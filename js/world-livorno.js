@@ -201,15 +201,12 @@
     };
     // the prototype of the houses by the road (js/world-hise.js; index.html?hise=1|2|3, else as they are): the houses and the blocks of flats in
     // chunks of their own (one texture, one material), by how near the road they stand (2: within 22 m of the centre line, 1: within 42 m)
-    const HK = API.hise, HL = HK ? HK.level() : 0, hisC = HL ? new Chunks(128, true) : null, onRoad = (x, z) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < 0.8; };
-    let nHv = 0, nHn = 0;
-    const hisPut = (bx, bz, Lb, Wb, ang, y0, hh, fl, type, wc, dn, ri) => {
-      const near = dn < 22 ? 2 : dn < 42 ? 1 : 0, dx = ri >= 0 ? T.px[ri] - bx : 0, dz = ri >= 0 ? T.pz[ri] - bz : 0, dl = Math.hypot(dx, dz);
-      if (near === 2) nHn++;
-      nHv += HK.house({ g: hisC.get(bx, bz), x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl, type, wall: wc, roof: ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], band: SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)],
-        lev: HL, near, rd: dl > 0.5 ? [dx / dl, dz / dl] : null, gH: nrGround, onRoad });
-    };
+    const HS = API.hise ? API.hise.setup({ Chunks, list: LD.bld, T, near: nrNear, gH: nrGround, style: 'med' }) : null, HL = HS ? HS.level : 0;
+    let bi = -1;
+    const hisPut = (bx, bz, Lb, Wb, ang, y0, hh, fl, type, wc, dn, ri) => HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl, type, wall: wc, dn, ri, id: bi,
+      roof: ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], band: SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)] });
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
+      bi++;
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
       let clash = false, y0 = 1e9, sea = false, dn = 1e9, ri = -1; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; if (n.i >= 0 && n.d < dn) { dn = n.d; ri = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
@@ -451,10 +448,10 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
-    if (hisC) hisC.addTo(sceneryGroup, HK.mat(), true, true);
+    if (HS) HS.addTo(sceneryGroup);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };
-    if (hisC) out.stats.hise = { level: HL, vertices: nHv, byRoad: nHn };   // (read by the tests)
+    if (HS) out.stats.hise = HS.stats;
     return out;
   }
 

@@ -19,10 +19,14 @@
   const ST = { upA: 0, upB: 128, gr: 256, flUp: 384, flGr: 512, plain: 640, rail: 704, wall: 736, white: 764, roof: 768 };
   const vAt = (y) => 1 - y / AH, WHITE = [0.5, vAt(ST.white + 2)];
   const DOOR = [1, 6], TALL = [2, 6], FLB = [1, 3, 5], SHOP = [0, 2, 5];   // which bays of a strip hold a door, a French window, the flats' balcony doors, the shops
-  let TEX = null, MAT = null;
+  // the styles (an atlas and a material each, made when first asked for): med (the Mediterranean: louvred shutters, terracotta tiles), north
+  // (the Ardennes, the Eifel: bare windows in white frames, some roller shutters, slate), cape (white frames, wooden shutters shut, tiles)
+  const STYLES = { med: { roof: 'tile' }, north: { roof: 'slate', bare: true, roll: true }, cape: { roof: 'tile', bare: true } };
+  const TEXS = new Map();
 
-  function atlas() {
-    if (TEX) return TEX;
+  function atlas(style) {
+    const sk = STYLES[style] ? style : 'med', SY = STYLES[sk];
+    if (TEXS.has(sk)) return TEXS.get(sk);
     const c = document.createElement('canvas'); c.width = AW; c.height = AH;
     const x = c.getContext('2d'), R = rng(4711);
     const rect = (col, a, b, w, h) => { x.fillStyle = col; x.fillRect(a, b, w, h); };
@@ -35,7 +39,7 @@
     const shade = (y0, h, a0, a1) => { const g = x.createLinearGradient(0, y0, 0, y0 + h); g.addColorStop(0, 'rgba(46,34,22,' + a0 + ')'); g.addColorStop(1, 'rgba(46,34,22,' + a1 + ')'); x.fillStyle = g; x.fillRect(0, y0, AW, h); };
     const louv = (a, b, w, h, S) => { rect(S[0], a, b, w, h); x.fillStyle = S[1]; for (let yy = b + 2; yy < b + h - 1; yy += 4) x.fillRect(a + 2, yy, w - 4, 1.7); x.strokeStyle = S[1]; x.lineWidth = 1.2; x.strokeRect(a + 0.6, b + 0.6, w - 1.2, h - 1.2); };
     const glass = (a, b, w, h) => { const g = x.createLinearGradient(0, b, 0, b + h); g.addColorStop(0, '#8097a8'); g.addColorStop(0.42, '#3b4955'); g.addColorStop(1, '#252e37'); x.fillStyle = g; x.fillRect(a, b, w, h); };
-    const GRN = ['#3b6348', '#274431'], BRN = ['#70503a', '#4c3423'];
+    const GRN = sk === 'cape' ? ['#70503a', '#4c3423'] : ['#3b6348', '#274431'];
     // a window: its stone surround and sill, the glass and its frame, the shutters open beside it or closed over it (tall: a French window
     // down to the floor; roll: a roller shutter let down by that share; grille: iron bars, a ground floor's)
     const win = (bx, y0, o) => {
@@ -69,14 +73,15 @@
     // the upper floors of a house: two rows that stack over the ground floor's (a house of three floors takes all three in one quad)
     [ST.upA, ST.upB].forEach((y0, n) => {
       plaster(y0, BAY); shade(y0, 14, 0.2, 0); course(y0);
-      (n ? ['o', 'o', 't', 'c', 'o', 'b', 't', 'o'] : ['o', 'c', 't', 'o', 'o', 'b', 't', 'c']).forEach((k, i) => { const bx = i * BAY; if (k === 'o') win(bx, y0, {}); else if (k === 'c') win(bx, y0, { closed: true }); else if (k === 't') win(bx, y0, { tall: true, closed: n === 0 && i === 6 }); });
+      (n ? ['o', 'o', 't', 'c', 'o', 'b', 't', 'o'] : ['o', 'c', 't', 'o', 'o', 'b', 't', 'c']).forEach((k, i) => { const bx = i * BAY, B = !!SY.bare;
+        if (k === 'o') win(bx, y0, { bare: B }); else if (k === 'c') win(bx, y0, SY.roll ? { bare: true, roll: 0.35 + R() * 0.4 } : { closed: true }); else if (k === 't') win(bx, y0, { tall: true, bare: B, closed: !B && n === 0 && i === 6 }); });
     });
     // a house's ground floor: the plinth, the doors under the French windows' neighbours, a garage, windows behind grilles or shutters
     plaster(ST.gr, BAY); shade(ST.gr, 10, 0.12, 0); shade(ST.gr + BAY - 50, 26, 0, 0.1);
     rect('#d2ccbd', 0, ST.gr + BAY - 24, AW, 24); rect('rgba(60,45,30,0.3)', 0, ST.gr + BAY - 25, AW, 1.6);
     ['g', 'd', 'c', 'o', 'G', 'o', 'd', 'c'].forEach((k, i) => { const bx = i * BAY, y0 = ST.gr;
-      if (k === 'g') win(bx, y0, { bare: true, grille: true }); else if (k === 'c') win(bx, y0, { closed: true }); else if (k === 'o') win(bx, y0, {});
-      else if (k === 'd') door(bx, y0, { col: i === 1 ? '#6f4b32' : '#35503d' }); else door(bx, y0, { kind: 'slat', w: 100, h: 86 }); });
+      if (k === 'g') win(bx, y0, { bare: true, grille: !SY.bare }); else if (k === 'c') win(bx, y0, SY.roll ? { bare: true, roll: 0.5 } : { closed: true }); else if (k === 'o') win(bx, y0, { bare: !!SY.bare });
+      else if (k === 'd') door(bx, y0, { col: i === 1 ? '#6f4b32' : sk === 'med' ? '#35503d' : '#3d4650' }); else door(bx, y0, { kind: 'slat', w: 100, h: 86, col: sk === 'med' ? null : '#8c8f8e' }); });
     // a block of flats: the upper floors (wide windows and balcony doors behind roller shutters) over shops, garages and the way in
     plaster(ST.flUp, BAY); shade(ST.flUp, 8, 0.12, 0); course(ST.flUp);
     ['w', 'b', 'w', 'b', 's', 'b', 'w', 'n'].forEach((k, i) => { const bx = i * BAY, y0 = ST.flUp, r = 0.2 + R() * 0.5;
@@ -88,22 +93,38 @@
       else if (k === 'G') door(bx, y0, { kind: 'slat', w: 100, h: 88 }); else win(bx, y0, { bare: true, grille: true }); });
     // plain plaster (side walls, gables, sheds, parapets); a balcony's railing (iron bars before the shaded wall); a yard's wall under its coping
     plaster(ST.plain, 64);
-    rect('#8f8f8c', 0, ST.rail, AW, 32); x.fillStyle = '#22252a'; for (let a = 0; a < AW; a += 8) x.fillRect(a + 3, ST.rail + 3, 2, 26); rect('#1b1e22', 0, ST.rail, AW, 4); rect('#1b1e22', 0, ST.rail + 28, AW, 4);
+    // (the railing: wrought iron on nothing, alpha 0 between the bars: every bar a spear head over the top rail, a ring between the rails at every
+    // fourth; drawn by the railings' own material, alphaTest)
+    x.clearRect(0, ST.rail, AW, 32); x.fillStyle = '#1d2024';
+    for (let a = 0; a < AW; a += 8) { x.fillRect(a + 2.5, ST.rail + 5, 3, 27); x.beginPath(); x.moveTo(a + 4, ST.rail); x.lineTo(a + 6.6, ST.rail + 6); x.lineTo(a + 1.4, ST.rail + 6); x.closePath(); x.fill(); }
+    x.fillRect(0, ST.rail + 7, AW, 3); x.fillRect(0, ST.rail + 12, AW, 2); x.fillRect(0, ST.rail + 26, AW, 3.5);
+    for (let a = 0; a < AW; a += 128) { x.fillRect(a, ST.rail + 3, 8, 29); x.beginPath(); x.arc(a + 4, ST.rail + 3.5, 4.4, 0, 6.3); x.fill(); }   // (a post every 2.56 m, a ball on it)
     plaster(ST.wall, 28); rect('#e9e3d3', 0, ST.wall, AW, 5); rect('rgba(50,38,26,0.3)', 0, ST.wall + 5, AW, 2); shade(ST.wall + 16, 12, 0, 0.16);
     rect('#ffffff', 0, ST.white, AW, 4);
     // the roof: courses of tiles from the eave (the strip's foot) to the ridge, 16 px a course (0.5 m), 8 px a tile (0.25 m): the cover tile's lit
     // back and the channel's shade, each tile its own tone, a few old and dark, the overlap's shadow at each course's foot, lichen in patches
-    for (let r = 0; r < 16; r++) for (let k = 0; k <= 128; k++) {
-      const a = k * 8 - (r % 2 ? 4 : 0), b = ST.roof + r * 16, f = 0.83 + R() * 0.19, t = R(), o = t < 0.07 ? 0.76 : 1;
-      rect('rgb(' + Math.round(255 * f * o) + ',' + Math.round(249 * f * o * (t > 0.9 ? 1.02 : 1)) + ',' + Math.round(242 * f * o * (t > 0.9 ? 0.9 : 1)) + ')', a, b, 8, 16);
-      rect('rgba(44,22,10,0.36)', a, b, 2, 16); rect('rgba(255,244,226,0.22)', a + 4, b, 2, 16);
+    if (SY.roof === 'slate') {   // slates: flat, 0.5 m by 0.5 m, every other course half a slate on; each its own grey, thin joints
+      for (let r = 0; r < 16; r++) for (let k = 0; k <= 65; k++) {
+        const a = k * 16 - (r % 2 ? 8 : 0), b = ST.roof + r * 16, f = 0.8 + R() * 0.2, t = R(), o = t < 0.06 ? 0.8 : 1;
+        rect('rgb(' + Math.round(250 * f * o) + ',' + Math.round(250 * f * o) + ',' + Math.round(252 * f * o) + ')', a, b, 16, 16); rect('rgba(14,16,22,0.3)', a, b, 1.3, 16);
+      }
+      for (let r = 0; r < 16; r++) { rect('rgba(14,16,22,0.42)', 0, ST.roof + r * 16 + 14.3, AW, 1.7); rect('rgba(255,255,255,0.1)', 0, ST.roof + r * 16, AW, 2); }
+    } else {
+      for (let r = 0; r < 16; r++) for (let k = 0; k <= 128; k++) {
+        const a = k * 8 - (r % 2 ? 4 : 0), b = ST.roof + r * 16, f = 0.83 + R() * 0.19, t = R(), o = t < 0.07 ? 0.76 : 1;
+        rect('rgb(' + Math.round(255 * f * o) + ',' + Math.round(249 * f * o * (t > 0.9 ? 1.02 : 1)) + ',' + Math.round(242 * f * o * (t > 0.9 ? 0.9 : 1)) + ')', a, b, 8, 16);
+        rect('rgba(44,22,10,0.36)', a, b, 2, 16); rect('rgba(255,244,226,0.22)', a + 4, b, 2, 16);
+      }
+      for (let r = 0; r < 16; r++) { rect('rgba(44,22,10,0.4)', 0, ST.roof + r * 16 + 14, AW, 2); rect('rgba(255,244,226,0.12)', 0, ST.roof + r * 16, AW, 2.5); }
     }
-    for (let r = 0; r < 16; r++) { rect('rgba(44,22,10,0.4)', 0, ST.roof + r * 16 + 14, AW, 2); rect('rgba(255,244,226,0.12)', 0, ST.roof + r * 16, AW, 2.5); }
     for (let k = 0; k < 46; k++) { x.fillStyle = 'rgba(74,82,60,' + (0.05 + R() * 0.09) + ')'; x.beginPath(); x.ellipse(R() * AW, ST.roof + 12 + R() * 232, 10 + R() * 34, 5 + R() * 12, 0, 0, 6.3); x.fill(); }
-    const t = TEX = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4;
+    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; TEXS.set(sk, t);
     return t;
   }
-  const mat = () => MAT || (MAT = new THREE.MeshLambertMaterial({ map: atlas(), vertexColors: true }));
+  // the houses' material, and the railings' (the same atlas: what is iron stands on nothing, so it is cut out; seen from both sides). A new one
+  // each time (a world may wrap its own cut into it; Render frees a world's materials with the world), the atlas is kept
+  const mat = (style) => new THREE.MeshLambertMaterial({ map: atlas(style), vertexColors: true });
+  const matRail = (style) => new THREE.MeshLambertMaterial({ map: atlas(style), vertexColors: true, alphaTest: 0.3, side: THREE.DoubleSide });
 
   const mul = (c, f) => [c[0] * f, c[1] * f, c[2] * f];
   const uR = (m) => m / 32, vR = (m) => vAt(AH - 1) + Math.min(m, 7.9) / 8 * (254 / AH);   // the roof's strip: 32 m across the atlas, 8 m from the eave up
@@ -115,13 +136,14 @@
   // lev (1-3), near (2 by the road, 1 near, 0 farther out), rd ([x, z]: the way to the road from the house), gH(x, z) (the ground),
   // onRoad(x, z) (inside the road's barriers: nothing of a yard there). Returns the vertices it added.
   function house(o) {
-    const g = o.g, n0 = g.P.length;
+    const g = o.g, n0 = g.P.length, f0 = o.gf ? o.gf.P.length : 0;
     let L = o.L, W = o.W, ang = o.ang; if (W > L) { const t = L; L = W; W = t; ang += Math.PI / 2; }
     const c = Math.cos(ang), s = Math.sin(ang), x0 = o.x, z0 = o.z, y0 = o.y0, hh = o.hh, lev = o.lev, near = o.near, flats = o.type === 'flats', small = o.type === 'small';
     const fl = Math.max(1, o.fl), fh = hh / fl, wc = o.wall, H = (k) => crH(x0, z0, 40 + k);
     const P = (lx, ly, lz) => [x0 + lx * c - lz * s, y0 + ly, z0 + lx * s + lz * c];
     const inn = [x0, y0 + hh * 0.5, z0];
     g.dUV = WHITE;
+    if (o.base > 0) box(g, x0, y0 - o.base - 0.5, z0, L + 0.3, o.base + 0.5, W + 0.3, ang, [0.6, 0.58, 0.54], null, true);   // (on a slope: the plinth down to the ground's low side)
     // the four walls: [from, to (local x, z)], the wall's own angle; the one that looks at the road
     const WL = [[[L / 2, W / 2], [-L / 2, W / 2], ang, 0, 1], [[-L / 2, -W / 2], [L / 2, -W / 2], ang, 0, -1], [[L / 2, -W / 2], [L / 2, W / 2], ang + Math.PI / 2, 1, 0], [[-L / 2, W / 2], [-L / 2, -W / 2], ang + Math.PI / 2, -1, 0]];
     let face = -1; if (o.rd) { let bd = 0.3; WL.forEach((w, k) => { const nx = w[3] * c - w[4] * s, nz = w[3] * s + w[4] * c, d = nx * o.rd[0] + nz * o.rd[1]; if (d > bd) { bd = d; face = k; } }); }
@@ -151,20 +173,20 @@
           const C = P(mx + nx * dp / 2, yb, mz + nz * dp / 2); box(g, C[0], C[1], C[2], bw, 0.14, dp, rot, mul(wc, 0.86), [0.74, 0.72, 0.68], true);
           const e = [[mx - tx * bw / 2, mz - tz * bw / 2], [mx - tx * bw / 2 + nx * dp, mz - tz * bw / 2 + nz * dp], [mx + tx * bw / 2 + nx * dp, mz + tz * bw / 2 + nz * dp], [mx + tx * bw / 2, mz + tz * bw / 2]];
           const ci = [x0 + (mx + nx * dp / 2) * c - (mz + nz * dp / 2) * s, y0 + yb + 0.5, z0 + (mx + nx * dp / 2) * s + (mz + nz * dp / 2) * c];
-          const vb = flats ? vAt(ST.plain + 60) : vAt(ST.rail + 31.5), vt = flats ? vAt(ST.plain + 30) : vAt(ST.rail + 0.5), col = flats ? mul(wc, 0.9) : [0.92, 0.92, 0.92];
-          let u = H(7) * 3; for (let j = 0; j < 3; j++) { const a = e[j], d = e[j + 1], l = Math.hypot(d[0] - a[0], d[1] - a[1]) / 20.5;
-            g.quadO(P(a[0], yb + 0.14, a[1]), P(d[0], yb + 0.14, d[1]), P(d[0], yb + 1.14, d[1]), P(a[0], yb + 1.14, a[1]), col, ci, [[u, vb], [u + l, vb], [u + l, vt], [u, vt]]); u += l; }
+          const vb = flats ? vAt(ST.plain + 60) : vAt(ST.rail + 31.5), vt = flats ? vAt(ST.plain + 30) : vAt(ST.rail + 0.5), col = flats ? mul(wc, 0.9) : [1, 1, 1], gr = flats ? g : o.gf;
+          let u = H(7) * 3; if (gr) for (let j = 0; j < 3; j++) { const a = e[j], d = e[j + 1], l = Math.hypot(d[0] - a[0], d[1] - a[1]) / 20.5;
+            gr.quadO(P(a[0], yb + 0.14, a[1]), P(d[0], yb + 0.14, d[1]), P(d[0], yb + 1.14, d[1]), P(a[0], yb + 1.14, a[1]), col, ci, [[u, vb], [u + l, vb], [u + l, vt], [u, vt]]); u += l; }
         }
       });
     }
     /* ---- the roof ---- */
-    const rc = o.roof, rc2 = mul(rc, 0.9 + H(11) * 0.16), hipped = !small && (flats ? H(12) < 0.5 : H(12) < 0.6 || L / W < 1.3), flat = flats && !hipped;
+    const rc = o.roof, rc2 = mul(rc, 0.9 + H(11) * 0.16), hipped = !small && (flats ? H(12) < 0.5 : o.hip != null ? H(12) < o.hip : H(12) < 0.6 || L / W < 1.3), flat = flats && !hipped;
     let roofY = () => hh;
     if (flat) {   // a flat roof behind its parapet, a block for the stairs
       box(g, x0, y0 + hh, z0, L, 0.5, W, ang, mul(wc, 0.92), [0.66, 0.6, 0.54]);
       const q = P((H(13) - 0.5) * L * 0.4, hh + 0.3, 0); box(g, q[0], q[1], q[2], 3.2, 2.3, 2.6, ang, mul(wc, 0.95), [0.6, 0.56, 0.5], true);
     } else {
-      const ov = small ? 0.2 : lev >= 2 ? 0.55 : 0.22, pitch = small ? 0.24 : 0.36 + H(14) * 0.1, a = L / 2 + (hipped ? ov : Math.min(ov, 0.3)), b = W / 2 + ov, r = hipped ? Math.max(0, a - b) : a;
+      const ov = small ? 0.2 : lev >= 2 ? 0.55 : 0.22, pitch = small ? (o.pitch ? o.pitch * 0.7 : 0.24) : o.pitch ? o.pitch * (0.9 + H(14) * 0.2) : 0.36 + H(14) * 0.1, a = L / 2 + (hipped ? ov : Math.min(ov, 0.3)), b = W / 2 + ov, r = hipped ? Math.max(0, a - b) : a;
       const yE = hh - ov * pitch, yR = hh + W / 2 * pitch, sl = b * Math.sqrt(1 + pitch * pitch), v0 = vR(0), v1 = vR(sl), uo = H(15) * 7, ri = [x0, y0 + hh - 2, z0];
       roofY = (lx, lz) => Math.min(hh + (W / 2 - Math.abs(lz)) * pitch, hipped ? hh + (L / 2 - Math.abs(lx)) * pitch : 1e9);
       const E = [P(-a, yE, -b), P(a, yE, -b), P(a, yE, b), P(-a, yE, b)], R0 = P(-r, yR, 0), R1 = P(r, yR, 0);
@@ -176,6 +198,10 @@
       } else {   // the gables' walls up to the ridge
         const vb = vAt(ST.plain + 62), vt = vAt(ST.plain + 2);
         for (const sx of [-1, 1]) g.triO(P(sx * L / 2, hh, -W / 2), P(sx * L / 2, hh, W / 2), P(sx * L / 2, yR, 0), wc, inn, null, null, [0.1, vb], [0.1 + W / 23, vb], [0.1 + W / 46, vt]);
+        // an attic window in each gable that is high enough for it (the upper row's first bay, smaller, just proud of the wall)
+        const ww = 1.5, wh = 1.18, yw = hh + Math.min(0.6, (yR - hh) * 0.15);
+        if (lev >= 2 && near && (W / 2) * (1 - (yw + wh - hh) / (yR - hh)) >= ww / 2 + 0.2) for (const sx of [-1, 1]) { const lx = sx * (L / 2 + 0.03), ua = 12 / AW, ub = 116 / AW, va = vAt(ST.upA + 104), vz = vAt(ST.upA + 22);
+          g.quadO(P(lx, yw, -ww / 2), P(lx, yw, ww / 2), P(lx, yw + wh, ww / 2), P(lx, yw + wh, -ww / 2), wc, inn, [[ua, va], [ub, va], [ub, vz], [ua, vz]]); }
       }
       // the ridge and the hips: a lighter line of ridge tiles over each
       const cap = mul(rc, 1.14), cw = 0.17, line = (p, q) => { const dx = q[0] - p[0], dz = q[2] - p[2], l = Math.hypot(dx, dz) || 1, ox = -dz / l * cw, oz = dx / l * cw;
@@ -201,37 +227,108 @@
           const p0 = P(mx - tx * hw, yt, mz - tz * hw), p1 = P(mx + tx * hw, yt, mz + tz * hw), p2 = P(mx + tx * hw + nx * dp, yt - 0.45, mz + tz * hw + nz * dp), p3 = P(mx - tx * hw + nx * dp, yt - 0.45, mz - tz * hw + nz * dp);
           g.quadUp(p0, p1, p2, p3, [ac, ac, mul(ac, 0.9), mul(ac, 0.9)]); g.quadO(p3, p2, [p2[0], p2[1] - 0.22, p2[2]], [p3[0], p3[1] - 0.22, p3[2]], mul(ac, 0.8), inn); } }
       if (!flats && o.gH && o.onRoad) {
-        let m = 2.2 + H(22) * 1.6, ok = false, K = null;
-        for (let tr = 0; tr < 2 && !ok; tr++) { K = [[-L / 2 - m, -W / 2 - m], [L / 2 + m, -W / 2 - m], [L / 2 + m, W / 2 + m], [-L / 2 - m, W / 2 + m]].map(([lx, lz]) => { const q = P(lx, 0, lz); q[1] = o.gH(q[0], q[2]); return q; });
-          ok = !K.some((q, i) => { const n = K[(i + 1) % 4]; return o.onRoad(q[0], q[2]) || o.onRoad((q[0] + n[0]) / 2, (q[2] + n[2]) / 2); }); if (!ok) m = 0.9; }
-        const ys = K.map(q => q[1]), yl = Math.min(...ys), yh = Math.max(...ys);
-        if (ok && yh - yl < 1.3) {
-          const lawn = H(23) < 0.5, pc = lawn ? [0.5, 0.58, 0.34] : [0.83, 0.79, 0.69], hedge = H(24) < 0.45, sc = hedge ? [0.19, 0.31, 0.17] : mul(wc, 0.97), st = hedge ? [0.25, 0.39, 0.21] : [0.86, 0.82, 0.72], sh = hedge ? 1.25 : 0.95, th = hedge ? 0.6 : 0.24;
-          g.quadUp(...K.map(q => [q[0], q[1] + 0.06, q[2]]), [pc, pc, pc, pc]);
-          // the yard's edge: the side on the road with a gap for the gate (two posts), the other sides whole
-          const fs = face < 0 ? -1 : face === 0 ? 2 : face === 1 ? 0 : face === 2 ? 1 : 3;   // (the yard's side under the wall that looks at the road: K[fs] -> K[fs + 1])
-          const seg = (p, q) => { const dx = q[0] - p[0], dz = q[2] - p[2], l = Math.hypot(dx, dz); if (l < 0.5) return; const yb = Math.min(p[1], q[1]) - 0.3;
-            box(g, (p[0] + q[0]) / 2, yb, (p[2] + q[2]) / 2, l, sh + 0.3 + Math.abs(p[1] - q[1]) * 0.5, th, Math.atan2(dz, dx), sc, st, true); };
-          for (let i = 0; i < 4; i++) { const p = K[i], q = K[(i + 1) % 4];
-            if (i !== fs) { seg(p, q); continue; }
-            const l = Math.hypot(q[0] - p[0], q[2] - p[2]), g0 = clamp(0.5 + (H(25) - 0.5) * 0.4 - 1.3 / l, 0.05, 0.9), g1 = Math.min(0.95, g0 + 2.6 / l), at = (t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
-            seg(p, at(g0)); seg(at(g1), q);
-            for (const t of [g0, g1]) { const e = at(t); box(g, e[0], e[1] - 0.3, e[2], 0.42, 1.75, 0.42, Math.atan2(q[2] - p[2], q[0] - p[0]), mul(wc, 0.93), [0.86, 0.82, 0.72], true); }
+        // the yard: a margin on each side of the house, each as wide as the road and the neighbours (o.plots) leave it, none where the house stands
+        // on the road's edge or wall to wall with the next one (M: the margins at -x, +x, -z, +z; the yard's corners K run -x-z, +x-z, +x+z, -x+z,
+        // EM: the margin an edge K[i] -> K[i + 1] stands off by)
+        const m0 = 2.2 + H(22) * 1.6, M = [m0, m0, m0, m0], EM = [2, 1, 3, 0], OUT = [[0, -1], [1, 0], [0, 1], [-1, 0]], WC = [[-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]];
+        const taken = (lx, lz) => { const px = x0 + lx * c - lz * s, pz = z0 + lx * s + lz * c; return o.onRoad(px, pz) || (o.plots ? !o.plots.free(px, pz, o.id) : false); };
+        const hitL = (a, b) => { const n = Math.max(2, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.5)); for (let k = 0; k <= n; k++) { const t = k / n; if (taken(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)) return true; } return false; };
+        const cor = () => [[-L / 2 - M[0], -W / 2 - M[2]], [L / 2 + M[1], -W / 2 - M[2]], [L / 2 + M[1], W / 2 + M[3]], [-L / 2 - M[0], W / 2 + M[3]]];
+        for (let i = 0; i < 4; i++) { const k = EM[i], a = WC[i], b = WC[(i + 1) % 4], n = OUT[i];   // (each side by itself: the line before its wall)
+          for (const d of [m0, 1.5, 0.9, 0]) { M[k] = d; if (!d || !hitL([a[0] + n[0] * d, a[1] + n[1] * d], [b[0] + n[0] * d, b[1] + n[1] * d])) break; } }
+        for (let it = 0; it < 4; it++) { const C = cor(); let any = false;   // (the corners: where one is taken, the narrower of its two sides goes)
+          for (let i = 0; i < 4 && !any; i++) { const ka = EM[(i + 3) % 4], kb = EM[i]; if (M[ka] > 0 && M[kb] > 0 && taken(C[i][0], C[i][1])) { M[M[ka] < M[kb] ? ka : kb] = 0; any = true; } }
+          if (!any) break; }
+        // the yard's ground is one plane through its corners' heights (what stands in it reads the plane: yY)
+        const C4 = cor(), hs = C4.map(([lx, lz]) => { const q = P(lx, 0, lz); return o.gH(q[0], q[2]); }), yw = L + M[0] + M[1], yd = W + M[2] + M[3], ycx = (M[1] - M[0]) / 2, ycz = (M[3] - M[2]) / 2;
+        const ym = (hs[0] + hs[1] + hs[2] + hs[3]) / 4, gx = (hs[1] + hs[2] - hs[0] - hs[3]) / (2 * yw), gz = (hs[2] + hs[3] - hs[0] - hs[1]) / (2 * yd), yP = (lx, lz) => ym + (lx - ycx) * gx + (lz - ycz) * gz;
+        // (level enough: a lawn or paving on that plane; on a slope the ground stays as it is and the fence steps down it)
+        const rise = Math.max(...hs) - Math.min(...hs), flatY = rise < 1.4 && Math.max(...hs.map((h, i) => Math.abs(h - yP(C4[i][0], C4[i][1])))) < 0.35;
+        const yY = flatY ? yP : (lx, lz) => { const q = P(lx, 0, lz); return o.gH(q[0], q[2]); }, Y = (lx, lz, up) => { const q = P(lx, 0, lz); q[1] = yY(lx, lz) + (up || 0); return q; };
+        if (Math.max(...M) > 0 && rise < 6) {
+          const lawn = H(23) < 0.5, pc = lawn ? [0.5, 0.58, 0.34] : [0.83, 0.79, 0.69], hedge = H(24) < (o.hedge || 0), iron = !hedge && !!o.gf;
+          const sc = hedge ? [0.19, 0.31, 0.17] : iron ? [0.8, 0.77, 0.7] : mul(wc, 0.97), st = hedge ? [0.25, 0.39, 0.21] : [0.86, 0.82, 0.72], sh = hedge ? 1.25 : iron ? 0.45 : 0.95, th = hedge ? 0.6 : iron ? 0.3 : 0.24;
+          const PIL = [0.84, 0.8, 0.72], CAP = [0.9, 0.87, 0.8], rvb = vAt(ST.rail + 31.5), rvt = vAt(ST.rail + 0.5), PATH = [0.66, 0.63, 0.57];
+          if (o.plots) { const q = P(ycx, 0, ycz); o.plots.add(q[0], q[2], yw, yd, ang, o.id); }
+          if (flatY) g.quadUp(...C4.map(([lx, lz]) => Y(lx, lz, 0.06)), [pc, pc, pc, pc]);
+          // (a pillar of the fence: plastered stone under a cap; one at a place)
+          const pils = [], pillar = (e, rot) => { for (const q of pils) if (Math.abs(q[0] - e[0]) + Math.abs(q[1] - e[1]) < 0.3) return; pils.push(e); const q = Y(e[0], e[1]);
+            box(g, q[0], q[1] - 0.3, q[2], 0.42, 1.95, 0.42, rot, PIL, null, true); box(g, q[0], q[1] + 1.65, q[2], 0.56, 0.1, 0.56, rot, CAP, null, true); };
+          // (the iron between two points: a railing of the atlas's strip, cut out, on the railings' mesh; ru: where along the strip)
+          const ru0 = Math.floor(H(33) * 8) / 8, iro = (a, b, yb, h) => { const p = P(a[0], 0, a[1]), q = P(b[0], 0, b[1]), l = Math.hypot(b[0] - a[0], b[1] - a[1]) / 20.48;
+            o.gf.quadO([p[0], yb, p[2]], [q[0], yb, q[2]], [q[0], yb + h, q[2]], [p[0], yb + h, p[2]], [1, 1, 1], inn, [[ru0, rvb], [ru0 + l, rvb], [ru0 + l, rvt], [ru0, rvt]]); };
+          // (a run of the fence from a to b (local), in panels of 2.5 m at most, each level (down a slope in steps): the low wall and the iron on it
+          // (a post of the strip at each panel's start), or the hedge, or the plastered wall; a pillar at both ends)
+          const seg = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]); if (l < 0.5) return; const n = Math.ceil(l / 2.56), rot = ang + Math.atan2(b[1] - a[1], b[0] - a[0]);
+            for (let k = 0; k < n; k++) { const u = [a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n], v = [a[0] + (b[0] - a[0]) * (k + 1) / n, a[1] + (b[1] - a[1]) * (k + 1) / n];
+              const ya = yY(u[0], u[1]), yq = yY(v[0], v[1]), yb = Math.min(ya, yq) - 0.3, yt = Math.max(ya, yq) + sh, q = P((u[0] + v[0]) / 2, 0, (u[1] + v[1]) / 2);
+              box(g, q[0], yb, q[2], l / n + 0.02, yt - yb, th, rot, sc, st, true); if (iron) iro(u, v, yt, 1.08); }
+            if (iron) { pillar(a, ang); pillar(b, ang); } };
+          // the side under the wall that looks at the road has the gate, before the door; the way from the door through the gate out to the road
+          const fs = face < 0 ? -1 : [2, 0, 1, 3][face], wf = face < 0 ? null : WL[face], nbF = wf ? Math.max(1, Math.round(Math.hypot(wf[1][0] - wf[0][0], wf[1][1] - wf[0][1]) / 2.9)) : 1, tD = (Math.floor((nbF - 1) / 2) + 0.5) / nbF;
+          const door = wf ? [wf[0][0] + (wf[1][0] - wf[0][0]) * tD, wf[0][1] + (wf[1][1] - wf[0][1]) * tD] : null;
+          for (let i = 0; i < 4; i++) { const k = EM[i], a = C4[i], b = C4[(i + 1) % 4];
+            if (!M[k]) {   // (no margin on this side: the wall stands on the yard's edge; the fence closes what its neighbours' margins leave open beside it)
+              for (const [u, v] of [[a, WC[i]], [WC[(i + 1) % 4], b]]) if (Math.hypot(v[0] - u[0], v[1] - u[1]) > 0.5 && !taken((u[0] + v[0]) / 2, (u[1] + v[1]) / 2)) seg(u, v);
+              continue; }
+            if (i !== fs || !door) { seg(a, b); continue; }
+            const l = Math.hypot(b[0] - a[0], b[1] - a[1]), tx = (b[0] - a[0]) / l, tz = (b[1] - a[1]) / l, gw = 1.3, td = clamp((door[0] - a[0]) * tx + (door[1] - a[1]) * tz, gw + 0.5, l - gw - 0.5);
+            if (l < 2 * gw + 1.4) { seg(a, b); continue; }
+            const e0 = [a[0] + tx * (td - gw), a[1] + tz * (td - gw)], e1 = [a[0] + tx * (td + gw), a[1] + tz * (td + gw)], n = OUT[i];
+            seg(a, e0); seg(e1, b);
+            if (iron) { pillar(e0, ang); pillar(e1, ang); iro(e0, e1, Math.max(yY(e0[0], e0[1]), yY(e1[0], e1[1])) + 0.1, 1.5); }   // (the gate: iron, shut)
+            else for (const e of [e0, e1]) { const q = Y(e[0], e[1]); box(g, q[0], q[1] - 0.3, q[2], 0.42, 1.75, 0.42, ang, mul(wc, 0.93), [0.86, 0.82, 0.72], true); }
+            const gm = [a[0] + tx * td, a[1] + tz * td], hw = gw - 0.2, d0 = [door[0] - n[0] * 0.02, door[1] - n[1] * 0.02];
+            { const nq = flatY ? 1 : Math.max(1, Math.ceil(M[k] / 1.6)); for (let j = 0; j < nq; j++) { const u = [d0[0] + (gm[0] - d0[0]) * j / nq, d0[1] + (gm[1] - d0[1]) * j / nq], v = [d0[0] + (gm[0] - d0[0]) * (j + 1) / nq, d0[1] + (gm[1] - d0[1]) * (j + 1) / nq];
+              g.quadUp(Y(u[0] - tx * hw, u[1] - tz * hw, 0.09), Y(u[0] + tx * hw, u[1] + tz * hw, 0.09), Y(v[0] + tx * hw, v[1] + tz * hw, 0.09), Y(v[0] - tx * hw, v[1] - tz * hw, 0.09), [PATH, PATH, PATH, PATH]); } }
+            // (outside the gate: over the ground as far as the road's edge, drawn only when it gets there and through no other house or yard)
+            const out = []; let pl = [Y(gm[0] - tx * hw, gm[1] - tz * hw, 0.09), Y(gm[0] + tx * hw, gm[1] + tz * hw, 0.09)], got = false;
+            for (let d = 1.2; d < 32 && !got && !o.noDrive; d += 2) { const cx = gm[0] + n[0] * d, cz = gm[1] + n[1] * d, wq = P(cx, 0, cz); got = o.onRoad(wq[0], wq[2]); if (!got && o.plots && !o.plots.free(wq[0], wq[2], o.id)) break;
+              const pa = P(cx - tx * hw, 0, cz - tz * hw), pb = P(cx + tx * hw, 0, cz + tz * hw); pa[1] = o.gH(pa[0], pa[2]) + 0.08; pb[1] = o.gH(pb[0], pb[2]) + 0.08; out.push([pl[0], pl[1], pb, pa]); pl = [pa, pb]; }
+            if (got) for (const q of out) g.quadUp(q[0], q[1], q[2], q[3], [PATH, PATH, PATH, PATH]);
           }
           // shrubs in the yard's corners (cypresses, oleanders), a car parked beside the house
           const hr = rng(Math.floor(H(26) * 1e9));
-          for (let i = 0; i < 4; i++) { const hq = crH(x0 + i, z0, 63); if (hq < 0.45) continue; const q = K[i], px = q[0] + (x0 - q[0]) * 0.16, pz = q[2] + (z0 - q[2]) * 0.16;
-            if (hq < 0.72) cone(g, px, q[1], pz, 0.55, 3.2 + hq * 2, 6, [0.16, 0.3, 0.17], [0.22, 0.38, 0.2], 0); else ico(g, px, q[1] + 0.7, pz, 0.95, 0.85, hq < 0.86 ? [0.26, 0.42, 0.2] : [0.5, 0.4, 0.42], hr, 0.12); }
-          if (m > 2.5 && H(27) < 0.4 && L > 7) { const sd = H(28) < 0.5 ? -1 : 1, q = P((H(29) - 0.5) * (L - 5), 0, sd * (W / 2 + m * 0.5)); q[1] = o.gH(q[0], q[2]);
-            parkedCar(g, q[0], q[1] + 0.06, q[2], ang + (H(30) < 0.5 ? Math.PI : 0), CARS[Math.floor(H(31) * CARS.length)], Math.floor(H(32) * 4)); }
+          for (let i = 0; i < 4; i++) { const hq = crH(x0 + i, z0, 63); if (hq < 0.45 || !M[EM[i]] || !M[EM[(i + 3) % 4]]) continue; const lx = C4[i][0] * 0.86 + ycx * 0.14, lz = C4[i][1] * 0.86 + ycz * 0.14, q = Y(lx, lz);
+            if (hq < 0.72) cone(g, q[0], q[1], q[2], 0.55, 3.2 + hq * 2, 6, [0.16, 0.3, 0.17], [0.22, 0.38, 0.2], 0); else ico(g, q[0], q[1] + 0.7, q[2], 0.95, 0.85, hq < 0.86 ? [0.26, 0.42, 0.2] : [0.5, 0.4, 0.42], hr, 0.12); }
+          { const sd = H(28) < 0.5 ? -1 : 1, ms = sd < 0 ? M[2] : M[3]; if (flatY && ms > 2.5 && H(27) < 0.4 && L > 7 && fs !== (sd < 0 ? 0 : 2)) { const q = Y((H(29) - 0.5) * (L - 5), sd * (W / 2 + ms * 0.5), 0.06);
+            parkedCar(g, q[0], q[1], q[2], ang + (H(30) < 0.5 ? Math.PI : 0), CARS[Math.floor(H(31) * CARS.length)], Math.floor(H(32) * 4)); } }
         }
       }
     }
     g.dUV = null;
-    return (g.P.length - n0) / 3;
+    return (g.P.length - n0 + (o.gf ? o.gf.P.length - f0 : 0)) / 3;
+  }
+
+  // the plots of a track: every building's footprint ([x, z, length, width, angle, …], a margin round each) and the yards as they are made, on a
+  // grid: free(x, z, id) says whether a point lies clear of all but the house id's own
+  function plots(list) {
+    const C = 24, M = new Map();
+    const put = (r) => { const rad = Math.hypot(r.L, r.W) / 2 + 1; for (let a = Math.floor((r.x - rad) / C); a <= Math.floor((r.x + rad) / C); a++) for (let b = Math.floor((r.z - rad) / C); b <= Math.floor((r.z + rad) / C); b++) { const k = a + ',' + b; let l = M.get(k); if (!l) M.set(k, l = []); l.push(r); } };
+    list.forEach((b, i) => put({ x: b[0], z: b[1], L: b[2] + 1.2, W: b[3] + 1.2, c: Math.cos(b[4]), s: Math.sin(b[4]), id: i }));
+    return { free(x, z, id) { const l = M.get(Math.floor(x / C) + ',' + Math.floor(z / C)); if (!l) return true; for (const r of l) { if (r.id === id) continue; const dx = x - r.x, dz = z - r.z; if (Math.abs(dx * r.c + dz * r.s) < r.L / 2 && Math.abs(dz * r.c - dx * r.s) < r.W / 2) return false; } return true; },
+      add(x, z, L, W, ang, id) { put({ x, z, L, W, c: Math.cos(ang), s: Math.sin(ang), id }); } };
+  }
+
+  // One track's houses in one place: the chunks (the houses' and the railings'), the plots, the way to the road and the counts. cfg: Chunks (the
+  // world's), list (the footprints [x, z, length, width, angle, …], for the plots), T (the track), near(x, z) (the world's nearest sample: { i, dd },
+  // dd the distance beyond the road's barrier), gH(x, z), style, d2 and d1 (how far from the road a house counts as by it, near it), opts (the
+  // builder's options for every house). Null without ?hise: the world draws its houses as they are.
+  function setup(cfg) {
+    const lev = level(); if (!lev) return null;
+    const C = new cfg.Chunks(cfg.size || 128, true), F = new cfg.Chunks(cfg.size || 128, true), pl = plots(cfg.list || []), T = cfg.T;
+    const onRoad = (x, z) => { const n = cfg.near(x, z); return n.i >= 0 && n.dd < 0.8; }, st = { level: lev, vertices: 0, byRoad: 0, houses: 0 };
+    return { level: lev, stats: st,
+      // o: x, z, L, W, ang, y0, hh, fl, type, wall, roof, band, id (its index in the list), dn (its distance from the road), ri (the nearest sample)
+      put(o) {
+        const near = o.dn < (cfg.d2 || 22) ? 2 : o.dn < (cfg.d1 || 42) ? 1 : 0, dx = o.ri >= 0 ? T.px[o.ri] - o.x : 0, dz = o.ri >= 0 ? T.pz[o.ri] - o.z : 0, dl = Math.hypot(dx, dz);
+        st.houses++; if (near === 2) st.byRoad++;
+        st.vertices += house(Object.assign({ g: C.get(o.x, o.z), gf: F.get(o.x, o.z), lev, near, rd: dl > 0.5 ? [dx / dl, dz / dl] : null, gH: cfg.gH, onRoad, plots: pl }, cfg.opts, o));
+      },
+      addTo(group, wrap) { const w = wrap || ((m) => m); C.addTo(group, w(mat(cfg.style)), true, true); F.addTo(group, w(matRail(cfg.style)), false, true); } };
   }
 
   // the level asked for: index.html?hise=1|2|3 (0 without it: the houses as they are)
   const level = () => { try { const q = new URLSearchParams(location.search).get('hise'); return clamp(Math.round(+(q != null ? q : window.__hise || 0)) || 0, 0, 3); } catch (e) { return 0; } };   // (window.__hise: a tool's way in)
-  API.hise = { atlas, mat, house, level };
+  API.hise = { atlas, mat, matRail, house, plots, setup, level };
 })();
