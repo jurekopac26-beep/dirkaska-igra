@@ -5,7 +5,7 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 ## Odločitve (privzete izbire, potrjene)
 - **a Cilji ekipe** (`js/zabava/cilji.js`): samo v karieri, na dirki s tekmeci (krožna, odprta cesta, dvoboj v prometu, eliminacija). Na štartu pred lučmi kartica s tremi cilji in »Brez cilja«; dirka čaka. Uspeh: dodatek k nagradi za mesto (delež), neuspeh: nič (brez stav).
 - **b Eliminacija** (`js/zabava/elim.js`, način `elim`, v meniju *Elimination*): vsakih 30 s izpade zadnja dvanajstina polja (22 avtov: 2, 100 avtov: 9), prvič po 45 s; polje iz *Opponents*, vsaj 5 tekmecev; dirka ~5–6 min. Zadnji avti imajo v časovni tabeli rdečo vrstico, odštevanje je pod uro (`#h-gap`), brez velikih napisov. Tudi v dirki s prijatelji (odloča gostitelj).
-- **c Ti loviš** (`js/zabava/lov.js`, način `lov`, v meniju *Pursuit*): ujameš, ko si skupaj 5 s manj kot 15 m za begunom (ob dotiku hitreje); pobegne, če je 10 s več kot 400 m pred tabo ali pride do konca ceste; 3:00. Vse odprte ceste s prometom. Najprej sam, s prijatelji pozneje (posebej).
+- **c Ti loviš** (`js/zabava/lov.js`, način `lov`, v meniju *Pursuit*): ujameš, ko si skupaj 5 s manj kot 15 m za begunom (ob dotiku hitreje); pobegne, če je 10 s več kot 400 m pred tabo ali pride do konca ceste; 3:00. Vse odprte ceste s prometom. Najprej sam, s prijatelji pozneje (posebej): **Pregon** (`js/zabava/beg.js`, [`docs/novosti-e.md`](novosti-e.md), Novost 2).
 - **d Tekmeci si zapomnijo** (`js/zabava/spomin.js`, jedro v `js/core.js`): zamera do konca dirke, v prvenstvu do konca prvenstva; oranžna vrstica v časovni tabeli in komentator. Jezen tekmec se brani ostreje in ne pusti prostora, nikoli namenoma ne zapelje vate. Kdor vozi čisto, mu tekmeci puščajo prostor.
 - **e Trener** (`js/zabava/trener.js`): po kronometru, kvalifikacijah in izzivu trije ovinki z največjo izgubo. Zlati duh: stikalo v možnostih kronometra (privzeto izklop), avtopilot v ozadju s tvojim avtom, raztegnjen na zlati čas.
 - **f Izzivi ob cesti** (`js/zabava/izzivi.js`): vse prave proge; krožne: radar, odsek; ceste: še drift cona, skok (kjer ga cesta ima), skriti zlati smerniki v stranskih cestah. Zvezdice iz hitrostnega profila. Stikalo v Nastavitvah (privzeto vklop); ne v dirki s prijatelji in misijah.
@@ -37,7 +37,7 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 | 3 | Tekmeci si zapomnijo | narejeno (jedro: `grudgeHit`, `aiWaits`, `aiDefend`, prostor ob avtu; igra: `js/zabava/spomin.js`) |
 | 4 | Trener in zlati duh | narejeno (`js/zabava/trener.js`: profil vožnje iz duha, ovinki `Track.corners`, zlati duh v ozadju) |
 | 5 | Izzivi ob cesti | narejeno (`js/zabava/izzivi.js`: postavitev iz oblike proge, zvezdice iz hitrosti avta po profilu) |
-| 6 | Ti loviš | narejeno (`js/zabava/lov.js`: policijska podoba `P.police`, begunec 150 m spredaj, merilnik aretacije) |
+| 6 | Ti loviš | narejeno (`js/zabava/lov.js`: policijska podoba `P.police`, begunec 150 m spredaj, merilnik aretacije); s prijatelji: Pregon (`js/zabava/beg.js`, PR #377) |
 | 7 | Živa cesta | narejeno (`js/zabava/cesta.js`: osebne nevarnosti pred igralcem, ne pred tekmecem, en klic risanja na dogodek) |
 | 8 | Spoj `main`, testi, osnutek PR | narejeno (spoj z `main` 4. 11.: nov trk `kCollide`, *Opponents* iz menija, Prvič na cesti) |
 | 9 | Drag dirka (I20, 8. 11. 2026) | `js/zabava/drag.js`, način `drag`, v meniju *Drag race*; načrt in stanje v `docs/drag-dirka.md` (PR #515) |
