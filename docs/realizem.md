@@ -343,7 +343,7 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`), E p
 | Korak | Veja / PR | Stanje |
 |---|---|---|
 | Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
-| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | v delu od 10. 11. 2026 (jure.kopac26; odločitev uporabnika 10. 11. 2026 ob ~01.40: »Lahko porabiš tokene za izboljšavo grafike na Fable 5.2«, izbira »Cesta in predmeti E0«); opis v razdelku »E0, prvi kos« |
+| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | v delu od 10. 11. 2026 (jure.kopac26; odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«); opis v razdelku »E0, prvi kos« |
 | E0 (ostalo), E1–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
 
 ## Viri
