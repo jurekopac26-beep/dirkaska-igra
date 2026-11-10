@@ -2502,52 +2502,52 @@
  "killar/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 127.74,
+  "winner": 127.77,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4dfc220dd668859d4c5fe093"
+  "digest": "01acae9e304da737b67da894"
  },
  "killar/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 139.7,
+  "winner": 139.77,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "020e5f3f3cd00b427871a04e"
+  "digest": "918876a59affb4e6311b6720"
  },
  "killar/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 129.66,
+  "winner": 129.63,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "770abe4c09b2a29616b7fba6"
+  "digest": "e010ee7137633ee97207f7e4"
  },
  "killar/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 129.48,
+  "winner": 129.59,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "eb756ec6f066baea371e3203"
+  "digest": "4a711597e14a76b02b795e58"
  },
  "killar/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 127.85,
+  "winner": 127.78,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4ff88a1b29ac2e08114760ba"
+  "digest": "a929de0f1569bad1e858b665"
  },
  "livorno/cs": {
   "finished": 21,

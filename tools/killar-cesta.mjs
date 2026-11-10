@@ -28,12 +28,17 @@
 //       lower in tighter bends (to 0.4 at 60 m), and no feature leaves the road steeper across than 15 % between its edges' strips or
 //       deeper than 0.36 m (at the height --k the file's switch stands at). The road's edges stay as they were (killarCross fades the
 //       relief to nothing over the last 1.8 m: a rut by the drop is closed by a bank). The three highest ridges at least 250 m apart are
-//       the co-driver's (calls: »crest left / right«, def.notes; his recorded words have none for a hollow or a tilt).
+//       the co-driver's (calls: »crest left / right«, def.notes; his recorded words have none for a hollow or a tilt);
+//   - under the relief the road's own tilt across (camber, camberFor below; the user, 10. 11. 2026: »Vozisce da je nagibano v vse smeri tako
+//     kot v resnici vozisce ni povsem ravno«, at ~11.00 »Ok + nežen nagib povsod«): 2-3 % one way or the other every 20-60 m, by a drop at
+//     most 1 % toward it, none at the quiet places and by the crests, never lifting the road (the ruts stay, the tilt yields to them).
 // Then it builds the road from the file and prints the times of the autopilot in a few cars before and after, their flights, the steepest
 // grade, and how far the file's own copy of today's profile (roadBase without the undulation) is from the road Track builds today.
 //   node tools/killar-cesta.mjs [--let 0.5] [--let-rob 0.35] [--razmik 100] [--seme 7] [--k 1.3]   writes the line KILLAR_UND in js/tracks/killar.js
 //     (--k: the switch KILLAR_RAZGIBANOST the heights are set for, the file's own by default: the flights, the dips' rims and the relief's
 //     limits hold at it; the line stores the heights at 1)
+//   node tools/killar-cesta.mjs --nagib [--seme 7]                         writes only the tilt across (KILLAR_UND.camber) for the file's crests and
+//     ruts, the rest of the line as it is (a whole new line bisects the crests again: their flights hang on the step at the take-off)
 //   node tools/killar-cesta.mjs --check                                   only prints the numbers of the file's undulation (writes nothing)
 // After a new line: node tools/killar-skala.mjs (the rock and the floor a falling car lands on, from the ground drawn now), node tools/menu-lens.js,
 // the medals (tests/killar.test.js prints them: the rally car on the autopilot x 1.01 / 1.06 / 1.14) and Killar's references (docs/proge/killar.md).
@@ -46,7 +51,7 @@ const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), FILE = path.join(ROOT, 'js/tracks/killar.js');
 const { coreSource } = require('../tests/lib/core.js'), { DT, seeded } = require('../tests/lib/sim.js');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? +process.argv[i + 1] : d; };
-const FL = arg('--let', 0.5), FL2 = arg('--let-rob', 0.35), GAP = arg('--razmik', 100), SEED = arg('--seme', 7), A = 9, CHECK = process.argv.includes('--check');
+const FL = arg('--let', 0.5), FL2 = arg('--let-rob', 0.35), GAP = arg('--razmik', 100), SEED = arg('--seme', 7), A = 9, CHECK = process.argv.includes('--check'), TILT = process.argv.includes('--nagib');
 const RE_K = /const KILLAR_RAZGIBANOST = ([\d.]+);/, RE_U = /const KILLAR_UND = \{.*\};/, SRC = coreSource();
 if (!RE_K.test(SRC) || !RE_U.test(SRC)) throw new Error('js/tracks/killar.js: KILLAR_RAZGIBANOST or the line KILLAR_UND not found');
 const K_FILE = +SRC.match(RE_K)[1], KT = arg('--k', K_FILE) || 1, orig = Math.random, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -87,12 +92,65 @@ const M = B0.C.MODELS.length, today = [];
 let vFast = new Float64Array(N), R0 = null;
 for (let m = 0; m < M; m++) { const r = tt(B0, m); today[m] = r.time; if (m === 4) R0 = r; for (let i = 0; i < N; i++) vFast[i] = Math.max(vFast[i], r.v[i]); }
 const SHOW = [4, 9, 7, 1, 0].filter(m => m < M);
+// ---- what the line's parts share: the quiet places, the draws, the bends, the drops, the relief across (as killarCross, at KT) ----
+const kH = T0.k, Q = [[0, S0 + 45], [T0.finishS - 20, T0.len], ...T0.cpS.map(c => [c - 8, c + 8]), ...(B0.def.bridges || []).map(([a, b]) => [S0 + a - 10, S0 + b + 10]),
+  ...[1150, 2642].map(d => [S0 + d - 22, S0 + d + 22])];   // (the passing places: js/world-killar.js def.pulls)
+const rng = (s) => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const kRange = (a, b) => { let lo = 0, hi = 0; for (let j = idx(a); j <= idx(b); j++) { lo = Math.min(lo, kH[j]); hi = Math.max(hi, kH[j]); } return [lo, hi]; };
+const dropIn = (a, b, sd) => (B0.def.drops || []).some(([x, y, q]) => q === sd && b >= S0 + x && a <= S0 + y);
+const reliefOf = (ruts) => (s, d) => { let y = 0, sl = 0;   // (the ruts, ridges and hollows: as killarCross in js/tracks/killar.js, at KT, before the road's edges)
+  for (const r of ruts) { const x = s - S0 - r[0], e = (r[5] || 0) + 3 * r[3]; if (x > e || x < -e) continue; const uu = Math.max(0, Math.abs(x) - (r[5] || 0)) / r[3], vv = (d - r[1] - (r[6] || 0) * x) / r[4], g = KT * r[2] * Math.exp(-uu * uu - vv * vv); y += g; sl -= 2 * vv / r[4] * g; }
+  return [y, sl]; };
+// ---- the tilt across the whole road (camber -> killarCross; the user, 10. 11. 2026: »Vozisce da je nagibano v vse smeri tako kot v resnici
+// vozisce ni povsem ravno«, at ~11.00 »Ok + nežen nagib povsod«): nowhere quite level. Stretches of 20-60 m (their own draws), each tilted
+// 2-3 % one way or the other, the steps between them smoothed over ~15 m: in a right-hander tighter than 150 m the right side lower
+// (banked into the bend), in such a left-hander the left; where a drop is on one side (within 20 m) the hill's side lower 2 of 3 (in a bend
+// into the hill always), toward the drop at most 1 % (0.5-0.9 %); none at the quiet places (on to the samples whose span reaches them, eased
+// in over 15 m) and from 20 m before to 40 m after a crest (eased over 15 m: the take-off and the landing on the road as it is). It never lifts the road (its
+// higher side at the road's height, the lower side down, closed by a bank at the edge): where it and the ruts add up to more than the
+// ruts' limits (15 % across, 0.36 m deep where the cars drive, below) or toward a drop's edge, within its last 1.8 m, to more than 0.9 %, less of
+// it there (the ruts stay). Every 10 m from the road's start, tenths of a percent at 1 (crestS: the crests, m along the road)
+function camberFor(crestS, ruts) {
+  const R3 = rng(SEED + 2000), CS = 10, nC = Math.ceil(T0.len / CS) + 1, tl = new Float64Array(N);
+  for (let s = 0; s < T0.len;) {
+    const b = Math.min(T0.len, s + 20 + 40 * R3()), u = R3(), u2 = R3(), [klo, khi] = kRange(s, b), dl = dropIn(s - 20, b + 20, -1), dr = dropIn(s - 20, b + 20, 1);
+    const right = khi > 1 / 150 && khi >= -klo, into = right ? -1 : klo < -1 / 150 ? 1 : 0;   // (the tilt that banks the road into the bend: -1 the right side lower)
+    let sd; if (dl !== dr) { const hill = dl ? -1 : 1; sd = into === hill || u < 2 / 3 ? hill : -hill; } else sd = into || (u < 0.5 ? -1 : 1);
+    const c = sd * ((sd > 0 ? dl : dr) ? 0.005 + 0.004 * u2 : 0.02 + 0.01 * u2);   // (+ the right side higher: the left lower)
+    for (let j = idx(s); j <= idx(b); j++) tl[j] = c;
+    s = b;
+  }
+  const box = (a, r) => { const o = new Float64Array(N); for (let i = 0; i < N; i++) { let t = 0; for (let d = -r; d <= r; d++) t += a[clamp(i + d, 0, N - 1)]; o[i] = t / (2 * r + 1); } return o; };
+  const ease = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }, tilt = box(box(tl, 3), 3);
+  const zones = Q.map(([a, b]) => [a - CS, b + CS, 15, 15]).concat(crestS.map(c => [c - 20, c + 40, 15, 15]));
+  for (let i = 0; i < N; i++) { const s = i * ds; let f = 1; for (const [a, b, ra, rb] of zones) f = Math.min(f, ease(s < a ? (a - s) / ra : s > b ? (s - b) / rb : 0));
+    let c = tilt[i] * f; if (dropIn(s - 20, s + 20, -1)) c = Math.min(c, 0.009); if (dropIn(s - 20, s + 20, 1)) c = Math.max(c, -0.009); tilt[i] = c; }
+  const camber = []; for (let k = 0; k < nC; k++) { const f = Math.min(N - 1, k * CS / ds), i = Math.min(N - 2, Math.floor(f)); camber.push(Math.round((tilt[i] + (tilt[i + 1] - tilt[i]) * (f - i)) / KT * 1000) || 0); }
+  const camAt = (s) => { const f = s / CS, j = Math.floor(f); return j >= 0 && j < nC - 1 ? KT * 0.001 * (camber[j] + (camber[j + 1] - camber[j]) * (f - j)) : 0; };
+  const surf = (s, d) => { const c = camAt(s), q = 2.7 - (c > 0 ? d : -d), ad = Math.abs(d); let [y, sl] = relief(s, d); if (q > 0 && c) { y -= Math.abs(c) * q; sl += c; }   // (as killarCross, at KT)
+    if (ad > 2.7) { const t = (ad - 2.7) / 1.8, e = 0.5 + 0.5 * Math.cos(Math.PI * t); sl = sl * e - y * 0.5 * Math.PI / 1.8 * Math.sin(Math.PI * t) * Math.sign(d); y *= e; } return [y, sl]; };
+  const relief = reliefOf(ruts), dropAt = (s, sd) => (B0.def.drops || []).some(([x, y, q]) => q === sd && s >= S0 + x && s <= S0 + y);
+  for (let pass = 0, n = 1; pass < 12 && n; pass++) { n = 0;
+    for (let k = 1; k < nC - 1; k++) { if (!camber[k]) continue; let over = 1;
+      for (let s = (k - 1) * CS; s <= (k + 1) * CS; s += 1) { const dl = dropAt(s, -1), dr = dropAt(s, 1);
+        for (let d = -4.4; d <= 4.41; d += 0.2) { const [y, sl] = surf(s, d);
+          if (Math.abs(d) <= 2.7) over = Math.max(over, Math.abs(sl) / 0.15, -y / 0.36);
+          else if ((d < 0 && dl && sl > 0.009 && camber[k] > 0) || (d > 0 && dr && sl < -0.009 && camber[k] < 0)) over = Math.max(over, 1.25); } }
+      if (over > 1.001) { camber[k] = Math.trunc(camber[k] / over * 0.9); n++; } } }
+  return camber;
+}
 let und;
-if (CHECK) und = JSON.parse(SRC.match(RE_U)[0].replace(/^const KILLAR_UND = /, '').replace(/;$/, ''));
+const fileLine = () => JSON.parse(SRC.match(RE_U)[0].replace(/^const KILLAR_UND = /, '').replace(/;$/, ''));
+const writeLine = (u) => { const src = fs.readFileSync(FILE, 'utf8'), n = (src.match(new RegExp(RE_U.source, 'g')) || []).length;
+  if (n !== 1) throw new Error('js/tracks/killar.js: the line KILLAR_UND found ' + n + ' times');
+  fs.writeFileSync(FILE, src.replace(RE_U, () => 'const KILLAR_UND = ' + JSON.stringify(u) + ';')); };
+if (CHECK) und = fileLine();
+else if (TILT) {   // --nagib: the file's line as it is (the crests, the dips, the ruts and the calls), only its tilt across written anew
+  und = fileLine(); und.camber = camberFor(und.crests.map(c => S0 + c[0]), und.ruts || []); writeLine(und);
+  console.log(`js/tracks/killar.js: KILLAR_UND.camber written (${und.camber.length} samples every 10 m; seed ${SEED}, at KILLAR_RAZGIBANOST ${KT}); the rest of the line as it was`);
+}
 else {
-  const vR = R0.v, vp = R0.vprof, kH = T0.k, g0 = T0.grade;
-  const Q = [[0, S0 + 45], [T0.finishS - 20, T0.len], ...T0.cpS.map(c => [c - 8, c + 8]), ...(B0.def.bridges || []).map(([a, b]) => [S0 + a - 10, S0 + b + 10]),
-    ...[1150, 2642].map(d => [S0 + d - 22, S0 + d + 22])];   // (the passing places: js/world-killar.js def.pulls)
+  const vR = R0.v, vp = R0.vprof, g0 = T0.grade;
   const quietEnd = (s, r) => { for (const [a, b] of Q) if (s + r > a && s - r < b) return b + r; return 0; };
   const minIn = (arr, a, b) => { let m = 1e9; for (let j = idx(a); j <= idx(b); j++) m = Math.min(m, arr[j]); return m; };
   const drop = (s) => { for (const [a, b, sd] of B0.def.drops || []) if (s >= S0 + a && s <= S0 + b) return sd; return 0; };
@@ -113,7 +171,6 @@ else {
   for (const c of crests) { c.w = r1(clamp(0.19 * c.v, 6.5, 9.5)); c.h = 0.3; c.fl = FL;
     if (toDrop(c.s - 10, c.s + 100) > 1) c.fl = FL2; }
   // ---- the dips ----
-  const rng = (s) => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const R = rng(SEED), dips = [];
   for (let s = S0 + 60; s < T0.finishS - 30;) {
     const w = 7 + 4 * R(), q = quietEnd(s, 2.4 * w); if (q) { s = q + 1; continue; }
@@ -125,8 +182,6 @@ else {
   }
   // ---- the relief across the road: ruts, hollows and ridges on one half of it (its own draws: the dips stay where they are) ----
   const R2 = rng(SEED + 1000), ruts = [], calls = [], cores = [], r3 = (x) => Math.round(x * 1000) / 1000;
-  const kRange = (a, b) => { let lo = 0, hi = 0; for (let j = idx(a); j <= idx(b); j++) { lo = Math.min(lo, kH[j]); hi = Math.max(hi, kH[j]); } return [lo, hi]; };
-  const dropIn = (a, b, sd) => (B0.def.drops || []).some(([x, y, q]) => q === sd && b >= S0 + x && a <= S0 + y);
   const nearCrest = (a, b) => crests.some(c => b > c.s - 20 && a < c.s + 40);   // (the take-off and the landing on the road as it is)
   // the right-handers tighter than 150 m (the drop on their outside: where the cars of a race run wide over the edge): the road banked
   // into the bend, a wide hollow along its inside, the deeper the tighter the bend (0.2-0.32 m), over the bend's length (cut clear of the
@@ -165,25 +220,21 @@ else {
   }
   // no steeper across than 15 % where the cars drive (to 2.7 m from the middle) and no deeper than 0.36 m, at KT: where the ruts and the
   // ridges add up to more, the ones there lowered (the banked bends' hollows stay)
-  const relief = (s, d) => { let y = 0, sl = 0;   // (as killarCross in js/tracks/killar.js, at KT, before the road's edges: the check below compares the two)
-    for (const r of ruts) { const x = s - S0 - r[0], e = (r[5] || 0) + 3 * r[3]; if (x > e || x < -e) continue; const uu = Math.max(0, Math.abs(x) - (r[5] || 0)) / r[3], vv = (d - r[1] - (r[6] || 0) * x) / r[4], g = KT * r[2] * Math.exp(-uu * uu - vv * vv); y += g; sl -= 2 * vv / r[4] * g; }
-    return [y, sl]; };
+  const relief = reliefOf(ruts);
   for (let pass = 0; pass < 4; pass++) for (let k = bowls; k < ruts.length; k++) { const r = ruts[k], e = (r[5] || 0) + 1.5 * r[3]; let over = 1;
     for (let s = S0 + r[0] - e; s <= S0 + r[0] + e; s += 2) for (let d = -2.7; d <= 2.71; d += 0.3) { const [y, sl] = relief(s, d); over = Math.max(over, Math.abs(sl) / 0.15, Math.abs(y) / 0.36); }
     if (over > 1.001) r[2] = r2(r[2] / over * 0.98); }
   for (const r of ruts.slice(bowls).sort((x, y) => x[0] - y[0])) if (r[2] * KT >= 0.17 && !calls.some(c => r[0] - c[0] < 250) && !crests.some(c => Math.abs(c.s - S0 - r[0]) < 120) && calls.length < 8) calls.push([r[0], Math.sign(r[1])]);   // (the co-driver's 'crest left / right': the highest ridges)
   ruts.sort((x, y) => x[0] - y[0]);
-  const line = (cr) => ({ N, L: r2(T0.len), S0: r2(S0), crests: cr.map(c => [r1(c.s - S0), r2(c.h), c.w]), dips, ruts, calls });
+  const camber = camberFor(crests.map(c => c.s), ruts);
+  const line = (cr) => ({ N, L: r2(T0.len), S0: r2(S0), crests: cr.map(c => [r1(c.s - S0), r2(c.h), c.w]), dips, ruts, calls, camber });
   // ---- each crest's height: the rally car on the autopilot flies FL s over it ----
   for (const c of crests) {
     let lo = 0.2, hi = 2.2;
     for (let it = 0; it < 9; it++) { c.h = (lo + hi) / 2; const f = flightAt(tt(build(KT, line(crests)), 4).L, c.s); if (f > c.fl) hi = c.h; else lo = c.h; }
     c.h = r2((lo + hi) / 2);
   }
-  und = line(crests);
-  const src = fs.readFileSync(FILE, 'utf8'), n = (src.match(new RegExp(RE_U.source, 'g')) || []).length;
-  if (n !== 1) throw new Error('js/tracks/killar.js: the line KILLAR_UND found ' + n + ' times');
-  fs.writeFileSync(FILE, src.replace(RE_U, () => 'const KILLAR_UND = ' + JSON.stringify(und) + ';'));
+  und = line(crests); writeLine(und);
   console.log(`js/tracks/killar.js: KILLAR_UND written (${und.crests.length} crests, ${und.dips.length} dips, ${und.ruts.length} ruts and ridges; seed ${SEED}, at KILLAR_RAZGIBANOST ${KT} flight ${FL} s, ${FL2} s at ${crests.filter(c => c.fl === FL2).map(c => Math.round(c.s - S0)).join(', ') || '-'} m, ${GAP} m apart)`);
 }
 
@@ -199,15 +250,21 @@ console.log(`KILLAR_RAZGIBANOST ${K_FILE}: ${und.crests.length} crests, ${und.di
   + `roadBase from today's road at most ${(emu * 1000).toFixed(1)} mm`);
 console.log('crests (m after the start line / height / half-width): ' + und.crests.map(c => c.join('/')).join('  '));
 if (T1.bank) {   // the relief across the road: its heights, its slopes across where the cars drive (to 2.7 m from the middle) and by the edges, towards a drop
-  const o = {}, RT = und.ruts || []; let lo = 0, hi = 0, lane = 0, edge = 0, out = 0, quiet = 0, tilted = 0, n = 0;
+  const o = {}, RT = und.ruts || []; let lo = 0, hi = 0, lane = 0, edge = 0, out = 0, quiet = 0, tilted = 0, level = 0, n = 0;
   const dropAt = (s, sd) => (B1.def.drops || []).some(([x, y, q]) => q === sd && s >= S0 + x && s <= S0 + y);
   for (let i = T1.startIdx; i < T1.finishIdx; i++) { const s = i * ds; let mx = 0;
     for (let d = -4.4; d <= 4.41; d += 0.2) { T1.bankAt(s, d, o); lo = Math.min(lo, o.dy); hi = Math.max(hi, o.dy); const ad = Math.abs(d);
       if (ad <= 2.7) { lane = Math.max(lane, Math.abs(o.sl)); mx = Math.max(mx, Math.abs(o.sl)); } else { edge = Math.max(edge, Math.abs(o.sl)); if (dropAt(s, Math.sign(d))) out = Math.max(out, o.sl * Math.sign(d) * -1); }
       if (s < S0 + 45 || T1.cpS.some(c => Math.abs(s - c) < 8) || (B1.def.bridges || []).some(([a, b]) => s > S0 + a - 10 && s < S0 + b + 10)) quiet = Math.max(quiet, Math.abs(o.dy)); }
-    n++; if (mx > 0.04) tilted++; }
+    n++; if (mx > 0.04) tilted++; if (mx < 0.01) level++; }
+  const CB = und.camber || [], k0 = Math.ceil(T1.startS / 10), k1 = Math.floor(T1.finishS / 10); let clo = 0, chi = 0, cdrop = 0, ext = 0, c0 = 0, c15 = 0;
+  for (let k = k0; k <= k1; k++) { const c = (CB[k] || 0) * K_FILE / 1000; clo = Math.min(clo, c); chi = Math.max(chi, c); if (!CB[k]) c0++; if (Math.abs(c) >= 0.015) c15++;
+    if (dropAt(k * 10, -1)) cdrop = Math.max(cdrop, c); if (dropAt(k * 10, 1)) cdrop = Math.max(cdrop, -c);
+    if (k > k0 && k < k1 && (CB[k] - CB[k - 1]) * (CB[k + 1] - CB[k]) < 0) ext++; }
+  if (CB.length) console.log(`tilt across (camber, every 10 m): ${(clo * 100).toFixed(1)} to +${(chi * 100).toFixed(1)} %, 1.5 % or more on ${(c15 / (k1 - k0 + 1) * 100).toFixed(0)} % of the race's road, `
+    + `none on ${(c0 / (k1 - k0 + 1) * 100).toFixed(0)} % (the quiet places, by the crests), toward a drop at most ${(cdrop * 100).toFixed(1)} %; it turns every ${((k1 - k0) * 10 / Math.max(1, ext)).toFixed(0)} m on average`);
   console.log(`relief across: ${RT.length} ruts and ridges (${RT.filter(r => r[2] < 0).length} ruts and hollows, ${RT.filter(r => r[2] > 0).length} ridges, ${RT.filter(r => r[6]).length} crossing), ${lo.toFixed(2)} to +${hi.toFixed(2)} m; `
-    + `the slope across where the cars drive at most ${(lane * 100).toFixed(1)} %, over 4 % on ${(tilted / n * 100).toFixed(0)} % of the road, by the edges ${(edge * 100).toFixed(1)} %; `
+    + `the slope across where the cars drive at most ${(lane * 100).toFixed(1)} %, over 4 % on ${(tilted / n * 100).toFixed(0)} % of the road, under 1 % on ${(level / n * 100).toFixed(0)} %, by the edges ${(edge * 100).toFixed(1)} %; `
     + `towards a drop's edge within 1.8 m of it at most ${(out * 100).toFixed(1)} %; in the quiet places ${(quiet * 1000).toFixed(1)} mm; the co-driver's calls at ${(und.calls || []).map(c => c[0] + (c[1] > 0 ? 'R' : 'L')).join(', ') || '-'} m`);
 }
 for (const m of SHOW) {

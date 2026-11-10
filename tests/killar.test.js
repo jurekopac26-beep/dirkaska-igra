@@ -56,16 +56,21 @@ check('track: named "Killar, Indija" ("Killar, India" in English), a real place 
   //     »Naj bo razgibana v vse smeri«, »3d naj bodo tla pod kolesi«): hollows, ruts and ridges on one half of the road or the other, the surface
   //     the car rides and leans with. The road's own profile and its bends' speeds as without it (Track.bank all 0), its edges at the road's own
   //     height (what stands by the road stays), nothing at the quiet places, no steeper across than ~15 % where the cars drive, and by a
-  //     drop's edge the surface never falls toward the drop (no ridge on that side); at 0 none of it; the co-driver calls the highest ridges
-  const o = { dy: 0, sl: 0 }, W = T.w, quietAt = (s) => s < S0 + 45 || s > T.finishS - 20 || T.cpS.some(c => Math.abs(s - c) < 8) || (def.bridges || []).some(([a, b]) => s > S0 + a - 10 && s < S0 + b + 10);
-  let ylo = 0, yhi = 0, lane = 0, edge = 0, out = 0, quietR = 0, toDrop = 0, n = 0, n4 = 0, nHol = 0, nRid = 0, sides = [0, 0];
-  for (let s = S0; s < T.finishS; s += 1) { const dr = def.drops.some(([a, b]) => s > S0 + a && s < S0 + b); let m = 0, lo = 0, hi = 0, at = 0;
-    for (let d = -W; d <= W + 1e-9; d += 0.25) { T.bankAt(s, d, o); const y = o.dy, sl = Math.abs(o.sl);
+  //     drop's edge the surface never falls toward the drop (no ridge on that side); at 0 none of it; the co-driver calls the highest ridges.
+  //     The hollows and ridges are the relief's own, measured on the road without its tilt across (1d below: TN, the track built with no
+  //     KILLAR_UND.camber); the surface's range, its slopes, its edges and the quiet places with the tilt, as the cars drive it
+  const o = { dy: 0, sl: 0 }, oN = { dy: 0, sl: 0 }, W = T.w, quietAt = (s) => s < S0 + 45 || s > T.finishS - 20 || T.cpS.some(c => Math.abs(s - c) < 8) || (def.bridges || []).some(([a, b]) => s > S0 + a - 10 && s < S0 + b + 10);
+  const srcN = src.replace(/,"camber":\[[^\]]*\]/, ''), mN = { exports: {} }, CN = new Function('module', 'exports', 'require', srcN + '\n;return Core;')(mN, mN.exports, require), TN = new CN.Track(CN.TRACKS.find(d => d.id === 'killar'));
+  const tl = typeof T.bankAt.tilt === 'function' ? T.bankAt.tilt : () => 0, lvl = [], lvlN = [];
+  let ylo = 0, yhi = 0, lane = 0, edge = 0, out = 0, quietR = 0, toDrop = 0, n = 0, n4 = 0, nHol = 0, nRid = 0, sides = [0, 0], lift = 0, high = 0;
+  for (let s = S0; s < T.finishS; s += 1) { const dr = def.drops.some(([a, b]) => s > S0 + a && s < S0 + b), c = tl(s); let m = 0, mn = 0, lo = 0, hi = 0, at = 0;
+    for (let d = -W; d <= W + 1e-9; d += 0.25) { T.bankAt(s, d, o); TN.bankAt(s, d, oN); const y = o.dy, sl = Math.abs(o.sl), yr = oN.dy, yt = y - yr;
       if (Math.abs(d) > W - 1e-6) edge = Math.max(edge, Math.abs(y)); if (quietAt(s)) quietR = Math.max(quietR, Math.abs(y));
-      if (Math.abs(d) <= 2.7) { lane = Math.max(lane, sl); m = Math.max(m, sl); } if (dr && d < -W + 1.8) toDrop = Math.max(toDrop, o.sl);
-      if (y < lo) { lo = y; at = d; } if (y > hi) hi = y; }
+      if (Math.abs(d) <= 2.7) { lane = Math.max(lane, sl); m = Math.max(m, sl); mn = Math.max(mn, Math.abs(oN.sl)); } if (dr && d < -W + 1.8) toDrop = Math.max(toDrop, o.sl);
+      ylo = Math.min(ylo, y); yhi = Math.max(yhi, y); if (yr < lo) { lo = yr; at = d; } if (yr > hi) hi = yr;
+      lift = Math.max(lift, yt); if (c > 0 ? d >= 2.7 : c < 0 ? d <= -2.7 : true) high = Math.max(high, Math.abs(yt)); }   // (the tilt alone: the surface with it minus the one without)
     T.bankAt(s, W + 0.5, o); out = Math.max(out, Math.abs(o.dy), Math.abs(o.sl)); T.bankAt(s, -W - 0.5, o); out = Math.max(out, Math.abs(o.dy), Math.abs(o.sl));
-    ylo = Math.min(ylo, lo); yhi = Math.max(yhi, hi); n++; if (m > 0.04) n4++; if (lo < -0.1) { nHol++; sides[at < 0 ? 0 : 1]++; } if (hi > 0.08) nRid++; }
+    n++; if (m > 0.04) n4++; if (lo < -0.1) { nHol++; sides[at < 0 ? 0 : 1]++; } if (hi > 0.08) nRid++; lvl.push(m < 0.004); lvlN.push(mn < 0.004); }
   const notes = (def.notes || []).filter(x => /^crest [LR]$/.test(x[2])), said = T.paceNotes().map(c => c.text).join(' | '), nSaid = (said.match(/crest (left|right)/g) || []).length;
   check('track: the relief across the road (def.cross): hollows down to ~0.36 m and ridges on both halves of the road, across over 4 % on more than 40 % of it and nowhere over 16 % where the cars drive; its edges and the quiet places level, by a drop\'s edge no fall toward it; no bend banked by it; at 0 none; the co-driver calls its highest ridges (»crest left / right«)',
     typeof def.cross === 'function' && !d0.cross && !d0.notes && !T0.bank && !!T.bank && T.bank.every(v => v === 0) && T.bankSide.every(v => v === 0) &&
@@ -74,6 +79,27 @@ check('track: named "Killar, Indija" ("Killar, India" in English), a real place 
     `the surface ${ylo.toFixed(2)} to +${yhi.toFixed(2)} m off the road's profile; across at most ${(lane * 100).toFixed(1)} % within 2.7 m of the middle, over 4 % on ${(100 * n4 / n).toFixed(0)} % of the road; a hollow over 0.1 m on ${(100 * nHol / n).toFixed(0)} % of it `
     + `(${(100 * sides[0] / n).toFixed(0)} % left, ${(100 * sides[1] / n).toFixed(0)} % right), a ridge over 0.08 m on ${(100 * nRid / n).toFixed(0)} %; at the edges ${(edge * 1000).toFixed(2)} mm, in the quiet places ${(quietR * 1000).toFixed(1)} mm, `
     + `toward a drop's edge at most ${(toDrop * 100).toFixed(1)} %; the co-driver's own notes ${notes.map(x => Math.round(x[0] + 8) + ' m ' + x[2]).join(', ')}, read ${nSaid}`);
+  // 1d. the road's own tilt across under the relief (KILLAR_UND.camber in js/tracks/killar.js -> T.bankAt.tilt(s), tools/killar-cesta.mjs; the
+  //     user, 10. 11. 2026: »Vozisce da je nagibano v vse smeri tako kot v resnici vozisce ni povsem ravno«, at ~11.00 »Ok + nežen nagib
+  //     povsod«): 2-3 % one way or the other in stretches of 20-60 m, turning gently; by a drop at most 1 % toward it (mostly toward the hill);
+  //     none at the quiet places (the passing places too) and by the crests (it runs out there: the take-off and the landing on the road as it
+  //     is). It never lifts the road: the surface with it minus the one without (TN) nowhere above 0, and 0 on its higher side from 2.7 m out.
+  //     Level across (under 0.4 % where the cars drive) the road is only there, eased in and out, and where the tilt turns over (a few metres;
+  //     by a drop, tilted toward it, 0.5-0.9 %)
+  const cr = bu.map(b => b.at * T.len), calm = (s, r) => (s < S0 + 45 + r || s > T.finishS - 20 - r || T.cpS.some(c => Math.abs(s - c) < 8 + r) || (def.bridges || []).some(([a, b]) => s > S0 + a - 10 - r && s < S0 + b + 10 + r)
+    || (def.pulls || []).some(p => Math.abs(s - S0 - p) < 22 + r) || cr.some(c => s > c - 20 - r && s < c + 40 + r));
+  let clo = 0, chi = 0, c15 = 0, cL = 0, cR = 0, cDrop = 0, cCalm = 0, cTop = 0, step = 0, nLv = 0, nLvN = 0, run = 0, runMax = 0, turns = 0, last = 0;
+  for (let k = 0, s = S0; s < T.finishS; s += 1, k++) { const c = tl(s), dr = def.drops.find(([a, b]) => s > S0 + a && s < S0 + b);
+    clo = Math.min(clo, c); chi = Math.max(chi, c); if (Math.abs(c) >= 0.015) c15++; if (c > 0.003) cR++; if (c < -0.003) cL++; if (dr) cDrop = Math.max(cDrop, -dr[2] * c);
+    if (calm(s, 0)) cCalm = Math.max(cCalm, Math.abs(c)); if (cr.some(t => Math.abs(s - t) <= 10)) cTop = Math.max(cTop, Math.abs(c)); step = Math.max(step, Math.abs(tl(s + 1) - c));
+    if (lvl[k]) nLv++; if (lvlN[k]) nLvN++; run = lvl[k] && !calm(s, 25) ? run + 1 : 0; runMax = Math.max(runMax, run);
+    const sg = Math.abs(c) < 0.003 ? 0 : Math.sign(c); if (sg && last && sg !== last) turns++; if (sg) last = sg; }
+  check('track: the road\'s own tilt across (KILLAR_UND.camber, T.bankAt.tilt): 2-3 % one way or the other, both ways, turning gently; by a drop at most 1 % toward it; none at the quiet places, the passing places and by the crests; it never lifts the road; level across only there and where it turns over',
+    typeof T.bankAt.tilt === 'function' && srcN !== src && clo >= -0.031 && chi <= 0.031 && c15 > 0.3 * n && cL > 0.3 * n && cR > 0.05 * n && turns >= 10 && cDrop <= 0.01 && cCalm < 1e-9 && cTop < 1e-9 && step < 0.004 &&
+    lift < 1e-9 && high < 1e-9 && runMax <= 10 && nLv < nLvN,
+    `${(clo * 100).toFixed(1)} to +${(chi * 100).toFixed(1)} %, 1.5 % or more on ${(100 * c15 / n).toFixed(0)} % of the road (the left side higher on ${(100 * cL / n).toFixed(0)} %, the right on ${(100 * cR / n).toFixed(0)} %, it turns over ${turns} times), `
+    + `toward a drop at most ${(cDrop * 100).toFixed(2)} %, at the quiet places and by the crests ${(Math.max(cCalm, cTop) * 100).toFixed(2)} %, at most ${(step * 100).toFixed(2)} % more a metre on; above the road ${(lift * 1000).toFixed(2)} mm, its higher side ${(high * 1000).toFixed(2)} mm; `
+    + `level across on ${(100 * nLv / n).toFixed(0)} % of the road (without the tilt ${(100 * nLvN / n).toFixed(0)} %), away from the quiet places and the crests ${runMax} m at a time at most`);
 }
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('killar'));
 check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrung Nala, the finish)',
@@ -150,8 +176,10 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   check('the fence is brittle, as the delineators: touched at 20 km/h (at 30° and at 10°), brushed at 5° at 60 and 120 km/h and at 2° at 90 km/h at 0.7 km, it breaks at once, holding nothing: the car not thrown back (at least 70 % of its speed across the fence kept), less than 5 % of its speed lost in 0.1 s',
     soft.every(x => x.touch && x.brk >= 1 && x.wall === 0 && x.vn0 > 0.3 && x.vnMin > 0.7 * x.vn0 && x.loss < 5 && x.fin),
     soft.map((x, k) => `${['20 km/h 30°', '20 km/h 10°', '60 km/h 5°', '120 km/h 5°', '90 km/h 2° at 0.7 km'][k]}: ${x.brk} broken, across ${x.vn0.toFixed(2)} -> least ${x.vnMin.toFixed(2)} m/s, speed -${x.loss.toFixed(1)} %`).join('; '));
-  check('the fence: at 90 km/h into it the car breaks a few panels, goes through and falls (more than 3 m down, onto the slope below), then it is back on the road near where it went over, damaged',
-    fast.brk >= 1 && fast.brk <= 4 && fast.fell && fast.falls === 1 && fast.drop > 3 && fast.back && Math.abs(fast.along) < 60 && fast.dmg > 0.2 && fast.fin,
+  // (how far down it falls before it first touches the slope hangs on centimetres where the slope right under the edge is steep: of 45 runs at
+  // 80-100 km/h, 17-23 degrees off the road's line, 6 m on or back from here, 26 fell less than 3 m before the road's tilt across, 27 with it)
+  check('the fence: at 90 km/h into it the car breaks a few panels, goes through and falls (more than 1.5 m down, onto the slope below), then it is back on the road near where it went over, damaged',
+    fast.brk >= 1 && fast.brk <= 4 && fast.fell && fast.falls === 1 && fast.drop > 1.5 && fast.back && Math.abs(fast.along) < 60 && fast.dmg > 0.2 && fast.fin,
     `${fast.brk} panels broken, fell ${fast.drop.toFixed(1)} m, back on the road ${fast.back} ${fast.along.toFixed(0)} m on, damage +${fast.dmg.toFixed(2)}`);
   // falling onto the slope (def.floor): at five places along the drops, slowly (29 km/h at 17° off the road's line) and fast (90 km/h at 20°)
   const ontoM = [300, 524, 1279, 2500, 3900], onto = ontoM.flatMap(m => [run(T.startS + m, -1, 8, 0.3, 0), run(T.startS + m, -1, 25, 0.35, 0)]);
