@@ -4,6 +4,7 @@ Kako bi ozadja v2 (Medvode, Slovenija) izgledala na naslovnem zaslonu igre: nov 
 
 | Posnetki | Kaj kažejo |
 |---|---|
+| `pregled-pokonci.webp`, `pregled-lezece.webp` | na eni sliki: današnji meni in ozadja 1, 2, 3, postavljena za meni (spodaj) |
 | `meni-zdaj-pokonci.webp`, `meni-zdaj-lezece.webp` | današnji meni: za naslovom je prizor igre |
 | `kot-je-pokonci.webp`, `kot-je-lezece.webp` | slike v2, kot so, čez cel zaslon (1, 2, 3): pokonci plošča z gumbi pokrije avto in tablo (vidno ostane samo nebo), ležeče pokrije tablo |
 | `meni-1-alpe-pokonci.webp`, `meni-2-hribi-pokonci.webp`, `meni-3-vecer-pokonci.webp` | slika v2 pokonci čez vso širino zaslona, pomaknjena tako, da so kolesa avta tik nad ploščo (slika ni na novo izrisana) |
@@ -14,6 +15,7 @@ Kako bi ozadja v2 (Medvode, Slovenija) izgledala na naslovnem zaslonu igre: nov 
 - Plošča menija pokonci pokrije spodnji dve tretjini zaslona, ležeče desno polovico. Ozadje mora imeti avto in tablo v delu, ki ostane viden: pokonci v zgornji tretjini, ležeče v levi polovici (pod napisom igre levo zgoraj).
 - Pokonci zadostuje postavitev obstoječe slike (polna širina, odmik od vrha izračunan iz položaja plošče, ker so telefoni različno visoki); pod sliko je barva njenega spodnjega roba, ki jo pokrije plošča.
 - Ležeče potrebuje lasten izris: prizori `medvode-1-alpe-meni`, `medvode-2-hribi-meni` in `medvode-3-vecer-meni` v `../../prizori.json` (kader `shift_x`, širši pas travnika, oblakov in jase brez gozda, da desni del za ploščo ni prazen). Gore so zaradi širšega objektiva nekoliko manjše.
+- Ležeče meni zatemni levi rob zaslona (`.scrim`: od 55 % ob robu do nič pri 30 % širine), prav tam, kjer je zdaj avto; pri 3 (pozno popoldne) je avto zato precej temen. Če ozadje postane slika, je zatemnitev lahko ožja ali šibkejša.
 
 ## Kako zagnati
 
