@@ -732,5 +732,6 @@
 
   Object.assign(API, { mrFarTower });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { MR: { get: () => MR, set: (v) => { MR = v; } } });
+  World.keep('MR', 'marrakesh');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.marrakesh = (scene, tex, opts) => buildMarrakesh(scene, tex, opts);
 })();

@@ -4,3 +4,10 @@
 *.png binary
 *.jpg binary
 *.mp4 binary
+# Generirani podatki z ogromnimi vrsticami: git diff, git show in git log -p jih ne izpisujejo (spoj bi sicer izpisal tisoče številk);
+# spajanje ostane besedilno (docs/varcevanje.md, E)
+js/routes.js -diff
+assets/maps/*.json -diff
+maketa-menija/assets/**/*.json -diff
+maketa-menija/outlines.js -diff
+maketa-menija/orodja/proge_igra.json -diff

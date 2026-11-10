@@ -970,5 +970,6 @@
     return out;
   }
 
+  World.keep('VR', 'uncompahgre');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.uncompahgre = (scene, tex, opts) => buildUncompahgre(scene, tex, opts);
 })();

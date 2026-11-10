@@ -91,7 +91,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       celjusti: { r: [0.075, 0.14], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js: in the engine bay, the wheel arches)
       filter_zraka: { x: 1.0, y: 0.56, z: -0.43 }, akumulator: { x: 0.98, y: 0.42, z: 0.44 }, turbo: { x: 1.5, y: 0.42, z: 0.18 }, cip: { x: 0.9, y: 0.66, z: 0.15 },
-      vzmeti: { in: 0.13, top: 0.66 }, amortizerji: { in: 0.13, top: 0.66 }, stabilizatorji: { in: 0.13 }, dim_gum: {},
+      vzmeti: { in: 0.13, top: 0.66 }, amortizerji: { in: 0.13, top: 0.66 }, stabilizatorji: { in: 0.13, floor: 0.21 }, dim_gum: {},
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, tail to nose: the rear bumper's face, the tailgate's lower panel
     // between the tail lamps' strips, its glass nearly upright, the long flat roof, the windscreen, the short bonnet, the lamp face leaning

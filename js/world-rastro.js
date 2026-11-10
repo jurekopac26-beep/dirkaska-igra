@@ -565,5 +565,6 @@
   }
 
   Object.assign(API, { rrMist });   // (what World and the other worlds use of this one)
+  World.keep('VR', 'rastro');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.rastro = (scene, tex, opts) => buildRastro(scene, tex, opts);
 })();

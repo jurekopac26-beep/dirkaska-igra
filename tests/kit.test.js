@@ -13,6 +13,8 @@
 //    body, the shell's top over it (where the flames come out) within its height
 //  - KOLIBRI's tail lamps on parts of their own (tailL / tailR: their side of the tail mesh goes with them), its number plate and rear
 //    wiper mounted on the tailgate (on: 'trunk'), each part's range on its own (non-empty in the Normalni build; the Visoki one builds)
+//  - look.wheels.mid (a middle axle, drawn only): it builds with a third arch and tub in the main loft and K.arches[2]; outside the axles,
+//    too near one of them or not a number fails the build naming wheels.mid (the middle wheels in a race: tests/browser/kit.test.mjs)
 //   node tests/kit.test.js
 'use strict';
 const fs = require('fs');
@@ -194,7 +196,7 @@ function raysThrough(res) {
   console.warn = () => { };   // (the place-holders' fallback warnings as their bodies are built)
   for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
     const I = R.kitInfo(M.id), PT = Core.partsOf(M);
-    for (const k in PT) { const p = PT[k], c = I.ranges[k] && I.ranges[k].c; if (p.wh != null) continue; n0++;
+    for (const k in PT) { const p = PT[k], c = I.ranges[k] && I.ranges[k].c; if (p.wh != null || p.tl) continue; n0++;   // (a trailer's part, tl: its look's, not the kit's)
       if (!c) { rows.push(`${M.id} ${k}: no range`); continue; }
       const d = Math.hypot(c[0] - p.lx * M.len / 2, c[1] - p.y, c[2] - p.lz * M.wid / 2); if (d > worst[1]) worst = [M.id + ' ' + k, d];
       if (d > 0.35) rows.push(`${M.id} ${k}: ${d.toFixed(2)} m (range at ${c.map(v => v.toFixed(2)).join(', ')})`); }
@@ -242,6 +244,26 @@ function raysThrough(res) {
   check('KOLIBRI: its tail lamps on parts of their own (tailL / tailR), the number plate and the rear wiper mounted on the tailgate (on), every part with geometry of its own; Visoki builds too',
     I.status === 'ok' && I.tailHost.L === 'tailL' && I.tailHost.R === 'tailR' && PT.plate.on === 'trunk' && PT.wiperRear.on === 'trunk' && !PT.tailL.on && !empty.length && I.hi && I.hi.status === 'ok',
     `tail lamps on ${I.tailHost.L} / ${I.tailHost.R}, plate on ${PT.plate.on}, rear wiper on ${PT.wiperRear.on}${empty.length ? ', no geometry: ' + empty.join(' ') : ''}, Visoki ${I.hi && I.hi.status}`);
+}
+
+// ---- 8. look.wheels.mid, a middle axle drawn only (PREDSEDNIK's model, a long wheelbase): its x in metres (wheels.xm), the main loft's
+//         default arches and K.arches with a third one there (a tub over its wheels); outside the axles, too near one of them (2 rw + 0.1 m)
+//         or not a number fails the build naming wheels.mid ----
+{
+  const L0 = Core.MODELS.find(m => m.id === 'predsednik').def.look, M = Core.MODELS.find(m => m.id === 'predsednik');
+  const withMid = (mid, seen) => Object.assign({}, L0, { wheels: Object.assign({}, L0.wheels, { mid }), build(K) { if (seen) seen.push(...K.arches.map(A => A.x)); return L0.build(K); } });
+  const A0 = [], A1 = [], a = tryLook('predsednik', withMid(undefined, A0)), b = tryLook('predsednik', withMid(-0.7, A1));
+  const tx = (r) => (r.tubs || []).map(T => +T.x.toFixed(3)), near = (p, q) => Math.abs(p - q) < 1e-6;
+  const ok = a.status === 'ok' && b.status === 'ok' && a.wheels.xm === null && near(b.wheels.xm, -0.7) && A0.length === 2 && A1.length === 3 && near(A1[0], A0[0]) && near(A1[1], A0[1]) && near(A1[2], -0.7)
+    && tx(b).length === tx(a).length + 1 && tx(b).some(x => near(x, -0.7)) && b.tris.outer > a.tris.outer;
+  for (const r of [a, b]) if (r.geo) r.geo.dispose();
+  check('look.wheels.mid: a middle axle builds (PREDSEDNIK at x -0.7), the main loft cuts a third arch with its tub there, K.arches[2] at it (front and rear as before)', ok,
+    `${a.status} / ${b.status}, xm ${b.wheels && b.wheels.xm}, K.arches ${JSON.stringify(A0)} -> ${JSON.stringify(A1)}, tubs ${JSON.stringify(tx(a))} -> ${JSON.stringify(tx(b))}, outer ${a.tris && a.tris.outer} -> ${b.tris && b.tris.outer}`);
+  const c = 2 * M.rw + 0.1, st = (mid) => { const r = tryLook('predsednik', withMid(mid)); if (r.geo) r.geo.dispose(); return r.status; };
+  const bads = [-M.b + c - 0.05, M.a - c + 0.05, M.a + 0.4, -M.b - 0.3, '-0.7', NaN].map(m => [m, st(m)]), edge = st(-M.b + c);
+  check('look.wheels.mid outside the axles, nearer than 2 rw + 0.1 m to one of them or not a number fails the build naming wheels.mid (the axles and the clearance in its message); exactly 2 rw + 0.1 m off builds',
+    bads.every(([, s]) => /^fallback:wheels\.mid .*rear axle \(-2\.15\).*front one \(2\.25\), 2 rw \+ 0\.1 m \(0\.82 m\)/.test(s)) && edge === 'ok',
+    bads.map(([m, s]) => (typeof m === 'number' ? +m.toFixed(2) : JSON.stringify(m)) + (/^fallback:wheels\.mid/.test(s) ? ' fails' : ': ' + s)).join(', ') + ` (${bads[0][1].replace(/^fallback:/, '')}); ${+(-M.b + c).toFixed(2)}: ${edge}`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} kit checks (${((Date.now() - t0) / 1000).toFixed(0)} s)`);

@@ -102,7 +102,8 @@ try {
     if (plan) {   // each kind to the best place its rules allow
       const near0 = (c) => { const d = T.open ? c.m : Math.min(Math.abs(c.m), Math.abs(L - c.m)); return d < 900; };
       const rule = { tribuna: c => c.minR >= 250 && c.dh < 1.3 && c.occ < 12, vhod: c => near0(c) && c.occ < 25, ogenj: c => c.trees >= 3 && c.occ < 25, hisa2: c => c.dh < 1.6 && c.occ < 12,
-        gasilci: c => c.dh < 1.6 && c.occ < 20, zar: c => c.dh < 1.8 && c.occ < 20, kamp: c => c.dh < 1.8 && c.occ < 20, oder: c => c.occ < 20 };
+        gasilci: c => c.dh < 1.6 && c.occ < 20, zar: c => c.dh < 1.8 && c.occ < 20, kamp: c => c.dh < 1.8 && c.occ < 20, oder: c => c.occ < 20,
+        ribici: c => c.dh < 1.2 && c.occ < 20, seno: c => c.dh < 1.8 && c.occ < 20, cebelarji: c => c.dh < 1.6 && c.occ < 20, balinanje: c => c.dh < 1.0 && c.occ < 15, sah: c => c.dh < 1.0 && c.occ < 15, rojstnidan: c => c.dh < 1.4 && c.occ < 20 };   // (js/world-ljudje3.js: a pond, a court, a chessboard on flat ground)
       for (const kind of plan.split(',')) { const ok = rule[kind] || (c => c.occ < 30);
         const c = out.find(c => ok(c) && far(c.m, pick.concat(taken)) && free(c)) || out.find(c => c.occ < 40 && far(c.m, pick.concat(taken)) && free(c));
         if (c) pick.push(Object.assign({ kind }, c)); }

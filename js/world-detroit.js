@@ -783,5 +783,6 @@
 
   Object.assign(API, { dtUpdate });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { DT: { get: () => DT, set: (v) => { DT = v; } } });
+  World.keep('DT', 'detroit');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.detroit = (scene, tex, opts) => buildDetroit(scene, tex, opts);
 })();

@@ -66,8 +66,10 @@ try {
   T.check('the six start lights: each its own look, none like the usual ones', new Set(sigs).size === 7, JSON.stringify(Object.fromEntries(Object.entries(side).map(([k, o]) => [k, o.sig]))));
   T.check('the six start lights: none wider than the usual ones (landscape and upright)', wide.length === 0, wide.join(', '));
   // at random: never the same twice in a row; Spa: the one out of the pits among them, no jets
-  const picks = async (n) => page.evaluate(async (n) => { const g = window.__game, out = []; g.startCamForce(0); for (let k = 0; k < n; k++) { g.onAction('restart'); g.pause(); out.push(g.startCam.v); } g.resume(); return out; }, n);
-  let p = await picks(24);
+  // (n draws, then on until every one of `want` has come up, at most 150: a fixed 24 drew all six flights only 97 % of the time, and the
+  // jets one more among seven only 99 % of the time, so about 1 run in 25 failed on chance alone; the 150 are missed about once in 10^12)
+  const picks = async (n, want = []) => page.evaluate(async ([n, want]) => { const g = window.__game, out = []; g.startCamForce(0); for (let k = 0; k < 150 && (k < n || !want.every(v => out.includes(v))); k++) { g.onAction('restart'); g.pause(); out.push(g.startCam.v); } g.resume(); return out; }, [n, want]);
+  let p = await picks(24, [1, 2, 3, 4, 5, 6]);
   T.check('Spa: at random, never the same twice in a row, all six of them', p.every((v, k) => k === 0 || v !== p[k - 1]) && [1, 2, 3, 4, 5, 6].every(v => p.includes(v)) && !p.includes(0), p.join(''));
   // a track without pits (Suzuka): never the one out of the pits, not even asked for
   await startTrack(page, 'suzuka', null);
@@ -77,7 +79,7 @@ try {
   // Bathurst (its own jets): the jets one more of them (0: no flight, the jets' shot and the usual lights; air.go stays set between restarts
   // with no frame between them, so only the shot and the lights say a flight was not the jets)
   await startTrack(page, 'bathurst', null);
-  const j = await page.evaluate(() => { const g = window.__game, out = []; g.startCamForce(0); for (let k = 0; k < 24; k++) { g.onAction('restart'); g.pause(); out.push({ v: g.startCam.v, jets: !!(Render.world.air && Render.world.air.go), cls: document.getElementById('h-lights').className, shot: document.getElementById('hud').classList.contains('shot') }); } g.resume(); return out; });
+  const j = await page.evaluate(() => { const g = window.__game, out = []; g.startCamForce(0); for (let k = 0; k < 150 && (k < 24 || !out.some(o => o.v === 0)); k++) { g.onAction('restart'); g.pause(); out.push({ v: g.startCam.v, jets: !!(Render.world.air && Render.world.air.go), cls: document.getElementById('h-lights').className, shot: document.getElementById('hud').classList.contains('shot') }); } g.resume(); return out; });
   T.check('Bathurst (its own jets): the jets one more of them, with their shot and the usual lights', j.some(o => o.v === 0) && j.filter(o => o.v === 0).every(o => o.jets && o.shot && !/sc\d/.test(o.cls)) && j.filter(o => o.v > 0).every(o => !o.shot && o.cls.includes('sc' + o.v)) && j.every((o, k) => k === 0 || o.v !== j[k - 1].v),
     j.map(o => o.v).join(''));
   // no flight in a time trial or from a flying start

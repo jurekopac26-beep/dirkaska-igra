@@ -77,9 +77,12 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer;
   // damage Vklop and the old timing tower under the map, as the tests were written for: the game's defaults are Samo videz and the tower at the top)
   const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal', damage: 2, tower: 2 }, settings));
-  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself)
+  // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself; tdgp-tips:
+  // the hints of the first pit stops all seen, so a test's stop shows only the stop's own toast, as on a phone that has stopped before;
+  // opts.tips: none seen, as on a new phone (tests/browser/pits.test.mjs). A new hint's id goes in here too)
   // (tdgp-nostartcam: no camera before the start, the race's chase view and its 1.3 s intro as the tests were written for; opts.startCam: on)
-  await page.addInitScript(([raw, adapt, sc]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw); }, [raw, !!opts.adaptive, !!opts.startCam]);
+  await page.addInitScript(([raw, adapt, sc, tips]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw);
+    if (!tips) localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1 })); }, [raw, !!opts.adaptive, !!opts.startCam, !!opts.tips]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)
   if (opts.seed) await page.addInitScript((seed) => { let s = seed; Math.random = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }, opts.seed);
@@ -108,13 +111,18 @@ export function startTrack(page, id, mode) {
   }, [id, mode]);
 }
 
-// the list of tracks shown in the track menu
-export function trackIds(page) {
-  return page.evaluate(async () => {
+// PROGE=seoul,spa: only these of the real tracks (GitHub's short round of a pull request that changes only tracks; tests/lib/sim.js)
+export const { izbrane, najmanj } = createRequire(import.meta.url)('../lib/sim.js');
+// the list of tracks shown in the track menu, without the test tracks (test: true: frozen until they are deleted before Google Play,
+// nothing is checked on them: CLAUDE.md »Testne proge«), only those of PROGE when it is given; all: every card of the menu, the test tracks too
+export async function trackIds(page, all = false) {
+  const ids = await page.evaluate(async (all) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(350);
-    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))];
-  });
+    const test = new Set(Core.TRACKS.filter(d => d.test).map(d => d.id));
+    return [...new Set([...document.querySelectorAll('[data-track]')].map(e => e.dataset.track))].filter(id => all || !test.has(id));
+  }, all);
+  return all ? ids : izbrane(ids);
 }
 
 // run the race for `sec` seconds of game time on autopilot, rendering a frame after every simulated second
@@ -127,6 +135,22 @@ export function simulate(page, sec) {
     }
     return nan;
   }, sec);
+}
+
+// drive the race to the line on autopilot and wait for the results screen. The game paused and stepped here, at most max × 2 s of game
+// time; the player's car stuck or the wrong way round for over 3 s is put back on the road after each 2 s, like a player tapping Na progo
+// (never in the pit lane, where it would undo the stop): the autopilot has no reverse gear and the race rescues only the rivals, so a knock
+// (Trki med avti, Simulacija) can leave the player's car against the barrier for good (in CI: hlvid, lang, pits, shramba). Not over by
+// then: the game runs on for the rest of the wait. No results: the error says where the car is
+export async function driveToResults(page, { max = 300, timeout = 180000 } = {}) {
+  const ph = await page.evaluate((max) => {
+    const g = window.__game; g.pause();
+    for (let k = 0; k < max && g.phase !== 'done'; k++) { g.sim(2, true); const P = g.race && g.race.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P); }
+    if (g.phase === 'done') return 'done';   // (the results screen is up: a resume would close it)
+    g.resume(); const P = g.race && g.race.player;
+    return g.phase + (P ? ' ' + JSON.stringify({ t: +g.race.time.toFixed(1), lap: P.lap, s: Math.round(P.q.s), v: +P.speed.toFixed(1), stuck: +(P.stuckT || 0).toFixed(1), wrong: +(P.wrongT || 0).toFixed(1), dmg: +(P.dmg || 0).toFixed(2), inPit: !!P.inPit }) : '');
+  }, max);
+  try { await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout }); } catch (e) { throw new Error(`no results after the race on autopilot (${ph}): ${e.message}`); }
 }
 
 // a small check list that prints OK/FAIL lines and sets the exit code

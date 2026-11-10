@@ -7,7 +7,8 @@
 // same file); Končaj: the choice over the list again; Zgodovina napak has the one collection of 2 moments. Bathurst again: Ponovi dirko
 // asks (Esc is Ne), the race under 2 s left without a question, one over it asks again (Enter: the marked Ne): nothing more kept.
 // The Red Bull Ring's qualifying lap (Štajerska, Avstrija) over the line: kept by itself (Do cilja), Glavni meni then asks nothing;
-// .rrp of the list downloads the file; the newest 10 kept; ✕ twice deletes one.
+// .rrp of the list downloads the file; the newest 10 kept; ✕ twice deletes one. Sklop 21: each entry has the player's car (as the game
+// names it) and, over the finish, its time (the lap of the qualifying) in green: KOLIBRI · 1:23.456; before it: ni do cilja.
 //   node tests/browser/napake-zadnji.test.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,7 +21,7 @@ const OUT = path.join(REPO, 'test-results', 'napake-zadnji'); fs.rmSync(OUT, { r
 const SUM = `(F) => { let h = 2166136261; for (const f of F) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return (h >>> 0).toString(16); }`;
 // a moment kept: Označi, a loop (an ellipse round cx, cy) in colour c with its note, Dodaj k zbirki
 async function moment(Q, c, cx, cy, r, note, bel) {
-  await Q.click('#nk-on'); if (bel) await Q.keyboard.type(bel);   // (Beležka: the keyboard in it at once)
+  await Q.click('#nk-on'); if (bel) { await Q.click('#nk-pal [data-c="2"]'); await Q.keyboard.type(bel); }   // (Beležka: the keyboard in it at once; this note in yellow, a colour of its own)
   await Q.click(`#nk-pal [data-c="${c}"]`);
   await Q.mouse.move(cx + r, cy); await Q.mouse.down(); for (let a = 0.2; a <= 2 * Math.PI + 0.25; a += 0.2) await Q.mouse.move(cx + r * Math.cos(a), cy + 0.7 * r * Math.sin(a)); await Q.mouse.up();
   if (note) await Q.keyboard.type(note);
@@ -28,7 +29,7 @@ async function moment(Q, c, cx, cy, r, note, bel) {
 }
 // the records kept (no blobs: what they are), after the writes asked so far (a collection's change: 300 ms later)
 const kept = (Q) => Q.evaluate(async () => { await new Promise(r => setTimeout(r, 450)); await Napake.pz.cakaj();
-  return (await Napake.pz.vsi()).map(o => ({ id: o.id, fin: o.fin, track: o.track, tname: o.tname, mode: o.mode, name: o.name, bytes: o.bytes, blob: o.blob && o.blob.size, dur: o.dur, n: o.n, laps: o.laps,
+  return (await Napake.pz.vsi()).map(o => ({ id: o.id, fin: o.fin, car: o.car, time: o.time, track: o.track, tname: o.tname, mode: o.mode, name: o.name, bytes: o.bytes, blob: o.blob && o.blob.size, dur: o.dur, n: o.n, laps: o.laps,
     zb: o.zb && { id: o.zb.id, items: o.zb.items.map(it => ({ n: it.n, t: it.t, img: it.img && it.img.type, gib: (it.gib || []).map(g => g && g.type), zapisi: it.zapisi.map(z => z.barva + ': ' + z.text) })) } })); });
 const vpr = (Q) => Q.evaluate(() => Napake.stanje.vpr);
 try {
@@ -40,7 +41,7 @@ try {
   await Q.evaluate(() => window.__game.onAction('rp-b5'));
   await moment(Q, 0, 250, 150, 40, 'Avto skoči čez robnik', 'Ves zaslon utripa');
   await Q.evaluate(() => window.__game.onAction('rp-race')); await Q.evaluate(() => window.__game.pause());
-  const r0 = await Q.evaluate(() => ({ sum: window.__game.recSum(), flags: window.__game.recFlags.length, screen: window.__game.screen, z: Napake.stanje.zbirka.map(z => ({ t: z.t, s: z.s, img: z.img })) }));
+  const r0 = await Q.evaluate(() => ({ car: Core.heirOf(window.__game.race.player.m).name, sum: window.__game.recSum(), flags: window.__game.recFlags.length, screen: window.__game.screen, z: Napake.stanje.zbirka.map(z => ({ t: z.t, s: z.s, img: z.img })) }));
 
   // 1. Glavni meni in the pause (a tap): the question, Ne marked and focused; the arrows move the mark; P does not let the race go on
   await Q.click('#s-pause [data-act="to-title"]'); await Q.waitForTimeout(200);
@@ -61,14 +62,16 @@ try {
   T.check('Da: the title (no race), the toast; one recording kept: Bathurst, Avstralija, not over the finish, posnetek_bathurst_<LLLLMMDD-UUMM>.rrp, the moment with its note and its pictures (JPEG, the motion\'s 3)',
     s2.screen === 'title' && !s2.race && !s2.vpr && /shranjena med zadnje posnetke/.test(s2.toast) && k1.length === 1 && o1.fin === 0 && o1.track === 'bathurst' && o1.tname === 'Bathurst, Avstralija' && /^posnetek_bathurst_\d{8}-\d{4}\.rrp$/.test(o1.name) &&
     o1.bytes === o1.blob && o1.bytes > 20000 && o1.dur > 20 && o1.n === 22 && o1.zb && o1.zb.items.length === 1 && o1.zb.items[0].img === 'image/jpeg' && o1.zb.items[0].gib.filter(g => g === 'image/jpeg').length === 3 &&
-    o1.zb.items[0].zapisi[0] === 'rdeča: Avto skoči čez robnik' && Math.abs(o1.zb.items[0].t - r0.z[0].t) < 1e-9, JSON.stringify({ s2, k1 }));
+    o1.zb.items[0].zapisi[0] === 'rdeča: Avto skoči čez robnik' && Math.abs(o1.zb.items[0].t - r0.z[0].t) < 1e-9 && o1.car === r0.car && r0.car.length > 2 && o1.time === 0, JSON.stringify({ s2, k1, car: r0.car }));
   T.check('the file kept reads back as the race\'s samples to the last bit (__game.recSum), the flag in its header, 22 cars', back.sum === r0.sum.h && back.n === r0.sum.n && back.track === 'bathurst' && back.flags === 1 && back.cars === 22, JSON.stringify({ back, r0: r0.sum }));
 
   // 3. Nastavitve orodja · Zadnji posnetki (1/10): the list; a tap opens the recording with its collection
   await Q.evaluate(() => Napake.nastavitve()); await Q.waitForFunction(() => /\(1\/10\)/.test((document.querySelector('#nk-set .nk-pz-n') || {}).textContent || ''), null, { timeout: 10000, polling: 100 });
   await Q.click('#nk-set [data-nk-d="pz"]'); await Q.waitForFunction(() => document.querySelectorAll('#nk-pz .nk-pzi').length === 1, null, { timeout: 10000, polling: 100 });
   const L1 = await Q.evaluate(() => Napake.stanje.pz);
-  T.check('Nastavitve orodja: Zadnji posnetki (1/10), Odpri: the list (Bathurst, Avstralija, the date, dirka, 1 trenutek, Nedokončana)', L1.length === 1 && /^Bathurst, Avstralija \d+\. \d+\. \d{4} \d\d:\d\d · dirka · 2 kroga · 0:\d\d 1 trenutek · \d+ KB Nedokončana$/.test(L1[0]), JSON.stringify(L1));
+  const reEsc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  T.check('Nastavitve orodja: Zadnji posnetki (1/10), Odpri: the list (Bathurst, Avstralija, the player\'s car · ni do cilja, the date, dirka, 1 trenutek, Nedokončana)',
+    L1.length === 1 && new RegExp('^Bathurst, Avstralija ' + reEsc(r0.car) + ' · ni do cilja \\d+\\. \\d+\\. \\d{4} \\d\\d:\\d\\d · dirka · 2 kroga · 0:\\d\\d 1 trenutek · \\d+ KB Nedokončana$').test(L1[0]), JSON.stringify(L1));
   await Q.click('#nk-pz .nk-pzi .nk-item');
   await Q.waitForFunction(() => window.__game.replay && window.__game.race && window.__game.race.track.def.id === 'bathurst' && Napake.zbirka.length === 1, null, { timeout: 240000, polling: 250 });
   await Q.waitForTimeout(400);
@@ -87,7 +90,7 @@ try {
   T.check('a second moment (blue) on the opened recording: number 2, kept with its record (the same id, the same file, 2 moments in order, still not over the finish)',
     k2.length === 1 && o3.id === o1.id && o3.blob === o1.blob && o3.fin === 0 && o3.zb && o3.zb.id === o1.zb.id && o3.zb.items.map(it => it.n).join() === '1,2' && o3.zb.items[1].zapisi[0] === 'modra: Tekmec zavije v travo' && o3.zb.items[1].img === 'image/jpeg', JSON.stringify(k2));
   const rep = await Q.evaluate(() => Napake.porocilo().split('\n'));
-  T.check('the report: the recording\'s name on the first line, the notes (#1 the notebook\'s kept with the record, #1 red, #2 blue)', rep[0].includes(' posnetek=' + o1.name) && rep.some(l => /^#1 .* beležka »Ves zaslon utripa«$/.test(l)) && rep.some(l => /^#1 .* rdeča »Avto skoči čez robnik«/.test(l)) && rep.some(l => /^#2 .* modra »Tekmec zavije v travo«/.test(l)), rep.slice(0, 4).join(' | '));
+  T.check('the report: the recording\'s name on the first line, the notes (#1 the yellow note with no loop kept with the record, #1 red, #2 blue)', rep[0].includes(' posnetek=' + o1.name) && rep.some(l => /^#1 .* rumena »Ves zaslon utripa« v_krogu=\[\]$/.test(l)) && rep.some(l => /^#1 .* rdeča »Avto skoči čez robnik«/.test(l)) && rep.some(l => /^#2 .* modra »Tekmec zavije v travo«/.test(l)), rep.slice(0, 4).join(' | '));
 
   // 5. Končaj: the choice (the collection changed) over the list again; Zgodovina napak: one collection of 2 moments
   await Q.click('[data-act="rp-exit"]'); await Q.waitForTimeout(600);
@@ -127,8 +130,10 @@ try {
   await P.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000, polling: 250 });
   const q1 = await kept(P), qa = q1[0] || {};
   const qs = await P.evaluate(() => window.__game.recSum());
+  const qt = await P.evaluate(() => ({ car: Core.heirOf(window.__game.race.player.m).name, ft: window.__game.race.player.finishTime }));   // (what the results show)
   T.check('the qualifying lap over the line: kept by itself at the results (Štajerska, Avstrija, over the finish, race+kvalifikacije, the player alone)',
     q1.length === 1 && qa.fin === 1 && qa.track === 'rbring' && qa.tname === 'Štajerska, Avstrija' && qa.mode === 'race+kvalifikacije' && qa.n === 1 && qa.bytes > 5000 && !qa.zb, JSON.stringify(q1));
+  T.check('its record has the player\'s car and its lap: the time the results show (to the millisecond), the car by the game\'s name', qa.car === qt.car && qt.car.length > 2 && qt.ft > 20 && Math.abs(qa.time - qt.ft) < 0.0006, JSON.stringify({ car: qa.car, time: qa.time, qt }));
   await P.click('#s-results [data-act="to-title"]'); await P.waitForTimeout(300);
   const q2 = await P.evaluate(() => ({ vpr: !!document.getElementById('nk-vpr'), screen: window.__game.screen }));
   const q3 = await kept(P);
@@ -144,7 +149,7 @@ try {
   const dl = await dl0, file = path.join(OUT, dl.suggestedFilename()); await dl.saveAs(file);
   const bytes = fs.readFileSync(file);
   T.check('the list: Štajerska, Avstrija · Do cilja; .rrp beside it downloads posnetek_rbring_<LLLLMMDD-UUMM>.rrp (gzip, the bytes kept)',
-    L2.length === 1 && /^Štajerska, Avstrija .* · dirka · kvalifikacije · 1:\d\d \d+ KB Do cilja$/.test(L2[0]) && /^posnetek_rbring_\d{8}-\d{4}\.rrp$/.test(dl.suggestedFilename()) && bytes[0] === 0x1f && bytes[1] === 0x8b && bytes.length === q3[0].bytes,
+    L2.length === 1 && new RegExp('^Štajerska, Avstrija ' + reEsc(qt.car) + ' · ' + reEsc(Math.floor(qt.ft / 60) + ':') + '\\d\\d\\.\\d{3} .* · dirka · kvalifikacije · 1:\\d\\d \\d+ KB Do cilja$').test(L2[0]) && /^posnetek_rbring_\d{8}-\d{4}\.rrp$/.test(dl.suggestedFilename()) && bytes[0] === 0x1f && bytes[1] === 0x8b && bytes.length === q3[0].bytes,
     JSON.stringify({ L2, name: dl.suggestedFilename(), bytes: bytes.length, kept: q3[0].bytes }));
   const lim = await P.evaluate(async () => {
     const o = (await Napake.pz.vsi())[0], t0 = o.date;

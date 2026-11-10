@@ -6,7 +6,7 @@
 //   node tests/browser/smoke.test.mjs
 import path from 'node:path';
 import url from 'node:url';
-import { ROOT, serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
+import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate, checker } from './lib.mjs';
 
 const T = checker('smoke');
 const srv = await serve();
@@ -59,10 +59,12 @@ try {
     await ctx.close();
   }
 
-  // 3. every track: race 20 s on autopilot with full graphics
+  // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«;
+  //    PROGE: only those, the menu still checked whole)
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
-  const ids = await trackIds(page), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
-  T.check('track menu lists every track of the game', [...ids].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, ids.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
+  const menu = await trackIds(page, true), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
+  const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), real = menu.filter(id => !test.includes(id)), ids = izbrane(real);
+  T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && real.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
   // the 20 s as simulate (lib.mjs) runs them (a second on autopilot, a drawn frame), and the player stuck or the wrong way out for more than
   // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
   // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left
@@ -87,7 +89,7 @@ try {
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
-    const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane: Bakreni gozd, Toskana, Gromski rt)
+    const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane)
     T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
       `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
@@ -99,10 +101,18 @@ try {
       await new Promise(r => setTimeout(r, 250));
       const el = $('h-note'), t0 = performance.now();   // (the pop-in, scale .8 to 1: software WebGL's slow frames hold its last step back)
       while (el.classList.contains('show') && Math.abs(el.getBoundingClientRect().height - el.offsetHeight) > 0.5 && performance.now() - t0 < 3000) await new Promise(r => requestAnimationFrame(r));
+      // (measured after frames the game drew, until the place holds over two more of them: the line under the clock (#h-split) is emptied
+      // in a timer 350 ms after it fades, the block shorter from then, and placeNote moves the sign up under it only in the game's next
+      // frame; measured in between, after that timer, the sign stood under the block as it had been (on GitHub 95 px under a block to
+      // 76.5 px, also after two of the game's frames: its frame can come after the page's in the same refresh). The game's frames counted,
+      // not the page's: the battery saver draws only every other one)
+      const drawn = async (n) => { const f0 = g.fr.drawn; for (let k = 0; k < 600 && g.fr.drawn < f0 + n; k++) await new Promise(r => requestAnimationFrame(r)); };
       // (the clock's block as game.js placeNote sees it: its bottom moves with the fonts, a line under the clock (a place's name, a corner's
       // number) a pixel more or less tall from one browser's font to another's)
-      const B = $('h-times'); let clk = -Infinity; for (const e of [B, ...B.children]) { const q = e.getBoundingClientRect(); if (q.width > 0 && q.height > 0) clk = Math.max(clk, q.bottom); }
-      return { s, cls: $('h-note').className, top: Math.round($('h-note').getBoundingClientRect().top), clk: +clk.toFixed(1), disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
+      const at = () => { const B = $('h-times'); let clk = -Infinity; for (const e of [B, ...B.children]) { const q = e.getBoundingClientRect(); if (q.width > 0 && q.height > 0) clk = Math.max(clk, q.bottom); } return { top: Math.round($('h-note').getBoundingClientRect().top), clk: +clk.toFixed(1) }; };
+      await drawn(2); let m = at();
+      for (let k = 0; k < 10; k++) { await drawn(2); const m2 = at(); if (m2.top === m.top && m2.clk === m.clk) break; m = m2; }
+      return { s, cls: $('h-note').className, top: m.top, clk: m.clk, disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
     const n1 = await sign(null);
     {
@@ -143,7 +153,8 @@ try {
     T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
     const d = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
-    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForTimeout(600);
+    // (the streaks go with the next frame drawn, Render.frame: on a slow machine later than 600 ms; up to 5 s)
+    await page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="dry"]').click()); await page.waitForFunction(() => !Render.raining, null, { timeout: 5000 }).catch(() => {});
     const d2 = await page.evaluate(() => ({ demo: window.__game.demo ? window.__game.demo.rain : null, drawn: Render.raining }));
     await startTrack(page, 'spa'); await simulate(page, 3);
     const r2 = await page.evaluate(() => { let marks = 0; Render.world.root.traverse(o => { if (o.name === 'tyremarks') marks++; });
@@ -327,10 +338,10 @@ try {
     T.check('Vršič Policija, the heat up: the helicopter drawn over the player, the radio hears of it (Bober)',
       P.heli && !!P.bober, `helicopter ${P.heli} (${P.heli2}), Bober: "${P.bober}"`);
     const pl = r.places;
-    T.check('the police radio names the real places: Jasna, Mihov dom, the hairpins by number (said in words), the pass, the streets of Kranjska Gora',
-      pl[0][0] === 'pri Jasni' && pl[1][0] === 'pri Mihovem domu' && pl[2][0] === 'pri 8. serpentini, Ruska kapelica' && pl[2][2] === 'pri osmi serpentini, Ruska kapelica' && pl[3][0] === 'med 8. in 9. serpentino' && pl[3][2] === 'med osmo in deveto serpentino' &&
-      pl[4][0] === 'na Vršiču' && /^na Vršiški cesti/.test(pl[5][0]) && pl.every(p => p[1] && !/[čšž]/.test(p[1])),
-      JSON.stringify(pl.map(p => p[0])));
+    T.check('the police radio names the real places: Jasna, Mihov dom, the hairpins by number, the pass, the streets of Kranjska Gora (the caption in Slovenian); the voice reads the English twin, the places spelt for an English voice (every voice speaks English)',
+      pl[0][0] === 'pri Jasni' && pl[1][0] === 'pri Mihovem domu' && pl[2][0] === 'pri 8. serpentini, Ruska kapelica' && pl[2][2] === 'at hairpin 8, the Russian Chapel' && pl[3][0] === 'med 8. in 9. serpentino' && pl[3][2] === 'between hairpins 8 and 9' &&
+      pl[4][0] === 'na Vršiču' && /^na Vršiški cesti/.test(pl[5][0]) && pl.every(p => p[1] && p[2] === p[1] && !/[čšž]/.test(p[2])),
+      JSON.stringify(pl.map(p => p[0] + ' / ' + p[2])));
     T.check('Vršič Policija, the mission: below the building at the top (the way to it on the HUD), the autopilot drives into it: MISIJA OPRAVLJENA!, the results, the rap sheet with the checkpoint, the commentator back after the run',
       M.escaped && !M.busted && /^SKRIVALIŠČE · \d+ m/.test(M.goal) && M.msgs.includes('MISIJA OPRAVLJENA!') && M.screen === 'results' && M.title === 'Misija opravljena!' && /garažo/.test(M.sub) &&
       M.rows.includes('Kontrola prometa: nisi ustavil, pobegnil') && M.rows.some(r => /^Prevožena pot: 12,3 \/ 12,3 km$/.test(r)) && r.radioOff,

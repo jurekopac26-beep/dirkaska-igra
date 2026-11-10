@@ -4606,5 +4606,6 @@
 
   Object.assign(API, { pkAmbientUpdate, pkGround, pkGroundMat, pkMovingUpdate, pkOpsUpdate, pkSummitUpdate, pkTex, pkWeatherUpdate, pkWildlifeUpdate });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { PK: { get: () => PK, set: (v) => { PK = v; } }, pkGMean: { get: () => pkGMean, set: (v) => { pkGMean = v; } } });
+  World.keep('PK', 'pikes');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.pikes = (scene, tex, opts) => buildPikes(scene, tex, opts);
 })();

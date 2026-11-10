@@ -19,6 +19,8 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/napake.css">
 <link rel="stylesheet" href="css/missions.css">
+<link rel="stylesheet" href="css/zabava.css">
+<link rel="stylesheet" href="css/neskoncna.css">
 <link rel="stylesheet" id="menu-css" href="css/menu.css" media="not all">
 </head>
 <body>
@@ -72,9 +74,12 @@
       <span id="h-alt" class="h-lbl"></span>
       <span id="h-turn" class="h-lbl"></span>
       <span id="h-pkcls" class="h-lbl"></span><!-- Pikes Peak: the class of the car -->
+      <div id="h-fc" aria-label="Napoved vremena"></div><!-- the weather forecast: a cloud and the laps to the rain while it is on its way (a changing weather, game.js fcHUD) -->
       <div id="h-fuel" aria-label="Gorivo"></div>
       <div id="h-flt" aria-label="Okvare"></div>
       <div id="h-flag" aria-label="Zastave"></div>
+      <div id="h-box" aria-label="Opozorilo za postanek"><b></b><i></i><span></span></div><!-- BOKSI TA KROG: the stop due this lap, under the stack (on its side under the clock), near the way in an arrow to the pit lane's side (game.js boxHUD) -->
+      <div id="h-fight" aria-label="Boj za mesto"><b></b><span></span><em></em></div><!-- BOJ ZA MESTO out of the pits: a rival alongside or close, its name and the gap, in the place of BOKSI TA KROG; IZ BOKSOV the same way: a rival out of the pits just ahead (game.js pitFightHUD, pitOutStep) -->
       <div id="h-tower" aria-hidden="true"></div><!-- the timing tower: the order with the gaps, as on TV -->
     </div>
     <div id="h-times">
@@ -88,10 +93,12 @@
     <div id="h-map"><canvas id="minimap"></canvas></div>
     <div id="h-prof" aria-hidden="true"><canvas id="h-prof-c"></canvas></div>
     <div id="h-wreck" aria-live="polite"><b id="h-wreck-t">VOZILO UNIČENO</b><button id="btn-retire" class="off">Odstopi</button></div><!-- a destroyed car (a time trial: a lost wheel too): retire, or drive the run again -->
-    <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div id="h-note"><svg viewBox="0 0 64 64" aria-hidden="true"><path id="h-note-path" d="" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><text id="h-note-num" x="52" y="61"></text></svg></div>
+    <div id="h-codrv"></div><!-- the co-driver's call: game.js updateCodrv and placeCap, docs/sovoznik.md -->
     <div id="h-lights"><i></i><i></i><i></i><i></i><i></i></div>
     <div id="h-fly" aria-live="polite"><div class="fl-l"><i></i><i></i><i></i></div><b></b></div><!-- the flying start's countdown: three amber lights, one goes out each second, the words under them; gone over the start line (game.js flyHUD) -->
-    <div id="h-pit" aria-hidden="true"><b></b><span></span><i><em></em></i></div><!-- the pit stop on the autopilot: what it does now, one bar from the way in to the hand-back (game.js pitBar) -->
+    <div id="h-pit" aria-hidden="true"><b></b><span></span><i><em></em></i></div><!-- the pit stop on the autopilot, once the stop is decided: the time to the hand-back and its bar (game.js pitBar) -->
+    <div id="h-stop" role="group" aria-label="Postanek po meri" aria-hidden="true"></div><!-- the custom stop: the tyres, the fuel, the repairs and POTRDI while the autopilot drives to the box (game.js stopOpen) -->
     <div id="h-react" aria-live="polite"><span></span> <b></b></div><!-- the start's reaction, in the column under the map (upright under the tower) above the big message (game.js reactHUD, hudCol) -->
     <div id="h-msg"></div>
     <div id="h-teamradio" aria-live="polite"><b>RADIO</b><span></span></div><!-- the team radio: the engineer (#47) -->
@@ -257,7 +264,7 @@
         <div class="row"><span class="rlbl">Duh najboljše vožnje</span><div class="seg" data-set="ghost"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Prelet proge pred startom (Pikes Peak, Katu-Jaryk)</span><div class="seg" data-set="pkFly"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Komentator (angleščina)</span><div class="seg" data-set="comm"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="comm-test">&#9654; Preizkusi glas</button><span id="comm-voice" class="vinfo"></span></div>
-        <div class="row"><span class="rlbl">Sovoznik na reliju (angleščina)</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Sovoznik</span><div class="seg" data-set="codrv"><button data-v="0">Izklop</button><button data-v="2">Napis</button><button data-v="1">Glas in napis</button></div></div>
         <div class="row" title="Kako se avta odzoveta, ko se zaletita drug v drugega. Simulacija (privzeto): kot v simulacijah. Arkadna: kot v arkadnih igrah. Mehka: mehak stik. Kaskaderska: močni trki. Stara: trki kot prej, za primerjavo. Velja takoj; izbereš jo lahko tudi v pavzi med dirko. V dirki s prijateljem velja vedno privzeta. Vrstice v Preizkusu (Trki med avti) jo spremenijo"><span class="rlbl">Trki med avti</span><div class="seg nw" data-set="crV"><button data-v="0">Simulacija</button><button data-v="1">Arkadna</button><button data-v="2">Mehka</button><button data-v="3">Kaskaderska</button><button data-v="4">Stara</button></div></div>
         <div class="set-note" id="crv-note"></div>
         <div class="row"><span class="rlbl">Poškodbe avtov</span><div class="seg" data-set="damage"><button data-v="0">Izklop</button><button data-v="1">Samo videz</button><button data-v="2">Vklop</button></div></div>
@@ -274,6 +281,10 @@
         <div class="row" title="Zmečkan sprednji vogal vleče avto na svojo stran (le pri vklopljenih poškodbah)"><span class="rlbl">Razbijanje: poškodbe vplivajo na vožnjo</span><div class="seg" data-set="xHandle"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Okvare (predrta guma, vroče zavore in motor)</span><div class="seg" data-set="faults"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Inženir sporočila radia ekipe tudi izgovori, v angleščini (kot vsi glasovi v igri); ni ga slišati, ko je zvok izklopljen"><span class="rlbl">Glas inženirja</span><div class="seg" data-set="engV"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="eng-test">&#9654; Preizkusi glas</button></div>
+        <div class="row" title="Radar, odsek na čas, drift cona, skok in skriti zlati smerniki ob progi, s tremi zvezdicami in rekordom"><span class="rlbl">Izzivi ob cesti</span><div class="seg" data-set="zbIzz"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Na odprti cesti se zgodi kaj nepričakovanega: kamenje, žival čez cesto, dela na cesti s semaforjem, počasen traktor"><span class="rlbl">Živa cesta</span><div class="seg" data-set="zbCesta"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Tekmec, ki ga zadeneš, se ti brani ostreje in te ne čaka; kdor vozi čisto, mu tekmeci puščajo prostor"><span class="rlbl">Tekmeci si zapomnijo</span><div class="seg" data-set="zbSpomin"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Video najboljšega trenutka po dirki</span><div class="seg" data-set="hlv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
         <div class="row" title="Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone."><span class="rlbl">Podrobnosti</span><div class="seg" data-set="detail"><button data-v="low">Nizka</button><button data-v="med">Srednja</button><button data-v="high">Visoka</button><button data-v="auto">Samodejno</button></div></div>
@@ -283,7 +294,8 @@
         <div class="row"><span class="rlbl">Uvod pred dirko (globus in helikopter)</span><div class="seg" data-set="intro"><button data-v="0">Polni</button><button data-v="1">Kratki</button><button data-v="2">Brez</button></div></div>
         <div class="row"><span class="rlbl">Glasba v uvodu</span><div class="seg" data-set="music"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Zvok</span><div class="seg" data-set="sound"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row"><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row"><span class="rlbl">Zvoki okolja</span><div class="seg" data-set="amb"><button data-v="0">Izklop</button><button data-v="0.5">Tiho</button><button data-v="1">Normalno</button><button data-v="2">Glasno</button></div></div>
+        <div class="row" title="Osnovno: kratki sunki ob trkih in pristankih, v boksih le postanek, izpust in VOZIŠ TI!. Vse: v boksih še vsak trenutek dela mehanikov ter pot v bokse in iz njih."><span class="rlbl">Vibracija</span><div class="seg" data-set="vibrate"><button data-v="0">Izklop</button><button data-v="1">Osnovno</button><button data-v="2">Vse</button></div></div>
         <div class="prof-box">
           <div class="row"><span class="rlbl">Profil</span><button class="btn mini" data-act="prof-export">Izvozi v datoteko</button><button class="btn mini" data-act="prof-import">Uvozi iz datoteke</button></div>
           <div class="set-note" id="prof-note"></div>
@@ -350,8 +362,10 @@
 
   <section id="s-pause" class="screen">
     <div class="panel small-panel">
-      <h2>Pavza</h2>
-      <div class="pause-body" id="pause-body"><!-- (scrolls on a short screen; the knocks' version right under the buttons, in sight) -->
+      <div class="pause-body" id="pause-body"><!-- (scrolls on a short screen; the knocks' version right under the buttons, in sight; on its side with the pause's box two columns: the title, the weather, the buttons left, the box, the strategy and the tyres right) -->
+        <div class="pause-l">
+        <h2>Pavza</h2>
+        <div id="pause-wx" class="pause-wx off" role="img"><svg class="pw-defs" width="0" height="0" aria-hidden="true"><defs><radialGradient id="pwG" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe08a" stop-opacity=".75"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient></defs></svg><div class="pw-row"></div><p class="pw-more"></p><div class="pw-tip"></div></div>
         <div class="btns">
           <button class="btn primary" data-act="resume">Nadaljuj</button>
           <button class="btn fsbtn" data-act="fullscreen">Celoten zaslon</button>
@@ -365,8 +379,12 @@
           <button class="btn ghost" data-act="to-title">Glavni meni</button>
         </div>
         <div class="row crv-row" id="crv-prow" title="Različica trkov med avti; velja takoj. Opis vsake je v Nastavitvah"><span class="rlbl">Trki med avti</span><div class="seg nw" data-set="crV"><button data-v="0">Simulacija</button><button data-v="1">Arkadna</button><button data-v="2">Mehka</button><button data-v="3">Kaskaderska</button><button data-v="4">Stara</button></div></div>
+        </div>
+        <div class="pause-r">
+        <div id="pause-info" class="pause-info off"><div class="pi-hd"><b class="pi-tab">Postanki</b></div><div class="pi-st"></div></div>
         <p id="pause-strat" class="pause-strat off"></p>
         <div class="row pit-row off" id="pit-row" title="Gume za suho pri naslednjem postanku (za dež jih mehaniki dajo sami)"><span class="rlbl">Gume v boksih</span><div class="seg" data-set="pitCmp"><button data-v="auto">Samodejno</button><button data-v="S">Mehke</button><button data-v="M">Srednje</button><button data-v="H">Trde</button></div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -374,7 +392,7 @@
   <section id="s-over" class="screen"><!-- the wheel rule: two wheels off, the car stopped (game.js gameOver) -->
     <div class="panel over-panel">
       <h2>KONEC IGRE</h2>
-      <p class="desc" id="over-sub">Odpadli sta dve kolesi: avto ne more naprej.</p>
+      <p class="desc" id="over-sub">Odpadlo je kolo: avto ne more naprej.</p>
       <button class="btn primary over-go" data-act="over-again" id="over-again">PONOVI IGRO</button>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
@@ -421,6 +439,7 @@
       <div class="res-head" id="res-head"><div id="res-pos" class="res-pos">1.</div><div><h2 id="res-title">Zmaga!</h2><p id="res-sub" class="desc"></p></div></div>
       <div id="res-vid" class="res-vid off" data-act="vid-big"><video id="res-vid-v" muted loop playsinline aria-label="Najboljši trenutek"></video><div class="rv-txt"><b>Najboljši trenutek</b><span id="res-vid-cap"></span></div><button class="btn primary rv-share" data-act="vid-share" id="res-vid-share">Deli</button></div>
       <div class="res-table-wrap"><div id="res-tt" class="off"></div><table id="res-table"><thead><tr><th>#</th><th>Voznik</th><th>Avto</th><th>Čas</th><th>Naj. krog</th></tr></thead><tbody></tbody></table><div id="res-laps" class="off"></div><div id="res-ch" class="off"></div></div>
+      <p id="res-lpt" class="res-lpt off"></p>
       <div id="res-prvi" class="res-save res-prvi off"><span>Prva dirka je za tabo. Kaj zdaj?</span><div class="rs-b"><button class="btn mini" data-act="prvi-school">Šola vožnje</button><button class="btn mini" data-act="prvi-tracks">Proge</button><button class="btn mini primary" data-act="prvi-career">Kariera</button></div></div>
       <div id="res-save" class="res-save off"><span id="res-save-t"></span><div class="rs-b"><button class="btn mini" data-act="save-later">Ne zdaj</button><button class="btn mini primary" data-act="save-export">Shrani profil</button></div></div>
       <div class="btns horiz">
@@ -430,6 +449,7 @@
         <button class="btn off" data-act="replay-hl" id="res-hl">Najboljši trenutki</button>
         <button class="btn off" data-act="chal-send" id="res-chal">Izzovi prijatelja</button>
         <button class="btn off" data-act="chal-reply" id="res-reply">Pošlji odgovor</button>
+        <button class="btn off" data-act="lp-send" id="res-lp">Pošlji prijateljem</button>
         <button class="btn" data-act="car-view" id="res-view">Ogled vozila</button>
         <button class="btn primary" data-act="restart" id="res-restart">Ponovi dirko</button>
       </div>
@@ -467,6 +487,19 @@
         <button class="btn ghost" data-act="chal-drop">Zavrni</button>
         <button class="btn ghost" data-act="chal-later">Kasneje</button>
         <button class="btn primary" data-act="chal-go">Sprejmi izziv</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-lp" class="screen">
+    <div class="panel small-panel lp-panel">
+      <h2>Lestvica prijateljev</h2>
+      <p id="lp-msg" class="desc"></p>
+      <p id="lp-more" class="desc small off"></p>
+      <div id="lp-nick-w" class="lp-nick off"><input type="text" id="lp-nick" class="txt" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="send" aria-label="Vzdevek"></div>
+      <div class="btns horiz">
+        <button class="btn ghost" data-act="lp-later">Pozneje</button>
+        <button class="btn primary" data-act="lp-send" id="lp-go">Pošlji svoje</button>
       </div>
     </div>
   </section>
@@ -516,7 +549,6 @@
     </div>
   </section>
 
-  <div id="wheel-swap"><button id="ws-btn" type="button" aria-label="Zamenjaj kolo"><span class="ic"></span><b id="ws-t">ZAMENJAJ KOLO</b><small id="ws-s">Pritisni tukaj za menjavo kolesa</small><i><s id="ws-bar"></s></i></button><b id="ws-l">ZAMENJAJ KOLO</b></div><!-- the wheel rule, a wheel off with the spare on the roof: a big button, its bar running out at its very foot; a tap on it puts the spare on at once (game.js swapHUD; under the title the same English words in both languages) -->
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">REAL ROADS ATLAS</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
@@ -573,6 +605,7 @@
 <script src="js/tracks/troisrivieres.js"></script>
 <script src="js/tracks/livorno.js"></script>
 <script src="js/tracks/mountbuller.js"></script>
+<script src="js/tracks/balea.js"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js">
 <link rel="x-lazy-script" data-lazy="nvpark" href="js/nvpark.js">
 <link rel="x-lazy-script" data-lazy="nvbase" href="js/nvbase.js">
@@ -585,6 +618,9 @@
 <link rel="x-lazy-script" data-lazy="nvwalls" href="js/nvwalls.js">
 <link rel="x-lazy-script" data-lazy="nvheli" href="js/nvheli.js">
 <link rel="x-lazy-script" data-lazy="nvride" href="js/nvride.js">
+<link rel="x-lazy-script" data-lazy="nvwater" href="js/nvwater.js">
+<link rel="x-lazy-script" data-lazy="nvfair" href="js/nvfair.js">
+<link rel="x-lazy-script" data-lazy="sovoznik-en" href="js/data/sovoznik-en.js">
 <script src="js/data/deli.js"></script>
 <script src="js/deli.js"></script>
 <script src="js/deli/spredaj.js"></script>
@@ -626,12 +662,26 @@
 <script src="js/cars/goljat.js"></script>
 <script src="js/cars/levs.js"></script>
 <script src="js/cars/levk.js"></script>
+<script src="js/cars/osa.js"></script>
+<script src="js/cars/sakal.js"></script>
+<script src="js/cars/gams.js"></script>
+<script src="js/cars/orel.js"></script>
+<script src="js/cars/merjasec.js"></script>
+<script src="js/cars/kuna.js"></script>
+<script src="js/cars/ris.js"></script>
+<script src="js/cars/vidra.js"></script>
+<script src="js/cars/tur.js"></script>
+<script src="js/cars/vran.js"></script>
+<script src="js/cars/cisterna.js"></script>
+<script src="js/cars/zrcalni.js"></script>
 <script src="js/core.js"></script>
 <script src="js/tex.js"></script>
 <script src="js/world.js"></script>
+<script src="js/world-zastave.js"></script>
 <script src="js/world-zivali.js"></script>
 <script src="js/world-ljudje.js"></script>
 <script src="js/world-ljudje2.js"></script>
+<script src="js/world-ljudje3.js"></script>
 <script src="js/world-pikes.js"></script>
 <script src="js/world-ouni.js"></script>
 <script src="js/world-vrsic.js"></script>
@@ -643,6 +693,9 @@
 <script src="js/world-montreal.js"></script>
 <script src="js/world-harju.js"></script>
 <script src="js/world-spa.js"></script>
+<script src="js/world-bathurst.js"></script>
+<script src="js/world-rio.js"></script>
+<script src="js/world-cpalace.js"></script>
 <script src="js/world-rbring.js"></script>
 <script src="js/world-riverside.js"></script>
 <script src="js/world-longford.js"></script>
@@ -670,12 +723,16 @@
 <script src="js/world-detroit.js"></script>
 <script src="js/world-marrakesh.js"></script>
 <script src="js/world-troisrivieres.js"></script>
+<script src="js/world-prelaz.js"></script>
 <script src="js/data/livorno.js"></script>
 <script src="js/world-livorno.js"></script>
 <script src="js/world-gore.js"></script>
 <script src="js/world-mountbuller.js"></script>
+<script src="js/world-zaslon.js"></script>
 <script src="js/render.js"></script>
+<script src="js/render-vecer.js"></script>
 <script src="js/sfx.js"></script>
+<script src="js/sfx-okolje.js"></script>
 <script src="js/input.js"></script>
 <script src="js/comm.js"></script>
 <script src="js/vendor/peerjs.min.js"></script>
@@ -686,6 +743,10 @@
 <script src="js/journey.js"></script>
 <script src="js/intro-data.js"></script>
 <script src="js/menu-car.js"></script>
+<script src="js/menu-tabla.js"></script>
+<script src="js/menu-izbor.js"></script>
+<script src="js/menu-zemlja.js"></script>
+<script src="js/menu-vreme.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/napake.js"></script>
 <script src="js/missions.js"></script>
@@ -718,7 +779,24 @@
 <script src="js/missions/m08.js"></script>
 <script src="js/missions/m17.js"></script>
 <script src="js/missions/m26.js"></script>
+<script src="js/missions/m11.js"></script>
+<script src="js/missions/m23.js"></script>
+<script src="js/missions/m29.js"></script>
+<script src="js/missions/m40.js"></script>
+<script src="js/missions/m45.js"></script>
+<script src="js/zabava.js"></script>
+<script src="js/zabava/cilji.js"></script>
+<script src="js/zabava/elim.js"></script>
+<script src="js/zabava/spomin.js"></script>
+<script src="js/zabava/trener.js"></script>
+<script src="js/zabava/izzivi.js"></script>
+<script src="js/zabava/lov.js"></script>
+<script src="js/zabava/cesta.js"></script>
+<script src="js/neskoncna.js"></script>
 <script src="js/shramba.js"></script>
+<script src="js/data/voznja.js"></script>
+<script src="js/denar.js"></script>
+<script src="js/lestvica.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

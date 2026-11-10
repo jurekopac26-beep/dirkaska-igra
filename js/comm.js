@@ -4,12 +4,14 @@
    Only one line plays at a time; while busy, only the most important pending
    line is kept, and urgent news (lead change, finish) cuts in.
    The run from the police has no commentator: the police radio speaks instead
-   (radio(): Slovenian lines in a voice that reads them; game.js directs them).
+   (radio(): its lines' English twins; game.js directs them). The team's engineer
+   on the radio (teamRadio(): Nastavitve · Glas inženirja). Every voice speaks
+   English, whatever the page's language (only the captions follow it).
    ========================================================================= */
 const Comm = (() => {
   const synth = (typeof window !== 'undefined' && window.speechSynthesis) || null;
   let on = true, speech = true, voice = null, speaking = false, cur = null, lastEnd = 0, queue = null, notesOn = true, voice2 = null;
-  let voiceRadio = null, voiceRadio2 = null, radioMode = false;   // (the police radio's voices; radioMode: the commentator and the co-driver silent)
+  let radioMode = false, engOn = true;   // (radioMode: the commentator and the co-driver silent; engOn: the engineer's voice)
   const log = [], lastPick = {};
   const GAP = 500;
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -104,6 +106,8 @@ const Comm = (() => {
     sc: ['The safety car is out! No overtaking!', 'Safety car deployed! The field will bunch up behind it.', 'Here comes the safety car! Everyone slows down.'],
     scIn: ['The safety car is coming in! Get ready for the restart!', 'Safety car in this lap! Warm up those tyres!', 'The lights are off on the safety car, restart coming!'],
     green: ['Green flag! We are racing again!', 'And we are green! Back to racing!', 'Green, green, green! Racing resumes!'],
+    red: ['Red flag! The race has been stopped!', 'Red flag, red flag! They are stopping the race after that crash!', 'The red flag is out! Everyone slows right down and lines up.'],   // (game.js flagEvent: the red flag, Core Race._redOut)
+    redGo: ['The restart is on! They follow the safety car away.', 'And we are going again, behind the safety car!', 'Restart! The queue is moving again.'],
     passWarn: ['Overtaking under the flag! Give that place back!', 'That was a pass under yellow! Let him back through!', 'No overtaking under the flag! Give the position back!'],
     penalty: ['A five second penalty!', 'That will cost you: five seconds added!', 'Penalty! Five seconds on your race time!'],
     // a changing weather (the rain starts or stops during the race) and the tyres
@@ -114,21 +118,40 @@ const Comm = (() => {
     batteryLow: ['The battery is running low! Box this lap for a charge.', 'Not much charge left in that battery, pit now!'],   // (an electric car)
     batteryOut: ['The battery is flat! Crawling along on the last of the charge!', 'Flat battery! That car is creeping back to the pits now.'],
     puncture: ['Puncture! That tyre is going down!', 'That knock has cut a tyre! A puncture!', 'A slow puncture, the car is pulling to one side now!'],
+    // worn tyres (a race with tyres): worn out, the cliff ahead; driven on, a tyre bursts
+    tyresWorn: ['Those tyres are worn out! The grip is about to fall away.', 'The tyres are finished, time to come in for a fresh set!', 'Look at those tyres, worn right down! Box now or pay the price.'],
+    tyreBurst: ['Bang! A tyre has burst! Those tyres were finished!', 'The tyre has given up! That is what happens when you stay out too long!', 'A blowout! The worn tyre could not take any more!'],
     // a friend's challenge (the challenge link): the run, beaten or not
     chalIntro: ["A challenge from {name}! The time to beat: {time}.", "{name} has set the bar at {time}. Let us see if you can beat it!"],
     chalWon: ["You beat {name}'s time! Challenge done!", "Faster than {name}, by {delta}! Send that one back!"],
     chalLost: ["Not quite, {name} is still faster, by {delta}.", "{name}'s time stands, {delta} quicker. Try again!"],
-    // the team's engineer on the radio (radio(): the co-driver's voice)
+    // the team's engineer on the radio (teamRadio(): the co-driver's voice; Nastavitve · Glas inženirja)
     radioBox: ['Box, box, box this lap!', 'Box this lap, box this lap.', 'Box this lap, we are ready for you.'],
     radioBoxWet: ['It is wet out there, box this lap for wets!', 'Box this lap for rain tyres!'],
     radioBoxDry: ['The line is dry, box this lap for slicks.', 'Box this lap, slicks are ready.'],
     radioBoxFix: ['Box this lap, we will fix the car.', 'Box this lap, box this lap, we have new parts ready.'],
     radioBoxTyre: ['Puncture! Box this lap, we have a new tyre ready.', 'Box this lap for a new tyre!'],
+    radioBoxWorn: ['The tyres are gone, box this lap!', 'Tyres are finished. Box, box, box!'],
     radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
     radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
     radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
+    // the weather forecast at the way in to a stop (a changing weather, game.js fcRadio): {when} 'within a lap' or 'in 2 to 3 laps', {p} the chance
+    radioFcRain: ['Forecast: rain {when}, {p} percent chance.', 'The radar has rain coming {when}, {p} percent.'],
+    radioFcStop: ['Forecast: the rain stops {when}, {p} percent chance.', 'The rain should ease off {when}, {p} percent.'],
+    radioFcDry: ['Forecast: dry to the finish.', 'No rain on the radar, dry to the end.'],
+    radioFcWet: ['Forecast: rain to the finish.', 'It stays wet to the end.'],
     radioSC: ['Safety car! Box now, it is a cheap stop.', 'Safety car, safety car. Box this lap, the stop is cheap.'],
+    radioRedPit: ['Red flag, red flag. Slowly into the pit lane, stay behind the car ahead.', 'Red flag. Into the pits, no overtaking, line up behind the car ahead.'],   // (the red flag, game.js flagEvent: the queue in the pit lane, or on the grid)
+    radioRedGrid: ['Red flag, red flag. Slowly to the grid, stay behind the car ahead.', 'Red flag. Back to the start straight, no overtaking, line up behind the car ahead.'],
+    radioRedGo: ['Restart behind the safety car. Get some heat in those tyres.', 'We are restarting behind the safety car. Warm the tyres up.'],
     radioGood: ['Good stop. You are P{pos}.', 'Nice stop, P{pos} now.'],
+    radioAhead: ['Car ahead boxing this lap.', 'The car ahead is boxing this lap.'],   // (the car right ahead in for its stop, game.js aheadRadio)
+    radioAheadOver: ['Car ahead boxing this lap. Stay out, the overcut should work.', 'Car ahead is boxing. Stay out one more lap for the overcut.'],
+    radioAheadUnder: ['Car ahead boxing next lap. Box this lap for the undercut.', 'They are boxing next lap. Box now, we go for the undercut.'],
+    radioGo: ['Go, go, go!', 'Go, go, go! All yours.', 'Go, go, go! Push now!'],   // (the hand-back after a stop: VOZIŠ TI!, game.js pitFree)
+    radioGain: ['Great stop, you gained {n} {pl}. P{pos} now.', 'The stop worked, up {n} {pl} to P{pos}.'],   // (the places a stop gained or lost, game.js swingRadio)
+    radioLose: ['We lost {n} {pl} in the stop. P{pos} now.', 'Down {n} {pl} after the stop, P{pos}. Keep pushing.'],
+    radioSame: ['No change after the stop, still P{pos}.', 'Same place after the stop, P{pos}.'],
     radioLast: ['Last lap, bring it home!', 'Final lap, keep it clean.', 'Last lap, push now!'],
     brakesHot: ['The brakes are overheating! They will not stop the car as well now.', 'Smoking hot brakes! Brake a little earlier for a while.'],
     engineHot: ['The engine is running hot! Losing power now.', 'Temperature warning, that engine is overheating!'],
@@ -256,39 +279,108 @@ const Comm = (() => {
       if (v.localService) sc += 0.5;
       if (sc > s2) { s2 = sc; b2 = v; }
     }
-    voice2 = b2;
-    // the police radio: a voice that reads Slovenian text (a Slovenian one, else a Croatian, Serbian or Bosnian one, else a Slovak or Czech
-    // one; a man's first), and another of its language for the dispatcher and the player's driver (none: the same voice, pitched apart)
-    let rb = null, rs = 0;
-    for (const v of vs) {
-      const L = RADIO_LANG.find(r => r[0].test(v.lang || '')); if (!L) continue;
-      const id = (v.name || '') + ' ' + (v.voiceURI || ''), sc = L[1] + (RMALE.test(id) ? 1 : RFEMALE.test(id) ? -0.5 : 0) + (v.localService ? 0.2 : 0);
-      if (sc > rs) { rs = sc; rb = v; }
-    }
-    const lg = (v) => (v.lang || '').slice(0, 2).toLowerCase();
-    voiceRadio = rb; voiceRadio2 = rb ? vs.find(v => v !== rb && lg(v) === lg(rb)) || null : null;
+    voice2 = b2;   // (also the engineer's on the team radio, and the police dispatcher's and the player's driver's)
     if (typeof onVoice === 'function') onVoice(voiceInfo());
   }
-  const RADIO_LANG = [[/^sl([-_]|$)/i, 10], [/^hr([-_]|$)/i, 7], [/^(bs|sr)([-_]|$)/i, 6], [/^(sk|cs)([-_]|$)/i, 4]];
-  const RMALE = /\bmale\b|lado|\brok\b|sre[cć]ko|matej|jakub|anton[ií]n|filip|luk[aá][sš]|nicholas|goran|\bivan\b|marko|smtm/i;
-  const RFEMALE = /female|petra|\blana\b|zuzana|laura|gabrijela|vesna|sophie|vlasta|smtf|smtl/i;
   let onVoice = null;
-  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '', radio: voiceRadio ? voiceRadio.name : '', radioLang: voiceRadio ? voiceRadio.lang : '' });
+  const voiceInfo = () => ({ name: voice ? voice.name : '', lang: voice ? voice.lang : 'en-GB', male: voiceMale, any: !!synth, codrv: voice2 ? voice2.name : '', rec: typeof window !== 'undefined' && !!(window.AudioContext || window.webkitAudioContext) });
   if (synth) { pickVoice(); try { synth.addEventListener('voiceschanged', pickVoice); } catch (_) { synth.onvoiceschanged = pickVoice; } }
+
+  /* the co-driver's recorded voice (docs/sovoznik.md, Glas): his words in one sheet (js/data/sovoznik-en.js, window.SOVOZNIK_EN: an MP3 in
+     base64 and each word's [from, to] s in it, made by tools/sovoznik-glas.py), loaded when he is to speak (recLoad: game.js codrvInit, a
+     call before it is decoded) and decoded once at its own rate (an offline context: half the memory of the game's 48 kHz). A call (the
+     tokens of Track.paceNotes) is read word by word, recGap apart, in the game's audio (Sfx.audio) through a light helmet (150 Hz high-pass,
+     +3 dB at 3 kHz), past the duck that lowers the rest under the voice. Not decoded yet, no Web Audio: the browser's English voice reads it */
+  const REC = { D: null, buf: null, at: null, ctx: null, out: null, src: [], load: false, dec: false };
+  const recGap = (a, b) => a === 'caution' ? 0.17 : /^d\d+$/.test(b) ? 0.13 : 0.06;   // (s: a comma after 'caution', before the distance; the tool's samples the same)
+  function recLoad() {
+    if (!speech || typeof document === 'undefined') return;
+    if (window.SOVOZNIK_EN) { recDecode(); return; }
+    if (REC.load) return;
+    REC.load = true;
+    const tag = document.querySelector('link[data-lazy="sovoznik-en"]'), sc = document.createElement('script');
+    sc.src = tag ? tag.getAttribute('href') : 'js/data/sovoznik-en.js';
+    sc.onload = recDecode; sc.onerror = () => { REC.load = false; };   // (no sheet: the browser's voice, again at the next race)
+    document.head.appendChild(sc);
+  }
+  function recDecode() {
+    const D = window.SOVOZNIK_EN, OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!D || REC.buf || REC.dec || !OAC) return;
+    REC.dec = true;
+    try {
+      const bin = atob(D.mp3), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const fail = () => { REC.dec = false; };
+      const p = new OAC(1, 1, D.rate).decodeAudioData(u8.buffer, (buf) => { if (!REC.buf) { REC.D = D; REC.buf = buf; REC.at = recTrim(buf, D.clips); } }, fail);   // (old Safari: the callbacks only)
+      if (p && p.catch) p.catch(fail);
+    } catch (_) { REC.dec = false; }
+  }
+  // each word's own [offset, length] s in the decoded sheet: its [from, to] widened (a decoder that keeps the MP3's ~50 ms delay) and cut to
+  // where it is heard (the first and the last sample over 1/50 of its loudest; 12 ms before, 25 ms after)
+  function recTrim(buf, clips) {
+    const x = buf.getChannelData(0), sr = buf.sampleRate, at = {};
+    for (const k of Object.keys(clips)) {
+      const a = Math.max(0, Math.floor((clips[k][0] - 0.03) * sr)), b = Math.min(x.length, Math.ceil((clips[k][1] + 0.08) * sr));
+      let pk = 0, i0 = a, i1 = b - 1;
+      for (let i = a; i < b; i++) pk = Math.max(pk, Math.abs(x[i]));
+      if (!pk) continue;
+      while (i0 < i1 && Math.abs(x[i0]) < pk * 0.02) i0++;
+      while (i1 > i0 && Math.abs(x[i1]) < pk * 0.02) i1--;
+      i0 = Math.max(a, i0 - Math.round(0.012 * sr)); i1 = Math.min(b, i1 + Math.round(0.025 * sr));
+      at[k] = [i0 / sr, (i1 - i0) / sr];
+    }
+    return at;
+  }
+  const recAudio = () => { const ctx = typeof Sfx !== 'undefined' && Sfx.audio ? Sfx.audio() : null; return ctx && ctx.state === 'running' ? ctx : null; };
+  const recCan = (toks) => !!(REC.at && toks && toks.length && toks.every(w => REC.at[w]) && recAudio());
+  // how long a call takes (s): its words from the sheet (as decoded, else as the sheet has them), ~0.4 s a word before it is here
+  function noteLen(toks) {
+    const D = REC.D || (typeof window !== 'undefined' && window.SOVOZNIK_EN) || null;
+    let T = 0;
+    (toks || []).forEach((w, i) => { if (i) T += recGap(toks[i - 1], w); T += REC.at && REC.at[w] ? REC.at[w][1] : D && D.clips[w] ? D.clips[w][1] - D.clips[w][0] : 0.4; });
+    return T;
+  }
+  // a call read now from the sheet: its length in s (0: it cannot be, the browser's voice then)
+  function recPlay(toks) {
+    const ctx = recAudio(); if (!ctx || !recCan(toks)) return 0;
+    if (!REC.out || REC.ctx !== ctx) {
+      const hp = ctx.createBiquadFilter(), pk = ctx.createBiquadFilter(), g = ctx.createGain();
+      hp.type = 'highpass'; hp.frequency.value = 150; hp.Q.value = 0.707;
+      pk.type = 'peaking'; pk.frequency.value = 3000; pk.Q.value = 1; pk.gain.value = 3;
+      g.gain.value = 1; hp.connect(pk); pk.connect(g); g.connect(ctx.destination);
+      REC.ctx = ctx; REC.out = hp;
+    }
+    recStop();
+    const t0 = ctx.currentTime + 0.02;
+    let t = t0;
+    toks.forEach((w, i) => {
+      if (i) t += recGap(toks[i - 1], w);
+      const s = ctx.createBufferSource(), a = REC.at[w];
+      s.buffer = REC.buf; s.connect(REC.out); s.start(t, a[0], a[1]); REC.src.push(s); t += a[1];
+    });
+    return t - t0 + 0.02;
+  }
+  function recStop() { for (const s of REC.src) { try { s.stop(); s.disconnect(); } catch (_) { } } REC.src = []; }
 
   function speakNow(item) {
     const maxT = 2000 + item.text.length * 95;          // safety net if the engine never reports the end
     const me = cur = { prio: item.prio, t: now(), maxT, item }; lastIt = item;
+    if (item.toks && speech) {   // the co-driver's call: from the sheet (its end: its length; busy() lets it go)
+      const len = recPlay(item.toks);
+      if (len) { me.maxT = len * 1000; item.rec = true; speaking = true; item.spoken = true; return; }
+    }
     if (!synth || !speech) { speaking = false; return; }
     try {
-      const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note ? voice2 || voice : voice;
+      const u = new SpeechSynthesisUtterance(item.text), v = item.radio ? item.voice : item.note || item.eng ? voice2 || voice : voice;
       if (v) u.voice = v;
       u.lang = v ? v.lang : 'en-GB'; u.volume = 1;
       if (item.radio) { u.rate = item.rate; u.pitch = item.pitch; }   // (the police radio: each speaker pitched apart)
       else if (item.note) { u.rate = 1.22; u.pitch = voice2 ? 1 : 1.3; }   // the co-driver: brisk (in the commentator's voice, higher)
+      else if (item.eng) { u.rate = 1.1; u.pitch = voice2 ? 0.95 : voiceMale ? 1.15 : 0.9; }   // the engineer: clipped (in the commentator's voice, pitched apart)
       else { u.rate = 1.08; u.pitch = voiceMale ? 0.95 : 0.72; }   // deeper tone when no male voice exists
       // only the line that is still current may end it (a cancelled line reports its end/error later, after the next one started)
       u.onend = u.onerror = () => { item.done = true; if (cur !== me) return; speaking = false; lastEnd = now(); cur = null; };
+      if (typeof SfxOkolje !== 'undefined') SfxOkolje.hush();   // (the announcer and the shouts by the road give way: js/sfx-okolje.js)
       speaking = true; synth.speak(u); item.spoken = true;
     } catch (_) { speaking = false; lastEnd = now() + item.text.length * 60; }
   }
@@ -324,49 +416,59 @@ const Comm = (() => {
     return item;
   }
 
-  // the co-driver's pace notes (a rally stage, game.js reads them ahead of the car): its own voice, said at once. The commentator's line
-  // is cut off; the co-driver's own call is not: the next one waits in line (before any chatter) and is dropped if it cannot start in 1.5 s
-  function note(text) {
-    if (!notesOn || !speech || !synth || !text || radioMode) return null;
-    const item = { key: 'note', text, prio: 4, t: now(), note: true, ttl: 1500 };
+  // the co-driver's pace notes (game.js reads them ahead of the car; toks: Track.paceNotes' tokens, the recorded voice reads them, else the
+  // browser's voice the text): said at once (0.2 s after his last call: noteFree). The commentator's line is cut off; the co-driver's own call
+  // is not: the next one waits in line (before any chatter) and is dropped if it cannot start in 1.5 s
+  const NOTE_GAP = 200;
+  function note(text, toks) {
+    if (!notesOn || !speech || !text || radioMode) return null;
+    if (toks && !REC.at) recLoad();   // (the sheet not here yet: the browser's voice this time)
+    if (!synth && !recCan(toks)) return null;
+    const item = { key: 'note', text, prio: 4, t: now(), note: true, ttl: 1500, toks: toks || null };
     log.push(item); if (log.length > 200) log.shift();
     if (!busy()) { speakNow(item); return item; }
-    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    if (speaking && cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }   // (the commentator cut off)
+    if (noteFree()) { speakNow(item); return item; }   // (the pause after a line)
     queue = item;
     return item;
   }
+  // the co-driver free for his next call (game.js waits for it with the voice on): none of his being read, 0.2 s after his last
+  function noteFree() { busy(); return !(speaking && cur && cur.item.note) && !(lastIt && lastIt.note && now() < lastEnd + NOTE_GAP); }
+  // his voice can be heard now: the sound on, the co-driver's voice on (setNotes), not the police radio's run; the sheet or the browser's voice
+  const noteCan = () => notesOn && speech && !radioMode && (!!synth || !!REC.at);
 
-  // the team's engineer on the radio (game.js radioHUD): a line of LINES in the co-driver's voice, said at once (the commentator's line is
-  // cut off), else next in line for a few seconds
+  // the team's engineer on the radio (game.js teamRadioShow, Nastavitve · Glas inženirja; not the commentator's switch, silent with the sound
+  // off): a line of LINES in the co-driver's voice, said at once (the commentator's line is cut off), else next in line for a few seconds.
+  // Returns the item (item.spoken once it starts, item.done once said, item.cut if cut off: game.js opens and closes the radio round it), or null
   function teamRadio(key, vars) {
-    if (!on || !speech || !synth) return null;
+    if (!engOn || !speech || !synth) return null;
     const pool = LINES[key]; if (!pool) return null;
     let k = Math.floor(Math.random() * pool.length);
     if (pool.length > 1 && k === lastPick[key]) k = (k + 1) % pool.length;
     lastPick[key] = k;
     const text = pool[k].replace(/\{(\w+)\}/g, (_, n) => (vars && vars[n] != null ? String(vars[n]) : ''));
-    const item = { key, text, prio: 3, t: now(), note: true, ttl: 4000 };
+    const item = { key, text, prio: 3, t: now(), eng: true, ttl: 4000 };
     log.push(item); if (log.length > 200) log.shift();
     if (!busy()) { speakNow(item); return item; }
-    if (cur && !cur.item.note) { cancelSpeech(); speakNow(item); return item; }
+    if (cur && !cur.item.note && !cur.item.eng) { cancelSpeech(); speakNow(item); return item; }
     queue = item;
     return item;
   }
   // a line of the police radio, said at once (game.js's radio director keeps the lines in turn): o.who 'okc' (the dispatcher), 'u' (a unit;
   // o.u its number: each a little different), 'heli', 'bov' (the station across the pass), in person 'cop' (the officer) and 'drv' (the
-  // player's driver); text in Slovenian, o.en the same in English with the places spelt for an English voice (said when no voice reads
-  // Slovenian). Returns the item (item.done once said, item.cut if cut off), or null: no speech (captions only). Not the commentator: heard
-  // with the sound on even when the commentator is switched off
+  // player's driver); text the line's English twin with the places spelt for an English voice (the captions stay in the page's language),
+  // in the commentator's voice (the dispatcher and the driver in the co-driver's). Returns the item (item.done once said, item.cut if cut
+  // off), or null: no English voice (captions only). Not the commentator: heard with the sound on even when the commentator is switched off
   function radio(text, o) {
     o = o || {};
     if (!speech || !synth || !text) return null;
-    const en = !voiceRadio || !!o.enOnly, w = o.who, two = w === 'okc' || w === 'drv', v2 = en ? voice2 : voiceRadio2, v = two && v2 ? v2 : en ? voice : voiceRadio;
-    if (!v || (en && !o.en)) return null;
-    const own = two && !!v2, low = en && !voiceMale && !own ? 0.82 : 1;   // (its own voice: hardly pitched; an English woman's voice: lower)
+    const w = o.who, two = w === 'okc' || w === 'drv', v = two && voice2 ? voice2 : voice;
+    if (!v) return null;
+    const own = two && !!voice2, low = !voiceMale && !own ? 0.82 : 1;   // (its own voice: hardly pitched; a woman's voice: lower)
     const pitch = low * (own ? (w === 'drv' ? 1.06 : 1) : w === 'okc' ? 1.1 : w === 'drv' ? 1.2 : w === 'cop' ? 0.86 : w === 'heli' ? 0.92 : w === 'bov' ? 1.0 : 0.8 + 0.1 * ((o.u || 0) % 3));
     const rate = w === 'cop' || w === 'drv' ? 1.02 : w === 'okc' ? 1.06 : 1.13;
     cancelSpeech(); queue = null;
-    const item = { key: 'radio', text: en ? o.en : text, prio: 9, t: now(), radio: true, voice: v, pitch, rate, who: w, lang: v.lang };
+    const item = { key: 'radio', text, prio: 9, t: now(), radio: true, voice: v, pitch, rate, who: w, lang: v.lang };
     log.push(item); if (log.length > 200) log.shift();
     speakNow(item);
     return item;
@@ -374,7 +476,7 @@ const Comm = (() => {
   function radioStop() { if (cur && cur.item && cur.item.radio) cancelSpeech(); }
   // the run from the police: only the radio speaks (say() and note() silent)
   function setRadioMode(v) { radioMode = !!v; if (radioMode) { queue = null; if (cur && cur.item && !cur.item.radio) cancelSpeech(); } }
-  const radioVoice = () => voiceRadio ? { name: voiceRadio.name, lang: voiceRadio.lang, two: !!voiceRadio2 } : null;
+  const radioVoice = () => voice ? { name: voice.name, lang: voice.lang, two: !!voice2 } : null;   // (tests: the police radio's voice)
 
   // news from the world: the Pikes Peak TV helicopter shows up (World's dyn.pk.news: { key, n }, each said once)
   let heliSeen = null;
@@ -394,16 +496,20 @@ const Comm = (() => {
     }
   }
 
-  function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
+  function cancelSpeech() { if (speaking && cur && cur.item) cur.item.cut = true; recStop(); if (synth) { try { synth.cancel(); } catch (_) { } } speaking = false; lastEnd = 0; cur = null; }
   function stop() { cancelSpeech(); queue = null; }
   // call from a tap handler: some browsers only allow speech after a user gesture
   function unlock() { if (!synth || !speech) return; try {   // (also with the commentator off: the police radio speaks then, and iOS wants the first line from a tap)
     const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (_) { } }
-  function test() { cancelSpeech(); queue = null; speakNow({ key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
+  // Preizkusi glas: the commentator; k 'eng': the engineer (Glas inženirja)
+  function test(k) { cancelSpeech(); queue = null; speakNow(k === 'eng' ? { key: 'test', text: 'Radio check. Box this lap, box this lap.', prio: 9, t: now(), eng: true } : { key: 'test', text: "Hello and welcome! I'm your commentator for today's race.", prio: 9, t: now() }); }
   function setOnVoice(fn) { onVoice = fn; fn(voiceInfo()); }
-  function setEnabled(v) { on = !!v; if (!on) stop(); }
+  // the commentator switched off: its own lines silent (not the co-driver's, the engineer's, the police radio's)
+  const ownLine = (it) => !!it && !it.note && !it.eng && !it.radio;
+  function setEnabled(v) { on = !!v; if (!on) { if (ownLine(queue)) queue = null; if (cur && ownLine(cur.item)) cancelSpeech(); } }
   function setSpeech(v) { speech = !!v; if (!speech) cancelSpeech(); }
   function setNotes(v) { notesOn = !!v; if (!notesOn && cur && cur.item.note) cancelSpeech(); }
+  function setEngineer(v) { engOn = !!v; if (!engOn) { if (queue && queue.eng) queue = null; if (cur && cur.item.eng) cancelSpeech(); } }
   const available = () => !!synth;
   // register (or replace) a pool at run time, e.g. a track's place lines; say() ignores keys that have no pool
   function addLines(key, arr) {
@@ -414,12 +520,12 @@ const Comm = (() => {
   }
   // what the commentator is doing: busy (speaking or in the pause after a line), the priority speaking now and waiting (-1 = none)
   function state() { const b = busy(); return { busy: b, prio: speaking && cur ? cur.prio : -1, queued: queue ? queue.prio : -1 }; }
-  // the commentator (the co-driver, the team radio) speaking or in the pause after a line: the game lowers its other sounds under the voice
+  // the commentator (the co-driver, the engineer) speaking or in the pause after a line: the game lowers its other sounds under the voice
   // (Sfx.setDuck; the browser's speech cannot be louder than full volume). Not the police radio: its static and its voices go together
   let lastIt = null;   // (the line spoken last: its pause after it counts too, so the duck holds between two lines)
   function talking() { const it = cur ? cur.item : lastIt; return !radioMode && busy() && !!(it && !it.radio); }
 
-  return { say, note, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, ordinal, words, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
+  return { say, note, noteFree, noteCan, noteLen, recLoad, get recReady() { return !!REC.at; }, teamRadio, update, stop, unlock, setEnabled, setSpeech, setNotes, setEngineer, ordinal, words, available, log, test, voiceInfo, setOnVoice, addLines, state, talking, radio, radioStop, setRadioMode, radioVoice, get radioMode() { return radioMode; } };
 })();
 if (typeof module !== 'undefined') module.exports = Comm;
 

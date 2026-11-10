@@ -7,7 +7,7 @@
 // cesti → Pokaži znova shows it, Preskoči goes to the title. Not shown with the settings kept, with the garage's profile, nor on a
 // quick entry's address.
 //   node tests/browser/prvi.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, driveToResults, checker } from './lib.mjs';
 
 const T = checker('prvi');
 const srv = await serve();
@@ -55,8 +55,7 @@ try {
   await pa.waitForFunction(() => window.__game.race && window.__game.race.track.def.id === 'rbring' && !window.__game.school && window.__game.race.cars.length > 1, null, { timeout: 120000 });
   const r1 = await ev(() => { const r = window.__game.race; return { cars: r.cars.length, laps: r.opts.laps, diff: r.opts.difficulty, grid: r.opts.playerGrid, rain: r.rain, prvi: window.__game.prvi, track: window.__game.S.track }; });
   T.check('Prva dirka: Štajerska, 6 cars, 2 laps, Lahka, the player 4th on the grid, dry; the first start noted seen (tdgp-prvi 1)', r1.cars === 6 && r1.laps === 2 && r1.diff === 0 && r1.grid === 4 && !r1.rain && r1.prvi.race && r1.prvi.seen && r1.prvi.state === '1' && r1.track === 'rbring', JSON.stringify(r1));
-  await ev(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
-  await pa.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
+  await driveToResults(pa);   // (on autopilot; stuck against the barrier, put back on the road: lib.mjs)
   await pa.waitForTimeout(300);
   const r2 = await ev(() => ({ next: !document.getElementById('res-prvi').classList.contains('off'), txt: document.getElementById('res-prvi').innerText.replace(/\s+/g, ' '), save: !document.getElementById('res-save').classList.contains('off'), races: window.__game.stats.races }));
   T.check('the first race\'s results: what comes next (Šola vožnje, Proge, Kariera), no offer to save the profile yet', r2.next && /Prva dirka je za tabo\. Kaj zdaj\?/.test(r2.txt) && /Šola vožnje/.test(r2.txt) && /Proge/.test(r2.txt) && /Kariera/.test(r2.txt) && !r2.save && r2.races === 1, JSON.stringify(r2));

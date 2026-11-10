@@ -318,16 +318,17 @@
     { const cols = ['#f6f6f2', '#2d6fd0', '#f6f6f2', '#f2c63a', '#f6f6f2', '#3a9a4c', '#f6f6f2', '#2d6fd0']; cols.forEach((cl, k) => { x.fillStyle = cl; x.fillRect(512 + k * 16, 128, 16, 128); }); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (ktA2Tex = t);
   }
+  const { AB, aStar, aTier, aTrunk } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
   function ktTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Siberian larch (light, open tiers of soft needles), 1 Siberian stone pine (the
     // 'cedar': dark, dense, a broad rounded crown), 2 birch, 3 poplar or willow of the valley floor, 4 a shrub (caragana, spiraea, dwarf birch: a low mound),
     // 5 a juniper mat on the rocks
-    const g = new GB(), R = rng(740 + kind), rs = API.ROCK_SMOOTH;
-    API.ROCK_SMOOTH = kind >= 1;   // (soft, rounded crowns; the larch's tiers stay crisp)
+    const g = new GB(), b = new AB(), R = rng(740 + kind), rs = API.ROCK_SMOOTH;
+    API.ROCK_SMOOTH = kind >= 1;   // (soft, rounded crowns; the larch's tiers soft in the kit A)
     if (kind === 0) {   // larch: a slim reddish trunk, five light tiers of drooping branches and a thin spire
       const col = [0.42, 0.57, 0.26], tip = [0.6, 0.72, 0.36];
-      cyl(g, 0, -0.02, 0, 0.022, 0.62, 3, [0.42, 0.27, 0.18], null, 0.008);
-      [[0.2, 0.22, 0.17], [0.36, 0.18, 0.16], [0.51, 0.145, 0.15], [0.65, 0.105, 0.14], [0.77, 0.07, 0.13]].forEach(([y, r, h], k) => starCone(g, 0, y, 0, r, h, 4, vary(col, R, 0.12), tip, k * 1.1 + 0.3, 0.07));
-      cone(g, 0, 0.88, 0, 0.03, 0.12, 3, col, tip, 0.2);
+      aTrunk(b, 0, -0.02, 0, 0.022, 0.62, 3, [0.42, 0.27, 0.18], 0.008);
+      [[0.2, 0.22, 0.17], [0.36, 0.18, 0.16], [0.51, 0.145, 0.15], [0.65, 0.105, 0.14], [0.77, 0.07, 0.13]].forEach(([y, r, h], k) => aStar(b, 0, y, 0, r, h, 4, vary(col, R, 0.12), tip, k * 1.1 + 0.3, 0.07));
+      aTier(b, 0, 0.88, 0, 0.03, 0.12, 3, col, tip, 0.2);
     } else if (kind === 1) {   // stone pine: a short trunk, dark needle clumps stacked into a broad, rounded cone
       const col = [0.11, 0.24, 0.13];
       cyl(g, 0, -0.02, 0, 0.035, 0.3, 4, [0.34, 0.24, 0.18], null, 0.025);
@@ -347,7 +348,7 @@
       for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(g, Math.cos(a) * d, 0.3 - d * 0.3, Math.sin(a) * d, 0.28, 0.55, vary(col, R, 0.2), R, 0.35); }
     }
     API.ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    const geo = kind === 0 ? b.geometry() : g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   // a yurt of the camps (white felt over a lattice: walls, a low cone of a roof, the smoke ring at its top; a painted wooden door, a band of ornament)
   function ktYurt(g, x, y, z, rot, r) {
@@ -609,8 +610,8 @@
       for (const [a, b] of [[1.35, 0.82], [1.35, -0.82], [-1.35, 0.82], [-1.35, -0.82]]) box(g, x + c * a - s * b, y, z + s * a + c * b, 0.74, 0.74, 0.28, rot, [0.08, 0.08, 0.09], null, true); };
     const flagE = (g, x, y, z, rot, h, k) => {   // a flag pole with the run's flag (orange, a white band; blue every other one), both faces
       cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
-      const c = Math.cos(rot), s = Math.sin(rot), fw = 1.7, fh = 1.0, [fx, fz] = [x + c * (fw / 2 + 0.06), z + s * (fw / 2 + 0.06)], y0 = y + h - fh - 0.15, a = k % 2 ? [0.12, 0.32, 0.66] : [0.86, 0.32, 0.1];
-      box(g, fx, y0, fz, fw, fh, 0.04, rot, a); box(g, fx, y0 + fh * 0.4, fz, fw + 0.01, fh * 0.2, 0.05, rot, [0.96, 0.95, 0.92]); };
+      const c = Math.cos(rot), s = Math.sin(rot), a = k % 2 ? [0.12, 0.32, 0.66] : [0.86, 0.32, 0.1];   // (the cloth waves: js/world-zastave.js)
+      API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, { grid: [[0, 1], [0, 0.4, 0.6, 1], [[a], [[0.96, 0.95, 0.92]], [a]]] }, 1.7, 1); };
 
     /* ---- the buildings: the kiosks at the top (timber, a lean-to roof, the board), the privies, the yurts and the log cabins of the camps ---- */
     let nBld = 0;
@@ -777,7 +778,7 @@
       box(gh, hx, hy, hz, 3.4, 2.6, 2.6, T.hd[i], [0.93, 0.92, 0.88], [0.3, 0.3, 0.32], true); box(gh, hx, hy + 1.2, hz, 3.45, 0.8, 2.65, T.hd[i], [0.16, 0.24, 0.36], null, true); exclPush(hx, hz, 5);
       for (const side of [-1, 1]) for (let s = sFin - 28; s < sFin + 12; s += 7) { const [px, pz, ii] = onSide(s, side, 1.4), py = ktGround(px, pz), gg = scen.get(px, pz);
         cyl(gg, px, py, pz, 0.06, 5, 5, [0.9, 0.9, 0.92]);
-        for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) box(gg, px + T.tx[ii] * (0.36 + a * 0.55), py + 3.8 + b * 0.55, pz + T.tz[ii] * (0.36 + a * 0.55), 0.55, 0.55, 0.05, T.hd[ii], (a + b) % 2 ? [0.08, 0.08, 0.08] : [0.96, 0.96, 0.96], null, true); }
+        API.flags.add(px + T.tx[ii] * 0.085, py + 4.9, pz + T.tz[ii] * 0.085, T.hd[ii], { chq: [3, 2, [0.08, 0.08, 0.08], [0.96, 0.96, 0.96]] }, 1.65, 1.1, 1); }   // (the chequered cloth waves: js/world-zastave.js)
       const board = (s, side, col, txt) => { const [px, pz, ii] = onSide(s, side, 0.9), py = ktGround(px, pz), gg = scen.get(px, pz);   // a board on two posts beside the road, facing the arriving cars
         for (const o of [-0.7, 0.7]) box(gg, px + T.nx[ii] * o, py - 0.2, pz + T.nz[ii] * o, 0.1, 1.6, 0.1, T.hd[ii], [0.3, 0.3, 0.32]);
         box(gg, px, py + 1.3, pz, 0.06, 1.0, 1.8, T.hd[ii], col); if (txt) { for (let a = 0; a < 4; a++) for (let b = 0; b < 2; b++) if ((a + b) % 2) box(gg, px - T.tx[ii] * 0.04, py + 1.5 + b * 0.25, pz - T.tz[ii] * 0.04, 0.02, 0.25, 0.25, T.hd[ii], [0.08, 0.08, 0.08]); } exclPush(px, pz, 3); };
@@ -936,5 +937,6 @@
   }
 
   Object.defineProperties(API, { KT: { get: () => KT, set: (v) => { KT = v; } } });
+  World.keep('KT', 'katu');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.katu = (scene, tex, opts) => buildKatu(scene, tex, opts);
 })();

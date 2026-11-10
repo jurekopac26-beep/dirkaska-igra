@@ -2,11 +2,10 @@
 // prog ne pišejo znova. Ime, angleško ime in stran vožnje vzame iz tabele Proge v načrtu, slog iz tools/predogled/proge.json (cfg), podatke
 // proge iz tools/proga-uvoz.mjs. Ničesar, kar že obstaja, ne prepiše (razen vrstice z medaljami); vsak korak lahko poženeš znova.
 //   node tools/nova-proga.mjs <id>              naredi in vpiše progo:
-//     js/tracks/<id>.js       osnutek (ime, opisa, načini, levi promet, slog look, imena serpentin, komentator) z oznakama za podatke uvoza;
+//     js/tracks/<id>.js       osnutek (ime, opisa, ime za komentatorja say, načini, levi promet, slog look, imena serpentin, komentator) z oznakama za podatke uvoza;
 //                             če podatkov še ni, požene tools/proga-uvoz.mjs <id>; nato izračuna medalje (relijski avto na avtopilotu)
 //     js/world-<id>.js        svet: World.gore z njegovim slogom (iz cfg), posebnosti proge dopiši v S.extra
 //     index.html              <script> proge (za zadnjo progo), js/world-gore.js in js/world-<id>.js (pred js/render.js)
-//     js/game.js              angleško ime za komentatorja (EN_NAME)
 //     README.md               vrstica v »Proge« in v »Zasluge«
 //     docs/proge/<id>.md      osnutek opisa
 //     docs/kazalo.md          vrstica v tabeli prog
@@ -51,6 +50,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: '${id}', name: ${jsq(name)}, theme: '${id}', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: ${U.hw || 5.0},${left ? ' leftHand: true,' : ''}
     desc: ${jsq(place + ' (' + country + '): kratka zavita cesta. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.')},
     en: { name: ${jsq(en)}, desc: ${jsq(enPlace + ' (' + enCountry + '): a short, twisting road. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.')}, escTo: 'To the finish' },
+    say: ${jsq(enPlace)},   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
     medals: {cs:[0,0,0],wet:{cs:[0,0,0]}},
@@ -110,7 +110,6 @@ if (!onlyMedals) {
   if (!h.includes('js/world-gore.js')) h = h.replace(/<script src="js\/render\.js/, '<script src="js/world-gore.js"></script>\n<script src="js/render.js');
   if (!h.includes('js/world-' + id + '.js')) h = h.replace(/<script src="js\/render\.js/, `<script src="js/world-${id}.js"></script>\n<script src="js/render.js`);
   if (h !== rd('index.html')) wr('index.html', h);
-  let g = rd('js/game.js'); const enShort = enPlace; if (!new RegExp('\\b' + id + ": '").test(g.match(/const EN_NAME = \{[^\n]*\}/)[0])) { g = g.replace(/(const EN_NAME = \{[^\n]*?) \};/, `$1, ${id}: ${jsq(enShort)} };`); wr('js/game.js', g); }
   let r = rd('README.md');
   if (!r.includes('(docs/proge/' + id + '.md)')) { const k = r.indexOf('\n\nZa izbris · samo za testiranje'); r = r.slice(0, k) + `\n- [${name}](docs/proge/${id}.md)` + r.slice(k); }
   if (!r.includes('`js/tracks/' + id + '.js`')) r = r.replace(/\n*$/, '') + `\n- Proga ${name.split(',')[0]} (sredinska črta, stranske ceste, stavbe, žičnice, smučarske proge, voda, parkirišča): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v \`js/tracks/${id}.js\` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).\n`;

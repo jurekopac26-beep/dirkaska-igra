@@ -18,7 +18,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('48'), K = D.K;
 const TD = Core.TRACKS.find(t => t.id === 'longford'), T = new Core.Track(TD);
-check('48: on Longford, a real track', D.track === 'longford' && !!TD && !TD.test);
+check('48: on Longford (a test track since 6. 11. 2026: the mission stays there until the user moves it)', D.track === 'longford' && !!TD);
 const o = D.opts(D);
 check('its race: alone, one run, in the rain, the truck on the KAMEN (slower), no damage', o.tt && o.laps === 1 && o.rain === 1 && o.damage === 0 && o.playerModel.id === 'kamen' && o.playerModel.vLim === 80, JSON.stringify({ tt: o.tt, rain: o.rain, m: o.playerModel.id }));
 check('9 people, at most 4 on the truck; no clock of its own, the stars in order', K.N === 9 && K.CAP === 4 && D.limit === 0 && D.stars[0] < D.stars[1]);

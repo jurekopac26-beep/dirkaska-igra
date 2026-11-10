@@ -197,7 +197,7 @@
     const DR = rng(9330);   // (the camp props' own random stream: R() is not drawn from)
     const FLAGS = [[[0.08, 0.08, 0.09], [0.82, 0.1, 0.1], [0.96, 0.78, 0.06]], [[0.76, 0.1, 0.14], [0.95, 0.95, 0.95], [0.12, 0.3, 0.62]], [[0.82, 0.1, 0.12], [0.95, 0.95, 0.95], [0.82, 0.1, 0.12]], [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]]];   // stripes: German, Dutch, Austrian, Belgian (upright)
     const flagPole = (g, x, y, z, rot, k) => { const c = Math.cos(rot), s = Math.sin(rot), F = FLAGS[k % FLAGS.length]; cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
-      for (let n = 0; n < 3; n++) { if (k % FLAGS.length === 3) { const a = 0.3 + n * 0.5; box(g, x + c * a, y + 5.2, z + s * a, 0.5, 0.95, 0.04, rot, F[n], null, true); } else box(g, x + c * 0.8, y + 5.84 - n * 0.32, z + s * 0.8, 1.5, 0.32, 0.04, rot, F[n], null, true); } };
+      API.flags.add(x + c * 0.05, y + 6.16, z + s * 0.05, rot, k % FLAGS.length === 3 ? { up: F } : F, 1.5, 0.96); };   // (the cloth waves: js/world-zastave.js)
     const tent = (x, z, rot, col) => {   // the fans' camp, by hash: a dome tent, a ridge tent, a gazebo or a caravan; now and then a flag on a pole beside it
       const g = scen.get(x, z), y = nrGround(x, z), h = crH(x, z, 31), c = Math.cos(rot), s = Math.sin(rot), dk = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72], dark = [0.16, 0.2, 0.26];
       if (h < 0.34) nrLump(g, x, y + 0.05, z, 1.5, 0.78, col, DR, 0.05);
@@ -237,7 +237,7 @@
       exclPush(x, z, span + 6);
       for (let d = -220; d < 160; d += 14) for (const side of [-1, 1]) {   // flag poles behind the walls
         const [px, pz, ii] = onSide(sAt(d), side, 2.2), py = nrGround(px, pz), gg = scen.get(px, pz); CR.avoid(px, pz, 0.45);
-        cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); box(gg, px + T.tx[ii] * 0.6, py + 4.8, pz + T.tz[ii] * 0.6, 1.2, 0.8, 0.05, T.hd[ii], fans[Math.floor(R() * fans.length)], null, true);
+        cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [fans[Math.floor(R() * fans.length)]], 1.2, 0.8);   // (waving)
       }
       for (let d = -210, n = 0; d < 150; d += 30, n++) for (const side of [-1, 1]) {   // banners on the walls of the straight: NÜRBURGRING, GRÜNE HÖLLE, NORDSCHLEIFE
         const s0 = sAt(d), a0 = T.idx(s0), b0 = T.idx(s0 + 3.6), [u0, v0, u1, v1] = nrAUV(BAN + 1 + (n + (side > 0 ? 1 : 0)) % 3);
@@ -316,7 +316,7 @@
       for (const a of [-0.12, 0.12]) box(g, x - tx * side * (0.78 + a) - nx * 1.16, y + 1.9, z - tz * side * (0.78 + a) - nz * 1.16, 0.12, 0.12, 0.04, hd, [1, 0.74, 0.12], null, true);
       const [u0, v0, u1, v1] = nrNUV(np++ % 128), lx = tx * side * 0.26, lz = tz * side * 0.26, px = x - nx * 1.13, pz = z - nz * 1.13;   // the number above the window, facing the road
       numC.get(px, pz).quadO([px + lx, y + 1.72, pz + lz], [px - lx, y + 1.72, pz - lz], [px - lx, y + 2.24, pz - lz], [px + lx, y + 2.24, pz + lz], [1, 1, 1], [x, y + 1.9, z], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);
-      const fx = x + tx * 1.8, fz = z + tz * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); box(g, fx + tx * 0.45, y + 3.4, fz + tz * 0.45, 0.9, 0.6, 0.04, hd, [0.98, 0.84, 0.1], null, true);
+      const fx = x + tx * 1.8, fz = z + tz * 1.8; cyl(g, fx, y, fz, 0.05, 4.2, 5, [0.85, 0.85, 0.87]); API.flags.add(fx, y + 4, fz, hd, [[0.98, 0.84, 0.1]], 0.9, 0.6);
       exclPush(x, z, 5);
     }
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
@@ -508,5 +508,6 @@
     return out;
   }
 
+  World.keep('NR', 'nring');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.nring = (scene, tex, opts) => buildNring(scene, tex, opts);
 })();

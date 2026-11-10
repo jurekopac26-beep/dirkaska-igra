@@ -19,8 +19,8 @@ const at = (d) => T.idx(T.startS + d);
 // 1. the track: a closed circuit of 5 laps, 2.641 km within 1 %, anticlockwise, in the big championship; a place name only
 {
   let turn = 0; for (let i = 0; i < T.N; i++) turn += T.k[i] * T.ds;
-  check('track: Newcastle, Avstralija (Newcastle, Australia), a closed circuit of 5 laps, not a test track, in the big championship',
-    def.name === 'Newcastle, Avstralija' && def.en && def.en.name === 'Newcastle, Australia' && !def.open && !def.timeTrial && !def.test && def.laps === 5 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('newcastle'),
+  check('track: Newcastle, Avstralija (Newcastle, Australia), a closed circuit of 5 laps, a test track since 6. 11. 2026 (one track a country: Australia keeps Bathurst or Great Alpine Road), in the big championship',
+    def.name === 'Newcastle, Avstralija' && def.en && def.en.name === 'Newcastle, Australia' && !def.open && !def.timeTrial && def.test === true && def.laps === 5 && C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('newcastle'),
     `${def.name} / ${def.en && def.en.name}, ${def.laps} laps`);
   check('track: 2.641 km within 1 %, the menu\'s real length 2.641 km, anticlockwise (one full turn to the left)',
     Math.abs(T.len / 2641 - 1) < 0.01 && def.realKm === 2.641 && Math.abs(turn + 2 * Math.PI) < 0.05,

@@ -12,7 +12,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // Game axes: x east, z south (north = up on the minimap). The road is OPEN: points[0] is the south end, the last point the north end.
   //   start / finish / cps : [x, z] positions, snapped to the nearest centre-line sample (cps = the split points CP1..CP4)
   TRACK_DEFS.push({
-    id: 'ouninpohja', name: 'Ouninpohja, Finska', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
+    // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
+    look: { fog: 0xc4d3dc, sun: 0xffe9c6, sunI: 1.18, sky: 0xcfe1f5, gnd: 0x4a5a2e, hemiI: 0.56, tint: [1.02, 1.0, 0.97], sat: 1.1, sunOff: [-88, 72, 58], split: [[0.97, 1.01, 1.03], [1.03, 1.0, 0.96]] },   // Ouninpohja: a clear Finnish August afternoon, a warm sun lower in the west (the forest's long shadows across the road), soft haze over the lakes
+    say: 'Ouninpohja',
+    cloudTh: 0.18,
+    zivali: { a: ['moose', 'hare', 'fox'], t: ['cabinR', 'logPile', 'huntStand', 'fallenTree', 'mushrooms'] },
+    id: 'ouninpohja', test: true, name: 'Ouninpohja, Finska', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
     desc: 'Najslavnejša hitrostna preizkušnja na Finskem: kronometer po makadamu od Hämepohje do Hassintieja. Skok za skokom skozi gozd, dolg desni ob jezeru Naarajärvi, dvorišče kmetije Ouni, skok pri Rumeni hiši (Keltainen talo), stopnice do križišča Mutanen, hitra Okskulmantie, vrhovi v smrekovem gozdu, ribnik in vas, skok Fast Crest in lasnica Kakaristo med polji. Ni nasprotnikov, dirkaš proti uri, na suhem ali v dežju.',
     en: { name: 'Ouninpohja, Finland', desc: 'The most famous special stage in Finland: a time trial on gravel from Hämepohja to Hassintie. Jump after jump through the forest, a long right by Lake Naarajärvi, the Ouni farmyard, the jump at the Yellow House (Keltainen talo), the steps down to the Mutanen junction, the fast Okskulmantie, crests in the spruce forest, a pond and a village, the Fast Crest jump and the Kakaristo hairpin between the fields. No rivals, you race against the clock, in the dry or in the rain.' },   // (the English page: Jezik · Language)
     realKm: 33,

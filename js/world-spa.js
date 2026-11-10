@@ -10,7 +10,7 @@
   const {
     Chunks, GB, IChunks, NRC, NRN, NRT, RB, TAU, atS, atSf, box, parkedCar, brookMat, clamp, cone, crH, crowdAt, crowdCtx, crowdFinish, crowdRun, crowdUV,
     cyl, gable, ico, lerp, nrAUV, nrDist, nrEdge, nrFir, nrGCol, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade,
-    nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pitLaneScenery, pixAvg, propFloorTable, rng, roadsideProps, spaScreenTex, sstep, vary
+    nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pitLaneScenery, pixAvg, propFloorTable, rng, roadsideProps, spaScreenTex, sstep, vary, pitExcl, pitKerbs, pitOpen
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -40,20 +40,19 @@
     for (const [st, n, sz] of [['rgba(46,92,42,0.55)', 90, 3], ['#f2f2ea', 70, 1], ['#e6d24a', 24, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // clover, daisies, buttercups
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
-  function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them): 0 a plantation spruce (tall and narrow, four drooping tiers, dark blue-green), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
-    const g = new GB(), R = rng(640 + kind), rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true;   // (smooth normals, as nrTreeGeo; the flag restored below)
-    const sp = [0.07, 0.17, 0.12], spT = [0.12, 0.26, 0.17], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
-    if (kind === 0) {
-      cone(g, 0, -0.02, 0, 0.022, 0.22, 4, [0.26, 0.19, 0.14], null, 0);
-      for (let t = 0; t < 4; t++) nrFir(g, 0, 0.14 + t * 0.2, 0, 0.19 * (1 - t * 0.2), 0.3, 5, sh(sp, 0.86 + t * 0.07), spT, t * 1.1, 0.04);
-    } else if (kind === 1) {
-      nrFir(g, 0, 0.1, 0, 0.18, 0.52, 5, sh(sp, 0.9), spT, 0.3, 0.03); nrFir(g, 0, 0.5, 0, 0.11, 0.5, 5, sp, spT, 1.1, 0.02);
-    } else {
-      cyl(g, 0, -0.02, 0, 0.022, 0.64, 4, [0.9, 0.9, 0.86], null, 0.016);
-      const be = [0.36, 0.52, 0.2]; ico(g, 0, 0.68, 0, 0.19, 1.3, be, R, 0.3); nrLump(g, 0.06, 0.52, 0.04, 0.14, 1.1, sh(be, 1.08), R, 0.25);
+  const { AB, aPuff, aTier, aTrunk } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
+  function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them) in the soft look A (AB, docs/drevesa-a.md): 0 a plantation spruce (tall and narrow, four tiers, dark blue-green, the tips lighter), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
+    const b = new AB(), R = rng(640 + kind), sp = [0.07, 0.17, 0.12], spT = [0.12, 0.26, 0.17], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    if (kind === 0) {   // (28 faces)
+      aTrunk(b, 0, -0.02, 0, 0.022, 0.32, 4, [0.26, 0.19, 0.14]);
+      for (let t = 0; t < 4; t++) aTier(b, 0, 0.14 + t * 0.2, 0, 0.19 * (1 - t * 0.2), 0.3, 6, sh(sp, 0.62 + t * 0.08), sh(spT, 1.2 + t * 0.05), t * 1.1);
+    } else if (kind === 1) {   // (10 faces)
+      aTier(b, 0, 0.1, 0, 0.18, 0.52, 5, sh(sp, 0.66), sh(spT, 1.2), 0.3); aTier(b, 0, 0.5, 0, 0.11, 0.5, 5, sh(sp, 0.8), sh(spT, 1.3), 1.1);
+    } else {   // (40 faces)
+      aTrunk(b, 0, -0.02, 0, 0.022, 0.66, 3, [0.9, 0.9, 0.86], 0.016);
+      const be = [0.36, 0.52, 0.2]; aPuff(b, 0, 0.68, 0, 0.19, 1.3, be, R, 0.3, 0.6, 1.3); aPuff(b, 0.06, 0.52, 0.04, 0.14, 1.1, sh(be, 1.08), R, 0.25, 0.6, 1.3, -0.4);
     }
-    API.ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return b.geometry();
   }
   let spaATex = null;
   function spaAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the braking boards 300-100 m, DRS, the corner names, banners, the game's sponsors (boards on the rails)
@@ -99,10 +98,10 @@
     // road's height; lane centre + 3.5 lane + 9 apron + 7.2 garages + 2.3), easing into the landscape beyond; the same behind the walls the track
     // sets itself (def.walls: the support pit lane and its garages, out to 30 m from the centre line). (nrH calls it right after its nrNear: NRN
     // holds the nearest sample, the lateral offset and the road's height there)
-    { const PP = def.pit, WL = def.walls || [];
+    { const PP = def.pit, WL = def.walls || [], PJ = PP ? T.pitJ() : null;
       P.pad = (x, z, h) => { const i = NRN.i; if (i < 0) return h;
         const lat = NRN.lat, hn = NRN.hn; let d = i * ds - sStart; d = ((d % L) + L) % L; if (d > L / 2) d -= L;
-        if (PP && lat > 0 && d >= PP[1] - 12 && d <= PP[2] + 12) { const p = T.pitAt(i * ds), reach = (p ? p.o : w + 3.6) + 22;
+        if (PJ && lat > 0 && d >= PJ.a - 12 && d <= PJ.b + 12) { const p = T.pitAt(i * ds), reach = (p ? p.o : w + 3.6) + 22;   // (PJ: with the deceleration and acceleration lanes)
           return lat < reach ? hn - 0.06 : lat < reach + 14 ? lerp(hn - 0.06, h, sstep(reach, reach + 14, lat)) : h; }
         for (const [a, b, sd] of WL) { if (lat * sd <= 0) continue;
           const f = Math.min(sstep(a - 30, a - 10, d), sstep(b + 50, b + 30, d)) * (1 - sstep(30, 44, lat * sd));
@@ -155,6 +154,7 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // inside of every bend, outside in the tighter ones
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0; if (inside || Math.abs(k) > 1 / 70) kerb[side2(side)][i] = 1; } }
+    pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
@@ -256,7 +256,7 @@
     for (const c of T.corners) { if (c.sev < 2) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 10; k <= i1c + 14; k++) { const ii = ((k % N) + N) % N; if ((si ? T.gravR : T.gravL)[ii]) tyreOn[si][ii] = 1; } }
     const kindAt = (i, side) => {   // -1 none (where the pit lane leaves and joins the circuit), 0 armco, 1 concrete wall, 2 tyre wall
-      if (side > 0 && def.pit) { const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }
+      if (side > 0 && def.pit) { if (pitOpen(i)) return -1; const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }   // (pitOpen: the deceleration and acceleration lanes too)
       if (tyreOn[side2(side)][i]) return 2;
       return t13(i) || wallOn[side2(side)][i] ? 1 : 0;
     };
@@ -317,7 +317,7 @@
     const DR = rng(9331);   // (the camp props' own random stream)
     const BE = [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]];   // the Belgian flag (upright stripes)
     const flagPole = (g, x, y, z, rot, cols) => { const c = Math.cos(rot), s = Math.sin(rot); cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
-      for (let n = 0; n < 3; n++) { const a = 0.3 + n * 0.5; box(g, x + c * a, y + 5.2, z + s * a, 0.5, 0.95, 0.04, rot, cols[n], null, true); } };
+      API.flags.add(x + c * 0.05, y + 6.15, z + s * 0.05, rot, { up: cols }, 1.5, 0.95); };   // (the cloth waves: js/world-zastave.js)
     const tent = (x, z, rot, col) => {   // the fans' camp, by hash: a dome tent, a ridge tent, a gazebo or a camper van; now and then a Belgian flag beside it
       const g = scen.get(x, z), y = nrGround(x, z), h = crH(x, z, 31), c = Math.cos(rot), s = Math.sin(rot), dk = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72], dark = [0.16, 0.2, 0.26];
       if (h < 0.34) nrLump(g, x, y + 0.05, z, 1.5, 0.78, col, DR, 0.05);
@@ -357,7 +357,7 @@
       for (let d = -300; d < 210; d += 14) {   // flag poles behind the wall on the grandstand side: the Belgian flag, the circuit's, the sponsors'
         const [px, pz, ii] = onSide(sAt(d), -1, 2.2), py = nrGround(px, pz), gg = scen.get(px, pz), k = Math.floor(crH(d, 3, 57) * 4); CR.avoid(px, pz, 0.45);
         if (k < 2) flagPole(gg, px, py, pz, T.hd[ii], BE);
-        else { cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); box(gg, px + T.tx[ii] * 0.6, py + 4.8, pz + T.tz[ii] * 0.6, 1.2, 0.8, 0.05, T.hd[ii], k === 2 ? [0.07, 0.18, 0.42] : fans[Math.floor(crH(d, 4, 57) * fans.length)], null, true); }
+        else { cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [k === 2 ? [0.07, 0.18, 0.42] : fans[Math.floor(crH(d, 4, 57) * fans.length)]], 1.2, 0.8); }
       }
       for (let d = -210, n = 0; d < 150; d += 30, n++) for (const side of [-1, 1]) {   // banners on the walls of the straight: EAU ROUGE, BELGIQUE · BELGIË, DÉPART · ARRIVÉE
         const s0 = sAt(d), a0 = T.idx(s0), b0 = T.idx(s0 + 3.6), [u0, v0, u1, v1] = nrAUV(BAN + 1 + (n + (side > 0 ? 1 : 0)) % 3);
@@ -418,7 +418,8 @@
     /* ---- the pit lane right of the pit straight, the crews' boxes and the pit building's garages (on the road's height) ---- */
     if (def.pit) { pitLaneScenery({ R, scen, prop: (kind, x, z, yaw, col) => out.props.push({ kind, x, z, yaw: yaw || 0, col: col || 0 }), excl: exclPush, root, out, ownTex, Y: (s) => T.elevAt(s).y, spa: true });
       for (let d = def.pit[1]; d <= def.pit[2]; d += 6) { const s = sAt(d), p = T.pitAt(s); if (!p) continue;   // no trees, no crowd from the rail to behind the garages
-        const r = (p.o + 20 - p.wall) / 2, [x, z] = onSide(s, 1, r); exclPush(x, z, r + 2); } }
+        const r = (p.o + 20 - p.wall) / 2, [x, z] = onSide(s, 1, r); exclPush(x, z, r + 2); }
+      pitExcl(exclPush); }   // (nor anything on the deceleration and acceleration lanes)
     /* ---- the support pit lane (the endurance series' pits on the way down to Eau Rouge: scenery, behind the pit wall): asphalt from the wall to the
        garages of the pit buildings off the pit straight, a white line along it; the strip between the road and the wall in concrete ---- */
     {
@@ -540,7 +541,7 @@
         exclPush(x, z, 4.5); CR.avoid(x, z, 2.4);
       }
       const scrTex = ownTex(spaScreenTex()), scrG = new GB(true);   // the big screens: across the track from the grandstands, facing them
-      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1], [6930, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source, the pit straight)
+      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source; the pit straight's is the live one, js/world-zaslon.js)
         const p = place(d0, -sg, 5.5, 5); if (!p) continue;
         const [x, z, i] = p, g = scen.get(x, z), y = nrGround(x, z), Wsc = 7.2, Hs = 4.05, y0 = y + 3.2, fx = T.nx[i] * sg, fz = T.nz[i] * sg, ux = -fz, uz = fx;
         for (const o of [-Wsc / 2 + 0.5, Wsc / 2 - 0.5]) box(g, x + ux * o - fx * 0.3, y - 0.2, z + uz * o - fz * 0.3, 0.3, y0 - y + Hs + 0.2, 0.3, Math.atan2(uz, ux), dark);
@@ -754,5 +755,6 @@
     return out;
   }
 
+  World.keep('NR', 'spa');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.spa = (scene, tex, opts) => buildSpa(scene, tex, opts);
 })();

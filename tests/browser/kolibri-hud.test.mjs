@@ -4,12 +4,12 @@
 // total yellow, the speed under it; the line under the clock under that block; nothing under the clock until there is a time; no
 // ZAVETRJE), the driving buttons (LEFT / RIGHT and BRAKE / GAS as pairs 3 px apart, as big as each other, the pedals' icons, a press that
 // tips the pedal in without changing its colour), the KOLIBRI's tyre dots (each its own colour, one on fire, a wheel off: an empty ring)
-// and ZAMENJAJ KOLO (round, over the car, its ring the time left; a tap, Enter, a pad's button), the settings (Poškodbe avtov Samo
+// and the wheel off at a real knock: the whole car on fire and KONEC IGRE (no ZAMENJAJ KOLO since 9. 11. 2026), the settings (Poškodbe avtov Samo
 // videz and Časovna tabela Zgoraj by default, Izklop · Zgoraj · Ob zemljevidu)
 //   node tests/browser/kolibri-hud.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
-const T = checker('KOLIBRI: tyres, ZAMENJAJ KOLO, the tower at the top, the driving buttons, the settings');
+const T = checker('KOLIBRI: tyres, a wheel off and the game over, the tower at the top, the driving buttons, the settings');
 const srv = await serve(), browser = await launch();
 const URL = srv.base + '/index.html?proga=bathurst&nacin=dirka&avto=kolibri&t=20';
 const ov = (a, b) => a && b && a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
@@ -50,42 +50,36 @@ async function screen(name, vp, touch) {
   // the pedal pressed: tipped in, its colour as it was
   const press = await page.evaluate(async () => { const e = document.getElementById('c-gas'), c0 = getComputedStyle(e).backgroundColor, b0 = getComputedStyle(e).borderColor; e.classList.add('on'); await new Promise(r => setTimeout(r, 200)); const cs = getComputedStyle(e), out = { t: cs.transform, c: cs.backgroundColor, b: cs.borderColor, c0, b0, d: cs.transitionDuration }; e.classList.remove('on'); out.d1 = getComputedStyle(e).transitionDuration; return out; });
   T.check('a pedal pressed: tipped in at its foot, sunk and smaller, its colour as it was (0.08 s down, 0.12 s up)', press.t !== 'none' && press.c === press.c0 && press.b === press.b0 && /0\.08s/.test(press.d) && /0\.12s/.test(press.d1), JSON.stringify(press));
-  // the tyres: each dot its own colour; one on fire; ZAMENJAJ KOLO
+  // the tyres: each dot its own colour; one on fire; its wheel off: the game over
   const dots = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.w = [0, 0.24, 0.5, 0.9]; P.kt.d = [0, 0, 0, 0]; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
     return [...document.querySelectorAll('#h-tyre .dts i')].map(i => getComputedStyle(i).backgroundColor); });
   T.check('the KOLIBRI\'s dots: each tyre its own colour (new green, worn yellow to orange, never red from the wear alone)', (() => { const c = dots.map(x => (x.match(/\d+/g) || []).map(Number)); return c[0][1] > 200 && c[0][0] < 80 && new Set(dots).size === 4 && c.every(v => v[1] > 90) && c[1][0] < c[2][0] && c[2][1] > c[3][1]; })(), dots.join(' | '));
-  const sw = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.d = [0.2, 1, 0, 0]; P.kt.hot = 1; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
-    const hot = document.querySelectorAll('#h-tyre .dts i')[1].className; Core.applyDamage(P, 0.009, 0, 0.7); g.sim(0.3, true); await new Promise(r => requestAnimationFrame(r)); await new Promise(r => requestAnimationFrame(r));
-    const W = document.getElementById('wheel-swap'), B = document.getElementById('ws-btn'), r = B.getBoundingClientRect(), m = document.getElementById('h-map').getBoundingClientRect(), lb = document.getElementById('ws-l').getBoundingClientRect();
-    const ctl = ['c-left', 'c-right', 'c-brake', 'c-gas'].map(id => document.getElementById(id).getBoundingClientRect()), o = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-    return { hot, miss: document.querySelectorAll('#h-tyre .dts i')[1].className, on: W.classList.contains('on') && W.classList.contains('round'), round: Math.abs(r.width - r.height) < 1, p: parseFloat(B.style.getPropertyValue('--p')), clear: !o(r, m) && !o(lb, m) && !ctl.some(c => o(r, c) || o(lb, c)), car: r.bottom < innerHeight * 0.6 }; });
-  T.check('a tyre on fire: its dot light red, blinking; its wheel off at a real knock: an empty ring', sw.hot === 'hot' && sw.miss === 'miss', `${sw.hot} -> ${sw.miss}`);
-  T.check('ZAMENJAJ KOLO: round, over the car, its ring the time left, clear of the map and the buttons', sw.on && sw.round && sw.p > 50 && sw.p < 100 && sw.clear && sw.car, JSON.stringify(sw));
+  const hot = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.d = [0.2, 1, 0, 0]; P.kt.hot = 1; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
+    return document.querySelectorAll('#h-tyre .dts i')[1].className; });
   await page.screenshot({ path: 'test-results/kolibri-hud-upright.png' }).catch(() => {});
-  const tap = await page.evaluate(async () => { const B = document.getElementById('ws-btn'); B.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); await new Promise(r => requestAnimationFrame(r)); const P = window.__game.race.player; return { wl: P.wreck.wl, on: document.getElementById('wheel-swap').classList.contains('on'), dot: document.querySelectorAll('#h-tyre .dts i')[1].className }; });
-  T.check('a tap on it: the wheel on again at once, a new tyre (its dot not empty), the button gone', tap.wl === 0 && !tap.on && tap.dot === '', JSON.stringify(tap));
+  const off = await page.evaluate(async () => { const g = window.__game, P = g.race.player, fr = () => new Promise(r => requestAnimationFrame(r)); Core.applyDamage(P, 0.009, 0, 0.7); g.sim(0.05, true); await fr(); await fr();
+    const out = { miss: document.querySelectorAll('#h-tyre .dts i')[1].className, wl: P.wreck.wl, burn: P.wreck.rule.burn, fire: Render.burning(P), btn: !!document.getElementById('wheel-swap') };
+    g.sim(5, true); await fr(); await fr(); return Object.assign(out, { over: g.screen === 'over' && document.getElementById('s-over').classList.contains('show'), n: P.wreck.nL, sub: document.getElementById('over-sub').textContent }); });
+  T.check('a tyre on fire: its dot light red, blinking; its wheel off at a real knock: an empty ring', hot === 'hot' && off.miss === 'miss', `${hot} -> ${off.miss}`);
+  T.check('its wheel off: the whole car on fire at once, no ZAMENJAJ KOLO; the car stops: KONEC IGRE (a wheel came off)', off.wl === 2 && off.burn === 2 && off.fire && !off.btn && off.over && off.n === 1 && /^(Odpadlo je kolo|A wheel came off)/.test(off.sub), JSON.stringify(off));
   T.check('upright: no page errors', !errors.length, errors.join(' | '));
   await ctx.close();
 }
 // 2. on its side
 {
   const { page, errors, ctx } = await screen('on its side 640 x 360', { width: 640, height: 360 }, true);
-  const sw = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.d[2] = 1; P.kt.hot = 2; Core.applyDamage(P, 0.009, -1, 0); g.sim(0.2, true); await new Promise(r => requestAnimationFrame(r)); await new Promise(r => requestAnimationFrame(r));
-    const r = document.getElementById('ws-btn').getBoundingClientRect(), lb = document.getElementById('ws-l').getBoundingClientRect(), o = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-    const others = ['h-map', 'c-left', 'c-right', 'c-brake', 'c-gas', 'h-main', 'tw-strip', 'h-times'].map(id => document.getElementById(id).getBoundingClientRect());
-    return { on: document.getElementById('wheel-swap').classList.contains('round'), clear: !others.some(e => o(r, e) || o(lb, e)), inside: lb.bottom < innerHeight }; });
-  T.check('on its side: ZAMENJAJ KOLO on the wide screen, over nothing (the map, the buttons, the top left, the tower, the clock)', sw.on && sw.clear && sw.inside, JSON.stringify(sw));
   await page.screenshot({ path: 'test-results/kolibri-hud-side.png' }).catch(() => {});
+  const sw = await page.evaluate(async () => { const g = window.__game, P = g.race.player, fr = () => new Promise(r => requestAnimationFrame(r)); P.kt.d[2] = 1; P.kt.hot = 2; Core.applyDamage(P, 0.009, -1, 0); g.sim(5, true); await fr(); await fr();
+    const p = document.querySelector('#s-over .panel').getBoundingClientRect();
+    return { over: g.screen === 'over', n: P.wreck.nL, inView: p.top >= 0 && p.left >= 0 && p.bottom <= innerHeight + 0.5 && p.right <= innerWidth + 0.5 }; });
+  T.check('on its side: a burning tyre\'s wheel off at a real knock: KONEC IGRE, its panel all on the screen', sw.over && sw.n === 1 && sw.inView, JSON.stringify(sw));
   T.check('on its side: no page errors', !errors.length, errors.join(' | '));
   await ctx.close();
 }
-// 3. a computer: Enter changes the wheel; the tower in the middle
+// 3. a computer: the tower in the middle
 for (const vp of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
   const { page, errors, ctx, L } = await screen(`a computer ${vp.width} x ${vp.height}`, vp, false);
-  const k = await page.evaluate(async () => { const g = window.__game, P = g.race.player; P.kt.d[0] = 1; P.kt.hot = 0; Core.applyDamage(P, 0.009, 1, 0); g.sim(0.1, true); await new Promise(r => requestAnimationFrame(r)); return document.getElementById('wheel-swap').classList.contains('on'); });
-  await page.keyboard.press('Enter');
-  const after = await page.evaluate(() => ({ wl: window.__game.race.player.wreck.wl, on: document.getElementById('wheel-swap').classList.contains('on') }));
-  T.check(`a computer ${vp.width} x ${vp.height}: Enter changes the wheel; the tower in the middle of the top`, k && after.wl === 0 && !after.on && Math.abs((L.strip.left + L.strip.right) / 2 - vp.width / 2) < 2, JSON.stringify(after));
+  T.check(`a computer ${vp.width} x ${vp.height}: the tower in the middle of the top`, Math.abs((L.strip.left + L.strip.right) / 2 - vp.width / 2) < 2, `${Math.round(L.strip.left)}-${Math.round(L.strip.right)}`);
   T.check(`a computer ${vp.width} x ${vp.height}: no page errors`, !errors.length, errors.join(' | '));
   await ctx.close();
 }

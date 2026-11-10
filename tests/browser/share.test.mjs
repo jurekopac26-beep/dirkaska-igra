@@ -6,7 +6,7 @@
 // the second phone (asked first): after the game starts again it has the first one's records, stats, career and ghost.
 //   node tests/browser/share.test.mjs
 import fs from 'node:fs';
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
 const T = checker('share');
 const srv = await serve();
@@ -18,8 +18,7 @@ try {
 
   // 1. a race to the line: the numbers, the first achievement
   await startTrack(pa, 'jezero');
-  await pa.evaluate(() => { const g = window.__game; g.pause(); for (let k = 0; k < 300 && g.phase !== 'done'; k++) g.sim(2, true); if (g.phase !== 'done') g.resume(); });
-  await pa.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 180000 });
+  await driveToResults(pa);   // (on autopilot; stuck against the barrier, put back on the road: lib.mjs)
   const s1 = await pa.evaluate(() => ({ st: window.__game.stats, sub: document.getElementById('res-sub').textContent }));
   T.check('a race counted: 1 race, the km (a 5.3 km race), the time, the track; "Prvi cilj" unlocked, on the results', s1.st.races === 1 && s1.st.km > 4.5 && s1.st.km < 8 && s1.st.time > 60 && s1.st.tracks.jezero === 1 && s1.st.ach.first > 0 && /Novi dosežki: .*Prvi cilj/.test(s1.sub),
     JSON.stringify({ races: s1.st.races, km: s1.st.km, time: s1.st.time, ach: Object.keys(s1.st.ach), sub: s1.sub }));
@@ -57,9 +56,13 @@ try {
   const g1 = await pb.evaluate(() => ({ track: window.__game.S.track, hash: location.hash, toast: document.getElementById('toast').textContent, stored: JSON.parse(localStorage.getItem('tdgp-fghost-jezero')) }));
   T.check('the link opened: the friend\'s ghost kept for Jezero Ring, the track chosen, a message; the address cleaned', g1.track === 'jezero' && g1.hash === '' && /Duh igralca Ana na progi Jezero Ring/.test(g1.toast) && g1.stored.name === 'Ana' && g1.stored.ghost.lap === 1, JSON.stringify({ track: g1.track, hash: g1.hash, toast: g1.toast }));
   await startTrack(pb, 'jezero');
+  // (the race paused all along: it goes on only in the autopilot's steps, the two frames after each drawn with the race still, the ghost
+  // where its run is at that moment; run in those frames, the race had the car with no one at the wheel, on a slow machine up to a
+  // fifth of a second a step, and a car driven into a wall stays there: the player's car is never put back on the road)
   const seen = await pb.evaluate(async () => { const g = window.__game, out = []; g.pause();
-    for (let k = 0; k < 90; k++) { g.sim(1, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); g.pause(); const f = Render.ghostF; out.push({ lap: g.race.player.lap, vis: !!(f && f.visible), tag: f && f.tag }); if (out.filter(o => o.vis).length > 5) break; }
-    return { gf: g.ghostF, vis: out.filter(o => o.vis).length, lap1: out.filter(o => o.lap === 1 && o.vis).length, tag: (out.find(o => o.tag) || {}).tag }; });
+    for (let k = 0; k < 150 && out.filter(o => o.vis).length <= 5; k++) { g.sim(1, true); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const f = Render.ghostF; out.push({ lap: g.race.player.lap, vis: !!(f && f.visible), tag: f && f.tag }); }
+    const P = g.race.player;
+    return { gf: g.ghostF, vis: out.filter(o => o.vis).length, lap1: out.filter(o => o.lap === 1 && o.vis).length, tag: (out.find(o => o.tag) || {}).tag, n: out.length, lap: P.lap, s: Math.round(P.q.s) }; });
   T.check('in the race: the friend\'s ghost drives on the flying laps (from lap 2), orange with "Ana" and the lap time over it', seen.gf && seen.gf.name === 'Ana' && seen.gf.lap && seen.vis > 3 && seen.lap1 === 0 && /^Ana \d:\d\d\.\d{3}$/.test(seen.tag || ''), JSON.stringify(seen));
   await pb.evaluate(() => { const g = window.__game; g.resume(); g.onAction('to-title'); });
 

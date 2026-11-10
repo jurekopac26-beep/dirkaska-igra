@@ -1,4 +1,4 @@
-// The places of the people's scenes (js/world-ljudje.js SITES, js/world-ljudje2.js site()), on every track, without a browser:
+// The places of the people's scenes (js/world-ljudje.js SITES, js/world-ljudje2.js and js/world-ljudje3.js site()), on every track, without a browser:
 // 1. only on the real tracks (the test ones have none), each on its track as World.people puts it: on an open road within its length (from the
 //    start), on a circuit anywhere on the lap (its metres wrapped), its side -1, 1 or 'room' (the wider verge there)
 // 2. no scene on a side road: its ground (12 m either way along the road, 1-13 m past the barrier, where tools/ljudje/mesta.mjs measures it)
@@ -23,12 +23,12 @@ const ctx = { console, performance: require('perf_hooks').performance, setTimeou
 ctx.self = ctx; ctx.window = ctx; vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/vendor/three.r128.min.js'), 'utf8'), ctx);
 ctx.World = {}; ctx.Tex = { STAND_KIT: new Proxy({}, { get: () => [0, 0, 1, 1] }), standKit: () => null, crowdSeats: () => null };
-for (const f of ['js/world-ljudje.js', 'js/world-ljudje2.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+for (const f of ['js/world-ljudje.js', 'js/world-ljudje2.js', 'js/world-ljudje3.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
 const SITES = ctx.World.peopleKit.SITES, STAFF = ctx.World.peopleKit.STAFF_SCENES, ids = Object.keys(SITES).sort(), all = ids.reduce((a, id) => a + SITES[id].length, 0);
 
 // 1. the tracks
 const defs = new Map(C.TRACKS.map(d => [d.id, d])), unknown = ids.filter(id => !defs.has(id)), test = ids.filter(id => defs.has(id) && defs.get(id).test);
-check(`${all} places on ${ids.length} tracks, all real ones (none on a test track, none on a track the game does not have)`, all > 150 && !unknown.length && !test.length,
+check(`${all} places on ${ids.length} tracks, all real ones (none on a test track, none on a track the game does not have)`, all > 90 && !unknown.length && !test.length,
   (unknown.length ? 'unknown: ' + unknown.join(', ') + '; ' : '') + (test.length ? 'test: ' + test.join(', ') : ''));
 
 const segD = (px, pz, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };

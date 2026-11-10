@@ -4,7 +4,22 @@
 const crypto = require('crypto');
 
 const DT = 1 / 120;
-const trackIds = (C) => C.TRACKS.map(d => d.id);   // every track the game has (a new track file is tested automatically)
+// PROGE=seoul,spa: only these of the real tracks (GitHub's short round of a pull request that changes only tracks: tests/lib/krog.js,
+// .github/workflows/tests.yml); without it every one. A name that is no real track of the game is an error (no test passes having run on
+// nothing), and so is --update with PROGE: the references would keep only these tracks, the others' lost
+const progeEnv = () => (process.env.PROGE || '').split(',').map(s => s.trim()).filter(Boolean);
+function izbrane(ids) {
+  const P = progeEnv();
+  if (!P.length) return ids;
+  if (process.argv.includes('--update')) throw new Error(`PROGE=${P.join(',')} with --update: the references would keep only these tracks (update without PROGE)`);
+  const tuje = P.filter(id => !ids.includes(id));
+  if (tuje.length) throw new Error('PROGE: not a real track of the game: ' + tuje.join(', '));
+  return ids.filter(id => P.includes(id));
+}
+// a check's least number of tracks (the whole list came back): with PROGE exactly as many as named (izbrane: each a real track)
+const najmanj = (n) => progeEnv().length || n;
+const trackIds = (C) => izbrane(C.TRACKS.filter(d => !d.test).map(d => d.id));   // every real track the game has (a new track file is tested
+// automatically; PROGE: only those); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
 const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
@@ -52,8 +67,8 @@ const SETUPS = {
 // (the knocks of the versions, Trki med avti: Simulacija by default, kCollide in core.js, the pack moves otherwise again; from the old times these only grazed or lost
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
-// costs: Uncompahgre's electric car 4, Newcastle's truck 4)
-const CRASH_AT = { katu: 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
+// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off)
+const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
@@ -114,4 +129,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

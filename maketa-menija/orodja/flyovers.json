@@ -3,6 +3,12 @@
   "vrsic",
   {
    "kbps": 900,
+   "speed": 400,
+   "back": 520,
+   "up": 330,
+   "ahead": 260,
+   "fogNear": 900,
+   "fogFar": 3400,
    "places": [
     {
      "n": "Lake Jasna",
@@ -28,8 +34,7 @@
    "alt": [
     810,
     1611
-   ],
-   "season": "autumn"
+   ]
   }
  ],
  [
@@ -63,6 +68,12 @@
   "ouninpohja",
   {
    "kbps": 900,
+   "speed": 380,
+   "back": 420,
+   "up": 270,
+   "ahead": 210,
+   "fogNear": 760,
+   "fogFar": 2900,
    "places": [
     {
      "n": "Lake Naarajärvi",
@@ -171,6 +182,12 @@
   "suzuka",
   {
    "kbps": 850,
+   "speed": 230,
+   "back": 300,
+   "up": 190,
+   "ahead": 150,
+   "fogNear": 640,
+   "fogFar": 2500,
    "places": []
   }
  ],
@@ -250,6 +267,12 @@
   "baldy",
   {
    "kbps": 450,
+   "speed": 260,
+   "back": 338,
+   "up": 213,
+   "ahead": 169,
+   "fogNear": 728,
+   "fogFar": 2808,
    "places": [
     {
      "n": "San Antonio Creek",
@@ -278,6 +301,12 @@
   "beartooth",
   {
    "kbps": 450,
+   "speed": 175,
+   "back": 228,
+   "up": 144,
+   "ahead": 114,
+   "fogNear": 490,
+   "fogFar": 1890,
    "places": [
     {
      "n": "Rock Creek Valley",
@@ -298,6 +327,12 @@
   "bigsur",
   {
    "kbps": 450,
+   "speed": 140,
+   "back": 182,
+   "up": 115,
+   "ahead": 91,
+   "fogNear": 392,
+   "fogFar": 1512,
    "places": [
     {
      "n": "Rocky Creek Bridge",
@@ -322,6 +357,12 @@
   "detroit",
   {
    "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
    "places": []
   }
  ],
@@ -329,6 +370,12 @@
   "maunakea",
   {
    "kbps": 450,
+   "speed": 205,
+   "back": 266,
+   "up": 168,
+   "ahead": 133,
+   "fogNear": 574,
+   "fogFar": 2214,
    "places": [
     {
      "n": "Lake Waiau",
@@ -353,6 +400,12 @@
   "moki",
   {
    "kbps": 450,
+   "speed": 175,
+   "back": 228,
+   "up": 144,
+   "ahead": 114,
+   "fogNear": 490,
+   "fogFar": 1890,
    "places": [
     {
      "n": "Pavement Ends",
@@ -377,6 +430,12 @@
   "longford",
   {
    "kbps": 450,
+   "speed": 251,
+   "back": 326,
+   "up": 206,
+   "ahead": 163,
+   "fogNear": 703,
+   "fogFar": 2711,
    "places": [
     {
      "n": "Viaduct",
@@ -401,6 +460,12 @@
   "newcastle",
   {
    "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
    "places": [
     {
      "n": "Turn 2",
@@ -421,6 +486,12 @@
   "townsville",
   {
    "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
    "places": [
     {
      "n": "Turn 2",
@@ -465,6 +536,12 @@
   "sani",
   {
    "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 146,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
    "places": [
     {
      "n": "Hairpin 1",
@@ -489,6 +566,12 @@
   "marrakesh",
   {
    "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
    "places": [
     {
      "n": "Turn 1",
@@ -532,6 +615,12 @@
   "toronto",
   {
    "kbps": 450,
+   "speed": 104,
+   "back": 135,
+   "up": 85,
+   "ahead": 68,
+   "fogNear": 291,
+   "fogFar": 1123,
    "places": [
     {
      "n": "Turn 1",
@@ -553,6 +642,12 @@
   "troisrivieres",
   {
    "kbps": 450,
+   "speed": 87,
+   "back": 113,
+   "up": 71,
+   "ahead": 57,
+   "fogNear": 244,
+   "fogFar": 940,
    "places": [
     {
      "n": "Turn 3",
@@ -573,6 +668,12 @@
   "greatalpine",
   {
    "kbps": 450,
+   "speed": 286,
+   "back": 372,
+   "up": 235,
+   "ahead": 186,
+   "fogNear": 801,
+   "fogFar": 3089,
    "places": [
     {
      "n": "Saint Patricks Creek",
@@ -601,6 +702,12 @@
   "hotham",
   {
    "kbps": 450,
+   "speed": 283,
+   "back": 368,
+   "up": 232,
+   "ahead": 184,
+   "fogNear": 792,
+   "fogFar": 3056,
    "places": [
     {
      "n": "Mount Blowhard",
@@ -629,6 +736,12 @@
   "monterey",
   {
    "kbps": 450,
+   "speed": 128,
+   "back": 166,
+   "up": 105,
+   "ahead": 83,
+   "fogNear": 358,
+   "fogFar": 1382,
    "places": [
     {
      "n": "Turn 2",
@@ -649,6 +762,12 @@
   "mulholland",
   {
    "kbps": 450,
+   "speed": 149,
+   "back": 194,
+   "up": 122,
+   "ahead": 97,
+   "fogNear": 417,
+   "fogFar": 1609,
    "places": [
     {
      "n": "Elephant Rock",
@@ -677,6 +796,12 @@
   "palomar",
   {
    "kbps": 450,
+   "speed": 286,
+   "back": 372,
+   "up": 234,
+   "ahead": 186,
+   "fogNear": 801,
+   "fogFar": 3089,
    "places": [
     {
      "n": "Hairpin 1",
@@ -705,6 +830,12 @@
   "riverside",
   {
    "kbps": 450,
+   "speed": 188,
+   "back": 244,
+   "up": 154,
+   "ahead": 122,
+   "fogNear": 526,
+   "fogFar": 2030,
    "places": [
     {
      "n": "Turn 1",
@@ -729,6 +860,12 @@
   "uncompahgre",
   {
    "kbps": 450,
+   "speed": 177,
+   "back": 230,
+   "up": 145,
+   "ahead": 115,
+   "fogNear": 496,
+   "fogFar": 1912,
    "places": [
     {
      "n": "Tunnel",
@@ -757,6 +894,12 @@
   "iroha",
   {
    "kbps": 450,
+   "speed": 178,
+   "back": 231,
+   "up": 145,
+   "ahead": 116,
+   "fogNear": 498,
+   "fogFar": 1922,
    "places": [
     {
      "n": "Curve ほ (5)",
@@ -913,6 +1056,12 @@
   "bangsaen",
   {
    "kbps": 450,
+   "speed": 128,
+   "back": 166,
+   "up": 105,
+   "ahead": 83,
+   "fogNear": 358,
+   "fogFar": 1382,
    "places": [
     {
      "n": "Turn 3 · Khao Lam",
