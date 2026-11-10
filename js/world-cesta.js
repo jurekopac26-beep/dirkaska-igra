@@ -95,6 +95,7 @@
     chapman:   P(CESTA, { prah: [0.66, 0.60, 0.49], sPrah: 0.95, kOdsek: 0.055, barva: 0.5, kRobV: 0.3 }),   // (sand off the sandstone cliffs)
     balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7, kRobV: 0.85 }),   // (grit after every winter, the frost's patches)
     caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
+    pikes:     P(CESTA, { prah: [0.62, 0.53, 0.45], kPrah: 0.5, kOdsek: 0.05, kOlje: 0.08, kKol: 0, barva: 0, rob: 0.25, robV: 0.6, kRobV: 0.4 }),   // (the builder's own wheel tracks, patches and faded paint, all in the road's mesh; the granite's pink grit)
   };
 
   /* ---- the noise both shaders read: one 128 x 128 RGBA tile (it wraps both ways, with mipmaps), made once, seeded (the same on every
@@ -170,7 +171,8 @@
      shadows, the rain's darker road and the sheen all fall on it as on the builder's). Road coordinates from the UVs: s = v * 8 m along,
      o = u * 8 - half width across. In the rain the dust darkens with the road and more (ceWet: the material's colour, which Render's
      applyRoad darkens, against its dry colour, uCeD.w): wet dust is dark, the band all but gone.
-     V.rob: the edge (an open road). The asphalt ends in a broken line (EDGE: how far in from the mesh's edge it is gone,
+     V.paint: the builder's road mesh holds its paint, crack seals and patches too (Pikes Peak: its vPaint, 0 on the asphalt): only the
+     asphalt wears. V.rob: the edge (an open road). The asphalt ends in a broken line (EDGE: how far in from the mesh's edge it is gone,
      ceE): nibbled all along within the room outside the edge line (uCeE.x m), bites a hand or two deep and a metre or so long, more of
      them on some stretches than on others, small teeth between; and here and there, on the worse stretches, a deep break through the
      edge line (to uCeF.x m more; the line breaks off with it: the paint's shader cuts it by the same EDGE). Outside it lies the
@@ -206,21 +208,21 @@
   float ceWt = abs( ceLane ) - 0.8;
   ceK *= 1.0 - uCeA.w * ( 1.0 + 0.6 * ceP.g ) * exp( - ceLane * ceLane / 0.22 ) * ( 0.35 + 0.65 * ceN2.a );
   ceK *= 1.0 + uCeC.w * exp( - ceWt * ceWt / 0.07 ) * ( 0.4 + 0.6 * ceN2.r );
-  diffuseColor.rgb *= ceK;
+${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= mix( 1.0, ceK, ceA0 );' : '  diffuseColor.rgb *= ceK;'}
   float ceDw = uCeC.x * ( 0.4 + 1.1 * ceN2.a ) * mix( 1.0, clamp( ( ceW - sign( ceO ) * ceRl ) / ceW, 0.35, 2.2 ), uCeA.y );
   float ceDu = 1.0 - smoothstep( 0.0, ceDw, ceW - ceAo );
   ceDu *= 0.35 + 0.65 * ceDu;
   ceDu = max( ceDu, uCeC.y * exp( - ceO * ceO / 0.3 ) * ceN2.a );
   ceDu *= 0.45 + 0.55 * ceN3.g;
   float ceWet = dot( diffuse, vec3( 1.0 ) ) * uCeD.w;
-  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu );${V.rob ? EDGE + `
+  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu${V.paint ? ' * ceA0' : ''} );${V.rob ? EDGE + `
   float ceEs = 0.006 + 0.0016 * vCeZ;
   float ceSh = ( 1.0 - smoothstep( ceE - ceEs, ceE + ceEs, ceEd ) ) * step( 0.03, ceEm );
   diffuseColor.rgb *= 1.0 - 0.3 * ceEm * ( 1.0 - smoothstep( ceE, ceE + 0.05, ceEd ) );
   diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( uCeM, vec2( - ceEd * uCeE.z, ceS * uCeE.w ) ).rgb * ceQ.rgb * ( uCeE.y * ceWet ), ceSh );` : ''}
 }`;
   function roadMat(base, T, cfg, P, V) {
-    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
+    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + (V.paint ? 'P' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
     const U = { uCeN: { value: noiseTex() }, uCeP: { value: P.tex }, uCeA: { value: new THREE.Vector4(1 / T.len, dirka, cfg.kPrah, cfg.kOlje) },
       uCeB: { value: new THREE.Vector4(cfg.kMadez, cfg.kOdsek, cfg.kLise, cfg.kProge || 0) }, uCeC: { value: new THREE.Vector4(cfg.sPrah, dirka ? 0 : 0.35, dirka ? 0 : 0.2, cfg.kKol || 0) }, uCeD: { value: new THREE.Vector4(cfg.prah[0], cfg.prah[1], cfg.prah[2], 1 / Math.max(0.01, base.color.r + base.color.g + base.color.b)) } };
     if (V.rob) { U.uCeM = { value: V.rob.tex }; U.uCeE = { value: new THREE.Vector4(cfg.rob, TMAX, V.rob.uv[0], V.rob.uv[1]) };
@@ -284,19 +286,21 @@
       for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const c = grid.get(key(cx + a, cz + b)); if (!c) continue; for (const i of c) { const dx = x - T.px[i], dz = z - T.pz[i], dy = y - HY(i), d = dx * dx + dz * dz + 4 * dy * dy; if (d < bd) { bd = d; best = i; } } }
       return best; };
     const rows = new Array(N);   // (the road's surface as the builder laid it, per sample: [offset, height, offset, height ...]; a banked bend's too)
-    const isRoad = (g) => {   // the builder's road UVs: every vertex where its UV says
+    // the builder's road UVs: nearly every vertex where its UV says, between the samples too (Pikes Peak's mesh holds its patches, crack
+    // seals and paint, draped between the rows; a chunk that holds a side road's mouth has that street's own UVs on it: Chapman's, Los Caracoles')
+    const isRoad = (g) => {
       const P = g.attributes.position, UV = g.attributes.uv; if (!P || !UV || P.count < 4) return false;
-      const st = Math.max(1, Math.floor(P.count / 24));
+      const st = Math.max(1, Math.floor(P.count / 48)); let n = 0, ok = 0;
       for (let k = 0; k < P.count; k += st) {
-        const f = UV.getY(k) * TILE / ds, i0 = Math.round(f); if (Math.abs(f - i0) > 0.02) return false;
-        const i = open ? i0 : ((i0 % N) + N) % N; if (i < 0 || i >= N) return false;
-        const oo = UV.getX(k) * TILE - T.wAt(i), dx = P.getX(k) - (T.px[i] + T.nx[i] * oo), dz = P.getZ(k) - (T.pz[i] + T.nz[i] * oo);
-        if (dx * dx + dz * dz > 0.01) return false;
+        n++; const f = UV.getY(k) * TILE / ds, i0 = Math.floor(f + 1e-4), t = Math.max(0, f - i0), i = open ? i0 : ((i0 % N) + N) % N, j = open ? i + 1 : (i + 1) % N; if (i < 0 || i >= N || (t > 0.02 && j >= N)) continue;
+        const q = t > 0.02 ? j : i, tt = t > 0.02 ? t : 0, L = (A) => A[i] + (A[q] - A[i]) * tt, oo = UV.getX(k) * TILE - lerp(T.wAt(i), T.wAt(q), tt), dx = P.getX(k) - (L(T.px) + L(T.nx) * oo), dz = P.getZ(k) - (L(T.pz) + L(T.nz) * oo);
+        if (dx * dx + dz * dz <= 0.01) ok++;
       }
-      return true; };
-    const addRows = (g) => { const P = g.attributes.position, UV = g.attributes.uv;
-      for (let k = 0; k < P.count; k++) { const i0 = Math.round(UV.getY(k) * TILE / ds), i = open ? i0 : ((i0 % N) + N) % N; if (i < 0 || i >= N) continue;
+      return n >= 4 && ok >= 0.8 * n; };
+    const addRows = (g) => { const P = g.attributes.position, UV = g.attributes.uv, PA = g.attributes.paint;
+      for (let k = 0; k < P.count; k++) { const f = UV.getY(k) * TILE / ds, i0 = Math.round(f), i = open ? i0 : ((i0 % N) + N) % N; if (i < 0 || i >= N || Math.abs(f - i0) > 0.02 || (PA && PA.getX(k) > 0.01)) continue;   // (the asphalt's own rows)
         const oo = UV.getX(k) * TILE - T.wAt(i), y = P.getY(k), r = rows[i] || (rows[i] = []); let q = 0;
+        if (Math.abs(oo) > T.wAt(i) + 0.01) continue;
         while (q < r.length && Math.abs(r[q] - oo) > 0.004) q += 2;
         if (q === r.length) r.push(oo, y); else if (y < r[q + 1]) r[q + 1] = y; } };   // (a patch laid over the road in the same mesh: the lower one is the road)
     const roadY = (i, oo) => { const r = rows[i]; if (!r) return T.hy[i] + 0.02;
@@ -397,7 +401,7 @@
       if (!open && !mid && hi - lo > len / 2) for (let k = 0; k < n; k++) if (A[k * 2] < len / 2) A[k * 2] += len;   // (a chunk across the lap's seam: its metres run on, as the road's UVs do)
       g.setAttribute('ceSO', new THREE.BufferAttribute(A, 2));
     };
-    const V = { rob: cfg.rob > 0 && tex.makadam ? robData() : null };
+    const V = { paint: road.some(m => !!m.geometry.attributes.paint), rob: cfg.rob > 0 && tex.makadam ? robData() : null };
     const P = profil(T, cfg, seed, V.rob), rm = roadMat(o.asphaltMat, T, cfg, P, V); if (o.ownTex) o.ownTex.push(P.tex);
     for (const m of road) { m.material = rm; info.asfalt++; }
     for (const m of cand) {
