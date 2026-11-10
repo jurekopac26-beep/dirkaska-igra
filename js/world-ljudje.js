@@ -147,7 +147,7 @@
     B.tri(col, BL, L, nBL, ins); B.tri(col, L, nFL, nBL, ins); B.tri(col, L, FL, nFL, ins);
     return B;
   }
-  const all = (c) => () => c, BACK6 = (j) => j >= 3, SIDE6 = (j) => j === 0 || j === 2;
+  const all = (c) => () => c, BACK6 = (j) => j >= 3;
   const COVER = new Set(['cap', 'beanie', 'helmet', 'hard', 'fire', 'scarf', 'veil', 'bucket', 'straw', 'flat', 'police']);   // (hats that hide the crown: no crown under them; a new hat of HATX that does: its name here)
   const HATY = { cap: 0.218, bucket: 0.21, straw: 0.229, flat: 0.232 };   // (a hat whose lower edge is above 0.19: the skull's band goes up to it)
   function person(o) {
@@ -190,16 +190,16 @@
       if (o.belt) { const rr = (y, k) => ({ y, w: W.w * k + 0.004, d: W.d * k + 0.004, z: W.z }); loft(B, [rr(-0.04, 1.06), rr(0.02, 1.07)], 6, all(o.belt)).to(torso); }
     }
 
-    // the head (head frame): the skull's band from the jaw up, the crown a fan; hair on the top and at the back (long: also round the face)
+    // the head (head frame): the skull's band from the jaw up, the crown a fan; hair on the top and at the back (the cheeks stay skin for every hair: a head seen from the side keeps its face)
     { if (kid) head.scale.setScalar(1.26);
       const nw = o.hat === 'scarf' ? 0.93 : 1;   // (a scarf's sides hug the head)
       const capLite = lite && o.hat === 'cap', cover = !capLite && COVER.has(o.hat), hy = cover && HATY[o.hat] || 0.19;
       const Hb = lite ? { y: 0.03, w: 0.103 * nw, d: 0.113, z: 0.004, a: 0.58 } : { y: 0.015, w: 0.094 * nw, d: 0.106, z: 0.01, a: 0.62 };   // (the jaw a little narrower than the skull)
       const Hc = !cover ? { y: 0.19, w: 0.105, d: 0.113, db: 0.117, z: -0.006, a: 0.6 }   // (bare: the skull a touch bigger; under a hat it fits inside the hat)
         : o.hat === 'police' ? { y: 0.217, w: 0.092, d: 0.09, z: 0, a: 0.6 }   // (inside the cap's eight-sided band)
-        : { y: hy, w: (hy > 0.2 ? 0.096 : 0.1) * nw, d: hy > 0.2 ? 0.106 : 0.11, db: hy > 0.2 ? 0.106 : 0.112, z: -0.006, a: 0.6 };
+        : { y: hy, w: (hy > 0.2 ? 0.096 : 0.1) * nw, d: hy > 0.2 ? 0.106 : 0.11, db: hy > 0.2 ? 0.106 : 0.11, z: -0.006, a: 0.6 };   // (db: the back inside the beanie's box, whose back face is at -0.1175)
       const hcol = hs && hs !== 'bald' ? hair : skin;
-      const band = (b, j) => hs === 'long' && (BACK6(j) || SIDE6(j)) ? hcol : BACK6(j) ? hcol : skin;
+      const band = (b, j) => BACK6(j) ? hcol : skin;
       loft(B, [Hb, Hc], 6, band, { apex: cover ? null : [0, 0.25, -0.012], apexCol: () => capLite ? hc : hcol }).to(head);   // (no underside: the camera is above, a chin facing down reads as a beard)
       if (hs === 'long' && !lite) loft(B, [{ y: -0.13, w: 0.105, d: 0.03, z: -0.098 }, { y: 0.17, w: 0.094, d: 0.035, z: -0.082 }], 4, (b, j) => j === 0 ? null : hair).to(head);   // (down the back to the shoulders)
       if (hs === 'pony' && !lite) loft(B, [{ y: -0.02, w: 0.026, d: 0.026, z: -0.158 }, { y: 0.155, w: 0.036, d: 0.036, z: -0.076 }], 4, all(hair)).to(head);   // (a ponytail, its top inside the skull)

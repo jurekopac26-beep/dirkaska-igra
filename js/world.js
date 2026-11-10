@@ -4729,7 +4729,7 @@ const World = (function () {
   }
 
   /* ================= SPECTATORS: an instanced crowd layer on IChunks, used by every world builder =================
-     One figure is 168 index verts (112 vertices): legs, torso, head, two arms and a flag that stays folded away unless the figure waves one.
+     One figure is 165 index verts (115 vertices): legs, torso, head, two arms and a flag that stays folded away unless the figure waves one.
      Vertex attribute aPart = bone * 10 + colour group; per instance aCrowd = (pose + phase, variant). The shader tints only the shirt, caps and
      long sleeves with the instance colour; skin, trousers, hair and flags come from small palettes picked by the variant (a hash of the position).
      Poses: 0 standing, 1 cheering, 2 waving, 3 filming, 4 clapping, 5 flag, 6 sitting on the grass. The arms move with uTime; people within
