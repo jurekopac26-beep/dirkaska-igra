@@ -7,7 +7,7 @@
 // J3: a pit stop with »Ne menjaj« (the tyres stay on) keeps the KOLIBRI's own tyres too (before, four new ones every stop); a burning
 //   tyre is changed all the same (as a burst one).
 // J1: the flying start's column: a car that starts past the first TV sector's line gets its sector times all race (before, none: it
-//   waited for that line of the first lap); Marrakesh (Maroko), 40 rivals, a lap, seed 9. (J4, the wheel rule: kolibri-tyres.test.js)
+//   waited for that line of the first lap); Marrakesh (Maroko), 40 rivals, a lap, seed 9. (J4, the wheel rule's second wheel: gone with #548, the first wheel off ends the game)
 //   node tests/ai-zastave.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
