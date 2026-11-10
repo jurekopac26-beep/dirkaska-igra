@@ -40,6 +40,7 @@ Načrt za sedem novosti, ki jih je uporabnik izbral 1. 11. 2026 (stran Odločitv
 | 6 | Ti loviš | narejeno (`js/zabava/lov.js`: policijska podoba `P.police`, begunec 150 m spredaj, merilnik aretacije); s prijatelji: Pregon (`js/zabava/beg.js`, PR #377) |
 | 7 | Živa cesta | narejeno (`js/zabava/cesta.js`: osebne nevarnosti pred igralcem, ne pred tekmecem, en klic risanja na dogodek) |
 | 8 | Spoj `main`, testi, osnutek PR | narejeno (spoj z `main` 4. 11.: nov trk `kCollide`, *Opponents* iz menija, Prvič na cesti) |
+| 9 | Drag dirka (I20, 8. 11. 2026) | `js/zabava/drag.js`, način `drag`, v meniju *Drag race*; načrt in stanje v `docs/drag-dirka.md` (PR #515) |
 
 ## Predaja
 - Po koraku 1: most (`js/zabava.js`) in priklopi v `js/game.js` so narejeni, Cilji ekipe delujejo (kartica pred lučmi, izplačilo prek `careerPay`). Za brskalniške teste lokalno: `npm install --no-save --no-package-lock --ignore-scripts peer@1.0.2` (namesti tudi Playwright iz `package.json`).
