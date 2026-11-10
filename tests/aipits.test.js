@@ -120,8 +120,11 @@ const dE = (T, c) => (((T.startS + T.def.pit[1] - c.q.s) % T.len) + T.len) % T.l
   const out = [];
   // (the damage is dealt here, as in 1 to 3: the AI drives so cleanly now that no rival is hurt in two laps by the race itself, of the seeds 1-100 of
   // Spa and Montréal none is, and none in four laps of seeds 1-24 on Spa, Montréal and Bathurst; on main the rivals are as clean. Before, a few seeds
-  // had one: Spa's 16 and 23. The rival on the grid's fifth place, hurt on the first lap, is in at its end; the rest is the game's own set-up)
-  for (const [tid, laps, seed] of [['spa', 2, 23], ['montreal', 2, 2]]) {
+  // had one: Spa's 16 and 23. The rival on the grid's fifth place, hurt on the first lap, is in at its end; the rest is the game's own set-up.
+  // Montréal's seed is 6, not 2: in seed 2 a rival on its way in goes into the wall at the entry and stands there till the game rescues it. It was
+  // freed only by a knock from its own just-shed bumper, which a car no longer gets (docs/trki-realizem.md »Odpadli deli«); with no pieces at all it
+  // was rescued before the change too. Of Montréal's seeds 1-30 it is the only one)
+  for (const [tid, laps, seed] of [['spa', 2, 23], ['montreal', 2, 6]]) {
     let A = null;
     const R = race(tid, { laps, seed, faults: true, flags: true, chars: true, slip: true, radio: true, launch: true },
       (r) => { const c = byGrid(r, 5); if (!A && r.state === 'racing' && c.lap === 1 && c.dist > r.track.len * 0.3) { A = c; c.dmg = 0.8; } });

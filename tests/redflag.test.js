@@ -97,7 +97,10 @@ const finished = (S) => S.r.cars.filter(c => !S.out.includes(c)).every(c => c.fi
 // again a second pile-up (two more cars): no red flag again, the safety car
 const RESTART = ['red', 'redHold', 'redGo', 'scIn', 'scGone', 'green'];
 {
-  const S = run('bathurst', { at: 60, hook: (r) => pileUp(r, 2, 2), lapped: true, again: true });
+  // (at 75 s: the two wrecks stop within RED.near of each other and block the road, as at 80, 85 and 90 s. Since the parts a car sheds stop
+  // as sheet metal does (docs/trki-realizem.md »Odpadli deli«) a wreck is no longer held back by its own parts: at 50, 60 and 70 s the two
+  // roll on 100 to 200 m apart and only the safety car comes. The user's, 10. 11. 2026: »Redkejša zastava je ok«)
+  const S = run('bathurst', { at: 75, hook: (r) => pileUp(r, 2, 2), lapped: true, again: true });
   const R0 = S.red || {}, H = S.hold || {}, G = S.go || {}, i = S.ks.indexOf('red');
   // (the safety car may come out a moment before it, for the first car stopped: it goes in at once, and the race's safety car is still to come)
   check('Bathurst: two cars wrecked together bring out the red flag within 15 s (a safety car out a moment before it goes in, the race\'s still to come)', !!S.red && S.red.t - S.hooked < 15 && S.ks.slice(0, i).every(k => k === 'sc') && R0.scUsed === false && R0.sc !== 'out',

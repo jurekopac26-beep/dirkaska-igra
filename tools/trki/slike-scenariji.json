@@ -6,7 +6,12 @@
   "tekmec: naprej in desno glede na igralca (od središča do središča), kot glede na cesto (90 = počez z nosom v desno, 180 = naproti), kmh (0 = stoji). Brez tekmeca: trk v ograjo.",
   "Do dotika oba držita hitrost brez volana. Po dotiku: po_trku nic (brez plina) ali plin (plin, ki je držal hitrost, ostane); volan (-1..1, + v desno) za volan_s sekund; zavora 0..1.",
   "casi: trenutki slik v sekundah po prvem dotiku (0 = zadnji korak pred dotikom). cakaj: koliko sekund največ do dotika. po: besedilo pod sliko o vnosih po dotiku.",
-  "Mere privzetih avtov na Spaju: igralec BURJA R7 3,95 x 1,80 m, tekmec VORTEX 4WD 4,55 x 1,80 m. Cesta je široka 13 m, ograja 4,2 m od roba (pri 660 m desna 1,5 m)."
+  "Mere privzetih avtov na Spaju: igralec BURJA R7 3,95 x 1,80 m, tekmec VORTEX 4WD 4,55 x 1,80 m. Cesta je široka 13 m, ograja 4,2 m od roba (pri 660 m desna 1,5 m).",
+  "Odpadli deli (--deli; scenariji deli*, svez*, klanec*, kolo, sam120, kolosam): tekmec z do_ograje sam zapelje v ograjo (bočna razdalja njegovega najbližjega vogala), igralec s kmh 0 stoji in gleda.",
+  "nacet (0..1): škoda avta pred trkom, razporejena po vsem avtu; udarci: prejšnji udarci v točko avta { naprej, desno: deleža polovice dolžine in širine od sredine, skoda }. Kar ti udarci odbijejo, v tem trku ni več na avtu.",
+  "skoda: nastavitev Škoda (1 Samo videz, privzeto v igri; 2 Vklop: kolesa odpadejo samo tako). avto: igralčev avto (tekmec vozi, kar določa njegov razred: tiger -> TIGER GT, ki ima kolesa med deli).",
+  "izrez [x0, y0, x1, y1]: del slike igre, ki ga slika pokaže (deleži; z večjo --velikost je to bližnji pogled iste kamere). pripis: dodatek v podnaslov. casi in cakaj lahko določi tudi scenarij.",
+  "Svež avto v privzeti škodi ob prvem trku ne izgubi skoraj nič (sprednji in zadnji deli držijo do 70 % škode), zato je tekmec v teh scenarijih že načet (nacet 0.85): izgubi 5 delov pri 60, 120 in 200 km/h. Svež (svez100, svez200) pri 20° izgubi do 90 km/h nič, od 100 do 200 km/h samo desno ogledalo."
  ],
  "privzeto": { "proga": "spa", "casi": [0, 0.3, 0.9, 1.8], "cakaj": 3 },
  "scenariji": {
@@ -56,6 +61,137 @@
    "po": "oba držita plin, tekmec 1,5 s zavija v igralca",
    "igralec": { "desno": -1.3, "kot": 0, "kmh": 120, "po_trku": "plin" },
    "tekmec": { "naprej": 0, "desno": 2.67, "kot": -3, "kmh": 120, "po_trku": "plin", "volan": -0.2, "volan_s": 1.5 }
+  },
+  "deli60": {
+   "naslov": "Odpadli deli: načet tekmec oplazi ograjo pri 60 km/h",
+   "opis": "načet tekmec (85 % škode) pod kotom 20° v desno ograjo tik ob cesti, na spustu (5 %), tik pred igralcem, ki stoji in gleda; po trku zavira",
+   "m": 660,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.32, 0, 0.84, 0.78],
+   "pripis": "cesta se tu spušča (5 %)",
+   "igralec": { "desno": -3, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 60, "nacet": 0.85, "zavora": 1 }
+  },
+  "deli120": {
+   "naslov": "Odpadli deli: načet tekmec oplazi ograjo pri 120 km/h",
+   "opis": "načet tekmec (85 % škode) pod kotom 20° v desno ograjo tik ob cesti, na spustu (5 %), tik pred igralcem, ki stoji in gleda; po trku zavira",
+   "m": 660,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.32, 0, 0.84, 0.78],
+   "pripis": "cesta se tu spušča (5 %)",
+   "igralec": { "desno": -3, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 120, "nacet": 0.85, "zavora": 1 }
+  },
+  "deli200": {
+   "naslov": "Odpadli deli: načet tekmec oplazi ograjo pri 200 km/h",
+   "opis": "načet tekmec (85 % škode) pod kotom 20° v desno ograjo tik ob cesti, na spustu (5 %), tik pred igralcem, ki stoji in gleda; po trku zavira",
+   "m": 660,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.32, 0, 0.84, 0.78],
+   "pripis": "cesta se tu spušča (5 %)",
+   "igralec": { "desno": -3, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 200, "nacet": 0.85, "zavora": 1 }
+  },
+  "svez100": {
+   "naslov": "Svež avto: tekmec oplazi ograjo pri 100 km/h",
+   "opis": "kot svez200 pri 100 km/h: najnižja hitrost (na 10 km/h natančno), pri kateri svežemu avtu v privzeti škodi (Samo videz) pri tem trku kaj odpade, in to samo desno ogledalo (pri 90 km/h nič)",
+   "m": 660,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.32, 0, 0.84, 0.78],
+   "pripis": "cesta se tu spušča (5 %) · tekmec pred trkom nepoškodovan",
+   "igralec": { "desno": -3, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 100, "zavora": 1 }
+  },
+  "svez200": {
+   "naslov": "Svež avto: tekmec oplazi ograjo pri 200 km/h",
+   "opis": "kot deli200, a tekmec pred trkom ni poškodovan: v privzeti škodi (Samo videz) mu odpade samo desno ogledalo (pri 60 in 90 km/h nič, pri 240 km/h še desni blatnik)",
+   "m": 660,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.32, 0, 0.84, 0.78],
+   "pripis": "cesta se tu spušča (5 %) · tekmec pred trkom nepoškodovan",
+   "igralec": { "desno": -3, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 200, "zavora": 1 }
+  },
+  "klanec60": {
+   "naslov": "Odpadli deli na klancu navzgor: načet tekmec oplazi ograjo pri 60 km/h",
+   "opis": "enako kot deli60, na dolgi ravnini 1700 m po štartu, ki se vzpenja (4,5 %): tam stari model dele še najbolj zavira",
+   "m": 1700,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 0.8, 1.4, 2],
+   "cakaj": 6,
+   "izrez": [0.34, 0, 0.86, 0.78],
+   "pripis": "cesta se tu vzpenja (4,5 %)",
+   "igralec": { "desno": 0, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 60, "nacet": 0.85, "zavora": 1 }
+  },
+  "klanec120": {
+   "naslov": "Odpadli deli na klancu navzgor: načet tekmec oplazi ograjo pri 120 km/h",
+   "opis": "enako kot deli120, na dolgi ravnini 1700 m po štartu, ki se vzpenja (4,5 %): tam stari model dele še najbolj zavira",
+   "m": 1700,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.34, 0, 0.86, 0.78],
+   "pripis": "cesta se tu vzpenja (4,5 %)",
+   "igralec": { "desno": 0, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 120, "nacet": 0.85, "zavora": 1 }
+  },
+  "klanec200": {
+   "naslov": "Odpadli deli na klancu navzgor: načet tekmec oplazi ograjo pri 200 km/h",
+   "opis": "enako kot deli200, na dolgi ravnini 1700 m po štartu, ki se vzpenja (4,5 %): tam stari model dele še najbolj zavira",
+   "m": 1700,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "izrez": [0.34, 0, 0.86, 0.78],
+   "pripis": "cesta se tu vzpenja (4,5 %)",
+   "igralec": { "desno": 0, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 200, "nacet": 0.85, "zavora": 1 }
+  },
+  "kolo": {
+   "naslov": "Odpadlo kolo: načet tekmec oplazi ograjo pri 200 km/h",
+   "opis": "kot deli200, s škodo Vklop in avtom s kolesi med deli (TIGER GT): tekmec ima od prej zmečkan desni sprednji vogal, zato mu ob dotiku odpade kolo",
+   "m": 660,
+   "po": "tekmec zavira, ti stojiš",
+   "casi": [0.6, 1.5, 3.5, 6],
+   "cakaj": 6,
+   "izrez": [0.32, 0, 0.84, 0.78],
+   "avto": "tiger",
+   "skoda": 2,
+   "pripis": "cesta se tu spušča (5 %) · desni sprednji vogal zmečkan že prej",
+   "igralec": { "desno": -3, "kot": 0, "kmh": 0 },
+   "tekmec": { "naprej": -12, "do_ograje": 5, "kot": 20, "kmh": 200, "nacet": 0.35, "udarci": [{ "naprej": 1, "desno": 1, "skoda": 0.25 }], "zavora": 1 }
+  },
+  "sam120": {
+   "naslov": "Tvoj avto: načet oplazi ograjo pri 120 km/h",
+   "opis": "igralec sam, načet (85 % škode), pod kotom 20° v desno ograjo, po dotiku zavira: lastni deli, kot jih vidi kamera za avtom (od blizu: --casi 0.15,0.3,0.45,0.6 --velikost 1920x1080 --okvirji)",
+   "m": 660,
+   "po": "zaviraš",
+   "casi": [0.3, 1, 2, 3.5],
+   "cakaj": 6,
+   "igralec": { "do_ograje": 5, "kot": 20, "kmh": 120, "nacet": 0.85, "zavora": 1 }
+  },
+  "kolosam": {
+   "naslov": "Tvoj avto izgubi kolo: načet oplazi ograjo pri 200 km/h",
+   "opis": "igralec sam v avtu s kolesi med deli (TIGER GT), škoda Vklop, desni sprednji vogal zmečkan že prej: ob dotiku mu odpade sprednje desno kolo; kamera je tik za avtom",
+   "m": 660,
+   "po": "zaviraš",
+   "casi": [0.5, 1, 1.5, 2, 3],
+   "cakaj": 6,
+   "avto": "tiger",
+   "skoda": 2,
+   "pripis": "desni sprednji vogal zmečkan že prej",
+   "igralec": { "do_ograje": 5, "kot": 20, "kmh": 200, "nacet": 0.35, "udarci": [{ "naprej": 1, "desno": 1, "skoda": 0.25 }], "zavora": 1 }
   }
  }
 }

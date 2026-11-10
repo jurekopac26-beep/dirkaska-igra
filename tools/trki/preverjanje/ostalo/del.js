@@ -11,7 +11,7 @@ function ctl(tid, part, state, kmh, id, donorId) {
   if (state === 'svoj') C.detachPart(P, part);
   else {
     let donor = P; if (donorId && donorId !== P.m.id) { donor = new C.Car(L.model(donorId), { phys: 'cs' }); donor.place(P.x, P.z, P.h); donor.y = P.y; }
-    race.spawnDebris(donor, part); d = race.debris[race.debris.length - 1];
+    race.spawnDebris(donor, part); d = race.debris[race.debris.length - 1]; d.by = null; d.byT = 0;   // (a part in the car's way, not its own: DEB.own)
     const ahead = front + d.r * 0.7 + 1.0; d.x = P.x + hx * ahead; d.z = P.z + hz * ahead; d.q = null;
     d.y = T.yAt(T.query(d.x, d.z, S.i, {})) + d.h * 0.5 + 0.02; d.wx = d.wy = d.wz = 0; d.rx = d.rz = 0; d.vy = 0;
     if (state === 'lezi') { d.vx = d.vz = 0; d.rest = true; d.ground = true; }

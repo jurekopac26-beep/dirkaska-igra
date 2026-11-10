@@ -210,7 +210,7 @@ function debRun(o) {
   if (o.stanje === 'svoj') C.detachPart(P, o.part);   // (Race._step throws it: spawnDebris)
   else {
     let donor = P; if (o.donor && o.donor !== P.m.id) { donor = new C.Car(model(o.donor), { phys: 'cs' }); donor.place(P.x, P.z, P.h); donor.y = P.y; }
-    race.spawnDebris(donor, o.part); d = race.debris[race.debris.length - 1];
+    race.spawnDebris(donor, o.part); d = race.debris[race.debris.length - 1]; d.by = null; d.byT = 0;   // (a part in the car's way, not its own: no time in which it does not touch it, DEB.own)
     const ahead = nose(P) + d.r * 0.7 + 0.6, off = o.off || 0;
     x0 = d.x = P.x + hx * ahead - hz * off; z0 = d.z = P.z + hz * ahead + hx * off; d.q = null;
     const gy = T.yAt(T.query(d.x, d.z, i0, {})) + d.h * 0.5 + 0.02;
@@ -411,7 +411,7 @@ function wallRun(o) {
 }
 function debRunAt(T, i0, B, dh, o) {
   const race = loneRace(T), P = race.player, v = o.kmh / KMH, n = 600; putCar(P, T, i0, B - 3.2, v, dh);
-  const hx = Math.cos(P.h), hz = Math.sin(P.h); race.spawnDebris(P, o.del); const d = race.debris[0], ahead = nose(P) + d.r * 0.7 + 0.6;
+  const hx = Math.cos(P.h), hz = Math.sin(P.h); race.spawnDebris(P, o.del); const d = race.debris[0], ahead = nose(P) + d.r * 0.7 + 0.6; d.by = null; d.byT = 0;   // (in the car's way, not its own: DEB.own)
   d.x = P.x + hx * ahead; d.z = P.z + hz * ahead; d.q = null; d.y = T.yAt(T.query(d.x, d.z, i0, {})) + d.h * 0.5 + 0.52; d.vy = 1; d.vx = hx * v * 0.7; d.vz = hz * v * 0.7; d.rest = false; d.ground = false; d.wx = d.wy = d.wz = 0;
   let rob = 1e9, voM = 0, hM = 0, nHit = 0, skok = 0;
   for (let k = 1; k <= n; k++) { const x = d.x, z = d.z, vx = d.vx, vz = d.vz; stepRace(race); if (P.hitDebris > 0) nHit++;
