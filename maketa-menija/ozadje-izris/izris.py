@@ -272,7 +272,7 @@ def world():
     gnd = mixc(nt, mrange(nt, sep.outputs[2], -0.08, 0.0), (0.05, 0.06, 0.04), hor)
     c = mixc(nt, mrange(nt, sep.outputs[2], -0.002, 0.004), gnd, c)
     lp = nd(nt, 'ShaderNodeLightPath')
-    k = math_(nt, 'MULTIPLY_ADD', lp.outputs['Is Camera Ray'], 1.0 - sky.get('light', 0.8), sky.get('light', 0.8))
+    k = math_(nt, 'MULTIPLY_ADD', lp.outputs['Is Camera Ray'], 1.0 - sky.get('light', 0.9), sky.get('light', 0.9))
     bg = nd(nt, 'ShaderNodeBackground'); L(nt, c, bg.inputs['Color']); L(nt, math_(nt, 'MULTIPLY', k, sky.get('strength', 1.0)), bg.inputs['Strength'])
     L(nt, bg.outputs[0], out.inputs[0])
     az, el = math.radians(CFG['sun']['az']), math.radians(CFG['sun']['el'])
@@ -300,6 +300,8 @@ def terrain():
     def field(sig, sh=None):
         n = ndimage.gaussian_filter(RNG.normal(0, 1, sh or Zabs.shape), sig); return n / (n.std() + 1e-9)
     n1, n2, n3 = field(1.5), field(6), field(0.8)
+    fc = CFG.get('forest_cover', 0.0)  # where the DSM misses the canopy: forest in patches below the tree line
+    if fc: fo0 = np.maximum(fo0, fc * sstep(-0.5, 0.4, n2) * (1 - sstep(CFG['treeline'] - 150, CFG['treeline'] + 50, G)))
     e = G
     tl = CFG['treeline']
     green1, green2 = np.array(lin([0.36, 0.47, 0.18])), np.array(lin([0.52, 0.55, 0.26]))
