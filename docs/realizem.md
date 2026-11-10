@@ -300,11 +300,11 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 **Razporeditev računov** (odločitev uporabnika 10. 11. 2026 ob ~22.30, prek Mateja, tabla #382, komentar 6779831019; datumi so ocene za `main`, v tedenskem načrtu 16. 11. ga samo še potrdita):
 - **biketraveler, fizika in avti:**
-  1. Trki (#608): odpadli deli in slike na Spa, nato »Realistična«; ~20. 11.
-  2. Garaža, nato #480 (FORMULA ORKAN in TAIFUN LM); ~17. 11.
-  3. Poškodbe P1–P6 po #480; gotove ~28. 11.
-  4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) od ~17. 11.; gotovi ~25. 11., s tem je 50 avtov.
-  5. Dež in sneg po trkih, s predogledom in uporabnikovim »ok«; ~25. 11.
+  1. **Dež in sneg najprej** (odločitev uporabnika 10. 11. 2026 ob ~23.10: »Prestavi na prioritetno«): Fable 5.2 z eno sejo, na `main` po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih.
+  2. Trki (#608): odpadli deli in slike na Spa, nato »Realistična«; ~20. 11.
+  3. Garaža, nato #480 (FORMULA ORKAN in TAIFUN LM); zaradi dežja in snega ~2–3 dni pozneje, ~19.–20. 11.
+  4. Poškodbe P1–P6 po #480; gotove ~28. 11.
+  5. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST); zaradi dežja in snega ~2–3 dni pozneje, gotovi ~27.–28. 11., s tem je 50 avtov.
   6. Nato pomoč pri predelavi prog.
 - **jure.kopac26, grafika:**
   1. #622 (E0, prvi kos) in #638 na `main` zdaj.
