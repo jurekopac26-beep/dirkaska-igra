@@ -199,9 +199,19 @@
         for (let k = 0; k < n; k++) { const t = (k + 0.5) / n - 0.5, ax = alongX ? lx + t * len : lx, az = alongX ? lz : lz + t * len;
           box(g, x + c * ax - s * az, y, z + s * ax + c * az, 0.7, 0.8, 0.7, ang, col, null, true); } }
     };
+    // the prototype of the houses by the road (js/world-hise.js; index.html?hise=1|2|3, else as they are): the houses and the blocks of flats in
+    // chunks of their own (one texture, one material), by how near the road they stand (2: within 22 m of the centre line, 1: within 42 m)
+    const HK = API.hise, HL = HK ? HK.level() : 0, hisC = HL ? new Chunks(128, true) : null, onRoad = (x, z) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < 0.8; };
+    let nHv = 0, nHn = 0;
+    const hisPut = (bx, bz, Lb, Wb, ang, y0, hh, fl, type, wc, dn, ri) => {
+      const near = dn < 22 ? 2 : dn < 42 ? 1 : 0, dx = ri >= 0 ? T.px[ri] - bx : 0, dz = ri >= 0 ? T.pz[ri] - bz : 0, dl = Math.hypot(dx, dz);
+      if (near === 2) nHn++;
+      nHv += HK.house({ g: hisC.get(bx, bz), x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl, type, wall: wc, roof: ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], band: SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)],
+        lev: HL, near, rd: dl > 0.5 ? [dx / dl, dz / dl] : null, gH: nrGround, onRoad });
+    };
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
+      let clash = false, y0 = 1e9, sea = false, dn = 1e9, ri = -1; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; if (n.i >= 0 && n.d < dn) { dn = n.d; ri = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, ck = castleAt(bx, bz);
       const kind = ck === 'castle' ? 3 : ck === 'tower' ? 2 : k0 === 0 && area > 240 ? 9 : k0;
@@ -218,12 +228,14 @@
         exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 3);
       } else if (kind === 9 || kind === 5 || kind === 6) {   // flats, shops, a school: three to five floors, a flat roof with its parapet
         const fl = kind === 9 ? 3 + Math.floor(hk * 3) : 2 + Math.floor(hk * 2), hh = Hb || fl * 3.1, wc = vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
+        if (HL) { vary([0.72, 0.68, 0.62], R, 0.05); hisPut(bx, bz, Lb, Wb, ang, y0, hh, Math.max(2, Math.round(hh / 3.1)), 'flats', wc, dn, ri); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2); continue; }   // (the prototype of the houses by the road; the same draws of R as below)
         box(g, bx, y0 - 0.5, bz, Lb, hh + 0.5, Wb, ang, wc, vary([0.72, 0.68, 0.62], R, 0.05), true);
         box(g, bx, y0 + hh, bz, Lb, 0.5, Wb, ang, wc.map(v => v * 0.92), [0.66, 0.6, 0.54]);
         for (let f = 1; f <= Math.round(hh / 3.1); f++) box(g, bx, y0 + f * 3.1 - 1.8, bz, Lb + 0.05, 0.9, Wb + 0.05, ang, SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)].map(v => v * 0.75), null, true);   // (the rows of windows and shutters)
         exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
       } else {   // a house or a villa: two floors (one if small), a terracotta roof, its shutters
         const small = area < 45 || kind === 4 || kind === 7, hh = Hb || (small ? 3 + hk : 5.8 + hk * 1.6), wc = kind === 7 ? [0.86, 0.9, 0.88] : vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
+        if (HL) { hisPut(bx, bz, Lb, Wb, ang, y0, hh, small ? 1 : hh > 8.6 ? 3 : 2, small ? 'small' : 'house', wc, dn, ri); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2); continue; }
         box(g, bx, y0 - 0.5, bz, Lb, hh + 0.5, Wb, ang, wc, null, true);
         if (!small) box(g, bx, y0 + hh * 0.55, bz, Lb + 0.04, 1.1, Wb + 0.04, ang, SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)], null, true);
         gable(g, bx, y0 + hh, bz, Lb + 0.6, Wb + 0.6, Math.min(2.6, Wb * 0.24), ang, ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], wc);
@@ -439,8 +451,10 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (hisC) hisC.addTo(sceneryGroup, HK.mat(), true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };
+    if (hisC) out.stats.hise = { level: HL, vertices: nHv, byRoad: nHn };   // (read by the tests)
     return out;
   }
 
