@@ -1445,6 +1445,24 @@ try {
     await click(page, 'track:1'); await page.waitForTimeout(400);
     const e = await page.evaluate(() => Menu.debug().run);
     T.check('another track starts a run of its own, from the start', e.id !== 'pikes' && e.t < 2.5, JSON.stringify(e));
+    // a circuit's flyover made as a loop (Spa; R.fly.loop, maketa-menija/orodja/flyover.mjs): the video goes straight on into its next lap, so
+    // the picture is not dipped where it loops and the start line's one name stays over it either side of the lap's end (the camera is still 2)
+    const wayS = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('spa') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
+    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'spa'; k++) await click(page, wayS);
+    await page.waitForFunction(() => { const v = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage .dio.fly:not(.away) video'); return v && /fly-spa\.webm$/.test(v.getAttribute('src')) && !v.paused && v.currentTime > 1; }, null, { timeout: 120000 }).catch(() => null);
+    const lp = await page.evaluate(() => new Promise((res) => {
+      const root = document.getElementById('menu-host').shadowRoot, box = root.querySelector('#track-stage .dio.fly:not(.away)'), v = box && box.querySelector('video'), lab = box && box.querySelector('.flab'), F = window.ROUTES.spa.fly;
+      if (!v || !lab || lab.children.length < 2) { res({ loop: F.loop, none: true }); return; }
+      const S = [], t0 = performance.now(); let looped = 0, last = 0;
+      const step = () => {
+        const t = v.currentTime; if (t < last - 1) looped++; last = t;
+        S.push([t, +(v.style.opacity || 1), lab.children[0].style.opacity === '1', lab.children[1].style.opacity === '1']);
+        if (performance.now() - t0 < 30000 && !(looped && t > 1)) requestAnimationFrame(step);
+        else res({ loop: F.loop, looped, n: S.length, dip: Math.min(...S.map(q => q[1])), before: S.some(q => q[0] > 5 && q[2]), after: S.some(q => q[0] < 5 && q[2]), finish: S.some(q => q[3]) });
+      };
+      v.addEventListener('seeked', () => requestAnimationFrame(step), { once: true }); v.currentTime = v.duration - 1.5;   // (the lap's last 1.5 s, then on into the next)
+    }));
+    T.check('a circuit\'s flyover made as a loop (Spa): the picture not dipped where it goes on into its next lap, the start line\'s one name over it before and after', lp.loop === 1 && lp.looped === 1 && lp.dip === 1 && lp.before && lp.after && !lp.finish, JSON.stringify(lp));
     T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
