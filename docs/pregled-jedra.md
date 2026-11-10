@@ -8,6 +8,7 @@ Pregled kode jedra igre, samo branje (odločitev uporabnika 8. 11. 2026 ob 16.05
 - 8. 11. 2026 ob 18.15: začetek pregleda.
 - 18.30: prvi prehod (`/code-review max`, ena seja brez več agentov) je prebral razred `Race`, trke, AI, promet ter v `js/render.js` pogled avtov, varnostni avto, razbitine, popravilo v boksih, kamero boksov in ogenj: dve najdbi (J1, J2), obe preverjeni. Za neprebrane dele (proga, fizika avta, poškodbe, policija, svet v izrisu, kamera, učinki) teče 9 vzporednih pregledov.
 - 19.06: **pregled končan.** 29 najdb: 0 kritičnih, 2 hudi, 8 srednjih, 19 nizkih; 24 potrjenih, 5 verjetnih. Oznake J so po vrstnem redu odkritja in se ne spreminjajo; razvrstitev po resnosti je v povzetku in v razdelkih spodaj. Obseg in zavrnjeni kandidati sta na koncu.
+- 10. 11. 2026: J4 odpadlo (#548: prvo odpadlo kolo konča igro), glej J4.
 
 ## Povzetek
 
@@ -17,7 +18,7 @@ Pregled kode jedra igre, samo branje (odločitev uporabnika 8. 11. 2026 ob 16.05
 | J23 | huda | Zastave ne vidijo ustavljenega tekmeca, ki je namenjen v bokse | `js/core.js:6417` | potrjeno |
 | J1 | srednja | Leteči štart: vodilni brez časov TV sektorjev | `js/core.js:6901` | potrjeno |
 | J3 | srednja | »Ne menjaj« gume vseeno da nove gume | `js/core.js:6352` | potrjeno |
-| J4 | srednja | Pravilo koles: drugo kolo ne odpade nikoli | `js/core.js:2797` | potrjeno |
+| J4 | srednja | Pravilo koles: drugo kolo ne odpade nikoli | `js/core.js:2797` | potrjeno; **odpadlo** z #548 (10. 11.) |
 | J10 | srednja | Policijski način: megla NaN v posnetku aretacije | `js/render.js:9688` | potrjeno |
 | J15 | srednja | Motor odpelje brez voznika | `js/core.js:4269` | potrjeno |
 | J19 | srednja | Table ob progi postanejo »duhovi« | `js/core.js:3193` | potrjeno |
@@ -77,6 +78,7 @@ Ni najdb: nobena od najdb ne ustavi igre na pravi progi, ne izgubi shranjenega n
 - Ko gori guma in prvo kolo odpade, teče odštevanje do drugega (`Q.due`). Rahel dotik (`amt < KT.real`) odšteje do 0,8 s brez preverjanja, ali je `Q.due` padel pod 0. `_wreckStep` drugo kolo spusti samo, dokler je `Q.due > 0`, zato se to ne zgodi nikoli; preskočeno je tudi varovalo »nikoli prej kot v 1 s« (`Q.t1`). Kasnejši pravi trki ga ne spustijo (prva veja `ktHit` zahteva `due > 0`, druga `nL == 0`).
 - **Primer:** dirka s poškodbami, avto s kolesi kot deli (npr. `kolibri` na `spa`): kolo z gorečo gumo odpade (`nL = 1`, `due = 4`), v zadnjih 0,8 s odštevanja se avto rahlo dotakne ograje. Simulacija v Node: `due` 0,25 → −0,15, 20 s pozneje še vedno `nL = 1`, `ask = 1`, brez KONEC IGRE, hitrost 35,8 m/s: avto vozi naprej s tremi kolesi do popravila, gumb ZAMENJAJ KOLO izgine (zahteva `due > 0`).
 - Preverjeno: potrjeno (simulacija).
+- **Odpadlo** (10. 11. 2026): z #548 (zbirna veja B, #579, `main` 2286d82e; odločitve uporabnika 9. 11. 2026: brez menjave kolesa) prvo odpadlo kolo konča igro, drugega kolesa in odštevanja `Q.due` ni več. Popravek iz #527 je ob spoju z zbirno vejo A (#583) izpadel (`docs/vrsta.md`, Usklajevanje, točka 12; Matejev komentar 6754361818).
 
 **J10 · Policijski način: megla postane NaN v posnetku aretacije** · `js/render.js:9688` (kamera, megla posnetka)
 - `dC = shot ? shot.fogD : …` nima privzete vrednosti (za razliko od `near`), `setShot` (9916) pa je ne doda. `bustShot` in `chkShot` (`js/game.js:3682–3693`) podata samo položaj, `fov`, `floor` in `near`, brez `fogD`, zato sta `scene.fog.near` in `scene.fog.far` NaN, dokler posnetek traja; vsi drugi klici `setShot` (foto način, prelet, cilj, misije) `fogD` podajo. Izid je odvisen od grafične kartice: megle ni in daljna ravnina reže ostro, ali pa so zamegljene točke črne.
