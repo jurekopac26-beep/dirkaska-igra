@@ -160,7 +160,7 @@ Vsak od E, S in G ima najprej korak z orodjem in graditeljem (E0, S0, G0), nato 
   - spori v `js/world.js`.
 
 #### E0, prvi kos: obraba asfalta in črte (PR #622, 10. 11. 2026)
-- **Odločitev:** uporabnik 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0« (izjema od mirovanja računa jure.kopac26). Na `main` gre po uporabnikovem »ok« na slikah.
+- **Odločitev:** uporabnik 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0« (izjema od mirovanja računa jure.kopac26). Na `main` gre po uporabnikovem »ok« na slikah: uporabnik jih je potrdil 10. 11. 2026 ob ~03.30 (izbira »Ok, z oljno sledjo«, prek Mateja), oljna sled sredi pasu na odprtih cestah ostane.
 - **Kaj prinese** (s kamere za avtom):
   - asfalt ni več enakomerno siv: proge vzdolž ceste (sled finišerja in prometa), prah in pesek ob robovih (barva po tleh države; na dirkališču je pas širši ob robu, kamor avti ne vozijo, na odprti cesti je tudi po sredini), odseki novejšega in starejšega asfalta z ravnim stikom čez cesto (cela širina ali en pas) in velike blede lise;
   - odprta cesta ima v vsakem pasu temno oljno sled med svetlejšima kolesnicama;
@@ -379,7 +379,7 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`), E p
 | Korak | Veja / PR | Stanje |
 |---|---|---|
 | Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
-| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | končano 10. 11. 2026, PR #622 ostane osnutek do uporabnikovega »ok« na slikah (`docs/realizem/e0-*.jpg`); jure.kopac26, odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«; opis v razdelku »E0, prvi kos« |
+| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | končano 10. 11. 2026; uporabnikov »ok« na slikah (`docs/realizem/e0-*.jpg`) 10. 11. ob ~03.30, PR #622 je v vrsti za `main` (`docs/vrsta.md`, 10.7, osnutek do vrste); jure.kopac26, odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«; opis v razdelku »E0, prvi kos« |
 | E0 (ostalo), E1–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
 
 ## Viri
