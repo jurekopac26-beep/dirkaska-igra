@@ -147,7 +147,8 @@
 
   /* ---- the asphalt's wear: a copy of the builder's road material, the wear in its shader (the albedo before the light: the sun, the
      shadows, the rain's darker road and the sheen all fall on it as on the builder's). Road coordinates from the UVs: s = v * 8 m along,
-     o = u * 8 - half width across ---- */
+     o = u * 8 - half width across. In the rain the dust darkens with the road and more (ceWet: the material's colour, which Render's
+     applyRoad darkens, against its dry colour, uCeD.w): wet dust is dark, the band all but gone ---- */
   const ROAD_FRAG = `
 {
   float ceS = vCe.x;
@@ -173,17 +174,18 @@
   ceDu *= 0.35 + 0.65 * ceDu;
   ceDu = max( ceDu, uCeC.y * exp( - ceO * ceO / 0.3 ) * ceN2.a );
   ceDu *= 0.45 + 0.55 * ceN3.g;
-  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD, uCeA.z * ceDu );
+  float ceWet = dot( diffuse, vec3( 1.0 ) ) * uCeD.w;
+  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu );
 }`;
   function roadMat(base, T, cfg, P) {
     const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta|' + base.customProgramCacheKey();
     const U = { uCeN: { value: noiseTex() }, uCeP: { value: P.tex }, uCeA: { value: new THREE.Vector4(1 / T.len, dirka, cfg.kPrah, cfg.kOlje) },
-      uCeB: { value: new THREE.Vector4(cfg.kMadez, cfg.kOdsek, cfg.kLise, cfg.kProge || 0) }, uCeC: { value: new THREE.Vector4(cfg.sPrah, dirka ? 0 : 0.35, dirka ? 0 : 0.2, cfg.kKol || 0) }, uCeD: { value: new THREE.Vector3(cfg.prah[0], cfg.prah[1], cfg.prah[2]) } };
+      uCeB: { value: new THREE.Vector4(cfg.kMadez, cfg.kOdsek, cfg.kLise, cfg.kProge || 0) }, uCeC: { value: new THREE.Vector4(cfg.sPrah, dirka ? 0 : 0.35, dirka ? 0 : 0.2, cfg.kKol || 0) }, uCeD: { value: new THREE.Vector4(cfg.prah[0], cfg.prah[1], cfg.prah[2], 1 / Math.max(0.01, base.color.r + base.color.g + base.color.b)) } };
     m.onBeforeCompile = (sh, r) => {
       prev.call(m, sh, r);   // (whatever the builder's material has in its shader already)
       Object.assign(sh.uniforms, U);
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCe;').replace('#include <begin_vertex>', `#include <begin_vertex>\nvCe = vec2( uv.y * ${TILE.toFixed(1)}, uv.x * ${TILE.toFixed(1)} );`);
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN, uCeP; uniform vec4 uCeA, uCeB, uCeC; uniform vec3 uCeD; varying vec2 vCe;')
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN, uCeP; uniform vec4 uCeA, uCeB, uCeC, uCeD; varying vec2 vCe;')
         .replace('#include <color_fragment>', '#include <color_fragment>' + ROAD_FRAG);
     };
     m.customProgramCacheKey = () => key; m.userData.cesta = 'asfalt'; m.userData.ceU = U;

@@ -173,7 +173,7 @@ Vsak od E, S in G ima najprej korak z orodjem in graditeljem (E0, S0, G0), nato 
   - mrežja črt najde po svetlih barvah oglišč na ploskvi ceste, merjeno ob samih mrežjih ceste (zato tudi v nagnjenem ovinku); kjer je v mrežju črt še kaj (žlebovi na Chapman's Peaku), se obrabi samo svetla barva;
   - vsako tako mrežje dobi kopijo materiala z obrabo v senčilniku; kar si material deli z drugim (boksi, izletne cone), ostane graditeljevo;
   - podatke o krogu bere senčilnik iz teksture 2048 × 1 (odmik idealne linije, zaviranje iz hitrostnega profila, ton odseka levo in desno, polovica širine), vzorce iz enega šuma 128 × 128;
-  - mokra cesta, sence in lesk asfalta delujejo kot prej (`applyRoad` in `asphaltLook` v `js/render.js` material najdeta po teksturi asfalta).
+  - mokra cesta, sence in lesk asfalta delujejo kot prej (`applyRoad` in `asphaltLook` v `js/render.js` material najdeta po teksturi asfalta); v dežju prah ob robu potemni skupaj s cesto (moker prah je temen, pas skoraj izgine).
 - **Proge:** tabela `PROGE` v modulu. Dirkališča: Spa, Nürburg, Štajerska, Bathurst, Montréal. Odprte ceste: Livorno, Tianmen, Rio do Rastro, Chapman's Peak, Bâlea, Los Caracoles. Nova prava proga dobi videz z eno vrstico v `PROGE` (`DIRKA` ali `CESTA` in barva prahu).
   - Brez videza ostanejo: Pikes Peak (svoja, podrobna cesta; pride v E1), Katu-Jaryk (makadam), Harju (gre v test, ko je Koli na `main`), Suzuka in Irohazaka (zamrznjeni), Medvode in druge proge odprtih PR (vrstico dobijo po združitvi).
   - Za testne proge in proge na odločanju `World.cesta.finish` takoj vrne: svet je zgrajen kot prej.
