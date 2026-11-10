@@ -80,12 +80,20 @@
     for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; };
   // (a save kept safe as the game's: a full storage makes room by dropping ghosts, js/shramba.js)
   const keepItem = (k, v) => { try { if (typeof Shramba !== 'undefined') Shramba.keep(k, v); else localStorage.setItem(k, v); } catch (_) { } };
+  // (the veteran's test money (the user's wish 9. 11. 2026, to test with: any car can be bought): the dearest car, every part for it (all 16
+  // options of each element the shop sells, js/data/deli.js) and its paint, up to the next 100.000 (2.100.000 with the cars and parts of
+  // 9. 11. 2026); a veteran saved before it (no vm) gets it once when opened again, one saved since keeps what it has left)
+  const VET_V = 2;
+  function vetMoney() { const top = ORDER.reduce((a, id) => (PRICE[id] || 0) > (PRICE[a] || 0) ? id : a, ORDER[0]);
+    let s = (PRICE[top] || 0) + paintPrice(top);
+    for (const el in EL) if (el !== 'barva') EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { s += price(el, t, j); }));
+    return Math.ceil(s / 100000) * 100000; }
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
     const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, rent: null, lang: S0lang(), sound: true, guide: 0, flag: '' };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
     S.cars.pico.cond = { clean: 0.35, body: 0.6, engine: 0.42 };
     if (mode === 'vet') {
-      S.money = 248500; S.car = 'kaze';
+      S.money = vetMoney(); S.vm = VET_V; S.car = 'kaze';
       const set = (id, P, c) => { const k = S.cars[id]; k.own = true; for (const el in P) { const o = findOpt(el, P[el]); if (o) k.parts[el] = o; } if (c) k.cond = c; };
       set('pico', { turbo: 'Turbo', cip: 'Chip', gume: 'Track Semi-slick', zavore: 'Sport pads', krilo: 'Arch' }, { clean: 0.9, body: 0.85, engine: 0.8 });
       set('kaze', { turbo: 'Turbo kit', cip: 'Stage 3 map', auspuh: 'Titanium', gume: 'Track Slick', zavore: 'Racing discs', aero: 'Sport', krilo: 'GT wing' }, { clean: 0.55, body: 0.72, engine: 0.66 });
@@ -105,11 +113,13 @@
   function load() {
     let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { s = null; }
     // the real profile: a new player's, an older garage's (the mockup's only before: g unset), or chosen
-    if (!s || s.v !== 2 || !s.g || s.mode === 'game') { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
+    // (the test money in the address, js/denar.js: the real profile, to show it)
+    if (!s || s.v !== 2 || !s.g || s.mode === 'game' || (typeof Denar !== 'undefined' && Denar.set)) { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
     if (!s.cars || !s.mode) { const d = profile(s.mode || 'full'); if (s.lang === 'en') d.lang = 'en'; return d; }
     const d = profile(s.mode);
     for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
     d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; pageOwn(d, s);
+    if (d.mode === 'vet' && s.vm !== VET_V) d.money = Math.max(d.money, vetMoney());   // (a veteran saved before 9. 11. 2026: the new test money)
     if (!d.cars.pico.own) d.cars.pico.own = true;
     d.rent = rentFrom(s.rent, d); for (const id of ORDER) haveFitted(d.cars[id]);
     return d;
@@ -609,7 +619,7 @@
     G.show(spec(S.car));
     setLang();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
-    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

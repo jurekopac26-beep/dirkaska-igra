@@ -3,9 +3,9 @@
 // a wheel off the road (grass, gravel: that wheel only) more. The damage only from knocks (damage Samo videz or Vklop), only to be seen:
 // the corner's tyre the most, the one beside it a little, the far one none; knocks alone never set one on fire. One burns (only one: less
 // side grip, the drive the same) where the car caught fire before: its damage at 80 %, a hard hit from 70 %, the most knocked tyre; in a
-// race with the wheel rule only; the wear never does. A burning tyre's wheel comes off at the next real knock, the second
-// 1-4 s later (at once at a real knock, sooner sliding), a big knock takes two at once; two gone: the car stops, the game is over.
-// ZAMENJAJ KOLO (Race.changeWheel) puts a new one on. A pit stop: four new tyres, cold for a lap. Damage off: the wear only.
+// race with the wheel rule only; the wear never does. A burning tyre's wheel comes off at the next real knock (a big knock: two at
+// once), the whole car on fire, the car stops and the game is over (the user, 9. 11. 2026: »Ko ti enkrat odpade kolo, je igre konec«; no
+// ZAMENJAJ KOLO, no second wheel). A pit stop: four new tyres, cold for a lap. Damage off: the wear only.
 // The user's choices of 3. 11. 2026: the cold tyres after a stop grip less only on the KOLIBRI (opts.tyreCold; on the others' cars the light
 // blue dots only), rain tyres on a drying road wear 2.5 times (every car), no wear in a mission (the mission's options: no tyreRule, checked
 // in tests/missions.test.js), the wear also in a time trial and on a track without pits.
@@ -71,23 +71,16 @@ function until(r, fn, s, slide) {   // steps until fn() or s seconds; the player
   const z = setUp({ damage: 0 }); for (let i = 0; i < 8; i++) C.applyDamage(z.P, 0.03, FL[0], FL[1]);
   check('damage off: no tyre damage, no fire (the wear only)', z.K.d.every(v => v === 0) && z.K.hot === -1);
 }
-// 4. a burning tyre's wheel: a touch leaves it, a real knock takes it; the second 1-4 s later, sooner sliding, at once at a real knock
+// 4. a burning tyre's wheel: a touch leaves it, a real knock takes it, the whole car on fire and the game over; a big knock: two at once
 {
   const burn = (o) => { const s = setUp(o); s.K.d[1] = 1; s.K.hot = 1; return s; };
   const a = burn(); C.applyDamage(a.P, 0.003, FL[0], FL[1]); const kept = !a.W.wl; C.applyDamage(a.P, 0.009, -L, -Wd);
-  check('a burning tyre: a touch does not take the wheel, a real knock anywhere takes that one; ZAMENJAJ KOLO asked', kept && a.W.wl === 2 && a.Q.ask === 1 && a.Q.due > 3.9, `wheels off ${a.W.wl}, due ${a.Q.due}`);
-  const t1 = until(a.r, () => a.W.nL >= 2, 8);
-  const b = burn(); C.applyDamage(b.P, 0.009, 0, Wd); const t2 = until(b.r, () => b.W.nL >= 2, 8, true);
-  const c = burn(); C.applyDamage(c.P, 0.009, 0, Wd); until(c.r, () => false, 0.5); C.applyDamage(c.P, 0.008, FL[0], FL[1]);
-  check('the second wheel: straight on ~4 s, sliding sooner (not under 1 s), at once at a real knock; then the car on fire', t1 > 3.5 && t1 < 4.3 && t2 >= 1 && t2 < 2.2 && c.W.nL === 2 && a.Q.burn === 2, `straight ${t1.toFixed(2)} s, sliding ${t2.toFixed(2)} s, knock: ${c.W.nL} off`);
-  const j4 = burn(); C.applyDamage(j4.P, 0.009, 0, Wd); until(j4.r, () => j4.Q.due < 0.25, 6); const dueT = j4.Q.due; C.applyDamage(j4.P, 0.003, FL[0], FL[1]); const t4 = until(j4.r, () => j4.W.nL >= 2, 3);
-  check('a touch in the second wheel\'s last 0.8 s: that wheel at once (J4 in docs/pregled-jedra.md; before, the countdown went below nothing and it never came off)', dueT > 0 && t4 < 0.05 && j4.W.nL === 2 && j4.Q.due === -1, `due ${dueT.toFixed(2)} s, the wheel ${t4 === Infinity ? "never" : t4.toFixed(3) + " s"} later, ${j4.W.nL} off`);
-  until(a.r, () => a.Q.over, 6);
-  check('two wheels off: the car stops, the game is over (KONEC IGRE)', a.Q.over && a.P.speed < 0.5);
+  check('a burning tyre: a touch does not take the wheel, a real knock anywhere takes that one (no other), the whole car on fire at once', kept && a.W.wl === 2 && a.W.nL === 1 && a.Q.burn === 2 && a.Q.fn === 1 && a.K.hot === -1, `wheels off ${a.W.wl}, fire ${a.Q.fn}/${a.Q.burn}`);
+  const tOver = until(a.r, () => a.Q.over, 6);
+  check('a wheel off: the car stops at once, the game is over (KONEC IGRE), no second wheel', a.Q.over && a.P.speed < 0.5 && tOver < 3 && a.W.nL === 1, `over ${tOver.toFixed(2)} s, ${a.W.nL} off`);
   const d = burn(); C.applyDamage(d.P, 0.03, FL[0], FL[1]);
-  check('a big knock on a burning tyre: two wheels at once, the car on fire', d.W.nL === 2 && d.Q.burn === 2 && d.Q.due === -1);
-  const e = burn(); C.applyDamage(e.P, 0.009, 0, Wd); const ok = e.r.changeWheel(e.P);
-  check('ZAMENJAJ KOLO: the new wheel at once, a new tyre on it, no second wheel coming', ok && !e.W.wl && e.K.d[1] === 0 && e.K.w[1] === 0 && e.Q.due === -1 && until(e.r, () => e.W.nL > 0, 5) === Infinity);
+  check('a big knock on a burning tyre: two wheels at once, the car on fire', d.W.nL === 2 && d.Q.burn === 2);
+  check('no ZAMENJAJ KOLO (no Race.changeWheel)', typeof a.r.changeWheel === 'undefined');
 }
 // 5. a pit stop: four new tyres, cold for a lap after it (the KOLIBRI's: less grip meanwhile; another car's: only to be seen, as 6 below)
 const pitStop = (o) => {

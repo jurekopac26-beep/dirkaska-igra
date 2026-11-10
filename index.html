@@ -392,7 +392,7 @@
   <section id="s-over" class="screen"><!-- the wheel rule: two wheels off, the car stopped (game.js gameOver) -->
     <div class="panel over-panel">
       <h2>KONEC IGRE</h2>
-      <p class="desc" id="over-sub">Odpadli sta dve kolesi: avto ne more naprej.</p>
+      <p class="desc" id="over-sub">Odpadlo je kolo: avto ne more naprej.</p>
       <button class="btn primary over-go" data-act="over-again" id="over-again">PONOVI IGRO</button>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
@@ -549,7 +549,6 @@
     </div>
   </section>
 
-  <div id="wheel-swap"><button id="ws-btn" type="button" aria-label="Zamenjaj kolo"><span class="ic"></span><b id="ws-t">ZAMENJAJ KOLO</b><small id="ws-s">Pritisni tukaj za menjavo kolesa</small><i><s id="ws-bar"></s></i></button><b id="ws-l">ZAMENJAJ KOLO</b></div><!-- the wheel rule, a wheel off with the spare on the roof: a big button, its bar running out at its very foot; a tap on it puts the spare on at once (game.js swapHUD; under the title the same English words in both languages) -->
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">REAL ROADS ATLAS</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
@@ -744,6 +743,10 @@
 <script src="js/journey.js"></script>
 <script src="js/intro-data.js"></script>
 <script src="js/menu-car.js"></script>
+<script src="js/menu-tabla.js"></script>
+<script src="js/menu-izbor.js"></script>
+<script src="js/menu-zemlja.js"></script>
+<script src="js/menu-vreme.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/napake.js"></script>
 <script src="js/missions.js"></script>
@@ -793,6 +796,7 @@
 <script src="js/neskoncna.js"></script>
 <script src="js/shramba.js"></script>
 <script src="js/data/voznja.js"></script>
+<script src="js/denar.js"></script>
 <script src="js/lestvica.js"></script>
 <script src="js/game.js"></script>
 </body>
