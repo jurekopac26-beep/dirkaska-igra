@@ -67,6 +67,7 @@ def build(cfg, folder):
 if __name__ == '__main__':
     scenes = json.load(open(sys.argv[1]))
     cfg = scenes[sys.argv[2]]
+    if 'base' in cfg: cfg = {**scenes[cfg['base']], **cfg}
     d = build(cfg, sys.argv[3])
     np.savez_compressed(sys.argv[4], **d)
     # a short check: the ground at the view, the target's distance, bearing and angle, the highest angle along the view's bearings

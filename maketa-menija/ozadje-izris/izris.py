@@ -22,7 +22,8 @@ ap.add_argument('--orient', default='pokonci,lezece'); ap.add_argument('--scale'
 ap.add_argument('--samples', type=int, default=96); ap.add_argument('--seed', type=int, default=11)
 ap.add_argument('--dry', action='store_true')  # build the scene only (no render)
 A = ap.parse_args()
-CFG = json.load(open(os.path.join(HERE, 'prizori.json')))[A.scene]
+SCN = json.load(open(os.path.join(HERE, 'prizori.json'))); CFG = SCN[A.scene]
+if 'base' in CFG: CFG = {**SCN[CFG['base']], **CFG}  # a variant: the base scene with these changes
 os.makedirs(A.tmp, exist_ok=True)
 RNG = np.random.default_rng(A.seed)
 T0 = time.time()
@@ -38,6 +39,7 @@ COMP = dict(
 )
 COMP.update(CFG.get('comp', {}))
 ORIENT = {'pokonci': dict(res=(1080, 1350), hfov=26.0, horizon=0.5), 'lezece': dict(res=(1600, 900), hfov=46.0, horizon=0.5)}
+for k_, v_ in CFG.get('orient', {}).items(): ORIENT[k_].update(v_)
 BET = math.radians(CFG['bearing'])
 FWD = np.array([math.sin(BET), math.cos(BET)]); RGT = np.array([math.cos(BET), -math.sin(BET)])
 def W(a, b):  # view frame -> world x (east), y (north)
@@ -278,7 +280,7 @@ def world():
     az, el = math.radians(CFG['sun']['az']), math.radians(CFG['sun']['el'])
     d = Vector((math.sin(az) * math.cos(el), math.cos(az) * math.cos(el), math.sin(el)))
     ld = bpy.data.lights.new('sonce', 'SUN'); ld.energy = CFG['sun'].get('strength', 4.4); ld.angle = math.radians(0.6)
-    ld.color = (1.0, 0.965, 0.91)
+    ld.color = tuple(CFG['sun'].get('color', (1.0, 0.965, 0.91)))
     so = bpy.data.objects.new('sonce', ld); so.rotation_mode = 'QUATERNION'; so.rotation_quaternion = d.to_track_quat('Z', 'Y'); link(so)
     return d
 
@@ -293,7 +295,8 @@ def terrain():
     relb = (np.degrees(np.arctan2(X, Y)) - CFG['bearing'] + 180) % 360 - 180
     cl = CFG.get('clear', [13, 2600])
     clear = (1 - sstep(cl[0] - 3, cl[0] + 2, np.abs(relb))) * (1 - sstep(cl[1] - 600, cl[1], dist))
-    wcan = sstep(1250, 1800, dist) * (1 - clear)
+    cn = CFG.get('canopy', [1250, 1800])  # the DSM's canopy on the terrain from here out (nearer: instanced trees)
+    wcan = sstep(cn[0], cn[1], dist) * (1 - clear)
     r0, r1 = CFG['flat']
     Zg = ((G - h0 - drop) + CH * wcan) * sstep(r0, r1, dist)
     # colours (linear) by height, slope and cover, with patches
@@ -379,6 +382,8 @@ def catmull(P, n=24):
     return np.stack([np.interp(ss, s, out[:, 0]), np.interp(ss, s, out[:, 1])], 1), ss
 
 def road():
+    if not COMP['road']:  # no road (the car parked on the meadow): a far point keeps the distance tests simple
+        C = np.array([[1e6, 1e6], [1e6 + 1, 1e6]]); return C, cKDTree(C)
     C, s = catmull(COMP['road']); w = COMP['width']
     t = np.gradient(C, axis=0); t /= np.linalg.norm(t, axis=1)[:, None]; nr = np.stack([t[:, 1], -t[:, 0]], 1)  # to the right
     us = np.array([-w / 2 - 0.9, -w / 2 - 0.02, -w / 2, -w / 4, 0, w / 4, w / 2, w / 2 + 0.02, w / 2 + 0.9])
@@ -773,7 +778,7 @@ def car():
             except Exception as e: log('normals', e)
         ob = obj('avto-%d' % mi, me); ob.parent = root
     a, b = COMP['car']; x, y = W(a, b); th = math.radians(COMP['car_head'])
-    hx, hy = W(math.sin(th), math.cos(th)); root.location = (x, y, 0.045 + 0.05 * 0.6); root.rotation_euler = (0, 0, math.atan2(hy, hx))
+    hx, hy = W(math.sin(th), math.cos(th)); root.location = (x, y, COMP.get('car_z', 0.045 + 0.05 * 0.6)); root.rotation_euler = (0, 0, math.atan2(hy, hx))
     return root
 
 def mat_paint():
@@ -836,39 +841,42 @@ def vegetation(T, roadC, rtree):
             me = broadleaf_lod(rng, H, bl).mesh('d1-%02d' % i, [m_bark2, m_leaf_lod]); obj('d1-%02d' % i, me, c1)
         Hs.append(H)
     Hs = np.array(Hs)
-    # the composition's forest round the view (in the view frame)
+    # the composition's forest round the view (in the view frame); none when the car is parked on an open meadow
     pts = []
-    sp = 4.4; ga, gb = np.meshgrid(np.arange(-200, 260, sp), np.arange(-40, 340, sp))
-    ga = ga + rng.uniform(-1.6, 1.6, ga.shape); gb = gb + rng.uniform(-1.6, 1.6, gb.shape); ga, gb = ga.ravel(), gb.ravel()
-    dd, ii = rtree.query(np.stack([ga, gb], 1)); tg = np.gradient(roadC, axis=0)[ii]
-    far = tg[:, 0] * (gb - roadC[ii, 1]) - tg[:, 1] * (ga - roadC[ii, 0]) > 0  # left of the road seen along it: the far side of its bend
-    ang = np.degrees(np.arctan2(ga, gb)); dist = np.hypot(ga, gb)
-    nz = 4 * np.sin(gb * 0.05) + 3 * np.sin(ga * 0.07 + 1)
-    W0, W1 = COMP['window']
-    left = far & (ang < W0) & (dist > 13)
-    right = far & (ang > W1) & (dist > 70 - 1.5 * np.clip(ang - W1, 0, 16) + nz)
-    side = ~far & (ang > 17) & (dist > 24)  # the camera's side of the road: only at the edge of the wide view
-    behind = (gb < 0) & (np.abs(ga) > 9)
-    sel = (left | right | side | behind) & (dd > COMP['width'] / 2 + 2.4)
-    sa, sb = COMP['sign']; sel &= np.hypot(ga - sa, gb - sb) > 6.5
-    # keep the car and the sign in the sun: no tree in the corridor toward the sun
-    sun = SUND; sa_, sb_ = V(sun[0], sun[1]); sv = np.array([sa_, sb_]) / math.hypot(sa_, sb_); tanel = sun[2] / math.hypot(sun[0], sun[1])
-    for (pa, pb) in (COMP['car'], COMP['sign']):
-        rel = np.stack([ga - pa, gb - pb], 1); t = rel @ sv; perp = np.abs(rel @ np.array([-sv[1], sv[0]]))
-        sel &= ~((t > 0) & (t < 34 / tanel) & (perp < 5.5))
-    za = np.where(sel)[0]; A_, B_ = ga[za], gb[za]; hf_ = np.where(right, 0.72, 1.0)[za]  # a younger, lower forest on the right
-    d2 = np.hypot(A_, B_); fov = np.degrees(np.abs(np.arctan2(A_, B_)))
-    keep = (fov < 40) | (d2 < 60)
-    A_, B_, hf_ = A_[keep], B_[keep], hf_[keep]
-    x, y = W(A_, B_); pts.append((x, y, None, hf_))
+    if COMP.get('forest', True):
+        sp = 4.4; ga, gb = np.meshgrid(np.arange(-200, 260, sp), np.arange(-40, 340, sp))
+        ga = ga + rng.uniform(-1.6, 1.6, ga.shape); gb = gb + rng.uniform(-1.6, 1.6, gb.shape); ga, gb = ga.ravel(), gb.ravel()
+        dd, ii = rtree.query(np.stack([ga, gb], 1)); tg = np.gradient(roadC, axis=0)[ii]
+        far = tg[:, 0] * (gb - roadC[ii, 1]) - tg[:, 1] * (ga - roadC[ii, 0]) > 0  # left of the road seen along it: the far side of its bend
+        ang = np.degrees(np.arctan2(ga, gb)); dist = np.hypot(ga, gb)
+        nz = 4 * np.sin(gb * 0.05) + 3 * np.sin(ga * 0.07 + 1)
+        W0, W1 = COMP['window']
+        left = far & (ang < W0) & (dist > 13)
+        right = far & (ang > W1) & (dist > 70 - 1.5 * np.clip(ang - W1, 0, 16) + nz)
+        side = ~far & (ang > 17) & (dist > 24)  # the camera's side of the road: only at the edge of the wide view
+        behind = (gb < 0) & (np.abs(ga) > 9)
+        sel = (left | right | side | behind) & (dd > COMP['width'] / 2 + 2.4)
+        sa, sb = COMP['sign']; sel &= np.hypot(ga - sa, gb - sb) > 6.5
+        # keep the car and the sign in the sun: no tree in the corridor toward the sun
+        sun = SUND; sa_, sb_ = V(sun[0], sun[1]); sv = np.array([sa_, sb_]) / math.hypot(sa_, sb_); tanel = sun[2] / math.hypot(sun[0], sun[1])
+        for (pa, pb) in (COMP['car'], COMP['sign']):
+            rel = np.stack([ga - pa, gb - pb], 1); t = rel @ sv; perp = np.abs(rel @ np.array([-sv[1], sv[0]]))
+            sel &= ~((t > 0) & (t < 34 / tanel) & (perp < 5.5))
+        za = np.where(sel)[0]; A_, B_ = ga[za], gb[za]; hf_ = np.where(right, 0.72, 1.0)[za]  # a younger, lower forest on the right
+        d2 = np.hypot(A_, B_); fov = np.degrees(np.abs(np.arctan2(A_, B_)))
+        keep = (fov < 40) | (d2 < 60)
+        A_, B_, hf_ = A_[keep], B_[keep], hf_[keep]
+        x, y = W(A_, B_); pts.append((x, y, None, hf_))
     # the DEM's forest farther out (beyond the composition, not in the clearing)
-    fm = (T['fo'] > 0.5) & (T['dist'] > 300) & (T['dist'] < 1700) & (T['clear'] < 0.3) & (np.abs(T['relb']) < 70)
-    ii, jj = np.nonzero(fm)
-    k = max(1, int(round(T['st'] / 6.0)))
-    xs_, ys_ = [], []
-    for di in range(k):
-        for dj in range(k):
-            xs_.append(T['X'][ii, jj] + (dj / k - 0.5) * T['st'] + rng.uniform(-2.5, 2.5, len(ii))); ys_.append(T['Y'][ii, jj] + (di / k - 0.5) * T['st'] + rng.uniform(-2.5, 2.5, len(ii)))
+    fr = CFG.get('forest_range', [300, 1700]); xs_, ys_ = [], []
+    for d0, d1, wdg, spc in ((fr[0], min(fr[1], 1700), 70, 6.0), (1700, fr[1], 30, 7.5)):  # farther: only in the view, sparser
+        if d1 <= d0: continue
+        fm = (T['fo'] > 0.5) & (T['dist'] > d0) & (T['dist'] < d1) & (T['clear'] < 0.3) & (np.abs(T['relb']) < wdg)
+        ii, jj = np.nonzero(fm)
+        k = max(1, int(round(T['st'] / spc)))
+        for di in range(k):
+            for dj in range(k):
+                xs_.append(T['X'][ii, jj] + (dj / k - 0.5) * T['st'] + rng.uniform(-2.5, 2.5, len(ii))); ys_.append(T['Y'][ii, jj] + (di / k - 0.5) * T['st'] + rng.uniform(-2.5, 2.5, len(ii)))
     if xs_:
         x2, y2 = np.concatenate(xs_), np.concatenate(ys_)
         a2, b2 = V(x2, y2); ok = ~((np.abs(np.degrees(np.arctan2(a2, b2))) < 40) & (b2 < 330) & (b2 > -40) & (a2 > -160) & (a2 < 260))
@@ -886,6 +894,23 @@ def vegetation(T, roadC, rtree):
     scatter('gozd0', c0, np.stack([X_, Y_, Z_], 1)[near], rot[near], scl[near], var[near])
     scatter('gozd1', c1, np.stack([X_, Y_, Z_], 1)[~near], rot[~near], scl[~near], var[~near])
     log('trees: near', int(near.sum()), 'far', int((~near).sum()))
+
+def parked_cap(ga, gb, hgt):
+    """the car parked on the meadow: nothing in its footprint, mown grass round it, and in front of it nothing above the line from the eye
+    to 0.1 m over its wheels' contact, so the whole car shows; returns (keep, the largest scale for an item hgt metres tall)"""
+    ca, cb = COMP['car']; th = math.radians(COMP['car_head']); f = np.array([math.sin(th), math.cos(th)]); r = np.array([f[1], -f[0]])
+    hl, hw = COMP.get('car_len', 2.8), COMP.get('car_wid', 1.22)
+    rel = np.stack([ga - ca, gb - cb], 1); al, ac = rel @ f, rel @ r
+    ex = np.hypot(np.clip(np.abs(al) - hl, 0, None), np.clip(np.abs(ac) - hw, 0, None))
+    keep = ex > 0.06
+    cap = np.where(ex < 4.5, (0.07 + 0.9 * sstep(0.3, 4.5, ex)) / hgt, np.inf)
+    cn = np.array([[ca, cb] + sl * hl * f + sw * hw * r for sl in (-1, 1) for sw in (-1, 1)])
+    angc = np.degrees(np.arctan2(cn[:, 0], cn[:, 1])); dn = np.hypot(cn[:, 0], cn[:, 1]).min()
+    ang = np.degrees(np.arctan2(ga, gb)); d = np.hypot(ga, gb)
+    fr = (ang > angc.min() - 1.5) & (ang < angc.max() + 1.5) & (d < dn)
+    zl = COMP['eye'] - (COMP['eye'] - 0.10) * d / dn
+    cap = np.where(fr, np.minimum(cap, 0.92 * zl / hgt), cap)
+    return keep, cap
 
 def meadow(roadC, rtree):
     cg = src_coll('trava'); m_gr = mat_vcol('trava'); rng = np.random.default_rng(31)
@@ -915,6 +940,9 @@ def meadow(roadC, rtree):
     edge = sstep(COMP['width'] / 2 + 0.5, COMP['width'] / 2 + 2.5, dd)
     ca, cb = COMP['car']; front = (np.abs(np.degrees(np.arctan2(ga, gb)) - np.degrees(math.atan2(ca, cb))) < 9) & (gb < cb - 3)
     s = (0.75 + 0.55 * rng.random(n)) * (0.55 + 0.45 * edge) * np.where(front, 0.65, 1.0) * (1 + sstep(20, 120, dist) * 0.8)
+    if COMP.get('parked'):
+        kp, cap = parked_cap(ga, gb, np.where(var >= 4, 0.95, 0.55)); s = np.minimum(s, cap)
+        ga, gb, s, var = ga[kp], gb[kp], s[kp], var[kp]; n = len(ga)
     x, y = W(ga, gb)
     rot = np.stack([rng.normal(0, 0.06, n), rng.normal(0, 0.06, n), rng.uniform(0, 6.28, n)], 1)
     scatter('travnik', cg, np.stack([x, y, np.zeros(n)], 1), rot, np.stack([s, s, s], 1), var)
@@ -925,6 +953,9 @@ def meadow(roadC, rtree):
     fa, fb = fa[ok & patch], fb[ok & patch]; n = len(fa)
     kind = rng.choice(3, n, p=[0.45, 0.33, 0.22]); var = kind + 3 * rng.integers(0, 3, n)
     x, y = W(fa, fb); s = rng.uniform(1.15, 1.7, n) * (1 + sstep(8, 40, np.hypot(fa, fb)) * 0.6)
+    if COMP.get('parked'):
+        kp, cap = parked_cap(fa, fb, np.full(n, 0.6)); s = np.minimum(s, cap)
+        fa, fb, s, var = fa[kp], fb[kp], s[kp], var[kp]; n = len(fa); x, y = W(fa, fb)
     rot = np.stack([rng.normal(0, 0.05, n), rng.normal(0, 0.05, n), rng.uniform(0, 6.28, n)], 1)
     scatter('cvetje', cf, np.stack([x, y, np.zeros(n)], 1), rot, np.stack([s, s, s], 1), var)
     # rocks: bottom left and right, past the road
@@ -943,6 +974,8 @@ def render(orient, path):
     co = bpy.data.objects.new('kamera-' + orient, cd); link(co)
     f = Vector((FWD[0], FWD[1], 0.0)); co.rotation_mode = 'QUATERNION'; co.rotation_quaternion = (-f).to_track_quat('Z', 'Y')
     co.location = CAM; SC.camera = co
+    if CFG.get('fstop'):  # a photo's depth of field, focused on the car
+        cd.dof.use_dof = True; cd.dof.focus_distance = math.hypot(*COMP['car']); cd.dof.aperture_fstop = CFG['fstop']
     SC.render.engine = 'CYCLES'; c = SC.cycles; c.device = 'CPU'; c.samples = A.samples; c.use_adaptive_sampling = True; c.adaptive_threshold = 0.02
     c.use_denoising = True; c.denoiser = 'OPENIMAGEDENOISE'
     c.max_bounces = 8; c.diffuse_bounces = 3; c.glossy_bounces = 3; c.transmission_bounces = 4; c.volume_bounces = 2; c.transparent_max_bounces = 40
