@@ -18,4 +18,6 @@ venv/bin/python dem.py prizori.json medvode-2-hribi /pot/dem /pot/dem-hribi.npz 
 venv/bin/python izris.py medvode-1-alpe --dem /pot/dem-medvode.npz --car /pot/jastreb-d81f2a.json --tmp /pot/tmp --out v2/medvode-1-alpe
 ```
 
+Izris ene slike traja ~5 min na 4 procesorskih jedrih (80 vzorcev, globinska ostrina z zaslonko f/8, izostreno na avto); oblaki so polje kumulusov na skupni višini baze (`cloud_field`).
+
 Viri in licence so enaki kot v `../README.md`: višine iz Copernicus DEM GLO-30 (navedba vira tam), avto JASTREB 6 iz igre, vse drugo postopkovno; brez OpenStreetMap, Google Maps, Google Earth in Street View.
