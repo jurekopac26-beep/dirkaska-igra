@@ -85,6 +85,7 @@
     // the road on its bridges (over the coves and the streams): the ground under them as the land is, not raised to the road
     const BR = (LD.bridges || []).filter(([a, b]) => b - a > 20).map(([a, b]) => [sAt(a), sAt(b)]);
     const BRC = BR.map(([a, b]) => { const i = T.idx((a + b) / 2); return [T.px[i], T.pz[i], ((b - a) / 2 + 40) ** 2]; });   // (a quick test before nrNear)
+    out.cestaRob = BR.map(([a, b]) => [a - 4, (b < a ? b + L : b) + 4, 0]);   // (World.cesta: the asphalt's edge whole on the bridges, between their parapets)
     const underBridge = (n) => { if (n.i < 0 || n.dd > 30) return false; const s = n.i * ds; for (const [a, b] of BR) if (s > a - 6 && s < b + 6) return true; return false; };
     P.pad = (x, z, h) => {
       const sd = seaD(x, z);

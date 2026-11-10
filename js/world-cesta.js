@@ -27,7 +27,7 @@
   if (typeof World === 'undefined' || typeof THREE === 'undefined') return;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v), lerp = (a, b, t) => a + (b - a) * t, sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   const TILE = 8;      // (the builders' road UVs: metres to a tile)
-  const NP = 2048;     // (the profile's texels along the lap)
+  const NP1 = 2048;    // (the profile's texels along the lap; twice as many with an edge)
   const WMAX = 12, RLMAX = 12;   // (the profile's ranges: the half width, the racing line's offset; m)
 
   /* ---- the countries' road markings. bela / rumena: the paint (as the builders'); rob: the edge lines' colour; sred: the centre line's
@@ -73,9 +73,15 @@
      in the lanes, dust down the middle too). prah: the dust's colour (the country's soil, dry), kPrah how much of it, sPrah the band's
      width (m; it wanders from under half of it to one and a half). kProge: the streaks along the road (the paver's and the traffic's).
      kMadez: the stains where the cars brake. kOdsek: how far the stretches of newer and older asphalt differ, odsek: their lengths (m,
-     from-to). kLise: the broad blotches. kOlje: the lanes' oil strip, kKol: their wheel tracks. barva: how worn the paint is (0-1) ---- */
+     from-to). kLise: the broad blotches. kOlje: the lanes' oil strip, kKol: their wheel tracks. barva: how worn the paint is (0-1).
+     rob (the second piece, docs/realizem.md »E0, drugi kos«): an open road's asphalt ends in a broken edge, the shoulder's gravel lying
+     in its bites: how far in from the road mesh's edge the asphalt is nibbled away all along (m: the room outside the builder's edge
+     line; 0 or none: the edge as the builder's, a circuit's kerbs and run-offs). robV: how far in the few deep breaks reach (m: through
+     the edge line, which breaks off with the asphalt), kRobV: how many of them (0 none - 1; a well kept road few). bankina: the gravel's
+     tint where the builder lays no shoulder of its own beside the road (Livorno: the verge's dry soil); where it does, the tint is read
+     from that shoulder, sample by sample ---- */
   const DIRKA = { vrsta: 'dirka', kPrah: 0.5, sPrah: 0.75, kProge: 0.07, kMadez: 0.3, kOdsek: 0.05, odsek: [140, 520], kLise: 0.08, kOlje: 0, kKol: 0, barva: 0.5 };
-  const CESTA = { vrsta: 'cesta', kPrah: 0.55, sPrah: 1.0, kProge: 0.08, kMadez: 0.2, kOdsek: 0.07, odsek: [80, 360], kLise: 0.09, kOlje: 0.13, kKol: 0.08, barva: 0.6 };
+  const CESTA = { vrsta: 'cesta', kPrah: 0.55, sPrah: 1.0, kProge: 0.08, kMadez: 0.2, kOdsek: 0.07, odsek: [80, 360], kLise: 0.09, kOlje: 0.13, kKol: 0.08, barva: 0.6, rob: 0.27, robV: 0.62, kRobV: 0.6 };
   const P = (base, o) => Object.assign({}, base, o);
   const PROGE = {
     spa:       P(DIRKA, { prah: [0.56, 0.55, 0.47], kOdsek: 0.035, odsek: [220, 700], barva: 0.45 }),   // (the builder's own stretches show already)
@@ -83,12 +89,12 @@
     rbring:    P(DIRKA, { prah: [0.57, 0.56, 0.48], kPrah: 0.45, sPrah: 0.7, kOdsek: 0.035, odsek: [240, 700], barva: 0.42 }),
     bathurst:  P(DIRKA, { prah: [0.62, 0.54, 0.42], kPrah: 0.55, sPrah: 0.9, kOdsek: 0.06, barva: 0.55 }),   // (a public road the rest of the year; the hill's ochre soil)
     montreal:  P(DIRKA, { prah: [0.57, 0.56, 0.50], sPrah: 0.75, kOdsek: 0.075, odsek: [70, 300], barva: 0.55 }),   // (a park's road the rest of the year, the winters' frost)
-    livorno:   P(CESTA, { prah: [0.62, 0.57, 0.47], sPrah: 0.95, kOdsek: 0, kOlje: 0.11, barva: 0.65 }),   // (the builder's own stretches)
-    tianmen:   P(CESTA, { prah: [0.50, 0.50, 0.41] }),
+    livorno:   P(CESTA, { prah: [0.62, 0.57, 0.47], sPrah: 0.95, kOdsek: 0, kOlje: 0.11, barva: 0.65, rob: 0.19, robV: 0.52, kRobV: 0.7, bankina: [1.03, 1.07, 1.05] }),   // (the builder's own stretches; no shoulder: the verge's dry soil to the asphalt)
+    tianmen:   P(CESTA, { prah: [0.50, 0.50, 0.41], rob: 0.22, robV: 0.55, kRobV: 0.3 }),   // (a show road, well kept)
     rastro:    P(CESTA, { prah: [0.58, 0.46, 0.36], barva: 0.6 }),   // (the serra's red soil)
-    chapman:   P(CESTA, { prah: [0.66, 0.60, 0.49], sPrah: 0.95, kOdsek: 0.055, barva: 0.5 }),   // (sand off the sandstone cliffs)
-    balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7 }),   // (grit after every winter, the frost's patches)
-    caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1 }),   // (the dry Andes: dust everywhere)
+    chapman:   P(CESTA, { prah: [0.66, 0.60, 0.49], sPrah: 0.95, kOdsek: 0.055, barva: 0.5, kRobV: 0.3 }),   // (sand off the sandstone cliffs)
+    balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7, kRobV: 0.85 }),   // (grit after every winter, the frost's patches)
+    caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
   };
 
   /* ---- the noise both shaders read: one 128 x 128 RGBA tile (it wraps both ways, with mipmaps), made once, seeded (the same on every
@@ -119,9 +125,12 @@
 
   /* ---- the road along the lap, for the shader: NP texels, each [the racing line's offset, how hard the cars brake there (0-1), the tone
      of the asphalt's stretch left and right (4 bits each), the half width]. Read unfiltered: a stretch's joint is a straight line across
-     the road ---- */
-  function profil(T, cfg, seed) {
-    const N = T.N, ds = T.ds, len = T.len, open = T.open, D = new Uint8Array(NP * 4), at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N);
+     the road. With an edge (rob: robData's) twice the texels and a second row: [the shoulder's tint there (RGB, / TMAX), how broken the
+     asphalt's edge is left and right (4 bits each; 0: the edge as the builder's)]: over a texel's samples the tint's mean and the least
+     broken (a bridge shorter than a texel keeps its clean edge), eased in and out over 4 texels ---- */
+  const TMAX = 1.5;
+  function profil(T, cfg, seed, rob) {
+    const NP = rob ? 2 * NP1 : NP1, N = T.N, ds = T.ds, len = T.len, open = T.open, H = rob ? 2 : 1, D = new Uint8Array(NP * 4 * H), at = (k) => (open ? clamp(k, 0, N - 1) : ((k % N) + N) % N);
     // braking: where the pace falls (the speed profile World's roadWear reads the racing line's rubber from), m/s2, smoothed over 24 m
     const v = T.speedProfile(16.5, 13, 85), a8 = Math.max(1, Math.round(8 / ds)), m12 = Math.max(1, Math.round(12 / ds)), raw = new Float32Array(N), brk = new Float32Array(N);
     for (let i = 0; i < N; i++) { const v0 = v[i], v1 = v[at(i + a8)]; raw[i] = sstep(2.5, 9, (v0 * v0 - v1 * v1) / (2 * a8 * ds)); }
@@ -140,7 +149,19 @@
       D[k * 4] = Math.round(clamp(rl / (2 * RLMAX) + 0.5, 0, 1) * 255); D[k * 4 + 1] = Math.round(brk[i] * 255);
       D[k * 4 + 2] = tone[0][k] * 16 + tone[1][k]; D[k * 4 + 3] = Math.round(clamp(T.wAt(i) / WMAX, 0, 1) * 255);
     }
-    const t = new THREE.DataTexture(D, NP, 1, THREE.RGBAFormat);
+    if (rob) {
+      const raw = [new Uint8Array(NP), new Uint8Array(NP)], tk = (k) => (open ? clamp(k, 0, NP - 1) : ((k % NP) + NP) % NP);
+      for (let k = 0; k < NP; k++) {
+        const i0 = Math.floor(k / NP * len / ds), i1 = Math.max(i0 + 1, Math.ceil((k + 1) / NP * len / ds)), q = (NP + k) * 4, c3 = [0, 0, 0]; let a = 1, b = 1;
+        for (let i = i0; i < i1; i++) { const j = at(i); for (let c = 0; c < 3; c++) c3[c] += rob.tint[j * 3 + c]; a &= rob.on[0][j]; b &= rob.on[1][j]; }
+        for (let c = 0; c < 3; c++) D[q + c] = Math.round(clamp(c3[c] / (i1 - i0) / TMAX, 0, 1) * 255);
+        raw[0][k] = a; raw[1][k] = b;
+      }
+      for (let k = 0; k < NP; k++) { const e = [15, 15];
+        for (let si = 0; si < 2; si++) for (let d = -3; d <= 3; d++) if (!raw[si][tk(k + d)]) e[si] = Math.min(e[si], Math.round(Math.abs(d) / 4 * 15));
+        D[(NP + k) * 4 + 3] = e[0] * 16 + e[1]; }
+    }
+    const t = new THREE.DataTexture(D, NP, H, THREE.RGBAFormat);
     t.wrapS = open ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true;
     return { tex: t, data: D, brk };
   }
@@ -148,17 +169,34 @@
   /* ---- the asphalt's wear: a copy of the builder's road material, the wear in its shader (the albedo before the light: the sun, the
      shadows, the rain's darker road and the sheen all fall on it as on the builder's). Road coordinates from the UVs: s = v * 8 m along,
      o = u * 8 - half width across. In the rain the dust darkens with the road and more (ceWet: the material's colour, which Render's
-     applyRoad darkens, against its dry colour, uCeD.w): wet dust is dark, the band all but gone ---- */
-  const ROAD_FRAG = `
-{
+     applyRoad darkens, against its dry colour, uCeD.w): wet dust is dark, the band all but gone.
+     V.rob: the edge (an open road). The asphalt ends in a broken line (EDGE: how far in from the mesh's edge it is gone,
+     ceE): nibbled all along within the room outside the edge line (uCeE.x m), bites a hand or two deep and a metre or so long, more of
+     them on some stretches than on others, small teeth between; and here and there, on the worse stretches, a deep break through the
+     edge line (to uCeF.x m more; the line breaks off with it: the paint's shader cuts it by the same EDGE). Outside it lies the
+     shoulder's own gravel (the builders' shoulder texture laid on as theirs is beside the road, in the shoulder's tint there: the
+     profile's second row), the asphalt's rim a little darker. No vertex moves: the cars drive on the mesh as before. Soft over a pixel
+     or so (vCeZ: the distance) ---- */
+  const HEAD = (V) => `
   float ceS = vCe.x;
-  vec4 ceP = texture2D( uCeP, vec2( ceS * uCeA.x, 0.5 ) );
+  vec4 ceP = texture2D( uCeP, vec2( ceS * uCeA.x, ${V.rob ? '0.25' : '0.5'} ) );
   float ceW = ceP.a * ${WMAX.toFixed(1)}, ceO = vCe.y - ceW, ceAo = abs( ceO ), ceRl = ( ceP.r - 0.5 ) * ${(2 * RLMAX).toFixed(1)};
   float ceT = floor( ceP.b * 255.0 + 0.5 ), ceTl = floor( ceT / 16.0 );
   ceT = ( ( ceO < 0.0 ? ceTl : ceT - ceTl * 16.0 ) - 7.5 ) / 7.5;
   vec4 ceN1 = texture2D( uCeN, vec2( ceO, ceS ) / 9.7 );
   vec4 ceN2 = texture2D( uCeN, vec2( ceO / 7.3 + 0.31, ceS / 47.0 ) );
-  vec4 ceN3 = texture2D( uCeN, vec2( ceO / 2.3 + 0.5, ceS / 6.1 ) );
+  vec4 ceN3 = texture2D( uCeN, vec2( ceO / 2.3 + 0.5, ceS / 6.1 ) );`;
+  const EDGE = `
+  vec4 ceQ = texture2D( uCeP, vec2( ceS * uCeA.x, 0.75 ) );
+  float ceEm = floor( ceQ.a * 255.0 + 0.5 ), ceEl = floor( ceEm / 16.0 );
+  ceEm = ( ceO < 0.0 ? ceEl : ceEm - ceEl * 16.0 ) / 15.0;
+  float ceEd = ceW - ceAo;
+  float ceEb = smoothstep( 0.3, 0.7, ceN2.r ) * ( 0.8 + 0.2 * ceT );
+  float ceEc = smoothstep( 0.5, 0.62, ceN3.b );
+  float ceEv = smoothstep( uCeF.y, uCeF.y + 0.08, ceN2.r ) * smoothstep( 0.4, 0.56, ceN1.b );
+  float ceE = ceEm * ( uCeE.x * clamp( 0.2 + 0.3 * ceEb + 0.55 * ceEc * ( 0.45 + 0.55 * ceEb ) + 0.55 * ( ceN1.g - 0.5 ), 0.06, 1.0 ) + uCeF.x * ceEv * ( 0.85 + 0.4 * ( ceN3.g - 0.5 ) ) );`;
+  const roadFrag = (V) => `
+{${HEAD(V)}
   float ceK = 1.0 + uCeB.y * ceT + uCeB.z * ( ceN1.r - 0.5 ) * 2.0 + uCeB.w * ( ceN2.a - 0.5 ) * 2.0;
   float ceLane = ceAo - ceW * 0.5;
   float ceLat = mix( ceLane, ceO - ceRl, uCeA.y );
@@ -175,25 +213,35 @@
   ceDu = max( ceDu, uCeC.y * exp( - ceO * ceO / 0.3 ) * ceN2.a );
   ceDu *= 0.45 + 0.55 * ceN3.g;
   float ceWet = dot( diffuse, vec3( 1.0 ) ) * uCeD.w;
-  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu );
+  diffuseColor.rgb = mix( diffuseColor.rgb, uCeD.rgb * ceWet * ceWet, uCeA.z * ceDu );${V.rob ? EDGE + `
+  float ceEs = 0.006 + 0.0016 * vCeZ;
+  float ceSh = ( 1.0 - smoothstep( ceE - ceEs, ceE + ceEs, ceEd ) ) * step( 0.03, ceEm );
+  diffuseColor.rgb *= 1.0 - 0.3 * ceEm * ( 1.0 - smoothstep( ceE, ceE + 0.05, ceEd ) );
+  diffuseColor.rgb = mix( diffuseColor.rgb, texture2D( uCeM, vec2( - ceEd * uCeE.z, ceS * uCeE.w ) ).rgb * ceQ.rgb * ( uCeE.y * ceWet ), ceSh );` : ''}
 }`;
-  function roadMat(base, T, cfg, P) {
-    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta|' + base.customProgramCacheKey();
+  function roadMat(base, T, cfg, P, V) {
+    const m = base.clone(), dirka = cfg.vrsta === 'dirka' ? 1 : 0, prev = base.onBeforeCompile, key = 'cesta' + (V.rob ? 'R' : '') + '|' + base.customProgramCacheKey(), frag = roadFrag(V);
     const U = { uCeN: { value: noiseTex() }, uCeP: { value: P.tex }, uCeA: { value: new THREE.Vector4(1 / T.len, dirka, cfg.kPrah, cfg.kOlje) },
       uCeB: { value: new THREE.Vector4(cfg.kMadez, cfg.kOdsek, cfg.kLise, cfg.kProge || 0) }, uCeC: { value: new THREE.Vector4(cfg.sPrah, dirka ? 0 : 0.35, dirka ? 0 : 0.2, cfg.kKol || 0) }, uCeD: { value: new THREE.Vector4(cfg.prah[0], cfg.prah[1], cfg.prah[2], 1 / Math.max(0.01, base.color.r + base.color.g + base.color.b)) } };
+    if (V.rob) { U.uCeM = { value: V.rob.tex }; U.uCeE = { value: new THREE.Vector4(cfg.rob, TMAX, V.rob.uv[0], V.rob.uv[1]) };
+      U.uCeF = { value: new THREE.Vector4(Math.max(0, (cfg.robV || 0) - cfg.rob), cfg.kRobV > 0 && cfg.robV > cfg.rob ? 0.8 - 0.2 * cfg.kRobV : 2, 0, 0) }; }
     m.onBeforeCompile = (sh, r) => {
       prev.call(m, sh, r);   // (whatever the builder's material has in its shader already)
       Object.assign(sh.uniforms, U);
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCe;').replace('#include <begin_vertex>', `#include <begin_vertex>\nvCe = vec2( uv.y * ${TILE.toFixed(1)}, uv.x * ${TILE.toFixed(1)} );`);
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN, uCeP; uniform vec4 uCeA, uCeB, uCeC, uCeD; varying vec2 vCe;')
-        .replace('#include <color_fragment>', '#include <color_fragment>' + ROAD_FRAG);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCe;' + (V.rob ? '\nvarying float vCeZ;' : '')).replace('#include <begin_vertex>', `#include <begin_vertex>\nvCe = vec2( uv.y * ${TILE.toFixed(1)}, uv.x * ${TILE.toFixed(1)} );`);
+      if (V.rob) sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvCeZ = - mvPosition.z;');
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN, uCeP; uniform vec4 uCeA, uCeB, uCeC, uCeD; varying vec2 vCe;' + (V.rob ? '\nuniform sampler2D uCeM; uniform vec4 uCeE, uCeF; varying float vCeZ;' : ''))
+        .replace('#include <color_fragment>', '#include <color_fragment>' + frag);
     };
     m.customProgramCacheKey = () => key; m.userData.cesta = 'asfalt'; m.userData.ceU = U;
     return m;
   }
 
   /* ---- the paint's wear: a copy of the builder's line material; by the place in the world (no UVs on the lines): worn patches where the
-     asphalt (its tone: uCeU) shows through, chips, the paint a little dirty ---- */
+     asphalt (its tone: uCeU) shows through, chips, the paint a little dirty. R (a road with an edge: the road material's uniforms): the
+     paint breaks off with the asphalt: nothing of a line is drawn where the road's own shader has the edge's gravel (the same EDGE, by
+     the lines' place on the road: the attribute ceSO finish() gives their meshes, as the road's UVs: metres along, metres from the left
+     edge) ---- */
   const PAINT_FRAG = `
 {
   float ceM = smoothstep( 0.78, 0.88, max( vColor.r, max( vColor.g, vColor.b ) ) );
@@ -202,15 +250,20 @@
   float ceWr = smoothstep( 0.4, 0.74, ceA ) * ( 0.4 + 0.6 * ceB ) + 0.3 * smoothstep( 0.55, 0.8, ceB );
   diffuseColor.rgb = mix( diffuseColor.rgb * mix( 1.0, 0.84 + 0.16 * ceB, ceM ), uCeU, ceM * min( 0.92, uCeL * ceWr ) );
 }`;
-  function paintMat(base, cfg, under) {
+  const PAINT_EDGE = `
+{${HEAD({ rob: true })}${EDGE}
+  if ( ceE > 0.001 && ceEd < ceE ) discard;
+}`;
+  function paintMat(base, cfg, under, R) {
     const m = base.clone(), U = { uCeN: { value: noiseTex() }, uCeU: { value: new THREE.Vector3(under[0], under[1], under[2]) }, uCeL: { value: cfg.barva } };
-    const prev = base.onBeforeCompile, key = 'cestaBarva|' + base.customProgramCacheKey();
+    const prev = base.onBeforeCompile, key = 'cestaBarva' + (R ? 'R' : '') + '|' + base.customProgramCacheKey();
+    if (R) for (const k of ['uCeP', 'uCeA', 'uCeE', 'uCeF']) U[k] = R[k];
     m.onBeforeCompile = (sh, r) => {
       prev.call(m, sh, r);
       Object.assign(sh.uniforms, U);
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCeW;').replace('#include <project_vertex>', '#include <project_vertex>\nvCeW = ( modelMatrix * vec4( transformed, 1.0 ) ).xz;');
-      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN; uniform vec3 uCeU; uniform float uCeL; varying vec2 vCeW;')
-        .replace('#include <color_fragment>', '#include <color_fragment>' + PAINT_FRAG);
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec2 vCeW;' + (R ? '\nattribute vec2 ceSO; varying vec2 vCe;' : '')).replace('#include <project_vertex>', '#include <project_vertex>\nvCeW = ( modelMatrix * vec4( transformed, 1.0 ) ).xz;' + (R ? '\nvCe = ceSO;' : ''));
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D uCeN; uniform vec3 uCeU; uniform float uCeL; varying vec2 vCeW;' + (R ? '\nuniform sampler2D uCeP; uniform vec4 uCeA, uCeE, uCeF; varying vec2 vCe;' : ''))
+        .replace('#include <color_fragment>', '#include <color_fragment>' + (R ? PAINT_EDGE : '') + PAINT_FRAG);
     };
     m.customProgramCacheKey = () => key; m.userData.cesta = 'barva'; m.userData.ceU = U;
     return m;
@@ -269,23 +322,92 @@
       for (let k = 0, st = Math.max(1, Math.floor(P.count / 240)); k < P.count; k += st) { const q = kind(P, C, k); n++; if (q === 1) on++; else if (q === 2) off++; }
       return on >= 0.4 * n && off <= 0.03 * n; };
     const AC = o.asphaltMat.color, under = [TONE[0] * AC.r * 0.8, TONE[1] * AC.g * 0.8, TONE[2] * AC.b * 0.8];
-    let P = null, rm = null; const pm = new Map(), info = { id: T.def.id, asfalt: 0, barva: 0 }, cand = [];
+    const pm = new Map(), info = { id: T.def.id, asfalt: 0, barva: 0, rob: 0 }, road = [], cand = [], shoulder = [];
     o.root.traverse((m) => {   // first the road (the lines are measured against it)
       if (!m.isMesh || !m.geometry || !m.geometry.attributes || Array.isArray(m.material) || !m.material) return;
       const mt = m.material;
-      if (mt === o.asphaltMat) {
-        if (!isRoad(m.geometry)) return;
-        if (!rm) { P = profil(T, cfg, seed); if (o.ownTex) o.ownTex.push(P.tex); rm = roadMat(o.asphaltMat, T, cfg, P); }
-        addRows(m.geometry); m.material = rm; info.asfalt++;
-      } else if (mt.isMeshLambertMaterial && mt.vertexColors && !mt.map && !mt.transparent && !mt.userData.cesta && cfg.barva > 0) cand.push(m);
+      if (mt === o.asphaltMat) { if (isRoad(m.geometry)) { addRows(m.geometry); road.push(m); } }
+      else if (mt.isMeshLambertMaterial && mt.vertexColors && !mt.map && !mt.transparent && !mt.userData.cesta && cfg.barva > 0) cand.push(m);
+      else if (cfg.rob > 0 && tex.makadam && mt.map === tex.makadam && mt.vertexColors && m.geometry.attributes.uv && m.geometry.attributes.color) shoulder.push(m);
     });
-    if (rm) for (const m of cand) {
+    if (!road.length) { o.cesta = info; return; }
+    /* ---- the edge (cfg.rob; an open road): where along the road, left and right, the asphalt's edge is broken (0-15), and the tint of
+       the shoulder's gravel there. The builders' shoulder strips are found as the road is: the meshes with the shared gravel texture
+       whose inner edge lies on the road's (u = 0 there, v = metres along / their tile): their colour there is the tint, their UVs' scale
+       the texture's (the gravel in the bites is the shoulder's own, laid on as beside the road). No shoulder mesh at all (Livorno): the
+       verge's soil, cfg.bankina, all along. The edge stays the builder's (clean) on the bridges and in the galleries (def.bridges,
+       def.loopBridge, def.galleries: metres after the start line), across the side roads' mouths (T.stubs: World.api.stubGeo's mouths)
+       and wherever the builder says (o.cestaRob: [from, to (the track's own metres), side (-1 left, 1 right, 0 both)]) ---- */
+    const robData = () => {
+      const len = T.len, has = [new Uint8Array(N), new Uint8Array(N)], tint = new Float32Array(N * 3), cnt = new Uint16Array(N), uvs = [1 / 4, 1 / 6], C3 = [0, 0, 0];
+      let found = 0;
+      for (const m of shoulder) {
+        const g = m.geometry, P = g.attributes.position, UV = g.attributes.uv, C = g.attributes.color;
+        // the strip's scale along the road: from the vertices at u = 0 whose nearest sample is plainly theirs
+        const est = [];
+        for (let k = 0, st = Math.max(1, Math.floor(P.count / 400)); k < P.count && est.length < 60; k += st) {
+          if (Math.abs(UV.getX(k)) > 1e-4 || UV.getY(k) < 4) continue;
+          const x = P.getX(k), y = P.getY(k), z = P.getZ(k), i = near(x, y, z); if (i < 8) continue;
+          const oo = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], al = (x - T.px[i]) * T.tx[i] + (z - T.pz[i]) * T.tz[i];
+          if (Math.abs(Math.abs(oo) - T.wAt(i)) < 0.03 && Math.abs(al) < 0.05) est.push(UV.getY(k) / (i * ds));
+        }
+        if (est.length < 6) continue;
+        est.sort((a, b) => a - b); const sv = est[est.length >> 1]; if (!(sv > 0.01 && sv < 2)) continue;
+        let su = 0, nu = 0;
+        for (let k = 0; k < P.count; k++) {
+          const u = UV.getX(k), f = UV.getY(k) / (sv * ds), i0 = Math.round(f); if (Math.abs(f - i0) > 0.02) continue;
+          const i = open ? i0 : ((i0 % N) + N) % N; if (i < 0 || i >= N) continue;
+          const x = P.getX(k), z = P.getZ(k), w = T.wAt(i), oo = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], al = (x - T.px[i]) * T.tx[i] + (z - T.pz[i]) * T.tz[i];
+          if (Math.abs(al) > 0.05 || Math.abs(P.getY(k) - roadY(i, oo < 0 ? -w : w)) > 0.08) continue;
+          const e = Math.abs(oo) - w;
+          if (Math.abs(u) <= 1e-4 && Math.abs(e) < 0.03) { has[oo < 0 ? 0 : 1][i] = 1; tint[i * 3] += C.getX(k); tint[i * 3 + 1] += C.getY(k); tint[i * 3 + 2] += C.getZ(k); cnt[i]++; }
+          else if (u > 0.02 && e > 0.2 && e < 2 && nu < 400) { su += u / e; nu++; }
+        }
+        if (nu) { uvs[0] = su / nu; uvs[1] = sv; found++; }
+      }
+      // the tint: the shoulder's own where there is one, the nearest one's where a sample has none, else the track's (cfg.bankina)
+      let n = 0;
+      for (let i = 0; i < N; i++) if (cnt[i]) { for (let c = 0; c < 3; c++) { tint[i * 3 + c] /= cnt[i]; C3[c] += tint[i * 3 + c]; } n++; }
+      const B = cfg.bankina || (n ? [C3[0] / n, C3[1] / n, C3[2] / n] : [0.62, 0.6, 0.55]);
+      if (!found) { has[0].fill(1); has[1].fill(1); }
+      for (let i = 0, last = -1; i < N; i++) { if (cnt[i]) { last = i; continue; } const j = last >= 0 && i - last <= 6 ? last : -1; for (let c = 0; c < 3; c++) tint[i * 3 + c] = j >= 0 ? tint[j * 3 + c] : B[c]; }
+      // clean: the bridges, the galleries, the side roads' mouths, the builder's own spans
+      const clean = [new Uint8Array(N), new Uint8Array(N)], d = T.def, S0 = T.startS || 0;
+      const span = (s0, s1, sd) => { for (let s = s0; s <= s1 + ds / 2; s += ds / 2) { if (open && (s < 0 || s > len)) continue; const i = T.idx(((s % len) + len) % len); if (!(sd > 0)) clean[0][i] = 1; if (!(sd < 0)) clean[1][i] = 1; } };
+      for (const [a, b] of d.bridges || []) span(S0 + a - 3, S0 + b + 3, 0);
+      if (d.loopBridge) span(S0 + d.loopBridge[0] - 1, S0 + d.loopBridge[1] + 1, 0);
+      for (const [a, b] of d.galleries || []) span(S0 + a - 2, S0 + b + 2, 0);
+      for (const [a, b, sd] of o.cestaRob || []) span(a, b, sd || 0);
+      if (T.stubs && T.stubs.length && World.api && World.api.stubGeo) { const M = World.api.stubGeo({}).mouthE; for (let si = 0; si < 2; si++) for (let i = 0; i < N; i++) if (M[si][i]) { clean[si][i] = 1; if (i > 0) clean[si][i - 1] = 1; if (i < N - 1) clean[si][i + 1] = 1; } }
+      const on = [new Uint8Array(N), new Uint8Array(N)]; let n1 = 0;   // (per side and sample: the edge broken there; profil() eases it in and out)
+      for (let si = 0; si < 2; si++) for (let i = 0; i < N; i++) if (has[si][i] && !clean[si][i]) { on[si][i] = 1; n1++; }
+      info.rob = Math.round(n1 / (2 * N) * 100);   // (for the tests: the share of the road's two edges that is broken, %)
+      return { tint, on, uv: uvs, tex: tex.makadam, shoulders: found };
+    };
+    // a line's place on the road, for the paint's shader (a road with an edge): per vertex [metres along, metres from the road's left edge],
+    // as the road's own UVs (x 8) are; a vertex that is not on the road's surface: the road's middle (nothing breaks off there)
+    const soAttr = (g) => {
+      const P = g.attributes.position, n = P.count, A = new Float32Array(n * 2), len = T.len; let lo = 1e9, hi = -1e9, mid = false;
+      for (let k = 0; k < n; k++) {
+        const x = P.getX(k), y = P.getY(k), z = P.getZ(k), i = near(x, y, z); if (i < 0) { A[k * 2 + 1] = T.wAt(0); continue; }
+        const w = T.wAt(i), oo = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], al = (x - T.px[i]) * T.tx[i] + (z - T.pz[i]) * T.tz[i];
+        const onRoad = Math.abs(oo) <= w + 0.05 && Math.abs(al) <= ds * 1.5 && Math.abs(y - roadY(i, oo)) <= 0.15, sv = i * ds + (onRoad ? al : 0);
+        A[k * 2] = sv; A[k * 2 + 1] = w + (onRoad ? oo : 0); if (sv < lo) lo = sv; if (sv > hi) hi = sv; if (sv > len * 0.25 && sv < len * 0.75) mid = true;
+      }
+      if (!open && !mid && hi - lo > len / 2) for (let k = 0; k < n; k++) if (A[k * 2] < len / 2) A[k * 2] += len;   // (a chunk across the lap's seam: its metres run on, as the road's UVs do)
+      g.setAttribute('ceSO', new THREE.BufferAttribute(A, 2));
+    };
+    const V = { rob: cfg.rob > 0 && tex.makadam ? robData() : null };
+    const P = profil(T, cfg, seed, V.rob), rm = roadMat(o.asphaltMat, T, cfg, P, V); if (o.ownTex) o.ownTex.push(P.tex);
+    for (const m of road) { m.material = rm; info.asfalt++; }
+    for (const m of cand) {
       if (!isPaint(m.geometry)) continue;
-      const mt = m.material; let c = pm.get(mt); if (!c) pm.set(mt, c = paintMat(mt, cfg, under));
+      const mt = m.material; let c = pm.get(mt); if (!c) pm.set(mt, c = paintMat(mt, cfg, under, V.rob ? rm.userData.ceU : null));
+      if (V.rob) soAttr(m.geometry);
       m.material = c; info.barva++;
     }
     o.cesta = info;   // (for the tests: how many meshes took each look)
-    if (rm) o.cestaMat = rm;
+    o.cestaMat = rm; o.cestaRobData = V.rob;
   }
 
   World.cesta = { finish, crte, CRTE, PROGE, BELA, RUMENA };
