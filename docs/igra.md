@@ -311,7 +311,7 @@ Gumb **Šola vožnje** na naslovnem zaslonu odpre štiri vaje z medaljami (zlato
 - **Idealna linija** (Štajerska): en krog, na cesti pred avtom pa je narisana idealna linija. Šteje delež kroga, ko je avto manj kot 1,5 m od nje (zlato 75 %, srebro 55 %, bron 35 %), krog pa mora biti hitrejši od 1,25-kratnega časa avtopilota.
 - **Drift** (Štajerska, z mesta pred četrtim ovinkom, med ovinki notranjega dela): v 40 sekundah zberi čim več točk drsenja. Ročne zavore ni: avto zdrsne bočno, ko ostro zaviješ v ovinek in v njem zaviraš (tako vozi tudi avtopilot). Točke se nabirajo, dokler avto drsi bočno (več za večji kot in večjo hitrost), in se ob koncu drsenja prištejejo; ob udarcu v ograjo ali avto se veriga izgubi. Medalje so glede na točke avtopilota v isti vaji (zlato 115 %, srebro 85 %, bron 50 %).
 
-Idealna linija in Drift sta bili do 9. 11. 2026 na Jezeru (testna proga, za gumbom NEUPORABNO); progo je izbrala seja teme (vprašanje `avtosola-proga` na strani Odločitve, do odgovora velja Štajerska).
+Idealna linija in Drift sta bili do 9. 11. 2026 na Jezeru (testna proga, za gumbom NEUPORABNO); od 10. 11. 2026 sta na Štajerski (odločitev uporabnika 10. 11. 2026, vprašanje `avtosola-proga` na strani Odločitve).
 
 Med vajo je na vrhu zaslona vrstica z nalogo in sprotnim rezultatom (npr. »ZAVIRANJE · do črte STOP 87 m«), po vaji pa rezultat z medaljo, meje medalj in tvoj najboljši rezultat; **Ponovi vajo** jo začne znova, **Šola vožnje** te vrne na seznam vaj. Dosežka **Učenec** (prva zlata medalja) in **Diplomant** (zlato v vseh vajah).
 
