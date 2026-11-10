@@ -644,7 +644,11 @@
         for (let k = 0; k <= n; k++) {
           let x = x0 + ux * L * k / n, z = z0 + uz * L * k / n; const nn = API.vrNear(x, z);
           if (API.vrDist(x, z) > 430) { tops.push(null); continue; }
-          if (nn.i >= 0 && nn.dd < 3) { x += ux * 14; z += uz * 14; }   // (never on the road: a step along the line)
+          if (nn.i >= 0 && nn.dd < 3) {   // (never on the road: a step along the line, 14 m, or further either way until clear of every leg of the road; S10, docs/pregled-sveta.md)
+            const bx = x, bz = z; let bd = -1;
+            for (const e of [14, -14, 21, -21, 28, -28, 7, -7]) { const cx = bx + ux * e, cz = bz + uz * e, q = API.vrNear(cx, cz), dd = q.i < 0 ? 1e9 : q.dd;
+              if (dd > bd) { bd = dd; x = cx; z = cz; } if (dd >= 3) break; }
+          }
           const y = caGround(x, z), g = scen.get(x, z), end = k === 0 || k === n, h = end ? 4.5 : kind === 0 ? 10 + (k % 3) : 7;
           if (end) { box(g, x, y - 0.3, z, 7, 3.6, 5, rot, [0.82, 0.8, 0.74], [0.5, 0.2, 0.15], true); cyl(g, x, y + 3.3, z, 2.0, 0.3, 10, st); exclPush(x, z, 6); CR.block(x, z, 7.5, 5.5, rot); }
           else { cyl(g, x, y - 0.3, z, kind === 0 ? 0.3 : 0.2, h + 0.3, 6, st); box(g, x, y + h, z, 0.4, 0.35, kind === 0 ? 4.6 : 1.6, rot, st); exclPush(x, z, 1.2); CR.avoid(x, z, 0.8); }

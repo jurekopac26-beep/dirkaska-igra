@@ -3176,6 +3176,10 @@ const Garage3D = (function () {
   function* armsPark(pace) { yield* par(armRest(0, pace), armRest(1, pace)); }
   // (a stand built in its own frame, set in place: g's vertices from v0 on moved by M (a turn about y and a move: their normals turned
   // with it))
+  // (only the vertices v0 .. v1 (the end if not given); the normals by the inverse transpose, so an uneven scale keeps them right)
+  function placeGBR(g, v0, v1, M) { const P = g.P, N = g.N, n3 = new THREE.Matrix3().getNormalMatrix(M);
+    for (let v = v0 * 3, e = (v1 == null ? P.length / 3 : v1) * 3; v < e; v += 3) { _tv.set(P[v], P[v + 1], P[v + 2]).applyMatrix4(M); P[v] = _tv.x; P[v + 1] = _tv.y; P[v + 2] = _tv.z;
+      _tv.set(N[v], N[v + 1], N[v + 2]).applyMatrix3(n3).normalize(); N[v] = _tv.x; N[v + 1] = _tv.y; N[v + 2] = _tv.z; } }
   function placeGB(g, v0, M) { const e = M.elements, P = g.P, N = g.N;
     for (let v = v0 * 3; v < P.length; v += 3) { const x = P[v], y = P[v + 1], z = P[v + 2], nx = N[v], ny = N[v + 1], nz = N[v + 2];
       P[v] = e[0] * x + e[4] * y + e[8] * z + e[12]; P[v + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; P[v + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
@@ -3717,70 +3721,135 @@ const Garage3D = (function () {
     CH.dirty = true; for (const A of RB) A.dirty = true; stepFixtures(0);
   }
 
-  /* ---------------- the front: the cabinet before the car, the colour circles, the lift's head ----------------
-     THE CABINET (the concept's, under the page's buttons in the first view): a low navy cabinet across the room before the turntable, its
-     top a light grey deck. On it three round plinths with three cars' maquettes (the player's car, one to rent, one for sale: each drawn
-     small, standing toward the camera; a tap brings it onto the turntable), a sign over each on two posts, tilted back toward the camera
-     (YOUR CAR green; RENT A CAR blue with a red tag, the rent; FOR SALE blue with a wide red tag, the car's price), three lamps over each
-     sign (lit over the maquette of the car on the turntable: FRONT.lit), the letters as reflective film; a ring of green light in the
-     YOUR CAR plinth (the player's car: its maquette's lamps on, it shakes a little as a running engine, a wisp from its exhaust), a
-     padlock before the one for sale (till it is bought); on the right the big red SERVICE button (a white ring round it, a white wrench in relief on its dome). Its words in English
-     (generic). THE COLOUR CIRCLES: the game's eight colours as discs in the floor on an arc before the turntable, each in a white ring.
-     THE LIFT'S HEAD: a small orange plate with an arrow on the lift's carriage (the version 25 of the concept): a tap lifts the car
-     and lets it down. Each a thing to tap (FRONT.items, with the regal's: pick), its outline for the marks (mark) ---------------- */
-  // (x0 .. x1: the cabinet as wide as an upright screen sees it at its face (360 x 640 and every other: -1.85 .. 1.66 at its deck), whole
-  // with its drawers)
-  const FRONT = { ry: 0.3, z: 6.05, d: 0.9, h: 0.82, x0: -1.79, x1: 1.6, mq: [-1.32, -0.5, 0.32], mz: 5.9, sv: [1.24, 5.94], items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450\u00a0\u{1FA99}', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, circ: { R: 3.5, a0: -0.95, a1: 0.95, r: 0.17 }, plate: null };
+  /* ---------------- the front: the plan chest before the car, the colour wells, the lift's head ----------------
+     THE PLAN CHEST (the plans' first view, nacrti 9: the concept's form 4 of the plan chest): a long low chest of drawers on an arc before
+     the turntable (its front a circle of 10 m about a point 4.3 m behind the room's middle, 0.97 m tall, 0.64 m deep), navy, its top navy
+     steel with a steel edge under its front and a yellow line along it. Two columns of twelve drawers either side of a middle stile (the
+     lights left: HEADLAMPS, UNDERGLOW, GRILLES, CALIPERS; the rest right: TAIL LAMPS, INDICATORS, DECALS, BRAKES), four of each column open,
+     the lower the further out (a staircase: the 1st, 4th, 7th and 11th, each row's inside seen over the one above it), the shut ones under
+     them. In each open drawer its element's four parts (the game's options: js/garage.js DRAWER), each in a cell of its dark insert (the
+     cells as wide on an upright screen, the outer ones from its edge), a tag before each with its name, the element's name on the
+     drawer's front, an aluminium pull along its top. A tap on a drawer (drw:<element>) opens its element's menu and pulls it a little
+     further out (drawer()), it slides back when the menu closes. ON ITS TOP: three round plinths with three cars' maquettes (the player's
+     car, one to rent, one for sale: each drawn small, standing toward the camera; a tap brings it onto the turntable), a sign over each on
+     two posts, turned to the camera (YOUR CAR; RENT A CAR with the rent; FOR SALE with the price), a ring of light round the plinth of the
+     car on the turntable (FRONT.lit), a ring of green light in the YOUR CAR plinth (the player's car: its maquette's lamps on, it shakes a
+     little as a running engine, a wisp from its exhaust), a padlock before the one for sale (till it is bought), each car's name before
+     it; on the right the big red SERVICE button (a white ring round it, a white wrench in relief on its dome). THE COLOUR WELLS: the
+     game's eight colours as glowing discs in the floor in a zigzag before the turntable, each in a steel rim. THE LIFT'S HEAD: a small
+     orange plate with an arrow on the lift's carriage: a tap lifts the car and lets it down. Each a thing to tap (FRONT.items, with the
+     regal's: pick), its outline for the marks (mark). The words in English (generic) ---------------- */
+  const FRONT = { ry: 0.3, items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450 \u{1FA99}', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, plate: null, lamps: [], ring: null };
   const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
   // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
   function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
   const _tv = new V3(), _yAx = new V3(0, 1, 0);
   const gbSlice = (g, a, b) => [Float32Array.from(g.P.slice(a * 3, b * 3)), Float32Array.from(g.N.slice(a * 3, b * 3))];
-  // the signs' and the labels' atlas (512 x 512, FAH its height): YOUR CAR, RENT A CAR, FOR SALE, the two red tags (their prices: drawn
-  // again), the labels on the deck's edge (STREET, SPORT, RACE · LOCKED, AERO KITS, SERVICE), the drawers' names (D0 .. D7, DRW.names)
-  const FAH = 512, FRA = { YOUR: [0, 0, 256, 56], RENT: [256, 0, 256, 56], SALE: [0, 56, 256, 56], T0: [256, 56, 128, 44], T1: [384, 56, 128, 44], L0: [0, 112, 170, 34], L1: [170, 112, 170, 34], L2: [340, 112, 172, 34], AK: [0, 146, 256, 34], SV: [256, 146, 256, 34] };
+  // the chest (the concept's form 4): its front's arc (radius R about (0, wc) in its frame F), its back's (R - D), H tall, N drawers a
+  // column (pitch P) over its plinth, the open ones (open: their pulls, metres out), its top topT thick (over: out over the front, gap: over
+  // the drawers), its ends at the angles -bE, bE, the stile st either side of the middle; a drawer's front fT thick, its pull pullH high and
+  // pullD out, its box dd deep (its walls wall), its insert inset in from the box's ends, under (its top under the drawer's); round a part
+  // in its cell clr, its tag tagD deep, sMax its largest scale; the top's slots (radius slot, at
+  // the angles slots: YOUR CAR, RENT A CAR, FOR SALE, -, SERVICE); the plans' camera (FIRST on an upright screen) in F: its place, its way
+  // ahead (y, z), the picture's half width (its tangent)
+  const PC = { R: 10, H: 0.9715, D: 0.6405, P: 0.0718, N: 12, open: [0, 3, 6, 10], plinth: 0.0755, pulls: [0.2716, 0.3732, 0.4802, 0.5499],
+    topT: 0.022, over: 0.012, gap: 0.012, bE: 0.185, st: 0.018, wc: -4.2992, fT: 0.018, pullH: 0.01, pullD: 0.005, wall: 0.008, inset: 0.034, dd: 0.6105, under: 0.012,
+    clr: 0.014, tagD: 0.026, sMax: 1.6, slot: 9.737, slots: [-0.1074, -0.0531, 0, 0.0531, 0.1074], cam: [0, 3.7909, 8.6103], fw: [-0.35227, -0.9359], ht: 0.327111 };
+  PC.rB = PC.R - PC.D; PC.y0 = PC.H - PC.topT - PC.gap; PC.face = PC.wc + PC.R; PC.yBot = PC.y0 - PC.N * PC.P;
+  // (F: the room turned 0.3 about its middle, 0.2 m toward the camera; the plans' camera in the room)
+  const MF = M4(0, 0, 0.2, 0, 0.3, 0), PLANCAM = new V3(2.5445, 3.7909, 8.4257);
+  // (a point of the arc in F: radius r, angle b from F's +z; the arc of radius r: its z at x; the plans' camera: the depth of a point (y,
+  // z) of F's x 0 plane, the x seen at the picture's x sx (-1 .. 1) at (y, z) (the same on every upright screen: as wide a view across);
+  // the camera's ray over an edge (z we, height he) down to the height hf: its z there)
+  const pcP = (r, b, y) => [r * Math.sin(b), y, PC.wc + r * Math.cos(b)], pcZ = (x, r) => PC.wc + Math.sqrt(Math.max(0, r * r - x * x));
+  const pcDepth = (y, z) => (y - PC.cam[1]) * PC.fw[0] + (z - PC.cam[2]) * PC.fw[1], pcX = (sx, y, z) => sx * PC.ht * pcDepth(y, z), pcSx = (x, y, z) => x / (PC.ht * pcDepth(y, z));
+  const pcRay = (we, he, hf) => we - (he - hf) * (PC.cam[2] - we) / (PC.cam[1] - he);
+  // (a slab of the arc in F: radius r0 .. r1, angle b0 .. b1, height y0 .. y1; its faces of 'tbiolr' (top, bottom, inner (r0), outer (r1),
+  // the b0 end, the b1 end), each facing out)
+  function pcSlab(g, r0, r1, b0, b1, y0, y1, col, faces) {
+    const n = Math.max(1, Math.ceil(Math.abs(b1 - b0) * Math.max(r1, 0.5) / 0.1)), B = (s) => b0 + (b1 - b0) * s, ym = (y0 + y1) / 2, rm = (r0 + r1) / 2;
+    for (let i = 0; i < n; i++) { const a = B(i / n), c = B((i + 1) / n), h = (a + c) / 2;
+      if (faces.includes('t')) g.quadO(pcP(r0, a, y1), pcP(r0, c, y1), pcP(r1, c, y1), pcP(r1, a, y1), col, pcP(rm, h, y1 - 1));
+      if (faces.includes('b')) g.quadO(pcP(r0, a, y0), pcP(r0, c, y0), pcP(r1, c, y0), pcP(r1, a, y0), col, pcP(rm, h, y0 + 1));
+      if (faces.includes('o')) g.quadO(pcP(r1, a, y0), pcP(r1, c, y0), pcP(r1, c, y1), pcP(r1, a, y1), col, pcP(r1 - 1, h, ym));
+      if (faces.includes('i')) g.quadO(pcP(r0, a, y0), pcP(r0, c, y0), pcP(r0, c, y1), pcP(r0, a, y1), col, pcP(r0 + 1, h, ym)); }
+    const s = Math.sign(b1 - b0) * 0.05;
+    if (faces.includes('l')) g.quadO(pcP(r0, b0, y0), pcP(r1, b0, y0), pcP(r1, b0, y1), pcP(r0, b0, y1), col, pcP(rm, b0 + s, ym));
+    if (faces.includes('r')) g.quadO(pcP(r0, b1, y0), pcP(r1, b1, y0), pcP(r1, b1, y1), pcP(r0, b1, y1), col, pcP(rm, b1 - s, ym));
+  }
+  // (a band in F between the curves za(x) (its back) and zb(x) (its front), x0 .. x1, y0 .. y1; its faces of 'tbfkle' (top, bottom, front,
+  // back, the x0 end, the x1 end); top: its top's colour; cols: [back, front] its top's colours (a shade from the back))
+  function pcBand(g, x0, x1, za, zb, y0, y1, col, faces, top, cols) {
+    if (x1 - x0 < 1e-4 || y1 - y0 < 1e-5) return; const n = Math.max(1, Math.ceil((x1 - x0) / 0.15)), X = (i) => x0 + (x1 - x0) * i / n, ym = (y0 + y1) / 2, F = faces || 'tbfkle';
+    for (let i = 0; i < n; i++) { const a = X(i), c = X(i + 1), m = (a + c) / 2, zm = (za(m) + zb(m)) / 2;
+      if (F.includes('t')) g.quadO([a, y1, za(a)], [c, y1, za(c)], [c, y1, zb(c)], [a, y1, zb(a)], top || col, [m, y1 - 1, zm], null, cols && [cols[0], cols[0], cols[1], cols[1]]);
+      if (F.includes('b')) g.quadO([a, y0, za(a)], [c, y0, za(c)], [c, y0, zb(c)], [a, y0, zb(a)], col, [m, y0 + 1, zm]);
+      if (F.includes('f')) g.quadO([a, y0, zb(a)], [c, y0, zb(c)], [c, y1, zb(c)], [a, y1, zb(a)], col, [m, ym, zb(m) - 1]);
+      if (F.includes('k')) g.quadO([a, y0, za(a)], [c, y0, za(c)], [c, y1, za(c)], [a, y1, za(a)], col, [m, ym, za(m) + 1]); }
+    if (F.includes('l')) g.quadO([x0, y0, za(x0)], [x0, y0, zb(x0)], [x0, y1, zb(x0)], [x0, y1, za(x0)], col, [x0 + 1, ym, (za(x0) + zb(x0)) / 2]);
+    if (F.includes('e')) g.quadO([x1, y0, za(x1)], [x1, y0, zb(x1)], [x1, y1, zb(x1)], [x1, y1, za(x1)], col, [x1 - 1, ym, (za(x1) + zb(x1)) / 2]);
+  }
+  // (a prism over the convex polygon Q ([x, z] in order) from y0 to y1: its top and its sides)
+  function pcPrism(g, Q, y0, y1, col) { const n = Q.length, cx = Q.reduce((a, q) => a + q[0], 0) / n, cz = Q.reduce((a, q) => a + q[1], 0) / n, ym = (y0 + y1) / 2;
+    for (let i = 1; i < n - 1; i++) g.triO([Q[0][0], y1, Q[0][1]], [Q[i][0], y1, Q[i][1]], [Q[i + 1][0], y1, Q[i + 1][1]], col, [cx, y1 - 1, cz], col, col);
+    for (let i = 0; i < n; i++) { const a = Q[i], c = Q[(i + 1) % n]; g.quadO([a[0], y0, a[1]], [c[0], y0, c[1]], [c[0], y1, c[1]], [a[0], y1, a[1]], col, [cx, ym, cz]); } }
+  // the signs' and the labels' atlas (512 x 512, FAH its height): YOUR CAR, RENT A CAR, FOR SALE, the two tags (their prices: drawn again;
+  // the sale's an LED panel's end), the cars' names before the plinths, SERVICE, the drawers' names (D0 .. D7, DRW.names), the parts'
+  // tags (G0 .. G31: DRW.tags, a drawer's four)
+  const FAH = 512, FRA = { YOUR: [0, 0, 256, 56], RENT: [256, 0, 256, 56], SALE: [0, 56, 256, 56], T0: [256, 56, 128, 44], T1: [384, 56, 128, 56], L0: [0, 112, 170, 34], L1: [170, 112, 170, 34], L2: [340, 112, 172, 34], SV: [256, 146, 256, 34] };
   for (let i = 0; i < 8; i++) FRA['D' + i] = [(i & 1) * 256, 184 + (i >> 1) * 22, 256, 20];
+  for (let i = 0; i < 32; i++) FRA['G' + i] = [(i & 3) * 128, 274 + (i >> 2) * 24, 128, 22];
   function frontTex() {
     const c = FRONT.cv || (FRONT.cv = document.createElement('canvas')); c.width = 512; c.height = FAH; const g = c.getContext('2d');
-    g.clearRect(0, 0, 512, FAH);
-    const sign = (r, bg, t) => { const [x, y, w, h] = r; g.fillStyle = bg; g.beginPath(); if (g.roundRect) g.roundRect(x + 3, y + 3, w - 6, h - 6, 7); else g.rect(x + 3, y + 3, w - 6, h - 6); g.fill();
-      g.strokeStyle = '#f4f6fa'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#ffffff'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 20); };
-    sign(FRA.YOUR, '#1f9a4a', 'YOUR CAR'); sign(FRA.RENT, '#1c4fb3', 'RENT A CAR'); sign(FRA.SALE, '#1c4fb3', 'FOR SALE');
-    for (const [r, t] of [[FRA.T0, FRONT.price[0]], [FRA.T1, FRONT.price[1]]]) { const [x, y, w, h] = r; g.fillStyle = '#d81f2a'; g.fillRect(x + 2, y + 2, w - 4, h - 4); g.strokeStyle = '#ffd9d6'; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, w - 6, h - 6);
-      g.fillStyle = '#fff'; g.font = '900 28px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      // a price in coins (450 🪙): the number and a gold coin drawn after it (not the emoji: not every phone's font has it)
-      const cn = t.endsWith('\u{1FA99}'), s = cn ? t.slice(0, -2).trim() : t;
+    g.clearRect(0, 0, 512, FAH); g.textAlign = 'center'; g.textBaseline = 'middle';
+    const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
+    // YOUR CAR: a blue sign, a white edge; RENT A CAR: a green arrow to the right; FOR SALE: a dark LED panel, its words amber
+    { const [x, y, w, h] = FRA.YOUR; g.fillStyle = '#2350c8'; rr(x + 3, y + 3, w - 6, h - 6, 7); g.fill(); g.strokeStyle = '#f4f6fa'; g.lineWidth = 3; g.stroke();
+      g.fillStyle = '#ffffff'; g.font = 'italic 900 34px Roboto, Arial, sans-serif'; g.fillText('YOUR CAR', x + w / 2, y + h / 2 + 1, w - 20); }
+    { const [x, y, w, h] = FRA.RENT; g.fillStyle = '#22a04a'; g.beginPath(); g.moveTo(x + 4, y + 5); g.lineTo(x + w - 30, y + 5); g.lineTo(x + w - 4, y + h / 2); g.lineTo(x + w - 30, y + h - 5); g.lineTo(x + 4, y + h - 5); g.closePath(); g.fill();
+      g.strokeStyle = '#eafbe9'; g.lineWidth = 3; g.stroke(); g.fillStyle = '#ffffff'; g.font = 'italic 900 31px Roboto, Arial, sans-serif'; g.fillText('RENT A CAR', x + (w - 26) / 2 + 2, y + h / 2 + 1, w - 46); }
+    const led = (r, t, coin) => { const [x, y, w, h] = r; g.fillStyle = '#16150f'; g.fillRect(x + 2, y + 4, w - 4, h - 8); g.strokeStyle = '#5c6068'; g.lineWidth = 3; g.strokeRect(x + 3, y + 5, w - 6, h - 10);
+      g.save(); g.shadowColor = '#ff9a1a'; g.shadowBlur = 6; g.fillStyle = '#ffb63a'; g.font = '900 30px "Courier New", monospace'; const s = coin ? t.slice(0, -2).trim() : t;
+      if (!coin) g.fillText(t, x + w / 2, y + h / 2 + 1, w - 14);
+      else { const cr = 9, tw = Math.min(g.measureText(s).width, w - 20 - 2 * cr), x0 = x + (w - tw - 6 - 2 * cr) / 2, cx = x0 + tw + 6 + cr, cy = y + h / 2 + 1; g.textAlign = 'left'; g.fillText(s, x0, cy, tw); g.textAlign = 'center';
+        g.shadowBlur = 0; g.fillStyle = '#f0b92e'; g.beginPath(); g.arc(cx, cy, cr, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#a87a14'; g.lineWidth = 2; g.stroke(); }
+      g.restore(); g.fillStyle = 'rgba(0, 0, 0, 0.38)'; for (let yy = y + 6; yy < y + h - 6; yy += 3) g.fillRect(x + 4, yy, w - 8, 1); };
+    led(FRA.SALE, 'FOR SALE');
+    // the rent: a red tag (a price in coins: the number and a gold coin drawn after it, not the emoji: not every phone's font has it)
+    { const [x, y, w, h] = FRA.T0, t = FRONT.price[0]; g.fillStyle = '#d81f2a'; g.fillRect(x + 2, y + 2, w - 4, h - 4); g.strokeStyle = '#ffd9d6'; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, w - 6, h - 6);
+      g.fillStyle = '#fff'; g.font = '900 28px Roboto, Arial, sans-serif'; const cn = t.endsWith('\u{1FA99}'), s = cn ? t.slice(0, -2).trim() : t;
       if (!cn) g.fillText(t, x + w / 2, y + h / 2 + 1, w - 10);
       else { const r = 10, tw = Math.min(g.measureText(s).width, w - 22 - 2 * r), x0 = x + (w - tw - 6 - 2 * r) / 2, cx = x0 + tw + 6 + r, cy = y + h / 2 + 1;
-        g.textAlign = 'left'; g.fillText(s, x0, cy, tw);
+        g.textAlign = 'left'; g.fillText(s, x0, cy, tw); g.textAlign = 'center';
         const gr = g.createRadialGradient(cx - 3, cy - 3, 1, cx, cy, r); gr.addColorStop(0, '#ffe28a'); gr.addColorStop(0.55, '#f0b92e'); gr.addColorStop(1, '#b98419');
         g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#d79f22'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, r - 1, 0, Math.PI * 2); g.stroke(); } }
-    const lab = (r, t) => { const [x, y, w, h] = r; g.fillStyle = '#d6dde8'; g.font = 'italic 800 22px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 8); };
-    [FRA.L0, FRA.L1, FRA.L2].forEach((r, i) => lab(r, FRONT.names[i] || '')); lab(FRA.SV, 'SERVICE');   // (under each maquette its car's name)
-    DRW.names.forEach((t, i) => { const [x, y, w, h] = FRA['D' + i]; g.fillStyle = '#e9eef6'; g.font = 'italic 800 17px Roboto, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 12); });   // (the drawers' names)
+    { const t = FRONT.price[1] || ''; led(FRA.T1, t, t.endsWith('\u{1FA99}')); }
+    const lab = (r, t) => { const [x, y, w, h] = r; g.fillStyle = '#d6dde8'; g.font = 'italic 800 22px Roboto, Arial, sans-serif'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 8); };
+    [FRA.L0, FRA.L1, FRA.L2].forEach((r, i) => lab(r, FRONT.names[i] || '')); lab(FRA.SV, 'SERVICE');   // (before each maquette its car's name)
+    DRW.names.forEach((t, i) => { const [x, y, w, h] = FRA['D' + i]; g.fillStyle = '#e9eef6'; g.font = 'italic 800 17px Roboto, Arial, sans-serif'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 12); });   // (the drawers' names)
+    DRW.tags.forEach((t, i) => { const [x, y, w, h] = FRA['G' + i]; g.fillStyle = '#15181e'; rr(x + 2, y + 2, w - 4, h - 4, 4); g.fill(); g.fillStyle = '#e4e9f0'; g.font = '800 14px Roboto, Arial, sans-serif'; g.fillText(t, x + w / 2, y + h / 2 + 1, w - 10); });   // (the parts' tags)
     if (FRONT.tex) FRONT.tex.needsUpdate = true;
   }
   // (a quad of the atlas' cell r: its middle c, its right and up ways (world), its size w x h)
   function atlasQuad(G, r, c, ri, up, w, h) { const [x, y, cw, ch] = r, u0 = x / 512, u1 = (x + cw) / 512, v1 = 1 - y / FAH, v0 = 1 - (y + ch) / FAH, P = (a, b) => [c.x + ri.x * a * w / 2 + up.x * b * h / 2, c.y + ri.y * a * w / 2 + up.y * b * h / 2, c.z + ri.z * a * w / 2 + up.z * b * h / 2];
     const n = new V3().crossVectors(ri, up).normalize(), ins = [c.x - n.x, c.y - n.y, c.z - n.z]; G.quadO(P(-1, -1), P(1, -1), P(1, 1), P(-1, 1), [1, 1, 1], ins, [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); }
-  /* ---------------- the cabinet's drawers (sklop 6d; the concept's mn/predali_pred_po, »vsaka vrsta predalov en meni s štirimi deli«):
-     eight open drawers in its face, four across and two high: its left half the front's (HEADLAMPS · UNDERGLOW over GRILLES ·
-     CALIPERS), its right the rear's and the rest (TAIL LAMPS · INDICATORS over DECALS · BRAKES), as the concept's two columns; in each
-     the four parts of its element the garage keeps (as js/garage.js DRAWER: the menu's), tilted back to the camera, its name on its lip.
-     A tap on one (drw:<element>) opens its element's menu and pulls it out (drawer()), it slides back when the menu closes. The eight
-     in three meshes: their trays and parts (lit as the cabinet), the parts' lights (unlit, over 1: they glow), the names (the front's
-     atlas); a drawer moved by writing its vertices again (base + its way out, along the cabinet's face's normal) ---------------- */
+  // (the atlas' cell r along a bowed front z = zfn(x) (1.5 mm out of it), x0 .. x1, y0 .. y1, in n pieces)
+  function bowQuad(G, r, x0, x1, y0, y1, zfn, n) { const [cx, cy, cw, ch] = r, u0 = cx / 512, u1 = (cx + cw) / 512, v1 = 1 - cy / FAH, v0 = 1 - (cy + ch) / FAH;
+    for (let i = 0; i < n; i++) { const a = x0 + (x1 - x0) * i / n, c = x0 + (x1 - x0) * (i + 1) / n, ua = u0 + (u1 - u0) * i / n, uc = u0 + (u1 - u0) * (i + 1) / n, za = zfn(a) + 0.0015, zc = zfn(c) + 0.0015;
+      G.quadO([a, y0, za], [c, y0, zc], [c, y1, zc], [a, y1, za], [1, 1, 1], [(a + c) / 2, (y0 + y1) / 2, (za + zc) / 2 - 1], [[ua, v0], [uc, v0], [uc, v1], [ua, v1]]); } }
+  /* ---------------- the chest's drawers (sklop 6d; the concept's mn/predali_pred_po, »vsaka vrsta predalov en meni s štirimi deli«, in
+     the plan chest of the plans): the eight open drawers, each its element's four parts the garage keeps (as js/garage.js DRAWER: the
+     menu's). A tap on one (drw:<element>) opens its element's menu and pulls it out (drawer()), it slides back when the menu closes. The
+     eight in three meshes: their boxes, fronts and parts (lit as the chest), the parts' lights (unlit, over 1: they glow), their names and
+     tags (the front's atlas); a drawer moved by writing its vertices again (base + its way out, F's +z) ---------------- */
   const DRW = { els: ['zarometi', 'luc_pod_avtom', 'zadnje_luci', 'zmigavci', 'maska', 'celjusti', 'nalepke', 'zavore'],
     names: ['HEADLAMPS', 'UNDERGLOW', 'TAIL LAMPS', 'INDICATORS', 'GRILLES', 'CALIPERS', 'DECALS', 'BRAKES'],
-    rows: [0.45, 0.11], ch: 0.3, d: 0.42, lip: 0.08, out: 0.3, tilt: 0.6, pz: 0.13, rails: [[0.08, 0.11], [0.41, 0.45], [0.75, 0.78]],
-    k: new Float32Array(8), want: -1, meshes: [], ranges: [], base: [], dir: null, col: null, cal: null };
-  // (the four columns across the cabinet: its end stiles 5 cm, the middle one 8 cm (the two halves), the others 4 cm; each part as big
-  // as the drawer's quarter lets it (0.22 m: its full size))
-  { const F = FRONT, D = DRW, e = 0.05, m = 0.08, s = 0.04, xm = (F.x0 + F.x1) / 2, cw = D.cw = (F.x1 - F.x0 - 2 * e - m - 2 * s) / 4;
-    D.cx = [F.x0 + e + cw / 2, F.x0 + e + cw * 1.5 + s, xm + m / 2 + cw / 2, xm + m / 2 + cw * 1.5 + s];
-    D.stiles = [[F.x0, F.x0 + e], [F.x0 + e + cw, F.x0 + e + cw + s], [xm - m / 2, xm + m / 2], [xm + m / 2 + cw, xm + m / 2 + cw + s], [F.x1 - e, F.x1]];
-    D.ps = Math.min(1, (cw - 0.03) / 4 / 0.22); }
-  // (a quad facing +z at depth z; a vertical ring facing +z)
+    tags: ['LED', 'YELLOW', 'SMOKED', 'BI-LED', 'BLUE', 'TURQUOISE', 'PURPLE', 'RED', 'SMOKED', 'CLEAR', 'ROUND', 'LED STRIP', 'CLEAR', 'SMOKED', 'SEQUENTIAL', 'CHROME',
+      'HONEYCOMB', 'MESH', 'CHROME', 'CARBON', 'RED', 'YELLOW', 'GOLD', 'BODY COLOUR', 'FLAMES', 'CHEQUERS', 'STAR', 'BIG BOLT', 'SPORT PADS', 'SPORT DISCS', 'RACING DISCS', 'CERAMIC'],
+    out: 0.12, k: new Float32Array(8), want: -1, meshes: [], ranges: [], base: [], dir: null, col: null, cal: null, geo: [], MR: MF };
+  // (a drawer's place: the column (0 left, 1 right) and the row (0 the top open one) of the element i: the left column the lights)
+  const drwAt = (i) => [(i & 2) >> 1, (i >> 2) * 2 + (i & 1)];
+// (a quad facing +z at depth z; a vertical ring facing +z)
   const fq = (G, x0, y0, x1, y1, z, col) => G.quadO([x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], col, [(x0 + x1) / 2, (y0 + y1) / 2, z - 1]);
   // one part in a drawer: its element's k-th of the four, built at its foot facing +z (g: lit, its gloss marked by gl; L: its lights)
   function drwPart(g, L, gl, el, k) {
@@ -3824,37 +3893,108 @@ const Garage3D = (function () {
       else { const sh = new THREE.Shape(); [[0.012, 0.05], [-0.03, -0.004], [-0.004, -0.004], [-0.016, -0.05], [0.03, 0.01], [0.004, 0.01], [0.022, 0.05]].forEach(([x, y], j) => j ? sh.lineTo(x, y) : sh.moveTo(x, y)); gAdd(g, new THREE.ShapeGeometry(sh), M, [1, 0.8, 0.12]); } }
     else if (el === 'zavore') {   // the brakes: a pair of sport pads, a slotted disc, a drilled one with its red hat, a ceramic one (its hat yellow)
       if (k === 0) { for (const x of [-0.04, 0.04]) { gl(METAL); World.box(g, x, 0.004, 0, 0.07, 0.05, 0.008, 0, [0.62, 0.1, 0.09]); gl(MATTE); World.box(g, x, 0.008, 0.008, 0.062, 0.042, 0.012, 0, [0.16, 0.15, 0.15]); } }
-      else { const r = 0.068, y = r + 0.004; gl(METAL); cylA(g, [0, y, 0], 'z', r, 0.012, 24, k === 3 ? [0.32, 0.33, 0.35] : [0.58, 0.6, 0.63]); gl(PAINT); cylA(g, [0, y, 0.01], 'z', 0.03, 0.01, 16, [[0.62, 0.64, 0.68], [0.75, 0.1, 0.09], [0.95, 0.75, 0.12]][k - 1]);
+      else { const r = 0.068, y = r + 0.004; gl(METAL); cylA(g, [0, y, 0], 'z', r, 0.012, 24, k === 3 ? [0.32, 0.33, 0.35] : [0.58, 0.6, 0.63]); gl(PAINT); cylA(g, [0, y, 0.008], 'z', 0.03, 0.006, 16, [[0.62, 0.64, 0.68], [0.75, 0.1, 0.09], [0.95, 0.75, 0.12]][k - 1]);
         if (k === 1) for (let j = 0; j < 6; j++) { const a = j / 6 * TAU, c = Math.cos(a), s = Math.sin(a), p = (u, v) => [c * u - s * v, y + s * u + c * v, 0.0065]; g.quadO(p(0.036, -0.002), p(0.062, 0.004), p(0.062, 0.008), p(0.036, 0.002), [0.14, 0.14, 0.15], [0, y, -1]); }
-        else for (let j = 0; j < 12; j++) { const a = j / 12 * TAU, q = j & 1 ? 0.045 : 0.056; discZ(g, Math.cos(a) * q, y + Math.sin(a) * q, 0.0065, 0, 0.0045, 6, [0.1, 0.1, 0.11], 1); }
-        gl(MATTE); World.box(g, 0, 0, -0.01, 0.06, 0.012, 0.03, 0, DK2); } }
+        else for (let j = 0; j < 12; j++) { const a = j / 12 * TAU, q = j & 1 ? 0.045 : 0.056; discZ(g, Math.cos(a) * q, y + Math.sin(a) * q, 0.0065, 0, 0.0045, 6, [0.1, 0.1, 0.11], 1); } } }
   }
-  function buildDrawers(MR) {
-    const F = FRONT, D = DRW, z1 = F.z + F.d / 2, g = new World.GB(), L = new World.GB(), T = new World.GB(true), gls = [], gl = (k) => gls.push([g.P.length / 3, k]);
-    const TRAY = [0.2, 0.22, 0.26], LIP = [0.13, 0.17, 0.33], W = FXC.W, its = [];
-    for (let i = 0; i < 8; i++) { const x = D.cx[i & 3], yb = D.rows[i >> 2], w = D.cw - 0.03, el = D.els[i], r0 = [g.P.length / 3, L.P.length / 3, T.P.length / 3];
-      // the tray: its floor, its low sides and back; its lip (its top edge white), its name on it
-      gl(SATIN); World.box(g, x, yb + 0.003, z1 - D.d / 2 - 0.01, w, 0.014, D.d - 0.03, 0, TRAY); for (const s of [-1, 1]) World.box(g, x + s * (w / 2 - 0.006), yb + 0.003, z1 - D.d / 2 - 0.01, 0.012, 0.06, D.d - 0.03, 0, TRAY);
-      World.box(g, x, yb + 0.003, z1 - D.d + 0.026, w, 0.06, 0.012, 0, TRAY);
-      gl(PAINT); World.box(g, x, yb, z1 - 0.012, w + 0.01, D.lip, 0.022, 0, LIP, W);
-      atlasQuad(T, FRA['D' + i], new V3(x, yb + D.lip / 2, z1 + 0.0012), new V3(1, 0, 0), new V3(0, 1, 0), w - 0.08, (w - 0.08) / 12.8);   // (the cell's 256 x 20)
-      // its four parts, tilted back to the camera, standing in a row before the tray's middle
-      const pv = g.P.length / 3;
-      for (let k = 0; k < 4; k++) { const a = g.P.length / 3, b = L.P.length / 3; drwPart(g, L, gl, el, k); const M = M4(x + (k - 1.5) * (w / 4), yb + 0.017, z1 - D.pz, -D.tilt, 0, 0, D.ps); placeGB(g, a, M); placeGB(L, b, M); }
-      D.ranges.push([[r0[0], g.P.length / 3], [r0[1], L.P.length / 3], [r0[2], T.P.length / 3]]); its.push([i, r0[0], g.P.length / 3, pv]); }
-    // all of it turned as the cabinet; the eight things to tap (their outline: the tray, its lip and its parts; their box the cubby's
-    // opening, to the drawer's front when it is out: drwBox, not the tray's whole box (it would lie over the drawers round it))
-    for (const G of [g, L, T]) placeGB(G, 0, MR);
-    D.dir = new V3(Math.sin(F.ry), 0, Math.cos(F.ry)); D.MR = MR;
-    D.items = its.map(([i, a, z]) => { const [P, N] = gbSlice(g, a, z), it = tapItem('drw:' + D.els[i], 'drw', P, N, { el: D.els[i], drw: i }); drwBox(it, 0); return it; });
+  // the chest's columns and drawers: the carcass (into g), the shut drawers (g), the open ones (gD, LD, TD: their own meshes)
+  function buildChest(g, gl) {
+    const D = DRW, R = PC.R, rB = PC.rB, H = PC.H, bE = PC.bE, et = 0.02 / R, sb = PC.st / R;
+    const NV = hexRgb(0x1c2c5e), NVE = hexRgb(0x15214a), YL = hexRgb(0xf2c230), AL = hexRgb(0x949eaa), ALD = hexRgb(0x7f8893), CAV = hexRgb(0x05070c), TOP2 = hexRgb(0x13286e),
+      BOX = hexRgb(0x252c3a), FELT = hexRgb(0x272c37), FELTD = hexRgb(0x0c0e12), SEAM = hexRgb(0x14171c), CUT = hexRgb(0x15181e), MAT = hexRgb(0x0b0f1d), CARD = hexRgb(0xf2f4f6);
+    // the carcass: the top (a steel edge under its front, the yellow line along it), the ends (dark inside), the back (dark inside), the
+    // dark floor inside, the rail under the top and over the plinth, the plinth set back (its shadow line), the middle stile
+    gl(SATIN); pcSlab(g, rB, R + PC.over, -bE - 0.004 / R, bE + 0.004 / R, H - PC.topT, H, TOP2, 'tbiolr');
+    gl(METAL); pcSlab(g, R - 0.02, R + PC.over, -bE, bE, H - PC.topT - 0.004, H - PC.topT, AL, 'bo');
+    gl(PAINT); pcSlab(g, R + PC.over, R + PC.over + 0.002, -bE - 0.004 / R, bE + 0.004 / R, H - 0.016, H - 0.006, YL, 'o');
+    gl(SATIN); pcSlab(g, rB, R, -bE, -bE + et, 0, H - PC.topT, NV, 'tiolr'); pcSlab(g, rB, R, bE - et, bE, 0, H - PC.topT, NV, 'tiolr');
+    pcSlab(g, rB, rB + 0.012, -bE + et, bE - et, PC.plinth, H - PC.topT, NV, 'i');
+    gl(MATTE); pcSlab(g, rB, rB + 0.012, -bE + et, bE - et, PC.plinth, H - PC.topT, CAV, 'o'); pcSlab(g, rB + 0.012, R - 0.004, -bE + et, -bE + et + 0.004 / R, PC.plinth, PC.y0, CAV, 'r'); pcSlab(g, rB + 0.012, R - 0.004, bE - et - 0.004 / R, bE - et, PC.plinth, PC.y0, CAV, 'l');
+    pcSlab(g, rB + 0.012, R - 0.01, -bE + et, bE - et, PC.plinth - 0.01, PC.plinth, CAV, 't');
+    gl(SATIN); pcSlab(g, R - 0.02, R, -bE + et, bE - et, PC.y0, H - PC.topT, NV, 'ob'); pcSlab(g, R - 0.02, R, -bE + et, bE - et, PC.plinth, PC.yBot, NV, 'ot');
+    pcSlab(g, rB + 0.03, R - 0.05, -bE + 0.03 / R, bE - 0.03 / R, 0, PC.plinth, NVE, 'olr'); gl(MATTE); pcSlab(g, rB, R, -bE, bE, 0, 0.003, CAV, 't');
+    gl(SATIN); pcSlab(g, rB + 0.012, R, -sb, sb, PC.plinth, PC.y0, NV, 'olr');
+    // the columns: their openings at the front (xo0 .. xo1), their boxes' ends at the back (xb0 .. xb1: the outer one radial, the middle one
+    // straight); the label holders on the shut drawers at x -0.8 and 0.8
+    const zr = (x) => pcZ(x, R), C2 = [0, 1].map(s => { const b0 = s ? sb : -bE + et, b1 = s ? bE - et : -sb, rb = rB + 0.02;
+      return { s, xo0: R * Math.sin(b0), xo1: R * Math.sin(b1), xb0: s ? R * Math.sin(b0) : rb * Math.sin(b0), xb1: s ? rb * Math.sin(b1) : R * Math.sin(b1), hold: s ? 0.8 : -0.8, occ: [{ z: (x) => pcZ(x, R + PC.over), h: H - PC.topT - 0.004 }] }; });
+    const gD = new World.GB(), LD = new World.GB(), TD = new World.GB(true), glsD = [], glD = (k) => glsD.push([gD.P.length / 3, k]), its = [];
+    for (let i = 0; i < PC.N; i++) for (const C of C2) {
+      const t = PC.y0 - i * PC.P - 0.002, b = PC.y0 - (i + 1) * PC.P + 0.002, row = PC.open.indexOf(i), x0 = C.xo0 + 0.003, x1 = C.xo1 - 0.003;
+      if (row < 0) {   // a shut drawer: its bowed front, its lip pull, a small aluminium holder with a blank card (the lowest on the foot)
+        const zq = i === PC.N - 1 ? (x) => zr(x) + PC.pulls[3] : zr;
+        gl(SATIN); pcBand(g, x0, x1, (x) => zq(x) - PC.fT, zq, b, t - PC.pullH, NV, 'tfle'); gl(METAL); pcBand(g, x0, x1, (x) => zq(x) - PC.fT, (x) => zq(x) + PC.pullD, t - PC.pullH, t, AL, 'tbfle');
+        const xm = C.hold, h = Math.min(0.03, t - b - PC.pullH - 0.008), yc = (b + t - PC.pullH) / 2, rot = Math.asin(xm / R), z = zq(xm);
+        gl(METAL); World.box(g, xm, yc - h / 2, z + 0.002, 0.12, h, 0.004, -rot, AL); gl(SATIN); World.box(g, xm, yc - h / 2 + 0.004, z + 0.004, 0.104, h - 0.008, 0.002, -rot, CARD); continue; }
+      // an open one: its box (the floor, the walls (the inner one double, to the opening's edge), the back), its insert (dark felt, its top
+      // under the drawer's), its front, its pull; its cells: as wide on the screen, their seams upright on it; in each a part, its tile
+      // under it, its tag before it; the element's name on the front
+      const el = 2 * C.s + (row & 1) + (row >> 1) * 4, p = PC.pulls[row], ytop = t - PC.under, zf = (x) => zr(x) + p, zfi = (x) => zf(x) - PC.fT, zbk = PC.face + p - PC.dd, zbi = zbk + PC.wall;
+      const uli = C.xb0 + PC.inset, uri = C.xb1 - PC.inset, occ = C.occ.slice(), zHi = (x, y) => pcRay(zfi(x), t, y), zLo = (x, y) => Math.max(zbi, ...occ.filter(e => e.h > y + 1e-4).map(e => pcRay(e.z(x), e.h, y)));
+      const r0 = [gD.P.length / 3, LD.P.length / 3, TD.P.length / 3], w0 = C.s ? uli : x0, w1 = C.s ? x1 : uri;
+      // (the box's walls from the opening's edges to the insert: the outer one's back along the chest's end (inside it), the inner one
+      // straight by the stile; its back wall)
+      const xe = (zbk - PC.wc) * Math.tan(C.s ? bE - et : -bE + et) + (C.s ? -0.003 : 0.003), xa = x0 + 0.001, xz = x1 - 0.001; glD(SATIN);
+      if (C.s) { pcBand(gD, xa, uli, () => zbk, zfi, b + 0.004, ytop, BOX, 'tkle'); pcPrism(gD, [[uri, zfi(uri)], [xz, zfi(xz)], [xe, zbk], [uri, zbk]], b + 0.004, ytop, BOX); }
+      else { pcPrism(gD, [[xa, zfi(xa)], [uli, zfi(uli)], [uli, zbk], [xe, zbk]], b + 0.004, ytop, BOX); pcBand(gD, uri, xz, () => zbk, zfi, b + 0.004, ytop, BOX, 'tkle'); }
+      pcBand(gD, uli, uri, () => zbk, () => zbi, b + 0.004, ytop, BOX, 'tfk');
+      const xmC = (uli + uri) / 2, zm0 = (zLo(xmC, ytop) + zHi(xmC, ytop)) / 2, sxa = C.s ? pcSx(uli, ytop, zm0) : -1 + 3 / 412, sxb = C.s ? 1 - 3 / 412 : pcSx(uri, ytop, zm0);
+      const shZ = (x) => Math.max(zbi, zLo(x, ytop) - 0.02), shZ1 = (x) => Math.min(zfi(x) - 0.002, shZ(x) + 0.09);
+      glD(MATTE); pcBand(gD, uli, uri, () => zbi, shZ, b + 0.012, ytop, FELT, 't', FELTD); pcBand(gD, uli, uri, shZ, shZ1, b + 0.012, ytop, FELT, 't', null, [FELTD, FELT]); pcBand(gD, uli, uri, shZ1, zfi, b + 0.012, ytop, FELT, 't');
+      glD(SATIN); pcBand(gD, x0, x1, zfi, (x) => zf(x), b, t - PC.pullH, NV, 'bfle'); glD(METAL); pcBand(gD, x0, x1, zfi, (x) => zf(x) + PC.pullD, t - PC.pullH, t, AL, 'tbfle');
+      // (a seam upright on the screen at the picture's x sx, at the height y on the curve zfn: its x)
+      const fix = (sx, y, zfn) => { let x = pcX(sx, y, zfn(0)); for (let q = 0; q < 4; q++) x = pcX(sx, y, zfn(x)); return x; }, cx = (j) => sxa + (sxb - sxa) * j / 4;
+      glD(MATTE); for (let j = 1; j < 4; j++) { const zs = [0, 1, 2, 3].map(q => { const xa = fix(cx(j), ytop, () => zm0), z0 = shZ(xa), z1 = zfi(xa); return z0 + (z1 - z0) * q / 3; });
+        for (let q = 0; q < 3; q++) { const xa = pcX(cx(j), ytop, zs[q]), xb = pcX(cx(j), ytop, zs[q + 1]), y = ytop + 0.0006; gD.quadO([xa - 0.0025, y, zs[q]], [xa + 0.0025, y, zs[q]], [xb + 0.0025, y, zs[q + 1]], [xb - 0.0025, y, zs[q + 1]], SEAM, [xa, y - 1, zs[q]]); } }
+      const G = D.geo[el] = { col: C.s, row, t, b, p, ytop, sx: [sxa, sxb], parts: [], zf, zLo: (x) => zLo(x, t) };
+      // the four parts: each laid flat in its cell (the underglow's strip upright: its light up), on the felt (2 mm in it), as thick as lets
+      // its top 2 cm over it (yT), as large as its cell and the window it is seen in (at yT) let it: one scale a drawer, its least
+      const lay = D.els[el] === 'luc_pod_avtom' ? new THREE.Matrix4() : new THREE.Matrix4().makeRotationX(-Math.PI / 2), yT = ytop + 0.02, P4 = [];
+      for (let k = 0; k < 4; k++) { const a = gD.P.length / 3, la = LD.P.length / 3; drwPart(gD, LD, glD, D.els[el], k); const ae = gD.P.length / 3, le = LD.P.length / 3;
+        const bb = new THREE.Box3(); for (let v = a * 3; v < ae * 3; v += 3) bb.expandByPoint(_tv.set(gD.P[v], gD.P[v + 1], gD.P[v + 2]).applyMatrix4(lay));
+        const xm = fix((cx(k) + cx(k + 1)) / 2, ytop, () => zm0), zh = zHi(xm, ytop) - 0.006, zt0 = zh - PC.tagD, zf0 = zt0 - 0.008, zb0 = zLo(xm, yT) + 0.006, zm = (zb0 + zf0) / 2;
+        const cw = Math.abs(pcX(cx(k + 1), yT, zm) - pcX(cx(k), yT, zm)), s = Math.min(PC.sMax, (cw - 2 * PC.clr - 0.02) / (bb.max.x - bb.min.x), (zf0 - zb0 - 2 * PC.clr) / (bb.max.z - bb.min.z));
+        P4.push({ k, a, ae, la, le, bb, zh, zt0, zb0, zf0, cw, s }); }
+      const s = G.s = Math.max(0.3, Math.min(...P4.map(q => q.s)));
+      for (const q of P4) { const bb = q.bb, fh = bb.max.y - bb.min.y, sy = Math.min(s, (yT - ytop + 0.002) / fh), zc = (q.zb0 + q.zf0) / 2, x = fix((cx(q.k) + cx(q.k + 1)) / 2, yT, () => zc), rot = Math.asin(x / R);
+        const M = new THREE.Matrix4().makeTranslation(x, ytop - 0.002, zc).multiply(new THREE.Matrix4().makeRotationY(rot)).multiply(new THREE.Matrix4().makeScale(s, sy, s))
+          .multiply(new THREE.Matrix4().makeTranslation(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -(bb.min.z + bb.max.z) / 2)).multiply(lay);
+        placeGBR(gD, q.a, q.ae, M); placeGBR(LD, q.la, q.le, M); G.parts.push([x, ytop - 0.002 + fh * sy, zc]);
+        // its cut-out (a dark rim round it on the felt), its tag before it (the cell's middle, as wide as the cell lets it)
+        glD(MATTE); const tw = (bb.max.x - bb.min.x) * s + PC.clr, td = (bb.max.z - bb.min.z) * s + PC.clr, c = Math.cos(rot), sn = Math.sin(rot), y = ytop + 0.0004;
+        const TP = (u, v) => [x + u * c + v * sn, y, zc - u * sn + v * c], rr = Math.min(tw, td) * 0.25, RP = [];
+        [[1, 1], [-1, 1], [-1, -1], [1, -1]].forEach(([iu, iv], j) => { for (let w = 0; w <= 3; w++) { const a = (j + w / 3) * Math.PI / 2; RP.push(TP(iu * (tw / 2 - rr) + rr * Math.cos(a), iv * (td / 2 - rr) + rr * Math.sin(a))); } });
+        for (let j = 0; j < RP.length; j++) gD.triO(TP(0, 0), RP[j], RP[(j + 1) % RP.length], CUT, [x, y - 1, zc]);
+        const zt = (q.zt0 + q.zh) / 2, xt = fix((cx(q.k) + cx(q.k + 1)) / 2, ytop, () => zt), th = Math.min(PC.tagD * 0.92, Math.min(0.2, q.cw * 0.78) * 22 / 128), rt = Math.asin(xt / R);
+        atlasQuad(TD, FRA['G' + (el * 4 + q.k)], new V3(xt, ytop + 0.0012, zt), new V3(Math.cos(rt), 0, -Math.sin(rt)), new V3(-Math.sin(rt), 0, -Math.cos(rt)), th * 128 / 22, th); }
+      // the element's name on the front, across the column's cells' middle
+      { const xl = fix((sxa + sxb) / 2, (b + t) / 2, zf), lw = 0.6, lh = lw * 20 / 256, yl = (b + t - PC.pullH) / 2; bowQuad(TD, FRA['D' + el], xl - lw / 2, xl + lw / 2, yl - lh / 2, yl + lh / 2, zf, 6); G.lab = [xl, yl, zf(xl)]; }
+      D.ranges[el] = [[r0[0], gD.P.length / 3], [r0[1], LD.P.length / 3], [r0[2], TD.P.length / 3]]; its.push([el, r0[0], gD.P.length / 3]);
+      C.occ.push({ z: zf, h: b }, { z: (x) => zf(x) + PC.pullD, h: t - PC.pullH });
+    }
+    // the chest's foot, out under the lowest open drawer as far as its front (the screen's chest down to the buttons under it): its ends,
+    // its top, the stile, the rail, the dark behind the lowest drawer's fronts, the plinth (flush: dark), a dark mat on the floor before it
+    { const zq = (x) => zr(x) + PC.pulls[3], xo = R * Math.sin(bE), xi = R * Math.sin(bE - et), xs = R * Math.sin(sb), tB = PC.y0 - (PC.N - 1) * PC.P - 0.002;
+      gl(SATIN); pcBand(g, -xo, -xi, zr, zq, 0, tB, NV, 'tfl'); pcBand(g, xi, xo, zr, zq, 0, tB, NV, 'tfe'); pcBand(g, -xi, xi, zr, (x) => zq(x) - PC.fT - 0.004, tB - 0.003, tB - 0.001, NV, 't');
+      pcBand(g, -xs, xs, (x) => zq(x) - 0.03, zq, PC.plinth, tB, NV, 'tf'); pcBand(g, -xi, xi, (x) => zq(x) - 0.03, zq, PC.plinth, PC.yBot + 0.002, NV, 'f');
+      gl(MATTE); pcBand(g, -xi, xi, (x) => zq(x) - PC.fT - 0.006, (x) => zq(x) - PC.fT - 0.004, PC.yBot, tB, CAV, 'f');
+      gl(SATIN); pcBand(g, -xi, xi, (x) => zq(x) - 0.03, zq, 0, PC.plinth, NVE, 'f'); gl(MATTE); pcBand(g, -xo - 0.04, xo + 0.04, zq, (x) => zq(x) + 0.16, 0, 0.004, MAT, 'tfle'); }
+    return { gD, LD, TD, glsD, its };
+  }
+  function buildDrawers(parts) {
+    const D = DRW, F = FRONT, { gD, LD, TD, glsD, its } = parts;
+    for (const G of [gD, LD, TD]) placeGB(G, 0, MF);
+    D.dir = new V3(Math.sin(F.ry), 0, Math.cos(F.ry));
+    D.items = []; for (const [i, a, z] of its) { const [P, N] = gbSlice(gD, a, z), it = tapItem('drw:' + D.els[i], 'drw', P, N, { el: D.els[i], drw: i }); D.items[i] = it; drwBox(it, 0); }
     const mk = (geo, mat, main) => { geo.attributes.position.setUsage(THREE.DynamicDrawUsage); const m = new THREE.Mesh(geo, mat); m.frustumCulled = false; scene.add(main ? mainOnly(m) : m); D.meshes.push(m); D.base.push(Float32Array.from(geo.attributes.position.array)); return m; };
-    const dm = mk(withGloss(g.geometry(), gls), fxMat()); dm.receiveShadow = true; dm.geometry.attributes.color.setUsage(THREE.DynamicDrawUsage);
-    mk(L.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true }), true);
-    const tm = mk(T.geometry(), new THREE.MeshBasicMaterial({ map: F.tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }), true); tm.renderOrder = 2;
+    const dm = mk(withGloss(gD.geometry(), glsD), fxMat()); dm.receiveShadow = true; dm.geometry.attributes.color.setUsage(THREE.DynamicDrawUsage);
+    mk(LD.geometry(), new THREE.MeshBasicMaterial({ vertexColors: true }), true);
+    const tm = mk(TD.geometry(), new THREE.MeshBasicMaterial({ map: F.tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }), true); tm.renderOrder = 2;
   }
-  // (a drawer's box to tap: its cubby's opening, deep to its front s metres out (its eight corners, turned as the cabinet))
-  function drwBox(it, s) { const D = DRW, x = D.cx[it.drw & 3], y = D.rows[it.drw >> 2], z1 = FRONT.z + FRONT.d / 2, hw = D.cw / 2;
-    it.pts = []; for (let i = 0; i < 8; i++) it.pts.push(new V3(i & 1 ? x + hw : x - hw, i & 2 ? y + D.ch : y, i & 4 ? z1 + s : z1 - 0.01).applyMatrix4(D.MR));
+  // (a drawer's box to tap: its cells' part of it on the screen (their seams upright: the same x on every upright screen), from the back
+  // of what is seen of it to its front s metres further out, from its bottom to its top; its eight corners in the room)
+  function drwBox(it, s) { const G = DRW.geo[it.drw], xm = G.lab[0], z0 = G.zLo(xm), z1 = G.zf(xm) + PC.pullD + s;
+    it.pts = []; for (let i = 0; i < 8; i++) { const y = i & 2 ? G.t : G.b, z = i & 4 ? z1 : z0; it.pts.push(new V3(pcX(G.sx[i & 1], y, z), y, z).applyMatrix4(MF)); }
     it.box.setFromPoints(it.pts); }
   // (the body-colour caliper in the car's colour; a drawer at s metres out, its marks with it)
   function drwColor(hex) { const D = DRW; D.col = hex; if (!D.cal) return; const a = D.meshes[0].geometry.attributes.color, c = hexRgb(hex); for (let v = D.cal[0]; v < D.cal[1]; v++) a.array.set(c, v * 3); sendRange(a, D.cal[0], D.cal[1]); }
@@ -3870,63 +4010,55 @@ const Garage3D = (function () {
     return mv; }
   const drwMoving = () => { for (let i = 0; i < 8; i++) if (DRW.k[i] !== (DRW.want === i ? 1 : 0)) return true; return false; };
   function buildFront() {
-    const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]), S = new World.GB(true), L = new World.GB(), F = FRONT, { NV, W, DK, ST } = FXC, y1 = F.h;
-    const z0 = F.z - F.d / 2, z1 = F.z + F.d / 2, xm = (F.x0 + F.x1) / 2, wd = F.x1 - F.x0, GR = [0.62, 0.65, 0.7];
-    // the cabinet: its plinth, its navy body behind the drawers' cubbies (DRW: eight in its face), the frame round them (rails over,
-    // between and under the two rows, stiles at the ends and between the drawers, the middle one wider: the two halves), each cubby's
-    // inside darker (its back, its roof, its sides), the deck (grey, a white lip at its front)
-    const D = DRW, zb = z1 - D.d;
-    gl(PAINT); World.box(g, xm, 0, F.z, wd, 0.08, F.d - 0.06, 0, DK); World.box(g, xm, 0.08, (z0 + zb) / 2, wd, y1 - 0.12, zb - z0, 0, NV, NV);
-    for (const [ya, yb] of D.rails) World.box(g, xm, ya, z1 - D.d / 2, wd, yb - ya, D.d, 0, NV, NV);
-    for (const [xa, xb] of D.stiles) World.box(g, (xa + xb) / 2, 0.08, z1 - D.d / 2, xb - xa, y1 - 0.12, D.d, 0, NV, NV);
-    gl(MATTE); for (let i = 0; i < 8; i++) { const x = D.cx[i & 3], y = D.rows[i >> 2], hw = D.cw / 2, h = D.ch, e = 0.001;
-      g.quadO([x - hw, y, zb + e], [x + hw, y, zb + e], [x + hw, y + h, zb + e], [x - hw, y + h, zb + e], [0.035, 0.045, 0.085], [x, y, zb - 1]);
-      g.quadO([x - hw, y + h - e, zb], [x + hw, y + h - e, zb], [x + hw, y + h - e, z1], [x - hw, y + h - e, z1], [0.045, 0.055, 0.1], [x, y + h + 1, z1]);
-      for (const s of [-1, 1]) g.quadO([x + s * (hw - e), y, zb], [x + s * (hw - e), y + h, zb], [x + s * (hw - e), y + h, z1], [x + s * (hw - e), y, z1], [0.07, 0.085, 0.16], [x + s * (hw + 1), y, z1]); }
-    gl(PAINT);
-    gl(SATIN); World.box(g, xm, y1 - 0.04, F.z, wd + 0.04, 0.04, F.d + 0.04, 0, GR, [0.7, 0.73, 0.78]); World.box(g, xm, y1 - 0.045, z1 + 0.025, wd + 0.04, 0.05, 0.02, 0, W);
-    // the plinths (dark discs, a steel rim), the posts of the signs
-    const cam = camAt(HOME), q = new V3();
-    F.mq.forEach((x, i) => { gl(METAL); cylA(g, [x, y1 + 0.02, F.mz], 'y', 0.25, 0.04, 28, ST); gl(SATIN); cylA(g, [x, y1 + 0.045, F.mz], 'y', 0.23, 0.012, 28, [0.1, 0.11, 0.13]);
-      for (const s of [-1, 1]) cone2(g, [x - 0.2 + s * 0.17, y1, F.mz - 0.24], [x - 0.2 + s * 0.17, y1 + 0.42, F.mz - 0.24], 0.012, 0.012, 6, ST); });
-    // the SERVICE button: a white ring on a dark foot, the red dome, the wrench in relief (white, flat on the dome's top)
-    { const [x, z] = F.sv; gl(SATIN); cylA(g, [x, y1, z], 'y', 0.3, 0.05, 32, DK); gl(PAINT); cylA(g, [x, y1 + 0.05, z], 'y', 0.27, 0.05, 32, W);
-      const v0 = g.P.length / 3; gl(PAINT); gAdd(g, new THREE.SphereGeometry(0.23, 32, 10, 0, TAU, 0, Math.PI * 0.42).scale(1, 0.55, 1), M4(x, y1 + 0.04, z), [0.85, 0.08, 0.06]);
+    const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]), S = new World.GB(true), L = new World.GB(), F = FRONT, { W, DK, ST } = FXC, H = PC.H;
+    const parts = buildChest(g, gl);
+    // (a slot on the top: radius dr further out than the slots' arc, the angle b (and da further round), height y over the top; turned to F)
+    const slot = (j, dr, da, y) => { const b = PC.slots[j] + (da || 0); return new V3(...pcP(PC.slot + (dr || 0), b, H + (y || 0))); };
+    const tng = (j) => new V3(Math.cos(PC.slots[j]), 0, -Math.sin(PC.slots[j])), rad = (j) => new V3(Math.sin(PC.slots[j]), 0, Math.cos(PC.slots[j]));
+    // the plinths (a steel disc, its grey top), the posts of the signs behind them (left of the middle)
+    for (let i = 0; i < 3; i++) { const c = slot(i); gl(METAL); cylA(g, [c.x, H + 0.016, c.z], 'y', 0.18, 0.032, 28, ST); gl(SATIN); cylA(g, [c.x, H + 0.034, c.z], 'y', 0.165, 0.006, 28, [0.21, 0.22, 0.25]);
+      for (const s of [-1, 1]) { const q = slot(i, -0.16, s * 0.016 - 0.004); gl(METAL); cone2(g, [q.x, H, q.z], [q.x, H + 0.25, q.z], 0.008, 0.008, 6, ST); } }
+    // the SERVICE button: a dark foot, a white ring, the red dome, the wrench in relief (white, flat on the dome's top)
+    { const c = slot(4); gl(SATIN); cylA(g, [c.x, H + 0.02, c.z], 'y', 0.2, 0.04, 32, DK); gl(PAINT); cylA(g, [c.x, H + 0.055, c.z], 'y', 0.18, 0.03, 32, W);
+      const v0 = g.P.length / 3; gl(PAINT); gAdd(g, new THREE.SphereGeometry(0.155, 32, 10, 0, TAU, 0, Math.PI * 0.42).scale(1, 0.55, 1), M4(c.x, H + 0.05, c.z), [0.85, 0.08, 0.06]);
       const sh = new THREE.Shape(); sh.moveTo(-0.11, -0.022); sh.lineTo(0.05, -0.022); sh.absarc(0.085, 0, 0.042, Math.PI * 1.25, Math.PI * 0.75, false); sh.lineTo(0.05, 0.022); sh.lineTo(-0.11, 0.022); sh.absarc(-0.11, 0, 0.022, Math.PI / 2, Math.PI * 1.5, false);
-      gAdd(g, new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: false, curveSegments: 8 }).rotateX(-Math.PI / 2).rotateY(0.35), M4(x, y1 + 0.18, z), [0.98, 0.98, 0.98]);
+      gAdd(g, new THREE.ExtrudeGeometry(sh, { depth: 0.012, bevelEnabled: false, curveSegments: 8 }).rotateX(-Math.PI / 2).rotateY(0.35).scale(0.7, 0.7, 0.7), M4(c.x, H + 0.144, c.z), [0.98, 0.98, 0.98]);
       F.svR = [v0, g.P.length / 3]; }
-    // (all of it turned to face the camera's first view: built facing +z, turned by ry about the room's middle)
-    const MR = M4(0, 0, 0, 0, F.ry, 0), turn = (o) => o.applyMatrix4(MR); placeGB(g, 0, MR);
+    // (all of it in F: placed in the room)
+    placeGB(g, 0, MF); const turn = (o) => o.applyMatrix4(MF), turnD = (o) => o.transformDirection(MF);
     { const [P, N] = gbSlice(g, F.svR[0], F.svR[1]); tapItem('service', 'service', P, N); }
     const geo = withGloss(g.geometry(), gls); const m = F.mesh = new THREE.Mesh(geo, fxMat()); m.receiveShadow = true; m.castShadow = true; scene.add(m);
-    // the signs, the tags and the labels: the atlas on quads facing the camera's first view (tilted back), unlit (the drawers' names too)
+    // the signs, the tags and the labels: the atlas on quads facing the plans' camera (tilted back), unlit (the drawers' names and tags too)
     frontTex(); F.tex = new THREE.CanvasTexture(F.cv); F.tex.anisotropy = 4;
-    buildDrawers(MR);
-    const toCam = (p) => { const d = q.copy(cam).sub(p).normalize(), ri = new V3(d.z, 0, -d.x).normalize(), up = new V3().crossVectors(d, ri).normalize(); return [ri, up]; };
+    buildDrawers(parts);
+    const q = new V3(), toCam = (p) => { const d = q.copy(PLANCAM).sub(p).normalize(), ri = new V3(d.z, 0, -d.x).normalize(), up = new V3().crossVectors(d, ri).normalize(); return [ri, up]; };
     const SIGN = [FRA.YOUR, FRA.RENT, FRA.SALE];
-    F.mq.forEach((x, i) => { const c = turn(new V3(x - 0.2, y1 + 0.56, F.mz - 0.24)), [ri, up] = toCam(c); atlasQuad(S, SIGN[i], c, ri, up, 0.62, 0.136);
-      if (i) atlasQuad(S, i === 1 ? FRA.T0 : FRA.T1, c.clone().addScaledVector(ri, 0.24).addScaledVector(up, 0.125), ri, up, 0.24, 0.083);
-      const l = turn(new V3(x, y1 + 0.003, F.mz + 0.33)); atlasQuad(S, [FRA.L0, FRA.L1, FRA.L2][i], l, turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.5, 0.1); });
-    atlasQuad(S, FRA.SV, turn(new V3(F.sv[0], y1 + 0.003, F.sv[1] + 0.38)), turn(new V3(1, 0, 0)), turn(new V3(0, 0, -1)), 0.56, 0.074);
+    for (let i = 0; i < 3; i++) { const c = turn(slot(i, -0.16, -0.004, 0.25)), [ri, up] = toCam(c), w = 0.44, h = 0.097; atlasQuad(S, SIGN[i], c, ri, up, w, h);
+      if (i === 1) atlasQuad(S, FRA.T0, c.clone().addScaledVector(ri, 0.17).addScaledVector(up, 0.085), ri, up, 0.17, 0.058);
+      if (i === 2) atlasQuad(S, FRA.T1, c.clone().addScaledVector(ri, w / 2 + 0.085), ri, up, 0.17, 0.0745);
+      const l = turn(slot(i, 0.215, 0, 0.003)); atlasQuad(S, [FRA.L0, FRA.L1, FRA.L2][i], l, turnD(tng(i)), turnD(rad(i).negate()), 0.36, 0.072); }
+    atlasQuad(S, FRA.SV, turn(slot(4, 0.235, 0, 0.003)), turnD(tng(4)), turnD(rad(4).negate()), 0.4, 0.053);
     const sg = S.geometry(); F.signs = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ map: F.tex, transparent: true, side: THREE.DoubleSide, color: new THREE.Color(1.05, 1.05, 1.05), polygonOffset: true, polygonOffsetFactor: -1 })); F.signs.renderOrder = 2; scene.add(mainOnly(F.signs));
-    // the lights: three lamps over each sign (their glass lit or dark: frontLamps), the YOUR CAR plinth's ring of green light
-    F.lamps = []; F.mq.forEach((x, i) => { const c = turn(new V3(x - 0.2, y1 + 0.66, F.mz - 0.27)), [ri] = toCam(c); const a = L.P.length / 3;
-      for (const s of [-1, 0, 1]) { const p = c.clone().addScaledVector(ri, s * 0.2); World.box(L, p.x, p.y, p.z, 0.07, 0.025, 0.05, Math.atan2(-ri.z, ri.x), [0.1, 0.1, 0.12]); World.box(L, p.x, p.y - 0.006, p.z, 0.06, 0.008, 0.042, Math.atan2(-ri.z, ri.x), [1, 1, 1]); }
-      F.lamps.push([a, L.P.length / 3]); });
-    F.ring = [L.P.length / 3]; { const p = turn(new V3(F.mq[0], y1 + 0.058, F.mz)); annulus(L, p.x, p.y, p.z, 0.2, 0.25, 32, [1, 1, 1]); } F.ring.push(L.P.length / 3);
+    // the lights: a ring round each plinth's top (lit round the car on the turntable: frontLamps), the YOUR CAR plinth's ring of green light;
+    // the colour wells' discs (their colours glowing: the light of the paint)
+    F.lamps = []; for (let i = 0; i < 3; i++) { const c = turn(slot(i, 0, 0, 0.0325)), a = L.P.length / 3; annulus(L, c.x, c.y, c.z, 0.168, 0.181, 32, [1, 1, 1]); F.lamps.push([a, L.P.length / 3]); }
+    F.ring = [L.P.length / 3]; { const p = turn(slot(0, 0, 0, 0.0375)); annulus(L, p.x, p.y, p.z, 0.13, 0.15, 32, [1, 1, 1]); } F.ring.push(L.P.length / 3);
+    // the colour wells: in a zigzag across the floor before the turntable (F: the angles -0.53 .. 0.53 from its +z, 3.24 m and 3.6 m out by
+    // turns), the colours in the plans' order (white, black, yellow, orange, red, purple, blue, green), each a steel rim round a glowing disc
+    { const C = new World.GB(), ORD = [1, 4, 3, 6, 0, 7, 2, 5]; ORD.forEach((ci, i) => { const a = -0.53 + 1.06 * i / 7, r = i & 1 ? 3.6 : 3.24, p = turn(new V3(Math.sin(a) * r, 0, Math.cos(a) * r)), v0 = C.P.length / 3, col = hexRgb(CIRC_COLS[ci]);
+        gAdd(C, new THREE.TorusGeometry(0.189, 0.022, 8, 36).rotateX(Math.PI / 2), M4(p.x, 0.008, p.z), [0.8, 0.82, 0.86]);
+        const [P, N] = gbSlice(C, v0, C.P.length / 3); tapItem('col' + ci, 'col', P, N, { i: ci, hex: CIRC_COLS[ci] });
+        annulus(L, p.x, 0.006, p.z, 0, 0.176, 32, col.map(v => v * 0.92)); annulus(L, p.x, 0.0065, p.z, 0.098, 0.116, 32, col.map(v => Math.min(1.25, v * 0.6 + 0.5))); });
+      const cm = F.cc = new THREE.Mesh(C.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x8a8a8a })); cm.receiveShadow = true; scene.add(cm); }
     const lg = L.geometry(); lg.attributes.color.setUsage(THREE.DynamicDrawUsage); F.glow = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ vertexColors: true })); scene.add(mainOnly(F.glow));
-    // the maquettes: sprites of the three cars drawn small (frontCars), their plinths' boxes the things to tap
-    F.mq.forEach((x, i) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false })); sp.center.set(0.5, 0.1); sp.position.copy(turn(new V3(x, y1 + 0.05, F.mz))); sp.scale.set(0.84, 0.42, 1); sp.visible = false; scene.add(mainOnly(sp)); F.sprites.push(sp); sp.userData.p0 = sp.position.clone();
-      const P = [], N = [], q2 = new V3(); for (let k = 0; k < 24; k++) { const a = k / 24 * TAU, b = (k + 1) / 24 * TAU; for (const [aa, yy] of [[a, 0], [b, 0], [b, 0.4], [a, 0], [b, 0.4], [a, 0.4]]) { turn(q2.set(x + Math.cos(aa) * 0.26, y1 + 0.03 + yy, F.mz + Math.sin(aa) * 0.26)); P.push(q2.x, q2.y, q2.z); q2.set(Math.cos(aa), 0, Math.sin(aa)).applyAxisAngle(_yAx, F.ry); N.push(q2.x, q2.y, q2.z); } }
-      const it = tapItem('mq' + i, 'mq', new Float32Array(P), new Float32Array(N), { i }); it.box.expandByPoint(turn(new V3(x - 0.52, y1 + 0.66, F.mz - 0.26))).expandByPoint(turn(new V3(x + 0.12, y1 + 0.66, F.mz - 0.22))); });   // (its sign tapped: the maquette)
-    // a padlock before the locked maquette (a gold body, a steel shackle)
-    { const pl = new World.GB(), x = F.mq[2] + 0.17, z = F.mz + 0.2; World.box(pl, x, y1, z, 0.09, 0.07, 0.03, 0, [0.95, 0.72, 0.15]); cone2(pl, [x - 0.028, y1 + 0.07, z], [x - 0.028, y1 + 0.1, z], 0.008, 0.008, 6, ST); cone2(pl, [x + 0.028, y1 + 0.07, z], [x + 0.028, y1 + 0.1, z], 0.008, 0.008, 6, ST); cone2(pl, [x - 0.028, y1 + 0.1, z], [x + 0.028, y1 + 0.1, z], 0.008, 0.008, 6, ST);
-      placeGB(pl, 0, MR); F.lockM = new THREE.Mesh(pl.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); scene.add(mainOnly(F.lockM)); }
-    // the colour circles: a white ring, the colour in it, each a thing to tap
-    { const C = new World.GB(), c = F.circ; CIRC_COLS.forEach((hex, i) => { const a = lerp(c.a0, c.a1, i / (CIRC_COLS.length - 1)), x = Math.sin(a) * c.R, z = Math.cos(a) * c.R, v0 = C.P.length / 3;
-        cylA(C, [x, 0, z], 'y', c.r + 0.035, 0.012, 28, [0.92, 0.93, 0.95]); cylA(C, [x, 0.012, z], 'y', c.r, 0.004, 28, hexRgb(hex).map(v => v * 0.9)); placeGB(C, v0, MR);
-        const [P, N] = gbSlice(C, v0, C.P.length / 3); tapItem('col' + i, 'col', P, N, { i, hex }); });
-      const cm = F.cc = new THREE.Mesh(C.geometry(), new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 70, specular: 0x666666 })); cm.receiveShadow = true; scene.add(cm); }
+    // the maquettes: sprites of the three cars drawn small (frontCars), their plinths' boxes the things to tap (their signs too)
+    for (let i = 0; i < 3; i++) { const c = slot(i), sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false })); sp.center.set(0.5, 0.1); sp.position.copy(turn(slot(i, 0, 0, 0.035))); sp.scale.set(0.46, 0.23, 1); sp.visible = false; scene.add(mainOnly(sp)); F.sprites.push(sp); sp.userData.p0 = sp.position.clone();
+      const P = [], N = [], q2 = new V3(); for (let k = 0; k < 24; k++) { const a = k / 24 * TAU, b = (k + 1) / 24 * TAU; for (const [aa, yy] of [[a, 0], [b, 0], [b, 0.24], [a, 0], [b, 0.24], [a, 0.24]]) { turn(q2.set(c.x + Math.cos(aa) * 0.19, H + 0.01 + yy, c.z + Math.sin(aa) * 0.19)); P.push(q2.x, q2.y, q2.z); turnD(q2.set(Math.cos(aa), 0, Math.sin(aa))); N.push(q2.x, q2.y, q2.z); } }
+      const it = tapItem('mq' + i, 'mq', new Float32Array(P), new Float32Array(N), { i }); it.box.expandByPoint(turn(slot(i, -0.16, -0.02, 0.3))).expandByPoint(turn(slot(i, -0.16, 0.012, 0.3))); }   // (its sign tapped: the maquette)
+    // a padlock before the locked maquette (a gold body, a steel shackle), front left of its plinth
+    { const pl = new World.GB(), c = slot(2, 0.14, -0.012), x = c.x, z = c.z, y1 = H; World.box(pl, x, y1, z, 0.07, 0.055, 0.025, -PC.slots[2], [0.95, 0.72, 0.15]);
+      for (const s of [-1, 1]) cone2(pl, [x + s * 0.021, y1 + 0.055, z], [x + s * 0.021, y1 + 0.078, z], 0.006, 0.006, 6, ST); cone2(pl, [x - 0.021, y1 + 0.078, z], [x + 0.021, y1 + 0.078, z], 0.006, 0.006, 6, ST);
+      placeGB(pl, 0, MF); F.lockM = new THREE.Mesh(pl.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); scene.add(mainOnly(F.lockM)); }
     // the lift's head: an orange plate with a white arrow up (both ways: a tap lifts the car or lets it down), on the carriage
     { const c = document.createElement('canvas'); c.width = c.height = 64; const x2 = c.getContext('2d'); x2.fillStyle = '#f07a1a'; x2.fillRect(0, 0, 64, 64); x2.strokeStyle = '#fff3e0'; x2.lineWidth = 4; x2.strokeRect(3, 3, 58, 58);
       x2.fillStyle = '#fff'; x2.beginPath(); x2.moveTo(32, 10); x2.lineTo(50, 30); x2.lineTo(39, 30); x2.lineTo(39, 54); x2.lineTo(25, 54); x2.lineTo(25, 30); x2.lineTo(14, 30); x2.closePath(); x2.fill();
@@ -3937,9 +4069,9 @@ const Garage3D = (function () {
   // (the plate rides with the lift's carriage; its outline with it)
   function frontPlate() { const F = FRONT, pm = F.plate; if (!pm) return; const y = 1.3 + Math.max(0, LIFT.c - LIFT.c0) + lift; if (Math.abs(pm.position.y - y) < 1e-4 && F.plateIt.P0) return; pm.position.y = y; pm.updateMatrixWorld();
     const it = F.plateIt, P0 = it.P0 || (it.P0 = it.P.slice()), N0 = it.N0 || (it.N0 = it.N.slice()); it.box.makeEmpty(); for (let i = 0; i < P0.length; i += 3) { _tv.set(P0[i], P0[i + 1], P0[i + 2]).applyMatrix4(pm.matrixWorld); it.P[i] = _tv.x; it.P[i + 1] = _tv.y; it.P[i + 2] = _tv.z; it.box.expandByPoint(_tv); _tv.set(N0[i], N0[i + 1], N0[i + 2]).transformDirection(pm.matrixWorld); it.N[i] = _tv.x; it.N[i + 1] = _tv.y; it.N[i + 2] = _tv.z; } }
-  // the signs' lamps (lit over FRONT.lit's maquette: 3 for none), the ring under YOUR CAR; the padlock; the prices on the tags
+  // the plinths' rings (bright round FRONT.lit's maquette: 3 for none), the ring of green light in YOUR CAR's; the padlock
   function frontLamps() { const F = FRONT, a = F.glow.geometry.attributes.color, C = a.array;
-    for (let i = 0; i < 3; i++) { const [v0, v1] = F.lamps[i], n = (v1 - v0) / 3, lit = i === F.lit; for (let s = 0; s < 3; s++) { const b = v0 + s * n, h = n / 2; for (let v = b; v < b + n; v++) { const g2 = v >= b + h, c = lit ? (g2 ? [3.4, 3.2, 2.8] : [2.2, 2.05, 1.8]) : g2 ? [0.35, 0.36, 0.38] : [0.1, 0.1, 0.12]; C[v * 3] = c[0]; C[v * 3 + 1] = c[1]; C[v * 3 + 2] = c[2]; } } }
+    for (let i = 0; i < 3; i++) { const [v0, v1] = F.lamps[i], c = i === F.lit ? [2.7, 2.55, 2.2] : [0.3, 0.32, 0.36]; for (let v = v0; v < v1; v++) C.set(c, v * 3); }
     for (let v = F.ring[0]; v < F.ring[1]; v++) { C[v * 3] = 0.4; C[v * 3 + 1] = 2.6; C[v * 3 + 2] = 0.9; }
     a.needsUpdate = true; F.lockM.visible = !!F.lock[2]; }
   // the maquettes: three cars drawn small (FRONT.cars: YOUR CAR the player's, RENT A CAR one to rent, FOR SALE one to buy; none: no
@@ -3958,8 +4090,8 @@ const Garage3D = (function () {
       F.cache.delete(k); F.cache.set(k, c); if (F.cache.size > 9) F.cache.delete(F.cache.keys().next().value);
       F.keys[i] = k; if (sp.material.map) sp.material.map.dispose(); sp.material.map = new THREE.CanvasTexture(c); sp.material.needsUpdate = true; sp.visible = true; } }
   // each frame: the YOUR CAR maquette shakes a little (a running engine) and puffs a wisp now and then; the lift's plate
-  function stepFront(dt) { const F = FRONT, sp = F.sprites[0]; if (sp && sp.visible) { const p0 = sp.userData.p0; sp.position.set(p0.x + Math.sin(time * 41) * 0.0025, p0.y + Math.abs(Math.sin(time * 33)) * 0.002, p0.z);
-      if ((F.puff = (F.puff || 0) - dt) < 0) { F.puff = 0.35 + Math.random() * 0.4; puffs.emit(p0.x - 0.33, p0.y + 0.06, p0.z + 0.08, -0.12, 0.08, 0.02, 1.2, 0.03, 0.12, [0.75, 0.77, 0.8], 0.3, -0.05, 1.0, 0.02); } }
+  function stepFront(dt) { const F = FRONT, sp = F.sprites[0]; if (sp && sp.visible) { const p0 = sp.userData.p0; sp.position.set(p0.x + Math.sin(time * 41) * 0.0014, p0.y + Math.abs(Math.sin(time * 33)) * 0.0011, p0.z);
+      if ((F.puff = (F.puff || 0) - dt) < 0) { F.puff = 0.35 + Math.random() * 0.4; puffs.emit(p0.x - 0.18, p0.y + 0.033, p0.z + 0.044, -0.07, 0.045, 0.011, 1.2, 0.017, 0.066, [0.75, 0.77, 0.8], 0.3, -0.05, 1.0, 0.011); } }
     frontPlate(); if (!busy) frontCars(FRONT.cars);
     if (TAPM.list.length) { const on = !rglAway(); for (const o of TAPM.list) if (o.userData.rgl) o.visible = on; } }
   /* ---------------- a tap on the picture: what it hits (pick), the marks on what a menu is for (mark), the new part seen through on the
@@ -4164,27 +4296,37 @@ const Garage3D = (function () {
 
   /* ---------------- the camera: round the car (the user drags it left and right only), moved by the animations ---------------- */
   const HOME = { yaw: 0.3, pitch: 0.36, dist: 9.2, tx: -0.1, ty: 0.55, tz: 0, fov: 33 };
+  // (the first view on a screen not lying down: the plans' (nacrti 9: the plan chest's camera, PLANCAM), as far from the car as HOME
+  // (with its fit: 9.2 m), its picture wider; HV the home view of the screen now (resize))
+  const FIRST = { yaw: 0.3, pitch: 0.36, dist: 7.91, tx: 0, ty: 0.55, tz: 0.2, fov: 38 };
+  // (lying down (odlocitve 8. 11.: »4«, the cars' buttons at the bottom as upright): the whole garage seen from a little higher, the
+  // regal whole under the buttons at the top, the car, the plan chest under it down to the cars' buttons (fitShift))
+  const WIDE = { yaw: 0.3, pitch: 0.42, dist: 8.6, tx: 0, ty: 0.5, tz: 0.6, fov: 33 };
+  let HV = HOME;
   const rig = Object.assign({}, HOME), user = { yaw: 0, vy: 0, zoom: 1 };
   const ZOOM = [0.55, 1.3];   // (the user's zoom (the mouse's wheel, two fingers): a factor on every view's distance; in: close to the car (odlocitve 30. 10.: »bolj približam«), out: the room's walls step aside)
   // (a factor on every view's distance and a lift of its height for the car on the table: k, dy now (eased while a new car drives in),
   // kw, dyw the car's own (the plans' views); every car as far (camFit))
-  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0, dn: 0, dw: 0 };   // (dn: the picture lowered by so many px, toward dw: drop())
+  const CAM = { k: 1, dy: 0, kw: 1, dyw: 0 }, SHIFT = { y: 0, free: 1, short: 0, dn: 0, dw: 0, zm: 1 };   // (dn: the picture lowered by so many px, toward dw: drop(); zm: fitShift)
   // (a picture narrower than AREF (the phone upright, the garage over the whole screen): as wide a view across as at AREF, more of it up
   // and down (its own fov wider))
   // (one wider than AWIDE (lying down): more of it up and down too, the more the less of the picture is free between the page's buttons
   // (SHIFT.free: its part of the height), the car and the cabinet before it between them)
-  const AREF = 0.95, AWIDE = 1.25, tallFov = (f) => { const a = W / H, t = Math.tan(f * Math.PI / 360); return a < AREF ? 2 * Math.atan(t * AREF / a) * 180 / Math.PI : a > AWIDE ? 2 * Math.atan(t * Math.sqrt(a / AWIDE) * clamp(0.93 / SHIFT.free, 1.25, 2.2)) * 180 / Math.PI : f; };
-  // upright: how far the picture is raised (fitShift: the page's buttons' edges in px, top: the top ones' foot, bottom: the car's name's
-  // top): the cabinet's front whole over the bottom ones (odlocitve 30. 10., V2), a car's roof (1.55 m over the table, the first view)
-  // under the top ones, the ceiling over the ring cut; both not possible: the roof first, SHIFT.short the cabinet's px left under them
+  const AREF = 0.95, AWIDE = 1.25, tallFov = (f) => { const a = W / H, t = Math.tan(f * Math.PI / 360); return a < AREF ? 2 * Math.atan(t * AREF / a * SHIFT.zm) * 180 / Math.PI : a > AWIDE ? 2 * Math.atan(t * Math.sqrt(a / AWIDE) * clamp(0.93 / SHIFT.free, 1.25, 2.2) * SHIFT.zm) * 180 / Math.PI : 2 * Math.atan(t * SHIFT.zm) * 180 / Math.PI; };
+  // how far the picture is raised (fitShift: the page's buttons' edges in px, top: the top ones' foot, bottom: the cars'
+  // buttons' top): the regal's top (the wings on it) just under the top ones (the plans' first view, nacrti 9: »spojlerji skoraj do
+  // gumbov zgoraj«), the plan chest under it to the cars' buttons (»omarica vse do gumbov«); as wide a view across on every upright
+  // screen, the room between the buttons too low for it (a short phone, a browser's bars) a wider one (SHIFT.zm, up to 1.8: the picture
+  // smaller), beyond that the regal's top cut (SHIFT.short: the chest's px still under the bottom ones)
+  // (lying down (WIDE): the regal whole, its top a little under the top buttons (FIT_WIDE: so much of the screen's height), the view
+  // wider up to 2.2 times)
+  const FIT_RGL = 0.0801, FIT_WIDE = 0.012;   // (the regal's top under the top buttons: so much of the screen's width (the plans' 412 x 915: raised 180 px))
   function fitShift(top, bottom) {
-    const asp = W / H, th = Math.tan(HOME.fov * Math.PI / 360), d = HOME.dist * Math.max(1, 3.5 / (th * Math.max(asp, AREF)) / HOME.dist), p = HOME.pitch;
-    const c = new THREE.PerspectiveCamera(tallFov(HOME.fov), asp, 0.1, 200); c.position.set(HOME.tx + Math.sin(HOME.yaw) * Math.cos(p) * d, HOME.ty + Math.sin(p) * d, HOME.tz + Math.cos(HOME.yaw) * Math.cos(p) * d);
-    c.lookAt(HOME.tx, HOME.ty, HOME.tz); c.updateMatrixWorld(); c.updateProjectionMatrix();
-    const F = FRONT, MR = M4(0, 0, 0, 0, F.ry, 0), y = (x, h, z) => (1 - _pk.set(x, h, z).applyMatrix4(MR).project(c).y) / 2 * H, yw = (x, h, z) => (1 - _pk.set(x, h, z).project(c).y) / 2 * H;
-    const cab = Math.max(y(F.x0, 0, F.z + F.d / 2), y(F.x1, 0, F.z + F.d / 2)), roof = Math.min(...[-2.2, 2.2].flatMap(x => [-1, 1].map(z => yw(x, 1.55, z))));
-    const need = cab + 8 - bottom, room = roof - top - 6;
-    SHIFT.y = Math.round(Math.max(0, Math.min(need, room))); SHIFT.free = 1; SHIFT.short = Math.max(0, Math.round(need - Math.max(0, room)));
+    SHIFT.zm = 1; SHIFT.free = 1; const V = HV, wide = W / H > AWIDE, c = new THREE.PerspectiveCamera(tallFov(V.fov), W / H, 0.1, 200); camAt(V, c.position); c.lookAt(V.tx, V.ty + CAM.dyw, V.tz); c.updateMatrixWorld(); c.updateProjectionMatrix();
+    const y = (p) => (1 - _pk.copy(p).project(c).y) / 2 * H, rt = Math.min(...RGL.bays.map(b => y(_tv.set(b.x, RGL.TOP, b.z)))), lo = y(_tv.set(0, PC.y0 - 11 * PC.P, PC.face + PC.pulls[3]).applyMatrix4(MF));
+    const rl = wide ? rt - FIT_WIDE * H : rt - FIT_RGL * W, zm = SHIFT.zm = clamp((lo - rl) / Math.max(1, bottom - top), 1, wide ? 2.2 : 1.8), Y = (v) => H / 2 + (v - H / 2) / zm;
+    SHIFT.y = Math.round(Math.max(0, Y(rl) - top, Y(lo) - bottom)); SHIFT.short = Math.max(0, Math.round(Y(lo) - SHIFT.y - bottom)); fxScale();
+    placeCamera(0);   // (the camera at once by the new screen and fit: what is tapped or measured before the next frame (a drawer's menu, the guide's rings) where it is seen)
   }
   // (odlocitve 30. 10.: the camera always as far by default, a lorry's too (the user zooms out for it): no car framed from further off)
   function camFit(cv, now) { CAM.kw = 1; CAM.dyw = 0;
@@ -4221,14 +4363,14 @@ const Garage3D = (function () {
       rig.yaw = from.yaw + u0.yaw + dy * k; user.yaw = 0; user.vy = 0;
     }, ez || EZ.io);
   }
-  const home = (s) => camTo(HOME, s == null ? 1.1 : s);
+  const home = (s) => camTo(HV, s == null ? 1.1 : s);
   // the views of the picture's pill: 1 three quarters from the front, 2 the side, 3 three quarters from the back, 360° round and round
   const VIEWS = [HOME, Object.assign({}, HOME, { yaw: 0.02, pitch: 0.1, dist: 7.2 }), Object.assign({}, HOME, { yaw: -0.78, pitch: 0.22, dist: 7.6 })];
   let autoSpin = false, viewTok = 0;
   function setView(i) {
     if (busy) return;
     const tok = ++viewTok; autoSpin = i === 'spin';
-    spawn(camTo(autoSpin ? Object.assign({}, HOME, { yaw: rig.yaw + user.yaw, pitch: 0.24 }) : VIEWS[i] || HOME, 1.0, null, () => tok !== viewTok));
+    spawn(camTo(autoSpin ? Object.assign({}, HV, { yaw: rig.yaw + user.yaw, pitch: 0.24 }) : i && VIEWS[i] || HV, 1.0, null, () => tok !== viewTok));
   }
 
   /* ---------------- input: drag left or right to go round the car (only that: the camera's height and distance stay, no zoom);
@@ -5259,7 +5401,7 @@ const Garage3D = (function () {
         eng.speed = vel; eng.thr = u < 0.25 ? 0.4 : 0; eng.rpm = nw.M.idle + (nw.M.redline - nw.M.idle) * clamp(vel / 30, 0.05, 0.8);
         nw.pitch = u > 0.45 ? -0.03 * Math.sin((u - 0.45) / 0.55 * Math.PI) : 0;
         lamps(nw, 1, u > 0.4 ? 1 : 0.5);
-        rig.tx = lerp(tx0, HOME.tx, EZ.io(u)) - 0.5 * Math.sin(u * Math.PI) * (1 - u);
+        rig.tx = lerp(tx0, HV.tx, EZ.io(u)) - 0.5 * Math.sin(u * Math.PI) * (1 - u);
       });
       nw.root.position.x = 0; if (wIn) { nw.steer = 0; yield* crab(nw, nw.root.position.z, 0); } aside(wIn, false); hud('arrived', nw.spec);   // (then across onto the table)
       yield* settle(nw, 0.025);
@@ -5269,7 +5411,7 @@ const Garage3D = (function () {
       yield* tween(0.4, (k) => { lamps(nw, 1, 0.4 - 0.05 * k); nw.shake = 1 - 0.65 * k; });
       idleOn(nw);
       if (old) freeCar(old);
-      rig.tx = HOME.tx;
+      rig.tx = HV.tx;
       planAhead(nw);   // (where the lift's pads go under it, measured while it stands: its first lift starts at once)
     }));
   }
@@ -5731,8 +5873,8 @@ const Garage3D = (function () {
   const deckAt = (P, x, z) => new THREE.Matrix4().makeTranslation(x, CART.deck + 0.004 + P.hs.y, z);
   // (a drawer's front (its middle, the drawer in), a part of its four in the tray (k; -1: the tray's middle) with the drawer out, where the
   // trolley stops before it)
-  function drwSpot(i, k) { const D = DRW, w = D.cw - 0.03, z1 = FRONT.z + FRONT.d / 2, x = D.cx[i & 3], y = D.rows[i >> 2];
-    const m = new V3(x, y + D.ch / 2, z1).applyMatrix4(D.MR), p = new V3(x + (k >= 0 ? k - 1.5 : 0) * (w / 4), y + 0.05, z1 - D.pz).applyMatrix4(D.MR).addScaledVector(D.dir, D.out);
+  function drwSpot(i, k) { const D = DRW, G = D.geo[i], x = G.lab[0], q = k >= 0 && G.parts[k] ? G.parts[k] : [x, G.ytop + 0.03, (G.zLo(x) + G.zf(x)) / 2];
+    const m = new V3(x, (G.b + G.t) / 2, G.zf(x)).applyMatrix4(MF), p = new V3(q[0], q[1], q[2]).applyMatrix4(MF).addScaledVector(D.dir, D.out);
     return { m, p, stop: [m.x + D.dir.x * (D.out + 0.42), m.z + D.dir.z * (D.out + 0.42)] }; }
 
   // the show: el an element (not the wheels' two, not the paint), spec the car with its new part (spec.upg: the levels before, when the
@@ -5909,7 +6051,7 @@ const Garage3D = (function () {
   // camera to one by its name unless it is there (in E the paint's glint fades: the light from the door washed the nose it looks at pale)
   const V_S2 = () => view({ yaw: 1.28, pitch: 0.24, dist: 10.4, at: [0.9, 0.7, -0.3] }), V_S = () => view({ yaw: 1.2, pitch: 0.24, dist: 8.6, at: [0.15, 0.72, 0] });
   const V_POL = () => view({ yaw: 1.16, pitch: 0.3, dist: 8.4, at: [0.3, 0.75, -0.1] }), V_E = (cv) => { const K = cv.kit; return view({ yaw: 1.5, pitch: -0.02, dist: 8.0 + 2 * Math.max(0, K.top - 1.5), at: [0.4, K.bottom - 0.45, -0.2] }, 0, 1.35); };
-  function* svcCam(n, s, ez) { if (SV.cam === n) return; SV.cam = n; GLK.want = n === 'E' ? 0.06 : 0.3; yield* camTo(n === 'S2' ? V_S2() : n === 'S' ? V_S() : n === 'POL' ? V_POL() : n === 'E' ? V_E(SV.cv) : HOME, s, ez); }
+  function* svcCam(n, s, ez) { if (SV.cam === n) return; SV.cam = n; GLK.want = n === 'E' ? 0.06 : 0.3; yield* camTo(n === 'S2' ? V_S2() : n === 'S' ? V_S() : n === 'POL' ? V_POL() : n === 'E' ? V_E(SV.cv) : HV, s, ez); }
   // (the paint's glint: its strength now and the one it eases to (the garage's 0.3))
   const GLK = { k: 0.3, want: 0.3 }, GLD = new V3(1, 0.35, 0.1).normalize();
   const glintK = (k) => { GLK.k = k; Render.garageLight(GLD, 0xffe2bc, k, 0xffffff); };
@@ -6350,13 +6492,15 @@ const Garage3D = (function () {
   }
   function resize(w, h, pr) {
     W = Math.max(2, w); H = Math.max(2, h);
+    { const v = W / H > AWIDE ? WIDE : FIRST; if (v !== HV) { const dy = rig.yaw - HV.yaw, at = !busy && Math.abs(Math.atan2(Math.sin(dy), Math.cos(dy))) < 1e-6 && ['pitch', 'dist', 'tx', 'ty', 'tz', 'fov'].every(k => Math.abs(rig[k] - HV[k]) < 1e-6); HV = v; if (at) Object.assign(rig, HV); } }   // (the home view of this screen; the camera there if it stood at the other's (its yaw by the angle: turned round whole times, as camTo leaves it, it is there too))
     renderer.setPixelRatio(pr); renderer.setSize(W, H, false);
     const rw = Math.max(2, Math.round(W * pr * REF.size)), rh = Math.max(2, Math.round(H * pr * REF.size));
     REF.rt.setSize(rw, rh); if (REF.gt) REF.gt.setSize(rw, rh); REF.texel.set(1 / rw, 1 / rh);
-    const sc = H * pr / (2 * Math.tan(tallFov(HOME.fov) * Math.PI / 360));
-    puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc;
-    sizePost(); shadowDirty = 2;
+    fxScale(); sizePost(); shadowDirty = 2;
   }
+  // (the sparks', puffs' and motes' sizes by the view's height)
+  function fxScale() { const sc = H * renderer.getPixelRatio() / (2 * Math.tan(tallFov(HV.fov) * Math.PI / 360));
+    puffs.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = motes.material.uniforms.uScale.value = sc; }
   // the car shown first: no drive-in, it stands there
   function show(spec) {
     svcStop(); if (!fxParked()) fxRest();   // (the robots parked: the tools in their nests, folded over their carriages; what they held back on the old car first)
@@ -6428,7 +6572,7 @@ const Garage3D = (function () {
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
     // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
     // locked maquettes, its tags' prices; the lift's plate)
-    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
+    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
     get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex, el: it.el })); },
     // (a drawer of the cabinet out: its element's (DRW.els), the others in; null: all in)
@@ -6518,7 +6662,7 @@ const Garage3D = (function () {
       // (the plans as a show makes them, a frame's share at a time: the time each item's took, its longest step (a frame held up), its steps)
       svcRun(items, o) { if (cur) setCond(cur, o && o.worn || { clean: 0.15, body: 0.3, engine: 0.3 }); return service(items, { clean: 1, body: 1, engine: 1 }); },
       svcFace(x, z, R, mn) { return svcPts(cur).face(x, z, R, 0, null, null, mn); }, svcPts() { return svcPts(cur); },   // (a turning tool's face laid on the top there: the plans' look at a bonnet)
-      tap() { if (busy) speed = 3; }, views() { return cur ? { S2: V_S2(), S: V_S(), POL: V_POL(), E: V_E(cur), HOME } : null; }, camAt: (v) => camAt(v).toArray(),
+      tap() { if (busy) speed = 3; }, views() { return cur ? { S2: V_S2(), S: V_S(), POL: V_POL(), E: V_E(cur), HOME: HV } : null; }, camAt: (v) => camAt(v).toArray(),
       SVU, SVWU, MK, SVX },
     get renderer() { return renderer; }, get camera() { return camera; }, get scene() { return scene; },
   };

@@ -441,7 +441,7 @@
     'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs', 'Smučarska vas': 'Ski Village',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
     'Terasa ob morju': 'Seafront Terrace', 'Pod železnico': 'Under the Railway', 'Lasnice Savolano': 'Savolano Hairpins', 'Stolp Castellaccio': 'Castellaccio Tower', 'Vzhodna lasnica': 'East Hairpin', 'Lasnici nad Romitom': 'Romito Hairpins', 'Grad Antignano': 'Antignano Castle',   // (Livorno: the descriptive names on the HUD; the rest are places)
-    'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner',   // (Nürburg, Spa, Suzuka, Monte Carlo: corners named after people or a bar get the plain names from the menu)
+    'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Kratki levi': 'Short Left', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner', 'Ovinek pri zbiralniku': 'Reservoir Bend',   // (Nürburg, Spa, Suzuka, Monte Carlo, Pikes Peak: corners named after people, a bar or the commentary box get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
@@ -926,6 +926,41 @@
     'KAMEN!': 'ROCK!',
     'RDEČA LUČ! +3 s KAZNI': 'RED LIGHT! +3 s PENALTY',
     'STOŽCI!': 'CONES!',
+    // the drag race (js/zabava/drag.js)
+    'DRAG DIRKA · 402 m': 'DRAG RACE · 402 m',
+    'Tvoja prednost: {0} m (počasnejše vozilo).': 'Your head start: {0} m (the slower vehicle).',
+    'Prednost tekmeca: {0} m (počasnejše vozilo).': 'The rival\'s head start: {0} m (the slower vehicle).',
+    'RDEČA LUČ!': 'RED LIGHT!',
+    'SPUSTI PLIN, POČAKAJ NA LUČI': 'OFF THE GAS, WAIT FOR THE LIGHTS',
+    'RDEČA LUČ · PORAZ': 'RED LIGHT · LOST',
+    'PORAZ': 'LOST',
+    'ČAS JE POTEKEL': 'TIME IS UP',
+    'Prestava gor': 'Shift up',
+    'POPOLNO': 'PERFECT',
+    'DOBRO': 'GOOD',
+    'PREZGODAJ': 'EARLY',
+    'PREPOZNO': 'LATE',
+    'Rdeča luč': 'Red light',
+    'Čas je potekel': 'Time is up',
+    'Poraz': 'Lost',
+    'Plin si pritisnil, preden so ugasnile luči.': 'You pressed the gas before the lights went out.',
+    'Na cilju si bil {0} s pred tekmecem ({1}).': 'You crossed the line {0} s ahead of the rival ({1}).',
+    'Tekmec ({0}) je bil na cilju {1} s pred tabo.': 'The rival ({0}) crossed the line {1} s ahead of you.',
+    'Drag dirka': 'Drag race',
+    'Tekmec': 'Rival',
+    'Reakcija': 'Reaction',
+    'rdeča luč': 'red light',
+    'Do cilja': 'To the line',
+    'Čas od luči': 'From the lights',
+    'Hitrost na cilju': 'Speed at the line',
+    'Prednost': 'Head start',
+    'Vozilo': 'Vehicle',
+    'Ponovi dvoboj': 'Race again',
+    'Menjave: {0} · popolno {1}, dobro {2}, prezgodaj {3}, prepozno {4}': 'Shifts: {0} · perfect {1}, good {2}, early {3}, late {4}',
+    'Menjave: nobene (prestave prestavljaš sam).': 'Shifts: none (you change gear yourself).',
+    'Električni avto: brez menjav.': 'Electric car: no gears to shift.',
+    'Proti avtu': 'Against a car',
+    'Proti tovornjaku': 'Against a truck',
     /* ---- Neskončna vožnja v prometu (js/neskoncna.js, docs/neskoncna-voznja.md) ---- */
     'NESKONČNA VOŽNJA!': 'ENDLESS TRAFFIC!', 'TOČKE': 'POINTS', 'NIZ ×{0}': 'COMBO ×{0}', 'PROMET ×{0}': 'TRAFFIC ×{0}',
     'TESNO!': 'CLOSE!', 'ZELO TESNO!': 'VERY CLOSE!', 'NIZ PREKINJEN': 'COMBO BROKEN', 'TRK! KONEC VOŽNJE': 'CRASH! THE RUN IS OVER',
