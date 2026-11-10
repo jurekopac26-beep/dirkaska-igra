@@ -36,7 +36,7 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 | Seja B (biketraveler, prevzem 7. 11.) | `super` | `modras`, `perun`, `skorpijon` |
 | jure.kopac26 od ned. 8. 11. (v #322, ki že vsebuje #304; tabla #382, komentar 6709363288) | `tovornjaki` | `titan` (+ razbijanje) |
 
-Istih avtov ne delata dve seji. Novi avti iz #361 in #396 niso med 32 (niso na `main`); na raven KOLIBRIJA jih pripelje njihov lastnik po dogovoru, ko so na `main`. Veja skupine se spoji v zbirno vejo (fetch, merge, push; nikoli force push), ko so povezani testi lokalno zeleni. Po vsaki skupini nova seja s predajo spodaj (izjema dveh sej z avti poleg Dreves A velja do pon. 9. 11. ob 0.00, nato največ 2 seji s kodo).
+Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 32; mesta za dele iz garaže dobijo v #480 (biketraveler), razdelek »Odprto: skupina `novi`« (odločitev uporabnika 11. 11. 2026 ob ~00.05 prek Mateja, tabla #382, komentar 6781849560). Veja skupine se spoji v zbirno vejo (fetch, merge, push; nikoli force push), ko so povezani testi lokalno zeleni. Po vsaki skupini nova seja s predajo spodaj (izjema dveh sej z avti poleg Dreves A velja do pon. 9. 11. ob 0.00, nato največ 2 seji s kodo).
 
 ## Postopek na avto
 
@@ -63,6 +63,11 @@ Istih avtov ne delata dve seji. Novi avti iz #361 in #396 niso med 32 (niso na `
 - Deset starejših avtov dobi posodobitev na raven KOLIBRIJA: KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV in SAMUM 4x4 (prošnja na tabli #382, komentar 6707802738, točka 2).
 - Njihovi modeli so v `js/core.js`, ne v `js/cars/`. STRELA EV in SAMUM 4x4 vozita v treh misijah, zato po spremembi poženi še teste misij.
 - Račun in termin določijo v tedenskem načrtu v ponedeljek 9. 11.; do takrat skupine ne začni.
+
+## Odprto: skupina `novi`
+- Deset avtov iz #460 dobi mesta za vse dele iz garaže na raven KOLIBRIJA: OSA R, ŠAKAL D, GAMS RH, OREL GT3, VRAN 01, KUNA S, MERJASEC V8, RIS G, TUR 6x6 in VIDRA E (odločitev uporabnika 11. 11. 2026 ob ~00.05 prek Mateja, tabla #382, komentar 6781849560). Ostali avti mesta že imajo (MRAVLJA, STRELICA in BLISK z manj elementi, ker nekateri na njih ne pridejo v poštev).
+- Delajo se v #480 (biketraveler), skupaj s starejšimi avti (manjkata FORMULA ORKAN in TAIFUN LM) in #626 (rezervno kolo TUR in VRAN, partyslo): en PR, en krog testov, ~21 h dela, na `main` ~17. 11., po garaži in pred Trki + Poškodbe.
+- partyslo avtov iz #460 ne spreminja, dokler je #480 odprt; po združitvi #480 zapre #626.
 
 ## Predaja
 
