@@ -19,11 +19,842 @@ Naloga uporabnika (9. 11. 2026 ob ~21.25): »Ultracode naj analizera fiziko trko
 
 | Faza | Kaj | Stanje |
 |---|---|---|
-| 1. Analiza | popis vseh stikov in meritve v jedru brez brskalnika (`tools/trki/`), primerjava z meritvami videov (`docs/nova-fizika-meritve.md`) in odprtimi viri | v delu (9. 11.) |
+| 1. Analiza | popis vseh stikov in meritve v jedru brez brskalnika (`tools/trki/`), primerjava z meritvami videov (`docs/nova-fizika-meritve.md`) in odprtimi viri | končano 10. 11.: popis 26 vrst stikov, meritve s petimi skriptami (`tools/trki/`), cilji iz posnetkov in odprtih virov, 44 odstopanj v eni razvrščeni tabeli (61 ugotovitev merilcev: 48 potrjenih, 11 popravljenih, 2 ovrženi; 8 novih najdb preverjalcev) |
 | 2. Zasnova | predlog za vsako odstopanje z meritvijo pred/po | čaka |
 | 3. Izdelava | nova različica, preklopljivo z isto izbiro | čaka |
 | 4. Preverjanje | testi z invarianti, neodvisen pregled `js/core.js`, `npm run test:related` | čaka |
 
-## Odstopanja (izpolni analiza)
+**Predaja 10. 11. 2026 (~01.30):** temo nadaljuje račun **biketraveler** (odločitev uporabnika 10. 11. ob ~00.57: »Varčno, trke prevzame biketraveler«; več agentov samo za fiziko trkov in preverjanje pred združitvijo). Stanje, kaj manjka in naslednji korak so v opisu pull requesta #608. Surovi podatki analize (69 zapisov: 61 ugotovitev merilcev in 8 najdb preverjalcev, z dokazi in ukazi za ponovitev) so v `docs/trki-realizem-podatki.md`, skripte preverjalcev v `tools/trki/preverjanje/`; oboje se pred združitvijo na `main` odstrani ali skrči. Zbirni agent je bil zaradi porabe ustavljen tik pred koncem: dele tega dokumenta je napisal on, sestavljen je z njegovo skripto, celote po sestavi ni nihče prebral od začetka do konca. Slike ZDAJ/POTEM še niso narejene.
 
-Tabela pride po fazi 1: razvrščena po tem, kaj igralec najbolj čuti, s številkami.
+## Popis stikov
+
+Vsi stiki, pri katerih igra spremeni hitrost, smer ali škodo avta. Koda je v `js/core.js`, kjer ni napisano drugače; številke so iz kode in meritev (razdelek Meritve). Korak fizike je 1/120 s. Kratice: `cs` klasična fizika (privzeta), `nova` nova fizika, `xgl` izguba oprijema po trku (0–1), J sunek, e odboj, vn hitrost zbliževanja vzdolž normale, rn ročica.
+
+| Stik | Kje v kodi | Kako deluje zdaj |
+|---|---|---|
+| Avto–avto: oblika stika in razmik | `Race._step` → `carCollide` → `kCollide` (`obbHit`, `rboxHit`, `rbCore`; `RB_R` 0,3 m, `RB_SLOP` 0,02 m, `RB_PUSH` 0,4, `RB_DEEP` 0,2 m) | Škatli z zaobljenimi vogali; normala iz najbližjih parov, prijemališče na sredini ploskev v dotiku. Prekrivanje se odvzame mehko po obratnih masah: 40 % ostanka na korak, nad 20 cm takoj (premik v klicu do 7,5 cm do 240 km/h zbliževanja; v mirovanju ostane 2 cm). Ko se prekrijeta tudi jedri (nad ~260 km/h zbliževanja), je normala os najmanjšega prekrivanja, prijemališče vogal ali sredina ploskve. |
+| Avto–avto: sunek, odboj, drgnjenje | `kCollide`: `K.e0` 0,3, `K.e1` 0,12, `K.eV` 4, `K.eT` 0,5, `K.mu` 0,35, `K.muL` 0,4 | En sunek J = (1 + e)·vn / (1/ma + 1/mb + rna²/Ia + rnb²/Ib); masa z gorivom (10–280 kg). Odboj je 0 pod 0,5 m/s, sicer pada od 0,30 proti 0,12 (izmerjeno 0,15 pri 30 km/h, 0,12 pri 240 km/h zbliževanja). Drgnjenje največ 0,35·J, naslonjen avto 0,14·J. Trd trk je 1 sunek v 1–4 korakih. |
+| Prevzem sunka, klasična fizika | `kTake` (veja `cs`), `stepCS` (`cSx`, `cSz`, `csKc`, `xgl`, `xglT`; `K.aH` 0,1, `K.aS` 0,06, `KG_V0`, `KG_V1`, `CSK.tapMax`) | Sunek vzdolž nosu gre takoj v hitrost; prečni del gume zdrgnejo s polnim oprijemom (izmerjeno 2,36 g). Vrtilni del postane sunek smeri `csKc` (dw × 0,0055·V sekund, največ ±23°, razpad 0,25 s). Kotno hitrost dobi avto le ob izgubi oprijema `xgl`: ko je zadek potisnjen prečno bolj kot nos in čez 10 % hitrosti, pri hitrosti po sunku nad 4 m/s (polno nad 10 m/s); oprijem se vrne v 0,6 s. |
+| Zdrs in vrtenje po izgubi oprijema | `stepCS`, veja `xgl` > 0: `CRASH.slide` 0,9 g, `CRASH.yawT` 0,8 s, `CRASH.yawC` 1,2 rad/s² | Avto drsi z 0,9 g·`xgl` in se vrti s kotno hitrostjo prvega sunka, ki razpada s časovno konstanto 0,8 s; zgornje meje ni (izmerjeno do 1934 °/s). Kotna hitrost se prišteje le, ko `xgl` zraste za več kot 0,1, zato poznejši sunki vrtenja ne zavirajo. |
+| Prevzem sunka, nova fizika | `kTake` (veja `nova`), `Car.stepNova` (`NVK.rMax` 3,2 rad/s; veja za avto, ki ne pelje naprej, s `CSK.tR`) | Avto vzame cel tog sunek (hitrost in kotno hitrost); vrtilna količina se v Simulaciji ohrani. Korak fizike nato kotno hitrost vsakič odreže na ±3,2 rad/s (183 °/s); pri avtu, ki ne pelje naprej (stoji, drsi bočno), ugasne s časovno konstanto 0,03 s (−27 % na korak). |
+| Naslon in drgnjenje bok ob boku | `kCollide` (odboj 0 pod `K.eT`, trenje × `muL`), `kTake`, `carKnockFx` (iskre `fxCar`) | Vrsta majhnih sunkov brez odboja (26–80 na sekundo z Δv nad 0,1 m/s), premik na klic do 2,5 cm. Hitrosti se ne zlepita: pri 3° in 20 km/h razlike gre hitrejši mimo v 1,1 s. Pasivni avto se zasuka 4–8° in pri 120–200 km/h ne izgubi oprijema. |
+| Vloge in različice | `KV` (`sim`, `arc`, `soft`, `stunt`), `K.pm`, `K.yaw`, `K.yawP`, `K.glP`, `K.glA`, `K.glR`; `Core.setTest({ cv })` | Simulacija: igralec v tekmeca in tekmec v igralca enako; med tekmecema polovična izguba oprijema (`glR` 0,5). Arkadna: igralec 1,7-krat težji (dobi 0,588 svojega deleža). Mehka in Kaskaderska: zasuk × 0,6 in × 1,5. Varnostni avto (`c.sc`) nikoli ne izgubi oprijema. Različica 6 (Realistična) je zdaj kopija Simulacije. |
+| Stara različica in veja `inPit` | `carCollide`, stara veja (trije krogi, `CSK.carE`, `tapT`, `tapMax`) | Trije krogi na avto (pri ±0,3 dolžine, polmer širina/2 + 0,02 m), odboj 0,1 (nova fizika 0,4), kotni členi × 0,6, zasuk samo kot sunek smeri (`tapMax` 0,4 rad = 23°); vogali se le razmaknejo brez sunka. Trk od zadaj pride 20–24 cm pred dotikom odbijačev. Velja za različico 5 (Stara) in vejo `inPit`, ki v dirki zaradi duhov teče le pri prikolicah. |
+| Boksna steza | `Race.pitStep` (`c.inPit`, `c.pitG`), `Race._pitGhostOff`, `Track.pitAt`, `PIT_V` | Avto v boksni stezi je duh: zanka parov vsak par z duhom preskoči, škode in predrtja ni; duh je spet trden, ko se z nikomer ne prekriva (največ 6 s). Omejevalnik 80 km/h. Boksni zid je ista črta z istim sunkom kot ograja, a brez škode. Nos zidu nima čelne ploskve. |
+| Prijateljev avto na spletu | `js/game.js`: `netPlace`, `netFrame`; `kCollide` in `carKnockFx`, veje `.net` | Vsak telefon vozi svoj avto; prijateljevega postavlja iz stanj, poslanih vsakih 50 ms (100 ms pri veliki mreži), 100 ms (200 ms) v preteklosti. Net avta trk ne premakne: lokalni avto vzame ves razmik in svoj delež sunka vsak korak znova; škodo dobi samo lokalni, prevrata ni. Oba telefona vedno vozita Simulacijo. |
+| Prikolice | `Race._tlStep` (`carCollide(R, o)`, `wallCollide(R, T, true)`), `tlJoin` (4 × `tlPin`), `tlHold`, `TLK` | Prikolica je svoje telo (12 t, 12,4 × 2,5 m; cestni vlak 2 × 11 t) in trči z istim `carCollide` in `wallCollide`; nato `tlJoin` spne sedlo in izenači hitrosti. Trk vidi samo vlačilec (5,3 t; vlak 7 t), gibalna količina prikolice pride čez sedlo v ~0,1 s. Klasičnemu vlačilcu gume držijo poteg sedla do `TLK.hold` 1,45 g, več pomeni izgubo oprijema. |
+| Škoda ob trku | `carKnockFx` → `knock`, `applyDamage`, `detachPart`; privzeto »Samo videz« (`js/game.js`) | Avto–avto: (hitrost zbliževanja − 3,5 m/s) × 1,6 % × `knockK`, obema enako ne glede na maso. Ograja: (hitrost v ograjo − 2,5 m/s) × 2,8 % × `knockK`. Pristanek: nad 11 m/s 1 % na m/s. Padec z roba: +32 %. »Vklop«: moč motorja −22 % × škoda, kolesa odpadejo nad 75 %. |
+| Predrta guma | `puncture`, `PUNC_T`, `FLAT`; `opts.faults` | Samo z vklopljenimi okvarami in ne v boksih: udarec ≥ 11 m/s, en žreb na trk, verjetnost min(25 %, (v − 11)/20); izmerjeno 0/4/26/24/23 % pri 10/12/15/20/27,8 m/s. Prazna guma: ovinek 2,38 → 2,27 g (spredaj) ali 2,23 g (zadaj). |
+| Odpadli deli in steklo | `detachPart`, `Race.spawnDebris`, `stepDebris`, `debrisHit`, `DEB_RUN` | Največ 40 kosov, igralna masa 1–14 (ogledalo 1, blatnik 5, odbijač 7, vrata 9, prtljažnik 11, pokrov 14); kos odleti z 0,7·v + 2–5 m/s in drsi s pojemkom 6,5 m/s². Ležeč kos (pod 3 m/s): avto ga povozi enkrat, −min(2,5 %, 0,2 %·m). Premikajoč kos: avto izgubi min(6 %, 0,4 %·m) na vsak korak stika in dobi naključen zasuk. Steklo: lise polmera 2 m z oprijemom −20 %. |
+| Ograja ob progi | `wallCollide(c, trk, canFall)`; `CSK.wallE` 0,05, `wallMu` 0,25, `wallYaw` 0,3; črta iz `Track._buildEdges` | Za vsak od 4 vogalov po vrsti: vogal čez črto premakne avto nazaj; normalni sunek J = −(1 + 0,05)·vn / (1/m + rn²/I·0,3), zasuk rn·J/I·0,3, trenje vzdolž ograje največ ±0,25·J. Iste tri številke za vse vrste ograj, obe fiziki in vse različice; vrsta ograje je samo risba. Oprijema (`xgl`) ograja ne vzame. |
+| Posledice udarca v ograjo | `knock`, `puncture`, `xRollStart`; `js/game.js` (zvok, tresenje), `js/render.js` (`fxWall`) | `hitWall` je največja hitrost vogala proti ograji v koraku. Nad 2,5 m/s škoda (15°/120 km/h 19 %, 30°/120 45 %, 90°/60 41 %, 90°/120 96 %). Zvok nad 1,5 m/s, tresenje nad 3 m/s, snop isker nad 2,5 m/s, sicer curek isker ob drgnjenju. |
+| Posebne ograje | `wallCollide`, veje `rings`, `trk.open`, `trk.wall2`, `stubPen`, `altC`, `pitLead` | Isti sunek kot ograja: otok krožišča (čelno 60 km/h → 8 km/h po 1. koraku, škoda 39 %), konca odprte ceste (→ 14 km/h, 41 %), stena predora (15°/120 → 111 km/h, 19 %). Stranske ceste, nasprotni pas in pasova ob boksih črto le premaknejo ali odprejo (prebrano v kodi, ni merjeno). |
+| Rob prepada in rob nove mape | `Track.dropAt`, `wallCollide(…, canFall)`, `Race._fall`; veja `trk.free` | Rob prepada (1,2 m od asfalta): nad 2,5 m/s navzven avto pade (1,6 s, +32 % škode, vrnjen na cesto z 28,8 km/h), počasneje ga rob drži kot ograja; prepade ima samo zamrznjena testna proga. Rob nove mape: sredina avta se pripne, hitrost čez rob se izniči, brez trenja, zasuka, škode in zvoka. |
+| Predmeti ob progi | `PROPK` (40 vrst), `propCarHit`, `propImpulse`, `propFeel`, `propStep`, `Race.breakProp` | Masa 3–220 kg. Avto (3 krogi polmera 0,92 m) predmet izrine; predmet dobi sunek 1,35·vrel/(1/m + r²/I + 1/M), hitrost do min(18 m/s, 0,72·v + 2) in 7,5 m/s navzgor. Avto ne dobi nasprotnega sunka: izgubi min(4,5 %, 0,16 %·m)·min(1, vrel/8) hitrosti na vsak korak stika in dobi naključen zasuk. Ulični predmeti s škodo udarijo enkrat (0,6 s brez stika). Ograja drži predmete s središčem pod 3,2 m. |
+| Promet | `Traffic._hitVeh`, `_knock`, `_runBike`, `TFK` | Mase 1300/2400/12 500/290/90/32 000 kg (avto, kombi, avtobus, motor, kolo, tovornjak s polprikolico). Krogi proti krogom, sunek z odbojem 0,25 in ročicami; sunek smeri avta obrezan na 22,9°. Kolo: avto izgubi min(v, 0,15·v + 1), kolo dobi 0,5 v. |
+| Ljudje in živali | `Traffic._hitPeds`, `TF_PED` | Pešec 75 kg samo v prometu in begu: avto izgubi min(v, 0,06·v + 0,4 m/s), pešec dobi 0,35 v. Gledalci, redarji, mehaniki in živali nimajo trka. |
+| Beg pred policijo in stavbe | `crashCollide`, `Police.collide`, `Traffic._hitVehP`; `boxCollide` | Škatla proti škatli, odboj 0,05 nad 1,5 m/s, trenje 0,5, izriv 35 % na korak; patrulja 1750 kg, kombi 2900 kg, motor 430 kg. Stavbe (`boxCollide`: odboj 0, trenje 0,2) ima samo skrivališče na zamrznjeni testni progi. |
+| Odstopljen avto, scenografija, nova mapa | `Race.retire`, `parkBrake`; `js/nvwalls.js` | Odstopljen avto stoji na izletni coni z ročno zavoro in trka kot avto. Drevesa, hiše in tribune nimajo trka: avto ustavi samo črta ograje. Ograje in predmeti nove mape so v `js/nvwalls.js` (ni v jedru, ni merjeno). |
+| Vzlet, let in pristanek | `Car.stepCS`, `stepNova`; `JUMP_G` 14, `M.landV` 11 m/s, `M.landK`, `landT` | Vzlet, ko je hitrost² × ukrivljenost ceste pod −0,85 × 14 m/s² in hitrost nad 6 m/s. V zraku ni sil gum, težnost 14 m/s². Pristanek: hitrost × (1 − min(13 %, 1,6 % na m/s navpične hitrosti) × `landK`), škoda nad 11 m/s, brez odboja; `landT` 0,05–0,2 s je samo časovnik (kamera, zvok). |
+| Prevračanje | `XROLL`, `xRollStart`, `xRollStep`; sprožilca v `carKnockFx` in `wallCollide` | Privzeto izklopljeno. Sproži ga trk v bok nad 9 m/s ali bočni udarec v ograjo nad 10 m/s, z žrebom 1 od 10. En obrat 1,18 s ali dva nad 15 m/s (1,58 s), pojemek 3 m/s² in na koncu hitrost × 0,8, škoda +4 % na obrat; avto konča na kolesih in pelje naprej. |
+| Vrstni red koraka in izbira parov | `Race._step`, `pair()`, `BIG_FIELD` 16, `Race._pairs`, `LOD` | Vsak avto (`Car.step`) → pari avto–avto → `pitStep` → `wallCollide` → prikolice → odpadli deli. Do 16 avtov vsi pari (12 avtov: 66 parov, 13–16 µs), nad 16 prelet po x (20 avtov: 10 parov; 100 avtov: 64, največ 144). Par se preskoči: različna nivoja na križanju, avto pada, duh v boksih. |
+
+## Meritve
+
+### Kako zagnati
+
+Pet skript v `tools/trki/` poganja kodo igre (`Race.step`, `Car.step`, `carCollide`, `wallCollide`) v Node, brez brskalnika in brez lastne fizike: stanja avtov samo berejo pred klici igre in po njih. Korak 1/120 s, izpis je ponovljiv (dva zagona dasta isto), vsaka skripta izid preveri še na Spa in Bathurstu ali v dirki s semenom.
+
+```
+node tools/trki/avto-avto.js       [--cv N] [--json] [--only <ime>] [--trace <scenarij> [--phys nova] [--mode hold] [--role RR] [--car kaze] [--ph 0.5] [--tspan 2]]
+node tools/trki/mase-razlicice.js  [--cv N] [--json] [--only vozila|mase|gorivo|prikolice|razlicice|vloge|ohranitev|proga] [--trace <scenarij> [--phys nova] [--tspan 0.3]]
+node tools/trki/zid.js             [--cv N] [--json] [--del matrika|prikolica|posebne|proga]
+node tools/trki/predmeti.js        [--cv N] [--json] [--del predmeti|vrste|zamik|pocasi|razbitine|svoj|promet|ljudje|policija|stavba|prikolica|kup|ograja|proga|dirka] [--cas]
+node tools/trki/boksi-pristanek.js [--cv N] [--json] [--del boksi|pristanek|padec|prevracanje|skoda|zanka|splet]
+```
+
+- `--cv N` izbere različico trkov (`Core.setTest({ cv })`): 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara, 6 Realistična (zdaj kopija Simulacije); brez nje privzeta. Ista skripta bo merila novo različico (pred/po).
+- `--json` da vse scenarije in vse stolpce; tabele spodaj so izvleček. `--only` in `--del` zaženeta en del, `--trace` en scenarij korak za korakom.
+- Imena scenarijev v `avto-avto.js`: `head-V-c|o` čelno, `rear-V-stand|bump-c|o` od zadaj, `tbone-V-stand|cross-mid|front|rear` bočno, `side-V-a3|a10-eq|dv20` bok ob boku, `pit-V-rear|front-2|4|8` vogal v bok; V = 60, 120, 200 km/h. Vsak scenarij teče v 4 legah prvega dotika v koraku.
+- Trajanje: `mase-razlicice.js` 5–12 s, `zid.js` ~11 s, `boksi-pristanek.js` 19,3 s, `predmeti.js` 31,7 s.
+- Trije preverjalci so iste trke ponovili z lastnimi skriptami (druga pot do iste številke); te skripte so zunaj repozitorija. Kjer je preverjalec številko popravil, je to zapisano pod tabelo.
+
+### Avto–avto (`avto-avto.js`)
+
+**cs (klasična), Simulacija, rally 1150 kg ×2; A udari, B zadet; po dotiku brez pedal in volana.** Oznake scenarijev: H čelno, R od zadaj (s B stoji, b B 30 km/h počasnejši), T bočno (s B stoji, x B prečka z V; m sredina, f sprednja, r zadnja os), S bok ob boku (a3/a10 kot °; e enaki hitrosti, d B 20 km/h počasnejši), P vogal A v zadnji (r) ali sprednji (f) bok B z 2/4/8 m/s; c sredinsko, o zamik pol širine. Stolpci A/B: hitrost 0,1 s/2 s po dotiku; E−%: izguba energije para v sunkih/po 2 s; največji zasuk nosu; največja kotna hitrost; največji xgl; čas do ravne vožnje (- ni v 6 s); sunki z Δv ≥ 0,1 m/s; največje prekrivanje škatel (cm). Gibalna količina para v sunkih: napaka 0,00 % povsod; NaN 0; zamenjava mest 0. V vrsticah S oba držita plin (E−% po 2 s je lahko negativen).
+
+|scenarij|A km/h|B km/h|E−%|zasuk°|ω°/s|xgl|ravno s|sunki|prekr.|
+|-|-|-|-|-|-|-|-|-|-|
+|H60c|7/6|7/6|99/99|0/0|0/0|0/0|-/-|1|26|
+|H60o|0/0|0/0|100/100|0/0|4/4|0/0|0/0|2|26|
+|R60sc|26/24|34/31|49/58|0/0|0/0|0/0|0/0|1|12|
+|R60so|30/24|30/27|43/63|-32/-26|166/150|0,3/0,3|0,8/0,8|2|12|
+|R60bc|43/39|47/42|10/27|0/0|0/0|0/0|0/0|1|5|
+|R60bo|45/41|45/41|10/27|-4/-4|50/50|0,2/0,2|0,3/0,3|1|5|
+|T60sm|26/0|26/0|50/100|0/0|0/0|0/0|0/0,6|2|12|
+|T60sf|26/0|26/0|51/100|3/0|35/0|0,2/0|0,1/0,6|16|14|
+|T60sr|29/20|23/0|53/90|-1/38|6/174|0/0,5|0,3/0,4|11|13|
+|T60xm|27/24|54/38|37/72|7/47|39/167|0/1|0,5/1,1|1|12|
+|T60xf|23/18|55/43|42/70|14/-5|37/42|0/0|0,7/0,4|17|14|
+|T60xr|39/35|53/27|22/73|5/176|34/406|0/1|0,6/-|1|12|
+|S60a3e|60/60|60/61|17/-2|20/5|78/4|0/0|2,5/2,1|77|8|
+|S60a10e|60/61|59/61|29/-3|17/6|79/12|0/0|2,7/2,3|95|10|
+|S60a3d|59/60|41/40|1/1|25/1|73/4|0/0|2,6/0,2|7|6|
+|S60a10d|58/62|42/62|50/-48|19/8|80/8|0/0,1|2,7/2,2|79|10|
+|P60r2|59/51|60/51|6/29|-4/-5|9/10|0/0|0,1/3,9|157|5|
+|P60r4|59/46|59/23|7/63|-6/-103|18/151|0/1|1/2|9|12|
+|P60r8|58/52|58/47|3/33|-4/-39|30/150|0/1|0,6/1,1|1|13|
+|P60f2|59/52|60/52|3/26|-2/2|12/7|0/0|0,1/0,1|3|5|
+|P60f4|59/47|59/47|12/38|-6/3|21/14|0/0|0,6/1,6|160|8|
+|P60f8|56/33|57/33|40/70|-12/4|33/26|0/0|2/2,9|44|13|
+|H120c|14/13|14/13|99/99|0/0|0/0|0/0|-/-|1|26|
+|H120o|0/0|0/0|100/100|0/0|4/4|0/0|0/0|2|26|
+|R120sc|53/47|67/60|49/60|0/0|0/0|0/0|0/0|1|26|
+|R120so|52/6|67/12|41/99|-120/-125|330/330|0,6/0,6|0,9/1,1|9|26|
+|R120bc|102/91|107/95|2/23|0/0|0/0|0/0|0/0|1|5|
+|R120bo|105/93|104/93|2/24|-5/-5|36/36|0/0|0,7/0,7|1|5|
+|T120sm|53/0|60/0|50/100|0/0|0/0|0/0|0/1,3|2|26|
+|T120sf|56/23|56/6|54/96|7/-41|70/74|0,2/0|1/1,6|10|26|
+|T120sr|66/57|44/0|30/78|-2/250|12/660|0/1|0,4/0,9|10|26|
+|T120xm|55/48|112/67|36/76|7/203|47/446|0/1|0,8/-|1|26|
+|T120xf|54/47|113/87|40/66|7/-3|46/34|0/0|0,8/0,8|11|26|
+|T120xr|80/70|108/38|21/78|7/521|49/804|0/1|0,9/-|1|26|
+|S120a3e|120/120|120/121|1/-1|11/5|52/16|0/0|2/0,2|68|5|
+|S120a10e|119/120|119/121|3/-1|-10/7|57/37|0/0|2,6/0,2|156|13|
+|S120a3d|119/120|101/100|1/0|16/4|68/9|0/0|2,6/1|12|6|
+|S120a10d|117/123|103/121|6/-22|-10/4|49/21|0/0|2,2/1,8|96|13|
+|P120r2|119/105|119/105|1/24|-3/-3|19/19|0/0|0,2/0,7|2|5|
+|P120r4|119/102|119/102|3/28|-11/-11|31/32|0/0|4,2/4,5|196|8|
+|P120r8|118/102|119/98|3/31|-9/-22|49/128|0/0,5|1,1/1,2|6|15|
+|P120f2|119/106|119/106|0/23|-3/2|22/15|0/0|0,2/0,1|6|4|
+|P120f4|119/105|119/105|1/23|-5/3|36/26|0/0|0,2/0,2|14|7|
+|P120f8|117/102|118/102|3/28|-7/6|51/41|0/0|0,3/0,3|64|11|
+|H200c|24/23|24/23|99/99|0/0|0/0|0/0|-/-|1|63|
+|H200o|27/0|28/13|74/100|-2248/0|1934/0|0,8/0|2,1/-|2|63|
+|R200sc|88/78|111/99|49/60|0/0|0/0|0/0|0/0|1|16|
+|R200so|85/29|113/42|41/94|-312/-311|551/551|0,6/0,6|1,7/1,9|6|16|
+|R200bc|182/157|186/160|1/27|0/0|0/0|0/0|0/0|1|5|
+|R200bo|184/157|183/157|1/29|-8/-8|52/52|0/0|1/1|1|5|
+|T200sm|88/14|104/14|50/99|0/0|0/0|0/0|0/2,2|3|16|
+|T200sf|96/77|96/6|50/85|15/-40|117/77|0,2/0|0,6/1,4|5|31|
+|T200sr|112/104|78/0|26/73|-8/611|53/1109|0/1|0,9/1,6|8|23|
+|T200xm|92/78|190/103|37/79|7/341|50/619|0/1|0,9/1,5|1|16|
+|T200xf|98/84|188/142|40/66|8/-4|51/30|0/0|0,9/1,2|7|28|
+|T200xr|131/114|182/70|22/78|8/1248|51/1344|0/1|0,9/-|1|16|
+|S200a3e|200/200|200/200|0/0|6/4|33/36|0/0|1,8/0,5|68|5|
+|S200a10e|199/201|199/201|2/-1|-10/7|52/53|0/0|1,9/0,7|164|16|
+|S200a3d|199/201|181/180|0/0|6/-1|38/9|0/0|1,8/0,3|11|5|
+|S200a10d|192/178|185/178|4/12|-11/-7|47/46|0/0|1,7/4,7|477|16|
+|P200r2|198/169|199/169|0/29|-4/-4|28/29|0/0|0,3/0,8|3|4|
+|P200r4|198/167|199/167|1/30|-8/-8|44/45|0/0|0,6/2,3|10|6|
+|P200r8|197/162|199/162|2/34|-17/-18|52/52|0/0|3,2/3,3|107|13|
+|P200f2|198/169|199/170|0/28|-3/2|33/24|0/0|0,1/0,3|8|4|
+|P200f4|198/169|198/169|0/29|-5/4|46/38|0/0|0,7/0,4|13|6|
+|P200f8|197/168|197/168|1/30|-8/7|53/52|0/0|0,8/0,8|27|11|
+
+**nova (nova fizika), iste oznake:**
+
+|scenarij|A km/h|B km/h|E−%|zasuk°|ω°/s|xgl|ravno s|sunki|prekr.|
+|-|-|-|-|-|-|-|-|-|-|
+|H120o|0/0|0/0|85/100|-7/-7|661/661|0/0|0,1/0,1|6|26|
+|R120so|58/51|58/51|43/64|-29/-28|330/330|0/0|0,5/0,5|4|26|
+|T120sf|60/43|54/43|33/74|18/-80|135/660|0/0|1,1/0,9|17|26|
+|T120sr|59/8|55/7|35/99|-5/15|30/660|0/0|1,9/-|22|26|
+|T120xm|57/50|115/94|31/61|35/11|530/446|0/0|0,4/0,8|1|26|
+|T120xf|54/47|112/97|35/60|50/-31|471/425|0/0|0,5/0,5|5|26|
+|T120xr|76/67|111/93|19/54|31/15|450/804|0/0|0,4/0,7|2|28|
+|P120r8|118/102|119/102|1/28|-21/-13|119/128|0/0|0,9/1|16|10|
+|T200xr|124/109|187/154|20/56|32/-11|735/1344|0/0|0,5/0,8|2|32|
+
+**Korak proti hitrosti (cs; A z V v stoječega B, zamik v deležu širine, 24 leg prvega dotika v koraku):**
+
+|V|zamik|A +0,1 s|B +0,1 s|zasuk A°|zasuk B°|prekr. cm|A mimo B|A obdrži > 90 % V|
+|-|-|-|-|-|-|-|-|-|
+|120|0,75|57–65|57–62|2–69|1–7|2–29|0/24|0/24|
+|200|0,5|85–89|108–113|301|156–299|5–45|0/24|0/24|
+|200|0,75|95–158|43–104|1–147|1–35|3–45|10/24|0/24|
+|300|0,5|130–132|164–165|548–998|59–542|7–68|0/24|0/24|
+|300|0,75|143–296|0–157|0–256|0–110|5–45|16/24|7/24|
+
+**Plin drži hitrost:** A spet pri 95 % hitrosti po: R60sc 1,4 s; R120sc 3,2 s; T120sr 1,4 s; T120xf 1,7 s; T120xr 1,0 s. **Vloge:** igralec→tekmec = tekmec→igralec; tekmec–tekmec: T120sr 287° (xgl 0,5), P120r8 −14° (xgl 0,26). **Proga = ravnina** (Spa, Bathurst; rally v stoječega kaze, 120 km/h): A 50/45, B 65/58 km/h na obeh.
+
+Popravki in dopolnila preverjalca:
+
+- Vrstice P60r (dotik v zadnji bok pri 60 km/h) so vzorec, ne ponovljiva številka: izid je občutljiv na začetno režo (0,4 m namesto 0,3 m premakne −104° s 4 na 5 m/s). Cel stik brez vnosov pri 2/4/5/6/8/10 m/s: −5/−37/−104/−95/−40/−63°; samo prvi sunek: −1/−8/−17/−24/−40/−63°. S plinom: 4 m/s −44,0°, 8 m/s −100,9°.
+- H200o: −2248° je zasuk v 6 s; preverjalec −1897° v 3 s (1931 °/s). Kateri avto se zavrti, določa vrstni red para v kodi (pri zamenjanem vrstnem redu se zavrti B).
+- Zasuk B z razvitim kotom: T120sr 268° (665 °/s), T120xr 523° (806 °/s), T200xr 1263° (1354 °/s).
+- Korak proti hitrosti, 300 km/h in zamik 0,75: mimo 15/24 (merilec 16/24); ostale vrstice potrjene.
+- Vrstica »Plin drži hitrost« ni odstopanje (glej Zavrnjeno pod tabelo odstopanj): prost avto pospeši s 53 na 114 km/h v 1,56 s, po trku od zadaj v 3,26 s; po bočnem trku s 67 na 114 km/h v 1,43 s proti 1,22 s.
+- Drugi modeli, od zadaj z zamikom v stoječega (60, 120, 200 km/h): rally −31,5/−25,5°, −119,4/−124,7° (`xgl` 0,56/0,60), −312/−310°; strega −4,5°, −8,5°, −8,5° (`xgl` 0); kaze −17,7°, −90°, −230°.
+- Brez odstopanja: trije avti v vrsti (120 km/h v dva stoječa) 39/39/41 km/h, gibalna količina 0,00 %; igralec zdrs po sunku ulovi s protivolanom (−23,8° → 0° v 2 s), volan v smer vrtenja da −331°.
+
+**Dotik v zadnji bok v ovinku (preverjalec; klasična fizika, Simulacija; zadeti je igralec, ki drži volan in hitrost)**
+
+| kje | prečna hitrost m/s | največji odmik smeri | `xgl` | opomba |
+|---|---|---|---|---|
+| 100 km/h na meji (2,38 g, polmer 33 m), z notranje strani | 1/2/3/4/6 | 1/0/1/3/4° | 0,00 | po 2 s 0,1/0,4/0,8/1,4/2,8 m s črte |
+| 160 km/h na meji (2,39 g, polmer 84 m), z notranje strani | 1–6 | 0–6° | 0,00 | |
+| skoraj naravnost (0,05 g) | 1–6 | 0–6° | 0,19 šele pri 6 m/s | bližina meje oprijema ne spremeni izida |
+| 100 km/h na meji, z zunanje strani | 3/4/6 | −5/−15/−171° | –/0,52/1,00 | pri 160 km/h do 6 m/s največ −6°, `xgl` 0 |
+
+### Mase, prikolice, različice (`mase-razlicice.js`)
+
+Oznake: L lahki, T težki (v tabeli D: I igralec, T tekmec, sc varnostni avto, net prijateljev avto); dv sprememba hitrosti; dP napaka gibalne količine para; E- izguba in E+ prirast kinetične energije; e odboj.
+
+Vse: resnična koda (Car.step, carCollide, wallCollide, Race._tlStep), ravnina, DT 1/120 s. Hitrosti v smeri A: pred > po 1. koraku > +2 s (km/h).
+
+**A. Mase (cs, Simulacija, 120 km/h)**
+| scenarij | lahki | težki | dv L:T | e | E- % trk/2 s | opomba |
+|---|---|---|---|---|---|---|
+| čelno, miška 560 / kamen 7000 | 119>-128>-106 | -119>-99>-81 | 247,2:19,8 | 0,12 | 27/51 | 1 sunek, 1 korak |
+| čelno, mravlja 165 / kamen | 119>-141>-99 | -119>-113>-91 | 260,0:6,1 | 0,12 | 9/41 | |
+| čelno L v stoječega T | 119>-4>-3 | 0>10>9 | 123,9:9,9 | 0,12 | 91/93 | |
+| zadaj L>T (120>90) | 119>88>78 | 90>92>76 | 31,4:2,5 | 0,15 | 1/32 | |
+| zadaj T>L | 90>121>106 | 119>117>94 | 30,8:2,5 | 0,15 | 0/34 | |
+| T: T v bok stoječega L | 0>123>81 | 119>109>81 | 229,8:18,4 | 0,12 | 7/50 | L na nosu 2 s; 186 sunkov, 2 nad 0,5 m/s |
+| T: T v prednjo os L | 0>88>81 | 119>112>81 | 229,5:18,4 | -0,20 | 7/50 | zasuk L 0° |
+| čelno, burja 1150 / cisterna 17300 | 121>-101>-98 | -120>-105>-98 | 227,1:15,1 | -0,02 | 24/33 | |
+| isto, 0,5 m iz sredine | 121>-87>-17 | -120>-106>-72 | 236,4:15,5 | -0,08 | 22/51 | avto ≥ 180° (odrezano), 568 °/s; vlačilec 37°, xgl 1,00 |
+
+(mA dvA)/(mB dvB) = 1,00 in dP 0,0 % v vseh vrsticah avto-avto.
+
+**B. Gorivo in pm (zadaj 120>90)**
+| primer | dvA:dvB | dvA/dvB | mB/mA | dP % | E+ % |
+|---|---|---|---|---|---|
+| burja>kamen, prazna | 30,14:4,95 | 6,087 | 6,087 | 0 | 0 |
+| polna (1210:7280 kg) | 30,07:5,00 | 6,017 | 6,017 | 0 | 0 |
+| formula polna (+105 kg) > prazna | 15,84:17,92 | 0,884 | 0,884 | 0 | 0 |
+| burja>burja, igralec A, cPm 1,7 | 12,49:21,23 | 0,588 | 1 | 41,2 | 6,41 |
+| cPm 3 | 8,43:25,28 | 0,333 | 1 | 66,7 | 14,39 |
+| Arkadna, igralec A | 13,54:23,02 | 0,588 | 1 | 41,2 | 7,20 |
+
+**C. Različice (burja/burja 120, igralec zadene tekmeca, cs)**
+| scenarij | Sim | Ark | Mehka | Kask | Stara |
+|---|---|---|---|---|---|
+| čelno: v po A/B; e | -14/14; 0,12 | 13/62; 0,20 | -7/7; 0,06 | -24/24; 0,20 | -12/12; 0,10 |
+| zadaj 120>90: v po; e | 104/108; 0,15 | 107/114; 0,24 | 105/107; 0,07 | 102/110; 0,26 | 104/107; 0,10 (dotik 22 cm prej) |
+| T v stoječega: po; +0,5; +2 s | 53/68; 39/39; 0/0 | 67/91; 65/49; 11/11 | 57/64; 39/39; 0/0 | 48/72; 47/31; 0/0 | 54/66; 46/46; 5/5 |
+| naslon 3°: zasuk A/B; sunki | 8/2; 114 | 10/3; 117 | 9/1; 117 | 8/3; 91 | 9/0; 0 |
+| sunek zadaj 8 m/s: zasuk B; xgl; v B 2 s | 23; 0,55; 100 | 52; 1,00; 74 | 7; 0; 114 | 75; 1,00; 53 | 7; 0; 113 |
+| lahek>težek čelno: v po | -128/-99 | -132/-85 | -115/-100 | -145/-98 | -123/-100 |
+
+**D. Vloge (sunek zadaj: zasuk B ° / xgl B)**
+| različica | I>T | T>I | T>T | I>sc |
+|---|---|---|---|---|
+| Simulacija | 23/0,55 | 23/0,55 | 17/0,27 | 16/0 |
+| Arkadna | 52/1,00 | 6/0 | 25/0,47 | 13/0 |
+| Kaskaderska | 75/1,00 | 75/1,00 | 75/1,00 | 19/0 |
+| Mehka, Stara | 7/0 | 7/0 | 7/0 | 7/0 |
+
+I>net (vse različice): čelno dv lokalnega -240,5 (tekmec -135,0), zadaj -30,8 (-17,5), T -120,6 (-67,8); net avto 0.
+
+**E. Mesto zadetka (T 120 v bok burje; B: zasuk ° / kotna hitrost °/s / xgl)**
+| kam | cs, B stoji | cs, B 60 | nova, B stoji | nova, B 60 |
+|---|---|---|---|---|
+| zadnja os | 268–269 / 665–666 / 1,00 (popravljeno) | 478–500 / 764–792 / 1,00 (popravljeno) | 11 / 666 / 0 | 13 / 792 / 0 |
+| sredina | 0 / 0 / 0 | 45 / 164 / 1,00 | 0 / 0 / 0 | 23 / 164 / 0 |
+| prednja os | 41 / 74 / 0 | 6 / 45 / 0 | 82 / 666 / 0 | 49 / 539 / 0 |
+
+**F. Prikolice (cisterna 5300 + 12000 kg, burja 1150)**
+| scenarij | izid |
+|---|---|
+| avto 120 > rep prikolice (60) | avto 121>59>53, vlačilec 60>65>61, e 0,09, 1 sunek (cs = nova) |
+| isto, 1 m iz sredine [cs] | avto 62°, 235 °/s, xgl 0,39, raven po 1,15 s |
+| avto 100 > sredina boka (vlačilec 30 počez) [cs] | avto 101>-2, E- 39 %, vlačilec xgl 1,00, 2°, pregib 1° |
+| avto 80 čelno > vlačilec 80 | avto 81>-67>-66, vlačilec -80>-70>-66, e -0,02 |
+| isto, 1 m iz sredine | cs: avto ≥ 180° (odrezano), 557 °/s, pregib 16°; nova: 5/7°, pregib 8° |
+| avto 100 > bok kabine (60 počez) | cs: avto/vlačilec 24/10°, pregib 4°, dP 9,6 %; nova: 44/33°, pregib 32° |
+| vlačilec 90 > avto 60 od zadaj | avto 62>88>83, potiska ga 2 s (232 sunkov, 1 nad 0,5 m/s) |
+| vlačilec 90 > rep druge prikolice (60) | 90>83>75 in 60>68>75 pri +0,1 s |
+| vlačilec 80 čelno > vlačilec 80 | 80>53>0 pri +0,1 s, prekrivanje 13 cm |
+| prikolica v ovinku pomete stoječ avto (20 km/h) [cs] | avto 0>8 km/h, 14°, 98 sunkov (skupaj 74 km/h), pregib 57° |
+| avto 120 > rep 2. cisterne vlaka (29 t) | avto 121>59, e 0,02 |
+
+**G. Ohranitev pri trkih (8 scenarijev × I>T, T>T)**
+| fizika | različica | dP % | manjka zasuka % | E+ % (kJ) |
+|---|---|---|---|---|
+| cs | Sim / Mehka / Stara | 0,0 | 62-100 / 78-100 / 100 | 0,01 / 0,01 / 0 |
+| cs | Arkadna | 41,2 | 10-100 | 6,52 (66,1) |
+| cs | Kaskaderska | 0,0 | -29 do 100 | 0,47 (3,0) |
+| nova | Sim / Stara | 0,0 | 0 | 0 |
+| nova | Arkadna | 41,2 | 0-24 | 6,68 (67,7) |
+| nova | Mehka / Kaskaderska | 0,0 | 40 / -50 | 0,01 / 0,40 (5,2) |
+
+NaN 0, prehod skozi 0 v vseh tekih.
+
+**H. Škoda (Car.dmg, 120 km/h)**
+| scenarij | dv L/T km/h | škoda L/T |
+|---|---|---|
+| čelno miška/kamen | 247/20 | 1,00/0,55 |
+| čelno mravlja/kamen | 260/6 | 1,00/0,55 |
+| T: miška v stoječ kamen | 124/10 | 0,47/0,26 |
+| T: kamen v stoječo mravljo | 270/6 | 0,61/0,26 |
+
+**I. Spa (dirka s semenom, Race.step) proti ravnini: kamen (igralec) čelno v miško**
+| kje | težki | lahki | dv |
+|---|---|---|---|
+| Spa | 119,9>97,0 | -120,1>128,6 | -22,8 / 248,7 |
+| ravnina | 119,0>99,2 | -119,4>127,8 | -19,8 / 247,2 |
+
+Lahki se ujema z (1+e) vc mB/(mA+mB) na 0,1 %; težki v Spa izgubi 2,9 km/h več (povozi razbitino v istem koraku).
+
+Popravki in dopolnila preverjalca:
+
+- Tabela E, zadnja os (klasična): skripta je zasuk rezala pri 180° (popravljeno v `tools/trki/mase-razlicice.js`, vrstica 201); pravi vrednosti sta 268–269° in 478–500°. Enako odrezan je »avto ≥ 180°« v tabelah A in F.
+- Tabela C, Stara: prvi sunek 23,9 cm pred dotikom škatel (merilec 20–22 cm); naslon 3° s prečno hitrostjo 1,74 m/s da v Stari 12 sunkov in zasuk 3,2° (ne 0).
+- Tabela D, Simulacija: 22°/0,53 (igralec–tekmec, obe smeri), 15°/0,26 (tekmec–tekmec), 12°/0,00 (varnostni avto).
+- Vrstica I>net je iz makete z net avtom, ki se nikoli ne odzove. Dvojna simulacija dveh telefonov: čelno 120 + 120 lokalni −233 km/h, oba nazaj s 114–115 km/h; T v stoječega: strelec 0 km/h (en telefon 52); od zadaj 120 v 90: strelec −30 km/h, zadeti 0 sunkov.
+- Tabela F: bok kabine 10,2°/48 °/s (klasična) in 31,2°/149 °/s (nova); čelni trk 1 m iz sredine v vlačilec ni ponovljen. Avto 80 čelno v vlačilec 80 konča pri −70 km/h (teorija −69,9).
+- Tabela G: v 8 scenarijih ni zadetka v zadnjo os. Tam en klic doda v Kaskaderski +55,3 kJ (8,7 % od 638 kJ), v Simulaciji +12,9 kJ (2,0 %), v Mehki +0,3 kJ. Arkadna: dP 41,2 % je delež prenesene gibalne količine (4,6 % skupne); prirast energije pri preverjalcu +72,8 kJ.
+- Tabela H: miška/kamen 1,00/0,56; pri 60 + 60 km/h 0,26/0,48.
+- Potiskanje s prikolico (od zadaj 60 v 32 in 120 v 91 km/h, 240 korakov; sunki/ponovni dotiki): vlak 60 merilec 94/45, preverjalec 77/45; vlak 120 57/46 in 58/39; cisterna 60 merilec 137/83, preverjalec 227/1 (se razlikujeta); vozilo brez prikolice 1/0.
+
+### Ograja (`zid.js`)
+
+**A. Matrika: BURJA R7 (1150 kg), klasična fizika (cs), asfalt ob ograji, brez vnosa.** v km/h; eN1/eNL: normalna hitrost stran od ograje po 1. koraku / ob odhodu, delež vpadne (− = še vanjo); μ: tang. izguba / normalni sunek; izh: izstopni kot; dh: zasuk nosu; w: največji zasuk °/s; drs: čas na ograji s (> = do konca 7 s); n: ločeni dotiki; pop: največji popravek lege cm; hit m/s; šk: škoda %; gum: verjetnost predrtja %; prv: lahko prevrne
+
+|kot|km/h|v1|vL|v0,5|v2|eN1|eNL|μ|izh|dh|w|drs|n|pop|hit|šk|gum|prv|
+|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|
+|5|60|58|–|55|49|−0,43|–|0,25|–|5|18|>6,80|1|0,1|1,4|0|0|ne|
+|5|120|117|–|112|101|−0,43|–|0,25|–|5|36|>6,90|1|1,4|2,9|1|0|ne|
+|5|200|196|192|186|165|−0,43|0,02|0,25|0,1|5|61|0,12|1|2,2|4,8|6|0|ne|
+|15|60|56|–|49|42|−0,37|–|0,25|–|15|49|>6,93|1|2,3|4,3|5|0|ne|
+|15|120|111|106|104|95|−0,37|0,02|0,25|0,3|15|100|0,22|1|5,9|8,6|19|0|ne|
+|15|200|186|177|172|153|−0,37|0,03|0,25|0,5|15|168|0,11|2|5,9|14,3|53|17|DA|
+|30|60|47|–|35|27|−0,24|–|0,25|–|30|72|>6,97|1|4,7|8,3|16|0|ne|
+|30|120|93|84|83|76|−0,24|0,01|0,25|0,5|30|147|0,29|1|11,6|16,6|45|25|DA|
+|30|200|156|143|140|126|−0,24|0,02|0,25|0,9|31|246|0,15|1|16,2|27,7|99|32|DA|
+|60|60|17|0|0|0|0,04|0,00|0,25|109,2|−4|68|0,35|2|6,0|14,4|33|17|ne|
+|60|120|33|0|0|0|0,04|0,00|0,25|−38,0|−24|136|0,90|2|18,1|28,8|74|25|ne|
+|60|200|55|31|18|14|0,04|0,03|0,25|9,5|−37|227|0,22|3|10,1|48,1|100|25|ne|
+|90|60|14|10|4|4|−0,12|0,07|0,16|156,7|1|93|0,03|1|11,6|16,6|41|25|ne|
+|90|120|27|21|13|12|−0,12|0,07|0,16|158,1|2|187|0,02|2|25,5|33,3|96|25|ne|
+|90|200|46|35|28|27|−0,12|0,06|0,16|158,7|3|312|0,02|2|16,3|55,5|100|25|ne|
+
+**B. Isti trki drugače.** plin = poln plin + volan stran; odm: s do 0,3 m stran za vedno; utr: preklopi stika na s; lep: obtiči
+
+|kot|km/h|cs+plin drs|odm|v2|nova: n|utr|drs|v2|nova+plin odm|v2|trava cs v2|
+|-|-|-|-|-|-|-|-|-|-|-|-|
+|5|60|0,16|0,67|139|3|117|>6,80|46|0,75|139|26|
+|5|120|0,25|0,88|170|36|35|>6,90|100|1,05|169|64|
+|5|200|0,12|1,02|211|38|18|1,73|163|1,18|210|114|
+|15|60|0,24|0,86|132|3|88|>6,93|32|0,93|129|22|
+|15|120|0,18|0,96|162|23|45|>6,97|87|1,13|158|61|
+|15|200|0,12|0,96|198|43|18|0,78|149|1,46|194|106|
+|30|60|0,53|0,98|120|3|2|>6,97|10|0,93|112|6|
+|30|120|0,30|1,09|148|8|96|>6,98|66|1,27|142|47|
+|30|200|0,15|0,75|175|50|20|0,59|118|1,46|166|86|
+|60|60|>6,98|lep|0|2|6|0,35|0|lep|0|0|
+|60|120|>6,99|lep|0|2|4|1,03|0|1,40|42|0|
+|60|200|0,24|lep|0|2|0|0,01|0|1,62|87|9|
+|90|60|0,03|lep|0|1|0|0,02|3|lep|0|1|
+|90|120|0,03|2,07|15|2|0|0,02|8|lep|0|7|
+|90|200|0,02|0,15|18|2|0|0,02|12|lep|0|21|
+
+**C. Druga vozila (cs, brez vnosa, asfalt).** MRAVLJA 165 kg, TITAN 5300 kg, CISTERNA = TITAN + polprikolica 12 t (Race.step); ud: koraki s škodo; prik: s prikolica na ograji; zlom: kot vlačilec–prikolica na koncu °
+
+|vozilo|kot/kmh|v1|v2|w|drs|ud|šk|prik|zlom|
+|-|-|-|-|-|-|-|-|-|-|
+|mravlja|5/120|116|88|68|0,10|1|1|||
+|titan|5/120|117|92|26|>6,90|1|1|||
+|cisterna|5/120|119|62|31|>6,90|1|1|6,74|56|
+|mravlja|15/120|110|83|177|0,10|2|30|||
+|titan|15/120|111|84|71|>6,97|1|10|||
+|cisterna|15/120|118|54|96|>6,97|2|10|6,81|56|
+|mravlja|30/120|91|67|173|0,21|2|57|||
+|titan|30/120|94|64|109|>6,98|1|24|||
+|cisterna|30/120|113|42|191|>6,98|5|25|6,81|56|
+|mravlja|90/60|20|6|303|0,02|2|70|||
+|titan|90/60|13|3|61|0,02|2|24|||
+|cisterna|90/60|44|1|50|0,12|6|55|0,00|7|
+|mravlja|90/120|40|9|606|0,02|2|100|||
+|titan|90/120|26|9|123|0,03|2|57|||
+|cisterna|90/120|87|2|99|0,12|8|100|0,00|30|
+|cisterna+plin|5/120|120|109|33|0,97|2|1|0,82|0|
+|cisterna nova|5/120|119|108|34|1,13|2|1|1,24|0|
+
+**D. Posebne ograje (BURJA R7, cs, brez vnosa)**
+
+|ograja|km/h|v1|v2|hit|šk|opomba|
+|-|-|-|-|-|-|-|
+|otok krožišča: čelno v sredino|60|8|3|16,5|39||
+|otok krožišča: čelno v sredino|120|17|9|33,0|85||
+|otok krožišča: 0,6 m od roba proti sredini|120|81|–|19,5|48||
+|otok krožišča: oplazi (0,3 m širine avta)|120|107|–|8,1|16||
+|konec odprte ceste: čelno|60|14|4|16,6|41||
+|konec odprte ceste: čelno|120|27|12|33,3|96||
+|začetek odprte ceste: vzvratno 30 km/h|30|7|1|8,3|16||
+|rob prepada, 5°|60|57|37|1,4|0|rob drži kot zid, drs 2,46 s|
+|rob prepada, 5°|120|–|–|–|–|pade čez rob|
+|rob prepada, 15°|30|27|7|2,3|0|rob drži kot zid, drs 1,73 s|
+|rob prepada, 15°|60|–|–|–|–|pade čez rob|
+|rob prepada, 30°|120|–|–|–|–|pade čez rob|
+|rob nove mape (track.free): 30°|120|103|73|0,0|0|brez trenja, zvoka, škode; na robu do konca|
+|stena predora nove mape (track.wall2): 15°|120|111|95|8,6|19||
+|stena predora nove mape (track.wall2): 90°|120|27|12|33,3|96||
+|nos zidu boksov (Spa, −167 m): naravnost vanj|120|109|64|0,1|0|skok v stran 115 cm v 1 koraku|
+
+**E. Prave proge in dirka s semenom (cs).** Isti trk 15°/120 in 90°/60; dirka: prva ograja igralca (tests/lib/sim.js »crash«) in isti udarec na ovalu
+
+|kje|15/120: v1|vL|v2|hit|šk|90/60: v1|hit|šk|
+|-|-|-|-|-|-|-|-|-|
+|Spa zid boksov −150 m|110|100|60|8,5|18|14|16,5|40|
+|Spa ravnina 1660 m|110|100|58|8,5|17|14|16,5|40|
+|Bathurst ravnina 750 m|111|95|61|8,5|20|14|16,6|41|
+|Bathurst zid na gori 3040 m|111|99|77|8,6|19|14|16,6|41|
+|oval (asfalt)|111|106|95|8,6|19|14|16,6|41|
+|oval (trava)|110|100|61|8,5|18|14|16,5|40|
+
+|dirka|fiz|v0|kot|v1 dirka/oval|μ|hit|v2|
+|-|-|-|-|-|-|-|-|
+|Spa|cs|163|29,9|123/127|0,26/0,25|22,6/22,7|75/71|
+|Spa|nova|133|28,9|103/106|0,26/0,25|17,7/17,9|79/76|
+|Bathurst|cs|163|26,1|132/135|0,26/0,25|19,9/20,1|79/76|
+|Bathurst|nova|145|26,9|114/119|0,26/0,25|18,5/18,1|80/84|
+
+**F. Po ograji skozi ovinek (180°, R 60 m, prihod 200 km/h; »po ograji« = poln plin brez volana).** Merilčeva postavitev ima 4 m trave pred ograjo in prvi udarec 30,9 m/s; za asfalt do ograje velja tabela preverjalca pod tem razdelkom.
+
+|fiz|kako|čas s|vMin|vOut|hit|šk|
+|-|-|-|-|-|-|-|
+|cs|avtopilot|5,30|116|129|0,0|0|
+|cs|po ograji|8,18|63|76|30,9|100|
+|nova|avtopilot|5,22|112|128|0,0|0|
+|nova|po ograji|6,79|96|102|30,8|100|
+
+Speljevanje (avto vzporedno, bok 2 cm od ograje, plin + volan stran): 0,3 m stran za vedno po 1,33 s iz mirovanja (TITAN 2,41 s) in po 0,45 s pri 60 km/h; hit ≤ 1,0 m/s, škoda 0.
+
+Vse vrstice (matrika 360, prikolica 60, vsi stolpci, nova fizika, trava): `node tools/trki/zid.js` ali `--json`.
+
+Popravki in dopolnila preverjalca:
+
+- Tabeli A in B tečeta v zanki za sam avto, brez odpadlih kosov iz zanke dirke: vrstice s škodo nad ~50 % (15°/200, 30°/200 in bolj strmo) precenijo hitrost po trku. V pravi zanki dirke da 30°/200: 156 km/h po 1. koraku, 112 km/h pri 0,15 s (56 %), v0,5 107–110, v2 98–100; Bathurst 113 (0,15 s), 104 ob odhodu, v2 67; Spa 107, v2 61. Brez kosov 143 km/h (72 %).
+- Po trku naravnan v 0,15–0,32 s (asfalt do ograje), 0,23–0,8 s (trava pred ograjo), 2,3–2,8 s (Bathurst 30°/200); izstopni kot 0,5–0,9° na asfaltu, 0,9–2,9° na Bathurstu. Čas 2,9 s do vzporednega nosu (15°/60 brez vnosa) velja za asfalt do ograje; na Bathurstu (2,5 m trave pred ograjo) 0,5–0,75 s.
+- 90°: stolpec dh je vzet ob odhodu po 0,02–0,03 s; nos ostane zasukan 18° (15–27° pri 80–100°). Na ovalu dobi sunek en vogal (60 → 14 km/h), na pravem zidu (Bathurst) oba (60 → 10 in 120 → 20 km/h v enem koraku).
+- Tabela C, cisterna: stolpec »zlom« je končni kot. Vrh pri 5°/120 je 63,2° pri 0,77 s (z volanom stran po 0,3 s 63,3°, nova fizika 9,1°); prag: 3°/120 1,3°, 5°/60 2,3°, 15°/120 55,8°. Čelno 60 km/h: 6 korakov s škodo (55 %) proti 24 % za vlačilec sam; 120 km/h: 8 korakov, 100 % proti 57 %.
+- Nos zidu boksov, skok vstran po odmiku sredine avta od črte zidu: Spa 115/95/55/82/42/0 cm pri 0/−0,2/−0,6/+0,2/+0,6/±1,2 m; Bathurst 70/90/87/50/10 cm pri 0/+0,2/+0,6/−0,2/−0,6 m.
+- Rob prepada: prag je točno 2,5 m/s navzven (10°/50: rob drži 3,08 s; 10°/55 pade; 20°/20 drži 4,43 s in se ustavi). Rob nove mape: 60°/100: 99,2 → 49,6 km/h, vogal 2,17 m čez rob; 90°/80: 79,4 → 0,0 km/h v enem koraku brez škode.
+- Nova fizika ob ograji (tabela B, stolpca »nova: n« in »utr«) je pri preverjalcu šteta do zadnjega stika: 5°/60 117 preklopov na sekundo; 5°/120 36 dotikov in 35 na sekundo; 15°/120 15 dotikov in 37 na sekundo; 30°/200 27 dotikov in 37 na sekundo; reža največ 2,0 cm, udarci največ 0,20 m/s.
+- Tekmeci po trku v ograjo (brez odstopanja): po 5–30°/120 so od ograje v 0,2–0,7 s in po 1 s vozijo 115–144 km/h (asfalt) oziroma 89–90 km/h (Spa, Bathurst); po 60–90° stojijo 3,5 s, nato odpeljejo; nobeden ni obtičal.
+
+**Lastni odpadli kosi po trku v ograjo (preverjalec; dirka s kosi proti dirki brez kosov, km/h)**
+
+| trk | kje | s kosi | brez kosov | kdaj |
+|---|---|---|---|---|
+| 30°/200 (2 kosa) | 5 mest | 107–113 | 139–143 | 0,15 s po trku |
+| 30°/200 | asfalt / Bathurst / Spa | 110 / 91 / 96 | 140 / 126 / 127 | 0,5 s |
+| 15°/200 (1 kos) | Bathurst / Spa | 135 / 133 | 153 / 156 | 0,5 s |
+| 15°/200 | Spa | 56 | 103 | 2 s |
+| 30°/120 in 15°/120 (škoda do 45 %) | – | brez vpliva | – | prag pri ~50 % škode |
+
+**Vožnja po ograji skozi ovinek z asfaltom do ograje (preverjalec; poln plin brez zavore in volana proti samovozniku igre z največjo spretnostjo 1,12; čas odseka v s)**
+
+| kje | po ograji | samovoznik na meji | razlika | opomba |
+|---|---|---|---|---|
+| oval R 30 m, klasična | 14,18 | 16,39 | −13,5 % | najnižja hitrost 129 proti 84 km/h, škoda 24 %, najmočnejši udarec 7,0 m/s |
+| oval R 60 m, klasična | 15,64 | 16,92 | −7,6 % | škoda 8 %, udarec 4,7 m/s |
+| oval R 120 m, klasična | 18,79 | 18,27 | +2,8 % | |
+| oval R 30 / 60 / 120 m, nova | 16,18 / 17,32 / 20,42 | 16,47 / 17,50 / 19,29 | | 100 % škode |
+| Marrakesh (142°, R ~45 m) | 14,93–15,14 | 14,95 | | samovoznik s spretnostjo 1,08: 15,30 s; 1: 16,15 s |
+| Bathurst (120°, R ~40 m) | 13,76–13,85 | 13,77 | | 1,08: 13,90 s; 1: 14,37 s |
+| Štajerska | 16,85 | 14,93 | | počasneje |
+| oval R 60 m s 4 m trave pred ograjo | 26,26 | | | vedno počasneje |
+
+Trda podlaga do zunanje ograje: 6 373 m od 67 693 m ovinkov (R pod 250 m) na 22 pravih progah (9 %): Marrakesh 100 %, Bathurst 96 %, Štajerska 87 %, Harju 61 %, Spa 58 %, Montréal 26 %, Medvode 14 %.
+
+Volan, držan proti ograji (preverjalec; dotik 5°, poln plin): klasična 60 km/h: 63 → 43 km/h (1 s) → 0 (2 s), nos 64° v zid; 120 km/h: 118 → 90 (2 s) → 0 (4 s), nos 36°. Nova: 60 → 60/57/56 km/h pri 1/2/4 s, nos 2,9°; 120 → 119/114/104 km/h, nos 2,4°.
+
+### Predmeti, odpadli deli, promet, policija (`predmeti.js`)
+
+**A. Predmeti ob progi** (rally 1150 kg brez plina; n = koraki stika, dv% = izguba proti kontroli pri 60/120/200 km/h; vo/v = predmet/avto pri 60/200; h = vrh leta m; pA/pP = izgubljena gib. količina avta / pridobljena predmeta pri 120; prič. = 1,35·m/(M+m))
+| vrsta kg | n | dv% sredina | dv% zamik 0,6 m | vo/v | h | pA/pP | prič. % |
+|---|---|---|---|---|---|---|---|
+| stožec 3 | 31/26/26 | 4,9/11,6/11,5 | 0,7/1,3/1,3 | 0,83/0,32 | 3,7 | 82,2 | 0,35 |
+| guma 9 | 58/27/27 | 17,2/29,9/31,6 | 2,7/5,1/4,5 | 0,81/0,32 | 3,7 | 70,8 | 1,05 |
+| bala 26 | 110/29/28 | 42,8/49,7/62,3 | 4,2/16,4/16,2 | 0,84/0,32 | 3,7 | 53,0 | 2,98 |
+| sklad bal 78 | 97/69/27 | 45,1/59,3/61,8 | 8,3/28,1/37,7 | 0,87/0,41 | 3,7 | 73,6 | 8,57 |
+| prenosna svetilka 5 | 56/37/27 | 13,2/24,7/19,0 | 1,7/1,8/1,6 | 0,83/0,32 | 3,5 | 105,4 | 0,58 |
+| sod 12 | 2/1/1 | 3,7/1,9/1,9 | 1,9/1,9/1,9 | 0,83/0,32 | 0,9 | 3,4 | 1,39 |
+| tabla zavorne razdalje 16 | 1/1/1 | 2,6/2,6/2,6 | 2,6/2,6/2,6 | 0,48/0,14 | 0,3 | 7,7 | 1,85 |
+| hidrant 45 | 2/1/1 | 8,5/4,5/4,5 | 4,5/4,5/4,5 | 0,84/0,32 | 0,9 | 2,1 | 5,08 |
+| svetilka 110 | 1/1/1 | 4,5/4,5/4,5 | 4,5/4,5/4,5 | 0,42/0,32 | 2,0 | 1,1 | 11,79 |
+| nadstrešek 220 | 1/1/1 | 4,5/4,5/4,5 | 4,5/4,5/4,5 | 0,51/0,26 | 2,5 | 0,6 | 21,68 |
+
+**B. Zamik zadetka 0/0,2/0,4/0,6/0,8/1,0/1,2 m**
+| predmet km/h | n | dv% |
+|---|---|---|
+| stožec 60 | 31/14/5/2/2/2/0 | 4,9/1,9/0,9/0,7/0,7/0,6/- |
+| stožec 200 | 26/5/4/3/2/1/0 | 11,5/2,4/1,7/1,3/1,0/0,5/- |
+| bala 60 | 110/21/11/1/1/1/1 | 42,8/18,1/9,5/4,2/4,2/4,2/4,2 |
+| bala 200 | 28/9/6/5/4/2/1 | 62,3/29,8/21,1/16,2/13,2/5,8/4,2 |
+
+**C. Isti predmet, avti 165/680/1150/5300 kg, 120 km/h** (dv%): stožec 11,3/11,6/11,6/11,4; bala 48,1/49,7/49,7/52,1; nadstrešek 4,5 pri vseh; ležeč pokrov 2,5 pri vseh; drseč pokrov 7,8/12,8/12,7/10,3
+**D. Počasi 5/15/30 km/h** (dv%; pot predmeta m): sklad bal 18,0/25,4/21,1; nadstrešek 0,7/7,4/7,8 (0,1/4,6/2,9 m); svetilka 0,7/2,3/6,8 (0,1/0,2/4,6 m); hidrant 2,5/4,5/8,2
+
+**E. Odpadli deli** (m = igralna masa; dv% (n) pri 60/120/200 km/h, v sredino)
+| del (m) | leži | drsi 6 m/s | leti 0,7 v | tik pred avtom | lasten del |
+|---|---|---|---|---|---|
+| ogledalo (1) | 0,2 | 0,9 (3)/1,2 (4)/1,0 (4) | 1,3 (4)/0,6 (2)/0,4 (1) | 2,2 (7)/1,6 (5)/1,1 (4) | ne zadene |
+| blatnik (5) | 1,0 | 4,5 (3)/4,8 (3)/3,7 (3) | 4,8 (3)/3,1 (2)/2,0 (1) | 7,8 (5)/5,0 (3)/3,1 (2) | -/-/2,0 (1) |
+| odbijač (7) | 1,4 | 6,1 (3)/6,6 (3)/4,9 (3) | 6,6 (3)/4,2 (2)/2,8 (1) | - | 8,4 (4)/4,4 (2)/2,9 (2) |
+| pokrov (14) | 2,5 | 9,0 (2)/12,7 (3)/10,9 (2) | 9,5 (2)/8,2 (2)/5,6 (1) | 13,7 (3)/9,6 (2)/7,8 (2) | 12,5 (3)/8,2 (2)/5,6 (1) |
+
+**F. Promet, ljudje, policija** (prvi dotik; e = odboj, p = gib. količina po/pred, prič. = (1+e)·m/(M+m))
+| trk (kg) | km/h | dv% avta | prič. % | e | p | opomba |
+|---|---|---|---|---|---|---|
+| avto 1300 | 120 | 66,3 | 66,3 | 0,25 | 1,00 | n 7, sunek nosu 23°, w 67°/s, vdor 0,50 m |
+| avtobus 12 500 | 120 | 114,4 | 114,5 | 0,25 | 1,00 | avto se odbije nazaj s 17 km/h |
+| motor 290 | 120 | 25,2 | 25,2 | 0,25 | 1,00 | vdor 0,15 m |
+| kolo 90 | 60 | 21,1 | 9,1 | - | 0,83 | kolo 0,5 v; avto do 42,5 km/h |
+| kolo 90 | 200 | 16,9 | 9,1 | - | 0,87 | |
+| avto 1300, zamik 0,6 m | 120 | 53,6 | - | 0,01 | 1,00 | sunek 23°, smer +16° |
+| avtobus, bok 5° | 60 | 0,6 | - | - | 1,03 | sunek 23°, w 62°/s, smer +15°, vdor 0,11 m |
+| tovornjak 32 000, bok 30° | 60 | 0,3 | - | - | 1,00 | w 93°/s, smer +27°, vdor 0,71 m |
+| avto 1300, beg | 120 | 53,7 | 53,7 | 0,05 | 1,00 | n 513, vdor 0,05 m |
+| pešec 75 | 60 | 8,4 | 6,1–8,3 | - | - | pešec 0,34 v, pA/pP 4,2 |
+| patrulja 1750 | 120 | 61,5 | 61,5 | 0,05 | 1,00 | n 214, škoda 10 % |
+| patr. motor 430, zamik 0,6 m | 120 | 18,9 | 27,0 | - | 1,00 | zasuk motorja 1019°/s |
+
+**G. Stavba (boxCollide), 120 km/h**: 10°: 99 % hitrosti vzdolž stene, w 124°/s, škoda 6 %; 30°: 95 %, w 344°/s, škoda 45 %; 90°: obstane (e 0), škoda 39 % (17,8 % pri 60, 66,8 % pri 200); skozi steno 0 cm
+**H. Stoječa polprikolica 17 300 kg / odstopljen avto 1400 kg** (60/120/200): prikolica: avto po trku −1/−3/−4 km/h, e 0,09, p 1,00, škoda 21/48/83 %; odstopljen: avto po trku 23/46/68 km/h, e 0,12/0,12/0,16, p 0,99/1,00/0,95, škoda 21/48/83 %
+
+**I. Več predmetov hkrati** (60/120 km/h)
+| prizor | n | dv% | budnih | predmet-korakov | mir s | pari drug v drugem |
+|---|---|---|---|---|---|---|
+| 3 skladi gum (9 gum) | 51/52 | 22,4/40,0 | 9/9 | 3232/3655 | 4,5/5,4 | 0 |
+| polje 6 × 5 stožcev | 82/35 | 18,8/30,1 | 28/30 | 6585/8517 | 4,2/4,6 | 0 |
+| polje 5 × 4 sodi | 6/7 | 16,8/18,4 | 20/20 | 4898/5935 | 4,2/4,1 | 0 |
+
+Čas koraka dirke (Node, 1 avto): 14–85 µs z budnimi predmeti, 5–14 µs brez.
+
+**J. Predmet med avtom in ograjo** (120 / 200 km/h; avto 20° proti ograji, predmet 0,15 m pred črto ograje; vrednosti preverjalca na Spa in Bathurstu; dv = počasneje kot ista vožnja brez predmeta 1 s po trku, kontrola sama pade s 120 na 72–75 km/h)
+| vrsta | koraki stika | dv km/h | najmanjša hitrost % kontrolne | čez črto ograje m | skok nazaj v enem koraku m |
+|---|---|---|---|---|---|
+| stožec 3 kg | 25–29 / 22–31 | 8–9 / 5–19 | 79–96 | 0 | 0 |
+| guma 9 kg | 74–119 / 25–32 | 19–22 / 40–42 | 49–67 | 0 | 0 |
+| bala 26 kg | 64–71 / 26–29 | 34 / 53–64 | 31–42 | 0 | 0 |
+| sod (en stik) | 1 | 2,0 / 3,3 | 95–98 | 0 | 0 |
+| prenosna svetilka 5 kg | – | – | – | 3,6–3,9 / 9,6–10,2 | 3,5–3,8 / 9,6–10,1 |
+| svetilka 110 kg | – | – | – | 3,0–3,2 / 5,6–6,0 | 2,9–3,1 / 5,5–5,9 |
+
+Merilec (lastna ravna proga): bala 69 / 148 korakov, 43 / 79 km/h počasneje, najmanj 6 / 4 % kontrolne (na pravih progah se ne ponovi); prenosna svetilka 5,8 / 12,4 m in svetilka 2,0 / 1,8 m čez črto. V stikih z balo avto na pravih progah izgubi 48,9 / 97,8 km/h.
+
+**K. Ravnina / Spa / Bathurst, 120 km/h** (dv%): stožec 11,6/13,2/10,8; bala 49,7/52,8/47,9; tabla zavorne razdalje 2,6 povsod; ležeč pokrov 2,5 povsod; leteč pokrov 8,2/8,3/5,6
+
+**L. Semenska dirka 13 avtov, vrsta predmetov čez cesto 250 m za štartom** (na plinu)
+| proga, predmet | zadelo avtov | n mediana/max | v0 km/h | dv% povpr./max | zaostanek m povpr./max |
+|---|---|---|---|---|---|
+| Spa, stožec | 11 | 18/102 | 55 | 1,6/2,7 | 0,0/1,4 |
+| Spa, bala | 9 | 18/55 | 53 | 8,0/26,9 | 3,0/11,2 |
+| Bathurst, stožec | 6 | 10/29 | 83 | 2,0/3,9 | −0,4/1,0 |
+| Bathurst, bala | 5 | 13/23 | 83 | 12,8/22,4 | 4,6/8,2 |
+
+**M. Semenska dirka s trkom: isti avto in isti del**
+| proga, postavitev | avto kg | del (m) | čas s | n | v0 | izguba km/h | delež samih stikov % (izračunan) |
+|---|---|---|---|---|---|---|---|
+| Spa, lm | igralec 960 | blatnik (5) | 7,23–8,11 | 62 | 171 | 121 | 71,4 |
+| Spa, formula | igralec 798 | blatnik (5) | 7,44–9,00 | 69 | 162 | 117 | 75,2 |
+| Bathurst, formula | tekmec 798 | odbijač (7) | 58,48–58,58 | 8 | 211 | 39 | 20,3 |
+
+Popravki in dopolnila preverjalca:
+
+- Tabela A velja za zadetek v sredino (±0,1 m) in 0,6 m iz nje; »14–33-krat preveč« velja le za ta pas. Povprečje po širini avta je v tabeli spodaj.
+- Sredina, izguba merjena neposredno v `Race.stepProps`, 60/120/200 km/h, Spa in Bathurst: stožec 5,4/13,3/10,6 in 4,9/11,3/10,4 %; guma 15,1/31,5/31,2 in 13,3/29,5/29,2 %; zaboj 32,1/41,8/54,7 in 27,2/40,8/48,6 %; bala 39,1/50,0/63,3 in 36,1/48,2/61,0 %; sklad bal 45,8/66,3/76,6 in 51,8/64,5/63,6 %. Na polnem plinu pri 120 km/h: stožec 13,9 %, bala 54,6 %.
+- Tabela E v oknu 6 s (Spa): drseč pokrov 13,3/15,0/14,2 %, odbijač 6,9/9,7/7,5 %, blatnik 6,2/7,1/5,5 %, ogledalo 1,6/2,7/1,8 %; tik pred avtom pokrov 18,3/14,4/9,8 %; lasten pokrov 13,4/9,5/5,6 %. Enako ali do 1,5-krat več kot pri merilcu.
+- Težki predmeti počasi: nadstrešek pri 15 km/h odrinjen 3,0 m ob izgubi 5,5 % (merilec 4,6 m, 7,4 %), svetilka pri 30 km/h 3,9 m ob 6,7 % (4,6 m, 6,8 %). Škoda ob nadstrešku pri 200 km/h: merilec 5,9 %, preverjalec 10,1 % (se razlikujeta).
+- Predmet skozi avto (koraki, ko je središče predmeta v tlorisu avta, pri 60/120/200 km/h): hidrant 88/34/14, koš 96/33/13, omarica 56/31/14, sod 118/32/13, nabiralnik 60/31/13, nadstrešek 53/27/12, svetilka 54/27/14; pri 15 km/h 161–219 korakov. Skok iz avta v enem koraku: nadstrešek 1,08 m pri 60 km/h (merilec 1,58 m), omarica 1,17 m.
+- Tabela M, neposredna meritev: Spa lm 70 korakov stika, 171 → 25 km/h, od tega 117,7 km/h v stikih z delom; Spa formula 70 korakov, 162 → 32 km/h, 105,3 km/h; Bathurst 8 korakov, −43,0 km/h (20,4 %).
+- Natančnost: število korakov stika lahkih predmetov je pri 60 km/h kaotično; odstotki pri 60 km/h držijo na ±20 %, pri 120 in 200 km/h na ±10 %.
+
+**Povprečje po širini avta (preverjalec; Spa, zamik zadetka od −1,2 do +1,2 m po 0,1 m, izguba hitrosti v %)**
+
+| predmet | 60 km/h | 120 km/h | 200 km/h | z robom avta | v sredino pri 120 km/h | pričakovano največ |
+|---|---|---|---|---|---|---|
+| stožec 3 kg | 1,10 | 2,35 | 1,81 | 0,5 | 13 | 0,35 |
+| guma 9 kg | 3,61 | 7,04 | 6,03 | 1,4–1,7 | 31 | 1,05 |
+| bala 26 kg | 10,31 | 18,83 | 18,92 | 4,2 | 50 | 2,98 |
+| sklad bal 78 kg | 14,78 | 28,23 | 37,78 | 4,5 | 66 | 8,57 |
+
+### Boksi, pristanek, prevračanje, škoda, zanka dirke, splet (`boksi-pristanek.js`)
+
+**Boksi: dirka, vsi avti v bokse (Race.step, 13 avtov)**
+| proga | s | avto-korakov v stezi | hkrati | stari trk (koraki) | trki | prekrivanje duh-duh | duh-trden avto | zid v stezi | škoda |
+|---|---|---|---|---|---|---|---|---|---|
+| Spa | 300 | 14.540 | 4 | 0 | 0 | 247 kor., do 3,02 m | 1.241 kor., do 1,87 m | 3× (do 15,9 m/s) | 0 |
+| Bathurst | 150 | 817 | 2 | 0 | 0 | 152, do 2,65 m | 287, do 1,86 m | 1× (3,0 m/s) | 0 |
+
+**Isti dotik pri 80 km/h: stari trk (inPit) / Simulacija (ravnina, rally, cs)**
+| prizor | e | po trku km/h P, O | prečno m/s P, O | sunek nosu ° | pop cm | škoda % |
+|---|---|---|---|---|---|---|
+| zadaj v stoječega | 0,10 (nova 0,40) / 0,12 | 32,7, 39,6 / 31,9, 40,3 | 0 | 0 | 7,2 / 1,0 | 29,9 / 29,9 |
+| bok ob boku 3° | – | 79,9 | 2,59, 2,34 / 0,73, 1,99 | 22,9 / 2,6 | 1,1 / 0,1 | 0 |
+| izvoz 30 v bok 80 | – | 30, 80 | 1,70, 2,52 / 0,00, 0,32 | 22,9 / 0 | 0,4 / 1,2 | 2,2 / 0 |
+
+**Meja boksne steze, 80 km/h (Spa, cs / nova)**
+| kam | kot | udarec m/s | po 1 s km/h | škoda % |
+|---|---|---|---|---|
+| boksni zid | 15° / 30° | 5,9 / 11,1 | 55,8 / 42,9 (nova 53,5 / 37,4) | 0 / 0 |
+| ograja proge | 15° / 30° | 5,7 / 11,0 | 48,2 / 34,4 (nova 53,4 / 39,0) | 8,8 / 23,8 |
+
+**Pristanek (rally 100 km/h, ravna cesta, JUMP_G 14)**
+| padec m | v zraku s | vy m/s (pri 9,81) | izguba hitrosti % | škoda % | odboj | bočni g po pristanku |
+|---|---|---|---|---|---|---|
+| 0,3 | 0,21 | 2,92 (2,43) | 4,7 | 0 | 0 | 1,56 (brez padca 1,58) |
+| 1 | 0,38 | 5,25 (4,43) | 8,4 | 0 | 0 | 1,54 |
+| 3 | 0,66 | 9,22 (7,67) | 13,0 | 0 | 0 | 1,52 |
+| 6 / 10 | 0,92 / 1,19 | 12,95 / 16,68 | 13,0 | 2,0 / 5,7 | 0 | – |
+
+Tovornjak 3–10 m: −5,2 %, škoda 0. Klanec (1 m, 100 km/h): raven 8,4 %, −8 %: 12,0 %, −15 %: 13,0 %, +8 %: 5,1 % (hitrost glede na cesto povsod 5,2–5,3 m/s); Spa (+4,7 %): 6,4 %.
+
+**Skoki na pravih progah (preverjalec; samovoznik igre, rally, klasična fizika, 150 s na progo).** Merilčeva tabela »Greben« je izpuščena: merjena je bila na gladki analitični ploskvi, na kateri avto pristane v koraku vzleta; na pravih progah avto poleti.
+| proga | leti | v zraku | vzlet in pristanek v istem koraku | pristanki po letu nad 0,05 s |
+|---|---|---|---|---|
+| Ouninpohja | 25 | 1411 korakov (11,8 s), najdaljši 1,07 s | 18 korakov, skupaj −2,3 km/h | 18: povprečno −10,9 % = 17,6 km/h, največ −13,0 % = 21,8 km/h (s 2452 m, 167 km/h), skupaj 316,6 km/h |
+| Nürburg | 2 | 45 korakov, do 0,36 s | 1 korak | 2: skupaj −4,9 km/h |
+| Medvode | – | 1 korak | 8 korakov v ~0,07 s pri s 2253 m in 206 km/h: −8,8 km/h | – |
+| Harju, Bâlea, Tianmen, Spa, Bathurst | 0 | 0 | 0 | – |
+
+Pristanek po klancu (preverjalec, avto 1 m nad cesto, 100 km/h): Bathurst ravno 8,4 %, klanec −7,3 %: 11,9 %, −13,0 %: 13,0 %, +7,5 %: 5,1 % (igra vzame navpično hitrost 5,25 / 7,39 / 8,86 / 3,16 m/s, pravokotno na cesto je povsod 5,1–5,3 m/s); Spa −0,5 %: 8,7 %, −7,0 %: 11,5 %, +4,7 %: 6,5 %. Na Ouninpohji je 17 od 18 pristankov na klancu navzdol (povprečno −3,0 %: navpično 6,97 m/s, pravokotno na cesto 5,64 m/s).
+
+**Padec čez rob (lastna cesta z def.drops)**
+| vstop | ven m/s | pada s, m | škoda | nazaj | izguba s |
+|---|---|---|---|---|---|
+| 60 km/h, 15° | 4,35 | 1,61, 16,1 | +32 % | 18,8 m naprej, 28,8 km/h | 0,68 |
+| 120 km/h, 15° | 8,56 | 1,61, 16,1 | +32 % | 38,7 m, 28,8 km/h | 1,30 |
+| 20 km/h, 5° | < 2,5 | ne pade | 0 | – | – |
+
+**Prevračanje (setCrash roll)**: v bok ≤ 8,9 m/s 0 %, 9,1–20 m/s 11 %; bočno v ograjo ≤ 9,5 m/s 0 %, ≥ 10,5 m/s 11 %.
+| km/h | trk m/s | obrati | traja s | konec km/h | pot m | pojemek g | škoda |
+|---|---|---|---|---|---|---|---|
+| 50 | 10 | 1 | 1,18 | 33,0 | 15,6 | 0,50 | +4 % |
+| 100 | 10 / 16 | 1 / 2 | 1,18 / 1,58 | 71,4 / 70,4 | 31,4 / 42,4 | 0,73 / 0,62 | +4 / +8 % |
+| 200 | 10 | 1 | 1,18 | 150,6 | 64,0 | 1,21 | +4 % |
+
+Dirke 90 s: čista 0 trkov nad 9 m/s; igralec namerno v trke: Spa 9 žrebov → 2 prevrata, Bathurst 7 → 1.
+
+**Škoda (rally, %)**
+| km/h | 18 | 36 | 54 | 72 | 100 | 150 | 200 |
+|---|---|---|---|---|---|---|---|
+| v stoječ avto (vsak) | 2,4 | 10,4 | 18,4 | 26,4 | 38,9 | 61,1 | 83,4 |
+| pravokotno v ograjo | 6,5 | 20,7 | 34,7 | 48,7 | 70,5 | 100 | – |
+
+| avto, škoda, način | 100 → 6 s plina km/h | ovinek g | brez rok 3 s m |
+|---|---|---|---|
+| rally cel | 209,4 | 2,38 | 0 |
+| rally 50 %, Samo videz / Vklop / Vklop + xHandle | 209,4 / 200,6 / 200,5 | 2,38 | 0 / 0 / 4,21 |
+| rally 100 %, Vklop | 190,8 | 2,38 | 0 |
+| formula cela / 50 % Samo videz | 273,2 / 256,5 | 3,74 / 3,18 | 0 |
+
+**Zanka (Spa, prvih 30 s; Node, µs na korak, razpon 4 zagonov)**
+| avtov | parov/korak (maks) | v dosegu (maks) | korak | pari | široka faza | zidovi |
+|---|---|---|---|---|---|---|
+| 12 | 66 (66) | 2,2 (11) | 144–215 | 13–16 | – | 12–26 |
+| 20 | 10 (42) | 4,0 (21) | 180–238 | 3,0–3,4 | 5,0–5,8 | 19–43 |
+| 100 | 64 (144) | 22,5 (60) | 612–894 | 14–22 | 68–76 | 98–215 |
+
+Klic (µs): carCollide zunaj dosega 0,14–0,23, v dosegu brez dotika 0,35–0,52, poln trk Simulacija 2,0–3,1, stari 0,13–1,1; wallCollide prosto 0,8–2,2, v ograji 1,6–4,5.
+
+**Splet (ravnina, rally; sunek lastnega avta km/h, A / B)**
+| prizor | zamik 0 | zamik 100 ms | zamik 200 ms |
+|---|---|---|---|
+| zadaj 100 v 80 | −11,7 / +11,7, e 0,17 | −19,5 / 0, B 0 korakov trka, dotik pri 6,51 m (prav 3,95) | −19,1 / 0, pri 8,82 m |
+| zadaj 120 v 60 | −33,7 / +33,7 | −59,3 / 0 | −58,8 / 0 |
+| čelno 60 + 60 | −68,7 / +68,7, e 0,12 | −122,4 / +122,4, e 1,00, prekrivanje 1,75 m | −122,5 / +122,5, e 1,01, 3,5 m |
+| v bok stoječega 60 | −53,5 / +53,5, B zasuk 18,9° | −61,6 / +0,4, B 0,1° | −61,6 / 0 |
+| bok ob boku 100, 3° (zasuk) | 11,4° / 22,5° | 39,3° / 68,8° (posledica merilčevega krmilnika; brez rok 2,8° / 2,8°) | brez dotika |
+
+Dve dirki na Spa (opts.remote), zadaj 100 v 80, po 1 s: A −23,9, B −5,9 km/h (ravnina −24,2 / −4,6, z uporom), koraki trka 21 / 0.
+
+Popravki in dopolnila preverjalca:
+
+- Pristanek na Spa in Bathurstu: padec 0,3/1/3 m: −4,5 do −4,9/−8,4 do −8,7/−13,0 % v enem koraku; 200 km/h in 3 m: −13,1 % = −26,1 km/h. Bočni pospešek po pristanku ni ponovljen.
+- Prevračanje: isti žreb za avte 1–400 pri prvem trku da 44 od 400 = 11,0 %; potek iz konstant v kodi se s tabelo ujema na 0,1–0,2.
+- Škoda po masi: strelica 460 kg v medveda 2300 kg pri 60 km/h: škoda 25,3/21,1 % ob spremembi hitrosti −56,2/+11,2 km/h (5 : 1); mravlja 165 kg v 7000 kg pri 36 km/h: 13,5/5,7 % ob 40,0/0,9 km/h (44 : 1).
+- Splet, dve pravi dirki na Spa z lastno interpolacijo stanj: od zadaj 100 v 80 km/h: zamik 100 ms A −17,6, B 0,0 km/h, koraki trka 20/0; zamik 200 ms −17,5/0,0, 52/0. 120 v 60 km/h: −55,7 in −55,6, B 0,0. Čelno 60 + 60: −114,1/+114,4 km/h, e 0,98 (100 ms); −114,5/+115,1, e 1,00 (200 ms). Prvi dotik od zadaj pri razdalji središč 6,30 m (100 ms) in 8,56 m (200 ms) namesto 3,95 m. Prizor »v bok stoječega« ni ponovljen.
+- Splet, dvojna simulacija dveh telefonov (preverjalec avto–avto): čelno 120 + 120: en telefon ±14 km/h (e 0,12); dva telefona ±70 km/h pri zamiku 8 ms in ±114–115 km/h pri 50–200 ms. T 120 v stoječega: en telefon 52/59 km/h; dva: strelec 0 km/h, zadeti 58–65 km/h. Od zadaj 120 v 90: en telefon 101/106 km/h; dva: strelec 86–90 km/h, zadeti 0 sunkov.
+- Samo s ponovnim zagonom skripte in branjem kode (brez lastne meritve preverjalca): boksna steza, boksni zid brez škode, krilo pri »Samo videz«, vodljivost pri »Vklop«.
+
+## Cilji
+
+Trije viri: meritve referenčnih posnetkov (`docs/nova-fizika-meritve.md`), odprti viri o resničnih trkih (vir z naslovom ali standardom) in prejšnje odločitve uporabnika, ki spremembo omejujejo.
+
+### Referenčni posnetki
+
+Vzorec: 70 dogodkov, potrjenih na sličicah (15 mestni, 40 turni, 15 formula), večinoma bok ob bok. Negotovost: hitrost ±10 %, vrtenje kamere ±5 %, pojemek ±20 %, zasuk avta ±30 % oz. ±8°.
+
+| Kaj | Posnetek | Igra zdaj (Simulacija, igralec v dirkah 2. 11., 8 prog × 150 s) |
+|---|---|---|
+| Skok vrtenja ob trku, p50 / p90 | 30 / 50 °/s | 34 / 97 °/s (Stara 63 / 74, Arkadna 24 / 87) |
+| Sprememba smeri ob trku, p50 / p90 | 2,4° / 7,8° | v 0,5 s 3,0° / 9,4° |
+| Bočna hitrost odboja | neto ≈ 1–1,5 m/s, največ ≈ 3,5 m/s | p50 / p90 1,79 / 3,14 m/s |
+| Poravnava po trku, p10 / p50 / p90 | 0,2 / 1,0 / 2,4 s | p50 0,89 s |
+| Izguba hitrosti ob trku, p50 / p90 | 1,4 / 5,3 m/s (n = 43) | ni merjeno 2. 11. (27. 10. klasična fizika 1,2 m/s) |
+| Močan trk v skupino | zasuk 30–40°, poravnava 0,5–0,7 s | kontrolirano: zadnji vogal pod 17° (8 m/s) 34°, oprijem nazaj v 0,6 s |
+| Verižni trk ob ogradi | avto 90° bočno, ≈ 1,6 s stoji, v 3 s spet 23 m/s | ni merjeno |
+
+Meritve v dirkah so hrupne (igralčevih dotikov le 14–24 na meritev; pri isti fiziki poravnava p50 0,97–1,76 s), zanesljivejši so kontrolirani trki. Največji odmik Simulacije v dirkah: skok vrtenja p90 97 proti 50 °/s in vstran p50 1,79 proti 1–1,5 m/s.
+
+Kontrolirani trki 2. 11. (Simulacija; izhodišče, ki ga nova različica pri lahkih dotikih ne sme pokvariti): 100 km/h v stoječ avto po 0,25 s 43 / 55 km/h; od zadaj 120 → 100 km/h z zamikom 0,6 m: 2,0° / 2,1° in 0,5 m/s vstran; sprednji vogal pod 15°: 7,4°; vštric 110 / 90 km/h, naslon 1 s: 111 / 90 km/h (ne zlepita se); 60 km/h v bok avta, ki prečka s 30 km/h: zasuk 152°; odboj 0,24 pri 2 m/s, 0,15 pri 8 m/s, 0 ob naslonu (pod 0,5 m/s); poskok položaja pod 3 cm.
+
+Varovalne meritve iz iste teme: ozke proge (120 dirk) 146 udarcev v ograjo in 16 vrtenj (Stara 96 in 0); štart z 22 avti (40 s, 5 prog), koraki s sunkom smeri nad 10°: Simulacija 73 / 100 / 92 / 72 / 2, Stara 1698 / 747 / 495 / 3323 / 653; čas fizike 0,56 ms na korak pri 100 avtih (Stara 0,73) in 0,25 ms pri 22; Stara golden 336/336.
+
+### Resnični trki (odprti viri)
+
+| Stik | Razpon | Vir |
+|---|---|---|
+| Odboj avto–avto in avto–tog zid po hitrosti | pod 5 km/h 0,4–0,7; 7–16 km/h 0,15–0,35; 25–60 km/h 0,05–0,2 (običajno 0,1); pri 100 km/h in več 0–0,1, odbojna hitrost 3–10 km/h | SAE 931842 »Vehicle Restitution Response in Low Velocity Collisions«; SAE 2013-01-0223; SAE 1999-01-0097; SAE 2000-01-0461 (nad 100 km/h učbeniška ekstrapolacija) |
+| Čelno v tog zid, 56 km/h | sunek traja 70–120 ms (pri 120 korakih na sekundo 8–14 korakov), vrh ~29 g, zmečkanje 0,5–0,8 m | NHTSA, 18th ESV; zmečkanje učbeniško |
+| Zid pravokotno, 50 in 100 km/h | avto obstane v 70–120 ms; odbojna hitrost 3–7 km/h pri 50 in 3–10 km/h pri 100 km/h; nazaj se odkotali največ 0,5–2 m | NHTSA (18th ESV); SAE 2000-01-0461; razdalja učbeniška |
+| Trenje | avto–avto 0,3–0,6; karoserija ob beton 0,15–0,4 (guma ob zid 0,4–0,8); ob jekleno ograjo 0,2–0,4 | SAE 2007-01-0744; SAE 2014-01-0469; arXiv 2104.01806; jeklo učbeniško |
+| Preskus ograje: pogoji in merila | TB11 900 kg, 100 km/h, 20°; TB32 1 500 kg, 110 km/h, 20°; MASH 3-10 1 100 kg, 100 km/h, 25° (bočna hitrost v zid 34–42 km/h); izhodni kot do ~15°, po možnosti pod 60 % vstopnega; avto se ne prevrne, ne prepleza in se ne zatakne | EN 1317-2:2010; AASHTO MASH 2016; NCHRP Report 350 (merila iz spomina) |
+| Tog betonski zid po kotih | 5–10°: izguba 3–10 %, izhod 0–3°, zasuk pod 5°; 20–25° pri 100 km/h: izhodna hitrost 72–88 %, izhodni kot 3–10°, avto drsi ob zidu 3–10 m; 45°: ostane 40–50 % hitrosti, zasuk 20–60°; oplazenje ima dva sunka: sprednji vogal, nato »udarec repa« 0,15–0,3 s pozneje | poročila preskusov MASH TL-3 (iz spomina) in sunkovni model z μ 0,25–0,4 (učbeniško) |
+| Jeklena odbojna ograja, 100 km/h pod 20–25° | upogib 0,6–1,2 m, izhodna hitrost 45–70 % vstopne, izhodni kot 5–20°, stik 0,3–0,6 s | poročila preskusov MASH (iz spomina) |
+| Zid iz gum, pravokotno 60–80 km/h | ustavitev v 1–2,5 m, povprečno 9–25 g, odboj 0,1–0,2, avto pogosto obtiči v gumah | FIA Standard 8861-2000; FIA Standard 3501-2017; SAE 983061 |
+| Vztrajnost okoli navpične osi | osebni avto: polmer vztrajnosti 1,35–1,55 m (≈ 0,30 × dolžina avta); isti sunek v vogal zasuka tovornjak 4–10× manj kot avto | NHTSA Light Vehicle Inertial Parameter Database (SAE 930897, SAE 1999-01-1336); tovornjaki učbeniško |
+| Udarec v zadnji vogal med dirko, 100 km/h | bočno 2 m/s: ~27 °/s (gume ujamejo); 4 m/s: ~50 °/s; 8 m/s: ~100 °/s (zanese 20–40°); prag: bočna hitrost zadnje osi nad 0,12–0,17 × hitrost vožnje, v ovinku ali dežju pol manj; potisk 0,5–1,5 m/s, ki traja 0,3–0,6 s, zasuka 90–180° v 1–2 s | učbeniško (sunek togega telesa; lasten izračun zbiralca) |
+| Ujem gum po sunku vrtenja | zasuk ≈ skok vrtenja × τ; τ 0,2–0,25 s cestne gume, ~0,1 s dirkalne pri 100 km/h (igra 0,15 s) | učbeniško (enosledni model vozila) |
+| Bočno drsenje in vrtenje, suh asfalt | 0,5–0,8 g = 18–28 km/h na sekundo; s 100 km/h do stoja 3,5–5,7 s in 50–80 m; 180° v 1–2 s | »Experimental determination of the translational acceleration values for a spinning vehicle« (2006); »Drag Factor Attenuation for Rotating Vehicles« (2008); SAE 930653 |
+| Nalet in mase | enaki masi, 100 km/h v stoječega: 45 / 55 km/h; 120 → 100 km/h: 108,5 / 111,5 km/h; avto 1 300 kg v stoječ tovornjak 5 500 kg: avto 11, tovornjak 21 km/h | učbeniško (gibalna količina, odboj 0,1–0,15) |
+| Čelni trk in bočni trk (T) | čelni 50 + 50 km/h: oba obstaneta (odboj ~5 km/h); z zamikom 30–50 %: zasuk 30–90° v 0,5–1 s, razideta se z 10–30 % hitrosti; T 60 km/h v bok avta s 30 km/h: zadeti drsi bočno ~33 km/h, gume jo odrgnejo v ~1,2 s in 5–6 m, zasuk 45–180° | učbeniško; FMVSS 214 (iz spomina) |
+| Bok ob bok | premik 5–20 cm, zasuk pod 1–2°, izguba 0–2 km/h; avta se ne zlepita | učbeniško (lasten izračun zbiralca) |
+| Prevračanje | SSF osebnih avtov 1,30–1,50; na ravnem asfaltu avto zdrsne in se ne prevrne, ~95 % prevračanj je ob oviri; ob robniku bočno ~25–50 km/h; kotaljenje 0,4–0,5 g, en obrat na ~1–1,5 s | NHTSA DOT HS 809 868; SAE 2006-01-0722; ostalo učbeniško |
+| Predmeti | stožec 3–9 kg: pod 1 % (0,3–0,7 % pri 1 300 kg), odleti z 1–1,8× hitrostjo avta; podirljiv drog: do 3 m/s (največ 5 m/s); bala 15–25 kg: 1–2 %; kup gum 30–50 kg: 2–4 %; prazna plastična ograja 40–75 kg: 3–5 %; lahki predmeti odletijo 5–20 m naprej | učbeniško (gibalna količina); EN 12767; AASHTO MASH 2016; NCHRP Report 350 |
+
+Zanesljivost virov: vrstice z oznako »učbeniško«, »iz spomina« ali »lasten izračun« niso potrjene z izvirnikom (zbiralcu je delovalo iskanje po spletu, branje strani ne); izračuni so s sunkovnim modelom (m 1 300 kg, Izz 2 100 kg·m², μ 0,25–0,4).
+
+Po čem meriti realizem (zbiralec): igralec s kamere za avtom opazi pet stvari: kam gre avto po trku (smer, zasuk), koliko hitrosti izgubi, ali se odbije, ali zadeti avto reagira po teži in ali lahko pelje naprej. Za igralnost ostane omehčano: pri »Samo videz« en trk ne konča dirke; izguba oprijema šele nad pragom in tekmeci zdrs ujamejo; poravnava je hitrejša kot v resnici (0,5–1 s namesto 1–2 s); prevračanje redko in le ob oviri; zid avta ne zatakne in slike ne sune.
+
+### Odločitve uporabnika, ki spremembo omejujejo
+
+Poleg Okvira zgoraj:
+
+- **28. 10. 2026:** uporabnik ostaja pri klasični fiziki; nova različica trkov mora delovati pri klasični (in pri novi).
+- **29.–31. 10. 2026:** motili so odboj od avta, preveč premakljiv drugi avto, blisk isker ob trku in avti, ki se »vlečejo kot magnet« (vštric se ne smeta zlepiti; drgnjenje samo ob udarcu nad 0,5 m/s in s pravima masama).
+- **2. 11. 2026:** pet različic (Simulacija privzeto, Arkadna, Mehka, Kaskaderska, Stara), na dirki s prijatelji vedno Simulacija; ograja, beg pred policijo (`crashCollide`) in promet ostanejo, kot so; v boksni stezi trki kot pri Stari; tekmeca ob dotiku izgubita le pol oprijema (`glR` 0,5), varnostni avto ga ne izgubi nikoli; Stara ostane bit za bitom (golden 336/336), testa obremenitve telefona vozita s Staro.
+- **3.–4. 11. 2026:** polje nad 21 tekmecev začne z letečim startom, ker se štart z mesta po novih trkih zagozdi; več vrtenja ob dotikih bi to poslabšalo.
+- **5. 11. 2026:** #202 zaprt: fizika in trki ostanejo, kot so na `main`.
+- **Poškodbe in videz:** privzeto »Samo videz«; trki se na gumah samo vidijo; močan bočni trk prevrne avto približno vsakič deseti (`XROLL`); KOLIBRI: trk ga stane 3,5-krat manj (`knockK`), močnejši trki ne smejo pospešiti razpada; tresenje kamere je privzeto izklopljeno.
+- **Pragovi, vezani na velikost udarca:** neskončna vožnja se konča ob udarcu v ograjo nad 6 m/s (`hitWall`) in ob sunku vozila nad 3 m/s; predrta guma od ~40 km/h naravnost v oviro; čist krog: trk je izguba hitrosti nad 50 m/s². Nova različica jih ne sme premakniti brez namena.
+- **Boksi:** od izvoza s proge do vrnitve je avto duh; na cesti boksov avto ne dobi poškodb.
+- **9. 11. 2026:** misije so ustavljene (dovoljen je najmanjši popravek, da testi misij ostanejo zeleni; misije uporabljajo trke: vlečna vrv, prikolica); testne proge so zamrznjene, zato meritve in slike na Spa in Bathurstu.
+
+## Odstopanja
+
+Ena tabela, razvrščena po tem, kaj igralec v dirki s kamero za avtom najbolj čuti: najprej občutek (5 = v vsaki dirki, 1 = komaj opazno), nato zaupanje v meritev (visoko, srednje, nizko); oboje je krepko na začetku stolpca »Kaj čuti igralec«. Občutek je znižan, kjer je preverjalec pomen zmanjšal ali kjer stik ni del privzete igre (pripis v oklepaju: nova fizika, prevračanje, škoda »Vklop«, promet, nova mapa).
+
+Od 61 ugotovitev petih merilcev so preverjalci 48 potrdili, 11 popravili in 2 ovrgli. V tabeli je 55 ugotovitev merilcev in 8 novih najdb preverjalcev, združenih v 44 vrstic (ista stvar pri več merilcih je ena vrstica); 2 ovrženi in 4 namerne lastnosti so pod tabelo. Stolpec »Preverjeno«: **potrjeno** (preverjalec je pojav ponovil z lastno skripto; kjer piše, samo s kodo ali ponovnim zagonom merilčeve skripte), **popravljeno** (pojav drži, številka ali razlaga je popravljena; v tabeli je popravljena vrednost), **ni preverjeno** (nova najdba preverjalca, ki je ni ponovil nihče drug). Kjer se merilec in preverjalec razlikujeta, sta zapisani obe številki. Vse velja za klasično fiziko in različico Simulacija, če ni napisano drugače; hitrosti brez enote v zapisih kot 30°/200 so km/h.
+
+| # | Odstopanje | Izmerjeno zdaj | Pričakovano (vir) | Kaj čuti igralec | Predlog | Preverjeno |
+|---|---|---|---|---|---|---|
+| 1 | Lahek predmet (stožec, guma, bala) zavira kot zid: avto ga dohiteva in zadeva 20–120 korakov zapored; masa avta ne šteje | V sredino pri 60/120/200 km/h: stožec 3 kg 4,9/11,6/11,5 % (26–31 korakov stika), guma 9 kg 17,2/29,9/31,6 %, bala 26 kg 42,8/49,7/62,3 %. Povprečje po širini avta: stožec 1,10/2,35/1,81 %, bala 10,31/18,83/18,92 %; z robom 0,5 % in 4,2 %. Bala ob ograji: po 1 s 34 (120) in 53–64 km/h (200) počasneje. Avti 165–5300 kg: stožec 11,3–11,6 %. Dirka (Spa, bale): povprečno 8,0 %, največ 26,9 %. | Največ (1 + e)·m/(M + m) ne glede na hitrost in zamik: stožec 0,35 %, guma 1,05 %, bala 2,98 %, sklad bal 8,57 % (ohranitev gibalne količine). Odprti viri: prometni stožec pod 1 %, bala slame 1–2 %, kup gum 2–4 %. Predmet je po trku hitrejši od avta, zato ponovnega stika ni. | **5 · visoko.** Avto, ki ga odnese široko v vrsto bal ali stožcev, izgubi desetine km/h, kot bi zadel oviro; ista bala stane 4 % ali 50 % hitrosti glede na 0,5 m zamika. | En enak in nasproten sunek na stik (Δv = j/M, z ročico tudi zasuk) namesto deleža hitrosti na vsak korak stika (`propFeel`); meja hitrosti predmeta (1 + e)·v, da odleti naprej. Cilj: bala največ 3 %, sklad bal največ 9 % pri vsakem zamiku. Ostane: predmet se umakne, skladi se razsujejo, zvok, spanje predmetov, različice 1–5. | potrjeno (sredina; Spa in Bathurst, tudi na plinu); popravljeno (ob ograji: najmanj 31–42 % kontrolne hitrosti, ne »skoraj obstane«); povprečje po širini je nova najdba preverjalca |
+| 2 | Odpadli deli zavirajo avto, tudi lastni | Premikajoč del: do 6 % hitrosti na vsak korak stika. Pokrov (m 14) pri 60/120/200 km/h: drseč 9,0/12,7/10,9 % v 2–3 korakih, tik pred avtom 13,7/9,6/7,8 %, lasten 12,5/8,2/5,6 %. Dirka (Spa): igralec rine svoj blatnik 62 korakov od 171 km/h: −121 km/h (preverjalec: 171 → 25 km/h, 117,7 km/h v stikih). Po trku 30°/200 v ograjo lastni kosi vzamejo 27–33 km/h v 0,15 s (prag pri ~50 % škode). | Enkrat na del največ (1 + e)·m/(M + m): pokrov 14 kg ob 1150 kg 1,6 %, odbijač 0,8 %, blatnik 0,6 %, ogledalo 0,1 % (ohranitev gibalne količine). Del, ki ga avto rine, jemlje le trenje ob tla (33 N). Izguba ne sme skočiti na pragu škode. | **5 · visoko.** Po trku avto »zavira sam«: lasten blatnik ali pokrov pred nosom ga v dobri sekundi upočasni za več kot 100 km/h; po hudem udarcu v ograjo izgubi še petino hitrosti. | Sunek po masi (j/M) enkrat na stik; nov stik z istim delom šele po ločitvi (zastavica kot `d.on`); kosi prvih ~0,5 s ne trkajo z avtom, od katerega so odpadli; dohiten del se odrine vstran ali pod avto. Ostane: največ 40 kosov, deli znotraj ograje, zvok in tresljaj ob zadetku. | potrjeno (drseč pokrov 13,3/15,0/14,2 % v oknu 6 s; dirke ponovljene); lastni kosi po trku v ograjo so nova najdba preverjalca |
+| 3 | Trd sunek v sprednji del avta ga ne zavrti: zadeti vozi naprej kot po tirih (klasična fizika zavrti le ob zadetku v zadek) | T 120 km/h v sprednjo os avta, ki prečka s 120 km/h: zadeti 120 → 113 km/h po 0,1 s, nos največ −2,9°, v 0,78 s prestavljen 8,9 m vstran in spet raven; tog sunek bi dal −417 °/s, vzeto 0, `xgl` 0. V sprednjo os stoječega: 41° (74 °/s); prečkajočega s 60 km/h: 6°. Isti trk v zadnjo os: 268° in 478–500° (665–792 °/s, `xgl` 1). | dw = r × P / I, enako spredaj in zadaj (647 °/s na ročici 1,19 m). Kot zdrsa nosu ~32° je daleč čez mejo gum (5–10°): zasuk 60–180°, drsenje 1–2 s, smer gibanja se obrne za 25–30° (ohranitev gibalne in vrtilne količine). Odprti viri: bočni trk zadetega zasuka za 45–180°. | **5 · visoko.** Avto, zadet v sprednji bok (tekmec ali igralec), se ne zavrti in ne zdrsne: prestavi se vstran in pelje naprej, kot da trka ni bilo. | Izguba oprijema in zasuk tudi, ko je trdo potisnjen nos (prečni Δv nad ~6 m/s ali zdrs nosu nad ~0,25–0,3 hitrosti): 30–50 % dw v `c.w`; prečni del nad tem, kar gume ujamejo, se drgne z drsnim trenjem (`CRASH.slide` 0,9 g). Ostane: lahki dotiki v sprednji bok (2 in 4 m/s: 2–6°, `xgl` 0), drgnjenje bok ob boku, sunek od zadaj. | potrjeno (sprednja os: −3,1°, vzeto 0 ob togi vsoti −572/+689 °/s; stoječi −41,2°); popravljeno (zadnja os 268° in 478–500°, ne 180°/178°: skripta je kot rezala pri 180°) |
+| 4 | Ograja avto poravna vzporedno in ga drži ob sebi; po trku ni ne zasuka ne izgube oprijema | Poševno 5–30°: izstopni kot 0,1–0,9°, čisti odboj 0,00–0,03. Brez vnosa stik vsak korak nad 6,8 s (5°/60, 5°/120, 15°/60, 30°/60); 15°/60: nos vzporeden šele po 2,9 s. Poln plin brez volana: prislonjen nad 5 s in pospešuje skoraj kot prost (5°/60: 104/137/179 km/h pri 1/2/4 s proti 100/134/177). Po 30°/200 je raven v 0,20 s; `xgl` ostane 0. | Izstopni kot pod ~60 % vpadnega, vozilo se ne vrne v ograjo (EN 1317-2, NCHRP Report 350). Toga betonska ograja pri 20–25°: izstop 3–10°, ostane 72–88 % hitrosti; pri 30° po modelu sunka 66–73 % (igra brez odpadlih kosov 72 %, z njimi 56 %). | **4 · visoko.** Avto se ob ograjo »prilepi« in drsi ob njej kot po tirnici; po hudem poševnem udarcu je v petinki sekunde raven in vozen, brez zanašanja. | Samo nova različica: vogal dobi ves zasuk iz ročice (1 namesto `wallYaw` 0,3) ali dotik z dvema vogaloma poravna nos v času stika; odboj 0,1–0,2 za beton (izstop 1–3°); nad ~8 m/s normalne hitrosti izguba oprijema kot pri trku med avti. V obliki, ki se zlije s `touch()` iz #494. | potrjeno (prislonjen: nos 15° → 9,1° → 1,4° → 0,5° pri 0,25/2/3,0 s); popravljeno (poševni trk: pričakovanih 50–65 % ni podprtih; v dirki ostane po 30°/200 le 56 % zaradi lastnih kosov, vrstica 2) |
+| 5 | Čelni trk v ograjo vrže avto vstran vzdolž ograje in ga zavrti | 90° pri 60/120/200 km/h: po 1. koraku 14/27/46 km/h, zasuk v koraku 93/187/312 °/s; od ograje odide z 9/19/33 km/h vzdolž nje (15–16 % vpadne hitrosti), vedno v isto stran avta. Preverjalec (90°/100): 19 % vzdolž ograje, 151–154 °/s, nos ostane zasukan 18° (15–27° pri 80–100°). Po trku pri 120 km/h avto po 3,8 s doseže nasprotno ograjo 14,5 m stran. | Simetričen čelni trk nima hitrosti vzdolž ograje ne zasuka: avto obstane v 70–120 ms, odboj 3–7 km/h pri 50 km/h in 3–10 km/h pri 100 km/h, nazaj se odkotali največ 0,5–2 m (simetrija in ohranitev gibalne količine; čelni preskusi v togo oviro). | **4 · visoko.** Po čelnem trku avto ne obstane pred ograjo: zdrsne vstran, se zasuka in oddrsi čez cesto. | Vogale, ki so v istem koraku v ograji, reši skupaj (en sunek v skupnem prijemališču ali ponovitve do skladnosti) in trenje računaj na hitrost težišča; zaporedna obdelava vogalov je vir nesimetrije. | potrjeno (vzrok v kodi: sunek dobi samo en vogal); popravek: nos ostane zasukan 18°, ne 1–3°; nesimetrija le ±5° okoli pravokotnice; pravi zid (Bathurst) 90°/60: 10 km/h po 1. koraku, 73 °/s |
+| 6 | Vse ograje so ista snov: beton, jeklena ograja, gume, mreža in les imajo odboj 0,05, trenje 0,25 in delež zasuka 0,3 | Na 5 mestih (zid boksov in ravnina na Spa, ravnina in gorski zid Bathursta, oval): 15°/120 → 110–111 km/h po 1. koraku, udarec 8,5–8,6 m/s, škoda 17–20 %; 90°/60 → 14 km/h, 16,5–16,6 m/s, škoda 40–41 %. Razliko po 2 s (58–95 km/h) naredi samo podlaga pred ograjo. Vrste ograj obstajajo le v risanju. | Beton: trenje 0,15–0,4, ne poda se. Jeklena ograja: poda se 0,6–1,2 m, izstop s 45–70 % hitrosti. Pregrada iz gum: ustavi v 1–2,5 m, odboj 0,1–0,2, avto pogosto obtiči (EN 1317-2, AASHTO MASH, FIA Standard 8861-2000). | **4 · visoko.** Gume ob ovinku, jeklena ograja in betonski zid se ob trku obnašajo enako; pregrada iz gum avta ne ujame. | `Track` nosi vrsto ograje po vzorcu in strani (ista tabela, kot jo riše svet); `wallCollide` za vrsto bere {odboj, trenje, delež zasuka, globina mečkanja, faktor škode}; številke samo v novi različici. Lesena ograja ostane krhka (#494). | potrjeno (koda bere samo `CSK.wallE` 0,05, `wallMu` 0,25, `wallYaw` 0,3; 360 vrstic matrike je enakih pri vseh različicah) |
+| 7 | Pristanek po skoku vzame ~11 % hitrosti v enem koraku | Ouninpohja (samovoznik, 150 s): 18 skokov, vsak pristanek vzame povprečno 10,9 % = 17,6 km/h, največ 13,0 % = 21,8 km/h; skupaj 316,6 km/h. Padec 0,3/1/3 m pri 100 km/h: −4,7/−8,4/−13,0 %. Šteje navpična hitrost, ne hitrost glede na cesto: klanec 0/−8/−15/+8 %: 8,4/12,0/13,0/5,1 % (glede na cesto povsod 5,2–5,3 m/s). Brez odboja; škoda šele nad 11 m/s. | Izgubi se le sestavina pravokotno na cesto: v·(1 − cos θ), θ = 7,2° → 0,8 % (~1,3 km/h pri 160 km/h). Sunek ob dotiku deluje vzdolž normale podlage, zato je pristanek na klancu navzdol najmehkejši (Newtonovi zakoni, Coulombovo trenje). | **4 · visoko (proge s skoki: Ouninpohja; Nürburg 2 skoka).** Po vsakem skoku avto »zagrabi«, kot bi voznik kratko pohodil zavoro: ~18 km/h na skok, okoli 10-krat preveč. | Izguba iz hitrosti pravokotno na cesto (vy − klanec·vzdolžna hitrost), 1–3 %, razporejena čez `landT` (0,05–0,2 s) namesto v enem koraku; trd pristanek naj se pozna v škodi in kratkem padcu oprijema. Najprej odločitev uporabnika, ali pristanek spada med trke (vprašanje 1). | potrjeno (Bathurst: 8,4/11,9/13,0/5,1 % pri klancu 0/−7,3/−13,0/+7,5 %; 17 od 18 pristankov na Ouninpohji je na klancu navzdol); meritev pravih skokov je nova najdba preverjalca |
+| 8 | Na spletu trk ne prenese gibalne količine: udarjajoči izgubi vse, udarjeni nič; čelni trk se odbije prožno | Zamik 100 ms, od zadaj 100 v 80 km/h: udarjajoči −19,5, udarjeni 0,0 km/h (en telefon −11,7/+11,7; preverjalec −17,6/0,0). Čelno 60 + 60: ∓122,4 km/h, odboj 1,00 (en telefon ∓68,7, odboj 0,12; preverjalec ∓114, 0,98). Prvi dotik od zadaj pri razdalji središč 6,51 m namesto 3,95 m (preverjalec 6,30 m). Pri 200 ms gresta avta bok ob boku drug skozi drugega. | Isti izid kot na enem telefonu: gibalna količina para se ohrani (−11,7/+11,7 km/h), čelni trk skoraj neprožen (odboj 0,1–0,2), stik na istem mestu karoserije na obeh telefonih. Zamik mesta = hitrost × zakasnitev: 27,8 m/s × 0,1 s = 2,8 m. | **4 · visoko (samo dirka s prijatelji).** Kdor zadene prijatelja, izgubi vso razliko hitrosti, zadeti ne čuti nič; čelni trk oba odbije kot žogi; trk se zgodi nekaj metrov pred avtom, ki ga igralec vidi. | Lokalni avto vzame en sunek na dotik in samo svoj delež; telefon, ki zazna dotik, pošlje dogodek trka (čas, točka, normala, sunek), drugi vzame svoj delež iz dogodka; za trk (ne za risanje) se prijateljev avto ekstrapolira na sedanji čas. Najprej odločitev uporabnika (vprašanje 2). | potrjeno (dve pravi dirki na Spa, ujemanje na 6–10 %); popravljeno (zasuk 39,3°/68,8° bok ob boku je posledica merilčevega krmilnika: brez rok 2,8°/2,8°); »v bok stoječega« ni ponovljen |
+| 9 | Polprikolica se ob oplazenju ograje zlomi in ustavi vlak | Cisterna (5,3 t + 12 t), 5°/120 km/h brez vnosa: kot med vlačilcem in prikolico s 3,7° na 42° v 0,3 s, ostane pri 56–62°; vlak se s 119 km/h ustavi v ~4 s (62 km/h po 2 s; vlačilec sam 92). Preverjalec: vrh 63,2°, tudi z volanom stran po 0,3 s 63,3°. Pri 3°/120 in 5°/60 zloma ni; nova fizika: vrh 9,1°. Čelno 60 km/h: škoda v 6 korakih 55 % (vlačilec sam 24 %). | Prikolica, ki jo ograja pritisne v bok, se poravna z ograjo in drsi ob njej; zlom ostane nekaj stopinj. Škoda enega trka se šteje enkrat (statika zglobnega vozila, ohranitev vrtilne količine). | **4 · visoko (samo polprikolice).** Rahel dotik ograje z vlačilcem konča dirko: prikolica se postavi počez in vlak obstane. | Popravek lege prikolice je ne obrača okoli sedla (`tlJoin`): sunek in popravek v točki stika z ročico do sedla, popravek razdeljen med vlačilec in prikolico; škoda vlaka po trku (največji sunek), ne po koraku. Uskladi s sejo tovornjakov. | potrjeno (Spa: vrh 63,2° pri 0,77 s; 15°/120 55,8°; čelno 120 km/h 8 korakov, 100 % proti 57 %); popravek: z volanom stran se zlomi enako in poravna šele po 4 s |
+| 10 | Dotik v zadnji bok: izid ni urejen po moči sunka, trajen potisk ne zavrti | 60 km/h, cel stik brez vnosov, 2/4/5/6/8/10 m/s: −5/−37/−104/−95/−40/−63°; samo prvi sunek −1/−8/−17/−24/−40/−63° (monotono). S plinom: 4 m/s −44°, 8 m/s −101°. 120 km/h: 4 m/s −10° (`xgl` 0), 8 m/s −22° (`xgl` 0,53). Trajen potisk pri 200 km/h (20 km/h hitrejši rine v zadnji bok): 477 sunkov v 6 s, zadeti −7°, `xgl` 0. | Močnejši sunek da večji zasuk. Sunek v zadnji vogal pri 100 km/h: 2 m/s ~27 °/s (gume ujamejo), 4 m/s ~50 °/s, 8 m/s ~100 °/s (zdrs 20–40°, brez popravka vrtenje v 0,3–0,5 s). Potisk 0,5–1,5 m/s, ki traja 0,3–0,6 s, zavrti avto za 90–180° v 1–2 s (manever PIT; učbeniško in lasten izračun zbiralca virov). | **4 · srednje.** Enak dotik v zadnji bok se enkrat konča s 5°, drugič z vrtenjem; močnejši udarec lahko zavrti manj kot šibkejši; vztrajno rinjenje v zadek ne zavrti nikoli. | Trajanje izgube oprijema določa največji sunek (`xglT` sorazmeren velikosti; drobni sunki naslona ga ne podaljšujejo); trajen potisk v zadnji bok se sešteva (prečni sunek zadnje osi v zadnjih 0,3 s) in vzame oprijem nad pragom. Ostane: 2 m/s da 3–5° brez izgube oprijema, sprednji bok nikoli ne zavrti. | popravljeno (številke so občutljive na začetno lego: reža 0,4 m namesto 0,3 m premakne −104° s 4 na 5 m/s; nemonotonost naredijo ponovni sunki para v stiku); trajen potisk potrjen; 121° pri »drži pas« je artefakt krmilnika in ne šteje |
+| 11 | Dotik v zadnji bok sredi ovinka na meji oprijema avta ne zavrti, samo odrine | Igralec na meji pri 100 km/h (2,38 g, polmer 33 m), tekmec z notranje strani v zadnji bok z 1/2/3/4/6 m/s: smer odstopi največ 1/0/1/3/4°, `xgl` 0,00, po 2 s 0,1/0,4/0,8/1,4/2,8 m s črte. Skoraj naravnost isti dotik 0–6° (`xgl` 0,19 šele pri 6 m/s). Z zunanje strani: 3 m/s −5°, 4 m/s −15° (`xgl` 0,52), 6 m/s −171° (`xgl` 1,00). 160 km/h na meji: 0–6°, `xgl` 0. | Na meji oprijema zadnja os nima rezerve (krog trenja): prečni sunek 1–2 m/s (30–60 °/s) zadnje gume preseže, avto se brez popravka v manj kot 1 s zasuka za več kot 30–90°; na ravnini da isti dotik 2–4° zdrsa in je ulovljiv. Prag mora padati z izrabljenim oprijemom. | **4 · srednje.** Dotik v zadnji bok sredi ovinka, klasičen vzrok vrtenja na dirkah, igralca le odrine s črte; bližina meje oprijema nič ne spremeni. | V `kTake` prag izgube oprijema zmanjšaj z izrabljenim oprijemom: `aH` × sqrt(1 − (`csAn`/`aL`)²) (isti izraz `stepCS` že uporablja); nad ~70 % meje vzemi del togega dw tudi pod pragom; trajen potisk sešteva zdrs čez korake. | ni preverjeno (nova najdba preverjalca avto–avto; skripta zunaj repozitorija) |
+| 12 | Bočni zdrs po trku se ustavi z ~2,4 g: par po bočnem trku obstane 1,4- do 2,6-krat prehitro | T 120 km/h v sredino stoječega: zadeti drsi bočno z 2,36 g (preverjalec 2,37 g = meja avta v ovinku); par obstane po 1,3 s in 11,8 m (preverjalec 1,42 s, 11,6 m); pri 200 km/h 31,1 m, pri 60 km/h 3,0 m v 0,6 s. Zasuk 0°/0°, strelec ostane prislonjen na bok zadetega. | Avto, ki drsi bočno ali se vrti, zavira z 0,5–0,8 g (18–28 km/h na sekundo; odprta literatura o pojemku vrtečih se vozil); igra sama za avto brez oprijema uporablja 0,9 g (`CRASH.slide`). Dosledna meja za avto igre je 0,9–1,65 g. | **4 · srednje.** Po bočnem trku avta obstaneta skoraj na mestu, namesto da bi ju odneslo čez cesto; zadeti »drsi« kot na polnem oprijemu. | Velik prečni sunek (nad ~6 m/s ali ~0,3 hitrosti avta, ali v stoječ avto) naj `stepCS` drgne z drsnim trenjem 0,9–1,0 g namesto s polnim oprijemom. Ostane: majhni prečni sunki (do ~3 m/s), ki jih gume ujamejo v 0,17 s pri 100 km/h, in vsi sredinski trki od zadaj. | potrjeno (0,72 s/2,9 m, 1,42 s/11,6 m, 2,33 s/31,6 m pri 60/120/200 km/h); popravek pričakovanja: 0,9–1,65 g namesto 0,7–0,9 g |
+| 13 | Vožnja po ograji skozi oster ovinek z asfaltom do ograje je hitrejša od vožnje na meji | Poln plin brez zavore in volana: oval R 30 m 14,18 s proti 16,39 s na meji (−13,5 %; najnižja hitrost 129 proti 84 km/h, škoda 24 %); R 60 m 15,64 proti 16,92 s (−7,6 %, škoda 8 %); R 120 m počasneje (+2,8 %). Prave proge: Marrakesh 14,93–15,14 proti 14,95 s, Bathurst 13,76–13,85 proti 13,77 s (enako kot na meji, 0,5–1,0 s hitreje od srednjega voznika). S 4 m trave pred ograjo vedno počasneje. | Stik z ograjo se nikoli ne splača: oplazenje pri 5–10° stane 3–10 % hitrosti na dotik (trenje avto–beton 0,15–0,4) in poškoduje avto; zid ne sme dodati ~1 g bočnega oprijema brez cene. | **4 · srednje.** V ostrem ovinku z asfaltom do ograje (9 % dolžine ovinkov pravih prog; Marrakesh 100 %, Bathurst 96 %) je najhitreje brez zaviranja zapeljati ob ograjo in se peljati po njej. | V novi različici drsenje ob ograji stane: trenje raste z normalno silo in trajanjem stika (vsaj 0,3–0,5 g zaviranja), manj oprijema med stikom, poln delež zasuka, škoda po poti drsenja. Merilo: skozi R 30–60 m z asfaltom do ograje vsaj 5 % počasneje od samovoznika z največjo spretnostjo (1,12). | ni preverjeno (nova najdba preverjalca zidu; merilčev »vožnja po ograji se ne splača« velja le s travo pred ograjo) |
+| 14 | Ali trk z zamikom zavrti avto, odloča 10 cm razlike med osema, ne sunek | Od zadaj z zamikom v stoječega: rally (osi 1,15/1,25 m od težišča) −32°/−26° pri 60 km/h, −120°/−125° pri 120 (`xgl` 0,56/0,60), −312° pri 200; strega (1,34/1,12 m) −5°/−9°/−9°, `xgl` 0. Tog sunek je pri obeh enak (~330 °/s pri 120 km/h). Čelno z zamikom pri 200 km/h: rally −2248°, strega 0°. | Enak sunek z enako ročico zavrti oba avta podobno (razlika do ~20 % zaradi vztrajnostnega momenta): pri 330 °/s 60–120° (vrtilna količina, Δω = r × P / I). | **3 · visoko.** Isti dotik od zadaj z enim avtom pomeni vrtenje, z drugim skoraj nič; izid določa model avta, ne moč trka. | Pri čistem navoru (majhen prečni sunek) naj prag primerja zahtevani zamik nosu (velikost dw × τ(V)) z mejo (npr. `CSK.tapMax`), ne razlike zdrsa zadaj in spredaj; pri prečnem sunku v bok ostane pravilo zadek proti nosu. Ostane: dotik v zadnji bok jemlje oprijem, v sprednji ne. | potrjeno (rally −31,5/−25,5°, −119,4/−124,7°, −312/−310°; strega −4,5/−8,5/−8,5°; tretji avto z osema 1,2/1,3 m −17,7/−90/−230°) |
+| 15 | Nova fizika: avto se po nobenem trku ne zavrti (omejitev 3,2 rad/s in ugašanje vrtenja) | T 120 km/h v zadnjo os stoječega: trk da 660–666 °/s, po enem koraku 310 °/s (merilec avto–avto) oziroma 3,20 rad/s = 183 °/s (merilec mas; merilca se tu razlikujeta), po 0,1 s 13 °/s; zasuk 11–15° (preverjalec 14,3°; klasična 268°). Prečkajoči pri 200 km/h −11° (klasična 1248°). Največ v vsej matriki 80°. | Gume zmorejo kotni pojemek ~9–10 rad/s² (preverjalec 9,7; merilec avto–avto 10–25 rad/s²), ne 42 000 °/s²: iz 660 °/s se avto vrti 0,5–1,2 s in zasuka za 150–400° (navor trenja gum, vrtilna količina). | **3 · visoko (samo nova fizika, ki ni privzeta).** Po najhujšem bočnem trku avto le pokima z nosom in pelje naprej. | Po sunku omejitev `NVK.rMax` nekaj časa ne velja (okno 1–2 s z mejo ~8–10 rad/s, ki pada nazaj na 3,2); veja za avto, ki ne pelje naprej, ne ugaša vrtenja avtu, ki drsi; gume pri velikem zdrsu dajo drsno trenje. Ostane: omejitev pri običajni vožnji; energija v sunkih ne raste. | potrjeno (14,3° in 14,8°; koda `stepNova`: omejitev 3,2 rad/s vsak korak, −27 % na korak pri avtu, ki ne pelje naprej) |
+| 16 | Nos zidu boksov nima čelne ploskve: avto preskoči več kot meter vstran | Spa, 109 km/h naravnost v začetek zidu (−167 m): v enem koraku 115 cm vstran, hitrost 109 → 109 km/h, udarec 0,1 m/s, brez škode in zvoka. Po odmiku sredine avta od črte zidu: 95 cm pri −0,2 m, 55 pri −0,6, 82 pri +0,2, 42 pri +0,6, 0 pri ±1,2 m; Bathurst 70 cm pri 0. | Trk v čelo zidu kot čelni trk v ograjo ali v blažilnik iz gum; premik v enem koraku največ v·dt = 0,25 m pri 109 km/h (zveznost gibanja). | **3 · visoko.** Ob zgrešenem uvozu v bokse avto preskoči zid vstran brez udarca; slika sune za meter. | Koncu zidu dodaj čelno ploskev (polkrog polmera ~0,5 m ali kratek prečni zid) z istim sunkom kot ograja; popravek lege nekaj cm na korak, ostalo reši sunek. | potrjeno (Spa in Bathurst; `hitWall` največ 0,6 m/s, škoda 0) |
+| 17 | Škoda ne pozna mase in raste linearno s hitrostjo | Čelno 120 + 120 km/h: kamen 7000 kg spremeni hitrost za 6,1 km/h (ob mravlji 165 kg) ali 19,8 km/h (ob miški 560 kg), škoda obakrat 0,55; lahki 247–260 km/h, škoda 1,00. Strelica 460 kg v medveda 2300 kg pri 15 m/s: škoda 22,1/18,4 % ob Δv 50,6/10,1 km/h (5 : 1). Rally v rally: 10,4/38,9/83,4 % pri 36/100/200 km/h; v ograjo 20,7 % pri 36 km/h, 100 % pri 150. | Resnost za vsako vozilo meri njegova Δv = (1 + e)·vc·m₂/(m₁ + m₂); deformacijsko delo raste s kvadratom hitrosti. 7 t ob 165 kg je skoraj brez škode; 36 km/h v ograjo je odbijač in hladilnik (~10 %), ne petina avta (ohranitev gibalne količine in energije; Δv kot merilo resnosti trka). | **3 · visoko (privzeto »Samo videz«: vidi se le na karoseriji).** Tovornjak je po dotiku s kartom enako razbit kot po trku s tovornjakom; majhen udarec v ograjo razbije petino avta. | V `carKnockFx` vsakemu avtu `imp` × 2·m₂/(m₁ + m₂) (enaki masi: brez spremembe), omejeno npr. na 0,15–1,6; pozneje škoda ∝ (lastna Δv)² z mehkim pragom; `knockK` ostane; pri prikolicah masa sklopa. Spada k paketu P (vprašanje 5). | potrjeno (miška/kamen 1,00/0,56; strelica/medved 25,3/21,1 % pri 60 km/h); razmerje mas nad 2 je le pri 5 od 56 vozil |
+| 18 | Vrtenje po trdem trku: kotna hitrost brez meje, izid odvisen od lege v koraku in nesimetričen | T v zadnjo os prečkajočega: 120 km/h 521° (804 °/s), 200 km/h 1248° (1344 °/s). Isti trk s prvim dotikom četrt koraka pozneje: T 200 v zadnjo os stoječega 253–611°, T 200 v sredino prečkajočega 214–668°, T 120 104–203°. Čelno z zamikom pri 200 km/h: A −2248° v 6 s (1934 °/s), B 0° v zrcalno enakem trku. Ostane 660 °/s prvega sunka, čeprav vsota togih navorov da 387 °/s. | Zrcalno enak trk da zrcalno enak izid; lega v koraku spremeni izid največ za ~20 %. Toga meja pri 120 km/h v os je ~660 °/s; nad ~700 °/s in ~1,5 obrata (540°) ni verjetno niti pri 200 km/h (ohranitev vrtilne količine, simetrija). | **3 · srednje.** Po hudem trku se avto vrti kot vrtavka (do 6 obratov); enak trk se enkrat konča s tretjino obrata, drugič z dvema; pri čelnem z zamikom se zavrti le eden. | Kotno hitrost iz sunka omeji (npr. 8–10 rad/s) in jo med `xgl` > 0 seštevaj s predznakom pri vsakem sunku (tudi zaviralne navore), ne le ob rasti `xgl`. Ostane: ~250° pri T 120 v zadnjo os stoječega in −120° od zadaj z zamikom (±20 %). | potrjeno (523° in 1263°; po legah v koraku 229/682/509/356°; čelno −1897° v 3 s); kateri avto se zavrti, določa vrstni red para v kodi, ne skripta |
+| 19 | Klasični vlačilec ostane ob bočnem trku skoraj tog, nova fizika ga zlomi | Avto 100 km/h v bok kabine cisterne (17,3 t), ki pelje počez s 60 km/h: klasična vlačilec 10°, 48 °/s, pregib 4°, `xgl` 1,00, 9,6 % gibalne količine vzamejo gume; nova 33°, 144 °/s, pregib 32°. Čelno 1 m iz sredine (80 + 80 km/h): klasična avto najmanj 180° (odrezano), 557 °/s, pregib 16°; nova avto 5°, pregib 8°, 160 sunkov. | Prost vlačilec 5,3 t dobi od tega sunka ~3,2 rad/s; gume v 0,1 s trka zadržijo le ~4 od ~29 kN s: zasuk ~30° in začetek zloma sklopa, bliže novi fiziki (ohranitev gibalne in vrtilne količine, Coulombovo trenje gum). | **3 · srednje (samo polprikolice).** Vlačilec po bočnem trku z avtom pelje naprej, kot da ga ni nič zadelo. | `tlHold` naj ob trku zadrži le sunek, ki ga gume zmorejo v času trka (`TLK.hold` × masa × ~0,1 s), ostalo gre v zasuk vlačilca; klasično in novo fiziko uskladiti. Uskladi s sejo tovornjakov. | potrjeno (bok kabine: 10,2°/48 °/s in 31,2°/149 °/s); čelni trk 1 m iz sredine ni ponovljen |
+| 20 | Zadet predmet je počasnejši od avta in poleti 3,5–3,7 m visoko | Hitrost zadetega predmeta proti hitrosti avta: 0,83 pri 60 km/h, 0,54 pri 120 in 0,32 pri 200 km/h (meja 18 m/s = 65 km/h; stožec, guma, bala, hidrant enako). Najvišja točka 3,5–3,7 m (preverjalec 3,5–3,9 m) pri stožcu, gumi, zaboju in bali. Pot: stožec 23/30/35 m, bala 17/21/28 m. | Lahek predmet ob težkem avtu dobi (1 + e)·v·M/(M + m) ≈ 1,2–1,35 v (pri 200 km/h ~250 km/h), nikoli več kot (1 + e)·v; stožec in bala (težišče 0,2–0,4 m) ostaneta pod ~1–1,5 m (Newtonov trkovni zakon). Odprti viri: stožec odleti z 1–1,8-kratno hitrostjo avta ali ostane pod njim; lahki predmeti letijo 5–20 m. | **3 · srednje.** Zadeti stožec ali bala poletita visoko pred kamero in padeta nazaj pred avto, ki ju zadene znova (vzrok vrstice 1). | Meja hitrosti (1 + e)·v; lahkim predmetom zračni upor ~v², da pot ostane 20–40 m in predmet ostane viden; navpični sunek po višini zadetka glede na težišče. Ostane: predmeti znotraj ograje, `propStep` (tla, spanje), strošek koraka. | potrjeno (65 km/h = 0,83/0,54/0,32 v; kosi sklada bal do 80–81 km/h; dvig 3,5–3,9 m) |
+| 21 | Ležeč del vzame enak odstotek hitrosti pri vsaki hitrosti in masi avta; del se ne premakne | Ogledalo 0,2 %, blatnik 1,0 %, odbijač 1,4 %, pokrov 2,5 % (−5 km/h pri 200 km/h), enako pri 60/120/200 km/h in pri masah 165–5300 kg; del obleži (pot 0,0 m). Dirka (Spa): tovornjak 7000 kg v koraku trka 119,9 → 97,0 km/h (−22,8; sam trk −19,9), ker v istem koraku povozi razbitino. | Prevoz čez ploščat kos pločevine ali plastike: delo reda 0,5–3 kJ, Δv = ΔE/(M·v): pri 120 km/h ~0,05–0,3 % (1150 kg), pri višji hitrosti in težjem vozilu manj; kos se premakne ali zasuka za 1–5 m (energijska bilanca, ocena merilca). | **3 · srednje.** Vsak prevožen kos na progi vzame nekaj km/h, tovornjaku enako kot kartu; kos pri tem obleži na mestu. | Izguba po energiji na vrsto dela (Δv = ΔE/(M·v)) ali vsaj delež po masi kosa proti masi vozila; kos dobi majhen sunek (1–3 m/s) in zasuk. Ostane: del se povozi in ne odbije, enkrat na prevoz, poskok v izrisu. | potrjeno (0,20/1,00/1,40/2,50 % pri vseh hitrostih in masah; premik 0,0 m); popravek enot: masa dela je igralna masa (največ 14), ne kg |
+| 22 | Težki ulični predmeti (svetilka, omarica, nadstrešek) so za avto prelahki in se umaknejo že pri 15 km/h | Vse vrste nad 28 kg (hidrant 45 kg, omarica 80, svetilka 110, nadstrešek 220 kg): en stik in izguba 4,5 % pri 120 in 200 km/h. Počasi: nadstrešek pri 15 km/h odrinjen 4,6 m ob izgubi 7,4 % (preverjalec 3,0 m, 5,5 %), svetilka pri 30 km/h 4,6 m ob 6,8 % (3,9 m, 6,7 %). Škoda avta pri 200 km/h: svetilka 5,9 %, hidrant 3,0 %. | Prost predmet (1 + e)·m/(M + m): hidrant 5,1 %, svetilka 11,8 %, nadstrešek 21,7 %. Sidran predmet se pod pragom loma ne premakne (pri 5–15 km/h avto obstane); lomljiv drog vzame do 3 m/s (največ 5 m/s), tog drog avto ustavi (EN 12767, NCHRP Report 350, AASHTO MASH). | **3 · srednje.** Avtobusna nadstrešnica ali ulična svetilka se umakne že ob počasnem dotiku; trk v drog pri 200 km/h stane manj kot bala slame. | Vrstam s škodo (`dmg`) dodaj prag loma (sunek ali energija): pod pragom trdna ovira (avto se odbije, odboj ~0,1), nad pragom se odlomi, avto izgubi sunek praga in (1 + e)·m/(M + m); škoda avta iz sunka. Ostane: tabla zavorne razdalje in lahki predmeti so lahki; avto po lomu ne obtiči. | potrjeno (4,50 % pri 120 in 200 km/h; pot predmeta 15–35 % krajša kot pri merilcu, slika ista); škoda ob nadstrešku pri 200 km/h: merilec 5,9 %, preverjalec 10,1 % (se razlikujeta) |
+| 23 | Čelni trk z zamikom: avta obstaneta na mestu z nosom naravnost, vrtilna količina izgine | Čelno z zamikom pol širine pri 60 in 120 km/h: oba po 0,1 s 0 km/h, zasuk 0,1°, največ 4 °/s, `xgl` 0; tog sunek bi dal vsakemu −340/−683 °/s, vzeto 0; vrtilno količino para sunki odvzamejo 99 %. Avta ostaneta prislonjena vseh 6 s. Nova fizika: 0 km/h, zasuk −7°. | Vrtilna količina se ohrani: pri 120 km/h do ~660 °/s (z zmečkanino 200–400 °/s), zasuk 60–180° v 0,5–1,5 s. Odprti viri: čelni trk s 30–50 % zamika zasuka avta za 30–90° v 0,5–1 s, razideta se z 10–30 % hitrosti. | **2 · visoko.** Po čelnem trku z zamikom avta obstaneta z nosom naravnost, kot zlepljena; na dirki redek dogodek. | Trd sunek (zahtevani zamik nosu nad `CSK.tapMax` ali Δv nad ~5 m/s) vzame oprijem in da kotno hitrost ne glede na hitrost po sunku: za prag `KG_V0`/`KG_V1` uporabi večjo od hitrosti pred sunkom in po njem. Ostane: sunki pod ~3 m/s v gneči, kjer ostane samo zamik nosu. | potrjeno (0 km/h, −0,1°, toga vsota −340/−683 °/s, vzeto 0; pri 200 km/h obstaneta simetrično v 3 od 4 leg) |
+| 24 | Sunki ob vrtečem se avtu dodajajo energijo | Posamezen klic `carCollide` poveča kinetično energijo para: T 200 v zadnjo os stoječega +55,4 kJ (3,1 % od 1775 kJ); T 120: 5 sunkov, največ +12,6 kJ (2,0 % od 639 kJ); čelno z zamikom pri 200 km/h +22,6 kJ; od zadaj z zamikom pri 200 km/h +11,8 kJ. Gibalna količina se ohrani (0,00 %). Merilec mas v svojih 8 scenarijih (brez zadetka v zadnjo os) prirasta ni našel. | Trk nikoli ne poveča kinetične energije para (odboj največ 1): prirast 0 J v vsakem klicu (ohranitev energije). | **2 · visoko.** Igralec tega ne vidi neposredno; prispeva k predolgemu vrtenju po hudih trkih (vrstica 18). | Sunek računaj skladno s tem, kar avto res vzame: če kotne hitrosti ne vzame, izpusti njegov člen rn²/I in w × r iz hitrosti zbliževanja; če drsi (`xgl` > 0), mu kotni del vedno prištej. Varovalo: po `kTake` energija para ni večja kot pred klicem. Ostane: sredinski trki do zadnje številke. | potrjeno (T 120: 4 prirasti, največ +12,9 kJ; T 200 +54 do +57 kJ; čelno +26,4 kJ pri drugi legi; trije avti v vrsti brez vrtenja 0,00 kJ) |
+| 25 | Hitri trki z majhnim prekrivanjem: izid je loterija koraka, avto gre lahko skozi vogal brez sunka | A v stoječega B, zamik 0,75 širine (prekrivanje 45 cm), 24 leg prvega dotika v koraku: 200 km/h A po 0,1 s 95–158, B 43–104 km/h, A pride mimo v 10/24 leg; 300 km/h A 143–296, B 0–157 km/h, mimo v 16/24, v 7/24 A obdrži več kot 90 % hitrosti; 120 km/h nikoli mimo, zasuk A 2–69°. Prekrivanje ob prvem dotiku do 45 cm (200) in 68 cm (300 km/h). | Izid ni odvisen od tega, kje v koraku se karoseriji srečata (razpon do ~10 %); prekrivanje 45 cm pri 200–300 km/h vedno prenese sunek: B dobi vsaj ~40 km/h, A izgubi vsaj ~20 % hitrosti (zvezno zaznavanje trkov). | **2 · visoko.** Pri zelo hitrem oplazenju stoječega avta gre igralec včasih skozi njegov vogal skoraj brez sunka, drugič ga isti trk ustavi; redko (razlika hitrosti okoli 200 km/h in več). | Ko je pot zbliževanja para v koraku nad ~0,25 m (nad ~110 km/h zbliževanja), poišči čas prvega dotika znotraj koraka (2–4 podkoraki `kCollide`) in tam izberi normalo; pri globokem stiku prijemališče na sredini prekritega dela. Ostane: trki pod ~100 km/h zbliževanja do zadnje številke in čas koraka dirke. | potrjeno (200 km/h: A 95–156, B 45–104 km/h, mimo 10/24; 300 km/h mimo 15/24 proti 16/24 pri merilcu; 7/24 obdrži več kot 90 %) |
+| 26 | Sunek in ustavitev v enem koraku, brez mečkanja; odboj 0,12 tudi pri največjih hitrostih | Čelno 120 + 120 km/h: 121 → −14 km/h v enem koraku (1 sunek), oba nazaj s 14 km/h (odboj 0,12 tudi pri 240 km/h zbliževanja). V ograjo pod 90°: 60 → 14 km/h v 1/120 s (≈157 g), 120 → 27 (≈315 g), 200 → 46 km/h (≈520 g); popravek lege do 25,5 cm v koraku. | Odboj pada s hitrostjo: 0,05–0,2 pri 25–60 km/h, 0–0,1 nad 100 km/h, hitrost odboja 3–10 km/h (SAE 931842, SAE 2013-01-0223). Čelni sunek traja 70–120 ms, nos se zmečka 0,5–0,8 m; pri 120 korakih na sekundo je to 8–14 korakov: očesu je enokoračni sunek enak, le lega ne sme skočiti. | **2 · visoko.** Po čelnem trku pri veliki hitrosti avta odskočita s 14 km/h, namesto da bi skoraj obstala; ob čelnem trku v ograjo slika sune za do 25 cm. | `e1` pri velikih hitrostih na 0,03–0,05 (npr. tretji člen nad 15 m/s). Po izbiri cona mečkanja: črta ograje »mehka« 0,5–0,8 m (gume 1–1,5 m), normalna sila omejena, ustavljanje 8–15 korakov; `hitWall` ostane hitrost prvega dotika (pragovi 6 m/s, ~40 km/h in 50 m/s² ostanejo). | potrjeno (±14 km/h v 1 sunku; Bathurst 60 → 10 in 120 → 20 km/h v enem koraku; popravek lege ni omejen); opomba preverjalca: 0,12 proti 0–0,05 je majhna razlika (odboj 14 namesto 0–6 km/h) |
+| 27 | Nova fizika ob ograji drgeta: stik se preklaplja 35–117-krat na sekundo | Nova fizika, brez vnosa: 5°/60 117 preklopov stika na sekundo; 5°/120 36 ločenih dotikov; 15°/120 23 dotikov pri merilcu in 15 pri preverjalcu, 30°/200 50 in 27 (se razlikujeta). Reža do 1,5–2,0 cm, udarci do 0,2–0,3 m/s. Klasična fizika: 0–3 preklopi na sekundo. | Trajen stik (drsenje) brez preklapljanja; iskre in zvok drgnjenja enakomerni (mehanika trajnega stika: normalna sila namesto zaporednih sunkov). | **2 · visoko (samo nova fizika).** Ob drsenju ob ograji zvok in iskre utripajo; pri namerni vožnji po ograji nova fizika nabere 67 udarcev s škodo (100 %), klasična 2 udarca in 8 %. | Stik naj drži nekaj korakov (vogal bližje od 2 cm, ki se ne oddaljuje hitreje od ~0,3 m/s, velja kot stik): `fxWall` in zvok iz zglajenega stika; v novi različici normalna sila ob trajnem stiku namesto sunkov. | potrjeno (5°/60 117 na sekundo; 5°/120 36 dotikov in 35 na sekundo; reža največ 2,0 cm, udarci največ 0,20 m/s; Spa s travo pred ograjo 12–29 preklopov na sekundo) |
+| 28 | Ulični predmet po edinem udarcu potuje skozi avto in nato skoči iz njega | Koraki, ko je središče predmeta v tlorisu avta brez stika, pri 60/120/200 km/h: hidrant 88/34/14, koš 96/33/13, sod 118/32/13, nadstrešek 53/27/12, svetilka 54/27/14; pri 15 km/h 161–219 korakov (1,3–1,8 s). Po 0,6 s predmet skoči iz avta v enem koraku: nadstrešek 1,08 m pri 60 km/h, omarica 1,17 m. | 0 korakov znotraj obrisa in noben premik v enem koraku nad v·dt (0,03–0,14 m; neprodirnost togih teles). | **2 · visoko.** Hidrant ali koš po udarcu drsi skozi avto in nato skoči iz njega; s kamero za avtom to večinoma zakrije karoserija. | Namesto izklopa stika za 0,6 s ohrani izrivanje iz krogov avta brez novega sunka in brez nove izgube (ali daj predmetu vsaj hitrost avta, vrstica 20). Ostane: en udarec in ena vdrtina na predmet. | popravljeno (merilo: središče v tlorisu karoserije; pri 120 in 200 km/h ujemanje z merilcem na 10–25 %, pri 60 km/h ne; svetilka 54/27/14 namesto 0; skok nadstreška 1,08 m namesto 1,58 m) |
+| 29 | Visok drog gre čez črto ograje in se v enem koraku vrne | Drog tik pred ograjo, avto 20° proti ograji pri 120/200 km/h: prenosna svetilka (5 kg, središče 4,0 m) 3,6–3,9/9,6–10,2 m čez črto ograje, nato skok nazaj 3,5–3,8/9,6–10,1 m v enem koraku; ulična svetilka (110 kg, središče 4,5 m) 3,0–3,2/5,6–6,0 m čez. Stožec, guma, bala, sod: 0,00 m. | 0 m čez črto ograje in noben premik v enem koraku nad v·dt (pri 18 m/s 0,15 m; zveznost gibanja). | **2 · visoko.** Zadeta svetilka odleti skozi ograjo in se v hipu pojavi nazaj; redek prizor. | Preskus ograje po najnižji točki predmeta (noga droga), ne po središču (ograja zdaj drži le predmete s središčem pod 3,2 m). Ostane: zadrževanje ostalih predmetov in delov. | popravljeno (merilec 5,8/12,4 m in 2,0/1,8 m; pojav in vzrok v kodi potrjena na Spa in Bathurstu) |
+| 30 | Zasuk avta ob predmetu ali delu je naključen, ne po strani in ročici zadetka | `propFeel` doda `c.w` += (naključno − 0,5)·m·0,012, `debrisHit` (naključno − 0,5)·m·0,05: smer zasuka ni odvisna od strani zadetka. Zadetek 0,6 m iz sredine: lahki predmeti 0–5 °/s, težki 1–6 °/s (tudi svetilka 110 kg). Največ v 240 vrsticah: 25 °/s, smer 2,3°, premik poti 0,33 m. | Zasuk po ročici, Δw = r × J / I (I = 1443 kg·m²), vedno proti strani zadetka: pri 120 km/h in zamiku 0,6 m stožec ~3 °/s, bala ~27 °/s, prosta svetilka ~108 °/s. | **2 · visoko.** Avto ob predmetu rahlo trzne v naključno smer, ne stran od zadetka; komaj opazno. | Zasuk iz ročice stika s predznakom po strani zadetka, brez naključja. Ostane: pri lahkih predmetih majhen (stožec ~3 °/s); avto zaradi stožca ali bale ne sme s ceste. | potrjeno z branjem kode (lastne meritve zasuka preverjalec ni delal) |
+| 31 | Težnost v zraku je 14 m/s² (1,43 g) | `JUMP_G` 14: padec 0,3/1/3 m traja 0,21/0,38/0,66 s, hitrost ob dotiku 2,92/5,25/9,22 m/s; padec čez rob 1,6 s = 16,1 m. | Pri g = 9,81 m/s²: 0,25/0,45/0,78 s in 2,43/4,43/7,67 m/s (let 19 % daljši, udarec 16 % šibkejši; prosti pad). | **2 · visoko.** Skoki so krajši in pristanki trši kot v resnici; to je del sedanjega občutka vožnje čez grebene. | Za novo različico g = 9,81; `JUMP_G` je skupna konstanta (skoki, drobci, priklopniki, padec), zato le skupaj s popravkom vzleta in novimi referencami. Najprej odločitev uporabnika (vprašanje 1), ker je to že fizika vožnje. | potrjeno (Spa, Bathurst: 0,21/0,38/0,65–0,66 s in 2,8–3,1/5,25–5,39/9,1–9,2 m/s) |
+| 32 | »Samo videz« pri formuli ni samo videz: odpadlo krilo vzame aero oprijem | Formula, 5 udarcev po 10 % v sprednji desni vogal, škoda »Samo videz«: odpade 1 del, `aeroK` 1,40e-4 → 0,70e-4; ovinek pri 200 km/h 3,74 → 3,18 g (−15 %); 100 km/h in 6 s plina: 273,2 → 256,5 km/h (pri »Vklop« 255,3). Rally pri 50 in 100 % škode vozi kot cel (209,4 km/h, 2,38 g). | Pri »Samo videz« škoda ne spremeni vožnje; izguba krila sodi pod »Vklop« (`docs/igra.md`, Poškodbe avtov). | **2 · visoko (samo avti s krili).** Po trku formula v hitrih ovinkih drži 15 % manj, čeprav je škoda nastavljena na »Samo videz«. | V `detachPart` zmanjšaj `aeroK` samo pri načinu »Vklop« (`dmgMode` 2). Spada k paketu P (vprašanje 5). | potrjeno s kodo in ponovnim zagonom skripte (brez lastne vožnje) |
+| 33 | Boksna steza: avti so duhovi, opis pravi drugače; boksni zid ne poškoduje | Dirka 13 avtov, vsi v bokse (Spa, 300 s): 14.540 avto-korakov v stezi, 0 trkov, 0 korakov starega trka; duhova se prekrivata v 247 korakih do 3,02 m, duh in trden avto v 1.241 korakih do 1,87 m. Boksni zid pod 30° pri 80 km/h: udarec 11,1 m/s, škoda 0,0 % (ograja proge 23,8 %); AI v mejo steze do 15,9 m/s brez škode. | `docs/igra.md` pravi »v boksni stezi trki ostanejo kot pri Stari«; v resnici trka med avti v stezi ni. Enak udarec v zid bi sicer dal (11,1 − 2,5) × 2,8 % = 24 % škode. | **2 · visoko.** V boksni stezi gredo avti drug skozi drugega; to je namerno (avto v boksih je duh, na boksni poti ni škode), napačen je le opis. | Nova različica boksov ne spreminja (duhovi ostanejo, da se steza ne zamaši); popravi opis v `docs/igra.md`. Škoda ob boksnem zidu ostane izklopljena (odločitev uporabnika: na boksni poti ni škode); AI ob uvozu naj se umiri (15,9 m/s). | potrjeno s kodo in ponovnim zagonom skripte (brez lastne meritve preverjalca) |
+| 34 | Rob prepada je pri počasnem prehodu neviden zid | Preizkusna cesta s prepadom: 5°/60 (navzven 1,4 m/s): avto 2,5 s drsi ob nevidnem robu 1,2 m od asfalta z istim trenjem kot ob ograji, 58 → 37 km/h po 2 s; 15°/30: ustavi se ob robu. Nad 2,5 m/s navzven pade (5°/120, 15°/60, 30°/120). | Kjer ograje ni, avto z vogalom čez rob zdrsne ali se nagne in pade, ko gre težišče čez; brez trenja in isker ob ničemer (statika: prevrnitev, ko težišče prečka rob). | **2 · srednje (prepade ima zdaj le zamrznjena testna proga; #494 prinaša padec z roba na `main`).** Počasen avto ob prepadu drsi ob nevidni steni z iskrami. | Brez praga hitrosti: padec, ko gre sredina avta (ali dve kolesi) čez rob; do takrat brez sunka in trenja. Kjer naj avto ostane na cesti, nizek zid ali robnik z isto fiziko kot ograja. Po spoju #494 izmeri znova. | potrjeno (prag točno 2,5 m/s navzven: 10°/50 rob drži 3,08 s, 10°/55 pade; 20°/20 drži 4,43 s in se ustavi) |
+| 35 | Prevračanje je žreb po trku in traja enako pri vsaki hitrosti | Z vklopljenim prevračanjem: v bok 0 % do 8,9 m/s, 11 % pri 9,1–20 m/s; bočno v ograjo 0 % do 9,5 m/s, 11 % od 10,5 m/s; enako za vse modele. En obrat 1,18 s, dva (trk nad 15 m/s) 1,58 s pri vsaki hitrosti; 100 km/h: pot 31 m, konec 71,4 km/h, škoda +4 %; 200 km/h: 64 m, 150,6 km/h. Avto, ki bočno drsi brez trka, se ne prevrne nikoli. | Prevrat je posledica spotika ob oviro pri bočni hitrosti ~25–50 km/h; na ravnem asfaltu avto zdrsne, ~95 % prevratov je spotaknjenih (NHTSA DOT HS 809 868; SAE 2006-01-0722). Valjanje zavira z 0,4–0,5 g, en obrat na ~1–1,5 s; pri 100 km/h 6,3 s in 87 m (ocena merilca). | **2 · srednje (prevračanje je privzeto izklopljeno).** Kadar je vklopljeno, se avto prevrne po žrebu »vsak deseti« in po enem obratu pelje naprej s 70–75 % hitrosti. | V novi različici prag iz lastne bočne hitrosti ob spotiku (robnik, trava ali pesek, kolo drugega avta, ograja) in oblike modela; trajanje in število obratov iz hitrosti (pojemek 0,45 g, obrat na ~1,2 s). Pravilo »vsakič deseti« je odločitev uporabnika (vprašanje 6). | potrjeno (koda: prag 9 m/s, ob ograji 10 m/s, žreb 0,1; 44 od 400 = 11,0 %; potek iz konstant se ujema na 0,1–0,2) |
+| 36 | Vlačilec s prikolico potiska avto: dotik se prekinja in vrača | Cisterna ali cestni vlak od zadaj v avto (60 v 32 in 120 v 91 km/h), oba brez plina, 240 korakov. Vlak 60: 94 sunkov, dotik znova 45-krat (preverjalec 77/45); vlak 120: 57/46 (58/39); cisterna 60: merilec 137 sunkov in 83 ponovitev, preverjalec 227 sunkov in neprekinjen stik (se razlikujeta). Vozilo brez prikolice: 1 sunek, 0 ponovitev. | Plastičen stik: ko sta vozili skupaj in ju nič ne loči, ostaneta v stiku brez ponovnih udarcev (neprožen trk, mirujoči stik togih teles). | **2 · srednje (samo vozila s prikolico).** Ko tovornjak s prikolico rine avto pred sabo, se dotik drobno ponavlja (zvok, iskre). | Mirujoči stik: pod pragom hitrosti in pri prekrivanju do ~2 cm brez razmika (histereza); učinki (zvok, iskre) šele nad pragom hitrosti. Vzrok je sklop s prikolico (prikolica vsak korak potegne vlačilec): uskladi s sejo tovornjakov. | popravljeno (vzrok je sklop s prikolico, ne razmerje mas; nad 0,5 m/s je le 1 sunek) |
+| 37 | Rob nove mape pripne sredino avta brez trenja, zvoka in škode | Rob nove mape (`track.free`), 30°/120 km/h: 119 → 103 km/h (natanko cos 30°), udarec 0, škoda 0, brez zasuka; avto ostane pripet na rob nad 6,8 s, pol avta sega čez rob. Preverjalec: 60°/100: 99,2 → 49,6 km/h, vogal 2,17 m čez rob; 90°/80: 79,4 → 0,0 km/h v enem koraku brez škode. | Viden rob (ograja, nasip) z isto fiziko kot ograje ali mehko upočasnjevanje pred robom (skladnost z ostalimi ograjami igre). | **2 · srednje (samo nova mapa).** Na robu nove mape avto obstane ob nevidni črti brez zvoka, isker in škode. | Rob mape pelji skozi isti sunek kot ograjo (po vogalih, s trenjem, `hitWall` in škodo) ali ga postavi kot steno (`wall2`). | potrjeno (118,6 → 102,7 km/h; na robu 3,8 s in več; vogal 0,90–0,95 m čez rob) |
+| 38 | Fizična črta je 10–25 cm pred narisanim licem ograje | Lice privzete ograje je narisano 0,25 m za črto trka (`js/world.js`:1783), jeklena ograja na Spa 0,12 m, gume 0,10 m (`js/world-spa.js`:271, 278); vogal avta se ustavi na črti. Med trkom gre vogal čez črto največ 25,5 cm (čelno 120 km/h) in je popravljen v istem koraku. | Karoserija se dotakne narisanega lica (reža 0–5 cm); v gume se pogrezne. | **2 · srednje.** Avto se ustavi 10–25 cm pred narisano ograjo; v gume se ne pogrezne. | Ob novi različici poravnaj: črta trka = narisano lice z odmikom po vrsti ograje (gume −0,3 m za pogrezanje) ali lice riši na črti. | potrjeno samo z branjem kode (v brskalniku ni merjeno) |
+| 39 | Kolo upočasni avto skoraj kot motor; kolo in pešec dobita premalo hitrosti | Od zadaj v sredino pri 60/120/200 km/h. Kolo 90 kg: avto −21,1/−18,1/−16,9 %, kolo dobi 0,5 v, gibalna količina po/pred 0,83–0,87. Motor 290 kg: −25,2 % (prav po masah). Stoječ pešec 75 kg: avto −8,4/−7,2/−6,7 %, pešec 0,34–0,35 v; avto izgubi 4,2/3,5/3,2-krat več gibalne količine, kot jo pešec dobi. | Kolo 90 kg ob 1150 kg: (1 + e)·m/(M + m) = 7,3–9,1 %, kolo ~1,0–1,25 v, gibalna količina 1,0. Pešec 75 kg: 6,1–8,3 %, pešec ~0,8–1,0 v (ohranitev gibalne količine; odprta literatura o trkih vozil s pešci: hitrost meta 0,7–1,0 hitrosti vozila). | **2 · srednje (samo vožnja v prometu).** Trk s kolesom zavre avto skoraj kot trk z motorjem; kolo in pešec skoraj obležita, namesto da bi ju odneslo. | V novi različici izguba po masah kot pri `_hitVeh`; kolo, kolesar in pešec dobijo hitrost iz sunka. Ostane: kazni in konec vožnje v neskončnem prometu, učinki in zvok. Promet je 2. 11. ostal, kot je (vprašanje 4). | potrjeno samo s ponovnim zagonom skripte (brez neodvisne meritve) |
+| 40 | Promet zunaj bega: obris iz krogov pušča vdor do 0,7 m, sunek smeri je vedno največji | Vdor avta v obris: bok avtobusa pod 30° 0,57 m (60 km/h) in 0,54 m (120), tovornjak s polprikolico 0,71/0,69 m, avto 1300 kg čelno pri 120 km/h 0,50 m. Sunek smeri 22,9–23° pri čelnem trku pri 120 km/h in enako pri oplazenju avtobusa pod 5° pri 60 km/h (izguba 0,6 %, 62 °/s, smer +14,7°). V begu pred policijo je vdor 0,05–0,12 m. | Vdor največ 0,05–0,10 m kot v begu. Zasuk sorazmeren s sunkom: oplazenje pod 5° pri 60 km/h (normalna hitrost 1,45 m/s) da po ročici ~40 °/s in nekaj stopinj spremembe smeri (geometrija obrisa; vrtilna količina). | **2 · srednje (samo vožnja v prometu).** Avto se ob trku pogrezne v avtobus ali tovornjak; že rahlo oplazenje zasuka nos za 23°. | Promet zunaj bega naj v novi različici uporablja isti obris kot avto–avto (`obbHit`) in pravila bega; sunek smeri sorazmeren s sunkom. Ostane: mase prometa, ohranitev gibalne količine prvega dotika, vsak dotik v neskončnem prometu konča vožnjo. Odločitev uporabnika (vprašanje 4). | potrjeno samo s ponovnim zagonom skripte (brez neodvisne meritve) |
+| 41 | Pri »Vklop« škoda vzame le moč motorja; oprijem in smer ostaneta | Rally z 0/50/100 % škode v sprednjem desnem vogalu, »Vklop«: 100 km/h in 6 s plina: 209,4/200,6/190,8 km/h (−4 %/−9 %); ovinek pri 120 km/h 2,38 g pri vseh; brez rok 3 s pri 100 km/h: 0,00 m vstran (z možnostjo `xHandle`, privzeto izklopljeno, 4,21 m). | Udarec v vogal s 50 % škode zamakne geometrijo kolesa (avto vleče, manj oprijema na tej osi); 100 % škode pomeni nevozen avto (`docs/igra.md`, Razbijanje · nov način: vodljivost). | **2 · srednje (samo pri škodi »Vklop«, ki ni privzeta).** Popolnoma razbit avto zavija kot cel, le počasneje pospešuje. | V novi različici pri »Vklop«: vlečenje volana iz razlike škode vogalov privzeto, oprijem osi × (1 − 0,2 × škoda vogala), nad 90 % samo počasna vožnja v bokse. Spada k paketu P (vprašanje 5). | potrjeno s kodo (`CSK.dmgGrip` 0) in ponovnim zagonom skripte (brez lastne vožnje) |
+| 42 | Greben: vzlet in pristanek v istem koraku (ostanek ovržene ugotovitve »greben brez leta«) | Samovoznik, 150 s na progo. Ouninpohja: 25 letov (11,8 s v zraku, najdaljši 1,07 s) in 18 korakov z vzletom in pristankom v istem koraku, skupaj −2,3 km/h. Nürburg: 2 leta, 1 tak korak. Medvode: en dogodek pri 206 km/h: 8 takih korakov v ~0,07 s, −8,8 km/h. Harju, Bâlea, Tianmen, Spa, Bathurst: 0 dogodkov. | Nad pragom vzleta let po paraboli, pod njim nobene izgube: 0 korakov z vzletom in pristankom v istem koraku. | **2 · srednje.** Na redkih blagih grebenih avto pri veliki hitrosti za hip »zagrabi« (Medvode: −8,8 km/h pri 206 km/h). | Pristanka v koraku vzleta ne kaznuj (izguba le, če je bil avto v zraku vsaj 2–3 korake ali je hitrost glede na cesto ob dotiku nad ~1 m/s); prag vzleta in padanje naj uporabljata isto težnost. Odvisno od vprašanja 1. | ni preverjeno (nova najdba preverjalca) |
+| 43 | Volan, držan proti ograji: klasična fizika avto obrne z nosom v zid in ga ustavi | Dotik 5°, poln plin, volan ves čas proti ograji. Klasična, 60 km/h: 63 → 43 km/h (1 s) → 0 (2 s), nos 64° v zid, pot 21 m v 4 s, škoda 3 %; 120 km/h: 118 → 90 (2 s) → 0 (4 s), nos 36°. Nova: 60 → 60/57/56 km/h pri 1/2/4 s, nos 2,9°; 120 → 119/114/104 km/h, nos 2,4°. | Iz oplazenja pri 5° se nos brez udarca ne zasuka 64° v tog zid; avto drsi ob zidu in izgublja hitrost s trenjem (0,15–0,4). Fiziki ne smeta dati tako različnega izida (presoja preverjalca). | **2 · nizko.** Kdor ob ograji drži volan vanjo, v klasični fiziki obstane z nosom v zidu tudi pod polnim plinom. | V novi različici naj stik z ograjo omeji zasuk nosu vanjo (poln delež zasuka pri dotiku z dvema vogaloma ali omejitev kota proti ograji med stikom); klasična in nova naj dasta podoben izid. Test: 5°/60 z volanom v ograjo po 2 s ne sme stati. | ni preverjeno (nova najdba preverjalca zidu; kandidat: en avto, ena cesta) |
+| 44 | Parkirna ura in prometni znak se po padcu ne umirita | Parkirna ura (`meter`, 14 kg) in prometni znak (`rssign`, 14 kg) se v 8 s ne umirita pri nobeni hitrosti: trzanje 0,14–0,27 m/s in 0,1–0,3 rad/s do prisilnega spanja pri 20 s. Ostale vrste mirujejo po 1,1–7,0 s. | Mirovanje v 2–4 s kot pri ostalih predmetih, brez vidnega tresenja; budni predmeti stanejo čas koraka (20 s namesto 4 s). | **1 · visoko.** Podrta parkirna ura ali znak na tleh še 20 s drobno trza. | Dušenje kotne hitrosti na tleh ali višji prag mirovanja za tanke dolge predmete (spanje pri v < 0,3 m/s in w < 0,4 rad/s). Ostane: spanje ostalih vrst. | potrjeno (Spa: gibljeta se še 8–12 s po zadetku in zaspita po 20,0 s; hidrant in sod mirujeta po 2,5–4,0 s) |
+
+**Ovrženo (ni v tabeli).** »Po trdem trku avto takoj pelje naprej« (`avto-po-trku-takoj-naprej`): številke se ponovijo, napačno je pričakovanje; izguba pogona in oprijema za 1–2 s je stvar poškodb (privzeto »Samo videz«), ne trka, vrnitev na hitrost pa je že zdaj počasnejša od čistega pospeševanja (po trku od zadaj 53 → 114 km/h v 3,26 s proti 1,56 s; po bočnem trku 67 → 114 km/h v 1,43 s proti 1,22 s). »Čez greben avto ne poleti« (`boksi-greben-brez-leta`): artefakt gladke analitične merilne ploskve; na pravih progah avto poleti (Ouninpohja 25 letov v 150 s), merilčev Bathurst je bil izmerjen pri 503 km/h; kar ostane, sta vrstici 42 (redki blagi grebeni) in 7 (pristanek).
+
+**Namerno (izmerjeno in potrjeno, ni za popravek).** Arkadna: igralčev avto je v trku 1,7× težji (od zadaj 120 v 90 km/h: napaka gibalne količine 41,2 % prenesene = 4,6 % skupne, +66 do +72,8 kJ); lastnost različice, v Simulaciji je napaka 0,00 %. Tekmeca med seboj izgubita pol manj oprijema in varnostni avto nič (22°/0,53, 15°/0,26, 12°/0,00): odločitev uporabnika 2. 11. 2026. Stara: prvi sunek 23,9 cm pred dotikom škatel (merilec 20–22 cm); ostane bit za bitom. Kaskaderska in Mehka množita zasuk (1,5 in 0,6): Kaskaderska doda do +55,3 kJ (8,7 % od 638 kJ) v enem klicu; lastnost različice, nova različica naj ima zasuk 1.
+
+**Skupni vzorec.** Sredinski trki in lahki dotiki so že blizu resničnim (razdelek »Kar je že dobro«). Odstopajo stiki zunaj sredine, prečni in dolgotrajni, ker en enak in nasproten sunek z ročico tam nadomeščajo posebna pravila:
+
+- klasična fizika vrtilni del sunka spremeni v sunek smeri in avto zavrti le, ko je zadek potisnjen bolj kot nos (vrstice 3, 10, 11, 14, 18, 23, 24);
+- prečni potisk gume zdrgnejo s polnim oprijemom (12);
+- ograja vogale rešuje po vrsti in z eno snovjo, da 0,3 zasuka in nikoli ne vzame oprijema (4, 5, 6, 13);
+- predmeti, odpadli deli in pristanek vzamejo delež hitrosti na korak ali dogodek, ne sunka po masi (1, 2, 7, 20, 21, 22);
+- na spletu sunek dobi samo lokalni avto (8).
+
+**Ponovitev številk** (prva številka je vrstica tabele):
+
+- 1: `node tools/trki/predmeti.js --del predmeti` (tudi `zamik`, `ograja`, `dirka`); 2: `--del razbitine` (tudi `svoj`, `dirka`);
+- 3: `node tools/trki/avto-avto.js --only tbone-120-cross-front` in `node tools/trki/mase-razlicice.js --only razlicice`; 10: `--only pit-60-rear` in `--only side-200-a10-dv20`; 12: `--only tbone-120-stand-mid`;
+- 4, 5, 6: `node tools/trki/zid.js --del matrika` (tudi `proga`, `posebne`); 9: `--del prikolica`;
+- 7: `node tools/trki/boksi-pristanek.js --del pristanek`; 8: `--del splet` in `node tools/trki/mase-razlicice.js --only vloge`; 17: `--only mase` in `node tools/trki/boksi-pristanek.js --del skoda`;
+- vrstice 11, 13, 42 in 43 ter deli vrstic 1, 2, 7 in 8 so iz skript preverjalcev v `tools/trki/preverjanje/` (`avto-avto/`, `zid/`, `ostalo/`; shranjene, kot so jih pustili preverjalci, nepregledane; `node tools/trki/preverjanje/<mapa>/<ime>.js`).
+
+## Kar je že dobro
+
+Tega nova različica ne sme pokvariti; pri lahkih dotikih, naslonu in sredinskih trkih naj da iste številke kot Simulacija.
+
+- **Ohranitev:** gibalna količina para se v vsakem klicu `carCollide` ohrani (napaka 0,00 % v vseh 66 vrsticah klasične in nove fizike); spremembi hitrosti sta natanko v obratnem razmerju mas (6,087 = 6,087), gorivo se šteje (polna rezervoarja 6,017 = 6,017; poln proti praznemu 0,884 pri formuli); vrstni red para in vloga (igralec ali tekmec) izida ne spremenita; brez NaN in brez prehoda skozi avto v okoli 480 tekih (tudi 240 km/h približevanja in 29 t proti 165 kg).
+- **Sredinski trki se ujemajo s teorijo:** 120 km/h v stoječega 53 / 67 km/h (teorija 52,8 / 67,2), izguba energije 49 % (teorija 49,3 %); čelno 120 + 120 km/h izguba 99 %, odboj 14 km/h; 120 km/h v dva stoječa v vrsti 39 / 39 / 41 km/h; odboj pada s hitrostjo (0,15 pri 30 km/h, 0,12 nad ~60 km/h, 0 pod 0,5 m/s).
+- **Dirkaški dotiki:** sunek od zadaj (30 km/h razlike) 103 / 107 km/h, brez zasuka in izgube oprijema, z zamikom oba −5° in ravno v 0,7 s; bok ob boku se avta ne zlepita (120 / 100 km/h ostaneta), pasivni avto se zasuka 4–8°, premik na klic do 2,5 cm, brez tresenja; lahek dotik v bok (2 m/s) 3–5° pri 60, 120 in 200 km/h; dotik v sprednji bok ne zavrti (2–12°); sunek v zadnji vogal 8 m/s pri 120 km/h: 22–23°, `xgl` 0,53–0,55, raven po 1,4 s; zdrs po sunku se da ujeti s protivolanom (−23,8° → 0° v 2 s).
+- **Tog sunek, kjer ga igra že ima:** bočni trk v zadnjo os stoječega pri 120 km/h: prvi sunek je natanko tog (40,7 km/h in 660 °/s; teorija 41,4 km/h in 657 °/s); nova fizika v Simulaciji ob samem trku ohrani vrtilno količino; vztrajnostni momenti so realni (kI/L 0,242–0,300 pri vseh 56 vozilih).
+- **Razmik in proga:** brez prehoda skozi avto do 200 km/h (0 od 4 leg v vseh vrsticah); razmik je mehak (do 7,5 cm na korak), v mirovanju ostane 2 cm prekrivanja brez tresenja; merilna ravnina velja za prave proge (Spa in Bathurst: 120 km/h v stoječega 50 / 65 km/h po sunku na obeh).
+- **Sklopi:** vlačilec s prikolico in avto končata s hitrostjo po gibalni količini (avto 80 čelno v cisterno 80: −70 km/h, teorija −69,9); avto v rep prikolice: odboj 0,09–0,11 z enim sunkom.
+- **Ograja:** položni trki (5–30°) ohranijo hitrost po Coulombovem računu (15°/120 → 106 km/h, račun 108; 5°/200 → 192, račun 195; trenje je v vsaki poševni vrstici natanko 0,25); brez »fliperja« (1–2 dotika, nasprotne ograje pri kotih do 30° avto ne doseže); z odzivom voznika lepljenja ni (s plinom in volanom stran je prost v 0,12–0,53 s in 0,3 m stran za vedno v 0,67–1,09 s; iz mirovanja ob ograji v 1,33 s); čelno (60–90°) avto res obstane (97–98 % energije gre v prvem koraku); pri 200 km/h noben vogal ne ostane čez črto ograje; tekmeci po trku ob ograjo ne obtičijo (po 5–30°/120 so od nje v 0,2–0,7 s; po 60–90° stojijo 3,5 s, nato odpeljejo); drgnjenje ob ograji ne proži zvoka trka.
+- **Predmeti in odpadli deli:** en sam stik je pravega reda (stožec 0,48 % proti 0,35; tabla zavorne razdalje 2,6 % proti 1,85; hidrant 4,5 % proti 5,1); predmeti (razen visokih drogov) in deli ostanejo znotraj črte ograje; kupi (30 stožcev, 9 gum ali 20 sodov) se umirijo v 3,2–5,4 s; odpadlih delov je največ 40 in med seboj ne trkajo; hitrost dela po zadetku je 1,10–1,23 v (pod mejo 1,35).
+- **Promet in policija:** prvi dotik v prometu je natanko po masah (izguba avta ob avtu 1300 kg 66,3 %, ob kombiju 84,5 %, ob motorju 25,2 %); beg pred policijo: odboj 0,05, izguba 61,5 % ob patrulji 1750 kg (pričakovano 61,5), vdor le 0,05–0,12 m; `boxCollide`: brez prehoda skozi steno do 200 km/h (0 cm).
+- **Boksi, gume, zrak:** omejevalnik 80 km/h in duhovi so zanesljivi (0 trkov, 0 škode in 4 postanki v 300 s z vsemi 13 avti v stezi na Spa); predrta guma sledi pravilu (4 / 26 / 24 / 23 % pri 12 / 15 / 20 / 27,8 m/s; pravilo 5 / 20 / 25 / 25 %); vrtenje v zraku ugasne (34 → 2,5 °/s v 0,66 s), pristanek je stabilen (brez poskakovanja in zasuka nosu); prevračanje je privzeto izklopljeno in ponovljivo (brez naključnih števil).
+- **»Samo videz« in cena:** pri običajnih avtih škoda vožnje ne spremeni (rally pri 100 % škode 209,4 km/h in 2,38 g kot cel avto); pri 12 avtih stanejo trki 13–16 µs za 66 parov in 12–26 µs za zidove na korak, široka faza zmanjša 4.950 možnih parov (100 avtov) na povprečno 64; skripte so ponovljive (dva zagona dasta isti izpis).
+
+## Omejitve in odprta vprašanja
+
+**Ni izmerjeno:**
+
+- **Podlaga in hitrost:** samo suh asfalt na ravnem (mokro, trava, makadam, klanec in nagib ne); avto–avto pri 60, 120 in 200 km/h, hitrosti pod 60 km/h (gneča v šikani, pragova 4 in 10 m/s) ne; avto med avtom in ograjo ter avto v zraku ali na strehi ne.
+- **Vožnja po trku:** vnosi po trku so stalni (brez pedal ali plin, ki drži hitrost); kaj po trku med avti naredi tekmec na pravi progi, ni merjeno (po trku ob ograjo je: ne obtiči).
+- **Različice:** 2–5 samo s posameznimi vrsticami; nova fizika po različicah samo v tabeli ohranitve; vrstice s prikolico so odvisne od različice (`KC.glT`), zato je izhodišče za novo različico treba izmeriti posebej.
+- **Brskalnik in telefon:** nova mapa (`js/newmap.js`, `js/nvwalls.js`) ni v jedru in ni merjena; odmik narisane ograje je iz kode risanja; kamera, zvok in iskre niso ocenjeni; časi koraka so iz Node (šum do ±50 %), ne s telefona.
+- **Splet:** ravnina in dve dirki na Spa; izguba paketov, nihanje zakasnitve, velika mreža in razlika škode med telefonoma niso merjeni.
+- **Ograja:** stranske ceste, nasprotni pas in meje pasu v boksih so samo prebrani v kodi; rob prepada, otok krožišča in konca odprte ceste so merjeni samo na preizkusni cesti (Spa in Bathurst jih nimata); pameten voznik po ograji ni merjen (že grob je v ostrih ovinkih hitrejši, vrstica 13); matrika `zid.js` teče brez odpadlih kosov, zato vrstice s škodo nad ~50 % precenijo hitrost po trku do 31 km/h (faza 2: prek `Race.step`).
+- **Predmeti:** kje in koliko predmetov stoji na progi, določi graditelj sveta v brskalniku (v jedru so samo table zavorne razdalje); merilčevi zadetki so v sredino in 0,6 m iz nje (povprečje po širini je dodal preverjalec); pešec je merjen samo stoječ; hlodi, bodice in zapore pri begu pred policijo so samo prebrani v kodi.
+- **Zrak:** pristanek je merjen s klasično fiziko (pri novi je koda ista, a ni izmerjena); prevračanje samo kot vklopljena možnost, pogostost iz 5 dirk po 90 s.
+
+**Zanesljivost:**
+
+- Pričakovane vrednosti so ocene iz odprte literature in sunkovnega modela; vrstice »učbeniško«, »iz spomina« in »lasten izračun« v Ciljih niso potrjene z izvirnikom.
+- Brez neodvisne meritve preverjalca (samo koda ali ponovni zagon merilčeve skripte) so vrstice 30, 32, 33, 38, 39, 40 in 41; pri vrstici 3 miška pod kamnom, pri 19 čelni trk 1 m iz sredine v vlačilec, pri 8 prizor »v bok stoječega«, pri 7 bočni pospešek po pristanku.
+- Osem novih najdb preverjalcev (v vrsticah 1, 2, 7, 8, 11, 13, 42 in 43) ni ponovil nihče drug; njihove skripte so v `tools/trki/preverjanje/` (nepregledane).
+- Posamezna vrstica dotika v zadnji bok ni ponovljiva številka, ampak vzorec (0,1 m drugačna začetna reža premakne izid, vrstica 10); pri 60 km/h je število korakov stika lahkih predmetov kaotično (odstotki ±20 %, pri 120 in 200 km/h ±10 %).
+
+**Vprašanja, ki so res uporabnikova:**
+
+1. Pristanek po skoku (vrstica 7) in težnost 14 m/s² (vrstica 31): ali štejeta med trke, ki jih nova različica sme spremeniti, ali med fiziko vožnje, ki se po odločitvi 9. 11. 2026 ob ~23.05 ne spreminja?
+2. Dirka s prijatelji (vrstica 8): ali nova različica velja tudi tam (zdaj vedno Simulacija) in ali popravek spletnega trka (dogodek trka med telefonoma) sodi v to temo?
+3. Koliko realizma pri zasuku igralčevega avta: naj ga zadetek v nos zavrti (vrstica 3) in vrtenje stane toliko kot v resnici (vrstica 12), ali naj ostane omiljeno zaradi igralnosti (hitra poravnava, tekmeci zdrs ujamejo, štart z veliko avti)?
+4. Ali sme nova različica spremeniti promet, kolesarja, pešca in beg pred policijo (2. 11. 2026 so ostali, kot so; vrstici 39 in 40)?
+5. Poškodbe (škoda po masi, vrstica 17; krilo pri »Samo videz«, 32; vodljivost pri »Vklop«, 41): v tej temi ali v paketu P (biketraveler)?
+6. Prevračanje (vrstica 35): ali ga sme nova različica vezati na oviro in bočno hitrost (pravilo »vsakič deseti« ostane)?
+7. Ograja in svetovna lestvica: ko vožnja po ograji ne bo več hitrejša (vrstica 13), se časi s stikom spremenijo; ali naj lestvica loči različico trkov?
+8. Stožci in bale (vrstica 1): ali naj stanejo le toliko kot v resnici (stožec pod 1 %, bala 1–3 %), čeprav potem niso več kazen za preširoko linijo?
+9. Ime različice: »Realistična«, »Fizikalna« ali »Resnični trk« (Okvir).
+10. Ali se popravka za novo fiziko (vrstici 15 in 27) sploh delata, ko uporabnik ostaja pri klasični?
