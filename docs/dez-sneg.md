@@ -1,6 +1,6 @@
 # Dež in sneg: oprijem in zavore
 
-Načrt teme: fizika za vse proge, svoja seja (Opus, napor max; `CLAUDE.md`, Seje). Vprašanje `dez-sneg-oprijem` na strani Odločitve 1 je zastavila seja »AI po tvoji liniji« (#305), ki je tudi primerjala igro z resničnostjo in drugimi igrami (spodaj).
+Načrt teme: fizika za vse proge, svoja seja (biketraveler, Fable 5.2, ena seja brez delovnih tokov z več agenti; `CLAUDE.md`, Seje). Vprašanje `dez-sneg-oprijem` na strani Odločitve 1 je zastavila seja »AI po tvoji liniji« (#305), ki je tudi primerjala igro z resničnostjo in drugimi igrami (spodaj).
 
 ## Odločitev uporabnika (5. 11. 2026)
 - Opažanje: »obcutek imam da dez in sneg premalo drsita za razliko od soncne«.
@@ -42,3 +42,4 @@ Načrt teme: fizika za vse proge, svoja seja (Opus, napor max; `CLAUDE.md`, Seje
 
 ## Stanje
 - 5. 11. 2026: odločitev zapisana, tema v `docs/vrsta.md` (»Načrtovano«); dela še ni.
+- 11. 11. 2026: delo začeto (biketraveler, veja `fizika/dez-sneg`, osnutek PR z oznako `predogled`); na `main` šele po uporabnikovem »ok« na predogledu.
