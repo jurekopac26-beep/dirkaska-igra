@@ -150,7 +150,8 @@ async function pageInit(o) {
   const K = window.__k4 = { n: 0, drawn: 0, thr, t0: R.time, sums, ev: { rob: -1, padec: -1, dotik: -1, konec_padca: -1, vrnjen: -1, ograja: -1 }, yRob: null, put0: R.putT ? R.putT.get(P) : undefined, trace: [], ext: {} };
   const m = () => {
     const q = T.query(P.x, P.z, P.q.i, qq), cam = Render.camera.position, vw = Render.viewOf(P), msg = document.getElementById('h-msg');
-    const tla = T.floor && T.floorAt(P.x, P.z, fo) ? fo.h : null, ter = gH(P.x, P.z), camT = gH(cam.x, cam.z), y = P.y || 0;
+    const Bd = P.fall && P.fall.b, hx = Bd ? Bd.x : P.x, hz = Bd ? Bd.z : P.z;                 // a body (c.fall.b): its heights over the ground are its centre of mass's
+    const tla = T.floor && T.floorAt(hx, hz, fo) ? fo.h : null, ter = gH(hx, hz), camT = gH(cam.x, cam.z), y = P.y || 0, yT = Bd ? Bd.y : y;
     const p = new V3(P.x, y + 0.7, P.z).project(Render.camera), inView = Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1 && p.z < 1;
     const top = los(cam.x, cam.y, cam.z, P.x, y + 1.3, P.z), low = los(cam.x, cam.y, cam.z, P.x, y + 0.25, P.z);
     // the body as drawn, whatever turns it (its group's own matrix): the nose's and the right side's angle over the level, the roof's angle off the vertical
@@ -158,8 +159,8 @@ async function pageInit(o) {
     const att = e ? [r1(ang(e[0], e[1], e[2])), r1(ang(e[8], e[9], e[10])), r1(90 - ang(e[4], e[5], e[6]))] : null;
     return { n: K.n, t: r3(K.n * STEP), cas_dirke: r3(R.time), x: r3(P.x), y: r3(y), z: r3(P.z), smer: r1(sg * wrap(P.h - O.hd) / RAD), kmh: r1(Math.hypot(P.vx, P.vz) * 3.6), vy: r3(P.vy || 0), w: r3(sg * (P.w || 0)),
       cez_rob: r3(sd > 0 ? q.d - q.br : -q.d - q.bl), s: r3(q.s), pod_robom: K.yRob == null ? null : r3(K.yRob - y), visina_ceste: r3(T.hy ? T.hy[q.i] : 0),
-      tla: r3(tla), nad_tlemi: tla == null ? null : r3(y - tla), teren: r3(ter), nad_terenom: ter == null ? null : r3(y - ter),
-      pada: P.fall ? (Number.isFinite(P.fall.t) ? r3(P.fall.t) : 0) : null, dotik: !!(P.fall && P.fall.land), zrak: P.air ? 1 : 0, prevracanje: !!P.rl, skoda: r3(P.dmg || 0), padci: (P.falls || 0) - falls0, predalec: (P.offN || 0) - off0, razbitih: R.fence ? R.fence.n - f0 : 0,
+      tla: r3(tla), nad_tlemi: tla == null ? null : r3(yT - tla), teren: r3(ter), nad_terenom: ter == null ? null : r3(yT - ter),
+      pada: P.fall ? (Number.isFinite(P.fall.t) ? r3(P.fall.t) : 0) : null, dotik: !!(P.fall && (P.fall.b ? P.fall.b.nc > 0 : P.fall.land)), telo: !!(P.fall && P.fall.b), zrak: P.air ? 1 : 0, prevracanje: !!P.rl, skoda: r3(P.dmg || 0), padci: (P.falls || 0) - falls0, predalec: (P.offN || 0) - off0, razbitih: R.fence ? R.fence.n - f0 : 0,
       kam: [r3(cam.x), r3(cam.y), r3(cam.z)], kam_nad_terenom: camT == null ? null : r3(cam.y - camT), kam_nad_avtom: r3(cam.y - y), kam_do_avta: r3(Math.hypot(cam.x - P.x, cam.y - y, cam.z - P.z)),
       kam_kot: r1(sg * wrap(Math.atan2(P.z - cam.z, P.x - cam.x) - O.hd) / RAD), v_kadru: inView, zaslon: [r3(p.x), r3(p.y)], zakrit_streha: r3(top), zakrit_kolesa: r3(low),
       narisan: !!(vw && vw.grp && vw.grp.visible), nos_gor: att ? att[0] : null, bok_gor: att ? att[1] : null, nagnjen: att ? att[2] : null, nagib_naprej: vw && vw.grp ? r1((vw.grp.rotation.z + (vw.bodyG ? vw.bodyG.rotation.z : 0)) / RAD) : null, nagib_vstran: vw && vw.grp ? r1((vw.grp.rotation.x + (vw.bodyG ? vw.bodyG.rotation.x : 0)) / RAD) : null,
@@ -174,15 +175,15 @@ async function pageInit(o) {
     const q = T.query(P.x, P.z, P.q.i, qq), ex = sd > 0 ? q.d - q.br : -q.d - q.bl, E2 = K.ev;
     if (E2.rob < 0 && ex > 0) { E2.rob = K.n; K.yRob = P.y || 0; }
     if (E2.padec < 0 && P.fall) E2.padec = K.n;
-    if (E2.dotik < 0 && P.fall && P.fall.land) E2.dotik = K.n;
+    if (E2.dotik < 0 && P.fall && (P.fall.b ? P.fall.b.hn > 0 : P.fall.land)) E2.dotik = K.n;   // a body (c.fall.b): its first knock
     if (E2.padec >= 0 && E2.konec_padca < 0 && !P.fall) E2.konec_padca = K.n;
     if (E2.vrnjen < 0 && ((R.putT && R.putT.get(P) !== K.put0) || (E2.rob >= 0 && Math.hypot(P.x - x0, P.z - z0) > 3))) E2.vrnjen = K.n;   // (put somewhere else at once: Race.putBack's mark, or a jump of over 3 m in a step)
     if (E2.ograja < 0 && R.fence && R.fence.n > f0) E2.ograja = K.n;
     if (E2.ograja === K.n) sums.do_ograje = hex(); if (E2.rob === K.n) sums.do_roba = hex(); if (E2.vrnjen === K.n) sums.do_vrnitve = hex();   // (the steps before that one)
     mix();
-    if (E2.rob >= 0 && E2.vrnjen < 0) { const X = K.ext, y = P.y || 0, tla = T.floor && T.floorAt(P.x, P.z, fo) ? fo.h : null, ter = gH(P.x, P.z);
-      X.najglobje = Math.max(X.najglobje == null ? -1e9 : X.najglobje, K.yRob - y); if (tla != null) X.najmanj_nad_tlemi = Math.min(X.najmanj_nad_tlemi == null ? 1e9 : X.najmanj_nad_tlemi, y - tla);
-      if (ter != null) X.najmanj_nad_terenom = Math.min(X.najmanj_nad_terenom == null ? 1e9 : X.najmanj_nad_terenom, y - ter); X.najdlje_cez_rob = Math.max(X.najdlje_cez_rob == null ? -1e9 : X.najdlje_cez_rob, ex);
+    if (E2.rob >= 0 && E2.vrnjen < 0) { const X = K.ext, y = P.y || 0, Bd = P.fall && P.fall.b, hx = Bd ? Bd.x : P.x, hz = Bd ? Bd.z : P.z, yT = Bd ? Bd.y : y, tla = T.floor && T.floorAt(hx, hz, fo) ? fo.h : null, ter = gH(hx, hz);
+      X.najglobje = Math.max(X.najglobje == null ? -1e9 : X.najglobje, K.yRob - y); if (tla != null) X.najmanj_nad_tlemi = Math.min(X.najmanj_nad_tlemi == null ? 1e9 : X.najmanj_nad_tlemi, yT - tla);
+      if (ter != null) X.najmanj_nad_terenom = Math.min(X.najmanj_nad_terenom == null ? 1e9 : X.najmanj_nad_terenom, yT - ter); X.najdlje_cez_rob = Math.max(X.najdlje_cez_rob == null ? -1e9 : X.najdlje_cez_rob, ex);
       X.najvec_vy_gor = Math.max(X.najvec_vy_gor == null ? -1e9 : X.najvec_vy_gor, P.vy || 0); }
   };
   // on to step `to` (a frame of the game after every second step: 60 a second), the frame at `to` really drawn if asked; that frame's numbers
@@ -279,9 +280,9 @@ try {
   const E = rep.ev, rel = (n) => (n < 0 ? null : +((n - n0) * STEP).toFixed(4));
   // the caption under a frame: the game time against the edge, the race's clock, the state as measured
   const state = (f) => {
-    const st = f.pada != null ? (f.dotik ? 'na pobočju' : 'pada') : E.vrnjen >= 0 && f.n >= E.vrnjen ? 'vrnjen na cesto' : f.cez_rob > 0 ? 'čez rob' : 'na cesti';
+    const st = f.pada != null ? (f.telo ? (f.dotik ? 'pada · na tleh' : 'pada · v zraku') : f.dotik ? 'na pobočju' : 'pada') : E.vrnjen >= 0 && f.n >= E.vrnjen ? 'vrnjen na cesto' : f.cez_rob > 0 ? 'čez rob' : 'na cesti';
     const bits = [st, sl(f.kmh) + ' km/h'];
-    if (f.pod_robom != null && (f.pada != null || f.cez_rob > 0) && !(E.vrnjen >= 0 && f.n >= E.vrnjen)) { bits.push(sl(f.pod_robom, 1) + ' m pod robom'); if (f.nad_terenom != null) bits.push(f.nad_terenom >= 0 ? sl(f.nad_terenom, 1) + ' m nad terenom' : sl(-f.nad_terenom, 1) + ' m POD terenom'); }
+    if (f.pod_robom != null && (f.pada != null || f.cez_rob > 0) && !(E.vrnjen >= 0 && f.n >= E.vrnjen)) { bits.push(sl(f.pod_robom, 1) + ' m pod robom'); if (f.nad_terenom != null) bits.push((f.telo ? 'težišče ' : '') + (f.nad_terenom >= 0 ? sl(f.nad_terenom, 1) + ' m nad terenom' : sl(-f.nad_terenom, 1) + ' m POD terenom')); }
     if (f.napis) bits.push('»' + f.napis + '«');
     if (!f.v_kadru) bits.push('avto zunaj slike'); else if (f.zakrit_streha > 0) bits.push('avto za terenom');
     return bits.join(' · ');
@@ -290,7 +291,7 @@ try {
   const I = B.init, head = `${I.proga} · ${m} m po štartu · čez ${stran > 0 ? 'desni' : 'levi'} rob pri ${sl(kmh)} km/h pod ${sl(kot)}° · ${oznaka}`;
   const sub = `kamera za avtom, ${VW} × ${VH} · ${I.avto.ime} · rob: sredina avta čez črto roba (${sl(I.kje.rob_od_roba_ceste, 1)} m za robom ceste)` + (git ? ' · ' + git.split(' ')[0] : '');
   const foot = `Koraki po 1/120 s, do roba plin, ki drži hitrost, brez volana; po robu ${poRobu === 'nic' ? 'brez pedal' : poRobu}. ` +
-    `Padec ${E.padec >= 0 ? sl(rel(E.padec), 2) + ' s' : 'ni zaznan'}, dotik pobočja ${E.dotik >= 0 ? sl(rel(E.dotik), 2) + ' s' : 'ga ni'}, vrnjen na cesto ${E.vrnjen >= 0 ? sl(rel(E.vrnjen), 2) + ' s' : 'ne'} po robu; najgloblje ${rep.ekstremi.najglobje != null ? sl(rep.ekstremi.najglobje, 1) : '?'} m pod robom.`;
+    `Padec ${E.padec >= 0 ? sl(rel(E.padec), 2) + ' s' : 'ni zaznan'}, ${frames.some(f => f.telo) ? 'prvi udarec ob tla' : 'dotik pobočja'} ${E.dotik >= 0 ? sl(rel(E.dotik), 2) + ' s' : 'ga ni'}, vrnjen na cesto ${E.vrnjen >= 0 ? sl(rel(E.vrnjen), 2) + ' s' : 'ne'} po robu; najgloblje ${rep.ekstremi.najglobje != null ? sl(rep.ekstremi.najglobje, 1) : '?'} m pod robom.`;
   const sheet = await compose(browser, tiles, head, sub, foot, path.join(out, ime + '.webp'), VW / VH);
   // the same frames cut out round the car (the car is small from the camera behind it): IZ x IZ*5/8 pixels of the frame, the car in the middle
   const IZ = Math.min(VW, Math.round(VW * 0.3)), IH = Math.round(IZ * 5 / 8), cut = (f) => { const cx = (f.zaslon[0] + 1) / 2 * VW, cy = (1 - f.zaslon[1]) / 2 * VH; return [Math.round(Math.max(0, Math.min(VW - IZ, cx - IZ / 2))), Math.round(Math.max(0, Math.min(VH - IH, cy - IH / 2))), IZ, IH]; };
