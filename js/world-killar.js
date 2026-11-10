@@ -430,7 +430,12 @@
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.9; return [k, k, k * 1.02]; };
+      // Killar's undulation (def.roadBase: the road without its crests and dips, js/tracks/killar.js): the road's normals face up, so the light
+      // does not see them; shaded by their own height b and slope b' along the road instead (k x clamp(1 - 7 b' + 0.2 b, 0.5, 1.35): the
+      // face that rises ahead darker, the one that falls away lighter), a crest or a dip 35-45 m ahead a clear band from the chase camera
+      const UB = def.roadBase && def.roadBase.length === N ? def.roadBase : null, ub = (j) => T.hy[j] - UB[j];
+      const uk = UB ? Float32Array.from({ length: N }, (_, i) => { const a = Math.max(0, i - 1), b = Math.min(N - 1, i + 1); return clamp(1 - 7 * (ub(b) - ub(a)) / ((b - a) * T.ds) + 0.2 * ub(i), 0.5, 1.35); }) : null;
+      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.9; if (uk) k *= uk[i]; return [k, k, k * 1.02]; };
       const wht = [0.95, 0.95, 0.92], ylw = [0.95, 0.74, 0.14], gc = [0.7, 0.65, 0.58], deck = [0.62, 0.61, 0.58], conc = [0.6, 0.59, 0.56], rockL = [0.5, 0.46, 0.42];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
@@ -645,12 +650,13 @@
         // start, now broken where the turnout's cars stand at 1150 m); its foot where the car meets the rock (Track.rock), elsewhere at the foot of the slope 3 m beyond the 10 m rule's reach (a car
         // is put back before it gets there: none drives through it), eased along the road outward only (never nearer the road than the rock or
         // that reach: where the rock comes nearer, the net stays behind it on the cut)
-        const reach = T.w + T.unf[0] + 3, runs = []; let rn = [], tot = 0;
+        // (the ground over the road measured from the road without its crests and dips, def.roadBase: the nets stay where they were before them)
+        const reach = T.w + T.unf[0] + 3, runs = [], hb = def.roadBase && def.roadBase.length === N ? def.roadBase : T.hy; let rn = [], tot = 0;
         const fl = () => { if (rn.length >= 5 && tot < 520) { runs.push(rn); tot += (rn.length - 1) * step; } rn = []; };
         for (let d = 60; d < 4900; d += step) {
           if (busy(d)) { fl(); continue; }
           const i = T.idx(sStart + d); let best = null;
-          for (const sd of [-1, 1]) { const e = sd > 0 ? T.br[i] : T.bl[i], at = (o) => vrFar(T.px[i] + T.nx[i] * sd * (e + o), T.pz[i] + T.nz[i] * sd * (e + o)) - T.hy[i];
+          for (const sd of [-1, 1]) { const e = sd > 0 ? T.br[i] : T.bl[i], at = (o) => vrFar(T.px[i] + T.nx[i] * sd * (e + o), T.pz[i] + T.nz[i] * sd * (e + o)) - hb[i];
             const r16 = at(16); if (at(6) > 2 && r16 > 10 && (!best || r16 > best.r)) best = { sd, e, r: r16 }; }
           if (!best || (rn.length && rn[0].sd !== best.sd)) { fl(); if (!best) continue; }
           const o = best.sd * (best.e + 3.4), n = vrNear(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o);

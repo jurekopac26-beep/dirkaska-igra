@@ -1,7 +1,8 @@
 // Killar (India, Himachal Pradesh): an open road with three ways to drive it on one card (def.modes: the race against 21 rivals, the time
 // trial and the duel in the traffic; a single lane of gravel, so the grid's two columns stand closer together). The road: the real line from the village of Killar along the cliff above the
-// Chenab, into the side valley of the Hangrung Nala and over its bridge, 4.4 km in its real scale, nearly level (~2,400 m), no steeper than
-// ~8.5 %; gravel all the way (def.roadSurface). No barriers but a wooden fence on the left (def.unfenced, def.fence, the user's decisions of
+// Chenab, into the side valley of the Hangrung Nala and over its bridge, 4.4 km in its real scale, nearly level (~2,400 m), its surveyed
+// profile no steeper than ~8.5 %, undulating (KILLAR_RAZGIBANOST, tools/killar-cesta.mjs: crests the co-driver calls, the stock rally car on the
+// autopilot flies ~0.35 s over each and lands softly, and silent dips; at 0 the road as surveyed, bit for bit); gravel all the way (def.roadSurface). No barriers but a wooden fence on the left (def.unfenced, def.fence, the user's decisions of
 // 9. 11. 2026), brittle as the delineators (~22.21): any touch breaks a panel or a few (they stay broken to the race's end), the car not
 // thrown back and barely slowed, and a car whose middle goes through it past the edge of a drop above the river (def.drops: right past the narrow shoulder) or off the bridge's deck
 // falls (Race._fall), fast or at a crawl, onto the slope drawn below (def.floor: it lands and slides on it, never sinks into it, and is soon
@@ -28,10 +29,29 @@ check('track: an open road with three ways to drive it (def.modes: race, time tr
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
 check('track: named "Killar, Indija" ("Killar, India" in English), a real place (no test track)', def.name === 'Killar, Indija' && def.en && def.en.name === 'Killar, India' && !def.test);
 {
-  let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, T.grade[i]);
-  check('track: from Killar (~2,400 m) 4.4 km along the cliff (the real length), nearly level, nowhere steeper than ~8.5 %',
+  const B = def.roadBase || T.hy;   // (the surveyed profile: without the undulation's crests and dips)
+  let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, (B[i + 1] - B[i - 1]) / (2 * T.ds));
+  check('track: from Killar (~2,400 m) 4.4 km along the cliff (the real length), nearly level, its surveyed profile nowhere steeper than ~8.5 %',
     Math.abs(def.alt[0] - 2402) < 10 && Math.abs(def.alt[1] - 2412) < 10 && T.raceLen > 4300 && T.raceLen < 4500 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 2 && gmax < 0.09,
     `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m, steepest ${(gmax * 100).toFixed(1)} %`);
+}
+// 1b. the undulation (KILLAR_RAZGIBANOST, the line KILLAR_UND in js/tracks/killar.js, tools/killar-cesta.mjs; the user's wish of 9. 11. 2026 at
+//     ~22.23): laid on the surveyed road (def.roadBase is the road Track builds at 0, to 5 mm: KILLAR_UND's samples, length and start line are
+//     the track's), 8-10 crests the co-driver calls (def.bumps) at least 100 m apart and silent dips between them, nothing of it at the start,
+//     the finish, the checkpoints and on the bridge; at 0 the def as before (elevSmooth 20, no crests, no roadBase)
+{
+  const { coreSource } = require('./lib/core.js'), src = coreSource(), re = /const KILLAR_RAZGIBANOST = ([\d.]+);/, K = +(src.match(re) || [0, 0])[1];
+  const m = { exports: {} }, C0 = new Function('module', 'exports', 'require', src.replace(re, 'const KILLAR_RAZGIBANOST = 0;') + '\n;return Core;')(m, m.exports, require);
+  const d0 = C0.TRACKS.find(d => d.id === 'killar'), T0 = new C0.Track(d0), B = def.roadBase || [], bu = def.bumps || [], S0 = T.startS;
+  let emu = 0, lo = 0, hi = 0, quiet = 0;
+  for (let i = 0; i < T.N; i++) { const u = T.hy[i] - B[i], s = i * T.ds; emu = Math.max(emu, Math.abs(B[i] - T0.hy[i])); lo = Math.min(lo, u); hi = Math.max(hi, u);
+    if (s < S0 + 45 || s > T.finishS - 20 || T.cpS.some(c => Math.abs(s - c) < 8) || (def.bridges || []).some(([a, b]) => s > S0 + a - 10 && s < S0 + b + 10)) quiet = Math.max(quiet, Math.abs(u)); }
+  const at = bu.map(b => b.at * T.len).sort((a, b) => a - b);
+  check('track: undulating (KILLAR_RAZGIBANOST > 0): 8-10 crests 100 m apart or more, 0.5-1.2 m at 1, dips down to 0.6 m; laid on the surveyed road; none at the start, the finish, the checkpoints, the bridge; at 0 the road as before',
+    K > 0 && d0.elevSmooth === 20 && !d0.bumps && !d0.roadBase && def.elevSmooth === 2 && B.length === T.N && T0.N === T.N && emu < 0.005 && bu.length >= 8 && bu.length <= 10 &&
+    bu.every(b => b.h >= 0.5 * K && b.h <= 1.2 * K && b.w >= 6 && b.w <= 10) && at.every((s, i) => s > S0 + 150 && s < T.finishS - 100 && (!i || s - at[i - 1] >= 99.9)) && lo > -0.6 * K && hi < 1.2 * K && quiet < 0.02,
+    `KILLAR_RAZGIBANOST ${K}: ${bu.length} crests at ${at.map(s => Math.round(s - S0)).join(', ')} m (${bu.map(b => b.h).join(', ')} m), the road ${lo.toFixed(2)} to +${hi.toFixed(2)} m off the surveyed one, `
+    + `in the quiet places ${(quiet * 1000).toFixed(1)} mm; roadBase from the road at 0 ${(emu * 1000).toFixed(1)} mm`);
 }
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('killar'));
 check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrung Nala, the finish)',
@@ -196,8 +216,13 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
   Math.random = seeded(3);
   const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player; r.start();
-  let t = 0, k = 0; while (!P.finished && t < 600) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+  const fl = []; let t = 0, k = 0, a0 = false, ta = 0, vy = 0;
+  while (!P.finished && t < 600) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
+    if (P.air && !a0) ta = t; if (!P.air && a0) { fl.push(t - ta); vy = Math.min(vy, P.impactVY || 0); } a0 = P.air; }
   Math.random = orig;
+  const fly = fl.filter(x => x > 0.1), nb = (def.bumps || []).length;
+  check('the undulation on the autopilot: the stock rally car flies over each crest (0.2-0.5 s), lands softly and never falls', fly.length === nb && fly.every(x => x > 0.2 && x < 0.5) && vy > -8 && !(P.falls || 0),
+    `${fly.length} flights over 0.1 s (${nb} crests): ${fly.map(x => x.toFixed(2)).join(', ')} s, the hardest landing ${vy.toFixed(1)} m/s, falls ${P.falls || 0}`);
   check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && P.finished && Math.abs(P.finishTime * 1.01 - M.cs[0]) < 1.5,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
 }
