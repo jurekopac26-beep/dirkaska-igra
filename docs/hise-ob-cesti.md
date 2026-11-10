@@ -68,6 +68,28 @@ Na najbolj pozidanih mestih proge je to največ +7 klicev risanja in +29 tisoč 
 - Podrobnosti po razdalji od ceste: balkoni, napušči in grebeni do 42 m, dvorišča do 22 m.
 - Viri: tlorisi hiš iz OpenStreetMap, ki so že v podatkih proge (ODbL). Tekstura je risana, brez fotografij, imen, napisov in logotipov. Nič iz Google Maps, Google Earth ali Street View.
 
+## Vse izbrane proge: kje hiše ob cesti so (pregled 10. 11. 2026)
+Prošnja uporabnika »Izboljsaj grafiko his in okolice na vseh izbranih progah« je izvedba paketa S · Stavbe (`docs/realizem.md`; `docs/vrsta.md`, »Načrtovano«: na `main` za paketom E, po tedenskem načrtu). Ta seja je dala graditelj, podatke Livorna in slike; preostale proge niso začete (poraba računa partyslo je 10. 11. nad ciljem: tekoče seje dokončajo, novih ni; tabla #382, komentar 6757283997). Štetje: središče stavbe do 22, 42 in 60 m od sredine ceste (kamera vidi ~60 m ob cesti).
+
+| Prava proga | Stavb v podatkih | do 22 m | do 42 m | do 60 m | Stanje in kaj potrebuje |
+|---|---|---|---|---|---|
+| Livorno, Italija | 1.469 | 288 tik ob cesti | | | prototip z vsem (razdelek zgoraj) |
+| Medvode, Slovenija | 1.936 | 64 | 256 | 429 | hiše že imajo obliko tlorisa, okna in vrata (lasten atlas), pločnike in stranske ceste; manjkajo ograje, dvorišča, poti do vhoda in strehe s strešniki |
+| Harju, Finska | lastni podatki (Overture) | | | | hiše že imajo obliko tlorisa in okna po nadstropjih; po prihodu Kolija gre v test |
+| Spa, Belgija | 169 | 4 | 49 | 88 | prototip (`?hise=3`); manjkajo prave oblike in ulice (podatki kot `LV_DATA.hise`), kamnite stene |
+| Los Caracoles, Čile | 139 | 11 | 22 | 29 | hotel, koče in hiše osebja z lastnim videzom; priklop graditelja s slogom za gore |
+| Bâlea, Romunija | 48 | 14 | 22 | 25 | koče in kioski ob jezeru; priklop graditelja s slogom za gore |
+| Chapman's Peak, Južna Afrika | 186 | 6 | 18 | 25 | prototip (`?hise=3`); slama še nima svojega pasu v teksturi |
+| Katu, Rusija | 61 | 2 | 6 | 16 | jurte, brunarice in kioski: ostanejo po meri (graditelj ne ustreza) |
+| Nürburg, Nemčija | 128 | 2 | 8 | 16 | prototip (`?hise=3`) |
+| Rio do Rastro, Brazilija | 62 | 3 | 5 | 6 | kioski in hale pri razgledišču, hiše na planoti; malo ob cesti |
+| Tianmen, Kitajska | 12 | 0 | 2 | 3 | paviljoni na vrhu: ostanejo po meri |
+| Montréal, Kanada | lastni podatki (obrisi OSM) | | | | paviljoni in stavbe otoka z obrisi in višinami; fasade po meri |
+| Štajerska, Avstrija; Bathurst, Avstralija | kmetije | | | | kmetije so 120–420 m od proge, zunaj pasu 60 m: podrobnosti ne bi bile vidne |
+| Pikes Peak, ZDA (asfalt in makadam) | lastne stavbe | | | | hiša na vrhu in redke koče po meri |
+
+Predlog vrstnega reda za izvedbo (največ hiš ob cesti najprej): Livorno → Medvode → Spa → Los Caracoles in Bâlea → Chapman's Peak in Nürburg; Katu, Tianmen, Montréal, Pikes Peak, Štajerska in Bathurst ostanejo pri stavbah po meri. Suzuka in Irohazaka sta zamrznjeni (gresta v test), zato izpadeta iz S1.
+
 ## Kaj manjka do prave izvedbe
 - **Druge prave proge s hišami** (prošnja uporabnika »Izboljsaj grafiko his in okolice na vseh izbranih progah«): priklop kot na Spaju (en klic `setup`), slog po pokrajini; prave oblike, ulice in pločniki potrebujejo podatke proge kot `LV_DATA.hise` (orodje `tools/livorno/hise.py` je napisano za Livorno; za druge proge ga je treba posplošiti ob `tools/proga-podatki.py`). Kamnite stene (Ardeni) in slama (Cape) še nimajo svojega pasu v teksturi.
 - Livorno: vrtovi in trate iz OSM (`leisure=garden`, `landuse=grass`), parkirišča, enokapne strehe prizidkov; pločnik je samo videz (brez robnika v fiziki).
