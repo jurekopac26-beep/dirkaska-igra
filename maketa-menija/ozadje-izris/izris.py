@@ -300,11 +300,12 @@ def terrain():
     def field(sig, sh=None):
         n = ndimage.gaussian_filter(RNG.normal(0, 1, sh or Zabs.shape), sig); return n / (n.std() + 1e-9)
     n1, n2, n3 = field(1.5), field(6), field(0.8)
-    fc = CFG.get('forest_cover', 0.0)  # where the DSM misses the canopy: forest in patches below the tree line
-    if fc: fo0 = np.maximum(fo0, fc * sstep(-0.5, 0.4, n2) * (1 - sstep(CFG['treeline'] - 150, CFG['treeline'] + 50, G)))
+    fc = CFG.get('forest_cover', 0.0)  # where the DSM misses the canopy: forest in patches below the tree line ([amount, from, to] of the noise)
+    fa, f0, f1 = (fc, -0.5, 0.4) if isinstance(fc, (int, float)) else fc
+    if fa: fo0 = np.maximum(fo0, fa * sstep(f0, f1, n2) * (1 - sstep(CFG['treeline'] - 150, CFG['treeline'] + 50, G)))
     e = G
     tl = CFG['treeline']
-    green1, green2 = np.array(lin([0.36, 0.47, 0.18])), np.array(lin([0.52, 0.55, 0.26]))
+    green1, green2 = (np.array(lin(c)) for c in CFG.get('meadow', ([0.36, 0.47, 0.18], [0.52, 0.55, 0.26])))
     meadow = green1 + (green2 - green1) * sstep(-1, 1.2, n2)[..., None]
     if CFG.get('fields'):
         fm = sstep(0.4, 0.9, n1) * (1 - sstep(tl - 600, tl - 300, e))
