@@ -6434,6 +6434,206 @@ const Core = (function () {
     for (let j = 0; j < n; j++) { let s = 0, m = 0; for (let d = -2; d <= 2; d++) { let q = j + d; if (T.open) { if (q < 0 || q >= n) continue; } else q = (q + n) % n; s += dd[q]; m++; } sm[j] = s / m; }
     return { proga: T.def.id, vreme: S.vreme || 'suho', slog: 1, razred: null, korak: k, k0: S.k0, ks: S.ks, dd: sm, vq, pl, ql, qh, wv };
   }
+  /* ---------------------------------------------------------------------
+     A FALL OVER THE EDGE: THE CAR A RIGID BODY ON THE DRAWN GROUND (Track.floor)
+     --------------------------------------------------------------------- */
+  // The user's of 10. 11. 2026 (»Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«): on a track
+  // whose ground beyond the edge the core knows (Track.floor, def.floor: Killar; no other track has one, so every other track's fall is as it
+  // was) a car that goes over the edge (Race._fall) is a rigid body with six degrees of freedom from the step after its middle crossed the
+  // line: a hull of points (its floor at the wheels' height, the belt line, the roof) on the road's platform inside the line, on the platform's
+  // edge and on the drawn ground beyond it (Track.floorAt), under gravity, with contacts that do not bounce and Coulomb friction. It tips about
+  // the edge as its middle passes it, falls, lands, tumbles and slides down the slope and comes to rest where the slope lets it; a hard knock
+  // on the ground damages it where it struck (knock: a dent there, the roof's from above). Then it is put back on the road where it went over
+  // (Race.rescue, as ever). No random number, and all of its state inside c.fall (an object: the race's state lines hold no more than they
+  // did); a car with a semi-trailer falls as it always did (Race._fall's own lines).
+  //   g: gravity (m/s2, the real one, not JUMP_G); mu: the body's friction on the ground; muW: its wheels' along the car while it stands on
+  //   them (they roll); sub: substeps a second at least; iters: the solver's rounds; slop, push: the depth left in and the most it is pushed out
+  //   of the ground a substep (m); angD: the turning's damping (1/s); restV, restW, restT: slower than this (m/s, rad/s) for this long (s) it
+  //   lies still; hold: how long it lies before it is put back; cap: the longest fall (s); outT: how long it may fall with no ground known under
+  //   it; reach: how far beyond the line the platform still matters (m); slab: the platform's thickness (m; under it only the drawn ground: a
+  //   bridge's deck); leadW, leadA: the most turn and tilt it has from its leading wheels being over the edge before its middle (rad/s, rad);
+  //   kick: overEdge's push, taken back out (its speed across the edge, its hop, the two numbers of its spin); hitV, dmgK, dmgMax: a knock on the
+  //   ground above this speed (m/s) damages, this much a m/s over it, at most this much a fall; dmgCut: a fall cut short (no ground known under
+  //   it, or the longest fall) has done at least this much, the old fall's fixed blow: it would have gone on down; ht: the hull's height by the
+  //   body (m; 1.32 else)
+  const FALL = { g: 9.81, mu: 0.8, muW: 0.25, sub: 240, iters: 8, slop: 0.01, push: 0.25, angD: 0.05, restV: 0.4, restW: 0.6, restT: 0.4, hold: 0.8, cap: 8, outT: 0.25,
+    reach: 5, slab: 1.5, leadW: 0.8, leadA: 0.12, kick: [4.5, 1.2, 0.6, 0.9], hitV: 3, dmgK: 0.012, dmgMax: 0.5, dmgCut: 0.32,
+    ht: { formula: 0.98, lm: 1.05, wedge: 1.16, coupe: 1.28, muscle: 1.34, sedan: 1.4, rally: 1.4, hatch: 1.44, ev: 1.46, truck: 1.9 } };
+  const _fbQ = {}, _fbF = {}, _fbK = {}, _fbL = {}, _fbE = {}, _fbG = {}, _fbO = [0, 0, 0], _fbHull = new Map();
+  // the hull of a model, in the car's own axes (x forward, y up, z to the right) from its centre of mass: P its points (the first nW on its floor)
+  function fallHull(M) {
+    let G = _fbHull.get(M); if (G) return G;
+    const L = M.len, W = M.wid, H = M.ht || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || 0.5, 0.35, 0.5 * H), hl = L / 2, hw = W / 2, P = [];
+    for (const fx of [-1, -0.5, 0, 0.5, 1]) for (const fz of [-1, -0.5, 0, 0.5, 1]) P.push(fx * hl, -hc, fz * hw);   // (its floor: 25, dense enough for the platform's edge under it)
+    const yb = 0.58 * H - hc; for (const [fx, fz] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1], [1, 0], [-1, 0]]) P.push(fx * hl, yb, fz * hw);   // (the belt line: bonnet, boot, the widest part)
+    const yr = H - hc, x0 = -0.3 * L, x1 = 0.08 * L, zr = 0.36 * W; for (const [x, z] of [[x0, zr], [x0, -zr], [x1, zr], [x1, -zr], [(x0 + x1) / 2, 0]]) P.push(x, yr, z);   // (the roof)
+    G = { P: new Float64Array(P), n: P.length / 3, nW: 25, L, W, H, hc, yb }; _fbHull.set(M, G); return G;
+  }
+  // the body's axes in the world from its quaternion (B.q: x, y, z, w, as the renderer's): R, rows the world's x, y, z
+  function fallRot(B) {
+    const Q = B.q, x = Q[0], y = Q[1], z = Q[2], w = Q[3], R = B.R;
+    R[0] = 1 - 2 * (y * y + z * z); R[1] = 2 * (x * y - w * z); R[2] = 2 * (x * z + w * y);
+    R[3] = 2 * (x * y + w * z); R[4] = 1 - 2 * (x * x + z * z); R[5] = 2 * (y * z - w * x);
+    R[6] = 2 * (x * z - w * y); R[7] = 2 * (y * z + w * x); R[8] = 1 - 2 * (x * x + y * y);
+  }
+  // the world's inverse inertia times a vector, into _fbO
+  function fallInv(B, vx, vy, vz) {
+    const R = B.R, I = B.iI, a = (R[0] * vx + R[3] * vy + R[6] * vz) * I[0], b = (R[1] * vx + R[4] * vy + R[7] * vz) * I[1], c = (R[2] * vx + R[5] * vy + R[8] * vz) * I[2];
+    _fbO[0] = R[0] * a + R[1] * b + R[2] * c; _fbO[1] = R[3] * a + R[4] * b + R[5] * c; _fbO[2] = R[6] * a + R[7] * b + R[8] * c;
+  }
+  // the road's own projection at a point (Track._qMain from the nearest of the 21 samples round hint, the whole road when that is over 60 m away;
+  // no side road)
+  function fallQ(T, x, z, hint, out) {
+    const N = T.N, px = T.px, pz = T.pz, open = T.open; let bi = -1, bd = 1e18;
+    if (hint >= 0) for (let o = -10; o <= 10; o++) { const i = open ? hint + o : (hint + o + N) % N; if (open && (i < 0 || i >= N)) continue; const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    if (bi < 0 || bd > 3600) for (let i = 0; i < N; i++) { const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    return T._qMain(x, z, bi, out);
+  }
+  // the body of a car that has just gone over the edge (the first step of its fall): where and how it was moving when its middle crossed the line
+  // (overEdge's push taken back out, unless F.raw says there was none), standing on the road as it slopes there (its grade along, its tilt across:
+  // as the car is drawn on it), with the turn and the tilt it has from its leading wheels having been over the edge already (free about the wheels
+  // still on the road for the time its middle took to reach the line, capped: its floor would have sat down on the edge). B, the renderer's too:
+  // x, y, z its centre of mass (px, py, pz a step ago), q its quaternion (pq a step ago), hc the centre's height over its wheels; nx, nz the way
+  // out across the edge, x0, y0, z0 where it went over; nc the points on the ground now; hn the knocks so far, hx, hy, hz, hv, hr the last one's
+  // place, speed and whether it was the roof's; lie: how long it has lain still (s)
+  function fallStart(T, c, F, dt) {
+    const M = c.m, G = fallHull(M), m = M.mass || 1200, q = fallQ(T, c.x, c.z, c.q.i, _fbQ), sd = (q.d > 0 ? 1 : -1) / (Math.hypot(q.nx, q.nz) || 1), nx = sd * q.nx, nz = sd * q.nz, K = FALL.kick;
+    let vx = c.vx, vz = c.vz, vy = c.vy || 0, w = c.w;
+    if (!F.raw) {   // (overEdge's push: across the edge it moved as fast as its last step took it, if that was slower than the push made it)
+      const vo = vx * nx + vz * nz, vp = ((c.x - c.px) * nx + (c.z - c.pz) * nz) / dt; if (vp < K[0] && vo > vp) { const v0 = Math.max(0, vp); vx -= nx * (vo - v0); vz -= nz * (vo - v0); }
+      vy = clamp(((c.y || 0) - (c.py || 0)) / dt, -40, 40); if (Math.abs(w) >= K[3]) w = (w < 0 ? -1 : 1) * (Math.abs(w) - K[3]) / K[2];
+    }
+    // (the road under it: its grade along and its tilt across, the car standing on that as it is drawn)
+    const gr = T.hasElev ? T.elevAt(q.s, _fbL).grade : 0, sl = T.bank ? T.bankAt(q.s, q.d, _fbK).sl || 0 : 0, gx = gr * q.tx + sl * q.nx, gz = gr * q.tz + sl * q.nz, gl = Math.hypot(gx, gz), y = (c.y || 0) + G.hc * Math.hypot(gl, 1);
+    const hh = -c.h / 2, B = { G, im: 1 / m, iI: [12 / (m * (G.W * G.W + G.H * G.H)), 12 / (m * (G.L * G.L + G.W * G.W)), 12 / (m * (G.L * G.L + G.H * G.H))],   // (1 / its inertia about its x: roll, y: yaw, z: pitch)
+      x: c.x, y, z: c.z, px: c.x, py: y, pz: c.z, q: [0, Math.sin(hh), 0, Math.cos(hh)], pq: [0, 0, 0, 1], hc: G.hc,
+      vx, vy, vz, wx: 0, wy: -w, wz: 0, R: new Float64Array(9), C: [], nx, nz, x0: c.x, y0: c.y || 0, z0: c.z, hint: q.i,
+      nc: 0, none: 0, still: 0, lie: 0, out: 0, done: 0, hn: 0, hx: 0, hy: 0, hz: 0, hv: 0, hr: 0, iv: 0, ik: -1, dmg: 0 };
+    for (let i = 0; i < G.n; i++) B.C.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, jn: 0, tx: 0, ty: 0, tz: 0, on: 0, hit: 0, reg: 0 });
+    // (the turn and the tilt it starts with: about the edge's own line, its outer side down: the axis up x out)
+    const vo = Math.max(0.5, vx * nx + vz * nz), cf = Math.cos(c.h) * nx + Math.sin(c.h) * nz, sf2 = Math.max(0, 1 - cf * cf);
+    const l = Math.abs(cf) * (M.a > 0 && M.b > 0 ? (M.a + M.b) / 2 : G.L * 0.3) + Math.sqrt(sf2) * G.W * 0.42, k2 = (cf * cf * (G.L * G.L + G.H * G.H) + sf2 * (G.W * G.W + G.H * G.H)) / 12;
+    const al = FALL.g * l / (k2 + l * l), t0 = l / vo, w0 = Math.min(FALL.leadW, al * t0), a0 = Math.min(FALL.leadA, 0.5 * al * t0 * t0), ax = nz, az = -nx;
+    B.wx += ax * w0; B.wz += az * w0;
+    if (gl > 1e-6) fallTilt(B.q, -gz / gl, gx / gl, Math.atan(gl));
+    fallTilt(B.q, ax, az, a0);
+    B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
+    return B;
+  }
+  // a quaternion turned by a radians about a level axis of the world (ax, 0, az: of length 1)
+  function fallTilt(Q, ax, az, a) {
+    const hs = Math.sin(a / 2), dw = Math.cos(a / 2), dx = ax * hs, dz = az * hs, x = Q[0], y = Q[1], z = Q[2], qw = Q[3];
+    Q[3] = dw * qw - dx * x - dz * z; Q[0] = dw * x + dx * qw - dz * y; Q[1] = dw * y + dz * x - dx * z; Q[2] = dw * z + dx * y + dz * qw;
+  }
+  // the road's platform about the body (E, from the track at its middle, once a step): E.ok while the body can still touch it; E.vl, E.vr: no
+  // drop on that side there (a verge at the road's height where no ground is drawn beyond the line)
+  function fallEdge(T, B, E) {
+    const q = fallQ(T, B.x, B.z, B.hint, _fbQ); E.ok = false; if (!(q.i >= 0)) return;
+    B.hint = q.i;
+    if (q.d > q.br + FALL.reach || -q.d > q.bl + FALL.reach) return;   // (far out: only the drawn ground)
+    const FA = T.fallAt;
+    E.ok = true; E.cx = B.x; E.cz = B.z; E.d = q.d; E.bl = q.bl; E.br = q.br; E.vl = !!FA && !FA[0][q.i]; E.vr = !!FA && !FA[1][q.i]; E.nx = q.nx; E.nz = q.nz; E.tx = q.tx; E.tz = q.tz; E.s = q.s;
+    if (T.hasElev) { const e = T.elevAt(q.s, _fbL); E.y = e.y; E.gr = e.grade; } else { E.y = 0; E.gr = 0; }
+  }
+  // the ground at a point of the hull: false above it, else G.d (how deep, along the normal) and its normal. Inside the lines the platform (a slab:
+  // FALL.slab; its top the road's own slope, its grade along and its tilt across), a point that came under it from beyond a line pushed back out
+  // across that line, not up through the road (c.reg: where the point was last, 0 over the platform, 1 beyond it); beyond a line the drawn ground
+  // (Track.floorAt), and where none is drawn (G.none) on a side with no drop the road's height on (a verge, for a point that came from the road)
+  function fallGround(T, E, x, y, z, G, c) {
+    if (E.ok) {
+      const dx = x - E.cx, dz = z - E.cz, d = E.d + dx * E.nx + dz * E.nz, ins = d < E.br && -d < E.bl;
+      if (ins || ((d > 0 ? E.vr : E.vl) && !T.floorAt(x, z, _fbF))) {
+        let yp = E.y + E.gr * (dx * E.tx + dz * E.tz), sl = 0; if (T.bank) { const k = T.bankAt(E.s, d, _fbK); yp += k.dy; sl = k.sl || 0; }
+        if (y >= yp) { c.reg = 0; return false; }
+        if (y > yp - FALL.slab) {
+          if (!c.reg) { const gx = E.gr * E.tx + sl * E.nx, gz = E.gr * E.tz + sl * E.nz, l = Math.hypot(gx, 1, gz); G.d = (yp - y) / l; G.nx = -gx / l; G.ny = 1 / l; G.nz = -gz / l; return true; }
+          if (ins) { const r = E.br - d, l = E.bl + d; if (r < l) { G.d = r; G.nx = E.nx; G.nz = E.nz; } else { G.d = l; G.nx = -E.nx; G.nz = -E.nz; } G.ny = 0; return true; }
+        }
+        if (!ins) { G.none = true; return false; }   // (under a verge: no ground known)
+      }
+    }
+    c.reg = 1;
+    if (!T.floorAt(x, z, _fbF)) { G.none = true; return false; }
+    const l = Math.hypot(_fbF.gx, 1, _fbF.gz), d = (_fbF.h - y) / l; if (d < 0) return false;
+    G.d = d; G.nx = -_fbF.gx / l; G.ny = 1 / l; G.nz = -_fbF.gz / l; return true;
+  }
+  // the hull's points on the ground now (B.C; B.nc how many, B.pen the deepest, B.none how many with no ground known under them)
+  function fallTouch(T, B, E) {
+    const P = B.G.P, R = B.R, C = B.C, G = _fbG; let nc = 0, pen = 0, none = 0;
+    for (let i = 0, n = B.G.n; i < n; i++) {
+      const c = C[i], lx = P[3 * i], ly = P[3 * i + 1], lz = P[3 * i + 2];
+      c.rx = R[0] * lx + R[1] * ly + R[2] * lz; c.ry = R[3] * lx + R[4] * ly + R[5] * lz; c.rz = R[6] * lx + R[7] * ly + R[8] * lz;
+      G.none = false;
+      if (fallGround(T, E, B.x + c.rx, B.y + c.ry, B.z + c.rz, G, c)) { c.on = 1; c.d = G.d; c.nx = G.nx; c.ny = G.ny; c.nz = G.nz; c.jn = 0; c.tx = c.ty = c.tz = 0; nc++; if (G.d > pen) pen = G.d; }
+      else { c.on = 0; if (G.none) none++; }
+    }
+    B.nc = nc; B.pen = pen; B.none = none;
+  }
+  // a substep of h seconds: gravity; the contacts (sequential impulses: no approach into the ground, friction against the slide up to mu times
+  // the push; a point's first touch at more than FALL.hitV is a knock, the step's hardest kept in B.iv, B.ik); the pose; out of the ground along
+  // the deepest point's normal; then whether it lies still, has no ground under it, or has fallen long enough (B.done: 1 at rest, 2 out, 3 the cap)
+  function fallSub(T, B, E, h) {
+    const C = B.C, im = B.im, n = B.G.n, O = _fbO;
+    B.vy -= FALL.g * h; const ad = Math.max(0, 1 - FALL.angD * h); B.wx *= ad; B.wy *= ad; B.wz *= ad;
+    fallRot(B); fallTouch(T, B, E);
+    const R = B.R, up = R[4];   // (its own up along the world's: on its wheels near 1)
+    if (B.nc) for (let it = 0; it < FALL.iters; it++) for (let i = 0; i < n; i++) {
+      const c = C[i]; if (!c.on) continue;
+      const rx = c.rx, ry = c.ry, rz = c.rz, nx = c.nx, ny = c.ny, nz = c.nz;
+      let ux = B.vx + B.wy * rz - B.wz * ry, uy = B.vy + B.wz * rx - B.wx * rz, uz = B.vz + B.wx * ry - B.wy * rx;
+      const vn = ux * nx + uy * ny + uz * nz;
+      if (it === 0 && !c.hit && -vn > FALL.hitV && -vn > B.iv) { B.iv = -vn; B.ik = i; }
+      fallInv(B, ry * nz - rz * ny, rz * nx - rx * nz, rx * ny - ry * nx);
+      const kn = im + (O[1] * rz - O[2] * ry) * nx + (O[2] * rx - O[0] * rz) * ny + (O[0] * ry - O[1] * rx) * nz, j1 = Math.max(0, c.jn - vn / kn), j = j1 - c.jn; c.jn = j1;
+      if (j) { B.vx += j * nx * im; B.vy += j * ny * im; B.vz += j * nz * im; B.wx += O[0] * j; B.wy += O[1] * j; B.wz += O[2] * j; }
+      ux = B.vx + B.wy * rz - B.wz * ry; uy = B.vy + B.wz * rx - B.wx * rz; uz = B.vz + B.wx * ry - B.wy * rx;
+      const un = ux * nx + uy * ny + uz * nz; let sx = ux - un * nx, sy = uy - un * ny, sz = uz - un * nz; const sl = Math.hypot(sx, sy, sz);
+      if (sl > 1e-7) {
+        sx /= sl; sy /= sl; sz /= sl;
+        fallInv(B, ry * sz - rz * sy, rz * sx - rx * sz, rx * sy - ry * sx);
+        const kt = im + (O[1] * rz - O[2] * ry) * sx + (O[2] * rx - O[0] * rz) * sy + (O[0] * ry - O[1] * rx) * sz;
+        let mu = FALL.mu; if (i < B.G.nW && up > 0.7) { const f = sx * R[0] + sy * R[3] + sz * R[6]; mu += (FALL.muW - mu) * f * f; }   // (on its wheels: they roll along the car)
+        const jt = -sl / kt, mx = mu * c.jn; let tx = c.tx + jt * sx, ty = c.ty + jt * sy, tz = c.tz + jt * sz; const tl = Math.hypot(tx, ty, tz); if (tl > mx) { const f = mx / tl; tx *= f; ty *= f; tz *= f; }
+        const dx = tx - c.tx, dy = ty - c.ty, dz = tz - c.tz; c.tx = tx; c.ty = ty; c.tz = tz;
+        B.vx += dx * im; B.vy += dy * im; B.vz += dz * im; fallInv(B, ry * dz - rz * dy, rz * dx - rx * dz, rx * dy - ry * dx); B.wx += O[0]; B.wy += O[1]; B.wz += O[2];
+      }
+    }
+    for (let i = 0; i < n; i++) C[i].hit = C[i].on;
+    B.x += B.vx * h; B.y += B.vy * h; B.z += B.vz * h;
+    const Q = B.q, qx = Q[0], qy = Q[1], qz = Q[2], qw = Q[3], hx = 0.5 * h * B.wx, hy = 0.5 * h * B.wy, hz = 0.5 * h * B.wz;
+    Q[3] = qw - hx * qx - hy * qy - hz * qz; Q[0] = qx + hx * qw + hy * qz - hz * qy; Q[1] = qy - hx * qz + hy * qw + hz * qx; Q[2] = qz + hx * qy - hy * qx + hz * qw;
+    const ql = 1 / Math.hypot(Q[0], Q[1], Q[2], Q[3]); Q[0] *= ql; Q[1] *= ql; Q[2] *= ql; Q[3] *= ql;
+    for (let p = 0; p < 4; p++) {
+      fallRot(B); fallTouch(T, B, E); if (!(B.pen > FALL.slop)) break;
+      let b = null; for (let i = 0; i < n; i++) { const c = C[i]; if (c.on && (!b || c.d > b.d)) b = c; }
+      const m = Math.min(FALL.push, b.d - FALL.slop * 0.5); B.x += b.nx * m; B.y += b.ny * m; B.z += b.nz * m;
+    }
+    const sp = Math.hypot(B.vx, B.vy, B.vz), wl = Math.hypot(B.wx, B.wy, B.wz);
+    if (B.nc && sp < FALL.restV && wl < FALL.restW) { B.still += h; if (B.still >= FALL.restT) { B.lie += h; B.vx = B.vy = B.vz = B.wx = B.wy = B.wz = 0; } } else { B.still = 0; B.lie = 0; }
+    if (B.none > n * 0.5) B.out += h; else B.out = 0;   // (most of it over ground the track does not know: no further)
+  }
+  // a step of a falling car's body (Race._fall on a track with Track.floor; the first makes it: fallStart): its substeps, the car's own numbers
+  // from the body (where it is and how it moves, for all that looks at a car: the camera, the map, the sound; its heading its nose's, c.y its
+  // centre less the centre's height, c.roadY with it), the step's hardest knock on the ground as damage where it struck (B.hn counts them: the
+  // game's sound and shake, the renderer's dust; no wall was hit: c.hitWall as it was), and its end: at rest for FALL.hold, no ground known under
+  // it for FALL.outT or FALL.cap seconds, then on the road again where it went over (race.rescue; c.q stayed there: Race.step's progress leaves a
+  // falling body alone)
+  function fallBody(race, c, F, dt) {
+    const T = race.track, B = F.b || (F.b = fallStart(T, c, F, dt)), E = _fbE;
+    c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y; B.px = B.x; B.py = B.y; B.pz = B.z; B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
+    const n = Math.max(1, Math.ceil(dt * FALL.sub - 1e-9)), h = dt / n;
+    fallEdge(T, B, E); B.iv = 0; B.ik = -1;
+    for (let k = 0; k < n && !B.done; k++) { fallSub(T, B, E, h); if (B.lie >= FALL.hold) B.done = 1; else if (B.out >= FALL.outT) B.done = 2; else if (F.t >= FALL.cap) B.done = 3; }
+    const R = B.R; fallRot(B);
+    c.x = B.x; c.z = B.z; c.y = c.roadY = B.y - B.hc; c.vx = B.vx; c.vy = B.vy; c.vz = B.vz; c.w = -B.wy; c.air = 1;
+    if (R[0] * R[0] + R[6] * R[6] > 0.09) c.h = Math.atan2(R[6], R[0]);
+    if (B.ik >= 0) {   // (the step's hardest knock: damage where it struck, in the car's own axes; the roof's a dent from above, as rolling over)
+      const P = B.G.P, k = 3 * B.ik, lx = P[k], ly = P[k + 1], lz = P[k + 2], roof = ly > B.G.yb + 0.01, amt = Math.min(FALL.dmgK * (B.iv - FALL.hitV), FALL.dmgMax - B.dmg);
+      B.hn++; B.hv = B.iv; B.hr = roof ? 1 : 0; B.hx = B.x + R[0] * lx + R[1] * ly + R[2] * lz; B.hy = B.y + R[3] * lx + R[4] * ly + R[5] * lz; B.hz = B.z + R[6] * lx + R[7] * ly + R[8] * lz;
+      if (amt > 0) { B.dmg += amt; if (roof && c.dmgMode && !c.pitG) { if (c.dents.length < 24) c.dents.push({ lx, lz, amt: 0.1, top: 1 }); c.roofDmg = Math.min(1, c.roofDmg + 0.3); knock(c, amt); } else knock(c, amt, lx, lz); }
+    }
+    if (B.done) { if (B.done > 1 && B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); }
+  }
   class Race {
     constructor(track, opts) {
       if (opts.phys !== 'cs' && opts.phys !== 'nova') opts = Object.assign({}, opts, { phys: 'cs' });   // two driving physics, 'cs' and 'nova' (the old 'rally' and 'arcade' map to cs, as in Car)
@@ -7240,6 +7440,7 @@ const Core = (function () {
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci];
         if (ST && !ST[ci]) continue;   // (a far car between its steps: where it was, its timers on at its next step)
+        if (c.fall && c.fall.b) continue;   // (a body falling down the slope, fallBody: its place on the road, its distance and its timers stay where it went over)
         const q = T.query(c.x, c.z, c.q.i, c.q);
         if (c.net) { c.sPrev = q.s; continue; }   // (distance, laps and the finish of the friend's car come from its phone)
         const cdt = SD ? SD[ci] : dt, m = SD ? Math.round(cdt / dt) : 1, cl = cdt > 0.0125 ? 3 * Math.round(cdt * 120) : 3;   // (m: the steps this one covers, LOD; cl: at most 3 m a 1/120 s, also in a longer step)
@@ -8110,6 +8311,7 @@ const Core = (function () {
     }
     _fall(c, dt) {
       const F = c.fall; F.t += dt;
+      if (this.track.floor && !c.tl) { fallBody(this, c, F, dt); return; }   // (the ground beyond the edge is known: it tumbles down it as a body, FALL)
       c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y;
       c.vy -= JUMP_G * dt; c.y += c.vy * dt; c.x += c.vx * dt; c.z += c.vz * dt; c.h += c.w * dt;
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
@@ -8268,7 +8470,7 @@ const Core = (function () {
         return;
       }
       if (W.hold > 0) { W.hold -= dt; parkBrake(c); c.stuckT = 0; return; }
-      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5) this.rescue(c);
+      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5 && !(c.fall && c.fall.b)) this.rescue(c);   // (a body falling down a slope, fallBody: when it lies)
     }
     // the marshals put a retired car where it may stand (standQ; retiredOff holds there), as retireControl parks it (its centre T.w + hw +
     // 1.6 m out, or 0.4 m short of the barrier): the nearest spot from where it is, on along the road (3 m at a time, up to 1 km), on
