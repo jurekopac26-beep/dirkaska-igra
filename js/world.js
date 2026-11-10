@@ -4747,7 +4747,7 @@ const World = (function () {
   }
 
   /* ================= SPECTATORS: an instanced crowd layer on IChunks, used by every world builder =================
-     One figure is 168 index verts (112 vertices): legs, torso, head, two arms and a flag that stays folded away unless the figure waves one.
+     One figure is 165 index verts (115 vertices): legs, torso, head, two arms and a flag that stays folded away unless the figure waves one.
      Vertex attribute aPart = bone * 10 + colour group; per instance aCrowd = (pose + phase, variant). The shader tints only the shirt, caps and
      long sleeves with the instance colour; skin, trousers, hair and flags come from small palettes picked by the variant (a hash of the position).
      Poses: 0 standing, 1 cheering, 2 waving, 3 filming, 4 clapping, 5 flag, 6 sitting on the grass. The arms move with uTime; people within
@@ -4761,7 +4761,7 @@ const World = (function () {
   function crNoise(u) { const i = Math.floor(u), f = u - i, a = crH(i, 0, 99), b = crH(i + 1, 0, 99); return a + (b - a) * f * f * (3 - 2 * f); }   // smooth 1D value noise (clumps along a run)
   const CR_SHIRTS = [[0.88, 0.16, 0.13], [0.95, 0.8, 0.18], [0.16, 0.4, 0.86], [0.94, 0.94, 0.92], [0.18, 0.62, 0.28], [0.98, 0.52, 0.1], [0.12, 0.13, 0.16], [0.6, 0.18, 0.5], [0.14, 0.5, 0.58], [0.82, 0.82, 0.84], [0.5, 0.32, 0.22], [0.2, 0.24, 0.42]];
   let crGeoC = null;
-  function crowdGeo() {   // the figure (1.72 m, facing local +z), built once and shared by every world
+  function crowdGeo() {   // the figure (1.71 m, facing local +z), built once and shared by every world
     if (crGeoC) return crGeoC;
     const P = [], Nm = [], Cl = [], Pa = [], Ix = [], W1 = [1, 1, 1];
     const quad = (a, b, c, d, ins, part, col) => {   // flat quad facing away from 'ins'
@@ -4771,19 +4771,39 @@ const World = (function () {
       for (const p of flip ? [a, d, c, b] : [a, b, c, d]) { P.push(p[0], p[1], p[2]); Nm.push(nx * s, ny * s, nz * s); Cl.push(col[0], col[1], col[2]); Pa.push(part); }
       Ix.push(k, k + 1, k + 2, k, k + 2, k + 3);
     };
-    const cub = (x0, x1, y0, y1, z0, z1, f) => {   // box faces px/nx/py/ny/pz/nz -> [part, colour]; missing faces are left out
-      const ins = [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2], F = {
-        px: [[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], nx: [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
-        py: [[x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0]], ny: [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]],
-        pz: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], nz: [[x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [x1, y0, z0]] };
-      for (const k in f) { const q = F[k]; quad(q[0], q[1], q[2], q[3], ins, f[k][0], f[k][1]); }
+    const poly = (pts, ins, part, col) => {   // a flat convex polygon (a fan) facing away from 'ins'
+      const a = pts[0], b = pts[1], c = pts[2];
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+      let cx = 0, cy = 0, cz = 0; for (const p of pts) { cx += p[0]; cy += p[1]; cz += p[2]; } cx /= pts.length; cy /= pts.length; cz /= pts.length;
+      const flip = nx * (cx - ins[0]) + ny * (cy - ins[1]) + nz * (cz - ins[2]) < 0, s = flip ? -1 : 1, k = P.length / 3;
+      const L = flip ? [pts[0]].concat(pts.slice(1).reverse()) : pts;
+      for (const p of L) { P.push(p[0], p[1], p[2]); Nm.push(nx * s, ny * s, nz * s); Cl.push(col[0], col[1], col[2]); Pa.push(part); }
+      for (let i = 1; i + 1 < L.length; i++) Ix.push(k, k + i, k + i + 1);
     };
     // bones: 0 body, 1 left arm, 2 right arm, 3 legs, 4 flag pole (in the right hand), 5 flag cloth; colour groups: 0 as modelled, 1 shirt,
-    // 2 skin, 3 trousers, 4 hair / cap, 5 sleeve (shirt or bare arm), 6 / 7 the flag's two stripes
-    cub(-0.17, 0.17, 0, 0.84, -0.11, 0.11, { px: [33, W1], nx: [33, W1], pz: [33, W1], nz: [33, W1], ny: [30, [0.12, 0.1, 0.09]] });   // legs, dark soles (seen when sitting)
-    cub(-0.22, 0.22, 0.84, 1.42, -0.13, 0.13, { px: [1, W1], nx: [1, W1], pz: [1, W1], nz: [1, W1], py: [1, W1] });   // torso
-    cub(-0.11, 0.11, 1.44, 1.7, -0.12, 0.12, { px: [2, W1], nx: [2, W1], pz: [2, W1], nz: [4, W1], py: [4, W1] });   // head: face and ears, hair (or a cap) on top and at the back
-    for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, x0 = sd < 0 ? -0.32 : 0.22; cub(x0, x0 + 0.1, 0.8, 1.4, -0.06, 0.06, { px: [b + 5, W1], nx: [b + 5, W1], pz: [b + 5, W1], nz: [b + 5, W1], ny: [b + 2, W1] }); }   // arms, the hand at the end
+    // 2 skin, 3 trousers, 4 hair / cap, 5 sleeve (shirt or bare arm), 6 / 7 the flag's two stripes. The proportions of the scenes' people
+    // (docs/ljudje-grafika.md): broad shoulders sloping up to the neck, a rounder head, two legs; 165 index vertices and 115 corners (the boxes: 168, 112)
+    { const zf = (y) => 0.098 + 0.03 * (1 - y / 0.86), zb = (y) => -0.094 + 0.024 * (1 - y / 0.86), xo = (y) => 0.125 + 0.042 * y / 0.86;   // (front, back, the outer side at height y)
+      const A = [-xo(0), 0, zf(0)], Bq = [-0.03, 0, zf(0)], Cq = [0, 0.4, zf(0.4)], D = [0.03, 0, zf(0)], E = [xo(0), 0, zf(0)], F = [xo(0.86), 0.86, zf(0.86)], G = [-xo(0.86), 0.86, zf(0.86)];
+      const A1 = [-xo(0), 0, zb(0)], E1 = [xo(0), 0, zb(0)], F1 = [xo(0.86), 0.86, zb(0.86)], G1 = [-xo(0.86), 0.86, zb(0.86)], ins = [0, 0.43, 0];
+      poly([Cq, Bq, A, G, F, E, D], ins, 33, W1);   // legs (bone 3): the front one fan from the crotch round the gap between the legs (one plane: shared corners)
+      poly([A, G, G1, A1], ins, 33, W1); poly([E, F, F1, E1], ins, 33, W1); poly([A1, G1, F1, E1], ins, 33, W1);   // (the outer sides, the back)
+      poly([A, E, E1, A1], [0, 0.3, 0], 30, [0.12, 0.1, 0.09]); }   // (dark soles, seen when sitting)
+    { const w0 = [0.176, 0.8, 0.108, -0.104], w1 = [0.272, 1.36, 0.124, -0.114];   // torso (bone 0, shirt): from the hips out to the shoulders, up to the neck (a low pyramid, its top inside the head)
+      const r = (w) => [[w[0], w[1], w[2]], [-w[0], w[1], w[2]], [-w[0], w[1], w[3]], [w[0], w[1], w[3]]], R0 = r(w0), R1 = r(w1), ins = [0, 1.1, 0];
+      for (let j = 0; j < 4; j++) poly([R0[j], R0[(j + 1) % 4], R1[(j + 1) % 4], R1[j]], ins, 1, W1);
+      for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], [0, 1.5, -0.004]], [0, 1.3, 0], 1, W1); }
+    { const r = (y, w, d, z) => [[w, y, z + d], [-w, y, z + d], [-w, y, z - d], [w, y, z - d]];   // head (bone 0): narrower at the jaw; the face and the sides skin, the back and the crown hair (or a cap)
+      const R0 = r(1.45, 0.086, 0.096, 0.01), R1 = r(1.638, 0.116, 0.126, -0.004), ins = [0, 1.55, 0];
+      for (let j = 0; j < 4; j++) poly([R0[j], R0[(j + 1) % 4], R1[(j + 1) % 4], R1[j]], ins, j === 2 ? 4 : 2, W1);
+      for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], [0, 1.708, -0.012]], [0, 1.6, 0], 4, W1); }
+    for (const sd of [-1, 1]) {   // arms (bone 1 at x < 0, bone 2 at x > 0; the sleeve): three sides, thick at the shoulder, thin at the hand; both ends open (in the shoulder, down)
+      const b = sd < 0 ? 10 : 20, X = (x) => sd * x, ins = [X(0.27), 1.1, -0.004];
+      const tri3 = (y, k) => [[X(0.27 - 0.026 * k), y, -0.004 + 0.036 * k], [X(0.27 + 0.026 * k), y, -0.004 + 0.036 * k], [X(0.27), y, -0.004 - 0.042 * k]];
+      const Lb = tri3(0.83, 1.25), Lt = tri3(1.375, 1.85);
+      for (let j = 0; j < 3; j++) poly([Lb[j], Lb[(j + 1) % 3], Lt[(j + 1) % 3], Lt[j]], ins, b + 5, W1);
+    }
     quad([0.26, 0.82, 0.09], [0.3, 0.82, 0.09], [0.3, -0.68, 0.09], [0.26, -0.68, 0.09], [0.28, 0, 0], 40, [0.84, 0.84, 0.86]);   // flag pole, one quad (mirrored to face the camera)
     for (const [y0, y1, cg] of [[-0.955, -0.68, 56], [-1.23, -0.955, 57]]) quad([0.3, y1, 0.09], [1.2, y1, 0.09], [1.2, y0, 0.09], [0.3, y0, 0.09], [0.75, y0, 0], cg, W1);   // the cloth: two stripes
     const g = new THREE.BufferGeometry();
