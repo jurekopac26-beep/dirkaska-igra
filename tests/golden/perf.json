@@ -488,5 +488,12 @@
   "kverts": 497,
   "maxKverts": 617,
   "jsMs": 1.99
+ },
+ "cromwell": {
+  "calls": 214,
+  "maxCalls": 263,
+  "kverts": 600,
+  "maxKverts": 713,
+  "jsMs": 1.77
  }
 }
