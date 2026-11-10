@@ -36,6 +36,15 @@ const def = (menu.match(/^\s*const vidSrc = .*$/m) || [''])[0];
   check('js/menu.js: the flyover, the corner\'s video and the helicopter\'s flight take their address from vidSrc, no video beside them',
     through === 3 && plain === 3 && ['fly', 'corner', 'heli'].every(k => menu.includes(`vidSrc('${k}-' + t.id + '.webm')`)), `${through} through vidSrc of ${plain} names of a video`);
   check('js/menu.js knows the list (' + KNOWS + '), the repository\'s js/menu-data.js carries none', menu.includes(KNOWS) && !data.includes(KNOWS));
+  // nowhere else in the game: a video's address built past vidSrc would be missing only in a preview (the recording's own file name is
+  // no address: '.mp4' : '.webm' in js/game.js)
+  const walk = (d) => fs.readdirSync(path.join(REPO, d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(d + '/' + e.name) : /\.(js|css)$/.test(e.name) ? [d + '/' + e.name] : []);
+  const code = [...walk('js'), ...walk('css'), 'sw.js', ...fs.readdirSync(REPO).filter(f => /\.html$/.test(f))], past = [];
+  for (const f of code) {
+    const t = fs.readFileSync(path.join(REPO, f), 'utf8').replace(/vidSrc\('(?:fly|corner|heli)-' \+ t\.id \+ '\.webm'\)/g, '').replace(/'\.mp4' : '\.webm'/g, '');
+    if (/\.webm['"`]/.test(t)) past.push(f);
+  }
+  check('no other file of the game names a video (js/, css/, sw.js, the pages)', past.length === 0 && code.length > 50, past.join(', ') || code.length + ' files');
   let src = null;
   try { src = (D) => vm.runInNewContext(def + '\nvidSrc', { D }); src({}); } catch (e) { src = null; }
   const V = { root: '../../', files: ['fly-a.webm', 'heli-a.webm'] };
@@ -92,7 +101,11 @@ try {
   untouched(tree(path.join(site, 'beta', '8'), { menu: MENU_OLD }), 'a preview whose menu does not read the list keeps every video');
   untouched(tree(path.join(site, 'beta', '9'), { b: B2, more: { 'fly-a.webm': Buffer.alloc(3000, 9), 'corner-a.webm': N, 'heli-a.webm': N } }), 'a preview with every video its own keeps them, and gets no list');
   untouched(tree(path.join(tmp, 'other')), 'a folder that is not under the site: nothing taken');
-  untouched(tree(path.join(site, 'beta', '10')), 'a site without main\'s videos: nothing taken', { root: path.join(tmp, 'none') });
+  {
+    const bare = tree(path.join(tmp, 'bare')); fs.rmSync(path.join(bare, 'assets', 'maps'), { recursive: true });   // (main with no videos at all)
+    const dir = tree(path.join(bare, 'beta', '10')), r = shareVideos(bare, dir);
+    check('a site whose main has no videos: the preview keeps its own, and gets no list', r.files.length === 0 && ls(path.join(dir, 'assets', 'maps')) === before && !listOf(path.join(dir, 'js', 'menu-data.js')), ls(path.join(dir, 'assets', 'maps')));
+  }
   {
     const dir = tree(path.join(site, 'beta', '11')); fs.rmSync(path.join(dir, 'js', 'menu-data.js'));
     const r = shareVideos(site, dir);
@@ -120,21 +133,22 @@ try {
 
 // 3. the whole build: a repository of its own, its origin with the pull requests' heads
 const repo = path.join(tmp, 'repo'), origin = path.join(tmp, 'origin.git');
+// (without the caller's GIT_* and GAME_ROOT: from a git hook GIT_DIR would point git at the real repository)
+const ENV = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^GIT_/.test(k) && k !== 'GAME_ROOT'));
 const git = (...a) => {
-  const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', '-c', 'protocol.file.allow=always', ...a], { cwd: repo, encoding: 'utf8' });
+  const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', '-c', 'protocol.file.allow=always', ...a], { cwd: repo, encoding: 'utf8', env: ENV });
   if (r.status !== 0) throw new Error(`git ${a.join(' ')}: ${r.stderr}`);
   return r.stdout.trim();
 };
 const build = (...more) => {
-  const env = Object.assign({}, process.env); delete env.GAME_ROOT;
-  const r = spawnSync(process.execPath, [path.join(repo, 'tools', 'predogled.mjs'), path.join(repo, '_site'), '--prs', path.join(tmp, 'prs.json'), ...more], { cwd: repo, encoding: 'utf8', env });
+  const r = spawnSync(process.execPath, [path.join(repo, 'tools', 'predogled.mjs'), path.join(repo, '_site'), '--prs', path.join(tmp, 'prs.json'), ...more], { cwd: repo, encoding: 'utf8', env: ENV });
   return { st: r.status, out: String(r.stdout) + String(r.stderr) };
 };
 try {
   const BIG = Buffer.alloc(1500000);   // (a video heavy enough for the short limit below)
   for (let i = 0; i < BIG.length; i++) BIG[i] = (i * 2654435761 >>> 13) & 255;
   fs.mkdirSync(repo, { recursive: true });
-  spawnSync('git', ['init', '-q', '--bare', origin], { encoding: 'utf8' });
+  spawnSync('git', ['init', '-q', '--bare', origin], { encoding: 'utf8', env: ENV });
   git('init', '-q'); git('checkout', '-q', '-b', 'main');
   tree(repo, { more: { 'fly-a.webm': BIG } });
   for (const f of ['predogled.mjs', 'predogled-posnetki.js', 'stamp.js']) put(path.join(repo, 'tools', f), fs.readFileSync(path.join(REPO, 'tools', f)));
@@ -164,7 +178,7 @@ try {
     !!V && V.root === '../../' && V.files.join(' ') === 'fly-a.webm fly-b.webm heli-a.webm', ls(m('beta/7')) + ' | ' + JSON.stringify(V));
   check('the log says how many videos play from main and how much lighter the preview is', /^#7 pr7 \(.{7}\) → beta\/7\/ \(stamped, 0\.0 MB; 3 video\(s\) played from main, 1\.4 MB less\)$/.test(line(7)), line(7));
   const page = has(path.join(S, 'beta', '7', 'index.html')) ? fs.readFileSync(path.join(S, 'beta', '7', 'index.html'), 'utf8') : '';
-  const chk = spawnSync(process.execPath, [path.join(repo, 'tools', 'stamp.js'), '--check-stamped'], { cwd: repo, encoding: 'utf8', env: Object.assign({}, process.env, { GAME_ROOT: path.join(S, 'beta', '7') }) });
+  const chk = spawnSync(process.execPath, [path.join(repo, 'tools', 'stamp.js'), '--check-stamped'], { cwd: repo, encoding: 'utf8', env: Object.assign({}, ENV, { GAME_ROOT: path.join(S, 'beta', '7') }) });
   check('the preview\'s page is stamped with the list in (the workflow\'s --check-stamped passes)', /js\/menu-data\.js\?v=[0-9a-f]{8}"/.test(page) && chk.status === 0, String(chk.stdout).trim().split('\n').slice(-1)[0]);
   check('the preview with an older menu is as its branch has it: every video, no list', ls(m('beta/8')) === ls(m('.')) && fs.readFileSync(path.join(S, 'beta', '8', 'js', 'menu-data.js'), 'utf8') === DATA &&
     /^#8 pr8 \(.{7}\) → beta\/8\/ \(stamped, 1\.4 MB\)$/.test(line(8)), line(8));

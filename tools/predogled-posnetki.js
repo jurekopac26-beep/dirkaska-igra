@@ -26,7 +26,7 @@ function shareVideos(root, dir) {
     const a = path.join(root, 'assets', 'maps', f), b = path.join(maps, f);
     let sa, sb;
     try { sa = fs.lstatSync(a); sb = fs.lstatSync(b); } catch (e) { continue; }   // (main has no such video: the pull request's own)
-    if (!sa.isFile() || !sb.isFile() || sa.size !== sb.size) continue;
+    if (!sa.isFile() || !sb.isFile() || sa.size !== sb.size || (sa.dev === sb.dev && sa.ino === sb.ino)) continue;   // (one file under two names: never deleted)
     if (fs.readFileSync(a).equals(fs.readFileSync(b))) same.push(f);
   }
   if (!same.length) return none;
