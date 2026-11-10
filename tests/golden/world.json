@@ -1869,5 +1869,34 @@
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "34a814d8"
   }
+ },
+ "serres": {
+  "meshes": 567,
+  "verts": 428445,
+  "instances": 6124,
+  "props": 65,
+  "crowd": 28,
+  "world": "29bffd3a",
+  "propsHash": "4db1e69a",
+  "floor": "249173c4/6356",
+  "groups": {
+   "-:MeshLambertMaterial": "b74180ab",
+   "-:MeshBasicMaterial": "2360f34d",
+   "srFar:MeshLambertMaterial": "f4fe52f",
+   "rsFar:MeshBasicMaterial": "82ff391a",
+   "flags:MeshLambertMaterial": "cba6efe0",
+   "crowd:MeshLambertMaterial": "7c4195bf",
+   "ao:MeshBasicMaterial": "d3a6ca03",
+   "tyremarks:MeshBasicMaterial": "d7e94787",
+   "roadwear:MeshLambertMaterial": "7b1c30b2",
+   "worn:MeshLambertMaterial": "727f492e",
+   "brakeBoards:MeshLambertMaterial": "eb556712",
+   "life:MeshLambertMaterial": "238d8495",
+   "lifeShadow:MeshBasicMaterial": "c89fae05",
+   "life:MeshBasicMaterial": "848a0645",
+   "people:MeshLambertMaterial": "889e1a4b",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "ded26840"
+  }
  }
 }
