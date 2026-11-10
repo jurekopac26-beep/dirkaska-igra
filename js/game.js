@@ -2364,7 +2364,10 @@
     introLen = 1.3; endPodium();
     { const air = Render.world && Render.world.air, ok = !on && !tt && !quali && !school;   // the Red Bull Ring: first the jets over the grid, filmed from the grid (not online, not in a time trial or qualifying)
       startCamPick(ok && !race.timeTrial && !race.opts.flying && !race.pol && !race.nv && race.zbMode !== 'drag', !!air);   // (or the camera before the start)
-      if (air && ok && !scV) { air.go = true; introLen += JET_SHOT; air.shot.crowd = true; Render.setShot(air.shot); $('hud').classList.add('shot'); } }   // (crowd: a big field's rivals past the nearest ten as their far mesh in this shot too, render.js crowdCut)
+      if (air && ok && !scV && !race.opts.flying && !race.pol && !race.nv) { air.go = true; introLen += JET_SHOT; air.shot.crowd = true; Render.setShot(air.shot); $('hud').classList.add('shot'); } }   // (crowd: a big field's rivals past the nearest ten as their far mesh in this shot too, render.js crowdCut)
+      // (no jets where the race leaves the intro at once, without the lights (updatePhase): a flying start (the endless drive on Bathurst, a
+      // big field on a circuit), the run from the police, NEW VERSION. Only the lights end the jets' shot (shotOff): the camera stayed on the
+      // grid with the HUD hidden while the car drove off)
       pkFlyStart(!on && tt && !quali && !ch);   // (Pikes Peak, Katu-Jaryk: the course flyover first, not in a challenge)
     lastLapCount = 0; prevGear = 1; prevAir = 0; jmp = { air: false, x: 0, z: 0, s: 0, best: 0, rec: 0, n: 0 }; msgT = 0; splitT = 0; pitHint = false; pitFree(null, false); Input.buzzOff(); fly.on = false; fly.n = 0; flyHUD(0); drsN = 0; secN = 0; towOn = false; wxSeen = race.wst ? race.wst.ev : 0; dryHint = false; tyreKey = '-'; fcKey = '-'; flSeen = flPSeen = 0; flKey = '-'; flTold = {}; rap.on = false; rap.st = ''; rap.k = 0;
     wreckKey = '-'; retireT = 0; hudWl = 0; hudFix = race.player && race.player.wreck ? race.player.wreck.fix : 0; hudWheelTold = false;
