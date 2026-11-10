@@ -257,10 +257,10 @@
     const a = pts[0], b = pts[pts.length - 1], A = M.alt;
     return R.open ? mark(a[0], a[1], M.start || 'Start', A ? num(A[0]) + ' m' : rally ? 'SS start' : '', false, 's') + mark(b[0], b[1], M.finish || 'Finish', A ? num(A[1]) + ' m' : '', true, 'f') : mark(a[0], a[1], 'Start · finish', '', false, 's');
   }
-  function routeLines(id, pts, rally) {   // the route drawn on, then a glowing point running along it (mapDots moves it; its glow a gradient: cheap to move)
+  function routeLines(id, pts, rally) {   // the route drawn on, its trail (mapTrail), then a glowing point running along it (mapDots moves it; its glow a gradient: cheap to move)
     const d = pathD(pts), c = rally ? ['#fff0dc', '#ffffff'] : ['#ffe07a', '#ffd23a'];
     return '<defs><radialGradient id="rg-' + id + '"><stop offset="0" stop-color="#fff8d0"/><stop offset=".35" stop-color="' + c[0] + '" stop-opacity=".75"/><stop offset="1" stop-color="' + c[1] + '" stop-opacity="0"/></radialGradient></defs>' +
-      '<path class="rt-o" d="' + d + '"/><path class="rt" d="' + d + '" pathLength="1"/>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
+      '<path class="rt-o" d="' + d + '"/><path class="rt" d="' + d + '" pathLength="1"/><g class="rt-tr"></g>' + (rally ? '<path class="rt-c" d="' + d + '"/>' : '') +
       '<g class="rt-dot" opacity="0"><g class="dz"><circle r="30" fill="url(#rg-' + id + ')"/><circle class="c" r="9"/></g></g>';
   }
   function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
@@ -445,17 +445,16 @@
      on the map the point runs as in the flyover: it speeds up from the start, waits at the finish while the flyover's camera rises over it,
      then goes round again; a flyover made as a loop (R.fly.loop, maketa-menija/orodja/flyover.mjs): at an even speed from its first frame to
      its last, on a circuit straight on over the start line into the next lap, with no wait and no dip of the picture there. A track with
-     only its map: the same run at the flyovers' own pace (RUN), so the point is as fast on every track. */
+     only its map: the run of a loop at the flyovers' own speed (RUN), so the point is as fast on every track: even all the way, at the
+     finish straight on into a new lap (the user's choice 10. 11. 2026, »Da, povsod enako«; the old flyovers stay as they are). Behind the
+     map's point its trail, coloured by the climb as the flyover's is (mapTrail). */
   const run = { id: '', t: 0, at: 0, on: false };   // the run's time t (s) at the moment at (performance.now()); on: going on from there, else held at t
   const runNow = () => run.t + (run.on ? (performance.now() - run.at) / 1000 : 0);
   function runSet(t, on) { run.t = t; run.at = performance.now(); run.on = on; }
-  // the flyovers' pace (maketa-menija/orodja/flyover.mjs CAMERA.speed): 326 m/s, speeding up over the first 12 % of the run's time and
-  // slowing down over the last 12 %, then 2.4 s at the finish
-  const RUN = { v: 326, ease: 0.12, end: 2.4 };
-  const runGo = (L) => L / (RUN.v * (1 - RUN.ease));   // (the seconds from the start to the finish of a run L m long, at that pace)
-  const runDur = (id) => { const F = RT[id].fly; return F ? F.frames.length / F.fps : runGo(RT[id].len) + RUN.end; };
-  // how far along the run at x (0..1 of its time): an even speed, reached smoothly over the first `e` and lost over the last `e` (as flyover.mjs)
-  function glide(x, e) { const G = (y) => e * (Math.pow(y / e, 3) - Math.pow(y / e, 4) / 2); x = Math.min(1, Math.max(0, x)); return (x < e ? G(x) : x > 1 - e ? 1 - e - G(1 - x) : e / 2 + x - e) / (1 - e); }
+  // the flyovers' speed (maketa-menija/orodja/flyover.mjs CAMERA.speed): 326 m/s, as a loop's: even from the start, no wait at the finish
+  const RUN = { v: 326 };
+  const runGo = (L) => L / RUN.v;   // (the seconds from the start to the finish of a run L m long, at that speed)
+  const runDur = (id) => { const F = RT[id].fly; return F ? F.frames.length / F.fps : runGo(RT[id].len); };
   // a new run: on the flyover held at its start until the video plays; on the map the route draws itself first (1.6 s), then the point sets off
   function runFresh(id, fly) { run.id = id; if (fly) runSet(0, false); else runSet(-1.6, true); }
   // where the point is at the run's time s, as a part of the run (0 the start, 1 the finish)
@@ -466,8 +465,8 @@
     const F = R.fly.frames, ring = R.fly.loop && !R.open ? 1 : 0, x = Math.min(F.length - 1 + ring, s * R.fly.fps), k = Math.max(0, Math.min(F.length - 2 + ring, Math.floor(x)));
     return (F[k][0] + ((k + 1 < F.length ? F[k + 1][0] : R.len) - F[k][0]) * (x - k)) / R.len;
   }
-  // where a run L m long at that pace is at its time s (0..1 of the way): the finish held for RUN.end, then round again
-  function paceAt(L, s) { const go = runGo(L), Dr = go + RUN.end; s = ((s % Dr) + Dr) % Dr; return glide(s / go, RUN.ease); }
+  // where a run L m long at that speed is at its time s (0..1 of the way): at the finish straight on into a new lap
+  function paceAt(L, s) { const go = runGo(L); return (((s % go) + go) % go) / go; }
   // that place on the map (its route's points lie evenly along the run, routes.py)
   function routePt(T, f) {
     const P = T.route, x = Math.max(0, Math.min(1, f)) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i;
@@ -523,13 +522,42 @@
         const id = box.dataset.map, dot = box.__dot || (box.__dot = $('.rt-dot', box));
         if (id !== run.id || !dot) continue;
         if (s < 0) { dot.setAttribute('opacity', '0'); continue; }   // (the route still drawing itself)
-        const p = routePt(RT[id].top, runAt(id, s));
+        const f = runAt(id, s), p = routePt(RT[id].top, f);
         dot.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ')'); dot.setAttribute('opacity', '1');
+        mapTrail(box, id, f, p);
         if (!box.__drawn) { box.__drawn = 1; box.classList.add('drawn'); }
       }
       mapRaf = requestAnimationFrame(step);
     };
     if (app) step();
+  }
+  // the trail behind the map's point (the user's wish 10. 11. 2026: the colours the flyover's point leaves behind it): the route behind the
+  // point coloured by the climb (GRADE, as the height graph: climbs) over its gold line, which stays as it was ahead of the point. As the
+  // track's flyover draws it: an old flyover (R.fly without loop) from the start up to the point; a loop, and a track with only its map, its
+  // last TRAIL m (at most 0.6 of the run; on a circuit round the start line), its further half narrowing to nothing. A piece between each
+  // two of the route's points (the point's own one up to the point), 7 px wide on the screen (over the gold 6, inside the dark edge's 11)
+  const TRAIL = 1500;   // (m: the flyovers' own, maketa-menija/orodja/drone_page.js flyInit trail)
+  function mapTrail(box, id, f, p) {
+    const R = RT[id], P = R.top.route, m = P.length;
+    let Z = box.__tr;
+    if (!Z) {
+      const g = $('.rt-tr', box); if (!g) return;
+      const v = climbs(R.prof, R.len), n = v.length, col = [];
+      for (let j = 0; j < m - 1; j++) { const q = (j + 0.5) / (m - 1) * (n - 1), i = Math.min(n - 2, Math.floor(q)); col.push('rgb(' + gradeRgb(v[i] + (v[i + 1] - v[i]) * (q - i)).join(',') + ')'); }
+      g.innerHTML = col.map((c, j) => '<path d="M' + P[j][0] + ' ' + P[j][1] + 'L' + P[j + 1][0] + ' ' + P[j + 1][1] + '" stroke="' + c + '" stroke-width="0"/>').join('') + '<path stroke-width="0"/>';
+      Z = box.__tr = { el: [...g.children], w: [], col, hi: -1, svg: $('svg', box) };
+    }
+    f = Math.min(1, Math.max(0, f));
+    const k = parseFloat(Z.svg.style.getPropertyValue('--k')) || 1, L = R.len, ds = L / (m - 1), d = f * L, i = Math.min(m - 2, Math.floor(f * (m - 1)));
+    const whole = !!R.fly && !R.fly.loop, ring = !R.open && !whole, tl = whole ? Infinity : Math.min(TRAIL, 0.6 * L);
+    const set = (j, w) => { const s = (7 * k * w).toFixed(2); if (Z.w[j] !== s) { Z.w[j] = s; Z.el[j].setAttribute('stroke-width', s); } };
+    for (let j = 0; j < m - 1; j++) {
+      const back = j < i ? d - (j + 0.5) * ds : j > i && ring ? d - (j + 0.5) * ds + L : -1;   // (from the point back to the piece's middle; the last lap's on a circuit)
+      set(j, back < 0 || back >= tl ? 0 : back <= tl / 2 ? 1 : Math.round((tl - back) / (tl / 2) * 20) / 20);
+    }
+    const h = Z.el[m - 1];   // (the point's own piece, at the full width)
+    if (Z.hi !== i) { Z.hi = i; h.setAttribute('stroke', Z.col[i]); }
+    h.setAttribute('d', 'M' + P[i][0] + ' ' + P[i][1] + 'L' + p[0].toFixed(1) + ' ' + p[1].toFixed(1)); set(m - 1, 1);
   }
   // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop (a circuit's
   // flyover made as a loop, R.fly.loop, goes straight on into its next lap: no dip, and the start line's one name stays over it either side)
@@ -598,6 +626,11 @@
     for (let i = 1; i < GRADE.length; i++) if (v <= GRADE[i][0]) { const a = GRADE[i - 1], b = GRADE[i], k = (v - a[0]) / (b[0] - a[0]); return a[1].map((c, j) => Math.round(c + (b[1][j] - c) * k)); }
     return GRADE[GRADE.length - 1][1];
   }
+  // the climb at each of the heights G along a run L m long (over about two of its steps, evened out a little): the graph's colours, the map's trail's
+  function climbs(G, L) {
+    const n = G.length, step = L / (n - 1), g = G.map((_, i) => { const a0 = Math.max(0, i - 1), b0 = Math.min(n - 1, i + 1); return (G[b0] - G[a0]) / ((b0 - a0) * step); });
+    return g.map((_, i) => (g[Math.max(0, i - 1)] + 2 * g[i] + g[Math.min(n - 1, i + 1)]) / 4);
+  }
   // a track's heights along its run: L (m), G the game's heights (its climb), H the heights shown (above the sea where known: real; where the
   // menu's data has none, from the start's height in geo.js)
   function heightsOf(t) {
@@ -611,13 +644,12 @@
   // the graph in a frame W × Hh px: its svg, and where on it a fraction f of the run is
   function graphOf(t, W, Hh) {
     const P = heightsOf(t); if (!P || W < 40 || Hh < 20) return null;
-    const H = P.H, G = P.G, n = H.length, lo = Math.min(...H), hi = Math.max(...H), step = P.L / (n - 1), span = Math.max(hi - lo, 120), yT = 18;
+    const H = P.H, n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, 120), yT = 18;
     const x = (f) => f * W, y = (h) => Hh - (h - lo) / span * (Hh - yT);
     const hAt = (f) => { const q = Math.min(n - 1, Math.max(0, f * (n - 1))), i = Math.min(n - 2, Math.floor(q)); return H[i] + (H[i + 1] - H[i]) * (q - i); };
     const line = 'M' + H.map((h, i) => x(i / (n - 1)).toFixed(1) + ' ' + y(h).toFixed(1)).join('L'), area = line + 'L' + W + ' ' + Hh + 'L0 ' + Hh + 'z';
-    // the climb at each height (over about two of its steps, evened out a little) as its colour, a stop of the line's gradient
-    const g = G.map((_, i) => { const a0 = Math.max(0, i - 1), b0 = Math.min(n - 1, i + 1); return (G[b0] - G[a0]) / ((b0 - a0) * step); });
-    const stops = g.map((_, i) => { const v = (g[Math.max(0, i - 1)] + 2 * g[i] + g[Math.min(n - 1, i + 1)]) / 4; return '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + gradeRgb(v).join(',') + ')"/>'; }).join('');
+    // the climb at each height as its colour, a stop of the line's gradient
+    const stops = climbs(P.G, P.L).map((v, i) => '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + gradeRgb(v).join(',') + ')"/>').join('');
     const lab = (h) => num(Math.round(h)) + ' m';
     const svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true"><defs>' +
       '<linearGradient id="hgc" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + stops + '</linearGradient>' +

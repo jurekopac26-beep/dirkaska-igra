@@ -579,6 +579,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .rally path.rt { stroke: #ff8a2a; }
 .rt-c { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 10 9; opacity: .9; }
 .rt-dot .c { fill: #fff8d0; }
+/* (the trail behind the map's point, coloured by the climb: js/menu.js mapTrail sets each piece's colour and width) */
+.rt-tr path { fill: none; stroke-linecap: round; }
 .topmap .rt-o { stroke-width: calc(11px * var(--k, 1)); }
 .topmap path.rt { stroke-width: calc(6px * var(--k, 1)); }
 /* (fitMaps: the same width on the screen at any zoom) */

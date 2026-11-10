@@ -1428,6 +1428,14 @@ try {
     const b = await ev(page, NEAR);
     T.check(`flyover -> map: the map goes on from the flyover's moment (${a.vt.toFixed(1)} s, the run now at ${b.run.t.toFixed(1)} s), its point where the flyover's was, the route already drawn`,
       a.run.id === 'pikes' && b.run.id === 'pikes' && b.run.t >= a.vt - 0.05 && b.run.t < a.vt + 15 && b.best < 2.5 && b.fromStart > 20 && b.drawn && b.views === 1, JSON.stringify({ a, b }));
+    // the map's point leaves its trail behind it coloured by the climb, as the flyover's point does (js/menu.js mapTrail): Pikes Peak's flyover
+    // (an old one, not a loop) draws the route from the start up to the point, so the map's trail is every piece before the point's own one,
+    // at the full width, that one up to the point, none ahead
+    const tr = await ev(page, `const b = root.querySelector("#track-stage .dio.topmap"), ps = [...b.querySelectorAll(".rt-tr path")], w = ps.map(p => +p.getAttribute("stroke-width")), n = ps.length - 1, on = w.slice(0, n).filter(x => x > 0).length;
+      const h = /^M([-\\d.]+) ([-\\d.]+)L([-\\d.]+) ([-\\d.]+)$/.exec(ps[n].getAttribute("d") || ""), P = window.ROUTES.pikes.top.route, dot = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
+      return { n, on, full: w.slice(0, on).every(x => x === w[n]) && w[n] > 0, ahead: w.slice(on, n).some(x => x > 0), head: !!h && !!dot && Math.hypot(+h[1] - P[on][0], +h[2] - P[on][1]) < 0.2 && +h[3] === +dot[1] && +h[4] === +dot[2], colours: new Set(ps.slice(0, on).map(p => p.getAttribute("stroke"))).size };`);
+    T.check(`the map's trail (Pikes Peak, an old flyover): the route from the start up to the point coloured by the climb (${tr.on} of ${tr.n} pieces, ${tr.colours} colours), the point's own piece up to it, nothing ahead`,
+      tr.on > 0 && tr.full && !tr.ahead && tr.head && tr.colours >= 2, JSON.stringify(tr));
     await page.waitForTimeout(2500);
     const c0 = await page.evaluate(() => Menu.debug().run);
     await click(page, 'cam:2');
@@ -1463,6 +1471,22 @@ try {
       v.addEventListener('seeked', () => requestAnimationFrame(step), { once: true }); v.currentTime = v.duration - 1.5;   // (the lap's last 1.5 s, then on into the next)
     }));
     T.check('a circuit\'s flyover made as a loop (Spa): the picture not dipped where it goes on into its next lap, the start line\'s one name over it before and after', lp.loop === 1 && lp.looped === 1 && lp.dip === 1 && lp.before && lp.after && !lp.finish, JSON.stringify(lp));
+    // a track with only its map (the shortest such circuit of the game): its point at the flyovers' even 326 m/s all the way, at the finish
+    // straight on into a new lap (no wait; the user's choice 10. 11. 2026: »Da, povsod enako«); its trail the loop's: the last 1500 m behind
+    // the point (round the start line), its further half narrowing to nothing
+    const mo = await page.evaluate(() => Menu.debug().list.filter(id => { const R = window.ROUTES[id], d = Core.TRACKS.find(x => x.id === id); return R && !R.fly && !R.open && d && !d.test && !d.pending; }).sort((a, b) => window.ROUTES[a].len - window.ROUTES[b].len)[0]);
+    const wayM = await page.evaluate((id) => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf(id) - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; }, mo);
+    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== mo; k++) await click(page, wayM);
+    await click(page, 'cam:1');
+    await page.waitForFunction((id) => { const r = Menu.debug().run; return r.id === id && r.t > window.ROUTES[id].len / 326 + 0.8; }, mo, { timeout: 90000 }).catch(() => null);
+    const mp = await ev(page, `const id = arg, R = window.ROUTES[id], P = R.top.route, run = Menu.debug().run, go = R.len / 326;
+      const at = (s) => { const x = (((s % go) + go) % go) / go * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
+      const b = root.querySelector("#track-stage .dio.topmap"), m = b && /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
+      let best = 1e9; if (m) for (let s = run.t - 0.4; s <= run.t + 0.05; s += 0.01) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
+      const w = b ? [...b.querySelectorAll(".rt-tr path")].map(p => +p.getAttribute("stroke-width")) : [], n = w.length - 1;
+      return { id, lap: +(run.t - go).toFixed(2), best: +best.toFixed(2), n, head: w[n] > 0, last: w[n - 1] > 0, mid: w[Math.floor(n / 2)], narrow: w.some(x => x > 0 && x < w[n]) };`, mo);
+    T.check(`a track with only its map (${mo}): the point at the flyovers' even pace, at the finish straight on into a new lap (${mp.lap} s into it); its trail round the start line, narrowing, not over the whole lap`,
+      mp.lap > 0.4 && mp.best < 2.5 && mp.head && mp.last && mp.mid === 0 && mp.narrow, JSON.stringify(mp));
     T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
