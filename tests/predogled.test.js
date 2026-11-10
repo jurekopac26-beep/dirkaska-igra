@@ -39,12 +39,15 @@ const def = (menu.match(/^\s*const vidSrc = .*$/m) || [''])[0];
   // nowhere else in the game: a video's address built past vidSrc would be missing only in a preview (the recording's own file name is
   // no address: '.mp4' : '.webm' in js/game.js)
   const walk = (d) => fs.readdirSync(path.join(REPO, d), { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(d + '/' + e.name) : /\.(js|css)$/.test(e.name) ? [d + '/' + e.name] : []);
-  const code = [...walk('js'), ...walk('css'), 'sw.js', ...fs.readdirSync(REPO).filter(f => /\.html$/.test(f))], past = [];
+  // (the pages and sw.js by the names the site publishes: GAME in tools/predogled.mjs)
+  const game = JSON.parse((/const GAME\s*=\s*(\[[^\]]*\])/.exec(fs.readFileSync(path.join(REPO, 'tools', 'predogled.mjs'), 'utf8')) || [0, '[]'])[1].replace(/'/g, '"'));
+  const pages = game.filter(f => /\.(html|js)$/.test(f));
+  const code = [...walk('js'), ...walk('css'), ...pages], past = [];
   for (const f of code) {
     const t = fs.readFileSync(path.join(REPO, f), 'utf8').replace(/vidSrc\('(?:fly|corner|heli)-' \+ t\.id \+ '\.webm'\)/g, '').replace(/'\.mp4' : '\.webm'/g, '');
     if (/\.webm['"`]/.test(t)) past.push(f);
   }
-  check('no other file of the game names a video (js/, css/, sw.js, the pages)', past.length === 0 && code.length > 50, past.join(', ') || code.length + ' files');
+  check('no other file of the game names a video (js/, css/, sw.js, the pages)', past.length === 0 && code.length > 50 && pages.includes('index.html') && pages.includes('sw.js'), past.join(', ') || code.length + ' files, ' + pages.join(' '));
   let src = null;
   try { src = (D) => vm.runInNewContext(def + '\nvidSrc', { D }); src({}); } catch (e) { src = null; }
   const V = { root: '../../', files: ['fly-a.webm', 'heli-a.webm'] };
