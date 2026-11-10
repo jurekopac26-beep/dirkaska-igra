@@ -250,9 +250,14 @@
 
     /* ---- buildings (OpenStreetMap footprints near the track) and the T13 grandstand ---- */
     let nBld = 0; const crB0 = excl.length;
+    // the prototype of the houses by the road (js/world-hise.js; index.html?hise=1|2|3, else as they are): the Eifel's houses from the kit (slate,
+    // steep gables), by how far beyond the barrier they stand; no drive out to the race track
+    const HS = API.hise ? API.hise.setup({ Chunks, list: def.bld || [], T, near: nrNear, gH: nrGround, style: 'north', d2: 34, d1: 64, opts: { hip: 0.1, pitch: 0.84, noDrive: true } }) : null;
+    let bi = -1;
     for (const [bx, bz, L, W, ang, H, k] of def.bld || []) {
+      bi++;
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[L / 2, W / 2], [L / 2, -W / 2], [-L / 2, W / 2], [-L / 2, -W / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); }
+      let clash = false, y0 = 1e9, dnH = 1e9, riH = -1; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; if (n.i >= 0 && n.dd < dnH) { dnH = n.dd; riH = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); }
       if (clash) continue;
       const g = scen.get(bx, bz); nBld++; CR.block(bx, bz, L, W, ang);   // (nobody stands inside it)
       if (k === 2) {   // grandstand: tiers climbing away from the track, a crowd on every tier, roof on pillars
@@ -272,6 +277,9 @@
         exclPush(bx, bz, Math.max(L, W) / 2 + 4);
       } else {   // house: rendered walls, a pitched roof along the long side
         const hh = H || 5.6 + R() * 2.2, walls = [[0.93, 0.9, 0.84], [0.96, 0.95, 0.92], [0.86, 0.82, 0.74], [0.9, 0.86, 0.8]], roofs = [[0.32, 0.3, 0.32], [0.46, 0.22, 0.16], [0.24, 0.24, 0.27]];
+        if (HS && L * W < 1500) { const wv = vary(walls[Math.floor(R() * walls.length)], R, 0.06), rc = roofs[Math.floor(R() * roofs.length)], small = L * W < 45;   // (the same draws of R as below)
+          HS.put({ x: bx, z: bz, L, W, ang, y0, hh, fl: small ? 1 : hh > 8.6 ? 3 : 2, type: small ? 'small' : 'house', wall: wv, roof: rc.map(v => v * 1.5), band: [0.3, 0.32, 0.34], dn: dnH, ri: riH, id: bi });
+          exclPush(bx, bz, Math.max(L, W) / 2 + 3); continue; }
         box(g, bx, y0 - 0.4, bz, L, hh + 0.4, W, ang, vary(walls[Math.floor(R() * walls.length)], R, 0.06), null, true);
         if (L * W < 1500) gable(g, bx, y0 + hh, bz, L + 0.6, W + 0.6, Math.min(4.2, W * 0.42), ang, roofs[Math.floor(R() * roofs.length)], [0.8, 0.78, 0.74]);
         else box(g, bx, y0 + hh, bz, L, 0.5, W, ang, [0.5, 0.5, 0.52]);
@@ -500,11 +508,13 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) { HS.addTo(sceneryGroup); }
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
+    if (HS) out.stats.hise = HS.stats;
     return out;
   }
 

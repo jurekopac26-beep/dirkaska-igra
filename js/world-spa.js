@@ -375,10 +375,15 @@
     const pitZone = (x, z) => { if (!def.pit) return false; const i = T.nearestIdx(x, z), lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], d = dS(i * ds), dd = d > L / 2 ? d - L : d;
       return lat > 0 && lat < 80 && dd > def.pit[1] - 20 && dd < def.pit[2] + 20; };
     const SEATS = [[0.14, 0.3, 0.62], [0.72, 0.14, 0.14], [0.9, 0.72, 0.12], [0.2, 0.5, 0.3]];
+    // the prototype of the houses by the road (js/world-hise.js; index.html?hise=1|2|3, else as they are): the Ardennes' houses from the kit (slate,
+    // steep gables), by how far beyond the barrier they stand; no drive out to the race track
+    const HS = API.hise ? API.hise.setup({ Chunks, list: def.bld || [], T, near: nrNear, gH: nrGround, style: 'north', d2: 34, d1: 64, opts: { hip: 0.12, pitch: 0.92, noDrive: true } }) : null;
+    let bi = -1;
     for (const [bx, bz, Lb, Wb, ang, H, k] of def.bld || []) {
+      bi++;
       if (k === 3 && pitZone(bx, bz)) continue;   // (the pit building on the pit straight is the pit lane's garages, below)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); }
+      let clash = false, y0 = 1e9, dnH = 1e9, riH = -1; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; if (n.i >= 0 && n.dd < dnH) { dnH = n.dd; riH = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); }
       if (clash) continue;
       const g = scen.get(bx, bz); nBld++; CR.block(bx, bz, Lb, Wb, ang);   // (nobody stands inside it)
       if (k === 2) {   // grandstand: tiers climbing away from the track, a crowd on every tier's seats, a roof on steel pillars over the back half
@@ -408,6 +413,9 @@
         exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 4);
       } else {   // an Ardennes house: grey stone or whitewashed walls (now and then red brick), a steep dark slate roof along the long side
         const hh = H || 5.4 + R() * 2.2, walls = [[0.66, 0.64, 0.6], [0.94, 0.93, 0.89], [0.72, 0.7, 0.66], [0.62, 0.38, 0.3]], wc = walls[Math.floor(R() * walls.length)];
+        if (HS && Lb * Wb < 1500) { const wv = vary(wc, R, 0.05), rc = vary([0.2, 0.22, 0.26], R, 0.08), small = Lb * Wb < 45;   // (the same draws of R as below)
+          HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl: small ? 1 : hh > 8.6 ? 3 : 2, type: small ? 'small' : 'house', wall: wv, roof: rc.map(v => v * 1.55), band: [0.3, 0.32, 0.34], dn: dnH, ri: riH, id: bi });
+          exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 3); continue; }
         box(g, bx, y0 - 0.4, bz, Lb, hh + 0.4, Wb, ang, vary(wc, R, 0.05), null, true);
         if (Lb * Wb < 1500) gable(g, bx, y0 + hh, bz, Lb + 0.5, Wb + 0.5, Math.min(5, Wb * 0.55), ang, vary([0.2, 0.22, 0.26], R, 0.08), wc);
         else box(g, bx, y0 + hh, bz, Lb, 0.5, Wb, ang, [0.36, 0.37, 0.4]);
@@ -747,12 +755,14 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) { HS.addTo(sceneryGroup); }
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
+    if (HS) out.stats.hise = HS.stats;
     return out;
   }
 

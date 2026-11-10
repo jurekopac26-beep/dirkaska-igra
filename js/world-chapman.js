@@ -199,12 +199,13 @@
     P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 50); P.c3 = valueNoise2(733, 160); P.c4 = valueNoise2(734, 260);
     P.st = [T.px[T.idx(sStart)], T.pz[T.idx(sStart)]];
     // the buildings (def.bld [x, z, length, width, angle, height, kind]: the houses of Hout Bay): clear of the road and the sea
-    const blds = [];
+    const blds = []; let bi = -1;
     for (const b of def.bld || []) {
+      bi++;
       const [x, z, L, W, ang, hgt, kind] = b; if (L < 3 || W < 3) continue;
-      const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
-      for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 2) || vrDem(px, pz) + base < 3) { ok = false; break; } }
-      if (ok) blds.push({ x, z, L: Math.min(L, 40), W: Math.min(W, 24), ang, hgt, kind });
+      const c = Math.cos(ang), s = Math.sin(ang); let ok = true, dn = 1e9, ri = -1;   // (dn, ri: how far beyond the road's barrier, the nearest sample: the prototype of the houses by the road)
+      for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 2) || vrDem(px, pz) + base < 3) { ok = false; break; } if (n.i >= 0 && n.dd < dn) { dn = n.dd; ri = n.i; } }
+      if (ok) blds.push({ x, z, L: Math.min(L, 40), W: Math.min(W, 24), ang, hgt, kind, id: bi, dn, ri });
     }
     // the view points' lay-bys (def.views [metres after the start line, side]): a level plot beside the road; the start's (the road closed behind it)
     const padBeside = (s, sd, r) => { const i = T.idx(s), o = (sd > 0 ? T.br[i] : T.bl[i]) + r - 1.5; return { x: T.px[i] + T.nx[i] * sd * o, z: T.pz[i] + T.nz[i] * sd * o, r, b: 10, h: T.hy[i] - 0.2, sd, i }; };
@@ -365,14 +366,17 @@
 
     /* ---- the houses of Hout Bay: white and cream plastered walls, grey, slate and terracotta roofs ---- */
     let nBld = 0;
+    // the prototype of the houses by the road (js/world-hise.js; index.html?hise=1|2|3, else as they are): the Cape's houses from the kit
+    const HS = API.hise ? API.hise.setup({ Chunks, size: 160, list: def.bld || [], T, near: vrNear, gH: chGround, style: 'cape', d2: 30, d1: 60, opts: { hip: 0.5, pitch: 0.5 } }) : null;
     {
       const RB = rng(3021), walls = [[0.96, 0.95, 0.92], [0.94, 0.9, 0.8], [0.9, 0.9, 0.88], [0.92, 0.86, 0.74], [0.97, 0.96, 0.94]], roofs = [[0.36, 0.38, 0.4], [0.62, 0.3, 0.2], [0.24, 0.26, 0.3], [0.52, 0.5, 0.48], [0.66, 0.36, 0.24]], woods = [[0.42, 0.3, 0.2], [0.56, 0.42, 0.28]];
       for (const b of blds) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = chGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
         if (b.kind === 3) { const mc = vary([0.8, 0.78, 0.74], RB, 0.1); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 2.8, b.W, b.ang, mc, null, true); }
-        else { const fl = b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1;
-          vrHouse(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall: walls[Math.floor(RB() * walls.length)], wood: woods[Math.floor(RB() * 2)], roof: vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1) }); }
+        else { const fl = b.hgt > 6.5 || b.L * b.W > 260 ? 2 : 1, wall = walls[Math.floor(RB() * walls.length)], wood = woods[Math.floor(RB() * 2)], roof = vary(roofs[Math.floor(RB() * roofs.length)], RB, 0.1);
+          if (HS) HS.put({ x: b.x, z: b.z, L: b.L, W: b.W, ang: b.ang, y0: hi + 0.3, base: hi - lo + 0.3, hh: fl * 2.9, fl, type: b.L * b.W < 45 ? 'small' : 'house', wall, roof, band: wood, dn: b.dn, ri: b.ri, id: b.id });
+          else vrHouse(g, fac.get(b.x, b.z), b.x, lo, hi, b.z, b.ang, b.L, b.W, fl, { wall, wood, roof }); }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
       }
     }
@@ -699,10 +703,12 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);
+    if (HS) HS.addTo(sceneryGroup, (m) => ouCutMat(m, cut));
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: chAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: chAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, walls: +(nWall / (2 * N)).toFixed(3), parapet: nRail, nets: nNet, views: views.length, baboons: nBab, kelp: nKelp, boats: nBoat, overhangs: nOver, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (HS) out.stats.hise = HS.stats;
     return out;
   }
 
