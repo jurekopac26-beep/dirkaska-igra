@@ -53,8 +53,7 @@ MIN_RIM = (300, 0.02)   # the island's bare rim takes the detail from at least t
 
 def js_obj(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()
-    i = s.index('{', s.index(var)); j = s.rindex('}')
-    return json.loads(s[i:j + 1])
+    return json.JSONDecoder().raw_decode(s, s.index('{', s.index(var)))[0]   # (the object alone: js/menu-data.js goes on after it, window.MENU.lens = ... and others)
 
 
 def wide_maps():

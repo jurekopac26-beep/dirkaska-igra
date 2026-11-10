@@ -42,8 +42,7 @@ SUN.update({'balea': ([-80, 86, 62], 1.24, 0.6), 'bathurst': ([-74, 86, -56], 1.
 
 def js_data(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()
-    i = s.index('{', s.index(var)); j = s.rindex('}')
-    return json.loads(s[i:j + 1])
+    return json.JSONDecoder().raw_decode(s, s.index('{', s.index(var)))[0]   # (the object alone: js/menu-data.js goes on after it, window.MENU.lens = ... and others)
 
 def load(tid):
     R = js_data('routes.js', 'window.ROUTES')[tid]['top']; X = js_data('intro-data.js', 'window.INTRO').get(tid, {}).get('top'); G = js_data('geo.js', 'window.GEO')['tracks'].get(tid)

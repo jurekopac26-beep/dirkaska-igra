@@ -19,7 +19,7 @@ MAPS = os.path.join(HERE, 'raw', 'maps')
 P = json.load(open(os.path.join(RAW, 'places.json')))['tracks']
 LM = json.load(open(os.path.join(HERE, 'landmarks.json')))
 SUMMIT = {'vrsic': 'Vršič', 'sani': 'Sani Pass', 'katu': 'Katu-Yaryk', 'rastro': 'Rio do Rastro'}   # (a mountain's name in the corner only where no trademark is near: the Colorado hill climb's mountain shows its height only)   # (a road over a mountain: its top's name; the circuits show the height only)
-NO_FLIGHT = set(['baldy', 'bangsaen', 'beartooth', 'bigsur', 'caracoles', 'chapman', 'detroit', 'greatalpine', 'harju', 'hotham', 'iroha', 'katu', 'longford', 'marrakesh', 'maunakea', 'medvode', 'moki', 'monterey', 'montreal', 'mulholland', 'newcastle', 'palomar', 'rastro', 'riverside', 'sani', 'tianmen', 'toronto', 'townsville', 'troisrivieres', 'uncompahgre'])   # (tracks without a helicopter flight: the intro goes straight to the start lights; these: their flights and flyovers later, the user's decision 30. 10. 2026)
+NO_FLIGHT = set(['baldy', 'bangsaen', 'beartooth', 'bigsur', 'caracoles', 'chapman', 'detroit', 'greatalpine', 'harju', 'hotham', 'iroha', 'katu', 'longford', 'marrakesh', 'maunakea', 'medvode', 'moki', 'monterey', 'montreal', 'mulholland', 'newcastle', 'palomar', 'rastro', 'riverside', 'sani', 'tianmen', 'toronto', 'townsville', 'troisrivieres', 'uncompahgre', 'balea', 'bathurst', 'livorno'])   # (tracks without a helicopter flight: the intro goes straight to the start lights; these: their flights and flyovers later, the user's decision 30. 10. 2026)
 MUSIC = {'Slovenia': 'slovenia', 'USA': 'usa', 'Finland': 'finland', 'Japan': 'japan', 'Monaco': 'monaco', 'Austria': 'austria', 'Belgium': 'belgium', 'Germany': 'germany', 'Australia': 'australia', 'South Africa': 'southafrica', 'Morocco': 'morocco', 'Canada': 'canada', 'Chile': 'chile', 'Brazil': 'brazil', 'Russia': 'russia', 'China': 'china', 'Thailand': 'thailand'}
 
 def old_intro():
@@ -27,11 +27,9 @@ def old_intro():
     if not os.path.exists(p): return {}
     s = open(p, encoding='utf-8').read(); return json.loads(s[s.index('{'):s.rstrip().rindex(';')])
 OLD = old_intro() if ONLY else {}
-out = {}
+out = dict(OLD)   # (only some tracks again: the others stay as they are and where they are, also a track that is not in places.json here)
 for tid, pl in P.items():
-    if ONLY and tid not in ONLY:
-        if tid in OLD: out[tid] = OLD[tid]
-        continue
+    if ONLY and tid not in ONLY: continue
     T = track(tid); pts = np.array(T['pts'], dtype=np.float64); G = Geo(pl['lat0'], pl['lon0'], pl['rot']); off = pl['offset']
     rd = lambda d: at_s(T, pts, T['startS'] + d)
     run = T['raceLen'] if T['open'] else T['len']
@@ -133,8 +131,6 @@ for tid, pl in P.items():
         json.dump(o, open(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid), 'w'), separators=(',', ':'), ensure_ascii=False)
         print(tid, 'heli path', len(C), 'frames,', os.path.getsize(os.path.join(SITE, 'assets', 'maps', 'heli-%s.json' % tid)) // 1024, 'KB')
 
-for tid in OLD:   # (a track not in places.json here: kept as it was)
-    if tid not in out: out[tid] = OLD[tid]
 with open(os.path.join(SITE, 'intro-data.js'), 'w') as f:
     f.write('/* The intro before a race: each track\'s map placed on the Earth, its country (flag, music), its summit\'s name and the places marked over\n   the helicopter\'s flight (made by intro_data.py from landmarks.json, do not edit). */\n')
     f.write('window.INTRO = ' + json.dumps(out, separators=(',', ':'), ensure_ascii=False) + ';\n')

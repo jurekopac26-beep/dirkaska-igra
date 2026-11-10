@@ -34,6 +34,7 @@ window.DR = (function () {
   let wcov = null;   // where the world's own ground and water are (worldCover)
   let seaExt = null;   // the world's sea carried on to the far land's edges (seaExtend)
   const groundMeshes = new WeakSet(), groundList = [];   // the world's ground meshes (worldCover): always drawn
+  let farOut = 0, farOutN = 0;   // (farLand: F.ownFar false, a world's own coarse far land left out; how wide a mesh counts as it, m; how many were)
   let lcAt = null;   // the real land cover at (x, z) (a made-up world: of the real place it stands on), from the far land cover picture
   const FE = { uFeather: { value: null }, uFeatherBox: { value: new THREE.Vector4(0, 0, 1, 1) }, uFeatherOn: { value: 0 } };   // (the seam's colours: edgeFeather)
   // the land cover picture (raw/geo/<track>-far-lc.png: WorldCover classes, north at the top over the far box F.ll), as lcAt(x, z)
@@ -93,6 +94,9 @@ window.DR = (function () {
       const nyOf = (a, b, cc) => { const ux = X[b] - X[a], uy = Y[b] - Y[a], uz = Z[b] - Z[a], vx = X[cc] - X[a], vy = Y[cc] - Y[a], vz = Z[cc] - Z[a]; return Math.abs(uz * vx - ux * vz) / (Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) + 1e-9); };
       if (pass === 1) for (let t = 0; t + 2 < n; t += 3) { const a = I ? I.getX(t) : t, b = I ? I.getX(t + 1) : t + 1, cc = I ? I.getX(t + 2) : t + 2; all++; if (nyOf(a, b, cc) > 0.35) up++; }
       const terrain = pass === 1 && all > 0 && up / all > 0.85;   // (a terrain tile: nearly all of it faces up; a building has its walls)
+      // (a world's own far land, much wider than its track: left out where asked, heli.json's ownFar false: a coarse land that floats
+      // over ours or sinks under it, with holes between it and the near tiles; our land, the real place's, goes there instead)
+      if (terrain && farOut && Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z) > farOut) { o.visible = false; o.layers.mask = 0; farOutN++; return; }
       for (let t = 0; t + 2 < n; t += 3) {
         nT++;
         const a = I ? I.getX(t) : t, b = I ? I.getX(t + 1) : t + 1, cc = I ? I.getX(t + 2) : t + 2, ax = X[a], az = Z[a], bx = X[b], bz = Z[b], cx = X[cc], cz = Z[cc];
@@ -159,6 +163,8 @@ window.DR = (function () {
     }
     // under the world's own ground wherever that is built (40 m under it well inside, well clear of its surface), meeting it at its edge (1.5 m under),
     // rising from there to the land's own heights over 400 m
+    if (F.ownFar === false) { let a = 1e9, b = -1e9, c = 1e9, d = -1e9; for (const [x, z] of rp) { a = Math.min(a, x); b = Math.max(b, x); c = Math.min(c, z); d = Math.max(d, z); }
+      farOut = Math.max(6000, 1.6 * Math.max(b - a, d - c) + 2000); }   // (as the maps' far backdrop, routemap_page.js)
     const WC = worldCover(x0 - cell, z0 - cell, 20, Math.ceil((nx + 2) * cell / 20), Math.ceil((nz + 2) * cell / 20));
     for (let k = 0; k < N; k++) {
       const i = k % W1, j = (k / W1) | 0, x = x0 + i * cell, z = z0 + j * cell, e = WC.at(x, z); if (e > 400) continue;
@@ -169,7 +175,7 @@ window.DR = (function () {
       else { const w = e / 400, s = w * w * (3 - 2 * w); H[k] = (gy - 1.5) * (1 - s) + H[k] * s; }
     }
     for (let k = 0; k < N; k++) { const i = k % W1, j = (k / W1) | 0, x = x0 + i * cell, z = z0 + j * cell; if (WC.at(x, z) < 0) continue; const yl = WC.level(x, z); if (Number.isFinite(yl)) H[k] = Math.min(H[k], yl - 6); }   // (under the world's water where no ground of its own is over it)
-    F.cover = +WC.share.toFixed(3); window.__WC = WC; wcov = WC;
+    F.cover = +WC.share.toFixed(3); window.__WC = WC; wcov = WC; if (farOut) F.farOut = farOutN;
     // the sea round a coastal world (F.sea): the world's own sea goes on to the horizon (seaExtend); our land under it wherever the real
     // land cover has water, a little above it wherever it has land (outside the world's own ground)
     if (F.sea && WC.waters.length) {
@@ -179,11 +185,13 @@ window.DR = (function () {
         const cl = Cl ? Cl[k] : lcAt ? lcAt(x, z) : 0;
         if (cl === 80 || cl === 0) { H[k] = Math.min(H[k], yw - 6); nW++; } else H[k] = Math.max(H[k], yw + 1.5);
       }
-      // (the world's own houses beyond its ground, over its sea plane: land under them, at their height; and land where both say land)
+      // (the world's own houses beyond its ground, over its sea plane: land under them, at their height; and land where both say land.
+      // Not in a world whose houses all stand on land of its own, its ground and its backdrop (F.seaHouses false, heli.json): there the
+      // things over its water are ships, bridges and shore overlays, and land under them shows as patches in the water)
       for (let k = 0; k < N; k++) {
         const i = k % W1, j = (k / W1) | 0, x = x0 + i * cell, z = z0 + j * cell; if (WC.at(x, z) < 0 || !Number.isFinite(WC.level(x, z))) continue;
         const gy = g(x, z), by = WC.base(x, z), cl = Cl ? Cl[k] : lcAt ? lcAt(x, z) : 0;
-        if (Number.isFinite(by) && by > yw - 1) H[k] = Math.max(H[k], by - 0.5, yw + 1.0);   // (under its buildings)
+        if (F.seaHouses !== false && Number.isFinite(by) && by > yw - 1) H[k] = Math.max(H[k], by - 0.5, yw + 1.0);   // (under its buildings)
         else if (cl !== 80 && cl !== 0 && Number.isFinite(gy) && gy >= yw + 3) H[k] = Math.max(H[k], gy - 0.5);   // (where the real place is land and its own heights say so too)
       }
       F.seaCells = nW; seaExtend(WC.waters[0], x0, z0, x0 + nx * cell, z0 + nz * cell);
@@ -223,7 +231,7 @@ window.DR = (function () {
       (Render.scene || W.root).add(mesh);
       const at = (x, z) => { const fi = (x - x0) / cell, fj = (z - z0) / cell; if (fi < 0 || fj < 0 || fi >= nx || fj >= nz) return NaN; const i = Math.floor(fi), j = Math.floor(fj), u = fi - i, v = fj - j, k = j * W1 + i; return (H[k] * (1 - u) + H[k + 1] * u) * (1 - v) + (H[k + W1] * (1 - u) + H[k + W1 + 1] * u) * v; };
       land = { mesh, n: N, h: at, grid: { x0, z0, cell, nx, nz, H } };
-      return { n: N, cell, real: true, tex: true, cover: F.cover, seaCells: F.seaCells };
+      return { n: N, cell, real: true, tex: true, cover: F.cover, seaCells: F.seaCells, farOut: F.farOut };
     }
     // the colours: the land cover (a real track) or the height (the drawn hills); rock where it is steep, snow up high, a little variety
     const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), c = new THREE.Color(), rock = new THREE.Color(0x8a857c), snow = new THREE.Color(0xeef1f4);
@@ -668,7 +676,7 @@ window.DR = (function () {
     const pickK = (L, r) => { let tot = 0; for (const K of L) tot += K.n; let a = r * tot; for (const K of L) { a -= K.n; if (a <= 0) return K; } return L[L.length - 1]; };
     const out = { tiles: 0, trees: 0, bushes: 0, houses: 0, keep: Math.round(keep), kinds: [...kinds.values()].map(K => [K.v, K.n, +K.sy.toFixed(1), Math.round(K.dr), +K.bbH.toFixed(2)]), treeKinds: trees.map(K => K.v), bushKinds: bushes.map(K => K.v) };
     const tiles = [], mk = new THREE.Matrix4(), qy = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), sv = new THREE.Vector3(), pv = new THREE.Vector3();
-    const dens = o.dens || 1, SP = 11 / Math.sqrt(dens), lake = o.noWater !== false;
+    const dens = o.dens || 1, SP = 11 / Math.sqrt(dens), lake = o.noWater !== false, seaY = seaExt ? seaExt.geometry.attributes.position.array[1] : -1e9; let wet = 0;
     for (const [ti, tj] of o.tiles) {
       const X0 = ti * TILE, Z0 = tj * TILE, items = new Map(), add = (K, mat, c) => { let L = items.get(K); if (!L) items.set(K, L = { m: [], c: [] }); L.m.push(mat.clone()); L.c.push(c); };
       // (the road's distance at the tile's corners: a tile wholly inside the game's strip is skipped)
@@ -692,6 +700,7 @@ window.DR = (function () {
         if (!what) continue;
         const dr = distRoad(x, z); if (dr < keep || (dr < keep + 60 && hash(i, j, 4) > (dr - keep) / 60)) continue;
         const y = ground(x, z, NaN); if (!Number.isFinite(y)) continue;
+        if (y < seaY + 0.3) { wet++; continue; }   // (not in the sea: a coastal world's own ground runs on under its sea plane, as its bed)
         if (what === 'house') {
           if (!o.houses) continue;
           const yaw = (Math.floor(hash(ti, tj, 9) * 4) * 90 + (hash(i, j, 5) - 0.5) * 16) * Math.PI / 180, L = 9 + 6 * hash(i, j, 6), Wd = 7 + 3 * hash(i, j, 7), Hh = 5.5 + 2.5 * hash(i, j, 8);
@@ -722,7 +731,7 @@ window.DR = (function () {
       tiles.push({ cx: X0 + TILE / 2, cz: Z0 + TILE / 2, meshes }); out.tiles++;
     }
     const forest = (x, z) => { const cl = lcAt(x, z); return cl === 10 && distRoad(x, z) > keep && !(wcov && o.inWorld === false && wcov.at(x, z) < 20) ? 16 : 0; };
-    plant = { tiles, top: forest, lcAt, keep };
+    plant = { tiles, top: forest, lcAt, keep }; if (wet) out.wet = wet;
     return out;
   }
   // the tiles to plant: those round where the helicopter looks over the shot (within `R` m of it, inside its view and a margin)

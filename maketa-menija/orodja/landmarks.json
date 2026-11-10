@@ -1158,5 +1158,75 @@
    "n": "Hat Bang Saen",
    "d": 3148
   }
+ ],
+ "balea": [
+  {
+   "n": "Bâlea Valley",
+   "d": 1150
+  },
+  {
+   "n": "Hairpins",
+   "d": 2726
+  },
+  {
+   "n": "Bâlea Lake",
+   "d": 4020,
+   "sub": "2,034 m"
+  }
+ ],
+ "bathurst": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Hilltop",
+   "d": 2736,
+   "sub": "873 m"
+  },
+  {
+   "n": "Bathurst",
+   "ll": [
+    -33.4196,
+    149.5778
+   ],
+   "snap": "town",
+   "r": 1500
+  }
+ ],
+ "livorno": [
+  {
+   "n": "Start · finish",
+   "d": 0
+  },
+  {
+   "n": "Montenero",
+   "d": 3196
+  },
+  {
+   "n": "Castellaccio",
+   "d": 7456
+  },
+  {
+   "n": "Romito",
+   "d": 11595
+  },
+  {
+   "n": "Calafuria",
+   "d": 13931
+  },
+  {
+   "n": "Ligurian Sea",
+   "ll": [
+    43.47,
+    10.32
+   ],
+   "snap": "water",
+   "r": 800
+  },
+  {
+   "n": "Antignano",
+   "d": 16847
+  }
  ]
 }

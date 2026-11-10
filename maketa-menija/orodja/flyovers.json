@@ -174,7 +174,7 @@
  [
   "rbring",
   {
-   "kbps": 850,
+   "kbps": 450,
    "places": []
   }
  ],
@@ -194,7 +194,7 @@
  [
   "spa",
   {
-   "kbps": 900,
+   "kbps": 450,
    "places": [
     {
      "n": "Steep Climb",
@@ -214,7 +214,7 @@
  [
   "nring",
   {
-   "kbps": 900,
+   "kbps": 450,
    "places": [
     {
      "n": "Flugplatz",

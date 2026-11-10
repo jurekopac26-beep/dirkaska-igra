@@ -74,7 +74,8 @@ if (process.env.FLY_PART || process.env.PREVIEW) {
   await page.addScriptTag({ url: '/__proto/drone_page.js' });
   // the real land round the strip (its heights and painted picture, geo_far.py), its land cover (geo_lc.py), the snow line (drones.json)
   const farP = path.join(HERE, 'raw', 'geo', track + '-far.json'), far = Object.assign(fs.existsSync(farP) ? JSON.parse(fs.readFileSync(farP, 'utf8')) : { synth: true }, J.snow ? { snow: J.snow } : {});
-  if (Hc.sea) far.sea = true;
+  if (Hc.sea) { far.sea = true; if (Hc.seaHouses === false) far.seaHouses = false; }
+  if (Hc.ownFar === false) far.ownFar = false;
   const lcF = 'raw/geo/' + track + '-far-lc.png', lc = fs.existsSync(path.join(HERE, lcF)) ? lcF : null;
   const land = await page.evaluate((o) => window.DR.setup(Object.assign(o, { theme: window.__game.demo.track.def.theme })), { mode: 'demo', fps, extra: 0, far, lc,
     edgeTint: Hc.edgeTint ? Object.assign({ margin: 300 }, Hc.edgeTint === true ? {} : Hc.edgeTint) : null, feather: Hc.feather || 0 });
@@ -84,7 +85,7 @@ if (process.env.FLY_PART || process.env.PREVIEW) {
     const tiles = await page.evaluate((r) => window.DR.flyTiles(r), opt.plantR);
     planted = await page.evaluate((o) => window.DR.plantLand(o), Object.assign({ lc, far: Object.assign({}, far, { h: undefined, lc: undefined }), tiles, houses: true }, Hc.plantO || {}));
   }
-  console.log(track, 'part', w, 'ready', JSON.stringify({ land: land.land, info, planted: planted && { tiles: planted.tiles, trees: planted.trees, bushes: planted.bushes, houses: planted.houses, keep: planted.keep } }), ((Date.now() - t0) / 1000).toFixed(0) + ' s');
+  console.log(track, 'part', w, 'ready', JSON.stringify({ land: land.land, info, planted: planted && { tiles: planted.tiles, trees: planted.trees, bushes: planted.bushes, houses: planted.houses, keep: planted.keep, wet: planted.wet } }), ((Date.now() - t0) / 1000).toFixed(0) + ' s');
   if (info.cw !== W || info.ch !== H) console.log(track, 'the game draws', info.cw, 'x', info.ch, 'not', W, 'x', H);
   if (process.env.PREVIEW) {   // a look at a few frames
     fs.mkdirSync(path.join(HERE, 'prev'), { recursive: true });
