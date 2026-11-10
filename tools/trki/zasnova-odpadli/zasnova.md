@@ -1,16 +1,16 @@
-# Odpadli deli: zasnova izvedbe (the design of the change; NOT in the game, NOT reviewed)
+# Odpadli deli: zasnova izvedbe (the design of the change; IMPLEMENTED 10. 11. 2026 with the differences below)
 
-State 10. 11. 2026. The parts cars shed stop on the road as sheet metal, plastic and wheels do, not as on ice (the user's of 10. 11. 2026). This is a design measured on copies of the core outside the repository: **nothing of it is in the game, no independent review has been made, no commit »Deli: …« exists.** The plan, the user's words, what is missing and in what order: `docs/trki-realizem.md`, »Predaja«, »Odpadli deli: zasnova izvedbe«. English for the implementer, as the code's comments.
+The parts cars shed stop on the road as sheet metal, plastic and wheels do, not as on ice (the user's of 10. 11. 2026). This text is the design as it was written before the implementation, measured on copies of the core outside the repository (the scratch folders `$Z`, `$B`, `$D`, `$S` it names no longer exist; their results are the numbers in the text). **It is kept as the record of why the model is as it is; the code is `js/core.js` (`DEB`, `stepDebris`, `debrisHit`, `Race.spawnDebris`), the test `tests/odpadli-deli.test.js`, the state and the measurements of the final code `docs/trki-realizem.md`, »Odpadli deli: izvedba«.** The design's patch (`jedro.patch`) and draft test (`test-osnutek.js`) were removed from this folder when they went into the game; the measuring tool is `tools/trki/odpadli.js`.
 
-**The names below.** The design was made in a scratch folder that no longer exists:
-- `$Z`: the tree before the change (branch `trki/realizem` at 26250ed7); `$B`: the tree to edit (the branch at 6e6c6228). **Every file:line below is `$B`'s**; the branch's later commits changed `js/core.js` only inside the fall's block (from line ~6354 on), so the lines of the pieces' code (3446-3535) hold and the later ones (7176-7186, 7339-7344, 8655) lie ~22 lines further down.
-- `$D`: the scratch folder: the copies (`$D/kopija` = `$Z` + the change, `$D/kopija-deli` = `$B` + the change), every other script named below (`$D/lib.js`, `rob.js`, `ograja.js`, `orodje.js`, `knock-probe.js`, `razb-sum.js`, `preveri.js`, `cas.js`, `rdeca.js`, `redflag-fix.test.js`) and the outputs (`$D/out/...`). None of these is kept: they were one-off measurements, their results are the numbers in this text.
-- `$S`: the scratch root (`$S/deli/d1/...`, `$S/deli/d2/...`: the two earlier agents' measurements and prototype, not kept; their numbers are in `docs/trki-realizem.md`, »Odpadli deli: meritve stanja in model«).
-
-**What is kept, in this folder:**
-- `jedro.patch` = `$D/out/core-deli-wt.patch`, the exact change of `js/core.js` (`$D/model-src.js` was the same text as five pieces); it applies to the branch: `git apply --check tools/trki/zasnova-odpadli/jedro.patch`;
-- `test-osnutek.js` = `$D/odpadli-deli.test.js`, the new test, to be saved as `tests/odpadli-deli.test.js` with the change (kept under another name here so that the list of related tests does not take it for a test); from here: `DELI_HARNESS=$PWD node tools/trki/zasnova-odpadli/test-osnutek.js`;
-- `tools/trki/odpadli.js` = `$D/deli.js`, the measuring tool (it changes nothing; it measures the tree it is in, or `GAME_ROOT=<tree>`).
+**Where the game differs from this text** (the independent review of the design, 10. 11. 2026; reasons and numbers in `docs/trki-realizem.md`):
+- §6, §13 (the time rule): not one car and one time a piece (`d.by`, `d.byT` as a car and a number) but **a list of cars, each with its own seconds** (`d.by` the cars, `d.byT` their seconds). With one slot two cars at one piece took the exemption from each other and both were knocked step after step;
+- §6, §13 ("the part is drawn through its own car for up to 2 s"): a piece that still moves and is in the way of a car on its list is **shouldered aside** (`DEB.push`: its speed across the car raised to 4 m/s, to the side it is on; nothing to the car). §13's "pushing the piece aside ... left for Realistična" no longer holds for the car's own parts;
+- §2, §3 (wheels): **a spare wheel is a wheel too** (`P.spare`), not a panel;
+- §2 (the height over the road): a banked bend's height is added (`T.bankAt`);
+- §4 (the cap of 40): a piece pushed off the list while it still tumbles or rolls is not left drawn on its edge;
+- §3: a surface code the tables do not know counts as asphalt;
+- §9 (the cost): a moving piece's step costs about 40 % more than before (not 20 %), a piece's whole run 2.4 to 3.7 times less; on real tracks a piece may be at rest only after up to 4.7 s at 200 km/h (not 3.7 s);
+- §10 (the tests): 24 checks, not 17 (two cars at one piece, each car its own time, the push, spare wheels); `tests/redflag.test.js` needed only the moment of the pile-up (60 s to 75 s; the second edit is not needed on the current tree); `tests/aipits.test.js` runs Montréal with seed 6; 86 of 140 scenarios and 17 of 100 races changed (Great Alpine Road and Ouninpohja are test tracks now); the frozen `tests/hotham.test.js` fails one check (the police chase, seed 11) until the user allows its seed to be changed.
 
 ## 1. What is wrong, what changes
 
