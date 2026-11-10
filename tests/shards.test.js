@@ -69,7 +69,7 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
   const cases = [
     ['docs/proge/medvode.md', ['testne-proge.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs']],
     ['js/world-montreal.js', ['stamp.test.js', 'razdelitev.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/gfx.test.mjs']],
-    ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'padec.test.js', 'rally.test.js', 'sovoznik.test.js', 'sovoznik-glas.test.js', 'ljudje-mesta.test.js', 'katu.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'neskoncna.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'browser/repro.test.mjs']],
+    ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'padec.test.js', 'rally.test.js', 'sovoznik.test.js', 'sovoznik-glas.test.js', 'ljudje-mesta.test.js', 'katu.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'neskoncna.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'browser/repro.test.mjs', 'browser/padec.test.mjs']],
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
     ['README.md', ['fleet.test.js']],
     ['tools/carshots.mjs', []],

@@ -23,20 +23,86 @@ Naloga uporabnika (9. 11. 2026 ob ~21.25): »Ultracode naj analizera fiziko trko
 | 2. Zasnova | predlog za vsako odstopanje z meritvijo pred/po | 10. 11.: zasnova prototipa Realistična (zasuk povsod po avtu, drsenje vstran po trku, ograja, lahek predmet) s številkami zdaj → pričakovano z zasebne kopije jedra: razdelek »Zasnova prototipa Realistična«; druga odstopanja čakajo |
 | 3. Izdelava | nova različica, preklopljivo z isto izbiro | čaka |
 | 4. Preverjanje | testi z invarianti, neodvisen pregled `js/core.js`, `npm run test:related` | čaka |
-| Padec čez rob (Killar) | avto, ki zapelje čez rob, pade kot togo telo na narisanih tleh (naloga uporabnika 10. 11. ob ~11.00; samo Killar, #629) | 10. 11.: jedro in test na veji (commit »Padec: avto čez rob pade kot togo telo (jedro, test)«); izris, kamera, zvok, posnetek in preizkus v brskalniku v delu: razdelek »Padec čez rob (Killar)« |
+| Padec čez rob (Killar) | avto, ki zapelje čez rob, pade kot togo telo na narisanih tleh (naloga uporabnika 10. 11. ob ~11.00; samo Killar, #629) | 10. 11.: narejeno na tej veji v štirih commitih »Padec: …« (jedro, izris, kamera, zvok, posnetek, testa `tests/padec.test.js` in `tests/browser/padec.test.mjs`); padec traja največ 1,5 s, nato je avto spet na cesti (odločitev uporabnika ob 13.55). V igri ga je mogoče videti, ko seja Killarja commite prenese na `zbirna/proge` (#494): razdelek »Padec čez rob (Killar)«, slike ZDAJ/POTEM v `docs/trki-slike/padec-*.webp` |
 | Odpadli deli | deli, ki odletijo od avta, se na cesti ustavijo hitreje (naloga uporabnika 10. 11. ob ~12.50: »popravi deli ki odletijo od avta sedaj prevec dalec drajsajo po cesti, naj se te delci hitreje ustavijo na cesti saj sedaj drajsajo se nekaj casa kot da so na ledu«; velja za vse izbire trkov) | v delu |
 
 **Predaja 10. 11. 2026 (~01.30):** temo nadaljuje račun **biketraveler** (odločitev uporabnika 10. 11. ob ~00.57: »Varčno, trke prevzame biketraveler«; več agentov samo za fiziko trkov in preverjanje pred združitvijo). Stanje, kaj manjka in naslednji korak so v opisu pull requesta #608. Surovi podatki analize (69 zapisov: 61 ugotovitev merilcev in 8 najdb preverjalcev, z dokazi in ukazi za ponovitev) so v `docs/trki-realizem-podatki.md`, skripte preverjalcev v `tools/trki/preverjanje/`; oboje se pred združitvijo na `main` odstrani ali skrči. Zbirni agent je bil zaradi porabe ustavljen tik pred koncem: dele tega dokumenta je napisal on, sestavljen je z njegovo skripto, celote po sestavi ni nihče prebral od začetka do konca. Slike ZDAJ/POTEM še niso narejene.
 
-**10. 11. 2026 (~11.00):** temo po odločitvi uporabnika (»Fable 5.2 naj dela na fiziki trkov, ker je to najpomembnejse da izbljsamo«) spet vodi račun **jure.kopac26** (seja session_01Ck3D3QtCPZJ7GHpFr4wi89, posreduje Matej). Vrstni red: 1. padec čez rob na Killarju, 2. odpadli deli, 3. faza 2 (prototip Realistična). Odločitve uporabnika tega dne: padec čez rob je mogoč samo na Killarju, drugod ostane ograja (~11.05, #629); »Trki naj dela naprej brez premora« (~12.40: po vsakem končanem koraku takoj naslednji, delovni tokovi do 10 agentov); vožnja brez dotika ostane do številke enaka.
+**10. 11. 2026 (~11.00):** temo po odločitvi uporabnika (fiziko trkov naj dela seja tega računa, »ker je to najpomembnejse da izbljsamo«) spet vodi račun **jure.kopac26** (seja session_01Ck3D3QtCPZJ7GHpFr4wi89, posreduje Matej). Vrstni red: 1. padec čez rob na Killarju, 2. odpadli deli, 3. faza 2 (prototip Realistična). Odločitve uporabnika tega dne: padec čez rob je mogoč samo na Killarju, drugod ostane ograja (~11.05, #629); »Trki naj dela naprej brez premora« (~12.40: po vsakem končanem koraku takoj naslednji, delovni tokovi do 10 agentov); vožnja brez dotika ostane do številke enaka; odpadli deli naj se na cesti ustavijo hitreje (~12.50, dobesedno v razdelku »Predaja«); »Vrni tako kot prej po 1,5s« (13.55: padec traja največ 1,5 s, nato je avto spet na cesti, razdelek »Padec čez rob (Killar)«).
+
+## Predaja 10. 11. 2026 (~16.45): nova seja Trki nadaljuje pri odpadlih delih in fazi 2
+
+Seja session_01Ck3D3QtCPZJ7GHpFr4wi89 (račun jure.kopac26) se 10. 11. 2026 do 18.00 ustavi zaradi porabe računa (rezerva 10 %, odločitev uporabnika ob ~14.30). Temo nadaljuje nova seja Trki na isti veji (`trki/realizem`, pull request #608, osnutek): v nedeljo, 15. 11. 2026, po resetu porabe ali prej na drugem računu, če tako odloči uporabnik. Zažene jo Matej. Ta razdelek je vse, kar nova seja potrebuje; delovnih datotek stare seje ne more brati.
+
+### Odločitve uporabnika 10. 11. 2026 (veljajo naprej)
+
+| Kdaj | Dobesedno | Kaj pomeni za delo |
+|---|---|---|
+| ~11.00 | fiziko trkov naj dela seja računa jure.kopac26, »ker je to najpomembnejse da izbljsamo« | temo vodi jure.kopac26 |
+| ~11.00 | »Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno« | razdelek »Padec čez rob (Killar)« |
+| ~11.05 | »Padec cez rob naj bo zaenkrat mozen samo na progi killar, da prvo tuki uredimo da bo bilo dobro. drugod naj zaenkrat ostane ograja ki prepreci padec cez rob« | pravilo #629: padec kot telo teče samo, kjer ima proga tla padca (`def.floor`: samo Killar); drugih prog in njihovih ograj ne spreminjaj |
+| ~12.40 | »Trki naj dela naprej brez premora« | po vsakem končanem koraku takoj naslednji, brez čakanja na »naprej«; delovni tokovi srednje velikosti, do 10 agentov |
+| ~12.50 | »popravi deli ki odletijo od avta sedaj prevec dalec drajsajo po cesti, naj se te delci hitreje ustavijo na cesti saj sedaj drajsajo se nekaj casa kot da so na ledu« | odpadli deli, spodaj |
+| 13.55 | »Vrni tako kot prej po 1,5s« | padec traja največ 1,5 s, nato je avto spet na cesti, kjer je šel čez rob, brez zatemnitve; daljšega padca do dna ni |
+| ~14.30 | rezerva porabe 10 % | seje s kodo delajo brez premora do ~90 % porabe računa, nato napišejo predajo in se ustavijo; kdaj je čas, javi Matej |
+
+Stalna pravila teme: vožnja brez dotika ostane do številke enaka (reference vožnje se spremenijo samo v scenarijih s trkom, in to utemeljeno); samo fizika trkov, ne vožnje; na `main` in na predogled šele po uporabnikovem »ok«, pred tem primerjava ZDAJ/POTEM v slikah (kamera za avtom, prava proga); commiti brez imena modela (`Co-Authored-By: Claude <noreply@anthropic.com>`, #628); pred vsakim potiskom `git fetch` in rebase na `origin/trki/realizem` (na veji gradi tudi seja tovornjakov); Killarjevih datotek in veje `zbirna/proge` ta tema ne spreminja (spremembe zanje so seznam v razdelku »Padec čez rob (Killar)«, vnese jih seja Killarja).
+
+### Vrstni red
+
+1. **Padec čez rob (Killar)**: narejen na veji v štirih commitih »Padec: …« (`df083d99`, `33e6ba73`, `1ac5a0ed`, `a771fe19`), slike ZDAJ/POTEM so v `docs/trki-slike/padec-*.webp`. Prenos na `zbirna/proge` (#494) še ni narejen: seja Killarja se je 10. 11. ustavila pred njim, naredi ga nova seja Killar (koraki, vrstni red commitov, kaj ob sporu in kako preveriti: »Prenos na `zbirna/proge`«; spremembe Killarjevih datotek: »Spremembe v datotekah Killarja«). Odprto: uporabnik padec preizkusi v igri, ko je na `zbirna/proge`; pred `main` njegov »ok«.
+2. **Odpadli deli** (naslednje): meritve stanja in model sta narejena (spodaj). Zasnova izvedbe, izvedba in pregled so tekli v delovnem toku stare seje; kar je potrjeno, je na veji v commitih »Deli: …« in dopisano spodaj. Če takih commitov ni, nova seja začne pri zasnovi izvedbe iz spodnjih številk.
+3. **Faza 2, prototip Realistična**: zasnova je v razdelku »Zasnova prototipa Realistična« (štiri točke s številkami zdaj → pričakovano, vrstni red dela, testi, tveganja). Kandidatne formule so v `tools/trki/zasnova-realisticna.js`: `node tools/trki/zasnova-realisticna.js <mapa zunaj repozitorija>` naredi zasebno kopijo igre s popravljenim jedrom, `GAME_ROOT=<mapa> node tools/trki/zid.js --cv 6` (in druga orodja `tools/trki/`) izmeri novo različico; `--cv 1 … 5` morajo dati enak izpis kot repozitorij. Izdelava v repozitoriju se še ni začela.
+
+### Odpadli deli: naloga
+
+Naloga uporabnika je v tabeli zgoraj. Navodilo Mateja (10. 11. ob ~12.50): na asfaltu naj se deli ustavijo hitro in realistično (kovina in plastika drsita s trenjem, gume se kotalijo posebej), na travi in makadamu še hitreje; popravek velja za **vse izbire trkov**, ne samo za »Realistično«; poveži ga z odstopanjem 2 (deli zavirajo avto); vožnja brez dotika ostane do številke enaka; ločeni commiti »Deli: …« na `trki/realizem`, a samo, če jih pregled potrdi. Za uporabnika primerjava: razdalja in čas drsenja prej/potem pri 60, 120 in 200 km/h, slike ali kratek posnetek s kamero za avtom na pravi progi (npr. Spa; Suzuka je testna).
+
+Kje je koda (`js/core.js`): `Race.spawnDebris(c, name, R)` (hitrost kosa `c.vx * 0.7` + 2–5 m/s navzven, 2,5–5 m/s navzgor, največ 40 kosov), `stepDebris(d, T, dt)` (teža `JUMP_G`, odboj 0,28 nad 2,5 m/s brez izgube vodoravne hitrosti, na tleh vsak kos na vsaki podlagi zavira `6.5 * dt` m/s, torej ~0,65 g, mirovanje pod 0,05 m/s), `DEB_RUN` in `debrisHit(c, d)` (avto čez kos). Kosi so v povzetku stanja (`stateLine`), zato vsaka sprememba spremeni reference scenarijev s trkom (`tests/golden/sim.json`, `…/cs`): po spremembi `node tests/golden.test.js --update` samo zanje in v opisu commita, kateri in zakaj.
+
+### Odpadli deli: meritve stanja in model (10. 11. 2026)
+
+Meritve in prototip sta naredila agenta delovnega toka na kopijah jedra zunaj repozitorija (Spa, pravi avti, 31 vrst delov × 20 semen oziroma 300 metov na celico); prototipa ni pregledal nihče drug, slik s kamero za avtom še ni.
+
+**Zakaj deli drsijo »kot na ledu«.** Zaviranje na tleh (6,5 m/s², 0,66 g) ni vzrok. Vzroki so trije:
+1. **Spust.** Zaviranje deluje samo v korakih, ko je kos na tleh. Kos na tleh pade 1 mm na korak, cesta na spustu pade več, zato kos šteje za letečega in ne zavira. Ravna cesta: mirovanje po 2,9/4,6/7,0 s in 24/67/158 m pri 60/120/200 km/h. Spa, spust 7 %: 16/36/27 s in 141/648/802 m. Nad naklon × hitrost = 1,25 m/s se kos ne ustavi nikoli (Bathurst, −14,8 %: 1062 m v 62 s). Dovolj strmih je 19 % dolžine pravih prog (Spa 33 %, Bathurst 40 %).
+2. **Ni zračnega upora, ni izgube ob pristanku, podlaga se ne upošteva.** Trava in makadam zavirata enako kot asfalt; kolesa nimajo kotaljenja in so narisana leže.
+3. **Sunek avta.** Nos avta svoj odpadli sprednji del sune na 1,03–1,08 svoje hitrosti (`debrisHit`: 1,35 × hitrost približevanja, največ 24 m/s); tak kos obleži 62/168/323 m naprej. Podvojitev ali potrojitev zaviranja skrajša drsenje na ravnini (pri 120 km/h 4,6 s → 2,7 → 2,1 s), na spustu pa ostane ~30 s.
+
+**Model** (ena funkcija namesto `stepDebris`, brez novih naključnih števil, strošek koraka × 1,15): zračni upor k·v² (k = 0,72 r²/m, med 0,01 in 0,06; kolo 0,007), izguba ob pristanku μ × udarec, prevračanje nad 7 m/s (μ 0,9), drsenje pod tem (μ 0,55), kos na tleh ostane na tleh; podlaga asfalt/trava/makadam: trenje × 1/1,35/1,8, odboj × 1/0,4/0,15; kolo poskoči, se kotali (pod 8 m/s zavira 5 m/s², trava 7, makadam 14), zavije in pod 2,5 m/s pade.
+
+| Del | Zdaj: m / s pri 60 · 120 · 200 km/h (raven asfalt) | Model |
+|---|---|---|
+| pokrov motorja | 31,7/3,2 · 80,0/5,0 · 177,1/7,4 | 10,7/1,4 · 19,8/1,9 · 29,5/2,1 |
+| sprednji odbijač | 29,2/3,1 · 75,7/4,9 · 170,2/7,3 | 9,3/1,4 · 15,7/1,7 · 21,9/1,8 |
+| vrata | 23,0/2,8 · 65,0/4,5 · 153,7/6,9 | 8,6/1,3 · 18,8/1,9 · 30,0/2,2 |
+| ogledalo | 27,9/3,1 · 73,5/4,8 · 167,0/7,2 | 9,8/1,2 · 20,0/1,9 · 31,0/2,2 |
+| sprednje kolo | 27,6/3,0 · 72,8/4,8 · 165,8/7,2 | 13,5/1,8 · 30,3/2,5 · 56,2/3,3 |
+
+Na travi je pot ~13 % in na makadamu ~24 % krajša kot na asfaltu. Na spustu kot na ravnini: Spa −7,2 % (sedem delov v pravi dirki, povprečje) 49/124/431 m → 9,3/19,5/30,2 m.
+
+**Odstopanje 2 (deli zavirajo avto) mora iti zraven.** Sam model naredi, da odpadli deli avte zavirajo 2–8-krat bolj kot zdaj: lasten sprednji odbijač vzame avtu 8,4/4,4/2,9 % hitrosti zdaj in 33/28/23 % samo z modelom. Z dvema praviloma je izguba majhna: R1 (lasten del avta ne zadene, dokler se enkrat ne loči od njega) da 0 % za lasten del; R1 + R2 (en sunek na prehod, po gibalni količini) da 1,8/0,9/0,5 % za tuj premikajoč se pokrov (zdaj 9–13 %). Pravilo »prvih 0,5 s« iz tabele odstopanj pri 60 km/h ne zadošča (16–22 %). Pri izvedbi preveriti: R1 loči avte po `d.car === c.id` (možen spor z oznakami policijskih avtov); R2 jemlje maso kosa iz igre (kolo 6, v resnici ~20 kg).
+
+**Reference in testi.** Kose vsebuje 94 od 154 scenarijev v `tests/golden/sim.json` in 17 od 110 dirk v `tests/golden/races.json`: ti se spremenijo, ostalih 60 in 93 mora ostati do številke enakih. Zasnovo omejujejo `tests/debris.test.js` (leteči kos: odvisen od današnjega pravila odboja), `tests/crossover.test.js` (pristanek na mostu), `tests/fleet.test.js` in `tests/debris.test.js` (kosi, narejeni ročno: nova polja potrebujejo privzete vrednosti), `tests/browser/crash.test.mjs` (mirovanje ali tla v 2 s), `tests/repro.test.js` (naključje samo iz `rand()`).
+
+**Vprašanje za uporabnika (ko bo izvedba pripravljena).** Kosi po novem obležijo 10–35 m od mesta trka, torej pogosteje na cesti na liniji vožnje; strošek vožnje čez ležeč kos ostane (ogledalo 0,2 %, odbijač 1,4 %, pokrov 2,5 % hitrosti na prehod). Umik ali čiščenje ležečih kosov bi nasprotoval prejšnji želji (»povožen kos ostane, kjer leži«).
+
+### Kako preveriti stanje veje
+
+- `node tests/padec.test.js` (22 preizkusov; v drevesu s Killarjem 30), `node tests/browser/padec.test.mjs` (22; s Killarjem 30), `node tests/trki.test.js`, `node tests/shards.test.js`, `node tools/stamp.js --check`;
+- `node tests/golden.test.js`: vseh 154 scenarijev enakih (vožnja na cesti se s padcem ne spremeni);
+- padec v igri je mogoče videti samo v drevesu s Killarjem (`zbirna/proge` + štirje commiti »Padec: …«, `git cherry-pick`): `index.html?proga=killar`; slike `node tools/trki/padec-slike.mjs --root <drevo> --m 524 --kmh 60 --kot 20 --out <mapa>`;
+- `npm run test:related` pred vsakim potiskom kode.
 
 ## Padec čez rob (Killar)
 
-Naloga uporabnika (10. 11. 2026 ob ~11.00): »Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«; ob ~11.05: »Padec cez rob naj bo zaenkrat mozen samo na progi killar, da prvo tuki uredimo da bo bilo dobro. drugod naj zaenkrat ostane ograja ki prepreci padec cez rob« (pravilo #629 v `CLAUDE.md`). Seja session_01Ck3D3QtCPZJ7GHpFr4wi89, račun jure.kopac26 (posreduje Matej).
+Naloga uporabnika (10. 11. 2026 ob ~11.00): »Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«; ob ~11.05: »Padec cez rob naj bo zaenkrat mozen samo na progi killar, da prvo tuki uredimo da bo bilo dobro. drugod naj zaenkrat ostane ograja ki prepreci padec cez rob« (pravilo #629 v `CLAUDE.md`); ob 13.55, po prvi primerjavi, v kateri je avto padal do konca tal (do 8 s): **»Vrni tako kot prej po 1,5s«**. Seja session_01Ck3D3QtCPZJ7GHpFr4wi89, račun jure.kopac26 (posreduje Matej).
+
+**Kaj velja po odločitvi ob 13.55.** Avto se čez rob še vedno prevesi in se kotali kot togo telo na resničnih tleh, padec v igri pa traja največ 1,5 s (pred popravkom največ 1,6 s). Nato je avto spet na cesti tam, kjer je šel čez rob: brez zatemnitve in brez daljšega padca do dna. Vsak padec stane vsaj 0,32 škode kot prej; udarci v tem času pustijo vdrtine tam, kjer je avto res udaril (skupaj največ 0,5 na padec).
 
 **Kje teče.** Killar, Indija je samo na veji `zbirna/proge` (#494). Popravek je razvit in preizkušen na drevesu `zbirna/proge` (3c1bbac2) s to spremembo; na `trki/realizem` so samo datoteke padca v svojih commitih (»Padec: …«), brez datotek Killarja, da se dajo prenesti na #494 (razdelek Prenos). Na `trki/realizem` nobena proga nima tal padca (`def.floor`), zato padca tu v igri ni: jedro preizkusi `tests/padec.test.js` na izmišljenem pobočju ob resnični cesti, v igri ga je mogoče videti šele v drevesu s Killarjem.
 
-**Na cesti se nič ne spremeni.** Nova koda teče samo za avto, ki je že čez rob (`c.fall`), in samo na progi s tlemi padca (`Track.floor`: edina je Killar). Vse stanje telesa je v predmetu `c.fall.b`; avto in dirka nista dobila nobenega novega številskega polja, naključnih števil padec ne porablja. Dokaz: reference vožnje (`tests/golden/sim.json`) so po spremembi enake v vseh 161 scenarijih zunaj Killarja, test »on the road nothing changes« (šest avtov 20 s ob pobočju, s tlemi in brez njih, stanje enako do zadnje števke). Ni vezano na Nastavitve »Trki med avti«.
+**Na cesti se nič ne spremeni.** Nova koda teče samo za avto, ki je že čez rob (`c.fall`), in samo na progi s tlemi padca (`Track.floor`: edina je Killar). Vse stanje telesa je v predmetu `c.fall.b`; avto ni dobil nobenega novega številskega polja, naključnih števil padec ne porablja. Dokaz: reference vožnje (`tests/golden/sim.json`) so po spremembi enake v vseh 154 scenarijih te veje (v drevesu s Killarjem v vseh 161 scenarijih zunaj Killarja); test »on the road nothing changes« (šest avtov 20 s ob pobočju, s tlemi in brez njih, stanje enako do zadnje števke). Ni vezano na Nastavitve »Trki med avti«.
 
 ### Zdaj (pred popravkom, `zbirna/proge` 3c1bbac2)
 
@@ -64,23 +130,31 @@ Meritve (72 padcev: 12 mest × 8/50/100 km/h × 10°/45°, avto BURJA R7, korak 
 
 ### Kaj pomeni »realistično« in kako se preverja
 
-Avto, ki zapelje čez rob, je togo telo na resničnih tleh: nanj delujejo samo teža, podpora tal in trenje. Merila so številke, ki jih meri test z lastnim računom na točkah trupa (ne z bralnikom jedra):
+Avto, ki zapelje čez rob, je togo telo na resničnih tleh: nanj delujejo samo teža, podpora tal in trenje. Merila so številke, ki jih meri `tests/padec.test.js` z lastnim računom na točkah trupa (ne z bralnikom jedra): 30 preizkusov v drevesu s Killarjem, 22 na tej veji. Telo test spremlja dlje, kot traja padec v igri (do 8 s, možnost dirke `opts.fallCap`), da se vidi, kako se kotali, drsi in obmiruje; preizkusa »the game's fall lasts 1.5 s« (izmišljeno pobočje in Killar) potrdita, da je padec v igri natanko začetek tega dolgega padca (stanje telesa po 1,34 s enako do zadnje števke) in da se konča po 1,5 s.
 
 | Merilo | Meja v testu | Zdaj | Potem |
 |---|---|---|---|
-| Čez rob se prevesi, ko gre težišče čez | pri hoji se od prvega koraka vrti z 0,3–2 rad/s, v 1,5 s je dno nagnjeno več kot 30° | sunek, vodoraven let | prevesi se okoli roba ploščadi |
-| Brez sunka čez rob | hitrost prečno na rob po začetku padca ni večja kot pred njim (+0,3 m/s) | dvig na 4,5 m/s | enaka |
+| Padec v igri traja največ 1,5 s | po 1,5 s (+ en korak) je avto na cesti do 3 m od mesta prehoda, na kolesih, en padec, škoda 0,32–0,5 (Killar: z zlomljeno ograjo vred do 0,6) | 1,6 s | 1,51 s |
+| Čez rob se prevesi, ko gre težišče čez | pri hoji se od prvega koraka vrti z 0,3–2 rad/s, v 1,5 s je dno nagnjeno več kot 30° | sunek, vodoraven let | prevesi se okoli roba ploščadi (0,80 rad/s takoj) |
+| Brez sunka čez rob | hitrost prečno na rob po začetku padca ni večja kot pred njim (+0,3 m/s); telo začne v nagibu ceste (vzpon ceste na 0,3 % natančno) | dvig na 4,5 m/s | enaka (2,4 → 2,4 m/s) |
 | Kotali se in drsi s trenjem | hiter in počasen padec gresta čez bok ali streho; na 10° pobočju obstane na pobočju, na 60° gre naprej | plosko vrtenje, brez trenja | trenje 0,8, kotaljenje |
 | Nikoli v teren | nobena točka trupa več kot 3 cm pod tlemi (Killar 5 cm), v nobenem koraku | vogal do 4,9 m | največ 1 cm |
-| Nikoli ne odskoči | s 2,5 m stopnice pristane in ostane: po dotiku nikoli več kot 0,6 m nad najnižjo točko | (krogla) | brez odboja |
-| Nikoli ne pridobi energije | energija (hitrost, vrtenje, višina) nikoli več kot 0,15 m višine nad najmanjšo dotlej | sunek na robu doda energijo | največ 0,03 m |
-| Obmiruje, kjer ga pobočje ustavi | vsi štirje padci na 45° pobočju z dnom ležijo pri miru ob vznožju pred 8 s | nikoli | obmiruje ali pride do konca znanih tal |
-| Udarci se poznajo | trd padec da vdrtino tam, kjer je udaril (0,1–0,5 škode na padec, vdrtina na udarec) | +0,32 brez vdrtin | vdrtine po udarcih, streha od zgoraj |
+| Nikoli ne odskoči | s 2,5 m stopnice pristane in ostane: po dotiku nikoli več kot 0,6 m nad najnižjo točko, nikoli hitreje od 2,5 m/s navzgor | (krogla) | brez odboja |
+| Nikoli ne pridobi energije | energija (hitrost, vrtenje, višina) nikoli več kot 0,15 m višine nad najmanjšo dotlej, vsi dvigi enega padca skupaj pod 0,5 m | sunek na robu doda energijo | največ 0,10 m (trideset padcev), Killar 0,05 m |
+| Tla ga ne potisnejo | telo se v koraku nikoli ne premakne več kot 0,1 m dlje, kot ga nese hitrost (serpentina 0,15 m): ni potisnjeno čez rob ceste ali gor skozi cesto | – | največ 2,6 cm |
+| Obmiruje, kjer ga pobočje ustavi (dolgi padec v testu) | vsi štirje padci na 45° pobočju z dnom ležijo pri miru ob vznožju; za mirovanje vzeto šele pod 0,5 m/s in 0,7 rad/s | nikoli | v testu obmiruje po 4,8–7,2 s; v igri je avto vrnjen že po 1,5 s |
+| Udarci se poznajo | trd padec da vdrtino tam, kjer je udaril; telo šteje 0,012 škode na m/s vsakega udarca nad 3 m/s, največ 0,5 na padec; vsak padec stane vsaj 0,32 | +0,32 brez vdrtin | 0,32–0,5, vdrtina na udarec, streha od zgoraj |
 | Vrnjen tja, kjer je šel čez | do 3 m od mesta prehoda, mesto na cesti, razdalja in števci med padcem zamrznjeni | 0–42 m naprej | na mestu prehoda |
 | Brez naključja | isti padec z drugimi naključnimi števili okoli njega se konča enako do zadnje števke | – | enako |
-| Vsako vozilo | najlažje, najtežje, najkrajše in najdaljše vozilo: končno, brez vdora, brez pridobljene energije | – | enako |
-| Vožnja na cesti do številke enaka | šest avtov 20 s ob pobočju: stanje enako s tlemi in brez; reference vožnje zunaj Killarja nespremenjene | – | 161 scenarijev enakih |
+| Vsako vozilo | najlažje, najtežje, najkrajše in najdaljše vozilo: končno, brez vdora, brez pridobljene energije; trup vsakega od 54 vozil je visok, kot je vozilo narisano (na 3 cm), težišče na 0,25–0,45 višine | – | enako |
+| Rob ceste in bankina | s 1,3 m stopnice v jarek obstane ob boku ceste (ne pod cesto, ne potisnjen gor skozi njo); kjer stran nima padca in za črto ni narisanih tal, ostane na višini ceste in se ustavi | – | obstane 2,5 m za črto |
+| Konec znanih tal | kjer se znana tla končajo, se padec konča in avto je vrnjen (Killar: 0,48 km pri 130 km/h, 0,57 km pri 5 km/h), brez vdora in brez sunka | – | konec po 3,7 in 5,7 s dolgega padca |
+| Serpentina in most (Killar, 4,04–4,06 km) | čez levo in desno stran pri 29, 50 in 90 km/h: telo vsakič, brez potiska čez rob ceste, vsak padec se konča | – | 15 od 17 voženj gre čez rob, vsi padci končani |
+| Vozilo s prikolico | pade po starem (brez telesa, konec v 2 s) | – | cisterna 0,52 s |
+| Vožnja na cesti do številke enaka | šest avtov 20 s ob pobočju: stanje enako s tlemi in brez; reference vožnje zunaj Killarja nespremenjene | – | 154 scenarijev te veje enakih |
 | Samo Killar | `def.floor` ima samo Killar; drugje pade avto po starem (ali ga zadrži ograja, #629) | – | enako |
+
+**Zunaj testa** (10. 11. 2026). 1320 padcev na 101 mestu vzdolž Killarja (5–130 km/h, pod 5–80° na rob, obe strani, naprej, vzvratno, v vrtenju in v skoku; padec v igri, 1,5 s): energija se nikoli ne dvigne za več kot 0,07 m, v narisanih tleh je trup največ 1 cm, škoda je 0,32 (mediana) do 0,5, avto pade 7,2 m (mediana) in največ 16,4 m; 1219 padcev konča meja 1,5 s, 100 konec znanih tal, 1 obmiruje. Neodvisen pregled jedra je našel 8 pomanjkljivosti, nobene hude: popravljene so (skok narisanih tal pod točko trupa, višina trupa vozil iz sestavljenih delov, začetek padca pri oddaljenih tekmecih, najmanjša škoda ob vsakem koncu, pokritost testa), ena je med omejitvami spodaj. Preizkus testa samega: 59 napak, vstavljenih posamič v kopijo jedra, test jih ujame 50; preživijo take, ki se na izidu padca ne poznajo (debelina ploščadi, največji izriv iz tal, število krogov reševanja stikov), in dve, ki ju test ne meri (reševanje razbitega tekmeca med padcem, mirovanje ob počasnem vrtenju na mestu).
 
 ### Zdaj: padec v slikah (kamera za avtom)
 
@@ -133,51 +207,96 @@ Slike naredi orodje `tools/trki/padec-slike.mjs` (potrebuje drevo s Killarjem): 
 
 | Funkcija | Kaj dela |
 |---|---|
-| `FALL` | vsa števila: teža 9,81 m/s² (prava, ne `JUMP_G`), trenje 0,8 (kolesa vzdolž avta 0,25, dokler stoji na njih), najmanj 240 podkorakov na sekundo, 8 krogov reševanja stikov, mirovanje (pod 0,4 m/s in 0,6 rad/s za 0,4 s, nato leži 0,8 s), najdaljši padec 8 s, škoda udarca (nad 3 m/s: 0,012 na m/s, največ 0,5 na padec), višine trupa po vrsti karoserije |
-| `fallHull(M)` | trup vozila iz 38 točk v oseh avta od težišča: 25 na dnu (višina koles), 8 v pasu (pokrov, prtljažnik, boki), 5 na strehi; mere iz modela (`len`, `wid`, `hcg`) |
-| `fallStart(T, c, F, dt)` | začetno stanje: hitrost avta brez sunka `overEdge` (vzame ga nazaj: prečno hitrost na tisto pred robom, skok in vrtenje), avto stoji na nagibu ceste (vzpon in prečni nagib), majhen začetni zasuk za čas, ko so bila sprednja kolesa že čez rob |
+| `FALL` | vsa števila: teža 9,81 m/s² (prava, ne `JUMP_G`), trenje 0,8 (kolesa vzdolž avta 0,25, dokler stoji na njih), najmanj 240 podkorakov na sekundo, 8 krogov reševanja stikov, mirovanje (pod 0,4 m/s in 0,6 rad/s za 0,4 s, nato leži 0,8 s), **najdaljši padec `cap` 1,5 s** (test sledi telesu dlje z možnostjo dirke `opts.fallCap`), škoda udarca (nad 3 m/s: 0,012 na m/s, največ 0,5 na padec) in najmanjša škoda padca `dmgCut` 0,32, `deep` 0,12 m (koliko globlje kot ob zadnjem pogledu je točka trupa še lahko v tleh), težišče `hcK` na 0,36 višine trupa, višine trupa po vrsti karoserije |
+| `fallHull(M)` | trup vozila iz 38 točk v oseh avta od težišča: 25 na dnu (višina koles), 8 v pasu (pokrov, prtljažnik, boki), 5 na strehi; mere iz modela (`len`, `wid`); višina `M.ht`, pri vozilih iz sestavljenih delov iz njihovega opisa (`look.body.roofY` ali `parts.ht`), sicer po vrsti karoserije; težišče `M.hcg` ali 0,36 višine (najmanj 0,35 m, največ pol višine); za vsak model se izračuna enkrat |
+| `fallStart(T, c, F, dt)` | začetno stanje: hitrost avta brez sunka `overEdge` (vzame ga nazaj: prečno hitrost na tisto pred robom, skok in vrtenje), avto stoji na nagibu ceste (vzpon in prečni nagib), majhen začetni zasuk za čas, ko so bila sprednja kolesa že čez rob; `dt` je dejanski zadnji korak avta (`fallLast`: oddaljenega tekmeca računa LOD redkeje, njegov korak je daljši) |
 | `fallQ`, `fallEdge` | projekcija telesa na cesto (lastna, brez stranskih cest) in ploščad ceste pod njim: višina, vzpon, črti roba, ali ima stran prepad |
 | `fallGround` | tla za eno točko trupa: znotraj črt roba ploščad ceste z njenim nagibom (debela 1,5 m, z navpičnim robom: točko, ki pride pod ploščad z zunanje strani, potisne ven, ne gor), zunaj narisana tla (`Track.floorAt`: višina in naklon trikotnika mreže 5 m); kjer tal ni, točka ne nosi |
+| `fallTouch` | stiki vseh točk trupa v eni legi. Točka, ki se znajde v tleh globlje, kot je mogla priti od zadnjega pogleda (prejšnja globina + 0,12 m + zadnji izriv + pot v podkoraku), ne da stika, dokler ni spet prosta: trikotniki narisanih tal in rob ploščadi se stikajo s skokom, in brez tega pravila bi telo ob skoku dobilo sunek. Če pod tako točko prej ni bilo znanih tal, se padec konča (`B.lost`) |
 | `fallSub` | podkorak: teža, zaporedni sunki v točkah stika brez odboja (restitucija 0) s Coulombovim trenjem, zaznava udarca (točka, ki prvič zadene hitreje od 3 m/s), premik in zasuk, izriv iz tal (največ 0,25 m na podkorak, 1 cm ostane), pravila mirovanja in konca |
-| `fallBody(race, c, F, dt)` | korak dirke: podkoraki, prepis lege v polja avta (`c.x, c.y, c.z, c.h`, hitrosti; `c.air = 1`), udarec → `knock(c, škoda, lx, lz)` z vdrtino na mestu udarca (streha: vdrtina od zgoraj in `roofDmg`), konec → `Race.rescue` |
+| `fallBody(race, c, F, dt)` | korak dirke: podkoraki, prepis lege v polja avta (`c.x, c.y, c.z, c.h`, hitrosti; `c.air = 1`), udarec → `knock(c, škoda, lx, lz)` z vdrtino na mestu udarca (streha: vdrtina od zgoraj in `roofDmg`), konec → doplačilo do najmanjše škode 0,32 in `Race.rescue`; takoj za tem višina ceste pod avtom (`c.roadY = c.y`: vanjo je med padcem pisalo telo, na krožni progi jo `rescue` prepusti naslednjemu koraku avta, slika pa je lahko narisana prej: kamera in senca bi bili eno sličico do sekunde prenizko) |
 
-Priklopi v obstoječo kodo so trije, vsak ena vrstica: `Race._fall` (`if (this.track.floor && !c.tl) { fallBody(…); return; }`), zanka napredka v `Race.step` (avto, ki pada kot telo, preskoči: mesto na cesti `c.q`, razdalja, kontrolne točke in števca »narobe« in »obtičal« ostanejo, kjer je šel čez) in `_wreckStep` (tekmeca brez kolesa med padcem ne rešuje). Vozilo s prikolico (`c.tl`) in proga brez tal padca (Uncompahgre, zamrznjena) padata po starem.
+Priklopi v obstoječo kodo so štirje, vsak ena vrstica: `Race._fall` (`if (this.track.floor && !c.tl) { fallBody(…); return; }`), zanka napredka v `Race.step` (avto, ki pada kot telo, preskoči: mesto na cesti `c.q`, razdalja, kontrolne točke in števca »narobe« in »obtičal« ostanejo, kjer je šel čez), `_wreckStep` (tekmeca brez kolesa med padcem ne rešuje) in `Race._lodPlan` (načrt LOD si za vsak avto zapomni dolžino prejšnjega koraka, `pd`; vožnja je ne bere). Vozilo s prikolico (`c.tl`) in proga brez tal padca (Uncompahgre, zamrznjena) padata po starem.
 
-**Konec padca** (`B.done`): 1 = obmiruje (in leži 0,8 s); 2 = pod več kot polovico trupa 0,25 s ni znanih tal (konec podatkov `def.floor`, 30 m za robom); 3 = 8 s. Pri 2 in 3 dobi avto najmanj staro škodo 0,32 (padel bi naprej). V vseh primerih ga `Race.rescue` vrne na cesto tam, kjer je šel čez (`c.q` je zamrznjen), z 8 m/s, kot doslej.
+**Konec padca** (`B.done`): 1 = obmiruje (in leži 0,8 s); 2 = znanih tal ni več (pod več kot polovico trupa 0,25 s ni tal, ali je točka trupa v tleh tam, kjer prej tal ni bilo: konec podatkov `def.floor`, 30 m za robom); 3 = meja `cap`, v igri 1,5 s (tako se konča 92 % padcev na Killarju). Ob vsakem koncu ima avto od padca najmanj staro škodo 0,32, in `Race.rescue` ga vrne na cesto tam, kjer je šel čez (`c.q` je zamrznjen), z 8 m/s, kot doslej.
 
 **Kaj bere izris** (dogovor z `js/render.js` in posnetkom): `c.fall.b` z legami `x, y, z` in prejšnjimi `px, py, pz`, kvaternionom `q` in prejšnjim `pq` (vrstni red x, y, z, w, osi telesa so osi skupine avta v izrisu), višino težišča `hc` in zadnjim udarcem `hn` (števec), `hx, hy, hz` (točka v svetu), `hv` (hitrost), `hr` (streha), `nc` (število točk na tleh).
 
 ### Popravek: izris, kamera, zvok, posnetek
 
-V delu (10. 11. 2026): izris avta po legi telesa (`c.fall.b`), kamera za avtom med padcem in ob vrnitvi, zvok in delci ob udarcih, posnetek dirke z nagibom in preizkus v brskalniku (`tests/browser/padec.test.mjs`). Do takrat je na veji samo jedro: avto v igri pade pravilno, narisan pa je še po starem (brez nagiba).
+Vse bere samo `c.fall.b` (dogovor zgoraj); kjer telesa ni (druge proge, vozilo s prikolico), se nič ne spremeni.
+
+| Datoteka | Funkcija | Kaj dela |
+|---|---|---|
+| `js/render.js` | `fallPose` | avto je narisan v legi telesa: zasuk med zadnjima korakoma telesa, izhodišče = težišče − `hc` vzdolž osi gor; od ceste ne ostane nič (nagib, vzmetenje, robniki), kolesa so naravnost in se izvrtijo do mirovanja, črno podvozje je pokazano in senca pod avtom skrita (kot pri prevračanju), ime ostane nad avtom |
+| | `fallBack` | v sliki, ko je avto spet na cesti, stoji po nagibu ceste takoj (ni zglajen iz lege, v kateri se je padec končal), brez prahu in tresenja pristanka |
+| | `fallFx` | namesto učinkov vožnje (sledi gum, plamen, iskre podvozja): ob vsakem trdem udarcu oblak prahu s tal na mestu udarca, pri močnejšem še kamni; iskre zlomljene ograje ostanejo |
+| | `fallCam`, `fallHead` | kamera za avtom med padcem gleda vzdolž ceste, kjer je šel avto čez (ne po smeri avta, ki se vrti), in mu sledi navzdol, najmanj 4 m nad pobočjem; avto ostane v sliki ležeče in pokonci; v sliki, ko je avto spet na cesti, je kamera takoj za njim (kot `resetCam`): brez zatemnitve in brez dviga s pobočja |
+| `js/game.js` | `fallFb` | vsak trd udarec igralčevega avta: zvok trka, vibracija in tresenje pogleda kot ob zidu te hitrosti (Nastavitve · Tresenje kamere: ob trku); po vrnitvi brez zvoka pristanka, brez napisa in dolžine skoka |
+| | `recFall`, `rpFall`, `rpFalls` | posnetek dirke shrani lego telesa v istih sedmih številih na avto (zasuk namesto smeri, hitrosti in volana; zastavice od `REC_FB` navzgor: stik s tlemi, števec in moč udarcev, streha), ponovitev postavi avto v isto lego; starejši posnetki se berejo kot prej |
+| `js/sfx.js` | `falls` | med padcem je motor v prostem teku, brez zvoka gum in robnikov; ko se telo dotika tal, drsenje karoserije |
+| `tools/posnetek.mjs` | | izpiše padce čez rob v posnetku (kdo, od kdaj do kdaj, kje, trdi udarci) in z `--zastavice` naredi sliko sredi vsakega padca |
+
+**Preizkus v brskalniku**: `tests/browser/padec.test.mjs`, 30 preizkusov (22 v drevesu brez Killarja), 1–2,5 min. Na pravi progi (Spa, Belgija) test za levim robom pri 1630 m postavi izmišljeno pobočje 45° (tla padca samo v strani testa: `Track.floor`, `Track.floorAt`); igralec gre čez rob trikrat (28 m/s pod 20°, 5 m/s pod 60°, hitro še pokonci 360 × 640), tekmec enkrat. V drevesu s Killarjem še dva prava prehoda pri 524 m (60 km/h pod 20° ležeče, 10 km/h pod 40° pokonci). Preveri:
+- narisana lega avta je v vsaki sličici padca lega telesa (do 4e-6° in 0 m), avto je vidno nagnjen (do 72°), senca pod njim skrita in podvozje pokazano, po padcu oboje kot prej;
+- pravilo 1,5 s (181 korakov) in v sličici tega koraka avto stoji na cesti tam, kjer je šel čez (ni zglajen iz lege padca);
+- v isti sličici je kamera za avtom na razdalji in višini novega pogleda in senca pod avtom, ne glede na to, kateri korak sličice je avto vrnil;
+- brez zatemnitve med padcem in po njem; napis »ZGRMEL SI V PREPAD!«; središče avta je ves padec v sliki, ležeče in pokonci;
+- po vrnitvi brez učinkov pristanka (tresenje, zvok, dolžina skoka, prah), dirka teče naprej, števca razdalje in krogov se med padcem ne premakneta;
+- vsak trd udarec da prah in en tresljaj pogleda `min(1,2; 0,08 × hitrost udarca)`; vsak padec stane vsaj 0,32 škode;
+- tekmec pade po istih pravilih, njegov padec igralčevega pogleda ne trese in ne pokaže napisa;
+- ponovitev (Posnetek do sem) nariše vsak padec, kot je bil v živo (smer gor do 0,5°, mesto do 0,01 m), po vrnitvi avto stoji na cesti s senco; `rpFalls()` našteje točno padce, ki so se zgodili; brez napak na strani.
+
+**Meritev zunaj testa** (končno drevo s Killarjem, 38 padcev vzdolž proge, 3420 sličic padca, 640 × 360 in 360 × 640): narisana lega je v vsaki sličici lega telesa (odstopanje 0), središče avta ni v nobeni sličici zunaj slike, v nobeni ga ne zakrije pobočje in v nobeni ni pod narisanimi tlemi; ob vrnitvi je kamera od novega pogleda oddaljena največ 0,06 m. Izris vožnje brez padca je do številke enak kot prej (Killar 339.000 števil, Bathurst 495.000).
+
+**Slike ZDAJ/POTEM** (kamera za avtom, isti prehod pri 0,52 km ob istih časih igre): `docs/trki-slike/padec-60kmh.webp` in `padec-10kmh.webp` (izrez okoli avta), `padec-60kmh-cela-slika.webp` (cela slika). Pri 60 km/h pod 20° avto zleti čez rob, se v zraku nagne za 72° in je po 1,51 s spet na cesti (prej: plosko vrtenje, lebdenje nad pobočjem, ob vrnitvi kamera še s strani). Pri 10 km/h pod 40° se prevesi čez rob na bok, po 0,76 s udari ob pobočje in je po 1,51 s spet na cesti (prej: sunek čez rob in avto za terenom). POTEM je narisan na drevesu `zbirna/proge` 3c1bbac2 s štirimi commiti padca iz razdelka Prenos (oznaka drevesa v sliki je lokalna, ker tega drevesa ni na nobeni veji); slike naredi `tools/trki/padec-slike.mjs` z istimi časi igre kot ZDAJ (`--po`).
 
 ### Spremembe v datotekah Killarja (vnese seja Killarja, #494)
 
-Ta veja Killarjevih datotek ne spreminja. Ko pridejo commiti padca v drevo s Killarjem, so potrebne te spremembe (preizkušene lokalno na `zbirna/proge` 3c1bbac2 s padcem):
+Ta veja Killarjevih datotek ne spreminja. Ko pridejo commiti padca v drevo s Killarjem, so potrebne te spremembe (preizkušene lokalno na `zbirna/proge` 3c1bbac2 s padcem; seznam velja za padec 1,5 s in zamenja prejšnjega za 8 s):
 
-1. **`tests/killar.test.js`** (popravek `tools/trki/padec-killar-test.patch`, `git apply`; tri mesta v pomočniku `run()` in v preizkusu »over the edge the car lands on the slope«):
-   - zanka vožnje `for (let k = 0; k < 120 * 4; k++)` → `k < 120 * 4 || (P.fall && k < 120 * 16)` (padec traja do 8 s, ne 1,6 s);
-   - prvi dotik pobočja `if (tl < 0 && P.fall.land) tl = k;` → `if (tl < 0 && P.fall.b && P.fall.b.hn) tl = k;` (prvi udarec telesa);
-   - pogoj `x.fallT <= 1.61 && (x.land < 0 || x.slid <= 0.51)` → `x.fallT <= 8.05`; besedilo preizkusa in izpis (»first knock after … s« namesto »touched after … s, slid … s«).
-   S tem je test 27/27 zelen.
-2. **`tests/lib/sim.js`, `CRASH_AT`** (`'killar/ev': 8.25, 'killar/rally': 12.75, 'killar/formula': 7.5`): vožnjo z razbijanjem uglasi znova. Zdaj avto v njej pade enkrat (padec do 8 s; škoda 0,38–0,42, noben del ne odpade) namesto večkrat (škoda 1, trije odpadli deli), zato `golden.test.js` za `killar/crash/cs`, `killar/formula/cs`, `killar/lm/cs` in `killar/car/cs` javi »this run does not really crash«.
-3. **`tests/golden/sim.json`**: vnosi `killar/race|demo|upg|crash|formula|lm|car/cs` (7) se spremenijo; po točki 2 `node tests/golden.test.js --update --only=killar`. Drugih 161 scenarijev ostane enakih.
-4. **`tests/golden/races.json`**: vnosi `killar/cs…` (5): spremenijo se štirje (`killar/cs`, `killar/cs/formula`, `killar/cs/lm`, `killar/cs/car`; `killar/cs/rain` ostane enak), vseh 13 avtov pride na cilj, čas zmagovalca se premakne za največ 0,02 s; `node tests/races.test.js --update --only=killar`.
-5. **`docs/proge/killar.md`**, alineji »Prepad« in »Pristanek na pobočju« (vrstici 12–13): namesto »po 1,6 s se vrne na cesto« in opisa krogle `Race._land` opis padca kot telesa: avto se prevesi čez rob, se kotali in drsi po pobočju, udarci pustijo vdrtine, obmiruje ali pride do konca znanih tal (najpozneje po 8 s), nato se vrne na cesto, kjer je šel čez (`js/core.js`, `FALL`, `fallBody`; preizkusi `tests/padec.test.js`, `tests/browser/padec.test.mjs`).
-6. **Ni potrebno, možnost za pozneje**: širša tla padca (`tools/killar-skala.mjs`, `o <= b + 30.01`). S 100 m namesto 30 m obmiruje 18 od 69 padcev namesto 15, mediana padca se podaljša s 4,8 na 8 s, datoteka proge zraste za ~25 KB: ne predlagam. `Race._offRoad` lahko padec začne brez sunka `overEdge` (`c.fall = { t: 0, raw: 1 }`); zdaj ga `fallStart` vzame nazaj sam, zato sprememba ni nujna.
+1. **`tests/killar.test.js`** (popravek `tools/trki/padec-killar-test.patch`, `git apply`; dve mesti v pomočniku `run()` in v preizkusu »over the edge the car lands on the slope«):
+   - prvi dotik pobočja `if (tl < 0 && P.fall.land) tl = k;` → `if (tl < 0 && P.fall.b && P.fall.b.hn) tl = k;` (prvi udarec telesa; zastavice `land` telo nima);
+   - pogoj `x.fallT <= 1.61 && (x.land < 0 || x.slid <= 0.51) && x.fin) && onto.filter(x => x.land >= 0).length >= 6` → `x.fallT <= 1.61 && x.fin) && onto.filter(x => x.land >= 0).length >= 3` (meja 1,61 s ostane; ob pobočje v tem času udarijo 4 od 10 voženj; prej je test zahteval dotik pri vsaj 6 od 10); besedilo preizkusa in izpis (»first knock after … s« namesto »touched after … s, slid … s«).
+   S tem je test 27/27 zelen. Brez popravka pade samo ta preizkus (»no touch« pri vseh desetih).
+2. **`tests/lib/sim.js`, `CRASH_AT`**: `'killar/rally': 12.75` → `15.5`, `'killar/ev': 8.25` → `4` (`'killar/formula': 7.5` ostane). Razlog: avto je po padcu vrnjen na mesto prehoda (prej do 42 m naprej, od koder je pogosto padel ali trčil še enkrat), zato pri starih časih pade enkrat in se ne razbije (škoda 0,42 in 0,43, noben del ne odpade) in `golden.test.js` javi »this run does not really crash«. Z novima časoma: `killar/crash/cs` škoda 0,78 in 3 odpadli deli, `killar/car/cs` škoda 1 in 2 odpadla dela; `killar/formula/cs` (0,38, 2 dela) in `killar/lm/cs` (0,41, 2 dela) ostaneta pokrita. Izbrana iz pregleda časov 4–16 s po 0,5 s.
+3. **`tests/golden/sim.json`**: vnosi `killar/race|demo|upg|crash|formula|lm|car/cs` (7) se spremenijo; po točki 2 `node tests/golden.test.js --update --only=killar`. Drugih 161 scenarijev ostane enakih (preverjeno s tem seznamom).
+4. **`tests/golden/races.json`**: vnosi `killar/cs…` (5): spremenijo se štirje (`killar/cs`, `killar/cs/formula`, `killar/cs/lm`, `killar/cs/car`; `killar/cs/rain` ostane enak), vseh 13 avtov pride na cilj, čas zmagovalca se premakne za največ 0,07 s; `node tests/races.test.js --update --only=killar`.
+5. **`docs/proge/killar.md`**, alineji »Prepad« in »Pristanek na pobočju« (vrstici 12–13): »po 1,6 s se vrne na cesto« → »po 1,5 s«; namesto opisa krogle `Race._land` (zdaj samo še za vozila s prikolico) opis padca kot telesa: avto se prevesi čez rob, se kotali in udarja ob pobočje, udarci pustijo vdrtine, nikoli ni pod narisanimi tlemi; po največ 1,5 s se vrne na cesto, kjer je šel čez (`js/core.js`, `FALL`, `fallBody`; preizkusi `tests/padec.test.js`, `tests/browser/padec.test.mjs`).
+6. **Registracija testov** na `zbirna/proge` (commit z registracijo se ne prenaša, ker ima ta veja druge sezname): `padec.test.js` v seznam `node` in `browser/padec.test.mjs` v seznam `browser` (`tests/run.js`), vrstica `RELATED` za `js/core.js`, `js/render.js`, `js/game.js`, `js/sfx.js` in `tools/posnetek.mjs`, pričakovani seznam v `tests/shards.test.js`, vrstici v `tests/README.md`.
+7. **Ni potrebno**: širša tla padca (`def.floor` 30 m za robom zadoščajo: v 1,5 s jih preleti samo zelo hiter avto, in takrat se padec konča prej). `Race._offRoad` lahko padec začne brez sunka `overEdge` (`c.fall = { t: 0, raw: 1 }`); zdaj ga `fallStart` vzame nazaj sam, zato sprememba ni nujna.
 
 ### Prenos na `zbirna/proge` (#494)
 
-Commiti »Padec: …« na tej veji vsebujejo samo `js/core.js`, `js/render.js`, `js/game.js`, `tools/posnetek.mjs`, `tests/padec.test.js` in `tests/browser/padec.test.mjs`; spremembe so narejene proti `zbirna/proge` in se na to vejo prenesejo s `git cherry-pick` (preverjeno na 3c1bbac2: brez sporov, datoteke po prenosu enake kot v drevesu, na katerem je bil popravek razvit; `tests/padec.test.js` tam 18/18, na tej veji 14/14, ker štirje preizkusi potrebujejo Killar). Registracija testov (`tests/run.js`, `tests/shards.test.js`, `tests/README.md`), dokumenti in slike so v ločenem commitu, ki se ne prenaša: na `zbirna/proge` se testa vpišeta ročno (seznam `node`, seznam `browser`, vrstica `RELATED`). Če gre Killar na `main` pred to vejo, se po spoju `main` v `trki/realizem` isti deli zlijejo brez sporov (ista vsebina na obeh straneh).
+Commiti »Padec: …« na tej veji vsebujejo samo datoteke padca: `js/core.js`, `js/render.js`, `js/game.js`, `js/sfx.js`, `tools/posnetek.mjs`, `tests/padec.test.js` in `tests/browser/padec.test.mjs`. Na `zbirna/proge` se prenesejo s `git cherry-pick` v tem vrstnem redu:
+
+1. `df083d99` Padec: avto čez rob pade kot togo telo (jedro, test)
+2. `33e6ba73` Padec: padec v igri traja največ 1,5 s, nato je avto spet na cesti (jedro, test)
+3. `1ac5a0ed` Padec: po vrnitvi je višina ceste pod avtom nastavljena takoj (jedro, test)
+4. `a771fe19` Padec: izris, kamera, zvok in posnetek padca kot telesa (render, game, sfx, posnetek, brskalniški test)
+
+Preverjeno na `zbirna/proge` 3c1bbac2: brez sporov (`js/render.js` in `js/sfx.js` git zlije sam), datoteke po prenosu enake kot v drevesu, na katerem je bil popravek preizkušen; `tests/padec.test.js` tam 30/30 (na tej veji 22/22, ker osem preizkusov potrebuje Killar), `tests/browser/padec.test.mjs` 30/30 (tu 22/22), `tests/killar.test.js` s popravkom iz točke 1 zgoraj 27/27. Registracija testov (`tests/run.js`, `tests/shards.test.js`, `tests/README.md`), dokumenti, slike in orodja so v commitih »Trki: …«, ki se ne prenašajo (točka 6 zgoraj). Če gre Killar na `main` pred to vejo, se po spoju `main` v `trki/realizem` isti deli zlijejo brez sporov (ista vsebina na obeh straneh).
+
+**Koraki za sejo Killarja.** Seja Killarja se je 10. 11. 2026 ustavila, preden je commite prenesla; prenos naredi nova seja Killar na `zbirna/proge` (naloga ob zagonu, Matej):
+1. `git fetch origin trki/realizem`, nato `git cherry-pick df083d99 33e6ba73 1ac5a0ed a771fe19` (v tem vrstnem redu). Na 3c1bbac2 sporov ni. Če se je `zbirna/proge` vmes spremenila in spor nastane: v bloku `FALL` in v funkcijah `fall…` (`js/core.js`, `js/render.js`, `js/game.js`, `js/sfx.js`) velja vsebina commita, drugod vsebina `zbirna/proge`.
+2. Killarjev test: `git show origin/trki/realizem:tools/trki/padec-killar-test.patch | git apply` (točka 1 prejšnjega razdelka).
+3. `CRASH_AT` v `tests/lib/sim.js` (točka 2), nato `node tests/golden.test.js --update --only=killar` in `node tests/races.test.js --update --only=killar` (točki 3 in 4), besedilo v `docs/proge/killar.md` (točka 5), registracija obeh testov padca (točka 6).
+4. Preveri: `node tests/padec.test.js` 30/30, `node tests/killar.test.js` 27/27, `node tests/browser/padec.test.mjs` 30/30 (zadnjih osem preizkusov je Killar), `node tests/golden.test.js` (vnosi zunaj Killarja enaki kot prej). V igri: `index.html?proga=killar`, čez levi rob pri ~0,52 km: avto se prevesi in kotali, napis »ZGRMEL SI V PREPAD!«, po 1,5 s stoji na cesti, kjer je šel čez, kamera je takoj za njim, brez zatemnitve.
 
 ### Odločitve, omejitve, odprta vprašanja
 
-- **Tla ostanejo 30 m** (točka 6 zgoraj). Posledica: na Killarju obmiruje 15 od 69 izmerjenih padcev; drugi pridejo do konca znanih tal (50) ali do 8 s (4), ker je soteska globoka 100–250 m s 46–72°. Na zaslonu avto takrat še pada, ko ga igra vrne na cesto.
-- **Vrnitev je vedno na mesto prehoda**, tudi ko telo obmiruje na cesti ali bankini (npr. pri 2,5 km s 100 km/h pod 10°: po 3 m visoki brežini se vrne na cesto 69 m naprej). Predaja na mestu bi zahtevala prehod iz telesa v vožnjo; ni narejeno.
-- **Čas**: padec stane igralca in tekmece do ~8,8 s namesto ~1,6 s (mediana 4,8 s). Tekmeci padejo 1,8-krat na dirko s 13 avti: uvrstitve na Killarju se spremenijo (reference dirk, točka 4 zgoraj). Gumb ↺ Na progo padec prekine.
-- **Česa jedro ne pozna**: dreves, skal in hiš na pobočju (telo gre skozi), vode na dnu, drugih avtov (padajoča avta se ne zadeneta). Višine trupa po vrsti karoserije so ocene (`FALL.ht`), vztrajnost je škatla enakomerne gostote.
+- **Padec v igri traja največ 1,5 s** (uporabnik 10. 11. 2026 ob 13.55: »Vrni tako kot prej po 1,5s«). Prva različica popravka je telo spremljala do konca (obmiruje, konec znanih tal ali 8 s; mediana 4,8 s); po primerjavi v slikah je uporabnik izbral staro trajanje. Posledica: ob vrnitvi avto praviloma še pada ali se kotali (1219 od 1320 izmerjenih padcev na Killarju konča meja, 100 konec znanih tal, 1 obmiruje). Pri 60 km/h pod 20° (0,52 km) je v 1,5 s nagnjen za 72° in 10,9 m pod robom, ne da bi se dotaknil tal; pri 10 km/h pod 40° se prevesi čez rob, po 0,76 s udari ob pobočje in je ob vrnitvi 3,3 m pod robom na boku (nagnjen 98°). Daljši padec ostane v jedru kot možnost dirke (`opts.fallCap`); uporablja jo samo test.
+- **Brez zatemnitve**: vrnitev je rez kot pred popravkom; kamera je v isti sliki za avtom na cesti.
+- **Škoda**: vsaj 0,32 na padec kot prej, z udarci največ 0,5 (meja velja pred faktorjem vozila: najlažje vozilo dobi do 0,65).
+- **Vrnitev je vedno na mesto prehoda** (prej do 42 m naprej), tudi ko bi telo obstalo na cesti ali bankini. Predaja na mestu bi zahtevala prehod iz telesa v vožnjo; ni narejeno.
+- **Čas**: padec stane igralca in tekmece toliko kot prej (1,5 s namesto 1,6 s). Tekmeci padejo 1,8-krat na dirko s 13 avti; reference dirk na Killarju se premaknejo malo (čas zmagovalca največ 0,07 s, točka 4 zgoraj). Gumb ↺ Na progo padec prekine; tak padec ni štet.
+- **Česa jedro ne pozna**: dreves, skal in hiš na pobočju (telo gre skozi), vode na dnu, drugih avtov (padajoča avta se ne zadeneta). Višine trupa po vrsti karoserije so ocene (`FALL.ht`), vztrajnost je škatla enakomerne gostote. Avto, ki gre čez rob med prevračanjem na cesti (`c.rl`), začne padec pokonci. Rob ploščadi ceste je med točkama proge raven, zato je na ostrem ovinku nekaj centimetrov ob narisanem robu.
 - **Splet**: tuji avti v dirki s prijatelji nimajo nagiba (stanje `c.fall.b` se ne pošilja); padajo po starem izrisu.
-- **Plitvi padci**: kjer je črta roba pred prelomom pobočja (1,28 km, 2,5 km), avto zapelje na travo pod robom in tam obstane; še vedno šteje kot padec (napis, vrnitev). O tem, ali naj bo tam padec, odloča podatek proge (`def.drops`), ne ta sprememba.
+- **Posnetek dirke**: lega telesa je vzorčena 20-krat na sekundo in med vzorci linearna (ob udarcu do ~3° in 0,13 m od lege v živo), hitrost udarca je shranjena v štirih stopnjah, prah udarcev se v ponovitvi ne riše. Starejša različica igre posnetka s padci ne prebere pravilno; stari posnetki se v novi berejo kot prej.
+- **Kamera**: metri nastavitve »Položaj avta« se med padcem v 0,4 s umaknejo iz pogleda (sicer bi avto, ki pada 15 m/s in več, zdrsnil pod spodnji rob slike) in se vrnejo z avtom na cesti. Pogled, ki nastane sredi padca (skok v posnetku), gleda v smeri dirke.
+- **Zvok in prikaz**: prestava in vrtljaji na zaslonu med padcem ostanejo vrednosti z roba (motor se sliši v prostem teku). Udarci tekmečevega telesa dajo prah, zvoka trka in tresenja pa ne.
+- **Plitvi padci**: kjer je črta roba pred prelomom pobočja (1,28 km, 2,5 km), avto zapelje na travo pod robom; še vedno šteje kot padec (napis, vrnitev po 1,5 s). O tem, ali naj bo tam padec, odloča podatek proge (`def.drops`), ne ta sprememba.
+- **Tla ostanejo 30 m** za robom (`def.floor`): za 1,5 s zadoščajo.
 
 ## Popis stikov
 
