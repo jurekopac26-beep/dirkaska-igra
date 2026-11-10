@@ -8,6 +8,8 @@ Odziv uporabnika na prve štiri makete (10. 11. 2026 ob ~22.15, prek Mateja): »
 | `medvode-2-hribi-pokonci.webp`, `medvode-2-hribi-lezece.webp` | Šmarna gora in Grmada (~3,7 km), z zahodnega brega Save v Medvodah | popoldne |
 | `medvode-3-vecer-pokonci.webp`, `medvode-3-vecer-lezece.webp` | Storžič in Karavanke (~22 km), z istega travnika kot 1 | pozno popoldne, nizko toplo sonce |
 
+Kako bi slike izgledale v meniju igre (posnetki naslovnega zaslona, pokonci in ležeče, in ležeči izris z lastnim kadrom za meni): `meni/README.md`.
+
 ## Kako zagnati
 
 Orodja in priprava so iz `../README.md` (isti `izris.py`, `dem.py` in `avto.mjs`). Prizori so v `../prizori.json`: `medvode-1-alpe`, `medvode-2-hribi` in `medvode-3-vecer` dopolnijo prizor `medvode` (polje `base`), postavitev avta in table je v polju `comp` (`parked`: avto na travniku, brez ceste in gozda ob njej; trava pred avtom je nižja od črte od oči do koles).

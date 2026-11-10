@@ -23,7 +23,7 @@ ap.add_argument('--samples', type=int, default=96); ap.add_argument('--seed', ty
 ap.add_argument('--dry', action='store_true')  # build the scene only (no render)
 A = ap.parse_args()
 SCN = json.load(open(os.path.join(HERE, 'prizori.json'))); CFG = SCN[A.scene]
-if 'base' in CFG: CFG = {**SCN[CFG['base']], **CFG}  # a variant: the base scene with these changes
+while 'base' in CFG: CFG = {**SCN[CFG['base']], **{k: v for k, v in CFG.items() if k != 'base'}}  # a variant: its base scene (maybe a variant too) with these changes
 os.makedirs(A.tmp, exist_ok=True)
 RNG = np.random.default_rng(A.seed)
 T0 = time.time()
@@ -944,11 +944,15 @@ def meadow(roadC, rtree):
     m_ctr = mat_simple('sredica', tuple(lin([0.95, 0.70, 0.08])), 0.6)
     for i in range(9):
         k = i % 3; me = flower(rng, k).mesh('cv-%02d' % i, [m_stem, pet[k], m_ctr]); obj('cv-%02d' % i, me, cf)
-    # points: in the view's wedge, denser close by
-    hf = 27.0
+    # points: in the view's wedge (at least ±27°, wider for a frame moved sideways: shift_x), denser close by
+    lo, hi = -27.0, 27.0
+    for k_ in A.orient.split(','):
+        o_ = ORIENT[k_]; t_ = math.tan(math.radians(o_['hfov'] / 2)); s_ = 2 * t_ * o_.get('shift_x', 0.0)
+        lo, hi = min(lo, math.degrees(math.atan(s_ - t_))), max(hi, math.degrees(math.atan(s_ + t_)))
+    tlo, thi = math.tan(math.radians(lo - 4)), math.tan(math.radians(hi + 4))
     def wedge(b0, b1, dens):
-        area = 0.5 * (b1 ** 2 - b0 ** 2) * 2 * math.tan(math.radians(hf + 4)); n = int(area * dens)
-        b = np.sqrt(rng.uniform(b0 ** 2, b1 ** 2, n)); a = rng.uniform(-1, 1, n) * b * math.tan(math.radians(hf + 4)); return a, b
+        area = 0.5 * (b1 ** 2 - b0 ** 2) * (thi - tlo); n = int(area * dens)
+        b = np.sqrt(rng.uniform(b0 ** 2, b1 ** 2, n)); a = rng.uniform(tlo, thi, n) * b; return a, b
     parts = [wedge(2.0, 7, 34), wedge(7, 20, 16), wedge(20, 55, 5.5), wedge(55, 130, 1.8)]
     ga = np.concatenate([p[0] for p in parts]); gb = np.concatenate([p[1] for p in parts])
     dd, _ = rtree.query(np.stack([ga, gb], 1)); ok = dd > COMP['width'] / 2 + 0.55
@@ -991,6 +995,7 @@ def render(orient, path):
     cd = bpy.data.cameras.new('kamera'); cd.sensor_fit = 'HORIZONTAL'; cd.sensor_width = 36.0
     cd.lens = 18.0 / math.tan(math.radians(o['hfov'] / 2)); cd.clip_start = 0.1; cd.clip_end = 120000
     cd.shift_y = (o['horizon'] - 0.5) * ry / rx  # the horizon at this fraction from the top
+    cd.shift_x = o.get('shift_x', 0.0)  # the frame moved right by this part of its width (the menu's panel covers the right: a scene's -meni)
     co = bpy.data.objects.new('kamera-' + orient, cd); link(co)
     f = Vector((FWD[0], FWD[1], 0.0)); co.rotation_mode = 'QUATERNION'; co.rotation_quaternion = (-f).to_track_quat('Z', 'Y')
     co.location = CAM; SC.camera = co
