@@ -157,7 +157,12 @@ HEAD = """/* Livorno (theme 'livorno'): the scenery data for js/world-livorno.js
    the canopy); far: the surface (100 m cells, +-12 km, bytes of 2 m); bld: OSM buildings within 60 m [x, z, length, width, angle, height
    (0 unknown), kind: 0 house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats]; walls [0 wall,
    1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]]; coast (the land on the left of each line); cliffs (the lower side on the right);
-   rail [bridge, tunnel, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind]; bridges [s0, s1] (the road on a bridge). Data: © OpenStreetMap contributors (ODbL 1.0: the
+   rail [bridge, tunnel, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind]; bridges [s0, s1] (the road on a bridge); hise (the
+   houses by the road, tools/livorno/hise.py: att, a hex digit a building, the walls a neighbour stands against (bits -x, +x, -z, +z of its frame);
+   wings [building, [[x, z, length, width, walls (base 3: 1 a neighbour, 2 its own wing), the roof's run behind each wall (4)], ...]]; roads [class
+   (0 asphalt, 1 paving, 2 gravel), width, [x, z, ...]]; roof {building: 1 gabled, 2 hipped, 3 flat, 4 pyramidal}; levels {building: floors}; walk
+   [left, right] [from, to] m after the start line: the road's sidewalks (walk2: with the built-up streets the map has none drawn on, a guess);
+   pools [x, z, length, width, angle]). Data: © OpenStreetMap contributors (ODbL 1.0: the
    derived data here under the ODbL 1.0); Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence
    and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and
    World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0). Only geographic and descriptive labels. */
@@ -205,6 +210,8 @@ def build_world():
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'bridges': [[round(a_, 1), round(b_, 1)] for a_, b_ in J['bridges']],
     }
+    hp = os.path.join(HERE, 'hise.json')   # (the houses by the road: tools/livorno/hise.py)
+    if os.path.exists(hp): h = json.load(open(hp)); data['hise'] = {k: h[k] for k in ('att', 'wings', 'roads')}; data['hise'].update(h['osm'])
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'livorno.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB; dem', D['nx'], 'x', D['nz'], '; lc', lnx, 'x', lnz, len(LC['rle']), 'chars; classes', np.bincount(lc.ravel(), minlength=4).tolist())

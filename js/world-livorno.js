@@ -201,10 +201,21 @@
     };
     // the prototype of the houses by the road (js/world-hise.js; index.html?hise=1|2|3, else as they are): the houses and the blocks of flats in
     // chunks of their own (one texture, one material), by how near the road they stand (2: within 22 m of the centre line, 1: within 42 m)
-    const HS = API.hise ? API.hise.setup({ Chunks, list: LD.bld, T, near: nrNear, gH: nrGround, style: 'med' }) : null, HL = HS ? HS.level : 0;
+    // (with it what tools/livorno/hise.py made of OpenStreetMap, LD.hise: the outlines cut into wings, the walls that stand against a neighbour,
+    // the roofs' shapes and the floors; at level 3 the streets and paths between the houses, the map's walls and hedges as the yards' own, the
+    // road's sidewalks, the swimming pools)
+    const HX = API.hise && API.hise.level() ? LD.hise || null : null, H3 = HX && API.hise.level() >= 3 ? HX : null, WG = new Map(), rects = HX ? [] : null;
+    const bOff = (bx, bz, Lb, Wb, ang) => { if (Lb < 2.2 || Wb < 2.2) return true; const ca = Math.cos(ang), sa = Math.sin(ang);   // (in the road's way or in the sea: not built)
+      for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2], [0, 0]]) { const cx = bx + ca * a - sa * b, cz = bz + sa * a + ca * b, n = nrNear(cx, cz); if ((n.i >= 0 && n.dd < 1.2) || seaD(cx, cz) > 2) return true; } return false; };
+    if (HX) { for (const [i, ws] of HX.wings) WG.set(i, ws);
+      LD.bld.forEach((b, i) => { if (bOff(b[0], b[1], b[2], b[3], b[4])) return; const ws = WG.get(i), c = Math.cos(b[4]), sn = Math.sin(b[4]); if (!ws) rects.push([b[0], b[1], b[2], b[3], b[4], i]); else for (const w of ws) rects.push([b[0] + w[0] * c - w[1] * sn, b[1] + w[0] * sn + w[1] * c, w[2], w[3], b[4], i]); }); }
+    const SRL = H3 ? API.hise.lines(H3.roads.map(([, w, fl]) => [w / 2, fl])) : null, BRL = H3 ? API.hise.lines(LD.walls.filter(([k]) => k <= 3).map(([, fl]) => [0, fl])) : null;
+    const HS = API.hise ? API.hise.setup({ Chunks, list: LD.bld, rects, T, near: nrNear, gH: nrGround, style: 'med', streets: SRL, barriers: BRL }) : null, HL = HS ? HS.level : 0;
     let bi = -1;
-    const hisPut = (bx, bz, Lb, Wb, ang, y0, hh, fl, type, wc, dn, ri) => HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl, type, wall: wc, dn, ri, id: bi,
-      roof: ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], band: SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)] });
+    const hisPut = (bx, bz, Lb, Wb, ang, y0, hh, fl, type, wc, dn, ri) => { const a = HX ? parseInt(HX.att[bi], 16) || 0 : 0, lv = HX && type !== 'small' ? HX.levels[bi] | 0 : 0;
+      if (lv) { fl = lv; hh = lv * 3.05 + 0.3; }   // (the floors where the map has them)
+      HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl, type, wall: wc, dn, ri, id: bi, att: a ? [a & 1, a >> 1 & 1, a >> 2 & 1, a >> 3 & 1] : null, shape: HX ? HX.roof[bi] | 0 : 0, wings: WG.get(bi) || null,
+        roof: ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], band: SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)] }); };
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       bi++;
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
@@ -246,6 +257,44 @@
       box(g, cx, y - 1, cz, 34, 15, 14, ang, wc, null, true); gable(g, cx, y + 14, cz, 34.6, 14.6, 4.5, ang, ROOF[0], wc);
       box(g, cx + Math.cos(ang) * 19, y - 1, cz + Math.sin(ang) * 19, 5, 29, 5, ang, wc, null, true); cone(g, cx + Math.cos(ang) * 19, y + 28, cz + Math.sin(ang) * 19, 3.3, 4, 4, ROOF[0], ROOF[0], ang + Math.PI / 4);
       ico(g, cx - Math.cos(ang) * 6, y + 17, cz - Math.sin(ang) * 6, 5, 0.8, [0.6, 0.55, 0.5], R, 0.02);
+    }
+
+    /* ---- with the houses' kit at level 3 (LD.hise): the streets and paths between the houses as ribbons on the ground (asphalt, paving, gravel;
+       closed at the road's wall), the road's sidewalks where OpenStreetMap has them (behind a kerb, between the asphalt and the wall: for the
+       eye only, the ground under them is the verge's), the swimming pools of the villas ---- */
+    if (H3) {
+      const COL = [[0.37, 0.37, 0.38], [0.72, 0.69, 0.62], [0.76, 0.69, 0.54]], LIFT = [0.07, 0.09, 0.05], EDG = [0.66, 0.65, 0.62]; let nS = 0;
+      for (const [cls, w, fl] of H3.roads) {
+        const hw = w / 2, sm = [];
+        for (let k = 0; k + 3 < fl.length; k += 2) { const ax = fl[k], az = fl[k + 1], bx = fl[k + 2], bz = fl[k + 3], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 3)); for (let j = k ? 1 : 0; j <= n; j++) sm.push([ax + (bx - ax) * j / n, az + (bz - az) * j / n]); }
+        let prev = null;
+        for (let k = 0; k < sm.length; k++) { const a = sm[Math.max(0, k - 1)], b = sm[Math.min(sm.length - 1, k + 1)], dl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / dl, nz = (b[0] - a[0]) / dl, x = sm[k][0], z = sm[k][1];
+          const nn = nrNear(x, z); if ((nn.i >= 0 && nn.dd < 0.5) || nrDist(x, z) > 66 || seaD(x, z) > -1) { prev = null; continue; }
+          const l = [x + nx * hw, 0, z + nz * hw], r = [x - nx * hw, 0, z - nz * hw]; l[1] = nrGround(l[0], l[2]) + LIFT[cls]; r[1] = nrGround(r[0], r[2]) + LIFT[cls];
+          const t = 0.93 + crH(Math.round(x / 6), Math.round(z / 6), 81) * 0.12, col = COL[cls].map(v => v * t), ew = !cls && w >= 4.5 ? 0.22 : 0;   // (a street's edge: a pale kerb line)
+          const l2 = ew ? [l[0] + nx * ew, l[1] + 0.03, l[2] + nz * ew] : null, r2 = ew ? [r[0] - nx * ew, r[1] + 0.03, r[2] - nz * ew] : null;
+          if (prev) { const g = scen.get(x, z); g.quadUp(prev[0], prev[1], r, l, [prev[2], prev[2], col, col]); nS++;
+            if (ew && prev[3]) { g.quadUp(prev[3], prev[0], l, l2, [EDG, EDG, EDG, EDG]); g.quadUp(prev[1], prev[4], r2, r, [EDG, EDG, EDG, EDG]); } }
+          prev = [l, r, col, l2, r2]; }
+      }
+      const KF = [0.58, 0.57, 0.55], KT = [0.76, 0.75, 0.72], BK = [0.5, 0.49, 0.47]; let nW = 0;
+      const vY = (i, side, o) => { const vr = vergeRow(i, side); for (let k = 0; k + 1 < vr.length; k++) if (o <= vr[k + 1][0]) return vr[k][1] + (vr[k + 1][1] - vr[k][1]) * clamp((o - vr[k][0]) / Math.max(1e-6, vr[k + 1][0] - vr[k][0]), 0, 1); return vr[vr.length - 1][1]; };
+      let wk2 = false; try { wk2 = new URLSearchParams(location.search).get('plocniki') === '2'; } catch (e) { /* (no page: a test) */ }   // (index.html?hise=3&plocniki=2: the guess for the built-up streets too)
+      (wk2 && H3.walk2 ? H3.walk2 : H3.walk).forEach((runs, si) => { const side = si ? 1 : -1;
+        for (const [a, b] of runs) { let pv = null, pi = -1;
+          for (let d = a; d <= b + 0.01; d += ds) { const i = T.idx(sAt(d)), w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], wk = Math.min(2.3, bar - w - 0.5); if (i === pi) continue; pi = i;
+            if (wk < 1) { pv = null; continue; }
+            const yv = vY(i, side, w + wk), row = [Pt(i, side * w, 0.02), Pt(i, side * w, 0.09), Pt(i, side * (w + 0.2), 0.09), Pt(i, side * (w + wk), Math.max(0.08, yv + 0.03)), Pt(i, side * (w + wk), yv - 0.06)];
+            if (pv) { const g = scen.get(row[0][0], row[0][2]), tone = 0.94 + crH(i >> 1, si, 83) * 0.1, pc = [0.68 * tone, 0.66 * tone, 0.62 * tone], inn = Pt(i, side * (w + 1), -1);
+              g.quadO(pv[0], row[0], row[1], pv[1], KF, inn); g.quadUp(pv[1], pv[2], row[2], row[1], [KT, KT, KT, KT]); g.quadUp(pv[2], pv[3], row[3], row[2], [pc, pc, pc, pc]); g.quadO(pv[3], row[3], row[4], pv[4], BK, inn); nW++; }
+            pv = row; } } });
+      for (const [x, z, pl, pw, pa] of H3.pools) {
+        const nn = nrNear(x, z); if ((nn.i >= 0 && nn.dd < 2) || SRL.on(x, z, 1)) continue;
+        const c = Math.cos(pa), sn = Math.sin(pa), q = (m, y) => [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => [x + a * (pl / 2 + m) * c - b * (pw / 2 + m) * sn, y, z + a * (pl / 2 + m) * sn + b * (pw / 2 + m) * c]);
+        const y = Math.max(...q(0.7, 0).map(p => nrGround(p[0], p[2]))) + 0.08, g = scen.get(x, z), ed = [0.86, 0.84, 0.78], wa = [0.3, 0.62, 0.78];
+        g.quadUp(...q(0.7, y), [ed, ed, ed, ed]); g.quadUp(...q(0, y + 0.03), [wa, wa, wa, wa]); exclPush(x, z, Math.max(pl, pw) / 2 + 1.5);
+      }
+      out.hiseRoads = [nS, nW];
     }
 
     /* ---- the railway along the shore (Antignano to Romito, where it runs within 60 m): ballast, two rails, the catenary's masts; the railway's
@@ -348,6 +397,7 @@
           if (h1 > p) continue;
           const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3) continue;
           if (excluded(x, z) || seaD(x, z) > -2) continue;
+          if (SRL && SRL.on(x, z, 0.8)) continue;   // (nor on a street between the houses)
           const hq = crH(x, z, 25), hs = crH(x, z, 26), cv = 0.86 + crH(x, z, 27) * 0.28, col = [cv * (0.95 + hq * 0.1), cv, cv * (0.94 + hs * 0.1)];
           const coastal = seaD(x, z) > -450 || nrGround(x, z) < 70;
           let sp;
@@ -363,22 +413,37 @@
         }
       }
       for (const [x, z, k] of LD.trees) {   // OSM's single trees
-        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 2.5) continue; if (excluded(x, z)) continue;
+        const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 2.5) continue; if (excluded(x, z) || (SRL && SRL.on(x, z, 0.8))) continue;
         const hq = crH(x, z, 28), sp = k === 'c' ? 2 : k === 'p' ? 0 : 1, hgt = sp === 2 ? 10 + hq * 5 : sp === 0 ? 12 + hq * 5 : 6 + hq * 4, wid = sp === 2 ? hgt * 0.17 : sp === 0 ? hgt * 0.85 : hgt * 0.9;
         plant(sp, x, z, hgt, wid, [0.95, 1, 0.95]);
       }
     }
     for (const t of TK) t.addTo(root, true);
 
-    /* ---- the stone walls and hedges of OSM by the road (within 30 m): a low wall or a hedge along each line ---- */
+    /* ---- the stone walls and hedges of OSM by the road (within 30 m): a low wall or a hedge along each line (with the houses' kit at level 3 in
+       pieces, none on the road or a street, and the fences too: iron railings on a low wall) ---- */
     for (const [k, fl] of LD.walls) {
-      if (k > 2) continue;
+      if (k > (H3 ? 3 : 2)) continue;
       for (let q = 0; q + 3 < fl.length; q += 2) {
         const ax = fl[q], az = fl[q + 1], bx = fl[q + 2], bz = fl[q + 3], len = Math.hypot(bx - ax, bz - az); if (len < 0.6) continue;
-        const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz); if (nn.i >= 0 && nn.dd < 0.8) continue;
-        const y = nrGround(mx, mz), ang = Math.atan2(bz - az, bx - ax), g = scen.get(mx, mz);
-        if (k === 2) box(g, mx, y - 0.2, mz, len + 0.3, 1.6, 1.1, ang, vary([0.26, 0.36, 0.2], R, 0.08), [0.3, 0.42, 0.22], true);
-        else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 1.6 : 1.3, 0.45, ang, vary(stone, R, 0.06), stoneT, true);
+        const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz), off = nn.i >= 0 && nn.dd < 0.8, ri = nn.i; if (off && !H3) continue;
+        const ang = Math.atan2(bz - az, bx - ax), col = k > 2 ? null : off ? (k === 2 ? [0.26, 0.36, 0.2] : stone) : k === 2 ? vary([0.26, 0.36, 0.2], R, 0.08) : vary(stone, R, 0.06);   // (the same draws of R with the kit and without)
+        if (!H3) { const y = nrGround(mx, mz), g = scen.get(mx, mz);
+          if (k === 2) box(g, mx, y - 0.2, mz, len + 0.3, 1.6, 1.1, ang, col, [0.3, 0.42, 0.22], true);
+          else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 1.6 : 1.3, 0.45, ang, col, stoneT, true);
+          continue; }
+        const n = Math.max(1, Math.ceil(len / 3.2)); let run = -1;
+        // (a hedge: the railing 0.5 m before it, on the side of the road)
+        const sg = k === 2 && ri >= 0 && (T.px[ri] - mx) * -(bz - az) + (T.pz[ri] - mz) * (bx - ax) < 0 ? -1 : 1, ox = k === 2 ? -(bz - az) / len * 0.5 * sg : 0, oz = k === 2 ? (bx - ax) / len * 0.5 * sg : 0;
+        for (let j = 0; j <= n; j++) {   // (pieces of 3 m: each on the ground under it, none inside the road's walls or on a street)
+          const px = ax + (bx - ax) * (j + 0.5) / n, pz = az + (bz - az) * (j + 0.5) / n, inR = (t) => { const q = nrNear(ax + (bx - ax) * t, az + (bz - az) * t); return q.i >= 0 && q.dd < 0.7; };
+          const ok = j < n && !inR((j + 0.5) / n) && !inR(j / n) && !inR((j + 1) / n) && !SRL.on(px, pz, 0.1);
+          if (k >= 2) { if (ok && run < 0) run = j; if (!ok && run >= 0) { HS.fence(ax + (bx - ax) * run / n + ox, az + (bz - az) * run / n + oz, ax + (bx - ax) * j / n + ox, az + (bz - az) * j / n + oz); run = -1; } if (k === 3) continue; }
+          if (!ok) continue;
+          const y = nrGround(px, pz), g = scen.get(px, pz);
+          if (k === 2) box(g, px - ox * 0.5, y - 0.3, pz - oz * 0.5, len / n + 0.3, 1.75, 0.8, ang, col, [0.3, 0.42, 0.22], true);
+          else box(g, px, y - 0.5, pz, len / n + 0.2, k === 1 ? 1.7 : 1.4, 0.45, ang, col, stoneT, true);
+        }
       }
     }
 
@@ -451,7 +516,7 @@
     if (HS) HS.addTo(sceneryGroup);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };
-    if (HS) out.stats.hise = HS.stats;
+    if (HS) { out.stats.hise = HS.stats; if (out.hiseRoads) { HS.stats.streets = out.hiseRoads[0]; HS.stats.sidewalk = out.hiseRoads[1]; } }
     return out;
   }
 

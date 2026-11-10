@@ -7,12 +7,13 @@ Zapiski raziskave 9. 11. 2026 (Matej, brez sprememb kode). Številke vrstic so p
 - 9. 11. 2026 ob ~23.55: »zgumirano linijo daj prvo v sliki v predogled in ne zacni z delom dokler je ne potrdim«.
 - 10. 11. 2026 ob ~00.57, po slikah: »Da, tudi na odprtih cestah«. Guma gre po uporabnikovi liniji, samo videz, in pride tudi na ceste brez boksov (npr. Tianmen), kjer je zdaj ni.
 - 10. 11. 2026 med ~02.00 in ~03.00, po slikah prototipa (v seji teme partyslo): »Plast gume naj bo sirsa«.
+- 10. 11. 2026 ob ~03.30, v pogovoru z Matejem (tabla #382, komentar 6757283997; vprašanje `zgumirana-linija-1`): izbral je **možnost 1**, vse po njegovi liniji: guma, ki se nabira, in stalne sledi v svetu (temni pas, sledi zaviranja), na dirkališčih in na odprtih cestah. Obseg je s tem razširjen za stalne sledi (ocena +4–6 h).
 
 ## Obseg
 - Guma (temna sled na liniji vožnje) se riše po liniji uporabnikove vožnje, kjer je posneta; kjer ni, po predvideni liniji iz sloga vožnje. Ko uporabnik posname nove proge, jih guma prevzame brez spremembe kode.
 - **Samo videz.** Oprijem ostane na izračunani liniji (`rubberAt`, +2 %, in `marbles()`, −6 %): fizika vožnje se ne spreminja (`CLAUDE.md`, Seje, »Proge in grafika«). Reference `tests/golden/races.json` in `tests/golden/sim.json` se ne smejo spremeniti.
 - Nov sloj na odprtih cestah brez boksov: preveri obremenitev telefona (`perf`, do ~300 klicev risanja).
-- **Ni v potrjenem obsegu:** stalni pasovi gume in sledi gum v svetovih (`js/world-tianmen.js` ~257, `js/world-spa.js` ~161, `tyreMarks` v `js/world.js` ~3686, okoli 17 svetov; +4–6 h). Ostanejo na izračunani liniji; ob predogledu to pokaži uporabniku in vprašaj.
+- **V obsegu od 10. 11. 2026** (izbira uporabnika, možnost 1): stalni pasovi gume in sledi gum v svetovih (`js/world-tianmen.js` ~257, `js/world-spa.js` ~161, `tyreMarks` v `js/world.js` ~3686, okoli 17 svetov; +4–6 h) gredo po uporabnikovi liniji skupaj z gumo; plast je širša (6,2 m, prošnja uporabnika; razdelek »Širša plast«).
 
 ## Mesta v kodi
 - Graditelj: `js/render.js` ~3907, `rubberLine(R)`; pas na `T.rl[ii] + RUB_O` (~3916), jakost iz `R.mb.rb` (~3909), prosojnost 0,22 + 0,5 · rb (~3936).
