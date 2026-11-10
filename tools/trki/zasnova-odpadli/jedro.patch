@@ -1,0 +1,150 @@
+--- a/js/core.js
++++ b/js/core.js
+@@ -3459,12 +3459,46 @@
+     if (sl > e) { _en[0] = -T.tx[T.N - 1]; _en[1] = -T.tz[T.N - 1]; return sl - e; }
+     return 0;
+   }
++  // What stops a piece (DEB; g is the game's own, JUMP_G). Before, a piece lost speed only in the steps it was on the ground, 6.5 m/s2 on
++  // every surface, and on a road falling away it was in the air most steps: it slid on as if on ice
++  //   the air     a piece in flight, or going end over end along the road, is braked by k v^2 (k = kA r^2 / m: a tumbling sheet shows half
++  //               its face on average; 0.03 a bonnet, 0.06 a bumper's cover); a wheel hardly (kW); a piece lying flat or a wheel rolling: not
++  //   a landing   bounces (e x its fall, a wheel wE; none under vB) and takes muT x the blow off its speed along the road (Coulomb: muT x
++  //               (its fall + its bounce)), so a piece that hops loses muT g on average whatever its bounce; it keeps at least 'keep' of
++  //               its speed (it flips on over its edge)
++  //   the road    a piece on the ground stays on it (down a slope too). Faster than vT it does not lie down: it goes end over end along its
++  //               travel (muT g and the air; drawn turning, spin x its speed / its edge's height, 'edge' x r); slower it lies flat and
++  //               scrapes (muS g: sheet metal or plastic on tarmac; one number for both: their real ranges overlap), its spin about the
++  //               vertical braked by the same friction
++  //   the ground under it (T.surface at its place, the cars' own lookup): sM x the friction, sK v^2 more where it ploughs (grass,
++  //               gravel), sE x the bounce (it thuds into grass and a gravel bed)
++  //   a wheel     (wh: -1 / 1, the side of the car it came off) is on its tread from its first landing (roll 1: upright, turning as the
++  //               road turns it). Too fast to roll (over vRoll) it bounds on, hop after hop (wHop x its speed up, wHopMax at most, never
++  //               higher than it fell), each landing taking muT x the blow; slower it rolls (aRoll per surface: far more than a real
++  //               wheel's rolling drag, which would carry it half a kilometre), turning towards its own side (veer: the slower the
++  //               tighter), wobbling more and more (lean0 .. lean0 + lean1 rad), falls over under vFall (roll 2) and scrubs to a stop
++  //               on its side (muR g). A car's knock takes it off its tread (roll 0) until it lands again
++  //   own, again  the seconds a piece does not touch the car it has just left: the car that shed it (own: it goes out from under its own
++  //               car, which before ran into it step after step and was braked by it) or knocked it away (again: one knock a pass)
++  const DEB = {
++    own: 2, again: 2,
++    kA: 0.72, kLo: 0.01, kHi: 0.06, kW: 0.007,
++    e: 0.28, vB: 2.5, muT: 0.9, keep: 0.3,
++    vT: 7, muS: 0.55, spin: 0.4, edge: 0.8,
++    wE: 0.5, wHop: 0.12, wHopMax: 3.5, vRoll: 8, vFall: 2.5, veer: 4, lean0: 0.06, lean1: 0.4, muR: 0.8,
++    //    asphalt kerb grass gravel paving makadam puddle cobbles (wet)
++    sM: [1, 1, 1.35, 1.8, 1, 1.15, 1.15, 1, 1],
++    sK: [0, 0, 0.02, 0.08, 0, 0.01, 0.01, 0, 0],
++    sE: [1, 1, 0.4, 0.15, 1, 0.7, 0.7, 1, 1],
++    aRoll: [5, 5, 7, 14, 5, 6, 6, 5, 5],
++  };
+   function stepDebris(d, T, dt) {
++    if (d.byT > 0 && (d.byT -= dt) <= 0) { d.byT = 0; d.by = null; }   // (the car it has just left may touch it again: debrisHit)
+     if (d.rest) return;
++    const W = d.wh || 0, re = W ? d.r : DEB.edge * d.r;           // (a piece made by hand, a test's: no wh, a panel)
+     d.vy -= JUMP_G * dt;
+     d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+     d.q = T.query(d.x, d.z, d.q ? d.q.i : -1, d.q || {});
+-    const gy = T.yAt(d.q) + d.h * 0.5 + 0.02;
+     const pen = T.wall(d.q, d.r * 0.5, _wn);                      // bounce off the barriers (a side road's limits)
+     if (pen > 0) {
+       const nx = _wn[0], nz = _wn[1];
+@@ -3472,18 +3506,53 @@
+       const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; }
+     }
+     if (T.open) { const pen = endPen(T, d.q, d.r * 0.5); if (pen > 0) { const nx = _en[0], nz = _en[1]; d.x += nx * pen; d.z += nz * pen; const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; } } }   // ... and the end walls
+-    if (d.y <= gy) {
+-      d.y = gy;
+-      if (d.vy < -2.5) { d.vy = -d.vy * 0.28; d.wx *= 0.6; d.wz *= 0.6; } else { d.vy = 0; d.ground = true; }
+-    } else d.ground = false;
+-    if (d.ground) {
+-      const sp = Math.hypot(d.vx, d.vz), dec = 6.5 * dt;          // sliding on the road (~0.65 g)
+-      if (sp <= dec) { d.vx = d.vz = 0; } else { d.vx -= d.vx / sp * dec; d.vz -= d.vz / sp * dec; }
+-      d.wy *= Math.max(0, 1 - 4 * dt); d.wx = d.wz = 0;
+-      d.rx = relaxAng(d.rx, dt); d.rz = relaxAng(d.rz, dt);        // settles flat (right way up or upside down)
+-      if (sp < 0.05 && Math.abs(d.wy) < 0.05) d.rest = true;
+-    } else { d.rx += d.wx * dt; d.rz += d.wz * dt; }
++    let sp = Math.hypot(d.vx, d.vz);
++    if (!d.ground || (!W && sp > DEB.vT)) {                       // the air (k v^2, solved over the step: no overshoot)
++      const f = 1 / (1 + (W ? DEB.kW : clamp(DEB.kA * d.r * d.r / d.m, DEB.kLo, DEB.kHi)) * sp * dt); d.vx *= f; d.vz *= f; sp *= f;
++    }
++    if (d.ground) {                                               // the road: end over end, scraping, rolling
++      const sf = T.surface(d.q), tum = !W && sp > DEB.vT;
++      if (W && !d.roll) d.roll = 1;
++      const a = (d.roll === 1 ? DEB.aRoll[sf] : (tum ? DEB.muT : W ? DEB.muR : DEB.muS) * DEB.sM[sf] * JUMP_G + DEB.sK[sf] * sp * sp) * dt;
++      if (sp <= a) { d.vx = d.vz = 0; sp = 0; } else { const f = 1 - a / sp; d.vx *= f; d.vz *= f; sp -= a; }
++      if (d.roll !== 1) {
++        const aw = a * 1.33 / d.r; d.wy = Math.abs(d.wy) <= aw ? 0 : d.wy - (d.wy < 0 ? -aw : aw);   // (the spin of a disc on the road: braked by 4/3 a / r)
++        d.wx = d.wz = 0;
++        if (tum) {                                                // end over end along its travel: about whichever of its two flat axes lies more across it
++          const cy = Math.cos(d.yaw), sy = Math.sin(d.yaw), al = d.vx * cy + d.vz * sy, ac = d.vz * cy - d.vx * sy, w = DEB.spin / re * dt;
++          if (Math.abs(ac) >= Math.abs(al)) { d.rx += ac * w; d.rz = relaxAng(d.rz, dt); }
++          else { d.rz -= (Math.cos(d.rx) < 0 ? -al : al) * w; d.rx = relaxAng(d.rx, dt); }
++        } else { d.rx = relaxAng(d.rx, dt); d.rz = relaxAng(d.rz, dt); }   // settles flat (right way up or upside down)
++      }
++    } else if (d.roll !== 1) { d.rx += d.wx * dt; d.rz += d.wz * dt; }
++    if (d.roll === 1) {                                           // a wheel on its tread, bounding or rolling
++      if (d.ground) {                                             // it turns towards its own side, the slower the tighter (its speed kept)
++        const om = W * DEB.veer / Math.max(sp, 2) * dt, co = Math.cos(om), so = Math.sin(om), vx = d.vx * co - d.vz * so;
++        d.vz = d.vx * so + d.vz * co; d.vx = vx; d.yaw += om;
++      }
++      const cy = Math.cos(d.yaw), sy = Math.sin(d.yaw), al = d.vx * cy + d.vz * sy, ac = d.vz * cy - d.vx * sy;   // its speed along and across its axle
++      d.rx += ac / d.r * dt; if (sp > 0.5) d.yaw -= (ac < 0 ? -al : al) / sp * 6 * dt;     // it turns as the road turns it; its axle comes square to its travel
++      const t = (Math.floor(d.rz / Math.PI) + 0.5) * Math.PI - DEB.lean0 - DEB.lean1 * clamp((DEB.vRoll - sp) / (DEB.vRoll - DEB.vFall), 0, 1);
++      d.rz += (t - d.rz) * Math.min(1, dt * 8); d.wx = d.wz = d.wy = 0;                    // upright, wobbling the more the slower
++      if (d.ground && sp < DEB.vFall) d.roll = 2;                 // ... and over it goes
++    }
+     d.yaw += d.wy * dt;
++    // how high its middle is over the road at its tilt (a disc re across, h thick: flat h / 2 as before, on its edge re)
++    const uy = Math.cos(d.rx) * Math.cos(d.rz), gy = T.yAt(d.q) + 0.02 + d.h * 0.5 * Math.abs(uy) + re * Math.sqrt(Math.max(0, 1 - uy * uy));
++    if (d.ground) {                                               // on the ground it stays on it (the road falling away too: only a car's knock lifts it)
++      d.y = gy; d.vy = 0;
++      if (sp < 0.05 && d.wy === 0 && d.roll !== 1 && Math.abs(uy) > 0.9998) d.rest = true;
++    } else if (d.y <= gy) {
++      d.y = gy;
++      if (d.vy <= 0) {                                            // a landing: the bounce, and what the blow takes along the road
++        const sf = T.surface(d.q), vn = -d.vy, sE = DEB.sE[sf]; let up = vn > DEB.vB ? vn * (W ? DEB.wE : DEB.e) * sE : 0;
++        if (W && sp > DEB.vRoll) up = Math.max(up, Math.min(DEB.wHop * sp, DEB.wHopMax, vn) * sE);   // a wheel too fast to roll: off the road again
++        const f = 1 - Math.min(DEB.muT * DEB.sM[sf] * (vn + up), (1 - DEB.keep * sE) * sp) / (sp || 1);
++        d.vx *= f; d.vz *= f;
++        if (up > 0) { d.vy = up; d.wx *= 0.6; d.wz *= 0.6; } else { d.vy = 0; d.ground = true; }
++        if (W && !d.roll) d.roll = 1;                             // a wheel: onto its tread at its first landing
++      }
++    }
+   }
+   // a car and a piece: one lying on the road (the user's: driven over, not knocked away) stays where it lies; the car loses a little speed,
+   // the phone thumps (hitDebris) and, over a panel (not a mirror's bit), the car hops as if it jumped ~2 m (drawn only: hopN, hopT s, hopH m,
+@@ -3499,6 +3568,7 @@
+   function debrisHit(c, d) {
+     const dx = d.x - c.x, dz = d.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + d.r * 0.7 + 0.1;   // (beyond the car's reach: nothing to touch)
+     if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) { debrisGone(c, d); return; }
++    if (d.byT > 0 && d.by === c) return;   // (the car it has just left, DEB.own / DEB.again: it comes out from under it, or lies under it, untouched)
+     const gone = () => debrisGone(c, d);
+     const ch = Math.cos(c.h), sh = Math.sin(c.h), lying = d.ground && Math.hypot(d.vx, d.vz) < DEB_RUN.v;
+     for (let i = 0; i < c.circles.length; i++) {
+@@ -3520,7 +3590,7 @@
+       if (vrel > 0.3) {
+         const kick = Math.min(24, 1.35 * vrel);
+         d.vx += kick * nx; d.vz += kick * nz; d.vy = Math.max(d.vy, 1 + Math.min(4, vrel * 0.18));
+-        d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false;
++        d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false; d.roll = 0; d.by = c; d.byT = DEB.again;
+         const k = Math.min(0.06, d.m * 0.004);                       // the car feels it: speed loss + twitch, more for big parts
+         c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * d.m * 0.05;
+         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
+@@ -7180,7 +7250,7 @@
+       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + rnd() * 3;
+       const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: (c.y || 0) + P.y, vx: c.vx * 0.7 + ux * out, vz: c.vz * 0.7 + uz * out, vy: 2.5 + rnd() * 2.5,
+         yaw: c.h, rx: 0, rz: 0, wx: (rnd() - 0.5) * 16, wy: (rnd() - 0.5) * 12, wz: (rnd() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
+-        q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
++        q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false, wh: P.wh != null ? (P.lz < 0 ? -1 : 1) : 0, roll: 0, by: c, byT: DEB.own };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
+       this.debris.push(d);
+       if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
+     }
+@@ -8652,7 +8722,7 @@
+ 
+   return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
+-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga };
++    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, applyDamage, careerWear, detachPart, DEB, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga };
+ })();
+ 
+ 
