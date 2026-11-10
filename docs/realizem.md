@@ -304,7 +304,7 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
   2. #480 (FORMULA ORKAN in TAIFUN LM) po garaži.
   3. Poškodbe P1–P6 takoj po #480; ~27. 11. V vrsti za `main` gredo deli Poškodb pred pakete grafike, ko so pripravljeni hkrati.
   4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) po Poškodbah; ~30. 11., s tem je 50 avtov.
-  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` ~22. 11.
+  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` ~22. 11.; ocena ni trda, kakovost je pred hitrostjo (odločitev uporabnika 10. 11. 2026 ob ~23.50; Fable 5.2, v Nastavitvah gumbi za možnosti trkov, privzeta najbolj realistična).
   6. Nato pomoč pri predelavi prog.
 - **jure.kopac26, grafika:**
   1. #622 (E0, prvi kos) in #638 na `main` zdaj.
