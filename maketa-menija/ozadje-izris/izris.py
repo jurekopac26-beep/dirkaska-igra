@@ -793,7 +793,7 @@ def clouds():
     import bmesh
     mv, nt, out = new_mat('oblak'); pv = nd(nt, 'ShaderNodeVolumePrincipled', Density=CFG.get('cloud_density', 0.03), Anisotropy=0.4)
     pv.inputs['Color'].default_value = (1, 1, 1, 1); L(nt, pv.outputs[0], out.inputs['Volume'])
-    if CFG.get('cloud_detail'):
+    if CFG.get('cloud_mottle'):  # an uneven density: softer edges, but a much slower render
         tco = nd(nt, 'ShaderNodeTexCoord'); nz = noise(nt, 0.004, 5, 0.6, tco.outputs['Object'])
         L(nt, math_(nt, 'MULTIPLY', mrange(nt, nz.outputs['Fac'], 0.22, 0.55), CFG.get('cloud_density', 0.03)), pv.inputs['Density'])
     dg = bpy.context.evaluated_depsgraph_get()
