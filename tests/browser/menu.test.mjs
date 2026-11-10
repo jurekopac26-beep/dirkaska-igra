@@ -70,9 +70,10 @@ try {
     //    and 3 (the corner's video and its poster, else the model) too
     const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']], roads = {}, heads = {}, cams = {}, lists = {};   // (heads: every track's globe and height graph, of every mode; cams: every track's pictures in cameras 1 and 3)
     // the stage's picture as it is now: its kind and its files (a video's poster and the video)
-    const PIC = `const st = root.querySelector('#track-stage'), map = st.querySelector('.dio.topmap'), v = st.querySelector('.dio.fly video, .dio.corner video');
-      if (v) return { kind: v.closest('.corner') ? 'corner' : 'flyover', files: [v.getAttribute('poster'), v.getAttribute('src')], loop: v.loop && v.muted };
-      return { kind: map ? 'map' : st.querySelector('.dio img') ? 'model' : 'none', files: [...st.querySelectorAll('.dio img, .dio image')].map(e => e.getAttribute('src') || e.getAttribute('href')) };`;
+    // (the view on top, the newest: the view shown before it stays under it for a moment while the new one fades in, stageViews)
+    const PIC = `const st = root.querySelector('#track-stage'), all = [...st.querySelectorAll('.dio')], top = all[all.length - 1], map = top && top.classList.contains('topmap') ? top : null, v = top && top.querySelector('video');
+      if (v) return { kind: top.classList.contains('corner') ? 'corner' : 'flyover', files: [v.getAttribute('poster'), v.getAttribute('src')], loop: v.loop && v.muted };
+      return { kind: map ? 'map' : top && top.querySelector('img') ? 'model' : 'none', files: top ? [...top.querySelectorAll('img, image')].map(e => e.getAttribute('src') || e.getAttribute('href')) : [] };`;
     for (const [mode, gm] of MODES) {
       await click(page, 'mode:' + mode); await click(page, 'cam:2');
       const exp = await page.evaluate((gm) => {
@@ -1398,6 +1399,53 @@ try {
     const f = await ev(page, 'const y = root.querySelector(".yard"); return { img: !!y.querySelector(".car img"), cv: !!y.querySelector("canvas.c3d"), act: y.querySelector(".car").dataset.act, i: MenuCar.info() };');
     T.check('no WebGL for the yard\'s car: its picture, no canvas, the tap still the garage', f.img && !f.cv && f.act === 'garage' && f.i.failed && !f.i.on, JSON.stringify(f));
     T.check('no WebGL for the yard\'s car: no page errors', !real(errors).filter(e => !/WebGL/.test(e)).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 11. the map (camera 1) and the flyover (camera 2) are one run of the point, seen from two cameras: the switch goes on from the same moment
+  // of the run, the point at the same place, not from the start (from the flyover to the map and back); a sheet over the stage keeps the flyover playing (the
+  // same video, not started again); another track starts its own run
+  {
+    const { ctx, page, errors } = await open();
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    // (a real road with a flyover: Pikes Peak; the shorter way round the list to it)
+    const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('pikes') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
+    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'pikes'; k++) await click(page, way);
+    await click(page, 'cam:2');   // (the step opens with the map: the flyover is the camera 2)
+    const VID = 'root.querySelector("#track-stage .dio.fly video")', live = (s) => page.waitForFunction((s) => { const v = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage .dio.fly video'); return v && !v.paused && v.currentTime > s; }, s, { timeout: 120000 });
+    await live(4);
+    // (the run's place on the map at its moment s, as js/menu.js runAt and routePt; the point drawn is the run's at most a second before: a frame of software WebGL)
+    const NEAR = `const R = window.ROUTES.pikes, F = R.fly.frames, Dr = F.length / R.fly.fps;
+      const at = (s) => { s = ((s % Dr) + Dr) % Dr; const x = Math.min(F.length - 1, s * R.fly.fps), k = Math.min(F.length - 2, Math.floor(x)), f = (F[k][0] + (F[k + 1][0] - F[k][0]) * (x - k)) / R.len, P = R.top.route, xi = Math.max(0, Math.min(1, f)) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(xi)), u = xi - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
+      const dot = root.querySelector("#track-stage .dio.topmap .rt-dot"), m = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(dot.getAttribute("transform") || ""), run = Menu.debug().run;
+      let best = 1e9; if (m) for (let s = run.t - 1; s <= run.t + 0.05; s += 0.02) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
+      const p0 = at(0);
+      return { run, best: +best.toFixed(2), fromStart: m ? +Math.hypot(p0[0] - +m[1], p0[1] - +m[2]).toFixed(1) : -1, drawn: root.querySelector("#track-stage .dio.topmap").classList.contains("drawn"), views: root.querySelectorAll("#track-stage .dio").length };`;
+    const a = await ev(page, 'const v = ' + VID + '; return { vt: v.currentTime, run: Menu.debug().run };');
+    await click(page, 'cam:1');
+    await page.waitForFunction(() => { const r = document.getElementById('menu-host').shadowRoot; return r.querySelectorAll('#track-stage .dio').length === 1 && !!r.querySelector('#track-stage .dio.topmap .rt-dot[opacity="1"]'); }, null, { timeout: 30000 }).catch(() => null);
+    const b = await ev(page, NEAR);
+    T.check(`flyover -> map: the map goes on from the flyover's moment (${a.vt.toFixed(1)} s, the run now at ${b.run.t.toFixed(1)} s), its point where the flyover's was, the route already drawn`,
+      a.run.id === 'pikes' && b.run.id === 'pikes' && b.run.t >= a.vt - 0.05 && b.run.t < a.vt + 15 && b.best < 2.5 && b.fromStart > 20 && b.drawn && b.views === 1, JSON.stringify({ a, b }));
+    await page.waitForTimeout(2500);
+    const c0 = await page.evaluate(() => Menu.debug().run);
+    await click(page, 'cam:2');
+    await page.waitForFunction(() => { const r = document.getElementById('menu-host').shadowRoot, b = r.querySelector('#track-stage .dio.fly'), v = b && b.querySelector('video'); return v && !b.classList.contains('pend') && r.querySelectorAll('#track-stage .dio').length === 1 && !v.paused && v.readyState >= 2; }, null, { timeout: 60000 }).catch(() => null);
+    const c = await ev(page, 'const v = ' + VID + '; return { vt: v ? v.currentTime : -1, run: Menu.debug().run };');
+    T.check(`map -> flyover: the flyover goes on from the map's moment (${c0.t.toFixed(1)} s), not from its start (the video at ${c.vt.toFixed(1)} s)`, c.vt >= c0.t - 0.05 && c.vt < c0.t + 8 && Math.abs(c.vt - c.run.t) < 0.5, JSON.stringify({ c0, c }));
+    // the screen drawn again round the stage (the weather chosen, a sheet opened and closed): the same video plays on, from where it was
+    await ev(page, VID + '.__same = 1;');
+    const d0 = await ev(page, 'return ' + VID + '.currentTime;');
+    await click(page, 'weather:rain'); await page.waitForTimeout(500); await click(page, 'weather:dry'); await page.waitForTimeout(500);
+    await click(page, 'more-options'); await page.waitForTimeout(500); await done(page); await page.waitForTimeout(800);
+    const d = await ev(page, 'const v = ' + VID + '; return { same: !!v.__same, vt: v.currentTime, paused: v.paused, videos: root.querySelectorAll("video").length };');
+    T.check('the weather chosen, a sheet opened and closed: the same flyover plays on (not started again)', d.same && !d.paused && d.vt > d0 && d.videos === 1, JSON.stringify({ d0, d }));
+    // another track: a run of its own, from its start
+    await click(page, 'track:1'); await page.waitForTimeout(400);
+    const e = await page.evaluate(() => Menu.debug().run);
+    T.check('another track starts a run of its own, from the start', e.id !== 'pikes' && e.t < 2.5, JSON.stringify(e));
+    T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 } finally {

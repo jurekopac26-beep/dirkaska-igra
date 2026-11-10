@@ -159,7 +159,8 @@
  },
  "montreal": {
   "kbps": 550,
-  "sea": true
+  "sea": true,
+  "seaHouses": false
  },
  "toronto": {
   "kbps": 550,
@@ -189,5 +190,9 @@
  "bangsaen": {
   "kbps": 550,
   "sea": true
+ },
+ "livorno": {
+  "sea": true,
+  "ownFar": false
  }
 }

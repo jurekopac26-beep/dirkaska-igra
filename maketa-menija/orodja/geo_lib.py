@@ -81,6 +81,27 @@ class Geo:
 def track(tid):
     return json.load(open(os.path.join(RAW, tid + '-track.json')))
 
+def at_s(T, pts, s):   # the road at s metres from the track's own start: x, z, y
+    n = len(pts); L = T['len']; st = T['step']
+    s = min(max(s, 0), (n - 1) * st) if T['open'] else s % L
+    f = s / st; i = int(math.floor(f)); t = f - i
+    a = pts[i % n]; b = pts[(i + 1) % n] if not T['open'] else pts[min(n - 1, i + 1)]
+    return a + (b - a) * t
+
+def fit_similarity(src, dst):   # dst ~ k R src + t (a proper turn: no mirror); returns A, B, tx, ty with dst = [[A, -B], [B, A]] src + t
+    ms, md = src.mean(0), dst.mean(0); S, D = src - ms, dst - md
+    a = (S[:, 0] * D[:, 0] + S[:, 1] * D[:, 1]).sum(); b = (S[:, 0] * D[:, 1] - S[:, 1] * D[:, 0]).sum(); n2 = (S ** 2).sum()
+    A, B = a / n2, b / n2; t = md - np.array([A * ms[0] - B * ms[1], B * ms[0] + A * ms[1]])
+    res = dst - (np.stack([A * src[:, 0] - B * src[:, 1], B * src[:, 0] + A * src[:, 1]], 1) + t)
+    return float(A), float(B), float(t[0]), float(t[1]), float(np.sqrt((res ** 2).sum(1)).max())
+
+def top_fit(tid):
+    """A track's top map on its world: the fit of its route's pixels (raw/maps/top-<id>.json, routemap.mjs) to the run's points at the same
+    distance along it (the world's metres, x east, z south) -> A, B, tx, ty (fit_similarity), the worst point's error in pixels, the map's data."""
+    T = track(tid); pts = np.array(T['pts'], dtype=np.float64); J = json.load(open(os.path.join(HERE, 'raw', 'maps', 'top-%s.json' % tid)))
+    w = np.array([at_s(T, pts, T['startS'] + d)[:2] for d in J['d']])
+    return fit_similarity(w, np.array(J['route'], dtype=np.float64)) + (J,)
+
 def haversine(lat1, lon1, lat2, lon2):
     p1, p2 = math.radians(lat1), math.radians(lat2); dp = p2 - p1; dl = math.radians(lon2 - lon1)
     a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2

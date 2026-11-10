@@ -40,12 +40,6 @@
  [
   "pikes",
   {
-   "speed": 280,
-   "back": 360,
-   "up": 230,
-   "ahead": 180,
-   "fogNear": 650,
-   "fogFar": 2600,
    "places": [
     {
      "n": "Halfway Picnic Grounds",
@@ -180,13 +174,7 @@
  [
   "rbring",
   {
-   "kbps": 850,
-   "speed": 200,
-   "back": 260,
-   "up": 165,
-   "ahead": 130,
-   "fogNear": 560,
-   "fogFar": 2200,
+   "kbps": 450,
    "places": []
   }
  ],
@@ -206,13 +194,7 @@
  [
   "spa",
   {
-   "kbps": 900,
-   "speed": 250,
-   "back": 320,
-   "up": 205,
-   "ahead": 160,
-   "fogNear": 700,
-   "fogFar": 2700,
+   "kbps": 450,
    "places": [
     {
      "n": "Steep Climb",
@@ -232,13 +214,7 @@
  [
   "nring",
   {
-   "kbps": 900,
-   "speed": 540,
-   "back": 700,
-   "up": 450,
-   "ahead": 350,
-   "fogNear": 1200,
-   "fogFar": 4600,
+   "kbps": 450,
    "places": [
     {
      "n": "Flugplatz",
@@ -263,12 +239,6 @@
   "medvode",
   {
    "kbps": 450,
-   "speed": 225,
-   "back": 292,
-   "up": 184,
-   "ahead": 146,
-   "fogNear": 630,
-   "fogFar": 2430,
    "places": [
     {
      "n": "Zbilje",
@@ -542,12 +512,6 @@
   "chapman",
   {
    "kbps": 450,
-   "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "East Fort",
@@ -628,12 +592,6 @@
   "montreal",
   {
    "kbps": 450,
-   "speed": 156,
-   "back": 203,
-   "up": 128,
-   "ahead": 101,
-   "fogNear": 437,
-   "fogFar": 1685,
    "places": [
     {
      "n": "Turn 1",
@@ -970,12 +928,6 @@
   "harju",
   {
    "kbps": 450,
-   "speed": 88,
-   "back": 114,
-   "up": 72,
-   "ahead": 57,
-   "fogNear": 246,
-   "fogFar": 950,
    "places": [
     {
      "n": "Harjun nousu",
@@ -1004,12 +956,6 @@
   "caracoles",
   {
    "kbps": 450,
-   "speed": 385,
-   "back": 500,
-   "up": 316,
-   "ahead": 250,
-   "fogNear": 1078,
-   "fogFar": 4158,
    "places": [
     {
      "n": "Curva 1 · 2,271 m",
@@ -1038,12 +984,6 @@
   "rastro",
   {
    "kbps": 450,
-   "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "Hairpin 8 · 1,209 m",
@@ -1068,12 +1008,6 @@
   "katu",
   {
    "kbps": 450,
-   "speed": 166,
-   "back": 216,
-   "up": 136,
-   "ahead": 108,
-   "fogNear": 465,
-   "fogFar": 1793,
    "places": [
     {
      "n": "Katu-Yaryk Pass · 1,206 m",
@@ -1098,12 +1032,6 @@
   "tianmen",
   {
    "kbps": 450,
-   "speed": 172,
-   "back": 224,
-   "up": 141,
-   "ahead": 112,
-   "fogNear": 482,
-   "fogFar": 1858,
    "places": [
     {
      "n": "Bend 66 · 839 m",
@@ -1150,6 +1078,78 @@
     {
      "n": "Laem Thaen",
      "d": 2548
+    }
+   ]
+  }
+ ],
+ [
+  "balea",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1 · 1,782 m",
+     "d": 195
+    },
+    {
+     "n": "Bâlea Valley",
+     "d": 1150
+    },
+    {
+     "n": "Hairpin 5 · 1,947 m",
+     "d": 2726
+    }
+   ],
+   "alt": [
+    1768,
+    2034
+   ]
+  }
+ ],
+ [
+  "bathurst",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 1360
+    },
+    {
+     "n": "Turn 8",
+     "d": 3176
+    },
+    {
+     "n": "Turn 16",
+     "d": 5376
+    }
+   ]
+  }
+ ],
+ [
+  "livorno",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Montenero",
+     "d": 3196
+    },
+    {
+     "n": "Castellaccio",
+     "d": 7456
+    },
+    {
+     "n": "Romito",
+     "d": 11595
+    },
+    {
+     "n": "Calafuria",
+     "d": 13931
+    },
+    {
+     "n": "Antignano",
+     "d": 16847
     }
    ]
   }

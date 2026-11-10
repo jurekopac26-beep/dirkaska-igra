@@ -448,5 +448,40 @@
    "pad": 1.0,
    "skirt": false
   }
+ ],
+ [
+  "balea",
+  "top",
+  "isle-balea",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "bathurst",
+  "top",
+  "isle-bathurst",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
+ ],
+ [
+  "livorno",
+  "top",
+  "isle-livorno",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0,
+   "skirt": false
+  }
  ]
 ]
