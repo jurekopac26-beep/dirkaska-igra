@@ -471,11 +471,13 @@
     return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u];
   }
   // a view of the stage that waited for its picture (pend: the video playing at the run's moment, the map's pictures loaded) fades in over the
-  // view shown before it, which then goes
+  // view shown before it, which then goes (only the views under it now: this one, sent away itself by a quick turn of the cameras, stays under
+  // the next until that one shows)
   function reveal(box) {
     if (!box.classList.contains('pend')) return;
     box.classList.remove('pend');
-    setTimeout(() => { const st = box.parentNode; if (st) for (const o of st.querySelectorAll('.dio.away')) o.remove(); }, 350);
+    const st = box.parentNode, old = st ? [...st.querySelectorAll('.dio.away')] : [];
+    setTimeout(() => { for (const o of old) if (o.classList.contains('away')) o.remove(); }, 350);
   }
   // the map's pictures loaded (or failed), or 1.5 s at most
   function mapLoaded(box, done) {
@@ -539,7 +541,9 @@
     // is the run's
     if (v && !v.__fly) {
       v.__fly = 1;
-      const play = () => { if (!v.isConnected) return; const p = v.play(); if (p && p.catch) p.catch(() => {}); };   // (a video the stage has dropped meanwhile stays paused)
+      // (a video the stage has dropped meanwhile, or one a race or another screen stopped while it loaded, stays paused; under the quick list
+      // or the Earth it waits for the screen to wake)
+      const play = () => { if (!v.isConnected || v.__stop) return; if (rested) { v.__due = 1; return; } const p = v.play(); if (p && p.catch) p.catch(() => {}); };
       const start = () => {
         if (!v.isConnected) return;
         const s = Math.max(0, runNow()) % runDur(id);
@@ -879,6 +883,7 @@
     s.classList.remove('rested');
     flyLabels(); mapDots(); graphOn(); carOn(); globe.on(); if (MV()) MV().wake();   // (the globe drawn again if the night was switched on the Earth)
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+    for (const v of s.querySelectorAll('video')) if (v.__due) { v.__due = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }   // (a flyover that was ready only while the screen rested)
   }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
     const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
@@ -1466,7 +1471,7 @@
   }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
-    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); cancelAnimationFrame(graphRaf);
+    const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) { under.pause(); under.__stop = 1; } cancelAnimationFrame(flyRaf); cancelAnimationFrame(mapRaf); cancelAnimationFrame(graphRaf);
     if (window.MenuCar) MenuCar.rest();   // (the car's canvas: its buffers freed for the race)
     shown = '';   // (after the race the screen it was started from is entered afresh: its weather as it is, not faded in again)
     const off = setting('intro') === 2, rect = stageRect();
@@ -1849,7 +1854,7 @@
     if (zemOpen()) ZE().close(true);   // (the Earth too)
     rested = null; globe.reset();
     if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
-    for (const v of app.querySelectorAll('video')) v.pause();
+    for (const v of app.querySelectorAll('video')) { v.pause(); v.__stop = 1; }   // (a flyover still loading: not played under the game later)
     shown = '';
   }
   // the menu could not start (its style did not load, or something in it failed): the game's old title and track screens take over, so there

@@ -649,6 +649,8 @@ window.DR = (function () {
         for (const a in E.attr) g.setAttribute(a, new THREE.Float32BufferAttribute(E.attr[a].d, E.attr[a].n)); if (E.index) g.setIndex(E.index); g.computeBoundingBox(); g.computeBoundingSphere();
         const tn = o.tint || [1, 1, 1], sam = E.sam.map(e => [e[0] * (o.scale || 1), e[1] * (o.scale || 1), e[2] * (o.scale || 1), e[3] * tn[0], e[4] * tn[1], e[5] * tn[2], 0, 0]);
         kinds.set('b' + v, { geo: g, mat: bm, n: E.n * ((o.borrowShare || {})[v] || 1), sam, bbH: g.boundingBox.max.y - g.boundingBox.min.y, borrowed: true }); }
+      // (a kind is named by its vertex count: when the other world changes, its kinds do, and nothing would be planted in their place)
+      for (const v of o.borrowKinds || []) if (!B[v]) console.error('plantLand: borrowed kind ' + v + ' is not in ' + o.borrow + ' (EXPORT=1 node heli.mjs <that world\'s track> lists its kinds of today)');
     }
     const rp = roadPts(20), distRoad = (x, z) => { let dm = 1e18; for (const r of rp) { const d = (r[0] - x) * (r[0] - x) + (r[1] - z) * (r[1] - z); if (d < dm) dm = d; } return Math.sqrt(dm); };
     const med = (a) => { const b = a.slice().sort((x, y) => x - y); return b[b.length >> 1]; };
@@ -914,7 +916,7 @@ window.DR = (function () {
   // land drawn this far round the camera), clear (m: the camera at least this high over the land under it), alt (the real heights at the
   // start and the finish), places ([{ n, d }]: the places named over the video)
   function flyInit(o) {
-    o = Object.assign({ W: 704, H: 432, fps: 30, speed: 300, ease: 0.12, end: 2.4, turn: 0.8, aim: 0.3, fov: 37, back: 411, up: 263, ahead: 206, fogD: 560, cull: 3400, plantR: 3400, clear: 70, places: [], alt: null }, o || {});
+    o = Object.assign({ W: 704, H: 432, fps: 30, speed: 326, ease: 0.12, start: 0, startK: 0.75, end: 2.4, turn: 0.8, aim: 0.3, fov: 37, back: 411, up: 263, ahead: 206, fogD: 700, cull: 3400, plantR: 3400, clear: 70, places: [], alt: null }, o || {});
     const open = T.finishS > T.startS, a0 = T.startS, b0 = open ? T.finishS : T.startS + T.len, pts = [];
     for (let s = a0; s <= b0 + 0.01; s += 6) { const i = T.idx(s); pts.push({ x: T.px[i], y: T.hy[i] + 2, z: T.pz[i], d: s - a0, h: T.hy[i] }); }
     const n = pts.length, sc = Render.scene;
@@ -948,9 +950,13 @@ window.DR = (function () {
       U.push(u); E.push(flyEase(Math.min(1, Math.max(0, (k - runF + 1) / endF)))); TH.push(Math.atan2(flyLerp(sz, b) - flyLerp(sz, a), flyLerp(sx, b) - flyLerp(sx, a)));
     }
     for (let k = 1; k < N; k++) { while (TH[k] - TH[k - 1] > Math.PI) TH[k] -= 2 * Math.PI; while (TH[k] - TH[k - 1] < -Math.PI) TH[k] += 2 * Math.PI; }
-    const TS = gauss(TH, Math.max(1, o.turn * o.fps)), A = [[], [], []], C = [[], [], []];
+    const TS = gauss(TH, Math.max(1, o.turn * o.fps)), A = [[], [], []], C = [[], [], []], startF = Math.round(o.start * o.fps);
     for (let k = 0; k < N; k++) {
-      const u = U[k], f = o.ahead * (1 - E[k]), ua = Math.min(n - 1, u + f / 6), lift = 1 + 0.6 * E[k], c = Math.cos(TS[k]), s = Math.sin(TS[k]);
+      // (start: over the first `start` seconds the camera comes from nearer, 1 - startK of its distance, height and aim ahead, so the point
+      // stays where it is in the picture: where a world's own steep rim behind the start would fill the first pictures; 0, every other
+      // flyover: the same camera from the first frame)
+      const near = startF ? 1 - o.startK * (1 - flyEase(Math.min(1, k / startF))) : 1;
+      const u = U[k], f = o.ahead * (1 - E[k]) * near, ua = Math.min(n - 1, u + f / 6), lift = (1 + 0.6 * E[k]) * near, c = Math.cos(TS[k]), s = Math.sin(TS[k]);
       A[0].push(flyLerp(px, u) + c * f); A[1].push(flyLerp(sy, ua)); A[2].push(flyLerp(pz, u) + s * f);
       C[0].push(flyLerp(sx, u) - c * o.back * lift); C[1].push(flyLerp(sy, u) + o.up * lift); C[2].push(flyLerp(sz, u) - s * o.back * lift);
     }
