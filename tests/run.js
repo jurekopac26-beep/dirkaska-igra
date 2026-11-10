@@ -117,7 +117,7 @@ const RELATED = [
   [/^js\/sfx\.js$/, ['browser/sound.test.mjs', 'browser/okolje.test.mjs']],
   [/^js\/world-zivali\.js$|^tools\/zvoki-pasovi\.mjs$|^js\/comm\.js$/, ['browser/okolje.test.mjs']],   // (the sounds by the road: their zones from the woods and the herds, js/sfx-okolje.js; the commentator cuts the announcer)
   [/^js\/lang\.js$|^js\/tracks\//, ['lang.test.js']],   // (a track's English name and description)
-  [/^js\/tracks\/|^js\/core\.js$|^js\/routes\.js$|^tools\/menu-lens\.js$/, ['menu-lens.test.js']],
+  [/^js\/tracks\/|^js\/core\.js$|^js\/routes\.js$|^tools\/menu-lens\.js$|^assets\/maps\/fly-/, ['menu-lens.test.js']],
   [/^js\/tracks\/|^js\/core\.js$/, ['rivals-n.test.js', 'grid.test.js']],   // (the menu's Opponents: the most rivals each track's start and finish take, def.maxRivals)   // (the menu's tables of the tracks' lengths and heights)
   [/^js\/tracks\/|^js\/geo\.js$|^tools\/menu-globe\.mjs$|^assets\/flags\/|^assets\/geo\/earth-s\.webp$/, ['menu-globe.test.js']],   // (the countries: the flags, the globe's outlines and places)
   [/^js\/tracks\/|^js\/menu-data\.js$|^tools\/menu-corner|^assets\/maps\/corner-/, ['menu-corner.test.js', 'browser/menu.test.mjs']],   // (the corner camera: its corners, videos and posters, MENU.corners)

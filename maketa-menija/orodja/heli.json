@@ -6,8 +6,8 @@
   "plantO": {
    "borrow": "raw/geo/kinds-nring.json",
    "borrowKinds": [
-    66,
-    120
+    26,
+    12
    ],
    "tint": [
     0.92,

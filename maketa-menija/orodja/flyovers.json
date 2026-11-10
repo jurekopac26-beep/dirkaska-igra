@@ -40,6 +40,7 @@
  [
   "pikes",
   {
+   "kbps": 450,
    "places": [
     {
      "n": "Halfway Picnic Grounds",
@@ -956,6 +957,7 @@
   "caracoles",
   {
    "kbps": 450,
+   "start": 4,
    "places": [
     {
      "n": "Curva 1 · 2,271 m",

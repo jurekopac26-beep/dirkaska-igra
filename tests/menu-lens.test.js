@@ -5,10 +5,12 @@
 // the game's road (121 heights from the start line, to 0.1 m), a real track's with its start line's height above the sea. MENU.shapes and
 // MENU.ncorners, the quick list's cards and facts (js/menu-izbor.js): every real track's shape from above (from its start line to its
 // finish, a circuit round to its start again; the longer side 200) and its corners as the game counts them; none for a test track.
+// The flyovers (camera 2; js/routes.js fly, maketa-menija/orodja/routes.py --fly): a track with a flyover has its video and its first
+// picture (assets/maps/fly-<id>.webm, .webp), and no flyover's file is left there without its flyover (a track need not have one).
 // After a new track or a changed road: node tools/menu-lens.js
 //   node tests/menu-lens.test.js
 'use strict';
-const path = require('path');
+const fs = require('fs'), path = require('path');
 const { loadCore, ROOT } = require('./lib/core.js');
 
 const C = loadCore();
@@ -65,5 +67,15 @@ for (const d of reals) {
 check(`every real track (${reals.length}) has its shape from above and its corners for the quick list, as the game's road (node tools/menu-lens.js)`, !soff.length, soff.join(', '));
 const sextra = [...Object.keys(SH), ...Object.keys(NC)].filter(id => !reals.some(d => d.id === id));
 check('no shape or corners for a test track or a track that is not in the game (the test tracks are frozen)', !sextra.length, [...new Set(sextra)].join(', '));
+
+// the flyovers: the menu offers camera 2 where the route has a flyover and plays assets/maps/fly-<id>.webm over its first picture
+const maps = fs.readdirSync(path.join(ROOT, 'assets', 'maps')), flown = ids.filter(id => RT[id] && RT[id].fly), foff = [];
+for (const id of flown) {
+  const F = RT[id].fly;
+  for (const e of ['webm', 'webp']) if (!maps.includes('fly-' + id + '.' + e)) foff.push('fly-' + id + '.' + e + ' is missing');
+  if (!(Array.isArray(F.frames) && F.frames.length > 60 && F.fps > 0)) foff.push(id + ': no frames');
+}
+for (const f of maps) { const m = /^fly-(.+)\.(?:webm|webp)$/.exec(f); if (m && !flown.includes(m[1])) foff.push(f + ' without a flyover in js/routes.js'); }
+check(`every flyover of js/routes.js (${flown.length} tracks) has its video and its first picture in assets/maps/, none there without its flyover`, flown.length > 0 && !foff.length, foff.join(', '));
 console.log(`\n${n - bad}/${n} passed`);
 process.exit(bad ? 1 : 0);
