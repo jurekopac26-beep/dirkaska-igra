@@ -78,7 +78,7 @@ def heights():
     s = np.arange(NP) * STEP
     return h + np.array([ramp(v, S_UP, UP) + ramp(v, S_LO, LO) for v in s])
 H = heights()
-H0 = float(H[0])   # the start line's height above the sea (216.6 m): the game's zero
+H0 = float(H[0])   # the start line's height above the sea (216.2 m): the game's zero
 
 # ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only (CLAUDE.md, Pravna varnost: no names of the circuit,
 # its people, races, firms or sponsors, nor of the streets round it); s in metres from the start line ----
@@ -186,10 +186,17 @@ def lake_mask(X, Z):   # True in the pond at the points X, Z (a regular grid: th
     for L in LAKES: dr.polygon([((x - x0) / c, (z - z0) / c) for x, z in L], fill=1)
     return np.asarray(im) > 0
 
-def lake_level():   # the pond's surface (m above the start line): 0.6 m under the lowest ground of its shore
+def lake_level():   # the pond's surface (m above the start line): 0.6 m under the lowest ground of its shore, and 0.45 m under the
+    # lowest road within 60 m of it (the run under the bridge climbs out of its cutting beside the pond: the water below the cutting's
+    # floor, World's water flat over 64 m blocks round the pond and the ground by that road, 0.3 m under it, above the water)
     if not LAKES: return None
     gd, ad = grid('dem'); lv = []
-    for L in LAKES: sh = sample(gd, ad, L[:, 0], L[:, 1], True) - H0; lv.append(float(np.percentile(sh, 10)) - 0.6)
+    for L in LAKES:
+        sh = sample(gd, ad, L[:, 0], L[:, 1], True) - H0; lv.append(float(np.percentile(sh, 10)) - 0.6)
+        A = L; B = np.roll(L, -1, 0); AB = B - A; dmin = np.full(NP, 1e9)
+        for a, ab in zip(A, AB):
+            t = np.clip(((P - a) @ ab) / max(float(ab @ ab), 1e-9), 0, 1); dmin = np.minimum(dmin, np.hypot(*(P - a - t[:, None] * ab).T))
+        if (dmin < 60).any(): lv.append(float((H[dmin < 60] - H0).min()) - 0.45)
     return round(min(lv), 2)
 
 LV = lake_level()
@@ -395,7 +402,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
           '; buildings', len(SK['bld']) // 7, 'houses', len(SK['hs']) // 2, 'roads', len(SK['road']), 'links', [len(l) // 2 for l in SK['lk']],
           'oval', [len(l) // 2 for l in SK['dt']], 'karting', [(k[0], len(k) // 2) for k in SK['kart']], '; pond', SK['sea'] and (SK['sea']['nx'], SK['sea']['nz'], SK['sea']['lv']), '; turns', TURNS)
     print('  crossing at (%.1f, %.1f): the bridge leg s %.0f (%.2f m), the leg under it s %.0f (%.2f m): %.2f m apart; OSM bridge s %.0f-%.0f' % (
-          XP[0] - O[0], XP[1] - O[1], S_UP, H[iu] - H0, S_LO, H[il] - H0, H[iu] - H[il], BR0, BR1))
+          XP[0], XP[1], S_UP, H[iu] - H0, S_LO, H[il] - H0, H[iu] - H[il], BR0, BR1))
     print('  power lines', [(p[0], len(p) // 3) for p in SK['lm']['pw']])
     for k in ('dem', 'lc', 'sk', 'far'): print('  %-4s %5d KB' % (k, len(js({'dem': D, 'lc': LC, 'sk': SK, 'far': FAR}[k]).encode()) // 1024))
     for k in SK: print('    sk.%-5s %5d KB' % (k, len(js(SK[k]).encode()) // 1024))
