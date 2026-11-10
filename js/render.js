@@ -3904,6 +3904,7 @@ const Render = (function () {
   // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
   // again for its track. Its picture: Tex.rubber
   const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
+  const RUB_OW = [-3.1, -2.1, -1.05, 0, 1.05, 2.1, 3.1], RUB_AW = [0, 0.4, 0.85, 1, 0.85, 0.4, 0], RUB_CW = [0.3, 0.25, 0.16, 0.12, 0.16, 0.25, 0.3];   // (the prototype's wider layer, ?guma=1: »Plast gume naj bo širša«)
   let rbLn = null, rbTex = null;
   function rubberLine(R) {
     // (the prototype for the pictures »zdaj in potem«, docs/zgumirana-linija.md; Race.rubRl, opts.guma: the rubber on the player's line, RL, on an
@@ -3913,7 +3914,8 @@ const Render = (function () {
     if (rbLn && (rbLn.userData.w !== world || rbLn.userData.rl !== RL)) { scene.remove(rbLn); rbLn.geometry.dispose(); rbLn.material.dispose(); rbLn = null; }
     const rb = R && T === curTrack && T.rl ? (R.mb ? R.mb.rb || 0 : RL ? (R.rubLv != null ? R.rubLv : 0.6) : 0) : 0;
     if (rb > 0.005 && !rbLn && world) {
-      const N = T.N, nc = RUB_O.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [], line = RL || T.rl, iE = RL && T.open ? N - 1 : N;
+      const RO = RL ? RUB_OW : RUB_O, RA = RL ? RUB_AW : RUB_A, RC = RL ? RUB_CW : RUB_C;   // (the prototype: wider, and kept on the asphalt)
+      const N = T.N, nc = RO.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [], line = RL || T.rl, iE = RL && T.open ? N - 1 : N;
       for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
       let ld = null;
       if (RL && R.vprof) { const vp = R.vprof, raw = new Float32Array(N); ld = new Float32Array(N);
@@ -3922,10 +3924,10 @@ const Render = (function () {
       for (let i = 0, j = 0; i <= iE; j++) {
         const ii = i % N, kb = ld ? 0.4 + 0.6 * Math.pow(ld[ii], 0.7) : 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), b0 = pos.length / 3;
         for (let v = 0; v < nc; v++) {
-          const o = line[ii] + RUB_O[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + (RL && T.open ? 0.05 : 0.032);
+          const lim = RL ? (T.wa ? T.wa[ii] : T.w) - 0.1 : 1e9, o = Math.max(-lim, Math.min(lim, line[ii] + RO[v])); let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + (RL && T.open ? 0.05 : 0.032);
           if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
           pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
-          col.push(RUB_C[v], RUB_C[v] * 0.96, RUB_C[v] * 0.92, RUB_A[v] * kb); uv.push(RUB_O[v] / 4, i * T.ds / 8);
+          col.push(RC[v], RC[v] * 0.96, RC[v] * 0.92, RA[v] * kb); uv.push(RO[v] / 4, i * T.ds / 8);
         }
         if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
         if (i === iE) break;

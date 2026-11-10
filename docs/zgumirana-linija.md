@@ -6,6 +6,7 @@ Zapiski raziskave 9. 11. 2026 (Matej, brez sprememb kode). Številke vrstic so p
 - 9. 11. 2026 ob ~23.54: »zgimirana linija naj gre po moji voznji po moji liniji tam kjer je posneta tam kjer pa ni pa naj zaenkrat predvideva dokler ne posnamem vseh prog«.
 - 9. 11. 2026 ob ~23.55: »zgumirano linijo daj prvo v sliki v predogled in ne zacni z delom dokler je ne potrdim«.
 - 10. 11. 2026 ob ~00.57, po slikah: »Da, tudi na odprtih cestah«. Guma gre po uporabnikovi liniji, samo videz, in pride tudi na ceste brez boksov (npr. Tianmen), kjer je zdaj ni.
+- 10. 11. 2026 med ~02.00 in ~03.00, po slikah prototipa (v seji teme partyslo): »Plast gume naj bo sirsa«.
 
 ## Obseg
 - Guma (temna sled na liniji vožnje) se riše po liniji uporabnikove vožnje, kjer je posneta; kjer ni, po predvideni liniji iz sloga vožnje. Ko uporabnik posname nove proge, jih guma prevzame brez spremembe kode.
@@ -47,6 +48,9 @@ Samo za slike (odločitvi uporabnika 10. 11. 2026 ob ~01.37 in ~01.50); na `main
 | Tianmen, šest vzorcev | 146 (največ 207), 388 tisoč (največ 545) | 150 (največ 217), 455 tisoč (največ 617) |
 
 Plast na odprti cesti je ena mreža čez vso cesto: +1 klic in +62 tisoč oglišč na sliko (12.890 oglišč, 20.616 trikotnikov). Pri šestih vzorcih je del razlike v tekmecih na drugih mestih: merilno orodje ima skupna naključna števila in nova mreža jih zamakne; dirka sama je enaka. Premik stalnih sledi ne doda ničesar. Prava izvedba naj plast razdeli na kose ob cesti, da se riše samo bližnji del.
+
+### Širša plast (10. 11. 2026, prošnja uporabnika »Plast gume naj bo sirsa«)
+V prototipu (`?guma=1`) je plast široka 6,2 m namesto 3,5 m: sedem stolpcev (`RUB_OW`: ±3,1, ±2,1, ±1,05 m in sredina; polna jakost v pasu ~2 m, do roba zbledi), stolpci ostanejo na asfaltu (omejitev na polovico širine ceste). Brez `?guma=1` velja stara širina. Slike so narejene znova (`guma-moznost-{1,2}.jpg`, `guma-{spa,tianmen}-potem{,-vse}.jpg`), primerjava ožja/širša je `guma-sirsa.jpg`. Tianmen s širšo plastjo: šest vzorcev 150 klicev (največ 217) in 486 tisoč oglišč (največ 648); 1930 m 120 klicev in 459 tisoč, 3380 m 122 in 447 tisoč (plast +93 tisoč oglišč na sliko namesto +62 tisoč; meji ~300 in ~900 tisoč). Stalni pas v svetu (`shade`) ostane enako širok; prava izvedba naj ga razširi skupaj s plastjo.
 
 ### Kaj manjka za pravo izvedbo
 - Linija ob gradnji sveta za stalni pas in sledi zaviranja (okoli 17 svetov z lastnim pasom, `tyreMarks` za vse).
