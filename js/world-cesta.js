@@ -34,10 +34,13 @@
      (between the two directions); crta: a broken centre line's dash and gap, m (the country's standard for a road outside towns, as far
      as its public rules say: checked again when a builder first draws by it; so far Italy's only); dvojna: where overtaking is forbidden
      the centre line is double (else one solid line). A circuit paints its own lines (white edge lines) and has no centre line. Only the
-     countries of the real tracks on main: a new track's country gets its row with the track ---- */
+     countries of the real tracks on main: a new track's country gets its row with the track.
+     The markings across the road (precne; a country's own sizes when a builder first draws by them, so far Italy's: the highway code's
+     regulation, art. 144 and 145): prehod: a pedestrian crossing's stripes along the road [their width, the gap, their length on a town's
+     streets, on a main road], m; stop: the stop line's width, m; prednost: the give-way line's triangles [base, height, gap], m ---- */
   const BELA = [0.95, 0.95, 0.92], RUMENA = [0.95, 0.74, 0.14];
   const CRTE = {
-    'Italija':      { rob: 'bela', sred: 'bela', crta: [4.5, 7.5], dvojna: false },
+    'Italija':      { rob: 'bela', sred: 'bela', crta: [4.5, 7.5], dvojna: false, prehod: [0.5, 0.5, 2.5, 4], stop: 0.5, prednost: [0.5, 0.6, 0.25] },
     'Romunija':     { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },
     'Avstrija':     { rob: 'bela', sred: 'bela', crta: [6, 12], dvojna: false },
     'Nemčija':      { rob: 'bela', sred: 'bela', crta: [4, 8], dvojna: false },
@@ -50,14 +53,14 @@
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
   };
-  const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false };   // (a country not in the table: white, as most of the world)
+  const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
   // the markings of the track's country and where its centre line runs: at[i] 0 none, 1 a dash, 2 solid (no overtaking: within `pred` m
   // before a bend tighter than `r` m and through it, both ways, as the lines are for the traffic of both directions). o.sred false: the
   // track has no centre line (a circuit)
   function crte(T, o) {
     o = o || {};
-    const C = Object.assign({}, CRTE[drzava(T)] || PRIVZETO), N = T.N, ds = T.ds, at = new Uint8Array(N);
+    const C = Object.assign({}, PRIVZETO, CRTE[drzava(T)]), N = T.N, ds = T.ds, at = new Uint8Array(N);
     C.barvaRob = (C.rob === 'rumena' ? RUMENA : BELA).slice(); C.barvaSred = (C.sred === 'rumena' ? RUMENA : BELA).slice(); C.drzava = drzava(T);
     if (o.sred !== false) {
       const r = o.r || 160, pred = o.pred || 50, n = Math.max(1, Math.round(pred / ds)), solid = new Uint8Array(N);
@@ -66,6 +69,31 @@
       for (let i = 0; i < N; i++) at[i] = solid[i] ? 2 : (i % pn) <= dn ? 1 : 0;
     }
     C.at = at; return C;
+  }
+  /* ---- the markings across the road by the country's rules (C: crte's), for the builders' lines' meshes. items: [s (the track's own
+     metres), kind: 0 a pedestrian crossing (the third: 1 on a main road, its stripes longer), 1 a stop line, 2 a give-way line (the third:
+     the lane, 1 the lap's own, -1 the oncoming one)]. o.rob: the inner side of the builder's edge lines (m in from the road's edge),
+     o.sred: half its centre line's width. Returns kosi: the pieces on the road [s0, s1, offset0, offset1, 0] a rectangle (s0 < s1),
+     [s0, s1, offset0, offset1, 1] a triangle (its base at s0, its point at s1: towards the driver who gives way); brez: [from, to]
+     along the road where the centre line is left out (through a crossing).
+     A crossing: stripes along the road from edge line to edge line, set about the road's middle. A stop line: across one lane, from
+     the centre line to the edge line, its far side at s. A give-way line: a row of triangles across the lane ---- */
+  function precne(T, C, items, o) {
+    o = o || {}; const rob = o.rob == null ? 0.45 : o.rob, sred = o.sred == null ? 0.08 : o.sred, len = T.len, kosi = [], brez = [];
+    for (const [s, kind, x] of items || []) {
+      const w = T.wAt(T.idx(((s % len) + len) % len));
+      if (kind === 0) {
+        const a = C.prehod[0], b = C.prehod[1], L = C.prehod[x ? 3 : 2], half = w - rob - 0.17, n = Math.max(1, Math.floor((2 * half + b) / (a + b)));
+        for (let k = 0; k < n; k++) { const oc = (k - (n - 1) / 2) * (a + b); kosi.push([s - L / 2, s + L / 2, oc - a / 2, oc + a / 2, 0]); }
+        brez.push([s - L / 2 - 0.5, s + L / 2 + 0.5]);
+      } else if (kind === 1 || kind === 2) {
+        const sd = x < 0 ? -1 : 1, lo = sd > 0 ? sred + 0.07 : -(w - rob), hi = sd > 0 ? w - rob : -(sred + 0.07);
+        if (kind === 1) kosi.push(sd > 0 ? [s - C.stop, s, lo, hi, 0] : [s, s + C.stop, lo, hi, 0]);
+        else { const b = C.prednost[0], h = C.prednost[1], g = C.prednost[2], n = Math.max(1, Math.floor((hi - lo + g) / (b + g))), m0 = (lo + hi) / 2 - (n * (b + g) - g) / 2;
+          for (let k = 0; k < n; k++) kosi.push([s, s - sd * h, m0 + k * (b + g), m0 + k * (b + g) + b, 1]); }
+      }
+    }
+    return { kosi, brez };
   }
 
   /* ---- the tracks that take the look. vrsta: 'dirka' a circuit (the stains about the racing line, the dust wider at the edge the cars
@@ -414,5 +442,5 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     o.cestaMat = rm; o.cestaRobData = V.rob;
   }
 
-  World.cesta = { finish, crte, CRTE, PROGE, BELA, RUMENA };
+  World.cesta = { finish, crte, precne, CRTE, PROGE, BELA, RUMENA };
 })();

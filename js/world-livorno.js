@@ -118,10 +118,22 @@
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- the road: asphalt (resurfaced in sections, darker on the racing line), white edge lines and the centre line by the country's
-       rules (World.cesta's crte: white, a dash every 12 m, solid before and through the bends); no kerbs (an old road) ---- */
+       rules (World.cesta's crte: white, a dash every 12 m, solid before and through the bends); no kerbs (an old road). In the settlements
+       the markings across the road where OpenStreetMap has them on the lap's ways (LD.onRoad): the pedestrian crossings' stripes (no
+       centre line through them), the stop lines and the give-way lines' triangles, by the country's rules too (World.cesta's precne), in
+       the lines' meshes ---- */
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const RC = 128, tileL = 8, secT = new Float32Array(N), CL = World.cesta ? World.cesta.crte(T, { r: 140, pred: 40 }).at : null;
+    const RC = 128, tileL = 8, secT = new Float32Array(N), CZ = World.cesta ? World.cesta.crte(T, { r: 140, pred: 40 }) : null, CL = CZ ? CZ.at : null;
+    const XM = CZ && World.cesta.precne ? World.cesta.precne(T, CZ, (LD.onRoad || []).map(([d, k, x]) => [sAt(d), k, x]), { rob: 0.38, sred: 0.08 }) : { kosi: [], brez: [] }, xk = new Map(), wx = [0.9, 0.9, 0.86];
+    for (const [a, b] of XM.brez) for (let i = Math.ceil(a / ds); i <= Math.floor(b / ds); i++) CL[((i % N) + N) % N] = 0;
+    for (const q of XM.kosi) { const c = Math.floor((((Math.floor(Math.min(q[0], q[1]) / ds) % N) + N) % N) / RC); if (!xk.has(c)) xk.set(c, []); xk.get(c).push(q); }
+    const PtS = (s, o, y) => { const f = (((s % L) + L) % L) / ds, i0 = Math.floor(f) % N, t = f - Math.floor(f), a = Pt(i0, o, y), b = Pt((i0 + 1) % N, o, y); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };
+    const layX = (gl, [s0, s1, o0, o1, tri]) => {   // (a piece on the road: a rectangle cut at the samples' rows, as the lines are laid, or a triangle)
+      if (tri) { const r0 = gl.row([PtS(s0, o0, 0.034), PtS(s0, o1, 0.034)], [wx, wx]), r1 = gl.row([PtS(s1, (o0 + o1) / 2, 0.034)], [wx]); if (s1 > s0) gl.I.push(r0, r0 + 1, r1); else gl.I.push(r0 + 1, r0, r1); return; }
+      const S = [s0]; for (let i = Math.floor(s0 / ds) + 1; i * ds < s1 - 0.05; i++) if (i * ds > s0 + 0.05) S.push(i * ds); S.push(s1);
+      let pr = -1; for (const s of S) { const r = gl.row([PtS(s, o0, 0.034), PtS(s, o1, 0.034)], [wx, wx]); if (pr >= 0) gl.link(pr, r, 0, 1); pr = r; }
+    };
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 37) * 70), t = 0.9 + crH(k, 5, 37) * 0.15; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
     for (let c0 = 0; c0 < N; c0 += RC) {
@@ -134,6 +146,7 @@
         const l = gl.row(lp, lp.map(() => wl));
         if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
       }
+      for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
     }
     {   // the chequered line on the bridge over the Rio Ardenza
