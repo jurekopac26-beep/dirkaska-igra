@@ -80,7 +80,9 @@ def pace(route, d, mpp):   # the corners of a track from its route on the top ma
 
 def fly(t, R, L):   # the flyover (map version 1) of a track whose map R (its places) and length L are known (flyover.mjs drew it)
     # the video, its first frame, and per frame [metres, start, finish, 0, places] where the menu shows them
-    # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway)
+    # (the start near the start, the finish near the end, a place near it; elsewhere 0: the menu hides it there anyway; a circuit's flyover
+    # made as a loop, flyover.mjs loop: its start line also before the lap's end, the one name the menu keeps over the line as the video goes
+    # straight on into the next lap, and no finish; fly.loop tells the menu so)
     fj = os.path.join(RAW, 'fly-%s.json' % t)
     if os.path.exists(fj):
         F = json.load(open(fj)); F['places'] = [neutral(x) for x in F['places']]
@@ -96,8 +98,9 @@ def fly(t, R, L):   # the flyover (map version 1) of a track whose map R (its pl
             q = next((x for x in R['places'] if x[0] == nm), None) or next((x for x in R['places'] if nm in x[0]), None)   # (the same name first, as the menu)
             pd.append(q[1] if q else L / 3 if nm == 'Split 1' else 2 * L / 3 if nm == 'Split 2' else -1e9)
         keep = lambda P, on: P if on and P and P[2] else 0
-        fr = [[f[0], keep(f[1], f[0] < L * 0.14), keep(f[2], f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
-        R['fly'] = { 'fps': F['fps'], 'W': F['W'], 'H': F['H'], 'places': F['places'], 'frames': fr }
+        ring = bool(F.get('loop')) and not R.get('open')
+        fr = [[f[0], keep(f[1], f[0] < L * 0.14 or (ring and f[0] > L * 0.78)), keep(f[2], not ring and f[0] > L * 0.78), 0, [keep(P, abs(f[0] - pd[i]) < L * 0.09) for i, P in enumerate(f[4])]] for f in F['frames']]
+        R['fly'] = dict({ 'fps': F['fps'], 'W': F['W'], 'H': F['H'] }, **({ 'loop': 1 } if F.get('loop') else {}), places=F['places'], frames=fr)
 
 def old_routes():
     p = os.path.join(SITE, 'routes.js')

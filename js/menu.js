@@ -443,7 +443,9 @@
      the same place, not from the start; another track, or the track screen entered anew, starts a new run. On a track with a flyover the run
      is the flyover's own (its video is the clock while it plays; R.fly.frames[k][0] is the point's place in frame k, metres along the run), so
      on the map the point runs as in the flyover: it speeds up from the start, waits at the finish while the flyover's camera rises over it,
-     then goes round again. A track with only its map: the same run at the flyovers' own pace (RUN), so the point is as fast on every track. */
+     then goes round again; a flyover made as a loop (R.fly.loop, maketa-menija/orodja/flyover.mjs): at an even speed from its first frame to
+     its last, on a circuit straight on over the start line into the next lap, with no wait and no dip of the picture there. A track with
+     only its map: the same run at the flyovers' own pace (RUN), so the point is as fast on every track. */
   const run = { id: '', t: 0, at: 0, on: false };   // the run's time t (s) at the moment at (performance.now()); on: going on from there, else held at t
   const runNow = () => run.t + (run.on ? (performance.now() - run.at) / 1000 : 0);
   function runSet(t, on) { run.t = t; run.at = performance.now(); run.on = on; }
@@ -460,8 +462,9 @@
   function runAt(id, s) {
     const R = RT[id]; if (!R.fly) return paceAt(R.len, s);
     const Dr = runDur(id); s = ((s % Dr) + Dr) % Dr;
-    const F = R.fly.frames, x = Math.min(F.length - 1, s * R.fly.fps), k = Math.max(0, Math.min(F.length - 2, Math.floor(x)));
-    return (F[k][0] + (F[k + 1][0] - F[k][0]) * (x - k)) / R.len;
+    // (a circuit's loop: after its last frame the point goes on to the start line, where its first frame has it)
+    const F = R.fly.frames, ring = R.fly.loop && !R.open ? 1 : 0, x = Math.min(F.length - 1 + ring, s * R.fly.fps), k = Math.max(0, Math.min(F.length - 2 + ring, Math.floor(x)));
+    return (F[k][0] + ((k + 1 < F.length ? F[k + 1][0] : R.len) - F[k][0]) * (x - k)) / R.len;
   }
   // where a run L m long at that pace is at its time s (0..1 of the way): the finish held for RUN.end, then round again
   function paceAt(L, s) { const go = runGo(L), Dr = go + RUN.end; s = ((s % Dr) + Dr) % Dr; return glide(s / go, RUN.ease); }
@@ -528,7 +531,8 @@
     };
     if (app) step();
   }
-  // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop
+  // the flyover: the start's and the finish's names over it (each of its frames says where they are), a short dip at the loop (a circuit's
+  // flyover made as a loop, R.fly.loop, goes straight on into its next lap: no dip, and the start line's one name stays over it either side)
   let flyRaf = 0;
   function flyLabels() {
     cancelAnimationFrame(flyRaf); flyRaf = 0;
@@ -559,7 +563,7 @@
     }
     const alt = M.alt ? M.alt.map(a => num(a) + ' m') : ['', ''];
     const tag = (cls, name, sub, icon) => '<div class="fl-' + cls + '">' + (icon || '') + '<b>' + esc(name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
-    const loop = !R.open, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
+    const loop = !R.open, ring = !!F.loop && loop, sub0 = alt[0] || (M.stage ? M.stage + ' start' : ''), sub1 = alt[1] || '';
     lab.innerHTML = tag('s start', loop ? 'Start · finish' : M.start || 'Start', sub0, flagSvg(false).replace('<g', '<svg viewBox="-2 -28 20 30" width="18" height="26"><g') + '</svg>') + tag('s finish', loop ? 'Finish' : M.finish || 'Finish', sub1, '<svg viewBox="-2 -28 20 30" width="18" height="26">' + flagSvg(true) + '</svg>');
     const els = [...lab.children];
     let last = 0, looped = false;
@@ -568,12 +572,12 @@
       // a short dip at the loop: the end fades out, the start fades back in (not the very first start: the poster shows there)
       const t = v.currentTime || 0, dur = v.duration; if (t < last - 1) looped = true; last = t;
       if (v.__live && run.id === id) runSet(t, !v.paused);   // (the video playing is the run's clock)
-      const op = isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
+      const op = !ring && isFinite(dur) && dur > 3 && !v.paused ? Math.max(0, Math.min(1, (dur - t) / 0.45, looped ? t / 0.45 : 1)) : 1;
       v.style.opacity = lab.style.opacity = op < 1 ? op.toFixed(2) : '';
       const f = F.frames[Math.min(F.frames.length - 1, Math.floor(t * F.fps))], W = box.clientWidth, H = box.clientHeight, k = Math.max(W / F.W, H / F.H), ox = (W - F.W * k) / 2, oy = (H - F.H * k) / 2;
       const put = (el, P, on) => { const y = P ? oy + P[1] * k : 0, vis = on && P && P[2] && P[0] > -40 && P[0] < F.W + 40 && P[1] > 0 && y > top && y < H - foot; el.style.opacity = vis ? 1 : 0; if (vis) el.style.transform = 'translate(' + (ox + P[0] * k).toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; };
       const d = f[0];
-      put(els[0], f[1], d < L * 0.12); put(els[1], f[2], d > L * 0.8);
+      put(els[0], f[1], d < L * 0.12 || (ring && d > L * 0.8)); put(els[1], f[2], !ring && d > L * 0.8);
       flyRaf = requestAnimationFrame(step);
     };
     flyRaf = requestAnimationFrame(step);

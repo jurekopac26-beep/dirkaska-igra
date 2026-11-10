@@ -2,7 +2,10 @@
 // flyFrame): the game's world of the track, and round its strip the real land (geo_far.py: its real heights, painted from the real land
 // cover; geo_lc.py: the land cover, after which the land is planted with the game's own trees, bushes and houses, as for the helicopter's
 // flight), so no bare land shows past the strip -> raw/maps/fly-<track>.webm (VP9, the size the menu uses) + fly-<track>.json (where the
-// start, the finish, the point and the places are in each frame).
+// start, the finish, the point and the places are in each frame; loop: 1 where the video goes straight on into its next lap). A flyover made
+// now is such a loop (drone_page.js flyInit, loop): the point at its even speed and the same camera from the first frame to the last, a
+// circuit's last frame followed by its first without a seam, an open road's cut from its finish to its start. A row with "loop": false is
+// drawn as the flyovers before (the point speeds up and slows down, the camera rises over the finish at the end).
 // Usage: node flyover.mjs [flyovers.json] [vrsic,pikes]   (the jobs: [[track, {options}], …]; only these tracks). The game comes from ../game_vrsic
 // (env GAME: another copy), ffmpeg from imageio-ffmpeg (env FFMPEG: another one). The real land comes from raw/geo/<track>-far.json and
 // -far-lc.png (without them: the drawn hills round the strip, unplanted); the race's settings from drones.json (the season, the snow line),
@@ -96,7 +99,7 @@ if (process.env.FLY_PART || process.env.PREVIEW) {
     }
     await browser.close(); server.close(); process.exit(0);
   }
-  if (w === 0) fs.writeFileSync(path.join(dir, 'info.json'), JSON.stringify({ frames: info.frames, n: info.n, fps: info.fps, W: info.W, H: info.H, raceLen: info.raceLen }));
+  if (w === 0) fs.writeFileSync(path.join(dir, 'info.json'), JSON.stringify({ frames: info.frames, n: info.n, fps: info.fps, W: info.W, H: info.H, raceLen: info.raceLen, loop: info.loop }));
   const t2 = Date.now(); let done = 0;
   for (let k = w; k < info.frames; k += P) {
     if (fs.existsSync(path.join(dir, num(k) + '.json'))) continue;   // drawn by an earlier run
@@ -135,7 +138,7 @@ if (process.env.FLY_PART || process.env.PREVIEW) {
       code = await ff([...src, ...vp9, ...q, '-pass', '1', '-passlogfile', log, '-f', 'null', '/dev/null']) || await ff([...src, ...vp9, ...q, '-pass', '2', '-passlogfile', log, name]);
     } else code = await ff([...src, ...vp9, ...crf, '-b:v', '0', name]);
     fs.copyFileSync(path.join(dir, num(0) + '.jpg'), path.join(OUT, 'fly-' + track + '-poster.jpg'));
-    fs.writeFileSync(path.join(OUT, 'fly-' + track + '.json'), JSON.stringify({ fps: info.fps, W: info.W, H: info.H, raceLen: info.raceLen, places: (opt.places || []).map(q => q.n), frames }));
+    fs.writeFileSync(path.join(OUT, 'fly-' + track + '.json'), JSON.stringify(Object.assign({ fps: info.fps, W: info.W, H: info.H, raceLen: info.raceLen }, info.loop ? { loop: 1 } : {}, { places: (opt.places || []).map(q => q.n), frames })));
     console.log(track, 'done', info.frames, 'frames', ((Date.now() - t0) / 1000).toFixed(0) + ' s', 'ffmpeg', code, fs.existsSync(name) ? (fs.statSync(name).size / 1024).toFixed(0) + ' KB' : '');
   }
 }
