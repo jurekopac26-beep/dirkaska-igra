@@ -14,6 +14,7 @@ const trener = require(path.join(ROOT, 'js', 'zabava', 'trener.js'));
 const izzivi = require(path.join(ROOT, 'js', 'zabava', 'izzivi.js'));
 const lov = require(path.join(ROOT, 'js', 'zabava', 'lov.js'));
 const cesta = require(path.join(ROOT, 'js', 'zabava', 'cesta.js'));
+const beg = require(path.join(ROOT, 'js', 'zabava', 'beg.js'));
 const { loadCore } = require('./lib/core.js');
 const { DT, seeded } = require('./lib/sim.js');
 const C = loadCore();
@@ -344,6 +345,118 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
   o = run('rocks', (ev) => { P.dist = 2000 + 80; P.q = { d: 0 }; cesta.step(r, 0.1); });
   check('past it (70 m): gone, the next one can come', cesta.ev === null);
   cesta.stop(); delete window.__zabava;
+}
+
+// 10. the pursuit with friends online (js/zabava/beg.js): Rio do Rastro with its traffic, four phones faked as in 4 (no network). The
+// room (one mode at a time, the patrol by turn or the host's choice, the setup's pick); the host drives the patrol car and decides (caught:
+// 5 s within 15 m; got away: 10 s 400 m ahead, the 3:00, the finish, the patrol gone; a friend gone; the end) and sends it; a fugitive's
+// phone (its car 150 m up the road, its own meter, the host's fates applied: caught, its finish 100000 s less the time); the results (the
+// patrol, those who got away, those caught: the longer the better)
+{
+  const T = new C.Track(C.TRACKS.find(d => d.id === 'rastro'));
+  global.Core = C;
+  const players = [{ id: 'h', name: 'Ana' }, { id: 'a', name: 'Bor' }, { id: 'b', name: 'Cene' }, { id: 'c', name: 'Dana' }];
+  const mk = (me, pol) => {
+    const others = players.filter(p => p.id !== me);
+    const race = new C.Race(T, { numAI: 0, playerGrid: players.findIndex(p => p.id === me) + 1, laps: 1, phys: 'cs', playerModel: C.MODELS[0], netTf: true, seed: 77, playerPolice: pol === me,
+      remote: others.map(p => ({ id: p.id, model: C.MODELS[2], color: 0x1c5fd6, num: 5 + players.indexOf(p), name: p.name, grid: players.indexOf(p) + 1, police: pol === p.id })) });
+    const cars = new Map(others.map(p => [p.id, { buf: [], fin: null, left: false, off: false }]));
+    const mp = { role: me === 'h' ? 'host' : 'guest', me, players, track: 'rastro', quick: false, ch: null, race: { no: 9, mine: null, tf: 1, seed: 77, pol, cars } };
+    const o = { race, mp, P: race.player, cars, msgs: [], toasts: [], texts: {}, redraw: 0, sent: [], car: (id) => race.remotes.find(c => c.netOf.id === id) };
+    o.G = { S: { name: players.find(p => p.id === me).name }, repro: () => false, phase: () => 'racing', setText: (id, t) => { o.texts[id] = t; }, showMsg: (t) => o.msgs.push(t), toast: (t) => o.toasts.push(t), say() {},
+      fmt: (t) => (+t).toFixed(1), mp: () => mp, finishOf() {}, netClock: () => race.time, netResults: () => { o.redraw++; } };
+    global.Net = { ids: others.map(p => p.id), sendTo: (id, m) => o.sent.push([id, m]) };
+    Z.init(o.G);
+    return o;
+  };
+  const fresh = () => { beg.stop(); Object.assign(beg.net, { on: false, pol: '', next: '', turns: {}, sig: '' }); elim.net.on = false; };
+  const run = (o, secs, each) => { for (let k = 0; k < Math.round(secs / 0.1); k++) { if (each) each(); o.race.time += 0.1; beg.step(o.race, 0.1); } };
+  const near = (o, c, m) => { const p = o.mp.race.pol === o.mp.me ? o.P : o.car(o.mp.race.pol); c.x = p.x + m; c.z = p.z; };
+  const away = (o, c, ahead) => { c.x = o.P.x + 2000; c.z = o.P.z; c.dist = (o.mp.race.pol === o.mp.me ? o.P : o.car(o.mp.race.pol)).dist + ahead; };
+  const fates = (o) => o.sent.filter(x => x[0] === 'a' || x[0] === 'h').map(x => x[1]).filter(m => m.k === 'bgd' || m.k === 'bge').map(m => m.k === 'bge' ? 'end' : m.id + ':' + m.st + (m.why ? ':' + m.why : '')).join(' ');
+  // the system's hooks (each f.<name>( of js/zabava.js) the pursuit has, idle (no pursuit: a race of another mode): none fails (a method
+  // named as a hook but meant for something else did: rows, the timing tower's red rows, called in every race)
+  {
+    const src = require('fs').readFileSync(path.join(ROOT, 'js', 'zabava.js'), 'utf8'), names = [...new Set([...src.matchAll(/\bf\.([A-Za-z_]+)\s*\(/g)].map(m => m[1]))], bad = [];
+    fresh(); const H0 = mk('h', ''), O = H0.race.cars.slice();
+    for (const n of names) if (typeof beg[n] === 'function') { try { const r = beg[n](O, H0.race); if (n === 'rows' && r != null && !(Array.isArray(r) && r.every(Number.isInteger))) bad.push(n + ': not row numbers'); } catch (e) { bad.push(n + ': ' + e.message); } }
+    check('beg: idle in a race of another mode, every hook of the system it has runs without an error (' + names.filter(n => typeof beg[n] === 'function').join(', ') + ')', names.length > 10 && bad.length === 0, bad.join(' | ') || names.length + ' hooks');
+  }
+  // the room
+  fresh(); let H = mk('h', '');
+  check('beg: the mode Pregon in a private room on an open road with traffic (Rio do Rastro); not a quick match, a championship, a circuit', beg.netMode.fits(H.mp) && !beg.netMode.fits(Object.assign({}, H.mp, { quick: true })) && !beg.netMode.fits(Object.assign({}, H.mp, { ch: { on: true } })) && !beg.netMode.fits(Object.assign({}, H.mp, { track: 'spa' })));
+  elim.netSet(true); beg.netSet(true);
+  const last = (k) => (H.sent.filter(x => x[1].k === k).pop() || [])[1];
+  const one1 = beg.net.on && !elim.net.on && last('el').on === 0 && last('bg').on === 1;
+  elim.netSet(true);
+  check('beg: one mode at a time: Pregon on, the elimination race off, and back (each to every phone: el, bg)', one1 && elim.net.on && !beg.net.on && last('bg').on === 0 && last('el').on === 1);
+  check('beg: the patrol by turn: the room\'s order on a tie (the host first), then the one who drove it least', beg.pick(['a', 'h', 'b', 'c']) === 'h' && (beg.net.turns = { h: 1 }, beg.pick(['a', 'h', 'b', 'c']) === 'a') && (beg.net.turns = { h: 1, a: 1 }, beg.pick(['c', 'b', 'a', 'h']) === 'b'));
+  beg.net.turns = {}; beg.net.pol = 'c';
+  check('beg: the host\'s choice when it is on the grid, else by turn', beg.pick(['h', 'a', 'c']) === 'c' && beg.pick(['h', 'a', 'b']) === 'h');
+  beg.netSet(true); beg.netSetup(['h', 'a', 'b', 'c']); const s1 = H.mp.beg;
+  beg.netSet(false); beg.netSetup(['h', 'a', 'b', 'c']); const s2 = H.mp.beg;
+  beg.netSet(true); H.mp.quick = true; beg.netSetup(['h', 'a', 'b', 'c']); const s3 = H.mp.beg; H.mp.quick = false;
+  check('beg: the setup (js/game.js netBeg): mp.beg with this grid\'s patrol; the mode off or a quick match: none; the elimination race off', s1 && s1.pol === 'c' && s2 === null && s3 === null && !elim.net.on, JSON.stringify([s1, s2, s3]));
+  beg.net({ t: 'zb', k: 'bg', on: 0, pol: 'b', next: 'a' }, 'h', false, null);
+  const fr = !beg.net.on && beg.net.pol === 'b' && beg.net.next === 'a';
+  beg.net({ t: 'zb', k: 'bg', on: 1, pol: '', next: 'h' }, 'b', true, null);
+  check('beg: a friend: the host\'s switch and choice arrive; on the host\'s phone no one else decides (host flag)', fr && !beg.net.on);
+  // the race, the host in the patrol car: three fugitives
+  fresh(); H = mk('h', 'h');
+  beg.made(H.race, { on: true }); beg.begin(H.race); let S = beg.st;
+  check('beg: the race: the pursuit (zbMode beg), my car the patrol car, three fugitives on their grid places; the host counts the turn', H.race.zbMode === 'beg' && H.race.zbBeg && H.P.police && S && S.mine === 'pol' && S.n0 === 3 && beg.net.turns.h === 1 && H.msgs.includes('PATRULJA · ULOVI BEGUNCE!'),
+    JSON.stringify({ mode: H.race.zbMode, n0: S && S.n0, turns: beg.net.turns, msgs: H.msgs }));
+  const [ca, cb, cc] = ['a', 'b', 'c'].map(H.car);
+  H.race.time = 10; away(H, cb, 100); away(H, cc, 120);
+  run(H, 0.5, () => { away(H, ca, 140); });
+  check('beg: the patrol\'s line: the nearest fugitive and the time left', /^BEGUNEC \d+ m · /.test(H.texts['h-gap'] || ''), H.texts['h-gap']);
+  run(H, 2, () => near(H, ca, 8));
+  const mid = H.texts['h-gap'] || '';
+  run(H, 3.2, () => near(H, ca, 8));
+  check('beg: 5 s within 15 m (8 m behind): caught, the host\'s fate to every phone, the meter on the patrol\'s line', S.F.get('a').st === 'c' && S.caught === 1 && fates(H) === 'a:c' && H.sent.filter(x => x[1].k === 'bgd').length === 3 && /^ARETACIJA \d+ % · /.test(mid) && H.toasts.includes('Ujel si: Bor'), fates(H) + ' ' + mid);
+  away(H, ca, -50);
+  run(H, 2, () => near(H, cc, 4));
+  check('beg: closer than 5 m (a knock) counts more: caught within 2 s', S.F.get('c').st === 'c' && S.F.get('c').at < 17.8, JSON.stringify({ st: S.F.get('c').st, at: S.F.get('c').at }));
+  run(H, 10.2, () => away(H, cb, 450));
+  const e1 = beg.over(H.race);
+  check('beg: 10 s more than 400 m ahead: got away (far); nobody runs: the end to every phone, the patrol\'s (UJEL SI 2 OD 3), its time', fates(H) === 'a:c c:c b:e:far end' && S.over && e1 && e1.msg === 'UJEL SI 2 OD 3' && Math.abs(H.mp.race.mine - S.F.get('b').at) < 0.2, fates(H) + ' ' + JSON.stringify(e1));
+  const rr = beg.table(H.race), nr = beg.netRes(H.race);
+  check('beg: the results: the patrol (Ujel 2 od 3), who got away, then the caught, the longer the better (Dana before Bor); no win for the patrol', rr.map(r => r.name).join() === 'Ana,Cene,Dana,Bor' && rr[0].res === 'Ujel 2 od 3' && rr[1].res === 'Pobegnil (predaleč)' && /^Ulovljen po /.test(rr[2].res) && nr && !nr.waiting && !nr.win,
+    rr.map(r => r.name + ' ' + r.res).join(' | '));
+  // the other ways away: the 3:00, the finish, a friend gone
+  fresh(); H = mk('h', 'h'); beg.made(H.race, { on: true }); beg.begin(H.race); S = beg.st;
+  H.race.time = 30; H.car('a').finished = true; H.cars.get('b').off = true; for (const id of 'abc') away(H, H.car(id), 100);
+  run(H, 0.1);
+  H.race.time = 179.95; run(H, 0.2);
+  check('beg: over the finish: got away (fin); a friend gone: left, neither; the 3:00 up: got away (time); the end', fates(H) === 'a:e:fin b:left c:e:time end' && S.over && S.caught === 0, fates(H));
+  // the patrol a friend's, gone: the host (running) got away, so did the others
+  fresh(); H = mk('h', 'a'); const d0 = H.P.dist; beg.made(H.race, { on: true }); beg.begin(H.race); S = beg.st;
+  check('beg: the host a fugitive: its own car 150 m up the road, on the asphalt; who drives the patrol (BEŽI PRED PATRULJO!)', S && S.mine === 'run' && Math.abs(H.P.dist - d0 - 150) < 0.3 && Math.abs(H.P.q.d) < T.wS(H.P.q.s) && H.msgs.includes('BEŽI PRED PATRULJO!') && H.toasts.includes('Patruljo vozi Bor.'),
+    JSON.stringify({ gap: +(H.P.dist - d0).toFixed(2), d: H.P.q && +H.P.q.d.toFixed(2) }));
+  H.race.time = 20; H.cars.get('a').off = true; run(H, 0.1);
+  const e2 = beg.over(H.race);
+  check('beg: the patrol gone: everyone got away (pol), mine too (POBEGNIL SI!, my time)', fates(H) === 'h:e:pol b:e:pol c:e:pol end' && e2 && e2.msg === 'POBEGNIL SI!' && Math.abs(H.mp.race.mine - 20.1) < 0.05, fates(H) + ' ' + JSON.stringify(e2));
+  // a fugitive's phone (a): its own meter, the host's fates
+  fresh(); const A = mk('a', 'h'); const a0 = A.P.dist; beg.made(A.race, { on: true }); beg.begin(A.race); S = beg.st;
+  A.race.time = 5; run(A, 0.1);
+  const l1 = A.texts['h-gap'] || '';
+  run(A, 6, () => near(A, A.P, 8));
+  check('beg: a fugitive\'s phone: 150 m up the road, its line (PATRULJA … m), its own meter full (ARETACIJA 100 %) but only the host decides', Math.abs(A.P.dist - a0 - 150) < 0.3 && /^PATRULJA \d+ m · /.test(l1) && S.F.get('a').st === 'run' && /^ARETACIJA 100 % · /.test(A.texts['h-gap'] || '') && !A.sent.length,
+    l1 + ' / ' + A.texts['h-gap'] + ' ' + JSON.stringify({ gap: +(A.P.dist - a0).toFixed(2), st: S.F.get('a').st }));
+  beg.net({ t: 'zb', k: 'bgd', no: 8, id: 'b', st: 'e', at: 30, why: 'far' }, 'h', false, A.race);
+  beg.net({ t: 'zb', k: 'bgd', no: 9, id: 'b', st: 'e', at: 30, why: 'far' }, 'c', true, A.race);
+  const ign = S.F.get('b').st === 'run';
+  beg.net({ t: 'zb', k: 'bgd', no: 9, id: 'b', st: 'e', at: 30, why: 'far' }, 'h', false, A.race);
+  beg.net({ t: 'zb', k: 'bgd', no: 9, id: 'a', st: 'c', at: 42.5, why: '' }, 'h', false, A.race);
+  const e3 = beg.over(A.race);
+  check('beg: the host\'s fates applied (not another race\'s, not a friend\'s): Cene away (said), mine caught (ULOVLJEN!): pulls over, its finish 100000 s less 42.5 s', ign && S.F.get('b').st === 'e' && A.toasts.includes('Pobegnil je: Cene') && e3 && e3.msg === 'ULOVLJEN!' && A.race.isOut(A.P) && Math.abs(A.mp.race.mine - 99957.5) < 1e-6 && A.redraw >= 2,
+    JSON.stringify({ ign, mine: A.mp.race.mine, e3, out: A.race.isOut(A.P) }));
+  const w1 = beg.netRes(A.race);
+  beg.net({ t: 'zb', k: 'bge', no: 9, at: 60 }, 'h', false, A.race);
+  const w2 = beg.netRes(A.race), ra = beg.table(A.race);
+  check('beg: the end arrives: the one still running got away; my part over at once (no waiting), no win; the patrol first in the results', !w1.waiting && !w1.win && S.over && S.F.get('c').st === 'e' && !w2.waiting && !w2.win && ra[0].pol && ra[0].name === 'Ana' && ra[0].res === 'Ujel 1 od 3' && ra[ra.length - 1].me,
+    ra.map(r => r.name + ' ' + r.res).join(' | '));
+  fresh(); delete global.Net; delete global.Core;
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

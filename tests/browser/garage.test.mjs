@@ -82,10 +82,11 @@ try {
     const u = await ui(), calls = await page.evaluate(() => { __garage.advance(0.1); return Garage3D.renderer.info.render.calls; });
     T.check('opens: 11.500 by the gold coin, PICO TURBO on the turntable, the go button "Izberi", Izberi progo at the top (a flag, no words: no track known yet, a chequered one)', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.track === 'Izberi progo' && u.flag, JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
     const L0 = await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), st = r('g-stage'), app = document.getElementById('g-app').getBoundingClientRect(), cr = r('g-cr'), hd = document.querySelector('.g-head').getBoundingClientRect();
-      const pv = r('g-prev'), nx = r('g-next'), go = r('g-go'), nm = r('g-name');
-      return { full: Math.abs(st.top - app.top) < 1 && Math.abs(st.bottom - app.bottom) < 1 && Math.abs(st.width - app.width) < 1, coin: +(cr.width / (hd.width - 28)).toFixed(2), cars: pv.bottom <= go.top && nx.bottom <= go.top && nm.bottom <= pv.top && Math.abs(pv.top - nx.top) < 1 && pv.right < nx.left,
+      const pv = r('g-prev'), nx = r('g-next'), go = r('g-go'), row = document.querySelector('.g-namerow').getBoundingClientRect(), nm = [...document.querySelectorAll('.g-cb .nm')];
+      return { full: Math.abs(st.top - app.top) < 1 && Math.abs(st.bottom - app.bottom) < 1 && Math.abs(st.width - app.width) < 1, coin: +(cr.width / (hd.width - 28)).toFixed(2), cars: pv.bottom <= go.top && nx.bottom <= go.top && Math.abs(pv.top - nx.top) < 1 && pv.right < nx.left,
+        names: nm.map(n => n.textContent), named: nm.every(n => n.textContent.length > 1 && n.textContent !== 'PICO TURBO' && n.scrollWidth <= n.clientWidth + 1), row: row.width <= 1 && row.height <= 1,
         imgs: [...document.querySelectorAll('.g-cb .th img')].length, shift: Garage3D.camera.view ? Garage3D.camera.view.offsetY : 0 }; });
-    T.check('the workshop over the whole page, raised (its picture shifted up), the coins\' button a third of the top, the name over the two cars\' buttons over back and Izberi', L0.full && L0.shift > 30 && L0.coin > 0.3 && L0.coin < 0.37 && L0.cars, JSON.stringify(L0));
+    T.check('the workshop over the whole page, raised (its picture shifted up), the coins\' button a third of the top, the two cars\' buttons (their names in them, the car\'s own only for the ear) over back and Izberi', L0.full && L0.shift > 30 && L0.coin > 0.3 && L0.coin < 0.37 && L0.cars && L0.named && L0.row, JSON.stringify(L0));
     T.check('the worn car shows its wear: dirt and scratches on the paint', u.info.dirt > 0.2 && u.info.scr > 0.2, JSON.stringify(u.info));
     T.check('draw calls of the garage stay modest (< 260)', calls > 20 && calls < 260, calls + ' calls');
     const kept = await page.evaluate(() => Garage3D._dbg.pieces.filter(p => p.g || p.sm).length);
@@ -477,16 +478,20 @@ try {
       ok, JSON.stringify(R));
   }
 
-  // 8c. lying down (640 × 360, 915 × 412): the picture's view taller by how little is free between the page's buttons: the car whole
-  // under the buttons at the top, the maquettes, the SERVICE button and the colour circles in the picture over the car's name
+  // 8c. lying down (640 × 360, 915 × 412; odlocitve 8. 11.: »4«, the cars' buttons at the bottom as upright): the whole garage between
+  // the page's buttons: the regal under the buttons at the top, the car whole, the maquettes, the SERVICE button, the colour circles and
+  // the plan chest's drawers over the cars' buttons (their names in them, whole)
   {
     const R = [];
     for (const [w, h] of [[640, 360], [915, 412]]) {
       await viewport(w, h, 600);
-      R.push(await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), app = document.getElementById('g-app').getBoundingClientRect(), top = r('g-track').bottom - app.top, name = r('g-name').top - app.top;
-        const car = Garage3D.box('car'), b = ['mq0', 'mq1', 'mq2', 'service', 'col0', 'col7'].map(k => Garage3D.box(k));
-        return { car: __garage.S.car, top: Math.round(top), name: Math.round(name), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]),
-          ok: !!car && car.y >= top - 2 && car.y + car.h <= name && b.every(x => x && x.y >= top && x.y + 20 <= name) }; }));
+      R.push(await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), app = document.getElementById('g-app').getBoundingClientRect(), top = r('g-track').bottom - app.top, low = r('g-prev').top - app.top;
+        const car = Garage3D.box('car'), b = ['mq0', 'mq1', 'mq2', 'service', 'col0', 'col7'].map(k => Garage3D.box(k)), d = Garage3D.drawers.els.map(e => Garage3D.box('drw:' + e)), wing = Garage3D.box('rgl:DOUBLE WING');
+        const nm = [...document.querySelectorAll('.g-cb .nm')];
+        return { car: __garage.S.car, top: Math.round(top), low: Math.round(low), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]), wing: wing && Math.round(wing.y),
+          drw: Math.round(Math.max(...d.map(x => x ? x.y + x.h : 1e9))), names: nm.map(n => n.textContent),
+          ok: !!car && car.y >= top - 2 && car.y + car.h <= low && b.every(x => x && x.y >= top && x.y + x.h <= low) && d.every(x => x && x.y + x.h <= low + 2) && !!wing && wing.y + wing.h > top - 4 && wing.y < top + 0.15 * innerHeight
+            && nm.every(n => n.textContent.length > 1 && n.scrollWidth <= n.clientWidth + 1) && !!document.querySelector('.g-namerow') && document.querySelector('.g-namerow').getBoundingClientRect().width <= 1 }; }));
       // (the guide's last step: a ring round each of the buttons for the other cars, its bubble beside them, clear of them)
       R.push(await page.evaluate(() => { __garage.guide(5); const el = document.getElementById('g-guide'), rings = [...el.querySelectorAll('.ring')].map(e => e.getBoundingClientRect()), bub = el.querySelector('.bub').getBoundingClientRect(); __garage.guide(6);
         return { rings: rings.map(r => [Math.round(r.left), Math.round(r.top), Math.round(r.width)]), bub: [Math.round(bub.left), Math.round(bub.top), Math.round(bub.width), Math.round(bub.bottom)], ok: rings.length === 2 && rings.every(r => r.width > 60 && bub.bottom <= r.top) }; }));
@@ -495,7 +500,7 @@ try {
     R.push(await page.evaluate(async () => { __garage.openMenu({ el: 'turbo', key: 'rgl:TURBO' }); const el = document.getElementById('g-menu'); el.classList.add('bot'); await new Promise(r => setTimeout(r, 450));
       const t = new DOMMatrix(getComputedStyle(el).transform), b = el.getBoundingClientRect(); __garage.closeMenu(); return { menu: [t.a, t.f, Math.round(b.bottom), innerHeight], ok: t.a === 1 && t.f === 0 && b.bottom <= innerHeight - 9 }; }));
     await viewport(412, 915, 600);
-    T.check('lying down (640 × 360, 915 × 412): the car whole between the buttons at the top and its name; the maquettes, SERVICE and the colour circles in the picture over the name; the guide\'s rings round the buttons for the other cars, its bubble beside them; a menu at the bottom where it opens', R.every(x => x.ok), JSON.stringify(R));
+    T.check('lying down (640 × 360, 915 × 412): the regal under the buttons at the top, the car whole, the maquettes, SERVICE, the colour circles and the drawers over the cars\' buttons (their names in them); the guide\'s rings round the buttons for the other cars, its bubble beside them; a menu at the bottom where it opens', R.every(x => x.ok), JSON.stringify(R));
   }
 
   // 8d. the zoom (the user's wish, 30. 10.): the mouse's wheel nearer and further, within its bounds (the cabinet still seen, the room's
