@@ -116,19 +116,22 @@
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
-    /* ---- the road: asphalt (resurfaced in sections, darker on the racing line), white edge lines; no kerbs (an old road) ---- */
+    /* ---- the road: asphalt (resurfaced in sections, darker on the racing line), white edge lines and the centre line by the country's
+       rules (World.cesta's crte: white, a dash every 12 m, solid before and through the bends); no kerbs (an old road) ---- */
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const RC = 128, tileL = 8, secT = new Float32Array(N);
+    const RC = 128, tileL = 8, secT = new Float32Array(N), CL = World.cesta ? World.cesta.crte(T, { r: 140, pred: 40 }).at : null;
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 37) * 70), t = 0.9 + crH(k, 5, 37) * 0.15; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
     for (let c0 = 0; c0 < N; c0 += RC) {
-      const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1;
+      const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pc = 0;
       for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
         const i = ii % N, w = T.wAt(i), offs = [-w, -w / 2, 0, w / 2, w], v = ii * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
-        const wl = [0.9, 0.9, 0.86], l = gl.row([Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)], [wl, wl, wl, wl]);
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l;
+        const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)];
+        if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));   // (the centre line's two points, only on the rows it runs over)
+        const l = gl.row(lp, lp.map(() => wl));
+        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
       }
       addM(gr, aMat); addM(gl, lMat);
     }

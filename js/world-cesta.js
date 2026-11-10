@@ -31,21 +31,20 @@
   const WMAX = 12, RLMAX = 12;   // (the profile's ranges: the half width, the racing line's offset; m)
 
   /* ---- the countries' road markings. bela / rumena: the paint (as the builders'); rob: the edge lines' colour; sred: the centre line's
-     (between the two directions); crta: a broken centre line's dash and gap, m (the country's standard for a road outside towns);
-     dvojna: where overtaking is forbidden the centre line is double (else one solid line). Only what the national rules say plainly;
-     a circuit paints its own lines (white edge lines) and has no centre line ---- */
+     (between the two directions); crta: a broken centre line's dash and gap, m (the country's standard for a road outside towns, as far
+     as its public rules say: checked again when a builder first draws by it; so far Italy's only); dvojna: where overtaking is forbidden
+     the centre line is double (else one solid line). A circuit paints its own lines (white edge lines) and has no centre line. Only the
+     countries of the real tracks on main: a new track's country gets its row with the track ---- */
   const BELA = [0.95, 0.95, 0.92], RUMENA = [0.95, 0.74, 0.14];
   const CRTE = {
     'Italija':      { rob: 'bela', sred: 'bela', crta: [4.5, 7.5], dvojna: false },
     'Romunija':     { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },
-    'Slovenija':    { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },
     'Avstrija':     { rob: 'bela', sred: 'bela', crta: [6, 12], dvojna: false },
     'Nemčija':      { rob: 'bela', sred: 'bela', crta: [4, 8], dvojna: false },
     'Belgija':      { rob: 'bela', sred: 'bela', crta: [2.5, 10], dvojna: false },
-    'Rusija':       { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
     'Kitajska':     { rob: 'bela', sred: 'rumena', crta: [4, 6], dvojna: true },
     'Brazilija':    { rob: 'bela', sred: 'rumena', crta: [4, 12], dvojna: true },
-    'Čile':         { rob: 'bela', sred: 'rumena', crta: [5, 7], dvojna: true },
+    'Čile':         { rob: 'bela', sred: 'rumena', crta: [4.5, 7.5], dvojna: true },   // (yellow where it snows, as on the Andes' passes: elsewhere in the country the centre line is white)
     'ZDA':          { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },
     'Kanada':       { rob: 'bela', sred: 'rumena', crta: [3, 6], dvojna: true },
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
@@ -53,7 +52,7 @@
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
-  // the markings of the track's country and where its centre line runs: sred[i] 0 none, 1 a dash, 2 solid (no overtaking: within `pred` m
+  // the markings of the track's country and where its centre line runs: at[i] 0 none, 1 a dash, 2 solid (no overtaking: within `pred` m
   // before a bend tighter than `r` m and through it, both ways, as the lines are for the traffic of both directions). o.sred false: the
   // track has no centre line (a circuit)
   function crte(T, o) {
@@ -61,9 +60,10 @@
     const C = Object.assign({}, CRTE[drzava(T)] || PRIVZETO), N = T.N, ds = T.ds, at = new Uint8Array(N);
     C.barvaRob = (C.rob === 'rumena' ? RUMENA : BELA).slice(); C.barvaSred = (C.sred === 'rumena' ? RUMENA : BELA).slice(); C.drzava = drzava(T);
     if (o.sred !== false) {
-      const r = o.r || 160, pred = o.pred || 50, n = Math.max(1, Math.round(pred / ds)), per = C.crta[0] + C.crta[1], solid = new Uint8Array(N);
+      const r = o.r || 160, pred = o.pred || 50, n = Math.max(1, Math.round(pred / ds)), solid = new Uint8Array(N);
+      const pn = Math.max(2, Math.round((C.crta[0] + C.crta[1]) / ds)), dn = Math.max(1, Math.round(C.crta[0] / ds));   // (in whole samples: a dash runs over dn + 1 of every pn rows)
       for (let i = 0; i < N; i++) if (Math.abs(T.k[i]) > 1 / r) for (let k = -n; k <= n; k++) { const j = T.open ? clamp(i + k, 0, N - 1) : ((i + k) % N + N) % N; solid[j] = 1; }
-      for (let i = 0; i < N; i++) at[i] = solid[i] ? 2 : ((i * ds) % per) < C.crta[0] ? 1 : 0;
+      for (let i = 0; i < N; i++) at[i] = solid[i] ? 2 : (i % pn) <= dn ? 1 : 0;
     }
     C.at = at; return C;
   }

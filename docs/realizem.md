@@ -159,6 +159,42 @@ Vsak od E, S in G ima najprej korak z orodjem in graditeljem (E0, S0, G0), nato 
   - skupne pomočnike uporabljajo tudi testne proge in Great Alpine Road (na odločanju), zanje mora ostati vse enako: nova možnost ali nov graditelj, stara pot nespremenjena;
   - spori v `js/world.js`.
 
+#### E0, prvi kos: obraba asfalta in črte (PR #622, 10. 11. 2026)
+- **Odločitev:** uporabnik 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0« (izjema od mirovanja računa jure.kopac26). Na `main` gre po uporabnikovem »ok« na slikah.
+- **Kaj prinese** (s kamere za avtom):
+  - asfalt ni več enakomerno siv: proge vzdolž ceste (sled finišerja in prometa), prah in pesek ob robovih (barva po tleh države; na dirkališču je pas širši ob robu, kamor avti ne vozijo, na odprti cesti je tudi po sredini), odseki novejšega in starejšega asfalta z ravnim stikom čez cesto (cela širina ali en pas) in velike blede lise;
+  - odprta cesta ima v vsakem pasu temno oljno sled med svetlejšima kolesnicama;
+  - v zaviralnih conah so kaplje olja (dirkališče: ob idealni liniji; cesta: po pasovih);
+  - barva črt je obrabljena: lise, kjer se vidi asfalt, okruški, rahlo umazana;
+  - Livorno dobi sredinsko črto po italijanskih pravilih (bela, prekinjena, pred ovinki in skozi njih polna).
+- **Česa namenoma ni:** temnejše linije vožnje (tema »zgumirana linija«, partyslo, `docs/zgumirana-linija.md`). Krpe, zalite razpoke in guma na idealni liniji dirkališč so od prej (`roadWear` v `js/world.js`) in ostanejo.
+- **Kako:** modul `js/world-cesta.js` (`World.cesta`), ki ga kliče `finish()` v `js/world.js` takoj za `roadWear`. Graditeljev ne spreminja:
+  - mrežja ceste najde po graditeljevem materialu asfalta (`out.asphaltMat`) in UV-jih ceste (u = odmik + polovica širine, v = metri vzdolž, oboje deljeno z 8);
+  - mrežja črt najde po svetlih barvah oglišč na ploskvi ceste, merjeno ob samih mrežjih ceste (zato tudi v nagnjenem ovinku); kjer je v mrežju črt še kaj (žlebovi na Chapman's Peaku), se obrabi samo svetla barva;
+  - vsako tako mrežje dobi kopijo materiala z obrabo v senčilniku; kar si material deli z drugim (boksi, izletne cone), ostane graditeljevo;
+  - podatke o krogu bere senčilnik iz teksture 2048 × 1 (odmik idealne linije, zaviranje iz hitrostnega profila, ton odseka levo in desno, polovica širine), vzorce iz enega šuma 128 × 128;
+  - mokra cesta, sence in lesk asfalta delujejo kot prej (`applyRoad` in `asphaltLook` v `js/render.js` material najdeta po teksturi asfalta).
+- **Proge:** tabela `PROGE` v modulu. Dirkališča: Spa, Nürburg, Štajerska, Bathurst, Montréal. Odprte ceste: Livorno, Tianmen, Rio do Rastro, Chapman's Peak, Bâlea, Los Caracoles. Nova prava proga dobi videz z eno vrstico v `PROGE` (`DIRKA` ali `CESTA` in barva prahu).
+  - Brez videza ostanejo: Pikes Peak (svoja, podrobna cesta; pride v E1), Katu-Jaryk (makadam), Harju (gre v test, ko je Koli na `main`), Suzuka in Irohazaka (zamrznjeni), Medvode in druge proge odprtih PR (vrstico dobijo po združitvi).
+  - Za testne proge in proge na odločanju `World.cesta.finish` takoj vrne: svet je zgrajen kot prej.
+- **Črte po državah:** tabela `CRTE` in `World.cesta.crte(T, { r, pred })` v modulu: barva robne in sredinske črte, dolžina črtice in presledka, ali je polna črta dvojna, in potek sredinske črte po vzorcih proge (`at[i]`: 0 nič, 1 črtica, 2 polna pred ovinkom, ostrejšim od `r`, in skozenj). Dolžine črtic so državni standard za cesto zunaj naselja, kolikor ga povedo javna pravila; ko graditelj po njih prvič riše, se preverijo znova (zdaj po tabeli riše samo Livorno). Pregled 10. 11. 2026:
+
+| Proga | Rob | Sredina | Stanje |
+|---|---|---|---|
+| Livorno, Italija | bela | bela, črtica 4,5 m in presledek 7,5 m, polna enojna | robni črti sta bili, **sredinska je dodana v tem kosu** |
+| Tianmen, Kitajska | bela | rumena | graditelj jo riše, ustreza |
+| Rio do Rastro, Brazilija | bela | rumena, polna dvojna | ustreza |
+| Los Caracoles, Čile | bela | rumena, polna dvojna (rumena, kjer sneži; drugod po državi bela) | ustreza |
+| Chapman's Peak, Južna Afrika | rumena | bela, polna dvojna | ustreza |
+| Bâlea, Romunija | bela | bela | ustreza |
+| Pikes Peak, ZDA | bela | rumena, polna dvojna | ustreza (svoja cesta) |
+| Spa, Nürburg, Štajerska, Montréal, Bathurst | bela | brez (dirkališče) | ustreza; Bathurst je preostanek leta javna cesta, sredinsko črto preverimo v E1 |
+
+- **Telefon** (izmerjeno s `tests/browser/perf.test.mjs`, NIZKA, prej → potem): Spa 181 klicev risanja in 442 tisoč oglišč → enako; Tianmen 146 in 394 → enako; Livorno 141 in 288 → 141 in 289 (sredinska črta v istem mrežju kot robni; na celi progi 15,7 tisoč oglišč več, 1,5 %). Prstni odtisi svetov (`tests/golden/world.json`) so enaki, razen Livorna. Senčilnik ceste prebere 4 teksture več na piko ceste (profil in trikrat šum); gradnja sveta traja ~40–50 ms dlje.
+- **Test:** `tests/browser/cesta.test.mjs` (opis v `tests/README.md`).
+- **Slike prej in potem** (kamera za avtom, levo prej, desno potem, na vsaki progi dva kadra, obrezana na cesto): `docs/realizem/e0-spa.jpg` (dirkališče), `docs/realizem/e0-tianmen.jpg` (odprta cesta), `docs/realizem/e0-livorno.jpg` (sredinska črta: prekinjena na ravnini, polna skozi ovinke).
+- **Kaj od E0 še manjka:** orodje za robove in robnike, stranske ceste iz OSM s križišči in zaporami, kompleti predmetov po državah, Pikes Peak (svoja cesta) in preverba sredinske črte na Bathurstu.
+
 ### S · Stavbe (~21 sej, na `main` za E)
 - **Kaj se spremeni:**
   - Oblika strehe, barve, material in nadstropja pridejo iz OSM (`roof:shape`, `roof:colour`, `building:colour`, `building:material`, `building:levels`).
@@ -343,7 +379,7 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`), E p
 | Korak | Veja / PR | Stanje |
 |---|---|---|
 | Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
-| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | v delu od 10. 11. 2026 (jure.kopac26; odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«); opis v razdelku »E0, prvi kos« |
+| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | končano 10. 11. 2026, PR #622 ostane osnutek do uporabnikovega »ok« na slikah (`docs/realizem/e0-*.jpg`); jure.kopac26, odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«; opis v razdelku »E0, prvi kos« |
 | E0 (ostalo), E1–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
 
 ## Viri
