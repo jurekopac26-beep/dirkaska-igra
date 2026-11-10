@@ -217,7 +217,7 @@ Najboljše poškodbe so v igri že zdaj, a izklopljene (Nastavitve, Razbijanje).
 
 **Začetek:** ko so na `main` #460 in #480 (avti) in deli iz garaže na vseh avtih po meniju #516. #322 je na `main` od 8. 11. Ocena začetka je ~16. 11. pri dveh računih oziroma ~22. 11. pri enem (linija za E).
 
-**Vrstni red:** P1 → P4 → P2 → P5 → P3 → P6, v 4 pull requestih. Predlog razdelitve: P1, P4 + P2, P5 + P3, P6.
+**Vrstni red:** P1 → P4 → P2 → P5 → P3 → P6, **v enem pull requestu skupaj s Trki (#608)** (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); prej 4 pull requesti (P1, P4 + P2, P5 + P3, P6).
 
 | Korak | Kaj | Samo videz (privzeto) | Vklop | Telefon | Seje |
 |---|---|---|---|---|---|
@@ -300,14 +300,14 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 **Razporeditev računov** (odločitev uporabnika 10. 11. 2026 ob ~22.30, prek Mateja, tabla #382, komentar 6779831019; datumi so ocene za `main`, v tedenskem načrtu 16. 11. ga samo še potrdita):
 - **biketraveler, fizika in avti** (odločitve uporabnika 10. 11. 2026 ob ~23.10 »Prestavi na prioritetno«, ob ~23.20 »Garazo daj tudi pod prioritetno« in ob ~23.35 »Poskodbe prestavi pred grafiko«, z izbiro »biketraveler takoj po #480«; vse prek Mateja):
-  1. **Prednost imata Dež in sneg ter garaža**, ki zasedeta obe mesti za seje s kodo. Dež in sneg: Fable 5.2 z eno sejo, na `main` po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih.
-  2. #480 (FORMULA ORKAN in TAIFUN LM) po garaži.
-  3. Poškodbe P1–P6 takoj po #480; ~27. 11. V vrsti za `main` gredo deli Poškodb pred pakete grafike, ko so pripravljeni hkrati.
+  1. **Prednost imata Dež in sneg ter garaža**, ki zasedeta obe mesti za seje s kodo. Na `main` gresta v eni zbirni veji; če uporabnikov »ok« za Dež in sneg zamuja več kot dan, gre garaža sama (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382). Dež in sneg: Fable 5.2 z eno sejo, na `main` po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih.
+  2. #480 (FORMULA ORKAN in TAIFUN LM) po garaži; vanj gre tudi #626 (partyslo), vodi ga biketraveler, ko je #480 pripravljen (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382).
+  3. Poškodbe P1–P6 takoj po #480, **skupaj s Trki (#608) v enem PR** (prej 4 PR) (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); na `main` ~27. 11. V vrsti za `main` gredo deli Poškodb pred pakete grafike, ko so pripravljeni hkrati.
   4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) po Poškodbah; ~30. 11., s tem je 50 avtov.
-  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` ~22. 11.; ocena ni trda, kakovost je pred hitrostjo (odločitev uporabnika 10. 11. 2026 ob ~23.20; Fable 5.2, v Nastavitvah gumbi za možnosti trkov, privzeta najbolj realistična).
+  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` s Poškodbami v enem PR (~27. 11.); ocena ni trda, kakovost je pred hitrostjo (odločitev uporabnika 10. 11. 2026 ob ~23.20; Fable 5.2, v Nastavitvah gumbi za možnosti trkov, privzeta najbolj realistična).
   6. Nato pomoč pri predelavi prog.
 - **jure.kopac26, grafika:**
-  1. #622 (E0, prvi kos) in #638 na `main` zdaj.
+  1. #622 (E0, prvi kos) in #638 na `main` zdaj, nato vse proge v enem PR: #494 v #569, en krog testov (vodi Združevanje jure.kopac26) (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); za njimi #246.
   2. Ned 15. 11.: Samsungov temni način; Killar (#494) na `main` v ponedeljek.
   3. E Cesta in predmeti na vseh pravih progah od 15. 11.; ~22. 11.
   4. S Stavbe ~30. 11., nato predelava prog.
