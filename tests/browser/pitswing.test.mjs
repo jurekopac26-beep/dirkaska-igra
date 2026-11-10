@@ -41,6 +41,10 @@ try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'rbring', damage: 0, radio: 1, fuel: 0, length: 'normal', weather: 'dry', tod: 'day', tower: 1 }, { width: 640, height: 360 }, { touch: true, seed: 5 });
   await startTrack(page, 'rbring');
   await page.evaluate(() => { const F = window.__game.race.fl; if (F) F.scUsed = true; });   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
+  // (four laps, not the track's two, and the call kept until the stop: a way in missed at the end of the first lap (over the lane's line
+  // and back out, where the pit autopilot lets go; a safety car or a penalty on the way: CI runs 1632, 1665, 1675) is taken at the end of
+  // the second; in two laps it had no second try. The laps are read where they are needed, so set after the start, as weather.test.mjs)
+  await page.evaluate(() => { window.__game.race.laps = 4; });
   await toRacing(page);
 
   // 1. a stop: told to come in half way round the first lap; on until a little after its result's message (paused, a quarter of a second at a
@@ -50,13 +54,13 @@ try {
     const g = window.__game, R = g.race, P = R.player, L = R.track.len, M = document.getElementById('h-msg'), out = { msgs: [], in: null, out: null, back: null };
     let last = '', was = false;
     for (let k = 0; k < 1600; k++) {
-      if (P.lap === 1 && P.dist > L * 0.4 && !P.repairN && !P.inPit) P.pitWant = true;
+      if ((P.lap > 1 || P.dist > L * 0.4) && !P.repairN && !P.inPit) P.pitWant = true;
       g.sim(0.25, true); g.hud(0.25); await null;
       // (stuck or the wrong way out on the circuit: put back on the road, like a player tapping Na progo. A rival's knock in a crowd can
       // turn the autopilot's car into a wall; it has no reverse gear and the race rescues only the rivals)
       if (!P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) R.rescue(P);
       if (P.inPit && !was) out.in = { t: +R.time.toFixed(2), pos: P.pos };
-      if (!P.inPit && was) { out.out = { t: +R.time.toFixed(2), pos: P.pos }; P.pitWant = false; }
+      if (!P.inPit && was && P.repairN) { out.out = { t: +R.time.toFixed(2), pos: P.pos }; P.pitWant = false; }   // (out after the stop: not over the line and back out at the way in)
       was = P.inPit;
       if (out.out && !g.pitAuto.st && out.back == null) out.back = +R.time.toFixed(2);
       const txt = M.className.includes('show') ? M.textContent : '';
