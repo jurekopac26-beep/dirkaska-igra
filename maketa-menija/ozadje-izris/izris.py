@@ -172,7 +172,7 @@ def tex_needles(name, base, tip, rng):
     im = Image.new('RGBA', (Wd, Hd), (0, 0, 0, 0)); dr = ImageDraw.Draw(im)
     def needles(x0, y0, x1, y1, ln, col, colt, dens=1.0):
         dx, dy = x1 - x0, y1 - y0; L_ = math.hypot(dx, dy) or 1; ux, uy = dx / L_, dy / L_
-        n = int(L_ / (4.2 * S / dens))
+        n = int(L_ / (2.9 * S / dens))
         for i in range(n):
             t = i / max(n - 1, 1); px, py = x0 + dx * t, y0 + dy * t
             for sgn in (-1, 1):
@@ -181,7 +181,7 @@ def tex_needles(name, base, tip, rng):
                 l = ln * rng.uniform(0.75, 1.15) * (0.75 + 0.35 * (1 - t))
                 c = colt if (t > 0.8 and rng.random() < 0.6) else col
                 j = rng.uniform(0.75, 1.2); cc = tuple(int(min(255, v * j)) for v in c) + (255,)
-                dr.line([(px, py), (px + vx * l, py + vy * l)], fill=cc, width=int(2.4 * S))
+                dr.line([(px, py), (px + vx * l, py + vy * l)], fill=cc, width=int(3.4 * S))
     ax = Wd / 2
     dr.line([(ax, Hd), (ax + 8 * S, 0)], fill=(70, 50, 35, 255), width=int(5 * S))
     y = Hd * 0.97; side = 1
@@ -189,12 +189,12 @@ def tex_needles(name, base, tip, rng):
         t = 1 - y / Hd; ln = Wd * 0.47 * (0.55 + 0.45 * (1 - t)) * rng.uniform(0.8, 1.05)
         ang = math.radians(rng.uniform(38, 58)); ex = ax + side * ln * math.sin(ang); ey = y - ln * math.cos(ang)
         dr.line([(ax, y), (ex, ey)], fill=(80, 60, 40, 255), width=int(3 * S))
-        needles(ax, y, ex, ey, 17 * S, base, tip)
-        for k in range(rng.integers(1, 3)):  # small side twigs on the twig
+        needles(ax, y, ex, ey, 22 * S, base, tip)
+        for k in range(rng.integers(2, 4)):  # small side twigs on the twig
             tt = rng.uniform(0.3, 0.7); bx, by = ax + (ex - ax) * tt, y + (ey - y) * tt; l2 = ln * 0.35
             a2 = math.atan2(ey - y, ex - ax) + side * rng.uniform(0.5, 0.8) * (1 if k % 2 else -1)
-            needles(bx, by, bx + l2 * math.cos(a2), by + l2 * math.sin(a2), 14 * S, base, tip, 0.9)
-        y -= rng.uniform(28, 46) * S; side = -side
+            needles(bx, by, bx + l2 * math.cos(a2), by + l2 * math.sin(a2), 18 * S, base, tip, 0.9)
+        y -= rng.uniform(17, 27) * S; side = -side
     needles(ax, Hd, ax + 8 * S, 0, 18 * S, base, tip)
     im = im.resize((512, 1024), Image.LANCZOS); return save_rgba(im, name)
 
@@ -202,14 +202,14 @@ def tex_leaves(name, cols, rng, shape='oval'):
     S = 2; N = 512 * S
     im = Image.new('RGBA', (N, N), (0, 0, 0, 0)); dr = ImageDraw.Draw(im)
     cx, cy = N / 2, N * 0.98
-    for tw in range(5):
-        ang = math.radians(-90 + rng.uniform(-55, 55)); ln = N * rng.uniform(0.55, 0.85)
+    for tw in range(7):
+        ang = math.radians(-90 + rng.uniform(-60, 60)); ln = N * rng.uniform(0.55, 0.85)
         ex, ey = cx + ln * math.cos(ang), cy + ln * math.sin(ang)
         dr.line([(cx, cy), (ex, ey)], fill=(85, 70, 50, 255), width=3 * S)
         for i in range(int(ln / (22 * S))):
             t = (i + 1) / (ln / (22 * S)); px, py = cx + (ex - cx) * t, cy + (ey - cy) * t
             for sgn in (-1, 1):
-                a = ang + sgn * math.radians(rng.uniform(30, 75)); sz = rng.uniform(26, 44) * S * (1.1 if shape == 'round' else 1.0)
+                a = ang + sgn * math.radians(rng.uniform(30, 75)); sz = rng.uniform(30, 50) * S * (1.1 if shape == 'round' else 1.0)
                 lx, ly = px + math.cos(a) * sz * 0.55, py + math.sin(a) * sz * 0.55
                 c = cols[rng.integers(len(cols))]; j = rng.uniform(0.82, 1.18); cc = tuple(int(min(255, v * j)) for v in c) + (255,)
                 w = sz * (0.62 if shape == 'oval' else 0.85)
@@ -265,9 +265,9 @@ def world():
     out = nt.nodes.new('ShaderNodeOutputWorld')
     tc = nd(nt, 'ShaderNodeTexCoord'); sep = nd(nt, 'ShaderNodeSeparateXYZ'); L(nt, tc.outputs['Generated'], sep.inputs[0])
     z = math_(nt, 'MAXIMUM', sep.outputs[2], 0.0)
-    t = math_(nt, 'POWER', z, 0.42)
+    t = math_(nt, 'POWER', z, 0.3)
     sky = CFG.get('sky', {})
-    hor = tuple(sky.get('horizon', (0.50, 0.66, 0.90))); zen = tuple(sky.get('zenith', (0.030, 0.10, 0.42)))
+    hor = tuple(sky.get('horizon', (0.40, 0.56, 0.86))); zen = tuple(sky.get('zenith', (0.012, 0.05, 0.31)))
     c = mixc(nt, t, hor, zen)
     gnd = mixc(nt, mrange(nt, sep.outputs[2], -0.08, 0.0), (0.05, 0.06, 0.04), hor)
     c = mixc(nt, mrange(nt, sep.outputs[2], -0.002, 0.004), gnd, c)
@@ -467,7 +467,7 @@ def conifer(rng, H, kind):
     mb = MB(); hb = H * P['hb'] * rng.uniform(0.6, 1.6); Rm = H * P['R'] * rng.uniform(0.85, 1.12)
     cylinder(mb, -0.4, H * 0.97, 0.012 * H + 0.12, 0.03, 8, 0)
     # the core (stops the light through the crown)
-    zs = np.linspace(hb + 0.6, H * 0.93, 9); rr = [0.5 * Rm * ((H - z) / (H - hb)) ** P['p'] for z in zs]
+    zs = np.linspace(hb + 0.6, H * 0.93, 9); rr = [0.36 * Rm * ((H - z) / (H - hb)) ** P['p'] for z in zs]
     rings = [ring(z, max(r, 0.05), 10) for z, r in zip(zs, rr)]
     for a_, b_ in zip(rings[:-1], rings[1:]):
         mb.add(np.vstack([a_, b_]), [[i, (i + 1) % 10, 10 + (i + 1) % 10, 10 + i] for i in range(10)], None, 2)
@@ -483,12 +483,14 @@ def conifer(rng, H, kind):
             rad = 0.08 + Lb * ts; dz = Lb * (math.tan(el) * ts - P['droop'] * (1 - (1 - fr) * 0.8) * ts ** 2 + P['up'] * ts ** 4)
             px, py, pz = ux * rad, uy * rad, z + dz
             wd = np.clip(0.55 * Lb, 0.28, 1.25) * (np.sin(np.pi * (0.12 + 0.88 * ts)) ** 0.6 + 0.05)
-            roll = rng.uniform(-0.35, 0.35); sx, sy = -uy * math.cos(roll), ux * math.cos(roll); sz = math.sin(roll)
-            Lv = np.stack([px - sx * wd / 2, py - sy * wd / 2, pz - sz * wd / 2], 1); Rv = np.stack([px + sx * wd / 2, py + sy * wd / 2, pz + sz * wd / 2], 1)
-            verts = np.empty((12, 3)); verts[0::2] = Lv; verts[1::2] = Rv
-            faces = [[2 * i, 2 * i + 1, 2 * i + 3, 2 * i + 2] for i in range(5)]
-            uvs = [[(0, ts[i]), (1, ts[i]), (1, ts[i + 1]), (0, ts[i + 1])] for i in range(5)]
-            mb.add(verts, faces, uvs, 1)
+            r0 = rng.uniform(-0.3, 0.3)
+            for roll in (r0 + 0.75, r0 - 0.75):
+                sx, sy = -uy * math.cos(roll), ux * math.cos(roll); sz = math.sin(roll)
+                Lv = np.stack([px - sx * wd / 2, py - sy * wd / 2, pz - sz * wd / 2], 1); Rv = np.stack([px + sx * wd / 2, py + sy * wd / 2, pz + sz * wd / 2], 1)
+                verts = np.empty((12, 3)); verts[0::2] = Lv; verts[1::2] = Rv
+                faces = [[2 * i, 2 * i + 1, 2 * i + 3, 2 * i + 2] for i in range(5)]
+                uvs = [[(0, ts[i]), (1, ts[i]), (1, ts[i + 1]), (0, ts[i + 1])] for i in range(5)]
+                mb.add(verts, faces, uvs, 1)
             if P['curt'] > 0 and Lb > 0.6 and rng.random() < P['curt'] * 0.8:  # hanging curtain under the branch
                 t2 = ts[2:]; hang = rng.uniform(0.25, 0.5) * min(1.0, Lb / 2)
                 top = np.stack([px[2:], py[2:], pz[2:] - 0.02], 1); bot = top + np.array([0, 0, -hang]) + np.stack([ux * 0.05 * np.ones(4), uy * 0.05 * np.ones(4), np.zeros(4)], 1)
@@ -817,7 +819,7 @@ def vegetation(T, roadC, rtree):
     m_bark = mat_bark('spruce'); m_bark2 = mat_bark(bl)
     m_need = mat_foliage('iglice', img(tn, alpha=True), (1.0, 1.0, 1.0), 0.22)
     m_leaf = mat_foliage('listje', img(tl_, alpha=True), (1.0, 1.0, 1.0), 0.35)
-    m_core = mat_simple('jedro', tuple(lin([0.13, 0.19, 0.10])), 0.9, **{'Specular IOR Level': 0.1})
+    m_core = mat_simple('jedro', tuple(lin([0.09, 0.14, 0.07])), 0.9, **{'Specular IOR Level': 0.1})
     nc = np.array(CFG.get('needle', (46, 74, 36))) / 255 * 0.9; m_need_lod = mat_solid_foliage('iglice-od-dalec', tuple(lin(nc)) + (1,))
     lc = np.array(CFG.get('leaves', [(96, 140, 44)])[0]) / 255 * 0.85; m_leaf_lod = mat_solid_foliage('listje-od-dalec', tuple(lin(lc)) + (1,))
     c0 = src_coll('drevesa0'); c1 = src_coll('drevesa1')
@@ -956,7 +958,7 @@ def render(orient, path):
 
 def post(png, out):
     im = Image.open(png).convert('RGB')
-    im = ImageEnhance.Color(im).enhance(CFG.get('sat', 1.12))
+    im = ImageEnhance.Color(im).enhance(CFG.get('sat', 1.18))
     im = im.filter(ImageFilter.UnsharpMask(radius=1.1, percent=45, threshold=2))
     a = np.asarray(im).astype(np.float32) / 255; h, w = a.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]; r2 = ((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2
