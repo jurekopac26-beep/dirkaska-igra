@@ -897,6 +897,8 @@ window.DR = (function () {
   let FL = null;
   const flyLerp = (a, u) => { const i = Math.min(a.length - 2, Math.max(0, Math.floor(u))), f = Math.min(1, Math.max(0, u - i)); return a[i] * (1 - f) + a[i + 1] * f; };
   const flyRound = (a, u) => { const n = a.length, i = Math.floor(u), f = u - i, j = ((i % n) + n) % n; return a[j] * (1 - f) + a[(j + 1) % n] * f; };   // (round a circuit: no ends)
+  // (an open road in a loop: past its ends it goes straight on, as it runs over its first and its last 48 m)
+  const flyOn = (a, u) => { const m = a.length - 1, q = Math.min(m, 8); return u < 0 ? a[0] + (a[q] - a[0]) / q * u : u > m ? a[m] + (a[m] - a[m - q]) / q * (u - m) : flyLerp(a, u); };
   const flyEase = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   function flyAvg(arr, r, ring) {   // a moving average; near the ends a narrower one, so the ends stay where they are (ring: round a circuit, no ends)
     const n = arr.length, out = new Array(n); for (let i = 0; i < n; i++) { const q = ring ? r : Math.min(r, i, n - 1 - i); let a = 0; for (let k = -q; k <= q; k++) a += arr[((i + k) % n + n) % n]; out[i] = a / (2 * q + 1); } return out;
@@ -935,7 +937,7 @@ window.DR = (function () {
     // at the road's ends; wr: a point's index likewise)
     const m = ring ? Math.max(16, Math.round((b0 - a0) / 6)) : Math.floor((b0 + 0.01 - a0) / 6) + 1, ds = ring ? (b0 - a0) / m : 6;
     for (let j = 0; j < m; j++) { const i = T.idx(a0 + j * ds); pts.push({ x: T.px[i], y: T.hy[i] + 2, z: T.pz[i], d: j * ds, h: T.hy[i] }); }
-    const n = pts.length, sc = Render.scene, at = ring ? flyRound : flyLerp, wr = (i) => ring ? ((i % n) + n) % n : Math.min(n - 1, Math.max(0, i));
+    const n = pts.length, sc = Render.scene, at = ring ? flyRound : o.loop ? flyOn : flyLerp, wr = (i) => ring ? ((i % n) + n) % n : Math.min(n - 1, Math.max(0, i));
     // the route: a flat ribbon 1.5 m over the road, 14 m wide, coloured by the climb, not in the haze; drawn from the start up to the point,
     // in a loop only its trail behind the point (flyTrail)
     const pos = new Float32Array(n * 6), col = new Float32Array(n * 6), nrm = new Float32Array(n * 2), idx = [], gc = new THREE.Color(), G = flyGrades(pts, o.alt, ring);
@@ -967,12 +969,14 @@ window.DR = (function () {
     const px = pts.map(p => p.x), pz = pts.map(p => p.z), st = Math.max(1, o.turn * o.fps), sg = Math.max(1, o.aim * o.fps);
     const runF = !o.loop ? Math.max(2, Math.round(pts[n - 1].d / (o.speed * (1 - o.ease)) * o.fps)) : ring ? Math.max(2, Math.round((b0 - a0) / o.speed * o.fps)) : Math.max(2, Math.round(pts[n - 1].d / o.speed * o.fps) + 1);
     const endF = o.loop ? 0 : Math.max(1, Math.round(o.end * o.fps)), N = runF + endF;
-    // (a circuit in a loop is planned for P frames more either side, the end of the lap before and the start of the lap after: all that is
-    // smoothed over time, the heading, the aim and the camera's height over the land, is then the same at the lap's end as at its start)
-    const P = ring ? Math.ceil(3 * st) + Math.ceil(3 * Math.max(sg, o.fps / 3)) + Math.round(o.fps * 0.6) + 4 : 0, M = N + 2 * P;
+    // (a loop is planned for P frames more either side, so all that is smoothed over time, the heading, the aim and the camera's height over
+    // the land, is not held back at its first and last frames: a circuit's are the end of the lap before and the start of the lap after,
+    // the same at the lap's end as at its start; an open road goes straight on past its ends, flyOn, so its first and last frames have the
+    // camera as it is anywhere along the road)
+    const P = o.loop ? Math.ceil(3 * st) + Math.ceil(3 * Math.max(sg, o.fps / 3)) + Math.round(o.fps * 0.6) + 4 : 0, M = N + 2 * P;
     const U = [], E = [], TH = [];
     for (let j = 0; j < M; j++) {
-      const k = j - P, u = !o.loop ? flyGlide(k / (runF - 1), o.ease) * (n - 1) : ring ? k * n / N : k / (N - 1) * (n - 1), a = ring ? u - rh : Math.max(0, u - rh), b = ring ? u + rh : Math.min(n - 1, u + rh);
+      const k = j - P, u = !o.loop ? flyGlide(k / (runF - 1), o.ease) * (n - 1) : ring ? k * n / N : k / (N - 1) * (n - 1), a = o.loop ? u - rh : Math.max(0, u - rh), b = o.loop ? u + rh : Math.min(n - 1, u + rh);
       U.push(u); E.push(o.loop ? 0 : flyEase(Math.min(1, Math.max(0, (k - runF + 1) / endF)))); TH.push(Math.atan2(at(sz, b) - at(sz, a), at(sx, b) - at(sx, a)));
     }
     for (let k = 1; k < M; k++) { while (TH[k] - TH[k - 1] > Math.PI) TH[k] -= 2 * Math.PI; while (TH[k] - TH[k - 1] < -Math.PI) TH[k] += 2 * Math.PI; }
@@ -981,8 +985,8 @@ window.DR = (function () {
       // (start: over the first `start` seconds the camera comes from nearer, 1 - startK of its distance, height and aim ahead, so the point
       // stays where it is in the picture: where a world's own steep rim behind the start would fill the first pictures; 0, every other
       // flyover: the same camera from the first frame; never on a circuit in a loop)
-      const near = startF ? 1 - o.startK * (1 - flyEase(Math.min(1, k / startF))) : 1;
-      const u = U[k], f = o.ahead * (1 - E[k]) * near, ua = ring ? u + f / ds : Math.min(n - 1, u + f / 6), lift = (1 + 0.6 * E[k]) * near, c = Math.cos(TS[k]), s = Math.sin(TS[k]);
+      const near = startF ? 1 - o.startK * (1 - flyEase(Math.min(1, Math.max(0, k - P) / startF))) : 1;
+      const u = U[k], f = o.ahead * (1 - E[k]) * near, ua = o.loop ? u + f / ds : Math.min(n - 1, u + f / 6), lift = (1 + 0.6 * E[k]) * near, c = Math.cos(TS[k]), s = Math.sin(TS[k]);
       A[0].push(at(px, u) + c * f); A[1].push(at(sy, ua)); A[2].push(at(pz, u) + s * f);
       C[0].push(at(sx, u) - c * o.back * lift); C[1].push(at(sy, u) + o.up * lift); C[2].push(at(sz, u) - s * o.back * lift);
     }
