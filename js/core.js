@@ -6354,33 +6354,40 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      A FALL OVER THE EDGE: THE CAR A RIGID BODY ON THE DRAWN GROUND (Track.floor)
      --------------------------------------------------------------------- */
-  // The user's of 10. 11. 2026 (»Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«): on a track
-  // whose ground beyond the edge the core knows (Track.floor, def.floor: Killar; no other track has one, so every other track's fall is as it
-  // was) a car that goes over the edge (Race._fall) is a rigid body with six degrees of freedom from the step after its middle crossed the
-  // line: a hull of points (its floor at the wheels' height, the belt line, the roof) on the road's platform inside the line, on the platform's
-  // edge and on the drawn ground beyond it (Track.floorAt), under gravity, with contacts that do not bounce and Coulomb friction. It tips about
-  // the edge as its middle passes it, falls, lands, tumbles and slides down the slope and comes to rest where the slope lets it; a hard knock
-  // on the ground damages it where it struck (knock: a dent there, the roof's from above). Then it is put back on the road where it went over
-  // (Race.rescue, as ever). No random number, and all of its state inside c.fall (an object: the race's state lines hold no more than they
-  // did); a car with a semi-trailer falls as it always did (Race._fall's own lines).
+  // The user's of 10. 11. 2026 (»Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«, then »Vrni
+  // tako kot prej po 1,5s«): on a track whose ground beyond the edge the core knows (Track.floor, def.floor: Killar; no other track has one, so
+  // every other track's fall is as it was) a car that goes over the edge (Race._fall) is a rigid body with six degrees of freedom from the step
+  // after its middle crossed the line: a hull of points (its floor at the wheels' height, the belt line, the roof) on the road's platform inside
+  // the line, on the platform's edge and on the drawn ground beyond it (Track.floorAt), under gravity, with contacts that do not bounce and
+  // Coulomb friction. It tips about the edge as its middle passes it, falls, lands, tumbles and slides down the slope; a hard knock on the ground
+  // damages it where it struck (knock: a dent there, the roof's from above). The game shows this for FALL.cap seconds (the old fall's time), then
+  // the car is on the road again where it went over (Race.rescue, as ever), the worse for the old fall's blow at least; left to it for longer
+  // (opts.fallCap: the tests) the body comes to rest where the slope lets it. No random number, and all of its state inside c.fall (an object:
+  // the race's state lines hold no more than they did); a car with a semi-trailer falls as it always did (Race._fall's own lines).
   //   g: gravity (m/s2, the real one, not JUMP_G); mu: the body's friction on the ground; muW: its wheels' along the car while it stands on
   //   them (they roll); sub: substeps a second at least; iters: the solver's rounds; slop, push: the depth left in and the most it is pushed out
-  //   of the ground a substep (m); angD: the turning's damping (1/s); restV, restW, restT: slower than this (m/s, rad/s) for this long (s) it
-  //   lies still; hold: how long it lies before it is put back; cap: the longest fall (s); outT: how long it may fall with no ground known under
-  //   it; reach: how far beyond the line the platform still matters (m); slab: the platform's thickness (m; under it only the drawn ground: a
-  //   bridge's deck); leadW, leadA: the most turn and tilt it has from its leading wheels being over the edge before its middle (rad/s, rad);
-  //   kick: overEdge's push, taken back out (its speed across the edge, its hop, the two numbers of its spin); hitV, dmgK, dmgMax: a knock on the
-  //   ground above this speed (m/s) damages, this much a m/s over it, at most this much a fall; dmgCut: a fall cut short (no ground known under
-  //   it, or the longest fall) has done at least this much, the old fall's fixed blow: it would have gone on down; ht: the hull's height by the
-  //   body (m; 1.32 else)
-  const FALL = { g: 9.81, mu: 0.8, muW: 0.25, sub: 240, iters: 8, slop: 0.01, push: 0.25, angD: 0.05, restV: 0.4, restW: 0.6, restT: 0.4, hold: 0.8, cap: 8, outT: 0.25,
-    reach: 5, slab: 1.5, leadW: 0.8, leadA: 0.12, kick: [4.5, 1.2, 0.6, 0.9], hitV: 3, dmgK: 0.012, dmgMax: 0.5, dmgCut: 0.32,
+  //   of the ground a round (m); angD: the turning's damping (1/s); restV, restW, restT: slower than this (m/s, rad/s) for this long (s) it
+  //   lies still; hold: how long it lies before it is put back; cap: the longest fall (s): the game shows the fall's beginning and puts the car
+  //   back as the old fall did (its 1.6 s; the user's decision of 10. 11. 2026: »Vrni tako kot prej po 1,5s«), a race may ask for a longer one
+  //   (opts.fallCap: the tests, which follow a body to where the ground lets it come to rest); outT: how long it may fall with no ground known
+  //   under it; reach: how far beyond the line the platform still matters (m); slab: the platform's thickness (m; under it only the drawn ground: a
+  //   bridge's deck); deep: how much deeper than its own way there a point may be found in the ground and still be on it (m; deeper, it is under
+  //   that ground: fallTouch); hcK: the centre of mass's height as a part of the hull's, for a model without its own (M.hcg); leadW, leadA: the
+  //   most turn and tilt it has from its leading wheels being over the edge before its middle (rad/s, rad); kick: overEdge's push, taken back out
+  //   (its speed across the edge, its hop, the two numbers of its spin); hitV, dmgK, dmgMax: a knock on the ground above this speed (m/s)
+  //   damages, this much a m/s over it, at most this much a fall; dmgCut: a fall costs at least this much, however it ends: the old fall's fixed
+  //   blow (the game cuts the fall short: the car would have gone on down); ht: the hull's height by the body, for a model without its own (m;
+  //   1.32 else)
+  const FALL = { g: 9.81, mu: 0.8, muW: 0.25, sub: 240, iters: 8, slop: 0.01, push: 0.25, angD: 0.05, restV: 0.4, restW: 0.6, restT: 0.4, hold: 0.8, cap: 1.5, outT: 0.25,
+    reach: 5, slab: 1.5, deep: 0.12, hcK: 0.36, leadW: 0.8, leadA: 0.12, kick: [4.5, 1.2, 0.6, 0.9], hitV: 3, dmgK: 0.012, dmgMax: 0.5, dmgCut: 0.32,
     ht: { formula: 0.98, lm: 1.05, wedge: 1.16, coupe: 1.28, muscle: 1.34, sedan: 1.4, rally: 1.4, hatch: 1.44, ev: 1.46, truck: 1.9 } };
-  const _fbQ = {}, _fbF = {}, _fbK = {}, _fbL = {}, _fbE = {}, _fbG = {}, _fbO = [0, 0, 0], _fbHull = new Map();
-  // the hull of a model, in the car's own axes (x forward, y up, z to the right) from its centre of mass: P its points (the first nW on its floor)
+  const _fbQ = {}, _fbF = {}, _fbK = {}, _fbL = {}, _fbE = {}, _fbG = {}, _fbO = [0, 0, 0], _fbHull = new WeakMap();
+  // the hull of a model, in the car's own axes (x forward, y up, z to the right) from its centre of mass: P its points (the first nW on its floor).
+  // As tall as the model says (M.ht; a kit vehicle as it is drawn: def.look.body.roofY, else def.parts.ht), else as its body is (FALL.ht); its
+  // centre of mass M.hcg up, else FALL.hcK of its height (never under 0.35 m, never over half its height)
   function fallHull(M) {
     let G = _fbHull.get(M); if (G) return G;
-    const L = M.len, W = M.wid, H = M.ht || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || 0.5, 0.35, 0.5 * H), hl = L / 2, hw = W / 2, P = [];
+    const D = M.def, L = M.len, W = M.wid, H = M.ht || (D && ((D.look && D.look.body && D.look.body.roofY) || (D.parts && D.parts.ht))) || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || FALL.hcK * H, 0.35, 0.5 * H), hl = L / 2, hw = W / 2, P = [];
     for (const fx of [-1, -0.5, 0, 0.5, 1]) for (const fz of [-1, -0.5, 0, 0.5, 1]) P.push(fx * hl, -hc, fz * hw);   // (its floor: 25, dense enough for the platform's edge under it)
     const yb = 0.58 * H - hc; for (const [fx, fz] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1], [1, 0], [-1, 0]]) P.push(fx * hl, yb, fz * hw);   // (the belt line: bonnet, boot, the widest part)
     const yr = H - hc, x0 = -0.3 * L, x1 = 0.08 * L, zr = 0.36 * W; for (const [x, z] of [[x0, zr], [x0, -zr], [x1, zr], [x1, -zr], [(x0 + x1) / 2, 0]]) P.push(x, yr, z);   // (the roof)
@@ -6425,8 +6432,8 @@ const Core = (function () {
     const hh = -c.h / 2, B = { G, im: 1 / m, iI: [12 / (m * (G.W * G.W + G.H * G.H)), 12 / (m * (G.L * G.L + G.W * G.W)), 12 / (m * (G.L * G.L + G.H * G.H))],   // (1 / its inertia about its x: roll, y: yaw, z: pitch)
       x: c.x, y, z: c.z, px: c.x, py: y, pz: c.z, q: [0, Math.sin(hh), 0, Math.cos(hh)], pq: [0, 0, 0, 1], hc: G.hc,
       vx, vy, vz, wx: 0, wy: -w, wz: 0, R: new Float64Array(9), C: [], nx, nz, x0: c.x, y0: c.y || 0, z0: c.z, hint: q.i,
-      nc: 0, none: 0, still: 0, lie: 0, out: 0, done: 0, hn: 0, hx: 0, hy: 0, hz: 0, hv: 0, hr: 0, iv: 0, ik: -1, dmg: 0 };
-    for (let i = 0; i < G.n; i++) B.C.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, jn: 0, tx: 0, ty: 0, tz: 0, on: 0, hit: 0, reg: 0 });
+      nc: 0, none: 0, still: 0, lie: 0, out: 0, done: 0, go: 0, ps: 0, lost: 0, hn: 0, hx: 0, hy: 0, hz: 0, hv: 0, hr: 0, iv: 0, ik: -1, dmg: 0 };
+    for (let i = 0; i < G.n; i++) B.C.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, jn: 0, tx: 0, ty: 0, tz: 0, on: 0, hit: 0, reg: 0, un: 0, no: 0 });
     // (the turn and the tilt it starts with: about the edge's own line, its outer side down: the axis up x out)
     const vo = Math.max(0.5, vx * nx + vz * nz), cf = Math.cos(c.h) * nx + Math.sin(c.h) * nz, sf2 = Math.max(0, 1 - cf * cf);
     const l = Math.abs(cf) * (M.a > 0 && M.b > 0 ? (M.a + M.b) / 2 : G.L * 0.3) + Math.sqrt(sf2) * G.W * 0.42, k2 = (cf * cf * (G.L * G.L + G.H * G.H) + sf2 * (G.W * G.W + G.H * G.H)) / 12;
@@ -6455,7 +6462,8 @@ const Core = (function () {
   // the ground at a point of the hull: false above it, else G.d (how deep, along the normal) and its normal. Inside the lines the platform (a slab:
   // FALL.slab; its top the road's own slope, its grade along and its tilt across), a point that came under it from beyond a line pushed back out
   // across that line, not up through the road (c.reg: where the point was last, 0 over the platform, 1 beyond it); beyond a line the drawn ground
-  // (Track.floorAt), and where none is drawn (G.none) on a side with no drop the road's height on (a verge, for a point that came from the road)
+  // (Track.floorAt), and where none is drawn (G.none: no ground known there) on a side with no drop the road's height on (a verge, for a point
+  // that came from the road)
   function fallGround(T, E, x, y, z, G, c) {
     if (E.ok) {
       const dx = x - E.cx, dz = z - E.cz, d = E.d + dx * E.nx + dz * E.nz, ins = d < E.br && -d < E.bl;
@@ -6474,25 +6482,36 @@ const Core = (function () {
     const l = Math.hypot(_fbF.gx, 1, _fbF.gz), d = (_fbF.h - y) / l; if (d < 0) return false;
     G.d = d; G.nx = -_fbF.gx / l; G.ny = 1 / l; G.nz = -_fbF.gz / l; return true;
   }
-  // the hull's points on the ground now (B.C; B.nc how many, B.pen the deepest, B.none how many with no ground known under them)
-  function fallTouch(T, B, E) {
-    const P = B.G.P, R = B.R, C = B.C, G = _fbG; let nc = 0, pen = 0, none = 0;
+  // the hull's points on the ground now (B.C; B.nc how many, B.pen the deepest, B.none how many with no ground known under them). A point found
+  // deeper in the ground than it can have come since it was last looked at (its depth then, FALL.deep, what the body has been pushed out by
+  // since: B.ps, and its own way in h seconds) did not come through that ground's top: it is under it (c.un: where the platform as the body's
+  // middle sees it gives way to the drawn ground, at a hole in what is drawn or at its end, under a bridge's deck) and is not on it until it has
+  // been free of it, so a body is never thrown up or aside by ground it is already inside. A point that was over ground the track does not
+  // know when last looked at (c.no) and is under known ground now has come back from there below it: the fall is over (B.lost). The fall's
+  // first look takes every point as it finds it (B.go)
+  function fallTouch(T, B, E, h) {
+    const P = B.G.P, R = B.R, C = B.C, G = _fbG, lim = B.go ? FALL.deep + B.ps : 1e9; let nc = 0, pen = 0, none = 0;
     for (let i = 0, n = B.G.n; i < n; i++) {
       const c = C[i], lx = P[3 * i], ly = P[3 * i + 1], lz = P[3 * i + 2];
       c.rx = R[0] * lx + R[1] * ly + R[2] * lz; c.ry = R[3] * lx + R[4] * ly + R[5] * lz; c.rz = R[6] * lx + R[7] * ly + R[8] * lz;
       G.none = false;
-      if (fallGround(T, E, B.x + c.rx, B.y + c.ry, B.z + c.rz, G, c)) { c.on = 1; c.d = G.d; c.nx = G.nx; c.ny = G.ny; c.nz = G.nz; c.jn = 0; c.tx = c.ty = c.tz = 0; nc++; if (G.d > pen) pen = G.d; }
-      else { c.on = 0; if (G.none) none++; }
+      let on = fallGround(T, E, B.x + c.rx, B.y + c.ry, B.z + c.rz, G, c);
+      if (!on) c.un = 0;
+      else if (c.un || G.d > (c.on ? c.d : 0) + lim + h * Math.hypot(B.vx + B.wy * c.rz - B.wz * c.ry, B.vy + B.wz * c.rx - B.wx * c.rz, B.vz + B.wx * c.ry - B.wy * c.rx)) { if (c.no && !c.un) B.lost = 1; c.un = 1; on = false; }
+      if (on) { c.on = 1; c.d = G.d; c.nx = G.nx; c.ny = G.ny; c.nz = G.nz; c.jn = 0; c.tx = c.ty = c.tz = 0; nc++; if (G.d > pen) pen = G.d; }
+      else c.on = 0;
+      if (G.none) { none++; c.no = 1; } else c.no = 0;
     }
-    B.nc = nc; B.pen = pen; B.none = none;
+    B.nc = nc; B.pen = pen; B.none = none; B.ps = 0; B.go = 1;
   }
   // a substep of h seconds: gravity; the contacts (sequential impulses: no approach into the ground, friction against the slide up to mu times
   // the push; a point's first touch at more than FALL.hitV is a knock, the step's hardest kept in B.iv, B.ik); the pose; out of the ground along
-  // the deepest point's normal; then whether it lies still, has no ground under it, or has fallen long enough (B.done: 1 at rest, 2 out, 3 the cap)
+  // the deepest point's normal (up to four rounds of FALL.push at most; B.ps: the last round's, for fallTouch's next look); then how long it has
+  // lain still (B.still, B.lie: stopped dead once it has been slow for FALL.restT) and how long most of it has had no ground known under it (B.out)
   function fallSub(T, B, E, h) {
     const C = B.C, im = B.im, n = B.G.n, O = _fbO;
     B.vy -= FALL.g * h; const ad = Math.max(0, 1 - FALL.angD * h); B.wx *= ad; B.wy *= ad; B.wz *= ad;
-    fallRot(B); fallTouch(T, B, E);
+    fallRot(B); fallTouch(T, B, E, 0);
     const R = B.R, up = R[4];   // (its own up along the world's: on its wheels near 1)
     if (B.nc) for (let it = 0; it < FALL.iters; it++) for (let i = 0; i < n; i++) {
       const c = C[i]; if (!c.on) continue;
@@ -6521,26 +6540,29 @@ const Core = (function () {
     Q[3] = qw - hx * qx - hy * qy - hz * qz; Q[0] = qx + hx * qw + hy * qz - hz * qy; Q[1] = qy - hx * qz + hy * qw + hz * qx; Q[2] = qz + hx * qy - hy * qx + hz * qw;
     const ql = 1 / Math.hypot(Q[0], Q[1], Q[2], Q[3]); Q[0] *= ql; Q[1] *= ql; Q[2] *= ql; Q[3] *= ql;
     for (let p = 0; p < 4; p++) {
-      fallRot(B); fallTouch(T, B, E); if (!(B.pen > FALL.slop)) break;
+      fallRot(B); fallTouch(T, B, E, p ? 0 : h); if (!(B.pen > FALL.slop)) break;
       let b = null; for (let i = 0; i < n; i++) { const c = C[i]; if (c.on && (!b || c.d > b.d)) b = c; }
-      const m = Math.min(FALL.push, b.d - FALL.slop * 0.5); B.x += b.nx * m; B.y += b.ny * m; B.z += b.nz * m;
+      const m = Math.min(FALL.push, b.d - FALL.slop * 0.5); B.x += b.nx * m; B.y += b.ny * m; B.z += b.nz * m; B.ps = m;
     }
     const sp = Math.hypot(B.vx, B.vy, B.vz), wl = Math.hypot(B.wx, B.wy, B.wz);
     if (B.nc && sp < FALL.restV && wl < FALL.restW) { B.still += h; if (B.still >= FALL.restT) { B.lie += h; B.vx = B.vy = B.vz = B.wx = B.wy = B.wz = 0; } } else { B.still = 0; B.lie = 0; }
     if (B.none > n * 0.5) B.out += h; else B.out = 0;   // (most of it over ground the track does not know: no further)
   }
+  // the time a car's last step covered: the step's own, or under LOD (a far rival worked out every k-th step) what Race._lodPlan kept of it
+  function fallLast(race, c, dt) { const L = race._lod; if (!L || !L.on) return dt; const d = L.pd[race.cars.indexOf(c)]; return d > 0 ? d : dt; }
   // a step of a falling car's body (Race._fall on a track with Track.floor; the first makes it: fallStart): its substeps, the car's own numbers
   // from the body (where it is and how it moves, for all that looks at a car: the camera, the map, the sound; its heading its nose's, c.y its
   // centre less the centre's height, c.roadY with it), the step's hardest knock on the ground as damage where it struck (B.hn counts them: the
-  // game's sound and shake, the renderer's dust; no wall was hit: c.hitWall as it was), and its end: at rest for FALL.hold, no ground known under
-  // it for FALL.outT or FALL.cap seconds, then on the road again where it went over (race.rescue; c.q stayed there: Race.step's progress leaves a
-  // falling body alone)
+  // game's sound and shake, the renderer's dust; no wall was hit: c.hitWall as it was), and its end (B.done): 1 at rest for FALL.hold, 2 no ground
+  // known under it for FALL.outT (or back under the known ground from where none is: B.lost), 3 the longest fall (FALL.cap, the game's; a race's
+  // own opts.fallCap). Then the fall has cost FALL.dmgCut at least and the car is on the road again where it went over (race.rescue; c.q stayed
+  // there: Race.step's progress leaves a falling body alone)
   function fallBody(race, c, F, dt) {
-    const T = race.track, B = F.b || (F.b = fallStart(T, c, F, dt)), E = _fbE;
+    const T = race.track, B = F.b || (F.b = fallStart(T, c, F, fallLast(race, c, dt))), E = _fbE;
     c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y; B.px = B.x; B.py = B.y; B.pz = B.z; B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
     const n = Math.max(1, Math.ceil(dt * FALL.sub - 1e-9)), h = dt / n;
     fallEdge(T, B, E); B.iv = 0; B.ik = -1;
-    for (let k = 0; k < n && !B.done; k++) { fallSub(T, B, E, h); if (B.lie >= FALL.hold) B.done = 1; else if (B.out >= FALL.outT) B.done = 2; else if (F.t >= FALL.cap) B.done = 3; }
+    for (let k = 0; k < n && !B.done; k++) { fallSub(T, B, E, h); if (B.lie >= FALL.hold) B.done = 1; else if (B.out >= FALL.outT || B.lost) B.done = 2; else if (F.t >= (race.opts.fallCap || FALL.cap)) B.done = 3; }
     const R = B.R; fallRot(B);
     c.x = B.x; c.z = B.z; c.y = c.roadY = B.y - B.hc; c.vx = B.vx; c.vy = B.vy; c.vz = B.vz; c.w = -B.wy; c.air = 1;
     if (R[0] * R[0] + R[6] * R[6] > 0.09) c.h = Math.atan2(R[6], R[0]);
@@ -6549,7 +6571,7 @@ const Core = (function () {
       B.hn++; B.hv = B.iv; B.hr = roof ? 1 : 0; B.hx = B.x + R[0] * lx + R[1] * ly + R[2] * lz; B.hy = B.y + R[3] * lx + R[4] * ly + R[5] * lz; B.hz = B.z + R[6] * lx + R[7] * ly + R[8] * lz;
       if (amt > 0) { B.dmg += amt; if (roof && c.dmgMode && !c.pitG) { if (c.dents.length < 24) c.dents.push({ lx, lz, amt: 0.1, top: 1 }); c.roofDmg = Math.min(1, c.roofDmg + 0.3); knock(c, amt); } else knock(c, amt, lx, lz); }
     }
-    if (B.done) { if (B.done > 1 && B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); }
+    if (B.done) { if (B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); }
   }
   class Race {
     constructor(track, opts) {
@@ -7921,7 +7943,8 @@ const Core = (function () {
       r.from = from; r.to = to; r.box = n0 === cur && (to === cur || now.length > 0);
       return r;
     }
-    // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one); ow: the steps since a
+    // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one; pd: the time the step
+    // before that covered, for what reads a car's last move: fallLast); ow: the steps since a
     // car's last one, ex: how far one between its steps has gone on since (its speed over them). Null in any other race. The player, the cars
     // on the grid, in or for the pits, falling, rolling, in the air, retired or held by the marshals: the full rate. The safety car on the
     // track (driven every step, it touches every car): the full rate within LOD.r m of it as well; the queue further back as any other far car
@@ -7930,8 +7953,8 @@ const Core = (function () {
     _lodPlan(dt) {
       const cars = this.cars, P = this.player, n = cars.length;
       if (LOD.off || n <= LOD.min || !P || this.remotes.length || this.timeTrial || this.pol || this.tf) { if (this._lod) this._lod.on = false; return null; }
-      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n) });
-      L.n++; L.on = true; L.h = dt;
+      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n), pd: new Float64Array(n) });
+      const was = L.on; L.n++; L.on = true; L.h = dt;
       const go = this.state === 'racing', X = this.fl && this.fl.sc && this.fl.sc.car;   // (X: the safety car on the track)
       for (let i = 0; i < n; i++) {
         const c = cars[i]; let k = 1;
@@ -7940,7 +7963,7 @@ const Core = (function () {
           if ((g > LOD.a || g < -LOD.b) && d2 > LOD.r * LOD.r && sx * sx + sz * sz > LOD.r * LOD.r) k = Math.abs(g) > LOD.r2 && d2 > LOD.r2 * LOD.r2 ? LOD.k2 : LOD.k;
         }
         L.kk[i] = k; L.owe[i] += dt;
-        if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)
+        if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.pd[i] = was ? L.dt[i] : 0; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)
         else { L.st[i] = 0; L.ow[i]++; L.ex[i] = L.ow[i] * dt * c.speed; }
       }
       return L;
