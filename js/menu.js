@@ -267,12 +267,16 @@
   function splitMarks(pts) {   // a rally stage (a circuit: its sectors): the two split times at a third and two thirds of it
     return [1, 2].map(k => { const p = pts[Math.round((pts.length - 1) * k / 3)]; return '<g class="sp" transform="translate(' + p[0] + ' ' + p[1] + ')"><rect x="-15" y="-15" width="30" height="30" rx="6"/><text y="6" text-anchor="middle">S' + k + '</text></g>'; }).join('');
   }
+  // a video of the track screen or of the flight before a race (assets/maps/: fly-, corner-, heli-<id>.webm). A pull request's preview on the
+  // site (beta/<number>/, tools/predogled.mjs) has no copy of a video that is the same file as main's: MENU.mainVideos, written by that tool,
+  // names those files and the way to the site's root, and main's own plays (tests/predogled.test.js)
+  const vidSrc = (f) => { const V = D.mainVideos; return (V && V.files && V.files.indexOf(f) >= 0 ? V.root : '') + 'assets/maps/' + f; };
   function flyView(t, lockd) {
-    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="assets/maps/fly-' + t.id + '.webm"></video><div class="flab" aria-hidden="true"></div></div>';
+    return '<div class="dio fly' + (lockd ? ' lock' : '') + '" data-route="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/fly-' + t.id + '.webp" src="' + vidSrc('fly-' + t.id + '.webm') + '"></video><div class="flab" aria-hidden="true"></div></div>';
   }
   const hasCorner = (t) => !!t && (D.corners || []).includes(t.id);
   function cornerView(t, lockd) {
-    return '<div class="dio corner' + (lockd ? ' lock' : '') + '" data-corner="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/corner-' + t.id + '.webp" src="assets/maps/corner-' + t.id + '.webm" aria-label="' + esc(D.cams[2].name) + ': ' + esc(t.name) + '"></video></div>';
+    return '<div class="dio corner' + (lockd ? ' lock' : '') + '" data-corner="' + t.id + '"><video muted loop playsinline preload="auto" poster="assets/maps/corner-' + t.id + '.webp" src="' + vidSrc('corner-' + t.id + '.webm') + '" aria-label="' + esc(D.cams[2].name) + ': ' + esc(t.name) + '"></video></div>';
   }
   // camera 3: its video plays from the start (the poster, its first frame, shows until it can)
   function cornerOn() {
@@ -1387,7 +1391,7 @@
     el.innerHTML = '<div class="ix-head2' + (over ? ' over' : '') + '" style="' + (side ? 'left:' + Math.round(cr.x) + 'px;height:' + Math.round(cr.y) + 'px' : over ? '' : 'height:' + Math.round(rect.y) + 'px') + '"><div class="ix-name">' + flagSvgOf(country) + '<h2>' + esc(t.name) + (country ? '<small>' + esc(country) + '</small>' : '') + '</h2></div>' +
       '<div class="ix-ctl"><button class="ix-mus" data-ix="music" aria-pressed="' + (setting('music') === 0) + '" aria-label="' + esc(D.intro.music) + '">' + SPK(setting('music') === 0) + '</button><button class="ix-skip" data-ix="skip">' + esc(D.intro.skip) + I.chev + '</button></div></div>' +
       '<div class="ix-v ix-stage' + (globe ? ' jon' : '') + (over ? ' hd' : '') + '" style="left:' + rect.x + 'px;top:' + rect.y + 'px;width:' + rect.w + 'px;height:' + rect.h + 'px">' +
-        '<video muted playsinline preload="auto" poster="assets/maps/heli-' + t.id + '.webp" src="assets/maps/heli-' + t.id + '.webm"></video>' + (globe && from ? introMap(from) : '') +
+        '<video muted playsinline preload="auto" poster="assets/maps/heli-' + t.id + '.webp" src="' + vidSrc('heli-' + t.id + '.webm') + '"></video>' + (globe && from ? introMap(from) : '') +
         '<div class="ix-pins" aria-hidden="true"></div><div class="ix-summit" aria-live="polite"><b></b><small></small></div></div>' +
       '<div class="card ix-card" style="left:' + cr.x + 'px;top:' + cr.y + 'px;width:' + cr.w + 'px"><p class="ix-what">' + esc(what.toUpperCase()) + '</p><div class="ix-specs">' + specsOf(t).map(s => '<div><small>' + esc(s[0]) + '</small><b>' + esc(s[1]) + '</b></div>').join('') + '</div>' +
         '<div class="ix-lay"></div><div class="ix-pwrap"></div></div>';

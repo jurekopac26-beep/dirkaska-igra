@@ -5,6 +5,9 @@
 // stamped from its own files (?v=… on its pages' links, tools/stamp.js: the repository's pages carry none). A preview that cannot be stamped
 // complete (a link to a missing file) is left out; main that cannot be stops the build, and the site stays as it was. A preview that would
 // take the whole site over LIMIT is left out too (in that order: the ones after it still go in if they fit); the log gives each tree's size.
+// A preview carries no second copy of the menu's videos (the flyovers, the corners' videos, the helicopter's flights: ~93 MB a tree): a video
+// that is the same file as main's is left out of it and its menu plays main's own from the site's root (tools/predogled-posnetki.js); a video
+// the pull request adds or changes stays in its preview, and a preview of a branch from before this keeps them all.
 //   node tools/predogled.mjs <site folder>                (the pull requests from gh pr list: GH_TOKEN, GITHUB_REPOSITORY)
 //   node tools/predogled.mjs <site folder> --prs <file>   (the list as gh pr list --json number,title,headRefName,headRefOid,isCrossRepository,updatedAt,labels gives it)
 //   … --limit <MB>                                        (another limit than LIMIT, e.g. to see a preview left out on a short list)
@@ -12,9 +15,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+
+const { shareVideos } = createRequire(import.meta.url)('./predogled-posnetki.js');
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-const MAX = 3;   // (each preview ~200 MB, mostly assets/; main in the root ~210 MB)
+const MAX = 3;   // (each preview ~200 MB, mostly assets/, ~93 MB less where its videos are main's; main in the root ~210 MB)
 // MB for the whole site (main and the previews; MB: 2^20 bytes): GitHub Pages publishes a site up to 1 GB, the rest is room for the archive's own
 // overhead (9. 11. 2026: 3 previews and main with maketa-menija/ made an artifact of ~940 MB, with the 22 new tracks of #569 it would be ~1.2 GB)
 const LIMIT = 950;
@@ -70,6 +76,7 @@ for (const p of shown) {
     run('git', ['fetch', '--quiet', '--depth=1', 'origin', `pull/${p.number}/head`], { stdio: ['ignore', 'inherit', 'inherit'] });
     const sha = run('git', ['rev-parse', 'FETCH_HEAD']).trim();
     unpack(sha, dir, (n) => GAME.includes(n));
+    const shared = shareVideos(site, dir);   // (before the size and the stamps: js/menu-data.js gets the list of main's videos)
     const bytes = size(dir);
     if (total + bytes > limit) {
       fs.rmSync(dir, { recursive: true, force: true }); big.push(Object.assign({ bytes }, p));
@@ -79,7 +86,8 @@ for (const p of shown) {
     stamp(dir);
     total += bytes;
     built.push(Object.assign({ sha, bytes }, p));
-    console.log(`#${p.number} ${p.headRefName} (${sha.slice(0, 7)}) → beta/${p.number}/ (stamped, ${mb(bytes)})`);
+    console.log(`#${p.number} ${p.headRefName} (${sha.slice(0, 7)}) → beta/${p.number}/ (stamped, ${mb(bytes)}` +
+      (shared.files.length ? `; ${shared.files.length} video(s) played from main, ${mb(shared.bytes)} less` : '') + ')');
   } catch (e) {
     fs.rmSync(dir, { recursive: true, force: true }); failed.push(p);
     console.log(`#${p.number}: not built (${String(e.message).split('\n')[0]})`);
