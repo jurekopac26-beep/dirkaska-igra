@@ -77,8 +77,8 @@ Načrt za 8 novih prog iz predstavitve »60 kratkih prog«: 7 iz prvega seznama 
 2. **Recept raste:** ob koncu seje 3–5 vrstic v Recept (kaj se je obneslo, česa ne, pripombe uporabnika). Recept ostane kratek (do ~1 stran), ni dnevnik.
 3. **Stanje v tem dokumentu:** vsaka seja ob koncu posodobi Stanje in zažene naslednjo z enim stavkom (razdelek Zagon naslednje seje). Koordinacijska seja dela ne spremlja; samo zažene naslednjo sejo, ko jo obvestiš.
 4. **Preizkus brez čakanja:** GitHub naredi predogled (`beta/<številka PR>/`, `tools/predogled.mjs`) in posnetke pred/po (`posnetki.yml`). Seja na uporabnika ne čaka; če pošlje pripombe, gredo v Recept in v popravek.
-5. **Pregled pred združitvijo (seja B):** Seznam pravil (spodaj); primerjava igre s fotografijami z istih 4–6 mest ob cesti (spodnja meja kakovosti: Bathurst po PR #210); en kratek neodvisen pregled s podagentom, ki dobi samo spremembe te proge in pravila, ne celega repozitorija.
-6. **Brez praznega čakanja:** dolgi testi tečejo v ozadju, pull request seja spremlja z obvestili GitHuba (`subscribe_pr_activity`), brez zank s `sleep`. Za iskanje po kodi kazalo in grep, ne podagenti.
+5. **Pregled pred združitvijo (seja B):** Seznam pravil (spodaj); primerjava igre s fotografijami z istih 4–6 mest ob cesti (spodnja meja kakovosti: Bathurst po PR #210); neodvisen pregled z agenti, ki proge niso pisali (neodvisno preverjanje pred združitvijo, `CLAUDE.md`, Seje: »Proge in grafika«; brez ultracode), ki dobijo samo spremembe te proge in pravila, ne celega repozitorija.
+6. **Brez praznega čakanja:** dolgi testi tečejo v ozadju, pull request seja spremlja z obvestili GitHuba (`subscribe_pr_activity`), brez zank s `sleep`. Za iskanje po kodi kazalo in grep, ne podagenti (delovni tokovi z več agenti so za raziskavo, izdelavo in pregled proge).
 
 ## Seja A (izdelava)
 1. Veja `nove-proge/<id>` (iz svežega `main`; seja 1A iz veje s tem načrtom, glej Stanje).
@@ -99,7 +99,7 @@ Načrt za 8 novih prog iz predstavitve »60 kratkih prog«: 7 iz prvega seznama 
 Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, kot PR #201) za vseh 8 prog, en pull request, združi ga sama, ko so zeleni vsi testi na GitHubu. Konec verige: uporabniku kratek seznam za preizkus na telefonu (vseh 8 prog in kaj pogledati).
 
 ## Zagon naslednje seje
-Nastavitve nove seje (`create_session`, claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5`, `tags` `["nove-proge"]`, `prompt` en stavek:
+Nastavitve nove seje (`create_session`, claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5` (ena seja brez več agentov; odločitev uporabnika 10. 11. 2026 ob ~00.57, `CLAUDE.md`, Seje: »Proge in grafika«; 9. in 10. 11. `claude-fable-5-2` z besedo »ultracode«), `tags` `["nove-proge"]`, `prompt` en stavek:
 - **A → B iste proge:** `source_revision` in `outcome_branch` `nove-proge/<id>`; »Naredi sejo <N>B po docs/nove-proge.md (veja nove-proge/<id>, PR #<št>).«
 - **B → A naslednje proge** (po združitvi): `source_revision` `main`, `outcome_branch` `nove-proge/<naslednji id>`; »Naredi sejo <N+1>A po docs/nove-proge.md.«
 - **8B → 9:** `source_revision` `main`, `outcome_branch` `nove-proge/meni`; »Naredi sejo 9 po docs/nove-proge.md.«
