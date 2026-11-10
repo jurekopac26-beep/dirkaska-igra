@@ -4495,6 +4495,9 @@ const Core = (function () {
   const TF_ROW = 0.95, TF_COL = 0.6, TF_PACE = 2.6;   // m: a group on foot, the rows (two abreast) and the two side by side; a group of cyclists, one behind the other
   const TF_DOGS = [0x3a2414, 0x8a5a2b, 0xd8b070, 0x1a1a1a, 0xe8e4dc, 0x6b6b6b, 0xb04a1c];   // a dog's coat (the game draws it)
   const tfSide = (T) => (T.def.leftHand ? -1 : 1);   // the side the traffic keeps to: 1 the right (uphill on the right half), -1 the left
+  // a race car in the patrol car's look, in the chase (online, beg s prijatelji, docs/novosti-e.md): its lights and siren (the game:
+  // polGear, roadSound), the traffic pulls over for it (Traffic._siren); driven by its player, not by the Police
+  function patrolCar(c) { c.police = true; c.pol = { mode: 'chase', kind: 'car', t: 0 }; return c; }
   const tfHash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };   // (0..1 by an id: no draw of the traffic's random numbers)
   class Traffic {
     constructor(race, dens) {
@@ -4656,7 +4659,7 @@ const Core = (function () {
 
     step(dt) {
       const race = this.race, cl = this.cl; cl.length = 0;
-      for (const c of race.cars) if (!c.net) { cl.push(c); if (c.tl && !c.tl.fall && c.tl.q.i >= 0) cl.push(c.tl); const R2 = c.tl && c.tl.next; if (R2 && !R2.fall && R2.q.i >= 0) cl.push(R2); }   // (a semi-trailer as a race car of its own: followed, run into, kept clear of)
+      for (const c of race.cars) if (!c.net) { cl.push(c); if (c.tl && !c.tl.fall && c.tl.q.i >= 0) cl.push(c.tl); const R2 = c.tl && c.tl.next; if (R2 && !R2.fall && R2.q.i >= 0) cl.push(R2); } else if (this.net) cl.push(c);   // (a semi-trailer as a race car of its own: followed, run into, kept clear of) (online, beg s prijatelji (net): the friends' cars too, as their phones send them: the traffic makes way for them, pulls over for the friend's patrol car, they knock it; it never moves them)
       if (race.pol) for (const c of race.pol.cars) cl.push(c);
       this.t += dt;
       if (this.win) this._winStep();
@@ -4936,7 +4939,7 @@ const Core = (function () {
     // bodies. A vehicle knocked by more than ~1.4 m/s (a bicycle or a motorbike by any real knock) comes loose; the car takes damage as
     // from another car (more from a bus, less from a bicycle)
     _hitVeh(c, v) {
-      if (c.ck) return this._hitVehP(c, v);   // (the run from the police: the contacts as in GTA, CRASH)
+      if (c.ck && !c.net) return this._hitVehP(c, v);   // (the run from the police: the contacts as in GTA, CRASH)
       const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
       const cha = Math.cos(c.h), sha = Math.sin(c.h), chb = Math.cos(v.h), shb = Math.sin(v.h), nb = Math.max(2, Math.round(v.len / v.wid)), rb = v.wid / 2;
       let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
@@ -4946,7 +4949,7 @@ const Core = (function () {
       if (best <= 0 || v.nc > 0) return 0;
       if (this.win && c === this.race.player) this.win.hit++;   // (the endless drive: any touch ends it, Endless)
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = c.m.mass, mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
+      const ma = c.m.mass, mb = v.mass, ia = c.net ? 0 : 1 / ma, ib = 1 / mb, tot = ia + ib;   // (a friend's car online: its own phone moves it; here it is as heavy as a wall, the vehicle takes all of it)
       c.x += bnx * best * ia / tot; c.z += bnz * best * ia / tot;
       if (v.st !== 0) { v.x -= bnx * best * ib / tot; v.z -= bnz * best * ib / tot; }
       else { const f = best * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
@@ -4954,15 +4957,15 @@ const Core = (function () {
       const vax = c.vx - c.w * raz, vaz = c.vz + c.w * rax, vbx = v.vx - v.w * rbz, vbz = v.vz + v.w * rbx;
       const vrel = (vax - vbx) * bnx + (vaz - vbz) * bnz; if (vrel >= 0) return 0;
       const Ib = mb * (v.len * v.len + v.wid * v.wid) / 12, rna = rax * bnz - raz * bnx, rnb = rbx * bnz - rbz * bnx;
-      const J = -1.25 * vrel / (ia + ib + rna * rna / c.I * 0.6 + rnb * rnb / Ib);
+      const J = -1.25 * vrel / (ia + ib + (c.net ? 0 : rna * rna / c.I * 0.6) + rnb * rnb / Ib);
       c.vx += J * bnx * ia; c.vz += J * bnz * ia;
-      if (!c.air) c.csKc = clamp(c.csKc + rna * J / c.I * CSK.tapT, -CSK.tapMax, CSK.tapMax);
+      if (!c.air && !c.net) c.csKc = clamp(c.csKc + rna * J / c.I * CSK.tapT, -CSK.tapMax, CSK.tapMax);
       const imp = -vrel, dvb = J * ib;
       if (v.st === 0 && (dvb > 1.4 || (v.kind >= 3 && dvb > 0.6))) { this._knock(v); v.w = 0; if (v.kind >= 3) this._throwRider(v, c.vx, c.vz, c); }
       if (v.st === 1) { v.vx -= J * bnx * ib; v.vz -= J * bnz * ib; v.w -= rnb * J / Ib; }
       else { const tx = this.T.tx[v.i], tz = this.T.tz[v.i]; v.v = Math.max(0, v.v - (J * bnx * ib * tx + J * bnz * ib * tz) * v.dir); }
       c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = bpx; c.contactZ = bpz;
-      if (imp > 3.5 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z; knock(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * cha + dz * sha, -dx * sha + dz * cha); }
+      if (imp > 3.5 && v.kind < 4 && !c.net) { const dx = bpx - c.x, dz = bpz - c.z; knock(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * cha + dz * sha, -dx * sha + dz * cha); }
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
       return imp;
@@ -5016,8 +5019,8 @@ const Core = (function () {
     _runBike(c, v, px, pz) {
       const sp = c.speed, R = this.R, vx = c.vx, vz = c.vz, f = 1 - Math.min(sp, 0.15 * sp + 1) / sp;
       const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = (px - c.x) * ch + (pz - c.z) * sh, lz = -(px - c.x) * sh + (pz - c.z) * ch, sd = lz >= 0 ? 1 : -1, k = 1.2 + 0.07 * sp;
-      c.vx *= f; c.vz *= f; if (!c.air) c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24, -CSK.tapMax, CSK.tapMax);
-      knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
+      if (!c.net) { c.vx *= f; c.vz *= f; } if (!c.air) { const kc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24, -CSK.tapMax, CSK.tapMax); if (!c.net) c.csKc = kc; }   // (a friend's car online: its own phone slows it; the same draws as there)
+      if (!c.net) knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
       this._knock(v, 0.8); v.w = (R() - 0.5) * 9; v.vx = vx * 0.5 - sh * sd * k; v.vz = vz * 0.5 + ch * sd * k;
       this._throwRider(v, vx, vz, c, true);
       c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
@@ -5212,9 +5215,9 @@ const Core = (function () {
           const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = rx * ch + rz * sh, lz = -rx * sh + rz * ch, hl = c.m.len / 2 + 0.22, hw = c.m.wid / 2 + 0.22;
           if (Math.abs(lx) > hl || Math.abs(lz) > hw) continue;
           if (c.speed < 2) { this._nudge(p, ch, sh, lx, lz, hl, hw); continue; }
-          const sp = c.speed, f = 1 - Math.min(sp, 0.06 * sp + 0.4) / sp;
-          c.vx *= f; c.vz *= f; if (!c.air) c.csKc = clamp((c.csKc || 0) + (this.R() - 0.5) * 0.12, -CSK.tapMax, CSK.tapMax);
-          this._runOver(p, c.vx, c.vz, 0.35);
+          const sp = c.speed, f = 1 - Math.min(sp, 0.06 * sp + 0.4) / sp, vx = c.vx * f, vz = c.vz * f;
+          if (!c.net) { c.vx = vx; c.vz = vz; } if (!c.air) { const kc = clamp((c.csKc || 0) + (this.R() - 0.5) * 0.12, -CSK.tapMax, CSK.tapMax); if (!c.net) c.csKc = kc; }   // (a friend's car online: its own phone slows it; the same draws as there)
+          this._runOver(p, vx, vz, 0.35);
           c.fxCar = Math.max(c.fxCar || 0, 2);
           this._event(p.kind === 3 ? 'bike' : 'ped', c, p.x, p.z); if (p.kind !== 3) this._penalty(c);
           break;
@@ -6460,10 +6463,12 @@ const Core = (function () {
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide, deli: opts.playerDeli });
           this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
+          if (opts.playerPolice) patrolCar(c);   // (online, beg s prijatelji: I drive the patrol car)
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
           c.netOf = { id: RM.id || 'h', num: RM.num || 2 }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
+          if (RM.police) patrolCar(c);   // (online, beg s prijatelji: the friend drives the patrol car)
         } else {
           const s = aiSpecs[order ? order[ai++] : ai++];
           c = new Car(s.model, { id: g, name: s.name, color: s.color, skill: s.skill, assist: CSK.aiAssist, phys: opts.phys, laneBias: (R() - 0.5) * 1.6 });
@@ -6546,8 +6551,10 @@ const Core = (function () {
       this.mk = opts.radio && !track.open && !this.timeTrial && this.laps >= 2 && total > 1 ? { d: 25, t: new Map(this.cars.map(c => [c, []])), lane: null } : null;
       if (track.sectors) this.secBest = [Infinity, Infinity, Infinity];   // (the best time in each sector of the race so far)
       this._prof();
-      // the open road (Vršič): its traffic and its people (opts.traffic: the duel with one rival; opts.police: the run from the police)
-      if (track.open && (opts.traffic || opts.police) && !opts.noPlayer && !this.timeTrial) this.tf = new Traffic(this, opts.police ? 0.85 : 1);
+      // the open road (Vršič): its traffic and its people (opts.traffic: the duel with one rival; opts.police: the run from the police;
+      // opts.netTf: online, beg s prijatelji, the same traffic on every phone from the host's opts.seed, no duel and no time penalties)
+      const netTf = !!(opts.netTf && RMS.length);
+      if (track.open && (opts.traffic || opts.police || netTf) && !opts.noPlayer && !this.timeTrial) { this.tf = new Traffic(this, opts.police || netTf ? 0.85 : 1); this.tf.net = netTf; }   // (net: the friends' cars count for the traffic, see Traffic.step)
       if (!track.open && opts.endless && this.player && !opts.noPlayer && !this.timeTrial) { this.tf = new Traffic(this, 1); this.en = new Endless(this); }   // (the endless drive on a circuit: race.en, its window of traffic in race.tf)
       if (track.open && opts.police && !opts.noPlayer && !this.timeTrial) this.pol = new Police(this);   // (the run from the police: race.pol)
     }
