@@ -797,7 +797,15 @@ def clouds():
         tco = nd(nt, 'ShaderNodeTexCoord'); nz = noise(nt, 0.004, 5, 0.6, tco.outputs['Object'])
         L(nt, math_(nt, 'MULTIPLY', mrange(nt, nz.outputs['Fac'], 0.22, 0.55), CFG.get('cloud_density', 0.03)), pv.inputs['Density'])
     dg = bpy.context.evaluated_depsgraph_get()
-    for i, (rel, el, dist, size) in enumerate(CFG.get('clouds', [])):
+    cl = [tuple(c) for c in CFG.get('clouds', [])]
+    cf = CFG.get('cloud_field')
+    if cf:  # a field of cumulus with one base height: perspective makes the far ones small and low over the horizon
+        fr = np.random.default_rng(cf.get('seed', 7))
+        for k in range(cf['n']):
+            d = cf['dmin'] * (cf['dmax'] / cf['dmin']) ** fr.random(); rel = fr.uniform(-cf.get('wedge', 32), cf.get('wedge', 32))
+            base = cf['base'] * fr.uniform(0.94, 1.06) - d * d / (2 * 6371000) * 0.87
+            cl.append((rel, math.degrees(math.atan2(base, d)), d, fr.uniform(*cf['size']) * (0.75 + 0.5 * d / cf['dmax'])))
+    for i, (rel, el, dist, size) in enumerate(cl):
         a, b = dist * math.sin(math.radians(rel)), dist * math.cos(math.radians(rel)); x, y = W(a, b); zc = dist * math.tan(math.radians(el))
         bm = bmesh.new(); rng = np.random.default_rng(100 + i); nb = 6 + int(size / 250)
         def puff(c, r):
