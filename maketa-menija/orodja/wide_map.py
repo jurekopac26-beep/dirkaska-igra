@@ -13,7 +13,7 @@ import json, math, os, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-from geo_lib import DEM, Geo, radii, haversine
+from geo_lib import DEM, Geo, radii, haversine, top_fit
 from geo_paint import paint, DETAIL, SEASON
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +28,7 @@ SHADOW_K = 0.4   # how dark the sun's cast shadows are painted (the game's islan
 FEATHER = 18.0  # the island's soft edge: from opaque to clear over this many tile pixels
 RING_M = 150.0  # the made-up rim of ground-only cells round the island's trees, in metres: cut off before the soft edge starts
 RING_PX = {'monaco': 8, 'riviera': 18, 'montreal': 6, 'toronto': 8}   # (where the island is a whole town to the tile's edge, or narrow land between water: only a thin rim)
-WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit', 'bangsaen'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
+WATER_OUT = {'monaco', 'riviera', 'newcastle', 'chapman', 'toronto', 'montreal', 'detroit', 'bangsaen', 'livorno'}   # (the game's sea or lake is a plane far wider than the harbour: the painted land's own water is used)
 STRIP_M = {'chapman': 260}   # (a world whose own land fills the whole tile: only a strip this many metres either side of the road is the island)
 BEACH = {'bangsaen'}   # (a beach between the road and the sea: the island goes on to the shore there, no rim cut; the painted sea flat, no seabed in its shading)
 H_SMOOTH = {'rastro': 5.0, 'tianmen': 6.0, 'bangsaen': 2.0}   # (output pixels: where the heights are coarse for the tile's scale, their steps would show in the shading)
@@ -38,6 +38,7 @@ SUN = {'ouni': ([-88, 72, 58], 1.18, 0.56), 'vrsic': ([-84, 70, 56], 1.16, 0.58)
        'rbring': ([-86, 78, 52], 1.12, 0.6), 'spa': ([-80, 96, 70], 0.98, 0.64), 'suzuka': ([-80, 96, 70], 1.06, 0.62), 'monaco': ([-80, 96, 70], 1.08, 0.6),
        'city': ([-80, 96, 70], 1.04, 0.6)}
 SUN.update({'medvode': ([-80, 84, 58], 1.18, 0.6), 'baldy': ([-78, 96, 50], 1.24, 0.6), 'beartooth': ([-84, 90, 58], 1.26, 0.6), 'bigsur': ([-86, 74, 58], 1.14, 0.62), 'maunakea': ([-62, 118, 44], 1.42, 0.58), 'moki': ([-86, 82, 46], 1.3, 0.62), 'monterey': ([-66, 74, 70], 1.24, 0.64), 'mulholland': ([-70, 104, 48], 1.4, 0.62), 'palomar': ([-74, 98, 52], 1.36, 0.62), 'riverside': ([-70, 74, 78], 1.3, 0.62), 'uncompahgre': ([-70, 92, 62], 1.24, 0.6), 'iroha': ([-80, 74, 60], 1.12, 0.6), 'harju': ([-100, 33, -8], 1.65, 0.58), 'montreal': ([-82, 88, 60], 1.16, 0.62), 'toronto': ([-60, 88, 70], 1.14, 0.62), 'cpalace': ([-60, 74, 66], 1.08, 0.62), 'greatalpine': ([-74, 92, -56], 1.26, 0.62), 'hotham': ([-64, 96, -58], 1.3, 0.62), 'longford': ([-70, 76, -66], 1.24, 0.56), 'newcastle': ([-58, 86, -66], 1.2, 0.62), 'townsville': ([-62, 96, -66], 1.34, 0.64), 'chapman': ([-92, 74, -40], 1.24, 0.62), 'sani': ([-70, 92, -58], 1.28, 0.6), 'caracoles': ([-72, 98, -62], 1.32, 0.6), 'rastro': ([-66, 92, -64], 1.1, 0.66), 'rio': ([-30, 120, -40], 1.3, 0.62), 'katu': ([96, 76, 18], 1.2, 0.58), 'tianmen': ([-70, 92, 60], 1.02, 0.68), 'bathurst': ([-74, 86, -56], 1.22, 0.6)})   # (the real roads and circuits added later: look in js/tracks/<id>.js, once render.js THEMES)
+SUN.update({'balea': ([-80, 86, 62], 1.24, 0.6), 'bathurst': ([-74, 86, -56], 1.22, 0.6)})   # (their looks in js/tracks/<id>.js; Livorno has none: the default)
 
 def js_data(name, var):
     s = open(os.path.join(ROOT, 'js', name), encoding='utf-8').read()
@@ -45,7 +46,11 @@ def js_data(name, var):
     return json.loads(s[i:j + 1])
 
 def load(tid):
-    R = js_data('routes.js', 'window.ROUTES')[tid]['top']; X = js_data('intro-data.js', 'window.INTRO')[tid]['top']; G = js_data('geo.js', 'window.GEO')['tracks'][tid]
+    R = js_data('routes.js', 'window.ROUTES')[tid]['top']; X = js_data('intro-data.js', 'window.INTRO').get(tid, {}).get('top'); G = js_data('geo.js', 'window.GEO')['tracks'].get(tid)
+    if X is None or G is None:   # (a track the menu's globe does not have yet, no entry in js/intro-data.js and js/geo.js: the same from the tools' own data,
+        # the map's fit as intro_data.py makes it, the world on the Earth from raw/geo/places.json, geo_places.py)
+        A, B, tx, ty, err, J = top_fit(tid); X = {'fit': [A, B, tx, ty]}; G = json.load(open(os.path.join(HERE, 'raw', 'geo', 'places.json')))['tracks'][tid]
+        print(tid, 'its own fit: %.3f m a pixel, worst %.1f px' % (1 / math.hypot(A, B), err), flush=True)
     return R, X, G
 
 class Frame:

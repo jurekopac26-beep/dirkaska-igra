@@ -123,7 +123,10 @@ if (process.env.FLY_PART || process.env.PREVIEW) {
     }
     const name = path.join(OUT, 'fly-' + track + '.webm'), ff = (args) => new Promise((res) => spawn(FF, args, { stdio: 'inherit' }).on('close', res));
     const src = ['-hide_banner', '-loglevel', 'error', '-y', '-framerate', String(info.fps), '-i', path.join(dir, '%05d.jpg')];
-    const vp9 = ['-c:v', 'libvpx-vp9', '-row-mt', '1', '-threads', '4', '-deadline', 'good', '-cpu-used', '2', '-g', String(info.fps * 4), '-pix_fmt', 'yuv420p', '-an'];
+    // (the slower search and the stronger filtered reference frames: at the same size the picture is closer to the frames, measured on Medvode
+    // at 450 kbit/s: SSIM 0.740 -> 0.748, the file 2 % smaller)
+    const vp9 = ['-c:v', 'libvpx-vp9', '-row-mt', '1', '-threads', '4', '-deadline', 'good', '-cpu-used', '1', '-lag-in-frames', '25', '-auto-alt-ref', '6', '-arnr-maxframes', '7', '-arnr-strength', '5',
+      '-g', String(info.fps * 4), '-pix_fmt', 'yuv420p', '-an'];
     let code;
     const crf = ['-crf', process.env.CRF || '44'];
     if (opt.kbps) {   // two passes, the quality kept but at most about this many kbit/s over the whole video (the bits where the picture needs them)

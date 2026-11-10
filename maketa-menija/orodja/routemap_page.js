@@ -47,7 +47,7 @@ window.RM = (function () {
     bathurst: { fog: 0xcfdbe6, sun: 0xfff0d2, sunI: 1.22, sky: 0xc6dcf6, gnd: 0x6b6a3c, hemiI: 0.6, sunOff: [-74, 86, -56] },
   };
   const SEASONS = { vrsic: 'autumn' };
-  const KEEP_SEA = new Set(['newcastle', 'detroit', 'bangsaen']);
+  const KEEP_SEA = new Set(['newcastle', 'detroit', 'bangsaen', 'livorno']);   // (Livorno: the sea plane to the horizon stays, its far hills go: wide_map.py paints the real land and sea)
   let B = null, R = null, CV = null;
   function build(id, opt) {
     if (B && B.id === id) return B;
@@ -94,7 +94,7 @@ window.RM = (function () {
   }
   // the theme's sky light and sun (overcast in the rain), the sun's shadows over the whole route
   function lights(Bw, box, rn) {
-    const th = THEMES[Bw.def.theme] || THEMES.lake, mix = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f * rn), L = [];
+    const th = THEMES[Bw.def.theme] || Bw.def.look || THEMES.lake, mix = (a, b, f) => new THREE.Color(a).lerp(new THREE.Color(b), f * rn), L = [];
     const hemi = new THREE.HemisphereLight(mix(th.sky, 0xaab4bd, 0.7), mix(th.gnd, 0x3a4032, 0.5), th.hemiI * (1 + 0.3 * rn)); Bw.sc.add(hemi); L.push(hemi);
     const sun = new THREE.DirectionalLight(mix(th.sun, 0xe8eef4, 0.8), th.sunI * (1 - 0.62 * rn));
     const cx = (box.x0 + box.x1) / 2, cz = (box.z0 + box.z1) / 2, cy = box.y, R0 = Math.hypot(box.x1 - box.x0, box.z1 - box.z0) / 2 + 200;

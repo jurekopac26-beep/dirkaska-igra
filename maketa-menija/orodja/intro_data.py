@@ -11,7 +11,7 @@ import json, math, os, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage
-from geo_lib import RAW, HERE, Geo, track
+from geo_lib import RAW, HERE, Geo, track, at_s, fit_similarity
 
 SITE = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, '..')
 ONLY = sys.argv[2].split(',') if len(sys.argv) > 2 else None   # (python3 intro_data.py <site> vrsic,spa: only these again, the others kept from <site>/intro-data.js)
@@ -21,20 +21,6 @@ LM = json.load(open(os.path.join(HERE, 'landmarks.json')))
 SUMMIT = {'vrsic': 'Vršič', 'sani': 'Sani Pass', 'katu': 'Katu-Yaryk', 'rastro': 'Rio do Rastro'}   # (a mountain's name in the corner only where no trademark is near: the Colorado hill climb's mountain shows its height only)   # (a road over a mountain: its top's name; the circuits show the height only)
 NO_FLIGHT = set(['baldy', 'bangsaen', 'beartooth', 'bigsur', 'caracoles', 'chapman', 'detroit', 'greatalpine', 'harju', 'hotham', 'iroha', 'katu', 'longford', 'marrakesh', 'maunakea', 'medvode', 'moki', 'monterey', 'montreal', 'mulholland', 'newcastle', 'palomar', 'rastro', 'riverside', 'sani', 'tianmen', 'toronto', 'townsville', 'troisrivieres', 'uncompahgre'])   # (tracks without a helicopter flight: the intro goes straight to the start lights; these: their flights and flyovers later, the user's decision 30. 10. 2026)
 MUSIC = {'Slovenia': 'slovenia', 'USA': 'usa', 'Finland': 'finland', 'Japan': 'japan', 'Monaco': 'monaco', 'Austria': 'austria', 'Belgium': 'belgium', 'Germany': 'germany', 'Australia': 'australia', 'South Africa': 'southafrica', 'Morocco': 'morocco', 'Canada': 'canada', 'Chile': 'chile', 'Brazil': 'brazil', 'Russia': 'russia', 'China': 'china', 'Thailand': 'thailand'}
-
-def at_s(T, pts, s):   # the road at s metres from the track's own start: x, z, y
-    n = len(pts); L = T['len']; st = T['step']
-    s = min(max(s, 0), (n - 1) * st) if T['open'] else s % L
-    f = s / st; i = int(math.floor(f)); t = f - i
-    a = pts[i % n]; b = pts[(i + 1) % n] if not T['open'] else pts[min(n - 1, i + 1)]
-    return a + (b - a) * t
-
-def fit_similarity(src, dst):   # dst ~ k R src + t (a proper turn: no mirror); returns A, B, tx, ty with dst = [[A, -B], [B, A]] src + t
-    ms, md = src.mean(0), dst.mean(0); S, D = src - ms, dst - md
-    a = (S[:, 0] * D[:, 0] + S[:, 1] * D[:, 1]).sum(); b = (S[:, 0] * D[:, 1] - S[:, 1] * D[:, 0]).sum(); n2 = (S ** 2).sum()
-    A, B = a / n2, b / n2; t = md - np.array([A * ms[0] - B * ms[1], B * ms[0] + A * ms[1]])
-    res = dst - (np.stack([A * src[:, 0] - B * src[:, 1], B * src[:, 0] + A * src[:, 1]], 1) + t)
-    return float(A), float(B), float(t[0]), float(t[1]), float(np.sqrt((res ** 2).sum(1)).max())
 
 def old_intro():
     p = os.path.join(SITE, 'intro-data.js')

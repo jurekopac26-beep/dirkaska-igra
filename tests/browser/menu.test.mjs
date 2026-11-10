@@ -1409,12 +1409,14 @@ try {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
-    for (let k = 0; k < 80 && (await ev(page, 'return root.querySelector(".where .w2").textContent;')) !== 'Vršič'; k++) await click(page, 'track:1');   // (a real road with a flyover)
+    // (a real road with a flyover: Pikes Peak; the shorter way round the list to it)
+    const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('pikes') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
+    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'pikes'; k++) await click(page, way);
     await click(page, 'cam:2');   // (the step opens with the map: the flyover is the camera 2)
     const VID = 'root.querySelector("#track-stage .dio.fly video")', live = (s) => page.waitForFunction((s) => { const v = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage .dio.fly video'); return v && !v.paused && v.currentTime > s; }, s, { timeout: 120000 });
     await live(4);
     // (the run's place on the map at its moment s, as js/menu.js runAt and routePt; the point drawn is the run's at most a second before: a frame of software WebGL)
-    const NEAR = `const R = window.ROUTES.vrsic, F = R.fly.frames, Dr = F.length / R.fly.fps;
+    const NEAR = `const R = window.ROUTES.pikes, F = R.fly.frames, Dr = F.length / R.fly.fps;
       const at = (s) => { s = ((s % Dr) + Dr) % Dr; const x = Math.min(F.length - 1, s * R.fly.fps), k = Math.min(F.length - 2, Math.floor(x)), f = (F[k][0] + (F[k + 1][0] - F[k][0]) * (x - k)) / R.len, P = R.top.route, xi = Math.max(0, Math.min(1, f)) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(xi)), u = xi - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
       const dot = root.querySelector("#track-stage .dio.topmap .rt-dot"), m = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(dot.getAttribute("transform") || ""), run = Menu.debug().run;
       let best = 1e9; if (m) for (let s = run.t - 1; s <= run.t + 0.05; s += 0.02) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
@@ -1425,7 +1427,7 @@ try {
     await page.waitForFunction(() => { const r = document.getElementById('menu-host').shadowRoot; return r.querySelectorAll('#track-stage .dio').length === 1 && !!r.querySelector('#track-stage .dio.topmap .rt-dot[opacity="1"]'); }, null, { timeout: 30000 }).catch(() => null);
     const b = await ev(page, NEAR);
     T.check(`flyover -> map: the map goes on from the flyover's moment (${a.vt.toFixed(1)} s, the run now at ${b.run.t.toFixed(1)} s), its point where the flyover's was, the route already drawn`,
-      a.run.id === 'vrsic' && b.run.id === 'vrsic' && b.run.t >= a.vt - 0.05 && b.run.t < a.vt + 15 && b.best < 2.5 && b.fromStart > 20 && b.drawn && b.views === 1, JSON.stringify({ a, b }));
+      a.run.id === 'pikes' && b.run.id === 'pikes' && b.run.t >= a.vt - 0.05 && b.run.t < a.vt + 15 && b.best < 2.5 && b.fromStart > 20 && b.drawn && b.views === 1, JSON.stringify({ a, b }));
     await page.waitForTimeout(2500);
     const c0 = await page.evaluate(() => Menu.debug().run);
     await click(page, 'cam:2');
@@ -1442,7 +1444,7 @@ try {
     // another track: a run of its own, from its start
     await click(page, 'track:1'); await page.waitForTimeout(400);
     const e = await page.evaluate(() => Menu.debug().run);
-    T.check('another track starts a run of its own, from the start', e.id !== 'vrsic' && e.t < 2.5, JSON.stringify(e));
+    T.check('another track starts a run of its own, from the start', e.id !== 'pikes' && e.t < 2.5, JSON.stringify(e));
     T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

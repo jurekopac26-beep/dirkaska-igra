@@ -1081,5 +1081,77 @@
     }
    ]
   }
+ ],
+ [
+  "balea",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1 · 1,782 m",
+     "d": 195
+    },
+    {
+     "n": "Bâlea Valley",
+     "d": 1150
+    },
+    {
+     "n": "Hairpin 5 · 1,947 m",
+     "d": 2726
+    }
+   ],
+   "alt": [
+    1768,
+    2034
+   ]
+  }
+ ],
+ [
+  "bathurst",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 1360
+    },
+    {
+     "n": "Turn 8",
+     "d": 3176
+    },
+    {
+     "n": "Turn 16",
+     "d": 5376
+    }
+   ]
+  }
+ ],
+ [
+  "livorno",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Montenero",
+     "d": 3196
+    },
+    {
+     "n": "Castellaccio",
+     "d": 7456
+    },
+    {
+     "n": "Romito",
+     "d": 11595
+    },
+    {
+     "n": "Calafuria",
+     "d": 13931
+    },
+    {
+     "n": "Antignano",
+     "d": 16847
+    }
+   ]
+  }
  ]
 ]

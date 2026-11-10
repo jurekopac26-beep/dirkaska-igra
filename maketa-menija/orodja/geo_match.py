@@ -32,6 +32,11 @@ GUESS = {
     'rastro': (-28.3930, -49.5390, 2500),      # below the hairpins (from the viewpoint at the top back along the road)
     'katu': (50.9100, 88.2200, 3000),          # the edge of the Ulagan plateau above the Chulyshman
     'tianmen': (29.0570, 110.4800, 2500),      # bend 54 (from the square below the cave back along the road)
+    # (the worlds whose origin is known: the start line of the track's own data, tools/proga/proge.json, the track's header, tools/livorno/livorno.json;
+    # the search only checks it: `moved` stays within the heights' own cells)
+    'balea': (45.6107785, 24.6144425, 150),
+    'bathurst': (-33.43930, 149.55846, 150),
+    'livorno': (43.51202, 10.3188882, 150),
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 

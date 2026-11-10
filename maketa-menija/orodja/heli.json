@@ -189,5 +189,8 @@
  "bangsaen": {
   "kbps": 550,
   "sea": true
+ },
+ "livorno": {
+  "sea": true
  }
 }
