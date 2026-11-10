@@ -6,7 +6,7 @@
    the track: docs/proge/cromwell.md). Its own: the figure of eight's bridge (Core: T.cross; the upper leg on an embankment, a concrete deck
    with parapets that fades while the followed car drives under it, Render's dyn.tunnel; the lower leg between retaining walls, the ground
    behind them on a patch of its own, finer than the terrain's grid); the pit lane on the left of the start straight (def.pit) and the pit
-   building behind it (12 crews' garages, a roof terrace, the race control's glass over the start line), the paddock behind it, the covered
+   building behind it (13 crews' garages, a roof terrace, the race control's glass over the start line), the paddock behind it, the covered
    grandstand across the straight; the terrace's dry golden grass with tussock and wild thyme, stony patches, the circuit's irrigated
    lawns; the radiata pine plantations, the shelter belts of Lombardy poplars, pines and macrocarpa, broom and briar; the orchards' and
    vineyards' rows on the farmland (lc 2, in blocks of 160 m; few by the circuit); the pond in the west loop (def.sk.sea: API.rbSea) with flax and
@@ -176,7 +176,7 @@
     const mD = (x, z) => (x - S0[0]) * mtx + (z - S0[1]) * mtz, mL = (x, z) => (x - S0[0]) * mnx + (z - S0[1]) * mnz;
     const mainD = (i) => { const d = dSs(i * ds); return d > -260 && d < 160; };   // (a sample on the main straight)
     // the paddock behind the pit building (metres along the straight and out from it, on the pits' side): asphalt from the building's back
-    const PAD = { d0: -78, d1: 70, o0: 38, o1: 86 };
+    const PAD = { d0: -78, d1: 78, o0: 38, o1: 86 };
     const paddock = (x, z) => { const d = mD(x, z), l = mL(x, z); return d > PAD.d0 && d < PAD.d1 && l > PAD.o0 && l < PAD.o1; };
 
     /* ---- the bridge (Core: T.cross, the lower leg under the upper one). The upper leg's road on its deck from D0 to D1 (14 m either side
@@ -499,12 +499,12 @@
       pitExcl(exclPush);
       nGar = pitBuilding();
     }
-    // the pit building: 134 m along the lane, the start line in its middle. The ground floor, 5 m: the crews' 12 garages (10 m, open: World's
+    // the pit building: 144 m along the lane, the start line in its middle. The ground floor, 5 m: the crews' 13 garages (10 m, open: World's
     // measures, out.pitBoxes[].gar, so that the renderer's team colours, door and flags fit; def.pitRow), offices at either end, a corridor
     // behind them with roller doors and windows to the paddock; on its flat roof a terrace behind white railings; over the start line the
     // race control, two floors of glass on the roof, the place's name on it, New Zealand's flags
     function pitBuilding() {
-      const pm = T.pitAt(sStart), PO = pm ? pm.o : 14, F = PO + 12.5, b0 = PO + 19.7, BK = b0 + 3.2, RF = 5.0, PR = def.pitRow || [-65, 55], B0 = PR[0], B1 = PR[1], E = 7;
+      const pm = T.pitAt(sStart), PO = pm ? pm.o : 14, F = PO + 12.5, b0 = PO + 19.7, BK = b0 + 3.2, RF = 5.0, PR = def.pitRow || [-65, 55], B0 = PR[0], B1 = PR[1] + 10, E = 7;   // (B1: the last box's garage's end, World's boxes from pitRow[0] to pitRow[1] + 10)
       const WALL = [0.94, 0.94, 0.92], DOOR = [0.74, 0.76, 0.78], SLAB = [0.95, 0.95, 0.94], ROOF = [0.62, 0.62, 0.6], RAIL = [0.96, 0.96, 0.95];
       const kb = (g, s, o, y, sx, sy, sz, col, top, nb) => { const [x, z, hd] = At(s, o); box(g, x, Y(s) + y, z, sx, sy, sz, hd, col, top, nb); };
       const kf = (g, d0, d1, o, y0, y1, col, dir) => { const [x0, z0] = At(sAt(d0), o), [x1, z1] = At(sAt(d1), o), sm = sAt((d0 + d1) / 2), [xb, zb] = At(sm, o - (dir || -1) * 0.2), dy = Y(sm);   // a flat panel facing the lane (dir -1) or the paddock (+1)
@@ -605,7 +605,7 @@
     for (let k = 0; k + 6 < B7.length; k += 7) {
       const x = B7[k], z = B7[k + 1], Lb = B7[k + 2], Wb = B7[k + 3], ang = B7[k + 4] * Math.PI / 180, H = B7[k + 5] || 6, kind = B7[k + 6], rd = nrDist(x, z);
       if (paddock(x, z) || excluded(x, z)) continue;
-      { const bd = mD(x, z), bl = mL(x, z); if (PP && bl > 18 && bl < 42 && bd > -72 - Lb / 2 && bd < 62 + Lb / 2) continue; }   // (by the pit building: ours)
+      { const bd = mD(x, z), bl = mL(x, z); if (PP && bl > 18 && bl < 42 && bd > -72 - Lb / 2 && bd < 72 + Lb / 2) continue; }   // (by the pit building: ours)
       const g = rd < 170 ? scen.get(x, z) : farB.get(x, z), y0 = groundMin(x, z, Lb, Wb, ang), c = Math.cos(ang), s = Math.sin(ang), at = (a, b) => [x + c * a - s * b, z + s * a + c * b];
       if (rd < 70 && Lb * Wb < 900) {   // the circuit's own (the offices, the workshops, the kiosks): dark cladding, a band of windows, a flat roof
         const Hb = clamp(H, 3.6, 8), ins = [x, y0 + Hb / 2, z];
