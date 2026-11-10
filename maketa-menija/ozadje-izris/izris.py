@@ -346,8 +346,9 @@ def mat_terrain():
     d = nd(nt, 'ShaderNodeVectorMath', _operation='DISTANCE'); L(nt, pos, d.inputs[0]); d.inputs[1].default_value = (0, 0, 0)
     # near: the meadow's ground under the grass
     nn = noise(nt, 0.35, 6, 0.6, pos)
-    near = mixc(nt, mrange(nt, nn.outputs['Fac'], 0.35, 0.65), tuple(lin([0.20, 0.26, 0.09])), tuple(lin([0.30, 0.33, 0.13])))
-    near = mixc(nt, mrange(nt, noise(nt, 2.5, 3, 0.5, pos).outputs['Fac'], 0.55, 0.75), near, tuple(lin([0.24, 0.20, 0.12])))
+    g0, g1, g2 = CFG.get('ground', ([0.20, 0.26, 0.09], [0.30, 0.33, 0.13], [0.24, 0.20, 0.12]))
+    near = mixc(nt, mrange(nt, nn.outputs['Fac'], 0.35, 0.65), tuple(lin(g0)), tuple(lin(g1)))
+    near = mixc(nt, mrange(nt, noise(nt, 2.5, 3, 0.5, pos).outputs['Fac'], 0.55, 0.75), near, tuple(lin(g2)))
     base = mixc(nt, mrange(nt, d.outputs['Value'], 160, 420, 1.0, 0.0), col, near)
     # crowns in the forest from afar; large patches
     vo = nd(nt, 'ShaderNodeTexVoronoi', Scale=0.14); L(nt, pos, vo.inputs['Vector'])
@@ -792,6 +793,9 @@ def clouds():
     import bmesh
     mv, nt, out = new_mat('oblak'); pv = nd(nt, 'ShaderNodeVolumePrincipled', Density=CFG.get('cloud_density', 0.03), Anisotropy=0.4)
     pv.inputs['Color'].default_value = (1, 1, 1, 1); L(nt, pv.outputs[0], out.inputs['Volume'])
+    if CFG.get('cloud_detail'):
+        tco = nd(nt, 'ShaderNodeTexCoord'); nz = noise(nt, 0.004, 5, 0.6, tco.outputs['Object'])
+        L(nt, math_(nt, 'MULTIPLY', mrange(nt, nz.outputs['Fac'], 0.22, 0.55), CFG.get('cloud_density', 0.03)), pv.inputs['Density'])
     dg = bpy.context.evaluated_depsgraph_get()
     for i, (rel, el, dist, size) in enumerate(CFG.get('clouds', [])):
         a, b = dist * math.sin(math.radians(rel)), dist * math.cos(math.radians(rel)); x, y = W(a, b); zc = dist * math.tan(math.radians(el))
@@ -804,12 +808,20 @@ def clouds():
             r = size * rng.uniform(0.14, 0.21); puff((rng.normal(0, 0.2) * size, rng.uniform(-0.14, 0.14) * size, size * 0.2 + r * 0.5), r)
         for k in range(3 + nb // 3):  # the towers (cauliflower tops)
             r = size * rng.uniform(0.09, 0.15); puff((rng.normal(0, 0.14) * size, rng.uniform(-0.1, 0.1) * size, size * rng.uniform(0.34, 0.5) + r * 0.4), r)
+        det = CFG.get('cloud_detail', False)
+        if det:  # cauliflower: small puffs over the top and the sides
+            for k in range(6 * nb):
+                u, v_ = rng.uniform(-0.45, 0.45), rng.uniform(-0.2, 0.2); hgt = size * (0.5 - 1.6 * (u * u + v_ * v_)) * rng.uniform(0.6, 1.05)
+                r = size * rng.uniform(0.045, 0.085); puff((u * size, v_ * size, max(hgt, r * 0.6)), r)
         me = bpy.data.meshes.new('oblak-tmp-%d' % i); bm.to_mesh(me); bm.free()
         tmp = obj('oblak-tmp-%d' % i, me)
-        rm = tmp.modifiers.new('rm', 'REMESH'); rm.mode = 'VOXEL'; rm.voxel_size = size / 90
+        rm = tmp.modifiers.new('rm', 'REMESH'); rm.mode = 'VOXEL'; rm.voxel_size = size / (150 if det else 90)
         tx = bpy.data.textures.new('oblaki-%d' % i, 'CLOUDS'); tx.noise_scale = size * 0.07; tx.noise_depth = 3
         ds = tmp.modifiers.new('ds', 'DISPLACE'); ds.texture = tx; ds.strength = size * 0.08; ds.texture_coords = 'LOCAL'; ds.mid_level = 0.5
-        sm = tmp.modifiers.new('sm', 'SMOOTH'); sm.iterations = 3
+        if det:
+            tx2 = bpy.data.textures.new('oblaki2-%d' % i, 'CLOUDS'); tx2.noise_scale = size * 0.018; tx2.noise_depth = 2
+            ds2 = tmp.modifiers.new('ds2', 'DISPLACE'); ds2.texture = tx2; ds2.strength = size * 0.025; ds2.texture_coords = 'LOCAL'; ds2.mid_level = 0.5
+        sm = tmp.modifiers.new('sm', 'SMOOTH'); sm.iterations = 1 if det else 3
         dg.update(); me2 = bpy.data.meshes.new_from_object(tmp.evaluated_get(dg))
         bpy.data.objects.remove(tmp)
         P = np.empty(len(me2.vertices) * 3, np.float32); me2.vertices.foreach_get('co', P); P = P.reshape(-1, 3)
@@ -903,7 +915,7 @@ def parked_cap(ga, gb, hgt):
     rel = np.stack([ga - ca, gb - cb], 1); al, ac = rel @ f, rel @ r
     ex = np.hypot(np.clip(np.abs(al) - hl, 0, None), np.clip(np.abs(ac) - hw, 0, None))
     keep = ex > 0.06
-    cap = np.where(ex < 4.5, (0.07 + 0.9 * sstep(0.3, 4.5, ex)) / hgt, np.inf)
+    cap = np.where(ex < 2.5, (0.12 + 0.6 * sstep(0.2, 2.5, ex)) / hgt, np.inf)
     cn = np.array([[ca, cb] + sl * hl * f + sw * hw * r for sl in (-1, 1) for sw in (-1, 1)])
     angc = np.degrees(np.arctan2(cn[:, 0], cn[:, 1])); dn = np.hypot(cn[:, 0], cn[:, 1]).min()
     ang = np.degrees(np.arctan2(ga, gb)); d = np.hypot(ga, gb)
@@ -935,11 +947,11 @@ def meadow(roadC, rtree):
     sa, sb = COMP['sign']; ok &= np.hypot(ga - sa, gb - sb) > 0.0
     ga, gb, dd = ga[ok], gb[ok], dd[ok]
     n = len(ga); dist = np.hypot(ga, gb)
-    var = np.where(rng.random(n) < 0.45, rng.integers(4, 7, n), rng.integers(0, 4, n))
+    var = np.where(rng.random(n) < CFG.get('grass_tall', 0.45), rng.integers(4, 7, n), rng.integers(0, 4, n))
     # shorter by the road and in front of the car
     edge = sstep(COMP['width'] / 2 + 0.5, COMP['width'] / 2 + 2.5, dd)
     ca, cb = COMP['car']; front = (np.abs(np.degrees(np.arctan2(ga, gb)) - np.degrees(math.atan2(ca, cb))) < 9) & (gb < cb - 3)
-    s = (0.75 + 0.55 * rng.random(n)) * (0.55 + 0.45 * edge) * np.where(front, 0.65, 1.0) * (1 + sstep(20, 120, dist) * 0.8)
+    s = CFG.get('grass_scale', 1.0) * (0.75 + 0.55 * rng.random(n)) * (0.55 + 0.45 * edge) * np.where(front, 0.65, 1.0) * (1 + sstep(20, 120, dist) * 0.8)
     if COMP.get('parked'):
         kp, cap = parked_cap(ga, gb, np.where(var >= 4, 0.95, 0.55)); s = np.minimum(s, cap)
         ga, gb, s, var = ga[kp], gb[kp], s[kp], var[kp]; n = len(ga)
@@ -947,7 +959,7 @@ def meadow(roadC, rtree):
     rot = np.stack([rng.normal(0, 0.06, n), rng.normal(0, 0.06, n), rng.uniform(0, 6.28, n)], 1)
     scatter('travnik', cg, np.stack([x, y, np.zeros(n)], 1), rot, np.stack([s, s, s], 1), var)
     # flowers in patches
-    fa, fb = wedge(2.0, 9, 9.0); fa2, fb2 = wedge(9, 45, 1.4); fa = np.concatenate([fa, fa2]); fb = np.concatenate([fb, fb2])
+    fm_ = CFG.get('flowers', 1.0); fa, fb = wedge(2.0, 9, 9.0 * fm_); fa2, fb2 = wedge(9, 45, 1.4 * fm_); fa = np.concatenate([fa, fa2]); fb = np.concatenate([fb, fb2])
     dd, _ = rtree.query(np.stack([fa, fb], 1)); ok = dd > COMP['width'] / 2 + 0.8
     patch = (np.sin(fa * 0.9) + np.sin(fb * 0.7 + 2) + np.sin((fa + fb) * 0.5)) > -0.2
     fa, fb = fa[ok & patch], fb[ok & patch]; n = len(fa)
