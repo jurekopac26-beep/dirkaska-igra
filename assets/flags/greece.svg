@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 900" width="1350" height="900">
+  <title>Greece</title>
+  <!-- Ratio 2:3 (Law 851/1978): nine horizontal stripes of equal height, blue and white by turns (blue at the top and the bottom), the
+       canton in the upper hoist a blue square five stripes high with a white cross, its arms one stripe wide (1 unit = 50: the stripes
+       100, the canton 500, the cross's arms 100 in its middle). Blue: #0D5EAF. -->
+  <rect width="1350" height="900" fill="#FFFFFF"/>
+  <path d="M0,0H1350V100H0ZM0,200H1350V300H0ZM0,400H1350V500H0ZM0,600H1350V700H0ZM0,800H1350V900H0Z" fill="#0D5EAF"/>
+  <rect width="500" height="500" fill="#0D5EAF"/>
+  <path d="M200,0H300V500H200ZM0,200H500V300H0Z" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+<title>New Zealand</title>
+<!-- Ratio 1:2 (New Zealand Flag Act 1981): royal blue with the Union Flag in the upper hoist quarter and the Southern Cross on the fly,
+     four five-pointed red stars with white borders: Gamma Crucis and Alpha Crucis on the fly's centre line, a fifth and four fifths
+     down, Beta Crucis and Delta Crucis either side, the stars' sizes as the specification gives them (Alpha the largest, Delta the smallest).
+     Colours: royal blue #012169 (Pantone 280), red #C8102E (Pantone 186), white. -->
+<defs>
+<clipPath id="nz-uj-s"><path d="M0,0V30H60V0Z"/></clipPath>
+<clipPath id="nz-uj-t"><path d="M30,15H60V30ZV30H0ZH0V0ZV0H60Z"/></clipPath>
+</defs>
+<path fill="#012169" d="M0,0H1200V600H0Z"/>
+<g transform="scale(10)" clip-path="url(#nz-uj-s)">
+<path d="M0,0L60,30M60,0L0,30" stroke="#FFFFFF" stroke-width="6"/>
+<path d="M0,0L60,30M60,0L0,30" clip-path="url(#nz-uj-t)" stroke="#C8102E" stroke-width="4"/>
+<path d="M30,0V30M0,15H60" stroke="#FFFFFF" stroke-width="10"/>
+<path d="M30,0V30M0,15H60" stroke="#C8102E" stroke-width="6"/>
+</g>
+<path id="nz-gamma-crucis" fill="#FFFFFF" d="M900,72.26L910.72,105.25L945.4,105.25L917.34,125.63L928.06,158.62L900,138.23L871.94,158.62L882.66,125.63L854.6,105.25L889.28,105.25Z"/>
+<path id="nz-delta-crucis" fill="#FFFFFF" d="M1018.83,180.82L1028.37,210.17L1059.23,210.17L1034.26,228.31L1043.8,257.67L1018.83,239.53L993.86,257.67L1003.4,228.31L978.43,210.17L1009.29,210.17Z"/>
+<path id="nz-beta-crucis" fill="#FFFFFF" d="M761.36,211.74L772.08,244.73L806.76,244.73L778.7,265.11L789.42,298.1L761.36,277.71L733.3,298.1L744.02,265.11L715.96,244.73L750.64,244.73Z"/>
+<path id="nz-alpha-crucis" fill="#FFFFFF" d="M900,427.01L911.9,463.62L950.4,463.62L919.25,486.26L931.15,522.87L900,500.24L868.85,522.87L880.75,486.26L849.6,463.62L888.1,463.62Z"/>
+<path fill="#C8102E" d="M900,88.46L907.08,110.25L930,110.25L911.46,123.72L918.54,145.52L900,132.05L881.46,145.52L888.54,123.72L870,110.25L892.92,110.25Z"/>
+<path fill="#C8102E" d="M1018.83,197.01L1024.73,215.18L1043.83,215.18L1028.38,226.4L1034.28,244.57L1018.83,233.34L1003.38,244.57L1009.28,226.4L993.83,215.18L1012.93,215.18Z"/>
+<path fill="#C8102E" d="M761.36,227.94L768.44,249.73L791.36,249.73L772.82,263.2L779.9,285L761.36,271.53L742.82,285L749.9,263.2L731.36,249.73L754.28,249.73Z"/>
+<path fill="#C8102E" d="M900,443.2L908.26,468.63L935,468.63L913.37,484.34L921.63,509.77L900,494.06L878.37,509.77L886.63,484.34L865,468.63L891.74,468.63Z"/>
+</svg>

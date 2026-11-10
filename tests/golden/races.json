@@ -3448,5 +3448,105 @@
   "rescues": 0,
   "nan": false,
   "digest": "f4f817a4f38a13a517a0f850"
+ },
+ "cromwell/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 240.27,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "906c8bb746e8a9e481d9a9f4"
+ },
+ "cromwell/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 258.76,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "654d082b29cad1b0940817f5"
+ },
+ "cromwell/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 212.32,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e402d022b15dd197ba61703f"
+ },
+ "cromwell/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 214.95,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0666636caed863b510b5b70d"
+ },
+ "cromwell/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 245.32,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9b609e4866ca917aaa9de1bd"
+ },
+ "serres/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 167.84,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c7240fc365306d414104796f"
+ },
+ "serres/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 181.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d6dfe9a4702043f624d855dc"
+ },
+ "serres/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 145.26,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bb8dfe1b7eae7aaeb7775790"
+ },
+ "serres/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 147.18,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "8af6baa9e0f12d4bd3fca732"
+ },
+ "serres/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 164.57,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6de7b2f05e6af6443f7745a3"
  }
 }
