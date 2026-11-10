@@ -862,6 +862,20 @@
   function recStart() { recd = { cars: race.cars.slice(), n: race.cars.length, w: race.cars.some(c => c.tl && c.tl.next) ? REC_TL2 : race.cars.some(c => c.tl) ? REC_TL : REC_W, frames: [], next: 0, prev: -1, ev: [], pos: null, last: new Map(), bytes: 0, out: null, flags: [], pit: [], trk: track }; }   // (flags: the race's own, Orodje za napake: { t } each, js/napake.js; pit: the player's pit stops, recPit; trk: its track)
   // Razbijanje · nov način: a car rolling over (c.rl) in the bits, from 8 up: how far through its roll (0..1023), its turns, its way round
   const rlBits = (r) => 8 * (1 + (Math.round(Core.clamp(r.t / r.T, 0, 1) * 1023) | (r.turns > 1 ? 1024 : 0) | (r.dir > 0 ? 2048 : 0)));
+  // Padec čez rob: a car falling as a body (Core fallBody, c.fall.b) is recorded as it turns, in the same seven numbers: x, y, z the car's own
+  // origin (the body's centre less the centre's height along the body's up axis: where the renderer puts the car), and in the heading's, the
+  // speed's and the steering's places its turn, a unit quaternion's x, y, z with w >= 0. In the bits from REC_FB up (a roll's own end below
+  // it: no older recording has them): 1 such a sample, 2 the body touches the ground, 4.. its count of hard knocks (three bits: a sample that
+  // counts on from the one before it had a knock), 32 the last knock on the roof, 64.. how hard it was (four steps of REC_FV m/s from Core
+  // FALL's 3). Of the low bits 2 (put back) is always on: the tool's own scan (js/napake.js zaznaj) and the lap's faults (tools/voznja.mjs)
+  // read a speed and a heading in every sample, and leave a put-back one alone
+  const REC_FB = 65536, REC_FV = 3, recKn = (bits) => Math.floor(bits / REC_FB) >> 2 & 7;   // (recKn: such a sample's count of knocks)
+  function recFall(f, o, B) {
+    const q = B.q, x = q[0], y = q[1], z = q[2], w = q[3], s = w < 0 ? -1 : 1;
+    f[o] = B.x - B.hc * 2 * (x * y - w * z); f[o + 1] = B.y - B.hc * (1 - 2 * (x * x + z * z)); f[o + 2] = B.z - B.hc * 2 * (y * z + w * x);
+    f[o + 3] = s * x; f[o + 4] = s * y; f[o + 5] = s * z;
+    f[o + 6] = (f[o + 6] % 8 | 2) + REC_FB * (1 + (B.nc ? 2 : 0) + 4 * (B.hn & 7) + (B.hr ? 32 : 0) + 64 * Core.clamp(Math.floor((B.hv - 3) / REC_FV), 0, 3));
+  }
   function recStep() {
     const R = recd; if (!R || race.state !== 'racing' && race.state !== 'done' || race.time < R.next || R.frames.length >= REC_MAX || R.bytes >= REC_BYTES) return;
     if (R.out == null && R.cars.every(c => race.isOut(c))) R.out = race.time; if (R.out != null && race.time > R.out + 3) return;   // (every car finished or retired 3 s ago: the recording is over)
@@ -871,7 +885,7 @@
       if (u !== 1) { f[o] = c.px + (c.x - c.px) * u; f[o + 1] = (c.py || 0) + ((c.y || 0) - (c.py || 0)) * u; f[o + 2] = c.pz + (c.z - c.pz) * u; f[o + 3] = c.ph + Core.wrapPi(c.h - c.ph) * u; }
       else { f[o] = c.x; f[o + 1] = c.y || 0; f[o + 2] = c.z; f[o + 3] = c.h; }
       f[o + 4] = c.vl || 0; f[o + 5] = c.delta || 0; f[o + 6] = bits; if (W > REC_W) f[o + 7] = c.tl ? c.tl.rel : 0; if (W > REC_TL) f[o + 8] = c.tl && c.tl.next ? c.tl.next.rel : 0; };
-    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj)
+    for (let k = 0; k < n; k++) { const c = R.cars[k]; put(c, 1 + k * W, (c.inBrk > 0.08 && c.vl > 0.5 ? 1 : 0) + (race.putT && race.putT.get(c) > R.prev ? 2 : 0) + (c.inPit || race.isOut(c) ? 4 : 0) + (c.rl ? rlBits(c.rl) : 0)); if (c.fall && c.fall.b) recFall(f, 1 + k * W, c.fall.b); }   // (2 and 4: Orodje za napake's flags of its own, js/napake.js zaznaj; a falling body: its turn in the sample, recFall)
     const S = race.fl && race.fl.sc, Rd = race.fl && race.fl.red, rb = Rd && Rd.st !== 'go' ? 8 : 0;
     if (S && S.car) put(S.car, 1 + n * W, 2 + (S.state === 'out' ? 4 : 0) + rb + (S.red ? 16 : 0)); else if (rb) f[1 + n * W + 6] = rb;
     R.frames.push(f); recPit(R); R.prev = race.time;
@@ -965,7 +979,7 @@
     if (replay.here) { rpRace(); return; }   // (the race so far: back into the race, never the results)
     if (recd && recd.file) { Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); Napake.konec(); toTitle(); return; }   // (an opened file: the moments kept to share, then the title)
     Napake.close(); hlOff(); replay = null; $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
-    if (recd) for (const c of recd.cars) { if (c.rl) delete c.rl; if (c.rpPit) delete c.rpPit; }   // (a roll the replay posed, its pit stop: over with it)
+    if (recd) for (const c of recd.cars) { if (c.rl) delete c.rl; if (c.rpPit) delete c.rpPit; if (c.fall && c.fall.rp) { c.fall = null; c.air = 0; } }   // (a roll the replay posed, its pit stop, a fall of its own (rpFall: no body the race could step): over with it)
     Render.crewSnap();   // (the player's crew as the race has it again)
     hlvStop();   // (the best moment's video: done)
     if (race && race.fl) race.fl.sc = race.fl.red = null;
@@ -993,6 +1007,7 @@
       const { o, q, ws, tl, tl2 } = K.cars[j];
       if (!('rl' in o)) delete c.rl;   // (a roll the replay posed)
       if (!('rpPit' in o)) delete c.rpPit;   // (the pit state the replay posed, rpPit: the race's own again for the crew and the pit camera)
+      if (!('fall' in o)) delete c.fall;   // (a fall the replay posed, rpFall, on a car that had none; the race's own, kept, comes back with the rest)
       Object.assign(c, o); if (q && c.q) Object.assign(c.q, q); if (ws && c.ws) for (let i = 0; i < ws.length; i++) c.ws[i] = ws[i]; if (tl && c.tl) Object.assign(c.tl, tl); if (tl2 && c.tl && c.tl.next) Object.assign(c.tl.next, tl2);
     });
     if (race.fl) { race.fl.sc = K.sc; race.fl.red = K.red; }
@@ -1224,6 +1239,46 @@
     c.q = track.query(c.x, c.z, c.q && c.q.i >= 0 ? c.q.i : -1, c.q || {});
     if (c.tl) Core.tlPose(c, W > REC_W ? A[o + 7] + (B[o + 7] - A[o + 7]) * u : 0, track, W > REC_TL ? A[o + 8] + (B[o + 8] - A[o + 8]) * u : 0);   // (its semi-trailer on the kingpin at its angle; an older recording: straight behind)
   }
+  // a car the recording has falling as a body (recFall's samples) round time t, or one that carries a fall: the car's own numbers as its last
+  // sample before the fall has them (its speed, its steering and its place on the road stay the edge's, as in the race), then where it is and
+  // how it is turned between the two samples (the turn the shorter way round; after the fall's last sample on as it came to that one, for a
+  // body put back while it still moves, never toward the sample that put it back), and c.fall.b
+  // for the renderer: the replay's own object (rp; never the race's, which goes on after Posnetek do sem), the body's place the car's own
+  // origin (hc 0), its knocks counted from the fall's first sample, the last one where the car is. Not falling at t: no fall on it
+  function rpFall(c, F, i, o, u, W) {
+    const A = F[i], B = F[Math.min(i + 1, F.length - 1)], s = o + 6, into = B[s] >= REC_FB;
+    if (A[s] < REC_FB) {   // (on the road yet, or again; over the edge before the next sample: toward where that one has it, its heading still this one's)
+      if (c.fall && (c.fall.rp || c.fall.b)) c.fall = null;
+      rpPose(c, A, into ? A : B, o, u, W);
+      if (into) { c.x = c.px = A[o] + (B[o] - A[o]) * u; c.y = c.py = c.roadY = A[o + 1] + (B[o + 1] - A[o + 1]) * u; c.z = c.pz = A[o + 2] + (B[o + 2] - A[o + 2]) * u; }
+      return;
+    }
+    let e = i, hn = 0; for (; e > 0 && F[e - 1][s] >= REC_FB; e--) hn += (recKn(F[e][s]) - recKn(F[e - 1][s])) & 7;
+    hn += recKn(F[e][s]); const E = F[Math.max(0, e - 1)]; rpPose(c, E, E, o, 0, W);
+    const R = c.fall && c.fall.rp ? c.fall : (c.fall = { rp: 1, h: c.h, b: { x: 0, y: 0, z: 0, px: 0, py: 0, pz: 0, q: [0, 0, 0, 1], pq: [0, 0, 0, 1], hc: 0, hn: 0, hx: 0, hy: 0, hz: 0, hv: 0, hr: 0, nc: 0 } }), b = R.b, K = Math.floor(A[s] / REC_FB);
+    let x = A[o], y = A[o + 1], z = A[o + 2], qx = A[o + 3], qy = A[o + 4], qz = A[o + 5], qw = Math.sqrt(Math.max(0, 1 - qx * qx - qy * qy - qz * qz));
+    const N = into ? B : i > 0 && F[i - 1][s] >= REC_FB ? F[i - 1] : A, d = N[0] - A[0];   // (N: the sample it moves to, or the one it came from; d: s to it)
+    c.vx = c.vy = c.vz = 0;
+    if (d) {
+      let bx = N[o + 3], by = N[o + 4], bz = N[o + 5], bw = Math.sqrt(Math.max(0, 1 - bx * bx - by * by - bz * bz)); if (qx * bx + qy * by + qz * bz + qw * bw < 0) { bx = -bx; by = -by; bz = -bz; bw = -bw; }
+      const g = d > 0 ? u : u * (B[0] - A[0]) / d; c.vx = (N[o] - x) / d; c.vy = (N[o + 1] - y) / d; c.vz = (N[o + 2] - z) / d;
+      qx += (bx - qx) * g; qy += (by - qy) * g; qz += (bz - qz) * g; qw += (bw - qw) * g; x += (N[o] - x) * g; y += (N[o + 1] - y) * g; z += (N[o + 2] - z) * g;
+    }
+    const l = 1 / (Math.hypot(qx, qy, qz, qw) || 1); qx *= l; qy *= l; qz *= l; qw *= l;
+    c.x = c.px = b.x = b.px = b.hx = x; c.y = c.py = c.roadY = b.y = b.py = b.hy = y; c.z = c.pz = b.z = b.pz = b.hz = z; c.air = 1;
+    const r0 = 1 - 2 * (qy * qy + qz * qz), r6 = 2 * (qx * qz - qw * qy); if (r0 * r0 + r6 * r6 > 0.09) R.h = Math.atan2(r6, r0); c.h = c.ph = R.h;   // (its heading its nose's while the nose is not straight up or down, as Core fallBody has it)
+    b.q[0] = b.pq[0] = qx; b.q[1] = b.pq[1] = qy; b.q[2] = b.pq[2] = qz; b.q[3] = b.pq[3] = qw;
+    b.hn = hn; b.hv = hn ? 3 + REC_FV * ((K >> 6) + 0.5) : 0; b.hr = K & 32 ? 1 : 0; b.nc = K & 2 ? 1 : 0;
+  }
+  // the falls over an edge the recording holds (tools/posnetek.mjs: Padci čez rob), each car's runs of recFall's samples in the order of their
+  // starts: [{ k: the car, t0, t1: the first and the last sample's time, n: its hard knocks }]
+  function rpFalls() {
+    const R = recd, out = []; if (!R) return out;
+    for (let k = 0; k < R.n; k++) { const s = 7 + k * R.w; let cur = null, kp = 0;
+      for (const f of R.frames) { if (f[s] < REC_FB) { cur = null; continue; } const kn = recKn(f[s]);
+        if (cur) { cur.t1 = f[0]; cur.n += (kn - kp) & 7; } else out.push(cur = { k, t0: f[0], t1: f[0], n: kn }); kp = kn; } }
+    return out.sort((a, b) => a.t0 - b.t0);
+  }
   // the player's pit state where the recording has it at time t (recPit's log): c.rpPit, what the renderer reads for the crew and the pit
   // stop's film camera in the replay (Render crewLogic, pitCine); the race's own fields stay as the race left them (it goes on after it)
   function rpPit(t) {
@@ -1246,7 +1301,7 @@
     const P = replay, R = recd, F = R.frames;
     while (i < F.length - 2 && F[i + 1][0] <= t) i++; while (i > 0 && F[i][0] > t) i--;
     const A = F[i], B = F[Math.min(i + 1, F.length - 1)], u = B[0] > A[0] ? Core.clamp((t - A[0]) / (B[0] - A[0]), 0, 1) : 0;
-    for (let k = 0; k < R.n; k++) rpPose(R.cars[k], A, B, 1 + k * R.w, u, R.w);
+    for (let k = 0; k < R.n; k++) { const c = R.cars[k], o = 1 + k * R.w; if (A[o + 6] >= REC_FB || B[o + 6] >= REC_FB || (c.fall && (c.fall.rp || c.fall.b))) rpFall(c, F, i, o, u, R.w); else rpPose(c, A, B, o, u, R.w); }   // (a body falling down a slope: as it turns, rpFall)
     rpPit(t);   // (the player's pit stop where the recording has it, for the crew and the film camera)
     const o = 1 + R.n * R.w, scOn = (A[o + 6] & 2) !== 0;   // (the safety car, where it was out: its own car, posed like the others)
     if (race.fl) {
@@ -3172,6 +3227,17 @@
     if (!jmp.n) return ''; let h = tr('Najdaljši skok {0} m', Math.round(jmp.best));
     if (J) h += tr(' · {0} {1} (tvoj rekord {2}, {3} {4} m)', esc(Lang.of(J, 'name')), jmp.rec ? Math.round(jmp.rec) + ' m' : '–', R0.jumpRec ? Math.round(R0.jumpRec) + ' m' : '–', esc(J.by), J.m);
     return h + '.'; };
+  // Padec čez rob: the player's car falling as a body (Core fallBody, P.fall.b). Each hard knock on the way down (B.hn counts them, B.hv how
+  // fast into the ground) is heard, felt and shaken as a hit into a wall of that speed is; the core keeps them out of hitWall, and the
+  // commentator's lines about a wall are not theirs. The step it is on the road again its air ends with no landing: no landing's thump, no
+  // jump's length (jumpLanded: the popup, the statistics, the achievement), no hard landing for the commentator
+  let fallB = null, fallN = 0;
+  function fallFb(P) {
+    const B = P.fall && P.fall.b;
+    if (!B) { if (fallB) { fallB = null; prevAir = 0; jmp.air = false; if (cs) cs.wasAir = false; } return; }
+    if (B !== fallB) { fallB = B; fallN = 0; }
+    if (B.hn !== fallN) { fallN = B.hn; Sfx.crash(B.hv); vibrate(Math.min(90, 20 + B.hv * 6)); Render.shake(Math.min(1.2, B.hv * (+S.xShake ? 0.14 : 0.08)), 'hit'); }
+  }
 
   /* ---------------- championship screen: the choice of a series, then the standings between the rounds, the final standings ---------------- */
   const trackName = (id) => Lang.of(Core.TRACKS.find(d => d.id === id), 'name') || id;
@@ -3296,6 +3362,7 @@
       Sfx.crash(imp);
       if (imp > 3) { vibrate(Math.min(90, 20 + imp * 6)); Render.shake(Math.min(1.2, imp * (+S.xShake ? 0.14 : 0.08)), 'hit'); }
     }
+    fallFb(P);   // (falling as a body: its knocks; back on the road: no landing after it)
     // landing after a jump: thump + small shake/vibration scaled by how hard the car came down
     if (prevAir && !P.air && P.impactVY < -2.5) {
       const hard = -P.impactVY;
@@ -6917,6 +6984,7 @@
         get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: (recd.pit || []).map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
+        rpFalls,   // (tools/posnetek.mjs, tests: the falls over an edge the recording holds)
         get radio() { return rd && { cap: $('h-radio').className ? $('h-radio').textContent : '', cur: rd.cur ? rd.cur.lbl + ' ' + rd.cur.sl : '', q: rd.q.length, log: rd.log.slice(), voice: Comm.radioVoice(), mode: Comm.radioMode }; },   // (tests: the police radio,
         radioPlace: (d, k) => track ? rdWhere(track.startS + d, k == null ? -1 : k).concat([rdSay({ en: rdWhere(track.startS + d, k == null ? -1 : k)[1] })]) : null,   // where d m after the start line is as the police say it (the caption, its English twin), and as the voice reads it)
         hud(dt = 1 / 60) { if (race) { updateHUD(dt); hudCol(dt); Comm.update(); } },   // (tests: the HUD as a frame of the running race draws it, the race itself not stepped: a paused race's HUD after sim)

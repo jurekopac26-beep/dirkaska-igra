@@ -6933,6 +6933,7 @@ const Render = (function () {
       const c = v.car, M = c.m, u = lodU(c, alpha);
       const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
       const y = lerp(c.py, c.y, u), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
+      const fb = c.fall && c.fall.b || null;   // (over the edge, falling down the slope as a rigid body, Core fallBody: its pose its own, fallPose below)
       // over a piece of debris on the road (Core debrisHit: hopN, hopT, hopH): the body up and down once, as if it jumped ~2 m
       if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
@@ -6947,10 +6948,11 @@ const Render = (function () {
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
       const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
+      if (v.fb && !fb) fallBack(v, pitchTarget, bankT, dt);   // (put back on the road after its fall: standing there at once)
       v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
       v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) - (v.dl ? v.dl.low : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
-      if (c.rl) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
+      if (c.rl && !fb) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45, 'land');
@@ -6959,6 +6961,7 @@ const Render = (function () {
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
       for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
+      if (fb) fallPose(v, c, fb, u, dt);
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
@@ -6976,6 +6979,7 @@ const Render = (function () {
       const nt = todK, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
       v.gq = { braking, rainL, wk, sk, x, y, z, nt, rl, gy };   // (carGlows: this frame's lamps, also for carCull's car back in view)
+      if (fb) v.gq.wk = v.gq.sk = 0;   // (falling: no road under it to mirror its lamps and its paint, no glint off a roof that tumbles)
       if (vis) carGlows(v);
       if (v.tlG) tlDraw(v, c, u, dt, braking, vis);   // (its semi-trailer on the kingpin, as the tractor is drawn)
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
@@ -6997,10 +7001,10 @@ const Render = (function () {
       if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
-      carFx(v, c, dt, !(opt && opt.noFx) && dt > 0);
+      carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
-      if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
+      if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
       if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
@@ -7012,7 +7016,7 @@ const Render = (function () {
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
-      if (v.sagQ) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
+      if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
       if (!vis) particles.mute = sparkP.mute = glows.mute = false;
     }
@@ -8522,6 +8526,48 @@ const Render = (function () {
       for (let k = 0; k < 4; k++) sparkP.emit(x + (rRnd() - 0.5) * 2, gy + 0.1, z + (rRnd() - 0.5) * 2, (rRnd() - 0.5) * 6 + c.vx * 0.4, 0.5 + rRnd() * 2, (rRnd() - 0.5) * 6 + c.vz * 0.4, 0.2 + rRnd() * 0.2, 0.6, 0.14, 1, 0.82, 0.36, 1, 10, 1.2, gy);
     }
   }
+  // a car falling down a slope as a rigid body (Core fallBody: c.fall.b, here B; a replay's too, made again from its recording): the pose is the
+  // body's own, all of it. Its quaternion between its last two steps, the shorter way round (the body's axes are the group's: x forward, y up,
+  // z to the right), the group's origin its centre of mass less the centre's height along its own up. Nothing of the road's stays in it
+  // (updateCars set those just before: the hop, the jacks, the kerbs' lift, the bank, the grade), the body sits level on its wheels at once (no
+  // lean, and no sag: updateCars), the front wheels point straight and all of them run down; its black underside shown and its contact
+  // shadow hidden, as a car rolling over (xRollPose; updateCars puts both back after); its name stays over it
+  function fallPose(v, c, B, u, dt) {
+    const a = B.pq, b = B.q, s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3] < 0 ? -1 : 1, hc = B.hc;
+    let qx = a[0] + (s * b[0] - a[0]) * u, qy = a[1] + (s * b[1] - a[1]) * u, qz = a[2] + (s * b[2] - a[2]) * u, qw = a[3] + (s * b[3] - a[3]) * u;
+    const l = 1 / (Math.hypot(qx, qy, qz, qw) || 1); qx *= l; qy *= l; qz *= l; qw *= l;
+    const ux = 2 * (qx * qy - qw * qz), uy = 1 - 2 * (qx * qx + qz * qz), uz = 2 * (qy * qz + qw * qx);   // (its up, in the world)
+    v.grp.quaternion.set(qx, qy, qz, qw);
+    v.grp.position.set(lerp(B.px, B.x, u) - hc * ux, lerp(B.py, B.y, u) - hc * uy, lerp(B.pz, B.z, u) - hc * uz);
+    v.roll = v.pitch = 0; v.bodyG.rotation.set(0, 0, 0); v.bodyG.position.set(0, -(v.dl ? v.dl.low : 0), 0);
+    if (v.fb !== 1) { v.fb = 1; v.fbN = B.hn; v.fbW = 1; }   // (the first frame of it; the knocks it has had already are no news: fallFx)
+    v.fbW *= Math.exp(-dt / 1.5); v.spin -= (1 - v.fbW) * c.vl * dt / c.m.rw;   // (the wheels in the air: from the speed it went over at down to a stop)
+    for (const w of v.wf) w.rotation.set(0, 0, -v.spin); for (const w of v.wr) w.rotation.z = -v.spin; for (const w of v.wm) w.rotation.z = -v.spin;
+    if (v.xUnd === undefined) { ownRnd(() => xUnder(v, c)); if (!v.xUnd) v.xUnd = null; }   // (made once; a body it cannot be made for: not tried again every frame)
+    if (v.xUnd) v.xUnd.visible = true;
+    if (v.blob && v.blob.visible) { v.blob.visible = false; v.xRB = true; }
+    if (v.tag) { const k = (v.tagY || (v.tagY = v.tag.position.y)) - hc; v.tag.position.set(k * 2 * (qx * qy + qw * qz), hc + k * uy, k * 2 * (qy * qz - qw * qx)); }   // (the world's up from its middle, in its own axes)
+  }
+  // the frame it is back on the road (Core Race.rescue): a car standing there, at the road's grade and bank at once (not eased out of the pose its
+  // fall ended in), and no landing of it either (wasAir: no ring of dust, no shake). For three frames in all (v.fb: 1 falling, then 2, 3, 0): the
+  // car's bank is the edge's it went over, none, until its first step on the road, and the roll would lean into the road's over 0.3 s
+  function fallBack(v, pitch, bank, dt) { if (dt > 0) v.fb = v.fb < 3 ? v.fb + 1 : 0; v.gpitch = pitch; v.broll = bank; v.roll = v.pitch = 0; v.wasAir = false; if (v.tag && v.tagY) v.tag.position.set(0, v.tagY, 0); }
+  // a falling body's effects, in place of a car on the road's (emitFx: no wheel of it on a road, no exhaust flame, no hub or bumper dragging;
+  // the sparks of the fence it broke on its way over still): at each hard knock on the ground (B.hn counts them; where: B.hx, hy, hz; how
+  // hard: B.hv, m/s) a burst of the ground's dust from the place, stones with it off a harder one (the renderer's own random numbers); the
+  // player's view is shaken by game.js (fallFb: as at a wall of that speed, Nastavitve · Tresenje kamere: ob trku)
+  function fallFx(v, c, B) {
+    v.sk.fill(null); v.acc.fill(0);   // (no skid mark from the edge to where it is put back)
+    if (c.fxWall > 2.5) sparks(c.wallX, c.wallZ, c.fxWall, c.y || 0);
+    if (c.fxCar > 3 && !c.fxQ) sparks(c.contactX, c.contactZ, c.fxCar * 0.7, c.y || 0, c.fxCar > 7 || Core.TX.cv === 5);
+    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    if (B.hn === v.fbN) return;
+    const more = B.hn > v.fbN; v.fbN = B.hn; if (!more) return;   // (a replay taken back in the fall: fewer knocks so far, none of them news)
+    const k = clamp(B.hv / 12, 0.3, 1.5), wetL = wetW > 0.1, dc = snowy() ? SNOW_DUST : world && world.dust || DUST0.col, hx = B.hx, hy = B.hy, hz = B.hz;   // (rain: a darker, thinner cloud off the wet ground)
+    for (let i = 0, n = 6 + 10 * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = (1.2 + rRnd() * 3) * k, sh = (wetL ? 0.68 : 0.92) + rRnd() * 0.12;
+      particles.emit(hx + Math.cos(a) * 0.5, hy + 0.2 + rRnd() * 0.4, hz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.3, 0.5 + rRnd() * 1.4 * k, Math.sin(a) * sp + c.vz * 0.3, 1.2 + rRnd() * 0.9, 1, (3.2 + rRnd() * 2.6) * (0.7 + 0.4 * k), dc[0] * sh, dc[1] * sh, dc[2] * sh, wetL ? 0.3 : 0.5, -0.06, 2, hy - 2); }
+    if (k > 0.5) for (let i = 0, n = 8 * k; i < n; i++) particles.emit(hx, hy + 0.2, hz, (rRnd() - 0.5) * 6 * k + c.vx * 0.4, 1.5 + rRnd() * 3 * k, (rRnd() - 0.5) * 6 * k + c.vz * 0.4, 0.7 + rRnd() * 0.5, 0.3, 0.24, 0.32, 0.26, 0.19, 0.95, 14, 0.4, hy - 6);   // (stones, down the slope)
+  }
   // the wheels go back (and toe out a little) with the metal crushed over them
   function xWheels(v, xc) {
     const o = [0, 0, 0, 0, 0];
@@ -9888,6 +9934,7 @@ const Render = (function () {
     const nv = c.phys === 'nova', LK = cam.look;
     let hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
     if (LK && LK.k > 0) hv += wrapPi(Math.atan2(LK.z - z, LK.x - x) - hv) * LK.k;   // (a special mission's target, cam.look { x, z, k }: the view behind the car turned toward it by k, js/missions/kit.js look)
+    if (cam.fall) hv = fallHead(dt);   // (a car falling down a slope: along the road where it went over, fallCam)
     const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
     cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
     cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
@@ -9898,6 +9945,7 @@ const Render = (function () {
     const LK = cam.look, D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
     const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
     let back = cam.userBack || 0;
+    if (cam.fall) back *= 1 - sstep(0, 1, cam.fall.k);   // (a car falling down a slope: Položaj avta's metres out of the view, fallCam)
     const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)
     if (back > 0 || tlB > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
       // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
@@ -9911,11 +9959,34 @@ const Render = (function () {
     const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs), tx = x + fx * ahead, tz = z + fz * ahead;
     return [tx - fx * D * Math.cos(pitch), baseY + D * Math.sin(pitch), tz - fz * D * Math.cos(pitch), tx, baseY, tz, fov];
   }
+  // the view behind a car that falls down a slope as a body (Core fallBody: c.fall.b; a replay's too): the falling car's own heading tumbles
+  // and its place on the road stays where it went over, so the view's heading is the road's own there, the way the car was going (taken once,
+  // from the track at the car's place, when the fall is first seen; across the road, at a crawl: the way the view looks already; a view made
+  // afresh in the middle of it, a replay's jump, where the car's speed is its tumbling heading's: the race's way), eased to as any heading
+  // (chaseStep: fallHead). The view's place follows the car down as it follows it on the road, 4 m over the slope at least (updateCamera), and
+  // the car stays in the picture at the usual distance and height (640 x 360 and 360 x 640, Blizu to Daleč, 38 falls along Killar: its middle
+  // never outside the picture, no slope and no road's edge between it and the camera while it is over the drawn ground), but for Položaj avta:
+  // its metres of view ahead sink a car that falls 15 m/s and more, under the view's eased height, to the picture's foot and past it, so they
+  // go out of the view in 0.4 s (chasePose; F.k) and are back with the car on the road. Back on the road (Core Race.rescue) the view is behind
+  // the car there in that very frame, as resetCam's, its last knock's shake left down the slope
+  const _fcQ = {};
+  function fallCam(c, x, z) {
+    const B = c.fall && c.fall.b, F = cam.fall;
+    if (F && (F.c !== c || !B)) { cam.fall = null; if (F.c === c) { resetCam(); cam.shake = 0; } }
+    if (!B) return;
+    if (!cam.fall) {
+      const q = curTrack.query(x, z, c.q ? c.q.i : -1, _fcQ), vt = c.vx * q.tx + c.vz * q.tz, s = !cam.init ? 1 : Math.abs(vt) > 1 ? Math.sign(vt) : Math.cos(cam.hs) * q.tx + Math.sin(cam.hs) * q.tz < 0 ? -1 : 1;
+      cam.fall = { c, h: Math.atan2(s * q.tz, s * q.tx), k: 0, snap: false };
+    }
+    if (!cam.init) { cam.fall.snap = true; cam.fall.k = 1; }   // (a view made afresh while it falls: along the road at once, not swung round from the tumbling car's heading)
+  }
+  function fallHead(dt) { const F = cam.fall; F.k = Math.min(1, F.k + dt / 0.4); if (F.snap) { F.snap = false; cam.hs = F.h; } return F.h; }
   function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && !pitOn(c) && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it (not under the pit stop's camera, pitCine: its view behind the car as ever)
+    fallCam(c, x, z);   // (the followed car over the edge, or just back on the road)
     if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
