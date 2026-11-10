@@ -151,7 +151,7 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
     const across = () => side * (P.vx * T.nx[P.q.i] + P.vz * T.nz[P.q.i]);
     for (let k = 0; k < 120 * 4; k++) { Math.random = seeded(100 + k); const sp = Math.hypot(P.vx, P.vz), vn = across(), n0 = r.fence.n;
       P.inThr = thr >= 0 ? thr : t0 < 0 && sp < v ? 0.7 : 0; P.inBrk = thr < 0 && t0 < 0 && sp > v * 1.03 ? 0.4 : 0; P.inSteer = 0; r.step(DT); if (P.fall) fell = true; minY = Math.min(minY, P.y);
-      if (P.fall) { if (tf < 0) tf = k; if (T.floorAt(P.x, P.z, fo)) { under = Math.min(under, P.y - fo.h); cells++; } if (tl < 0 && P.fall.land) tl = k; } else if (tf >= 0 && tp < 0) tp = k;   // (the drawn ground under the falling car's middle)
+      if (P.fall) { if (tf < 0) tf = k; if (T.floorAt(P.x, P.z, fo)) { under = Math.min(under, P.y - fo.h); cells++; } if (tl < 0 && P.fall.b && P.fall.b.hn) tl = k; } else if (tf >= 0 && tp < 0) tp = k;   // (the drawn ground under the falling car's middle)
       if (t0 < 0 && ((P.hitWall || 0) > 0 || r.fence.n > n0)) { t0 = k; v0 = sp; vn0 = vn; }
       if (t0 >= 0 && !fell && k - t0 <= 24) { vnMin = Math.min(vnMin, across()); if (k - t0 === 12) v1 = Math.hypot(P.vx, P.vz); }
       wall = Math.max(wall, P.hitWall || 0); P.hitWall = 0; if (!fell && !P.offN) { out = Math.max(out, side * P.q.d - T.w); past = Math.max(past, side * P.q.d - (side > 0 ? P.q.br : P.q.bl)); } if (P.offN) P.inThr = 0; }
@@ -183,9 +183,9 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
     `${fast.brk} panels broken, fell ${fast.drop.toFixed(1)} m, back on the road ${fast.back} ${fast.along.toFixed(0)} m on, damage +${fast.dmg.toFixed(2)}`);
   // falling onto the slope (def.floor): at five places along the drops, slowly (29 km/h at 17° off the road's line) and fast (90 km/h at 20°)
   const ontoM = [300, 524, 1279, 2500, 3900], onto = ontoM.flatMap(m => [run(T.startS + m, -1, 8, 0.3, 0), run(T.startS + m, -1, 25, 0.35, 0)]);
-  check('over the edge the car lands on the slope drawn below it (def.floor; the user\'s report of 9. 11. 2026 at ~23.48: »padel v grafiko in postal neviden«): at 0.3, 0.52, 1.28, 2.5 and 3.9 km, slowly and fast, its middle never under the ground drawn there, and back on the road at most 0.5 s after it first touched it (1.6 s after it went over at the latest)',
-    onto.every(x => x.fell && x.falls === 1 && x.cells > 0 && x.under > -0.1 && x.back && x.fallT > 0 && x.fallT <= 1.61 && (x.land < 0 || x.slid <= 0.51) && x.fin) && onto.filter(x => x.land >= 0).length >= 6,
-    onto.map((x, k) => `${ontoM[k >> 1]} m ${k & 1 ? 'fast' : 'slow'}: ${x.land >= 0 ? `touched after ${x.land.toFixed(2)} s, slid ${x.slid.toFixed(2)} s` : 'no touch'}, at least ${x.under.toFixed(2)} m over the ground, back after ${x.fallT.toFixed(2)} s`).join('; '));
+  check('over the edge the car lands on the slope drawn below it (def.floor; the user\'s report of 9. 11. 2026 at ~23.48: »padel v grafiko in postal neviden«): at 0.3, 0.52, 1.28, 2.5 and 3.9 km, slowly and fast, its middle never under the ground drawn there; it falls as a body (js/core.js, FALL: it tips over the edge, tumbles, is knocked on the slope: at least three of the ten within the fall\'s time) and is back on the road 1.5 s after it went over (1.6 s at the latest)',
+    onto.every(x => x.fell && x.falls === 1 && x.cells > 0 && x.under > -0.1 && x.back && x.fallT > 0 && x.fallT <= 1.61 && x.fin) && onto.filter(x => x.land >= 0).length >= 3,
+    onto.map((x, k) => `${ontoM[k >> 1]} m ${k & 1 ? 'fast' : 'slow'}: ${x.land >= 0 ? `first knock after ${x.land.toFixed(2)} s` : 'no knock'}, at least ${x.under.toFixed(2)} m over the ground, back after ${x.fallT.toFixed(2)} s`).join('; '));
   check('the fence holds no car: hit at ~29 and ~19 km/h across it, or sliding along it at 50 km/h, it breaks and the car goes through and falls, then it is back on the road',
     [above, below, slide].every(x => x.brk >= 1 && x.fell && x.falls === 1 && x.back && x.wall === 0 && x.fin),
     [above, below, slide].map((x, k) => `${['~29 km/h', '~19 km/h', 'sliding'][k]}: ${x.brk} broken, fell ${x.fell}, back ${x.back}`).join('; '));
