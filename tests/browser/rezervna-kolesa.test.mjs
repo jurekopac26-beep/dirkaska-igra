@@ -2,7 +2,7 @@
 // damage they keep still; from 50 % they rock on their carriers (a kit car's: their points on its body turned, the rest of the body as it
 // was; the TITAN CISTERNA's four on its trailer's rack: one mesh of its own, the trailer drawn without them), harder near 80 %; at 80 % the
 // core throws them off: each lies on the road as a piece of its own (a mesh), the trailer drawn without them, its shadow too. KAMEN (two
-// behind its cab), MEDVED (one on its tailgate), the TITAN CISTERNA. On a real track (Bathurst).
+// behind its cab), MEDVED and VRAN (one on their tailgate), TUR (one lying in its bed), the TITAN CISTERNA. On a real track (Bathurst).
 //   node tests/browser/rezervna-kolesa.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -10,7 +10,7 @@ const T = checker('The spare wheels: they rock from 50 % damage, at 80 % they co
 const srv = await serve(), browser = await launch();
 const ready = (page) => page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
 try {
-  for (const car of ['kamen', 'medved', 'cisterna']) {
+  for (const car of ['kamen', 'medved', 'vran', 'tur', 'cisterna']) {
     const { page, errors } = await openGame(browser, srv.base + `/index.html?proga=bathurst&nacin=dirka&avto=${car}&t=2`, { quality: 'high' }, { width: 640, height: 360 });
     await ready(page);
     const r = await page.evaluate(() => {
@@ -47,8 +47,8 @@ try {
       else out.dead = SP.filter(k => v.kit.dead[k]).length;
       return out;
     });
-    const name = { kamen: 'KAMEN', medved: 'MEDVED', cisterna: 'the TITAN CISTERNA' }[car], J = JSON.stringify;
-    T.check(`${name}: its spare wheels (${r.spares.join(', ')})`, r.spares.length === { kamen: 2, medved: 1, cisterna: 4 }[car] && (r.tl ? r.spares.length === 4 : r.ranges === r.spares.length), J(r));
+    const name = { kamen: 'KAMEN', medved: 'MEDVED', vran: 'VRAN', tur: 'TUR', cisterna: 'the TITAN CISTERNA' }[car], J = JSON.stringify;
+    T.check(`${name}: its spare wheels (${r.spares.join(', ')})`, r.spares.length === { kamen: 2, medved: 1, vran: 1, tur: 1, cisterna: 4 }[car] && (r.tl ? r.spares.length === 4 : r.ranges === r.spares.length), J(r));
     if (r.tl) {
       T.check(`${name}: at 30 % the tyres keep still in the trailer's look`, !r.still.mesh && !r.still.cut, J(r.still));
       T.check(`${name}: at 62 % the stack rocks on its rack (a mesh of its own, up to ${r.wob.ang}°), the trailer without it`, r.wob.mesh && r.wob.cut && r.wob.ang > 0.3 && r.wob.ang < 12, J(r.wob));
