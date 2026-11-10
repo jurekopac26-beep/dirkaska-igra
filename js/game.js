@@ -771,6 +771,14 @@
   const VZ_KEY = 'rr_voznja';
   let vzOn = false;
   try { const v = new URLSearchParams(location.search).get('voznja'); if (v === '1') localStorage.setItem(VZ_KEY, '1'); else if (v === '0') localStorage.removeItem(VZ_KEY); vzOn = localStorage.getItem(VZ_KEY) === '1'; } catch (_) { vzOn = false; }
+  // the rubbered-in line by the player's driving, on open roads too (a prototype for the pictures »zdaj in potem«, docs/zgumirana-linija.md):
+  // index.html?guma=1 (not kept); the profiles as voznjaOf's, for the line's place only (Race opts.guma, a look: nobody drives by them)
+  let gumaOn = false; try { gumaOn = new URLSearchParams(location.search).get('guma') === '1'; } catch (_) { gumaOn = false; }
+  const gumaOf = (def) => {
+    if (!gumaOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
+    const L = VOZNJA_PROFILI.filter(p => p.proga === def.id); if (typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG) L.push(VOZNJA_SLOG);
+    return L.length ? L : undefined;
+  };
   const voznjaOf = (def) => {
     if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
     const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
@@ -2337,7 +2345,8 @@
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
-      voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)
+      voznja: solo || chase || duel ? undefined : voznjaOf(track.def),   // (the rivals on the player's driving: a race with rivals)
+      guma: gumaOf(track.def)
     }, MS.opts(), prviOpts(), ZB.opts(zctx)));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race; Zabava: a novelty's mode, js/zabava.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
     careerCond(M, !!(on || school || ch));   // (the career: the car's wear from its last races, till the garage's service)

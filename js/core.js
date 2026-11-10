@@ -6710,16 +6710,18 @@ const Core = (function () {
     // Again after every change of the profiles (the weather): a profile of the weather the road has now (the style: the dry), or none (the
     // race's own AI)
     _voznja() {
-      const T = this.track, all = this.opts.voznja ? [].concat(this.opts.voznja) : [];
+      // (opts.guma, a prototype for the pictures »zdaj in potem«, docs/zgumirana-linija.md: the same profiles for the rubbered-in line's place
+      // only, Race.rubRl, a look: without opts.voznja the cars drive as ever, vis)
+      const T = this.track, vis = !this.opts.voznja && !!this.opts.guma, all = this.opts.voznja ? [].concat(this.opts.voznja) : vis ? [].concat(this.opts.guma) : [];
       for (const c of this.cars) c.uRl = c.uT = c.uLim = null;
-      this.voznja = null;
+      this.voznja = null; this.rubRl = null;
       if (!all.length) return;
       const wet = (this.wst && this.wst.on ? this.wst.water : this.rain) > 0.05, win = !!this.opts.winter;
       const ok = (p) => p && /^mokro/.test(p.vreme || '') === wet && /zima/.test(p.vreme || '') === win;
       const V = all.find(p => ok(p) && !p.razredi && p.proga === T.def.id && p.vq && p.vq.length > 1) || null, S = T.def.test || T.def.pending ? null : all.find(p => ok(p) && p.razredi && p.razredi.length) || null;   // (the style: a real track only, not a test one nor one still to be chosen)
       let VS = null;   // (the style's profile of this track: once for each speed profile of the race)
       if (S) { const z = this._vzS; VS = z && z.vp === this.vprof && z.S === S ? z.P : voznjaIzSloga(T, this.vprof, S); this._vzS = { vp: this.vprof, S, P: VS }; }
-      this.voznja = V || VS;
+      if (!vis) this.voznja = V || VS;
       if (!V && !VS) return;
       const N = T.N, ds = T.ds, L = T.len, mid = (DIFF[1][0] + DIFF[1][1]) / 2, h0 = DIFF[2][0];
       // the pace by difficulty: lam -1 (the easiest car on easy) .. 0 (the slowest on hard) .. 1 (the quickest on hard): toward the
@@ -6770,6 +6772,8 @@ const Core = (function () {
         return o;
       };
       const RV = V ? prep(V) : null, RS = VS ? prep(VS) : null, aBs = new Map(), sss = new Map();   // (each car model's profile: its braking, and its share of the pace up to 11-24 m/s)
+      if (this.opts.guma) { const RU = RV || RS, rr = this.rubRl = new Float32Array(N); for (let i = 0; i < N; i++) { const li = (T.wa ? T.wa[i] : T.w) - 1.7; rr[i] = clamp(T.rl[i] + RU.dd[i], -li, li); } }   // (the rubber's line: the player's, kept on the asphalt)
+      if (vis) return;
       for (const c of this.cars) {
         if (c.isPlayer || c.net || c.sc || c.pol) continue;
         const R = RV && (!RV.cls || RV.cls.has(c.m.id)) ? RV : c.tl ? null : RS; if (!R) continue;   // (a semi-trailer: its own driving, not the style)
