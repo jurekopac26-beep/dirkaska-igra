@@ -298,6 +298,27 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 ## Čas in vrsta
 
+**Razporeditev računov** (odločitev uporabnika 10. 11. 2026 ob ~22.30, prek Mateja, tabla #382, komentar 6779831019; datumi so ocene za `main`, v tedenskem načrtu 16. 11. ga samo še potrdita):
+- **biketraveler, fizika in avti:**
+  1. Trki (#608): odpadli deli in slike na Spa, nato »Realistična«; ~20. 11.
+  2. Garaža, nato #480 (FORMULA ORKAN in TAIFUN LM); ~17. 11.
+  3. Poškodbe P1–P6 po #480; gotove ~28. 11.
+  4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) od ~17. 11.; gotovi ~25. 11., s tem je 50 avtov.
+  5. Dež in sneg po trkih, s predogledom in uporabnikovim »ok«; ~25. 11.
+  6. Nato pomoč pri predelavi prog.
+- **jure.kopac26, grafika:**
+  1. #622 (E0, prvi kos) in #638 na `main` zdaj.
+  2. Ned 15. 11.: Samsungov temni način; Killar (#494) na `main` v ponedeljek.
+  3. E Cesta in predmeti na vseh pravih progah od 15. 11.; ~22. 11.
+  4. S Stavbe ~30. 11., nato predelava prog.
+- **partyslo, proge, nato grafika:**
+  1. Prelet Spa (#246) 10. 11.; v sredo #569 in 7 prog na `main`; od petka zadnje 3 proge (2 makadamski, 1 ledena) in Koli; preostali 3 preleti po uporabnikovem »ok« na Spa.
+  2. Od ~17. 11. G Rastje in teren; na `main` za S, ~1. 12.
+  3. Od ~23. 11. predelava prog iz PR, nato nove proge po novem postopku; vse prave proge z novo grafiko ~6. 12.
+- Modeli po `CLAUDE.md`: grafika Fable 5.2 z eno sejo; fizika trkov Fable 5.2 z ultracode; proge, meni in popravki Opus.
+
+Tabela spodaj je prvotna ocena (8. 11.); kjer se razlikuje, velja razporeditev zgoraj.
+
 **Seja** je ena seja Opus z naporom max (~3 ure dela). Ena linija naredi ~3 seje na dan. En račun ima dve liniji, dva računa štiri.
 
 **Začetek** je po tedenskem načrtu (pon. 9. 11.), najprej v torek 10. 11. Račune določi tedenski načrt.
