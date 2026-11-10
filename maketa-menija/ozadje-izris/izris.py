@@ -4,7 +4,7 @@
 # Copernicus DEM (dem.py), avto iz igre (avto.mjs). Navodila in viri: README.md v tej mapi.
 #
 # Zagon (python z bpy):  python izris.py <prizor> --dem <dem.npz> --car <avto.json> --tmp <mapa> --out <izhod brez končnice>
-#                         [--orient pokonci,lezece] [--scale 0.25] [--samples 160]
+#                         [--orient pokonci,lezece] [--scale 0.25] [--samples 96] [--dry]
 # Izhod: <out>-pokonci.webp (1080 × 1350) in <out>-lezece.webp (1600 × 900), vsaka do ~300 KB.
 import argparse, base64, io, json, math, os, sys, time
 import numpy as np
@@ -19,7 +19,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('scene'); ap.add_argument('--dem', required=True); ap.add_argument('--car', required=True)
 ap.add_argument('--tmp', required=True); ap.add_argument('--out', required=True)
 ap.add_argument('--orient', default='pokonci,lezece'); ap.add_argument('--scale', type=float, default=1.0)
-ap.add_argument('--samples', type=int, default=160); ap.add_argument('--seed', type=int, default=11)
+ap.add_argument('--samples', type=int, default=96); ap.add_argument('--seed', type=int, default=11)
 ap.add_argument('--dry', action='store_true')  # build the scene only (no render)
 A = ap.parse_args()
 CFG = json.load(open(os.path.join(HERE, 'prizori.json')))[A.scene]

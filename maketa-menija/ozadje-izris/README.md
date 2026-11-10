@@ -24,7 +24,7 @@ venv/bin/python izris.py medvode --dem /pot/dem-medvode.npz --car /pot/jastreb-d
 
 - Hiter preizkus: `--scale 0.25 --samples 24`; samo gradnja prizora brez izrisa: `--dry`; ena usmeritev: `--orient pokonci`.
 - Prizori (točka pogleda, smer, sonce, meja snega in gozda, oblaki, barve, napis na tabli) so v `prizori.json`; kompozicija (cesta, avto, tabla) na vrhu `izris.py` (`COMP`, `ORIENT`).
-- Trajanje na 4 jedrih: gradnja prizora ~10 s, izris ene slike v polni velikosti s 160 vzorci ~ČAS min.
+- Trajanje na 4 procesorskih jedrih: gradnja prizora ~10 s, izris ene slike v polni velikosti s 96 vzorci ~8 min (preizkus z `--scale 0.25 --samples 24` ~20 s).
 
 ## Kaj je v sliki in od kod
 
