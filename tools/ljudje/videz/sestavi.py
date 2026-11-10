@@ -1,4 +1,4 @@
-# Sestavi sliko primerjave videza ljudi (prej / potem) za stran Odločitve: glavni posnetek s kamere za avtom z rumeno lupo (povečava iz iste
+# Sestavi sliko primerjave videza ljudi (zdaj / potem; pravilo »primerjava v slikah«, CLAUDE.md) za stran Odločitve: glavni posnetek s kamere za avtom z rumeno lupo (povečava iz iste
 # kamere) za prej in za potem, pod njima lupe drugih mest drug ob drugem (prej | potem), spodaj številke. WebP do ~300 KB.
 #   python3 tools/ljudje/videz/sestavi.py <ime> <proga> <naslov> <podnaslov> <glavni posnetek> [vrstica posnetek ...] [--film] [--izrez K]
 #   posnetek: ime iz stats.json (npr. bathurst-zar-45); --film: vrstice so tri zaporedne lupe (gibanje), samo za potem
@@ -80,7 +80,7 @@ def pair(f, label, kz=None):   # the loupes of one place: prej | potem
     d.text((14, 8), label, font=font(24, True), fill=(238, 242, 246))
     for k, v in enumerate(['prej', ime]):
         z = crop(img(v, f, '_zoom'), kz).resize((w, h), Image.LANCZOS); x = k * (w + 6); row.paste(z, (x, 44)); dd = ImageDraw.Draw(row)
-        chip(dd, (x + 10, 54), 'PREJ' if v == 'prej' else 'POTEM', 22, fill=((40, 46, 56, 255) if v == 'prej' else YEL + (255,)), col=((255, 255, 255) if v == 'prej' else (17, 17, 17)))
+        chip(dd, (x + 10, 54), 'ZDAJ' if v == 'prej' else 'POTEM', 22, fill=((40, 46, 56, 255) if v == 'prej' else YEL + (255,)), col=((255, 255, 255) if v == 'prej' else (17, 17, 17)))
     return row
 
 def film(f, label, kz=None):   # three loupes one after another (the motion), potem only
@@ -115,7 +115,7 @@ if IZ:
     for r in vrstice:
         f, k, fm = spec(r); parts.append(film(f, 'Potem, gibanje (tri lupe v ~0,5 s): ' + what(f), k) if fm else pair(f, what(f), k))
 else:
-    parts.append(panel('prej', glavni, 'PREJ · ' + what(glavni)))
+    parts.append(panel('prej', glavni, 'ZDAJ · ' + what(glavni)))
     parts.append(Image.new('RGB', (W, 6), (14, 19, 25)))
     parts.append(panel(ime, glavni, 'POTEM · ' + what(glavni)))
     for f in vrstice: parts.append(film(f, 'Potem, gibanje (tri lupe v ~0,3 s): ' + what(f)) if FILM else pair(f, what(f)))
