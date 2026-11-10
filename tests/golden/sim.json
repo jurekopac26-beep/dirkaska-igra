@@ -4900,25 +4900,25 @@
   }
  },
  "killar/race/cs": {
-  "digest": "5236e080012ad820cd3d91cc",
+  "digest": "ba0a3abaa73779880b752cd3",
   "lead": 1900,
   "car0": [
-   -1190.62,
-   -1038.11
+   -1270.41,
+   -1072.15
   ],
   "cover": {
-   "dmg": 0.48,
+   "dmg": 0.06,
    "loose": 0,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/demo/cs": {
-  "digest": "2d6ace5e9911029d84a4b129",
-  "lead": 2058.9,
+  "digest": "489709a0731447c4847876d4",
+  "lead": 2055.5,
   "car0": [
-   -1406.53,
-   -1270.63
+   -1404.88,
+   -1268.08
   ],
   "cover": {
    "dmg": 0,
@@ -4928,11 +4928,11 @@
   }
  },
  "killar/upg/cs": {
-  "digest": "fb9f9d86c6f5acc868e71818",
-  "lead": 2046.1,
+  "digest": "c5dac14eb8892cc7dac723c3",
+  "lead": 2039.6,
   "car0": [
-   -1346.53,
-   -1208.81
+   -1343.29,
+   -1205.8
   ],
   "cover": {
    "dmg": 0,
@@ -4942,25 +4942,25 @@
   }
  },
  "killar/crash/cs": {
-  "digest": "7ef1445dc69da4e11348374b",
-  "lead": 1900,
+  "digest": "ee0b371d2861b714725af22c",
+  "lead": 1899.4,
   "car0": [
-   -1222.16,
-   -1041.26
+   -1113.45,
+   -991.69
   ],
   "cover": {
-   "dmg": 0.61,
-   "loose": 1,
+   "dmg": 1,
+   "loose": 6,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/formula/cs": {
-  "digest": "c37dfe3cdabcf0eb193d11fe",
-  "lead": 1875.7,
+  "digest": "37fee12c93921574e5f730cb",
+  "lead": 1874.6,
   "car0": [
-   -1194.44,
-   -1038.82
+   -1189.2,
+   -1035.51
   ],
   "cover": {
    "dmg": 1,
@@ -4970,29 +4970,29 @@
   }
  },
  "killar/lm/cs": {
-  "digest": "d97af8699e131d8170bd4a62",
-  "lead": 1854.9,
+  "digest": "be23c8beb010a284278e8f21",
+  "lead": 1852.3,
   "car0": [
-   -1098.03,
-   -979.6
+   -1193.06,
+   -1039.69
   ],
   "cover": {
-   "dmg": 0.69,
-   "loose": 16,
+   "dmg": 0.42,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }
  },
  "killar/car/cs": {
-  "digest": "77510198b94c4902d039117e",
-  "lead": 1900.9,
+  "digest": "f63f79b3adc21d19fd1ea26a",
+  "lead": 1900,
   "car0": [
-   -1258.96,
-   -1067.72
+   -1235.55,
+   -1056.21
   ],
   "cover": {
-   "dmg": 0.92,
-   "loose": 3,
+   "dmg": 0.77,
+   "loose": 2,
    "rescues": 0,
    "repairs": 0
   }

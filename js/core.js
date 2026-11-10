@@ -234,6 +234,11 @@ const Core = (function () {
           for (let d = a - 22; d <= b + 22; d += ds / 2) { const i = this.idx(this.startS + d), f = Math.min(sstep(a - 22, a + 6, d), sstep(b + 22, b - 6, d)); if (sl * f > bk[i]) { bk[i] = sl * f; bs[i] = side; } }
         }
       }
+      // a road's own relief across its width (def.cross(track) -> (s, d, out) => out, as bankAt below: the surface's height over the road's
+      // profile at d m from its middle and its slope across there; Killar's ruts, hollows and ridges, js/tracks/killar.js): read where a
+      // banked bend's tilt is (the cars' step, the marks, the lines, the splashes); no bend banked by it (bank 0: the speeds as without it);
+      // Track.relief: the open road's traffic stands on it too (Traffic, below)
+      if (typeof def.cross === 'function') { const f = def.cross(this); if (f) { this.bank = new Float32Array(N); this.bankSide = new Int8Array(N); this.bankAt = f; this.relief = true; } }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
       // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
       if (def.wide) for (const [a, b, sd, m, e0] of def.wide) { const e = e0 || 30; for (let d = a - e; d <= b + e; d += ds) {   // (e: the ease, default 30 m; a junction's mouth on a street circuit: a few metres)
@@ -4863,6 +4868,7 @@ const Core = (function () {
       const T = this.T, N = T.N, f = clamp(p.s / T.ds, 0, N - 1.001), i = Math.floor(f), j = i + 1, t = f - i;
       const nx = T.nx[i] + (T.nx[j] - T.nx[i]) * t, nz = T.nz[i] + (T.nz[j] - T.nz[i]) * t;
       p.x = T.px[i] + (T.px[j] - T.px[i]) * t + nx * p.d; p.z = T.pz[i] + (T.pz[j] - T.pz[i]) * t + nz * p.d; p.y = T.hy ? T.hy[i] + (T.hy[j] - T.hy[i]) * t : 0;
+      if (T.relief) p.y += T.bankAt(p.s, p.d, _bk).dy;   // (on the road's own relief across, as the vehicles below)
     }
     // a vehicle on its lane: x, z, y, heading and velocity from s, d, its speed and dd (its sideways speed this step)
     _altOf(v) { if (v.dir > 0 || v.st !== 0) return null; for (const A of this.alts) if (v.s >= A.a && v.s <= A.b) return A; return null; }
@@ -4882,6 +4888,7 @@ const Core = (function () {
       const T = this.T, N = T.N, f = clamp(v.s / T.ds, 0, N - 1.001), i = Math.floor(f), j = i + 1, t = f - i;
       const nx = T.nx[i] + (T.nx[j] - T.nx[i]) * t, nz = T.nz[i] + (T.nz[j] - T.nz[i]) * t, tx = T.tx[i] + (T.tx[j] - T.tx[i]) * t, tz = T.tz[i] + (T.tz[j] - T.tz[i]) * t;
       v.x = T.px[i] + (T.px[j] - T.px[i]) * t + nx * v.d; v.z = T.pz[i] + (T.pz[j] - T.pz[i]) * t + nz * v.d; v.y = T.hy ? T.hy[i] + (T.hy[j] - T.hy[i]) * t : 0;
+      if (T.relief) v.y += T.bankAt(v.s, v.d, _bk).dy;   // (a road with its own relief across, def.cross: on its surface, in a hollow or on a ridge as the cars are)
       v.vx = tx * v.v * v.dir + nx * dd; v.vz = tz * v.v * v.dir + nz * dd; v.i = i;
       v.h = v.v > 0.4 ? Math.atan2(v.vz, v.vx) : Math.atan2(tz * v.dir, tx * v.dir);
     }
@@ -5031,7 +5038,7 @@ const Core = (function () {
           const pen = q.d > 0 ? q.d - (q.br - hw) : -q.bl + hw - q.d, sg = q.d > 0 ? -1 : 1;
           v.x += q.nx * pen * sg; v.z += q.nz * pen * sg; const vn = v.vx * q.nx + v.vz * q.nz, kb = pm ? 1.05 : 1.3; if (vn * sg < 0) { v.vx -= q.nx * vn * kb; v.vz -= q.nz * vn * kb; }
         }
-        v.s = q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.yAt(q) : 0; v.v = 0; v.brake = true;
+        v.s = q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.yAt(q) : 0; if (T.relief) v.y += T.bankAt(q.s, q.d, _bk).dy; v.v = 0; v.brake = true;
         if (Math.hypot(v.vx, v.vz) < 0.25 && Math.abs(v.w) < 0.25) { v.st = 2; v.t = 0; v.vx = v.vz = v.w = 0; }
       } else if (v.st === 2) {
         v.t += dt;

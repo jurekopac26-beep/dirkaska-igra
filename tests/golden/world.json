@@ -1418,22 +1418,22 @@
  },
  "killar": {
   "meshes": 1559,
-  "verts": 1020105,
-  "instances": 43803,
+  "verts": 1114003,
+  "instances": 43807,
   "props": 95,
   "crowd": 146,
-  "world": "c14b4149",
+  "world": "afc3a22d",
   "propsHash": "5a404b3",
-  "floor": "f0c52a38/9520",
+  "floor": "ab9d352f/9520",
   "groups": {
-   "-:MeshLambertMaterial": "bcaec0bc",
-   "-:MeshPhongMaterial": "362b4f5d",
+   "-:MeshLambertMaterial": "65cfd614",
+   "-:MeshPhongMaterial": "776466d0",
    "-:MeshBasicMaterial": "c58331d7",
-   "crowd:MeshLambertMaterial": "fefa78c9",
-   "ao:MeshBasicMaterial": "3bb991ea",
-   "life:MeshLambertMaterial": "631a66aa",
-   "lifeShadow:MeshBasicMaterial": "77791025",
-   "life:MeshBasicMaterial": "8133be08"
+   "crowd:MeshLambertMaterial": "6c289e9f",
+   "ao:MeshBasicMaterial": "aa227629",
+   "life:MeshLambertMaterial": "22f399fb",
+   "lifeShadow:MeshBasicMaterial": "ac4382c6",
+   "life:MeshBasicMaterial": "a9d7771e"
   }
  },
  "zurich": {

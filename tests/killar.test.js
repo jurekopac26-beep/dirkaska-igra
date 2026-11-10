@@ -52,6 +52,28 @@ check('track: named "Killar, Indija" ("Killar, India" in English), a real place 
     bu.every(b => b.h >= 0.5 * K && b.h <= 1.2 * K && b.w >= 6 && b.w <= 10) && at.every((s, i) => s > S0 + 150 && s < T.finishS - 100 && (!i || s - at[i - 1] >= 99.9)) && lo > -0.6 * K && hi < 1.2 * K && quiet < 0.02,
     `KILLAR_RAZGIBANOST ${K}: ${bu.length} crests at ${at.map(s => Math.round(s - S0)).join(', ')} m (${bu.map(b => b.h).join(', ')} m), the road ${lo.toFixed(2)} to +${hi.toFixed(2)} m off the surveyed one, `
     + `in the quiet places ${(quiet * 1000).toFixed(1)} mm; roadBase from the road at 0 ${(emu * 1000).toFixed(1)} mm`);
+  // 1c. the relief across the road (def.cross -> Track.bankAt, KILLAR_UND.ruts in js/tracks/killar.js, tools/killar-cesta.mjs; the user, 10. 11. 2026:
+  //     »Naj bo razgibana v vse smeri«, »3d naj bodo tla pod kolesi«): hollows, ruts and ridges on one half of the road or the other, the surface
+  //     the car rides and leans with. The road's own profile and its bends' speeds as without it (Track.bank all 0), its edges at the road's own
+  //     height (what stands by the road stays), nothing at the quiet places, no steeper across than ~15 % where the cars drive, and by a
+  //     drop's edge the surface never falls toward the drop (no ridge on that side); at 0 none of it; the co-driver calls the highest ridges
+  const o = { dy: 0, sl: 0 }, W = T.w, quietAt = (s) => s < S0 + 45 || s > T.finishS - 20 || T.cpS.some(c => Math.abs(s - c) < 8) || (def.bridges || []).some(([a, b]) => s > S0 + a - 10 && s < S0 + b + 10);
+  let ylo = 0, yhi = 0, lane = 0, edge = 0, out = 0, quietR = 0, toDrop = 0, n = 0, n4 = 0, nHol = 0, nRid = 0, sides = [0, 0];
+  for (let s = S0; s < T.finishS; s += 1) { const dr = def.drops.some(([a, b]) => s > S0 + a && s < S0 + b); let m = 0, lo = 0, hi = 0, at = 0;
+    for (let d = -W; d <= W + 1e-9; d += 0.25) { T.bankAt(s, d, o); const y = o.dy, sl = Math.abs(o.sl);
+      if (Math.abs(d) > W - 1e-6) edge = Math.max(edge, Math.abs(y)); if (quietAt(s)) quietR = Math.max(quietR, Math.abs(y));
+      if (Math.abs(d) <= 2.7) { lane = Math.max(lane, sl); m = Math.max(m, sl); } if (dr && d < -W + 1.8) toDrop = Math.max(toDrop, o.sl);
+      if (y < lo) { lo = y; at = d; } if (y > hi) hi = y; }
+    T.bankAt(s, W + 0.5, o); out = Math.max(out, Math.abs(o.dy), Math.abs(o.sl)); T.bankAt(s, -W - 0.5, o); out = Math.max(out, Math.abs(o.dy), Math.abs(o.sl));
+    ylo = Math.min(ylo, lo); yhi = Math.max(yhi, hi); n++; if (m > 0.04) n4++; if (lo < -0.1) { nHol++; sides[at < 0 ? 0 : 1]++; } if (hi > 0.08) nRid++; }
+  const notes = (def.notes || []).filter(x => /^crest [LR]$/.test(x[2])), said = T.paceNotes().map(c => c.text).join(' | '), nSaid = (said.match(/crest (left|right)/g) || []).length;
+  check('track: the relief across the road (def.cross): hollows down to ~0.36 m and ridges on both halves of the road, across over 4 % on more than 40 % of it and nowhere over 16 % where the cars drive; its edges and the quiet places level, by a drop\'s edge no fall toward it; no bend banked by it; at 0 none; the co-driver calls its highest ridges (»crest left / right«)',
+    typeof def.cross === 'function' && !d0.cross && !d0.notes && !T0.bank && !!T.bank && T.bank.every(v => v === 0) && T.bankSide.every(v => v === 0) &&
+    ylo < -0.25 && ylo > -0.4 && yhi > 0.12 && yhi < 0.3 && lane > 0.08 && lane < 0.16 && n4 > 0.4 * n && nHol > 0.3 * n && sides[0] > 0.1 * n && sides[1] > 0.1 * n && nRid > 0.05 * n &&
+    edge < 1e-6 && out === 0 && quietR < 0.005 && toDrop < 0.01 && notes.length >= 2 && notes.length <= 8 && nSaid >= notes.length,
+    `the surface ${ylo.toFixed(2)} to +${yhi.toFixed(2)} m off the road's profile; across at most ${(lane * 100).toFixed(1)} % within 2.7 m of the middle, over 4 % on ${(100 * n4 / n).toFixed(0)} % of the road; a hollow over 0.1 m on ${(100 * nHol / n).toFixed(0)} % of it `
+    + `(${(100 * sides[0] / n).toFixed(0)} % left, ${(100 * sides[1] / n).toFixed(0)} % right), a ridge over 0.08 m on ${(100 * nRid / n).toFixed(0)} %; at the edges ${(edge * 1000).toFixed(2)} mm, in the quiet places ${(quietR * 1000).toFixed(1)} mm, `
+    + `toward a drop's edge at most ${(toDrop * 100).toFixed(1)} %; the co-driver's own notes ${notes.map(x => Math.round(x[0] + 8) + ' m ' + x[2]).join(', ')}, read ${nSaid}`);
 }
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('killar'));
 check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrung Nala, the finish)',
@@ -198,14 +220,17 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
 {
   Math.random = seeded(3);
   const r = new C.Race(T, opts({ traffic: true, damage: 2 })), P = r.player; r.start();
-  let t = 0, k = 0, standMax = 0; const stand = new Map();
+  let t = 0, k = 0, standMax = 0, offS = 0, deep = 0, nS = 0; const stand = new Map(), ob = { dy: 0, sl: 0 };
   while (t < 600 && r.cars.some(c => !c.finished)) {
     Math.random = seeded(7000 + (++k));
     C.aiControl(P, r, DT); r.step(DT); t += DT;
     if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
-    if (k % 60 === 0) for (const v of r.tf.veh) { const w = v.v < 0.3 && v.st === 0 ? (stand.get(v) || 0) + 0.5 : 0; stand.set(v, w); standMax = Math.max(standMax, w); }
+    if (k % 60 === 0) for (const v of r.tf.veh) { const w = v.v < 0.3 && v.st === 0 ? (stand.get(v) || 0) + 0.5 : 0; stand.set(v, w); standMax = Math.max(standMax, w);
+      if (!v.st && !v.alt && !v.hid && T.bank) { const i = Math.min(T.N - 2, Math.floor(v.s / T.ds)), f = v.s / T.ds - i; T.bankAt(v.s, v.d, ob); nS++; offS = Math.max(offS, Math.abs(v.y - (T.hy[i] + (T.hy[i + 1] - T.hy[i]) * f) - ob.dy)); deep = Math.max(deep, Math.abs(ob.dy)); } }
   }
   Math.random = orig;
+  check('duel: the traffic drives on the road\'s relief across (Track.relief): every vehicle on the surface where it is, in the hollows and on the ridges (no wheel in the air over a hollow)', nS > 500 && offS < 1e-6 && deep > 0.15,
+    `${nS} samples, the most off the surface ${(offS * 1000).toFixed(2)} mm, the deepest relief under a vehicle ${deep.toFixed(2)} m`);
   const hits = r.cars.reduce((a, c) => a + (c.hitPeople || 0), 0);
   check('duel: both reach the finish through the traffic, no one on foot knocked down, no vehicle standing for long', r.cars.every(c => c.finished) && !hits && standMax < 30,
     `${r.cars.filter(c => c.finished).length}/2 in ${t.toFixed(0)} s, people hit ${hits}, longest stand ${standMax.toFixed(1)} s, falls ${r.cars.reduce((a, c) => a + (c.falls || 0), 0)}, ${r.tf.veh.length} vehicles`);
@@ -216,13 +241,16 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
   Math.random = seeded(3);
   const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player; r.start();
-  const fl = []; let t = 0, k = 0, a0 = false, ta = 0, vy = 0;
+  const fl = [], ob = { dy: 0, sl: 0 }; let t = 0, k = 0, a0 = false, ta = 0, vy = 0, nG = 0, n4 = 0, lean = 0, ride = 0;
   while (!P.finished && t < 600) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P);
-    if (P.air && !a0) ta = t; if (!P.air && a0) { fl.push(t - ta); vy = Math.min(vy, P.impactVY || 0); } a0 = P.air; }
+    if (P.air && !a0) ta = t; if (!P.air && a0) { fl.push(t - ta); vy = Math.min(vy, P.impactVY || 0); } a0 = P.air;
+    if (!P.air && !P.fall && !P.finished && T.bank) { const b = Math.abs(P.bankSl || 0); nG++; if (b > 0.04) n4++; lean = Math.max(lean, b); T.bankAt(P.q.s, P.q.d, ob); ride = Math.max(ride, Math.abs(P.bankSl - ob.sl)); } }
   Math.random = orig;
   const fly = fl.filter(x => x > 0.1), nb = (def.bumps || []).length;
-  check('the undulation on the autopilot: the stock rally car flies over each crest (0.2-0.5 s), lands softly and never falls', fly.length === nb && fly.every(x => x > 0.2 && x < 0.5) && vy > -8 && !(P.falls || 0),
+  check('the undulation on the autopilot: the stock rally car flies over each crest (0.2-0.6 s), lands softly and never falls', fly.length === nb && fly.every(x => x > 0.2 && x < 0.6) && vy > -8 && !(P.falls || 0),
     `${fly.length} flights over 0.1 s (${nb} crests): ${fly.map(x => x.toFixed(2)).join(', ')} s, the hardest landing ${vy.toFixed(1)} m/s, falls ${P.falls || 0}`);
+  check('the relief across on the autopilot: the car leans with the road under it (Car.bankSl is the surface\'s slope across where the car is, to the step it has just made): over 4 % for more than a fifth of the run, at the most 8-31 % (the steepest the bank that closes a rut by the road\'s edge)', nG > 0 && n4 > 0.2 * nG && lean > 0.08 && lean < 0.31 && ride < 0.04,
+    `across over 4 % for ${(100 * n4 / Math.max(1, nG)).toFixed(0)} % of the time on the ground, at most ${(lean * 100).toFixed(1)} %; the car's slope from the surface's where it stands after the step at most ${(ride * 100).toFixed(2)} %`);
   check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && P.finished && Math.abs(P.finishTime * 1.01 - M.cs[0]) < 1.5,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
 }

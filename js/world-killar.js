@@ -429,13 +429,24 @@
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.4, bar - 0.6), -0.1), [bar + 0.4, Math.min(-0.35, gAt(bar + 0.4) - 0.2)], lift(bar + 1.1, -0.25), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
-      const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
+      const RLF = !!T.bank, offs = RLF ? [-w, -w * 0.8, -w * 0.62, -w * 0.44, -w * 0.22, 0, w * 0.22, w * 0.44, w * 0.62, w * 0.8, w] : [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;   // (RLF: the road's relief across, below)
       // Killar's undulation (def.roadBase: the road without its crests and dips, js/tracks/killar.js): the road's normals face up, so the light
       // does not see them; shaded by their own height b and slope b' along the road instead (k x clamp(1 - 7 b' + 0.2 b, 0.5, 1.35): the
       // face that rises ahead darker, the one that falls away lighter), a crest or a dip 35-45 m ahead a clear band from the chase camera
       const UB = def.roadBase && def.roadBase.length === N ? def.roadBase : null, ub = (j) => T.hy[j] - UB[j];
       const uk = UB ? Float32Array.from({ length: N }, (_, i) => { const a = Math.max(0, i - 1), b = Math.min(N - 1, i + 1); return clamp(1 - 7 * (ub(b) - ub(a)) / ((b - a) * T.ds) + 0.2 * ub(i), 0.5, 1.35); }) : null;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.9; if (uk) k *= uk[i]; return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.9; if (uk) k *= rk ? rk[i * NO + offs.indexOf(o)] : uk[i]; return [k, k, k * 1.02]; };
+      // Killar's relief across the road (def.cross, Track.bankAt: ruts, hollows and ridges on one half of the road, js/tracks/killar.js; the user,
+      // 10. 11. 2026, »3d naj bodo tla pod kolesi«): the road's surface drawn at its height (ry: ten strips across, under a metre each, the last
+      // two each side back to the edge's own height) and shaded as the crests and dips are, by its height r and its slopes along (r') and across
+      // (r_d, from the sun's side sg): k x clamp(1 - 7 (b' + r') - 4.5 r_d sg + 0.2 b + 0.7 r, 0.45, 1.4), a hollow dark at its bottom and on
+      // the flank away from the sun, a ridge light: from the chase camera, high over the car, the shape reads by its light
+      const NO = offs.length, ry = RLF ? new Float32Array(N * NO) : null, rk = RLF && UB ? new Float32Array(N * NO) : null;
+      if (RLF) { const o2 = { dy: 0, sl: 0 }, rs = new Float32Array(N * NO), su = (def.look && def.look.sunOff) || [0, 1, 0], sh = Math.hypot(su[0], su[2]) || 1;
+        for (let i = 0; i < N; i++) for (let c = 0; c < NO; c++) { T.bankAt(i * T.ds, offs[c], o2); ry[i * NO + c] = o2.dy; rs[i * NO + c] = o2.sl; }
+        if (rk) for (let i = 0; i < N; i++) { const a = Math.max(0, i - 1), b = Math.min(N - 1, i + 1), g = (ub(b) - ub(a)) / ((b - a) * T.ds), lit = (su[0] * T.nx[i] + su[2] * T.nz[i]) / sh, sg = lit < 0 ? Math.min(-0.5, lit) : Math.max(0.5, lit);
+          for (let c = 0; c < NO; c++) rk[i * NO + c] = clamp(1 - 7 * (g + (ry[b * NO + c] - ry[a * NO + c]) / ((b - a) * T.ds)) - 4.5 * rs[i * NO + c] * sg + 0.2 * ub(i) + 0.7 * ry[i * NO + c], 0.45, 1.4); } }
+      const PtR = RLF ? (i, c) => [T.px[i] + T.nx[i] * offs[c], T.hy[i] + 0.02 + ry[i * NO + c], T.pz[i] + T.nz[i] * offs[c]] : (i, c) => Pt(i, offs[c], 0.02);
       const wht = [0.95, 0.95, 0.92], ylw = [0.95, 0.74, 0.14], gc = [0.7, 0.65, 0.58], deck = [0.62, 0.61, 0.58], conc = [0.6, 0.59, 0.56], rockL = [0.5, 0.46, 0.42];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
@@ -450,7 +461,7 @@
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
-            gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
+            gr.quadUp(PtR(i, c), PtR(i, c + 1), PtR(j, c + 1), PtR(j, c), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           if (!UNK) for (const [o0, o1] of SB.edges(i, j, [[-(w - 0.25), -(w - 0.4)], [w - 0.4, w - 0.25]])) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
           if (!UNK) for (const [o0, o1] of [[-0.21, -0.09], [0.09, 0.21]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ylw, ylw, ylw, ylw]);
           for (const side of [-1, 1]) {
