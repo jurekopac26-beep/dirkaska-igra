@@ -888,7 +888,7 @@ try {
     await ctx.close();
   }
 
-  // 5. a time trial on a new track (Harju: the model of its land, no map or flight yet), and the short intro with its video and Skip
+  // 5. a time trial on another track (Harju), and the short intro with its video and Skip
   {
     const { ctx, page, errors } = await open();
     await ready(page);
