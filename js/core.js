@@ -6571,7 +6571,7 @@ const Core = (function () {
       B.hn++; B.hv = B.iv; B.hr = roof ? 1 : 0; B.hx = B.x + R[0] * lx + R[1] * ly + R[2] * lz; B.hy = B.y + R[3] * lx + R[4] * ly + R[5] * lz; B.hz = B.z + R[6] * lx + R[7] * ly + R[8] * lz;
       if (amt > 0) { B.dmg += amt; if (roof && c.dmgMode && !c.pitG) { if (c.dents.length < 24) c.dents.push({ lx, lz, amt: 0.1, top: 1 }); c.roofDmg = Math.min(1, c.roofDmg + 0.3); knock(c, amt); } else knock(c, amt, lx, lz); }
     }
-    if (B.done) { if (B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); }
+    if (B.done) { if (B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); c.roadY = c.y; }   // (the road's height under it at once: the body wrote its own there, a circuit's rescue leaves it to the car's next step, and a frame may be drawn before that)
   }
   class Race {
     constructor(track, opts) {
