@@ -5,7 +5,7 @@
   "instances": 474,
   "props": 352,
   "crowd": 428,
-  "world": "8275a4a2",
+  "world": "2719749a",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -29,7 +29,7 @@
    "ao:MeshBasicMaterial": "d9446f28",
    "tyremarks:MeshBasicMaterial": "64ffa4d2",
    "sceneThings:MeshLambertMaterial": "e491568b",
-   "people:MeshLambertMaterial": "72bff189",
+   "people:MeshLambertMaterial": "214e656",
    "sceneLamps:MeshBasicMaterial": "93d6a22e"
   }
  },
@@ -39,7 +39,7 @@
   "instances": 459,
   "props": 352,
   "crowd": 413,
-  "world": "5137af56",
+  "world": "5fe69a11",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -64,7 +64,7 @@
    "pkSpray:ShaderMaterial": "63b596e6",
    "ao:MeshBasicMaterial": "9c8fe09f",
    "sceneThings:MeshLambertMaterial": "7ed2efb7",
-   "people:MeshLambertMaterial": "241e6c12"
+   "people:MeshLambertMaterial": "14ba14b"
   }
  },
  "ouninpohja": {
@@ -129,7 +129,7 @@
   "instances": 116555,
   "props": 805,
   "crowd": 475,
-  "world": "502c8c00",
+  "world": "92295bee",
   "propsHash": "fcc23a7",
   "floor": "e5170eee/41384",
   "groups": {
@@ -146,7 +146,7 @@
    "life:MeshBasicMaterial": "d9d65fb3",
    "sceneThings:MeshLambertMaterial": "f387844f",
    "sceneLamps:MeshBasicMaterial": "39d7248",
-   "people:MeshLambertMaterial": "c7a6d9a6",
+   "people:MeshLambertMaterial": "309a0ffc",
    "sceneSmoke:MeshLambertMaterial": "c07dbe68",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "b07c1069"
@@ -158,7 +158,7 @@
   "instances": 48272,
   "props": 101,
   "crowd": 401,
-  "world": "b724e57",
+  "world": "5aa1ddf7",
   "propsHash": "2afe5d7",
   "floor": "5755fdd4/14000",
   "groups": {
@@ -176,7 +176,7 @@
    "life:MeshBasicMaterial": "6a8c2567",
    "sceneThings:MeshLambertMaterial": "b771080f",
    "sceneLamps:MeshBasicMaterial": "82a540c6",
-   "people:MeshLambertMaterial": "3c63cfa",
+   "people:MeshLambertMaterial": "b2e31fc8",
    "sceneSmoke:MeshLambertMaterial": "7cd47305",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "db7db40e",
@@ -190,7 +190,7 @@
   "instances": 11162,
   "props": 79,
   "crowd": 133,
-  "world": "24b4b803",
+  "world": "1827875c",
   "propsHash": "7dce562f",
   "floor": "106192fc/8652",
   "groups": {
@@ -210,7 +210,7 @@
    "life:MeshBasicMaterial": "b39a189b",
    "sceneThings:MeshLambertMaterial": "d662259b",
    "sceneLamps:MeshBasicMaterial": "137604f1",
-   "people:MeshLambertMaterial": "6ffaff4c",
+   "people:MeshLambertMaterial": "7fe2dd0e",
    "sceneSmoke:MeshLambertMaterial": "9e026998",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "993f30da",
@@ -224,7 +224,7 @@
   "instances": 17073,
   "props": 159,
   "crowd": 111,
-  "world": "2f2e62bf",
+  "world": "75b2c179",
   "propsHash": "e18141a2",
   "floor": "72b445dd/11620",
   "groups": {
@@ -243,7 +243,7 @@
    "life:MeshBasicMaterial": "615c75c0",
    "sceneThings:MeshLambertMaterial": "b200d436",
    "sceneLamps:MeshBasicMaterial": "73d9ab82",
-   "people:MeshLambertMaterial": "7c03bc6c",
+   "people:MeshLambertMaterial": "a9dbf1b8",
    "sceneSmoke:MeshLambertMaterial": "8c778a96",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "a9b5870e"
@@ -255,7 +255,7 @@
   "instances": 56154,
   "props": 277,
   "crowd": 427,
-  "world": "ab30fd01",
+  "world": "592c94dc",
   "propsHash": "936a6b1c",
   "floor": "b5b3e5da/22736",
   "groups": {
@@ -272,7 +272,7 @@
    "life:MeshBasicMaterial": "5d884570",
    "sceneThings:MeshLambertMaterial": "1390b977",
    "sceneLamps:MeshBasicMaterial": "26ce6d11",
-   "people:MeshLambertMaterial": "3bcb9e03",
+   "people:MeshLambertMaterial": "420c38e9",
    "umbrellas:MeshLambertMaterial": "80253bfd"
   }
  },
@@ -282,7 +282,7 @@
   "instances": 20414,
   "props": 117,
   "crowd": 126,
-  "world": "9bad4ec1",
+  "world": "9daae609",
   "propsHash": "f4e9249f",
   "floor": "c390a1c7/10304",
   "groups": {
@@ -299,7 +299,7 @@
    "life:MeshBasicMaterial": "9fd93005",
    "sceneThings:MeshLambertMaterial": "8091efb3",
    "sceneLamps:MeshBasicMaterial": "6b95f99a",
-   "people:MeshLambertMaterial": "4494e12",
+   "people:MeshLambertMaterial": "8801243d",
    "sceneSmoke:MeshLambertMaterial": "bc91407e",
    "umbrellas:MeshLambertMaterial": "80253bfd"
   }
@@ -310,7 +310,7 @@
   "instances": 4296,
   "props": 33,
   "crowd": 1027,
-  "world": "5cfa275b",
+  "world": "b802e7e7",
   "propsHash": "d16c96de",
   "floor": "3cab689f/5488",
   "groups": {
@@ -328,7 +328,7 @@
    "life:MeshBasicMaterial": "832afa4f",
    "sceneThings:MeshLambertMaterial": "78f46b60",
    "sceneLamps:MeshBasicMaterial": "7302020e",
-   "people:MeshLambertMaterial": "cd824435",
+   "people:MeshLambertMaterial": "952cb161",
    "umbrellas:MeshLambertMaterial": "80253bfd"
   }
  },
@@ -338,7 +338,7 @@
   "instances": 8833,
   "props": 103,
   "crowd": 151,
-  "world": "1859af92",
+  "world": "621676b4",
   "propsHash": "31c86d06",
   "floor": "8a20442b/12404",
   "groups": {
@@ -358,7 +358,7 @@
    "life:MeshBasicMaterial": "368a19ca",
    "sceneThings:MeshLambertMaterial": "87d48c63",
    "sceneLamps:MeshBasicMaterial": "d56b54c3",
-   "people:MeshLambertMaterial": "bb4a1fa3",
+   "people:MeshLambertMaterial": "46ae5858",
    "sceneSmoke:MeshLambertMaterial": "8c757aff",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "4580a951",
@@ -563,7 +563,7 @@
   "instances": 25952,
   "props": 81,
   "crowd": 112,
-  "world": "4e94f4e9",
+  "world": "97ba16e5",
   "propsHash": "1599f175",
   "floor": "e8c675d4/10836",
   "groups": {
@@ -579,7 +579,7 @@
    "life:MeshBasicMaterial": "9f1daa0f",
    "sceneThings:MeshLambertMaterial": "2dc86452",
    "sceneLamps:MeshBasicMaterial": "a15fcb85",
-   "people:MeshLambertMaterial": "8f63883a",
+   "people:MeshLambertMaterial": "a0c87e6e",
    "umbrellas:MeshLambertMaterial": "80253bfd"
   }
  },
@@ -652,7 +652,7 @@
   "instances": 4434,
   "props": 32,
   "crowd": 208,
-  "world": "dd016305",
+  "world": "5c3ed9e",
   "propsHash": "15736fc5",
   "floor": "81fc37d0/6440",
   "groups": {
@@ -668,7 +668,7 @@
    "life:MeshBasicMaterial": "f6204382",
    "sceneThings:MeshLambertMaterial": "89fc7d2e",
    "sceneLamps:MeshBasicMaterial": "2b41d31b",
-   "people:MeshLambertMaterial": "92a6247",
+   "people:MeshLambertMaterial": "bbb5b0db",
    "sceneSmoke:MeshLambertMaterial": "c52c55f6",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "90d1b2d4",
@@ -876,7 +876,7 @@
   "instances": 7085,
   "props": 802,
   "crowd": 177,
-  "world": "53e94298",
+  "world": "59779b72",
   "propsHash": "fde357d4",
   "floor": "17dd3a61/13356",
   "groups": {
@@ -895,7 +895,7 @@
    "lifeShadow:MeshBasicMaterial": "bfa59e9f",
    "life:MeshBasicMaterial": "fdf72bab",
    "sceneThings:MeshLambertMaterial": "2de15c2e",
-   "people:MeshLambertMaterial": "123ecdf4",
+   "people:MeshLambertMaterial": "6374f10e",
    "sceneLamps:MeshBasicMaterial": "9fba34ce",
    "sceneSmoke:MeshLambertMaterial": "61f553dd",
    "umbrellas:MeshLambertMaterial": "80253bfd"
@@ -907,7 +907,7 @@
   "instances": 7831,
   "props": 75,
   "crowd": 320,
-  "world": "cd172c82",
+  "world": "643bfa3c",
   "propsHash": "9893e9c0",
   "floor": null,
   "groups": {
@@ -935,7 +935,7 @@
    "brakeBoards:MeshLambertMaterial": "62ecc02e",
    "sceneThings:MeshLambertMaterial": "4a01f41",
    "sceneLamps:MeshBasicMaterial": "5c45af37",
-   "people:MeshLambertMaterial": "13e40841",
+   "people:MeshLambertMaterial": "61561217",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "7006017c",
    "zaslon-okvir:MeshLambertMaterial": "2f000297",
@@ -1117,7 +1117,7 @@
   "instances": 1285,
   "props": 78,
   "crowd": 61,
-  "world": "d0f17e31",
+  "world": "29e7562e",
   "propsHash": "ddd14867",
   "floor": "13ba048b/5936",
   "groups": {
@@ -1147,7 +1147,7 @@
    "life:MeshLambertMaterial": "f940e6ca",
    "sceneThings:MeshLambertMaterial": "640218ef",
    "sceneLamps:MeshBasicMaterial": "661812b5",
-   "people:MeshLambertMaterial": "7cfd0775",
+   "people:MeshLambertMaterial": "aec7b8d5",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "standSteps:MeshLambertMaterial": "5597dca1"
   }
