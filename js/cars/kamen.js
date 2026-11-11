@@ -95,7 +95,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.25, 1.15, 1.3, 2.16, 1.1, 2.18, 0.02, 'b', 0.06]],         // the cab's front face beside the bonnet (the bulkhead once it is off)
         eye: { x: 0.5, y: 2.5, near: 0.25, tilt: 0.1, style: 'closed' },      // (high up behind the windscreen, the bonnet's front over the dashboard)
         decalX: -2.3, decalY: 2.8, decalRz: 0, decalS: 1.15,               // (the start number on the box's flat roof, behind the hatch)
-        crush: { x0: -0.3, x1: 1.12, z: 1.06 }, cage: true },              // (only the cab's roof crushes; a rally truck's roll cage)
+        crush: { x0: -0.36, x1: 1.12, z: 1.06 }, cage: true },              // (only the cab's roof crushes; a rally truck's roll cage)
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
       budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
       wheels: { style: 'knob', w: 0.42, rimK: 0.48, rim: [0.8, 0.8, 0.78], gap: 0.1, seg: 32, segHi: 64 },

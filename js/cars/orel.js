@@ -246,7 +246,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           C.seat(-0.42, 0.24, SZ, { w: 0.46, top: 0.62, lean: 0.34, shell: true, belt: 'harness', col: SH, col2: SC, strap: RED });
           C.console(0.0, 0.35, { l: 0.24, seq: true, brake: false });
           C.pedals(0.66, 0.19, SZ, 3);
-          for (const sd of [-1, 1]) C.door(sd, { x: [-0.28, 0.9], y: [0.3, 0.74], z: 0.82, insert: CF, crank: false, speaker: false, strap: RED });
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.28, 0.9], y: [0.3, 0.74], z: 0.86, insert: CF, crank: false, speaker: false, strap: RED });
           K.cyl([-0.2, 0.22, 0.36], [-0.55, 0.22, 0.36], 0.07, RED, { n: 6, inner: true, part: 'body' }); }   // (the extinguisher on the floor)
         const hoop = (s) => [[[-0.72, 0.17, s * 0.8], [-0.72, 0.86, s * 0.84]], [[-0.72, 0.86, s * 0.84], [-0.7, 1.1, s * 0.48]], [[-0.7, 1.1, s * 0.48], [0.12, 1.12, s * 0.5]],
           [[0.12, 1.12, s * 0.5], [0.66, 0.66, s * 0.82]], [[-0.72, 0.45, s * 0.86], [0.6, 0.48, s * 0.84]]];   // (the main hoop, the roof and A-pillar bars, the door bars)

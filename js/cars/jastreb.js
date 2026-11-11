@@ -130,7 +130,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       },
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
       budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
-      wheels: { style: 'wire', w: 0.18, rimK: 0.62, gap: 0.05, seg: 32, segHi: 64 },
+      wheels: { style: 'wire', w: 0.18, rimK: 0.62, gap: 0.05, segHi: 64 },
       // the regions: the standard ones, the wings to the nose and to the tail (the lamps go with them), the tailgate (trunk) its glass alone
       regions: (std) => std.map(r => /^fender/.test(r.part) ? Object.assign({}, r, { x: [r.x[0], 2.6] }) : /^quarter/.test(r.part) ? Object.assign({}, r, { x: [-2.6, r.x[1]] })
         : r.part === 'trunk' ? Object.assign({}, r, { x: [-1.49, -0.73], bands: ['edge', 'crown'] }) : r),

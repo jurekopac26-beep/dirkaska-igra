@@ -255,7 +255,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) C.seat(-0.26, 0.24, sd * 0.35, { w: 0.46, top: 0.62, lean: 0.4, col: SEAT, col2: TRIM });
           C.console(0.06, 0.37, { l: 0.32 });
           C.pedals(0.78, 0.17, SZ, 3);
-          for (const sd of [-1, 1]) C.door(sd, { x: [-0.38, 0.86], y: [0.26, 0.74], z: 0.8, insert: SEAT, crank: false, speaker: false }); }
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.38, 0.86], y: [0.26, 0.74], z: 0.86, insert: SEAT, crank: false, speaker: false }); }
         { const x = -0.74, w = L.prop(x, 'w') - 0.05, wt = L.prop(x, 'wt') - 0.05, yb = L.prop(x, 'yb') + 0.03, ybl = L.prop(x, 'ybelt'), yt = L.prop(x, 'yt') - 0.04, yc = top(x, 0) - 0.04;
           K.plate([[x, yb, -w], [x, yb, w], [x, ybl, w], [x, yt, wt], [x, yc, 0.3], [x, yc, -0.3], [x, yt, -wt], [x, ybl, -w]], 0.03, TRIM, IN); }
         K.box(-1.24, 0.2, 0, 0.9, 0.34, 0.42, 0, METAL, null, false, IN);
