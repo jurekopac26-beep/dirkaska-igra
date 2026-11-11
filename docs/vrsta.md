@@ -15,6 +15,8 @@ Za objavo (1. 2. 2027) mora biti v igri:
 
 **Mejniki do izida** (odločitev uporabnika 9. 11. 2026 ob 11.36, tabla #382, komentar 6737933880; veljajo za načrte vseh računov): **do 23. 12. 2026** vseh 70 pravih prog na `main` (prej 50 do 1. 12.); **od 23. 12.** brez novih funkcij (samo popravki, proge, dodelava; prej od 15. 12.; spremembe z odločitvami uporabnika 9. 11. 2026 ob ~18.30: »naj bo cilj 70 prog in 50 avtov«, »zamrznitev naj bo prestavljena na 23.12.2026« in vseh 70 prog do 23. 12.); **15. 1. 2027** kandidat za izid; **1. 2. 2027** izid. Testne proge se izbrišejo pred izidom, načrtovano ob zamrznitvi 23. 12. (`CLAUDE.md`, »Testne proge«).
 
+**Nove proge ustavljene do ponovne potrditve** (odločitev uporabnika 11. 11. 2026 ob ~12.35, prek Mateja, tabla #382, dobesedno: »Ostale potrjene nove proge, ki še niso narejene: ~34 h. Ne zacni se teh prog z izdelavo dokler jih ponovno ne potrdim. Ko bo cas za to me spomni da jih ponovno pregledam in potrdim«): ustavljene so potrjene nove proge brez datoteke proge na kateri koli veji (Koli, Longyearbyen, Envalira in ostale do 70, tudi zadnje 3: 2 makadamski, 1 ledena); naprej teče samo 10 novih prog od Hải Vâna do Batangasa; proge z datoteko (#569, #494 in odprti osnutki) ostanejo, kot so. Vrstica »Vse proge v enem PR«: ~45 h namesto ~79 h, na `main` ostane ~8. 12. Opomnik za ponovni pregled pošlje koordinacija jure.kopac26 v ponedeljek 30. 11. 2026 ob 10.25 (prej, če partyslo javi, da je 10 prog skoraj gotovih).
+
 Kar je na tem seznamu, gre v vrsti pred ostalim, razen prog, ki so v vrsti vedno zadnje (odločitev uporabnika 7. 11. ob 16.39, tabla #382, komentar 6709363288), in nove mape z misijami, ki je še za njimi (odločitev uporabnika 8. 11. ob 21.25, komentar 6726766597: kar je narejeno, je na `main`, novo delo gre na zadnje mesto, tudi za proge; nova mapa ni več pred ostalim; `CLAUDE.md`, »Posebne misije«). Po njem sme vrstni red premikati tudi Matej (svetovalec uporabnika, pogovor računa jure.kopac26): vsak premik objavi na tabli #382, uporabnik ga lahko prekliče (`CLAUDE.md`, »Tabla med računi«; `docs/varcevanje.md`, »Tabla«).
 
 ## Pravila
@@ -70,7 +72,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 7. Mesta za dele na 20 avtih (#480 + #626), biketraveler, ~16. 11.
 8. 30 avtov KOLIBRI, biketraveler, ~23. 11.
 9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
-10. Vse proge v enem PR (#569 + #494 + nove proge), jure.kopac26 in partyslo, ~7. 12.
+10. Vse proge v enem PR (#569 + #494 + 10 novih prog od Hải Vâna do Batangasa; ostale ustavljene do ponovne potrditve, razdelek »Različica 1.0«), jure.kopac26 in partyslo, ~45 h, ~8. 12.
 11. Preleti (#246), partyslo, ~7. 12.
 12. Grafika (E, S, G), jure.kopac26 in partyslo, ~8. 12.
 13. 5 tovornjakov, biketraveler, ~16. 12.
