@@ -232,6 +232,13 @@ try {
     const l3 = await lampBuy(null);
     T.check('↺ SERIJSKO: the car\'s own lamps back on the trolley from the door (no drawer), the yellow ones out and into their drawer; no lamp on the car\'s parts any more',
       lampLog(l3.f, '((hop,)?old\\.out,cart\\.parked|cart\\.parked,(hop,)?old\\.out)', ['cart.out', 'drawer.back', 'lights']) && l3.f.plan.lamp && !l3.f.plan.drawer && l3.f.old === 'real' && l3.f.put === 'cart' && l3.f.parked && /serijsko/i.test(l3.f.chip) && l3.r.t <= 17 && !l3.u.parts.zarometi, JSON.stringify(l3));
+    // (the turbo by its plan's plate on a car built from the kit (the KOZOROG): the bonnet up on its prop, the turbo from the regal set
+    // down onto the engine, its four screws done with the key, its two hoses on, the bonnet down over it, the engine revved: MOČ)
+    const tm0 = (await ui()).S.money;
+    await page.evaluate(() => { __garage.openMenu({ el: 'turbo', key: 'rgl:TURBO', sel: __garage.findOpt('turbo', 'Turbo') }); document.querySelector('#g-menu [data-mact="buy"]').click(); });
+    const tr = await run(), tf = await fitOf(), tu = await ui();
+    T.check('the turbo on the KOZOROG (a kit car), by its plan\'s plate: the bonnet up on its prop, the turbo from the regal onto the engine, its screws, its hoses, the bonnet down, the engine revved (MOČ); paid, the engine\'s level 1, the table still',
+      tf.log === 'plan,bonnet.up,grab,swap,screws,hoses,bonnet.down,revs' && tf.plan.regal && /MOČ/.test(tf.chip) && tm0 - tu.S.money > 0 && tu.info.upg.motor === 1 && !!tu.S.cars.kozorog.parts.turbo && tr.table === 0 && tr.t <= 17, JSON.stringify({ tf, t: tr.t, upg: tu.info.upg }));
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
