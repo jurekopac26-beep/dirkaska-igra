@@ -57,13 +57,14 @@ try {
     T.check(`Spa, flight ${v}: the chase view itself by the 5th light (${end} s), off at the start`, r.end && r.end.gap < 0.05 && r.end.rot < 0.002 && r.off.phase === 'racing' && r.off.v === 0 && r.off.rv === 0, JSON.stringify({ end: r.end, off: r.off }));
   }
   // upright: the limit of the upright chase view (higher, farther), the old Blizu's: Srednje's since the upright chase view came closer (the
-  // user, 11. 11. 2026; the flights as they were); with Blizu, closer, the flight as at Srednje, over its last 0.8 s down to the chase view
+  // user, 11. 11. 2026; the flights as they were); with Blizu, closer, the flight as at Srednje, over its last 0.8 s down to the chase view;
+  // so with Super blizu (0.8, upright only: the user, 11. 11. 2026), closer still
   await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300); await page.evaluate(() => Render.resize());   // (paused: the game's own resize waits for a frame)
-  for (const [v, z] of [[2, 1.4], [6, 1.4], [2, 1.1], [6, 1.1]]) {
+  for (const [v, z] of [[2, 1.4], [6, 1.4], [2, 1.1], [6, 1.1], [2, 0.8]]) {
     await page.evaluate((z) => { __game.S.zoom = z; Render.cam.userZoom = z; }, z);
     const r = await fly(page, v), mid = z === 1.4;
     T.check(mid ? `Spa upright, flight ${v}, Srednje: never closer nor lower than the upright chase view (the old Blizu's), the chase view by the 5th light`
-      : `Spa upright, flight ${v}, Blizu: never closer nor lower than its chase view (closer than Srednje's), down to it by the 5th light`,
+      : `Spa upright, flight ${v}, ${z < 1 ? 'Super blizu' : 'Blizu'}: never closer nor lower than its chase view (closer than Srednje's), down to it by the 5th light`,
       r.lim.d > 35 && r.chase && (mid ? Math.abs(r.chase.d - r.lim.d) < 0.3 && r.minD >= r.lim.d - 0.05 && r.minH >= r.lim.h - 0.05 : r.chase.d < r.lim.d - 3 && r.minD >= r.chase.d - 0.05 && r.minH >= r.chase.h - 0.05) && r.end && r.end.gap < 0.05,
       JSON.stringify({ lim: r.lim, chase: r.chase, minD: r.minD, minH: r.minH, end: r.end }));
   }

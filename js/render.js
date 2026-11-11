@@ -9966,6 +9966,9 @@ const Render = (function () {
   // upright its distance 1.1/1.4 of what it was (the user, 11. 11. 2026: a phone held upright sees more of the road than on its side, so
   // what was Blizu is Srednje now, Blizu closer still, Daleč about the old Srednje; Oddaljenost's steps as ever); on its side as ever, 30
   const CHASE_UP = 46 * 1.1 / 1.4;
+  // Oddaljenost's fourth step, Super blizu (0.8: one step nearer than Blizu, the steps 0.3 apart), only upright (the user, 11. 11. 2026:
+  // »četrto opcijo za pokončno kamero«); on its side no nearer than Blizu
+  const ZOOM_SIDE = 1.1;
   function chaseStep(c, dt, h, spd, pitZ, k2, x, z) {
     // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
     // travel, so a sliding car shows its angle)
@@ -9982,7 +9985,7 @@ const Render = (function () {
   function chasePose(c, x, z, baseY) {
     // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
     const portrait = camera.aspect < 1;
-    const LK = cam.look, D = (portrait ? CHASE_UP : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+    const LK = cam.look, D = (portrait ? CHASE_UP * cam.userZoom : 30 * Math.max(ZOOM_SIDE, cam.userZoom)) * cam.zoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
     const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
     let back = cam.userBack || 0;
     const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)
