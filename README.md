@@ -15,7 +15,7 @@ Merila kot `tools/proge-pregled.js` (korak 5 m). Cilji: ceste in makadam 350–5
 | Sogeri, Papua Nova Gvineja | `sogeri` | 1,98 km, 458 °/km, ravnine 50 %, 13 ovinkov, 1 lasnica, +114 m (5,7 %) | trava 79 %, gozd 21 %, skalne stene ob 29 %, 1 most | pregrada 23 % | ustreza |
 | Viñales, Kuba | `vinales` | 1,99 km, 302 °/km, ravnine 58 % (najdaljša 470 m), 11 ovinkov, +55 m (2,7 %) | trava, gozd, polja, 15 stavb, 1 razgledišče, 17 stranskih poti | pregrada 1 % | **oblika pod ciljem** (premalo ovinkov in vzpona) |
 | Barahona, Dominikanska republika | `barahona` | 1,99 km, 444 °/km, ravnine 51 %, 11 ovinkov, 1 lasnica, +81 m (4,1 %) | gozd 97 %, strmo pobočje nad morjem na 45 %, razgledišče 370 m za ciljem | pregrada 0 % | ustreza |
-| Elmenteita, Kenija | `elmenteita` | 1,74 km makadama, 476 °/km, ravnine 41 %, 10 ovinkov, 1 lasnica, +11 m (0,6 %) | trava 82 %, grmovje 15 %, 7 stavb; hrib 0,6–1 km od ceste | pregrada 0 % | oblika ustreza, **skoraj ravna** |
+| Elmenteita, Kenija | `elmenteita` | 1,74 km makadama, 476 °/km, ravnine 41 %, 10 ovinkov, 1 lasnica, +11 m (0,6 %) | trava 82 %, grmovje 15 %, 7 stavb | pregrada 0 % | oblika ustreza, **skoraj ravna** |
 | Chachani, Peru | `chachani` | 1,74 km makadama, 481 °/km, ravnine 48 %, 10 ovinkov, 1 lasnica, +86 m (4,9 %), 3473–3559 m | trava 51 %, grmovje 35 %, skale 8 % | pregrada 0 % | ustreza |
 | Escuintla, Gvatemala | – | dirkališča 2,41 km v OSM ni (vrisana sta samo ravna steza 0,8 km in kratke zanke) | – | – | **odpade: ni podatkov OSM** |
 | Batangas, Filipini | `batangas` | 3,48 km, 565 °/km, ravnine 45 %, 13 ovinkov (3,7 na km), višinska razlika 11 m | trava 50 %, gozd 24 %, 26 stavb (boksi, hale) | pregrada 0 % | ustreza |
