@@ -216,6 +216,8 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     stubExcl(exclPush);   // (nothing grows or stands on the side roads)
+    for (const S of T.stubs || []) { const H = S.hill, ds = S.Lend / Math.max(1, S.n - 1); if (H) for (let si = 0; si < 2; si++) for (let j = 0; j < S.n; j++) if (H.on[si][j]) {   // (nor on a hill beside one, Track.hill: up to 0.6 m past its soft limit, where the cars drive)
+      const sd = si ? 1 : -1, l = H.lim[si][j], u = sd * (T.stubHw(S, j * ds, sd) + S.lim + l / 2); exclPush(S.x[j] - S.tz[j] * u, S.z[j] + S.tx[j] * u, l / 2 + 1.1); } }
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const v of views) exclPush(v.x, v.z, v.r + 2);
     const sea = (x, z) => chGround(x, z) < seaY + 0.3;
@@ -411,7 +413,7 @@
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.78, 0.77, 0.74], [0.86, 0.85, 0.82]); }
       const nm = (n) => T.names.find(q => q.n.startsWith(n));   // the brown place boards and the green one at the end of the road
-      for (const [n, k, o] of [['Hout Bay', 0, 30], ['East Fort', 1, -30], ['Razgledišče · The Sentinel', 3, -40]]) { const q = nm(n); if (!q) continue; const [bx, bz, bi] = onSide(sStart + q.d + o, -1, 1.4); if (excluded(bx, bz)) continue;
+      for (const [n, k, o] of [['Hout Bay', 0, 30], ['East Fort', 1, -30], ['Razgledišče · The Sentinel', 3, -40]]) { const q = nm(n); if (!q) continue; const [bx, bz, bi] = onSide(sStart + q.d + o, -1, Math.max(1.4, hillOut(T.idx(sStart + q.d + o), 0) + 0.5)); if (excluded(bx, bz)) continue;   // (on a hill past its soft limit, as the signs)
         const by = chGround(bx, bz), [bv0, bv1, bu0, bu1] = board(k); box(scen.get(bx, bz), bx, by - 0.2, bz, 0.1, 2.6, 0.1, T.hd[bi], [0.6, 0.61, 0.63]); bannerQ(bx, by + 1.7, bz, -T.tx[bi], -T.tz[bi], 3.2, 0.8, bv0, bv1, bu0, bu1, ban2); exclPush(bx, bz, 2); }
       { const [bx, bz, bi] = onSide(T.len - 60, -1, 1.4), by = chGround(bx, bz), [bv0, bv1, bu0, bu1] = board(2); box(scen.get(bx, bz), bx, by - 0.2, bz, 0.1, 2.6, 0.1, T.hd[bi], [0.6, 0.61, 0.63]); bannerQ(bx, by + 1.7, bz, -T.tx[bi], -T.tz[bi], 3.2, 0.8, bv0, bv1, bu0, bu1, ban2); exclPush(bx, bz, 2); }
     }

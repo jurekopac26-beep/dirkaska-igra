@@ -5,7 +5,8 @@
 // the police start the run on the left half too. Vršič's traffic still keeps right. A whole race up to the view point (12 AI + the player on
 // autopilot): every car finishes and pulls up in its own slot past the line; a whole duel in the traffic on autopilot: both reach the top and
 // the traffic keeps moving, on its own (left) half. The medal times of the time trial: the stock rally car on the autopilot. The hills behind the
-// barrier line (def.hills): a car up onto their foot, put back from them; the sea side's wall as it was.
+// barrier line (def.hills): a car up onto their foot, put back from them; the sea side's wall as it was. The start's hill beside the old road
+// (def.hills.S, the report of 11. 11. 2026): the car driven into it from the report's point climbs it, no knock, still in the race.
 //   node tests/chapman.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -159,6 +160,45 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     check('hills: a car held against the hill with the throttle is stuck within 4 s and put back on the road (the button, Race.rescue)', held.resc && held.resc.t < 4 && Math.abs(held.resc.d) < T.w && Math.abs(held.resc.dy) < 0.05,
       held.resc ? `put back after ${f(held.resc.t)} s, ${f(held.resc.d)} m from the middle, ${f(held.resc.dy, 2)} m from the road` : 'never stuck');
   }
+}
+
+// 8. the start (the user, 11. 11. 2026 10.34, on the preview: »Na zacetki proge ce zapeljem v hrib se zaletim v hrib namesti zapeljem v hrib«;
+// the race's recording: the player at 142 km/h off the road to the left by the grid, across the old road (side road 0, Military Road) and its
+// corner against its far side's limit, a wall there then, the knock tearing a wheel off: out of the race). The hill past the old road's far
+// side (def.hills.S): from the report's point (x 48.8, z 17.95, heading 0.339, 142 km/h, full throttle) steered a little to the left (and as
+// recorded, back to the right): up onto the slope, no wall's knock, no damage, never past its soft limit, still in the race (Race.isOut); as
+// recorded back onto the road and on. Along the start, the grid to 75 m, driven into the hill (30 m/s, 30°): no knock there either (a touch
+// along the line between the road and the old road at most; the drive over when the car, back across the road, hits the sea side's wall)
+{
+  const S = T.stubs && T.stubs[0], H = S && S.hill, q0 = T.query(55.85, 20.21, -1, {}), j0 = q0.k === 0 ? Math.min(S.n - 2, q0.kj) : -1;
+  check('the start: a hill past the old road\'s far side where the report\'s car hit its limit (side road 0, u > 0)', !!H && j0 >= 0 && H.on[1][j0] === 1 && H.on[1][j0 + 1] === 1 && H.lim[1][j0] > 2,
+    H ? `the report's knock ${(q0.s - T.startS).toFixed(0)} m after the start, ${q0.st.toFixed(0)} m along the old road; its soft limit ${H.lim[1][Math.max(0, j0)].toFixed(2)} m` : 'no hills beside the side roads');
+  const go = (x0, z0, h0, v, thr, steer, secs) => {   // (the player at x0, z0 heading h0 at v m/s, its pedals and steering (t: s) held)
+    const orig = Math.random; Math.random = seeded(7);
+    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player, qa = T.query(x0, z0, -1, {});
+    P.place(x0, z0, h0); P.y = P.py = T.yAt(qa); P.q = T.query(x0, z0, qa.i, {}); P.sPrev = P.q.s; P.dist = P.q.s - T.startS; P.vx = Math.cos(h0) * v; P.vz = Math.sin(h0) * v; r.start();
+    const y0 = P.y, q2 = {}; let up = 0, rise = 0, wall = 0, sea = 0, dmg = 0, out = false, onK = false, over = -9;
+    for (let t = 0; t < secs; t += DT) {
+      P.inThr = thr; P.inBrk = 0; P.inSteer = steer(t); P.inHand = 0; r.step(DT);
+      if (P.hitWall > 0 && T.query(P.wallX, P.wallZ, P.q.i, q2).d > 0) { sea = P.hitWall; break; }   // (the sea side, to the right: the hill's part over)
+      up = Math.max(up, P.y - T.yAt(P.q)); rise = Math.max(rise, P.y - y0); if (P.q.k === 0) onK = true; if (r.isOut(P)) out = true;
+      wall = Math.max(wall, P.hitWall || 0); dmg = Math.max(dmg, +P.dmg || 0, (P.dz || []).reduce((a, x) => a + (+x || 0), 0), (P.dents || []).length, P.flat ? 1 : 0);
+      if (H) { const ch = Math.cos(P.h), sh = Math.sin(P.h);   // (its corners past the old road's limit on the hill: how far past the soft limit there)
+        for (const [cx, cz] of P.corners) { const qq = T.query(P.x + cx * ch - cz * sh, P.z + cx * sh + cz * ch, P.q.i, q2); if (qq.k !== 0) continue;
+          const si = qq.u > 0 ? 1 : 0, f = Math.max(0, qq.st / 2), j = Math.min(S.n - 2, Math.floor(f)), w = Math.min(1, f - j), o = Math.abs(qq.u) - (T.stubHw(S, qq.st, qq.u) + S.lim);
+          if (o > 0 && (H.on[si][j] || H.on[si][j + 1])) over = Math.max(over, o - (H.lim[si][j] * (1 - w) + H.lim[si][j + 1] * w)); } } }
+    Math.random = orig; return { up, rise, wall, sea, dmg, out, onK, over, d: P.q.d, k: P.q.k, kmh: P.speed * 3.6 };
+  };
+  const f = (x, k) => x.toFixed(k == null ? 1 : k), say = (x) => `wall ${f(x.wall)} m/s, damage ${f(x.dmg, 2)}, ${x.out ? 'OUT' : 'in the race'}, ${f(x.up, 2)} m up the slope, ${f(x.rise, 2)} m higher, the most past the soft limit ${f(x.over, 3)} m`;
+  const left = go(48.8, 17.95, 0.339, 142 / 3.6, 1, () => -0.08, 3), rec = go(48.8, 17.95, 0.339, 142 / 3.6, 1, (t) => t < 0.2 ? 0 : t < 0.25 ? 0.09 : 0.26, 3);
+  check('the start: from the report\'s point at 142 km/h a little to the left the car drives up the hill past the old road: higher, no knock, no damage, never past its soft limit, still in the race',
+    left.onK && left.up > 0.2 && left.rise > 0.2 && left.wall === 0 && !left.sea && left.dmg === 0 && !left.out && left.over < 0.05, say(left));
+  check('the start: as recorded (back to the right) the same, then back onto the road and on (> 100 km/h)',
+    rec.onK && rec.up > 0.2 && rec.wall === 0 && !rec.sea && rec.dmg === 0 && !rec.out && rec.over < 0.05 && rec.k < 0 && Math.abs(rec.d) < T.w && rec.kmh > 100, say(rec) + `; after 3 s ${f(rec.d)} m from the middle at ${f(rec.kmh, 0)} km/h`);
+  const grid = [-135, -100, -50, 0, 25, 50, 75].map(sR => { const i = T.idx(T.startS + sR), h = T.hd[i] - 30 * Math.PI / 180;
+    return Object.assign(go(T.px[i] - T.nx[i] * 1.5, T.pz[i] - T.nz[i] * 1.5, h, 30, 0.6, () => 0, 2.5), { sR }); });
+  check('the start: along the grid and the start (-135 to 75 m) driven into the hill at 30 m/s, 30°: no knock (a touch at most 1 m/s), no damage, still in the race',
+    grid.every(x => x.wall <= 1 && x.dmg === 0 && !x.out), grid.map(x => `${x.sR} m: ${x.wall ? 'touch ' + f(x.wall) + ' m/s' : 'no wall'}, ${f(x.up, 2)} m up${x.sea ? ', then the sea side at ' + f(x.sea) + ' m/s' : ''}`).join('; '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

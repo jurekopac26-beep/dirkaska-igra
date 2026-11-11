@@ -325,6 +325,21 @@ const Core = (function () {
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
       if (def.sideRoads && def.sideRoads.length && open) this._buildStubs(def.sideRoads);
+      // the hills beside the side roads (def.hills.S: [side road, side (0: u < 0, 1: u > 0), first sample, the digits as the road's]; Chapman's
+      // Peak: the hill past Military Road's far edge at the start, the cuts beside the driveways up the mountain): as the road's, past the side
+      // road's limit across (stubHw + lim) and every SR.ds along it, the heights above its own (S.Y); the soft limit within the 4 m past that
+      // limit where a point is still the side road's (Track.query: SR.rm). S.hill (y, lim, on, lx, lz as Track.hill's); hillGround, wallCollide
+      if (this.hill && def.hills.S && this.stubs) {
+        const D = def.hills.d, K = D.length, W = K + 1;
+        for (const [k, si, j0, str] of def.hills.S) { const S = this.stubs[k]; if (!S) continue; const n = S.n;
+          const H = S.hill || (S.hill = { d: D, k: K, y: [new Float32Array(n * K), new Float32Array(n * K)], lim: [new Float32Array(n), new Float32Array(n)], on: [new Uint8Array(n), new Uint8Array(n)],
+            lx: [new Float32Array(n), new Float32Array(n)], lz: [new Float32Array(n), new Float32Array(n)] });
+          let l = 0; for (let m = 0; m < str.length / W && j0 + m < n; m++) { const j = j0 + m; let y = 0;
+            for (let e = 0; e < K; e++) H.y[si][j * K + e] = (y += HILL_DIG.indexOf(str[m * W + e])) * 0.05;
+            H.lim[si][j] = (l += HILL_DIG.indexOf(str[m * W + K]) - 31) * 0.01; H.on[si][j] = 1; } }
+        for (const S of this.stubs) { const H = S.hill; if (!H) continue;
+          for (let si = 0; si < 2; si++) for (let j = 0; j < S.n; j++) { const u = (si ? 1 : -1) * (this.stubHw(S, j * SR.ds, si ? 1 : -1) + S.lim + H.lim[si][j]); H.lx[si][j] = S.x[j] - S.tz[j] * u; H.lz[si][j] = S.z[j] + S.tx[j] * u; } }
+      }
     }
 
     /* ---- side roads ("stubs"): a car can turn off into one, the barrier open across its mouth (delineator posts there, a row of cones
@@ -2247,7 +2262,7 @@ const Core = (function () {
   }
   function hillGround(c, trk) {
     const H = trk.hill, q = c.q; if (c.hl) c.hl.on = 0;
-    if (q.k >= 0) return;   // (in a side road)
+    if (q.k >= 0) { if (trk.stubs[q.k].hill) stubHillGround(c, trk, q); return; }   // (in a side road: its own hills, S.hill)
     const a = q.a, b = Math.min(trk.N - 1, a + 1); if (!H.on[0][a] && !H.on[0][b] && !H.on[1][a] && !H.on[1][b]) return;
     const ch = Math.cos(c.h), sh = Math.sin(c.h), tw = c.tw, A = c.m.a, B = c.m.b, t = q.t; let y0 = 0, y1 = 0, y2 = 0, y3 = 0;
     for (let k = 0; k < 4; k++) {   // (the wheels as the steps' wpos: 0, 1 the front left and right, 2, 3 the rear)
@@ -2269,7 +2284,35 @@ const Core = (function () {
   function hillSoft(c, trk, q, si, wx, wz, dt) {
     const H = trk.hill, a = Math.min(q.a, trk.N - 2), X = H.lx[si], Z = H.lz[si], ex = X[a + 1] - X[a], ez = Z[a + 1] - Z[a], el = Math.hypot(ex, ez) || 1;
     let nx = -ez / el, nz = ex / el; if ((nx * q.nx + nz * q.nz) * (si ? 1 : -1) < 0) { nx = -nx; nz = -nz; }   // (into the hill, square to the limit's line)
-    const rem = (X[a] - c.x - wx) * nx + (Z[a] - c.z - wz) * nz;   // (the way left to the limit; past it, less than 0)
+    softStop(c, X[a], Z[a], nx, nz, wx, wz, dt);
+  }
+  // beside a side road (S.hill; wallCollide: a corner past its limit across on a hill beside it): as hillSoft, the limit's line along the side
+  // road's samples (q.kj, the segment the corner is on), into the hill along u on that side
+  function stubHillSoft(c, S, q, si, wx, wz, dt) {
+    const H = S.hill, a = Math.min(q.kj, S.n - 2), X = H.lx[si], Z = H.lz[si], ex = X[a + 1] - X[a], ez = Z[a + 1] - Z[a], el = Math.hypot(ex, ez) || 1;
+    let nx = -ez / el, nz = ex / el; if ((nz * q.kx - nx * q.kz) * (si ? 1 : -1) < 0) { nx = -nx; nz = -nz; }
+    softStop(c, X[a], Z[a], nx, nz, wx, wz, dt);
+  }
+  // the ground under a car's wheels past a side road's limit across on a hill beside it (S.hill; hillGround with the car's middle in the side
+  // road): as the road's, each wheel's u and t along the side road from the car's; none within the road's barrier lines (near the junction)
+  function stubHillGround(c, trk, q) {
+    const S = trk.stubs[q.k], H = S.hill, n = S.n, ch = Math.cos(c.h), sh = Math.sin(c.h), tw = c.tw, A = c.m.a, B = c.m.b; let y0 = 0, y1 = 0, y2 = 0, y3 = 0;
+    for (let k = 0; k < 4; k++) {
+      const lx = k < 2 ? A : -B, ly = k & 1 ? tw : -tw, ox = lx * ch - ly * sh, oz = lx * sh + ly * ch;
+      if (!q.deep) { const d = q.d + ox * q.nx + oz * q.nz; if (Math.abs(d) <= (d > 0 ? q.br : q.bl)) continue; }
+      const u = q.u - ox * q.kz + oz * q.kx, t = q.st + ox * q.kx + oz * q.kz, si = u > 0 ? 1 : 0, o = Math.abs(u) - (trk.stubHw(S, t, u) + S.lim);
+      if (o <= 0 || t >= S.L - 0.5) continue;
+      const f = Math.max(0, t / SR.ds), j = Math.min(n - 2, Math.floor(f)), w = Math.min(1, f - j);
+      const y = (H.on[si][j] ? hillY(H, si, j, o) * (1 - w) : 0) + (H.on[si][j + 1] ? hillY(H, si, j + 1, o) * w : 0);
+      if (k === 0) y0 = y; else if (k === 1) y1 = y; else if (k === 2) y2 = y; else y3 = y;
+    }
+    if (!(y0 || y1 || y2 || y3)) return;
+    const hl = c.hl || (c.hl = { on: 0, lat: 0, lon: 0 });
+    hl.on = 1; hl.lat = (y1 + y3 - y0 - y2) / (4 * tw); hl.lon = (y0 + y1 - y2 - y3) / (2 * (A + B)); c.roadY += (y0 + y1 + y2 + y3) / 4;
+  }
+  // the even stop of hillSoft: the limit's line through (X0, Z0), (nx, nz) into the hill
+  function softStop(c, X0, Z0, nx, nz, wx, wz, dt) {
+    const rem = (X0 - c.x - wx) * nx + (Z0 - c.z - wz) * nz;   // (the way left to the limit; past it, less than 0)
     if (rem < 0) { c.x += nx * rem; c.z += nz * rem; }
     const vIn = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz;
     if (vIn <= 0) return;
@@ -3880,7 +3923,13 @@ const Core = (function () {
           else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
         }
         if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
-        if (q.k >= 0 && !zone && !trk.def.sideClosed) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
+        if (q.k >= 0 && !zone && !trk.def.sideClosed) { const S = trk.stubs[q.k];
+          if (S.hill && (q.deep || pen > 0) && q.st < S.L - 0.5) { const H = S.hill, si = q.u > 0 ? 1 : 0, j = Math.min(S.n - 2, q.kj);   // (past its limit across on a hill beside it, out of the road's barrier lines: no wall, the soft limit up the slope, S.hill)
+            if ((H.on[si][j] || H.on[si][j + 1]) && Math.abs(q.u) > trk.stubHw(S, q.st, q.u) + S.lim) { stubHillSoft(c, S, q, si, wx, wz, dt || 1 / 120); continue; } }
+          const ps = trk.stubPen(q, 0, _wn);
+          if (ps > 0 && pen > 0 && !q.deep && trk.hill) { const H = trk.hill, si = q.d > 0 ? 1 : 0;   // (out of it past the road's barrier line on the road's hill, between the two: the road's soft limit, hillSoft)
+            if (Math.abs(q.d) > (si ? q.br : q.bl) && (H.on[si][q.a] || H.on[si][Math.min(trk.N - 1, q.a + 1)])) { hillSoft(c, trk, q, si, wx, wz, dt || 1 / 120); continue; } }
+          if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
         if (pen <= 0) continue;
         if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
           const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
