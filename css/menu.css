@@ -422,15 +422,16 @@ svg { display: block; }
 .fbadge { position: absolute; top: -14px; right: -2px; z-index: 1; padding: 3px 6px 2px; border-radius: 999px; background: var(--cyan); color: #04121c; font: 900 italic 11px/1 var(--f-ui); font-variant-numeric: tabular-nums; box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
 /* ---------------- single race, step 2: the track (js/menu.js vTrack) ----------------
    (docs/meni-izbira-proge.md »Zadnje odločitve«, the mockup maketa-menija/izbira-proge, 412 × 892.) The picture from the top of the screen
-   down to the row, nothing dark over it: the head over its top (the back arrow 78 × 52, the place 44 px with a soft shadow, the globe 52),
-   the graph under the arrow, the weather under the globe, the counter at the bottom left, the cameras at the bottom right. Under it the
+   down to the row, nothing dark over it: the head over its top (the back button 52 high, the arrow and Back on it, the place 44 px with a soft shadow, the globe 52),
+   the graph under the back button, the weather under the globe, the counter at the bottom left, the cameras at the bottom right. Under it the
    room, over the picture's foot by --ov with its top corners rounded: the row, the yard, the neighbours, Race!. On its side: the picture the
    whole height at the left, the head and the rest at the right */
 #s-track { --sg: 10px; --ov: 16px; }
 .thead { position: absolute; left: 0; right: 0; top: 0; z-index: 6; display: flex; align-items: center; gap: 10px; padding: calc(14px + var(--st, 0px)) 14px 0; pointer-events: none; }
 .thead > * { pointer-events: auto; }
-.thead .hback { flex: 0 0 auto; width: 78px; height: 52px; }
+.thead .hback { flex: 0 0 auto; width: auto; height: 52px; gap: 6px; padding: 0 16px 0 12px; }   /* (the arrow and Back by it: the user, 11. 11. 2026) */
 .thead .hback svg { width: 24px; height: 24px; }
+.hback b { font: 900 italic 21px/1 var(--f-ui); letter-spacing: -.3px; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .3); white-space: nowrap; }
 .where { flex: 1 1 auto; min-width: 0; margin: 0; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; color: #fff;
   font: 900 italic 44px/1.12 var(--f-ui); letter-spacing: -.5px; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0, 0, 0, .45), 0 0 16px rgba(0, 0, 0, .55); }
 .globe { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 38% 34%, #2d6fb0, #0d2a4a 70%); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .35), 0 4px 10px rgba(0, 0, 0, .45); }
@@ -438,7 +439,7 @@ svg { display: block; }
 .globe canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }   /* (the Earth turned to the track: js/menu.js globe) */
 #s-track .stage { flex: 0 1 58.3%; min-height: 150px; overflow: hidden; }
 #s-track .stage .empty { position: absolute; left: 0; right: 0; top: 45%; margin: 0; text-align: center; font: 800 italic 16px/1.3 var(--f-ui); color: var(--lbl); }
-/* the height graph in its frame under the back arrow (js/menu.js graphOf): as wide as the arrow, 0.6 of it high; the part driven (to the point)
+/* the height graph in its frame under the back button at its left (js/menu.js graphOf): as wide as the arrow was before Back came on it, 78, 0.6 of it high; the part driven (to the point)
    its line coloured by the climb over a strong yellow, the rest a thin white line over a light yellow; the lowest point on the bottom edge */
 .hgraph { position: absolute; left: 14px; top: calc(88px + var(--st, 0px)); width: 78px; height: 47px; padding-top: 6px; z-index: 4; pointer-events: none; overflow: hidden; border-radius: 8px; background: rgba(10, 14, 20, .45); }
 .hgraph svg { display: block; }
@@ -477,7 +478,7 @@ svg { display: block; }
 .trow .opp > button:active b { color: var(--gold); }
 .trow .best small, .trow .best b, .trow .gt small, .trow .gt b { color: var(--gold); }
 .trow .flag { flex: 0 0 auto; padding: 0 10px 0 4px; }
-.trow .flag img { display: block; height: 24px; width: auto; max-width: 44px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 5px rgba(0, 0, 0, .5); }
+.trow .flag img { display: block; height: 34px; width: auto; max-width: 68px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .3), 0 2px 5px rgba(0, 0, 0, .5); }
 /* the yard: a wall and a floor (the horizon at the car's height), the blue road sign with the country on two posts, the car before it */
 .yard { position: relative; flex: 1 1 120px; min-height: 84px; margin-top: 6px; overflow: hidden; background: linear-gradient(180deg, #0f2036 0%, #13263f 58%, #1b3150 58.5%, #101d31 100%); }
 .yard::after { content: ''; position: absolute; left: 0; right: 0; top: 58%; height: 30%; background: radial-gradient(60% 100% at 32% 0%, rgba(120, 170, 255, .12), transparent 70%); pointer-events: none; }
@@ -540,13 +541,13 @@ svg { display: block; }
 #s-track .foot .go { flex: 1 1 auto; max-width: none; min-width: 0; height: 56px; font-size: 25px; }
 @media (max-height: 700px) {
   #s-track { --ov: 14px; }
-  .thead { padding-top: calc(10px + var(--st, 0px)); gap: 8px; } .thead .hback { width: 64px; height: 44px; } .globe { width: 44px; height: 44px; } .where { font-size: 34px; }
-  .hgraph { top: calc(62px + var(--st, 0px)); width: 64px; height: 40px; padding-top: 4px; }   /* (under the arrow, as wide as it) */
+  .thead { padding-top: calc(10px + var(--st, 0px)); gap: 8px; } .thead .hback { height: 44px; gap: 5px; padding: 0 13px 0 10px; } .thead .hback svg { width: 20px; height: 20px; } .hback b { font-size: 18px; } .globe { width: 44px; height: 44px; } .where { font-size: 34px; }
+  .hgraph { top: calc(62px + var(--st, 0px)); width: 64px; height: 40px; padding-top: 4px; }   /* (under the back button, at its left) */
   .wxv { top: calc(62px + var(--st, 0px)); width: 44px; gap: 4px; }   /* (under the globe) */
   .wxv svg { width: 30px; height: 30px; } .wxv [aria-pressed="true"] svg { width: 40px; height: 40px; } .wxv b { font-size: 11px; } .wxmore { height: 20px; line-height: 20px; }
   .tcount, .cams { bottom: calc(var(--ov) + 8px); } .tcount { height: 34px; padding: 0 9px; font-size: 14px; } .cams { padding: 3px; gap: 3px; } .cams button { width: 28px; height: 28px; } .cams button[aria-pressed="true"] { width: 36px; } .cams button svg { width: 18px; height: 18px; }
   .dio.friends { --fpad: calc(64px + var(--st, 0px)) 62px calc(var(--ov) + 50px) 10px; }
-  .trow { min-height: 50px; margin-top: 8px; padding-top: 4px; padding-bottom: 4px; } .trow .opp b { font-size: 32px; } .trow .flag img { height: 22px; }
+  .trow { min-height: 50px; margin-top: 8px; padding-top: 4px; padding-bottom: 4px; } .trow .opp b { font-size: 32px; } .trow .flag img { height: 30px; max-width: 60px; }
   .nbrs { padding-top: 6px; } .nb { height: 44px; }
   #s-track .foot { padding-top: 8px; } #s-track .foot .go { height: 48px; }
 }
@@ -974,7 +975,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
      blurred over the screen and darker to its foot, the head over the cards, the chosen track's card (the stage) in the middle with its gold
      edge (in it the graph at the top left, the weather in a row at the top right, the counter and the cameras at its foot), the neighbours'
      cards (--x, --y, --w, --h, --r, --b: their places, ringPlace moves them as it turns; --lo their names, --ui the chosen card's things),
-     the arrows ‹ ›, the row and Race! under the card, the car at the bottom left; no sign and no neighbours' flags. Small screens: the
+     the arrows ‹ ›, the row and Race! under the card at the screen's foot, the car at the bottom left; no sign and no neighbours' flags. Small screens: the
      buttons and the words no smaller than a finger and an eye need */
   #s-track { --ov: 0px; --u: calc(1px * var(--k, 1)); display: block; inset: 0; isolation: isolate; overflow: hidden; }
   #s-track .rsafe { display: block; position: absolute; left: var(--sl); right: var(--sr); top: var(--st); bottom: var(--sb); visibility: hidden; pointer-events: none; }
@@ -1002,11 +1003,13 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .rarw.l { left: calc(var(--ox) + 234 * var(--u) - var(--as) / 2); } #s-track .rarw.r { left: calc(var(--ox) + 658 * var(--u) - var(--as) / 2); }
   #s-track .rarw svg { width: 40%; height: 40%; }
   #s-track .rarw:active { transform: scale(.92); }
-  /* the head over the cards: the back arrow, the place (44 of the drawing's px, smaller where it is wider than 680: fitWhere), the globe */
+  /* the head over the cards: the back button as big as Race!, the arrow and Back on it (the user, 11. 11. 2026), the place over the card
+     (44 of the drawing's px, smaller where it is wider than 388: fitWhere), the globe */
   #s-track .thead { position: absolute; left: var(--ox); top: var(--oy); right: auto; width: calc(892 * var(--u)); height: calc(66 * var(--u)); padding: 0; display: block; z-index: 6; pointer-events: none; }
-  #s-track .thead .hback { position: absolute; left: calc(14 * var(--u)); top: calc(14 * var(--u)); width: max(56px, calc(78 * var(--u))); height: max(44px, calc(52 * var(--u))); }   /* (a finger: 44 px) */
-  #s-track .thead .hback svg { width: max(18px, calc(24 * var(--u))); height: max(18px, calc(24 * var(--u))); }
-  #s-track .where { position: absolute; left: calc(106 * var(--u)); top: calc(14 * var(--u)); width: calc(680 * var(--u)); height: calc(52 * var(--u)); font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); }
+  #s-track .thead .hback { position: absolute; left: calc(14 * var(--u)); top: calc(12 * var(--u)); width: calc(224 * var(--u)); height: max(44px, calc(56 * var(--u))); gap: calc(10 * var(--u)); padding: 0; border-radius: 13px; }   /* (a finger: 44 px) */
+  #s-track .thead .hback svg { width: max(18px, calc(26 * var(--u))); height: max(18px, calc(26 * var(--u))); }
+  #s-track .hback b { font-size: max(18px, calc(25 * var(--u))); }
+  #s-track .where { position: absolute; left: calc(252 * var(--u)); top: calc(14 * var(--u)); width: calc(388 * var(--u)); height: calc(52 * var(--u)); font-size: calc(44 * var(--u)); line-height: calc(52 * var(--u)); }
   #s-track .globe { position: absolute; left: auto; right: calc(14 * var(--u)); top: calc(14 * var(--u)); width: max(44px, calc(52 * var(--u))); height: max(44px, calc(52 * var(--u))); }
   /* in the chosen card: its things fade as it turns away (--ui) */
   #s-track .stage > :is(.hgraph, .wxv, .tcount, .cams), #s-track .stage :is(.mlab, .flab) { opacity: var(--ui, 1); }
@@ -1029,12 +1032,14 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .ftab td { height: max(18px, calc(25 * var(--u))); }
   #s-track .ftab th { padding: max(3px, calc(6 * var(--u))) 4px max(3px, calc(5 * var(--u))); }
   #s-track .fsend { height: max(24px, calc(32 * var(--u))); }
-  /* under the card: the row; at its right Race!; at the bottom left the car (no wall, no floor, no sign: the picture behind it) */
-  #s-track .trow { position: absolute; z-index: 5; left: calc(var(--ox) + 254 * var(--u)); top: calc(var(--oy) + 318 * var(--u)); width: calc(384 * var(--u)); min-height: max(44px, calc(60 * var(--u))); margin: 0; padding: calc(6 * var(--u)) calc(8 * var(--u)) calc(6 * var(--u)) calc(10 * var(--u)); }
+  /* under the card at the screen's foot, a small edge over the phone's bar (the user, 11. 11. 2026: »povsem do dna«): the row as wide as
+     the card; at its right Race!, its middle at the row's; at the bottom left the car (no wall, no floor, no sign: the picture behind it) */
+  #s-track { --rb: calc(var(--sb, 0px) + max(6px, calc(8 * var(--u)))); }
+  #s-track .trow { position: absolute; z-index: 5; left: calc(var(--ox) + 254 * var(--u)); top: auto; bottom: var(--rb); width: calc(384 * var(--u)); min-height: max(44px, calc(60 * var(--u))); margin: 0; padding: calc(6 * var(--u)) calc(8 * var(--u)) calc(6 * var(--u)) calc(10 * var(--u)); }
   #s-track .trow small { font-size: max(9.5px, calc(11.5 * var(--u))); } #s-track .trow b { font-size: max(12px, calc(15 * var(--u))); } #s-track .trow .opp b { font-size: max(22px, calc(42 * var(--u))); }
-  #s-track .trow .flag img { height: max(16px, calc(24 * var(--u))); } #s-track .trow > div { padding: 0 calc(4 * var(--u)); } #s-track .trow .flag { padding: 0 calc(10 * var(--u)) 0 calc(4 * var(--u)); } #s-track .trow .opp { padding: 0 calc(4 * var(--u)) 0 calc(12 * var(--u)); }
-  #s-track .foot { position: absolute; z-index: 5; left: calc(var(--ox) + 654 * var(--u)); top: calc(var(--oy) + 320 * var(--u)); width: calc(224 * var(--u)); padding: 0; }
-  #s-track .foot .go { height: max(40px, calc(56 * var(--u))); font-size: max(18px, calc(25 * var(--u))); }
+  #s-track .trow .flag img { height: max(22px, calc(34 * var(--u))); max-width: max(44px, calc(68 * var(--u))); } #s-track .trow .flag .nf { width: max(31px, calc(48 * var(--u))); height: max(22px, calc(34 * var(--u))); } #s-track .trow > div { padding: 0 calc(4 * var(--u)); } #s-track .trow .flag { padding: 0 calc(10 * var(--u)) 0 calc(4 * var(--u)); } #s-track .trow .opp { padding: 0 calc(4 * var(--u)) 0 calc(12 * var(--u)); }
+  #s-track .foot { position: absolute; z-index: 5; left: calc(var(--ox) + 654 * var(--u)); top: auto; bottom: var(--rb); width: calc(224 * var(--u)); height: max(44px, calc(60 * var(--u))); padding: 0; }
+  #s-track .foot .go { height: max(44px, calc(56 * var(--u))); font-size: max(18px, calc(25 * var(--u))); }
   #s-track .yard { position: absolute; z-index: 2; left: var(--ox); top: calc(var(--oy) + 250 * var(--u)); width: calc(252 * var(--u)); bottom: 0; flex: none; min-height: 0; margin: 0; background: none; }
   #s-track .yard::after, #s-track .sign, #s-track .post, #s-track .nbrs { display: none; }
   #s-track .yard .car { left: calc(10 * var(--u)); top: calc(46 * var(--u)); bottom: auto; width: calc(240 * var(--u)); height: calc(90 * var(--u)); }
@@ -1085,7 +1090,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
    panel on the right; the countries' flags by continent, a country's tracks, a track's card, the progress marks ---------------- */
 .trow .flag button { display: block; border-radius: 3px; }
 .trow .flag button:active img { transform: scale(.92); }
-.trow .flag .nf { display: flex; align-items: center; justify-content: center; width: 34px; height: 24px; border-radius: 3px; background: #3b4557; font: 800 10px/1 var(--f-ui); color: #dfe8f6; }
+.trow .flag .nf { display: flex; align-items: center; justify-content: center; width: 48px; height: 34px; border-radius: 3px; background: #3b4557; font: 800 12px/1 var(--f-ui); color: #dfe8f6; }
+@media (max-height: 700px) { .trow .flag .nf { width: 42px; height: 30px; } }   /* (as the flags: 34 px high, 30 on a short screen; the user, 11. 11. 2026: a bigger flag) */
 .sign[data-act] { cursor: pointer; }
 .pr { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%; font: 900 11px/1 var(--f-ui); font-style: normal;
   color: #2a1b02; text-shadow: none; box-shadow: 0 1px 3px rgba(0, 0, 0, .55), inset 0 0 0 1.5px rgba(255, 255, 255, .6); vertical-align: middle; }

@@ -3,7 +3,8 @@
 // gantry, 2 the drone jumping round the car at every light, 3 the helicopter circling, 4 the helicopter over the first corner, 5 the
 // aeroplane's pass and banked turn, 6 the drone out of the pits (only on a track with pits); where the world films its own intro (the jets:
 // Styria, Bathurst, Rio) that intro is one more of them. The intro 3 s, the lights at 3.0 s + 0.8 s each; never closer to the player's car
-// than the chase view with Oddaljenost: Blizu nor lower than it (landscape and upright), the chase view itself by the 5th light (6.4 s, the
+// than the chase view with Oddaljenost: Blizu nor lower than it (landscape; upright Srednje's, the old Blizu, since the upright chase view
+// came closer on 11. 11. 2026: with Blizu the flight comes down to it over its last 0.8 s), the chase view itself by the 5th light (6.4 s, the
 // drone of the lights 6.6 s), off at the start. Not in a time trial or from a flying start; the tests' own default (tdgp-nostartcam): off.
 //   node tests/browser/startcam.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -28,6 +29,7 @@ const fly = (page, v) => page.evaluate((v) => {
     if (o.end == null && g.startCam.t >= 6.7 && g.phase === 'lights') {   // (past the 5th light: the camera as the chase view without the flight)
       const a = cam(), q = Render.camera.quaternion.clone(), was = Render.startCam.v; Render.startCamStop(); const b = cam(), qb = Render.camera.quaternion.clone();
       o.end = { gap: +Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]).toFixed(3), rot: +q.angleTo(qb).toFixed(4) }; Render.startCamGo(was); Render.startCam.t = 6.7;
+      o.chase = { d: +Math.hypot(b[0] - B[0], b[1] - B[1], b[2] - B[2]).toFixed(2), h: +(b[1] - B[1]).toFixed(2) };   // (the chase view itself: its distance from the car, its height over it)
     }
   }
   o.off = { phase: g.phase, v: g.startCam.v, rv: Render.startCam.v };
@@ -54,12 +56,18 @@ try {
     T.check(`Spa, flight ${v}: never closer than the Blizu chase view (${r.lim.d} m) nor lower (${r.lim.h} m)`, r.minD >= r.lim.d - 0.05 && r.minH >= r.lim.h - 0.05, `closest ${r.minD} m, lowest ${r.minH} m`);
     T.check(`Spa, flight ${v}: the chase view itself by the 5th light (${end} s), off at the start`, r.end && r.end.gap < 0.05 && r.end.rot < 0.002 && r.off.phase === 'racing' && r.off.v === 0 && r.off.rv === 0, JSON.stringify({ end: r.end, off: r.off }));
   }
-  // upright: the limit of the upright chase view (higher, farther)
+  // upright: the limit of the upright chase view (higher, farther), the old Blizu's: Srednje's since the upright chase view came closer (the
+  // user, 11. 11. 2026; the flights as they were); with Blizu, closer, the flight as at Srednje, over its last 0.8 s down to the chase view
   await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300); await page.evaluate(() => Render.resize());   // (paused: the game's own resize waits for a frame)
-  for (const v of [2, 6]) {
-    const r = await fly(page, v);
-    T.check(`Spa upright, flight ${v}: never closer nor lower than the upright Blizu chase view, the chase view by the 5th light`, r.lim.d > 35 && r.minD >= r.lim.d - 0.05 && r.minH >= r.lim.h - 0.05 && r.end && r.end.gap < 0.05, JSON.stringify({ lim: r.lim, minD: r.minD, minH: r.minH, end: r.end }));
+  for (const [v, z] of [[2, 1.4], [6, 1.4], [2, 1.1], [6, 1.1]]) {
+    await page.evaluate((z) => { __game.S.zoom = z; Render.cam.userZoom = z; }, z);
+    const r = await fly(page, v), mid = z === 1.4;
+    T.check(mid ? `Spa upright, flight ${v}, Srednje: never closer nor lower than the upright chase view (the old Blizu's), the chase view by the 5th light`
+      : `Spa upright, flight ${v}, Blizu: never closer nor lower than its chase view (closer than Srednje's), down to it by the 5th light`,
+      r.lim.d > 35 && r.chase && (mid ? Math.abs(r.chase.d - r.lim.d) < 0.3 && r.minD >= r.lim.d - 0.05 && r.minH >= r.lim.h - 0.05 : r.chase.d < r.lim.d - 3 && r.minD >= r.chase.d - 0.05 && r.minH >= r.chase.h - 0.05) && r.end && r.end.gap < 0.05,
+      JSON.stringify({ lim: r.lim, chase: r.chase, minD: r.minD, minH: r.minH, end: r.end }));
   }
+  await page.evaluate(() => { __game.S.zoom = 1.1; Render.cam.userZoom = 1.1; });
   // the six start lights: each its own look, none like the usual ones, none wider than them (landscape and upright)
   const up = await looks(page); await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(300); const side = await looks(page);
   const sigs = Object.values(side).map(o => o.sig), wide = [side, up].flatMap(L => Object.entries(L).filter(([k, o]) => o.w > L.base.w + 0.5).map(([k, o]) => k + ' ' + o.w.toFixed(1) + ' > ' + L.base.w.toFixed(1)));

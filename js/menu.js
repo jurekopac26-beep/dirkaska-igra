@@ -1012,7 +1012,7 @@
   function vTrack() {
     const list = TRACKS();
     let h = '<section class="scr" id="s-track" aria-label="Single race">';
-    const head = (inner) => '<div class="thead"><button class="back hback" data-act="back" aria-label="Back">' + ARROW + '</button>' + (inner || '') + '</div>';
+    const head = (inner) => '<div class="thead"><button class="back hback" data-act="back" aria-label="Back">' + ARROW + '<b>Back</b></button>' + (inner || '') + '</div>';   // (the arrow and Back by it: the user, 11. 11. 2026)
     if (!list.length) return h + head() + '<div class="stage"><p class="empty">No tracks for this mode.</p></div></section>';
     trackIdx = Math.min(trackIdx, list.length - 1);
     const n = list.length, t = list[trackIdx], ctry = countryOf(t), fl = flagUrl(ctry);
