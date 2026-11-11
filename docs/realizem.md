@@ -356,6 +356,23 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 ## Čas in vrsta
 
+**Posodobljen načrt 11. 11. 2026** (potrdil uporabnik ob ~11.25; Matej, tabla #382, komentar 6793233105; velja pred starejšimi datumi spodaj, vrstni red ostane): vsi trije računi imajo ta teden več dela, zato je večina ~2 dni prej; vse na `main` ~16. 12. (prej ~18. 12.). Vrsta za `main` (ocene):
+1. Dež in sneg (#647), biketraveler, ~12. 11.
+2. Chapman (#654), jure.kopac26, ~13. 11. po »ok«
+3. Kamera in meni (#650, brez »Super blizu«), jure.kopac26, ~13. 11. po »ok«
+4. Samsungov temni način (#656), jure.kopac26, ~14. 11. po preizkusu
+5. Garaža (#653), biketraveler, ~14. 11. po »ok«
+6. Najboljše vožnje (nova tema), jure.kopac26, ~14. 11.
+7. Mesta za dele na 20 avtih (#480 + #626), biketraveler, ~16. 11.
+8. 30 avtov KOLIBRI, biketraveler, ~23. 11.
+9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
+10. Vse proge v enem PR (#569 + #494 + nove proge), jure.kopac26 in partyslo, ~7. 12.
+11. Preleti (#246), partyslo, ~7. 12.
+12. Grafika (E, S, G), jure.kopac26 in partyslo, ~8. 12.
+13. 5 tovornjakov, biketraveler, ~16. 12.
+
+Poraba do resetov (odločitve uporabnika 11. 11. 2026 ob ~11.00, ~11.05 in ~11.25): jure.kopac26 95 % do ned 15. 11. 00.00, zadnjih 5 % ned 00.00–05.00, nato stoji do reseta ob 10.00, do 3 seje s kodo hkrati; biketraveler po ponastavitvi do 3 seje s kodo hkrati in cilj 100 % do ned 12.00; partyslo do čet ~15.00 največ 1 seja s kodo, reset pet 03.00. Ta teden: jure.kopac26 #654, #656, #650, nato E (#657), Najboljše vožnje, S; biketraveler #647, #653, #480 + #626, stikalo »tekmeci po moji liniji«, Trki faza 2; partyslo preverjanje 60 m in slike za 10 novih prog, od petka izdelava, od ~17. 11. G.
+
 **Razporeditev računov** (odločitev uporabnika 10. 11. 2026 ob ~22.30, prek Mateja, tabla #382, komentar 6779831019; datumi so ocene za `main`, v tedenskem načrtu 16. 11. ga samo še potrdita):
 - **biketraveler, fizika in avti** (odločitve uporabnika 10. 11. 2026 ob ~23.10 »Prestavi na prioritetno«, ob ~23.20 »Garazo daj tudi pod prioritetno« in ob ~23.35 »Poskodbe prestavi pred grafiko«, z izbiro »biketraveler takoj po #480«; vse prek Mateja):
   1. **Prednost imata Dež in sneg ter garaža**, ki zasedeta obe mesti za seje s kodo. Na `main` gresta v eni zbirni veji; če uporabnikov »ok« za Dež in sneg zamuja več kot dan, gre garaža sama (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382). Dež in sneg: Fable 5.2 z eno sejo, na `main` po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih.
