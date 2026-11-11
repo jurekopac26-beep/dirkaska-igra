@@ -118,7 +118,7 @@ Zunanja lupina Normalnih je trikotnik za trikotnikom enaka kot na `main`, razen 
 
 - Veja `slike/avti-kolibri` (`README.md` s seznamom, slike v `pilot/`): za vsak avto Visoki v salonu (cel avto in podrobnosti od blizu), notranjost, avto po trku na Spa, Belgija (telefon pokonci s kamero za avtom: kot ga kaže telefon in isti pogled skozi dolg objektiv; računalnik z Visokimi v foto načinu, z novim načinom in s privzetimi nastavitvami), nepoškodovan avto na telefonu in KOLIBRI kot vzor.
 - `tools/avti-kolibri/slike.mjs` (scenariji v `scenariji.json`) nariše eno različico igre, `tools/avti-kolibri/sestavi.py` sestavi pare ZDAJ | POTEM (JPEG do ~300 KB). Navodilo je na vrhu obeh datotek.
-- `tools/avti-kolibri/zunaj.js` je odtis samo zunanje lupine, po delih: avto z novo notranjostjo pred delom `--save`, po njem `--check`; razlika je dovoljena samo v delih, ki se namenoma spremenijo (ogledala, ki počijo: `mirrorL`, `mirrorR`, z istim številom trikotnikov). `tools/avti-kolibri/strop.js` pokaže vrh notranjosti brez dvojčka pod odtisom strehe (`look.body.crush`) po 10 cm: nova notranjost ne sme biti višja od stare (polje strehe ostane), voznik Visokih (`--hi`) sme, ker testi tečejo na Normalnih.
+- `tools/avti-kolibri/zunaj.js` je odtis samo zunanje lupine, po delih: avto z novo notranjostjo pred delom `--save`, po njem `--check`; razlika je dovoljena samo v delih, ki se namenoma spremenijo (ogledala, ki počijo: `mirrorL`, `mirrorR`, z istim številom trikotnikov). `tools/avti-kolibri/strop.js` pokaže vrh notranjosti brez dvojčka pod odtisom strehe (`look.body.crush`) po 10 cm: nova notranjost ne sme biti višja od stare (polje strehe ostane), voznik Visokih (`--hi`) sme, ker testi tečejo na Normalnih. `tools/avti-kolibri/streha.mjs <id …>` ponovi udor strehe od zadaj iz testa trkov (točka 10) v minuti na avto, namesto celega testa (~30 min).
 - Na pokončnem telefonu je avto s kamere za avtom širok okoli 25 pik (kamera je ~64 m za avtom): podrobnosti Visokih telefon ne riše, notranjost in razbita stekla pa so na tej razdalji komaj vidni.
 
 ### Čas po delih (ena seja, ura vsebnika)
@@ -164,6 +164,7 @@ Razdelitev na tabli #382 (komentar 6796604526). Vzor sta pilot (zgoraj) in SOKOL
 | SOKOL R | 1322 / 658 | 1322 / 1380 | 1361 / 1736 | 0,898 / 0,881 |
 
 - SOKOL R: ogledali sta del lupine (`K.skin`, jadro), zato je pokrov odprt in steklo `K.mirGlass` (poči kot pri `K.mirror`); rezervoar pod krovom za sedeži je odstranjen (neviden); voznik Visokih seže do 1,12 m (testi tečejo na Normalnih).
+- SOKOL R, odtis strehe (`body.crush`): začne se na sredini steklenih zadnjih vrat (x −1,33 namesto −1,5). Prej je udarec od zadaj upognil predvsem steklo in streho povprečno pogreznil le 2,0 cm (14 % meje `rlim` 0,141; test trkov, točka 10, zahteva 15 %). Zdaj jo pogrezne 0,5 / 1,4 / 2,5 cm (lahek, srednji, močan), močan udarec v nos 3,5 cm (prej 3,9). Fizika trkov ostane enaka; spremenita se samo videz in razdelitev polja strehe.
 
 ## Predaja
 

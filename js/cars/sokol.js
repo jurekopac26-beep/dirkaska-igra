@@ -131,7 +131,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.145, 0.62, 0.21, 0.41, 0.56, 0.5, 0, 'b', 0.06]],             // the nose's face: the mouth
         eye: { x: -0.5, y: 1.02 },
         door: [0.62, -0.5], bumpF: 0.3, bumpR: 0.175, bumpY: [0.62, 0.62],
-        crush: { x0: -1.5, x1: 0.18, z: 0.62 },                          // (the roof and the hatch's top: the bubble canopy)
+        crush: { x0: -1.33, x1: 0.18, z: 0.62 },                         // (the roof and the hatch's top half, from its middle: a knock from behind caves the roof in, not only the glass)
         decalX: 1.2, decalY: 0.752, decalRz: -0.087, decalS: 0.68, decalPart: 'hood' },   // (the start number on the bonnet's sunk middle: the roof's
                                                                          //  double bubble stays in sight from the chase camera)
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver, the tyres in 64)
