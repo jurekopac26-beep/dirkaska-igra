@@ -367,16 +367,16 @@
   }
  },
  "chapman": {
-  "meshes": 2277,
-  "verts": 1139113,
-  "instances": 78977,
+  "meshes": 2278,
+  "verts": 1171819,
+  "instances": 78953,
   "props": 193,
   "crowd": 33,
-  "world": "99dd2b0c",
+  "world": "71e4d44e",
   "propsHash": "4f11b3f4",
   "floor": "7feca5ef/10808",
   "groups": {
-   "-:MeshLambertMaterial": "4413e3a2",
+   "-:MeshLambertMaterial": "9adb152f",
    "-:MeshPhongMaterial": "beacf3d2",
    "-:MeshBasicMaterial": "99552dd0",
    "crowd:MeshLambertMaterial": "dd9fef6b",

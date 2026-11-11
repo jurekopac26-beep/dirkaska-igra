@@ -515,20 +515,15 @@
         if (at(12) > 6 && at(25) > 16) want[side > 0 ? 1 : 0][i] = 1; }   // (the slope rising steeply right behind the road)
       for (const side of [-1, 1]) {
         const nd = want[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl, i0 = T.idx(sStart + 120), i1 = T.idx(sFin - 40);
-        const hl = T.hill ? T.hill.on[side > 0 ? 1 : 0] : null;   // (the net itself none on a hill, Track.hill: its warning sign and the stones stay)
         for (let i = 0; i < N; i++) if (i < i0 || i > i1 || onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || (T.gap && (T.gap[side > 0 ? 1 : 0][Math.max(0, i - 3)] || T.gap[side > 0 ? 1 : 0][Math.min(N - 1, i + 3)]))) nd[i] = 0;   // (none across a side road)
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++;
           if ((j - i) * T.ds >= 40) {
-            for (let i2 = i; i2 < j;) { if (hl && hl[i2]) { i2++; continue; } let j2 = i2; while (j2 < j && !(hl && hl[j2])) j2++;   // (the net: its runs off the hills, 40 m and more)
-              if ((j2 - i2) * T.ds >= 40) {
-                const off = 3 + 1.5 * rpHash(i2, 81), Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
-                for (let k = i2; k < j2 - 1; k++) { const a = Qn(k, 0.1), b = Qn(k + 1, 0.1), c = Qn(k + 1, 4.3), d = Qn(k, 4.3); c[0] -= T.nx[k + 1] * side * 0.6; c[2] -= T.nz[k + 1] * side * 0.6; d[0] -= T.nx[k] * side * 0.6; d[2] -= T.nz[k] * side * 0.6;
-                  ng.quadUp(a, b, c, d, [nc, nc, nc, nc], [[0, 0], [1, 0], [1, 1], [0, 1]]); nNet++; }
-                for (let k = i2; k < j2; k += 4) { const a = Qn(k, -0.2), g = scen.get(a[0], a[2]); box(g, a[0] - T.nx[k] * side * 0.3, a[1], a[2] - T.nz[k] * side * 0.3, 0.16, 4.7, 0.16, T.hd[k], steel);
-                  const up = Qn(k, 0); exclPush(up[0], up[2], 1.4); }
-              }
-              i2 = j2; }
-            for (let k = i; k < j; k += 3) fallen.push([k * T.ds + (rpHash(k, 7) - 0.5) * 4, side]);   // (stones come down the slope: on the shoulder below)
+            const off = 3 + 1.5 * rpHash(i, 81), Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
+            for (let k = i; k < j - 1; k++) { const a = Qn(k, 0.1), b = Qn(k + 1, 0.1), c = Qn(k + 1, 4.3), d = Qn(k, 4.3); c[0] -= T.nx[k + 1] * side * 0.6; c[2] -= T.nz[k + 1] * side * 0.6; d[0] -= T.nx[k] * side * 0.6; d[2] -= T.nz[k] * side * 0.6;
+              ng.quadUp(a, b, c, d, [nc, nc, nc, nc], [[0, 0], [1, 0], [1, 1], [0, 1]]); nNet++; }
+            for (let k = i; k < j; k += 3) fallen.push([k * T.ds + (rpHash(k, 7) - 0.5) * 4, side]);   // (stones come down through the nets: on the shoulder below)
+            for (let k = i; k < j; k += 4) { const a = Qn(k, -0.2), g = scen.get(a[0], a[2]); box(g, a[0] - T.nx[k] * side * 0.3, a[1], a[2] - T.nz[k] * side * 0.3, 0.16, 4.7, 0.16, T.hd[k], steel);
+              const up = Qn(k, 0); exclPush(up[0], up[2], 1.4); }
             const [wx, wz, wi] = onSide(i * T.ds - 30, -side, Math.max(0.9, hillOut(T.idx(i * T.ds - 30), -side > 0 ? 1 : 0) + 0.5)); if (!excluded(wx, wz)) { const wy = chGround(wx, wz); box(scen.get(wx, wz), wx, wy - 0.2, wz, 0.08, 2.2, 0.08, T.hd[wi], [0.6, 0.61, 0.63]); bannerQ(wx, wy + 1.3, wz, -T.tx[wi], -T.tz[wi], 0.9, 0.8, 7 / 8, 1, 2 / 8, 3 / 8, ban2); exclPush(wx, wz, 1.2); }
           }
           i = j; }
