@@ -369,14 +369,14 @@
  "chapman": {
   "meshes": 2278,
   "verts": 1171819,
-  "instances": 78953,
+  "instances": 78879,
   "props": 193,
   "crowd": 33,
-  "world": "71e4d44e",
+  "world": "e9d11610",
   "propsHash": "4f11b3f4",
-  "floor": "7feca5ef/10808",
+  "floor": "48ac7de3/10808",
   "groups": {
-   "-:MeshLambertMaterial": "9adb152f",
+   "-:MeshLambertMaterial": "f075221f",
    "-:MeshPhongMaterial": "beacf3d2",
    "-:MeshBasicMaterial": "99552dd0",
    "crowd:MeshLambertMaterial": "dd9fef6b",

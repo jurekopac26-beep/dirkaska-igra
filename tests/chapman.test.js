@@ -135,7 +135,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
         const o = Math.abs(qq.d) - (side > 0 ? qq.br : qq.bl), b = Math.min(T.N - 1, qq.a + 1); deep = Math.max(deep, o); if (o > 0) over = Math.max(over, o - (H.lim[si][qq.a] + (H.lim[si][b] - H.lim[si][qq.a]) * qq.t)); }
       past = Math.max(past, deep); if (deep > 0) inHill = true;
       if (P.hl && P.hl.on) tilt = Math.max(tilt, Math.atan(Math.hypot(P.hl.lat, P.hl.lon)) * 180 / Math.PI);
-      wall = Math.max(wall, P.hitWall || 0); dmg = Math.max(dmg, P.dmg ? Object.values(P.dmg).reduce((a, x) => a + (+x || 0), 0) : 0); if (P.rl) roll = 1;
+      wall = Math.max(wall, P.hitWall || 0); dmg = Math.max(dmg, +P.dmg || 0, (P.dz || []).reduce((a, x) => a + (+x || 0), 0), (P.dents || []).length, P.flat ? 1 : 0); if (P.rl) roll = 1;
       if (inHill && lift > 0.3 && P.y - ry < 0.05) back = t;   // (down from the hill again: the slope brought it back to the road's level)
       if (P.stuckT > 2.5) { r.rescue(P); r.step(DT); resc = { t, d: P.q.d, dy: P.y - T.elevAt(P.q.s, {}).y }; } }
     Math.random = orig; return { past, over, lift, tilt, resc, back, wall, dmg, roll, g1, g10, lim: H.lim[si][i] };
