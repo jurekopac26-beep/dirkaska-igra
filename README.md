@@ -2,7 +2,18 @@
 
 Veja samo za slike zdaj/potem (ni del igre, ne gre na `main`). Koda je v pull requestu #654 (veja `popravki/chapman-ograje`), opis proge v `docs/proge/chapman.md` (»Hribi za ograjo«).
 
-## Prošnja uporabnika (11. 11. 2026)
+## Avto zapelje v hrib, brez nevidne stene (11. 11. 2026 ob ~4.30)
+
+Prošnja uporabnika: »Poprabi da se avto ne zabije v hrib ampak zapelje v hrib vzemi si cas naredi dobro to«. Na vsaki sliki zgoraj **zdaj** (predogled pred tem popravkom, commit `2034b05`), spodaj **potem** (s popravkom, #654), ob istih časih. Kamera za avtom, suho, dan, poletje; avto postavljen 2,5 m pred črto ograje, plin 30 %, brez krmiljenja; izrez okoli avta, pod sliko čas, hitrost, višina nad cesto, nagib, poškodbe in gumb »Na progo« (ko avto obtiči 2,5 s).
+
+| Slika | Kaj kaže |
+|---|---|
+| [`chapman-ograje/chapman-521m-v-hrib.jpg`](chapman-ograje/chapman-521m-v-hrib.jpg) | 521 m levo (#1), 72 km/h pod kotom 30°. Zdaj: nevidna stena, kjer je hrib visok 0,9 m: udarec pri 0,2 s (72 → 57 km/h), iskre, 20 % poškodb, pri 0,6 s še en udarec (23 %); avto ne pride više kot 0,2 m. Potem: zapelje v pobočje do 0,8 m nad cesto, nagne se do 44°, ne prevrne se, teža ga vrne na cesto po 2,4 s; brez udarca, isker in poškodb. |
+| [`chapman-ograje/chapman-3000m-mreza.jpg`](chapman-ograje/chapman-3000m-mreza.jpg) | 3000 m levo, pod lovilno mrežo, 72 km/h pod kotom 60° (najostrejši primer). Zdaj: v 0,1 s s 72 na 17 km/h, 42 % poškodb, obstane ob črti. Potem: mehka meja ga enakomerno ustavi v ~0,5 s (72 → 50 → 30 → 4 km/h), 0,8 m čez črto in 0,4 m gor, ~2 m pred mrežo, brez poškodb; s plinom ostane ob pobočju, po 2,5 s gumb »Na progo«. |
+
+Starejše slike spodaj so iz prejšnjega koraka (ograja in vkop); njihov »potem« je na novih slikah »zdaj«.
+
+## Brez ograje in vkopa (prejšnji korak, 11. 11. 2026)
 
 Poročilo `RRA-NAPAKE v=ceb4266a proga=chapman` (#1 521 m, #2 893 m, #3 2133 m): »zbrisi ograjo in to vdolbljeno zemljo vrni nazaj na enak raven kot ostalo«, »le levi strani kjer je vzadaj hrib zbrisi ograjo«, »prav tako na desni strani zbrisi ograjo in vdolbino pod ograjo ce je za ograjo hrib«; in »tam kjer zbrises ograjo prav tako zbrisi v kodi da je prej bila tam ograja tako da avto lahko zapelje v hrib«.
 
