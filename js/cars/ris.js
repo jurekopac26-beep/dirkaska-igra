@@ -109,6 +109,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.05, 0.94, 0.25, 0.72, 0.78, 0.78, 0.03, 'b', 0.08],      // the nose's top
           [2.22, 0.86, 0.22, 0.62, 0.7, 0.66, 0.02, 'b', 0.07]],      // the nose's face: the grille and the light pod
         eye: { x: -0.4, y: 1.06 },
+        crush: { x0: -1.4, x1: 0.41, z: 0.84 },   // (the middle of the rear glass: a knock from behind sinks the roof, crash.test point 10)
       },
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
       budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)

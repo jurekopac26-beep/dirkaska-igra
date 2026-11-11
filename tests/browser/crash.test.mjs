@@ -312,7 +312,7 @@ try {
   // theirs too (the spoiler: a wing where the car has one); a crushed end caves the roof in, the harder the knock the deeper (the roof's
   // own top, what lies on it left out). A front bumper that carries an aero car's downforce (the Superkombi's: its splitter is no part of
   // its own) comes off as before, the core's rule (core.js maskHeld): the bonnet still neither hangs nor comes off
-  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris']) {
+  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'sakal', 'ris']) {   // (not kamen, orel: the cage right under the roof, a knock from behind sinks it under 15 % of rlim, as on main)
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
