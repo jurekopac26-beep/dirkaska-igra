@@ -18,8 +18,8 @@
   --red: #e2382d;
   --green: #5fd38a;
   --f: Roboto, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
-  --st: env(safe-area-inset-top, 0px);
-  --sb: env(safe-area-inset-bottom, 0px);
+  --st: max(var(--okvir-t, 0px), env(safe-area-inset-top, 0px));
+  --sb: max(var(--okvir-b, 0px), env(safe-area-inset-bottom, 0px));
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0d1626; } }
