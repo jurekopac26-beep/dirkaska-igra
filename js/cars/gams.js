@@ -75,12 +75,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       vrata: { x: [-0.37, 0.78], y: [0.39, 0.92], handle: [-0.25, 0.84, 0.91, 0.13, 0.025], win: [[-0.35, 0.07], [-0.03, 0.07], [-0.03, 0.92], [-0.35, 0.92]], netIn: 0.003, frame: [-0.37, -0.35, 0.92, 0.98] },
       zavore: { s: 1 },
       matice: { k: 5, r: 0.2 },
-      // (sklop 3 · barve, js/deli/barve.js) the stripes beside the scoop; the decals on the doors, on the fenders ahead of the arches and
-      // the quarters ahead of the rear ones, on the bonnet between the louvres and on the roof; the sun strip on the windscreen's top; the
+      // (sklop 3 · barve, js/deli/barve.js) the stripes beside the scoop, ending on the bonnet ahead of the nose's drop; the decals on the
+      // doors behind the A-pillar's foot, on the fenders ahead of the arches and the quarters ahead of the rear ones, on the bonnet's front
+      // between the louvres and on the roof (each option within +300 triangles, tests/deli.test.js); the sun strip on the windscreen's top; the
       // calipers; the fuel cap on the right quarter behind the door (none stock)
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
-      crte: { z: [0.24, 0.38] },
-      nalepke: { side: [[-0.25, 0.82], [1.77, 1.87], [-0.91, -0.47]], y: [0.491, 0.868], hood: { x: [0.9, 1.82], z: [0.26, 0.46] }, roof: { x: [-1.67, -0.1] } },
+      crte: { z: [0.24, 0.38], x: [[-9, 1.95]] },
+      nalepke: { side: [[-0.25, 0.7], [1.77, 1.87], [-0.91, -0.47]], y: [0.491, 0.868], hood: { x: [1.2, 1.82], z: [0.26, 0.46] }, roof: { x: [-1.67, -0.1] } },
       soncni_pas: { x: [-0.05, 0.09] }, zamasek: { x: -0.94, y: 0.88, z: 0.91, r: 0.045 },
       celjusti: { r: [0.085, 0.16], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) round the transverse four in the bay; the struts and bars at the wheels
