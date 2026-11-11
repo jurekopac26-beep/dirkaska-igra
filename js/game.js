@@ -2959,15 +2959,16 @@
   /* ---------------- PIKES PEAK: corner warnings, medals per class, the legend ghost ---------------- */
   // Medals per class, dry and wet (s): measured with the autopilot (Core.aiControl, assist 2, no upgrades, as tests/races.test.js drives)
   // on the fastest car of each class: dry FORMULA ORKAN 164.26, BURJA R7 182.30, STREGA MR 186.80, LEV S 184.27 (VORTEX 185.13,
-  // KAZE 189.19, PICO 186.12); wet 180.68, 196.83, 204.23, 200.22 (Time Attack 1's set on the retired model at index 5: 184.58, 200.20).
+  // KAZE 189.19, PICO 186.12); wet (a third less grip, brakes 30 % weaker: docs/dez-sneg.md) FORMULA ORKAN 200.35, STRELA EV 212.92,
+  // STREGA MR 227.45, LEV S 222.46 (Time Attack 1's set on the retired model at index 5: 184.58 in the dry, 222.46 in the rain).
   // Gold ~1.5 % under that run, silver ~2.5 % over it, bronze ~8 % over.
   // The class's best medal is kept with its board (R0.pkMed[class] 0 gold .. 2 bronze; the board's best time counts too).
-  const PK_MED = { unl: [161, 168, 177], open: [176, 183, 193], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [177, 185, 195], open: [189, 197, 208], ppo: [201, 209, 220], ta1: [197, 205, 216] };
+  const PK_MED = { unl: [161, 168, 177], open: [176, 183, 193], ppo: [183, 191, 201], ta1: [181, 189, 199] }, PK_MED_WET = { unl: [197, 205, 216], open: [209, 218, 229], ppo: [224, 233, 245], ta1: [219, 228, 240] };
   const PK_LEG = { unl: 'formula', open: 'ev', ppo: 'strega', ta1: 'levs' };   // the legend's car: the class's fastest on the autopilot
   // The historic gravel road ('pikesg', the same way measured): dry FORMULA ORKAN 211.86 (TAIFUN LM 221.97), SAMUM 4x4 192.18 (STRELA EV 198.32, BURJA R7
-  // 198.98, VORTEX 200.95), STREGA MR 210.10 (KAZE 212.49, VIHAR V8 221.37), the retired model at index 5 203.70 (PICO 204.66); wet 248.21, 208.69, 238.59, 229.21. On the
+  // 198.98, VORTEX 200.95), STREGA MR 210.10 (KAZE 212.49, VIHAR V8 221.37), the retired model at index 5 203.70 (PICO 204.66); wet 290.82, 232.16, 273.34, 260.74. On the
   // loose gravel the 4x4 truck is the fastest car of all and the slicks of the Unlimited cars hold them back
-  const PK_MED_G = { unl: [208, 217, 228], open: [189, 196, 207], ppo: [206, 215, 226], ta1: [200, 208, 219] }, PK_MED_G_WET = { unl: [244, 254, 268], open: [205, 213, 225], ppo: [235, 244, 257], ta1: [225, 234, 247] };
+  const PK_MED_G = { unl: [208, 217, 228], open: [189, 196, 207], ppo: [206, 215, 226], ta1: [200, 208, 219] }, PK_MED_G_WET = { unl: [286, 298, 314], open: [228, 237, 250], ppo: [269, 280, 295], ta1: [256, 267, 281] };
   const PK_LEG_G = { unl: 'formula', open: 'truck', ppo: 'strega', ta1: 'levs' };   // (Time Attack 1: the retired model's heir, LEV S, as on the asphalt)
   const pkMedW = (d, wet) => pkGrav(d) ? (wet ? PK_MED_G_WET : PK_MED_G) : wet ? PK_MED_WET : PK_MED;   // (the medal times of a road, dry or wet)
   const pkLegCar = (d, c) => (pkGrav(d) ? PK_LEG_G : PK_LEG)[c];

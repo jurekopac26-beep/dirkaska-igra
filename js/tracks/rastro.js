@@ -33,7 +33,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 2.6, side: 2.2, noCurbs: true, noGravel: true, offSurface: 'grass', gradeForce: true, elevSmooth: 10,
     elev: RASTRO_H.map((h, i) => [i / (RASTRO_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[177,185,199],"wet":{"cs":[191,201,216]}},
+    medals: {"cs":[177,185,199],"wet":{"cs":[212,222,239]}},
     // the bridge over the stream below bend 9 (OpenStreetMap: bridge): [from, to] in metres after the start line
     bridges: [[2327.3,2335.3]],
     // the 17 numbered bends, from the bottom: [metres after the start line, altitude, 1 right / -1 left] (the hairpins: 1, 2, 4, 6, 8, 10, 12-16)

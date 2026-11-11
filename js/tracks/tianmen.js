@@ -37,7 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 2.0, side: 2.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 8,
     elev: TIANMEN_H.map((h, i) => [i / (TIANMEN_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[204,214,230],"wet":{"cs":[220,231,249]}},
+    medals: {"cs":[204,214,230],"wet":{"cs":[242,254,273]}},
     // the loop's bridge: the upper leg over the lower one at bend 90 ([from, to] metres after the start line; Track finds the crossing itself)
     loopBridge: [3927.1,3975.1],
     // the numbered bends (counted from the foot of the road, as its name has it): [metres after the start line, altitude, 1 right / -1 left, its number]

@@ -396,7 +396,7 @@ const Render = (function () {
   // on the rain tyres, as the HUD's tyre label), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12
   // sides: ~200 triangles, a phone draws 52 of them)
   const fWheelCache = new Map(), F_WET = 0x2b86e6, F_SOFT = 0xe02119;
-  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : c.wet < 0.9 ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, else softs)
+  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : (c.wx ? c.wx.w > 0.5 : c.wet < 0.9) ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, by the water under the car, else softs)
   // every other car's tyres carry the same band in a race with compounds (c.ty with a compound, or rain tyres); null: none, the tyres as
   // they always were (no compounds, the showroom, a ghost). The band is in the wheels' own geometry (its variant with the band, cached like
   // the rest: no draw call more); a pit stop's new set shows once the car is built afresh at its end (Race.repairCar: frame)

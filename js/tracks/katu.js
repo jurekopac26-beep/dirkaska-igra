@@ -37,7 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the dust off the dry Altai gravel (Render): a pale brown cloud that hangs on in the still air of the canyon
     dust: { rate: 1.3, life: 2, size: 1.3, s0: 2.2, rise: 1.4, alpha: 1, drag: 0.6, col: [0.78, 0.7, 0.58] },
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [133,140,150], wet: { cs: [144,151,163] } },
+    medals: { cs: [133,140,150], wet: { cs: [160,168,180] } },
     // the hairpins (their signs): [metres after the start line, altitude on the sign, 1 right / -1 left]
     hairpins: [[1120,1173,-1],[1458,1133,1],[1884,1079,-1],[2100,1052,1],[2298,1023,-1],[2686,947,1],[2810,927,-1]],
     // where the old road (Katu-Yaryk) leaves the plateau and where it reaches the valley floor: metres after the start line

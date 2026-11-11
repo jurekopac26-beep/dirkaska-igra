@@ -33,7 +33,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
     elev: CARACOLES_H.map((h, i) => [i / (CARACOLES_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [293, 308, 331], wet: { cs: [318, 334, 359] } },
+    medals: { cs: [293, 308, 331], wet: { cs: [350, 368, 396] } },
     // the bridge over the Juncalillo and the two avalanche galleries over the road (OpenStreetMap: covered, layer -1): [from, to] in metres after the
     // start line, a gallery's last value the side of the mountain (its closed wall: -1 left, 1 right; the open side looks down the valley)
     bridges: [[306.9,329.6]],

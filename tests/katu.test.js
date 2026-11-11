@@ -60,8 +60,8 @@ const run = (rain) => {
   check('run: the player alone, to the flying finish on the autopilot, no rescue, no wall; within 1.5 % of the gold medal\'s base',
     d.alone && d.P.finished && !d.resc && !d.walls && Math.abs(d.P.finishTime / g - 1) < 0.015 && d.P.splits.length === 4 && d.P.splits.every((s, k) => k === 0 || s > d.P.splits[k - 1]),
     `${d.P.finishTime && d.P.finishTime.toFixed(2)} s (gold ${def.medals.cs[0]} s), splits ${d.P.splits.map(s => s.toFixed(1)).join(' / ')}, ${d.resc} rescues, ${d.walls} walls, top ${(d.vmax * 3.6).toFixed(0)} km/h`);
-  check('run in the rain: to the finish, no rescue, 5-12 % slower than in the dry, within 1.5 % of the wet gold\'s base',
-    w.P.finished && !w.resc && w.P.finishTime / d.P.finishTime > 1.05 && w.P.finishTime / d.P.finishTime < 1.12 && Math.abs(w.P.finishTime / gw - 1) < 0.015,
+  check('run in the rain: to the finish, no rescue, 14-26 % slower than in the dry (wet gravel: a third less grip, docs/dez-sneg.md), within 1.5 % of the wet gold\'s base',
+    w.P.finished && !w.resc && w.P.finishTime / d.P.finishTime > 1.14 && w.P.finishTime / d.P.finishTime < 1.26 && Math.abs(w.P.finishTime / gw - 1) < 0.015,
     `${w.P.finishTime && w.P.finishTime.toFixed(2)} s (${((w.P.finishTime / d.P.finishTime - 1) * 100).toFixed(1)} % slower, gold ${def.medals.wet.cs[0]} s), ${w.resc} rescues`);
 }
 
