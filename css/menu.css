@@ -990,6 +990,20 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
     left: calc(var(--ox) + var(--x) * var(--u)); top: calc(var(--oy) + var(--y) * var(--u)); width: calc(var(--w) * var(--u)); height: calc(var(--h) * var(--u)); border-radius: calc(var(--r) * var(--u));
     box-shadow: 0 0 0 calc(3 * var(--g) * var(--u)) rgba(255, 198, 41, var(--g)), 0 calc((12 - 4 * var(--t)) * var(--u)) calc((30 - 10 * var(--t)) * var(--u)) rgba(0, 0, 0, calc(.6 - .1 * var(--t))), inset 0 0 0 1px rgba(255, 255, 255, calc(.2 * var(--t))); }
   #s-track .stage { --x: 254; --y: 70; --w: 384; --h: 236; --r: 16; --g: 1; --t: 0; z-index: 4; }
+  /* an open road's map (js/menu.js tallOf: --tall on the stage and a card): the chosen card from under the head down to 6 px of the
+     drawing over the row, the map upright in it as upright (the user, 11. 11. 2026); a card grows to it as it comes to the middle (--g) */
+  #s-track .stage.tall { --tall: 1; }
+  #s-track :is(.stage, .rcard) { height: calc(var(--h) * var(--u) + var(--tall, 0) * var(--g) * (100% - var(--rb) - max(44px, calc(60 * var(--u))) - var(--oy) - 312 * var(--u))); }
+  /* (in it the weather a column down its right side, as upright: the chosen one first with its name, the more options under them; the
+     cameras a column down its left side, under the graph and over the counter: the route, its start at the foot, between them from the
+     head to the row) */
+  #s-track .stage.tall .wxv { display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(6 * var(--u))); top: max(6px, calc(8 * var(--u))); right: max(6px, calc(8 * var(--u)));
+    width: calc(48 * var(--u)); height: auto; }
+  #s-track .stage.tall .wxv > button { position: static; flex: none; }
+  #s-track .stage.tall .wxv > [aria-pressed="true"] { order: -1; }
+  #s-track .stage.tall .wxv > .wxmore { order: 1; }
+  #s-track .stage.tall .cams { flex-direction: column; right: auto; bottom: auto; left: max(6px, calc(8 * var(--u))); top: calc(max(6px, calc(8 * var(--u))) + max(36px, calc(47 * var(--u))) + 8 * var(--u)); }
+  #s-track .stage.tall .cams button[aria-pressed="true"] { width: max(26px, calc(30 * var(--u))); height: max(34px, calc(40 * var(--u))); }
   #s-track .rcard { display: block; z-index: 3; cursor: pointer; filter: brightness(var(--b)) var(--wxk, ); background: var(--pic) center / cover no-repeat, #16263c; }
   #s-track .rcard.mdl { background: var(--pic) center 42% / 92% auto no-repeat, linear-gradient(180deg, #2c4b72, #172a44 70%, #101d31); }   /* (the model on the sky) */
   #s-track .rlab { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: calc(8 * var(--u)); padding: calc(26 * var(--u)) calc(10 * var(--u)) calc(9 * var(--u)); background: linear-gradient(rgba(5, 10, 20, 0), rgba(5, 10, 20, .85)); opacity: var(--lo, 0); pointer-events: none; }

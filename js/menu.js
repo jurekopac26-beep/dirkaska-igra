@@ -296,9 +296,13 @@
   // An open road is drawn running up the screen, its start at the bottom and its finish at the top. The routes are laid out lengthwise
   // (start left, finish right), so the map is turned by the quarter turn that puts the finish above the start (-90 for those).
   // A circuit or a rally stage is not turned (its start and finish are one place or a stage's own).
+  const upright = (t, R) => !!R && t.group === 'road' && !!R.open;
+  // (on its side the chosen card of an open road's map reaches from under the head to over the row, the map upright in it: the user,
+  // 11. 11. 2026, »Gorske proge naj bodo v ležečem načinu postavljene tako kot gorske proge v stoječem načinu«; css/menu.css --tall)
+  const tallOf = (t) => cam === 1 && upright(t, RT[t.id]);
   const turnOf = (t, R) => {
     const p = R.top.route, a = p[0], b = p[p.length - 1];
-    if (t.group !== 'road' || !R.open) return 0;
+    if (!upright(t, R)) return 0;
     const q = Math.round((-90 - Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI) / 90) * 90;
     return ((q % 360) + 540) % 360 - 180;
   };
@@ -357,6 +361,15 @@
     }
     return T[key];
   }
+  // the route's points turned as routeBox turns them (no more than ~300: for a test of where it lies)
+  function routeTurned(T, a) {
+    const key = 'pt' + a;
+    if (!T[key]) {
+      const r = a * Math.PI / 180, c = Math.cos(r), s = Math.sin(r), mx = T.W / 2, my = T.H / 2, n = Math.max(1, Math.ceil(T.route.length / 300));
+      T[key] = T.route.filter((p, i) => i % n === 0 || i === T.route.length - 1).map(p => { const dx = p[0] - mx, dy = p[1] - my; return [mx + dx * c - dy * s, my + dx * s + dy * c]; });
+    }
+    return T[key];
+  }
   // the map from above: the whole route (start to finish) as big as fits the frame (not blurred), the route's line, flags and point the same
   // size on the screen however far the map is zoomed. An open road is turned to run up the frame (start at the bottom, finish at the top)
   // when the frame is not much wider than it is tall; in a wide, short frame it would shrink to a sliver, so there it lies along the frame
@@ -367,7 +380,7 @@
     for (const box of app.querySelectorAll('.dio.topmap[data-map]')) {   // (the track screen's maps: the intro's is fitted by fitIntroMap)
       const T = RT[box.dataset.map].top, svg = $('svg', box), W = box.clientWidth, H = box.clientHeight;
       if (!W || !H) continue;
-      const turn = +box.dataset.turn || 0, a = turn && W / H < 1.3 ? turn : 0, rg = $('g.rot', svg), bg = $('.mapbg', box);
+      const tall = isLand() && !!box.closest('#track-stage.tall'), turn = +box.dataset.turn || 0, a = turn && (W / H < 1.3 || tall) ? turn : 0, rg = $('g.rot', svg), bg = $('.mapbg', box);
       if (rg) { if (a) rg.setAttribute('transform', 'rotate(' + a + ' ' + T.W / 2 + ' ' + T.H / 2 + ')'); else rg.removeAttribute('transform'); }
       if (bg) bg.style.transform = a ? 'rotate(' + a + 'deg) scale(' + (Math.max(W / H, H / W) * 1.06).toFixed(3) + ')' : '';   // (the blurred backdrop turns with the map)
       // the route is centred in what the screen's own things leave of the picture (keepOut: the head over it, the weather down its right
@@ -376,12 +389,33 @@
       // least as big as that takes, the view kept inside the land (the route a little off the middle, or a little bigger, where it must be);
       // otherwise the blurred backdrop fills whatever falls outside the map tile, so nothing is cropped or left empty
       const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0), K = keepOut(box), E = (D.wideMaps || {})[box.dataset.map] || 0;
-      const padL = 10, padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + (isLand() ? NAME_ROOM_LAND : NAME_ROOM), padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
+      const padL = Math.max(10, K.left + 6), padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + (isLand() ? NAME_ROOM_LAND : NAME_ROOM), padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
       const q = Math.abs(a) === 90, LW = (q ? T.H : T.W) + 2 * E, LH = (q ? T.W : T.H) + 2 * E;   // (the land turned with the map: a quarter turn swaps its sides)
-      const s = Math.max(Math.min(availW / rw, availH / rh), E ? Math.max(W / LW, H / LH) : 0), k = 0.5 / s;
-      const vw = W / s, vh = H / s, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-      let vx = cx - (padL + availW / 2) / s, vy = cy - (padTop + availH / 2) / s;
-      if (E) { const lx = T.W / 2 - LW / 2, ly = T.H / 2 - LH / 2; vx = Math.min(Math.max(vx, lx), lx + LW - vw); vy = Math.min(Math.max(vy, ly), ly + LH - vh); }
+      const sMin = E ? Math.max(W / LW, H / LH) : 0, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      // the view at a scale with the route's middle my px down the frame, kept in the land
+      const view = (s, my, ox = 0) => {
+        const vw = W / s, vh = H / s; let vx = cx - (padL + availW / 2 + ox) / s, vy = cy - my / s;
+        if (E) { const lx = T.W / 2 - LW / 2, ly = T.H / 2 - LH / 2; vx = Math.min(Math.max(vx, lx), lx + LW - vw); vy = Math.min(Math.max(vy, ly), ly + LH - vh); }
+        return { vx, vy, vw, vh, s };
+      };
+      let V = view(Math.max(Math.min(availW / rw, availH / rh), sMin), padTop + availH / 2);
+      // on its side an open road's tall card: the route as big as keeps it clear of the graph, the cameras, the counter, the weather and the
+      // carousel's arrows (it may reach in beside them where it is narrow), in the middle or a little to a side; where the land makes it
+      // bigger than the room between them (sMin), where it lies under the fewest of them
+      if (tall) {
+        const fb = box.getBoundingClientRect(), O = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .hgraph, :scope > .wxv > button'), ...app.querySelectorAll('#s-track .rarw')]
+          .map(e => e.getBoundingClientRect()).filter(r => r.width > 0).map(r => [r.left - fb.left - 8, r.top - fb.top - 8, r.right - fb.left + 8, r.bottom - fb.top + 8]), P = routeTurned(T, a);
+        const hits = (c, most) => { let n = 0; for (const [x, y] of P) { const X = (x - c.vx) * c.s, Y = (y - c.vy) * c.s; if ((X < 10 || X > W - 10 || Y < 10 || Y > H - 10 || O.some(o => X > o[0] && X < o[2] && Y > o[1] && Y < o[3])) && ++n >= most) break; } return n; };   // (nor out to the card's edges)
+        // (the nearest places first: a little to a side, or up into the finish's name's room, its name then beside its flag: mapLabels)
+        const OFF = []; for (const oy of [0, -10, -20, -30, -40]) for (const ox of [0, -12, 12, -24, 24, -36, 36]) OFF.push([ox, oy]);
+        OFF.sort((p, q) => Math.abs(p[0]) / 12 + Math.abs(p[1]) / 10 - Math.abs(q[0]) / 12 - Math.abs(q[1]) / 10);
+        const s0 = V.s; let bn = hits(V, Infinity);
+        size: for (let f = Math.max(Math.min((W - 20) / rw, availH / rh), s0); ; f = Math.max(s0, f * 0.97)) {
+          for (const [ox, oy] of OFF) { const c = view(f, padTop + availH / 2 + oy, ox), n = hits(c, bn); if (!n) { V = c; break size; } if (n < bn) { bn = n; V = c; } }
+          if (f <= s0) break;
+        }
+      }
+      const { vx, vy, vw, vh, s } = V, k = 0.5 / s;
       svg.setAttribute('viewBox', vx.toFixed(1) + ' ' + vy.toFixed(1) + ' ' + vw.toFixed(1) + ' ' + vh.toFixed(1));
       svg.style.setProperty('--k', k.toFixed(3));
       const up = a ? ' rotate(' + (-a) + ')' : '';   // (the names stay upright on a turned map)
@@ -393,11 +427,12 @@
   // what of the stage's picture the screen's own things cover (px in from its edges): the head over its top (upright: the screen's head lies
   // over the picture), the weather down its right side, the counter and the cameras at its foot
   function keepOut(box) {
-    const b = box.getBoundingClientRect(), st = box.parentNode, hd = app && $('#s-track .thead', app), K = { top: 0, right: 0, bottom: 0 };
+    const b = box.getBoundingClientRect(), st = box.parentNode, hd = app && $('#s-track .thead', app), K = { top: 0, right: 0, bottom: 0, left: 0 }, tall = isLand() && st.classList.contains('tall');
     const hit = (r) => !!r && r.width > 0 && r.bottom > b.top + 1 && r.top < b.bottom - 1 && r.right > b.left + 1 && r.left < b.right - 1;
     const hr = hd && hd.getBoundingClientRect(); if (hit(hr)) K.top = hr.bottom - b.top;
-    const w = !isLand() && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side: a row at the card's top, the route goes under it)
-    for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
+    const w = (!isLand() || tall) && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side a row at the card's top, the route goes under it; a column down a tall card's side)
+    // (the counter and the cameras at its foot; in a tall card the graph, the cameras and the counter one over another down its left side)
+    for (const e of st.querySelectorAll(tall ? ':scope > .hgraph, :scope > .cams, :scope > .tcount' : ':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (!hit(r)) continue; if (tall) K.left = Math.max(K.left, r.right - b.left); else K.bottom = Math.max(K.bottom, b.bottom - r.top); }
     return K;
   }
   // the names of the map's flags as the flyover's: the name in a box (the finish's dark), its height in a small gold box under it at the
@@ -877,7 +912,7 @@
     const at = (k) => list[((trackIdx + k) % n + n) % n];
     const card = (k) => {
       const u = at(k), c = countryOf(u), f = flagUrl(c), [x, y, w, hh, b, r] = RING(k), fly = !!(RT[u.id] && RT[u.id].fly);
-      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
+      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + (tallOf(u) ? '--tall:1;' : '') + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
         '<div class="rlab">' + (f ? '<img src="' + f + '" alt="">' : '<span class="nf">' + esc((c || u.name).slice(0, 3).toUpperCase()) + '</span>') + '<span><b>' + esc(u.name) + '</b><small>' + esc((c ? c + ' · ' : '') + u.km.toFixed(2) + ' km') + '</small></span></div></div>';
     };
     const arw = (k) => {
@@ -1012,7 +1047,7 @@
     const real = list.filter(u => !u.test), at = t.test ? 'TEST' : (real.indexOf(t) + 1) + '\u2009/\u2009' + real.length, W = wxOn();
     // (on its side the weather is a row at the card's top: the chosen one first, the others after it in their order: --wx, the drawing's px)
     const wo = WX5.filter(w => w[0] !== W), wxX = (id) => id === W ? 0 : (wo.length < WX5.length ? 4 : -40) + 40 * (wo.findIndex(w => w[0] === id) + 1);
-    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
+    h += '<div class="stage' + (isRoute(t) ? ' route' : '') + (tallOf(t) ? ' tall' : '') + ' cam' + cam + wxCls() + '" id="track-stage">' + stageView(t) + (withGraph(t) ? '<div class="hgraph" data-graph="' + t.id + '"></div>' : '') +
       '<div class="tcount" role="note" aria-label="' + (t.test ? 'Test track' : 'Track ' + at.replace(/\u2009\/\u2009/, ' of ')) + '">' + at + '</div>' +
       '<div class="wxv" role="group" aria-label="Weather">' + WX5.map(w => '<button class="w-' + w[0] + '" aria-pressed="' + (W === w[0]) + '" data-act="weather:' + w[0] + '" aria-label="' + w[1] + '" style="--wx:' + wxX(w[0]) + '">' + wxIcon(w[0]) + '<b>' + w[1] + '</b></button>').join('') +
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';

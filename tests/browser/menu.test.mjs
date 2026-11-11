@@ -1148,6 +1148,12 @@ try {
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
       const out = { name: root.querySelector(".where .w2").textContent, head: root.querySelector(".where").textContent.replace(/\\s+/g, " ").trim(), pic: c(pic), nb: [...root.querySelectorAll(innerWidth > innerHeight ? ".rcard[data-k='-1'], .rcard[data-k='1']" : ".nb")].map(c), scr: [innerWidth, innerHeight] };
       if (svg) { out.rot = svg.querySelector("g.rot").getAttribute("transform") || ""; out.s = c(svg.querySelector(".mk.s circle")); const f = svg.querySelector(".mk.f circle"); out.f = f ? c(f) : null; out.line = c(svg.querySelector("path.rt-o")); out.names = [...st.querySelectorAll(".mlab .fl-s")].map(c); out.boxes = [...st.querySelectorAll(".mlab .fl-s")].map(e => { const b = e.querySelector("b").getBoundingClientRect(), m = e.querySelector("small"), r = m && m.getBoundingClientRect(); return [e.className, getComputedStyle(e.querySelector("b")).backgroundColor, r ? +(r.top >= b.bottom - 1 && Math.abs(r.right - b.right) < 12) : -1]; }); const ld = svg.querySelector("image.land"); out.land = ld ? c(ld) : null; out.keep = [...st.querySelectorAll(":scope > .cams, :scope > .wxv, :scope > .hgraph, :scope > .tcount")].concat([...root.querySelector(".thead").children]).map(c); }
+      out.tall = st.classList.contains("tall"); out.st = c(st); out.th = c(root.querySelector(".thead")); out.row = c(root.querySelector(".trow")); out.wx = c(st.querySelector(".wxv")); out.cams = c(st.querySelector(".cams")); out.cnt = c(st.querySelector(".tcount")); const gr = st.querySelector(".hgraph"); out.gr = gr ? c(gr) : null;
+      if (svg && out.tall) {   // (the route's line on the screen, 201 points along it: under none of the things over the card or beside it)
+        const p = svg.querySelector("path.rt-o"), L = p.getTotalLength(), M = p.getScreenCTM(), pts = []; for (let i = 0; i <= 200; i++) { const q = p.getPointAtLength(L * i / 200); pts.push([M.a * q.x + M.c * q.y + M.e, M.b * q.x + M.d * q.y + M.f]); }
+        const ob = { arrows: ".rarw", weather: "#track-stage .wxv > button", cameras: "#track-stage .cams", counter: "#track-stage .tcount", graph: "#track-stage .hgraph", cards: ".rcard[data-k='-1'], .rcard[data-k='1']" };
+        out.hit = Object.keys(ob).filter(k => [...root.querySelectorAll(ob[k])].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && pts.some(([x, y]) => x > r.left && x < r.right && y > r.top && y < r.bottom); }));
+      }
       return out;`;
     await click(page, 'cam:1'); await page.waitForTimeout(500);
     const v1 = await ev(page, MEASURE);
@@ -1166,7 +1172,7 @@ try {
     // every real track with a map (the real list again: back to the title, Single race, Circuit race): the route and its names inside the
     // picture, the painted land over all of it
     await page.click('.thead [data-act="back"]'); await click(page, 'single'); await click(page, 'mode:race'); await click(page, 'cam:1'); await page.waitForTimeout(500);
-    const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = [], close = []; let maps = 0, pk = null;
+    const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = [], close = [], talls = [], tallBad = [], hits = [], shape = []; let maps = 0, pk = null;
     const over = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
     const share = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t)) / Math.min(a.w * a.h, b.w * b.h);   // (how much of the smaller name the other covers)
     for (let k = 0; k < ids.length; k++) {
@@ -1175,15 +1181,29 @@ try {
         await page.waitForTimeout(300);
         const m = await ev(page, MEASURE);
         if (id === 'pikes') pk = m;
+        if (side && m.names) {   // (on its side, camera 1: an open road's card tall, a circuit's as it was)
+          const open = await page.evaluate((id) => { const d = Core.TRACKS.find(x => x.id === id), R = (window.ROUTES || {})[id]; return !d.test && !d.rally && !d.descent && !!d.open && !!(R && R.open); }, id);
+          if (m.tall !== open) tallBad.push(id);
+          if (m.tall) {
+            talls.push(id); if (m.hit.length) hits.push(id + ': ' + m.hit.join(' '));
+            if (!(m.st.t >= m.th.b - 1 && Math.abs(m.row.t - m.st.b - 6 * g.k) < 1 && m.wx.h > m.wx.w * 2 && m.wx.r <= m.st.r && m.wx.l >= m.st.r - 70 * g.k && m.cams.h > m.cams.w * 2 && m.cams.l >= m.st.l &&
+              m.cams.r <= m.st.l + Math.max(44, 50 * g.k) && (!m.gr || m.cams.t >= m.gr.b) && m.cams.b <= m.cnt.t)) shape.push(id);
+          } else if (Math.abs(m.st.h - 236 * g.k) > 1) shape.push(id);
+        }
         if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !covers(m.land, m.pic)) bare.push(m.name); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); if (m.names.length === 2 && share(...m.names) > (w === 640 ? 0.15 : 0)) close.push(m.name + ' ' + share(...m.names).toFixed(2)); }
       }
       await click(page, 'track:1');
     }
     T.check(`${w}x${h}: on every real track's map (${maps}) the route and the names of its flags are inside the picture`, maps >= 5 && !cut.length, JSON.stringify(cut));
-    // an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it lies
-    const tall = !!pk && pk.pic.w / pk.pic.h < 1.3, turned = !!pk && /^rotate\(-90 /.test(pk.rot || '');
+    // an open road's map is turned to run up the frame (start below, finish above) in a frame not much wider than tall, else it lies; on
+    // its side always (its card tall, below)
+    const tall = !!pk && (side || pk.pic.w / pk.pic.h < 1.3), turned = !!pk && /^rotate\(-90 /.test(pk.rot || '');
     const upright = !!pk && !!pk.f && (tall ? pk.s.y > pk.f.y + pk.pic.h * 0.4 && Math.abs(pk.s.x - pk.f.x) < pk.pic.w * 0.35 : pk.f.x > pk.s.x + pk.pic.w * 0.4);
     T.check(`${w}x${h}: the open road's map ${tall ? 'runs up the frame (Pikes Peak: Crystal Reservoir, the start, below; the Summit, the finish, above)' : 'lies along the frame (it is wide and short): the start left, the finish right'}`, !!pk && turned === tall && upright, JSON.stringify(pk && { name: pk.name, rot: pk.rot, pic: pk.pic, s: pk.s, f: pk.f }));
+    // on its side an open road's map as upright (the user, 11. 11. 2026: »Gorske proge naj bodo v ležečem načinu postavljene tako kot gorske proge v stoječem
+    // načinu. Proga naj bo čez večji del slike vse od zgoraj napisa do roba menija spodaj«; docs/meni-izbira-proge.md)
+    if (side) T.check(`${w}x${h}: on its side, camera 1, an open road's card (${talls.join(', ')}) from under the head to 6 of the drawing's px over the row, the weather a column down its right side and the cameras one down its left (under the graph, over the counter); its route clear of them, the counter, the graph, the arrows and the neighbours' cards; a circuit's card as it was`,
+      talls.length >= 5 && !tallBad.length && !hits.length && !shape.length, JSON.stringify({ talls, tallBad, hits, shape }));
     T.check(`${w}x${h}: on every map the painted land covers the whole picture`, !bare.length, JSON.stringify(bare));
     T.check(`${w}x${h}: on every map the names of the flags are not under the head, the graph, the weather, the counter or the cameras' buttons`, maps >= 5 && !under.length, JSON.stringify(under));
     // (on the smallest screen on its side, the card 276 × 169, two long names over flags close together can't both be clear: there they cover each other least)
