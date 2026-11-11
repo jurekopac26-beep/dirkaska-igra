@@ -28,7 +28,7 @@ const Denar = (function () {
     note = { txt, bad: !!bad };
     const show = () => {
       const el = document.createElement('div'); el.id = 'denar-toast'; el.setAttribute('role', 'status'); el.textContent = txt;
-      el.style.cssText = 'position:fixed;left:50%;top:calc(12px + max(var(--okvir-t, 0px), env(safe-area-inset-top, 0px)));transform:translateX(-50%);z-index:2147483000;max-width:calc(100% - 32px);'
+      el.style.cssText = 'position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top, 0px));transform:translateX(-50%);z-index:2147483000;max-width:calc(100% - 32px);'
         + 'padding:10px 16px;border-radius:12px;background:rgba(12,16,22,.94);color:#fff;font:600 14px/1.35 system-ui,sans-serif;text-align:center;pointer-events:none;'
         + 'border:1px solid ' + (bad ? '#e5484d' : '#e8b04a') + ';box-shadow:0 6px 24px rgba(0,0,0,.45);transition:opacity .4s';
       const old = document.getElementById('denar-toast'); if (old) old.remove();

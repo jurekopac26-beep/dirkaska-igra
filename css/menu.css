@@ -17,7 +17,7 @@
   --panel: rgba(14, 18, 25, .88); --panel-edge: rgba(255, 255, 255, .10);
   --steel1: #666d7b; --steel2: #3b414d; --steel-sh: #1f232b;
   --f-ui: 'ApexMenu', Roboto, system-ui, 'Segoe UI', Arial, sans-serif;
-  color-scheme: dark; color-scheme: only dark;
+  color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -763,7 +763,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .ix-summit small { background: var(--gold); color: var(--gold-ink); font: 900 italic 11px/1 var(--f-ui); padding: 4px 8px 3px; transform: skewX(-10deg); margin-right: 7px; white-space: nowrap; }
 .ix-summit small:empty { display: none; }
 /* the card under the stage: where the track screen's card was (its frame and kerb), down to the foot of the screen */
-.ix-card.card { position: absolute; z-index: 2; margin: 0; bottom: calc(14px + max(var(--okvir-b, 0px), env(safe-area-inset-bottom, 0px))); padding: 13px 14px 11px 26px; gap: 11px; overflow: hidden; animation: fade .35s ease-out both; }
+.ix-card.card { position: absolute; z-index: 2; margin: 0; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding: 13px 14px 11px 26px; gap: 11px; overflow: hidden; animation: fade .35s ease-out both; }
 .ix-what { margin: 0; font: 900 italic 12.5px/1.25 var(--f-ui); letter-spacing: .1em; color: var(--gold); flex: 0 0 auto; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* (two lines on a narrow phone: the weather is not cut off) */
 .ix-specs { flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px 10px; }
@@ -956,7 +956,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   /* the main menu: the panel at the right, the logo and the game's own scene at the left */
   .t-top .logo.small { max-width: calc(100% - min(470px, 56vw) - 12px); }
   .t-top .logo.small .l1 { font-size: clamp(30px, calc((100vw - min(470px, 56vw)) / 10), 44px); }   /* (on one line beside a wide panel, else REAL ROADS / ATLAS) */
-  .t-menu.title-panel { left: auto; right: max(14px, var(--okvir-r, 0px), env(safe-area-inset-right, 0px)); top: auto; bottom: 10px; max-height: calc(100% - 20px); width: min(470px, 56vw); justify-content: center; gap: 8px; padding: 10px 12px 10px 22px; overflow-y: auto; scrollbar-width: none; }
+  .t-menu.title-panel { left: auto; right: max(14px, env(safe-area-inset-right, 0px)); top: auto; bottom: 10px; max-height: calc(100% - 20px); width: min(470px, 56vw); justify-content: center; gap: 8px; padding: 10px 12px 10px 22px; overflow-y: auto; scrollbar-width: none; }
   .t-menu.title-panel::-webkit-scrollbar { display: none; }
   .t-menu .tile { height: clamp(52px, calc((100vh - 196px) / 3), 96px); flex: 0 0 auto; }
   .t-menu .tile .tx b { font-size: clamp(17px, 5.2vh, 23px); }
@@ -1066,7 +1066,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .cm-school::before { background: repeating-linear-gradient(180deg, var(--curb) 0 13px, var(--chalk) 13px 26px); }
 .cm-stats::before { background: linear-gradient(180deg, var(--lime), #3da81a); }
 /* ---------------- the notch, the rounded corners, the gesture bar (the page covers the whole screen: viewport-fit=cover) ---------------- */
-:host { --st: max(var(--okvir-t, 0px), env(safe-area-inset-top, 0px)); --sb: max(var(--okvir-b, 0px), env(safe-area-inset-bottom, 0px)); --sl: max(var(--okvir-l, 0px), env(safe-area-inset-left, 0px)); --sr: max(var(--okvir-r, 0px), env(safe-area-inset-right, 0px)); }
+:host { --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); }
 .topbar { padding-top: calc(14px + var(--st)); }
 .t-top { top: calc(14px + var(--st)); }
 .foot { padding-bottom: calc(18px + var(--sb)); }

@@ -5,23 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- the same declarations as the game's index.html: in such a browser they are ignored here exactly as there -->
 <meta name="theme-color" content="#161b23">
-<meta name="color-scheme" content="only dark">
 <meta name="color-scheme" content="dark">
 <meta name="supported-color-schemes" content="dark">
 <meta name="darkreader-lock">
 <title>Real Roads Atlas · preizkus barv</title>
 <!--
-  Preizkus barv za brskalnik, ki stran temni na silo (temni način Samsung Interneta). Iz igre potrebuje samo js/okvir.js (odločitev o okvirju).
-  Zgoraj je zaznava, ki jo uporabljata okvir in meni (js/okvir.js forced, js/menu.js forcedDark: sistemska barva Canvas v svetlem elementu
-  je bela, razen če brskalnik temni na silo), in odločitev, ali se igra odpre v okvirju. Pod njo so štiri polja menija (bela tabla, zlata
-  značka, rdeča tablica, rdeče-beli robnik): najprej v okvirjih (vrstici B in C: ista stran z ?polja=1, v njej samo polja, narisana z navadnim
-  CSS; B je okvir, v kakršnem se odpre igra; vrstica D so ista polja brez okvirja, kot zdaj v igri), nato vsaka vrstica narisana na drug
-  način. Vrstici A in 0 sta canvas, ki ga brskalnik ne prebarva: vrstica, ki je v takem brskalniku enaka njima, pomeni način, ki deluje.
+  Preizkus barv za brskalnik, ki stran temni na silo (temni način Samsung Interneta). Iz igre potrebuje css/menu.css in js/sence.js.
+  Zgoraj je zaznava, ki jo uporablja meni (js/menu.js forcedDark: sistemska barva Canvas v svetlem elementu je bela, razen če brskalnik
+  temni na silo), in ali igra tu riše barve na nov način (js/sence.js). Spodaj ista štiri polja menija (bela tabla, zlata značka, rdeča
+  tablica, rdeče-beli robnik), vsaka vrstica narisana na drug način. Prva vrstica je canvas, ki ga brskalnik ne prebarva: vrstica, ki je
+  v takem brskalniku enaka prvi, pomeni način, ki deluje. Vrstica 10 so polja, narisana s CSS menija (css/menu.css) in z js/sence.js,
+  tako kot meni igre v Samsung Internetu (window.SenceRoots: tu nov način vedno, samo za ta polja, ostale vrstice ostanejo, kot so).
 -->
-<script>if (/[?&]polja=/.test(location.search)) document.documentElement.className = 'polja';</script>
-<script src="js/okvir.js" data-poroca></script>
+<script>window.SenceRoots = true;</script>
+<script src="js/sence.js"></script>
 <style>
-  :root, html, body { color-scheme: dark; color-scheme: only dark; forced-color-adjust: none; }
+  :root, html, body { color-scheme: dark; forced-color-adjust: none; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #161b23; color: #f6f6f1; font: 15px/1.45 system-ui, Roboto, 'Segoe UI', Arial, sans-serif;
     padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
@@ -38,10 +37,9 @@
   td { padding: 5px 0; border-top: 1px solid #2a3344; vertical-align: top; overflow-wrap: anywhere; }
   td:first-child { width: 46%; padding-right: 10px; color: #9fb0c3; }
   .ua { font-size: 11px; color: #9fb0c3; }
-  button, a.btn { font: 700 15px/1 system-ui, Roboto, sans-serif; color: #fff; background: #26324a; border: 1.5px solid #5d6b82; border-radius: 10px; padding: 12px 16px; margin: 10px 0 0; }
-  a.btn { display: inline-block; margin: 0 6px 8px 0; text-decoration: none; }
+  button { font: 700 15px/1 system-ui, Roboto, sans-serif; color: #fff; background: #26324a; border: 1.5px solid #5d6b82; border-radius: 10px; padding: 12px 16px; margin: 10px 0 0; }
   #copied { margin-left: 10px; color: #8ff0b0; font-size: 13px; }
-  /* the grids: a label, then the four fields of the menu */
+  /* the grid: a label, then the four fields of the menu */
   .grid { display: grid; grid-template-columns: 88px repeat(4, minmax(0, 1fr)); gap: 6px; align-items: center; }
   .hd { font: 700 11px/1.2 system-ui, Roboto, sans-serif; color: #9fb0c3; text-align: center; text-transform: uppercase; letter-spacing: .04em; }
   .lb { font: 600 11.5px/1.25 system-ui, Roboto, sans-serif; color: #d6dcea; }
@@ -53,12 +51,6 @@
   .na { color: #5d6b82; font-style: normal; font-weight: 600; }
   .wide { grid-column: 1 / -1; }
   .wide img { display: block; width: 100%; height: 200px; border-radius: 7px; }
-  /* B, C: the four fields inside a frame (this page with ?polja=1), the frame's own color-scheme in its style */
-  iframe.fr { grid-column: 2 / -1; display: block; width: 100%; height: 44px; border: 0; }
-  .polja body { padding: 0; overflow: hidden; }
-  .polja main { max-width: none; }
-  .polja main > :not(#grid) { display: none; }
-  .polja #grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   /* 4: the fill is the shadow of a black block 2000 px to the left (filter colours are never darkened), the text its own text-shadow */
   .ds::before, .ds.st::after { content: ''; position: absolute; top: 0; bottom: 0; left: -2000px; width: 100%; background: #000; filter: drop-shadow(2000px 0 0 var(--f)); }
   .ds.st::after { background: repeating-linear-gradient(180deg, transparent 0 10px, #000 10px 20px); filter: drop-shadow(2000px 0 0 #f6f6f1); }
@@ -68,11 +60,10 @@
   .fl.mask { background: repeating-linear-gradient(180deg, transparent 0 10px, #000 10px 20px); }
   /* 6: every colour as its opposite, turned back by filter: invert(1) */
   .inv { filter: invert(1); }
-  /* 10: the fill a picture (background-image), the text cut out of a picture of its colour */
-  .bi, .bi > span { background-size: 100% 100%; background-repeat: no-repeat; }
-  /* (the text's picture is drawn over the whole field, as large as the fill's: a browser that darkens by force takes a picture drawn small for an icon and turns it) */
-  .bi > span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: transparent; -webkit-background-clip: text; background-clip: text; }
   .note { font-size: 12.5px; color: #9fb0c3; }
+  .btn { display: inline-block; margin: 0 8px 8px 0; padding: 11px 14px; border-radius: 10px; background: #26324a; border: 1.5px solid #5d6b82; color: #fff; font: 700 14px/1 system-ui, Roboto, sans-serif; text-decoration: none; }
+  /* 10: a shadow root of its own (css/menu.css and js/sence.js, as the game's menu), the field filling the cell */
+  .mn { position: relative; height: 44px; border-radius: 7px; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -87,21 +78,17 @@
 
   <h2>Kaj narediti</h2>
   <ol>
-    <li>To stran odpri s povezavo v Claudu (tako se odpre v istem brskalniku kot igra) in naredi posnetke zaslona, da se vidi vsa stran.</li>
-    <li>Tapni <b>Igra v okvirju</b> in poglej meni in dirko: barve morajo biti enake kot v Chromu.</li>
-    <li>Posnetke pošlji Claudu (ali tapni <b>Kopiraj podatke</b> in jih prilepi) in povej, kakšne so barve v igri.</li>
+    <li>To stran odpri s povezavo v Claudu (tako se odpre v istem brskalniku kot igra) in naredi posnetek zaslona, po potrebi dva, da se vidi vsa stran.</li>
+    <li>Isto stran odpri še v Chromu in naredi posnetek.</li>
+    <li>Posnetke pošlji Claudu (ali tapni <b>Kopiraj podatke</b> in jih prilepi).</li>
   </ol>
+  <p class="note">V vsaki vrstici so ista štiri polja kot v meniju igre. Vrstica 0 je narisana v canvas, ki ga brskalnik ne prebarva. Vrstica, ki je enaka vrstici 0, pomeni način risanja, ki v tem brskalniku deluje. V Chromu so vse vrstice enake. <b>Vrstica 10</b> je narisana tako kot meni igre z novim načinom (v Samsung Internetu): mora biti enaka vrstici 0.</p>
 
   <h2>Igra</h2>
-  <p><a class="btn" id="auto" href="./">Igra, kot se odpre sama</a><a class="btn" href="./?okvir=1">Igra v okvirju</a><a class="btn" href="./?okvir=0">Igra brez okvirja</a></p>
-  <p class="note">»Igra brez okvirja« velja za ta zavihek, dokler ne tapneš ene od drugih dveh. »Igra, kot se odpre sama« pozabi ta preklop in zapis o neuspelem okvirju: igra se sama odloči, ali okvir potrebuje.</p>
-
-  <h2>Okvir</h2>
-  <p class="note">Vrstica A je narisana v canvas, ki ga brskalnik ne prebarva. V vrsticah B in C so ista polja v okvirju, narisana tako kot v igri; v okvirju B se odpre igra. Vrstica D so ista polja brez okvirja. Če je vrstica B enaka vrstici A, okvir v tem brskalniku deluje.</p>
-  <div class="grid" id="frames"></div>
+  <p><a class="btn" href="./">Igra</a><a class="btn" href="./?sence=0">Igra brez novega načina</a><a class="btn" href="./?sence=1">Igra z novim načinom</a></p>
+  <p class="note">»Igra« riše barve na nov način samo v Samsung Internetu. Povezavi z »brez« in »z« ga izklopita ali vklopita v vsakem brskalniku (za primerjavo).</p>
 
   <h2>Polja</h2>
-  <p class="note">V vsaki vrstici so ista štiri polja kot v meniju igre. Vrstica 0 je narisana v canvas, ki ga brskalnik ne prebarva. Vrstica, ki je enaka vrstici 0, pomeni način risanja, ki v tem brskalniku deluje. V Chromu brez temnega načina so vse vrstice enake.</p>
   <div class="grid" id="grid"></div>
 </main>
 <script>
@@ -117,27 +104,18 @@
   const comp = (hex) => '#' + hex.slice(1).match(/../g).map(h => (255 - parseInt(h, 16)).toString(16).padStart(2, '0')).join('');
   const stripes = (a, b) => 'repeating-linear-gradient(180deg, ' + a + ' 0 10px, ' + b + ' 10px 20px)';
   const FONT = '900 italic 13px system-ui, Roboto, sans-serif';
-  const span = (k, style) => k.text ? '<span' + (style ? ' style="' + style + '"' : '') + '>' + k.text + '</span>' : '';
-  // a field painted the plain way, as the game's own CSS paints (row 1, and the page inside the frames)
-  const plain = (k) => '<div class="c" style="background:' + (k.stripe ? stripes(k.bg, k.stripe) : k.bg) + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>';
-  const grid = document.getElementById('grid');
 
-  // inside a frame of rows B and C (?polja=1): only the four fields; the page around the frame reads the rest
-  if (document.documentElement.classList.contains('polja')) { grid.innerHTML = K.map(plain).join(''); return; }
-
-  // a field drawn in a 2D canvas (w × h CSS px): the references, and the pictures of rows 8, 9 and 10
-  function draw(ctx, k, x, y, w, h, noText) {
+  // a field drawn in a 2D canvas (w × h CSS px): the reference, and the pictures of rows 8 and 9
+  function draw(ctx, k, x, y, w, h) {
     ctx.fillStyle = k.bg; ctx.fillRect(x, y, w, h);
     if (k.stripe) { ctx.fillStyle = k.stripe; for (let s = 10; s < h; s += 20) ctx.fillRect(x, y + s, w, Math.min(10, h - s)); }
-    if (k.text && !noText) { ctx.fillStyle = k.ink; ctx.font = FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(k.text, x + w / 2, y + h / 2 + 1); }
+    if (k.text) { ctx.fillStyle = k.ink; ctx.font = FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(k.text, x + w / 2, y + h / 2 + 1); }
   }
   function canvasOf(w, h, paint) {
     const dpr = Math.min(3, window.devicePixelRatio || 1), cv = document.createElement('canvas');
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     const ctx = cv.getContext('2d', { alpha: false }); ctx.scale(dpr, dpr); paint(ctx); return cv;
   }
-  const solids = {};   // (row 10: a picture of one colour, the text cut out of it)
-  const solid = (c) => solids[c] || (solids[c] = 'url(' + canvasOf(64, 64, (ctx) => { ctx.fillStyle = c; ctx.fillRect(0, 0, 64, 64); }).toDataURL('image/png') + ')');
 
   // the SVG filters of row 5: a flood of each colour kept where the element is (SourceAlpha)
   const floods = document.getElementById('floods'), fl = {};
@@ -146,107 +124,87 @@
     floods.insertAdjacentHTML('beforeend', '<filter id="' + id + '" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feFlood flood-color="' + c + '"/><feComposite in2="SourceAlpha" operator="in"/></filter>');
   }
 
-  const ref = (k, j) => '<div class="c ref" data-k="' + j + '"></div>';
+  const span = (k, style) => k.text ? '<span' + (style ? ' style="' + style + '"' : '') + '>' + k.text + '</span>' : '';
   const ROWS = [
-    ['Canvas (referenca)', ref],
-    ['Navaden CSS (kot zdaj v igri)', plain],
+    ['Canvas (referenca)', () => '<div class="c ref"></div>'],
+    ['Navaden CSS (kot zdaj v igri)', (k) => '<div class="c" style="background:' + (k.stripe ? stripes(k.bg, k.stripe) : k.bg) + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>'],
     ['Gradient', (k) => '<div class="c" style="background:' + (k.stripe ? stripes(k.bg, k.stripe) : 'linear-gradient(' + k.bg + ',' + k.bg + ')') + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>'],
     ['Senca box-shadow', (k) => k.stripe ? '<div class="c na">—</div>' : '<div class="c" style="box-shadow:inset 0 0 0 999px ' + k.bg + ';color:' + (k.ink || '#fff') + '">' + span(k) + '</div>'],
     ['Filter drop-shadow, besedilo text-shadow', (k) => '<div class="c ds' + (k.stripe ? ' st' : '') + '" style="--f:' + k.bg + ';--ink:' + k.ink + '">' + span(k) + '</div>'],
     ['Filter SVG feFlood, besedilo text-shadow', (k) => '<div class="c"><i class="fl" style="filter:' + fl[k.bg] + '"></i>' + (k.stripe ? '<i class="fl mask" style="filter:' + fl[k.stripe] + '"></i>' : '') + span(k, '--ink:' + k.ink) + '</div>'],
     ['Obrnjene barve + invert(1)', (k) => '<div class="c inv" style="background:' + (k.stripe ? stripes(comp(k.bg), comp(k.stripe)) : comp(k.bg)) + ';color:' + (k.ink ? comp(k.ink) : '#000') + '">' + span(k) + '</div>'],
     ['SVG v strani', (k) => '<div class="c"><svg aria-hidden="true"><rect width="100%" height="100%" fill="' + k.bg + '"/>' + (k.stripe ? [10, 30].map(y => '<rect y="' + y + '" width="100%" height="10" fill="' + k.stripe + '"/>').join('') : '') + (k.text ? '<text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" fill="' + k.ink + '" style="font:' + FONT + '">' + k.text + '</text>' : '') + '</svg></div>'],
-    ['Majhna slika (PNG)', (k, j) => '<div class="c small" data-k="' + j + '"></div>'],
+    ['Majhna slika (PNG)', () => '<div class="c small"></div>'],
   ];
-  // the frames: each loads this page once more (?polja=1) and carries its own color-scheme, B the one the game's frame carries (js/okvir.js)
-  const FRAMES = [
-    ['B', 'Okvir s color-scheme: dark (v takem se odpre igra)', 'dark'],
-    ['C', 'Okvir s color-scheme: only dark', 'only dark'],
-  ];
-  const row = (id, label, cells) => '<div class="lb"><i>' + id + '</i> ' + label + '</div>' + cells;
-  const fields = (f) => K.map(f).join('');
-  const head = '<div></div>' + K.map(k => '<div class="hd">' + k.name + '</div>').join('');
-  document.getElementById('frames').innerHTML = head + row('A', 'Canvas (referenca)', fields(ref))
-    + FRAMES.map(f => row(f[0], f[1], '<iframe class="fr" data-id="' + f[0] + '" title="Polja v okvirju ' + f[0] + '" style="color-scheme:' + f[2] + '" src="' + location.pathname + '?polja=1"></iframe>')).join('')
-    + row('D', 'Brez okvirja (kot zdaj v igri)', fields(plain));
-  grid.innerHTML = head + ROWS.map((r, i) => row(i, r[0], fields(r[1]))).join('')
-    + '<div class="lb wide"><i>9</i> Velika slika (PNG, cela širina: brskalnik jo šteje za fotografijo)</div><div class="wide" id="big"></div>'
-    + row(10, 'Ozadje iz slike (PNG), besedilo izrezano iz slike', fields((k, j) => '<div class="c bi" data-k="' + j + '">' + span(k) + '</div>'));
 
-  // the canvas fields, the small pictures (row 8), the big one (row 9) and the picture backgrounds (row 10), drawn at their size on the screen
+  const grid = document.getElementById('grid');
+  let h = '<div></div>' + K.map(k => '<div class="hd">' + k.name + '</div>').join('');
+  ROWS.forEach((r, i) => { h += '<div class="lb"><i>' + i + '</i> ' + r[0] + '</div>' + K.map(k => r[1](k)).join(''); });
+  h += '<div class="lb"><i>10</i> Meni igre (nov način)</div>' + K.map((k) => '<div class="mn" data-k="' + k.id + '"></div>').join('');
+  h += '<div class="lb wide"><i>9</i> Velika slika (PNG, cela širina: brskalnik jo šteje za fotografijo)</div><div class="wide" id="big"></div>';
+  grid.innerHTML = h;
+
+  // the canvas fields, the small pictures (row 8) and the big one (row 9), drawn at their size on the screen
   function paint() {
-    document.querySelectorAll('.c.ref, .c.small, .c.bi').forEach((box) => {
-      const k = K[+box.dataset.k], w = box.clientWidth, hh = box.clientHeight, bi = box.classList.contains('bi');
-      const cv = canvasOf(w, hh, (ctx) => draw(ctx, k, 0, 0, w, hh, bi));
-      if (bi) { box.style.backgroundImage = 'url(' + cv.toDataURL('image/png') + ')'; if (box.firstElementChild) box.firstElementChild.style.backgroundImage = solid(k.ink); return; }
-      box.textContent = '';
-      if (box.classList.contains('small')) { const im = new Image(); im.alt = ''; im.src = cv.toDataURL('image/png'); box.appendChild(im); } else box.appendChild(cv);
+    const refs = grid.querySelectorAll('.c.ref'), smalls = grid.querySelectorAll('.c.small');
+    K.forEach((k, j) => {
+      for (const [box, asImg] of [[refs[j], false], [smalls[j], true]]) {
+        const w = box.clientWidth, hh = box.clientHeight, cv = canvasOf(w, hh, (ctx) => draw(ctx, k, 0, 0, w, hh));
+        box.textContent = '';
+        if (asImg) { const im = new Image(); im.alt = ''; im.src = cv.toDataURL('image/png'); box.appendChild(im); } else box.appendChild(cv);
+      }
     });
     const big = document.getElementById('big'), W = big.clientWidth, H = 200, gap = 6, cw = (W - 3 * gap) / 4;
     const cv = canvasOf(W, H, (ctx) => { ctx.fillStyle = '#161b23'; ctx.fillRect(0, 0, W, H); K.forEach((k, j) => draw(ctx, k, j * (cw + gap), 0, cw, H)); });
     big.innerHTML = '<img alt="" src="' + cv.toDataURL('image/png') + '">';
   }
 
-  // the diagnosis: the same probe as the frame's and the menu's (js/okvir.js forced, js/menu.js forcedDark), what it reads, and what
-  // js/okvir.js would decide for the game here (window.__okvirPoroca: the script above, with data-poroca, only tells)
-  function probe(scheme, w) {
-    w = w || window; const d = w.document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:' + scheme;
-    w.document.body.appendChild(d); const c = w.getComputedStyle(d).backgroundColor; d.remove(); return c;
+  // row 10: each field in a shadow root of its own, as the game's menu (js/menu.js init): css/menu.css, the field in its colours
+  // (the menu's own: --chalk, --gold, --curb), and js/sence.js over it (Sence.root), in every browser
+  const MN = '.f { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 900 italic 13px/1 system-ui, Roboto, sans-serif; letter-spacing: -.2px; }'
+    + '.f.bela { background: #fff; color: #111; } .f.zlata { background: var(--gold); color: var(--gold-ink); } .f.rdeca { background: var(--curb); color: #fff; }'
+    + '.f.robnik { background: repeating-linear-gradient(180deg, var(--curb) 0 10px, var(--chalk) 10px 20px); }';
+  fetch('css/menu.css').then((r) => r.ok ? r.text() : '').catch(() => '').then((css) => {
+    for (const box of grid.querySelectorAll('.mn')) {
+      const k = K.find((x) => x.id === box.dataset.k), root = box.attachShadow({ mode: 'open' });
+      root.innerHTML = '<style>' + css + '</style><style>' + MN + '</style><div class="f ' + k.id + '">' + (k.text ? '<span>' + k.text + '</span>' : '') + '</div>';
+      if (window.Sence) Sence.root(root);
+    }
+  });
+
+  // the diagnosis: the same probe as the menu's (js/menu.js forcedDark), and what it reads
+  function probe(scheme) {
+    const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:' + scheme;
+    document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c;
   }
-  const dark = (w) => (w || window).matchMedia('(prefers-color-scheme: dark)').matches;
   function forcedDark() {
     try {
-      if (dark()) return false;
+      if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
       const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(probe('light'));
       return !!m && (m[4] == null || +m[4] > 0.5) && (299 * m[1] + 587 * m[2] + 114 * m[3]) / 1000 < 128;
     } catch (_) { return false; }
   }
   const ua = navigator.userAgent, ver = (re) => { const m = re.exec(ua); return m ? m[1] : null; };
   const browser = ver(/SamsungBrowser\/([\d.]+)/) ? 'Samsung Internet ' + ver(/SamsungBrowser\/([\d.]+)/) : ver(/Firefox\/([\d.]+)/) ? 'Firefox ' + ver(/Firefox\/([\d.]+)/) : ver(/Chrome\/([\d.]+)/) ? 'Chrome/Chromium ' + ver(/Chrome\/([\d.]+)/) : 'drug';
-  const fd = forcedDark(), R = window.__okvirPoroca || null;
-  let tab = null; try { tab = sessionStorage.getItem('rr-okvir'); } catch (_) { }
+  const fd = forcedDark();
   const D = [
     ['Brskalnik', browser],
     ['Ali brskalnik temni na silo (zaznava igre)', fd ? 'DA' : 'NE'],
-    ['Igra se odpre v okvirju (js/okvir.js)', R ? (R.okvir ? 'DA' : 'NE') + ' · ' + R.zakaj : 'ni podatka (js/okvir.js se ni naložil)'],
-    ['Poskusni okvir pove temno shemo', R ? (R.poskus ? 'da' : 'ne') : 'ni podatka'],
-    ['Zapis o neuspelem okvirju (rr-okvir)', R && R.zapis ? R.zapis.zakaj + ' · do ' + new Date(R.zapis.do).toLocaleString('sl-SI') : 'ni'],
-    ['Preklop v tem zavihku', tab === '0' ? 'brez okvirja (?okvir=0)' : 'ni'],
-    ['prefers-color-scheme: dark', dark() ? 'da' : 'ne'],
+    ['Igra riše barve na nov način (js/sence.js)', /SamsungBrowser/i.test(navigator.userAgent) ? 'DA (Samsung Internet)' : 'NE (samo v Samsung Internetu)'],
+    ['prefers-color-scheme: dark', matchMedia('(prefers-color-scheme: dark)').matches ? 'da' : 'ne'],
     ['Sonda Canvas, color-scheme: light', probe('light')],
     ['Sonda Canvas, color-scheme: only light', probe('only light')],
     ['Ključna beseda canvas podprta', String(!!(window.CSS && CSS.supports && CSS.supports('background-color', 'canvas')))],
-  ].concat(FRAMES.map(f => ['Okvir ' + f[0] + ' (' + f[2] + ')', 'nalagam …', f[0]]), [
     ['Zaslon', screen.width + ' × ' + screen.height + ' · okno ' + innerWidth + ' × ' + innerHeight + ' · DPR ' + (window.devicePixelRatio || 1)],
     ['Čas', new Date().toLocaleString('sl-SI')],
-  ]);
-  const diag = document.getElementById('diag');
-  function table() {
-    diag.textContent = '';
-    for (const r of D.concat([['User agent', ua, 'ua']])) { const tr = diag.insertRow(), a = tr.insertCell(), b = tr.insertCell(); a.textContent = r[0]; b.textContent = r[1]; if (r[2] === 'ua') b.className = 'ua'; }
-  }
-  table();
-  // what the page inside each frame is told and reads (the same origin: read from here once it has loaded)
-  document.querySelectorAll('iframe.fr').forEach((f) => {
-    f.addEventListener('load', () => {
-      let t;
-      try {
-        const w = f.contentWindow;
-        if (!w.document.documentElement.classList.contains('polja')) return;
-        t = 'prefers dark: ' + (dark(w) ? 'da' : 'ne') + ' · Canvas light: ' + probe('light', w) + ' · only light: ' + probe('only light', w);
-      } catch (e) { t = 'ni mogoče prebrati (' + (e && e.message) + ')'; }
-      D.find(r => r[2] === f.dataset.id)[1] = t; f.dataset.read = '1'; table();
-    });
-  });
+  ];
+  document.getElementById('diag').innerHTML = D.map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '<tr><td>User agent</td><td class="ua"></td></tr>';
+  document.querySelector('#diag .ua').textContent = ua;
   const v = document.getElementById('verdict');
   v.className = 'verdict ' + (fd ? 'yes' : 'no');
-  v.textContent = !fd ? 'Ta brskalnik strani ne temni na silo (ali tega ni mogoče zaznati). Igra se odpre kot vedno, brez okvirja.'
-    : !R ? 'Ta brskalnik temni stran na silo. Odločitve o okvirju ni (js/okvir.js se ni naložil).'
-    : R.okvir ? 'Ta brskalnik temni stran na silo. Igra se zato odpre v okvirju, ki naj barve ohrani: vrstica B spodaj mora biti enaka vrstici A.'
-    : 'Ta brskalnik temni stran na silo, okvirja pa igra tu ne uporabi (' + R.zakaj + '). Pokaže obvestilo »Colours too dark?«.';
+  v.textContent = (fd ? 'Ta brskalnik temni stran na silo.' : 'Zaznava ne pove, da ta brskalnik temni stran na silo (v Samsung Internetu tega pogosto ne pove, čeprav temni).')
+    + (/SamsungBrowser/i.test(navigator.userAgent) ? ' Igra tu riše barve na nov način: vrstica 10 mora biti enaka vrstici 0.' : ' Igra tu riše barve kot vedno.');
 
-  // "Igra, kot se odpre sama": without the tab's switch (?okvir=0) and without the record of a frame that failed
-  document.getElementById('auto').addEventListener('click', () => { try { sessionStorage.removeItem('rr-okvir'); localStorage.removeItem('rr-okvir'); } catch (_) { } });
   document.getElementById('copy').addEventListener('click', () => {
     const txt = 'Preizkus barv (temni-nacin.html)\n' + D.map(r => r[0] + ': ' + r[1]).join('\n') + '\nUser agent: ' + ua;
     const done = (ok) => { document.getElementById('copied').textContent = ok ? 'Kopirano.' : 'Kopiranje ni uspelo: naredi posnetek zaslona.'; };

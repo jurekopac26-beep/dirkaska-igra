@@ -24,11 +24,10 @@
      (the 3D world, a WebGL canvas, is spared). No page can switch it off, so the title says where the player can (darkSheet). Found
      with Chrome's own probe: the system colour Canvas in a light element is white unless the browser forces dark. A browser that
      also reports prefers dark (Chrome's auto-dark) respects the game's color-scheme and leaves it as it is: nothing to say. The page
-     temni-nacin.html shows the same probe and what each way of painting looks like in such a browser. Where it can, the game
-     sidesteps all this by opening itself in a frame with a dark color-scheme (js/okvir.js): the page in the frame is told dark,
-     so the probe finds nothing there; the notice is what is left where the frame is not used. */
+     temni-nacin.html shows the same probe and what each way of painting looks like in such a browser. */
   const isSamsung = () => /SamsungBrowser/i.test(navigator.userAgent);
   function forcedDark() {
+    if (window.Sence && Sence.on) return false;   // (js/sence.js draws the colours past it: nothing to say)
     try {
       if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
       const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:light';
@@ -1811,6 +1810,7 @@
       const l = document.getElementById('menu-css'), r = await fetch(l ? l.href : 'css/menu.css');
       if (!r.ok) throw new Error('css/menu.css: ' + r.status);
       const st = document.createElement('style'); st.textContent = await r.text(); root.insertBefore(st, app);
+      if (window.Sence) Sence.root(root);   // (js/sence.js: the colours past Samsung's forced dark)
       ready = true; flush();
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitWhere(); signOn(); });   // (the place's name and the sign's measured again in their own fonts)
     } catch (e) { fail(e); }
