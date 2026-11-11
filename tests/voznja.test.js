@@ -203,6 +203,24 @@ if (pB) {
   check(`open road: the whole run from the first corner (the standing start left out) to the finish (${(TB.raceLen / 1000).toFixed(1)} km), the line 1 m right of the racing line on average (±0.25 m)`, Math.abs(pB.dolzina - TB.raceLen) < 50 && s0 > 0 && s0 <= 500 && pB.krogi.uporabljeni.every(k => k.izpusceno_m && k.izpusceno_m.start > 0) && pB.n[pB.n.length - 2] === 3 && fr.length > 100 && Math.abs(off - 1) < 0.25,
     `${off.toFixed(3)} m over ${fr.length} points, the start left out to ${s0} m`);
 }
+// 3b. Najboljše vožnje (js/najboljse.js, docs/najboljse-voznje.md): the same three runs in one file of the track (najboljse_<proga>_….rrp: the
+// recordings one after another, gzipped): each a run of its own (<file> #1, #2, #3), the profile the three files' to the byte but the names;
+// a later recording broken (the file cut short): the ones before it read, it left out with its reason
+{
+  const pk = rB.map(r => Buffer.from(NK.rrp.pack(r.H, r.frames))), fN = path.join(OUT, 'najboljse_balea_20261111-1200.rrp'), nm = (k) => path.basename(fN) + ' #' + k;
+  fs.writeFileSync(fN, zlib.gzipSync(Buffer.concat(pk)));
+  const rN = tool([fN], path.join(OUT, 'najboljse.json')), pN = rN.prof && rN.prof.proge && rN.prof.proge[0];
+  const bare = (p) => JSON.stringify(p, (k, v) => (k === 'datoteka' ? undefined : v));
+  check('Najboljše vožnje: a file of three recordings read as three runs (#1-#3), the profile as of the three files (but the names)', rN.code === 0 && pN && pB && rN.prof.proge.length === 1 &&
+    rN.prof.datoteke.join() === [1, 2, 3].map(nm).join() && pN.krogi.uporabljeni.map(k => k.datoteka).join() === [1, 2, 3].map(nm).join() && bare(pN) === bare(pB) && /3 posnetk/.test(rN.text),
+    `exit ${rN.code}, ${rN.prof ? rN.prof.datoteke.join(' | ') : rN.text.slice(0, 300)}`);
+  const fC = path.join(OUT, 'najboljse_balea_20261111-1300.rrp');
+  fs.writeFileSync(fC, zlib.gzipSync(Buffer.concat([pk[0], pk[1].subarray(0, pk[1].length >> 1)])));
+  const rC = tool([fC], path.join(OUT, 'najboljse-pol.json')), pC = rC.prof && rC.prof.proge && rC.prof.proge[0], nC = (k) => path.basename(fC) + ' #' + k;
+  check('Najboljše vožnje: the file cut in its second recording: the first read (one run), the second left out (»posnetek je poškodovan«)', rC.code === 0 && pC && pC.krogi.uporabljeni.length === 1 &&
+    pC.krogi.uporabljeni[0].datoteka === nC(1) && rC.prof.datoteke.join() === [1, 2].map(nC).join() && new RegExp(nC(2).replace(/[.#]/g, '\\$&') + ': posnetka ni mogoče prebrati: posnetek je poškodovan').test(rC.text),
+    `exit ${rC.code}, ${rC.prof ? rC.prof.datoteke.join(' | ') : ''}; ${rC.text.split('\n').filter(l => /✗/.test(l)).join(' / ').slice(0, 300)}`);
+}
 
 // 4. a changing weather (the header's wxs, js/game.js rrpOf): rain from 150 s into the dry race, full after 25 s: lap 1 dry, lap 2 left out
 // while the road gets wet, later laps wet (40 s after the rain is full); the spin and the hit laps left out for their own reasons

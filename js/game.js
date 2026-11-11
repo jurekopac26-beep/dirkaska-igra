@@ -1195,6 +1195,11 @@
     dirka: () => (race && recd && bg === 'race' && !recd.file && recd.trk === track && !(mp && mp.race) && !race.nv && !school && race.player ? { fin: (!!race.player.finished && !race.player.busted) || !!(MS.run && MS.run.res) || !!race.zbOver } : null),   // (race.zbOver: a novelty's own mode over by its rule, js/zabava/: the elimination race, the pursuit, the drag race)
     zaseden: () => !!(race && bg === 'race' && ((screen === 'none' && !paused && phase !== 'done' && !replay) || (replay && replay.play)))
   };
+  // Najboljše vožnje (js/najboljse.js): a time trial driven alone over the finish (as Zadnji posnetki's dirka; not a special mission, not
+  // a police chase, not a novelty's own mode); its physics the player's car's (the run's, not the setting's)
+  const NV_HOOKS = { rrp: rrpOf, rec: () => recd, track: () => track, carName: NK_HOOKS.carName, phys: () => (race && race.player && race.player.phys) || physOf(),
+    ime: (id) => trackName(id), cas: (t) => fmt(t), toast: (t, ms) => toast(t, ms),
+    tt: () => { const d = NK_HOOKS.dirka(); return !!(d && race.timeTrial && race.player.finished && !race.player.busted && !MS.run && !race.pol && !race.zbMode); } };
   const NK_LEAVE = new Set(['to-title', 'restart', 'over-again', 'to-school', 'to-champ']);   // (the actions that leave a race: a race before its finish asks first, Napake.izhod)
   const leaveAct = (a, el) => { if (!(NK_LEAVE.has(a) && Napake.izhod(() => onAction(a, el)))) onAction(a, el); };
   function replayAct(a) {
@@ -2319,6 +2324,7 @@
   function newRace(mode) {
     mkFlush();   // (the run before it, left before its finish (Ponovi): its tyre marks kept)
     Napake.pusti();   // (the race before, if any: kept among Zadnji posnetki when over the finish, js/napake.js)
+    if (typeof Najboljse !== 'undefined') Najboljse.pusti();   // (a time trial over the finish: among Najboljše vožnje when valid, js/najboljse.js)
     if (repro) repro.R = Core.rng((repro.seed * 2731 + 19) >>> 0);   // (the test mode: this race's draws from its seed, from the start)
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
     const on = mp && mp.race, md = on ? 'race' : modeSet(track.def), tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
@@ -2515,6 +2521,7 @@
     mkFlush();   // (a time trial left for the menu: its tyre marks kept)
     if (nv) { if (nv.built || nv.err) { location.reload(); return; } nv = null; }   // (NEW VERSION · TEST 1: the new map changed the track's world, the page again)
     Napake.pusti();   // (Zadnji posnetki: a race over the finish kept, or kept again: js/napake.js)
+    if (typeof Najboljse !== 'undefined') Najboljse.pusti();
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
@@ -3072,6 +3079,7 @@
     phase = 'done';
     Sfx.setRunning(false); Input.buzzOff();
     Napake.cilj();   // (over the finish: the recording kept among Zadnji posnetki, js/napake.js)
+    if (typeof Najboljse !== 'undefined') Najboljse.cilj();   // (a time trial: among Najboljše vožnje when valid and among the best, js/najboljse.js)
     if (mp && mp.race) { netResults(); return; }
     $('res-restart').dataset.act = 'restart'; $('res-laps').classList.add('off');
     $('res-reply').classList.add('off'); $('res-chal').classList.toggle('off', !chalCan());   // (a challenge for a friend: the best run of this track, once there is one)
@@ -6765,6 +6773,7 @@
 
   function bindUI() {
     rpLineBind(); Napake.init(NK_HOOKS);
+    if (typeof Najboljse !== 'undefined') Najboljse.init(NV_HOOKS);
     $('h-stop').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; e.preventDefault(); e.stopPropagation(); b.blur();   // (the custom stop's panel: a choice, POTRDI)
       if (b.classList.contains('sp-ok')) stopOk(); else { const r = b.closest('.sp-row').dataset.r; stopPick(r, r === 'fuel' ? +b.dataset.v : b.dataset.v); } });
     window.addEventListener('keydown', stopKey);
