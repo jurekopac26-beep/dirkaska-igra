@@ -356,21 +356,38 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 ## Čas in vrsta
 
+**Posodobljen načrt 11. 11. 2026** (potrdil uporabnik ob ~11.25; Matej, tabla #382, komentar 6793233105; velja pred starejšimi datumi spodaj, vrstni red ostane): vsi trije računi imajo ta teden več dela, zato je večina ~2 dni prej; vse na `main` ~16. 12. (prej ~18. 12.). Vrsta za `main` (ocene):
+1. Dež in sneg (#647), biketraveler, ~12. 11.
+2. Chapman (#654), jure.kopac26, ~13. 11. po »ok«
+3. Kamera in meni (#650, brez »Super blizu«), jure.kopac26, ~13. 11. po »ok«
+4. Samsungov temni način (#656), jure.kopac26, ~14. 11. po preizkusu
+5. Garaža (#653), biketraveler, ~14. 11. po »ok«
+6. Najboljše vožnje (nova tema), jure.kopac26, ~14. 11.
+7. Mesta za dele na 20 avtih (#480 + #626), biketraveler, ~16. 11.
+8. 30 avtov KOLIBRI, biketraveler, ~23. 11.
+9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
+10. Vse proge v enem PR (#569 + #494 + nove proge), jure.kopac26 in partyslo, ~7. 12.
+11. Preleti (#246), partyslo, ~7. 12.
+12. Grafika (E, S, G), jure.kopac26 in partyslo, ~8. 12.
+13. 5 tovornjakov, biketraveler, ~16. 12.
+
+Poraba do resetov (odločitve uporabnika 11. 11. 2026 ob ~11.00, ~11.05 in ~11.25): jure.kopac26 95 % do ned 15. 11. 00.00, zadnjih 5 % ned 00.00–05.00, nato stoji do reseta ob 10.00, do 3 seje s kodo hkrati; biketraveler po ponastavitvi do 3 seje s kodo hkrati in cilj 100 % do ned 12.00; partyslo do čet ~15.00 največ 1 seja s kodo, reset pet 03.00. Ta teden: jure.kopac26 #654, #656, #650, nato E (#657), Najboljše vožnje, S; biketraveler #647, #653, #480 + #626, stikalo »tekmeci po moji liniji«, Trki faza 2; partyslo preverjanje 60 m in slike za 10 novih prog, od petka izdelava, od ~17. 11. G.
+
 **Razporeditev računov** (odločitev uporabnika 10. 11. 2026 ob ~22.30, prek Mateja, tabla #382, komentar 6779831019; datumi so ocene za `main`, v tedenskem načrtu 16. 11. ga samo še potrdita):
 - **biketraveler, fizika in avti** (odločitve uporabnika 10. 11. 2026 ob ~23.10 »Prestavi na prioritetno«, ob ~23.20 »Garazo daj tudi pod prioritetno« in ob ~23.35 »Poskodbe prestavi pred grafiko«, z izbiro »biketraveler takoj po #480«; vse prek Mateja):
   1. **Prednost imata Dež in sneg ter garaža**, ki zasedeta obe mesti za seje s kodo. Na `main` gresta v eni zbirni veji; če uporabnikov »ok« za Dež in sneg zamuja več kot dan, gre garaža sama (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382). Dež in sneg: Fable 5.2 z eno sejo, na `main` po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih.
-  2. #480 (FORMULA ORKAN in TAIFUN LM ter mesta za dele na 10 avtih iz #460) po garaži, na `main` ~17. 11. (odločitev uporabnika 11. 11. 2026 ob ~00.05 prek Mateja, tabla #382, komentar 6781849560); vanj gre tudi #626 (partyslo), vodi ga biketraveler, ko je #480 pripravljen (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382).
-  3. Poškodbe P1–P6 takoj po #480, **skupaj s Trki (#608) v enem PR** (prej 4 PR) (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); na `main` ~29. 11. (prej ~27. 11.; 10 avtov v #480 (odločitev uporabnika 11. 11. 2026 ob ~00.05 prek Mateja, tabla #382, komentar 6781849560)). V vrsti za `main` gredo deli Poškodb pred pakete grafike, ko so pripravljeni hkrati.
-  4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) po Poškodbah; ~2. 12., s tem je 50 avtov.
-  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` s Poškodbami v enem PR (~29. 11.); ocena ni trda, kakovost je pred hitrostjo (odločitev uporabnika 10. 11. 2026 ob ~23.20; Fable 5.2, v Nastavitvah gumbi za možnosti trkov, privzeta najbolj realistična).
-  6. Nato pomoč pri predelavi prog.
+  2. **Avti na raven KOLIBRIJA pred Trki**: vseh 13 preostalih v #480 (FORMULA ORKAN in TAIFUN LM ter mesta za dele na 11 avtih iz #460, tudi ZRCALNI VLAK) v prvem prostem mestu za sejo s kodo, ena seja, na `main` ~17. 11. (odločitev uporabnika 11. 11. 2026 ob ~00.15 prek Mateja, tabla #382, komentar 6781978213, datum po komentarju 6782506960; prej 10 avtov iz #460 po garaži, »V #480, pred poškodbami«, komentar 6781849560); vanj gre tudi #626 (partyslo), vodi ga biketraveler, ko je #480 pripravljen (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382). Takoj po #480 in pred Trki + Poškodbe **30 avtov na raven KOLIBRIJA** z notranjostjo, Visokimi (o njih uporabnik odloči po slikah) in nastavitvami trkov, ~47 h, na `main` ~25. 11. (odločitev uporabnika 11. 11. 2026 ob ~02.40 prek Mateja, tabla #382, komentar 6784505738; `docs/avti-kolibri.md`, »Prednost: 30 avtov«).
+  3. Poškodbe P1–P6 takoj po #480, 30 avtih in #569 + #494 (komentar 6784739386), **skupaj s Trki (#608) v enem PR** (prej 4 PR) (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); na `main` ~7. 12. (komentar 6784505738; prej ~29. 11., pred tem ~27. 11.; 13 avtov v #480 pred Trki (odločitvi uporabnika 11. 11. 2026 ob ~00.05 in ~00.15 prek Mateja, tabla #382, komentarja 6781849560 in 6781978213)). V vrsti za `main` gredo deli Poškodb pred pakete grafike, ko so pripravljeni hkrati.
+  4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) **za grafiko**: začnejo, ko so paketi grafike na `main` (~9. 12.), na `main` ~20. 12., pred zamrznitvijo 23. 12. (zamik ~2 dni zaradi 30 avtov in #246, Matej, komentar 6784505738), mesta za dele dobijo že ob izdelavi; s tem je 50 avtov (odločitvi uporabnika 11. 11. 2026 ob ~00.15 in ~00.35 prek Mateja, tabla #382, komentarja 6781978213, točka 4, in 6782294421, točka a; prej ~18. 12., pred tem ~2. 12. po Poškodbah).
+  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` s Poškodbami v enem PR (~7. 12.); ocena ni trda, kakovost je pred hitrostjo (odločitev uporabnika 10. 11. 2026 ob ~23.20; Fable 5.2, v Nastavitvah gumbi za možnosti trkov, privzeta najbolj realistična).
+  6. Po Trkih + Poškodbah (~7. 12.) po tedenskem načrtu teme iz »Načrtovano« (npr. #605, Hitro nalaganje 2) ali pomoč pri grafiki (komentar 6782294421, točka a; prej: pomoč pri predelavi prog).
 - **jure.kopac26, grafika:**
-  1. #622 (E0, prvi kos) in #638 na `main` zdaj, nato vse proge v enem PR: #494 v #569, en krog testov (vodi Združevanje jure.kopac26) (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); za njimi #246.
-  2. Ned 15. 11.: Samsungov temni način; Killar (#494) na `main` v ponedeljek.
+  1. #622 (E0, prvi kos) in #638 na `main` zdaj. Vse proge v enem PR (#494 v #569, en krog testov; odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382) gredo na `main` takoj za 30 avtov in pred Trki + Poškodbe, ~26. 11. (odločitev uporabnika 11. 11. 2026 ob ~03.05 prek Mateja, tabla #382, komentar 6784739386, dobesedno: »prestavi Vse proge v enem PR (#569 + #494) na 5 mesto takoj za 30 avtov«); do takrat jih uporabnik preizkuša na stalnem predogledu #569 (`tools/predogled.mjs`, naredi ga jure.kopac26), Združevanje je ustavljeno, posodabljajo se samo prave proge na `main`; pravilo »proge vedno zadnje« zanje ne velja. #246 (preleti) je zadržan: na `main` za Garažo, avti (#480 in 30 avtov) ter Trki + Poškodbe in pred paketi grafike, ~8. 12. (odločitev uporabnika 11. 11. 2026 ob ~00.55 prek Mateja, tabla #382, komentar 6784505738, dobesedno: »Preleti postavi za garazo, fiziko trkov, posodobitve avtomobilov ter pred grafiko«); paketi grafike gredo na `main` za njim, ~9. 12. (zamik ~2 dni); rok 23. 12. ostane.
+  2. Ned 15. 11.: Samsungov temni način; Killar (#494) na `main` s #569 ~26. 11. (komentar 6784739386; prej v ponedeljek).
   3. E Cesta in predmeti na vseh pravih progah od 15. 11.; ~22. 11.
   4. S Stavbe ~30. 11., nato predelava prog.
 - **partyslo, proge, nato grafika:**
-  1. Prelet Spa (#246) 10. 11.; v sredo #569 in 7 prog na `main`; od petka zadnje 3 proge (2 makadamski, 1 ledena) in Koli; preostali 3 preleti po uporabnikovem »ok« na Spa.
+  1. Prelet Spa (#246) 10. 11.; #569 na `main` ~26. 11., takoj za 30 avtov (komentar 6784739386; prej v sredo); od petka zadnje 3 proge (2 makadamski, 1 ledena) in Koli; preostali 3 preleti po uporabnikovem »ok« na Spa. #246 gre na `main` šele ~8. 12. (zgoraj) in do takrat na njem ni dela; prosti čas porabe gre grafiki po progah (G Rastje in teren, predelava prog) (komentar 6784505738).
   2. Od ~17. 11. G Rastje in teren; na `main` za S, ~1. 12.
   3. Od ~23. 11. predelava prog iz PR, nato nove proge po novem postopku; vse prave proge z novo grafiko ~6. 12.
 - Modeli po `CLAUDE.md`: grafika Fable 5.2 z eno sejo; fizika trkov Fable 5.2 z ultracode; proge, meni in popravki Opus.
