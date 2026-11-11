@@ -6524,7 +6524,12 @@ const Garage3D = (function () {
       const near = (x) => armFor(0, 'nozzle', new V3(x, W.yA + 0.12, zW + 0.24), [lean(x), -0.55, -0.83]);
       const L = ARM.FA + TL.nozzle, dz = clamp((-ARM.z0[1] - K.hw - 0.1) / L, 0.3, 0.7), dy = -Math.sqrt(1 - dz * dz);   // (tall: the wrist out at the ring's far edge, the tip 0.1 m out from the car's widest)
       const top = (x) => tall ? armFor(1, 'nozzle', new V3(x, Math.min(K.top - 0.3, ARM.Y0 - 0.07 + dy * L), -(K.hw + 0.1)), [lean(x), dy, dz]) : armFor(1, 'nozzle', new V3(x, K.top + 0.32, -0.1), [lean(x), -1, 0]);
-      yield* par(armGo(0, near(x0), 1.4), armGo(1, top(x0), 1.4));
+      // (the camera, its plan's plate: nearer for the spray and along the car with the nozzles, from its front quarter to its rear one; low by
+      // the front quarter as it dries. A mist of the paint comes down from the chamber's top where the nozzles are)
+      const dC = clamp(4.4 + (K.front - K.rear) * 0.52 + Math.max(0, K.top - 1.5) * 0.6, 6.2, 9.2), yC = K.top * 0.6;   // (farther for a long or a tall one)
+      const VP0 = view({ at: [x0 * 0.4, yC, 0], yaw: 0.6, pitch: 0.2, dist: dC }), VP1 = view({ at: [x1 * 0.4, yC, 0], yaw: -0.5, pitch: 0.2, dist: dC }), VPD = view({ at: [K.front * 0.15, K.top * 0.5, 0], yaw: 0.9, pitch: 0.13, dist: dC * 0.9 });
+      const mistTop = (x, n) => { for (let j = 0; j < n; j++) { const p = carPt(cv, x + rnd(-0.7, 0.7), K.top + rnd(0.55, 0.9), rnd(-1, 1) * K.hw); puffs.emit(p.x, p.y, p.z, rnd(-0.15, 0.15), rnd(-1.3, -0.8), rnd(-0.15, 0.15), rnd(0.6, 0.95), 0.1, 0.6, col, 0.28, 0.5, 1.4, 0.02); } };
+      yield* par(armGo(0, near(x0), 1.4), armGo(1, top(x0), 1.4), camTo(VP0, 1.4));
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
       // the new body only (its wheels, shadow and parts stay the old car's), cut the other way
@@ -6534,11 +6539,11 @@ const Garage3D = (function () {
       const cut = (x) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); fwd.set(1, 0, 0).transformDirection(cv.v.grp.matrixWorld); const c = fwd.dot(o) + x; cv.clip.set(fwd.clone().negate(), c); nw.clip.set(fwd.clone(), -c); };
       cut(x0); hud('paint', { step: 'spray' });
       sLoop('paint', 'bandpass', 3800, 0.6, 0.16);
-      yield* tween(3.4, (k, u) => {
+      yield* par(tween(3.4, (k, u) => {
         const s = lerp(x0, x1, EZ.sine(u)); cut(s);
         for (const [i, q] of [[0, near(s)], [1, top(s)]]) { Object.assign(RB[i].s, q); RB[i].dirty = true; }
-        paintMist(col, 2);
-      });
+        paintMist(col, 2); mistTop(s, 2);
+      }), camTo(VP1, 3.4, EZ.sine));
       sLoop('paint', 'bandpass', 3800, 0.6, 0);
       // the swap: the new car takes the old one's place (its own wheels, its parts moved over)
       cv.root.remove(nw.root); nw.v.grp.traverse(o => { if (o.isMesh) o.visible = true; }); nw.contact.visible = true;
@@ -6549,7 +6554,7 @@ const Garage3D = (function () {
       freeCar(cv);
       // drying: the arms up out of the way, the chamber's lights warm, a warm glow sweeping along the car, glints on the fresh paint
       hud('paint', { step: 'dry' });
-      yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: tall ? Math.PI / 2 : -Math.PI / 2 }, 0.6));   // (level, not out through the chamber's ends; the far one away from the near one's (over the car: toward the far side))
+      spawn(camTo(VPD, 1.3)); yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: tall ? Math.PI / 2 : -Math.PI / 2 }, 0.6));   // (level, not out through the chamber's ends; the far one away from the near one's (over the car: toward the far side))
       chamberColor(PAINT_C.warm); sLoop('dry', 'lowpass', 500, 0.7, 0.12);
       const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(7, 3, 1); scene.add(warm);
       yield* tween(1.8, (k, u) => { warm.material.opacity = 0.4 * Math.sin(u * Math.PI); warm.position.copy(carPt(nw, lerp(K.front, K.rear, u), K.top * 0.6, 0)); if (Math.random() < 0.5) sparkle(nw, 1); });
