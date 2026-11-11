@@ -6,6 +6,8 @@
 // than the chase view with Oddaljenost: Blizu nor lower than it (landscape; upright Srednje's, the old Blizu, since the upright chase view
 // came closer on 11. 11. 2026: with Blizu the flight comes down to it over its last 0.8 s), the chase view itself by the 5th light (6.4 s, the
 // drone of the lights 6.6 s), off at the start. Not in a time trial or from a flying start; the tests' own default (tdgp-nostartcam): off.
+// The stored Oddaljenost read back (game.js): never nearer than Blizu (Super blizu, on the preview of #650 for a day: Blizu) nor farther
+// than Daleč, never NaN.
 //   node tests/browser/startcam.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -104,6 +106,23 @@ try {
     const r = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const v = g.startCam.v; let n = 0; while (g.phase === 'intro' && n < 600) { g.sim(1 / 120, true); n++; } g.resume(); return { v, t: +(n / 120).toFixed(2) }; });
     T.check('the tests\' default: no flight, the lights after the usual 1.3 s', r.v === 0 && r.t >= 1.3 && r.t <= 1.4, JSON.stringify(r));
     T.check('no errors on the page (default)', errors.length === 0, errors.slice(0, 5).join(' | '));
+    await page.context().close(); }
+  // the stored Oddaljenost read back (game.js): Super blizu (0.8, on the preview of #650 for a day and gone again: the user, 11. 11. 2026,
+  // »preblizu«) is Blizu, saved so at once; no number Srednje (never NaN); farther than Daleč Daleč; between the steps as it is (1.2, the
+  // tests' own); the row has its three buttons only, the camera's lit (one page loaded once for each: the test's own settings, the zoom
+  // from the list, sessionStorage zk its place)
+  { const Z = [[0.8, 1.1], ['x', 1.4], [9, 1.7], [1.2, 1.2]];
+    const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 360, height: 640 }, {
+      init: () => { const s = JSON.parse(localStorage.getItem('tdgp-settings')); s.zoom = [0.8, 'x', 9, 1.2][+sessionStorage.getItem('zk') || 0]; localStorage.setItem('tdgp-settings', JSON.stringify(s)); } });
+    for (const [k, [z, want]] of Z.entries()) {
+      if (k) { await page.evaluate((k) => sessionStorage.setItem('zk', k), k); await page.reload({ timeout: 180000 }); await page.waitForFunction(() => window.__game, null, { timeout: 180000 }); }
+      const r = await page.evaluate(() => ({ s: __game.S.zoom, cam: Render.cam.userZoom, kept: JSON.parse(localStorage.getItem('tdgp-settings')).zoom,
+        row: [...document.querySelectorAll('[data-set="zoom"] button')].map(b => b.dataset.v + (b.classList.contains('sel') ? '*' : '')).join(' ') }));
+      const row = ['1.1', '1.4', '1.7'].map(v => v + (+v === want ? '*' : '')).join(' ');
+      T.check(`Oddaljenost stored as ${JSON.stringify(z)}: ${want === z ? 'kept' : 'read back as ' + want + ' and saved so'}, the camera's, ${want === 1.2 ? 'no button lit (the tests\' own)' : 'its button lit'}, no Super blizu`,
+        r.s === want && r.cam === want && r.kept === want && r.row === row, JSON.stringify(r));
+    }
+    T.check('no errors on the page (Oddaljenost)', errors.length === 0, errors.slice(0, 5).join(' | '));
     await page.context().close(); }
 } finally {
   await browser.close(); await srv.close();
