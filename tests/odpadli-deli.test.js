@@ -11,10 +11,13 @@
 //   - that time ends (its own part, a part it knocked away: untouched 1.5 s after, touched as any car 2.5 s after) and is each car's own:
 //     two cars at one piece (side by side, a part between them or arriving between them) are touched once a piece, not step after step,
 //     and a second car's knock does not lengthen the first one's time
-//   - in that time the car does not drive through a part still moving: one in its way is shouldered aside, at no price to the car
+//   - in that time the car does not drive through a part still moving: one in its way is shouldered aside, at no price to the car; the push
+//     (DEB.push, under DEB_RUN.v) gives it no speed beyond what it had or the car's own and the push: a part between a standing car and
+//     the barrier is not shot out along the gap, one between two standing cars lies at once and no car's ending time knocks it
 //   - a spare wheel is a tyre like the vehicle's own: on its tread, then over and flat
-//   - checks 25 to 38 (the independent check of 11. 11. 2026): no random number of the race, the banked bend, every ground of DEB's tables,
+//   - checks 25 to 40 (the independent check of 11. 11. 2026): no random number of the race, the banked bend, every ground of DEB's tables,
 //     the push's size and what it is measured against, the cap's fix, the wheel's veer, wobble and knock, bounce and landing, the 2 s to the step
+//     (a pass over a lying part begun in the car's time is not paid in its middle), the push no source of speed (O1, O2)
 // (a piece lying on the road, driven over: tests/debris.test.js)
 //   node tests/odpadli-deli.test.js            check
 //   node tests/odpadli-deli.test.js --prej     print PREJ of the tree given (GAME_ROOT=<a tree from before the change>)
@@ -209,8 +212,11 @@ const ALL = Object.keys(CELL).reduce((a, k) => a.concat(CELL[k]), []);
 }
 // ---- the exemption ends; two cars at one piece (the rule is each car's own: debrisHit, d.by) ----
 // the car over a piece on the road `at` s after the piece left it (ownPart: its own front bumper, shed at 20 km/h; else another car's, knocked away by
-// it at 120 km/h): put 5 m short of the piece `at` - 0.5 s after, 10 m/s faster than it; the steps it is touched in within 1.5 s, the first one's share of its speed
-function meetAgain(ownPart, at) {
+// it at 120 km/h): put 5 m short of the piece `at` - 0.5 s after (or putK steps after), 10 m/s faster than it; the steps it is touched in within
+// 1.5 s, the first one's (first s, firstK steps after) share of its speed, and over: the step it is first over the piece (as debrisHit tests it)
+const onIt = (c, d) => { if (d.y - (c.y || 0) > 1.3) return false; const ch = Math.cos(c.h), sh = Math.sin(c.h), r = c.rad + d.r * 0.7;
+  return c.circles.some(o => (d.x - c.x - ch * o) ** 2 + (d.z - c.z - sh * o) ** 2 < r * r); };
+function meetAgain(ownPart, at, putK) {
   const orig = Math.random; try {
   const T = road('asfalt'), race = lone(T), P = race.player; let k = 0;
   const step = () => { P.hitDebris = 0; P.inThr = P.inBrk = P.inSteer = 0; race.step(DT); k++; return P.hitDebris > 0; };
@@ -220,11 +226,13 @@ function meetAgain(ownPart, at) {
     if (!hit || lying) return { err: hit ? 'run over lying, not knocked' : 'never knocked' }; }
   const t0 = k, d = race.debris[0];
   put(P, T, 1000, 0);                                               // (away: the piece comes to rest alone)
-  while ((k - t0) * DT < at - 0.5 - 1e-9) step();
+  while (putK != null ? k - t0 < putK : (k - t0) * DT < at - 0.5 - 1e-9) step();
   const i = T.query(d.x, d.z, -1, {}).i, h = T.hd[i], vp = 10 + Math.max(0, d.vx * Math.cos(h) + d.vz * Math.sin(h));
   put(P, T, i, vp); P.place(d.x - Math.cos(h) * 5, d.z - Math.sin(h) * 5, h); P.vx = Math.cos(h) * vp; P.vz = Math.sin(h) * vp; P.q = T.query(P.x, P.z, i, P.q);
-  let hits = 0, first = 0, loss = 0; for (let j = 0; j < 180; j++) { const v0 = Math.hypot(P.vx, P.vz); if (step()) { hits++; if (!first) { first = (k - t0) * DT; loss = 1 - Math.hypot(P.vx, P.vz) / v0; } } }
-  return { hits, first, loss, m: d.m };
+  let hits = 0, first = 0, firstK = 0, loss = 0, over = 0;
+  for (let j = 0; j < 180; j++) { const v0 = Math.hypot(P.vx, P.vz), hit = step(); if (!over && onIt(P, d)) over = k - t0;
+    if (hit) { hits++; if (!first) { firstK = k - t0; first = firstK * DT; loss = 1 - Math.hypot(P.vx, P.vz) / v0; } } }
+  return { hits, first, firstK, loss, m: d.m, over };
   } finally { Math.random = orig; }
 }
 // the player's car sheds `parts` at kmh; the other cars ([m behind it, m beside it] each, the same model) coast as it does (c.ctl: no driver): the steps each is touched in
@@ -308,8 +316,8 @@ function through(M, parts, kmh, inp) {
   for (const id of ['sokol', 'tiger']) { const M = C.MODELS.find(m => m.id === id);
     for (const ps of ['bumperF', 'hood', 'bumperF+hood+fenderL+fenderR']) for (const kmh of SPEEDS) for (const inp of ['prosto', 'zavora']) rows.push(Object.assign({ id: id + ' ' + ps + ' ' + kmh + ' ' + inp }, through(M, ps.split('+'), kmh, inp))); }
   const w = rows.slice().sort((a, b) => b.deep - a.deep)[0], sum = rows.reduce((a, r) => a + r.deep, 0), hits = rows.reduce((a, r) => a + r.hits, 0);
-  check('the car does not drive through its own parts (front bumper, bonnet, four front parts at once; a car and a kit car; 60, 120, 200 km/h; coasting, braking): one still moving in its way is shouldered aside (deep inside the car for 0.25 s at most a run), and the car is not touched',
-    rows.every(r => r.deep <= 30) && hits === 0, `${rows.length} runs: ${sum} steps of a part deep inside its car in all, the worst ${w.deep} (${w.id}); the car touched in ${hits} steps`);
+  check('the car does not drive through its own parts (front bumper, bonnet, four front parts at once; a car and a kit car; 60, 120, 200 km/h; coasting, braking): one still moving in its way is shouldered aside (deep inside the car for 0.3 s at most a run: the push of 2.5 m/s, under DEB_RUN.v, clears it later than 4 did, 0.12 s), and the car is not touched',
+    rows.every(r => r.deep <= 36) && hits === 0, `${rows.length} runs: ${sum} steps of a part deep inside its car in all, the worst ${w.deep} (${w.id}); the car touched in ${hits} steps`);
 }
 // ---- a spare wheel (a part with spare: 1; a tyre like the vehicle's own): on its tread like a wheel, not a panel ----
 {
@@ -326,10 +334,11 @@ function through(M, parts, kmh, inp) {
   check('a spare wheel that comes off (the off-roader\'s, the pick-up\'s, the buggy\'s, the semi-trailer\'s; 120 km/h) is a tyre like the vehicle\'s own: on its tread, then over and flat, its rim never in the road',
     cnt > 0 && wh === cnt && tread === cnt && flat === cnt && sink < 1e-6, `${cnt} throws: a wheel ${wh}, on the tread then fallen ${tread}, at rest flat ${flat}, its rim at most ${f(sink * 100, 1)} cm in the road; ${det.join(', ')}`);
 }
-// ==== checks 25 to 38 (from the independent check of the finished code, 11. 11. 2026) ====
+// ==== checks 25 to 40 (from the independent check of the finished code, 11. 11. 2026) ====
 // Each fails on a changed js/core.js that checks 1 to 24 let through (the name of that change in brackets): a piece drawing a random number of
 // the race, the banked bend dropped from a piece's height, a ground of DEB's tables turned to ice, a push of another size or measured against
-// the road, the cap's fix, a wheel's veer, wobble and knock, the bounce by ground, the landing's keep, the tumbling throw by throw, the 2 s.
+// the road, the cap's fix, a wheel's veer, wobble and knock, the bounce by ground, the landing's keep, the tumbling throw by throw, the 2 s
+// and a pass paid in its middle (K2), the push without its limit (O1) or over DEB_RUN.v (O2).
 
 // ---- 25, 26: the pieces take no random number of the race [rand_extra, rand_land] ----
 // Check 14 cannot see a draw: it steps with SIM.stepRace, which seeds Math.random anew before every step, so a number taken in one step
@@ -353,7 +362,7 @@ function shoulder(kmh, slip, parts, inp, keep) {
     for (const [d, vx, vz] of pre) { if (d.wh || d.dead) continue;
       const q = T.query(d.x, d.z, d.q ? d.q.i : 150, _q); if ((q.d > 0 ? q.br : q.bl) - Math.abs(q.d) - d.r * 0.5 < 1) continue;   // (a barrier turns it too)
       if (Math.abs(vx * d.vz - vz * d.vx) <= 1e-9 * (1 + Math.hypot(vx, vz) * Math.hypot(d.vx, d.vz))) continue;
-      const s = (d.z - P.z) * ch - (d.x - P.x) * sh < 0 ? -1 : 1, rel = ((d.vz - P.vz) * ch - (d.vx - P.vx) * sh) * s;
+      const la = (d.z - P.z) * ch - (d.x - P.x) * sh, s = la < -0.05 ? -1 : la > 0.05 ? 1 : (d.id & 1 ? 1 : -1), rel = ((d.vz - P.vz) * ch - (d.vx - P.vx) * sh) * s;   // (the side as debrisHit picks it)
       pushes++; off = Math.max(off, Math.abs(rel - DEB.push)); fast = Math.max(fast, rel); }
     if (k > 12) for (const d of race.debris) { if (d.rest || (d.ground && Math.hypot(d.vx, d.vz) < 3) || d.y - (P.y || 0) > 1.3) continue;   // (deep inside the car: as check 23 counts it)
       const dx = d.x - P.x, dz = d.z - P.z, lo = dx * ch + dz * sh, la = dz * ch - dx * sh; if (lo > c0 && lo < c1 && Math.abs(la) < 0.6 * P.rad) deep++; }
@@ -524,14 +533,83 @@ function lands(T, kmh) {
     PAN.length > 0 && back.length <= PAN.length * 0.03 && least > -0.15, `${PAN.length} throws: ${back.length} backwards on the whole, the least ${f(least, 3)} x its speed`);
 }
 
-// ---- 38: the time is 2 s, to the step [own_18, own_22, again_18, again_22] ----
+// ---- 38: the time is 2 s, to the step, and a pass begun in it is not paid in its middle [own_18, own_22, again_18, again_22, k2_paid] ----
 // (checks 18 and 19 meet the part 1.24 s and 2.24 s after it left the car and are over it for half a second: any DEB.own or DEB.again from
-// about 1.75 to 2.24 s passes them. Here the car is over the lying part as its time ends: put 5 m short of it 1.7 s after, 10 m/s faster, it
-// is over it from 1.95 to 2.45 s and pays the lying pass in the step its time ends)
+// about 1.75 to 2.24 s passes them. Here the car comes over the lying part in the steps about its time's end, step by step (put 5 m short
+// of it, 10 m/s faster: it is over it for ~0.5 s): one that comes over it before the time ends is not touched in the whole pass (before
+// K2: paid in its middle, in the step the time ended), one that comes over it as the time ends or after is touched once, as it comes)
 {
-  const a = meetAgain(true, 2.2), c = meetAgain(false, 2.2), ok = (r) => !r.err && r.hits === 1 && Math.abs(r.first - 2) < 0.013;
-  check('the time is 2 s to the step: a car over the lying part as its time ends (its own part; a part it knocked away) is touched once, 2.00 s after the part left it',
-    ok(a) && ok(c), a.err || c.err || `its own part: ${a.hits} touch at ${f(a.first, 3)} s; a part it knocked away: ${c.hits} touch at ${f(c.first, 3)} s`);
+  const lim = (m) => Math.min(0.06, (m || 0) * 0.004) + 0.005;
+  // (put step by step so that it comes over the part from 1.88 to 2.12 s after; a step's put may come over it a step later than the one before)
+  const scan = (own) => { const c0 = meetAgain(own, 0, 200); if (c0.err || !c0.over) return { err: c0.err || 'never over it' };
+    const L = c0.over - 200, R = []; for (let pk = 226 - L; pk <= 254 - L; pk++) { const r = meetAgain(own, 0, pk); R.push(Object.assign({ kA: r.over }, r)); }
+    const kE = (R.find(r => r.hits > 0) || {}).kA, bad = R.filter(r => r.err || !r.over || (kE == null || r.kA < kE ? r.hits !== 0 : r.hits !== 1 || r.firstK !== r.kA || !(r.loss > 0) || r.loss > lim(r.m)));
+    return { R, kE, bad, ok: kE != null && Math.abs(kE * DT - 2) < 0.013 && R.some(r => r.kA === kE - 1) && !bad.length }; };
+  const said = (x) => x.err || `the first touched ${x.kE != null ? 'coming over it ' + f(x.kE * DT, 3) + ' s after' : 'never'}` + (x.bad.length ? `; wrong: ${x.bad.slice(0, 3).map(r => r.err || `over at ${r.over}, ${r.hits} touch${r.hits === 1 ? '' : 'es'} at ${r.firstK}`).join(', ')} (of ${x.R.length})` : `, ${x.R.length} arrivals as they should`);
+  const a = scan(true), c = scan(false);
+  check('the time is 2 s to the step: a car coming over the lying part (its own part; a part it knocked away) before its time ends is not touched in the whole pass, one coming over it 2.00 s after the part left it or later is touched once, as it comes',
+    !a.err && !c.err && a.ok && c.ok, `its own part: ${said(a)}; a part it knocked away: ${said(c)}`);
+}
+
+// ---- 39, 40: the push is no source of speed [push_nocap: O1; push_4: O2] ----
+// (the independent check of 11. 11. 2026, O1 and O2.) A standing car (braking) 0.05 m off the barrier, its nose 4 or 8 degrees towards it,
+// a part in the gap by its front circle, on its list (DEB.own), thrown along the road, back or across it: each push shoves it from the car,
+// the barrier back at it. Before, every push gave it speed and it was shot out along the gap (16 m/s, 8 m off); now no push makes it faster
+// than it was or than the car's speed (0) and DEB.push. Between two standing cars side by side, the part on both their lists (one car's time
+// 2 s, the other's 0.6 or 1.2), pushed by one and the other: before, at 4 m/s, over DEB_RUN.v (3 m/s, the most a lying part moves), it was
+// never lying and a car whose time ended knocked it (took back on its list); now a push leaves it under DEB_RUN.v: it lies, nobody knocks it
+const I0 = 150, DEG = Math.PI / 180;
+// the car's outermost reach across the road at a heading turned a from the road; car c `lat` m across the road at I0, turned by `turn`, standing
+function reachOf(c, a) { let m = -1e9; for (const x of c.circles) m = Math.max(m, x * Math.sin(a) + c.rad);
+  for (const [rx, rz] of c.corners) m = Math.max(m, rx * Math.sin(a) + Math.abs(rz) * Math.cos(a)); return m; }
+function park(T, c, lat, turn) { const q = T.query(T.px[I0], T.pz[I0], I0, {}); put(c, T, I0, 0, turn); c.place(T.px[I0] + q.nx * lat, T.pz[I0] + q.nz * lat, T.hd[I0] + turn);
+  c.vx = c.vz = 0; c.q = T.query(c.x, c.z, I0, c.q); c.sPrev = c.q.s; c.noReverse = true; }   // (standing: the brake held at a standstill does not engage reverse, Car.noReverse)
+// a part p as race.spawnDebris makes it off car c, put at x, z with the speed given, flat, on the ground or 0.25 m above it, on the lists by / byT
+function pieceAt(T, R, c, p, x, z, vx, vz, ground, by, byT) { R.spawnDebris(c, p, SIM.seeded(SEED + 7)); const d = R.debris[R.debris.length - 1];
+  d.x = x; d.z = z; d.vx = vx; d.vz = vz; d.vy = ground ? 0 : 1; d.rx = d.rz = 0; d.wx = d.wy = d.wz = 0; d.yaw = c.h; d.q = T.query(x, z, I0, {});
+  d.y = T.yAt(d.q) + 0.02 + d.h * 0.5 + (ground ? 0 : 0.25); d.ground = ground; d.rest = false; d.roll = 0; d.by = by.slice(); d.byT = byT.slice(); return d; }
+function squeezed(p, ad, sg, u, dir, ground) {
+  const orig = Math.random; try {
+  const T = road('asfalt'), R = lone(T), P = R.player, q0 = T.query(T.px[I0], T.pz[I0], I0, {}), a = ad * DEG, B = sg > 0 ? q0.br : q0.bl;
+  park(T, P, sg * (B - 0.05 - reachOf(P, a)), sg * a);
+  const cf = P.circles[P.circles.length - 1], cx = P.x + Math.cos(P.h) * cf, cz = P.z + Math.sin(P.h) * cf, lat = sg * (B - 0.5 * PT[p].r - 0.001);
+  const pl = (cx - T.px[I0]) * q0.nx + (cz - T.pz[I0]) * q0.nz, th = P.h + dir * DEG * sg;
+  const d = pieceAt(T, R, P, p, cx + q0.nx * (lat - pl), cz + q0.nz * (lat - pl), Math.cos(th) * u, Math.sin(th) * u, ground, [P], [DEB.own]), x0 = d.x, z0 = d.z;
+  let vm = 0, far = 0, hits = 0;
+  for (let s = 0; s < 4 * 120 && !(d.rest && !d.by.length); s++) { P.hitDebris = 0; P.inThr = 0; P.inBrk = 1; P.inSteer = 0; R.step(DT); if (P.hitDebris > 0) hits++;
+    vm = Math.max(vm, Math.hypot(d.vx, d.vz)); far = Math.max(far, Math.hypot(d.x - x0, d.z - z0)); }
+  return { vm, far, hits, u };
+  } finally { Math.random = orig; }
+}
+function between(p, gap, ci, byT, u, dir, ground) {
+  const orig = Math.random; try {
+  Math.random = SIM.seeded(SEED);
+  const T = road('asfalt'), R = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 99, playerModel: MD, fieldModel: MD, assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); R.start();
+  const A = R.player, B = R.cars.find(c => !c.isPlayer), ra = reachOf(A, 0); B.ctl = () => {};
+  park(T, A, -(ra + gap / 2), 0); park(T, B, ra + gap / 2, 0);
+  const cx = T.px[I0] + Math.cos(T.hd[I0]) * A.circles[ci], cz = T.pz[I0] + Math.sin(T.hd[I0]) * A.circles[ci], th = T.hd[I0] + dir * DEG;
+  const d = pieceAt(T, R, A, p, cx, cz, Math.cos(th) * u, Math.sin(th) * u, ground, [A, B], byT);
+  let knocks = 0, hits = 0, vm = 0, last = 0;
+  for (let s = 0; s < 10 * 120 && !(d.rest && !d.by.length); s++) { const was = [A, B].map(c => d.by.indexOf(c) >= 0);
+    for (const c of R.cars) { c.hitDebris = 0; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; } R.step(DT);
+    [A, B].forEach((c, j) => { if (!was[j] && d.by.indexOf(c) >= 0) knocks++; if (c.hitDebris > 0) hits++; });
+    const v = Math.hypot(d.vx, d.vz); vm = Math.max(vm, v); if (v >= 0.05) last = (s + 1) * DT; }
+  return { knocks, hits, vm, last, rest: d.rest };
+  } finally { Math.random = orig; }
+}
+{
+  const S = [];
+  for (const p of ['hood', 'bumperF', 'wheelFL', 'mirrorL']) for (const ad of [4, 8]) for (const sg of [1, -1]) for (const [u, dir] of [[0, 0], [1, 90], [2, 180], [2, -90]]) for (const ground of [false, true])
+    S.push(Object.assign({ id: `${p}, nose ${ad} deg, ${sg > 0 ? 'right' : 'left'}, ${u} m/s at ${dir} deg, ${ground ? 'on the ground' : 'dropped'}` }, squeezed(p, ad, sg, u, dir, ground)));
+  const wv = S.slice().sort((x, y) => (y.vm - Math.max(y.u, DEB.push)) - (x.vm - Math.max(x.u, DEB.push)))[0], wf = S.slice().sort((x, y) => y.far - x.far)[0];
+  check('a part between a standing car and the barrier (the bonnet, the front bumper, a wheel, a mirror; the nose 4 or 8 degrees towards it, 0.05 m off it; thrown 0 to 2 m/s): no push makes it faster than it was or than DEB.push (+0.1 m/s), it goes 1 m at most and the car is not touched',
+    S.every(r => r.vm <= Math.max(r.u, DEB.push) + 0.1 && r.far <= 1 && r.hits === 0), `${S.length} runs: the fastest ${f(wv.vm, 2)} m/s (${wv.id}), the farthest ${f(wf.far, 2)} m (${wf.id}); the car touched in ${S.reduce((a, r) => a + r.hits, 0)} steps`);
+  const W = [];
+  for (const p of ['wheelFL', 'bumperF', 'fenderL']) for (const gap of [0.05, 0.15, 0.3, 0.5, 0.8]) for (const ci of [4, 2]) for (const byT of [[2, 0.6], [1.2, 2]]) for (const dir of [90, -90])
+    W.push(Object.assign({ id: `${p}, gap ${gap} m, circle ${ci}, times ${byT.join(' / ')} s, 1.5 m/s at ${dir} deg` }, between(p, gap, ci, byT, 1.5, dir, false)));
+  const wk = W.slice().sort((x, y) => y.knocks - x.knocks || y.last - x.last)[0];
+  check('a part between two standing cars, on both their lists (one car\'s time 2 s, the other\'s 0.6 or 1.2 s; gaps 0.05 to 0.8 m): a push leaves it under DEB_RUN.v (3 m/s), it lies within 1 s, and no car knocks it as its time ends',
+    DEB.push < 3 && W.every(r => r.knocks === 0 && r.hits === 0 && r.vm < 3 && r.last <= 1 && r.rest), `${W.length} runs: ${W.reduce((a, r) => a + r.knocks, 0)} knocks, the fastest ${f(Math.max(...W.map(r => r.vm)), 2)} m/s, the last moving ${f(wk.last, 2)} s (${wk.id}), at rest ${W.filter(r => r.rest).length}; a car touched in ${W.reduce((a, r) => a + r.hits, 0)} steps`);
 }
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

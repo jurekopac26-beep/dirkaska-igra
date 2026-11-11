@@ -3520,9 +3520,12 @@ const Core = (function () {
   //               car, which before ran into it step after step and was braked by it) or knocked it away (again: one knock a pass).
   //               Each car its own time (d.by the cars, d.byT their seconds): with one slot two cars at one piece took it from each
   //               other and were both knocked step after step. In that time the car does not drive through a piece still moving: one in
-  //               its way is shouldered aside (push m/s to its side, against the car), at no price to the car
+  //               its way is shouldered aside (push m/s to its side, against the car), at no price to the car; the push gives it no speed
+  //               beyond what it had or the car's own speed and push (a piece caught between a car and a barrier, or two cars, is not shot
+  //               out along the gap), and push is under DEB_RUN.v: a piece a standing car shoulders aside lies at once (it does not dance
+  //               between two cars at push m/s until a car's time ends and it is knocked)
   const DEB = {
-    own: 2, again: 2, push: 4,
+    own: 2, again: 2, push: 2.5,
     kA: 0.72, kLo: 0.01, kHi: 0.06, kW: 0.007,
     e: 0.28, vB: 2.5, muT: 0.9, keep: 0.3,
     vT: 7, muS: 0.55, spin: 0.4, edge: 0.8,
@@ -3613,7 +3616,6 @@ const Core = (function () {
     const free = !!d.by && d.by.indexOf(c) >= 0;   // (the car it has just left, DEB.own / DEB.again: no knock, no price)
     const gone = () => debrisGone(c, d);
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lying = d.ground && Math.hypot(d.vx, d.vz) < DEB_RUN.v;
-    if (free && lying) return;   // (it lies under its car, untouched)
     for (let i = 0; i < c.circles.length; i++) {
       const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i];
       const ex = d.x - ax, ez = d.z - az, r = c.rad + d.r * 0.7, e2 = ex * ex + ez * ez;
@@ -3621,6 +3623,7 @@ const Core = (function () {
       if (lying) {
         if (d.on && d.on.indexOf(c) >= 0) return;   // (still over it: the same pass)
         (d.on || (d.on = [])).push(c);
+        if (free) return;   // (it lies under its car, untouched: a pass begun in the car's time is not paid in its middle when the time ends)
         const sp = Math.hypot(c.vx, c.vz); if (sp < 1.5) return;
         const k = Math.min(DEB_RUN.kMax, d.m * DEB_RUN.k); c.vx *= 1 - k; c.vz *= 1 - k;
         c.hitDebris = Math.max(c.hitDebris || 0, d.m >= DEB_RUN.m ? 6 : 2.5);
@@ -3630,8 +3633,12 @@ const Core = (function () {
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
       if (free) {   // in its car's way (going deeper into it): shouldered aside, to the side it is on. A push of its speed, not of its place (no jump), and nothing to the car
         if ((d.vx - c.vx) * nx + (d.vz - c.vz) * nz < 0) {
-          const s = dz * ch - dx * sh < 0 ? -1 : 1, px = -sh * s, pz = ch * s, a = DEB.push - ((d.vx - c.vx) * px + (d.vz - c.vz) * pz);
-          if (a > 0) { d.vx += a * px; d.vz += a * pz; }
+          const la = dz * ch - dx * sh, s = la < -0.05 ? -1 : la > 0.05 ? 1 : (d.id & 1 ? 1 : -1);   // (one on the car's axis, a bumper, a bonnet: to the side its number gives, half of them each way)
+          const px = -sh * s, pz = ch * s, a = DEB.push - ((d.vx - c.vx) * px + (d.vz - c.vz) * pz);
+          if (a > 0) {   // (no faster than it was or than the car and push: squeezed against a barrier or another car it is not shot out along the gap)
+            const v0 = Math.hypot(d.vx, d.vz); d.vx += a * px; d.vz += a * pz;
+            const v1 = Math.hypot(d.vx, d.vz), lim = Math.max(v0, Math.hypot(c.vx, c.vz) + DEB.push); if (v1 > lim) { d.vx *= lim / v1; d.vz *= lim / v1; }
+          }
         }
         return;
       }
@@ -7914,7 +7921,8 @@ const Core = (function () {
     // the red flag's hold: the track cleared (the debris and the glass off it, the retired cars to where they may stand)
     _redClear() {
       const T = this.track;
-      for (const d of this.debris) d.dead = true; this.debris.length = 0; if (this.glass) this.glass.length = 0;
+      for (const d of this.debris) { d.dead = true; if (!d.rest && Math.abs(Math.cos(d.rx) * Math.cos(d.rz)) < 0.94) d.ground = false; }   // (as the cap of 40: one taken off while it still tumbles or rolls is not left drawn on its edge)
+      this.debris.length = 0; if (this.glass) this.glass.length = 0;
       for (const c of this.cars) if (dnf(c) && !c.net && !c.finished && !(c.wreck.stop && (c.wreck.fin || retiredOff(T, c, -0.2)))) this._parkRetired(c);
     }
 
