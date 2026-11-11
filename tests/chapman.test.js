@@ -4,7 +4,8 @@
 // road both ways (uphill on the left, downhill on the right as the race sees it), goes round things on its right, a bus pulls in to the left;
 // the police start the run on the left half too. Vršič's traffic still keeps right. A whole race up to the view point (12 AI + the player on
 // autopilot): every car finishes and pulls up in its own slot past the line; a whole duel in the traffic on autopilot: both reach the top and
-// the traffic keeps moving, on its own (left) half. The medal times of the time trial: the stock rally car on the autopilot.
+// the traffic keeps moving, on its own (left) half. The medal times of the time trial: the stock rally car on the autopilot. The hills behind the
+// barrier line (def.hills): a car up onto their foot, put back from them; the sea side's wall as it was.
 //   node tests/chapman.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -107,6 +108,36 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   Math.random = orig;
   check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && P.finished && Math.abs(P.finishTime * 1.01 - M.cs[0]) < 1.5,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
+}
+
+// 7. the hills behind the barrier line (def.hills, tools/chapman-hribi.mjs; the user, 11. 11. 2026): where the ground rises behind it no fence, no
+// ditch and no wall at the line; a car runs up onto the hill's foot (higher, tilted), no further than where the ground is 0.9 m high; one held
+// against the hill with the throttle is stuck and put back on the road (the button, Race.rescue). On the sea side the wall stays; no other track has hills
+{
+  const H = T.hill, on = (sR, si) => !!(H && H.on[si][T.idx(T.startS + sR)]), len = (si) => H ? H.on[si].reduce((a, b) => a + b, 0) * T.ds : 0;
+  check('hills: on the mountain side at the reports\' places (521, 893, 2133 m on the left) and the rock at 2133 m on the right, not on the sea side at 893 m; no other track has hills',
+    on(521, 0) && on(893, 0) && on(2133, 0) && on(2133, 1) && !on(893, 1) && len(0) > 4000 && len(1) > 1000 && C.TRACKS.every(d => d.id === 'chapman' || !d.hills),
+    H ? `left ${len(0).toFixed(0)} m, right ${len(1).toFixed(0)} m of ${T.raceLen.toFixed(0)} m` : 'no hills');
+  const drive = (sR, side, deg, v, thr, secs) => {   // (the player 2.5 m inside the barrier line, turned deg towards it, at v m/s, the throttle held, straight on)
+    const orig = Math.random; Math.random = seeded(7);
+    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player, i = T.idx(T.startS + sR), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar - 2.5), h = T.hd[i] + side * deg * Math.PI / 180;
+    P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = sR; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
+    let past = -9, lift = 0, tilt = 0, resc = null;
+    for (let t = 0; t < secs && !resc; t += DT) {
+      P.inThr = thr; P.inBrk = 0; P.inSteer = 0; P.inHand = 0; r.step(DT);
+      const q = P.q, ry = T.elevAt(q.s, {}).y; if (Math.sign(q.d) === side) past = Math.max(past, Math.abs(q.d) - (side > 0 ? q.br : q.bl)); lift = Math.max(lift, P.y - ry);
+      if (P.hl && P.hl.on) tilt = Math.max(tilt, Math.abs(Math.atan(P.hl.lat)) * 180 / Math.PI);
+      if (P.stuckT > 2.5) { r.rescue(P); r.step(DT); resc = { t, d: P.q.d, dy: P.y - T.elevAt(P.q.s, {}).y }; } }
+    Math.random = orig; return { past, lift, tilt, resc, lim: (side > 0 ? H.out[1] : H.out[0])[i] };
+  };
+  if (H) {
+    const up = drive(521, -1, 20, 15, 0.3, 3), sea = drive(893, 1, 20, 15, 0.3, 3), held = drive(521, -1, 70, 6, 0.8, 8);
+    check('hills: at 521 m a car runs up onto the hill\'s foot (its middle past the old barrier line, higher, tilted) and no further than the limit', up.past > 0.1 && up.past < up.lim && up.lift > 0.2 && up.tilt > 10,
+      `its middle ${up.past.toFixed(2)} m past the line (the limit ${up.lim.toFixed(2)} m for its corners), up ${up.lift.toFixed(2)} m, tilted ${up.tilt.toFixed(0)}°`);
+    check('hills: at 893 m on the sea side the wall stays at the barrier line (no hill, the car not lifted)', sea.past < -0.3 && sea.lift < 0.02, `its middle ${(-sea.past).toFixed(2)} m inside the line, up ${sea.lift.toFixed(2)} m`);
+    check('hills: a car held against the hill with the throttle is stuck within 4 s and put back on the road (the button, Race.rescue)', held.resc && held.resc.t < 4 && Math.abs(held.resc.d) < T.w && Math.abs(held.resc.dy) < 0.05,
+      held.resc ? `put back after ${held.resc.t.toFixed(1)} s, ${held.resc.d.toFixed(1)} m from the middle, ${held.resc.dy.toFixed(2)} m from the road` : 'never stuck');
+  }
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

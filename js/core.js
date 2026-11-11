@@ -304,6 +304,20 @@ const Core = (function () {
           if (B[i] > t) B[i] = lerp(B[i], t, f); if (d >= a && d <= b) D[sd > 0 ? 1 : 0][i] = 1;
         }
       }
+      // hills (def.hills; Chapman's Peak, written by tools/chapman-hribi.mjs from the terrain): where the ground rises behind the barrier line, no
+      // barrier (the user, 11. 11. 2026: no fence, no ditch, the car may drive up into the hill). y: per side ([0] left, [1] right) the ground's height
+      // at HILL_D past the barrier line, three a sample (at the line and on the road's side of it: the road's height); out: how far past the line the
+      // limit is (where the ground is HILL_W high, at HILL_D[2] at most; eased in and out over 8 m at a hill's ends); on: 1 on a hill. hillGround
+      // (the ground under a car's wheels, the pull down the slope), wallCollide (the limit)
+      this.hill = null;
+      if (def.hills && def.hills.n === N) {
+        const H = this.hill = { d: HILL_D, y: [new Float32Array(N * 3), new Float32Array(N * 3)], out: [new Float32Array(N), new Float32Array(N)], on: [new Uint8Array(N), new Uint8Array(N)] };
+        [def.hills.L, def.hills.R].forEach((runs, si) => { for (const [i0, str] of runs) { const n = str.length / 3;
+          for (let k = 0; k < n && i0 + k < N; k++) { const i = i0 + k; let po = 0, py = 0, o = -1;
+            for (let j = 0; j < 3; j++) { const y = H.y[si][i * 3 + j] = HILL_DIG.indexOf(str[k * 3 + j]) * 0.05;
+              if (o < 0 && y >= HILL_W) o = po + (HILL_D[j] - po) * (HILL_W - py) / Math.max(1e-6, y - py); po = HILL_D[j]; py = y; }
+            const f = Math.min(1, k / 4, (n - 1 - k) / 4); H.out[si][i] = (o < 0 ? HILL_D[2] : o) * f * f * (3 - 2 * f); H.on[si][i] = 1; } } });
+      }
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
       if (def.sideRoads && def.sideRoads.length && open) this._buildStubs(def.sideRoads);
@@ -2215,6 +2229,31 @@ const Core = (function () {
     c.gradeNow += (dF + dB) / 2; c.curvNow += dF - dB;
   }   // (Track.bankAt output; _bk2: the new map's banked bend, track.bank2)
   const NV_STEP = 0.9;   // (m in the metre each way: nvGround's step)
+  // the hills behind the barrier line (Track.hill; Chapman's Peak): the ground under a car's wheels there (none on the road's side of the barrier line:
+  // a car that never comes past it drives as before), the car's height the wheels' mean, its tilt (c.hl: lat, lon, the ground's rise in the metre
+  // to the car's right and ahead; the pull down the slope in the steps, the tilt in the renderer). c.hl only on a track with hills
+  const HILL_D = [0.3, 1.2, 2.1], HILL_W = 0.9, HILL_DIG = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  function hillY(H, si, i, o) {   // (the ground o m past the barrier line, side si, sample i; past HILL_D[2] on up as from HILL_D[1])
+    const y = H.y[si], b = i * 3;
+    if (o <= HILL_D[0]) return y[b] * o / HILL_D[0];
+    if (o <= HILL_D[1]) return y[b] + (y[b + 1] - y[b]) * (o - HILL_D[0]) / (HILL_D[1] - HILL_D[0]);
+    return y[b + 1] + (y[b + 2] - y[b + 1]) * (o - HILL_D[1]) / (HILL_D[2] - HILL_D[1]);
+  }
+  function hillGround(c, trk) {
+    const H = trk.hill, q = c.q; if (c.hl) c.hl.on = 0;
+    if (q.k >= 0) return;   // (in a side road)
+    const a = q.a, b = Math.min(trk.N - 1, a + 1); if (!H.on[0][a] && !H.on[0][b] && !H.on[1][a] && !H.on[1][b]) return;
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), tw = c.tw, A = c.m.a, B = c.m.b, t = q.t; let y0 = 0, y1 = 0, y2 = 0, y3 = 0;
+    for (let k = 0; k < 4; k++) {   // (the wheels as the steps' wpos: 0, 1 the front left and right, 2, 3 the rear)
+      const lx = k < 2 ? A : -B, ly = k & 1 ? tw : -tw, d = q.d + (lx * ch - ly * sh) * q.nx + (lx * sh + ly * ch) * q.nz, si = d > 0 ? 1 : 0, o = Math.abs(d) - (si ? q.br : q.bl);
+      if (o <= 0) continue;
+      const y = (H.on[si][a] ? hillY(H, si, a, o) * (1 - t) : 0) + (H.on[si][b] ? hillY(H, si, b, o) * t : 0);
+      if (k === 0) y0 = y; else if (k === 1) y1 = y; else if (k === 2) y2 = y; else y3 = y;
+    }
+    if (!(y0 || y1 || y2 || y3)) return;
+    const hl = c.hl || (c.hl = { on: 0, lat: 0, lon: 0 });
+    hl.on = 1; hl.lat = (y1 + y3 - y0 - y2) / (4 * tw); hl.lon = (y0 + y1 - y2 - y3) / (2 * (A + B)); c.roadY += (y0 + y1 + y2 + y3) / 4;
+  }
 
   /* ---------------------------------------------------------------------
      THE SEMI-TRAILER (model.trailer: the TITAN CISTERNA, docs/titan-cisterna.md): a body of its own on the tractor's fifth wheel. c.tl
@@ -2684,6 +2723,7 @@ const Core = (function () {
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
       if (trk.ground2) nvGround(this, trk);   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest; by the car's height, under the hill in the tunnel or on it)
       if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); const ob = !_bk2.sl && this.mxSl; this.bankSl = ob ? this.mxSl : _bk2.sl; this.bnx = ob ? this.mxBx : _bk2.nx; this.bnz = ob ? this.mxBz : _bk2.nz; }   // (the new map's banked bend, js/newmap.js ringBank: its height is in ground2, here its tilt and the way across it)
+      if (trk.hill && trk.hasElev) hillGround(this, trk);   // (Chapman's Peak: on a hill's foot behind the barrier line, Track.hill)
       if (this.rl) { this.xRollStep(dt); return; }   // (Razbijanje · nov način: rolling over, xRollStart)
       // (Trki med avti: a knock's push sideways, kTake, apart from the drift law: out of the speed here, scrubbed by the tyres and put back after the
       // move below; less what something else took of the speed that way since it was put there (cSr: that speed then; a wall, say), never the
@@ -2871,6 +2911,7 @@ const Core = (function () {
       }
       if (this.bankSl && grounded) { const b2 = trk.bank2 && !trk.bank, a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = (b2 ? this.bnx : this.q.nx) * a2, wz = (b2 ? this.bnz : this.q.nz) * a2, fl = m * (wx * ch + wz * sh);
         Fx += fl; Fy += m * (-wx * sh + wz * ch); Fgrav += fl; }
+      if (this.hl && this.hl.on && grounded) { const hl = this.hl, k = -m * G / Math.sqrt(1 + hl.lat * hl.lat + hl.lon * hl.lon); Fx += k * hl.lon; Fy += k * hl.lat; Fgrav += k * hl.lon; }   // (down a hill's slope, hillGround)
       // ---- yaw: follow (path rate + attitude rate) with a short lag and a yaw-acceleration limit ----
       let rT = clamp(wN + dAtt, -K.rMax, K.rMax);
       if (!fwd) rT = (vl < -0.5 ? -stIn : 0) * Math.min(Math.abs(vl) / P.rmin, 1.6);   // reversing: kinematic
@@ -2924,6 +2965,7 @@ const Core = (function () {
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }
       if (trk.ground2) nvGround(this, trk);
       if (trk.bank2 && !trk.bank) { trk.bank2(this.x, this.z, _bk2); const ob = !_bk2.sl && this.mxSl; this.bankSl = ob ? this.mxSl : _bk2.sl; this.bnx = ob ? this.mxBx : _bk2.nx; this.bnz = ob ? this.mxBz : _bk2.nz; }
+      if (trk.hill && trk.hasElev) hillGround(this, trk);   // (Chapman's Peak: on a hill's foot behind the barrier line, Track.hill)
       if (this.rl) { this.xRollStep(dt); return; }
       if (this.csKc) { this.w += this.csKc * K.kick; this.csKc = 0; }   // (cs's attitude kick from the traffic, debris or the police: a turn of the yaw here)
       if (this.nvH !== this.h) this.nvA = 0;   // (the heading set from outside, e.g. put back on the road: no slide carried over)
@@ -3090,6 +3132,7 @@ const Core = (function () {
       }
       if (this.bankSl && grounded) { const b2 = trk.bank2 && !trk.bank, a2 = -G * this.bankSl / Math.sqrt(1 + this.bankSl * this.bankSl), wx = (b2 ? this.bnx : this.q.nx) * a2, wz = (b2 ? this.bnz : this.q.nz) * a2, fl = m * (wx * ch + wz * sh);
         Fx += fl; Fy += m * (-wx * sh + wz * ch); Fgrav += fl; }
+      if (this.hl && this.hl.on && grounded) { const hl = this.hl, k = -m * G / Math.sqrt(1 + hl.lat * hl.lat + hl.lon * hl.lon); Fx += k * hl.lon; Fy += k * hl.lat; Fgrav += k * hl.lon; }   // (down a hill's slope, hillGround)
       // ---- the stability aid (the drift assist): past its slide angle a yaw torque back, while the slide still grows ----
       const att = bSS - beta;   // (the slide beyond the steady one the steer asks for)
       if (fwd && grounded && spd > 4) { const ex = Math.abs(att) - NA.att; if (ex > 0 && this.w * att > 0) Mz -= Math.sign(att) * NA.k * ex * this.I * lo; }
@@ -3791,6 +3834,7 @@ const Core = (function () {
       else {
         const q = trk.query(px, pz, c.q.i, _q);
         let br = q.br, bl = q.bl, inner = -1e9, sd = 1;
+        if (trk.hill && !(q.k >= 0)) { const O = trk.hill.out, b = Math.min(trk.N - 1, q.a + 1); br += O[1][q.a] + (O[1][b] - O[1][q.a]) * q.t; bl += O[0][q.a] + (O[0][b] - O[0][q.a]) * q.t; }   // (on a hill: its limit up it, Track.hill)
         if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom; a lane on the left: all measured to that side, sd)
         if (trk.def.pit) { const u = trk.pitLead(q.s); if (u > 0) { const e = trk.w + 0.7 + 7 * u; if (trk.def.pit[0] > 0) br = Math.max(br, e); else bl = Math.max(bl, e); } }   // (the deceleration and acceleration lanes: open to every car, their barrier taken away out to their outer edge, Track.pitJ)
         const qd = q.d * sd;
