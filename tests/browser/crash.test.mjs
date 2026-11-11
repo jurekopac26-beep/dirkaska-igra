@@ -312,7 +312,7 @@ try {
   // theirs too (the spoiler: a wing where the car has one); a crushed end caves the roof in, the harder the knock the deeper (the roof's
   // own top, what lies on it left out). A front bumper that carries an aero car's downforce (the Superkombi's: its splitter is no part of
   // its own) comes off as before, the core's rule (core.js maskHeld): the bonnet still neither hangs nor comes off
-  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'sokol']) {
+  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'sokol', 'tornado']) {
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
@@ -353,7 +353,7 @@ try {
   // posts as built (darkFn); then a pit stop's repair (the crew's work stepped as repair.test.mjs does it) brings the colours back to the
   // car's as built, and Race.repairCar builds it afresh in them
   const RSEQ = [[0.15, -1, 0], [0.15, 1, -0.6], [0.15, 0.1, -1], [0.15, -1, 0.6], [0.3, 1, 0], [0.3, 0, 1], [0.05, -1, -0.6], 'top', [0.15, 1, 0.6], [0.15, -0.1, 1]], NK = RSEQ.length;
-  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'sokol'];   // (render.js XT_MIN: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
+  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado'];   // (render.js XT_MIN: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
   // the crew's repair stepped by hand (repair.test.mjs) on the car Q (frames(k): k frames drawn): the painted points' colours against the
   // car's as built (xc.col0), the roof's and all of them, before, through it and after (Race.repairCar: built afresh); and at every one of
   // its 16 steps (REPAIR_N; the middle of each, and 0, 0.3, 0.65, 0.95) the roof shell's points (nNew) and the area (in plan) of its facets,
@@ -389,7 +389,7 @@ try {
   // (black paint, a car's dark trim too, on its warm way as the black car's: on it, as dark as it should be or stopped at the glass's
   // edge or held back with its facet, never lighter, no nearer the glass colours than 0.066 or than it was)
   const bkOk = (DK) => DK.bk === 0 || (DK.offWay < 1e-4 && DK.bkErr < 1e-4 && DK.bkStopBad === 0 && DK.bkUp === 0 && (DK.bkFar === null || DK.bkFar >= 0.066 - 1e-4) && (DK.bkNear === null || DK.bkNear >= -1e-4));
-  for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['tiger', 'normal'], ['superkombi', 'normal'], ['sokol', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
+  for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['tiger', 'normal'], ['superkombi', 'normal'], ['sokol', 'normal'], ['tornado', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
     const rr = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: det, carId: rival ? 'tornado' : id }, (A) => {
       const SEQ = A[0], g = window.__game, R = g.race, P = R.player;
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }

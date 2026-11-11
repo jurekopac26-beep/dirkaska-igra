@@ -162,9 +162,11 @@ Razdelitev na tabli #382 (komentarja 6796604526 in 6800140271): drugo polovico d
 | Avto | Normalni prej | Normalni potem | Visoki potem | Vrh notranjosti pod streho (prej / potem) |
 |---|---|---|---|---|
 | SOKOL R | 1322 / 658 | 1322 / 1380 | 1361 / 1736 | 0,898 / 0,881 |
+| TORNADO V8 | 1252 / 756 | 1260 / 1282 | 1313 / 1638 | 1,217 / 1,217 |
 
 - SOKOL R: ogledali sta del lupine (`K.skin`, jadro), zato je pokrov odprt in steklo `K.mirGlass` (poči kot pri `K.mirror`); rezervoar pod krovom za sedeži je odstranjen (neviden); voznik Visokih seže do 1,12 m (testi tečejo na Normalnih).
 - SOKOL R, odtis strehe (`body.crush`): začne se na sredini steklenih zadnjih vrat (x −1,33 namesto −1,5). Prej je udarec od zadaj upognil predvsem steklo in streho povprečno pogreznil le 2,0 cm (14 % meje `rlim` 0,141; test trkov, točka 10, zahteva 15 %). Zdaj jo pogrezne 0,5 / 1,4 / 2,5 cm (lahek, srednji, močan), močan udarec v nos 3,5 cm (prej 3,9). Fizika trkov ostane enaka; spremenita se samo videz in razdelitev polja strehe.
+- TORNADO V8: ogledali `K.mirror` s `crack: 1` (steklo poči), zato zunaj +4 trikotnike na ogledalo kot TIGER GT in SUPERKOMBI; najvišja v kabini ostane kletka (1,217 m), nova notranjost je pod njo; udor strehe od zadaj 0,2 / 0,6 / 1,2 cm (meja `rlim` 6,5 cm), odtis strehe ostane.
 
 ## Predaja
 
