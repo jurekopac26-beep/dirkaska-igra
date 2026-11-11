@@ -3767,8 +3767,10 @@ const World = (function () {
       const f = s / ds, i0 = Math.floor(f), t = f - i0, i = at(i0), j = at(i0 + 1), L = (A) => A[i] + (A[j] - A[i]) * t;
       let y = HYi(i) + (HYi(j) - HYi(i)) * t + 0.035; if (T.bank) y += T.bankAt(s, lo, bk).dy;
       return [L(T.px) + L(T.nx) * lo, y, L(T.pz) + L(T.nz) * lo]; };
+    const onTall = (p) => !!T._tall && T._tall.some(Rg => (p[0] - Rg.x) ** 2 + (p[2] - Rg.z) ** 2 < (Rg.ie + 0.2) ** 2);   // (a ring's tall island (Medvode): no wear on its grass)
     const decal = (s, lo, hl, hw, rot, u0, v0, u1, v1, col) => {   // centre (s, lo), half length and width along and across the road, turned by rot; an atlas cell
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
+      if (T._tall && Q.some(q => onTall(q[0]))) return;
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
     // patches, every 40-100 m, more often in a wheel track than not
     for (let s = R() * 50; s < len - 6; s += (40 + R() * 60) * sp / Math.sqrt(kw)) {
@@ -3807,6 +3809,7 @@ const World = (function () {
           const i = at(k), cc = T.rl[i] + sd * 0.78;
           if (deck(i) || Math.abs(cc) > w - 0.5) { prev = null; continue; }
           const a = (0.1 + 0.46 * use[i]) * (0.8 + 0.4 * R()), row = [cc - 0.36, cc - 0.13, cc + 0.13, cc + 0.36].map(lo => pt(i * ds, lo)), c = chunk(row[1]);
+          if (T._tall && row.some(onTall)) { prev = null; continue; }
           const put = (R4, al) => R4.map((p, q) => vtx(c, p, [0.07, 0.07, 0.08, q === 1 || q === 2 ? al : 0], [[0.53, 0.66, 0.84, 0.97][q], 0.25])), ids = put(row, a);
           if (prev && prev.c !== c) prev = { ids: put(prev.row, prev.a) };   // (into the next chunk: the last row again, so the strip goes on)
           if (prev) for (let q = 0; q < 3; q++) { face(c, prev.ids[q], prev.ids[q + 1], ids[q + 1]); face(c, prev.ids[q], ids[q + 1], ids[q]); }
@@ -4194,8 +4197,8 @@ const World = (function () {
     // hotels), the lamps in its two built-up stretches
     vrsic: { reg: 'SI', town: 50, out: 90, towns: [{ n: 'KRANJSKA GORA', d0: null, d1: 2404, lamps: [[-60, 1196], [1596, 2090]] }] },
     // Medvode (the start in it), Zbilje, Valburga, Smlednik (def.names, OSM); their built-up stretches. The castle hill after Smlednik: out of them
-    medvode: { reg: 'SI', town: 50, out: 70, towns: [{ n: 'MEDVODE', d0: null, d1: 1786, lamps: [[-60, 1770]] }, { n: 'ZBILJE', d0: 2052, d1: 3502, lamps: [[2058, 2880]] },
-      { n: 'VALBURGA', d0: 4036, d1: 4688, lamps: [[4040, 4680]] }, { n: 'SMLEDNIK', d0: 4704, d1: 5242, lamps: [[4708, 5236]] }] },
+    medvode: { reg: 'SI', town: 50, out: 70, towns: [{ n: 'MEDVODE', d0: null, d1: 1786, lamps: [[-60, 1770]] }, { n: 'ZBILJE', d0: 2052, d1: 3548, lamps: [[2058, 2926]] },
+      { n: 'VALBURGA', d0: 4082, d1: 4735, lamps: [[4087, 4727]] }, { n: 'SMLEDNIK', d0: 4751, d1: 5289, lamps: [[4755, 5283]] }] },
     // Ouni and Kakaristo: the real stage's places (a farm, the junction in the fields: the name only). The village of the added section has no
     // name that could be checked: no board, no limits, no lamps
     ouni: { reg: 'FI', town: 50, out: 80, towns: [{ n: 'OUNI', d0: 1576, hamlet: true }, { n: 'KAKARISTO', d0: 8634, hamlet: true }] },
@@ -4239,7 +4242,9 @@ const World = (function () {
       return q.st <= S.Lend + 2 && Math.abs(q.u) <= T.stubHw(S, q.st) + S.lim + m ? S : null; };
     const edge = (i, side) => T.wAt(i) + (T.walk ? T.walk[side > 0 ? 1 : 0][i] : 0);   // (the asphalt's edge, with the sidewalk)
     const dOf = (i) => i * T.ds - sS;
-    const yAt = (i, x, z) => { const h = T.hy ? T.hy[i] : 0, y = gH(x, z); return Math.max(h - 0.7, Math.min(h + 0.35, y)); };
+    // the ground one sees: def.barrier's inside the barrier is the run-off's, at the height the cars drive on (Track.yAt; World draws it there), not the terrain under it
+    const QG = {}, gAt = T.def.barrier ? (x, z, i) => { const q = T.query(x, z, i, QG); return Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) ? T.yAt(q) : gH(x, z); } : (x, z) => gH(x, z);
+    const yAt = (i, x, z) => { const h = T.hy ? T.hy[i] : 0, y = gAt(x, z, i); return Math.max(h - 0.7, Math.min(h + 0.35, y)); };
     const small = [], cell = (k) => { let j = small.indexOf(k); if (j < 0) { j = small.length; small.push(k); } return j; };   // (the atlas cells this road needs)
     const names = [], board = (nm, crossed) => { names.push([nm, crossed]); return names.length - 1; };
     { const n0 = o.props.length; o.props = o.props.filter(p => p.kind !== 'vboard'); st.removed = n0 - o.props.length; }   // (Medvode's boards without lettering: the lettered ones instead)
@@ -4270,8 +4275,8 @@ const World = (function () {
         const si = side > 0 ? 1 : 0, gp = T.gap && T.gap[si]; if (gp && (gp[i] || gp[Math.max(0, i - 2)] || gp[Math.min(N - 1, i + 2)])) continue;
         const at = (l) => [T.px[i] + T.nx[i] * side * l, T.pz[i] + T.nz[i] * side * l];
         const [lat, behind] = fitLat(i, side, edge(i, side) + off, hw, rc); let ok = true;
-        for (const l of [lat - hw, lat, lat + hw]) { const [x, z] = at(l);   // (the whole sign: not into a rock face or over a drop (its poles reach the ground), a house, a side road, another leg of the road)
-          if ((T.hy && (gH(x, z) > T.hy[i] + 0.8 || gH(x, z) < T.hy[i] - 0.95)) || (T.onBuilding && T.onBuilding(x, z, 0.4)) || stub(x, z, 0.4, i) || Math.abs(T.nearestIdx(x, z) - i) * T.ds > 40) { ok = false; break; } }
+        for (const l of [lat - hw, lat, lat + hw]) { const [x, z] = at(l), g = T.hy ? gAt(x, z, i) : 0;   // (the whole sign: not into a rock face or over a drop (its poles reach the ground), a house, a side road, another leg of the road)
+          if ((T.hy && (g > T.hy[i] + 0.8 || g < T.hy[i] - 0.95)) || (T.onBuilding && T.onBuilding(x, z, 0.4)) || stub(x, z, 0.4, i) || Math.abs(T.nearestIdx(x, z) - i) * T.ds > 40) { ok = false; break; } }
         if (!ok) continue;
         const [x, z] = at(lat);
         if (stub(x, z, 0.8, i) || busy(x, z, r)) continue;
@@ -4296,17 +4301,18 @@ const World = (function () {
       const next = cfg.towns.find(u => u.d0 != null && u.d0 > t.d1 - 1 && u.d0 < t.d1 + 60); if (!next && sign(t.d1 + 26, 'lim:' + cfg.out)) st.lim++;
     }
     // the chevrons on the outside of the sharpest bends: two, three round a hairpin (more than 150 degrees), not in a roundabout; in front of the rail or
-    // the wall round the bend where there is one (a paved hairpin's wall may stand well out), else 1.2 m off the asphalt
+    // the wall round the bend where there is one (a paved hairpin's wall may stand well out), else 1.2 m off the asphalt (def.barrier: the circuit's
+    // barrier far out, its bale stacks in front of it: 1.2 m off the asphalt, where the real road has them)
     for (const c of T.corners.slice().sort((p, q) => p.i0 - q.i0)) {
       if (!(c.minR <= 17 || c.angle > 2.6)) continue;
       const d0 = dOf(c.i0); if (d0 < 40 || d0 > T.finishS - sS - 10) continue;
       const side = -c.dir, n = c.angle > 2.6 ? 3 : 2, k = 'chev:' + (c.dir > 0 ? 'R' : 'L');
       for (let q = 0; q < n; q++) { const i = Math.round(c.i0 + (c.i1 - c.i0) * (0.12 + 0.76 * q / (n - 1))), si = side > 0 ? 1 : 0;
         if ((T.gap && T.gap[si][i]) || dOf(i) > T.finishS - sS - 10 || T.rings.some(R => Math.hypot(T.px[i] - R.x, T.pz[i] - R.z) < R.wz + 5)) continue;   // (not past the finish, nor round a roundabout)
-        const bar = side > 0 ? T.br[i] : T.bl[i], [lat, behind] = fitLat(i, side, visBar(i, side) ? Math.max(edge(i, side) + 1.2, bar - 1.05) : edge(i, side) + 1.2, 0.75, 0.12);   // (at the rail or the wall round the bend where there is one)
+        const bar = side > 0 ? T.br[i] : T.bl[i], [lat, behind] = fitLat(i, side, visBar(i, side) && !T.def.barrier ? Math.max(edge(i, side) + 1.2, bar - 1.05) : edge(i, side) + 1.2, 0.75, 0.12);   // (at the rail or the wall round the bend where there is one)
         const x = T.px[i] + T.nx[i] * side * lat, z = T.pz[i] + T.nz[i] * side * lat;
         if (stub(x, z, 0.5, i) || busy(x, z, 0.6) || (T.onBuilding && T.onBuilding(x, z, 1.2))) continue;
-        if (T.hy && (gH(x, z) > T.hy[i] + 0.8 || gH(x, z) < T.hy[i] - 0.95)) continue;
+        if (T.hy) { const g = gAt(x, z, i); if (g > T.hy[i] + 0.8 || g < T.hy[i] - 0.95) continue; }
         placed.push(x, z, 0.6);
         const j = Math.max(0, i - 16), ax = T.px[j] - x, az = T.pz[j] - z, al = Math.hypot(ax, az) || 1;   // (facing the cars coming into the bend)
         items.push({ kind: 'chev', p: { i, x, z, y: yAt(i, x, z), d: dOf(i), lat, side, behind }, nx: ax / al, nz: az / al, cell: cell(k), y: 1.7, w: 1.4, h: 1.4 }); st.chev++; }
@@ -5217,7 +5223,7 @@ const World = (function () {
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, ownRnd, parkOn, pikesProps, pitExcl, pitJunction, pitKerbs, pitLaneScenery, pitOpen, pitRoadAt, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
-    shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wrapS
+    shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, tyreStack, valueNoise2, vary, waterMat, waterline, wrapS
   };
   Object.defineProperties(API, {
     LOD: { get: () => LOD },

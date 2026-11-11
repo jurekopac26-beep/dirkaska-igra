@@ -217,11 +217,11 @@
   "jsMs": 1.14
  },
  "medvode": {
-  "calls": 130,
-  "maxCalls": 151,
-  "kverts": 366,
-  "maxKverts": 545,
-  "jsMs": 1.2
+  "calls": 131,
+  "maxCalls": 146,
+  "kverts": 533,
+  "maxKverts": 779,
+  "jsMs": 1.82
  },
  "montreal": {
   "calls": 185,
@@ -565,5 +565,19 @@
   "kverts": 619,
   "maxKverts": 779,
   "jsMs": 1.03
+ },
+ "hakone": {
+  "calls": 184,
+  "maxCalls": 196,
+  "kverts": 253,
+  "maxKverts": 273,
+  "jsMs": 4.38
+ },
+ "killar": {
+  "calls": 146,
+  "maxCalls": 162,
+  "kverts": 282,
+  "maxKverts": 353,
+  "jsMs": 1.99
  }
 }

@@ -910,10 +910,10 @@ const Sfx = (function () {
     set(eng.out.gain, 0, 0.02); set(eng.tg.gain, 0, 0.02);   // (the old voice silent)
     if (!kitPl) kitPl = kitVoice(ctx, bus, 1.0, false, engTaps());
     if (kitPl.car !== P) kitReset(kitPl, P);
-    const thr = clamp(num(revInput, 0), 0, 1), locked = !!P.locked;
-    let rpm = P.rpm;
+    const thr = clamp(num(revInput, 0), 0, 1), locked = !!P.locked, fb = falls(P);
+    let rpm = fb ? M.idle : P.rpm;
     if (locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * thr + KR() * 60 * thr;   // (on the grid: revving with the throttle, as the old voice)
-    kitStep(kitPl, M, { rpm, load: locked ? thr : P.inThr, speed: P.speed, brk: P.inBrk, cut: P.shiftT > 0 ? 0.35 : 1, pl: true, dt, tc: 0.015, locked });
+    kitStep(kitPl, M, { rpm, load: locked ? thr : fb ? 0 : P.inThr, speed: P.speed, brk: P.inBrk, cut: P.shiftT > 0 ? 0.35 : 1, pl: true, dt, tc: 0.015, locked });
     plM = M;
   }
   // the rivals with a preset among the three nearest (W: [car, its engine slot k, distance, pan (its side of the camera; null: none)]): each
@@ -931,7 +931,8 @@ const Sfx = (function () {
       if (!V) continue;
       const M = c.m, loud = clamp(num(M.sndP.loud, 1), 0.1, 3), att = clamp(1 - d / (70 * (0.5 + 0.5 * loud)), 0, 1);
       V.level = ai[k].level;
-      kitStep(V, M, { rpm: c.rpm, load: c.inThr || 0, speed: c.speed, brk: c.inBrk, cut: 1, pl: false, att, dop: ai[k].dop, dt, tc: 0.03, locked: !!c.locked });
+      const cf = falls(c);
+      kitStep(V, M, { rpm: cf ? M.idle : c.rpm, load: cf ? 0 : c.inThr || 0, speed: c.speed, brk: c.inBrk, cut: 1, pl: false, att, dop: ai[k].dop, dt, tc: 0.03, locked: !!c.locked });
       aiSeen[k] = [M.id, V.kind, V.dop, V.tg ? V.tg.ff : null];
       if (V.pn && pan != null) set(V.pn.pan, pan, 0.05);
     }
@@ -1158,7 +1159,7 @@ const Sfx = (function () {
       if (S.fire == null && !S.fired && dBurning(c)) S.fire = t;
       if (S.fire != null && t - S.fire > D_FIRE) { S.fire = null; S.fired = true; }
       if (S.fire != null) dFireC.push([c, S]);
-      if (W && W.wl && c.speed > 2) dScrC.push([c, S]);
+      if ((falls(c) ? c.fall.b.nc : W && W.wl) && c.speed > 2) dScrC.push([c, S]);   // (a body falling down a slope: it scrapes where it slides over the ground, with or without its wheels; in the air nothing does)
     }
   }
   // where a car is heard from the player's: [loudness (1 - d / R)^2, pan (its side on the screen)], null beyond R
@@ -1253,8 +1254,8 @@ const Sfx = (function () {
     const G = [];
     for (const [c] of dScrC) {
       const w = dWhere(c, P, cam, D_RL); if (!w) continue;
-      const W = c.wreck; let hard = 0, nl = 0; for (let k = 0; k < 4; k++) if (W.wl & (1 << k)) { nl++; const s = c.ws ? c.ws[k] : 0; if (s <= 1 || s === 4 || s >= 7) hard = 1; }
-      G.push([c, w[0] * 0.18 * Core.sstep(1.5, 10, c.speed) * (hard ? 1 : 0.35) * (nl > 1 ? 1.25 : 1), w[1]]);
+      const W = c.wreck, cf = falls(c); let hard = 0, nl = 0; if (!cf) for (let k = 0; k < 4; k++) if (W.wl & (1 << k)) { nl++; const s = c.ws ? c.ws[k] : 0; if (s <= 1 || s === 4 || s >= 7) hard = 1; }
+      G.push([c, w[0] * 0.18 * Core.sstep(1.5, 10, c.speed) * (cf ? 0.7 : hard ? 1 : 0.35) * (nl > 1 ? 1.25 : 1), w[1]]);   // (a falling body's bodywork over the slope's rock and earth: between a hub's on a road and on grass)
     }
     if (G.length || dScrV.some(v => v && v.car)) dPool(dScrV, G, 'scrape', (v, e) => { const c = e[0], f = c.speed / (2 * Math.PI * (c.m.rw || 0.32)); set(v.am.frequency, clamp(f, 0.5, 60), 0.1); set(v.amg.gain, e[1] * 0.5, 0.1); set(v.s.playbackRate, 0.75 + 0.5 * clamp(c.speed / 35, 0, 1), 0.1); });
   }
@@ -1320,22 +1321,25 @@ const Sfx = (function () {
 
   // (a value that is not a number never reaches a param: setTargetAtTime throws on one, and update would stop halfway every frame)
   const set = (p, v, tc) => { if (Number.isFinite(v)) p.setTargetAtTime(v, ctx.currentTime, tc || 0.03); };
+  // a car falling as a body down a slope (Padec čez rob, Core fallBody): its own step does not run, so its revs, its throttle and what was
+  // under its wheels are still those of the edge it went over: its engine idles meanwhile, and no tyre or wheel of it is heard on a road
+  const falls = (c) => !!(c.fall && c.fall.b);
 
   // per-frame update
   function update(race, player, view, revInput) {
     if (!ctx || ctx.state !== 'running' || !player) return;
     const tNow = ctx.currentTime, dt = clamp(tNow - lastT, 0, 0.1), tU = performance.now(); lastT = tNow;
-    const M = player.m;
+    const M = player.m, fb = falls(player);
     if (race && !prepRaces.has(race)) { prepRaces.add(race); raceKinds(race, player); }   // (a new race: its presets' waves made first, prep)
     // player engine (a registered vehicle, model.sndP: its preset's own voice, kitPlayer; the 11 others: their engine type, engSet)
     if (M.sndP) kitPlayer(player, M, revInput, dt);
     else {
       if (kitPl && kitPl.on) kitOff(kitPl, 0.02);
       plM = null;
-      let rpm = player.rpm;
+      let rpm = fb ? M.idle : player.rpm;
       if (player.locked) rpm = M.idle + (M.redline * 0.82 - M.idle) * (revInput || 0) + Math.random() * 60 * (revInput || 0);
       const r = clamp(rpm / M.redline, 0.08, 1.05);
-      const load = player.locked ? (revInput || 0) : player.inThr;
+      const load = player.locked ? (revInput || 0) : fb ? 0 : player.inThr;
       const cut = player.shiftT > 0 ? 0.35 : 1;
       engKindSet(eng, engKind(player));
       engSet(eng, player, rpm, clamp(load, 0, 1), 1, (0.1 + 0.1 * r + 0.1 * load) * cut * eng.level, dt, tNow);
@@ -1359,9 +1363,9 @@ const Sfx = (function () {
         const e = cam ? cam.matrixWorld.elements : null, pan = e ? clamp((dx * e[0] + dz * e[2]) / Math.max(d, 12) * 1.2, -0.9, 0.9) : null;   // (its side of the camera)
         if (c.m.sndP) { set(v.out.gain, 0); set(v.tg.gain, 0); kw.push([c, k, d, pan, null]); continue; }   // (a registered vehicle: kitRivals)
         engKindSet(v, engKind(c)); aiSeen[k] = [c.m.id, v.kind, v.dop];
-        const rr = clamp(c.rpm / c.m.redline, 0.1, 1.05);
+        const cf = falls(c), crpm = cf ? c.m.idle : c.rpm, rr = clamp(crpm / c.m.redline, 0.1, 1.05);
         const att = clamp(1 - d / 80, 0, 1);
-        engSet(v, c, c.rpm, clamp(c.inThr || 0, 0, 1), v.dop, att * att * (0.06 + 0.1 * rr) * v.level * 3, dt, tNow);
+        engSet(v, c, crpm, cf ? 0 : clamp(c.inThr || 0, 0, 1), v.dop, att * att * (0.06 + 0.1 * rr) * v.level * 3, dt, tNow);
         v.fx.gain.value = att;
         if (v.pn && pan != null) set(v.pn.pan, pan, 0.05);
       }
@@ -1372,7 +1376,7 @@ const Sfx = (function () {
     }
     // tyres
     const spd = player.speed;
-    const hardW = (w) => w <= 1 || w >= 7, onHard = hardW(player.ws[2]) && hardW(player.ws[3]);   // (asphalt, a kerb, the cobbles)
+    const hardW = (w) => w <= 1 || w >= 7, onHard = !fb && hardW(player.ws[2]) && hardW(player.ws[3]);   // (asphalt, a kerb, the cobbles; falling down a slope: on no road)
     const slide = Math.max(0, player.latR - 2.2) / 5 + player.spin * 0.8 + (player.lock ? 0.6 : 0) + (player.inHand > 0.5 && spd > 5 ? 0.5 : 0);
     const sq = onHard && spd > 3 ? clamp(slide, 0, 1.2) : 0, wet = race ? race.rain || 0 : 0;
     set(squeal.out.gain, sq * 0.09 * (1 - 0.7 * wet), 0.04);   // (a wet road hardly squeals)
@@ -1380,11 +1384,11 @@ const Sfx = (function () {
     set(hiss.out.gain, onHard ? wet * clamp(spd / 45, 0, 1) * 0.1 : 0, 0.08);
     set(squeal.bp.frequency, 980 + clamp(spd, 0, 50) * 6, 0.1);
     // offroad rumble
-    let off = 0, cob = 0; for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w >= 7) cob++; else if (w >= 2) off++; }
+    let off = 0, cob = 0; if (!fb) for (let k = 0; k < 4; k++) { const w = player.ws[k]; if (w >= 7) cob++; else if (w >= 2) off++; }
     set(rumble.out.gain, off / 4 * clamp(spd / 18, 0, 1) * 0.5, 0.05);
     set(rumble.flt.frequency, (player.ws.indexOf(3) >= 0 || player.ws.some(w => w === 5 || w === 6)) ? 520 : 240, 0.1);
     // a kerb: a hard buzz; the cobbles (the setts in the hairpins of Vršič): a softer, quicker drumming under the tyres
-    set(curbV.out.gain, player.onCurb ? clamp(spd / 20, 0, 1) * 0.35 : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * 0.2, 0.03);
+    set(curbV.out.gain, player.onCurb && !fb ? clamp(spd / 20, 0, 1) * 0.35 : player.air ? 0 : cob / 4 * clamp(spd / 22, 0, 1) * 0.2, 0.03);
     set(curbV.flt.frequency, player.onCurb || !cob ? 40 + spd * 3.5 : 60 + spd * 6, 0.05);
     set(wind.out.gain, clamp(spd / 70, 0, 1) ** 2 * 0.12, 0.1);
     // loose gravel (gravel traps, makadam): the crunch, louder in a slide, and stones pinging off the underbody; in the rain the crunch muffled by
@@ -1550,7 +1554,7 @@ const Sfx = (function () {
   }
   // a knocked-over trackside prop: hollow plastic 'tock' for a cone, rubbery thump for tyres, soft thud for straw, woody knock for a crate
   let lastKnock = 0;
-  const POLES = new Set(['bollard', 'lamp', 'sign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag', 'dpost', 'rssign', 'rschev', 'rsboard', 'bboard']);   // (Medvode's bollards, lamps, signs and flag poles, a circuit's braking board, the open roads' delineators, signs and boards: the same hollow 'tock' as a post)
+  const POLES = new Set(['bollard', 'lamp', 'sign', 'bsign', 'nsign', 'zaprta', 'vboard', 'flagp', 'cflag', 'dpost', 'rssign', 'rschev', 'rsboard', 'bboard', 'iboard']);   // (Medvode's bollards, lamps, signs and flag poles, a circuit's braking board, the open roads' delineators, signs and boards: the same hollow 'tock' as a post)
   function knock(kind, v) {
     if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(v)) return;
     const now = ctx.currentTime; if (now - lastKnock < 0.05) return; lastKnock = now;

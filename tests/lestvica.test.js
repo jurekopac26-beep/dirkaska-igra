@@ -106,7 +106,7 @@ const repack = (o) => L.pack(J(o));
     let pairs = 0, minR = 9, maxR = 0;
     for (const id of ids) {
       const d = C.TRACKS.find(x => x.id === id), T = new C.Track(d), tt = !!d.timeTrial;
-      const b = T.open ? L.bound(T, { kind: tt ? 'tt' : 'up' }, C.MODELS) : L.bound(T, { kind: 'lap' }, C.MODELS) * (id === 'nring' || id === 'livorno' ? 1 : 2);   // (the reference races: two laps, one of the long ones)
+      const b = T.open ? L.bound(T, { kind: tt ? 'tt' : 'up' }, C.MODELS) : L.bound(T, { kind: 'lap' }, C.MODELS) * (id === 'nring' || id === 'livorno' || id === 'hakone' ? 1 : 2);   // (the reference races: two laps, one of the long ones as in tests/races.test.js)
       for (const v of ['cs', 'cs/formula', 'cs/lm', 'cs/car']) {
         const g = GOLD[id + '/' + v]; if (!g || !(g.winner > 0)) continue;
         pairs++; const r = g.winner / b; minR = Math.min(minR, r); maxR = Math.max(maxR, r);

@@ -31,7 +31,8 @@
   "townsville",
   "troisrivieres",
   "uncompahgre",
-  "vrsic"
+  "vrsic",
+  "zurich"
  ],
  "datoteke": {
   "assets/flags/monaco.svg": "5f9c273b3bceeb2f",
@@ -142,6 +143,8 @@
   "assets/geo/l3-vrsic.webp": "b0d0fc55efc85c51",
   "assets/maps/corner-vrsic.webm": "db0456903c9eeca4",
   "assets/maps/corner-vrsic.webp": "a016d6a4b0b898bd",
+  "assets/maps/corner-zurich.webm": "7dbd0c6c345606fd",
+  "assets/maps/corner-zurich.webp": "902b9c31e12ee91d",
   "assets/maps/fly-gora.webm": "461da34d368441f0",
   "assets/maps/fly-gora.webp": "6aeee3ec0f7de82a",
   "assets/maps/fly-jezero.webm": "2cd4852cad898995",
@@ -381,6 +384,8 @@
   "assets/tracks/troisrivieres.webp": "ed0f7e55fc6a85fa",
   "assets/tracks/uncompahgre-rain.webp": "0a3c49fef5f52e39",
   "assets/tracks/uncompahgre.webp": "12153db134d8f19b",
+  "assets/tracks/zurich-rain.webp": "0324496ff4687f80",
+  "assets/tracks/zurich.webp": "cb79367ae6f72826",
   "docs/proge/baldy.md": "ad2d644deb3a22e8",
   "docs/proge/bangsaen.md": "171f68ea3f241d00",
   "docs/proge/beartooth.md": "5a8cc345f5f5321b",
@@ -406,6 +411,8 @@
   "docs/proge/troisrivieres.md": "4e6c3019fcd6ea00",
   "docs/proge/uncompahgre.md": "17834aed39b874c4",
   "docs/proge/vrsic.md": "4be7a13fb9b2bc7b",
+  "docs/proge/zurich.md": "347c25ddfad89b8f",
+  "js/data/zurich.js": "19e2b49466cd5bd0",
   "js/tracks/baldy.js": "44ba2ee7cd00870c",
   "js/tracks/bangsaen.js": "93e82ad6820273ce",
   "js/tracks/beartooth.js": "98aecd81b32c1336",
@@ -437,6 +444,7 @@
   "js/tracks/troisrivieres.js": "8b4d045f3fb87492",
   "js/tracks/uncompahgre.js": "7c420bf7f946b634",
   "js/tracks/vrsic.js": "0f6c56cd951a3c80",
+  "js/tracks/zurich.js": "9ee74ad804797817",
   "js/world-baldy.js": "0faf0d854cb74d0e",
   "js/world-bangsaen.js": "d3047fce8f1fd676",
   "js/world-beartooth.js": "fa99abb2a0d310db",
@@ -459,6 +467,7 @@
   "js/world-townsville.js": "0d3a368a3a89bed7",
   "js/world-troisrivieres.js": "9747e40ac9f3dbff",
   "js/world-uncompahgre.js": "c1d4a5b575ab145b",
+  "js/world-zurich.js": "b11d108b8397f294",
   "maketa-menija/assets/geo/l1-riviera.webp": "0466f4ab2dac21bb",
   "maketa-menija/assets/geo/l2-gora-h.png": "710a650006c229d6",
   "maketa-menija/assets/geo/l2-gora.webp": "577949f52db37fb0",
@@ -567,7 +576,16 @@
   "tests/townsville.test.js": "46346645a47694a8",
   "tests/troisrivieres.test.js": "d2f4916e3dc5614b",
   "tests/uncompahgre.test.js": "a1e989ab82919ac6",
-  "tests/vrsic.test.js": "9ed891c9c406a133"
+  "tests/vrsic.test.js": "9ed891c9c406a133",
+  "tests/zurich.test.js": "01acecb2ebda6cca",
+  "tools/zurich/build.py": "4b95e9c7fdc4d534",
+  "tools/zurich/chm.png": "770c55f85c220d3e",
+  "tools/zurich/config.json": "8f47196541ce5779",
+  "tools/zurich/dem.png": "248a5b8d6bb8cc35",
+  "tools/zurich/far.png": "f17a03dcf59a0bf1",
+  "tools/zurich/lc.png": "add66b17b43338bf",
+  "tools/zurich/lu.png": "9fe05001b59321bc",
+  "tools/zurich/zurich.json": "3e0148af2cd526cb"
  },
  "dovoljenja": [
   {
@@ -784,6 +802,11 @@
    "datum": "2026-11-09",
    "proga": "greatalpine",
    "razlog": "uporabnik 9. 11. 2026 ob ~2.15 v pogovoru z Matejem: Bathurst ostane, Great Alpine Road v test"
+  },
+  {
+   "datum": "2026-11-07",
+   "proga": "zurich",
+   "razlog": "Uporabnik 7. 11. 2026: »Proga je dobra ampak zgradbe in ceste niso take kot v zurichu. Prestavi progo v test«"
   }
  ]
 }

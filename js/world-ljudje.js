@@ -1584,7 +1584,7 @@
     harju: [['reli', 392, 1], ['oder', 1464, 1], ['foto2', 2144, 1]],
     katu: [['ogenj', 720, 1], ['kamp', 4544, -1]],
     marrakesh: [['gasilci', 80, 1], ['marsali', 480, 1], ['tribuna', 1112, 1], ['marsali', 1560, -1], ['foto', 2320, 1]],
-    medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2896, 1], ['kolesarji', 4336, -1]],
+    medvode: [['foto2', 96, 1], ['piknik', 1664, 1], ['hisa2', 2880, 1], ['kolesarji', 4384, -1]],
     montreal: [['gasilci', 136, 1], ['foto', 1736, 1], ['marsali', 2520, -1], ['marsali', 3232, -1], ['tribuna', 4064, 1]],
     nring: [['oder', 1950, 1], ['zar', 3300, -1], ['tv', 4720, 1], ['ogenj', 5640, -1], ['foto2', 7672, 1], ['gasilci', 8424, -1], ['ogenj', 9832, -1], ['oder', 11088, 1], ['piknik', 12392, -1], ['zar', 14624, -1], ['tv', 16350, -1], ['kamp', 17168, -1], ['telo', 18450, -1], ['marsali', 19976, -1]],
     pikes: [['foto2', 4672, 1]],

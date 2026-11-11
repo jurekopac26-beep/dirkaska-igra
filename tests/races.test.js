@@ -25,7 +25,7 @@ function race(tid, phys, rain, model) {
   try {
     Math.random = seeded(3);
     const T = new C.Track(C.TRACKS.find(d => d.id === tid)), tt = !!T.def.timeTrial;
-    const laps = tt || tid === 'nring' || tid === 'livorno' ? 1 : 2;   // (the long laps: the Nordschleife, Livorno)
+    const laps = tt || tid === 'nring' || tid === 'livorno' || tid === 'hakone' ? 1 : 2;   // (the long laps: the Nordschleife, Livorno, Hakone)
     const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: model || C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain });
     r.start();
     const P = r.player, st = new Map(r.cars.map(c => [c, { spins: 0, spinning: false, walls: 0, resc: 0 }]));

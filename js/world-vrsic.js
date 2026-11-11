@@ -137,6 +137,7 @@
     }
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, only a gentle rise right behind them
     if (STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
+    if (VR.hfix) h = VR.hfix(x, z, h, i >= 0 ? dd : 999);   // a world's own shaping of the ground after vrPrep (Hakone: the railway's bed)
     VRN.dd = i >= 0 ? dd : 999;
     return h;
   }

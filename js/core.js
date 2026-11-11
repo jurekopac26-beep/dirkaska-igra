@@ -65,6 +65,10 @@ const Core = (function () {
   // its edge comes back down onto it), the barrier's clearance from a mouth (gc m: it ends this far before the kerb return, as a guard rail's
   // end does; the traffic does not pull up there either)
   const SNS = 6, SR = { ds: 2, r: [6.5, 4.5, 4.5], rN: 3.2, lt: 24, em: 12, rm: 4, gc: 2 }, _sp = { S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0 }, _n2 = [0, 0];
+  // the run-off's surfaces (def.roSurf, Track._buildRunoff): the run-length code's digits; per class (0 asphalt, 1 light paving, 2 grass, 3 gravel or bare
+  // earth) its channel in the atlas (R paving, G grass, B gravel, A asphalt) and the surface it drives as (Track.surface: paving as asphalt, gravel as makadam)
+  const RO_A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', RO_DIG = new Uint8Array(128), RO_CH = [3, 0, 1, 2], RO_SF = [0, 0, 2, 5], _roQ = { a: -1, u: 0 };
+  for (let k = 0; k < 64; k++) RO_DIG[RO_A64.charCodeAt(k)] = k;
 
   // the braking boards' plate (Track.brakeBoards, World's brakeBoards): width, height (m), its lower edge above the road on the verge (y0) and over
   // a barrier (y1: above the cars by the wall and the spectators behind it)
@@ -230,6 +234,11 @@ const Core = (function () {
           for (let d = a - 22; d <= b + 22; d += ds / 2) { const i = this.idx(this.startS + d), f = Math.min(sstep(a - 22, a + 6, d), sstep(b + 22, b - 6, d)); if (sl * f > bk[i]) { bk[i] = sl * f; bs[i] = side; } }
         }
       }
+      // a road's own relief across its width (def.cross(track) -> (s, d, out) => out, as bankAt below: the surface's height over the road's
+      // profile at d m from its middle and its slope across there; Killar's ruts, hollows and ridges, js/tracks/killar.js): read where a
+      // banked bend's tilt is (the cars' step, the marks, the lines, the splashes); no bend banked by it (bank 0: the speeds as without it);
+      // Track.relief: the open road's traffic stands on it too (Traffic, below)
+      if (typeof def.cross === 'function') { const f = def.cross(this); if (f) { this.bank = new Float32Array(N); this.bankSide = new Int8Array(N); this.bankAt = f; this.relief = true; } }
       // more run-off where a track asks for it (def.wide = [[from, to, side (-1 left, 1 right), metres], ...], metres after the start line;
       // closed circuits, and the pull-outs of an open road: Big Sur): the barrier on that side moves out, eased in and out over 30 m
       if (def.wide) for (const [a, b, sd, m, e0] of def.wide) { const e = e0 || 30; for (let d = a - e; d <= b + e; d += ds) {   // (e: the ease, default 30 m; a junction's mouth on a street circuit: a few metres)
@@ -286,7 +295,7 @@ const Core = (function () {
       // avalanche galleries over the road (def.galleries = [[from, to, side], ...], metres after the start line; open roads: Los Caracoles) and
       // narrow bridges (def.narrow = [[from, to], ...]: Big Sur's, a sidewalk and the parapet): the barriers close in to the gallery's wall and
       // pillars, or the parapet, 1.6 m past the road's edges, eased in and out over 25 m at its ends
-      if ((def.galleries || def.narrow) && open) for (const [a, b] of (def.galleries || []).concat(def.narrow || [])) for (let d = a - 25; d <= b + 25; d += ds / 2) {
+      if ((def.galleries || def.narrow) && open && !def.barrier) for (const [a, b] of (def.galleries || []).concat(def.narrow || [])) for (let d = a - 25; d <= b + 25; d += ds / 2) {
         const i = Math.floor((this.startS + d) / ds); if (i < 0 || i >= N) continue;
         const f = Math.min(sstep(a - 25, a, d), sstep(b + 25, b, d)), t = (def.edgeBar != null ? this.wAt(i) : this.w) + 1.6;
         if (def.edgeBar != null) { if (f > 0) { this.bl[i] = lerp(this.bl[i], t, f); this.br[i] = lerp(this.br[i], t, f); } continue; }   // (def.edgeBar: out to the parapets)
@@ -304,10 +313,63 @@ const Core = (function () {
           if (B[i] > t) B[i] = lerp(B[i], t, f); if (d >= a && d <= b) D[sd > 0 ? 1 : 0][i] = 1;
         }
       }
+      // no barriers at all (def.unfenced = [reach, time], open roads: Killar, the user's decision of 9. 11. 2026): bl / br stay where the
+      // barriers would stand (the verge's edge: the builder's shoulder and scenery, the room the AI, the parking and the marshals keep the
+      // cars in), but wallCollide holds no car there. fallAt: per side ([0] left, [1] right) 1 where a car whose middle passes that line goes over
+      // the edge (Race._fall): the drops, and the bridges' sides (no parapets: off the deck into the stream below); elsewhere a car more than reach
+      // metres from the road's edge (def.halfWidth) for time seconds is put back on the road (Race._offRoad). unf: [reach, time]
+      this.unf = null; this.fallAt = null;
+      if (def.unfenced && open) {
+        this.unf = def.unfenced;
+        const F = this.fallAt = this.dropAt ? [this.dropAt[0].slice(), this.dropAt[1].slice()] : [new Uint8Array(N), new Uint8Array(N)];
+        for (const [a, b] of def.bridges || []) for (let d = a; d <= b; d += ds / 2) { const i = Math.floor((this.startS + d) / ds); if (i >= 0 && i < N) F[0][i] = F[1][i] = 1; }
+      }
+      // a wooden fence along one side of an unfenced road (def.fence = { side, from, to, gaps, P, vBreak, slow, dmg }: Killar's left, the user's decision
+      // of 9. 11. 2026 between ~18.10 and ~18.20): panels P m long from 'from' to 'to' (metres after the start line), none whose middle is in a gap. A standing
+      // panel holds a car on that side's line (bl / br) as a barrier; a car hitting it at more than vBreak m/s across it breaks it (and the
+      // next one when it hit near a post): the race's own state (Race.fence: the time each broke, kept to the race's end; World draws it),
+      // the car through it and, over a drop, over the edge (Race._offRoad). vBreak 0: a brittle fence (Killar, the user's decision of 9. 11. 2026
+      // at ~22.21: as fragile as the delineators), broken by any touch at any speed, holding no car; slow: the share of the car's speed a broken panel
+      // takes (a brittle one's grows with how hard it was hit, as a delineator's: fenceBreak), dmg: the dent (a brittle one's only past 6 m/s across).
+      // fence: { side, s0 (track s of panel 0), P, n, on (1 a panel), v, slow, dmg }
+      this.fence = null;
+      if (def.fence && this.unf) {
+        const D = def.fence, P = D.P || 3, n = Math.max(0, Math.floor((D.to - D.from) / P)), on = new Uint8Array(n);
+        for (let k = 0; k < n; k++) { const m = D.from + (k + 0.5) * P; on[k] = (D.gaps || []).some(([a, b]) => m >= a && m <= b) ? 0 : 1; }
+        this.fence = { side: D.side < 0 ? -1 : 1, s0: this.startS + D.from, P, n, on, v: D.vBreak != null ? D.vBreak : 6.5, slow: D.slow != null ? D.slow : 0.1, dmg: D.dmg != null ? D.dmg : 0.03 };
+      }
+      // the rock beside an unfenced road (def.rock: Killar, tools/killar-skala.mjs from the ground the world draws; the user's decisions of
+      // 9. 11. 2026 between ~18.10 and ~18.20): per side the line where the ground rises steeply (a cut) or a house stands, as runs [side, metres
+      // after the start line, [its distance from the road's middle in decimetres, every 2.5 m]]: a wall of the terrain (wallCollide), not a
+      // barrier; elsewhere the slope is driven to the 10 m rule (Race._offRoad). rock: [left, right], per sample the line's distance, 0 none
+      this.rock = null;
+      if (def.rock && this.unf) {
+        const Rk = this.rock = [new Float32Array(N), new Float32Array(N)];
+        for (const [sd, a, v] of def.rock) {
+          const A = Rk[sd > 0 ? 1 : 0], s0 = this.startS + a;
+          for (let i = Math.max(0, Math.ceil(s0 / ds - 1e-9)); i < N; i++) { const f = (i * ds - s0) / 2.5, j = Math.floor(f); if (j > v.length - 2) { if (j === v.length - 1 && f - j < 1e-6) A[i] = v[j] / 10; break; } A[i] = (v[j] + (v[j + 1] - v[j]) * (f - j)) / 10; }
+        }
+      }
+      // the ground beyond the edge where a car goes over (def.floor: Killar, tools/killar-skala.mjs from the terrain the world draws, js/world-killar.js
+      // unGround; the user's report of 9. 11. 2026 at ~23.48: the car fell into the slope and was gone): the terrain grid's vertices in the band a falling
+      // car can reach, { x0, z0, c: the cell (m), v: rows [j, i0, base, heights] }: the grid's row j from column i0 on, each height over base
+      // (decimetres) in decimetres, two characters of base64url each; floorAt rebuilds the same two triangles per cell as the world draws, and
+      // a falling car lands on that slope, not under it (Race._fall). floor: { x0, z0, c, M: (j * 65536 + i) -> the vertex's height }
+      this.floor = null;
+      if (def.floor && this.fallAt) {
+        const D = def.floor, M = new Map(), A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        for (const [j, i0, b, v] of D.v) for (let k = 0; 2 * k < v.length; k++) M.set(j * 65536 + i0 + k, (b + A.indexOf(v[2 * k]) * 64 + A.indexOf(v[2 * k + 1])) / 10);
+        this.floor = { x0: D.x0, z0: D.z0, c: D.c, M };
+      }
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
       if (def.sideRoads && def.sideRoads.length && open) this._buildStubs(def.sideRoads);
+      // the run-off's real surfaces (def.roSurf with def.barrier: Medvode): see _buildRunoff, made when first asked for (roM, roPv: a track built for
+      // the menu's list never needs its atlas)
+      this._roDef = def.roSurf && def.barrier ? def.roSurf : null; this._roM = this._roDef ? undefined : null; this._roPv = null;
     }
+    get roM() { if (this._roM === undefined) this._buildRunoff(this._roDef); return this._roM; }
+    get roPv() { if (this._roM === undefined) this._buildRunoff(this._roDef); return this._roPv; }
 
     /* ---- side roads ("stubs"): a car can turn off into one, the barrier open across its mouth (delineator posts there, a row of cones
        across it that the cars knock over), and drive along it until a guard rail (a gate, a building) across it makes it turn round; the
@@ -391,6 +453,31 @@ const Core = (function () {
       }
     }
     _hyAt(s) { const N = this.N, f = clamp(s / this.ds, 0, N - 1), i = Math.min(N - 2, Math.floor(f)); return this.hy[i] + (this.hy[i + 1] - this.hy[i]) * (f - i); }   // (the road's height at s, open roads)
+    // def.ringH (Medvode): the ground of a roundabout's zone and of its legs' run-off round it one smooth surface, not the road's height at the
+    // nearest sample (which jumps from one leg to the other: the legs' run-offs meet round a ring): per ring a 2 m grid out to 24 m past its
+    // circle, the heights of the road's samples near it blended by distance (inverse cube); Track.ringY holds to it 12 m past the circle and
+    // eases out to the road's own height by 22 m past it
+    _buildRingH() {
+      if (!this.hasElev) return;
+      const N = this.N, px = this.px, pz = this.pz, hy = this.hy, CS = 2;
+      for (const R of this.rings) { if (!(R.zr > 0)) continue;
+        const ext = R.zr + 24, n = Math.ceil(2 * ext / CS) + 1, x0 = R.x - ext, z0 = R.z - ext, H = new Float32Array(n * n), ids = [];
+        for (let i = 0; i < N; i++) if (Math.hypot(px[i] - R.x, pz[i] - R.z) < ext + 30) ids.push(i);
+        if (!ids.length) continue;
+        for (let b = 0; b < n; b++) for (let a = 0; a < n; a++) { const x = x0 + a * CS, z = z0 + b * CS; let sw = 0, sh = 0;
+          for (const i of ids) { const dx = px[i] - x, dz = pz[i] - z, d2 = dx * dx + dz * dz; if (d2 > 1600) continue; const d = Math.sqrt(d2), w = 1 / (d2 * d + 0.5); sw += w; sh += w * hy[i]; }
+          if (!(sw > 0)) { let bd = 1e18, bh = 0; for (const i of ids) { const d2 = (px[i] - x) ** 2 + (pz[i] - z) ** 2; if (d2 < bd) { bd = d2; bh = hy[i]; } } H[b * n + a] = bh; }
+          else H[b * n + a] = sh / sw; }
+        R.hg = { x0, z0, n, H, cs: CS, r0: R.zr + 12, r1: R.zr + 22 }; }
+    }
+    // the ground's height at (x, z) given the road's there (y): within a ring's zone its own surface (def.ringH), blended
+    ringY(x, z, y) {
+      for (const R of this.rings) { const G = R.hg; if (!G) continue; const dd = Math.hypot(x - R.x, z - R.z); if (dd >= G.r1) continue;
+        const fa = clamp((x - G.x0) / G.cs, 0, G.n - 1.001), fb = clamp((z - G.z0) / G.cs, 0, G.n - 1.001), a = Math.floor(fa), b = Math.floor(fb), u = fa - a, v = fb - b, H = G.H, n = G.n;
+        const h = (H[b * n + a] * (1 - u) + H[b * n + a + 1] * u) * (1 - v) + (H[(b + 1) * n + a] * (1 - u) + H[(b + 1) * n + a + 1] * u) * v;
+        return lerp(y, h, sstep(G.r1, G.r0, dd)); }
+      return y;
+    }
     // the asphalt's half width at sample i / at s along the road: a road of several widths (def.widths: wa) its own there, else def.halfWidth
     wAt(i) { return this.wa ? this.wa[clamp(i, 0, this.N - 1)] : this.w; }
     wS(s) { return this.wa ? this.wa[this.idx(s)] : this.w; }
@@ -582,7 +669,11 @@ const Core = (function () {
       for (const [ri, w] of add2) { const r = runs[ri], P = Array.from(r.pts), ix = Array.from(r.ix); if (w.pre) { P.unshift(w.pre[0], w.pre[1]); ix.unshift(-1); } if (w.post) { P.push(w.post[0], w.post[1]); ix.push(-1); } r.pts = Float64Array.from(P); r.ix = Int32Array.from(ix); }
       // o.islands (def.edgeBar: the fence right along the road): none on an island between two drivable roads narrower than o.islands m (a splitter island, the inner
       // wedge of a hairpin: the island's own kerb and grass show it) nor on a roundabout's apron round its island (the wall is there all the same)
-      if (o.islands || def.edgeBar != null) {
+      // the walls across the rings' roads (R.shut): from the solid island's edge (R.rs: where wallCollide's wall starts; a tall island's middle) out to the zone's circle, the outside on both of its sides
+      const shutRuns = []; rings.forEach((R, r) => { for (const S of R.shut || []) { const P = [], a = R.rs, b = R.zr, m = Math.max(2, Math.ceil((b - a) / step) + 1);
+        for (let j = 0; j < m; j++) { const t = a + (b - a) * j / (m - 1); P.push(R.x + S.ux * t, R.z + S.uz * t); }
+        shutRuns.push({ k: 2, side: 0, ref: r, sg: 1, shut: true, closed: false, pts: Float64Array.from(P), ix: new Int32Array(m).fill(-1) }); } });
+      if (o.islands || (def.edgeBar != null && !def.barrier)) {
         const W = o.islands || 8, out = [];
         for (const r of runs) {
           const P = r.pts, n = P.length / 2, keep = new Uint8Array(n);
@@ -598,9 +689,9 @@ const Core = (function () {
             if (L >= minLen) out.push(Object.assign({}, r, { closed: r.closed && j === 0 && e === n - 1, pts: Float64Array.from(pts), ix: Int32Array.from(Array.from(r.ix.slice(j, e + 1))) }));
             j = e + 1; }
         }
-        return { runs: out, skips };
+        return { runs: out.concat(shutRuns), skips };
       }
-      return { runs, skips };
+      return { runs: runs.concat(shutRuns), skips };
     }
     // for the scenery the fence would have to cut through: hit(pts, cx, cz) is true for a footprint (pts: [[x, z], ...], its centre cx, cz) whose centre stands in the
     // free ground (free: Track.wallFree) or that one of the runs' lines cuts into by more than `depth` m (Medvode: such a house is left out, nothing to drive into)
@@ -638,7 +729,7 @@ const Core = (function () {
           out.tx = sp.kx; out.tz = sp.kz; out.nx = -sp.kz; out.nz = sp.kx; out.bl = this.bl[S.iF]; out.br = this.br[S.iF];
           out.y = Y; out.g = Gs; out.fb = 1;
         } else {   // (fb: how far into its own height across the verge; 0 on the road's asphalt, where y and g are the road's exactly)
-          const fb = out.fb = sstep(this.wAt(out.a), this._stubRamp(out.d > 0 ? out.br : out.bl), Math.abs(out.d)), e = this.elevAt(out.s);
+          const bar = out.d > 0 ? out.br : out.bl, fb = out.fb = this.def.barrier ? sstep(bar, bar + 6, Math.abs(out.d)) : sstep(this.wAt(out.a), this._stubRamp(bar), Math.abs(out.d)), e = this.elevAt(out.s);   // (def.barrier: inside it the run-off's own height, the road's: blended into the side road's past it)
           out.y = fb > 0 ? e.y + (Y - e.y) * fb : e.y; out.g = fb > 0 ? e.grade + (Gs * (sp.kx * out.tx + sp.kz * out.tz) - e.grade) * fb : e.grade;
         }
         return true;
@@ -657,11 +748,117 @@ const Core = (function () {
     wall(q, r, n) {
       let pen = -1e9;
       if (!q.deep) { const sg = q.d > 0 ? 1 : -1; pen = Math.abs(q.d) - ((sg > 0 ? q.br : q.bl) - r); n[0] = -q.nx * sg; n[1] = -q.nz * sg; }
-      if (q.k >= 0) { const ps = this.stubPen(q, r, _n2); if (ps <= 0) return Math.min(pen, ps); if (q.deep || ps < pen) { n[0] = _n2[0]; n[1] = _n2[1]; return ps; } }
+      if (q.k >= 0 && (q.deep || !this.def.barrier)) { const ps = this.stubPen(q, r, _n2); if (ps <= 0) return Math.min(pen, ps); if (q.deep || ps < pen) { n[0] = _n2[0]; n[1] = _n2[1]; return ps; } }   // (def.barrier: the barrier runs across its mouth; deep in it, beyond, its own limits)
       return pen;
     }
     // the height of the ground the cars drive on at a query result: the road's (its height at s), in a side road its own
-    yAt(q) { return q.k >= 0 && q.fb > 0 ? q.y : this.hasElev ? this.elevAt(q.s).y : 0; }
+    yAt(q) { const y = q.k >= 0 && q.fb > 0 ? q.y : this.hasElev ? this.elevAt(this.def.barrier ? this.hs(q) : q.s).y : 0; return this.def.ringH ? this.ringY(q.x, q.z, y) : y; }   // (def.ringH: round a ring its own surface, a side road's too)
+    // def.barrier: the s the ground's height is read at, continuous all over the run-off. The projection onto the line (q.s) jumps where the nearest
+    // segment changes, on a bend's inside by up to a metre 10 m in (a step of ~0.15 m on the castle road's 17 %); the run-off is drawn in rows along the
+    // samples' normals at their heights, so the s that matches it is u, how far between the normals of samples a and a + 1 the point lies
+    // (o: given, it gets a and u of the answer, a = -1 when it is q.s)
+    hs(q, o) {
+      if (o) o.a = -1;
+      if (!this.def.barrier || q.deep || (q.k >= 0 && q.fb > 0)) return q.s;
+      const N = this.N, px = this.px, pz = this.pz, nx = this.nx, nz = this.nz; let a = q.a;
+      for (let it = 0; it < 3; it++) {
+        if (a < 0 || a + 1 >= N) return q.s;
+        const b = a + 1, ex = px[b] - px[a], ez = pz[b] - pz[a], fx = nx[b] - nx[a], fz = nz[b] - nz[a], gx = q.x - px[a], gz = q.z - pz[a];
+        const A = -(ex * fz - ez * fx), B = (gx * fz - gz * fx) - (ex * nz[a] - ez * nx[a]), Cq = gx * nz[a] - gz * nx[a];   // (cross(g - u e, n_a + u f) = 0: the point on the line between the two normals)
+        let u;
+        if (Math.abs(A) < 1e-9) u = -Cq / B;
+        else { const D = B * B - 4 * A * Cq; if (D < 0) return q.s; const h = -0.5 * (B + (B >= 0 ? 1 : -1) * Math.sqrt(D)), u1 = h / A, u2 = h !== 0 ? Cq / h : u1; u = Math.abs(u1 - 0.5) < Math.abs(u2 - 0.5) ? u1 : u2; }
+        if (!(u === u)) return q.s;
+        if (u < -1e-6) { a--; continue; } if (u > 1 + 1e-6) { a++; continue; }
+        if (o) { o.a = a; o.u = u; }
+        return (a + u) * this.ds;
+      }
+      return q.s;
+    }
+    // def.roSurf (Medvode, with def.barrier): the run-off's real surfaces, 0 asphalt, 1 light paving (concrete, pavers, paved yards), 2 grass (verges, lawns,
+    // fields), 3 gravel or bare earth, between the road's edge (its sidewalk's) and the barrier and round the rings out to their zones' circles. The
+    // track file's raster, in the run-off's own frame: nd rows across (row b at d = (b - (nd - 1) / 2) * cell, + right) by (N - 1) * per + 1 columns along
+    // (column c at sample c / per), the class at p(f) + d n(f) (p, n lerped between the samples, n not normalised: as World draws the run-off's rows and
+    // hs inverts them), row by row; per ring (Track.rings' order) n x n texels round its centre, cell apart; both run-length coded (rle: per run
+    // v = (length - 1) * 4 + class in little-endian base-32 digits of A64, (k & 32) set while more follow). Decoded into roM: one RGBA texture atlas
+    // (R paving, G grass, B gravel, A asphalt, one-hot x 255, then a 3 x 3 tent blur: the 0.5 m stairs become straight edges under the GPU's
+    // linear filter), the route in strips of 512 samples (nd + 2 rows each: a margin row, the nd rows, a margin row; 2 margin columns either side
+    // from the neighbouring strip), the rings' regions (n + 2 square) side by side below; texel (a, b)'s centre at (a, b): uv ((a + 0.5) / W, (b + 0.5) / H).
+    // World.mvRunoffMat draws it on the same bytes; roClass reads it as the GPU's filter does (what is drawn is what is driven). roPv: per side (0 left,
+    // 1 right) and sample, how far from the centre line the run-off is paved without a break from the edge (asphalt, paving; beside a gravel road its
+    // gravel too): the AI and the traffic keep to it. A raster made for another route (roSurf.hash not this route's _roHash: its line, normals, edges,
+    // barrier or rings moved) is left out: the run-off as without it
+    _buildRunoff(R) {
+      const N = this.N; this._roM = null; this._roPv = null; if (!R || R.N !== N || !R.rle || R.hash !== this._roHash()) return;
+      const per = R.per, nd = R.nd, cell = R.cell, C = (N - 1) * per + 1, ST = 512, nS = Math.ceil((N - 1) / ST), mL = 2, rings = R.rings || [], TS = Math.max(128, ...rings.map(g => (g.n | 0) + 2));   // (TS: a ring's tile in the atlas, its n + 2 texels square (a wider zone: more))
+      const ext = (s, n) => { const out = new Uint8Array(n); let k = 0, v = 0, m = 1;   // (the run-length code -> n classes)
+        for (let i = 0; i < s.length && k < n; i++) { const q = RO_DIG[s.charCodeAt(i) & 127]; v += (q & 31) * m; m *= 32; if (q & 32) continue;
+          const len = Math.floor(v / 4) + 1; out.fill(v % 4, k, Math.min(n, k + len)); k += len; v = 0; m = 1; }
+        return out; };
+      const blur = (cls, w, h) => {   // (one-hot RGBA, then the tent (a + 2b + c + 2) >> 2 along the rows, then across, the edges clamped: integers, the same everywhere)
+        const n = w * h, w4 = w * 4, A = new Uint8Array(n * 4), B = new Uint8Array(n * 4);
+        for (let k = 0; k < n; k++) A[k * 4 + RO_CH[cls[k]]] = 255;
+        for (let y = 0; y < h; y++) { const r0 = y * w4, r1 = r0 + w4 - 4;
+          for (let k = r0; k < r0 + 4; k++) B[k] = (3 * A[k] + A[k + 4] + 2) >> 2;
+          for (let k = r0 + 4; k < r1; k++) B[k] = (A[k - 4] + 2 * A[k] + A[k + 4] + 2) >> 2;
+          for (let k = r1; k < r1 + 4; k++) B[k] = (A[k - 4] + 3 * A[k] + 2) >> 2; }
+        for (let y = 0; y < h; y++) { const r0 = y * w4, up = y > 0 ? -w4 : 0, dn = y < h - 1 ? w4 : 0;
+          for (let k = r0; k < r0 + w4; k++) A[k] = (B[k + up] + 2 * B[k] + B[k + dn] + 2) >> 2; }
+        return A; };
+      const RT = blur(ext(R.rle, nd * C), C, nd), W = Math.ceil(Math.max(mL * 2 + ST * per + 1, rings.length * TS) / 8) * 8, RS = nd + 2, H = RS * nS + (rings.length ? TS : 0), D = new Uint8Array(W * H * 4), SW = mL * 2 + ST * per + 1;
+      for (let k = 0; k < nS; k++) for (let y = 0; y < RS; y++) { const b = clamp(y - 1, 0, nd - 1), c0 = k * ST * per - mL, t0 = (RS * k + y) * W * 4, a = Math.max(0, -c0), e = Math.min(SW, C - c0);   // (columns c0 .. c0 + SW - 1 of row b, clamped at the road's ends)
+        D.set(RT.subarray((b * C + c0 + a) * 4, (b * C + c0 + e) * 4), t0 + a * 4);
+        for (let x = 0; x < SW; x++) if (x < a || x >= e) { const s = (b * C + clamp(c0 + x, 0, C - 1)) * 4, t = t0 + x * 4; D[t] = RT[s]; D[t + 1] = RT[s + 1]; D[t + 2] = RT[s + 2]; D[t + 3] = RT[s + 3]; } }
+      const M = this._roM = { W, H, data: D, per, strip: ST, mL, nd, rs: RS, cell, nS, rings: [] };
+      rings.forEach((g, r) => { const TR = this.rings.find(Q => Math.hypot(Q.x - g.x, Q.z - g.z) < 0.5), n = g.n; if (!TR || !(TR.zr > 0) || n + 2 > TS) return;
+        const A = blur(ext(g.rle, n * n), n, n), x0 = TS * r, y0 = RS * nS;
+        for (let y = 0; y < n + 2; y++) for (let x = 0; x < n + 2; x++) { const s = (clamp(y - 1, 0, n - 1) * n + clamp(x - 1, 0, n - 1)) * 4, t = ((y0 + y) * W + x0 + x) * 4; D[t] = A[s]; D[t + 1] = A[s + 1]; D[t + 2] = A[s + 2]; D[t + 3] = A[s + 3]; }
+        M.rings.push({ x: g.x, z: g.z, zr: TR.zr, fx0: x0 + 1 + (n - 1) / 2, fy0: y0 + 1 + (n - 1) / 2 }); });
+      // the paved run-off out from each edge (stepping 0.25 m along the sample's normal: its row of the run-off), then the least over 6 m either way (a
+      // driveway opens no stretch)
+      const pv = [new Float32Array(N), new Float32Array(N)], E = [new Float32Array(N), new Float32Array(N)];   // (pv: the paved width past the edge E)
+      const isl = this.rings.filter(g => g.zr > 0);   // (a ring's solid island: no way on through it)
+      for (let i = 0; i < N; i++) for (let sd = 0; sd < 2; sd++) { const sg = sd ? 1 : -1, e = E[sd][i] = this.wAt(i) + (this.walk ? this.walk[sd][i] : 0), bar = sd ? this.br[i] : this.bl[i], grav = this.sf && this.sf[i] === 5; let o = e;
+        for (let t = e + 0.25; t <= bar + 1e-6; t += 0.25) { const x = this.px[i] + this.nx[i] * sg * t, z = this.pz[i] + this.nz[i] * sg * t; if (isl.some(g => (x - g.x) ** 2 + (z - g.z) ** 2 < (g.rs + 0.3) ** 2)) break;
+          const c = this._roAt(i, sg * t, x, z); if (c > 1 && !(grav && c === 3)) break; o = t; }
+        pv[sd][i] = o - e; }
+      this._roPv = pv.map((P, sd) => P.map((v, i) => { let m = v; for (let j = Math.max(0, i - 3); j <= Math.min(N - 1, i + 3); j++) m = Math.min(m, P[j]); return E[sd][i] + m; }));
+    }
+    // the route a run-off raster is made for, to the centimetre (rdump.js writes it into def.roSurf.hash): the centre line, the normals, the edges
+    // (the asphalt and the sidewalks), the barrier, the rings' circles; FNV-1a over the rounded values, hex
+    _roHash() {
+      let h = 0x811c9dc5; const put = (v) => { let k = Math.round(v * 100) | 0; for (let b = 0; b < 4; b++) { h = Math.imul(h ^ (k & 255), 16777619); k >>= 8; } };
+      for (let i = 0; i < this.N; i++) { const w = this.wAt(i); put(this.px[i]); put(this.pz[i]); put(this.nx[i]); put(this.nz[i]); put(w + (this.walk ? this.walk[0][i] : 0)); put(w + (this.walk ? this.walk[1][i] : 0)); put(this.bl[i]); put(this.br[i]); }
+      for (const R of this.rings || []) { put(R.x); put(R.z); put(R.r); put(R.hw); put(R.ri); put(R.zr); }
+      return (h >>> 0).toString(16);
+    }
+    // the class (0 asphalt, 1 paving, 2 grass, 3 gravel) at the atlas's texel coordinates (fx, fy): the largest of the four weights as the GPU's linear
+    // filter blends them (ties: asphalt, paving, grass, gravel)
+    _roTex(fx, fy) {
+      const M = this.roM, W = M.W, D = M.data, a = clamp(Math.floor(fx), 0, W - 2), b = clamp(Math.floor(fy), 0, M.H - 2), u = clamp(fx - a, 0, 1), v = clamp(fy - b, 0, 1), k = (b * W + a) * 4, k2 = k + W * 4;
+      let best = 0, bw = -1;
+      for (let j = 0; j < 4; j++) { const c = RO_CH[j], w = (D[k + c] * (1 - u) + D[k + 4 + c] * u) * (1 - v) + (D[k2 + c] * (1 - u) + D[k2 + 4 + c] * u) * v; if (w > bw) { bw = w; best = j; } }
+      return best;
+    }
+    // ... at f samples along the route (fractional), d across (+ right, in the run-off's frame), the point (x, z): in a ring's zone the ring's
+    _roAt(f, d, x, z) {
+      const M = this.roM;
+      for (const g of M.rings) { const dx = x - g.x, dz = z - g.z; if (dx * dx + dz * dz < g.zr * g.zr) return this._roTex(g.fx0 + dx / M.cell, g.fy0 + dz / M.cell); }
+      const fc = clamp(f, 0, this.N - 1), k = Math.min(M.nS - 1, Math.floor(fc / M.strip));
+      return this._roTex(M.mL + (fc - k * M.strip) * M.per, M.rs * k + 1 + clamp(d / M.cell + (M.nd - 1) / 2, 0, M.nd - 1));
+    }
+    // the run-off's class at a query result: where the point lies between the rows of the run-off (hs: between two samples' normals, at d along their
+    // blend), as the mesh's rows show it
+    roClass(q) {
+      const o = _roQ, s = this.hs(q, o); let f = s / this.ds, d = q.d;
+      if (o.a >= 0) { const a = o.a, u = o.u, nx = lerp(this.nx[a], this.nx[a + 1], u), nz = lerp(this.nz[a], this.nz[a + 1], u);
+        f = a + u; d = ((q.x - lerp(this.px[a], this.px[a + 1], u)) * nx + (q.z - lerp(this.pz[a], this.pz[a + 1], u)) * nz) / (nx * nx + nz * nz); }
+      return this._roAt(f, d, q.x, q.z);
+    }
+    // the atlas's uv (World: the run-off's vertices) of a row's point: sample i, d across, in strip k (the chunk's: none of its quads spans two strips);
+    // in ring g's region (roM.rings[g]) at (x, z)
+    roUV(i, d, k) { const M = this.roM; return [(M.mL + (i - k * M.strip) * M.per + 0.5) / M.W, (M.rs * k + 1 + clamp(d / M.cell + (M.nd - 1) / 2, 0, M.nd - 1) + 0.5) / M.H]; }
+    roRingUV(g, x, z) { const M = this.roM, R = M.rings[g]; return [(R.fx0 + (x - R.x) / M.cell + 0.5) / M.W, (R.fy0 + (z - R.z) / M.cell + 0.5) / M.H]; }
     // the row of cones across side road k just past the barrier line and where all of it has left the road (the course goes straight on), across its whole width there (its corners'
     // kerb returns too; none on the road's own asphalt, where a sharp corner's runs along its edge): [{ kind: 'cone', x, z, yaw, col, i }] for
     // Race.setProps (World puts them in its props; i: a sample near the junction, the lookup's hint)
@@ -672,12 +869,13 @@ const Core = (function () {
       return out;
     }
     // is (x, z) inside, or within m metres of, a building of the track's data (def.bld: [x, z, L, W, ang, height, kind, name, outline]; the scenery leaves out
-    // those under 2.2 m across)
+    // those under 2.2 m across and def.dropBld's)
     onBuilding(x, z, m) {
       const bl = this.def.bld; if (!bl) return false;
       let H = this._bldHash;
       if (!H) { H = this._bldHash = new Map();
-        for (let k = 0; k < bl.length; k++) { const b = bl[k]; if (b[2] < 2.2 || b[3] < 2.2) continue; const r = Math.hypot(b[2], b[3]) / 2 + 1;
+        const drop = new Set(this.def.dropBld || []);   // (def.dropBld: left out of the scenery)
+        for (let k = 0; k < bl.length; k++) { const b = bl[k]; if (b[2] < 2.2 || b[3] < 2.2 || drop.has(k)) continue; const r = Math.hypot(b[2], b[3]) / 2 + 1;
           for (let a = Math.floor((b[0] - r) / 16); a <= Math.floor((b[0] + r) / 16); a++) for (let c = Math.floor((b[1] - r) / 16); c <= Math.floor((b[1] + r) / 16); c++) { const key = a * 65536 + c; let L = H.get(key); if (!L) H.set(key, L = []); L.push(k); } } }
       const L = H.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16)); if (!L) return false;
       for (const k of L) { const b = bl[k], P = b[8];
@@ -986,6 +1184,13 @@ const Core = (function () {
       // def.edgeBar: the barrier right along the road, this far past the asphalt's edge all the way (Medvode: a fence along the whole course, nothing to drive off onto;
       // the sidewalks push it out behind them, the houses and walls pull it in, def.walls)
       if (this.def.edgeBar != null) for (let i = 0; i < N; i++) { const wi = wa ? wa[i] : w; BL[i] = BR[i] = wi + this.def.edgeBar; }
+      // def.barrier (Medvode: a race circuit's barrier along the whole road, the run-off out to it, def.roSurf its surfaces): its line as the track file has it, metres
+      // from the centre line on either side at every sample ({ d0, step, L, R }, decimetres; d: metres after the start line); the houses, walls,
+      // sidewalks, the bridge's parapets and the rings are in it already (def.walls, def.narrow do not apply)
+      const BB = this.def.barrier;
+      if (BB) { const i0 = this.def.start ? this.nearestIdx(this.def.start[0], this.def.start[1]) : 0, nB = BB.L.length;
+        for (let i = 0; i < N; i++) { const f = clamp(((i - i0) * ds - BB.d0) / BB.step, 0, nB - 1), j = Math.min(nB - 2, Math.floor(f)), u = f - j;
+          BL[i] = lerp(BB.L[j], BB.L[j + 1], u) / 10; BR[i] = lerp(BB.R[j], BB.R[j + 1], u) / 10; } }
       // ... and there the upper leg runs between the parapets of its bridge (3 m from the road), the lower one between the walls of the
       // underpass (3.4 m), each narrowing in over the next 30 / 24 m
       for (const c of X) for (let i = 0; i < N; i++) {
@@ -994,7 +1199,7 @@ const Core = (function () {
       }
       // walls the track sets itself (def.walls = [[from, to, side (-1 left, 1 right), metres past the road edge, ease (m, default 20)], ...],
       // metres after the start line): a pit wall right by the road; on an open road the houses, fences and barriers of a street stage, eased in and out
-      if (this.def.walls) {
+      if (this.def.walls && !BB) {
         const i0 = this.def.start ? this.nearestIdx(this.def.start[0], this.def.start[1]) : 0;
         for (const [a, b, side, off, e0] of this.def.walls) { const arr = side > 0 ? BR : BL, e = e0 || 20;
           for (let d = a - e; d <= b + e; d += ds) { const i = open ? clamp(i0 + Math.round(d / ds), 0, N - 1) : ((i0 + Math.round(d / ds)) % N + N) % N, f = Math.min(sstep(a - e, a, d), sstep(b + e, b, d)); arr[i] = lerp(arr[i], (wa ? wa[i] : w) + off, f); } }
@@ -1005,12 +1210,23 @@ const Core = (function () {
       // thing in the way (wallCollide); the wrong-way count is off within wz of its centre (the cars' wrong-way test)
       // the oncoming lanes (def.altDn: Medvode's roundabouts and split approaches) are road too, def.altHw half wide: no barrier on them (onAlt);
       // a lane's open [f0, f1] (shares of its length from its start): only that much of it is road, the rest runs on behind the fence
-      this.altC = (this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + (this.def.edgeBar != null ? this.def.edgeBar : 0.4), pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      // (def.altFree false: the lanes are no free ground of their own: the run-off out to def.barrier holds them where they are near the road; past it they run on behind it)
+      this.altC = (this.def.altFree === false ? [] : this.def.altDn || []).map(A => { const P = A.P, hw = (this.def.altHw || 2.4) + (this.def.edgeBar != null ? this.def.edgeBar : 0.4), pts = []; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
         const n = P.length / 3, cum = [0]; for (let k = 1; k < n; k++) cum.push(cum[k - 1] + Math.hypot(P[k * 3] - P[k * 3 - 3], P[k * 3 + 1] - P[k * 3 - 2]));
         const L = cum[n - 1] || 1, o = A.open || [0, 1];
         for (let k = 0; k < n; k++) { if (cum[k] < o[0] * L - 1e-6 || cum[k] > o[1] * L + 1e-6) continue; const x = P[k * 3], z = P[k * 3 + 1]; pts.push(x, z); x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
         return { pts, hw, bb: [x0 - hw, z0 - hw, x1 + hw, z1 + hw] }; }).filter(L => L.pts.length >= 4);
-      this.rings = (this.def.rings || []).map(r => ({ x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zone === false ? 0 : r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: r.zone === false ? 0 : r.r + (r.hw || 3) + 14 }));   // (zone false: one way round, on the route's own road)
+      this.rings = (this.def.rings || []).map(r => { const R = { x: r.c[0], z: r.c[1], r: r.r, hw: r.hw || 3, ri: r.ri != null ? r.ri : Math.max(1.5, r.r - (r.hw || 3) - 1.85), zr: r.zone === false ? 0 : r.zr != null ? r.zr : r.r + (r.hw || 3) + 3, wz: 0 };   // (zone false: one way round, on the route's own road)
+        R.wz = r.zone === false ? 0 : Math.max(R.r + R.hw + 14, R.zr + 5);
+        // isl 'tall' (or mid given; Medvode): the central island dense tall grass the cars may drive across (Track.surface: TALL, grass and slower), solid only in
+        // its very middle (mid m: the stone on its plinth in a ring of tyres). rs: the solid radius (else the whole island, ri); ie: the tall grass's edge (World's
+        // island edge, the ring road's inner edge less 0.35 m); the wrong-way count is off there as everywhere in the zone
+        R.tall = R.zr > 0 && (r.isl === 'tall' || r.mid > 0); R.mid = R.tall ? (r.mid > 0 ? r.mid : 1.6) : 0; R.rs = R.tall ? R.mid : R.ri; R.ie = R.tall ? Math.max(R.mid, R.r - R.hw - 0.35) : R.ri;
+        // shut: walls across the ring's road (angles, rad, atan2(z, x) from its centre): the side the route does not use closed, from the island (a tall one's middle) out past the zone's circle
+        R.shut = (r.shut || []).map(t => ({ ux: Math.cos(t), uz: Math.sin(t), h: 0.25, r0: R.rs - 0.5, r1: R.zr + 12 }));
+        return R; });
+      this._tall = this.rings.filter(R => R.tall); if (!this._tall.length) this._tall = null;   // (Track.surface: the tall grass's islands)
+      if (this.def.ringH) this._buildRingH();
       // curbs where curvature is meaningful (both sides), dilated — but not on makadam (rally) roads
       const cb = new Uint8Array(N);
       if (this.def.roadSurface !== 'makadam' && !this.def.noCurbs) for (let i = 0; i < N; i++) if (Math.abs(k[i]) > 1 / 190) cb[i] = 1;
@@ -1468,6 +1684,18 @@ const Core = (function () {
     // where the car stops in the box at boxD: s, its lateral offset o, its yaw a from the lane's direction (0: parked straight, parallel to it)
     bayPose(boxD) { const s = this.startS + boxD, p = this.pitAt(s); if (!p) return null; const o = this.bayDim().o; return { s, o: p.lout + o, a: 0 }; }
 
+    // the drawn ground at (x, z) where def.floor has it (Track.floor): out.h its height, out.gx / out.gz its slope (dh/dx, dh/dz); false where
+    // the floor has no cell (the car falls free there). The same two triangles per cell as the world's tiles (js/world-killar.js unGround)
+    floorAt(x, z, out) {
+      const F = this.floor, M = F.M, c = F.c, gx = (x - F.x0) / c, gz = (z - F.z0) / c, i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, k = j * 65536 + i;
+      if (u + v <= 1) {
+        const a = M.get(k), b = M.get(k + 1), d = M.get(k + 65536); if (a === undefined || b === undefined || d === undefined) return false;
+        out.h = a + u * (b - a) + v * (d - a); out.gx = (b - a) / c; out.gz = (d - a) / c; return true;
+      }
+      const a = M.get(k + 65537), b = M.get(k + 65536), d = M.get(k + 1); if (a === undefined || b === undefined || d === undefined) return false;
+      out.h = a + (1 - u) * (b - a) + (1 - v) * (d - a); out.gx = (a - b) / c; out.gz = (a - d) / c; return true;
+    }
+
     // nearest point search around hint index; returns object (reused)
     query(x, z, hint, out) {
       const N = this.N, px = this.px, pz = this.pz;
@@ -1483,13 +1711,25 @@ const Core = (function () {
         }
       }
       const pk = out.k, pj = out.kj; out.k = -1; out.deep = false;   // (a side road: out.k its index, -1 none; pk / pj: this result's last one, a hint)
-      if (this.stubs && hint >= 0 && bd > 400 && this._stubQ(x, z, hint, out, false, pk, pj)) return out;   // deep in a side road (the hint its junction): the road not searched
+      const zq = this.def.barrier && this.inZone(x, z);   // (def.barrier: in a roundabout's zone the ring's own ground, never a side road's: its legs are closed at the zone's edge)
+      if (this.stubs && hint >= 0 && bd > 400 && !zq && this._stubQ(x, z, hint, out, false, pk, pj)) return out;   // deep in a side road (the hint its junction): the road not searched
       if (bi < 0 || bd > 60 * 60) {
         for (let i = 0; i < N; i++) { const dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
       }
       this._qMain(x, z, bi, out);
-      if (this.stubs && Math.abs(out.d) > this.wAt(out.a) - 1) this._stubQ(x, z, out.a, out, true, pk, pj);   // off the asphalt: perhaps in a side road
+      if (this.stubs && Math.abs(out.d) > this.wAt(out.a) - 1 && !zq) this._stubQ(x, z, out.a, out, true, pk, pj);   // off the asphalt: perhaps in a side road
       return out;
+    }
+    // is (x, z) inside a roundabout's zone (its free ground round the island, out to zr)
+    inZone(x, z) { for (const R of this.rings || []) { const dx = x - R.x, dz = z - R.z; if (R.zr > 0 && dx * dx + dz * dz < R.zr * R.zr) return true; } return false; }
+    // Track.query without the side roads: the road's own projection from the nearest of the 21 samples round hint (the whole road when that is
+    // over 60 m away), as wallFree sees it. def.barrier: no car gets into a side road (the barrier runs across every mouth), and a point deep in
+    // one is pinned at its junction (Track.query: its d there is not the barrier's): wallCollide asks this instead
+    queryRoute(x, z, hint, out) {
+      const N = this.N, px = this.px, pz = this.pz, open = this.open; let bi = -1, bd = 1e18;
+      if (hint >= 0) for (let o = -10; o <= 10; o++) { const i = open ? hint + o : (hint + o + N) % N; if (open && (i < 0 || i >= N)) continue; const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+      if (bi < 0 || bd > 3600) for (let i = 0; i < N; i++) { const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+      out.k = -1; out.deep = false; return this._qMain(x, z, bi, out);
     }
     // the projection onto the road's centre line from its sample bi (Track.query without the side roads)
     _qMain(x, z, bi, out) {
@@ -1520,12 +1760,14 @@ const Core = (function () {
 
     // surface at a query result: 0 asphalt, 1 curb, 2 grass, 3 gravel (def.runoffTarmac: the wide run-off areas are asphalt, 4 as paving;
     // def.gravelStrips: gravel just past the kerb), 5 makadam; 6 a puddle on it (in the rain, inRain: def.rain's puddles); 7 cobbles
-    // (def.setts), 8 cobbles in the rain; a road of several kinds (_buildSections): the width, the road's surface and the verge's at the query's
-    // sample. A side road (q.k >= 0, past the road's own asphalt): asphalt, or makadam on a forest road, the gravel of the verge past its edge
+    // (def.setts), 8 cobbles in the rain; 9 a roundabout's island of dense tall grass (def.rings isl 'tall': grass, slower; Car.ws and so the rest of the
+    // game, the sound, the marks, the dirt, the commentary, the network, see it as grass, 2); a road of several kinds (_buildSections): the width, the road's
+    // surface and the verge's at the query's sample. A side road (q.k >= 0, past the road's own asphalt): asphalt, or makadam on a forest road, the gravel of the verge past its edge
     surface(q) {
+      if (this._tall) for (const R of this._tall) { const dx = q.x - R.x, dz = q.z - R.z; if (dx * dx + dz * dz < R.ie * R.ie) return 9; }
       const wa = this.wa, d = q.d, ad = Math.abs(d), w = wa ? lerp(wa[q.a], wa[this.open ? Math.min(this.N - 1, q.a + 1) : (q.a + 1) % this.N], q.t) : this.w;
       if (this.free && ad > w + 0.3) return 5;   // (NEW VERSION · TEST 1: off the road the new map's packed gravel and sand, driven as makadam, not a run-off's gravel trap; its paved ways: track.surf2, Car.stepCS)
-      if (ad <= w || (this.walk && ad <= w + this.walk[d > 0 ? 1 : 0][q.a])) {   // (a sidewalk: part of the road)
+      if (ad <= w || (this.walk && ad <= w + (this._roDef ? lerp(this.walk[d > 0 ? 1 : 0][q.a], this.walk[d > 0 ? 1 : 0][Math.min(this.N - 1, q.a + 1)], q.t) : this.walk[d > 0 ? 1 : 0][q.a]))) {   // (a sidewalk: part of the road; def.roSurf: its width lerped as the run-off's rows draw its edge)
         if (this.settAt && this.settAt[q.a]) return this.inRain ? 8 : 7;
         if (this.sf) { const sf = this.sf[q.a]; if (sf !== 5) return sf; }
         else if (this.def.roadSurface !== 'makadam' || (this.pavedAt && this.pavedAt[q.a])) return 0;
@@ -1533,6 +1775,8 @@ const Core = (function () {
         if (p >= 0) { const u = this.puddles[p], a = (q.s - u[0]) / u[2], b = (d - u[1]) / u[3]; if (a * a + b * b < 1) return 6; }
         return 5;
       }
+      if (this.def.barrier && !q.deep) {   // (def.barrier: out to the barrier a race circuit's run-off, its real surfaces (def.roSurf: roClass; light paving drives as asphalt, gravel and bare earth as makadam); without them asphalt, beside a gravel road gravel)
+        if (this.roM) return RO_SF[this.roClass(q)]; return this.sf && this.sf[q.a] === 5 ? 5 : 0; }
       if (q.k >= 0) { const S = this.stubs[q.k]; return Math.abs(q.u) <= this.stubHw(S, q.st, q.u) ? (S.grav ? 5 : 0) : 3; }
       if (this.def.pit && !this.open) {   // the pit road (the lane, the deceleration and acceleration lanes, the gore): asphalt; the apron: paving (_pave)
         const V = this._pv || this._pave(), a = 3 * q.a, b = 3 * ((q.a + 1) % this.N), t = q.t, dl = this.def.pit[0] < 0 ? -d : d;
@@ -1675,7 +1919,7 @@ const Core = (function () {
   // a wheel knocked off (a kit vehicle, Car.wreck.wl bit k): like a flat tyre, a little worse (the hub on the road), through the same
   // per-wheel share and drag; any two gone still leave every vehicle >= 40 km/h on flat asphalt (fleet.test), so it limps to the pits
   const LOSTW = { tr: 0.55, c0: 2.0, c1: 0.03 };
-  const LOOSE = [0, 0, 1, 1, 0, 1];     // grass, gravel, makadam: where a car on slicks (model.loose) has only that share of its grip
+  const LOOSE = [0, 0, 1, 1, 0, 1, 0, 0, 0, 1];     // grass, gravel, makadam, the tall grass: where a car on slicks (model.loose) has only that share of its grip
   // rain: the grip left on a wet track (x every surface's grip: cornering and traction; the brakes keep 0.55 + 0.45 x of theirs).
   // Less grip also means bigger, lazier slides (as on the loose surfaces)
   const WET = 0.8;
@@ -1997,6 +2241,7 @@ const Core = (function () {
     { lat: 0.7, tr: 0.72, c0: 2.6, c1: 0.12 },      // a puddle (in the rain, on top of WET): the water drags at the wheel (one side in it: a tug towards it)
     { lat: 0.9, tr: 0.9, c0: 0.12, c1: 0.008 },     // cobbles (granite setts): a little less grip than asphalt, a little drag from the bumps
     { lat: 0.78, tr: 0.8, c0: 0.12, c1: 0.008 },    // cobbles in the rain (on top of WET)
+    { lat: 0.6, tr: 0.78, c0: 2.4, c1: 0.24 },      // a roundabout's island of dense tall grass (def.rings isl 'tall'): grass that holds the car back harder (all four wheels in it at 50 km/h: ~0.6 g of drag, the verge's ~0.37 g), a little less grip
   ];
   // cs per model (drive-type layer, targets §5.4): bx brake excess at full brake + full demand, coast / thr steady attitude
   // change at full demand, liftP / pwr FR/MR rotation, out = unwind factor, turn = turn-in speed factor, w = path-rate cap factor
@@ -2561,7 +2806,7 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      CAR
      --------------------------------------------------------------------- */
-  const _wpos = [[0, 0], [0, 0], [0, 0], [0, 0]], _elv = { y: 0, grade: 0, curv: 0 };   // (Car.stepCS's scratch: the wheels' places, the road's height)
+  const _wpos = [[0, 0], [0, 0], [0, 0], [0, 0]], _elv = { y: 0, grade: 0, curv: 0 }, _elv2 = { y: 0, grade: 0, curv: 0 };   // (Car.stepCS's scratch: the wheels' places, the road's height; _elv2 def.barrier's over the run-off)
   class Car {
     constructor(model, opts) {
       // upgrades: the car drives a CLONE of the model (MODELS / ARC entries are shared by every car and the menus: never mutate them)
@@ -2679,8 +2924,9 @@ const Core = (function () {
       const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, K = CSK;
       const CA = CSASSIST[ASSISTS.indexOf(A)] || CSASSIST[2], CP = CSP[M.id] || CSP.kaze, ai = this.isPlayer ? 1 : K.aiBx;
       this.px = this.x; this.pz = this.z; this.ph = this.h; this.py = this.y;
-      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = e.y; this.gradeNow = e.grade; this.curvNow = e.curv;
-        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
+      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = trk.def.barrier ? trk.elevAt(trk.hs(this.q), _elv2).y : e.y; this.gradeNow = e.grade; this.curvNow = e.curv;   // (def.barrier: the height continuous over the run-off, Track.hs)
+        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; }   // (in a side road past the road's asphalt: its own height and grade, Track._stubQ)
+        if (trk.def.ringH) this.roadY = trk.ringY(this.x, this.z, this.roadY); }   // (round a roundabout: its zone's own surface)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }   // a banked corner (the Karussell)
       if (trk.ground2) nvGround(this, trk);   // (NEW VERSION · TEST 1: the new map's ground, js/newmap.js: its height, slope and bend over a crest; by the car's height, under the hill in the tunnel or on it)
@@ -2708,7 +2954,7 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * ch - wpos[k][1] * sh, wz = this.z + wpos[k][0] * sh + wpos[k][1] * ch;
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
+        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf === 9 ? 2 : sf;   // (the tall grass: grass to the rest of the game)
         const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk, lt = S.lat * lk * (kg ? kg[4] : 1);   // (slicks on loose ground; a flat or cut tyre: pf; a wheel knocked off: the hub; winter gravel packed with snow)
         muSum += tr; if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) curb++;
         const ld = M.looseDrag && off ? M.looseDrag : 1;   // (the truck: the loose ground holds it back less. Its pit lane is paved, not loose ground: there it is as every car)
@@ -2919,8 +3165,9 @@ const Core = (function () {
     _nova(dt, trk) {
       const M = this.m, P = this.arc || ARC[M.id] || ARC.kaze, A = this.assist, K = NVK, KC = CSK, lv = ASSISTS.indexOf(A);
       const CA = CSASSIST[lv] || CSASSIST[2], NA = NVASSIST[lv] || NVASSIST[2], CP = CSP[M.id] || CSP.kaze, SL = this.nvSl ? K.slide : null, balR = SL ? SL.balR : K.balR;
-      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = e.y; this.gradeNow = e.grade; this.curvNow = e.curv;
-        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; } }   // (as cs: a side road's own height)
+      if (trk.hasElev) { trk.query(this.x, this.z, this.q.i, this.q); const e = trk.elevAt(this.q.s, _elv); this.roadY = trk.def.barrier ? trk.elevAt(trk.hs(this.q), _elv2).y : e.y; this.gradeNow = e.grade; this.curvNow = e.curv;   // (as cs: def.barrier, the height continuous over the run-off)
+        if (this.q.k >= 0 && this.q.fb > 0) { this.roadY = this.q.y; this.gradeNow = this.q.g; this.curvNow *= 1 - this.q.fb; }   // (as cs: a side road's own height)
+        if (trk.def.ringH) this.roadY = trk.ringY(this.x, this.z, this.roadY); }   // (as cs: round a roundabout, its zone's own surface)
       else { this.roadY = 0; this.gradeNow = 0; this.curvNow = 0; }
       if (trk.bank) { trk.bankAt(this.q.s, this.q.d, _bk); this.roadY += _bk.dy; this.bankSl = _bk.sl; }
       if (trk.ground2) nvGround(this, trk);
@@ -2946,12 +3193,12 @@ const Core = (function () {
       for (let k = 0; k < 4; k++) {
         const wx = this.x + wpos[k][0] * cb - wpos[k][1] * sb, wz = this.z + wpos[k][0] * sb + wpos[k][1] * cb;   // (the wheels where the body has them)
         const q = trk.query(wx, wz, this.wq[k].i >= 0 ? this.wq[k].i : this.q.i, this.wq[k]);
-        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf;
+        const sf0 = trk.surface(q), sf = sf0 === 5 && trk.surf2 ? trk.surf2(wx, wz, this.y) : sf0, off = LOOSE[sf] && !(this.inPit && M.loose > 1), fl = this.flat & (1 << k), pf = this.flt && this.flt.pw === k ? this.flt.pk : 0, wl = this.wreck ? this.wreck.wl & (1 << k) : 0; this.ws[k] = sf === 9 ? 2 : sf;   // (as cs: the tall grass is grass to the rest of the game)
         const S = CSSURF[sf], lk = (M.loose && off ? M.loose : 1) * (wl ? LOSTW.tr : fl ? FLAT.tr : 1 - (1 - PUNC_TR) * pf) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK : 1) * (kg ? kg[k] : 1) * (this.dTy ? deliTyre(this.dTy, sf, trk, this.wet) : 1), tr = S.tr * lk;
         const lt = S.lat * lk * (kg ? kg[4] : 1) * (M.loose && off ? (1 - (1 - M.loose) * K.slick) / M.loose : 1) * (sf === 1 ? K.kerbLat : 1) * (1 - clamp(Z[4 + k] * K.kerbG, 0, 0.35));   // (slicks on loose ground: K.slick of cs's side grip lost)
         if (k < 2) muF += tr * 0.5; else muR += tr * 0.5; if (sf === 1) { curb++; kb |= 1 << k; }
-        if (sf === 2) { const n = Math.sin(K.grK * (1.9 * wx + 0.7 * wz)) * Math.sin(K.grK * (1.3 * wz - 0.4 * wx) + 1.7); gn[k] = n; gb |= 1 << k; if (k < 2) gF += n; else gR += n; }   // (the grass: a bumpy field, the same bumps in the same place)
-        const ld = (M.looseDrag && off ? M.looseDrag : 1) * (sf === 2 ? K.grassD : 1);
+        if (sf === 2 || sf === 9) { const n = Math.sin(K.grK * (1.9 * wx + 0.7 * wz)) * Math.sin(K.grK * (1.3 * wz - 0.4 * wx) + 1.7); gn[k] = n; gb |= 1 << k; if (k < 2) gF += n; else gR += n; }   // (the grass, the tall grass too: a bumpy field, the same bumps in the same place)
+        const ld = (M.looseDrag && off ? M.looseDrag : 1) * (sf === 2 || sf === 9 ? K.grassD : 1);   // (the tall grass: cs's own drag for it, as much more than the grass's as in cs)
         const c0 = wl ? S.c0 * ld + LOSTW.c0 : fl ? S.c0 * ld + FLAT.c0 : S.c0 * ld + FLAT.c0 * pf, c1 = wl ? S.c1 * ld + LOSTW.c1 : fl ? S.c1 * ld + FLAT.c1 : S.c1 * ld + FLAT.c1 * pf;
         const dk = (c0 * Math.min(1, spd / 3) + c1 * spd) * 0.25;
         dragC0 += c0 * 0.25; dragC1 += c1 * 0.25;
@@ -3168,7 +3415,10 @@ const Core = (function () {
   /* ---------------------------------------------------------------------
      COLLISIONS
      --------------------------------------------------------------------- */
-  const _q = {};
+  const _q = {}, _oq = {}, _fl = {};   // (_oq: Race._offRoad's; _fl: Race._land's)
+  // a falling car on the drawn ground (Track.floor, Race._land): a ball of FLOOR_R (m) round its middle, FLOOR_R above its wheels; FLOOR_T (s): the
+  // longest it slides on the slope once it touched it before it is put back on the road (the fall's 1.6 s at most, as ever)
+  const FLOOR_R = 0.8, FLOOR_T = 0.5;
   // The damage a knock does (a wall, another car, the traffic, street furniture, a cyclist, a log, a hard landing, the roof on the road
   // rolling over): the formulas at those places times the vehicle's model.knockK (def.phys.knockK; 1 without one). The Kolibri's 1 / 3.5
   // (the user's: its typical crash 1 % instead of 3.5 %, every other in proportion). Only the knocks: not the fall down a drop (Race._fall:
@@ -3614,6 +3864,13 @@ const Core = (function () {
       flagp:  { m: 5, rh: 0.13, rb: 3.1,  h0: 3.0,   e: 0.2,  mu: 0.6,  lift: 0.1,  I: 18,   pts: cylPts(0.06, -3.0, 3.0, 4).concat([[1.9, 2.85, 0], [1.9, 1.95, 0]]) },   // a flag pole with the flag
       cflag:  { m: 4,  rh: 0.13, rb: 2.6,  h0: 2.5,   e: 0.2,  mu: 0.6,  lift: 0.1,  I: 8,   pts: cylPts(0.06, -2.5, 2.5, 4).concat([[1.7, 2.4, 0], [1.7, 1.3, 0]]) },    // a chequered flag on a pole at the finish
       bench:  { m: 6, rh: 0.7,  rb: 0.5,  h0: 0.24,  e: 0.15, mu: 0.8,  lift: 0.3,  I: 1.7,    pts: boxPts(0.9, 0.24, 0.22) },   // a bus stop's bench
+      // Medvode's islands (r9): the island's sign, a blue keep-right board on a post standing on a stack of three heavy rubber bases (0.6 x 0.22 x 0.6 m, 40 kg each):
+      // a car knocks the lot down, the three bases and the board on its post burst apart (breaks: a kind per part); heavy, they are shoved along at half the car's
+      // speed (carry) and to either side by turns (spread m/s), with little speed of their own (vK, vMax), the car not running into them again for a moment (grace),
+      // and grind to a stop within a few metres (drag, mu: Race.breakProp, propStep)
+      isign:  { m: 126, rh: 0.36, rb: 1.25, h0: 1.18, breaks: ['iblock', 'iblock', 'iblock', 'iboard'], parts: [[0, -1.07, 0], [0, -0.85, 0], [0, -0.63, 0], [0, 0.33, 0]], pf: [[0.4, 0.05], [0.45, 0.1], [0.5, 0.15], [0.9, 1.2]], vK: 0.1, vMax: 2, spread: 4, carry: 0.5, grace: true },
+      iblock: { m: 40, rh: 0.33, rb: 0.44, h0: 0.11,  e: 0.08, mu: 0.9,  lift: 0.12, I: 1.4, kick: 0.7, drag: 4, pts: boxPts(0.3, 0.11, 0.3) },   // one of its bases (kick: knocked again, it slides off a few metres)
+      iboard: { m: 6,  rh: 0.33, rb: 0.95, h0: 0.85,  e: 0.2,  mu: 0.6,  lift: 0.4,  I: 1.5, drag: 2.5, pts: cylPts(0.04, -0.85, 0.82, 4).concat([[0, 0.81, 0.32], [0, 0.81, -0.32], [0, 0.17, 0.32], [0, 0.17, -0.32]]) },   // its board on the post
       // street furniture (the junctions of the street circuits; Render draws each kind, local +x towards the road for those with an arm): a
       // traffic signal on its pole, one on a mast arm over the road, a street light on its davit, a sign on a post, a hydrant, a litter bin, an
       // electrical cabinet, a bollard, a bus shelter, a construction drum. dmg: a heavy one dents the car a little (applyDamage, as in propCarHit)
@@ -3676,7 +3933,7 @@ const Core = (function () {
   }
   function propCarHit(race, c, b) {
     const K = b.K, dx = b.x - c.x, dz = b.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + (K.reach || K.rh) + 0.1;   // (beyond the car's reach)
-    if (dx * dx + dz * dz > R * R || (K.dmg != null && b.hit1 && b.age < 0.6)) return;   // (street furniture: one knock, then it is on its way for a moment)
+    if (dx * dx + dz * dz > R * R || (K.dmg != null && b.hit1 && b.age < 0.6) || (b.by === c && b.age < 0.6)) return;   // (street furniture: one knock, then it is on its way for a moment; a heavy stack's parts (K.grace): not run into again by the car that burst it for a moment)
     const cy = c.y || 0; if (b.y - K.rb > cy + 1.3 || b.y + K.rb < cy + 0.05) return;
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     for (let i = 0; i < c.circles.length; i++) {
@@ -3692,10 +3949,10 @@ const Core = (function () {
       const vcx = c.vx - c.w * rcz, vcz = c.vz + c.w * rcx, vrel = (vcx - b.vx) * nx + (vcz - b.vz) * nz;   // closing speed at the contact
       b.x += nx * (r - e); b.z += nz * (r - e); b.dirty = true;                                          // the prop gives way
       if (vrel < 0.5) return;
-      if (K.breaks) { race.breakProp(b, nx, nz, vrel, c.vx, c.vz); propFeel(c, K.m, vrel, b.kind); return; }
+      if (K.breaks) { race.breakProp(b, nx, nz, vrel, c.vx, c.vz, c); propFeel(c, K.m, vrel, b.kind); return; }
       const rx = K.legs ? px - b.x : -nx * K.rh, rz = K.legs ? pz - b.z : -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away (a board at its leg: it turns as well)
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
-      const j = 1.35 * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);
+      const j = (K.kick || 1.35) * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);   // (K.kick: a heavy, dead block takes less of the knock)
       b.sleep = false; b.t = 0; b.age = 0;
       propImpulse(b, nx * j, 0, nz * j, rx, ry, rz);
       b.vy = Math.min(7.5, b.vy + Math.min(5, vrel * K.lift * 0.22)); b.wy += (rand() - 0.5) * Math.min(10, vrel * 0.5);
@@ -3730,7 +3987,7 @@ const Core = (function () {
     b.qx = qx + h * (wx * qw + wy * qz - wz * qy); b.qy = qy + h * (wy * qw + wz * qx - wx * qz);
     b.qz = qz + h * (wz * qw + wx * qy - wy * qx); b.qw = qw - h * (wx * qx + wy * qy + wz * qz);
     const ql = Math.hypot(b.qx, b.qy, b.qz, b.qw) || 1; b.qx /= ql; b.qy /= ql; b.qz /= ql; b.qw /= ql;
-    const F = race.propFloor, fl = (q) => (q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (F ? F(q) : 0));   // (the verge may lie below the road; a side road: its own height)
+    const F = race.propFloor, fl = (q) => { const y = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(T.def.barrier ? T.hs(q) : q.s).y : 0) + (F ? F(q) : 0); return T.def.ringH ? T.ringY(q.x, q.z, y) : y; };   // (the verge may lie below the road; a side road: its own height; def.ringH: round a ring its zone's)
     let q = T.query(b.x, b.z, b.qi, _pq), gy = fl(q);
     if (gy - b.fy > 0.45) {   // the floor rose by more than 0.45 m since the last step and the prop is that far below it: a face (a deck's end, a planter, the
       let lo = 1e9; for (const p of K.pts) { const r = qRot(b, p[0], p[1], p[2], _r3)[1]; if (r < lo) lo = r; }   // side of a pit), not a slope: it bounces off
@@ -3739,7 +3996,7 @@ const Core = (function () {
     b.fy = gy; b.qi = q.i; race._bkMove(b);
     const lim = (q.d > 0 ? q.br : q.bl) - K.rh - (F && F.inset && !q.deep ? F.inset[q.i * 2 + (q.d > 0 ? 1 : 0)] : 0);   // barriers (with the catch fences above them; F.inset: solid scenery in front of them)
     let pen = q.deep ? -1e9 : Math.abs(q.d) - lim, nx = q.nx * Math.sign(q.d), nz = q.nz * Math.sign(q.d);
-    if (q.k >= 0) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits)
+    if (q.k >= 0 && (q.deep || !T.def.barrier)) { const ps = T.stubPen(q, K.rh, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = -_wn[0]; nz = -_wn[1]; } }   // (a side road's limits; def.barrier: the barrier across its mouth)
     if (pen > 0 && b.y - gy < 3.2) {
       b.x -= nx * pen; b.z -= nz * pen;
       const vn = b.vx * nx + b.vz * nz; if (vn > 0) { b.vx -= 1.35 * vn * nx; b.vz -= 1.35 * vn * nz; b.wy += (rand() - 0.5) * vn; }
@@ -3763,7 +4020,7 @@ const Core = (function () {
     }
     if (maxPen > 0) b.y += maxPen;
     if (b.vy > 8) b.vy = 8;                                                          // no trampoline bounces off a spinning edge
-    if (touch) { const k = Math.max(0, 1 - 2.2 * dt), kv = Math.max(0, 1 - 1.4 * dt); b.wx *= k; b.wy *= k; b.wz *= k; b.vx *= kv; b.vz *= kv; }   // rolling resistance, scuffing
+    if (touch) { const k = Math.max(0, 1 - 2.2 * dt), kv = Math.max(0, 1 - (K.drag || 1.4) * dt); b.wx *= k; b.wy *= k; b.wz *= k; b.vx *= kv; b.vz *= kv; }   // rolling resistance, scuffing (K.drag: a heavy block grinds to a stop sooner)
     else { const kv = Math.max(0, 1 - 0.25 * dt); b.vx *= kv; b.vz *= kv; }          // a little air drag
     const arr = race.propBk, nb = arr.length;
     for (let o = -1; o <= 1; o++) { const L = arr[(b.bk + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const c = L[n]; if (c !== b && !c.dead) propPair(race, b, c); } }
@@ -3776,49 +4033,30 @@ const Core = (function () {
     b.dirty = true;
   }
 
-  function wallCollide(c, trk, canFall) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall)
+  // over the edge of a drop (wallCollide, Race._offRoad): (nx, nz) the way back to the road, vo the car's speed the other way, out (at 4.5 m/s
+  // at least, clear of the cliff); then it falls (Race._fall), spinning as it went over
+  // a fence panel broken (wallCollide): panel k and, hit within a metre of a post, the one beyond it (a car is wider than that); the time it
+  // broke kept (Race.fence.brk: World throws its planks and leaves the gap, the replay too); the planks take a little of the hit (Fn.slow of
+  // the car's speed, a tenth by default, a small dent Fn.dmg where it hit; a brittle fence (Fn.v 0): as a delineator, the share grows with vo,
+  // the speed across it, to Fn.slow at 8 m/s, and the dent only past 6 m/s). c.fenceN: the hits that broke panels; c.fenceT: the race's time of its last
+  function fenceBreak(Fn, FS, t, k, s, c, rx, rz, vo) {
+    const u = (s - Fn.s0) / Fn.P - k, j = u < 0.34 ? k - 1 : u > 0.66 ? k + 1 : -1;
+    for (const m of j >= 0 && j < Fn.n ? [k, j] : [k]) if (Fn.on[m] && !FS.brk[m]) { FS.brk[m] = Math.max(1e-3, t); FS.n++; }
+    const g = 1 - Fn.slow * (Fn.v > 0 ? 1 : clamp(vo / 8, 0, 1)); c.vx *= g; c.vz *= g; if (Fn.v > 0 || vo > 6) applyDamage(c, Fn.dmg, rx, rz); c.fenceN = (c.fenceN || 0) + 1; c.fenceT = t;
+  }
+  function overEdge(c, nx, nz, vo) {
+    if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }
+    c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9);
+  }
+  function wallCollide(c, trk, canFall, rc) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall; rc: its race, a fence's panels: Track.fence)
     if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
       const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); }
       if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
     }
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
     let hit = 0, hitK = 0, hnx = 0, hnz = 0;
-    for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
-      const rx = c.corners[k][0], rz = c.corners[k][1];
-      const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
-      const px = c.x + wx, pz = c.z + wz;
-      let pen = 0, nx = 0, nz = 0;
-      if (trk.free) { if (!trk.wall2(px, pz, c.y || 0, _tw)) continue; pen = _tw[2]; nx = _tw[0]; nz = _tw[1]; }   // (the new map: only its tunnel's walls)
-      else {
-        const q = trk.query(px, pz, c.q.i, _q);
-        let br = q.br, bl = q.bl, inner = -1e9, sd = 1;
-        if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom; a lane on the left: all measured to that side, sd)
-        if (trk.def.pit) { const u = trk.pitLead(q.s); if (u > 0) { const e = trk.w + 0.7 + 7 * u; if (trk.def.pit[0] > 0) br = Math.max(br, e); else bl = Math.max(bl, e); } }   // (the deceleration and acceleration lanes: open to every car, their barrier taken away out to their outer edge, Track.pitJ)
-        const qd = q.d * sd;
-        if (qd > br) { pen = qd - br; nx = -q.nx * sd; nz = -q.nz * sd; }
-        else if (qd < inner) { pen = inner - qd; nx = q.nx * sd; nz = q.nz * sd; }
-        else if (qd < -bl) { pen = -bl - qd; nx = q.nx * sd; nz = q.nz * sd; }
-        if (sd < 0) br = q.br;
-        let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
-        if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2; if (d2 > (R.zr + 8) * (R.zr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
-          if (dd < R.ri) { pen = R.ri - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }
-          if (dd < R.zr) { pen = 0; zone = true; break; }
-          if (pen > 0 && q.k < 0 && dd - R.zr < pen) { pen = dd - R.zr; nx = -rx2 / dd; nz = -rz2 / dd; } }
-        if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
-          const sl = q.s + (q.over || 0), N = trk.N;
-          if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
-          else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
-        }
-        if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
-        if (q.k >= 0 && !zone && !trk.def.sideClosed) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
-        if (pen <= 0) continue;
-        if (canFall && trk.dropAt && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
-          const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
-          if (vo > 2.5) { if (vo < 4.5) { c.vx -= nx * (4.5 - vo); c.vz -= nz * (4.5 - vo); }   // (off the edge: out at 4.5 m/s at least, clear of the cliff)
-            c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9); return; }
-        }
-      }
-      c.wallX = px; c.wallZ = pz;
+    const touch = (wx, wz, pen, nx, nz, k) => {   // a contact at the car's offset (wx, wz) (corner k, or the nearest corner), pen deep along the wall's normal (nx, nz): out of it, the impulse
+      c.wallX = c.x + wx; c.wallZ = c.z + wz;
       // positional correction
       c.x += nx * pen; c.z += nz * pen;
       // corner velocity
@@ -3840,6 +4078,68 @@ const Core = (function () {
         c.vx += Jt * tx / c.m.mass; c.vz += Jt * tz / c.m.mass;
         c.w += rt * Jt / c.I * wy;
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
+      }
+    };
+    for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
+      const rx = c.corners[k][0], rz = c.corners[k][1];
+      const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
+      const px = c.x + wx, pz = c.z + wz;
+      let pen = 0, nx = 0, nz = 0;
+      if (trk.free) { if (!trk.wall2(px, pz, c.y || 0, _tw)) continue; pen = _tw[2]; nx = _tw[0]; nz = _tw[1]; }   // (the new map: only its tunnel's walls)
+      else {
+        const q = trk.def.barrier ? trk.queryRoute(px, pz, c.q.i, _q) : trk.query(px, pz, c.q.i, _q);   // (def.barrier: the road's own barrier, every side road closed)
+        let br = q.br, bl = q.bl, inner = -1e9, sd = 1;
+        if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom; a lane on the left: all measured to that side, sd)
+        if (trk.def.pit) { const u = trk.pitLead(q.s); if (u > 0) { const e = trk.w + 0.7 + 7 * u; if (trk.def.pit[0] > 0) br = Math.max(br, e); else bl = Math.max(bl, e); } }   // (the deceleration and acceleration lanes: open to every car, their barrier taken away out to their outer edge, Track.pitJ)
+        const qd = q.d * sd;
+        if (qd > br) { pen = qd - br; nx = -q.nx * sd; nz = -q.nz * sd; }
+        else if (qd < inner) { pen = inner - qd; nx = q.nx * sd; nz = q.nz * sd; }
+        else if (qd < -bl) { pen = -bl - qd; nx = q.nx * sd; nz = q.nz * sd; }
+        if (sd < 0) br = q.br;
+        if (trk.unf) {   // (def.unfenced: no barrier at the sides, over the edge of a drop or off the road: Race._offRoad; only a standing fence panel holds
+          // the car, a corner just across its line (a car behind the fence goes through it), unless the car hits it hard enough to break it; a brittle one (Fn.v 0) breaks at any touch)
+          const Fn = trk.fence, FS = rc && rc.fence, kf = Fn && FS && pen > 0 && pen < 1.2 && !(q.k >= 0) && (q.d > 0 ? 1 : -1) === Fn.side ? Math.floor((q.s - Fn.s0) / Fn.P) : -1;
+          if (!(kf >= 0 && kf < Fn.n && Fn.on[kf] && !FS.brk[kf])) pen = 0;
+          else if (canFall) { const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz); if (Fn.v <= 0 || vo > Fn.v || (vo > 1.5 && c.fenceT != null && rc.time - c.fenceT < 0.5)) { fenceBreak(Fn, FS, rc.time, kf, q.s, c, rx, rz, vo); pen = 0; } }   // (through it: for 0.5 s after it broke one, the car ploughs through the next ones it hits too)
+          if (!(pen > 0) && trk.rock && !(q.k >= 0)) {   // the rock of a cut or a house's wall (Track.rock): the ground stops the car there, on either side (a corner up to 3 m in)
+            const sg = q.d > 0 ? 1 : -1, A = trk.rock[sg > 0 ? 1 : 0], f = q.s / trk.ds, i = Math.max(0, Math.min(trk.N - 2, Math.floor(f))), a = A[i], b = A[i + 1];
+            if (a > 0 && b > 0) { const e = sg * q.d - (a + (b - a) * (f - i)); if (e > 0 && e < 3) { pen = e; nx = -q.nx * sg; nz = -q.nz * sg; } }
+          }
+        }
+        let zone = false;   // (inside a roundabout's zone: no barrier of the route's or a side road's; only its island, solid; just past the zone the circle is the wall)
+        if (trk.rings.length) for (const R of trk.rings) { const rx2 = px - R.x, rz2 = pz - R.z, d2 = rx2 * rx2 + rz2 * rz2, rr = Math.max(R.zr, R.shut.length ? R.zr + 12 : 0); if (d2 > (rr + 8) * (rr + 8)) continue; const dd = Math.sqrt(d2) || 1e-6;
+          if (dd < R.rs) { pen = R.rs - dd; nx = rx2 / dd; nz = rz2 / dd; zone = true; break; }   // (the solid island: a tall one's middle only, R.rs)
+          let shut = false;
+          for (const S of R.shut) {   // (a wall across the ring's road: the car's corner is kept on the side its car was on before this step)
+            const u = rx2 * S.ux + rz2 * S.uz; if (u < S.r0 || u > S.r1) continue;
+            const v = -rx2 * S.uz + rz2 * S.ux, vc = -(c.px - R.x) * S.uz + (c.pz - R.z) * S.ux, sg = vc >= 0 ? 1 : -1, p = S.h - sg * v;
+            if (p > 0 && p < 2.5) { pen = p; nx = -S.uz * sg; nz = S.ux * sg; zone = true; shut = true; break; } }
+          if (shut) break;
+          if (dd < R.zr) { pen = 0; zone = true; break; }
+          if (pen > 0 && q.k < 0 && dd - R.zr < pen) { pen = dd - R.zr; nx = -rx2 / dd; nz = -rz2 / dd; } }
+        if (trk.open) {   // open road: the two ends of the road are walls 0.5 m in from the last samples
+          const sl = q.s + (q.over || 0), N = trk.N;
+          if (sl < 0.5 && 0.5 - sl > pen) { pen = 0.5 - sl; nx = trk.tx[0]; nz = trk.tz[0]; }
+          else if (sl > trk.len - 0.5 && sl - (trk.len - 0.5) > pen) { pen = sl - (trk.len - 0.5); nx = -trk.tx[N - 1]; nz = -trk.tz[N - 1]; }
+        }
+        if (!zone && trk.altC.length && pen > 0 && trk.onAlt(px, pz)) { pen = 0; zone = true; }   // (on an oncoming lane: road)
+        if (q.k >= 0 && !zone && !trk.def.sideClosed) { const ps = trk.stubPen(q, 0, _wn); if (ps <= 0) pen = 0; else if (q.deep || ps < pen) { pen = ps; nx = _wn[0]; nz = _wn[1]; } }   // a side road: inside it no barrier; out of it its own limit (Track.stubPen)
+        if (pen <= 0) continue;
+        if (canFall && trk.dropAt && !trk.unf && !(q.k >= 0) && trk.dropAt[q.d > 0 ? 1 : 0][q.i] && (q.d > 0 ? q.d > br : q.d < -q.bl)) {   // the edge of a drop: out over it at more than 2.5 m/s, the car goes over (slower, the shoulder's edge holds it)
+          const vo = -((c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz);
+          if (vo > 2.5) { overEdge(c, nx, nz, vo); return; }
+        }
+      }
+      touch(wx, wz, pen, nx, nz, k);
+    }
+    // a tall island's middle (def.rings isl 'tall': R.mid across, the stone in its ring of tyres, narrower than a car is long): the car's body as its circles along it
+    // (as carCollide's), not only its corners, so that it cannot slide over it sideways
+    if (trk._tall && c.circles) for (const R of trk._tall) {   // (c.circles: a car; a bare probe (the tests' points) meets the middle at its corners above, R.rs)
+      const dx0 = c.x - R.x, dz0 = c.z - R.z, reach = R.mid + c.rad + Math.max(Math.abs(c.circles[0]), Math.abs(c.circles[c.circles.length - 1])); if (dx0 * dx0 + dz0 * dz0 > reach * reach) continue;
+      for (let i = 0; i < c.circles.length; i++) {
+        const ox = ch * c.circles[i], oz = sh * c.circles[i], ex = c.x + ox - R.x, ez = c.z + oz - R.z, d = Math.hypot(ex, ez) || 1e-6, pen = R.mid + c.rad - d; if (pen <= 0) continue;
+        const nx = ex / d, nz = ez / d, wx = ox - nx * c.rad, wz = oz - nz * c.rad, lx = wx * ch + wz * sh, lz = -wx * sh + wz * ch;   // (the contact: the circle's rim towards the middle; lx, lz in the car's frame: its nearest corner)
+        touch(wx, wz, pen, nx, nz, (lx >= 0 ? 0 : 2) + (lz >= 0 ? 1 : 0));
       }
     }
     if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); }
@@ -4267,9 +4567,14 @@ const Core = (function () {
         for (let j = 1; c.dist - j * Lw + 22.5 + X >= lo; j++) { const b = c.dist - j * Lw; for (let k = distFrom(BD, b - 8.5 - X); k < BD.length && BD[k].dist - b <= 22.5 + X; k++) if (BD[k] !== c) see(BD[k], BD[k].dist - b); }
       }
       c.aiThreat = threat; c.aiGap = tgap; c.alU = aU; c.alD = aD;
+      if (T.def.barrier && !c.police && T.roPv) {   // (def.roSurf: where the paved road at the car ahead has no room for two side by side with 0.65 m to spare either side (a village street, the castle road between grass and forest floor): no pass, behind it a car's length back; not behind a patrol car)
+        let hold = null; if (threat && threat.m && !threat.police) { const pv = T.roPv, ia = threat.q.a, wq = T.wAt(ia), lm = wq - (M.aiEdge || 1.25), eL = Math.max(lm, Math.min(wq + 2.2, T.bl[ia] - 1.6, pv[0][ia] - 1.2)), eR = Math.max(lm, Math.min(wq + 2.2, T.br[ia] - 1.6, pv[1][ia] - 1.2));
+          if (eL + eR < (M.wid + threat.m.wid) / 2 + 1.3) hold = threat; }
+        c.aiHold = hold; }
       if (race.tf) { const P = race.tf.aiPlan(c, v, _tfv); c.tfLo = P.lo; c.tfHi = P.hi; c.tfFol = P.fol; c.tfEdge = P.edge; }   // the open road: the corridor between the traffic, or behind it
       if (threat && race.fl && !(threat.fl && threat.fl.stopT > 0) && (c.sc || race._noPass(c))) { target = c.laneBias; c.passing = 0; }   // (a yellow flag or the safety car: no overtaking, stay in line; a stopped car is passed)
       else if (threat && threat.vl > 3 && !dnf(threat) && c.flyA !== undefined && race.flyOn) { target = c.laneBias; c.passing = 0; }   // (the flying start's column: no overtaking while it holds; a stopped car is passed)
+      else if (threat && c.aiHold === threat) { target = c.laneBias; c.passing = 0; }   // (no room to pass on the paved road: in line behind it)
       else if (threat && !(c.chr && aiWaits(c, threat, race, v))) {
         const rlHere = RL[q.i];
         const oPos = X ? tlD(threat, q.d) : threat.q.d;
@@ -4300,7 +4605,8 @@ const Core = (function () {
     if (T.open) { const f = clamp(fi, 0, N - 1); i0 = Math.min(N - 2, Math.floor(f)); i1 = i0 + 1; ft = f - i0; }   // open road: the look-ahead stops at the end
     else { i0 = ((Math.floor(fi) % N) + N) % N; i1 = (i0 + 1) % N; ft = fi - Math.floor(fi); }
     let rlv = lerp(RL[i0], RL[i1], ft);
-    let lim = (T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w) - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
+    const wl = T.wa ? lerp(T.wa[i0], T.wa[i1], ft) : T.w;
+    let lim = wl - (M.aiEdge || 1.25);   // (M.aiEdge: the formula keeps further in; a road of several widths: its width at the look-ahead)
     const kerbOut = txv('aiKerb', 0, NVK.aiKerb, c);   // (the new physics' rivals, or by the setting Tekmeci: robniki, over the kerbs at the apex and the exit (the reference video): where the line runs along the asphalt's edge, out by up to kerbOut, never nearer a barrier than half the car and 0.6 m)
     if (kerbOut > 0 && T.curb && T.curb[i0] && T.br && !c.inPit && !c.pitWant && !c.pitG) {
       const lin = (T.wa ? T.wa[i0] : T.w) - 1.7, near = clamp((Math.abs(rlv) - lin + 0.8) / 0.8, 0, 1);
@@ -4308,16 +4614,18 @@ const Core = (function () {
     }
     if (c.tl && !c.tl.fall && !c.inPit && !c.pitG) rlv -= clamp(0.5 * c.tl.kd2 * lerp(T.rk[i0], T.rk[i1], ft), -3, 3);   // (a semi-trailer behind: wider in a bend by as much as its axles cut in, d^2 / 2R)
     if (c.uLim) { const e = Math.max(c.uLim[i0], c.uLim[i1]); if (e > lim) lim = e; }   // (over the verge, as the player: Race._voznja)
-    let off = clamp(rlv + c.aiOff, -lim, lim);
+    let limL = lim, limR = lim;
+    if (T.def.barrier && !c.police) { const pv = T.roPv; limL = Math.max(lim, Math.min(wl + 2.2, lerp(T.bl[i0], T.bl[i1], ft) - 1.6, pv ? lerp(pv[0][i0], pv[0][i1], ft) - 1.2 : 1e9)); limR = Math.max(lim, Math.min(wl + 2.2, lerp(T.br[i0], T.br[i1], ft) - 1.6, pv ? lerp(pv[1][i0], pv[1][i1], ft) - 1.2 : 1e9)); }   // (def.barrier: to pass or to get away, onto the run-off, up to 2.2 m past the road's edge, only where it is paved (Track.roPv: 1.2 m inside it); not the patrol cars)
+    let off = clamp(rlv + c.aiOff, -limL, limR);
     if ((c.alU || c.alD) && !c.inPit && !c.pitG) {   // a car alongside (the nearest on each side): not across into it, the offset held where that leaves it (between two: in the middle)
       const a = c.alU, b = c.alD, gs = txv('aiSide', 0.6, NVK.aiSide, c), w2 = KC && !race.pol ? (o) => aiReach(c) + aiReach(o) : (o) => (M.wid + o.m.wid) * 0.5;   // (Trki: ravni odbijači: the boxes' corners, turned to the road, reach further out)
       const gp = (o) => gs + (o.isPlayer && c.chr && c.chr.zbR >= 20 && !(c.chr.zbMad > 0.3) ? 0.5 : 0);   // (Zabava: the player's clean racing respected: more room alongside it)
       const hi = a ? a.q.d - w2(a) - gp(a) : 1e9, lo = b ? b.q.d + w2(b) + gp(b) : -1e9;   // (gs: the new physics' rivals closer alongside, wheel to wheel as in the reference video)
-      if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -lim, lim); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
+      if (off > hi || off < lo) { off = clamp(lo > hi ? (lo + hi) * 0.5 : clamp(off, lo, hi), -limL, limR); c.aiOff = clamp(off - rlv, -2 * T.w, 2 * T.w); }
       const ah = (o) => o && o.dist > c.dist && o.vl > Math.max(5, v - 4) ? o : null, fa = ah(a), fb = ah(b);
-      c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > lim ? fb : hi < -lim ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
+      c.alSq = lo > hi ? (fa && fb ? (fa.vl < fb.vl ? fa : fb) : fa || fb) : lo > limR ? fb : hi < -limL ? fa : null;   // (no room between them, or against the road's edge: the one further back lifts, below; a stopped or much slower car is passed)
     } else c.alSq = null;
-    if (race.tf && c.tfLo != null) { const E = Math.max(lim + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
+    if (race.tf && c.tfLo != null) { const E = Math.max(Math.max(limL, limR) + 0.4, c.tfEdge || 0); off = clamp(off, Math.max(-E, c.tfLo), Math.min(E, c.tfHi)); }   // (the open road: within the corridor the traffic leaves; round a roadblock over the verge)
     if (c.pitWant && T.def.pit) {   // (autopilot into the pits: follow the lane)
       const pz = T.pitAt(sT), pn = T.pitAt(q.s); if (pz && (c.inPit || pz.gap || (pn && pn.gap))) off = pz.o * pz.sd;   // (over to the lane only where it can be reached: the way in or out, or in it; beside the pit wall on with the lap, in next time)
       const bd = pz && c.inPit && !pz.gap ? race._boxD(c) : null;
@@ -4386,7 +4694,8 @@ const Core = (function () {
           if (o.speed < 4 || (xb != null && xb > -6)) continue;
           if (g > -8 && g < 30 && Math.abs(o.q.d * pz.sd - pz.o) < 2.6) { vT = 0; break; } } } } }   // (the turn into the box and out of it: at BAY.v, the curve Race.pitStep brakes to)
     const gT = !!(c.pitG && c.aiThreat && c.aiThreat.pitG && c.aiGap < (c.aiThreat.m.len + M.len) * 0.5 && (c.aiThreat.vl < 1 || (c.aiThreat.vl < 4 && apronBound(c.aiThreat, c, race, T))));   // (a ghost on the pit road already level with a car standing at its box, or one off the lane onto the apron on its way into another box, at walking pace: on through it, not stopped in it)
-    { const o = c.aiThreat, bx = !!KC && !race.pol && !c.inPit, f0 = txv('aiFol', race.cars.length > LOD.min ? LOD.fol : -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs((race._tlX ? tlD(o, q.d) : o.q.d) - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8); }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop)
+    { const o = c.aiThreat, bx = !!KC && !race.pol && !c.inPit, f0 = txv('aiFol', race.cars.length > LOD.min ? LOD.fol : -1, NVK.aiFolM, c), fol = bx && f0 < 0 ? RB_FOL : f0, g0 = (o && fol >= 0 ? Math.max(M.aiGap || 3, (M.len + o.m.len) * 0.5 + fol) : (M.aiGap || 3)) + (race.slip && (c.vprof || race.vprof)[T.idx(q.s + 20 + v * 2.5)] < v - 3 ? 0.12 * v : 0); if (o && !gT && c.aiGap < g0 + 6 && Math.abs((race._tlX ? tlD(o, q.d) : o.q.d) - q.d) < (M.aiFol || 2.1)) vT = Math.min(vT, bx ? Math.max(0, Math.max(0, o.vl) + (c.aiGap - g0) * 0.8) : Math.max(0, o.vl) + Math.max(0, c.aiGap - g0) * 0.8);
+      if (o && c.aiHold === o) { const g1 = Math.max(g0, (M.len + o.m.len) / 2 + 2); if (c.aiGap < g1 + 6) vT = Math.min(vT, Math.max(0, Math.max(0, o.vl) + (c.aiGap - g1) * 0.8)); } }   // (the slipstream on: a braking zone 2.5 s ahead, a time gap to the car ahead too, the tow brings it up faster; M.aiFol: a wide vehicle follows one further to its side; Trki: ravni odbijači: square ends do not nest into a car ahead, so the gap is bumper to bumper, RB_FOL at least, and a car too close drops back, never below a stop; c.aiHold: no room beside it, whatever its side: a car's length and 2 m back, dropping back from alongside)
     if (c.tfFol) { const F = c.tfFol, g = (F.o.m ? F.o.q.s : race.tf.loop ? race.tf._rs(F.o.s, q.s) : F.o.s) - q.s - M.len / 2 - F.len / 2; vT = Math.min(vT, Math.sqrt(F.vs * F.vs + 10 * Math.max(0, g - 8))); }   // (the open road: no way past yet, behind it)   // right behind someone with no gap yet: follow, don't ram (M.aiGap: the formula keeps a longer gap)
     if (race.flyOn && c.flyA !== undefined) {   // the flying start's column: each its gap to the car ahead; the player's car over the line as the countdown ends, not sooner
       const a = c.flyA, ax = a ? tlX(a) : 0; if (a && a.dist > c.dist && a.vl > 3 && !dnf(a)) vT = Math.min(vT, Math.max(0, a.vl) + (a.dist - c.dist - ax - (a.flyP ? (a.m.len + M.len) / 2 + 7 : FLY_KEEP * c.flyTg * Math.max(10, v))) * 0.45);   // (ax: its semi-trailer's tail, tlX)
@@ -4631,6 +4940,7 @@ const Core = (function () {
       const T = this.T, N = T.N, f = clamp(p.s / T.ds, 0, N - 1.001), i = Math.floor(f), j = i + 1, t = f - i;
       const nx = T.nx[i] + (T.nx[j] - T.nx[i]) * t, nz = T.nz[i] + (T.nz[j] - T.nz[i]) * t;
       p.x = T.px[i] + (T.px[j] - T.px[i]) * t + nx * p.d; p.z = T.pz[i] + (T.pz[j] - T.pz[i]) * t + nz * p.d; p.y = T.hy ? T.hy[i] + (T.hy[j] - T.hy[i]) * t : 0;
+      if (T.relief) p.y += T.bankAt(p.s, p.d, _bk).dy;   // (on the road's own relief across, as the vehicles below)
     }
     // a vehicle on its lane: x, z, y, heading and velocity from s, d, its speed and dd (its sideways speed this step)
     _altOf(v) { if (v.dir > 0 || v.st !== 0) return null; for (const A of this.alts) if (v.s >= A.a && v.s <= A.b) return A; return null; }
@@ -4651,6 +4961,7 @@ const Core = (function () {
       const i = Math.min(N - 1, Math.floor(f)), j = i + 1 < N ? i + 1 : 0, t = f - i;
       const nx = T.nx[i] + (T.nx[j] - T.nx[i]) * t, nz = T.nz[i] + (T.nz[j] - T.nz[i]) * t, tx = T.tx[i] + (T.tx[j] - T.tx[i]) * t, tz = T.tz[i] + (T.tz[j] - T.tz[i]) * t;
       v.x = T.px[i] + (T.px[j] - T.px[i]) * t + nx * v.d; v.z = T.pz[i] + (T.pz[j] - T.pz[i]) * t + nz * v.d; v.y = T.hy ? T.hy[i] + (T.hy[j] - T.hy[i]) * t : 0;
+      if (T.relief) v.y += T.bankAt(v.s, v.d, _bk).dy;   // (a road with its own relief across, def.cross: on its surface, in a hollow or on a ridge as the cars are)
       v.vx = tx * v.v * v.dir + nx * dd; v.vz = tz * v.v * v.dir + nz * dd; v.i = i;
       v.h = v.v > 0.4 ? Math.atan2(v.vz, v.vx) : Math.atan2(tz * v.dir, tx * v.dir);
     }
@@ -4834,7 +5145,7 @@ const Core = (function () {
           const pen = q.d > 0 ? q.d - (q.br - hw) : -q.bl + hw - q.d, sg = q.d > 0 ? -1 : 1;
           v.x += q.nx * pen * sg; v.z += q.nz * pen * sg; const vn = v.vx * q.nx + v.vz * q.nz, kb = pm ? 1.05 : 1.3; if (vn * sg < 0) { v.vx -= q.nx * vn * kb; v.vz -= q.nz * vn * kb; }
         }
-        v.s = this.loop ? this._rs(q.s, v.s) : q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.yAt(q) : 0; v.v = 0; v.brake = true;   // (the loop: its continuous s)
+        v.s = this.loop ? this._rs(q.s, v.s) : q.s; v.d = q.d; v.i = q.a; v.y = T.hy ? T.yAt(q) : 0; if (T.relief) v.y += T.bankAt(q.s, q.d, _bk).dy; v.v = 0; v.brake = true;   // (the loop: its continuous s)
         if (Math.hypot(v.vx, v.vz) < 0.25 && Math.abs(v.w) < 0.25) { v.st = 2; v.t = 0; v.vx = v.vz = v.w = 0; }
       } else if (v.st === 2) {
         v.t += dt;
@@ -5245,7 +5556,11 @@ const Core = (function () {
     aiPlan(c, v, out) {
       const T = this.T, s = this._cs(c), hw = c.m.wid / 2, cl2 = c.m.len / 2, sd = this.sd;   // (the loop: the car's s near the window's, the vehicles' continuous s)
       c.tfStk = v < 1.5 && c.tfFol ? (c.tfStk || 0) + 0.15 : 0;   // (held up for a while: it squeezes by with less room)
-      const edge = T.wS(s) - 0.3 + (T.def.pullOff && c.tfStk > 2.5 ? T.def.pullOff : 0);   // (a narrow road's shoulder too, def.pullOff, once held up)
+      let edge = T.wS(s) - 0.3 + (T.def.pullOff && c.tfStk > 2.5 ? T.def.pullOff : 0), edgeL = edge, edgeR = edge;   // (a narrow road's shoulder too, def.pullOff, once held up)
+      if (T.def.barrier) { const ib = T.idx(s), F = c.tfFol, pv = T.roPv;
+        if (c.tfStk > 1 && F && F.vs < 0.5 && pv) { const fd = F.o.m ? F.o.q.d : F.o.d; c.tfVg = 20; c.tfVgS = fd > 0.3 ? -1 : fd < -0.3 ? 1 : pv[1][ib] > pv[0][ib] ? 1 : -1; } else c.tfVg = Math.max(0, (c.tfVg || 0) - 1);
+        edge = Math.max(edge, Math.min(T.wS(s) + 2.5, Math.min(T.bl[ib], T.br[ib]) - 1.0));
+        edgeL = pv && !(c.tfVg > 0 && c.tfVgS < 0) ? Math.max(edgeL, Math.min(edge, pv[0][ib] - 0.3)) : edge; edgeR = pv && !(c.tfVg > 0 && c.tfVgS > 0) ? Math.max(edgeR, Math.min(edge, pv[1][ib] - 0.3)) : edge; }   // (def.barrier: round the traffic over the run-off, on each side only where it is paved (Track.roPv); held up behind something standing still (a bus at its stop, a jam), over the verge on the side away from it too for the next 20 plans (tfVg, tfVgS: it keeps to it while it gets going))
       const sq = c.tfStk > 2.5 ? 0.3 : 1, mg = (os, ol) => { const k = Math.abs(T.k[T.idx(os)]); return (0.9 + Math.max(0.9 * Math.min(1, k * 18), ol * ol * k / 8) + 0.022 * v * 0.7) * sq; };   // (ol * ol * k / 8: a long body's ends off the curve, a truck's in a hairpin)
       let lo = -1e9, hi = 1e9, fg = 1e9, clearL = 1e9, ng = 1e9, nO = null, nLen = 0, nVs = 0;
       out.fol = null;
@@ -5262,9 +5577,9 @@ const Core = (function () {
         if (g < -olen - c.m.len - 1 || g > 20 + Math.max(0, cls) * 4.5 || (vs > 1 && cls < 1 && g > 10)) return;
         if (g < 0) { const m = 0.5 + 0.02 * v; if (c.q.d < od) hi = Math.min(hi, od - ow / 2 - hw - m); else lo = Math.max(lo, od + ow / 2 + hw + m); return; }   // (alongside: keep to its side)
         if (g < ng) { ng = g; nO = o; nLen = olen; nVs = vs; }
-        const m = mg(os, olen), pL = od - ow / 2 - hw - m, pR = od + ow / 2 + hw + m, lo2 = Math.max(lo, -edge + hw), rL = pL - lo2, rR = Math.min(hi, edge - hw) - pR;
-        if (vs > 1 && !this.ow) { if (sd < 0) { if (rR >= 0.3 || (pR < edge - hw && clearL > g + 45 + v * 2)) lo = Math.max(lo, pR); else block(g, o, olen, vs); return; }   // same way, slower (keeping left: passed on its right)
-          if (rL >= 0.3 || (pL > -edge + hw && clearL > g + 45 + v * 2)) hi = Math.min(hi, pL); else block(g, o, olen, vs); return; }   // same way, slower
+        const m = mg(os, olen), pL = od - ow / 2 - hw - m, pR = od + ow / 2 + hw + m, lo2 = Math.max(lo, -edgeL + hw), rL = pL - lo2, rR = Math.min(hi, edgeR - hw) - pR;
+        if (vs > 1 && !this.ow) { if (sd < 0) { if (rR >= 0.3 || (pR < edgeR - hw && clearL > g + 45 + v * 2)) lo = Math.max(lo, pR); else block(g, o, olen, vs); return; }   // same way, slower (keeping left: passed on its right)
+          if (rL >= 0.3 || (pL > -edgeL + hw && clearL > g + 45 + v * 2)) hi = Math.min(hi, pL); else block(g, o, olen, vs); return; }   // same way, slower
         if (rL >= 0 && rL >= rR) hi = Math.min(hi, pL); else if (rR >= 0) lo = Math.max(lo, pR); else block(g, o, olen, this.ow ? vs : 0);   // standing (a one-way road: anything ahead, on the side with more room)
       };
       for (const o of this.veh) { if (o.off || o.alt || (o.st === 0 && o.dir < 0 && o.v >= 1)) continue; const g = o.s - s; if (g < -20 || g > 220) continue;
@@ -5293,12 +5608,12 @@ const Core = (function () {
       }
       if (this.race.pol) for (const sp of this.race.pol.spikes) { const g = sp.s - s - cl2; if (!sp.on || g < -cl2 * 2 || g > 20 + v * 3) continue;   // (a spike strip ahead: through its gap, whatever else is there)
         const mg = T.def.barW ? 0.8 : 0.35; if (sp.side > 0) sHi = Math.min(sHi, sp.d0 - hw - mg); else sLo = Math.max(sLo, sp.d1 + hw + mg); }   // (mg: room to spare where the gap is wide enough: a car swinging across into it does not clip the strip)
-      const E = Math.max(edge, vE);
+      const EL = Math.max(edgeL, vE), ER = Math.max(edgeR, vE);
       if (sLo > lo || sHi < hi) {   // the gap: a hard limit; with no room in it beside the rest, behind the nearest thing, in the gap
         const a = Math.max(lo, sLo), b = Math.min(hi, sHi);
-        if (a <= b - 0.2) { lo = a; hi = b; } else { if (nO) block(ng, nO, nLen, Math.max(0, nVs)); lo = sLo > -1e8 ? sLo : -E + hw; hi = sHi < 1e8 ? sHi : E - hw; if (lo > hi) lo = hi = sLo > -1e8 ? sLo : sHi; }
-      } else if (lo > hi - 0.2 || lo > E - hw || hi < -E + hw) { if (nO) block(ng, nO, nLen, Math.max(0, nVs)); lo = Math.min(lo, E - hw); hi = Math.max(hi, -E + hw); if (lo > hi) lo = hi = (lo + hi) / 2; }
-      out.lo = lo; out.hi = hi; out.edge = vE > edge ? vE - hw : 0;
+        if (a <= b - 0.2) { lo = a; hi = b; } else { if (nO) block(ng, nO, nLen, Math.max(0, nVs)); lo = sLo > -1e8 ? sLo : -EL + hw; hi = sHi < 1e8 ? sHi : ER - hw; if (lo > hi) lo = hi = sLo > -1e8 ? sLo : sHi; }
+      } else if (lo > hi - 0.2 || lo > ER - hw || hi < -EL + hw) { if (nO) block(ng, nO, nLen, Math.max(0, nVs)); lo = Math.min(lo, ER - hw); hi = Math.max(hi, -EL + hw); if (lo > hi) lo = hi = (lo + hi) / 2; }
+      out.lo = lo; out.hi = hi; out.edge = vE > Math.min(edgeL, edgeR) ? vE - hw : 0;
       return out;
     }
     // the last resort, every step: something the car would touch soon at the present speeds (0.8 s, up to 1.3 s when closing fast), ahead of it
@@ -6401,6 +6716,228 @@ const Core = (function () {
     for (let j = 0; j < n; j++) { let s = 0, m = 0; for (let d = -2; d <= 2; d++) { let q = j + d; if (T.open) { if (q < 0 || q >= n) continue; } else q = (q + n) % n; s += dd[q]; m++; } sm[j] = s / m; }
     return { proga: T.def.id, vreme: S.vreme || 'suho', slog: 1, razred: null, korak: k, k0: S.k0, ks: S.ks, dd: sm, vq, pl, ql, qh, wv };
   }
+  /* ---------------------------------------------------------------------
+     A FALL OVER THE EDGE: THE CAR A RIGID BODY ON THE DRAWN GROUND (Track.floor)
+     --------------------------------------------------------------------- */
+  // The user's of 10. 11. 2026 (»Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«, then »Vrni
+  // tako kot prej po 1,5s«): on a track whose ground beyond the edge the core knows (Track.floor, def.floor: Killar; no other track has one, so
+  // every other track's fall is as it was) a car that goes over the edge (Race._fall) is a rigid body with six degrees of freedom from the step
+  // after its middle crossed the line: a hull of points (its floor at the wheels' height, the belt line, the roof) on the road's platform inside
+  // the line, on the platform's edge and on the drawn ground beyond it (Track.floorAt), under gravity, with contacts that do not bounce and
+  // Coulomb friction. It tips about the edge as its middle passes it, falls, lands, tumbles and slides down the slope; a hard knock on the ground
+  // damages it where it struck (knock: a dent there, the roof's from above). The game shows this for FALL.cap seconds (the old fall's time), then
+  // the car is on the road again where it went over (Race.rescue, as ever), the worse for the old fall's blow at least; left to it for longer
+  // (opts.fallCap: the tests) the body comes to rest where the slope lets it. No random number, and all of its state inside c.fall (an object:
+  // the race's state lines hold no more than they did); a car with a semi-trailer falls as it always did (Race._fall's own lines).
+  //   g: gravity (m/s2, the real one, not JUMP_G); mu: the body's friction on the ground; muW: its wheels' along the car while it stands on
+  //   them (they roll); sub: substeps a second at least; iters: the solver's rounds; slop, push: the depth left in and the most it is pushed out
+  //   of the ground a round (m); angD: the turning's damping (1/s); restV, restW, restT: slower than this (m/s, rad/s) for this long (s) it
+  //   lies still; hold: how long it lies before it is put back; cap: the longest fall (s): the game shows the fall's beginning and puts the car
+  //   back as the old fall did (its 1.6 s; the user's decision of 10. 11. 2026: »Vrni tako kot prej po 1,5s«), a race may ask for a longer one
+  //   (opts.fallCap: the tests, which follow a body to where the ground lets it come to rest); outT: how long it may fall with no ground known
+  //   under it; reach: how far beyond the line the platform still matters (m); slab: the platform's thickness (m; under it only the drawn ground: a
+  //   bridge's deck); deep: how much deeper than its own way there a point may be found in the ground and still be on it (m; deeper, it is under
+  //   that ground: fallTouch); hcK: the centre of mass's height as a part of the hull's, for a model without its own (M.hcg); leadW, leadA: the
+  //   most turn and tilt it has from its leading wheels being over the edge before its middle (rad/s, rad); kick: overEdge's push, taken back out
+  //   (its speed across the edge, its hop, the two numbers of its spin); hitV, dmgK, dmgMax: a knock on the ground above this speed (m/s)
+  //   damages, this much a m/s over it, at most this much a fall; dmgCut: a fall costs at least this much, however it ends: the old fall's fixed
+  //   blow (the game cuts the fall short: the car would have gone on down); ht: the hull's height by the body, for a model without its own (m;
+  //   1.32 else)
+  const FALL = { g: 9.81, mu: 0.8, muW: 0.25, sub: 240, iters: 8, slop: 0.01, push: 0.25, angD: 0.05, restV: 0.4, restW: 0.6, restT: 0.4, hold: 0.8, cap: 1.5, outT: 0.25,
+    reach: 5, slab: 1.5, deep: 0.12, hcK: 0.36, leadW: 0.8, leadA: 0.12, kick: [4.5, 1.2, 0.6, 0.9], hitV: 3, dmgK: 0.012, dmgMax: 0.5, dmgCut: 0.32,
+    ht: { formula: 0.98, lm: 1.05, wedge: 1.16, coupe: 1.28, muscle: 1.34, sedan: 1.4, rally: 1.4, hatch: 1.44, ev: 1.46, truck: 1.9 } };
+  const _fbQ = {}, _fbF = {}, _fbK = {}, _fbL = {}, _fbE = {}, _fbG = {}, _fbO = [0, 0, 0], _fbHull = new WeakMap();
+  // the hull of a model, in the car's own axes (x forward, y up, z to the right) from its centre of mass: P its points (the first nW on its floor).
+  // As tall as the model says (M.ht; a kit vehicle as it is drawn: def.look.body.roofY, else def.parts.ht), else as its body is (FALL.ht); its
+  // centre of mass M.hcg up, else FALL.hcK of its height (never under 0.35 m, never over half its height)
+  function fallHull(M) {
+    let G = _fbHull.get(M); if (G) return G;
+    const D = M.def, L = M.len, W = M.wid, H = M.ht || (D && ((D.look && D.look.body && D.look.body.roofY) || (D.parts && D.parts.ht))) || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || FALL.hcK * H, 0.35, 0.5 * H), hl = L / 2, hw = W / 2, P = [];
+    for (const fx of [-1, -0.5, 0, 0.5, 1]) for (const fz of [-1, -0.5, 0, 0.5, 1]) P.push(fx * hl, -hc, fz * hw);   // (its floor: 25, dense enough for the platform's edge under it)
+    const yb = 0.58 * H - hc; for (const [fx, fz] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1], [1, 0], [-1, 0]]) P.push(fx * hl, yb, fz * hw);   // (the belt line: bonnet, boot, the widest part)
+    const yr = H - hc, x0 = -0.3 * L, x1 = 0.08 * L, zr = 0.36 * W; for (const [x, z] of [[x0, zr], [x0, -zr], [x1, zr], [x1, -zr], [(x0 + x1) / 2, 0]]) P.push(x, yr, z);   // (the roof)
+    G = { P: new Float64Array(P), n: P.length / 3, nW: 25, L, W, H, hc, yb }; _fbHull.set(M, G); return G;
+  }
+  // the body's axes in the world from its quaternion (B.q: x, y, z, w, as the renderer's): R, rows the world's x, y, z
+  function fallRot(B) {
+    const Q = B.q, x = Q[0], y = Q[1], z = Q[2], w = Q[3], R = B.R;
+    R[0] = 1 - 2 * (y * y + z * z); R[1] = 2 * (x * y - w * z); R[2] = 2 * (x * z + w * y);
+    R[3] = 2 * (x * y + w * z); R[4] = 1 - 2 * (x * x + z * z); R[5] = 2 * (y * z - w * x);
+    R[6] = 2 * (x * z - w * y); R[7] = 2 * (y * z + w * x); R[8] = 1 - 2 * (x * x + y * y);
+  }
+  // the world's inverse inertia times a vector, into _fbO
+  function fallInv(B, vx, vy, vz) {
+    const R = B.R, I = B.iI, a = (R[0] * vx + R[3] * vy + R[6] * vz) * I[0], b = (R[1] * vx + R[4] * vy + R[7] * vz) * I[1], c = (R[2] * vx + R[5] * vy + R[8] * vz) * I[2];
+    _fbO[0] = R[0] * a + R[1] * b + R[2] * c; _fbO[1] = R[3] * a + R[4] * b + R[5] * c; _fbO[2] = R[6] * a + R[7] * b + R[8] * c;
+  }
+  // the road's own projection at a point (Track._qMain from the nearest of the 21 samples round hint, the whole road when that is over 60 m away;
+  // no side road)
+  function fallQ(T, x, z, hint, out) {
+    const N = T.N, px = T.px, pz = T.pz, open = T.open; let bi = -1, bd = 1e18;
+    if (hint >= 0) for (let o = -10; o <= 10; o++) { const i = open ? hint + o : (hint + o + N) % N; if (open && (i < 0 || i >= N)) continue; const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    if (bi < 0 || bd > 3600) for (let i = 0; i < N; i++) { const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    return T._qMain(x, z, bi, out);
+  }
+  // the body of a car that has just gone over the edge (the first step of its fall): where and how it was moving when its middle crossed the line
+  // (overEdge's push taken back out, unless F.raw says there was none), standing on the road as it slopes there (its grade along, its tilt across:
+  // as the car is drawn on it), with the turn and the tilt it has from its leading wheels having been over the edge already (free about the wheels
+  // still on the road for the time its middle took to reach the line, capped: its floor would have sat down on the edge). B, the renderer's too:
+  // x, y, z its centre of mass (px, py, pz a step ago), q its quaternion (pq a step ago), hc the centre's height over its wheels; nx, nz the way
+  // out across the edge, x0, y0, z0 where it went over; nc the points on the ground now; hn the knocks so far, hx, hy, hz, hv, hr the last one's
+  // place, speed and whether it was the roof's; lie: how long it has lain still (s)
+  function fallStart(T, c, F, dt) {
+    const M = c.m, G = fallHull(M), m = M.mass || 1200, q = fallQ(T, c.x, c.z, c.q.i, _fbQ), sd = (q.d > 0 ? 1 : -1) / (Math.hypot(q.nx, q.nz) || 1), nx = sd * q.nx, nz = sd * q.nz, K = FALL.kick;
+    let vx = c.vx, vz = c.vz, vy = c.vy || 0, w = c.w;
+    if (!F.raw) {   // (overEdge's push: across the edge it moved as fast as its last step took it, if that was slower than the push made it)
+      const vo = vx * nx + vz * nz, vp = ((c.x - c.px) * nx + (c.z - c.pz) * nz) / dt; if (vp < K[0] && vo > vp) { const v0 = Math.max(0, vp); vx -= nx * (vo - v0); vz -= nz * (vo - v0); }
+      vy = clamp(((c.y || 0) - (c.py || 0)) / dt, -40, 40); if (Math.abs(w) >= K[3]) w = (w < 0 ? -1 : 1) * (Math.abs(w) - K[3]) / K[2];
+    }
+    // (the road under it: its grade along and its tilt across, the car standing on that as it is drawn)
+    const gr = T.hasElev ? T.elevAt(q.s, _fbL).grade : 0, sl = T.bank ? T.bankAt(q.s, q.d, _fbK).sl || 0 : 0, gx = gr * q.tx + sl * q.nx, gz = gr * q.tz + sl * q.nz, gl = Math.hypot(gx, gz), y = (c.y || 0) + G.hc * Math.hypot(gl, 1);
+    const hh = -c.h / 2, B = { G, im: 1 / m, iI: [12 / (m * (G.W * G.W + G.H * G.H)), 12 / (m * (G.L * G.L + G.W * G.W)), 12 / (m * (G.L * G.L + G.H * G.H))],   // (1 / its inertia about its x: roll, y: yaw, z: pitch)
+      x: c.x, y, z: c.z, px: c.x, py: y, pz: c.z, q: [0, Math.sin(hh), 0, Math.cos(hh)], pq: [0, 0, 0, 1], hc: G.hc,
+      vx, vy, vz, wx: 0, wy: -w, wz: 0, R: new Float64Array(9), C: [], nx, nz, x0: c.x, y0: c.y || 0, z0: c.z, hint: q.i,
+      nc: 0, none: 0, still: 0, lie: 0, out: 0, done: 0, go: 0, ps: 0, lost: 0, hn: 0, hx: 0, hy: 0, hz: 0, hv: 0, hr: 0, iv: 0, ik: -1, dmg: 0 };
+    for (let i = 0; i < G.n; i++) B.C.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, jn: 0, tx: 0, ty: 0, tz: 0, on: 0, hit: 0, reg: 0, un: 0, no: 0 });
+    // (the turn and the tilt it starts with: about the edge's own line, its outer side down: the axis up x out)
+    const vo = Math.max(0.5, vx * nx + vz * nz), cf = Math.cos(c.h) * nx + Math.sin(c.h) * nz, sf2 = Math.max(0, 1 - cf * cf);
+    const l = Math.abs(cf) * (M.a > 0 && M.b > 0 ? (M.a + M.b) / 2 : G.L * 0.3) + Math.sqrt(sf2) * G.W * 0.42, k2 = (cf * cf * (G.L * G.L + G.H * G.H) + sf2 * (G.W * G.W + G.H * G.H)) / 12;
+    const al = FALL.g * l / (k2 + l * l), t0 = l / vo, w0 = Math.min(FALL.leadW, al * t0), a0 = Math.min(FALL.leadA, 0.5 * al * t0 * t0), ax = nz, az = -nx;
+    B.wx += ax * w0; B.wz += az * w0;
+    if (gl > 1e-6) fallTilt(B.q, -gz / gl, gx / gl, Math.atan(gl));
+    fallTilt(B.q, ax, az, a0);
+    B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
+    return B;
+  }
+  // a quaternion turned by a radians about a level axis of the world (ax, 0, az: of length 1)
+  function fallTilt(Q, ax, az, a) {
+    const hs = Math.sin(a / 2), dw = Math.cos(a / 2), dx = ax * hs, dz = az * hs, x = Q[0], y = Q[1], z = Q[2], qw = Q[3];
+    Q[3] = dw * qw - dx * x - dz * z; Q[0] = dw * x + dx * qw - dz * y; Q[1] = dw * y + dz * x - dx * z; Q[2] = dw * z + dx * y + dz * qw;
+  }
+  // the road's platform about the body (E, from the track at its middle, once a step): E.ok while the body can still touch it; E.vl, E.vr: no
+  // drop on that side there (a verge at the road's height where no ground is drawn beyond the line)
+  function fallEdge(T, B, E) {
+    const q = fallQ(T, B.x, B.z, B.hint, _fbQ); E.ok = false; if (!(q.i >= 0)) return;
+    B.hint = q.i;
+    if (q.d > q.br + FALL.reach || -q.d > q.bl + FALL.reach) return;   // (far out: only the drawn ground)
+    const FA = T.fallAt;
+    E.ok = true; E.cx = B.x; E.cz = B.z; E.d = q.d; E.bl = q.bl; E.br = q.br; E.vl = !!FA && !FA[0][q.i]; E.vr = !!FA && !FA[1][q.i]; E.nx = q.nx; E.nz = q.nz; E.tx = q.tx; E.tz = q.tz; E.s = q.s;
+    if (T.hasElev) { const e = T.elevAt(q.s, _fbL); E.y = e.y; E.gr = e.grade; } else { E.y = 0; E.gr = 0; }
+  }
+  // the ground at a point of the hull: false above it, else G.d (how deep, along the normal) and its normal. Inside the lines the platform (a slab:
+  // FALL.slab; its top the road's own slope, its grade along and its tilt across), a point that came under it from beyond a line pushed back out
+  // across that line, not up through the road (c.reg: where the point was last, 0 over the platform, 1 beyond it); beyond a line the drawn ground
+  // (Track.floorAt), and where none is drawn (G.none: no ground known there) on a side with no drop the road's height on (a verge, for a point
+  // that came from the road)
+  function fallGround(T, E, x, y, z, G, c) {
+    if (E.ok) {
+      const dx = x - E.cx, dz = z - E.cz, d = E.d + dx * E.nx + dz * E.nz, ins = d < E.br && -d < E.bl;
+      if (ins || ((d > 0 ? E.vr : E.vl) && !T.floorAt(x, z, _fbF))) {
+        let yp = E.y + E.gr * (dx * E.tx + dz * E.tz), sl = 0; if (T.bank) { const k = T.bankAt(E.s, d, _fbK); yp += k.dy; sl = k.sl || 0; }
+        if (y >= yp) { c.reg = 0; return false; }
+        if (y > yp - FALL.slab) {
+          if (!c.reg) { const gx = E.gr * E.tx + sl * E.nx, gz = E.gr * E.tz + sl * E.nz, l = Math.hypot(gx, 1, gz); G.d = (yp - y) / l; G.nx = -gx / l; G.ny = 1 / l; G.nz = -gz / l; return true; }
+          if (ins) { const r = E.br - d, l = E.bl + d; if (r < l) { G.d = r; G.nx = E.nx; G.nz = E.nz; } else { G.d = l; G.nx = -E.nx; G.nz = -E.nz; } G.ny = 0; return true; }
+        }
+        if (!ins) { G.none = true; return false; }   // (under a verge: no ground known)
+      }
+    }
+    c.reg = 1;
+    if (!T.floorAt(x, z, _fbF)) { G.none = true; return false; }
+    const l = Math.hypot(_fbF.gx, 1, _fbF.gz), d = (_fbF.h - y) / l; if (d < 0) return false;
+    G.d = d; G.nx = -_fbF.gx / l; G.ny = 1 / l; G.nz = -_fbF.gz / l; return true;
+  }
+  // the hull's points on the ground now (B.C; B.nc how many, B.pen the deepest, B.none how many with no ground known under them). A point found
+  // deeper in the ground than it can have come since it was last looked at (its depth then, FALL.deep, what the body has been pushed out by
+  // since: B.ps, and its own way in h seconds) did not come through that ground's top: it is under it (c.un: where the platform as the body's
+  // middle sees it gives way to the drawn ground, at a hole in what is drawn or at its end, under a bridge's deck) and is not on it until it has
+  // been free of it, so a body is never thrown up or aside by ground it is already inside. A point that was over ground the track does not
+  // know when last looked at (c.no) and is under known ground now has come back from there below it: the fall is over (B.lost). The fall's
+  // first look takes every point as it finds it (B.go)
+  function fallTouch(T, B, E, h) {
+    const P = B.G.P, R = B.R, C = B.C, G = _fbG, lim = B.go ? FALL.deep + B.ps : 1e9; let nc = 0, pen = 0, none = 0;
+    for (let i = 0, n = B.G.n; i < n; i++) {
+      const c = C[i], lx = P[3 * i], ly = P[3 * i + 1], lz = P[3 * i + 2];
+      c.rx = R[0] * lx + R[1] * ly + R[2] * lz; c.ry = R[3] * lx + R[4] * ly + R[5] * lz; c.rz = R[6] * lx + R[7] * ly + R[8] * lz;
+      G.none = false;
+      let on = fallGround(T, E, B.x + c.rx, B.y + c.ry, B.z + c.rz, G, c);
+      if (!on) c.un = 0;
+      else if (c.un || G.d > (c.on ? c.d : 0) + lim + h * Math.hypot(B.vx + B.wy * c.rz - B.wz * c.ry, B.vy + B.wz * c.rx - B.wx * c.rz, B.vz + B.wx * c.ry - B.wy * c.rx)) { if (c.no && !c.un) B.lost = 1; c.un = 1; on = false; }
+      if (on) { c.on = 1; c.d = G.d; c.nx = G.nx; c.ny = G.ny; c.nz = G.nz; c.jn = 0; c.tx = c.ty = c.tz = 0; nc++; if (G.d > pen) pen = G.d; }
+      else c.on = 0;
+      if (G.none) { none++; c.no = 1; } else c.no = 0;
+    }
+    B.nc = nc; B.pen = pen; B.none = none; B.ps = 0; B.go = 1;
+  }
+  // a substep of h seconds: gravity; the contacts (sequential impulses: no approach into the ground, friction against the slide up to mu times
+  // the push; a point's first touch at more than FALL.hitV is a knock, the step's hardest kept in B.iv, B.ik); the pose; out of the ground along
+  // the deepest point's normal (up to four rounds of FALL.push at most; B.ps: the last round's, for fallTouch's next look); then how long it has
+  // lain still (B.still, B.lie: stopped dead once it has been slow for FALL.restT) and how long most of it has had no ground known under it (B.out)
+  function fallSub(T, B, E, h) {
+    const C = B.C, im = B.im, n = B.G.n, O = _fbO;
+    B.vy -= FALL.g * h; const ad = Math.max(0, 1 - FALL.angD * h); B.wx *= ad; B.wy *= ad; B.wz *= ad;
+    fallRot(B); fallTouch(T, B, E, 0);
+    const R = B.R, up = R[4];   // (its own up along the world's: on its wheels near 1)
+    if (B.nc) for (let it = 0; it < FALL.iters; it++) for (let i = 0; i < n; i++) {
+      const c = C[i]; if (!c.on) continue;
+      const rx = c.rx, ry = c.ry, rz = c.rz, nx = c.nx, ny = c.ny, nz = c.nz;
+      let ux = B.vx + B.wy * rz - B.wz * ry, uy = B.vy + B.wz * rx - B.wx * rz, uz = B.vz + B.wx * ry - B.wy * rx;
+      const vn = ux * nx + uy * ny + uz * nz;
+      if (it === 0 && !c.hit && -vn > FALL.hitV && -vn > B.iv) { B.iv = -vn; B.ik = i; }
+      fallInv(B, ry * nz - rz * ny, rz * nx - rx * nz, rx * ny - ry * nx);
+      const kn = im + (O[1] * rz - O[2] * ry) * nx + (O[2] * rx - O[0] * rz) * ny + (O[0] * ry - O[1] * rx) * nz, j1 = Math.max(0, c.jn - vn / kn), j = j1 - c.jn; c.jn = j1;
+      if (j) { B.vx += j * nx * im; B.vy += j * ny * im; B.vz += j * nz * im; B.wx += O[0] * j; B.wy += O[1] * j; B.wz += O[2] * j; }
+      ux = B.vx + B.wy * rz - B.wz * ry; uy = B.vy + B.wz * rx - B.wx * rz; uz = B.vz + B.wx * ry - B.wy * rx;
+      const un = ux * nx + uy * ny + uz * nz; let sx = ux - un * nx, sy = uy - un * ny, sz = uz - un * nz; const sl = Math.hypot(sx, sy, sz);
+      if (sl > 1e-7) {
+        sx /= sl; sy /= sl; sz /= sl;
+        fallInv(B, ry * sz - rz * sy, rz * sx - rx * sz, rx * sy - ry * sx);
+        const kt = im + (O[1] * rz - O[2] * ry) * sx + (O[2] * rx - O[0] * rz) * sy + (O[0] * ry - O[1] * rx) * sz;
+        let mu = FALL.mu; if (i < B.G.nW && up > 0.7) { const f = sx * R[0] + sy * R[3] + sz * R[6]; mu += (FALL.muW - mu) * f * f; }   // (on its wheels: they roll along the car)
+        const jt = -sl / kt, mx = mu * c.jn; let tx = c.tx + jt * sx, ty = c.ty + jt * sy, tz = c.tz + jt * sz; const tl = Math.hypot(tx, ty, tz); if (tl > mx) { const f = mx / tl; tx *= f; ty *= f; tz *= f; }
+        const dx = tx - c.tx, dy = ty - c.ty, dz = tz - c.tz; c.tx = tx; c.ty = ty; c.tz = tz;
+        B.vx += dx * im; B.vy += dy * im; B.vz += dz * im; fallInv(B, ry * dz - rz * dy, rz * dx - rx * dz, rx * dy - ry * dx); B.wx += O[0]; B.wy += O[1]; B.wz += O[2];
+      }
+    }
+    for (let i = 0; i < n; i++) C[i].hit = C[i].on;
+    B.x += B.vx * h; B.y += B.vy * h; B.z += B.vz * h;
+    const Q = B.q, qx = Q[0], qy = Q[1], qz = Q[2], qw = Q[3], hx = 0.5 * h * B.wx, hy = 0.5 * h * B.wy, hz = 0.5 * h * B.wz;
+    Q[3] = qw - hx * qx - hy * qy - hz * qz; Q[0] = qx + hx * qw + hy * qz - hz * qy; Q[1] = qy - hx * qz + hy * qw + hz * qx; Q[2] = qz + hx * qy - hy * qx + hz * qw;
+    const ql = 1 / Math.hypot(Q[0], Q[1], Q[2], Q[3]); Q[0] *= ql; Q[1] *= ql; Q[2] *= ql; Q[3] *= ql;
+    for (let p = 0; p < 4; p++) {
+      fallRot(B); fallTouch(T, B, E, p ? 0 : h); if (!(B.pen > FALL.slop)) break;
+      let b = null; for (let i = 0; i < n; i++) { const c = C[i]; if (c.on && (!b || c.d > b.d)) b = c; }
+      const m = Math.min(FALL.push, b.d - FALL.slop * 0.5); B.x += b.nx * m; B.y += b.ny * m; B.z += b.nz * m; B.ps = m;
+    }
+    const sp = Math.hypot(B.vx, B.vy, B.vz), wl = Math.hypot(B.wx, B.wy, B.wz);
+    if (B.nc && sp < FALL.restV && wl < FALL.restW) { B.still += h; if (B.still >= FALL.restT) { B.lie += h; B.vx = B.vy = B.vz = B.wx = B.wy = B.wz = 0; } } else { B.still = 0; B.lie = 0; }
+    if (B.none > n * 0.5) B.out += h; else B.out = 0;   // (most of it over ground the track does not know: no further)
+  }
+  // the time a car's last step covered: the step's own, or under LOD (a far rival worked out every k-th step) what Race._lodPlan kept of it
+  function fallLast(race, c, dt) { const L = race._lod; if (!L || !L.on) return dt; const d = L.pd[race.cars.indexOf(c)]; return d > 0 ? d : dt; }
+  // a step of a falling car's body (Race._fall on a track with Track.floor; the first makes it: fallStart): its substeps, the car's own numbers
+  // from the body (where it is and how it moves, for all that looks at a car: the camera, the map, the sound; its heading its nose's, c.y its
+  // centre less the centre's height, c.roadY with it), the step's hardest knock on the ground as damage where it struck (B.hn counts them: the
+  // game's sound and shake, the renderer's dust; no wall was hit: c.hitWall as it was), and its end (B.done): 1 at rest for FALL.hold, 2 no ground
+  // known under it for FALL.outT (or back under the known ground from where none is: B.lost), 3 the longest fall (FALL.cap, the game's; a race's
+  // own opts.fallCap). Then the fall has cost FALL.dmgCut at least and the car is on the road again where it went over (race.rescue; c.q stayed
+  // there: Race.step's progress leaves a falling body alone)
+  function fallBody(race, c, F, dt) {
+    const T = race.track, B = F.b || (F.b = fallStart(T, c, F, fallLast(race, c, dt))), E = _fbE;
+    c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y; B.px = B.x; B.py = B.y; B.pz = B.z; B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
+    const n = Math.max(1, Math.ceil(dt * FALL.sub - 1e-9)), h = dt / n;
+    fallEdge(T, B, E); B.iv = 0; B.ik = -1;
+    for (let k = 0; k < n && !B.done; k++) { fallSub(T, B, E, h); if (B.lie >= FALL.hold) B.done = 1; else if (B.out >= FALL.outT || B.lost) B.done = 2; else if (F.t >= (race.opts.fallCap || FALL.cap)) B.done = 3; }
+    const R = B.R; fallRot(B);
+    c.x = B.x; c.z = B.z; c.y = c.roadY = B.y - B.hc; c.vx = B.vx; c.vy = B.vy; c.vz = B.vz; c.w = -B.wy; c.air = 1;
+    if (R[0] * R[0] + R[6] * R[6] > 0.09) c.h = Math.atan2(R[6], R[0]);
+    if (B.ik >= 0) {   // (the step's hardest knock: damage where it struck, in the car's own axes; the roof's a dent from above, as rolling over)
+      const P = B.G.P, k = 3 * B.ik, lx = P[k], ly = P[k + 1], lz = P[k + 2], roof = ly > B.G.yb + 0.01, amt = Math.min(FALL.dmgK * (B.iv - FALL.hitV), FALL.dmgMax - B.dmg);
+      B.hn++; B.hv = B.iv; B.hr = roof ? 1 : 0; B.hx = B.x + R[0] * lx + R[1] * ly + R[2] * lz; B.hy = B.y + R[3] * lx + R[4] * ly + R[5] * lz; B.hz = B.z + R[6] * lx + R[7] * ly + R[8] * lz;
+      if (amt > 0) { B.dmg += amt; if (roof && c.dmgMode && !c.pitG) { if (c.dents.length < 24) c.dents.push({ lx, lz, amt: 0.1, top: 1 }); c.roofDmg = Math.min(1, c.roofDmg + 0.3); knock(c, amt); } else knock(c, amt, lx, lz); }
+    }
+    if (B.done) { if (B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); c.roadY = c.y; }   // (the road's height under it at once: the body wrote its own there, a circuit's rescue leaves it to the car's next step, and a frame may be drawn before that)
+  }
   class Race {
     constructor(track, opts) {
       if (opts.phys !== 'cs' && opts.phys !== 'nova') opts = Object.assign({}, opts, { phys: 'cs' });   // two driving physics, 'cs' and 'nova' (the old 'rally' and 'arcade' map to cs, as in Car)
@@ -6410,6 +6947,7 @@ const Core = (function () {
       this.laps = opts.laps || 3;
       this.time = 0; this.state = 'grid'; this.countdown = 0;
       this.cars = []; this.debris = []; this.debrisId = 0; this.props = null; this.propBk = null; this.propSlots = null; this.propCap = null;
+      this.fence = track.fence ? { brk: new Float32Array(track.fence.n), n: 0 } : null;   // (a fence's panels, Track.fence: the race's time each broke, 0 standing; n broken)
       this.finishOrder = [];
       // time trial (def.timeTrial, e.g. the Pikes Peak hill climb; a track with both ways to drive it, def.modes, driven as one when
       // opts.tt): the player alone, standing ON the start line; the clock is race.time. A time trial that can also be raced (def.timeTrial
@@ -6898,6 +7436,11 @@ const Core = (function () {
       }
       return this._gw;
     }
+    // a grid column's distance from the middle: on a road in its real width (def.barrier) the car wholly on the asphalt of its slot, 0.3 m in;
+    // slot g side by side with another (online: two on a row, the same distance to the line) the two 2.6 m apart at least, as _gridWide's
+    // columns (a narrow street: a little over its edge, on the paved run-off beside it)
+    _gridRoad(i, c, g) { const T = this.track, l = Math.min(3.4, T.w - 1.6); if (!T.def.barrier) return l;
+      const m = clamp(T.wAt(i) - 0.3 - ((c && c.m.wid) || 1.9) / 2, 0, l); return this._gridBack(g) === this._gridBack(g % 2 === 1 ? g + 1 : g - 1) ? Math.min(l, Math.max(1.3, m)) : m; }
     // a race with semi-trailers (the TITAN CISTERNA; _gTl: the field's longest tail behind a rig's middle and its trailer, its longest nose, its
     // widest): grid slot g { b: m behind the line, lat: m across }, all of them worked out at once (cached in _gTl). A circuit: the two staggered
     // columns _gStep apart from 9 m behind the line (online: two abreast, the rows 2 x _gStep apart); up an open road the first of these
@@ -6957,13 +7500,13 @@ const Core = (function () {
     // a vehicle wider than 2.6 m (the monster truck) where the grid's columns or the racing line (the flying start's column) would put its side
     // at the asphalt's edge: that much further in, 0.3 m of asphalt outside it (a narrower car where it always stood)
     _inside(c, i, lat) { const hw = (c.m.wid || 1.9) / 2, lim = Math.max(0, this.track.wAt(i) - hw - 0.3); return hw > 1.3 && Math.abs(lat) > lim ? Math.sign(lat) * lim : lat; }
-    _gridLat(g, W) { if (this._gTl) return this._tlSlot(g).lat; return W && W.K > 1 ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, this.track.w - 1.6); }   // grid slot g's offset across the road (W: _gridWide's rows)
+    _gridLat(g, W, i, c) { if (this._gTl) return this._tlSlot(g).lat; return W && W.K > 1 ? ((g - 1) % W.K - (W.K - 1) / 2) * W.cs : (g % 2 === 1 ? -1 : 1) * this._gridRoad(i, c, g); }   // grid slot g's offset across the road (W: _gridWide's rows; i, c: the slot's place along the road and its car, _gridRoad: a road in its real width)
     _placeOnGrid(c, g) {
       const T = this.track;
       const back = this._gridBack(g);
       const s = T.startS - back;
       const i = this.timeTrial ? T.startIdx : T.idx(s);
-      const W = this.timeTrial ? null : this._gridWide(), lat = this._inside(c, i, this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : this._gridLat(g, W));   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide; a wide vehicle: _inside)
+      const W = this.timeTrial ? null : this._gridWide(), lat = this._inside(c, i, this.timeTrial ? 0 : this.opts.qualiBack > 0 && !T.open ? T.rl[i] : this._gridLat(g, W, i, c));   // (qualifying: on the racing line; a narrow road: the two columns closer together; rows abreast: _gridWide; a wide vehicle: _inside)
       const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
       c.place(x, z, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }   // (open road: the camera starts at the right height)
       c.dist = -back; c.lap = 0;
@@ -7084,11 +7627,11 @@ const Core = (function () {
       this.propFloor = floor || null;
       for (const it of list) {
         const K = PROPK[it.kind]; if (!K) continue;
-        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(q.s).y : 0) + (floor ? floor(q, true) : 0);   // (it.i: the builder's sample index, a hint that saves a full scan; the floor row of the nearest sample, as the builder's placement test saw it; in a side road its own height)
+        const q = T.query(it.x, it.z, it.i >= 0 && it.i < T.N ? it.i : -1, {}), gy0 = q.k >= 0 && q.fb > 0 ? q.y : (T.hasElev ? T.elevAt(T.def.barrier ? T.hs(q) : q.s).y : 0) + (floor ? floor(q, true) : 0), gy = T.def.ringH ? T.ringY(it.x, it.z, gy0) : gy0;   // (it.i: the builder's sample index, a hint that saves a full scan; the floor row of the nearest sample, as the builder's placement test saw it; in a side road its own height)
         const b = mkProp(it.kind, it.x, (it.y != null ? it.y : gy) + K.h0, it.z, it.yaw); b.col = it.col || 0; b.qi = q.i;
         if (K.home) b.home = [b.x, b.y, b.z, b.qy, b.qw];   // (drawn by the world's own mesh where it stands: Render moves that part of it from this pose)
         b.slot = slots[it.kind] = (slots[it.kind] || 0); slots[it.kind]++; cap[it.kind] = (cap[it.kind] || 0) + 1; props.push(b);
-        if (K.breaks) b.parts = K.parts.map(() => { const pb = mkProp(K.breaks, it.x, gy, it.z, 0); pb.hidden = true; pb.dead = true; pb.col = b.col; cap[K.breaks] = (cap[K.breaks] || 0) + 1; props.push(pb); return pb; });
+        if (K.breaks) b.parts = K.parts.map((_, k) => { const pk = Array.isArray(K.breaks) ? K.breaks[k] : K.breaks, pb = mkProp(pk, it.x, gy, it.z, 0); pb.hidden = true; pb.dead = true; pb.col = b.col; cap[pk] = (cap[pk] || 0) + 1; props.push(pb); return pb; });   // (breaks: one kind for all its parts, or one per part)
       }
       for (const k in cap) if (!slots[k]) slots[k] = 0;
       this.props = props; this.propSlots = slots; this.propCap = cap;
@@ -7098,17 +7641,17 @@ const Core = (function () {
     _bkPut(b) { const k = Math.max(0, Math.floor(b.qi / 6)) % this.propBk.length; b.bk = k; this.propBk[k].push(b); }
     _bkDel(b) { const L = this.propBk[b.bk]; if (L) { const i = L.indexOf(b); if (i >= 0) L.splice(i, 1); } b.bk = -1; }
     _bkMove(b) { const k = Math.max(0, Math.floor(b.qi / 6)) % this.propBk.length; if (k !== b.bk) { this._bkDel(b); b.bk = k; this.propBk[k].push(b); } }
-    breakProp(b, nx, nz, vn, svx, svz) {   // a stack bursts: its tyres / bales fly off (the bottom ones hardest, the top one pops up)
+    breakProp(b, nx, nz, vn, svx, svz, by) {   // a stack bursts: its tyres / bales fly off (the bottom ones hardest, the top one pops up); by: the car that burst it
       if (b.dead) return;
       b.dead = true; b.hidden = true; b.sleep = true; b.dirty = true; this._bkDel(b); this.propFx(b, vn);
       const K = b.K, tx = -nz, tz = nx; if (!b.parts) return;
       b.parts.forEach((p, k) => {
         const o = qRot(b, K.parts[k][0], K.parts[k][1], K.parts[k][2], _r3), f = K.pf[k];
         p.x = b.x + o[0]; p.y = b.y + o[1]; p.z = b.z + o[2]; p.qx = b.qx; p.qy = b.qy; p.qz = b.qz; p.qw = b.qw;
-        const side = (rand() - 0.5) * 2.4, vv = b.kind === 'bstack' || b.kind === 'rbstack' ? Math.min(11, vn * 0.62) : Math.min(14, vn * 0.78);
-        p.vx = svx * 0.2 + nx * vv * f[0] + tx * side; p.vz = svz * 0.2 + nz * vv * f[0] + tz * side; p.vy = f[1] + vv * 0.05 * (k + 1);
+        const side = K.spread ? (k % 2 ? 1 : -1) * K.spread * (0.75 + 0.5 * rand()) : (rand() - 0.5) * 2.4, vv = K.vK ? Math.min(K.vMax, vn * K.vK) : b.kind === 'bstack' || b.kind === 'rbstack' ? Math.min(11, vn * 0.62) : Math.min(14, vn * 0.78);   // (K.vK, vMax: a heavy one's pieces burst off slower; K.spread: they go to either side by turns, out of the car's way)
+        const cy = K.carry != null ? K.carry : 0.2; p.vx = svx * cy + nx * vv * f[0] + tx * side; p.vz = svz * cy + nz * vv * f[0] + tz * side; p.vy = f[1] + vv * 0.05 * (k + 1);   // (K.carry: the share of the car's speed its parts take: heavy ones shoved along, not run into again)
         p.wx = (rand() - 0.5) * 9; p.wy = (rand() - 0.5) * 7; p.wz = (rand() - 0.5) * 9;
-        p.dead = false; p.hidden = false; p.sleep = false; p.dirty = true; p.t = 0; p.age = 0; p.qi = b.qi;
+        p.dead = false; p.hidden = false; p.sleep = false; p.dirty = true; p.t = 0; p.age = 0; p.qi = b.qi; p.by = K.grace ? by || null : null;
         if (p.slot < 0) { p.slot = this.propSlots[p.kind]; this.propSlots[p.kind]++; }
         this._bkPut(p);
       });
@@ -7117,8 +7660,12 @@ const Core = (function () {
     stepProps(dt) {
       if (!this.props) return;
       const T = this.track, bk = this.propBk, nb = bk.length;
+      const RB = this._ringBk || (this._ringBk = T.def.barrier ? T.rings.filter(R => R.zr > 0).map(R => { const ks = new Set(); for (let i = 0; i < T.N; i++) if (Math.hypot(T.px[i] - R.x, T.pz[i] - R.z) < R.zr + 14) ks.add(Math.floor(i / 6) % nb); return { R, ks: [...ks] }; }) : []);   // (def.barrier: the buckets of each ring's samples)
+      const hitBk = (c, k) => { const L = bk[k]; for (let n = L.length - 1; n >= 0; n--) { const b = L[n]; if (b && !b.dead) propCarHit(this, c, b); } };
       const hit = (c) => { if (!(c.q.i >= 0)) return; const k0 = Math.floor(c.q.i / 6);
-        for (let o = -1; o <= 1; o++) { const L = bk[(k0 + o + nb) % nb]; for (let n = L.length - 1; n >= 0; n--) { const b = L[n]; if (b && !b.dead) propCarHit(this, c, b); } } };
+        for (let o = -1; o <= 1; o++) hitBk(c, (k0 + o + nb) % nb);
+        for (const G of RB) { const dx = c.x - G.R.x, dz = c.z - G.R.z; if (dx * dx + dz * dz > (G.R.zr + 8) ** 2) continue;   // (round a ring: the route passes its walls twice, its two legs' samples far apart: the props of all its samples)
+          for (const k of G.ks) { const o = k - (k0 % nb); if (o >= -1 && o <= 1) continue; hitBk(c, k); } } };
       for (const c of this.cars) hit(c);
       if (this.pol) for (const c of this.pol.cars) if (c.pol.mode !== 'gone') hit(c);   // (the patrol cars too: the cones across a side road they come out of)
       for (const b of this.props) if (!b.sleep && !b.dead) propStep(this, b, T, dt);
@@ -7193,7 +7740,8 @@ const Core = (function () {
         }
         else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) { const was = !!c.inPit; this.pitStep(c, dt, true); if (!!c.inPit !== was) this._pitLane(c); }   // (107: the time in the pit lane)
       }
-      for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true); }
+      for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true, this); }
+      if (T.unf) for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) this._offRoad(c, SD ? SD[ci] : dt); }   // (def.unfenced: over the edge, or too far off the road: back on it)
       this._tlStep(dt, lv);   // (the semi-trailers: their knocks and walls, on the kingpin again)
       if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
@@ -7207,6 +7755,7 @@ const Core = (function () {
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci];
         if (ST && !ST[ci]) continue;   // (a far car between its steps: where it was, its timers on at its next step)
+        if (c.fall && c.fall.b) continue;   // (a body falling down the slope, fallBody: its place on the road, its distance and its timers stay where it went over)
         const q = T.query(c.x, c.z, c.q.i, c.q);
         if (c.net) { c.sPrev = q.s; continue; }   // (distance, laps and the finish of the friend's car come from its phone)
         const cdt = SD ? SD[ci] : dt, m = SD ? Math.round(cdt / dt) : 1, cl = cdt > 0.0125 ? 3 * Math.round(cdt * 120) : 3;   // (m: the steps this one covers, LOD; cl: at most 3 m a 1/120 s, also in a longer step)
@@ -7780,7 +8329,8 @@ const Core = (function () {
       r.from = from; r.to = to; r.box = n0 === cur && (to === cur || now.length > 0);
       return r;
     }
-    // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one); ow: the steps since a
+    // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one; pd: the time the step
+    // before that covered, for what reads a car's last move: fallLast); ow: the steps since a
     // car's last one, ex: how far one between its steps has gone on since (its speed over them). Null in any other race. The player, the cars
     // on the grid, in or for the pits, falling, rolling, in the air, retired or held by the marshals: the full rate. The safety car on the
     // track (driven every step, it touches every car): the full rate within LOD.r m of it as well; the queue further back as any other far car
@@ -7789,8 +8339,8 @@ const Core = (function () {
     _lodPlan(dt) {
       const cars = this.cars, P = this.player, n = cars.length;
       if (LOD.off || n <= LOD.min || !P || this.remotes.length || this.timeTrial || this.pol || this.tf) { if (this._lod) this._lod.on = false; return null; }
-      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n) });
-      L.n++; L.on = true; L.h = dt;
+      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n), pd: new Float64Array(n) });
+      const was = L.on; L.n++; L.on = true; L.h = dt;
       const go = this.state === 'racing', X = this.fl && this.fl.sc && this.fl.sc.car;   // (X: the safety car on the track)
       for (let i = 0; i < n; i++) {
         const c = cars[i]; let k = 1;
@@ -7799,7 +8349,7 @@ const Core = (function () {
           if ((g > LOD.a || g < -LOD.b) && d2 > LOD.r * LOD.r && sx * sx + sz * sz > LOD.r * LOD.r) k = Math.abs(g) > LOD.r2 && d2 > LOD.r2 * LOD.r2 ? LOD.k2 : LOD.k;
         }
         L.kk[i] = k; L.owe[i] += dt;
-        if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)
+        if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.pd[i] = was ? L.dt[i] : 0; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)
         else { L.st[i] = 0; L.ow[i]++; L.ex[i] = L.ow[i] * dt * c.speed; }
       }
       return L;
@@ -7991,8 +8541,9 @@ const Core = (function () {
         if (!this.timeTrial) { const X = this._gTl, room = T.len - 20 - T.finishS, nP = X ? Math.max(1, this._gridN - 1) : Math.max(12, this._gridN - 1), st = Math.min(9, (room - 38) / nP), a0 = X ? Math.min(70, room - nP * st) : st < 9 ? room - nP * st : nP > 12 ? Math.min(70, room - nP * st) : 70;   // (semi-trailers, _gTl: the slots for its own field, the last within the road)
           let L = 0, W = 0; if (X) { L = X.nose + X.tail; W = X.wid; } else if (nP > 12) for (const o of this.cars) { L = Math.max(L, o.m.len || 4.4); W = Math.max(W, o.m.wid || 1.9); }   // (the field's longest and widest car; a rig: its tractor's nose to its trailer's tail)
           const two = (nP > 12 || !!X) && 2 * st < L + 0.8, k = two ? Math.max(0, nP - c.finishPos + 1) : c.finishPos - 1, sd = k % 2 ? -1 : 1;
-          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), dO = Math.min(T.wAt(pi) + 1.4, (sd > 0 ? T.br[pi] : T.bl[pi]) - 1.3), xw = (w) => Math.max(0, w / 2 - 0.95);   // (xw: a car wider than 1.9 m that much further in, its outer side where a 1.9 m one's is)
-          c.parkD = sd * (two ? ((k >> 1) % 2 ? dO - xw(c.m.wid || 1.9) : Math.min(T.wAt(pi) - 1.5, dO - xw(W) - W - 0.5)) : this.tf ? dO - xw(c.m.wid || 1.9) : T.wAt(pi) - 1.5); }   // (the open road: off the asphalt as far as the barrier lets it, clear of the traffic; the inner row clear of the outer one's widest)
+          const pi = T.idx(c.parkS = Math.min(T.len - 20, T.finishS + a0 + st * k)), bar = sd > 0 ? T.br[pi] : T.bl[pi], xw = (w) => Math.max(0, w / 2 - 0.95);   // (xw: a car wider than 1.9 m that much further in, its outer side where a 1.9 m one's is)
+          const out = (w) => T.def.barrier ? Math.min(T.wAt(pi) + 1.4 - xw(w), bar - 0.4 - w / 2) : Math.min(T.wAt(pi) + 1.4, bar - 1.3) - xw(w);   // (the outer row's slot of a car w wide; def.barrier: its side 0.4 m off the barrier)
+          c.parkD = sd * (two ? ((k >> 1) % 2 ? out(c.m.wid || 1.9) : Math.min(T.wAt(pi) - 1.5, out(W) - W - 0.5)) : this.tf || T.def.barrier ? out(c.m.wid || 1.9) : T.wAt(pi) - 1.5); }   // (the open road, def.barrier's run-off: off the asphalt as far as the barrier lets it, clear of the traffic; the inner row clear of the outer one's widest)
       }
     }
     _queueRespawn(c) { c.parkQ = true; c.locked = true; c.inThr = 0; c.inBrk = 1; c.inSteer = 0; this._rq.push(c); }
@@ -8000,7 +8551,7 @@ const Core = (function () {
     _serveRespawn() {
       const T = this.track, c = this._rq[0];
       for (let g = 1; g <= 4; g++) {
-        const b = this._gridBack(g), i = T.idx(T.startS - b), lat = this._gTl ? this._gridLat(g, this._gridWide()) : (g % 2 === 1 ? -1 : 1) * Math.min(3.4, T.w - 1.6);
+        const b = this._gridBack(g), i = T.idx(T.startS - b), lat = this._gTl ? this._gridLat(g, this._gridWide()) : (g % 2 === 1 ? -1 : 1) * this._gridRoad(i, c, g);
         const x = T.px[i] + T.nx[i] * lat, z = T.pz[i] + T.nz[i] * lat;
         let free = true;
         if (this._gTl) free = this._tlFree(c, T.startS - b, lat);
@@ -8052,12 +8603,12 @@ const Core = (function () {
       }
       for (let k = 0; k < A.length; k++) {
         const c = cars[A[k]], R = c.tl; if (c.net || c.fall || R.fall) continue;
-        wallCollide(R, T, true); if (R.rl) R.rl = null;
+        wallCollide(R, T, true, this); if (R.rl) R.rl = null;
         if (R.fall) { R.torn = 1; R.vy = Math.max(0, R.vy || 0); if (c.dmgMode) applyDamage(c, 0.04, -c.m.len * 0.4, 0); if (R.next && !R.next.fall) { R.next.fall = { t: 0 }; R.next.vy = R.vy; } continue; }   // (over the edge: torn off the kingpin, a jerk at the tractor's tail; the second tank with it)
         tlJoin(c, R, dt);
         const R2 = R.next; if (!R2 || R2.fall) continue;   // (the second tank: back on the dolly where the first one is now, its walls, on the dolly again)
         tlSnap(R, R2);
-        wallCollide(R2, T, true); if (R2.rl) R2.rl = null;
+        wallCollide(R2, T, true, this); if (R2.rl) R2.rl = null;
         if (R2.fall) { R2.torn = 1; R2.vy = Math.max(0, R2.vy || 0); continue; }
         tlJoin(R, R2, dt);
       }
@@ -8077,11 +8628,43 @@ const Core = (function () {
     }
     _fall(c, dt) {
       const F = c.fall; F.t += dt;
+      if (this.track.floor && !c.tl) { fallBody(this, c, F, dt); return; }   // (the ground beyond the edge is known: it tumbles down it as a body, FALL)
       c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y;
       c.vy -= JUMP_G * dt; c.y += c.vy * dt; c.x += c.vx * dt; c.z += c.vz * dt; c.h += c.w * dt;
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
-      if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); const R2 = c.tl.next; if (R2) { if (!R2.fall) { R2.fall = { t: 0 }; R2.vy = c.vy; } tlFly(R2, dt); } }   // (its semi-trailer falls with it; a road train's second tank too)
+      if (this.track.floor) this._land(c, F, dt);
+      if (c.tl) { if (!c.tl.fall) { c.tl.fall = { t: 0 }; c.tl.vy = c.vy; } tlFly(c.tl, dt); const R2 = c.tl.next; if (R2) { if (!R2.fall) { R2.fall = { t: 0 }; R2.vy = c.vy; } tlFly(R2, dt); }   // (its semi-trailer falls with it; a road train's second tank too)
+        if (this.track.floor) for (let L = c.tl; L; L = L.next) if (this.track.floorAt(L.x, L.z, _fl) && L.y < _fl.h) { const e = _fl.h - L.y; L.y += e; L.yA += e; L.yK += e; if (L.vy < 0) L.vy = 0; } }   // (on the slope with it, not under it)
       if (F.t >= 1.6) { c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; applyDamage(c, 0.32); this.rescue(c); }
+    }
+    // a falling car on the drawn ground (Track.floor: Killar; the user's report of 9. 11. 2026 at ~23.48: over the edge the car fell into the slope and
+    // was gone): a ball of FLOOR_R round its middle, FLOOR_R above its wheels, pushed out of the slope along its normal, its speed into the slope gone
+    // and the rest rubbed off (it slides down the slope, drawn on it, as far as a steep one lets it); its first touch ends the fall FLOOR_T s later
+    // at the latest (put back on the road where it went over, as ever). Where the floor has no cell, it falls free
+    _land(c, F, dt) {
+      const G = _fl; if (!this.track.floorAt(c.x, c.z, G)) return;
+      const l = Math.hypot(G.gx, 1, G.gz), nx = -G.gx / l, ny = 1 / l, nz = -G.gz / l, d = (c.y + FLOOR_R - G.h) * ny;   // (d: the ball's middle from the slope's plane)
+      if (d >= FLOOR_R) return;
+      const p = FLOOR_R - d; c.x += nx * p; c.y += ny * p; c.z += nz * p; c.roadY = c.y;
+      const vn = c.vx * nx + c.vy * ny + c.vz * nz; if (vn < 0) { c.vx -= vn * nx; c.vy -= vn * ny; c.vz -= vn * nz; }
+      const r = Math.max(0, 1 - 2.5 * dt); c.vx *= r; c.vy *= r; c.vz *= r; c.w *= r;
+      if (!F.land) { F.land = 1; F.t = Math.max(F.t, 1.6 - FLOOR_T); }
+    }
+    // a road with no barriers (def.unfenced, Track.unf = [reach, time]; wallCollide holds no car at the sides but at a fence's standing panels,
+    // Track.fence), every step after the walls: a
+    // car whose middle is past the edge of a drop or of a bridge's deck (Track.fallAt) goes over it, fast or at a crawl (Race._fall: it falls,
+    // then it is put back on the road where it went over, damaged); one whose middle has been more than reach metres from the road's edge
+    // (def.halfWidth; Killar: 10 m, the user's decision of 9. 11. 2026 between ~18.10 and ~18.20: the verge, the ditch, the slope and the trees
+    // first; a steep cut's rock or a house's wall stops it before that, Track.rock) for time seconds is put back on the road where it is (rescue: on the line, its nose along the road, no damage); closer, stuck,
+    // the player's own button puts it back (↺). A fence (Track.fence) holds it on its side (wallCollide) until it breaks. c.offT: how long
+    // it has been out there; c.offN: how many times it was put back (game.js: the player's message)
+    _offRoad(c, dt) {
+      const T = this.track, q = T.query(c.x, c.z, c.q.i, _oq);
+      if (!(q.i >= 0) || q.k >= 0) return;
+      const sd = q.d > 0 ? 1 : -1, ex = sd > 0 ? q.d - q.br : -q.d - q.bl;
+      if (ex > 0 && T.fallAt[sd > 0 ? 1 : 0][q.i]) { const nx = -sd * q.nx, nz = -sd * q.nz; overEdge(c, nx, nz, -(c.vx * nx + c.vz * nz)); c.offT = 0; return; }
+      if (Math.abs(q.d) - T.w > T.unf[0]) { c.offT = (c.offT || 0) + dt; if (c.offT >= T.unf[1]) { c.offT = 0; c.offN = (c.offN || 0) + 1; this.rescue(c); } }
+      else if (c.offT) c.offT = 0;
     }
     // when a car was last put somewhere else at once (rescue, the marshals' refit beside the road): the replay's recording marks it (game.js
     // recStep), so Orodje za napake does not take it for a jump. A Map, not a car's own number: the race's state as it was (tests/golden)
@@ -8181,7 +8764,7 @@ const Core = (function () {
         return;
       }
       if (W.hold > 0) { W.hold -= dt; parkBrake(c); c.stuckT = 0; return; }
-      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5) this.rescue(c);
+      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5 && !(c.fall && c.fall.b)) this.rescue(c);   // (a body falling down a slope, fallBody: when it lies)
     }
     // the marshals put a retired car where it may stand (standQ; retiredOff holds there), as retireControl parks it (its centre T.w + hw +
     // 1.6 m out, or 0.4 m short of the barrier): the nearest spot from where it is, on along the road (3 m at a time, up to 1 km), on
