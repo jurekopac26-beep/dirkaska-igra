@@ -7,7 +7,8 @@
 // place of the track (kraj:<name>); in the report's line (v_krogu=[...]). The tool's own flags (zaznaj) of a recording made up on the real
 // track: a car standing 7 s, a jump across, under the road, a jump up, a rival the wrong way; none in the pit lane, none at a rescue; the
 // scan in two slices the same as in one. In the replay the log's hitch is a grey flag with !: its tap shows what it is, Potrdi puts it in
-// Zastavice and in the report (!1 ... (samodejna zastavica)), Zavrzi takes one away.
+// Zastavice and in the report (!1 ... (samodejna zastavica)), Zavrzi takes one away. Tekmeci po moji liniji in the tool's settings (the
+// switch of ?voznja=1, rr_voznja): off at first, on from the next race (the player's style on Bathurst), off again.
 //   node tests/browser/napake-samodejno.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -174,6 +175,28 @@ try {
   T.check('Nastavitve orodja: the log with its notes (the newest first), Kopiraj (the D lines), Počisti (empty, kept so); Prikaz za razvijalca Vklop',
     /^\(\d+\)$/.test(s1.n) && /napaka »[^«]*reading 'frames'/.test(s1.dn) && /^D /.test(clip) && /reading 'frames'/.test(clip) && s2.n === '(0)' && s2.saved.length === 0 && s2.dev === 1, JSON.stringify({ s1, clip: clip.slice(0, 200), s2 }));
   await Q.click('#nk-set [data-nk-d="zapri"]');
+
+  // 8. Tekmeci po moji liniji (Nastavitve orodja; the switch of ?voznja=1, rr_voznja, docs/ai-po-tvoji-liniji.md, Vklop): Izklop at first and
+  // the race without the player's driving; Vklop kept in the browser, the race under way the same, the next one (Bathurst: a real track, in
+  // the dry) with the player's style (VOZNJA_SLOG) and its AI on it; Izklop again: the next race without it
+  const vzRace = () => Q.evaluate(() => { const r = window.__game.race, v = r && r.opts.voznja; return { v: v ? v.map(p => p.razredi ? 'slog' : p.proga).join(' ') : null, on: !!(r && r.voznja), key: localStorage.getItem('rr_voznja') }; });
+  const vzSel = () => Q.evaluate(() => [...document.querySelectorAll('#nk-set [data-k="vz"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' '));
+  const vzOpen = async () => { await Q.evaluate(() => { window.__game.pause(); window.__game.onAction('to-settings'); }); await Q.click('#nk-set-open'); await Q.waitForTimeout(200); };
+  const vzNew = async () => { await Q.evaluate(() => { window.__vzOld = window.__game.race; window.__game.onAction('restart'); }); await Q.waitForFunction(() => window.__game.race && window.__game.race !== window.__vzOld, null, { timeout: 60000, polling: 100 }); await Q.waitForTimeout(300); };
+  await Q.click('#nk-set-open'); await Q.waitForTimeout(200);
+  const z0 = Object.assign({ sel: await vzSel() }, await vzRace());
+  await Q.click('#nk-set [data-k="vz"] [data-v="1"]');
+  const z1 = Object.assign({ sel: await vzSel() }, await vzRace());
+  await Q.click('#nk-set [data-nk-d="zapri"]'); await vzNew();
+  const z2 = await vzRace();
+  await vzOpen();
+  const z3 = Object.assign({ sel: await vzSel() }, await vzRace());
+  await Q.click('#nk-set [data-k="vz"] [data-v="0"]');
+  await Q.click('#nk-set [data-nk-d="zapri"]'); await vzNew();
+  const z4 = await vzRace();
+  T.check('Tekmeci po moji liniji: Izklop at first (no rr_voznja, the race without it); Vklop: rr_voznja 1, the race under way the same, the next with the style and its AI on it; Izklop: the next without it',
+    z0.sel === 'Vklop Izklop*' && z0.key === null && z0.v === null && !z0.on && z1.sel === 'Vklop* Izklop' && z1.key === '1' && z1.v === null &&
+    / ?slog$/.test(z2.v || '') && z2.on && z2.key === '1' && z3.sel === 'Vklop* Izklop' && z4.v === null && !z4.on && z4.key === null, JSON.stringify({ z0, z1, z2, z3, z4 }));
   const own = errors.filter(e => !/preizkus obljube|reading 'frames'/.test(e));
   T.check('no page errors (but the two made for the log)', own.length === 0, own.slice(0, 5).join(' | '));
   await Q.context().close();

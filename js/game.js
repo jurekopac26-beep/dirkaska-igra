@@ -790,10 +790,12 @@
   // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2 and 3): index.html?voznja=1 turns it on, ?voznja=0
   // off (kept in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by
   // it, on every real track (not a test track, def.test, nor one still to be chosen, def.pending; new tracks too) the rest of the AI by
-  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja)
+  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja). The same switch in Nastavitve · Orodje za napake ·
+  // Nastavitve orodja, Tekmeci po moji liniji (js/napake.js, NK_HOOKS.voznja, vzSet): kept as ?voznja keeps it, from the next race
   const VZ_KEY = 'rr_voznja';
   let vzOn = false;
   try { const v = new URLSearchParams(location.search).get('voznja'); if (v === '1') localStorage.setItem(VZ_KEY, '1'); else if (v === '0') localStorage.removeItem(VZ_KEY); vzOn = localStorage.getItem(VZ_KEY) === '1'; } catch (_) { vzOn = false; }
+  const vzSet = (on) => { vzOn = !!on; try { if (vzOn) localStorage.setItem(VZ_KEY, '1'); else localStorage.removeItem(VZ_KEY); } catch (_) { } };   // (no storage: for this visit only)
   const voznjaOf = (def) => {
     if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
     const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
@@ -1179,6 +1181,7 @@
   const NK_HOOKS = {
     replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms), ui: () => replayUI(),
     inLoops: rpInLoops, track: () => track, get recW() { return recd ? recd.w : REC_W; }, dev: (on) => { PH.dev = !!on; },
+    voznja: (on) => { if (on !== undefined) vzSet(on); return vzOn; },   // (Tekmeci po moji liniji in the tool's settings: ?voznja's switch, read or set)
     kje: () => (race && bg === 'race' && !(mp && mp.race) ? { t: race.time, track: track.def.id, rec: recd, lap: rpLap(race.player, race.time), s: rpS(race.player.q) } : null),   // (the race now: a note of the log, js/napake.js)
     where: rpWhere, meta: rpMeta, map: rpMap, shotAt: rpShotAt, flag: rpFlag, flags: () => (recd ? recd.flags : []),
     stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
