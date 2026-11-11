@@ -2156,9 +2156,10 @@ const Core = (function () {
      spun more easily). Mehka: soft contact (little bounce, little turn, hard to spin: rubbing is racing). Kaskaderska: the crash games
      (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late). Realistična (real,
      the sixth choice, cv 6; in the row right after Simulacija): as a real crash (docs/trki-realizem.md, »Zasnova prototipa Realistična«):
-     Simulacija's numbers and four things more, only at a touch (the code asks KC.id === 'real' in the knock, KR outside it); not for the
-     police chase (c.ck), a truck with its trailer (c.tl: the tractor and the trailer's body) nor in the pit lane (the old knock there, the
-     walls as Simulacija's); the new physics (phys 'nova') not 1 and 2 (kTake gives it the push before), at the barrier the push without 3's grip:
+     Simulacija's numbers and four things more, only at a touch (every place asks krOn(c)); not for the police chase (c.ck), a truck with
+     its trailer (c.tl: the tractor and the trailer's body) nor in the pit lane (c.inPit: the old knock there, the walls, the slide and
+     the light things as Simulacija's); the new physics (phys 'nova') not 1 and 2 (kTake gives it the push before, its step is its own),
+     at the barrier the push without 3's grip; never online (the game sends no version there: the default):
        1 the turn anywhere on the car (kTakeR): each axle's slip by the mean lever, (a + b) / 2; the grip goes as Simulacija's, and when both
          axles are pushed past aH2 (all of it aS2 further: a hard knock in the middle) or the nose more than the tail and past aHf (aSf:
          a knock on the nose); the knock's yaw rate goes to the car as far as its grip goes (wI), at every knock, up to wMax rad/s, the rest to
@@ -2182,7 +2183,10 @@ const Core = (function () {
   // tests and the renderer ask for Stara as 5). The order of the choices on the page is its own (index.html: Realistična after Simulacija)
   const KV_IDS = [null, 'sim', 'arc', 'soft', 'stunt', 'old', 'real'], KV_DEF = 'sim';
   let KC = null;   // (the knock in use: the version's numbers with the settings over them, its id on it (KC.id); null: the old knock)
-  let KR = false;   // (Realistična is the version in use, KC.id === 'real': kept beside KC for the code outside kCollide to ask cheaply: the slide (stepCS), the walls (wallCollide), the props and the loose parts (propCarHit, debrisHit); set wherever KC is)
+  let KR = false;   // (Realistična is the version in use, KC.id === 'real': kept beside KC to be asked cheaply, krOn: the knock (kTake), the slide (stepCS), the walls (wallCollide), the props and the loose parts (propCarHit, debrisHit); set wherever KC is)
+  // Realistična's rules for this car (the one question of all four places): not in the run from the police (c.ck: crashCollide's contacts, its own grip),
+  // not a truck with its trailer (c.tl: the tractor and, tlMake, the trailer's body) and not in the pit lane (c.inPit: the old knock there, carCollide)
+  const krOn = (c) => KR && !c.ck && !c.tl && !c.inPit;
   function kvMake() {
     const id = TX.cv != null && KV_IDS[TX.cv] ? KV_IDS[TX.cv] : KV_DEF; if (id === 'old') return null;
     const K = Object.assign({ id, fx: 1 }, KV[id]);
@@ -2903,7 +2907,7 @@ const Core = (function () {
       this.vx += ax * dt; this.vz += az * dt;
       if (wN !== 0) { const cr = Math.cos(wN * dt), sr = Math.sin(wN * dt), vx0 = this.vx; this.vx = vx0 * cr - this.vz * sr; this.vz = vx0 * sr + this.vz * cr; }
       this.x += this.vx * dt; this.z += this.vz * dt; this.h += this.w * dt;
-      if (slx || slz) { const sm = Math.hypot(slx, slz), aS0 = Math.max(0.35 * aL, Math.sqrt(Math.max(0, aL * aL - this.csAn * this.csAn))), aS = KR && !this.ck && !this.tl ? kSlideR(aS0, sm, spd, gl) : aS0, dv = grounded ? Math.min(aS, sm / (clamp(SL_T * spd, 0.04, 0.25) * (KC ? KC.slT : 1))) * dt : 0, k = sm > dv ? 1 - dv / sm : 0;   // (the tyres scrub the push: in SL_T x speed s while it is small, at most with what grip the corner leaves, a third at least; Realistična: a big push or a car without its grip slides on, kSlideR)
+      if (slx || slz) { const sm = Math.hypot(slx, slz), aS0 = Math.max(0.35 * aL, Math.sqrt(Math.max(0, aL * aL - this.csAn * this.csAn))), aS = krOn(this) ? kSlideR(aS0, sm, spd, gl) : aS0, dv = grounded ? Math.min(aS, sm / (clamp(SL_T * spd, 0.04, 0.25) * (KC ? KC.slT : 1))) * dt : 0, k = sm > dv ? 1 - dv / sm : 0;   // (the tyres scrub the push: in SL_T x speed s while it is small, at most with what grip the corner leaves, a third at least; Realistična: a big push or a car without its grip slides on, kSlideR)
         slx *= k; slz *= k; this.x += slx * dt; this.z += slz * dt; }   // (its speed put back at the end, past the stopped car's hold)
       if (trk.hasElev || trk.ground2) {   // (NEW VERSION · TEST 1: the new map's hills on a flat track)
         if (this.air) {
@@ -3661,7 +3665,7 @@ const Core = (function () {
         const kick = Math.min(24, 1.35 * vrel);
         d.vx += kick * nx; d.vz += kick * nz; d.vy = Math.max(d.vy, 1 + Math.min(4, vrel * 0.18));
         d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false; d.roll = 0; (d.by || (d.by = [])).push(c); (d.byT || (d.byT = [])).push(DEB.again);
-        if (KR && !c.ck && !c.tl) propPush(c, -d.m * kick * nx, -d.m * kick * nz, ax + nx * c.rad - c.x, az + nz * c.rad - c.z);   // (Realistična: the push back of what the part got, at the contact; no share of the speed, no twitch)
+        if (krOn(c)) propPush(c, -d.m * kick * nx, -d.m * kick * nz, ax + nx * c.rad - c.x, az + nz * c.rad - c.z);   // (Realistična: the push back of what the part got, at the contact; no share of the speed, no twitch)
         else { const k = Math.min(0.06, d.m * 0.004);                // the car feels it: speed loss + twitch, more for big parts
           c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * d.m * 0.05; }
         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
@@ -3804,7 +3808,7 @@ const Core = (function () {
       const vcx = c.vx - c.w * rcz, vcz = c.vz + c.w * rcx, vrel = (vcx - b.vx) * nx + (vcz - b.vz) * nz;   // closing speed at the contact
       b.x += nx * (r - e); b.z += nz * (r - e); b.dirty = true;                                          // the prop gives way
       if (vrel < 0.5) return;
-      const kr = KR && !c.ck && !c.tl, bvx = b.vx, bvz = b.vz;   // (Realistična: the push back of what it got, propPush; bvx, bvz its speed before)
+      const kr = krOn(c), bvx = b.vx, bvz = b.vz;   // (Realistična: the push back of what it got, propPush; bvx, bvz its speed before)
       if (K.breaks) { const live = !b.dead; race.breakProp(b, nx, nz, vrel, c.vx, c.vz);
         if (kr && live && b.parts) { let qx = 0, qz = 0; for (const p of b.parts) { qx += p.K.m * (p.vx - bvx); qz += p.K.m * (p.vz - bvz); } propPush(c, -qx, -qz, rcx, rcz); }   // (a stack: what its pieces got)
         propFeel(c, K.m, vrel, b.kind, kr); return; }
@@ -3966,7 +3970,7 @@ const Core = (function () {
       // corner velocity
       const vcx = c.vx - c.w * wz, vcz = c.vz + c.w * wx;
       const vn = vcx * nx + vcz * nz;
-      if (KR && vn < -KC.wall.v0 && !c.ck && !c.tl && !c.inPit) { wallR(c, wx, wz, nx, nz, k); if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; } }   // (Realistična: a knock, wallR; leaning on it, in the run from the police, a semi-trailer and in the pit lane as before)
+      if (krOn(c) && vn < -KC.wall.v0) { wallR(c, wx, wz, nx, nz, k); if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; } }   // (Realistična: a knock, wallR; leaning on it, in the run from the police, a semi-trailer and in the pit lane as before)
       else if (vn < 0) {
         const rn = wx * nz - wz * nx;
         const e = CSK.wallE, wy = CSK.wallYaw;
@@ -4123,7 +4127,7 @@ const Core = (function () {
     const pl = !!c.isPlayer, dvx = Px / m, dvz = Pz / m, dw = (rx * Pz - rz * Px) / I * K.yaw * (pl ? K.yawP : 1);
     if (c.phys === 'nova') { c.vx += dvx; c.vz += dvz; c.w += dw; return; }
     if (c.air || c.rl) { c.vx += dvx; c.vz += dvz; return; }   // (no tyres on the road)
-    if (K.id === 'real' && !c.ck && !c.tl) return kTakeR(c, dvx, dvz, dw, K, o);   // (Realistična: the turn anywhere on the car, kTakeR; not in the run from the police nor a semi-trailer's tractor, tlHold)
+    if (krOn(c)) return kTakeR(c, dvx, dvz, dw, K, o);   // (Realistična, krOn: the turn anywhere on the car, kTakeR; not in the run from the police nor a semi-trailer's tractor, tlHold; the pit lane does not come here, carCollide)
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
     c.vx += dvx; c.vz += dvz; c.cSx = (c.cSx || 0) - sh * lt; c.cSz = (c.cSz || 0) + ch * lt;   // (the push across kept apart: stepCS takes it out of the speed for the drift law and scrubs it)
     { const sm = Math.hypot(c.cSx, c.cSz); c.cSr = sm > 1e-9 ? (c.vx * c.cSx + c.vz * c.cSz) / sm : null; }   // (the speed that way now: what a wall takes of it before the next step comes off the push, stepCS)
