@@ -325,13 +325,25 @@ try {
       && u8.S.money > u9.S.money && !!u9.S.cars.muscle.parts.zarometi, JSON.stringify({ f5, paid: u8.S.money - u9.S.money }));
     await page.evaluate(() => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: __garage.findOpt('zarometi', 'Yellow') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run(); const f6 = await fitOf();
     T.check('the yellow headlamps out of the same drawer: the LED ones back into it on the trolley\'s way out', f6.log === 'plan,cart.in,cart.loaded,cart.parked,grab,swap,put,drawer.back,cart.out' && f6.plan.drawer && f6.put === 'cart' && f6.cart && !f6.cart.on && f6.cart.load === 0 && f6.parked, JSON.stringify(f6));
-    // (a long car's exhaust off the regal (the muscle car): behind it beyond the far arm's reach, pushed in under the car the arm would go
-    // down through the body (the final review of 4. 11. 2026): the arm brings it as near as it gets by the body, the part hops on from
-    // there and the old one back into the hand the same way, onto the regal; no part is put on without the arm any more)
-    await page.evaluate(() => { __garage.openMenu({ el: 'auspuh', key: 'rgl:SPORT', sel: __garage.findOpt('auspuh', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
-    const fx = await fitOf(), ux = await page.evaluate(() => Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null);
-    T.check('a long car\'s exhaust off the regal (the muscle car): beyond the far arm\'s reach behind it, not pushed in under the body (the arm down through it): the arm holds it by the rear, the part hops on (under 1 m) and the old one back into the hand, onto the regal; not put on without the arm; the arms parked',
-      fx.log === 'plan,grab,hop,swap,put' && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.at[0] < -2.2 && fx.plan.hop > 0 && fx.plan.hop < 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked, JSON.stringify({ fx, ux }));
+    // (the exhaust by its plan's plate, a long car's off the regal (the muscle car): the car up on the lift (0,55 m), the near arm's wrench
+    // at the clamp under the bumper (two bursts of sparks before the swap, one after it), the far arm with the pipe behind the car: beyond
+    // its reach under the body (pushed in it would go down through it: the final review of 4. 11. 2026), so it brings the pipe as near
+    // as it gets by the body, the part hops on from there and the old one back into the hand the same way, onto the regal; the car down,
+    // two revs, KONČANO; no part is put on without the arm any more)
+    const exOf = () => page.evaluate(() => ({ lift: Garage3D.info.lift, wr: Garage3D._dbg.FIT.log.filter(q => q.step === 'wrench').map(q => q.n).join('+'), plain: Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null }));
+    const exLog = (f) => /^plan,grab,wrench,hop,swap,wrench,/.test(f.log) && f.log.split(',').slice(6).sort().join() === 'down,put,revs';
+    await page.evaluate(() => { __garage.openMenu({ el: 'auspuh', key: 'rgl:SPORT', sel: __garage.findOpt('auspuh', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rx = await run();
+    const fx = await fitOf(), ex = await exOf(), ux = ex.plain;
+    T.check('a long car\'s exhaust off the regal by its plan\'s plate (the muscle car): the car up on the lift, the near arm\'s wrench at the clamp (two bursts before the swap, one after); beyond the far arm\'s reach behind it, not pushed in under the body (the arm down through it): the arm holds it by the rear, the part hops on (under 1 m) and the old one back into the hand, onto the regal; the car down, the revs, KONČANO (' + rx.t + ' s: within 14); not put on without the arm; the arms parked',
+      exLog(fx) && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.lift === 0.55 && fx.plan.wrench && ex.wr === '2+1' && rx.lift > 0.5 && ex.lift === 0 && fx.plan.at[0] < -2.2 && fx.plan.hop > 0 && fx.plan.hop < 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked && /KONČANO/.test(fx.chip) && rx.t <= 14,
+      JSON.stringify({ fx, ex, t: rx.t, lift: rx.lift }));
+    // (an exhaust that lifts the engine's level: a Stage 1 map in the car's parts (+6 %), the straight pipe off the regal (+2,5 %): level 1;
+    // the same fitting, then the engine's short show at the car's rear instead of the two revs: its parts on, MOČ with both numbers)
+    await page.evaluate(() => { const S = __garage.S; S.cars.muscle.parts.cip = __garage.findOpt('cip', 'Stage 1 map'); __garage.openMenu({ el: 'auspuh', key: 'rgl:STRAIGHT', sel: __garage.findOpt('auspuh', 'Straight') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rx2 = await run();
+    const fx2 = await fitOf(), ex2 = await exOf(), ux2 = await ui();
+    T.check('an exhaust that lifts the engine\'s level (a Stage 1 map and the straight pipe: +8,5 %, level 1): the same fitting on the lift with the wrench, then the engine\'s short show (its parts on, MOČ with both numbers, no KONČANO) (' + rx2.t + ' s: within 15); the arms parked',
+      exLog(fx2) && !ex2.plain && fx2.plan.lift === 0.55 && fx2.plan.wrench && ex2.wr === '2+1' && rx2.lift > 0.5 && ex2.lift === 0 && fx2.put === 'regal' && !fx2.stay && fx2.parked && /MOČ/.test(fx2.chip) && /kW → /.test(fx2.chip) && !/KONČANO/.test(fx2.chip) && ux2.info.upg.motor === 1 && ux2.info.parts.motor >= 1 && rx2.t <= 15,
+      JSON.stringify({ fx2, ex2, t: rx2.t, upg: ux2.info.upg, parts: ux2.info.parts }));
     // (the GT wing again, the car's own now (NAMESTI): the SPORT kit's wing stands on the lid: no caps there, the snap, the old part back onto the regal)
     await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: __garage.findOpt('krilo', 'GT wing') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rw3 = await run();
     const fw3 = await fitOf(), uw3 = await ui();

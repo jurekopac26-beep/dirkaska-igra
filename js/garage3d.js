@@ -6010,6 +6010,8 @@ const Garage3D = (function () {
     const cv = cur; if (!cv) return; FIT.n++; FIT.log.length = 0;
     spawn(rglRestock());
     const pcs = o.src && o.src.startsWith('rgl:') && RGL.pcs && RGL.pcs[o.src], regal = !!(pcs && pcs.length && pcs[0].hs), di = !regal && o.src === 'drw:' + el ? DRW.els.indexOf(el) : -1;
+    // (the exhaust goes on with the car up on the lift (its plan's plate): its place, the arms' ways and the camera planned as it will stand there)
+    const ex = el === 'auspuh', l0 = lift; if (ex) setLift(FIT.lift);
     const i = regal ? 1 : 0, tool = regal ? 'reach' : 'gripper', sd = regal ? -1 : 1, pc = regal ? pcs[0] : null, S = partSpot(cv, el, sd), K = cv.kit, up = S.out.y > 0.7;
     const nw = makeCar(spec); nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);   // (its shaders made now: no stutter at the swap)
     const np = regal ? null : partObj(cv, el, o.to, sd), G = cv.v.grp, gq = G.getWorldQuaternion(new THREE.Quaternion()), ax = (x, y, z) => new V3(x, y, z).applyQuaternion(gq);
@@ -6021,12 +6023,12 @@ const Garage3D = (function () {
     const cT = S.p.clone().addScaledVector(S.out, up ? hs.y + 0.03 : pipe ? hs.x - 0.15 : hs.z + 0.03), pd = up || pipe ? (up ? S.out.clone() : ax(0, 1, 0)) : S.out.clone().multiplyScalar(0.5).add(ax(0, 1, 0)).normalize(), dirs = inDirs(S.out);
     let grab = null, plan = null, park = null, exact = false, why = 'grab';
     // (by the car's end or side the arm's way clear of it: in beside a bumper, a sill, a nose, not down through the body (none: no arm))
-    const NC = { k: 160 }, clr = up ? null : (tip, s) => clearOf(G, tip, s, NC);
+    const NC = { k: ex ? 240 : 160 }, clr = up ? null : (tip, s) => clearOf(G, tip, s, NC);
     if (regal) {   // (the reach straight in to the part's face (its frame's z: out of the bay), turned and tilted down the least)
       const n = new V3().setFromMatrixColumn(pc.M, 2).normalize(), tip = new V3().setFromMatrixPosition(pc.M).addScaledVector(n, pc.hs.z + 0.004), g = reachPlan(1, 'reach', tip, n.clone().negate());
       if (g) { g.tip = tip; g.pre = poseAt(1, 'reach', tip.clone().addScaledVector(g.d, -0.5), g.d, g.s.yaw); g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(pc.M);
         if (g.pre) { grab = g; why = 'place';   // (the exhaust level, its pipe along the car: exactly so; on the top (not a wing) upright as on the regal; the rest its face out)
-          if (pipe) plan = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(sd, 0, 0), ax(0, 1, 0), ax(0, 0, sd)).setPosition(cT), dirs, pd, 0.3, clr);
+          if (pipe) for (const q of [S.out, pd]) if (!plan) plan = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(sd, 0, 0), ax(0, 1, 0), ax(0, 0, sd)).setPosition(cT), dirs, q, 0.3, clr);   // (in under the bumper from behind the car; else down onto its place)
           if (up && el !== 'krilo') for (const a of [1, -1]) { const q = framePlan(1, 'reach', g.off, new THREE.Matrix4().makeBasis(ax(a, 0, 0), ax(0, 1, 0), ax(0, 0, a)).setPosition(cT), dirs, pd, 0.3); if (q && (!plan || q.sc < plan.sc)) plan = q; }
           for (const q of [pd, ax(0, 1, 0)]) if (!plan) plan = placePlan(1, 'reach', g.off, cT, face, false, dirs, q, 0.3, clr);   // (back out along the way out and up, else (a long car's end) straight up)
           if (!plan) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(1, 'reach', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
@@ -6078,24 +6080,39 @@ const Garage3D = (function () {
         const hit = rayAll.intersectObject(G, true).find(r => r.object.isMesh && r.object.visible); if (!hit || Math.abs(hit.point.y - S.p.y) > 0.3) continue;
         const c = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.03, 0.016, 12), PM.carbonFlat); c.matrixAutoUpdate = false; c.matrix.makeTranslation(S.p.x, hit.point.y + 0.008, sz * zl * f); c.userData.leg = new V3(S.p.x, hit.point.y, sz * zl * f); scene.add(c); wing.caps.push(c); break; }
       rayAll.far = f0; }
+    // THE EXHAUST by its plan's plate (auspuh): the car up on the lift while the part is fetched; the near arm's wrench at the clamp under the
+    // rear bumper (sparks: loosened); the new pipe in under the bumper; the wrench again (tightened); the car down; the engine revved twice
+    // (a flame). The wrench: beside the bumper's face from the near side (a long car's rear beyond the ring's end: none)
+    const exS = ex && plan && grab ? { up: false, wr: null, at: false, clear: true, off: true, end: false } : null;
+    if (exS && i === 1) { const tip = new V3(K.rear - 0.03, S.p.y + 0.02, clamp(K.hw * 0.25, 0.14, 0.3)), NW = { k: 60 };
+      for (const d of [[0, 0, -1], [0, -0.26, -0.97], [0.26, 0, -0.97], [0.5, 0, -0.87], [0.5, -0.2, -0.84], [0.71, 0, -0.71]]) { const q = poseAt(0, 'wrench', tip, d), q2 = q && poseAt(0, 'wrench', tip.clone().addScaledVector(q.d, -0.25), q.d, q.s.yaw);
+        if (q2 && clearOf(G, tip, q.s, NW)) { q.pre = q2; q.tip = tip; exS.wr = q; break; } } }
+    if (ex) setLift(l0);
     const done = () => { if (!o.up) hud('done', { kind: el }); };
     if (!plan || !grab) {   // (no arm can: the new car in the old one's place with a puff at the spot)
+      if (ex) S.p.y -= FIT.lift - l0;   // (the exhaust's spot was measured with the car up on the lift)
       fitLog('plain', { regal, el, why, at: S.p.toArray().map(q => +q.toFixed(2)), hs: hs.toArray().map(q => +q.toFixed(2)) }); if (np) disposeTree(np.o);
       for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, rnd(-0.5, 0.5), rnd(0.2, 0.8), rnd(-0.5, 0.5), 0.6, 0.12, 0.5, [0.75, 0.75, 0.78], 0.4, -0.3, 2, 0.02);
       SFX.clunk(0.4); fitSwap(cv, nw); done(); if (o.up) yield* upShow(o.up[0], o.up[1]); return;
     }
-    fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, exact, real: !!(np && np.real), hop: toss ? +toss.d.toFixed(2) : 0, caps: wing ? wing.caps.length : 0, side: sd, hit: S.hit, at: S.p.toArray().map(q => +q.toFixed(2)), out: S.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
+    fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, exact, real: !!(np && np.real), hop: toss ? +toss.d.toFixed(2) : 0, caps: wing ? wing.caps.length : 0, lift: exS ? FIT.lift : 0, wrench: !!(exS && exS.wr), side: sd, hit: S.hit, at: S.p.toArray().map(q => +q.toFixed(2)), out: S.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
     if (regal) RGL.P.stay = true;   // (the regal in the picture till the part is back on it)
     // (the camera at the part's own place when it goes on exactly where the car draws it: a flat one (a decal on the bonnet) from over the top)
     const PX = exact ? new V3().setFromMatrixPosition(inCar(np)) : null, flat = exact && np.hs.y < 0.06 && np.hs.y * 3 < Math.min(np.hs.x, np.hs.z);
-    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - 0.2], yaw: 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = wing && !toss ? view({ at: [S.p.x, S.p.y + 0.1, 0], yaw: -1.0, pitch: 0.3, dist: 3.3, fov: 34 }) : spotView(exact ? { p: PX, out: flat ? ax(0, 1, 0) : S.out } : S);
+    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - 0.2], yaw: 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = wing && !toss ? view({ at: [S.p.x, S.p.y + 0.1, 0], yaw: -1.0, pitch: 0.3, dist: 3.3, fov: 34 }) : exS ? view({ at: [K.rear - 0.05, S.p.y + 0.12, 0], yaw: -1.22, pitch: 0.1, dist: 3.4, fov: 34 }) : spotView(exact ? { p: PX, out: flat ? ax(0, 1, 0) : S.out } : S);
     // (the wing's look from behind, a little to the near side, at the end)
     const VH = wing ? view({ at: [S.p.x + 0.1, cT.y, 0], yaw: -1.27, pitch: 0.27, dist: 3.1, fov: 33 }) : null;
+    // (the exhaust's: the car's rear on the lift from behind, a little to the near side (V2); the same down on its wheels for the revs)
+    const VE = exS ? view({ at: [K.rear - 0.05, S.p.y - FIT.lift + 0.2, 0], yaw: -1.22, pitch: 0.14, dist: 3.5, fov: 34 }) : null;
+    const burst = (p) => { for (let j = 0; j < 14; j++) sparks.emit(p.x, p.y - 0.02, p.z, rnd(-2, 2), rnd(-1.8, 0.3), rnd(-2, 2), rnd(0.3, 0.6), 0.06, 0.015, SPK, 1, 9, 0.4, 0); mark(2, p.x, p.y, p.z, 0.35, 1.6, 1.0, 0.5, 0.15); SFX.wrench(); SFX.spark(); };
+    const wrenchAt = function* (n, f) { const W = exS.wr; yield* armExt(0, W.s, 0, 0.3 * f); for (let k = 0; k < n; k++) { burst(W.tip); yield* wait(0.22 * f); } yield* armExt(0, W.pre.s, 0, 0.25 * f); };
     // to the part: the arm's tool over it; the trolley in from the door (for a drawer's part to the cabinet first: the drawer out, the part
     // onto its deck, the drawer in; then across the room's right and along the car's near side)
     const cart = regal ? null : CART.root || buildCart(), ds = di >= 0 ? drwSpot(di, o.toK == null ? -1 : o.toK) : null, lane = park ? [CAB.x, park[1]] : null;
     const toPart = function* () { yield* armTool(i, tool); yield* armCarry(i, grab.pre.s, grab.pre.ext, 1.3); };
     if (wing && wing.caps.length) { wing.off = false; spawn((function* () { yield* armTool(wing.h, wing.tool); yield* armCarry(wing.h, wing.pose.s, wing.pose.ext, 1.3); wing.at = true; })()); }   // (the other arm beside the deck meanwhile, its hand open for the caps)
+    if (exS) spawn((function* () { yield* liftUp(cv, FIT.lift, false, 0.75); exS.up = true; })());
+    if (exS && exS.wr) { exS.off = false; spawn((function* () { yield* armTool(0, 'wrench'); yield* waitFor(() => exS.up, 8); yield* armCarry(0, exS.wr.pre.s, 0, 1.0); exS.at = true; })()); }
     if (cart) { cart.position.set(CART.out, 0, 0); cart.visible = true; }
     if (ds) {
       fitLog('cart.in'); SFX.click();
@@ -6115,7 +6132,9 @@ const Garage3D = (function () {
     fitLog('grab', { rgl: regal ? +RGL.P.k.toFixed(2) : null });
     yield* armExt(i, grab.pre.s, grab.pre.ext, regal ? 0.45 : 0.35);
     // to its place (turned in the hand meanwhile as it is to go on), pressed on
-    yield* par(armCarry(i, plan.pre.s, plan.pre.ext, 1.4), holdTo(i, plan.off, 1.3), camTo(V2, 1.4));
+    // (the exhaust's clamp loosened as the camera comes round to the car's rear: the wrench in, two bursts, out)
+    yield* par(armCarry(i, plan.pre.s, plan.pre.ext, 1.4), holdTo(i, plan.off, 1.3), camTo(V2, 1.4),
+      exS && exS.wr ? (function* () { yield* wait(0.75); yield* waitFor(() => exS.up && exS.at, 6); yield* wrenchAt(2, 1); fitLog('wrench', { n: 2 }); })() : null);
     if (wing && !toss) {   // (12 cm over the lid: 0.4 of the way back out; the caps into the other hand meanwhile, that arm off with them; the snap)
       const mid = {}, k12 = 0.12 / 0.3; for (const n of ['x', 'y', 'z']) mid[n] = lerp(plan.s[n], plan.pre.s[n], k12);
       const capHop = function* (c, k) { yield* wait(k * 0.16); SFX.click(); const a = new V3().setFromMatrixPosition(c.matrix), q0 = new THREE.Quaternion(), A = RB[wing.h];
@@ -6126,7 +6145,9 @@ const Garage3D = (function () {
       if (wing.caps.length) spawn((function* () { yield* armExt(wing.h, { y: Math.min(ARM.Y0 - 0.05, RB[wing.h].s.y + 0.45), pitch: 0 }, 0, 0.4); const ob = letGo(wing.h); if (ob) disposeTree(ob); yield* armRest(wing.h, 1.2); wing.off = true; })());
       yield* wait(0.14); yield* armExt(i, plan.s, plan.ext, 0.13, EZ.in); SFX.clunk(0.8); fitLog('snap', { caps: wing.caps.length });
       for (const c of wing.caps) { const g = c.userData.leg; for (let k = 0; k < 7; k++) sparks.emit(g.x, g.y + 0.02, g.z, rnd(-1.2, 1.2), rnd(0.6, 2.2), rnd(-1.2, 1.2), 0.25 + Math.random() * 0.25, 0.04, 0.012, [1, 0.8, 0.4], 1, 8, 0.6, 0.02); }
-    } else { yield* armExt(i, plan.s, plan.ext, 0.45, EZ.sine); SFX.wrench(); }
+    } else {
+      if (exS) yield* waitFor(() => exS.up, 8);
+      yield* armExt(i, plan.s, plan.ext, 0.45, EZ.sine); SFX.wrench(); }
     // (the spot beyond the arm: the part out of its hand in an arc onto its place (where the car draws it, else its middle at the spot))
     const hopT = toss ? 0.3 + toss.d * 0.12 : 0, fly = function* (ob, M0, M1) { const a = new V3(), b = new V3(), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), sa = new V3(), p = new V3(), q = new THREE.Quaternion(); M0.decompose(a, qa, sa); M1.decompose(b, qb, _hs);
       yield* tween(hopT, (k) => { p.lerpVectors(a, b, k); p.y += Math.sin(Math.PI * k) * (0.18 + toss.d * 0.16); ob.matrix.compose(p, q.copy(qa).slerp(qb, k), sa); ob.matrixWorldNeedsUpdate = true; }, EZ.io); };
@@ -6138,11 +6159,20 @@ const Garage3D = (function () {
     for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, S.out.x * rnd(0.2, 0.8) + rnd(-0.3, 0.3), rnd(0.1, 0.6), S.out.z * rnd(0.2, 0.8) + rnd(-0.3, 0.3), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02);
     SFX.clunk(0.5);
     const held = letGo(i), op = wing && wing.bare ? null : regal ? { o: rglCopy(pc), real: false } : partObj(cv, el, o.from, sd), Fo = !op ? null : op.real && !PART_AT.hidden.includes(el) ? inCar(op) : held.matrix.clone();
-    disposeTree(held); fitSwap(cv, nw); if (op) hold(i, op.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: !op ? 'none' : op.real ? 'real' : regal ? 'regal' : 'case' });
+    disposeTree(held); fitSwap(cv, nw, ex); if (op) hold(i, op.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: !op ? 'none' : op.real ? 'real' : regal ? 'regal' : 'case' });
     if (toss && op) { letGo(i); SFX.whoosh(0.3); yield* fly(op.o, Fo, Mh); hold(i, op.o, op.o.matrix.clone()); }   // (the old part back into the hand the same way)
     if (wing) { if (o.up) levelNow(o.up[0], o.up[1]); if (!toss) spawn(settle(cur, 0.01)); }   // (the wing's level's parts on with it: on a car that draws no wing of its own the level's wing is the one snapped on)
     yield* wait(0.15); SFX.wrench();
+    if (exS && exS.wr) { exS.clear = false; spawn((function* () { yield* wrenchAt(1, 0.7); fitLog('wrench', { n: 1 }); exS.clear = true; yield* armRest(0, 1.2); exS.off = true; })()); }
     yield* armExt(i, plan.pre.s, plan.pre.ext, 0.4, EZ.sine);
+    // (the exhaust's end meanwhile: the wrench out from under it, the car down onto its wheels (the lift's arms stowed after), the engine
+    // revved twice with a flame (its level's show brief when that changed: its parts, the power's chip, the revs), then home)
+    if (exS) spawn((function* () { yield* waitFor(() => exS.clear, 4);
+      let stowed = false; spawn((function* () { yield* lowerCar(cur, false, 0.8); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); stowed = true; })());
+      yield* par(camTo(VE, 0.9), waitFor(() => lift < 1e-3, 3)); fitLog('down');   // (on its wheels: the revs as it settles)
+      if (o.up) yield* upShow(o.up[0], o.up[1], true);
+      else { if (cur.M.ev) yield* evPulse(cur, cur.parts.motor || cur.v.grp, 1); else yield* revs(cur, 2, false); idleOn(cur); SFX.ping(1760); hud('done', { kind: el }); yield* wait(0.2); }
+      fitLog('revs'); yield* waitFor(() => stowed, 4); yield* home(1.4); exS.end = true; })());
     // the old part back where the new one came from: on the regal as the new one stood (in by the way it was taken), on the deck
     let put = null;
     if (!op) { /* (nothing to take back) */ }
@@ -6150,7 +6180,7 @@ const Garage3D = (function () {
       put = framePlan(1, 'reach', RB[1].held.a, pc.M, ways, grab.d.clone().negate(), 0.5); }
     else put = framePlan(0, 'gripper', RB[0].held.a, deckAt(op, park[0], park[1]), [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2]], new V3(0, 1, 0), 0.35);
     if (put) {
-      yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.4), holdTo(i, put.off, 1.3), wing ? camTo(VH, 1.0) : camTo(V1, 1.4));
+      yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.4), holdTo(i, put.off, 1.3), wing ? camTo(VH, 1.0) : exS ? null : camTo(V1, 1.4));
       yield* armExt(i, put.s, put.ext, regal ? 0.5 : 0.4); SFX.clunk(0.3);
       const ob = letGo(i); fitLog('put', { where: regal ? 'regal' : 'cart' });
       if (regal) RGL.ret.push(ob); else deckPut(op);
@@ -6172,6 +6202,7 @@ const Garage3D = (function () {
         for (let k = 0; k < 6; k++) { glint(new V3(cT.x + rnd(-0.12, 0.12), cT.y + rnd(-0.05, 0.1), rnd(-1, 1) * Math.max(hs.x, hs.z) * 0.9), 0.3, 0xffffff); yield* wait(0.15); }
         yield* home(1.4); };
       yield* par(lookW(), armRest(i, 1.2), cartOut, regal ? rglUnstay(1.4) : null, waitFor(() => wing.off, 6)); return; }
+    if (exS) { yield* par(waitFor(() => exS.end, 30), armRest(i, 1.2), cartOut, regal ? rglUnstay(1.4) : null, waitFor(() => exS.off, 6)); return; }   // (the exhaust: its end runs since the swap)
     sparkle(cur, 6); SFX.ping(1760); done();
     yield* par(o.up ? upShow(o.up[0], o.up[1]) : home(1.4), armRest(i, 1.2), cartOut, regal ? rglUnstay(1.4) : null);   // (a level changed: its upgrade's show now, as one: the camera round the car)
   }
