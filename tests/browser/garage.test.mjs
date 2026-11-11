@@ -283,6 +283,21 @@ try {
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); await run(); const f3 = await fitOf(), u6 = await ui();
     T.check('the slicks again: the car\'s own (tvoj), NAMESTI, free; off the regal again, the tyres\' level 3', d6.tiles[0].p === 'tvoj' && d6.buy === 'NAMESTI' && d6.can && u6.S.money === u5.S.money && /^plan,/.test(f3.log) && f3.plan.regal && f3.swaps === 4 && f3.puts === 'cart,cart,regal,regal' && u6.info.upg.gume === 3,
       JSON.stringify({ d6: { buy: d6.buy, t0: d6.tiles[0] }, f3, paid: u5.S.money - u6.S.money }));
+    // the wing by its plan's plate (krilo): the GT wing off the regal onto the bare lid: the far arm's reach brings it, the near one's
+    // gripper takes the two caps off the lid, the wing stands 12 cm over it, snaps on (no old part: nothing back onto the regal), its aero
+    // level's parts on with it (no show of the level after), the look from behind, KONČANO: within 11 s (20,5 s before); SERIJSKO: off
+    // again by the trolley (the aero level 0 again)
+    const uw0 = await ui();
+    await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: __garage.findOpt('krilo', 'GT wing') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rw = await run();
+    const fw = await fitOf(), uw1 = await ui();
+    T.check('the GT wing off the regal onto the bare lid: two caps off it, the snap, no old part back, the aero level with it, KONČANO (' + rw.t + ' s: within 11); the arms parked',
+      fw.log === 'plan,grab,snap,swap' && fw.plan.regal && fw.plan.arm === 1 && fw.plan.el === 'krilo' && fw.plan.caps === 2 && !fw.plan.hop && fw.old === 'none' && !fw.stay && fw.parked && /KONČANO/.test(fw.chip) && rw.t <= 11
+      && uw1.info.upg.aero > uw0.info.upg.aero && uw1.info.parts.aero > 0 && uw0.S.money > uw1.S.money, JSON.stringify({ fw, rw, upg: uw1.info.upg, parts: uw1.info.parts }));
+    await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: null }); document.querySelector('#g-menu [data-mact="stock"]').click(); }); await run();
+    const fw2 = await fitOf(), uw2 = await ui();
+    T.check('SERIJSKO: the wing off again by the trolley (a parts case on, the old one onto the trolley and off with it), the aero level and its parts as before',
+      /^plan,cart\.in,/.test(fw2.log) && /,put,cart\.out$/.test(fw2.log) && fw2.plan.caps === 0 && fw2.put === 'cart' && fw2.cart && !fw2.cart.on && fw2.parked && !uw2.S.cars.muscle.parts.krilo && uw2.info.upg.aero === uw0.info.upg.aero && uw2.info.parts.aero === uw0.info.parts.aero,
+      JSON.stringify({ fw2, upg: uw2.info.upg, parts: uw2.info.parts }));
     // the aero kits' menu (a tap on the car's body): RACE locked; SPORT bought, then RACE open
     const mb = await page.evaluate(async () => { const b = Garage3D.box('car'); __garage.onTap(b.x + b.w / 2, b.y + b.h * 0.35); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const m = __garage.menu && __garage.menu.el; __garage.closeMenu(); return m; });
     T.check('a tap on the car\'s body: the aero kits\' menu', mb === 'aero', mb);
@@ -290,7 +305,7 @@ try {
     T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
     await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
     const u4 = await ui();
-    T.check('the SPORT kit bought (2.600 🪙): the aero level from it', u6.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: u6.S.money - u4.S.money, upg: u4.info.upg }));
+    T.check('the SPORT kit bought (2.600 🪙): the aero level from it', uw2.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: uw2.S.money - u4.S.money, upg: u4.info.upg }));
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); await page.waitForTimeout(100); const dR2 = await menuDom();
     await page.evaluate(() => { const b = Garage3D.box('mq0'); __garage.onTap(5, b.y - 120); });
     const shut = await page.evaluate(() => ({ menu: !!__garage.menu, marks: Garage3D._dbg.marks, on: document.getElementById('g-menu').classList.contains('on'), low: !document.getElementById('g-low').classList.contains('hide') }));
@@ -317,6 +332,12 @@ try {
     const fx = await fitOf(), ux = await page.evaluate(() => Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null);
     T.check('a long car\'s exhaust off the regal (the muscle car): beyond the far arm\'s reach behind it, not pushed in under the body (the arm down through it): the arm holds it by the rear, the part hops on (under 1 m) and the old one back into the hand, onto the regal; not put on without the arm; the arms parked',
       fx.log === 'plan,grab,hop,swap,put' && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.at[0] < -2.2 && fx.plan.hop > 0 && fx.plan.hop < 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked, JSON.stringify({ fx, ux }));
+    // (the GT wing again, the car's own now (NAMESTI): the SPORT kit's wing stands on the lid: no caps there, the snap, the old part back onto the regal)
+    await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: __garage.findOpt('krilo', 'GT wing') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rw3 = await run();
+    const fw3 = await fitOf(), uw3 = await ui();
+    T.check('the GT wing again with the SPORT kit\'s wing on the lid: no caps, the snap, the old part back onto the regal, KONČANO (' + rw3.t + ' s: within 12.5); the arms parked',
+      fw3.log === 'plan,grab,snap,swap,put' && fw3.plan.caps === 0 && fw3.old === 'regal' && fw3.put === 'regal' && fw3.ret >= 1 && !fw3.stay && fw3.parked && /KONČANO/.test(fw3.chip) && rw3.t <= 12.5 && uw3.info.upg.aero >= 2 && !!uw3.S.cars.muscle.parts.krilo,
+      JSON.stringify({ fw3, rw3, upg: uw3.info.upg }));
     // the cabinet's three cars: YOUR CAR the muscle car (the lamps over it), FOR SALE and RENT A CAR the next two cars not owned (FOR SALE
     // locked, its price on its tag; the rent on RENT A CAR's), their names under them, all three drawn; a tap on FOR SALE's maquette:
     // that car drives onto the table (the lamps over FOR SALE); on YOUR CAR's: the muscle car back
