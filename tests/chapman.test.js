@@ -6,7 +6,8 @@
 // autopilot): every car finishes and pulls up in its own slot past the line; a whole duel in the traffic on autopilot: both reach the top and
 // the traffic keeps moving, on its own (left) half. The medal times of the time trial: the stock rally car on the autopilot. The hills behind the
 // barrier line (def.hills): a car up onto their foot, put back from them; the sea side's wall as it was. The start's hill beside the old road
-// (def.hills.S, the report of 11. 11. 2026): the car driven into it from the report's point climbs it, no knock, still in the race.
+// (def.hills.S, the report of 11. 11. 2026): the car driven into it from the report's point climbs it, no knock, still in the race. Across
+// the side roads' mouths on the mountain side: a soft stop up the hill past their far edge, never one at once.
 //   node tests/chapman.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -190,15 +191,34 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     Math.random = orig; return { up, rise, wall, sea, dmg, out, onK, over, d: P.q.d, k: P.q.k, kmh: P.speed * 3.6 };
   };
   const f = (x, k) => x.toFixed(k == null ? 1 : k), say = (x) => `wall ${f(x.wall)} m/s, damage ${f(x.dmg, 2)}, ${x.out ? 'OUT' : 'in the race'}, ${f(x.up, 2)} m up the slope, ${f(x.rise, 2)} m higher, the most past the soft limit ${f(x.over, 3)} m`;
-  const left = go(48.8, 17.95, 0.339, 142 / 3.6, 1, () => -0.08, 3), rec = go(48.8, 17.95, 0.339, 142 / 3.6, 1, (t) => t < 0.2 ? 0 : t < 0.25 ? 0.09 : 0.26, 3);
+  const left = go(48.8, 17.95, 0.339, 142 / 3.6, 1, () => -0.08, 3), rec = go(48.8, 17.95, 0.339, 142 / 3.6, 1, (t) => t < 0.2 ? 0 : t < 0.25 ? 0.09 : 0.26, 3.5);   // (rec: back on the road ~3.1 s on)
   check('the start: from the report\'s point at 142 km/h a little to the left the car drives up the hill past the old road: higher, no knock, no damage, never past its soft limit, still in the race',
     left.onK && left.up > 0.2 && left.rise > 0.2 && left.wall === 0 && !left.sea && left.dmg === 0 && !left.out && left.over < 0.05, say(left));
   check('the start: as recorded (back to the right) the same, then back onto the road and on (> 100 km/h)',
-    rec.onK && rec.up > 0.2 && rec.wall === 0 && !rec.sea && rec.dmg === 0 && !rec.out && rec.over < 0.05 && rec.k < 0 && Math.abs(rec.d) < T.w && rec.kmh > 100, say(rec) + `; after 3 s ${f(rec.d)} m from the middle at ${f(rec.kmh, 0)} km/h`);
+    rec.onK && rec.up > 0.2 && rec.wall === 0 && !rec.sea && rec.dmg === 0 && !rec.out && rec.over < 0.05 && rec.k < 0 && Math.abs(rec.d) < T.w && rec.kmh > 100, say(rec) + `; after 3.5 s ${f(rec.d)} m from the middle at ${f(rec.kmh, 0)} km/h`);
   const grid = [-135, -100, -50, 0, 25, 50, 75].map(sR => { const i = T.idx(T.startS + sR), h = T.hd[i] - 30 * Math.PI / 180;
     return Object.assign(go(T.px[i] - T.nx[i] * 1.5, T.pz[i] - T.nz[i] * 1.5, h, 30, 0.6, () => 0, 2.5), { sR }); });
   check('the start: along the grid and the start (-135 to 75 m) driven into the hill at 30 m/s, 30°: no knock (a touch at most 1 m/s), no damage, still in the race',
     grid.every(x => x.wall <= 1 && x.dmg === 0 && !x.out), grid.map(x => `${x.sR} m: ${x.wall ? 'touch ' + f(x.wall) + ' m/s' : 'no wall'}, ${f(x.up, 2)} m up${x.sea ? ', then the sea side at ' + f(x.sea) + ' m/s' : ''}`).join('; '));
+}
+
+// 9. the side roads' mouths on the mountain side (the old road by its mouth at 114 m, the driveway 4 at 2729 m): a car across
+// one into the hill past its far edge, from its first sample on at the hill's full limit (def.hills.S's fifth number) and, where the road has
+// no hill by the mouth, back to it (Track: S.hill.o): a soft stop, not one at once (the sweep of 11. 11. 2026: before up to 250 g in a step);
+// from 1.5 m left of the middle at 115 km/h, 30° to the left, the throttle at 0.6
+{
+  const zmaj = C.MODELS.find(m => m.id === 'zmaj'), mouth = (sR) => {
+    const orig = Math.random; Math.random = seeded(7);
+    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1, playerModel: zmaj, damage: 2 })), P = r.player, i = T.idx(T.startS + sR), h = T.hd[i] - 30 * Math.PI / 180, v = 115 / 3.6;
+    P.place(T.px[i] - T.nx[i] * 1.5, T.pz[i] - T.nz[i] * 1.5, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = sR; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
+    let g1 = 0, wall = 0, dmg = 0, onK = false;
+    for (let t = 0; t < 2.5; t += DT) { P.inThr = 0.6; P.inBrk = 0; P.inSteer = 0; P.inHand = 0; P.hitWall = 0; const vx = P.vx, vz = P.vz; r.step(DT);
+      if (!(P.hitWall > 0)) g1 = Math.max(g1, Math.hypot(P.vx - vx, P.vz - vz) / DT / 9.81); wall = Math.max(wall, P.hitWall || 0); dmg = Math.max(dmg, +P.dmg || 0); if (P.q.k >= 0) onK = true; if (P.speed < 1 && t > 0.5) break; }
+    Math.random = orig; return { sR, g1, wall, dmg, onK };
+  };
+  const all = [75, 2700, 2725].map(mouth), f = (x, k) => x.toFixed(k == null ? 1 : k);
+  check('the side roads\' mouths on the mountain side (75, 2700, 2725 m) driven across at 115 km/h, 30°: no stop at once (a step at most 40 g), no knock, no damage',
+    all.every(x => x.onK && x.g1 <= 40 && x.wall <= 1 && x.dmg === 0), all.map(x => `${x.sR} m: ${f(x.g1)} g${x.wall ? ', touch ' + f(x.wall) + ' m/s' : ''}${x.dmg ? ', damage ' + f(x.dmg, 2) : ''}${x.onK ? '' : ', not in the side road'}`).join('; '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
