@@ -1068,6 +1068,13 @@ const Render = (function () {
                                triangles, 356 with the legs. Its sub-range 'driver' (aIn 255) never chars in a fire; a driver of your
                                own (helmet and torso of skins and bars) gets the same with K.part('body', fn, { sub: 'driver', ... })
        K.lookOf(id)            another vehicle's look (draw it and add to it: look.build(K), then the differences)
+       K.cab                   the cabin's and the structure's pieces (KOLIBRI's, in pieces: kitCab below has each one's measures), all in
+                               the inner block of 'body', a door's card in its door: K.cab.dash(o) the dashboard ('road': binnacle, dials,
+                               vents, radio, heater, glovebox; 'race': the logger's display, the switch panel), .steer(o) the steering
+                               wheel on its column, .seat(x, y, z, o) a front seat (cushion, bolsters, back, headrest, belt or harness),
+                               .bench(x, y, o), .console(x, y, o) (the gear lever, the hand brake), .pedals(x, y, z, n), .door(sd, o) a
+                               door's card, .nose(o) and .tail(o) the structure behind the bumpers (radiator support, radiator, crash
+                               bar); for Visoki: .badge(x, y, z, dir, host) a generic badge, .plate(...) a number plate's frame and bars
        K.rgb, K.shade, K.mix, the colours: see COLOURS
 
      WORKED EXAMPLE (a small two-box hatch; the RAKETA 16V, js/cars/raketa.js, is the full one)
@@ -1977,7 +1984,147 @@ const Render = (function () {
       }, Object.assign({}, o, { part: kx.ex ? null : 'body', noCrush: true, noDent: true, sub: 'driver' }));   // (sub 'driver': the char never blackens him, see aIn)
     };
     K.lookOf = (id) => { const m = Core.MODELS.find(q => q.id === id), d = m && m.def || (Core.DEFS || []).find(q => q && q.id === id); if (!d || !d.look) kitFail('lookOf: no look for ' + id); return d.look; };
+    K.cab = kitCab(K);
     return K;
+  }
+
+  // ---- K.cab: the cabin's and the structure's pieces (avti na raven KOLIBRIJA, docs/avti-kolibri.md: KOLIBRI's cabin, js/cars/kolibri.js,
+  //      in pieces with their measures, so every car draws its own from them). Each piece is drawn with K's own primitives into the inner
+  //      block of 'body' (seen once a door opens, a pane breaks or a part is off: no triangle more while the car is whole), a door's card
+  //      into its door. Look units; the driver sits on the left (z < 0) ----
+  function kitCab(K) {
+    const IN = { inner: true, part: 'body' }, inn = (x) => Object.assign({}, IN, x);
+    const PL = [0.11, 0.11, 0.12], PL2 = [0.17, 0.17, 0.18], PL3 = [0.23, 0.23, 0.24], BLK = [0.04, 0.04, 0.045], WH = [0.93, 0.93, 0.9], ST = [0.15, 0.15, 0.16], VENT = [0.03, 0.03, 0.035], BK = [-1, 0, 0];
+    // a flat convex polygon turned to face out (K.face shows only the side its points run counter-clockwise from)
+    const face = (pts, col, out, o) => { const [a, b, c] = pts, u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; K.face(n[0] * out[0] + n[1] * out[1] + n[2] * out[2] < 0 ? pts.slice().reverse() : pts, col, o || IN); };
+    // a rectangle facing back (towards the seats) at x: z0..z1, y0..y1
+    const back = (x, z0, z1, y0, y1, col) => face([[x, y0, z0], [x, y0, z1], [x, y1, z1], [x, y1, z0]], col, BK);
+    const C = { IN, face, PL, PL2, PL3, BLK, ST };
+    // the dashboard: one skin across (o.x: its face towards the seats, o.y: its top at the cowl, o.d: from the face forward to the cowl,
+    // o.w: its half width; o.col, o.col2: its body, its face). o.style 'road' (the default): the binnacle over two dials on the driver's
+    // side (o.dz: their rims, the scales' ticks, the needles), the vents, the radio with its lit display and knobs, the heater's three
+    // knobs, the round vents at the ends, the glovebox's lid. 'race': the logger's lit display in its box with the shift lights over it,
+    // the switch panel in the middle (two rows of switches, the red master switch, the brake bias knob); 'none': the skin alone
+    C.dash = (o) => {
+      const x = o.x, y = o.y, d = o.d || 0.39, w = o.w, dz = o.dz == null ? -0.31 : o.dz, c1 = o.col || PL, c2 = o.col2 || PL2;
+      const prof = (z) => [[x + d, y], [x + 0.15, y - 0.035], [x + 0.04, y - 0.06], [x, y - 0.14], [x + 0.03, y - 0.28], [x + 0.21, y - 0.32], [x + Math.max(0.3, d - 0.02), y - 0.26]].map(([px, py]) => [px, py, z]);
+      K.skin([-w, -0.12, 0.12, w].map(prof), (k, e) => e === 2 || e === 3 ? c2 : c1, c1, c1, IN);
+      if (o.style === 'none') return;
+      if (o.style === 'race') {
+        K.box(x + 0.045, y - 0.075, dz, 0.07, 0.12, 0.25, 0, BLK, BLK, true, IN);
+        back(x + 0.008, dz - 0.105, dz + 0.105, y - 0.06, y + 0.03, [0.07, 0.16, 0.2]);                                                      // the display, lit
+        for (const [z0, z1, yy, col] of [[-0.09, 0.02, 0.0, [0.25, 0.9, 0.4]], [-0.09, -0.03, -0.03, WH], [0.0, 0.09, -0.03, [0.95, 0.7, 0.15]], [0.045, 0.09, 0.0, WH]])
+          back(x + 0.0065, dz + z0, dz + z1, y + yy - 0.008, y + yy + 0.008, col);
+        for (let i = 0; i < 5; i++) back(x + 0.0065, dz - 0.085 + i * 0.037, dz - 0.063 + i * 0.037, y + 0.034, y + 0.043, i < 2 ? [0.2, 0.85, 0.3] : i < 4 ? [0.95, 0.7, 0.15] : [0.9, 0.12, 0.08]);   // (the shift lights)
+        const sz = o.sz == null ? 0.12 : o.sz;                                                                                               // the switch panel's middle
+        K.plate([[x + 0.02, y - 0.3, sz - 0.15], [x + 0.02, y - 0.3, sz + 0.15], [x - 0.02, y - 0.13, sz + 0.15], [x - 0.02, y - 0.13, sz - 0.15]], 0.02, BLK, IN);
+        const SW = [[0.9, 0.12, 0.08], [0.95, 0.7, 0.15], [0.2, 0.5, 0.9], [0.25, 0.85, 0.35]], px = (yy) => x - 0.031 + (y - 0.13 - yy) / 0.17 * 0.04;   // (the panel's face at a height)
+        for (let r = 0; r < 2; r++) for (let i = 0; i < 4; i++) { const yy = y - 0.19 - r * 0.055, z = sz - 0.105 + i * 0.045; back(px(yy) - 0.002, z - 0.012, z + 0.012, yy - 0.016, yy + 0.016, SW[(i + r) % 4]); }
+        K.discX(px(y - 0.21) - 0.003, y - 0.21, sz + 0.105, 0.026, 8, [0.85, 0.1, 0.07], -1, IN);                                          // the master switch
+        K.discX(px(y - 0.27) - 0.003, y - 0.27, sz + 0.105, 0.018, 8, PL3, -1, IN);                                                          // the brake bias
+        return;
+      }
+      K.box(x + 0.09, y - 0.045, dz, 0.16, 0.07, 0.34, 0, c1, c1, true, IN);
+      for (const s of [-1, 1]) { const z = dz + s * 0.065, r = 0.048, yd = y - 0.09;
+        K.discX(x + 0.008, yd, z, r + 0.008, 10, [0.6, 0.61, 0.64], -1, IN); K.discX(x + 0.006, yd, z, r, 10, BLK, -1, IN);
+        for (let i = 0; i < 5; i++) { const a = Math.PI * (1.25 - i * 0.375), c = Math.cos(a), sn = Math.sin(a);
+          face([[x + 0.0045, yd + sn * r * 0.72, z + c * r * 0.72 - sn * 0.003], [x + 0.0045, yd + sn * r * 0.72, z + c * r * 0.72 + sn * 0.003], [x + 0.0045, yd + sn * r * 0.95 + c * 0.003, z + c * r * 0.95], [x + 0.0045, yd + sn * r * 0.95 - c * 0.003, z + c * r * 0.95]], WH, BK); }
+        face([[x + 0.004, yd - 0.004, z - 0.003], [x + 0.004, yd + 0.004, z + 0.003], [x + 0.004, yd + 0.036, z + (s < 0 ? 0.022 : -0.014)]], [0.85, 0.12, 0.08], BK); }
+      K.box(x + 0.03, y - 0.28, 0, 0.06, 0.2, 0.26, 0, c2, c2, true, IN);                                                                      // the centre stack
+      for (const s of [-1, 1]) { const z = s * 0.065; back(x - 0.002, z - 0.05, z + 0.05, y - 0.135, y - 0.09, VENT);
+        for (const yy of [y - 0.118, y - 0.104]) back(x - 0.004, z - 0.048, z + 0.048, yy, yy + 0.004, PL3); }
+      back(x - 0.002, -0.1, 0.1, y - 0.21, y - 0.16, BLK);                                                                                    // the radio, its display, its knobs
+      back(x - 0.004, -0.06, 0.03, y - 0.193, y - 0.175, [0.95, 0.55, 0.12]);
+      for (const z of [-0.08, 0.06]) K.discX(x - 0.003, y - 0.184, z, 0.011, 6, PL3, -1, IN);
+      for (const z of [-0.07, 0, 0.07]) K.discX(x, y - 0.25, z, 0.018, 8, PL3, -1, IN);                                                      // the heater's knobs
+      for (const s of [-1, 1]) { K.discX(x + 0.007, y - 0.1, s * (w - 0.1), 0.04, 8, PL3, -1, IN); K.discX(x + 0.005, y - 0.1, s * (w - 0.1), 0.03, 8, VENT, -1, IN); }
+      face([[x + 0.018, y - 0.24, 0.17], [x + 0.018, y - 0.24, 0.46], [x + 0.008, y - 0.16, 0.46], [x + 0.008, y - 0.16, 0.17]], c2, BK);   // the glovebox's lid, its latch
+      face([[x + 0.01, y - 0.18, 0.28], [x + 0.01, y - 0.18, 0.35], [x + 0.009, y - 0.172, 0.35], [x + 0.009, y - 0.172, 0.28]], BLK, BK);
+    };
+    // the steering wheel: a round rim (a skin round the column's axis: o.c its middle, o.ax the column's direction down and forward in
+    // x-y, o.r its radius), its spokes (o.spokes: their angles, 0 to the right), the hub, the column on to the dash (o.to)
+    C.steer = (o) => { const c = o.c, ax = o.ax || [0.6, -0.8], R = o.r || 0.165, rr = o.rr || 0.017, e2 = [-ax[1], ax[0]], n = o.n || 10;
+      const at = (a, q, d) => [c[0] + Math.sin(a) * e2[0] * q + ax[0] * d, c[1] + Math.sin(a) * e2[1] * q + ax[1] * d, c[2] + Math.cos(a) * q];
+      const rings = []; for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2; rings.push([[R - rr, -rr * 0.8], [R + rr, -rr * 0.8], [R, rr * 1.2]].map(([q, d]) => at(a, q, d))); }
+      K.skin(rings, o.col || [0.05, 0.05, 0.055], null, null, IN);
+      for (const a of o.spokes || [0, Math.PI, -Math.PI / 2]) K.bar(at(a, 0.04, 0), at(a, R - rr, 0), 0.011, PL2, inn({ n: 4 }));
+      K.cyl(at(0, 0, -0.01), at(0, 0, 0.02), 0.045, PL, inn({ n: 8, capB: [0.25, 0.25, 0.27] }));
+      if (o.to) K.cyl(at(0, 0, 0.02), o.to, 0.028, PL, inn({ n: 6 })); };
+    // a front seat (x: its cushion's middle, y: the cushion's foot, z): the cushion with its bolsters, the back leaning (o.top: its top over
+    // y), its bolsters, the headrest (o.col the cloth, o.col2 the bolsters); o.belt 'road' (the default: a belt across from the pillar's
+    // side), 'harness' (a racing harness in o.strap: two straps down the back to the buckle, the lap belt) or null; o.shell: a racing
+    // bucket (wings beside the helmet in place of the headrest)
+    C.seat = (x, y, z, o) => { o = o || {}; const w = o.w || 0.4, T = o.top || 0.76, c1 = o.col || [0.46, 0.07, 0.07], c2 = o.col2 || [0.1, 0.1, 0.11], sd = z < 0 ? -1 : 1, hw = w / 2, lean = o.lean == null ? 0.213 : o.lean;
+      const xb = (h) => x - 0.25 - lean * (h - 0.15), belt = o.belt === undefined ? 'road' : o.belt, bf = o.shell ? 0.09 : 0;                 // (the back's face at a height over y; a bucket's deeper sides)
+      K.box(x, y, z, 0.46, 0.13, w, 0, c2, c1, true, IN);
+      for (const s of [-1, 1]) K.box(x - 0.02, y + 0.08, z + s * (hw + 0.005), 0.44, 0.1, 0.06, 0, c2, c2, true, IN);
+      K.plate([[xb(0.15), y + 0.15, z - hw * 0.9], [xb(0.15), y + 0.15, z + hw * 0.9], [xb(T), y + T, z + hw * 0.81], [xb(T), y + T, z - hw * 0.81]], 0.09, c1, IN);
+      for (const s of [-1, 1]) K.plate([[xb(0.18) + 0.036 + bf, y + 0.18, z + s * hw], [xb(0.2) - 0.04, y + 0.2, z + s * hw], [xb(T - 0.1) - 0.03, y + T - 0.1, z + s * hw * 0.95], [xb(T - 0.1) + 0.05 + bf * 0.5, y + T - 0.1, z + s * hw * 0.95]], 0.06, c2, IN);
+      if (o.shell) { for (const s of [-1, 1]) K.plate([[xb(T - 0.22) + 0.03, y + T - 0.22, z + s * hw * 0.84], [xb(T - 0.22) + 0.2, y + T - 0.2, z + s * hw * 0.84], [xb(T) + 0.17, y + T - 0.03, z + s * hw * 0.84], [xb(T) + 0.03, y + T, z + s * hw * 0.84]], 0.035, c2, IN); }
+      else K.plate([[xb(T - 0.08) + 0.01, y + T - 0.08, z - hw * 0.55], [xb(T - 0.08) + 0.01, y + T - 0.08, z + hw * 0.55], [xb(T + 0.04) + 0.01, y + T + 0.04, z + hw * 0.5], [xb(T + 0.04) + 0.01, y + T + 0.04, z - hw * 0.5]], 0.07, c2, IN);
+      if (belt === 'road') K.bar([xb(T - 0.05) + 0.05, y + T - 0.05, z + sd * hw * 0.85], [x + 0.08, y + 0.18, z - sd * hw * 0.6], 0.012, [0.32, 0.32, 0.34], inn({ n: 3 }));
+      if (belt === 'harness') { const sc = o.strap || [0.75, 0.1, 0.08], ft = 0.053, h0 = 0.17, h1 = T - 0.1;                                 // (flat straps: a face each, lying on the back and across the cushion)
+        for (const s of [-1, 1]) { const zz = z + s * 0.075;
+          face([[xb(h0) + ft, y + h0, zz - 0.024], [xb(h0) + ft, y + h0, zz + 0.024], [xb(h1) + ft, y + h1, zz + 0.024], [xb(h1) + ft, y + h1, zz - 0.024]], sc, [1, 0.2, 0]);
+          face([[x - 0.17, y + 0.136, z + s * 0.03], [x - 0.11, y + 0.136, z + s * 0.03], [x - 0.13, y + 0.136, z + s * hw * 0.92], [x - 0.19, y + 0.136, z + s * hw * 0.92]], sc, [0, 1, 0]); }
+        K.box(x - 0.14, y + 0.13, z, 0.07, 0.025, 0.07, 0, [0.6, 0.61, 0.64], [0.6, 0.61, 0.64], true, IN); } };                               // (the buckle)
+    // the rear bench (x: its cushion's middle, y: its foot; o.w across, o.top: the back's top over y, o.heads: the headrests' z)
+    C.bench = (x, y, o) => { o = o || {}; const w = o.w || 1.0, T = o.top || 0.68, c1 = o.col || [0.46, 0.07, 0.07], c2 = o.col2 || [0.1, 0.1, 0.11], hw = w / 2;
+      K.box(x, y, 0, 0.42, 0.15, w, 0, c2, c1, true, IN);
+      K.plate([[x - 0.2, y + 0.15, -hw], [x - 0.2, y + 0.15, hw], [x - 0.3, y + T, hw - 0.01], [x - 0.3, y + T, -hw + 0.01]], 0.08, c1, IN);
+      for (const z of o.heads || [-0.28, 0.28]) K.plate([[x - 0.29, y + T - 0.05, z - 0.09], [x - 0.29, y + T - 0.05, z + 0.09], [x - 0.31, y + T + 0.04, z + 0.085], [x - 0.31, y + T + 0.04, z - 0.085]], 0.06, c2, IN); };
+    // the console between the seats (x: the gear lever's foot, y: the console's foot): the lever in its gaiter, its knob (o.knob), the hand
+    // brake behind it (o.brake false: none; a sequential lever: o.seq, upright, taller)
+    C.console = (x, y, o) => { o = o || {}; const z = o.z || 0;
+      K.box(x - 0.02, y, z, o.l || 0.32, 0.1, 0.2, 0, PL2, PL, true, IN);
+      K.cyl([x, y + 0.1, z], [x, y + 0.14, z], 0.045, PL, inn({ n: 5, r2: 0.02 }));
+      const top = o.seq ? [x - 0.05, y + 0.36, z] : [x - 0.03, y + 0.28, z];
+      K.bar([x, y + 0.12, z], top, o.seq ? 0.011 : 0.008, [0.5, 0.5, 0.52], inn({ n: 4 }));
+      K.box(top[0] - 0.002, top[1] - 0.005, z, 0.04, 0.04, 0.04, 0, BLK, o.knob || [0.9, 0.9, 0.9], true, IN);
+      if (o.brake !== false) { K.box(x - 0.32, y - 0.05, z, 0.32, 0.06, 0.1, 0, PL, PL, true, IN); K.bar([x - 0.2, y + 0.02, z], [x - 0.45, y + 0.1, z], 0.014, PL3, inn({ n: 4 })); } };
+    // the pedals (x, y: their feet, z: the middle one; n of them)
+    C.pedals = (x, y, z, n) => { for (let i = 0; i < (n || 3); i++) { const dz = (i - ((n || 3) - 1) / 2) * 0.1;
+      face([[x, y, z + dz - 0.03], [x, y, z + dz + 0.03], [x + 0.02, y + 0.08, z + dz + 0.03], [x + 0.02, y + 0.08, z + dz - 0.03]], [0.3, 0.3, 0.32], [-0.9, 0.3, 0]); } };
+    // a door's card (inside the door, going with it; sd: its side, o.x: [rear, front], o.y: [foot, top], o.z: its plane, o.host: the
+    // door's part): the card (o.col), its insert (o.insert), the arm rest, the pull, the speaker under it (o.speaker false: none), the
+    // window's crank (o.crank); o.strap (a colour): a racing door, a bare panel with a pull strap
+    C.door = (sd, o) => { const host = o.host || (sd < 0 ? 'doorL' : 'doorR'), z = sd * o.z, oo = { inner: true, host }, dir = sd < 0 ? 'z' : '-z', od = Object.assign({ dir }, oo);
+      const [x0, x1] = o.x, [y0, y1] = o.y, xm = (x0 + x1) / 2, L = x1 - x0, ym = (y0 + y1) / 2, H = y1 - y0, c1 = o.col || PL;
+      K.rect(xm, ym, z, L, H, c1, od);
+      if (o.strap) { K.rect(xm, ym, z - sd * 0.002, L * 0.9, H * 0.86, o.insert || [0.07, 0.07, 0.075], od);
+        K.bar([xm + 0.25 * L, ym + 0.2 * H, z - sd * 0.004], [xm - 0.05 * L, ym + 0.05 * H, z - sd * 0.03], 0.012, o.strap, { n: 3, inner: true, host }); return; }
+      K.rect(xm - 0.05 * L, ym + 0.07 * H, z - sd * 0.002, L * 0.76, H * 0.4, o.insert || [0.46, 0.07, 0.07], od);
+      K.box(xm - 0.08 * L, ym - 0.27 * H, z - sd * 0.03, L * 0.53, 0.05, 0.06, 0, PL2, PL2, true, oo);
+      K.rect(xm + 0.26 * L, ym + 0.27 * H, z - sd * 0.003, 0.09, 0.03, [0.45, 0.46, 0.5], od);
+      if (o.speaker !== false) K.rect(xm + 0.23 * L, y0 - 0.11, z - sd * 0.003, 0.14, 0.12, [0.05, 0.05, 0.055], od);
+      if (o.crank) K.bar([xm - 0.37 * L, ym + 0.07 * H, z - sd * 0.004], [xm - 0.32 * L, ym - 0.07 * H, z - sd * 0.04], 0.008, PL3, { n: 3, inner: true, host }); };
+    // the front's structure behind the bumper (seen once the bumper hangs or is off: no hollow nose). o.x: the radiator support's panel
+    // (in the paint, darker: steel), o.w: its half width, o.y: [foot, top]; the radiator in front of it (o.rad: [across, tall], aluminium,
+    // dark fins across), the posts by the fenders, the inner aprons closing the arches' fronts, the frame rails' ends, the cross member
+    // under it, the steel crash bar at o.bar (x) on the rails
+    C.nose = (o) => { const x = o.x, w = o.w, y0 = o.y[0], y1 = o.y[1], ym = (y0 + y1) / 2, h = y1 - y0, P = K.paint, od = (d) => Object.assign({ dir: d }, IN), rad = o.rad || [w * 1.3, h * 1.3], xb = o.bar == null ? x + 0.105 : o.bar, yb = o.barY == null ? y0 + 0.05 : o.barY;
+      K.rect(x, ym, 0, w * 2, h, K.shade(P, 0.62), od('x'));
+      K.box(x + 0.04, y0 + 0.05, 0, 0.05, rad[1], rad[0], 0, [0.42, 0.44, 0.47], null, true, IN);
+      for (let i = 0; i < 4; i++) K.rect(x + 0.0665, y0 + 0.05 + rad[1] * (0.17 + i * 0.2), 0, rad[0] - 0.04, 0.016, [0.12, 0.12, 0.13], od('x'));
+      for (const sd of [-1, 1]) { K.rect(x + 0.026, ym + 0.005, sd * (w - 0.005), 0.07, h * 1.1, K.shade(P, 0.8), od('x'));
+        K.rect(x - 0.02, ym - 0.005, sd * (w + 0.025), 0.13, h * 1.1, K.shade(P, 0.55), od(sd < 0 ? '-z' : 'z'));
+        K.rect(x + 0.01, ym, sd * w * 0.62, 0.14, 0.09, ST, od('y')); }
+      K.rect(x + 0.025, y0 + 0.005, 0, w * 2, 0.05, ST, od('x'));
+      K.box(xb, yb, 0, 0.05, 0.1, o.barW || w * 1.9, 0, ST, null, true, IN); };
+    // the tail's likewise: the rear panel behind the bumper (o.x, o.w, o.y), its crash bar at o.bar
+    C.tail = (o) => { const y0 = o.y[0], y1 = o.y[1];
+      K.rect(o.x, (y0 + y1) / 2, 0, o.w * 2, y1 - y0, K.shade(K.paint, 0.62), Object.assign({ dir: '-x' }, IN));
+      K.box(o.bar == null ? o.x - 0.065 : o.bar, o.barY == null ? y0 + 0.05 : o.barY, 0, 0.05, 0.1, o.barW || o.w * 1.9, 0, ST, null, true, IN); };
+    // (Visoki) a generic badge (a chrome hexagon, a dark field, a chevron: no make's) at (x, y, z) facing dir (1 forward, -1 back), on host
+    C.badge = (x, y, z, dir, host, r) => { const o = { host }, k = (r || 0.034) / 0.034;
+      K.discX(x, y, z, 0.034 * k, 6, K.chrome, dir, o); K.discX(x + dir * 0.001, y, z, 0.026 * k, 6, [0.1, 0.1, 0.11], dir, o);
+      face([[x + dir * 0.002, y + 0.017 * k, z], [x + dir * 0.002, y - 0.012 * k, z - 0.016 * k], [x + dir * 0.002, y - 0.012 * k, z + 0.016 * k]], K.chrome, [dir, 0, 0], o); };
+    // (Visoki) a number plate's dark frame and the four dark bars of its characters: on the plate at (x, y, z), w x h, facing dir, on host
+    C.plate = (x, y, z, w, h, dir, host) => { const d = dir > 0 ? 'x' : '-x';
+      K.rect(x - dir * 0.0008, y, z, w + 0.024, h + 0.02, [0.1, 0.1, 0.11], { dir: d, host });
+      for (let i = 0; i < 4; i++) K.rect(x + dir * 0.0012, y, z + (i - 1.5) * w * 0.21, w * 0.12, h * 0.48, [0.16, 0.17, 0.2], { dir: d, host }); };
+    return C;
   }
 
   // ---- the build: the look's buckets -> one geometry (outer block by part, then the inner block by part), its ranges, the paint lists ----
@@ -8917,7 +9064,7 @@ const Render = (function () {
      A hit from behind also dents the rear bumper in a V (some 10 cm in its middle on a light one, creased) with the tailgate's foot, and
      bends the spoiler down in its middle (xPush: xc.vr). The table's wheels are the core's (it decides when one comes off). A picture is
      drawn one pane a frame (a rival's: one over all of them), the player's car never waiting on a rival's */
-  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev']);   // (the cars being reworked: the table theirs first, the others later)
+  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi']);   // (the cars being reworked: the table theirs first, the others later)
   const xTab = (c) => !!(XC.glass || XC.body) && !!c && !!c.m && XT_CARS.has(c.m.id) && !!c.m.kit;
   const XT_ST = [0, 0.5, 0.7, 0.75, 1], XT_KEYS = ['W', 'R', 'DL', 'DR', 'QL', 'QR'];
   const XT_ROWS = {
@@ -8940,7 +9087,7 @@ const Render = (function () {
   })();
   // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
   // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
-  const XT_MIN = new Set(['kolibri']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
+  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
     const sd = w < 0 ? 'L' : 'R';
