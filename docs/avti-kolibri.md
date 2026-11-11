@@ -157,7 +157,7 @@ Lokalno na veji `avti-kolibri/pilot` (11. 11. 2026). `npm run test:related` bi z
 
 ## 15 avtov biketraveler (#661, v zbirno vejo #480)
 
-Razdelitev na tabli #382 (komentar 6796604526). Vzor sta pilot (zgoraj) in SOKOL R; postopek na avto in predaja sta v opisu #661.
+Razdelitev na tabli #382 (komentarja 6796604526 in 6800140271): drugo polovico dela seja »Kolibri avtomobili druga polovica« (biketraveler, svoj osnutek v #480); TIGER GT ostane tu, RIS G je njen. Vzor sta pilot (zgoraj) in SOKOL R; postopek na avto in predaja sta v opisu #661.
 
 | Avto | Normalni prej | Normalni potem | Visoki potem | Vrh notranjosti pod streho (prej / potem) |
 |---|---|---|---|---|
