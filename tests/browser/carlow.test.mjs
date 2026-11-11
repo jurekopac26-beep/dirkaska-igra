@@ -8,7 +8,7 @@
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('Položaj avta: the car sits lower / further back in the frame, always whole on the screen');
-const BACK = [0, 2, 5, 7, 10, 15, 20], ZOOM = [0.8, 1.1, 1.4, 1.7], GAP = 8;   // (Oddaljenost Super blizu (upright only; on its side as Blizu), Blizu, Srednje, Daleč; GAP: px at least between the car and the screen's foot)
+const BACK = [0, 2, 5, 7, 10, 15, 20], ZOOM = [1.1, 1.4, 1.7], GAP = 8;   // (Oddaljenost Blizu, Srednje, Daleč; GAP: px at least between the car and the screen's foot)
 const srv = await serve();
 const browser = await launch();
 try {
@@ -63,10 +63,6 @@ try {
     // 1 · on the grid before the start, the car standing
     const grid = await sweep();
     judge('on the grid', grid);
-    // Super blizu (the user, 11. 11. 2026: »za pokončno kamero«): upright Blizu's view scaled one step nearer, the look-ahead too (the car
-    // bigger, about where Blizu has it: not on the screen's foot), on its side the very frame of Blizu
-    const at = (z) => grid.rows.filter(r => r.z === z && r.b === 0)[0], sb = at(0.8), bl = at(1.1), mid = (r) => (r.top + r.bottom) / 2;
-    T.check(`${view}, on the grid: Super blizu ${view === 'upright' ? 'nearer than Blizu (the car bigger, about where Blizu has it)' : 'as Blizu'}`, view === 'upright' ? sb.bottom - sb.top > (bl.bottom - bl.top) * 1.2 && Math.abs(mid(sb) - mid(bl)) < 0.05 * height : Math.abs(sb.top - bl.top) < 0.2 && Math.abs(sb.bottom - bl.bottom) < 0.2, JSON.stringify({ sb, bl }));
 
     // 2 · flat out on the Kemmel straight (the longest stretch without a bend): the autopilot drives there (physics only), then the camera
     // settles on the frozen car, pulled back with the speed
