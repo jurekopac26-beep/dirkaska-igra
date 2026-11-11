@@ -27,7 +27,7 @@ for (const d of real) {
   if (!(s >= 0 && s < T.len) || (d.open && !(s > T.startS && s < T.finishS))) out.push(d.id + ':' + s);
   const k = c.cam; if (!Array.isArray(k) || k.length !== 7 || !k.every(Number.isFinite) || !(k[6] >= 20 && k[6] <= 70) || Math.hypot(k[0] - k[3], k[2] - k[5]) < 15) nocam.push(d.id);
 }
-check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 25 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
+check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 19 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
 const testcfg = Object.keys(CFG).filter(id => dropped.includes(id) || !defs.find(d => d.id === id));
 check('no test track but Vršič (and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
 

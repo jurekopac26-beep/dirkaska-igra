@@ -624,7 +624,8 @@
 
   /* ---------------- the woods (the instanced trees of the world, from o.cull) ---------------- */
   const HCELL = 12;
-  function woods(o) {
+  function woods(o) { const g = woodsGen(o, null); let r; do r = g.next(); while (!r.done); return r.value; }
+  function* woodsGen(o, late) {   // (in slices when late is given: js/sfx-okolje.js, while the cars wait on the grid)
     const trees = new Map(), m4 = new THREE.Matrix4(), hOf = new Map(), w4 = new THREE.Matrix4(); let n = 0;
     // the instanced plants: those on the vegetation list (o.cull: IChunks), and any other instanced mesh whose shape is mostly green (a world's
     // own forest: Ouninpohja's spruces, Nikko's broadleaves), not the crowds' figures nor the car parks' cars
@@ -641,9 +642,11 @@
         im.getMatrixAt(k, m4); w4.multiplyMatrices(im.matrixWorld, m4); const sy = Math.hypot(el[4], el[5], el[6]); if (h0 * sy < 3.2) continue;   // (trees: not bushes, tufts or stones)
         const x = el[12], z = el[14], key = Math.floor(x / HCELL) + ',' + Math.floor(z / HCELL);
         let L = trees.get(key); if (!L) trees.set(key, L = []); L.push(x, z, k, im); n++;
+        if (late && (k & 1023) === 1023 && late()) yield;
       }
+      if (late && late()) yield;
     }
-    return { trees, n };
+    return { trees, n, cell: HCELL };
   }
   // the trees within r of (x, z): their count and the nearest's distance (fn: called for each, e.g. to take it out)
   function near(W, x, z, r, fn) {
@@ -757,7 +760,7 @@
     const Z = ZIV[def.id]; if (!Z || (Z.nizka === false && World.api.LOD.tier === 0)) return null;
     const LOD = A.LOD, R = A.rng(1777 + [...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) % 100000), gH = o.groundH;
     if (typeof gH !== 'function') return null;
-    const W = woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
+    const W = World.woods(o), G = occGrid(o, gH, T), chunks = new A.Chunks(256), placed = [], live = [], liveOK = LOD.draw('animals'); let softLive = null;
     const stats = { trees: W.n, things: 0, groups: 0, animals: 0, live: 0, fly: 0, kinds: {}, sizes: { one: 0, pair: 0, herd: 0 }, at: [], scene: null, scenes: [] }, fly = [];   // (fly: the bird that flies off, apart from the live ones: no soft shadow of its own)
     const grp = new THREE.Group(); grp.name = 'life'; o.root.add(grp);
     const slope = (x, z, r) => { const h0 = gH(x, z), d = Math.max(Math.abs(gH(x + r, z) - h0), Math.abs(gH(x - r, z) - h0), Math.abs(gH(x, z + r) - h0), Math.abs(gH(x, z - r) - h0)); return Number.isFinite(d) ? d / r : 9; };
@@ -907,5 +910,7 @@
     o.lifeStats = stats; return stats;
   };
   World.lifeTable = ZIV;   // (for the tests and the docs)
+  World.woods = (o) => o.woods || (o.woods = woods(o));   // (the woods once per world: World.life's glades cut from it, and the forest of the ambient sounds, js/sfx-okolje.js)
+  World.woodsGen = function* (o, late) { if (!o.woods) { const W = yield* woodsGen(o, late); if (!o.woods) o.woods = W; } return o.woods; };   // (the same, in slices)
   World.lifeSoc = SOC; World.lifeScenes = SCENE;
 })();

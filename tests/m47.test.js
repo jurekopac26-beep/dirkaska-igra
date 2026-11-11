@@ -16,7 +16,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('47'), K = D.K;
 const T = new Core.Track(Core.TRACKS.find(t => t.id === 'greatalpine'));
-check('47: on the Great Alpine Road, a real track', D.track === 'greatalpine' && !Core.TRACKS.find(t => t.id === 'greatalpine').test);
+check('47: on the Great Alpine Road (a test track since 9. 11. 2026: the mission stays there until the user moves it)', D.track === 'greatalpine' && Core.TRACKS.find(t => t.id === 'greatalpine').test === true);
 const o = D.opts(D);
 check('its race: alone, the fire engine (slower), no damage', o.tt && o.damage === 0 && o.playerModel.id === 'titan' && o.playerModel.vLim < 120);
 const mk = (s) => { const p = { q: { s }, x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, finished: false }; return { player: p, track: T }; };

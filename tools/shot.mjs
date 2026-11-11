@@ -7,9 +7,10 @@
 //                                                        main or HEAD^1, taken out with git archive; or a folder with a copy of the game),
 //                                                        side by side with the changed pixels marked (pred | po | razlika)
 //   povzetek.md, povzetek.json                           what was taken, and with --pred how much of each picture changed
-//   node tools/shot.mjs bathurst --m 1284 --pokonci --lezece
-//   node tools/shot.mjs bathurst spa --m 400,1284 --pred main          (main against the working tree)
-//   node tools/shot.mjs vrsic --t 30 --vreme dez                        (the race on the autopilot to 30 s, the car where it got to, the field shown)
+//   node tools/shot.mjs spa --m 900 --pokonci --lezece
+//   node tools/shot.mjs spa suzuka --m 0,900 --pred main               (main against the working tree)
+//   node tools/shot.mjs pikes --t 30 --vreme dez                        (the race on the autopilot to 30 s, the car where it got to, the field shown)
+//   node tools/shot.mjs suzuka --m 0 --cas vecer                        (the time of day: jutro, dan (default), vecer, noc)
 //   node tools/shot.mjs --nabor --pred HEAD^1                           (the set the workflow uses: NABOR and the real tracks the change touches)
 //   node tools/shot.mjs spa --m 400 --avto miska --pred main            (--avto <id>: the player's car, as the quick entry's avto=)
 import fs from 'node:fs';
@@ -19,18 +20,22 @@ import { execFileSync } from 'node:child_process';
 import { serve, launch, openGame } from '../tests/browser/lib.mjs';
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-// the set for the pull requests' workflow (.github/workflows/posnetki.yml): real tracks, a few places each (metres after the start)
-const NABOR = { bathurst: [250, 1284], spa: [600], vrsic: [1500] };
+// the set for the pull requests' workflow (.github/workflows/posnetki.yml): real tracks, a few places each (metres after the start). Not the
+// frozen ones (test: true, and pending: true, which CLAUDE.md keeps still too): Spa and Suzuka, each at the start (pit buildings, grandstands;
+// the car stands on the line, so the summary's s reads as the lap's length) and in a corner (Eau Rouge; the S curves), and Pikes Peak, a mountain
+// road, in the forest at the W hairpins and in the serpentines under the summit
+const NABOR = { spa: [0, 900], suzuka: [0, 820], pikes: [2850, 5300] };
 const SIZE = { lezece: { width: 640, height: 360 }, pokonci: { width: 360, height: 640 } };
 const CHANGED = 0.5;   // (a picture counts as changed from this share of changed pixels, %: below it a sky's drift or a flag's wave)
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
-const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), pred = flag('--pred'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
+const CAS = { jutro: 'dawn', dan: 'day', vecer: 'dusk', 'večer': 'dusk', noc: 'night', 'noč': 'night' };
+const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
 const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor'), nizka = has('--nizka');   // (--nizka: the graphics detail NIZKA, as perf.test.mjs measures the phone's load)
 let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci', 'lezece'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
-if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme))) {
-  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--nizka] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
+if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme)) || (cas && !CAS[cas])) {
+  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
     '       node tools/shot.mjs --nabor [--pred <ref|folder>]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
   process.exit(2);
 }
@@ -78,7 +83,7 @@ if (nabor) {
 async function takeAll(browser, gameRoot, tag) {
   const srv = await serve(gameRoot), shots = {}, problems = [];
   try {
-    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11 });
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: cas ? CAS[cas] : 'day', season: 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11 });
     for (const [id, places] of jobs) {
       const q = new URLSearchParams({ proga: id, t: String(t != null ? t : places ? 0.5 : 3) }); if (vreme) q.set('vreme', vreme); if (avto) q.set('avto', avto);
       const n0 = errors.length;

@@ -33,13 +33,18 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
   check('every suite in 1-8 shares: each test in exactly one share, none left out', !out.length, out.join('; ') || 'node, fleet, browser');
 }
 
-// 2. the browser tests in as many shares as on GitHub (the workflow's matrix 1..n, its --shard k/n and its name k/n): about as long as each other
+// 2. the browser tests in as many shares as on GitHub (each job's matrix 1..n, its --shard k/n and its name k/n: the full suite's, browser,
+// and the short round's, kratek-brskalnik): the full suite's about as long as each other
 {
   const wf = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'tests.yml'), 'utf8');
-  const mat = /shard: \[([\d, ]+)\]/.exec(wf), arg = /--shard \$\{\{ matrix\.shard \}\}\/(\d+)/.exec(wf), name = /Igra v brskalniku \(\$\{\{ matrix\.shard \}\}\/(\d+)\)/.exec(wf);
-  const ks = mat ? mat[1].split(',').map(Number) : [], n = arg ? +arg[1] : 0;
-  check('the workflow\'s browser shares agree: the matrix 1..n, --shard k/n and the job\'s name k/n', n > 1 && ks.join() === Array.from({ length: n }, (_, i) => i + 1).join() && name && +name[1] === n,
-    `matrix [${ks.join(', ')}], --shard k/${arg ? arg[1] : '?'}, name k/${name ? name[1] : '?'}`);
+  const deli = (id) => {
+    const j = (new RegExp(`\\n  ${id}:\\n([\\s\\S]*?)(?=\\n  [\\w-]+:\\n|$)`).exec(wf) || [])[1] || '';
+    const mat = /shard: \[([\d, ]+)\]/.exec(j), arg = /--shard \$\{\{ matrix\.shard \}\}\/(\d+)/.exec(j), name = /(?:^|\n)    name: [^\n]*\$\{\{ matrix\.shard \}\}\/(\d+)\)/.exec(j);
+    const ks = mat ? mat[1].split(',').map(Number) : [], n = arg ? +arg[1] : 0;
+    return { n, ok: n > 1 && ks.join() === Array.from({ length: n }, (_, i) => i + 1).join() && !!name && +name[1] === n, txt: `${id}: matrix [${ks.join(', ')}], --shard k/${arg ? arg[1] : '?'}, name k/${name ? name[1] : '?'}` };
+  };
+  const B = deli('browser'), K = deli('kratek-brskalnik'), n = B.n;
+  check('the workflow\'s browser shares agree (the full suite\'s job and the short round\'s): the matrix 1..n, --shard k/n and the job\'s name k/n', B.ok && K.ok, `${B.txt}; ${K.txt}`);
   const head = lines(run('browser', '--shard', `1/${n || 4}`, '--list'))[0] || '', m = /the shares: ([\d, ]+) min/.exec(head), mins = m ? m[1].split(', ').map(Number) : [];
   check(`the browser tests in ${n} shares about as long as each other (the longest at most 15 % over the mean)`, n > 1 && mins.length === n && Math.max(...mins) <= 1.15 * mins.reduce((a, b) => a + b, 0) / n, head);
 }
@@ -64,7 +69,7 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
   const cases = [
     ['docs/proge/medvode.md', ['testne-proge.test.js', 'medvode.test.js', 'medvode-props.test.js', 'medvode-fence.test.js', 'fleet.test.js', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-props.test.mjs']],
     ['js/world-montreal.js', ['stamp.test.js', 'razdelitev.test.js', 'montreal.test.js', 'browser/world.test.mjs', 'browser/gfx.test.mjs']],
-    ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'ljudje-mesta.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'browser/repro.test.mjs']],
+    ['js/core.js', ['stamp.test.js', 'menu-lens.test.js', 'golden.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'rally.test.js', 'sovoznik.test.js', 'sovoznik-glas.test.js', 'ljudje-mesta.test.js', 'katu.test.js', 'serpentine.test.js', 'start.test.js', 'grid.test.js', 'rivals-n.test.js', 'quick.test.js', 'neskoncna.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'rezervna-kolesa.test.js', 'browser/repro.test.mjs']],
     ['tests/browser/quick.test.mjs', ['quick.test.js', 'browser/quick.test.mjs']],   // (and the Node test of its theme)
     ['README.md', ['fleet.test.js']],
     ['tools/carshots.mjs', []],
@@ -138,6 +143,32 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
   check('every test that lists the repository\'s files is in MD_TESTS (tests/run.js --dokumenti), each of them in a suite too; GitHub\'s job Dokumenti runs them',
     md.length > 0 && lister.length > 0 && !stray.length && !lone.length && /node tests\/run\.js --dokumenti\b/.test(job),
     [stray.length ? 'not in MD_TESTS: ' + stray.join(', ') : '', lone.length ? 'in no suite: ' + lone.join(', ') : '', /--dokumenti/.test(job) ? '' : 'job dokumenti does not run tests/run.js --dokumenti'].filter(Boolean).join('; ') || md.join(', '));
+}
+
+// 10. the short round (tests/run.js --kratek; GitHub's for a change of only tracks, tests/lib/krog.js): every test over every track (one that
+// calls trackIds) is in PO_PROGAH, each in a suite; it runs them only on the tracks named (PROGE) with the related tests of the files and the
+// frozen tracks' guard: node those without the browser, browser those in it; a new track's round in the workflow's shares within ~30 min
+// (PROGA_SECS: the times with these tracks); a bad --kratek an error
+{
+  const src = fs.readFileSync(RUN, 'utf8'), po = (((/const PO_PROGAH = \[([^\]]*)\]/.exec(src) || [])[1] || '').match(/'[^']+'/g) || []).map(q => q.slice(1, -1));
+  const klic = [], all = ['node', 'fleet', 'browser'].flatMap(s => lines(run(s, '--list')));
+  for (const d of ['', 'browser']) for (const f of fs.readdirSync(path.join(__dirname, d)).filter(f => /\.test\.m?js$/.test(f))) {
+    if (/\btrackIds\(/.test(fs.readFileSync(path.join(__dirname, d, f), 'utf8'))) klic.push(path.posix.join(d, f));
+  }
+  const brez = klic.filter(f => !po.includes(f)), tuji = po.filter(f => !all.includes(f));
+  check('every test over every track (it calls trackIds) is in PO_PROGAH (tests/run.js), each in a suite: the short round runs it on the tracks changed', klic.length > 0 && !brez.length && !tuji.length,
+    [brez.length ? 'not in PO_PROGAH: ' + brez.join(', ') : '', tuji.length ? 'in no suite: ' + tuji.join(', ') : ''].filter(Boolean).join('; ') || po.join(', '));
+  const F = 'js/tracks/balea.js,index.html,js/lang.js,tests/golden/races.json,docs/proge/balea.md,assets/tracks/balea.webp';
+  const nd = lines(run('--kratek', 'balea', '--files', F, 'node', '--list')), br = lines(run('--kratek', 'balea', '--files', F, 'browser', '--list'));
+  const manj = (l, b) => po.filter(f => f.startsWith('browser/') === b).concat(b ? ['browser/lang.test.mjs'] : ['testne-proge.test.js', 'balea.test.js', 'lang.test.js']).filter(f => !l.includes(f));
+  const mn = manj(nd.slice(1), false), mb = manj(br.slice(1), true), tujci = nd.slice(1).filter(f => f.startsWith('browser/')).concat(br.slice(1).filter(f => !f.startsWith('browser/')));
+  check('--kratek balea: the tests over every track, the related tests (balea.test.js, lang), the frozen tracks\' guard; node and browser apart',
+    /^the short round of balea \(PROGE\)/.test(nd[0] || '') && !mn.length && !mb.length && !tujci.length, [mn.length ? 'node lacks ' + mn.join(', ') : '', mb.length ? 'browser lacks ' + mb.join(', ') : '', tujci.length ? 'in the wrong list: ' + tujci.join(', ') : ''].filter(Boolean).join('; ') || `node ${nd.length - 1}, browser ${br.length - 1}`);
+  const wf = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'tests.yml'), 'utf8'), k = +((/--kratek [^\n]* browser --shard \$\{\{ matrix\.shard \}\}\/(\d+)/.exec(wf) || [])[1] || 0);
+  const head = lines(run('--kratek', 'balea', '--files', F, 'browser', '--shard', `1/${k || 3}`, '--list'))[1] || '', m = /the shares: ([\d, ]+) min/.exec(head), mins = m ? m[1].split(', ').map(Number) : [];
+  check(`a new track's short round in the workflow's ${k} browser shares: each within 30 min on GitHub (PROGA_SECS)`, k > 1 && mins.length === k && Math.max(...mins) <= 30, head);
+  const slabo = [['--kratek', '--list'], ['--kratek', 'balea', 'fleet', '--list'], ['--kratek', 'balea', '--related', '--list'], ['--kratek', 'balea', '--koda']].map(a => ({ a: a.join(' '), r: run(...a) }));
+  check('a bad --kratek (no track, the fleet suite, with --related or --koda): an error (exit 2), nothing run', slabo.every(x => x.r.status === 2 && !x.r.stdout.trim()), slabo.map(x => `${x.a}: exit ${x.r.status}`).join(', '));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

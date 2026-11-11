@@ -12,7 +12,7 @@ import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('pit lights (dusk, night)');
 const srv = await serve();
 const browser = await launch();
-const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal', 'toronto', 'bangsaen', 'troisrivieres'];   // (8: Longford, Newcastle and Townsville are test tracks since 6. 11. 2026)
+const PITS = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal'];   // (5: Longford, Newcastle and Townsville are test tracks since 6. 11. 2026, Toronto, Bang Saen and Trois-Rivières since 5. 11. 2026)
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', tod: 'night', weather: 'dry' }, { width: 844, height: 390 });
   // 1. every track with pits, its world built at night: the lights where the garages are
@@ -34,7 +34,7 @@ try {
     }, id));
   }
   const bad = res.filter(r => r.none || r.boxes !== r.nB || r.nB < 13 || r.n !== 1 || !r.add || r.cast || r.k !== 1 || r.lamps !== r.nB * (r.kind === 'bulb' ? 3 : 2) || r.quads < 2 * r.nB);
-  T.check('at night on all 8 tracks with pits: one additive mesh of the pits\' lights over the crews\' boxes (no shadow), two lamps a box (three bulbs in the 1930s stalls and the 1950s shed)', !bad.length,
+  T.check('at night on all 5 tracks with pits: one additive mesh of the pits\' lights over the crews\' boxes (no shadow), two lamps a box (three bulbs in the 1930s stalls and the 1950s shed)', !bad.length,
     (bad.length ? 'bad: ' + JSON.stringify(bad) + ' ' : '') + res.map(r => `${r.id} ${r.kind} ${r.quads}q ${r.lamps}l`).join(', '));
   const side = res.filter(r => !r.none && (r.wMin < -7 || r.wMax > 23 || r.hMin < -0.3 || r.hMax > 6));
   T.check('the lights on the garages\' side of the lane only (nothing past the lane towards the circuit), on the floor and the garages (up to 6 m)', !side.length,
@@ -80,12 +80,13 @@ try {
       const cv = document.querySelector('canvas'), c2 = document.createElement('canvas'); c2.width = 211; c2.height = 98; const x2 = c2.getContext('2d');
       const shot = () => { const c0 = __gl.calls, o0 = { ...own }; Render.frame(1 / 60, 1, P, 'chase', {}); const n = __gl.calls - c0; x2.drawImage(cv, 0, 0, 211, 98); const d = x2.getImageData(0, 0, 211, 98).data; let l = 0; for (let k = 0; k < d.length; k += 4) l += d[k] * 0.3 + d[k + 1] * 0.59 + d[k + 2] * 0.11;
         return { calls: n, pit: own.pit - o0.pit, sheen: own.sheen - o0.sheen, lum: +(l / (d.length / 4)).toFixed(2) }; };
+      const dy = Render.world.dyn || {}, zs = dy.zaslon; dy.zaslon = null;   // (the big screen's live picture draws the scene once more: js/world-zaslon.js; only the main picture is measured)
       Render.resetCam(); for (let k = 0; k < 30; k++) Render.frame(1 / 60, 1, P, 'chase', {});
       const on = shot(), lamps = Render.show.pits && Render.show.pits.lamps;
       m.visible = false; const off = shot(); m.visible = true;
       Render.setAtmos({ season: 'summer', tod: 'day' }); for (let k = 0; k < 3; k++) Render.frame(1 / 60, 1, P, 'chase', {});
       const day = shot(); day.mesh = !!Render.scene.getObjectByName('pitLights');
-      Render.setAtmos({ season: 'summer', tod: 'night' });
+      Render.setAtmos({ season: 'summer', tod: 'night' }); dy.zaslon = zs;
       return { on, off, day, lamps };
     });
     T.check(`${id} at night, the camera behind the car in its box: the pits' lights drawn (their mesh once, the lamps' sheen once: at most 2 draw calls), the picture brighter with them`,

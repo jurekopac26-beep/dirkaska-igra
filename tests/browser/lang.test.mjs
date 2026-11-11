@@ -41,8 +41,8 @@ try {
   const c2 = await page.evaluate(() => ({ desc: document.getElementById('car-desc').textContent, stats: document.getElementById('car-stats').innerText, next: document.getElementById('car-next').textContent,
     cat: document.getElementById('car-cat').textContent, chips: [...document.querySelectorAll('#car-cats .cat-chip')].map(b => b.textContent).join('/'), strip: document.getElementById('car-strip').getAttribute('aria-label') }));
   const s2 = await slovene();
-  T.check('cars in English: "Four-wheel drive. An 80s rally car ... hp", Power / Grip, Next; the categories (Small cars … Specials), "Rally · 1/3" under the name (the BURJA R7, the cheapest rally car)', /^(Rear-wheel drive|Four-wheel drive|Front-wheel drive|Mid-engined)\. [A-Z][a-z].*\. \d+ hp, \d+ kg\.$/.test(c2.desc) && /Power/.test(c2.stats) && /Grip/.test(c2.stats) && c2.next === 'Next' &&
-    c2.chips === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && c2.cat === 'Rally · 1/3' && c2.strip === 'Vehicles in the category' && !s2.length, JSON.stringify({ c2, s2 }));
+  T.check('cars in English: "Four-wheel drive. An 80s rally car ... hp", Power / Grip, Next; the categories (Small cars … Specials), "Rally · 1/4" under the name (the BURJA R7, the cheapest rally car)', /^(Rear-wheel drive|Four-wheel drive|Front-wheel drive|Mid-engined)\. [A-Z][a-z].*\. \d+ hp, \d+ kg\.$/.test(c2.desc) && /Power/.test(c2.stats) && /Grip/.test(c2.stats) && c2.next === 'Next' &&
+    c2.chips === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && c2.cat === 'Rally · 1/4' && c2.strip === 'Vehicles in the category' && !s2.length, JSON.stringify({ c2, s2 }));
   await act('to-upg'); await page.waitForTimeout(250);
   const u2 = await page.evaluate(() => [...document.querySelectorAll('#upg-list .upg-row')].map(r => r.querySelector('.rlbl').textContent + ': ' + [...r.querySelectorAll('button')].map(b => b.textContent).join('/')).join(' | '));
   const su = await slovene();
@@ -70,10 +70,13 @@ try {
   await page.evaluate(() => document.querySelector('[data-board="pikes"]').click()); await page.waitForTimeout(200);
   const b5p = await txt('board-body'), s5p = await slovene();
   T.check('leaderboard in English (a circuit\'s records, a time trial\'s board)', /^Records · Jezero Ring · 3 laps/.test(b5) && /Best lap/.test(b5) && /No times on this track yet\. Drive the climb/.test(b5p) && !s5.length && !s5p.length, JSON.stringify({ b5, b5p, s5, s5p }));
+  const champCards = () => page.evaluate(() => ({ cards: [...document.querySelectorAll('.ch-card h3')].map(h => h.textContent).join('/'), meta: document.querySelector('.ch-card .tmeta').textContent, go: document.getElementById('ch-go').textContent, diff: document.getElementById('ch-diff').textContent }));
   await act('to-champ'); await page.waitForTimeout(250);
-  const h5 = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.ch-card h3')].map(h => h.textContent).join('/'), meta: document.querySelector('.ch-card .tmeta').textContent, go: document.getElementById('ch-go').textContent, diff: document.getElementById('ch-diff').textContent }));
-  const sh = await slovene();
-  T.check('championship in English: Home Cup / Short tracks / Legends / Grand Championship, "3 races", Start the championship', h5.cards === 'Home Cup/Short tracks/Legends/Grand Championship' && /^3 races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length, JSON.stringify({ h5, sh }));
+  const h5 = await champCards(), sh = await slovene();
+  await act('to-champ-nu'); await page.waitForTimeout(250);   // (the cups of the test tracks: behind NEUPORABNO)
+  const h5n = await champCards(), shn = await slovene();
+  T.check('championship in English: Legends / Grand Championship (behind NEUPORABNO Home Cup / Short tracks, "3 races"), Start the championship', h5.cards === 'Legends/Grand Championship' && /^\d+ races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length &&
+    h5n.cards === 'Home Cup/Short tracks' && /^3 races · \d+ km$/.test(h5n.meta) && !shn.length, JSON.stringify({ h5, h5n, sh, shn }));
   await act('to-career'); await page.waitForTimeout(200);
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)
@@ -120,7 +123,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'miska'); g.onAction('to-car'); }); await page.waitForTimeout(300);
   const f6 = await page.evaluate(() => ({ cat: document.getElementById('car-cat').textContent, desc: document.getElementById('car-desc').textContent, strip: [...document.querySelectorAll('#car-strip .car-chip b')].map(b => b.textContent).join('/') }));
   const sF = await slovene();
-  T.check('a vehicle of the fleet in English: "Small cars · 3/6", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 3/6' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
+  T.check('a vehicle of the fleet in English: "Small cars · 4/8", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 4/8' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
   await page.evaluate(() => { window.__game.S.car = 0; });   // (the KAZE RS, as the title below expects too)
   await startTrack(page, 'jezero');
   const w6 = await page.evaluate(async () => { const g = window.__game, P = g.race.player, raf = () => new Promise(q => requestAnimationFrame(q));

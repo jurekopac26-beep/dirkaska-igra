@@ -1,5 +1,5 @@
-// The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Medvode and Ouninpohja (Vršič's, a test
-// track since 6. 11. 2026, is not built):
+// The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Medvode (Vršič's, a test track since
+// 6. 11. 2026, and Ouninpohja's, a test track since 8. 11. 2026, are not built; Pikes Peak has none):
 // 1. place-name boards only at the settlements whose real name the track's data knows (def.names, the track's description), the board struck
 //    through where the road leaves the settlement; the speed limit after them (50 in; out: 70 at Medvode); chevron
 //    boards on the outside of every sharpest bend (radius 17 m or under, or more than 150 degrees round; not round a roundabout) and nowhere else;
@@ -7,15 +7,14 @@
 // 2. what a car can reach is knockable (Core's rssign, rschev, rsboard; the white delineators the heavier dpost): driven into one at 90 km/h the
 //    car loses a little speed (under 6 %) and takes a small dent (under 2 %), the sign flies off; a board collides at its legs (a car between
 //    them passes under it, one leg knocks it over); Medvode's signs stand behind the fence, out of reach: fixed, in the static mesh
-// 3. at night the street lamps light the road only in the settlements (Render's floodlights: none on Pikes Peak and Ouninpohja, no settlement
-//    on them whose name is known), the sign faces shine; the same world again from a second build
+// 3. at night the street lamps light the road only in the settlements (Render's floodlights: none where no settlement
+//    has a name the track's data knows: no road of the list is left that has none, w.dark waits for the next one), the sign faces shine; the same world again from a second build
 //   node tests/browser/roadside.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('roadside equipment of the open roads');
 const WANT = {   // the boards each road must have (the real names), the limits in and out (none: no settlement on the road), dark: no lamps at night
   medvode: { boards: ['MEDVODE (konec)', 'ZBILJE', 'ZBILJE (konec)', 'VALBURGA', 'VALBURGA (konec)', 'SMLEDNIK', 'SMLEDNIK (konec)'], lim: [50, 70], fixed: true },
-  ouninpohja: { boards: ['OUNI', 'KAKARISTO'], lim: null, dark: true },   // (the hamlets: the name only; the added section's village has no name that could be checked)
 };
 const srv = await serve();
 const browser = await launch();
@@ -113,7 +112,7 @@ try {
   for (const [id, want] of [['pikes', 'none'], ['spa', 'all']]) {
     await startTrack(page, id);
     const n = await page.evaluate(() => { const g = window.__game, Tr = g.race.track; g.S.tod = 'night'; Render.setAtmos({ season: 'summer', tod: 'night' }, true); const n = (Render.show.lamps || []).length; g.S.tod = 'day'; Render.setAtmos({ season: 'summer', tod: 'day' }, true); return { n, all: Math.floor(Tr.len / 30) }; });
-    T.check(want === 'none' ? `${id}: a road with no settlement on it is dark at night (no street lamps)` : `${id}: a circuit keeps its floodlights every 30 m at night`, want === 'none' ? n.n === 0 : n.n === n.all, `${n.n} lamps (every 30 m: ${n.all})`);
+    T.check(want === 'none' ? `${id}: a road with no settlement on it is dark at night (no street lamps)` : `${id}: a circuit keeps its floodlights every 30 m at night`, want === 'none' ? n.n === 0 : n.n >= n.all, `${n.n} lamps (every 30 m: ${n.all}; by a stand its roof lamps' pools instead of a pole: js/render-vecer.js)`);
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {
