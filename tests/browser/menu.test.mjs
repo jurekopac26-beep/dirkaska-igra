@@ -1429,13 +1429,15 @@ try {
     T.check(`flyover -> map: the map goes on from the flyover's moment (${a.vt.toFixed(1)} s, the run now at ${b.run.t.toFixed(1)} s), its point where the flyover's was, the route already drawn`,
       a.run.id === 'pikes' && b.run.id === 'pikes' && b.run.t >= a.vt - 0.05 && b.run.t < a.vt + 15 && b.best < 2.5 && b.fromStart > 20 && b.drawn && b.views === 1, JSON.stringify({ a, b }));
     // the map's point leaves its trail behind it coloured by the climb, as the flyover's point does (js/menu.js mapTrail): Pikes Peak's flyover
-    // (an old one, not a loop) draws the route from the start up to the point, so the map's trail is every piece before the point's own one,
-    // at the full width, that one up to the point, none ahead
+    // is a loop on an open road, so the map's trail is the last 1.5 km of the route behind the point (TRAIL), not the route from the start:
+    // every piece of it before the point's own one, thinner towards its far end, that one up to the point, none ahead
     const tr = await ev(page, `const b = root.querySelector("#track-stage .dio.topmap"), ps = [...b.querySelectorAll(".rt-tr path")], w = ps.map(p => +p.getAttribute("stroke-width")), n = ps.length - 1, on = w.slice(0, n).filter(x => x > 0).length;
       const h = /^M([-\\d.]+) ([-\\d.]+)L([-\\d.]+) ([-\\d.]+)$/.exec(ps[n].getAttribute("d") || ""), P = window.ROUTES.pikes.top.route, dot = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
-      return { n, on, full: w.slice(0, on).every(x => x === w[n]) && w[n] > 0, ahead: w.slice(on, n).some(x => x > 0), head: !!h && !!dot && Math.hypot(+h[1] - P[on][0], +h[2] - P[on][1]) < 0.2 && +h[3] === +dot[1] && +h[4] === +dot[2], colours: new Set(ps.slice(0, on).map(p => p.getAttribute("stroke"))).size };`);
-    T.check(`the map's trail (Pikes Peak, an old flyover): the route from the start up to the point coloured by the climb (${tr.on} of ${tr.n} pieces, ${tr.colours} colours), the point's own piece up to it, nothing ahead`,
-      tr.on > 0 && tr.full && !tr.ahead && tr.head && tr.colours >= 2, JSON.stringify(tr));
+      let k = -1, bd = 0.2; if (h) P.forEach((q, i) => { const e = Math.hypot(+h[1] - q[0], +h[2] - q[1]); if (e < bd) { bd = e; k = i; } });
+      const lit = w.slice(0, n).map((x, i) => x > 0 ? i : -1).filter(i => i >= 0), first = lit.length ? lit[0] : -1, last = lit.length ? lit[lit.length - 1] : -1;
+      return { n, on, k, first, last, contig: last - first + 1 === on, full: on > 0 && w[n] > 0 && Math.abs(w[last] - w[n]) < 1e-6, taper: on > 0 && w[first] < w[n], ahead: lit.some(i => i >= k), head: !!h && !!dot && k >= 0 && last === k - 1 && +h[3] === +dot[1] && +h[4] === +dot[2], colours: new Set(lit.map(i => ps[i].getAttribute("stroke"))).size };`);
+    T.check(`the map's trail (Pikes Peak, a loop flyover on an open road): the last 1.5 km of the route behind the point coloured by the climb (${tr.on} of ${tr.n} pieces, ${tr.colours} colours), thinner towards its far end, the point's own piece up to it, nothing ahead`,
+      tr.on > 0 && tr.on <= 0.3 * tr.n && (tr.first === 0 || tr.on >= 0.2 * tr.n) && tr.contig && tr.full && (tr.first === 0 || tr.taper) && !tr.ahead && tr.head && tr.colours >= 2, JSON.stringify(tr));
     await page.waitForTimeout(2500);
     const c0 = await page.evaluate(() => Menu.debug().run);
     await click(page, 'cam:2');
