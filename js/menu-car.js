@@ -223,7 +223,7 @@ window.MenuCar = (function () {
   }
 
   /* ---------------- the view: the showroom's camera for the car's size, the car into the button ---------------- */
-  // a box in the yard as laid out (a new track's sign and car sliding in, their transforms, do not move it: the car drawn where it stands)
+  // a box in the yard as laid out (a new track's sign sliding in, its transform, does not move it: the car drawn where it stands)
   const boxIn = (e) => e ? { left: e.offsetLeft, top: e.offsetTop, width: e.offsetWidth, height: e.offsetHeight } : null;
   function frameCar() {
     const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
@@ -405,11 +405,9 @@ window.MenuCar = (function () {
     return W > 0;
   }
   const SUN = { x: -6, y: 10, z: 7 };
-  let shIn = null;   // (the shadow coming in after a new track's car: { t: when it starts, ms })
   function draw(now) {
     if (!car || !fit()) return;
     windMat.uniforms.uT.value = calm() ? 0 : (now - t0) / 1000;
-    if (shMat) { const k = shIn ? clamp((now - shIn.t) / shIn.ms, 0, 1) : 1; shMat.opacity = k; if (k >= 1) shIn = null; }
     Render.garageLight(SUN, 0xfff2dd, 0.55, 0xffffff);
     const b = performance.now(); renderer.render(scene, cam); busy = busy * 0.9 + (performance.now() - b) * 0.1;
     frames++;
@@ -444,13 +442,14 @@ window.MenuCar = (function () {
     if (!on) { on = true; last = 0; if (!raf) raf = requestAnimationFrame(loop); }
     return drawn;
   }
-  function detach() { on = false; cancelAnimationFrame(raf); raf = 0; shIn = null; }
+  function detach() { on = false; cancelAnimationFrame(raf); raf = 0; }
   function rest() {
     detach();
     if (renderer && !failed) { renderer.setSize(1, 1, false); W = H = 0; lay = ''; dirty = true; drawn = false; }   // (back from the race: drawn afresh, faded in)
   }
   function live(spec) { return !!car && drawn && !failed && key === spec.id + '|' + spec.color + '|' + (spec.num || 0); }
-  // the car as it is drawn now, in a picture of its own (the old screen's, going out as a new track's comes in: js/menu.js trackTo)
+  // the car as it is drawn now, in a picture of its own (the old screen's as it fades over a new track's, the car at the same place in
+  // both: js/menu.js trackGo, ringLand)
   function snap() {
     if (!car || !renderer || failed || !drawn || !canvas.isConnected) return null;
     try { draw(performance.now()); } catch (_) { return null; }
@@ -475,8 +474,6 @@ window.MenuCar = (function () {
     }
     return { cv: alCv, key: alKey, pr: alCv.width / W };
   }
-  // a new track's car: its shadow comes when it stands (ms after now, over fade ms); none on a device that asks for less motion
-  function shadeIn(after, fade) { shIn = calm() || !shMat ? null : { t: performance.now() + after, ms: Math.max(1, fade) }; if (shMat && shIn) shMat.opacity = 0; }
   function info() {
     const ri = renderer ? renderer.info : null;
     return { on, drawn, failed, frames, builds, car: car ? car.M.id : null, size: [W, H], calls: ri ? ri.render.calls : 0, tris: ri ? ri.render.triangles : 0, lines: wind ? wind.lines : 0, verts: wind ? wind.verts : 0,
@@ -512,5 +509,5 @@ window.MenuCar = (function () {
     return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height], shade };
   }
   const cover = () => cov, watch = (fn) => { watcher = fn || null; };
-  return { supported, attach, detach, rest, live, placed, info, sample, snap, shadeIn, cover, watch, alpha };
+  return { supported, attach, detach, rest, live, placed, info, sample, snap, cover, watch, alpha };
 })();

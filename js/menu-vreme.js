@@ -5,8 +5,8 @@
    reflection, or snow), the road sign (drops and drips; snow stuck on it, frost, snow on its top), the car (darker in the rain; frosted
    windows, snow on its top, standing in snow) and the buttons (drops and splashes; snow on their tops). A tap on a weather: a ring on its
    icon, the light and the air change in ~1 s, the water and the snow gather in ~2.5 s. The wind blows from the right to the left.
-   js/menu.js calls on() after each drawing of the track screen, turn() as the carousel turns (the buttons' drops and snow fade), arrive()
-   as a new track's car comes in (its reflection when it stands; leave() as the old one goes), rest() and wake() under the Earth, off() when the screen goes. The Earth
+   js/menu.js calls on() after each drawing of the track screen (a new track's: the car stays, its reflection with it), turn() as the
+   carousel turns (the buttons' drops and snow fade), rest() and wake() under the Earth, off() when the screen goes. The Earth
    keeps its day (its own moon button). A device that asks for less motion: the weather as one still picture, at once; a slow one: fewer
    frames (as the car's, js/menu-car.js). Nothing of it takes a tap (pointer-events: none). */
 window.MenuVreme = (() => {
@@ -42,7 +42,7 @@ window.MenuVreme = (() => {
   const a3 = (v) => (+v).toFixed(3);
 
   let app = null, L = null, UI = null, AIR = null, ro = null, raf = 0, lastMs = 0, lastT = 0, busy = 0, frames = 0, resting = false, dirty = true, land = false, heavy = false;
-  let look = 'dry', tl = [{ t: -99, k: 'dry' }], taps = [], storm = null, enter = null, arr = null, uiNow = 1, uiGoal = 1, CK = null, last = null;
+  let look = 'dry', tl = [{ t: -99, k: 'dry' }], taps = [], storm = null, enter = null, uiNow = 1, uiGoal = 1, CK = null, last = null;
 
   /* ---------------- the canvases ---------------- */
   function layer(parent, cls, before) {
@@ -575,7 +575,7 @@ window.MenuVreme = (() => {
   function floorL(S) {
     const G = L.geo; if (!G || !L.fl || !L.fl.w) return;
     const { w, ws } = S, wet = S.wet, sn = ws.snow, dark = .35 * w.storm + .18 * w.rain + .08 * w.change, rainy = ws.rain + ws.storm * 1.5 + ws.change * .4, ok = CK && !CK.none;
-    const refl = ok && wet > .01 ? wet * S.arrA : 0;
+    const refl = ok && wet > .01 ? wet : 0;
     const sig = [dark, wet, sn, refl].map((v) => Math.round(v * 200)).join(',') + '|' + (ok ? CK.key : '') + '|' + G.key, mv = (wet > .01 && rainy > .01) || sn > .01;
     if (land || !L.rm) { paint(L.fl, sig, mv, (g) => ground(g, S, refl, rainy)); return; }
     paint(L.fl, sig, mv, (g) => { g.translate(-G.ox, -G.oy); room(g, S, dark, refl, rainy); });
@@ -813,17 +813,16 @@ window.MenuVreme = (() => {
     if (tl.length > 1 && t - tl[tl.length - 1].t > SLOW + .05) tl = [{ t: -99, k: tl[tl.length - 1].k }];
     if (taps.length) taps = taps.filter((e) => t - e.t < TAP);
     const w = c ? pure(look) : weights(t, FAST), ws = c ? pure(look) : weights(t, SLOW), F = c ? 0 : flash(t) * w.storm;
-    if (c) { uiNow = uiGoal; enter = null; arr = null; } else if (!(enter && !enter.ready) && uiNow < uiGoal) uiNow = Math.min(uiGoal, uiNow + dt * 4);
+    if (c) { uiNow = uiGoal; enter = null; } else if (!(enter && !enter.ready) && uiNow < uiGoal) uiNow = Math.min(uiGoal, uiNow + dt * 4);
     const airA = enter ? smooth((t - enter.t) / .3) : 1;
     if (enter && enter.ready && airA >= 1) enter = null;
-    const arrA = arr ? clamp((t - arr.t) / arr.d, 0, 1) : 1; if (arr && arrA >= 1) arr = null;
-    const S = last = { t, tt: c ? 0 : t, w, ws, F, wet: mix(ws, 'wet'), uiA: uiNow, airA, arrA };
+    const S = last = { t, tt: c ? 0 : t, w, ws, F, wet: mix(ws, 'wet'), uiA: uiNow, airA };
     let waitCar = false;
     if ((S.wet > .005 || ws.snow > .005) && L.yard && !carData()) waitCar = true;   // (its reflection, its snow: once it is drawn)
     snowSlots(S, t);
     stageL(S); floorL(S); carL(S); signL(S); uiL(S); airL(S); rbgL(S);
     if (c) { if (waitCar && L.tries++ < 20) setTimeout(kick, 250); return false; }
-    return tl.length > 1 || taps.length > 0 || look !== 'dry' || !!enter || uiNow < uiGoal || !!arr || waitCar || L.fading || dirty;
+    return tl.length > 1 || taps.length > 0 || look !== 'dry' || !!enter || uiNow < uiGoal || waitCar || L.fading || dirty;
   }
   function kick() { if (!raf && !resting && app && L) raf = requestAnimationFrame(loop); }
   function loop(ms) {
@@ -848,7 +847,7 @@ window.MenuVreme = (() => {
     const t = now(), k = KEYS.includes(lk) ? lk : 'dry', c = calm(), A = o.app || s.parentNode;
     if (A !== app) { off(); app = A; }
     if (o.entering || !L || c) {
-      tl = [{ t: -99, k }]; taps = []; storm = k === 'storm' ? { t0: t, end: 1e12 } : null; arr = null;
+      tl = [{ t: -99, k }]; taps = []; storm = k === 'storm' ? { t0: t, end: 1e12 } : null;
       enter = o.entering && !c ? { t, ready: 0 } : null; uiNow = enter ? 0 : 1; uiGoal = 1;
     } else {
       if (k !== look) { tl.push({ t, k }); if (k === 'storm') storm = { t0: t, end: 1e12 }; else if (storm && storm.end > t) storm.end = t; }
@@ -867,18 +866,13 @@ window.MenuVreme = (() => {
   }
   // the carousel turning (p: how far, in places): the buttons' drops and snow fade (at a third of a place gone), come back as it stops
   function turn(p) { const a = Math.max(0, 1 - 3 * Math.abs(p || 0)); uiGoal = a; if (uiNow > a) uiNow = a; kick(); }
-  // a new track's car comes in: its reflection when it stands (after ms, over fade ms), as its shadow (MenuCar.shadeIn)
-  function arrive(after, fade) { if (calm() || !L) return; arr = { t: now() + (after || 0) / 1000, d: Math.max(.001, (fade || 1) / 1000) }; kick(); }
-  // the screen goes as a new track's comes in: its floor at once without the car's reflection (the car drives out of it; back by itself
-  // after a while if no arrive() follows)
-  function leave() { if (calm() || !L) return; arr = { t: now() + .6, d: .26 }; try { frame(now()); } catch (_) { /* (the next frame) */ } }
   function rest() { resting = true; if (raf) { cancelAnimationFrame(raf); raf = 0; } }
   function wake() { if (!resting) return; resting = false; lastT = 0; dirty = true; kick(); }
   function off() {
     if (raf) cancelAnimationFrame(raf); raf = 0; resting = false;
     if (ro) { ro.disconnect(); ro = null; }
     if (UI) UI.c.remove(); if (AIR) AIR.c.remove(); UI = AIR = null;
-    L = null; app = null; enter = null; arr = null; taps = []; storm = null;
+    L = null; app = null; enter = null; taps = []; storm = null;
   }
   // (tests) the weather as it is now, and at once in its own weather (no fade, no tap, no flash, the buttons shown)
   function info() {
@@ -891,10 +885,10 @@ window.MenuVreme = (() => {
   }
   function settle() {
     if (!L) return info();
-    tl = [{ t: -99, k: look }]; taps = []; enter = null; arr = null; storm = null; uiNow = uiGoal = 1;
+    tl = [{ t: -99, k: look }]; taps = []; enter = null; storm = null; uiNow = uiGoal = 1;
     if (L.snw) for (const s of L.snw) s.at = -99;
     dirty = true; frame(now());
     return info();
   }
-  return { on, off, rest, wake, turn, arrive, leave, resize: () => { dirty = true; kick(); }, info, settle };
+  return { on, off, rest, wake, turn, resize: () => { dirty = true; kick(); }, info, settle };
 })();

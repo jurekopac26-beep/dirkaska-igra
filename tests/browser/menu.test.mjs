@@ -806,27 +806,32 @@ try {
     const nb = await sign();
     T.check('the race car again: the sign\'s name back where it was, as big', nb.cover === de.cover && nb.nameLeft === de.nameLeft && nb.fs === de.fs && nb.fits, JSON.stringify(nb));
     // upright a neighbour tapped (‹ Livorno, then › Nürburg again): the old screen (its car a picture of it) fades over the new one while
-    // its sign with its posts, its car and its name go out to the side the track went (250 of 412 px in 260 ms); the new sign comes in
-    // from the other side (the whole width, 540 ms after 140 ms), its car 60 ms after it, the shadow when it stands; then one screen
+    // its sign with its posts goes out to the side the track went (250 of 412 px in 260 ms); the new sign comes in from the other side (the
+    // whole width, 540 ms after 140 ms); the car, its name and its shadow stay where they stand, nothing of them moving (the user,
+    // 11. 11. 2026: only the sign that changes moves); then one screen
     const go = (b) => ev(page, `const kf = ${KF}, one = (e) => (kf(e) || [])[0] || '';
       root.querySelector('.nb.' + arg).click();
       const S = [...root.querySelectorAll('#mn > #s-track')], now = S[0], old = S[1], ny = now.querySelector('.yard'), oy = old && old.querySelector('.yard'), W = ny.getBoundingClientRect().width, d = Menu.debug();
+      const box = (y, s) => { const e = y && y.querySelector(':scope > ' + s); if (!e) return null; const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(v => +v.toFixed(1)); };
       return { id: d.list[d.trackIdx], n: S.length, arrive: d.arrive, W, gone: !!old && old.classList.contains('tgone') && old.inert && old.getAttribute('aria-hidden') === 'true', snap: !!(oy && oy.querySelector(':scope > canvas.c3d.snap')),
-        out: oy ? [...oy.querySelectorAll(':scope > .sign, :scope > .post, :scope > .car, :scope > .cname, :scope > canvas.c3d')].map(one) : null, fade: old ? kf(old) : null,
-        in: ['.sign', '.post', '.car', '.cname', 'canvas.c3d'].map(c => one(ny.querySelector(':scope > ' + c))), sh: MenuCar.info().shadow };`, b);
+        out: oy ? [...oy.querySelectorAll(':scope > .sign, :scope > .post')].map(one) : null, fade: old ? kf(old) : null,
+        in: ['.sign', '.post'].map(c => one(ny.querySelector(':scope > ' + c))),
+        still: [...(oy ? oy.querySelectorAll(':scope > .car, :scope > .cname, :scope > canvas.c3d, :scope > canvas.wxcar') : []), ...ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > canvas.c3d, :scope > canvas.wxcar')].map(e => e.getAnimations().length),
+        at: [['.car', '.car'], ['.cname', '.cname'], ['canvas.c3d.snap', 'canvas.c3d:not(.snap)']].map(([o, n]) => [box(oy, o), box(ny, n)]), sh: MenuCar.info().shadow };`, b);
     const end = () => page.waitForFunction(() => { const i = MenuCar.info(); return document.getElementById('menu-host').shadowRoot.querySelectorAll('#mn > #s-track').length === 1 && !Menu.debug().arrive && i.drawn && i.shadow && i.shadow.opacity === 1; }, null, { timeout: 20000 }).then(() => true).catch(() => false);
     const slid = (a, d) => {
       const tx = (v) => 'translateX(' + v.toFixed(0) + 'px)', o = tx(-d * a.W * 250 / 412) + ' 0 260', i = tx(d * a.W);
-      return a.n === 2 && a.gone && a.snap && a.arrive > 0 && a.out && a.out.length === 6 && a.out.every(x => x === 'none ' + o) && JSON.stringify(a.fade) === '["1 0 90 340"]' &&
-        JSON.stringify(a.in) === JSON.stringify([i + ' none 140 540', i + ' none 140 540', i + ' none 200 540', i + ' none 200 540', i + ' none 200 540']) && a.sh && a.sh.opacity === 0;
+      return a.n === 2 && a.gone && a.snap && a.arrive > 0 && a.out && a.out.length === 3 && a.out.every(x => x === 'none ' + o) && JSON.stringify(a.fade) === '["1 0 90 340"]' &&
+        JSON.stringify(a.in) === JSON.stringify([i + ' none 140 540', i + ' none 140 540']) && a.still.length >= 6 && a.still.every(k => k === 0) &&
+        a.at.every(([p, q]) => p && q && p.every((v, k) => Math.abs(v - q[k]) <= 0.5)) && a.sh && a.sh.opacity === 1;
     };
     await page.waitForTimeout(300);
     const al = await go('l'), alEnd = await end(), it = await sign();
-    T.check('upright ‹ (Livorno): the old screen fades over the new one while its sign, posts, car (a picture of it) and name go out to the right; the new sign comes in from the left, the car 60 ms after it, its shadow when it stands; then one screen, Italy\'s sign',
+    T.check('upright ‹ (Livorno): the old screen fades over the new one while its sign and posts go out to the right and the new sign comes in from the left; the car (a picture of it in the old screen), its name and its shadow stand still at the same place; then one screen, Italy\'s sign',
       al.id === 'livorno' && slid(al, -1) && alEnd && it.key === 'Italy' && /^polygon\(/.test(it.clip) && it.fits, JSON.stringify({ al, alEnd, it }));
     const ar = await go('r'), arEnd = await end(), de2 = await sign();
     T.check('upright › (Nürburg again): the same from the right; then Germany\'s sign', ar.id === 'nring' && slid(ar, 1) && arEnd && de2.key === 'Germany', JSON.stringify({ ar, arEnd, de2 }));
-    // the quick list opened as they come in: they stand at once, the old screen gone; its shadow there when the list is closed
+    // the quick list opened as the sign comes in: it stands at once, the old screen gone; the car with its shadow when the list is closed
     const qk = await ev(page, `root.querySelector('.nb.l').click(); const a0 = Menu.debug().arrive, n0 = root.querySelectorAll('#mn > #s-track').length;
       root.querySelector('.trow [data-act="izbor"]').click();
       const y = root.querySelector('#s-track .yard'), d = Menu.debug();
@@ -834,15 +839,15 @@ try {
     const qOpen = await page.waitForFunction(() => MenuIzbor.isOpen(), null, { timeout: 10000 }).then(() => true).catch(() => false);
     await page.keyboard.press('Escape'); await page.waitForFunction(() => !MenuIzbor.isOpen(), null, { timeout: 10000 }).catch(() => null);
     const qEnd = await end();
-    T.check('the quick list opened as the sign and the car come in: they stand at once, the old screen gone; the list closed, the car with its shadow',
+    T.check('the quick list opened as the sign comes in: it stands at once, the old screen gone; the list closed, the car with its shadow',
       qk.a0 > 0 && qk.n0 === 2 && qk.arrive === 0 && qk.n === 1 && qk.run === 0 && qk.id === 'livorno' && qOpen && qEnd, JSON.stringify({ qk, qOpen, qEnd }));
     // a device that asks for less motion: the next track at once
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const cm = await ev(page, `root.querySelector('.nb.r').click(); const y = root.querySelector('#s-track .yard'), d = Menu.debug();
       return { id: d.list[d.trackIdx], n: root.querySelectorAll('#mn > #s-track').length, arrive: d.arrive, run: [...y.children].reduce((a, e) => a + e.getAnimations().length, 0), sh: MenuCar.info().shadow };`);
-    T.check('a device that asks for less motion: the next track\'s sign and car at once (no old screen fading, nothing sliding), the shadow with the car',
+    T.check('a device that asks for less motion: the next track\'s sign at once (no old screen fading, nothing sliding), the car with its shadow',
       cm.id === 'nring' && cm.n === 1 && cm.arrive === 0 && cm.run === 0 && cm.sh && cm.sh.opacity === 1, JSON.stringify(cm));
-    T.check('the signs, the shadow and the sign and car coming in: no page errors', !real(errors).length, real(errors).join(' | '));
+    T.check('the signs, the shadow and the sign coming in: no page errors', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 
@@ -901,11 +906,12 @@ try {
     await page.keyboard.press('Escape'); await zem(page, 0); await page.waitForTimeout(200);
     const z2 = await ev(page, 'return MenuVreme.info();');
     T.check('the Earth over the screen: the weather rests (nothing drawn), closed it moves again', z1.resting && !z1.moving && z1.on && !z2.resting && z2.moving, JSON.stringify({ z1, z2 }));
-    // a neighbour: the new track's sign and car come in with their own (the snow on the sign's top, on the car), the weather goes on
+    // a neighbour: the new track's sign comes in with its own (the snow on the sign's top), the car's snow stays with the car, still; the
+    // weather goes on
     await click(page, 'weather:snow'); await page.evaluate(() => MenuVreme.settle());
     const nb = await ev(page, `root.querySelector('.nb.r').click(); const y = root.querySelector('#s-track .yard'), n = (s) => { const e = y.querySelector(s); return e ? e.getAnimations().length : -1; };
       return { car: n(':scope > canvas.wxcar'), sc: n(':scope > canvas.wxsc'), n: root.querySelectorAll('#mn > #s-track').length, i: MenuVreme.info() };`);
-    T.check('a neighbour tapped: the new car\'s snow and the sign\'s top come in with them, the weather goes on (Snow)', nb.car > 0 && nb.sc > 0 && nb.n === 2 && nb.i.on && nb.i.look === 'snow', JSON.stringify(nb));
+    T.check('a neighbour tapped: the sign\'s top comes in with it, the car\'s snow stays still with the car, the weather goes on (Snow)', nb.car === 0 && nb.sc > 0 && nb.n === 2 && nb.i.on && nb.i.look === 'snow', JSON.stringify(nb));
     await page.waitForTimeout(900);
     // (the car where it stands, not where it was as it came in: js/menu-car.js measures the yard as laid out; its snow with it)
     const nb2 = await ev(page, 'return { box: MenuCar.info().box, car: MenuVreme.info().car };');
@@ -1322,25 +1328,25 @@ try {
     const izOff = await page.waitForFunction(() => !MenuIzbor.isOpen(), null, { timeout: 10000 }).then(() => true).catch(() => false);
     T.check('a track picked in the quick list (Suzuka): its card turns in from its side, then rests; the list closed',
       w6.some(s => s.turning && s.id === 'suzuka' && Math.abs(s.p) > 0.05) && last(w6).id === 'suzuka' && idle(last(w6)) && izOff, JSON.stringify({ w6: w6.map(s => [s.t, s.id, s.p, +s.turning, +s.fading, s.scr]), izOff }));
-    // the car with the cards (sklop 11): the old one out to the side they go (half its place in 260 ms), a picture of it; the new one in from
-    // the other side (460 ms after 160 ms), its shadow when it stands; then nothing moving
+    // the cards turn, the car stays (the user, 11. 11. 2026: only what changes moves): the old screen's car a picture of it at the new one's
+    // place, nothing of either sliding, the shadow on; then nothing moving
     const ca = await page.evaluate((src) => new Promise((res) => {
       const root = document.getElementById('menu-host').shadowRoot, kf = (0, eval)(src), one = (e) => (kf(e) || [])[0] || '', t0 = performance.now();
       root.querySelector('.rarw.r').click();
       const step = () => {
         const d = Menu.debug(), S = [...root.querySelectorAll('#mn > #s-track')];
         if (d.ring.fading && S.length === 2) {
-          const ny = S[0].querySelector('.yard'), oy = S[1].querySelector('.yard'), c = ny.querySelector(':scope > .car');
+          const ny = S[0].querySelector('.yard'), oy = S[1].querySelector('.yard'), box = (e) => { if (!e) return null; const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(v => +v.toFixed(1)); };
           res({ id: d.list[d.trackIdx], in: ['.car', '.cname', 'canvas.c3d'].map(k => one(ny.querySelector(':scope > ' + k))), sign: one(ny.querySelector(':scope > .sign')), out: [...oy.querySelectorAll(':scope > .car, :scope > .cname, :scope > canvas.c3d')].map(one),
-            snap: !!oy.querySelector(':scope > canvas.c3d.snap'), step: c.getBoundingClientRect().width / 2, sh: MenuCar.info().shadow });
+            at: [['.car', '.car'], ['.cname', '.cname'], ['canvas.c3d.snap', 'canvas.c3d:not(.snap)']].map(([o, n]) => [box(oy.querySelector(':scope > ' + o)), box(ny.querySelector(':scope > ' + n))]),
+            snap: !!oy.querySelector(':scope > canvas.c3d.snap'), sh: MenuCar.info().shadow });
         } else if (performance.now() - t0 < 10000) requestAnimationFrame(step); else res(null);
       };
       requestAnimationFrame(step);
     }), KF);
     const caEnd = await page.waitForFunction(() => { const i = MenuCar.info(), d = Menu.debug(); return !d.arrive && !d.ring.fading && !d.ring.turning && i.shadow && i.shadow.opacity === 1; }, null, { timeout: 20000 }).then(() => true).catch(() => false);
-    const cx = (v) => 'translateX(' + v.toFixed(0) + 'px)';
-    T.check('on its side the car with the cards: the old one (a picture of it) out to the left, half its place in 260 ms; the new one in from the right in 460 ms after 160 ms, its shadow when it stands (no sign lying); then nothing moving',
-      ca && ca.snap && ca.out.length === 3 && ca.out.every(x => x === 'none ' + cx(-ca.step) + ' 0 260') && ca.in.every(x => x === cx(ca.step) + ' none 160 460') && !ca.sign && ca.sh && ca.sh.opacity === 0 && caEnd, JSON.stringify({ ca, caEnd }));
+    T.check('on its side the cards turn, the car stays: the old screen\'s car a picture of it at the same place, nothing of either sliding, its shadow on (no sign lying); then nothing moving',
+      ca && ca.snap && ca.out.length === 3 && ca.out.every(x => x === '') && ca.in.every(x => x === '') && !ca.sign && ca.at.every(([p, q]) => p && q && p.every((v, k) => Math.abs(v - q[k]) <= 0.5)) && ca.sh && ca.sh.opacity === 1 && caEnd, JSON.stringify({ ca, caEnd }));
     T.check('no page errors in the carousel', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }

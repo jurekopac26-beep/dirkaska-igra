@@ -823,7 +823,7 @@
       // on its side the new track's card turns in from the side it lies on in the list (the shorter way round); not under the Earth
       const n = L.length, d = ((i - trackIdx) % n + n) % n, dir = d <= n / 2 ? 1 : -1;
       ringStop();
-      if (ringOn() && !zemOpen()) { trackIdx = i; select(); if (MV()) MV().leave(); render(true); ringIn(-dir); carIn(dir); } else trackGo(dir, i);
+      if (ringOn() && !zemOpen()) { trackIdx = i; select(); render(true); ringIn(-dir); } else trackGo(dir, i);   // (the car stays where it stands)
     }
     return true;
   }
@@ -928,8 +928,7 @@
   // after the new one, every query finds the new one first); an arrow that had the focus: the new one has it
   function ringLand(d) {
     const n = TRACKS().length, old = app && $('#s-track', app), fa = app && app.getRootNode().activeElement, arw = fa && fa.classList && fa.classList.contains('rarw') ? (fa.classList.contains('l') ? 'l' : 'r') : '';
-    const snap = old && window.MenuCar ? MenuCar.snap() : null;   // (the car as it stood, in the old screen as it goes)
-    if (old && MV()) MV().leave();   // (its reflection on a wet floor: gone with it, back when the new one stands)
+    const snap = old && window.MenuCar ? MenuCar.snap() : null;   // (the car as it stands, in the old screen as it fades: the new one's is at the same place)
     trackIdx = ((trackIdx + d) % n + n) % n; select();
     if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; }
     arriveDone();
@@ -940,7 +939,6 @@
       old.classList.add('rgone'); old.setAttribute('aria-hidden', 'true'); old.inert = true; now.after(old); ringGone = old;
       ringGoneT = setTimeout(() => { old.remove(); if (ringGone === old) ringGone = null; }, 320);
       const oy = $('.yard', old); if (oy && snap) oy.insertBefore(snap, oy.firstChild);
-      carOut(oy, d); carIn(d);
     }
     if (arw) { const b = $('#s-track .rarw.' + arw, app); if (b) b.focus({ preventScroll: true }); }
   }
@@ -952,12 +950,13 @@
     if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; }
     arriveDone();
   }
-  /* a new track's sign and car come in from the side (docs/meni-izbira-proge.md, sklop 11; the mockup's change()). Upright (the arrows, a
-     swipe, the quick list; trackGo): the old screen fades over the new one while its sign with its posts, its car (a picture of it: the
-     car's canvas is the new yard's, MenuCar.snap) and the car's name go out to one side and the new ones come in from the other: out
-     250 of 412 px in 260 ms, in from the whole width in 540 ms after 140 ms, the car 60 ms after the sign, its shadow on the floor when it
-     stands. Lying (ringLand, the quick list's ringIn) only the car: out half its place, in from the other half in 460 ms after 160 ms.
-     At once on a device that asks for less motion and under the Earth; ringStop (another layer over the screen, a new change) ends them. */
+  /* a new track's sign comes in from the side (docs/meni-izbira-proge.md, sklop 11; the mockup's change()); the car stays where it stands,
+     still, with its name, shadow, snow and reflection (the user, 11. 11. 2026: only the sign that changes moves). Upright (the arrows, the
+     flags' buttons, a swipe, the quick list; trackGo): the old screen fades over the new one (its car a picture of it at the same place:
+     the car's canvas is the new yard's, MenuCar.snap) while its sign with its posts goes out to one side and the new one comes in from the
+     other: out 250 of 412 px in 260 ms, in from the whole width in 540 ms after 140 ms. Lying (ringLand, the quick list's ringIn) the
+     carousel turns, the car stays. At once on a device that asks for less motion and under the Earth; ringStop (another layer over the
+     screen, a new change) ends them. */
   const calmNow = () => !!(CALMQ && CALMQ.matches);
   let arrive = [];
   const arriving = (a) => { arrive.push(a); a.addEventListener('finish', () => { const k = arrive.indexOf(a); if (k >= 0) arrive.splice(k, 1); }); return a; };   // (a finished one let go)
@@ -969,32 +968,17 @@
     const old = d && app && screen === 'track' && shown === 'track' && !calmNow() && !zemOpen() ? $('#s-track', app) : null;
     if (!old) { render(); return; }
     const snap = window.MenuCar ? MenuCar.snap() : null;
-    if (MV()) MV().leave();
     old.remove(); for (const v of old.querySelectorAll('video')) v.pause();
     render(true);
     const now = $('#s-track', app); if (!now) return;
     old.classList.add('still', 'tgone'); old.setAttribute('aria-hidden', 'true'); old.inert = true; now.after(old); ringGone = old;   // (still: its own slide-in not again)
     const fade = old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 340, delay: 90, easing: 'ease-out', fill: 'forwards' });
-    fade.onfinish = () => { old.remove(); if (ringGone === old) ringGone = null; };   // (gone when it has faded: its sign and car are out by then)
+    fade.onfinish = () => { old.remove(); if (ringGone === old) ringGone = null; };   // (gone when it has faded: its sign is out by then)
     arriving(fade);
     const oy = $('.yard', old), ny = $('.yard', now), W = (ny || now).getBoundingClientRect().width || 412;
     if (oy && snap) oy.insertBefore(snap, oy.firstChild);
-    if (oy) slide(oy.querySelectorAll(':scope > .sign, :scope > .post, :scope > .wxsc, :scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), 0, -d * W * 250 / 412, OUT);
-    if (ny) {
-      slide(ny.querySelectorAll(':scope > .sign, :scope > .post, :scope > .wxsc'), d * W, 0, Object.assign({ duration: 540, delay: 140 }, IN));   // (.wxsc: the snow on the sign's top, js/menu-vreme.js)
-      slide(ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), d * W, 0, Object.assign({ duration: 540, delay: 200 }, IN));   // (.wxcar: the snow on the car)
-    }
-    if (window.MenuCar) MenuCar.shadeIn(560, 260);
-    if (MV()) MV().arrive(560, 260);   // (its reflection when it stands)
-  }
-  // (lying) the old car out, the new one in: half the car's place to each side
-  const carStep = () => { const c = app && $('#s-track .yard .car', app); return c ? c.getBoundingClientRect().width / 2 : 120; };
-  function carOut(oy, d) { if (oy && !calmNow()) slide(oy.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), 0, -d * carStep(), OUT); }
-  function carIn(d) {
-    const ny = !calmNow() && app && $('#s-track .yard', app); if (!ny) return;
-    slide(ny.querySelectorAll(':scope > .car, :scope > .cname, :scope > .c3d, :scope > .wxcar'), d * carStep(), 0, Object.assign({ duration: 460, delay: 160 }, IN));
-    if (window.MenuCar) MenuCar.shadeIn(520, 240);
-    if (MV()) MV().arrive(520, 240);
+    if (oy) slide(oy.querySelectorAll(':scope > .sign, :scope > .post, :scope > .wxsc'), 0, -d * W * 250 / 412, OUT);
+    if (ny) slide(ny.querySelectorAll(':scope > .sign, :scope > .post, :scope > .wxsc'), d * W, 0, Object.assign({ duration: 540, delay: 140 }, IN));   // (.wxsc: the snow on the sign's top, js/menu-vreme.js)
   }
   // the weather's row on the card (on its side): the new choice slides to the first place, the others to theirs (the screen is drawn
   // again: each button from where it was)
