@@ -208,7 +208,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             if (!F.zarometi) for (const dz of [-0.053, 0.053]) K.rect(2.1265, 0.62, s * 0.53 + dz, 0.008, 0.05, D, { host: LR('head', s) });   // (the lamp's three cells)
             if (!F.aero) for (const x of [X0 + 0.2, X1 - 0.2]) DC.side([[x - 0.035, 0.336], [x + 0.035, 0.336], [x, 0.395]], [0.6, 0.61, 0.64], [s], 0.008);   // (the jacking points, on the skirts)
           }
-          if (!F.vlecne_kljuke) K.face([[-2.089, 0.395, -0.64], [-2.089, 0.395, -0.60], [-2.089, 0.37, -0.62]], RED, { host: 'bumperR' });   // (over the strap, facing back)
+          if (!F.vlecne_kljuke) K.face([[-2.089, 0.395, -0.60], [-2.089, 0.395, -0.64], [-2.089, 0.37, -0.62]], RED, { host: 'bumperR' });   // (over the strap, facing back)
           K.driver(-0.47, 1.1, -0.37, { inner: true, r: 0.12, lean: 0.22, hands: [0.06, 0.805, 0.16], knee: [0.14, 0.57, 0.17], feet: [0.59, 0.39, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
         }
         // ---- inside (as KOLIBRI's: K.cab): carpet, tunnel, bulkhead; race dash, wheel; two shell seats with harnesses, sequential lever, pedals; door cards with pulls; boot floor; radiator behind the mouth, rear panel; the cage, the four, the spare ----
