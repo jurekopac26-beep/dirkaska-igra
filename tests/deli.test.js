@@ -166,6 +166,10 @@ const RJ = fs.readFileSync(path.join(ROOT, 'js/render.js'), 'utf8'), bodySecs = 
 const OLD = [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge'], ['muscle', 'muscle'], ['rally', 'rally'], ['truck', 'truck'], ['ev', 'ev']].filter(([id, k]) => { const M = C.MODELS.find(x => x.id === id), L = M && M.def && M.def.look;
   return !L || !bodySecs(k) || JSON.stringify(L.body.secs) !== bodySecs(k) || !M.def.mounts || M.kit; });
 check('starejsi: KAZE, VORTEX, PICO, STREGA, VIHAR V8 patched (a look, mounts; still drawn by their builder stock) with BODIES\' sections as in render.js', !OLD.length, OLD.map(o => o[0]).join(', ') || 'all five');
+// the open cars (FORMULA ORKAN): no BODIES sections (render.js draws them with formulaGeometry), the look its own tub; still drawn by
+// their builder stock
+const OWN = ['formula'].filter(id => { const M = C.MODELS.find(x => x.id === id); return !M || !M.def || !M.def.look || !M.def.mounts || M.kit; });
+check('starejsi: FORMULA ORKAN patched (its own look, mounts; still drawn by its builder stock)', !OWN.length, OWN.join(', ') || 'all');
 console.warn = warn;
 
 console.log(`\n${bad ? 'FAIL' : 'OK'}: ${n - bad}/${n} checks (${((Date.now() - t0) / 1000).toFixed(1)} s)`);

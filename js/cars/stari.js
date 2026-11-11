@@ -371,10 +371,104 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     delete m.hauba; delete m.antena; delete m.auspuh; delete m.streha; delete m.stresna_zajemalka; delete m.zaluzije; delete m.soncni_pas; delete m.prtljaznik;   // (the canopy: no sunroof, scoop, louvres or sun strip on glass; no boot)
     return m;
   }
+  // ---- FORMULA ORKAN (MODELS 'formula'): render.js formulaGeometry's pieces on its own tub (look units = metres): a closed loft (the
+  // cockpit's opening black on its top), pods, floor, diffuser, gearbox, halo, helmet in 'body'; the nose 'hood', the wings 'bumperF' /
+  // 'bumperR', the engine cover 'trunk', the bargeboards 'fenderL' / 'fenderR', the mirrors on the pods; one track for both axles (hw 0.78:
+  // the stock rear's, the front 5 cm in; docs/deli.md)
+  const FSECS = [[-0.86, 0.27, 0.09, 0.52, 0.12, 0.85, 0.06, 'b', 0.2], [-0.62, 0.30, 0.09, 0.50, 0.14, 0.87, 0.06, 'r', 0.2],
+    [-0.44, 0.36, 0.09, 0.42, 0.27, 0.60, 0.06, 'r', 0.2], [-0.10, 0.36, 0.09, 0.40, 0.30, 0.56, 0.06, 'r', 0.2],
+    [0.42, 0.33, 0.09, 0.38, 0.27, 0.57, 0.06, 'gf', 0.2], [0.80, 0.29, 0.10, 0.38, 0.23, 0.54, 0.06, 'b', 0.2],
+    [1.20, 0.25, 0.15, 0.38, 0.21, 0.515, 0.06, 'b', 0.15], [1.72, 0.21, 0.20, 0.37, 0.17, 0.49, 0.06, 'b', 0.12]];
+  // (a ring of ten round x: bottom (yb, wb), the side (ym, wm), the top (yt, wt), its crown tf of wt; for K.skin)
+  const fRing = (x, yb, wb, ym, wm, yt, wt, tf) => { const f = tf == null ? 0.5 : tf, r = Math.min(0.06, (yt - ym) * 0.4);
+    return [[x, yb, -wb * 0.86], [x, yb + 0.025, -wb], [x, ym, -wm], [x, yt - r, -wt], [x, yt, -wt * f], [x, yt, wt * f], [x, yt - r, wt], [x, ym, wm], [x, yb + 0.025, wb], [x, yb, wb * 0.86]]; };
+  const ngon = (n, f) => { const o = []; for (let i = 0; i < n; i++) o.push(f(i / n * Math.PI * 2)); return o; };
+  const FK2 = [0.15, 0.15, 0.17];   // (the carbon's grey: FK and DARK are too near the glass's colours)
+  function lookFormula() {
+    return {
+      body: { len: 5.2, wid: 1.96, wz: 0.2, secs: FSECS, roofY: 0.576, engRear: true, engine: [-1.05, 0.62], crush: { x0: 0, x1: 0, z: 0 },
+        eye: { x: -0.12, y: 0.76, near: 0.12, tilt: 0.06, style: 'formula' }, decalX: 1.0, decalY: 0.576, decalRz: -0.075, decalS: 0.36 },
+      wheels: { style: 'slick', w: 0.3, wR: 0.4, arch: false, rim: [0.12, 0.12, 0.13], tyre: [0.07, 0.07, 0.08] },
+      regions: 'none',
+      build(K) {
+        const P = K.paint, S = K.strp, KB = K.black, KD = K.dark;
+        const L = K.loft(K.body.secs, (k, e, kind) => kind === 'r' && e >= 3 && e <= 5 ? KB : e === 0 || e === 8 ? FK2 : P,
+          { caps: { front: { col: FK2, low: 'body', high: 'body', cut: 0 }, rear: { col: FK2, low: 'body', high: 'body', cut: 0 } }, arches: false, tubs: false });
+        K.part('body', () => {
+          const POD = [[0.62, 0.64, 0.5], [0.4, 0.71, 0.53], [-0.2, 0.71, 0.5], [-0.75, 0.62, 0.41], [-1.32, 0.44, 0.24]];   // the pods (x, the outer z, the top)
+          for (const sd of [-1, 1]) K.skin(POD.map(([x, zo, yt]) => [[x, 0.1, sd * 0.25], [x, 0.1, sd * (zo - 0.05)], [x, 0.16, sd * zo], [x, yt - 0.08, sd * zo], [x, yt, sd * (zo - 0.12)], [x, yt, sd * 0.25]]),
+            (k, e) => e === 0 ? KB : e === 1 ? FK2 : e === 3 ? S : P, KB, KB);
+          const FL = [[1.1, 0.3], [0.7, 0.6], [0.3, 0.74], [-1.15, 0.74], [-1.48, 0.64], [-1.75, 0.54]];   // the floor (convex)
+          K.plate(FL.map(([x, z]) => [x, 0.065, z]).concat(FL.slice().reverse().map(([x, z]) => [x, 0.065, -z])), 0.04, KB);
+          K.plate([[-1.75, 0.065, -0.54], [-1.75, 0.065, 0.54], [-2.36, 0.32, 0.5], [-2.36, 0.32, -0.5]], 0.02, KB);   // the diffuser's ramp
+          for (const z of [-0.5, -0.24, 0.24, 0.5]) K.endplate([[-1.75, 0.05], [-2.36, 0.34], [-2.36, 0.06], [-1.75, 0.045]], z, 0.012, FK2);
+          K.skin([fRing(-2.05, 0.2, 0.14, 0.4, 0.13, 0.52, 0.08), fRing(-2.28, 0.25, 0.09, 0.36, 0.09, 0.46, 0.06), fRing(-2.44, 0.28, 0.05, 0.34, 0.055, 0.4, 0.04)],
+            (k, e) => e >= 3 && e <= 5 ? P : KB, FK2, KB);   // the gearbox
+          K.box(-2.31, 0.44, 0, 0.2, 0.035, 0.92, 0, KB); K.box(-2.3, 0.44, 0, 0.14, 0.45, 0.03, 0, KB);   // the beam wing, the pylon (up to the main plane)
+          K.box(-2.22, 0.5, 0, 0.18, 0.06, 0.07, 0, [0.52, 0.5, 0.47]); K.box(-0.7, 0.925, 0, 0.13, 0.05, 0.11, 0, [0.96, 0.78, 0.08]);   // the exhaust, the camera
+          const fx = 1.8, rx = -1.7, sus = (a, b) => K.bar(a, b, 0.014, KB, { n: 3 });   // the wishbones, push rods, track rods, drive shafts
+          for (const sd of [-1, 1]) {
+            const hf = sd * 0.61, hr = sd * 0.56;
+            sus([fx + 0.24, 0.47, sd * 0.19], [fx, 0.5, hf]); sus([fx - 0.26, 0.47, sd * 0.21], [fx, 0.5, hf]); sus([fx + 0.28, 0.2, sd * 0.15], [fx, 0.2, hf]); sus([fx - 0.3, 0.2, sd * 0.2], [fx, 0.2, hf]);
+            sus([fx - 0.02, 0.22, hf - sd * 0.03], [fx - 0.08, 0.5, sd * 0.2]); sus([fx + 0.12, 0.32, sd * 0.17], [fx + 0.1, 0.33, hf]);
+            sus([rx + 0.28, 0.48, sd * 0.2], [rx, 0.52, hr]); sus([rx - 0.22, 0.48, sd * 0.14], [rx, 0.52, hr]); sus([rx + 0.32, 0.18, sd * 0.24], [rx, 0.17, hr]); sus([rx - 0.26, 0.18, sd * 0.2], [rx, 0.17, hr]);
+            K.bar([rx, 0.36, sd * 0.14], [rx, 0.36, hr], 0.025, [0.3, 0.3, 0.32], { n: 4 });
+          }
+          const H = [[-0.44, 0.62, -0.26], [-0.28, 0.79, -0.285], [-0.02, 0.855, -0.25], [0.18, 0.875, -0.15], [0.28, 0.88, 0]];   // the halo (its feet on the tub's top edge)
+          K.sweep([[-0.025, -0.025], [0.025, -0.025], [0.025, 0.025], [-0.025, 0.025]], H.concat(H.slice(0, 4).reverse().map(p => [p[0], p[1], -p[2]])), KB, { capA: KB, capB: KB });
+          K.bar([0.28, 0.88, 0], [0.46, 0.625, 0], 0.02, KB, { n: 4 });   // its strut down to the tub
+        }, { noCrush: true });
+        K.tailLamp(-2.445, 0.34, 0, 0.085, 0.07);   // the rain light on the gearbox's tip
+        K.part('body', () => {   // the driver's helmet, its visor
+          const HX = -0.16, HY = 0.755, ring = (dy, r) => ngon(10, a => [HX + Math.cos(a) * r, HY + dy, Math.sin(a) * r]);
+          K.skin([ring(-0.14, 0.06), ring(-0.06, 0.125), ring(0, 0.135), ring(0.06, 0.12), ring(0.11, 0.07)],
+            (k, e) => (k === 1 || k === 2) && (e === 8 || e === 9 || e === 0 || e === 1) ? [0.26, 0.17, 0.06] : [0.95, 0.95, 0.93], KD, P);
+        }, { noCrush: true, noDent: true, sub: 'driver' });
+        K.part('hood', () => {   // the nose
+          K.skin([fRing(1.72, 0.2, 0.172, 0.37, 0.212, 0.552, 0.172), fRing(2.1, 0.205, 0.11, 0.31, 0.14, 0.43, 0.11), fRing(2.4, 0.19, 0.08, 0.27, 0.1, 0.36, 0.075), fRing(2.62, 0.18, 0.05, 0.235, 0.06, 0.29, 0.045)],
+            (k, e) => e === 9 ? KB : k === 2 ? S : P, FK2, S);
+          K.inner(() => K.box(1.75, 0.218, 0, 0.06, 0.3, 0.34, 0, KD));
+        });
+        K.part('bumperF', () => {   // the front wing: the main plane, two flaps, the end plates, the pylons up to the nose
+          K.wingPlank(2.70, 0.08, 2.30, 0.12, 0.022, -0.9, 0.9, KB);
+          for (const sd of [-1, 1]) {
+            K.wingPlank(2.42, 0.15, 2.23, 0.215, 0.018, sd * 0.22, sd * 0.9, P); K.wingPlank(2.29, 0.225, 2.15, 0.29, 0.016, sd * 0.3, sd * 0.9, S);
+            K.endplate([[2.71, 0.07], [2.13, 0.07], [2.13, 0.33], [2.39, 0.30], [2.64, 0.18]], sd * 0.915, 0.02, P);
+            K.endplate([[2.55, 0.1], [2.35, 0.12], [2.35, 0.2], [2.55, 0.185]], sd * 0.05, 0.012, KB);
+          }
+        });
+        K.part('bumperR', () => {   // the rear wing: two planes, the end plates
+          K.wingPlank(-2.22, 0.865, -2.48, 0.93, 0.032, -0.49, 0.49, P); K.wingPlank(-2.43, 0.975, -2.595, 1.075, 0.018, -0.485, 0.485, S);
+          for (const sd of [-1, 1]) K.endplate([[-2.18, 0.8], [-2.26, 0.48], [-2.62, 0.48], [-2.62, 1.06], [-2.22, 1.0]], sd * 0.5, 0.022, P);
+        });
+        K.part('trunk', () => {   // the engine cover, its fin; the engine, its gearbox and exhaust under it
+          K.skin([fRing(-0.86, 0.088, 0.322, 0.52, 0.272, 0.912, 0.122), fRing(-1.3, 0.1, 0.28, 0.5, 0.22, 0.78, 0.1), fRing(-1.75, 0.12, 0.2, 0.45, 0.16, 0.63, 0.08), fRing(-2.05, 0.2, 0.142, 0.4, 0.132, 0.522, 0.082)],
+            (k, e) => e === 9 ? KB : P, FK2, FK2);
+          K.endplate([[-0.9, 0.9], [-1.95, 0.58], [-1.95, 0.7], [-1.02, 0.99]], 0, 0.016, S);
+          K.inner(() => {
+            K.box(-1.45, 0.3, 0, 0.9, 0.3, 0.36, 0, [0.4, 0.41, 0.43]); K.box(-1.25, 0.6, 0, 0.36, 0.12, 0.2, 0, [0.16, 0.16, 0.18]);
+            K.box(-1.87, 0.36, 0, 0.3, 0.14, 0.18, 0, [0.62, 0.5, 0.36]); K.bar([-1.6, 0.45, 0], [-2.12, 0.5, 0], 0.025, [0.62, 0.6, 0.56], { n: 6 });
+          });
+        });
+        for (const sd of [-1, 1]) K.part(sd < 0 ? 'fenderL' : 'fenderR', () => K.box(0.84, 0.19, sd * 0.63, 0.46, 0.22, 0.02, 0, P));   // the bargeboards (1 cm into the pods)
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.34, 0.562, sd * 0.5, { w: 0.07, h: 0.065, d: 0.15, col: P, z0: sd * 0.285 }); });
+        for (const id of ['crte', 'nalepke', 'celjusti', 'akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});
+        return L;
+      },
+    };
+  }
+  function mountsFormula() {   // (the open car's own: no glass, lamps, bonnet, roof or doors; the wings are the car's, the aero kit none)
+    return { platisca: {}, barva: {}, luc_pod_avtom: {}, gume: {}, zavore: { s: 1 }, matice: { k: 4, r: 0.2, lock: true },
+      ogledala: { x: 0.34, y: 0.562, z: 0.5, w: 0.07, h: 0.065, d: 0.15, z0: 0.285 }, celjusti: { r: [0.11, 0.21], a: [70, 125] },
+      crte: { z: [0.05, 0.13], x: [[0.8, 1.7]], fit: true, dy: -0.36, sx: [0.65, 1.7] }, nalepke: { side: [[0.85, 1.55]], y: [0.2, 0.36], hood: { x: [0.85, 1.5], z: [0.04, 0.14] } },
+      dim_gum: { w: 0.4 }, cip: { x: -0.95, y: 0.4, z: 0 }, turbo: { x: -1.1, y: 0.15, z: 0.2, ic: [-0.6, 0.13, 0.39] }, akumulator: { x: -1.07, y: 0.612, z: 0, back: true },
+      vzmeti: { in: 0.58, top: 0.48 }, amortizerji: { in: 0.575, top: 0.5 }, stabilizatorji: { in: 0.42, floor: [0.2, 0.09] } };
+  }
   for (const [id, key] of [['kaze', 'coupe'], ['vortex', 'sedan'], ['pico', 'hatch'], ['strega', 'wedge']])
     VEHICLE_DEFS.push({ id, patch: true, look: look(key), mounts: mounts(key) });
   VEHICLE_DEFS.push({ id: 'muscle', patch: true, look: lookMuscle(), mounts: mountsMuscle() });
   VEHICLE_DEFS.push({ id: 'rally', patch: true, look: lookRally(), mounts: mountsRally() });
   VEHICLE_DEFS.push({ id: 'truck', patch: true, look: lookTruck(), mounts: mountsTruck() });
   VEHICLE_DEFS.push({ id: 'ev', patch: true, look: lookEv(), mounts: mountsEv() });
+  VEHICLE_DEFS.push({ id: 'formula', patch: true, look: lookFormula(), mounts: mountsFormula() });
 })();
