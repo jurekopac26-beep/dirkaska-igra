@@ -20,6 +20,7 @@
      data-poroca on the script (temni-nacin.html): only tell the decision, in window.__okvirPoroca */
 (function () {
   'use strict';
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;   // (the tests load the page's scripts into Node: tests/lib/core.js)
   var W = window, D = document, VER = 1, KEY = 'rr-okvir';
   var me = D.currentScript, onlyTell = !!(me && me.hasAttribute('data-poroca'));
   var prefersDark = function (w) { try { return (w || W).matchMedia('(prefers-color-scheme: dark)').matches; } catch (_) { return false; } };
