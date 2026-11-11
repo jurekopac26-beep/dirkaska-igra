@@ -13,6 +13,8 @@
 //     and a second car's knock does not lengthen the first one's time
 //   - in that time the car does not drive through a part still moving: one in its way is shouldered aside, at no price to the car
 //   - a spare wheel is a tyre like the vehicle's own: on its tread, then over and flat
+//   - checks 25 to 38 (the independent check of 11. 11. 2026): no random number of the race, the banked bend, every ground of DEB's tables,
+//     the push's size and what it is measured against, the cap's fix, the wheel's veer, wobble and knock, bounce and landing, the 2 s to the step
 // (a piece lying on the road, driven over: tests/debris.test.js)
 //   node tests/odpadli-deli.test.js            check
 //   node tests/odpadli-deli.test.js --prej     print PREJ of the tree given (GAME_ROOT=<a tree from before the change>)
@@ -323,6 +325,213 @@ function through(M, parts, kmh, inp) {
   } finally { Math.random = orig; }
   check('a spare wheel that comes off (the off-roader\'s, the pick-up\'s, the buggy\'s, the semi-trailer\'s; 120 km/h) is a tyre like the vehicle\'s own: on its tread, then over and flat, its rim never in the road',
     cnt > 0 && wh === cnt && tread === cnt && flat === cnt && sink < 1e-6, `${cnt} throws: a wheel ${wh}, on the tread then fallen ${tread}, at rest flat ${flat}, its rim at most ${f(sink * 100, 1)} cm in the road; ${det.join(', ')}`);
+}
+// ==== checks 25 to 38 (from the independent check of the finished code, 11. 11. 2026) ====
+// Each fails on a changed js/core.js that checks 1 to 24 let through (the name of that change in brackets): a piece drawing a random number of
+// the race, the banked bend dropped from a piece's height, a ground of DEB's tables turned to ice, a push of another size or measured against
+// the road, the cap's fix, a wheel's veer, wobble and knock, the bounce by ground, the landing's keep, the tumbling throw by throw, the 2 s.
+
+// ---- 25, 26: the pieces take no random number of the race [rand_extra, rand_land] ----
+// Check 14 cannot see a draw: it steps with SIM.stepRace, which seeds Math.random anew before every step, so a number taken in one step
+// changes nothing in the next. Here the numbers are counted (Core's rand() is Math.random in a race that is not a replay): the same run
+// with the pieces on the road and with them taken off it asks Math.random exactly as often.
+// The car travels along the road at kmh, pointing `slip` rad off its travel (0: straight; else it slides), sheds `parts` and goes on 1.9 s
+// (its own time, DEB.own, is 2 s). keep false: the pieces taken off the road as they land on the list.
+// Also what the push does (checks 30, 31): a panel's own step only scales its speed along the road (stepDebris), so a panel whose travel
+// turns in a step, away from the barriers, was shouldered aside in it: `off` is the most its speed across the car, against the car,
+// differs from DEB.push after such a step, `fast` the most that speed is (the number itself is checked too: at most 5 m/s, a shove, not a shot)
+function shoulder(kmh, slip, parts, inp, keep) {
+  const orig = Math.random; try {
+  const T = road('asfalt'), race = lone(T), P = race.player, v = kmh / KMH, h0 = T.hd[150], g = Math.random; let drawn = 0;
+  Math.random = () => { drawn++; return g(); };
+  put(P, T, 150, v, slip); P.vx = Math.cos(h0) * v; P.vz = Math.sin(h0) * v; for (const p of parts) C.detachPart(P, p);
+  let hits = 0, pushes = 0, off = 0, fast = 0, deep = 0, shed = 0;
+  for (let k = 1; k <= 228; k++) {
+    const pre = race.debris.map(d => [d, d.vx, d.vz]);
+    P.hitDebris = 0; P.inThr = 0; P.inBrk = inp === 'zavora' ? 1 : 0; P.inSteer = 0; race.step(DT); if (P.hitDebris > 0) hits++; shed = Math.max(shed, race.debrisId || 0);
+    const ch = Math.cos(P.h), sh = Math.sin(P.h), c0 = P.circles[0], c1 = P.circles[P.circles.length - 1];
+    for (const [d, vx, vz] of pre) { if (d.wh || d.dead) continue;
+      const q = T.query(d.x, d.z, d.q ? d.q.i : 150, _q); if ((q.d > 0 ? q.br : q.bl) - Math.abs(q.d) - d.r * 0.5 < 1) continue;   // (a barrier turns it too)
+      if (Math.abs(vx * d.vz - vz * d.vx) <= 1e-9 * (1 + Math.hypot(vx, vz) * Math.hypot(d.vx, d.vz))) continue;
+      const s = (d.z - P.z) * ch - (d.x - P.x) * sh < 0 ? -1 : 1, rel = ((d.vz - P.vz) * ch - (d.vx - P.vx) * sh) * s;
+      pushes++; off = Math.max(off, Math.abs(rel - DEB.push)); fast = Math.max(fast, rel); }
+    if (k > 12) for (const d of race.debris) { if (d.rest || (d.ground && Math.hypot(d.vx, d.vz) < 3) || d.y - (P.y || 0) > 1.3) continue;   // (deep inside the car: as check 23 counts it)
+      const dx = d.x - P.x, dz = d.z - P.z, lo = dx * ch + dz * sh, la = dz * ch - dx * sh; if (lo > c0 && lo < c1 && Math.abs(la) < 0.6 * P.rad) deep++; }
+    if (!keep && race.debris.length) { for (const d of race.debris) d.dead = true; race.debris.length = 0; } }
+  return { drawn, hits, pushes, off, fast, deep, shed };
+  } finally { Math.random = orig; }
+}
+// twelve pieces nobody touches (the car parked 1.7 km away), until all rest: the numbers Math.random gave (pieces false: the same steps without them)
+function quietDraws(pieces, steps) {
+  const orig = Math.random; try {
+  const T = road('asfalt'), race = lone(T, 1000), g = Math.random; let drawn = 0, k = 0;
+  if (pieces) { const D = donor(T, 150, 200 / KMH), rnd = SIM.seeded(SEED); for (let j = 0; j < 2; j++) for (const p of ['hood', 'bumperF', 'doorL', 'wheelFL', 'wheelRL', 'mirrorL']) race.spawnDebris(D, p, rnd); }
+  Math.random = () => { drawn++; return g(); };
+  const n2 = steps || 20 * 120; while (k < n2) { k++; race.player.inBrk = 1; race.step(DT); if (!steps && race.debris.every(d => d.rest)) break; }
+  return { drawn, steps: k, rest: race.debris.every(d => d.rest), cnt: race.debris.length };
+  } finally { Math.random = orig; }
+}
+const FOUR = ['bumperF', 'hood', 'fenderL', 'fenderR'];
+{
+  const b = quietDraws(true), a = quietDraws(false, b.steps);
+  check('twelve pieces flying, landing, rolling and scraping to rest with no car near take no random number: Math.random is asked as often as in the same steps without them',
+    b.cnt === 12 && b.rest && a.steps === b.steps && a.drawn === b.drawn, `${b.steps} steps: ${b.drawn} numbers with the pieces, ${a.drawn} without`);
+  const rows = []; for (const kmh of [120, 200]) for (const inp of ['prosto', 'zavora']) { const A = shoulder(kmh, 0, FOUR, inp, true), B = shoulder(kmh, 0, FOUR, inp, false); rows.push({ id: kmh + ' ' + inp, A, B }); }
+  const w = rows.find(r => r.A.drawn !== r.B.drawn) || rows[0], pushes = rows.reduce((s, r) => s + r.A.pushes, 0);
+  check('the car shouldering its own four front parts aside (120, 200 km/h; coasting, braking; 1.9 s) takes no random number for it: Math.random is asked as often as in the same run with the pieces taken off the road (the throw\'s own numbers: both)',
+    rows.every(r => r.A.shed >= 4 && r.A.drawn === r.B.drawn && r.A.drawn >= 20 && r.A.hits === 0) && pushes > 0,
+    `${rows.length} runs, ${pushes} steps with a push; ${w.id}: ${w.A.drawn} numbers with the pieces, ${w.B.drawn} without`);
+}
+
+// ---- 27: on a banked bend a piece lies on the banked road [nobank] ----
+// (the Nordschleife's banked bends, the only banking on a real track: Track.bank, bankAt; the test's flat roads and Spa have none)
+{
+  const orig = Math.random, T = road('nring'), _b = {}; let ib = 0, cnt = 0, rest = 0, off = 0, under = 0, banked = 0, most = 0;
+  for (let i = 0; i < T.N; i++) if (T.bank && T.bank[i] > T.bank[ib]) ib = i;
+  try { for (const turn of [0.5, -0.5, 0]) { const race = lone(T, (ib + (T.N >> 1)) % T.N), D = donor(T, ib, 50 / KMH, turn), rnd = SIM.seeded(SEED + 1), S = [];
+    for (let k = 0; k < 3; k++) for (const p of ['hood', 'bumperF', 'wheelFL', 'mirrorL']) { race.spawnDebris(D, p, rnd); const d = race.debris[race.debris.length - 1]; d.by = null; d.byT = 0; S.push(d); }
+    const road0 = (d) => T.yAt(d.q) + T.bankAt(d.q.s, d.q.d, _b).dy;
+    for (let k = 1; k <= 30 * 120 && !S.every(d => d.rest); k++) { race.player.inBrk = 1; race.step(DT);
+      for (const d of S) { if (d.rest) continue; const uy = Math.cos(d.rx) * Math.cos(d.rz), re = d.wh ? d.r : EDGE * d.r;
+        under = Math.max(under, road0(d) + 0.02 + d.h * 0.5 * Math.abs(uy) + re * Math.sqrt(Math.max(0, 1 - uy * uy)) - d.y); } }
+    for (const d of S) { cnt++; if (!d.rest) continue; rest++; const dy = T.bankAt(d.q.s, d.q.d, _b).dy; const uy = Math.cos(d.rx) * Math.cos(d.rz), re = d.wh ? d.r : EDGE * d.r; off = Math.max(off, Math.abs(d.y - (road0(d) + 0.02 + d.h * 0.5 * Math.abs(uy) + re * Math.sqrt(Math.max(0, 1 - uy * uy))))); most = Math.max(most, Math.abs(dy)); if (Math.abs(dy) > 0.05) banked++; } }
+  } finally { Math.random = orig; }
+  check('on a banked bend (the Nordschleife\'s steepest) a piece lies on the banked road: at rest its middle its own height (at its tilt) over the road as banked there, never under it on the way',
+    !!T.bank && rest === cnt && banked >= cnt / 3 && off < 1e-6 && under < 1e-6, `${cnt} throws at sample ${ib}: ${banked} at rest where the banking moves the road over 5 cm (the most ${f(most, 2)} m); off the banked road by ${off.toExponential(1)} m at most, under it ${under.toExponential(1)} m`);
+}
+
+// ---- 28: every ground the game has (T.surface's codes 0 .. 8) [makadam_ice, kerb_ice] ----
+// (a code past the tables, DEB's fallback to tarmac [nofallback], cannot be checked this way and cannot happen in the game: with surface() answering 9
+// the parked car's own step throws first, Car.stepCS: CSSURF[9] is undefined)
+// (the test's grounds are asphalt, grass, gravel: 0, 2, 3. A kerb 1, paving 4, makadam 5, a puddle on it 6, cobbles 7 and wet cobbles 8 are
+// never under a piece in the 24 checks; makadam is the road of real stages.) A road that is the asked ground everywhere: the flat road, its
+// surface() answering the code
+const coded = (code) => { const T = new C.Track(road('asfalt').def); T.surface = () => code; return T; };
+{
+  const NAME = ['asphalt', 'kerb', 'grass', 'gravel', 'paving', 'makadam', 'puddle', 'cobbles', 'wet cobbles'], R = [];
+  for (let code = 0; code <= 8; code++) { const T = coded(code), h = throws(T, 150, 120, ['hood'], NT, 60), w = throws(T, 150, 120, ['wheelFL'], NT, 60);
+    R.push({ code, th: mean(h.map(r => r.t)), tw: mean(w.map(r => r.t)), fh: mean(h.map(r => r.far)), fw: mean(w.map(r => r.far)), rest: h.concat(w).every(r => r.rest > 0 && r.flat > 0.9998) }); }
+  const A = R[0], Gr = R[2], Pe = R[3], within = (r) => r.th <= A.th * 1.0001 && r.tw <= A.tw * 1.0001 && r.th >= Pe.th * 0.9999 && r.tw >= Pe.tw * 0.9999 && r.fh <= A.fh * 1.02 && r.fw <= A.fw * 1.02;
+  const soft = (r) => r.th < A.th && r.tw < A.tw && r.th > Gr.th && r.tw > Gr.tw;
+  check('on every ground the game has (kerb, paving, makadam, a puddle, cobbles dry and wet) a bonnet and a wheel at 120 km/h come to rest, no later and no further than on tarmac, no sooner than in gravel; on makadam and in a puddle sooner than on tarmac, later than on grass',
+    R.every(r => r.rest && within(r)) && soft(R[5]) && soft(R[6]), R.map(r => `${NAME[r.code]} ${f(r.th, 2)} / ${f(r.tw, 2)} s`).join(', ') + ' (bonnet / wheel)');
+}
+
+// ---- 29: the cap's own fix: a piece pushed off the list while it still rolls or tumbles is not left "on the ground" [cap_nofix] ----
+// (js/render.js keeps a dead piece drawn while d.rest || d.ground, with the wrecks kept on the road: one frozen on its edge would stand there)
+{
+  const orig = Math.random; let r = {};
+  try { const T = road('asfalt'), race = lone(T, 1000), rnd = SIM.seeded(SEED), D = donor(T, 150, 120 / KMH), tilt = (d) => Math.abs(Math.cos(d.rx) * Math.cos(d.rz));
+    const go = (n) => { for (let k = 0; k < n; k++) { race.player.inBrk = 1; race.step(DT); } };
+    for (let k = 0; k < 10; k++) for (const p of ['wheelFL', 'hood', 'bumperF', 'wheelRL']) race.spawnDebris(D, p, rnd);
+    const A = race.debris.slice(0, 12); go(150);                                              // 1.25 s on: the wheels on their treads, the panels end over end
+    const up = A.filter(d => !d.rest && d.ground && tilt(d) < 0.94);
+    for (let k = 0; k < 12; k++) race.spawnDebris(D, 'mirrorL', rnd);                          // twelve more: the first twelve go
+    r = { n: up.length, gone: A.every(d => d.dead) && race.debris.length === 40, off: up.filter(d => !d.ground).length };
+    for (let k = 0; k < 40 && !race.debris.every(d => d.rest); k++) go(120);
+    const B = race.debris.slice(0, 5); r.lay = B.every(d => d.rest && d.ground);
+    for (let k = 0; k < 5; k++) race.spawnDebris(D, 'mirrorL', rnd);                           // five more: five lying at rest go, and stay as they lie
+    r.stay = B.every(d => d.dead && d.rest && d.ground);
+  } finally { Math.random = orig; }
+  check('the cap of 40: a piece pushed off the list while it rolls or tumbles on the road is no longer "on the ground" (not left drawn on its edge); one pushed off at rest stays as it lies',
+    r.gone && r.n > 0 && r.off === r.n && r.lay && r.stay, `${r.n} of the first twelve rolling or tumbling when pushed off: ${r.off} off the ground; five at rest pushed off: ${r.stay ? 'still at rest' : 'changed'}`);
+}
+
+// ---- 30, 31: the push is DEB.push across the car, against the car, a shove and not a shot [push_40, push_abs, push_radial] ----
+{
+  const S = [], Z = [];
+  for (const kmh of [60, 120, 200]) for (const inp of ['prosto', 'zavora']) S.push(Object.assign({ id: kmh + ' ' + inp }, shoulder(kmh, 0, FOUR, inp, true)));
+  for (const kmh of [60, 120, 200]) for (const slip of [0.5, -0.5, 1.2]) Z.push(Object.assign({ id: kmh + ' km/h, ' + slip + ' rad' }, shoulder(kmh, slip, FOUR, 'prosto', true)));
+  const sum = (a, k) => a.reduce((s, r) => s + r[k], 0), worst = (a) => a.slice().sort((x, y) => y.off - x.off)[0], ws = worst(S), wz = worst(Z), wd = Z.slice().sort((x, y) => y.deep - x.deep)[0];
+  check('a part shouldered aside by its car driving straight (four front parts; 60, 120, 200 km/h; coasting, braking) leaves it at DEB.push m/s across the car, 5 m/s at most (a shove, not a shot); the car is not touched',
+    sum(S, 'pushes') > 0 && S.every(r => r.off < 1e-6 && r.fast <= 5 && r.hits === 0 && r.shed >= 4), `${S.length} runs, ${sum(S, 'pushes')} steps with a push: its speed across the car ${f(Math.max(...S.map(r => r.fast)), 2)} m/s at most (5 allowed), off DEB.push by ${ws.off.toExponential(1)} at most (${ws.id})`);
+  check('the same of a car sliding (pointing 0.5, -0.5, 1.2 rad off its travel; 60, 120, 200 km/h): the push is against the car, not against the road, the car is not touched and does not drive through the parts (deep inside it for 0.25 s at most a run)',
+    sum(Z, 'pushes') > 0 && Z.every(r => r.off < 1e-6 && r.fast <= 5 && r.hits === 0 && r.shed >= 4 && r.deep <= 30), `${Z.length} runs, ${sum(Z, 'pushes')} steps with a push: ${f(Math.max(...Z.map(r => r.fast)), 2)} m/s across the car at most, off DEB.push by ${wz.off.toExponential(1)} at most (${wz.id}); deep inside the car ${sum(Z, 'deep')} steps in all, the worst ${wd.deep} (${wd.id})`);
+}
+
+// ---- 32, 33: a wheel turns towards the side of the car it came off, and wobbles [veer0, veer_flip, wh_side, nowobble] ----
+// NT throws straight along the road at 120 km/h: how far its travel turns while it rolls on its tread on the ground (rad; + towards the car's +lz side)
+function veers(part) {
+  const orig = Math.random; try {
+  const T = road('asfalt'), race = lone(T, 1000), D = donor(T, 150, 120 / KMH), rnd = SIM.seeded(SEED), S = [];
+  for (let k = 0; k < NT; k++) { race.spawnDebris(D, part, rnd); const d = race.debris[race.debris.length - 1]; d.by = null; d.byT = 0; S.push({ d, turn: 0 }); }
+  for (let k = 1; k <= 20 * 120 && !S.every(s => s.d.rest); k++) {
+    for (const s of S) { const d = s.d; s.vx = d.vx; s.vz = d.vz; s.on = d.roll === 1 && d.ground; }
+    race.player.inBrk = 1; race.step(DT);
+    for (const s of S) { const d = s.d; if (s.on && d.roll === 1 && d.ground && Math.hypot(d.vx, d.vz) > 0.5) s.turn += Math.atan2(s.vx * d.vz - s.vz * d.vx, s.vx * d.vx + s.vz * d.vz); } }
+  return S.map(s => s.turn);
+  } finally { Math.random = orig; }
+}
+{
+  const WHS = Object.keys(PT).filter(p => PT[p].wh != null), V = WHS.map(p => ({ p, lz: PT[p].lz, t: veers(p) }));
+  check('a wheel rolling on its tread turns towards the side of the car it came off (left wheels one way, right wheels the other; every throw, over 0.3 rad)',
+    V.length === 4 && V.some(v => v.lz < 0) && V.some(v => v.lz > 0) && V.every(v => v.t.every(t => t * v.lz > 0 && Math.abs(t) > 0.3)), V.map(v => `${v.p} ${f(mean(v.t), 2)}`).join(', ') + ' rad (+: towards +lz)');
+  const WH = ALL.filter(r => PT[r.part].wh != null), up = WH.map(r => r.up).filter(x => x > 0);
+  const lean = up.filter(x => x > 0.2).length;
+  check('a rolling wheel wobbles: it leans off the upright as it slows (|uy| over 0.2 at its most, at least half of the wheels that rolled a while)', up.length > WH.length / 2 && lean >= up.length / 2, `${up.length} wheels: ${lean} lean over 0.2; the most each leans |uy| ${f(Math.min(...up), 2)} .. ${f(Math.max(...up), 2)}`);
+}
+
+// ---- 34: a car's knock takes a wheel off its tread until it lands again [knock_keeproll] ----
+// a wheel thrown at 120 km/h; once it rolls on the road on its tread (over 4.5 m/s: under 3 it would be run over as a lying piece) the car comes up its line 3.5 m behind it, 10 m/s faster
+{
+  const orig = Math.random; let r = { err: 'the wheel never rolled' };
+  try { const T = road('asfalt'), race = lone(T, 1000), P = race.player;
+    race.spawnDebris(donor(T, 150, 120 / KMH), 'wheelFL', SIM.seeded(SEED)); const d = race.debris[0]; d.by = null; d.byT = 0;
+    const step = () => { P.hitDebris = 0; P.inThr = P.inBrk = P.inSteer = 0; race.step(DT); return P.hitDebris > 0; };
+    let k = 0; while (k++ < 600 && !d.rest && !(d.roll === 1 && d.ground && Math.hypot(d.vx, d.vz) > 4.5)) step();
+    if (d.roll === 1 && d.ground && !d.rest) { r = { err: 'never knocked' };
+      const sp = Math.hypot(d.vx, d.vz), h = Math.atan2(d.vz, d.vx), i = T.query(d.x, d.z, -1, {}).i;
+      put(P, T, i, sp + 10); P.place(d.x - Math.cos(h) * 3.5, d.z - Math.sin(h) * 3.5, h); P.vx = Math.cos(h) * (sp + 10); P.vz = Math.sin(h) * (sp + 10); P.q = T.query(P.x, P.z, i, P.q);
+      let kn = false, air = 0, bad2 = 0, again = false;
+      for (k = 0; k < 30 * 120 && !d.rest; k++) { const r0 = d.roll, hit = step();
+        if (!kn) { if (hit) { kn = true; r = { was: r0, at: d.roll, up: !d.ground }; put(P, T, 1000, 0); } else if (k > 240) break; continue; }
+        if (!again) { if (d.roll === 1) again = true; else { air++; if (d.ground || d.roll !== 0) bad2++; } } }
+      if (kn) Object.assign(r, { air, bad: bad2, again, end: d.roll, flat: d.rest && Math.abs(Math.cos(d.rx) * Math.cos(d.rz)) > 0.9998 }); }
+  } finally { Math.random = orig; }
+  check('a wheel rolling on its tread knocked on by a car (the car up its line, 10 m/s faster) is off its tread while it flies (roll 0), on it again from its landing, then falls and lies flat',
+    !r.err && r.was === 1 && r.at === 0 && r.up && r.air > 0 && r.bad === 0 && r.again && r.end === 2 && r.flat, r.err || `roll ${r.was} before the knock, ${r.at} after; ${r.air} steps in the air off its tread; on it again ${r.again}; at rest roll ${r.end}, flat ${r.flat}`);
+}
+
+// ---- 35, 36: a landing: the ground's own bounce, and the share of its speed it keeps [sE_one, land_tarmac, nobounce, keep0] ----
+// bonnets and front bumpers thrown at kmh on a ground: the mean of each one's first bounce over its fall, and the least share of its speed along the road any landing leaves a piece
+function lands(T, kmh) {
+  const orig = Math.random; try {
+  const race = lone(T, 1000), D = donor(T, 150, kmh / KMH), rnd = SIM.seeded(SEED), S = [];
+  for (let k = 0; k < NT; k++) for (const p of ['hood', 'bumperF']) { race.spawnDebris(D, p, rnd); const d = race.debris[race.debris.length - 1]; d.by = null; d.byT = 0; S.push({ d, e: -1 }); }
+  let keep = 1, cnt = 0;
+  for (let k = 1; k <= 20 * 120 && !S.every(s => s.d.rest); k++) {
+    for (const s of S) { const d = s.d; s.sp0 = Math.hypot(d.vx, d.vz); s.vy0 = d.vy; s.g0 = d.ground; }
+    race.player.inBrk = 1; race.step(DT);
+    for (const s of S) { const d = s.d, vn = -(s.vy0 - G * DT); if (s.g0 || vn <= 0 || !(d.ground || d.vy > 0)) continue;   // a landing: it fell, now it is on the ground or on its way up
+      if (s.e < 0) s.e = Math.max(0, d.vy) / vn; if (s.sp0 > 1) { cnt++; keep = Math.min(keep, Math.hypot(d.vx, d.vz) / s.sp0); } } }
+  return { e: mean(S.filter(s => s.e >= 0).map(s => s.e)), keep, cnt };
+  } finally { Math.random = orig; }
+}
+{
+  const a = lands(coded(0), 120), g = lands(coded(2), 120), p = lands(coded(3), 120);
+  check('a panel thuds into grass and a gravel bed: its first bounce (over its fall) lower on grass than on tarmac, lower still in gravel', a.e > 0.1 && g.e < a.e * 0.8 && p.e < g.e * 0.8, `tarmac ${f(a.e, 2)}, grass ${f(g.e, 2)}, gravel ${f(p.e, 2)} x its fall`);
+  const slow = [20, 30, 45].map(kmh => lands(coded(0), kmh)), least = Math.min(...slow.map(r => r.keep)), cnt = slow.reduce((s, r) => s + r.cnt, 0);
+  check('a landing on tarmac never stops a piece dead: it keeps at least a quarter of its speed along the road (bonnets and bumpers at 20, 30, 45 km/h, every landing; DEB.keep)', cnt > 0 && least >= 0.25, `${cnt} landings: the least kept ${f(least, 3)} x (DEB.keep ${DEB.keep})`);
+}
+
+// ---- 37: the panels that go end over end turn forward throw by throw, not only on their mean [tum_nocos] ----
+// (check 6 takes the mean over all throws: with the upside-down correction of the turn about the piece's z dropped, 86 of 551 throws turn
+// backwards, down to -0.47 x their speed, and the mean is still over 0.1. On the final tree 4 of 551 are a little under 0, to -0.07: short
+// tumbles in which the piece's other axis settling flat, relaxAng, outweighs the turn. So: 3 in 100 at most, none under -0.15)
+{
+  const PAN = ALL.filter(r => r.fwd != null), back = PAN.filter(r => !(r.fwd > 0)), least = Math.min(...PAN.map(r => r.fwd));
+  check('the panels that go end over end turn forward along their travel throw by throw, not only on their mean (3 in 100 at most a little backwards on the whole, none faster than 0.15 x its speed)',
+    PAN.length > 0 && back.length <= PAN.length * 0.03 && least > -0.15, `${PAN.length} throws: ${back.length} backwards on the whole, the least ${f(least, 3)} x its speed`);
+}
+
+// ---- 38: the time is 2 s, to the step [own_18, own_22, again_18, again_22] ----
+// (checks 18 and 19 meet the part 1.24 s and 2.24 s after it left the car and are over it for half a second: any DEB.own or DEB.again from
+// about 1.75 to 2.24 s passes them. Here the car is over the lying part as its time ends: put 5 m short of it 1.7 s after, 10 m/s faster, it
+// is over it from 1.95 to 2.45 s and pays the lying pass in the step its time ends)
+{
+  const a = meetAgain(true, 2.2), c = meetAgain(false, 2.2), ok = (r) => !r.err && r.hits === 1 && Math.abs(r.first - 2) < 0.013;
+  check('the time is 2 s to the step: a car over the lying part as its time ends (its own part; a part it knocked away) is touched once, 2.00 s after the part left it',
+    ok(a) && ok(c), a.err || c.err || `its own part: ${a.hits} touch at ${f(a.first, 3)} s; a part it knocked away: ${c.hits} touch at ${f(c.first, 3)} s`);
 }
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);
