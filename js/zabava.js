@@ -1,6 +1,6 @@
 /* =========================================================================
    ZABAVA — the novelties that make the game more interesting (docs/zabava.md): the team's goals, the elimination race, rivals who
-   remember, the coach, the challenges by the road, the pursuit, the living road. Each one is a file of its own in js/zabava/
+   remember, the coach, the challenges by the road, the pursuit. Each one is a file of its own in js/zabava/
    (Zabava.add); the game has only short hooks (ZB in js/game.js, next to the special missions' MS).
    ========================================================================= */
 const Zabava = (function () {

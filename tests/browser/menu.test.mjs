@@ -26,6 +26,13 @@ try {
   const click = (page, act) => page.click(`[data-act="${act}"] >> visible=true`);   // (the one on show: the carousel's cards and arrows, on its side only, come before the neighbours' buttons, upright only)
   const done = (page) => page.click('.sheet .go[data-act="close-sheet"]');   // (a sheet's Done button)
   const shown = (page) => page.evaluate(() => [...document.querySelectorAll('.screen.show')].map(e => e.id));
+  // behind NEUPORABNO (the title's button, CLAUDE.md »Pred izidom: NEUPORABNO«): its sheet, a hidden track's card, Select: the track step of
+  // the hidden tracks, on it (in the menu's mode when the track is driven in it)
+  const nuPick = async (page, id) => {
+    await page.click('[data-act="nu"] >> visible=true');
+    await page.click(`.izb-sheet.nu [data-t="${id}"]`); await page.click(`.izb-sheet.nu [data-sel="${id}"]`);
+    await page.waitForFunction((id) => { const d = Menu.debug(); return d.nu && d.screen === 'track' && d.list[d.trackIdx] === id && !document.getElementById('menu-host').shadowRoot.querySelector('.izb-sheet'); }, id, { timeout: 15000 });
+  };
   // (a picture still on its way when the next track is stepped to is cancelled by the browser: not an error of the page)
   const real = (errs) => errs.filter(e => !/^request failed: \S+\/assets\//.test(e));
   const raceOn = (page, id) => page.waitForFunction((id) => window.__game.race && window.__game.race.track.def.id === id, id, { timeout: 120000 });
@@ -52,7 +59,17 @@ try {
     await ready(page);
     const t = await ev(page, 'return { tiles: [...root.querySelectorAll(".tile b")].map(e => e.textContent), small: [...root.querySelectorAll(".tsmall span")].map(e => e.textContent), sub: root.querySelector(".t-single small").textContent, logo: root.querySelector(".logo").textContent };');
     T.check('the title: Single race, Multiplayer, Career; Settings and Leaderboard; the logo', JSON.stringify(t.tiles) === '["SINGLE RACE","MULTIPLAYER","CAREER"]' && t.small.includes('Settings') && t.small.includes('Leaderboard') && /REAL ROADS ATLAS\s*RACING GAME/i.test(t.logo), JSON.stringify(t));
-    T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && /Circuit race/.test(t.sub), t.sub);
+    // (the game's track here Jezero, hidden behind NEUPORABNO: the title shows the first real one of Circuit race, the default mode, instead)
+    const first = 'const id = Menu.debug().list[0], d = Core.TRACKS.find(x => x.id === id) || {}, full = (d.en || {}).name || d.name || "", k = full.lastIndexOf(", "); return { id, name: k > 0 ? full.slice(0, k) : full, real: !d.test && !d.pending, race: (d.modes || [d.timeTrial ? "tt" : "race"]).includes("race"), game: __game.S.track };';
+    const f = await ev(page, first);
+    T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero): the first real one of Circuit race, the default mode (now Bâlea; a rally stage, a time trial only, is not in it)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && f.real && f.race && t.sub === f.name + ' · Circuit race', t.sub + ' ' + JSON.stringify(f));
+    {   // (a fresh player, no track saved: the game's own default track is that one, firstTrackId in js/game.js)
+      const o = await openGame(browser, PAGE, '{"sound":0,"intro":2,"quali":0}', { width: 412, height: 915 }, { menu: true });   // (the settings as a string: lib.mjs adds no track)
+      await ready(o.page);
+      const g = await ev(o.page, first);
+      T.check('a fresh player (no track saved): the game\'s own track is the first real one of Circuit race, the one on the title', g.real && g.race && g.game === g.id, JSON.stringify(g));
+      await o.ctx.close();
+    }
 
     // 2. the modes
     await click(page, 'single');
@@ -64,27 +81,24 @@ try {
     T.check('Endless traffic: Bathurst only; the last cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
     await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
 
-    // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest, then the test tracks; equal
-    //    lengths by id), every track with its picture in camera 2 (the flyover, else its model, and the height graph), the list going
-    //    round (after the last track the first again); the first time a track is met, its pictures in cameras 1 (the map, else the model)
-    //    and 3 (the corner's video and its poster, else the model) too
+    // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest; equal lengths by id), every track
+    //    with its picture in camera 2 (the flyover, else its model, and the height graph), the list going round (after the last track the
+    //    first again); the first time a track is met, its pictures in cameras 1 (the map, else the model) and 3 (the corner's video and its
+    //    poster, else the model) too. The hidden tracks (pending, test) only behind NEUPORABNO, the same way (CLAUDE.md, »Pred izidom: NEUPORABNO«)
     const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']], roads = {}, heads = {}, cams = {}, lists = {};   // (heads: every track's globe and height graph, of every mode; cams: every track's pictures in cameras 1 and 3)
     // the stage's picture as it is now: its kind and its files (a video's poster and the video)
     const PIC = `const st = root.querySelector('#track-stage'), map = st.querySelector('.dio.topmap'), v = st.querySelector('.dio.fly video, .dio.corner video');
       if (v) return { kind: v.closest('.corner') ? 'corner' : 'flyover', files: [v.getAttribute('poster'), v.getAttribute('src')], loop: v.loop && v.muted };
       return { kind: map ? 'map' : st.querySelector('.dio img') ? 'model' : 'none', files: [...st.querySelectorAll('.dio img, .dio image')].map(e => e.getAttribute('src') || e.getAttribute('href')) };`;
-    for (const [mode, gm] of MODES) {
-      await click(page, 'mode:' + mode); await click(page, 'cam:2');
-      const exp = await page.evaluate((gm) => {
-        const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm));
-        const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
-        ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
-        return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent).length, lens: ds.every(d => L[d.id] > 0) };
-      }, gm);
-      const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
-      T.check(`${mode}: one list of the game's tracks (${exp.ids.length}), the real ones from the shortest to the longest, then the ones awaiting the choice (pending), then the test tracks; no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
-      roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5., 6. and 9. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass, Great Alpine Road)`, roads.race === roads.trial && roads.race >= 8, JSON.stringify(roads));
+    // a mode's tracks in the menu's order: the real ones; behind NEUPORABNO (nu) the hidden ones, those awaiting the user's choice first, then the test tracks
+    const expList = ([gm, nu]) => {
+      const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm) && !!(d.test || d.pending) === nu);
+      const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
+      ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
+      return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent).length, lens: ds.every(d => L[d.id] > 0) };
+    };
+    // every track of the list on the stage in turn (camera 2), round to the first again: its picture, its head (key: the list, lists[key])
+    const walk = async (key, mode, exp) => {
       const first = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       let seen = 0; const bad = [], urls = new Set();
       for (let k = 0; k < exp.ids.length; k++) {
@@ -103,7 +117,7 @@ try {
           return null;
         }, null, { timeout: 20000 }).then(h => h.jsonValue()).catch(() => ({ name: '?', kind: 'none' }));
         seen++; if (r.kind === 'none' || r.kind === 'map') bad.push(k); for (const f of r.files || []) urls.add(f);
-        if (r.head) heads[mode + ':' + r.head.id] = Object.assign(r.head, { mode });
+        if (r.head) heads[key + ':' + r.head.id] = Object.assign(r.head, { mode, key });
         if (r.head && !cams[r.head.id]) {   // (cameras 1 and 3, the first time the track is met)
           await click(page, 'cam:1'); const c1 = await ev(page, PIC); await click(page, 'cam:3'); const c3 = await ev(page, PIC); await click(page, 'cam:2');
           cams[r.head.id] = { c1, c3 }; for (const f of c1.files.concat(c3.files)) urls.add(f);
@@ -112,9 +126,34 @@ try {
       }
       const again = await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; });
       const gone = await page.evaluate(async (list) => { const out = []; for (const u of list) { try { if (!(await fetch(u, { method: 'HEAD' })).ok) out.push(u); } catch (_) { out.push(u); } } return out; }, [...urls]);
-      T.check(`${mode}: every track shows its picture (${seen} tracks, ${urls.size} picture files, none missing); after the last the first again`, !bad.length && !gone.length && seen === exp.ids.length && again === first, JSON.stringify({ bad, gone, first, again }));
+      lists[key] = exp.ids;
+      return { seen, bad, gone, first, again, n: urls.size };
+    };
+    for (const [mode, gm] of MODES) {
+      await click(page, 'mode:' + mode); await click(page, 'cam:2');
+      const exp = await page.evaluate(expList, [gm, false]);
+      const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
+      T.check(`${mode}: one list of the game's real tracks (${exp.ids.length}) from the shortest to the longest, no hidden one (pending, test: NEUPORABNO); no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
+      roads[mode] = exp.roads;
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5., 6. and 9. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass, Great Alpine Road; Irohazaka awaits the choice)`, roads.race === roads.trial && roads.race >= 7, JSON.stringify(roads));
+      const w = await walk(mode, mode, exp);
+      T.check(`${mode}: every track shows its picture (${w.seen} tracks, ${w.n} picture files, none missing); after the last the first again`, !w.bad.length && !w.gone.length && w.seen === exp.ids.length && w.again === w.first, JSON.stringify(w));
       await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
-      lists[mode] = exp.ids;
+    }
+    // behind NEUPORABNO: every mode's hidden tracks the same way (the mode chosen, back to the title, NEUPORABNO's sheet, the first one's
+    // card, Select: the track step of the mode's hidden tracks); its back arrow: the title
+    for (const [mode, gm] of MODES) {
+      const exp = await page.evaluate(expList, [gm, true]); if (!exp.ids.length) continue;
+      await click(page, 'mode:' + mode); await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');
+      await nuPick(page, exp.ids[0]); await click(page, 'cam:2');
+      const d = await page.evaluate(() => Menu.debug());
+      T.check(`${mode} behind NEUPORABNO: the mode's hidden tracks (${exp.ids.length}), the ones awaiting the choice (pending) first, then the test tracks, each from the shortest to the longest`, d.nu && d.screen === 'track' && exp.lens && JSON.stringify(d.list) === JSON.stringify(exp.ids), JSON.stringify({ nu: d.nu, list: d.list, exp: exp.ids }));
+      const w = await walk(mode + '+nu', mode, exp);
+      T.check(`${mode} behind NEUPORABNO: every track shows its picture (${w.seen} tracks, ${w.n} picture files, none missing); after the last the first again`, !w.bad.length && !w.gone.length && w.seen === exp.ids.length && w.again === w.first, JSON.stringify(w));
+      await page.click('.thead [data-act="back"]');   // (behind NEUPORABNO: back to the title, the hidden tracks hidden again)
+      const t0 = await page.evaluate(() => { const d = Menu.debug(); return { screen: d.screen, sub: d.titleSub, nu: d.nu }; });
+      T.check(`${mode} behind NEUPORABNO: the back arrow leads to the title, the hidden tracks hidden again`, t0.screen === 'title' && !t0.sub && !t0.nu, JSON.stringify(t0));
+      await click(page, 'single');
     }
     // every track's pictures in cameras 1 and 3: the map from above where the track has a route (routes.js), else its model; the corner's
     // video in a loop, muted, where MENU.corners has it (every real track, and Vršič: a test track since 6. 11. 2026 without a model), else (a
@@ -129,7 +168,7 @@ try {
     const nograph = H.filter(x => !x.graph || (!tests.includes(x.id) && (x.graph.length !== 2 || !x.graph.every(t => /^-?\d[\d,]* m$/.test(t))))).map(x => x.id + ':' + JSON.stringify(x.graph));
     T.check(`every track of every mode (${H.length}) has its height graph; a real one's with its lowest and highest heights`, H.length >= 90 && !nograph.length, nograph.join(', '));
     // the counter at the picture's bottom left: the track's place among the real tracks of its mode's list (1 / 26 ...), a test track TEST
-    const badCount = H.filter(x => { const real = lists[x.mode].filter(id => !tests.includes(id)); return x.count !== (tests.includes(x.id) ? 'TEST' : (real.indexOf(x.id) + 1) + '\u2009/\u2009' + real.length); }).map(x => x.mode + ':' + x.id + ':' + x.count);
+    const badCount = H.filter(x => { const real = lists[x.key].filter(id => !tests.includes(id)); return x.count !== (tests.includes(x.id) ? 'TEST' : (real.indexOf(x.id) + 1) + '\u2009/\u2009' + real.length); }).map(x => x.mode + ':' + x.id + ':' + x.count);
     T.check(`the counter: every real track its place among the real tracks of the list (1 / ${lists.race.filter(id => !tests.includes(id)).length} in Circuit race), every test track TEST`, H.length >= 90 && !badCount.length, badCount.join(', '));
     const withC = H.filter(x => x.ctry), noglobe = withC.filter(x => x.globe !== x.ctry).map(x => x.id + ':' + x.ctry + '/' + x.globe);
     T.check(`every track with a country (${withC.length} of ${H.length}: the test tracks Copper Forest and Thunder Cape have none) has its globe in the head, that country gold on it`, withC.length >= 90 && withC.length >= H.length - 4 && !noglobe.length, noglobe.join(', '));
@@ -360,14 +399,14 @@ try {
     T.check('no page errors with the opponents\' sheet', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
-  {   // 0 opponents (Trial): the race alone (a short one: 3 laps), to the finish on the autopilot: Cilj (a tick, no place), no win in the
-    //   statistics, no page error
-    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 0, length: 'short' });
+  {   // 0 opponents (Trial): the race alone (Montréal: 3 laps), to the finish on the autopilot: Cilj (a tick, no place), no win in the
+    //   statistics, no page error (a real circuit: the test tracks, Trois-Rivières before 9. 11. 2026, are behind NEUPORABNO)
+    const { ctx, page, errors } = await open({ track: 'montreal', lastTrack: 'montreal', rivals: 0, length: 'normal' });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
     await click(page, 'race-single');
-    await raceOn(page, 'troisrivieres').catch(() => null);
+    await raceOn(page, 'montreal').catch(() => null);
     const st0 = await page.evaluate(() => ({ cars: __game.race && __game.race.cars.length, laps: __game.race && __game.race.laps, wins: __game.stats.wins || 0, races: __game.stats.races || 0 }));
     const fin = await page.evaluate(async () => { const g = window.__game; for (let k = 0; k < 90 && g.phase !== 'done'; k++) { g.sim(10, true); await new Promise(r => setTimeout(r, 0)); }
       return { phase: g.phase, title: document.getElementById('res-title').textContent, pos: document.getElementById('res-pos').textContent, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), wins: g.stats.wins || 0, races: g.stats.races || 0 }; });
@@ -376,22 +415,22 @@ try {
     T.check('no page errors in a race alone', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
-  {   // a field bigger than the game's own (40 opponents on Trois-Rivières): the race starts flying (the column, as the Nordschleife's 100:
+  {   // a field bigger than the game's own (40 opponents on Montréal): the race starts flying (the column, as the Nordschleife's 100:
     //   a big field's standing start piled up in its first corners with the knocks between cars, game.js newRace flyGo), the player's car
     //   over the line hands it over, the field rolling on 15 s more: no rival standing 3 s on end; no page error
-    const { ctx, page, errors } = await open({ track: 'troisrivieres', lastTrack: 'troisrivieres', rivals: 40, length: 'short' });
+    const { ctx, page, errors } = await open({ track: 'montreal', lastTrack: 'montreal', rivals: 40, length: 'short' });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     const row = await ev(page, 'return root.querySelector(".trow .opp").textContent;');
     await click(page, 'race-single');
-    await raceOn(page, 'troisrivieres').catch(() => null);
+    await raceOn(page, 'montreal').catch(() => null);
     const fl = await page.evaluate(async () => { const g = window.__game, r = g.race, st = new Map(), yld = () => new Promise(q => setTimeout(q, 0)); let worst = 0, t = 0, k = 0;
       const o = { cars: r.cars.length, flying: r.opts.flying || 0 };
       for (; t < 40 && (g.phase !== 'racing' || r.flyOn); t += 0.25) { g.sim(0.25, true); if (++k % 8 === 0) await yld(); }
       o.took = +t.toFixed(2); o.flyOn = !!r.flyOn; o.phase = g.phase;
       for (let j = 0; j < 60; j++) { g.sim(0.25, true); for (const c of r.cars) if (!c.isPlayer) { const v = Math.hypot(c.vx, c.vz) < 3 ? (st.get(c) || 0) + 0.25 : 0; st.set(c, v); worst = Math.max(worst, v); } if (j % 8 === 0) await yld(); }
       o.worst = worst; o.dist = Math.round(r.player.dist); return o; });
-    T.check('40 opponents on Trois-Rivières (more than the game\'s own 21): the row 40, 41 cars from a flying start, the player\'s over the line, then 15 s on: no rival standing 3 s on end',
+    T.check('40 opponents on Montréal (more than the game\'s own 21): the row 40, 41 cars from a flying start, the player\'s over the line, then 15 s on: no rival standing 3 s on end',
       row === 'Opponents40' && fl.cars === 41 && fl.flying > 0 && fl.phase === 'racing' && !fl.flyOn && fl.worst < 3 && fl.dist > 0, JSON.stringify({ row, fl }));
     T.check('no page errors in a big field\'s flying start', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
@@ -407,15 +446,19 @@ try {
   }
 
   // 4c. the quick list (js/menu-izbor.js; docs/meni-izbira-proge.md, sklop 8): the flag in the row opens it over the track step: the
-  //     countries by continent A to Z (the shown track's gold), the test tracks in their own tile at the end; a country's tracks, a track's
-  //     card (its shape from above, its facts, the player's best, its heights), Select and Race!; the search (no accents needed) and the
-  //     filters; the player's marks (a race's first three places a medal, a track driven a tick, one not driven NEW: in the row too);
-  //     Back (the phone's: the history; Esc; the pad's B) a layer down, the cross closes it
+  //     countries by continent A to Z (the shown track's gold), no test tracks; a country's tracks, a track's card (its shape from above,
+  //     its facts, the player's best, its heights), Select and Race!; the search (no accents needed) and the filters; the player's marks
+  //     (a race's first three places a medal, a track driven a tick, one not driven NEW: in the row too); Back (the phone's: the history;
+  //     Esc; the pad's B) a layer down, the cross closes it. NEUPORABNO's sheet (the title's button): the hidden tracks, a test track's
+  //     card, Race!
   {
     const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'suzuka@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
     const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, null, { init: 'localStorage.setItem("tdgp-records", ' + JSON.stringify(JSON.stringify({ tracks: recs })) + ');' });
     const miss = []; page.on('response', (r) => { if (r.status() === 404) miss.push(new URL(r.url()).pathname); });
     await ready(page);
+    // (Irohazaka awaits the user's choice (pending: behind NEUPORABNO); here a real track of Japan, the list's one country of two tracks: one
+    // track per country (CLAUDE.md) leaves none else. The menu reads the flag as it makes a list, its place stays the hidden tracks' first)
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });
     await click(page, 'single'); await click(page, 'mode:race');
     const IZ = (n) => page.waitForFunction((n) => window.MenuIzbor && (n ? MenuIzbor.isOpen() && MenuIzbor.depth() === n : !MenuIzbor.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.izb')), n, { timeout: 10000 });
     const VIEW = `const q = (s) => root.querySelector(".izb " + s), all = (s) => [...root.querySelectorAll(".izb " + s)], tx = (e) => e ? e.textContent.replace(/\\s+/g, " ").trim() : null;
@@ -439,11 +482,11 @@ try {
     T.check('the quick list opened (a dialog; the pad\'s part of the screen; one step in the history): "Choose a country", its countries and the mode\'s real tracks counted',
       g.title === 'Choose a country' && g.dlg === 'dialog/true' && g.pad && g.depth === 1 && g.hist === 1 && !!sub && +sub[1] === countryTiles.length && +sub[2] === exp.real && countryTiles.reduce((a, t) => a + t[1], 0) === exp.real, JSON.stringify({ g: { title: g.title, sub: g.sub, dlg: g.dlg, pad: g.pad, depth: g.depth, hist: g.hist }, exp }));
     const conts = ['Europe', 'North America', 'South America', 'Africa', 'Asia', 'Oceania'];
-    const az = g.cts.slice(0, -1).every((c, i, a) => conts.includes(c) && (!i || conts.indexOf(a[i - 1]) < conts.indexOf(c))) && g.secs.slice(0, -1).every(n => n.every((c, i) => !i || n[i - 1].localeCompare(c, 'en') < 0));
-    T.check('the countries by continent (Europe first, as the mockup), A to Z in each, the test tracks in their own tile at the end (For testing, every test track of the mode)',
-      az && g.cts[0] === 'Europe' && g.cts[g.cts.length - 1] === 'For testing' && JSON.stringify(g.secs[g.secs.length - 1]) === '["TEST"]' && g.tiles[g.tiles.length - 1][0] === 'TEST' && g.tiles[g.tiles.length - 1][1] === exp.test && tile('Belgium')[1] === 1 && tile('Japan')[1] >= 2, JSON.stringify({ cts: g.cts, secs: g.secs, tiles: g.tiles.map(t => t[0] + ':' + t[1]) }));
-    T.check('the marks on the flags: the shown track\'s country gold (Belgium), its best a gold 1; Japan (Suzuka 2nd) silver; Germany (Nürburg 5th) a tick; a country not driven NEW; the test tracks NEW',
-      tile('Belgium')[3] === 1 && g.tiles.filter(t => t[3]).length === 1 && tile('Belgium')[2] === 'gold:1' && tile('Japan')[2] === 'silver:2' && tile('Germany')[2] === 'done:' && tile('Canada')[2] === 'new:NEW' && g.tiles[g.tiles.length - 1][2] === 'new:NEW', JSON.stringify(g.tiles));
+    const az = g.cts.every((c, i, a) => conts.includes(c) && (!i || conts.indexOf(a[i - 1]) < conts.indexOf(c))) && g.secs.every(n => n.every((c, i) => !i || n[i - 1].localeCompare(c, 'en') < 0));
+    T.check('the countries by continent (Europe first, as the mockup), A to Z in each; no test tracks (no For testing tile: they are behind NEUPORABNO)',
+      az && g.cts[0] === 'Europe' && !g.cts.includes('For testing') && !g.tiles.some(t => t[0] === 'TEST') && exp.test === 0 && tile('Belgium')[1] === 1 && tile('Japan')[1] >= 2, JSON.stringify({ cts: g.cts, secs: g.secs, tiles: g.tiles.map(t => t[0] + ':' + t[1]) }));
+    T.check('the marks on the flags: the shown track\'s country gold (Belgium), its best a gold 1; Japan (Suzuka 2nd) silver; Germany (Nürburg 5th) a tick; a country not driven NEW',
+      tile('Belgium')[3] === 1 && g.tiles.filter(t => t[3]).length === 1 && tile('Belgium')[2] === 'gold:1' && tile('Japan')[2] === 'silver:2' && tile('Germany')[2] === 'done:' && tile('Canada')[2] === 'new:NEW', JSON.stringify(g.tiles));
     // a country: its tracks (Japan: Iroha, Suzuka), each with its mark, facts and best; then Suzuka's card
     await page.click('.izb-c[data-c="Japan"]'); await IZ(2);
     const jp = await view(), suz = jp.rows.find(r => r[0] === 'suzuka') || [], iro = jp.rows.find(r => r[0] === 'iroha') || [];
@@ -514,8 +557,8 @@ try {
     T.check('an ice track (Nürburg flagged): Ice finds it alone (its type "Ice"), Circuit does not, the search "nurburg" finds it without a filter',
       JSON.stringify(i1.rows.map(r => r[0])) === '["nring"]' && / · Ice$/.test(i1.rows[0][3]) && !i1.none && !i2.rows.some(r => r[0] === 'nring') && i2.rows.length >= 3 && JSON.stringify(i3.rows.map(r => r[0])) === '["nring"]',
       JSON.stringify({ i1: i1.rows.map(r => r.slice(0, 4)), i2: i2.rows.length, i3: i3.rows.map(r => r[0]) }));
-    // Select: a country of several tracks (the list's first: Canada's other two became test tracks on 8. 11. 2026, #379), a track's card,
-    // Select: the screen goes to it, the list closed and its steps gone
+    // Select: a country of several tracks (Japan, Irohazaka shown as real above), a track's card, Select: the screen goes to it, the list
+    // closed and its steps gone
     const several = (countryTiles.find(t => t[1] >= 2) || [])[0];
     await page.click(`.izb-c[data-c="${several}"]`); await IZ(2);
     const ca = await view(), pickId = ca.rows.map(r => r[0]).find(id => id !== 'spa');
@@ -534,14 +577,23 @@ try {
     const be2 = await view();
     T.check('a country of one track (Belgium): its card at once (Spa: a gold 1, Best lap 02:20.210, 1st place); the head\'s back arrow: the countries',
       be.title === 'Spa' && be.sub === 'Belgium' && !!be.card && be.card.best === 'gold:1|Best lap|02:20.2101st place' && be2.title === 'Choose a country', JSON.stringify({ be: be.title, best: be.card && be.card.best, be2: be2.title }));
-    // the test tracks' tile: their list (TEST on each); a test track's card (its picture, no shape); Race! starts its race at once
-    await page.click('.izb-c[data-test]'); await IZ(2);
-    const tl = await view();
-    await page.click('.izb-t[data-t="jezero"]'); await IZ(3);
+    // NEUPORABNO (the title's button): its sheet (no countries): NEW VERSION · TEST 1, MISSIONS and CUPS on top, then the tracks awaiting the
+    // user's choice (PENDING) and the test tracks (TEST), each its row; a test track's card (its picture, no shape); Race! starts its race at once
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = true; });   // (awaiting the choice again, as in the game)
+    await page.keyboard.press('Escape'); await IZ(0);
+    await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');
+    await page.click('[data-act="nu"] >> visible=true'); await IZ(1);
+    const tl = await view(), nx = await ev(page, 'const s = root.querySelector(".izb-sheet"); return { nu: !!s && s.classList.contains("nu"), label: s && s.getAttribute("aria-label"), top: [...root.querySelectorAll(".izb-nu [data-act]")].map(e => e.dataset.act), cts: [...root.querySelectorAll(".izb .izb-ct")].map(e => e.firstChild.textContent), cups: (root.querySelector(".nu-bar.cup small") || {}).textContent || "" };');
+    const ne = await page.evaluate(() => { const ds = Menu.debug().tracks.map(id => Core.TRACKS.find(d => d.id === id)); return { p: ds.filter(d => d.pending && !d.test).map(d => d.id), t: ds.filter(d => d.test).map(d => d.id) }; });
+    T.check(`NEUPORABNO's sheet: NEW VERSION · TEST 1, MISSIONS, CUPS (Home Cup · Short tracks) on top; then the tracks awaiting the choice (${ne.p.length}, PENDING) and the test tracks (${ne.t.length}, TEST), no countries`,
+      tl.title === 'NEUPORABNO' && tl.sub === [ne.p.length ? ne.p.length + ' pending' : '', ne.t.length + ' test', 'not in version 1.0'].filter(Boolean).join(' · ') && nx.nu && /NEUPORABNO/.test(nx.label) && tl.depth === 1 &&
+      JSON.stringify(nx.top) === '["newver","game:to-missions","game:to-champ-nu"]' && nx.cups === 'Home Cup · Short tracks' && JSON.stringify(nx.cts) === JSON.stringify((ne.p.length ? ['Pending · one per country stays'] : []).concat(['Test · to be removed'])) &&
+      JSON.stringify(tl.rows.map(r => r[0])) === JSON.stringify(ne.p.concat(ne.t)) && tl.rows.every(r => r[5] === (ne.t.includes(r[0]) ? 'TEST' : 'PENDING')) && !tl.tiles.length && ne.t.includes('jezero'),
+      JSON.stringify({ title: tl.title, sub: tl.sub, nx, rows: tl.rows.map(r => r[0] + ':' + r[5]) }));
+    await page.click('.izb-t[data-t="jezero"]'); await IZ(2);
     const jz = await view();
-    T.check('the test tracks\' tile: their list (Test tracks, to be removed; TEST on each), a test track\'s card (Jezero: its picture, no shape; TEST in the head)',
-      tl.title === 'Test tracks' && /^\d+ tracks · to be removed$/.test(tl.sub) && tl.rows.length === exp.test && tl.rows.every(r => r[5] === 'TEST') && / · TEST$/.test(jz.sub) && jz.card && jz.card.shape === 'pic' && JSON.stringify(jz.card.btns) === '["Select","Race!"]',
-      JSON.stringify({ tl: tl.title + ' / ' + tl.sub, n: tl.rows.length, jz: jz.sub, card: jz.card }));
+    T.check('a test track\'s card behind NEUPORABNO (Jezero: its picture, no shape; TEST in the head; Select and Race!)', / · TEST$/.test(jz.sub) && jz.card && jz.card.shape === 'pic' && JSON.stringify(jz.card.btns) === '["Select","Race!"]',
+      JSON.stringify({ jz: jz.sub, card: jz.card }));
     await page.click('.izb-race');
     let raced = true; await raceOn(page, 'jezero').catch(async () => { raced = false; console.log('  (the page:', JSON.stringify(await pageState(page)) + ')'); });
     const rc = await page.evaluate(() => ({ open: MenuIzbor.isOpen(), covers: Menu.covers(), hist: history.state && history.state.nazaj }));
@@ -579,6 +631,7 @@ try {
     const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'suzuka@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
     const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, null, { init: 'localStorage.setItem("tdgp-records", ' + JSON.stringify(JSON.stringify({ tracks: recs })) + ');' });
     await ready(page);
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in the quick list above: Irohazaka a real track of Japan here)
     await click(page, 'single'); await click(page, 'mode:race');
     const earth = () => ev(page, EARTH);
     const place = (id) => page.evaluate((id) => { const p = (MENU.globe.places || {})[id], g = GEO.tracks[id]; return p || (g ? [g.lat0, g.lon0] : null); }, id);
@@ -593,7 +646,7 @@ try {
       Math.abs(e1.R.lat - spa[0]) < 0.3 && Math.abs(wrap(e1.R.lon - spa[1])) < 0.3 && Math.abs(e1.R.d - 3.7) < 0.01 && e1.R.tex === 'assets/geo/earth.webp' && e1.R.size.join() === '4096,2048' && !e1.R.weak && e1.rested && e1.car === false,
       JSON.stringify(Object.assign({}, e1, { names: e1.names.length, pins: e1.pins.length })));
     T.check('the pins in the colours of the player\'s progress (Spa won: gold, the track shown; Suzuka 2nd: silver; Nürburg 5th: a tick\'s green; the rest NEW); from afar the countries named (Belgium the shown one\'s), none over another or a button, none over the shown one\'s pin',
-      e1.pins.includes('spa:gold cur') && e1.pins.includes('suzuka:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 3 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
+      e1.pins.includes('spa:gold cur') && e1.pins.includes('suzuka:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 2 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
       JSON.stringify({ pins: e1.pins, names: e1.names.map(n => n.c + (n.cur ? '*' : '')) }));
     const n0 = e1.R.n; await page.waitForTimeout(600); const n1 = await page.evaluate(() => MenuZemlja._R().n);
     const sun = await page.evaluate(() => { const s = MenuZemlja.sun(), v = MenuZemlja._R().sun, p = (s[1] + 180) * Math.PI / 180, t = (90 - s[0]) * Math.PI / 180;
@@ -620,16 +673,16 @@ try {
     const b3 = await ev(page, 'const d = Menu.debug(); return { hist: history.state && history.state.nazaj, id: d.list[d.trackIdx], rested: !!root.querySelector("#s-track.rested"), car: MenuCar.info().on };');
     T.check('Back (the phone\'s) from the track\'s card: the country\'s; the pad\'s B: the Earth alone (no country chosen); Esc: closed, no step of it left in the history; the screen under it moving again (the car), still on Spa',
       b1.card && b1.card.title === 'Japan' && !b1.R.tc && b2.R && !b2.card && !b2.R.sel && !b3.hist && b3.id === 'spa' && !b3.rested && b3.car, JSON.stringify({ b1: b1.card && b1.card.title, b2: b2.R && b2.R.sel, b3 }));
-    // a pin tapped (Marrakesh): its track's card at once; the card's cross: the Earth alone
+    // a pin tapped (Bâlea): its track's card at once; the card's cross: the Earth alone. (Marrakesh until 9. 11. 2026: awaiting the user's
+    // choice (pending), behind NEUPORABNO, not on this Earth)
     await page.click('.thead .globe'); await zem(page, 1);
-    const pin = await ev(page, 'const r = root.querySelector(".zp[data-t=\\"marrakesh\\"]").getBoundingClientRect(); return [r.left, r.top];');
+    const pin = await ev(page, 'const r = root.querySelector(".zp[data-t=\\"balea\\"]").getBoundingClientRect(); return [r.left, r.top];');
     await page.mouse.click(pin[0], pin[1]); await zem(page, 3);
     const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
     const p2 = await earth();
-    const pendM = await page.evaluate(() => !!Core.TRACKS.find(d => d.id === 'marrakesh').pending);   // (Marrakesh awaits the user's choice (pending: true): its card's subtitle says so)
-    T.check('a pin tapped (Marrakesh): its track\'s card at once (Morocco chosen, three steps; PENDING in the subtitle while the track awaits the choice); the card\'s cross: the Earth alone again', p1.R.tc === 'marrakesh' && p1.R.sel === 'Morocco' && p1.card && p1.card.sub === 'Morocco' + (pendM ? ' · PENDING' : '') && !p2.card && !p2.R.sel && p2.depth === 1,
-      JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub], p2: [p2.R.sel, p2.depth, !!p2.card], pendM }));
+    T.check('a pin tapped (Bâlea): its track\'s card at once (Romania chosen, three steps); the card\'s cross: the Earth alone again', p1.R.tc === 'balea' && p1.R.sel === 'Romania' && p1.card && p1.card.sub === 'Romania' && !p2.card && !p2.R.sel && p2.depth === 1,
+      JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub], p2: [p2.R.sel, p2.depth, !!p2.card] }));
     // + and − come closer (the tracks named) and go back; a drag turns it (east under a finger moving west) and it glides a little after;
     // the arrows turn it; the target: back to the track shown, its country's card
     await page.click('.zem-in'); await zem(page, 1); const z1 = await earth();
@@ -935,7 +988,7 @@ try {
     await ctx.close();
   }
 
-  // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Monte Carlo: its helicopter's first frame behind it).
+  // 5a. Circuit race on a circuit: the race weekend's calendar is the intro (Spa: its helicopter's first frame behind it).
   //     Qualifying is off: Saturday skipped, Sunday's grid the back of it, Race! "Start from last place"; Back to the tracks; switched
   //     on it is remembered (the setting, kept), Saturday first; Race! without it starts the race from the back of the grid (22nd of 22),
   //     with it the qualifying lap; the pad's B and Start; on its side Race! at the very bottom right
@@ -945,17 +998,17 @@ try {
       return { on: w.classList.contains('on'), head: w.querySelector('.ix-name h2').firstChild.textContent, days: vis('.wk-hd'), ses: vis('.wk-sname'), sky: vis('.wk-wd em'), pos: vis('.wk-pos'), stamp: vis('.wk-stamp'), go: g && g.textContent, pic: w.querySelector('.wk-pic img').getAttribute('src'),
         sw: w.querySelector('.wk-sw').getAttribute('aria-checked'), btn: r && [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight], race: !!window.__game.race, wx: w.querySelector('.wk-wx').textContent.replace(/\\s+/g, ' ').trim() };`);
     const toWeekend = async (page) => { await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300); };
-    const { ctx, page, errors } = await open({ intro: 0, track: 'monaco', mode: 'race', lastTrack: 'monaco' });
+    const { ctx, page, errors } = await open({ intro: 0, track: 'spa', mode: 'race', lastTrack: 'spa' });   // (a real circuit: Monte Carlo before 9. 11. 2026, a test track behind NEUPORABNO)
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     await toWeekend(page);
     const w0 = await wk(page);
     T.check('Race! in Circuit race: the race weekend (Saturday qualifying skipped, Sunday the race from P22 of 22), the track from afar behind it, the race waits',
-      w0 && !w0.on && w0.head === 'Monte Carlo' && JSON.stringify(w0.days) === '["SATURDAY","SUNDAY"]' && JSON.stringify(w0.ses) === '["Qualifying","Race"]' && w0.sky.length === 2 && w0.sky.every(k => /sunny|clear/i.test(k)) &&
-      JSON.stringify(w0.pos) === '["P22/22"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-monaco.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
+      w0 && !w0.on && w0.head === 'Spa' && JSON.stringify(w0.days) === '["SATURDAY","SUNDAY"]' && JSON.stringify(w0.ses) === '["Qualifying","Race"]' && w0.sky.length === 2 && w0.sky.every(k => /sunny|clear/i.test(k)) &&
+      JSON.stringify(w0.pos) === '["P22/22"]' && JSON.stringify(w0.stamp) === '["SKIPPED"]' && /^Race!\s*START FROM LAST PLACE$/.test(w0.go) && w0.pic === 'assets/maps/heli-spa.webp' && w0.sw === 'false' && !w0.race, JSON.stringify(w0));
     await page.click('.intro.wk [data-wk="back"]'); await page.waitForTimeout(300);
     const b = await ev(page, 'return { wk: !!root.querySelector(".intro"), name: root.querySelector("#s-track .where .w2").textContent, race: !!window.__game.race };');
-    T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Monte Carlo' && !b.race, JSON.stringify(b));
+    T.check('Back: the weekend gone, the track screen again, no race', !b.wk && b.name === 'Spa' && !b.race, JSON.stringify(b));
     await page.evaluate(() => { window.__game.S.weather = 'change'; });   // (Changing: the weekend's Sunday changeable, Saturday as the race starts)
     await toWeekend(page);
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
@@ -964,7 +1017,7 @@ try {
     T.check('Changing weather: Sunday changeable ("CHANGEABLE · may change"), Saturday dry or rain as the race will start', w1.sky.length === 2 && w1.sky[1] === 'Changeable' && /^(Sunny|Mostly sunny|Clear|Rain)$/.test(w1.sky[0]) && /^CHANGEABLE ?· may change$/.test(w1.wx), JSON.stringify({ sky: w1.sky, wx: w1.wx }));
     await page.click('.intro.wk [data-wk="q"]'); await page.waitForTimeout(200);
     await page.click('.intro.wk [data-wk="go"]');
-    await raceOn(page, 'monaco').catch(() => null);
+    await raceOn(page, 'spa').catch(() => null);
     const r0 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length, grid: r.player.grid, intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro'), rain: r.rain, wx: r.wst && r.wst.wx && Object.assign({}, r.wst.wx) }; });
     T.check('Race! with qualifying off: the race, from the back of the grid (22nd of 22)', r0 && !r0.quali && r0.cars === 22 && r0.grid === 22 && !r0.intro, JSON.stringify(r0));
     T.check('Changing weather: the race starts as Saturday showed (rain or dry), the change to come (to the other)', r0 && !!r0.wx && r0.rain === (w1.sky[0] === 'Rain' ? 1 : 0) && r0.wx.r1 === 1 - r0.rain && r0.wx.at > 0, JSON.stringify({ sat: w1.sky[0], rain: r0 && r0.rain, wx: r0 && r0.wx }));
@@ -972,7 +1025,7 @@ try {
     await ctx.close();
   }
   {   // (qualifying on, as left from the last time; on its side; the pad)
-    const { ctx, page, errors } = await open({ intro: 0, quali: 1, track: 'monaco', mode: 'race', lastTrack: 'monaco' }, { width: 915, height: 412 });
+    const { ctx, page, errors } = await open({ intro: 0, quali: 1, track: 'spa', mode: 'race', lastTrack: 'spa' }, { width: 915, height: 412 });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
     await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 }); await page.waitForTimeout(300);
@@ -982,7 +1035,7 @@ try {
     const gone = await ev(page, 'return !root.querySelector(".intro");');
     await click(page, 'race-single'); await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk'), null, { timeout: 120000 });
     const ps = await page.evaluate(() => Menu.padKey('start'));
-    await raceOn(page, 'monaco').catch(() => null);
+    await raceOn(page, 'spa').catch(() => null);
     const r1 = await page.evaluate(() => { const r = __game.race; return r && { quali: !!r.quali, cars: r.cars.length }; });
     T.check('the pad: B back to the tracks, Start the choice (with qualifying on: the qualifying lap, alone)', pb && gone && ps && r1 && r1.quali && r1.cars === 1, JSON.stringify({ pb, gone, ps, r1 }));
     T.check('no page errors on the race weekend on its side', !real(errors).length, real(errors).join(' | '));
@@ -1037,17 +1090,17 @@ try {
 
   // 6. the layouts: upright (360 x 640 and 412 x 915), on its side (915 x 412 and 640 x 360): the menu, the track step, the quick list, the Earth
   for (const [w, h] of [[360, 640], [412, 915], [915, 412], [640, 360]]) {
-    const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (Vršič, the last track of the list (a test track since 6. 11. 2026), has no model for the title's tile)
+    const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (the title's tile: Nürburg's model; Vršič, a test track since 6. 11. 2026, has none)
     await page.emulateMedia({ reducedMotion: 'reduce' });   // (the slide-in of a screen is off: it would still be on its way, and the screen 8 px low, when measured)
     await ready(page);
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in the quick list above: Japan's list two tracks, Suzuka and Irohazaka)
     const title = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const b = [...root.querySelectorAll(".title-panel button")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, w: innerWidth, h: innerHeight, over: b.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length };');
     T.check(`${w}x${h}: the main menu fits the screen, every button inside its panel`, title.top >= -0.5 && title.bottom <= title.h + 0.5 && title.over === 0, JSON.stringify(title));
     await click(page, 'single');
     const modes = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const c = [...root.querySelectorAll(".t-sub .mode")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, h: innerHeight, cut: c.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length, n: c.length };');
     T.check(`${w}x${h}: the eight modes fit their panel`, modes.top >= -0.5 && modes.bottom <= modes.h + 0.5 && modes.cut === 0 && modes.n === 8, JSON.stringify(modes));
-    await click(page, 'mode:race');
-    const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('vrsic') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
-    for (let k = 0; k < 60 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'vrsic'; k++) await click(page, way);   // (to Vršič, a test track since 6. 11. 2026 and the longest of them, the list's last: past the tracks awaiting the choice and the test tracks after Nürburg, the last real one)
+    await click(page, 'mode:race'); await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');
+    await nuPick(page, 'vrsic');   // (Vršič, a test track since 6. 11. 2026: behind NEUPORABNO, the longest hidden track, its list's last)
     await click(page, 'cam:2');   // (the flyover)
     await page.waitForTimeout(500);
     // the track step: upright the picture from the top of the screen (the head over it) to the row, then the row, the yard, the neighbours
@@ -1079,7 +1132,7 @@ try {
       (side ? Math.abs(g.gr.l - g.st.l - e8) < 0.6 && Math.abs(g.gr.t - g.st.t - e8) < 0.6 : Math.abs(g.gr.l - g.hb.l) < 0.5 && Math.abs(g.gr.w - g.hb.w) < 0.5 && g.gr.t >= g.hb.b + 8), JSON.stringify({ gr: g.gr, st: g.st, hb: g.hb, grw: g.grw, wx: g.wx }));
 
     // the whole route and the names of its flags inside the picture; the neighbours (on its side their cards) at the same place on the next track. (An open road's map
-    // turned to run up the frame: on Pikes Peak, below. Vršič, a test track since 6. 11. 2026, is drawn as the test tracks are, not turned)
+    // turned to run up the frame: on Pikes Peak, below. Vršič, a test track since 6. 11. 2026 (behind NEUPORABNO), is drawn as the test tracks are, not turned)
     const MEASURE = `
       const c = (e) => { const r = e.getBoundingClientRect(); return { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2, l: r.left, r: r.right, t: r.top, b: r.bottom, w: r.width, h: r.height }; };
       const st = root.querySelector("#track-stage"), pic = st.querySelector(".dio"), svg = st.querySelector(".topmap svg");
@@ -1100,7 +1153,9 @@ try {
     // the real land painted round the map (wide-<id>.webp, wide_map.py) covers the whole picture: no blurred or empty edge, in the frame turned or not
     const covers = (l, p) => !!l && l.l <= p.l + 1 && l.r >= p.r - 1 && l.t <= p.t + 1 && l.b >= p.b - 1;
     T.check(`${w}x${h}: the open road's map has the real land painted over the whole picture (the wide map reaches every edge of the frame)`, covers(v1.land, v1.pic), JSON.stringify({ land: v1.land, pic: v1.pic }));
-    // every other real track with a map: the route and its names inside the picture, the painted land over all of it
+    // every real track with a map (the real list again: back to the title, Single race, Circuit race): the route and its names inside the
+    // picture, the painted land over all of it
+    await page.click('.thead [data-act="back"]'); await click(page, 'single'); await click(page, 'mode:race'); await click(page, 'cam:1'); await page.waitForTimeout(500);
     const ids = await page.evaluate(() => Menu.debug().list), cut = [], bare = [], under = [], close = []; let maps = 0, pk = null;
     const over = (a, b) => a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t;
     const share = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t)) / Math.min(a.w * a.h, b.w * b.h);   // (how much of the smaller name the other covers)
@@ -1254,6 +1309,7 @@ try {
       e1.from === 'spa' && e1.mid.turning && e1.mid.id === 'spa' && e1.id === next && idle(e1.ring) && e1.scr === 1 && zr, JSON.stringify({ e1, zOk, zr }));
     await page.keyboard.press('Escape'); await zem(page, 0).catch(() => null); await page.waitForTimeout(300);
     // a track picked in the quick list (Japan, Suzuka, Select): its card turns in from its side
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in 6: Japan's list two tracks, Suzuka and Irohazaka; Irohazaka after the real ones, Spa's place in the list kept)
     await page.click('.trow .flag button');
     await page.waitForFunction(() => window.MenuIzbor && MenuIzbor.isOpen() && MenuIzbor.depth() === 1 && document.getElementById('menu-host').shadowRoot.querySelector('.izb.on'), null, { timeout: 10000 });
     await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
@@ -1351,7 +1407,9 @@ try {
   // garage's buttons do: its back index.html?zaslon=avto&avto=<id>, its Izberi progo with &naprej=proga), then straight the track step
   // again, the same track (stran Odločitve m8, 2: not the game's car screen), on the garage's car (here another one for Izberi progo)
   {
-    const { ctx, page, errors } = await open();
+    // (the game's track a real one, Spa: the page's settings are set again on each load (lib.mjs), and with Jezero, the tests' own track, hidden
+    // behind NEUPORABNO, the game would come back from the garage on Jezero, rightly on NEUPORABNO's list, not on the track the step showed)
+    const { ctx, page, errors } = await open({ track: 'spa' });
     await ready(page);
     let gar = null, way = 'back', other = '';
     await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + ' +

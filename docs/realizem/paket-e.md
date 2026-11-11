@@ -1,0 +1,97 @@
+# Realizem, paket E · Cesta in predmeti (~23 sej, na `main` prvi)
+
+Del `docs/realizem.md` (razdeljen po paketih 11. 11. 2026, ukrep 5 »Manj sklopov«, `docs/varcevanje.md`). Odločitve uporabnika, proge, postopek, pravna ocena, čas in vrsta so v `docs/realizem.md`.
+
+- **Kaj se spremeni:**
+  - Ograje so takšne vrste kot v resnici: jeklena, betonska, iz gum, mreža.
+  - Robniki dobijo barve in oblike posamezne proge.
+  - Svetilke in table se postavijo, kjer so v OSM.
+  - Kompleti predmetov po državah: ograje, smerniki, ogledala, jarki, drogovi, postajališča, table brez napisov.
+  - Asfalt se nosi: temnejša linija vožnje, zalite razpoke, krpe, prašna robova, madeži olja v zaviralnih conah.
+  - **Stranske ceste s križišči**, samo za videz: odcep do ~60 m od proge iz OSM, s pravim križiščem, črtami in znaki. Za dirko so zaprte (ograja, stožci ali redar), zato avto ne more zaviti nanje.
+  - **Črte na cesti** po pravilih države (barva in vrsta sredinske in robne črte); na dirkališčih kot v resnici.
+- **Izhodišče:**
+  - stranske ceste odprtih cest so v igri že zdaj: `def.sideRoads` v datoteki proge, `_buildStubs` v `js/core.js` in skupni pomočniki `stubGeo`, `stubProps` (stožci in zapore) in `stubRails` v `js/world-vrsic.js`, ki niso zamrznjeni;
+  - imajo jih Katu-Jaryk (`stubStats` v `js/world-katu.js`), Los Caracoles, Chapman's Peak in Medvode;
+  - Montréal ima križišča otoških cest, zaprta z ograjo (`junctions` v `js/world-montreal.js`), kar je zgled za dirkališča;
+  - robna črta je že v teksturi ceste (`edgeLinePaint` v `js/world.js`).
+- **Koraki:**
+  - E0: orodje za robove, asfalt, stranske ceste iz OSM (križišča, zapore) in črte po državah; kompleti po državah.
+  - E1: Nürburg, Pikes Peak, Suzuka, Tianmen. Najprej slike pred in po s kamere za avtom na strani Odločitve; ostale skupine šele po odgovoru.
+  - E2–E4: skupine 2–4.
+  - Nove proge, ki še niso na `main`, dobijo stranske ceste in črte po združitvi, v istem paketu (predelava prog iz PR). Proge, ki se šele začnejo (A12–A19, Koli …), jih imajo od začetka (postopek).
+- **Telefon** (ocena):
+  - predmeti kot primerki: +1–3 klici na progo;
+  - obraba asfalta: 0–2 klica (senčilnik in nalepke na isti mreži);
+  - stranske ceste v isti mreži kot cesta po kosih (kot zdaj `stubGeo`): 0 novih klicev, ~10–30 tisoč oglišč na progo; zapore in znaki kot primerki kompletov;
+  - črte v teksturi ceste: 0 klicev in 0 oglišč.
+- **Seje:** ~9 za orodje in komplete (od tega ~2 za stranske ceste in ~1 za črte), ~1 na progo brez stranskih cest (10 prog), ~0,8 na progo, ki jih že ima (5 prog).
+- **Datoteke:**
+  - `tools/proga-podatki.py` (ograje, zidovi, svetilke in stranske ceste iz OSM);
+  - `js/world.js` (kompleti kot primerki, robniki, črte po državah, stranske ceste na progah brez njih);
+  - `js/world-vrsic.js` (skupni pomočniki stranskih cest), `js/world-montreal.js` in graditelji pravih prog, ki stranske ceste že imajo;
+  - `js/render.js` (obraba asfalta v senčilniku);
+  - podatki v `js/tracks/<id>.js` (`sideRoads`).
+- **Tveganje:**
+  - klici risanja pri predmetih;
+  - robniki dirkališč in stranske ceste ne smejo spremeniti vožnje in AI;
+  - skupne pomočnike uporabljajo tudi testne proge in Great Alpine Road (na odločanju), zanje mora ostati vse enako: nova možnost ali nov graditelj, stara pot nespremenjena;
+  - spori v `js/world.js`.
+
+## E0, prvi kos: obraba asfalta in črte (PR #622, 10. 11. 2026)
+- **Odločitev:** uporabnik 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0« (izjema od mirovanja računa jure.kopac26). Na `main` gre po uporabnikovem »ok« na slikah: uporabnik jih je potrdil 10. 11. 2026 ob ~03.30 (izbira »Ok, z oljno sledjo«, prek Mateja), oljna sled sredi pasu na odprtih cestah ostane.
+- **Kaj prinese** (s kamere za avtom):
+  - asfalt ni več enakomerno siv: proge vzdolž ceste (sled finišerja in prometa), prah in pesek ob robovih (barva po tleh države; na dirkališču je pas širši ob robu, kamor avti ne vozijo, na odprti cesti je tudi po sredini), odseki novejšega in starejšega asfalta z ravnim stikom čez cesto (cela širina ali en pas) in velike blede lise;
+  - odprta cesta ima v vsakem pasu temno oljno sled med svetlejšima kolesnicama;
+  - v zaviralnih conah so kaplje olja (dirkališče: ob idealni liniji; cesta: po pasovih);
+  - barva črt je obrabljena: lise, kjer se vidi asfalt, okruški, rahlo umazana;
+  - Livorno dobi sredinsko črto po italijanskih pravilih (bela, prekinjena, pred ovinki in skozi njih polna).
+- **Česa namenoma ni:** temnejše linije vožnje (tema »zgumirana linija«, partyslo, `docs/zgumirana-linija.md`). Krpe, zalite razpoke in guma na idealni liniji dirkališč so od prej (`roadWear` v `js/world.js`) in ostanejo.
+- **Kako:** modul `js/world-cesta.js` (`World.cesta`), ki ga kliče `finish()` v `js/world.js` takoj za `roadWear`. Graditeljev ne spreminja:
+  - mrežja ceste najde po graditeljevem materialu asfalta (`out.asphaltMat`) in UV-jih ceste (u = odmik + polovica širine, v = metri vzdolž, oboje deljeno z 8);
+  - mrežja črt najde po svetlih barvah oglišč na ploskvi ceste, merjeno ob samih mrežjih ceste (zato tudi v nagnjenem ovinku); kjer je v mrežju črt še kaj (žlebovi na Chapman's Peaku), se obrabi samo svetla barva;
+  - vsako tako mrežje dobi kopijo materiala z obrabo v senčilniku; kar si material deli z drugim (boksi, izletne cone), ostane graditeljevo;
+  - podatke o krogu bere senčilnik iz teksture 2048 × 1 (odmik idealne linije, zaviranje iz hitrostnega profila, ton odseka levo in desno, polovica širine), vzorce iz enega šuma 128 × 128;
+  - mokra cesta, sence in lesk asfalta delujejo kot prej (`applyRoad` in `asphaltLook` v `js/render.js` material najdeta po teksturi asfalta); v dežju prah ob robu potemni skupaj s cesto (moker prah je temen, pas skoraj izgine).
+- **Proge:** tabela `PROGE` v modulu. Dirkališča: Spa, Nürburg, Štajerska, Bathurst, Montréal. Odprte ceste: Livorno, Tianmen, Rio do Rastro, Chapman's Peak, Bâlea, Los Caracoles. Nova prava proga dobi videz z eno vrstico v `PROGE` (`DIRKA` ali `CESTA` in barva prahu).
+  - Brez videza ostanejo: Pikes Peak (svoja, podrobna cesta; videz dobi v drugem kosu, spodaj), Katu-Jaryk (makadam), Harju (gre v test, ko je Koli na `main`), Suzuka in Irohazaka (zamrznjeni), Medvode in druge proge odprtih PR (vrstico dobijo po združitvi).
+  - Za testne proge in proge na odločanju `World.cesta.finish` takoj vrne: svet je zgrajen kot prej.
+- **Črte po državah:** tabela `CRTE` in `World.cesta.crte(T, { r, pred })` v modulu: barva robne in sredinske črte, dolžina črtice in presledka, ali je polna črta dvojna, in potek sredinske črte po vzorcih proge (`at[i]`: 0 nič, 1 črtica, 2 polna pred ovinkom, ostrejšim od `r`, in skozenj). Dolžine črtic so državni standard za cesto zunaj naselja, kolikor ga povedo javna pravila; ko graditelj po njih prvič riše, se preverijo znova (zdaj po tabeli riše samo Livorno). Pregled 10. 11. 2026:
+
+| Proga | Rob | Sredina | Stanje |
+|---|---|---|---|
+| Livorno, Italija | bela | bela, črtica 4,5 m in presledek 7,5 m, polna enojna | robni črti sta bili, **sredinska je dodana v tem kosu** |
+| Tianmen, Kitajska | bela | rumena | graditelj jo riše, ustreza |
+| Rio do Rastro, Brazilija | bela | rumena, polna dvojna | ustreza |
+| Los Caracoles, Čile | bela | rumena, polna dvojna (rumena, kjer sneži; drugod po državi bela) | ustreza |
+| Chapman's Peak, Južna Afrika | rumena | bela, polna dvojna | ustreza |
+| Bâlea, Romunija | bela | bela | ustreza |
+| Pikes Peak, ZDA | bela | rumena, polna dvojna | ustreza (svoja cesta) |
+| Spa, Nürburg, Štajerska, Montréal, Bathurst | bela | brez (dirkališče) | ustreza; Bathurst je preostanek leta javna cesta, sredinsko črto preverimo v E1 |
+
+- **Telefon** (izmerjeno s `tests/browser/perf.test.mjs`, NIZKA, prej → potem): Spa 181 klicev risanja in 442 tisoč oglišč → enako; Tianmen 146 in 394 → enako; Livorno 141 in 288 → 141 in 289 (sredinska črta v istem mrežju kot robni; na celi progi 15,7 tisoč oglišč več, 1,5 %). Prstni odtisi svetov (`tests/golden/world.json`) so enaki, razen Livorna. Senčilnik ceste prebere 4 teksture več na piko ceste (profil in trikrat šum); gradnja sveta traja ~40–50 ms dlje.
+- **Test:** `tests/browser/cesta.test.mjs` (opis v `tests/README.md`).
+- **Slike prej in potem** (kamera za avtom, levo prej, desno potem, na vsaki progi dva kadra, obrezana na cesto): `docs/realizem/e0-spa.jpg` (dirkališče), `docs/realizem/e0-tianmen.jpg` (odprta cesta), `docs/realizem/e0-livorno.jpg` (sredinska črta: prekinjena na ravnini, polna skozi ovinke).
+- **Kaj od E0 še manjka:** po drugem kosu v točki »Predaja« razdelka »E0, drugi kos« (spodaj).
+
+## E0, drugi kos: rob ceste in talne oznake (PR #622, na `main` od 11. 11. 2026; uporabnikov »ok« na slikah 10. 11. ob ~12.30)
+- **Naloga:** Matej (jure.kopac26) po uporabnikovi odločitvi 10. 11. 2026 ob ~01.40 (izboljšava grafike): nalomljen rob asfalta na odprtih cestah, talne oznake po državah, Pikes Peak v tabeli `PROGE`. Drugi kos je v ločenih commitih iste veje (rob, Pikes Peak, oznake ter testi, slike in dokumenti). Na `main` gre po uporabnikovem »ok« na slikah; če ga ne potrdi, se ti commiti vrnejo (`git revert`, v obratnem vrstnem redu) in prvi kos ostane.
+- **Kaj prinese** (s kamere za avtom):
+  - **rob asfalta na odprtih cestah** (Tianmen, Rio do Rastro, Chapman's Peak, Bâlea, Los Caracoles, Livorno, Pikes Peak) ni več ravna črta: vzdolž roba so drobni ugrizi v pasu zunaj robne črte, ponekod globok odlom skozi robno črto, ki se odlomi skupaj z asfaltom; v ugrizih je gramoz graditeljeve bankine (njena tekstura in barva na tistem mestu; Livorno bankine nima: suha zemlja ob cesti), rob asfalta je malo temnejši. Število odlomov je po progi: razgledni cesti (Tianmen, Chapman's Peak) malo, gorske ceste in ceste tovornjakov (Bâlea, Los Caracoles) več. Čist rob ostane na mostovih, v galerijah, ob ustjih stranskih cest in kjer ga določi graditelj (`out.cestaRob`: Livorno na mostovih, Pikes Peak ob ustjih). V dežju gramoz potemni z mokro cesto;
+  - **oznake čez cesto** na Livornu po italijanskih pravilih (pravilnik k zakonu o cestnem prometu, čl. 144 in 145): prehodi za pešce (pasovi 0,5 m s presledki 0,5 m, dolgi 2,5 m v naselju in 4 m na glavni cesti; skozi prehod ni sredinske črte), stop črte (0,5 m čez pas) in črte za prednost (trikotniki 0,5 × 0,6 m s konico proti vozniku, ki daje prednost). Kraji so vozlišča OpenStreetMap na cestah kroga (`LV_DATA.onRoad` iz `tools/livorno/build.py`): 28 prehodov, 4 stop črte in 3 črte za prednost. OSM ima kraj znaka, ne njegove smeri: pas orodje določi po bližjem koncu poti OSM (križišče, ob katerem znak stoji);
+  - **Pikes Peak** v tabeli `PROGE`: obraba asfalta, prah granita ob robu in nalomljen rob. Njegove kolesnice, krpe, zalite razpoke in obledele črte so graditeljeve (v istem mrežju kot cesta) in ostanejo.
+- **Sredinska črta:** vse odprte ceste iz `PROGE` jo imajo (tabela pri prvem kosu). **Bathursta ni bilo mogoče preveriti:** strežnik OpenStreetMap iz okolja seje ni dosegljiv, v repozitoriju podatka ni; ostane kot dirkališče z robnima črtama, preverba ostane za E1 (samo odprti viri).
+- **Česa namenoma ni:** temnejše linije vožnje (zgumirana linija, partyslo). Vožnja, fizika in AI so enaki: oglišča ceste se ne premaknejo.
+- **Kako** (`js/world-cesta.js`):
+  - rob je v senčilniku ceste (`EDGE`): koliko je asfalta od roba mrežja odlomljenega, iz šuma in iz druge vrstice profila kroga (na odprtih cestah 4096 × 2: jakost roba levo in desno, 4 bite, in barva bankine po kosih kroga; `robData()`), mehko čez piko ali dve glede na razdaljo;
+  - robne črte so v svojih mrežjih: ta dobijo atribut `ceSO` (mesto oglišča na cesti: metri vzdolž in od levega roba, kot UV-ji ceste), senčilnik črt z istim `EDGE` zavrže piko, kjer je asfalt odlomljen. Zato se prstni odtisi svetov šestih odprtih cest spremenijo (`tests/golden/world.json`); Pikes Peak ima črte v mrežju ceste in ostane enak;
+  - nastavitve v `PROGE`: `rob` (m, pas zunaj robne črte za drobne ugrize), `robV` (m, globina redkih odlomov), `kRobV` (koliko jih je), `bankina` (barva gramoza, kjer graditelj nima bankine);
+  - iskanje mrežij ceste je strpnejše (oglišča tudi med vzorci, 80 % na svojem mestu): Pikes Peak ima v mrežju ceste krpe in črte; `V.paint`: obraba velja samo za asfalt (atribut `paint` = 0);
+  - `World.cesta.precne(T, C, items, o)` vrne kose oznak po pravilih države (`CRTE`: `prehod`, `stop`, `prednost`; Italija po pravilniku, druge države privzeto) in odseke brez sredinske črte; graditelj jih položi v svoje mrežje črt (Livorno: `layX`, kot so položene črte).
+- **Telefon:** noben nov klic risanja in nobeno novo oglišče, razen oznak na Livornu (+2.095 oglišč v obstoječih mrežjih črt, 0,2 % oglišč njegovega sveta). Profil kroga odprtih cest je 4096 × 2 (32 KB namesto 8 KB); senčilnik ceste na odprtih cestah prebere 2 teksturi več na piko (druga vrstica profila, gramoz), senčilnik črt 5 (profil dvakrat, šum trikrat; črt je na sliki malo).
+- **Test:** `tests/browser/cesta.test.mjs` (rob na Tianmenu, tudi na NIZKA; Pikes Peak; oznake na Livornu; opis v `tests/README.md`).
+- **Slike prej in potem** (kamera za avtom, levo prej z glavo `f124715`, desno potem): `docs/realizem/e0-rob.jpg` (Bâlea: rob v običajnem pogledu in povečan), `docs/realizem/e0-oznake.jpg` (Livorno: dva prehoda, črta za prednost, prehod in stop črta v nasprotnem pasu ob ovinku), `docs/realizem/e0-pikes.jpg` (Pikes Peak na 2,85 in 6 km).
+- **Predaja** (10. 11. 2026 ob ~11.30; seja se ustavi po Matejevem navodilu, E0 nadaljuje nova seja):
+  - **Narejeno:** vse tri naloge drugega kosa v ločenih commitih veje `realizem/e0-crte-asfalt`: `fd5c6d3` (rob), `b150529` (Pikes Peak), `8b70c88` (oznake na Livornu), `81f381d` (test, prstni odtisi, slike, opis) in commit s to predajo (samo dokumenti). Lokalno zeleno: `cesta.test.mjs` (15 preverb), prstni odtisi svetov (šest odprtih cest posodobljenih), varovalo testnih prog, `node tools/stamp.js --check`, `npm run test:related` (18 od 18). Telefon (`perf.test.mjs`, NIZKA, klici risanja in oglišča na sliko), prej z glavo `f124715` in potem enako: Spa 181 in 442 tisoč, Tianmen 146 in 394, Rio do Rastro 156 in 343, Chapman's Peak 141 in 419, Bâlea 156 in 362, Los Caracoles 155 in 269, Livorno 141 in 289, Pikes Peak 117 in 277; čas JS na sliko se razlikuje v obe smeri (šum meritve).
+  - **Po predaji opravljeno:** (1) uporabnikov »ok« na slikah drugega kosa je dan (10. 11. 2026 ob ~12.30, »Ok, na main po vrsti«); (2) pot na `main`: PR #622 je na `main` od 11. 11. 2026 (squash `244f7cd7`, krog testov na GitHubu zelen, spori s `main` razrešeni s spojem svežega `main`). **Manjka:** (3) preverba sredinske črte na Bathurstu (OSM iz okolja seje ni bil dosegljiv; samo odprti viri); (4) ostalo od E0: orodje za robove in robnike, stranske ceste iz OSM s križišči in zaporami, kompleti predmetov po državah. Oznake čez cesto ima samo Livorno: `World.cesta.precne` je pripravljen za vse države, graditelj potrebuje kraje, kot jih ima Livorno v `LV_DATA.onRoad`.
+  - **Kako se preveri:** `node tests/browser/cesta.test.mjs` (~7 min); `WORLD_ONLY=tianmen,rastro,chapman,balea,caracoles,livorno node tests/browser/world.test.mjs [--update]`; `PERF_ONLY=spa,tianmen,rastro,chapman,balea,caracoles,livorno,pikes node tests/browser/perf.test.mjs`; `npm run test:related`; v igri `index.html?proga=balea` (rob), `?proga=livorno` (prehodi ~300 m in ~1,9 km od štarta), `?proga=pikes`.

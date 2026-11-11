@@ -532,9 +532,12 @@ try {
     await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.mouse.click(tap.x, tap.y)]);
     const url1 = page.url();
     await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
-    const g = await page.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
+    // (the game's own track is a real one now (NEUPORABNO: not Jezero), so the address carries its country (Romunija); the TITAN is not the
+    // player's car: the button's flag is grey, so the country is read from the profile (S.flag), where the garage keeps it, or leaves it
+    // empty when it has no flag for that country (the chequered flag), never another one)
+    const g = await page.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, sflag: __garage.S.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
     T.check('from the game\'s car screen: the car (over its place, clear of the panel, "Tapni avto za garažo") tapped opens the garage with it, the TITAN in green; the profile kept (the same credits), the MOCKUP bar there',
-      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f(&drzava=[^&]+)?$/.test(url1) && (!/drzava=/.test(url1) || g.flag === decodeURIComponent(url1.split('drzava=')[1])) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
+      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f(&drzava=[^&]+)?$/.test(url1) && (!/drzava=/.test(url1) || g.sflag === '' || g.sflag === decodeURIComponent(url1.split('drzava=')[1])) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
       JSON.stringify({ tap, url1, g, before }));
     await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('.g-foot .g-btn-back')]);
     await page.waitForFunction(() => window.__game && __game.screen === 'car', null, { timeout: 180000 });

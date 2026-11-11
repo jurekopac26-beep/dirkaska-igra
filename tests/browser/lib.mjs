@@ -63,25 +63,37 @@ export function launch(extraArgs = []) {
 
 // open the game; settings: an object (merged over sound/commentary off and no qualifying: Start goes straight to the race), a raw JSON
 // string, or null (a fresh profile)
+// NEW VERSION · TEST 1 from the new menu's title (opts.menu): behind NEUPORABNO since 9. 11. 2026, the first bar of its sheet
+export async function tapNewVersion(page) {
+  const q = '#menu-host', nv = '.izb-nu [data-act="newver"]';
+  await page.evaluate((q) => document.querySelector(q).shadowRoot.querySelector('[data-act="nu"]').click(), q);
+  await page.waitForFunction(([q, nv]) => !!document.querySelector(q).shadowRoot.querySelector(nv), [q, nv], { timeout: 30000 });
+  await page.evaluate(([q, nv]) => document.querySelector(q).shadowRoot.querySelector(nv).click(), [q, nv]);
+}
+
 export async function openGame(browser, address, settings = {}, viewport = { width: 480, height: 270 }, opts = {}) {
   const ctx = await browser.newContext(Object.assign({ viewport, hasTouch: !!opts.touch }, opts.context));   // (opts.touch: a phone's touch screen, the pointer coarse as on a phone; opts.context: more of the context's options)
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  // (a known miss, no failure of the game: Vršič, a test track frozen since 6. 11. 2026, has no menu picture, assets/tracks/vrsic.webp; the
+  // quick list and NEUPORABNO's list show its flyover instead and the browser logs the 404)
+  page.on('console', m => { if (m.type() === 'error' && !(/^Failed to load resource/.test(m.text()) && /\/assets\/tracks\/vrsic\.webp$/.test((m.location() || {}).url || ''))) errors.push('console: ' + m.text()); });
   // (net::ERR_ABORTED is the browser's own cancel, no failure of the game or the server: a page reloaded while a script was still on its
   // way, a video read in pieces; a missing file is a 404 answer, not a failed request)
   page.on('requestfailed', r => { const why = (r.failure() || {}).errorText || ''; if (why !== 'net::ERR_ABORTED') errors.push('request failed: ' + r.url() + (why ? ' (' + why + ')' : '')); });
   // (the failures off unless a test asks for them: a cut tyre after a knock would change what the other tests see; the best moment's video
   // after a race too: it would play before the results)
   // (carDet normal: the cars as a phone draws them, whatever the test browser's pointer: Nastavitve · Detajli avtov picks Visoki on a computer;
-  // damage Vklop and the old timing tower under the map, as the tests were written for: the game's defaults are Samo videz and the tower at the top)
-  const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal', damage: 2, tower: 2 }, settings));
+  // damage Vklop and the old timing tower under the map, as the tests were written for: the game's defaults are Samo videz and the tower at the top;
+  // the track Jezero, the game's default the tests were written for: since 9. 11. 2026 the game's default is the first real track, Jezero a test track)
+  const raw = settings === null ? null : typeof settings === 'string' ? settings : JSON.stringify(Object.assign({ sound: 0, comm: 0, quali: 0, faults: 0, hlv: 0, carDet: 'normal', damage: 2, tower: 2, track: 'jezero' }, settings));
   // (tdgp-noadapt: software WebGL is slow, so without it the game would lower the resolution and switch shadows off by itself; tdgp-tips:
   // the hints of the first pit stops all seen, so a test's stop shows only the stop's own toast, as on a phone that has stopped before;
   // opts.tips: none seen, as on a new phone (tests/browser/pits.test.mjs). A new hint's id goes in here too)
   // (tdgp-nostartcam: no camera before the start, the race's chase view and its 1.3 s intro as the tests were written for; opts.startCam: on)
-  await page.addInitScript(([raw, adapt, sc, tips]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw);
+  // (tdgp-nu1: the new menu's one-time move of a hidden track to the first real one done, so a test's Jezero stays the game's track)
+  await page.addInitScript(([raw, adapt, sc, tips]) => { localStorage.setItem('tdgp-defaults-v2', '1'); localStorage.setItem('tdgp-defaults-v3', '1'); localStorage.setItem('tdgp-defaults-v4', '1'); localStorage.setItem('tdgp-defaults-v5', '1'); localStorage.setItem('tdgp-nu1', '1'); if (!adapt) localStorage.setItem('tdgp-noadapt', '1'); if (!sc) localStorage.setItem('tdgp-nostartcam', '1'); if (raw !== null) localStorage.setItem('tdgp-settings', raw);
     if (!tips) localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1 })); }, [raw, !!opts.adaptive, !!opts.startCam, !!opts.tips]);
   // opts.seed: Math.random becomes a seeded generator. (The game still runs in real time, so this alone does not make a
   // run repeatable: a test that needs the same result every time also pauses the game and steps it itself.)

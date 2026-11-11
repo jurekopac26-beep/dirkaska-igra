@@ -838,7 +838,7 @@
     'Robnik! Vagonček je zadel robnik, potniki so poskočili.': 'Kerb! A wagon hit the kerb and the passengers jumped.', 'Potniki so prestrašeni: preveč robnikov.': 'The passengers are frightened: too many kerbs.',
     'Zapeljal si mimo razgledne točke.': 'You drove past the viewpoint.', 'Zapeljal si mimo okvirja: zapelji vzvratno do razgleda.': 'You drove past the box: reverse back to the viewpoint.',
     'Ustavi v rumenem okvirju ob razgledni točki.': 'Stop in the yellow box at the viewpoint.', 'Pelji mirno: potniki uživajo v razgledu.': 'Drive smoothly: the passengers are enjoying the view.',
-    /* ---- Zabava (js/zabava.js, js/zabava/): the team goals, the elimination race, the rivals who remember, the coach, the challenges by the road, the pursuit, the living road ---- */
+    /* ---- Zabava (js/zabava.js, js/zabava/): the team goals, the elimination race, the rivals who remember, the coach, the challenges by the road, the pursuit ---- */
     'Pridobi vsaj {0} mest': 'Gain at least {0} places',
     'Pridobi vsaj {0} mesta': 'Gain at least {0} places',
     'Brez dotika ograje': 'No touching the barrier',
@@ -916,17 +916,6 @@
     'Lov': 'Pursuit',
     'Begunec': 'Fugitive',
     'Ponovi lov': 'Chase again',
-    'Živa cesta': 'Living road',
-    'Na odprti cesti se zgodi kaj nepričakovanega: kamenje, žival čez cesto, dela na cesti s semaforjem, počasen traktor': 'Something unexpected happens on the open road: rocks, an animal crossing, road works with lights, a slow tractor',
-    'POZOR: KAMENJE NA CESTI': 'CAUTION: ROCKS ON THE ROAD',
-    'POZOR: ŽIVAL NA CESTI': 'CAUTION: ANIMAL ON THE ROAD',
-    'POZOR: DELA NA CESTI': 'CAUTION: ROAD WORKS',
-    'POZOR: POČASEN TRAKTOR': 'CAUTION: SLOW TRACTOR',
-    'ŽIVAL! UPOČASNI': 'ANIMAL! SLOW DOWN',
-    'TRAKTOR! PREHITEVAJ PREVIDNO': 'TRACTOR! PASS WITH CARE',
-    'KAMEN!': 'ROCK!',
-    'RDEČA LUČ! +3 s KAZNI': 'RED LIGHT! +3 s PENALTY',
-    'STOŽCI!': 'CONES!',
     // Zabava · Pregon s prijatelji (js/zabava/beg.js): online, one friend in the patrol car, the others run
     'Pregon': 'Police chase',
     'Patrulja': 'Patrol car',

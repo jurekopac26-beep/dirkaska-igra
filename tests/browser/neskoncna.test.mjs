@@ -1,4 +1,5 @@
-// Neskončna vožnja v prometu (docs/neskoncna-voznja.md, »Predelava na krožne proge«) in the game, on Bathurst: the quick entry
+// Neskončna vožnja v prometu (docs/neskoncna-voznja.md, »Predelava na krožne proge«) in the game, on Bathurst: the start as on a phone
+// (upright, in real time, from the quick entry and from the menu: after the intro the drive starts), the quick entry
 // ?proga=bathurst&nacin=neskoncno, the HUD (the clock, the score, the line with the traffic, the lap and the km; the race's clock, place and
 // lap hidden), a close pass's points and the seconds it adds, the clock's warning, the end when it is empty and its results (the top 10, the
 // record kept by the level: another level's apart), the end at a touch; in English too; the mode on Bathurst only; the phone's load at the
@@ -24,6 +25,28 @@ const results = (page, lv) => page.evaluate((lv) => {
 }, lv);
 
 try {
+  // 0. the start as on a phone (upright 360 x 800, a touch screen, the camera before the start on, as the game has it), from the quick
+  // entry and from the menu (Single race > Endless traffic > RACE), the game left to run in real time (no stepping): after the intro the
+  // drive starts, the HUD on show and the game's camera following the car. (Bathurst's world films three jets over the grid before a
+  // standing start, the HUD hidden, and only the lights end that shot; the endless drive's flying start goes from the intro straight to the
+  // race, so the camera stood on the grid while the car drove off: the user's report of 10. 11. 2026, »the intro stays, the game never starts«)
+  for (const how of ['quick', 'menu']) {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html' + (how === 'quick' ? '?proga=bathurst&nacin=neskoncno' : ''), { difficulty: 1 }, { width: 360, height: 800 }, { menu: true, touch: true, startCam: true });
+    if (how === 'menu') for (const act of ['single', 'mode:endless', 'race-single']) { await page.click(`[data-act="${act}"] >> visible=true`, { timeout: 60000 }); await page.waitForTimeout(400); }
+    // (the time driven counts from the line on: the flying start's run up to it first)
+    const at = (sec) => page.waitForFunction((sec) => { const r = window.__game.race; return !!(r && r.en && (r.en.time > sec || r.en.over)); }, sec, { timeout: 240000 });
+    const look = () => page.evaluate(() => {
+      const g = window.__game, r = g.race, P = r.player, c = Render.camera.position, vis = (id) => getComputedStyle(document.getElementById(id)).visibility;
+      return { trk: r.track.def.id, mode: r.zbMode, phase: g.phase, shot: document.getElementById('hud').classList.contains('shot'), ck: vis('h-en-ck'), spd: vis('h-spd'), c: [c.x, c.z], p: [P.x, P.z], over: r.en.over && r.en.over.why };
+    });
+    await at(1); const a = await look(); await at(2.5); const s = await look();
+    const d = (u, v) => Math.round(Math.hypot(u[0] - v[0], u[1] - v[1])); Object.assign(s, { cam: d(s.c, s.p), camMove: d(s.c, a.c), carMove: d(s.p, a.p) }); delete s.c; delete s.p;
+    T.check(`${how === 'quick' ? '?proga=bathurst&nacin=neskoncno' : 'the menu (Single race > Endless traffic > RACE)'} upright as on a phone, in real time: after the intro the drive starts (no TV shot, the HUD's clock and speed on show, the camera following the car)`,
+      s.trk === 'bathurst' && s.mode === 'endless' && s.phase === 'racing' && !s.shot && s.ck === 'visible' && s.spd === 'visible' && s.carMove > 10 && s.camMove > s.carMove / 2 && s.cam < 80 && !s.over, JSON.stringify(s));
+    T.check('no errors on the page (' + how + ', upright)', !errors.length, errors.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+
   // 1. Bathurst in Slovenian, the medium level: the drive, its HUD, two close passes, the warning, the clock empty, the results and the
   // record; then the hard level (a record of its own) ended by a touch; the mode's tracks
   {
