@@ -86,6 +86,7 @@ Kratka pravila so v `CLAUDE.md`. Tu so citati odločitev uporabnika, datumi in u
 - **Pravila enkrat na dan v en PR:** odločitev uporabnika 11. 11. 2026 ob ~00.40 (komentar 6782294421, točka b4). Če je PR s pravili za ta dan že odprt, gredo nova pravila vanj.
 
 ## Seje
+- **Med čakanjem na »ok« naprej:** odločitev uporabnika 11. 11. 2026 ob ~04.40, dobesedno: »Dokler cakas na moj ok. Zacni ze z naslednim delom nanseznamu, da ne cakas«.
 - **Največ 2 seji s kodo:** seje, ki samo čakajo na teste, se ne štejejo. Nove seje zaganja koordinacija (»VSE SEJE«) ali veriga po svojem načrtu, ko je prostor.
 - **Največ 6 odprtih tem na račun:** odločitev uporabnika 7. 11. 2026. Šteje račun, ki temo vodi (stolpec Račun v `docs/vrsta.md`, sicer dnevno stanje na tabli). Pri 6 ali več račun teme dokončuje po vrsti, dokler ne pride pod 6; osnutke zapre samo po odločitvi uporabnika. Izjema »kratek PR s pravili ali dokumenti« velja za PR, ki gre na `main` isti dan.
 - **Poraba 100 % 12 h pred iztekom:** odločitev uporabnika 9. 11. 2026: »Vsak račun vsakič porabi 100 % 12 h pred iztekom porabe.« Pas ±5 točk okoli cilja: račun dela, kot dela; več kot 5 točk nad ciljem nobene nove seje, nezačeto delo prevzame račun pod ciljem. Reset, rok, predaja, vodenje PR v 12 h luknji in zapis v dnevnem stanju (»<račun>: X % (cilj Y %)«; trenutnih odstotkov ne zapisuj v repozitorij): `docs/varcevanje.md`, »Poraba«.

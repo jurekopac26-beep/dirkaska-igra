@@ -56,6 +56,7 @@ Kratka pravila. Podrobnosti, citati odločitev uporabnika, datumi, številke kom
 
 ## Seje
 - Ena tema na sejo; večji korak je nova seja s kratkim povzetkom. Seja dela samostojno, poroča ob koncu ali ob odločitvi, ki je res uporabnikova. Seznam PR za uporabnika: ime računa in 1–3 stavki, kaj prinese v igro; ure po ljubljanskem času.
+- **Med čakanjem na »ok« naprej**: seja, ki čaka na uporabnikov »ok« (predogled, slike), napiše predajo in se ustavi; račun takoj začne naslednje delo s seznama v mejah 2 sej s kodo, 6 tem in porabe (postanek računa, npr. Rezerva 10 %, ostane).
 - Največ 2 seji s kodo hkrati na račun (čakanje na teste ne šteje); zaganja jih koordinacija ali veriga, ko je prostor. Pred zagonom preveri svoje seje (`list_sessions`) in odprte PR vseh računov; seja s kodo dobi `source_url`.
 - **Največ 6 odprtih tem na račun** (PR in osnutki; zbirna veja je ena tema): pri 6 nove teme ne začni, dokončuj in na strani Odločitve predlagaj, kaj zapreti ali združiti. Izjeme: popravek rdečega `main`, kratek PR s pravili ali dokumenti za isti dan, tema, ki jo uporabnik začne kljub opozorilu.
 - **Poraba 100 % 12 h pred iztekom**: cilj = 100 % × ure od reseta / 156; več kot 5 točk pod ciljem ena seja s kodo več (največ 2), več kot 5 točk nad ciljem nobene nove, nezačeto delo prevzame račun pod ciljem (`docs/varcevanje.md`, »Poraba«).
