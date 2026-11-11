@@ -164,12 +164,15 @@ Razdelitev na tabli #382 (komentarja 6796604526 in 6800140271): drugo polovico d
 | SOKOL R | 1322 / 658 | 1322 / 1380 | 1361 / 1736 | 0,898 / 0,881 |
 | TORNADO V8 | 1252 / 756 | 1260 / 1282 | 1313 / 1638 | 1,217 / 1,217 |
 | GOZDAR | 1374 / 548 | 1382 / 1088 | 1399 / 1444 | 1,605 / 1,605 |
+| TUR 6x6 | 1838 / 442 | 1846 / 1206 | 1932 / 1562 | 1,612 / 1,607 |
 
 - SOKOL R: ogledali sta del lupine (`K.skin`, jadro), zato je pokrov odprt in steklo `K.mirGlass` (poči kot pri `K.mirror`); rezervoar pod krovom za sedeži je odstranjen (neviden); voznik Visokih seže do 1,12 m (testi tečejo na Normalnih).
 - SOKOL R, odtis strehe (`body.crush`): začne se na sredini steklenih zadnjih vrat (x −1,33 namesto −1,5). Prej je udarec od zadaj upognil predvsem steklo in streho povprečno pogreznil le 2,0 cm (14 % meje `rlim` 0,141; test trkov, točka 10, zahteva 15 %). Zdaj jo pogrezne 0,5 / 1,4 / 2,5 cm (lahek, srednji, močan), močan udarec v nos 3,5 cm (prej 3,9). Fizika trkov ostane enaka; spremenita se samo videz in razdelitev polja strehe.
 - TORNADO V8: ogledali `K.mirror` s `crack: 1` (steklo poči), zato zunaj +4 trikotnike na ogledalo kot TIGER GT in SUPERKOMBI; najvišja v kabini ostane kletka (1,217 m), nova notranjost je pod njo; udor strehe od zadaj 0,2 / 0,6 / 1,2 cm (meja `rlim` 6,5 cm), odtis strehe ostane.
 - GOZDAR: ogledali `K.mirror` s `crack: 1` (+4 trikotnike na ogledalo kot TORNADO V8); gume s kockami ostanejo (`style: 'knob'`, brez `seg` in `segHi`); najvišja v kabini ostane kletka (1,605 m), nova notranjost, sedeža in voznik Visokih so pod njo.
 - GOZDAR, odtis strehe (`body.crush`): začne se pred zadnjim lokom kletke (x −0,3 namesto −0,61; zadnji rob strehe drži glavni lok). Prej je udarec od zadaj streho pogreznil 0,3 / 0,7 / 1,3 cm (10,5 % meje `rlim` 0,124; test trkov, točka 10, zahteva 15 %). Zdaj 0,4 / 1,1 / 2,0 cm (meja 0,121), močan udarec v nos 4,5 cm (prej 5,3). Fizika trkov ostane enaka; spremenita se samo videz in razdelitev polja strehe.
+- TUR 6x6: ogledali `K.mirror` s `crack: 1` (+4 trikotnike na ogledalo kot TORNADO V8); gume s kockami ostanejo (`style: 'knob'`, brez `seg` in `segHi`); stari naslon zadnje klopi je segal skozi zadnjo steno kabine v keson (1,534 m pri x −0,8), nova notranjost je vsa v kabini (nič za x −0,68); akumulator in filter_zraka sta zdaj narisana na svojih mestih (`mounts`); voznik Visokih seže do 1,815 m (testi tečejo na Normalnih).
+- TUR 6x6, odtis strehe (`body.crush`): začne se 38 cm pred zadnjim robom strehe (x −0,3 namesto −0,72; zadnji pas strehe drži zadnja stena kabine). Prej je udarec od zadaj streho pogreznil 0,6 / 1,3 / 2,3 cm (7 % meje `rlim` 0,317; test trkov, točka 10, zahteva 3 cm), z novo notranjostjo 0,5 / 1,5 / 2,7 cm. Zdaj 0,7 / 1,9 / 3,4 cm (meja 0,316), močan udarec v nos 13,8 cm (prej 12,2). Fizika trkov ostane enaka; spremenita se samo videz in razdelitev polja strehe.
 
 ## Predaja
 

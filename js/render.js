@@ -9077,7 +9077,7 @@ const Render = (function () {
      A hit from behind also dents the rear bumper in a V (some 10 cm in its middle on a light one, creased) with the tailgate's foot, and
      bends the spoiler down in its middle (xPush: xc.vr). The table's wheels are the core's (it decides when one comes off). A picture is
      drawn one pane a frame (a rival's: one over all of them), the player's car never waiting on a rival's */
-  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'sokol', 'tornado', 'gozdar']);   // (the cars being reworked: the table theirs first, the others later)
+  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur']);   // (the cars being reworked: the table theirs first, the others later)
   const xTab = (c) => !!(XC.glass || XC.body) && !!c && !!c.m && XT_CARS.has(c.m.id) && !!c.m.kit;
   const XT_ST = [0, 0.5, 0.7, 0.75, 1], XT_KEYS = ['W', 'R', 'DL', 'DR', 'QL', 'QR'];
   const XT_ROWS = {
@@ -9100,7 +9100,7 @@ const Render = (function () {
   })();
   // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
   // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
-  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
+  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
     const sd = w < 0 ? 'L' : 'R';
