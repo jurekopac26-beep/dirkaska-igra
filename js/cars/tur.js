@@ -44,13 +44,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       zarometi: { x: 2.955, y0: 1.12, lean: 0, zc: 0.74, yc: 1.12, s: 0.22, hosts: ['headL', 'headR'], depth: 0.04 },
       platisca: {},
       // (sklop 2 · spredaj, js/deli/spredaj.js) the kit's lips under the steel bumpers' boxes (no skirts: the steps take the sills;
-      // options 2, 3 the tail's corner lips), its flares out from the stock ones over all six wheels, the canards on the bumper's
-      // corners; the bonnet's top from the cowl to the nose's drop; the grille between the round lamps; the indicators on the nose under
-      // the lamps (the bumper's part of the face), the repeaters on the front fenders behind the wheels, the rear ones on the bumper, the
+      // options 2, 3 the tail's corner lips), its flares out from the stock ones over all six wheels (four segments round each: six
+      // flares within the room for one car with parts, +300 triangles, tests/deli.test.js), the canards on the bumper's corners; the
+      // bonnet's top from the cowl to the nose's drop; the grille between the round lamps; the indicators on the nose under the lamps
+      // (the bumper's part of the face), the repeaters on the front fenders behind the wheels, the rear ones on the bumper, the
       // mirrors' fronts; the extra lamps on the bumper's face, four on its top inside the bull bar's legs, before the grille, the pod
       // under the bull bar's top bar, the roof bar in place of the light bar (the stock one goes with it): all in the bumper's part but
       // the roof bar
-      aero: { xf: 3.02, xr: -3.11, w: 1.0, yf: 0.62, yr: 0.6, ws: 1.1, canY: 0.7, partF: 'bumperF', partR: 'bumperR' },
+      aero: { xf: 3.02, xr: -3.11, w: 1.0, yf: 0.62, yr: 0.6, ws: 1.1, canY: 0.7, partF: 'bumperF', partR: 'bumperR', flareN: 4 },
       hauba: { x0: 1.6, x1: 2.85, w: 0.85, rel: true },
       maska: { x: 2.955, y0: 1.08, lean: 0, yc: 1.08, w: 1.0, h: 0.3, comb: 1.5 },
       zmigavci: { front: { x: 2.95, y: 0.9, z: 0.74, w: 0.14, h: 0.05, part: 'bumperF' }, side: { x: 1.62, y: 1.2, z: 1.059, hosts: ['fenderL', 'fenderR'] },
@@ -84,20 +85,21 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       matice: { k: 6, r: 0.2 },
       // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet and the cab's roof (not over the open bed, not under the light
       // bar), option 7's bands on the tall sides higher up (dy), from the tailgate to the nose (sx); the decals on the doors behind the
-      // number panels, on the bed's sides over the rear flares and on the front fenders over theirs (behind the repeaters), on the
-      // bonnet and the roof; the sun strip on the windscreen's top; the fuel cap on the right bed side behind the cab, over the middle
-      // flare; the calipers
+      // number panels, on the bed's sides over the rear flares (over their middle: +300 triangles) and on the front fenders over theirs
+      // (behind the repeaters), on the bonnet and the roof; the sun strip on the windscreen's top; the fuel cap on the right bed side
+      // behind the cab, over the middle flare; the calipers
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.3, 0.48], x: [[1.6, 2.86], [-0.62, 0.52]], dy: 0.52, sx: [-2.95, 2.85] },
-      nalepke: { side: [[0.14, 0.52], [-2.9, -1.7], [1.75, 2.8]], y: [1.12, 1.32], hood: { x: [1.7, 2.6], z: [0.25, 0.7] }, roof: { x: [-0.45, 0.45] } },
+      nalepke: { side: [[0.14, 0.52], [-2.6, -1.8], [1.75, 2.8]], y: [1.12, 1.32], hood: { x: [1.7, 2.6], z: [0.25, 0.7] }, roof: { x: [-0.45, 0.45] } },
       soncni_pas: { x: [0.78, 0.92] }, zamasek: { x: -1.25, y: 1.24, z: 1.05, r: 0.045 },
       celjusti: { r: [0.119, 0.223], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) the V8's bay under the long bonnet (open to the front wheels under the tubs' walls,
       // from 0.84 up): the filter against the block's left over the floor, the turbo against its right (the twins one each side), the
       // battery on the floor ahead of the right front arch, the control box on the block's top beside the intake; the struts and bars at
-      // the six wheels (the struts against the tubs' walls, the coils' feet at the walls' foot: the front tubs' higher)
+      // the six wheels (the struts against the tubs' walls, the coils' feet at the walls' foot: the front tubs' higher; the dampers'
+      // reservoirs at the front and rear four only: within the room)
       filter_zraka: { x: 1.85, y: 0.845, z: -0.48 }, akumulator: { x: 2.6, y: 0.755, z: 0.52 }, turbo: { x: 2.3, y: 0.84, z: 0.42, twin: [-0.84, 0], ic: [2.36, 0.845, 0.42] }, cip: { x: 1.9, y: 1.196, z: 0.25 },
-      vzmeti: { in: 0.21, top: 1.04, seat: [0.83, 0.72] }, amortizerji: { in: 0.205, top: 1.06 }, stabilizatorji: { in: 0.18, floor: 0.72 }, dim_gum: {},
+      vzmeti: { in: 0.21, top: 1.04, seat: [0.83, 0.72] }, amortizerji: { in: 0.205, top: 1.06, mid: false }, stabilizatorji: { in: 0.18, floor: 0.72 }, dim_gum: {},
     },
     // the look (KIT API v1, render.js; look units = metres: the centre of mass at x 0, the front axle at 2.00, the rear-most at -2.30, the
     // middle one at -0.95): one loft from the tailgate to the nose: the bed (its top open), the cab's back wall with its window, the roof,
