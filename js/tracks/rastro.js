@@ -32,8 +32,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: [0, 0], finish: [-631.05,-159.18], cps: [[-272.33,152.08],[-491.96,199.9],[-537.62,367.02],[-652.98,663.64]],
     runoff: 0.55, inner: 2.6, side: 2.2, noCurbs: true, noGravel: true, offSurface: 'grass', gradeForce: true, elevSmooth: 10,
     elev: RASTRO_H.map((h, i) => [i / (RASTRO_H.length - 1), h / 10]),
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[177,185,199],"wet":{"cs":[212,222,239]}},
+    // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac or the snow, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    medals: {"cs":[177,185,199],"wet":{"cs":[212,222,239]},"winter":{"cs":[206,216,232],"wet":{"cs":[252,265,285]}}},
     // the bridge over the stream below bend 9 (OpenStreetMap: bridge): [from, to] in metres after the start line
     bridges: [[2327.3,2335.3]],
     // the 17 numbered bends, from the bottom: [metres after the start line, altitude, 1 right / -1 left] (the hairpins: 1, 2, 4, 6, 8, 10, 12-16)

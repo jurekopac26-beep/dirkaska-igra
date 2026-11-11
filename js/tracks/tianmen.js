@@ -36,8 +36,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     start: [0, 0], finish: [-34.3,830.3], cps: [[219.9,408.7],[-54.5,484.1],[5.0,659.5],[-240.4,540.8]],
     runoff: 0.55, inner: 2.0, side: 2.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 8,
     elev: TIANMEN_H.map((h, i) => [i / (TIANMEN_H.length - 1), h / 10]),
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[204,214,230],"wet":{"cs":[242,254,273]}},
+    // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac or the snow, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    medals: {"cs":[204,214,230],"wet":{"cs":[242,254,273]},"winter":{"cs":[235,247,266],"wet":{"cs":[292,306,329]}}},
     // the loop's bridge: the upper leg over the lower one at bend 90 ([from, to] metres after the start line; Track finds the crossing itself)
     loopBridge: [3927.1,3975.1],
     // the numbered bends (counted from the foot of the road, as its name has it): [metres after the start line, altitude, 1 right / -1 left, its number]
