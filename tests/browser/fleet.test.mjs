@@ -198,7 +198,7 @@ try {
   // ---- 4. in a race on Bakreni gozd: each vehicle as the player and as a rival ----
   await page.evaluate((id) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === id); }, kits.length ? kits[0].id : 'rally');
   await startTrack(page, 'gozd');
-  const R4 = [], XT_MIN = ['kolibri', 'tiger', 'medved', 'superkombi'], bodyKey = (id) => XT_MIN.includes(id) ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's and the pilot cars' bodies: the side scrapes' own program, render.js XT_MIN, XT_SCR)
+  const R4 = [], XT_MIN = ['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris'], bodyKey = (id) => XT_MIN.includes(id) ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's and the pilot cars' bodies: the side scrapes' own program, render.js XT_MIN, XT_SCR)
   for (const m of kits) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
