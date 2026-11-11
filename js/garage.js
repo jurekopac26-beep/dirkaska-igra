@@ -514,6 +514,7 @@
       case 'go': { const go = $('g-go'); go.classList.add('done'); go.textContent = tr('Izbran ✓'); toast(tr('{0} je izbran za naslednjo dirko.', M().name)); setTimeout(() => head(), 1600); break; }
       case 'back': location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(S.car) : ''); break;   // (the game's car screen, on the car shown)
       case 'track': if (!C().own && S.rent !== S.car) break; location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
+      case 'skip': G.skip(); break;
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
@@ -568,7 +569,11 @@
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
     G.onTap = onTap;
     G.onHud = (k, d) => {
-      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); return; }
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); steps(null); return; }
+      if (k === 'fit') { if (d.step === 'down' && stepsAt) stepsAt.cnt = '';   // (the wheels' count: theirs only)
+        if (STEP_L[d.step]) steps(STEP_L[d.step]); return; }
+      if (k === 'paint') { steps(STEP_L['paint.' + d.step]); return; }
+      if (k === 'step') { if (stepsAt) { stepsAt.cnt = d.i + '/' + d.n; steps(); } return; }
       if (k === 'power') { const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
         chip(tr('MOČ'), Math.round(a) + ' kW → <em>' + Math.round(b) + ' kW</em>', 'power'); }
       else if (k === 'done') { if (d.kind === 'motor') { lastFit = null; return; }
@@ -577,6 +582,24 @@
         const n = { clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' }[d.kind];
         chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓')); lastFit = null; }
     };
+  }
+  // a show's steps under the picture (garaza-animacije, korak 3): each step as it starts, the done ones as dots (the last 8), a wheel's
+  // count; PRESKOČI runs the show to its end at once (Garage3D.skip: the same end, only sooner). Not shown before the first step
+  const STEP_L = { 'cart.in': 'Voziček pelje del', grab: 'Roka prime del', 'old.out': 'Stari del ven', swap: 'Novi del na avto', put: 'Stari del odložen',
+    off: 'Stara guma dol', wrench: 'Objemka', snap: 'Zaskok', screws: 'Vijaki', hoses: 'Cevi', ring: 'Obroč', lights: 'Preizkus luči',
+    'bonnet.up': 'Pokrov gor', 'bonnet.down': 'Pokrov dol', revs: 'Motor zaturira', down: 'Avto dol',
+    'paint.chamber': 'Komora', 'paint.spray': 'Brizganje', 'paint.dry': 'Sušenje' };
+  let stepsAt = null;
+  function steps(lab) {
+    const el = $('g-steps');
+    if (lab === null) { stepsAt = null; el.classList.remove('on'); return; }
+    if (!$('g-stage').classList.contains('busy')) return;   // (a plan made without a show: no bar)
+    if (lab) { if (!stepsAt) stepsAt = { n: 0, cnt: '' }; if (lab !== stepsAt.lab) { stepsAt.n++; stepsAt.lab = lab; } }
+    if (!stepsAt) return;
+    const n = Math.min(stepsAt.n, 8);
+    el.querySelector('.d').innerHTML = '<i></i>'.repeat(n - 1) + '<i class="on"></i>';
+    el.querySelector('.l').innerHTML = esc(tr(stepsAt.lab)) + (stepsAt.cnt ? '<small>' + stepsAt.cnt + '</small>' : '');
+    el.classList.add('on');
   }
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); $('g-demo').classList.toggle('game', S.mode === 'game'); }   // (the real profile: no reset)
   // the picture over the whole page, raised a little (its foot under the buttons): the regal's top under the buttons at the top, the plan

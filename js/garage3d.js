@@ -5526,7 +5526,7 @@ const Garage3D = (function () {
      The camera: the regal, the far wheel as its part goes on, then the near side. FIT.log: the steps, for the tests */
   const FIT = { log: [], lift: 0.55, n: 0, pace: 0.74 };   // (pace: the arms' moves' times at the wheels, times this)
   const RIMK = { std: 0.64, deep: 0.68, wire: 0.72, retro: 0.6, knob: 0.5, truck: 0.62, monster: 0.46, slick: 0.68, kart: 0.56 };   // (render.js' kitWheelGeo: the rim's edge, x the wheel's radius)
-  const fitLog = (step, x) => { FIT.log.push(Object.assign({ step, n: FIT.n, t: +time.toFixed(2) }, x || {})); };
+  const fitLog = (step, x) => { FIT.log.push(Object.assign({ step, n: FIT.n, t: +time.toFixed(2) }, x || {})); hud('fit', { step }); };   // (the page's bar of steps: each step as it starts)
   const _h1 = new V3(1, 1, 1);
   // (a regal's part taken: its vertices folded into its middle (and back from their copy); a copy of it in its own frame (pc.M: its
   // middle (a rim's face), its axle as z), drawn with the regal's own materials)
@@ -7018,10 +7018,11 @@ const Garage3D = (function () {
   function frame(dt, noDraw) {
     if (!ready) return;
     dt = Math.min(dt, 0.05); time += dt; THB.n++;
-    const dts = dt * showRate(); runTasks(dts);   // (more shows waiting: this one hurries)
+    const rate = showRate(), ns = speed > 3 ? Math.ceil(speed / 3) : 1, dts = dt * rate / ns;   // (more shows waiting: this one hurries; PRESKOČI: in steps no longer than a tap's)
+    for (let k = 0; k < ns; k++) runTasks(dts);
     if (cur) idleSmoke(cur, dt);
     for (const cv of liveCars()) poseCar(cv, dt);
-    stepFixtures(dt, dts); svcFx(dt, dts);
+    for (let k = 0; k < ns; k++) { stepFixtures(dt / ns, dts); svcFx(dt / ns, dts); }
     engFrame(dt);
     puffs.update(dt); sparks.update(dt); stepFlames(dt);
     motes.material.uniforms.uT.value = time;
@@ -7072,6 +7073,7 @@ const Garage3D = (function () {
     init, resize, frame, show, swap, upgrade, service, paint, fit(el, spec, o) { return play(function* () { yield* fitWheels(el, spec, o || {}); }); },
     fitPart(el, spec, o) { return play(function* () { yield* fitPart(el, spec, o || {}); }); }, thumb, view: setView, sfx: (k) => { if (SFX[k]) SFX[k](); },
     set onHud(f) { hud = f || (() => {}); }, set onTap(f) { onTap = f || (() => {}); },
+    skip() { if (busy) speed = 14; },   // (PRESKOČI: the show runs to its end at once, the same end)
     // (the page: the picture raised by px (lying down: free, the part of its height free between the page's buttons); what a tap hits;
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
     // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
