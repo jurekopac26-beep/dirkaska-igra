@@ -883,12 +883,18 @@ const Napake = (function () {
   const PZ_DB = 'rra-posnetki', PZ_S = 'posnetki', PZ_MAX = 10;
   const PZ = new WeakMap();   // (a recording of the game kept: { id, date, fin, blob, nF (the samples in blob), nQ (the samples of the last write asked), o (its record as last written) })
   const PZ_ASK = new WeakMap();   // (the question at leaving answered for a recording: 'da' / 'ne')
-  let pzDbP = null, pzQ = Promise.resolve(), pzWait = null, pzT = 0;   // (pzQ: the writes, one after another; pzWait: a recording of the list being opened)
-  function pzDb() {
-    if (!pzDbP) pzDbP = new Promise((res, rej) => { try { const r = indexedDB.open(PZ_DB, 1); r.onupgradeneeded = () => r.result.createObjectStore(PZ_S, { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } });
-    pzDbP.catch(() => { pzDbP = null; }); return pzDbP;
+  let pzQ = Promise.resolve(), pzWait = null, pzT = 0;   // (pzQ: the writes, one after another; pzWait: a recording of the list being opened)
+  // a store of records by their id in IndexedDB, opened at its first use: (mode, fn) runs fn(store) in one transaction, its request's result
+  // once done (Zadnji posnetki; js/najboljse.js: Najboljše vožnje)
+  function shramba(ime, st) {
+    let p = null;
+    const db = () => {
+      if (!p) { p = new Promise((res, rej) => { try { const r = indexedDB.open(ime, 1); r.onupgradeneeded = () => r.result.createObjectStore(st, { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }); p.catch(() => { p = null; }); }
+      return p;
+    };
+    return (mode, fn) => db().then(d => new Promise((res, rej) => { const t = d.transaction(st, mode), out = fn(t.objectStore(st)); t.oncomplete = () => res(out && 'result' in out ? out.result : undefined); t.onerror = t.onabort = () => rej(t.error || new Error('shranjevanje ni uspelo')); }));
   }
-  const pzDo = (mode, fn) => pzDb().then(d => new Promise((res, rej) => { const t = d.transaction(PZ_S, mode), out = fn(t.objectStore(PZ_S)); t.oncomplete = () => res(out && 'result' in out ? out.result : undefined); t.onerror = t.onabort = () => rej(t.error || new Error('shranjevanje ni uspelo')); }));
+  const pzDo = shramba(PZ_DB, PZ_S);
   const pzAll = () => pzDo('readonly', s => s.getAll()).then(l => (l || []).sort((a, b) => b.date - a.date));
   const pzGet = (id) => pzDo('readonly', s => s.get(id));
   const pzDel = (id) => pzDo('readwrite', s => s.delete(id));
@@ -1356,7 +1362,10 @@ const Napake = (function () {
     // header; cas: a time as the lists show it)
     cilj, pusti, izhod, padKey, zadnji, pz: { vsi: () => pzAll(), odpri: pzOdpri, put: pzPut, MAX: PZ_MAX, cakaj: () => pzQ, igralec: igralecH, cas },
     // the recording as a file (the tests, tools/posnetek.mjs): write, read, open; pojdi: the replay to t (k the car followed, cam), slika: its picture
-    rrp: { pisi: rrpPisi, beri: rrpBeri, odpri: rrpOdpri, shrani: rrpShrani, pack: rrpPack, unpack: rrpUnpack,
+    // (js/najboljse.js, Najboljše vožnje: shramba, the store; packKos, the packing in slices; gzip (back: unpacked); pocakaj, a slice's wait;
+    // prenesi, a file to the downloads; canShare, coarse, the share sheet; stamp, a date as in the files' names)
+    shramba, pocakaj, prenesi, canShare, coarse,
+    rrp: { pisi: rrpPisi, beri: rrpBeri, odpri: rrpOdpri, shrani: rrpShrani, pack: rrpPack, unpack: rrpUnpack, packKos: rrpPackKos, gzip, stamp: stampOf,
       pojdi: (t, k, cam) => { if (!G || !G.replay()) return false; G.view(k == null ? -1 : k, cam); G.seek(t); return true; },
       kje: (t, k) => (G ? G.where(t, k) : null),
       slika: (max) => { const c = G && G.replay() && G.shot(max || 1280); return c ? c.toDataURL('image/png') : null; } },

@@ -1254,6 +1254,8 @@ p.pk-medl { margin: -2px 0 6px; font: 700 12px/1.3 var(--f-ui); opacity: .9; }
 .res-prvi { border-color: rgba(255,198,41,.45); background: rgba(255,198,41,.08); }
 /* Nastavitve: Samodejne kopije napredka, a copy a row (when, why, the races, the money) with its Obnovi */
 .kop-row .rlbl { flex: 1 1 200px; min-width: 0; }
+/* Nastavitve: Najboljše vožnje, a run a row (its place, time, car, date); a track's Deli 10 najboljših under its runs */
+.nv-row .rlbl { flex: 1 1 200px; min-width: 0; }
 /* Pikes Peak: the course flyover before the start (TV captions at the famous places; the touch controls out of the picture while it runs) */
 #pk-fly { display: none; position: absolute; left: calc(14px + var(--sl)); top: calc(14px + var(--st)); max-width: calc(100% - 90px); padding: 8px 14px 9px; border-left: 4px solid var(--lcd); border-radius: 0 8px 8px 0; background: linear-gradient(90deg, rgba(10, 14, 22, .82), rgba(10, 14, 22, .55)); color: var(--chalk); pointer-events: none; opacity: 0; }
 #pk-fly.show { display: block; }

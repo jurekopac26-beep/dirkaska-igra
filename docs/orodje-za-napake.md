@@ -101,6 +101,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - pri vsaki zbirki in pri vsakem posnetku (Zadnji posnetki) sta ime avta igralca in čas vožnje, zeleno, če je prišel do cilja (`KOLIBRI · 1:23.456`), sicer »ni do cilja« (sklop 21); posnetki do cilja imajo zelen rob, v Zadnjih posnetkih jih pokaže gumb »Samo do cilja«;
   - slika v obeh seznamih in v zapisu se z dotikom poveča čez celo okno (zapre jo dotik, Esc ali Zapri); dotik besedila odpre zapis oziroma posnetek;
   - Zgodovina napak je samo slike napak z besedilom; **posnetki dirk za prenos (.rrp) so v Zadnjih posnetkih** (povezava v Nastavitvah orodja in v Zgodovini napak); zapis, katerega posnetek je še med njimi, ima gumba Odpri posnetek in Shrani .rrp.
+  - Najboljše vožnje niso del orodja (Nastavitve igre, `docs/najboljse-voznje.md`): posnetke veljavnih voženj na čas hranijo v svoji bazi `rra-najboljse`, z isto shrambo in zapisom posnetka (`Napake.shramba`, `Napake.rrp`).
 - **Nastavitve → Orodje za napake:**
   - Vklop;
   - Ob koncu (Vprašaj / Deli / Shrani);
