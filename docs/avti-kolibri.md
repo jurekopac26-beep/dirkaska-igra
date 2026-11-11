@@ -14,7 +14,7 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 - Vsi imajo sklop 1 (`krilo`, `zarometi`, `platisca`, razen kjer avto dela nima) in razbijanje luči, tablice in brisalcev (oktober 2026, `docs/deli.md`, »Drugi avti po kategorijah«).
 - **Manjka vsem 32:** 35 elementov sklopov 2 in 3 (mesta, ovoji, pregled). Razbijanje (luči v ohišjih, poskus sklopa 1) sta JASTREB in PANTER dobila 6. 11., TITAN 8. 11. v #322.
 - Element, ki na avtu ne pride v poštev, v `mounts` ni (garaža ga ne ponudi). Merila: brez strehe (odprti avti, BLISK) ni `streha`, `stresna_zajemalka`, `zaluzije`; brez stekla ni `zatemnitev`, `soncni_pas`, `zaluzije`; brez vrat ni `vrata`; brez serijskega ogledala ni `ogledala`; brez luči (BLISK, BIZON spredaj, STRELICA, MRAVLJA) ni `zarometi`, `zadnje_luci`, `zmigavci`; brez pokrova prtljažnika (pickup, buggy, MIŠKA s priprtim pokrovom motorja zadaj) ni `prtljaznik`; odprta kolesa ni `lovilci_blata` in pragov `aero`. Skriti deli so tam, kjer je motor (zadaj: MIŠKA, SKAKAČ; v sredini: PEŠČENJAK, BIZON …).
-- **Ne prenašamo:** KOLIBRIJEVE notranjosti (3A; dokler je avto cel, se ne riše), podrobnosti Visokih (`look.hi`; telefon riše Normalne), fizike (`roof0`, `knockK`, `spinK`) in KOLIBRIJEVEGA serijskega videza (strešni spojler z zavorno lučjo, bela črta): vsak avto ostane svoj.
+- **Ne prenašamo:** fizike (`roof0`, `knockK`, `spinK`) in KOLIBRIJEVEGA serijskega videza (strešni spojler z zavorno lučjo, bela črta): vsak avto ostane svoj. KOLIBRIJEVE notranjosti (3A; dokler je avto cel, se ne riše), podrobnosti Visokih (`look.hi`; telefon riše Normalne) in KOLIBRIJEVEGA videza razbijanja (`XT_MIN`, `XT_TAB` v `js/render.js`) do 11. 11. 2026 nismo prenašali; po naročilu uporabnika 11. 11. 2026 (prek Mateja) jih pilot prenese na tri avte (razdelek »Pilot« spodaj), ostale avte dela tema 30 avtov.
 
 ## Pravila
 
@@ -69,6 +69,77 @@ Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 3
 - Delajo se v #480 (biketraveler), skupaj s starejšimi avti (manjkata FORMULA ORKAN in TAIFUN LM) in #626 (rezervno kolo TUR in VRAN, partyslo): en PR, en krog testov, ~21 h dela, na `main` ~17. 11., po garaži in pred Trki + Poškodbe.
 - partyslo avtov iz #460 ne spreminja, dokler je #480 odprt; po združitvi #480 zapre #626.
 
+## Pilot: notranjost, Visoki in videz razbijanja na treh avtih (11. 11. 2026)
+
+Naročilo uporabnika 11. 11. 2026 ob ~02.45 (prek Mateja): »naredi slike kako bodo avti zgledali potem ko bodo posodobljeni«; ob ~02.40 je temo »30 avtov na raven KOLIBRIJA« dal med prioritetne. Pilot na **TIGER GT**, **MEDVED 4x4** in **SUPERKOMBI** prenese tri stvari, ki jih doslej nismo prenašali (»Kaj drugim avtom manjka«): KOLIBRIJEVO notranjost, podrobnosti Visokih in KOLIBRIJEV videz razbijanja. Koda je na veji `avti-kolibri/pilot` (brez pull requesta, ne gre na `main`: prevzame jo tema 30 avtov), slike prej/potem na veji `slike/avti-kolibri`. Vožnja in fizika trkov sta nespremenjeni.
+
+### Kaj je narejeno
+
+- **Gradniki kabine `K.cab`** (`kitCab` v `js/render.js`, na voljo v vsakem `build`; vse v notranjem bloku, ki se riše šele, ko avto ni več cel): `C.dash` (armaturna plošča z nadstreškom nad merilniki; `style` `road`, `race`, `none`), `C.steer` (volan na drogu z naperami), `C.seat` (sedež z naslonom, vzglavnikom in pasom; `shell` školjka, `belt` `road` ali `harness`), `C.bench` (zadnja klop z vzglavniki), `C.console` (sredinska konzola s prestavno ročico, `seq` sekvenčna, in ročno zavoro), `C.pedals`, `C.door` (obloga vrat z vložkom, zvočnikom, ročico ali zanko), `C.nose` in `C.tail` (hladilnik, prečnik in nosilca pod odbijačem), `C.face` in barve `C.PL`, `C.PL2`, `C.PL3`, `C.BLK`, `C.ST`. Za Visoke: `C.badge` (generičen kromiran šesterokotnik s puščico, brez znamke, kot na KOLIBRIJU) in `C.plate` (okvir tablice s štirimi temnimi polji, brez napisa).
+- **Notranjost** (blok `{ const C = K.cab … }` v `build` vsakega avta, namesto prejšnjih škatel): tla, požarna stena, armatura, volan, sedeži, konzola, pedali, obloge vrat, motor z okolico (nosilci vzmeti, akumulator, filter, posodice), struktura nosu in repa. TIGER GT: dirkalna kabina s kletko; MEDVED 4x4: usnjeni sedeži, klop, prtljažni prostor z zabojem; SUPERKOMBI: školjki s pasovi, gasilni aparat, V10 v okvirju za pregrado. Nič v kabini ni višje od prejšnjih naslonov in kletke (polje strehe se ob trku ustavi nad njimi, kot prej).
+- **Proračun notranjosti:** `look.budget: { inner: 1400 }`, `look.budgetHi: { inner: 1750 }` (kot KOLIBRI; privzeto 800 / 1200). Zunanji proračun ostane 1400 (Visoki 2400).
+- **Visoki** (`look.hi: true`, blok `if (K.hi) { … }`): generična značka spredaj in zadaj, okvir tablice (MEDVED), reže in zatiči pokrova, reže vrat, ročaji, celice žarometov in polja zadnjih luči, puščice dvigal in vlečnih kavljev, voznik za volanom (`K.driver`, notranji blok: vidi se šele skozi razbito steklo ali odprta vrata) in po avtu: TIGER GT identifikacijske lučke na stebričku; MEDVED 4x4 šobe za pranje, gumijaste zaponke, vlečna kljuka, kavelj vitla, antena, trakovi čez deske; SUPERKOMBI tri pozicijske lučke nad vetrobranom, zastavica krila, mreža v voznikovem oknu, ročaj drsnih vrat. Podrobnost na mestu dela iz garaže se riše samo na serijskem delu (`K.fitted.<id>`).
+- **Gume:** `wheels.seg: 32, segHi: 64` na TIGRU GT in SUPERKOMBIJU, kot jih imajo KOLIBRI, KOZOROG TC in LEV R: igralčev avto in avto v salonu imata okroglo gumo (32 odsekov namesto 16, na Visokih 64) z barvno črto zmesi na rami namesto širokega pasu na boku. To je edina sprememba celega avta pri Normalnih (tudi na telefonu, samo igralčev avto); MEDVED 4x4 (`knob`) ostane, kot je. Če naj cel avto na telefonu ostane do trikotnika enak, se `seg: 32` izpusti (ostane `segHi: 64`).
+- **Razbijanje:** vsi trije so v `XT_CARS` (tabela »Razbijanje · nov način«: stekla po moči in mestu udarca, luči, deli; MEDVED 4x4 je bil v njej že prej) in v `XT_MIN` (KOLIBRIJEVA dodatka tudi pri privzetih nastavitvah: praske ob boku, program `dirtyCarCgS`, in polje strehe `xtRoof`: streha se vda z vsakim udarcem, štartna številka na zmečkani strehi izgine); ogledala imajo `crack: 1` (steklo se razbije; +8 trikotnikov zunaj na TIGRU GT in SUPERKOMBIJU, MEDVED jih je že imel). Pod odtrganim pokrovom se vidi motor avta (sivega nadomestnega motorja za avte iz `XT_CARS` ni).
+
+### Števila trikotnikov (zunaj / znotraj)
+
+| Avto | Normalni prej | Normalni potem | Visoki potem |
+|---|---|---|---|
+| TIGER GT | 1388 / 720 | 1396 / 1298 | 1573 / 1654 |
+| MEDVED 4x4 | 1348 / 582 | 1348 / 1388 | 1648 / 1744 |
+| SUPERKOMBI | 1334 / 698 | 1342 / 1386 | 1536 / 1742 |
+| KOLIBRI (vzor) | 1392 / 1372 | enako | 1546 / 1728 |
+
+Zunanja lupina Normalnih je trikotnik za trikotnikom enaka kot na `main`, razen stekel ogledal (TIGER GT, SUPERKOMBI; kolesa niso v tem štetju). Notranji blok se riše šele, ko avto ni več cel, zato cel avto telefona ne obremeni več kot prej. Meritev na telefonu (Spa, Belgija; nastavitve kot v `tools/obremenitev.mjs`: 844 × 390, NIZKA, sence; en okvir kamere za avtom 900 m po štartu, klici risanja / tisoč oglišč): cel igralčev avto TIGER GT 99 / 220,0 → 99 / 220,8, MEDVED 4x4 99 / 219,6 → enako, SUPERKOMBI 99 / 220,3 → 99 / 221,1 (razlika so okrogle gume in stekla ogledal); po treh udarcih s slik (65 % škode, privzete nastavitve) TIGER GT 103 / 222,4 → 103 / 224,9, MEDVED 4x4 104 / 221,9 → 103 / 224,3, SUPERKOMBI 103 / 222,7 → 102 / 225,5. Razbit avto torej doda 2,4–2,9 tisoč oglišč (okoli 1 % okvira) in nobenega klica risanja; meje Spa v `tests/golden/perf.json` (`maxCalls` 222, `maxKverts` 573) so daleč. `perf.test.mjs` vozi privzeti avto in ni bil pognan: trije avti so v njem samo tekmeci (njihova kolesa in lupina ostanejo, razen 8 trikotnikov ogledal).
+
+### Kaj so pokazali preizkusi razbijanja
+
+- **Tabela** (`tests/browser/crash.test.mjs`, točka 10; seznam razširjen na TIGER GT in SUPERKOMBI): TIGER GT in MEDVED 4x4 vseh 5 preverjanj. **SUPERKOMBI:** sprednji odbijač nosi podtlak (aero avto brez ločenega dela `splitter`; `bumperF.df` 0,3 v `expandParts`), zato ga jedro ne zadrži do 70 % (`maskHeld` v `js/core.js`) in po treh udarcih v nos odpade, kot na `main`. To je fizika trkov (tema Trki), zato pilot tega ne spreminja; test za tak avto preverja samo pokrov. Rešitev kot na TIGRU GT in KOZOROGU TC: podtlak na ločen del `splitter` (`mounts.aero.partF`), odbijač `df: 0`.
+- **KOLIBRIJEVA pravila** (`tests/browser/kolibri.test.mjs`, pognan na vsakem avtu posebej, ni v repozitoriju): SUPERKOMBI 20 od 20. MEDVED 4x4: 19 od 20, pade samo prag »streha se vda z vsakimi 10 % škode« pri novem načinu (streha se vda enakomerno do 9 cm pri 90 %, prvi korak je manjši od 3 mm). TIGER GT: 17 od 20, vsi trije padci so KOLIBRIJEVI pragovi za streho brez kletke (pri privzetih nastavitvah 5,1 cm pri 90 % namesto 8 cm; stranski poteg 5–6 mm namesto 1 cm): kletka streho drži. Pragovi so umerjeni na KOLIBRIJA; za 30 avtov jih je treba vezati na mejo strehe (`rlim`), ne na centimetre.
+- Kontrolni avto v `kolibri.test.mjs` (avto iz tabele brez KOLIBRIJEVIH dodatkov) je zdaj KOZOROG TC, ker je MEDVED 4x4 v `XT_MIN`; `tests/browser/fleet.test.mjs` pričakuje program `dirtyCarCgS` na vseh avtih iz `XT_MIN`. Točka 11 istega testa (polje strehe) ima zdaj na seznamu tudi TIGER GT in SUPERKOMBI; za avte s KOLIBRIJEVO streho (`XTM` v testu, enako kot `XT_MIN`) veljata KOLIBRIJEVI merili: proračun strehe se meri pri zadnjem udarcu pod 90 % škode (ne po šestih udarcih), ko je avto uničen, pa je streha na meji in se ne poglablja več. Prej sta MEDVEDU 4x4 padli prav ti dve preverjanji (streha gre po novem s škodo do meje: 90 % globine pri 100 % škode), zdaj točko 11 prestanejo KOLIBRI in vsi trije (54 od 54), tudi »streha nikoli skozi sedeže, voznika in kletko« z novimi kabinami. Štartna številka na zmečkani strehi razbitine izgine na vseh avtih iz `XTM`. Pri SUPERKOMBIJU sonda testa pod streho ne najde nobene točke v napoto (`clear` je `null`: cevi kletke imajo točke samo na koncih), zato je to preverjanje zanj prazno; na sliki razbitine (100 %) streha leži na kletki.
+- **Odtis strehe** (`tests/browser/fleet.test.mjs`, »a crushed roof«): pri privzetih nastavitvah streho treh avtov zdaj vodi KOLIBRIJEVO polje strehe, ki ob straneh zajame tudi, kar gleda do 35 cm čez odtis (`body.crush`): MEDVEDOVO dihalko ob desnem stebričku (28 točk, do 13 cm navzdol s streho) in vrh TIGROVIH zadnjih bokov z vogaloma vrat (54 točk, do 3 cm). Test za avte s poljem strehe zato dovoli stranski pas polja (35 cm namesto 10 cm); na slikah je videti prav (dihalka ostane cela ob stebričku).
+
+### Slike in orodje
+
+- Veja `slike/avti-kolibri` (`README.md` s seznamom, slike v `pilot/`): za vsak avto Visoki v salonu (cel avto in podrobnosti od blizu), notranjost, avto po trku na Spa, Belgija (telefon pokonci s kamero za avtom: kot ga kaže telefon in isti pogled skozi dolg objektiv; računalnik z Visokimi v foto načinu, z novim načinom in s privzetimi nastavitvami), nepoškodovan avto na telefonu in KOLIBRI kot vzor.
+- `tools/avti-kolibri/slike.mjs` (scenariji v `scenariji.json`) nariše eno različico igre, `tools/avti-kolibri/sestavi.py` sestavi pare ZDAJ | POTEM (JPEG do ~300 KB). Navodilo je na vrhu obeh datotek.
+- Na pokončnem telefonu je avto s kamere za avtom širok okoli 25 pik (kamera je ~64 m za avtom): podrobnosti Visokih telefon ne riše, notranjost in razbita stekla pa so na tej razdalji komaj vidni.
+
+### Čas po delih (ena seja, ura vsebnika)
+
+| Avto | Notranjost | Visoki | Razbijanje | Skupaj |
+|---|---|---|---|---|
+| TIGER GT (prvi) | 10 min, skupaj z gradniki `K.cab` | 3,5 min | 9,5 min, skupaj z `XT_CARS` in `XT_MIN` | 23 min |
+| MEDVED 4x4 | 7,5 min | 2,5 min | 4,5 min | 14 min |
+| SUPERKOMBI | ~5,5 min | 5,5 min | 6 min | ~17 min |
+
+- **Priprava** (pravila, vzor KOLIBRI, kopija `main` za levo stran slik): 7,5 min.
+- **Izdelava treh avtov:** 50 min po uri (02.49–03.39 po ljubljanskem času); vsota po avtih je 54 min, ker se je načrtovanje SUPERKOMBIJEVE notranjosti prekrivalo z MEDVEDOVIM razbijanjem (zato »~«).
+- **Slike, testi, popravki po testih in opis:** 1 h 50 min (03.39–05.30): orodje za slike in 18 listov (44 pogledov na strani POTEM, 40 na strani ZDAJ), meritev obremenitve, testi avtov in trije popravki po njih (MEDVEDOVA požarna stena za pregled delov iz garaže; merili KOLIBRIJEVE strehe v testu trkov; stranski pas polja strehe v testu flote), ta opis. Večji del tega časa je čakanje na brskalniške teste: test trkov ~26 min na krog (dvakrat), test flote ~100 s na avto, pregled delov 2–3 min na avto.
+- Časi so po uri vsebnika, ena seja brez premora.
+
+Za oceno 30 avtov: izdelava je 15–25 min seje na avto, od tega notranjost približno polovica; prvi avto je trajal dlje zaradi skupnih gradnikov in seznamov, ki so zdaj narejeni. Preverjanje je bilo v pilotu daljše od izdelave. Pri vsakem avtu se ponovi pregled delov iz garaže, brskalniški test flote, točki 10 in 11 testa trkov in pogled na slike; enkratno je bilo orodje za slike in prilagoditev testov. Avto, ki ga še ni v tabeli razbijanja (`XT_CARS`), potrebuje še `crack: 1` na ogledalih in preverjanje tabele; avto z aero odbijačem ali dihalko ob stebričku ima posebnosti, opisane zgoraj.
+
+### Preverjeno
+
+Lokalno na veji `avti-kolibri/pilot` (11. 11. 2026). `npm run test:related` bi zaradi spremembe v `js/render.js` izbral celoten nabor (134 testov), zato so pognani testi avtov:
+
+- **Node, vse zeleno:** `tests/kit.test.js`, `tests/fleet.test.js`, `tests/deli.test.js` (27 od 27), `tests/deli-barve.test.js` (14 od 14), `tests/deli-pregled.test.js` za `tiger`, `medved` in `superkombi` (15 od 15 vsak), `tests/kolibri-tyres.test.js`, `tests/rezervna-kolesa.test.js`, `tests/stamp.test.js`, `tests/testne-proge.test.js`, `node tools/stamp.js --check`.
+- **Brskalniški, vse zeleno:** `crash.test.mjs` (220 od 220), `kolibri.test.mjs` (20 od 20), `fleet.test.mjs` z `FLEET_ONLY=tiger,medved,superkombi,kolibri` (41 od 41), `cars-ui.test.mjs` (45 od 45), `garage.test.mjs` (80 od 80), `kolibri-hud.test.mjs` (43 od 43), `rezervna-kolesa.test.mjs` (21 od 21).
+- **Odtis vseh 56 vozil** (`tools/deli-odtis.js`, `main` proti veji): 53 vozil ter Visoki KOLIBRIJA, KOZOROGA TC in LEVA R so trikotnik za trikotnikom enaki; razlikujejo se samo trije avti pilota (notranjost; zunaj samo stekla ogledal na TIGRU GT in SUPERKOMBIJU, MEDVED 4x4 je zunaj enak).
+- **Vožnja in fizika trkov:** model vsakega od 56 vozil (vse razen izrisa) in njegova tabela delov (`Core.partsOf`) sta enaka kot na `main`; `js/core.js` ni spremenjen.
+- **Ni pognano:** celoten povezani nabor (134 testov), brskalniški test flote za vsa vozila (pognan samo za štiri avte), `perf.test.mjs` in `gfx.test.mjs`. To naredi tema 30 avtov po spoju svežega `main`.
+
+### Kaj ostane temi 30 avtov
+
+- Prevzem veje `avti-kolibri/pilot` (ali njen spoj v vejo teme): po spoju svežega `main` celoten krog testov, ker se spremeni `js/render.js` (pilot je pognal samo teste avtov, zgoraj).
+- SUPERKOMBI in drugi aero avti brez dela `splitter`: odločitev o odbijaču (zgoraj) skupaj s temo Trki.
+- Pragovi strehe v KOLIBRIJEVIH pravilih za avte s kletko (zgoraj).
+- Odločitev o okroglih gumah pri Normalnih (`seg: 32`, zgoraj) in o tem, ali naj KOLIBRIJEVA dodatka (praske, polje strehe) veljata pri privzetih nastavitvah za vse avte (`XT_MIN`) ali samo z vklopljenim novim načinom.
+- Voznik se v izrezih salona (`carShot` `cut`) ne vidi, ker izrez riše Normalne; preveri se v igri (foto način po trku).
+- Garažni deli na treh avtih so preverjeni s `tests/deli-pregled.test.js <id>`; plošče delov (`tools/deli-plosca.mjs`) z Visokimi podrobnostmi niso pregledane na slikah.
+
 ## Predaja
 
 | Skupina | Stanje | Kaj sledi |
@@ -83,6 +154,7 @@ Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 3
 | tovornjaki · TITAN | končano (jure.kopac26, 8. 11., v #322): TITAN 28 od 38 elementov z razbijanjem (`headL` / `headR` na odbijaču, `tailL` / `tailR`, `wiperFront`; kaj odpade in zakaj: `docs/deli.md`, Tovornjaki); pregled delov 15/15, serijski trikotnik za trikotnikom enak (`tools/deli-odtis.js`); cisterna ima iste dele in mesta (`tests/cisterna.test.js`), kabina zrcalnega vlaka ohrani mesta iz sklopa 1 | na `main` z #322 (vrstica 6 v `docs/vrsta.md`) |
 | misije | končano (Seja B, 7. 11.): vozilo misije je serijsko, brez delov iz garaže (`opts()` v `js/missions.js`: `playerDeli` prazen, ko misija da svoje vozilo; test v `tests/missions.test.js`; odločitev uporabnika 7. 11. ob 14.53, komentar 6707802738) | — |
 | super | končano (Seja B · super, biketraveler, 7. 11.): MODRAS V10, PERUN V12, ŠKORPIJON po 37 od 38 elementov (brez `prtljaznik`; opis v `docs/deli.md`, Superšportni); pregled delov 15/15, serijski avti trikotnik za trikotnikom enaki; veja `avti-kolibri/super`, spojena v zbirno | — |
+| pilot: notranjost, Visoki, videz razbijanja | končano na veji `avti-kolibri/pilot` (jure.kopac26, 11. 11. 2026, brez pull requesta): TIGER GT, MEDVED 4x4, SUPERKOMBI; slike prej/potem na veji `slike/avti-kolibri`; opis, čas po delih in odprte odločitve v razdelku »Pilot« zgoraj | prevzame tema 30 avtov |
 
 Skupne spremembe v zbirni veji (Seja 1, 6. 11.):
 - `tests/deli-pregled.test.js <id>` za vsak avto: dovoljeni deli za razbijanje so KOLIBRIJEVI in tisti, ki jih imenujejo avtovi `mounts` (`part`, `parts`, `hosts`, `partF`, `partR`); obvezni so iz `mounts`, če jih ima (sicer KOLIBRIJEVI); pari, ki se križajo, so obvezni samo na KOLIBRIJU; avto brez `look.hi` nima Visokih. Stanje s sklopom 1 (6. 11.): zeleni vsi avti Seje 1 in Seje 2 razen SKAKAČA (krilo 3 in 4 lebdita 5 cm nad avtom: skupina teren).
