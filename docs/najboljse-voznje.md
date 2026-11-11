@@ -32,6 +32,7 @@ Odločitev uporabnika (11. 11. 2026 ob ~10.50, prek Mateja; `docs/vrsta.md`, »N
 
 ## Nastavitve → Najboljše vožnje
 
+- Razdelek je zadnji v Nastavitvah, za Preizkusom, ker Preizkus ostane takoj za profilom (`tests/browser/nova.test.mjs`).
 - Seznam je razdeljen po progah. Znotraj proge je razdeljen po skupinah v vrstnem redu suho, mokro, suho · zima, mokro · zima; klasična fizika je pred novo.
 - Vsaka vrstica kaže mesto, čas, avto in datum. Pod progo je gumb »Deli 10 najboljših«.
 - **Deli** naredi eno datoteko `najboljse_<proga>_<LLLLMMDD-UUMM>.rrp` z 10 najboljšimi vožnjami vsake skupine proge. Posnetki so v njej drug za drugim (surovi `.rrp`, skupaj gzip).
