@@ -120,8 +120,10 @@ jobs:
     if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
     # (nabor traja na CI 19–21, 27–33 ali 37–42 min, odvisno od stroja, ki ga dodeli GitHub (3. 11. 2026: počasni stroji več kot polovica
-    # tekov); pri 40 min je počasen stroj prekinil main in več pull requestov tik pred koncem ali po njem, vsaka nova proga doda 2–3 min)
-    timeout-minutes: 60
+    # tekov); pri 40 min je počasen stroj prekinil main in več pull requestov tik pred koncem ali po njem, vsaka nova proga doda 2–3 min.
+    # S 29 novimi progami (#569, 11. 11. 2026): 51 min na hitrem stroju, na počasnem je pri 60 min prekinitev prišla šele pri 103. testu
+    # od 180 (races 20 min, golden 11 min), zato 150 min)
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -131,7 +133,7 @@ jobs:
       - run: npm ci
       - run: npm run test:node
         env:
-          TEST_TIMEOUT_MIN: 25   # (omejitev enega testa; privzeto 15 min, races.test.js na počasnem stroju 13–14 min in raste z vsako progo)
+          TEST_TIMEOUT_MIN: 45   # (omejitev enega testa; privzeto 15 min, races.test.js na počasnem stroju 13–14 min, s 29 novimi progami 20 min in raste z vsako progo)
           TEST_PADLI: padli-node.txt   # (imena padlih testov za posel Vzrok)
       - if: ${{ failure() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4

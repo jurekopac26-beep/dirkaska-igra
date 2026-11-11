@@ -112,7 +112,7 @@ v poslu »Vzrok« našteje združitve od zadnjega zelenega nočnega kroga in kat
 (`node tests/run.js --vzrok --od <sha> --padli <datoteka>`; imena padlih testov zapiše `TEST_PADLI=<datoteka>`).
 Osnutek (draft) pull requesta testov ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem
 nadaljnjem potisku (odločitev uporabnika 31. 10. 2026). Test, ki teče dlje od 15 minut, se ustavi in šteje kot neuspešen
-(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški testi tečejo s 30 minutami na test, testi Node s 25 (`races.test.js` traja na počasnem stroju 13–14 min), ves nabor Node pa ima 60 minut (traja 19–42 min, odvisno od stroja)); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima trikrat toliko časa, smoke in perf pa dvakrat (na GitHubu 90 in 60 minut).
+(drugače: `TEST_TIMEOUT_MIN=30 npm test`; na GitHubu brskalniški testi tečejo s 30 minutami na test, testi Node s 45 (`races.test.js` traja na počasnem stroju 13–14 min, s 29 novimi progami 20 min), ves nabor Node pa ima 150 minut (traja 19–42 min, s 29 novimi progami 51 min na hitrem stroju in preko 60 na počasnem, odvisno od stroja)); test pomnilnika (`browser/memory.test.mjs`), ki gre trikrat skozi vse proge in se z vsako novo progo podaljša, ima trikrat toliko časa, smoke in perf pa dvakrat (na GitHubu 90 in 60 minut).
 Dolg test ima lahko tudi `TEST_SLOW`-kratni čas, ki ga porabi na GitHubu (`SECS` v `tests/run.js`), če je to več: privzeto 4-kratni, ker
 stroj oblačne seje potrebuje 2- do 2,5-krat toliko časa kot GitHub (`world`, `gfx` ~25–30 min, `perf` ~70 min); na GitHubu 2-kratni. Doma
 ima tako `world` 45 min, `gfx` 49 min, `perf` 124 min, `memory` 177 min.
