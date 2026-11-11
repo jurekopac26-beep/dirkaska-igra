@@ -5497,15 +5497,20 @@ const Garage3D = (function () {
       yield* par(home(1.4), lift > 1e-3 || LIFT.s > 1e-3 ? liftDown(cv, false) : null);   // (off the lift: the car down, the arms out)
     }
   }
-  /* ---------------- the tyres and the rims: the ring's arms change them on a wheel ----------------
+  /* ---------------- the tyres and the rims: the ring's two arms change them on all four wheels ----------------
+     The car up on the lift (its wheels free); each arm works its side of the car, the front wheel, then the rear one, both at once.
      A part on the regal: the far arm takes it with its reach (its tubes out under the ring: the ring and its glass are in the carriage's
-     way past the ring's edge, so no arm reaches over it), brings it to the far wheel at that end of the car (bay 0's: the rear one) and
-     presses it on (the car's four wheels change: the new car put in the old one's place), takes the old part off and puts it where the
-     new one stood (RGL.ret: there till the next part is fitted, then the regal's own is back). A part not in the garage comes on the
-     trolley (in through the right door along the lane, across before the car's nose, along its near side to behind the front wheel):
-     the near arm's gripper takes it off its deck, changes it on the near front wheel, lays the old one on the deck, the trolley takes it
-     away. The car up on the lift meanwhile (its wheels free). FIT.log: the steps, for the tests */
-  const FIT = { log: [], lift: 0.55, n: 0 };
+     way past the ring's edge, so no arm reaches over it), brings it to a far wheel and presses it on (that wheel changes: the new car
+     stands in the old one's place with nothing of it drawn, its wheels shown one by one), takes the old part off and puts it where the
+     new one stood (RGL.ret: there till the next part is fitted, then the regal's own is back). The near wheels' parts come on the
+     trolley (in through the right door along the lane, across before the car's nose, along its near side to between its wheels): the
+     near arm's gripper pulls the old tyre off the rim (the bare rim left on the car), stands it on the trolley's free place, takes the
+     new one off the trolley and pushes it on; a rim it presses on over the old one, which it lays where the new one lay. A part not in
+     the garage: the far wheels' come on the trolley's twin (beside the nose on the far side: the lift's post and its arms are between
+     the far wheels), the far arm's reach as the near arm's gripper. A rear wheel the car draws with its body: both arms press its
+     part on together, last, and the whole new car is shown for the old one. A wheel no arm gets to changes at the end with the car.
+     The camera: the regal, the far wheel as its part goes on, then the near side. FIT.log: the steps, for the tests */
+  const FIT = { log: [], lift: 0.55, n: 0, pace: 0.74 };   // (pace: the arms' moves' times at the wheels, times this)
   const RIMK = { std: 0.64, deep: 0.68, wire: 0.72, retro: 0.6, knob: 0.5, truck: 0.62, monster: 0.46, slick: 0.68, kart: 0.56 };   // (render.js' kitWheelGeo: the rim's edge, x the wheel's radius)
   const fitLog = (step, x) => { FIT.log.push(Object.assign({ step, n: FIT.n, t: +time.toFixed(2) }, x || {})); };
   const _h1 = new V3(1, 1, 1);
@@ -5554,12 +5559,13 @@ const Garage3D = (function () {
     return { o, r: rx, rr, zf, zb };
   }
   // (a wheel's frame in the room: its middle (the car up by h on the lift, or as it stands now), its axle out from the car as z (a far
-  // wheel's turned round, not mirrored: the same wheel to the eye), its turn round the axle)
+  // wheel's turned round, not mirrored: the same wheel to the eye), its turn round the axle; a wheel in the body (no object of its
+  // own): where the car has it)
   function wheelFrame(cv, w, h) {
     cv.root.updateMatrixWorld(true);
-    const c = h == null ? new V3().setFromMatrixPosition(w.obj.matrixWorld) : cv.root.localToWorld(new V3(w.x, w.y + h, w.z)), q = new THREE.Quaternion().setFromRotationMatrix(cv.root.matrixWorld);
+    const c = h == null && w.obj ? new V3().setFromMatrixPosition(w.obj.matrixWorld) : cv.root.localToWorld(new V3(w.x, w.y + (h == null ? cv.v.grp.position.y : h), w.z)), q = new THREE.Quaternion().setFromRotationMatrix(cv.root.matrixWorld);
     if (w.sd < 0) q.multiply(new THREE.Quaternion().setFromAxisAngle(_yAx, Math.PI));
-    q.multiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), w.obj.rotation.z * (w.sd < 0 ? -1 : 1)));
+    q.multiply(new THREE.Quaternion().setFromAxisAngle(new V3(0, 0, 1), (w.obj ? w.obj.rotation.z : 0) * (w.sd < 0 ? -1 : 1)));
     return { c, q, t: new V3(0, 0, 1).applyQuaternion(q), F: new THREE.Matrix4().compose(c, q, _h1) };
   }
   // (an arm's tool's tip as a frame (its way y, the forearm's pin z) for its state s, the tip tl from the coupling)
@@ -5630,7 +5636,7 @@ const Garage3D = (function () {
 
   // THE TROLLEY: a low cart (navy, a light grey deck with a lip round it, a band of cyan light, a round eye in its nose, an amber lamp on a
   // short mast at its back, hazard bars across its ends), its nose toward -x; it crabs sideways. One mesh; what it carries on its deck
-  const CART = { root: null, L: 0.96, W: 0.62, deck: 0.43, out: 10.8 };
+  const CART = { root: null, b: null, L: 0.96, W: 0.62, deck: 0.43, out: 10.8 };
   function buildCart() {
     const g = new World.GB(), gl = [], gk = (q) => gl.push([g.P.length / 3, q]), { W, NV, DK, ST, CY, BK } = FXC, L = CART.L / 2, Wd = CART.W / 2, D = CART.deck, GR = [0.7, 0.72, 0.75];
     gk(PAINT); World.box(g, 0, 0.1, 0, CART.L, D - 0.13, CART.W, 0, NV, W); World.box(g, 0, 0.2, 0, CART.L + 0.006, 0.02, CART.W + 0.006, 0, CY);
@@ -5646,13 +5652,18 @@ const Garage3D = (function () {
     const R = CART.root = new THREE.Group(); R.add(m); R.position.set(CART.out, 0, 0); R.visible = false; scene.add(R); return R;
   }
   // (along [x, z] points, each leg eased in and out, at v m/s at the most; its motor's hum)
-  function* cartGo(path, v) { const R = CART.root; R.visible = true; svcLoop('cart', 'lowpass', 260, 0.8, 0.07);
+  // (the trolleys: the one that comes to the car's near side (0) and its twin for the far side (1: the same mesh again, made when it is
+  // first needed))
+  function cartOf(k) {
+    const A = CART.root || buildCart(); if (!k) return A;
+    if (!CART.b) { const m0 = A.children[0], m = new THREE.Mesh(m0.geometry, m0.material); m.castShadow = true; m.receiveShadow = true;
+      const R = CART.b = new THREE.Group(); R.add(m); R.position.set(CART.out, 0, 0); R.visible = false; scene.add(R); }
+    return CART.b;
+  }
+  function* cartGo(path, v, R) { R = R || CART.root; const id = R === CART.root ? 'cart' : 'cartb'; R.visible = true; svcLoop(id, 'lowpass', 260, 0.8, 0.07);
     for (const [x, z] of path) { const x0 = R.position.x, z0 = R.position.z, L = Math.hypot(x - x0, z - z0); if (L < 1e-3) continue;
       yield* tween(0.3 + L / v, (k) => { R.position.set(lerp(x0, x, k), 0, lerp(z0, z, k)); }, EZ.io); }
-    svcLoop('cart', 'lowpass', 260, 0.8, 0); }
-  // (a part laid on the deck, its outer face up, its inner one on the deck (in the cart's frame))
-  function onDeck(p) { const R = CART.root; R.add(p.o); p.o.matrixAutoUpdate = false;
-    p.o.matrix.compose(new V3(0, CART.deck + 0.004 - p.zb, 0), new THREE.Quaternion().setFromAxisAngle(new V3(1, 0, 0), -Math.PI / 2), _h1); p.o.matrixWorldNeedsUpdate = true; }
+    svcLoop(id, 'lowpass', 260, 0.8, 0); }
   // (the new car in the old one's place at once, as the old one stands: up on the lift, its wheels' turn; same (the wheels' parts only
   // new, fitWheels): the lift's plan and the robots' look at its body kept, else (a part on the body, fitPart) measured again)
   function fitSwap(cv, nw, same) {
@@ -5661,97 +5672,204 @@ const Garage3D = (function () {
     if (same) { nw.lp = cv.lp; nw.hgrid = cv.hgrid; } nw.way = cv.way; cur = nw; svcForget(); tt.remove(cv.root); poseCar(nw, 0); planAhead(nw); idleOn(nw); freeCar(cv);
   }
 
-  // the show: el 'gume' or 'platisca', spec the car with the new part, o.src the regal's part ('rgl:NAME') or none (the trolley)
+  // (the new car in the old one's place with nothing of it drawn: its wheels shown one by one as the arms change them (the old car's
+  // hidden then); unstageCar: all of it drawn again (for fitSwap))
+  function stageCar(cv, nw) {
+    nw.root.position.copy(cv.root.position); nw.root.quaternion.copy(cv.root.quaternion); nw.v.grp.position.y = cv.v.grp.position.y;
+    for (const k of ['spin', 'pitch', 'bounce', 'roll', 'steer']) nw[k] = cv[k];
+    const keep = new Set(), wh = new Set(), hid = nw.staged = [];
+    for (const w of nw.wheels) if (w.obj) { wh.add(w.obj); for (let q = w.obj; q && q !== tt; q = q.parent) keep.add(q); }
+    const walk = (p) => { for (const c of p.children) { if (keep.has(c) && !wh.has(c)) walk(c); else if (c.visible) { c.visible = false; hid.push(c); } } };
+    walk(nw.root); poseCar(nw, 0);
+  }
+  function unstageCar(nw) { if (!nw.staged) return; for (const c of nw.staged) c.visible = true; nw.staged = null; }
+
+  // the show: el 'gume' or 'platisca', spec the car with the new part, o.src the regal's part ('rgl:NAME') or none (the trolleys)
   function* fitWheels(el, spec, o) {
-    const cv = cur; if (!cv) return; FIT.n++; FIT.log.length = 0; const kind = el === 'gume' ? 'gume' : 'platisca', tyre = kind === 'gume';
+    const cv = cur; if (!cv) return; FIT.n++; FIT.log.length = 0; const kind = el === 'gume' ? 'gume' : 'platisca', tyre = kind === 'gume', K = cv.kit;
     spawn(rglRestock());
-    const pcs = o.src && RGL.pcs && RGL.pcs[o.src], regal = !!(pcs && pcs.length), i = regal ? 1 : 0, tool = regal ? 'reach' : 'gripper';
+    const pcs = o.src && RGL.pcs && RGL.pcs[o.src], regal = !!(pcs && pcs.length), bay = regal ? RGL.bays[pcs[0].bay] : null;
     const nw = makeCar(spec); nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);   // (its shaders made now: no stutter at the swap)
-    const far = cv.wheels.filter(w => w.obj && w.sd < 0), near = cv.wheels.filter(w => w.obj && w.sd > 0), bay = regal ? RGL.bays[pcs[0].bay] : null;
-    const w = regal ? far.sort((a, b) => Math.abs(a.x - bay.x) - Math.abs(b.x - bay.x))[0] : near.find(q => q.front) || near[0];
-    // (the old car's part and the new car's (their frames the wheels'), the wheel up on the lift: its frame)
-    const wN = w && nw.wheels.find(q => q.obj && q.sd === w.sd && q.front === w.front), oldP = w && wheelPart(cv, w, kind), newT = wN && wheelPart(nw, wN, kind);
-    const WF = w && wheelFrame(cv, w, FIT.lift), sx = w && w.x > 0 ? 1 : -1;
-    let pc = null, grab = null, plan = null, park = null;
-    if (oldP && newT) {
-      if (regal) {   // (of the set's parts the one the reach gets to and puts on with the least turn in its hand: a tyre by its tread's front at
-        // its free end's edge (the bay's end tyres), the edge that goes out on the wheel; a rim by its hub cap)
+    stageCar(cv, nw);
+    const DN = [0, -1, 0], UP = new V3(0, 1, 0), XA = new V3(1, 0, 0), HP = Math.PI / 2, PC = FIT.pace;   // (PC: the arms' moves' times, times this)
+    const E = { up: false, near: false, grab: false, swap: false, n: 0, tot: 0, own: 0, vr: 0, vt: 0, whole: false };
+    const drop = (J) => { for (const p of [J.oldP, J.newT, J.rim]) if (p && p.o) disposeTree(p.o); return null; };
+    // (a wheel's job: the old car's part and the new car's (meshes in the wheel's frame), the wheel's frame up on the lift; virt: a rear
+    // wheel in the body (the car draws it with the body: its parts as its side's front wheel's; it changes with the whole car))
+    const mk = (w, i, tool) => { const src = w.obj ? w : cv.wheels.find(q => q.obj && q.sd === w.sd), wN = nw.wheels[cv.wheels.indexOf(w)], sN = src && nw.wheels[cv.wheels.indexOf(src)]; if (!wN || !sN || !sN.obj) return null;
+      const J = { i, tool, w, wN, virt: !w.obj, oldP: wheelPart(cv, src, kind), newT: wheelPart(nw, sN, kind), WF: wheelFrame(cv, w, FIT.lift), sx: w.x > 0 ? 1 : -1, tz: w.sd };
+      return J.oldP && J.newT ? J : drop(J); };
+    const side = (sd) => { const L = cv.wheels.filter(w => w.sd === sd), f = L.find(w => w.front && w.obj), r = L.filter(w => !w.front).sort((a, b) => a.x - b.x)[0]; return [f, r].filter(Boolean); };
+    // (the ways down onto a wheel's top with a tyre held by its tread's top: straight down (the tyre turned about the upright only, in
+    // the wrist), then tilted out from the car (a narrow car: the wrist stays in its half of the ring), then toward the car's end)
+    const tyreDirs = (J) => { const D = [[DN, -J.tz * HP]]; for (const a of [0.12, 0.24, 0.36, 0.48]) D.push([[0, -Math.cos(a), -J.tz * Math.sin(a)], null]);
+      for (const a of [0.12, 0.24, 0.36, 0.48]) D.push([[-J.sx * Math.sin(a), -Math.cos(a), 0], null]); return D; };
+    // (off the regal, the far arm's reach: a tyre by its tread's front at its free end's edge (the bay's end tyres), the edge that goes
+    // out on the wheel; a rim by its hub cap; put on with the least turn in its hand)
+    const viaRegal = (J, q, zg) => {
+      const tip = new V3(tyre ? -q.r - 0.004 : 0, 0, tyre ? zg : 0.035).applyMatrix4(q.M), n = new V3().setFromMatrixColumn(q.M, tyre ? 0 : 2); if (!tyre) n.negate();
+      const g = reachPlan(1, 'reach', tip, n); if (!g) return null; g.tip = tip; g.pre = poseAt(1, 'reach', tip.clone().addScaledVector(g.d, -0.5), g.d, g.s.yaw); if (!g.pre) return null;
+      g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(q.M);
+      const WF = J.WF, p = tyre ? placePlan(1, 'reach', g.off, WF.c, WF.t.clone().multiplyScalar(Math.sign(zg)), false, [[DN, 0], [DN, Math.PI]].concat([1, 2, 3, 4].map(k => [[-J.sx * Math.sin(k * 0.12), -Math.cos(k * 0.12), 0], null])), WF.t, 0.32)
+        : placePlan(1, 'reach', g.off, WF.c.clone().addScaledVector(WF.t, J.oldP.zf), WF.t, false, faceDirs(WF.t, J.sx), WF.t, 0.3);
+      return p ? { sc: p.sc + g.sc * 0.5, pc: q, grab: g, plan: p } : null;
+    };
+    // (off a trolley (k: the near side's, the far side's twin) parked at pk, the arm's tool down onto each part: tyres stand in a row
+    // along its deck, their outer faces toward its ends (one place more than the tyres: the first old one's), each taken by its tread's
+    // top at its outer edge (the edge that goes out on the wheel: the tool beside the body there); rims lie on it, their faces up, each
+    // taken by its cap. The near side's stands between the wheels, the far side's beside the nose (the lift's post and its arms are
+    // between the far wheels))
+    const viaCart = (Js, i, tool, k) => {
+      if (!Js.length || (k && !Js[0].w.front)) { Js.forEach(drop); return null; }
+      const n = Js.length, tz = Js[0].tz, pz = tz * clamp(K.hw + 0.62, 0.64, 2.06);
+      const p = tyre ? Math.max(...Js.map(J => Math.max(J.oldP.zf - J.oldP.zb, J.newT.zf - J.newT.zb))) + 0.07 : 2 * Math.max(...Js.map(J => Math.max(J.oldP.r, J.newT.r))) + 0.05;
+      const ns = tyre ? n + 1 : n, xm = ARM.x1 - 0.06 - ns * p / 2;   // (xm: its end places still under the arm's bridge)
+      const px = clamp(k ? Js[0].w.x + 0.75 : n > 1 ? (Js[0].w.x + Js[1].w.x) / 2 : Js[0].w.x - Js[0].sx * 0.95, -xm, xm);
+      const C = { k, cart: cartOf(k), pk: [px, pz], parked: false, Js: [], sx: (j) => (j - (ns - 1) / 2) * p }, P0 = new THREE.Matrix4().makeTranslation(px, 0, pz);
+      Js.forEach((J, q) => {
+        const j = q ? 0 : ns - 1, f = q ? -1 : 1, T = J.newT; let L, tip, yG;
+        if (tyre) { L = new THREE.Matrix4().compose(new V3(C.sx(j) - f * (T.zf + T.zb) / 2, CART.deck + 0.004 + T.r, 0), new THREE.Quaternion().setFromAxisAngle(UP, f * HP), _h1); tip = new V3(0, T.r + 0.004, T.zf + 0.03); yG = tz * (f - 1) * HP; }
+        else { L = new THREE.Matrix4().compose(new V3(C.sx(j), CART.deck + 0.004 - T.zb, 0), new THREE.Quaternion().setFromAxisAngle(XA, -HP), _h1); tip = new V3(0, 0, T.zf + 0.004); yG = -tz * HP; }
+        const F = P0.clone().multiply(L); tip.applyMatrix4(F);
+        const g = poseAt(i, tool, tip, DN, yG), pre = g && poseAt(i, tool, tip.clone().add(new V3(0, 0.35, 0)), DN, yG); if (!pre) { drop(J); return; }
+        g.tip = tip; g.pre = pre; g.sc = 0; g.off = tipM(g.s, TL[tool] + g.ext).invert().multiply(F);
+        const pl = tyre ? placePlan(i, tool, g.off, J.WF.c, J.WF.t, false, tyreDirs(J), J.WF.t, 0.32) : placePlan(i, tool, g.off, J.WF.c, J.WF.t, false, faceDirs(J.WF.t, J.sx), J.WF.t, 0.3);
+        if (!pl) { drop(J); return; }
+        // (a tyre: the old one off its rim first (the bare rim: the wheel's other triangles), onto the free place; else pressed on over the old one)
+        if (tyre && !J.virt) J.rim = wheelPart(cv, J.w, 'platisca');
+        Object.assign(J, { src: 'cart', mode: J.rim ? 'off' : 'press', C, cart: C.cart, grab: g, plan: pl, L, slot: j, free: C.Js.length ? C.Js[0].slot : ns > 2 ? 1 : 0 }); C.Js.push(J);
+      });
+      if (!C.Js.length) return null;
+      for (const J of C.Js) { const ob = J.newT.o; C.cart.add(ob); ob.matrix.copy(J.L); ob.matrixWorldNeedsUpdate = true; }
+      C.cart.position.set(CART.out + k * 2, 0, 0); return C;
+    };
+    // the jobs: the far wheels off the regal by the far arm's reach (each wheel its part: the most wheels done, then the least turns);
+    // the near ones off the trolley by the near arm's gripper; nothing on the regal (or out of the reach's way there): the far ones off
+    // the trolley's twin by the reach
+    const J1 = [], rest = [];
+    { const Js = side(-1).map(w => mk(w, 1, 'reach')).filter(Boolean);
+      if (regal) {
+        Js.sort((a, b) => (a.virt - b.virt) || Math.abs(a.w.x - bay.x) - Math.abs(b.w.x - bay.x));
         const cands = []; if (tyre) { const m = Math.max(...pcs.map(q => Math.abs(q.bx || 0))); for (const q of pcs) if (Math.abs(Math.abs(q.bx || 0) - m) < 1e-3) cands.push([q, Math.sign(q.bx || 1) * (q.w / 2 + 0.03)]); } else for (const q of pcs) cands.push([q, 0]);
-        let best = null;
-        for (const [q, zg] of cands) {
-          const tip = new V3(tyre ? -q.r - 0.004 : 0, 0, tyre ? zg : 0.035).applyMatrix4(q.M), n = new V3().setFromMatrixColumn(q.M, tyre ? 0 : 2); if (!tyre) n.negate();
-          const g = reachPlan(1, 'reach', tip, n); if (!g) continue; g.tip = tip; g.pre = poseAt(1, 'reach', tip.clone().addScaledVector(g.d, -0.5), g.d, g.s.yaw); if (!g.pre) continue;
-          g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(q.M);
-          const p = tyre ? placePlan(1, 'reach', g.off, WF.c, WF.t.clone().multiplyScalar(Math.sign(zg)), false, [[[0, -1, 0], 0], [[0, -1, 0], Math.PI]].concat([1, 2, 3, 4].map(k => [[-sx * Math.sin(k * 0.12), -Math.cos(k * 0.12), 0], null])), WF.t, 0.32)
-            : placePlan(1, 'reach', g.off, WF.c.clone().addScaledVector(WF.t, oldP.zf), WF.t, false, faceDirs(WF.t, sx), WF.t, 0.3);
-          if (!p) continue; const sc = p.sc + g.sc * 0.5; if (!best || sc < best.sc) best = { sc, q, g, p }; }
-        if (best) { pc = best.q; grab = best.g; plan = best.p; }
-      } else {   // (the new part on the deck, its face up; the gripper down onto it (a rim by its cap, a tyre by its sidewall on the car's side:
-        // on the wheel it turns face out, that side up); on the wheel it goes in along the axle)
-        park = [w.x - 0.95, cv.kit.hw + 0.62];
-        const c0 = new V3(park[0], CART.deck + 0.004 - newT.zb, park[1]), Fd = new THREE.Matrix4().compose(c0, new THREE.Quaternion().setFromAxisAngle(new V3(1, 0, 0), -Math.PI / 2), _h1);
-        const top = c0.clone().add(new V3(0, newT.zf + 0.004, tyre ? -(newT.r + newT.rr) / 2 : 0)), g = poseAt(0, 'gripper', top, [0, -1, 0], -Math.PI / 2);
-        if (g) { g.tip = top; g.sc = 0; g.pre = poseAt(0, 'gripper', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL.gripper).invert().multiply(Fd); grab = g;
-          plan = placePlan(0, 'gripper', g.off, WF.c, WF.t, false, faceDirs(WF.t, sx), WF.t, 0.3); }
-      }
+        const opt = Js.map(J => cands.map(([q, zg]) => viaRegal(J, q, zg))), C = cands.length; let best = null;
+        for (let a = -1; a < C; a++) for (let b = -1; b < C; b++) { if (a >= 0 && a === b) continue; const A0 = a >= 0 && opt[0] ? opt[0][a] : null, B0 = b >= 0 && opt[1] ? opt[1][b] : null; if ((a >= 0 && !A0) || (b >= 0 && !B0)) continue;
+          const sc = (A0 ? 100 - A0.sc : 0) + (B0 ? 100 - B0.sc : 0); if (!best || sc > best.sc) best = { sc, r: [A0, B0] }; }
+        Js.forEach((J, q) => { const r = best && best.r[q]; if (r) { Object.assign(J, r, { src: 'regal', mode: 'press' }); disposeTree(J.newT.o); J.newT.o = null; J1.push(J); } else rest.push(J); });   // (the regal's own part goes on: the car's own is the new car's)
+        rest.sort((a, b) => b.w.x - a.w.x);
+      } else rest.push(...Js);
     }
+    const CA = viaCart(side(1).map(w => mk(w, 0, 'gripper')).filter(Boolean), 0, 'gripper', 0), CB = viaCart(rest, 1, 'reach', 1);
+    const J0 = CA ? CA.Js : []; if (CB) J1.push(...CB.Js);
+    const all = J1.concat(J0), first = (regal && J1.length && J1[0].src === 'regal' ? J1[0] : J0[0]) || all[0]; all.forEach((J, q) => { J.id = q; if (J.virt) E.vt++; else E.own++; }); E.tot = all.length;
     const done = () => hud('done', { kind: el });
-    if (!plan || !grab || !grab.pre) {   // (no arm can: the new car in the old one's place with a puff of the wheels' dust)
+    if (!first) {   // (no arm can: the new car in the old one's place with a puff of the wheels' dust)
       fitLog('plain', { regal });
-      if (oldP) disposeTree(oldP.o); if (newT) disposeTree(newT.o);
       for (const q of cv.wheels) { const p = cv.v.grp.localToWorld(new V3(q.x, q.y, q.z)); for (let k = 0; k < 6; k++) puffs.emit(p.x, p.y, p.z, rnd(-0.6, 0.6), rnd(0.2, 0.8), rnd(-0.6, 0.6), 0.6, 0.12, 0.5, [0.75, 0.75, 0.78], 0.4, -0.3, 2, 0.02); }
-      SFX.clunk(0.4); fitSwap(cv, nw, true); done(); return;
+      SFX.clunk(0.4); unstageCar(nw); fitSwap(cv, nw, true); done(); return;
     }
-    fitLog('plan', { regal, arm: i, tool, wheel: w.front ? 'front' : 'rear', side: w.sd, bay: regal ? pcs[0].bay : -1, at: WF.c.toArray().map(q => +q.toFixed(2)), piece: pc ? pcs.indexOf(pc) : -1, ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
-    if (regal) { disposeTree(newT.o); RGL.P.stay = true; }   // (the regal's own part goes on: the car's own is the new car's; the regal in the picture till it is back)
-    // the camera: at the regal from the side the arm comes in on (its tool in the bay, the part on it; RGL.P.stay: the regal in the
-    // picture), then the far wheel from beyond the car's end on the far side; the near front wheel and the trolley
-    let V1, V2;
-    if (regal) { V1 = rglView(grab, bay);
-      V2 = view({ at: [WF.c.x, WF.c.y + 0.2, WF.c.z], yaw: sx * 2.2, pitch: 0.25, dist: 2.9, fov: 34 }); }
-    else V1 = V2 = view({ at: [w.x - 0.55, WF.c.y - 0.1, w.z + 0.45], yaw: 0.62, pitch: 0.16, dist: 4.4, fov: 33 });
-    // up on the lift, the arm's tool, to the part (the trolley in meanwhile)
-    const cart = regal ? null : CART.root || buildCart();
-    if (cart) { onDeck(newT); cart.position.set(CART.out, 0, 0); }
-    const toPart = function* () { yield* armTool(i, tool); yield* armCarry(i, grab.pre.s, grab.pre.ext, 1.3); };
-    const cartIn = cart ? (function* () { fitLog('cart.in'); SFX.click(); yield* cartGo([[cv.kit.front + 0.95, 0], [cv.kit.front + 0.95, park[1]], park], 4.2); SFX.ping(1320); fitLog('cart.parked'); })() : null;
-    yield* par(camTo(V1, 1.3), liftUp(cv, FIT.lift, false), toPart(), cartIn);
-    // the part taken: the tubes out to it (the gripper down onto it), a clunk, back out with it
-    yield* armExt(i, grab.s, grab.ext, regal ? 0.55 : 0.4);
-    SFX.clunk(0.3);
-    if (regal) { const cp = rglCopy(pc); rglHide(pc, true); pc.take = FIT.n; hold(i, cp, pc.M); }
-    else { cart.updateMatrixWorld(true); hold(i, newT.o, newT.o.matrixWorld.clone()); }
-    fitLog('grab', { piece: pc ? pc.kind : kind, hid: pc ? pc.hid : null, rgl: regal ? +RGL.P.k.toFixed(2) : null });   // (rgl: the regal's fade, 0 in the picture)
-    yield* armExt(i, grab.pre.s, grab.pre.ext, regal ? 0.45 : 0.35);
-    // to the wheel (turned in the hand meanwhile as it is to go on), pressed on along its axle
-    yield* par(armCarry(i, plan.pre.s, plan.pre.ext, 1.4), holdTo(i, plan.off, 1.3), regal ? camTo(V2, 1.4) : null);
-    yield* armExt(i, plan.s, plan.ext, 0.45, EZ.sine); SFX.wrench();
-    // the swap: the car's wheels change (the new car in its place), the old part in the hand now, a puff of dust off the wheel
-    const p0 = WF.c; for (let k = 0; k < 10; k++) puffs.emit(p0.x, p0.y, p0.z, rnd(-0.5, 0.5), rnd(0.1, 0.7), WF.t.z * rnd(0.2, 0.9), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02);
-    SFX.clunk(0.5);
-    disposeTree(letGo(i));
-    const Fo = wheelFrame(cv, w).F; fitSwap(cv, nw, true); hold(i, oldP.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw });
-    yield* wait(0.15); SFX.wrench();
-    yield* armExt(i, plan.pre.s, plan.pre.ext, 0.4, EZ.sine);
-    // the old part back where the new one was: on the regal (a tyre standing on the board, a rim on its peg), on the deck
-    let put = null;
-    if (regal) { const M = pc.M, z = new V3().setFromMatrixColumn(M, 2), c = new V3().setFromMatrixPosition(M), dirs = [[grab.d, null]];
-      for (const a of [0.08, -0.08, 0.16, -0.16, 0.24, -0.24]) for (const th of [0, 0.06, 0.12]) dirs.push([turnDir(grab.d, a, th), null]);
-      if (tyre) c.y += oldP.r - pc.r; else c.addScaledVector(z, -oldP.zf);
-      put = placePlan(1, 'reach', RB[1].held.a, c, z, tyre, dirs, grab.d.clone().negate(), 0.5); }
-    else { const c = new V3(park[0], CART.deck + 0.004 - oldP.zb, park[1]); put = placePlan(0, 'gripper', RB[0].held.a, c, new V3(0, 1, 0), tyre, [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2]], new V3(0, 1, 0), 0.35); }
-    if (put) {
-      yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.4), holdTo(i, put.off, 1.3), regal ? camTo(V1, 1.4) : null);
-      yield* armExt(i, put.s, put.ext, regal ? 0.5 : 0.4); SFX.clunk(0.3);
-      const ob = letGo(i); fitLog('put', { where: regal ? 'regal' : 'cart' });
-      if (regal) { RGL.ret.push(ob); ob.material.dispose(); ob.material = fxMat(RGL.P.u); ob.material.userData.own = true; }
-      else { cart.updateMatrixWorld(true); const Mw = ob.matrix.clone(); cart.add(ob); ob.matrix.copy(cart.matrixWorld.clone().invert().multiply(Mw)); ob.matrixWorldNeedsUpdate = true; }
-      yield* armExt(i, put.pre.s, 0, 0.4);
-    } else { fitLog('put', { where: 'none' }); disposeTree(letGo(i)); yield* armExt(i, plan.pre.s, 0, 0.3); }
-    // a glint off the new part; home, the car down, the arm parked, the trolley off with the old part
-    const cartOut = cart ? (function* () { yield* cartGo([[cur.kit.front + 0.95, park[1]], [cur.kit.front + 0.95, 0], [CART.out, 0]], 4.6); cart.visible = false; for (const q of cart.children.slice(1)) disposeTree(q); fitLog('cart.out'); })() : null;
+    const far1 = first.src === 'regal';   // (the show opens at the regal: the far arm's first wheel in the picture, then the near side)
+    fitLog('plan', { regal, n: all.length, arm: first.i, tool: first.tool, wheel: first.w.front ? 'front' : 'rear', side: first.w.sd, bay: regal ? pcs[0].bay : -1, at: first.WF.c.toArray().map(q => +q.toFixed(2)), piece: first.pc ? pcs.indexOf(first.pc) : -1,
+      ext: +first.grab.ext.toFixed(2), turn: +first.plan.turn.toFixed(2), jobs: all.map(J => ({ arm: J.i, src: J.src, mode: J.mode, virt: J.virt, wheel: J.w.front ? 'front' : 'rear', side: J.w.sd, turn: +J.plan.turn.toFixed(2) })) });
+    if (far1) RGL.P.stay = true;   // (the regal in the picture till the show is over)
+    const stepDone = (J) => { J.done = true; E.n++; hud('step', { kind: el, i: E.n, n: E.tot }); };
+    // (a wheel changed: the new car's shown (the old car's hidden); a wheel in the body: the whole new car for the old one (the two of
+    // them at once: their arms press together, after the wheels that change one by one))
+    const change = (J) => { if (!J.virt) { J.w.obj.visible = false; J.wN.obj.visible = true; E.own--; } else if (!E.whole) { E.whole = true; unstageCar(nw); cv.root.visible = false; lamps(nw, 1, 0.35); } };
+    const dust = (J, n) => { const p0 = J.WF.c, t = J.WF.t; for (let k = 0; k < n; k++) puffs.emit(p0.x, p0.y, p0.z, rnd(-0.5, 0.5), rnd(0.1, 0.7), t.z * rnd(0.2, 0.9), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02); };
+    const toDeck = (ob, R) => { R.updateMatrixWorld(true); const Mw = ob.matrix.clone(); R.add(ob); ob.matrix.copy(R.matrixWorld.clone().invert().multiply(Mw)); ob.matrixWorldNeedsUpdate = true; };
+    // (the old part held put down on a trolley's place j: a tyre standing (either way round), a rim on its back)
+    const deckPlan = (J, j) => { const x = J.C.pk[0] + J.C.sx(j), z = J.C.pk[1], H = RB[J.i].held.a;
+      return tyre ? placePlan(J.i, J.tool, H, new V3(x, CART.deck + 0.004 + J.oldP.r, z), XA, true, [[DN, 0], [DN, Math.PI], [DN, HP], [DN, -HP]], UP, 0.35)
+        : placePlan(J.i, J.tool, H, new V3(x, CART.deck + 0.004 - J.oldP.zb, z), UP, false, [[DN, -J.tz * HP], [DN, J.tz * HP]], UP, 0.35); };
+    function* putDeck(J, j) { const i = J.i, put = deckPlan(J, j);
+      if (!put) { fitLog('put', { j: J.id, where: 'none' }); disposeTree(letGo(i)); return; }
+      yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.3 * PC), holdTo(i, put.off, 1.2 * PC));
+      yield* waitFor(() => J.C.parked, 9);
+      yield* armExt(i, put.s, put.ext, 0.4 * PC); SFX.clunk(0.3); toDeck(letGo(i), J.cart); fitLog('put', { j: J.id, where: 'cart' });
+      yield* armExt(i, put.pre.s, put.pre.ext, 0.3 * PC); }
+    // a job, the new part pressed on over the old one: the part taken (the tubes out to it, the tool down onto it: a clunk), to the wheel
+    // (turned in the hand meanwhile as it is to go on), pressed on along the axle: the wheel changes (the new car's shown, a puff of
+    // dust), the old part in the hand now, back where the new one was (on the regal: a tyre standing on the board, a rim on its peg)
+    function* press(J) {
+      const i = J.i, reg = J.src === 'regal', g = J.grab, pl = J.plan;
+      yield* armCarry(i, g.pre.s, g.pre.ext, 1.3 * PC);
+      if (!reg) yield* waitFor(() => J.C.parked, 9);
+      yield* armExt(i, g.s, g.ext, (reg ? 0.55 : 0.4) * PC); SFX.clunk(0.3);
+      if (reg) { const cp = rglCopy(J.pc); rglHide(J.pc, true); J.pc.take = FIT.n; hold(i, cp, J.pc.M); }
+      else { J.cart.updateMatrixWorld(true); hold(i, J.newT.o, J.newT.o.matrixWorld.clone()); }
+      fitLog('grab', { j: J.id, piece: reg ? J.pc.kind : kind, hid: reg ? J.pc.hid : null, rgl: reg ? +RGL.P.k.toFixed(2) : null });   // (rgl: the regal's fade, 0 in the picture)
+      if (J === first) E.grab = true;
+      yield* armExt(i, g.pre.s, g.pre.ext, (reg ? 0.45 : 0.35) * PC);
+      yield* waitFor(() => i || E.near, 12);
+      yield* par(armCarry(i, pl.pre.s, pl.pre.ext, 1.4 * PC), holdTo(i, pl.off, 1.3 * PC));
+      yield* waitFor(() => E.up, 12);
+      if (J.virt) { E.vr++; yield* waitFor(() => E.vr >= E.vt && E.own <= 0, 25); }
+      yield* armExt(i, pl.s, pl.ext, 0.45 * PC, EZ.sine); SFX.wrench(); dust(J, 10); SFX.clunk(0.5);
+      disposeTree(letGo(i)); const Fo = wheelFrame(cv, J.w).F; change(J); hold(i, J.oldP.o, Fo); fitLog('swap', { j: J.id }); stepDone(J);
+      yield* wait(0.15 * PC); SFX.wrench();
+      yield* armExt(i, pl.pre.s, pl.pre.ext, 0.4 * PC, EZ.sine);
+      if (J === first) E.swap = true;
+      if (!reg) { yield* putDeck(J, J.slot); return; }
+      const M = J.pc.M, z = new V3().setFromMatrixColumn(M, 2), c = new V3().setFromMatrixPosition(M), dirs = [[g.d, null]];
+      for (const a of [0.08, -0.08, 0.16, -0.16, 0.24, -0.24]) for (const th of [0, 0.06, 0.12]) dirs.push([turnDir(g.d, a, th), null]);
+      if (tyre) c.y += J.oldP.r - J.pc.r; else c.addScaledVector(z, -J.oldP.zf);
+      const put = placePlan(1, 'reach', RB[1].held.a, c, z, tyre, dirs, g.d.clone().negate(), 0.5);
+      if (!put) { fitLog('put', { j: J.id, where: 'none' }); disposeTree(letGo(i)); yield* armExt(i, pl.pre.s, 0, 0.3 * PC); return; }
+      yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.4 * PC), holdTo(i, put.off, 1.3 * PC));
+      yield* armExt(i, put.s, put.ext, 0.5 * PC); SFX.clunk(0.3);
+      const ob = letGo(i); fitLog('put', { j: J.id, where: 'regal' }); RGL.ret.push(ob); ob.material.dispose(); ob.material = fxMat(RGL.P.u); ob.material.userData.own = true;
+      yield* armExt(i, put.pre.s, 0, 0.4 * PC);
+    }
+    // a job, a tyre off a trolley: the old tyre gripped on the wheel (its tread's top at its outer edge), pulled off along the axle (the
+    // bare rim left on the car), stood on the trolley's free place; the new one off its place, pushed onto the rim (the new car's wheel)
+    function* offOn(J) {
+      const i = J.i, g = J.grab, pl = J.plan;
+      yield* armCarry(i, pl.pre.s, pl.pre.ext, 1.3 * PC);
+      yield* waitFor(() => E.up, 12);
+      yield* armExt(i, pl.s, pl.ext, 0.4 * PC, EZ.sine); SFX.wrench();
+      cv.root.updateMatrixWorld(true); J.rim.o.matrix.copy(J.w.obj.matrixWorld); scene.add(J.rim.o); J.rim.o.matrixWorldNeedsUpdate = true;
+      hold(i, J.oldP.o, wheelFrame(cv, J.w).F); J.w.obj.visible = false; dust(J, 6); fitLog('off', { j: J.id });
+      yield* wait(0.1 * PC);
+      yield* armExt(i, pl.pre.s, pl.pre.ext, 0.4 * PC, EZ.sine);
+      yield* putDeck(J, J.free);
+      yield* armCarry(i, g.pre.s, g.pre.ext, 0.8 * PC);
+      yield* armExt(i, g.s, g.ext, 0.35 * PC); SFX.clunk(0.3);
+      J.cart.updateMatrixWorld(true); hold(i, J.newT.o, J.newT.o.matrixWorld.clone()); fitLog('grab', { j: J.id, piece: kind });
+      yield* armExt(i, g.pre.s, g.pre.ext, 0.3 * PC);
+      yield* waitFor(() => i || E.near, 12);
+      yield* par(armCarry(i, pl.pre.s, pl.pre.ext, 1.3 * PC), holdTo(i, pl.off, 1.2 * PC));
+      yield* armExt(i, pl.s, pl.ext, 0.45 * PC, EZ.sine); SFX.clunk(0.5); SFX.wrench();
+      disposeTree(letGo(i)); disposeTree(J.rim.o); J.rim = null; J.wN.obj.visible = true; E.own--; fitLog('swap', { j: J.id }); stepDone(J);
+      yield* wait(0.12 * PC);
+      yield* armExt(i, pl.pre.s, pl.pre.ext, 0.35 * PC, EZ.sine);
+    }
+    const chain = function* (Js) { if (!Js.length) return; yield* armTool(Js[0].i, Js[0].tool); for (const J of Js) yield* (J.mode === 'off' ? offOn(J) : press(J)); };
+    // the trolleys: in through the right door along the lane (the twin behind the first), before the car's nose each to its side; off
+    // with the old parts the same way
+    const cartIn = function* (C) { if (!C) return; fitLog('cart.in', { k: C.k }); if (!C.k) SFX.click();
+      yield* cartGo([[K.front + 0.95, 0], [K.front + 0.95, C.pk[1]], C.pk], 4.2, C.cart); if (!C.k) SFX.ping(1320); C.parked = true; fitLog('cart.parked', { k: C.k }); };
+    const cartOut = function* (C) { if (!C) return;
+      yield* cartGo([[cur.kit.front + 0.95, C.pk[1]], [cur.kit.front + 0.95, 0], [CART.out, 0]], 4.6, C.cart); C.cart.visible = false; for (const q of C.cart.children.slice(1)) disposeTree(q); fitLog('cart.out', { k: C.k }); };
+    // the camera: at the regal from the side the arm comes in on (its tool in the bay, the part on it), the far wheel from beyond the
+    // car's end on the far side as the part goes on; then the near side: each near wheel and the trolley from beyond the car's end
+    // (close, as the plans' plates: the wheel, the arm over it and the trolley fill the picture between the page's buttons; the
+    // picture is raised (SHIFT), so the views aim above the wheel)
+    const nearV = (J) => { const dx = J.C.pk[0] - J.w.x; return view({ at: [J.w.x + dx * 0.45, J.WF.c.y + 0.6, J.w.z + 0.45], yaw: -Math.sign(dx || -1) * 0.62, pitch: 0.09, dist: 3.25 + Math.max(0, Math.abs(dx) - 0.95) * 0.9, fov: 33 }); };
+    const cams = function* () {
+      if (far1) { const c = first.WF.c;
+        yield* camTo(rglView(first.grab, bay), 1.3); yield* waitFor(() => E.grab && E.up, 9);
+        yield* camTo(view({ at: [c.x, c.y + 0.55, c.z], yaw: first.sx * 2.2, pitch: 0.15, dist: 2.75, fov: 34 }), 1.4 * PC + 0.3);
+        yield* waitFor(() => E.swap, 9); yield* wait(0.2); }
+      E.near = true; if (!J0.length) return;
+      yield* camTo(nearV(J0[0]), far1 ? 1.2 : 1.3);
+      if (J0.length > 1) { yield* waitFor(() => J0[0].done, 30); yield* wait(0.25); yield* camTo(nearV(J0[1]), 1.4); }
+    };
+    yield* par(cams(), (function* () { yield* liftUp(cv, FIT.lift, false, 0.75); E.up = true; })(), chain(J1), chain(J0), cartIn(CA), cartIn(CB));
+    // the new car whole in the old one's place (a wheel no arm got to changes with it); a glint off the new parts; home, the car down,
+    // the arms parked, the trolleys off with the old parts
+    unstageCar(nw); fitSwap(cv, nw, true); fitLog('done', { deli: deliKey(cur.spec), car: cur === nw, n: E.n });
     sparkle(cur, 6); SFX.ping(1760); done();
-    yield* par(home(1.4), liftDown(cur, false), armRest(i, 1.2), cartOut, regal ? rglUnstay(1.4) : null);
+    yield* par(home(1.4), liftDown(cur, false), armRest(0, 1.2), armRest(1, 1.2), cartOut(CA), cartOut(CB), far1 ? rglUnstay(1.4) : null);
   }
   // (the regal free to step aside again once the camera has left it)
   function* rglUnstay(s) { yield* wait(s); if (RGL.P) RGL.P.stay = false; }
@@ -5906,21 +6024,42 @@ const Garage3D = (function () {
           if (!plan) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(1, 'reach', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
     } else {   // (the part on the deck by the car's near side, before its spot; the gripper down onto its top, toward its near end)
       park = [clamp(S.p.x - (up ? 0.9 : 0.75), K.rear + 0.5, K.front - 0.5), K.hw + 0.62];
-      const top = new V3(park[0], CART.deck + 0.006 + 2 * np.hs.y, park[1] + Math.min(np.hs.z * 0.6, 0.45)), g = poseAt(0, 'gripper', top, [0, -1, 0], -Math.PI / 2);
-      if (g) { g.tip = top; g.pre = poseAt(0, 'gripper', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL.gripper).invert().multiply(deckAt(np, park[0], park[1]));
+      const dz0 = Math.min(np.hs.z * 0.6, 0.45), deckGrab = (pk, dz) => { const top = new V3(pk[0], CART.deck + 0.006 + 2 * np.hs.y, pk[1] + dz), g = poseAt(0, 'gripper', top, [0, -1, 0], -Math.PI / 2); if (!g) return null;
+        g.tip = top; g.pre = poseAt(0, 'gripper', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL.gripper).invert().multiply(deckAt(np, pk[0], pk[1])); return g; };
+      let g = deckGrab(park, dz0);
+      // (a long or a wide vehicle: the trolley as near its spot as the arm still gets to it, the gripper onto the part's middle or its end by the car)
+      if (!g || !g.pre) { const pk = [clamp(park[0], ARM.x0 + 0.3, ARM.x1 - 0.3), park[1]]; for (const dz of [dz0, 0, -dz0]) { const q = deckGrab(pk, dz); if (q && q.pre) { g = q; park = pk; break; } } }
+      if (g) {
         if (g.pre) { grab = g; why = 'place';
           for (const q of [pd, ax(0, 1, 0)]) { if (plan) break;   // (back out along the way out and up, else (a long car's end beyond the arm's reach that way) straight up)
             if (np.real && !PART_AT.hidden.includes(el)) { plan = framePlan(0, 'gripper', g.off, inCar(np), dirs, q, 0.3, clr); exact = !!plan; }
             if (!plan) plan = placePlan(0, 'gripper', g.off, cT, face, false, dirs, q, 0.3, clr); }
           if (!plan) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(0, 'gripper', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
     }
+    // (no way on for the arm: a spot beyond its reach (a long vehicle's end), one in under the body (the arm down through it): the part
+    // to the nearest place by the spot the arm gets to clear of the car: out from the spot, to the arm's own side of it, higher (a tall
+    // vehicle's top: by its side); the places beyond the ring also pulled in under the arm's bridge, by the hand's hold on the part;
+    // its tool straight down (turned any way) or tilted out from the ring toward it. The part hops on from its hand there and the old
+    // one back into it the same way)
+    let toss = null;
+    if (grab && !plan) { const m = new V3().setFromMatrixPosition(grab.off).length() + 0.12, fx = (x) => clamp(x, ARM.x0 + m, ARM.x1 - m), fz = (z) => clamp(z, ARM.z0[i] + m, ARM.z1[i] - m), gy = G.position.y, hm = Math.max(hs.x, hs.y, hs.z), sdA = i ? -1 : 1, C0 = [];
+      const inCarBox = (c) => c.x > K.rear - hm - 0.04 && c.x < K.front + hm + 0.04 && Math.abs(c.z) < K.hw + hm + 0.04 && c.y < K.top + gy + hs.y + 0.04;   // (the body in the way there)
+      const add = (c) => { for (const q of [c, new V3(fx(c.x), c.y, fz(c.z))]) if (!inCarBox(q) && !C0.some(e => e[0].distanceToSquared(q) < 1e-4)) C0.push([q, q.distanceTo(cT)]); };
+      for (const a of [0, 0.25, 0.5, 0.8, 1.2]) for (const sz of [0, 0.3, 0.6, 1, 1.5]) for (const h of [0, 0.3, 0.6, 1]) { const c = cT.clone().addScaledVector(S.out, a); c.z += sdA * sz; c.y += h; add(c); }
+      for (const y of [2.4, 2, 1.6, 1.2]) if (y < cT.y) add(new V3(cT.x, y, sdA * (K.hw + hm + 0.12)));   // (a tall vehicle's top: by its side, as high as the arm holds it)
+      C0.sort((p, q) => p[1] - q[1]); NC.k = 200; const UPW = new V3(0, 1, 0), DNW = [0, -1, 0], anyClr = (tip, s) => clearOf(G, tip, s, NC);
+      for (const [c, d] of C0) { if (d > 3.6 || NC.k <= 0) break;
+        const ux = c.x - fx(c.x), uz = c.z - fz(c.z), ul = Math.hypot(ux, uz), ways = [[DNW, null], [DNW, 0], [DNW, Math.PI / 2], [DNW, -Math.PI / 2], [DNW, Math.PI]];
+        if (ul > 0.02) for (const th of [0.35, 0.7, 1.05]) ways.push([[ux / ul * Math.sin(th), -Math.cos(th), uz / ul * Math.sin(th)], null]);
+        const q = placePlan(i, tool, grab.off, c, face, false, ways, UPW, 0.25, anyClr); if (q) { plan = q; toss = { c, d }; break; } }
+      if (!plan) why = 'hop:' + C0.length + ':' + NC.k; }
     const done = () => { if (!o.up) hud('done', { kind: el }); };
     if (!plan || !grab) {   // (no arm can: the new car in the old one's place with a puff at the spot)
       fitLog('plain', { regal, el, why, at: S.p.toArray().map(q => +q.toFixed(2)), hs: hs.toArray().map(q => +q.toFixed(2)) }); if (np) disposeTree(np.o);
       for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, rnd(-0.5, 0.5), rnd(0.2, 0.8), rnd(-0.5, 0.5), 0.6, 0.12, 0.5, [0.75, 0.75, 0.78], 0.4, -0.3, 2, 0.02);
       SFX.clunk(0.4); fitSwap(cv, nw); done(); if (o.up) yield* upShow(o.up[0], o.up[1]); return;
     }
-    fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, exact, real: !!(np && np.real), side: sd, hit: S.hit, at: S.p.toArray().map(q => +q.toFixed(2)), out: S.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
+    fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, exact, real: !!(np && np.real), hop: toss ? +toss.d.toFixed(2) : 0, side: sd, hit: S.hit, at: S.p.toArray().map(q => +q.toFixed(2)), out: S.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +plan.turn.toFixed(2) });
     if (regal) RGL.P.stay = true;   // (the regal in the picture till the part is back on it)
     // (the camera at the part's own place when it goes on exactly where the car draws it: a flat one (a decal on the bonnet) from over the top)
     const PX = exact ? new V3().setFromMatrixPosition(inCar(np)) : null, flat = exact && np.hs.y < 0.06 && np.hs.y * 3 < Math.min(np.hs.x, np.hs.z);
@@ -5950,12 +6089,19 @@ const Garage3D = (function () {
     // to its place (turned in the hand meanwhile as it is to go on), pressed on
     yield* par(armCarry(i, plan.pre.s, plan.pre.ext, 1.4), holdTo(i, plan.off, 1.3), camTo(V2, 1.4));
     yield* armExt(i, plan.s, plan.ext, 0.45, EZ.sine); SFX.wrench();
+    // (the spot beyond the arm: the part out of its hand in an arc onto its place (where the car draws it, else its middle at the spot))
+    const hopT = toss ? 0.3 + toss.d * 0.12 : 0, fly = function* (ob, M0, M1) { const a = new V3(), b = new V3(), qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), sa = new V3(), p = new V3(), q = new THREE.Quaternion(); M0.decompose(a, qa, sa); M1.decompose(b, qb, _hs);
+      yield* tween(hopT, (k) => { p.lerpVectors(a, b, k); p.y += Math.sin(Math.PI * k) * (0.18 + toss.d * 0.16); ob.matrix.compose(p, q.copy(qa).slerp(qb, k), sa); ob.matrixWorldNeedsUpdate = true; }, EZ.io); };
+    let Mh = null;
+    if (toss) { poseArm(i); const ob = RB[i].held.o; Mh = ob.matrix.clone(); letGo(i); SFX.whoosh(0.4); fitLog('hop', { d: +toss.d.toFixed(2) });
+      yield* fly(ob, Mh, np && np.real && !PART_AT.hidden.includes(el) ? inCar(np) : Mh.clone().setPosition(cT)); hold(i, ob, ob.matrix.clone()); }
     // the swap: the car changes (the new one in its place), the old part in the hand now (as the car drew it, where it was; else where the
     // new one is), a puff off the body
     for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, S.out.x * rnd(0.2, 0.8) + rnd(-0.3, 0.3), rnd(0.1, 0.6), S.out.z * rnd(0.2, 0.8) + rnd(-0.3, 0.3), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02);
     SFX.clunk(0.5);
     const held = letGo(i), op = regal ? { o: rglCopy(pc), real: false } : partObj(cv, el, o.from, sd), Fo = op.real && !PART_AT.hidden.includes(el) ? inCar(op) : held.matrix.clone();
     disposeTree(held); fitSwap(cv, nw); hold(i, op.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: op.real ? 'real' : regal ? 'regal' : 'case' });
+    if (toss) { letGo(i); SFX.whoosh(0.3); yield* fly(op.o, Fo, Mh); hold(i, op.o, op.o.matrix.clone()); }   // (the old part back into the hand the same way)
     yield* wait(0.15); SFX.wrench();
     yield* armExt(i, plan.pre.s, plan.pre.ext, 0.4, EZ.sine);
     // the old part back where the new one came from: on the regal as the new one stood (in by the way it was taken), on the deck
@@ -6593,7 +6739,9 @@ const Garage3D = (function () {
     setCond(c) { if (cur) setCond(cur, c); },
     get cur() { return cur; },
     get info() { return cur ? { car: cur.M.id, color: cur.spec.color, stripe: cur.spec.stripe !== false, upg: Object.assign({}, cur.spec.upg), parts: Object.keys(cur.parts).reduce((o, k) => (o[k] = cur.parts[k].userData.items.length, o), {}), dirt: cur.v.dirtU ? +cur.v.dirtU.value.toFixed(3) : null, scr: cur.v.scrU ? +cur.v.scrU.value.toFixed(3) : null, lift: +lift.toFixed(3), ang: +tt.rotation.y.toFixed(3) } : null; },
-    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, post: POST, stats: STATS, FIT, CART, get cart() { const R = CART.root; return R ? { on: R.visible, x: +R.position.x.toFixed(3), z: +R.position.z.toFixed(3), load: R.children.length - 1 } : null; }, get floorMat() { return floorMat; }, get keyLight() { return keyLight; },
+    _dbg: { REF, TX, tasks, user, rig, pieces, WALLS, post: POST, stats: STATS, FIT, CART, get cart() { const R = CART.root; return R ? { on: R.visible, x: +R.position.x.toFixed(3), z: +R.position.z.toFixed(3), load: R.children.length - 1 } : null; },
+      get cartB() { const R = CART.b; return R ? { on: R.visible, load: R.children.length - 1 } : null; }, get wheels() { return cur ? cur.wheels.map(w => (w.obj ? 1 : 0)).join('') : ''; },   // (the trolley's twin; the car's wheels: 1 a wheel of its own, 0 one in the body)
+      get floorMat() { return floorMat; }, get keyLight() { return keyLight; },
       // (the lift: one column, where it stands, its piece's box; the arms (0 stowed .. 1 at the pads), the carriage's level, the table's
       // height, the carriage's and the arms' nearest to the cars' lane (|z|); its parts for the pictures' checks; raise: the car put up
       // on it at once, as a show cut short would leave it)
