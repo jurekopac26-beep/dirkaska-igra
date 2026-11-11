@@ -17,7 +17,7 @@
   --panel: rgba(14, 18, 25, .88); --panel-edge: rgba(255, 255, 255, .10);
   --steel1: #666d7b; --steel2: #3b414d; --steel-sh: #1f232b;
   --f-ui: 'ApexMenu', Roboto, system-ui, 'Segoe UI', Arial, sans-serif;
-  color-scheme: dark;
+  color-scheme: dark; color-scheme: only dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
