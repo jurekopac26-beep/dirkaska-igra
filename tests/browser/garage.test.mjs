@@ -215,6 +215,23 @@ try {
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
     T.check('bought: the KOZOROG TC for 140.000 🪙 (the veteran\'s money less 140.000), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === vt.vm - 140000 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
+    // (the head lamps by their plan's plate on a car that draws them as parts of their own (the KOZOROG): the near arm's hand draws the
+    // old lamp out first (its seat left dark) while the trolley fetches the new one from the drawer; the old one onto the trolley's deck,
+    // the new one taken, pushed in (the car the new one's now), its ring screwed, the lights tried from before the car, KONČANO; the
+    // yellow ones after them: the LED ones back into the drawer on the trolley's way out; ↺ SERIJSKO: the car's own lamps back on
+    // the trolley from the door, the yellow ones into the drawer)
+    const lampLog = (f, mid, end) => new RegExp('^plan,cart\\.in,' + mid + ',put,grab,swap,ring,').test(f.log) && f.log.split(',').slice(-end.length).sort().join() === end.join();
+    const lampBuy = async (n) => { await page.evaluate((n) => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: n ? __garage.findOpt('zarometi', n) : null }); document.querySelector('#g-menu [data-mact="' + (n ? 'buy' : 'stock') + '"]').click(); }, n);
+      const r = await run(), f = await fitOf(), u = await ui(); return { r, f, u: { money: u.S.money, parts: u.S.cars.kozorog.parts } }; };
+    const l1 = await lampBuy('LED');
+    T.check('the LED head lamps on a car that draws its lamps as parts of their own (the KOZOROG), by their plan\'s plate: the old lamp out first (the car\'s own, as it draws it), the trolley with the new one from the drawer, the old one onto its deck, the new one in, its ring screwed, the lights tried, KONČANO',
+      lampLog(l1.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'lights']) && l1.f.plan.lamp && l1.f.plan.real && l1.f.plan.drawer && l1.f.plan.arm === 0 && l1.f.plan.tool === 'gripper' && l1.f.old === 'real' && l1.f.put === 'cart' && l1.f.cart && !l1.f.cart.on && l1.f.cart.load === 0
+      && l1.f.parked && /KONČANO/.test(l1.f.chip) && l1.r.t <= 19.5 && !!l1.u.parts.zarometi, JSON.stringify(l1));
+    const l2 = await lampBuy('Yellow');
+    T.check('the yellow ones out of the same drawer: the LED ones drawn out, onto the trolley, back into their drawer on its way out', lampLog(l2.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'drawer.back', 'lights']) && l2.f.old === 'real' && l2.f.put === 'cart' && l2.f.cart && !l2.f.cart.on && l2.f.cart.load === 0 && l2.f.parked && l2.r.t <= 21.5, JSON.stringify(l2));
+    const l3 = await lampBuy(null);
+    T.check('↺ SERIJSKO: the car\'s own lamps back on the trolley from the door (no drawer), the yellow ones out and into their drawer; no lamp on the car\'s parts any more',
+      lampLog(l3.f, '((hop,)?old\\.out,cart\\.parked|cart\\.parked,(hop,)?old\\.out)', ['cart.out', 'drawer.back', 'lights']) && l3.f.plan.lamp && !l3.f.plan.drawer && l3.f.old === 'real' && l3.f.put === 'cart' && l3.f.parked && /serijsko/i.test(l3.f.chip) && l3.r.t <= 17 && !l3.u.parts.zarometi, JSON.stringify(l3));
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
