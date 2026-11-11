@@ -327,11 +327,15 @@
   function inlineStyle(el) {
     const s = el.style; if (!s || !s.length) return false;
     const t = s.cssText;
+    // (our own rewrite coming back through the observer: left as it is, else a rewrite that is not its own fixed point would go round
+    // without end in the observer's microtasks)
+    if (t === el.__sdcss) return false;
     if (!/(^|;)\s*(color|background|border|text-shadow)[a-z-]*\s*:/i.test(t)) return false;
     const pick = t.split(';').filter((d) => /^\s*(color|background|border|text-shadow)/i.test(d)).join(';');
     if (/background-color:\s*transparent|--sd-c:/.test(t) && !/(^|;)\s*color\s*:/.test(t.replace(/--sd-c:[^;]*/g, '').replace(/caret-color[^;]*/g, '')) && !/background(-image)?:\s*(?!none)[^;]*gradient|background(-color)?:\s*(?!transparent)#|background:\s*rgb/.test(pick)) return false;
     const r = rewriteDecls(t); if (r == null) return false;
-    s.cssText = r; return true;
+    if (r === t) { el.__sdcss = t; return false; }
+    s.cssText = r; el.__sdcss = s.cssText; return true;
   }
 
   // ---- pictures and icons ----
