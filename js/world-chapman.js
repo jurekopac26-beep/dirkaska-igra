@@ -291,19 +291,19 @@
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return chGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       const HL = T.hill && T.hill.on[side > 0 ? 1 : 0][i] ? T.hill : null;   // (a hill behind the barrier line, Track.hill: no ditch, the ground up the hill's foot as the cars find it)
-      if (HL) { const Y = HL.y[side > 0 ? 1 : 0], D = HL.d; return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.05), -0.02), [bar + D[0], Y[i * 3]], [bar + D[1], Y[i * 3 + 1]], [bar + D[2], Y[i * 3 + 2]]]; }
+      if (HL) { const Y = HL.y[side > 0 ? 1 : 0], D = HL.d, b = i * HL.k; return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.05), -0.02), [bar + D[0], Y[b]], [bar + D[1], Y[b + 1]], [bar + D[2], Y[b + 2]]]; }   // (the verge to 2.1 m past the line; the ground's mesh on up the hill)
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     // the hills behind the barrier line (Track.hill; the user, 11. 11. 2026: no fence and no ditch where the ground rises behind it, the cars up onto
-    // the hill's foot): hillOut, how far past the line a car gets there (the most within 4 m); hillIn, a point (vrNear) nearer the road than that and
+    // the hill's foot): hillOut, how far past the line a car gets there (its soft limit, Track.hill.lim: the most within 4 m); hillIn, a point (vrNear) nearer the road than that and
     // 0.6 m (no wall, post, sign, plant, stone or spectator there: the cars would drive through it)
-    const hillOut = (i, si) => { if (!T.hill || !T.hill.on[si][i]) return 0; let m = 0; for (let k = Math.max(0, i - 2); k <= Math.min(N - 1, i + 2); k++) m = Math.max(m, T.hill.out[si][k]); return m; };
+    const hillOut = (i, si) => { if (!T.hill || !T.hill.on[si][i]) return 0; let m = 0; for (let k = Math.max(0, i - 2); k <= Math.min(N - 1, i + 2); k++) m = Math.max(m, T.hill.lim[si][k]); return m; };
     const hillIn = (nn) => !!(T.hill && nn.i >= 0 && T.hill.on[nn.lat > 0 ? 1 : 0][nn.i] && nn.dd < hillOut(nn.i, nn.lat > 0 ? 1 : 0) + 0.6);
     // (tools/chapman-hribi.mjs reads the ground behind the barrier line from here to write def.hills: g, the ground's height above the road o m out
-    // from the centre line; skip, where no hill may be: the bridge, the side roads' mouths)
+    // from the centre line; skip, where no hill may be: the bridge, the side roads' mouths; nets, the rockfall nets' runs [side, i, j, off], filled below)
     out.hillProbe = { g: (i, side, o) => { const q = side * o; return chGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - T.hy[i]; },
-      skip: (i, side) => !!(onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || stubVerge(SB, i, side, w + sw, side > 0 ? T.br[i] : T.bl[i])) };
+      skip: (i, side) => !!(onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || stubVerge(SB, i, side, w + sw, side > 0 ? T.br[i] : T.bl[i])), nets: [] };
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k * 0.99, k * 0.97]; };
@@ -518,7 +518,8 @@
         for (let i = 0; i < N; i++) if (i < i0 || i > i1 || onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || (T.gap && (T.gap[side > 0 ? 1 : 0][Math.max(0, i - 3)] || T.gap[side > 0 ? 1 : 0][Math.min(N - 1, i + 3)]))) nd[i] = 0;   // (none across a side road)
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++;
           if ((j - i) * T.ds >= 40) {
-            const off = 3 + 1.5 * rpHash(i, 81), Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
+            const off = 3 + 1.5 * rpHash(i, 81); out.hillProbe.nets.push([side, i, j, off]);   // (the cars' soft limit on a hill stops short of it: tools/chapman-hribi.mjs)
+            const Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
             for (let k = i; k < j - 1; k++) { const a = Qn(k, 0.1), b = Qn(k + 1, 0.1), c = Qn(k + 1, 4.3), d = Qn(k, 4.3); c[0] -= T.nx[k + 1] * side * 0.6; c[2] -= T.nz[k + 1] * side * 0.6; d[0] -= T.nx[k] * side * 0.6; d[2] -= T.nz[k] * side * 0.6;
               ng.quadUp(a, b, c, d, [nc, nc, nc, nc], [[0, 0], [1, 0], [1, 1], [0, 1]]); nNet++; }
             for (let k = i; k < j; k += 3) fallen.push([k * T.ds + (rpHash(k, 7) - 0.5) * 4, side]);   // (stones come down through the nets: on the shoulder below)

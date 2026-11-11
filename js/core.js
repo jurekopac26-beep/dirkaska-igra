@@ -305,18 +305,22 @@ const Core = (function () {
         }
       }
       // hills (def.hills; Chapman's Peak, written by tools/chapman-hribi.mjs from the terrain): where the ground rises behind the barrier line, no
-      // barrier (the user, 11. 11. 2026: no fence, no ditch, the car may drive up into the hill). y: per side ([0] left, [1] right) the ground's height
-      // at HILL_D past the barrier line, three a sample (at the line and on the road's side of it: the road's height); out: how far past the line the
-      // limit is (where the ground is HILL_W high, at HILL_D[2] at most; eased in and out over 8 m at a hill's ends); on: 1 on a hill. hillGround
-      // (the ground under a car's wheels, the pull down the slope), wallCollide (the limit)
+      // barrier and no wall (the user, 11. 11. 2026: no fence, no ditch, the car drives up into the hill, never into an unseen wall). d: how far past
+      // the barrier line the ground is read; y: per side ([0] left, [1] right) the ground's height there above the road, d.length a sample (on the
+      // road's side of the line: the road's height); lim: the soft limit, how far past the line a car's corner gets (short of the rockfall net, else
+      // where the ground is too high: the rock), smooth along the road and down to the line at a hill's ends; lx, lz: that limit's line in the world
+      // (every sample, the barrier line off a hill); on: 1 on a hill. hillGround (the ground under a car's wheels, the pull down the slope), hillSoft
+      // (the soft limit; wallCollide)
       this.hill = null;
-      if (def.hills && def.hills.n === N) {
-        const H = this.hill = { d: HILL_D, y: [new Float32Array(N * 3), new Float32Array(N * 3)], out: [new Float32Array(N), new Float32Array(N)], on: [new Uint8Array(N), new Uint8Array(N)] };
-        [def.hills.L, def.hills.R].forEach((runs, si) => { for (const [i0, str] of runs) { const n = str.length / 3;
-          for (let k = 0; k < n && i0 + k < N; k++) { const i = i0 + k; let po = 0, py = 0, o = -1;
-            for (let j = 0; j < 3; j++) { const y = H.y[si][i * 3 + j] = HILL_DIG.indexOf(str[k * 3 + j]) * 0.05;
-              if (o < 0 && y >= HILL_W) o = po + (HILL_D[j] - po) * (HILL_W - py) / Math.max(1e-6, y - py); po = HILL_D[j]; py = y; }
-            const f = Math.min(1, k / 4, (n - 1 - k) / 4); H.out[si][i] = (o < 0 ? HILL_D[2] : o) * f * f * (3 - 2 * f); H.on[si][i] = 1; } } });
+      if (def.hills && def.hills.n === N && def.hills.d) {
+        const D = def.hills.d, K = D.length, W = K + 1;
+        const H = this.hill = { d: D, k: K, y: [new Float32Array(N * K), new Float32Array(N * K)], lim: [new Float32Array(N), new Float32Array(N)], on: [new Uint8Array(N), new Uint8Array(N)],
+          lx: [new Float32Array(N), new Float32Array(N)], lz: [new Float32Array(N), new Float32Array(N)] };
+        [def.hills.L, def.hills.R].forEach((runs, si) => { for (const [i0, str] of runs) { const n = str.length / W; let l = 0;
+          for (let k = 0; k < n && i0 + k < N; k++) { const i = i0 + k; let y = 0;   // (the heights as rises from the last one, 5 cm steps; the limit as its change, 1 cm steps)
+            for (let j = 0; j < K; j++) H.y[si][i * K + j] = (y += HILL_DIG.indexOf(str[k * W + j])) * 0.05;
+            H.lim[si][i] = (l += HILL_DIG.indexOf(str[k * W + K]) - 31) * 0.01; H.on[si][i] = 1; } }
+          const sg = si ? 1 : -1, bar = si ? this.br : this.bl; for (let i = 0; i < N; i++) { const o = sg * (bar[i] + H.lim[si][i]); H.lx[si][i] = this.px[i] + this.nx[i] * o; H.lz[si][i] = this.pz[i] + this.nz[i] * o; } });
       }
       // side roads (def.sideRoads; open roads: the streets, service roads and forest roads that meet Vršič): see _buildStubs
       this.stubs = null; this.stubAt = null; this.stubNear = null; this.gap = null;
@@ -2232,12 +2236,14 @@ const Core = (function () {
   // the hills behind the barrier line (Track.hill; Chapman's Peak): the ground under a car's wheels there (none on the road's side of the barrier line:
   // a car that never comes past it drives as before), the car's height the wheels' mean, its tilt (c.hl: lat, lon, the ground's rise in the metre
   // to the car's right and ahead; the pull down the slope in the steps, the tilt in the renderer). c.hl only on a track with hills
-  const HILL_D = [0.3, 1.2, 2.1], HILL_W = 0.9, HILL_DIG = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  function hillY(H, si, i, o) {   // (the ground o m past the barrier line, side si, sample i; past HILL_D[2] on up as from HILL_D[1])
-    const y = H.y[si], b = i * 3;
-    if (o <= HILL_D[0]) return y[b] * o / HILL_D[0];
-    if (o <= HILL_D[1]) return y[b] + (y[b + 1] - y[b]) * (o - HILL_D[0]) / (HILL_D[1] - HILL_D[0]);
-    return y[b + 1] + (y[b + 2] - y[b + 1]) * (o - HILL_D[1]) / (HILL_D[2] - HILL_D[1]);
+  // (HILL_DIG: def.hills' digits; HILL_REM: closer to the limit than this a corner's speed into the hill is all taken (the last of an even stop:
+  // twice its rate for a step); HILL_YAW: the share of a wall's turn (CSK.wallYaw) the soft limit gives a car; HILL_MU: its scrape along the slope)
+  const HILL_DIG = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', HILL_REM = 0.001, HILL_YAW = 1, HILL_MU = 0.2;
+  function hillY(H, si, i, o) {   // (the ground o m past the barrier line, side si, sample i: between the points read; past the last one on up as before it)
+    const D = H.d, K = H.k, y = H.y[si], b = i * K;
+    if (o <= D[0]) return y[b] * o / D[0];
+    let j = 1; while (j < K - 1 && o > D[j]) j++;
+    return y[b + j - 1] + (y[b + j] - y[b + j - 1]) * (o - D[j - 1]) / (D[j] - D[j - 1]);
   }
   function hillGround(c, trk) {
     const H = trk.hill, q = c.q; if (c.hl) c.hl.on = 0;
@@ -2253,6 +2259,26 @@ const Core = (function () {
     if (!(y0 || y1 || y2 || y3)) return;
     const hl = c.hl || (c.hl = { on: 0, lat: 0, lon: 0 });
     hl.on = 1; hl.lat = (y1 + y3 - y0 - y2) / (4 * tw); hl.lon = (y0 + y1 - y2 - y3) / (2 * (A + B)); c.roadY += (y0 + y1 + y2 + y3) / 4;
+  }
+  // the soft limit up a hill (Track.hill.lim; wallCollide: a corner past the barrier line on a hill, at wx, wz from the car's middle): no wall
+  // there. The corner's speed into the hill is taken away so that it stops at the limit at the latest, at an even rate from where it is: its
+  // speed squared over twice the way left (the softest stop the slope leaves room for), never more; past the limit it is put back onto it, its
+  // speed into the hill gone, no bounce. The limit's line in the world (Track.hill.lx, lz) between the samples round the corner: on a bend, far
+  // from the road's middle, the road's own frame would tilt it. A rockfall net catches a car this way (the limit is short of it). The pull back
+  // down is the slope's (hillGround). No knock, no damage, no puncture, no wall's scrape (hitWall): only the slope's own along it (HILL_MU)
+  function hillSoft(c, trk, q, si, wx, wz, dt) {
+    const H = trk.hill, a = Math.min(q.a, trk.N - 2), X = H.lx[si], Z = H.lz[si], ex = X[a + 1] - X[a], ez = Z[a + 1] - Z[a], el = Math.hypot(ex, ez) || 1;
+    let nx = -ez / el, nz = ex / el; if ((nx * q.nx + nz * q.nz) * (si ? 1 : -1) < 0) { nx = -nx; nz = -nz; }   // (into the hill, square to the limit's line)
+    const rem = (X[a] - c.x - wx) * nx + (Z[a] - c.z - wz) * nz;   // (the way left to the limit; past it, less than 0)
+    if (rem < 0) { c.x += nx * rem; c.z += nz * rem; }
+    const vIn = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz;
+    if (vIn <= 0) return;
+    const dv = rem <= HILL_REM ? vIn : Math.min(vIn, vIn * vIn / (2 * rem) * dt), M = c.m.mass, wy = CSK.wallYaw * HILL_YAW;
+    const rn = wx * nz - wz * nx, J = dv / (1 / M + rn * rn / c.I * wy);   // (out of the hill, at the corner)
+    c.vx -= J * nx / M; c.vz -= J * nz / M; c.w -= rn * J / c.I * wy;
+    const tx = -nz, tz = nx, rt = wx * tz - wz * tx, vt = (c.vx - c.w * wz) * tx + (c.vz + c.w * wx) * tz;   // (the scrape along the slope)
+    const Jt = clamp(-vt / (1 / M + rt * rt / c.I * wy), -HILL_MU * J, HILL_MU * J);
+    c.vx += Jt * tx / M; c.vz += Jt * tz / M; c.w += rt * Jt / c.I * wy;
   }
 
   /* ---------------------------------------------------------------------
@@ -3818,7 +3844,7 @@ const Core = (function () {
     b.dirty = true;
   }
 
-  function wallCollide(c, trk, canFall) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall)
+  function wallCollide(c, trk, canFall, dt) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall; dt: the step, for a hill's soft limit, hillSoft)
     if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
       const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); }
       if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
@@ -3834,7 +3860,8 @@ const Core = (function () {
       else {
         const q = trk.query(px, pz, c.q.i, _q);
         let br = q.br, bl = q.bl, inner = -1e9, sd = 1;
-        if (trk.hill && !(q.k >= 0)) { const O = trk.hill.out, b = Math.min(trk.N - 1, q.a + 1); br += O[1][q.a] + (O[1][b] - O[1][q.a]) * q.t; bl += O[0][q.a] + (O[0][b] - O[0][q.a]) * q.t; }   // (on a hill: its limit up it, Track.hill)
+        if (trk.hill && !(q.k >= 0)) { const H = trk.hill, si = q.d > 0 ? 1 : 0, o = Math.abs(q.d) - (si ? q.br : q.bl);   // (on a hill past the barrier line: no wall, its soft limit up the slope, Track.hill)
+          if (o > 0 && (H.on[si][q.a] || H.on[si][Math.min(trk.N - 1, q.a + 1)])) { hillSoft(c, trk, q, si, wx, wz, dt || 1 / 120); continue; } }
         if ((c.isPlayer || c.pitWant || c.inPit || c.pitG) && trk.def.pit) { const pz2 = trk.pitAt(q.s); if (pz2) { sd = pz2.sd; if (sd < 0) { br = q.bl; bl = q.br; } if (pz2.gap) br = Math.max(br, pz2.lout); else if (c.inPit) { inner = pz2.inner; br = pz2.lout + (c.boxD != null ? trk.bayRoom(q.s, c.boxD) : 0); } } }   // in the pit lane: between the pit wall (the kerb in front of the stands) and the lane's outer edge (by the car's own box: out to the garages, Track.bayRoom; a lane on the left: all measured to that side, sd)
         if (trk.def.pit) { const u = trk.pitLead(q.s); if (u > 0) { const e = trk.w + 0.7 + 7 * u; if (trk.def.pit[0] > 0) br = Math.max(br, e); else bl = Math.max(bl, e); } }   // (the deceleration and acceleration lanes: open to every car, their barrier taken away out to their outer edge, Track.pitJ)
         const qd = q.d * sd;
@@ -7225,7 +7252,7 @@ const Core = (function () {
       const pair = (i, j) => { if ((!lv || Math.abs((cars[i].y || 0) - (cars[j].y || 0)) < 3) && !(pk && cars[i].finished && cars[j].finished) && !cars[i].fall && !cars[j].fall && !cars[i].pitG && !cars[j].pitG) carCollide(cars[i], cars[j]); };   // (a car on the pit road: a ghost to every other, Race.pitStep)
       if (cars.length <= BIG_FIELD) { for (let i = 0; i < cars.length; i++) for (let j = i + 1; j < cars.length; j++) pair(i, j); }
       else for (const p of this._pairs(ST)) { const i = p >> 10, j = p & 1023; if (ST && !(ST[i] && ST[j])) this._lodPair(i, j, pair, dt); else pair(i, j); }   // (a big field: only the pairs close enough to touch, in the same order; LOD: not two cars both between their steps)
-      if (SC) { for (const c of cars) if (!c.net && !c.pitG && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T); }
+      if (SC) { for (const c of cars) if (!c.net && !c.pitG && (!lv || Math.abs((c.y || 0) - (SC.y || 0)) < 3)) carCollide(SC, c); wallCollide(SC, T, false, dt); }
       if (this.pol) this.pol.collide();
       if (T.def.pit && !T.free) for (const c of cars) {   // (free driving, the new map: no pit road, the track's own lies under it) which side of the pit wall the car is on, on the pit road or not (before the walls push it; AI: on the way in for tyres)
         if (c.net) {   // (a friend's car online: a ghost as its own phone says (netPG, sent with its state), so both phones skip the same contacts; an older
@@ -7235,7 +7262,7 @@ const Core = (function () {
         }
         else if (c.isPlayer || c.pitWant || c.inPit || c.pitG) { const was = !!c.inPit; this.pitStep(c, dt, true); if (!!c.inPit !== was) this._pitLane(c); }   // (107: the time in the pit lane)
       }
-      for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true); }
+      for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (!c.net && !c.fall && !(ST && !ST[ci])) wallCollide(c, T, true, dt); }
       this._tlStep(dt, lv);   // (the semi-trailers: their knocks and walls, on the kingpin again)
       if (T.def.pit && !T.free) for (const c of cars) if (c.isPlayer || c.pitWant || c.inPit) this.pitStep(c, dt, false);  // speed limiter, stopping at the box, repair
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
@@ -8094,12 +8121,12 @@ const Core = (function () {
       }
       for (let k = 0; k < A.length; k++) {
         const c = cars[A[k]], R = c.tl; if (c.net || c.fall || R.fall) continue;
-        wallCollide(R, T, true); if (R.rl) R.rl = null;
+        wallCollide(R, T, true, dt); if (R.rl) R.rl = null;
         if (R.fall) { R.torn = 1; R.vy = Math.max(0, R.vy || 0); if (c.dmgMode) applyDamage(c, 0.04, -c.m.len * 0.4, 0); if (R.next && !R.next.fall) { R.next.fall = { t: 0 }; R.next.vy = R.vy; } continue; }   // (over the edge: torn off the kingpin, a jerk at the tractor's tail; the second tank with it)
         tlJoin(c, R, dt);
         const R2 = R.next; if (!R2 || R2.fall) continue;   // (the second tank: back on the dolly where the first one is now, its walls, on the dolly again)
         tlSnap(R, R2);
-        wallCollide(R2, T, true); if (R2.rl) R2.rl = null;
+        wallCollide(R2, T, true, dt); if (R2.rl) R2.rl = null;
         if (R2.fall) { R2.torn = 1; R2.vy = Math.max(0, R2.vy || 0); continue; }
         tlJoin(R, R2, dt);
       }
