@@ -271,6 +271,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // the tractor's look: the TITAN's (its shape, colours, chrome), a little rust low on it: the doors' lower edges, the steps, the bumper's lip
     look: {
       get body() { return titan().body; }, get wheels() { return titan().wheels; }, regions: 'none',
+      hi: true, budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (the TITAN's: its cabin and its Visoki details come with its build)
       build(K) {
         K.lookOf('titan').build(K);
         const R1 = [0.45, 0.24, 0.12], R2 = [0.36, 0.18, 0.09];
