@@ -122,7 +122,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         door: [0.9, -0.4], bumpF: 0.18, bumpR: 0.2, bumpY: [0.4, 0.6],
         engine: [-1.25, 1.0], engRear: true,                                 // (the V10 under the glass cover)
         crush: { x0: -0.8, x1: 0.1, z: 0.62 } },                             // (the roof between the rear window and the windscreen's top)
-      wheels: { style: 'std', spokes: 5, w: 0.25, wR: 0.3, rimK: 0.74, rim: [0.56, 0.57, 0.6], cap: [0.16, 0.16, 0.17], gap: 0.045 },
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
+      wheels: { style: 'std', spokes: 5, w: 0.25, wR: 0.3, rimK: 0.74, rim: [0.56, 0.57, 0.6], cap: [0.16, 0.16, 0.17], gap: 0.045, seg: 32, segHi: 64 },
       regions: (std) => std.map(r => r.part === 'hood' ? Object.assign({}, r, { x: [r.x[0], 2.08] })
         : r.part === 'bumperF' ? Object.assign({}, r, { bands: ['tuck', 'side', 'window', 'edge', 'crown'], y: [-1, 2] }) : r),
       build(K) {
@@ -218,7 +220,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { K.box(-2.16, 0.95, sd * 0.6, 0.12, 0.09, 0.03, 0, B); K.endplate([[-2.03, 1.0], [-2.32, 1.045], [-2.32, 1.105], [-2.05, 1.06]], sd * 0.862, 0.016, B); }
         }), { noCrush: true, noDent: true, hinge: [[-2.06, 1.02, -0.6], [-2.06, 1.02, 0.6]] });
         // ---- the door mirrors on black stalks, the wiper ----
-        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.7, 0.85, sd * 0.94, { w: 0.13, h: 0.075, d: 0.17, arm: B, z0: sd * 0.86 }); });   // (the garage's in their place: mounts.ogledala)
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.7, 0.85, sd * 0.94, { w: 0.13, h: 0.075, d: 0.17, arm: B, z0: sd * 0.86, crack: 1 }); });   // (the garage's in their place: mounts.ogledala)
         K.deli('vlecne_kljuke', () => {}); K.deli('lovilci_blata', () => {});   // (stock: none; the garage's tow points, mudflaps and sills' guards)
         K.part('body', () => { for (const id of ['streha', 'stresna_zajemalka', 'antena']) K.deli(id, () => {}); });   // (stock: none; the garage's on the roof)
         K.part('trunk', () => K.deli('zaluzije', () => {}));   // (stock: none; the garage's louvres on the glass engine cover)
@@ -233,13 +235,27 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('hood', [0.91, 0.85, -0.6], [0.91, 0.85, 0.6]);
         K.hinge('trunk', [-0.8, 1.0, -0.5], [-0.8, 1.0, 0.5]);
         for (const sd of [-1, 1]) K.hinge(sd < 0 ? 'doorL' : 'doorR', [0.89, 0.3, sd * 0.93], [0.89, 0.8, sd * 0.93]);
-        // ---- inside (seen once a part is off): the seats, the dashboard, the tunnel, the wheel, the bulkhead behind the seats; the V10's block
-        //      and banks under the glass; the luggage tub under the bonnet ----
+        // ---- Visoki (Nastavitve · Detajli avtov: Visoki; the player's and the showroom's car): the tail lamps' chrome rings' centres, the
+        //      driver low under the roof's peak ----
+        if (K.hi) {
+          const F = K.fitted, LR = (n, sd) => n + (sd < 0 ? 'L' : 'R');   // (F: a garage part in a detail's place: none of it there)
+          if (!F.zadnje_luci) for (const sd of [-1, 1]) for (const z of [0.69, 0.52]) K.discX(-2.2625, 0.849, sd * z, 0.014, 6, [0.6, 0.6, 0.62], -1, { host: LR('tail', sd) });
+          K.driver(-0.3, 0.97, -0.35, { inner: true, r: 0.11, lean: 0.38, hands: [0.18, 0.64, 0.15], knee: [0.46, 0.5, 0.16], feet: [0.76, 0.22, 0.11], suit: [0.2, 0.22, 0.26], helmet: [0.2, 0.55, 0.3] });
+        }
+        // ---- inside (seen once a part is off): the floor, the seats, the dashboard and its wheel (left-hand drive), the tunnel with its
+        //      lever, the pedals, the door cards, the bulkhead behind the seats; the V10's block and banks under the glass; the luggage tub
+        //      under the bonnet ----
         const IN = { inner: true, part: 'body' };
-        for (const sd of [-1, 1]) K.seat(-0.22, 0.33, sd * 0.35, { w: 0.46, l: 0.46, back: 0.6, tilt: 0.4, col: SEAT });
-        K.box(0.52, 0.48, 0, 0.36, 0.24, 1.44, 0, TRIM, null, false, IN);
-        K.box(0.1, 0.13, 0, 0.9, 0.24, 0.24, 0, TRIM, null, false, IN);
-        K.cyl([0.2, 0.62, -0.35], [0.22, 0.655, -0.35], 0.16, B, Object.assign({ n: 8 }, IN));
+        { const C = K.cab, SZ = -0.35, CARP = [0.08, 0.08, 0.085];
+          C.face([[-0.72, 0.15, -0.72], [0.98, 0.15, -0.72], [0.98, 0.15, 0.72], [-0.72, 0.15, 0.72]], CARP, [0, 1, 0]);
+          C.face([[0.98, 0.15, -0.72], [0.98, 0.15, 0.72], [0.98, 0.6, 0.72], [0.98, 0.6, -0.72]], CARP, [-1, 0, 0]);
+          K.box(0.1, 0.13, 0, 0.9, 0.24, 0.24, 0, C.PL2, C.PL, true, IN);   // (the tunnel)
+          C.dash({ x: 0.4, y: 0.66, d: 0.36, w: 0.72, dz: SZ, col: TRIM, col2: [0.18, 0.18, 0.19] });
+          C.steer({ c: [0.2, 0.64, SZ], ax: [0.7, -0.71], r: 0.16, rr: 0.016, to: [0.4, 0.5, SZ] });
+          for (const sd of [-1, 1]) C.seat(-0.26, 0.24, sd * 0.35, { w: 0.46, top: 0.62, lean: 0.4, col: SEAT, col2: TRIM });
+          C.console(0.06, 0.37, { l: 0.32 });
+          C.pedals(0.78, 0.17, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.38, 0.86], y: [0.26, 0.74], z: 0.86, insert: SEAT, crank: false, speaker: false }); }
         { const x = -0.74, w = L.prop(x, 'w') - 0.05, wt = L.prop(x, 'wt') - 0.05, yb = L.prop(x, 'yb') + 0.03, ybl = L.prop(x, 'ybelt'), yt = L.prop(x, 'yt') - 0.04, yc = top(x, 0) - 0.04;
           K.plate([[x, yb, -w], [x, yb, w], [x, ybl, w], [x, yt, wt], [x, yc, 0.3], [x, yc, -0.3], [x, yt, -wt], [x, ybl, -w]], 0.03, TRIM, IN); }
         K.box(-1.24, 0.2, 0, 0.9, 0.34, 0.42, 0, METAL, null, false, IN);

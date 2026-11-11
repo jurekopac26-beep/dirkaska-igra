@@ -115,6 +115,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // along each side, a sun strip, the number panels on the doors (generic: no marks)
     look: {
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver, the tyres in 64)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
       body: {
         //       x       w      yb     ybelt  wt     yt     cr     kind  tuck
         secs: [[-2.0, 0.76, 0.25, 0.48, 0.72, 0.53, 0.02, 'b', 0.09],       // the rally bumper's rear face (the end cap)
@@ -347,12 +348,23 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // (the aerial on Visoki; the garage's on both, in the body: mounts.antena)
         K.part('body', () => K.deli('antena', () => { if (K.hi) { const y0 = L.topY(-1.1, 0.32); K.box(-1.1, y0 - 0.004, 0.32, 0.04, 0.02, 0.02, 0, B, null, false, { part: 'body' }); K.bar([-1.1, y0 + 0.012, 0.32], [-1.36, y0 + 0.26, 0.32], 0.0035, B, { n: 4, part: 'body' }); } }));
         if (K.hi) {
-          K.cyl([0.28, 0.86, -0.36], [0.24, 0.88, -0.36], 0.17, B, { n: 8, inner: true, part: 'body' });   // (the steering wheel)
           K.driver(-0.42, 1.06, -0.36, { inner: true, r: 0.12, lean: 0.3, hands: [0.22, 0.88, 0.15], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
         }
-        // ---- inside: two buckets, the dashboard, the roll cage, the transverse four in the bay ----
-        for (const sd of [-1, 1]) K.seat(-0.38, 0.48, sd * 0.36, { w: 0.48, back: 0.74, col: [0.1, 0.1, 0.11] });
-        K.box(0.6, 0.6, 0, 0.3, 0.26, 1.42, 0, D, null, false, { inner: true, part: 'body' });
+        // ---- inside (the inner block: seen once a door opens, a pane breaks or a part is off; K.cab's pieces, docs/avti-kolibri.md): the
+        //      bare floor and the firewall, the tunnel, the race dashboard and its wheel (left-hand drive), two shell buckets with
+        //      harnesses, the tall hand brake by the sequential lever, the pedals, the bare door cards; the roll cage, the transverse four in
+        //      the bay, the spare wheel in the boot. Nothing taller than the old seats' backs (1.22) under the roof ----
+        { const C = K.cab, IN = C.IN, SZ = -0.36, FL = [0.08, 0.08, 0.085], SH = [0.08, 0.08, 0.09], SC = [0.15, 0.15, 0.16], RD = [0.75, 0.1, 0.08];
+          C.face([[-1.1, 0.3, -0.76], [0.78, 0.3, -0.76], [0.78, 0.3, 0.76], [-1.1, 0.3, 0.76]], FL, [0, 1, 0]);                   // the floor
+          C.face([[0.78, 0.3, -0.76], [0.78, 0.3, 0.76], [0.78, 0.84, 0.76], [0.78, 0.84, -0.76]], FL, [-1, 0, 0]);                // the firewall
+          K.box(0.1, 0.3, 0, 1.2, 0.17, 0.24, 0, C.PL2, C.PL, true, IN);                                                             // the tunnel
+          C.dash({ x: 0.5, y: 0.84, d: 0.34, w: 0.68, dz: SZ, col: [0.09, 0.09, 0.1], col2: [0.15, 0.15, 0.16], style: 'race' });
+          C.steer({ c: [0.26, 0.87, SZ], ax: [0.75, -0.66], r: 0.165, rr: 0.017, to: [0.46, 0.74, SZ] });
+          for (const sd of [-1, 1]) { K.box(-0.38, 0.3, sd * 0.36, 0.4, 0.18, 0.38, 0, C.PL, null, true, IN);                       // the seats on their rails
+            C.seat(-0.38, 0.48, sd * 0.36, { w: 0.48, top: 0.68, lean: 0.3, shell: true, belt: 'harness', col: SH, col2: SC, strap: RD }); }
+          C.console(0.14, 0.47, { l: 0.3, seq: true });
+          C.pedals(0.72, 0.33, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.56, 0.74], y: [0.4, 0.84], z: 0.8, insert: SC, crank: false, speaker: false, strap: RD }); }
         const CG = [0.78, 0.79, 0.82], cy = 1.3;
         K.cage([[[-0.8, 0.3, -0.6], [-0.8, cy, -0.5]], [[-0.8, 0.3, 0.6], [-0.8, cy, 0.5]], [[-0.8, cy, -0.5], [-0.8, cy, 0.5]], [[-0.8, 0.3, -0.6], [-0.8, cy, 0.5]],
           [[0.62, 0.62, -0.62], [0.2, cy, -0.46]], [[0.62, 0.62, 0.62], [0.2, cy, 0.46]], [[0.2, cy, -0.46], [-0.8, cy, -0.5]], [[0.2, cy, 0.46], [-0.8, cy, 0.5]],

@@ -95,8 +95,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.25, 1.15, 1.3, 2.16, 1.1, 2.18, 0.02, 'b', 0.06]],         // the cab's front face beside the bonnet (the bulkhead once it is off)
         eye: { x: 0.5, y: 2.5, near: 0.25, tilt: 0.1, style: 'closed' },      // (high up behind the windscreen, the bonnet's front over the dashboard)
         decalX: -2.3, decalY: 2.8, decalRz: 0, decalS: 1.15,               // (the start number on the box's flat roof, behind the hatch)
-        crush: { x0: -0.3, x1: 1.12, z: 1.06 }, cage: true },              // (only the cab's roof crushes; a rally truck's roll cage)
-      wheels: { style: 'knob', w: 0.42, rimK: 0.48, rim: [0.8, 0.8, 0.78], gap: 0.1 },
+        crush: { x0: -0.36, x1: 1.12, z: 1.06 }, cage: true },              // (only the cab's roof crushes; a rally truck's roll cage)
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
+      wheels: { style: 'knob', w: 0.42, rimK: 0.48, rim: [0.8, 0.8, 0.78], gap: 0.1, seg: 32, segHi: 64 },
       regions: 'none',
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, CH = K.chrome, D = [0.15, 0.15, 0.16], FRM = [0.19, 0.19, 0.2], STL = [0.34, 0.35, 0.37];
@@ -130,7 +132,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.bar([-0.37, 1.55, sd * 1.19], [-0.37, 2.45, sd * 1.19], 0.018, CH, { n: 4, part: 'body' });   // the grab handle behind the door
         }
         for (const z of [-0.5, 0.36]) K.bar([1.2, 2.245, z - 0.36], [1.186, 2.3, z + 0.36], 0.012, B, { n: 4, part: 'wiperFront' });   // the wipers (parked along the windscreen's base)
-        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(1.16, 2.5, sd * 1.43, { w: 0.07, h: 0.42, d: 0.2, col: B, arm: D, z0: sd * 1.18 }); });   // the big mirrors on their arms (the garage's: mounts.ogledala)
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(1.16, 2.5, sd * 1.43, { w: 0.07, h: 0.42, d: 0.2, col: B, arm: D, z0: sd * 1.18, crack: 1 }); });   // the big mirrors on their arms (the garage's: mounts.ogledala)
         // ---- the roof lamps: four round spot lamps on a bar over the windscreen (never crushed with the roof) ----
         K.part('body', () => K.deli('relijske_luci', () => {   // (the garage's rally lamps in their place: mounts.relijske_luci)
           K.box(0.86, 3.02, 0, 0.14, 0.07, 1.74, 0, D);
@@ -238,12 +240,28 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           if (!vk) K.box(-3.12, 0.8, 0, 0.12, 0.16, 0.22, 0, RED);   // (the hitch)
           for (const sd of [-1, 1]) K.rect(-3.131, 0.93, sd * 0.8, 0.22, 0.06, [0.85, 0.08, 0.06], { dir: '-x' });
         }, { hinge: [[-3.0, 0.9, -0.8], [-3.0, 0.9, 0.8]] });
-        // ---- inside (seen once a part is off): three seats (the driver, the navigator, the mechanic between them), the dashboard, the big
-        //      wheel, the roll cage; the engine under the bonnet, the radiator behind the grille ----
-        for (const z of [-0.56, 0.56]) K.seat(0.35, 1.8, z, { w: 0.55, l: 0.5, back: 0.75 });
-        K.seat(0.02, 1.78, 0, { w: 0.48, l: 0.45, back: 0.7 });
-        K.box(1.02, 1.72, 0, 0.32, 0.45, 2.2, 0, D, null, false, { inner: true, part: 'body' });
-        K.cyl([0.86, 2.08, -0.56], [0.78, 2.2, -0.56], 0.24, [0.08, 0.08, 0.09], { n: 8, inner: true, part: 'body' });
+        // ---- Visoki (Nastavitve · Detajli avtov: Visoki; the player's and the showroom's car): the head lamps' bulbs, the tail lamps' bars;
+        //      the driver in his harness at the big wheel ----
+        if (K.hi) {
+          const F = K.fitted, LR = (n, sd) => n + (sd < 0 ? 'L' : 'R');   // (F: a garage part in a detail's place: none of it there)
+          for (const sd of [-1, 1]) {
+            if (!F.zarometi) for (const z of [0.86, 1.06]) K.discX(2.96, 1.36, sd * z, 0.022, 6, [1, 0.99, 0.94], 1, { host: LR('head', sd) });
+            if (!F.zadnje_luci) K.rect(-3.1095, 1.68, sd * 0.73, 0.12, 0.01, [0.3, 0.02, 0.03], { dir: '-x', host: LR('tail', sd) }); }
+          K.driver(0.42, 2.47, -0.56, { inner: true, r: 0.12, lean: 0.16, hands: [0.8, 2.12, 0.2], knee: [0.76, 1.98, 0.17], feet: [1.02, 1.42, 0.12], suit: [0.85, 0.42, 0.08], helmet: [0.95, 0.95, 0.93] });
+        }
+        // ---- inside (seen once a part is off): the cab's floor, its rear wall, three bucket seats with harnesses (the driver, the navigator,
+        //      the mechanic between them, a little back), the dashboard and the big wheel (left-hand drive), the gear lever, the pedals, the
+        //      plain door cards with straps, the roll cage; the engine under the bonnet, the radiator behind the grille ----
+        { const C = K.cab, IN = C.IN, SZ = -0.56, FL = [0.2, 0.2, 0.21], SH = [0.08, 0.08, 0.085], SC = [0.14, 0.14, 0.16], ST = [0.85, 0.42, 0.08];
+          C.face([[-0.3, 1.36, -1.06], [1.16, 1.36, -1.06], [1.16, 1.36, 1.06], [-0.3, 1.36, 1.06]], FL, [0, 1, 0]);
+          C.face([[-0.3, 1.36, 1.06], [-0.3, 1.36, -1.06], [-0.3, 2.9, -1.06], [-0.3, 2.9, 1.06]], FL, [1, 0, 0]);
+          C.dash({ x: 0.88, y: 2.16, d: 0.3, w: 1.0, dz: SZ, col: [0.1, 0.1, 0.11], col2: [0.16, 0.16, 0.17], style: 'race' });
+          C.steer({ c: [0.82, 2.14, SZ], ax: [0.6, -0.8], r: 0.22, rr: 0.02, to: [1.0, 1.9, SZ] });
+          for (const [x, y, z] of [[0.35, 1.8, -0.56], [0.35, 1.8, 0.56], [0.02, 1.78, 0]]) { K.box(x, 1.36, z, 0.4, y - 1.36, 0.4, 0, C.PL, null, true, IN);
+            C.seat(x, y, z, { w: z ? 0.52 : 0.46, top: 0.7, lean: 0.16, shell: true, belt: 'harness', col: SH, col2: SC, strap: ST }); }
+          C.console(0.62, 1.5, { l: 0.22, z: -0.2, brake: false, seq: true });
+          C.pedals(1.04, 1.38, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { x: [0.08, 1.1], y: [1.45, 2.18], z: 1.06, insert: FL, crank: false, speaker: false, strap: ST }); }
         const cg = [];
         for (const sd of [-1, 1]) cg.push([[-0.28, 1.36, sd * 1.06], [-0.28, 2.88, sd * 0.98]], [[1.0, 1.4, sd * 1.06], [0.92, 2.88, sd * 0.98]], [[0.92, 2.88, sd * 0.98], [-0.28, 2.88, sd * 0.98]]);
         cg.push([[-0.28, 2.88, -0.98], [-0.28, 2.88, 0.98]], [[0.92, 2.88, -0.98], [0.92, 2.88, 0.98]], [[-0.28, 1.36, -1.06], [-0.28, 2.88, 0.98]]);

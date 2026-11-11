@@ -128,7 +128,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         lamps: [[1.7, 0.68, 0.58], [-1.72, 0.87, 0.67]],                     // (the glow: the head lamps' projectors, the tail lamps' middles)
         engine: [1.4, 0.88],
       },
-      wheels: { style: 'std', spokes: 5, w: 0.2, rim: [0.82, 0.83, 0.85], cap: [0.3, 0.3, 0.32], gap: 0.05 },
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
+      wheels: { style: 'std', spokes: 5, w: 0.2, rim: [0.82, 0.83, 0.85], cap: [0.3, 0.3, 0.32], gap: 0.05, seg: 32, segHi: 64 },
       // the standard regions, but the rear bumper's top goes with the bumper, the tailgate is the panel between the lamps up to the roof (its
       // glass, the spoiler's roof lip), the bonnet the cowl to its front edge between the wings, the quarters below the belt (the C-pillars
       // and the quarter glass stay: a lost quarter lies flat)
@@ -287,18 +289,49 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.deli('auspuh', () => K.exhaust(-1.93, 0.27, -0.48, 0.035, 0.2, { n: 6 }));          // (the garage's in its place: mounts.auspuh)
         }, { hinge: [[-1.9, 0.33, -0.6], [-1.9, 0.33, 0.6]] });
         // ---- the mirrors, the wipers ----
-        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.48, 0.965, sd * 0.87, { w: 0.1, h: 0.1, d: 0.15, z0: sd * 0.79 }); });   // (the garage's: mounts.ogledala)
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.48, 0.965, sd * 0.87, { w: 0.1, h: 0.1, d: 0.15, z0: sd * 0.79, crack: 1 }); });   // (the garage's: mounts.ogledala)
         // (none stock: the garage's aero, extra lamps, sunroof, roof scoop, aerials (in the body), tow points and mud flaps: K.deli, their mounts)
         for (const id of ['aero', 'relijske_luci', 'streha', 'stresna_zajemalka', 'vlecne_kljuke', 'lovilci_blata']) K.deli(id, () => {});
         K.part('body', () => K.deli('antena', () => {}));   // (the aerials the body's: over a door's edge on the roof too)
         for (const z of [-0.36, 0.2]) K.bar([0.99, 0.97, z - 0.26], [0.93, 1.0, z + 0.26], 0.01, B, { n: 3, part: 'wiperFront' });   // (a part: both blades come off together)
         // ---- hinges: the doors at their front edges ----
         K.hinge('doorL', [0.71, 0.4, -0.82], [0.71, 0.85, -0.82]); K.hinge('doorR', [0.71, 0.4, 0.82], [0.71, 0.85, 0.82]);
-        // ---- inside: the seats (the rear bench seen through the tailgate's opening), the dashboard, the transverse four in the bay ----
-        for (const sd of [-1, 1]) K.seat(-0.4, 0.5, sd * 0.36, { w: 0.48, back: 0.7 });
-        K.seat(-0.98, 0.45, 0, { w: 1.1, back: 0.55 });
-        K.box(0.55, 0.62, 0, 0.3, 0.24, 1.4, 0, D, null, false, { inner: true, part: 'body' });
-        K.engine(1.4, 0.36, 0, { l: 0.5, w: 0.6, h: 0.5 });
+        // ---- Visoki (Nastavitve · Detajli avtov: Visoki; the player's and the showroom's car): a generic badge in the grille (no make's),
+        //      the handles' chrome grips, the doors' shut line at the sill, the head lamps' bulbs, the tail lamps' bars, the tow point's
+        //      arrow; the driver at the wheel ----
+        if (K.hi) {
+          const C = K.cab, F = K.fitted, LR = (n, sd) => n + (sd < 0 ? 'L' : 'R');   // (F: a garage part in a detail's place: none of it there)
+          if (!F.maska) C.badge(1.876, 0.6, 0, 1, 'body', 0.026);
+          for (const sd of [-1, 1]) { const door = LR('door', sd), dz = { dir: sd < 0 ? '-z' : 'z', host: door };
+            if (!F.vrata) K.rect(-0.47, 0.88, sd * (pr(-0.47, 'w') + 0.0095), 0.11, 0.008, K.chrome, dz);
+            DC.side([[-0.585, 0.33], [0.715, 0.33], [0.715, 0.338], [-0.585, 0.338]], D, [sd], 0.009, { host: door });
+            if (!F.zarometi) K.discX(1.792, 0.62, sd * 0.5, 0.012, 6, [1, 0.99, 0.94], 1, { host: LR('head', sd) });
+            if (!F.zadnje_luci) K.rect(-1.8415, 0.84, sd * 0.49, 0.06, 0.006, [0.3, 0.02, 0.03], { dir: '-x', host: LR('tail', sd) }); }
+          K.face([[-1.9355, 0.4, 0.4], [-1.9355, 0.4, 0.44], [-1.9355, 0.43, 0.42]], [0.75, 0.1, 0.08], { part: 'bumperR' });   // (the arrow over the tow point)
+          K.driver(-0.38, 1.17, -0.36, { inner: true, r: 0.115, lean: 0.24, hands: [0.205, 0.865, 0.15], knee: [0.38, 0.66, 0.16], feet: [0.78, 0.37, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
+        }
+        // ---- inside (the inner block: seen once a door opens, a pane breaks or a part is off; K.cab's pieces, docs/avti-kolibri.md): the
+        //      carpet, the tunnel, the firewall; the dashboard with its dials (the driver's left), the wheel, two cloth seats, the rear bench
+        //      (seen through the tailgate's opening), the console, the pedals, the doors' cards; the boot's floor behind the bench; the
+        //      transverse four in the bay; the radiator behind the mouth, the tail's panel. Nothing taller
+        //      than the old seats' backs (1.174) under the roof: its room to cave in (crash.test.mjs, the roof field) ----
+        { const C = K.cab, IN = C.IN, SZ = -0.36, CARP = [0.08, 0.08, 0.085], CL = [0.2, 0.21, 0.24], CL2 = [0.09, 0.09, 0.1];
+          C.face([[-1.2, 0.3, -0.77], [0.86, 0.3, -0.77], [0.86, 0.3, 0.77], [-1.2, 0.3, 0.77]], CARP, [0, 1, 0]);                 // the carpet
+          C.face([[0.86, 0.3, -0.77], [0.86, 0.3, 0.77], [0.86, 0.84, 0.77], [0.86, 0.84, -0.77]], CARP, [-1, 0, 0]);              // the firewall
+          K.box(0.2, 0.3, 0, 1.2, 0.16, 0.22, 0, C.PL2, C.PL, true, IN);                                                             // the tunnel
+          C.dash({ x: 0.43, y: 0.86, d: 0.4, w: 0.7, dz: SZ, col: [0.1, 0.1, 0.11], col2: [0.16, 0.16, 0.17] });
+          C.steer({ c: [0.22, 0.86, SZ], ax: [0.75, -0.66], r: 0.17, rr: 0.017, to: [0.44, 0.72, SZ] });
+          for (const sd of [-1, 1]) { K.box(-0.4, 0.3, sd * 0.36, 0.42, 0.2, 0.4, 0, C.PL, null, true, IN);                          // the seats on their runners
+            C.seat(-0.4, 0.5, sd * 0.36, { w: 0.48, top: 0.62, col: CL, col2: CL2 }); }
+          K.box(-0.98, 0.3, 0, 0.5, 0.15, 1.2, 0, C.PL, null, true, IN);
+          C.bench(-0.98, 0.45, { w: 1.2, top: 0.47, heads: [-0.38, 0.38], col: CL, col2: CL2 });
+          C.console(0.3, 0.46, { l: 0.34 });
+          C.pedals(0.82, 0.33, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.56, 0.68], y: [0.4, 0.86], z: 0.78, insert: CL, crank: false, speaker: false });
+          C.face([[-1.86, 0.5, -0.7], [-1.24, 0.5, -0.7], [-1.24, 0.5, 0.7], [-1.86, 0.5, 0.7]], CARP, [0, 1, 0]);                 // the boot's floor
+          K.engine(1.4, 0.36, 0, { l: 0.5, w: 0.6, h: 0.5 });
+          C.nose({ x: 1.72, w: 0.55, y: [0.3, 0.58], rad: [0.8, 0.26], bar: 1.8, barY: 0.3, barW: 1.1 });
+          C.tail({ x: -1.86, w: 0.6, y: [0.36, 0.62], bar: -1.89, barY: 0.38, barW: 1.1 }); }
         // (the garage's hidden parts round the engine and at the wheels, none stock: K.deli, js/deli/skriti.js)
         for (const id of ['akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});
       },

@@ -16,8 +16,8 @@
 //    V from behind; from behind again and again the user's order; a mirror off, its door window 75 %; only the Kolibri, only switched on.
 //    The user's rules over the table (1B, 2B, 3B): the first knock on an end breaks one of its lamps; the face and the tail (bumpers, bonnet,
 //    spoiler) neither hang nor come off till the car is 70 % gone, then as the table has it; an end crushed no deeper than 0.3 m till then
-// 10. the Medved, the Kozorog, the Lev R: the table theirs too, the user's rules over it as the Kolibri's; a crushed end caves the roof in,
-//    the harder the knock the deeper
+// 10. the Medved, the Kozorog, the Lev R, the pilot's Tiger GT and Superkombi (docs/avti-kolibri.md): the table theirs too, the user's
+//    rules over it as the Kolibri's; a crushed end caves the roof in, the harder the knock the deeper
 // 11. the roof field: every knock (any side, a rollover's roof contact, a landing) caves the roof in more, never past its limit, never
 //    through the seats, the driver, a cage (Goljat's outer one too), the posts' tops never through it (a rival's coarse body too); a
 //    wreck's start number and a patrol car's light bar gone; open cars and karts none, their drivers and hoops never lifted; the roof's
@@ -308,9 +308,11 @@ try {
   const tt = await run({ xBody: 1, xGlass: 1 }, () => { const P = window.__game.race.player; return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: Render.viewOf(P).body.material.customProgramCacheKey() }; });
   T.check('Kolibri off (the default): no table, the body\'s material as ever but for its side scrapes (dirtyCarCgS: kolibri.test.mjs); another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCgS' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, tornado: tt.r }));
 
-  // 10. the cars being reworked (the Medved, the Kozorog, the Lev R): the table theirs too (the spoiler: a wing where the car has one);
-  // a crushed end caves the roof in, the harder the knock the deeper (the roof's own top, what lies on it left out)
-  for (const id of ['kozorog', 'lev', 'medved']) {
+  // 10. the cars being reworked (the Medved, the Kozorog, the Lev R; the pilot's Tiger GT and Superkombi, docs/avti-kolibri.md): the table
+  // theirs too (the spoiler: a wing where the car has one); a crushed end caves the roof in, the harder the knock the deeper (the roof's
+  // own top, what lies on it left out). A front bumper that carries an aero car's downforce (the Superkombi's: its splitter is no part of
+  // its own) comes off as before, the core's rule (core.js maskHeld): the bonnet still neither hangs nor comes off
+  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'modras', 'sakal', 'ris']) {   // (not perun: its rear window in the front strong row, no quarter panes, open in docs/avti-kolibri.md; not titan, cisterna: out of XT_MIN, the roof field moved the cab's rear wall; not kamen, orel: the cage right under the roof, a knock from behind sinks it under 15 % of rlim, as on main)
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
@@ -319,6 +321,7 @@ try {
       out.fs = scene([0.3, 1, 0]); out.bl = scene([0.05, -1, 0]); out.bm = scene([0.15, -1, 0]); out.bs = scene([0.3, -1, 0]); out.bm7 = scene([0.15, -1, 0], 0.7);
       out.fl = scene([0.05, 1, 0.3]); out.rl = scene([0.05, -1, -0.3]);   // (the first knock on an end: its nearer lamp, the user's 1B)
       out.wing = !!Render.viewOf(P).body.geometry.userData.ranges.wing;
+      { const bf = Core.partsOf(P.m).bumperF; out.dfF = P.aeroK0 != null && !!bf && bf.df > 0; }   // (its front bumper carries downforce: not held to 70 %)
       // the nose knocked again and again to ~60 %: its end no deeper than 0.3 m (the roof field's own points apart), nothing of the face loose (3B, 2B)
       { R.repairCar(P); Render.frame(0.016, 1, P, 'chase', {}); out.n6 = [];
         const endMax = () => { const v = Render.viewOf(P), xc = v.xc, a = v.body.geometry.attributes.position.array, Rr = xc.rest, n = Rr.length / 3, skip = new Uint8Array(n), G = xc.rf && xc.rf.G, dv = v.kit && v.kit.deadV;
@@ -331,8 +334,9 @@ try {
     T.check(`${id}: the table (front strong: windscreen 100 %, door windows 75 %; rear light: only the rear window 50 %)` + (C.wing ? '; rear medium: its wing hangs from 70 %, under it it stays on (the user\'s 2B, a wing for downforce too)' : ''),
       eq(C.fs.panes, { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && eq(C.bl.panes, { R: 0.5 }) && (!C.wing || (C.bm7.ajar.includes('wing') && !C.bm.ajar.includes('wing') && !C.bm.dead.includes('wing'))), JSON.stringify({ fs: C.fs.panes, bl: C.bl.panes, bm: C.bm.ajar, bm7: C.bm7.ajar }));
     T.check(`${id}: the first knock on the front breaks its nearer head lamp, on the rear its nearer rear lamp (the user's 1B)`, C.fl.lamps[1] && !C.fl.lamps[0] && C.rl.lamps[2] && !C.rl.lamps[3], JSON.stringify({ front: C.fl.lamps, rear: C.rl.lamps }));
-    T.check(`${id}: the nose knocked again and again to ~60 %: its end no deeper than 0.3 m, the bumper and the bonnet neither hang nor off, the bonnet not torn (the user's 2B, 3B)`,
-      C.n6.every(q => q.dmg < 0.7 && q.end <= 0.3 + 1e-3 && !q.ajar.some(n => /^(bumperF|hood)$/.test(n)) && !q.dead.some(n => /^(bumperF|hood)$/.test(n)) && !q.torn) && C.n6[5].dmg >= 0.5, JSON.stringify(C.n6));
+    const face = C.dfF ? /^hood$/ : /^(bumperF|hood)$/;
+    T.check(`${id}: the nose knocked again and again to ~60 %: its end no deeper than 0.3 m, the bumper and the bonnet neither hang nor off, the bonnet not torn (the user's 2B, 3B)` + (C.dfF ? '; its bumper carries downforce: off as before' : ''),
+      C.n6.every(q => q.dmg < 0.7 && q.end <= 0.3 + 1e-3 && !q.ajar.some(n => face.test(n)) && !q.dead.some(n => face.test(n)) && !q.torn) && C.n6[5].dmg >= 0.5 && (id !== 'superkombi' || C.dfF), JSON.stringify(C.n6));
     T.check(`${id}: from behind the roof caves in, the harder the knock the deeper (mean drop light < medium < strong, the strong one 3 cm or more; a caged roof 15 % of the deepest it can go)`, rf[0] > 0 && rf[0] < rf[1] && rf[1] < rf[2] && rf[2] >= Math.min(0.03, 0.15 * C.bs.rf.rlim) && C.bs.roof.max < 0.3, JSON.stringify([C.bl.roof, C.bm.roof, C.bs.roof, C.bs.rf]));
     T.check(`${id}: no NaN, no page errors`, C.nan === 0 && !ct.errors.length, ct.errors.slice(0, 3).join(' | '));
   }
@@ -349,6 +353,7 @@ try {
   // posts as built (darkFn); then a pit stop's repair (the crew's work stepped as repair.test.mjs does it) brings the colours back to the
   // car's as built, and Race.repairCar builds it afresh in them
   const RSEQ = [[0.15, -1, 0], [0.15, 1, -0.6], [0.15, 0.1, -1], [0.15, -1, 0.6], [0.3, 1, 0], [0.3, 0, 1], [0.05, -1, -0.6], 'top', [0.15, 1, 0.6], [0.15, -0.1, 1]], NK = RSEQ.length;
+  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'kamen', 'orel', 'sakal', 'ris'];   // (render.js XT_MIN, not titan, cisterna: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
   // the crew's repair stepped by hand (repair.test.mjs) on the car Q (frames(k): k frames drawn): the painted points' colours against the
   // car's as built (xc.col0), the roof's and all of them, before, through it and after (Race.repairCar: built afresh); and at every one of
   // its 16 steps (REPAIR_N; the middle of each, and 0, 0.3, 0.65, 0.95) the roof shell's points (nNew) and the area (in plan) of its facets,
@@ -384,7 +389,7 @@ try {
   // (black paint, a car's dark trim too, on its warm way as the black car's: on it, as dark as it should be or stopped at the glass's
   // edge or held back with its facet, never lighter, no nearer the glass colours than 0.066 or than it was)
   const bkOk = (DK) => DK.bk === 0 || (DK.offWay < 1e-4 && DK.bkErr < 1e-4 && DK.bkStopBad === 0 && DK.bkUp === 0 && (DK.bkFar === null || DK.bkFar >= 0.066 - 1e-4) && (DK.bkNear === null || DK.bkNear >= -1e-4));
-  for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
+  for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['tiger', 'normal'], ['superkombi', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
     const rr = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: det, carId: rival ? 'tornado' : id }, (A) => {
       const SEQ = A[0], g = window.__game, R = g.race, P = R.player;
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
@@ -410,15 +415,16 @@ try {
       const v = Render.viewOf(P); o.wreck = { roofDmg: P.roofDmg, dec: v.dec ? v.dec.visible : null, onRoof: !!(v.dec && v.xc && v.xc.rf && v.xc.rf.dec) };
       return o; }, [RSEQ, id, rival, paintFn, asideFn, darkFn, pitFn]);
     const S = rr.r.s1, F = S[0].rf, name = `${id}${det === 'high' ? ' (Visoki)' : ''}${rival ? ' (a rival, its coarse body)' : ''}`, mean = S.map(q => q.roof.mean), inc = mean.map((m, k) => +(m - (k ? mean[k - 1] : 0)).toFixed(3));
-    const need = S.map((q, k) => { const h = RSEQ[k % NK]; return h === 'top' || q.eff >= 0.1 ? 0.003 : q.eff >= 0.03 ? 0.0015 : -0.001; }), side = !rival && (id === 'kolibri' || id === 'medved' || id === 'rally' || id === 'truck');
+    const need = S.map((q, k) => { const h = RSEQ[k % NK]; return h === 'top' || q.eff >= 0.1 ? 0.003 : q.eff >= 0.03 ? 0.0015 : -0.001; }), side = !rival && (id === 'kolibri' || id === 'medved' || id === 'rally' || id === 'truck'), xm = XTM.includes(id);
     T.check(`roof field, ${name}: a field with a limit (lref ${F && F.lref})` + (rival ? ', the coarse body' : ''), !!F && F.lref >= 0.02 && (!rival || S[0].xd === 0), JSON.stringify(F) + ' xd ' + S[0].xd);
     const fill = S.map(q => q.rf.rlim ? q.roof.mean / q.rf.rlim : 0);   // (how near the deepest the roof's top can go)
     T.check(`roof field, ${name}: after every knock the roof more caved in (its mean drop up 3 mm or more, 1.5 on the light one (a knock the field takes: 0.03 or more as the core makes it), while under 70 % of its limit; 1.5 mm while under 90 %; its deepest never less)`,
-      inc.every((d, k) => { const f = k ? fill[k - 1] : 0; return d >= (f < 0.7 || need[k] < 0 ? need[k] : f < 0.9 ? 0.0015 : -0.001) - 1e-9; }) && S.every((q, k) => !k || q.roof.max >= S[k - 1].roof.max - 1e-4), 'mean ' + mean.join(' ') + ' | max ' + S.map(q => q.roof.max).join(' ') + ' | fill ' + fill.map(f => f.toFixed(2)).join(' '));
+      inc.every((d, k) => { const f = k ? fill[k - 1] : 0; return d >= (xm && k && S[k - 1].dmg >= 1 - 1e-9 ? -0.001 : f < 0.7 || need[k] < 0 ? need[k] : f < 0.9 ? 0.0015 : -0.001) - 1e-9; }) && S.every((q, k) => !k || q.roof.max >= S[k - 1].roof.max - 1e-4), 'mean ' + mean.join(' ') + ' | max ' + S.map(q => q.roof.max).join(' ') + ' | fill ' + fill.map(f => f.toFixed(2)).join(' '));
     // (the Kolibri's roof follows its damage, core.js roofOf (roof0 0) and render.js's kind 3: at its limit as the car is gone. These knocks,
-    // unscaled (Core.applyDamage: none of its knockK), take it to 100 % by the 6th: its budget at the last knock that leaves it under 90 %)
-    const kb = id === 'kolibri' ? Math.max(0, S.findIndex(q => q.dmg >= 0.9 - 1e-9) - 1) : 5;
-    T.check(`roof field, ${name}: the budget lasts (after 6 knocks under 88 % of its limit${id === 'kolibri' ? '; the Kolibri: while under 90 % gone' : ''})`, kb >= 3 && fill[kb] < 0.88, 'at ' + kb + ': ' + fill.map(f => f.toFixed(2)).join(' ') + ' | dmg ' + S.map(q => q.dmg.toFixed(2)).join(' '));
+    // unscaled (Core.applyDamage: none of its knockK), take it to 100 % by the 6th: its budget at the last knock that leaves it under 90 %.
+    // The pilot's cars with the Kolibri's roof, XTM, the same: at their limit as they are gone, none deeper after)
+    const kb = xm ? Math.max(0, S.findIndex(q => q.dmg >= 0.9 - 1e-9) - 1) : 5;
+    T.check(`roof field, ${name}: the budget lasts (after 6 knocks under 88 % of its limit${xm ? '; the Kolibri\'s roof: while under 90 % gone' : ''})`, kb >= 3 && fill[kb] < 0.88, 'at ' + kb + ': ' + fill.map(f => f.toFixed(2)).join(' ') + ' | dmg ' + S.map(q => q.dmg.toFixed(2)).join(' '));
     T.check(`roof field, ${name}: never past a limit, no facet over, the roof clear of what is in the way (5 mm, or as near as it was built), the headliner too, the posts' tops under it, nothing in the way lifted, no NaN`,
       S.every(q => q.rf && q.rf.over === 0 && q.rf.flip === 0 && (q.rf.clear === null || q.rf.clear >= Math.min(0.005, q.rf.clear0) - 1e-4) && (q.rf.clearL === null || q.rf.clearL >= 0) && (q.rf.clearF === null || q.rf.clearF >= -1e-4) && q.rf.obsUp <= 1e-5 && q.nan === 0),
       JSON.stringify(S.map(q => q.rf && [q.rf.over, q.rf.flip, q.rf.clear, q.rf.clear0, q.rf.clearL, q.rf.clearF, q.rf.obsUp, q.nan])));
@@ -438,7 +444,7 @@ try {
         mean[NK - 1] >= 0.25 * F.lref && S[NK - 1].roof.max <= F.lmax + 0.005, JSON.stringify({ mean: mean[NK - 1], max: S[NK - 1].roof.max, lref: F.lref, lmax: F.lmax }));
       T.check(`roof field, ${name}: the same field every time (the knocks again on the repaired car)`, rr.r.s2.every((q, k) => q.rf && q.rf.hash === S[k].rf.hash), S.map(q => q.rf.hash).join(' ') + ' / ' + rr.r.s2.map(q => q.rf && q.rf.hash).join(' '));
       T.check(`roof field, ${name}: a hard landing caves it in too`, rr.r.land.roof.mean >= 0.005 && rr.r.land.over === 0, JSON.stringify(rr.r.land));
-      if (id === 'kolibri') T.check(`roof field, ${name}: a wreck's start number on its crushed roof gone (as in the old way)`, rr.r.wreck.roofDmg >= 0.5 && rr.r.wreck.dec === false, JSON.stringify(rr.r.wreck));
+      if (xm) T.check(`roof field, ${name}: a wreck's start number on its crushed roof gone (as in the old way)`, rr.r.wreck.roofDmg >= 0.5 && rr.r.wreck.dec === false, JSON.stringify(rr.r.wreck));
     }
     T.check(`roof field, ${name}: no page errors`, !rr.errors.length, rr.errors.slice(0, 3).join(' | '));
   }
