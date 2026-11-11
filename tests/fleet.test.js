@@ -41,6 +41,8 @@ const { DT, seeded } = require('./lib/sim.js');
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
   'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
+// patch files of the 11 (docs/avti-kolibri.md, skupina starejsi): js/cars/<file> with patch defs only, of these ids, after the roster's files
+const PATCH_FILES = { 'stari.js': ['kaze', 'vortex', 'pico', 'strega', 'muscle', 'rally', 'truck', 'ev'] }, NPATCH = Object.values(PATCH_FILES).reduce((a, l) => a + l.length, 0);
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
 // the road cars, 18.3 formula, 19.9 lm): each category's own members inside it, widened for what the category adds (a 38 kW micro
@@ -74,7 +76,7 @@ const t0 = Date.now(), orig = Math.random;
 //      (no other global, no top-level let / const / class: those clash when the page loads every file into one scope; nothing of the
 //      page touched while loading) ----
 {
-  const dir = path.join(ROOT, 'js', 'cars'), files = fs.readdirSync(dir).filter(f => f.endsWith('.js')).sort();
+  const dir = path.join(ROOT, 'js', 'cars'), files = fs.readdirSync(dir).filter(f => f.endsWith('.js')).sort().filter(f => !PATCH_FILES[f]);
   check('js/cars: a file for every roster vehicle and none more', files.length === ROSTER.length && ROSTER.every(id => files.includes(id + '.js')), files.length + ' files');
   for (const f of files) {
     const id = f.slice(0, -3), src = fs.readFileSync(path.join(dir, f), 'utf8'), ctx = vm.createContext({});
@@ -87,7 +89,15 @@ const t0 = Date.now(), orig = Math.random;
     if (!only.length || only.includes(id)) check(`${f}: alone in an empty sandbox, run twice: one def a run, id '${id}', no other global or top-level name`,
       !err && k1 === 'VEHICLE_DEFS' && n1 === 1 && k2 === 'VEHICLE_DEFS' && Array.isArray(D) && D.length === 2 && D.every(d => d && d.id === id), err || `globals ${k2 || '-'}, ${n1} then ${D ? D.length : 0} defs`);
   }
-  const S = pageScripts(path.join(ROOT, 'index.html')), cars = S.filter(s => /^js\/cars\//.test(s)), iCars = S.map((s, i) => /^js\/cars\//.test(s) ? i : -1).filter(i => i >= 0);
+  for (const f of Object.keys(PATCH_FILES)) { const src = fs.existsSync(path.join(dir, f)) ? fs.readFileSync(path.join(dir, f), 'utf8') : null, ctx = vm.createContext({}); let err = src ? '' : 'missing';
+    try { if (src) { vm.runInContext(src, ctx, { filename: f }); vm.runInContext(src, ctx, { filename: f }); } } catch (e) { err = e.message; }
+    const D = ctx.VEHICLE_DEFS, want = PATCH_FILES[f].concat(PATCH_FILES[f]).join();
+    check(`${f}: a patch file of the 11, run twice: only patch defs of ${PATCH_FILES[f].join(', ')}, no other global`, !err && Object.keys(ctx).join() === 'VEHICLE_DEFS' && Array.isArray(D) &&
+      D.every(d => d && d.patch === true && OLD.includes(d.id)) && D.map(d => d.id).join() === want, err || `${D ? D.length : 0} defs`); }
+  const S0 = pageScripts(path.join(ROOT, 'index.html')), pf = S0.map((s, i) => PATCH_FILES[s.slice(8)] && /^js\/cars\//.test(s) ? i : -1).filter(i => i >= 0);
+  check('index.html: the patch files of the 11 after the vehicle files, right before core.js', pf.length === Object.keys(PATCH_FILES).length &&
+    pf.every((v, i) => v === S0.findIndex(s => /(^|\/)core\.js$/.test(s)) - pf.length + i), pf.join());
+  const S = S0.filter(s => !PATCH_FILES[s.slice(8)]), cars = S.filter(s => /^js\/cars\//.test(s)), iCars = S.map((s, i) => /^js\/cars\//.test(s) ? i : -1).filter(i => i >= 0);
   const iTrack = Math.max(...S.map((s, i) => /^js\/tracks\//.test(s) ? i : -1)), iCore = S.findIndex(s => /(^|\/)core\.js$/.test(s));
   check('index.html: the vehicle files after the tracks, before core.js, in the roster (registration) order', cars.map(s => s.slice(8, -3)).join() === ROSTER.join() &&
     iCars[0] > iTrack && iCars[iCars.length - 1] < iCore && iCars.every((v, i) => !i || v === iCars[i - 1] + 1), cars.length + ' tags');   // (js/lang.js may sit between the tracks and the vehicles)
@@ -109,7 +119,7 @@ const H = require('./lib/handling.js')(C);
 const model = (id) => C.MODELS.find(m => m.id === id);
 const track = (id) => new C.Track(C.TRACKS.find(d => d.id === id));
 check('Core: the 11 first, in their places, then all the new ones in the roster order; no def skipped', C.MODELS.slice(0, 11).map(m => m.id).join() === OLD.join() && C.MODELS.slice(11).map(m => m.id).join() === ROSTER.join() &&
-  C.DEFS.length === ROSTER.length && C.DEFS_SKIPPED.length === 0, C.MODELS.length + ' models, ' + C.DEFS.length + ' defs, skipped ' + JSON.stringify(C.DEFS_SKIPPED));
+  C.DEFS.length === ROSTER.length + NPATCH && C.DEFS_SKIPPED.length === 0, C.MODELS.length + ' models, ' + C.DEFS.length + ' defs, skipped ' + JSON.stringify(C.DEFS_SKIPPED));
 
 // ---- 2. the registry: every model sound (the 11 and the new ones) ----
 {
