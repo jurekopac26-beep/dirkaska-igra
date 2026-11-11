@@ -166,7 +166,7 @@ check('rain: the winner slower in the rain than in the dry', WET > DRY, `dry ${D
     let t = 0, k = 0; while (!P.finished && t < 900) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
     Math.random = orig; return P.finished ? P.finishTime : 0; };
   const dry = run(false), wet = run(true);
-  check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01 (dry and wet)', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && Math.abs(dry * 1.01 - M.cs[0]) < 1.5 && Math.abs(wet * 1.01 - M.wet.cs[0]) < 2.5,
+  check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01 (the dry; this frozen track keeps its old wet medals: the autopilot in the rain 5-20 % slower than the old wet gold, a third less grip in the wet, docs/dez-sneg.md)', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && Math.abs(dry * 1.01 - M.cs[0]) < 1.5 && wet * 1.01 / M.wet.cs[0] > 1.05 && wet * 1.01 / M.wet.cs[0] < 1.2,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${dry.toFixed(1)} s / ${wet.toFixed(1)} s in the rain`);
 }
 
