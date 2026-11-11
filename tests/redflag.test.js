@@ -99,7 +99,7 @@ const RESTART = ['red', 'redHold', 'redGo', 'scIn', 'scGone', 'green'];
 {
   // (at 75 s: the two wrecks stop within RED.near of each other and block the road, as at 80, 85 and 90 s. Since the parts a car sheds stop
   // as sheet metal does (docs/trki-realizem.md »Odpadli deli«) a wreck is no longer held back by its own parts: at 50, 60 and 70 s the two
-  // roll on 100 to 200 m apart and only the safety car comes. The user's, 10. 11. 2026: »Redkejša zastava je ok«)
+  // roll on 100 to 330 m apart (measured: 102, 324 and 206 m) and only the safety car comes. The user's, 10. 11. 2026: »Redkejša zastava je ok«)
   const S = run('bathurst', { at: 75, hook: (r) => pileUp(r, 2, 2), lapped: true, again: true });
   const R0 = S.red || {}, H = S.hold || {}, G = S.go || {}, i = S.ks.indexOf('red');
   // (the safety car may come out a moment before it, for the first car stopped: it goes in at once, and the race's safety car is still to come)
