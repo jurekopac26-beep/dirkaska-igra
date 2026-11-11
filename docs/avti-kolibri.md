@@ -14,7 +14,7 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 - Vsi imajo sklop 1 (`krilo`, `zarometi`, `platisca`, razen kjer avto dela nima) in razbijanje luči, tablice in brisalcev (oktober 2026, `docs/deli.md`, »Drugi avti po kategorijah«).
 - **Manjka vsem 32:** 35 elementov sklopov 2 in 3 (mesta, ovoji, pregled). Razbijanje (luči v ohišjih, poskus sklopa 1) sta JASTREB in PANTER dobila 6. 11., TITAN 8. 11. v #322.
 - Element, ki na avtu ne pride v poštev, v `mounts` ni (garaža ga ne ponudi). Merila: brez strehe (odprti avti, BLISK) ni `streha`, `stresna_zajemalka`, `zaluzije`; brez stekla ni `zatemnitev`, `soncni_pas`, `zaluzije`; brez vrat ni `vrata`; brez serijskega ogledala ni `ogledala`; brez luči (BLISK, BIZON spredaj, STRELICA, MRAVLJA) ni `zarometi`, `zadnje_luci`, `zmigavci`; brez pokrova prtljažnika (pickup, buggy, MIŠKA s priprtim pokrovom motorja zadaj) ni `prtljaznik`; odprta kolesa ni `lovilci_blata` in pragov `aero`. Skriti deli so tam, kjer je motor (zadaj: MIŠKA, SKAKAČ; v sredini: PEŠČENJAK, BIZON …).
-- **Ne prenašamo:** KOLIBRIJEVE notranjosti (3A; dokler je avto cel, se ne riše), podrobnosti Visokih (`look.hi`; telefon riše Normalne), fizike (`roof0`, `knockK`, `spinK`) in KOLIBRIJEVEGA serijskega videza (strešni spojler z zavorno lučjo, bela črta): vsak avto ostane svoj.
+- **Ne prenašamo:** KOLIBRIJEVE notranjosti (3A; dokler je avto cel, se ne riše), podrobnosti Visokih (`look.hi`; telefon riše Normalne), fizike (`roof0`, `knockK`, `spinK`) in KOLIBRIJEVEGA serijskega videza (strešni spojler z zavorno lučjo, bela črta): vsak avto ostane svoj. Izjema za 30 avtov: »Prednost: 30 avtov« spodaj.
 
 ## Pravila
 
@@ -36,7 +36,7 @@ Tema »Posodobitev vseh avtov na raven KOLIBRIJA« (odločitev uporabnika 6. 11.
 | Seja B (biketraveler, prevzem 7. 11.) | `super` | `modras`, `perun`, `skorpijon` |
 | jure.kopac26 od ned. 8. 11. (v #322, ki že vsebuje #304; tabla #382, komentar 6709363288) | `tovornjaki` | `titan` (+ razbijanje) |
 
-Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 32; mesta za dele iz garaže dobijo v #480 (biketraveler), razdelek »Odprto: skupina `novi`« (odločitev uporabnika 11. 11. 2026 ob ~00.05 prek Mateja, tabla #382, komentar 6781849560). Veja skupine se spoji v zbirno vejo (fetch, merge, push; nikoli force push), ko so povezani testi lokalno zeleni. Po vsaki skupini nova seja s predajo spodaj (izjema dveh sej z avti poleg Dreves A velja do pon. 9. 11. ob 0.00, nato največ 2 seji s kodo).
+Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 32; mesta za dele iz garaže dobijo v #480 (biketraveler), razdelek »Odprto: skupina `novi`« (odločitvi uporabnika 11. 11. 2026 ob ~00.05 in ~00.15 prek Mateja, tabla #382, komentarja 6781849560 in 6781978213). Veja skupine se spoji v zbirno vejo (fetch, merge, push; nikoli force push), ko so povezani testi lokalno zeleni. Po vsaki skupini nova seja s predajo spodaj (izjema dveh sej z avti poleg Dreves A velja do pon. 9. 11. ob 0.00, nato največ 2 seji s kodo).
 
 ## Postopek na avto
 
@@ -62,12 +62,20 @@ Istih avtov ne delata dve seji. Novi avti iz #460 (prej #361 in #396) niso med 3
 ## Odprto: skupina `starejsi`
 - Deset starejših avtov dobi posodobitev na raven KOLIBRIJA: KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV in SAMUM 4x4 (prošnja na tabli #382, komentar 6707802738, točka 2).
 - Njihovi modeli so v `js/core.js`, ne v `js/cars/`. STRELA EV in SAMUM 4x4 vozita v treh misijah, zato po spremembi poženi še teste misij.
-- Račun in termin določijo v tedenskem načrtu v ponedeljek 9. 11.; do takrat skupine ne začni.
+- Osem jih je v #480 (biketraveler); FORMULA ORKAN in TAIFUN LM gresta vanj skupaj s skupino `novi` (spodaj; odločitev uporabnika 11. 11. 2026 ob ~00.15 prek Mateja, tabla #382, komentar 6781978213; prej: račun in termin v tedenskem načrtu 9. 11.).
 
 ## Odprto: skupina `novi`
-- Deset avtov iz #460 dobi mesta za vse dele iz garaže na raven KOLIBRIJA: OSA R, ŠAKAL D, GAMS RH, OREL GT3, VRAN 01, KUNA S, MERJASEC V8, RIS G, TUR 6x6 in VIDRA E (odločitev uporabnika 11. 11. 2026 ob ~00.05 prek Mateja, tabla #382, komentar 6781849560). Ostali avti mesta že imajo (MRAVLJA, STRELICA in BLISK z manj elementi, ker nekateri na njih ne pridejo v poštev).
-- Delajo se v #480 (biketraveler), skupaj s starejšimi avti (manjkata FORMULA ORKAN in TAIFUN LM) in #626 (rezervno kolo TUR in VRAN, partyslo): en PR, en krog testov, ~21 h dela, na `main` ~17. 11., po garaži in pred Trki + Poškodbe.
+- Enajst avtov iz #460 (na `main` od 9. 11., zdaj 2–3 od 38 mest za dele, ZRCALNI VLAK 3) dobi mesta za vse dele iz garaže na raven KOLIBRIJA: OSA R, ŠAKAL D, GAMS RH, OREL GT3, VRAN 01, KUNA S, MERJASEC V8, RIS G, TUR 6x6, VIDRA E in ZRCALNI VLAK (odločitev uporabnika 11. 11. 2026 ob ~00.15 prek Mateja, tabla #382, komentar 6781978213; prej ob ~00.05 deset avtov brez ZRCALNEGA VLAKA, komentar 6781849560). Dogovor »na raven KOLIBRIJA jih pripelje njihov lastnik« s tem nadomesti biketraveler. Ostali avti mesta že imajo (MRAVLJA, STRELICA in BLISK z manj elementi, ker nekateri na njih ne pridejo v poštev).
+- Delajo se v #480 (biketraveler), skupaj s starejšima FORMULA ORKAN in TAIFUN LM (skupaj 13 avtov) in #626 (rezervno kolo TUR in VRAN, partyslo): en PR, en krog testov, ena seja brez več agentov, ~15–20 h dela (2–3 dni), na `main` ~17. 11. (Matej, tabla #382, komentar 6782506960), po garaži in **pred Trki** (#608; Trki in Poškodbe so en PR). Vrstni red »biketraveler, pred trki« je izbira uporabnika ob ~00.15 in velja namesto »V #480, pred poškodbami« iz ~00.05.
 - partyslo avtov iz #460 ne spreminja, dokler je #480 odprt; po združitvi #480 zapre #626.
+
+## Prednost: 30 avtov na raven KOLIBRIJA
+
+- Odločitev uporabnika 11. 11. 2026 ob ~02.40 prek Mateja (tabla #382, komentar 6784505738), dobesedno: »30 avtov na raven KOLIBRIJA prestavi v seznamu kot prioritetno«.
+- Avti: RIS G, SOKOL R, LEV S, TIGER GT, OREL GT3, TORNADO V8, KOZOROG TC, GOZDAR, MEDVED 4x4, TUR 6x6, ZMAJ 85, GAMS RH, LEV R, BURJA, JASTREB 6, ŠKORPIJON H, PERUN V12, VIHAR, MODRAS V10, JELEN GT, ŠAKAL D, PANTER 6, SUPERKOMBI, GOLJAT, STRELA EV, FORMULA ORKAN, TAIFUN, TITAN, TITAN CISTERNA, KAMEN PUŠČAVA.
+- Za teh 30 se prenese tudi, kar je zgoraj pod »Ne prenašamo«: notranjost, podrobnosti Visokih (`look.hi`; o njih uporabnik odloči po slikah) in nastavitve trkov (`knockK`, `roof0`, `spinK`; samo fizika trkov). KOLIBRIJEV serijski videz se ne prenaša. Mesta za dele (#480) in poškodbe (Trki + Poškodbe) ostanejo, kot so.
+- Dela biketraveler takoj po #480 in pred Trki + Poškodbe, ~47 h, na `main` ~25. 11.; Trki + Poškodbe se zato zamaknejo na ~7. 12. (`docs/vrsta.md`, »Načrtovano«).
+- Poskus na treh avtih (TIGER GT, MEDVED 4x4, SUPERKOMBI) za slike prej/potem naredi jure.kopac26 (uporabnik ob ~02.45: »naredi slike kako bodo avti zgledali potem ko bodo posodobljeni«): koda na veji `avti-kolibri/pilot`, slike na `slike/avti-kolibri`, brez PR. Kodo prevzame biketraveler; teh treh avtov medtem ne dela nihče drug.
 
 ## Predaja
 
