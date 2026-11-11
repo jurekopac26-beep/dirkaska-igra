@@ -1050,6 +1050,8 @@ const Render = (function () {
                                frame (a colour: a line over and under it), frameH, box (a solid panel instead of a flat one), host }
        K.mirror(x, y, z, o)            a door mirror (z > 0 the right one): its housing (o.col, default the paint) at (x, y, z), the glass
                                facing back, the arm in to o.z0; o { w, h, d, arm (colour), part }: part mirrorL / mirrorR when the table has it
+       K.mirGlass(rim, M)              a mirror of the car's own shape (its housing K.skin, the cap left open): its glass in the rim's outline,
+                               that cracks as K.mirror's; M { x, y, z, w, h, d, root, r }: the housing's middle and size, the stalk's foot
        K.exhaust(x, y, z, r, len, o)   a pipe ending at x (o.dir -1: pointing back), dark inside; o { n, col (K.chrome), hole (the inside's colour) }
        K.number(x, y, z, h, o)         a start-number panel (door, side, bonnet: no draw call of its own): the car's own number in seven-segment
                                digits, lit per car; centred at (x, y, z) on the surface, h tall, facing o.dir ('z' the right side, '-z' the
@@ -1907,6 +1909,17 @@ const Render = (function () {
       if (o.crack) { const c = [gx, y + 0.2 * gh, z + sd * 0.25 * gd], rim = [[gx, y - gh, z - gd], [gx, y - gh, z], [gx, y - gh, z + gd], [gx, y + gh, z + gd], [gx, y + gh, z], [gx, y + gh, z - gd]];
         kx.prim(x - w / 2, y, z, () => { for (let i = 0; i < 6; i++) g.triO(c, rim[i], rim[(i + 1) % 6], KIT_MIRROR, [gx + 1, y, z]); }, Object.assign({}, o, { part, sub: 'mglass' + side }));
         if (part) (kx.mirs || (kx.mirs = {}))[part] = { x: x * sx, y, z: z * sz, w: w * sx, h, d: d * sz, sd, root: [(x + 0.03) * sx, y - h * 0.45, z0 * sz], r: 0.014 }; }
+    };
+    // a door mirror of the car's own shape (not K.mirror) with K.mirror's crack: rim, its glass's outline (an upright face looking back, its
+    // points in order round it), drawn as the same fan round a point a little up and out of its middle (mglassL / mglassR: xtMirGlass), and
+    // the mirror's place for its fold (kitFold): M { x, y, z (its housing's middle), w, h, d (its size along, up, across), root (its stalk's
+    // foot on the body), r (the stalk's radius: 0.014) }. In place of the housing's own glass (K.skin's cap left open there)
+    K.mirGlass = (rim, M) => {
+      if (!Array.isArray(rim) || rim.length < 3 || !M || !Array.isArray(M.root)) kitFail('mirGlass: a rim of 3+ points and the mirror { x, y, z, w, h, d, root }');
+      const sd = M.z < 0 ? -1 : 1, side = sd < 0 ? 'L' : 'R', part = 'mirror' + side, n = rim.length, gx = rim.reduce((s, p) => s + p[0], 0) / n;
+      const c = [gx, M.y + 0.2 * (M.h / 2 - 0.01), M.z + sd * 0.25 * (M.d / 2 - 0.01)];
+      kx.prim(gx, M.y, M.z, () => { for (let i = 0; i < n; i++) g.triO(c, rim[i], rim[(i + 1) % n], KIT_MIRROR, [gx + 1, M.y, M.z]); }, { part, sub: 'mglass' + side });
+      (kx.mirs || (kx.mirs = {}))[part] = { x: M.x * sx, y: M.y, z: M.z * sz, w: M.w * sx, h: M.h, d: M.d * sz, sd, root: [M.root[0] * sx, M.root[1], M.root[2] * sz], r: M.r || 0.014 };
     };
     K.exhaust = (x, y, z, r, len, o) => { o = o || {}; const dir = o.dir || -1; kx.prim(x - dir * len / 2, y, z, () => tubeX(g, x - dir * len, x, y, z, r, o.n || 8, o.col || K.chrome, o.hole || [0.03, 0.03, 0.035]), o); };   // (o.hole: the dark inside; o.inner as for any primitive)
     // a start-number panel: the car's own number (1..100) in seven-segment digits (two places and a middle one for a single digit), lit per car
@@ -9064,7 +9077,7 @@ const Render = (function () {
      A hit from behind also dents the rear bumper in a V (some 10 cm in its middle on a light one, creased) with the tailgate's foot, and
      bends the spoiler down in its middle (xPush: xc.vr). The table's wheels are the core's (it decides when one comes off). A picture is
      drawn one pane a frame (a rival's: one over all of them), the player's car never waiting on a rival's */
-  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi']);   // (the cars being reworked: the table theirs first, the others later)
+  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'sokol']);   // (the cars being reworked: the table theirs first, the others later)
   const xTab = (c) => !!(XC.glass || XC.body) && !!c && !!c.m && XT_CARS.has(c.m.id) && !!c.m.kit;
   const XT_ST = [0, 0.5, 0.7, 0.75, 1], XT_KEYS = ['W', 'R', 'DL', 'DR', 'QL', 'QR'];
   const XT_ROWS = {
@@ -9087,7 +9100,7 @@ const Render = (function () {
   })();
   // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
   // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
-  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
+  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'sokol']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
     const sd = w < 0 ? 'L' : 'R';
