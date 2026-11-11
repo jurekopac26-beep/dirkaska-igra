@@ -67,7 +67,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 
 ## Zdaj (meritev, 1. 11. 2026)
 
-Gledalci ob progi so instancirani kockasti ljudje (`crowdGeo` v `js/world.js`, 112 oglišč na osebo). Kamera za avtom, telefon ležeče, 12 mest na krogu:
+Gledalci ob progi so bili ob tej meritvi instancirani kockasti ljudje (`crowdGeo` v `js/world.js`, 112 oglišč na osebo; od #432 imajo človeško postavo s 115 lastnimi in 165 indeksnimi oglišči, `docs/ljudje-grafika.md`). Kamera za avtom, telefon ležeče, 12 mest na krogu:
 
 | Proga | Ljudi ob progi | Njihova oglišča na sličico (Nizka: povprečje / največ) | Visoka |
 |---|---|---|---|

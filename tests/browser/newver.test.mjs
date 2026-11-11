@@ -1,4 +1,4 @@
-// NEW VERSION · TEST 1 (the title's button, js/game.js nvStart, js/newmap.js): the button top right on the title (upright and on its side),
+// NEW VERSION · TEST 1 (behind the title's NEUPORABNO, js/game.js nvStart, js/newmap.js): the first bar of NEUPORABNO's sheet (upright and on its side),
 // a tap starts Toskana alone with the new map built over it (no rivals, no lights, no laps to count), the car at HOME (where a mission ends) driving freely past
 // the road's barriers, on the new map's ground (the snow hill), up to the map's edge; the walls of fence the car pushes; the garages' menus on their coloured floors
 // (js/nvmenu.js: the driving school's licences, four levels of three tasks, a task's START starts it (js/nvschool.js), the other garages twelve challenges in four levels of three that say V IZDELAVI, HOME's box Garaža v izdelavi);
@@ -6,7 +6,7 @@
 // (barrels, cones, stalls, crates, bins, benches, blocks, balloon stands, lamps), its bouncy castles the car bounces off, its people who run out of the
 // car's way; the ground by the sea (the beach's sand, one meadow, the new shores, the meadow beyond the map's edges); back to the title the page loads again.
 //   node tests/browser/newver.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, checker, tapNewVersion } from './lib.mjs';
 
 const T = checker('newver');
 const srv = await serve();
@@ -15,14 +15,19 @@ const PAGE = srv.base + '/index.html';
 try {
   const open = (vp) => openGame(browser, PAGE, { intro: 2, quali: 0 }, vp, { menu: true });
   const ready = (page) => page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
-  const box = (page) => page.evaluate(() => { const r = document.getElementById('menu-host').shadowRoot, b = r.querySelector('[data-act="newver"]'), l = r.querySelector('.logo'); if (!b) return null; const q = b.getBoundingClientRect(), lq = l.getBoundingClientRect(); return { x: q.x, y: q.y, r: q.right, b: q.bottom, lr: lq.right, lb: lq.bottom, W: innerWidth, H: innerHeight, txt: b.textContent }; });
+  const box = (page, sel) => page.evaluate((sel) => { const b = document.getElementById('menu-host').shadowRoot.querySelector(sel); if (!b) return null; const q = b.getBoundingClientRect(); return { x: q.x, y: q.y, r: q.right, b: q.bottom, W: innerWidth, H: innerHeight, txt: b.textContent }; }, sel);
+  const inside = (b) => !!b && b.x >= -0.5 && b.y >= -0.5 && b.r <= b.W + 0.5 && b.b <= b.H + 0.5;
 
-  // 1. the button: on the title, top right, inside the screen, clear of the logo (a small phone upright and on its side)
+  // 1. the button: not on the title but behind NEUPORABNO (the title's tile; its sheet's first bar), inside the screen (a small phone upright and on its side)
   for (const vp of [{ width: 360, height: 640 }, { width: 640, height: 360 }]) {
     const { ctx, page, errors } = await open(vp);
     await ready(page); await page.waitForTimeout(400);
-    const b = await box(page);
-    T.check(`${vp.width}x${vp.height}: NEW VERSION · TEST 1 on the title, top right, inside the screen and clear of the logo`, !!b && /NEW VERSION/.test(b.txt) && /TEST 1/.test(b.txt) && b.x > b.W / 2 && b.r <= b.W && b.y >= 0 && b.b < b.H / 2 && (b.x >= b.lr || b.y >= b.lb), JSON.stringify(b));
+    const t0 = await box(page, '[data-act="newver"]'), nu = await box(page, '[data-act="nu"]');
+    await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="nu"]').click());
+    await page.waitForFunction(() => { const e = document.getElementById('menu-host').shadowRoot.querySelector('.izb-nu [data-act="newver"]'), q = e && e.getBoundingClientRect();   // (the sheet in: on its side it slides in from the right)
+      return !!q && q.left >= -0.5 && q.right <= innerWidth + 0.5 && q.top >= -0.5 && q.bottom <= innerHeight + 0.5; }, null, { timeout: 10000 }).catch(() => null);
+    const b = await box(page, '.izb-nu [data-act="newver"]');
+    T.check(`${vp.width}x${vp.height}: NEW VERSION · TEST 1 not on the title; NEUPORABNO's tile there, its sheet's first bar NEW VERSION · TEST 1, both inside the screen`, !t0 && inside(nu) && /NEUPORABNO/.test(nu.txt) && inside(b) && /NEW VERSION/.test(b.txt) && /TEST 1/.test(b.txt), JSON.stringify({ t0, nu, b }));
     T.check(`${vp.width}x${vp.height}: no errors on the title`, !errors.length, errors.slice(0, 2).join(' | '));
     await ctx.close();
   }
@@ -31,7 +36,7 @@ try {
   {
     const { ctx, page, errors } = await open({ width: 412, height: 915 });
     await ready(page);
-    await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+    await tapNewVersion(page);
     const t0 = Date.now();
     // the wait screen: the new map's picture behind it (not the track's view), a bar at the bottom that fills as the map is built
     const ws = await page.waitForFunction(() => { const b = document.getElementById('nv-load'), i = b && b.querySelector('#nv-bar'); if (!i) return null; const r = i.parentNode.getBoundingClientRect(); return { bg: b.style.backgroundImage, bottom: innerHeight - r.bottom, w: r.width, W: innerWidth, pct: (b.querySelector('#nv-pct') || {}).textContent }; }, null, { timeout: 300000, polling: 50 }).then(h => h.jsonValue());

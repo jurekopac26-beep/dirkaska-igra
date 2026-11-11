@@ -37,7 +37,7 @@ Načrt teme: fizika za vse proge, svoja seja (Opus, napor max; `CLAUDE.md`, Seje
 3. Preizkus uporabnika na telefonu (predogled `beta/<pr>/`): dirka v dežju in zimska dirka.
 
 ## Pogoj za začetek
-- Ko se izprazni vrsta za `main` (znak »VSE SEJE«, `docs/vrsta.md`), ker sprememba spremeni reference vseh prog.
+- **Takoj** (odločitev uporabnika 10. 11. 2026 ob ~23.10 v pogovoru z Matejem: »Dež in sneg, po tvojem »ok« na predogledu. Prestavi na prioritetno«): tema ima prednost pred vsem ostalim delom, ne čaka več, da se izprazni vrsta za `main`. Dela jo biketraveler (Fable 5.2, ena seja); na `main` gre po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih (sprememba spremeni reference vseh prog). Na `main` gre z garažo v eni zbirni veji; če »ok« zamuja več kot dan, gre garaža sama (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382).
 - Po #202 (račun 2, »Fizika vožnje vrnjena na stanje pred spremembami«, osnutek), ki spreminja isti `Car.stepCS`: začni na `main`, ko je #202 združen ali zaprt.
 
 ## Stanje

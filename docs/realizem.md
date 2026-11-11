@@ -122,142 +122,10 @@ En postopek velja za predelavo 15 prog in za vse nove proge. Je nov korak v `too
 
 Vsak od E, S in G ima najprej korak z orodjem in graditeljem (E0, S0, G0), nato skupine prog po vrstnem redu zgoraj.
 
-### E · Cesta in predmeti (~23 sej, na `main` prvi)
-- **Kaj se spremeni:**
-  - Ograje so takšne vrste kot v resnici: jeklena, betonska, iz gum, mreža.
-  - Robniki dobijo barve in oblike posamezne proge.
-  - Svetilke in table se postavijo, kjer so v OSM.
-  - Kompleti predmetov po državah: ograje, smerniki, ogledala, jarki, drogovi, postajališča, table brez napisov.
-  - Asfalt se nosi: temnejša linija vožnje, zalite razpoke, krpe, prašna robova, madeži olja v zaviralnih conah.
-  - **Stranske ceste s križišči**, samo za videz: odcep do ~60 m od proge iz OSM, s pravim križiščem, črtami in znaki. Za dirko so zaprte (ograja, stožci ali redar), zato avto ne more zaviti nanje.
-  - **Črte na cesti** po pravilih države (barva in vrsta sredinske in robne črte); na dirkališčih kot v resnici.
-- **Izhodišče:**
-  - stranske ceste odprtih cest so v igri že zdaj: `def.sideRoads` v datoteki proge, `_buildStubs` v `js/core.js` in skupni pomočniki `stubGeo`, `stubProps` (stožci in zapore) in `stubRails` v `js/world-vrsic.js`, ki niso zamrznjeni;
-  - imajo jih Katu-Jaryk (`stubStats` v `js/world-katu.js`), Los Caracoles, Chapman's Peak in Medvode;
-  - Montréal ima križišča otoških cest, zaprta z ograjo (`junctions` v `js/world-montreal.js`), kar je zgled za dirkališča;
-  - robna črta je že v teksturi ceste (`edgeLinePaint` v `js/world.js`).
-- **Koraki:**
-  - E0: orodje za robove, asfalt, stranske ceste iz OSM (križišča, zapore) in črte po državah; kompleti po državah.
-  - E1: Nürburg, Pikes Peak, Suzuka, Tianmen. Najprej slike pred in po s kamere za avtom na strani Odločitve; ostale skupine šele po odgovoru.
-  - E2–E4: skupine 2–4.
-  - Nove proge, ki še niso na `main`, dobijo stranske ceste in črte po združitvi, v istem paketu (predelava prog iz PR). Proge, ki se šele začnejo (A12–A19, Koli …), jih imajo od začetka (postopek).
-- **Telefon** (ocena):
-  - predmeti kot primerki: +1–3 klici na progo;
-  - obraba asfalta: 0–2 klica (senčilnik in nalepke na isti mreži);
-  - stranske ceste v isti mreži kot cesta po kosih (kot zdaj `stubGeo`): 0 novih klicev, ~10–30 tisoč oglišč na progo; zapore in znaki kot primerki kompletov;
-  - črte v teksturi ceste: 0 klicev in 0 oglišč.
-- **Seje:** ~9 za orodje in komplete (od tega ~2 za stranske ceste in ~1 za črte), ~1 na progo brez stranskih cest (10 prog), ~0,8 na progo, ki jih že ima (5 prog).
-- **Datoteke:**
-  - `tools/proga-podatki.py` (ograje, zidovi, svetilke in stranske ceste iz OSM);
-  - `js/world.js` (kompleti kot primerki, robniki, črte po državah, stranske ceste na progah brez njih);
-  - `js/world-vrsic.js` (skupni pomočniki stranskih cest), `js/world-montreal.js` in graditelji pravih prog, ki stranske ceste že imajo;
-  - `js/render.js` (obraba asfalta v senčilniku);
-  - podatki v `js/tracks/<id>.js` (`sideRoads`).
-- **Tveganje:**
-  - klici risanja pri predmetih;
-  - robniki dirkališč in stranske ceste ne smejo spremeniti vožnje in AI;
-  - skupne pomočnike uporabljajo tudi testne proge in Great Alpine Road (na odločanju), zanje mora ostati vse enako: nova možnost ali nov graditelj, stara pot nespremenjena;
-  - spori v `js/world.js`.
-
-### S · Stavbe (~21 sej, na `main` za E)
-- **Kaj se spremeni:**
-  - Oblika strehe, barve, material in nadstropja pridejo iz OSM (`roof:shape`, `roof:colour`, `building:colour`, `building:material`, `building:levels`).
-  - Kjer podatka ni, se uporabi slog kraja iz atlasa fasad po regijah. Atlas je risan po odprtih fotografijah.
-  - Stavbe tik ob cesti so po meri (izbira uporabnika), z balkoni, okni po nadstropjih, napuščem in pravo streho.
-  - Okna in vrata so tekstura v atlasu, ne geometrija. Balkoni in napušč so samo pri stavbah tik ob cesti.
-  - Znamenitosti so po pravni oceni države.
-- **Koraki:**
-  - S0: orodje (Overture brez virov Google, strehe, ravni podrobnosti) in atlas fasad.
-  - S1: Nürburg, Suzuka, Livorno, Spa.
-  - S2: Medvode (po #494), Montréal, Štajerska. Bâlea in Los Caracoles imata malo stavb in gresta zraven brez svoje seje.
-- **Telefon:** cilj je +0 klicev risanja (atlas, skupne mreže) in največ ~150 tisoč oglišč na progo.
-- **Seje:** 10 za orodje in atlas, ~1,5 na progo s stavbami.
-- **Datoteke:**
-  - `tools/proga-podatki.py` (korak za stavbe), `tools/<id>/config.json`;
-  - `js/world.js` (graditelj stavb, ravni podrobnosti);
-  - atlas fasad v `assets/`;
-  - podatki v `js/tracks/<id>.js`.
-- **Tveganje:**
-  - oglišča v krajih z veliko stavbami (Livorno, Medvode);
-  - pravna presoja znamenitosti;
-  - spori v `js/world.js` s pull requesti prog.
-
-### G · Rastje in teren (~16 sej, na `main` za S)
-- **Kaj se spremeni:**
-  - Gozd, grmovje in golo skalovje so v pasu ob cesti v enakem deležu kot v resnici (WorldCover).
-  - Trava je brez pasov košnje, razen kjer jih ima resnična proga.
-  - Ob asfaltu je ozek pas zemlje in gramoza.
-  - Barve tal so iz Sentinel-2, svetloba in ton po državi.
-  - Kjer višinski model zgladi pečine (Chapman's Peak, Tianmen), je teren po meri.
-  - Oblika dreves (»mehke krogle«) ostane.
-- **Koraki:**
-  - G0: WorldCover in Sentinel-2, kompleti rastja po podnebju, svetloba po državah.
-  - G1–G4: skupine 1–4.
-- **Telefon:**
-  - Barve in svetloba stanejo 0 klicev.
-  - Gozd do ceste je glavno tveganje za oglišča. Do 60 m so podrobna drevesa, za tem ploskve krošenj.
-- **Seje:** ~8–9 za orodje in komplete, ~0,5 na progo.
-- **Datoteke:**
-  - `tools/proga-podatki.py` (WorldCover, Sentinel-2);
-  - `js/world.js` (rastje po razredih, pas zemlje, zima na severu);
-  - `js/render.js` (svetloba in ton po državi);
-  - podatki v `js/tracks/<id>.js`.
-- **Tveganje:**
-  - oglišča gozda do ceste;
-  - barve in svetloba ne smejo spremeniti drugih prog (slike `gfx`).
-
-### P · Poškodbe (16 sej)
-
-Najboljše poškodbe so v igri že zdaj, a izklopljene (Nastavitve, Razbijanje). Paket jih vklopi in doda, kar se ob trku v resnici zgodi najprej.
-
-**Privzeto samo videz** (izbira uporabnika): avto je zmečkan, vozi pa kot nepoškodovan. V Nastavitvah je izbira **Izklop / Samo videz / Vklop**:
-- **Izklop:** brez poškodb.
-- **Samo videz:** privzeto.
-- **Vklop:** tudi vpliv na vožnjo.
-
-**Začetek:** ko so na `main` #460 in #480 (avti) in deli iz garaže na vseh avtih po meniju #516. #322 je na `main` od 8. 11. Ocena začetka je ~16. 11. pri dveh računih oziroma ~22. 11. pri enem (linija za E).
-
-**Vrstni red:** P1 → P4 → P2 → P5 → P3 → P6, v 4 pull requestih. Predlog razdelitve: P1, P4 + P2, P5 + P3, P6.
-
-| Korak | Kaj | Samo videz (privzeto) | Vklop | Telefon | Seje |
-|---|---|---|---|---|---|
-| P1 Novi način poškodb privzeto | vklopijo se obstoječa stikala Razbijanja: gostejše telo z udrtinami, steklo, ki poči, odrgnjena barva, deli na cesti; namesto 11 stikal ena nastavitev podrobnosti (preproste / podrobne); drobci stekla in barve 1–3 cm | ves videz | enako | polno telo samo za igralca in 5 najbližjih avtov (predlog, ~+15 klicev); vsi razbiti avti s polnim telesom 221 → 283 klicev | 1 |
-| P4 Sledi trkov in pravi delci | na avtu barva drugega avta ali siva odrgnina od zidu; na cesti drobni črni koščki plastike, drobci stekla, luske barve; iskre in brazde, ko podvozje drgne po tleh | ves videz | enako | +1–2 klica (vsi delci v enem nizu) | 1–2 |
-| P2 Motor: para, pregrevanje, olje | para iz hladilnika pri 15–30 % poškodbe (zdaj dim šele nad 45 %), oljni dim in madeži | para in dim | še pregrevanje: motor izgublja moč in se ustavi | 0 (sistem dima) | 1–2 |
-| P5 Steklo in luči | vetrobransko steklo poči v pajčevino in ostane; stranska in zadnja razpadejo v kocke; žaromet poči, luč ugasne ali sveti postrani | ves videz; steklo na cesti ne vzame oprijema | steklo na cesti vzame največ 5 % oprijema (zdaj 20 %, ko je vklopljeno Razbijanje) | 0 | 1 |
-| P3 Kolesa in obese | zvita spona ali platišče, nagnjeno kolo, povešen vogal, iskre pod podvozjem | kolo je vidno zvito | avto vleče na stran, pri hitrosti trese | 0 | 1–2 |
-| P6 Karoserija kot pri testih trkov | močan čelni trk skrajša prednji del za 0,4–0,7 m, pokrov se zloži v obrnjen V, pri trku z vogalom gre kolo nazaj, kabina ostane cela | skrajša se samo telo | enako | 0 | 2–3 |
-
-P6 ima visoko tveganje (testi trkov, tekmeci in reference), zato je zadnji.
-
-**Obremenitev telefona**, merjeno 8. 11. 2026 na Bathurstu, preden je šel na odločanje:
-- dirkališče z 20 avti na štartu;
-- nastavitve za telefon: 844 × 390, kakovost normalna, detajli avtov nizki, sence;
-- »po trkih« pomeni šest udarcev na avto, povprečno 46 % poškodbe.
-
-Nadaljnje meritve so na Spa.
-
-| Način | Klici, nepoškodovani | Klici po trkih | Oglišča po trkih |
-|---|---|---|---|
-| Zdaj (privzeto) | 210 | 221 | 681 tisoč |
-| Vse Razbijanje vklopljeno | 260 | 283 | 702 tisoč |
-| Samo novo telo | 260 | 283 | 694 tisoč |
-| Predlog P1: polno telo za igralca in 5 najbližjih (ocena) | ~225 | ~236 | ~690 tisoč |
-| Meja proge (`CLAUDE.md`) | ~300 | ~300 | ~900 tisoč |
-
-Čas sličice v brskalniku brez grafične kartice je preveč nemiren za sklepe. Pri 120 udarcih hkrati se prve sličice v obeh načinih zataknejo do ~1 s; to je treba preveriti na telefonu.
-
-- **Datoteke:**
-  - `js/render.js` (telo, steklo, para, delci, kolesa);
-  - `js/core.js` (model poškodb, vpliv na vožnjo pri »Vklop«);
-  - `js/game.js` (Nastavitve);
-  - `js/lang.js` (prevodi).
-
-  `js/world.js` ostane nespremenjen.
-- **Tveganje:**
-  - klici risanja pri polju razbitih avtov (283 od ~300);
-  - vpliv na vožnjo pri »Vklop« spremeni čase krogov in teste voženj (privzeto ga ni);
-  - začetek je odvisen od #460, #480 in #516.
+- **E · Cesta in predmeti (~23 sej, na `main` prvi)**: `docs/realizem/paket-e.md` (tudi »E0, prvi kos« in »E0, drugi kos«).
+- **S · Stavbe (~21 sej, na `main` za E)**: `docs/realizem/paket-s.md`.
+- **G · Rastje in teren (~16 sej, na `main` za S)**: `docs/realizem/paket-g.md`.
+- **P · Poškodbe (16 sej)**: `docs/realizem/paket-p.md`.
 
 ## Pravna ocena po državah
 
@@ -297,6 +165,36 @@ Viri (8. 11. 2026):
 Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 
 ## Čas in vrsta
+
+**Manj sklopov pri grafiki** (ukrep 1; odločitev uporabnika 11. 11. 2026 ob ~12.55 prek Mateja, tabla #382, komentar 6795249505; velja pred razporeditvijo spodaj; vseh 8 ukrepov v `docs/varcevanje.md`, »Manj sklopov«):
+- **E** (#657) ostane en sklop za vse prave proge.
+- **S in G**: prvi seji S in G naredita sestavne dele (orodje, graditelje, komplete; S0 in G0), nato gresta S in G **skupaj v enem prehodu na progo** (ena seja na progo naredi stavbe ter rastje in teren).
+- **Proge si računa izmenjujeta** po vrstnem redu v razdelku »Proge in vrstni red«: jure.kopac26 vzame 1., 3., 5. …, partyslo 2., 4., 6. …; zamrznjene proge (`test`, `pending`) se preskočijo.
+- **Predelava novih prog po #569** ostane pri partyslo.
+- Seja dela do ~150 tisoč konteksta, nato predaja (`CLAUDE.md`, Seje).
+
+Vrsta za `main` z ocenami je v `docs/vrsta.md` (»Posodobljen načrt 11. 11. 2026«, »Manj sklopov«); tu se ne ponavlja.
+
+**Razporeditev računov** (odločitev uporabnika 10. 11. 2026 ob ~22.30, prek Mateja, tabla #382, komentar 6779831019; datumi so ocene za `main`, v tedenskem načrtu 16. 11. ga samo še potrdita):
+- **biketraveler, fizika in avti** (odločitve uporabnika 10. 11. 2026 ob ~23.10 »Prestavi na prioritetno«, ob ~23.20 »Garazo daj tudi pod prioritetno« in ob ~23.35 »Poskodbe prestavi pred grafiko«, z izbiro »biketraveler takoj po #480«; vse prek Mateja):
+  1. **Prednost imata Dež in sneg ter garaža**, ki zasedeta obe mesti za seje s kodo. Na `main` gresta v eni zbirni veji; če uporabnikov »ok« za Dež in sneg zamuja več kot dan, gre garaža sama (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382). Dež in sneg: Fable 5.2 z eno sejo, na `main` po uporabnikovem »ok« na predogledu, v vrsti takoj za PR, ki so takrat v testih.
+  2. **Avti na raven KOLIBRIJA pred Trki**: vseh 13 preostalih v #480 (FORMULA ORKAN in TAIFUN LM ter mesta za dele na 11 avtih iz #460, tudi ZRCALNI VLAK) v prvem prostem mestu za sejo s kodo, ena seja, na `main` ~17. 11. (odločitev uporabnika 11. 11. 2026 ob ~00.15 prek Mateja, tabla #382, komentar 6781978213, datum po komentarju 6782506960; prej 10 avtov iz #460 po garaži, »V #480, pred poškodbami«, komentar 6781849560); vanj gre tudi #626 (partyslo), vodi ga biketraveler, ko je #480 pripravljen (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382). Takoj po #480 in pred Trki + Poškodbe **30 avtov na raven KOLIBRIJA** z notranjostjo, Visokimi (o njih uporabnik odloči po slikah) in nastavitvami trkov, ~47 h, na `main` ~25. 11. (odločitev uporabnika 11. 11. 2026 ob ~02.40 prek Mateja, tabla #382, komentar 6784505738; `docs/avti-kolibri.md`, »Prednost: 30 avtov«).
+  3. Poškodbe P1–P6 takoj po #480, 30 avtih in #569 + #494 (komentar 6784739386), **skupaj s Trki (#608) v enem PR** (prej 4 PR) (odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382); na `main` ~7. 12. (komentar 6784505738; prej ~29. 11., pred tem ~27. 11.; 13 avtov v #480 pred Trki (odločitvi uporabnika 11. 11. 2026 ob ~00.05 in ~00.15 prek Mateja, tabla #382, komentarja 6781849560 in 6781978213)). V vrsti za `main` gredo deli Poškodb pred pakete grafike, ko so pripravljeni hkrati.
+  4. 5 tovornjakov (TITAN PLIN, TITAN AVTOVOZ, KRILO VETRNICE, LASTOVKA, HRAST) **za grafiko**: začnejo, ko so paketi grafike na `main` (~9. 12.), na `main` ~20. 12., pred zamrznitvijo 23. 12. (zamik ~2 dni zaradi 30 avtov in #246, Matej, komentar 6784505738), mesta za dele dobijo že ob izdelavi; s tem je 50 avtov (odločitvi uporabnika 11. 11. 2026 ob ~00.15 in ~00.35 prek Mateja, tabla #382, komentarja 6781978213, točka 4, in 6782294421, točka a; prej ~18. 12., pred tem ~2. 12. po Poškodbah).
+  5. Trki (#608): odpadli deli in slike na Spa; faza 2 »Realistična« začne po predogledu Dež in sneg (~12. 11.), Trki na `main` s Poškodbami v enem PR (~7. 12.); ocena ni trda, kakovost je pred hitrostjo (odločitev uporabnika 10. 11. 2026 ob ~23.20; Fable 5.2, v Nastavitvah gumbi za možnosti trkov, privzeta najbolj realistična).
+  6. Po Trkih + Poškodbah (~7. 12.) po tedenskem načrtu teme iz »Načrtovano« (npr. #605, Hitro nalaganje 2) ali pomoč pri grafiki (komentar 6782294421, točka a; prej: pomoč pri predelavi prog).
+- **jure.kopac26, grafika:**
+  1. #622 (E0, prvi kos) in #638 na `main` zdaj. Vse proge v enem PR (#494 v #569, en krog testov; odločitev uporabnika 10. 11. 2026 ob ~23.30 prek Mateja, tabla #382) gredo na `main` takoj za 30 avtov in pred Trki + Poškodbe, ~26. 11. (odločitev uporabnika 11. 11. 2026 ob ~03.05 prek Mateja, tabla #382, komentar 6784739386, dobesedno: »prestavi Vse proge v enem PR (#569 + #494) na 5 mesto takoj za 30 avtov«); do takrat jih uporabnik preizkuša na stalnem predogledu #569 (`tools/predogled.mjs`, naredi ga jure.kopac26), Združevanje je ustavljeno, posodabljajo se samo prave proge na `main`; pravilo »proge vedno zadnje« zanje ne velja. #246 (preleti) je zadržan: na `main` za Garažo, avti (#480 in 30 avtov) ter Trki + Poškodbe in pred paketi grafike, ~8. 12. (odločitev uporabnika 11. 11. 2026 ob ~00.55 prek Mateja, tabla #382, komentar 6784505738, dobesedno: »Preleti postavi za garazo, fiziko trkov, posodobitve avtomobilov ter pred grafiko«); paketi grafike gredo na `main` za njim, ~9. 12. (zamik ~2 dni); rok 23. 12. ostane.
+  2. Ned 15. 11.: Samsungov temni način; Killar (#494) na `main` s #569 ~26. 11. (komentar 6784739386; prej v ponedeljek).
+  3. E Cesta in predmeti na vseh pravih progah od 15. 11.; ~22. 11.
+  4. S Stavbe ~30. 11., nato predelava prog.
+- **partyslo, proge, nato grafika:**
+  1. Prelet Spa (#246) 10. 11.; #569 na `main` ~26. 11., takoj za 30 avtov (komentar 6784739386; prej v sredo); od petka zadnje 3 proge (2 makadamski, 1 ledena) in Koli; preostali 3 preleti po uporabnikovem »ok« na Spa. #246 gre na `main` šele ~8. 12. (zgoraj) in do takrat na njem ni dela; prosti čas porabe gre grafiki po progah (G Rastje in teren, predelava prog) (komentar 6784505738).
+  2. Od ~17. 11. G Rastje in teren; na `main` za S, ~1. 12.
+  3. Od ~23. 11. predelava prog iz PR, nato nove proge po novem postopku; vse prave proge z novo grafiko ~6. 12.
+- Modeli po `CLAUDE.md`: grafika Fable 5.2 z eno sejo; fizika trkov Fable 5.2 z ultracode; proge, meni in popravki Opus.
+
+Tabela spodaj je prvotna ocena (8. 11.); kjer se razlikuje, velja razporeditev zgoraj.
 
 **Seja** je ena seja Opus z naporom max (~3 ure dela). Ena linija naredi ~3 seje na dan. En račun ima dve liniji, dva računa štiri.
 
@@ -343,7 +241,9 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`), E p
 | Korak | Veja / PR | Stanje |
 |---|---|---|
 | Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
-| E0–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
+| E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | končano 10. 11. 2026; uporabnikov »ok« na slikah (`docs/realizem/e0-*.jpg`) 10. 11. ob ~03.30, na `main` od 11. 11. 2026 s PR #622 (squash `244f7cd7`); jure.kopac26, odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«; opis v razdelku »E0, prvi kos« |
+| E0, drugi kos: rob ceste, oznake čez cesto, Pikes Peak | `realizem/e0-crte-asfalt` (isti PR #622, ločeni commiti) | končano 10. 11. 2026, uporabnikov »ok« na slikah (`docs/realizem/e0-rob.jpg`, `e0-oznake.jpg`, `e0-pikes.jpg`) 10. 11. ob ~12.30; na `main` od 11. 11. 2026 s PR #622 (squash `244f7cd7`); opis v razdelku »E0, drugi kos« |
+| E0 (ostalo), E1–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
 
 ## Viri
 
