@@ -528,7 +528,7 @@ try {
     // circuits, no test track), two on (either), Rally, Ice (no ice track in the game yet: it says so); all off: the countries again
     const cats = await ev(page, 'return [...root.querySelectorAll(".izb-chips button")].map(e => e.dataset.f + ":" + e.textContent.trim() + ":" + (e.querySelector("svg") ? "icon" : "-"));');
     const want = (types) => page.evaluate((types) => Menu.debug().list.filter(id => {
-      const d = Core.TRACKS.find(x => x.id === id), gr = d.ice ? 'ice' : d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
+      const d = Core.TRACKS.find(x => x.id === id), gr = d.ice ? 'ice' : d.test ? 'test' : (d.rally || d.descent && d.timeTrial) ? 'rally' : d.open ? 'road' : 'circuit';   // (as js/menu.js gr: a descent against the clock alone, Katu-Jaryk, is a rally; one with a race and traffic, Sa Calobra, or with rivals, Ngorongoro, an open road)
       return !types.length || types.includes(gr);
     }), types);
     const tap = async (...ks) => { for (const k of ks) await page.click(`.izb-chips [data-f="${k}"]`); return view(); };
@@ -676,12 +676,13 @@ try {
     // a pin tapped (Bâlea): its track's card at once; the card's cross: the Earth alone. (Marrakesh until 9. 11. 2026: awaiting the user's
     // choice (pending), behind NEUPORABNO, not on this Earth)
     await page.click('.thead .globe'); await zem(page, 1);
-    const pin = await ev(page, 'const r = root.querySelector(".zp[data-t=\\"balea\\"]").getBoundingClientRect(); return [r.left, r.top];');
+    // (a pin on top at its own place, Bâlea's if it is: from afar a country's name can lie over a pin and take the tap, as Albania's over Bâlea's since the new tracks, 11. 11. 2026)
+    const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(); return [r.left, r.top, p.dataset.t];');
     await page.mouse.click(pin[0], pin[1]); await zem(page, 3);
     const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
     const p2 = await earth();
-    T.check('a pin tapped (Bâlea): its track\'s card at once (Romania chosen, three steps); the card\'s cross: the Earth alone again', p1.R.tc === 'balea' && p1.R.sel === 'Romania' && p1.card && p1.card.sub === 'Romania' && !p2.card && !p2.R.sel && p2.depth === 1,
+    T.check(`a pin tapped (${pin[2]}): its track's card at once (its country chosen, three steps); the card's cross: the Earth alone again`, p1.R.tc === pin[2] && !!p1.R.sel && (pin[2] !== 'balea' || p1.R.sel === 'Romania') && p1.card && p1.card.sub === p1.R.sel && !p2.card && !p2.R.sel && p2.depth === 1,
       JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub], p2: [p2.R.sel, p2.depth, !!p2.card] }));
     // + and − come closer (the tracks named) and go back; a drag turns it (east under a finger moving west) and it glides a little after;
     // the arrows turn it; the target: back to the track shown, its country's card

@@ -19,6 +19,9 @@ try {
       const frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       let asked = false, done = false;
       for (let k = 0; k < 4000 && !P.finished; k++) {
+        // (a rival that stops too, one the first lap's crowd has hurt, can be quicker than the player's 30 s: then the notice is rightly not shown, as the second run
+        // below wants. The game's real-time frames draw Math.random in between, so the seed does not decide whether a rival does: in this run only the player's own stop counts)
+        if (!faster) R.pst.log = R.pst.log.filter(e => e.c === P);
         if (P.lap >= 1 && !P.repairN && !P.pitDone) { P.pitWant = true; if (!asked && faster) R.pst.log.push({ c: R.cars.find(c => c !== P), lap: 1, t: 0.8, lane: 5, ty: 'M', at: R.time }); asked = true; }   // (in at the end of the first lap, as tests/browser/hud.test.mjs; a faster stop before it: made up)
         if (P.repairN && !P.inPit) P.pitWant = false;
         if (P.inPit || g.pitAuto.st) g.sim(1 / 30, false, 0, 0); else g.sim(done ? 1 : 0.25, true);
