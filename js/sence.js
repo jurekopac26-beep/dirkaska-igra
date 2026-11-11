@@ -87,7 +87,20 @@
       return [n, v, imp];
     });
   }
-  function rewriteDecls(text) {
+  // a box-shadow: its parts down to the last one of a colour or inset (those go into the layer's filter: the browser's darkening leaves
+  // a filter's colours as they are, and an inset one has to be over the layer) and the black outer ones under those (they stay as they
+  // are, under the layer, where they were). One that changes by the frame (calc()) stays as it was.
+  function shadowSplit(v) {
+    if (/^(none|initial|inherit|unset)$/i.test(v) || /calc\(|env\(|var\(--sd-/i.test(v)) return null;
+    const P = split(v, ','); let k = -1;
+    P.forEach((p, i) => {
+      const t = split(p, ' '), c = t.find(isColTok);
+      if (t.some((x) => /^inset$/i.test(x)) || !c || /^var\(/i.test(c) || (([r, g, b, a]) => a > 0 && r + g + b >= 6)(col(c))) k = i;
+    });
+    if (k < 0) return null;
+    return [P.slice(0, k + 1).join(', '), P.slice(k + 1).join(', ') || 'none'];
+  }
+  function rewriteDecls(text, plain) {
     const D = decls(text); let ch = false; const out = [];
     for (const [n, v0, imp] of D) {
       let v = v0; const add = (nn, vv) => { out.push([nn, vv, imp]); ch = true; };
@@ -111,6 +124,10 @@
         if (N.endsWith('-color')) add(n, 'transparent'); else { out.push([n, v, imp]); add(N === 'border' ? 'border-color' : N + '-color', 'transparent'); }
         continue;
       }
+      if (N === 'box-shadow' && !plain) {
+        const S = shadowSplit(cur(v));
+        if (S) { add('--sd-bs', S[0]); add('--sd-bf', cur(v)); add(n, 'var(--sd-bk, ' + S[1] + ')'); continue; }
+      }
       if (/currentcolor/i.test(v)) { add(n, cur(v)); continue; }
       out.push([n, v, imp]);
     }
@@ -120,7 +137,7 @@
   function rewriteRules(list) {
     for (const r of Array.from(list)) {
       if (r.cssRules && !(r instanceof CSSKeyframesRule) && r.type !== 1) { rewriteRules(r.cssRules); continue; }
-      if (r instanceof CSSKeyframesRule) { for (const k of Array.from(r.cssRules)) { const t = rewriteDecls(k.style.cssText); if (t != null) k.style.cssText = t; } continue; }
+      if (r instanceof CSSKeyframesRule) { for (const k of Array.from(r.cssRules)) { const t = rewriteDecls(k.style.cssText, true); if (t != null) k.style.cssText = t; } continue; }
       if (!r.style) continue;
       // (a picture's canvas takes the picture's rules and not the canvases' ones; :where adds nothing to a rule's weight)
       const sel = r.selectorText;
@@ -128,7 +145,7 @@
         const t = sel.replace(CNV, '$1canvas:where(:not([data-sdimg]))').replace(IMG, '$1:is(img, :where(canvas[data-sdimg]))');
         if (t !== sel) r.selectorText = t;
       }
-      const t = rewriteDecls(r.style.cssText); if (t != null) { r.style.cssText = t; ST.rules++; }
+      const t = rewriteDecls(r.style.cssText, sel && /::?(before|after)\b/i.test(sel)); if (t != null) { r.style.cssText = t; ST.rules++; }
       if (r.cssRules && r.cssRules.length) rewriteRules(r.cssRules);
     }
   }
@@ -139,13 +156,13 @@
   try {
     const reg = (name, syntax, inherits, initialValue) => { try { CSS.registerProperty(initialValue == null ? { name, syntax, inherits } : { name, syntax, inherits, initialValue }); } catch (_) { /* (registered) */ } };
     reg('--sd-c', '<color>', true, getComputedStyle(document.documentElement).color || '#000');
-    reg('--sd-bgc', '<color>', false, 'transparent'); reg('--sd-bc', '<color>', false, 'transparent'); reg('--sd-bgi', '*', false);
+    reg('--sd-bgc', '<color>', false, 'transparent'); reg('--sd-bc', '<color>', false, 'transparent'); reg('--sd-bgi', '*', false); reg('--sd-bs', '*', false); reg('--sd-bf', '*', false); reg('--sd-bk', '*', false);
   } catch (_) { /* (no CSS.registerProperty: the colours only change, not ease) */ }
   const BASE = ':root,:host{--sd-ts:0 0 transparent}' +
     '*:not(svg):not(svg *),*::before,*::after,*::placeholder,*::marker{color:transparent!important;caret-color:var(--sd-c)!important;text-shadow:0 0 0 var(--sd-c),var(--sd-ts)!important;-webkit-text-fill-color:transparent!important}' +
     'svg{color:var(--sd-c)!important}' +
     '[data-sdo]{overflow:clip!important;overflow-clip-margin:border-box!important}[data-sdo=f]{display:flow-root!important}' +
-    '[data-sdl]{isolation:isolate}[data-sdp]{position:relative}' +
+    '[data-sde]{filter:var(--sd-ef)!important}[data-sdl]{isolation:isolate}[data-sdp]{position:relative}' +
     '[data-sdl=b]::before,[data-sdl=a]::after{content:""!important;position:absolute!important;inset:var(--sd-li,0)!important;z-index:-1!important;pointer-events:none!important;' +
     'border-radius:inherit!important;box-sizing:border-box!important;border-style:inherit!important;border-width:inherit!important;border-color:var(--sd-lk,transparent)!important;' +
     'background:var(--sd-lb,none)!important;background-color:var(--sd-lc,transparent)!important;background-clip:padding-box!important;filter:var(--sd-lf,none)!important;' +
@@ -172,22 +189,51 @@
     return root.__sdDefs;
   }
   let fid = 0;
-  function filterFor(root, pal, svgShape) {
-    const D = defsOf(root), key = (svgShape ? 's' : '') + pal.map((c) => c.map((x) => fmt(x)).join(',')).join(';');
+  const rgb = (c) => 'flood-color="rgb(' + c.slice(0, 3).map(Math.round).join(',') + ')" flood-opacity="' + fmt(c[3]) + '"';
+  // sh: the box's shadows ({ list: [{ i: inset, x, y, b: blur, s: spread, c }], ob: how far its border box is outside the layer,
+  // ib: how far its padding box is inside it, mx/my: the filter's region past the layer, as a share of its size)
+  function filterFor(root, pal, svgShape, sh) {
+    const D = defsOf(root), key = (svgShape ? 's' : '') + pal.map((c) => c.map((x) => fmt(x)).join(',')).join(';') + (sh ? '|' + sh.key : '');
     let id = D.ids.get(key); if (id) return id;
     id = 'sd' + (++fid); D.ids.set(key, id); ST.filters++;
-    const box = svgShape ? 'x="-50%" y="-50%" width="200%" height="200%"' : 'x="0" y="0" width="1" height="1"';
-    let h;
-    if (pal.length === 1) {
-      const c = pal[0];
-      h = '<feFlood flood-color="rgb(' + c.slice(0, 3).map(Math.round).join(',') + ')" flood-opacity="' + fmt(c[3]) + '"/><feComposite in2="SourceAlpha" operator="in"/>';
+    const box = svgShape ? 'x="-50%" y="-50%" width="200%" height="200%"' : sh && (sh.mx || sh.my)
+      ? 'x="' + -sh.mx + '" y="' + -sh.my + '" width="' + fmt(1 + 2 * sh.mx) + '" height="' + fmt(1 + 2 * sh.my) + '"' : 'x="0" y="0" width="1" height="1"';
+    let h = '';
+    if (sh && sh.el) { /* (its own picture: the shadows under it) */ } else if (pal.length === 1) {
+      h = '<feFlood ' + rgb(pal[0]) + '/><feComposite in2="SourceAlpha" operator="in" result="S"/>';
     } else {
       const k = 1 / (1 - A0), b = -A0 / (1 - A0), row = '0 0 0 ' + fmt(k) + ' ' + fmt(b);
       const tab = (i) => pal.map((c) => fmt(i < 3 ? c[i] / 255 : c[3])).join(' ');
       h = '<feComponentTransfer in="SourceAlpha" result="m"><feFuncA type="linear" slope="' + fmt(1 / A0) + '" intercept="0"/></feComponentTransfer>' +
-        '<feColorMatrix in="SourceGraphic" type="matrix" values="' + row + ' ' + row + ' ' + row + ' 0 0 0 0 1"/>' +
-        '<feComponentTransfer><feFuncR type="table" tableValues="' + tab(0) + '"/><feFuncG type="table" tableValues="' + tab(1) + '"/><feFuncB type="table" tableValues="' + tab(2) + '"/><feFuncA type="table" tableValues="' + tab(3) + '"/></feComponentTransfer>' +
-        '<feComposite in2="m" operator="in"/>';
+        '<feColorMatrix in="SourceGraphic" type="matrix" values="' + row + ' ' + row + ' ' + row + ' 0 0 0 0 1" result="i"/>' +
+        '<feComponentTransfer result="x"><feFuncR type="table" tableValues="' + tab(0) + '"/><feFuncG type="table" tableValues="' + tab(1) + '"/><feFuncB type="table" tableValues="' + tab(2) + '"/></feComponentTransfer>' +
+        // (its alphas from the index too, through the red channel: the matrix's alpha is 1, as an alpha of the index would lose the colours under it)
+        (pal.some((c) => c[3] !== 1) ? '<feComponentTransfer in="i"><feFuncR type="table" tableValues="' + tab(3) + '"/></feComponentTransfer>' +
+          '<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0"/><feComposite in="x" operator="in"/>' : '') +
+        '<feComposite in2="m" operator="in" result="S"/>';
+    }
+    if (sh) {   // the shadows, as the browser draws a box-shadow: the outer ones under the box (none under it), the inset ones over it
+      const M = 'in="SourceAlpha"', mor = (inn, r, out) => (r ? '<feMorphology ' + inn + ' operator="' + (r > 0 ? 'dilate' : 'erode') + '" radius="' + fmt(Math.abs(r)) + '" result="' + out + '"/>' : '');
+      h += '<feComponentTransfer ' + M + ' result="M"><feFuncA type="linear" slope="' + (sh.el ? 50 : fmt(1 / A0)) + '" intercept="0"/></feComponentTransfer>';
+      if (sh.ib) h += mor('in="M"', -sh.ib, 'P');
+      if (sh.ob) h += mor('in="M"', sh.ob, 'O');
+      const P = sh.ib ? 'P' : 'M', O = sh.ob ? 'O' : 'M', outer = [], inner = [];
+      sh.list.forEach((d, j) => {
+        const r = 'h' + j; let t;
+        if (!d.i) {
+          t = mor('in="' + O + '"', d.s, r + 'a') + '<feOffset in="' + (d.s ? r + 'a' : O) + '" dx="' + d.x + '" dy="' + d.y + '" result="' + r + 'b"/>' +
+            (d.b ? '<feGaussianBlur in="' + r + 'b" stdDeviation="' + fmt(d.b / 2) + '" result="' + r + 'b"/>' : '') +
+            '<feFlood ' + rgb(d.c) + '/><feComposite in2="' + r + 'b" operator="in"/><feComposite in2="' + O + '" operator="out" result="' + r + '"/>';
+          outer.unshift(r);
+        } else {
+          t = '<feOffset in="' + P + '" dx="' + d.x + '" dy="' + d.y + '" result="' + r + 'a"/>' + mor('in="' + r + 'a"', -d.s, r + 'a') +
+            (d.b ? '<feGaussianBlur in="' + r + 'a" stdDeviation="' + fmt(d.b / 2) + '" result="' + r + 'a"/>' : '') +
+            '<feFlood ' + rgb(d.c) + '/><feComposite in2="' + r + 'a" operator="out"/><feComposite in2="' + P + '" operator="in" result="' + r + '"/>';
+          inner.unshift(r);
+        }
+        h += t;
+      });
+      h += '<feMerge>' + outer.concat(sh.el ? 'SourceGraphic' : 'S', inner).map((r) => '<feMergeNode in="' + r + '"/>').join('') + '</feMerge>';
     }
     D.svg.insertAdjacentHTML('beforeend', '<filter id="' + id + '" ' + box + ' color-interpolation-filters="sRGB">' + h + '</filter>');
     return id;
@@ -196,14 +242,14 @@
   // ---- a box's colours → what its layer draws ----
   const GR = /(repeating-)?(linear|radial|conic)-gradient\(/gi;
   const specCache = new Map();
-  function spec(root, bgc, bgi, bc, border) {
-    const key = bgc + '|' + bgi + '|' + (border ? bc : '');
+  function spec(root, bgc, bgi, bc, border, sh) {
+    const key = bgc + '|' + bgi + '|' + (border ? bc : '') + '|' + (sh ? sh.key : '');
     let s = specCache.get(root) && specCache.get(root).get(key); if (s) return s;
-    s = make(root, bgc, bgi, bc, border);
+    s = make(root, bgc, bgi, bc, border, sh);
     if (!specCache.has(root)) specCache.set(root, new Map()); specCache.get(root).set(key, s);
     return s;
   }
-  function make(root, bgc, bgi, bc, border) {
+  function make(root, bgc, bgi, bc, border, sh) {
     const imgs = bgi && bgi !== 'none' ? bgi : '';
     const nGr = (imgs.match(GR) || []).length;
     if (/url\(|image-set\(/i.test(imgs) || nGr > 1 || (imgs && !nGr)) return { native: true };
@@ -236,18 +282,20 @@
     if (border) pal.push(over(col(bc), real.length ? over(real[0].c, base) : base));
     if (real.length) for (const x of real) pal.push(over(x.c, base));
     else if (base[3] > 0) pal.push(base);
+    const bare = !pal.length && !!sh;   // (only its shadows: the layer draws its shape, the filter none of it)
+    if (bare) pal.push([0, 0, 0, 0]);
     if (!pal.length) return null;
     // only black (of any alpha): the browser's darkening keeps it as it is, so no layer and no filter for it (the race's vignette over
     // the 3D picture, the shades of dialogs: a filter there would cost every frame)
-    if (pal.every((p) => p[0] + p[1] + p[2] < 6)) return { native: true };
+    if (!sh && pal.every((p) => p[0] + p[1] + p[2] < 6)) return { native: true };
     const n = pal.length, off = border ? 1 : 0, blk = (i) => 'rgba(0,0,0,' + fmt(lvl(i, n)) + ')';
     let b = 'none', c = 'transparent';
     if (real.length) {
       let i = 0;
       const a2 = stops.map((x) => (x.c ? blk(off + i++) + (x.pos ? ' ' + x.pos : '') : x.hint));
       b = pre + fn + (head ? head + ', ' : '') + a2.join(', ') + post;
-    } else if (base[3] > 0) c = blk(off);
-    return { b, c, k: border ? blk(0) : 'transparent', f: 'url(#' + filterFor(root, pal) + ')' };
+    } else if (base[3] > 0 || bare) c = blk(off);
+    return { b, c, k: border ? blk(0) : 'transparent', f: 'url(#' + filterFor(root, pal, false, sh) + ')' };
   }
 
   // ---- the elements ----
@@ -263,6 +311,22 @@
   }
   function clearVars(el, pre) { for (const k of ['b', 'c', 'k', 'f', 'i']) el.style.removeProperty('--sd-' + pre + k); }
   function setVars(el, pre, s) { el.style.setProperty('--sd-' + pre + 'b', s.b); el.style.setProperty('--sd-' + pre + 'c', s.c); el.style.setProperty('--sd-' + pre + 'k', s.k); el.style.setProperty('--sd-' + pre + 'f', s.f); }
+  // its shadows that go into its layer's filter (--sd-bs: shadowSplit) → [{ i, x, y, b, s, c }]; null: not ones it can (em, …)
+  function shadows(v, cs) {
+    const out = [];
+    for (const p of split(v, ',')) {
+      const t = split(p, ' '); let i = false, c = null; const L = [];
+      for (const x of t) {
+        if (/^inset$/i.test(x)) i = true;
+        else if (isColTok(x)) c = x;
+        else { const n = /^(-?[\d.]+)(px)?$/.exec(x); if (!n || (!n[2] && +n[1] !== 0)) return null; L.push(+n[1]); }
+      }
+      if (L.length < 2 || L.length > 4) return null;
+      out.push({ i, x: L[0], y: L[1], b: L[2] || 0, s: L[3] || 0, c: col(c || cs.getPropertyValue('--sd-c')) });
+    }
+    return out.length ? out : null;
+  }
+  const lit = (d) => d.c[3] > 0 && d.c[0] + d.c[1] + d.c[2] >= 6;
   const free = (el, p) => { const c = getComputedStyle(el, p).content; return !c || c === 'none' || c === 'normal'; };
   function element(el, root) {
     const tag = el.localName;
@@ -282,8 +346,14 @@
       if (cs.position === 'static') el.setAttribute('data-sdp', '');
       bgCanvas(el, cs, L, bi);
     } else if (el.__sdbg) dropBg(el);
+    // its shadows
+    const SB = cs.getPropertyValue('--sd-bs').trim(), SL = SB ? shadows(SB, cs) : null;
+    // (a box that clips its content would clip its layer's outer shadows too: those go into a filter of its own, under it)
+    const clips = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
+    const SLi = SL && clips ? SL.filter((d) => d.i) : SL, SLo = SL && clips ? SL.filter((d) => !d.i) : [];
+    let shOn = !!SL && !SLi.length;
     // the element's own surface
-    if (B.bg || B.border) {
+    if (B.bg || B.border || (SLi && SLi.some(lit))) {
       let slot = el.getAttribute('data-sdl');
       if (!slot && !NOLAYER.test(tag) && !el.hasAttribute('data-sdn')) slot = free(el, '::before') ? 'b' : free(el, '::after') ? 'a' : '';
       // a box that clips its content (overflow: hidden) would clip its own layer's border too: it clips at its border's outer edge
@@ -294,12 +364,21 @@
         if (!el.hasAttribute('data-sdo')) el.setAttribute('data-sdo', cs.display === 'block' ? 'f' : '');
         clip = false;
       }
-      const s = slot ? spec(root, B.bgc, B.bgi, B.bc, B.border && !clip) : null;
+      let sh = null;
+      if (SLi && SLi.length && slot) {
+        const SL = SLi, bw = Math.max.apply(null, B.w), lb = B.border && !clip, ob = lb ? 0 : bw, ib = lb ? bw : 0;
+        const W = el.offsetWidth - (lb ? 0 : 2 * bw), H = el.offsetHeight - (lb ? 0 : 2 * bw);
+        const far = (k) => Math.max(0, ...SL.filter((d) => !d.i).map((d) => Math.abs(d[k]) + Math.max(0, d.s) + d.b)) + (SL.some((d) => !d.i) ? ob + 2 : 0);
+        const q = (px, all) => (px && all > 0 ? Math.ceil(px / all * 20) / 20 : 0);
+        sh = { list: SL, ob, ib, mx: q(far('x'), W), my: q(far('y'), H) };
+        sh.key = JSON.stringify([SL.map((d) => [+d.i, d.x, d.y, d.b, d.s, d.c.map(fmt)]), ob, ib, sh.mx, sh.my]);
+      }
+      const s = slot ? spec(root, B.bgc, B.bgi, B.bc, B.border && !clip, sh) : null;
       if (s && !s.native) {
         el.removeAttribute('data-sdn'); clearVars(el, 'n');
         if (el.getAttribute('data-sdl') !== slot) { el.setAttribute('data-sdl', slot); ST.layers++; }
         if (cs.position === 'static') el.setAttribute('data-sdp', '');
-        setVars(el, 'l', s);
+        setVars(el, 'l', s); if (sh) shOn = true;
         el.style.setProperty('--sd-li', B.border && !clip ? B.w.map((x) => -x + 'px').join(' ') : '0');
         if (B.border && clip) { el.setAttribute('data-sdn', ''); el.style.setProperty('--sd-nk', B.bc); el.style.setProperty('--sd-nb', 'none'); el.style.setProperty('--sd-nc', 'transparent'); }
       } else {   // no layer for it: its colours as they were (the browser's darkening and all)
@@ -308,6 +387,22 @@
         el.style.setProperty('--sd-nb', B.bgi || 'none'); el.style.setProperty('--sd-nc', B.bgc || 'transparent'); el.style.setProperty('--sd-nk', B.border ? B.bc : 'transparent');
       }
     } else if (el.hasAttribute('data-sdl') || el.hasAttribute('data-sdn')) { unlayer(el); el.removeAttribute('data-sdn'); clearVars(el, 'n'); }
+    let ef = null;
+    if (shOn && SLo.some(lit)) {
+      const W = el.offsetWidth, H = el.offsetHeight, q = (px, all) => (px && all > 0 ? Math.ceil(px / all * 20) / 20 : 0);
+      const far = (k) => Math.max(...SLo.map((d) => Math.abs(d[k]) + Math.max(0, d.s) + d.b)) + 2;
+      const sh = { list: SLo, ob: 0, ib: 0, el: true, mx: q(far('x'), W), my: q(far('y'), H) };
+      sh.key = 'e' + JSON.stringify([SLo.map((d) => [d.x, d.y, d.b, d.s, d.c.map(fmt)]), sh.mx, sh.my]);
+      let of = orig.get(el); if (!of) orig.set(el, of = {});
+      if (of.f == null) of.f = el.hasAttribute('data-sde') ? '' : (cs.filter !== 'none' ? cs.filter : '');
+      ef = 'url(#' + filterFor(root, [], false, sh) + ')' + (of.f ? ' ' + of.f : '');
+    }
+    if (SLo.length && !ef) shOn = false;
+    if (ef) { if (el.style.getPropertyValue('--sd-ef') !== ef) el.style.setProperty('--sd-ef', ef); el.setAttribute('data-sde', ''); }
+    else if (el.hasAttribute('data-sde')) { el.removeAttribute('data-sde'); el.style.removeProperty('--sd-ef'); }
+    // shadows not in its layer: as they were (the browser's darkening and all)
+    if (SB && !shOn) { const f = cs.getPropertyValue('--sd-bf').trim(); if (el.style.getPropertyValue('--sd-bk') !== f) el.style.setProperty('--sd-bk', f); }
+    else if (el.style.getPropertyValue('--sd-bk')) el.style.removeProperty('--sd-bk');
     // its pseudo-elements' own surfaces
     for (const [p, a, pre] of [['::before', 'data-sdb', 'B'], ['::after', 'data-sda', 'A']]) {
       if (el.getAttribute('data-sdl') === (p === '::before' ? 'b' : 'a')) continue;
@@ -330,7 +425,7 @@
     // (our own rewrite coming back through the observer: left as it is, else a rewrite that is not its own fixed point would go round
     // without end in the observer's microtasks)
     if (t === el.__sdcss) return false;
-    if (!/(^|;)\s*(color|background|border|text-shadow)[a-z-]*\s*:/i.test(t)) return false;
+    if (!/(^|;)\s*(color|background|border|text-shadow|box-shadow)[a-z-]*\s*:/i.test(t)) return false;
     const pick = t.split(';').filter((d) => /^\s*(color|background|border|text-shadow)/i.test(d)).join(';');
     if (/background-color:\s*transparent|--sd-c:/.test(t) && !/(^|;)\s*color\s*:/.test(t.replace(/--sd-c:[^;]*/g, '').replace(/caret-color[^;]*/g, '')) && !/background(-image)?:\s*(?!none)[^;]*gradient|background(-color)?:\s*(?!transparent)#|background:\s*rgb/.test(pick)) return false;
     const r = rewriteDecls(t); if (r == null) return false;
@@ -469,7 +564,7 @@
           if (r.target.__sdbg && !r.target.__sdbg.isConnected) todo.add(r.target);   // (its picture's canvas went with its old content)
         }
         else if (r.type === 'attributes' && r.target.nodeType === 1) {
-          if (r.attributeName === 'style') { if (inlineStyle(r.target)) todo.add(r.target); }
+          if (r.attributeName === 'style') { if (inlineStyle(r.target) || /(^|;)\s*background[a-z-]*\s*:[^;]*url\((?!["']?#)/i.test(r.target.getAttribute('style') || '')) todo.add(r.target); }
           else todo.add(r.target);
         }
       }
