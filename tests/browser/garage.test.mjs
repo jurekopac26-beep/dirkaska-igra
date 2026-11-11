@@ -320,9 +320,16 @@ try {
     T.check('a tap on the car\'s body: the aero kits\' menu', mb === 'aero', mb);
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); const dR = await menuDom();
     T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
-    await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run();
-    const u4 = await ui();
+    await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const ra = await run();
+    const u4 = await ui(), fa = await fitOf(), pa = await page.evaluate(() => Garage3D._dbg.FIT.log.filter(q => q.step === 'plan').map(q => ({ el: q.el, exact: !!q.exact, real: !!q.real, hop: q.hop || 0, caps: q.caps || 0 })));
     T.check('the SPORT kit bought (2.600 🪙): the aero level from it', uw2.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: uw2.S.money - u4.S.money, upg: u4.info.upg }));
+    // (the kit by its plan's plate (aero): the trolley brings its lip and its wing lying along its deck; the near arm's gripper takes the lip
+    // by its front edge and pushes it in under the front bumper exactly where the car draws it (the click: no case, no hop; no old part on
+    // a car with none); the trolley on along the car, the wing onto the bare lid as the wing's own show (two caps off, the snap); the
+    // level's parts on with them (no show of the level after), KONČANO: within 17 s)
+    T.check('the SPORT kit by its plan\'s plate: its lip in under the front bumper by the arm (the car\'s own piece, exactly, no hop), then its wing onto the bare lid (two caps off, the snap), the trolley off, KONČANO (' + ra.t + ' s: within 17); the arms parked',
+      fa.log === 'plan,cart.in,cart.parked,grab,swap,plan,grab,snap,swap,cart.out' && pa.length === 2 && pa[0].el === 'aero' && pa[0].real && pa[0].exact && !pa[0].hop && pa[1].el === 'krilo' && pa[1].real && pa[1].caps === 2 && !pa[1].hop
+      && fa.old === 'none' && fa.cart && !fa.cart.on && fa.parked && /KONČANO/.test(fa.chip) && u4.info.parts.aero >= 2 && ra.t <= 17, JSON.stringify({ fa, pa, t: ra.t, parts: u4.info.parts }));
     await page.evaluate(() => __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Race') })); await page.waitForTimeout(100); const dR2 = await menuDom();
     await page.evaluate(() => { const b = Garage3D.box('mq0'); __garage.onTap(5, b.y - 120); });
     const shut = await page.evaluate(() => ({ menu: !!__garage.menu, marks: Garage3D._dbg.marks, on: document.getElementById('g-menu').classList.contains('on'), low: !document.getElementById('g-low').classList.contains('hide') }));
