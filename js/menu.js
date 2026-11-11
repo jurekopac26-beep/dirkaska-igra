@@ -24,7 +24,9 @@
      (the 3D world, a WebGL canvas, is spared). No page can switch it off, so the title says where the player can (darkSheet). Found
      with Chrome's own probe: the system colour Canvas in a light element is white unless the browser forces dark. A browser that
      also reports prefers dark (Chrome's auto-dark) respects the game's color-scheme and leaves it as it is: nothing to say. The page
-     temni-nacin.html shows the same probe and what each way of painting looks like in such a browser. */
+     temni-nacin.html shows the same probe and what each way of painting looks like in such a browser. Where it can, the game
+     sidesteps all this by opening itself in a frame with a dark color-scheme (js/okvir.js): the page in the frame is told dark,
+     so the probe finds nothing there; the notice is what is left where the frame is not used. */
   const isSamsung = () => /SamsungBrowser/i.test(navigator.userAgent);
   function forcedDark() {
     try {

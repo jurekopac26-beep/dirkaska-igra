@@ -3,8 +3,9 @@
    Such a browser repaints every element of the page whatever the page declares (color-scheme: only dark included),
    because the player's preferred scheme stays light (js/menu.js, forcedDark). A document inside a frame whose own
    color-scheme is dark is told that the preferred scheme is dark, and what declares a dark scheme there is left as
-   it is (Chromium 129+, Samsung Internet 28+). So where forced darkening is found, the page loads itself once more
-   inside such a frame and shows only that: the menu and the HUD keep their own colours.
+   it is (measured in Chromium with forced dark; the trial frame below checks the first half in the browser at
+   hand, the second only the eye can: temni-nacin.html). So where forced darkening is found, the page loads itself
+   once more inside such a frame and shows only that: the menu and the HUD keep their own colours.
 
    The script runs first in <head> (index.html, garaza.html), synchronously and alone:
      outside  decides (decide), writes the frame over the whole screen and swallows the rest of its own document,
