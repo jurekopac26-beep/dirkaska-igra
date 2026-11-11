@@ -82,10 +82,11 @@ try {
     const u = await ui(), calls = await page.evaluate(() => { __garage.advance(0.1); return Garage3D.renderer.info.render.calls; });
     T.check('opens: 11.500 by the gold coin, PICO TURBO on the turntable, the go button "Izberi", Izberi progo at the top (a flag, no words: no track known yet, a chequered one)', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.track === 'Izberi progo' && u.flag, JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
     const L0 = await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), st = r('g-stage'), app = document.getElementById('g-app').getBoundingClientRect(), cr = r('g-cr'), hd = document.querySelector('.g-head').getBoundingClientRect();
-      const pv = r('g-prev'), nx = r('g-next'), go = r('g-go'), nm = r('g-name');
-      return { full: Math.abs(st.top - app.top) < 1 && Math.abs(st.bottom - app.bottom) < 1 && Math.abs(st.width - app.width) < 1, coin: +(cr.width / (hd.width - 28)).toFixed(2), cars: pv.bottom <= go.top && nx.bottom <= go.top && nm.bottom <= pv.top && Math.abs(pv.top - nx.top) < 1 && pv.right < nx.left,
+      const pv = r('g-prev'), nx = r('g-next'), go = r('g-go'), row = document.querySelector('.g-namerow').getBoundingClientRect(), nm = [...document.querySelectorAll('.g-cb .nm')];
+      return { full: Math.abs(st.top - app.top) < 1 && Math.abs(st.bottom - app.bottom) < 1 && Math.abs(st.width - app.width) < 1, coin: +(cr.width / (hd.width - 28)).toFixed(2), cars: pv.bottom <= go.top && nx.bottom <= go.top && Math.abs(pv.top - nx.top) < 1 && pv.right < nx.left,
+        names: nm.map(n => n.textContent), named: nm.every(n => n.textContent.length > 1 && n.textContent !== 'PICO TURBO' && n.scrollWidth <= n.clientWidth + 1), row: row.width <= 1 && row.height <= 1,
         imgs: [...document.querySelectorAll('.g-cb .th img')].length, shift: Garage3D.camera.view ? Garage3D.camera.view.offsetY : 0 }; });
-    T.check('the workshop over the whole page, raised (its picture shifted up), the coins\' button a third of the top, the name over the two cars\' buttons over back and Izberi', L0.full && L0.shift > 30 && L0.coin > 0.3 && L0.coin < 0.37 && L0.cars, JSON.stringify(L0));
+    T.check('the workshop over the whole page, raised (its picture shifted up), the coins\' button a third of the top, the two cars\' buttons (their names in them, the car\'s own only for the ear) over back and Izberi', L0.full && L0.shift > 30 && L0.coin > 0.3 && L0.coin < 0.37 && L0.cars && L0.named && L0.row, JSON.stringify(L0));
     T.check('the worn car shows its wear: dirt and scratches on the paint', u.info.dirt > 0.2 && u.info.scr > 0.2, JSON.stringify(u.info));
     T.check('draw calls of the garage stay modest (< 260)', calls > 20 && calls < 260, calls + ' calls');
     const kept = await page.evaluate(() => Garage3D._dbg.pieces.filter(p => p.g || p.sm).length);
@@ -198,15 +199,19 @@ try {
     T.check('a part of a car not bought tapped: no menu, a word to buy the car first', !m && /Najprej kupi avto/.test(await page.evaluate(() => document.getElementById('g-toast').textContent)), JSON.stringify(m));
   }
 
-  // 3. the veteran's profile: much money, cars with parts (their levels from them); buying one
+  // 3. the veteran's profile: money for any car (the user's wish 9. 11. 2026: the dearest car, every part for it and its paint, up to the
+  // next 100.000), cars with parts (their levels from them); buying one
   {
     await page.evaluate(() => document.querySelector('#g-modes [data-mode="vet"]').click()); await run();
-    const u = await ui();
-    T.check('the veteran: 248.500, the KAZE RS (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)', u.money === '248.500' && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ money: u.money, car: u.info.car, upg: u.info.upg }));
+    const u = await ui(), vt = await page.evaluate(() => { const P = Core.CAREER.car, ids = __garage.ORDER, top = ids.reduce((a, id) => (P[id] || 0) > (P[a] || 0) ? id : a, ids[0]); let parts = 0;
+      for (const el in GarageShop.EL) if (el !== 'barva') GarageShop.EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { parts += __garage.price(el, t, j); }));
+      const vm = __garage.vetMoney(); return { vm, top, need: (P[top] || 0) + parts + __garage.paintPrice(top), txt: Lang.thou(vm) }; });
+    T.check('the veteran: money for the dearest car (' + vt.top + '), every part for it and its paint, up to the next 100.000 (' + vt.txt + '); the KAZE RS (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)',
+      vt.vm >= vt.need && vt.vm - vt.need < 100000 && vt.vm % 100000 === 0 && u.S.money === vt.vm && u.money === vt.txt && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ vt, money: u.money, car: u.info.car, upg: u.info.upg }));
     await page.evaluate(() => __garage.pickCar('kozorog')); await run();
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
-    T.check('bought: the KOZOROG TC for 140.000 🪙 (248.500 -> 108.500), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === 108500 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
+    T.check('bought: the KOZOROG TC for 140.000 🪙 (the veteran\'s money less 140.000), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === vt.vm - 140000 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
@@ -473,16 +478,20 @@ try {
       ok, JSON.stringify(R));
   }
 
-  // 8c. lying down (640 × 360, 915 × 412): the picture's view taller by how little is free between the page's buttons: the car whole
-  // under the buttons at the top, the maquettes, the SERVICE button and the colour circles in the picture over the car's name
+  // 8c. lying down (640 × 360, 915 × 412; odlocitve 8. 11.: »4«, the cars' buttons at the bottom as upright): the whole garage between
+  // the page's buttons: the regal under the buttons at the top, the car whole, the maquettes, the SERVICE button, the colour circles and
+  // the plan chest's drawers over the cars' buttons (their names in them, whole)
   {
     const R = [];
     for (const [w, h] of [[640, 360], [915, 412]]) {
       await viewport(w, h, 600);
-      R.push(await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), app = document.getElementById('g-app').getBoundingClientRect(), top = r('g-track').bottom - app.top, name = r('g-name').top - app.top;
-        const car = Garage3D.box('car'), b = ['mq0', 'mq1', 'mq2', 'service', 'col0', 'col7'].map(k => Garage3D.box(k));
-        return { car: __garage.S.car, top: Math.round(top), name: Math.round(name), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]),
-          ok: !!car && car.y >= top - 2 && car.y + car.h <= name && b.every(x => x && x.y >= top && x.y + 20 <= name) }; }));
+      R.push(await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), app = document.getElementById('g-app').getBoundingClientRect(), top = r('g-track').bottom - app.top, low = r('g-prev').top - app.top;
+        const car = Garage3D.box('car'), b = ['mq0', 'mq1', 'mq2', 'service', 'col0', 'col7'].map(k => Garage3D.box(k)), d = Garage3D.drawers.els.map(e => Garage3D.box('drw:' + e)), wing = Garage3D.box('rgl:DOUBLE WING');
+        const nm = [...document.querySelectorAll('.g-cb .nm')];
+        return { car: __garage.S.car, top: Math.round(top), low: Math.round(low), carY: car && [Math.round(car.y), Math.round(car.y + car.h)], b: b.map(x => x && [Math.round(x.y), Math.round(x.y + x.h)]), wing: wing && Math.round(wing.y),
+          drw: Math.round(Math.max(...d.map(x => x ? x.y + x.h : 1e9))), names: nm.map(n => n.textContent),
+          ok: !!car && car.y >= top - 2 && car.y + car.h <= low && b.every(x => x && x.y >= top && x.y + x.h <= low) && d.every(x => x && x.y + x.h <= low + 2) && !!wing && wing.y + wing.h > top - 4 && wing.y < top + 0.15 * innerHeight
+            && nm.every(n => n.textContent.length > 1 && n.scrollWidth <= n.clientWidth + 1) && !!document.querySelector('.g-namerow') && document.querySelector('.g-namerow').getBoundingClientRect().width <= 1 }; }));
       // (the guide's last step: a ring round each of the buttons for the other cars, its bubble beside them, clear of them)
       R.push(await page.evaluate(() => { __garage.guide(5); const el = document.getElementById('g-guide'), rings = [...el.querySelectorAll('.ring')].map(e => e.getBoundingClientRect()), bub = el.querySelector('.bub').getBoundingClientRect(); __garage.guide(6);
         return { rings: rings.map(r => [Math.round(r.left), Math.round(r.top), Math.round(r.width)]), bub: [Math.round(bub.left), Math.round(bub.top), Math.round(bub.width), Math.round(bub.bottom)], ok: rings.length === 2 && rings.every(r => r.width > 60 && bub.bottom <= r.top) }; }));
@@ -491,7 +500,7 @@ try {
     R.push(await page.evaluate(async () => { __garage.openMenu({ el: 'turbo', key: 'rgl:TURBO' }); const el = document.getElementById('g-menu'); el.classList.add('bot'); await new Promise(r => setTimeout(r, 450));
       const t = new DOMMatrix(getComputedStyle(el).transform), b = el.getBoundingClientRect(); __garage.closeMenu(); return { menu: [t.a, t.f, Math.round(b.bottom), innerHeight], ok: t.a === 1 && t.f === 0 && b.bottom <= innerHeight - 9 }; }));
     await viewport(412, 915, 600);
-    T.check('lying down (640 × 360, 915 × 412): the car whole between the buttons at the top and its name; the maquettes, SERVICE and the colour circles in the picture over the name; the guide\'s rings round the buttons for the other cars, its bubble beside them; a menu at the bottom where it opens', R.every(x => x.ok), JSON.stringify(R));
+    T.check('lying down (640 × 360, 915 × 412): the regal under the buttons at the top, the car whole, the maquettes, SERVICE, the colour circles and the drawers over the cars\' buttons (their names in them); the guide\'s rings round the buttons for the other cars, its bubble beside them; a menu at the bottom where it opens', R.every(x => x.ok), JSON.stringify(R));
   }
 
   // 8d. the zoom (the user's wish, 30. 10.): the mouse's wheel nearer and further, within its bounds (the cabinet still seen, the room's
@@ -523,9 +532,12 @@ try {
     await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.mouse.click(tap.x, tap.y)]);
     const url1 = page.url();
     await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
-    const g = await page.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
+    // (the game's own track is a real one now (NEUPORABNO: not Jezero), so the address carries its country (Romunija); the TITAN is not the
+    // player's car: the button's flag is grey, so the country is read from the profile (S.flag), where the garage keeps it, or leaves it
+    // empty when it has no flag for that country (the chequered flag), never another one)
+    const g = await page.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, sflag: __garage.S.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
     T.check('from the game\'s car screen: the car (over its place, clear of the panel, "Tapni avto za garažo") tapped opens the garage with it, the TITAN in green; the profile kept (the same credits), the MOCKUP bar there',
-      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f(&drzava=[^&]+)?$/.test(url1) && (!/drzava=/.test(url1) || g.flag === decodeURIComponent(url1.split('drzava=')[1])) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
+      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f(&drzava=[^&]+)?$/.test(url1) && (!/drzava=/.test(url1) || g.sflag === '' || g.sflag === decodeURIComponent(url1.split('drzava=')[1])) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
       JSON.stringify({ tap, url1, g, before }));
     await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('.g-foot .g-btn-back')]);
     await page.waitForFunction(() => window.__game && __game.screen === 'car', null, { timeout: 180000 });

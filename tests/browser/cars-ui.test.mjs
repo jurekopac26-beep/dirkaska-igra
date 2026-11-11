@@ -18,8 +18,8 @@
 //   the pause (its buttons there are the pause's); the results with Odstop (no record), Ogled vozila (close, from over the road, upright
 //   too); in the
 //   statistics a race (Dirke), never a finish (no win, podium, track raced to the line, achievement of the finish), the km as driven
-// - the commentator's destruction lines: the player's lost part (its own name), wheel, three wheels, the wreck, fire; a rival's wheel,
-//   fire and retirement nearby; the counts afresh after a repair
+// - the commentator's destruction lines: the player's lost part (its own name), the wreck, fire; a rival's wheel, fire and retirement
+//   nearby; the counts afresh after a repair; the player's wheel last (no "three wheels": the wheel rule ends the game, 9. 11. 2026)
 //   node tests/browser/cars-ui.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -269,7 +269,7 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', name: 'Ana', carV: 3, carId: 'titan', quali: 0, damage: 1 }, { width: 480, height: 270 });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
     const rivals = () => page.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, cars: [...new Set(r.cars.filter(c => !c.isPlayer).map(c => c.m.id))].join(), me: r.player.m.id, champ: !!r.champ }; });
-    await act('to-champ'); await wait(250);
+    await act('to-champ-nu'); await wait(250);   // (Domači pokal: behind NEUPORABNO, a cup of the test tracks)
     const pick0 = await page.evaluate(() => document.getElementById('ch-diff').textContent);
     await page.evaluate(() => document.querySelector('[data-champ="domaci"]').click()); await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'jezero'); }, null, { timeout: 90000 });
@@ -337,12 +337,11 @@ try {
     await page.evaluate(() => { window.__said = []; const o = Comm.say; Comm.say = (k, v, p, q) => { window.__said.push({ k, v: v ? JSON.parse(JSON.stringify(v)) : null, t: window.__game.race ? +window.__game.race.time.toFixed(2) : 0 }); return o(k, v, p, q); }; });
     await startTrack(page, 'jezero');
     const said = () => page.evaluate(() => window.__said.map(s => s.k + (s.v && (s.v.part || s.v.wheel || s.v.a) ? ':' + (s.v.part || s.v.wheel || s.v.a) : '')));
-    // the commentator: run, then the player's door, a wheel (on three for a while), the rivals' troubles near the player
+    // the commentator: run, then the player's door, the rivals' troubles near the player (the player's wheel last: it ends the game)
     const c1 = await page.evaluate(() => {
       const g = window.__game, r = g.race, P = r.player; g.pause(); g.sim(9, true);
       window.__said.length = 0;
       Core.detachPart(P, 'doorL'); g.sim(0.5, true);
-      Core.detachPart(P, 'wheelRL'); g.sim(8, true);
       const near = r.cars.filter(c => c !== P).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
       Core.detachPart(near[0], 'wheelFR'); g.sim(0.5, true);
       near[1].dmg = 0.99; g.sim(0.5, true);   // (a total wreck: on fire at once, Render.burning; a hub's sparks need frames drawn, fire.test.mjs)
@@ -350,8 +349,8 @@ try {
       return { names: near.slice(0, 3).map(c => c.name), d: near.slice(0, 3).map(c => Math.round(Math.hypot(c.x - P.x, c.z - P.z))) };
     });
     const k1 = await said();
-    T.check('the commentator: the player\'s part by its name ("left door"), the wheel ("rear left wheel"), on three wheels; near rivals: a lost wheel, a fire, a retirement (their names)',
-      k1.includes('partLost:left door') && k1.includes('wheelLost:rear left wheel') && k1.includes('threeWheels') && k1.includes('rivalWheel:' + c1.names[0]) && k1.includes('fire:' + c1.names[1]) && k1.includes('rivalWreck:' + c1.names[2]),
+    T.check('the commentator: the player\'s part by its name ("left door"); near rivals: a lost wheel, a fire, a retirement (their names)',
+      k1.includes('partLost:left door') && k1.includes('rivalWheel:' + c1.names[0]) && k1.includes('fire:' + c1.names[1]) && k1.includes('rivalWreck:' + c1.names[2]),
       JSON.stringify({ k1, c1 }));
     // a repair (or the marshals' refit) starts the counts afresh: the same part again is said again
     const k2 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; window.__said.length = 0; r.repairCar(P); g.sim(7, true);
@@ -359,6 +358,13 @@ try {
       for (let k = 0; k < 4; k++) { const pl = window.__said.filter(s => s.k === 'partLost').pop(); if (!pl || r.time - pl.t >= 6.2) break; g.sim(pl.t + 6.2 - r.time, true); }
       Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
     T.check('after a repair the same lost part is told again', k2.includes('partLost:left door'), JSON.stringify(k2));
+    // the player's wheel (the wheel rule, game.js WHEEL_RULE; the user, 9. 11. 2026: »Ko ti enkrat odpade kolo, je igre konec«): said by its
+    // name ("rear left wheel"), never "on three wheels": the car stops there, retires, and the game is over (wheels.test.mjs)
+    const k3 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; g.sim(8, true); window.__said.length = 0;
+      Core.detachPart(P, 'wheelRL'); g.sim(6, true); return { over: !!(P.wreck && P.wreck.rule && P.wreck.rule.over), out: r.isOut(P), kmh: Math.round(P.speed * 3.6) }; });
+    const k3s = await said();
+    T.check('the player\'s wheel by its name ("rear left wheel"), never "on three wheels": the car stops, retires and the game is over',
+      k3s.includes('wheelLost:rear left wheel') && !k3s.includes('threeWheels') && k3.over && k3.out && k3.kmh === 0, JSON.stringify({ k3s, k3 }));
     // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
     // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
     // wheels and the game is over, KONEC IGRE, wheels.test.mjs)

@@ -25,19 +25,6 @@
    55
   ]
  },
- "ouninpohja": {
-  "s": 8883,
-  "o": "Ostri levi na križišču",
-  "cam": [
-   -2076.8,
-   26.9,
-   -5227.1,
-   -2146.8,
-   1.8,
-   -5227.1,
-   52.3
-  ]
- },
  "nring": {
   "s": 12290,
   "o": "Karussell, nagnjena lasnica",
@@ -236,19 +223,6 @@
    0.9,
    -1352.9,
    49.9
-  ]
- },
- "greatalpine": {
-  "s": 3078,
-  "o": "Ovinek pri Wild Dog Creek",
-  "cam": [
-   1077,
-   128.7,
-   1649.8,
-   1052.4,
-   84.8,
-   1741.5,
-   54.8
   ]
  },
  "marrakesh": {

@@ -878,6 +878,7 @@
        OpenStreetMap has the stations only, the pylons between them evenly), its stations a hut under the bull wheel's housing; a drag lift lower
        still, without the chairs; the conveyors on the slope not drawn ---- */
     let nPyl = 0;
+    const ROPE_CLEAR = 7;   // m: the ropes over the road, at least (the asphalt and 2 m past its edge)
     if ((def.cables || []).length) {
       const gp = new GB(), steel = [0.42, 0.44, 0.46], rope = [0.12, 0.12, 0.13], top = [], seat = [0.22, 0.3, 0.5], frame = [0.3, 0.31, 0.33];
       const pyl = []; for (let k = 0; k + 2 < (def.pylons || []).length; k += 3) pyl.push(def.pylons.slice(k, k + 3));
@@ -890,19 +891,32 @@
           pts.push(q); }
         const n = pts.length;
         const dir = (k) => { const a = pts[Math.max(0, k - 1)], b = pts[Math.min(n - 1, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
-        const H = (k) => (ch ? (k === 0 || k === n - 1 ? 5 : ch === 1 ? 9 + 4 * rpHash(k, 91) : 6) : k === 0 || k === n - 1 ? 9 : 18 + 6 * rpHash(k, 91));   // (the stations' rope height, the pylons')
-        for (let k = 0; k < n; k++) { const [x, z] = pts[k], y = vrFar(x, z), [dx, dz] = dir(k), dist = vrDist(x, z); top.push([x, y + H(k), z, dx, dz]);
-          if ((k === 0 || k === n - 1) && ch) { if (dist < 600) { const g = scen.get(x, z), a = Math.atan2(dz, dx);   // (a lift's station: the hut, the bull wheel's housing over the loop)
+        const H = (k) => (ch ? (k === 0 || k === n - 1 ? 5 : ch === 1 ? 9 + 4 * rpHash(k, 91) : 6) : k === 0 || k === n - 1 ? 9 : 18 + 6 * rpHash(k, 91)), end = (k) => k === 0 || k === n - 1;   // (the stations' rope height, the pylons')
+        const RO = ch ? 2.3 : 4.2, SG = ch ? 0.02 : 0.035;   // (the ropes' half gauge, their sag)
+        for (let k = 0; k < n; k++) { const [x, z] = pts[k], [dx, dz] = dir(k); top.push([x, vrFar(x, z) + H(k), z, dx, dz]); }
+        // the ropes clear the road: where a span crosses it (the asphalt and 2 m past its edge), both its ropes stay ROPE_CLEAR m above the road. Its
+        // ends go up: a pylon by all of it, a station (whose rope deck rises with it) by a quarter as much, so the pylon by a station grows the most
+        // (S19, docs/pregled-sveta.md: on Balea the last span hung 1-6 m over the road). A few rounds: a lifted end changes its other span too
+        const ropeY = (A, B, t, span) => lerp(A[1], B[1], t) - span * SG * 4 * t * (1 - t);
+        for (let it = 0, up = 1; it < 4 && up; it++) { up = 0; for (let k = 0; k + 1 < n; k++) {
+          const A = top[k], B = top[k + 1]; let need = 0.05, tw = 0;
+          for (const f of [-1, 1]) { const o = RO * f, ax = A[0] - A[4] * o, az = A[2] + A[3] * o, bx = B[0] - B[4] * o, bz = B[2] + B[3] * o, span = Math.hypot(bx - ax, bz - az), m = Math.ceil(span);
+            for (let q = 1; q < m; q++) { const t = q / m, x = lerp(ax, bx, t), z = lerp(az, bz, t); if (vrDist(x, z) > 16) continue;
+              const r = vrNear(x, z); if (r.i < 0 || r.dd > 2) continue;
+              const nd = ROPE_CLEAR - (ropeY(A, B, t, span) - r.hn); if (nd > need) { need = nd; tw = t; } } }
+          if (tw > 0) { const wa = end(k) ? 0.25 : 1, wb = end(k + 1) ? 0.25 : 1, s = need / ((1 - tw) * wa + tw * wb); A[1] += s * wa; B[1] += s * wb; up = 1; }
+        } }
+        for (let k = 0; k < n; k++) { const [x, z] = pts[k], y = vrFar(x, z), [dx, dz] = dir(k), dist = vrDist(x, z), hh = top[k][1] - y;
+          if (end(k) && ch) { if (dist < 600) { const g = scen.get(x, z), a = Math.atan2(dz, dx);   // (a lift's station: the hut, the bull wheel's housing over the loop)
             box(g, x, y - 0.5, z, 6, 4.2, 5, a, [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); box(g, x, y + 3.7, z, 8.5, 1.3, 6.2, a, [0.84, 0.82, 0.78], [0.42, 0.44, 0.47]); exclPush(x, z, 7); } continue; }
-          if (k === 0 || k === n - 1) { if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, 9.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
+          if (end(k)) { if (dist < 600) { box(scen.get(x, z), x, y - 0.5, z, 14, hh + 0.5, 9, Math.atan2(dz, dx), [0.72, 0.71, 0.68], [0.5, 0.5, 0.5], true); exclPush(x, z, 10); } continue; }
           if (dist > 900) continue;
-          const g = scen.get(x, z), hh = H(k), a = Math.atan2(dz, dx);   // a pylon: a tapering steel mast, the cross-arm with the two rope saddles
+          const g = scen.get(x, z), a = Math.atan2(dz, dx);   // a pylon: a tapering steel mast, the cross-arm with the two rope saddles
           if (ch) { cyl(g, x, y - 0.4, z, 0.34, hh + 0.4, 6, steel, steel, 0.24); box(g, x, y + hh - 0.3, z, 0.4, 0.4, 5.2, a, steel, null, true);   // (a lift's: the tube, the cross-arm, the sheaves)
             for (const o of [-2.3, 2.3]) box(g, x - dz * o, y + hh - 0.45, z + dx * o, 2.2, 0.3, 0.3, a, [0.26, 0.27, 0.29], null, true);
             exclPush(x, z, 2); nPyl++; continue; }
           for (let q = 0; q < 4; q++) { const f0 = q / 4, f1 = (q + 1) / 4, r0 = lerp(1.6, 0.6, f0), r1 = lerp(1.6, 0.6, f1); box(g, x, y + hh * f0 - (q ? 0 : 0.5), z, r0 * 0.9 + r1 * 0.1, hh / 4 + (q ? 0 : 0.5), r0 * 0.9 + r1 * 0.1, a, steel, null, true); }
           box(g, x, y + hh, z, 0.6, 0.5, 9, a, steel, null, true); exclPush(x, z, 3); nPyl++; }
-        const RO = ch ? 2.3 : 4.2, SG = ch ? 0.02 : 0.035;   // (the ropes' half gauge, their sag)
         for (const f of [-1, 1]) for (let k = 0; k + 1 < top.length; k++) {   // the ropes: ~16 segments each span, sagging
           const A = top[k], B = top[k + 1], o = RO * f, ax = A[0] - A[4] * o, az = A[2] + A[3] * o, bx = B[0] - B[4] * o, bz = B[2] + B[3] * o, span = Math.hypot(bx - ax, bz - az);
           if (Math.min(vrDist(ax, az), vrDist(bx, bz)) > 1100) continue;
@@ -1171,5 +1185,6 @@
   }
 
   Object.assign(API, { PL_LOOK, buildPrelaz });   // (what World and the other worlds use of this one)
+  for (const th of Object.keys(PL_LOOK)) World.keep('caBank', th);   // (the walls' terrain kept between the passes' builds; World.build frees it for the other worlds: caBank.f's closure holds this build's whole world)
   for (const th of Object.keys(PL_LOOK)) World.ext[th] = (scene, tex, opts) => buildPrelaz(scene, tex, opts, PL_LOOK[th]);
 })();

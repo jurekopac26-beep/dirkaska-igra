@@ -261,6 +261,8 @@
     }
     for (const tr of A.trails) {   // the ribbons, turned to the camera
       const n = tr.s.length, g = tr.m.geometry, P = tr.P, C = tr.C;
+      tr.m.visible = n > 1 && t - tr.s[n - 1][3] < 22;   // (gone once the last of it has faded)
+      if (!tr.m.visible) continue;   // (and then nothing to turn till the next fly-past: not every frame of the race)
       for (let k = 0; k < n; k++) {
         const s = tr.s[k], age = t - s[3], x = s[0] + RB_WIND[0] * 0.35 * age, y = s[1] - 0.12 * age, z = s[2] + RB_WIND[1] * 0.35 * age;
         const q = tr.s[Math.min(n - 1, k + 1)], p0 = tr.s[Math.max(0, k - 1)], tx = q[0] - p0[0], ty = q[1] - p0[1], tz = q[2] - p0[2];
@@ -272,7 +274,6 @@
         for (const o of [0, 4]) { C[k * 8 + o] = tr.col[0]; C[k * 8 + o + 1] = tr.col[1]; C[k * 8 + o + 2] = tr.col[2]; C[k * 8 + o + 3] = a; }
       }
       g.setDrawRange(0, Math.max(0, n - 1) * 6); g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
-      tr.m.visible = n > 1 && t - tr.s[n - 1][3] < 22;   // (gone once the last of it has faded)
     }
     /* the helicopter: once a race, when the player's car comes down the straight for the second time; timed (as Pikes Peak's fly-over) to be over
        the road A m in front of the car at height H, both chosen for the camera in use: in the frame, clear of the car */
