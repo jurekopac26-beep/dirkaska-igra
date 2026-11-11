@@ -8650,7 +8650,8 @@ const Render = (function () {
     v.grp.quaternion.set(qx, qy, qz, qw);
     v.grp.position.set(lerp(B.px, B.x, u) - hc * ux, lerp(B.py, B.y, u) - hc * uy, lerp(B.pz, B.z, u) - hc * uz);
     v.roll = v.pitch = 0; v.bodyG.rotation.set(0, 0, 0); v.bodyG.position.set(0, -(v.dl ? v.dl.low : 0), 0);
-    if (v.fb !== 1) { v.fb = 1; v.fbN = B.hn; v.fbW = 1; }   // (the first frame of it; the knocks it has had already are no news: fallFx)
+    if (v.fb !== 1) { v.fb = 1; v.fbW = 1; v.fbB = null; }   // (the first frame of it)
+    if (v.fbB !== B) { v.fbB = B; v.fbN = B.hn; }   // (the first frame of this body: the fall's own, or another body on a car still falling (a replay's own in place of the race's, and the race's again after Posnetek do sem); the knocks it has had already are no news: fallFx)
     v.fbW *= Math.exp(-dt / 1.5); v.spin -= (1 - v.fbW) * c.vl * dt / c.m.rw;   // (the wheels in the air: from the speed it went over at down to a stop)
     for (const w of v.wf) w.rotation.set(0, 0, -v.spin); for (const w of v.wr) w.rotation.z = -v.spin; for (const w of v.wm) w.rotation.z = -v.spin;
     if (v.xUnd === undefined) { ownRnd(() => xUnder(v, c)); if (!v.xUnd) v.xUnd = null; }   // (made once; a body it cannot be made for: not tried again every frame)
@@ -8661,7 +8662,7 @@ const Render = (function () {
   // the frame it is back on the road (Core Race.rescue): a car standing there, at the road's grade and bank at once (not eased out of the pose its
   // fall ended in), and no landing of it either (wasAir: no ring of dust, no shake). For three frames in all (v.fb: 1 falling, then 2, 3, 0): the
   // car's bank is the edge's it went over, none, until its first step on the road, and the roll would lean into the road's over 0.3 s
-  function fallBack(v, pitch, bank, dt) { if (dt > 0) v.fb = v.fb < 3 ? v.fb + 1 : 0; v.gpitch = pitch; v.broll = bank; v.roll = v.pitch = 0; v.wasAir = false; if (v.tag && v.tagY) v.tag.position.set(0, v.tagY, 0); }
+  function fallBack(v, pitch, bank, dt) { if (dt > 0) v.fb = v.fb < 3 ? v.fb + 1 : 0; v.fbB = null; v.gpitch = pitch; v.broll = bank; v.roll = v.pitch = 0; v.wasAir = false; if (v.tag && v.tagY) v.tag.position.set(0, v.tagY, 0); }
   // a falling body's effects, in place of a car on the road's (emitFx: no wheel of it on a road, no exhaust flame, no hub or bumper dragging;
   // the sparks of the fence it broke on its way over still): at each hard knock on the ground (B.hn counts them; where: B.hx, hy, hz; how
   // hard: B.hv, m/s) a burst of the ground's dust from the place, stones with it off a harder one (the renderer's own random numbers); the

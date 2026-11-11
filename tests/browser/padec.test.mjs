@@ -18,11 +18,18 @@
 //  5. knocks: each hard knock of the body on the slope (B.hn grows) gives dust, the view shakes by the game's one value (min(1.2, 0.08 x
 //     the knock's m/s)), never by more; every fall costs at least 0.32 of damage
 //  6. the replay (Posnetek do sem): inside a fall the replay's car carries a posed body and is drawn as it was live at that race time,
-//     after the put-back it stands on the road; rpFalls() lists exactly the falls that happened, with their times
+//     after the put-back it stands on the road; rpFalls() lists exactly the falls that happened, with their times; the speed the people by
+//     the road are given for the replay's car inside a fall is its speed over the ground (a fall's sample holds a part of the body's turn
+//     where a road's holds the speed)
 //  7. a rival over the edge is drawn by the same rules, with no shake of the player's view and no banner
 //  8. Killar (only where the track is in the tree): two real crossings of the ravine side 524 m after the start (60 km/h under 20°,
 //     10 km/h under 40° in portrait): checks 1-4 on real ground
 //  9. no errors on the page
+// 10. Posnetek do sem in the middle of a fall, after a hard knock of the body (the replay shows the car on the road, then early in that
+//     fall), and back in the race: the knocks the body has had already give no dust again, its next knock does
+// 11. behind the results (the player home, the race going on): the results' replay opened and left in the middle of the rival's fall
+//     leaves that car as the race had it (the same body, untouched, its place on the road the edge's), and its fall goes on to its
+//     put-back where it went over
 //   node tests/browser/padec.test.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -87,6 +94,7 @@ async function install() {
   Render.frame = function (dt, alpha, target, mode, opt) {
     const c = H.car, sh0 = Render.cam.shake, fx0 = Render.fxStats().total;
     let real = H.real1; H.real1 = false;
+    if (opt && opt.rp) H.rp = opt.rp;   // (a replay's frame: what the people by the road read the replay's car from, js/world-ljudje.js resim)
     if (H.plan) { const F = c.fall; if (F && F.b && !F.rp) { while (H.plan.i < H.plan.ft.length && F.t >= H.plan.ft[H.plan.i]) { H.plan.i++; real = true; } } else if (H.backN >= 0 && H.plan.after.includes(H.n - H.backN)) real = true; }
     if (!real) mute(true);
     let r; try { r = frame0.apply(this, arguments); } finally { if (!real) mute(false); }
@@ -198,12 +206,66 @@ async function install() {
     g.onAction('rp-here'); if (!g.replay) return { error: 'no replay (Posnetek do sem)' };
     if (g.replay.play) g.onAction('rp-play');
     const out = []; H.rows.length = 0;
-    for (const it of list) { H.car = cars[it.k]; g.rpSeek(it.t); for (let j = 0; j < (it.n || 1); j++) H.tick(1000 / 60); const r = H.rows.pop(); H.rows.length = 0; r.rt = g.replay.t; out.push(r); }
+    for (const it of list) { H.car = cars[it.k]; H.rp = null; g.rpSeek(it.t); for (let j = 0; j < (it.n || 1); j++) H.tick(1000 / 60); const r = H.rows.pop(); H.rows.length = 0; r.rt = g.replay.t; r.av = H.rp ? H.rp.at(g.replay.t, { x: 0, z: 0, v: 0 }).v : null; out.push(r); }   // (av: the speed of the car the replay follows, the player's, as the people by the road are given it)
     const falls = g.rpFalls();
     g.onAction('rp-race');
     const after = { replay: !!g.replay, falls: cars.map(c => c.fall ? (c.fall.rp ? 'rp' : 'own') : '') };
     g.pause(); H.car = P;
     return { rows: out, falls, after };
+  };
+  // Posnetek do sem in the middle of a fall, after a hard knock of its body (the slow crossing: its first knock, the dust of it drawn): the
+  // replay shows the car on the road before the fall, then early in that fall (before the knock); Nazaj v dirko, 3 · 2 · 1, and the race
+  // goes on to the fall's end. The frames from the return on, the race's events with them
+  H.mid = () => {
+    const s = H.stage('P', 5, 60); if (s.error) return s;
+    const c = H.car = P; H.backN = -1; H.overSt = -1; H.plan = null; H.rows.length = 0;
+    Render.resetCam(); for (let j = 0; j < 5; j++) Render.frame(0.1, 1, P, 'chase', { noFx: true });
+    H.rows.length = 0; const t0 = R.time;
+    c.fall = { t: 0, raw: 1 }; c.air = 1; H.overSt = H.steps;
+    H.go();
+    for (let j = 0; j < 400 && c.fall && !(c.fall.b && c.fall.b.hn); j++) H.tick(1000 / 60);
+    for (let j = 0; j < 2 && c.fall; j++) H.tick(1000 / 60);
+    if (!c.fall || !c.fall.b || !c.fall.b.hn) return { error: 'no hard knock of the body before its fall ended' };
+    const own = c.fall, hn0 = own.b.hn, dust = H.rows.reduce((m, x) => m + x.fx1 - x.fx0, 0), tP = R.time; H.rows.length = 0;
+    g.onAction('rp-here'); if (!g.replay) return { error: 'no replay (Posnetek do sem)' };
+    if (g.replay.play) g.onAction('rp-play');
+    g.rpSeek(t0 - 0.5); for (let j = 0; j < 4; j++) H.tick(1000 / 60); const road = H.rows.pop();
+    g.rpSeek(t0 + 0.15); for (let j = 0; j < 2; j++) H.tick(1000 / 60); const early = H.rows.pop(); H.rows.length = 0;
+    const st0 = H.steps, e0 = H.ev.length;
+    g.onAction('rp-race'); const same = c.fall === own;
+    for (let j = 0; j < 900 && !(H.backN >= 0 && H.n - H.backN > 5); j++) H.tick(1000 / 60);
+    g.pause();
+    const rows = H.rows.map(x => ({ st: x.st, f: x.f, hn: x.hn, fx: x.fx1 - x.fx0 })); H.rows.length = 0;
+    return { t0, tP, hn0, dust, road: road.f, early: { f: early.f, hn: early.hn }, st0, same, rows, ev: H.ev.slice(e0) };
+  };
+  // behind the results: the player home (the last metres of its last lap's distance, the autopilot), the results up and the race going on
+  // behind them (the rival is not home); the rival over the made-up slope, and in the middle of its fall the results' replay is opened,
+  // shown where that car was on the road, and left again. Then the race's own frames to the put-back
+  H.behind = () => {
+    if (!A) return { error: 'no rival in the race' };
+    R.repairCar(P); P.lap = R.laps; P.dist = R.laps * T.len - 4;
+    for (let j = 0; j < 60 && g.phase !== 'done'; j++) g.sim(0.5, true);
+    if (g.phase !== 'done' || !P.finished) return { error: 'the player is not home with the results up (phase ' + g.phase + ')' };
+    if (R.isOut(A)) return { error: 'the rival is home or out of the race too' };
+    const s = H.stage('A', 8, 25); if (s.error) return s;
+    const c = H.car = A, k = cars.indexOf(A); H.backN = -1; H.overSt = -1; H.plan = null; H.rows.length = 0;
+    const e0 = H.ev.length, over = { t: R.time, s: c.q.s, d: c.q.d };
+    c.fall = { t: 0, raw: 1 }; c.air = 1; H.overSt = H.steps;
+    H.go();
+    for (let j = 0; j < 400 && c.fall && !(c.fall.b && c.fall.t >= 0.5); j++) H.tick(1000 / 60);
+    if (!c.fall || !c.fall.b) return { error: 'the rival\'s fall was over before the replay (the race behind the results did not go on as a fall)' };
+    const own = c.fall, B = own.b, snap = () => ({ x: B.x, y: B.y, z: B.z, q: Array.from(B.q), ft: own.t, s: c.q.s, d: c.q.d, time: R.time, steps: H.steps });
+    const was = snap();
+    g.onAction('replay'); if (!g.replay) return { error: 'no replay from the results' };
+    const here = g.replay.here; if (g.replay.play) g.onAction('rp-play');
+    g.rpSeek(over.t - 1); for (let j = 0; j < 3; j++) H.tick(1000 / 60);
+    const shown = { fall: c.fall ? (c.fall.rp ? 'rp' : c.fall === own ? 'own' : 'other') : '', moved: Math.hypot(c.x - B.x, c.z - B.z) };
+    g.onAction('rp-exit');
+    const now = snap(), after = { replay: !!g.replay, same: c.fall === own && own.b === B, phase: g.phase };
+    for (let j = 0; j < 600 && !(H.backN >= 0 && H.n - H.backN > 5); j++) H.tick(1000 / 60);
+    g.pause();
+    const back = H.ev.slice(e0).filter(e => e.e === 'back' && e.k === k).pop() || null; H.rows.length = 0;
+    return { over, was, here, shown, now, after, back, fall: c.fall ? (c.fall.rp ? 'rp' : 'own') : '' };
   };
   return { ok: 1, idx: cars.map(c => R.cars.indexOf(c)), track: T.def.id, model: P.m.id, modelA: A ? A.m.id : null };
 }
@@ -317,7 +379,7 @@ try {
       // 6: the replay, standing, at about six moments of each fall (the race time of a live frame's picture: its step's time less the rest
       // of the step), and 0.1 s and 0.4 s after each put-back (a sample every 0.05 s: the body is carried on to the first one after it)
       const list = [];
-      all.forEach((s, j) => { const n = s.fr.length; for (let i = 2; i < n; i += Math.max(1, Math.floor(n / 6))) { const x = s.fr[i]; list.push({ j, k: s.k, t: x.t - (1 - x.a) / 120, up: x.up, pos: x.pos }); }
+      all.forEach((s, j) => { const n = s.fr.length; for (let i = 2; i < n; i += Math.max(1, Math.floor(n / 6))) { const x = s.fr[i]; list.push({ j, k: s.k, t: x.t - (1 - x.a) / 120, up: x.up, pos: x.pos, v: x.v }); }
         list.push({ j, k: s.k, t: s.r.back.t + 0.1, after: 1, n: 3 }, { j, k: s.k, t: s.r.back.t + 0.4, after: 1, n: 3 }); });
       const rep = await page.evaluate((list) => window.__pd.replay(list.map(it => ({ t: it.t, k: it.k, n: it.n }))), list);
       if (rep.error) T.check('the replay opens (Posnetek do sem)', false, rep.error);
@@ -333,6 +395,35 @@ try {
         T.check('rpFalls() lists exactly the falls that happened, with their times; back in the race from the replay no car carries a fall',
           rep.falls.length === all.length && all.every(s => rep.falls.filter(q => fits(s, q)).length === 1) && !rep.after.replay && rep.after.falls.every(x => !x),
           `${rep.falls.map(q => `car ${q.k} ${f(q.t0)}-${f(q.t1)} s (${q.n} knocks)`).join(', ')}; live ${all.map(s => `car ${inst.idx[s.k]} ${f(s.r.over.t)}-${f(s.r.back.t)} s`).join(', ')}; after: replay ${rep.after.replay}, falls [${rep.after.falls.join(',')}]`);
+        // (the replay follows the player's car: its own falls. Between two samples, 0.05 s apart, the speed is the mean over them: a knock
+        // in between may halve or double it against the live frame's)
+        const mine = in1.filter(x => x.s.k === 0);
+        T.check('the replay inside a fall: the people by the road are given the car\'s speed over the ground (within 0.4 to 2 times the live frame\'s), never a part of the body\'s turn',
+          mine.length >= 12 && mine.some(x => x.it.v > 10) && mine.every(x => x.av != null && x.av >= 0.4 * x.it.v - 1 && x.av <= 2 * x.it.v + 2),
+          mine.map(x => `${f(x.av, 1)} (live ${f(x.it.v, 1)})`).join(', ') + ' m/s');
+      }
+      // 10
+      const mid = await page.evaluate(() => window.__pd.mid());
+      if (mid.error) T.check('Posnetek do sem in the middle of a fall', false, mid.error);
+      else {
+        const k1 = mid.ev.find(e => e.e === 'knock' && e.k === 0), bk = mid.ev.find(e => e.e === 'back' && e.k === 0), lim = k1 ? k1.st : bk ? bk.st : Infinity;
+        const pre = mid.rows.filter(x => x.st < lim), run = pre.filter(x => x.st > mid.st0), at = k1 ? mid.rows.find(x => x.st >= k1.st) : null;
+        T.check('Posnetek do sem in the middle of a fall, after a hard knock (the replay shows the car on the road, then early in that fall), and back in the race: the knocks the body has had already give no dust again, its next knock does',
+          mid.dust >= 6 && mid.road === 0 && mid.early.f === 3 && mid.early.hn < mid.hn0 && mid.same && run.length >= 3 && run.every(x => x.f === 2) && pre.every(x => x.fx === 0) && !!at && at.fx >= 6 && !!bk,
+          `live: ${mid.hn0} knock, +${mid.dust} particles, the race stopped ${f(mid.tP - mid.t0)} s into the fall; the replay: on the road (${mid.road}), then early in the fall with ${mid.early.hn} knocks (${mid.early.f}); back: the race's own body ${mid.same}, ` +
+          `${pre.length} frames to its next knock (${run.length} of them with the race going on) with ${pre.reduce((m, x) => m + x.fx, 0)} particles, most in one ${pre.length ? mx(pre, x => x.fx) : '-'}; the next knock ${at ? '+' + at.fx : 'none'}; put back ${!!bk}`);
+      }
+      // 11 (last on this page: the race is over for the player from here on)
+      const bh = await page.evaluate(() => window.__pd.behind());
+      if (bh.error) T.check('behind the results: the results\' replay in the middle of a rival\'s fall', false, bh.error);
+      else {
+        const eq = (a, b) => a.x === b.x && a.y === b.y && a.z === b.z && a.ft === b.ft && a.q.every((v, i) => v === b.q[i]) && a.s === b.s && a.d === b.d && a.time === b.time && a.steps === b.steps;
+        T.check('behind the results (the player home, the race going on): the results\' replay, opened and left in the middle of the rival\'s fall, leaves that car as the race had it (the same body, untouched, its place on the road the edge\'s)',
+          !bh.here && bh.shown.fall === '' && bh.shown.moved > 5 && !bh.after.replay && bh.after.same && eq(bh.was, bh.now) && bh.after.phase === 'done',
+          `the replay: the results' (${!bh.here}), it showed the car on the road ${f(bh.shown.moved, 1)} m from its body (fall '${bh.shown.fall}'); after it: the race's own body ${bh.after.same}, ${f(bh.now.ft)} s into its fall as before (${f(bh.was.ft)} s), place on the road ${f(bh.now.s, 1)} m (${f(bh.was.s, 1)} m before), body and car unchanged ${eq(bh.was, bh.now)}`);
+        T.check('behind the results: after the replay that fall goes on to its put-back where the car went over, no later than 1.5 s + a step of the race after going over',
+          !!bh.back && !bh.fall && bh.back.t - bh.over.t <= 1.5 + 2 / 120 + 1e-6 && Math.abs(bh.back.s - bh.over.s) <= 2 && Math.abs(bh.back.d) < G.bl,
+          bh.back ? `put back ${f(bh.back.t - bh.over.t, 3)} s of the race after going over, ${f(Math.abs(bh.back.s - bh.over.s))} m along the road from there, ${f(bh.back.d)} m off its middle; fall after it '${bh.fall}'` : `never put back (fall '${bh.fall}')`);
       }
     }
     // 9 (Chrome's own note about a vibration asked for before the page was tapped is not the game's error: the test never taps)
