@@ -24,12 +24,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 75000, pk: 'open', field: ['vran'],
     snd: { kind: 'v8', hz: 0.85, loud: 1.3 },
     expect: { t100: [2.8, 3.15], vmax: [192, 208], latG: [2.05, 2.15], d100: [23.7, 25.5] },   // (measured 2.93 / 200 / 2.10 / 24.6)
-    partNames: { tailgate: 'tailgate', spare: 'spare wheel', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
-    // the closed car's set (no boot lid: the tailgate in its place) and its own: the tailgate with the rear window, the spare on it, each lamp
+    partNames: { tailgate: 'tailgate', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
+    // the closed car's set (no boot lid: the tailgate in its place) and its own: the tailgate with the rear window and the spare, each lamp
     parts: { set: 'car', ht: 2.0, y0: 0.62, drop: ['trunk'],
       extra: {
-        tailgate: { z: 1, th: 0.78, m: 14, rW: 0.42, h: 0.13, lx: -0.9, lz: 0, y: 1.2 },   // (with the rear window; the spare wheel is on it)
-        spare: { z: 1, th: 1, m: 14, r: 0.45, h: 0.28, lx: -0.935, lz: 0, y: 0.98, on: 'tailgate', spare: 1 },   // (Core's spare: it rocks from 50 % of the damage, off at 80 %; with the gate)
+        tailgate: { z: 1, th: 0.78, m: 14, rW: 0.42, h: 0.13, lx: -0.9, lz: 0, y: 1.2 },   // (with the rear window and the spare wheel on it)
         headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: 0.94, lz: -0.58, y: 0.99 },
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: 0.94, lz: 0.58, y: 0.99 },
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: -0.875, lz: -0.69, y: 0.95 },
@@ -191,15 +190,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.16, 0.42, 0, 0.12, 0.16, 1.8, 0, DK, null, true);
           if (!VK) for (const sd of [-1, 1]) K.rect(-2.222, 0.46, sd * 0.62, 0.05, 0.08, RED, { dir: '-x' });
         }, { hinge: [[-2.12, 0.42, -0.85], [-2.12, 0.42, 0.85]] });
-        // ---- the tailgate (hinged on its left): the rear window, its handle; the spare wheel low on its carrier, a part of its own on the
-        //      gate (parts.extra.spare, on: 'tailgate'): it swings open and leaves with the gate, or by itself (Core's spare) ----
+        // ---- the tailgate (hinged on its left): the rear window, its handle; the spare wheel low on its carrier (with
+        //      it, or by itself: the sub-range 'spare') ----
         K.part('tailgate', () => {
           K.rect(-2.103, 1.64, 0, 1.2, 0.4, G, { dir: '-x' });
           K.rect(-2.102, 1.1, 0.62, 0.12, 0.04, B, { dir: '-x' });
         }, { hinge: [[-2.1, 0.72, -0.86], [-2.1, 1.85, -0.86]] });
-        K.part('spare', () => {
+        K.part('tailgate', () => {
           K.tyre(-2.245, 0.98, 0, { axis: 'x', face: -1, w: 0.28 });
-        });
+        }, { sub: 'spare' });
         // ---- the rock sliders under the doors, the rear axle under the short tail (in sight from behind) ----
         K.part('body', () => {
           for (const sd of [-1, 1]) K.bar([-0.96, 0.56, sd * 0.97], [0.76, 0.56, sd * 0.97], 0.035, T, { n: 4 });

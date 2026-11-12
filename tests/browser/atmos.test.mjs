@@ -46,7 +46,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(4, true); g.resume(); });
   await page.waitForTimeout(600);
   const s4 = await look(), fall = await page.evaluate(() => ({ rain: Render.raining, snow: (() => { let v = false; Render.scene.traverse(o => { if (o.isPoints && o.material && o.material.uniforms && o.material.uniforms.uBox && o.visible) v = true; }); return v; })() }));
-  T.check('a winter night race: grip x0.94 (x0.8 more in the snow), the headlights\' beams on the road, snow falling instead of rain', Math.abs(r.gk - 0.94) < 1e-9 && Math.abs(r.wet - 0.8 * 0.94) < 0.01 && s4.beamOn >= 10 && fall.snow && !fall.rain,
+  T.check('a winter night race: grip x0.70 (x0.65 more in the snow, docs/dez-sneg.md), the headlights\' beams on the road, snow falling instead of rain', Math.abs(r.gk - 0.7) < 1e-9 && Math.abs(r.wet - 0.65 * 0.7) < 0.01 && s4.beamOn >= 10 && fall.snow && !fall.rain,
     JSON.stringify({ r, beams: s4.beamOn, fall }));
   await act('to-title'); await page.waitForTimeout(300);
 

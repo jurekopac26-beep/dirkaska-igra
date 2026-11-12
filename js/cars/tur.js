@@ -21,15 +21,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 80000, pk: 'open', field: ['tur'], fieldN: 9, fill: ['medved', 'pescenjak'],   // (a bigger race: 9 of its own through the field, the rest these two off-roaders of its pace (3.46 s / 190 and 4.08 s / 187 km/h): 99 of its own would not fit the phone's budget)
     snd: { kind: 'v8', hz: 0.8, loud: 1.3 },
     expect: { t100: [3.27, 3.67], vmax: [180, 196], latG: [1.97, 2.07], d100: [26.2, 28.0] },   // (measured 3.47 / 188 / 2.02 / 27.1)
-    partNames: { tailgate: 'tailgate', spare: 'spare wheel', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
-    // the truck's set (the bumpers, the doors, the mirrors) and the pickup's own: the hood, the front fenders, the tailgate, the spare wheel, each lamp
+    partNames: { tailgate: 'tailgate', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
+    // the truck's set (the bumpers, the doors, the mirrors) and the pickup's own: the hood, the front fenders, the tailgate, each lamp
     parts: { set: 'truck', ht: 2.15, y0: 0.6,
       extra: {
         hood: { lx: 0.73 },
         fenderL: { lz: -0.95, f: 0.42, h: 0.13 },
         fenderR: { lz: 0.95, f: 0.42, h: 0.13 },
         tailgate: { z: 1, th: 0.7, m: 14, rW: 0.45, h: 0.08, lx: -1.0, lz: 0, f: 0.5 },
-        spare: { z: 1, th: 1, m: 14, r: 0.47, h: 0.36, lx: -0.633, lz: 0, y: 1.02, spare: 1 },   // (the wheel lying in the bed; Core's spare: it rocks from 50 % of the damage, off at 80 %)
         headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.2, h: 0.08, lx: 0.98, lz: -0.67, y: 1.12 },
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.2, h: 0.08, lx: 0.98, lz: 0.67, y: 1.12 },
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.17, h: 0.05, lx: -1.0, lz: -0.85, y: 1.1 },
@@ -174,7 +173,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the bed: the sports bar behind the cab, the spare wheel lying in it
         for (const sd of [-1, 1]) K.bar([-0.9, 1.44, sd * 0.98], [-0.9, 1.95, sd * 0.86], 0.045, DK, { n: 6 });
         K.bar([-0.9, 1.95, -0.86], [-0.9, 1.95, 0.86], 0.045, DK, { n: 6 });
-        K.part('spare', () => K.tyre(-1.9, 1.02, 0, { axis: 'y' }));   // (a part of its own: Core's spare)
+        K.tyre(-1.9, 1.02, 0, { axis: 'y' });
         // the tail: the lamps on the bed's corners (each a part of its own, in its black surround), the rear bumper with its step
         for (const sd of [-1, 1]) { const tp = sd < 0 ? 'tailL' : 'tailR';
           K.rect(-3.053, 1.1, sd * 0.9, 0.18, 0.36, B, { dir: '-x', part: tp }); }
