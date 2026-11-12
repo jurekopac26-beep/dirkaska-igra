@@ -39,7 +39,10 @@
 //   scenes with it; the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
 //   damage: docs/trki-realizem.md, »Testi različice Realistična«); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the
 //   whole state of the race and of the car after every step is the same in cv 6 as in cv 1, each in a core of its own; the plane with given
-//   inputs, both physics; the control: the same comparison finds the first touch); the other versions (the reference tests/golden/trki.json: a
+//   inputs, both physics; the control: the same comparison finds the first touch; among rivals (a race on a circuit with pits lays rubber on the
+//   track by what every car does, Core Race._marbles, so the cars of a race share it: Spa, 12 rivals, the player on pole touching nothing
+//   with the same inputs is the same in cv 6 as in cv 1 up to the step at which the rubber sums of the two races first differ, and through
+//   the whole 40 s with the cv 1 race's sum put in: nothing else links it to the others' knocks)); the other versions (the reference tests/golden/trki.json: a
 //   digest of the whole state after every step of 12 knocks, 5 barriers, 5 things by the road, 2 loose parts and a truck with its semi-trailer
 //   at the barrier in each of the six versions; after a wanted change of a version: node tests/trki.test.js --update); the exempt (Core krOn:
 //   a truck with its semi-trailer, a car in the run from the police and a car in the pit lane keep Simulacija's rules at the knock, in the
@@ -764,6 +767,48 @@ for (const tid of ['spa', 'bathurst']) {
   ok(`race ${tid} in Realistična, no launch: no knock gives a car more than 8 m/s in a step, no car is faster than the fastest of the other versions by more than 5 km/h and none turns faster than 9 rad/s`,
     !R6.nan && R6.gain < 8 && R6.top < topO + 5 && R6.wmax <= 9 + 1e-9,
     `the most gained in a step ${f(R6.gain, 2)} m/s (${R6.gainAt}; the other versions ${f(Math.max(...others.map(x => x.gain)), 2)}), the fastest ${f(R6.top, 0)} km/h (the other versions ${f(topO, 0)}), the fastest turn ${f(R6.wmax, 2)} rad/s`);
+}
+
+// ---- no touch among rivals: the rubber on the track (the independent check, 12. 11. 2026) ----
+// A race on a circuit with pits (Race opts.tyres; in the game a race, not a time trial, an open road or a test track) lays rubber on the
+// track by what every car of the race does: one sum for the race (Core Race._marbles, mb.d), a factor in every car's grip. Rivals that
+// knock one another differently in another version lay it a little differently, so in such a race a car that touches nothing is the same
+// to the last digit only until they do. The link is the driving's, older than the versions, and left as it is (docs/trki-realizem.md,
+// »Popravki po neodvisnem preverjanju«); checked here: it is the only one. Spa, 12 rivals, the player on pole touching nothing, its inputs
+// the autopilot's of a cv 1 race played back: its driving state (ST) after every step is the same in cv 6 as in cv 1 up to the step at
+// which the rubber sums of the two races first differ, and through the whole run with the cv 1 race's sum put into the cv 6 race.
+{
+  const tid = 'spa', n = Math.round(40 / DT), IN = ['inSteer', 'inThr', 'inBrk', 'inHand', 'digitalSteer'];
+  const ST = 'x y z h vx vy vz w steer delta drift gear rpm axF vl vt beta slipF slipR spin lock dist lap wet dmg xgl cSx cSz'.split(' ');
+  const firstDiff = (a, b) => { for (let i = 0; i < Math.max(a.length, b.length); i++) if (a[i] !== b[i]) return i + 1; return 0; };   // (the step, from 1; 0: none)
+  const which = (a, b) => { const p = a.split(';'), q = b.split(';'), i = p.findIndex((x, j) => x !== q[j]); return i < 0 ? '' : `${p[i]} / ${q[i]}`; };
+  // rec: the inputs to play back (none: the autopilot's, recorded); sum: the rubber sum to put in at every step (none: the race's own)
+  const run = (tx, rec, sum) => test(tx, () => {
+    Math.random = seeded(64); const T = new C.Track(C.TRACKS.find(d => d.id === tid));
+    const r = new C.Race(T, { numAI: 12, playerGrid: 1, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs', tyres: true }); r.start();
+    const p = r.player, o = { on: !!r.mb, L: [], d: [], v: [], ins: [], touch: 0, knock: 0 };
+    // (the given sum in place of what this race lays in the step, then the rubber's share of every car's grip as ever)
+    if (sum && r.mb) { const lay = r._marbles; r._marbles = function (dt) { const s = this.state; this.state = ''; this.mb.d = sum[this._k]; lay.call(this, dt); this.state = s; }; }
+    for (let k = 1; k <= n; k++) {
+      for (const c of r.cars) c.hitCar = c.hitWall = c.hitDebris = 0; Math.random = seeded(1000 + k);
+      if (rec) Object.assign(p, rec[k - 1]); else { C.aiControl(p, r, DT); o.ins.push(Object.fromEntries(IN.map(q => [q, p[q]]))); }
+      r._k = k - 1; r.step(DT);
+      o.L.push(ST.map(q => `${q}=${p[q]}`).join(';')); o.d.push(r.mb ? r.mb.d : 0); o.v.push([p.x, p.z, p.vx, p.vz, p.wet]);
+      if (!o.touch && (p.hitCar || p.hitWall || p.hitDebris || p.xgl || p.cSx || p.cSz || p.csKc)) o.touch = k;
+      if (!o.knock && r.cars.some(c => c.hitCar > 0 || c.hitWall > 0 || c.hitDebris > 0)) o.knock = k;
+    }
+    o.dist = p.dist; return o;
+  });
+  const R0 = run(SIM), A = run(SIM, R0.ins), B = run(REAL, R0.ins), E = run(REAL, R0.ins, A.d);
+  const d0 = firstDiff(R0.L, A.L), dB = firstDiff(A.L, B.L), dE = firstDiff(A.L, E.L), dM = firstDiff(A.d, B.d);
+  let mp = 0, mv = 0, mw = 0;   // (the largest differences to the end of the run without the sum put in: the place, the speed, the grip)
+  for (let k = 0; k < n; k++) { const a = A.v[k], b = B.v[k]; mp = Math.max(mp, Math.hypot(a[0] - b[0], a[1] - b[1])); mv = Math.max(mv, Math.hypot(a[2] - b[2], a[3] - b[3])); mw = Math.max(mw, Math.abs(a[4] - b[4]) / a[4]); }
+  ok('Realistična, no touch among rivals (a race with the rubber on the track: Spa, 12 rivals, the player on pole touching nothing for 40 s, its inputs the autopilot\'s of the cv 1 race played back): the driving state of the player after every step is the same in cv 6 as in cv 1 up to the step at which the rubber sums of the two races first differ (not before the rivals\' first knock), and through the whole run with the cv 1 race\'s sum put into the cv 6 race; the control: the sums do differ in the run',
+    A.on && [R0, A, B, E].every(x => !x.touch) && A.knock > 0 && B.knock === A.knock && d0 === 0 && dM >= A.knock && (!dB || dB >= dM) && dE === 0 && A.dist > 500,
+    !A.on ? 'the race has no rubber on the track' : [R0, A, B, E].some(x => x.touch) ? `the player touched something (steps ${[R0, A, B, E].map(x => x.touch).join(', ')})`
+      : d0 ? `the inputs played back do not give the autopilot's drive: step ${d0}, ${which(R0.L[d0 - 1], A.L[d0 - 1])}`
+      : dE ? `with the cv 1 race's sum the player differs at step ${dE}: ${which(A.L[dE - 1], E.L[dE - 1])}`
+      : `the rivals' first knock at step ${A.knock} (cv 6: ${B.knock}); the rubber sums first differ at step ${dM}${dM ? ` (${A.d[dM - 1]} / ${B.d[dM - 1]})` : ''}; the player first differs at step ${dB}${dB ? ` (${which(A.L[dB - 1], B.L[dB - 1])})` : ''}, to the end of the run by at most ${mp.toExponential(1)} m, ${mv.toExponential(1)} m/s and ${mw.toExponential(1)} of its grip; with the cv 1 race's sum the same over ${n} steps (${f(A.dist, 0)} m)`);
 }
 
 let bad = 0;
