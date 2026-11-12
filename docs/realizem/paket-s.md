@@ -23,3 +23,9 @@ Del `docs/realizem.md` (razdeljen po paketih 11. 11. 2026, ukrep 5 »Manj sklopo
   - oglišča v krajih z veliko stavbami (Livorno, Medvode);
   - pravna presoja znamenitosti;
   - spori v `js/world.js` s pull requesti prog.
+
+## S0, prvi kos: sestavni deli stavb (v delu)
+
+**Odločitev.** Uporabnik 12. 11. 2026 ob ~18.00 v pogovoru z Matejem: »Da, S0 Stavbe« (tretja seja s kodo računa jure.kopac26, kljub več kot 6 odprtim temam). Po ukrepu »Manj sklopov« (`docs/realizem.md`, »Čas in vrsta«) S0 naredi samo sestavne dele; proge jih dobijo v skupnem prehodu S in G.
+
+Veja `realizem/s0-stavbe`, osnutek PR. Opis, slike in predaja pridejo sem, ko je kos končan.
