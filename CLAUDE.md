@@ -14,6 +14,7 @@ Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-
 - Samo kamera **za avtom** (`chase`), pokonci in ležeče; ne dodajaj kamer. Grafika za to kamero; česar ni videti, poenostavi. Gledalcev čim manj (`fewFans`).
 - Obremenitev: do ~300 klicev risanja in ~900 tisoč oglišč (`tests/golden/perf.json`); ne povečuj drugim progam.
 - Realizem (`docs/realizem.md`): paketi samo na 15 pravih prog; poškodbe samo videz, odtrgano kolo = konec dirke.
+- **Vse kot v resnici, nič izmišljenega**: stavbe, poti do hiš, ceste, predmeti in proge samo po virih (OSM, javni višinski modeli, javni podatki); česar v virih ni, se ne doda.
 - **Vidne barve avtov**: nobenih črnih ali zelo temnih (novi avti, privzete barve, tekmeci, promet); barva, ki jo igralec izbere v garaži, ostane.
 - Odločitve za grafiko in meni: 2–3 možnosti s slikami naenkrat, en »ok«. Grafika in fizika pred `main`: slike zdaj in potem. Grafika (S, G) enkrat na progo, šele ko je na `main`.
 
