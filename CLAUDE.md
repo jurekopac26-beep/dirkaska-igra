@@ -26,14 +26,17 @@ Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-
 - Commit konča z »Co-Authored-By: Claude <noreply@anthropic.com>« in »Claude-Session: …«; brez imen modelov.
 - Lokalno samo `npm run test:related`, uspešnih ne ponavljaj; krog na GitHubu po vrsti spremembe.
 - PR odpri ob začetku dela kot osnutek; »Ready for review« šele med prvima dvema v `docs/vrsta.md`. **Združevanje vodi seja Združevanje** (po vrsti, svež `main`, zeleni krogi); seja s kodo se ne naroči na PR. Pravila enkrat na dan v en PR.
-- Največ 6 odprtih tem (pri 6 nove ne začni, predlagaj, kaj zapreti) in 2 seji s kodo na račun; pred zagonom `list_sessions` in odprti PR.
+- Največ 6 odprtih tem (pri 6 nove ne začni, predlagaj, kaj zapreti) in 2 seji s kodo na račun (jure.kopac26 3, dokler je pod ciljem porabe); pred zagonom `list_sessions` in odprti PR.
 - Pred združitvijo: spoji svež `main`, povezani testi, zadnji krog na `main` in nočni krog zelena (500 ponovi enkrat); rdeč `main` najprej popravi; po združitvi obvesti seje iz zbirke `cakanje`. PR na istih datotekah gredo drug za drugim; majhne spremembe iste teme v en PR.
+- Uporabnikovi popravki: čez dan jih pošilja Mateju, do 5.00 jih zbira, ob 5.00 gredo kot en sveženj v zbirno vejo dneva; »prednost« gre na začetek vrste. »Ok« na predogledu samo za grafiko, trke in meni; drobni popravki gredo na `main` po zelenih testih (`docs/odlocitve.md`, Postopek).
+- **Najprej odločitev, nato koda**: proga, meni, grafika ali nova funkcija se začne šele, ko uporabnik potrdi seznam, skico ali sliko na strani Odločitve; pripombe na isti predogled gredo seji v enem sporočilu in se popravijo v enem krogu.
 
 ## Seje
+- **Nov Matej vsak dan** ob 5.00 s kratko predajo (stari se ustavi).
 - Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
 - **Predaja vseh sej (tudi s kodo) pri ~80 tisoč konteksta**; kratka predaja, nova seja, stara se ustavi. Velikih sej ne budi po več kot 1 h mirovanja: nova seja s predajo.
-- **Model**: Opus za zasnovo, kodo, proge, meni, popravke (mehanski popravki prog: imena, oznake, slike za meni, dokumenti na Sonnetu); Fable 5.2 za grafiko in fiziko; **Trki samo Fable 5.2** (ko je porabljen, počakajo). **Rutina (koordinacija, Združevanje, obvestila, zbiranje) samo Haiku/Sonnet.** Modela in napora sredi seje ne menjaj. Napor high, max samo za trke, grafiko, težke napake, zasnovo.
-- **Več agentov samo za trke**: do 5 agentov, preverjanje z več agenti **dvakrat**: vmes, ko je narejena prva polovica (odtrgano kolo, deformacija), in na koncu teme; drugje en agent.
+- **Model**: Opus za zasnovo, kodo, proge, meni, popravke (mehanski popravki prog: imena, oznake, slike za meni, dokumenti na Sonnetu); Fable 5.2 za grafiko in fiziko; **Trki samo Fable 5.2** (ko je porabljen, počakajo). **Rutina (koordinacija, Združevanje, obvestila, zbiranje) samo Haiku/Sonnet.** Spori, dokumenti, vrsta in Združevanje: Sonnet, napor medium. Modela in napora sredi seje ne menjaj. Napor high, max samo za trke, grafiko, težke napake, zasnovo.
+- **Več agentov samo za trke**: do 5 agentov, preverjanje z več agenti **enkrat**, na koncu teme pred `main`; vmes in drugje en agent.
 - **Poraba 100 % 12 h pred iztekom** (`docs/varcevanje.md`, »Poraba«): pod ciljem ena seja več, nad ciljem nobene nove.
 - **Fizika vožnje se ne spreminja** (samo trki; izjema »Dež in sneg« po »ok«): avto brez dotika vozi enako.
 - Čakanje: na teste `subscribe_pr_activity`; drugo v zbirko `cakanje`; brez `sleep`.
