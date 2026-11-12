@@ -465,9 +465,10 @@
 
   /* ---------------- screens ---------------- */
   // a row of choices wider than its panel (a narrow phone; the pause panel on a phone on its side): smaller letters, then smaller still; in the
-  // settings and the pause, lists that scroll, a row too wide even so (a narrow phone, a wide font: Trki med avti's five in DejaVu Sans 305 px
-  // on a panel 296 px wide, the last one cut off; its six, with Realistična, on a phone 360 px wide too) wraps its choices onto two lines, in
-  // the middle size, half of them on each (five: three and two, six: three and three; --wb the share of a line each starts from)
+  // settings and the pause, lists that scroll, a row too wide even so (a narrow phone, a wide font: the five versions of the knocks, one row
+  // then, in DejaVu Sans 305 px on a panel 296 px wide, the last one cut off; today the four of Preizkus's Starejše različice or the two
+  // long choices of Odpadlo kolo) wraps its choices onto two lines, in the middle size, half of them on each (four: two and two, two: one
+  // under the other; --wb the share of a line each starts from)
   function fitSegs() {
     const sc = document.querySelector('.screen.show'); if (!sc) return;
     for (const g of sc.querySelectorAll('.seg')) {
