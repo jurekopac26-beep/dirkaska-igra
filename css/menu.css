@@ -1377,28 +1377,32 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 
 /* the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best, the rating, the difficulty,
    the mode, the opponents; the same background for all, no labels over the difficulty and the mode; a tap: its window (js/menu.js twPlace) */
-.trow .flag img { height: 40px; max-width: 60px; width: 60px; object-fit: cover; }
+.trow .flag img { height: 40px; max-width: 60px; width: 60px; object-fit: fill; opacity: 1; filter: none; mix-blend-mode: normal; box-shadow: 0 0 0 1px rgba(255, 255, 255, .45), 0 2px 5px rgba(0, 0, 0, .5); }   /* (full colours, a thin edge, 60 x 40: the user, 12. 11. 2026) */
 .trow .flag .nf { width: 60px; height: 40px; }
-.trow > :is(.best, .rate, .dif, .md) { padding: 0; }
-.trow > div > button[data-act^="tw:"] { width: 100%; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 3px 2px; border-radius: 9px; }
+.trow .flag { padding: 0 6px 0 0; }
+.trow > div + div { border-left-color: rgba(255, 255, 255, .16); }
+.trow > :is(.best, .rate, .dif, .md) { flex: 1 1 0; padding: 0 2px; align-self: stretch; justify-content: center; }   /* (each cell its divider, all as high, the same width) */
+.trow > .opp { align-self: stretch; padding: 0 0 0 6px; }
+.trow > .opp, .trow > .opp > button { gap: 4px; }
+.trow > div > button[data-act^="tw:"] { width: 100%; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 3px 1px; border-radius: 9px; }
 .trow > .opp > button[data-act^="tw:"] { flex-direction: row; width: auto; }
 .trow > div > button[data-act^="tw:"]:active { background: rgba(255, 255, 255, .06); }
 .trow > .tw-on > button { box-shadow: inset 0 0 0 2px var(--gold), 0 0 12px rgba(255, 198, 41, .35); }
-.trow .best small, .trow .rate small { color: var(--gold); }
-.trow .best b.tm, .trow .rate b.tm { font-size: 18px; color: #fff; }
-.trow > .best { flex-grow: 1.35; }
-.trow .newb { display: inline-block; padding: 3px 7px; border-radius: 5px; background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); color: var(--gold-ink); font: 900 italic 13px/1 var(--f-ui); }
-.trow :is(.dif, .md) b { font: 800 italic 12px/1.08 var(--f-ui); text-align: center; white-space: normal; }
+.trow :is(.best, .rate) small { display: block; height: 13px; font: 600 11.5px/13px var(--f-ui); color: var(--gold); }   /* (Best race and Rating: gold, as big, on one line; their values under them on one line) */
+.trow :is(.best, .rate) > button > b { display: flex; align-items: center; justify-content: center; height: 21px; }
+.trow :is(.best, .rate, .dif, .md) b.tm, .trow :is(.dif, .md) b { font: 800 italic 16px/1.05 var(--f-ui); color: #fff; letter-spacing: -.3px; }
+.trow :is(.dif, .md) b { text-align: center; white-space: nowrap; }
+.trow .newb { display: inline-block; padding: 3px 7px; border-radius: 5px; background: linear-gradient(180deg, #7fe8ff, #2fa8e6); color: #fff; text-shadow: 0 1px 1px rgba(0, 40, 70, .55); font: 900 italic 13px/1 var(--f-ui); box-shadow: 0 1px 3px rgba(0, 0, 0, .45); }   /* (NEW: light blue, white letters) */
 .dsh { display: flex; gap: 3px; }
 .dsh i { width: 9px; height: 3.5px; border-radius: 2px; background: rgba(255, 255, 255, .2); }
 .dsh.d0 i.on { background: #ffd23f; } .dsh.d1 i.on { background: #ffad5c; } .dsh.d2 i.on { background: #ff7a1a; } .dsh.d3 i.on { background: #ff3b3b; }
 .dsh.m i { background: rgba(255, 255, 255, .26); } .dsh.m i.on { background: #45e07a; }
 .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-@media (max-width: 380px) { .trow .flag img, .trow .flag .nf { width: 50px; height: 34px; } .trow .flag { padding: 0 6px 0 2px; } .trow .best b.tm, .trow .rate b.tm { font-size: 15px; } .trow :is(.dif, .md) b { font-size: 11px; } .dsh i { width: 7px; } }
+@media (max-width: 380px) { .trow .flag img, .trow .flag .nf { width: 50px; height: 34px; } .trow .flag { padding: 0 6px 0 2px; } .trow :is(.best, .rate, .dif, .md) b.tm, .trow :is(.dif, .md) b { font-size: 13.5px; } .trow :is(.best, .rate) small { font-size: 10.5px; } .dsh i { width: 7px; } }
 @media (orientation: landscape) {
   #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(40px, calc(60 * var(--u))); height: max(27px, calc(40 * var(--u))); max-width: none; }
-  #s-track .trow .best b.tm, #s-track .trow .rate b.tm { font-size: max(13px, calc(18 * var(--u))); }
-  #s-track .trow :is(.dif, .md) b { font-size: max(10px, calc(12 * var(--u))); }
+  #s-track .trow :is(.best, .rate, .dif, .md) b.tm, #s-track .trow :is(.dif, .md) b { font-size: max(10px, calc(14.5 * var(--u))); }
+  #s-track .trow :is(.best, .rate) small { height: auto; font-size: max(9.5px, calc(11.5 * var(--u))); line-height: 1; } #s-track .trow :is(.best, .rate) > button > b { height: max(12px, calc(19 * var(--u))); }
   #s-track .trow > div > button[data-act^="tw:"] { min-height: 0; }
 }
 

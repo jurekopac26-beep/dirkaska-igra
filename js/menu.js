@@ -1238,7 +1238,7 @@
     const t = curTrack(), has = (m) => !t || t.modes.includes(GAME_MODE[m]);
     return twFrame('mod', 'Mode', ROW_MODES.map((m, i) => {
       const on = m[0] === mode, ok = has(m[0]);
-      let h = opt('rmode:' + m[0], on, '<span class="mi">' + m[3] + '</span><span class="tx"><b>' + esc(m[1]) + '</b><small>' + esc(ok ? m[2] : 'Not on this track.') + '</small></span>' + dashes(i, 'm', true), !ok);
+      let h = opt('rmode:' + m[0], on, '<span class="mi">' + m[3] + '</span><span class="tx"><b>' + esc(m[1]) + '</b><small>' + esc(ok ? m[2] : 'Open roads only') + '</small></span>' + dashes(i, 'm', true), !ok);
       if (m[0] === 'chase' && on) h += '<div class="side" role="group" aria-label="Your side"><button class="on" aria-pressed="true" data-act="side:run">Getaway<small>You run, they chase</small></button>' +
         '<button disabled aria-pressed="false">Police<small>Soon</small></button></div>';
       return h;
