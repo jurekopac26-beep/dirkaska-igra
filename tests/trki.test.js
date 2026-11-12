@@ -26,7 +26,12 @@
 //   knock, of a barrier and of a thing off the car's line gives the mirror image of the outcome to 1e-9; square into the barrier no yaw and no
 //   slide along it), limits (no NaN at 60-200 km/h, never over 9 rad/s with the grip lost, PITs ordered by their impulse, the turns, the
 //   leaving angles and the losses to the things in their bands; a loose part in the way takes under 1.6 % of the speed and no random number,
-//   a part lying on the road is run over as in Simulacija); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the
+//   a part lying on the road is run over as in Simulacija); the barrier with the car sliding or spinning (300 scenes at both barriers: on its
+//   way at 20-90 deg to the barrier, the nose 10-60 deg off its way, 100 and 200 km/h, turning at up to 4 rad/s either way: a knock, its own
+//   rule over 1.5 m/s, never adds energy and leaning on the barrier, Simulacija's rule, at most 7 kJ a touch; never over 9 rad/s with the grip
+//   lost, also when a corner leans on the barrier after the knock; the mirror image to 1e-9 without turning at the start and in all but a few
+//   scenes with it; the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
+//   damage: docs/trki-realizem.md, »Testi različice Realistična«); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the
 //   whole state of the race and of the car after every step is the same in cv 6 as in cv 1, each in a core of its own; the plane with given
 //   inputs, both physics; the control: the same comparison finds the first touch); the other versions (the reference tests/golden/trki.json: a
 //   digest of the whole state after every step of 12 knocks, 5 barriers, 5 things by the road, 2 loose parts and a truck with its semi-trailer
@@ -471,7 +476,7 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     const mine = keys.filter(k => k.endsWith('/real') && !k.startsWith('rig/')), own = mine.filter(k => dg(k) !== dg(k.replace(/real$/, 'sim'))), asSim = mine.filter(k => !own.includes(k)).map(k => k.replace(/\/real$/, ''));
     ok('the versions, the reference (tests/golden/trki.json): 12 knocks between cars, 5 barriers, 5 things by the road, 2 loose parts and a truck with its semi-trailer at the barrier end in the recorded state in each of the six versions (the whole state after every step); the barrier, the things and the loose parts are the same in cv 1 to 5 (the walls as they were); Realistična has its own in at least 16 of the 24 scenes and Simulacija\'s for the truck with its trailer',
       keys.length === 25 * 6 && !bad.length && !gone.length && eq('wall/', five) && eq('prop/', five) && eq('part/', five) && eq('rig/', ['sim', 'old', 'real']) && own.length >= 16,
-      UPDATE ? `${keys.length} entries written` : bad.length || gone.length ? `${bad.length} changed or without a reference, ${gone.length} not run: ${bad.concat(gone).slice(0, 6).join(', ')}` : `${keys.length} entries; Realistična differs from Simulacija in ${own.length} of ${mine.length} (as Simulacija: ${asSim.join(', ') || 'none'})`);
+      UPDATE ? `${keys.length} entries written` : bad.length || gone.length ? `${bad.length} changed or without a reference, ${gone.length} not run: ${bad.concat(gone).slice(0, 6).join(', ')} (after a wanted change of a version: node tests/trki.test.js --update; npm run golden:update does not write this reference)` : `${keys.length} entries; Realistična differs from Simulacija in ${own.length} of ${mine.length} (as Simulacija: ${asSim.join(', ') || 'none'})`);
   }
 
   // -- the exemptions (Core krOn): a truck with its semi-trailer (c.tl), a car in the run from the police (c.ck) and a car in the pit lane (c.inPit)

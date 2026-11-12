@@ -128,6 +128,7 @@ const RELATED = [
   [/^js\/core\.js$/, ['cisterna.test.js', 'zrcalni.test.js']],   // (the semi-trailer: its joint, its AI, its grid, in a race of six rigs)
   [/^js\/core\.js$|^js\/cars\//, ['rezervna-kolesa.test.js']],   // (the spare wheels: off at 80 % of the damage, docs/deli.md »Rezervno kolo«)
   [/^js\/core\.js$/, ['debris.test.js', 'odpadli-deli.test.js']],   // (the parts a car sheds: how they stop on the road, what they do to the cars; docs/trki-realizem.md »Odpadli deli«)
+  [/^js\/game\.js$/, ['trki.test.js']],   // (the online race's rule, js/game.js testOf: with a friend online the version of the knocks stays the default; the test reads it there)
   [/^js\/render\.js$|^js\/cars\/(kamen|pescenjak|medved|cisterna)\.js$/, ['browser/rezervna-kolesa.test.mjs']],   // (their rocking from 50 %, their pieces)
   [/^js\/deli\/(barve|skriti)\.js$/, ['deli.test.js', 'deli-barve.test.js', 'browser/deli-barve.test.mjs']],   // (the garage's parts, sklop 3)
   [/^js\/deli(\.js$|\/)|^js\/data\/deli\.js$|^js\/cars\/kolibri\.js$|^tests\/lib\/deli-geo\.js$/, ['deli.test.js', 'deli-pregled.test.js', 'deli-barve.test.js', 'browser/maketa-delov.test.mjs']],   // (the parts on KOLIBRI looked at, sklop 4)
