@@ -45,11 +45,11 @@ check('track: an open gravel road, a time trial downhill (def.descent), 4 checkp
 }
 
 // 3. a whole run on the autopilot (the stock rally car, as the medal times were set): to the flying finish without a rescue or a wall; in the rain
-// slower; the splits in order
-const run = (rain) => {
+// slower, in winter (the snow on the gravel) slower still; the splits in order
+const run = (rain, winter) => {
   const orig = Math.random; Math.random = seeded(3);
   try {
-    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, rain, tt: true });
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, rain, winter: !!winter, tt: true });
     r.start(); const P = r.player; let t = 0, k = 0, walls = 0, resc = 0, vmax = 0;
     while (t < 400 && !P.finished) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.hitWall > 3) walls++; P.hitWall = 0; vmax = Math.max(vmax, P.speed); if (P.stuckT > 3 || P.wrongT > 3) { r.rescue(P); resc++; } }
     return { r, P, walls, resc, vmax, alone: r.cars.length === 1 && r.timeTrial };
@@ -60,9 +60,13 @@ const run = (rain) => {
   check('run: the player alone, to the flying finish on the autopilot, no rescue, no wall; within 1.5 % of the gold medal\'s base',
     d.alone && d.P.finished && !d.resc && !d.walls && Math.abs(d.P.finishTime / g - 1) < 0.015 && d.P.splits.length === 4 && d.P.splits.every((s, k) => k === 0 || s > d.P.splits[k - 1]),
     `${d.P.finishTime && d.P.finishTime.toFixed(2)} s (gold ${def.medals.cs[0]} s), splits ${d.P.splits.map(s => s.toFixed(1)).join(' / ')}, ${d.resc} rescues, ${d.walls} walls, top ${(d.vmax * 3.6).toFixed(0)} km/h`);
-  check('run in the rain: to the finish, no rescue, 5-12 % slower than in the dry, within 1.5 % of the wet gold\'s base',
-    w.P.finished && !w.resc && w.P.finishTime / d.P.finishTime > 1.05 && w.P.finishTime / d.P.finishTime < 1.12 && Math.abs(w.P.finishTime / gw - 1) < 0.015,
+  check('run in the rain: to the finish, no rescue, 14-26 % slower than in the dry (wet gravel: a third less grip, docs/dez-sneg.md), within 1.5 % of the wet gold\'s base',
+    w.P.finished && !w.resc && w.P.finishTime / d.P.finishTime > 1.14 && w.P.finishTime / d.P.finishTime < 1.26 && Math.abs(w.P.finishTime / gw - 1) < 0.015,
     `${w.P.finishTime && w.P.finishTime.toFixed(2)} s (${((w.P.finishTime / d.P.finishTime - 1) * 100).toFixed(1)} % slower, gold ${def.medals.wet.cs[0]} s), ${w.resc} rescues`);
+  const z = run(0, 1), gz = def.medals.winter.cs[0] / 1.01;
+  check('run in winter (snow on the gravel, docs/dez-sneg.md): to the finish, no rescue, slower than in the rain, within 1.5 % of the winter gold\'s base',
+    z.P.finished && !z.resc && z.P.finishTime > w.P.finishTime && Math.abs(z.P.finishTime / gz - 1) < 0.015,
+    `${z.P.finishTime && z.P.finishTime.toFixed(2)} s (gold ${def.medals.winter.cs[0]} s), ${z.resc} rescues`);
 }
 
 // 4. the co-driver (a gravel descent reads its notes as a rally stage does): every hairpin called, in order, the last call to the finish
@@ -77,6 +81,7 @@ const run = (rain) => {
 {
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
   check('medals: gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0], `dry ${M.cs}, wet ${M.wet.cs}`);
+  const Z = M.winter; check('winter medals: gold < silver < bronze, in winter and in the snow (on the snowy gravel the rain adds nothing); slower than the summer\'s', !!Z && asc(Z.cs) && asc(Z.wet.cs) && Z.cs[0] > M.cs[0] && Z.wet.cs[0] >= Z.cs[0] && Z.wet.cs[0] > M.wet.cs[0], Z ? `winter ${Z.cs}, snow ${Z.wet.cs}` : 'no winter medals');
   const L = T.names;
   check('places: the pass, the seven hairpins, the traverse and the valley, in order along the run, the commentator\'s lines for the pass and the valley',
     L.length === 10 && /^Prelaz Katu-Jaryk/.test(L[0].n) && L.filter(p => /^Serpentina \d/.test(p.n)).length === 7 && /^Dolina Čulišmana/.test(L[9].n) && L.every((p, k) => k === 0 || p.d > L[k - 1].d) && !!L[0].say && !!L[9].say,
