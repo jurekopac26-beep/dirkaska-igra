@@ -396,7 +396,7 @@ const Render = (function () {
   // on the rain tyres, as the HUD's tyre label), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12
   // sides: ~200 triangles, a phone draws 52 of them)
   const fWheelCache = new Map(), F_WET = 0x2b86e6, F_SOFT = 0xe02119;
-  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : c.wet < 0.9 ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, else softs)
+  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : (c.wx ? c.wx.w > 0.5 : c.wet < 0.9) ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, by the water under the car, else softs)
   // every other car's tyres carry the same band in a race with compounds (c.ty with a compound, or rain tyres); null: none, the tyres as
   // they always were (no compounds, the showroom, a ghost). The band is in the wheels' own geometry (its variant with the band, cached like
   // the rest: no draw call more); a pit stop's new set shows once the car is built afresh at its end (Race.repairCar: frame)
@@ -5527,7 +5527,7 @@ const Render = (function () {
     if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && !c.inPit) {   // (on the pit road, c.inPit: no rail beside the car either, the circuit's barriers are not the lane's walls; in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
+      if ((gap < 0.12 && !hillOn(T, q, side)) || (c.fxWall > 0 && c.fxWall <= 2.5)) {   // (a hill behind the line: no rail there to rub, hillOn)
         const sx = Math.sign(fn * side) * L, sz = Math.sign(ln * side) * H, px = X + fx * sx + lx * sz + nx * side * Math.max(0, gap), pz = Z + fz * sx + lz * sz + nz * side * Math.max(0, gap);
         f.sc += (c.fxWall > 0 ? 8 : 0) + clamp(spd / 18, 0.3, 1.6) * 110 * dt;
         while (f.sc >= 1) { f.sc -= 1; sparkP.emit(px, gy + 0.35 + R() * 0.3, pz, c.vx * 0.55 + (R() - 0.5) * 3 - nx * side * R() * 2, 1 + R() * 3, c.vz * 0.55 + (R() - 0.5) * 3 - nz * side * R() * 2, 0.2 + R() * 0.3, 0.85, 0.2, 1, 0.72 + R() * 0.2, 0.3, 1, 11, 1.2, gy); }
@@ -7011,9 +7011,9 @@ const Render = (function () {
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035 * sw, -0.045 * sw, 0.04 * sw) - v.pitch) * Math.min(1, dt * 7);
       // pitch with the road slope (nose up on climbs), or follow the arc while airborne
-      const pitchTarget = c.air ? Math.atan2(c.vy, Math.max(Math.abs(c.vl), 6)) * 0.8 : Math.atan(c.gradeNow || 0);
+      const hl = c.hl && c.hl.on && !c.air ? c.hl : null, pitchTarget = c.air ? Math.atan2(c.vy, Math.max(Math.abs(c.vl), 6)) * 0.8 : Math.atan(c.gradeNow || 0) + (hl ? clamp(Math.atan(hl.lon), -0.8, 0.8) : 0);   // (hl: up a hill behind the barrier line, Chapman's Peak: its tilt, the core's hillGround; never more than ~45°)
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
-      const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
+      const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = (c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0) - (hl ? clamp(Math.atan(hl.lat), -0.8, 0.8) : 0);   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       if (v.fb && !fb) fallBack(v, pitchTarget, bankT, dt);   // (put back on the road after its fall: standing there at once)
       v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
@@ -9306,6 +9306,9 @@ const Render = (function () {
   // ~11 cm at most in one place; xDent's cluster, applyDent's depth times the same share). On NIZKA only the player's (a rival's dented body gives up its far mesh, farStep). A contact point
   // the core left as it was (a person on foot's: no point of its own) is no graze
   const XT_SCR = { ev: 0.07, m: 0.004, gap: 0.03, gapT: 0.3, dent: 0.015, dk: 0.75 };
+  // a hill behind the barrier line on that side of the car's place (Chapman's Peak, Core.Track.hill): no rail there, the car drives up the
+  // slope (the core's wallCollide, the same test), so no sparks off the line and no graze (carFx, xtScrape); a knock of its own (fxWall) still shows
+  function hillOn(T, q, side) { const H = T && T.hill; if (!H || q.k >= 0) return false; const on = H.on[side > 0 ? 1 : 0]; return !!(on[q.a] || on[Math.min(T.N - 1, q.a + 1)]); }
   function xtScrape(v, c, dt) {
     const S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0], dn: [0, 0] }), M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5, fresh = c.contactX !== S.cx || c.contactZ !== S.cz;
     S.cx = c.contactX; S.cz = c.contactZ;
@@ -9314,7 +9317,7 @@ const Render = (function () {
     if (q && q.br != null && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && c.speed > 1) {   // (a barrier beside it, as carFx has it)
       const fn = ch * q.nx + sh * q.nz, ln = -sh * q.nx + ch * q.nz, e = hl * Math.abs(fn) + hw * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if (Math.abs(ln) > Math.abs(fn) && (gap < XT_SCR.gap || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
+      if (Math.abs(ln) > Math.abs(fn) && ((gap < XT_SCR.gap && !hillOn(T, q, side)) || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
         at[k] = c.fxWall > 0 && c.wallX != null ? (c.wallX - c.x) * ch + (c.wallZ - c.z) * sh : 0; }
     }
     if (c.fxCar > 0 && c.contactX != null && fresh) {   // (another car, the traffic: the contact on its flank, a point of its own)
