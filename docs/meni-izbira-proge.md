@@ -80,6 +80,16 @@ Makete: `VRŠIČ` v vseh vremenih in 6 prog s 6 avti (seja 30. 10. 2026).
 
 **Pravna opomba:** posnetek preleta `assets/maps/fly-rbring.webm` in `.webp` (5. 10. 2026) na stavbi ob progi kaže napis z imenom znamke (starejša različica sveta; zdajšnji transparenti v `js/world-rbring.js` so zemljepisni: MURTAL, SPIELBERG, STEIERMARK). Pred objavo ga posnemi znova (sklop 4, kamere).
 
+## Vrstica podatkov, graf višine in ocena (odločitve uporabnika 12. 11. 2026, slike prek Mateja)
+
+Velja pred točkama 2 in 3 zgoraj, kjer se razlikuje. Samo načrt; v kodi še nič.
+
+- **Vrstica podatkov**, po vrsti: zastava · *Best race* · **Difficulty** · **Mode** · **Rating** · število nasprotnikov. *Length* in *Climb* odideta iz vrstice.
+- **Difficulty** (namesto *Length*): štiri stopnje (Easy, Medium, Hard, Super hard = `S.difficulty` 0–3), pod imenom 4 črtice. **Mode** (namesto *Climb*): štirje načini z ikono, *Classic race* (zaprta cesta, dirkališče), *Street race* (odprta cesta, promet), *Police chase*, *Endless traffic*. Izbira: **dotik zamenja** na naslednjo možnost (predlog 1); vrstica ostane enako visoka.
+- **Rating:** povprečje ocen prog (★ 4,3); dotik odpre okno ocene čez ves spodnji del pod sliko (`docs/svetovna-lestvica.md`, »Ocene prog«).
+- **Zgoraj levo v sliki** (okvir grafa višine): samo **dolžina** (npr. 4.03 km) in graf višine; vzpon pove graf. Višina grafa po višinski razliki proge (polna pri 300 m in več), barva odseka po strmini: zelena pod 3 %, rumena 3–6 %, oranžna 6–9 %, rdeča nad 9 %. Ravna proga je nizka zelena črta.
+- Odprto (privzeto, dokler uporabnik ne reče drugače): *Street race* je sedanji *Traffic duel*, *Police chase* sedanji beg pred policijo, *Endless traffic* sedanji *Endless*; zaslon z načini ostane za ostale načine. *Super hard* je zdaj samo za beg pred policijo (`raceDiff` v `js/game.js`): v dirki šteje kot *Hard*. Fizika vožnje se ne spreminja.
+
 ## Izboljšave makete (uporabnik 7. 11. 2026: »Začni vse razen 7 in 10«)
 
 Osem predlogov iz pogovora 7. 11. (ne: 7 – preleti za kamero 2, 10 – naključna proga ali dnevni izziv). Samo v maketi `maketa-menija/izbira-proge/`, igre se ne dotika. Veja `ccr-f828f1e1-3zvur4`, brez pull requesta (uporabnik ga ni zahteval). Po vsakem delu: commit, `npm run test:related` (varovalo testnih prog: nobene nove datoteke z `vrsic` v imenu), `node tools/stamp.js --check`, push, nova različica žive makete https://claude.ai/artifact/TGZVx8E1vcpzp3b4gYE2Fq (nova seja jo najprej prebere; stran je `index.html` brez prvih 4 vrstic, `</style></head>` + `<body>` → `</style>`, brez zadnjega `</body></html>`; datoteke z istimi potmi kot v repozitoriju, objavljene datoteke najprej preberi) in posnetek 412 × 892 (`tests/browser/lib.mjs`: `serve`, `launch`). Ocena skupaj ≈ 10–12 h. Vrstni red:
