@@ -113,6 +113,7 @@ Kratka pravila so v `CLAUDE.md`. Tu so citati odločitev uporabnika, datumi in u
   - Ko gre tedenska poraba računa h koncu, vsaka seja računa napiše predajo v opis svojega PR (stanje, kaj manjka, kako testirati), končane PR vpiše v vrsto s pripisom »prevzame <ime računa>« in se ustavi; drug račun jih vodi na `main` (`docs/vrsta.md`, »Prevzem zdaj«).
   - Seznam PR za uporabnika: pri vsakem ime računa in 1–3 stavki, kaj prinese v igro (ne samo naslov); ure po ljubljanskem času.
   - Če združitev na GitHubu vrne napako 500, jo ponovi enkrat; pogosto je že uspela.
+- **Manj sklopov** (odločitev uporabnika 11. 11. 2026 ob ~12.55, prek Mateja, tabla #382, komentar 6795249505, dobesedno: »Uporabi vse varcevalne ukrepe ki si jih predlagal«): seja s kodo se ob pripravljenem PR ustavi, PR do `main` vodi seja Združevanje računa; pregled z več agenti enkrat na zbirno vejo; vseh 8 ukrepov v `docs/varcevanje.md`, »Manj sklopov«.
 
 ### Tabla med računi (issue #382)
 - **Tabla:** odločitev uporabnika 5. 11. 2026. Imena računov (5. 11. 2026) so točno del emaila pred @ in veljajo za sporočila uporabniku, tablo, PR in dokumente; računov ne imenuj po številki. Repozitorij in tabla sta javna.

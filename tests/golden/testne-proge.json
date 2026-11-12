@@ -552,7 +552,7 @@
   "maketa-menija/assets/video/poster-jezero.jpg": "25a31a0335ba4776",
   "maketa-menija/orodja/geo_monaco.py": "e240c4ea72f8bc8a",
   "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681",
-  "tests/baldy.test.js": "db0197506acc0a11",
+  "tests/baldy.test.js": "befe1a577e7f0ded",
   "tests/bangsaen.test.js": "02c21d8efe12f66c",
   "tests/beartooth.test.js": "2a2c00ed21a2fbb4",
   "tests/bigsur.test.js": "4068fc7d414012dd",
@@ -560,7 +560,7 @@
   "tests/browser/townsville.test.mjs": "5eac204579d71b58",
   "tests/detroit.test.js": "6266b08504f0522b",
   "tests/greatalpine.test.js": "93e4b6303773d1b8",
-  "tests/hotham.test.js": "6c1369cc6bfd6749",
+  "tests/hotham.test.js": "9c35161f67af97c4",
   "tests/longford.test.js": "f69a4eb30e3a682a",
   "tests/maunakea.test.js": "163732532460a886",
   "tests/moki.test.js": "2c7b2631ef3bebad",
@@ -568,10 +568,10 @@
   "tests/mountbuller.test.js": "62a5d26779a470bb",
   "tests/mulholland.test.js": "d0c109bd6d8c8d3c",
   "tests/newcastle.test.js": "2b59d8cda20c9855",
-  "tests/palomar.test.js": "96b3fa88730f8c2a",
-  "tests/rio.test.js": "83d4197a56a332e9",
+  "tests/palomar.test.js": "448b35d505743928",
+  "tests/rio.test.js": "5947f05f9b74a65f",
   "tests/riverside.test.js": "031019726ee3365a",
-  "tests/sani.test.js": "6a9f1598afd6d984",
+  "tests/sani.test.js": "f30d9fbc96feb017",
   "tests/toronto.test.js": "721b6a6a588d95c4",
   "tests/townsville.test.js": "46346645a47694a8",
   "tests/troisrivieres.test.js": "d2f4916e3dc5614b",
@@ -807,6 +807,31 @@
    "datum": "2026-11-07",
    "proga": "zurich",
    "razlog": "Uporabnik 7. 11. 2026: »Proga je dobra ampak zgradbe in ceste niso take kot v zurichu. Prestavi progo v test«"
+  },
+  {
+   "datum": "2026-11-11",
+   "proga": "sani",
+   "razlog": "Uporabnik 11. 11. 2026 ob ~17.20 v seji #647 (izbira 1 na vprašanje dez-sneg-testne-proge): samo meje za dež v testu proge; datoteke proge ostanejo"
+  },
+  {
+   "datum": "2026-11-11",
+   "proga": "palomar",
+   "razlog": "Uporabnik 11. 11. 2026 ob ~17.20 v seji #647 (izbira 1 na vprašanje dez-sneg-testne-proge): samo meje za dež v testu proge; datoteke proge ostanejo"
+  },
+  {
+   "datum": "2026-11-11",
+   "proga": "baldy",
+   "razlog": "Uporabnik 11. 11. 2026 ob ~17.20 v seji #647 (izbira 1 na vprašanje dez-sneg-testne-proge): samo meje za dež v testu proge; datoteke proge ostanejo"
+  },
+  {
+   "datum": "2026-11-11",
+   "proga": "hotham",
+   "razlog": "Uporabnik 11. 11. 2026 ob ~17.20 v seji #647 (izbira 1 na vprašanje dez-sneg-testne-proge): samo meje za dež v testu proge; datoteke proge ostanejo"
+  },
+  {
+   "datum": "2026-11-11",
+   "proga": "rio",
+   "razlog": "Uporabnik 11. 11. 2026 ob ~17.20 v seji #647 (izbira 1 na vprašanje dez-sneg-testne-proge): samo meje za dež v testu proge; datoteke proge ostanejo"
   }
  ]
 }

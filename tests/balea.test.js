@@ -132,6 +132,14 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   Math.random = orig;
   check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && P.finished && Math.abs(P.finishTime * 1.01 - M.cs[0]) < 1.5,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
+  // in winter (the cold tarmac, docs/dez-sneg.md): its own set, slower than the summer's, the snow slower still; gold = the same car's winter run x 1.01
+  const Z = M.winter; Math.random = seeded(3);
+  const rz = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1, winter: true })), Pz = rz.player; rz.start();
+  t = 0; k = 0; while (!Pz.finished && t < 600) { Math.random = seeded(5000 + (++k)); C.aiControl(Pz, rz, DT); rz.step(DT); t += DT; if (Pz.stuckT > 3 || Pz.wrongT > 3) rz.rescue(Pz); }
+  Math.random = orig;
+  check('winter medals: gold < silver < bronze, in winter and in the snow; slower than the summer\'s, the snow slowest; gold = the stock rally car\'s winter run x 1.01',
+    !!Z && asc(Z.cs) && asc(Z.wet.cs) && Z.cs[0] > M.cs[0] && Z.wet.cs[0] >= Z.cs[0] && Z.wet.cs[0] > M.wet.cs[0] && Pz.finished && Math.abs(Pz.finishTime * 1.01 - Z.cs[0]) < 1.5,
+    Z ? `winter ${Z.cs.join('/')} s, snow ${Z.wet.cs.join('/')} s, autopilot ${Pz.finishTime ? Pz.finishTime.toFixed(1) : '-'} s` : 'no winter medals');
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
