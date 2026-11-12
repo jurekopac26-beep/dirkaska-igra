@@ -32,6 +32,9 @@ Kratka pravila so v `CLAUDE.md`. Tu so citati odločitev uporabnika, datumi in u
 - **Proge na odločanju zamrznjene:** odločitev uporabnika 8. 11. 2026 ob 20.25: »Proge, ki so na odločanju, ne posodabljaj, enako kot proge, ki so v testu.«
 - **Urejaj samo prave proge:** odločitev uporabnika 8. 11. 2026 ob ~23.05, prek Mateja, tabla, komentar 6727768260, dobesedno: »Vedno urejaj samo proge, ki niso v pending ali test. Proge v test/pending ne urejaj. Ko napišem 'uredi vse proge', to pomeni vse izbrane proge brez kategorij pending/test.« Izjema ostane izrecna prošnja za točno določeno progo.
 
+## Proge, ki niso na `main` (12. 11. 2026 ob ~3.15)
+- Uporabnik (prek Mateja, tabla #382, komentar 6812418930): »prog ne delaj dokler niso potrjene. prav tako ne urejaj nubene proge ki ni na mainu.« Velja za vse tri račune takoj: nobena seja ne začenja novih prog in ne ureja prog, ki niso na `main` (popravki, grafika, podatki, slike, spoji `main`), tudi ne v #569, #494 in drugih PR prog. Napol narejene se ustavijo, predaja v opis PR. Izjema: izrecna potrditev uporabnika za točno to progo. Prave proge na `main` se urejajo naprej. Preizkus v predogledu #569 ostane. Seje Združevanje ne spajajo `main` v PR prog.
+
 ## Ena proga na državo
 - Na odločanju (stanje 12. 11. 2026): Medvode (ne šteje med 70), Crystal Palace in London, Marrakesh in Dadès; aktualni seznam v `docs/proge-po-drzavah.md`.
 - **Pravilo:** odločitev uporabnika 3. 11. 2026. Država s progo v igri: dokler uporabnik ne izbere (vprašanja `ena-proga-<država>` na strani Odločitve), nove proge iz nje ne začni; druge proge iste skupine ali koraka naredi.
