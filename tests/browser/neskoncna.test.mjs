@@ -54,19 +54,19 @@ try {
     await there(page); await go(page); await drive(page, 8);
     const s0 = await page.evaluate(() => {
       const r = window.__game.race, h = document.getElementById('hud'), d = (q) => getComputedStyle(document.querySelector(q)).display, tx = (id) => { const e = document.getElementById(id); return e ? e.textContent : null; };
-      return { mode: r.zbMode, en: !!r.en, lv: r.en.lv, n: r.cars.length, tf: r.tf.veh.filter(v => !v.off).length, on: h.classList.contains('en-on'), duel: h.classList.contains('duel'), ck: tx('h-en-ck'), clock: r.en.clock, sc: tx('h-en-sc'), ln: tx('h-en-ln'),
+      return { mode: r.zbMode, en: !!r.en, lv: r.en.lv, n: r.cars.length, tf: r.tf.veh.filter(v => !v.off).length, on: h.classList.contains('en-on'), duel: h.classList.contains('duel'), ck: tx('h-en-ck'), clock: r.en.clock, sc: tx('h-en-sc'), ln: [...document.querySelectorAll('#h-en-ln span')].map(e => e.textContent).join(' · '),
         time: d('#h-time'), pos: d('#hud .h-rankrow'), lap: d('#h-lap'), spd: d('#h-spd'), ckd: d('#h-en-ckw'), score: r.en.score, over: !!r.en.over };
     });
-    T.check('?nacin=neskoncno on Bathurst: the endless drive, alone in the traffic; the clock running (30 s at the start, medium), the score and the line (PROMET ×1,5 · KROG 1 · … km); the race\'s clock, place and lap hidden, the speed shown',
-      s0.mode === 'endless' && s0.en && s0.lv === 1 && s0.n === 1 && s0.tf >= 10 && s0.on && !s0.duel && /^\d+,\d$/.test(s0.ck) && s0.clock > 15 && s0.clock < 30 && Math.abs(parseFloat(s0.ck.replace(',', '.')) - s0.clock) < 0.11 && s0.ckd !== 'none' &&
+    T.check('?nacin=neskoncno on Bathurst: the endless drive, alone in the traffic; the clock running (12 s at the start, medium), the score and the line (PROMET ×1,5 · KROG 1 · … km); the race\'s clock, place and lap hidden, the speed shown',
+      s0.mode === 'endless' && s0.en && s0.lv === 1 && s0.n === 1 && s0.tf >= 10 && s0.on && !s0.duel && /^\d+,\d$/.test(s0.ck) && s0.clock > 5 && s0.clock < 12 && Math.abs(parseFloat(s0.ck.replace(',', '.')) - s0.clock) < 0.11 && s0.ckd !== 'none' &&
       /^\d/.test(s0.sc) && s0.score > 0 && /^PROMET ×1,5 · KROG 1 · \d+,\d km$/.test(s0.ln) && s0.time === 'none' && s0.pos === 'none' && s0.lap === 'none' && s0.spd !== 'none' && !s0.over, JSON.stringify(s0));
     const s1 = await page.evaluate(async () => {
-      const g = window.__game, E = g.race.en, c0 = E.clock; E._pass(true, { v: 100 / 3.6, min: 0.3 }); E._pass(true, { v: 100 / 3.6, min: 0.7 }); g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
+      const g = window.__game, E = g.race.en, c0 = E.clock, t0 = E.time; E.time = 0; E._pass(true, { v: 100 / 3.6, min: 0.3 }); E._pass(true, { v: 100 / 3.6, min: 0.7 }); E.time = t0; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
       const pop = document.getElementById('h-en-pop'), cb = document.getElementById('h-en-cb'), add = document.getElementById('h-en-add');
       const big = document.getElementById('h-en-big');
       return { pop: pop.textContent, cls: pop.className, cb: cb.className, cbt: cb.querySelector('b').textContent, bonus: E.bonus, add: add.textContent, addCls: add.className, big: big.textContent, bigCls: big.className, plus: Math.round((E.clock - c0) * 100) / 100, added: Math.round(E.add * 10) / 10 };
     });
-    T.check('two close overtakings at 100 km/h: +400 TESNO! (the second, x2), NIZ ×2, +3 s and +2,7 s by the clock (1 s each and the closeness, x1,25 with the combo), the last big in the middle',
+    T.check('two close overtakings at 100 km/h: +400 TESNO! (the second, x2), NIZ ×2, +3 s and +2,7 s by the clock (1 s each and the closeness, x1,25 with the combo; at the start of the drive, before the bonus fades), the last big in the middle',
       s1.pop === '+400 TESNO!' && /show/.test(s1.cls) && !/off/.test(s1.cb) && s1.cbt === 'NIZ ×2' && s1.bonus === 900 && s1.add === '+2,7 s' && s1.addCls === 'show' && s1.big === '+2,7 s' && /show/.test(s1.bigCls) &&
       s1.plus > 5.6 && s1.plus <= 5.7 && s1.added === 5.7, JSON.stringify(s1));
     const s2 = await page.evaluate(async () => {
@@ -91,7 +91,7 @@ try {
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });
     const s4 = await page.evaluate(() => { const recs = JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {}, ks = Object.keys(recs).filter(x => /^bathurst-endless/.test(x)).sort();
       return { keys: ks, n: ks.map(k => (recs[k].enBoard || []).length), sub: document.getElementById('res-sub').textContent, title: document.getElementById('res-title').textContent, head: (document.querySelector('.en-board b') || {}).textContent }; });
-    T.check('Težka: 25 s at the start, the traffic x2; a hard knock of a vehicle: two lives off, AVTO JE POŠKODOVAN, still on; one more: Preveč trkov.', h0.lv === 2 && h0.start === 25 && h0.clock <= 25 && h0.clock > 15 && h0.dens === 2 && h0.lives === 1 && !h0.why1 && h0.msg === 'AVTO JE POŠKODOVAN' && h0.why === 'hits', JSON.stringify(h0));
+    T.check('Težka: 10 s at the start, the traffic x2; a hard knock of a vehicle: two lives off, AVTO JE POŠKODOVAN, still on; one more: Preveč trkov.', h0.lv === 2 && h0.start === 10 && h0.clock <= 10 && h0.clock > 5 && h0.dens === 2 && h0.lives === 1 && !h0.why1 && h0.msg === 'AVTO JE POŠKODOVAN' && h0.why === 'hits', JSON.stringify(h0));
     T.check('its own record (bathurst-endless-2@…, Nov rekord!, Preveč trkov.), the medium one\'s kept apart', s4.keys.length === 2 && /^bathurst-endless-1@/.test(s4.keys[0]) && /^bathurst-endless-2@/.test(s4.keys[1]) && s4.n.join() === '1,1' &&
       s4.title === 'Nov rekord!' && / Preveč trkov\.$/.test(s4.sub) && s4.head === 'Najboljših 10 · Bathurst, Avstralija · Težka', JSON.stringify(s4));
     const md = await page.evaluate(() => { const m = (id) => { const d = Core.TRACKS.find(x => x.id === id); return Zabava.modes(d, d.modes || ['race']).indexOf('endless') >= 0; };
