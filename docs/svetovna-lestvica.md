@@ -189,6 +189,15 @@ Noben test ne kliče pravega strežnika in ne potrebuje skrivnosti.
 5. Določi kontaktni naslov e-pošte za pravilnik (posebej za igro, ne zasebnega) in ime upravljavca, kot naj bo v pravilniku.
 6. Ob prvem koraku kode na telefonu odpelje 2 vožnji na predogledu in pošlje datoteko posnetka (preizkus ponovljivosti; če ima iPhone, še eno na njem).
 
+## Ocene prog (1–5 zvezdic)
+
+Odločitev uporabnika 12. 11. 2026 ob ~13.45 (pogovor z Matejem, račun jure.kopac26): »vsaka proga v meniju tudi glasovanje, ocena od 1 do 5 … proge so ocenjene skupno povprečje vseh online ocenitev«. Izbira: ocena **po prevoženi progi**, povprečje vidno **od prvega glasa**.
+
+- Igralec oceni progo, ko jo je vsaj enkrat prevozil do cilja (igra to ve iz rekordov, `tdgp-records`); svojo oceno lahko pozneje spremeni. En glas na igralca in progo, podpisan z istim ključem kot oddaja časa (brez računa).
+- Strežnik: `POST /v1/ocena` (id, proga, 1–5, podpis; omejitev pošiljanja kot pri časih), `GET /v1/ocene` (povprečje in število glasov za vse proge, en odgovor, v predpomnilniku) in `GET /v1/ocene/<proga>` (tedenska povprečja zadnjih 8 tednov). V D1 tabela `ocene` (id igralca, proga, ocena, datum); izbris vseh podatkov igralca izbriše tudi njegove ocene.
+- Meni (slike potrjene 12. 11.): ocena je nov podatek **»Rating« v vrstici podatkov** proge (med vzponom in lestvico, npr. ★ 4,3), od prvega glasa. Dotik odpre okno ocene, ki prekrije **ves spodnji del menija pod animacijo**: zvezdice za glas (samo prevožena proga; sicer »Finish this track once to rate it«), povprečje s številom glasov in **graf povprečja po tednih** (zadnjih 8 tednov; brez stolpcev 1–5). Brez interneta zadnje shranjeno stanje, glas čaka v vrsti.
+- Ure: +2 v seji 2 (strežnik), +4 v seji 4 (igra, meni). Samo prave proge.
+
 ## Seje in časi
 
 Vsaka seja je nova seja z vejo `svetovna-lestvica/<korak>` in osnutkom pull requesta; na `main` po vrsti (`docs/vrsta.md`; ta tema ni proga, zato gre pred progami).
@@ -197,13 +206,13 @@ Vsaka seja je nova seja z vejo `svetovna-lestvica/<korak>` in osnutkom pull requ
 |---|---|---|---|---|---|
 | 0 | načrt (ta) | ta dokument, vprašanja | Opus | 1,5 | 8. 11. 2026 |
 | 1 | ponovljivost | zapis vnosa ob vožnji (`opts.repro`, seme), `tools/lestvica-preveri.mjs` brez strežnika, meritev Chrome in telefon | Opus, max | 6 | po tedenskem načrtu (odgovori 9. 11.) |
-| 2 | strežnik | Worker, D1, R2, vmesnik, pregled ob oddaji, filter, omejitve, izbris, orodje skrbnika, testi z lažnim strežnikom, namestitev | Opus, max | 8 | račun, ključ in omrežje (točke 2–4 zgoraj) |
+| 2 | strežnik | Worker, D1, R2, vmesnik, pregled ob oddaji, filter, omejitve, izbris, ocene prog, orodje skrbnika, testi z lažnim strežnikom, namestitev | Opus, max | 10 | račun, ključ in omrežje (točke 2–4 zgoraj) |
 | 3 | preverjanje | opravilo na GitHubu (urnik, OIDC, starejše različice), stanje `sumljivo` | Opus, max | 4 | po 1 in 2 |
-| 4 | igra | `js/svet.js`, oddaja po rekordu, zavihek *World*, Lestvica, rezultati, Nastavitve, brez interneta, prevodi, brskalniški test | Opus, max | 10 | po 2 |
+| 4 | igra | `js/svet.js`, oddaja po rekordu, zavihek *World*, Lestvica, rezultati, ocene prog v meniju, Nastavitve, brez interneta, prevodi, brskalniški test | Opus, max | 14 | po 2 |
 | 5 | pravilnik | `zasebnost.html`, `privacy.html`, pogoji, odgovori Data safety, `README.md` (Zasluge), `docs/igra.md`, kazalo | Sonnet | 3 | po 4 in točki 5 zgoraj |
 | 6 | preizkus | uporabnik na predogledu in telefonu, popravki | Sonnet | 2 | po 5 |
 
-Skupaj ~34 ur. Časovnica do izida 1. 2. 2027: seji 1 in 2 v novembru, 3 in 4 do sredine decembra, 5 do konca decembra, preizkus v prvi polovici januarja, na `main` najpozneje 20. 1. 2027 (rezerva pred izidom). Seji 1 in 4 se dotikata `js/game.js` (seja 1 tudi `js/core.js`, samo zapis vnosa in `repro`), zato gresta na `main` druga za drugo.
+Skupaj ~40 ur (z ocenami prog). Časovnica do izida 1. 2. 2027: seji 1 in 2 v novembru, 3 in 4 do sredine decembra, 5 do konca decembra, preizkus v prvi polovici januarja, na `main` najpozneje 20. 1. 2027 (rezerva pred izidom). Seji 1 in 4 se dotikata `js/game.js` (seja 1 tudi `js/core.js`, samo zapis vnosa in `repro`), zato gresta na `main` druga za drugo.
 
 ## Odločitve uporabnika (stran Odločitve 2, jure.kopac26)
 
@@ -212,6 +221,7 @@ Odgovori 9. 11. 2026 v pogovoru seje (klikljiva izbira), zapisani na stran Odlo�
 - `svetovna-lestvica-gostitelj` = **1 · Cloudflare**: Workers, D1 z jurisdikcijo `eu`, vedro R2 v EU; ponovitve voženj na GitHubu.
 - `svetovna-lestvica-obseg` = **1 · kronometer na cestah in najboljši krog na dirkališčih**, vse prave proge; krog šteje samo iz vožnje brez tekmecev (kvalifikacije ali nov kratek način *Hot lap*).
 - `svetovna-lestvica-posnetki` = **1 · javni duhovi prvih 100** na vsaki lestvici (`GET /v1/duh`, v igri *Race ghost*).
+- 12. 11. 2026 v pogovoru z Matejem: **ocene prog** 1–5 po prevoženi progi, povprečje od prvega glasa (razdelek »Ocene prog«).
 
 ## Stanje
 
