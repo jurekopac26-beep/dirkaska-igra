@@ -38,9 +38,11 @@
 //   at the barrier in each of the six versions; after a wanted change of a version: node tests/trki.test.js --update); the exempt (Core krOn:
 //   a truck with its semi-trailer, a car in the run from the police and a car in the pit lane keep Simulacija's rules at the knock, in the
 //   slide a knock leaves, at the barrier, at the things by the road and at a loose part; beside each the same scene without the mark, which
-//   differs; a real run from the police on Chapman's Peak and Spa's real pit lane); the online race (js/game.js testOf(true) is {} and every
-//   Core.setTest there goes through it: a friend's car into the local one ends as Simulacija's); races (as the other versions, and no launch:
-//   no knock gives a car more than 8 m/s in a step, none faster than in the other versions, none turning faster than 9 rad/s)
+//   differs; a real run from the police on Chapman's Peak and Spa's real pit lane); the online race (js/game.js testOf(true) is {}, every
+//   Core.setTest there goes through it, and its two calls hand it whether the race is online: testOf(!!on) at the start, testOf(a friend's
+//   car is in the race) at a change of the settings: a friend's car into the local one ends as Simulacija's); the safety car (c.sc: a knock
+//   never takes its grip, beside it the same knock without the mark); races (as the other versions, and no launch: no knock gives a car more
+//   than 8 m/s in a step, none faster than in the other versions, none turning faster than 9 rad/s)
 // - Nastavitve (the user's buttons, 10. 11. 2026): the game's default is Realistična (js/game.js DEF, the one-time move tdgp-defaults-v6,
 //   the rows of index.html: Trki Realistično / Kot zdaj, the older versions in Preizkus), the core's own stays Simulacija (the references
 //   of the drive do not move); Odpadli deli: Izklop is Core TX.deb 0, never with a friend; Odpadlo kolo: the race's wheel rule
@@ -198,6 +200,19 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
       KR.every(x => !x.r.nan && !x.q.nan && x.r.wGl <= 9 + 1e-9) && Math.abs(P[0]) < Math.abs(P[1]) && Math.abs(P[1]) < Math.abs(P[2]) && Math.abs(P[0]) < 10 && Math.abs(P[2]) > 60
         && t('tbone-front-60') < -70 && t('tbone-front-60') > -120 && t('tbone-rear-60') > 70 && t('tbone-rear-60') < 120 && t('tbone-front-120') < -125 && Math.abs(t('rear-off-60')) < 10,
       `the fastest turn with the grip lost ${f(w.r.wGl, 3)} rad/s (${w.name}); PIT 60 km/h: ${P.map(x => f(x, 1)).join(' / ')} deg; T-bone front 60 / 120: ${f(t('tbone-front-60'), 1)} / ${f(t('tbone-front-120'), 1)} deg, rear 60: ${f(t('tbone-rear-60'), 1)} deg; from behind 60: ${f(t('rear-off-60'), 1)} deg`);
+  }
+
+  // -- the safety car (c.sc) never loses its grip to a knock (kGripR, as kTake: no marshals and no reverse for it, the race would wait behind it):
+  // the T-bone at the rear part at 120 km/h, which spins any other car, into a standing car with the mark and, beside it, without
+  {
+    const sc = (mark) => test(REAL, () => { const { A, B } = SR.tbone(HC, 120 / 3.6, -1.2, 1); if (mark) B.sc = true; let gl = 0, dw1 = null, hits = 0;
+      for (let i = 1; i <= Math.round(1 / DT); i++) { HC.step(A, idle()); HC.step(B, idle()); const w0 = B.w, k0 = [B.vx, B.vz].join(); C.carCollide(A, B);
+        if (k0 !== [B.vx, B.vz].join()) { hits++; if (dw1 === null) dw1 = B.w - w0; } gl = Math.max(gl, B.xgl || 0); }
+      return { hits, gl, dw1, v: B.speed * 3.6 }; });
+    const s1 = sc(true), s0 = sc(false);
+    ok('Realistična, the safety car: a knock never takes its grip: hit on its rear part at 120 km/h (a T-bone into it standing) it is pushed away with its grip whole for the whole second and no yaw rate from the knock (the turn is a swing of its nose it catches itself); the same car without the mark loses all its grip and is spun',
+      s1.hits > 0 && s1.gl === 0 && s1.dw1 === 0 && s1.v > 20 && s0.hits > 0 && s0.gl > 0.9 && Math.abs(s0.dw1) > 2,
+      `the safety car: the grip lost ${f(s1.gl, 3)}, the yaw rate from the first knock ${f(s1.dw1, 3)} rad/s, leaving at ${f(s1.v, 1)} km/h; without the mark: ${f(s0.gl, 3)} and ${f(s0.dw1, 3)} rad/s`);
   }
 
   // -- the barrier and the things by the road: a road of its own (straight and level, a wall 4.5 m from the middle line on both sides)
@@ -539,12 +554,15 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
       const testOf = new Function('S', 'TEST_LV', m[0] + '\nreturn testOf;')(S, LV); on = testOf(true); off = testOf(false); } catch (e) { err = String(e && e.message || e); }
     C.setTest(on || REAL); const cvOn = C.TX.cv; C.setTest(off); const cvOff = C.TX.cv; C.setTest(null);
     const calls = (src.match(/setTest\(/g) || []).length, via = (src.match(/Core\.setTest\(testOf\(/g) || []).length;
+    // what the game hands testOf: at the start of a race the race's own word that it is online (on), and when the settings change during a race
+    // whether a friend's car is in it; a call with anything else (testOf(false): the menu's choice online too) is a miss
+    const atStart = (src.match(/Core\.setTest\(testOf\(!!on\)\);/g) || []).length, atSet = (src.match(/Core\.setTest\(testOf\(race && race\.player && race\.cars\.some\(c => c\.net\)\)\);/g) || []).length;
     // a friend's car (net) into the front part of the standing local car: the local car takes its share by the version
     const net = (tx) => { const S = tb(); S.A.net = true; return knock(HC, tx, S, 1, { lines: true }); };
     const nOn = net(on || REAL), nS = net(SIM), nR = net(REAL);
-    ok('the online race: with a friend\'s car in the race the game gives the core no choice (js/game.js: testOf(true) is {}, and every Core.setTest there goes through testOf), so Realistična chosen in the menu (testOf(false): cv 6) is Simulacija online: a friend\'s car into the local one ends as Simulacija\'s to the last digit, not as Realistična\'s',
-      !!m && !err && !!on && JSON.stringify(on) === '{}' && !!off && off.cv === 6 && cvOn === null && cvOff === 6 && calls > 0 && calls === via && !!nOn.first && same(nOn.L, nS.L) && !same(nR.L, nS.L),
-      err || `testOf(true) ${JSON.stringify(on)}, testOf(false).cv ${off && off.cv}; setTest calls in the game ${calls}, through testOf ${via}; the local car turned ${f(nOn.turn, 1)} deg (Simulacija ${f(nS.turn, 1)}, Realistična ${f(nR.turn, 1)})`);
+    ok('the online race: with a friend\'s car in the race the game gives the core no choice (js/game.js: testOf(true) is {}, every Core.setTest there goes through testOf, and the two calls there hand it whether the race is online: testOf(!!on) at the start, testOf(a friend\'s car is in the race) when the settings change), so Realistična chosen in the menu (testOf(false): cv 6) is Simulacija online: a friend\'s car into the local one ends as Simulacija\'s to the last digit, not as Realistična\'s',
+      !!m && !err && !!on && JSON.stringify(on) === '{}' && !!off && off.cv === 6 && cvOn === null && cvOff === 6 && calls === 2 && via === 2 && atStart === 1 && atSet === 1 && !!nOn.first && same(nOn.L, nS.L) && !same(nR.L, nS.L),
+      err || `testOf(true) ${JSON.stringify(on)}, testOf(false).cv ${off && off.cv}; setTest calls in the game ${calls}, through testOf ${via} (at the start with the race's word ${atStart}, at a change of the settings with the friend's car ${atSet}); the local car turned ${f(nOn.turn, 1)} deg (Simulacija ${f(nS.turn, 1)}, Realistična ${f(nR.turn, 1)})`);
   }
 
   // -- Nastavitve: the game's default is Realistična (js/game.js DEF, the one-time move tdgp-defaults-v6, the rows of index.html), the core's

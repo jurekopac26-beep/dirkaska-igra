@@ -16,7 +16,8 @@
 //     the barrier is not shot out along the gap, one between two standing cars lies at once and no car's ending time knocks it
 //   - a spare wheel is a tyre like the vehicle's own: on its tread, then over and flat
 //   - checks 25 to 40 (the independent check of 11. 11. 2026): no random number of the race, the banked bend, every ground of DEB's tables,
-//     the push's size and what it is measured against, the cap's fix, the wheel's veer, wobble and knock, bounce and landing, the 2 s to the step
+//     the push's size and what it is measured against, the cap's fix (29; the same fix where the red flag clears the road, Race._redClear: 29b,
+//     12. 11. 2026), the wheel's veer, wobble and knock, bounce and landing, the 2 s to the step
 //     (a pass over a lying part begun in the car's time is not paid in its middle), the push no source of speed (O1, O2)
 //   - checks 41 to 45: Nastavitve »Odpadli deli: Izklop« (Core TX.deb 0): a part comes off and flies the same to the last digit, no car
 //     touches it (another car's part in the way, its own parts: the car's whole state after every step as with no part at all, no random
@@ -448,6 +449,25 @@ const coded = (code) => { const T = new C.Track(road('asfalt').def); T.surface =
   } finally { Math.random = orig; }
   check('the cap of 40: a piece pushed off the list while it rolls or tumbles on the road is no longer "on the ground" (not left drawn on its edge); one pushed off at rest stays as it lies',
     r.gone && r.n > 0 && r.off === r.n && r.lay && r.stay, `${r.n} of the first twelve rolling or tumbling when pushed off: ${r.off} off the ground; five at rest pushed off: ${r.stay ? 'still at rest' : 'changed'}`);
+}
+
+// ---- 29b: the red flag clears the road (Race._redClear: every piece off the list at once) with the same fix [red_nofix] ----
+// (the pieces of the crash that brought the flag out are still rolling when the race is stopped: without the fix they stay drawn on their edges)
+{
+  const orig = Math.random; let r = {};
+  try { const T = road('asfalt'), race = lone(T, 1000), rnd = SIM.seeded(SEED), D = donor(T, 150, 120 / KMH), tilt = (d) => Math.abs(Math.cos(d.rx) * Math.cos(d.rz));
+    const go = (n) => { for (let k = 0; k < n; k++) { race.player.inBrk = 1; race.step(DT); } };
+    for (let k = 0; k < 5; k++) for (const p of ['hood', 'bumperF']) race.spawnDebris(D, p, rnd);                     // ten that come to rest first
+    for (let k = 0; k < 40 && !race.debris.every(d => d.rest); k++) go(120);
+    const B = race.debris.slice(); r.lay = B.length === 10 && B.every(d => d.rest && d.ground);
+    for (let k = 0; k < 7; k++) for (const p of ['wheelFL', 'hood', 'bumperF', 'wheelRL']) race.spawnDebris(D, p, rnd);   // 28 more, 1.25 s before the flag
+    const A = race.debris.slice(10); go(150);
+    const up = A.filter(d => !d.rest && d.ground && tilt(d) < 0.94);
+    race._redClear();
+    r.n = up.length; r.off = up.filter(d => !d.ground).length; r.gone = B.concat(A).every(d => d.dead) && race.debris.length === 0; r.stay = B.every(d => d.rest && d.ground);
+  } finally { Math.random = orig; }
+  check('the red flag: the road is cleared at once (Race._redClear), and a piece taken off while it rolls or tumbles on the road is no longer "on the ground" (not left drawn on its edge); one taken off at rest stays as it lies',
+    r.lay && r.gone && r.n > 0 && r.off === r.n && r.stay, `${r.n} of the 28 pieces of 1.25 s ago rolling or tumbling when the road is cleared: ${r.off} off the ground; ten at rest: ${r.stay ? 'still at rest' : 'changed'}`);
 }
 
 // ---- 30, 31: the push is DEB.push across the car, against the car, a shove and not a shot [push_40, push_abs, push_radial] ----
