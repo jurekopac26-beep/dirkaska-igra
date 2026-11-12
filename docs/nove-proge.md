@@ -98,10 +98,6 @@ Načrt za 8 novih prog iz predstavitve »60 kratkih prog«: 7 iz prvega seznama 
 ## Seja 9 (meni za vseh 8)
 Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, kot PR #201) za vseh 8 prog, en pull request, združi ga sama, ko so zeleni vsi testi na GitHubu. Konec verige: uporabniku kratek seznam za preizkus na telefonu (vseh 8 prog in kaj pogledati).
 
-## Postopek po predlogi (odločitev uporabnika 12. 11. 2026 ob ~11.45)
-- Seja prve nove proge v vrsti **zapiše natančen postopek** (koraki, ukazi, preverjanja, slike) v ta razdelek; seje ostalih prog mu sledijo brez ponovnega raziskovanja in odstopajo samo, če se postopek res ne ujema.
-- Pravila prog so v `CLAUDE.md` (Proge); tukaj je samo postopek, ne pravil.
-
 ## Zagon naslednje seje
 Nastavitve nove seje (`create_session`, claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5` (ena seja brez več agentov; odločitev uporabnika 10. 11. 2026 ob ~00.57, `CLAUDE.md`, Seje: »Proge in grafika«; 9. in 10. 11. `claude-fable-5-2` z besedo »ultracode«), `tags` `["nove-proge"]`, `prompt` en stavek:
 - **A → B iste proge:** `source_revision` in `outcome_branch` `nove-proge/<id>`; »Naredi sejo <N>B po docs/nove-proge.md (veja nove-proge/<id>, PR #<št>).«
