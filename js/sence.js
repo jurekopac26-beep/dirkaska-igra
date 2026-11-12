@@ -189,6 +189,9 @@
     // (an SVG's text its own colours, svgIcon's: not the text-shadow of the text round it, which it inherits, white over its glyphs and their
     // stroke: the menu's height profile, the phone, 12. 11. 2026)
     'svg{color:var(--sd-c)!important;text-shadow:var(--sd-ts)!important}' +
+    // (an emoji, the coin of Lang.eur: Chromium draws a colour glyph with its fill's alpha, so in a transparent fill it is gone and the text-shadow
+    // under it a dark round; in black, which forced dark leaves, it has its own colours: the garage's prices, the phone, 12. 11. 2026)
+    '[data-sdj]{color:#000!important;-webkit-text-fill-color:#000!important;text-shadow:none!important}' +
     '[data-sdo]{overflow:clip!important;overflow-clip-margin:border-box!important}[data-sdo=f]{display:flow-root!important}' +
     '[data-sde]{filter:var(--sd-ef)!important}[data-sdl]{isolation:isolate}[data-sdp]{position:relative}' +
     '[data-sdl=b]::before,[data-sdl=a]::after{content:""!important;position:absolute!important;inset:var(--sd-li,0)!important;z-index:-1!important;pointer-events:none!important;' +
@@ -660,12 +663,21 @@
   }
 
   // ---- a tree: rewritten once, watched after ----
+  const EMO = /((?:\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F)\p{Emoji_Modifier}?(?:\u200D\p{Extended_Pictographic}\uFE0F?\p{Emoji_Modifier}?)*)/u;
+  const EMOS = new RegExp(EMO.source, 'gu');
+  function emoji(n) {   // (a text's emoji each in its own span[data-sdj])
+    const p = n.parentNode; if (!p || p.nodeType !== 1 || p.hasAttribute('data-sdj') || p.namespaceURI === 'http://www.w3.org/2000/svg' || /^(script|style|textarea|title)$/i.test(p.localName) || !EMO.test(n.data)) return;
+    const f = document.createDocumentFragment();
+    n.data.split(EMOS).forEach((t, i) => { if (!t) return; if (i % 2) { const s = document.createElement('span'); s.setAttribute('data-sdj', ''); s.textContent = t; f.appendChild(s); } else f.appendChild(document.createTextNode(t)); });
+    p.replaceChild(f, n);
+  }
   function scan(root, top) {
     const t0 = performance.now();
     const list = top && top.nodeType === 1 ? [top].concat(Array.from(top.querySelectorAll('*'))) : Array.from(root.querySelectorAll('*'));
     for (const el of list) {
       if (el.namespaceURI === 'http://www.w3.org/2000/svg') { if (el.localName === 'svg' && !(el.parentNode && el.parentNode.namespaceURI === 'http://www.w3.org/2000/svg')) svgIcon(el, root); continue; }
       try { element(el, root); } catch (_) { /* (one element: the rest go on) */ }
+      for (const c of Array.from(el.childNodes)) if (c.nodeType === 3) emoji(c);
     }
     ST.ms += performance.now() - t0;
   }
@@ -678,7 +690,7 @@
     const mo = new MutationObserver((recs) => {
       for (const r of recs) {
         if (r.type === 'childList') {
-          for (const n of r.addedNodes) if (n.nodeType === 1 && !n.hasAttribute('data-sddefs') && !n.hasAttribute('data-sdbg')) todo.add(n);
+          for (const n of r.addedNodes) if (n.nodeType === 1 && !n.hasAttribute('data-sddefs') && !n.hasAttribute('data-sdbg')) todo.add(n); else if (n.nodeType === 3) emoji(n);
           if (r.target.__sdbg && !r.target.__sdbg.isConnected) todo.add(r.target);   // (its picture's canvas went with its old content)
         }
         else if (r.type === 'attributes' && r.target.nodeType === 1) {

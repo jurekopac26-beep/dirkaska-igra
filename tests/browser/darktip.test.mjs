@@ -7,6 +7,8 @@
 //   the game hid at once comes back with the title, the link under the title opens it again, "Don't show this again" is kept over a
 //   reload (the link stays); the notice fits upright and on its side
 // - Samsung Internet draws the game's colours its own way (js/sence.js): no notice; with ?sence=0 (the way of painting off) the notice
+// - the garage (garaza.html) the same way: Samsung Internet in force dark draws it with js/sence.js (the coins' emoji in black, which force dark
+//   leaves: span[data-sdj]); a plain browser and another one in force dark do not
 // - temni-nacin.html: its verdict and its eleven rows of fields (row 10: the game's menu drawn the new way), in a plain and in a forced browser
 //   node tests/browser/darktip.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
@@ -102,6 +104,26 @@ try {
     const r = await page.evaluate(() => ({ verdict: document.getElementById('verdict').className, rows: document.querySelectorAll('.grid .lb').length, cells: document.querySelectorAll('.grid .c').length, refs: document.querySelectorAll('.c.ref canvas').length, small: document.querySelectorAll('.c.small img').length, mn: document.querySelectorAll('.grid .mn').length, mnDrawn: [...document.querySelectorAll('.grid .mn')].filter((m) => m.shadowRoot && m.shadowRoot.querySelector('.f')).length }));
     T.check(`temni-nacin.html, ${name}: "${yes ? 'DA' : 'NE'}", eleven rows (ten of four fields and the big picture), the canvas and picture fields drawn, row 10 drawn by the game's menu code`,
       r.verdict === 'verdict ' + (yes ? 'yes' : 'no') && r.rows === 11 && r.cells === 36 && r.refs === 4 && r.small === 4 && r.mn === 4 && r.mnDrawn === 4 && !errors.length, JSON.stringify({ r, errors }));
+    await ctx.close();
+  }
+
+  // 5. the garage: drawn by js/sence.js only in Samsung Internet in force dark, its coins' emoji in black spans; no errors
+  for (const [name, browser, ua, yes] of [['a plain browser', plain, undefined, false], ['forced, not Samsung Internet', forced, undefined, false], ['Samsung Internet, forced', forced, SAMSUNG, true]]) {
+    const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, colorScheme: 'light', ...(ua ? { userAgent: ua } : {}) }), page = await ctx.newPage(), errors = [];
+    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+    await page.addInitScript(() => { try { localStorage.setItem('apex-garage', JSON.stringify({ v: 2, mode: 'full', guide: 1, demo: false, flag: 'ZDA' })); } catch (_) {} });
+    await page.goto(srv.base + '/garaza.html');
+    await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
+    await page.evaluate(() => { const b = Garage3D.box('rgl:TURBO'); __garage.onTap(b.x + b.w / 2, b.y + b.h / 2); __garage.advance(1); });   // (the turbo's parts, with prices)
+    await page.waitForTimeout(500);
+    const r = await page.evaluate(() => {
+      const j = [...document.querySelectorAll('[data-sdj]')], c = j.find((e) => /\u{1FA99}/u.test(e.textContent));
+      return { on: !!(window.Sence && Sence.on), attr: document.documentElement.hasAttribute('data-sence'), rules: window.Sence ? Sence.stats.rules : 0, sdj: j.length,
+        coin: c ? getComputedStyle(c).webkitTextFillColor : null, coins: /\u{1FA99}/u.test(document.body.textContent) };
+    });
+    T.check(`garaza.html, ${name}: ${yes ? "drawn by js/sence.js, the coins of the turbo parts' prices in black spans" : 'left as it is'}; no errors`,
+      (yes ? r.on && r.attr && r.rules > 0 && r.coins && r.coin === 'rgb(0, 0, 0)' : !r.on && !r.attr && r.sdj === 0) && !errors.length, JSON.stringify({ r, errors }));
     await ctx.close();
   }
 } finally {
