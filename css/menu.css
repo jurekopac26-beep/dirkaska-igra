@@ -1480,3 +1480,11 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .sheet.twin.low .twopt { min-height: 32px; padding: 2px 34px 2px 10px; } .sheet.twin.low .twopt .tx small { display: none; }
   .sheet.twin.low .twopt .mi { width: 24px; height: 24px; } .sheet.twin.low .twopt .mi svg { width: 18px; height: 18px; }
 }
+/* on its side the row's cells shrink with the drawing (640 × 360: the row as high as Race!, nothing cut) */
+@media (orientation: landscape) {
+  #s-track .trow > div > button[data-act^="tw:"] { padding: calc(2 * var(--u)) 1px; gap: max(2px, calc(4 * var(--u))); }
+  #s-track .trow .newb { font-size: max(10px, calc(13 * var(--u))); padding: max(2px, calc(3 * var(--u))) max(4px, calc(7 * var(--u))); }
+  #s-track .trow .dsh { gap: max(2px, calc(3 * var(--u))); } #s-track .trow .dsh i { width: max(6px, calc(9 * var(--u))); height: max(3px, calc(3.5 * var(--u))); }
+  #s-track .trow > :is(.best, .rate, .dif, .md) { padding: 0 1px; }
+  #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(36px, calc(60 * var(--u))); height: max(24px, calc(40 * var(--u))); }
+}
