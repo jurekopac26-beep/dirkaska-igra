@@ -187,7 +187,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     const S = RA.secs.map(row), F = S[S.length - 1], R = S[0];
     return {
       body: { len: RA.len, wid: RA.wid, secs: RA.secs, wz: 0.1, engRear: false },
-      wheels: { style: 'std', spokes: 5, w: 0.26, rim: [0.93, 0.93, 0.9], tyre: RK },
+      hi: true, budget: { inner: 1400 }, budgetHi: { inner: 1750 },
+      wheels: { style: 'std', spokes: 5, w: 0.26, rim: [0.93, 0.93, 0.9], tyre: RK, seg: 32, segHi: 64 },
       build(K) {
         const Lv = K.paint;   // (the livery: the car's colour; the builder's turns a very light one blue, the kit's paint is recoloured per car)
         const sk = WH.map(v => v * 0.85);
@@ -224,8 +225,26 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const id of ['aero', 'hauba', 'zmigavci', 'relijske_luci', 'prtljaznik', 'vlecne_kljuke', 'streha', 'crte', 'celjusti', 'dim_gum', 'nalepke', 'soncni_pas',
           'zamasek', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji']) K.deli(id, () => {});
         K.part('trunk', () => K.deli('zaluzije', () => {}));
-        const ws = S.find(s => s.k === 'gf');
-        K.seat(ws.x - 0.75, 0.5, -0.36); K.seat(ws.x - 0.75, 0.5, 0.36); K.engine(AX.rally[0] + 0.15, R.yb + 0.05, 0);
+        K.engine(AX.rally[0] + 0.15, R.yb + 0.05, 0);
+        // the cabin (avti na raven KOLIBRIJA): the carpet over the lining's floor (0.32), the tunnel, the toe board, the race dash under the
+        // windscreen, two shells with harnesses, the console with the sequential lever, the pedals, the door cards (no doors: on the body),
+        // the boot's floor, the radiator and the crash bars behind the bumpers; all under the old seats' top
+        { const C = K.cab, IN = C.IN, SZ = -0.36, CP = [0.12, 0.12, 0.13], RED = [0.75, 0.1, 0.08];
+          C.face([[-1.44, 0.33, -0.84], [0.70, 0.33, -0.84], [0.70, 0.33, 0.84], [-1.44, 0.33, 0.84]], CP, [0, 1, 0]);   // carpet
+          K.box(0.08, 0.33, 0, 1.1, 0.12, 0.2, 0, C.PL2, C.PL, true, IN);   // tunnel
+          C.face([[0.70, 0.33, -0.84], [0.70, 0.33, 0.84], [0.70, 0.66, 0.84], [0.70, 0.66, -0.84]], CP, [-1, 0, 0]);   // toe board
+          C.dash({ x: 0.40, y: 0.89, d: 0.30, w: 0.76, dz: SZ, style: 'race', col: K.lining, col2: [0.1, 0.1, 0.11] });
+          C.steer({ c: [0.04, 0.88, SZ], ax: [0.9, -0.436], r: 0.17, rr: 0.016, to: [0.40, 0.70, SZ] });
+          for (const sd of [-1, 1]) C.seat(-0.36, 0.33, sd * 0.36, { w: 0.46, top: 0.74, lean: 0.22, shell: true, belt: 'harness', col: [0.08, 0.08, 0.085], col2: [0.15, 0.15, 0.16], strap: RED });
+          C.console(0.10, 0.45, { l: 0.3, seq: true }); C.pedals(0.62, 0.35, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { host: 'body', x: [-0.45, 0.5], y: [0.42, 0.80], z: 0.84, col: [0.12, 0.12, 0.13], insert: [0.2, 0.2, 0.21], strap: RED });
+          C.face([[-1.84, 0.345, -0.74], [-1.46, 0.335, -0.74], [-1.46, 0.335, 0.74], [-1.84, 0.345, 0.74]], CP, [0, 1, 0]);   // boot floor
+          C.nose({ x: 1.74, w: 0.6, y: [0.34, 0.62], rad: [0.8, 0.24], bar: 1.80, barY: 0.36, barW: 1.1 });
+          C.tail({ x: -1.77, w: 0.62, y: [0.34, 0.6], bar: -1.81, barY: 0.36, barW: 1.1 }); }
+        if (K.hi) { const C = K.cab, F = K.fitted;   // (Visoki) the badges, the driver (suit, helmet)
+          if (!F.maska) C.badge(1.917, 0.56, 0, 1, 'bumperF', 0.024);
+          if (!F.zadnje_luci) C.badge(-1.922, 0.72, 0, -1, 'bumperR', 0.024);
+          K.driver(-0.53, 1.09, -0.36, { inner: true, r: 0.12, lean: 0.22, hands: [0.02, 0.885, 0.16], knee: [0.1, 0.58, 0.17], feet: [0.56, 0.40, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] }); }
         return L;
       },
     };
