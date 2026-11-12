@@ -24,3 +24,15 @@ Del `docs/realizem.md` (razdeljen po paketih 11. 11. 2026, ukrep 5 »Manj sklopo
 - **Tveganje:**
   - oglišča gozda do ceste;
   - barve in svetloba ne smejo spremeniti drugih prog (slike `gfx`).
+
+## G0 · sestavni deli (v delu)
+
+Veja `realizem/g0-rastje-teren`, jure.kopac26 (odločitev uporabnika 12. 11. 2026 ob ~19.30 prek Mateja, tabla #382, komentar 6830929804; prej partyslo od ~17. 11.). G0 na progah ne dela; prehod na proge pride po G0, skupaj s S.
+
+Kosi, vsak v svojem commitu:
+1. **Orodje** (`tools/proga-podatki.py`): deleži razredov WorldCover v pasu do 60 m ob cesti (po odsekih, levo in desno) in barve tal iz letnega mozaika Sentinel-2.
+2. **Kompleti rastja po podnebju**: nova datoteka `js/world-rastje.js`; v `js/world.js` samo kratki priklopi, da so spori z E (#657, `js/world-cesta.js`) in S0 (#668) majhni.
+3. **Svetloba in ton po državah** (`js/render.js`, kratek priklop; tabela v `js/world-rastje.js`).
+4. **Mehak prehod med travo ob cesti in pobočjem** (odločitev uporabnika 12. 11. 2026 ob ~14.25 prek Mateja): samo prave proge, zamrznjene ostanejo do pike enake.
+
+Pred `main`: 2–3 možnosti s slikami naenkrat in slike zdaj in potem (Spa, Belgija) na strani Odločitve.
