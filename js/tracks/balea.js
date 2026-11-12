@@ -32,8 +32,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Bâlea, Romania', desc: 'The Transfăgărășan up the glacial Bâlea valley in Romania: six hairpins to Bâlea Lake at 2,034 m. The last 4 km of the road over the Făgăraș Mountains, from 1,768 m among alpine pastures, dwarf pine, rocks and scree, under the rocky ridge. A race against rivals, a time trial, a duel in the traffic and a run from the police.', escTo: 'To the lake' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: BALEA_H.map((h, i) => [i / (BALEA_H.length - 1), h / 10]),
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [129, 136, 146], wet: { cs: [139, 147, 158] } },
+    // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac or the snow, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    medals: { cs: [129, 136, 146], wet: { cs: [156, 164, 177] }, winter: { cs: [152, 159, 171], wet: { cs: [188, 197, 212] } } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; a
     // summer tourist road: cars and campers, very many motorbikes, a few coaches, hardly any trucks
     traffic: { mix: [0.5, 0.17, 0.04, 0.27, 0.02], bike: 2200 },

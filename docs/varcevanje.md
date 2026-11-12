@@ -22,8 +22,20 @@ Odločitve uporabnika 3. 11. 2026 na strani Odločitve (vprašanja `zetoni-1` do
 | »Dopolnitev« (druga seja) | koda max, rutina in koordinacija medium; kratki pogovori; manj slik; koordinacija na modelu Sonnet; majhne spremembe iste teme v en pull request |
 | »Hitro združevanje« (druga seja) | po svežem `main` s spori samo v žigih, seznamih testov ali kazalu združi brez novega kroga; če `main` pade, ga popravi seja tega pull requesta |
 | »Vse štiri ukrepe« (11. 11. 2026 ob ~00.40, prek Mateja, tabla #382, komentar 6782294421, točka b) | predaja velike seje pri ~150 tisoč, okno za povzetek 200 tisoč; `CLAUDE.md` z ~52 KB na ~15 KB (citati in zgodovina v `docs/odlocitve.md`; PR #651: ~18 KB, da ostane vsako pravilo); napor privzeto high, max samo za trke, grafiko, težke napake in novo zasnovo; tabla 4× na dan na račun v majhni sveži seji, stanje je zadnji lastni komentar; pravila enkrat na dan v en PR; potrditev uporabnika (»vseh 5 predlogov«) in peti predlog, pravila, ki ostanejo: `docs/odlocitve.md`, »Varčevanje z žetoni« |
+| »Uporabi vse varcevalne ukrepe ki si jih predlagal« (11. 11. 2026 ob ~12.55, prek Mateja, tabla #382, komentar 6795249505) | vseh 8 ukrepov »Manj sklopov« (razdelek spodaj) |
 
 V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta eno pravilo (Postopek); predaja velike seje je glavna pot, povzetek rezerva (Seje; od 11. 11. 2026 predaja pri ~150 tisoč in povzetek pri ~144 tisoč, prej ~300 in ~350 tisoč); napor medium za rutino in koordinacijo da okolje »Koordinacija« (spodaj); osnutek ob začetku dela nadomesti prejšnje »Pull request odpri samo, če …«.
+
+## Manj sklopov (odločitev uporabnika 11. 11. 2026)
+Manj sej in krogov testov za isto delo. Ukrepi:
+1. **Grafika**: E (#657) ostane en sklop za vse prave proge; prvi seji S in G naredita sestavne dele, nato S in G v enem prehodu na progo; proge si jure.kopac26 (1., 3., 5. …) in partyslo (2., 4., 6. …) izmenjujeta po vrstnem redu v `docs/realizem.md`, zamrznjene se preskočijo; predelava novih prog po #569 ostane pri partyslo; seja dela do ~150 tisoč (`docs/realizem.md`, »Čas in vrsta«).
+2. **#480 in 30 avtov KOLIBRI** v eni zbirni veji, na `main` ~25. 11. (prej #480 ~17. 11.) (`docs/vrsta.md`).
+3. **Popravki Chapman (#654), Samsung (#656) in ikona** v enem PR; kar uporabnik ne potrdi, gre ven.
+4. **Seja Združevanje na račun**: ko je PR pripravljen (povezani testi lokalno zeleni, predaja v opisu PR), se seja s kodo ustavi in se ne naroči na PR. Ena majhna seja Združevanje na račun (Sonnet, napor medium, okolje »Koordinacija«) čaka na teste in združi vse PR računa po vrsti. Rdeč test popravi nova seja s kodo po predaji (`CLAUDE.md`, Seje).
+5. **Krajši dokumenti**: `docs/vrsta.md` samo tabela in pravila (zgodovina v `docs/arhiv/vrsta-zgodovina.md`); `docs/realizem.md` razdeljen po paketih (`docs/realizem/paket-e.md`, `-s`, `-g`, `-p`).
+6. **Osnutki prog** se zaprejo, ko so v celoti v #569.
+7. **Pregled z več agenti** enkrat na zbirno vejo, ne na vsak PR v njej.
+8. **Matejevo poročilo**: vsak dan kratko (kaj je novo, kaj čaka na uporabnika); ob ponedeljkih celotno »Stanje« (6 delov, 10 predlogov) v tedenskem načrtu ob 10.40.
 
 ## Predlogi a–e (`zetoni-1`)
 

@@ -125,6 +125,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   Math.random = orig;
   check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && P.finished && Math.abs(P.finishTime * 1.01 - M.cs[0]) < 1.5,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
+  const Z = M.winter; check('winter medals: gold < silver < bronze, in winter and in the snow; slower than the summer\'s, the snow slowest', !!Z && asc(Z.cs) && asc(Z.wet.cs) && Z.cs[0] > M.cs[0] && Z.wet.cs[0] >= Z.cs[0] && Z.wet.cs[0] > M.wet.cs[0], Z ? `winter ${Z.cs.join('/')} s, snow ${Z.wet.cs.join('/')} s` : 'no winter medals');
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
