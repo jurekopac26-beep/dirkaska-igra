@@ -23,6 +23,7 @@ Odločitve uporabnika 3. 11. 2026 na strani Odločitve (vprašanja `zetoni-1` do
 | »Hitro združevanje« (druga seja) | po svežem `main` s spori samo v žigih, seznamih testov ali kazalu združi brez novega kroga; če `main` pade, ga popravi seja tega pull requesta |
 | »Vse štiri ukrepe« (11. 11. 2026 ob ~00.40, prek Mateja, tabla #382, komentar 6782294421, točka b) | predaja velike seje pri ~150 tisoč, okno za povzetek 200 tisoč; `CLAUDE.md` z ~52 KB na ~15 KB (citati in zgodovina v `docs/odlocitve.md`; PR #651: ~18 KB, da ostane vsako pravilo); napor privzeto high, max samo za trke, grafiko, težke napake in novo zasnovo; tabla 4× na dan na račun v majhni sveži seji, stanje je zadnji lastni komentar; pravila enkrat na dan v en PR; potrditev uporabnika (»vseh 5 predlogov«) in peti predlog, pravila, ki ostanejo: `docs/odlocitve.md`, »Varčevanje z žetoni« |
 | »Uporabi vse varcevalne ukrepe ki si jih predlagal« (11. 11. 2026 ob ~12.55, prek Mateja, tabla #382, komentar 6795249505) | vseh 8 ukrepov »Manj sklopov« (razdelek spodaj) |
+| »uporabi vse 4« (12. 11. 2026 ob ~1.13, prek Mateja, tabla #382, komentar 6810475805) | koordinacija na Sonnetu v sveži seji, rutinske seje predaja pri ~80 tisoč; velikih sej ne budi po 1 h mirovanja; sredi seje ne menjaj modela ali napora; `CLAUDE.md` najmanj 25 % krajši (razdelek »Dražje seje«) |
 
 V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta eno pravilo (Postopek); predaja velike seje je glavna pot, povzetek rezerva (Seje; od 11. 11. 2026 predaja pri ~150 tisoč in povzetek pri ~144 tisoč, prej ~300 in ~350 tisoč); napor medium za rutino in koordinacijo da okolje »Koordinacija« (spodaj); osnutek ob začetku dela nadomesti prejšnje »Pull request odpri samo, če …«.
 
@@ -36,6 +37,12 @@ Manj sej in krogov testov za isto delo. Ukrepi:
 6. **Osnutki prog** se zaprejo, ko so v celoti v #569.
 7. **Pregled z več agenti** enkrat na zbirno vejo, ne na vsak PR v njej.
 8. **Matejevo poročilo**: vsak dan kratko (kaj je novo, kaj čaka na uporabnika); ob ponedeljkih celotno »Stanje« (6 delov, 10 predlogov) v tedenskem načrtu ob 10.40.
+
+## Dražje seje (odločitev uporabnika 12. 11. 2026 ob ~1.13)
+Ukrepi 1–3 iz komentarja 6810475805 (»uporabi vse 4«; ukrep 4 je krajši `CLAUDE.md`, `docs/odlocitve.md`, »Seje«):
+1. **Koordinacija na Sonnetu v sveži seji s kratko predajo.** Rutinske seje (koordinacija, Združevanje, zbiranje) pišejo predajo pri ~80 tisoč konteksta (seje s kodo ostanejo pri ~150 tisoč): kratka predaja (kaj teče, kaj čaka, koga obvestiti), delo nadaljuje nova seja, stara se ustavi (odjavi PR, izbriše svoja opravila).
+2. **Velikih sej ne budi po več kot 1 h mirovanja.** Predpomnilnik poteče po 1 h in bujenje bi ves kontekst prebralo na novo. Namesto »nadaljuj« začni novo sejo s predajo: isti model in napor, `source_url` in veja PR. Velja tudi za `send_later` in rezervno preverjanje.
+3. **Sredi seje ne menjaj modela ali napora.** Za drug model ali napor začni novo sejo s predajo (primer: tema, ki preide s kode na grafiko ali fiziko).
 
 ## Predlogi a–e (`zetoni-1`)
 
@@ -153,3 +160,4 @@ Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `d
 - 5. 11. 2026, račun strani 3: #279 spojen s svežim `main` (570ebca; obdržano vse z `main`, tudi #277); `tools/spoji-main.mjs` prilagojen #286: strani `index.html` in `garaza.html` reši `stamp.js --merge`, orodje ostane za kazalo, sezname testov, `README.md` in `js/lang.js`.
 - 9. 11. 2026: pravilo porabe 100 % 12 h pred iztekom (razdelek Poraba) in zbiranje manjših popravkov v en pull request (`CLAUDE.md`, Postopek, »Popravki in posodobitve skupaj«); odločitvi uporabnika prek Mateja, tabla #382, komentar 6737552977.
 - 11. 11. 2026: »Vse štiri ukrepe« v PR #651 (račun jure.kopac26): `CLAUDE.md` 51,7 KB → ~18 KB, podrobnosti v `docs/odlocitve.md`; napor high, okno 200 tisoč (povzetek pri ~144 tisoč), predaja ~150 tisoč, tabla 4× na dan. `CLAUDE_CODE_EFFORT_LEVEL` iz nastavitev je povozil napor seje (seja, ustvarjena s high, je tekla z max), zato je odstranjen; prva seja z `effort` `max` po združitvi preveri `echo $CLAUDE_EFFORT` in zapiše sem.
+- 12. 11. 2026: ukrepi 1–4 (»Dražje seje«) v PR s pravili dneva (račun jure.kopac26): `CLAUDE.md` 18,9 KB → ~14,2 KB (najmanj 25 %); rutinske seje predaja pri ~80 tisoč, velikih sej ne budi po 1 h, modela ali napora sredi seje ne menjaj.
