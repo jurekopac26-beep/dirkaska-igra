@@ -15,7 +15,7 @@ Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-
 - Obremenitev: do ~300 klicev risanja in ~900 tisoč oglišč (`tests/golden/perf.json`); ne povečuj drugim progam.
 - Realizem (`docs/realizem.md`): paketi samo na 15 pravih prog; poškodbe samo videz, odtrgano kolo = konec dirke.
 - **Vidne barve avtov**: nobenih črnih ali zelo temnih (novi avti, privzete barve, tekmeci, promet); barva, ki jo igralec izbere v garaži, ostane.
-- Odločitve za grafiko in meni: 2–3 možnosti s slikami naenkrat, en »ok«. Grafika in fizika pred `main`: slike zdaj in potem.
+- Odločitve za grafiko in meni: 2–3 možnosti s slikami naenkrat, en »ok«. Grafika in fizika pred `main`: slike zdaj in potem. Grafika (S, G) enkrat na progo, šele ko je na `main`.
 
 ## Pravna varnost
 - Samo zemljepisna imena; brez logotipov, podjetij, lokalov, sponzorjev, prireditev, znamk avtov; **nikoli imen resničnih oseb**. Podatki samo OSM in javni višinski modeli; **nikoli Google Maps, Earth, Street View**. Vir z licenco gre v `README.md`, »Zasluge«.
@@ -32,7 +32,7 @@ Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-
 ## Seje
 - Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
 - **Predaja vseh sej (tudi s kodo) pri ~80 tisoč konteksta**; kratka predaja, nova seja, stara se ustavi. Velikih sej ne budi po več kot 1 h mirovanja: nova seja s predajo.
-- **Model**: Opus za zasnovo, kodo, proge, meni, popravke; Fable 5.2 za grafiko in fiziko; **Trki samo Fable 5.2** (ko je porabljen, počakajo). **Rutina (koordinacija, Združevanje, obvestila, zbiranje) samo Haiku/Sonnet.** Modela in napora sredi seje ne menjaj. Napor high, max samo za trke, grafiko, težke napake, zasnovo.
+- **Model**: Opus za zasnovo, kodo, proge, meni, popravke (mehanski popravki prog: imena, oznake, slike za meni, dokumenti na Sonnetu); Fable 5.2 za grafiko in fiziko; **Trki samo Fable 5.2** (ko je porabljen, počakajo). **Rutina (koordinacija, Združevanje, obvestila, zbiranje) samo Haiku/Sonnet.** Modela in napora sredi seje ne menjaj. Napor high, max samo za trke, grafiko, težke napake, zasnovo.
 - **Več agentov samo za trke**: do 5 agentov, preverjanje z več agenti **dvakrat**: vmes, ko je narejena prva polovica (odtrgano kolo, deformacija), in na koncu teme; drugje en agent.
 - **Poraba 100 % 12 h pred iztekom** (`docs/varcevanje.md`, »Poraba«): pod ciljem ena seja več, nad ciljem nobene nove.
 - **Fizika vožnje se ne spreminja** (samo trki; izjema »Dež in sneg« po »ok«): avto brez dotika vozi enako.
@@ -47,4 +47,4 @@ Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-
 ## Kje je kaj
 - Orodje za napake (`js/napake.js`): samo slovenščina, sklopa 0 in 8 odložena; slik in seznamov napak ne shranjuj.
 - `docs/kazalo.md`: samo »Na kratko«, ostalo z grepom; velikih datotek ne beri v celoti. O progah `docs/proge-pregled.md`. Orodje za napake: `docs/orodje-za-napake.md`.
-- Žetoni: odločitve enkrat v docs; slike samo za vprašanja in ob koncu (≤300 KB); opis PR do ~20 vrstic.
+- Žetoni: odločitve enkrat v docs; slike samo za vprašanja in ob koncu (≤300 KB); opis PR do ~20 vrstic. V `docs/vrsta.md` celica do ~2 stavka, starejše v `docs/arhiv/vrsta-zgodovina.md`.

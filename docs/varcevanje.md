@@ -25,6 +25,7 @@ Odločitve uporabnika 3. 11. 2026 na strani Odločitve (vprašanja `zetoni-1` do
 | »Uporabi vse varcevalne ukrepe ki si jih predlagal« (11. 11. 2026 ob ~12.55, prek Mateja, tabla #382, komentar 6795249505) | vseh 8 ukrepov »Manj sklopov« (razdelek spodaj) |
 | »uporabi vse 4« (12. 11. 2026 ob ~1.13, prek Mateja, tabla #382, komentar 6810475805) | koordinacija na Sonnetu v sveži seji, rutinske seje predaja pri ~80 tisoč; velikih sej ne budi po 1 h mirovanja; sredi seje ne menjaj modela ali napora; `CLAUDE.md` najmanj 25 % krajši (razdelek »Dražje seje«) |
 | »Vse (priporočeno)« (12. 11. 2026 ob ~11.45, prek Mateja, tabla #382, komentar 6821467471) | varčevanje 2. del: predaja vseh sej pri ~80 tisoč, `CLAUDE.md` ~6 KB, tabla 2× na dan, grafika in meni z 2–3 možnostmi naenkrat, Trki do 5 agentov, rutina na Haiku/Sonnet (razdelek »Varčevanje 2. del«) |
+| »Vse« (12. 11. 2026 ob ~19.20, prek Mateja, tabla #382) | varčevanje 3. del: krajši `docs/vrsta.md`, mehanski popravki prog na Sonnetu, grafika enkrat na progo na `main` (razdelek »Varčevanje 3. del«) |
 
 V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta eno pravilo (Postopek); predaja velike seje je glavna pot, povzetek rezerva (Seje; od 11. 11. 2026 predaja pri ~150 tisoč in povzetek pri ~144 tisoč, prej ~300 in ~350 tisoč); napor medium za rutino in koordinacijo da okolje »Koordinacija« (spodaj); osnutek ob začetku dela nadomesti prejšnje »Pull request odpri samo, če …«.
 
@@ -44,6 +45,12 @@ Ukrepi 1–3 iz komentarja 6810475805 (»uporabi vse 4«; ukrep 4 je krajši `CL
 1. **Koordinacija na Sonnetu v sveži seji s kratko predajo.** Rutinske seje (koordinacija, Združevanje, zbiranje) pišejo predajo pri ~80 tisoč konteksta (od 12. 11. 2026 ob ~11.45 tudi seje s kodo pri ~80 tisoč, razdelek »Varčevanje 2. del«): kratka predaja (kaj teče, kaj čaka, koga obvestiti), delo nadaljuje nova seja, stara se ustavi (odjavi PR, izbriše svoja opravila).
 2. **Velikih sej ne budi po več kot 1 h mirovanja.** Predpomnilnik poteče po 1 h in bujenje bi ves kontekst prebralo na novo. Namesto »nadaljuj« začni novo sejo s predajo: isti model in napor, `source_url` in veja PR. Velja tudi za `send_later` in rezervno preverjanje.
 3. **Sredi seje ne menjaj modela ali napora.** Za drug model ali napor začni novo sejo s predajo (primer: tema, ki preide s kode na grafiko ali fiziko).
+
+## Varčevanje 3. del (odločitev uporabnika 12. 11. 2026 ob ~19.20)
+»Vse«, prek Mateja, tabla #382; ocena ~5–8 % manj porabe brez izgube kakovosti (točke 1–3 predloga so že v »Varčevanje 2. del«):
+1. **Krajši `docs/vrsta.md`**: celica v tabeli ima do ~2 stavka veljavnega stanja; starejše zapise (»Starejše«, »Prej«) seja, ki vrstico spremeni, premakne v `docs/arhiv/vrsta-zgodovina.md` in pusti sklic.
+2. **Mehanski popravki prog na Sonnetu** (napor high): imena, oznake `test`/`pending`, slike za meni, dokumenti in prevodi; obremenitev, izletna cona, ograje in graditelji ostanejo na Opusu (ločena seja, predaja).
+3. **Grafika enkrat na progo**: S in G (in predelava videza) samo na progah na `main`; proge v odprtih PR (#569, #494) dobijo grafiko šele po združitvi, ne pred njo in potem še enkrat.
 
 ## Varčevanje 2. del (odločitev uporabnika 12. 11. 2026 ob ~11.45)
 »Vse (priporočeno)«, tabla #382, komentar 6821467471; cilj ~30–40 % manj porabe brez izgube kakovosti; velja takoj, vsaka koordinacija potrdi v eni vrstici:
