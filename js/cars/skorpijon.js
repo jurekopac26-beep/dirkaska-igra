@@ -115,7 +115,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: -0.36, y: 0.92, near: 0.2, tilt: 0.06, style: 'closed' },   // (low in the canopy)
         door: [0.95, -0.42], bumpF: 0.15, bumpR: 0.3, bumpY: [0.58, 0.62],    // (the lower nose ahead of the bonnet's edge the front clip; the tail's lower half the rear one)
         engRear: true, crush: { x0: -0.7, x1: 0.3, z: 0.56 } },               // (the V8 behind the seats; only the canopy's roof crushes)
-      wheels: { style: 'std', spokes: 10, w: 0.25, wR: 0.31, rim: [0.12, 0.12, 0.13], cap: [0.8, 0.81, 0.84], gap: 0.05 },   // (black rims, the silver centre lock)
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver, the tyres in 64)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, as KOLIBRI's: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
+      wheels: { style: 'std', spokes: 10, w: 0.25, wR: 0.31, rim: [0.12, 0.12, 0.13], cap: [0.8, 0.81, 0.84], gap: 0.05, seg: 32, segHi: 64 },   // (black rims, the silver centre lock)
       // the standard regions, the front clip also taking the lower nose's top (ahead of the bonnet's leading edge), the doors the canopy's
       // side glass (its edge band, behind the windscreen's top)
       regions: (std) => { const i = std.findIndex(r => r.part === 'hood');
@@ -192,7 +194,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const z of [-0.5, -0.17, 0.17, 0.5]) K.plate([[-1.95, 0.17, z], [-2.34, 0.36, z], [-2.34, 0.22, z]], 0.03, B);
         });
         // ---- the door mirrors on their stalks ----
-        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.62, 0.8, sd * 0.96, { col: P, arm: B, w: 0.09, h: 0.065, d: 0.15, z0: sd * 0.8 }); });   // (the garage's in their place: mounts.ogledala)
+        K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.62, 0.8, sd * 0.96, { col: P, arm: B, w: 0.09, h: 0.065, d: 0.15, z0: sd * 0.8, crack: 1 }); });   // (the garage's in their place: mounts.ogledala)
         K.deli('vlecne_kljuke', () => {}); K.deli('lovilci_blata', () => {});   // (stock: none; the garage's tow points, mudflaps and sills' guards)
         K.part('body', () => { for (const id of ['streha', 'stresna_zajemalka', 'antena', 'zaluzije']) K.deli(id, () => {}); });   // (stock: none; the garage's on the roof and the rear glass)
         K.deli('vrata', () => {});   // (stock: no handles (dihedral doors); the garage's doors: mounts.vrata)
@@ -201,15 +203,39 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.hinge('hood', [0.97, 0.78, -0.5], [0.97, 0.78, 0.5]);
         K.hinge('trunk', [-0.86, 0.98, -0.4], [-0.86, 0.98, 0.4]);
         for (const sd of [-1, 1]) K.hinge(sd < 0 ? 'doorL' : 'doorR', [0.95, 0.25, sd * 0.96], [0.6, 0.95, sd * 0.7]);
-        // ---- inside (seen once a part is off): the bucket seats low, the dashboard, the wheel, the tunnel, the bulkhead behind the seats; the V8
-        //      behind it with the hybrid's orange cables, the front axle's electric motor and the radiators in the nose ----
-        for (const sd of [-1, 1]) K.seat(-0.3, 0.33, sd * 0.34, { w: 0.46, l: 0.46, back: 0.6, tilt: 0.42, col: [0.46, 0.09, 0.07] });
+        // ---- Visoki: the badges (the nose's face over its middle duct, the tail's face between the mesh and the light bar); the head lamps'
+        //      cells; the jacking points' arrows on the skirt; the tow point's arrow; the driver, low in the canopy ----
+        if (K.hi) {
+          const C = K.cab, LR = (n, s) => n + (s < 0 ? 'L' : 'R'), F = K.fitted, RED = [0.75, 0.1, 0.08], DD = [0.09, 0.09, 0.1];   // (F: a garage part in a detail's place: none of it there)
+          if (!F.maska && !F.relijske_luci) C.badge(2.3515, 0.37, 0, 1, 'bumperF', 0.024);
+          if (!F.zadnje_luci) C.badge(-2.3515, 0.69, 0, -1, 'body', 0.03);
+          for (const s of [-1, 1]) {
+            if (!F.zarometi) for (const dz of [-0.047, 0.047]) K.rect(2.2095, 0.53, s * 0.62 + dz, 0.008, 0.042, DD, { host: LR('head', s) });   // (the lamp's three cells)
+            if (!F.aero) for (const x of [XB - 0.23, XA + 0.23]) D.side([[x - 0.03, 0.225], [x + 0.03, 0.225], [x, 0.275]], [0.6, 0.61, 0.64], [s], 0.008);   // (the jacking points)
+          }
+          if (!F.vlecne_kljuke) fc([[-2.351, 0.5, -0.78], [-2.351, 0.5, -0.74], [-2.351, 0.475, -0.76]], RED, [-1, 0, 0], { host: 'bumperR' });   // (over the tow point, facing back)
+          K.driver(-0.38, 0.87, -0.33, { inner: true, r: 0.11, lean: 0.5, hands: [0.11, 0.62, 0.15], knee: [0.12, 0.4, 0.17], feet: [0.55, 0.26, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
+        }
+        // ---- inside (seen once a part is off), KOLIBRI's cab: the carpet and the toe board, the dashboard under the cowl's shell with the
+        //      display's low binnacle, the wheel, the harnessed carbon buckets, the console with its sequential lever, the pedals, the door
+        //      cards; the tunnel, the bulkhead behind the seats; the V8 behind it with the hybrid's orange cables, the front axle's electric
+        //      motor and the radiators in the nose ----
+        { const C = K.cab, IN = C.IN, SZ = -0.33, CP = [0.12, 0.12, 0.13], RED = [0.75, 0.1, 0.08];
+          C.face([[-0.62, 0.195, -0.78], [0.82, 0.195, -0.78], [0.82, 0.195, 0.78], [-0.62, 0.195, 0.78]], CP, [0, 1, 0]);   // (the carpet)
+          C.face([[0.82, 0.195, -0.78], [0.82, 0.195, 0.78], [0.82, 0.4, 0.78], [0.82, 0.4, -0.78]], CP, [-1, 0, 0]);   // (the toe board)
+          C.dash({ x: 0.42, y: 0.66, d: 0.42, w: 0.8, dz: SZ, style: 'none', col: K.lining, col2: [0.1, 0.1, 0.11] });   // (under the cowl's shell)
+          K.box(0.43, 0.52, SZ, 0.05, 0.065, 0.24, 0, C.BLK, C.BLK, true, IN);   // (the display's binnacle, low: the race one would stand through the cowl)
+          C.face([[0.403, 0.53, SZ - 0.1], [0.403, 0.53, SZ + 0.1], [0.403, 0.575, SZ + 0.1], [0.403, 0.575, SZ - 0.1]], [0.07, 0.16, 0.2], [-1, 0, 0]);   // (the display, lit)
+          C.steer({ c: [0.12, 0.62, SZ], ax: [0.9, -0.436], r: 0.16, rr: 0.016, to: [0.43, 0.47, SZ] });
+          for (const sd of [-1, 1]) C.seat(-0.1, 0.2, sd * 0.34, { w: 0.42, top: 0.58, lean: 0.546, shell: true, belt: 'harness', col: [0.46, 0.09, 0.07], col2: [0.15, 0.15, 0.16], strap: RED });
+          C.console(0.12, 0.37, { l: 0.3, seq: true });
+          C.pedals(0.62, 0.22, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.36, 0.6], y: [0.36, 0.7], z: 0.86, col: [0.12, 0.12, 0.13], insert: [0.2, 0.2, 0.21], strap: RED });
+        }
         fc([[0.3, 0.56, -0.72], [0.3, 0.56, 0.72], [0.93, 0.765, 0.72], [0.93, 0.765, -0.72]], K.lining, [-0.3, 1, 0], { part: 'body' });   // the dashboard's top under the windscreen
         //   (the outer shell, one-sided, sloping to the driver; the lining's colour: matte, no clear coat's sky on it, which a dark painted
         //   face turned up this far still shows as a white glare): from the seat it closes the view under the low cowl; the glass hides it
-        K.box(0.42, 0.4, 0, 0.36, 0.3, 1.36, 0, DK, null, false, { inner: true, part: 'body' });
         K.box(1.43, 0.46, 0, 0.2, 0.06, 0.3, 0, [0.95, 0.45, 0.08], null, false, { inner: true, part: 'body' });   // (the front motor's orange junction box)
-        K.cyl([0.14, 0.6, -0.34], [0.17, 0.64, -0.34], 0.16, [0.06, 0.06, 0.065], { n: 6, inner: true, part: 'body' });
         K.box(0, 0.17, 0, 0.9, 0.2, 0.22, 0, DK, null, false, { inner: true, part: 'body' });
         K.box(-0.66, 0.17, 0, 0.04, 0.68, 1.5, 0, K.lining, null, false, { inner: true, part: 'body' });
         K.engine(-1.4, 0.32, 0, { l: 0.8, w: 0.62, h: 0.48, col: [0.36, 0.37, 0.4] });

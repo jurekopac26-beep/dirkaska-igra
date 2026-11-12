@@ -229,7 +229,8 @@ var DELI = (function () {
   // how far the lamp's ring reaches back (default 0.014, flush in a flat face; a housing standing out of a curved wing: more), socket: the
   // part of the dark socket behind each lamp ('body', seen once a lamp that is a part of its own is knocked out; 'host': its lamp's part),
   // shape: the car's own lamp outline (metres round zc, yc; every option takes it, s then sizes its details), bulge: that lens' dome,
-  // ringW: its ring's width, tilt: the lens and its details lie on the leaning face (a steep nose: MODRAS; else they stand upright) }.
+  // ringW: its ring's width, tilt: the lens and its details lie on the leaning face (a steep nose: MODRAS; else they stand upright), hiSeg:
+  // false (on Visoki the round shapes in Normalni's segments: TUR's small lamps, within the room for one car with parts) }.
   // Each lamp: its lens (the sub-range that lights up at night) of its own outline, a ring round it, the details in front of the lens
   function zarometi(K, n, m) {
     const s = m.s || 1, hosts = m.hosts || [undefined, undefined];
@@ -263,7 +264,7 @@ var DELI = (function () {
           const M = at(cu, cv, off); for (let i = 0; i < R.length; i++) fwd([M, R[i], R[(i + 1) % R.length]]); return; } }
       col0 = col; fwd(pts.map(([u, v]) => at(u, v, off))); };   // (facing forward)
     // (round shapes in k segments on Visoki, six in ten of them on Normalni (a phone's: the lamps face away from the camera behind the car))
-    const sq = (k) => K.hi ? k : Math.max(6, Math.round(k * 0.6)), ell = (cu, cv, ru, rv, k) => ellipse(cu, cv, ru, rv, sq(k));
+    const HI = K.hi && m.hiSeg !== false, sq = (k) => HI ? k : Math.max(6, Math.round(k * 0.6)), ell = (cu, cv, ru, rv, k) => ellipse(cu, cv, ru, rv, sq(k));
     const circ = (cu, cv, r, k) => ell(cu, cv, r, r, k || 14);
     const disc = (cu, cv, r, col, off, k) => face(circ(cu, cv, r, k), col, off);
     const ann = (cu, cv, r0, r1, col, off, k) => { const q = sq(k || 16); for (let i = 0; i < q; i++) { const a0 = i / q * Math.PI * 2, a1 = (i + 1) / q * Math.PI * 2;
@@ -292,7 +293,7 @@ var DELI = (function () {
         ann(0.01, 0, 0.035, 0.065, [0.86, 0.87, 0.9], L, 16); disc(0.01, 0, 0.035, [0.7, 0.72, 0.75], L, 12); disc(0.01, 0, 0.014, [1, 0.97, 0.88], L + 0.003, 8); break; }
       case 4: {   // okrogli, klasični: two round lamps a side in a black panel, chrome rings, ringed glass (Normalni: eight sides, the
         // four round lamps within the room for one car with parts on a car whose stock lamp is small: MIŠKA's, the user's choice 30. 10.)
-        const q = K.hi ? 16 : 13;
+        const q = HI ? 16 : 13;
         at0(0, 0); lamp([circ(-0.072, 0, 0.067, q), circ(0.075, 0, 0.067, q)], WARM, K.chrome, 0.012);
         face(rrect(0, 0, 0.3, 0.16, 0.03, 2), [0.06, 0.06, 0.065], -0.006);
         for (const u of [-0.072, 0.075]) { ann(u, 0, 0.042, 0.047, [0.82, 0.8, 0.72], L, q); disc(u, 0, 0.018, [0.86, 0.87, 0.9], L + 0.002, 10); }
