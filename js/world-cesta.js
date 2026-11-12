@@ -40,7 +40,7 @@
      streets, on a main road], m; stop: the stop line's width, m; prednost: the give-way line's triangles [base, height, gap], m ---- */
   const BELA = [0.95, 0.95, 0.92], RUMENA = [0.95, 0.74, 0.14];
   const CRTE = {
-    'Italija':      { rob: 'bela', sred: 'bela', crta: [4.5, 7.5], dvojna: false, prehod: [0.5, 0.5, 2.5, 4], stop: 0.5, prednost: [0.5, 0.6, 0.25] },
+    'Italija':      { rob: 'bela', sred: 'bela', crta: [4.5, 7.5], dvojna: false, prehod: [0.5, 0.5, 2.5, 4], stop: 0.5, prednost: [0.5, 0.6, 0.25], ustje: [1, 1] },
     'Romunija':     { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },
     'Avstrija':     { rob: 'bela', sred: 'bela', crta: [6, 12], dvojna: false },
     'Nemčija':      { rob: 'bela', sred: 'bela', crta: [4, 8], dvojna: false },
@@ -442,5 +442,221 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     o.cestaMat = rm; o.cestaRobData = V.rob;
   }
 
-  World.cesta = { finish, crte, precne, CRTE, PROGE, BELA, RUMENA };
+  /* ---- side roads for the look only (package E, docs/realizem/paket-e.md) ----
+     ceste: the generator's rows [s, side, class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or a main road), width (m),
+     one-way, end (0 fades into the terrain, 1 joins another of these roads), [x, z, …]]; the side and the place of the mouth are taken
+     from the geometry. Nothing here is part of the track's model: nobody drives on these strips (the barrier on the fence line stays),
+     they are the picture of a junction. Two phases, as a builder needs them:
+       const SC = stranske(T, ceste, { tla, rob, ton })   // measures: the mouths, the strips' rows and heights
+       SC.tek(si, bit, c0, c1)        // the wall (bit 1) and the edge line (bit 2) in runs that stop at the openings (fractional stations)
+       SC.ustja, SC.krogi             // the mouths for the road's shader (out.cestaRob), circles that keep the trees off
+       SC.robovi(gv, c0, c1, barva)   // the strips' shoulders into the verges' chunk (the ground's colour and material)
+       SC.asfalt(RB, barva)           // the strips: a few meshes for a clone of the asphalt's material
+       SC.predmeti(get, zapora)       // the barriers on the fence line (1 plastic, 2 metal fences, 3 bales and a tape) and the paint
+     o: tla(x, z) the ground's height; rob(i, side, d) the verge's height above the road at the sample i, d metres from the centre line;
+     ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE) */
+  function stranske(T, ceste, o) {
+    o = o || {};
+    const N = T.N, ds = T.ds, L = T.len, px = T.px, pz = T.pz, nx = T.nx, nz = T.nz, hy = T.hy, tla = o.tla, rob = o.rob || null, ton = o.ton || (() => 0.8), odprta = !!o.odprta;
+    const C = CRTE[o.drzava] || CRTE.Italija, wrap = (i) => ((i % N) + N) % N, mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+    const hsh = (a, b) => { let h = Math.imul(a + 1, 374761393) ^ Math.imul(b + 7, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+    // the main road: the nearest point of its centre line (the samples in a grid, both segments at each sample)
+    const CELL = 24, grid = new Map(), key = (cx, cz) => cx * 73856093 ^ cz * 19349663;
+    for (let i = 0; i < N; i++) { const k = key(Math.floor(px[i] / CELL), Math.floor(pz[i] / CELL)); let c = grid.get(k); if (!c) grid.set(k, c = []); c.push(i); }
+    const Q = { i: -1, t: 0, d: 1e9, lat: 1, w: 0, h: 0, bar: 0 };
+    const mr = (x, z) => {
+      const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL); let bd = 1e18, bi = -1, bt = 0;
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+        const c = grid.get(key(cx + a, cz + b)); if (!c) continue;
+        for (let n = 0; n < c.length; n++) for (let k = 0; k < 2; k++) {
+          const i0 = k ? (c[n] + N - 1) % N : c[n], i1 = (i0 + 1) % N; if (odprta && !i1) continue;
+          const ax = px[i0], az = pz[i0], ex = px[i1] - ax, ez = pz[i1] - az, t = clamp(((x - ax) * ex + (z - az) * ez) / (ex * ex + ez * ez || 1), 0, 1), qx = ax + ex * t - x, qz = az + ez * t - z, d2 = qx * qx + qz * qz;
+          if (d2 < bd) { bd = d2; bi = i0; bt = t; }
+        }
+      }
+      if (bi < 0) { Q.i = -1; Q.d = 1e9; return Q; }
+      const j = (bi + 1) % N;
+      Q.lat = (x - lerp(px[bi], px[j], bt)) * lerp(nx[bi], nx[j], bt) + (z - lerp(pz[bi], pz[j], bt)) * lerp(nz[bi], nz[j], bt) >= 0 ? 1 : -1;
+      Q.i = bi; Q.t = bt; Q.d = Math.sqrt(bd); Q.w = lerp(T.wAt(bi), T.wAt(j), bt); Q.h = lerp(hy[bi], hy[j], bt);
+      Q.bar = Q.lat > 0 ? lerp(T.br[bi], T.br[j], bt) : lerp(T.bl[bi], T.bl[j], bt);
+      return Q;
+    };
+    // the openings: per side the samples' flags (bit 1 the wall, bit 2 the edge line) and the fractional ends beside them
+    const rez = [new Uint8Array(N), new Uint8Array(N)], nan = () => new Float32Array(N).fill(NaN), kA = [[nan(), nan()], [nan(), nan()]], kB = [[nan(), nan()], [nan(), nan()]];
+    const odpri = (si, bit, fa, fb) => {
+      let a = Math.ceil(fa), b = Math.floor(fb); if (a > b) a = b = Math.round((fa + fb) / 2);
+      for (let i = a; i <= b; i++) rez[si][wrap(i)] |= bit;
+      kA[bit - 1][si][wrap(a - 1)] = clamp(fa - (a - 1), 0.001, 1); kB[bit - 1][si][wrap(b + 1)] = clamp(b + 1 - fb, 0.001, 1);
+    };
+    // runs of stations for the samples c0 … c1 (a chunk; c1 is the next chunk's first sample): a run stops at an opening with the
+    // fractional station of its end (run.z0, run.z1: the run begins, ends at an opening) and never begins at c1
+    const tek = (si, bit, c0, c1) => {
+      const runs = [], A = kA[bit - 1][si], B = kB[bit - 1][si], F = rez[si]; let run = null;
+      for (let ii = c0; ii <= c1; ii++) {
+        const i = ii % N;
+        if (F[i] & bit) { run = null; continue; }
+        if (!run) { if (ii === c1) break; run = []; runs.push(run); if (B[i] > 0) { run.push(ii - B[i]); run.z0 = true; } }
+        run.push(ii);
+        if (A[i] > 0 && ii < c1) { run.push(ii + A[i]); run.z1 = true; run = null; }
+      }
+      return runs.filter(r => r.length > 1);
+    };
+    const hs = (px[1] - px[0]) * nz[0] - (pz[1] - pz[0]) * nx[0], E = [-1, -0.5, 0, 0.5, 1], R = [], ustja = [], krogi = [];
+    for (let ri = 0; ri < ceste.length; ri++) {
+      const c = ceste[ri], razred = c[2], hw = Math.max(1.2, c[3] / 2), eno = !!c[4], konec = c[5], xy = c[6], np = xy.length >> 1; if (np < 2) continue;
+      const cum = [0]; for (let k = 1; k < np; k++) cum.push(cum[k - 1] + Math.hypot(xy[2 * k] - xy[2 * k - 2], xy[2 * k + 1] - xy[2 * k - 1]));
+      const U = cum[np - 1];
+      const at = (u) => { let k = 1; while (k < np - 1 && cum[k] < u) k++; const a = k - 1, t = (u - cum[a]) / (cum[k] - cum[a] || 1); return [xy[2 * a] + (xy[2 * k] - xy[2 * a]) * t, xy[2 * a + 1] + (xy[2 * k + 1] - xy[2 * a + 1]) * t]; };   // (the end segments carry on straight)
+      const win = Math.max(1, 1.2 * hw), nrm = (u) => { const a = at(u - win), b = at(u + win), dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1; return hs > 0 ? [-dz / l, dx / l] : [dz / l, -dx / l]; };   // (the right-hand normal, as the main road's)
+      const ins = (p) => { mr(p[0], p[1]); return Q.d <= Q.w - 0.15; };   // (on the main asphalt: the strip laps 0.15 m over its edge)
+      const bis = (f, lo, hi) => { for (let k = 0; k < 12; k++) { const m = (lo + hi) / 2; if (f(m)) lo = m; else hi = m; } return hi; };   // (f holds at lo, not at hi)
+      // where the centre leaves the main asphalt
+      const fc = (m) => ins(at(m)); let uc;
+      if (fc(0)) { let u = 0; const lim = Math.min(U, 30); while (u < lim && fc(u + 0.25)) u += 0.25; if (u >= lim) continue; uc = bis(fc, u, u + 0.25); }
+      else { let u = 0; while (u > -25 && !fc(u - 0.25)) u -= 0.25; if (u <= -25) continue; uc = bis(fc, u - 0.25, u); }
+      { const p = at(uc + 0.5); mr(p[0], p[1]); } const side = Q.lat, si = side > 0 ? 1 : 0;
+      // the end: the polyline's, or short of another part of the lap (its verge stays whole)
+      let uEnd = U, far = false;
+      for (let u = uc + 4; u <= U; u += 1) { const p = at(u); mr(p[0], p[1]); if (Q.d > Q.bar + hw + 5) far = true; else if (far && Q.d < Q.bar + hw + 3.5) { uEnd = u - 1; break; } }
+      if (uEnd - uc < 8) continue;
+      // five columns across, flared at the mouth; each column begins at its own (outermost) crossing of the main road's edge
+      const F = razred ? 1.5 : 1, X = razred ? 5 : 3.5, hwf = (u) => { const k = 1 - Math.min(1, Math.max(0, u - uc) / X); return hw + F * k * k; };
+      const P = (u, e) => { const a = at(u), n = nrm(u), k = e * hwf(u); return [a[0] + n[0] * k, a[1] + n[1] * k]; };
+      const top = Math.min(uEnd - 0.5, uc + 25), u0 = [];
+      for (let k = 0; k < 5; k++) { const e = E[k], f = (m) => ins(P(m, e)); let u = top; if (f(u)) break; while (u > uc - 25 && !f(u - 0.25)) u -= 0.25; if (u <= uc - 25) break; u0.push(bis(f, u - 0.25, u)); }
+      if (u0.length < 5) continue;
+      // the opening in the wall: where the two edges cross the fence line; the gap in the edge line: the mouth's two corners
+      const fen = (k) => { const e = E[k], f = (m) => { const p = P(m, e); mr(p[0], p[1]); return Q.d <= Q.bar + 0.3; }; let u = u0[k]; const lim = Math.min(uEnd - 0.5, u0[k] + 22); while (u < lim && f(u + 0.25)) u += 0.25; if (u >= lim) return NaN; const p = P(bis(f, u, u + 0.25), e); mr(p[0], p[1]); return Q.lat === side ? Q.i + Q.t : NaN; };
+      const idx = (p) => { mr(p[0], p[1]); return Q.i + Q.t; }, span = (a, b, m) => { if (b - a > N / 2) b -= N; else if (a - b > N / 2) b += N; return a < b ? [a - m, b + m] : [b - m, a + m]; };
+      const wa = fen(0), wb = fen(4); if (!(wa === wa && wb === wb)) continue;
+      const zid = span(wa, wb, 0.2), crt = span(idx(P(u0[0], -1)), idx(P(u0[4], 1)), 0.1);
+      // the rows: the mouth's line along the main edge, an apron row 1.2 m on (the stop line), then every ~2.6 m, the last square to the road
+      const D = uEnd - u0[2]; if (D < 6) continue;
+      const nn = Math.max(2, Math.round((D - 1.2) / 2.6)), dr = [0, 1.2]; for (let k = 1; k <= nn; k++) dr.push(1.2 + (D - 1.2) * k / nn);
+      const nr = dr.length, V = [], OFF = [], UU = [];
+      for (let r = 0; r < nr; r++) { const row = [], off = [], uu = []; for (let k = 0; k < 5; k++) { const u = u0[k] + (uEnd - u0[k]) * dr[r] / D, p = P(u, E[k]); row.push([p[0], 0, p[1]]); off.push(E[k] * hwf(u)); uu.push(u); } V.push(row); OFF.push(off); UU.push(uu); }
+      // the heights: on the main road at the mouth (its slope along becomes the strip's tilt across, fading out), then down to the ground;
+      // inside the fence and a little beyond never below the road's level and the verge
+      for (const p of V[0]) { mr(p[0], p[2]); p[1] = Q.h + 0.032; }
+      mr(V[0][2][0], V[0][2][2]); const i0 = Q.i;
+      const lo = (x, z) => {
+        mr(x, z); const d = Q.d, b = Q.bar; if (d >= b + 3.4 || Math.abs(((Q.i - i0 + N * 1.5) % N) - N / 2) > 60) return -1e9;
+        const i = Q.i, t = Q.t, h = Q.h, s = Q.lat; let v = h + 0.03 - 0.4 * sstep(b + 0.8, b + 3.4, d);
+        if (rob) v = Math.max(v, h + lerp(rob(i, s, d), rob((i + 1) % N, s, d), t) + 0.03);
+        return v;
+      };
+      const g0 = (V[0][4][1] - V[0][0][1]) / (OFF[0][4] - OFF[0][0]), gr = dr.map(d => g0 * (1 - sstep(2, 16, d)));
+      const raw = dr.map((d, r) => { let m = -1e9; for (let k = 0; k < 5; k++) m = Math.max(m, tla(V[r][k][0], V[r][k][2]) + 0.07 - gr[r] * OFF[r][k]); return m; });
+      let base = raw.slice(); for (let it = 0; it < 2; it++) base = base.map((v, r) => (r < 1 || r > nr - 2 ? v : (base[r - 1] + 2 * v + base[r + 1]) / 4));
+      for (let r = 1; r < nr; r++) {
+        const b = Math.max(raw[r], lerp(V[0][2][1], Math.max(base[r], raw[r]), sstep(0, 12, dr[r])));
+        for (let k = 0; k < 5; k++) { const p = V[r][k]; p[1] = Math.max(b + gr[r] * OFF[r][k], lo(p[0], p[2])); }
+      }
+      odpri(si, 1, zid[0], zid[1]); odpri(si, 2, crt[0], crt[1]);
+      { let a = crt[0] * ds - 0.4, b = crt[1] * ds + 0.4; if (a < 0) { a += L; b += L; } ustja.push([a, b, side]); }
+      for (let u = uc, st = Math.max(2, hw * 1.2); u <= uEnd; u += st) { const p = at(u); krogi.push([p[0], p[1], hwf(u) + 1.8]); }
+      mr(V[1][2][0], V[1][2][2]);
+      R.push({ razred, hw, eno, konec, side, si, i0, zid, crt, V, OFF, UU, dr, nr, D, hwM: hwf(u0[2] + 0.6), dp: Math.max(0.5, Q.d - Q.w + 0.15), hh: hsh(ri, 3) });
+    }
+    // the shoulders: a band of the ground's colour from each edge down under the ground (and beyond a fading end)
+    const robovi = (g, c0, c1, barva) => {
+      const uv = (p) => [p[0] / 14, -p[2] / 14];
+      for (const r of R) {
+        if (r.i0 < c0 || r.i0 >= c1) continue;
+        for (const sg of [-1, 1]) {
+          let prev = -1;
+          for (let k = 1; k < r.nr; k++) {
+            const e = r.V[k][sg < 0 ? 0 : 4], q = r.V[k][sg < 0 ? 1 : 3], l = Math.hypot(e[0] - q[0], e[2] - q[2]) || 1, dx = (e[0] - q[0]) / l, dz = (e[2] - q[2]) / l;
+            const wd = Math.min(3, 0.5 + 1.5 * Math.max(0, e[1] - tla(e[0], e[2]))), ox = e[0] + dx * wd, oz = e[2] + dz * wd, O = [ox, tla(ox, oz) - 0.12, oz], I = [e[0], e[1] - 0.004, e[2]];
+            const cI = barva(e[0], e[2]), cO = barva(ox, oz), pts = sg < 0 ? [O, I] : [I, O], row = g.row(pts, sg < 0 ? [cO, cI] : [cI, cO], pts.map(uv));
+            if (prev >= 0) g.link(prev, row, 0, 1); prev = row;
+          }
+        }
+        if (!r.konec) {
+          const a = r.V[r.nr - 2][2], b = r.V[r.nr - 1][2], l = Math.hypot(b[0] - a[0], b[2] - a[2]) || 1, dx = (b[0] - a[0]) / l * 2, dz = (b[2] - a[2]) / l * 2;
+          const p0 = r.V[r.nr - 1].map(p => [p[0], p[1] - 0.004, p[2]]), p1 = p0.map(p => [p[0] + dx, tla(p[0] + dx, p[2] + dz) - 0.12, p[2] + dz]);
+          g.link(g.row(p0, p0.map(p => barva(p[0], p[2])), p0.map(uv)), g.row(p1, p1.map(p => barva(p[0], p[2])), p1.map(uv)), 0, 4);
+        }
+      }
+    };
+    // the strips (buckets of 256 samples by the mouth): the main road's tone at the mouth, then the road's own (a driveway or a track is
+    // pale gravel), a fading end takes the ground's colour
+    const asfalt = (RBc, barva) => {
+      const B = new Map();
+      for (const r of R) {
+        const kb = r.i0 >> 8; let g = B.get(kb); if (!g) B.set(kb, g = new RBc(true));
+        const m = ton(r.i0), k1 = 0.78 * (0.92 + 0.14 * r.hh), own = r.razred ? [k1, k1, k1 * 1.02] : [1.5, 1.42, 1.26].map(v => v * (0.94 + 0.1 * r.hh)); let prev = -1;
+        for (let k = 0; k < r.nr; k++) {
+          const d = r.dr[k], c = mix3([m, m, m * 1.02], own, sstep(0.3, r.razred ? 5 : 3.5, d)), fd = r.konec ? 0 : sstep(r.D - 6, r.D - 0.5, d);
+          const cols = r.V[k].map((p, j) => { const q = j === 0 || j === 4 ? 0.95 : 1, v = [c[0] * q, c[1] * q, c[2] * q]; if (!fd) return v; const gc = barva(p[0], p[2]); return mix3(v, [gc[0] * 1.2, gc[1] * 1.2, gc[2] * 1.2], fd); });
+          const row = g.row(r.V[k], cols, r.V[k].map((p, j) => [(r.OFF[k][j] + r.hw) / TILE, r.UU[k][j] / TILE]));
+          if (prev >= 0) g.link(prev, row, 0, 4); prev = row;
+        }
+      }
+      return [...B.values()];
+    };
+    // the barriers across the openings on the fence line (no inscriptions) and the paint by the country's rules: a street stops, a
+    // bigger road gives way, a driveway has nothing; on the entering lane (the left half, seen from the main road), a one-way road across
+    const predmeti = (get, zapora) => {
+      const box = World.api.box, RD = [0.78, 0.12, 0.1], WH = [0.93, 0.93, 0.9], KV = [0.62, 0.64, 0.67], KV2 = [0.54, 0.56, 0.6], SL = [0.85, 0.72, 0.4], SL2 = [0.78, 0.64, 0.34], SLT = [0.9, 0.79, 0.48], PW = [0.9, 0.9, 0.86];
+      for (const r of R) {
+        const side = r.side, fa = r.zid[0], fb = r.zid[1];
+        const FP = (f, e, y) => { const a = Math.floor(f), t = f - a, i = wrap(a), j = (i + 1) % N, b0 = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.3 + e), b1 = side * ((side > 0 ? T.br[j] : T.bl[j]) + 0.3 + e); return [lerp(px[i] + nx[i] * b0, px[j] + nx[j] * b1, t), lerp(hy[i], hy[j], t) + y, lerp(pz[i] + nz[i] * b0, pz[j] + nz[j] * b1, t)]; };
+        let len = 0; for (let k = 0; k < 8; k++) { const a = FP(fa + (fb - fa) * k / 8, 0, 0), b = FP(fa + (fb - fa) * (k + 1) / 8, 0, 0); len += Math.hypot(b[0] - a[0], b[2] - a[2]); }
+        const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+        const kar = (g, A, B, s0, s1, y0, y1, col) => {   // (a flat card between two points of the fence line, both faces)
+          const a = [lerp(A[0], B[0], s0), lerp(A[1], B[1], s0) + y0, lerp(A[2], B[2], s0)], b = [lerp(A[0], B[0], s1), lerp(A[1], B[1], s1) + y0, lerp(A[2], B[2], s1)], c = [b[0], b[1] + y1 - y0, b[2]], d = [a[0], a[1] + y1 - y0, a[2]];
+          const l = Math.hypot(B[0] - A[0], B[2] - A[2]) || 1, qx = -(B[2] - A[2]) / l * 0.5, qz = (B[0] - A[0]) / l * 0.5, m = mid(a, c);
+          g.quadO(a, b, c, d, col, [m[0] + qx, m[1], m[2] + qz]); g.quadO(a, b, c, d, col, [m[0] - qx, m[1], m[2] - qz]);
+        };
+        if (zapora === 2) {   // grey metal crowd fences
+          const n = Math.max(1, Math.round(len / 2.2));
+          for (let k = 0; k < n; k++) {
+            const A = FP(fa + (fb - fa) * (k + 0.03) / n, 0, 0), B = FP(fa + (fb - fa) * (k + 0.97) / n, 0, 0), g = get((A[0] + B[0]) / 2, (A[2] + B[2]) / 2), l = Math.hypot(B[0] - A[0], B[2] - A[2]) || 1, ps = 0.06 / l, bs = 0.018 / l;
+            kar(g, A, B, 0, 1, 1.02, 1.07, KV); kar(g, A, B, 0, 1, 0.16, 0.2, KV); kar(g, A, B, 0, ps, 0, 1.07, KV); kar(g, A, B, 1 - ps, 1, 0, 1.07, KV);
+            for (let j = 1; j <= 7; j++) kar(g, A, B, j / 8 - bs, j / 8 + bs, 0.2, 1.02, KV2);
+          }
+        } else if (zapora === 3) {   // straw bales and a red-and-white tape on thin posts behind them
+          const nb = Math.max(1, Math.floor(len / 1.08));
+          for (let k = 0; k < nb; k++) { const f = fa + (fb - fa) * (k + 0.5) / nb, c = FP(f, 0, 0), a = FP(f - 0.05, 0, 0), b = FP(f + 0.05, 0, 0); box(get(c[0], c[2]), c[0], c[1], c[2], 1.0, 0.45, 0.5, Math.atan2(b[2] - a[2], b[0] - a[0]), k & 1 ? SL2 : SL, SLT, true); }
+          const np = len > 5 ? 3 : 2, PS = []; for (let k = 0; k < np; k++) { const p = FP(fa + (fb - fa) * (0.05 + 0.9 * k / (np - 1)), 0.5, 0); PS.push(p); box(get(p[0], p[2]), p[0], p[1], p[2], 0.06, 1.06, 0.06, 0, WH, WH, true); }
+          for (let k = 0; k + 1 < np; k++) { const A = PS[k], B = PS[k + 1], g = get((A[0] + B[0]) / 2, (A[2] + B[2]) / 2), n = Math.max(2, Math.round(Math.hypot(B[0] - A[0], B[2] - A[2]) / 0.5)); for (let j = 0; j < n; j++) kar(g, A, B, j / n, (j + 1) / n, 0.93, 1.01, (j + k) & 1 ? WH : RD); }
+        } else {   // red-and-white plastic barriers
+          const n = Math.max(1, Math.round(len / 2.05)), PR = [[-0.24, 0], [-0.24, 0.2], [-0.09, 0.78], [0.09, 0.78], [0.24, 0.2], [0.24, 0]];
+          for (let k = 0; k < n; k++) {
+            const f0 = fa + (fb - fa) * k / n, f1 = fa + (fb - fa) * (k + 1) / n, A = PR.map(p => FP(f0, p[0], p[1])), B = PR.map(p => FP(f1, p[0], p[1])), col = k & 1 ? WH : RD, inn = mid(FP(f0, 0, 0.3), FP(f1, 0, 0.3)), g = get(inn[0], inn[2]);
+            for (let j = 0; j < 5; j++) g.quadO(A[j], B[j], B[j + 1], A[j + 1], col, inn);
+            if (k === 0) for (let j = 1; j < 5; j++) g.triO(A[0], A[j], A[j + 1], col, inn, col, col);
+            if (k === n - 1) for (let j = 1; j < 5; j++) g.triO(B[0], B[j], B[j + 1], col, inn, col, col);
+          }
+        }
+        if (!r.razred) continue;
+        // the paint on the apron (the first two rows), 1.5 cm over the strip
+        const AP = (e, t) => { const cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc), f = cc - k, a = mix3(r.V[0][k], r.V[0][k + 1], f), b = mix3(r.V[1][k], r.V[1][k + 1], f); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
+        const tt = (x) => Math.min(0.97, x / r.dp), la = -(r.hw - 0.15), lb = r.eno ? r.hw - 0.15 : -0.1;
+        if (r.razred === 1) {
+          const t0 = tt(0.25), t1 = tt(0.25 + C.stop), cuts = [la / r.hwM, ...[-0.5, 0, 0.5].filter(v => v > la / r.hwM + 0.01 && v < lb / r.hwM - 0.01), lb / r.hwM];
+          for (let k = 0; k + 1 < cuts.length; k++) { const a = AP(cuts[k], t0), b = AP(cuts[k + 1], t0), c2 = AP(cuts[k + 1], t1), d = AP(cuts[k], t1); get((a[0] + c2[0]) / 2, (a[2] + c2[2]) / 2).quadUp(a, b, c2, d, [PW, PW, PW, PW]); }
+        } else {
+          const b = C.prednost[0], h = C.prednost[1], gp = C.prednost[2], n = Math.max(1, Math.floor((lb - la + gp) / (b + gp))), m0 = (la + lb) / 2 - (n * (b + gp) - gp) / 2;
+          for (let k = 0; k < n; k++) { const x0 = (m0 + k * (b + gp)) / r.hwM, x1 = (m0 + k * (b + gp) + b) / r.hwM, a = AP(x0, tt(0.25)), b2 = AP(x1, tt(0.25)), c2 = AP((x0 + x1) / 2, tt(0.25 + h)); get(a[0], a[2]).triUp(a, b2, c2, [PW, PW, PW]); }
+        }
+      }
+    };
+    // the main road's edge line across a mouth is broken where the country's rules say so (C.ustje: dash, gap): the dashes as
+    // [f0, f1, side] in stations for the roads of the samples c0 … c1
+    const prekinjena = (c0, c1) => {
+      const out = []; if (!C.ustje) return out;
+      const a = C.ustje[0] / ds, p = (C.ustje[0] + C.ustje[1]) / ds;
+      for (const r of R) {
+        if (r.i0 < c0 || r.i0 >= c1) continue;
+        const f0 = r.crt[0], f1 = r.crt[1], n = Math.max(1, Math.round((f1 - f0 - (p - a)) / p)), st = (f0 + f1) / 2 - (n * p - (p - a)) / 2;
+        for (let k = 0; k < n; k++) out.push([st + k * p, st + k * p + a, r.side]);
+      }
+      return out;
+    };
+    return { n: R.length, rez, tek, ustja, krogi, robovi, asfalt, predmeti, prekinjena };
+  }
+
+  World.cesta = { finish, crte, precne, stranske, CRTE, PROGE, BELA, RUMENA };
 })();
