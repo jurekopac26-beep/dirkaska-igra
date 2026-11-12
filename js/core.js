@@ -3900,10 +3900,11 @@ const Core = (function () {
   // slower it leans on it as before). A rigid body's knock, its whole turning mass (no share of the turn): where it bears, the corners within the
   // crush's length (face x the closing speed, cr0 to cr1 m) of the deepest one, each by how far behind it is (a flank flat on the wall bears
   // through its middle; the order of the corners does not count), at arm of the lever. The bounce by the closing speed (e0 to e1, none for a
-  // car leaning on it, eT), the rub along it (mu of the push, at the same place). The grip by kGripR, as a knock (the new physics: the push only)
+  // car leaning on it, eT), the rub along it (mu of the push, at the same place). The grip by kGripR, as a knock (the new physics: the push only).
+  // k < 0: a contact that is not a corner (a round thing met along the car's side): it bears where it touches, (wx, wz), at arm of the lever
   function wallR(c, wx, wz, nx, nz, k) {
     const W = KC.wall; let ax = wx, az = wz;
-    { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners; let sw = 0, dm = 0;
+    if (k >= 0) { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners; let sw = 0, dm = 0;
       for (let j = 0; j < P.length; j++) { const d = (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
       ax = 0; az = 0;
       for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, t = clamp(1 - ((j === k ? 0 : (ox - wx) * nx + (oz - wz) * nz) - dm) / cr, 0, 1);

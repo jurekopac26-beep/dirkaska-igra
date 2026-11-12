@@ -5,6 +5,10 @@
 //   GAME_ROOT=<folder> node tools/trki/zid.js --cv 6         the new version is KC.id === 'real' (cv 6); --cv 1 … 5 must print as before
 // The numbers of the candidate can be overridden at run time: KRR='{"wArm":0.7}' GAME_ROOT=<folder> node tools/trki/zid.js --cv 6
 // An anchor that is no longer found (the code under it has changed) stops the script with the anchor's first words.
+// Since »Trki: različica Realistična (cv 6) – jedro in dokazi« (12. 11. 2026) these formulas are in js/core.js itself (KV.real, krOn, kTakeR,
+// kGripR, kSlideR, wallR, propPush), so on that tree the script stops at its first anchor. A copy with the candidate is still made from a tree
+// before Realistična (git worktree add <tree> f1c4a0a, then node <tree>/tools/trki/zasnova-realisticna.js <folder>): docs/trki-realizem.md,
+// »Realistična v repozitoriju: jedro in dokazi«.
 'use strict';
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..', '..'), OUT = process.argv[2] && path.resolve(process.argv[2]);
