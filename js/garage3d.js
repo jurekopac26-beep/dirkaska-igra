@@ -4558,12 +4558,12 @@ const Garage3D = (function () {
   // fresh)), the scanner's line on the paint and what it has passed, the scratches on the polisher's lane lit red behind it, the polish
   // over them and the check (green) after which none is left. Two of render.js's lines replaced (both must be found: a page error else),
   // its variables used as they are. SVU: one set for all (only the car on the table is serviced), all in its own frame (vLp)
-  const SVU = {}; for (const k of ['uSvW0', 'uSvW1', 'uSvW2', 'uSvW3', 'uSvW4', 'uSvB', 'uSvZ', 'uPol', 'uScN', 'uScA', 'uVeA', 'uScD']) SVU[k] = { value: new THREE.Vector4() };
+  const SVU = {}; for (const k of ['uSvW0', 'uSvW1', 'uSvW2', 'uSvW3', 'uSvW4', 'uSvB', 'uSvZ', 'uPol', 'uScN', 'uScA', 'uVeA', 'uScD', 'uPnD']) SVU[k] = { value: new THREE.Vector4() };
   const SVW = [0, 1, 2, 3, 4].map(i => SVU['uSvW' + i].value);   // (0 pre-rinse, 1 foam, 2 scrub, 3 rinse, 4 dry: each (side lo, hi, top lo, hi) along x)
   function svuOff() { for (const w of SVW) w.set(9, -9, 9, -9); SVU.uSvB.value.set(9, 0, 0, 0); SVU.uSvZ.value.set(0, 0, 0, 0); SVU.uPol.value.set(9, -9, 9, -9); SVU.uScN.value.set(0, 0, 1, 99);
-    SVU.uScA.value.set(0, 9, 1, 0); SVU.uVeA.value.set(0, 9, 1, 0); SVU.uScD.value.set(0, 0, 0, 0); }
+    SVU.uScA.value.set(0, 9, 1, 0); SVU.uVeA.value.set(0, 9, 1, 0); SVU.uScD.value.set(0, 0, 0, 0); SVU.uPnD.value.set(-9, 9, 0, 0); }
   svuOff();
-  const SV_HEAD = ['uniform vec4 uSvW0, uSvW1, uSvW2, uSvW3, uSvW4, uSvB, uSvZ, uPol, uScN, uScA, uVeA, uScD;', 'float svPol = 0.0;',
+  const SV_HEAD = ['uniform vec4 uSvW0, uSvW1, uSvW2, uSvW3, uSvW4, uSvB, uSvZ, uPol, uScN, uScA, uVeA, uScD, uPnD;', 'float svPol = 0.0;',
     'float svH(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }',
     'float svN(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(svH(i), svH(i + vec3(1.0, 0.0, 0.0)), f.x), mix(svH(i + vec3(0.0, 1.0, 0.0)), svH(i + vec3(1.0, 1.0, 0.0)), f.x), f.y), mix(mix(svH(i + vec3(0.0, 0.0, 1.0)), svH(i + vec3(1.0, 0.0, 1.0)), f.x), mix(svH(i + vec3(0.0, 1.0, 1.0)), svH(i + 1.0), f.x), f.y), f.z); }',
     'float svIn(vec4 w, float x, float tb) { vec2 r = mix(w.xy, w.zw, tb); return smoothstep(r.x - 0.05, r.x + 0.05, x) * (1.0 - smoothstep(r.y - 0.05, r.y + 0.05, x)); }'].join('\n');
@@ -4603,6 +4603,15 @@ const Garage3D = (function () {
     '    diffuseColor.rgb = mix(diffuseColor.rgb, fc, fa); cgD = max(cgD, fa); svWt *= 1.0 - fa; }',
     '  diffuseColor.rgb *= 1.0 - 0.14 * svWt; cgD -= 0.4 * svWt + 0.35 * max(uSvB.z, svPol);',
     '  totalEmissiveRadiance += vec3(0.55, 0.62, 0.7) * step(0.98, svH(floor(vLp * 64.0))) * svWt; }',
+    // (the fresh paint (uPnD: x the drying's front, dry ahead of it (toward the nose); y the spray's front, painted ahead of it; z the dry
+    // paint's new sheen; w the heat): wet behind the drying front, deeper and dull, a little mottled; a warm glow on the paint at the front
+    // as the lamps pass; ahead of it dry, glossier for a while)
+    'if (uPnD.x > -8.0 || uPnD.z > 0.001) { float px = vLp.x + (n - 0.5) * 0.14;',
+    '  float wt = smoothstep(uPnD.y - 0.06, uPnD.y + 0.06, px) * (1.0 - smoothstep(uPnD.x - 0.1, uPnD.x + 0.1, px)) * SV_OUT, mo = svN(vLp * 9.0);',
+    '  diffuseColor.rgb *= 1.0 - 0.24 * wt; cgD = mix(cgD, 0.55 + 0.3 * mo, wt);',
+    '  float ht = exp(-pow((px - uPnD.x) / 0.32, 2.0)) * uPnD.w * SV_OUT;',
+    '  totalEmissiveRadiance += vec3(1.25, 0.42, 0.1) * ht * (0.35 + 0.65 * dot(diffuseColor.rgb, vec3(0.33)));',
+    '  cgD -= 0.5 * uPnD.z * (1.0 - wt) * SV_OUT; }',
     '}'].join('\n');
   function svcPaint(c) { const ob = c.onBeforeCompile, k0 = c.customProgramCacheKey;
     c.onBeforeCompile = (sh, r) => { ob.call(c, sh, r); Object.assign(sh.uniforms, SVU); const f = sh.fragmentShader, n = (DIRT_OLD.test(f) ? 1 : 0) + (f.includes(SCR_OLD) ? 1 : 0);
@@ -6813,10 +6822,10 @@ const Garage3D = (function () {
       for (const k in nw.parts) nw.parts[k].visible = false; nw.contact.visible = false;
       cv.root.add(nw.root); nw.root.position.set(0, 0, 0);
       const cut = (x) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); fwd.set(1, 0, 0).transformDirection(cv.v.grp.matrixWorld); const c = fwd.dot(o) + x; cv.clip.set(fwd.clone().negate(), c); nw.clip.set(fwd.clone(), -c); };
-      cut(x0); hud('paint', { step: 'spray' });
+      cut(x0); SVU.uPnD.value.set(9, x0, 0, 0); hud('paint', { step: 'spray' });   // (the new paint wet where it is sprayed)
       sLoop('paint', 'bandpass', 3800, 0.6, 0.16);
       yield* par(tween(3.4, (k, u) => {
-        const s = lerp(x0, x1, EZ.sine(u)); cut(s);
+        const s = lerp(x0, x1, EZ.sine(u)); cut(s); SVU.uPnD.value.y = s;
         for (const [i, q] of [[0, near(s)], [1, top(s)]]) { Object.assign(RB[i].s, q); RB[i].dirty = true; }
         paintMist(col, 2); mistTop(s, 2);
       }), camTo(VP1, 3.4, EZ.sine));
@@ -6828,15 +6837,22 @@ const Garage3D = (function () {
       for (const k in nw.parts) nw.parts[k].visible = true;
       tt.add(nw.root); nw.root.position.copy(cv.root.position); cur = nw; tt.remove(cv.root); nw.lp = cv.lp; planAhead(nw); idleOn(nw);   // (the same body, the same parts: the lift's pads where they were (not measured yet: now))
       freeCar(cv);
-      // drying: the arms up out of the way, the chamber's lights warm, a warm glow sweeping along the car, glints on the fresh paint
+      // drying: the arms up out of the way, the chamber's lights warm, the lamps' heat along the car (the paint dries behind it), glints on the fresh paint
       hud('paint', { step: 'dry' });
       spawn(camTo(VPD, 1.3)); yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: tall ? Math.PI / 2 : -Math.PI / 2 }, 0.6));   // (level, not out through the chamber's ends; the far one away from the near one's (over the car: toward the far side))
+      // (the lamps warm up at the nose, then their heat runs along the car to its tail: wet, deep and dull behind it, a warm glow on the
+      // paint where it is, dry and glossy ahead; the camera with it from the front quarter toward the rear one; then the fresh sheen fades)
+      const PD = SVU.uPnD.value; PD.set(x0, -9, 0, 0);
       chamberColor(PAINT_C.warm); sLoop('dry', 'lowpass', 500, 0.7, 0.12);
-      const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(7, 3, 1); scene.add(warm);
-      yield* tween(1.8, (k, u) => { warm.material.opacity = 0.4 * Math.sin(u * Math.PI); warm.position.copy(carPt(nw, lerp(K.front, K.rear, u), K.top * 0.6, 0)); if (Math.random() < 0.5) sparkle(nw, 1); });
-      scene.remove(warm); warm.material.dispose(); sLoop('dry', 'lowpass', 500, 0.7, 0);
-      sparkle(nw, 16); SFX.ping(2093); SFX.ping(2793);
-      chamberColor(color); yield* par(chamberTo(0, 2.2), armsPark(1.6));
+      const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(6, 3.2, 1); scene.add(warm);
+      const at = (x) => warm.position.copy(carPt(nw, x, K.top * 0.75, 0));
+      at(x0); yield* tween(0.8, (k, u) => { PD.w = u; warm.material.opacity = 0.6 * u; });
+      const VPD2 = view({ at: [x1 * 0.25, K.top * 0.5, 0], yaw: 0.25, pitch: 0.15, dist: dC * 0.95 });
+      yield* par(tween(4.2, (k, u) => { const x = lerp(x0, x1, u); PD.x = x; PD.z = 1; at(x); warm.material.opacity = 0.6 + 0.08 * Math.sin(u * 40); if (Math.random() < 0.35) sparkle(nw, 1); }), camTo(VPD2, 4.2, EZ.sine));
+      PD.x = x1 - 0.45; sparkle(nw, 16); SFX.ping(2093); SFX.ping(2793);   // (the heat off past the tail)
+      yield* tween(0.6, (k, u) => { PD.w = 1 - u; warm.material.opacity = 0.6 * (1 - u); });
+      PD.x = -9; scene.remove(warm); warm.material.dispose(); sLoop('dry', 'lowpass', 500, 0.7, 0);
+      chamberColor(color); yield* par(chamberTo(0, 2.2), armsPark(1.6), tween(2.2, (k, u) => { PD.z = 1 - u; })); PD.set(-9, 9, 0, 0);
       chamberColor(null); PAINT_C.on = false;
       hud('done', { kind: 'paint' });
       yield* wait(0.4);
@@ -7119,7 +7135,7 @@ const Garage3D = (function () {
           for (const [v0, v1, k] of R.runs) if (k >= b && k < b + AP) for (let j = v0; j < v1; j++) { const y = a[j * 3 + 1], z = a[j * 3 + 2]; low = Math.min(low, y); if (y < 2) lane = Math.min(lane, Math.abs(z)); }
           if (A.tool !== 'none') { const m = STN[A.i].tools[A.tool].mesh, t = m.geometry.attributes.position.array; for (let j = 0; j < t.length; j += 3) { v.set(t[j], t[j + 1], t[j + 2]).applyMatrix4(m.matrix); low = Math.min(low, v.y); if (v.y < 2) lane = Math.min(lane, Math.abs(v.z)); } }
           return { s: Object.fromEntries(Object.entries(A.s).map(([k, q]) => [k, +q.toFixed(3)])), tool: A.tool, rest: A.rest, low: +low.toFixed(3), tip: A.J.tipA.toArray().map(q => +q.toFixed(3)), lane: +lane.toFixed(3), cast: R.mesh.castShadow }; }); },
-      get fx() { const R = this.arms; return { arms: R, lane: Math.min(...R.map(r => r.lane)), parked: fxParked(), tools: FX.tools.filter(m => m.visible).length }; },
+      get fx() { const R = this.arms; return { arms: R, lane: Math.min(...R.map(r => r.lane)), parked: fxParked(), tools: FX.tools.filter(m => m.visible).length, pnd: SVU.uPnD.value.toArray().map(v => +v.toFixed(2)) }; },   // (pnd: the fresh paint's fronts, sheen, heat)
       // (any pose at once, for the pictures: { arms: [state | { tool, tip, dir } | 'rest' | 'keep', ...], chamber, col })
       armsPose(o) { fxSet(o); },
       // (the chamber: k, its glass's lowest point, each band's foot, its ring, drawn, its lights' colour; chamberClear: the nearest the

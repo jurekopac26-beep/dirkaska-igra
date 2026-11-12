@@ -641,6 +641,7 @@
     G.init($('g-gl')); resize();
     G.show(spec(S.car));
     setLang();
+    { const e = document.querySelector('script[src^="js/garage3d.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), v = $('g-ver'); if (v && m) { v.textContent = m[1]; v.hidden = false; } }   // (the stamp, only on a published page)
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
     window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };

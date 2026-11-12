@@ -41,6 +41,7 @@ svg { display: block; }
 /* ---- the mockup's bar (the profile to try, the language) ---- */
 .g-demo { position: relative; z-index: 4; display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #0f1521; border-bottom: 1px solid #1d2636; flex: 0 0 auto; }
 .g-demo-l { font: italic 800 13px/1 var(--f); letter-spacing: .16em; color: #5d6b84; }
+.g-ver { font: 600 10px/1 monospace; color: #5d6b84; opacity: .8; flex: 0 0 auto; }   /* (the published stamp: which version the preview runs) */
 .g-modes { display: flex; padding: 3px; border-radius: 999px; background: #070b12; border: 1px solid #222c3c; flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .g-modes::-webkit-scrollbar { display: none; }
 .g-modes button { padding: 6px 10px; border-radius: 999px; font: 700 12.5px/1.1 var(--f); color: #b7c3d9; white-space: nowrap; }
