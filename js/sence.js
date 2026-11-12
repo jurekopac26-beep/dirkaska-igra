@@ -173,7 +173,9 @@
   } catch (_) { /* (no CSS.registerProperty: the colours only change, not ease) */ }
   const BASE = ':root,:host{--sd-ts:0 0 transparent}' +
     '*:not(svg):not(svg *),*::before,*::after,*::placeholder,*::marker{color:transparent!important;caret-color:var(--sd-c)!important;text-shadow:0 0 0 var(--sd-c),var(--sd-ts)!important;-webkit-text-fill-color:transparent!important}' +
-    'svg{color:var(--sd-c)!important}' +
+    // (an SVG's text its own colours, svgIcon's: not the text-shadow of the text round it, which it inherits, white over its glyphs and their
+    // stroke: the menu's height profile, the phone, 12. 11. 2026)
+    'svg{color:var(--sd-c)!important;text-shadow:var(--sd-ts)!important}' +
     '[data-sdo]{overflow:clip!important;overflow-clip-margin:border-box!important}[data-sdo=f]{display:flow-root!important}' +
     '[data-sde]{filter:var(--sd-ef)!important}[data-sdl]{isolation:isolate}[data-sdp]{position:relative}' +
     '[data-sdl=b]::before,[data-sdl=a]::after{content:""!important;position:absolute!important;inset:var(--sd-li,0)!important;z-index:-1!important;pointer-events:none!important;' +
@@ -571,7 +573,9 @@
     const ps = sh.map((e) => {
       const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return null;
       const f = paint(cs.fill, +cs.fillOpacity), k = +parseFloat(cs.strokeWidth) > 0 ? paint(cs.stroke, +cs.strokeOpacity) : null;
-      return f || k ? { f, k } : null;
+      // (paint-order: a stroke painted under the fill)
+      const po = (cs.paintOrder || 'normal').split(/\s+/).filter((w) => w === 'fill' || w === 'stroke');
+      return f || k ? { f, k, up: po[0] === 'stroke' } : null;
     });
     if (!ps.some(Boolean)) return;
     const one = (p) => p.f && p.k ? null : p.f || p.k, ones = ps.map((p) => p && one(p));
@@ -584,9 +588,10 @@
       const p = ps[i]; if (!p) return;
       if (one(p)) e.style.filter = 'url(#' + filterFor(root, [one(p)], true) + ')';
       else {
-        // a fill and a stroke of two colours: the fill drawn faint black, the stroke black, a filter turns the two into their colours
-        e.style.fill = BLACK0; e.style.stroke = '#000'; e.style.fillOpacity = e.style.strokeOpacity = '1';
-        e.style.filter = 'url(#' + filterFor(root, [p.f, p.k], true) + ')';
+        // a fill and a stroke of two colours: the one under drawn faint black, the one over it black (paint-order: a stroke under the fill,
+        // as the menu's numbers have it, else the fill over it all black: the phone, 12. 11. 2026), a filter turns the two into their colours
+        e.style.fill = p.up ? '#000' : BLACK0; e.style.stroke = p.up ? BLACK0 : '#000'; e.style.fillOpacity = e.style.strokeOpacity = '1';
+        e.style.filter = 'url(#' + filterFor(root, p.up ? [p.k, p.f] : [p.f, p.k], true) + ')';
       }
       e.setAttribute('data-sdf', '');
     });
