@@ -63,7 +63,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 
 **Posodobljen načrt 11. 11. 2026** (potrdil uporabnik ob ~11.25; Matej, tabla #382, komentar 6793233105; velja pred starejšimi datumi spodaj, vrstni red ostane): vsi trije računi imajo ta teden več dela, zato je večina ~2 dni prej; vse na `main` ~16. 12. (prej ~18. 12.). Vrsta za `main` (ocene):
 1. Dež in sneg (#647), biketraveler, ~12. 11.
-2. Popravki Chapman (#654) + Samsungov temni način (#656) + ikona v enem PR (ukrep 3; kar uporabnik ne potrdi, gre ven), jure.kopac26, ~13. 11. po »ok«
+2. Popravki Samsungov temni način (#656) + ikona v enem PR (Chapman #654 je na main) (ukrep 3; kar uporabnik ne potrdi, gre ven), jure.kopac26, ~13. 11. po »ok«
 3. Kamera in meni (#650, brez »Super blizu«), jure.kopac26, ~13. 11. po »ok«
 4. (združeno v 2.)
 5. Garaža (#653), biketraveler, ~14. 11. po »ok«
