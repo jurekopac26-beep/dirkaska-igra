@@ -42,7 +42,7 @@ try {
     await at(1); const a = await look(); await at(2.5); const s = await look();
     const d = (u, v) => Math.round(Math.hypot(u[0] - v[0], u[1] - v[1])); Object.assign(s, { cam: d(s.c, s.p), camMove: d(s.c, a.c), carMove: d(s.p, a.p) }); delete s.c; delete s.p;
     T.check(`${how === 'quick' ? '?proga=bathurst&nacin=neskoncno' : 'the menu (Single race > Endless traffic > RACE)'} upright as on a phone, in real time: after the intro the drive starts (no TV shot, the HUD's clock and speed on show, the camera following the car)`,
-      s.trk === 'bathurst' && s.mode === 'endless' && s.phase === 'racing' && !s.shot && s.ck === 'visible' && s.spd === 'visible' && s.carMove > 10 && s.camMove > s.carMove / 2 && s.cam < 80 && !s.over, JSON.stringify(s));
+      (how === 'quick' ? s.trk === 'bathurst' : ['bathurst', 'chapman', 'caracoles', 'balea'].indexOf(s.trk) >= 0) && s.mode === 'endless' && s.phase === 'racing' && !s.shot && s.ck === 'visible' && s.spd === 'visible' && s.carMove > 10 && s.camMove > s.carMove / 2 && s.cam < 80 && !s.over, JSON.stringify(s));
     T.check('no errors on the page (' + how + ', upright)', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
@@ -61,12 +61,14 @@ try {
       s0.mode === 'endless' && s0.en && s0.lv === 1 && s0.n === 1 && s0.tf >= 10 && s0.on && !s0.duel && /^\d+,\d$/.test(s0.ck) && s0.clock > 15 && s0.clock < 30 && Math.abs(parseFloat(s0.ck.replace(',', '.')) - s0.clock) < 0.11 && s0.ckd !== 'none' &&
       /^\d/.test(s0.sc) && s0.score > 0 && /^PROMET ×1,5 · KROG 1 · \d+,\d km$/.test(s0.ln) && s0.time === 'none' && s0.pos === 'none' && s0.lap === 'none' && s0.spd !== 'none' && !s0.over, JSON.stringify(s0));
     const s1 = await page.evaluate(async () => {
-      const g = window.__game, E = g.race.en, c0 = E.clock; E._near('vnear', { v: 100 / 3.6, min: 0.3 }); E._near('near', { v: 100 / 3.6, min: 0.7 }); g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
+      const g = window.__game, E = g.race.en, c0 = E.clock; E._pass(true, { v: 100 / 3.6, min: 0.3 }); E._pass(true, { v: 100 / 3.6, min: 0.7 }); g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
       const pop = document.getElementById('h-en-pop'), cb = document.getElementById('h-en-cb'), add = document.getElementById('h-en-add');
-      return { pop: pop.textContent, cls: pop.className, cb: cb.className, cbt: cb.querySelector('b').textContent, bonus: E.bonus, add: add.textContent, addCls: add.className, plus: Math.round((E.clock - c0) * 100) / 100, added: E.add };
+      const big = document.getElementById('h-en-big');
+      return { pop: pop.textContent, cls: pop.className, cb: cb.className, cbt: cb.querySelector('b').textContent, bonus: E.bonus, add: add.textContent, addCls: add.className, big: big.textContent, bigCls: big.className, plus: Math.round((E.clock - c0) * 100) / 100, added: Math.round(E.add * 10) / 10 };
     });
-    T.check('two close passes: +400 TESNO! (the second, x2), NIZ ×2 with its time, +2,5 s by the clock (4 + 2 x 1,25 s on it)', s1.pop === '+400 TESNO!' && /show/.test(s1.cls) && !/off/.test(s1.cb) && s1.cbt === 'NIZ ×2' && s1.bonus === 900 &&
-      s1.add === '+2,5 s' && s1.addCls === 'show' && s1.plus > 6.3 && s1.plus <= 6.5 && s1.added === 6.5, JSON.stringify(s1));
+    T.check('two close overtakings at 100 km/h: +400 TESNO! (the second, x2), NIZ ×2, +3 s and +2,7 s by the clock (1 s each and the closeness, x1,25 with the combo), the last big in the middle',
+      s1.pop === '+400 TESNO!' && /show/.test(s1.cls) && !/off/.test(s1.cb) && s1.cbt === 'NIZ ×2' && s1.bonus === 900 && s1.add === '+2,7 s' && s1.addCls === 'show' && s1.big === '+2,7 s' && /show/.test(s1.bigCls) &&
+      s1.plus > 5.6 && s1.plus <= 5.7 && s1.added === 5.7, JSON.stringify(s1));
     const s2 = await page.evaluate(async () => {
       const g = window.__game, E = g.race.en; E.clock = 4.6; g.sim(0.05, true); await new Promise(r => requestAnimationFrame(r));
       return { low: document.getElementById('h-en-ckw').classList.contains('low'), msg: document.getElementById('h-msg').textContent, ck: document.getElementById('h-en-ck').textContent };
@@ -76,24 +78,25 @@ try {
     await drive(page, 8);
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });
     const s3 = await results(page, 1);
-    T.check('the clock empty: ČAS JE POTEKEL!, the end; the results Nov rekord! (the first run), the score, km and the time driven, why (Čas je potekel.), 13 rows, Vozi znova',
-      m.why === 'time' && m.msg === 'ČAS JE POTEKEL!' && s3.why === 'time' && s3.title === 'Nov rekord!' && /^\d[\d ]* točk · \d+,\d km · \d+:\d\d\. Čas je potekel\.$/.test(s3.sub) && s3.pos === '1' && s3.rows === 13 && s3.btn === 'Vozi znova', JSON.stringify(Object.assign({ m }, s3)));
+    T.check('the clock empty: ČAS JE POTEKEL!, the end; the results Nov rekord! (the first run), the score, km and the time driven, why (Čas je potekel.), 14 rows, Vozi znova',
+      m.why === 'time' && m.msg === 'ČAS JE POTEKEL!' && s3.why === 'time' && s3.title === 'Nov rekord!' && /^\d[\d ]* točk · \d+,\d km · \d+:\d\d\. Čas je potekel\.$/.test(s3.sub) && s3.pos === '1' && s3.rows === 14 && s3.btn === 'Vozi znova', JSON.stringify(Object.assign({ m }, s3)));
     T.check('the top 10 under the results (Najboljših 10 · Bathurst, Avstralija · Srednja, this run marked), the record kept by the level (bathurst-endless-1@…: bestScore, enBoard)',
       s3.head === 'Najboljših 10 · Bathurst, Avstralija · Srednja' && s3.board === 1 && s3.me === 1 && !!s3.key && s3.best === s3.score && s3.kept === 1, JSON.stringify(s3));
-    // the hard level: its clock, a record of its own; a touch of a vehicle ends it
+    // the hard level: its clock, a record of its own; a knock of a vehicle at speed takes two lives (the car still drives), the next one ends it
     await page.evaluate(() => { const g = window.__game; g.S.difficulty = 2; g.onAction('restart'); });
     await go(page); await drive(page, 3);
-    const h0 = await page.evaluate(async () => { const g = window.__game, r = g.race; const o = { lv: r.en.lv, clock: r.en.clock, start: Core.EN.clock[2], dens: r.tf.win.dens }; r.tf.win.hit++; g.sim(0.1, true); await new Promise(q => requestAnimationFrame(q)); o.msg = document.getElementById('h-msg').textContent; o.why = r.en.over && r.en.over.why; return o; });
+    const h0 = await page.evaluate(async () => { const g = window.__game, r = g.race; const o = { lv: r.en.lv, clock: r.en.clock, start: Core.EN.clock[2], dens: r.tf.win.dens }; r.tf.win.hit++; r.tf.win.imp = 13; g.sim(0.1, true); await new Promise(q => requestAnimationFrame(q)); o.msg = document.getElementById('h-msg').textContent; o.lives = r.en.lives; o.why1 = r.en.over && r.en.over.why;
+      g.sim(1.2, true); r.tf.win.hit++; r.tf.win.imp = 5; g.sim(0.1, true); o.why = r.en.over && r.en.over.why; return o; });
     await drive(page, 8);
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });
     const s4 = await page.evaluate(() => { const recs = JSON.parse(localStorage.getItem('tdgp-records') || '{}').tracks || {}, ks = Object.keys(recs).filter(x => /^bathurst-endless/.test(x)).sort();
       return { keys: ks, n: ks.map(k => (recs[k].enBoard || []).length), sub: document.getElementById('res-sub').textContent, title: document.getElementById('res-title').textContent, head: (document.querySelector('.en-board b') || {}).textContent }; });
-    T.check('Težka: 25 s at the start, the traffic x2; a touch of a vehicle: DOTIK! KONEC VOŽNJE', h0.lv === 2 && h0.start === 25 && h0.clock <= 25 && h0.clock > 15 && h0.dens === 2 && h0.why === 'touch' && h0.msg === 'DOTIK! KONEC VOŽNJE', JSON.stringify(h0));
-    T.check('its own record (bathurst-endless-2@…, Nov rekord!, Dotik vozila.), the medium one\'s kept apart', s4.keys.length === 2 && /^bathurst-endless-1@/.test(s4.keys[0]) && /^bathurst-endless-2@/.test(s4.keys[1]) && s4.n.join() === '1,1' &&
-      s4.title === 'Nov rekord!' && / Dotik vozila\.$/.test(s4.sub) && s4.head === 'Najboljših 10 · Bathurst, Avstralija · Težka', JSON.stringify(s4));
+    T.check('Težka: 25 s at the start, the traffic x2; a hard knock of a vehicle: two lives off, AVTO JE POŠKODOVAN, still on; one more: Preveč trkov.', h0.lv === 2 && h0.start === 25 && h0.clock <= 25 && h0.clock > 15 && h0.dens === 2 && h0.lives === 1 && !h0.why1 && h0.msg === 'AVTO JE POŠKODOVAN' && h0.why === 'hits', JSON.stringify(h0));
+    T.check('its own record (bathurst-endless-2@…, Nov rekord!, Preveč trkov.), the medium one\'s kept apart', s4.keys.length === 2 && /^bathurst-endless-1@/.test(s4.keys[0]) && /^bathurst-endless-2@/.test(s4.keys[1]) && s4.n.join() === '1,1' &&
+      s4.title === 'Nov rekord!' && / Preveč trkov\.$/.test(s4.sub) && s4.head === 'Najboljših 10 · Bathurst, Avstralija · Težka', JSON.stringify(s4));
     const md = await page.evaluate(() => { const m = (id) => { const d = Core.TRACKS.find(x => x.id === id); return Zabava.modes(d, d.modes || ['race']).indexOf('endless') >= 0; };
       return { all: Core.TRACKS.filter(d => m(d.id)).map(d => d.id), q: Core.quickArgs('?proga=vrsic&nacin=neskoncno').mode }; });
-    T.check('the mode on Bathurst only (not on the other circuits, the open roads or the test tracks); ?proga=vrsic&nacin=neskoncno: none', md.all.join() === 'bathurst' && md.q === null, JSON.stringify(md));
+    T.check('the mode on its four tracks (Bathurst and three open roads with everyday traffic; not on the test tracks); ?proga=vrsic&nacin=neskoncno: none', md.all.slice().sort().join() === 'balea,bathurst,caracoles,chapman' && md.q === null, JSON.stringify(md));
     T.check('no errors on the page', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
@@ -103,11 +106,11 @@ try {
     await there(page); await go(page); await drive(page, 4);
     const s0 = await page.evaluate(() => ({ mode: window.__game.race.zbMode, ln: document.getElementById('h-en-ln').textContent, pts: document.querySelector('#h-en .en-sc small').textContent, ck: document.getElementById('h-en-ck').textContent }));
     T.check('?nacin=endless on Bathurst in English: TRAFFIC ×1.5 · LAP 1 · … km, POINTS, the clock with a point', s0.mode === 'endless' && /^TRAFFIC ×1\.5 · LAP 1 · \d+\.\d km$/.test(s0.ln) && s0.pts === 'POINTS' && /^\d+\.\d$/.test(s0.ck), JSON.stringify(s0));
-    await page.evaluate(() => { window.__game.race.player.hitWall = 9; });
+    await page.evaluate(() => { const r = window.__game.race; r.en.lives = 1; r.player.hitWall = 9; });
     await drive(page, 8);
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });
     const s1 = await page.evaluate(() => ({ title: document.getElementById('res-title').textContent, sub: document.getElementById('res-sub').textContent, btn: document.getElementById('res-restart').textContent, head: document.querySelector('.en-board b').textContent }));
-    T.check('the results in English: New record!, Crashed into the barrier., Drive again, Top 10 · Bathurst, Australia · Medium', s1.title === 'New record!' && / Crashed into the barrier\.$/.test(s1.sub) && s1.btn === 'Drive again' && s1.head === 'Top 10 · Bathurst, Australia · Medium', JSON.stringify(s1));
+    T.check('the results in English: New record!, Too many crashes., Drive again, Top 10 · Bathurst, Australia · Medium', s1.title === 'New record!' && / Too many crashes\.$/.test(s1.sub) && s1.btn === 'Drive again' && s1.head === 'Top 10 · Bathurst, Australia · Medium', JSON.stringify(s1));
     T.check('no errors on the page (English)', !errors.length, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }

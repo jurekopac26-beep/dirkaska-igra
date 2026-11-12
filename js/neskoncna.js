@@ -1,7 +1,8 @@
 // Neskončna vožnja v prometu (docs/neskoncna-voznja.md): a mode of its own (endless; in the menu Endless traffic) on the circuits of
-// Core.EN.tracks (for now Bathurst). Alone in the traffic going the race's way, lap after lap, denser every 30 s; a clock you keep topped
-// up (it starts at 30 s on the medium level; the close passes put seconds on it, the speed slows it down); points for the speed and for
-// the close passes; the run over when the clock is empty, at any touch of a vehicle or a hard knock on the wall. The rules are
+// Core.EN.tracks (Bathurst's circuit, lap after lap in the traffic going its way; the open roads Chapman's Peak, Caracoles, Bâlea: the
+// traffic both ways, from the end back to the start, stage after stage), denser and denser; a clock you keep topped up (every overtaking
+// +1 s, a close pass more, the closer the more, a big +N s each time); points for the speed and for the close passes; three lives: a hit
+// on a car or the wall at speed takes one (a hard one two), a head-on crash ends the run; the knocks harm the car mechanically. The rules are
 // js/core.js's (Endless, race.en: the traffic's window round the player, the clock, the points, the end); here the mode (Zabava's hooks,
 // js/zabava.js), the HUD, the messages, the results and the records, kept apart by the level (the best score and the top 10:
 // records.tracks['<id>-endless-<level>@<physics>'].bestScore, .enBoard; recKey in js/game.js).
@@ -13,6 +14,7 @@
   const num = (v) => String(Math.max(0, Math.floor(v))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');   // (12 345: a thin space, in both languages)
   const x1 = (v) => Z.dec((Math.round(v * 10) / 10).toFixed(1));
   const mmss = (t) => { const s = Math.max(0, Math.floor(t)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  const hearts = (n) => '<b>' + '♥'.repeat(Math.max(0, n)) + '</b><i>' + '♥'.repeat(Math.max(0, (EN() ? EN().lives : 3) - n)) + '</i>';   // (the lives: left, lost)
   const posNum = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
   // a level's top 10 as kept (plain objects with a score; anything else dropped), best first: s the score, km, t the time driven (s), lap
   // the laps done, car, d the date
@@ -22,12 +24,12 @@
   const feat = {
     id: 'endless', BOARD, boardOf, LV,
     st: null,
-    modes: (d) => { const E = EN(); return E && E.tracks.indexOf(d.id) >= 0 && !d.open && !d.test ? ['endless'] : []; },   // (its circuits, Core.EN.tracks)
-    mine: (ctx) => { const E = EN(); return ctx.md === 'endless' && !ctx.on && !(ctx.cr >= 0) && !ctx.mis && !ctx.school && !ctx.chal && !ctx.nv && !ctx.prvi && !ctx.track.open && !!E && E.tracks.indexOf(ctx.track.def.id) >= 0; },
+    modes: (d) => { const E = EN(); return E && E.tracks.indexOf(d.id) >= 0 && !d.test ? ['endless'] : []; },   // (its circuits, Core.EN.tracks)
+    mine: (ctx) => { const E = EN(); return ctx.md === 'endless' && !ctx.on && !(ctx.cr >= 0) && !ctx.mis && !ctx.school && !ctx.chal && !ctx.nv && !ctx.prvi && !!E && E.tracks.indexOf(ctx.track.def.id) >= 0; },
     // alone, the game's flying start (opts.flying), laps without end, no flags, no rivals' characters, no slipstream, no fuel, no tyre wear,
-    // no failures, no team radio, no wheel rule (two wheels gone end the drive anyway, Endless)
+    // no failures, no team radio, no wheel rule (a wheel gone ends the drive anyway, Endless), the knocks' mechanical harm (damage 2)
     opts(ctx) { return this.mine(ctx) ? { numAI: 0, numSet: undefined, playerGrid: 1, aiOrder: undefined, qualiBack: 0, laps: 999, endless: true, traffic: false, police: false, flying: 3, fuel: false, tyres: false, compounds: false,
-      flags: false, chars: false, slip: false, faults: false, radio: false, rival: undefined, wheelRule: undefined } : null; },
+      flags: false, chars: false, slip: false, faults: false, radio: false, rival: undefined, wheelRule: undefined, damage: 2 } : null; },
     made(race, ctx) { if (this.mine(ctx) && race.en) race.zbMode = 'endless'; },
     begin(race) {
       this.stop();
@@ -36,9 +38,12 @@
       hud.classList.add('en-on');
       const el = document.createElement('div'); el.id = 'h-en'; el.setAttribute('aria-live', 'off');
       el.innerHTML = '<div class="en-ck" id="h-en-ckw"><b id="h-en-ck">' + Z.dec(race.en.clock.toFixed(1)) + '</b><small>s</small><em id="h-en-add"></em></div>' +
-        '<div class="en-sc"><b id="h-en-sc">0</b><small>' + Z.esc(tr('TOČKE')) + '</small></div><div id="h-en-cb" class="off"><b></b><i><u></u></i></div><div id="h-en-ln"></div><div id="h-en-pop"></div>';
+        '<div id="h-en-lv">' + hearts(race.en.lives) + '</div><div class="en-sc"><b id="h-en-sc">0</b><small>' + Z.esc(tr('TOČKE')) + '</small></div><div id="h-en-cb" class="off"><b></b><i><u></u></i></div><div id="h-en-ln"></div><div id="h-en-pop"></div>';
       box.appendChild(el);
-      this.st = { el, ck: Z.el('h-en-ck'), ckW: Z.el('h-en-ckw'), add: Z.el('h-en-add'), sc: Z.el('h-en-sc'), cb: Z.el('h-en-cb'), ln: Z.el('h-en-ln'), pop: Z.el('h-en-pop'),
+      // the big +N s in the middle of the screen (every second the clock gets), the dark of a new stage
+      const big = document.createElement('div'); big.id = 'h-en-big'; hud.appendChild(big);
+      const fade = document.createElement('div'); fade.id = 'en-fade'; hud.appendChild(fade);
+      this.st = { el, ck: Z.el('h-en-ck'), ckW: Z.el('h-en-ckw'), add: Z.el('h-en-add'), sc: Z.el('h-en-sc'), cb: Z.el('h-en-cb'), ln: Z.el('h-en-ln'), pop: Z.el('h-en-pop'), lv: Z.el('h-en-lv'), big, fade, bigT: 0, fadeT: 0,
         seen: race.en.ev, popT: 0, addT: 0, hotT: 0, ended: false, shown: -1, ckT: '', low: false, line: '' };
       const G = Z.G; if (G) G.showMsg(tr('NESKONČNA VOŽNJA!'), 'gold', 1.8);
     },
@@ -52,23 +57,37 @@
       // the combo with its time left; the traffic's density, the lap and the road driven
       S.cb.classList.toggle('off', !(E.combo >= 2));
       if (E.combo >= 2) { S.cb.firstChild.textContent = tr('NIZ ×{0}', E.combo); S.cb.querySelector('u').style.width = Math.round(100 * Math.max(0, E.comboT) / EN().comboT) + '%'; }
-      const line = tr('PROMET ×{0}', x1(race.tf.win.dens)) + ' · ' + tr('KROG {0}', E.lap + 1) + ' · ' + Z.dec((E.dist / 1000).toFixed(1)) + ' km';
+      const line = tr('PROMET ×{0}', x1(race.tf.win.dens)) + ' · ' + (E.open ? tr('ETAPA {0}', E.stage) : tr('KROG {0}', E.lap + 1)) + ' · ' + Z.dec((E.dist / 1000).toFixed(1)) + ' km';
       if (line !== S.line) { S.line = line; S.ln.textContent = line; }
       if (S.popT > 0 && (S.popT -= dt) <= 0) S.pop.className = '';
       if (S.addT > 0 && (S.addT -= dt) <= 0) S.add.className = '';
       if (S.hotT > 0 && (S.hotT -= dt) <= 0) S.ln.classList.remove('hot');
+      if (S.bigT > 0 && (S.bigT -= dt) <= 0) S.big.className = '';
+      if (S.fadeT > 0 && (S.fadeT -= dt) <= 0) S.fade.className = '';
     },
     // what the drive tells: a close pass (the points and the seconds it put on the clock, a beep; the commentator now and then), the
     // traffic denser, a lap done, the clock nearly empty, the combo broken by a touch of the wall
     event(race, e) {
       const S = this.st, G = Z.G, sfx = typeof Sfx !== 'undefined' ? Sfx : null;
       const pop = (t, cls) => { S.pop.textContent = t; S.pop.className = 'show ' + (cls || ''); S.popT = 1.3; };
-      if (e.k === 'near' || e.k === 'vnear') {
-        pop('+' + num(e.pts) + ' ' + tr(e.k === 'vnear' ? 'ZELO TESNO!' : 'TESNO!'), e.k);
-        if (e.add > 0) { S.add.textContent = '+' + x1(e.add) + ' s'; S.add.className = ''; void S.add.offsetWidth; S.add.className = 'show'; S.addT = 1.2; }
-        if (sfx && sfx.beep) sfx.beep(e.k === 'vnear' ? 1320 : 990, 0.07, 0.1);
+      if (e.k === 'pass' || e.k === 'near' || e.k === 'vnear') {
+        if (e.k !== 'pass') pop('+' + num(e.pts) + ' ' + tr(e.k === 'vnear' ? 'ZELO TESNO!' : 'TESNO!'), e.k);
+        if (e.add > 0) {
+          S.add.textContent = '+' + x1(e.add) + ' s'; S.add.className = ''; void S.add.offsetWidth; S.add.className = 'show'; S.addT = 1.2;
+          S.big.textContent = tr('+{0} s', x1(e.add)); S.big.className = ''; void S.big.offsetWidth; S.big.className = 'show ' + e.k; S.bigT = 1.1;
+        }
+        if (sfx && sfx.beep) sfx.beep(e.k === 'vnear' ? 1320 : e.k === 'near' ? 990 : 780, 0.07, 0.1);
         if (G && (e.k === 'vnear' || e.combo >= 3) && Math.random() < 0.35) G.say(e.combo >= 3 ? 'zbEnCombo' : 'zbEnClose', { n: e.combo }, 1);
       } else if (e.k === 'tap') pop(tr('NIZ PREKINJEN'), 'bad');
+      else if (e.k === 'hit') {
+        S.lv.innerHTML = hearts(e.gap); S.lv.className = ''; void S.lv.offsetWidth; S.lv.className = 'hit';
+        if (e.gap > 0) { pop(e.gap === 1 ? tr('TRK! ŠE 1 TRK') : tr('TRK! ŠE {0} TRKI', e.gap), 'bad'); if (G) G.showMsg(tr('AVTO JE POŠKODOVAN'), 'slow', 1.4); }
+        if (sfx && sfx.beep) sfx.beep(260, 0.16, 0.14);
+      }
+      else if (e.k === 'stage') {
+        S.fade.className = 'show'; S.fadeT = 0.6; if (typeof Render !== 'undefined' && Render.resetCam) Render.resetCam();
+        if (G) { G.showMsg(tr('ETAPA {0}', race.en.stage), 'gold', 1.6); if (Math.random() < 0.6) G.say('zbEnStage', { n: race.en.stage }, 2); }
+      }
       else if (e.k === 'dens') { S.ln.classList.add('hot'); S.hotT = 1.6; }
       else if (e.k === 'lap') { if (G) { G.showMsg(tr('KROG {0}', race.en.lap + 1), 'gold', 1.4); if (Math.random() < 0.6) G.say('zbEnLap', { n: race.en.lap }, 2); } }
       else if (e.k === 'low') { if (G) { G.showMsg(tr('ČAS SE IZTEKA!'), 'slow', 1.6); G.say('zbEnLow', null, 3); } if (sfx && sfx.beep) sfx.beep(520, 0.12, 0.12); }
@@ -77,26 +96,26 @@
       const S = this.st, E = race && race.en; if (!S || S.ended || !E || !E.over || race.zbMode !== 'endless') return null;
       S.ended = true;
       const w = E.over.why, vars = { pts: num(E.score) };
-      return w === 'time' ? { msg: tr('ČAS JE POTEKEL!'), cls: 'slow', say: 'zbEnTime', vars } : { msg: tr(w === 'touch' ? 'DOTIK! KONEC VOŽNJE' : 'TRK! KONEC VOŽNJE'), cls: 'slow', say: 'zbEnOver', vars };
+      return w === 'time' ? { msg: tr('ČAS JE POTEKEL!'), cls: 'slow', say: 'zbEnTime', vars } : { msg: tr(w === 'crash' ? 'ČELNI TRK! KONEC VOŽNJE' : 'TRK! KONEC VOŽNJE'), cls: 'slow', say: 'zbEnOver', vars };
     },
     noPodium(race) { return !!race && race.zbMode === 'endless'; },
     // the results of its own: the score, why it is over, the level's top 10 with this run in it, a new record
     finish(race) {
       const S = this.st, G = Z.G, E = race && race.en; if (!S || !E || race.zbMode !== 'endless' || !G || typeof document === 'undefined') return false;
       const $ = (id) => document.getElementById(id), R0 = G.rec(race.track.def.id), P = race.player, lv = tr(LV[E.lv] || LV[1]);   // (G.rec: the key of this level, recKey)
-      const run = { s: Math.floor(E.score), km: Math.round(E.dist / 10) / 100, t: Math.round(E.time * 10) / 10, lap: E.lap, car: P.m.id, d: Date.now() };
+      const run = { s: Math.floor(E.score), km: Math.round(E.dist / 10) / 100, t: Math.round(E.time * 10) / 10, lap: E.open ? E.stage - 1 : E.lap, car: P.m.id, d: Date.now() };
       const B = boardOf(R0), best = posNum(R0.bestScore) ? R0.bestScore : 0, newRec = run.s > 0 && run.s > best;
       let rank = 0; if (run.s > 0) { B.push(run); B.sort((a, b) => b.s - a.s || a.d - b.d); rank = B.indexOf(run) + 1; }
       R0.enBoard = B.slice(0, BOARD); if (newRec) R0.bestScore = run.s;
       G.saveRecords();
-      const why = { time: tr('Čas je potekel.'), touch: tr('Dotik vozila.'), crash: tr('Trk z vozilom.'), wall: tr('Trk v ograjo.'), roll: tr('Avto se je prevrnil.'), fall: tr('Avto je zgrmel v prepad.'), wheels: tr('Avto je izgubil kolesi.') }[E.over ? E.over.why : ''] || '';
+      const why = { time: tr('Čas je potekel.'), crash: tr('Čelni trk.'), hits: tr('Preveč trkov.'), roll: tr('Avto se je prevrnil.'), fall: tr('Avto je zgrmel v prepad.'), wheels: tr('Avto je izgubil kolo.') }[E.over ? E.over.why : ''] || '';
       $('res-pos').textContent = rank > 0 && rank <= BOARD ? String(rank) : '–';
       $('res-title').textContent = newRec ? tr('Nov rekord!') : tr('Konec vožnje');
       $('res-sub').textContent = tr('{0} točk · {1} km · {2}.', num(run.s), Z.dec(run.km.toFixed(1)), mmss(run.t)) + (why ? ' ' + why : '');
       $('res-head').classList.remove('tt'); $('res-tt').classList.add('off'); const laps = $('res-laps'); if (laps) laps.classList.add('off');
       $('res-table').querySelector('thead').innerHTML = '<tr><th>' + Z.esc(tr('Neskončna vožnja')) + '</th><th></th></tr>';
       const rows = [[tr('Točke'), num(run.s)], [tr('Za hitrost'), num(E.spd)], [tr('Za tesna prehitevanja'), num(E.bonus)], [tr('Čas vožnje'), mmss(E.time)], [tr('Dodan čas'), '+' + x1(E.add) + ' s'],
-        [tr('Prevoženo'), Z.dec(run.km.toFixed(2)) + ' km'], [tr('Krogi'), String(E.lap)], [tr('Tesno / zelo tesno'), E.near + ' / ' + E.vnear], [tr('Najdaljši niz'), E.comboBest > 1 ? '×' + E.comboBest : '–'],
+        [tr('Prevoženo'), Z.dec(run.km.toFixed(2)) + ' km'], E.open ? [tr('Etape'), String(E.stage)] : [tr('Krogi'), String(E.lap)], [tr('Prehitevanja'), String(E.pass)], [tr('Tesno / zelo tesno'), E.near + ' / ' + E.vnear], [tr('Najdaljši niz'), E.comboBest > 1 ? '×' + E.comboBest : '–'],
         [tr('Najvišja hitrost'), Math.round(E.vmax * 3.6) + ' km/h'], [tr('Promet na koncu'), '×' + x1(race.tf.win.dens)], [tr('Težavnost'), lv], [tr('Rekord'), num(Math.max(best, run.s))]];
       $('res-table').querySelector('tbody').innerHTML = rows.map(([a, b], i) => '<tr' + (i === 0 ? ' class="me"' : '') + '><td>' + Z.esc(a) + '</td><td>' + Z.esc(b) + '</td></tr>').join('');
       $('res-restart').dataset.act = 'restart'; $('res-restart').textContent = tr('Vozi znova');
@@ -110,17 +129,18 @@
     stop() {
       const S = this.st; this.st = null;
       const hud = Z.el('hud'); if (hud) hud.classList.remove('en-on');
-      if (S) S.el.remove();
+      if (S) { S.el.remove(); S.big.remove(); S.fade.remove(); }
     },
   };
   if (typeof Comm !== 'undefined' && Comm.addLines) {
-    Comm.addLines('zbEnGo', ['Off you go! Lap after lap in the traffic, and the clock is already ticking.', 'The track is yours, and it only gets busier. Keep that clock topped up!', 'Endless traffic, one life. Close passes buy you time!']);
+    Comm.addLines('zbEnGo', ['Off you go! Lap after lap in the traffic, and the clock is already ticking.', 'The track is yours, and it only gets busier. Keep that clock topped up!', 'Endless traffic, three knocks and you are out. Every overtake buys you time!']);
     Comm.addLines('zbEnClose', ['Ooh, that was close!', 'Inches to spare!', 'Threading the needle there!']);
     Comm.addLines('zbEnCombo', ['The combo keeps building!', 'One after another, superb!', 'What a run of close passes!']);
     Comm.addLines('zbEnLap', ['Another lap done, and the traffic keeps coming!', 'That is lap {n} in the books!', 'Round again, still going!']);
+    Comm.addLines('zbEnStage', ['Back to the start, and the traffic is heavier now!', 'Stage {n}, and still the clock is ticking!', 'Another run down this road, here we go!']);
     Comm.addLines('zbEnLow', ['The clock is nearly empty, find some close ones!', 'Running out of time here!', 'Seconds left, push!']);
     Comm.addLines('zbEnTime', ['And the clock runs out! {pts} points.', 'Time is up! The run ends with {pts} points.', 'No time left. {pts} points on the board.']);
-    Comm.addLines('zbEnOver', ['And that is the end of the run! {pts} points.', 'Contact! The run is over with {pts} points.', 'That one ends it. {pts} points on the board.']);
+    Comm.addLines('zbEnOver', ['And that is the end of the run! {pts} points.', 'One knock too many! The run is over with {pts} points.', 'That one ends it. {pts} points on the board.']);
   }
   Z.add(feat);
   if (typeof module !== 'undefined') module.exports = feat;

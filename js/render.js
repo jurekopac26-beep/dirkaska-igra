@@ -6322,10 +6322,11 @@ const Render = (function () {
      of the race's own kind (makeView) in white with a blue band along both sides reading POLICIJA and a light bar flashing blue; an
      officer in a yellow vest by each parked one. The spike strips across the road. ---------------- */
   let road = null;
-  const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x9aa0a6, 0x2b2e33, 0x121417, 0x1f3f7a, 0x8c1c1c, 0xb52a1f, 0x2e5a3a, 0x6b4a2b, 0x9fb6c9, 0xd9c7a0, 0x3a4b63, 0x7a1f3d, 0xe8e8e4, 0x5a5f66];
-  const RD_VAN = [0xf2f2f0, 0xf2f2f0, 0xdcdcd6, 0x2f5fa8, 0xc9ccd0, 0xd8b020, 0x8c1c1c];
-  const RD_TRUCK = [0xf2f2f0, 0xc0281c, 0x1f4f9a, 0xe0a020, 0x2a2c30, 0x2d6a3a, 0xd8d8d4, 0x8a1c1c];   // (the trucks' cabs)
-  const RD_BUS = [0x19a7a4, 0xf2f2ee, 0x19a7a4], RD_MOTO = [0xd8261c, 0x151515, 0x1b5fb8, 0xf2f2f2, 0xe86a10], RD_BIKE = [0xd8261c, 0x1b5fb8, 0x151515, 0xf2f2f2, 0x2aa05a, 0xe8b400];
+  // the traffic's paints: bright and light ones only, no black or dark ones (seen well on the tarmac ahead; the user, 12. 11. 2026)
+  const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x2f6fd0, 0xd02a1f, 0xe8b400, 0x3a9a4a, 0xe86a10, 0x9fc6e9, 0xd9c7a0, 0xb52a1f, 0x9aa0a6, 0x2aa5b0, 0xc84a8a, 0xe8e8e4, 0x6fa0e0, 0xf0d860];
+  const RD_VAN = [0xf2f2f0, 0xf2f2f0, 0xdcdcd6, 0x2f5fa8, 0xc9ccd0, 0xd8b020, 0xc0281c];
+  const RD_TRUCK = [0xf2f2f0, 0xc0281c, 0x1f4f9a, 0xe0a020, 0xe86a10, 0x3a9a4a, 0xd8d8d4, 0xd8b020];   // (the trucks' cabs)
+  const RD_BUS = [0x19a7a4, 0xf2f2ee, 0x19a7a4], RD_MOTO = [0xd8261c, 0xf2c200, 0x1b5fb8, 0xf2f2f2, 0xe86a10], RD_BIKE = [0xd8261c, 0x1b5fb8, 0x151515, 0xf2f2f2, 0x2aa05a, 0xe8b400];
   const RD_SHIRT = [0xc0392b, 0x2e6fb5, 0xf2f2ee, 0x3c7a3e, 0xe0a526, 0x5b3a82, 0x1f2a36, 0xd46a8f, 0x7a8b99, 0x9b2d20, 0x4aa3a0, 0xecd9b0], RD_TROU = [0x2b3a55, 0x1c1c20, 0x4a4f57, 0x6e5a42, 0x33415c, 0x8a7d66];
   const RD_HAIR = [0x2a1d14, 0x4a3222, 0x6b4a2e, 0xb8925a, 0x1a1a1a, 0x8c8c8c, 0xd9c29a], RD_PACK = [0xc0392b, 0x2e6fb5, 0xe0a526, 0x3c7a3e, 0x303438];
   const RD_MG = [1, 0, 1];   // (the colour code the instance's own colour replaces, as crewMaterial does)
@@ -6349,10 +6350,57 @@ const Render = (function () {
     const c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], P = (e, f, s, r) => [e[0] + f * px + s * qx, e[1] + f * py + s * qy, e[2] + f * pz + s * qz];
     for (const [f0, s0, f1, s1] of [[1, 1, 1, -1], [1, -1, -1, -1], [-1, -1, -1, 1], [-1, 1, 1, 1]]) g.quadO(P(a, f0, s0), P(b, f0, s0), P(b, f1, s1), P(a, f1, s1), col, c);
   }
-  function rdCarGeo(body, id) {   // a car of the traffic: the game's body (the colour code for its paint, no stripe) and its front wheels
-    const M = Core.MODELS.find(m => m.id === id), g = new GB(), fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
-    for (const sd of [-1, 1]) wheelInto(g, fx, M.rw, sd * (M.wid * 0.5 - 0.1), M.rw, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
-    return rdMerge([carGeometry(body, M, 0xff00ff, false), g.geometry()]);
+  // the traffic's everyday cars (the user, 12. 11. 2026: simple everyday cars instead of the racers' bodies): three shapes after the
+  // garage's road cars in js/cars/ (their look.body.secs, read only; the BODIES' own as a stand-in if one is missing), scaled to an
+  // everyday size: a city hatch (jezek), a saloon (merjasec), a boxy SUV (medved). A light shell of 8 points round each section (no
+  // detail of the garage's), the glass of the windscreen, the rear window and the side windows (a B-pillar between), the lamps, the
+  // indicators, the bumpers, the grille, the mirrors, dark arches and four simple wheels: ~1.2 thousand vertices instead of 3-4.
+  // The lights' glows stay as they are (updateRoad: by the Core's 4.3 x 1.8 m), so each shape keeps near that size
+  const RD_CARS = [{ id: 'jezek', body: 'hatch', len: 4.1, wid: 1.76, rw: 0.31 }, { id: 'merjasec', body: 'sedan', len: 4.55, wid: 1.8, rw: 0.32 },
+    { id: 'medved', body: 'hatch', len: 4.42, wid: 1.84, rw: 0.36 }];
+  function rdWheel(g, cx, cy, cz, r, wd) {   // a plain wheel: the tread, the outer sidewall, the rim's disc and its hub (10 sides; the inner face unseen)
+    const S = 10, sd = Math.sign(cz) || 1, K = [0.07, 0.07, 0.08], RM = [0.6, 0.62, 0.66], HB = [0.28, 0.29, 0.31], inn = [cx, cy, cz], out = [cx, cy, cz - sd];
+    const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
+    for (let i = 0; i < S; i++) { const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2, zo = sd * wd / 2;
+      g.quadO(p(a0, -wd / 2, r), p(a0, wd / 2, r), p(a1, wd / 2, r), p(a1, -wd / 2, r), K, inn);
+      g.quadO(p(a0, zo, r * 0.66), p(a0, zo, r), p(a1, zo, r), p(a1, zo, r * 0.66), K, out);
+      g.quadO(p(a0, zo, r * 0.2), p(a0, zo, r * 0.66), p(a1, zo, r * 0.66), p(a1, zo, r * 0.2), RM, out);
+      g.triO([cx, cy, cz + zo + sd * 0.01], p(a0, zo, r * 0.2), p(a1, zo, r * 0.2), HB, out); }
+  }
+  function rdCarGeo(k) {
+    const C = RD_CARS[k], VD = typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS.find(d => d.id === C.id) : null, lb = VD && VD.look && VD.look.body;
+    const src = lb && lb.secs ? lb : BODIES[C.body], sx = C.len / src.len, sz = C.wid / src.wid, B = RD_MG, GL = GLASS, K = [0.1, 0.1, 0.11], DK = [0.05, 0.05, 0.06];
+    const S = src.secs.map(s => ({ x: s[0] * sx, w: s[1] * sz, yb: s[2], yl: s[3], wt: s[4] * sz, yt: s[5], cr: s[6], k: s[7] })), n = S.length, g = new GB();
+    const ring = s => [[s.x, s.yb, s.w * 0.93], [s.x, s.yl, s.w], [s.x, s.yt, s.wt], [s.x, s.yt + s.cr, s.wt * 0.4], [s.x, s.yt + s.cr, -s.wt * 0.4], [s.x, s.yt, -s.wt], [s.x, s.yl, -s.w], [s.x, s.yb, -s.w * 0.93]];
+    const R = S.map(ring), L = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    for (let i = 0; i < n - 1; i++) { const A = R[i], Bv = R[i + 1], gl = S[i].k === 'gf' || S[i].k === 'gr', ins = [(S[i].x + S[i + 1].x) / 2, (S[i].yb + Math.min(S[i].yt, S[i + 1].yt)) / 2, 0];
+      for (let e = 0; e < 7; e++) g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], gl && e >= 2 && e <= 4 ? GL : B, ins); }
+    // the side windows over the roof's run (the 'r' sections), inset, a B-pillar in the middle of a long one
+    const ri = S.map((s, i) => i).filter(i => i < n - 1 && S[i].k === 'r');
+    if (ri.length) { const x0 = S[ri[0]].x + 0.06, x1 = S[ri[ri.length - 1] + 1].x - 0.06, xm = (x0 + x1) / 2, cut = x1 - x0 > 1.5 ? [[x0, xm - 0.06], [xm + 0.06, x1]] : [[x0, x1]];
+      for (const i of ri) { const a = S[i].x, b = S[i + 1].x;
+        for (const [c0, c1] of cut) { const u0 = Math.max(0, (c0 - a) / (b - a)), u1 = Math.min(1, (c1 - a) / (b - a)); if (u1 <= u0) continue;
+          for (const [lo, hi, sd] of [[1, 2, 1], [6, 5, -1]]) { const P = (u, t) => { const q = L(L(R[i][lo], R[i + 1][lo], u), L(R[i][hi], R[i + 1][hi], u), t); q[2] += sd * 0.006; return q; };
+            g.quadO(P(u0, 0.1), P(u1, 0.1), P(u1, 0.9), P(u0, 0.9), GL, [(a + b) / 2, 0.9, 0]); } } } }
+    // the ends: the face (a fan in the paint), the rear window of a tailgate, the lamps, the indicators, the bumper, the grille
+    for (const [s, f] of [[S[0], -1], [S[n - 1], 1]]) { const rg = ring(s), c = [s.x, (s.yb + s.yt) / 2, 0], ins = [s.x - f, c[1], 0], x = s.x + f * 0.008, w = s.w;
+      for (let e = 0; e < 8; e++) g.triO(c, rg[e], rg[(e + 1) % 8], B, ins);
+      const Q = (y0, y1, z0, z1, col) => g.quadO([x, y0, z0], [x, y0, z1], [x, y1, z1], [x, y1, z0], col, ins);
+      if (f < 0 && s.yt - s.yl > 0.3) Q(s.yl + 0.06, s.yt - 0.05, -s.wt * 0.82, s.wt * 0.82, GL);
+      Q(s.yb, s.yb + 0.14, -w * 0.9, w * 0.9, K);
+      const ly = Math.max(s.yb + 0.2, s.yl - (f > 0 ? 0.17 : 0.2)), lh = f > 0 ? 0.11 : 0.13;
+      for (const sd of [-1, 1]) { Q(ly, ly + lh, sd * w * 0.48, sd * w * 0.86, f > 0 ? [1, 0.96, 0.84] : [0.74, 0.05, 0.04]);
+        Q(ly + (f > 0 ? -0.06 : 0), ly + (f > 0 ? -0.01 : 0.04), sd * w * 0.86, sd * w * 0.94, [1, 0.55, 0.05]); }
+      if (f > 0) Q(s.yb + 0.17, ly + lh * 0.7, -w * 0.4, w * 0.4, DK); }
+    // the mirrors (at the windscreen's foot), the dark arches over the wheels, the wheels
+    const fw = S.find(s => s.k === 'gf'), ia = S.indexOf(fw), xb = ia >= 0 && ia < n - 1 ? S[ia + 1] : S[Math.floor(n / 2)];
+    for (const sd of [-1, 1]) World.box(g, xb.x - 0.12, xb.yl + 0.04, sd * (xb.w + 0.08), 0.16, 0.12, 0.14, 0, B);
+    const ax = C.len / 2 - (C.len < 4.3 ? 0.74 : 0.86), rr = C.rw, wd = 0.22;
+    for (const x of [ax, -ax + 0.06]) for (const sd of [-1, 1]) { const at = S.reduce((m, s) => Math.abs(s.x - x) < Math.abs(m.x - x) ? s : m, S[0]), z = sd * (at.w * 0.93 + 0.004), ra = rr + 0.07, N = 7;
+      for (let j = 0; j < N; j++) { const a0 = j / N * Math.PI, a1 = (j + 1) / N * Math.PI;
+        g.triO([x, rr, z], [x + Math.cos(a0) * ra, rr + Math.sin(a0) * ra, z], [x + Math.cos(a1) * ra, rr + Math.sin(a1) * ra, z], DK, [x, rr, z - sd]); }
+      rdWheel(g, x, rr, sd * (at.w * 0.93 - wd / 2 + 0.03), rr, wd); }
+    return g.geometry();
   }
   function rdVanGeo(col) {   // a van: the box, the bonnet, the windscreen, side windows by the cab, lights, bumpers, wheels (5.3 x 2.0 m); col: its paint (else the colour code)
     const g = new GB(), B = col || RD_MG, W = 2.0, hw = W / 2, K = [0.08, 0.08, 0.09], GL = GLASS;
@@ -6406,8 +6454,8 @@ const Render = (function () {
   const RD_FAR = 90;
   function rdFarGeo(kind, id) {
     const g = new GB(), K = [0.08, 0.08, 0.09], B = RD_MG, bx = (x, y, z, sx, sy, sz, col, top) => World.box(g, x, y, z, sx, sy, sz, 0, col, top || col, true);
-    if (kind === 'car') { const M = Core.MODELS.find(m => m.id === id), L = M.len, W = M.wid;
-      bx(0, 0, 0, L * 0.78, 0.4, W * 0.94, K); bx(0, 0.24, 0, L, 0.54, W, B); bx(-L * 0.07, 0.78, 0, L * 0.48, 0.5, W * 0.84, GLASS, B); }
+    if (kind === 'car') { const C = RD_CARS[id], L = C.len, W = C.wid, hb = id === 2 ? 0.5 : 0.3, hc = id === 2 ? 0.7 : 0.48;   // (its shape's size, RD_CARS; the SUV taller)
+      bx(0, 0, 0, L * 0.78, 0.4, W * 0.94, K); bx(0, hb - 0.06, 0, L, hc, W, B); bx(-L * 0.07, hb - 0.06 + hc, 0, L * (id === 0 ? 0.56 : 0.48), 0.5, W * 0.84, GLASS, B); }
     else if (kind === 'van') { bx(0, 0, 0, 4.4, 0.42, 1.92, K); bx(-0.35, 0.32, 0, 4.6, 1.73, 2.0, B); bx(2.25, 0.32, 0, 0.8, 0.8, 1.96, B); bx(1.94, 1.12, 0, 0.66, 0.85, 2.02, GLASS, B); }
     else if (kind === 'bus') { bx(0, 0, 0, 10.6, 0.5, 2.42, K); bx(0, 0.36, 0, 11.8, 2.8, 2.5, B); bx(0.21, 1.45, 0, 11.42, 1.35, 2.52, GLASS, B); }
     else if (kind === 'truck') { bx(0, 0, 0, 15.6, 0.66, 2.4, K); bx(7.05, 0.62, 0, 2.3, 2.3, 2.49, B); bx(6.75, 2.92, 0, 1.7, 0.6, 2.35, B); bx(7.6, 1.75, 0, 1.24, 0.95, 2.51, GLASS, B);
@@ -6571,7 +6619,7 @@ const Render = (function () {
     // over its mesh's places is not drawn, updateRoad's put. The keys as updateRoad picks the mesh: a car by its colour, a truck on its own)
     const pc = {}; if (race.en) for (const v of race.tf.veh) { const k = v.kind === 0 ? 'c' + Math.floor(v.col * 7.3) % 3 : v.kind === 2 && v.p === 5 ? 't' : v.kind; pc[k] = (pc[k] || 0) + 1; }
     const nf = (k, n) => Math.max(n, pc[k] || 0);
-    const V = { car: [mk(rdCarGeo('hatch', 'pico'), nf('c0', 40), matP, true), mk(rdCarGeo('sedan', 'vortex'), nf('c1', 40), matP, true), mk(rdCarGeo('coupe', 'kaze'), nf('c2', 24), matP, true)],
+    const V = { car: [mk(rdCarGeo(0), nf('c0', 40), matP, true), mk(rdCarGeo(1), nf('c1', 40), matP, true), mk(rdCarGeo(2), nf('c2', 24), matP, true)],
       van: mk(rdVanGeo(), nf(1, 24), matP, true), bus: mk(rdBusGeo(), nf(2, 8), matP, true), truck: mk(rdTruckGeo(), nf('t', 20), matP, true), moto: mk(rdMotoGeo(), nf(3, 12), matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
       pvan: mk(rdPolVanGeo(), 4, matP, true), pmoto: mk(rdPolMotoGeo(), 6, matP, true) };   // (the police's van and motorbikes)
     const NP = 140, PG = pedGeos();
@@ -6608,7 +6656,7 @@ const Render = (function () {
     // (updateRoad): with its frustum culling off a mesh draws all its vehicles into the shadow map, at the densest traffic on the hairpin
     // roads tens of them for nothing (Tianmen, Rio do Rastro: 50-70k vertices a frame). The same geometry (disposed with the first)
     const tw = new Map(); if (race.en) for (const im of [...V.car, V.van, V.bus, V.truck, V.moto]) { const t = mk(im.geometry, im.instanceMatrix.count, matP, false); t.visible = false; tw.set(im, t); }
-    const far = race.en ? { car: [mk(rdFarGeo('car', 'pico'), nf('c0', 40), matP, false), mk(rdFarGeo('car', 'vortex'), nf('c1', 40), matP, false), mk(rdFarGeo('car', 'kaze'), nf('c2', 24), matP, false)],
+    const far = race.en ? { car: [mk(rdFarGeo('car', 0), nf('c0', 40), matP, false), mk(rdFarGeo('car', 1), nf('c1', 40), matP, false), mk(rdFarGeo('car', 2), nf('c2', 24), matP, false)],
       van: mk(rdFarGeo('van'), nf(1, 24), matP, false), bus: mk(rdFarGeo('bus'), nf(2, 8), matP, false), truck: mk(rdFarGeo('truck'), nf('t', 20), matP, false), moto: mk(rdFarGeo('moto'), nf(3, 12), matP, false) } : null;   // (and the stand-ins far away, rdFarGeo)
     if (far) for (const im of [...far.car, far.van, far.bus, far.truck, far.moto]) im.visible = false;
     scene.add(grp);

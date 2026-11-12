@@ -1,9 +1,9 @@
-// The endless drive in the traffic (docs/neskoncna-voznja.md, »Predelava na krožne proge«), no browser: js/core.js's Endless (race.en,
-// opts.endless) on a circuit (Core.EN.tracks: Bathurst) and the traffic's window round the player (Traffic._winStep): one way round the
-// loop, the lanes by the road's width, the vehicles' lane changes and sudden brakings, new ones out of sight, across the line without a
-// jump; the clock (its start and its run by the level, the seconds a close pass adds, its cap, the end when empty), the density by the
-// time, the end at a touch of a vehicle, the points; the mode's tracks, options and top 10 (js/neskoncna.js); the quick entry; a run
-// repeatable bit for bit.
+// The endless drive in the traffic (docs/neskoncna-voznja.md), no browser: js/core.js's Endless (race.en, opts.endless) on Bathurst's loop
+// and three open roads (Core.EN.tracks) and the traffic's window round the player (Traffic._winStep): one way round the loop, both ways on
+// a road (on again from its start: a new stage), no bicycles, nobody on foot; the lanes, the vehicles' lane changes and sudden brakings, new
+// ones out of sight; the clock (its start and its run by the level, +1 s an overtaking and more the closer, its cap, the end when empty),
+// the density by the time; the hits (three lives, a light touch none, head-on the end), the car harmed mechanically; the points; the
+// mode's tracks, options and top 10 (js/neskoncna.js); the quick entry; a run repeatable bit for bit.
 //   node tests/neskoncna.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -132,60 +132,122 @@ const ghost = (r, secs, each) => {
   check('after the end: no more points, the clock stays empty', L[1][1].score === sc && L[1][1].clock === 0);
 }
 
-// 4. the close passes (the player alongside a vehicle going the same way, overtaking it): 0.4, 0.8 and 1.4 m, the combo, the seconds on the
-// clock (more with the combo, at most twice the start's); too slow; overtaking too slowly
+// 4. the passes (the player alongside a vehicle going the same way, overtaking it): every overtaking +1 s, more the closer (closeT x the room
+// under 1.5 m), the points and the combo for a close one at 70 km/h or more; the clock at most three times the start's; once a vehicle; none
+// with a touch
 {
   const r = mk({ flying: 0 }), tf = r.tf, E = r.en, T = r.track, sd = tf.sd, s0 = straight(T, T.startS + 300); r.start();
   const P = putP(r, s0, sd * T.wS(s0) * 0.45, 120), hw = P.m.wid / 2;
-  const pass = (gap, kmh, vo, k) => {
+  let o = null;
+  const pass = (gap, kmh, vo, k, again, touch) => {
     putP(r, s0, sd * T.wS(s0) * 0.45, kmh); const ps = T.startS + P.dist;
-    for (const v of tf.veh) v.off = true;
-    const o = tf.veh.find(v => v.kind === (k || 0)); tf._winPlace(o, ps + 20, 1); o.v = vo / 3.6;
-    o.d = P.q.d - sd * (gap + o.wid / 2 + hw); const ev = E.ev;
-    for (let r0 = 20; r0 >= -20; r0 -= 0.25) { o.s = ps + r0; tf._pose(o, 0); E._passes(kmh / 3.6); }
+    if (!again) { for (const v of tf.veh) v.off = true; o = tf.veh.find(v => v.kind === (k || 0)); tf._winPlace(o, ps + 20, 1); }
+    o.v = vo / 3.6; o.d = P.q.d - sd * (gap + o.wid / 2 + hw); const ev = E.ev;
+    for (let r0 = 20; r0 >= -20; r0 -= 0.25) { o.s = ps + r0; tf._pose(o, 0); E._passes(kmh / 3.6, !!touch && Math.abs(r0) < 1); }
     return E.log.filter(e => e.n > ev);
   };
-  if (s0 < 0) check('bathurst: a straight for the close passes', false);
+  const sec = (gap, combo) => Math.round((EN.passT + EN.closeT[1] * Math.max(0, 1 - gap / EN.close) * (1 + EN.comboAdd * (combo - 1))) * 10) / 10;
+  if (s0 < 0) check('bathurst: a straight for the passes', false);
   else {
     E.clock = 10;
-    const a = pass(0.4, 120, 70), b = pass(0.8, 120, 70), c = pass(1.4, 120, 70);
-    check(`0.4 m past one at 120 km/h: ZELO TESNO, 600 points, +${EN.vnearT[1]} s`, a.length === 1 && a[0].k === 'vnear' && a[0].pts === 600 && a[0].add === EN.vnearT[1] && Math.abs(a[0].gap - 0.4) < 0.03, JSON.stringify(a));
-    const addB = EN.nearT[1] * (1 + EN.comboAdd);
-    check(`0.8 m next: TESNO, 240 x the combo x2, +${addB} s (x${1 + EN.comboAdd} with the combo)`, b.length === 1 && b[0].k === 'near' && b[0].pts === 480 && b[0].combo === 2 && Math.abs(b[0].add - addB) < 1e-9, JSON.stringify(b));
-    check('1.4 m: nothing (the combo kept); the clock 10 + both, the seconds added counted', c.length === 0 && E.combo === 2 && E.vnear === 1 && E.near === 1 && E.bonus === 1080 && Math.abs(E.clock - (10 + EN.vnearT[1] + addB)) < 1e-9 && Math.abs(E.add - (EN.vnearT[1] + addB)) < 1e-9, f1(E.clock) + ' s');
+    const a = pass(0.4, 120, 70), b = pass(0.8, 120, 70), c = pass(1.4, 120, 70), f = pass(2.5, 120, 70);
+    check(`0.4 m past one at 120 km/h: ZELO TESNO, 600 points, +${f1(sec(0.4, 1))} s`, a.length === 1 && a[0].k === 'vnear' && a[0].pts === 600 && Math.abs(a[0].add - sec(0.4, 1)) < 1e-9 && Math.abs(a[0].gap - 0.4) < 0.03, JSON.stringify(a));
+    check(`0.8 m next: TESNO, 240 x the combo x2, +${f1(sec(0.8, 2))} s (the closeness's seconds x${1 + EN.comboAdd} with the combo)`, b.length === 1 && b[0].k === 'near' && b[0].pts === 480 && b[0].combo === 2 && Math.abs(b[0].add - sec(0.8, 2)) < 1e-9, JSON.stringify(b));
+    check(`1.4 m: an overtaking, +${f1(sec(1.4, 2))} s, no points (the combo kept); 2.5 m: +${EN.passT} s`, c.length === 1 && c[0].k === 'pass' && c[0].pts === 0 && Math.abs(c[0].add - sec(1.4, 2)) < 1e-9 && f.length === 1 && f[0].k === 'pass' && f[0].add === EN.passT && E.combo === 2 && E.pass === 4,
+      JSON.stringify(c.concat(f)));
+    check('the clock 10 + all four, the seconds added counted', E.vnear === 1 && E.near === 1 && E.bonus === 1080 && Math.abs(E.clock - (10 + sec(0.4, 1) + sec(0.8, 2) + sec(1.4, 2) + 1)) < 1e-9 && Math.abs(E.add - (E.clock - 10)) < 1e-9, f1(E.clock) + ' s');
+    const twice = pass(0.4, 120, 70, 0, true);
+    check('the same vehicle overtaken again (dropped back, past it once more): nothing', twice.length === 0, JSON.stringify(twice));
+    const hit = pass(0.2, 120, 70, 0, false, true);
+    check('a pass with a touch on the way: nothing', hit.length === 0, JSON.stringify(hit));
     for (let k = 0; k < 4; k++) pass(0.8, 120, 70);
     check(`the combo at most x${EN.comboMax}`, E.combo === EN.comboMax && E.log[E.log.length - 1].pts === 240 * EN.comboMax);
     const cap = EN.clock[1] * EN.clockMax; E.clock = cap - 1; const d = pass(0.4, 120, 70);
     check(`the clock at most ${cap} s (x${EN.clockMax} the start's)`, d.length === 1 && Math.abs(d[0].add - 1) < 1e-9 && Math.abs(E.clock - cap) < 1e-9, f1(E.clock) + ' s');
-    const sl = pass(0.4, 60, 30), slow = pass(0.4, 120, 105), bus = pass(0.6, 120, 70, 2);
-    check('at 60 km/h (under 70): nothing; only 15 km/h faster than it: nothing; past a bus: TESNO', sl.length === 0 && slow.length === 0 && bus.length === 1 && bus[0].k === 'near', JSON.stringify(sl.concat(slow, bus)));
+    E.clock = 10; E.combo = 0; const sl = pass(0.4, 60, 30), slow = pass(0.4, 120, 119.5), bus = pass(0.6, 120, 70, 2);
+    check('at 60 km/h: the seconds (+1 and the closeness), no points; barely faster than it: nothing; past a bus: TESNO',
+      sl.length === 1 && sl[0].k === 'pass' && sl[0].pts === 0 && Math.abs(sl[0].add - sec(0.4, 1)) < 1e-9 && slow.length === 0 && bus.length === 1 && bus[0].k === 'near', JSON.stringify(sl.concat(slow, bus)));
   }
 }
 
-// 5. the end: a touch of a vehicle, a crash into one, the wall (a brush: nothing; a knock: the combo gone; hard: the end), rolling over,
-// falling, two wheels gone
+// 5. the hits: three lives; a light touch of a car or the wall: nothing; a car at speed or the wall knocked: one (hard: two), the combo
+// gone, the car harmed (mechanically: damage 2), the drive on; none left: the end (hits); head-on: the end at once (crash); rolling over,
+// falling, a wheel gone: the end
 {
   const T = track(ID), s0 = straight(T, T.startS + 300);
   const into = (kmh, gapM) => {
     const q = mk({ flying: 0 }); q.start();
     const Q = putP(q, s0, q.tf.sd * q.track.wS(s0) * 0.45, kmh); q.tf._winFill(EN.spawn, 0);
     const o = q.tf.veh.find(v => v.off && v.kind === 0); q.tf._winPlace(o, Q.q.s + gapM, 0); o.d = o.dT = Q.q.d; o.v0 = 0.01; o.v = 0; q.tf._pose(o, 0);
-    let t = 0, v = 0; while (t < 6 && !q.en.over) { Q.inThr = kmh < 40 ? 0 : 1; Q.inBrk = 0; Q.inSteer = 0; v = Q.speed; q.step(DT); t += DT; for (const c of q.cars) { c.hitWall = 0; c.hitCar = 0; } }
-    return [q.en.over, t, v * 3.6];
+    let t = 0, v = 0, hits = []; while (t < 4 && !q.en.over) { Q.inThr = kmh < 40 ? 0 : 1; Q.inBrk = 0; Q.inSteer = 0; v = Q.speed; const ev = q.en.ev; q.step(DT); t += DT; hits = hits.concat(q.en.log.filter(e => e.n > ev && e.k === 'hit')); for (const c of q.cars) { c.hitWall = 0; c.hitCar = 0; } }
+    return [q, hits, q.tf.win.hit];
   };
-  const [a, ta, va] = into(8, 6), [b, tb] = into(100, 40);
-  check('a gentle touch of a car standing in the lane (under 10 km/h): the end (touch)', !!a && a.why === 'touch', a ? a.why + ' at ' + f1(ta) + ' s, ' + f1(va) + ' km/h' : 'none');
-  check('into it at 100 km/h: the end (crash or touch)', !!b && (b.why === 'crash' || b.why === 'touch'), b ? b.why + ' at ' + f1(tb) + ' s' : 'none');
+  const [qa, ha, na] = into(8, 6), [qb, hb] = into(100, 40);
+  check('a gentle touch of a car standing in the lane (under 10 km/h): no hit counted, the drive on', na > 0 && ha.length === 0 && qa.en.lives === EN.lives && !qa.en.over, na + ' touches, ' + qa.en.lives + ' lives');
+  check('into it at 100 km/h (from behind): a hit, two lives off at once (hard), the car harmed; not the end there', hb.length >= 1 && hb[0].pts === 2 && hb[0].gap === EN.lives - 2 && qb.player.dmg > 0 && qb.player.dmgMode === 2,
+    JSON.stringify(hb) + ', dmg ' + f1(qb.player.dmg) + (qb.en.over ? ', ' + qb.en.over.why : ''));
   const r = mk({ flying: 0 }), E = r.en; r.start(); const P = putP(r, s0, r.tf.sd * T.wS(s0) * 0.45, 100); r.tf._winFill(EN.spawn, 0);
+  check('the car harmed mechanically here (dmgMode 2), whatever the settings', P.dmgMode === 2 && mk({ flying: 0, damage: 0 }).player.dmgMode === 2);
   E.combo = 3; E.comboT = 4; P.hitWall = 1.0; r.step(DT);
-  check('the wall brushed (1 m/s): nothing', E.combo === 3 && !E.over);
+  check('the wall brushed (1 m/s): nothing', E.combo === 3 && !E.over && E.lives === EN.lives);
   P.hitWall = 2.0; r.step(DT);
-  check('the wall knocked (2 m/s): the combo gone, the drive on', E.combo === 0 && !E.over && E.log[E.log.length - 1].k === 'tap');
-  P.hitWall = 7; r.step(DT);
-  check('the wall at 7 m/s: the end (wall)', !!E.over && E.over.why === 'wall' && E.log[E.log.length - 1].k === 'over');
-  for (const [k, set] of [['roll', (P) => { P.rl = {}; }], ['fall', (P) => { P.fall = {}; }], ['wheels', (P) => { P.wreck = { nL: 2 }; }]]) {
+  check('the wall knocked (2 m/s): the combo gone, no life lost', E.combo === 0 && !E.over && E.lives === EN.lives && E.log[E.log.length - 1].k === 'tap');
+  P.hitWall = 6; r.step(DT);
+  check(`the wall at 6 m/s: a life off (${EN.lives - 1} left), a hit event`, E.lives === EN.lives - 1 && !E.over && E.log.some(e => e.k === 'hit' && e.pts === 1 && e.gap === EN.lives - 1));
+  P.hitWall = 0; r.step(DT); P.hitWall = 6; r.step(DT);
+  check(`another knock within ${EN.hitCool} s (the same crash): nothing more`, E.lives === EN.lives - 1);
+  for (let t = 0; t < EN.hitCool + 0.1; t += DT) { P.hitWall = 0; r.step(DT); }
+  P.hitWall = 6; r.step(DT); const l2 = E.lives;
+  for (let t = 0; t < EN.hitCool + 0.1; t += DT) { P.hitWall = 0; r.step(DT); }
+  P.hitWall = 12; r.step(DT);
+  check('the next knock after: another life; the last one: the end (hits)', l2 === EN.lives - 2 && E.lives === 0 && !!E.over && E.over.why === 'hits' && E.log[E.log.length - 1].k === 'over', l2 + ' then ' + E.lives);
+  for (const [k, set] of [['roll', (P) => { P.rl = {}; }], ['fall', (P) => { P.fall = {}; }], ['wheels', (P) => { P.wreck = { nL: 1 }; }]]) {
     const q = mk({ flying: 0 }); q.start(); const Q = putP(q, s0, q.tf.sd * q.track.wS(s0) * 0.45, 100); set(Q); q.en.step(DT);
     check(`${k}: the end`, !!q.en.over && q.en.over.why === k);
+  }
+}
+
+// 5b. the open roads (Chapman's Peak, Caracoles, Bălea: Core.EN.tracks after Bathurst): the traffic both ways, nobody on foot, no bicycles;
+// one coming the other way passed close: the closeness's seconds only (no overtaking), at 70 km/h or more the points; head-on into one: the
+// end at once (crash); at the end of the road on again from its start, a new stage, no finish
+{
+  const mkT = (id, o) => new C.Race(track(id), Object.assign({ numAI: 0, playerGrid: 1, laps: 999, phys: 'cs', seed: 3, playerModel: C.MODELS[4], endless: true, flying: 3, fuel: false, difficulty: 1 }, o));
+  for (const id of EN.tracks.slice(1)) {
+    const r = mkT(id), tf = r.tf, on = tf ? tf.veh.filter(v => !v.off) : [];
+    check(`${id}: an open road (def.open), the endless drive, the traffic both ways, no bicycles, nobody on foot or at a stop, the start ${EN.clock[1]} s`,
+      !!r.en && r.en.open && !tf.loop && !tf.ow && on.some(v => v.dir === 1) && on.some(v => v.dir === -1) && !tf.veh.some(v => v.kind === 4) && tf.ped.length === 0 && tf.grp.length === 0 && r.en.clock === EN.clock[1],
+      on.filter(v => v.dir === 1).length + ' up, ' + on.filter(v => v.dir === -1).length + ' down');
+  }
+  const T = track('chapman'), s0 = straight(T, T.startS + 300);
+  {
+    const r = mkT('chapman', { flying: 0 }), tf = r.tf, E = r.en, sd = tf.sd; r.start();
+    const P = putP(r, s0, sd * T.wS(s0) * 0.45, 100), hw = P.m.wid / 2;
+    const meet = (gap, kmh) => {
+      putP(r, s0, sd * T.wS(s0) * 0.45, kmh); const ps = T.startS + P.dist;
+      for (const v of tf.veh) v.off = true; const o = tf.veh.find(v => v.kind === 0 && v.dir === -1); tf._winPlace(o, ps + 20, 0);
+      o.v = 70 / 3.6; o.d = P.q.d - sd * (gap + o.wid / 2 + hw); const ev = E.ev;
+      for (let r0 = 20; r0 >= -20; r0 -= 0.25) { o.s = ps + r0; tf._pose(o, 0); E._passes(kmh / 3.6, false); }
+      return E.log.filter(e => e.n > ev);
+    };
+    E.clock = 10; const a = meet(0.6, 100), b = meet(1.6, 100), c = meet(0.6, 50), more = Math.round(EN.closeT[1] * (1 - 0.6 / EN.close) * 10) / 10;
+    check(`one coming the other way 0.6 m off at 100 km/h: TESNO, 200 points, +${f1(more)} s (the closeness only), no overtaking counted; 1.6 m: nothing; at 50 km/h: nothing`,
+      a.length === 1 && a[0].k === 'near' && a[0].pts === 200 && Math.abs(a[0].add - more) < 1e-9 && E.pass === 0 && b.length === 0 && c.length === 0, JSON.stringify(a.concat(b, c)));
+  }
+  {
+    const q = mkT('chapman', { flying: 0 }); q.start();
+    const Q = putP(q, s0, q.tf.sd * T.wS(s0) * 0.45, 100); q.tf._winFill(EN.spawn, 0);
+    const o = q.tf.veh.find(v => v.off && v.kind === 0 && v.dir === -1); q.tf._winPlace(o, Q.q.s + 40, 0); o.d = o.dT = Q.q.d; o.v0 = 0.01; o.v = 0; q.tf._pose(o, 0);
+    let t = 0; while (t < 4 && !q.en.over) { Q.inThr = 1; Q.inBrk = 0; Q.inSteer = 0; q.step(DT); t += DT; for (const c of q.cars) { c.hitWall = 0; c.hitCar = 0; } }
+    check('head-on into one in the player\'s lane at 100 km/h: the end at once (crash), lives not counted down first', !!q.en.over && q.en.over.why === 'crash' && q.en.lives === EN.lives, q.en.over ? q.en.over.why + ', ' + q.en.lives + ' lives' : 'no end');
+  }
+  {
+    const r = mkT('chapman', { flying: 0 }), E = r.en; r.start(); const sE = r.track.finishS - EN.wrapEnd - 5;
+    const P = putP(r, sE, r.tf.sd * r.track.wS(sE) * 0.45, 90), v0 = P.speed, ev = E.ev;
+    for (let t = 0; t < 0.5; t += DT) { P.inThr = 0.5; r.step(DT); }
+    const st = E.log.filter(e => e.n > ev && e.k === 'stage');
+    check(`the end of the road: on again from the start (${EN.wrapTo} m past the line), stage 2, the speed kept, no finish, the window filled again`,
+      st.length === 1 && E.stage === 2 && Math.abs(P.q.s - r.track.startS) < 40 && !P.finished && !E.over && Math.abs(P.speed - v0) < 3 && r.tf.veh.some(v => !v.off && v.dir === -1),
+      'stage ' + E.stage + ', ' + f1(P.q.s - r.track.startS) + ' m past the start, ' + f1(P.speed * 3.6) + ' km/h');
   }
 }
 
@@ -212,16 +274,17 @@ const ghost = (r, secs, each) => {
   const F = require('../js/neskoncna.js');
   const ctx = (id, o) => Object.assign({ md: 'endless', on: false, cr: -1, track: { open: !!def(id).open, def: def(id) } }, o);
   const tracks = C.TRACKS.filter(d => F.modes(d).length).map(d => d.id);
-  check('the mode on Bathurst only (Core.EN.tracks): not on the other circuits, the open roads or the test tracks', JSON.stringify(tracks) === JSON.stringify(EN.tracks) && JSON.stringify(EN.tracks) === '["bathurst"]', tracks.join(', '));
+  check('the mode on Bathurst and three open roads with ordinary traffic (Core.EN.tracks): not on the other circuits, the other roads or the test tracks',
+    JSON.stringify(tracks.slice().sort()) === JSON.stringify(EN.tracks.slice().sort()) && JSON.stringify(EN.tracks) === '["bathurst","chapman","caracoles","balea"]' && EN.tracks.every(id => !def(id).test && !def(id).pending) && EN.tracks.slice(1).every(id => def(id).open), tracks.join(', '));
   const o = F.opts(ctx(ID));
   check('its options: alone, endless, laps without end, the flying start, no fuel, no flags, no rivals; not online, in the career or on another track',
     !!o && o.numAI === 0 && o.endless === true && o.laps === 999 && o.flying === 3 && o.fuel === false && o.flags === false && o.traffic === false && o.police === false &&
-    !F.opts(ctx(ID, { on: true })) && !F.opts(ctx(ID, { cr: 0 })) && !F.opts(ctx(ID, { md: 'race' })) && !F.opts(ctx('spa')) && !F.opts(ctx('vrsic')));
+    o.damage === 2 && !!F.opts(ctx('chapman')) && !F.opts(ctx(ID, { on: true })) && !F.opts(ctx(ID, { cr: 0 })) && !F.opts(ctx(ID, { md: 'race' })) && !F.opts(ctx('spa')) && !F.opts(ctx('vrsic')));
   const B = F.boardOf({ enBoard: [null, 'x', { s: -5 }, { s: 0 }].concat(Array.from({ length: 12 }, (_, k) => ({ s: 1000 + 37 * ((k * 5) % 12), km: 3.2, t: 95, lap: 1, car: 'm' + k, d: 100 + k }))) });
   check(`the top ${F.BOARD}: the best first, nothing else kept`, B.length === F.BOARD && B.every((e, k) => k === 0 || B[k - 1].s >= e.s) && B[0].s === 1000 + 37 * 11 && B.every(e => e.s > 0 && e.lap === 1 && e.km === 3.2), B.map(e => e.s).join(' '));
   const Q = C.quickArgs;
-  check('quick entry: nacin=neskoncno / endless on Bathurst; not on an open road (Vršič) or another circuit (Spa)',
-    Q('?proga=bathurst&nacin=neskoncno').mode === 'endless' && Q('?proga=bathurst&nacin=endless').mode === 'endless' && Q('?proga=vrsic&nacin=neskoncno').mode === null && Q('?proga=spa&nacin=neskoncno').mode === null);
+  check('quick entry: nacin=neskoncno / endless on Bathurst and Chapman\'s Peak; not on another road (Vršič) or another circuit (Spa)',
+    Q('?proga=bathurst&nacin=neskoncno').mode === 'endless' && Q('?proga=bathurst&nacin=endless').mode === 'endless' && Q('?proga=chapman&nacin=neskoncno').mode === 'endless' && Q('?proga=vrsic&nacin=neskoncno').mode === null && Q('?proga=spa&nacin=neskoncno').mode === null);
 }
 
 // 8. a run repeatable bit for bit

@@ -1,6 +1,6 @@
 # Neskončna vožnja v prometu (načrt)
 
-**Zdaj (6. 11. 2026):** način je samo na krožni progi Bathurst, z uro, ki jo polniš, in stopnjami težavnosti (razdelka »Predelava na krožne proge« in »Izvedba predelave« spodaj). Razdelki do »Izvedba (#372 …)« opisujejo prvo različico na odprtih cestah; kar je tam drugače, ne velja več (etape, nasprotni pas, gostota po km, konec samo ob trku).
+**Zdaj (12. 11. 2026):** način je na Bathurstu in treh odprtih cestah z navadnim prometom (Chapman's Peak, Caracoles, Bălea), z uro, ki jo polni prehitevanje, tremi življenji in mehanskimi poškodbami (razdelek »Promet na odprtih cestah« spodaj; prej »Predelava na krožne proge« in »Izvedba predelave«). Razdelki do »Izvedba (#372 …)« opisujejo prvo različico na odprtih cestah; kar je tam drugače, ne velja več (etape, nasprotni pas, gostota po km, konec samo ob trku).
 
 Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtocesti, promet je vse gostejši; točke dobiš za hitrost in tesna prehitevanja; vožnja se konča ob trku; rekord se shrani. Ta dokument je načrt (seja session_01WbgGzro2DxnoL3t84r7MaV, koordinacija »VSE SEJE 2«, račun partyslo). Uporabnik je izbral prave odprte ceste (`neskoncna-1` = 1); **koda je v delu v #372** (osnutek, veja `neskoncna-voznja/koda` na #250), **6. 11. je uporabnik način prestavil na krožne proge** (zaenkrat samo Bathurst, ura, ki jo polniš, težavnost po stopnjah): predelava je narejena 6. 11. (razdelka »Predelava na krožne proge« in »Izvedba predelave«); spodnji opis odprtih cest je opis prve različice.
 
@@ -151,6 +151,14 @@ Koraki (ocena 8–12 h):
 
 Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in 6811211471): Neskončna vožnja še na 3 pravih cestah z normalnim prometom (Bathurst ostane), brez kolesarjev in pešcev, ura se polni s prehitevanjem (+1 s) in vožnjo tik ob vozilu (bliže = več), vsakič velik »+N s« sredi zaslona, promet vedno gostejši, igre ne konča prvi dotik: čelni trk konec, ograja 2–3 trki, trk v vozilo s hitrostjo 2–3 trki, rahel dotik ne šteje; avto se v tem načinu poškoduje tudi mehansko (obstoječa nastavitev poškodb »Vklop«), samo vidne barve vozil, nato grafika prometnih vozil. Seja: osnutek `neskoncna/promet`.
 
+### Izvedba (12. 11., osnutek #666)
+
+- **Proge**: `Core.EN.tracks` = Bathurst, Chapman's Peak (Južna Afrika), Caracoles (Čile), Bălea (Romunija): prave odprte ceste brez `test`/`pending`, z dvosmernim prometom in brez mestnega jedra ali kolesarske proge (prometna obremenitev in pasovi kot na Bathurstu). Na odprti cesti promet v obe smeri (en pas na smer), brez kolesarjev, pešcev in postaj (`_winPool`). Na koncu ceste (`EN.wrapEnd` 60 m pred ciljem) se vožnja nadaljuje z začetka: zatemnitev 0,6 s, nova **etapa** (»ETAPA n«), hitrost, smer in mesto čez cesto ostanejo, okno prometa se napolni znova.
+- **Ura**: vsako prehitevanje (vozilo v isti smeri, enkrat na vozilo, brez dotika) +`EN.passT` 1 s; vožnja tik ob vozilu doda še `closeT` 3 / 2,5 / 2 / 1,5 s po stopnji × (1 − razmik / 1,5 m) × (1 + 0,25 × (niz − 1)); srečanje z nasproti vozečim samo ta del. Točke in niz samo za tesno (pod 1 m; pod 0,5 m »ZELO TESNO«) pri 70 km/h ali več. Na uri največ trikratni začetek (`clockMax`). Vsakič velik »+N s« sredi zaslona (`#h-en-big`).
+- **Trki**: tri življenja (srčki na zaslonu). Čelni trk (sunek nad 7 m/s, vozili si nasproti) takoj konec (`'crash'`). Trk v vozilo nad 3 m/s eno življenje, nad 12 m/s dve; ograja nad 4 m/s eno, nad 10 m/s dve; med dvema štetima trkoma 1 s (isti trk). Rahel dotik ne šteje; ograja nad 1,5 m/s prekine niz. Ob trku »TRK! ŠE n TRKI« in »AVTO JE POŠKODOVAN«; brez življenj `'hits'`. Prevrnitev, padec in izgubljeno kolo so konec.
+- **Poškodbe**: v tem načinu vedno mehanske (`dmgMode` 2, `damage: 2` v možnostih), ne glede na nastavitev; drugod nespremenjeno. Fizika vožnje in vožnja prometa se ne spreminjata.
+- **Meni**: podnapis »Ever denser traffic. Overtakes add time.«, oznaka *THREE HITS AND OUT*; rezultati: Etape ali Krogi, Prehitevanja, razlog konca (Čelni trk, Preveč trkov, Avto je izgubil kolo).
+
 ## Stanje
 
 - 5. 11. 2026: tema v `docs/vrsta.md` (Načrtovano, #339); načrt in vprašanja `neskoncna-1`–`3` na strani Odločitve 3. Čaka na odgovore uporabnika; koda še ni začeta.
@@ -159,3 +167,4 @@ Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in
 - 5. 11. 2026 ob 22h: koda pripravljena v osnutku #372, povezani testi lokalno zeleni (Node 16, brskalnik 16), v vrsti na 30. mestu (#381). Mount Buller in Sani Pass gresta v test (zgoraj), način ostane na 9 cestah; koda brez sprememb.
 - 6. 11. 2026 ponoči: popravljena mesta v mrežah vozil (pregled kode #372, 89750a1). Uporabnik v seji: način samo na krožnih progah, zaenkrat samo Bathurst, ura, ki jo polniš, težavnost po stopnjah (zgoraj). `neskoncna-2` (= 3) in `-3` (= 1) prebrana, nadomesti ju odločitev v seji. Predelava čaka na novo sejo (razdelek Predelava na krožne proge).
 - 6. 11. 2026: predelava na Bathurst končana v #372 (izvedba zgoraj); svež `main` spojen, testi `tests/neskoncna.test.js` (39) in `tests/browser/neskoncna.test.mjs` (16) na Bathurstu, v meniju ploščica samo na Bathurstu (`menu.test.mjs`). V vrsti spet »pripravljen«, osnutek do vrste.
+- 12. 11. 2026: igranje za odprte ceste narejeno v osnutku #666 (zgoraj); testi `tests/neskoncna.test.js` (52). Sledi grafika prometnih vozil v istem PR.
