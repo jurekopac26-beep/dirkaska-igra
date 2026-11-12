@@ -534,6 +534,8 @@ svg { display: block; }
   .yard { background: radial-gradient(circle at 8% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 26% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 44% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 62% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 80% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 96% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),
     linear-gradient(180deg, #16161a 0, #16161a 9%, #202027 9.4%, #26262e 58%, #0d0d10 58.3%, #18181c 70%, #09090b 100%); }
   .yard::after { background: radial-gradient(60% 100% at 32% 0%, rgba(255, 236, 205, .07), transparent 70%); }
+  /* (the sign and its posts' tops 12 px higher with the car: the car hides as much of the sign as before, the name in its middle) */
+  .sign { top: calc(12% - 12px); } .post { top: calc(48% - 12px); }
 }
 /* the two neighbouring tracks: the flag at its hoist, its last column stretched to the far edge (js/menu.js flagFill), a double arrow */
 .nbrs { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 14px 0; }
