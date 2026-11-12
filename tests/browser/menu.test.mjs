@@ -881,7 +881,7 @@ try {
     T.check('the weather over the track step: on, Dry, its layers (the picture, the floor in the yard and under the neighbours, the car, the sign and its top, the buttons, the air)',
       e0.on && e0.look === 'dry' && e0.layers && Object.entries(e0.layers).every(([k, v]) => v || k === 'rbg'), JSON.stringify(e0));
     const dry = await look();
-    T.check('Dry: the warm sun (the picture bright; no sun's rays over it: the user, 12. 11. 2026), nothing on the buttons, nothing in the air, the model or map dry',
+    T.check('Dry: the warm sun (the picture bright; no sun rays over it: the user, 12. 11. 2026), nothing on the buttons, nothing in the air, the model or map dry',
       dry.ink.st === 0 && dry.ink.ui === 0 && dry.ink.air === 0 && dry.wet === 0 && /^brightness\(1\.06/.test(dry.f), JSON.stringify(dry));
     await click(page, 'weather:rain');
     const tap = await ev(page, 'return MenuVreme.info();');
