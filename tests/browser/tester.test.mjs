@@ -58,17 +58,22 @@ try {
   await page.waitForTimeout(1200);
   await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(300);
   const d = got.find((e) => e.t === 'dirka');
-  T.check('left for the title: the race sent (jezero, its mode and weather, seconds, zapustil, no place), none open', d && d.k === 'T2' && d.s === s0.s && d.proga === 'jezero' && d.nacin === a.s.dirka.nacin
-    && d.vreme === a.s.dirka.vreme && d.trajanje > 0.5 && d.izid === 'zapustil' && d.mesto === null && !(await st()).s.dirka, JSON.stringify(d));
+  T.check('left for the title: the race sent (jezero, its mode and weather, seconds, zapustil, the car, the place at leaving or none, the seconds on the track), none open', d && d.k === 'T2' && d.s === s0.s && d.proga === 'jezero' && d.nacin === a.s.dirka.nacin
+    && d.vreme === a.s.dirka.vreme && d.trajanje > 0.5 && d.izid === 'zapustil' && (d.mesto === null || (Number.isInteger(d.mesto) && d.mesto >= 1))
+    && typeof d.avto === 'string' && d.avto.length > 0 && d.avto === a.s.dirka.avto && d.cp >= 1 && d.cm >= 0 && d.cg === 0 && !(await st()).s.dirka, JSON.stringify(d));
   await startTrack(page, 'jezero'); await driveToResults(page);
   const c = got.filter((e) => e.t === 'dirka')[1];
-  T.check('a race driven to the line: sent at the results (jezero, cilj, the place 1..n)', c && c.proga === 'jezero' && c.izid === 'cilj' && Number.isInteger(c.mesto) && c.mesto >= 1 && c.trajanje > 0, JSON.stringify(c));
-  T.check('only the known fields sent (no names, no address, no time of the device)', got.every((e) => Object.keys(e).every((k) => ['k', 's', 't', 'zig', 'naprava', 'os', 'brskalnik', 'proga', 'nacin', 'vreme', 'trajanje', 'izid', 'mesto'].includes(k))), JSON.stringify(got));
+  T.check('a race driven to the line: sent at the results (jezero, cilj, the place 1..n, the car)', c && c.proga === 'jezero' && c.izid === 'cilj' && Number.isInteger(c.mesto) && c.mesto >= 1 && c.trajanje > 0 && c.avto, JSON.stringify(c));
+  T.check('only the known fields sent (no names, no address, no time of the device)', got.every((e) => Object.keys(e).every((k) => ['k', 's', 't', 'zig', 'naprava', 'os', 'brskalnik', 'proga', 'nacin', 'vreme', 'trajanje', 'izid', 'mesto', 'avto', 'cp', 'cm', 'cg'].includes(k))), JSON.stringify(got));
 
   got.length = 0;
   await open('');
   a = await st();
   T.check('a reload with no code: counts on with the kept code (a new visit: start, T2), no notice', a.on && !a.ask && got.some((e) => e.t === 'start' && e.k === 'T2'), JSON.stringify({ a, got }));
+  got.length = 0;
+  await page.goto(srv.base + '/garaza.html', { timeout: 180000 }); await page.waitForTimeout(800);
+  a = await page.evaluate(() => ({ on: Tester.on, s: Tester.state() }));
+  T.check('the garage (garaza.html): counts too, the time in the garage', a.on && a.s.kje === 'garaza' && got.some((e) => e.t === 'start' && e.k === 'T2' && e.zig === 'garaza'), JSON.stringify({ a, got }));
   got.length = 0;
   await open('?tester=off');
   a = await st();

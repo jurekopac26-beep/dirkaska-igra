@@ -145,7 +145,7 @@ const RELATED = [
   [/^js\/shramba\.js$/, ['browser/share.test.mjs']],   // (the saved game kept safe: the profile file and its import go through it)
   [/^js\/render\.js$/, ['browser/marks.test.mjs', 'browser/sledi.test.mjs']],
   [/^js\/denar\.js$|^js\/garage\.js$|^(index|garaza)\.html$/, ['browser/denar.test.mjs']],   // (the test money in the address, ?denar: read before the career, the garage on Kariera)
-  [/^js\/(tester|game)\.js$|^index\.html$/, ['browser/tester.test.mjs']],   // (Test s prijatelji: sends only with ?tester=<code> and consent, never in a test's browser)
+  [/^js\/(tester|game)\.js$|^(index|garaza)\.html$/, ['browser/tester.test.mjs']],   // (Test s prijatelji: sends only with ?tester=<code> and consent, never in a test's browser)
   [/^js\/(garage|game)\.js$|^garaza\.html$/, ['browser/denarnica.test.mjs']],   // (the garage's real profile: the career's coins, cars and upgrades, shared with the game)   // (the tyre marks of the last runs and a friend's: Render.setOldMarks)
   [/^js\/nv(boat|water)\.js$/, ['browser/nvwater.test.mjs', 'browser/newver.test.mjs']],   // (the water course's bed, its jet skis at the pier, driving on the water)
   [/^tests\/lib\//, ['quick.test.js']],

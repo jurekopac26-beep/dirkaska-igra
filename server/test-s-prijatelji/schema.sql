@@ -4,7 +4,10 @@ CREATE TABLE IF NOT EXISTS seje (
   koda TEXT NOT NULL,           -- the tester's code (T1 .. T30)
   zacetek INTEGER NOT NULL,     -- the first event of the visit
   zadnji INTEGER NOT NULL,      -- the last event (start, beat every minute while the game is seen, end)
-  naprava TEXT, os TEXT, brskalnik TEXT, zig TEXT
+  naprava TEXT, os TEXT, brskalnik TEXT, zig TEXT,
+  s_proga INTEGER NOT NULL DEFAULT 0,   -- seconds seen on a track (a race on), in the menus, in the garage (garaza.html)
+  s_meni INTEGER NOT NULL DEFAULT 0,
+  s_garaza INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS seje_koda ON seje (koda, zacetek);
 CREATE TABLE IF NOT EXISTS dirke (
@@ -12,8 +15,9 @@ CREATE TABLE IF NOT EXISTS dirke (
   seja TEXT NOT NULL, koda TEXT NOT NULL,
   cas INTEGER NOT NULL,         -- when the race ended (the server's clock)
   proga TEXT, nacin TEXT, vreme TEXT,
+  avto TEXT,                    -- the car's name in the game (12. 11.)
   trajanje REAL,                -- seconds from the start of the race to its end
   izid TEXT,                    -- cilj | odstop | zapustil
-  mesto INTEGER
+  mesto INTEGER                 -- the place; null where it has no meaning (police, time trial, fun modes) or is not known
 );
 CREATE INDEX IF NOT EXISTS dirke_koda ON dirke (koda, cas);

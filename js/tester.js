@@ -6,20 +6,34 @@
    so the installed game and later visits count too; ?tester=off forgets them. A browser driven by a test (navigator.webdriver) never
    sends. What it sends (the counter, server/test-s-prijatelji/worker.js), nothing else: the code; a visit's start, a beat a minute
    while the game is seen, its end (a visit: a random id of its own, a new one after the game was away 2 min or more); each race at
-   its end: the track, the mode, the weather, its seconds, over the finish / retired / left, the place; the device (phone, tablet or
-   desktop, the system and the browser, no versions) and the game's stamp. No names, no IP kept, no cookies. Slovenian only, its own DOM
-   (as js/napake.js and js/denar.js: no tr()). js/game.js calls Tester.zacni / konec / pusti only when Tester.on.
+   its end: the track, the mode, the weather, the car (the game's own name), its seconds, over the finish / retired / left, the place
+   (null where a place has no meaning: police, time trial, the fun modes ...); the seconds the game was seen on a track, in the menus and
+   in the garage (garaza.html loads this too; a visit goes on across the two pages); the device (phone, tablet or desktop, the system and
+   the browser, no versions) and the game's stamp. No names, no IP kept, no cookies. Slovenian only, its own DOM (as js/napake.js and
+   js/denar.js: no tr()). js/game.js calls Tester.zacni / konec / pusti only when Tester.on (the 12. 11. fixes: the user's test).
    ========================================================================= */
 const Tester = (function () {
   'use strict';
-  const URL_E = 'https://stevec.rra-test.workers.dev/e', KEY = 'rra-tester', BEAT = 60000, AWAY = 120000;
+  const URL_E = 'https://stevec.rra-test.workers.dev/e', KEY = 'rra-tester', SKEY = 'rra-tester-seja', BEAT = 60000, AWAY = 120000;
   const T = { on: false };
+  const GARAZA = /garaza\.html$/.test(location.pathname);
   let koda = null, seja = null, beat = 0, skrit = 0, dirka = null, sent = [];
+  // where the game is seen (garaza: the garage page; proga: a race on; meni: the rest) and its seconds there, not sent yet
+  let kje = GARAZA ? 'garaza' : 'meni', od = 0, cas = { meni: 0, proga: 0, garaza: 0 };
+  const vidno = () => document.visibilityState !== 'hidden';
+  let vis = vidno();   // (seen since od: its own, as the event 'hidden' comes when the page is hidden already)
+  function stej() { const t = performance.now(); if (od && vis) cas[kje] += t - od; od = t; }
+  function kam(k) { stej(); kje = GARAZA ? 'garaza' : k; }
+  function casi() { stej(); const o = { cm: Math.round(cas.meni / 1000), cp: Math.round(cas.proga / 1000), cg: Math.round(cas.garaza / 1000) };
+    cas.meni -= o.cm * 1000; cas.proga -= o.cp * 1000; cas.garaza -= o.cg * 1000; return o; }
 
   const rid = () => { try { const a = new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a, (b) => b.toString(16).padStart(2, '0')).join(''); } catch (_) { return (Date.now().toString(36) + Math.random().toString(36).slice(2)).slice(0, 24); } };
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { return null; } };
   const save = (v) => { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (_) { } };
-  const zig = () => { const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')); return m ? m[1] : 'lokalno'; };
+  const zig = () => { const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')); return m ? m[1] : GARAZA ? 'garaza' : 'lokalno'; };
+  // a visit goes on across the game and the garage (sessionStorage: this tab only), unless away 2 min or more
+  const sejaLoad = () => { try { const v = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); return v && v.k === koda && Date.now() - v.t < AWAY ? v.s : null; } catch (_) { return null; } };
+  const sejaSave = () => { try { sessionStorage.setItem(SKEY, JSON.stringify({ s: seja, k: koda, t: Date.now() })); } catch (_) { } };
   function naprava() {
     const u = navigator.userAgent || '', touchMac = /Macintosh/.test(u) && navigator.maxTouchPoints > 1;
     const tip = /iPad/.test(u) || touchMac || (/Android/.test(u) && !/Mobile/.test(u)) ? 'tablica' : /Mobi|iPhone|iPod|Android/.test(u) ? 'telefon' : 'namizje';
@@ -29,27 +43,30 @@ const Tester = (function () {
   }
   function send(o) {
     if (!T.on) return;
-    const body = JSON.stringify(Object.assign({ k: koda, s: seja }, o));
+    if (o.t !== 'start') Object.assign(o, casi());
+    const body = JSON.stringify(Object.assign({ k: koda, s: seja }, o)); sejaSave();
     sent.push(o.t); if (sent.length > 50) sent.shift();
     try {
       fetch(URL_E, { method: 'POST', body, keepalive: true, mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', headers: { 'Content-Type': 'text/plain' } }).catch(() => { });
     } catch (_) { try { navigator.sendBeacon(URL_E, new Blob([body], { type: 'text/plain' })); } catch (__) { } }
   }
-  function start() { seja = rid(); send(Object.assign({ t: 'start', zig: zig() }, naprava())); }
-  function tick() { if (T.on && document.visibilityState === 'visible') send({ t: 'beat' }); }
+  function start(go) { seja = (go && sejaLoad()) || rid(); od = performance.now(); send(Object.assign({ t: 'start', zig: zig() }, naprava())); }
+  function tick() { if (T.on && vidno()) send({ t: 'beat' }); }
   function race(izid, mesto) {
     if (!dirka) return;
     const d = dirka; dirka = null;
-    send({ t: 'dirka', proga: d.proga, nacin: d.nacin, vreme: d.vreme, trajanje: Math.round((performance.now() - d.t0) / 100) / 10, izid, mesto: mesto == null ? null : mesto });
+    kam('meni');
+    send({ t: 'dirka', proga: d.proga, nacin: d.nacin, vreme: d.vreme, avto: d.avto, trajanje: Math.round((performance.now() - d.t0) / 100) / 10, izid,
+      mesto: Number.isInteger(mesto) && mesto >= 1 ? mesto : null });
   }
   function begin() {
-    T.on = true; start();
+    T.on = true; start(true);
     beat = setInterval(tick, BEAT);
     document.addEventListener('visibilitychange', () => {
       if (!T.on) return;
-      if (document.visibilityState === 'hidden') { skrit = Date.now(); send({ t: 'end' }); }
-      else if (skrit && Date.now() - skrit >= AWAY) { skrit = 0; start(); }   // (away a while: a new visit; the race open meanwhile stays open)
-      else { skrit = 0; send({ t: 'beat' }); }
+      if (document.visibilityState === 'hidden') { skrit = Date.now(); stej(); vis = false; send({ t: 'end' }); }   // (its seconds counted up to now, then none while hidden)
+      else if (skrit && Date.now() - skrit >= AWAY) { skrit = 0; vis = true; start(false); }   // (away a while: a new visit; the race open meanwhile stays open)
+      else { skrit = 0; vis = true; od = performance.now(); send({ t: 'beat' }); }
     });
     addEventListener('pagehide', () => { if (T.on) { race('zapustil', null); send({ t: 'end' }); } });
   }
@@ -84,10 +101,11 @@ const Tester = (function () {
     if (k) { if (st && st.koda === k) { if (st.ok) { koda = k; begin(); } } else ask(k); return; }
     if (st && st.ok && st.koda) { koda = st.koda; begin(); }   // (no code in the address: a device that said yes before, e.g. the installed game)
   }
-  T.zacni = (info) => { if (!T.on) return; race('zapustil', null); dirka = { proga: String(info.proga || ''), nacin: String(info.nacin || ''), vreme: String(info.vreme || ''), t0: performance.now() }; };
+  T.zacni = (info) => { if (!T.on) return; race('zapustil', null); kam('proga');
+    dirka = { proga: String(info.proga || ''), nacin: String(info.nacin || ''), vreme: String(info.vreme || ''), avto: String(info.avto || '').slice(0, 24), t0: performance.now() }; };
   T.konec = (izid, mesto) => { if (T.on) race(izid, mesto); };
-  T.pusti = () => { if (T.on) race('zapustil', null); };
-  T.state = () => ({ on: T.on, koda, seja, dirka: dirka && { proga: dirka.proga, nacin: dirka.nacin, vreme: dirka.vreme }, sent: sent.slice() });   // (for the tests)
+  T.pusti = (mesto) => { if (T.on) race('zapustil', mesto); };   // (the place at the moment it was left, null where it has no meaning)
+  T.state = () => ({ on: T.on, koda, seja, kje, dirka: dirka && { proga: dirka.proga, nacin: dirka.nacin, vreme: dirka.vreme, avto: dirka.avto }, sent: sent.slice() });   // (for the tests)
   run();
   return T;
 })();
