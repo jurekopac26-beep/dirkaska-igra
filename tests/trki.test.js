@@ -19,14 +19,23 @@
 // - a friend's car online (net) is not moved by the knock: the local car takes the whole separation and only its own share of the push
 // - the walls as they were (the user's): the knock off a barrier is the same in every version
 // - races (Spa, Bathurst: 12 rivals, the player on the autopilot, 150 s) in every version: nothing NaN, every car moving, no two cars
-//   touching side by side for 2 s on end (glued), spins (past 40 deg at speed) at most 4 in Simulacija, Arkadna and Mehka
+//   touching side by side for 2 s on end (glued), spins (past 40 deg at speed) at most 4 in Simulacija, Arkadna, Mehka and Realistična
 // - Realistična (cv 6; docs/trki-realizem.md, »Zasnova prototipa Realistična«, »Testi«): conservation (in every knock of two cars the pair's
 //   momentum is kept to 1e-9 and its kinetic energy with the turning grows by at most 0.5 kJ; at the barrier neither the energy nor the speed
 //   along it grows and no corner is left inside; a thing by the road never speeds the car up), symmetry (the mirror image of a knock, of a
 //   barrier and of a thing off the car's line gives the mirror image of the outcome to 1e-9; square into the barrier no yaw and no slide along
 //   it), limits (no NaN at 60-200 km/h, never over 9 rad/s with the grip lost, PITs ordered by their impulse, the turns, the leaving angles and
-//   the losses to the things in their bands)
-//   node tests/trki.test.js
+//   the losses to the things in their bands); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the whole state of
+//   the race and of the car after every step is the same in cv 6 as in cv 1, each in a core of its own; the plane with given inputs, both
+//   physics; the control: the same comparison finds the first touch); the other versions (the reference tests/golden/trki.json: a digest of the
+//   whole state after every step of 12 knocks, 5 barriers, 5 things by the road and a truck with its semi-trailer at the barrier in each of the
+//   six versions; after a wanted change of a version: node tests/trki.test.js --update); the exempt (Core krOn: a truck with its semi-trailer,
+//   a car in the run from the police and a car in the pit lane keep Simulacija's rules at the knock, in the slide a knock leaves, at the
+//   barrier and at the things by the road; beside each the same scene without the mark, which differs; a real run from the police on
+//   Chapman's Peak and Spa's real pit lane); the online race (js/game.js testOf(true) is {} and every Core.setTest there goes through it: a
+//   friend's car into the local one ends as Simulacija's); races (as the other versions, and no launch: no knock gives a car more than
+//   8 m/s in a step, none faster than in the other versions, none turning faster than 9 rad/s)
+//   node tests/trki.test.js            (--update: writes the reference tests/golden/trki.json)
 'use strict';
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { loadCore, ROOT } = require('./lib/core.js');
@@ -127,8 +136,8 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   const mOf = (c) => c.m.mass + (c.fuelKg || 0), IOf = (c) => c.I * mOf(c) / c.m.mass;
   const put = (c, x, z, h, v) => { c.place(x, z, h); c.vx = v * Math.cos(h); c.vz = v * Math.sin(h); const M = c.m; for (let g = 1; g <= M.gears.length; g++) { c.gear = g; if (v / M.rw * M.gears[g - 1] * M.final * 9.5493 < M.redline * 0.9) break; } c._vT = v; c._v = v; return c; };
   const SR = {
-    // A along +x into the side of the standing B (its nose across the road), at B's front (s > 0) or rear part
-    tbone: (H, V, s, m, idA) => { const B = car(H, 0, false), A = idA ? H.mkCar(idA, { v: 0 }) : car(H, 0, true); A.isPlayer = true; A.noReverse = true; put(B, 0, 0, m * Math.PI / 2, 0); put(A, -(B.m.wid / 2 + A.m.len / 2 + 0.3), m * s, 0, V); return { A, B }; },
+    // A along +x into the side of the standing B (its nose across the road; idB: its model), at B's front (s > 0) or rear part
+    tbone: (H, V, s, m, idB) => { const A = car(H, 0, true), B = idB ? H.mkCar(idB, { v: 0 }) : car(H, 0, false); B.isPlayer = false; B.noReverse = true; put(B, 0, 0, m * Math.PI / 2, 0); put(A, -(B.m.wid / 2 + A.m.len / 2 + 0.3), m * s, 0, V); return { A, B }; },
     // head on, A's line off B's by off
     head: (H, V, off, m) => { const A = car(H, 0, true), B = car(H, 0, false), L = A.m.len; put(B, 0, 0, Math.PI, V); put(A, -(L + 0.3), m * off, 0, V); return { A, B }; },
     // into the back of a standing car, off its middle
@@ -142,14 +151,15 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   const mir = (s) => [s[0], -s[1], -s[2], s[3], -s[4], -s[5], -s[6], s[7], -s[8], s[9]];
   const dev = (p, q) => Math.max(...p.map((x, i) => Math.abs(i === 2 ? wrap(x - q[i]) : x - q[i])));
   // the knocks of a pair, stepped as a race does (the cars' own steps, then the knock). Per knock (a step in which carCollide changed a speed):
-  // the change of the pair's momentum (kg m/s) and of its kinetic energy with the turning (J). o.pre(A, B): before the first step
+  // the change of the pair's momentum (kg m/s) and of its kinetic energy with the turning (J). o.pre(A, B): before the first step; o.iA(t), o.iB(t):
+  // the drivers (none: no inputs); o.lines: the state of both after every step
   function knock(H, tx, S, secs, o) {
     return test(tx, () => {
       const { A, B } = S, L = [], pE = () => { const ma = mOf(A), mb = mOf(B); return [ma * A.vx + mb * B.vx, ma * A.vz + mb * B.vz, 0.5 * (ma * (A.vx * A.vx + A.vz * A.vz) + mb * (B.vx * B.vx + B.vz * B.vz) + IOf(A) * A.w * A.w + IOf(B) * B.w * B.w)]; };
-      if (o && o.pre) o.pre(A, B);
+      const iA = (o && o.iA) || idle, iB = (o && o.iB) || idle; if (o && o.pre) o.pre(A, B);
       let dp = 0, dE = -Infinity, wGl = 0, nan = false, hits = 0, first = null, h0 = B.h, turn = 0;
       for (let i = 1; i <= Math.round(secs / DT); i++) {
-        H.step(A, idle()); H.step(B, idle());
+        H.step(A, iA(i * DT)); H.step(B, iB(i * DT));
         const b = pE(), k0 = [A.vx, A.vz, A.w, B.vx, B.vz, B.w].join();
         C.carCollide(A, B);
         if (k0 !== [A.vx, A.vz, A.w, B.vx, B.vz, B.w].join()) { const a = pE(); hits++; dp = Math.max(dp, Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1])); dE = Math.max(dE, a[2] - b[2]); if (!first) first = { i, a: sv(A), b: sv(B), la: stateLine(A), lb: stateLine(B) }; }
@@ -241,10 +251,10 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   }
 
   // a thing by the road (Race.setProps: cone, tyre, bale, bstack, lamp) in the car's way, off m off its line; beside it the same run without the
-  // thing (the twin). loss: the speed lost to the twin at the last touch, % of the speed before the first. o.pre(c): before the first step
+  // thing (the twin). loss: the speed lost to the twin at the last touch, % of the speed before the first. o.pre(c): before the first step; o.id: the model
   function prop(tx, kind, kmh, off, secs, o) {
     return test(tx, () => {
-      const mk = (withProp) => { const race = mkRace(), P = race.player; placeCar(P, OV.px[I0], 0, 0, kmh / 3.6); if (o && o.pre) o.pre(P);
+      const mk = (withProp) => { const race = mkRace(o && o.id), P = race.player; placeCar(P, OV.px[I0], 0, 0, kmh / 3.6); if (o && o.pre) o.pre(P);
         if (withProp) { race.setProps([{ kind, x: P.x, z: P.z, yaw: 0, col: 0, i: I0 }], null); const K = race.props[0].K, ahead = P.circles[P.circles.length - 1] + P.rad + (K.reach || K.rh) + 0.6;
           race.setProps([{ kind, x: P.x + ahead, z: off, yaw: 0, col: 0, i: I0 }], null); }
         return race; };
@@ -254,7 +264,7 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
         const vb = Math.hypot(P.vx, P.vz); stepR(A, k); stepR(B, k);
         if (P.hitDebris > 0) { last = k; if (!first) { first = k; v0 = vb; st1 = sv(P); } loss = (Math.hypot(Q.vx, Q.vz) - Math.hypot(P.vx, P.vz)) / v0 * 100; }
         fast = Math.max(fast, Math.hypot(P.vx, P.vz) - Math.hypot(Q.vx, Q.vz)); if (!fin(P)) nan = true;
-        L.push(stateLine(P) + '|' + stateLine(A.props[0]));
+        L.push(stateLine(P) + '|' + stateLine(A.props[0]) + (P.tl ? '|' + stateLine(P.tl) : ''));
       }
       return { first, last, loss, fast, nan, st1, L, end: [loss, P.x, P.z, P.h * D, Math.hypot(P.vx, P.vz) * 3.6] };
     });
@@ -269,6 +279,174 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     ok('Realistična, the things by the road, limits: the car loses the speed the thing\'s mass takes: a cone under 0.5 %, a bale under 3.5 %, the heavier thing more at the same speed (cone, tyre, bale, stack) and every one less at 200 than at 60 km/h; Simulacija takes 20 times more at a cone',
       [60, 120, 200].every(v => l('cone-' + v) > 0 && l('cone-' + v) < 0.5 && l('bale-' + v) < 3.5 && l('cone-' + v) < l('tyre-' + v) && l('tyre-' + v) < l('bale-' + v) && l('bale-' + v) < l('bstack-' + v)) && KINDS.every(k => l(k + '-200') < l(k + '-60')) && sim.loss > 20 * l('cone-120'),
       `60 / 120 / 200 km/h: ${KINDS.map(k => `${k} ${[60, 120, 200].map(v => f(l(k + '-' + v), 2)).join(' / ')} %`).join('; ')}; Simulacija, a cone at 120: ${f(sim.loss, 2)} %`);
+  }
+
+  // -- no touch: a car that touches nothing drives the same to the last digit whatever the choice. Two races side by side, the same but for the
+  // choice: cv 1 and cv 6, each in a core of its own (the default is cv 1: the choice, above), the whole state after every step (raceState: the
+  // race, the cars, the debris). mk(K): the race in that core; o.drive(K, race, k): a driver in place of the autopilot; o.more(race): more state
+  const C1 = loadCore(), C6 = loadCore(), KS = [C1, C6]; C1.setTest(SIM); C6.setTest(REAL);
+  function twin(mk, secs, o) {
+    const R = KS.map(mk), P = R.map(r => r.player);
+    let touch = 0, diff = 0, fld = '', vmax = 0, hw = 0, wallAt = 0, pit = 0;
+    for (let k = 1; k <= Math.round(secs / DT); k++) {
+      const L = R.map((r, j) => { for (const c of r.cars) c.hitCar = c.hitWall = c.hitDebris = 0; Math.random = seeded(1000 + k);
+        if (o && o.drive) o.drive(KS[j], r, k); else KS[j].aiControl(P[j], r, DT); r.step(DT); return raceState(r) + (o && o.more ? '\n' + o.more(r) : ''); });
+      if (!touch && P.some(c => c.hitCar || c.hitWall || c.hitDebris || c.xgl || c.cSx || c.cSz || c.csKc)) touch = k;
+      if (!diff && L[0] !== L[1]) { diff = k; fld = field(L[0], L[1]); }
+      if (!wallAt && P[0].hitWall > 0) wallAt = k;
+      vmax = Math.max(vmax, P[0].speed); hw = Math.max(hw, P[0].hitWall, P[1].hitWall); if (P[0].inPit && P[1].inPit) pit++;
+    }
+    return { R, P, touch, diff, fld, vmax, hw, wallAt, pit };
+  }
+  const raceOn = (K, tid, o) => { Math.random = seeded(64); const r = new K.Race(new K.Track(K.TRACKS.find(d => d.id === tid)), Object.assign({ numAI: 0, playerGrid: 1, laps: 99, playerModel: K.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }, o)); r.start(); return r; };
+  // off the road from t0 to t1 s (the wheel hard over, full throttle), the autopilot otherwise
+  const into = (t0, t1) => (K, r, k) => { const c = r.player, t = k * DT; if (t >= t0 && t < t1) { c.inSteer = -1; c.inThr = 1; c.inBrk = 0; c.inHand = 0; c.digitalSteer = true; } else { c.digitalSteer = false; K.aiControl(c, r, DT); } };
+  // alone on a real track, cones standing by the barriers
+  function solo(tid, o) {
+    const pl = (r) => r.props.map(b => stateLine(b)).join('\n'); let p0 = null;
+    const t = twin((K) => { const r = raceOn(K, tid, { phys: o.phys || 'cs', rain: o.rain || 0 }), T = r.track, list = [];
+      for (let i = 0, n = 0; i < T.N; i += 25, n++) { const sd = n % 2 ? 1 : -1, B = sd > 0 ? T.br[i] : T.bl[i], w = T.wa ? T.wa[i] : T.w; if (B - 0.6 > w + 1.2) list.push({ kind: 'cone', x: T.px[i] + T.nx[i] * sd * (B - 0.6), z: T.pz[i] + T.nz[i] * sd * (B - 0.6), yaw: 0, col: 0, i }); }
+      r.setProps(list, null); if (p0 == null) p0 = pl(r); return r; }, o.secs, o);
+    const pe = t.R.map(pl);
+    return { touch: t.touch, diff: t.diff, fld: t.fld, vmax: t.vmax, cones: t.R[0].props.length, moved: pe[0] !== p0, props: pe[0] === pe[1], dist: t.P[0].dist };
+  }
+  // 100 km/h into the front part of a standing car (idB: its model), in Simulacija and in Realistična
+  const tb = (idB) => SR.tbone(HC, 100 / 3.6, 1.2, 1, idB), knS = knock(HC, SIM, tb(), 1, { lines: true }), knR = knock(HC, REAL, tb(), 1, { lines: true });
+  {
+    const all = [['spa', 0, 'cs'], ['spa', 1, 'cs'], ['bathurst', 0, 'cs'], ['bathurst', 1, 'cs'], ['spa', 0, 'nova']].map(([tid, rain, phys]) => Object.assign(solo(tid, { rain, phys, secs: phys === 'nova' ? 20 : 60 }), { name: `${tid} ${rain ? 'wet' : 'dry'}${phys === 'nova' ? ' (the new physics, 20 s)' : ''}` }));
+    const bad = all.find(x => x.diff || x.touch || x.moved || !x.props);
+    ok('Realistična, no touch: alone on Spa and Bathurst (60 s on the autopilot, dry and wet; cones standing by the barriers) the whole state of the race and of the car after every step is the same in cv 6 as in cv 1; the car touches nothing there (no knock, barrier or thing, no grip lost, no slide left by a knock) and no cone moves',
+      all.every(x => !x.diff && !x.touch && !x.moved && x.props && x.cones >= 20 && x.dist > 300),
+      bad ? `${bad.name}: ${bad.touch ? `the scenario touched something at step ${bad.touch}` : bad.diff ? `cv 6 differs from cv 1 at step ${bad.diff}: ${bad.fld}` : 'a cone moved or the cones differ'}`
+        : all.map(x => `${x.name}: ${f(x.dist, 0)} m, top ${f(x.vmax * 3.6, 0)} km/h, ${x.cones} cones`).join('; '));
+    // the control: the same comparison finds a touch
+    const cr = solo('spa', { secs: 12, drive: into(6, 8.5) }), kd = firstDiff(knS.L, knR.L);
+    ok('Realistična, no touch, the control: the same comparison finds a touch: turned off the road at Spa after 6 s, cv 6 and cv 1 are the same up to the first touch and differ within a second of it; 100 km/h into the front part of a standing car: the same up to the first knock, different from that step on',
+      cr.touch > 0 && cr.diff >= cr.touch && cr.diff <= cr.touch + 120 && !!knS.first && !!knR.first && knS.first.i === knR.first.i && kd === knS.first.i,
+      `Spa: the first touch at step ${cr.touch}, the first difference at step ${cr.diff} (${cr.fld}); the plane: the first knock at step ${knS.first ? knS.first.i : '?'}, the first difference at step ${kd}`);
+  }
+  // the plane with given inputs, both physics: a slalom, braking into a turn, a handbrake turn, grass
+  {
+    const stepIn = (H, c, I) => { c.inSteer = I.st || 0; c.inThr = I.thr || 0; c.inBrk = I.brk || 0; c.inHand = I.hand || 0; c.steer += C.clamp(c.inSteer - c.steer, -6 * DT, 6 * DT); c.step(DT, H.plane); };
+    const DRV = {
+      slalom: { v: 100, I: (t) => ({ st: 0.5 * Math.sin(2 * Math.PI * t / 2.4), thr: 0.4 }) },
+      braking: { v: 150, I: (t) => (t < 0.5 ? { thr: 1 } : { brk: 0.9, st: t < 2.5 ? 0.3 : 0 }) },
+      handbrake: { v: 90, I: (t) => (t < 0.5 ? { thr: 0.5 } : t < 1.6 ? { st: 0.8, hand: 1 } : { st: -0.3, thr: 0.6 }) },
+      grass: { v: 80, surf: 2, I: (t) => ({ st: 0.4 * Math.sin(2 * Math.PI * t / 3), thr: 0.7 }) },
+    };
+    const drive = (H, tx, k) => test(tx, () => { const d = DRV[k], c = H.mkCar('rally', { v: d.v }), L = []; let turn = 0, h = c.h; H.surf(d.surf || 0);
+      try { for (let i = 1; i <= Math.round(5 / DT); i++) { stepIn(H, c, d.I(i * DT)); turn += Math.abs(wrap(c.h - h)); h = c.h; L.push(stateLine(c)); } } finally { H.surf(0); }
+      return { L, touch: !!(c.xgl || c.cSx || c.cSz || c.csKc), turn: turn * D, v: c.speed * 3.6, nan: !fin(c) }; });
+    const res = []; for (const [H, ph] of [[HC, 'classic'], [HN, 'new']]) for (const k in DRV) { const d = drive(H, null, k), s = drive(H, SIM, k), r = drive(H, REAL, k); res.push({ name: `${k} (${ph})`, d, s, r, ok: same(d.L, s.L) && same(s.L, r.L) && !r.touch && !r.nan && r.turn > 20, at: firstDiff(s.L, r.L) || firstDiff(d.L, s.L) }); }
+    const bad = res.find(x => !x.ok);
+    ok('Realistična, no touch, the plane: with the same inputs (a slalom at 100 km/h, braking from 150 km/h into a turn, a handbrake turn at 90 km/h, grass at 80 km/h; 5 s each, the classic and the new physics) the car\'s whole state after every step is the same in cv 6, in cv 1 and by default',
+      res.length === 8 && !bad, bad ? `${bad.name}: ${bad.at ? `differs at step ${bad.at}: ${field(bad.s.L[bad.at - 1], bad.r.L[bad.at - 1])}` : 'the scenario touched something or did not drive'}` : res.map(x => `${x.name}: ${f(x.r.v, 0)} km/h, turned ${f(x.r.turn, 0)} deg`).join('; '));
+  }
+
+  // through a race's own step (the car's step, the barrier, a semi-trailer's kingpin and its barrier): a lone car on the straight, th deg off
+  // the road toward the barrier on the side. first: the first step with a touch (firstC the car's, firstT its trailer's)
+  function ride(tx, id, th, kmh, side, secs) {
+    return test(tx, () => {
+      const race = mkRace(id), c = race.player, P = spot(c, side, th / D, 0.3), L = [], tl = c.tl, t2 = tl && tl.next;
+      placeCar(c, P.x, P.z, P.h, kmh / 3.6);
+      let firstC = 0, firstT = 0, nan = false;
+      for (let k = 1; k <= Math.round(secs / DT); k++) {
+        c.wallX = NaN; if (tl) tl.wallX = NaN; if (t2) t2.wallX = NaN;
+        stepR(race, k);
+        if (!firstC && !Number.isNaN(c.wallX)) firstC = k; if (!firstT && ((tl && !Number.isNaN(tl.wallX)) || (t2 && !Number.isNaN(t2.wallX)))) firstT = k;
+        if (!fin(c)) nan = true; L.push(stateLine(c) + (tl ? '|' + stateLine(tl) : ''));
+      }
+      const q = OV.query(c.x, c.z, c.q.i, _cq);
+      return { first: firstC && firstT ? Math.min(firstC, firstT) : firstC || firstT, firstC, firstT, nan, L, end: [q.s, q.d, wrap(c.h - OV.hd[q.i]) * D, Math.hypot(c.vx, c.vz) * 3.6] };
+    });
+  }
+
+  // -- the other versions: the same knock, barrier and thing by the road end in the same state as before Realistična got rules of its own. The
+  // reference tests/golden/trki.json keeps, for every version, a digest of the whole state after every step (and the end, to read). After a
+  // wanted change of a version: node tests/trki.test.js --update
+  {
+    const digest = (L) => crypto.createHash('sha256').update(L.join('\n')).digest('hex').slice(0, 24);
+    const gold = {}, ref = (key, r) => { gold[key] = { digest: digest(r.L), end: r.end.map(x => +x.toFixed(3)) }; };
+    const sc = (k) => (H) => { const S = SC[k](H); return [{ A: S.P, B: S.O }, { iA: S.iP, iB: S.iO, lines: true }, 2]; }, sr = (mk) => (H) => [mk(H), { lines: true }, 1.5];
+    const GK = [['stand', HC, sc('stand')], ['bump', HC, sc('bump')], ['drift3', HC, sc('drift3')], ['rub', HC, sc('rub')], ['pit', HC, sc('pit')], ['pit-nova', HN, sc('pit')],
+      ['tbone-front-120', HC, sr(H => SR.tbone(H, 120 / 3.6, 1.2, 1))], ['tbone-rear-60', HC, sr(H => SR.tbone(H, 60 / 3.6, -1.2, 1))], ['head-off-120', HC, sr(H => SR.head(H, 120 / 3.6, 0.6, 1))],
+      ['rear-off-120', HC, sr(H => SR.rear(H, 120 / 3.6, 0.6, 1))], ['pit-60-rear-8', HC, sr(H => SR.pit(H, 60 / 3.6, 8, 1, 0))], ['pit-120-front-4', HC, sr(H => SR.pit(H, 120 / 3.6, 4, 1, 1))]];
+    const GW = [[5, 60], [15, 120], [30, 120], [90, 60], [85, 120]], GP = [['cone', 120], ['tyre', 60], ['bale', 120], ['bstack', 60], ['lamp', 60]];
+    for (const [id, tx] of VS) {
+      for (const [name, H, mk] of GK) { const [S, o, secs] = mk(H); ref(`knock/${name}/${id}`, knock(H, tx, S, secs, o)); }
+      for (const [th, kmh] of GW) ref(`wall/${th}-${kmh}/${id}`, wall(tx, th, kmh, 1, 2));
+      for (const [kind, kmh] of GP) ref(`prop/${kind}-${kmh}/${id}`, prop(tx, kind, kmh, 0, 1.2));
+      ref(`rig/wall-15-90/${id}`, ride(tx, RIG, 15, 90, 1, 2));
+    }
+    const keys = Object.keys(gold), G0 = !UPDATE && fs.existsSync(GFILE) ? JSON.parse(fs.readFileSync(GFILE, 'utf8')) : {};
+    if (UPDATE) { fs.writeFileSync(GFILE, JSON.stringify(gold, null, 1) + '\n'); console.log(`reference written: tests/golden/trki.json (${keys.length} entries)`); }
+    const bad = UPDATE ? [] : keys.filter(k => !G0[k] || G0[k].digest !== gold[k].digest), gone = UPDATE ? [] : Object.keys(G0).filter(k => !gold[k]);
+    for (const k of bad) console.log(G0[k] ? `CHANGED ${k} (was ${G0[k].digest} [${G0[k].end}], now ${gold[k].digest} [${gold[k].end}])` : `NO REFERENCE ${k}`);
+    for (const k of gone) console.log(`NOT RUN ${k}`);
+    const dg = (k) => gold[k].digest, five = ['sim', 'arc', 'soft', 'stunt', 'old'], eq = (grp, ids) => keys.filter(k => k.startsWith(grp) && k.endsWith('/' + ids[0])).every(k => ids.every(id => dg(k.replace(/[^/]+$/, id)) === dg(k)));
+    const mine = keys.filter(k => k.endsWith('/real') && !k.startsWith('rig/')), own = mine.filter(k => dg(k) !== dg(k.replace(/real$/, 'sim'))), asSim = mine.filter(k => !own.includes(k)).map(k => k.replace(/\/real$/, ''));
+    ok('the versions, the reference (tests/golden/trki.json): 12 knocks between cars, 5 barriers, 5 things by the road and a truck with its semi-trailer at the barrier end in the recorded state in each of the six versions (the whole state after every step); the barrier and the things are the same in cv 1 to 5 (the walls as they were); Realistična has its own in at least 14 of the 22 scenes and Simulacija\'s for the truck with its trailer',
+      keys.length === 23 * 6 && !bad.length && !gone.length && eq('wall/', five) && eq('prop/', five) && eq('rig/', ['sim', 'old', 'real']) && own.length >= 14,
+      UPDATE ? `${keys.length} entries written` : bad.length || gone.length ? `${bad.length} changed or without a reference, ${gone.length} not run: ${bad.concat(gone).slice(0, 6).join(', ')}` : `${keys.length} entries; Realistična differs from Simulacija in ${own.length} of ${mine.length} (as Simulacija: ${asSim.join(', ') || 'none'})`);
+  }
+
+  // -- the exemptions (Core krOn): a truck with its semi-trailer (c.tl), a car in the run from the police (c.ck) and a car in the pit lane (c.inPit)
+  // keep Simulacija's rules in Realistična at each of the places that ask: the knock (kTake), the slide a knock leaves (stepCS), the barrier
+  // (wallCollide) and the things by the road (propCarHit). Beside each scene the same one without the mark, which does differ
+  // the slide a knock leaves, made by hand as kTake leaves it: 8 m/s across at 100 km/h, no inputs
+  const slide = (tx, id, pre) => test(tx, () => { const c = HC.mkCar(id || 'rally', { v: 100 }), L = []; c.vz += 8; c.cSx = 0; c.cSz = 8; c.cSr = 8; if (pre) pre(c);
+    for (let i = 0; i < Math.round(1.5 / DT); i++) { HC.step(c, idle()); L.push(stateLine(c)); } return L; });
+  const two = (fn) => [fn(SIM), fn(REAL)], eqL = (p) => p[0].length > 0 && same(p[0], p[1]), lines = (p) => p.map(x => x.L);
+  {
+    // without a mark every one of the four differs
+    const sl0 = two(tx => slide(tx)), w0 = [wl['30/120'].s, wl['30/120'].r], p0 = [prop(SIM, 'bale', 120, 0, 1.2), pr['bale-120'].r];
+    const base = !eqL(sl0) && !eqL(lines(w0)) && w0[0].first > 0 && !eqL(lines(p0)) && p0[0].first > 0 && knS.first.lb !== knR.first.lb;
+
+    // a truck with its semi-trailer; the same tractor without one is not exempt
+    const TR = 'titan', rw = two(tx => ride(tx, RIG, 15, 90, 1, 2)), tw = two(tx => ride(tx, TR, 15, 90, 1, 2)), rp = two(tx => prop(tx, 'bale', 60, 0, 1.2, { id: RIG })), tp = two(tx => prop(tx, 'bale', 60, 0, 1.2, { id: TR }));
+    const rs = two(tx => slide(tx, RIG)), ts = two(tx => slide(tx, TR)), rk = two(tx => knock(HC, tx, tb(RIG), 1, { lines: true })), tk = two(tx => knock(HC, tx, tb(TR), 1, { lines: true }));
+    const lb = (p) => (p[0].first && p[1].first && p[0].first.i === p[1].first.i ? p[0].first.lb === p[1].first.lb : null);
+    ok('Realistična, exempt: a truck with its semi-trailer keeps Simulacija\'s rules: at the barrier (15 deg, 90 km/h, through the race\'s step: the tractor and the trailer both touch it), at a bale and in the slide a knock leaves its whole state after every step is the same in cv 6 as in cv 1, and hit by a car at 100 km/h it takes its share as in cv 1; the same tractor without the trailer differs in all four',
+      base && !!RIG && model(RIG).mass === model(TR).mass && !model(TR).trailer && eqL(lines(rw)) && rw[0].firstC > 1 && rw[0].firstT > 1 && !rw[1].nan && eqL(lines(rp)) && rp[0].first > 0 && eqL(rs) && lb(rk) === true
+        && !eqL(lines(tw)) && firstDiff(tw[0].L, tw[1].L) === tw[0].first && !eqL(lines(tp)) && !eqL(ts) && lb(tk) === false,
+      `${RIG}: the tractor touches the barrier at step ${rw[0].firstC}, the trailer at step ${rw[0].firstT}, the bale at step ${rp[0].first} (loss ${f(rp[0].loss, 2)} / ${f(rp[1].loss, 2)} %); ${TR}: the barrier at step ${tw[0].first}, cv 6 differs from step ${firstDiff(tw[0].L, tw[1].L)}; the bale ${f(tp[0].loss, 2)} / ${f(tp[1].loss, 2)} %; without a mark ${base ? 'all four differ' : 'NOT all four differ'}`);
+
+    // the run from the police: the game's own mark on a real run (Chapman's Peak: an open road with traffic and a patrol car), turned into the barrier
+    const ckOf = (c) => { c.ck = { m: mOf(c) + 90, gl: 0, glT: 1 }; };
+    const ch = twin((K) => raceOn(K, 'chapman', { laps: 1, seed: 11, difficulty: 3, police: true }), 9, { drive: into(4, 6.5), more: (r) => r.pol.cars.map(c => stateLine(c)).join('\n') });
+    const cw = two(tx => wall(tx, 30, 120, 1, 2, { pre: ckOf })), cp = two(tx => prop(tx, 'bale', 120, 0, 1.2, { pre: ckOf })), cs = two(tx => slide(tx, 'rally', ckOf));
+    const ck1 = two(tx => knock(HC, tx, tb(), 1, { lines: true, pre: (A, B) => ckOf(B) })), ck2 = two(tx => knock(HC, tx, tb(), 1, { lines: true, pre: (A, B) => { ckOf(A); ckOf(B); } }));
+    ok('Realistična, exempt: a car in the run from the police keeps Simulacija\'s rules: a real run (Chapman\'s Peak, the player\'s car with the chase\'s mark, turned into the barrier after 4 s) is the same in cv 6 as in cv 1 after every step, the patrol car with it; a car with the mark at the barrier (30 deg, 120 km/h), at a bale and in the slide a knock leaves is the same after every step; hit at 100 km/h it takes its share as in cv 1 (two cars with the mark: the same to the end)',
+      base && !!ch.P[0].ck && !!ch.P[1].ck && ch.R[0].pol.cars.length > 0 && ch.hw > 3 && !ch.diff && eqL(lines(cw)) && cw[0].first > 0 && eqL(lines(cp)) && cp[0].first > 0 && eqL(cs) && lb(ck1) === true && eqL(lines(ck2)) && !same(ck1[0].L, ck1[1].L),
+      `the run: ${ch.R[0].pol.cars.length} patrol car(s), the barrier first at step ${ch.wallAt} (the hardest ${f(ch.hw, 1)} m/s), ${ch.diff ? `cv 6 differs at step ${ch.diff}: ${ch.fld}` : 'no difference'}; the barrier at step ${cw[0].first}, the bale ${f(cp[0].loss, 2)} / ${f(cp[1].loss, 2)} % (without the mark ${f(p0[0].loss, 2)} / ${f(p0[1].loss, 2)} %)`);
+
+    // the pit lane: a real one (Spa: the car in the middle of the lane, 30 deg toward its wall at 55 km/h, the race's own step keeps it in the lane)
+    const inPit = (c) => { c.inPit = true; };
+    const pl = twin((K) => { const r = raceOn(K, 'spa', { laps: 9 }), T = r.track, c = r.player, P = T.def.pit, sM = T.startS + (P[1] + P[2]) / 2, i = Math.round((((sM % T.len) + T.len) % T.len) / T.ds) % T.N, pz = T.pitAt(i * T.ds), d = pz.o * pz.sd, h = T.hd[i] + pz.sd * 30 / D;
+      c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, h); c.locked = false; c.steer = 0; c.inSteer = c.inThr = c.inBrk = c.inHand = 0; c.digitalSteer = true; c.vx = Math.cos(h) * 55 / 3.6; c.vz = Math.sin(h) * 55 / 3.6; c.gear = 2;
+      c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s; c.inPit = true; return r; }, 2, { drive: () => {} });
+    const pw = two(tx => wall(tx, 30, 120, 1, 2, { pre: inPit })), pp = two(tx => prop(tx, 'bale', 120, 0, 1.2, { pre: inPit })), ps = two(tx => slide(tx, 'rally', inPit));
+    const pk = two(tx => knock(HC, tx, tb(), 1, { lines: true, pre: (A, B) => inPit(B) })), po = knock(HC, OLD, tb(), 1, { lines: true, pre: (A, B) => inPit(B) });
+    ok('Realistična, exempt: a car in the pit lane keeps Simulacija\'s rules: in a real pit lane (Spa, 30 deg into the lane\'s wall at 55 km/h, in the lane at every step) the whole state after every step is the same in cv 6 as in cv 1; a car with the lane\'s mark at the barrier (30 deg, 120 km/h), at a bale and in the slide a knock leaves is the same after every step; a knock on it is the old knock (Stara\'s) in both',
+      base && pl.pit === Math.round(2 / DT) && pl.hw > 3 && !pl.diff && eqL(lines(pw)) && pw[0].first > 0 && eqL(lines(pp)) && pp[0].first > 0 && eqL(ps) && eqL(lines(pk)) && pk[0].hits > 0 && same(pk[1].L, po.L),
+      `the lane: in it for ${pl.pit} steps, its wall first at step ${pl.wallAt} (the hardest ${f(pl.hw, 1)} m/s), ${pl.diff ? `cv 6 differs at step ${pl.diff}: ${pl.fld}` : 'no difference'}; the barrier at step ${pw[0].first}, the bale ${f(pp[0].loss, 2)} / ${f(pp[1].loss, 2)} %; the knock: ${pk[0].hits} touches, the car hit turned ${f(pk[1].turn, 1)} deg (without the mark ${f(knR.turn, 1)}, Simulacija ${f(knS.turn, 1)})`);
+  }
+
+  // -- the online race: with a friend's car in the race the game gives the core no choice (js/game.js testOf(net): {}), so the knocks are
+  // Simulacija's on both sides whatever is chosen in the menu
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8'), m = /const testOf = \(net\) => \{[^\n]*\n[^\n]*\}; \};/.exec(src);
+    let on = null, off = null, err = '';
+    try { const S = new Proxy({ crV: 5 }, { get: (o, k) => (k in o ? o[k] : 0) }), LV = new Proxy({}, { get: () => [null] });
+      const testOf = new Function('S', 'TEST_LV', m[0] + '\nreturn testOf;')(S, LV); on = testOf(true); off = testOf(false); } catch (e) { err = String(e && e.message || e); }
+    C.setTest(on || REAL); const cvOn = C.TX.cv; C.setTest(off); const cvOff = C.TX.cv; C.setTest(null);
+    const calls = (src.match(/setTest\(/g) || []).length, via = (src.match(/Core\.setTest\(testOf\(/g) || []).length;
+    // a friend's car (net) into the front part of the standing local car: the local car takes its share by the version
+    const net = (tx) => { const S = tb(); S.A.net = true; return knock(HC, tx, S, 1, { lines: true }); };
+    const nOn = net(on || REAL), nS = net(SIM), nR = net(REAL);
+    ok('the online race: with a friend\'s car in the race the game gives the core no choice (js/game.js: testOf(true) is {}, and every Core.setTest there goes through testOf), so Realistična chosen in the menu (testOf(false): cv 6) is Simulacija online: a friend\'s car into the local one ends as Simulacija\'s to the last digit, not as Realistična\'s',
+      !!m && !err && !!on && JSON.stringify(on) === '{}' && !!off && off.cv === 6 && cvOn === null && cvOff === 6 && calls > 0 && calls === via && !!nOn.first && same(nOn.L, nS.L) && !same(nR.L, nS.L),
+      err || `testOf(true) ${JSON.stringify(on)}, testOf(false).cv ${off && off.cv}; setTest calls in the game ${calls}, through testOf ${via}; the local car turned ${f(nOn.turn, 1)} deg (Simulacija ${f(nS.turn, 1)}, Realistična ${f(nR.turn, 1)})`);
   }
 }
 
@@ -356,22 +534,28 @@ function race(tid, tx) {
   return test(tx, () => {
     Math.random = seeded(64); const T = new C.Track(C.TRACKS.find(d => d.id === tid));
     const r = new C.Race(T, { numAI: 12, playerGrid: 12, laps: 5, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); r.start();
-    const sp = new Map(), glue = new Map(); let spins = 0, glued = 0, nan = false, hits = 0;
+    const sp = new Map(), glue = new Map(), pv = new Map(); let spins = 0, glued = 0, nan = false, hits = 0, gain = 0, gainAt = '', top = 0, wmax = 0;
     for (let k = 1; k <= 150 / DT; k++) {
       Math.random = seeded(1000 + k); C.aiControl(r.player, r, DT); r.step(DT);
       for (const c of r.cars) { if (!Number.isFinite(c.x + c.z + c.vx + c.vz + c.w)) nan = true; if (c.hitCar > 3) hits++; c.hitCar = 0;
+        const v = Math.hypot(c.vx, c.vz), p = pv.get(c); if (p != null && v - p > gain) { gain = v - p; gainAt = `${c.m.id} ${f(p * 3.6, 0)} -> ${f(v * 3.6, 0)} km/h at ${f(k * DT, 1)} s`; } pv.set(c, v); top = Math.max(top, v * 3.6); wmax = Math.max(wmax, Math.abs(c.w));   // (the most speed gained in a step: a knock; the fastest; the fastest turn)
         const s = Math.abs(c.beta || 0) > 0.7 && c.speed > 8; if (s && !sp.get(c)) spins++; sp.set(c, s); }
       if (k % 12 === 0) for (let a = 0; a < r.cars.length; a++) for (let b = a + 1; b < r.cars.length; b++) { const A = r.cars[a], B = r.cars[b], dx = B.x - A.x, dz = B.z - A.z; if (dx * dx + dz * dz > 36) { glue.set(a * 100 + b, 0); continue; }
         const ch = Math.cos(A.h), sh = Math.sin(A.h), lx = dx * ch + dz * sh, lz = -dx * sh + dz * ch, touch = Math.abs(lx) < A.m.len * 0.9 && Math.abs(lz) < (A.m.wid + B.m.wid) * 0.5 + 0.08 && A.speed > 5;
         const n = touch ? (glue.get(a * 100 + b) || 0) + 1 : 0; glue.set(a * 100 + b, n); if (n === 20) glued++; }
     }
-    return { nan, spins, glued, hits, moving: r.cars.filter(c => c.speed > 5).length, n: r.cars.length };
+    return { nan, spins, glued, hits, gain, gainAt, top, wmax, moving: r.cars.filter(c => c.speed > 5).length, n: r.cars.length };
   });
 }
 for (const tid of ['spa', 'bathurst']) {
-  const res = [SIM, ARC, SOFT, STUNT, OLD].map(tx => race(tid, tx)), nm = ['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska', 'Stara'];
-  ok(`race ${tid} in every version: nothing NaN, every car moving, no two cars glued side by side for 2 s, spins at most 4 in Simulacija, Arkadna and Mehka`,
-    res.every(x => !x.nan && x.moving === x.n && x.glued === 0) && res.slice(0, 3).every(x => x.spins <= 4), res.map((x, i) => `${nm[i]}: ${x.hits} knocks, ${x.spins} spins, ${x.glued} glued, ${x.moving}/${x.n} moving`).join('; '));
+  const res = [SIM, ARC, SOFT, REAL, STUNT, OLD].map(tx => race(tid, tx)), nm = ['Simulacija', 'Arkadna', 'Mehka', 'Realistična', 'Kaskaderska', 'Stara'];
+  ok(`race ${tid} in every version: nothing NaN, every car moving, no two cars glued side by side for 2 s, spins at most 4 in Simulacija, Arkadna, Mehka and Realistična`,
+    res.every(x => !x.nan && x.moving === x.n && x.glued === 0) && res.slice(0, 4).every(x => x.spins <= 4), res.map((x, i) => `${nm[i]}: ${x.hits} knocks, ${x.spins} spins, ${x.glued} glued, ${x.moving}/${x.n} moving`).join('; '));
+  // Realistična: no launch (a knock gives a car no speed and no turn out of nothing)
+  const R6 = res[3], others = res.filter(x => x !== R6), topO = Math.max(...others.map(x => x.top));
+  ok(`race ${tid} in Realistična, no launch: no knock gives a car more than 8 m/s in a step, no car is faster than the fastest of the other versions by more than 5 km/h and none turns faster than 9 rad/s`,
+    !R6.nan && R6.gain < 8 && R6.top < topO + 5 && R6.wmax <= 9 + 1e-9,
+    `the most gained in a step ${f(R6.gain, 2)} m/s (${R6.gainAt}; the other versions ${f(Math.max(...others.map(x => x.gain)), 2)}), the fastest ${f(R6.top, 0)} km/h (the other versions ${f(topO, 0)}), the fastest turn ${f(R6.wmax, 2)} rad/s`);
 }
 
 let bad = 0;
