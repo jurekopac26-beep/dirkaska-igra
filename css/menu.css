@@ -541,7 +541,8 @@ svg { display: block; }
 .nbrs { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 14px 0; }
 .nb { position: relative; height: 54px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; background: #3b4352 center / 100% 100% no-repeat; border: 2px solid rgba(255, 255, 255, .85);
   box-shadow: 0 4px 0 rgba(0, 0, 0, .35), 0 8px 16px rgba(0, 0, 0, .35); }
-.nb img { height: 100%; width: auto; display: block; }
+.nb img { position: relative; height: 100%; width: auto; display: block; }
+.nb .edge { position: absolute; inset: 0; width: 100%; height: 100%; }   /* (js/sence.js: the flag's last sliver, under it) */
 .nb i { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 24px; filter: drop-shadow(0 0 2px rgba(0, 0, 0, .9)) drop-shadow(0 1px 3px rgba(0, 0, 0, .6)); }
 .nb i svg { width: 100%; height: 100%; }
 .nb.l i { left: 14%; } .nb.r i { right: 10%; }
