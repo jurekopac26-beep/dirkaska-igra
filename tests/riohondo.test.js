@@ -115,7 +115,7 @@ const past = (x, z) => { const q = near(x, z); return Math.abs(q.lat) - (q.lat >
   check('names: only places and plain descriptions (no name of the circuit, its stands, races or sponsors), the boards of the world\'s file too',
     ban.includes('RÍO HONDO') && !/aut[oó]dromo|internacional|international|moto ?gp|grand prix|\bgp\b|formula|tc ?2000|turismo carretera|gobierno|provincial|circuito/i.test(words));
 }
-// 6. a whole race: 12 AI and the player on the autopilot, 2 laps, everyone to the finish without a rescue; in the rain 3-15 % slower
+// 6. a whole race: 12 AI and the player on the autopilot, 2 laps, everyone to the finish without a rescue; in the rain 10-25 % slower (a third less grip in the wet: docs/dez-sneg.md)
 const race = (rain) => {
   const orig = Math.random; Math.random = seeded(3);
   try {
@@ -129,7 +129,7 @@ const race = (rain) => {
 {
   const d = race(0), w = race(1);
   check('race: 13 cars, 2 laps, all to the finish, no rescue; the winner in 3-5 min', d.fin === 13 && d.cars === 13 && !d.resc && d.win > 180 && d.win < 300, `${d.fin}/${d.cars}, winner ${d.win && d.win.toFixed(2)} s, ${d.resc} rescues`);
-  check('race in the rain: all to the finish, no rescue, the winner 3-15 % slower', w.fin === 13 && !w.resc && w.win / d.win > 1.03 && w.win / d.win < 1.15, `${w.fin}/${w.cars}, winner ${w.win && w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower)`);
+  check('race in the rain: all to the finish, no rescue, the winner 10-25 % slower', w.fin === 13 && !w.resc && w.win / d.win > 1.1 && w.win / d.win < 1.25, `${w.fin}/${w.cars}, winner ${w.win && w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower)`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

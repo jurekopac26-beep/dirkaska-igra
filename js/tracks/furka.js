@@ -35,7 +35,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: FURKA_H.map((h, i) => [i / (FURKA_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [138, 145, 156], wet: { cs: [150, 157, 169] } },
+    medals: { cs: [138, 145, 156], wet: { cs: [165, 173, 187] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; a
     // summer road over a famous Alpine pass: cars and campers, very many motorbikes, a few coaches, hardly a truck, and cyclists on the climb
     traffic: { mix: [0.5, 0.17, 0.04, 0.27, 0.02], bike: 900 },

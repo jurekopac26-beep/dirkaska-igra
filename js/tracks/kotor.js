@@ -34,7 +34,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: KOTOR_H.map((h, i) => [i / (KOTOR_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [174, 183, 197], wet: { cs: [189, 199, 213] } },
+    medals: { cs: [174, 183, 197], wet: { cs: [208, 218, 235] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // summer road up from the bay: cars (many hired), the vans and the tourists' minibuses and coaches up to Lovćen and back, motorbikes, no
     // lorries on the narrow hairpins, and a few cyclists on the climb

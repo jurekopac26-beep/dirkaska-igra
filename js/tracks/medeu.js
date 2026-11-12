@@ -33,7 +33,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: MEDEU_H.map((h, i) => [i / (MEDEU_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [139, 146, 157], wet: { cs: [151, 158, 170] } },
+    medals: { cs: [139, 146, 157], wet: { cs: [166, 175, 188] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the road up
     // from the city's favourite outing: cars and taxis, many minibuses and buses, a few motorbikes and service trucks
     traffic: { mix: [0.5, 0.22, 0.12, 0.1, 0.06], bike: 3000 },

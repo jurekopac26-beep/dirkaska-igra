@@ -38,7 +38,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'grass', gradeForce: true, elevSmooth: 6,
     elev: ESP_H.map((h, i) => [i / (ESP_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [151, 158, 170], wet: { cs: [165, 173, 186] } },
+    medals: { cs: [151, 158, 170], wet: { cs: [182, 191, 206] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // old road since the motorway took its long-distance traffic: the locals' cars and pickups, motorbikes (the bikers' favourite road), a few
     // buses and logging lorries, the odd cyclist

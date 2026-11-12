@@ -100,7 +100,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     roadSurface: 'makadam', runoff: 0.25, inner: 2.0, side: 2.2, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
     elev: KILLAR_H.map((h, i) => [i / (KILLAR_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[122,128,138],"wet":{"cs":[135,141,152]}},
+    medals: {"cs":[122,128,138],"wet":{"cs":[151,159,171]}},
     // the dust off the dry gravel (Render): a pale grey-brown cloud, the colour of the mountainside's schist
     dust: { rate: 1.2, life: 1.9, size: 1.3, s0: 2.3, rise: 1.3, alpha: 0.9, drag: 0.6, col: [0.7, 0.66, 0.6] },
     // the bridge over the Hangrung Nala (OpenStreetMap: the stream crosses the road there): [from, to] in metres after the start line

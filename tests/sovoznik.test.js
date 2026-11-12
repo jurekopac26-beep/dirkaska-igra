@@ -25,7 +25,7 @@ const roads = C.TRACKS.filter(d => C.codrvRoad(d));
 {
   const ids = roads.map(d => d.id);
   check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, no circuit',
-    ROADS.length >= 10 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test) && !ids.some(id => US.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
+    ROADS.length >= 9 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test) && !ids.some(id => US.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
     `${ids.length}: ${ids.join(' ')}${ROADS.length < PLAN.length ? ' (of the plan now test tracks: ' + PLAN.filter(id => !ROADS.includes(id)).join(' ') + ')' : ''}`);
 }
 

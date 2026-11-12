@@ -44,7 +44,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the sea beyond the corridor (irFar: the far model's wet nodes, all flat at its level, 0 m)
     far: { lake: [0, 0, 0] },
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.055 (silver), x 1.13 (bronze); the rain x 1.08 (cs: Circuit Superstars physics)
-    medals: { cs: [180, 190, 203], wet: { cs: [194, 205, 219] } },
+    medals: { cs: [180, 190, 203], wet: { cs: [229, 240, 258] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // island's road: cars and pick-ups, the shared minibuses between the villages and the port, a few motorbikes and lorries, rare cyclists on the cobbles
     traffic: { mix: [0.44, 0.22, 0.2, 0.09, 0.05], bike: 6000 },

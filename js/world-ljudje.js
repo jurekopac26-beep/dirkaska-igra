@@ -1592,7 +1592,6 @@
     rastro: [['piknik', 4432, -1]],
     rbring: [['vhod', 216, -1], ['gasilci', 896, -1], ['marsali', 1704, -1], ['zar', 2488, -1], ['oder', 3112, 1], ['foto', 3560, 1]],
     spa: [['vhod', 170, -1], ['foto', 870, -1], ['marsali', 1360, 1], ['ogenj', 1864, 1], ['tribuna', 4280, 1], ['gasilci', 5560, 1], ['zar', 6288, 1]],
-    suzuka: [['tribuna', 118, 1], ['vhod', 806, -1], ['foto', 2022, 1], ['gasilci', 4070, -1], ['marsali', 5078, 1]],
   };
   // the fans' flags by the track's country (horizontal stripes, no emblems): Germany, Belgium (as stripes), Australia's green and gold, Finland
   const vert = (a) => Object.assign(a, { vert: true });

@@ -34,7 +34,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: IZOARD_H.map((h, i) => [i / (IZOARD_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [186, 196, 210], wet: { cs: [201, 211, 227] } },
+    medals: { cs: [186, 196, 210], wet: { cs: [223, 234, 251] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; a
     // summer road over a famous col: cars and campers, many motorbikes, hardly a coach or a truck, and cyclists all the way up
     traffic: { mix: [0.52, 0.16, 0.02, 0.28, 0.02], bike: 600 },

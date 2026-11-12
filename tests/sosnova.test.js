@@ -107,7 +107,7 @@ const turnIn = (s0, s1) => { let a = 0; for (let d = s0; d <= s1; d += T.ds) a +
     over === 3 && times >= 10 && kv400 === 2 && inside.every(q => q.lat < 0 && q.d < eh && q.d > eh - 100),
     `${over} lines over it ${times} times, the 400 kV line ${kv400} times; ${inside.length} of ${pylons} poles inside the barriers (at ${inside.map(q => Math.round(q.d)).join(', ')} m; the east hairpin at ${Math.round(eh)} m)`);
 }
-// 6. a whole race: 12 AI and the player on the autopilot, 2 laps, everyone to the finish without a rescue; in the rain 3-15 % slower
+// 6. a whole race: 12 AI and the player on the autopilot, 2 laps, everyone to the finish without a rescue; in the rain 10-25 % slower (a third less grip in the wet: docs/dez-sneg.md)
 const race = (rain) => {
   const orig = Math.random; Math.random = seeded(3);
   try {
@@ -121,7 +121,7 @@ const race = (rain) => {
 {
   const d = race(0), w = race(1);
   check('race: 13 cars, 2 laps, all to the finish, no rescue; the winner in 1.5-3 min', d.fin === 13 && d.cars === 13 && !d.resc && d.win > 90 && d.win < 180, `${d.fin}/${d.cars}, winner ${d.win && d.win.toFixed(2)} s, ${d.resc} rescues`);
-  check('race in the rain: all to the finish, no rescue, the winner 3-15 % slower', w.fin === 13 && !w.resc && w.win / d.win > 1.03 && w.win / d.win < 1.15, `${w.fin}/${w.cars}, winner ${w.win && w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower)`);
+  check('race in the rain: all to the finish, no rescue, the winner 10-25 % slower', w.fin === 13 && !w.resc && w.win / d.win > 1.1 && w.win / d.win < 1.25, `${w.fin}/${w.cars}, winner ${w.win && w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower)`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

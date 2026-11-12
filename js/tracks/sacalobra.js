@@ -38,7 +38,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: SACALOBRA_H.map((h, i) => [i / (SACALOBRA_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [177, 185, 199], wet: { cs: [191, 201, 216] } },
+    medals: { cs: [177, 185, 199], wet: { cs: [210, 220, 237] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // summer road to a famous cove: cars (many hired), the tourists' coaches down to the sea and back, motorbikes, hardly a truck, and the cyclists who
     // come to the island for this climb in groups all the way (def.descent: the ones going down as fast as the cars)

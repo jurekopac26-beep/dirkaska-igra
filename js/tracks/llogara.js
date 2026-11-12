@@ -33,7 +33,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: LLOGARA_H.map((h, i) => [i / (LLOGARA_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [135, 142, 153], wet: { cs: [146, 153, 165] } },
+    medals: { cs: [135, 142, 153], wet: { cs: [160, 168, 181] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the old road over
     // the pass in summer: the holidaymakers' cars, many minibuses and coaches, motorbikes, a few trucks (the through traffic goes by the tunnel)
     traffic: { mix: [0.56, 0.2, 0.1, 0.1, 0.04], bike: 3500 },

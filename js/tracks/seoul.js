@@ -27,7 +27,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: SE_H.map((h, i) => [i / (SE_H.length - 1), h / 10]),
     widths: [[-245.1, 4.6], [900.9, 4.6], [930.9, 4.4], [2167.9, 4.4], [2197.9, 6.2], [2390.9, 6.2], [2420.9, 5.0], [2715.9, 5.0]],
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [75, 79, 85], wet: { cs: [82, 86, 92] } },
+    medals: { cs: [75, 79, 85], wet: { cs: [90, 95, 102] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the park's
     // roads are the buses' (the city's green buses up to the tower), the taxis and the tourists' cars, the delivery vans and scooters below in the town
     traffic: { mix: [0.56, 0.14, 0.2, 0.08, 0.02], bike: 5200 },

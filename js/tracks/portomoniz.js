@@ -33,7 +33,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: PORTOMONIZ_H.map((h, i) => [i / (PORTOMONIZ_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [127, 134, 144], wet: { cs: [138, 144, 155] } },
+    medals: { cs: [127, 134, 144], wet: { cs: [150, 158, 170] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the island's
     // main road down to the town in summer: the holidaymakers' hire cars, the islanders' vans, the buses to Funchal and the coaches to the pools, a few motorbikes
     traffic: { mix: [0.62, 0.17, 0.1, 0.07, 0.04], bike: 4200 },

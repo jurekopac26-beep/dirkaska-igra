@@ -179,7 +179,7 @@ const repack = (o) => L.pack(J(o));
 
   // 5. the size
   {
-    const table = L.keyTable(C.TRACKS), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;
+    const table = L.keyTable(C.TRACKS.filter(d => !d.test)), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;   // (the real tracks: the test ones go before the release, CLAUDE.md)
     for (const k of table.keys()) { t[k] = [60000 + Math.floor(Math.random() * 600000), 300 + (i % 20), cars[i % cars.length]]; i++; }
     const P = await player('Turbo Tina', t), l = await L.link(P.pk, []);
     check(`every record of every track (${Object.keys(t).length} times) in one link: at most 8 000 characters`, l.z.length <= 8000 && l.n === 0, l.z.length + ' characters');

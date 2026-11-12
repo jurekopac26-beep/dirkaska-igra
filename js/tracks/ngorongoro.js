@@ -42,7 +42,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     setts: [[0, 3400]], surf: [[-300, -2, 'makadam']],
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.055 (silver), x 1.13 (bronze),
     // in the rain the same car on the autopilot on the wet setts (84.2 s dry, 96.4 s wet; tests/ngorongoro.test.js; cs: Circuit Superstars physics)
-    medals: { cs: [85.1, 88.9, 95.2], wet: { cs: [97.4, 101.7, 108.9] } },
+    medals: { cs: [85.1, 88.9, 95.2], wet: { cs: [107.1, 112.4, 120.8] } },
     // the traffic of the duel: [car, van, bus, motorbike, truck], all going down (def.oneWay); only four-wheel drives in the crater: the safari
     // cars and their pop-top vans, no buses, motorbikes, lorries or bicycles (bike: 0), nobody on foot (foot: 0) by the road among the animals
     traffic: { mix: [0.55, 0.45, 0, 0, 0], bike: 0, foot: 0 },

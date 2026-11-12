@@ -37,7 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: GUDAURI_H.map((h, i) => [i / (GUDAURI_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot (146.3 s, in the rain 160.2 s) x 1.01 (gold), 1.06
     // (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [148, 155, 167], wet: { cs: [162, 170, 183] } },
+    medals: { cs: [148, 155, 167], wet: { cs: [179, 188, 202] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // main road over the Caucasus to the border: cars, minibuses and coaches of the ski village and the tourists, many long-distance trucks, a few
     // motorbikes, hardly a cyclist
