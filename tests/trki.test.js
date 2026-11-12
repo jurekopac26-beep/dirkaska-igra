@@ -41,6 +41,9 @@
 //   differs; a real run from the police on Chapman's Peak and Spa's real pit lane); the online race (js/game.js testOf(true) is {} and every
 //   Core.setTest there goes through it: a friend's car into the local one ends as Simulacija's); races (as the other versions, and no launch:
 //   no knock gives a car more than 8 m/s in a step, none faster than in the other versions, none turning faster than 9 rad/s)
+// - Nastavitve (the user's buttons, 10. 11. 2026): the game's default is Realistična (js/game.js DEF, the one-time move tdgp-defaults-v6,
+//   the rows of index.html: Trki Realistično / Kot zdaj, the older versions in Preizkus), the core's own stays Simulacija (the references
+//   of the drive do not move); Odpadli deli: Izklop is Core TX.deb 0, never with a friend; Odpadlo kolo: the race's wheel rule
 //   node tests/trki.test.js            (--update: writes the reference tests/golden/trki.json)
 'use strict';
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
@@ -542,6 +545,31 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     ok('the online race: with a friend\'s car in the race the game gives the core no choice (js/game.js: testOf(true) is {}, and every Core.setTest there goes through testOf), so Realistična chosen in the menu (testOf(false): cv 6) is Simulacija online: a friend\'s car into the local one ends as Simulacija\'s to the last digit, not as Realistična\'s',
       !!m && !err && !!on && JSON.stringify(on) === '{}' && !!off && off.cv === 6 && cvOn === null && cvOff === 6 && calls > 0 && calls === via && !!nOn.first && same(nOn.L, nS.L) && !same(nR.L, nS.L),
       err || `testOf(true) ${JSON.stringify(on)}, testOf(false).cv ${off && off.cv}; setTest calls in the game ${calls}, through testOf ${via}; the local car turned ${f(nOn.turn, 1)} deg (Simulacija ${f(nS.turn, 1)}, Realistična ${f(nR.turn, 1)})`);
+  }
+
+  // -- Nastavitve: the game's default is Realistična (js/game.js DEF, the one-time move tdgp-defaults-v6, the rows of index.html), the core's
+  // own stays Simulacija (KV_DEF: a Core nobody tells anything, as the Node tests and the online race have it; the choice, above), so no
+  // reference of the drive moves; »Odpadli deli: Izklop« is Core TX.deb 0 (tests/odpadli-deli.test.js), »Odpadlo kolo« the race's wheel
+  // rule (tests/wheels.test.js: with it and without); none of them reaches a race with a friend
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8'), html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    const m = /const testOf = \(net\) => \{[^\n]*\n[^\n]*\}; \};/.exec(src), def = (/\n  const DEF = \{[^\n]*/.exec(src) || [''])[0];
+    const v6 = (/if \(!localStorage\.getItem\('tdgp-defaults-v6'\)\) \{ ([^\n]*?) localStorage\.setItem\('tdgp-defaults-v6', '1'\);/.exec(src) || [])[1] || '';
+    const has = (t, k, v) => new RegExp('(^|[^A-Za-z.])' + k + '(: | = )' + v + '([,; }]|$)').test(t);
+    const of = (o, friend) => { const S = new Proxy(o, { get: (t, k) => (k in t ? t[k] : 0) }), LV = new Proxy({}, { get: () => [null] }); return new Function('S', 'TEST_LV', m[0] + '\nreturn testOf;')(S, LV)(friend); };
+    let on = null, off = null, net = null, err = '';
+    try { on = of({ crV: 5, debris: 1 }, false); off = of({ crV: 5, debris: 0 }, false); net = of({ crV: 5, debris: 0 }, true); } catch (e) { err = String(e && e.message || e); }
+    const txOf = (o) => { C.setTest(o); const r = { cv: C.TX.cv, deb: C.TX.deb }; C.setTest(null); return r; };
+    const core = txOf(null), tOn = txOf(on || { deb: 0 }), tOff = txOf(off || {}), tNet = txOf(net || { cv: 6, deb: 0 });
+    const row = (key) => { const out = [], re = new RegExp('data-set="' + key + '">(.*?)</div>', 'g'); let x; while ((x = re.exec(html))) out.push((x[1].match(/data-v="[^"]*"/g) || []).map(t => t.replace(/[^0-9]/g, '')).join(',')); return out.join(' | '); };
+    const rows = { crV: row('crV'), debris: row('debris'), wheelOver: row('wheelOver'), damage: row('damage') };
+    const wheel = /wheelRule: solo \|\| chase \|\| !\+S\.wheelOver \? undefined : WHEEL_RULE,/.test(src);
+    const valid = /S\.crV = Number\.isInteger\(\+S\.crV\) && \+S\.crV >= 0 && \+S\.crV <= CR_REAL \? \+S\.crV : CR_REAL;/.test(src) && /CR_OLD = 4, CR_REAL = 5;/.test(src);
+    ok('Nastavitve: the game\'s default is Realistična (js/game.js DEF: Trki 5, Odpadli deli Vklop, Odpadlo kolo Konec dirke, Poškodbe Samo videz; the one-time move tdgp-defaults-v6 sets the first three and leaves Poškodbe; a stored version out of range becomes Realistična; index.html: Trki Realistično / Kot zdaj in Nastavitve and in the pause, the four older versions in Preizkus), the core\'s own stays Simulacija (no choice given: no version, no deb), so the references of the drive do not move; Odpadli deli: Vklop gives the core nothing, Izklop TX.deb 0, a race with a friend neither (and no version); Odpadlo kolo: Dirka teče naprej gives the race no wheel rule',
+      !!m && !err && !!def && has(def, 'crV', '5') && has(def, 'debris', '1') && has(def, 'wheelOver', '1') && has(def, 'damage', '1') && has(v6, 'S\\.crV', '5') && has(v6, 'S\\.debris', '1') && has(v6, 'S\\.wheelOver', '1') && !/damage/.test(v6) && valid && wheel
+        && C.KV_IDS[1] === 'sim' && C.KV_IDS[6] === 'real' && core.cv === null && core.deb === null && !!on && on.cv === 6 && on.deb === null && tOn.cv === 6 && tOn.deb === null && !!off && off.cv === 6 && off.deb === 0 && tOff.cv === 6 && tOff.deb === 0
+        && !!net && JSON.stringify(net) === '{}' && tNet.cv === null && tNet.deb === null && rows.crV === '5,0 | 1,2,3,4 | 5,0' && rows.debris === '0,1' && rows.wheelOver === '1,0' && rows.damage === '0,1,2',
+      err || `DEF: crV ${has(def, 'crV', '5') ? 5 : '?'}, debris ${has(def, 'debris', '1') ? 1 : '?'}, wheelOver ${has(def, 'wheelOver', '1') ? 1 : '?'}, damage ${has(def, 'damage', '1') ? 1 : '?'}; the move: ${v6.trim()}; the core alone: cv ${core.cv}, deb ${core.deb}; Vklop: cv ${tOn.cv}, deb ${tOn.deb}; Izklop: cv ${tOff.cv}, deb ${tOff.deb}; with a friend ${JSON.stringify(net)}: cv ${tNet.cv}, deb ${tNet.deb}; the rows: crV ${rows.crV}; debris ${rows.debris}; wheelOver ${rows.wheelOver}; damage ${rows.damage}`);
   }
 }
 

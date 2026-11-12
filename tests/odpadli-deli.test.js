@@ -18,11 +18,15 @@
 //   - checks 25 to 40 (the independent check of 11. 11. 2026): no random number of the race, the banked bend, every ground of DEB's tables,
 //     the push's size and what it is measured against, the cap's fix, the wheel's veer, wobble and knock, bounce and landing, the 2 s to the step
 //     (a pass over a lying part begun in the car's time is not paid in its middle), the push no source of speed (O1, O2)
+//   - checks 41 to 45: Nastavitve »Odpadli deli: Izklop« (Core TX.deb 0): a part comes off and flies the same to the last digit, no car
+//     touches it (another car's part in the way, its own parts: the car's whole state after every step as with no part at all, no random
+//     number more or less; under every one of the six versions of the knocks), a piece that has come to rest is off the road; a race in
+//     which no part comes off is the reference's, a race with a crash is Vklop's to the last digit until a car first touches a piece there
 // (a piece lying on the road, driven over: tests/debris.test.js)
 //   node tests/odpadli-deli.test.js            check
 //   node tests/odpadli-deli.test.js --prej     print PREJ of the tree given (GAME_ROOT=<a tree from before the change>)
 'use strict';
-const path = require('path'), fs = require('fs');
+const path = require('path'), fs = require('fs'), crypto = require('crypto');
 const HR = __dirname;
 const { loadCore } = require(path.join(HR, 'lib', 'core.js'));
 const SIM = require(path.join(HR, 'lib', 'sim.js'));
@@ -610,6 +614,101 @@ function between(p, gap, ci, byT, u, dir, ground) {
   const wk = W.slice().sort((x, y) => y.knocks - x.knocks || y.last - x.last)[0];
   check('a part between two standing cars, on both their lists (one car\'s time 2 s, the other\'s 0.6 or 1.2 s; gaps 0.05 to 0.8 m): a push leaves it under DEB_RUN.v (3 m/s), it lies within 1 s, and no car knocks it as its time ends',
     DEB.push < 3 && W.every(r => r.knocks === 0 && r.hits === 0 && r.vm < 3 && r.last <= 1 && r.rest), `${W.length} runs: ${W.reduce((a, r) => a + r.knocks, 0)} knocks, the fastest ${f(Math.max(...W.map(r => r.vm)), 2)} m/s, the last moving ${f(wk.last, 2)} s (${wk.id}), at rest ${W.filter(r => r.rest).length}; a car touched in ${W.reduce((a, r) => a + r.hits, 0)} steps`);
+}
+// ---- 41 to 45: Odpadli deli: Izklop (Nastavitve »Odpadli deli«; js/game.js testOf: deb 0; Core TX.deb, Race.step) ----
+// The user's buttons (the decision of 10. 11. 2026, docs/trki-realizem.md »Gumbi v Nastavitvah«). With Izklop a part still comes off its car and flies as it does (the same
+// throw, the same random numbers), but no car touches it (no speed lost, no twitch, no hop, no shove) and a piece that has come to rest is
+// taken off the road (dead, as the cap of 40 takes one). A car that touches nothing drives the same to the last digit, whatever is chosen.
+const izklop = (fn, cv) => { C.setTest(cv ? { cv, deb: 0 } : { deb: 0 }); try { return fn(); } finally { C.setTest(null); } };
+const md5 = (t) => crypto.createHash('md5').update(t).digest('hex');
+const firstDiff = (A, B) => { for (let i = 0; i < Math.max(A.length, B.length); i++) if (A[i] !== B[i]) return i + 1; return 0; };   // (the first step two runs differ in; 0: never)
+{
+  // twelve parts thrown at 200 km/h off a donor, the race's car parked 850 samples on: every piece's whole state after every step until it lies
+  const fly = () => { const orig = Math.random; try {
+    const T = road('asfalt'), race = lone(T, 1000), P = race.player, D = donor(T, 150, 200 / KMH), rnd = SIM.seeded(SEED), S = [];
+    for (let k = 0; k < 2; k++) for (const p of ['hood', 'bumperF', 'doorL', 'wheelFL', 'wheelRL', 'mirrorL']) { race.spawnDebris(D, p, rnd); S.push({ d: race.debris[race.debris.length - 1], L: [], k: 0 }); }
+    let lying = 0;
+    for (let k = 1; k <= 60 * 120 && S.some(s => !s.k); k++) { P.inThr = 0; P.inBrk = 1; race.step(DT);
+      for (const s of S) if (!s.k) { s.L.push(md5(SIM.stateLine(Object.assign({}, s.d, { dead: false })))); if (s.d.rest) { s.k = k; s.dead = s.d.dead; s.on = race.debris.indexOf(s.d) >= 0; } }
+      lying = Math.max(lying, race.debris.filter(d => d.rest).length); }
+    return { S, lying, left: race.debris.length };
+  } finally { Math.random = orig; } };
+  const a = fly(), b = izklop(fly), dif = a.S.map((s, i) => firstDiff(s.L, b.S[i].L)).filter(x => x);
+  check('Odpadli deli, Izklop: twelve parts thrown at 200 km/h far from any car fly, land and stop the same to the last digit as with Vklop (every piece\'s whole state after every step); with Vklop they lie on the road, with Izklop each is off it in the step it comes to rest',
+    a.S.every(s => s.k && !s.dead && s.on) && a.left === 12 && a.lying === 12 && b.S.every(s => s.k && s.dead && !s.on) && b.left === 0 && b.lying === 0 && a.S.every((s, i) => s.k === b.S[i].k) && !dif.length,
+    `Vklop: ${a.S.filter(s => s.k).length} at rest (the last after ${f(Math.max(...a.S.map(s => s.k)) * DT, 2)} s), ${a.left} on the road; Izklop: ${b.S.filter(s => s.k && s.dead).length} taken off as they came to rest, ${b.left} on the road, lying on the list at a step's end ${b.lying}; pieces that flew otherwise ${dif.length}`);
+}
+// another car's part in the car's way (as knock above: a donor 12 m ahead, at the car's speed, sheds it), part null: no part at all. The car's
+// whole state after every step, the steps it is touched in, how often Math.random is asked, the pieces left on the road
+function pass(part, kmh, secs) {
+  const orig = Math.random; try {
+  const T = road('asfalt'), race = lone(T), P = race.player, v = kmh / KMH, g = Math.random, L = []; let drawn = 0, hits = 0, lying = 0;
+  Math.random = () => { drawn++; return g(); };
+  put(P, T, 150, v); if (part) race.spawnDebris(donor(T, 156, v), part, SIM.seeded(SEED));
+  for (let k = 1; k <= secs * 120; k++) { P.hitDebris = 0; P.inThr = P.inBrk = P.inSteer = 0; race.step(DT); if (P.hitDebris > 0) hits++; L.push(md5(SIM.stateLine(P)));
+    lying = Math.max(lying, race.debris.filter(d => d.rest).length); }
+  return { hits, L, drawn, lying, left: race.debris.length };
+  } finally { Math.random = orig; }
+}
+{
+  const rows = [], SEC = 10;
+  for (const kmh of [60, 120, 200]) { const none = pass(null, kmh, SEC);
+    for (const p of ['hood', 'bumperF', 'trunk', 'wheelFL']) { const on = pass(p, kmh, SEC), off = izklop(() => pass(p, kmh, SEC));
+      rows.push({ id: p + ' ' + kmh, p, on: on.hits, onDiff: firstDiff(on.L, none.L), off: off.hits, diff: firstDiff(off.L, none.L), drawn: off.drawn - none.drawn, drawnOn: on.drawn - none.drawn, lying: off.lying, left: off.left, leftOn: on.left }); } }
+  const badR = rows.filter(r => r.off || r.diff || r.drawn || r.lying || r.left), teeth = rows.filter(r => r.on > 0 && r.onDiff > 0 && r.leftOn === 1);
+  check('Odpadli deli, Izklop: another car\'s part in the way (the bonnet, the front bumper, the boot lid, a wheel of a car 12 m ahead; 60, 120, 200 km/h; 10 s): the car is not touched, its whole state after every step is the same to the last digit as with no part thrown, Math.random is asked exactly as often, the piece is off the road once it lies (with Vklop the bonnet and the front bumper touch the car at every speed and lie on the road, and a knock takes random numbers)',
+    rows.length === 12 && !badR.length && rows.filter(r => r.p === 'hood' || r.p === 'bumperF').every(r => teeth.indexOf(r) >= 0) && rows.some(r => r.drawnOn > 0),
+    `${rows.length} runs: Izklop touched ${rows.reduce((a, r) => a + r.off, 0)} steps, differs from no part in ${rows.filter(r => r.diff).length}, random numbers more or less ${rows.reduce((a, r) => a + Math.abs(r.drawn), 0)}, pieces left ${rows.reduce((a, r) => a + r.left, 0)}${badR.length ? ' (' + badR[0].id + ')' : ''}; Vklop: touched in ${teeth.length} runs (${rows.map(r => r.on).join(' ')} steps), random numbers more ${rows.reduce((a, r) => a + r.drawnOn, 0)}`);
+  // in every collision version: Izklop is that version's own drive with no part
+  let okV = 0; const det = [];
+  for (let cv = 1; cv < C.KV_IDS.length; cv++) { C.setTest({ cv }); let none; try { none = pass(null, 120, 6); } finally { C.setTest(null); }
+    const off = izklop(() => pass('hood', 120, 6), cv), d = firstDiff(off.L, none.L); if (!off.hits && !d && off.drawn === none.drawn) okV++; det.push(C.KV_IDS[cv] + ' ' + off.hits + '/' + d); }
+  check('Odpadli deli, Izklop in every collision version (Nastavitve »Trki« and Preizkus): another car\'s bonnet in the way does not touch the car, its state after every step is that version\'s with no part thrown', okV === C.KV_IDS.length - 1, det.join(', ') + ' (touches / the first step that differs)');
+}
+// the car's own parts (as own above; Core.detachPart at kmh, coasting or braking). off: Izklop's run, the pieces left to the game, until none
+// is on the road (40 s at most); else the same K steps with every piece taken off the list as it lands on it (no part at all)
+function ownRun(parts, kmh, inp, off, K) {
+  const orig = Math.random; try {
+  const T = road('asfalt'), race = lone(T), P = race.player, L = []; put(P, T, 150, kmh / KMH); for (const p of parts) C.detachPart(P, p);
+  let hits = 0, shed = 0, lying = 0;
+  for (let k = 1; k <= (K || 40 * 120); k++) { P.hitWall = P.hitCar = P.hitDebris = 0; P.inThr = 0; P.inBrk = inp === 'zavora' ? 1 : 0; P.inSteer = 0; race.step(DT);
+    shed = Math.max(shed, race.debrisId || 0); if (P.hitDebris > 0) hits++; L.push(md5(SIM.stateLine(P)));
+    if (!off && race.debris.length) { for (const d of race.debris) d.dead = true; race.debris.length = 0; }
+    lying = Math.max(lying, race.debris.filter(d => d.rest).length);
+    if (off && !K && !race.debris.length) break; }
+  return { hits, shed, lying, L, left: race.debris.length };
+  } finally { Math.random = orig; }
+}
+{
+  const rows = [];
+  for (const ps of ['bumperF+hood+fenderL+fenderR', 'wheelFL', 'doorL+mirrorL+wing']) for (const kmh of [120, 200]) for (const inp of ['prosto', 'zavora']) { const parts = ps.split('+');
+    const A = izklop(() => ownRun(parts, kmh, inp, true)), B = ownRun(parts, kmh, inp, false, A.L.length);
+    rows.push({ id: ps + ' ' + kmh + ' ' + inp, hits: A.hits, shed: A.shed >= parts.length && A.shed === B.shed, diff: firstDiff(A.L, B.L), lying: A.lying, left: A.left, t: A.L.length * DT }); }
+  const badR = rows.filter(r => r.hits || !r.shed || r.diff || r.lying || r.left);
+  check('Odpadli deli, Izklop: the car that sheds parts (the front bumper, the bonnet and both fenders; a front wheel; a door, a mirror and the wing; 120 and 200 km/h; coasting, braking) is touched by none of them, its whole state after every step is the same to the last digit as with every piece taken off the road at once, and when the last piece has come to rest the road is empty',
+    rows.length === 12 && !badR.length, `${rows.length} runs: touched ${rows.reduce((a, r) => a + r.hits, 0)} steps, differ ${rows.filter(r => r.diff).length}, pieces left ${rows.reduce((a, r) => a + r.left, 0)}, the road empty after ${f(Math.min(...rows.map(r => r.t)), 1)} to ${f(Math.max(...rows.map(r => r.t)), 1)} s${badR.length ? ' (' + badR[0].id + ')' : ''}`);
+}
+{
+  // a race in which no part comes off: the reference's with Izklop too; races with a crash (the formula's and the newer road car's crash
+  // set-ups of tests/lib/sim.js on Spa, 13 cars, 30 and 45 s): parts come off, none lies on the list at a step's end, none is ever touched
+  // (d.on: a car over it; d.by: a car that knocked it, there only the car it left, for its 2 s), and every car is where Vklop has it to the
+  // last digit (its place, speed, heading and turning after every step, its whole state every second) until the step a car first touches
+  // a piece there
+  const ref = JSON.parse(fs.readFileSync(path.join(HR, 'golden', 'sim.json'), 'utf8'))['spa/race/cs'], r = izklop(() => SIM.runScenario(C, 'spa', 'race', 'cs'));
+  const crash = (set, secs) => { const orig = Math.random; try { Math.random = SIM.seeded(7);
+    const S = SIM.SETUPS[set], race = SIM.makeRace(C, 'spa', (C2, tt, t) => S.opts(C2, tt, 'cs', t)), L = [], born = {}; let lying = 0, most = 0, kt = 0, touched = 0;
+    for (let k = 1; k <= secs * 120; k++) { SIM.stepRace(C, race, k, S.drive);
+      let t = false; for (const d of race.debris) { if (!born[d.id]) born[d.id] = k; const by = d.by || [];
+        if ((d.on && d.on.length) || by.length > 1 || by.some(c => c.id !== d.car) || (by.length && (k - born[d.id]) * DT > DEB.own + 2 * DT)) t = true; }
+      if (t) { touched++; if (!kt) kt = k; }
+      lying = Math.max(lying, race.debris.filter(d => d.rest).length); most = Math.max(most, race.debris.length);
+      L.push(race.cars.map(c => c.x + ',' + c.z + ',' + c.vx + ',' + c.vz + ',' + c.h + ',' + c.w).join(';') + (k % 120 ? '' : '|' + md5(race.cars.map(c => SIM.stateLine(c)).join('\n')))); }
+    return { shed: race.debrisId || 0, lying, most, kt, touched, L, left: race.debris.length };
+  } finally { Math.random = orig; } };
+  const R = [['formula', 30], ['car', 45]].map(([set, secs]) => { const on = crash(set, secs), off = izklop(() => crash(set, secs)); return { set, on, off, kd: firstDiff(on.L, off.L) }; });
+  check('Odpadli deli, Izklop in a race: a race in which no part comes off (Spa, 13 cars, 60 s) is the reference\'s to the last digit (tests/golden/sim.json spa/race/cs); in races with a crash (Spa, 13 cars: the formula\'s, 30 s; the newer road car\'s, 45 s) parts come off, none lies on the list at a step\'s end, no car is ever over one or knocks one, and every car is where Vklop has it to the last digit until the step a car first touches a piece there',
+    !!ref && r.cover.loose === 0 && r.digest === ref.digest && R.every(x => x.off.shed > 0 && x.off.lying === 0 && x.off.touched === 0 && x.on.shed > 0 && x.on.lying > 0 && (x.on.kt ? x.kd === 0 || x.kd >= x.on.kt : x.kd === 0)) && R.some(x => x.on.kt > 0 && x.kd >= x.on.kt),
+    `${r.digest}; ` + R.map(x => `${x.set}: Izklop ${x.off.shed} parts off, at most ${x.off.most} on the list at once, ${x.off.left} left, lying at a step's end ${x.off.lying}, touched ${x.off.touched}; Vklop ${x.on.shed} parts off, ${x.on.lying} lying, a car first at a piece at step ${x.on.kt || '-'}, the two runs differ from step ${x.kd || '-'}`).join('; '));
 }
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);
