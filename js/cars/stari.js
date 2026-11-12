@@ -450,9 +450,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     return m;
   }
   // ---- FORMULA ORKAN (MODELS 'formula'): render.js formulaGeometry's pieces on its own tub (look units = metres): a closed loft (the
-  // cockpit's opening black on its top), pods, floor, diffuser, gearbox, halo, helmet in 'body'; the nose 'hood', the wings 'bumperF' /
-  // 'bumperR', the engine cover 'trunk', the bargeboards 'fenderL' / 'fenderR', the mirrors on the pods; one track for both axles (hw 0.78:
-  // the stock rear's, the front 5 cm in; docs/deli.md)
+  // cockpit's opening black on its top; Visoki open over the seat with the driver, the wheel, the seat and its pads), pods, floor, diffuser,
+  // gearbox, halo, helmet and the engine (body's inner) in 'body'; the nose 'hood', the wings 'bumperF' / 'bumperR', the engine cover 'trunk',
+  // the bargeboards 'fenderL' / 'fenderR', the mirrors on the pods; one track for both axles (hw 0.78: the stock rear's, the front 5 cm in; docs/deli.md)
   const FSECS = [[-0.86, 0.27, 0.09, 0.52, 0.12, 0.85, 0.06, 'b', 0.2], [-0.62, 0.30, 0.09, 0.50, 0.14, 0.87, 0.06, 'r', 0.2],
     [-0.44, 0.36, 0.09, 0.42, 0.27, 0.60, 0.06, 'r', 0.2], [-0.10, 0.36, 0.09, 0.40, 0.30, 0.56, 0.06, 'r', 0.2],
     [0.42, 0.33, 0.09, 0.38, 0.27, 0.57, 0.06, 'gf', 0.2], [0.80, 0.29, 0.10, 0.38, 0.23, 0.54, 0.06, 'b', 0.2],
@@ -466,11 +466,13 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     return {
       body: { len: 5.2, wid: 1.96, wz: 0.2, secs: FSECS, roofY: 0.576, engRear: true, engine: [-1.05, 0.62], crush: { x0: 0, x1: 0, z: 0 },
         eye: { x: -0.12, y: 0.76, near: 0.12, tilt: 0.06, style: 'formula' }, decalX: 1.0, decalY: 0.576, decalRz: -0.075, decalS: 0.36 },
-      wheels: { style: 'slick', w: 0.3, wR: 0.4, arch: false, rim: [0.12, 0.12, 0.13], tyre: [0.07, 0.07, 0.08] },
+      hi: true, budget: { inner: 1400 }, budgetHi: { inner: 1750 },
+      wheels: { style: 'slick', w: 0.3, wR: 0.4, arch: false, rim: [0.12, 0.12, 0.13], tyre: [0.07, 0.07, 0.08], seg: 32, segHi: 64 },
       regions: 'none',
       build(K) {
         const P = K.paint, S = K.strp, KB = K.black, KD = K.dark;
-        const L = K.loft(K.body.secs, (k, e, kind) => kind === 'r' && e >= 3 && e <= 5 ? KB : e === 0 || e === 8 ? FK2 : P,
+        // (the cockpit's opening: black on the tub's top; Visoki open over the seat, -0.44 to 0.42: its walls, the floor, the bulkheads the loft's own)
+        const L = K.loft(K.body.secs, (k, e, kind) => kind === 'r' && e >= 3 && e <= 5 ? (K.hi && k >= 2 && k <= 3 ? null : KB) : e === 0 || e === 8 ? FK2 : P,
           { caps: { front: { col: FK2, low: 'body', high: 'body', cut: 0 }, rear: { col: FK2, low: 'body', high: 'body', cut: 0 } }, arches: false, tubs: false });
         K.part('body', () => {
           const POD = [[0.62, 0.64, 0.5], [0.4, 0.71, 0.53], [-0.2, 0.71, 0.5], [-0.75, 0.62, 0.41], [-1.32, 0.44, 0.24]];   // the pods (x, the outer z, the top)
@@ -497,11 +499,25 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.bar([0.28, 0.88, 0], [0.46, 0.625, 0], 0.02, KB, { n: 4 });   // its strut down to the tub
         }, { noCrush: true });
         K.tailLamp(-2.445, 0.34, 0, 0.085, 0.07);   // the rain light on the gearbox's tip
-        K.part('body', () => {   // the driver's helmet, its visor
+        if (!K.hi) K.part('body', () => {   // the driver's helmet, its visor (Visoki: the whole driver)
           const HX = -0.16, HY = 0.755, ring = (dy, r) => ngon(10, a => [HX + Math.cos(a) * r, HY + dy, Math.sin(a) * r]);
           K.skin([ring(-0.14, 0.06), ring(-0.06, 0.125), ring(0, 0.135), ring(0.06, 0.12), ring(0.11, 0.07)],
             (k, e) => (k === 1 || k === 2) && (e === 8 || e === 9 || e === 0 || e === 1) ? [0.26, 0.17, 0.06] : [0.95, 0.95, 0.93], KD, P);
         }, { noCrush: true, noDent: true, sub: 'driver' });
+        if (K.hi) {   // (Visoki) the open cockpit: the driver (his legs into the nose), the wheel, the seat and its pads
+          K.driver(-0.16, 0.755, 0, { r: 0.135, lean: 0.6, hands: [0.27, 0.48, 0.11], feet: [0.95, 0.22, 0.1], band: P, suit: [0.14, 0.16, 0.2], helmet: [0.95, 0.95, 0.93] });
+          K.part('body', () => {
+            const C = [0.27, 0.48, 0], U = [0.34, 0.94], NB = [-0.94, 0.34], at = (u, v, w) => [C[0] + U[0] * u + NB[0] * (w || 0), C[1] + U[1] * u + NB[1] * (w || 0), v];
+            K.plate([[-0.07, -0.09], [-0.07, 0.09], [-0.035, 0.115], [0.035, 0.115], [0.07, 0.09], [0.07, -0.09], [0.035, -0.115], [-0.035, -0.115]].map(([u, v]) => at(u, v)), 0.03, KB);   // the wheel
+            for (const sd of [-1, 1]) K.cyl(at(-0.065, sd * 0.125), at(0.065, sd * 0.125), 0.025, KD, { n: 8 });   // its grips
+            K.plate([[-0.035, -0.055], [-0.035, 0.055], [0.035, 0.055], [0.035, -0.055]].map(([u, v]) => at(u, v, 0.018)), 0.004, [0.05, 0.12, 0.1]);   // its display (no text)
+            K.bar(C, [0.42, 0.426, 0], 0.02, KD, { n: 6 });   // the column to the bulkhead
+            const PD = [0.09, 0.09, 0.1], SEC = [[0.30, 0.55], [0.29, 0.67], [0.20, 0.67], [0.205, 0.62]];
+            for (const sd of [-1, 1]) K.skin([SEC.map(([z, y]) => [-0.36, y, sd * z]), SEC.map(([z, y]) => [-0.08, y, sd * z])], PD, PD, PD);   // the side pads
+            K.box(-0.3675, 0.48, 0, 0.135, 0.20, 0.40, 0, PD);   // the headrest
+            K.plate([[-0.295, 0.505, -0.2], [-0.295, 0.505, 0.2], [-0.048, 0.16, 0.2], [-0.048, 0.16, -0.2]], 0.02, PD);   // the seat's back (down to the pelvis)
+          }, { noCrush: true });
+        }
         K.part('hood', () => {   // the nose
           K.skin([fRing(1.72, 0.2, 0.172, 0.37, 0.212, 0.552, 0.172), fRing(2.1, 0.205, 0.11, 0.31, 0.14, 0.43, 0.11), fRing(2.4, 0.19, 0.08, 0.27, 0.1, 0.36, 0.075), fRing(2.62, 0.18, 0.05, 0.235, 0.06, 0.29, 0.045)],
             (k, e) => e === 9 ? KB : k === 2 ? S : P, FK2, S);
@@ -519,15 +535,26 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.wingPlank(-2.22, 0.865, -2.48, 0.93, 0.032, -0.49, 0.49, P); K.wingPlank(-2.43, 0.975, -2.595, 1.075, 0.018, -0.485, 0.485, S);
           for (const sd of [-1, 1]) K.endplate([[-2.18, 0.8], [-2.26, 0.48], [-2.62, 0.48], [-2.62, 1.06], [-2.22, 1.0]], sd * 0.5, 0.022, P);
         });
-        K.part('trunk', () => {   // the engine cover, its fin; the engine, its gearbox and exhaust under it
+        K.part('trunk', () => {   // the engine cover, its fin (the engine under it: body's inner, it stays when the cover comes off)
           K.skin([fRing(-0.86, 0.088, 0.322, 0.52, 0.272, 0.912, 0.122), fRing(-1.3, 0.1, 0.28, 0.5, 0.22, 0.78, 0.1), fRing(-1.75, 0.12, 0.2, 0.45, 0.16, 0.63, 0.08), fRing(-2.05, 0.2, 0.142, 0.4, 0.132, 0.522, 0.082)],
             (k, e) => e === 9 ? KB : P, FK2, FK2);
           K.endplate([[-0.9, 0.9], [-1.95, 0.58], [-1.95, 0.7], [-1.02, 0.99]], 0, 0.016, S);
-          K.inner(() => {
-            K.box(-1.45, 0.3, 0, 0.9, 0.3, 0.36, 0, [0.4, 0.41, 0.43]); K.box(-1.25, 0.6, 0, 0.36, 0.12, 0.2, 0, [0.16, 0.16, 0.18]);
-            K.box(-1.87, 0.36, 0, 0.3, 0.14, 0.18, 0, [0.62, 0.5, 0.36]); K.bar([-1.6, 0.45, 0], [-2.12, 0.5, 0], 0.025, [0.62, 0.6, 0.56], { n: 6 });
-          });
         });
+        K.part('body', () => {   // the engine: the oil tank, the crankcase, the V's banks and cam covers, the plenum, the bellhousing, the tailpipe
+          const BL = [0.4, 0.41, 0.43], CAM = [0.16, 0.16, 0.18], BH = [0.62, 0.5, 0.36];
+          const prism = (x0, x1, ring, col) => K.skin([ring.map(([y, z]) => [x0, y, z]), ring.map(([y, z]) => [x1, y, z])], col, col, col);
+          K.box(-0.945, 0.10, 0, 0.14, 0.30, 0.26, 0, BL);   // the oil tank (the chip on its top, y 0.40)
+          K.box(-1.2575, 0.13, 0, 0.485, 0.17, 0.22, 0, BL);   // the crankcase
+          for (const sd of [-1, 1]) {
+            prism(-1.06, -1.46, [[0.258, sd * 0.042], [0.414, sd * 0.198], [0.498, sd * 0.114], [0.342, sd * -0.042]], BL);   // the banks (a 90 degree V)
+            prism(-1.08, -1.40, [[0.424, sd * 0.188], [0.445, sd * 0.209], [0.509, sd * 0.145], [0.488, sd * 0.124]], CAM);   // the cam covers
+          }
+          K.skin([[[0.42, -0.06], [0.64, -0.08], [0.67, -0.06], [0.67, 0.06], [0.64, 0.08], [0.42, 0.06]].map(([y, z]) => [-1.07, y, z]),
+            [[0.40, -0.05], [0.54, -0.06], [0.56, -0.045], [0.56, 0.045], [0.54, 0.06], [0.40, 0.05]].map(([y, z]) => [-1.5, y, z])], CAM, CAM, CAM);   // the plenum (the battery's rear face on its front cap)
+          K.skin([[[0.15, -0.13], [0.18, -0.16], [0.42, -0.16], [0.45, -0.12], [0.45, 0.12], [0.42, 0.16], [0.18, 0.16], [0.15, 0.13]].map(([y, z]) => [-1.46, y, z]),
+            [[0.23, -0.105], [0.26, -0.125], [0.39, -0.12], [0.44, -0.085], [0.44, 0.085], [0.39, 0.12], [0.26, 0.125], [0.23, 0.105]].map(([y, z]) => [-2.04, y, z])], BH, BH, BH);   // the bellhousing
+          K.bar([-1.5, 0.45, 0], [-2.04, 0.47, 0], 0.02, [0.62, 0.6, 0.56], { n: 6 });   // the tailpipe
+        }, { inner: true });
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'fenderL' : 'fenderR', () => K.box(0.84, 0.19, sd * 0.63, 0.46, 0.22, 0.02, 0, P));   // the bargeboards (1 cm into the pods)
         K.deli('ogledala', () => { for (const sd of [-1, 1]) K.mirror(0.34, 0.562, sd * 0.5, { w: 0.07, h: 0.065, d: 0.15, col: P, z0: sd * 0.285 }); });
         for (const id of ['crte', 'nalepke', 'celjusti', 'akumulator', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum']) K.deli(id, () => {});
