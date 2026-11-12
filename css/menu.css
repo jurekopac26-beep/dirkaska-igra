@@ -514,7 +514,7 @@ svg { display: block; }
 #mn > canvas.wxl { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
 #mn > canvas.wxui { z-index: 9; }
 #mn > canvas.wxair { z-index: 10; }   /* (the tap on the car: it gives a little, as a button) */
-.yard .car { position: absolute; left: 2%; bottom: 4%; width: 62%; height: 84%; z-index: 3; display: flex; align-items: flex-end; justify-content: flex-start; }
+.yard .car { position: absolute; left: 2%; bottom: calc(4% + 12px); width: 62%; height: 84%; z-index: 3; display: flex; align-items: flex-end; justify-content: flex-start; }
 .yard .car img { width: 100%; height: 100%; object-fit: contain; object-position: left bottom; filter: var(--wxcar, ) drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
 .yard .car .mono { width: 72px; height: 72px; margin: 0 0 6px 18px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .35); font: 900 italic 34px/1 var(--f-ui); }
 .yard .car:active { transform: translateY(2px); }
@@ -526,6 +526,15 @@ svg { display: block; }
   text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: opacity .3s ease; }
 .yard.c3d-wait:not(.c3d-on) .cname { opacity: 0; }
 .yard .cname:active { transform: translateY(1px); }
+/* the showroom (S2; the user, 12. 11. 2026, docs/odlocitve.md »Meni: razstavni prostor«): upright the room warm grey, the yard a dark room
+   with a row of lamps, a dark wall and a glossy floor (the car's reflection on it: js/menu-vreme.js); the sign as before, on its two posts */
+@media (orientation: portrait) {
+  .room { --card1: rgba(34, 37, 43, .97); --card2: rgba(22, 24, 28, .98); --lbl: #c9c3c2; --line: rgba(255, 255, 255, .10); --edge: rgba(255, 255, 255, .14); --navy2: #120f10;
+    background: linear-gradient(180deg, #2a1d1f, #1a1516 70px, #120f10); }
+  .yard { background: radial-gradient(circle at 8% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 26% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 44% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 62% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 80% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 96% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),
+    linear-gradient(180deg, #16161a 0, #16161a 9%, #202027 9.4%, #26262e 58%, #0d0d10 58.3%, #18181c 70%, #09090b 100%); }
+  .yard::after { background: radial-gradient(60% 100% at 32% 0%, rgba(255, 236, 205, .07), transparent 70%); }
+}
 /* the two neighbouring tracks: the flag at its hoist, its last column stretched to the far edge (js/menu.js flagFill), a double arrow */
 .nbrs { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 14px 0; }
 .nb { position: relative; height: 54px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; background: #3b4352 center / 100% 100% no-repeat; border: 2px solid rgba(255, 255, 255, .85);

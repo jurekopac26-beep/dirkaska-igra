@@ -409,8 +409,9 @@ window.MenuVreme = (() => {
     for (let i = 1; i < hv.length; i++) { const a = hv[i - 1], b = hv[i]; if (a[1] >= low && b[1] >= low && (!ga || b[0] - a[0] > gb[0] - ga[0])) { ga = a; gb = b; } }
     if (!ga || gb[0] - ga[0] < 4 * pr) { ga = [0, y1]; gb = [bw - 1, y1]; }
     const gl = (i) => ga[1] + (gb[1] - ga[1]) * (i - ga[0]) / (gb[0] - ga[0]);   // (the ground under column i, the source's px)
-    // the reflection: each column flipped about the ground, fading out (lying: sooner)
-    const RH = Math.round(.6 * bh), fa = land ? .38 : .42, fl = land ? .7 : 1;
+    // the reflection: each column flipped about the ground, fading out (lying: sooner, on the wet ground only; upright the showroom's
+    // glossy floor, dry or wet: stronger, longer, fading softly and blurred, docs/odlocitve.md »Meni: razstavni prostor«)
+    const RH = Math.round((land ? .6 : .8) * bh), fa = land ? .38 : .6, fl = land ? .7 : 1, fe = land ? 1 : 1.6;
     const ry0 = Math.floor(Math.min(gl(0), gl(bw - 1))), rh = Math.ceil(Math.max(gl(0), gl(bw - 1))) + RH + 2 - ry0;
     const rc = cv(bw, rh), rg = rc.getContext('2d'), ro2 = rg.createImageData(bw, rh), q = ro2.data;
     for (let i = 0; i < bw; i++) {
@@ -418,11 +419,11 @@ window.MenuVreme = (() => {
       for (let dy = 0; dy <= RH; dy++) {
         const sy = Math.round(g0 - dy), ty = Math.round(g0 + dy) - ry0; if (sy < 0 || sy >= H || ty < 0 || ty >= rh) continue;
         const si = (sy * W + x) * 4, a = d[si + 3]; if (!a) continue;
-        const f = fa * Math.max(0, 1 - dy / (RH * fl)); if (f <= 0) continue;
+        const f = fa * Math.pow(Math.max(0, 1 - dy / (RH * fl)), fe); if (f <= 0) continue;
         const ti = (ty * bw + i) * 4; q[ti] = d[si]; q[ti + 1] = d[si + 1]; q[ti + 2] = d[si + 2]; q[ti + 3] = a * f;
       }
     }
-    rg.putImageData(ro2, 0, 0);
+    rg.putImageData(ro2, 0, 0); if (!land) soften(rc, 1.1 * pr);
     // frost on the windows (grey-blue glass in its upper part), snow packed on the lower body, thickest round the wheels
     const fr = cv(bw, bh), fg = fr.getContext('2d'), fo = fg.createImageData(bw, bh), o = fo.data, wc = [ga[0] / bw, gb[0] / bw];
     for (let j = 0; j < bh; j++) for (let i = 0; i < bw; i++) {
@@ -575,7 +576,7 @@ window.MenuVreme = (() => {
   function floorL(S) {
     const G = L.geo; if (!G || !L.fl || !L.fl.w) return;
     const { w, ws } = S, wet = S.wet, sn = ws.snow, dark = .35 * w.storm + .18 * w.rain + .08 * w.change, rainy = ws.rain + ws.storm * 1.5 + ws.change * .4, ok = CK && !CK.none;
-    const refl = ok && wet > .01 ? wet : 0;
+    const refl = !ok ? 0 : land ? (wet > .01 ? wet : 0) : 1;   // (upright the showroom's floor: the reflection dry too)
     const sig = [dark, wet, sn, refl].map((v) => Math.round(v * 200)).join(',') + '|' + (ok ? CK.key : '') + '|' + G.key, mv = (wet > .01 && rainy > .01) || sn > .01;
     if (land || !L.rm) { paint(L.fl, sig, mv, (g) => ground(g, S, refl, rainy)); return; }
     paint(L.fl, sig, mv, (g) => { g.translate(-G.ox, -G.oy); room(g, S, dark, refl, rainy); });
@@ -587,7 +588,9 @@ window.MenuVreme = (() => {
     if (wet > .01) {
       const gl = g.createLinearGradient(0, hz, 0, H); gl.addColorStop(0, 'rgba(110,150,210,' + a3(.16 * wet) + ')'); gl.addColorStop(.3, 'rgba(60,90,140,' + a3(.08 * wet) + ')'); gl.addColorStop(1, 'rgba(0,0,0,0)');
       g.fillStyle = gl; g.fillRect(0, hz, W, H - hz);
-      if (refl > .005) { g.globalAlpha = Math.min(1, refl); g.drawImage(CK.refl, G.ox + CK.rx, G.oy + CK.ry, CK.rw, CK.rh); g.globalAlpha = 1; }
+    }
+    if (refl > .005) { g.globalAlpha = Math.min(1, refl); g.drawImage(CK.refl, G.ox + CK.rx, G.oy + CK.ry, CK.rw, CK.rh); g.globalAlpha = 1; }
+    if (wet > .01) {
       if (rainy > .01) ripples(g, 26, (r) => [r() * W, hz + 8 + r() * Math.max(10, H - hz - 20)], rainy, t, 14);
     }
     if (sn > .01) {
@@ -818,7 +821,7 @@ window.MenuVreme = (() => {
     if (enter && enter.ready && airA >= 1) enter = null;
     const S = last = { t, tt: c ? 0 : t, w, ws, F, wet: mix(ws, 'wet'), uiA: uiNow, airA };
     let waitCar = false;
-    if ((S.wet > .005 || ws.snow > .005) && L.yard && !carData()) waitCar = true;   // (its reflection, its snow: once it is drawn)
+    if ((S.wet > .005 || ws.snow > .005 || !land) && L.yard && !carData()) waitCar = true;   // (its reflection (upright always), its snow: once it is drawn)
     snowSlots(S, t);
     stageL(S); floorL(S); carL(S); signL(S); uiL(S); airL(S); rbgL(S);
     if (c) { if (waitCar && L.tries++ < 20) setTimeout(kick, 250); return false; }
