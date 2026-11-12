@@ -254,6 +254,46 @@
     return id;
   }
 
+  // ---- stripes: a repeating gradient of hard stops down a pseudo-element (the menu's kerbs: .title-panel::before, .tile::before …) ----
+  // The levels of black and the filter's table drew those red and black on the phone (white darkened; 12. 11. 2026), so a stripe pattern
+  // is drawn only by what the phone showed right (temni-nacin.html rows 4 and 5): the pseudo-element plain black, a filter of floods, one
+  // per band, tiled down it (feTile) and kept where it is (SourceAlpha, its round corners too).
+  const PX = (t) => (/^0$/.test(t) ? 0 : /^-?[\d.]+px$/.test(t) ? parseFloat(t) : NaN);
+  function bandsOf(bgi) {
+    const m = /^repeating-linear-gradient\((.*)\)$/i.exec((bgi || '').trim()); if (!m) return null;
+    const args = split(m[1], ',');
+    if (args.length && !isColTok(split(args[0], ' ')[0])) { if (!/^(180deg|to bottom|0\.5turn)$/i.test(args.shift().trim())) return null; }
+    const pts = [];
+    for (const a of args) {
+      const t = split(a, ' '); if (!t.length || !isColTok(t[0]) || t.length > 3) return null;
+      const c = col(t[0]); if (!c || c[3] !== 1) return null;
+      const ps = t.slice(1).map(PX); if (ps.some(isNaN)) return null;
+      if (!ps.length) return null;
+      for (const y of ps) pts.push({ c, y });
+    }
+    if (pts.length < 2 || pts[0].y !== 0) return null;
+    const bands = [];
+    for (let i = 0; i + 1 < pts.length; i++) {
+      const A = pts[i], B = pts[i + 1];
+      if (B.y < A.y) return null;
+      if (B.y === A.y) continue;   // (a hard stop)
+      if (A.c.join() !== B.c.join()) return null;   // (a soft blend: not a stripe)
+      bands.push({ c: A.c, y0: A.y, y1: B.y });
+    }
+    return bands.length > 1 && bands.length <= 8 ? bands : null;
+  }
+  function stripeFilter(root, bands) {
+    const D = defsOf(root), key = 't' + bands.map((d) => d.c.map(fmt).join(',') + '@' + d.y0 + '-' + d.y1).join(';');
+    let id = D.ids.get(key); if (id) return id;
+    id = 'sd' + (++fid); D.ids.set(key, id); ST.filters++;
+    const P = bands[bands.length - 1].y1;
+    const h = bands.map((d, i) => '<feFlood ' + rgb(d.c) + ' y="' + fmt(d.y0) + '" height="' + fmt(d.y1 - d.y0) + '" result="b' + i + '"/>').join('') +
+      '<feMerge y="0" height="' + fmt(P) + '" result="T">' + bands.map((d, i) => '<feMergeNode in="b' + i + '"/>').join('') + '</feMerge>' +
+      '<feTile in="T"/><feComposite in2="SourceAlpha" operator="in"/>';
+    D.svg.insertAdjacentHTML('beforeend', '<filter id="' + id + '" x="0" y="0" width="1" height="1" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' + h + '</filter>');
+    return id;
+  }
+
   // ---- a box's colours → what its layer draws ----
   const GR = /(repeating-)?(linear|radial|conic)-gradient\(/gi;
   const specCache = new Map();
@@ -424,7 +464,8 @@
       if (free(el, p) && !el.hasAttribute(a)) continue;
       const pc = getComputedStyle(el, p), P = boxOf(pc);
       if (!P.bg && !P.border) { if (el.hasAttribute(a)) { el.removeAttribute(a); clearVars(el, pre); } continue; }
-      let s = spec(root, P.bgc, P.bgi, P.bc, P.border);
+      const bands = !P.border && (!P.bgc || TRANSP.test(P.bgc)) ? bandsOf(P.bgi) : null;
+      let s = bands ? { b: 'none', c: '#000', k: 'transparent', f: 'url(#' + stripeFilter(root, bands) + ')' } : spec(root, P.bgc, P.bgi, P.bc, P.border);
       const k = el; let of = orig.get(k); if (!of) orig.set(k, of = {});
       if (of[p] == null) of[p] = el.hasAttribute(a) ? '' : (pc.filter !== 'none' ? pc.filter : '');
       if (!s || s.native) s = { b: P.bgi || 'none', c: P.bgc || 'transparent', k: P.border ? P.bc : 'transparent', f: of[p] || 'none' };
