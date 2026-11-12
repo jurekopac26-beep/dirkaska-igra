@@ -368,7 +368,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     const S = EV.secs.map(row), F = S[S.length - 1], R = S[0], EK = [0.05, 0.05, 0.06], CF = [0.1, 0.1, 0.11], W = [0.95, 0.97, 1.0];
     return {
       body: { len: EV.len, wid: EV.wid, secs: EV.secs, wz: 0.13, engRear: false, decalX: 1.42, decalY: 0.772, decalRz: -0.08, decalS: 0.72 },   // (the number on the bonnet, as BODIES.ev's)
-      wheels: { style: 'std', spokes: 5, w: 0.3, rim: [0.15, 0.16, 0.18], tyre: [0.07, 0.07, 0.08] },
+      hi: true, budget: { inner: 1400 }, budgetHi: { inner: 1750 },
+      wheels: { style: 'std', spokes: 5, w: 0.3, rim: [0.15, 0.16, 0.18], tyre: [0.07, 0.07, 0.08], seg: 32, segHi: 64 },
       build(K) {
         const P = K.paint;
         // the builder's loft: carbon tucks, the canopy's glass (the window bands and the top of every segment but the body's), the rest paint
@@ -396,8 +397,38 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const id of ['aero', 'hauba', 'zmigavci', 'relijske_luci', 'auspuh', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'streha', 'stresna_zajemalka', 'antena',
           'crte', 'celjusti', 'dim_gum', 'nalepke', 'soncni_pas', 'zamasek', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji']) K.deli(id, () => {});
         K.part('trunk', () => K.deli('zaluzije', () => {}));
-        const ws = S.find(s => s.k === 'gf');
-        K.seat(ws.x - 0.75, 0.45, -0.38); K.seat(ws.x - 0.75, 0.45, 0.38); K.engine(AX.ev[0] + 0.15, R.yb + 0.05, 0, { h: 0.3 });
+        K.engine(AX.ev[0] + 0.15, R.yb + 0.05, 0, { h: 0.3 });
+        // the cabin (avti na raven KOLIBRIJA): the carpet on the flat floor (0.29; no tunnel), the toe board, the thin dash under the canopy
+        // (its face over the open footwell), the screen on it and the slim display behind the wheel (lit, no text), the light strip across
+        // its face, the wheel on its column (the shroud under the dash), two seats forward under the canopy's top, the floating console (the
+        // bin and its arm rest between the seats, the bridge on to the dash: the floor open under it), two pedals, the rear bench, the door
+        // cards (no doors: on the body; no speakers), the radiator and the crash bars behind the bumpers
+        { const C = K.cab, IN = C.IN, SZ = -0.38, CP = [0.1, 0.1, 0.105], VI = [0.16, 0.16, 0.17], VI2 = [0.08, 0.08, 0.085], DK = [0.09, 0.09, 0.1], LIT = [0.07, 0.16, 0.2], od = (d) => Object.assign({ dir: d }, IN);
+          C.face([[-0.74, 0.29, -0.86], [1.0, 0.29, -0.86], [1.0, 0.29, 0.86], [-0.74, 0.29, 0.86]], CP, [0, 1, 0]);   // carpet
+          C.face([[-1.26, 0.29, -0.62], [-0.74, 0.29, -0.62], [-0.74, 0.29, 0.62], [-1.26, 0.29, 0.62]], CP, [0, 1, 0]);
+          C.face([[0.94, 0.29, -0.84], [0.94, 0.29, 0.84], [1.06, 0.62, 0.84], [1.06, 0.62, -0.84]], CP, [-0.94, 0.34, 0]);   // toe board
+          const DP = [[1.0, 0.79], [0.66, 0.77], [0.56, 0.745], [0.53, 0.7], [0.56, 0.64], [0.75, 0.62], [0.98, 0.66]];   // the dash's profile
+          K.skin([-0.8, -0.12, 0.12, 0.8].map(z => DP.map(([x, y]) => [x, y, z])), (k, e) => e === 2 || e === 3 ? C.PL2 : DK, DK, DK, IN);
+          K.plate([[0.6, 0.755, -0.18], [0.6, 0.755, 0.18], [0.64, 0.93, 0.18], [0.64, 0.93, -0.18]], 0.025, C.BLK, IN);   // the screen
+          C.face([[0.59, 0.773, -0.165], [0.59, 0.773, 0.165], [0.6235, 0.918, 0.165], [0.6235, 0.918, -0.165]], LIT, [-0.975, 0.223, 0]);
+          K.plate([[0.6, 0.755, SZ - 0.12], [0.6, 0.755, SZ + 0.12], [0.615, 0.82, SZ + 0.12], [0.615, 0.82, SZ - 0.12]], 0.02, C.BLK, IN);   // the display
+          C.face([[0.5916, 0.767, SZ - 0.11], [0.5916, 0.767, SZ + 0.11], [0.602, 0.813, SZ + 0.11], [0.602, 0.813, SZ - 0.11]], LIT, [-0.974, 0.225, 0]);
+          C.face([[0.5463, 0.7281, -0.76], [0.5463, 0.7281, 0.76], [0.5403, 0.7191, 0.76], [0.5403, 0.7191, -0.76]], CYAN, [-0.832, 0.555, 0]);   // the strip
+          C.steer({ c: [0.2, 0.82, SZ], ax: [0.9, -0.436], r: 0.17, rr: 0.014, to: [0.488, 0.68, SZ] });
+          K.box(0.52, 0.62, SZ, 0.12, 0.1, 0.11, 0, C.PL, C.PL, false, IN);   // the column's shroud
+          for (const sd of [-1, 1]) C.seat(-0.06, 0.28, sd * 0.38, { w: 0.46, top: 0.68, lean: 0.3, belt: 'road', col: VI, col2: VI2 });
+          K.box(-0.17, 0.29, 0, 0.3, 0.26, 0.2, 0, C.PL2, C.PL, true, IN); K.box(-0.17, 0.55, 0, 0.28, 0.05, 0.19, 0, VI2, VI, true, IN);   // the bin, its arm rest
+          K.box(0.24, 0.49, 0, 0.52, 0.06, 0.19, 0, C.PL2, DK, false, IN); K.box(0.495, 0.49, 0, 0.13, 0.17, 0.18, 0, C.PL2, C.PL2, true, IN);   // the bridge, its front
+          K.rect(0.25, 0.551, 0, 0.16, 0.12, C.BLK, od('y')); for (const z of [-0.05, 0.05]) K.rect(0.06, 0.551, z, 0.08, 0.08, C.BLK, od('y'));   // the tray, the cups
+          C.pedals(0.93, 0.33, SZ, 2);
+          C.bench(-0.95, 0.3, { w: 1.0, top: 0.56, col: VI, col2: VI2 });
+          for (const sd of [-1, 1]) C.door(sd, { host: 'body', x: [-0.45, 0.55], y: [0.4, 0.7], z: 0.89, col: VI2, insert: VI, speaker: false });
+          C.nose({ x: 2.15, w: 0.62, y: [0.34, 0.5], rad: [0.8, 0.15], bar: 2.23, barY: 0.29, barW: 1.2 });
+          C.tail({ x: -2.2, w: 0.62, y: [0.36, 0.62], bar: -2.27, barY: 0.36, barW: 1.2 }); }
+        if (K.hi) { const C = K.cab, FT = K.fitted;   // (Visoki) the badges, the driver (suit, helmet)
+          if (!FT.maska) C.badge(2.312, 0.45, 0, 1, 'body', 0.024);
+          if (!FT.zadnje_luci) C.badge(-2.337, 0.6, 0, -1, 'bumperR', 0.024);
+          K.driver(-0.3, 1.0, -0.38, { inner: true, r: 0.12, lean: 0.3, hands: [0.18, 0.825, 0.16], knee: [0.33, 0.6, 0.17], feet: [0.88, 0.37, 0.09], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] }); }
         K.inner(() => K.box(1.08, 0.3, 0, 0.03, 0.42, 1.7, 0, CF));   // (the bulkhead at the windscreen's foot: the front bay closed from the long cabin)
         return L;
       },
