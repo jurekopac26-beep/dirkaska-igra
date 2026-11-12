@@ -4873,10 +4873,13 @@ const Core = (function () {
     // (EN.spawnR: across the infield, a hairpin)
     _winSp(dir) { return this.loop ? EN.sp : dir > 0 ? (this.ow ? EN.sp : EN.spUp) : EN.spDn; }
     _winPool() {
-      const T = this.T, R = this.R, M = this.race.opts.tfCars || (T.def.traffic && T.def.traffic.mix) || EN.mix, PK = [0, 1, 2, 3, 5];
+      // (no motorbikes, the user, 12. 11. 2026: »zbriši motorje, ljudi in kolesarje«; their share goes to the others in proportion. Nobody on
+      // foot nor on a bicycle either: the endless drive's pool is only this, _populate's people and cyclists never come)
+      const T = this.T, R = this.R, M0 = this.race.opts.tfCars || (T.def.traffic && T.def.traffic.mix) || EN.mix, PK = [0, 1, 2, 3, 5];
+      const M = M0.map((w, q) => PK[q] === 3 ? 0 : w), tot = M.reduce((a, w) => a + w, 0) || 1;
       for (const dir of this.ow ? [1] : [1, -1]) {
         const n = Math.ceil(EN.densMax * EN.ahead / this._winSp(dir)) + 4;
-        for (let k = 0; k < n; k++) { const u = R(); let q = 0, c = M[0]; while (q < M.length - 1 && u >= c) c += M[++q]; const p = PK[q]; this._veh(dir, p === 5 ? 2 : p, this.loop ? T.startS : this.s0 + 60, p).off = true; }   // (a truck: kind 2 on its own figures)
+        for (let k = 0; k < n; k++) { const u = R() * tot; let q = 0, c = M[0]; while (q < M.length - 1 && u >= c) c += M[++q]; const p = PK[q]; this._veh(dir, p === 5 ? 2 : p, this.loop ? T.startS : this.s0 + 60, p).off = true; }   // (a truck: kind 2 on its own figures)
       }
     }
     _winPs() { const P = this.race.player; return this.loop ? this.T.startS + P.dist : P.q.s; }
@@ -5353,7 +5356,7 @@ const Core = (function () {
   // headCos apart) above headOn m/s ends the run; the wall above wallHit one, above wallHard two; hitCool s between two counted; a touch of
   // the wall above wallTap m/s breaks the combo. The end also: rolling over, falling off a drop, a wheel gone. low: the clock's warning
   // (s). wrapEnd: a new stage that far before the finish line; wrapTo: on again that far past the start line. mix: a road with no mix of
-  // its own [car, van, bus, motorbike, truck]
+  // its own [car, van, bus, motorbike (none: _winPool), truck]
   const EN = { tracks: ['bathurst', 'chapman', 'caracoles', 'balea'],
     clock: [45, 30, 25, 20], clockMax: 3, passT: 1, closeT: [3, 2.5, 2, 1.5], close: 1.5, comboAdd: 0.25, vRef: [35, 50, 65, 80],
     dens0: [1, 1.5, 2, 2.5], densUp: [0.25, 0.5, 0.5, 0.75], densT: 30, densMax: 4, lc: [0.02, 0.03, 0.04, 0.05], sb: [0.006, 0.01, 0.014, 0.02], heatT: 60, heatMax: 3,
@@ -5361,7 +5364,7 @@ const Core = (function () {
     v: [[70, 110], [65, 100], [60, 85], [80, 110], [15, 25], [60, 85]], vTop: 110 / 3.6, lat: 1.6, lane3: 6.5, lcInd: 1.2, sbDec: 5, fair: 2,
     vMin: 60 / 3.6, vPts: 40 / 3.6, nearV: 70 / 3.6, near: 1.0, vnear: 0.5, nearPts: 200, vnearPts: 500, passV: 3, passDv: 1,
     lives: 3, carHit: 3, carHard: 12, headOn: 7, headCos: -0.5, wallHit: 4, wallHard: 10, hitCool: 1,
-    comboT: 5, comboMax: 5, wallTap: 1.5, low: 5, wrapEnd: 60, wrapTo: 0, mix: [0.62, 0.16, 0.06, 0.08, 0.08] };
+    comboT: 5, comboMax: 5, wallTap: 1.5, low: 5, wrapEnd: 60, wrapTo: 0, mix: [0.67, 0.17, 0.07, 0, 0.09] };
 
   class Endless {
     constructor(race) {

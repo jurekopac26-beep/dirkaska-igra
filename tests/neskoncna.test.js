@@ -48,8 +48,8 @@ const ghost = (r, secs, each) => {
 {
   const r = mk(), tf = r.tf, E = r.en, P = r.player, T = r.track, W = tf && tf.win;
   check('bathurst: race.en and the window (race.tf.win), the traffic on the loop (tf.loop), one way', !!E && !!W && tf.loop && tf.ow && tf.veh.every(v => v.dir === 1));
-  check(`the pool: enough for the densest window (${Math.ceil(EN.densMax * EN.ahead / EN.sp) + 4}), no bicycles, nobody on foot or at a stop`,
-    tf.veh.length === Math.ceil(EN.densMax * EN.ahead / EN.sp) + 4 && !tf.veh.some(v => v.kind === 4) && tf.ped.length === 0 && tf.grp.length === 0, tf.veh.length + ' vehicles');
+  check(`the pool: enough for the densest window (${Math.ceil(EN.densMax * EN.ahead / EN.sp) + 4}), no motorbikes nor bicycles, nobody on foot or at a stop`,
+    tf.veh.length === Math.ceil(EN.densMax * EN.ahead / EN.sp) + 4 && !tf.veh.some(v => v.kind === 3 || v.kind === 4) && tf.ped.length === 0 && tf.grp.length === 0, tf.veh.length + ' vehicles');
   const on = tf.veh.filter(v => !v.off), ps = T.startS + P.dist;
   check(`at the start: the window full (${want(tf)} at x${EN.dens0[1]}), every vehicle ${EN.reset} m or more ahead`, W.n[0] === want(tf) && on.length === want(tf) && on.every(v => v.s >= ps + EN.reset - 1e-6),
     W.n[0] + ', the nearest ' + f1(Math.min(...on.map(v => v.s - ps))) + ' m');
@@ -214,8 +214,8 @@ const ghost = (r, secs, each) => {
   const mkT = (id, o) => new C.Race(track(id), Object.assign({ numAI: 0, playerGrid: 1, laps: 999, phys: 'cs', seed: 3, playerModel: C.MODELS[4], endless: true, flying: 3, fuel: false, difficulty: 1 }, o));
   for (const id of EN.tracks.slice(1)) {
     const r = mkT(id), tf = r.tf, on = tf ? tf.veh.filter(v => !v.off) : [];
-    check(`${id}: an open road (def.open), the endless drive, the traffic both ways, no bicycles, nobody on foot or at a stop, the start ${EN.clock[1]} s`,
-      !!r.en && r.en.open && !tf.loop && !tf.ow && on.some(v => v.dir === 1) && on.some(v => v.dir === -1) && !tf.veh.some(v => v.kind === 4) && tf.ped.length === 0 && tf.grp.length === 0 && r.en.clock === EN.clock[1],
+    check(`${id}: an open road (def.open), the endless drive, the traffic both ways, no motorbikes nor bicycles, nobody on foot or at a stop, the start ${EN.clock[1]} s`,
+      !!r.en && r.en.open && !tf.loop && !tf.ow && on.some(v => v.dir === 1) && on.some(v => v.dir === -1) && !tf.veh.some(v => v.kind === 3 || v.kind === 4) && tf.ped.length === 0 && tf.grp.length === 0 && r.en.clock === EN.clock[1],
       on.filter(v => v.dir === 1).length + ' up, ' + on.filter(v => v.dir === -1).length + ' down');
   }
   const T = track('chapman'), s0 = straight(T, T.startS + 300);

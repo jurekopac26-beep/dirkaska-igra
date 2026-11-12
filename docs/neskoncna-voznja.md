@@ -6,7 +6,7 @@ Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtoce
 
 ## Na kratko
 
-- Nov način **Endless traffic** v izbiri načina (Single race). Izbereš odprto cesto in avto, štartaš leteče (~80 km/h), okoli tebe je promet obeh smeri: avti, kombiji, avtobusi, tovornjaki in motorji (brez kolesarjev in pešcev).
+- Nov način **Endless traffic** v izbiri načina (Single race). Izbereš odprto cesto in avto, štartaš leteče (~80 km/h), okoli tebe je promet obeh smeri: avti, kombiji, avtobusi in tovornjaki (brez motorjev, kolesarjev in pešcev).
 - **Točke**: za hitrost (vsak meter nad 60 km/h, več pri večji hitrosti) in za tesna prehitevanja ali srečanja (manj kot 1 m prostora); zaporedna tesna prehitevanja dvigujejo niz (×2 … ×5).
 - **Promet se gosti** s prevoženo razdaljo (+20 % na km, do 4-kratne gostote dvoboja v prometu).
 - **Konec ob trku** s prometom ali ob hudem udarcu v ograjo ali steno; dotik brez sunka samo prekine niz.
@@ -35,7 +35,7 @@ Novost, ki jo je uporabnik izbral 5. 11. 2026: voziš po odprti cesti ali avtoce
 ## Kako se igra
 
 - **Začetek**: Single race → *Endless traffic* → odprta cesta (seznam samo odprtih cest) → avto (kot pri drugih načinih; vsak avto iz voznega parka). Leteči štart ~120 m po štartni črti pri ~80 km/h, brez tekmecev (`nAI` 0), brez duha, zastav, boksov in policije.
-- **Promet**: mešanica vozil brez kolesarjev in pešcev (avto 62 %, kombi 16 %, avtobus 6 %, motor 8 %, tovornjak 8 %; kot `opts.tfCars`), zato nihče ni povožen in ni kazni +5 s. Vozila živijo v **oknu okoli igralca** (od 400 m za njim do 1600 m pred njim): kar ostane zadaj, se vrne naprej, novo vozilo se pojavi vsaj 300 m pred igralcem (dlje od risanja, 250 m) in nikoli na drugem vozilu. Število je tako omejeno (pri 4-kratni gostoti ~60 vozil).
+- **Promet**: mešanica vozil brez motorjev, kolesarjev in pešcev (avto 67 %, kombi 17 %, avtobus 7 %, tovornjak 9 %; lastna mešanica ceste brez motorjev, sorazmerno; `Traffic._winPool`), zato nihče ni povožen in ni kazni +5 s. Vozila živijo v **oknu okoli igralca** (od 400 m za njim do 1600 m pred njim): kar ostane zadaj, se vrne naprej, novo vozilo se pojavi vsaj 300 m pred igralcem (dlje od risanja, 250 m) in nikoli na drugem vozilu. Število je tako omejeno (pri 4-kratni gostoti ~60 vozil).
 - **Gostota**: na začetku kot v dvoboju (navzgor eno vozilo na ~290 m, navzdol na ~250 m), nato +20 % na vsak prevožen km do 4-kratne (pri 15 km); na zaslonu majhen napis *PROMET ×2,2*.
 - **Konec ceste** (`neskoncna-2`, priporočena možnost 1): ~60 m pred ciljem kratka zatemnitev (0,5 s), avto se nadaljuje ~120 m po štartni črti iste ceste z isto hitrostjo, promet v oknu se postavi znova (z gostoto, ki jo je vožnja dosegla; nič v 150 m okoli igralca), točke in niz ostanejo, napis *ODSEK 2*. Svet ostane isti, nalaganja ni. Na enosmerni Irohazaki enako.
 - **Trk**: vožnja se konča ob dogodku `'crash'` s prometom (sunek nad 3 m/s, isto merilo kot zdaj), ob udarcu v ograjo ali steno nad mejo (`hitWall`, meja se določi v testih, okoli 6 m/s), ob prevrnitvi ali padcu s ceste (reševanje na cesto). Rahel dotik (manjši sunek, drsenje ob ograji) samo prekine niz. Po trku kamera še ~2 s gleda nesrečo, nato rezultati.
@@ -157,6 +157,8 @@ Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in
 - **Ura**: vsako prehitevanje (vozilo v isti smeri, enkrat na vozilo, brez dotika) +`EN.passT` 1 s; vožnja tik ob vozilu doda še `closeT` 3 / 2,5 / 2 / 1,5 s po stopnji × (1 − razmik / 1,5 m) × (1 + 0,25 × (niz − 1)); srečanje z nasproti vozečim samo ta del. Točke in niz samo za tesno (pod 1 m; pod 0,5 m »ZELO TESNO«) pri 70 km/h ali več. Na uri največ trikratni začetek (`clockMax`). Vsakič velik »+N s« sredi zaslona (`#h-en-big`).
 - **Trki**: tri življenja (srčki na zaslonu). Čelni trk (sunek nad 7 m/s, vozili si nasproti) takoj konec (`'crash'`). Trk v vozilo nad 3 m/s eno življenje, nad 12 m/s dve; ograja nad 4 m/s eno, nad 10 m/s dve; med dvema štetima trkoma 1 s (isti trk). Rahel dotik ne šteje; ograja nad 1,5 m/s prekine niz. Ob trku »TRK! ŠE n TRKI« in »AVTO JE POŠKODOVAN«; brez življenj `'hits'`. Prevrnitev, padec in izgubljeno kolo so konec.
 - **Poškodbe**: v tem načinu vedno mehanske (`dmgMode` 2, `damage: 2` v možnostih), ne glede na nastavitev; drugod nespremenjeno. Fizika vožnje in vožnja prometa se ne spreminjata.
+- **Brez motorjev, ljudi in kolesarjev** (uporabnik 12. 11. 2026 ob ~3.30 prek Mateja 11: »zbriši motorje ljudi in kolesarje«): `_winPool` motorjem da delež 0 in ga sorazmerno razdeli drugim (tudi na cestah z lastno mešanico, `def.traffic.mix`), pešcev, kolesarjev in vrženih voznikov v tem načinu ni; ostanejo avti, kombi, avtobus in tovornjak. Drugi načini (promet, dvoboj, policija) nespremenjeni.
+- **Vozila** (uporabnik 12. 11.: vsako vozilo kot bo končano): avti, kombi, avtobus in tovornjak iz odsekov (`rdShell`) s stekli, lučmi, ogledali in kolesi v lokih (`js/render.js`).
 - **Meni**: podnapis »Ever denser traffic. Overtakes add time.«, oznaka *THREE HITS AND OUT*; rezultati: Etape ali Krogi, Prehitevanja, razlog konca (Čelni trk, Preveč trkov, Avto je izgubil kolo).
 
 ## Stanje
@@ -168,3 +170,4 @@ Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in
 - 6. 11. 2026 ponoči: popravljena mesta v mrežah vozil (pregled kode #372, 89750a1). Uporabnik v seji: način samo na krožnih progah, zaenkrat samo Bathurst, ura, ki jo polniš, težavnost po stopnjah (zgoraj). `neskoncna-2` (= 3) in `-3` (= 1) prebrana, nadomesti ju odločitev v seji. Predelava čaka na novo sejo (razdelek Predelava na krožne proge).
 - 6. 11. 2026: predelava na Bathurst končana v #372 (izvedba zgoraj); svež `main` spojen, testi `tests/neskoncna.test.js` (39) in `tests/browser/neskoncna.test.mjs` (16) na Bathurstu, v meniju ploščica samo na Bathurstu (`menu.test.mjs`). V vrsti spet »pripravljen«, osnutek do vrste.
 - 12. 11. 2026: igranje za odprte ceste narejeno v osnutku #666 (zgoraj); testi `tests/neskoncna.test.js` (52). Sledi grafika prometnih vozil v istem PR.
+- 12. 11. 2026 ponoči: nova vozila (slike uporabniku ob 3.20 in 3.42) in brez motorjev, ljudi in kolesarjev v #666.

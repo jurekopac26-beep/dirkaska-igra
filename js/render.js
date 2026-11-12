@@ -6473,23 +6473,12 @@ const Render = (function () {
     World.box(g, -8.15, 0.42, 0, 0.12, 0.16, W - 0.3, 0, K);   // (the underrun bar)
     return g.geometry();
   }
-  // a motorbike and its rider: two wheels, the fork, the tank in its colour and the helmet in it too, the seat, the engine, the exhaust,
-  // the bars, the lights; the rider (dark gear) on the seat, leaning to the bars; col: its paint (else the colour code)
-  function rdMotoGeo(col) {
-    const g = new GB(), B = col || RD_MG, K = [0.08, 0.08, 0.09], S = [0.62, 0.64, 0.68], J = [0.2, 0.21, 0.24], T = [0.13, 0.14, 0.17];
+  function rdMotoGeo(col) {   // a motorbike: two wheels, the tank in its colour, the seat, the engine, the fork and bars, the lights; col: its paint (else the colour code)
+    const g = new GB(), B = col || RD_MG, K = [0.08, 0.08, 0.09], S = [0.62, 0.64, 0.68];
     wheelInto(g, 0.72, 0.31, 0, 0.31, 0.12, K, S); wheelInto(g, -0.72, 0.31, 0, 0.31, 0.15, K, S);
-    rdRod(g, [0.72, 0.31, 0.07], [0.52, 1.0, 0.07], 0.05, S); rdRod(g, [0.72, 0.31, -0.07], [0.52, 1.0, -0.07], 0.05, S);
-    rdRod(g, [0.36, 0.72, 0], [-0.16, 0.74, 0], 0.3, B); rdRod(g, [0.5, 0.86, 0], [0.62, 0.62, 0], 0.18, B);   // (the tank, the front cowl)
-    World.box(g, -0.5, 0.74, 0, 0.62, 0.1, 0.26, 0, K); rdRod(g, [-0.5, 0.76, 0], [-0.88, 0.84, 0], 0.14, B);   // (the seat, the tail)
-    World.box(g, -0.02, 0.28, 0, 0.5, 0.36, 0.3, 0, [0.3, 0.3, 0.33]); rdRod(g, [0.1, 0.3, 0.16], [-0.86, 0.46, 0.18], 0.08, S);
-    World.box(g, 0.5, 1.0, 0, 0.05, 0.05, 0.72, 0, K);
-    World.box(g, 0.66, 0.8, 0, 0.08, 0.14, 0.16, 0, [1, 0.97, 0.82]); World.box(g, -0.9, 0.8, 0, 0.04, 0.07, 0.14, 0, [0.72, 0.06, 0.05]);
-    for (const sd of [-1, 1]) { const z = sd * 0.16;
-      rdRod(g, [-0.36, 0.9, z * 0.8], [0.08, 0.84, z * 1.2], 0.15, T); rdRod(g, [0.08, 0.84, z * 1.2], [-0.12, 0.4, z * 1.25], 0.12, T);   // (thigh, shin)
-      World.box(g, -0.08, 0.32, sd * 0.2, 0.26, 0.1, 0.1, 0, K);
-      rdRod(g, [-0.06, 1.4, sd * 0.2], [0.24, 1.14, sd * 0.28], 0.1, J); rdRod(g, [0.24, 1.14, sd * 0.28], [0.48, 1.03, sd * 0.33], 0.09, J); }   // (the arms to the bars)
-    rdRod(g, [-0.36, 0.88, 0], [-0.04, 1.42, 0], 0.36, J);   // (the torso, leaning forward)
-    World.box(g, 0.02, 1.48, 0, 0.3, 0.3, 0.27, 0, B); World.box(g, 0.17, 1.55, 0, 0.02, 0.1, 0.2, 0, [0.06, 0.07, 0.09]);   // (the helmet, its visor)
+    World.box(g, 0.08, 0.64, 0, 0.62, 0.26, 0.32, 0, B); World.box(g, -0.44, 0.72, 0, 0.6, 0.12, 0.28, 0, K); World.box(g, -0.02, 0.3, 0, 0.52, 0.36, 0.28, 0, [0.3, 0.3, 0.33]);
+    rdRod(g, [0.72, 0.31, 0], [0.52, 1.0, 0], 0.07, S); World.box(g, 0.5, 1.0, 0, 0.05, 0.05, 0.72, 0, K);
+    World.box(g, 0.64, 0.84, 0, 0.08, 0.14, 0.16, 0, [1, 0.97, 0.82]); World.box(g, -0.78, 0.78, 0, 0.04, 0.08, 0.14, 0, [0.72, 0.06, 0.05]); World.box(g, -0.62, 0.34, 0.16, 0.5, 0.08, 0.08, 0, S);
     return g.geometry();
   }
   // the endless drive's stand-ins for the vehicles far away (over RD_FAR m from the camera's point, updateRoad): a few boxes each, what reads
@@ -6563,7 +6552,7 @@ const Render = (function () {
   // the police motorbike: white, a blue stripe on the tank, a tall screen, panniers, a blue lamp either side of the headlight and at the back
   function rdPolMotoGeo() {
     const g = new GB(), K = [0.08, 0.08, 0.09];
-    World.box(g, 0.1, 0.86, 0, 0.5, 0.06, 0.31, 0, RD_PB);
+    World.box(g, 0.1, 0.78, 0, 0.5, 0.06, 0.33, 0, RD_PB);
     g.quadO([0.56, 1.05, -0.2], [0.56, 1.05, 0.2], [0.44, 1.42, 0.17], [0.44, 1.42, -0.17], [0.55, 0.62, 0.7], [0, 1.2, 0]);
     for (const sd of [-1, 1]) { World.box(g, -0.62, 0.42, sd * 0.27, 0.46, 0.36, 0.16, 0, RD_PW); World.box(g, -0.62, 0.62, sd * 0.36, 0.44, 0.08, 0.012, 0, RD_PB);
       World.box(g, 0.66, 0.92, sd * 0.12, 0.05, 0.07, 0.07, 0, [0.12, 0.2, 0.55]); }
