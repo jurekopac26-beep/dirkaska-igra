@@ -8,9 +8,10 @@ Del `docs/realizem.md` (razdeljen po paketih 11. 11. 2026, ukrep 5 »Manj sklopo
   - Ob asfaltu je ozek pas zemlje in gramoza.
   - Barve tal so iz Sentinel-2, svetloba in ton po državi.
   - Kjer višinski model zgladi pečine (Chapman's Peak, Tianmen), je teren po meri.
+  - **Mehak prehod med travo ob cesti in pobočjem** (odločitev uporabnika 12. 11. 2026 ob ~14.25 prek Mateja, opomba z orodja za napake na Chapman's Peaku, 128 m od starta: »Popravi prehode iz trave v hrib da izgledajo bolj realisticno«): brez ostrega roba med barvama; prelivanje tal, grmičevje in kamni na robu, na vseh pravih progah v G0, Chapman's Peak preveri v svoji skupini (slike zdaj in potem).
   - Oblika dreves (»mehke krogle«) ostane.
 - **Koraki:**
-  - G0: WorldCover in Sentinel-2, kompleti rastja po podnebju, svetloba po državah.
+  - G0: WorldCover in Sentinel-2, kompleti rastja po podnebju, svetloba po državah, mehak prehod trava–pobočje.
   - G1–G4: skupine 1–4.
 - **Telefon:**
   - Barve in svetloba stanejo 0 klicev.

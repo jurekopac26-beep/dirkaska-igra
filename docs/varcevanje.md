@@ -23,6 +23,9 @@ Odločitve uporabnika 3. 11. 2026 na strani Odločitve (vprašanja `zetoni-1` do
 | »Hitro združevanje« (druga seja) | po svežem `main` s spori samo v žigih, seznamih testov ali kazalu združi brez novega kroga; če `main` pade, ga popravi seja tega pull requesta |
 | »Vse štiri ukrepe« (11. 11. 2026 ob ~00.40, prek Mateja, tabla #382, komentar 6782294421, točka b) | predaja velike seje pri ~150 tisoč, okno za povzetek 200 tisoč; `CLAUDE.md` z ~52 KB na ~15 KB (citati in zgodovina v `docs/odlocitve.md`; PR #651: ~18 KB, da ostane vsako pravilo); napor privzeto high, max samo za trke, grafiko, težke napake in novo zasnovo; tabla 4× na dan na račun v majhni sveži seji, stanje je zadnji lastni komentar; pravila enkrat na dan v en PR; potrditev uporabnika (»vseh 5 predlogov«) in peti predlog, pravila, ki ostanejo: `docs/odlocitve.md`, »Varčevanje z žetoni« |
 | »Uporabi vse varcevalne ukrepe ki si jih predlagal« (11. 11. 2026 ob ~12.55, prek Mateja, tabla #382, komentar 6795249505) | vseh 8 ukrepov »Manj sklopov« (razdelek spodaj) |
+| »uporabi vse 4« (12. 11. 2026 ob ~1.13, prek Mateja, tabla #382, komentar 6810475805) | koordinacija na Sonnetu v sveži seji, rutinske seje predaja pri ~80 tisoč; velikih sej ne budi po 1 h mirovanja; sredi seje ne menjaj modela ali napora; `CLAUDE.md` najmanj 25 % krajši (razdelek »Dražje seje«) |
+| »Vse (priporočeno)« (12. 11. 2026 ob ~11.45, prek Mateja, tabla #382, komentar 6821467471) | varčevanje 2. del: predaja vseh sej pri ~80 tisoč, `CLAUDE.md` ~6 KB, tabla 2× na dan, grafika in meni z 2–3 možnostmi naenkrat, Trki do 5 agentov, rutina na Haiku/Sonnet (razdelek »Varčevanje 2. del«) |
+| »Vse« (12. 11. 2026 ob ~19.20, prek Mateja, tabla #382) | varčevanje 3. del: krajši `docs/vrsta.md`, mehanski popravki prog na Sonnetu, grafika enkrat na progo na `main` (razdelek »Varčevanje 3. del«) |
 
 V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta eno pravilo (Postopek); predaja velike seje je glavna pot, povzetek rezerva (Seje; od 11. 11. 2026 predaja pri ~150 tisoč in povzetek pri ~144 tisoč, prej ~300 in ~350 tisoč); napor medium za rutino in koordinacijo da okolje »Koordinacija« (spodaj); osnutek ob začetku dela nadomesti prejšnje »Pull request odpri samo, če …«.
 
@@ -36,6 +39,28 @@ Manj sej in krogov testov za isto delo. Ukrepi:
 6. **Osnutki prog** se zaprejo, ko so v celoti v #569.
 7. **Pregled z več agenti** enkrat na zbirno vejo, ne na vsak PR v njej.
 8. **Matejevo poročilo**: vsak dan kratko (kaj je novo, kaj čaka na uporabnika); ob ponedeljkih celotno »Stanje« (6 delov, 10 predlogov) v tedenskem načrtu ob 10.40.
+
+## Dražje seje (odločitev uporabnika 12. 11. 2026 ob ~1.13)
+Ukrepi 1–3 iz komentarja 6810475805 (»uporabi vse 4«; ukrep 4 je krajši `CLAUDE.md`, `docs/odlocitve.md`, »Seje«):
+1. **Koordinacija na Sonnetu v sveži seji s kratko predajo.** Rutinske seje (koordinacija, Združevanje, zbiranje) pišejo predajo pri ~80 tisoč konteksta (od 12. 11. 2026 ob ~11.45 tudi seje s kodo pri ~80 tisoč, razdelek »Varčevanje 2. del«): kratka predaja (kaj teče, kaj čaka, koga obvestiti), delo nadaljuje nova seja, stara se ustavi (odjavi PR, izbriše svoja opravila).
+2. **Velikih sej ne budi po več kot 1 h mirovanja.** Predpomnilnik poteče po 1 h in bujenje bi ves kontekst prebralo na novo. Namesto »nadaljuj« začni novo sejo s predajo: isti model in napor, `source_url` in veja PR. Velja tudi za `send_later` in rezervno preverjanje.
+3. **Sredi seje ne menjaj modela ali napora.** Za drug model ali napor začni novo sejo s predajo (primer: tema, ki preide s kode na grafiko ali fiziko).
+
+## Varčevanje 3. del (odločitev uporabnika 12. 11. 2026 ob ~19.20)
+»Vse«, prek Mateja, tabla #382; ocena ~5–8 % manj porabe brez izgube kakovosti (točke 1–3 predloga so že v »Varčevanje 2. del«):
+1. **Krajši `docs/vrsta.md`**: celica v tabeli ima do ~2 stavka veljavnega stanja; starejše zapise (»Starejše«, »Prej«) seja, ki vrstico spremeni, premakne v `docs/arhiv/vrsta-zgodovina.md` in pusti sklic.
+2. **Mehanski popravki prog na Sonnetu** (napor high): imena, oznake `test`/`pending`, slike za meni, dokumenti in prevodi; obremenitev, izletna cona, ograje in graditelji ostanejo na Opusu (ločena seja, predaja).
+3. **Grafika enkrat na progo**: S in G (in predelava videza) samo na progah na `main`; proge v odprtih PR (#569, #494) dobijo grafiko šele po združitvi, ne pred njo in potem še enkrat.
+
+## Varčevanje 2. del (odločitev uporabnika 12. 11. 2026 ob ~11.45)
+»Vse (priporočeno)«, tabla #382, komentar 6821467471; cilj ~30–40 % manj porabe brez izgube kakovosti; velja takoj, vsaka koordinacija potrdi v eni vrstici:
+1. **Predaja vseh sej (tudi s kodo) pri ~80 tisoč konteksta** (prej seje s kodo ~150 tisoč).
+2. **`CLAUDE.md` pol krajši** (14,2 KB → ~6 KB): samo bistvo, podrobnosti v `docs/pravila-podrobno.md`, `docs/odlocitve.md` in tem dokumentu; pravila ostanejo ista.
+3. **Tabla 2× na dan** (razdelek »Tabla«): biketraveler 6.15 in 18.15, partyslo 7.15 in 19.15, jure.kopac26 8.15 in 20.15.
+4. **Grafika in meni:** vedno 2–3 možnosti s slikami naenkrat in en »ok«, ne popravek za popravkom.
+5. **Trki:** delovni tokovi do 5 agentov (prej 10); preverjanje z več agenti samo enkrat, na koncu teme pred `main` (12. 11. ob ~22.00; prej dvakrat).
+6. **Odpade** (popravek 12. 11. ob ~11.55, komentar 6821811805): proge ne po predlogi, vsaka proga svoja raziskava in svoj značaj; uporabniku je zelo pomembno, da si niso podobne.
+7. **Rutina** (koordinacija, Združevanje, obvestila, zbiranje vprašanj) samo na Haiku/Sonnet; Opus in Fable samo za kodo.
 
 ## Predlogi a–e (`zetoni-1`)
 
@@ -67,7 +92,7 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
 - **Seja z naporom max:** koordinacija ali seja, ki jo zažene, pokliče `create_session` z `effort` `max`. Napor seje velja pred `effortLevel` iz nastavitev; `max` se v `effortLevel` ne shrani, zato ga ima samo taka seja. Brez `effort` seja teče s high (ali z naporom, ki ga uporabnik izbere v aplikaciji).
 - **Zakaj brez `CLAUDE_CODE_EFFORT_LEVEL`** (preverjeno 11. 11. 2026, Claude Code 2.1.322): spremenljivka iz nastavitev repozitorija ima prednost pred vsem drugim, tudi pred naporom seje (`effort` iz `create_session`, izbira v aplikaciji); takega CLI zavrne (»CLAUDE_CODE_EFFORT_LEVEL overrides effort for this session«). Seja PR s tem pravilom je bila ustvarjena s high (`get_session`: `session_context.effort_level` `high`), tekla pa je z max iz spremenljivke (`echo $CLAUDE_EFFORT` → `max`). Spremenljivka high bi enako zadržala na high tudi sejo z `effort` `max`, zato je ni.
 - **Preverjanje v seji:** `echo $CLAUDE_EFFORT` pokaže napor, s katerim seja res teče; `get_session` pokaže samo napor, shranjen ob zagonu. Prva seja, zagnana z `effort` `max` po združitvi, to preveri in izid zapiše v »Stanje« spodaj.
-- Delovni tokovi z več agenti (ultracode) tečejo samo za fiziko trkov in za neodvisno preverjanje pred združitvijo; grafika teče na Fable 5.2 z eno sejo, proge, meni, popravki in izbrisi na Opusu z eno sejo (odločitev uporabnika 10. 11. 2026 ob ~00.57; `CLAUDE.md`, Seje: »Proge in grafika«). Tok z več agenti porabi nekajkrat več kot navadna seja, zato je srednje velikosti (do 10 agentov), rutinsko delo teh tem (spoj `main`, čakanje na teste, združevanje, opisi) pa ostane brez več agentov.
+- Delovni tokovi z več agenti (ultracode) tečejo samo za fiziko trkov in za neodvisno preverjanje pred združitvijo; grafika teče na Fable 5.2 z eno sejo, proge, meni, popravki in izbrisi na Opusu z eno sejo (odločitev uporabnika 10. 11. 2026 ob ~00.57; `CLAUDE.md`, Seje: »Proge in grafika«). Tok z več agenti porabi nekajkrat več kot navadna seja, zato je srednje velikosti (do 5 agentov od 12. 11. 2026, prej 10; preverjanje z več agenti enkrat, na koncu teme), rutinsko delo teh tem (spoj `main`, čakanje na teste, združevanje, opisi) pa ostane brez več agentov.
 - Prejšnji način za koordinacijo, `.claude/settings.local.json` z medium, ne deluje: datoteka je v `.gitignore` in je v novem kontejnerju ni.
 - Nastavitev `maxEffortLevel` napor omeji (tudi napor seje in `CLAUDE_CODE_EFFORT_LEVEL`); med datotekami nastavitev velja najnižja. Okolje »Koordinacija« jo z namestitveno skripto zapiše v `~/.claude/settings.json`, zato seje v tem okolju tečejo z medium, koda v okolju »Default« pa s high (z max, kadar ga seja dobi ob zagonu).
 - **Uporabnik enkrat na vsakem računu**, kjer tečejo koordinacija ali zbiranje: v aplikaciji (meni okolja v naslovni vrstici seje) doda novo okolje z imenom `Koordinacija`, z enakim omrežjem kot »Default«, in v namestitveno skripto (Setup script) vpiše:
@@ -84,8 +109,8 @@ Seja, ki čaka na drug pull request ali na drugo sejo, se ne zbuja s preverjanje
 - `.claude/settings.json`: `env.CLAUDE_CODE_AUTO_COMPACT_WINDOW` `200000` (odločitev uporabnika 11. 11. 2026 ob ~00.40, komentar 6782294421, točka b1; prej `400000` po `zetoni-3`, pred tem okno 1 milijon).
 - **Prag:** CLI od okna odšteje 20 tisoč (`effective_window`), platforma pa nastavi `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` 80, zato seja pogovor povzame pri 80 % od tega: pri 200000 pri ~144 tisoč, pri prejšnjih 400000 pri ~304 tisoč (`get_session` → `external_metadata.autocompact_state`: `effective_window` 380.000, `threshold` 304.000, 11. 11. 2026; 3. 11. 2026 je bil prag 349.600, 92 %).
 - Po povzetku podrobnosti z začetka seje niso več v pogovoru: kar mora ostati (odločitve, stanje, poti), seja sproti zapiše v datoteke, commite ali docs.
-- Predaja velike seje pri ~150 tisoč (`CLAUDE.md`, Seje) je glavna pot, povzetek je rezerva, kadar predaje ni. `get_session` → `external_metadata.context_usage` pokaže `max_tokens` (okno) in `used_tokens`; 11. 11. 2026 je `used_tokens` med korakom kazal 0, zato je velikost konteksta le ocena: predaja ob koncu teme ali po velikem koraku je zanesljivejša.
-- **Odprto (Matej):** pri oknu 200000 pride povzetek (~144 tisoč) malo pred predajo pri ~150 tisoč; okno 220000 bi dalo prag ~160 tisoč.
+- Predaja vseh sej pri ~80 tisoč (od 12. 11. 2026; prej ~150 tisoč; `CLAUDE.md`, Seje) je glavna pot, povzetek je rezerva, kadar predaje ni. `get_session` → `external_metadata.context_usage` pokaže `max_tokens` (okno) in `used_tokens`; 11. 11. 2026 je `used_tokens` med korakom kazal 0, zato je velikost konteksta le ocena: predaja ob koncu teme ali po velikem koraku je zanesljivejša.
+- **Odprto (Matej; od 12. 11. 2026 prag predaje ~80 tisoč, zato verjetno brez predmeta):** pri oknu 200000 pride povzetek (~144 tisoč) malo pred predajo pri ~150 tisoč; okno 220000 bi dalo prag ~160 tisoč.
 
 ## Svež main pred združitvijo (`zetoni-4`)
 Krog testov na `main` se ne prekine (`concurrency` v `.github/workflows/tests.yml`: začeti krog se izteče, najnovejši počaka, vmesni odpadejo; pull requesti se še naprej prekinjajo), zato je varovalka po združitvi res krog testov (odločitev uporabnika `ci-main-krog`, 4. 11. 2026).
@@ -126,17 +151,17 @@ Odločitev uporabnika 9. 11. 2026 dopoldne (~10.50–11.05, v pogovoru z Matejem
 Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `docs/odlocitve.md`.
 
 - **Kaj se objavi:** nova tema (veja ali PR), prevzem ali predaja tujega PR, stanje vrste in kdo združuje, rdeč `main` in kdo ga popravlja, odločitve uporabnika, ki veljajo za vse (pravilo samo v `CLAUDE.md` ali `docs/` na `main`), in prošnje drugim računom. Ob vsakem branju koordinacija prebere nove komentarje in odgovori na prošnje zase.
-- **Branje 4× na dan** (odločitev uporabnika 11. 11. 2026 ob ~00.40, komentar 6782294421, točka b4; prej 8× na dan), po ljubljanskem času:
+- **Branje 2× na dan** (odločitev uporabnika 12. 11. 2026 ob ~11.45, komentar 6821467471, točka 3; prej 4× na dan od 11. 11. 2026, 8× na dan od 7. 11.), po ljubljanskem času:
 
 | Račun | Ure branja | Urnik (`cron_expression`) |
 |---|---|---|
-| biketraveler | 0.15, 6.15, 12.15, 18.15 | `CRON_TZ=Europe/Ljubljana 15 0,6,12,18 * * *` |
-| partyslo | 1.15, 7.15, 13.15, 19.15 | `CRON_TZ=Europe/Ljubljana 15 1,7,13,19 * * *` |
-| jure.kopac26 | 2.15, 8.15, 14.15, 20.15 | `CRON_TZ=Europe/Ljubljana 15 2,8,14,20 * * *` |
+| biketraveler | 6.15, 18.15 | `CRON_TZ=Europe/Ljubljana 15 6,18 * * *` |
+| partyslo | 7.15, 19.15 | `CRON_TZ=Europe/Ljubljana 15 7,19 * * *` |
+| jure.kopac26 | 8.15, 20.15 | `CRON_TZ=Europe/Ljubljana 15 8,20 * * *` |
 
 - **Majhna sveža seja:** vsako branje je opravilo po urniku, ki ob vsakem zagonu ustvari novo sejo (`create_trigger` z `create_new_session_on_fire` `true`), v okolju »Koordinacija« (model Sonnet, napor medium). Seja ne nosi pogovora prejšnjih branj: najprej prebere svoj zadnji komentar na tabli (stanje) in komentarje za njim, nato naredi, kar je treba; kar se je spremenilo, zapiše v nov komentar, ki je stanje za naslednje branje. Ko je PR s tem pravilom na `main`, koordinacija vsakega računa svoje opravilo za tablo nastavi na te ure in na novo sejo ob vsakem zagonu, staro opravilo z 8 branji pa izbriše.
 - **Dodatno branje** (odločitev uporabnika 7. 11. 2026): če je ob rednem branju najnovejši komentar, ki ni tvoj, mlajši od 1 h, tablo prebereš še enkrat čez 30 min (ob xx.45, `send_later` v isti seji); dokler je ob dodatnem branju nov komentar, ki ni tvoj, še enkrat čez 30 min, sicer spet samo ob rednih urah. Lastni komentarji ne štejejo.
-- **Dnevno stanje** (odločitev uporabnika 5. 11. 2026): koordinacija vsakega računa enkrat na dan, ob prvem branju po 9.00 (biketraveler 12.15, partyslo 13.15, jure.kopac26 14.15), objavi en komentar: kaj teče (seja, PR), kaj čaka v vrsti, odprta vprašanja na strani Odločitve svojega računa (število in povezava), tedenska poraba, če jo pozna (»<račun>: X % (cilj Y %)«, razdelek Poraba), in za vsak svoj PR v vrsti oceno »na `main` do <dan, ura>« (~1,5 h na krog testov, dva kroga hkrati).
+- **Dnevno stanje** (odločitev uporabnika 5. 11. 2026): koordinacija vsakega računa enkrat na dan, ob večernem branju (biketraveler 18.15, partyslo 19.15, jure.kopac26 20.15), objavi en komentar: kaj teče (seja, PR), kaj čaka v vrsti, odprta vprašanja na strani Odločitve svojega računa (število in povezava), tedenska poraba, če jo pozna (»<račun>: X % (cilj Y %)«, razdelek Poraba), in za vsak svoj PR v vrsti oceno »na `main` do <dan, ura>« (~1,5 h na krog testov, dva kroga hkrati).
 - **Ustavitev in ponovni začetek:** ko se račun ustavi (poraba, odločitev uporabnika), objavi »<ime> stoji do <čas>« in katere PR vodi kdo; ob ponovnem začetku »<ime> spet dela« in katere PR prevzame nazaj.
 - **Spori med PR:** ko dva PR (tudi različnih računov) spreminjata iste datoteke ali isto mesto v igri, seja, ki to opazi, objavi, kdo gre na `main` prvi in kdo po spoju preveri; dogovor zapiše tudi v `docs/vrsta.md` (Usklajevanje med računi).
 - **Matejeve odločitve:** Matej odločitve za biketravelerja in partyslo objavi v komentarju, ki se začne z »Matej (jure.kopac26)« in pove, za kateri račun je; koordinacija tega računa jih ob branju izvede sama, brez lepljenja uporabnika, in v eni vrstici odgovori, kaj je naredila. Velja samo za komentarje lastnika repozitorija (`author_association` OWNER); pravila spremeni samo odločitev uporabnika, ki jo komentar navede (datum in ura).
@@ -153,3 +178,5 @@ Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `d
 - 5. 11. 2026, račun strani 3: #279 spojen s svežim `main` (570ebca; obdržano vse z `main`, tudi #277); `tools/spoji-main.mjs` prilagojen #286: strani `index.html` in `garaza.html` reši `stamp.js --merge`, orodje ostane za kazalo, sezname testov, `README.md` in `js/lang.js`.
 - 9. 11. 2026: pravilo porabe 100 % 12 h pred iztekom (razdelek Poraba) in zbiranje manjših popravkov v en pull request (`CLAUDE.md`, Postopek, »Popravki in posodobitve skupaj«); odločitvi uporabnika prek Mateja, tabla #382, komentar 6737552977.
 - 11. 11. 2026: »Vse štiri ukrepe« v PR #651 (račun jure.kopac26): `CLAUDE.md` 51,7 KB → ~18 KB, podrobnosti v `docs/odlocitve.md`; napor high, okno 200 tisoč (povzetek pri ~144 tisoč), predaja ~150 tisoč, tabla 4× na dan. `CLAUDE_CODE_EFFORT_LEVEL` iz nastavitev je povozil napor seje (seja, ustvarjena s high, je tekla z max), zato je odstranjen; prva seja z `effort` `max` po združitvi preveri `echo $CLAUDE_EFFORT` in zapiše sem.
+- 12. 11. 2026: ukrepi 1–4 (»Dražje seje«) v PR s pravili dneva (račun jure.kopac26): `CLAUDE.md` 18,9 KB → ~14,2 KB (najmanj 25 %); rutinske seje predaja pri ~80 tisoč, velikih sej ne budi po 1 h, modela ali napora sredi seje ne menjaj.
+- 12. 11. 2026 ob ~11.45: varčevanje 2. del v istem PR s pravili (jure.kopac26): `CLAUDE.md` 14,2 KB → ~6 KB, celotno prejšnje besedilo v `docs/pravila-podrobno.md`; ure table 2× na dan (opravila po urniku popravi vsak račun).
