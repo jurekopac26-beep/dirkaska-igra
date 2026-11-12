@@ -4,7 +4,7 @@
    as the Nordschleife and Bang Saen) and the scenery data of js/data/livorno.js (OpenStreetMap, Copernicus DEM, ESA WorldCover, Meta / WRI canopy).
    The 60 m rule (the user's decision): the detailed things only within ~60 m of the road, as far as the chase camera sees them: the houses and
    villas of Ardenza, Montenero and Antignano in their OSM footprints (ochre and cream walls, terracotta roofs), the castles and the coastal tower,
-   the pines (umbrella and maritime), holm oaks, cypresses and the macchia, the low stone walls along the road, the rocks and the sea by the coast
+   the pines (umbrella and maritime), holm oaks, cypresses and the macchia, the steel guard rails along the road, the rocks and the sea by the coast
    road, the railway along the shore, the spectators at the hairpins, in the towns and at the start by the seafront terrace. Farther out only the
    terrain from the heights (the woods as their dark canopy colour), the sea to the horizon, the far hills and the town beyond. Only geographic and
    plain names (no people, events, firms or brands).
@@ -117,6 +117,24 @@
     const tiles = [];
     for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
+    /* ---- the verges between the asphalt, the walls and the terrain (lifted onto the ground where it rises) ---- */
+    const vergeRow = (i, side) => {
+      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
+      return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
+    };
+
+    /* ---- the side roads for the look (World.cesta's stranske, LD.side from OpenStreetMap): measured here, before the road and the
+       barriers, whose edge lines, rail and walls leave the mouths open; the strips (over the verges), the barriers and the paint are built
+       with the terrain. Nothing of the track's model changes: the invisible barrier stays on the fence line ---- */
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
+    const wF = (f) => { const a = Math.floor(f), i = ((a % N) + N) % N; return lerp(T.wAt(i), T.wAt((i + 1) % N), f - a); };
+    const barF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, j = (i + 1) % N; return side > 0 ? lerp(T.br[i], T.br[j], f - a) : lerp(T.bl[i], T.bl[j], f - a); };
+    const edgeL = (f, si) => { const w = wF(f); return si ? [PtF(f, w - 0.38, 0.034), PtF(f, w - 0.22, 0.034)] : [PtF(f, -w + 0.22, 0.034), PtF(f, -w + 0.38, 0.034)]; };   // (an edge line's two points)
+    const vergeAt = (i, side, d) => { const pr = vergeRow(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const SC = World.cesta && World.cesta.stranske && LD.side ? World.cesta.stranske(T, LD.side, { tla: nrGround, rob: vergeAt, ton: (i) => 0.84 * secT[i] - 0.04, drzava: 'Italija' }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    if (SC) { for (const u of SC.ustja) out.cestaRob.push(u); for (const k of SC.krogi) exclPush(k[0], k[1], k[2]); out.stranske = SC.n; }
+
     /* ---- the road: asphalt (resurfaced in sections, darker on the racing line), white edge lines and the centre line by the country's
        rules (World.cesta's crte: white, a dash every 12 m, solid before and through the bends); no kerbs (an old road). In the settlements
        the markings across the road where OpenStreetMap has them on the lap's ways (LD.onRoad): the pedestrian crossings' stripes (no
@@ -137,15 +155,18 @@
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 37) * 70), t = 0.9 + crH(k, 5, 37) * 0.15; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
     for (let c0 = 0; c0 < N; c0 += RC) {
-      const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pc = 0;
+      const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1;
       for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
         const i = ii % N, w = T.wAt(i), offs = [-w, -w / 2, 0, w / 2, w], v = ii * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
-        const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)];
-        if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));   // (the centre line's two points, only on the rows it runs over)
-        const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
+        const cl = CL ? CL[i] : 0;
+        if (cl) { const l = gl.row([Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034)], [wx, wx]); if (pl >= 0) gl.link(pl, l, 0, 1); pl = l; } else pl = -1;   // (the centre line, only on the rows it runs over)
       }
+      for (const si of [0, 1]) for (const run of tek(si, 2, c0, Math.min(c0 + RC, N))) {   // (the edge lines, open at the side roads' mouths)
+        let p = -1;
+        for (const f of run) { const l = gl.row(edgeL(f, si), [wx, wx]); if (p >= 0) gl.link(p, l, 0, 1); p = l; }
+      }
+      if (SC) for (const [f0, f1, sd] of SC.prekinjena(c0, Math.min(c0 + RC, N))) gl.link(gl.row(edgeL(f0, sd > 0 ? 1 : 0), [wx, wx]), gl.row(edgeL(f1, sd > 0 ? 1 : 0), [wx, wx]), 0, 1);   // (and broken across them)
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
     }
@@ -156,29 +177,59 @@
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker }));
     }
 
-    /* ---- the barriers (Core's T.bl / T.br) drawn as the coast's low stone walls; concrete parapets on the bridges; at the start a white wall with
-       a catch fence and the crowd behind it ---- */
+    /* ---- the barriers (Core's T.bl / T.br) drawn as the steel guard rail of Italy's roads (the galvanised double wave on posts every 4 m);
+       concrete parapets on the bridges; at the start a white wall with a catch fence and the crowd behind it. The look alone: the barrier
+       is the same line ---- */
     const bridgeAt = new Uint8Array(N); for (const [a, b] of BR) for (let s = a - 4; s <= b + 4; s += ds / 2) bridgeAt[T.idx(s)] = 1;
     const startArea = (i) => { const d = dS(i * ds); return d > L - 320 || d < 140; };
-    const kindAt = (i) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : 0);   // 0 stone wall, 1 white wall and fence, 2 parapet
+    const kindAt = (i) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : 0);   // 0 guard rail, 1 white wall and fence, 2 parapet
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    const stone = [0.8, 0.72, 0.6], stoneD = [0.62, 0.55, 0.46], stoneT = [0.86, 0.8, 0.7], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], par = [0.82, 0.8, 0.76];
-    const wallRow = (gr, i, side, k) => {
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : k === 2 ? 1.05 : 0.85, tone = 0.92 + crH(i >> 3, side, 71) * 0.16;
-      const c0 = k === 1 ? whD : k === 2 ? whD : stoneD.map(v => v * tone), c1 = k === 1 ? wh : k === 2 ? par : stone.map(v => v * tone), c2 = k === 0 ? stoneT : k === 1 ? wh : par;
-      let p = [Pt(i, o, -0.5), Pt(i, o, h - 0.08), Pt(i, o, h), Pt(i, o2, h)], c = [c0, c1, c2, c2];
+    const stone = [0.8, 0.72, 0.6], stoneT = [0.86, 0.8, 0.7], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], par = [0.82, 0.8, 0.76];
+    const wallRow = (gr, f, side, k) => {   // (the start's white wall, k 1, and a bridge's parapet, k 2)
+      const bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 1.05, c1 = k === 1 ? wh : par;
+      let p = [PtF(f, o, -0.5), PtF(f, o, h - 0.08), PtF(f, o, h), PtF(f, o2, h)], c = [whD, c1, c1, c1];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
+    const wallCap = (gr, f, side, k) => {   // (a wall's end: at a side road's mouth and where the rail takes over)
+      const bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 1.05, cB = k === 1 ? wh : par;
+      gr.link(gr.row([PtF(f, o, -0.5), PtF(f, o, h)], [whD, cB]), gr.row([PtF(f, o2, -0.5), PtF(f, o2, h)], [whD, cB]), 0, 1);
+    };
+    const kindF = (f) => kindAt(((Math.round(f) % N) + N) % N);
+    const zn = [0.8, 0.82, 0.84], znD = [0.5, 0.52, 0.55], znE = [0.66, 0.68, 0.71], znP = [0.44, 0.46, 0.49], znV = [0.36, 0.38, 0.41], znT = [0.76, 0.78, 0.8];
+    const RAIL = [[0.2, 0.43, znD], [0.1, 0.51, zn], [0.2, 0.595, znV], [0.1, 0.68, zn], [0.2, 0.76, znT]];   // ([beyond the barrier's line, above the ground, colour]: crests to the road, the valley and the lower edge in shade)
+    const footF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, h = (q) => vergeAt(q, side, (side > 0 ? T.br[q] : T.bl[q]) + 0.2); return f - a < 1e-4 ? h(i) : lerp(h(i), h((i + 1) % N), f - a); };   // (the verge under the rail, over the road's height)
+    const railRow = (gr, f, side) => {
+      const bar = barF(f, side), ft = footF(f, side), tone = 0.95 + crH(Math.floor(f) >> 1, side, 73) * 0.1;
+      const p = RAIL.map(q => PtF(f, side * (bar + q[0]), ft + q[1])), c = RAIL.map(q => q[2].map(v => v * tone));
+      if (side < 0) { p.reverse(); c.reverse(); }
+      return gr.row(p, c);
+    };
+    const railPost = (gr, f, side) => {   // (a post behind the rail: its face across the road and its face to the road)
+      const ft = footF(f, side), bar = barF(f, side), o1 = side * (bar + 0.2), o2 = side * (bar + 0.3), y0 = ft - 0.2, y1 = ft + 0.74, d = 0.03;
+      const A = gr.row([PtF(f - d, o2, y0), PtF(f - d, o2, y1)], [znP, znP]), B = gr.row([PtF(f - d, o1, y0), PtF(f - d, o1, y1)], [znP, znE]), C = gr.row([PtF(f + d, o1, y0), PtF(f + d, o1, y1)], [znP, znE]);
+      gr.link(A, B, 0, 1); gr.link(B, C, 0, 1);
+    };
+    const secRow = (gr, f, side, k) => (k ? [wallRow(gr, f, side, k), 3] : [railRow(gr, f, side), RAIL.length - 1]);   // (the barrier's ribbon at a station: [row, quads across])
+    const secLink = (gr, A, B) => gr.link(A[0], B[0], 0, A[1]);
     for (let c0 = 0; c0 < N; c0 += RC) {
       const gr = new RB();
-      for (const side of [-1, 1]) {
-        let prev = -1, pk = -1;
-        for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
-          const i = ii % N, k = kindAt(i);
-          if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
-          const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
+      for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + RC, N))) {   // (the rail and the walls, open at the side roads' mouths)
+        const cE = Math.min(c0 + RC, N), nR = run.length; let prev = null, pk = -1;
+        for (let q = 0; q < nR; q++) {
+          const f = run[q], k = kindF(f);
+          if (prev && k !== pk) {
+            secLink(gr, prev, secRow(gr, f, side, pk)); prev = null;
+            if (!pk || !k) wallCap(gr, f, side, pk || k);   // (the wall's end face, where the rail meets it)
+          }
+          const r = secRow(gr, f, side, k); if (prev) secLink(gr, prev, r); prev = r; pk = k;
+          if (!k) {   // (the rail's posts: at its ends by the mouths and every 4 m between)
+            const e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
+            if (e0 || e1 || (f === Math.floor(f) && f % 2 === 0 && f < cE)) railPost(gr, f + (e0 ? 0.05 : e1 ? -0.05 : 0), side);
+          }
         }
+        if (run.z0 && kindF(run[0])) wallCap(gr, run[0], side, kindF(run[0]));
+        if (run.z1 && kindF(run[nR - 1])) wallCap(gr, run[nR - 1], side, kindF(run[nR - 1]));
       }
       addM(gr, rMat, true);
     }
@@ -191,16 +242,11 @@
       addM(gf, fMat);
     }
 
-    /* ---- the verges between the asphalt, the walls and the terrain (lifted onto the ground where it rises) ---- */
-    const vergeRow = (i, side) => {
-      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
-      return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
-    };
-
     /* ---- scenery chunks (vertex coloured, 128 m) and the spectators ---- */
     const scen = new Chunks(128);
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nCast = 0;
+    let nBld = 0, nCast = 0, nLamp = 0, nStop = 0, nPost = 0;
+    const BLD = [];   // (the houses that stand: [x, z, half length, half width, cos, sin], for the lamps and the stops)
 
     /* ---- the buildings (OSM footprints within 60 m): houses and villas in ochre, cream, salmon and white with terracotta roofs, blocks of flats with
        flat roofs, churches with a bell tower, the castles and towers in stone (the landmarks' outlines make the castles of their footprints) ---- */
@@ -222,7 +268,7 @@
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, ck = castleAt(bx, bz);
       const kind = ck === 'castle' ? 3 : ck === 'tower' ? 2 : k0 === 0 && area > 240 ? 9 : k0;
-      nBld++; CR.block(bx, bz, Lb, Wb, ang);
+      nBld++; CR.block(bx, bz, Lb, Wb, ang); BLD.push([bx, bz, Lb / 2, Wb / 2, ca, sa]);
       if (kind === 3 || kind === 2 || kind === 8) {   // stone: a castle block, a tower, a ruin
         const sc = vary([0.74, 0.66, 0.55], R, 0.08), hh = kind === 2 ? Math.max(Hb, 13 + hk * 5) : kind === 3 ? Math.max(Hb, 9 + hk * 4) : 2.5 + hk * 2;
         box(g, bx, y0 - 0.5, bz, Lb, hh + 0.5, Wb, ang, sc, vary(sc, R, 0.05), true);
@@ -449,7 +495,34 @@
             if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + RC, N), API.nrGCol);
         addM(gv, gMat);
+      }
+      if (SC) {   // (the side roads' strips, the orange posts across their openings in the wall and the paint)
+        const sMat = aMat.clone();
+        for (const g of SC.asfalt(RB, API.nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
+        nPost = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki;   // (where the posts stand: read by the tests)
+      }
+      {   // (OSM's street lamps and bus stops, for the look: behind the fence, off the side roads and the houses, not by a bridge or in the sea)
+        const inB = (x, z, m) => { for (const b of BLD) { const dx = x - b[0], dz = z - b[1]; if (Math.abs(dx * b[4] + dz * b[5]) < b[2] + m && Math.abs(dz * b[4] - dx * b[5]) < b[3] + m) return true; } return false; };
+        const onS = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] - 1.2 + m; if ((x - k[0]) ** 2 + (z - k[1]) ** 2 < r * r) return true; } return false; };
+        const spot = (x, z, m) => { const n = nrNear(x, z); return n.i >= 0 && n.dd >= 0.6 + m && !underBridge(n) && seaD(x, z) < -0.5 && !onS(x, z, m) && !inB(x, z, 0.3 + m); };
+        const LP = [];
+        for (const [lx, lz] of LD.lamps || []) {
+          const n = nrNear(lx, lz); if (n.i < 0) continue;
+          const i = n.i, sg = n.lat < 0 ? -1 : 1; let x = lx, z = lz, ok = false;
+          if (n.dd < 0.9) { const o = sg * ((sg > 0 ? T.br[i] : T.bl[i]) + 1.0); x = T.px[i] + T.nx[i] * o; z = T.pz[i] + T.nz[i] * o; }   // (one that would stand inside the fence goes behind it: 0.6 m or so, less on the inside of a bend)
+          for (let k = 0; k < 6 && !(ok = spot(x, z, 0)); k++) { x -= sg * T.nx[i] * 0.5; z -= sg * T.nz[i] * 0.5; }   // (out of a house: towards the road)
+          if (!ok || LP.some(q => (q[0] - x) ** 2 + (q[1] - z) ** 2 < 36)) continue;
+          LP.push([x, z]); World.cesta.svetilka(scen.get(x, z), x, nrGround(x, z), z, Math.atan2(-sg * T.nz[i], -sg * T.nx[i])); nLamp++;
+        }
+        for (const [sd, side, dist, shel] of LD.stops || []) {
+          for (const k of [0, 3, -3, 6, -6, 9, -9]) {   // (off a side road's mouth: a few metres along the road)
+            const i = T.idx(sAt(sd) + k * ds), o = side * Math.max(dist, (side > 0 ? T.br[i] : T.bl[i]) + (shel ? 1.3 : 1.0)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+            if (!spot(x, z, shel ? 0.3 : 0) || (shel && !(spot(x + T.tx[i] * 1.8, z + T.tz[i] * 1.8, 0) && spot(x - T.tx[i] * 1.8, z - T.tz[i] * 1.8, 0)))) continue;
+            World.cesta.postaja(scen.get(x, z), x, nrGround(x, z), z, Math.atan2(-side * T.nz[i], -side * T.nx[i]), shel); nStop++; break;
+          }
+        }
       }
       G.col = G.cov = P.edge = null;   // (build only)
     }
@@ -457,7 +530,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, lamps: nLamp, stops: nStop, mouthPosts: nPost, fans: nFans, rocks: out.rocks };   // (read by the tests)
     return out;
   }
 
