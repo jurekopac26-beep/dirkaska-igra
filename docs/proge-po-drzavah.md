@@ -6,7 +6,7 @@ Pravilo uporabnika (3. 11. 2026): v prihodnje naredimo iz vsake države samo **e
 
 Viri prog na čakanju: verige iz `docs/nove-proge.md` (veja `nove-proge/balea`), `docs/gorske-proge.md` (kratke proge, veja `gorske-proge/01-norquay`, skupine A–D) in `docs/zavite-proge.md` (veja `ccr-67c8ebdb-8sdz1o`, koraki 1–4); narejene proge na vejah s pull requestom; stare veje iz oktobra (`claude/proga-<id>` in druge), ki niso na `main`. Pregled prog v igri s slikami kamere 1 in zavitostjo: https://claude.ai/artifact/DvMKmf9ZWhENQYRqhR6DrJ
 
-**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; naprej samo 10 od Hải Vâna do Batangasa (`docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
+**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; od 12. 11. ob ~19.00 tudi 10 od Hải Vâna do Batangasa (veliko jih bo zamenjanih, predvsem preveč zavite; `docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
 
 ## Nove proge za 1.0 (odločitve uporabnika 7. 11. 2026)
 
