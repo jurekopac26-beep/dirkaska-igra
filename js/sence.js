@@ -21,9 +21,8 @@
   const q = location.search;
   // (temni-nacin.html: window.SenceRoots, on everywhere but only for the roots it hands in, its own rows of the page left as they are)
   const roots = !!window.SenceRoots;
-  // (on: Samsung Internet by its UA, or any browser that darkens a light page by force (the menu's probe, js/menu.js forcedDark: the
-  // system colour Canvas in a light element is dark), as Samsung Internet does with a UA without its name (its desktop version, a UA
-  // changed in its settings); a plain Chrome, light or dark, darkens nothing and stays as it is)
+  // (on: Samsung Internet by its UA only, the user's decision; another browser that darkens a light page by force gets the menu's tip
+  // instead (js/menu.js forcedDark). The probe (the system colour Canvas in a light element is dark) only for temni-nacin.html's verdict)
   function forced() {
     try {
       if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
@@ -34,7 +33,7 @@
     } catch (_) { return false; }
   }
   const why = { ua: /SamsungBrowser/i.test(navigator.userAgent), forced: forced(), param: /[?&]sence=1/.test(q) ? 1 : /[?&]sence=0/.test(q) ? 0 : null };
-  const on = roots || why.param === 1 || (why.param !== 0 && (why.ua || why.forced));
+  const on = roots || why.param === 1 || (why.param !== 0 && why.ua);
   const Sence = window.Sence = { on, why, root: () => {}, rewriteSheet: () => {}, stats: { rules: 0, layers: 0, filters: 0, imgs: 0, svgs: 0, ms: 0 } };
   if (!on) return;
   const ST = Sence.stats;
