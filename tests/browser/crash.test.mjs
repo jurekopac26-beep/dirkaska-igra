@@ -8,7 +8,7 @@
 // 4. the mirrors: the first side blow knocks that side's mirror off, it lies on the road and stays there while the car drives on
 // 5. repeated side blows: the roof sinks on that side (its edge lower than the other side's); the rear door swung open, its window broken
 // 6. one of the 11 (the rally car) dense too; switched off during a race the cars are built again as before
-// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Normalni within 6 % more vertices than off, Visoki within 30 %
+// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track, the Tornado V8): Normalni within 6 % more vertices than off, Visoki within 30 %
 // 8. xParts, xDust, xDrag: a rear bumper knocked loose (the car 70 % gone: the tail hangs loose only from then) drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
 //    knocked off lies on the road and, pushed out of the core's 40 pieces, stays drawn there; off: none of it (the piece freed as before);
 //    rolling over: the car's black underside (floor, subframes, tunnel, exhaust, tank) drawn while it rolls, not before nor after
@@ -514,8 +514,9 @@ try {
   }
 
   // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Normalni and Visoki drawn in turn at
-  // each place, the same frame (switched as in Nastavitve: the cars built again), so only the cars' own geometry differs
-  const { page: lp, ctx: lc } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, { camera: 'chase', zoom: 1.2 }), { width: 844, height: 390 }, { seed: 12345 });
+  // each place, the same frame (switched as in Nastavitve: the cars built again), so only the cars' own geometry differs; the Tornado V8,
+  // the car it measured before the base car became the Merjasec V8 (docs/avti-kolibri.md, »15 avtov biketraveler«)
+  const { page: lp, ctx: lc } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, { camera: 'chase', zoom: 1.2, carId: 'tornado' }), { width: 844, height: 390 }, { seed: 12345 });
   await lp.evaluate(() => { window.__gl = { calls: 0, verts: 0 }; const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
     const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]); });
