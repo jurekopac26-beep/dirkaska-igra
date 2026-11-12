@@ -179,7 +179,7 @@ Odločitev uporabnika 10. 11. 2026 (~23.20): v Nastavitvah naj bodo gumbi, s kat
 - **Dirka s prijatelji:** vedno Kot zdaj in Odpadli deli Vklop, brez pravila koles; poškodbe določi gostitelj (`testOf(true)` vrne `{}`), zato telefona ostaneta usklajena.
 - **Obstoječi igralci** so ob prvem zagonu enkrat preklopljeni na nove privzete vrednosti (`tdgp-defaults-v6` v `js/game.js`, po vzoru `tdgp-defaults-v5` pri poškodbah): Trki Realistično, Odpadli deli Vklop, Odpadlo kolo Konec dirke. Poškodbe ostanejo, kot jih je igralec izbral; pozneje velja, kar izbere sam.
 - **Angleška imena** (`js/lang.js`): Knocks: Realistic / As now; Older versions; Car damage: Off / Looks only / On; Debris: Off / On; Lost wheel: Race over / Race goes on.
-- Testi: `tests/trki.test.js` (preverjanje 43), `tests/odpadli-deli.test.js` (41–45), v brskalniku `tests/browser/nova.test.mjs`. Izbire z razlogi in seznam možnosti za uporabnika: `docs/trki-realizem.md`, »Gumbi v Nastavitvah: izvedba«.
+- Testi: `tests/trki.test.js` (preverjanje privzetih vrednosti igre, »Nastavitve«; v izpisu 30.), `tests/odpadli-deli.test.js` (41–45), v brskalniku `tests/browser/nova.test.mjs`. Izbire z razlogi in seznam možnosti za uporabnika: `docs/trki-realizem.md`, »Gumbi v Nastavitvah: izvedba«.
 
 ## Preizkus: tekmeci in trki
 
