@@ -1265,12 +1265,13 @@ try {
         JSON.stringify({ u1, names: y1.names.map(n => n.c) }));
       await ev(page, 'root.querySelector(".zl.c[data-c=\\"Japan\\"]").click();'); await zem(page, 2);
       const y2 = await ev(page, EARTH), u2 = await ev(page, ZB);
-      const cardAt = (c) => side ? Math.abs(c[2] - u2.W) < 1 && Math.abs(c[1]) < 1 && Math.abs(c[3] - u2.H) < 1 && Math.abs(c[2] - c[0] - Math.min(412, u2.W * 0.6)) < 2
-        : Math.abs(c[0]) < 1 && Math.abs(c[2] - u2.W) < 1 && Math.abs(c[3] - u2.H) < 1 && c[1] >= Math.max(u2.H - 460, u2.H <= 700 ? 120 : 150) - 0.5;
+      // (a track's card, its picture beside its shape, up to 510 px high upright: the user, 12. 11. 2026)
+      const cardAt = (c, mh = 460) => side ? Math.abs(c[2] - u2.W) < 1 && Math.abs(c[1]) < 1 && Math.abs(c[3] - u2.H) < 1 && Math.abs(c[2] - c[0] - Math.min(412, u2.W * 0.6)) < 2
+        : Math.abs(c[0]) < 1 && Math.abs(c[2] - u2.W) < 1 && Math.abs(c[3] - u2.H) < 1 && c[1] >= Math.max(u2.H - mh, u2.H <= 700 ? 120 : 150) - 0.5;
       await page.click('.zem-card .izb-t[data-t="suzuka"]'); await zem(page, 3);
       const y3 = await ev(page, EARTH), u3 = await ev(page, ZB);
       T.check(`${w}x${h}: on the Earth a country's card (Japan) ${side ? 'at the right, the screen\'s height, the title left of it' : 'from the bottom, the screen\'s width'}, its cross 44 px or more, no name over it; a track's card (Suzuka): Select and Race! in sight without scrolling, 44 px or more; its back arrow and cross 44 px or more`,
-        !!y2.card && cardAt(y2.card.r) && big(u2.x) && clean(y2) && (!side || (u2.tb[2] <= y2.card.r[0] && u2.ts[2] <= y2.card.r[0])) && !!y3.card && cardAt(y3.card.r) && u3.btns.length === 2 &&
+        !!y2.card && cardAt(y2.card.r) && big(u2.x) && clean(y2) && (!side || (u2.tb[2] <= y2.card.r[0] && u2.ts[2] <= y2.card.r[0])) && !!y3.card && cardAt(y3.card.r, 510) && u3.btns.length === 2 &&
         u3.btns.every(b => b[1] >= u3.body[1] - 0.5 && b[3] <= u3.body[3] + 0.5 && b[3] <= u3.H + 0.5 && b[3] - b[1] >= 43.5) && big(u3.bk) && big(u3.x) && clean(y3),
         JSON.stringify({ c2: y2.card && y2.card.r, x2: u2.x, tb: u2.tb, ts: u2.ts, c3: y3.card && y3.card.r, body: u3.body, btns: u3.btns, bk: u3.bk, x3: u3.x }));
       await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await zem(page, 0);

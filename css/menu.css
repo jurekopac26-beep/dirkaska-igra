@@ -1272,6 +1272,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .izb-tc { gap: 9px; } .izb-shape { flex-basis: 132px; height: 104px; } .izb-photo { height: 104px; } .izb-facts { gap: 8px; } .izb-facts b { font-size: 17px; }
   .izb-hg { height: 60px; } .izb-hg svg { top: 19px; height: 24px; } .izb-btns button { height: 44px; } .izb-race { font-size: 21px; }
   .izb-nu { gap: 8px; } .nu-nv { min-height: 46px; } .nu-bar { min-height: 40px; }
+  /* (the Earth's card on a low screen: the picture, the shape and the facts in one row, Select and Race! in sight) */
+  .izb-tc.ph .izb-tcr { flex-wrap: nowrap; } .izb-tc.ph .izb-facts { flex: 0 0 auto; flex-direction: column; justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) { .izb-sheet, .izb-dim { transition: none; } .izb-body.in { animation: none; } }
 /* The Earth (js/menu-zemlja.js): out of the head's globe over the whole screen (a circle from its middle: --zx, --zy, --zr; --zR the

@@ -395,13 +395,14 @@
       // the view at a scale with the route's middle my px down the frame, kept in the land
       const view = (s, my, ox = 0) => {
         const vw = W / s, vh = H / s; let vx = cx - (padL + availW / 2 + ox) / s, vy = cy - my / s;
-        if (E) { const lx = T.W / 2 - LW / 2, ly = T.H / 2 - LH / 2; vx = Math.min(Math.max(vx, lx), lx + LW - vw); vy = Math.min(Math.max(vy, ly), ly + LH - vh); }
+        // (a view wider or taller than the land, only a turned map on its side smaller than sMin: the land in it along that side, the blurred backdrop beyond)
+        if (E) { const lx = T.W / 2 - LW / 2, ly = T.H / 2 - LH / 2; vx = vw > LW ? Math.min(Math.max(vx, lx + LW - vw), lx) : Math.min(Math.max(vx, lx), lx + LW - vw); vy = vh > LH ? Math.min(Math.max(vy, ly + LH - vh), ly) : Math.min(Math.max(vy, ly), ly + LH - vh); }
         return { vx, vy, vw, vh, s };
       };
       let V = view(Math.max(Math.min(availW / rw, availH / rh), sMin), padTop + availH / 2);
       // on its side an open road's turned map in the chosen card: the route as big as keeps it clear of the graph, the cameras, the counter, the weather and the
       // carousel's arrows (it may reach in beside them where it is narrow), in the middle or a little to a side; where the land makes it
-      // bigger than the room between them (sMin), where it lies under the fewest of them
+      // bigger than the room between them (sMin), smaller (the land narrower than the card), else where it lies under the fewest of them
       if (tall) {
         const fb = box.getBoundingClientRect(), O = [...box.parentNode.querySelectorAll(':scope > .cams, :scope > .tcount, :scope > .hgraph, :scope > .wxv > button'), ...app.querySelectorAll('#s-track .rarw')]
           .map(e => e.getBoundingClientRect()).filter(r => r.width > 0).map(r => [r.left - fb.left - 8, r.top - fb.top - 8, r.right - fb.left + 8, r.bottom - fb.top + 8]), P = routeTurned(T, a);
@@ -409,8 +410,10 @@
         // (the nearest places first: a little to a side, or up into the finish's name's room, its name then beside its flag: mapLabels)
         const OFF = []; for (const oy of [0, -10, -20, -30, -40]) for (const ox of [0, -12, 12, -24, 24, -36, 36]) OFF.push([ox, oy]);
         OFF.sort((p, q) => Math.abs(p[0]) / 12 + Math.abs(p[1]) / 10 - Math.abs(q[0]) / 12 - Math.abs(q[1]) / 10);
-        const s0 = V.s; let bn = hits(V, Infinity);
-        size: for (let f = Math.max(Math.min((W - 20) / rw, availH / rh), s0); ; f = Math.max(s0, f * 0.97)) {
+        // (smaller than the land allows where it must, down to half the room between the card's edges: the user, 12. 11. 2026, the card its
+        // size as it was, so a turned route clear of the weather's row is smaller than the land round it; the blurred backdrop at the sides)
+        const s0 = Math.min(V.s, Math.min((W - 20) / rw, (H - 20) / rh) * 0.5); let bn = hits(V, Infinity);
+        size: for (let f = Math.max(Math.min((W - 20) / rw, availH / rh), V.s); ; f = Math.max(s0, f * 0.97)) {
           for (const [ox, oy] of OFF) { const c = view(f, padTop + availH / 2 + oy, ox), n = hits(c, bn); if (!n) { V = c; break size; } if (n < bn) { bn = n; V = c; } }
           if (f <= s0) break;
         }
