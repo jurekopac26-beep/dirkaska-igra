@@ -3,12 +3,14 @@
 // (type, colours, texture size and tiling, transparency), the knockable props and the prop floor. Textures' pixels are not
 // included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was. Also the
 // braking boards: on every circuit all of them (Track.brakeBoards) in one mesh without a shadow, each standing on the ground; none elsewhere.
+// Chapman's Peak's hills behind the barrier line (def.hills) as its terrain gives them (tools/chapman-hribi.mjs).
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
 //   WORLD_ONLY=medvode,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, pwNote } from './lib.mjs';
+import { DL as HILL_DL, probe as hillProbe, hills, line as hillsLine, fileLine as hillsFile } from '../../tools/chapman-hribi.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'world.json');
 const update = process.argv.includes('--update');
@@ -23,6 +25,12 @@ try {
   for (const id of await trackIds(page)) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
+    if (id === 'chapman' && !update) { const h = hills(await page.evaluate(hillProbe, HILL_DL)), have = hillsFile();   // (Chapman's Peak's hills behind the barrier line, def.hills: as its terrain gives them now)
+      T.check('chapman: def.hills as its terrain gives them (else node tools/chapman-hribi.mjs)', have === hillsLine(h), have ? `${h.stats.length} hills, ${h.stats.reduce((a, x) => a + x[2], 0)} m` : 'no def.hills');
+      const nc = await page.evaluate(() => { const T = window.__game.race.track, H = T.hill; let worst = 99, n = 0;   // (the rockfall nets the world built: the cars' soft limit short of each, its posts 0.3 m nearer the road)
+        for (const [sd, i, j, off] of Render.world.hillProbe.nets) for (let k = Math.max(0, i - 2); k < Math.min(T.N, j + 2); k++) if (H && H.on[sd > 0 ? 1 : 0][k]) { n++; worst = Math.min(worst, off - H.lim[sd > 0 ? 1 : 0][k]); }
+        return { nets: Render.world.hillProbe.nets.length, n, worst }; });
+      T.check('chapman: the cars\' soft limit on a hill at least 0.5 m short of a rockfall net (they never reach its posts and mesh)', nc.nets > 0 && nc.n > 0 && nc.worst >= 0.5, `${nc.nets} nets, ${nc.n} samples of a hill by one, the least room ${nc.worst.toFixed(2)} m`); }
     const fp = await page.evaluate(async () => {
       for (let k = 0; k < 2; k++) await new Promise(r => requestAnimationFrame(r));   // (a frame of the new world drawn first: what follows the camera is set, e.g. Pikes Peak's shadow casters and haze, however long its first frame took)
       const W = Render.world, race = window.__game.race, Tr = race.track;
