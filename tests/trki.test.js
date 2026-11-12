@@ -21,15 +21,21 @@
 // - races (Spa, Bathurst: 12 rivals, the player on the autopilot, 150 s) in every version: nothing NaN, every car moving, no two cars
 //   touching side by side for 2 s on end (glued), spins (past 40 deg at speed) at most 4 in Simulacija, Arkadna, Mehka and Realistična
 // - Realistična (cv 6; docs/trki-realizem.md, »Zasnova prototipa Realistična«, »Testi«): conservation (in every knock of two cars the pair's
-//   momentum is kept to 1e-9 and its kinetic energy with the turning grows by at most 0.5 kJ; at the barrier neither the energy nor the speed
+//   momentum is kept to 1e-9 and its kinetic energy with the turning never grows, to 1e-4 J (Core kCollide: a car that takes only a part of
+//   its turn takes as much more of it as keeps the pair's energy; the independent check, 12. 11. 2026): the 30 scenes of two BURJA R7, the
+//   144 by the roles and the weights (player/rival both ways and rival/rival, BURJA R7 and TITAN, 5300 kg, 120-300 km/h) and 24 with a car
+//   rolling over or in the air; at the barrier neither the energy nor the speed
 //   along it grows and no corner is left inside; a thing by the road and a loose part never speed the car up), symmetry (the mirror image of a
 //   knock, of a barrier and of a thing off the car's line gives the mirror image of the outcome to 1e-9; square into the barrier no yaw and no
 //   slide along it), limits (no NaN at 60-200 km/h, never over 9 rad/s with the grip lost, PITs ordered by their impulse, the turns, the
 //   leaving angles and the losses to the things in their bands; a loose part in the way takes under 1.6 % of the speed and no random number,
 //   a part lying on the road is run over as in Simulacija); the barrier with the car sliding or spinning (300 scenes at both barriers: on its
 //   way at 20-90 deg to the barrier, the nose 10-60 deg off its way, 100 and 200 km/h, turning at up to 4 rad/s either way: a knock, its own
-//   rule over 1.5 m/s, never adds energy and leaning on the barrier, Simulacija's rule, at most 7 kJ a touch; never over 9 rad/s with the grip
-//   lost, also when a corner leans on the barrier after the knock; the mirror image to 1e-9 without turning at the start and in all but a few
+//   rule over 1.5 m/s, never adds energy and neither does leaning on the barrier, to 1e-4 J (slower: Simulacija's rule, and where that would
+//   add energy the same push as a rigid body takes it); never over 9 rad/s with the grip
+//   lost, also when a corner leans on the barrier after the knock; the same by the weights (96 scenes: MRAVLJA 165 kg, BURJA R7, TITAN,
+//   KAMEN PUŠČAVA 7000 kg, also without turning at the start) and the yaw rate right after a touch at most 9 rad/s whichever car (460
+//   scenes: the new physics, the classic MRAVLJA, a car rolling over); the mirror image to 1e-9 without turning at the start and in all but a few
 //   scenes with it; the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
 //   damage: docs/trki-realizem.md, »Testi različice Realistična«); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the
 //   whole state of the race and of the car after every step is the same in cv 6 as in cv 1, each in a core of its own; the plane with given
@@ -189,8 +195,8 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   const KR = Object.values(kn), worst = (fn) => KR.reduce((a, b) => (fn(b) > fn(a) ? b : a));
   {
     const p = worst(x => x.r.dp), e = worst(x => x.r.dE);
-    ok('Realistična, conservation: in every knock of two cars (30 scenes: T-bone at the front and the rear part, head on and from behind off the middle, PITs; 60, 120, 200 km/h) the pair\'s momentum is kept to 1e-9 kg m/s and its kinetic energy with the turning does not grow by more than 0.5 kJ',
-      KR.every(x => x.r.hits > 0 && x.r.dp <= 1e-9 && x.r.dE <= 500), `momentum off by at most ${p.r.dp.toExponential(1)} kg m/s (${p.name}); the most energy added ${f(e.r.dE / 1000, 3)} kJ (${e.name})`);
+    ok('Realistična, conservation: in every knock of two cars (30 scenes: T-bone at the front and the rear part, head on and from behind off the middle, PITs; 60, 120, 200 km/h) the pair\'s momentum is kept to 1e-9 kg m/s and its kinetic energy with the turning never grows (to 1e-4 J)',
+      KR.every(x => x.r.hits > 0 && x.r.dp <= 1e-9 && x.r.dE <= 1e-4), `momentum off by at most ${p.r.dp.toExponential(1)} kg m/s (${p.name}); the largest change of the energy in a knock ${e.r.dE.toExponential(1)} J (${e.name})`);
     const d1 = (x) => (x.r.first && x.q.first && x.r.first.i === x.q.first.i ? Math.max(dev(mir(x.r.first.a), x.q.first.a), dev(mir(x.r.first.b), x.q.first.b)) : Infinity), d2 = (x) => Math.max(dev(mir(x.r.a), x.q.a), dev(mir(x.r.b), x.q.b));
     const a = worst(d1), ax = KR.filter(x => x.axis), b = ax.reduce((u, v) => (d2(v) > d2(u) ? v : u));
     ok('Realistična, symmetry: the mirror image of a knock gives the mirror image of its outcome: right after the first knock in all 30 scenes, and at the end (1.5 s) where the cars stand along the axes (12 scenes), to 1e-9',
@@ -200,6 +206,42 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
       KR.every(x => !x.r.nan && !x.q.nan && x.r.wGl <= 9 + 1e-9) && Math.abs(P[0]) < Math.abs(P[1]) && Math.abs(P[1]) < Math.abs(P[2]) && Math.abs(P[0]) < 10 && Math.abs(P[2]) > 60
         && t('tbone-front-60') < -70 && t('tbone-front-60') > -120 && t('tbone-rear-60') > 70 && t('tbone-rear-60') < 120 && t('tbone-front-120') < -125 && Math.abs(t('rear-off-60')) < 10,
       `the fastest turn with the grip lost ${f(w.r.wGl, 3)} rad/s (${w.name}); PIT 60 km/h: ${P.map(x => f(x, 1)).join(' / ')} deg; T-bone front 60 / 120: ${f(t('tbone-front-60'), 1)} / ${f(t('tbone-front-120'), 1)} deg, rear 60: ${f(t('tbone-rear-60'), 1)} deg; from behind 60: ${f(t('rear-off-60'), 1)} deg`);
+  }
+
+  // -- the roles and the weights (the independent check, 12. 11. 2026: the knock's push is a free rigid body's, and a car that took its speed whole
+  // and only a part of the turn left with more energy than it came with, up to 17,7 kJ a knock; a rival into a rival, a heavy vehicle and 300 km/h
+  // were not looked at): the player's car into a rival, a rival into the player's and two rivals; BURJA R7 and TITAN (5300 kg) either way. s: the
+  // part of the standing car's length off its middle; the PIT with the two cars' own sizes
+  const SX = {
+    tbone: (A, B, V, s) => { put(B, 0, 0, Math.PI / 2, 0); put(A, -(B.m.wid / 2 + A.m.len / 2 + 0.3), s * B.m.len, 0, V); },
+    head: (A, B, V, off) => { put(B, 0, 0, Math.PI, V); put(A, -((A.m.len + B.m.len) / 2 + 0.3), off, 0, V); },
+    rear: (A, B, V, off) => { put(B, 0, 0, 0, 0); put(A, -((A.m.len + B.m.len) / 2 + 0.3), off, 0, V); },
+    pit: (A, B, V, vc, front) => { const al = Math.asin(vc / V), gap = 0.3, cx = (front ? 0.35 : -0.35) * B.m.len - V * (Math.cos(al) - 1) * gap / vc, cz = -B.m.wid / 2 - gap;
+      put(B, 0, 0, 0, V); put(A, cx - (A.m.len / 2 * Math.cos(al) - A.m.wid / 2 * Math.sin(al)), cz - (A.m.len / 2 * Math.sin(al) + A.m.wid / 2 * Math.cos(al)), al, V); },
+  };
+  const pairOf = (ia, ib, role) => { const A = HC.mkCar(ia, { v: 0 }), B = HC.mkCar(ib, { v: 0 }); A.isPlayer = role[0] === 'P'; B.isPlayer = role[1] === 'P'; A.noReverse = B.noReverse = true; return { A, B }; };
+  {
+    const v = (kmh) => kmh / 3.6, KXS = [['tbone-front-120', (A, B) => SX.tbone(A, B, v(120), 0.28)], ['tbone-rear-120', (A, B) => SX.tbone(A, B, v(120), -0.28)], ['tbone-front-300', (A, B) => SX.tbone(A, B, v(300), 0.28)], ['tbone-rear-300', (A, B) => SX.tbone(A, B, v(300), -0.28)],
+      ['head-0.6-200', (A, B) => SX.head(A, B, v(200), 0.6)], ['head-1.5-200', (A, B) => SX.head(A, B, v(200), 1.5)], ['head-0.6-300', (A, B) => SX.head(A, B, v(300), 0.6)], ['head-1.5-300', (A, B) => SX.head(A, B, v(300), 1.5)],
+      ['rear-off-300', (A, B) => SX.rear(A, B, v(300), 0.6)], ['pit-200-front-8', (A, B) => SX.pit(A, B, v(200), 8, 1)], ['pit-300-rear-8', (A, B) => SX.pit(A, B, v(300), 8, 0)], ['pit-300-front-8', (A, B) => SX.pit(A, B, v(300), 8, 1)]];
+    const KX = [];
+    for (const [ia, ib] of [['rally', 'rally'], ['rally', 'titan'], ['titan', 'rally'], ['titan', 'titan']]) for (const role of ['PR', 'RP', 'RR']) for (const [name, mk] of KXS) {
+      const S = pairOf(ia, ib, role); mk(S.A, S.B); KX.push({ name: `${name} ${ia}/${ib} ${role}`, role, heavy: ia !== 'rally' || ib !== 'rally', r: knock(HC, REAL, S, 3) }); }
+    const worst = (fn, L) => (L || KX).reduce((a, b) => (fn(b) > fn(a) ? b : a)), p = worst(x => x.r.dp), e = worst(x => x.r.dE), w = worst(x => x.r.wGl), n = (fn) => KX.filter(fn).length;
+    ok('Realistična, conservation by the roles and the weights (144 scenes: the player\'s car into a rival, a rival into the player\'s, two rivals; BURJA R7 and TITAN, 5300 kg, either way; T-bone at the front and the rear part at 120 and 300 km/h, head on 0.6 and 1.5 m off at 200 and 300, from behind at 300, PITs at 200 and 300): in every knock the pair\'s momentum is kept to 1e-8 kg m/s and its kinetic energy with the turning never grows (to 1e-4 J); nothing NaN, never over 9 rad/s with the grip lost',
+      KX.every(x => x.r.hits > 0 && !x.r.nan && x.r.dp <= 1e-8 && x.r.dE <= 1e-4 && x.r.wGl <= 9 + 1e-9) && n(x => x.role === 'RR') === 48 && n(x => x.heavy) === 108,
+      `momentum off by at most ${p.r.dp.toExponential(1)} kg m/s (${p.name}); the largest change of the energy in a knock ${e.r.dE.toExponential(1)} J (${e.name}); the fastest turn with the grip lost ${f(w.r.wGl, 3)} rad/s (${w.name}); ${KX.reduce((a, x) => a + x.r.hits, 0)} knocks`);
+    // a car rolling over (c.rl) or in the air (c.air): no wheel on the road, it takes a knock's speed whole and of the turn none, so a corner of a
+    // spinning one swinging into another car pushed both and kept its spin (the independent check: up to 12,8 kJ a knock). Now of the turn what
+    // slows its own spin, as much as the pair's energy asks (kCollide's guard). Beside a car at the same speed (100 km/h), 5 cm between the flanks
+    const SP = [];
+    for (const st of ['rl', 'air']) for (const [ia, ib] of [['rally', 'rally'], ['rally', 'titan'], ['titan', 'rally']]) for (const w0 of [3, -3, 9, -9]) {
+      const S = pairOf(ia, ib, 'RR'), V = v(100); put(S.A, 0, 0, 0, V); put(S.B, 0, S.A.m.wid / 2 + S.B.m.wid / 2 + 0.05, 0, V);
+      SP.push({ name: `${st} ${ia}/${ib} ${w0}`, r: knock(HC, REAL, S, 2, { pre: (A, B) => { if (st === 'rl') B.rl = { t: 0, T: 1.58, turns: 2, dir: 1, H: 1.5, k: 0 }; else { B.air = 1; B.vy = 3; B.airT = 0; } B.w = w0; } }) }); }
+    const se = SP.reduce((a, b) => (b.r.dE > a.r.dE ? b : a)), sp = SP.reduce((a, b) => (b.r.dp > a.r.dp ? b : a));
+    ok('Realistična, a car rolling over or in the air, spinning at 3 and 9 rad/s either way beside another at 100 km/h (24 scenes; BURJA R7 and TITAN): a corner swinging into the other car never leaves the pair with more kinetic energy with the turning than before the knock (to 1e-4 J), the momentum kept to 1e-8 kg m/s, nothing NaN',
+      SP.every(x => !x.r.nan && x.r.dp <= 1e-8 && x.r.dE <= 1e-4) && SP.filter(x => x.r.hits > 0).length >= 20,
+      `${SP.filter(x => x.r.hits > 0).length} of ${SP.length} scenes with a knock, ${SP.reduce((a, x) => a + x.r.hits, 0)} knocks; the largest change of the energy in a knock ${se.r.dE.toExponential(1)} J (${se.name}); momentum off by at most ${sp.r.dp.toExponential(1)} kg m/s (${sp.name})`);
   }
 
   // -- the safety car (c.sc) never loses its grip to a knock (kGripR, as kTake: no marshals and no reverse for it, the race would wait behind it):
@@ -225,7 +267,7 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   const OV = new C.Track({ id: 'trki-oval', name: 'Ravnina, Preizkus', halfWidth: 6, points: ovalPts(1600, 220), startX: 50, edgeBar: 4, walls: [[100, 1400, 1, -1.5, 20], [100, 1400, -1, -1.5, 20]] });
   let I0 = 0; for (let i = 0; i < OV.N; i++) if (Math.abs(OV.pz[i]) < 1 && Math.abs(OV.px[i] - 600) < Math.abs(OV.px[I0] - 600)) I0 = i;   // (the middle of the first straight)
   const model = (id) => C.MODELS.find(m => m.id === id), RIG = (C.MODELS.find(m => m.trailer && !m.trailer.next) || C.MODELS.find(m => m.trailer) || {}).id;
-  const mkRace = (id) => { Math.random = seeded(64); const r = new C.Race(OV, { numAI: 0, playerGrid: 1, laps: 99, playerModel: id ? model(id) : C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); r.start(); return r; };
+  const mkRace = (id, ph) => { Math.random = seeded(64); const r = new C.Race(OV, { numAI: 0, playerGrid: 1, laps: 99, playerModel: id ? model(id) : C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: ph || 'cs' }); r.start(); return r; };
   const placeCar = (c, x, z, h, v) => { c.place(x, z, h); c.locked = false; c.steer = 0; c.inSteer = c.inThr = c.inBrk = c.inHand = 0; c.digitalSteer = true; c.vx = Math.cos(h) * v; c.vz = Math.sin(h) * v;
     const M = c.m; for (let g = 1; g <= M.gears.length; g++) { c.gear = g; if (v / M.rw * M.gears[g - 1] * M.final * 9.5493 < M.redline * 0.9) break; }
     c.q = OV.query(c.x, c.z, I0, c.q); c.sPrev = c.q.s; c.dist = c.q.s - OV.startS;
@@ -278,20 +320,21 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   // w0 rad/s, its nearest corner 0.3 m from the barrier. Per step with a touch, by the hit the barrier records: a knock (faster than
   // Realistična's threshold V0: its own rule, Core wallR) or leaning on it (slower: Simulacija's rule in every version), and the change of the
   // kinetic energy with the turning in each; a touch without a push (a hit recorded, the speeds and the turning as before it); the damage the
-  // hits stand for (wallCollide: 2.8 % a m/s over 2.5); the state right after the first touch (st1) and at the end (st), seen from the barrier
+  // hits stand for (wallCollide: 2.8 % a m/s over 2.5); the state right after the first touch (st1) and at the end (st), seen from the barrier; the
+  // fastest turn right after a touch, whatever the grip (wT). o.id, o.ph: the model and the physics (BURJA R7, the classic); o.pre(c): before the first step
   const V0 = 1.5;
-  function skid(tx, th, hb, kmh, w0, side, secs) {
+  function skid(tx, th, hb, kmh, w0, side, secs, o) {
     return test(tx, () => {
-      const c = mkRace().player, B = side > 0 ? OV.br[I0] : OV.bl[I0], F = { tx: OV.tx[I0], tz: OV.tz[I0], mx: side * OV.nx[I0], mz: side * OV.nz[I0] }, v = kmh / 3.6, a = OV.hd[I0] + side * th / D;
+      const c = mkRace(o && o.id, o && o.ph).player, B = side > 0 ? OV.br[I0] : OV.bl[I0], F = { tx: OV.tx[I0], tz: OV.tz[I0], mx: side * OV.nx[I0], mz: side * OV.nz[I0] }, v = kmh / 3.6, a = OV.hd[I0] + side * th / D;
       const d0 = side * (B - 0.3 - Math.max(...c.corners.map(p => p[0] * Math.sin(hb / D) + side * p[1] * Math.cos(hb / D))));
-      placeCar(c, OV.px[I0] + OV.nx[I0] * d0, OV.pz[I0] + OV.nz[I0] * d0, OV.hd[I0] + side * hb / D, v); c.vx = Math.cos(a) * v; c.vz = Math.sin(a) * v; c.w = side * w0;
+      placeCar(c, OV.px[I0] + OV.nx[I0] * d0, OV.pz[I0] + OV.nz[I0] * d0, OV.hd[I0] + side * hb / D, v); c.vx = Math.cos(a) * v; c.vz = Math.sin(a) * v; c.w = side * w0; if (o && o.pre) o.pre(c);
       const m = c.m.mass, I = c.I, E = () => 0.5 * (m * (c.vx * c.vx + c.vz * c.vz) + I * c.w * c.w), vt = () => c.vx * F.tx + c.vz * F.tz, vn = () => c.vx * F.mx + c.vz * F.mz;
-      let n = 0, nK = 0, nL = 0, dEK = -Infinity, dEL = -Infinity, deep = Infinity, nan = false, wGl = 0, ni = 0, niHit = 0, dmg = 0, dmgNi = 0, st1 = null;
+      let n = 0, nK = 0, nL = 0, dEK = -Infinity, dEL = -Infinity, deep = Infinity, nan = false, wGl = 0, wT = 0, ni = 0, niHit = 0, dmg = 0, dmgNi = 0, st1 = null;
       for (let k = 1; k <= Math.round(secs / DT); k++) {
         c.steer += C.clamp(c.inSteer - c.steer, -6 * DT, 6 * DT); c.step(DT, OV);
         const u = [c.vx, c.vz, c.w], e0 = E(); c.wallX = NaN; c.hitWall = 0;
         C.wallCollide(c, OV, true); OV.query(c.x, c.z, c.q.i, c.q);
-        if (!Number.isNaN(c.wallX)) { const h = c.hitWall, dE = E() - e0, d = Math.max(0, h - 2.5) * 0.028; n++; dmg += d; deep = Math.min(deep, room(c, side));
+        if (!Number.isNaN(c.wallX)) { const h = c.hitWall, dE = E() - e0, d = Math.max(0, h - 2.5) * 0.028; n++; dmg += d; deep = Math.min(deep, room(c, side)); wT = Math.max(wT, Math.abs(c.w));
           if (h > V0) { nK++; dEK = Math.max(dEK, dE); } else if (h > 0) { nL++; dEL = Math.max(dEL, dE); }
           if (h > 0 && c.vx === u[0] && c.vz === u[1] && c.w === u[2]) { ni++; niHit = Math.max(niHit, h); dmgNi += d; }
           if (!st1) st1 = [side * c.w, vt(), vn()]; }
@@ -299,7 +342,7 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
         c.hitWall = 0; c.hitCar = 0; c.fxWall = 0;
       }
       const q = OV.query(c.x, c.z, c.q.i, _cq);
-      return { n, nK, nL, dEK, dEL, deep, nan, wGl, ni, niHit, dmg, dmgNi, st1, st: [q.s, side * q.d, side * wrap(c.h - OV.hd[q.i]), vt(), vn(), side * c.w, c.steer, c.xgl || 0, Math.abs(c.csKc || 0)] };
+      return { n, nK, nL, dEK, dEL, deep, nan, wGl, wT, ni, niHit, dmg, dmgNi, st1, st: [q.s, side * q.d, side * wrap(c.h - OV.hd[q.i]), vt(), vn(), side * c.w, c.steer, c.xgl || 0, Math.abs(c.csKc || 0)] };
     });
   }
   const SK = [];
@@ -311,9 +354,9 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
   {
     const two = (x, fn) => Math.max(fn(x.r), fn(x.l)), worst = (fn, L) => (L || SK).reduce((a, b) => (fn(b) > fn(a) ? b : a)), sum = (fn) => SK.reduce((a, b) => a + fn(b), 0), both = (fn) => SK.every(x => fn(x.r) && fn(x.l));
     const k = worst(x => two(x, y => y.dEK)), e = worst(x => two(x, y => y.dEL)), es = worst(x => Math.max(x.s.dEK, x.s.dEL)), d = worst(x => two(x, y => -y.deep));
-    ok('Realistična, the barrier, sliding and spinning, conservation (300 scenes at both barriers: on its way at 20 to 90 deg to the barrier, the nose 10 to 60 deg off its way, 100 and 200 km/h, turning at 0, 2 and 4 rad/s either way): nothing NaN, no corner left inside, a knock (a touch faster than 1.5 m/s: its own rule) never adds kinetic energy with the turning; leaning on the barrier (slower: Simulacija\'s rule) adds at most 7 kJ a touch',
-      both(y => y.n > 0 && !y.nan && y.deep >= -1e-6 && y.dEK <= 1e-6 && y.dEL <= 7000) && sum(x => x.r.nK) >= 1000,
-      `${sum(x => x.r.nK + x.l.nK)} knocks: at most ${f(two(k, y => y.dEK), 6)} J (${k.name}); ${sum(x => x.r.nL + x.l.nL)} leaning touches: at most ${f(two(e, y => y.dEL) / 1000, 2)} kJ (${e.name}; Simulacija at a touch ${f(Math.max(es.s.dEK, es.s.dEL) / 1000, 2)} kJ, ${es.name}); the deepest corner ${(-two(d, y => -y.deep)).toExponential(1)} m`);
+    ok('Realistična, the barrier, sliding and spinning, conservation (300 scenes at both barriers: on its way at 20 to 90 deg to the barrier, the nose 10 to 60 deg off its way, 100 and 200 km/h, turning at 0, 2 and 4 rad/s either way): nothing NaN, no corner left inside, a knock (a touch faster than 1.5 m/s: its own rule) never adds kinetic energy with the turning, and neither does leaning on the barrier (slower: Simulacija\'s rule, and where that would add energy the same push as a rigid body takes it; to 1e-4 J)',
+      both(y => y.n > 0 && !y.nan && y.deep >= -1e-6 && y.dEK <= 1e-6 && y.dEL <= 1e-4) && sum(x => x.r.nK) >= 1000,
+      `${sum(x => x.r.nK + x.l.nK)} knocks: at most ${f(two(k, y => y.dEK), 6)} J (${k.name}); ${sum(x => x.r.nL + x.l.nL)} leaning touches: at most ${two(e, y => y.dEL).toExponential(1)} J (${e.name}; Simulacija at a touch ${f(Math.max(es.s.dEK, es.s.dEL) / 1000, 2)} kJ, ${es.name}); the deepest corner ${(-two(d, y => -y.deep)).toExponential(1)} m`);
     const w = worst(x => two(x, y => y.wGl)), cap = SK.filter(x => two(x, y => y.wGl) >= 9 - 1e-9), cap0 = cap.filter(x => !x.w0);
     ok('Realistična, the barrier, sliding and spinning, limits: with the grip lost the car never turns faster than 9 rad/s, also when a corner then leans on the barrier, and the limit is at work (reached in at least 60 of the scenes, 10 of them without turning at the start)',
       both(y => y.wGl <= 9 + 1e-9) && cap.length >= 60 && cap0.length >= 10, `the fastest ${f(two(w, y => y.wGl), 6)} rad/s (${w.name}); at the limit in ${cap.length} scenes, ${cap0.length} of them without turning at the start`);
@@ -324,6 +367,30 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     const N = sum(x => x.r.n + x.l.n), NI = sum(x => x.r.ni + x.l.ni), DM = sum(x => x.r.dmg + x.l.dmg), DN = sum(x => x.r.dmgNi + x.l.dmgNi), h = worst(x => two(x, y => y.niHit)), NS = sum(x => x.s.ni + x.sl.ni);
     ok('Realistična, the barrier, the touch without a push (a corner swings into the barrier faster than 1.5 m/s while the middle of its patch does not close on it: the hit is recorded, nothing pushes the car; docs/trki-realizem.md, »Robni primer brez sunka«): under 2 % of the steps with a touch and under 2 % of the damage the hits stand for; none in Simulacija',
       NI / N < 0.02 && DN / DM < 0.02 && !NS, `${NI} of ${N} steps with a touch (${f(100 * NI / N)} %), ${f(100 * DN / DM)} % of the damage; the fastest ${f(two(h, y => y.niHit))} m/s (${h.name}); Simulacija ${NS} of ${sum(x => x.s.n + x.sl.n)}`);
+  }
+
+  // the barrier by the weights (the independent check, 12. 11. 2026: leaning on the barrier, the whole push into the speed and 0.3 of it into the
+  // turn, added up to 53,9 kJ a touch to a heavy vehicle, also with no turning at the start; the checks above have BURJA R7 only): MRAVLJA (165
+  // kg), BURJA R7, TITAN (5300 kg) and KAMEN PUŠČAVA (7000 kg), the nose square or nearly so to the barrier, 120 and 200 km/h
+  {
+    const SH = [];
+    for (const id of ['mravlja', 'rally', 'titan', 'kamen']) for (const [th, hb] of [[45, 90], [30, 90], [60, 120], [20, 60]]) for (const kmh of [120, 200]) for (const w0 of [0, 3, -3])
+      SH.push({ name: `${id} ${th}/${hb}/${kmh}/${w0}`, id, w0, r: skid(REAL, th, hb, kmh, w0, 1, 3, { id }), s: skid(SIM, th, hb, kmh, w0, 1, 3, { id }) });
+    const worst = (fn, L) => (L || SH).reduce((a, b) => (fn(b) > fn(a) ? b : a)), k = worst(x => x.r.dEK), e = worst(x => x.r.dEL), HV = SH.filter(x => x.id === 'titan' || x.id === 'kamen'), S0 = SH.filter(x => !x.w0), nl = (L) => L.reduce((a, x) => a + x.r.nL, 0), e0 = worst(x => x.r.dEL, S0);
+    ok('Realistična, the barrier by the weights (96 scenes: MRAVLJA, BURJA R7, TITAN and KAMEN PUŠČAVA, 165 to 7000 kg; on its way at 20 to 60 deg to the barrier with the nose square or nearly so to it, 120 and 200 km/h, turning at 0 and 3 rad/s either way): nothing NaN, no corner left inside, neither a knock nor leaning on the barrier ever adds kinetic energy with the turning (to 1e-4 J); the scenes do lean (the heavy vehicles in at least 2000 touches, the scenes without turning at the start in at least 1000)',
+      SH.every(x => x.r.n > 0 && !x.r.nan && x.r.deep >= -1e-6 && x.r.dEK <= 1e-6 && x.r.dEL <= 1e-4) && nl(HV) >= 2000 && nl(S0) >= 1000,
+      `${SH.reduce((a, x) => a + x.r.nK, 0)} knocks: at most ${k.r.dEK.toExponential(1)} J (${k.name}); ${nl(SH)} leaning touches (${nl(HV)} of the heavy vehicles, ${nl(S0)} without turning at the start): at most ${e.r.dEL.toExponential(1)} J (${e.name}), without turning at the start ${e0.r.dEL.toExponential(1)} J (${e0.name})`);
+    // the yaw rate after a touch of the barrier, whichever car (the independent check: the new physics left the barrier at up to 52 rad/s, a car
+    // rolling over at up to 14, the classic with its grip whole over 9 too: the limit was for a classic car with its grip lost only)
+    const SW = [], rl = (c) => { c.rl = { t: 0, T: 1.58, turns: 2, dir: 1, H: 1.5, k: 0 }; };
+    for (const [id, ph] of [['rally', 'nova'], ['mravlja', 'nova'], ['titan', 'nova'], ['formula', 'nova'], ['mravlja', 'cs']]) for (const th of [20, 45, 90]) for (const off of [-60, 60]) for (const kmh of [100, 200]) for (const w0 of [0, 4, -4, 8, -8])
+      SW.push({ name: `${id} ${ph} ${th}/${th + off}/${kmh}/${w0}`, g: ph === 'nova' ? 'nova' : 'cs', r: skid(REAL, th, th + off, kmh, w0, 1, 3, { id, ph }), s: skid(SIM, th, th + off, kmh, w0, 1, 3, { id, ph }) });
+    for (const id of ['rally', 'titan']) for (const th of [20, 30, 45, 60, 90]) for (const off of [-30, 30]) for (const kmh of [100, 200]) for (const w0 of [4, -4, 8, -8])
+      SW.push({ name: `${id} rolling over ${th}/${th + off}/${kmh}/${w0}`, g: 'rl', r: skid(REAL, th, th + off, kmh, w0, 1, 2, { id, pre: rl }), s: skid(SIM, th, th + off, kmh, w0, 1, 2, { id, pre: rl }) });
+    const G = (g) => SW.filter(x => x.g === g), top = (g, v) => G(g).reduce((a, b) => (b[v].wT > a[v].wT ? b : a)), over = (g) => G(g).filter(x => x.s.wT > 9.001).length;
+    ok('Realistična, the barrier, the yaw rate after a touch whichever car (460 scenes: the new physics, BURJA R7, MRAVLJA, TITAN and FORMULA ORKAN, and the classic MRAVLJA sliding and spinning at up to 8 rad/s into the barrier at 100 and 200 km/h; BURJA R7 and TITAN rolling over into it): right after a touch no car turns faster than 9 rad/s, nothing NaN; Simulacija leaves the barrier faster than that in at least 30 scenes of the new physics and 5 of a car rolling over',
+      SW.every(x => x.r.n > 0 && !x.r.nan && x.r.wT <= 9 + 1e-9) && over('nova') >= 30 && over('rl') >= 5,
+      ['nova', 'cs', 'rl'].map(g => `${g}: at most ${f(top(g, 'r').r.wT, 3)} rad/s (${top(g, 'r').name}); Simulacija ${f(top(g, 's').s.wT, 2)} rad/s (${top(g, 's').name}), over 9 in ${over(g)} of ${G(g).length}`).join('; '));
   }
 
   // a thing by the road (Race.setProps: cone, tyre, bale, bstack, lamp) in the car's way, off m off its line; beside it the same run without the

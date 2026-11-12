@@ -3903,7 +3903,8 @@ const Core = (function () {
   // slower it leans on it as before). A rigid body's knock, its whole turning mass (no share of the turn): where it bears, the corners within the
   // crush's length (face x the closing speed, cr0 to cr1 m) of the deepest one, each by how far behind it is (a flank flat on the wall bears
   // through its middle; the order of the corners does not count), at arm of the lever. The bounce by the closing speed (e0 to e1, none for a
-  // car leaning on it, eT), the rub along it (mu of the push, at the same place). The grip by kGripR, as a knock (the new physics: the push only).
+  // car leaning on it, eT), the rub along it (mu of the push, at the same place). The grip by kGripR, as a knock (the new physics and a car in the
+  // air or rolling over: the push only, no grip to take). The yaw rate after it at most wMax, whichever car.
   // k < 0: a contact that is not a corner (a round thing met along the car's side): it bears where it touches, (wx, wz), at arm of the lever
   function wallR(c, wx, wz, nx, nz, k) {
     const W = KC.wall; let ax = wx, az = wz;
@@ -3919,12 +3920,11 @@ const Core = (function () {
     const tx = -nz, tz = nx, rt = ax * tz - az * tx, vx1 = c.vx + J * nx * im, vz1 = c.vz + J * nz * im, w1 = c.w + rn * J / I;
     const vt = (vx1 - w1 * az) * tx + (vz1 + w1 * ax) * tz, Jt = clamp(-vt / (im + rt * rt / I), -W.mu * J, W.mu * J);
     const Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz, dvx = Px * im, dvz = Pz * im, dw = (ax * Pz - az * Px) / I, V0 = Math.hypot(c.vx, c.vz);
-    c.vx += dvx; c.vz += dvz; c.w += dw;
-    if (c.phys === 'nova' || c.air || c.rl) return;
+    c.vx += dvx; c.vz += dvz; c.w = clamp(c.w + dw, -KC.wMax, KC.wMax);   // (at most wMax, whichever car: as a knock's turn of one that spins on)
+    if (c.phys === 'nova' || c.air || c.rl) return;   // (no grip to take: the push only)
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
     const G2 = kGripR(c, lt, dw, V0, Math.hypot(c.vx, c.vz), KC, c.isPlayer ? KC.glP : KC.glA), g = G2[0];
     if (g > 0.02 && g >= (c.xgl || 0)) { c.xgl = g; c.xglT = KC.glT * (1 + KC.glX * clamp((G2[1] - 0.3) / 0.6, 0, 1)); }
-    if (c.xgl > 0) c.w = clamp(c.w, -KC.wMax, KC.wMax);   // (spinning on: at most wMax, as a knock)
   }
   function wallCollide(c, trk, canFall) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall)
     if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
@@ -3976,21 +3976,28 @@ const Core = (function () {
       const vn = vcx * nx + vcz * nz;
       if (krOn(c) && vn < -KC.wall.v0) { wallR(c, wx, wz, nx, nz, k); if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; } }   // (Realistična: a knock, wallR; leaning on it, in the run from the police, a semi-trailer and in the pit lane as before)
       else if (vn < 0) {
-        const rn = wx * nz - wz * nx;
-        const e = CSK.wallE, wy = CSK.wallYaw;
-        const J = -(1 + e) * vn / (1 / c.m.mass + rn * rn / c.I * wy);
-        c.vx += J * nx / c.m.mass; c.vz += J * nz / c.m.mass;
-        c.w += rn * J / c.I * wy;
-        // friction along wall
-        const tx = -nz, tz = nx;
-        const vtan = (c.vx - c.w * wz) * tx + (c.vz + c.w * wx) * tz;
-        const rt = wx * tz - wz * tx;
-        let Jt = -vtan / (1 / c.m.mass + rt * rt / c.I * wy);
-        const mu = CSK.wallMu;
-        Jt = clamp(Jt, -mu * J, mu * J);
-        c.vx += Jt * tx / c.m.mass; c.vz += Jt * tz / c.m.mass;
-        c.w += rt * Jt / c.I * wy;
-        if (krOn(c) && c.xgl > 0) c.w = clamp(c.w, -KC.wMax, KC.wMax);   // (Realistična, spinning on: at most wMax also when it leans on the barrier)
+        const rn = wx * nz - wz * nx, vx0 = c.vx, vz0 = c.vz, w0 = c.w;
+        // (the push with wallYaw of the turn, as ever. Realistična, krOn: where that would leave the car with more energy than it came with (a corner
+        // its own spin drives into the barrier: the whole push into the speed, a part into the turn), the same push once more as a rigid body takes
+        // it, the whole turn (wy 1): that one never adds any)
+        for (let wy = CSK.wallYaw; ; wy = 1) {
+          const e = CSK.wallE;
+          const J = -(1 + e) * vn / (1 / c.m.mass + rn * rn / c.I * wy);
+          c.vx += J * nx / c.m.mass; c.vz += J * nz / c.m.mass;
+          c.w += rn * J / c.I * wy;
+          // friction along wall
+          const tx = -nz, tz = nx;
+          const vtan = (c.vx - c.w * wz) * tx + (c.vz + c.w * wx) * tz;
+          const rt = wx * tz - wz * tx;
+          let Jt = -vtan / (1 / c.m.mass + rt * rt / c.I * wy);
+          const mu = CSK.wallMu;
+          Jt = clamp(Jt, -mu * J, mu * J);
+          c.vx += Jt * tx / c.m.mass; c.vz += Jt * tz / c.m.mass;
+          c.w += rt * Jt / c.I * wy;
+          if (wy === 1 || !krOn(c) || c.m.mass * ((c.vx - vx0) * (c.vx + vx0) + (c.vz - vz0) * (c.vz + vz0)) + c.I * (c.w - w0) * (c.w + w0) <= 2e-6) break;
+          c.vx = vx0; c.vz = vz0; c.w = w0;
+        }
+        if (krOn(c)) c.w = clamp(c.w, -KC.wMax, KC.wMax);   // (Realistična: at most wMax also when it leans on the barrier, as wallR, whichever car)
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     }
@@ -4089,8 +4096,9 @@ const Core = (function () {
      flat bumper or flank pushes square on, through the middle of the faces that touch; the overlap taken away softly (RB_*: no pop). The push J at
      the contact with the cars' real weights (their fuel too; the player's x pm) and turning masses: the bounce by the closing speed (none for a car
      leaning on another), the rub along the contact (Coulomb: at most mu of J; a car leaning on another muL of it). Each car takes its share as its
-     tyres do (kTake). A friend's car online is not moved here (its own phone moves it): the local car takes the whole separation and only its own
-     share of the push. Damage, sparks (the knock, or two flanks grinding past each other), the scrape marks: carKnockFx */
+     tyres do (kTake; Realistična: of the turn more where the two would else leave the knock with more energy than they came with, kTurnR). A
+     friend's car online is not moved here (its own phone moves it): the local car takes the whole separation and only its own share of the push.
+     Damage, sparks (the knock, or two flanks grinding past each other), the scrape marks: carKnockFx */
   function kCollide(a, b, K) {
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = (Math.hypot(a.m.len, a.m.wid) + Math.hypot(b.m.len, b.m.wid)) * 0.5 + 0.05;   // (the two boxes' reach)
     if (dx0 * dx0 + dz0 * dz0 > R * R) return 0;
@@ -4114,8 +4122,19 @@ const Core = (function () {
     const rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx, J = (1 + e) * vn / (tot + rna * rna / Ia + rnb * rnb / Ib);
     const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = K.mu * (K.muL + (1 - K.muL) * sstep(K.muV, K.muV + 1, vn));
     const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;
-    if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K, b);
-    if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K, a);
+    let ka, kb;
+    if (KR && !a.net && !b.net) {   // (Realistična: the two cars never leave the knock with more energy than they came with, kTurnR)
+      const dax = Px / ma, daz = Pz / ma, dbx = -Px / mb, dbz = -Pz / mb, dwa = (rax * Pz - raz * Px) / Ia * K.yaw * (a.isPlayer ? K.yawP : 1), dwb = (rbz * Px - rbx * Pz) / Ib * K.yaw * (b.isPlayer ? K.yawP : 1);
+      const ta = kTurnR(a, dax, daz, dwa, K, b), tb = kTurnR(b, dbx, dbz, dwb, K, a);
+      const dE = ma * (dax * (a.vx + 0.5 * dax) + daz * (a.vz + 0.5 * daz)) + mb * (dbx * (b.vx + 0.5 * dbx) + dbz * (b.vz + 0.5 * dbz)) + Ia * ta * (a.w + 0.5 * ta) + Ib * tb * (b.w + 0.5 * tb);
+      if (dE > 1e-6) {   // (NaN, a car outside the rule: not this either)
+        const wa = a.w + ta, ra = dwa - ta, xa = wa * ra < 0 ? (Math.abs(ra) <= Math.abs(wa) ? ra : -wa) : 0, wb = b.w + tb, rb = dwb - tb, xb = wb * rb < 0 ? (Math.abs(rb) <= Math.abs(wb) ? rb : -wb) : 0;
+        const A = 0.5 * (Ia * xa * xa + Ib * xb * xb), B = Ia * wa * xa + Ib * wb * xb, D = B * B - 4 * A * dE, l = A > 0 && D >= 0 ? Math.min(1, 2 * dE / (-B + Math.sqrt(D))) : 1;
+        if (xa) ka = (ta + l * xa) / dwa; if (xb) kb = (tb + l * xb) / dwb;
+      }
+    }
+    if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K, b, ka);
+    if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K, a, kb);
     const imp = carKnockFx(a, b, vn, J, rna, rnb, Ia, Ib, false, px, pz), fx = Math.max(vn, Math.abs(vt) * 0.5 * sstep(20, 200, J));   // (two flanks grinding past each other throw sparks too, pressed hard enough)
     a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);
     return imp;
@@ -4127,12 +4146,13 @@ const Core = (function () {
   // yaw rate change for as long as a real car's tyres take to stop it, RB_TAPT x speed; a push that goes on, step after step, holds the nose that
   // much off and does not wind it further). Past what its rear tyres hold (its tail pushed across past aH of its speed, more than its nose) its
   // grip goes for a moment (xgl, back in glT s: the travel no longer follows the nose, it spins on with the yaw rate the knock gave it and slides):
-  // a hard tap on a rear quarter spins it. The player's turn and grip by yawP and glP, the others' grip by glA (o the other car: a rival's, glR of it)
-  function kTake(c, Px, Pz, rx, rz, m, I, K, o) {
+  // a hard tap on a rear quarter spins it. The player's turn and grip by yawP and glP, the others' grip by glA (o the other car: a rival's, glR of it).
+  // kMin (Realistična, kCollide's guard, kTurnR): at least that share of the turn into the yaw rate
+  function kTake(c, Px, Pz, rx, rz, m, I, K, o, kMin) {
     const pl = !!c.isPlayer, dvx = Px / m, dvz = Pz / m, dw = (rx * Pz - rz * Px) / I * K.yaw * (pl ? K.yawP : 1);
     if (c.phys === 'nova') { c.vx += dvx; c.vz += dvz; c.w += dw; return; }
-    if (c.air || c.rl) { c.vx += dvx; c.vz += dvz; return; }   // (no tyres on the road)
-    if (krOn(c)) return kTakeR(c, dvx, dvz, dw, K, o);   // (Realistična, krOn: the turn anywhere on the car, kTakeR; not in the run from the police nor a semi-trailer's tractor, tlHold; the pit lane does not come here, carCollide)
+    if (c.air || c.rl) { c.vx += dvx; c.vz += dvz; if (kMin > 0) c.w += dw * Math.min(1, kMin); return; }   // (no tyres on the road; kMin: Realistična, of the turn that slows its spin, kCollide)
+    if (krOn(c)) return kTakeR(c, dvx, dvz, dw, K, o, kMin);   // (Realistična, krOn: the turn anywhere on the car, kTakeR; not in the run from the police nor a semi-trailer's tractor, tlHold; the pit lane does not come here, carCollide)
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
     c.vx += dvx; c.vz += dvz; c.cSx = (c.cSx || 0) - sh * lt; c.cSz = (c.cSz || 0) + ch * lt;   // (the push across kept apart: stepCS takes it out of the speed for the drift law and scrubs it)
     { const sm = Math.hypot(c.cSx, c.cSz); c.cSr = sm > 1e-9 ? (c.vx * c.cSx + c.vz * c.cSz) / sm : null; }   // (the speed that way now: what a wall takes of it before the next step comes off the push, stepCS)
@@ -4157,17 +4177,34 @@ const Core = (function () {
   // (cSx, cSz); the grip by kGripR, taken only when no less than what is gone already, back in glT x (1 to 2 by the slip: a harder knock
   // longer); the turn into the yaw rate by as much as the tyres have let go (kw, at every knock, not only a new loss; at most wMax), the rest
   // a swing of the nose as kTake (csKc)
-  function kTakeR(c, dvx, dvz, dw, K, o) {
+  // kMin (kCollide's guard, kTurnR): at least that share of the turn into the yaw rate, the grip as it is
+  function kTakeR(c, dvx, dvz, dw, K, o, kMin) {
     const pl = !!c.isPlayer, ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh, V0 = Math.hypot(c.vx, c.vz);
     c.vx += dvx; c.vz += dvz; c.cSx = (c.cSx || 0) - sh * lt; c.cSz = (c.cSz || 0) + ch * lt;
     { const sm = Math.hypot(c.cSx, c.cSz); c.cSr = sm > 1e-9 ? (c.vx * c.cSx + c.vz * c.cSz) / sm : null; }
     const V1 = Math.hypot(c.vx, c.vz), tm = CSK.tapMax;
     const G2 = kGripR(c, lt, dw, V0, V1, K, pl ? K.glP : K.glA * (o && !o.isPlayer && !o.net ? K.glR : 1)), g = G2[0];
-    const g0 = c.xgl || 0, gN = Math.max(g0, g), kw = gN > 0.02 ? Math.min(1, gN * K.wI) : 0;
+    const g0 = c.xgl || 0, gN = Math.max(g0, g), kw0 = gN > 0.02 ? Math.min(1, gN * K.wI) : 0, kw = kMin > kw0 ? Math.min(1, kMin) : kw0;
     if (g > 0.02 && g >= g0) { c.xgl = g; c.xglT = K.glT * (1 + K.glX * clamp((G2[1] - 0.3) / 0.6, 0, 1)); }
     if (kw > 0) c.w = clamp(c.w + dw * kw, -K.wMax, K.wMax);
     const sw = dw * (1 - kw) * clamp(RB_TAPT * V1, RB_TAP0, RB_TAP1);
     c.csKc = clamp(sw * c.csKc > 0 ? (Math.abs(sw) > Math.abs(c.csKc) ? sw : c.csKc) : c.csKc + sw, -tm, tm);
+  }
+  // kTurnR: the turn a car would take of a knock's dw by kTake as it stands (kTakeR's own share kw, the same numbers; the new physics the whole; a
+  // car with no wheel on the road none; NaN for a car outside the rule, krOn: kTake's rule of Simulacija). kCollide's guard with it: the push J is
+  // a free rigid body's, and a car that takes its speed whole and only a share of the turn can leave the knock with more energy than it came
+  // with, when the turn it leaves out would have slowed its own spin (found by the independent check, 12. 11. 2026: up to 17,7 kJ a knock). Where
+  // the two cars' energy would grow so, the cars whose spin the knock slows take more of that turn (at most the whole or until the spin stops),
+  // both by the same part l of it, only as much as brings the growth to nothing (all of it where that is not enough: the two then leave with no
+  // more than two rigid bodies would). Every other knock as before, to the last digit
+  function kTurnR(c, dvx, dvz, dw, K, o) {
+    if (c.phys === 'nova') return dw;
+    if (c.air || c.rl) return 0;
+    if (!krOn(c)) return NaN;
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
+    const g = kGripR(c, lt, dw, Math.hypot(c.vx, c.vz), Math.hypot(c.vx + dvx, c.vz + dvz), K, c.isPlayer ? K.glP : K.glA * (o && !o.isPlayer && !o.net ? K.glR : 1))[0];
+    const gN = Math.max(c.xgl || 0, g), kw = gN > 0.02 ? Math.min(1, gN * K.wI) : 0;
+    return kw > 0 ? clamp(c.w + dw * kw, -K.wMax, K.wMax) - c.w : 0;
   }
   // kSlideR: stepCS's scrub of the push across (aS, the grip the corner leaves) for Realistična: a push of sm m/s past s0 (sl0, or slA of the
   // speed spd), or a car without its grip (gl, xgl), slides on the road's sliding friction (CRASH.slide g) instead; a small push as before
