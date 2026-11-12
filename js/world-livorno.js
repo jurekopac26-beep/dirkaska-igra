@@ -222,7 +222,8 @@
     /* ---- scenery chunks (vertex coloured, 128 m) and the spectators ---- */
     const scen = new Chunks(128);
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nCast = 0;
+    let nBld = 0, nCast = 0, nLamp = 0, nStop = 0;
+    const BLD = [];   // (the houses that stand: [x, z, half length, half width, cos, sin], for the lamps and the stops)
 
     /* ---- the buildings (OSM footprints within 60 m): houses and villas in ochre, cream, salmon and white with terracotta roofs, blocks of flats with
        flat roofs, churches with a bell tower, the castles and towers in stone (the landmarks' outlines make the castles of their footprints) ---- */
@@ -244,7 +245,7 @@
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, ck = castleAt(bx, bz);
       const kind = ck === 'castle' ? 3 : ck === 'tower' ? 2 : k0 === 0 && area > 240 ? 9 : k0;
-      nBld++; CR.block(bx, bz, Lb, Wb, ang);
+      nBld++; CR.block(bx, bz, Lb, Wb, ang); BLD.push([bx, bz, Lb / 2, Wb / 2, ca, sa]);
       if (kind === 3 || kind === 2 || kind === 8) {   // stone: a castle block, a tower, a ruin
         const sc = vary([0.74, 0.66, 0.55], R, 0.08), hh = kind === 2 ? Math.max(Hb, 13 + hk * 5) : kind === 3 ? Math.max(Hb, 9 + hk * 4) : 2.5 + hk * 2;
         box(g, bx, y0 - 0.5, bz, Lb, hh + 0.5, Wb, ang, sc, vary(sc, R, 0.05), true);
@@ -479,13 +480,34 @@
         for (const g of SC.asfalt(RB, API.nrGCol)) addM(g, sMat);
         SC.predmeti((x, z) => scen.get(x, z), zap);
       }
+      {   // (OSM's street lamps and bus stops, for the look: behind the fence, off the side roads and the houses, not by a bridge or in the sea)
+        const inB = (x, z, m) => { for (const b of BLD) { const dx = x - b[0], dz = z - b[1]; if (Math.abs(dx * b[4] + dz * b[5]) < b[2] + m && Math.abs(dz * b[4] - dx * b[5]) < b[3] + m) return true; } return false; };
+        const onS = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] - 1.2 + m; if ((x - k[0]) ** 2 + (z - k[1]) ** 2 < r * r) return true; } return false; };
+        const spot = (x, z, m) => { const n = nrNear(x, z); return n.i >= 0 && n.dd >= 0.6 + m && !underBridge(n) && seaD(x, z) < -0.5 && !onS(x, z, m) && !inB(x, z, 0.3 + m); };
+        const LP = [];
+        for (const [lx, lz] of LD.lamps || []) {
+          const n = nrNear(lx, lz); if (n.i < 0) continue;
+          const i = n.i, sg = n.lat < 0 ? -1 : 1; let x = lx, z = lz, ok = false;
+          if (n.dd < 0.9) { const o = sg * ((sg > 0 ? T.br[i] : T.bl[i]) + 1.0); x = T.px[i] + T.nx[i] * o; z = T.pz[i] + T.nz[i] * o; }   // (one that would stand inside the fence goes behind it: 0.6 m or so, less on the inside of a bend)
+          for (let k = 0; k < 6 && !(ok = spot(x, z, 0)); k++) { x -= sg * T.nx[i] * 0.5; z -= sg * T.nz[i] * 0.5; }   // (out of a house: towards the road)
+          if (!ok || LP.some(q => (q[0] - x) ** 2 + (q[1] - z) ** 2 < 36)) continue;
+          LP.push([x, z]); World.cesta.svetilka(scen.get(x, z), x, nrGround(x, z), z, Math.atan2(-sg * T.nz[i], -sg * T.nx[i])); nLamp++;
+        }
+        for (const [sd, side, dist, shel] of LD.stops || []) {
+          for (const k of [0, 3, -3, 6, -6, 9, -9]) {   // (off a side road's mouth: a few metres along the road)
+            const i = T.idx(sAt(sd) + k * ds), o = side * Math.max(dist, (side > 0 ? T.br[i] : T.bl[i]) + (shel ? 1.3 : 1.0)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+            if (!spot(x, z, shel ? 0.3 : 0) || (shel && !(spot(x + T.tx[i] * 1.8, z + T.tz[i] * 1.8, 0) && spot(x - T.tx[i] * 1.8, z - T.tz[i] * 1.8, 0)))) continue;
+            World.cesta.postaja(scen.get(x, z), x, nrGround(x, z), z, Math.atan2(-side * T.nz[i], -side * T.nx[i]), shel); nStop++; break;
+          }
+        }
+      }
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, lamps: nLamp, stops: nStop, fans: nFans, rocks: out.rocks };   // (read by the tests)
     return out;
   }
 

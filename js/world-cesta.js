@@ -452,7 +452,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
        SC.ustja, SC.krogi             // the mouths for the road's shader (out.cestaRob), circles that keep the trees off
        SC.robovi(gv, c0, c1, barva)   // the strips' shoulders into the verges' chunk (the ground's colour and material)
        SC.asfalt(RB, barva)           // the strips: a few meshes for a clone of the asphalt's material
-       SC.predmeti(get, zapora)       // the barriers on the fence line (1 plastic, 2 metal fences, 3 bales and a tape) and the paint
+       SC.predmeti(get, zapora)       // the barriers on the fence line (1 plastic, 2 concrete blocks, 3 bales and a tape) and the paint
      o: tla(x, z) the ground's height; rob(i, side, d) the verge's height above the road at the sample i, d metres from the centre line;
      ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE) */
   function stranske(T, ceste, o) {
@@ -598,7 +598,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     // the barriers across the openings on the fence line (no inscriptions) and the paint by the country's rules: a street stops, a
     // bigger road gives way, a driveway has nothing; on the entering lane (the left half, seen from the main road), a one-way road across
     const predmeti = (get, zapora) => {
-      const box = World.api.box, RD = [0.78, 0.12, 0.1], WH = [0.93, 0.93, 0.9], KV = [0.62, 0.64, 0.67], KV2 = [0.54, 0.56, 0.6], SL = [0.85, 0.72, 0.4], SL2 = [0.78, 0.64, 0.34], SLT = [0.9, 0.79, 0.48], PW = [0.9, 0.9, 0.86];
+      const box = World.api.box, RD = [0.78, 0.12, 0.1], WH = [0.93, 0.93, 0.9], BT = [0.7, 0.7, 0.68], BT2 = [0.63, 0.63, 0.62], SL = [0.85, 0.72, 0.4], SL2 = [0.78, 0.64, 0.34], SLT = [0.9, 0.79, 0.48], PW = [0.9, 0.9, 0.86];
       for (const r of R) {
         const side = r.side, fa = r.zid[0], fb = r.zid[1];
         const FP = (f, e, y) => { const a = Math.floor(f), t = f - a, i = wrap(a), j = (i + 1) % N, b0 = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.3 + e), b1 = side * ((side > 0 ? T.br[j] : T.bl[j]) + 0.3 + e); return [lerp(px[i] + nx[i] * b0, px[j] + nx[j] * b1, t), lerp(hy[i], hy[j], t) + y, lerp(pz[i] + nz[i] * b0, pz[j] + nz[j] * b1, t)]; };
@@ -609,13 +609,15 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
           const l = Math.hypot(B[0] - A[0], B[2] - A[2]) || 1, qx = -(B[2] - A[2]) / l * 0.5, qz = (B[0] - A[0]) / l * 0.5, m = mid(a, c);
           g.quadO(a, b, c, d, col, [m[0] + qx, m[1], m[2] + qz]); g.quadO(a, b, c, d, col, [m[0] - qx, m[1], m[2] - qz]);
         };
-        if (zapora === 2) {   // grey metal crowd fences
-          const n = Math.max(1, Math.round(len / 2.2));
-          for (let k = 0; k < n; k++) {
-            const A = FP(fa + (fb - fa) * (k + 0.03) / n, 0, 0), B = FP(fa + (fb - fa) * (k + 0.97) / n, 0, 0), g = get((A[0] + B[0]) / 2, (A[2] + B[2]) / 2), l = Math.hypot(B[0] - A[0], B[2] - A[2]) || 1, ps = 0.06 / l, bs = 0.018 / l;
-            kar(g, A, B, 0, 1, 1.02, 1.07, KV); kar(g, A, B, 0, 1, 0.16, 0.2, KV); kar(g, A, B, 0, ps, 0, 1.07, KV); kar(g, A, B, 1 - ps, 1, 0, 1.07, KV);
-            for (let j = 1; j <= 7; j++) kar(g, A, B, j / 8 - bs, j / 8 + bs, 0.2, 1.02, KV2);
-          }
+        const blok = (f0, f1, PR, col, c0, c1) => {   // (a barrier's body with the profile PR between two stations of the fence line, end faces where asked)
+          const A = PR.map(q => FP(f0, q[0], q[1])), B = PR.map(q => FP(f1, q[0], q[1])), inn = mid(FP(f0, 0, 0.3), FP(f1, 0, 0.3)), g = get(inn[0], inn[2]), m = PR.length - 1;
+          for (let j = 0; j < m; j++) g.quadO(A[j], B[j], B[j + 1], A[j + 1], col, inn);
+          if (c0) for (let j = 1; j < m; j++) g.triO(A[0], A[j], A[j + 1], col, inn, col, col);
+          if (c1) for (let j = 1; j < m; j++) g.triO(B[0], B[j], B[j + 1], col, inn, col, col);
+        };
+        if (zapora === 2) {   // grey concrete blocks, a hand's gap between them
+          const n = Math.max(1, Math.round(len / 2.1)), PB = [[-0.3, 0], [-0.3, 0.2], [-0.1, 0.82], [0.1, 0.82], [0.3, 0.2], [0.3, 0]], gp = Math.min(0.03, 0.06 * n / (len || 1));
+          for (let k = 0; k < n; k++) blok(fa + (fb - fa) * (k + gp) / n, fa + (fb - fa) * (k + 1 - gp) / n, PB, k & 1 ? BT2 : BT, true, true);
         } else if (zapora === 3) {   // straw bales and a red-and-white tape on thin posts behind them
           const nb = Math.max(1, Math.floor(len / 1.08));
           for (let k = 0; k < nb; k++) { const f = fa + (fb - fa) * (k + 0.5) / nb, c = FP(f, 0, 0), a = FP(f - 0.05, 0, 0), b = FP(f + 0.05, 0, 0); box(get(c[0], c[2]), c[0], c[1], c[2], 1.0, 0.45, 0.5, Math.atan2(b[2] - a[2], b[0] - a[0]), k & 1 ? SL2 : SL, SLT, true); }
@@ -623,12 +625,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
           for (let k = 0; k + 1 < np; k++) { const A = PS[k], B = PS[k + 1], g = get((A[0] + B[0]) / 2, (A[2] + B[2]) / 2), n = Math.max(2, Math.round(Math.hypot(B[0] - A[0], B[2] - A[2]) / 0.5)); for (let j = 0; j < n; j++) kar(g, A, B, j / n, (j + 1) / n, 0.93, 1.01, (j + k) & 1 ? WH : RD); }
         } else {   // red-and-white plastic barriers
           const n = Math.max(1, Math.round(len / 2.05)), PR = [[-0.24, 0], [-0.24, 0.2], [-0.09, 0.78], [0.09, 0.78], [0.24, 0.2], [0.24, 0]];
-          for (let k = 0; k < n; k++) {
-            const f0 = fa + (fb - fa) * k / n, f1 = fa + (fb - fa) * (k + 1) / n, A = PR.map(p => FP(f0, p[0], p[1])), B = PR.map(p => FP(f1, p[0], p[1])), col = k & 1 ? WH : RD, inn = mid(FP(f0, 0, 0.3), FP(f1, 0, 0.3)), g = get(inn[0], inn[2]);
-            for (let j = 0; j < 5; j++) g.quadO(A[j], B[j], B[j + 1], A[j + 1], col, inn);
-            if (k === 0) for (let j = 1; j < 5; j++) g.triO(A[0], A[j], A[j + 1], col, inn, col, col);
-            if (k === n - 1) for (let j = 1; j < 5; j++) g.triO(B[0], B[j], B[j + 1], col, inn, col, col);
-          }
+          for (let k = 0; k < n; k++) blok(fa + (fb - fa) * k / n, fa + (fb - fa) * (k + 1) / n, PR, k & 1 ? WH : RD, k === 0, k === n - 1);
         }
         if (!r.razred) continue;
         // the paint on the apron (the first two rows), 1.5 cm over the strip
@@ -658,5 +655,23 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     return { n: R.length, rez, tek, ustja, krogi, robovi, asfalt, predmeti, prekinjena };
   }
 
-  World.cesta = { finish, crte, precne, stranske, CRTE, PROGE, BELA, RUMENA };
+  /* ---- street furniture of OSM for the look (package E): a street lamp and a bus stop, nothing written on them ----
+     (x, y, z) the foot on the ground, a the way to the road (radians, atan2(z, x)) */
+  const SIVA = [0.55, 0.56, 0.58], SIVA2 = [0.4, 0.42, 0.45];
+  function svetilka(g, x, y, z, a, h) {   // (a steel pole, an arm over the road's edge, a flat head)
+    const box = World.api.box, cyl = World.api.cyl, H = h || 8.2, c = Math.cos(a), s = Math.sin(a);
+    cyl(g, x, y - 0.3, z, 0.09, H + 0.3, 5, SIVA, null, 0.06);
+    box(g, x + c * 0.7, y + H - 0.1, z + s * 0.7, 1.5, 0.1, 0.1, a, SIVA);
+    box(g, x + c * 1.6, y + H - 0.16, z + s * 1.6, 0.7, 0.18, 0.3, a, SIVA2, [0.5, 0.52, 0.55]);
+  }
+  function postaja(g, x, y, z, a, nadstresek) {   // (a shelter open to the road: a pad, a back and two sides of tinted glass, a roof; without it a pole with a blank plate)
+    const box = World.api.box, cyl = World.api.cyl, c = Math.cos(a), s = Math.sin(a), u = a + Math.PI / 2;
+    if (!nadstresek) { cyl(g, x, y - 0.2, z, 0.04, 2.9, 4, SIVA); box(g, x, y + 2.2, z, 0.5, 0.5, 0.05, a, [0.12, 0.3, 0.62]); box(g, x, y + 2.3, z, 0.3, 0.3, 0.07, a, [0.93, 0.93, 0.9]); return; }
+    box(g, x, y - 0.3, z, 3.6, 0.36, 1.4, u, [0.5, 0.52, 0.55], null, true);
+    box(g, x, y + 2.3, z, 3.8, 0.12, 1.6, u, [0.3, 0.32, 0.36], [0.4, 0.42, 0.46]);
+    for (const e of [-1.7, 1.7]) box(g, x - s * e, y, z + c * e, 0.08, 2.3, 1.3, u, [0.6, 0.7, 0.78], null, true);
+    box(g, x - c * 0.62, y, z - s * 0.62, 3.4, 2.3, 0.06, u, [0.55, 0.68, 0.76], null, true);
+  }
+
+  World.cesta = { finish, crte, precne, stranske, svetilka, postaja, CRTE, PROGE, BELA, RUMENA };
 })();
