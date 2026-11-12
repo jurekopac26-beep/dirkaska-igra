@@ -196,17 +196,46 @@
       gr.link(gr.row([PtF(f, o, -0.5), PtF(f, o, h)], [cA, cB]), gr.row([PtF(f, o2, -0.5), PtF(f, o2, h)], [cA, cB]), 0, 1);
     };
     const kindF = (f) => kindAt(((Math.round(f) % N) + N) % N);
+    /* (on trial, ?ograja=1|2|3: the steel guard rail of Italy's roads in the stone wall's place: 1 the double wave on posts, 2 the taller
+       triple wave on closer posts, 3 the double wave with a tube on top. The look alone: the barrier is the same line, Core's T.bl / T.br) */
+    const OGR = +((/[?&]ograja=([123])/.exec(typeof location !== 'undefined' ? location.search : '') || [0, 0])[1]);
+    const zn = [0.8, 0.82, 0.84], znD = [0.5, 0.52, 0.55], znE = [0.66, 0.68, 0.71], znP = [0.44, 0.46, 0.49], znV = [0.36, 0.38, 0.41], znT = [0.76, 0.78, 0.8];
+    const RAIL = OGR === 2 ? [[0.2, 0.45, znD], [0.1, 0.53, zn], [0.2, 0.615, znV], [0.1, 0.7, zn], [0.2, 0.785, znV], [0.1, 0.87, zn], [0.2, 0.95, znT]]
+      : [[0.2, 0.43, znD], [0.1, 0.51, zn], [0.2, 0.595, znV], [0.1, 0.68, zn], [0.2, 0.76, znT]];   // ([beyond the barrier's line, above the ground, colour]: crests to the road, the valleys and the lower edge in shade)
+    const TUBE = OGR === 3 ? [[0.2, 1.0, znD], [0.2, 1.1, zn], [0.3, 1.1, znE], [0.3, 1.0, znD]] : null, postTop = OGR === 3 ? 1.04 : OGR === 2 ? 0.93 : 0.74, postStep = OGR === 2 ? 1 : 2;
+    const footF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, h = (q) => vergeAt(q, side, (side > 0 ? T.br[q] : T.bl[q]) + 0.2); return f - a < 1e-4 ? h(i) : lerp(h(i), h((i + 1) % N), f - a); };   // (the verge under the rail, over the road's height)
+    const railRow = (gr, f, side, prof, ft, tone) => {
+      const bar = barF(f, side), p = prof.map(q => PtF(f, side * (bar + q[0]), ft + q[1])), c = prof.map(q => q[2].map(v => v * tone));
+      if (side < 0) { p.reverse(); c.reverse(); }
+      return gr.row(p, c);
+    };
+    const railPost = (gr, f, side) => {   // (a post behind the rail: its face across the road and its face to the road)
+      const ft = footF(f, side), bar = barF(f, side), o1 = side * (bar + 0.2), o2 = side * (bar + 0.3), y0 = ft - 0.2, y1 = ft + postTop, d = 0.03;
+      const A = gr.row([PtF(f - d, o2, y0), PtF(f - d, o2, y1)], [znP, znP]), B = gr.row([PtF(f - d, o1, y0), PtF(f - d, o1, y1)], [znP, znE]), C = gr.row([PtF(f + d, o1, y0), PtF(f + d, o1, y1)], [znP, znE]);
+      gr.link(A, B, 0, 1); gr.link(B, C, 0, 1);
+    };
+    const secRows = (gr, f, side, k) => {   // (the barrier's ribbons at a station: [row, quads across] of each)
+      if (!OGR || k !== 0) return [[wallRow(gr, f, side, k), 3]];
+      const ft = footF(f, side), tone = 0.95 + crH(Math.floor(f) >> 1, side, 73) * 0.1, R = [[railRow(gr, f, side, RAIL, ft, tone), RAIL.length - 1]];
+      if (TUBE) R.push([railRow(gr, f, side, TUBE, ft, tone), 3]);
+      return R;
+    };
+    const secLink = (gr, A, B) => { for (let j = 0; j < A.length; j++) gr.link(A[j][0], B[j][0], 0, A[j][1]); };
     for (let c0 = 0; c0 < N; c0 += RC) {
       const gr = new RB();
       for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + RC, N))) {   // (the walls, open at the side roads' mouths)
-        let prev = -1, pk = -1;
-        for (const f of run) {
-          const k = kindF(f);
-          if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, f, side, pk), 0, 3); prev = -1; }
-          const r = wallRow(gr, f, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
+        const cE = Math.min(c0 + RC, N), nR = run.length; let prev = null, pk = -1;
+        for (let q = 0; q < nR; q++) {
+          const f = run[q], k = kindF(f);
+          if (prev && k !== pk) { secLink(gr, prev, secRows(gr, f, side, pk)); prev = null; }
+          const r = secRows(gr, f, side, k); if (prev) secLink(gr, prev, r); prev = r; pk = k;
+          if (OGR && k === 0) {   // (the rail's posts: at its ends by the mouths and every postStep stations between)
+            const e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
+            if (e0 || e1 || (f === Math.floor(f) && f % postStep === 0 && f < cE)) railPost(gr, f + (e0 ? 0.05 : e1 ? -0.05 : 0), side);
+          }
         }
-        if (run.z0) wallCap(gr, run[0], side, kindF(run[0]));
-        if (run.z1) wallCap(gr, run[run.length - 1], side, kindF(run[run.length - 1]));
+        if (run.z0 && !(OGR && kindF(run[0]) === 0)) wallCap(gr, run[0], side, kindF(run[0]));
+        if (run.z1 && !(OGR && kindF(run[nR - 1]) === 0)) wallCap(gr, run[nR - 1], side, kindF(run[nR - 1]));
       }
       addM(gr, rMat, true);
     }
