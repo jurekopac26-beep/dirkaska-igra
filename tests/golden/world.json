@@ -1198,15 +1198,15 @@
  },
  "livorno": {
   "meshes": 1705,
-  "verts": 1087743,
+  "verts": 1188573,
   "instances": 34306,
   "props": 9,
   "crowd": 426,
-  "world": "1dd46160",
+  "world": "540120f2",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "325e3882",
+   "-:MeshLambertMaterial": "a119f2c",
    "-:MeshPhongMaterial": "b6985ac9",
    "crowd:MeshLambertMaterial": "6817d1c3",
    "flags:MeshLambertMaterial": "34784006",

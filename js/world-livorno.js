@@ -222,7 +222,7 @@
     /* ---- scenery chunks (vertex coloured, 128 m) and the spectators ---- */
     const scen = new Chunks(128);
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nCast = 0, nLamp = 0, nStop = 0;
+    let nBld = 0, nCast = 0, nLamp = 0, nStop = 0, nPost = 0;
     const BLD = [];   // (the houses that stand: [x, z, half length, half width, cos, sin], for the lamps and the stops)
 
     /* ---- the buildings (OSM footprints within 60 m): houses and villas in ochre, cream, salmon and white with terracotta roofs, blocks of flats with
@@ -475,10 +475,10 @@
         if (SC) SC.robovi(gv, c0, Math.min(c0 + RC, N), API.nrGCol);
         addM(gv, gMat);
       }
-      if (SC) {   // (the side roads' strips, their barriers and paint; the barrier's kind is a temporary switch until the user's choice)
-        const zap = +((/[?&]zapora=(\d)/.exec(typeof location !== 'undefined' ? location.search : '') || [0, 1])[1]), sMat = aMat.clone();
+      if (SC) {   // (the side roads' strips, the orange posts across their openings in the wall and the paint)
+        const sMat = aMat.clone();
         for (const g of SC.asfalt(RB, API.nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
-        SC.predmeti((x, z) => scen.get(x, z), zap);
+        nPost = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki;   // (where the posts stand: read by the tests)
       }
       {   // (OSM's street lamps and bus stops, for the look: behind the fence, off the side roads and the houses, not by a bridge or in the sea)
         const inB = (x, z, m) => { for (const b of BLD) { const dx = x - b[0], dz = z - b[1]; if (Math.abs(dx * b[4] + dz * b[5]) < b[2] + m && Math.abs(dz * b[4] - dx * b[5]) < b[3] + m) return true; } return false; };
@@ -507,7 +507,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, lamps: nLamp, stops: nStop, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, lamps: nLamp, stops: nStop, mouthPosts: nPost, fans: nFans, rocks: out.rocks };   // (read by the tests)
     return out;
   }
 

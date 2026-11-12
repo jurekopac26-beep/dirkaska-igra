@@ -452,7 +452,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
        SC.ustja, SC.krogi             // the mouths for the road's shader (out.cestaRob), circles that keep the trees off
        SC.robovi(gv, c0, c1, barva)   // the strips' shoulders into the verges' chunk (the ground's colour and material)
        SC.asfalt(RB, barva)           // the strips: a few meshes for a clone of the asphalt's material
-       SC.predmeti(get, zapora)       // the barriers on the fence line (1 plastic, 2 concrete blocks, 3 bales and a tape) and the paint
+       SC.predmeti(get)               // a row of orange posts across each opening on the fence line and the paint; returns the posts' count
      o: tla(x, z) the ground's height; rob(i, side, d) the verge's height above the road at the sample i, d metres from the centre line;
      ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE) */
   function stranske(T, ceste, o) {
@@ -558,6 +558,13 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
       mr(V[1][2][0], V[1][2][2]);
       R.push({ razred, hw, eno, konec, side, si, i0, zid, crt, V, OFF, UU, dr, nr, D, hwM: hwf(u0[2] + 0.6), dp: Math.max(0.5, Q.d - Q.w + 0.15), hh: hsh(ri, 3) });
     }
+    // a shoulder's two points beside the strip's edge in row k (sg -1 the left edge, 1 the right): the outer one under the ground, the
+    // inner one at the edge
+    const bankina = (r, sg, k) => {
+      const e = r.V[k][sg < 0 ? 0 : 4], q = r.V[k][sg < 0 ? 1 : 3], l = Math.hypot(e[0] - q[0], e[2] - q[2]) || 1, dx = (e[0] - q[0]) / l, dz = (e[2] - q[2]) / l;
+      const wd = Math.min(3, 0.5 + 1.5 * Math.max(0, e[1] - tla(e[0], e[2]))), ox = e[0] + dx * wd, oz = e[2] + dz * wd;
+      return [[ox, tla(ox, oz) - 0.12, oz], [e[0], e[1] - 0.004, e[2]]];
+    };
     // the shoulders: a band of the ground's colour from each edge down under the ground (and beyond a fading end)
     const robovi = (g, c0, c1, barva) => {
       const uv = (p) => [p[0] / 14, -p[2] / 14];
@@ -566,9 +573,8 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
         for (const sg of [-1, 1]) {
           let prev = -1;
           for (let k = 1; k < r.nr; k++) {
-            const e = r.V[k][sg < 0 ? 0 : 4], q = r.V[k][sg < 0 ? 1 : 3], l = Math.hypot(e[0] - q[0], e[2] - q[2]) || 1, dx = (e[0] - q[0]) / l, dz = (e[2] - q[2]) / l;
-            const wd = Math.min(3, 0.5 + 1.5 * Math.max(0, e[1] - tla(e[0], e[2]))), ox = e[0] + dx * wd, oz = e[2] + dz * wd, O = [ox, tla(ox, oz) - 0.12, oz], I = [e[0], e[1] - 0.004, e[2]];
-            const cI = barva(e[0], e[2]), cO = barva(ox, oz), pts = sg < 0 ? [O, I] : [I, O], row = g.row(pts, sg < 0 ? [cO, cI] : [cI, cO], pts.map(uv));
+            const [O, I] = bankina(r, sg, k);
+            const cI = barva(I[0], I[2]), cO = barva(O[0], O[2]), pts = sg < 0 ? [O, I] : [I, O], row = g.row(pts, sg < 0 ? [cO, cI] : [cI, cO], pts.map(uv));
             if (prev >= 0) g.link(prev, row, 0, 1); prev = row;
           }
         }
@@ -595,37 +601,79 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
       }
       return [...B.values()];
     };
-    // the barriers across the openings on the fence line (no inscriptions) and the paint by the country's rules: a street stops, a
-    // bigger road gives way, a driveway has nothing; on the entering lane (the left half, seen from the main road), a one-way road across
-    const predmeti = (get, zapora) => {
-      const box = World.api.box, RD = [0.78, 0.12, 0.1], WH = [0.93, 0.93, 0.9], BT = [0.7, 0.7, 0.68], BT2 = [0.63, 0.63, 0.62], SL = [0.85, 0.72, 0.4], SL2 = [0.78, 0.64, 0.34], SLT = [0.9, 0.79, 0.48], PW = [0.9, 0.9, 0.86];
-      for (const r of R) {
-        const side = r.side, fa = r.zid[0], fb = r.zid[1];
+    // the verge's height at a point: the highest of the sheets of the stations round the nearest one (inside a tight bend the sheets
+    // fold over each other); between two stations a sheet is ruled by the lateral distance, as the world links its verge rows
+    const vrhRoba = (x, z) => {
+      mr(x, z); if (Q.i < 0) return tla(x, z);
+      const side = Q.lat, c = Q.i, h0 = Q.h + lerp(rob(c, side, Q.d), rob((c + 1) % N, side, Q.d), Q.t); let h = -1e9;
+      for (let a = c - 16; a <= c + 16; a++) {
+        if (odprta && (a < 0 || a > N - 2)) continue;
+        const i = wrap(a), j = (i + 1) % N, ex = x - px[i], ez = z - pz[i], dx = px[j] - px[i], dz = pz[j] - pz[i], mx = nx[j] - nx[i], mz = nz[j] - nz[i];
+        // (the point's station t between the two: (E - t dP) x (n + t dn) = 0)
+        const A = dz * mx - dx * mz, B = ex * mz - ez * mx - dx * nz[i] + dz * nx[i], C0 = ex * nz[i] - ez * nx[i], D = B * B - 4 * A * C0; if (D < 0) continue;
+        const q = -0.5 * (B + (B < 0 ? -1 : 1) * Math.sqrt(D));
+        for (const t of [q / A, C0 / q]) {
+          if (!(t >= -1e-6 && t <= 1 + 1e-6)) continue;
+          const ux = nx[i] + mx * t, uz = nz[i] + mz * t, d = side * ((x - px[i] - dx * t) * ux + (z - pz[i] - dz * t) * uz) / (ux * ux + uz * uz);
+          if (d < lerp(T.wAt(i), T.wAt(j), t)) continue;   // (the asphalt of the main road is not a verge)
+          const v0 = rob(i, side, d), v1 = rob(j, side, d); if (v0 > -8 && v1 > -8) h = Math.max(h, lerp(hy[i], hy[j], t) + lerp(v0, v1, t));
+        }
+      }
+      return h > -1e8 ? h : h0;
+    };
+    // the height of the drawn surface under a point in a side road's opening: the strip or the shoulders of this road or of a near one
+    // on the same side (the triangles as asfalt and robovi link them) or, beside them, the verge (the ground where the world gives none)
+    const povrsje = (r) => {
+      const blizu = R.filter((q) => q.side === r.side && Math.min(wrap(q.i0 - r.i0), wrap(r.i0 - q.i0)) <= 60);
+      for (const q of blizu) if (!q.B) q.B = [-1, 1].map((sg) => { const a = []; for (let k = 1; k < q.nr; k++) a[k] = bankina(q, sg, k); return a; });
+      return (x, z) => {
+        const tri = (a, b, c) => {
+          const d = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]); if (Math.abs(d) < 1e-9) return -1e9;
+          const u = ((b[2] - c[2]) * (x - c[0]) + (c[0] - b[0]) * (z - c[2])) / d, v = ((c[2] - a[2]) * (x - c[0]) + (a[0] - c[0]) * (z - c[2])) / d, w = 1 - u - v;
+          return u < -1e-6 || v < -1e-6 || w < -1e-6 ? -1e9 : u * a[1] + v * b[1] + w * c[1];
+        };
+        let h = rob ? vrhRoba(x, z) : tla(x, z);
+        for (const q of blizu) {
+          for (let k = 0; k + 1 < q.nr; k++) for (let j = 0; j < 4; j++) h = Math.max(h, tri(q.V[k][j], q.V[k][j + 1], q.V[k + 1][j]), tri(q.V[k][j + 1], q.V[k + 1][j + 1], q.V[k + 1][j]));
+          for (let s = 0; s < 2; s++) for (let k = 1; k + 1 < q.nr; k++) { const a = q.B[s][k], b = q.B[s][k + 1]; h = Math.max(h, s ? tri(a[1], a[0], b[1]) : tri(a[0], a[1], b[0]), s ? tri(a[0], b[0], b[1]) : tri(a[1], b[1], b[0])); }
+        }
+        return h;
+      };
+    };
+    // the orange posts across the openings on the fence line (the wall stops at an opening and a row of posts stands in its place: a
+    // post every ~1.5 m, half a gap from the wall's ends, each on the surface under it; a dark foot, an orange body with two white
+    // bands, no inscriptions) and the paint by the country's rules: a street stops, a bigger road gives way, a driveway has nothing;
+    // on the entering lane (the left half, seen from the main road), a one-way road across. Returns the number of posts; `stebricki`
+    // keeps where they stand (x, the height of the surface under the post, z and the road's number: four numbers a post; for the tests)
+    const stebricki = [];
+    const predmeti = (get) => {
+      const cyl = World.api.cyl, OR = [0.96, 0.4, 0.06], WH = [0.94, 0.94, 0.91], DK = [0.14, 0.14, 0.15], PW = [0.9, 0.9, 0.86];
+      const POST = [[0.4, OR], [0.12, WH], [0.12, OR], [0.12, WH], [0.2, OR]];   // (the body's bands from the foot up: height, colour)
+      let posts = 0; stebricki.length = 0;
+      for (let ri = 0; ri < R.length; ri++) {
+        const r = R[ri], side = r.side, fa = r.zid[0], fb = r.zid[1];
         const FP = (f, e, y) => { const a = Math.floor(f), t = f - a, i = wrap(a), j = (i + 1) % N, b0 = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.3 + e), b1 = side * ((side > 0 ? T.br[j] : T.bl[j]) + 0.3 + e); return [lerp(px[i] + nx[i] * b0, px[j] + nx[j] * b1, t), lerp(hy[i], hy[j], t) + y, lerp(pz[i] + nz[i] * b0, pz[j] + nz[j] * b1, t)]; };
-        let len = 0; for (let k = 0; k < 8; k++) { const a = FP(fa + (fb - fa) * k / 8, 0, 0), b = FP(fa + (fb - fa) * (k + 1) / 8, 0, 0); len += Math.hypot(b[0] - a[0], b[2] - a[2]); }
-        const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-        const kar = (g, A, B, s0, s1, y0, y1, col) => {   // (a flat card between two points of the fence line, both faces)
-          const a = [lerp(A[0], B[0], s0), lerp(A[1], B[1], s0) + y0, lerp(A[2], B[2], s0)], b = [lerp(A[0], B[0], s1), lerp(A[1], B[1], s1) + y0, lerp(A[2], B[2], s1)], c = [b[0], b[1] + y1 - y0, b[2]], d = [a[0], a[1] + y1 - y0, a[2]];
-          const l = Math.hypot(B[0] - A[0], B[2] - A[2]) || 1, qx = -(B[2] - A[2]) / l * 0.5, qz = (B[0] - A[0]) / l * 0.5, m = mid(a, c);
-          g.quadO(a, b, c, d, col, [m[0] + qx, m[1], m[2] + qz]); g.quadO(a, b, c, d, col, [m[0] - qx, m[1], m[2] - qz]);
-        };
-        const blok = (f0, f1, PR, col, c0, c1) => {   // (a barrier's body with the profile PR between two stations of the fence line, end faces where asked)
-          const A = PR.map(q => FP(f0, q[0], q[1])), B = PR.map(q => FP(f1, q[0], q[1])), inn = mid(FP(f0, 0, 0.3), FP(f1, 0, 0.3)), g = get(inn[0], inn[2]), m = PR.length - 1;
-          for (let j = 0; j < m; j++) g.quadO(A[j], B[j], B[j + 1], A[j + 1], col, inn);
-          if (c0) for (let j = 1; j < m; j++) g.triO(A[0], A[j], A[j + 1], col, inn, col, col);
-          if (c1) for (let j = 1; j < m; j++) g.triO(B[0], B[j], B[j + 1], col, inn, col, col);
-        };
-        if (zapora === 2) {   // grey concrete blocks, a hand's gap between them
-          const n = Math.max(1, Math.round(len / 2.1)), PB = [[-0.3, 0], [-0.3, 0.2], [-0.1, 0.82], [0.1, 0.82], [0.3, 0.2], [0.3, 0]], gp = Math.min(0.03, 0.06 * n / (len || 1));
-          for (let k = 0; k < n; k++) blok(fa + (fb - fa) * (k + gp) / n, fa + (fb - fa) * (k + 1 - gp) / n, PB, k & 1 ? BT2 : BT, true, true);
-        } else if (zapora === 3) {   // straw bales and a red-and-white tape on thin posts behind them
-          const nb = Math.max(1, Math.floor(len / 1.08));
-          for (let k = 0; k < nb; k++) { const f = fa + (fb - fa) * (k + 0.5) / nb, c = FP(f, 0, 0), a = FP(f - 0.05, 0, 0), b = FP(f + 0.05, 0, 0); box(get(c[0], c[2]), c[0], c[1], c[2], 1.0, 0.45, 0.5, Math.atan2(b[2] - a[2], b[0] - a[0]), k & 1 ? SL2 : SL, SLT, true); }
-          const np = len > 5 ? 3 : 2, PS = []; for (let k = 0; k < np; k++) { const p = FP(fa + (fb - fa) * (0.05 + 0.9 * k / (np - 1)), 0.5, 0); PS.push(p); box(get(p[0], p[2]), p[0], p[1], p[2], 0.06, 1.06, 0.06, 0, WH, WH, true); }
-          for (let k = 0; k + 1 < np; k++) { const A = PS[k], B = PS[k + 1], g = get((A[0] + B[0]) / 2, (A[2] + B[2]) / 2), n = Math.max(2, Math.round(Math.hypot(B[0] - A[0], B[2] - A[2]) / 0.5)); for (let j = 0; j < n; j++) kar(g, A, B, j / n, (j + 1) / n, 0.93, 1.01, (j + k) & 1 ? WH : RD); }
-        } else {   // red-and-white plastic barriers
-          const n = Math.max(1, Math.round(len / 2.05)), PR = [[-0.24, 0], [-0.24, 0.2], [-0.09, 0.78], [0.09, 0.78], [0.24, 0.2], [0.24, 0]];
-          for (let k = 0; k < n; k++) blok(fa + (fb - fa) * k / n, fa + (fb - fa) * (k + 1) / n, PR, k & 1 ? WH : RD, k === 0, k === n - 1);
+        // the line of the row: the fence line across the opening without its fold (inside a tight bend the line runs over itself, and
+        // a point of it that lies nearer to the road than its own offset belongs to the fold); the posts stand evenly along what is left
+        const BO = (f) => { const a = Math.floor(f), i = wrap(a), j = (i + 1) % N; return lerp(side > 0 ? T.br[i] : T.bl[i], side > 0 ? T.br[j] : T.bl[j], f - a) + 0.3; };
+        const M = Math.max(8, Math.ceil((fb - fa) * 4)), a0 = Math.floor(fa) - 24, a1 = Math.ceil(fb) + 24, LN = [], S = [0];
+        for (let k = 0; k <= M; k++) {
+          const f = fa + (fb - fa) * k / M, p = FP(f, 0, 0); let d2 = 1e18;
+          for (let a = a0; a < a1 && k > 0 && k < M; a++) {
+            if (odprta && (a < 0 || a > N - 2)) continue;
+            const i = wrap(a), j = (i + 1) % N, dx = px[j] - px[i], dz = pz[j] - pz[i], t = clamp(((p[0] - px[i]) * dx + (p[2] - pz[i]) * dz) / (dx * dx + dz * dz), 0, 1);
+            d2 = Math.min(d2, (p[0] - px[i] - dx * t) ** 2 + (p[2] - pz[i] - dz * t) ** 2);
+          }
+          if (Math.sqrt(d2) >= BO(f) - 0.25) LN.push(p);
+        }
+        for (let k = 1; k < LN.length; k++) S[k] = S[k - 1] + Math.hypot(LN[k][0] - LN[k - 1][0], LN[k][2] - LN[k - 1][2]);
+        const len = S[S.length - 1], n = Math.max(2, Math.round(len / 1.5)), tlak = povrsje(r);
+        for (let k = 0, m = 1; k < n; k++) {
+          const s = len * (k + 0.5) / n; while (m < S.length - 1 && S[m] < s) m++;
+          const t = S[m] > S[m - 1] ? (s - S[m - 1]) / (S[m] - S[m - 1]) : 0, x = lerp(LN[m - 1][0], LN[m][0], t), z = lerp(LN[m - 1][2], LN[m][2], t), g = get(x, z), y0 = tlak(x, z); let y = y0 + 0.04;
+          cyl(g, x, y0 - 0.04, z, 0.2, 0.08, 6, DK, DK);   // (the foot 4 cm into the surface)
+          for (let j = 0; j < POST.length; j++) { cyl(g, x, y, z, 0.1, POST[j][0], 6, POST[j][1], j === POST.length - 1 ? OR : null); y += POST[j][0]; }
+          posts++; stebricki.push(x, y0, z, ri);
         }
         if (!r.razred) continue;
         // the paint on the apron (the first two rows), 1.5 cm over the strip
@@ -639,6 +687,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
           for (let k = 0; k < n; k++) { const x0 = (m0 + k * (b + gp)) / r.hwM, x1 = (m0 + k * (b + gp) + b) / r.hwM, a = AP(x0, tt(0.25)), b2 = AP(x1, tt(0.25)), c2 = AP((x0 + x1) / 2, tt(0.25 + h)); get(a[0], a[2]).triUp(a, b2, c2, [PW, PW, PW]); }
         }
       }
+      return posts;
     };
     // the main road's edge line across a mouth is broken where the country's rules say so (C.ustje: dash, gap): the dashes as
     // [f0, f1, side] in stations for the roads of the samples c0 … c1
@@ -652,7 +701,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
       }
       return out;
     };
-    return { n: R.length, rez, tek, ustja, krogi, robovi, asfalt, predmeti, prekinjena };
+    return { n: R.length, rez, tek, ustja, krogi, robovi, asfalt, predmeti, stebricki, prekinjena };
   }
 
   /* ---- street furniture of OSM for the look (package E): a street lamp and a bus stop, nothing written on them ----

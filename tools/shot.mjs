@@ -13,7 +13,7 @@
 //   node tools/shot.mjs suzuka --m 0 --cas vecer                        (the time of day: jutro, dan (default), vecer, noc)
 //   node tools/shot.mjs --nabor --pred HEAD^1                           (the set the workflow uses: NABOR and the real tracks the change touches)
 //   node tools/shot.mjs spa --m 400 --avto miska --pred main            (--avto <id>: the player's car, as the quick entry's avto=)
-//   node tools/shot.mjs livorno --m 270 --q zapora=2                    (--q <query>: more of the address's parameters, for a build's switch)
+//   node tools/shot.mjs livorno --m 270 --q <key>=<value>               (--q <query>: more of the address's parameters, for a build's temporary switch)
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';

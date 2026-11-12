@@ -178,11 +178,43 @@ try {
       m = Math.sqrt(m); if (m > worst) worst = m; if (m > 4.5) far++;
     }
     return { n: W.stranske, osm: LV_DATA.side.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, worst: +worst.toFixed(2),
-      lamps: W.stats.lamps, osmLamps: LV_DATA.lamps.length, stops: W.stats.stops, osmStops: LV_DATA.stops.length, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
+      lamps: W.stats.lamps, osmLamps: LV_DATA.lamps.length, stops: W.stats.stops, osmStops: LV_DATA.stops.length, posts: W.stats.mouthPosts, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   });
-  T.check('Livorno: OpenStreetMap\'s side roads for the look (a strip of asphalt through an opening in the wall at each mouth, the mouths 3 to 40 m wide), its street lamps and bus stops behind the fence; the track\'s model as a track built alone has it',
+  T.check('Livorno: OpenStreetMap\'s side roads for the look (a strip of asphalt through an opening in the wall at each mouth, the mouths 3 to 40 m wide, a row of orange posts across each opening), its street lamps and bus stops behind the fence; the track\'s model as a track built alone has it',
     sr.n >= sr.osm * 0.8 && sr.n <= sr.osm && sr.mouths === sr.n && sr.wMin >= 3 && sr.wMax <= 40 && sr.strips >= 1 && sr.stripV > sr.n * 20 && sr.stripV <= liv.verts * 0.1 && sr.far === 0 &&
-    sr.lamps >= sr.osmLamps * 0.75 && sr.lamps <= sr.osmLamps && sr.stops >= sr.osmStops * 0.85 && sr.stops <= sr.osmStops && sr.model, JSON.stringify(sr));
+    sr.lamps >= sr.osmLamps * 0.75 && sr.lamps <= sr.osmLamps && sr.stops >= sr.osmStops * 0.85 && sr.stops <= sr.osmStops && sr.posts >= sr.n * 2 && sr.posts <= sr.n * 27 && sr.model, JSON.stringify(sr));
+
+  // the posts across the openings: evenly along the fence line, each on the surface drawn under it, none near the road's asphalt
+  const sp = await page.evaluate(() => {
+    const W = Render.world, T = window.__game.race.track, P = W.stebricki || [], n = P.length / 4, meshes = [], rows = new Map();
+    for (let k = 0; k < n; k++) { const id = P[k * 4 + 3]; if (!rows.has(id)) rows.set(id, []); rows.get(id).push(k); }
+    let gMin = 1e9, gMax = 0, lone = 0, road = 1e9, none = 0, off = 0;
+    for (const ks of rows.values()) {
+      if (ks.length < 2) lone++;
+      for (let j = 1; j < ks.length; j++) { const a = ks[j - 1] * 4, b = ks[j] * 4, g = Math.hypot(P[b] - P[a], P[b + 2] - P[a + 2]); gMin = Math.min(gMin, g); gMax = Math.max(gMax, g); }
+    }
+    for (let k = 0; k < n; k++) {   // (the nearest point of the road's middle line: the post's distance from the asphalt's edge there)
+      const x = P[k * 4], z = P[k * 4 + 2]; let m = 1e18, mi = 0;
+      for (let i = 0, e = T.open ? T.N - 1 : T.N; i < e; i++) {
+        const j = (i + 1) % T.N, dx = T.px[j] - T.px[i], dz = T.pz[j] - T.pz[i], t = Math.max(0, Math.min(1, ((x - T.px[i]) * dx + (z - T.pz[i]) * dz) / (dx * dx + dz * dz))), d = (x - T.px[i] - dx * t) ** 2 + (z - T.pz[i] - dz * t) ** 2;
+        if (d < m) { m = d; mi = i; }
+      }
+      road = Math.min(road, Math.sqrt(m) - T.wAt(mi));
+    }
+    // (a ray down each post against every drawn mesh: the highest surface under it, the post's own top and its foot's aside)
+    W.root.updateMatrixWorld(true);
+    W.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.visible) meshes.push(o); });
+    const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), from = new THREE.Vector3();
+    for (let k = 0; k < n; k++) {
+      const y0 = P[k * 4 + 1]; let top = -1e9;
+      rc.set(from.set(P[k * 4], y0 + 3, P[k * 4 + 2]), dn); rc.far = 6;
+      for (const h of rc.intersectObjects(meshes, false)) { const y = h.point.y; if (Math.abs(y - (y0 + 1)) > 2e-3 && Math.abs(y - (y0 + 0.04)) > 2e-3 && y < y0 + 0.6 && y > top) top = y; }
+      if (top < -1e8) none++; else off = Math.max(off, Math.abs(y0 - top));
+    }
+    return { n, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), road: +road.toFixed(1), none, off: +off.toFixed(3) };
+  });
+  T.check('Livorno: the posts across the openings stand evenly along the fence line (1 to 2.2 m apart, two or more a row), each on the surface drawn under it (within 3 cm: a ray down against the world\'s meshes), none within 2 m of the road\'s asphalt',
+    sp.n === sr.posts && sp.rows === sr.n && sp.lone === 0 && sp.gMin >= 1 && sp.gMax <= 2.2 && sp.none === 0 && sp.off <= 0.03 && sp.road >= 2, JSON.stringify(sp));
 
   await startTrack(page, 'pikes');
   const pk = await look(page);
