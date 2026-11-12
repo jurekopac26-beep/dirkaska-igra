@@ -1090,7 +1090,7 @@
     const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', d = t.def, pg = IZ() && G.progress ? G.progress(d) : null;
     const cell = (lbl, val, cls) => '<div class="' + (cls || '') + '"><small>' + esc(lbl) + '</small><b>' + esc(val) + '</b></div>';
     // the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best (NEW or the time), the rating,
-    // the difficulty, the mode and the opponents. A tap on one of the last five: its window from the foot up to the row (twSheet), the cell
+    // the mode, the difficulty and the opponents. A tap on one of the last five: its window from the foot up to the row (twSheet), the cell
     // framed gold while it is open (twOn)
     const twOn = (k) => sheet === twSheet && tw === k ? ' tw-on' : '';
     const twB = (k, lbl, inner) => '<button data-act="' + (k === 'riv' ? 'riv' : 'tw:' + k) + '" aria-haspopup="dialog" aria-label="' + esc(lbl) + '">' + inner + '</button>';
@@ -1116,17 +1116,14 @@
     // the mode: its full name on two lines, 4 grey dashes, the chosen mode's green (Classic race the first, Endless traffic the last)
     const mi = ROW_MODES.findIndex(m => m[0] === mode), mname = mi >= 0 ? ROW_MODES[mi][1] : modeOf(mode).name;
     const md = '<div class="md' + twOn('mode') + '">' + twB('mode', 'Mode: ' + mname + '. Choose', '<b>' + two(mname) + '</b>' + dashes(mi, 'm', true)) + '</div>';
-    h += '<div class="trow">' + flagB + best + rate + dif + md + last + '</div>';
+    h += '<div class="trow">' + flagB + best + rate + md + dif + last + '</div>';   // (the mode before the difficulty: the user, 12. 11. 2026)
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
-    // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
-    // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage (the name a button of its own,
-    // out of the keys' way and hidden from readers, the car's button says it: a phone's touch adjustment takes it for a target, not so a
-    // plain span with the menu's listener far up)
+    // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; no name over it (the user, 12. 11. 2026:
+    // its button says it to the readers); a tap: the garage
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
     h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '" data-country="' + esc(ctry) + '"' + (IZ() ? ' data-act="izbor"' : '') + '><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
-      '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
-      '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
+      '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button></div>';   // (no name over the car: the user, 12. 11. 2026)
     // the neighbours of the list: their flags (a track without one: its name)
     const nb = (k) => {
       const u = list[(trackIdx + k + n) % n], c = countryOf(u), f = flagUrl(c), fill = f ? flagFill(f) : '';

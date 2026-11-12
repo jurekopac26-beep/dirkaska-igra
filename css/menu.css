@@ -344,7 +344,7 @@ svg { display: block; }
 .dio img.wet { opacity: 0; transition: opacity .7s ease; }
 .stage.rainy .dio img.wet { opacity: 1; }
 /* the weather over the whole track screen (js/menu-vreme.js, sklop 12): the picture's light and colours (--wxf, the videos' --wxv), a
-   blue tint, the snow's light, the clouds, the warm sun and a canvas over it (the sun's rays, the rainbow, frost, lightning, drops on the
+   blue tint, the snow's light, the clouds, the warm sun and a canvas over it (the rainbow, frost, lightning, drops on the
    lens); the module fades them itself (no transitions); the labels over them */
 .stage > .wxo { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; }
 .stage > .wxo.tint { background: #283c60; mix-blend-mode: multiply; }
@@ -518,21 +518,12 @@ svg { display: block; }
 .yard .car img { width: 100%; height: 100%; object-fit: contain; object-position: left bottom; filter: var(--wxcar, ) drop-shadow(0 8px 8px rgba(0, 0, 0, .55)); }
 .yard .car .mono { width: 72px; height: 72px; margin: 0 0 6px 18px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .1); border: 2px solid rgba(255, 255, 255, .35); font: 900 italic 34px/1 var(--f-ui); }
 .yard .car:active { transform: translateY(2px); }
-/* the car's name in a small box over it (stran Odločitve m6): over the car's top at its left (js/menu-car.js sets --car-top/--car-left
-   as it fits the car; its picture: the top of the yard), never above the yard; with a 3D car still on its way: shown with it; a button
-   (the tap: the garage, as on the car) */
-.yard .cname { position: absolute; z-index: 4; display: block; margin: 0; text-align: left; top: max(3px, calc(var(--car-top, 12%) - 25px)); left: calc(var(--car-left, 2%) + 10px); max-width: 56%; padding: 4px 8px 4px 7px; border-radius: 6px;
-  background: rgba(8, 15, 27, .86); border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); color: #f4f7fb; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .04em;
-  text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: opacity .3s ease; }
-.yard.c3d-wait:not(.c3d-on) .cname { opacity: 0; }
-.yard .cname:active { transform: translateY(1px); }
 /* the showroom (S2; the user, 12. 11. 2026, docs/odlocitve.md »Meni: razstavni prostor«): upright the room warm grey, the yard a dark room
-   with a row of lamps, a dark wall and a glossy floor (the car's reflection on it: js/menu-vreme.js); the sign as before, on its two posts */
+   a dark wall (no lamps: the user, 12. 11. 2026) and a glossy floor (the car's reflection on it: js/menu-vreme.js); the sign as before, on its two posts */
 @media (orientation: portrait) {
   .room { --card1: rgba(34, 37, 43, .97); --card2: rgba(22, 24, 28, .98); --lbl: #c9c3c2; --line: rgba(255, 255, 255, .10); --edge: rgba(255, 255, 255, .14); --navy2: #120f10;
     background: linear-gradient(180deg, #2a1d1f, #1a1516 70px, #120f10); }
-  .yard { background: radial-gradient(circle at 8% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 26% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 44% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 62% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 80% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),radial-gradient(circle at 96% 5%, #fffdf6 0 2.6px, rgba(255, 226, 180, .75) 3.6px, rgba(255, 226, 180, .22) 7.8px, rgba(255, 226, 180, 0) 18.2px),
-    linear-gradient(180deg, #16161a 0, #16161a 9%, #202027 9.4%, #26262e 58%, #0d0d10 58.3%, #18181c 70%, #09090b 100%); }
+  .yard { background: linear-gradient(180deg, #16161a 0, #16161a 9%, #202027 9.4%, #26262e 58%, #0d0d10 58.3%, #18181c 70%, #09090b 100%); }
   .yard::after { background: radial-gradient(60% 100% at 32% 0%, rgba(255, 236, 205, .07), transparent 70%); }
   /* (the sign and its posts' tops 12 px higher with the car: the car hides as much of the sign as before, the name in its middle) */
   .sign { top: calc(12% - 12px); } .post { top: calc(48% - 12px); }
@@ -1063,7 +1054,6 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   /* the car in the middle under the left neighbour's card (its middle at 144 of the drawing's px: js/menu.js RING_S; --car-mid: js/menu-car.js
      frameCar puts it in the middle of its button), its name under it in the middle (the user, 12. 11. 2026) */
   #s-track .yard .car { --car-mid: 1; left: calc(34 * var(--u)); top: calc(48 * var(--u)); bottom: auto; width: calc(220 * var(--u)); height: calc(86 * var(--u)); }
-  #s-track .yard .cname { top: calc(138 * var(--u)); left: calc(144 * var(--u)); translate: -50% 0; max-width: calc(220 * var(--u)); }   /* (over it is the neighbour's card with its name) */
   /* the old screen over the new one as it fades (js/menu.js ringLand) */
   #mn > #s-track.rgone { pointer-events: none; z-index: 8; animation: rgone .3s ease-out forwards; }   /* (over all of the new screen, its head and row too: z-index to 7) */
   /* the sheets: a box in the middle, not a strip from the foot */
@@ -1375,8 +1365,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 }
 @media (prefers-reduced-motion: reduce) { .zem, .zem-card, .zem-card.on, .zem-hint, .globe { transition: none; } .zp.cur::after { animation: none; } }
 
-/* the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best, the rating, the difficulty,
-   the mode, the opponents; the same background for all, no labels over the difficulty and the mode; a tap: its window (js/menu.js twPlace) */
+/* the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best, the rating, the mode, the difficulty,
+   the opponents; the same background for all, no labels over the difficulty and the mode; a tap: its window (js/menu.js twPlace) */
 .trow .flag img { height: 40px; max-width: 60px; width: 60px; object-fit: fill; opacity: 1; filter: none; mix-blend-mode: normal; box-shadow: 0 0 0 1px rgba(255, 255, 255, .45), 0 2px 5px rgba(0, 0, 0, .5); }   /* (full colours, a thin edge, 60 x 40: the user, 12. 11. 2026) */
 .trow .flag .nf { width: 60px; height: 40px; }
 .trow .flag { padding: 0 6px 0 0; }
