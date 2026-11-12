@@ -607,6 +607,20 @@
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
   const flagEdge = {};
+  // (where the game draws its colours anew, js/sence.js: the column as a gradient of hard stops, its colours then by the page's own filters
+  // and not a picture, which Samsung Internet darkens)
+  function edgeGradient(d) {
+    const runs = [];
+    for (let y = 0; y < 96; y++) {
+      const c = [d[y * 4], d[y * 4 + 1], d[y * 4 + 2]], r = runs[runs.length - 1];
+      if (r && Math.abs(r.c[0] - c[0]) + Math.abs(r.c[1] - c[1]) + Math.abs(r.c[2] - c[2]) < 24) r.n++; else runs.push({ c, n: 1 });
+    }
+    // (a pixel of a stripe's edge, between two colours: to its bigger neighbour)
+    for (let i = runs.length - 2; i > 0; i--) if (runs[i].n === 1) { const k = runs[i - 1].n >= runs[i + 1].n ? i - 1 : i + 1; runs[k].n++; runs.splice(i, 1); }
+    let y = 0;
+    const st = runs.map((r) => { const s = 'rgb(' + r.c.join(',') + ') ' + (y / 96 * 100).toFixed(2) + '% ' + ((y += r.n) / 96 * 100).toFixed(2) + '%'; return s; });
+    return 'linear-gradient(to bottom, ' + st.join(', ') + ')';
+  }
   function flagFill(url) {
     if (url in flagEdge) return flagEdge[url];
     flagEdge[url] = '';
@@ -614,7 +628,7 @@
     im.onload = () => {
       try {
         const cv = document.createElement('canvas'); cv.width = 1; cv.height = 96; const c = cv.getContext('2d');
-        c.drawImage(im, -63, 0, 64, 96); flagEdge[url] = 'url(' + cv.toDataURL() + ')';
+        c.drawImage(im, -63, 0, 64, 96); flagEdge[url] = window.Sence && window.Sence.on ? edgeGradient(c.getImageData(0, 0, 1, 96).data) : 'url(' + cv.toDataURL() + ')';
         if (app) for (const b of app.querySelectorAll('.nb[data-flag="' + url + '"]')) b.style.backgroundImage = flagEdge[url];
       } catch (_) { /* (a canvas that cannot be read: the button's own colour) */ }
     };

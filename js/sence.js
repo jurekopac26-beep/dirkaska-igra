@@ -21,8 +21,21 @@
   const q = location.search;
   // (temni-nacin.html: window.SenceRoots, on everywhere but only for the roots it hands in, its own rows of the page left as they are)
   const roots = !!window.SenceRoots;
-  const on = roots || /[?&]sence=1/.test(q) || (/SamsungBrowser/i.test(navigator.userAgent) && !/[?&]sence=0/.test(q));
-  const Sence = window.Sence = { on, root: () => {}, rewriteSheet: () => {}, stats: { rules: 0, layers: 0, filters: 0, imgs: 0, svgs: 0, ms: 0 } };
+  // (on: Samsung Internet by its UA, or any browser that darkens a light page by force (the menu's probe, js/menu.js forcedDark: the
+  // system colour Canvas in a light element is dark), as Samsung Internet does with a UA without its name (its desktop version, a UA
+  // changed in its settings); a plain Chrome, light or dark, darkens nothing and stays as it is)
+  function forced() {
+    try {
+      if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
+      const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:light';
+      document.documentElement.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove();
+      const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(c);
+      return !!m && (m[4] == null || +m[4] > 0.5) && (299 * m[1] + 587 * m[2] + 114 * m[3]) / 1000 < 128;
+    } catch (_) { return false; }
+  }
+  const why = { ua: /SamsungBrowser/i.test(navigator.userAgent), forced: forced(), param: /[?&]sence=1/.test(q) ? 1 : /[?&]sence=0/.test(q) ? 0 : null };
+  const on = roots || why.param === 1 || (why.param !== 0 && (why.ua || why.forced));
+  const Sence = window.Sence = { on, why, root: () => {}, rewriteSheet: () => {}, stats: { rules: 0, layers: 0, filters: 0, imgs: 0, svgs: 0, ms: 0 } };
   if (!on) return;
   const ST = Sence.stats;
   if (!roots) document.documentElement.setAttribute('data-sence', '');
@@ -134,7 +147,7 @@
     }
     return ch ? out.map(([n, v, i]) => n + ': ' + v + (i ? ' !important' : '')).join('; ') : null;
   }
-  const IMG = /(^|[\s>+~(,])img(?=$|[\s.:#[>+~),])/g, CNV = /(^|[\s>+~(,])canvas(?=$|[\s.:#[>+~),])/g;
+  const IMG = /(^|[\s>+~(,])img(?=$|[\s.:#[>+~),])/g, CNV = /(^|[\s>+~(,])canvas(?=$|[\s.:#[>+~),])/g, SVGT = /(^|[\s>+~(,])svg(?=$|[\s.:#[>+~),])/g;
   function rewriteRules(list) {
     for (const r of Array.from(list)) {
       if (r.cssRules && !(r instanceof CSSKeyframesRule) && r.type !== 1) { rewriteRules(r.cssRules); continue; }
@@ -142,8 +155,8 @@
       if (!r.style) continue;
       // (a picture's canvas takes the picture's rules and not the canvases' ones; :where adds nothing to a rule's weight)
       const sel = r.selectorText;
-      if (sel && /(^|[^\w-])(img|canvas)([^\w-]|$)/.test(sel)) {
-        const t = sel.replace(CNV, '$1canvas:where(:not([data-sdimg]))').replace(IMG, '$1:is(img, :where(canvas[data-sdimg]))');
+      if (sel && /(^|[^\w-])(img|canvas|svg)([^\w-]|$)/.test(sel)) {
+        const t = sel.replace(CNV, '$1canvas:where(:not([data-sdimg]))').replace(SVGT, '$1svg:where(:not([data-sdimg]))').replace(IMG, '$1:is(img, :where(canvas[data-sdimg], svg[data-sdimg]))');
         if (t !== sel) r.selectorText = t;
       }
       const t = rewriteDecls(r.style.cssText, sel && /::?(before|after)\b/i.test(sel)); if (t != null) { r.style.cssText = t; ST.rules++; }
@@ -332,7 +345,7 @@
   function element(el, root) {
     const tag = el.localName;
     if (inlineStyle(el)) { /* (moved into the custom properties) */ }
-    if (tag === 'img') { toCanvas(el); return; }
+    if (tag === 'img') { if (SVGSRC.test(el.getAttribute('src') || '')) toSvg(el, root); else toCanvas(el); return; }
     const cs = getComputedStyle(el);
     if (cs.display === 'none') return;
     const B = boxOf(cs);
@@ -422,16 +435,17 @@
   // an element's own style="" colours (the game's buttons of a colour, the HUD's swatches) → the custom properties
   function inlineStyle(el) {
     const s = el.style; if (!s || !s.length) return false;
-    const t = s.cssText;
-    // (our own rewrite coming back through the observer: left as it is, else a rewrite that is not its own fixed point would go round
-    // without end in the observer's microtasks)
-    if (t === el.__sdcss) return false;
+    const t = s.cssText, own = (x) => x.replace(/--sd-[\w-]+\s*:[^;]*;?\s*/g, '');
+    // (our own rewrite coming back through the observer, or our own --sd-* set since: left as it is, else a rewrite that is not its own
+    // fixed point would go round without end in the observer's microtasks, and its own background-image: none would be read as the
+    // page's and clear the colours kept in --sd-bgi)
+    if (own(t) === el.__sdcss) return false;
     if (!/(^|;)\s*(color|background|border|text-shadow|box-shadow)[a-z-]*\s*:/i.test(t)) return false;
     const pick = t.split(';').filter((d) => /^\s*(color|background|border|text-shadow)/i.test(d)).join(';');
     if (/background-color:\s*transparent|--sd-c:/.test(t) && !/(^|;)\s*color\s*:/.test(t.replace(/--sd-c:[^;]*/g, '').replace(/caret-color[^;]*/g, '')) && !/background(-image)?:\s*(?!none)[^;]*gradient|background(-color)?:\s*(?!transparent)#|background:\s*rgb/.test(pick)) return false;
     const r = rewriteDecls(t); if (r == null) return false;
-    if (r === t) { el.__sdcss = t; return false; }
-    s.cssText = r; el.__sdcss = s.cssText; return true;
+    if (r === t) { el.__sdcss = own(t); return false; }
+    s.cssText = r; el.__sdcss = own(s.cssText); return true;
   }
 
   // ---- pictures and icons ----
@@ -502,6 +516,44 @@
       img.replaceWith(c); ST.imgs++;
     };
     if (img.complete && img.naturalWidth) go(); else img.addEventListener('load', go, { once: true });
+  }
+  // a drawing (<img> of an .svg: the countries' flags) inline in its place (svg[data-sdimg], the CSS's img rules for it too), its shapes'
+  // colours then by SVG filters as an icon's (svgIcon): Samsung Internet darkens a picture drawn in a canvas too (the phone, 12. 11. 2026:
+  // the flags' white grey and Belgium's yellow ochre), never the colour of an feFlood
+  const SVGSRC = /^[^?#:]*\.svg([?#]|$)/i, svgText = new Map();
+  let svgN = 0;
+  function toSvg(img, root) {
+    if (img.__sd) return; img.__sd = 1;
+    const u = img.getAttribute('src');
+    let p = svgText.get(u);
+    if (!p) { p = fetch(u).then((r) => (r.ok ? r.text() : null)).catch(() => null); svgText.set(u, p); }
+    p.then((txt) => {
+      if (!img.isConnected) return;
+      const doc = txt && new DOMParser().parseFromString(txt, 'image/svg+xml'), src = doc && doc.documentElement;
+      if (!src || src.localName !== 'svg' || doc.querySelector('parsererror')) { img.__sd = 0; toCanvas(img); return; }
+      const svg = document.importNode(src, true);
+      for (const t of Array.from(svg.querySelectorAll('title,script,foreignObject'))) t.remove();
+      // (its ids its own: the same flag twice on a screen)
+      const pre = 'sdi' + (++svgN) + '-', ids = Array.from(svg.querySelectorAll('[id]'));
+      if (ids.length) {
+        const map = new Map(ids.map((e) => [e.id, pre + e.id]));
+        for (const e of ids) e.id = map.get(e.id);
+        for (const e of Array.from(svg.querySelectorAll('*'))) for (const a of Array.from(e.attributes)) {
+          if (/url\(#|^#/.test(a.value)) e.setAttribute(a.name, a.value.replace(/url\(#([^)]+)\)/g, (m, i) => (map.has(i) ? 'url(#' + map.get(i) + ')' : m)).replace(/^#(.+)$/, (m, i) => (map.has(i) ? '#' + map.get(i) : m)));
+        }
+      }
+      // its own size as the picture's (a CSS that sizes it by one side keeps its shape), drawn into its box as the picture (object-fit)
+      const vb = svg.viewBox && svg.viewBox.baseVal;
+      if (!svg.getAttribute('width') && vb && vb.width) svg.setAttribute('width', vb.width);
+      if (!svg.getAttribute('height') && vb && vb.height) svg.setAttribute('height', vb.height);
+      const fit = getComputedStyle(img).objectFit;
+      svg.setAttribute('preserveAspectRatio', fit === 'cover' ? 'xMidYMid slice' : fit === 'contain' || fit === 'scale-down' ? 'xMidYMid meet' : 'none');
+      for (const a of Array.from(img.attributes)) if (a.name !== 'src' && a.name !== 'srcset' && a.name !== 'alt' && a.name !== 'loading' && a.name !== 'decoding' && a.name !== 'width' && a.name !== 'height') svg.setAttribute(a.name, a.value);
+      if (img.alt) { svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', img.alt); } else svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('data-sdimg', u);
+      img.replaceWith(svg); ST.imgs++;
+      svgIcon(svg, root);
+    });
   }
   const SHAPES = 'path,rect,circle,ellipse,line,polyline,polygon,text,use';
   // a paint of a shape (fill or stroke) → rgba, or null when it draws nothing or draws a picture (url(): left as it is)

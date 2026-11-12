@@ -190,7 +190,7 @@
   const D = [
     ['Brskalnik', browser],
     ['Ali brskalnik temni na silo (zaznava igre)', fd ? 'DA' : 'NE'],
-    ['Igra riše barve na nov način (js/sence.js)', /SamsungBrowser/i.test(navigator.userAgent) ? 'DA (Samsung Internet)' : 'NE (samo v Samsung Internetu)'],
+    ['Igra riše barve na nov način (js/sence.js)', (() => { const w = window.Sence && Sence.why || {}; return w.param === 0 ? 'NE (izklopljeno z ?sence=0)' : w.param === 1 ? 'DA (vklopljeno z ?sence=1)' : w.ua || w.forced ? 'DA (' + [w.ua && 'Samsung Internet', w.forced && 'brskalnik temni na silo'].filter(Boolean).join(', ') + ')' : 'NE (samo v Samsung Internetu ali brskalniku, ki temni na silo)'; })()],
     ['prefers-color-scheme: dark', matchMedia('(prefers-color-scheme: dark)').matches ? 'da' : 'ne'],
     ['Sonda Canvas, color-scheme: light', probe('light')],
     ['Sonda Canvas, color-scheme: only light', probe('only light')],
@@ -203,7 +203,7 @@
   const v = document.getElementById('verdict');
   v.className = 'verdict ' + (fd ? 'yes' : 'no');
   v.textContent = (fd ? 'Ta brskalnik temni stran na silo.' : 'Zaznava ne pove, da ta brskalnik temni stran na silo (v Samsung Internetu tega pogosto ne pove, čeprav temni).')
-    + (/SamsungBrowser/i.test(navigator.userAgent) ? ' Igra tu riše barve na nov način: vrstica 10 mora biti enaka vrstici 0.' : ' Igra tu riše barve kot vedno.');
+    + (window.Sence && Sence.why && Sence.why.param !== 0 && (Sence.why.ua || Sence.why.forced || Sence.why.param === 1) ? ' Igra tu riše barve na nov način: vrstica 10 mora biti enaka vrstici 0.' : ' Igra tu riše barve kot vedno.');
 
   document.getElementById('copy').addEventListener('click', () => {
     const txt = 'Preizkus barv (temni-nacin.html)\n' + D.map(r => r[0] + ': ' + r[1]).join('\n') + '\nUser agent: ' + ua;
