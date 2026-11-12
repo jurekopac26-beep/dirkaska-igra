@@ -171,8 +171,10 @@
   }
   // the houses' material, and the railings' (the same atlas: what is iron stands on nothing, so it is cut out; seen from both sides). A new one
   // each time (a world may wrap its own cut into it; Render frees a world's materials with the world), the atlas is kept
-  const mat = (style) => new THREE.MeshLambertMaterial({ map: atlas(style), vertexColors: true });
-  const matRail = (style) => new THREE.MeshLambertMaterial({ map: atlas(style), vertexColors: true, alphaTest: 0.3, side: THREE.DoubleSide });
+  // (userData.stavbe: how the tests and the tools find the builder's meshes in a world)
+  const tag = (m, k) => { m.userData.stavbe = k; return m; };
+  const mat = (style) => tag(new THREE.MeshLambertMaterial({ map: atlas(style), vertexColors: true }), 'hisa');
+  const matRail = (style) => tag(new THREE.MeshLambertMaterial({ map: atlas(style), vertexColors: true, alphaTest: 0.3, side: THREE.DoubleSide }), 'ograja');
 
   const mul = (c, f) => [c[0] * f, c[1] * f, c[2] * f];
   const uR = (m) => m / 32, vR0 = (m, top) => vAt(top + 255) + Math.min(m, 7.9) / 8 * (254 / AH);   // a roof's strip (top: its top row): 32 m across the atlas, 8 m from the eave up
@@ -404,7 +406,7 @@
   }
 
   /* ---- the kits: which style (atlas), walls, roofs and roof shapes the houses of a country get. Keyed by the country of the track's name
-     (»Spa, Belgija«). Generic houses only: no names, signs, logos, artworks or statues (docs/realizem/paket-s.md, »Pravna ocena«).
+     (»Spa, Belgija«). Generic houses only: no names, signs, logos, artworks or statues (docs/realizem.md, »Pravna ocena po državah«).
        walls  [weight, colour, finish (0 plaster, 1 and 2 the style's own)]      roofs  [weight, colour, 0 | 1 (the style's second roof)]
        opts   hip (the share of hipped roofs), pitch, noDrive                     ravne  the share of flat roofs ---- */
   const PRIVZETO = { style: 'med', walls: [[1, [0.94, 0.92, 0.87], 0]], roofs: [[1, [0.76, 0.43, 0.3], 0]], band: [0.3, 0.32, 0.34], opts: {}, ravne: 0 };
