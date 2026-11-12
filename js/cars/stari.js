@@ -122,7 +122,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     const S = MU.secs.map(row), F = S[S.length - 1], R = S[0];
     return {
       body: { len: MU.len, wid: MU.wid, secs: MU.secs, wz: 0.1, engRear: false },
-      wheels: { style: 'std', spokes: 5, w: 0.28, rim: CH, tyre: [0.07, 0.07, 0.08] },
+      hi: true, budget: { inner: 1400 }, budgetHi: { inner: 1750 },
+      wheels: { style: 'std', spokes: 5, w: 0.28, rim: CH, tyre: [0.07, 0.07, 0.08], seg: 32, segHi: 64 },
       build(K) {
         const P = K.paint, sk = K.shade(K.paint, 0.55);
         // the builder's loft: the skirts the paint at 55 %, the windscreen and the side windows glass, the rest paint
@@ -150,8 +151,30 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('trunk', () => K.deli('krilo', () => {}));
         for (const id of ['aero', 'zmigavci', 'relijske_luci', 'prtljaznik', 'vlecne_kljuke', 'lovilci_blata', 'streha', 'stresna_zajemalka', 'antena', 'celjusti', 'dim_gum',
           'nalepke', 'soncni_pas', 'akumulator', 'filter_zraka', 'turbo', 'cip', 'vzmeti', 'amortizerji', 'stabilizatorji']) K.deli(id, () => {});
-        const ws = S.find(s => s.k === 'gf');
-        K.seat(ws.x - 0.75, 0.5, -0.38); K.seat(ws.x - 0.75, 0.5, 0.38); K.engine(1.3 + 0.15, R.yb + 0.05, 0);
+        K.engine(1.3 + 0.15, R.yb + 0.05, 0);
+        // the cabin (avti na raven KOLIBRIJA): the carpet over the lining's floor (0.32; between the rear tubs behind the seats), the
+        // tunnel, the toe board, the deep dash with its wood face under the windscreen, the big thin wheel, two vinyl buckets, the rear
+        // bench under the fastback, the console with the floor shifter (the parking brake a pedal: no lever), the pedals, the door cards
+        // with their cranks (no doors: on the body; no speakers), the boot's floor, the radiator and the crash bars behind the bumpers;
+        // all under the old seats' top
+        { const C = K.cab, SZ = -0.38, CP = [0.1, 0.1, 0.105], VI = [0.13, 0.13, 0.14], VI2 = [0.07, 0.07, 0.075], DK = [0.1, 0.1, 0.11];
+          C.face([[-0.98, 0.33, -0.86], [0.62, 0.33, -0.86], [0.62, 0.33, 0.86], [-0.98, 0.33, 0.86]], CP, [0, 1, 0]);   // carpet
+          C.face([[-1.68, 0.33, -0.62], [-0.98, 0.33, -0.62], [-0.98, 0.33, 0.62], [-1.68, 0.33, 0.62]], CP, [0, 1, 0]);
+          K.box(-0.2, 0.33, 0, 1.64, 0.12, 0.24, 0, C.PL2, C.PL, true, C.IN);   // tunnel
+          C.face([[0.62, 0.33, -0.84], [0.62, 0.33, 0.84], [0.62, 0.66, 0.84], [0.62, 0.66, -0.84]], CP, [-1, 0, 0]);   // toe board
+          C.dash({ x: 0.08, y: 0.9, d: 0.5, w: 0.8, dz: SZ, style: 'road', col: DK, col2: [0.28, 0.17, 0.09] });
+          C.steer({ c: [-0.27, 0.86, SZ], ax: [0.9, -0.436], r: 0.185, rr: 0.014, to: [0.1, 0.67, SZ] });
+          for (const sd of [-1, 1]) C.seat(-0.62, 0.33, sd * 0.38, { w: 0.48, top: 0.68, lean: 0.24, belt: 'road', col: VI, col2: VI2 });
+          C.bench(-1.36, 0.33, { w: 1.0, top: 0.5, heads: [], col: VI, col2: VI2 });
+          C.console(-0.38, 0.45, { l: 0.44, brake: false, knob: [0.85, 0.86, 0.88] }); C.pedals(0.54, 0.35, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { host: 'body', x: [-0.44, 0.5], y: [0.44, 0.82], z: 0.87, col: VI2, insert: VI, speaker: false, crank: true });
+          C.face([[-2.22, 0.345, -0.74], [-1.72, 0.335, -0.74], [-1.72, 0.335, 0.74], [-2.22, 0.345, 0.74]], CP, [0, 1, 0]);   // boot floor
+          C.nose({ x: 2.15, w: 0.62, y: [0.36, 0.64], rad: [0.9, 0.26], bar: 2.26, barY: 0.38, barW: 1.2 });
+          C.tail({ x: -2.24, w: 0.62, y: [0.38, 0.62], bar: -2.3, barY: 0.4, barW: 1.2 }); }
+        if (K.hi) { const C = K.cab, F = K.fitted;   // (Visoki) the badges, the driver (suit, helmet)
+          if (!F.maska) C.badge(2.375, 0.68, 0, 1, 'bumperF', 0.024);
+          if (!F.zadnje_luci) C.badge(-2.373, 0.795, 0, -1, 'bumperR', 0.024);
+          K.driver(-0.83, 1.07, -0.38, { inner: true, r: 0.12, lean: 0.24, hands: [-0.29, 0.865, 0.175], knee: [-0.1, 0.6, 0.17], feet: [0.5, 0.39, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] }); }
         return L;
       },
     };
