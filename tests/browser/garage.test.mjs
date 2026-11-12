@@ -241,8 +241,9 @@ try {
     T.check('another tab (DVOJNI TURBO): its four tiles, the last one chosen (12.000 🪙)', d2.tabs[3][2] && d2.tiles[3].sel && /12\.000 🪙/.test(d2.buy), JSON.stringify(d2));
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r = await run();
     const u = await ui(), mk2 = await page.evaluate(() => ({ marks: Garage3D._dbg.marks, ghost: Garage3D.ghosted, menu: !!__garage.menu, dim: Garage3D._dbg.dim }));
+    // (the muscle car draws its dual exhaust itself (js/cars/stari.js, the profile's 'Dual'): no tips in the engine's group, its vents and scoop)
     T.check('bought and fitted: 12.000 🪙 paid, the menu closed (no marks, nothing seen through), the engine\'s level 3 (twin turbo +25 %, the dual exhaust +1,5 %), its show played (its parts on the car), the table still',
-      m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && !mk2.dim && u.info.upg.motor === 3 && u.info.parts.motor >= 6 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
+      m0 - u.S.money === 12000 && !mk2.menu && mk2.marks === 0 && !mk2.ghost && !mk2.dim && u.info.upg.motor === 3 && u.info.parts.motor >= 3 && r.table === 0 && r.ang === 0 && JSON.stringify(u.S.cars.muscle.parts.turbo) === '[3,3]', JSON.stringify({ paid: m0 - u.S.money, upg: u.info.upg, parts: u.info.parts, mk2 }));
     const ch = await page.evaluate(() => ({ c: __garage.chip, kw: Core.MODELS.find(m => m.id === 'muscle').kw, html: document.getElementById('g-chip').innerHTML }));
     T.check('its chip over the car: MOČ with the bolt before it, both numbers with their unit (stock kW → kW with the twin turbo, +25 %)', ch.c && ch.c.small === 'MOČ' && ch.c.icon === 'power' && /<small><i><svg/.test(ch.html)
       && ch.c.big === Math.round(ch.kw) + ' kW → ' + Math.round(ch.kw * 1.25) + ' kW', JSON.stringify(ch));

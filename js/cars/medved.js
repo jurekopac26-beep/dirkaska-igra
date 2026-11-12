@@ -20,12 +20,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 50000, pk: 'open', field: ['medved'],
     snd: { kind: 'v8', hz: 0.8, loud: 1.1 },
     expect: { t100: [3.18, 3.73], vmax: [184, 195], latG: [1.99, 2.09], d100: [25.8, 28.5] },
-    partNames: { tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
+    partNames: { tailgate: 'tailgate', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
       plate: 'number plate', wiperFront: 'windscreen wipers', wiperRear: 'rear wiper' },
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
-        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with the ladder on it, its spare wheel a part of its own on it)
-        spare: { z: 1, th: 1, m: 10, r: 0.38, h: 0.23, lx: -0.958, lz: 0, y: 1.06, on: 'tailgate', spare: 1 },   // (Core's spare: it wobbles from 50 % of the damage, off at 80 %; with the gate)
+        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with its spare wheel and the ladder on it)
         roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.24, lz: 0, y: 1.88 },     // (with its light bar and its load)
         bullBar: { z: 0, th: 0.45, m: 10, rW: 0.22, h: 0.15, lx: 0.985, lz: 0, y: 0.97 },    // (steel: it takes the first knock, before the bumper)
         // (as KOLIBRI's: the round lamps in the fenders' pods parts of their own, mounted on the fenders (they go with them); a hit on their
@@ -219,16 +218,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const z of [-0.46, -0.68]) K.bar([-2.205, 0.7, z], [-2.175, 1.95, z], 0.016, T, { n: 4 });
           for (const y of [0.86, 1.13, 1.4, 1.67]) K.rect(-2.205 + (y - 0.7) * 0.024, y, -0.57, 0.22, 0.026, T, { dir: '-x' });
         }, { hinge: [[-2.17, 0.66, 0.84], [-2.17, 1.74, 0.84]] });
-        // ---- the spare wheel on the tailgate (its carrier on the gate's frame): the tyre, a cover over the rim in the paint; a part of its own on
-        //      the gate (parts.extra.spare, on: 'tailgate'): it swings open and leaves with the gate, or by itself (Core's spare: at 80 % of the
-        //      damage, wobbling from 50 %) ----
-        K.part('spare', () => {
+        // ---- the spare wheel on the tailgate (its carrier on the gate's frame): the tyre, a cover over the rim in the paint; it swings open and
+        //      leaves with the gate (or by itself: its sub-range 'spare') ----
+        K.part('tailgate', () => {
           const TY = [0.045, 0.045, 0.05], ring = (x) => { const R = []; for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, r = i % 2 ? 0.35 : 0.38; R.push([x, 1.06 + Math.sin(a) * r, Math.cos(a) * r]); } return R; };
           K.skin([ring(-2.18), ring(-2.41)], TY, null, TY);                                  // the tyre: its tread in blocks (its face to the gate unseen)
           K.discX(-2.412, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
           K.discX(-2.417, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
           K.bar([-2.2, 0.98, 0], [-2.17, 0.66, 0], 0.03, B, { n: 4 });                       // the carrier's arm down to the frame
-        });
+        }, { sub: 'spare' });   // (its own sub-range: Razbijanje · nov način knocks it off the gate in a hard crash from behind)
         // ---- the roof rack the length of the roof (never crushed): the frame on its feet, a slat either side of the start number; the light bar
         //      as its front member (four round lamps); the load on it, seen from above: two orange sand boards along its sides, a bag under
         //      a tarp strapped down at its front (no jerrycans: the user's decision of 9. 11. 2026, docs/avti-kolibri.md) ----

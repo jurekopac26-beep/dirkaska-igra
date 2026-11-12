@@ -2137,6 +2137,12 @@ const Render = (function () {
     const b = best || low; if (!b) { if (holed) kitFail('give body.decalX / decalY: no roof to lay the start number on (an open top)'); return; }
     body.decalX = b.x; body.decalY = b.y; body.decalRz = b.rz; body.decalS = b.k;
   }
+  // one of the 11 older models (js/core.js MODELS, no kit: true) with a look and mounts of its own (a patch def, js/cars/stari.js): drawn as
+  // ever by its own builder (carGeometry ...; the stock car the same triangle for triangle, a rival's too), by the kit's copy of its look
+  // only with the garage's parts fitted (car.deli: avti na raven KOLIBRIJA, skupina starejsi, docs/avti-kolibri.md); kitM: drawn by the kit
+  // at all (the tools and tests: Render.kitTry, kitInfo, deliMesh)
+  const oldKit = (M) => !!M && !M.kit && !!(M.def && M.def.look && M.def.mounts);
+  const kitM = (M) => !!M && (!!M.kit || oldKit(M));
   function kitEntry(M, hi, deli) {
     // a car with parts fitted (car.deli, js/deli.js): a body of its own, its model's look built with them (the last eight kept: the player's,
     // the showroom's, the garage's previews); none of them on this vehicle: its model's body
@@ -2164,7 +2170,7 @@ const Render = (function () {
     let res = null, status = 'ok';
     try { if (!M.def || !M.def.look) kitFail('look null (a place-holder)'); res = kitBuild(M, M.def.look, false); }
     catch (e) { status = 'fallback:' + (e && e.message ? e.message : String(e)); if (typeof console !== 'undefined') console.warn('vehicle ' + M.id + ' drawn as the generic kit hatch: ' + status); res = kitBuild(M, kitFallbackLook(M), true); }
-    BODIES[M.id] = res.body;
+    if (M.kit) BODIES[M.id] = res.body;   // (an older model's kit body never takes its builder's place: rally, formula ... are body names too)
     E = { M, key: M.id, status, geo: res.geo, tail: res.tail, W: res.wheels, body: res.body, tris: res.tris, regions: res.regions, std: res.std, tubs: res.tubs, openings: res.openings, wheels: {} };
     kitCache.set(M.id, E); return E;
   }
@@ -2318,13 +2324,13 @@ const Render = (function () {
   for (const M of Core.MODELS) if (M.kit) { try { BODIES[M.id] = kitBodyOf(M, M.def && M.def.look ? M.def.look : kitFallbackLook(M)); } catch (e) { BODIES[M.id] = kitBodyOf(M, kitFallbackLook(M)); } }
   // (tests) a copy of a kit model in a car's colour (and stripe): how many of its vertices are near a glass colour without being glass
   function kitGlassNear(id, color, stripe) {
-    const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
+    const M = Core.MODELS.find(m => m.id === id); if (!M || !kitM(M)) return null;
     const g = kitRecolour(kitEntry(M).geo.clone(), color, stripe, 7), a = g.attributes.color.array; let n = 0, e = null;
     for (let i = 0; i < a.length; i += 3) { const d = Math.min(Math.hypot(a[i] - GLASS[0], a[i + 1] - GLASS[1], a[i + 2] - GLASS[2]), Math.hypot(a[i] - KIT_GL2[0], a[i + 1] - KIT_GL2[1], a[i + 2] - KIT_GL2[2]));
       if (d > 1e-4 && d < 0.06) { n++; if (!e) e = [a[i], a[i + 1], a[i + 2]]; } }
     g.dispose(); return { n, e };
   }
-  function kitStatus(id) { const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null; return kitEntry(M).status; }
+  function kitStatus(id) { const M = Core.MODELS.find(m => m.id === id); if (!M || !kitM(M)) return null; return kitEntry(M).status; }
   // (the garage, DELI.mesh) option n of part id alone where it sits on vehicle M (a model or its id): a THREE.Group in the car's frame
   // (metres), the body built with it and only the part's own triangles kept (those K.deli drew: geo.userData.deli, and the car's own
   // housing round it, K.deli's around; own: the option's alone) in colour's paint, tail lamps with their lit part (the tail mesh, all of
@@ -2332,7 +2338,7 @@ const Render = (function () {
   // mount for it (or its build failed)
   function deliMesh(M, id, n, color, own) {
     if (typeof M === 'string') M = Core.MODELS.find(m => m.id === M);
-    if (!M || !M.kit || typeof DELI === 'undefined') return null;
+    if (!kitM(M) || typeof DELI === 'undefined') return null;
     const E = kitEntry(M, true, { [id]: n }); if (!E.deli) return null;
     const grp = new THREE.Group(); grp.name = 'deli:' + id + n;
     if (id === 'platisca' || KIT_WHEEL_DELI.includes(id)) {   // (the wheels' parts: the four wheels with them)
@@ -2358,7 +2364,7 @@ const Render = (function () {
   // neutral geometry (the caller disposes it), the completed body, the triangles, the openings, the tubs); look null: the model's own; deli:
   // the garage's parts fitted (car.deli: its geo.userData.deli, tests/deli-pregled.test.js), hi: Visoki
   function kitTry(id, look, deli, hi) {
-    const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
+    const M = Core.MODELS.find(m => m.id === id); if (!M || !kitM(M)) return null;
     try { const r = kitBuild(M, look || M.def.look, false, !!hi, deli && typeof DELI !== 'undefined' ? DELI.clean(deli, M) : undefined); return { status: 'ok', geo: r.geo, tail: r.tail, body: r.body, tris: r.tris, openings: r.openings, tubs: r.tubs, regions: r.regions, std: r.std, wheels: r.wheels }; }
     catch (e) { return { status: 'fallback:' + (e && e.message ? e.message : String(e)) }; }
   }
@@ -2366,7 +2372,7 @@ const Render = (function () {
   function kitFireOf(M, E) { const S = [E.body.engine[0] * M.len / E.body.len, E.body.engine[1], 0], t = kitFireTop(E.geo, S, M.wid, null); return { seat: S, top: t > -1e8 ? t : null }; }
   function kitInfo(id, deli) {   // (deli: the body with the garage's parts on it, car.deli)
     if (id == null) return { models: kitCache.size, hi: kitCacheHi.size, deli: kitDeliCache.size, wheels: kitWheelCache.size, show: kitShowLRU.length, legacy: geoCache.size, pieces: tierNow === 0 ? KIT_PIECES : null };   // (the caches: one body per model built, its wheels, the showroom's two; the 11's per-colour bodies; pieces: how many the tier draws, null: all)
-    const M = Core.MODELS.find(m => m.id === id); if (!M || !M.kit) return null;
+    const M = Core.MODELS.find(m => m.id === id); if (!kitM(M)) return null;
     const E = kitEntry(M, false, deli), U = E.geo.userData, wh = kitWheels(E, true), wl = kitWheels(E, false), rg = {};
     const pa = E.geo.attributes.position.array;
     for (const n in U.ranges) { const R = U.ranges[n], c = [0, 0, 0]; let k = 0; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++, k++) for (let j = 0; j < 3; j++) c[j] += pa[i * 3 + j];
@@ -2761,21 +2767,21 @@ const Render = (function () {
     const grp = new THREE.Group();
     const bodyG = new THREE.Group(); grp.add(bodyG);
     const bodyMat = (opts && opts.noDirt) ? matCar : dirtyCarMat(!!(opts && opts.xcut), !!(opts && opts.xscr));
-    const KE = M.kit ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show)), car.deli) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
+    const KE = M.kit || (oldKit(M) && car.deli && typeof DELI !== 'undefined' && DELI.key(car.deli, M)) ? kitEntry(M, carHi && (!!car.isPlayer || !!(opts && opts.show)), car.deli) : null;   // a registered vehicle: its kit body (Visoki: the player's and the showroom's in their small details) (a copy of its own, in this car's colours; the showroom's from its two kept ones)
     const xd = opts && opts.xd || 0;   // (Razbijanje · nov način: the body dense, xDense)
     const band = opts && opts.show ? null : tyreBand(car);   // (the compound's band on the tyres: the wheels' variants with it, the stock rear wheels' body)
     const body = new THREE.Mesh(KE ? kitBodyGeo(KE, car, !!(opts && opts.show), xd) : xd ? xDense(carGeometry(M.body, M, car.color, car.stripe !== false, band), xd) : carGeometry(M.body, M, car.color, car.stripe !== false, band), bodyMat);
     body.castShadow = true; body.receiveShadow = false; bodyG.add(body);
     const tail = new THREE.Mesh(KE ? KE.tail : tailGeo(M.body, M), matTailOff); bodyG.add(tail);
-    const def = BODIES[M.body];
+    const def = KE ? KE.body : BODIES[M.body];   // (an older model with parts: its kit body's number, lamps)
     const dec = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.86), new THREE.MeshLambertMaterial({ map: numTex(car.num || 0), transparent: true }));
     dec.geometry.rotateX(-Math.PI / 2); dec.geometry.rotateY(-Math.PI / 2);
     dec.position.set(def.decalX != null ? def.decalX * (M.len / def.len) : def.secs.find(s => s[7] === 'r')[0] * (M.len / def.len) + 0.3 * (M.len / def.len), def.roofY + 0.012, 0);
     bodyG.add(dec);
-    if (M.body === 'formula') { dec.scale.set(0.36, 1, 0.36); dec.rotation.z = -0.075; }   // (on the chassis in front of the cockpit)
+    if (!KE && M.body === 'formula') { dec.scale.set(0.36, 1, 0.36); dec.rotation.z = -0.075; }   // (on the chassis in front of the cockpit)
     if (def.decalY != null) dec.position.y = def.decalY + 0.012; if (def.decalRz) dec.rotation.z = def.decalRz; if (def.decalS) dec.scale.set(def.decalS, 1, def.decalS);   // (the new bodies: on a sloping bonnet or nose)
     if (KE && KE.deli && DELI.clean(car.deli, M).streha) dec.visible = false;   // (a sunroof fitted, js/deli/streha.js: no start number over its glass, the user's)
-    if (M.body === 'rally') {
+    if (!KE && M.body === 'rally') {
       const sxr = M.len / def.len, szr = M.wid / def.wid;
       for (const sd of [-1, 1]) {
         const dd = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.46), dec.material);
@@ -2787,14 +2793,14 @@ const Render = (function () {
     const wf = [], wr = [], wm = [];
     const fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
     let fp = null, bandGeo;   // (bandGeo(col): the separate wheels' geometry, front and rear, with that band: the new set the crew pushes home, crewTyres)
-    if (M.body === 'formula') {
+    if (!KE && M.body === 'formula') {
       fp = fPartMeshes(car, bodyG); bandGeo = (col) => ({ f: fWheelGeo(F_HUB.fr, F_HUB.fw, col != null ? col : F_SOFT), r: fWheelGeo(F_HUB.rr, F_HUB.rw, col != null ? col : F_SOFT) });
       for (const sd of [-1, 1]) {   // open wheels: all four separate (they steer and spin; the pit crew changes them)
         const f = new THREE.Mesh(fWheelGeo(F_HUB.fr, F_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(fWheelGeo(F_HUB.rr, F_HUB.rw, tyreCol(car)), matWheel);
         f.position.set(M.a, F_HUB.fr, sd * F_HUB.fz); r.position.set(-M.b, F_HUB.rr, sd * F_HUB.rz); f.castShadow = r.castShadow = !!car.isPlayer;   // (a field of 13: the rivals' wheels cast none)
         grp.add(f, r); wf.push(f); wr.push(r);
       }
-    } else if (M.body === 'lm') {
+    } else if (!KE && M.body === 'lm') {
       fp = lmPartMeshes(car, bodyG); bandGeo = (col) => ({ f: lmWheelGeo(LM_HUB.fr, LM_HUB.fw, col != null ? col : F_SOFT), r: lmWheelGeo(LM_HUB.rr, LM_HUB.rw, col != null ? col : F_SOFT) });
       for (const sd of [-1, 1]) {   // all four wheels separate, as the formula's (under the pontoons' humps)
         const f = new THREE.Mesh(lmWheelGeo(LM_HUB.fr, LM_HUB.fw, tyreCol(car)), matWheel), r = new THREE.Mesh(lmWheelGeo(LM_HUB.rr, LM_HUB.rw, tyreCol(car)), matWheel);
@@ -2828,7 +2834,7 @@ const Render = (function () {
     for (const sd of [-1, 1]) lights.push(new THREE.Vector3(fs[0] * sxB + 0.05, fs[3] - 0.12, sd * fs[1] * szB * 0.62));
     for (const sd of [-1, 1]) lights.push(new THREE.Vector3(rs[0] * sxB - 0.06, rs[3] - 0.16, sd * rs[1] * szB * 0.6));
     if (dB.lamps) dB.lamps.forEach(([x, y, z], k) => { lights[k * 2].set(x * sxB, y, -z * szB); lights[k * 2 + 1].set(x * sxB, y, z * szB); });   // (the new bodies: where their lamps are)
-    const noHead = M.body === 'formula';   // the formula: no headlamps, one rain light at the tip of the crash structure
+    const noHead = !KE && M.body === 'formula';   // the formula: no headlamps, one rain light at the tip of the crash structure
     if (noHead) { lights[0].set(2.62, 0.26, -0.05); lights[1].set(2.62, 0.26, 0.05); lights[2].set(-2.49, 0.34, -0.02); lights[3].set(-2.49, 0.34, 0.02); }
     // (the kit: its ranges (immutable, shared), this car's own state: dead (parts off), deadV (their vertices: dents and the roof's crush
     // skip them), loose (the debris copies waiting for their pieces, also v.loose), ajar (parts hanging loose), tailOut (tail lamps out))
@@ -10819,11 +10825,11 @@ const Render = (function () {
     const solo = !!car.rigG && (ortho || !!o.cam), cx0 = car.cx; if (solo) { car.rigG.visible = false; car.cx = 0; }   // (a rig: its tractor alone in a check sheet's view (its box, grid and hubs) and a camera of the car's own; the rig in the three-quarter views)
     showTurn(0);
     let geo0 = null;   // o.cut: [parts]: those parts taken off (their ranges collapsed on a copy of its own) and the whole buffer drawn: the lining, the floor, the cabin, the engine bay
-    if (o.cut && M.kit) { const E = kitEntry(M, false, o.deli), g2 = kitRecolour(E.geo.clone(), o.color != null ? o.color : 0xc0392b, true, o.num || 7), U = g2.userData, pa = g2.attributes.position.array;
+    if (o.cut && (M.kit || (oldKit(M) && car.kit))) { const E = kitEntry(M, false, o.deli), g2 = kitRecolour(E.geo.clone(), o.color != null ? o.color : 0xc0392b, true, o.num || 7), U = g2.userData, pa = g2.attributes.position.array;
       for (const n of o.cut) { const R = U.ranges[n]; if (!R) continue; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { pa[i * 3] = pa[a * 3]; pa[i * 3 + 1] = pa[a * 3 + 1]; pa[i * 3 + 2] = pa[a * 3 + 2]; } }
       g2.setDrawRange(0, U.N); geo0 = car.body.geometry; car.body.geometry = g2; }
     let gh = null;   // o.ghost: [id, n] the garage's part alone, whole and solid, on the car drawn see-through (a hidden part under the bonnet, in a wheel arch)
-    if (o.ghost && M.kit) { const part = deliMesh(M, o.ghost[0], o.ghost[1], o.color != null ? o.color : 0xc0392b); gh = { part, mats: [] };
+    if (o.ghost && kitM(M)) { const part = deliMesh(M, o.ghost[0], o.ghost[1], o.color != null ? o.color : 0xc0392b); gh = { part, mats: [] };
       car.grp.traverse(m => { if (!m.isMesh || !m.material || m === car.blob) return; gh.mats.push([m, m.material]); const c = m.material.clone(); c.transparent = true; c.opacity = 0.16; c.depthWrite = false; m.material = c; });
       if (part) car.bodyG.add(part); }
     const bg0 = showScene.background, blob0 = car.blob ? car.blob.visible : false;

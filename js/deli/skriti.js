@@ -11,6 +11,7 @@
    stabilizatorji, dim_gum {} (at the wheels: K.arches, K.hw; in: how far inboard of the hub the strut stands, top: its top's height;
    vzmeti seat: the coils' foot, a number or [front, rear] (K.rw + 0.04 if not given; a high body over low arms, GOZDAR's: on the arm, on the axle);
    stabilizatorji floor: the height of the floor under the bars, a number or [front, rear], K.rw - 0.06 if not given;
+   amortizerji mid: false (no reservoirs at a middle axle's wheels: TUR's six within the room for one car with parts);
    dim_gum w: the rear tyre's width, its inner wall the band's place (none: look.wheels.w; MRAVLJA's wider rear tyres)) */
 (function () {
   'use strict';
@@ -72,7 +73,7 @@
     for (const dz of [-0.04, 0.04]) cyl(K, [x, y + 0.17 * k, z + dz * k], [x, y + 0.17 * k + 0.02, z + dz * k], 0.012, dz < 0 ? RED : BLK, { n: 4 });   // (its terminals)
   }
   // ================================================================ at the wheels: the springs, the dampers, the anti-roll bars, the tyres' smoke
-  const wheels = (K, fn) => { for (const A of K.arches) for (const sd of [-1, 1]) fn(A.x, sd, A === K.arches[0]); };
+  const wheels = (K, fn) => { for (const A of K.arches) for (const sd of [-1, 1]) fn(A.x, sd, A === K.arches[0], A === K.arches[2]); };   // (front; mid: a middle axle's, look.wheels.mid)
   function vzmeti(K, n, m) {
     const low = DELI.effect('vzmeti', n).lower || 0, k = 3, col = [AL, RED, AL, AL, YEL, YEL, RED, PUR, BLU, BLU, BLU, GRN, RED, ORA, YEL, GOLD][n - 1], ti = m.in || 0.13, top = (m.top || 0.66) - low;
     wheels(K, (x, sd, front) => { const z = sd * (K.hw - ti), y0 = m.seat == null ? K.rw + 0.04 : [].concat(m.seat)[front ? 0 : [].concat(m.seat).length - 1], h = (top - y0) / (k * 2 - 1);   // (seat: the coils' foot on a low arm)
@@ -81,11 +82,11 @@
   }
   function amortizerji(K, n, m) {
     const col = [DK, YEL, YEL, RED, RED, BLU, BLU, GOLD, RED, BLU, ORA, GRN, GOLD, YEL, BLU, RED][n - 1], ti = (m.in || 0.13) + 0.005, top = m.top || 0.66;
-    wheels(K, (x, sd) => { const z = sd * (K.hw - ti), y0 = K.rw + 0.02;
+    wheels(K, (x, sd, front, mid) => { const z = sd * (K.hw - ti), y0 = K.rw + 0.02;
       cyl(K, [x, y0, z], [x, y0 + (top - y0) * 0.6, z], 0.032, col, { capA: null });
       cyl(K, [x, y0 + (top - y0) * 0.6, z], [x, top + 0.02, z], 0.012, CHR, { n: 4, capA: null, capB: null });
       if (n >= 6) box(K, x, top - 0.02, z, 0.06, 0.03, 0.06, n >= 13 ? GOLD : AL);   // (its top mount, adjustable)
-      if (n === 10 || n >= 15) cyl(K, [x + 0.038, y0 + 0.08, z - sd * 0.038], [x + 0.038, y0 + 0.2, z - sd * 0.038], 0.022, col, { n: 5, capA: null, capB: AL }); });   // (a reservoir, against the body)
+      if ((n === 10 || n >= 15) && !(mid && m.mid === false)) cyl(K, [x + 0.038, y0 + 0.08, z - sd * 0.038], [x + 0.038, y0 + 0.2, z - sd * 0.038], 0.022, col, { n: 5, capA: null, capB: AL }); });   // (a reservoir, against the body; mid false: none at a middle axle's)
   }
   function stabilizatorji(K, n, m) {
     const col = [BLK, BLK, RED, RED, BLU, BLU, YEL, YEL, RED, RED, BLU, BLU, GOLD, GOLD, AL, ORA][n - 1], r = 0.011 + Math.min(n, 12) * 0.0008, ti = (m.in || 0.13) + 0.06;
