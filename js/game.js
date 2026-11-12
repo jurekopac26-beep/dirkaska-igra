@@ -46,7 +46,7 @@
 
   /* ---------------- settings ---------------- */
   const lowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 3);
-  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 2, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: firstTrackId(), comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', amb: 1, tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, rivals: -1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 0, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0, zbIzz: 1, zbSpomin: 1, zbGold: 0, zbDrag: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
+  const DEF = { phys: 'cs', slide: 0, control: 'buttons', camera: 'chase', zoom: 1.4, assist: 2, difficulty: 1, autoGas: 0, notes: 1, quality: lowEnd ? 'normal' : 'high', detail: 'auto', shadows: 1, sound: 1, vibrate: 2, camShake: 0, camLand: 0, camKerb: 0, camMis: 0, tiltSens: 22, tiltInvert: 0, car: 0, color: 0, track: firstTrackId(), comm: 1, codrv: 1, damage: 1, weather: 'dry', season: 'summer', tod: 'day', mode: 'race', ghost: 1, quali: 0, cmp: 'auto', pitCmp: 'auto', name: 'Igralec', lang: 'sl', saver: 'off', amb: 1, tower: 1, length: 'normal', fuel: 0, faults: 1, radio: 1, engV: 1, hlv: 1, line: 0, intro: 0, music: 1, menuCam: 1, rivals: -1, carLow: 0, carDet: typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches ? 'normal' : 'high', lastTrack: '', xBody: 0, xGlass: 0, xPaint: 0, xRoll: 0, xBump: 0, xAi: 0, xParts: 0, xDrag: 0, xDust: 0, xShake: 0, xHandle: 0, crV: 5, debris: 1, wheelOver: 1, tAiSpr: 0, tAiFol: 0, tAiPush: 0, tAiSide: 0, tAiKerb: 0, crPm: 0, crE: 0, crMu: 0, crYaw: 0, crGl: 0, crSl: 0, crFx: 0, zbIzz: 1, zbSpomin: 1, zbGold: 0, zbDrag: 0 };   // (carDet: Detajli avtov, the cars' small details (Visoki on a computer, Normalni on a phone) and Razbijanje · nov način's dense bodies: Normalni the player's only, Visoki every car's)
   let S = Object.assign({}, DEF), carIn = false;   // (carIn: the stored settings have a car index of their own; the car's migration below)
   let records = {};
   // Prvič na cesti (the first start): a browser that has never kept the game's settings (read before anything below writes them), nor
@@ -66,6 +66,10 @@
   // one-time move to car damage Samo videz (it was Vklop by default) and the timing tower at the top (Časovna tabela: 0 Izklop, 1 Zgoraj,
   // 2 Ob zemljevidu, the old tower under the map; a tower that was on: at the top now)
   try { if (!localStorage.getItem('tdgp-defaults-v5')) { S.damage = 1; localStorage.setItem('tdgp-defaults-v5', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
+  // one-time move to the realistic choices (the user's, 10. 11. 2026: buttons for the options, the most realistic one the default): Trki
+  // Realistično (it was Simulacija; whoever had picked another version gets it too, the older ones stay in Preizkus), Odpadli deli Vklop,
+  // Odpadlo kolo Konec dirke. Poškodbe stay as chosen (Samo videz by default since v5)
+  try { if (!localStorage.getItem('tdgp-defaults-v6')) { S.crV = 5; S.debris = 1; S.wheelOver = 1; localStorage.setItem('tdgp-defaults-v6', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
   if (![0, 1, 2].includes(+S.tower)) S.tower = 1;
   // one camera, behind the car, on a phone held either way (the isometric, kino and cockpit cameras are gone): an old setting moves to it
   S.camera = 'chase';
@@ -77,9 +81,10 @@
   // Preizkus: tekmeci in trki (Nastavitve): the levels of each row, 0 = Privzeto (the rivals: as the driving physics has it; the knocks: as the chosen
   // version of Trki med avti has it: nothing changes); the numbers go to Core.setTest (the knocks' rows as cPm, cE, cMu, cYaw, cGl, cSl, cFx)
   const TEST_LV = { tAiSpr: [null, 1, 0.6, 0.3], tAiFol: [null, -1, 0.5, 1.5, 3], tAiPush: [null, 0, 0.02, 0.04], tAiSide: [null, 0.6, 0.35, 0.15], tAiKerb: [null, 0, 1.2, 2.2], crPm: [null, 1, 1.5, 2], crE: [null, 0, 0.5, 1.6], crMu: [null, 0, 0.15, 0.35, 0.6], crYaw: [null, 0.4, 0.7, 1, 2], crGl: [null, 0, 0.5, 1.6], crSl: [null, 0.6, 1, 1.6], crFx: [null, 1, 0] };
-  const CR_ROWS = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], CR_OLD = 4, CR_REAL = 5;   // (Preizkus: Trki med avti, the rows over the version's numbers; crV 4 is Stara, the old knock, which has none of them; crV 5 Realistična, the last one so far: the versions' knock, the rows over it as over the others)
+  const CR_ROWS = ['crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx'], CR_OLD = 4, CR_REAL = 5;   // (Preizkus: Trki med avti, the rows over the version's numbers; crV 4 is Stara, the old knock, which has none of them; crV 5 Realistična, the game's default (Nastavitve »Trki: Realistično«): the versions' knock, the rows over it as over the others)
   for (const k in TEST_LV) S[k] = Number.isInteger(+S[k]) && +S[k] >= 0 && +S[k] < TEST_LV[k].length ? +S[k] : 0;
-  S.crV = Number.isInteger(+S.crV) && +S.crV >= 0 && +S.crV <= CR_REAL ? +S.crV : 0;   // (Trki med avti, the version of the knocks between cars: 0 Simulacija (the default), 1 Arkadna, 2 Mehka, 3 Kaskaderska, 4 Stara, 5 Realistična (in the making; on the page it stands right after Simulacija, its number the next free one: the stored choices keep theirs); Core TX.cv = crV + 1)
+  S.crV = Number.isInteger(+S.crV) && +S.crV >= 0 && +S.crV <= CR_REAL ? +S.crV : CR_REAL;   // (Trki, the version of the knocks: 5 Realistična (the default: Nastavitve »Trki: Realistično«), 0 Simulacija (»Kot zdaj«: the default before 12. 11. 2026, and the core's own, KV_DEF: online and the tests), the older ones in Preizkus: 1 Arkadna, 2 Mehka, 3 Kaskaderska, 4 Stara; the stored numbers keep their meaning; Core TX.cv = crV + 1)
+  S.debris = +S.debris === 0 ? 0 : 1; S.wheelOver = +S.wheelOver === 0 ? 0 : 1;   // (Odpadli deli: 1 Vklop, 0 Izklop: Core TX.deb; Odpadlo kolo: 1 Konec dirke (the wheel rule, WHEEL_RULE), 0 Dirka teče naprej)
   for (const k of ['crNB', 'tCrStyle', 'tCrMass', 'tCrE', 'tCrMu', 'tCrYaw', 'tCrBox', 'tCrScrub', 'tCrFx']) delete S[k];   // (the knocks' rows before the versions: gone, not kept in the settings)
   if (S.slide !== 1) S.slide = 0;   // (the new physics' style, Nastavitve → Slog nove fizike: 1 Drseč, the player's car only: Car.nvSl)
   if (S.phys !== 'nova') S.phys = 'cs';   // two driving physics (Nastavitve → Fizika vožnje): 'cs' the classic kinematic drift, 'nova' the new one (Car.stepNova); the old 'rally' and 'arcade' were removed, their saves get cs
@@ -507,11 +512,14 @@
       // their choice for the other versions) and its note says so; Razbijanje: odboji in vrtenje ob trku the other way round: only the old knock has it; Nova fizika
       // (the race's own while one runs: it keeps the physics it started with, these rows act at once): Zdrs po trku and Ujem gum dimmed too, the classic physics'
       // (the new physics' own tyres lose their grip to a knock and catch its push). The sentences and the names by crV: Realistična (5) after Stara (4),
-      // its rows of Preizkus as the other versions' (Core kvMake puts them over its numbers)
+      // its rows of Preizkus as the other versions' (Core kvMake puts them over its numbers). The names are the buttons': the row Trki has Realistično (5) and
+      // Kot zdaj (0, Simulacija), the older four (1 to 4) are a row of Preizkus (Starejše različice), named in the note when one of them is chosen
       for (const k of CR_ROWS.concat('xBump')) { const g = document.querySelector(`#s-settings [data-set="${k}"]`), r = g && g.closest('.row'); if (r) r.classList.toggle('nbx', k === 'xBump' ? !old : old || (nv && (k === 'crGl' || k === 'crSl'))); }
-      $('crv-note').textContent = tr(['Kot v simulacijah: vsak avto s svojo pravo težo, malo odboja, drgnjenje ob stiku, zasuk po mestu udarca; udarec v zadnji vogal te lahko zavrti.', 'Kot v arkadnih igrah: tvoj avto šteje 1,7-krat svojo težo, tekmeci se umaknejo, več odboja, gladki boki, tebe trk le malo zasuka.',
-        'Mehak stik: malo odboja in zasuka, avta se drgneta, težko te zavrti.', 'Močni trki: več odboja in zasuka, avti se hitro zavrtijo, oprijem se vrne pozneje.', 'Trki kot prej (za primerjavo): okrogla konca, velik sunek smeri ob vsakem dotiku.', 'Kot pravi trk (v delu): za zdaj enako kot Simulacija, za primerjavo z njo.'][v]);
-      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Simulacija', 'Arkadna', 'Mehka', 'Kaskaderska', 'Stara', 'Realistična'][v])) + (nv ? ' ' + tr('Zdrs po trku in Ujem gum veljata le pri klasični fiziki (Nova to naredi s svojimi gumami).') : ''); }
+      $('crv-note').textContent = (v >= 1 && v <= CR_OLD ? tr('Izbrana je starejša različica iz Preizkusa ({0}).', tr(['Kot zdaj', 'Arkadna', 'Mehka', 'Kaskaderska', 'Stara', 'Realistično'][v])) + ' ' : '') +
+        tr(['Trki kot do zdaj (različica Simulacija): vsak avto s svojo pravo težo, malo odboja, drgnjenje ob stiku, zasuk po mestu udarca; udarec v zadnji vogal te lahko zavrti.', 'Kot v arkadnih igrah: tvoj avto šteje 1,7-krat svojo težo, tekmeci se umaknejo, več odboja, gladki boki, tebe trk le malo zasuka.',
+        'Mehak stik: malo odboja in zasuka, avta se drgneta, težko te zavrti.', 'Močni trki: več odboja in zasuka, avti se hitro zavrtijo, oprijem se vrne pozneje.', 'Trki kot prej (za primerjavo): okrogla konca, velik sunek smeri ob vsakem dotiku.',
+        'Kot pravi trk: udarec avto zavrti, kamorkoli ga zadene, po hudem trku dlje drsi vstran, od ograje se odbije kot togo telo, lahek predmet (stožec, guma, bala) ga upočasni po svoji masi.'][v]);
+      $('cr-note').textContent = old ? tr('Izbrana je različica Stara (trki kot prej): vrstice spodaj ne veljajo.') : tr('Vrstice spodaj spremenijo izbrano različico ({0}); Privzeto pusti njeno vrednost.', tr(['Kot zdaj', 'Arkadna', 'Mehka', 'Kaskaderska', 'Stara', 'Realistično'][v])) + (nv ? ' ' + tr('Zdrs po trku in Ujem gum veljata le pri klasični fiziki (Nova to naredi s svojimi gumami).') : ''); }
     document.querySelectorAll('.tiltrow').forEach(r => r.classList.toggle('off', S.control !== 'tilt'));
     $('tilt-sens').value = S.tiltSens; $('tilt-sens-v').textContent = S.tiltSens + '°';
     $('tilt-inv-btn').classList.toggle('primary', !!S.tiltInvert);
@@ -577,7 +585,7 @@
   // Razbijanje · nov način: the switches of its physics (Core), all off online
   const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, handle: +S.xHandle, glass: +S.xGlass };   // (glass: the broken glass on the road slides, Race._glassStep)
   const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]];   // (Preizkus: the rivals and the knocks; Trki med avti: the version, cv 1-6 as Core's KV_IDS (crV + 1), the rows of Preizkus over its numbers (Core leaves them out with Stara); never online, where both phones must drive the same: the default)
-    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cv: +S.crV + 1, cPm: L('crPm'), cE: L('crE'), cMu: L('crMu'), cYaw: L('crYaw'), cGl: L('crGl'), cSl: L('crSl'), cFx: L('crFx') }; };
+    return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cv: +S.crV + 1, cPm: L('crPm'), cE: L('crE'), cMu: L('crMu'), cYaw: L('crYaw'), cGl: L('crGl'), cSl: L('crSl'), cFx: L('crFx'), deb: +S.debris ? null : 0 }; };
   function applySettings() {
     renderSettings();
     Render.cam.userZoom = +S.zoom;
@@ -636,7 +644,7 @@
       const d = Core.TRACKS.find(x => x.id === S.track), W = ['malo krila', 'srednje krilo', 'veliko krila'], G = ['kratke prestave', 'srednje prestave', 'dolge prestave'], U = setupOf(S.track);
       if (d) toast(tr('Nastavitev za {0}: {1}, {2}.', Lang.of(d, 'name'), tr(W[U.wing]), tr(G[U.gear])), 2400);
       return; }
-    const num = ['crV', 'tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'amb', 'vibrate', 'camShake', 'camLand', 'camKerb', 'camMis', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'engV', 'hlv', 'intro', 'music', 'menuCam', 'rivals', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle', 'zbIzz', 'zbSpomin', 'zbGold', 'zbDrag'];
+    const num = ['crV', 'debris', 'wheelOver', 'tAiSpr', 'tAiFol', 'tAiPush', 'tAiSide', 'tAiKerb', 'crPm', 'crE', 'crMu', 'crYaw', 'crGl', 'crSl', 'crFx', 'slide', 'zoom', 'assist', 'difficulty', 'autoGas', 'notes', 'shadows', 'sound', 'amb', 'vibrate', 'camShake', 'camLand', 'camKerb', 'camMis', 'comm', 'codrv', 'damage', 'ghost', 'quali', 'tower', 'fuel', 'line', 'faults', 'radio', 'engV', 'hlv', 'intro', 'music', 'menuCam', 'rivals', 'carLow', 'xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake', 'xHandle', 'zbIzz', 'zbSpomin', 'zbGold', 'zbDrag'];
     S[key] = num.includes(key) ? +v : v;
     if (key === 'lang') Lang.set(S.lang);   // (before the settings apply: what they write is in the new language)
     if (key === 'shadows') { autoNoShadows = false; perf.pending = perf.restore = false; perf.keep = true; }   // the player's own choice wins for the rest of the visit
@@ -644,6 +652,7 @@
     if (key === 'tower') { twCls(); if (tw) { tw.html = ''; tw.at = 0; } }
     if (key === 'line') Render.setLine(!!race && lineWant());
     if (key === 'tAiSpr' && race) toast(tr('Razpon hitrosti tekmecev velja od naslednje dirke.'), 2600);   // (dealt out when the race is made; the other rows of Preizkus act at once)
+    if (key === 'wheelOver' && race) toast(tr('Odpadlo kolo: izbira velja od naslednje dirke.'), 2600);   // (the wheel rule is the race's own, set at its start: Race opts.wheelRule)
     if ((key === 'phys' || key === 'slide') && race) toast(tr('Fizika velja od naslednje dirke.'), 2600);   // (a race keeps the physics it started with: its rivals' pace and lines are worked out for it)
     save(); applySettings();
     if (key === 'lang') relang();
@@ -2430,7 +2439,7 @@
       numAI: solo ? 0 : nAI, numSet: !solo && pick >= 0 || undefined, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
       laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
-      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
+      tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase || !+S.wheelOver ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch; Nastavitve »Odpadlo kolo: Dirka teče naprej«: no race has it)
       voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)
     }, MS.opts(), prviOpts(), ZB.opts(zctx)));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race; Zabava: a novelty's mode, js/zabava.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
@@ -2556,7 +2565,7 @@
     if (bg !== 'race' || paused || phase === 'done') return;
     paused = true; Sfx.setRunning(false); Input.reset(); Input.buzzOff(); Comm.stop(); toastHold();
     $('pause-photo').classList.toggle('off', !!(mp && mp.race)); $('pause-view').classList.toggle('off', !!(mp && mp.race));   // (online the race goes on: no photos)
-    $('crv-prow').classList.toggle('off', !!(mp && mp.race) || !!race.pol || race.cars.length < 2);   // (Trki med avti, switched at once in the pause (setOption); online both phones drive the default; the run from the police (its knocks are crashCollide's) and a car alone on the road: nothing it changes, not offered)
+    $('crv-prow').classList.toggle('off', !!(mp && mp.race) || !!race.pol || race.cars.length < 2);   // (Trki: Realistično / Kot zdaj, switched at once in the pause (setOption); online both phones drive the core's default (Kot zdaj); the run from the police (its knocks are crashCollide's): nothing it changes; a car alone on the road: no knock between cars to compare, the row not offered (Realistična's walls and props are its too: the choice of Nastavitve, reached from here))
     $('pause-rp').classList.toggle('off', !rpHereOk());   // (Posnetek do sem: not online, nor before 2 s of the race are recorded)
     const rb = $('pause-retire'); rb.classList.toggle('off', !canRetire()); rb.textContent = tr('Odstopi'); retireT = 0;   // (a destroyed car: out of the race from here too)
     stratInfo(); pauseInfo();
@@ -6915,6 +6924,7 @@
       Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); fitSegs();
       if (screen === 'car') { for (const row of [$('car-cats'), $('car-strip')]) chipInView(row, row.querySelector('.sel')); carTapLay(); }   // (turned: the chosen chips in the middle again, the car's tap over it)
     });
+    { const st = $('set-test'); if (st) st.addEventListener('toggle', () => { if (st.open) fitSegs(); }); }   // (Preizkus opened: its rows of choices, not measured while it was folded (fitSegs skips a row out of sight), fitted to the panel: Starejše različice's four are wider than an upright phone's panel)
     window.addEventListener('orientationchange', () => setTimeout(() => { Render.resize(); mm.w = 0; buildMinimap(); Input.layout(); }, 250));
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);

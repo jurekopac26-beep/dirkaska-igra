@@ -2132,8 +2132,11 @@ const Core = (function () {
   // a real crash, Simulacija's knock and four things more; null the default, Simulacija) and over its numbers: cPm how many times its own weight the
   // player's car counts against another, cE the share of the version's bounce (0 none), cMu the rub (Coulomb's mu along the contact), cYaw the
   // share of the turn a knock gives, cGl the share of the grip a hard knock costs (the spin), cSl the time the tyres take to scrub a push
-  // sideways (x the version's), cFx 0: a knock throws no sparks or dust (the scrape marks stay). Online none of it: both phones drive the default
-  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null };
+  // sideways (x the version's), cFx 0: a knock throws no sparks or dust (the scrape marks stay). The parts off the cars (Nastavitve: Odpadli deli;
+  // Race.step): deb 0 Izklop: a part still comes off and flies as it does (the same throw, the same random numbers), but no car touches it
+  // (no speed lost, no twitch, no hop) and one that has come to rest is taken off the road (dead, as the cap of 40 takes one: the renderer
+  // frees it, or keeps it drawn with Razbijanje: deli ostanejo na progi); null as it was (Vklop). Online none of it: both phones drive the default
+  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null, deb: null };
   /* Trki med avti: the versions (KV), each the same knock (kCollide) with its own numbers, as racing games do it: the cars' real weights, the
      push at the true contact of two boxes, the bounce, the bodies' rub, the turn by the lever about each car's middle, then each car's tyres.
        pm             the player's car weighs pm times its own against another car (an arcade game's: the rivals give way, the player hardly moves)
@@ -7600,7 +7603,9 @@ const Core = (function () {
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       if (this.pol) for (const c of this.pol.cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name, this.pol.RD); c.detach.length = 0; }   // (the run from the police: a battered patrol car's panels on the road too, thrown with the police's own random numbers: the race's draws stay as they were)
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
-      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (c.net || (ST && !ST[ci])) continue; const cr = c.circles[c.circles.length - 1] + c.rad, cy = c.y || 0;   // (the reach test of debrisHit first, here: most pieces are far from most cars)
+      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt);
+        if (TX.deb === 0) { for (let i = this.debris.length - 1; i >= 0; i--) if (this.debris[i].rest) { this.debris[i].dead = true; this.debris.splice(i, 1); } }   // (Odpadli deli: Izklop: no car touches a piece, one lying still is off the road)
+        else for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (c.net || (ST && !ST[ci])) continue; const cr = c.circles[c.circles.length - 1] + c.rad, cy = c.y || 0;   // (the reach test of debrisHit first, here: most pieces are far from most cars)
         for (const d of this.debris) { if (lv && !(Math.abs(d.y - cy) < 4)) continue; const dx = d.x - c.x, dz = d.z - c.z, R = cr + d.r * 0.7 + 0.1;
           if (dx * dx + dz * dz > R * R || d.y - cy > 1.3) { if (d.on && d.on.length) debrisGone(c, d); } else debrisHit(c, d); } } }
       if (XR.glass || this.glass) this._glassStep(cars);
