@@ -16,6 +16,7 @@
   const mmss = (t) => { const s = Math.max(0, Math.floor(t)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const hearts = (n) => '<b>' + '♥'.repeat(Math.max(0, n)) + '</b><i>' + '♥'.repeat(Math.max(0, (EN() ? EN().lives : 3) - n)) + '</i>';   // (the lives: left, lost)
   const posNum = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   // a level's top 10 as kept (plain objects with a score; anything else dropped), best first: s the score, km, t the time driven (s), lap
   // the laps done, car, d the date
   const boardOf = (R0) => (Array.isArray(R0.enBoard) ? R0.enBoard : []).filter(e => e && typeof e === 'object' && posNum(e.s))
@@ -38,12 +39,17 @@
       hud.classList.add('en-on');
       const el = document.createElement('div'); el.id = 'h-en'; el.setAttribute('aria-live', 'off');
       el.innerHTML = '<div class="en-ck" id="h-en-ckw"><b id="h-en-ck">' + Z.dec(race.en.clock.toFixed(1)) + '</b><small>s</small><em id="h-en-add"></em></div>' +
-        '<div id="h-en-lv">' + hearts(race.en.lives) + '</div><div class="en-sc"><b id="h-en-sc">0</b><small>' + Z.esc(tr('TOČKE')) + '</small></div><div id="h-en-cb" class="off"><b></b><i><u></u></i></div><div id="h-en-ln"></div><div id="h-en-pop"></div>';
+        '<div id="h-en-lv">' + hearts(race.en.lives) + '</div><div id="h-en-cb" class="off"><b></b><i><u></u></i></div><div id="h-en-pop"></div>';
       box.appendChild(el);
+      // the points and the traffic's line under the minimap (the user, 12. 11. 2026: »točke« and »promet« under the map; game.js hudCol: the
+      // first in the column under it, the messages below), two lines of a fixed height: the traffic's density, then the stage / lap and the road
+      const mp = document.createElement('div'); mp.id = 'h-en-map'; mp.setAttribute('aria-live', 'off');
+      mp.innerHTML = '<div class="en-sc"><b id="h-en-sc">0</b><small>' + Z.esc(tr('TOČKE')) + '</small></div><div id="h-en-ln"><span></span><span></span></div>';
+      hud.appendChild(mp);
       // the big +N s in the middle of the screen (every second the clock gets), the dark of a new stage
       const big = document.createElement('div'); big.id = 'h-en-big'; hud.appendChild(big);
       const fade = document.createElement('div'); fade.id = 'en-fade'; hud.appendChild(fade);
-      this.st = { el, ck: Z.el('h-en-ck'), ckW: Z.el('h-en-ckw'), add: Z.el('h-en-add'), sc: Z.el('h-en-sc'), cb: Z.el('h-en-cb'), ln: Z.el('h-en-ln'), pop: Z.el('h-en-pop'), lv: Z.el('h-en-lv'), big, fade, bigT: 0, fadeT: 0,
+      this.st = { el, mp, ck: Z.el('h-en-ck'), ckW: Z.el('h-en-ckw'), add: Z.el('h-en-add'), sc: Z.el('h-en-sc'), cb: Z.el('h-en-cb'), ln: Z.el('h-en-ln'), pop: Z.el('h-en-pop'), lv: Z.el('h-en-lv'), big, fade, bigT: 0, fadeT: 0,
         seen: race.en.ev, popT: 0, addT: 0, hotT: 0, ended: false, shown: -1, ckT: '', low: false, line: '' };
       const G = Z.G; if (G) G.showMsg(tr('NESKONČNA VOŽNJA!'), 'gold', 1.8);
     },
@@ -57,13 +63,31 @@
       // the combo with its time left; the traffic's density, the lap and the road driven
       S.cb.classList.toggle('off', !(E.combo >= 2));
       if (E.combo >= 2) { S.cb.firstChild.textContent = tr('NIZ ×{0}', E.combo); S.cb.querySelector('u').style.width = Math.round(100 * Math.max(0, E.comboT) / EN().comboT) + '%'; }
-      const line = tr('PROMET ×{0}', x1(race.tf.win.dens)) + ' · ' + (E.open ? tr('ETAPA {0}', E.stage) : tr('KROG {0}', E.lap + 1)) + ' · ' + Z.dec((E.dist / 1000).toFixed(1)) + ' km';
-      if (line !== S.line) { S.line = line; S.ln.textContent = line; }
+      const l1 = tr('PROMET ×{0}', x1(race.tf.win.dens)), l2 = (E.open ? tr('ETAPA {0}', E.stage) : tr('KROG {0}', E.lap + 1)) + ' · ' + Z.dec((E.dist / 1000).toFixed(1)) + ' km';
+      if (l1 + l2 !== S.line) { S.line = l1 + l2; S.ln.firstChild.textContent = l1; S.ln.lastChild.textContent = l2; }
       if (S.popT > 0 && (S.popT -= dt) <= 0) S.pop.className = '';
       if (S.addT > 0 && (S.addT -= dt) <= 0) S.add.className = '';
       if (S.hotT > 0 && (S.hotT -= dt) <= 0) S.ln.classList.remove('hot');
       if (S.bigT > 0 && (S.bigT -= dt) <= 0) S.big.className = '';
       if (S.fadeT > 0 && (S.fadeT -= dt) <= 0) S.fade.className = '';
+      this.whoosh(race);
+    },
+    // the traffic going by (the user, 12. 11. 2026): a vehicle's rush as it comes level with the player (Sfx.passBy), at its loudest as the
+    // two are side by side (the sound's rise, ~0.3 s, before: th m along the road at the speed between them), the louder the less room
+    // between the two and the quicker; once a vehicle and a pass (the last place along the road, S.wr; a jump of the road, a new stage: none)
+    whoosh(race) {
+      const S = this.st, P = race.player, T = race.track, tf = race.tf, sfx = typeof Sfx !== 'undefined' ? Sfx : null;
+      if (!sfx || !sfx.passBy || !tf || !tf.veh || !P.q || P.finished) return;
+      const W = S.wr || (S.wr = new WeakMap()), i = P.q.i, ps = tf._winPs(), va = P.vx * T.tx[i] + P.vz * T.tz[i], hw = P.m.wid / 2;
+      for (const o of tf.veh) {
+        if (o.off || o.hid || o.alt || o.st !== 0) { W.delete(o); continue; }
+        const r = o.s - ps, c = va - o.v * o.dir, th = c * 0.3, was = W.get(o);
+        if (Math.abs(r) > 60) { W.delete(o); continue; }
+        W.set(o, r);
+        if (was == null || Math.abs(r - was) > 8 || Math.abs(c) < 2 || (was - th) * (r - th) > 0) continue;
+        const g = Math.abs(o.d - P.q.d) - o.wid / 2 - hw;
+        if (g < 5) sfx.passBy(Math.max(0, 1 - Math.max(0, g) / 5) * clamp(Math.abs(c) / 20, 0.3, 1), o.x, o.z, o.len > 6.5, Math.abs(c));
+      }
     },
     // what the drive tells: a close pass (the points and the seconds it put on the clock, a beep; the commentator now and then), the
     // traffic denser, a lap done, the clock nearly empty, the combo broken by a touch of the wall
@@ -76,7 +100,7 @@
           S.add.textContent = '+' + x1(e.add) + ' s'; S.add.className = ''; void S.add.offsetWidth; S.add.className = 'show'; S.addT = 1.2;
           S.big.textContent = tr('+{0} s', x1(e.add)); S.big.className = ''; void S.big.offsetWidth; S.big.className = 'show ' + e.k; S.bigT = 1.1;
         }
-        if (sfx && sfx.beep) sfx.beep(e.k === 'vnear' ? 1320 : e.k === 'near' ? 990 : 780, 0.07, 0.1);
+        if (sfx && sfx.bonus) sfx.bonus(e.add, e.k);   // (the seconds' chime: higher and richer the closer and the more; passBy: the rush itself)
         if (G && (e.k === 'vnear' || e.combo >= 3) && Math.random() < 0.35) G.say(e.combo >= 3 ? 'zbEnCombo' : 'zbEnClose', { n: e.combo }, 1);
       } else if (e.k === 'tap') pop(tr('NIZ PREKINJEN'), 'bad');
       else if (e.k === 'hit') {
@@ -129,7 +153,7 @@
     stop() {
       const S = this.st; this.st = null;
       const hud = Z.el('hud'); if (hud) hud.classList.remove('en-on');
-      if (S) { S.el.remove(); S.big.remove(); S.fade.remove(); }
+      if (S) { S.el.remove(); S.mp.remove(); S.big.remove(); S.fade.remove(); }
     },
   };
   if (typeof Comm !== 'undefined' && Comm.addLines) {

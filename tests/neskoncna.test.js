@@ -113,7 +113,7 @@ const ghost = (r, secs, each) => {
 }
 
 // 3. the clock: a second a second standing still, slower over vRef (twice it: half as fast); how long a run lasts with no close pass at
-// 100 km/h by the level (the medium one about a minute: docs/neskoncna-voznja.md); the warning; empty: the end
+// 100 km/h by the level (the start's seconds x 100 / vRef: medium 24 s; docs/neskoncna-voznja.md); the warning; empty: the end
 {
   const last = (kmh, lv) => {
     const r = mk({ flying: 0, difficulty: lv }), T = r.track, s0 = straight(T, T.startS + 300); r.start();
@@ -122,12 +122,12 @@ const ghost = (r, secs, each) => {
     return [t, r.en];
   };
   const r = mk({ flying: 0 }), E = r.en, T = r.track, s0 = straight(T, T.startS + 300); r.start(); putP(r, s0, r.tf.sd * T.wS(s0) * 0.45, 0);
-  for (let k = 0; k < 100; k++) E.step(0.1);
+  for (let k = 0; k < 50; k++) E.step(0.1);
   const c0 = E.clock; putP(r, s0, r.tf.sd * T.wS(s0) * 0.45, 2 * EN.vRef[1]); for (let k = 0; k < 100; k++) E.step(0.1);
-  check(`standing: a second a second; at ${2 * EN.vRef[1]} km/h (twice vRef): half as fast`, Math.abs(c0 - (EN.clock[1] - 10)) < 1e-6 && Math.abs(E.clock - (c0 - 5)) < 1e-6, f1(EN.clock[1]) + ' -> ' + f1(c0) + ' -> ' + f1(E.clock));
+  check(`standing: a second a second; at ${2 * EN.vRef[1]} km/h (twice vRef): half as fast`, Math.abs(c0 - (EN.clock[1] - 5)) < 1e-6 && Math.abs(E.clock - (c0 - 5)) < 1e-6, f1(EN.clock[1]) + ' -> ' + f1(c0) + ' -> ' + f1(E.clock));
   const L = [0, 1, 2, 3].map(lv => last(100, lv)), t = L.map(x => x[0]);
-  check(`at 100 km/h with no close pass the clock lasts ${t.map(f1).join(' / ')} s by the level (medium about a minute), then the end (time)`,
-    t[0] > t[1] && t[1] > t[2] && t[2] > t[3] && Math.abs(t[1] - 60) < 1 && t[3] > 20 && t[0] > 100 && L.every(x => x[1].over && x[1].over.why === 'time' && x[1].clock === 0 && x[1].log.some(e => e.k === 'low') && x[1].log[x[1].log.length - 1].k === 'over'));
+  check(`at 100 km/h with no close pass the clock lasts ${t.map(f1).join(' / ')} s by the level (the start's seconds x 100 / vRef), then the end (time)`,
+    t[0] > t[1] && t[1] > t[2] && t[2] > t[3] && t.every((x, k) => Math.abs(x - EN.clock[k] * Math.max(1, 100 / EN.vRef[k])) < 0.3) && L.every(x => x[1].over && x[1].over.why === 'time' && x[1].clock === 0 && x[1].log.some(e => e.k === 'low') && x[1].log[x[1].log.length - 1].k === 'over'));
   const sc = L[1][1].score; L[1][1].step(0.1);
   check('after the end: no more points, the clock stays empty', L[1][1].score === sc && L[1][1].clock === 0);
 }
@@ -164,6 +164,11 @@ const ghost = (r, secs, each) => {
     check(`the combo at most x${EN.comboMax}`, E.combo === EN.comboMax && E.log[E.log.length - 1].pts === 240 * EN.comboMax);
     const cap = EN.clock[1] * EN.clockMax; E.clock = cap - 1; const d = pass(0.4, 120, 70);
     check(`the clock at most ${cap} s (x${EN.clockMax} the start's)`, d.length === 1 && Math.abs(d[0].add - 1) < 1e-9 && Math.abs(E.clock - cap) < 1e-9, f1(E.clock) + ' s');
+    // the seconds halved every decayT s of the drive (the user, 12. 11. 2026: none drives for ever): an overtaking at decayT +0.5 s, at
+    // 6 x decayT none (under 0.05 s: the overtaking counted, +0 s); a close pass then: its points, no seconds
+    E.clock = 10; E.combo = 0; E.time = EN.decayT; const h1 = pass(2.5, 120, 70); E.time = 6 * EN.decayT; const h2 = pass(2.5, 120, 70), h3 = pass(0.4, 120, 70); E.time = 0;
+    check(`the seconds halved every ${EN.decayT} s of the drive: +${EN.passT / 2} s, then none; a close pass: points only`,
+      h1.length === 1 && Math.abs(h1[0].add - EN.passT / 2) < 1e-9 && h2.length === 1 && h2[0].k === 'pass' && h2[0].add === 0 && h3.length === 1 && h3[0].k === 'vnear' && h3[0].pts > 0 && h3[0].add === 0 && Math.abs(E.clock - 10.5) < 1e-9, JSON.stringify(h1.concat(h2, h3)));
     E.clock = 10; E.combo = 0; const sl = pass(0.4, 60, 30), slow = pass(0.4, 120, 119.5), bus = pass(0.6, 120, 70, 2);
     check('at 60 km/h: the seconds (+1 and the closeness), no points; barely faster than it: nothing; past a bus: TESNO',
       sl.length === 1 && sl[0].k === 'pass' && sl[0].pts === 0 && Math.abs(sl[0].add - sec(0.4, 1)) < 1e-9 && slow.length === 0 && bus.length === 1 && bus[0].k === 'near', JSON.stringify(sl.concat(slow, bus)));

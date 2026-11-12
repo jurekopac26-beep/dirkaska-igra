@@ -104,8 +104,9 @@ try {
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?proga=bathurst&nacin=endless', { lang: 'en', difficulty: 1 }, { width: 640, height: 360 }, { menu: true });
     await there(page); await go(page); await drive(page, 4);
-    const s0 = await page.evaluate(() => ({ mode: window.__game.race.zbMode, ln: document.getElementById('h-en-ln').textContent, pts: document.querySelector('#h-en .en-sc small').textContent, ck: document.getElementById('h-en-ck').textContent }));
-    T.check('?nacin=endless on Bathurst in English: TRAFFIC ×1.5 · LAP 1 · … km, POINTS, the clock with a point', s0.mode === 'endless' && /^TRAFFIC ×1\.5 · LAP 1 · \d+\.\d km$/.test(s0.ln) && s0.pts === 'POINTS' && /^\d+\.\d$/.test(s0.ck), JSON.stringify(s0));
+    const s0 = await page.evaluate(() => ({ mode: window.__game.race.zbMode, ln: [...document.querySelectorAll('#h-en-ln span')].map(e => e.textContent).join(' · '), pts: document.querySelector('#h-en-map .en-sc small').textContent, ck: document.getElementById('h-en-ck').textContent,
+      under: (() => { const m = document.getElementById('h-map').getBoundingClientRect(), b = document.getElementById('h-en-map').getBoundingClientRect(); return b.top >= m.bottom - 1 && b.left >= m.left - 1 && b.right <= m.right + 1; })() }));
+    T.check('?nacin=endless on Bathurst in English: TRAFFIC ×1.5 · LAP 1 · … km, POINTS, the clock with a point; the points and the traffic under the minimap (the user, 12. 11. 2026)', s0.mode === 'endless' && /^TRAFFIC ×1\.5 · LAP 1 · \d+\.\d km$/.test(s0.ln) && s0.pts === 'POINTS' && /^\d+\.\d$/.test(s0.ck) && s0.under, JSON.stringify(s0));
     await page.evaluate(() => { const r = window.__game.race; r.en.lives = 1; r.player.hitWall = 9; });
     await drive(page, 8);
     await page.waitForFunction(() => window.__game.screen === 'results', null, { timeout: 30000 });

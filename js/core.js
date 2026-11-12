@@ -5341,6 +5341,7 @@ const Core = (function () {
   // tracks: the roads with the mode. By the level (race.opts.difficulty 0-3: easy, medium, hard, super hard): clock the seconds at the
   // start (at most clockMax x that on it); passT the seconds an overtaking puts on it; closeT the seconds more for passing (either way)
   // with no room at all between the two bodies, less the more room, none at close m (x 1 + comboAdd a step of the combo over the first);
+  // all of it halved every decayT s of the drive (the user, 12. 11. 2026: so that none can drive for ever; under 0.05 s: none);
   // vRef the speed (km/h) over which the clock runs slower: at v, vRef / v of a second a second; dens0 the traffic's density at the start,
   // densUp its step every densT s, up to densMax; lc / sb a vehicle's lane changes / sudden brakings on a whim, a second (x heat: 1 + the
   // drive's time / heatT, at most heatMax; on the loop only). The window (m along the road): ahead, behind (behindOn: an oncoming one
@@ -5358,7 +5359,7 @@ const Core = (function () {
   // (s). wrapEnd: a new stage that far before the finish line; wrapTo: on again that far past the start line. mix: a road with no mix of
   // its own [car, van, bus, motorbike (none: _winPool), truck]
   const EN = { tracks: ['bathurst', 'chapman', 'caracoles', 'balea'],
-    clock: [45, 30, 25, 20], clockMax: 3, passT: 1, closeT: [3, 2.5, 2, 1.5], close: 1.5, comboAdd: 0.25, vRef: [35, 50, 65, 80],
+    clock: [15, 12, 10, 8], clockMax: 3, decayT: 90, passT: 1, closeT: [3, 2.5, 2, 1.5], close: 1.5, comboAdd: 0.25, vRef: [35, 50, 65, 80],
     dens0: [1, 1.5, 2, 2.5], densUp: [0.25, 0.5, 0.5, 0.75], densT: 30, densMax: 4, lc: [0.02, 0.03, 0.04, 0.05], sb: [0.006, 0.01, 0.014, 0.02], heatT: 60, heatMax: 3,
     ahead: 1600, behind: 150, behindOn: 60, spawn: 300, spawnR: 260, reset: 150, gap: 45, sp: 200, spUp: 290, spDn: 250,
     v: [[70, 110], [65, 100], [60, 85], [80, 110], [15, 25], [60, 85]], vTop: 110 / 3.6, lat: 1.6, lane3: 6.5, lcInd: 1.2, sbDec: 5, fair: 2,
@@ -5470,7 +5471,8 @@ const Core = (function () {
       if (cl) { this.combo = this.combo > 0 ? Math.min(EN.comboMax, this.combo + 1) : 1; this.comboT = EN.comboT; if (this.combo > this.comboBest) this.comboBest = this.combo; }
       const pts = cl ? Math.round((k === 'vnear' ? EN.vnearPts : EN.nearPts) * M.v * 3.6 / 100) * this.combo : 0;
       const more = EN.closeT[lv] * Math.max(0, 1 - Math.max(0, M.min) / EN.close) * (1 + EN.comboAdd * Math.max(0, this.combo - 1));
-      const cap = EN.clock[lv] * EN.clockMax, add = Math.max(0, Math.min(cap - this.clock, Math.round(((up ? EN.passT : 0) + more) * 10) / 10));
+      const cap = EN.clock[lv] * EN.clockMax, fade = Math.pow(0.5, this.time / EN.decayT);   // (the seconds fewer the longer the drive)
+      const add = Math.max(0, Math.min(cap - this.clock, Math.round(((up ? EN.passT : 0) + more) * fade * 10) / 10));
       if (!up && add <= 0 && !cl) return;
       this.bonus += pts; this.score += pts; this.clock += add; this.add += add;
       if (up) this.pass++; if (cl) { if (k === 'vnear') this.vnear++; else this.near++; }
