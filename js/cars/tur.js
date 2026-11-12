@@ -40,7 +40,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // the lamps' parts; the rims on its six wheels
     mounts: {
       krilo: { x: -0.68, w: 0.72, part: 'body', s: 1.3, front: -0.42 },
-      zarometi: { x: 2.955, y0: 1.12, lean: 0, zc: 0.74, yc: 1.12, s: 0.22, hosts: ['headL', 'headR'], depth: 0.04 },
+      zarometi: { x: 2.955, y0: 1.12, lean: 0, zc: 0.74, yc: 1.12, s: 0.22, hosts: ['headL', 'headR'], depth: 0.04, hiSeg: false },
       platisca: {},
       // (sklop 2 · spredaj, js/deli/spredaj.js) the kit's lips under the steel bumpers' boxes (no skirts: the steps take the sills;
       // options 2, 3 the tail's corner lips), its flares out from the stock ones over all six wheels (four segments round each: six
@@ -98,7 +98,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // the six wheels (the struts against the tubs' walls, the coils' feet at the walls' foot: the front tubs' higher; the dampers'
       // reservoirs at the front and rear four only: within the room)
       filter_zraka: { x: 1.85, y: 0.845, z: -0.48 }, akumulator: { x: 2.6, y: 0.755, z: 0.52 }, turbo: { x: 2.3, y: 0.84, z: 0.42, twin: [-0.84, 0], ic: [2.36, 0.845, 0.42] }, cip: { x: 1.9, y: 1.196, z: 0.25 },
-      vzmeti: { in: 0.21, top: 1.04, seat: [0.83, 0.72] }, amortizerji: { in: 0.205, top: 1.06, mid: false }, stabilizatorji: { in: 0.18, floor: 0.72 }, dim_gum: {},
+      vzmeti: { in: 0.21, top: 1.04, seat: [0.83, 0.72], hiN: 6 }, amortizerji: { in: 0.205, top: 1.06, mid: false, hiN: 6 }, stabilizatorji: { in: 0.18, floor: 0.72 }, dim_gum: {},
     },
     // the look (KIT API v1, render.js; look units = metres: the centre of mass at x 0, the front axle at 2.00, the rear-most at -2.30, the
     // middle one at -0.95): one loft from the tailgate to the nose: the bed (its top open), the cab's back wall with its window, the roof,

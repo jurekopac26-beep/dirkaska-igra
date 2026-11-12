@@ -264,7 +264,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         if (K.hi) {
           const C = K.cab, RED = [0.75, 0.1, 0.08], LR = (n, sd) => n + (sd < 0 ? 'L' : 'R'), bx = (o) => Object.assign({ dir: '-x' }, o);
           if (!K.fitted.maska) C.badge(2.272, 0.87, 0, 1, 'body', 0.036);   // (K.fitted: a garage part in a detail's place: none of it there)
-          C.badge(-2.4185, 1.06, 0, -1, 'spare', 0.06);
+          K.part('tailgate', () => C.badge(-2.4185, 1.06, 0, -1, 'tailgate', 0.06), { sub: 'spare' });   // (on the spare's cover: in its sub-range, it leaves with it)
           C.plate(2.4035, 0.5, 0, 0.5, 0.11, 1, 'bumperF'); C.plate(-2.2625, 0.47, 0, 0.5, 0.11, -1, 'plate');
           if (!K.fitted.hauba) K.part('hood', () => { for (const sd of [-1, 1]) {
             LD.top([1.1, 2.17, 2.17, 1.1].map((x, i) => [x, sd * (L.prop(x, 'wt') - (i < 2 ? 0.012 : 0.02))]), DK, 0.004);
