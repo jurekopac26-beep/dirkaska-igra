@@ -147,6 +147,10 @@ Koraki (ocena 8–12 h):
 - **Zaslon in rezultati**: velika ura z desetinkami, ob tesnem prehitevanju zelen »+2,5 s«; točke, NIZ, vrstica PROMET ×… · KROG … · km; ob novem krogu »KROG n«. Rezultati: 13 vrstic (dodan čas, krogi, težavnost), lestvica »Najboljših 10 · Bathurst, Avstralija · Srednja«. Kvalifikacij, duha, vmesnih časov in komentarja krogov dirke v tem načinu ni.
 - **Simulacija** (avtopilot s stiki, 3 semena; avtopilot redko tesno prehiteva): lahka 25–142 s, srednja 68–93 s, težka 44–51 s, super težka 29–41 s. **Obremenitev** pri ×4 na Bathurstu (`tests/browser/neskoncna.test.mjs`, nastavitve `perf.test.mjs`): povprečno 178 klicev risanja (največ 180) in 687 tisoč oglišč (največ 708), 16 vozil v 250 m, vsa narisana.
 
+## Promet na odprtih cestah (odločitev 12. 11.)
+
+Uporabnik 12. 11. 2026 ob 1.58 prek Mateja (tabla #382, komentarja 6811014558 in 6811211471): Neskončna vožnja še na 3 pravih cestah z normalnim prometom (Bathurst ostane), brez kolesarjev in pešcev, ura se polni s prehitevanjem (+1 s) in vožnjo tik ob vozilu (bliže = več), vsakič velik »+N s« sredi zaslona, promet vedno gostejši, igre ne konča prvi dotik: čelni trk konec, ograja 2–3 trki, trk v vozilo s hitrostjo 2–3 trki, rahel dotik ne šteje; avto se v tem načinu poškoduje tudi mehansko (obstoječa nastavitev poškodb »Vklop«), samo vidne barve vozil, nato grafika prometnih vozil. Seja: osnutek `neskoncna/promet`.
+
 ## Stanje
 
 - 5. 11. 2026: tema v `docs/vrsta.md` (Načrtovano, #339); načrt in vprašanja `neskoncna-1`–`3` na strani Odločitve 3. Čaka na odgovore uporabnika; koda še ni začeta.
