@@ -11,7 +11,8 @@
 // the paint's shader sharing the road's uniforms: the edge lines break off with the asphalt; the picture changes with the edge and only
 // with it); Pikes Peak takes the look (its road mesh holds its own paint: only the asphalt wears, its edge broken too); Livorno's markings
 // across the road (World.cesta.precne: Italy's sizes for crossings, stop and give-way lines; at OpenStreetMap's places, LV_DATA.onRoad, in
-// the lines' meshes, no centre line through a crossing, the vertices well under 1 % of the world's).
+// the lines' meshes, no centre line through a crossing, the vertices well under 1 % of the world's); Livorno's side roads for the look
+// (World.cesta.stranske: a strip through an opening in the wall at each mouth), OpenStreetMap's lamps and stops, the track's model untouched.
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('the road\'s look');
@@ -161,6 +162,27 @@ try {
   T.check('Livorno: OpenStreetMap\'s crossings, stop and give-way lines laid in the lines\' meshes (each piece where the rules put it), no centre line through a crossing, their vertices under 1 % of the world\'s',
     mk.crossings >= 20 && mk.stops >= 1 && mk.giveWays >= 1 && mk.pieces >= mk.crossings * 4 + mk.stops + mk.giveWays * 3 && mk.laid === mk.pieces && mk.cLine === 0 && mk.verts > 0 && mk.verts <= liv.verts * 0.01 && mk.verts <= liv.paintV * 0.05,
     JSON.stringify({ mk: Object.assign({}, mk, { rules: undefined }), worldV: liv.verts, paintV: liv.paintV }));
+
+  // the side roads, the lamps and the stops of OpenStreetMap, for the look (package E): a strip through each opening, the furniture off
+  // the road, and the track's model as a track built alone has it
+  const sr = await page.evaluate(() => {
+    const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === 'livorno'));
+    const same = (a, b) => { if (!a || !b || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+    const M = (W.cestaRob || []).filter(u => u[2] !== 0), wid = M.map(u => u[1] - u[0]), V = []; let strips = 0;
+    W.root.traverse(o => { if (!o.isMesh || !o.userData.stranska) return; strips++; const P = o.geometry.attributes.position; for (let k = 0; k < P.count; k++) V.push(P.getX(k), P.getZ(k)); });
+    let far = 0, worst = 0;
+    for (const [a, b, sd] of M) {   // (the fence line across the mouth: the strip's rows of vertices pass through it, a row every few metres)
+      let m = 1e9;
+      for (let j = 0; j <= 8; j++) { const i = T.idx(a + (b - a) * j / 8), o = sd * (sd > 0 ? T.br[i] : T.bl[i]), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+        for (let k = 0; k < V.length; k += 2) { const d = (V[k] - x) ** 2 + (V[k + 1] - z) ** 2; if (d < m) m = d; } }
+      m = Math.sqrt(m); if (m > worst) worst = m; if (m > 4.5) far++;
+    }
+    return { n: W.stranske, osm: LV_DATA.side.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, worst: +worst.toFixed(2),
+      lamps: W.stats.lamps, osmLamps: LV_DATA.lamps.length, stops: W.stats.stops, osmStops: LV_DATA.stops.length, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
+  });
+  T.check('Livorno: OpenStreetMap\'s side roads for the look (a strip of asphalt through an opening in the wall at each mouth, the mouths 3 to 40 m wide), its street lamps and bus stops behind the fence; the track\'s model as a track built alone has it',
+    sr.n >= sr.osm * 0.8 && sr.n <= sr.osm && sr.mouths === sr.n && sr.wMin >= 3 && sr.wMax <= 40 && sr.strips >= 1 && sr.stripV > sr.n * 20 && sr.stripV <= liv.verts * 0.1 && sr.far === 0 &&
+    sr.lamps >= sr.osmLamps * 0.75 && sr.lamps <= sr.osmLamps && sr.stops >= sr.osmStops * 0.85 && sr.stops <= sr.osmStops && sr.model, JSON.stringify(sr));
 
   await startTrack(page, 'pikes');
   const pk = await look(page);

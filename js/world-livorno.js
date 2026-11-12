@@ -477,7 +477,7 @@
       }
       if (SC) {   // (the side roads' strips, their barriers and paint; the barrier's kind is a temporary switch until the user's choice)
         const zap = +((/[?&]zapora=(\d)/.exec(typeof location !== 'undefined' ? location.search : '') || [0, 1])[1]), sMat = aMat.clone();
-        for (const g of SC.asfalt(RB, API.nrGCol)) addM(g, sMat);
+        for (const g of SC.asfalt(RB, API.nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
         SC.predmeti((x, z) => scen.get(x, z), zap);
       }
       {   // (OSM's street lamps and bus stops, for the look: behind the fence, off the side roads and the houses, not by a bridge or in the sea)
