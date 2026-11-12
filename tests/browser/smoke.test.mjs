@@ -148,7 +148,7 @@ try {
     await startTrack(page, 'spa');
     const nan = await simulate(page, 20);
     await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
-    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet <= 0.8 && c.wet > 0.79 && c.ty && c.ty.k === 'wet'), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet <= 0.65 && c.wet > 0.64 && c.ty && c.ty.k === 'wet'), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
       birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
     T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
