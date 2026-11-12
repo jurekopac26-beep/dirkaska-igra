@@ -113,11 +113,23 @@
     if (k < 0) return null;
     return [P.slice(0, k + 1).join(', '), P.slice(k + 1).join(', ') || 'none'];
   }
-  function rewriteDecls(text, plain) {
-    const D = decls(text); let ch = false; const out = [];
+  const join = (out) => out.map(([n, v, i]) => n + ': ' + v + (i ? ' !important' : '')).join('; ');
+  function rewriteDecls(text, plain) { const out = rewriteList(decls(text), plain); return out && join(out); }
+  // a rule's declarations rewritten into it: as a whole, or one by one where some come out of no value (the longhands of a shorthand
+  // with a var() in it that a later longhand breaks up: the hud's timer's font, a border; the whole text would lose them), those as they are
+  function rewriteStyle(st, plain) {
+    const D = decls(st.cssText), out = rewriteList(D, plain); if (!out) return false;
+    if (D.every((d) => d[1])) { st.cssText = join(out); return true; }
+    const was = new Set(D.map(([n, v, i]) => n.toLowerCase() + ':' + v + !!i));
+    for (const [n, v, i] of out) if (v && !was.has(n.toLowerCase() + ':' + v + !!i)) st.setProperty(n, v, i ? 'important' : '');
+    return true;
+  }
+  function rewriteList(D, plain) {
+    let ch = false; const out = [];
     for (const [n, v0, imp] of D) {
       let v = v0; const add = (nn, vv) => { out.push([nn, vv, imp]); ch = true; };
       const N = n.toLowerCase();
+      if (!v) { out.push([n, v, imp]); continue; }
       if (N.startsWith('--')) { out.push([n, v, imp]); continue; }
       if (N === 'color') { out.push([n, v, imp]); add('--sd-c', /^currentcolor$/i.test(v) ? 'inherit' : cur(v)); continue; }
       if (N === 'text-shadow') { out.push([n, v, imp]); add('--sd-ts', /^none$/i.test(v) ? '0 0 transparent' : cur(v)); continue; }
@@ -144,23 +156,24 @@
       if (/currentcolor/i.test(v)) { add(n, cur(v)); continue; }
       out.push([n, v, imp]);
     }
-    return ch ? out.map(([n, v, i]) => n + ': ' + v + (i ? ' !important' : '')).join('; ') : null;
+    return ch ? out : null;
   }
   const IMG = /(^|[\s>+~(,])img(?=$|[\s.:#[>+~),])/g, CNV = /(^|[\s>+~(,])canvas(?=$|[\s.:#[>+~),])/g, SVGT = /(^|[\s>+~(,])svg(?=$|[\s.:#[>+~),])/g;
   function rewriteRules(list) {
-    for (const r of Array.from(list)) {
-      if (r.cssRules && !(r instanceof CSSKeyframesRule) && r.type !== 1) { rewriteRules(r.cssRules); continue; }
-      if (r instanceof CSSKeyframesRule) { for (const k of Array.from(r.cssRules)) { const t = rewriteDecls(k.style.cssText, true); if (t != null) k.style.cssText = t; } continue; }
-      if (!r.style) continue;
-      // (a picture's canvas takes the picture's rules and not the canvases' ones; :where adds nothing to a rule's weight)
-      const sel = r.selectorText;
-      if (sel && /(^|[^\w-])(img|canvas|svg)([^\w-]|$)/.test(sel)) {
-        const t = sel.replace(CNV, '$1canvas:where(:not([data-sdimg]))').replace(SVGT, '$1svg:where(:not([data-sdimg]))').replace(IMG, '$1:is(img, :where(canvas[data-sdimg], svg[data-sdimg]))');
-        if (t !== sel) r.selectorText = t;
-      }
-      const t = rewriteDecls(r.style.cssText, sel && /::?(before|after)\b/i.test(sel)); if (t != null) { r.style.cssText = t; ST.rules++; }
-      if (r.cssRules && r.cssRules.length) rewriteRules(r.cssRules);
+    for (const r of Array.from(list)) try { rule(r); } catch (_) { ST.err = (ST.err || 0) + 1; }   // (one rule: the rest of the sheet goes on)
+  }
+  function rule(r) {
+    if (r.cssRules && !(r instanceof CSSKeyframesRule) && r.type !== 1) { rewriteRules(r.cssRules); return; }
+    if (r instanceof CSSKeyframesRule) { for (const k of Array.from(r.cssRules)) rewriteStyle(k.style, true); return; }
+    if (!r.style) return;
+    // (a picture's canvas takes the picture's rules and not the canvases' ones; :where adds nothing to a rule's weight)
+    const sel = r.selectorText;
+    if (sel && /(^|[^\w-])(img|canvas|svg)([^\w-]|$)/.test(sel)) {
+      const t = sel.replace(CNV, '$1canvas:where(:not([data-sdimg]))').replace(SVGT, '$1svg:where(:not([data-sdimg]))').replace(IMG, '$1:is(img, :where(canvas[data-sdimg], svg[data-sdimg]))');
+      if (t !== sel) r.selectorText = t;
     }
+    if (rewriteStyle(r.style, sel && /::?(before|after)\b/i.test(sel))) ST.rules++;
+    if (r.cssRules && r.cssRules.length) rewriteRules(r.cssRules);
   }
   function rewriteSheet(sh) { try { if (sh && !sh.__sd) { sh.__sd = 1; rewriteRules(sh.cssRules); } } catch (_) { /* (another origin's sheet) */ } }
   Sence.rewriteSheet = rewriteSheet;
@@ -254,7 +267,7 @@
     return id;
   }
 
-  // ---- stripes: a repeating gradient of hard stops down a pseudo-element (the menu's kerbs: .title-panel::before, .tile::before …) ----
+  // ---- stripes: a repeating gradient of hard stops down a pseudo-element (the menu's kerbs: .title-panel::before, .tile::before …) or across a box ----
   // The levels of black and the filter's table drew those red and black on the phone (white darkened; 12. 11. 2026), so a stripe pattern
   // is drawn only by what the phone showed right (temni-nacin.html rows 4 and 5): the pseudo-element plain black, a filter of floods, one
   // per band, tiled down it (feTile) and kept where it is (SourceAlpha, its round corners too).
@@ -262,7 +275,11 @@
   function bandsOf(bgi) {
     const m = /^repeating-linear-gradient\((.*)\)$/i.exec((bgi || '').trim()); if (!m) return null;
     const args = split(m[1], ',');
-    if (args.length && !isColTok(split(args[0], ' ')[0])) { if (!/^(180deg|to bottom|0\.5turn)$/i.test(args.shift().trim())) return null; }
+    let x = false;   // (down it, or across it: the loading screen's bar, 90deg)
+    if (args.length && !isColTok(split(args[0], ' ')[0])) {
+      const d = args.shift().trim();
+      if (/^(90deg|to right|0\.25turn)$/i.test(d)) x = true; else if (!/^(180deg|to bottom|0\.5turn)$/i.test(d)) return null;
+    }
     const pts = [];
     for (const a of args) {
       const t = split(a, ' '); if (!t.length || !isColTok(t[0]) || t.length > 3) return null;
@@ -280,15 +297,16 @@
       if (A.c.join() !== B.c.join()) return null;   // (a soft blend: not a stripe)
       bands.push({ c: A.c, y0: A.y, y1: B.y });
     }
-    return bands.length > 1 && bands.length <= 8 ? bands : null;
+    if (bands.length < 2 || bands.length > 8) return null;
+    bands.x = x; return bands;
   }
   function stripeFilter(root, bands) {
-    const D = defsOf(root), key = 't' + bands.map((d) => d.c.map(fmt).join(',') + '@' + d.y0 + '-' + d.y1).join(';');
+    const D = defsOf(root), key = 't' + (bands.x ? 'x' : 'y') + bands.map((d) => d.c.map(fmt).join(',') + '@' + d.y0 + '-' + d.y1).join(';');
     let id = D.ids.get(key); if (id) return id;
     id = 'sd' + (++fid); D.ids.set(key, id); ST.filters++;
-    const P = bands[bands.length - 1].y1;
-    const h = bands.map((d, i) => '<feFlood ' + rgb(d.c) + ' y="' + fmt(d.y0) + '" height="' + fmt(d.y1 - d.y0) + '" result="b' + i + '"/>').join('') +
-      '<feMerge y="0" height="' + fmt(P) + '" result="T">' + bands.map((d, i) => '<feMergeNode in="b' + i + '"/>').join('') + '</feMerge>' +
+    const P = bands[bands.length - 1].y1, [Y, H] = bands.x ? ['x', 'width'] : ['y', 'height'];
+    const h = bands.map((d, i) => '<feFlood ' + rgb(d.c) + ' ' + Y + '="' + fmt(d.y0) + '" ' + H + '="' + fmt(d.y1 - d.y0) + '" result="b' + i + '"/>').join('') +
+      '<feMerge ' + Y + '="0" ' + H + '="' + fmt(P) + '" result="T">' + bands.map((d, i) => '<feMergeNode in="b' + i + '"/>').join('') + '</feMerge>' +
       '<feTile in="T"/><feComposite in2="SourceAlpha" operator="in"/>';
     D.svg.insertAdjacentHTML('beforeend', '<filter id="' + id + '" x="0" y="0" width="1" height="1" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' + h + '</filter>');
     return id;
@@ -428,7 +446,9 @@
         sh = { list: SL, ob, ib, mx: q(far('x'), W), my: q(far('y'), H) };
         sh.key = JSON.stringify([SL.map((d) => [+d.i, d.x, d.y, d.b, d.s, d.c.map(fmt)]), ob, ib, sh.mx, sh.my]);
       }
-      const s = slot ? spec(root, B.bgc, B.bgi, B.bc, B.border && !clip, sh) : null;
+      // (stripes across a box of its own, no border or shadows: the loading screen's bar; as the pseudo-elements' stripes below)
+      const bands = slot && !B.border && !sh && (!B.bgc || TRANSP.test(B.bgc)) ? bandsOf(B.bgi) : null;
+      const s = bands ? { b: 'none', c: '#000', k: 'transparent', f: 'url(#' + stripeFilter(root, bands) + ')' } : slot ? spec(root, B.bgc, B.bgi, B.bc, B.border && !clip, sh) : null;
       if (s && !s.native) {
         el.removeAttribute('data-sdn'); clearVars(el, 'n');
         if (el.getAttribute('data-sdl') !== slot) { el.setAttribute('data-sdl', slot); ST.layers++; }
