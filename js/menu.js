@@ -297,8 +297,8 @@
   // (start left, finish right), so the map is turned by the quarter turn that puts the finish above the start (-90 for those).
   // A circuit or a rally stage is not turned (its start and finish are one place or a stage's own).
   const upright = (t, R) => !!R && t.group === 'road' && !!R.open;
-  // (on its side the chosen card of an open road's map reaches from under the head to over the row, the map upright in it: the user,
-  // 11. 11. 2026, »Gorske proge naj bodo v ležečem načinu postavljene tako kot gorske proge v stoječem načinu«; css/menu.css --tall)
+  // (on its side, camera 1, an open road's map is turned in the chosen card as upright, the card its size as it was: the user, 12. 11. 2026,
+  // »vrni velikost okvirja in pozicije na isto kot je bila predno si obracal sliko, obrni samo sliko v okvirju«; fitMaps)
   const tallOf = (t) => cam === 1 && upright(t, RT[t.id]);
   const turnOf = (t, R) => {
     const p = R.top.route, a = p[0], b = p[p.length - 1];
@@ -389,7 +389,7 @@
       // least as big as that takes, the view kept inside the land (the route a little off the middle, or a little bigger, where it must be);
       // otherwise the blurred backdrop fills whatever falls outside the map tile, so nothing is cropped or left empty
       const [x0, y0, x1, y1] = routeBox(T, a), rw = Math.max(1, x1 - x0), rh = Math.max(1, y1 - y0), K = keepOut(box), E = (D.wideMaps || {})[box.dataset.map] || 0;
-      const padL = Math.max(10, K.left + 6), padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + (isLand() ? NAME_ROOM_LAND : NAME_ROOM), padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
+      const padL = 10, padR = Math.max(10, K.right + 6), padTop = Math.max(10, K.top) + (isLand() ? NAME_ROOM_LAND : NAME_ROOM), padBot = Math.max(10, K.bottom + 6), availW = Math.max(60, W - padL - padR), availH = Math.max(60, H - padTop - padBot);
       const q = Math.abs(a) === 90, LW = (q ? T.H : T.W) + 2 * E, LH = (q ? T.W : T.H) + 2 * E;   // (the land turned with the map: a quarter turn swaps its sides)
       const sMin = E ? Math.max(W / LW, H / LH) : 0, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
       // the view at a scale with the route's middle my px down the frame, kept in the land
@@ -399,7 +399,7 @@
         return { vx, vy, vw, vh, s };
       };
       let V = view(Math.max(Math.min(availW / rw, availH / rh), sMin), padTop + availH / 2);
-      // on its side an open road's tall card: the route as big as keeps it clear of the graph, the cameras, the counter, the weather and the
+      // on its side an open road's turned map in the chosen card: the route as big as keeps it clear of the graph, the cameras, the counter, the weather and the
       // carousel's arrows (it may reach in beside them where it is narrow), in the middle or a little to a side; where the land makes it
       // bigger than the room between them (sMin), where it lies under the fewest of them
       if (tall) {
@@ -427,12 +427,11 @@
   // what of the stage's picture the screen's own things cover (px in from its edges): the head over its top (upright: the screen's head lies
   // over the picture), the weather down its right side, the counter and the cameras at its foot
   function keepOut(box) {
-    const b = box.getBoundingClientRect(), st = box.parentNode, hd = app && $('#s-track .thead', app), K = { top: 0, right: 0, bottom: 0, left: 0 }, tall = isLand() && st.classList.contains('tall');
+    const b = box.getBoundingClientRect(), st = box.parentNode, hd = app && $('#s-track .thead', app), K = { top: 0, right: 0, bottom: 0 };
     const hit = (r) => !!r && r.width > 0 && r.bottom > b.top + 1 && r.top < b.bottom - 1 && r.right > b.left + 1 && r.left < b.right - 1;
     const hr = hd && hd.getBoundingClientRect(); if (hit(hr)) K.top = hr.bottom - b.top;
-    const w = (!isLand() || tall) && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side a row at the card's top, the route goes under it; a column down a tall card's side)
-    // (the counter and the cameras at its foot; in a tall card the graph, the cameras and the counter one over another down its left side)
-    for (const e of st.querySelectorAll(tall ? ':scope > .hgraph, :scope > .cams, :scope > .tcount' : ':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (!hit(r)) continue; if (tall) K.left = Math.max(K.left, r.right - b.left); else K.bottom = Math.max(K.bottom, b.bottom - r.top); }
+    const w = !isLand() && $(':scope > .wxv', st), wr = w && w.getBoundingClientRect(); if (hit(wr)) K.right = b.right - wr.left;   // (on its side: a row at the card's top, the route goes under it)
+    for (const e of st.querySelectorAll(':scope > .cams, :scope > .tcount')) { const r = e.getBoundingClientRect(); if (hit(r)) K.bottom = Math.max(K.bottom, b.bottom - r.top); }
     return K;
   }
   // the names of the map's flags as the flyover's: the name in a box (the finish's dark), its height in a small gold box under it at the
@@ -912,7 +911,7 @@
     const at = (k) => list[((trackIdx + k) % n + n) % n];
     const card = (k) => {
       const u = at(k), c = countryOf(u), f = flagUrl(c), [x, y, w, hh, b, r] = RING(k), fly = !!(RT[u.id] && RT[u.id].fly);
-      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + (tallOf(u) ? '--tall:1;' : '') + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
+      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
         '<div class="rlab">' + (f ? '<img src="' + f + '" alt="">' : '<span class="nf">' + esc((c || u.name).slice(0, 3).toUpperCase()) + '</span>') + '<span><b>' + esc(u.name) + '</b><small>' + esc((c ? c + ' · ' : '') + u.km.toFixed(2) + ' km') + '</small></span></div></div>';
     };
     const arw = (k) => {
