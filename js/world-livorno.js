@@ -4,7 +4,7 @@
    as the Nordschleife and Bang Saen) and the scenery data of js/data/livorno.js (OpenStreetMap, Copernicus DEM, ESA WorldCover, Meta / WRI canopy).
    The 60 m rule (the user's decision): the detailed things only within ~60 m of the road, as far as the chase camera sees them: the houses and
    villas of Ardenza, Montenero and Antignano in their OSM footprints (ochre and cream walls, terracotta roofs), the castles and the coastal tower,
-   the pines (umbrella and maritime), holm oaks, cypresses and the macchia, the low stone walls along the road, the rocks and the sea by the coast
+   the pines (umbrella and maritime), holm oaks, cypresses and the macchia, the steel guard rails along the road, the rocks and the sea by the coast
    road, the railway along the shore, the spectators at the hairpins, in the towns and at the start by the seafront terrace. Farther out only the
    terrain from the heights (the woods as their dark canopy colour), the sea to the horizon, the far hills and the town beyond. Only geographic and
    plain names (no people, events, firms or brands).
@@ -124,7 +124,7 @@
     };
 
     /* ---- the side roads for the look (World.cesta's stranske, LD.side from OpenStreetMap): measured here, before the road and the
-       walls, whose edge lines and stone leave the mouths open; the strips (over the verges), the barriers and the paint are built
+       barriers, whose edge lines, rail and walls leave the mouths open; the strips (over the verges), the barriers and the paint are built
        with the terrain. Nothing of the track's model changes: the invisible barrier stays on the fence line ---- */
     const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
     const wF = (f) => { const a = Math.floor(f), i = ((a % N) + N) % N; return lerp(T.wAt(i), T.wAt((i + 1) % N), f - a); };
@@ -177,65 +177,59 @@
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker }));
     }
 
-    /* ---- the barriers (Core's T.bl / T.br) drawn as the coast's low stone walls; concrete parapets on the bridges; at the start a white wall with
-       a catch fence and the crowd behind it ---- */
+    /* ---- the barriers (Core's T.bl / T.br) drawn as the steel guard rail of Italy's roads (the galvanised double wave on posts every 4 m);
+       concrete parapets on the bridges; at the start a white wall with a catch fence and the crowd behind it. The look alone: the barrier
+       is the same line ---- */
     const bridgeAt = new Uint8Array(N); for (const [a, b] of BR) for (let s = a - 4; s <= b + 4; s += ds / 2) bridgeAt[T.idx(s)] = 1;
     const startArea = (i) => { const d = dS(i * ds); return d > L - 320 || d < 140; };
-    const kindAt = (i) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : 0);   // 0 stone wall, 1 white wall and fence, 2 parapet
+    const kindAt = (i) => (bridgeAt[i] ? 2 : startArea(i) ? 1 : 0);   // 0 guard rail, 1 white wall and fence, 2 parapet
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-    const stone = [0.8, 0.72, 0.6], stoneD = [0.62, 0.55, 0.46], stoneT = [0.86, 0.8, 0.7], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], par = [0.82, 0.8, 0.76];
-    const wallRow = (gr, f, side, k) => {
-      const i = ((Math.floor(f) % N) + N) % N, bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : k === 2 ? 1.05 : 0.85, tone = 0.92 + crH(i >> 3, side, 71) * 0.16;
-      const c0 = k === 1 ? whD : k === 2 ? whD : stoneD.map(v => v * tone), c1 = k === 1 ? wh : k === 2 ? par : stone.map(v => v * tone), c2 = k === 0 ? stoneT : k === 1 ? wh : par;
-      let p = [PtF(f, o, -0.5), PtF(f, o, h - 0.08), PtF(f, o, h), PtF(f, o2, h)], c = [c0, c1, c2, c2];
+    const stone = [0.8, 0.72, 0.6], stoneT = [0.86, 0.8, 0.7], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], par = [0.82, 0.8, 0.76];
+    const wallRow = (gr, f, side, k) => {   // (the start's white wall, k 1, and a bridge's parapet, k 2)
+      const bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 1.05, c1 = k === 1 ? wh : par;
+      let p = [PtF(f, o, -0.5), PtF(f, o, h - 0.08), PtF(f, o, h), PtF(f, o2, h)], c = [whD, c1, c1, c1];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
-    const wallCap = (gr, f, side, k) => {   // (the wall's end at a side road's mouth)
-      const bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : k === 2 ? 1.05 : 0.85, cA = k === 0 ? stoneD : whD, cB = k === 0 ? stone : k === 1 ? wh : par;
-      gr.link(gr.row([PtF(f, o, -0.5), PtF(f, o, h)], [cA, cB]), gr.row([PtF(f, o2, -0.5), PtF(f, o2, h)], [cA, cB]), 0, 1);
+    const wallCap = (gr, f, side, k) => {   // (a wall's end: at a side road's mouth and where the rail takes over)
+      const bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 1.05, cB = k === 1 ? wh : par;
+      gr.link(gr.row([PtF(f, o, -0.5), PtF(f, o, h)], [whD, cB]), gr.row([PtF(f, o2, -0.5), PtF(f, o2, h)], [whD, cB]), 0, 1);
     };
     const kindF = (f) => kindAt(((Math.round(f) % N) + N) % N);
-    /* (on trial, ?ograja=1|2|3: the steel guard rail of Italy's roads in the stone wall's place: 1 the double wave on posts, 2 the taller
-       triple wave on closer posts, 3 the double wave with a tube on top. The look alone: the barrier is the same line, Core's T.bl / T.br) */
-    const OGR = +((/[?&]ograja=([123])/.exec(typeof location !== 'undefined' ? location.search : '') || [0, 0])[1]);
     const zn = [0.8, 0.82, 0.84], znD = [0.5, 0.52, 0.55], znE = [0.66, 0.68, 0.71], znP = [0.44, 0.46, 0.49], znV = [0.36, 0.38, 0.41], znT = [0.76, 0.78, 0.8];
-    const RAIL = OGR === 2 ? [[0.2, 0.45, znD], [0.1, 0.53, zn], [0.2, 0.615, znV], [0.1, 0.7, zn], [0.2, 0.785, znV], [0.1, 0.87, zn], [0.2, 0.95, znT]]
-      : [[0.2, 0.43, znD], [0.1, 0.51, zn], [0.2, 0.595, znV], [0.1, 0.68, zn], [0.2, 0.76, znT]];   // ([beyond the barrier's line, above the ground, colour]: crests to the road, the valleys and the lower edge in shade)
-    const TUBE = OGR === 3 ? [[0.2, 1.0, znD], [0.2, 1.1, zn], [0.3, 1.1, znE], [0.3, 1.0, znD]] : null, postTop = OGR === 3 ? 1.04 : OGR === 2 ? 0.93 : 0.74, postStep = OGR === 2 ? 1 : 2;
+    const RAIL = [[0.2, 0.43, znD], [0.1, 0.51, zn], [0.2, 0.595, znV], [0.1, 0.68, zn], [0.2, 0.76, znT]];   // ([beyond the barrier's line, above the ground, colour]: crests to the road, the valley and the lower edge in shade)
     const footF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, h = (q) => vergeAt(q, side, (side > 0 ? T.br[q] : T.bl[q]) + 0.2); return f - a < 1e-4 ? h(i) : lerp(h(i), h((i + 1) % N), f - a); };   // (the verge under the rail, over the road's height)
-    const railRow = (gr, f, side, prof, ft, tone) => {
-      const bar = barF(f, side), p = prof.map(q => PtF(f, side * (bar + q[0]), ft + q[1])), c = prof.map(q => q[2].map(v => v * tone));
+    const railRow = (gr, f, side) => {
+      const bar = barF(f, side), ft = footF(f, side), tone = 0.95 + crH(Math.floor(f) >> 1, side, 73) * 0.1;
+      const p = RAIL.map(q => PtF(f, side * (bar + q[0]), ft + q[1])), c = RAIL.map(q => q[2].map(v => v * tone));
       if (side < 0) { p.reverse(); c.reverse(); }
       return gr.row(p, c);
     };
     const railPost = (gr, f, side) => {   // (a post behind the rail: its face across the road and its face to the road)
-      const ft = footF(f, side), bar = barF(f, side), o1 = side * (bar + 0.2), o2 = side * (bar + 0.3), y0 = ft - 0.2, y1 = ft + postTop, d = 0.03;
+      const ft = footF(f, side), bar = barF(f, side), o1 = side * (bar + 0.2), o2 = side * (bar + 0.3), y0 = ft - 0.2, y1 = ft + 0.74, d = 0.03;
       const A = gr.row([PtF(f - d, o2, y0), PtF(f - d, o2, y1)], [znP, znP]), B = gr.row([PtF(f - d, o1, y0), PtF(f - d, o1, y1)], [znP, znE]), C = gr.row([PtF(f + d, o1, y0), PtF(f + d, o1, y1)], [znP, znE]);
       gr.link(A, B, 0, 1); gr.link(B, C, 0, 1);
     };
-    const secRows = (gr, f, side, k) => {   // (the barrier's ribbons at a station: [row, quads across] of each)
-      if (!OGR || k !== 0) return [[wallRow(gr, f, side, k), 3]];
-      const ft = footF(f, side), tone = 0.95 + crH(Math.floor(f) >> 1, side, 73) * 0.1, R = [[railRow(gr, f, side, RAIL, ft, tone), RAIL.length - 1]];
-      if (TUBE) R.push([railRow(gr, f, side, TUBE, ft, tone), 3]);
-      return R;
-    };
-    const secLink = (gr, A, B) => { for (let j = 0; j < A.length; j++) gr.link(A[j][0], B[j][0], 0, A[j][1]); };
+    const secRow = (gr, f, side, k) => (k ? [wallRow(gr, f, side, k), 3] : [railRow(gr, f, side), RAIL.length - 1]);   // (the barrier's ribbon at a station: [row, quads across])
+    const secLink = (gr, A, B) => gr.link(A[0], B[0], 0, A[1]);
     for (let c0 = 0; c0 < N; c0 += RC) {
       const gr = new RB();
-      for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + RC, N))) {   // (the walls, open at the side roads' mouths)
+      for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + RC, N))) {   // (the rail and the walls, open at the side roads' mouths)
         const cE = Math.min(c0 + RC, N), nR = run.length; let prev = null, pk = -1;
         for (let q = 0; q < nR; q++) {
           const f = run[q], k = kindF(f);
-          if (prev && k !== pk) { secLink(gr, prev, secRows(gr, f, side, pk)); prev = null; }
-          const r = secRows(gr, f, side, k); if (prev) secLink(gr, prev, r); prev = r; pk = k;
-          if (OGR && k === 0) {   // (the rail's posts: at its ends by the mouths and every postStep stations between)
+          if (prev && k !== pk) {
+            secLink(gr, prev, secRow(gr, f, side, pk)); prev = null;
+            if (!pk || !k) wallCap(gr, f, side, pk || k);   // (the wall's end face, where the rail meets it)
+          }
+          const r = secRow(gr, f, side, k); if (prev) secLink(gr, prev, r); prev = r; pk = k;
+          if (!k) {   // (the rail's posts: at its ends by the mouths and every 4 m between)
             const e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
-            if (e0 || e1 || (f === Math.floor(f) && f % postStep === 0 && f < cE)) railPost(gr, f + (e0 ? 0.05 : e1 ? -0.05 : 0), side);
+            if (e0 || e1 || (f === Math.floor(f) && f % 2 === 0 && f < cE)) railPost(gr, f + (e0 ? 0.05 : e1 ? -0.05 : 0), side);
           }
         }
-        if (run.z0 && !(OGR && kindF(run[0]) === 0)) wallCap(gr, run[0], side, kindF(run[0]));
-        if (run.z1 && !(OGR && kindF(run[nR - 1]) === 0)) wallCap(gr, run[nR - 1], side, kindF(run[nR - 1]));
+        if (run.z0 && kindF(run[0])) wallCap(gr, run[0], side, kindF(run[0]));
+        if (run.z1 && kindF(run[nR - 1])) wallCap(gr, run[nR - 1], side, kindF(run[nR - 1]));
       }
       addM(gr, rMat, true);
     }
