@@ -98,7 +98,8 @@ try {
     page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     await page.goto(srv.base + '/temni-nacin.html');
     await page.waitForFunction(() => document.querySelectorAll('#big img').length === 1, null, { timeout: 30000 });
-    const r = await page.evaluate(() => ({ verdict: document.getElementById('verdict').className, rows: document.querySelectorAll('.grid .lb').length, cells: document.querySelectorAll('.grid .c').length, refs: document.querySelectorAll('.c.ref canvas').length, small: document.querySelectorAll('.c.small img').length, mn: document.querySelectorAll('.grid .mn').length, mnDrawn: [...document.querySelectorAll('.grid .mn')].filter((m) => m.children.length).length }));
+    await page.waitForFunction(() => [...document.querySelectorAll('.grid .mn')].every((m) => m.shadowRoot && m.shadowRoot.querySelector('.f')), null, { timeout: 30000 }).catch(() => {});
+    const r = await page.evaluate(() => ({ verdict: document.getElementById('verdict').className, rows: document.querySelectorAll('.grid .lb').length, cells: document.querySelectorAll('.grid .c').length, refs: document.querySelectorAll('.c.ref canvas').length, small: document.querySelectorAll('.c.small img').length, mn: document.querySelectorAll('.grid .mn').length, mnDrawn: [...document.querySelectorAll('.grid .mn')].filter((m) => m.shadowRoot && m.shadowRoot.querySelector('.f')).length }));
     T.check(`temni-nacin.html, ${name}: "${yes ? 'DA' : 'NE'}", eleven rows (ten of four fields and the big picture), the canvas and picture fields drawn, row 10 drawn by the game's menu code`,
       r.verdict === 'verdict ' + (yes ? 'yes' : 'no') && r.rows === 11 && r.cells === 36 && r.refs === 4 && r.small === 4 && r.mn === 4 && r.mnDrawn === 4 && !errors.length, JSON.stringify({ r, errors }));
     await ctx.close();

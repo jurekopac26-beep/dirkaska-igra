@@ -17,6 +17,7 @@
    class) — a text that changes in a race (the HUD's numbers) costs nothing more than its text-shadow. */
 (function () {
   'use strict';
+  if (typeof document === 'undefined') return;   // (outside a browser, as the tests' loadCore: nothing to paint)
   const q = location.search;
   // (temni-nacin.html: window.SenceRoots, on everywhere but only for the roots it hands in, its own rows of the page left as they are)
   const roots = !!window.SenceRoots;
