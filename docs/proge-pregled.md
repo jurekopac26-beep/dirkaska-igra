@@ -17,7 +17,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
 | Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
-| Irohazaka, Japonska | `iroha` | odprta cesta | 5,0 km | 947 | 25 % | 19 | +322 m |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
 | Santo Antão, Zelenortski otoki | `santoantao` | odprta cesta | 5,0 km | 936 | 27 % | 6 | −336 m |
 | Kotor, Črna gora | `kotor` | odprta cesta | 5,0 km | 899 | 31 % | 13 | +253 m |
@@ -28,11 +27,11 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
+| Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Espinazo del Diablo, Mehika | `espinazo` | odprta cesta | 5,0 km | 599 | 40 % | 1 | −50 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
 | Gudauri, Gruzija | `gudauri` | odprta cesta | 4,8 km | 587 | 39 % | 5 | +260 m |
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |
-| Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
@@ -49,9 +48,8 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Sepang, Malezija | `sepang` | krog | 5,5 km | 304 | 63 % | 4 | 21 m razpona |
 | Pembrey, Wales | `pembrey` | krog | 2,3 km | 297 | 64 % | 1 | ravno |
 | Lombok, Indonezija | `lombok` | krog | 4,3 km | 297 | 62 % | 1 | ravno |
-| Suzuka, Japonska | `suzuka` | krog | 5,8 km | 286 | 62 % | 1 | 41 m razpona |
-| Tuzla, Turčija | `tuzla` | krog | 5,3 km | 281 | 69 % | 1 | 40 m razpona |
 | Killar, Indija | `killar` | odprta cesta | 4,4 km | 285 | 65 % | 1 | +10 m |
+| Tuzla, Turčija | `tuzla` | krog | 5,3 km | 281 | 69 % | 1 | 40 m razpona |
 | Montréal, Kanada | `montreal` | krog | 4,4 km | 279 | 75 % | 2 | ravno |
 | Termas de Río Hondo, Argentina | `riohondo` | krog | 4,8 km | 275 | 63 % | 3 | ravno |
 | Lusail, Katar | `lusail` | krog | 5,4 km | 275 | 68 % | 3 | ravno |
