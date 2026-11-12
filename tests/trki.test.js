@@ -251,6 +251,58 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
       `leaving at ${ex.map(x => f(x, 2)).join(' / ')} deg (Simulacija ${['15/120', '30/120', '30/200'].map(k => f(wl[k].s.exit, 2)).join(' / ')}); square: ${slow.map(x => f(x * 100, 1)).join(' / ')} % of the speed left; the fastest turn with the grip lost ${f(w.r.wGl, 2)} rad/s (${w.name})`);
   }
 
+  // the barrier with the car sliding or spinning: on its way at th deg to the barrier, its nose hb deg off the road (not on its way), turning at
+  // w0 rad/s, its nearest corner 0.3 m from the barrier. Per step with a touch, by the hit the barrier records: a knock (faster than
+  // Realistična's threshold V0: its own rule, Core wallR) or leaning on it (slower: Simulacija's rule in every version), and the change of the
+  // kinetic energy with the turning in each; a touch without a push (a hit recorded, the speeds and the turning as before it); the damage the
+  // hits stand for (wallCollide: 2.8 % a m/s over 2.5); the state right after the first touch (st1) and at the end (st), seen from the barrier
+  const V0 = 1.5;
+  function skid(tx, th, hb, kmh, w0, side, secs) {
+    return test(tx, () => {
+      const c = mkRace().player, B = side > 0 ? OV.br[I0] : OV.bl[I0], F = { tx: OV.tx[I0], tz: OV.tz[I0], mx: side * OV.nx[I0], mz: side * OV.nz[I0] }, v = kmh / 3.6, a = OV.hd[I0] + side * th / D;
+      const d0 = side * (B - 0.3 - Math.max(...c.corners.map(p => p[0] * Math.sin(hb / D) + side * p[1] * Math.cos(hb / D))));
+      placeCar(c, OV.px[I0] + OV.nx[I0] * d0, OV.pz[I0] + OV.nz[I0] * d0, OV.hd[I0] + side * hb / D, v); c.vx = Math.cos(a) * v; c.vz = Math.sin(a) * v; c.w = side * w0;
+      const m = c.m.mass, I = c.I, E = () => 0.5 * (m * (c.vx * c.vx + c.vz * c.vz) + I * c.w * c.w), vt = () => c.vx * F.tx + c.vz * F.tz, vn = () => c.vx * F.mx + c.vz * F.mz;
+      let n = 0, nK = 0, nL = 0, dEK = -Infinity, dEL = -Infinity, deep = Infinity, nan = false, wGl = 0, ni = 0, niHit = 0, dmg = 0, dmgNi = 0, st1 = null;
+      for (let k = 1; k <= Math.round(secs / DT); k++) {
+        c.steer += C.clamp(c.inSteer - c.steer, -6 * DT, 6 * DT); c.step(DT, OV);
+        const u = [c.vx, c.vz, c.w], e0 = E(); c.wallX = NaN; c.hitWall = 0;
+        C.wallCollide(c, OV, true); OV.query(c.x, c.z, c.q.i, c.q);
+        if (!Number.isNaN(c.wallX)) { const h = c.hitWall, dE = E() - e0, d = Math.max(0, h - 2.5) * 0.028; n++; dmg += d; deep = Math.min(deep, room(c, side));
+          if (h > V0) { nK++; dEK = Math.max(dEK, dE); } else if (h > 0) { nL++; dEL = Math.max(dEL, dE); }
+          if (h > 0 && c.vx === u[0] && c.vz === u[1] && c.w === u[2]) { ni++; niHit = Math.max(niHit, h); dmgNi += d; }
+          if (!st1) st1 = [side * c.w, vt(), vn()]; }
+        if (!fin(c)) nan = true; if (c.xgl > 0) wGl = Math.max(wGl, Math.abs(c.w));
+        c.hitWall = 0; c.hitCar = 0; c.fxWall = 0;
+      }
+      const q = OV.query(c.x, c.z, c.q.i, _cq);
+      return { n, nK, nL, dEK, dEL, deep, nan, wGl, ni, niHit, dmg, dmgNi, st1, st: [q.s, side * q.d, side * wrap(c.h - OV.hd[q.i]), vt(), vn(), side * c.w, c.steer, c.xgl || 0, Math.abs(c.csKc || 0)] };
+    });
+  }
+  const SK = [];
+  for (const th of [20, 30, 45, 60, 90]) for (const off of [-60, -30, -10, 10, 30, 60]) for (const kmh of [100, 200]) for (const w0 of [0, 2, -2, 4, -4]) {
+    const g = (tx, side) => skid(tx, th, th + off, kmh, w0, side, 3), d1 = (p, q) => p.st1 && q.st1 ? Math.max(...p.st1.map((y, i) => Math.abs(y - q.st1[i]))) : NaN;
+    const x = { name: `${th}/${th + off}/${kmh}/${w0}`, w0, r: g(REAL, 1), l: g(REAL, -1), s: g(SIM, 1), sl: g(SIM, -1) };
+    x.m1 = d1(x.r, x.l); x.m = dev(x.r.st, x.l.st); x.sm = dev(x.s.st, x.sl.st); SK.push(x);
+  }
+  {
+    const two = (x, fn) => Math.max(fn(x.r), fn(x.l)), worst = (fn, L) => (L || SK).reduce((a, b) => (fn(b) > fn(a) ? b : a)), sum = (fn) => SK.reduce((a, b) => a + fn(b), 0), both = (fn) => SK.every(x => fn(x.r) && fn(x.l));
+    const k = worst(x => two(x, y => y.dEK)), e = worst(x => two(x, y => y.dEL)), es = worst(x => Math.max(x.s.dEK, x.s.dEL)), d = worst(x => two(x, y => -y.deep));
+    ok('Realistična, the barrier, sliding and spinning, conservation (300 scenes at both barriers: on its way at 20 to 90 deg to the barrier, the nose 10 to 60 deg off its way, 100 and 200 km/h, turning at 0, 2 and 4 rad/s either way): nothing NaN, no corner left inside, a knock (a touch faster than 1.5 m/s: its own rule) never adds kinetic energy with the turning; leaning on the barrier (slower: Simulacija\'s rule) adds at most 7 kJ a touch',
+      both(y => y.n > 0 && !y.nan && y.deep >= -1e-6 && y.dEK <= 1e-6 && y.dEL <= 7000) && sum(x => x.r.nK) >= 1000,
+      `${sum(x => x.r.nK + x.l.nK)} knocks: at most ${f(two(k, y => y.dEK), 6)} J (${k.name}); ${sum(x => x.r.nL + x.l.nL)} leaning touches: at most ${f(two(e, y => y.dEL) / 1000, 2)} kJ (${e.name}; Simulacija at a touch ${f(Math.max(es.s.dEK, es.s.dEL) / 1000, 2)} kJ, ${es.name}); the deepest corner ${(-two(d, y => -y.deep)).toExponential(1)} m`);
+    const w = worst(x => two(x, y => y.wGl)), cap = SK.filter(x => two(x, y => y.wGl) >= 9 - 1e-9), cap0 = cap.filter(x => !x.w0);
+    ok('Realistična, the barrier, sliding and spinning, limits: with the grip lost the car never turns faster than 9 rad/s, also when a corner then leans on the barrier, and the limit is at work (reached in at least 60 of the scenes, 10 of them without turning at the start)',
+      both(y => y.wGl <= 9 + 1e-9) && cap.length >= 60 && cap0.length >= 10, `the fastest ${f(two(w, y => y.wGl), 6)} rad/s (${w.name}); at the limit in ${cap.length} scenes, ${cap0.length} of them without turning at the start`);
+    const off = (fn, L) => L.filter(x => !(fn(x) <= 1e-9)), S0 = SK.filter(x => !x.w0), ST = SK.filter(x => x.w0), o1 = off(x => x.m1, ST), oE = off(x => x.m, ST), top = (fn, L) => fn(worst(fn, L));
+    ok('Realistična, the barrier, sliding and spinning, symmetry: the left barrier gives the mirror image of the right one to 1e-9 right after the first touch and at the end in every scene without turning at the start (60); turning at the start (240) in all but at most 2 right after the first touch and 8 at the end (two corners at the barrier in one step are handled one after the other, and the mirror image has them in the other order)',
+      !off(x => x.m1, S0).length && !off(x => x.m, S0).length && o1.length <= 2 && oE.length <= 8,
+      `without turning off by at most ${top(x => x.m1, S0).toExponential(1)} / ${top(x => x.m, S0).toExponential(1)}; turning: ${o1.length} / ${oE.length} of ${ST.length} off (at most ${f(top(x => x.m1, ST), 3)} / ${f(top(x => x.m, ST), 3)}: ${worst(x => x.m, ST).name}); Simulacija at the end: ${off(x => x.sm, SK).length} of ${SK.length} off (${off(x => x.sm, S0).length} without turning)`);
+    const N = sum(x => x.r.n + x.l.n), NI = sum(x => x.r.ni + x.l.ni), DM = sum(x => x.r.dmg + x.l.dmg), DN = sum(x => x.r.dmgNi + x.l.dmgNi), h = worst(x => two(x, y => y.niHit)), NS = sum(x => x.s.ni + x.sl.ni);
+    ok('Realistična, the barrier, the touch without a push (a corner swings into the barrier faster than 1.5 m/s while the middle of its patch does not close on it: the hit is recorded, nothing pushes the car; docs/trki-realizem.md, »Robni primer brez sunka«): under 2 % of the steps with a touch and under 2 % of the damage the hits stand for; none in Simulacija',
+      NI / N < 0.02 && DN / DM < 0.02 && !NS, `${NI} of ${N} steps with a touch (${f(100 * NI / N)} %), ${f(100 * DN / DM)} % of the damage; the fastest ${f(two(h, y => y.niHit))} m/s (${h.name}); Simulacija ${NS} of ${sum(x => x.s.n + x.sl.n)}`);
+  }
+
   // a thing by the road (Race.setProps: cone, tyre, bale, bstack, lamp) in the car's way, off m off its line; beside it the same run without the
   // thing (the twin). loss: the speed lost to the twin at the last touch, % of the speed before the first. o.pre(c): before the first step; o.id: the model
   function prop(tx, kind, kmh, off, secs, o) {

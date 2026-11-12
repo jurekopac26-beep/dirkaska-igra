@@ -3987,6 +3987,7 @@ const Core = (function () {
         Jt = clamp(Jt, -mu * J, mu * J);
         c.vx += Jt * tx / c.m.mass; c.vz += Jt * tz / c.m.mass;
         c.w += rt * Jt / c.I * wy;
+        if (krOn(c) && c.xgl > 0) c.w = clamp(c.w, -KC.wMax, KC.wMax);   // (Realistična, spinning on: at most wMax also when it leans on the barrier)
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     }
