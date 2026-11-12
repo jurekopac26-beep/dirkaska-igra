@@ -117,6 +117,7 @@ const RELATED = [
   [/^js\/render(-vecer)?\.js$/, ['browser/atmos.test.mjs', 'browser/vecer.test.mjs']],   // (the time of day's lights: the evening's, js/render-vecer.js)
   [/^js\/(menu|menu-data)\.js$|^css\/menu\.css$/, ['browser/menu.test.mjs', 'browser/darktip.test.mjs']],
   [/^temni-nacin\.html$/, ['browser/darktip.test.mjs']],
+  [/^js\/sence\.js$/, ['browser/menu.test.mjs', 'browser/darktip.test.mjs', 'browser/hud.test.mjs']],
   [/^js\/net\.js$/, ['net-core.test.js', 'browser/online.test.mjs']],
   [/^js\/sfx\.js$/, ['browser/sound.test.mjs', 'browser/okolje.test.mjs']],
   [/^js\/world-zivali\.js$|^tools\/zvoki-pasovi\.mjs$|^js\/comm\.js$/, ['browser/okolje.test.mjs']],   // (the sounds by the road: their zones from the woods and the herds, js/sfx-okolje.js; the commentator cuts the announcer)
