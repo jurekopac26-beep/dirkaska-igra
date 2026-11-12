@@ -572,7 +572,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   // ---- TAIFUN LM (MODELS 'lm'): render.js lmGeometry's pieces (look units = metres): the canopy a closed loft (its glass the stock's); the tub,
   // the pontoons, floor, diffuser, fences, gearbox and the tail's band in 'body'; the nose 'hood', the splitter 'bumperF', the rear wing on its
   // swan necks with the DRS flap 'bumperR', the engine cover with the fin 'trunk', the louvres 'fenderL' / 'fenderR', the mirrors on stalks down
-  // to the pontoons; one track for both axles (hw 0.825: the stock front's 5 mm in, the rear's 5 mm out; docs/deli.md)
+  // to the pontoons; the engine under the cover, the front's bay under the nose and the cockpit under the canopy body's inner (avti na raven
+  // KOLIBRIJA: they stay when the cover or the nose comes off); one track for both axles (hw 0.825: the stock front's 5 mm in, the rear's 5 mm
+  // out; docs/deli.md)
   const LSECS = [[-1.05, 0.40, 0.52, 0.72, 0.28, 0.81, 0.06, 'r', 0.03], [-0.45, 0.475, 0.52, 0.84, 0.36, 0.99, 0.06, 'r', 0.03],
     [0.22, 0.485, 0.52, 0.86, 0.38, 1.01, 0.06, 'gf', 0.03], [0.8, 0.475, 0.52, 0.76, 0.36, 0.91, 0.06, 'gf', 0.03],
     [1.2, 0.4375, 0.5033, 0.5933, 0.36, 0.6383, 0.0233, 'b', 0.0258], [1.28, 0.43, 0.5, 0.56, 0.36, 0.584, 0.016, 'b', 0.025]];   // (1.2: the windscreen's painted foot)
@@ -585,7 +587,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     return {
       body: { len: 4.95, wid: 2.0, wz: 0.175, secs: LSECS, roofY: 1.07, engRear: true, engine: [-1.35, 0.78], crush: { x0: 0, x1: 0, z: 0 },
         eye: { x: 0.3, y: 0.85 }, decalX: -0.12, decalY: 1.06, decalS: 0.62, lamps: [[2.49, 0.3, 0.7], [-2.47, 0.615, 0.62]] },
-      wheels: { style: 'slick', w: 0.3, wR: 0.34, arch: false, rim: [0.1, 0.1, 0.11], tyre: [0.075, 0.075, 0.08] },
+      hi: true, budget: { inner: 1400 }, budgetHi: { inner: 1750 },
+      wheels: { style: 'slick', w: 0.3, wR: 0.34, arch: false, rim: [0.1, 0.1, 0.11], tyre: [0.075, 0.075, 0.08], seg: 32, segHi: 64 },
       regions: 'none',
       build(K) {
         const P = K.paint, S = K.strp, KB = K.black, KD = K.dark;
@@ -606,11 +609,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         }, { noCrush: true });
         K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(2.461, 0.2925, sd * 0.68, 0.03, { shape: 'rect', w: 0.34, h: 0.045, ring: null, col: [0.95, 0.97, 1.0], host: 'body' }); });
         K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(-2.444, 0.615, sd * 0.425, 0.85, 0.04, { d: 0.02 }); });   // (x -2.462..-2.442 as stock)
-        K.part('hood', () => {   // the nose (its stripe the stock's), the front's dark bay under it
+        K.part('hood', () => {   // the nose (its stripe the stock's)
           K.skin([fRing(1.3, 0.1, 0.46, 0.34, 0.5, 0.545, 0.44, 0.7), fRing(1.8, 0.1, 0.4, 0.3, 0.44, 0.465, 0.38, 0.7), fRing(2.2, 0.1, 0.34, 0.24, 0.38, 0.37, 0.32, 0.7),
             fRing(2.52, 0.1, 0.22, 0.18, 0.25, 0.26, 0.2, 0.7)], (k, e) => e === 9 ? KB : k === 2 ? S : P, FK2, S);
-          K.inner(() => K.box(1.5, 0.148, 0, 0.5, 0.2, 0.44, 0, KD));
         });
+        K.part('body', () => K.box(1.5, 0.148, 0, 0.5, 0.2, 0.44, 0, KD), { inner: true });   // the front's dark bay under the nose (the chip on it: it stays when the nose comes off)
         K.part('bumperF', () => {   // the splitter, the dive planes and their end plates
           K.wingPlank(2.56, 0.06, 2.04, 0.072, 0.024, -0.97, 0.97, KB);
           for (const sd of [-1, 1]) { K.wingPlank(2.40, 0.30, 2.18, 0.34, 0.014, Math.min(sd * 0.93, sd * 1.06), Math.max(sd * 0.93, sd * 1.06), P);
@@ -621,13 +624,37 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const sd of [-1, 1]) { K.endplate([[-1.96, 0.7], [-2.52, 0.7], [-2.52, 1.16], [-2.02, 1.1]], sd * 0.92, 0.02, P);
             K.bar([-2.18, 0.6, sd * 0.24], [-2.16, 0.94, sd * 0.24], 0.02, KB, { n: 4 }); K.bar([-2.16, 0.94, sd * 0.24], [-2.22, 1.035, sd * 0.24], 0.0175, KB, { n: 4 }); }
         });
-        K.part('trunk', () => {   // the engine cover, the fin; the engine, its intake, the gearbox's case and the exhaust under the cover
+        K.part('trunk', () => {   // the engine cover, the fin (the engine under it: body's inner, it stays when the cover comes off)
           K.skin([fRing(-1.0, 0.5, 0.42, 0.72, 0.38, 0.875, 0.28, 0.7), fRing(-1.6, 0.5, 0.38, 0.66, 0.34, 0.785, 0.24, 0.7), fRing(-2.1, 0.5, 0.34, 0.6, 0.3, 0.705, 0.2, 0.7),
             fRing(-2.4, 0.48, 0.3, 0.56, 0.26, 0.645, 0.16, 0.7)], (k, e) => e === 9 ? KB : P, null, FK2);
           K.endplate([[-0.5, 1.03], [-2.26, 0.99], [-2.26, 0.66], [-1.0, 0.86]], 0, 0.018, S);
-          K.inner(() => { K.box(-1.5, 0.52, 0, 0.8, 0.16, 0.36, 0, [0.4, 0.41, 0.43]); K.box(-1.3, 0.68, 0, 0.36, 0.08, 0.2, 0, [0.16, 0.16, 0.18]);
-            K.box(-1.95, 0.55, 0, 0.26, 0.12, 0.18, 0, [0.62, 0.5, 0.36]); K.bar([-1.7, 0.6, 0], [-2.3, 0.58, 0], 0.03, [0.62, 0.6, 0.56], { n: 6 }); });
         });
+        K.part('body', () => {   // the engine (over the cover's floor, under its crown and the fin): the tray, the crankcase, the V's banks and cam covers, the plenum, the bellhousing, the tailpipe
+          const BL = [0.4, 0.41, 0.43], CAM = [0.16, 0.16, 0.18], BH = [0.62, 0.5, 0.36];
+          const prism = (x0, x1, ring, col) => K.skin([ring.map(([y, z]) => [x0, y, z]), ring.map(([y, z]) => [x1, y, z])], col, col, col);
+          K.plate([[-1.02, 0.508, -0.33], [-1.02, 0.508, 0.33], [-2.08, 0.508, 0.27], [-2.08, 0.508, -0.27]], 0.004, KB);
+          K.box(-1.5, 0.508, 0, 0.78, 0.1, 0.36, 0, BL);
+          for (const sd of [-1, 1]) {
+            prism(-1.12, -1.62, [[0.56, sd * 0.03], [0.69, sd * 0.16], [0.747, sd * 0.103], [0.617, sd * -0.027]], BL);   // (a 90 degree V)
+            prism(-1.14, -1.58, [[0.697, sd * 0.153], [0.712, sd * 0.168], [0.755, sd * 0.125], [0.74, sd * 0.11]], CAM); }   // (on the banks' tops)
+          K.skin([[[0.62, -0.06], [0.76, -0.075], [0.79, -0.055], [0.79, 0.055], [0.76, 0.075], [0.62, 0.06]].map(([y, z]) => [-1.14, y, z]),
+            [[0.6, -0.05], [0.71, -0.06], [0.735, -0.045], [0.735, 0.045], [0.71, 0.06], [0.6, 0.05]].map(([y, z]) => [-1.55, y, z])], CAM, CAM, CAM);
+          K.skin([[[0.51, -0.12], [0.53, -0.15], [0.63, -0.15], [0.66, -0.11], [0.66, 0.11], [0.63, 0.15], [0.53, 0.15], [0.51, 0.12]].map(([y, z]) => [-1.88, y, z]),
+            [[0.52, -0.09], [0.54, -0.11], [0.62, -0.11], [0.645, -0.08], [0.645, 0.08], [0.62, 0.11], [0.54, 0.11], [0.52, 0.09]].map(([y, z]) => [-2.2, y, z])], BH, BH, BH);
+          K.bar([-1.7, 0.6, 0], [-2.3, 0.58, 0], 0.03, [0.62, 0.6, 0.56], { n: 6 });
+        }, { inner: true });
+        {   // the cockpit (avti na raven KOLIBRIJA; body's inner, seen once a part is off: the canopy's glass opaque): the carbon floor over the tub,
+            // the black well the driver sits down into, the bucket with its harness leaning far back, the low dash with its lit display, the
+            // wheel; in Visoki the driver, deep in the tub (his chest, arms and helmet over the floor)
+          const C = K.cab, SZ = -0.18, RED = [0.75, 0.1, 0.08], fy = (x) => 0.603 - Math.max(0, x + 0.4) * 0.02 / 1.3;   // (3 mm over the tub's top)
+          for (const [x0, x1] of [[-0.99, -0.4], [-0.4, 0.85]]) C.face([[x0, fy(x0), -0.35], [x1, fy(x1), -0.35], [x1, fy(x1), 0.35], [x0, fy(x0), 0.35]], FK2, [0, 1, 0]);
+          C.face([[0.16, fy(0.16) + 0.002, SZ - 0.17], [0.66, fy(0.66) + 0.002, SZ - 0.17], [0.66, fy(0.66) + 0.002, SZ + 0.24], [0.16, fy(0.16) + 0.002, SZ + 0.24]], C.BLK, [0, 1, 0]);
+          C.seat(0.405, 0.38, SZ, { w: 0.44, top: 0.58, lean: 0.5, shell: true, belt: 'harness', col: [0.08, 0.08, 0.085], col2: [0.15, 0.15, 0.16], strap: RED });
+          C.dash({ x: 0.68, y: 0.76, d: 0.18, w: 0.44, style: 'none', col: K.lining, col2: [0.1, 0.1, 0.11] });
+          C.face([[0.7113, 0.6893, -0.08], [0.7113, 0.6893, 0.08], [0.6833, 0.6333, 0.08], [0.6833, 0.6333, -0.08]], [0.07, 0.16, 0.2], [-0.894, 0.447, 0]);   // (the display, lit)
+          C.steer({ c: [0.55, 0.74, SZ], ax: [0.9, -0.436], r: 0.13, rr: 0.014, to: [0.71, 0.66, SZ] });
+          if (K.hi) K.driver(0.27, 0.87, SZ, { inner: true, r: 0.12, lean: 0.46, hands: [0.55, 0.76, 0.12], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
+        }
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'fenderL' : 'fenderR', () => {   // the louvres over the front wheels
           K.box(1.55, 0.868, sd * 0.72, 0.42, 0.012, 0.26, 0, KB);
           for (let i = 0; i < 5; i++) K.box(1.39 + i * 0.08, 0.872, sd * 0.72, 0.022, 0.02, 0.24, 0, [0.22, 0.22, 0.24]);
