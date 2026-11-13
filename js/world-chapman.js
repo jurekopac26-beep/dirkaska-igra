@@ -216,6 +216,8 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     stubExcl(exclPush);   // (nothing grows or stands on the side roads)
+    for (const S of T.stubs || []) { const H = S.hill, ds = S.Lend / Math.max(1, S.n - 1); if (H) for (let si = 0; si < 2; si++) for (let j = 0; j < S.n; j++) if (H.on[si][j]) {   // (nor on a hill beside one, Track.hill: up to 0.6 m past its soft limit, where the cars drive)
+      const sd = si ? 1 : -1, l = H.lim[si][j], u = sd * (T.stubHw(S, j * ds, sd) + S.lim + l / 2); exclPush(S.x[j] - S.tz[j] * u, S.z[j] + S.tx[j] * u, l / 2 + 1.1); } }
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const v of views) exclPush(v.x, v.z, v.r + 2);
     const sea = (x, z) => chGround(x, z) < seaY + 0.3;
@@ -290,9 +292,20 @@
       if (onBr[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
       const ms = stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return chGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
+      const HL = T.hill && T.hill.on[side > 0 ? 1 : 0][i] ? T.hill : null;   // (a hill behind the barrier line, Track.hill: no ditch, the ground up the hill's foot as the cars find it)
+      if (HL) { const Y = HL.y[side > 0 ? 1 : 0], D = HL.d, b = i * HL.k; return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.05), -0.02), [bar + D[0], Y[b]], [bar + D[1], Y[b + 1]], [bar + D[2], Y[b + 2]]]; }   // (the verge to 2.1 m past the line; the ground's mesh on up the hill)
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    // the hills behind the barrier line (Track.hill; the user, 11. 11. 2026: no fence and no ditch where the ground rises behind it, the cars up onto
+    // the hill's foot): hillOut, how far past the line a car gets there (its soft limit, Track.hill.lim: the most within 4 m); hillIn, a point (vrNear) nearer the road than that and
+    // 0.6 m (no wall, post, sign, plant, stone or spectator there: the cars would drive through it)
+    const hillOut = (i, si) => { if (!T.hill || !T.hill.on[si][i]) return 0; let m = 0; for (let k = Math.max(0, i - 2); k <= Math.min(N - 1, i + 2); k++) m = Math.max(m, T.hill.lim[si][k]); return m; };
+    const hillIn = (nn) => !!(T.hill && nn.i >= 0 && T.hill.on[nn.lat > 0 ? 1 : 0][nn.i] && nn.dd < hillOut(nn.i, nn.lat > 0 ? 1 : 0) + 0.6);
+    // (tools/chapman-hribi.mjs reads the ground behind the barrier line from here to write def.hills: g, the ground's height above the road o m out
+    // from the centre line; skip, where no hill may be: the bridge, the side roads' mouths; nets, the rockfall nets' runs [side, i, j, off], filled below)
+    out.hillProbe = { g: (i, side, o) => { const q = side * o; return chGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - T.hy[i]; },
+      skip: (i, side) => !!(onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || stubVerge(SB, i, side, w + sw, side > 0 ? T.br[i] : T.bl[i])), nets: [] };
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k * 0.99, k * 0.97]; };
@@ -342,7 +355,7 @@
     const scen = new Chunks(160), fac = new Chunks(240, true), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const shirts = [[0.95, 0.95, 0.95], [0.12, 0.4, 0.26], [0.98, 0.76, 0.12], [0.12, 0.2, 0.5], [0.84, 0.2, 0.16], [0.4, 0.62, 0.86], [0.92, 0.5, 0.2], [0.14, 0.14, 0.16]];
-    const CR = crowdCtx({ gH: chGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => sea(x, z), shirts }), crSoft = new Set();
+    const CR = crowdCtx({ gH: chGround, near: (x, z) => { const nn = vrNear(x, z); return hillIn(nn) ? 0 : nn.dd; }, excluded, maxSlope: 0.6, water: (x, z) => sea(x, z), shirts }), crSoft = new Set();
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (as Los Caracoles')
       const ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = W / 2 * f;
@@ -400,7 +413,7 @@
       const eX = T.px[iE] + T.tx[iE] * 1.2, eZ = T.pz[iE] + T.tz[iE] * 1.2;
       for (let o = -T.bl[iE]; o <= T.br[iE]; o += 2.05) { const bx = eX + T.nx[iE] * o, bz = eZ + T.nz[iE] * o; box(scen.get(bx, bz), bx, T.hy[iE] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[iE], [0.78, 0.77, 0.74], [0.86, 0.85, 0.82]); }
       const nm = (n) => T.names.find(q => q.n.startsWith(n));   // the brown place boards and the green one at the end of the road
-      for (const [n, k, o] of [['Hout Bay', 0, 30], ['East Fort', 1, -30], ['Razgledišče · The Sentinel', 3, -40]]) { const q = nm(n); if (!q) continue; const [bx, bz, bi] = onSide(sStart + q.d + o, -1, 1.4); if (excluded(bx, bz)) continue;
+      for (const [n, k, o] of [['Hout Bay', 0, 30], ['East Fort', 1, -30], ['Razgledišče · The Sentinel', 3, -40]]) { const q = nm(n); if (!q) continue; const [bx, bz, bi] = onSide(sStart + q.d + o, -1, Math.max(1.4, hillOut(T.idx(sStart + q.d + o), 0) + 0.5)); if (excluded(bx, bz)) continue;   // (on a hill past its soft limit, as the signs)
         const by = chGround(bx, bz), [bv0, bv1, bu0, bu1] = board(k); box(scen.get(bx, bz), bx, by - 0.2, bz, 0.1, 2.6, 0.1, T.hd[bi], [0.6, 0.61, 0.63]); bannerQ(bx, by + 1.7, bz, -T.tx[bi], -T.tz[bi], 3.2, 0.8, bv0, bv1, bu0, bu1, ban2); exclPush(bx, bz, 2); }
       { const [bx, bz, bi] = onSide(T.len - 60, -1, 1.4), by = chGround(bx, bz), [bv0, bv1, bu0, bu1] = board(2); box(scen.get(bx, bz), bx, by - 0.2, bz, 0.1, 2.6, 0.1, T.hd[bi], [0.6, 0.61, 0.63]); bannerQ(bx, by + 1.7, bz, -T.tx[bi], -T.tz[bi], 3.2, 0.8, bv0, bv1, bu0, bu1, ban2); exclPush(bx, bz, 2); }
     }
@@ -459,6 +472,7 @@
         const nd = need[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || onBr[i] || vAt[i] === (side > 0 ? 2 : 1)) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
+        if (T.hill) for (let i = 0; i < N; i++) if (T.hill.on[side > 0 ? 1 : 0][i]) nd[i] = 0;   // (none on a hill: Track.hill)
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 5) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
         stubRails(nd, side);   // (open across the side roads' mouths)
         nWall += nd.reduce((a, b) => a + b, 0);
@@ -476,17 +490,17 @@
         }
       }
       const kp = caProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
-      for (const sp of mkPosts) { if (kp.has(sp)) continue;
+      for (const sp of mkPosts) { if (kp.has(sp) || hillOut(sp[0], sp[1] > 0 ? 1 : 0)) continue;   // (the knockable ones on the verge; the fixed ones past the barrier line, none on a hill: the cars drive there)
         const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]);
         box(g, p[0], p[1] - 0.2, p[2], 0.13, 1.2, 0.13, T.hd[i], [0.94, 0.94, 0.92], null, true); box(g, p[0], p[1] + 0.72, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.1, 0.1, 0.1], null, true);
       }
-      const sign = (s, side, cell, face) => { const [px, pz, ii] = onSide(s, side, 0.9); if (excluded(px, pz)) return; const py = chGround(px, pz), u0 = cell / 8;   // a sign on a post beside the road (atlas row 0), facing the cars coming (face 1: up the road)
+      const sign = (s, side, cell, face) => { const [px, pz, ii] = onSide(s, side, Math.max(0.9, hillOut(T.idx(s), side > 0 ? 1 : 0) + 0.5)); if (excluded(px, pz)) return; const py = chGround(px, pz), u0 = cell / 8;   // a sign on a post beside the road (atlas row 0), facing the cars coming (face 1: up the road)
         box(scen.get(px, pz), px, py - 0.2, pz, 0.08, 2.2, 0.08, T.hd[ii], [0.6, 0.61, 0.63]); bannerQ(px, py + 1.3, pz, -T.tx[ii] * face, -T.tz[ii] * face, 0.8, 0.8, 7 / 8, 1, u0, u0 + 1 / 8, ban2); exclPush(px, pz, 1.2); CR.avoid(px, pz, 0.6); };
       for (const d of [70, 1240, 2330, 3480]) { sign(sStart + d, -1, 3, 1); sign(sStart + d + 25, 1, 3, -1); }   // the speed limit, both ways (on the left of the road: they drive on the left)
       for (const v of views) sign(v.i * T.ds - 70, -1, 4, 1);   // a view point ahead
       for (const c of T.corners) { if (c.sev < 3) continue;   // chevrons on the outside of the sharp bends, facing the cars coming in (both ways)
         const out_ = -c.dir, sm = (c.i0 + c.i1) / 2 * T.ds;
-        for (const o of [-12, 0, 12]) { const [cx, cz, ci] = onSide(sm + o, out_, 0.7); if (excluded(cx, cz)) continue;
+        for (const o of [-12, 0, 12]) { const [cx, cz, ci] = onSide(sm + o, out_, Math.max(0.7, hillOut(T.idx(sm + o), out_ > 0 ? 1 : 0) + 0.5)); if (excluded(cx, cz)) continue;
           const cy = chGround(cx, cz), g = scen.get(cx, cz), cell = c.dir > 0 ? 0 : 1, u0 = cell / 8;
           box(g, cx, cy - 0.2, cz, 0.08, 1.5, 0.08, T.hd[ci], [0.6, 0.61, 0.63]);
           bannerQ(cx, cy + 0.75, cz, -T.tx[ci], -T.tz[ci], 0.7, 0.7, 7 / 8, 1, u0, u0 + 1 / 8, ban2); CR.avoid(cx, cz, 0.6); } }
@@ -506,13 +520,14 @@
         for (let i = 0; i < N; i++) if (i < i0 || i > i1 || onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || (T.gap && (T.gap[side > 0 ? 1 : 0][Math.max(0, i - 3)] || T.gap[side > 0 ? 1 : 0][Math.min(N - 1, i + 3)]))) nd[i] = 0;   // (none across a side road)
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++;
           if ((j - i) * T.ds >= 40) {
-            const off = 3 + 1.5 * rpHash(i, 81), Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
+            const off = 3 + 1.5 * rpHash(i, 81); out.hillProbe.nets.push([side, i, j, off]);   // (the cars' soft limit on a hill stops short of it: tools/chapman-hribi.mjs)
+            const Qn = (k, y) => { const o = side * (bar[k] + off); const x = T.px[k] + T.nx[k] * o, z = T.pz[k] + T.nz[k] * o; return [x, chGround(x, z) + y, z]; };
             for (let k = i; k < j - 1; k++) { const a = Qn(k, 0.1), b = Qn(k + 1, 0.1), c = Qn(k + 1, 4.3), d = Qn(k, 4.3); c[0] -= T.nx[k + 1] * side * 0.6; c[2] -= T.nz[k + 1] * side * 0.6; d[0] -= T.nx[k] * side * 0.6; d[2] -= T.nz[k] * side * 0.6;
               ng.quadUp(a, b, c, d, [nc, nc, nc, nc], [[0, 0], [1, 0], [1, 1], [0, 1]]); nNet++; }
             for (let k = i; k < j; k += 3) fallen.push([k * T.ds + (rpHash(k, 7) - 0.5) * 4, side]);   // (stones come down through the nets: on the shoulder below)
             for (let k = i; k < j; k += 4) { const a = Qn(k, -0.2), g = scen.get(a[0], a[2]); box(g, a[0] - T.nx[k] * side * 0.3, a[1], a[2] - T.nz[k] * side * 0.3, 0.16, 4.7, 0.16, T.hd[k], steel);
               const up = Qn(k, 0); exclPush(up[0], up[2], 1.4); }
-            const [wx, wz, wi] = onSide(i * T.ds - 30, -side, 0.9); if (!excluded(wx, wz)) { const wy = chGround(wx, wz); box(scen.get(wx, wz), wx, wy - 0.2, wz, 0.08, 2.2, 0.08, T.hd[wi], [0.6, 0.61, 0.63]); bannerQ(wx, wy + 1.3, wz, -T.tx[wi], -T.tz[wi], 0.9, 0.8, 7 / 8, 1, 2 / 8, 3 / 8, ban2); exclPush(wx, wz, 1.2); }
+            const [wx, wz, wi] = onSide(i * T.ds - 30, -side, Math.max(0.9, hillOut(T.idx(i * T.ds - 30), -side > 0 ? 1 : 0) + 0.5)); if (!excluded(wx, wz)) { const wy = chGround(wx, wz); box(scen.get(wx, wz), wx, wy - 0.2, wz, 0.08, 2.2, 0.08, T.hd[wi], [0.6, 0.61, 0.63]); bannerQ(wx, wy + 1.3, wz, -T.tx[wi], -T.tz[wi], 0.9, 0.8, 7 / 8, 1, 2 / 8, 3 / 8, ban2); exclPush(wx, wz, 1.2); }
           }
           i = j; }
       }
@@ -556,7 +571,7 @@
             kind = r1 < 0.24 ? 0 : r1 < 0.5 + 0.12 * nr ? 1 : r1 < 0.5 + 0.12 * nr + 0.16 * pr ? 2 : r1 < 0.62 + 0.12 * nr + 0.3 * er ? 6 : r1 < 0.7 + 0.12 * nr + 0.25 * pc ? 7 : r1 < 0.76 && A < 120 ? 3 : -1; }
           if (kind < 0) continue;
           if (sl > (kind === 3 ? 1.2 : 0.95)) continue;
-          const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
+          const nn = vrNear(x, z); if (nn.i >= 0 && (nn.dd < 1.6 || hillIn(nn))) continue;
           if (excluded(x, z)) continue;
           const tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.88 + r4 * 0.18];
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.5 + r4 * 0.5, tint);
@@ -597,7 +612,7 @@
       const RS = rng(3047), maxS = Math.round(14000 * dens); let nS = 0;
       edge: for (let s = 12; s < T.len - 12; s += 1.4 / dens) for (const side of [-1, 1]) {
         const o = 1.7 + Math.pow(RS(), 2) * 30, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
-        if (vrNear(x, z).dd < 1.2 || excluded(x, z) || sea(x, z) || chGround(x, z) + base < 4) continue;
+        const nv = vrNear(x, z); if (nv.dd < 1.2 || hillIn(nv) || excluded(x, z) || sea(x, z) || chGround(x, z) + base < 4) continue;
         const y0 = chGround(x, z), sl = chSlope(x, z); if (sl > 1.2 || (vrLC(x, z) === 1 && r1 < 0.5)) continue;
         const k = 0.84 + r3 * 0.28, sc = 0.8 + r1 * 1.2 - 0.008 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
         if (++nS >= maxS) break edge;

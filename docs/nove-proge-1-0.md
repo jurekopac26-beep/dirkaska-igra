@@ -1,6 +1,8 @@
-# Nove proge za 1.0: prvih 11 in del 2 (načrt, podatki poti, vrstni red, predaja)
+# Nove proge za 1.0: prvih 11, del 2 in del 3 (načrt, podatki poti, vrstni red, predaja)
 
-Seznam je potrdil uporabnik 7. 11. 2026 ob ~21.20 v pogovoru z Matejem (tabla #382, komentar 6712589851; predlog s podrobnostmi: komentar 6709785463). Pravila za vse nove proge za 1.0 (1–5 km, merili zavitosti in »do 60 m ob cesti«, izletna cona, mestne proge) so v `CLAUDE.md` (»Ena proga na državo«) in v `docs/proge-po-drzavah.md`, razdelek »Nove proge za 1.0«. O seznamu 50 prog (vprašanje `nove-proge-1-0-50`) se uporabnik odloča po delih (`docs/proge-po-drzavah.md`, »Nove proge za 1.0«): 11 prog s čakanja je potrdil 8. 11. 2026 (razdelek »Del 2« spodaj), druge proge na čakanju se do njegove odločitve ne začnejo.
+Seznam je potrdil uporabnik 7. 11. 2026 ob ~21.20 v pogovoru z Matejem (tabla #382, komentar 6712589851; predlog s podrobnostmi: komentar 6709785463). Pravila za vse nove proge za 1.0 (1–5 km, merili zavitosti in »do 60 m ob cesti«, izletna cona, mestne proge) so v `CLAUDE.md` (»Ena proga na državo«) in v `docs/proge-po-drzavah.md`, razdelek »Nove proge za 1.0«. O seznamu prog za 1.0 (cilj 70 od 9. 11. 2026, prej 50; vprašanje `nove-proge-1-0-50`) se uporabnik odloča po delih (`docs/proge-po-drzavah.md`, »Nove proge za 1.0«): 11 prog s čakanja je potrdil 8. 11. 2026 (razdelek »Del 2« spodaj), druge proge na čakanju se do njegove odločitve ne začnejo. Osem dirkališč izven Evrope je potrdil 8. 11. 2026 ob 20.45 (razdelek »Del 3« spodaj).
+
+**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; naprej samo 10 od Hải Vâna do Batangasa (`docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
 
 ## Proge
 
@@ -37,8 +39,8 @@ Seja proge pred korakom `data` preveri:
 
 - Pravila za novo progo so v `CLAUDE.md` (ime, pravna varnost, obremenitev, meni, postopek), v `docs/nove-proge.md` (»Seznam pravil« in »Recept«) in v `docs/proga-livorno.md` (sklopi 2–5: proga v igri, okolica do 60 m, obremenitev, meni in opisi). Ob koncu zaženi še `node tools/proge-pregled.js` in v `docs/proge-pregled.md` dopiši vrstico »Do 60 m ob cesti«.
 - Graditelje ponovno uporabi: prelazi `js/world-prelaz.js` (Bâlea), dirkališča z boksi (Spa, Bathurst), ulične proge (Newcastle). Kar potrebuje samo ena proga, gre pod zastavico, ne v kopijo graditelja.
-- **Vsaka proga ima svojo sejo** (Opus, napor max), svojo vejo `nove-proge/<id>` in osnutek PR, odprt ob začetku dela (naslov »Nova proga: <Kraj, Država>«). Ko so povezani testi lokalno zeleni, se PR vpiše na konec vrste in ostane osnutek.
-- Seja se začne z »Naredi progo `<id>` po docs/nove-proge-1-0.md (partyslo)«. Pri ~300 tisoč žetonih napiše predajo v opis svojega PR (stanje, kaj manjka, kako testirati) in delo nadaljuje nova seja.
+- **Vsaka proga ima svojo sejo** (Opus, ena seja brez več agentov, napor high (do 11. 11. 2026 max; `CLAUDE.md`, Seje, »Model in napor«); odločitev uporabnika 10. 11. 2026 ob ~00.57, `CLAUDE.md`, Seje: »Proge in grafika«; 9. in 10. 11. Fable 5.2 z ultracode), svojo vejo `nove-proge/<id>` in osnutek PR, odprt ob začetku dela (naslov »Nova proga: <Kraj, Država>«). Ko so povezani testi lokalno zeleni, se PR vpiše na konec vrste in ostane osnutek.
+- Seja se začne s stavkom »Naredi progo `<id>` po docs/nove-proge-1-0.md (partyslo)«, brez besede »ultracode«. Pri ~300 tisoč žetonih napiše predajo v opis svojega PR (stanje, kaj manjka, kako testirati) in delo nadaljuje nova seja.
 
 ## Vrstni red in seje
 
@@ -46,7 +48,7 @@ Seja proge pred korakom `data` preveri:
   - V vsaki liniji teče hkrati ena seja. Skupaj sta na računu partyslo največ 2 seji s kodo (`CLAUDE.md`, Seje).
   - Kratki dirkališči sta prvi, da se pot za dirkališča (`raceway`, boksi) uredi na majhni progi. Izoard gre prvi v liniji B, ker ima graditelja prelazov že pripravljenega.
 - **Naslednja seja:** ko je proga končana, njena seja pošlje VSE SEJE 2 (`session_01WbgGzv4TzuAXEWDMgtBJpF`) sporočilo »<id> končana, naslednja v liniji: <id>«. VSE SEJE 2 nato zažene naslednjo sejo, ko je prostor.
-- **Vrsta za `main`:** proge so vedno zadnje. Najprej gre skupina »Proge« (Killar, Hakone, Medvode), za njo nove proge v skupinah po 3–4 (`docs/vrsta.md`).
+- **Vrsta za `main`:** proge so vedno zadnje. Najprej gre skupina »Proge« (Killar, Hakone, Medvode), za njo nove proge v zbirnih vejah (od 9. 11. 2026 vse pripravljene proge računa v enem pull requestu; `docs/vrsta.md`).
 - **Predlog skupin:** N1 = Silkeborg, Kågeröd, Izoard in Sosnová; N2 = Pembrey, Kildare, Sa Calobra in Kotor; N3 = Biķernieki, Zandvoort in London.
   - Vodja skupine je seja, ki konča zadnjo progo skupine. Naredi zbirno vejo `zbirna/nove-proge-N<k>` po pravilih vrste.
   - Skupine lahko spremenita uporabnik in Matej.
@@ -114,3 +116,30 @@ Meritve so iz OSM (8. 11. 2026), točke na 5 m kot `tools/proge-pregled.js`, v s
   - Če se linija dela 1 konča prej, VSE SEJE 2 v njej začne prvo progo dela 2.
 - **Skupine za vrsto** (po predvidenem vrstnem redu dokončanja): **N4** = Dadès, Furka, Santo Antão, Gudauri; **N5** = Ngorongoro, Medeu, Ella, Llogara; **N6** = Espinazo del Diablo, Porto Moniz, Seul. Vodja skupine in zbirna veja `zbirna/nove-proge-N<k>` sta kot v delu 1; skupine lahko spremenita uporabnik in Matej.
 - Seja proge se začne z »Naredi progo `<id>` po docs/nove-proge-1-0.md (partyslo)« in ob koncu pošlje VSE SEJE 2 »<id> končana, naslednja v liniji: <id>«.
+
+## Del 3: osem dirkališč izven Evrope
+
+Uporabnik je 8. 11. 2026 po predstavitvi dirkališč odločil »Ok vse proge so v redu, začni vse« (ob 20.45, prek Mateja, tabla #382, komentar 6726246790; zapis v `docs/proge-po-drzavah.md`, »Nove proge za 1.0«); ob 20.05 je izbral še Novo Zelandijo: »Nova Zelandija ok naredi tudi«, to je Cromwell (Wellington, Crown Range in Coronet Peak odpadejo). Vseh osem je iz držav brez prave proge v igri (Tajska po #379). Pravila in postopek so kot v delih 1 in 2 (»Podatki poti«, »Kako narediti progo«), razen spodaj.
+
+### Proge
+
+Dolžine so iz predstavitve dirkališč. `id` je predlog: seja proge ga spremeni, če je v `js/tracks/` že zaseden.
+
+| Linija | id | Proga | Vrsta, dolžina | Posebnosti |
+|---|---|---|---|---|
+| A12 | `tuzla` | Tuzla, Turčija | dirkališče, 5,3 km | nad 5 km: polna dolžina |
+| A13 | `sepang` | Sepang, Malezija | dirkališče, 5,5 km | nad 5 km: polna dolžina |
+| A14 | `lombok` | Lombok, Indonezija | dirkališče, 4,3 km | |
+| A15 | `buriram` | Buriram, Tajska | dirkališče, 4,6 km | šele ko je #379 na `main` (Tajska ima do takrat še Bang Saen) |
+| A16 | `sakhir` | Sakhir, Bahrajn | dirkališče, 5,4 km | nad 5 km: polna dolžina |
+| A17 | `cromwell` | Cromwell, Nova Zelandija | dirkališče, 4,1 km | zamenja odprto mesto Nove Zelandije; izletno cono najprej preveri seja proge |
+| A18 | `lusail` | Lusail, Katar | dirkališče, 5,4 km | nad 5 km: polna dolžina |
+| A19 | `riohondo` | Termas de Río Hondo, Argentina | dirkališče, 4,8 km | izletno cono najprej preveri seja proge |
+
+- **Dolžina:** proge nad 5 km (Tuzla, Sepang, Sakhir, Lusail) ostanejo v polni dolžini; izjema od pravila 1–5 km, kot pri Suzuki (priporočena možnost predstavitve, potrjena z »vse v redu«).
+- **Pravno:** v igri je samo ime kraja. Uradna imena dirkališč (nekatera vsebujejo podjetje ali sponzorja) in imena ovinkov po osebah ne nastopajo: ovinki so oštevilčeni ali imajo opisno ime, table in napisi so generični (`CLAUDE.md`, »Pravna varnost«).
+- **Izletna cona:** Tuzla, Sepang, Lombok, Buriram, Sakhir in Lusail imajo ograjo do 3 m od roba na 0–12 % kroga (OSM). Cromwell in Termas de Río Hondo nista izmerjena, ker zanju v OSM ni odprte sredinske črte: njuna seja najprej preveri pravilo na satelitskem posnetku iz odprtega vira (nikoli Google) in progo začne šele, če ograja do 3 m od roba ni na več kot pol dolžine (`docs/proge-po-drzavah.md`, »Izletna cona«); sicer jo javi in je ne začne.
+- **Podatki poti:** brez `tools/<id>/config.json`; ta se pripravi pri seji proge (`tools/proga-podatki.py`, kot v delu 1; `highway=raceway` v `DRIVE` doda prva seja dirkališča). Cromwell in Termas de Río Hondo nimata odprte sredinske črte (v OSM je ni): seja proge vzame pot iz drugega odprtega vira (nikoli Google) in vir navede v opisu PR ter v `README.md` (»Zasluge«).
+- **Vrstni red:** linija A po Espinazu (A11), po vrstnem redu tabele; nove proge ostanejo zadnje. Buriram se začne šele, ko je #379 na `main`; do takrat gre linija A mimo njega na naslednjo progo. Ena seja na linijo, na računu največ 2 seji s kodo (kot v delih 1 in 2).
+- **Skupine za vrsto** (predlog; od 9. 11. 2026 gredo vse pripravljene proge računa v en pull request, skupine se lahko združijo): **N7** = Tuzla, Sepang, Lombok, Buriram; **N8** = Sakhir, Cromwell, Lusail, Termas de Río Hondo. Vodja skupine in zbirna veja `zbirna/nove-proge-N<k>` sta kot v delu 1; skupine lahko spremenita uporabnik in Matej.
+- **Kateri račun jih gradi:** predlaga ponedeljkov tedenski načrt (Matej, 9. 11. 2026). Seja proge se začne z »Naredi progo `<id>` po docs/nove-proge-1-0.md (<račun>)«, ima svojo vejo `nove-proge/<id>` in osnutek PR (naslov »Nova proga: <Kraj, Država>«) in ob koncu pošlje VSE SEJE 2 »<id> končana, naslednja v liniji: <id>«.

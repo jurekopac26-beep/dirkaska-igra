@@ -77,8 +77,8 @@ Načrt za 8 novih prog iz predstavitve »60 kratkih prog«: 7 iz prvega seznama 
 2. **Recept raste:** ob koncu seje 3–5 vrstic v Recept (kaj se je obneslo, česa ne, pripombe uporabnika). Recept ostane kratek (do ~1 stran), ni dnevnik.
 3. **Stanje v tem dokumentu:** vsaka seja ob koncu posodobi Stanje in zažene naslednjo z enim stavkom (razdelek Zagon naslednje seje). Koordinacijska seja dela ne spremlja; samo zažene naslednjo sejo, ko jo obvestiš.
 4. **Preizkus brez čakanja:** GitHub naredi predogled (`beta/<številka PR>/`, `tools/predogled.mjs`) in posnetke pred/po (`posnetki.yml`). Seja na uporabnika ne čaka; če pošlje pripombe, gredo v Recept in v popravek.
-5. **Pregled pred združitvijo (seja B):** Seznam pravil (spodaj); primerjava igre s fotografijami z istih 4–6 mest ob cesti (spodnja meja kakovosti: Bathurst po PR #210); en kratek neodvisen pregled s podagentom, ki dobi samo spremembe te proge in pravila, ne celega repozitorija.
-6. **Brez praznega čakanja:** dolgi testi tečejo v ozadju, pull request seja spremlja z obvestili GitHuba (`subscribe_pr_activity`), brez zank s `sleep`. Za iskanje po kodi kazalo in grep, ne podagenti.
+5. **Pregled pred združitvijo (seja B):** Seznam pravil (spodaj); primerjava igre s fotografijami z istih 4–6 mest ob cesti (spodnja meja kakovosti: Bathurst po PR #210); neodvisen pregled z agenti, ki proge niso pisali (neodvisno preverjanje pred združitvijo, `CLAUDE.md`, Seje: »Proge in grafika«; brez ultracode), ki dobijo samo spremembe te proge in pravila, ne celega repozitorija.
+6. **Brez praznega čakanja:** dolgi testi tečejo v ozadju, pull request seja spremlja z obvestili GitHuba (`subscribe_pr_activity`), brez zank s `sleep`. Za iskanje po kodi kazalo in grep, ne podagenti (delovni tokovi z več agenti so za raziskavo, izdelavo in pregled proge).
 
 ## Seja A (izdelava)
 1. Veja `nove-proge/<id>` (iz svežega `main`; seja 1A iz veje s tem načrtom, glej Stanje).
@@ -99,7 +99,7 @@ Načrt za 8 novih prog iz predstavitve »60 kratkih prog«: 7 iz prvega seznama 
 Zemljevid od zgoraj, globus, prelet in glasba (`js/routes.js`, `assets/maps/`, kot PR #201) za vseh 8 prog, en pull request, združi ga sama, ko so zeleni vsi testi na GitHubu. Konec verige: uporabniku kratek seznam za preizkus na telefonu (vseh 8 prog in kaj pogledati).
 
 ## Zagon naslednje seje
-Nastavitve nove seje (`create_session`, claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5`, `tags` `["nove-proge"]`, `prompt` en stavek:
+Nastavitve nove seje (`create_session`, claude-code-remote): `source_url` `https://github.com/jurekopac26-beep/dirkaska-igra`, `model` `claude-opus-5-5` (ena seja brez več agentov; odločitev uporabnika 10. 11. 2026 ob ~00.57, `CLAUDE.md`, Seje: »Proge in grafika«; 9. in 10. 11. `claude-fable-5-2` z besedo »ultracode«), `tags` `["nove-proge"]`, `prompt` en stavek:
 - **A → B iste proge:** `source_revision` in `outcome_branch` `nove-proge/<id>`; »Naredi sejo <N>B po docs/nove-proge.md (veja nove-proge/<id>, PR #<št>).«
 - **B → A naslednje proge** (po združitvi): `source_revision` `main`, `outcome_branch` `nove-proge/<naslednji id>`; »Naredi sejo <N+1>A po docs/nove-proge.md.«
 - **8B → 9:** `source_revision` `main`, `outcome_branch` `nove-proge/meni`; »Naredi sejo 9 po docs/nove-proge.md.«
@@ -123,22 +123,24 @@ Seja, ki jo je ustvarila druga seja, orodja `create_session` nima. Takrat obvest
 - **Pasti (1A)**: Overture `connectors.at` je delež dolžine v metrih; brez filtra razredov pot ubere pešpot čez serpentine; `elevSmooth` v datoteki proge naj bo ~6 m (sicer se serpentine spet zgladijo v krake in test »serpentine položnejše« pade); test `golden.test.js` zahteva, da »crash« odtrga del (`CRASH_AT` v `tests/lib/sim.js`, za Bâleo `'balea/rally': 6.5`). Nova proga gre na konec seznama v `index.html` (pred tem bi zamaknila avte »/car« drugih prog). Reference samo za novo progo: `--only=<id>` (golden, races), `WORLD_ONLY`, `PERF_ONLY`. Slika za meni: kopija igre v `maketa-menija/game_main/`, `dio2.mjs` z enim opravilom, `mkwebp.py ../../assets/tracks <id>`, vrstica v `proge_igra.json`.
 - **Fotografije**: Wikimedia Commons in Mapillary iz ukazne vrstice niso dosegljivi (proxy), tudi podagent `web-fetch` ne (1B: `commons.wikimedia.org` ni na seznamu dovoljenih domen okolja). Brez njih: videz po podatkih in poznavanju kraja, zapis v `docs/proge/<id>.md`.
 - **Meni z globusom (1B, od #239/#244)**: vsaka prava proga potrebuje zastavo države (`assets/flags/<država>.svg` in vnos v `FLAG_FILES` v `js/menu.js`), obris države za globus in svoje mesto (start). Ko ju `js/geo.js` nima: start v `PLACES` in državo v `SUBUNITS` v `tools/menu-globe.mjs`, nato `node tools/menu-globe.mjs` (zapiše `js/menu-data.js`); še `node tools/menu-lens.js` (dolžina proge in višinski profil za graf v `js/menu-data.js`); preveri `node tests/menu-globe.test.js` in `node tests/menu-lens.test.js`. Za Bâleo: Romunija (zastava 2 : 3, modra, rumena, rdeča).
-- **Vprašanja uporabniku** (uporabnik 31. 10.: »vedno tako, da samo kliknem izbiro«): vsa, tudi potrditve, na stran Odločitve (`ArtifactData` `set`, zbirka `vprasanja`, oštevilčene možnosti; oblika v `CLAUDE.md`, razdelek »Seje: čakanje in vprašanja«, PR #227). V pogovoru samo, če stran ni dosegljiva.
+- **Vprašanja uporabniku** (uporabnik 31. 10.: »vedno tako, da samo kliknem izbiro«): vsa, tudi potrditve, na stran Odločitve (`ArtifactData` `set`, zbirka `vprasanja`, oštevilčene možnosti; oblika v `CLAUDE.md`, Seje, »Vprašanja za uporabnika«, in `docs/vprasanja.md`, PR #227). V pogovoru samo, če stran ni dosegljiva.
 - **Kamera (1B)**: kamera za avtom gleda strmo navzdol; s posnetkov (`tools/shot.mjs <id> --m …`) se vidi predvsem cesta, robovi, teren ob njej in pobočja, obzorje komaj. Grafiko dodelaj tam.
 - **Kraki serpentin (1B)**: cesta v igri (11 m) je širša od prave, zato se ograji dveh krakov skoraj dotikata in teren med njima je bil temna stena nad »zobmi« 5-metrske mreže. Rešitev v `buildPrelaz`: zid iz zidanega kamna (`bk`, `plWallTex`) od roba zgornjega kraka do police ob spodnjem, teren pod njim spuščen prek `API.caBank` (kljuka v `caH`, velja samo za progo, ki jo je nastavila). Za diagnozo: `World.api` v brskalniku (`caGround`, `vrNear`, `T`) in začasna kričeča barva mreže. Nova proga dobi zidove sama, če ima tesne serpentine.
 
 ## Stanje
 
+Od 7. 11. 2026 proge s čakanja delajo seje po `docs/nove-proge-1-0.md` (ena seja na progo, osnutek PR, skupine N4–N6); stanje spodaj je prenos iz tega načrta (8. 11. 2026).
+
 | Seja | Proga | Kaj | Ocena (h) | Stanje |
 |---|---|---|---|---|
 | 0 | – | načrt (ta dokument, `CLAUDE.md`) | – | na `main` s pull requestom Bâlee (#226) |
-| 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | končano (PR #226) |
-| 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | končano (PR #226) |
-| 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | naslednja (2A) |
-| 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | čaka |
-| 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | čaka |
-| 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka |
-| 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | čaka |
-| 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | čaka |
-| 8A, 8B | Ngorongoro, Tanzanija | izdelava z živalmi, dodelava | 20–28 | čaka |
+| 1A | Bâlea, Romunija | izdelava, skupna okolica za prelaze, orodje, Recept | 11–15 | končano (PR #226, na `main` od 7. 11. 2026) |
+| 1B | Bâlea, Romunija | dodelava grafike, združitev | 4–6 | končano (PR #226, na `main` od 7. 11. 2026) |
+| 2A, 2B | Furka, Švica | izdelava, dodelava | 12–16 | v delu: PR #509 (osnutek; B6, skupina N4 v `docs/nove-proge-1-0.md`) |
+| 3A, 3B | Gudauri, Gruzija | izdelava, dodelava | 12–16 | v delu: PR #523 (osnutek; B7, skupina N4) |
+| 4A, 4B | Llogara, Albanija | izdelava, dodelava | 12–16 | čaka (B9, skupina N5) |
+| 5A, 5B | Porto Moniz, Portugalska | izdelava, dodelava | 14–18 | čaka (B10, skupina N6) |
+| 6A, 6B | Yungas, Bolivija | izdelava, dodelava | 14–18 | ne začni (brez izletne cone, 5. 11. 2026) |
+| 7A, 7B | Pau, Francija | izdelava, dodelava | 18–24 | ne začni (brez izletne cone, 5. 11. 2026) |
+| 8A, 8B | Ngorongoro, Tanzanija | izdelava z živalmi, dodelava | 20–28 | čaka (A9, skupina N5) |
 | 9 | vseh 8 | meni: zemljevid od zgoraj, globus, prelet, glasba | 4–6 | čaka |

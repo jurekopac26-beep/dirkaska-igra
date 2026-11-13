@@ -49,8 +49,8 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
 // 3. tyres: the grip of slicks and rain tyres on a dry and a wet road, the wear
 {
   const G = C.TYRE_GRIP;
-  check('tyres: slicks grip fully on a dry road, lose most of it in the wet; rain tyres grip less on a dry road and like before in the rain',
-    G.dry(0) === 1 && G.dry(1) < 0.7 && G.wet(0) < 1 && G.wet(0) > 0.85 && Math.abs(G.wet(1) - 0.8) < 1e-9 && C.tyreFor(0) === 'dry' && C.tyreFor(1) === 'wet',
+  check('tyres: slicks grip fully on a dry road, lose half of it in the wet; rain tyres grip less on a dry road and as the plain rain on a wet one (0.65: docs/dez-sneg.md)',
+    G.dry(0) === 1 && Math.abs(G.dry(1) - 0.5) < 1e-9 && G.wet(0) < 1 && G.wet(0) > 0.85 && Math.abs(G.wet(1) - 0.65) < 1e-9 && C.tyreFor(0) === 'dry' && C.tyreFor(1) === 'wet',
     `slicks ${f3(G.dry(0))} / ${f3(G.dry(1))}, rain tyres ${f3(G.wet(0))} / ${f3(G.wet(1))}`);
   Math.random = seeded(9);
   const T = track('rbring'), r = new C.Race(T, { numAI: 2, playerGrid: 3, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3, tyres: true, rain: 1 });
@@ -104,19 +104,21 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
   check('AI pit stops: every car finishes', r.cars.every(c => c.finished || c.isPlayer), `${r.cars.filter(c => c.finished).length}/13 in ${t.toFixed(0)} s`);
 }
 
-// 6. winter (Race opts winter): cold tarmac grips a little less, a gravel road packed with snow much less; the AI's profile follows
+// 6. winter (Race opts winter): cold tarmac grips less (x0.70), a gravel road packed with snow much less (x0.45; a real gravel stage: Katu-Jaryk);
+// under falling snow (winter and rain) the tarmac's two shares multiply, a road already packed with snow stays as it is (snow on snow);
+// the AI's profile follows (the shares measured on the car: oprijem.test.js)
 {
   const mk = (id, winter, rain) => new C.Race(track(id), { numAI: 1, playerGrid: 2, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3, winter, rain });
-  const a = mk('rbring', false), b = mk('rbring', true), g = mk('gora', true), gr = mk('gora', true, 1), R = (r) => r.vprof.reduce((x, v) => x + v, 0) / r.vprof.length;
-  check('winter: tarmac x0.94, a snowy gravel road x0.74 (and less again in the snow), the AI slower through the corners',
-    a.player.wet === 1 && Math.abs(b.player.wet - 0.94) < 1e-9 && Math.abs(g.player.wet - 0.74) < 1e-9 && Math.abs(gr.player.wet - 0.8 * 0.74) < 1e-9 && R(b) < R(a),
-    `grip ${a.player.wet} / ${b.player.wet} / ${g.player.wet} / ${gr.player.wet.toFixed(3)}, profile ${R(a).toFixed(1)} vs ${R(b).toFixed(1)} m/s`);
+  const a = mk('rbring', false), b = mk('rbring', true), g = mk('katu', true), gr = mk('katu', true, 1), br = mk('rbring', true, 1), R = (r) => r.vprof.reduce((x, v) => x + v, 0) / r.vprof.length;
+  check('winter: tarmac x0.70 (x0.65 again under falling snow), a snowy gravel road x0.45 (the same under falling snow), the AI slower through the corners',
+    a.player.wet === 1 && Math.abs(b.player.wet - 0.7) < 1e-9 && Math.abs(g.player.wet - 0.45) < 1e-9 && Math.abs(gr.player.wet - 0.45) < 1e-9 && Math.abs(br.player.wet - 0.7 * 0.65) < 1e-9 && R(b) < R(a) && R(br) < R(b) && Math.abs(R(gr) / R(g) - 1) < 1e-9,
+    `grip ${a.player.wet} / ${b.player.wet} (${br.player.wet.toFixed(3)}) / ${g.player.wet} (${gr.player.wet.toFixed(3)}), profile ${R(a).toFixed(1)} vs ${R(b).toFixed(1)} vs ${R(br).toFixed(1)} m/s`);
 }
 
 // 7. without the new options: no tyres, no weather changes, the grip of the old rain
 {
   const T = track('rbring'), r = new C.Race(T, { numAI: 2, playerGrid: 3, laps: 1, playerModel: C.MODELS[4], phys: 'cs', seed: 3, rain: 1 });
-  check('without tyres and a changing weather: as before (no tyres on the cars, the rain\'s grip for all)', !r.wst.on && r.cars.every(c => !c.ty && Math.abs(c.wet - 0.8) < 1e-9) && r.water === 1, '');
+  check('without tyres and a changing weather: as before (no tyres on the cars, the rain\'s grip for all)', !r.wst.on && r.cars.every(c => !c.ty && Math.abs(c.wet - 0.65) < 1e-9) && r.water === 1, '');
 }
 
 console.log(`\n${n - bad}/${n} passed`);

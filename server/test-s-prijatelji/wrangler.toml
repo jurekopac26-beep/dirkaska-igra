@@ -1,0 +1,11 @@
+# Test s prijatelji (docs/test-s-prijatelji.md). The account, the database id and the secrets are NOT in the repository:
+# set database_id to the D1 database's id locally (do not commit it), and the secrets with `wrangler secret put KODE` / `PREGLED`.
+name = "stevec"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rra-test"
+database_id = "<id baze D1, samo lokalno>"

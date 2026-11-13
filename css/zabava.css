@@ -30,3 +30,38 @@
 #hud.zb-line #h-gap { display: block; margin-top: 3px; font: 700 clamp(9px, 2.5vh, 12px)/1.2 var(--f-ui, Roboto, sans-serif); color: #ffd34d; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
 #hud.zb-line #h-gap.zb-red { color: #ff6b6b; }
 #hud.zb-line #h-gap.zb-ok { color: #9fe07a; }
+
+/* the drag race (js/zabava/drag.js): the HUD shows only what the run needs; the panel under the time (the shift light, the gear, the revs
+   with the green band, the strip with both cars, the shift's word); the PRESTAVA button on the left above the steering (the left thumb
+   is free on the straight), above the wheel or the tilt's brake in those modes */
+#hud.zb-drag #h-tower, #hud.zb-drag #tw-strip, #hud.zb-drag #h-lap, #hud.zb-drag #h-tyre, #hud.zb-drag #h-times, #hud.zb-drag #h-drs, #hud.zb-drag #h-sec, #hud.zb-drag #h-split, #hud.zb-drag #h-prof { display: none; }   /* (the run's clock in the panel, .zd-t) */
+#zb-drag { position: absolute; left: 50%; top: calc(58px + var(--st, 0px)); transform: translateX(-50%); width: min(300px, 64vw); padding: 7px 10px 6px; border-radius: 12px; background: rgba(10, 14, 22, 0.62); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); font-family: var(--f-ui, Roboto, sans-serif); color: #fff; pointer-events: none; }
+#zb-drag .zd-top { display: flex; align-items: center; gap: 8px; }
+#zb-drag .zd-lt { flex: none; width: 18px; height: 18px; border-radius: 50%; background: #2a313c; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.15); }
+#zb-drag .zd-lt.y { background: #ffd34d; box-shadow: 0 0 10px #ffd34d; }
+#zb-drag .zd-lt.g { background: #58e05a; box-shadow: 0 0 14px #58e05a; }
+#zb-drag .zd-lt.r { background: #ff4b3a; box-shadow: 0 0 14px #ff4b3a; }
+#zb-drag .zd-g { flex: none; min-width: 22px; font: 900 italic 26px/1 var(--f-ui, Roboto, sans-serif); text-align: center; }
+#zb-drag .zd-t { flex: none; min-width: 56px; font: 800 15px/1 var(--f-ui, Roboto, sans-serif); text-align: right; font-variant-numeric: tabular-nums; }
+#zb-drag .zd-rev { position: relative; flex: 1; height: 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+#zb-drag .zd-rev i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #6fa8ff, #ffffff); }
+#zb-drag .zd-rev em { position: absolute; top: 0; bottom: 0; background: rgba(88, 224, 90, 0.45); }
+#zb-drag.lim .zd-rev i { background: #ff4b3a; }
+#zb-drag .zd-run { position: relative; height: 8px; margin: 7px 2px 0; border-radius: 4px; background: rgba(255, 255, 255, 0.1); box-shadow: inset -3px 0 0 #fff; }
+#zb-drag .zd-run i { position: absolute; top: -2px; width: 10px; height: 12px; margin-left: -5px; border-radius: 3px; }
+#zb-drag .zd-run .zd-me { background: #ffd34d; z-index: 1; }
+#zb-drag .zd-run .zd-op { background: #ff7a64; }
+#zb-drag .zd-w { display: block; height: 14px; margin-top: 4px; font: 800 12px/14px var(--f-ui, Roboto, sans-serif); letter-spacing: 1.2px; text-align: center; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+#zb-drag .zd-w.perfect { color: #58e05a; }
+#zb-drag .zd-w.good { color: #c9f2a8; }
+#zb-drag .zd-w.early { color: #ffd34d; }
+#zb-drag .zd-w.late { color: #ff7a64; }
+#zb-shift { left: calc(14px + var(--sl)); bottom: calc(var(--cb) + var(--ch) + 12px); width: calc(var(--cw) * 2 + 3px); height: clamp(52px, 17vh, 84px); flex-direction: column; gap: 2px; border-radius: 16px; border: 1.5px solid rgba(255, 211, 77, 0.6); background: rgba(16, 20, 27, 0.22); }
+#zb-shift svg { width: 30px; height: 30px; }
+#zb-shift span { font-size: clamp(10px, 2.6vh, 13px); color: #ffd34d; }
+@media (orientation: landscape) { #hud.zb-drag #h-lights { top: calc(140px + var(--st, 0px)); } }   /* (under the panel) */
+@media (orientation: portrait) { #zb-drag { left: calc(12px + var(--sl)); right: calc(var(--map-r) + var(--map-w) + 10px); top: calc(16px + var(--st) + var(--hb) * 1.9); width: auto; transform: none; } }   /* (under the place and the speed, left of the map's column: the map, the reaction, the messages) */
+#touch.m-wheel #zb-shift { bottom: calc(16px + var(--sb) + clamp(130px, 44vh, 200px)); }
+@media (orientation: landscape) { #touch.m-tilt #zb-shift { bottom: calc(var(--cb) + max(var(--ch), clamp(80px, 29vh, 132px)) + 12px); } }
+.zb-res .zb-drag-res { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.zb-res .zb-drag-res .zb-ci { width: auto; margin: 0; min-height: 40px; padding: 8px 14px; color: #fff; font: 700 13px/1.2 var(--f-ui, Roboto, sans-serif); }

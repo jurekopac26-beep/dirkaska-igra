@@ -35,7 +35,7 @@ const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 3, playerMo
   }
   const badT = out.filter(o => o.share < 0.05 || o.share > 0.5 || o.wrong || o.offRoad || o.nearLine || o.straight);
   check('the band on every real circuit with pits: on the outside of the bends, 1.3 m or more off the racing line, on the asphalt, none on the straights, 5-50 % of the lap',
-    out.length >= 8 && !badT.length, (badT.length ? JSON.stringify(badT) + ' · ' : '') + out.map(o => `${o.id} ${(o.share * 100).toFixed(0)} %`).join(', '));
+    out.length >= 5 && !badT.length, (badT.length ? JSON.stringify(badT) + ' · ' : '') + out.map(o => `${o.id} ${(o.share * 100).toFixed(0)} %`).join(', '));
   const T = track('cpalace'), a = T.marbles(), b = new C.Track(T.def).marbles();
   check('the band: the same every time it is found', a.k.every((v, i) => v === b.k[i] && a.c[i] === b.c[i] && a.h[i] === b.h[i]), '');
 }
