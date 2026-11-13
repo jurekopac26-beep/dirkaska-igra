@@ -1394,11 +1394,11 @@
  },
  "haivan": {
   "meshes": 933,
-  "verts": 353798,
+  "verts": 353966,
   "instances": 28157,
   "props": 33,
   "crowd": 182,
-  "world": "795c18d8",
+  "world": "b41cb94",
   "propsHash": "624c8695",
   "floor": "61e8e778/4704",
   "groups": {
@@ -1409,7 +1409,7 @@
    "crowd:MeshLambertMaterial": "b04cdd58",
    "ao:MeshBasicMaterial": "4e767c98",
    "tyremarks:MeshBasicMaterial": "64c29179",
-   "roadwear:MeshLambertMaterial": "c91b17b8"
+   "roadwear:MeshLambertMaterial": "331d7170"
   }
  }
 }
