@@ -12,6 +12,8 @@ x,y,h=T['x'],T['y'],T['h']; n=len(x); print('cela pot %.0f m, h %.0f..%.0f'%(n*5
 print('h vsakih 500 m:',' '.join('%d'%h[i] for i in range(0,n,100)))
 for nm,la,lo in c.get('near',[]):
     px,py=T['geo'].xy(la,lo); i=int(np.argmin((x-px)**2+(y-py)**2)); print(nm,'pri s=%d m, %.0f m od ceste, h %d'%(i*5,np.hypot(x[i]-px,y[i]-py),h[i]))
-w=int(L/5)
+w=int(L/5); hw=c.get('hw2',3.5)
+gx,gy=np.gradient(x),np.gradient(y); gl=np.hypot(gx,gy); nx,ny=-gy/gl,gx/gl
+cL=(T['dem'].at(x+nx*(hw+30),y+ny*(hw+30),3)-h)<=-15; cR=(T['dem'].at(x-nx*(hw+30),y-ny*(hw+30),3)-h)<=-15
 for a in range(int(lo_/5),min(max(1,n-w+1),int(hi_/5)),int(st/5)):
-    m=proga.metrics(x[a:a+w],y[a:a+w],False); print('%5d-%5d  %4d°/km ravn %2d%% naj %3dm ov %2d las %d  dh %+4d'%(a*5,a*5+L,m['twist'],m['straight']*100,m['longest'],m['corners'],m['hairpins'],h[min(a+w,n)-1]-h[a]))
+    m=proga.metrics(x[a:a+w],y[a:a+w],False); print('%5d-%5d  %4d°/km ravn %2d%% naj %3dm ov %2d las %d  dh %+4d  prepad L%3d%% D%3d%%'%(a*5,a*5+L,m['twist'],m['straight']*100,m['longest'],m['corners'],m['hairpins'],h[min(a+w,n)-1]-h[a],cL[a:a+w].mean()*100,cR[a:a+w].mean()*100))

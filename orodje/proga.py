@@ -185,7 +185,18 @@ def check(T):
     # strmina ob cesti iz DEM (30 m; samo namig): padec ali stena > 60 % v 20 m od roba
     hl=T['dem'].at(x+nx*(hw+20),y+ny*(hw+20),3)-T['h']; hr=T['dem'].at(x-nx*(hw+20),y-ny*(hw+20),3)-T['h']
     R['drop']=float(((hl<-12)|(hr<-12)).mean()); R['wall']=float(((hl>12)|(hr>12)).mean())
-    # razgled: najnižja točka v 1,5 km pod cesto
+    # prepad: padec terena 10/20/30 m od roba (levo = levo v smeri vožnje), globina do 150 m
+    D=T['dem']; P={}
+    for sd,sg in(('L',1),('R',-1)):
+        dd={o:D.at(x+sg*nx*(hw+o),y+sg*ny*(hw+o),3)-T['h'] for o in(10,20,30,60,100,150)}
+        d30=-dd[30]; deep=-np.minimum.reduce([dd[o] for o in dd])
+        c15=d30>=15; c25=d30>=25
+        P[sd]=dict(p15=float(c15.mean()),p25=float(c25.mean()),max30=float(d30.max()),mean30=float(d30[c15].mean()) if c15.any() else 0.0,
+                   deep=float(np.median(deep[c15])) if c15.any() else 0.0,deepmax=float(deep.max()),wall=float((dd[30]>=15).mean()))
+    side='L' if P['L']['p15']>=P['R']['p15'] else 'R'; o='R' if side=='L' else 'L'
+    hl30=D.at(x+nx*(hw+30),y+ny*(hw+30),3)-T['h']; hr30=D.at(x-nx*(hw+30),y-ny*(hw+30),3)-T['h']
+    R['cliff2']=dict(side=side,L=P['L'],R=P['R'],any15=float(((hl30<=-15)|(hr30<=-15)).mean()),
+                    onewall=float((((hl30<=-15)&(hr30>=15))|((hr30<=-15)&(hl30>=15))).mean()))
     return R
 
 # ---------- zemljevid ----------
@@ -396,6 +407,8 @@ def line(T):
     if R['road'][1]: it.append('%d stranskih cest'%R['road'][1])
     if R['barrier'][1]: it.append('ograje/zidovi (OSM) ob %s'%pc(R['barrier'][0]))
     it.append('strmo pobočje ob cesti (DEM): navzdol %s, navzgor %s'%(pc(R['drop']),pc(R['wall'])))
+    C=R['cliff2']; S=C[C['side']]; sn={'L':'levo','R':'desno'}
+    it.append('prepad (≥15 m padca v 30 m od roba): %s dolžine na %s (≥25 m: %s), na drugi strani %s; padec v 30 m povprečno %d m, največ %d m; globina do 150 m od roba mediana %d m, največ %d m; stena na drugi strani ob prepadu %s'%(pc(S['p15']),sn[C['side']],pc(S['p25']),pc(C[{'L':'R','R':'L'}[C['side']]]['p15']),round(S['mean30']),round(S['max30']),round(S['deep']),round(S['deepmax']),pc(C['onewall'])))
     meas='%s km, %d °/km, ravnine %s (najdaljša %d m), %d ovinkov, %d lasnic, %+d m (%d → %d m, povprečno %s %%, največ %s %%)'%(fm(M['len']/1000,2),round(M['twist']),pc(M['straight']),M['longest'],M['corners'],M['hairpins'],round(M['h1']-M['h0']),round(M['h0']),round(M['h1']),fm(M['grade'],1),fm(M['gmax'],1))
     if T['closed']: meas='%s km, %d °/km, ravnine %s (najdaljša %d m), %d ovinkov (%s na km), višinska razlika %d m'%(fm(M['len']/1000,2),round(M['twist']),pc(M['straight']),M['longest'],M['corners'],fm(M['corners']/(M['len']/1000),1),round(M['hmax']-M['hmin']))
     return dict(meas=meas,land=land,items='; '.join(it),zone=R['zone'],R=R,M=M)
