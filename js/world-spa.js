@@ -695,6 +695,8 @@
         }
       }
     }
+    if (World.rastje) out.rastje = World.rastje.barve(def, { tla: gMat, drevesa: tMat, chunks: tk.concat(tf), trava: { lc: nrLC, dist: nrDist, gcol: nrGCol, avg: gMat.map.avgCol,
+      x0: G.x0, z0: G.z0, x1: G.x0 + G.ntx * NRC * NRT, z1: G.z0 + G.ntz * NRC * NRT } });   // (Realizem G0: the measured colours, js/world-rastje.js)
     for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
