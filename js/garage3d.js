@@ -4452,6 +4452,8 @@ const Garage3D = (function () {
   const ray = new THREE.Raycaster(), rayAll = new THREE.Raycaster(); rayAll.layers.enableAll();   // (rayAll: the car's small bits too, drawn by the main camera only)
   // where the body is: its box, the height of its top at (x, z), its underside's, the side at (x, y), the front and the back at (y, z)
   // (car space; probeOf: the same on any meshes)
+  // (a body longer than 6.4 m, the coach: the garage's car a scale model of it, Render.garageK its scale; 1 for every other car)
+  const GK = (M) => Render.garageK ? Render.garageK(M) : 1;
   function bodyProbe(v) {
     v.grp.updateMatrixWorld(true);
     const meshes = []; v.bodyG.traverse(o => { if (o.isMesh && o.visible && o !== v.dec && !(v.dec && o.material === v.dec.material) && o !== v.tail) meshes.push(o); });
@@ -4533,7 +4535,7 @@ const Garage3D = (function () {
       out.push(q);
     }
     if (!v.wr.length) {   // (the rear wheels in the body: as the front ones, at the race's rear axle)
-      const rx = -M.b * (M.len / 4.4) * 0.98;
+      const rx = -M.b * (M.len / 4.4) * 0.98 * GK(M);
       for (const f of out.slice()) out.push(Object.assign({}, f, { obj: null, x: rx, front: false, own: false }));
     }
     return out;
@@ -5290,7 +5292,7 @@ const Garage3D = (function () {
     LN.obs = { nx, G };
   }
   // (in the background: the lane's fixtures, then the way out of the car on the table if it is a wide one (cv.way, kept while its parts stay))
-  const wideCar = (cv) => Math.max(cv.M.wid / 2, cv.kit.hw) + LN.m >= 1.3, wayKey = (cv) => JSON.stringify(cv.spec.upg);
+  const wideCar = (cv) => Math.max(cv.M.wid * GK(cv.M) / 2, cv.kit.hw) + LN.m >= 1.3, wayKey = (cv) => JSON.stringify(cv.spec.upg);
   function laneAhead(cv) {
     if (LN.obs && (!wideCar(cv) || (cv.way && cv.way.key === wayKey(cv)))) return;
     spawn((function* () { yield;
@@ -5813,7 +5815,7 @@ const Garage3D = (function () {
     let g = null; if (n && !PART_AT.wheels.includes(el) && Render.deliMesh) try { g = Render.deliMesh(cv.M, el, n, cv.spec.color); } catch (_) { g = null; }
     if (g) {   // (deliMesh's own geometry the car's or new and never drawn: left as it is; the halves new: the show's, disposed with the part)
       const w = new THREE.Group(), b = new THREE.Box3();
-      g.traverse(q => { if (!q.isMesh) return; const h = halfGeo(q.geometry.index ? q.geometry.toNonIndexed() : q.geometry, sd); if (!h) return;
+      g.traverse(q => { if (!q.isMesh) return; const h = halfGeo(q.geometry.index ? q.geometry.toNonIndexed() : q.geometry, sd); if (!h) return; if (GK(cv.M) < 1) h.scale(GK(cv.M), GK(cv.M), GK(cv.M));   // (the coach's part: in its scale model's size)
         h.computeBoundingBox(); b.union(h.boundingBox); const m = new THREE.Mesh(h, q.material); m.castShadow = true; w.add(m); });
       const sz = b.getSize(new V3());
       if (w.children.length && sz.length() < 1.7) { const c = b.getCenter(new V3()); for (const m of w.children) { m.geometry.translate(-c.x, -c.y, -c.z); m.geometry.computeBoundingSphere(); }
@@ -6551,7 +6553,7 @@ const Garage3D = (function () {
     sc.add(new THREE.HemisphereLight(0xe8efff, 0x40444c, 0.8)); const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(3, 6, 4); sc.add(d);
     const r = new THREE.DirectionalLight(0x9fc8ff, 0.4); r.position.set(-4, 2, -5); sc.add(r);
     sc.add(cv.root); cv.v.blob && (cv.v.blob.material.opacity = 0.85); if (o.lit) lamps(cv, 1, 1);
-    const cam = new THREE.PerspectiveCamera(24, w / h, 0.1, 60), L = Math.max(4, cv.M.len), g0 = GROUND.value, ya = o.yaw == null ? Math.atan2(0.95, 1.55) : o.yaw, R = L * 1.818 + (o.back || 0) * 1.82;
+    const cam = new THREE.PerspectiveCamera(24, w / h, 0.1, 60), L = Math.max(4, cv.M.len * GK(cv.M)), g0 = GROUND.value, ya = o.yaw == null ? Math.atan2(0.95, 1.55) : o.yaw, R = L * 1.818 + (o.back || 0) * 1.82;
     cam.position.set(Math.sin(ya) * R, L * 0.5 * R / (L * 1.818), Math.cos(ya) * R); cam.lookAt(0, 0.45, 0); cam.layers.enable(NOREFL); GROUND.value = 0;   // (its shadows too; on the floor)
     const rt = new THREE.WebGLRenderTarget(w * 2, h * 2, { format: THREE.RGBAFormat }); const old = renderer.getClearColor(new THREE.Color()), oa = renderer.getClearAlpha();
     renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(sc, cam);

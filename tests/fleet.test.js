@@ -39,7 +39,7 @@ const { DT, seeded } = require('./lib/sim.js');
 
 // the registration order (= the script tags' order, append-only: a shipped vehicle is retired, never removed or moved)
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
-  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni'];
+  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni', 'avtovoz', 'vetrnica', 'hrast', 'lastovka'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
@@ -119,7 +119,7 @@ check('Core: the 11 first, in their places, then all the new ones in the roster 
     const p = (s) => probs.push(M.id + ': ' + s), PT = C.partsOf(M);
     if (ids.has(M.id)) p('id twice'); ids.add(M.id); if (!M.retired) { if (names.has(M.name)) p('name twice'); names.add(M.name); }   // (a retired model: named as its heir)
     for (const k of ['mass', 'a', 'b', 'kI', 'kw', 'redline', 'final', 'rw', 'cDrag', 'len', 'wid', 'steerMax']) if (!(fin(M[k]) && M[k] > 0)) p(k);
-    if (!(fin(M.idle) && M.idle >= 0) || !(M.gears.length && M.gears.every(g => fin(g) && g > 0)) || !(M.a + M.b < M.len) || M.len > 6.4 || M.wid > 3.2) p('idle / gears / wheelbase / size');
+    if (!(fin(M.idle) && M.idle >= 0) || !(M.gears.length && M.gears.every(g => fin(g) && g > 0)) || !(M.a + M.b < M.len) || M.len > 13 || M.wid > 3.2) p('idle / gears / wheelbase / size');   // (13 m: the coach, LASTOVKA, the one rigid body longer than 6.4 m)
     if (M.Tmax !== M.kw * 1000 / (M.redline * (Math.PI * 2) / 60 * Math.max(0.3, 1 - 0.85 * (1.0 - 0.7) * (1.0 - 0.7)))) p('Tmax (not the loop\'s)');
     if (!DRIVES.includes(M.drive)) p('drive ' + M.drive); if (!cats.includes(M.cat)) p('cat ' + M.cat);
     if (!M.stats || !['power', 'grip', 'weight', 'drift'].every(k => fin(M.stats[k]) && M.stats[k] >= 0 && M.stats[k] <= 10)) p('stats');
@@ -149,13 +149,13 @@ check('Core: the 11 first, in their places, then all the new ones in the roster 
   // the roster's rules (DESIGN section 8): little wheelspin above 300 W/kg (else it spins all the time: smoke, power rotation, the AI's
   // throttle cut); the big ones slow to launch and long to stop; slicks / aero cars weak off the road, the off-roaders strong there and soft
   // on landing
-  const rule = [], big = ['titan', 'kamen', 'predsednik', 'goljat'], off = ['teren', 'tovornjaki'];
+  const rule = [], big = ['titan', 'kamen', 'predsednik', 'goljat', 'lastovka'], off = ['teren', 'tovornjaki'], roadT = ['titan', 'lastovka'];   // (roadT: the trucks of the road, not off-roaders)
   for (const M of C.MODELS) {
     if (M.kw * 1000 / M.mass > 300 && !((M.spinK || 1) <= 0.3)) rule.push(M.id + ' spinK ' + M.spinK);
     if (!M.kit) continue;
     if (big.includes(M.id) && !(M.tracK <= 0.75 && M.brakeK <= 0.8)) rule.push(M.id + ' tracK / brakeK');
     if (M.aero && !(M.loose >= 0.66 && M.loose <= 0.8)) rule.push(M.id + ' loose (aero) ' + M.loose);
-    if ((off.includes(M.cat) && M.id !== 'titan' && !M.trailer || M.id === 'goljat') && !(M.loose >= 1.1 && M.loose <= 1.35 && M.landV >= 16 && M.landV <= 24)) rule.push(M.id + ' off-road loose / landV');
+    if ((off.includes(M.cat) && !roadT.includes(M.id) && !M.trailer || M.id === 'goljat') && !(M.loose >= 1.1 && M.loose <= 1.35 && M.landV >= 16 && M.landV <= 24)) rule.push(M.id + ' off-road loose / landV');
   }
   check('the roster\'s rules: spinK <= 0.3 above 300 W/kg; trucks, limousine, monster: tracK <= .75, brakeK <= .8; aero cars loose .66-.8; off-roaders loose 1.1-1.35, landV 16-24', !rule.length, rule.join('; '));
   const stand = C.MODELS.slice(0, 11).every(M => { const c = new C.Car(M, { phys: 'cs' }); return c.circles.join() === [-M.len * 0.3, 0, M.len * 0.3].join() && !c.wreck && C.partsOf(M) === C.PARTS; });
@@ -206,7 +206,7 @@ const MEAS = {};
   }
   info('statsOf on the 11 (the hand-made bars, -> the formula): ' + OLD.map(id => { const S = C.statsOf(model(id)), M = model(id); return id + ' ' + ['power', 'grip', 'weight', 'drift'].map(k => M.stats[k] + (S[k] !== M.stats[k] ? '>' + S[k] : '')).join('/'); }).join(', '));
   if (!only.length) {
-    const big = ['titan', 'kamen', 'predsednik', 'goljat', 'cisterna', 'zrcalni'], road = C.MODELS.filter(M => !big.includes(M.id) && M.cat !== 'dirkalni').map(M => M.id);
+    const big = ['titan', 'kamen', 'predsednik', 'goljat', 'cisterna', 'zrcalni', 'avtovoz', 'vetrnica', 'hrast', 'lastovka'], road = C.MODELS.filter(M => !big.includes(M.id) && M.cat !== 'dirkalni').map(M => M.id);
     const dBig = Math.min(...big.map(id => MEAS[id].d100)), dRoad = Math.max(...road.map(id => MEAS[id].d100)), tBig = Math.min(...big.map(id => MEAS[id].t100));
     check('the trucks, the limousine and the monster truck: longer stops than any road car, slow launches (0-100 over 4.5 s)', dBig > dRoad && tBig > 4.5, `100-0 >= ${dBig.toFixed(1)} m (road cars <= ${dRoad.toFixed(1)} m), 0-100 >= ${tBig.toFixed(2)} s`);
     check('TITAN: the 160 km/h limiter holds it (150-160.5 km/h flat out)', MEAS.titan.vmax >= 150 && MEAS.titan.vmax <= 160.5, MEAS.titan.vmax.toFixed(1) + ' km/h');
@@ -317,11 +317,11 @@ const MEAS = {};
     for (const M of C.MODELS) {
       const A = new C.Car(M, { phys: 'cs' }), B = new C.Car(BIG, { phys: 'cs' }), e = 0.03;
       A.place(0, 0, 0); B.place((M.len + BIG.len) / 2 - e, (M.wid + BIG.wid) / 2 - e, 0); A.vx = 2; A.vz = 2;
-      far = Math.max(far, Math.hypot(B.x - A.x, B.z - A.z));
+      if (M.len <= 6.4) far = Math.max(far, Math.hypot(B.x - A.x, B.z - A.z));
       if (!(C.crashCollide(A, B) > 0)) miss.push(M.id);
     }
-    const van = Math.max(...C.MODELS.map(M => hd(M.len, M.wid))) + hd(5.3, 2.0);
-    check(`the run from the police: every vehicle touching the biggest box corner to corner is caught by the 7 m early-out (centres ${far.toFixed(2)} m apart at most; any vehicle and the police van ${van.toFixed(2)} m)`,
+    const van = Math.max(...C.MODELS.filter(M => M.len <= 6.4).map(M => hd(M.len, M.wid))) + hd(5.3, 2.0);
+    check(`the run from the police: every vehicle touching the biggest box corner to corner is caught by the 7 m early-out (centres ${far.toFixed(2)} m apart at most; any vehicle and the police van ${van.toFixed(2)} m; the coach, longer than 6.4 m, by the early-out's own reach: the two lengths' half and 1.5 m)`,
       !miss.length && far < 7 && van < 7, miss.join(', '));
   }
 }
