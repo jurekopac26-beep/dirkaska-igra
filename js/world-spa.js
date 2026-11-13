@@ -586,6 +586,10 @@
     const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, 'Kratki levi': 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
     let nFans = 0; const crE0 = excl.length;
+    // the ways to the houses (def.yard rows from def.houseWays on: OpenStreetMap, drawn by yardWorld in js/world.js): the fans' camp keeps off them
+    const waySeg = []; if (def.houseWays >= 0) for (const w of (def.yard || []).slice(def.houseWays)) if (w[0] < 2) for (let j = 1; j + 3 < w.length; j += 2) waySeg.push([w[j], w[j + 1], w[j + 2] - w[j], w[j + 3] - w[j + 1], w[0] ? 1 : 2]);
+    const onWay = (x, z, r) => { for (const [ax, az, ux, uz, hw] of waySeg) { const t = Math.max(0, Math.min(1, ((x - ax) * ux + (z - az) * uz) / (ux * ux + uz * uz || 1))), dx = x - ax - ux * t, dz = z - az - uz * t;
+      if (dx * dx + dz * dz < (hw + r) * (hw + r)) return true; } return false; };
     for (const q of T.names) {
       const wgt = FANS[q.n]; if (!wgt) continue;
       const sm = sAt(q.d), side = roomSide(sm), half = 18 + wgt * 12;
@@ -598,7 +602,9 @@
       for (let ii = T.idx(sm - half - 6), n = 0; n < (2 * half + 12) / ds; n++, ii = (ii + 1) % N) if (!fence[side2(side)][ii]) fence[side2(side)][ii] = 1;
       if (wgt >= 2) for (let k = 0; k < wgt * 5; k++) {   // camping in the woods behind the crowd
         const s = sm + (R() - 0.5) * half * 2, [x, z, i] = onSide(s, side, 9 + R() * 22); if (nrSlope(x, z) > 0.45 || inBrook(x, z, 3)) continue;
-        if (R() < 0.55) tent(x, z, T.hd[i] + (R() - 0.5) * 0.6, tcols[Math.floor(R() * tcols.length)]); else carPk(x, z, T.hd[i] + (R() - 0.5) * 0.8, vary(fans[Math.floor(R() * fans.length)], R, 0.2));
+        const way = onWay(x, z, 3.2);   // (on a way to a house: no camp there; the random stream runs on as before)
+        if (R() < 0.55) { const rot = T.hd[i] + (R() - 0.5) * 0.6, col = tcols[Math.floor(R() * tcols.length)]; if (!way) tent(x, z, rot, col); }
+        else { const rot = T.hd[i] + (R() - 0.5) * 0.8, col = vary(fans[Math.floor(R() * fans.length)], R, 0.2); if (!way) carPk(x, z, rot, col); }
       }
       const [ex, ez] = onSide(sm, side, 14); exclPush(ex, ez, half + 10);
     }
