@@ -103,9 +103,11 @@
     const gr = (d) => d.test ? 'test' : (d.rally || d.descent && d.timeTrial) ? 'rally' : d.open ? 'road' : 'circuit';   // (a descent against the clock alone, Katu-Jaryk: a rally; one with a race and traffic, Sa Calobra, or with rivals, Ngorongoro: an open road)
     TR = G.defs().filter(d => !d.variantOf).map(d => {
       const en = d.en || {}, full = en.name || d.name, k = full.lastIndexOf(', ');
-      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d), test: !!d.test,
-        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
+      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc),
+        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial };
       Object.defineProperties(t, {
+        test: { get() { return !!d.test; } }, group: { get() { return gr(d); } },   // (read as the menu makes a list, as pending: a test may make a test track real for a while)
+        tag: { get() { return ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)]; } },
         km: { get() { if (lenOf(d)) return lenOf(d) / 1000; const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
         corners: { get() { const n = (D.ncorners || {})[d.id]; return n != null ? n : G.track(d.id).corners.length; } },   // (the real tracks': MENU.ncorners, tools/menu-lens.js)
         laps: { get() { return d.open ? 1 : G.lapsOf(d); } },
