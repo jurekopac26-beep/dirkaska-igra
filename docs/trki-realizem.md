@@ -1796,6 +1796,19 @@ Polno telo ima vsak avto: najslabši primer (vseh 22 razbitih) je 290 klicev, po
 
 Korak K (odpadlo kolo) v tem P1 ni narejen.
 
+## Poškodbe P4: sledi trkov in pravi delci (13. 11. 2026)
+
+Samo videz (`js/render.js`), samo s Podrobnimi (`v.xOn`); vožnja, jedro in `rand()` niso spremenjeni. Kaj je narejeno:
+- **Barva drugega:** udarna točka dobi barvo tega, v kar je avto udaril. V ograjo ali zid je to sivina kovine/betona (`XSRC_WALL`), v avto pa barva tistega tekmeca, ki ima isto točko dotika (`contactX/Z` sta pri obeh avtih enaka). Barva se po vozliščih tehta z globino udarca (`xc.tw`, `xc.tc`), prikaže se v `xPaint` in je močnejša, kjer je odrgnjen lak (`pn`). Star udarec (`d.old`) barve ne prenese.
+- **Drobci 1–3 cm:** kos je 10-krat manjši (prej 10–25 cm), zato je kosov stekla 3-krat več. Lak: `min(40, 6 + 80·amt)` luskic (prej `4 + 40·amt`, 10–25 cm).
+- **Črna plastika:** ob udarcu v vogal ali odbijač (`|lx| > 0,38·dolžine`) pade še `min(16, 2 + 30·amt)` kosov črne plastike velikosti 3–8 cm.
+- **Žleb v asfaltu:** gola pesta nad 15 m/s zareže tanko svetlo sled (`skids.add`, 5 cm). Iskre ob pesti in vlečenem odbijaču so že bile.
+- **Obremenitev:** nova je le sled v obstoječih skidih, drobci ostanejo v istem primerku (`xSh`, 6000), zato ni novih klicev risanja.
+
+Testi drobcev v `crash.test` so relativni (manj in manjši po vsakem prevozu), zato se ne spremenijo.
+
+**Ni narejeno (naslednja seja):** posebni »gruščasti« prah ob trku v zid s cv 6. Slike ZDAJ/POTEM (Spa, celni, zid30, tbone) so samo v pripomočkih seje, ne v repozitoriju.
+
 ## Kar je že dobro
 
 Tega nova različica ne sme pokvariti; pri lahkih dotikih, naslonu in sredinskih trkih naj da iste številke kot Simulacija.
