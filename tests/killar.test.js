@@ -87,7 +87,7 @@ check('track: named "Killar, Indija" ("Killar, India" in English), a real place 
   //     Level across (under 0.4 % where the cars drive) the road is only there, eased in and out, and where the tilt turns over (a few metres;
   //     by a drop, tilted toward it, 0.5-0.9 %)
   const cr = bu.map(b => b.at * T.len), calm = (s, r) => (s < S0 + 45 + r || s > T.finishS - 20 - r || T.cpS.some(c => Math.abs(s - c) < 8 + r) || (def.bridges || []).some(([a, b]) => s > S0 + a - 10 - r && s < S0 + b + 10 + r)
-    || (def.pulls || []).some(p => Math.abs(s - S0 - p) < 22 + r) || cr.some(c => s > c - 20 - r && s < c + 40 + r));
+    || (def.pulls || []).some(p => Math.abs(s - S0 - p) < 22 + r) || cr.some(c => s > c - 10 - r && s < c + 30 + r));   // (by a crest from 10 m before to 30 m after, CW in tools/killar-cesta.mjs)
   let clo = 0, chi = 0, c15 = 0, cL = 0, cR = 0, cDrop = 0, cCalm = 0, cTop = 0, step = 0, nLv = 0, nLvN = 0, run = 0, runMax = 0, turns = 0, last = 0;
   for (let k = 0, s = S0; s < T.finishS; s += 1, k++) { const c = tl(s), dr = def.drops.find(([a, b]) => s > S0 + a && s < S0 + b);
     clo = Math.min(clo, c); chi = Math.max(chi, c); if (Math.abs(c) >= 0.015) c15++; if (c > 0.003) cR++; if (c < -0.003) cL++; if (dr) cDrop = Math.max(cDrop, -dr[2] * c);
@@ -170,8 +170,8 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
   };
   const brkAll = (r) => r.fence.brk.fill(0.001);
   const fast = run(sm, sd, 25, 0.35, 0), above = run(sm, sd, 15, 0.56, 0), below = run(sm, sd, 15, 0.36, 0), slide = run(sm, sd, 14, 0.2, 0.3), crawl = run(sm, sd, 2.5, 0.6, 0.12, brkAll);
-  const soft = [run(sm, sd, 20 / 3.6, 0.52, -1), run(sm, sd, 20 / 3.6, 0.175, -1, null, 0.3), run(sm, sd, 60 / 3.6, 0.087, -1, null, 0.3), run(sm, sd, 120 / 3.6, 0.087, -1, null, 0.3),
-    run(T.startS + 700, -1, 90 / 3.6, 0.035, -1, null, 0.2)];   // (the last: the user's report of 9. 11. 2026 at ~23.48, at 0.7 km the car slid along the fence: brushing it at 2° at 90 km/h)
+  const soft = [run(sm, sd, 20 / 3.6, 0.52, -1), run(sm, sd, 20 / 3.6, 0.175, -1, null, 0.3), run(sm - 15, sd, 60 / 3.6, 0.087, -1, null, 0.3), run(sm - 15, sd, 120 / 3.6, 0.087, -1, null, 0.3),
+    run(T.startS + 700, -1, 90 / 3.6, 0.035, -1, null, 0.2)];   // (at 5° 15 m before sm: at sm the bank closing a rut by the edge, 13. 11. 2026, turns the brush away a few cm short of the fence, at 120 km/h on to the crest at 1330 m and its landing; the last: the user's report of 9. 11. 2026 at ~23.48, at 0.7 km the car slid along the fence: brushing it at 2° at 90 km/h)
   const brL = run(T.startS + ba + 8, -1, 8, 1, 0), brR = run(T.startS + ba + 8, 1, 10, 0.5, 0), up = run(sm, -sd, 15, 0.45, 0), at9 = stand(sm, 9), at11 = stand(sm, 11);
   check('the fence is brittle, as the delineators: touched at 20 km/h (at 30° and at 10°), brushed at 5° at 60 and 120 km/h and at 2° at 90 km/h at 0.7 km, it breaks at once, holding nothing: the car not thrown back (at least 70 % of its speed across the fence kept), less than 5 % of its speed lost in 0.1 s',
     soft.every(x => x.touch && x.brk >= 1 && x.wall === 0 && x.vn0 > 0.3 && x.vnMin > 0.7 * x.vn0 && x.loss < 5 && x.fin),

@@ -544,12 +544,16 @@
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
       const tileL = 7, grav = [1.03, 0.97, 0.9];
-      const cols = (i) => { const rl = clamp(T.rl[i], -w + 2.3, w - 2.3); return [-w, -w + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, w - 0.5, w]; };
+      // (with the gravel's relief, js/makadam-cesta.js: also every 0.2 w across, the ruts and the tilt drawn wherever they are; the user, 13. 11. 2026)
+      const MC = typeof MakadamCesta !== 'undefined' && MakadamCesta.has(T), sun = def.look && def.look.sunOff, RX = MC ? [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8].map(f => f * w) : [];
+      const cols = (i) => { const rl = clamp(T.rl[i], -w + 2.3, w - 2.3); return [-w, -w + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, w - 0.5, w, ...RX].sort((a, b) => a - b); };
+      const Pr = MC ? (i, o) => Pt(i, o, 0.02 + MakadamCesta.y(T, i * T.ds, o)) : (i, o) => Pt(i, o, 0.02);
       const shade = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o);
         let k = 1.0 - 0.2 * trk + 0.06 * sstep(0.5, 0.2, a);   // the tracks darker and smoother, the loose crown between them lighter
         const outer = Math.sign(o) === -Math.sign(T.k[i]) ? sstep(1 / 400, 1 / 70, Math.abs(T.k[i])) : 0;   // on the outside of a bend the cars throw the loose gravel out
         k += (0.06 + 0.07 * outer) * sstep(w - 1.3 - 1.4 * outer, w - 0.3, ao) * (1 - trk);
         k *= 0.93 + 0.13 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7);   // long dusty and darker stretches
+        if (MC) k *= MakadamCesta.lit(T, i, o, sun);   // (the ruts dark at their bottom and on the flank away from the sun, the ridges light)
         return [grav[0] * k, grav[1] * k, grav[2] * k]; };
       const shC = [0.66, 0.6, 0.48];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
@@ -563,7 +567,7 @@
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, oi = cols(i), oj = cols(j);
           for (let c = 0; c < oi.length - 1; c++) { const a0 = oi[c], a1 = oi[c + 1], b0 = oj[c], b1 = oj[c + 1];
-            gr.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + w) / tileL, v0], [(a1 + w) / tileL, v0], [(b1 + w) / tileL, v1], [(b0 + w) / tileL, v1]]); }
+            gr.quadUp(Pr(i, a0), Pr(i, a1), Pr(j, b1), Pr(j, b0), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + w) / tileL, v0], [(a1 + w) / tileL, v0], [(b1 + w) / tileL, v1], [(b0 + w) / tileL, v1]]); }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j];
             gv.quadUp(Pt(i, side * w, 0.01), Pt(i, side * qi[0][0], qi[0][1]), Pt(j, side * qj[0][0], qj[0][1]), Pt(j, side * w, 0.01), [shC, shC, shC, shC], [wuv(Pt(i, side * w, 0)), wuv(Pt(i, side * qi[0][0], 0)), wuv(Pt(j, side * qj[0][0], 0)), wuv(Pt(j, side * w, 0))]);

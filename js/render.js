@@ -5435,6 +5435,23 @@ const Render = (function () {
      revs and on a gear change, a stream of sparks while the car scrapes along the barrier (the stock burst covers the hits) and, a formula
      at speed, sparks from its plank touching the road (in bursts, more over a kerb, a shower on landing). The particles only for the cars
      round the view ---------------- */
+  // Killar's wooden fence (Track.fence, Race.fence; the user's, 13. 11. 2026: no sparks when it is touched or knocked down): 1 where a
+  // panel stands at q.s on that side (sd: 1 right, -1 left) or broke there a moment ago (WOOD.t s: its planks still flying), else 0 (the
+  // verge of an unfenced road: nothing there to rub). woodFx: splinters of its planks thrown off the corner that hit it and a puff of dust
+  // off the verge, by time (WOOD.n a second at 18 m/s and more), the renderer's own random numbers. Render only (the core's contact as it was)
+  const WOOD = { t: 0.6, n: 70 };
+  function woodAt(T, q, sd) {
+    const Fn = T.fence, FS = curRace && curRace.fence; if (!Fn || sd !== Fn.side || q.k >= 0) return 0;
+    const k = Math.floor((q.s - Fn.s0) / Fn.P); if (!(k >= 0 && k < Fn.n && Fn.on[k])) return 0;
+    const b = FS && FS.brk[k]; return !b || curRace.time - b < WOOD.t ? 1 : 0;
+  }
+  function woodFx(f, px, pz, gy, c, ox, oz, spd, dt) {   // (ox, oz: out, away from the road)
+    const R = Math.random; f.sc += clamp(spd / 18, 0.3, 1) * WOOD.n * dt;
+    while (f.sc >= 1) { f.sc -= 1;
+      const a = (R() - 0.5) * 2.4;   // splinters: little dark-brown chips, off along the car and out over the verge, falling fast
+      particles.emit(px, gy + 0.4 + R() * 0.4, pz, c.vx * 0.45 + ox * (1 + R() * 2.5) + oz * a, 1.2 + R() * 2.4, c.vz * 0.45 + oz * (1 + R() * 2.5) - ox * a, 0.5 + R() * 0.4, 0.09, 0.06, 0.42 + R() * 0.1, 0.3 + R() * 0.06, 0.18, 1, 9, 0.8, gy);
+      if (R() < 0.4) particles.emit(px + ox * 0.3, gy + 0.3, pz + oz * 0.3, c.vx * 0.15 + (R() - 0.5) * 1.5, 0.3 + R() * 0.5, c.vz * 0.15 + (R() - 0.5) * 1.5, 0.9 + R() * 0.6, 0.5, 2 + R() * 1.4, 0.66, 0.6, 0.5, 0.32, -0.04, 1.6, gy); }   // (the dust, pale and soft)
+  }
   function carFx(v, c, dt, live) {
     const f = v.cfx || (v.cfx = { heat: 0, thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0 }), M = c.m, R = Math.random;
     if (!v.axW) { const sc = M.len / 4.4; v.axW = v.pk ? v.pk.w.value : v.wf.length && v.wr.length ? { x: v.wf[0].position.x, y: v.wr[0].position.x, z: v.wf[0].position.y } : { x: M.a * sc * 0.98 + 0.05, y: -M.b * sc * 0.98, z: M.rw }; }
@@ -5472,11 +5489,13 @@ const Render = (function () {
     if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && !c.inPit) {   // (on the pit road, c.inPit: no rail beside the car either, the circuit's barriers are not the lane's walls; in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
+      const wood = T && T.unf ? woodAt(T, q, side) : -1;   // (an unfenced road, Killar: no rail, the line it would stand on is the verge's edge; only where its wooden fence stands, splinters and dust: woodAt)
+      if ((gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) && wood) {
         const sx = Math.sign(fn * side) * L, sz = Math.sign(ln * side) * H, px = X + fx * sx + lx * sz + nx * side * Math.max(0, gap), pz = Z + fz * sx + lz * sz + nz * side * Math.max(0, gap);
-        f.sc += (c.fxWall > 0 ? 8 : 0) + clamp(spd / 18, 0.3, 1.6) * 110 * dt;
+        if (wood > 0) woodFx(f, px, pz, gy, c, nx * side, nz * side, spd, dt);
+        else { f.sc += (c.fxWall > 0 ? 8 : 0) + clamp(spd / 18, 0.3, 1.6) * 110 * dt;
         while (f.sc >= 1) { f.sc -= 1; sparkP.emit(px, gy + 0.35 + R() * 0.3, pz, c.vx * 0.55 + (R() - 0.5) * 3 - nx * side * R() * 2, 1 + R() * 3, c.vz * 0.55 + (R() - 0.5) * 3 - nz * side * R() * 2, 0.2 + R() * 0.3, 0.85, 0.2, 1, 0.72 + R() * 0.2, 0.3, 1, 11, 1.2, gy); }
-        glows.add(px, gy + 0.5, pz, 1.4, 1, 0.7, 0.3, 0.3 + 0.3 * night);
+        glows.add(px, gy + 0.5, pz, 1.4, 1, 0.7, 0.3, 0.3 + 0.3 * night); }
       } else f.sc = 0;
     }
     // a formula's plank on the road at speed (the prototype's too): bursts of sparks from under its floor, trailing behind (more over a kerb; a shower on landing)
@@ -9193,7 +9212,7 @@ const Render = (function () {
     if (q && q.br != null && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && c.speed > 1) {   // (a barrier beside it, as carFx has it)
       const fn = ch * q.nx + sh * q.nz, ln = -sh * q.nx + ch * q.nz, e = hl * Math.abs(fn) + hw * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if (Math.abs(ln) > Math.abs(fn) && (gap < XT_SCR.gap || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
+      if (Math.abs(ln) > Math.abs(fn) && (gap < XT_SCR.gap || c.fxWall > 0) && !(T && T.unf && !woodAt(T, q, side))) {   // (an unfenced road: only where its wooden fence stands, woodAt) const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
         at[k] = c.fxWall > 0 && c.wallX != null ? (c.wallX - c.x) * ch + (c.wallZ - c.z) * sh : 0; }
     }
     if (c.fxCar > 0 && c.contactX != null && fresh) {   // (another car, the traffic: the contact on its flank, a point of its own)
@@ -9516,6 +9535,11 @@ const Render = (function () {
     return ownRnd(() => { const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q; });   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)
   }
 
+  // a rival's cloud off gravel and dirt (the user's, Killar, 13. 11. 2026: too much dust behind the rivals, the player's own car hard to see):
+  // it disperses fast (RDUST.life of the player's cloud's time) and is fainter the farther that car is from the one the view follows (cam.vcx,
+  // vcz: the player's), RDUST.a near, down to RDUST.far's share at RDUST.d[1] m and beyond. Render only; the player's own cloud as it was
+  const RDUST = { life: 0.45, a: 0.7, far: 0.15, d: [12, 60] };
+  function rivalDust(x, z) { const d = Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)); return RDUST.a * (1 - (1 - RDUST.far) * Core.sstep(RDUST.d[0], RDUST.d[1], d)); }
   function offRoad(c, wi, surf) {   // a wheel off the road: on the grass or in the gravel, or on a makadam verge past the road's edge
     if (surf === 2 || surf === 3) return true;
     if (surf !== 5 && surf !== 6) return false;
@@ -9628,11 +9652,11 @@ const Render = (function () {
           const vxs = c.vx * 0.25 + (Math.random() - 0.5) * 2.4, vzs = c.vz * 0.25 + (Math.random() - 0.5) * 2.4;
           if (surf === 3 || surf === 5) {
             // big, lingering dust cloud on dirt/gravel (the classic rally rooster tail)
-            const sh = 0.92 + Math.random() * 0.12, dc = snowy() ? SNOW_DUST : world && world.dust;   // (a track may raise its own cloud, def.dust: Ouninpohja's; a world may give its own dust colour: Pikes Peak's pale granite; winter: powder snow)
-            if (dust && snowy()) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.5 * D.alpha, -0.04, 1.3 * D.drag, yb);
-            else if (dust) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, D.col[0] * sh, D.col[1] * sh, D.col[2] * sh, 0.42 * D.alpha, -0.04, 1.3 * D.drag, yb);
-            else if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, 1.8 + Math.random() * 1.0, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55, -0.05, 1.2, yb);
-            else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, 1.5 + Math.random() * 0.9, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42, -0.04, 1.3, yb);
+            const sh = 0.92 + Math.random() * 0.12, dc = snowy() ? SNOW_DUST : world && world.dust, rd = c.isPlayer ? null : rivalDust(px, pz), lf = rd ? RDUST.life : 1, af = rd || 1;   // (a track may raise its own cloud, def.dust: Ouninpohja's; a world may give its own dust colour: Pikes Peak's pale granite; winter: powder snow)
+            if (dust && snowy()) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life * lf, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.5 * D.alpha * af, -0.04, 1.3 * D.drag, yb);
+            else if (dust) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life * lf, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, D.col[0] * sh, D.col[1] * sh, D.col[2] * sh, 0.42 * D.alpha * af, -0.04, 1.3 * D.drag, yb);
+            else if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, (1.8 + Math.random() * 1.0) * lf, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55 * af, -0.05, 1.2, yb);
+            else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, (1.5 + Math.random() * 0.9) * lf, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42 * af, -0.04, 1.3, yb);
             if (Math.random() < 0.28) particles.emit(px, 0.2 + yb, pz, -c.vx * 0.04 + (Math.random() - 0.5) * 2.5, 2 + Math.random() * 2.5, -c.vz * 0.04 + (Math.random() - 0.5) * 2.5, 0.5 + Math.random() * 0.35, 0.3, 0.24, 0.32, 0.26, 0.19, 0.95, 14, 0.4, yb); // flying stones
           }
           else {
