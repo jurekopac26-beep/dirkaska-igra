@@ -1882,11 +1882,13 @@ Na veji `trki/realizem` je paket P cel: P1, P4, P2 (videz in pregrevanje), P5, P
 - `trki-hotham-seme` = 1: seme pregona v `tests/hotham.test.js` 11 → 29 (dovoljenje v `tests/golden/testne-proge.json`).
 - `trki-uncompahgre-padec` = 1: Uncompahgre ostane, kot je, do izbrisa testnih prog.
 
-Naslednja seja: **neodvisno preverjanje z več agenti** (samo fizika trkov, do 10 agentov) enkrat, na koncu teme pred `main`. PR #608 ostane osnutek do vrste.
+Naslednja seja: **neodvisno preverjanje z več agenti** (samo fizika trkov, do 10 agentov) enkrat, na koncu teme pred `main`, s skripto `tools/trki/preverjanje/pregled-poskodb-tok.txt` (spodnja predaja, točka 1; preglej še P2.3); nato točka 2 spodaj (manjkajoča testa P1.12 in P1.13). Po spoju #665 so povezani testi zeleni (testne-proge, lang, golden 140/140 enako, races, hotham, trki, fleet, browser/wheels, browser/lang). PR #608 ostane osnutek do vrste.
 
 Slike ZDAJ/POTEM delaj z `tools/trki/slike.mjs <scenarij> --a-root <git worktree starega commita> --b-root . --a-nast dmgDet=1 --b-nast dmgDet=1 --velikost 1920x1080 --izrez 0.36,0.38,0.64,0.9` (izrez da avto od blizu). Slike niso v repozitoriju.
 
 ## Predaja (13. 11. 2026, ~12.45)
+
+*Starejša od zgornje predaje: točke 3, 4 in stran Odločitve so medtem rešene (odgovori zgoraj), slike `celni` in `zid30` narejene; ostajata točki 1 in 2.*
 
 Seja prevzema je spojila svež `main` (#665; spoj `02ef0478`, spor samo v seznamu testov `tests/run.js`, rešilo ga je `tools/spoji-main.mjs`) in se ustavila pri meji konteksta. Kode ni spremenila.
 
