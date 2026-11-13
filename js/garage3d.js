@@ -38,7 +38,7 @@ const Garage3D = (function () {
   // the backs (unlit) x this (the concept's sheet base 236 / 255, and the brighter blue its pictures show in today's light); wz: the wings
   // on the top this far toward the car from a bay's middle (the concept's 0.2 reached 0.3 m out over the top board's front: the far
   // robot's arm passes there reaching the far rear corner of a car)
-  const RGL = { on: true, left: 'flat', L: 1.7034, D: 0.66, LV: [0.06, 0.705, 1.35, 1.995], TOP: 2.66, R: 4.75, A: 0.352, clear: [-4.94, 4.8, 4.25, 1.1], backK: 1.35, wz: 0.04, P: null, bays: [], body: [], names: [], col: -1, mesh: null, wall: null, atlas: null };
+  const RGL = { on: true, left: 'flat', L: 1.7034, D: 0.66, ty: 0.36, LV: [0.06, 0.705, 1.35, 1.995], TOP: 2.66, R: 4.75, A: 0.352, clear: [-4.94, 4.8, 4.25, 1.1], backK: 1.35, wz: 0.04, P: null, bays: [], body: [], names: [], col: -1, mesh: null, wall: null, atlas: null };
   const WIN = [3.45, 4.3], WW = 1.9, BACKW = RGL.on ? [] : [-5.9, -2.75, -0.35, 2.95, 6.1], FRONTW = [-6.2, -3.1, 0, 3.1, 6.2];
   const WASH_X = [-7.4, -4.2, 1.3, 4.6, 7.6], COLS = { backFront: [-4.75, 5.0], sides: [-2.8, 2.8, 6.5], corners: true };
   // the light (init sets it from the renderer): HDR (a half-float target), how bright the luminous things glow (EMI), the outside's
@@ -3620,13 +3620,14 @@ const Garage3D = (function () {
         [0.78, 0.86, 0.94, 0.98].forEach((f, i) => { const y0 = LV[i] + 0.02, y1 = (i < 3 ? LV[i + 1] - 0.01 : BT + 0.01) - 0.01, c = BL.map(v => v * f * RGL.backK);
           aq([xa, y0, z], [xb, y0, z], [xb, y1, z], [xa, y1, z], q, c, [0, (y0 + y1) / 2, z - 1], false, [[ua, q.v0], [ub, q.v0], [ub, q.v1], [ua, q.v1]]); }); }
       const yA = LV[0] + 0.0175, yB = LV[1] + 0.0175, yC = LV[2] + 0.0175, yD = LV[3] + 0.0175, WMAX = 2 * (hw - 0.08);
-      // A: a tyre set (four standing in a row, the set a little smaller in its storey as the concept's)
+      // A: a tyre set (four standing in a row, the set a little smaller in its storey as the concept's; RGL.ty apart, so the far arm's
+      // gripper fits between two of them with 5 cm to spare: the board takes the new tyres from places 3 and 2 too)
       const T = RGL_TY[k]; if (T) { const s = T[5], vt = g.P.length / 3, at0 = A.P.length / 3, pcs = [];
-        for (let i = 0; i < 4; i++) { const g0 = g.P.length / 3, a1 = A.P.length / 3; tyreUp((i - 1.5) * 0.28, T[3], 0, T, k); pcs.push({ g: [g0, g.P.length / 3], a: [a1, A.P.length / 3], x: (i - 1.5) * 0.28 }); }
+        for (let i = 0; i < 4; i++) { const g0 = g.P.length / 3, a1 = A.P.length / 3; tyreUp((i - 1.5) * RGL.ty, T[3], 0, T, k); pcs.push({ g: [g0, g.P.length / 3], a: [a1, A.P.length / 3], x: (i - 1.5) * RGL.ty }); }
         const Mt = M4(0, yA + 0.0005, 0.04, 0, 0, 0, s); placeGB(g, vt, Mt); placeGB(A, at0, Mt); its.push([T[0], 'tyre', vt, g.P.length / 3]);
         // (each tyre a part the far arm takes: its frame (its middle, its axis across the bay as its z), its size)
         RGL.pcs['rgl:' + T[0]] = pcs.map(q => ({ kind: 'tyre', g: q.g, a: q.a, s, r: T[3] * s, w: T[4] * s, bx: q.x * s, M: new THREE.Matrix4().makeRotationY(Math.PI / 2).setPosition(new V3(q.x * s, yA + 0.0005 + T[3] * s, 0.04)), bay: k }));
-        shBack(0.1, yA + 0.26, 1.22, 0.66); shFlat(0.05, yA + 0.002, 0, 1.18, 0.42); plate(T[0], 0, yA, Math.min(WMAX, 1.05 * s + 0.04)); }
+        shBack(0.1, yA + 0.26, 1.38, 0.66); shFlat(0.05, yA + 0.002, 0, 1.34, 0.42); plate(T[0], 0, yA, Math.min(WMAX, 1.05 * s + 0.04)); }
       // B and C: the exhausts on their stands (bays 0-2), the rims on theirs (bays 3, 4)
       [yB, yC].forEach((y, li) => {
         if (k < 3) { const ex = li * 3 + k, ve = g.P.length / 3; exhaust(ex); placeGB(g, ve, M4(0, y + 0.13, 0.02, 0, 0.08, 0, 1.22)); its.push([RGL_EX[k][li], 'exhaust', ve, g.P.length / 3]); const vs = g.P.length / 3; for (const x of [-0.244, 0.244]) stand(x, 0.02, 0.13, true); placeGB(g, vs, M4(0, y, 0));
@@ -4664,9 +4665,15 @@ const Garage3D = (function () {
       q.side = sw.length ? Math.max(...sw) : q.wd / 2; q.dish = dk.length ? Math.min(...dk) : q.wd / 2 - 0.01; q.spk = dk.length ? Math.max(...dk) : q.dish + 0.012;
       out.push(q);
     }
-    if (!v.wr.length) {   // (the rear wheels in the body: as the front ones, at the race's rear axle)
+    if (!v.wr.length) {   // (the rear wheels in the body: where render.js drew them (the body's userData.wr, rearWheel), else as the front ones at the race's rear axle)
+      const W = v.body && v.body.geometry && v.body.geometry.userData.wr, Mb = new THREE.Matrix4(); let p = v.body;
+      for (; p && p !== v.grp; p = p.parent) { p.updateMatrix(); Mb.premultiply(p.matrix); }
       const rx = -M.b * (M.len / 4.4) * 0.98;
-      for (const f of out.slice()) out.push(Object.assign({}, f, { obj: null, x: rx, front: false, own: false }));
+      for (const f of out.slice()) { const r = W && p && W.find(q => q.sd === f.sd);
+        if (!r) { out.push(Object.assign({}, f, { obj: null, x: rx, front: false, own: false })); continue; }
+        const P = v.body.geometry.attributes.position.array, bb = new THREE.Box3(); for (let i = r.a * 3; i < r.b * 3; i += 3) bb.expandByPoint(_rv.set(P[i], P[i + 1], P[i + 2]).applyMatrix4(Mb));
+        const c = new V3(r.x, r.y, r.z).applyMatrix4(Mb), wd = bb.max.z - bb.min.z, dw = (wd - f.wd) / 2;   // (its size as the front one's, its box; its faces as the front one's, from its own sidewall)
+        out.push(Object.assign({}, f, { obj: null, x: c.x, y: c.y, z: c.z, r: (bb.max.y - bb.min.y) / 2, wd, outer: f.sd > 0 ? bb.max.z : bb.min.z, front: false, own: false, wr: r, side: f.side + dw, dish: f.dish + dw, spk: f.spk + dw })); }
     }
     return out;
   }

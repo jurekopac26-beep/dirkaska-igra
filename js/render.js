@@ -82,6 +82,11 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
+  // a rear wheel drawn in the body: the geometry's userData.wr keeps where its triangles are (a, b: its vertices) and what it is (sd, x, y, z:
+  // its centre, r, wd, k: where its tyre begins, a share of r), so the garage can take the tyre off its rim (garage3d.js, fitWheels)
+  function rearWheel(g, w, fn) { const a = g.P.length / 3; fn(); (g.wr || (g.wr = [])).push(Object.assign(w, { a, b: g.P.length / 3 })); }
+  const withWr = (g) => { const geo = g.geometry(); if (g.wr) geo.userData.wr = g.wr; return geo; };
+
   // (band: the compound's band on the sidewalls (tyreBand), the outer one only for a wheel in the body (cz off the car's middle), else both)
   function wheelInto(g, cx, cy, cz, r, wd, tire, rim, band) {
     const S = 12, inn = [cx, cy, cz];
@@ -237,10 +242,10 @@ const Render = (function () {
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band);
+      const z = sd * (M.wid * 0.5 - 0.1); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.26, k: 0.68 }, () => wheelInto(g, rx, r, z, r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band));
       for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
     }
-    return g.geometry();
+    return withWr(g);
   }
   /* ---------------- formula car: open wheels, wings, halo ----------------
      x forward from the centre of mass, y up, z right; the axles at M.a / -M.b. The body mesh is the tub (chassis, cockpit, airbox), the
@@ -514,8 +519,8 @@ const Render = (function () {
     discX(g, rear.x - 0.035, 0.7, 0, 0.06, 10, CH, -1);
     for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) muscleWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);   // (the rear wheels in the body; the fronts are meshes of their own)
-    return g.geometry();
+    for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.13); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.3, k: 0.68 }, () => muscleWheelInto(g, rx, r, z, r, 0.3, band)); }   // (the rear wheels in the body; the fronts are meshes of their own)
+    return withWr(g);
   }
   function muscleWheelInto(g, cx, cy, cz, r, wd, band) { wheelInto(g, cx, cy, cz, r, wd, [0.07, 0.07, 0.08], [0.8, 0.81, 0.84], band); }
 
@@ -548,8 +553,8 @@ const Render = (function () {
     World.box(g, rear.x + 0.14, 0.19, 0, 0.34, 0.1, 1.5, 0, CF);
     for (let i = -2; i <= 2; i++) World.box(g, rear.x + 0.12, 0.13, i * 0.3, 0.3, 0.2, 0.025, 0, K);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) aeroWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);
-    return g.geometry();
+    for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.13); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.3, k: 0.8 }, () => aeroWheelInto(g, rx, r, z, r, 0.3, band)); }
+    return withWr(g);
   }
   // the electric car's wheel: a low tyre, a silver rim lip, a dark aero disc with five swept cyan blades (the spin shows), a centre lock
   function aeroWheelInto(g, cx, cy, cz, r, wd, band) {
@@ -605,7 +610,7 @@ const Render = (function () {
       fRod(g, [x + 0.08, r + 0.1, sd * (hz - 0.2)], [x - 0.1, 1.08, sd * 0.7], 0.07, [0.74, 0.74, 0.77]);
       fRod(g, [x + 0.05, r + 0.3, sd * (hz - 0.23)], [x - 0.05, 0.86, sd * 0.74], 0.1, S);   // (its spring)
     }
-    for (const sd of [-1, 1]) knobWheelInto(g, rx, r, sd * hz, r, 0.36, null, band);
+    for (const sd of [-1, 1]) rearWheel(g, { sd, x: rx, y: r, z: sd * hz, r, wd: 0.36, k: 0.56 }, () => knobWheelInto(g, rx, r, sd * hz, r, 0.36, null, band));
     // the bed: the spare lying in it, the cage from the roof down to the tail; the light bar on the roof; the snorkel
     knobWheelInto(g, -1.72, 1.24 + 0.17, 0, 0.44, 0.34, 'y');
     const cg = [0.1, 0.1, 0.11];
@@ -618,7 +623,7 @@ const Render = (function () {
     for (let i = 0; i < 6; i++) World.box(g, 0.325, 1.815, (i - 2.5) * 0.25, 0.012, 0.08, 0.19, 0, [1, 0.96, 0.82]);
     for (const sd of [-1, 1]) fRod(g, [0.24, 1.77, sd * 0.6], [0.24, 1.8, sd * 0.6], 0.05, K);
     fRod(g, [1.0, 1.22, M.wid * 0.5 - 0.1], [0.62, 1.8, M.wid * 0.5 - 0.2], 0.1, K); World.box(g, 0.6, 1.76, M.wid * 0.5 - 0.2, 0.14, 0.12, 0.12, 0, K);
-    return g.geometry();
+    return withWr(g);
   }
   // a wheel-arch flare: a thick arc over the wheel (centre cx, cy) from radius r0 to r1, from z0 (in) to z1 (out)
   function flareInto(g, cx, cy, r0, r1, z0, z1, col) {
@@ -2453,8 +2458,8 @@ const Render = (function () {
     }
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band);
-    return done(smoothNormals(g.geometry(), 38));
+    for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.1); rearWheel(g, { sd, x: wx, y: r, z, r, wd: 0.24, k: 0.68 }, () => wheelInto(g, wx, r, z, r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band)); }
+    return done(smoothNormals(withWr(g), 38));
   }
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
