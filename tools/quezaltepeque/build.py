@@ -1,32 +1,34 @@
-# Batangas, Filipini: the game's track file from the track data (tools/batangas/batangas.json and its PNG grids, made by tools/proga-podatki.py).
-#   python3 -I tools/batangas/build.py   -> js/tracks/batangas.js (centre line, heights, names, pits, stands, terrain, land cover, horizon)
-# Edit the names, the pits, the stands and the text here, not in the generated file. Plan: docs/nove-proge-1-0.md, the track: docs/proge/batangas.md.
+# Quezaltepeque, Salvador: the game's track file from the track data (tools/quezaltepeque/quezaltepeque.json and its PNG grids, made by
+# tools/proga-podatki.py).   python3 -I tools/quezaltepeque/build.py   -> js/tracks/quezaltepeque.js (centre line, heights, names, pits,
+# stands, terrain, land cover, horizon). Edit the names, the pits, the stands and the text here, not in the generated file.
+# Plan: docs/nove-proge-1-0.md, the track: docs/proge/quezaltepeque.md.
 import base64, json, math, os
 import numpy as np
 from PIL import Image
 from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
-J = json.load(open(os.path.join(HERE, 'batangas.json')))
+J = json.load(open(os.path.join(HERE, 'quezaltepeque.json')))
 STEP = J['step']; RAW0 = np.array(J['line']).reshape(-1, 2); NP = len(RAW0)
 
-# ---- the finish line: the data's first point is OSM's finish line (a node of the raceway way on the main straight, by the pits), so the
-# line stays as it is; everything moved so that the finish line is the origin ----
-K0 = 0; OX, OZ = (float(v) for v in RAW0[K0])
+# ---- the finish line: OSM has no node for it, so it goes to the middle of the pit building on the right of the main straight (the data's
+# first point is the main straight's south-western end, where the pit lane comes back): K0 points on; everything moved so that the
+# finish line is the origin ----
+K0 = int(round(260 / STEP)); OX, OZ = (float(v) for v in RAW0[K0])
 RAW = np.roll(RAW0, -K0, 0) - [OX, OZ]
 def mv(q): return [round(v - (OX if k % 2 == 0 else OZ), 1) for k, v in enumerate(q)]   # a flat [x, z, x, z, ...] list in the data's frame -> ours
 
-# ---- the centre line: OSM's raceway way of the circuit, clockwise as raced, its nodes' corners rounded (sigma 5 m) ----
+# ---- the centre line: OSM's raceway way of the circuit, clockwise as raced, its nodes' corners rounded ----
 P = np.stack([ndimage.gaussian_filter1d(RAW[:, 0], 1.0, mode='wrap'), ndimage.gaussian_filter1d(RAW[:, 1], 1.0, mode='wrap')], 1)
 SEG = np.hypot(*(np.roll(P, -1, 0) - P).T); LEN = float(SEG.sum()); CUM = np.r_[0, np.cumsum(SEG)[:-1]]
 
 # ---- the heights: the ground model across the road (Copernicus DEM less the canopy and the buildings), its bumps and dips narrower than
-# ~150 m and ~100 m taken out (a grey opening and closing: the trees' and the buildings' remains by the road), smoothed (sigma 30 m): a
-# plateau 99-110 m above the sea; the main straight level, grades at most 3 % ----
+# ~150 m and ~100 m taken out (the trees' and the buildings' remains by the road), smoothed (sigma 30 m): the circuit on the lava plain
+# at the foot of the Quezaltepeque volcano, about 500-520 m above the sea; the main straight by the pits an even slope, grades at most 6 % ----
 def heights():
-    h = np.roll(np.array(J['hRaw'], float), -K0); cap = 0.03 * STEP
+    h = np.roll(np.array(J['hRaw'], float), -K0); cap = 0.06 * STEP
     h = ndimage.gaussian_filter1d(ndimage.grey_closing(ndimage.grey_opening(h, size=31, mode='wrap'), size=21, mode='wrap'), 6.0, mode='wrap')
-    i0 = int(round(-200 / STEP)); i1 = int(round(330 / STEP)); a = h[i0]; b = h[i1]   # the main straight level from the last corner to Turn 1's brakes
+    i0 = int(round(-250 / STEP)); i1 = int(round(190 / STEP)); a = h[i0]; b = h[i1]   # the pit lane's length of the main straight: an even slope
     for i in range(i0, i1 + 1): h[i] = a + (b - a) * (i - i0) / (i1 - i0)
     for _ in range(400):
         d = np.roll(h, -1) - h; ex = np.clip(np.abs(d) - cap, 0, None) * np.sign(d) / 2
@@ -44,58 +46,54 @@ def sd(x, z):   # metres after the start line and to the right of the travel dir
     d = np.hypot(P[:, 0] - x, P[:, 1] - z); i = int(d.argmin()); j = (i + 1) % NP; tx, tz = P[j] - P[i]; tl = math.hypot(tx, tz)
     return float(CUM[i]), float(((x - P[i, 0]) * -tz + (z - P[i, 1]) * tx) / tl)
 
-# ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races or the circuit
-# (CLAUDE.md, Pravna varnost); the turns by their numbers in the lines, as the circuit numbers them (17: 11 right, 6 left) ----
+# ---- names on the HUD ([label, s, the commentator's lines]): plain descriptions only, no names of people, firms, races, the circuit or
+# its viewpoints (CLAUDE.md, Pravna varnost); 11 turns (8 right, 3 left), numbered in the lines as we number them ----
 NAMES = [
-    ('Desni na koncu ravnine', 360, ['Hard on the brakes for the hairpin of Turn 1!', 'The tight right at the end of the main straight!', 'Down the gears into the first hairpin!']),
-    ('Dolgi desni', 950, ['Round the long right of Turn 2!', 'Keep it tight through the long right!', 'The long right, patience on the throttle!']),
-    ('Ostri levi', 1274, ['Brake hard for the tight left of Turn 3!', 'The hairpin left!', 'Round the tight left, Turn 3!']),
-    ('Desni za ostrim levim', 1389, ['Straight into the right of Turn 4!', 'Right after the hairpin!', 'Through Turn 4!']),
-    ('Trije levi', 1664, ['Into the three lefts!', 'Left, left and left again, Turns 5 to 7!', 'The run of lefts begins!']),
-    ('Ravnina proti zahodu', 2050, ['Flat out down the straight to the west!', 'The long run west!', 'Foot down towards the far end!']),
-    ('Zahodni ostri desni', 2384, ['Hard on the brakes for the western hairpin!', 'The tight right of Turn 8!', 'Round the far hairpin!']),
-    ('Šikana', 2690, ['Left and right through the chicane!', 'Over the kerbs in the chicane!', 'Turns 9 and 10, the chicane!']),
-    ('Desni za šikano', 2779, ['The right of Turn 11!', 'Out of the chicane and into the right!', 'Through Turn 11!']),
-    ('Dvojni desni', 3360, ['The double right onto the main straight!', 'Right and right again, Turns 12 and 13!', 'The last corners, then the main straight!']),
-    ('Ciljna ravnina', 3510, ['Down the main straight past the pits!', 'Flat out past the grandstand!', 'The main straight, the line ahead!']),
+    ('Desni na koncu ravnine', 415, ['Hard on the brakes for the right of Turn 1!', 'The first right at the end of the main straight!', 'Down the gears into Turn 1!']),
+    ('Dva desna', 620, ['Right and right again, Turns 2 and 3!', 'The two rights, one after the other!', 'Keep it tidy through the rights!']),
+    ('Desni pred levimi', 880, ['The right of Turn 4!', 'Through Turn 4, the lefts are next!', 'Turn 4, then the long left!']),
+    ('Dolgi levi pri tribuni', 1040, ['Round the long left past the grandstand!', 'The long left of Turn 5, the fans close by!', 'Patience on the throttle through the long left!']),
+    ('Levi in desni', 1180, ['Left and right, Turns 6 and 7!', 'Flick left, then right!', 'Through the left and the right!']),
+    ('Ostri desni', 1390, ['Brake hard for the tight right of Turn 8!', 'The tightest corner of the lap!', 'Round the tight right!']),
+    ('Ravnina ob lavi', 1580, ['Flat out along the old lava flow!', 'Black rock beyond the fence, foot down!', 'The run past the lava field!']),
+    ('Dolgi lasnični', 1800, ['All the way round the long hairpin of Turn 9!', 'Round the hairpin, Turn 9!', 'The long hairpin right!']),
+    ('Levi lasnični', 2260, ['The hairpin left of Turn 10!', 'Swing left round Turn 10!', 'The only hairpin to the left!']),
+    ('Zadnji lasnični', 2845, ['Hard on the brakes for the last hairpin!', 'The hairpin onto the main straight!', 'Turn 11, the last corner!']),
+    ('Ciljna ravnina', 3100, ['Down the main straight past the pits!', 'Flat out past the grandstand!', 'The main straight, the line ahead!']),
 ]
-# the apexes of Turns 1-13 (their number boards): the hairpin right at the end of the main straight, the long right, the tight left and the
-# right after it, the three lefts, the western hairpin right, the chicane (left, right), the right after it and the double right
-TURNS = [360, 950, 1274, 1389, 1664, 1759, 1854, 2384, 2674, 2714, 2779, 3334, 3389]
+# the apexes of Turns 1-11 (their number boards): the right at the end of the main straight, the two rights, the right before the lefts,
+# the long left, the left and the right, the tight right, the long hairpin right, the hairpin left and the last hairpin
+TURNS = [415, 555, 690, 880, 1045, 1135, 1220, 1390, 1800, 2260, 2845]
 
-DESC = ('Dirkališče na planoti v pokrajini Batangas južno od Manile, pri Rosariu: 3,6 km v smeri urinega kazalca, 13 zavojev (8 desnih in 5 '
-        'levih) na skoraj ravni planoti okoli 100 m nad morjem. Ciljna ravnina mimo glavne tribune in boksov do ostrega desnega, dolgi desni, '
-        'ostri levi in desni za njim, trije levi drug za drugim, ravnina proti zahodu do ostrega desnega na zahodnem koncu, šikana, desni za '
-        'njo in dvojni desni na ciljno ravnino. Tropsko zelenje, kokosove palme, mangovci in sladkorni trs, griči na obzorju, tribune ob '
-        'progi in boksi (zapelji vanje in mehaniki ti popravijo avto).')
-DESC_EN = ('A circuit on the plateau of Batangas province south of Manila, near Rosario: 3.6 km, clockwise, 13 turns (8 right, 5 left) on a '
-           'nearly level plateau about 100 m above the sea. The main straight past the main grandstand and the pits to the tight right, the long '
-           'right, the tight left and the right after it, three lefts one after another, the straight to the west to the tight right at the far '
-           'end, the chicane, the right after it and the double right onto the main straight. Tropical green, coconut palms, mango trees and '
-           'sugar cane, hills on the horizon, grandstands by the track and the pits (drive in and the mechanics fix the car).')
+DESC = ('Dirkališče na lavni ravnici ob vznožju ognjenika San Salvador (Quezaltepeque), severozahodno od prestolnice: 3,2 km v smeri '
+        'urinega kazalca, 11 zavojev (8 desnih in 3 levi) okoli 500 m nad morjem. Ciljna ravnina mimo boksov in tribune, štirje desni, dolgi '
+        'levi pri tribuni, levi in desni, ostri desni, ravnina ob strjeni lavi, dolgi lasnični, levi lasnični in zadnji lasnični na ciljno '
+        'ravnino. Tropsko zelenje, črna lava za ograjo, ognjenik na obzorju, tribune ob progi in boksi (zapelji vanje in mehaniki ti popravijo avto).')
+DESC_EN = ('A circuit on the lava plain at the foot of the San Salvador volcano (Quezaltepeque), north-west of the capital: 3.2 km, clockwise, 11 '
+           'turns (8 right, 3 left) about 500 m above the sea. The main straight past the pits and the grandstand, four rights, the long left by '
+           'the grandstand, a left and a right, the tight right, the straight along the old lava flow, the long hairpin, the hairpin left and '
+           'the last hairpin onto the main straight. Tropical green, black lava beyond the fence, the volcano on the horizon, grandstands by the '
+           'track and the pits (drive in and the mechanics fix the car).')
 
-# ---- the pits (Core.Track.pitAt): the lane on the right of the main straight (OSM's pit lane w185557423, 13-25 m from the centre line),
-# from before the double right to after the main straight's middle (the real lane leaves before Turn 12 and comes back ~200 m after the
-# line); the 13 crews' boxes along the pit buildings (OSM: two buildings 69 m and 76 m long, 23-25 m to the right of the centre line), the
-# player's the 7th; the pit wall 2.5 m past the road's edge ----
-PIT = [14, -320, 200, -85]   # (the player's box: the 7th crew's, -90 .. -80 m: Core's crewBoxes, the box centres pitRow[0] + 5 + 10 k)
-PIT_ROW = [-150, -30]
-PIT_BOX = [-175, 30, 1]   # (the garages: World's RB_LOOK.batangas.pitBox; the crews' 13 open)
-WALLS = [[-320, 200, 1, 2.5]]   # the pit wall along the lane
-# the barriers moved out (def.wide) where the grandstands stand back from the road: the main grandstand on the left of the main straight
-# (OSM: a building 51 m long, 26 m from the centre line)
-WIDE = [[-60, 30, -1, 9]]
-# grandstands [from, to, side, rows, roof, sections, orange, name]: the main grandstand on the left of the main straight (roofed, where OSM's
-# long building opposite the pits stands), open blocks inside Turn 1, inside the long right of Turn 2, outside Turn 3, outside the western
-# hairpin; their names places of Batangas
-STANDS = [[-55, 25, -1, 12, 1, 3, 0, 'BATANGAS'], [285, 345, 1, 6, 0, 2, 0, 'ROSARIO'], [890, 1010, 1, 7, 0, 3, 0, 'LIPA'],
-          [1205, 1260, 1, 6, 0, 2, 0, 'IBAAN'], [2330, 2410, -1, 7, 0, 2, 0, 'PADRE GARCIA']]
-SECTORS = [1200, 2450]
-# the two DRS zones (Race._drs): [turn, detection, activation (metres before / after that turn), the next turn]: detection 120 m before Turn
-# 7, open from 80 m after it down the straight to the west to Turn 8; detection 150 m before Turn 13, open from 40 m after it along the main
+# ---- the pits (Core.Track.pitAt): the lane on the right of the main straight (OSM's pit lane, 12-14 m from the centre line), from the
+# main straight's start to before Turn 1; the 13 crews' boxes along the pit building (OSM: 140 m long, 18-31 m to the right of the centre
+# line), the player's the 7th; the pit wall 2.5 m past the road's edge ----
+PIT = [13, -250, 180, -5]   # (the player's box: the 7th crew's, -10 .. 0 m: Core's crewBoxes, the box centres pitRow[0] + 5 + 10 k)
+PIT_ROW = [-70, 50]
+PIT_BOX = [-72, 72, 1]   # (the garages: World's RB_LOOK.quezaltepeque.pitBox; the crews' 13 open)
+WALLS = [[-245, 175, 1, 2.5]]   # the pit wall along the lane
+# the barriers moved out (def.wide) where the main grandstand stands back from the road on the left of the main straight (OSM: the
+# viewpoint and the car park there, ~30 m from the centre line)
+WIDE = [[-50, 40, -1, 9]]
+# grandstands [from, to, side, rows, roof, sections, orange, name]: the main grandstand on the left of the main straight (roofed), the open
+# blocks on the right outside the long left of Turn 5 (OSM: two bleachers) and on the right before the last hairpin (OSM: a viewpoint); their names places of El Salvador
+STANDS = [[-45, 30, -1, 10, 1, 3, 0, 'QUEZALTEPEQUE'], [1030, 1095, 1, 6, 0, 2, 0, 'OPICO'], [2395, 2450, 1, 5, 0, 2, 0, 'LA LIBERTAD']]
+SECTORS = [1000, 1950]
+# the two DRS zones (Race._drs): [turn, detection, activation (metres before / after that turn), the next turn]: detection 100 m before
+# Turn 8, open from 60 m after it along the lava field to Turn 9; detection 150 m before Turn 11, open from 60 m after it along the main
 # straight to Turn 1
-DRS = [[7, -120, 80, 8], [13, -150, 40, 1]]
-REAL_KM = 3.62
+DRS = [[8, -100, 60, 9], [11, -150, 60, 1]]
+REAL_KM = 3.21
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
@@ -137,11 +135,12 @@ def scenery():
     lo = math.floor(hv.min() - 2); step = max(0.25, math.ceil((hv.max() + 2 - lo) / 254 * 20) / 20)
     dem = np.clip(np.round((hv - lo) / step), 0, 255)
     D = dict(x0=x0, z0=z0, nx=nx, nz=nz, cell=c, lo=lo, step=step, base=0, noise=0.12, b64=b64bytes(dem))
-    # land cover, 16 m cells: 0 open (the grass, the sugar cane and the fields of the plateau), 1 the trees (the coconut palms, the mango and
-    # the bamboo groves), 2 the scrub (the bushes on the grass), 3 built-up (the villages, the car parks): ESA WorldCover, the canopy height (Meta /
-    # WRI: bushes 2-5 m, trees over 5 m) and OSM's woods, scrub, car parks and buildings over it
+    # land cover, 16 m cells: 0 open (the grass and the fields), 1 the trees (the broadleaf groves, the palms), 2 the scrub (the bushes on the
+    # grass and on the old lava), 3 built-up (the car parks, the houses): ESA WorldCover, the canopy height (Meta / WRI: bushes 2-5 m, trees
+    # over 5 m) and OSM's woods, scrub, car parks and buildings over it; the old lava flow (OSM's bare rock) a mask of its own (sk.lava, the
+    # same cells, run-length coded as lc: 1 the lava), scrub on the land cover
     g1, a1 = grid('lc'); g2, a2 = grid('lu'); g3, a3 = grid('chm')
-    lnx = nx - 1; lnz = nz - 1; votes = np.zeros((4, lnz, lnx), np.float32)
+    lnx = nx - 1; lnz = nz - 1; votes = np.zeros((4, lnz, lnx), np.float32); lav = np.zeros((lnz, lnx), np.float32)
     for fz in (-0.25, 0.25):
         for fx in (-0.25, 0.25):
             X, Z = np.meshgrid(x0 + (np.arange(lnx) + 0.5 + fx) * c, z0 + (np.arange(lnz) + 0.5 + fz) * c)
@@ -150,29 +149,30 @@ def scenery():
             cls[(ch >= 2) & (ch < 5)] = 2; cls[ch >= 5] = 1; cls[wc == 10] = 1; cls[wc == 20] = 2
             cls[(wc == 50) & (lu != 10)] = 3   # (built-up inside the circuit's grounds (OSM): its paved run-offs and roads, the builder's own: grass)
             cls[lu == 9] = 1; cls[lu == 8] = 2; cls[(lu == 1) | (lu == 2) | (lu == 14)] = 3
+            cls[lu == 11] = 2; lav += (lu == 11)
             for k in range(4): votes[k] += (cls == k)
-    lc = votes.argmax(0).astype(np.uint8)
+    lc = votes.argmax(0).astype(np.uint8); lava = (lav >= 2).astype(np.uint8)
     LC = dict(x0=x0, z0=z0, nx=lnx, nz=lnz, cell=c, rle=rle_lc(lc))
     # the buildings by the circuit (OSM, within 60 m): [x, z, length, width, angle (deg), height]: not the pit buildings on the right of the
     # main straight (World's pitBox: the garages) nor the long building opposite them (def.stands: the main grandstand)
     bld = []
     for b in J['bld']:
         x, z, l, w, ang, hgt, kind, s, d = b; x -= OX; z -= OZ
-        if l > 45 and (s > 3400 or s < 100): continue   # (the pit buildings and the main grandstand's building)
+        if l > 100: continue   # (the pit building: World's pitBox, the garages)
         hh = hgt if hgt > 0 else 9.0 if l * w > 2000 else 7.5 if l * w > 500 else 5.5 if l * w > 100 else 3.2
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), hh]
-    # the service roads round the circuit (OSM highway=service within 120 m, not the two in their tunnels under it): [n, x0, z0, x1, z1, ...];
+    # the service roads round the circuit (OSM highway=service within 120 m, not the one over the track's bridge): [n, x0, z0, x1, z1, ...];
     # the dirt tracks (highway=track, compacted) as trk
     svc = []; trk = []
     for r in J['roads']:
         if r[3] == 2: continue
         q = mv(r[-1])
-        if r[0] == 'service': svc += [len(q) // 2] + q
+        if r[0] in ('service', 'unclassified'): svc += [len(q) // 2] + q
         elif r[0] == 'track': trk += [len(q) // 2] + q
-    return D, LC, dict(bld=bld, svc=svc, trk=trk)
+    return D, LC, dict(bld=bld, svc=svc, trk=trk, lava=rle_lc(lava))
 
 
-# ---- the horizon (def.far for Riverside's rsFar): the highest ground in rings round the circuit (the hills of Batangas, the mountains to the north and the volcanoes to the west) ----
+# ---- the horizon (def.far for Riverside's rsFar): the highest ground in rings round the circuit (the San Salvador volcano to the south-east, the hills and the ranges round the valley) ----
 FAR_R = [1500, 2000, 2700, 3500, 4500, 5600, 7000, 8500, 10000, 11500]   # the rings' outer distances (m from the circuit's middle; the far grid reaches ~12 km)
 def far_rings(na=180, step=2):
     g, a = grid('far'); A = a.astype(np.float64) / 10 - 100   # (m above the sea; the sea 0)
@@ -209,53 +209,54 @@ def build_track():
     turns = '[' + ','.join('[%s,%s]' % tuple(f1(v) for v in at(s)) for s in TURNS) + ']'
     D, LC, SK = scenery(); FAR = far_rings()
     js = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':'))
-    src = '''/* Track definition 'batangas'. index.html loads the track files before js/core.js, in the order of the track menu. */
+    src = '''/* Track definition 'quezaltepeque'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Batangas, Philippines: the circuit on the plateau of Batangas province near Rosario, clockwise, in its real layout and scale: the finish
-  // line on the main straight (OSM's; the main grandstand on the left, the pits on the right), the hairpin right of Turn 1 at the end of
-  // the straight, the long right of Turn 2, the tight left of Turn 3 and the right of Turn 4, the three lefts of Turns 5-7, the straight to
-  // the west, the hairpin right of Turn 8 at the far end, the chicane of Turns 9 and 10, the right of Turn 11 and the double right of Turns
-  // 12 and 13 onto the main straight: %(km)s km on our line (3.62 km).
-  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/batangas/config.json: the raceway way
-  // of the circuit, clockwise as raced), the corners at its nodes rounded (sigma 5 m); metres, origin = the finish line, x east, z south.
-  // GENERATED by tools/batangas/build.py (edit the names, the pits, the stands and the text there).
-  // Heights (BT_H): Copernicus DEM GLO-30 less the tree crowns (Meta / WRI canopy height) and the buildings (OSM), its spikes taken out,
-  // smoothed, grades at most 3 %%, the main straight level; every 10 m from the finish line, decimetres above it (%(h0)s m a.s.l.): the
-  // plateau, %(hmin)s .. %(hmax)s m round the lap.
-  // Scenery data for the world builder (js/world-batangas.js on js/world-rbring.js): terrain (dem: the same model, 16 m cells, heights above
-  // the finish line), land cover (lc, 16 m cells: 0 the grass and the fields, 1 the trees, 2 the scrub, 3 the villages and the car parks:
-  // ESA WorldCover, the canopy height and OSM), and sk: the buildings by the circuit (bld: [x, z, length, width, angle (deg), height]: OSM),
-  // the service roads round the circuit (svc, trk: [points, x, z, ...]: OSM); the horizon (far: the highest ground in rings round the
-  // circuit, Copernicus DEM, for Riverside's rsFar).
-  // The names: plain descriptions only (no names of people, firms, races or the circuit).
+  // Quezaltepeque, El Salvador: the circuit on the lava plain at the foot of the San Salvador volcano (Quezaltepeque), clockwise, in its
+  // real layout and scale: the finish line in the middle of the main straight (the main grandstand on the left, the pits on the right),
+  // the right of Turn 1, the rights of Turns 2-4, the long left of Turn 5, the left and the right of Turns 6 and 7, the tight right of
+  // Turn 8, the straight along the old lava flow, the long hairpin right of Turn 9, the hairpin left of Turn 10 and the last hairpin of
+  // Turn 11 onto the main straight: %(km)s km on our line (3.21 km).
+  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/quezaltepeque/config.json: the
+  // raceway way of the circuit, clockwise as raced), its corners rounded; metres, origin = the finish line, x east, z south.
+  // GENERATED by tools/quezaltepeque/build.py (edit the names, the pits, the stands and the text there).
+  // Heights (QZ_H): Copernicus DEM GLO-30 less the tree crowns (Meta / WRI canopy height) and the buildings (OSM), its spikes taken out,
+  // smoothed, grades at most 6 %%, the pit lane's length of the main straight an even slope; every 10 m from the finish line, decimetres
+  // above it (%(h0)s m a.s.l.): %(hmin)s .. %(hmax)s m round the lap.
+  // Scenery data for the world builder (js/world-quezaltepeque.js on js/world-rbring.js): terrain (dem: the same model, 16 m cells, heights
+  // above the finish line), land cover (lc, 16 m cells: 0 the grass and the fields, 1 the trees, 2 the scrub, 3 the built-up ground and
+  // the car parks: ESA WorldCover, the canopy height and OSM), and sk: the buildings by the circuit (bld: [x, z, length, width, angle
+  // (deg), height]: OSM), the service roads round the circuit (svc, trk: [points, x, z, ...]: OSM), the old lava flow (lava: [points,
+  // x, z, ...]: OSM's nature reserve on it); the horizon (far: the highest ground in rings round the circuit, Copernicus DEM, for
+  // Riverside's rsFar).
+  // The names: plain descriptions only (no names of people, firms, races, the circuit or its viewpoints).
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
   // © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; the land cover:
   // ESA WorldCover 2021 (CC BY 4.0); the canopy: Meta and World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0).
-  const BT_H = [%(lbh)s];
+  const QZ_H = [%(lbh)s];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
-    look: { fog: 0xd3e0e4, sun: 0xfff0d6, sunI: 1.14, sky: 0x86b6e4, gnd: 0x587a3a, hemiI: 0.7, tint: [0.99, 1.02, 0.97], sat: 1.06, sunOff: [-58, 88, -36], split: [[0.97, 1.0, 1.04], [1.04, 1.01, 0.95]] },   // the plateau of Batangas: a humid tropical haze, a high sun, lush green grass and trees
-    say: 'Batangas',
+    look: { fog: 0xd6dfe0, sun: 0xfff1d8, sunI: 1.12, sky: 0x8bb8e2, gnd: 0x5d7a3c, hemiI: 0.7, tint: [0.99, 1.01, 0.97], sat: 1.04, sunOff: [-58, 88, -36], split: [[0.97, 1.0, 1.04], [1.04, 1.01, 0.95]] },   // the valley under the San Salvador volcano: a humid tropical haze, a high sun
+    say: 'Quezaltepeque',
     grassNat: 0.25, lawn: [0.96, 1.04, 0.9],
-    zivali: { a: ['buffalo', 'egret'], t: ['palmHut'], open: true },
-    id: 'batangas', name: 'Batangas, Filipini', theme: 'batangas', laps: 3, halfWidth: 6,
+    zivali: { a: ['cow', 'egret'], t: ['palmHut'], open: true },
+    id: 'quezaltepeque', name: 'Quezaltepeque, Salvador', theme: 'quezaltepeque', laps: 3, halfWidth: 6,
     desc: %(desc)s,
-    en: { name: 'Batangas, Philippines', desc: %(desc_en)s },
+    en: { name: 'Quezaltepeque, El Salvador', desc: %(desc_en)s },
     start: [0, 0], runoff: 1.1, inner: 4.2, side: 6, gradeForce: true, elevSmooth: 10, realKm: %(real)s, runoffTarmac: true,
-    elev: BT_H.map((h, i) => [i / BT_H.length, h / 10]),
+    elev: QZ_H.map((h, i) => [i / QZ_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap
     names: [
 %(names)s
     ],
-    turns: %(turns)s,   // the apexes of Turns 1-13 (their number boards): the hairpin right, the long right, the tight left, the right after it, the three lefts, the western hairpin, the chicane (2), the right after it, the double right (2)
+    turns: %(turns)s,   // the apexes of Turns 1-11 (their number boards): the right, the three rights, the long left, the left and the right, the tight right, the long hairpin, the hairpin left, the last hairpin
     pit: %(pit)s,   // pit lane on the right of the main straight: [centre offset to the right, from, to, the player's box] (metres from the finish line)
-    pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.batangas.pitBox)
+    pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.quezaltepeque.pitBox)
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane
     wide: %(wide)s,   // the barriers back behind a wide verge by the main grandstand on the left of the main straight
-    // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main grandstand on the left of the main straight, open blocks inside Turn 1, inside Turn 2, outside Turn 3 and outside Turn 8
+    // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main grandstand on the left of the main straight, open blocks outside the long left (T4) and by the hairpin left (T9)
     stands: %(stands)s,
-    zaslon: { d: -20, side: -1, off: 27.5 },   // the big screen (js/world-zaslon.js) by the main grandstand, turned towards the cars coming (node tools/zaslon-mesto.mjs batangas)
+    zaslon: { d: -20, side: -1, off: 27.5 },   // the big screen (js/world-zaslon.js) by the main grandstand, turned towards the cars coming (node tools/zaslon-mesto.mjs quezaltepeque)
     drs: %(drs)s,   // the DRS zones: [turn, detection, activation (metres from that turn), the next turn]: the straight to the west from Turn 7 to Turn 8, the main straight from Turn 13 to Turn 1
     sectors: %(sectors)s,   // the three sectors of the timing screens: Turns 1-4, Turns 5-8, the chicane and the double right
     dem: %(dem)s,
@@ -269,7 +270,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
            desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
            pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), drs=json.dumps(DRS),
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
-    path = os.path.join(ROOT, 'js', 'tracks', 'batangas.js'); open(path, 'w').write(src)
+    path = os.path.join(ROOT, 'js', 'tracks', 'quezaltepeque.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights (%.1f .. %.1f m above the finish line, %.1f m a.s.l.);' % (hk.min() - H0, hk.max() - H0, H0),
           'dem', D['nx'], 'x', D['nz'], 'lo %.1f step %.2f' % (D['lo'], D['step']), '; lc', LC['nx'], 'x', LC['nz'], len(LC['rle']), 'chars; buildings', len(SK['bld']) // 6,
           '; service roads', sum(1 for _ in svc_iter(SK['svc'])), '; tracks', sum(1 for _ in svc_iter(SK['trk'])))
