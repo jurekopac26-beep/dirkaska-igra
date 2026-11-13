@@ -33,7 +33,7 @@ try {
     const H = f && fromFile(f), rec = H && H.vnos, r = rec ? preveri(rec, K) : null;
     T.check('qualifying alone on Spa, to the line: the race repeatable, its input recorded (kind quali, engine V8, complete, the finish\'s step)', s.phase === 'done' && s.repro && s.rec && s.rec.ok && s.rec.kind === 'quali' && /^V8/.test(s.rec.eng) && s.rec.track === 'spa' && s.rec.fs > 12000 && !s.rec.names, JSON.stringify(s));
     T.check('… the record in the recording\'s file (Shrani posnetek, .rrp: its header\'s vnos), the same as the race\'s', !!rec && rec.fs === s.rec.fs && rec.n === s.rec.n && /^posnetek_spa_/.test(f.name), f ? f.name : 'no file');
-    T.check('… replayed in Node from the file: OK (the finish in the same step, the time within a millisecond, the path within 0.5 m)', r && r.ok && r.res.fs === s.rec.fs && Math.abs(r.res.dft) < 0.0005 && r.res.maxD <= 0.5, r && (r.why || '') + ' ' + res(r.res));
+    T.check('… replayed in Node from the file: OK (the finish in the same step, the time to the step, the path within 0.5 m)', r && r.ok && r.res.fs === s.rec.fs && Math.abs(r.res.dft) < 1 / 120 && r.res.maxD <= 0.5, r && (r.why || '') + ' ' + res(r.res));
     T.check('… replayed in the same browser: to the last bit', me.ok && me.exact && me.fs === s.rec.fs, res(me));
     errs.push(...errors); await ctx.close();
   }

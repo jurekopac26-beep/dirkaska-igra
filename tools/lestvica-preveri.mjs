@@ -47,7 +47,7 @@ export function vrstica(name, rec, r) {
   const res = r.res, tag = r.ok ? 'OK  ' : 'FAIL', o = rec && typeof rec === 'object' ? `${rec.track || '?'} (${rec.kind || '?'}, ${rec.eng || '?'})` : '';
   if (!res) return `${tag} ${name} — ${o} ${r.why}`.replace(/ +/g, ' ');
   const ft = res.fs != null && rec.fin ? (res.dft === 0 ? 'čas enak do bita' : `čas ${res.dft > 0 ? '+' : ''}${res.dft} s od zapisa`) : `brez cilja, ${(res.n / 120).toFixed(1)} s`;
-  return `${tag} ${name} — ${o}: ${res.fs != null ? 'cilj v koraku ' + res.fs + ', ' : ''}${ft}, pot največ ${f3(res.maxD)} m od zapisa${res.exact ? ', natančno do bita' : ''}${r.why ? ' — ' + r.why : ''}`;
+  return `${tag} ${name} — ${o}: ${res.fs != null ? 'cilj v koraku ' + res.fs + ', ' : ''}${ft}, pot največ ${f3(res.maxD)} m od zapisa${res.exact ? ', natančno do bita' : ''}${res.tla ? `, ${res.tla} odgovorov tal podrtih predmetov manjka ali ostane` : ''}${res.mr ? `, ${res.mr} naključnih števil manjka ali ostane` : ''}${r.why ? ' — ' + r.why : ''}`;   // (tla, mr: 0 in the same engine)
 }
 
 if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {

@@ -93,6 +93,27 @@ for (const [name, f, re] of BAD) {
 }
 check('the tampering checks are real (throttle events and autopilot calls in the record)', fi >= 0 && ai >= 0);
 
+// the props from the world (setProps: its list and its floor, js/world.js; Node builds no world, so made up here): cones and tyres on the line
+// after the start, a floor that varies, solid scenery in front of the left barrier (the floor's inset, js/world.js propSolid)
+{
+  const P0 = new C.Race(T, Object.assign({}, SOLO)).player, i0 = T.query(P0.x, P0.z, -1, {}).i, PN = 20 * 120;
+  const FL = (q) => 0.03 * Math.sin(q.s * 0.37 + q.d * 1.3);
+  FL.inset = new Float32Array(T.N * 2); for (let i = i0; i < i0 + 80; i++) FL.inset[(i % T.N) * 2] = 0.4;
+  const LIST = []; for (let j = 0; j < 12; j++) { const i = (i0 + 10 + j * 3) % T.N, o = [-1.2, 0, 1.2][j % 3]; LIST.push({ kind: j % 2 ? 'tyre' : 'cone', x: T.px[i] + T.nx[i] * o, z: T.pz[i] + T.nz[i] * o, yaw: 0, col: 0, i }); }
+  let seen = null;
+  const withProps = (race, k) => { if (k === 0) race.setProps(LIST, FL); if (k === 5) seen = race.propFloor && race.propFloor.inset; auto(race, k); };
+  const pst = (r) => r.race.props.map(b => [b.x, b.y, b.z, b.qx, b.qy, b.qz, b.qw, b.sleep ? 1 : 0].join(',')).join(';');
+  const q0 = run(SOLO, withProps, PN, false), q1 = run(SOLO, withProps, PN, true), R = q1.R;
+  const keys = Object.keys(R.pf).filter(k => k !== 'p'), knocked = q1.race.props.filter(b => b.age > 0).length, si = R.f.indexOf('!setProps');
+  let ins = null; for (let i = 0; i < R.e.length; i += 3) if (R.e[i + 1] === si) ins = R.e[i + 2].ins;
+  check('props from the world (setProps): recorded = not recorded, to the last bit (the cars and every prop; the floor\'s inset seen through the record\'s floor)', q0.digest === q1.digest && pst(q0) === pst(q1) && seen === FL.inset && R.ok, JSON.stringify({ d: [q0.digest, q1.digest], props: pst(q0) === pst(q1), inset: seen === FL.inset, why: R.why }));
+  check('… each knocked prop\'s floor answers its own (by its place in race.props), setProps\'s apart, the inset in its call', knocked >= 2 && keys.length >= 2 && keys.every(k => +k >= 0 && +k < LIST.length) && Array.isArray(R.pf.p) && Array.isArray(ins) && ins.length === 160, JSON.stringify({ knocked, keys, ins: ins && ins.length }));
+  const rQ = V.replay(C, R);
+  check('… replayed to the last bit (every floor answer used, one by one)', rQ.ok && rQ.exact && rQ.tla === 0 && rQ.mr === 0 && rQ.n === PN, res(rQ));
+  const rC = V.replay(C, cp(R, (c) => { delete c.pf[keys[0]]; }));
+  check('… a knocked prop\'s floor answers missing: the replay goes on (that prop on the road\'s height; counted, not exact), the path and the finish decide', !/ne gre skozi/.test(rC.why) && rC.tla > 0 && !rC.exact, res(rC) + ' tla=' + rC.tla);
+}
+
 // no names in a record (the player's, a friend's in a challenge: chal, champ), wherever the game sets them
 {
   const N = 'Izmišljeni Voznik';

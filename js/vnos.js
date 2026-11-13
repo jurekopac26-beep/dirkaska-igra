@@ -9,7 +9,8 @@
    A field changed inside an object of the race (not set on it) is not seen: the comparison tells whether it mattered.
    No names in a record (name, playerName at any depth; the race's chal and champ, the game's own) */
 const Vnos = (() => {
-  const V = 1, STEP = 1 / 120, CP = 60, DG = 1200, MAXE = 900000, MAXW = 40, DEEP = 10, TOL = 0.0005;   // (TOL: the finish time's room, s: the same to the millisecond shown)
+  const V = 1, STEP = 1 / 120, CP = 60, DG = 1200, MAXE = 900000, MAXW = 40, DEEP = 10, TOL = STEP;   // (TOL: the finish time's room, s: to the step, as the plan
+  // has it; within one engine's version it is the same to the bit, across engines Math's last bit differs: docs/svetovna-lestvica.md)
   const SKIP = new Set(['name', 'playerName']);   // (names: never in a record, never physics)
   const IGN = new Set(['chal', 'champ']);   // (the race's: the game's own, the core never reads them; a friend's name in chal)
   const CALLS = ['start', 'rescue', 'retire', 'pitLaunch', 'putBack', 'setProps'];   // (the race's methods the game calls that change it)
@@ -152,22 +153,32 @@ const Vnos = (() => {
       after(S);
     };
   }
-  // the props: what setProps reads of each (its kind, place, height, turn, colour); the floor's answers kept, in a step or in setProps, as runs
+  // the props: what setProps reads of each (its kind, place, height, turn, colour) and of the floor (its inset: the solid scenery in front of a
+  // barrier, js/world.js propSolid); the floor's answers kept, in a step or in setProps, as runs, each prop its own (by its place in race.props;
+  // 'p': setProps's): a prop that moves a little otherwise in another engine takes no other prop's answers
   const PK = ['x', 'z', 'i', 'y', 'yaw', 'col'];
+  const pkey = (race, ix, b) => { if (!b || typeof b !== 'object') return 'p'; let k = ix.get(b); if (k === undefined) { const i = race.props ? race.props.indexOf(b) : -1; ix.set(b, k = i >= 0 ? String(i) : 'p'); } return k; };
   function floorW(S, fl) {
     if (typeof fl !== 'function') return fl;
-    const A = S.rec.pf;
-    return function (q, near) {
+    const A = S.rec.pf, ix = new WeakMap();
+    const w = function (q, near, b) {
       const y = fl.call(this, q, near);
-      if (!S.done && (S.inStep || S.inCall) && cur === S) { const v = enc(y, S.X, 0), L = A.length; if (L && A[L - 2] === v) A[L - 1]++; else A.push(v, 1); }
+      if (!S.done && (S.inStep || S.inCall) && cur === S) { const k = pkey(S.race, ix, b), L = A[k] || (A[k] = []), v = enc(y, S.X, 0), m = L.length; if (m && L[m - 2] === v) L[m - 1]++; else L.push(v, 1); }
       return y;
     };
+    Object.defineProperty(w, 'inset', { get: () => fl.inset, configurable: true });   // (Core propStep reads it from the floor)
+    return w;
+  }
+  function insetOf(fl, X) {   // (the floor's inset: the place and value of each one not 0; null: none)
+    const I = fl && fl.inset; if (!I || typeof I.length !== 'number') return null;
+    const o = []; for (let i = 0; i < I.length; i++) if (I[i] !== 0) o.push(i, enc(I[i], X, 0));
+    return o;
   }
   function callW(S, k, f) {
     return function (...a) {
       if (!free(S)) return f.apply(this, a);
       let val;
-      try { val = k === 'setProps' ? { p: (a[0] || []).map(it => [String(it.kind)].concat(PK.map(q => enc(it[q], S.X, 0)))), f: typeof a[1] === 'function' ? 1 : 0 } : enc(a, Object.assign({ fn: true }, S.X), 0); }
+      try { val = k === 'setProps' ? { p: (a[0] || []).map(it => [String(it.kind)].concat(PK.map(q => enc(it[q], S.X, 0)))), f: typeof a[1] === 'function' ? 1 : 0, ins: insetOf(a[1], S.X) } : enc(a, Object.assign({ fn: true }, S.X), 0); }
       catch (err) { bad(S, k + ': ' + err.message); return f.apply(this, a); }
       return logged(S, k, val, () => f.apply(this, k === 'setProps' ? [a[0], floorW(S, a[1])] : a), true);
     };
@@ -191,7 +202,7 @@ const Vnos = (() => {
     const X = { C, race }, X0 = { C };
     const S = { C, race, X, cars: race.cars, nc: race.cars.length, n: 0, en: 0, dt: STEP, done: false, inStep: false, inCall: false, snap: new Map(), fi: new Map() };
     const R = S.rec = { v: V, ok: true, why: '', w: [], stamp: stamp(), eng: engine(), kind: (info && info.kind) || '', track: race.track.def.id, opts: null,
-      xr: enc(Object.assign({}, C.XR), X0, 0), tx: enc(Object.assign({}, C.TX), X0, 0), lod: enc(Object.assign({}, C.LOD), X0, 0), f: [], e: [], mr: [], pf: [], cp: [], dg: [], n: 0, fs: null, fin: null };
+      xr: enc(Object.assign({}, C.XR), X0, 0), tx: enc(Object.assign({}, C.TX), X0, 0), lod: enc(Object.assign({}, C.LOD), X0, 0), f: [], e: [], mr: [], pf: {}, cp: [], dg: [], n: 0, fs: null, fin: null };
     SES.set(race, S);
     try { R.opts = enc(race.opts, X0, 0); } catch (err) { bad(S, 'opts: ' + err.message); return R; }
     def(race, 'step', stepW(S, race.step));
@@ -205,10 +216,11 @@ const Vnos = (() => {
   /* ---------------- the replay ---------------- */
   // the record replayed in a race of its own (Node: tools/lestvica-preveri.mjs; o.track: a Track to reuse). { ok, why, n, fs (the step of the
   // finish, null: not reached), dft (the finish time less the recorded one, s), maxD (the path's largest distance from the record, m), cpBad (the
-  // first step 0.5 m off, -1 none), dgBad (the first step whose digest differs, -1 none), exact (every digest and the finish to the last bit) }
+  // first step 0.5 m off, -1 none), dgBad (the first step whose digest differs, -1 none), exact (every digest and the finish to the last bit),
+  // tla, mr (the floor's answers and the calls' random numbers the replay asked for and the record didn't have, or left over: 0 in one engine) }
   function replay(C, rec, o) {
     o = o || {};
-    const res = { ok: false, why: '', n: 0, fs: null, dft: null, maxD: 0, cpBad: -1, dgBad: -1, exact: false };
+    const res = { ok: false, why: '', n: 0, fs: null, dft: null, maxD: 0, cpBad: -1, dgBad: -1, exact: false, tla: 0, mr: 0 };
     if (!rec || rec.v !== V) { res.why = 'zapis ni te različice'; return res; }
     const tdef = C.TRACKS.find(d => d.id === rec.track); if (!tdef) { res.why = 'ni proge ' + rec.track; return res; }
     const xr0 = Object.assign({}, C.XR), tx0 = Object.assign({}, C.TX), lod0 = Object.assign({}, C.LOD), cur0 = cur, M0 = Math.random;
@@ -218,9 +230,17 @@ const Vnos = (() => {
       C.setCrash(dec(rec.xr, X)); C.setTest(dec(rec.tx, X)); Object.assign(C.LOD, dec(rec.lod, X));
       const race = new C.Race(o.track || new C.Track(tdef), dec(rec.opts, X)), P = race.player; X.race = race;
       if (!P) throw new Error('dirka brez igralca');
-      const PF = rec.pf, MRV = rec.mr; let pi = 0, pk = 0, mi = 0, short = '';
-      X.fn = function () { if (pi >= PF.length) { short = short || 'tla'; return 0; } const v = dec(PF[pi], X); if (++pk >= PF[pi + 1]) { pi += 2; pk = 0; } return v; };
-      const rnd = () => { if (mi >= MRV.length) { short = short || 'naključna števila'; return 0.5; } return MRV[mi++]; };
+      // the floor's answers, each prop's in turn, and the calls' random numbers; one the record hasn't (another engine: a prop moved otherwise) is
+      // that prop's last (none yet: the road's height), a number 0.5: counted, the path and the finish decide
+      const PF = rec.pf && typeof rec.pf === 'object' && !Array.isArray(rec.pf) ? rec.pf : {}, MRV = Array.isArray(rec.mr) ? rec.mr : [], pat = {}, plast = {}, pix = new WeakMap();
+      let mi = 0;
+      X.fn = function (q, near, b) {
+        const k = pkey(race, pix, b), L = own.call(PF, k) && Array.isArray(PF[k]) ? PF[k] : null, c = pat[k] || (pat[k] = [0, 0]);
+        if (!L || c[0] >= L.length) { res.tla++; return own.call(plast, k) ? plast[k] : 0; }
+        const v = dec(L[c[0]], X); if (++c[1] >= L[c[0] + 1]) { c[0] += 2; c[1] = 0; }
+        return (plast[k] = v);
+      };
+      const rnd = () => { if (mi >= MRV.length) { res.mr++; return 0.5; } return MRV[mi++]; };
       const tgt = (key) => key === 'r' ? race : key === 'o' ? race.opts : key === 'x' ? C.XR : key === 'l' ? C.LOD : key === 'fl' ? race.fl : key[0] === 'c' ? race.cars[+key.slice(1)] : null;
       let dt = STEP;
       const apply = (name, val) => {
@@ -228,6 +248,7 @@ const Vnos = (() => {
         if (name[0] === '!') {
           const k = name.slice(1);
           if (k === 'aiControl') { const a = typeof val === 'number' ? [race.cars[val], STEP] : dec(val, X); if (!a || !a[0]) throw new Error('ni avta #' + val); C.aiControl(a[0], race, a[1]); return; }
+          if (k === 'setProps') { let I; if (Array.isArray(val.ins)) { I = new Float32Array(race.track.N * 2); for (let j = 0; j + 1 < val.ins.length; j += 2) if (val.ins[j] >= 0 && val.ins[j] < I.length) I[val.ins[j]] = dec(val.ins[j + 1], X); } X.fn.inset = I; }
           const a = k === 'setProps' ? [val.p.map(t => { const it = { kind: t[0] }; PK.forEach((q, j) => { it[q] = dec(t[j + 1], X); }); return it; }), val.f ? X.fn : null] : dec(val, X);
           Math.random = rnd;
           try { if (k === 'careerWear') C.careerWear(...a); else if (CALLS.includes(k)) race[k](...a); else throw new Error('klic ' + k); } finally { Math.random = M0; }
@@ -252,8 +273,9 @@ const Vnos = (() => {
         if (P.finished && res.fs == null) res.fs = k;
         if (P.finished && rec.fs == null) break;
       }
-      if (short) throw new Error('zapisu zmanjka: ' + short);
-      const rest = ei < E.length ? 'dogodki' : pi < PF.length ? 'tla' : mi < MRV.length ? 'naključna števila' : '';
+      const rest = ei < E.length ? 'dogodki' : '';
+      for (const k of Object.keys(PF)) { const L = PF[k], c = pat[k] || [0, 0]; if (Array.isArray(L)) for (let j = c[0]; j + 1 < L.length; j += 2) res.tla += Math.max(0, (+L[j + 1] || 0) - (j === c[0] ? c[1] : 0)); }
+      res.mr += Math.max(0, MRV.length - mi);
       if (rec.fs != null) {
         if (res.fs == null) res.why = 'cilja ni (zapis: korak ' + rec.fs + ')';
         else if (res.fs !== rec.fs) res.why = 'cilj v koraku ' + res.fs + ', zapis ' + rec.fs;
@@ -267,7 +289,7 @@ const Vnos = (() => {
       else res.exact = dgOk && res.maxD === 0;
       if (!res.why && res.cpBad >= 0) res.why = 'pot več kot 0,5 m od zapisa (korak ' + res.cpBad + ')';
       if (!res.why && rest) res.why = 'v zapisu ostanejo ' + rest;
-      if (rest) res.exact = false;
+      if (rest || res.tla || res.mr) res.exact = false;
       res.ok = !res.why;
     } catch (err) { res.why = 'zapis ne gre skozi: ' + ((err && err.message) || String(err)); }
     finally { Math.random = M0; C.setCrash(xr0); C.setTest(tx0); Object.assign(C.LOD, lod0); cur = cur0; }
