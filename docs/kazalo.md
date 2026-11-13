@@ -225,6 +225,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
 | *greatalpine* | *Great Alpine Road, Avstralija (test)* | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
+| savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
