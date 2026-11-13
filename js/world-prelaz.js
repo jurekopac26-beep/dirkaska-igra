@@ -45,7 +45,7 @@
       rock: [0.52, 0.46, 0.4], rockWarm: [0.6, 0.44, 0.32], lichen: [0.38, 0.36, 0.3], scree: [0.62, 0.48, 0.36],
       sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
       rockCols: [[0.55, 0.52, 0.5], [0.6, 0.56, 0.52], [0.47, 0.45, 0.44], [0.62, 0.5, 0.4], [0.5, 0.47, 0.44], [0.56, 0.54, 0.5]],   // (granite, a little red with the laterite)
-      centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line, solid through the hairpins)
+      centre: [0.95, 0.74, 0.14], dash: [3, 9], solidNear: 70,   // (yellow centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpins)
       chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.48, 0.4],
       fans: [[0.84, 0.14, 0.14], [0.98, 0.84, 0.12], [0.95, 0.95, 0.95], [0.12, 0.3, 0.62], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
       cars: [[0.9, 0.9, 0.88], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.78, 0.72, 0.6]],

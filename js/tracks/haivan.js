@@ -25,6 +25,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: HAIVAN_H.map((h, i) => [i / (HAIVAN_H.length - 1), h / 10]),
     medals: { cs: [59, 62, 66], wet: { cs: [72, 75, 81] }, winter: { cs: [69, 73, 78], wet: { cs: [85, 90, 96] } } },
+    maxRivals: 90,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~190 m of road past the line: a bigger field's parking would reach the end of the road (92 already do)
     // the traffic of the open road: [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; Vietnam: scooters above all,
     // tour vans and coaches to the top, a few cars, the trucks take the tunnel below
     traffic: { mix: [0.22, 0.2, 0.08, 0.48, 0.02], bike: 2600 },
