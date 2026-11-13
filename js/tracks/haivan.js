@@ -19,6 +19,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xc8d6dc, sun: 0xfff2dc, sunI: 1.28, sky: 0xa9c8e8, gnd: 0x3e5a2c, hemiI: 0.62, tint: [1.0, 1.01, 0.98], sat: 1.1, sunOff: [70, 92, -40], split: [[0.97, 1.0, 1.05], [1.03, 1.0, 0.96]] },   // Hải Vân: a hazy, warm morning over the sea
     say: 'the Hai Van Pass',
+    roadWear: 1.2,
     id: 'haivan', name: 'Hải Vân, Vietnam', theme: 'haivan', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.5,
     desc: 'Prelaz Hải Vân v Vietnamu: zadnja 2 km stare ceste čez prelaz med Huếjem in Đà Nẵngom, od zaliva Lăng Cô skozi tropski gozd nad morjem do sedla na 477 m.',
     en: { name: 'Hai Van, Vietnam', desc: 'The Hải Vân Pass in Vietnam: the last 2 km of the old road over the pass between Huế and Đà Nẵng, up from the bay of Lăng Cô through the tropical forest above the sea to the saddle at 477 m.' },
