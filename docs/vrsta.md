@@ -85,6 +85,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.11 | #569 Zbirna N1–N7 + #494 Proge | 29 pravih prog; popravi se samo, kar ovira `main`; na `main` ~15.–16. 11. po meniju; oznake `test`/`pending` kot na `main` | jure.kopac26 | **pripravljen 13. 11.** (povezani testi lokalno zeleni); predaja v opisu #569; do `main` ga vodi Združevanje (jure.kopac26) |
 | 13a–13r | #485, #498, #500, #550, #556, #564, #576, #582, #588, #592, #603, #607 (N1–N8), #283, #261, #153, #465 (#494) | nove proge, vse v #569 oz. #494 | partyslo, jure.kopac26 | osnutki se zaprejo; podrobnosti v arhivu |
 | 10.12 | #246 | preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva; ~8. 12. | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
-| 10.13 | veja `pravila/2026-11-13` | pravila 13. 11.: croatiadata, 9 prog, Švica, proge s prepadom, Aguascalientes, Koli in Longyearbyen, Mujib in Irishtown, varčevanje 1–4 | jure.kopac26 | pripravljen 13. 11. (povezani testi lokalno zeleni); za #664 |
+| 10.13 | veja `pravila/2026-11-13` (#674) | pravila 13. 11.: croatiadata, 9 prog, Švica, proge s prepadom, Aguascalientes, Koli in Longyearbyen, Mujib in Irishtown, varčevanje 1–4 | jure.kopac26 | pripravljen 13. 11. (povezani testi lokalno zeleni); za #664 |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
