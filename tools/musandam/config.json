@@ -1,0 +1,210 @@
+{
+ "id": "musandam",
+ "about": "Musandam, Oman (id musandam): 4 km of the coastal road west of Khasab, cut into the limestone cliffs above the bays of the Musandam peninsula, right-hand traffic, past the hamlet of Hanna (docs/nove-proge-1-0.md: a track along a drop, the barrier on the sea side)",
+ "box": [
+  26.205,
+  56.19,
+  26.262,
+  56.245
+ ],
+ "closed": false,
+ "route": [
+  [
+   26.22573,
+   56.22107,
+   null,
+   "run-up for the grid | trunk, w85800380, 200 m before the start line"
+  ],
+  [
+   26.22741,
+   56.22045,
+   null,
+   "start | trunk, w85800380, s 0 m"
+  ],
+  [
+   26.2287,
+   56.22006,
+   null,
+   "trunk, w85800380, s 150 m"
+  ],
+  [
+   26.23004,
+   56.21981,
+   null,
+   "trunk, w85800380, s 300 m"
+  ],
+  [
+   26.23119,
+   56.21907,
+   null,
+   "trunk, w85800380, s 450 m"
+  ],
+  [
+   26.23155,
+   56.21767,
+   null,
+   "trunk, w85800380, s 600 m"
+  ],
+  [
+   26.23092,
+   56.21637,
+   null,
+   "trunk, w85800380, s 750 m"
+  ],
+  [
+   26.22997,
+   56.2153,
+   null,
+   "trunk, w85800380, s 900 m"
+  ],
+  [
+   26.22948,
+   56.21403,
+   null,
+   "trunk, w85800380, s 1050 m"
+  ],
+  [
+   26.23045,
+   56.21319,
+   null,
+   "trunk, w85800380, s 1200 m"
+  ],
+  [
+   26.23167,
+   56.21384,
+   null,
+   "trunk, w85800380, s 1350 m"
+  ],
+  [
+   26.23301,
+   56.21384,
+   null,
+   "trunk, w85800380, s 1500 m"
+  ],
+  [
+   26.23404,
+   56.21482,
+   null,
+   "trunk, w85800380, s 1650 m"
+  ],
+  [
+   26.23514,
+   56.21539,
+   null,
+   "trunk, w85800380, s 1800 m"
+  ],
+  [
+   26.23644,
+   56.21572,
+   null,
+   "trunk, w85800380, s 1950 m"
+  ],
+  [
+   26.23753,
+   56.2166,
+   null,
+   "trunk, w85800380, s 2100 m"
+  ],
+  [
+   26.23874,
+   56.21707,
+   null,
+   "trunk, w85800380, s 2250 m"
+  ],
+  [
+   26.23988,
+   56.21633,
+   null,
+   "trunk, w85800380, s 2400 m"
+  ],
+  [
+   26.24109,
+   56.21594,
+   null,
+   "trunk, w85800380, s 2550 m"
+  ],
+  [
+   26.2423,
+   56.21643,
+   null,
+   "trunk, w85800380, s 2700 m"
+  ],
+  [
+   26.24359,
+   56.21623,
+   null,
+   "trunk, w85800380, s 2850 m"
+  ],
+  [
+   26.24391,
+   56.21482,
+   null,
+   "trunk, w85800380, s 3000 m"
+  ],
+  [
+   26.24342,
+   56.21343,
+   null,
+   "trunk, w85800380, s 3150 m"
+  ],
+  [
+   26.24242,
+   56.21252,
+   null,
+   "trunk, w85800380, s 3300 m"
+  ],
+  [
+   26.24107,
+   56.21248,
+   null,
+   "trunk, w85800380, s 3450 m"
+  ],
+  [
+   26.23976,
+   56.21242,
+   null,
+   "trunk, w85800380, s 3600 m"
+  ],
+  [
+   26.23851,
+   56.21201,
+   null,
+   "trunk, w85800380, s 3750 m"
+  ],
+  [
+   26.23721,
+   56.21204,
+   null,
+   "finish | trunk, w85800380, s 3900 m"
+  ],
+  [
+   26.23431,
+   56.21065,
+   null,
+   "the cars' slots past the finish line | trunk, w85800380, 250 m past it"
+  ]
+ ],
+ "prefer": [
+  "طريق خصب - تيبات"
+ ],
+ "geoRoads": [],
+ "geoWater": [],
+ "marks": [],
+ "places": [
+  [
+   "Hanna",
+   "1718351189",
+   null
+  ],
+  [
+   "al Harf",
+   "11918757551",
+   null
+  ]
+ ],
+ "dist": {
+  "grid": 480,
+  "coast": 600,
+  "cliffs": 400
+ }
+}
