@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "darvaz": {
+  "calls": 123,
+  "maxCalls": 139,
+  "kverts": 322,
+  "maxKverts": 375,
+  "jsMs": 1.4
  }
 }
