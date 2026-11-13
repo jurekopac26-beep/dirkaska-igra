@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Darvaz (Tajikistan, the Darvaz range): ~4 km of the primary road РБ04 (M41) along the right bank of the Panj, ~35 km upriver from
-  // Kalaikhumb: a ledge cut into the foot of the rock walls of the gorge, the river ~40 m below on the left, across it only the other bank's
+  // Kalaikhumb (izhodišče 38.37293, 71.17488): a ledge cut into the foot of the rock walls of the gorge, the river ~40 m below on the left, across it only the other bank's
   // walls (terrain only: no labels, no border line). Driven upriver, over the bridge on the side stream of the Pshikharv valley, along the
   // walls and the screes to the bend where the gorge turns east. The drop to the river: a guardrail and the track's wall keep every car on the
   // road; falling over the edge is Killar's alone. One card, four ways to drive it (def.modes): a race against the rivals on the closed road, a
@@ -28,7 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: DARVAZ_H.map((h, i) => [i / (DARVAZ_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {cs:[0,0,0],wet:{cs:[0,0,0]},winter:{cs:[0,0,0],wet:{cs:[0,0,0]}}},
+    medals: {cs:[98,103,111],wet:{cs:[117,122,132]},winter:{cs:[113,119,128],wet:{cs:[138,145,156]}}},
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // trunk road along the river: many lorries, minibuses and cars, a few buses and motorbikes, hardly a cyclist (a touring one now and then)
     traffic: { mix: [0.34, 0.24, 0.06, 0.06, 0.30], bike: 5000 },
@@ -36,7 +36,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1f4f8a', text: '#f4f6f0' }, escTo: 'Po soteski',   // (and the results of an escape: 'Po soteski v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Most · Pšiharv", "d": 1270.0, "say": ["Over the bridge on the side stream, and back onto the ledge!", "The bridge, and the walls close in again!"]},
+      {"n": "Most čez Pšiharv", "d": 1270.0, "say": ["Over the bridge on the side stream, and back onto the ledge!", "The bridge, and the walls close in again!"]},
       {"n": "Stena nad Panjem", "d": 2300.0, "say": ["Along the wall above the Panj, the river far below on your left!", "Rock on the right, the river on the left. Keep it tidy!"]},
       {"n": "Soteska Darvaz", "d": 3500.0, "say": ["Into the bend where the gorge turns east!", "Through the gorge, and the finish is near!"]},
     ],
