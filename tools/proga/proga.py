@@ -99,6 +99,21 @@ def separate(x, z, gap, adj, it=60):
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
 
+def widen(x, z, rmin, it=20):
+    """The tightest hairpins opened up (def `polmer`: the least radius of the centre line, m): where the line bends tighter, it is blended
+    a step at a time (at most `it` steps, def `polmer_it`) with a 3 m Gaussian of itself round each such apex (+-10 m): the apex moves in
+    and the bend opens (OpenStreetMap's sharp corners at the tips of hairpins far tighter than a road 9-10 m wide can turn). -> x, z, steps"""
+    for n in range(it):
+        x, z, s = resample(x, z, 1.0)
+        hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
+        tight = np.where(np.abs(k) > 1 / rmin)[0]
+        if not len(tight): return x, z, n
+        w = np.zeros_like(s)
+        for t in tight: w = np.maximum(w, np.exp(-((s - s[t]) / 10.0) ** 2))
+        xs = gaussian_filter1d(x, 3, mode='nearest'); zs = gaussian_filter1d(z, 3, mode='nearest')
+        x = x * (1 - w) + xs * w; z = z * (1 - w) + zs * w
+    x, z, s = resample(x, z, 1.0); return x, z, it
+
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
     hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
@@ -342,6 +357,9 @@ def main():
     S0, F0 = (x[i0], z[i0]), (x[i1], z[i1])
     hw = C['polsirina']; gap = C.get('razmik', 2 * hw + 10)
     x, z, mm, mx = separate(x, z, gap, int(gap * 2.6))
+    if C.get('polmer'):   # (the tightest hairpins opened up, then the legs apart again)
+        x, z, nw = widen(x, z, C['polmer'], C.get('polmer_it', 20)); x, z, mm2, mx2 = separate(x, z, gap, int(gap * 2.6))
+        log('hairpins opened to %.1f m in %d steps; the legs moved %.1f m more at most' % (C['polmer'], nw, mx2)); mx = max(mx, mx2)
     x, z, s = resample(x, z, 1.0)
     i0 = int(np.argmin(np.hypot(x - S0[0], z - S0[1]))); i1 = int(np.argmin(np.hypot(x - F0[0], z - F0[1])))
     # the game's origin: the start line

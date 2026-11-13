@@ -15,5 +15,24 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "limalimo": {
+    "ime": "Limalimo, Etiopija",
+    "okvir": [13.235, 37.855, 13.30, 37.91],
+    "pot": [[13.2765571, 37.876516], [13.2669693, 37.8812319], [13.2594918, 37.8818838], [13.2574557, 37.8879934]],
+    "start": [13.2761495, 37.8783177],
+    "cilj": [13.25649, 37.8862874],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 5.0,
+    "gauss": 2.5,
+    "polmer": 10,
+    "razredi": ["trunk"],
+    "visine": { "mediana": 50, "glajenje": 40, "naklon": 0.12, "serpentine": 0.35, "serpentine_m": 18 },
+    "s2": "S2A_37PCQ_20241211_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "LIMALIMO_H"
   }
 }
