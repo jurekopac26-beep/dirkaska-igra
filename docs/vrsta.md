@@ -42,7 +42,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Garaža z Dež in sneg v eni zbirni veji: animacije (8 plošč, #546) | biketraveler | prednost; pred `main` ok na posnetku |
 | Avti na raven KOLIBRIJA: preostalih 13 v #480 (+ #626) | biketraveler | pred Trki; na `main` ~17. 11. |
 | **30 avtov na raven KOLIBRIJA** (`docs/avti-kolibri.md`, »Prednost: 30 avtov«) | biketraveler | po #480, pred Trki; ~47 h, ~25. 11. |
-| 5 novih tovornjakov (50 avtov) z mesti za dele ob izdelavi | biketraveler | za grafiko; na `main` ~20. 12. |
+| 4 novi tovornjaki (TITAN PLIN odpade 13. 11.; za 50 avtov še eno vozilo) z mesti za dele ob izdelavi | biketraveler | za grafiko; na `main` ~20. 12. |
 | Občutek hitrosti pri kameri za avtom (I5) | jure.kopac26 | po tedenskem načrtu; pred `main` preizkus uporabnika |
 | Analiza kroga (I12) | biketraveler | v delu od 8. 11.; pred progami |
 | Samodejno zaviranje pred ovinki za začetnike (I10) | jure.kopac26 | po tedenskem načrtu |
