@@ -158,11 +158,11 @@
   "instances": 48272,
   "props": 101,
   "crowd": 401,
-  "world": "5aa1ddf7",
+  "world": "588c5ff2",
   "propsHash": "2afe5d7",
   "floor": "5755fdd4/14000",
   "groups": {
-   "-:MeshLambertMaterial": "db355d20",
+   "-:MeshLambertMaterial": "cb053df0",
    "-:MeshBasicMaterial": "a2c28e88",
    "crowd:MeshLambertMaterial": "48cce0f",
    "flags:MeshLambertMaterial": "48125986",
