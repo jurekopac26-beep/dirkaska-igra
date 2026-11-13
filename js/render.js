@@ -5503,7 +5503,7 @@ const Render = (function () {
      at speed, sparks from its plank touching the road (in bursts, more over a kerb, a shower on landing). The particles only for the cars
      round the view ---------------- */
   function carFx(v, c, dt, live) {
-    const f = v.cfx || (v.cfx = { heat: 0, thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0 }), M = c.m, R = Math.random;
+    const f = v.cfx || (v.cfx = { heat: 0, thr: 0, pop: 0, pt: 0, sh: false, sc: 0, pl: 0, fn: c.fenceN || 0 }), M = c.m, R = Math.random;
     if (!v.axW) { const sc = M.len / 4.4; v.axW = v.pk ? v.pk.w.value : v.wf.length && v.wr.length ? { x: v.wf[0].position.x, y: v.wr[0].position.x, z: v.wf[0].position.y } : { x: M.a * sc * 0.98 + 0.05, y: -M.b * sc * 0.98, z: M.rw }; }
     const W = v.axW, me = v.grp.matrixWorld.elements, spd = c.speed, gy = c.roadY != null ? c.roadY : c.y || 0;
     const fx = me[0], fz = me[2], lx = me[8], lz = me[10], X = me[12], Z = me[14];   // forward, right (local z) and the car's origin
@@ -5533,13 +5533,18 @@ const Render = (function () {
         glows.add(_pkE.x - fx * 0.3, _pkE.y, _pkE.z - fz * 0.3, 1.6 * big, 1, 0.5, 0.15, 0.45 * night + 0.2);
       }
     } else if (f.pop > 0) f.pop -= dt;
-    if (c.air || spd < 2 || !near) { f.sc = f.pl = 0; return; }
-    // the barrier: a stream of sparks from the corner that rubs along it (and a burst for a light knock the stock sparks leave out)
     const q = c.q, T = curRace && curRace.track;
+    if ((c.fenceN || 0) !== f.fn) {   // a wooden fence's panel just broken (Core fenceBreak, Track.fence): splinters and a little dust where the car went through it, no sparks (wood does not spark)
+      const Fn = T && T.fence; if (Fn && near && (c.fenceN || 0) > f.fn && q && q.br != null) { const o = (Fn.side > 0 ? q.br : -q.bl) - q.d; splinters(X + q.nx * o, Z + q.nz * o, Math.min(8, 2 + spd * 0.25), gy, c); }
+      f.fn = c.fenceN || 0;
+    }
+    if (c.air || spd < 2 || !near) { f.sc = f.pl = 0; return; }
+    // the barrier: a stream of sparks from the corner that rubs along it (and a burst for a light knock the stock sparks leave out); none where
+    // there is no rail (an unfenced road, Core Track.unf: Killar) nor off a wooden fence (woodAt: wood does not spark, the user's decision of 13. 11. 2026)
     if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && !c.inPit) {   // (on the pit road, c.inPit: no rail beside the car either, the circuit's barriers are not the lane's walls; in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if ((gap < 0.12 && !hillOn(T, q, side)) || (c.fxWall > 0 && c.fxWall <= 2.5)) {   // (a hill behind the line: no rail there to rub, hillOn)
+      if ((gap < 0.12 && !hillOn(T, q, side) && !(T && T.unf)) || (c.fxWall > 0 && c.fxWall <= 2.5 && !woodAt(T, c))) {   // (a hill behind the line: no rail there to rub, hillOn)
         const sx = Math.sign(fn * side) * L, sz = Math.sign(ln * side) * H, px = X + fx * sx + lx * sz + nx * side * Math.max(0, gap), pz = Z + fz * sx + lz * sz + nz * side * Math.max(0, gap);
         f.sc += (c.fxWall > 0 ? 8 : 0) + clamp(spd / 18, 0.3, 1.6) * 110 * dt;
         while (f.sc >= 1) { f.sc -= 1; sparkP.emit(px, gy + 0.35 + R() * 0.3, pz, c.vx * 0.55 + (R() - 0.5) * 3 - nx * side * R() * 2, 1 + R() * 3, c.vz * 0.55 + (R() - 0.5) * 3 - nz * side * R() * 2, 0.2 + R() * 0.3, 0.85, 0.2, 1, 0.72 + R() * 0.2, 0.3, 1, 11, 1.2, gy); }
@@ -8669,7 +8674,7 @@ const Render = (function () {
   // player's view is shaken by game.js (fallFb: as at a wall of that speed, Nastavitve · Tresenje kamere: ob trku)
   function fallFx(v, c, B) {
     v.sk.fill(null); v.acc.fill(0);   // (no skid mark from the edge to where it is put back)
-    if (c.fxWall > 2.5) sparks(c.wallX, c.wallZ, c.fxWall, c.y || 0);
+    if (c.fxWall > 2.5) wallFx(c, c.y || 0);
     if (c.fxCar > 3 && !c.fxQ) sparks(c.contactX, c.contactZ, c.fxCar * 0.7, c.y || 0, c.fxCar > 7 || Core.TX.cv === 5);
     c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
     if (B.hn === v.fbN) return;
@@ -9763,7 +9768,7 @@ const Render = (function () {
       } else v.acc[k] = 0;
     }
     // sparks
-    if (c.fxWall > 2.5) { sparks(c.wallX, c.wallZ, c.fxWall, yb); }
+    if (c.fxWall > 2.5) wallFx(c, yb);   // (sparks off metal and stone; off a wooden fence's panel splinters, woodAt)
     if (c.fxCar > 3 && !c.fxQ) { sparks(c.contactX, c.contactZ, c.fxCar * 0.7, yb, c.fxCar > 7 || Core.TX.cv === 5); }   // (c.fxQ: Trki med avti: Iskre izklop, a knock between cars without sparks or dust; the bright flash only in a hard knock, over 7 m/s: the user's, a touch does not light up; Stara, the old knock: as before, at every knock)
     if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
@@ -9788,6 +9793,26 @@ const Render = (function () {
       const p = wheelWorld(c, -M.len * 0.5 - 0.1, 0.35, x, z, h);
       for (let k = 0; k < 3; k++) particles.emit(p.x, 0.35 + yb, p.z, -Math.cos(h) * 3 + (Math.random() - 0.5), 0.3, -Math.sin(h) * 3 + (Math.random() - 0.5), 0.14, 0.35, 0.8, 1, 0.55 + Math.random() * 0.3, 0.1, 0.95, 0, 3, yb);
     }
+  }
+  // a knock on a wall (c.fxWall, at c.wallX, wallZ): sparks off metal and stone, splinters off a wooden fence's panel (woodAt)
+  function wallFx(c, y) { if (woodAt(curRace && curRace.track, c)) splinters(c.wallX, c.wallZ, c.fxWall, y, c); else sparks(c.wallX, c.wallZ, c.fxWall, y); }
+  // the car's knock on a wall (c.wallX, wallZ) was on a wooden fence's standing panel (Core Track.fence: on its side, within 0.8 m of its
+  // line, the panel there up): wood does not spark (the user's decision of 13. 11. 2026, Killar s=755 m), only its splinters fly
+  function woodAt(T, c) {
+    const Fn = T && T.fence, q = c.q; if (!Fn || !q || q.br == null || q.k >= 0 || c.wallX == null) return false;
+    const d = q.d + (c.wallX - c.x) * q.nx + (c.wallZ - c.z) * q.nz, side = d > 0 ? 1 : -1; if (side !== Fn.side || Math.abs(Math.abs(d) - (side > 0 ? q.br : q.bl)) > 0.8) return false;
+    const k = Math.floor((q.s - Fn.s0) / Fn.P); return k >= 0 && k < Fn.n && !!Fn.on[k];
+  }
+  // wood hit or broken (a fence's panel): chips of the planks (brown, grey with age, some pale where they split) and a little dust, no sparks nor a flash
+  function splinters(x, z, imp, y, c) {
+    if (x == null) return;
+    const n = Math.min(18, 6 + imp * 1.5), y0 = y || 0, vx = c ? c.vx * 0.35 : 0, vz = c ? c.vz * 0.35 : 0;
+    for (let k = 0; k < n; k++) {
+      const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 4, pale = Math.random() < 0.3, g = 0.85 + Math.random() * 0.3;
+      particles.emit(x, 0.4 + Math.random() * 0.5 + y0, z, vx + Math.cos(a) * sp, 1.5 + Math.random() * 3, vz + Math.sin(a) * sp, 0.9 + Math.random() * 0.6, 0.14 + Math.random() * 0.08, 0.1,
+        (pale ? 0.66 : 0.42) * g, (pale ? 0.54 : 0.31) * g, (pale ? 0.38 : 0.2) * g, 1, 9, 1, y0);
+    }
+    for (let k = 0; k < 4; k++) { const a = Math.random() * Math.PI * 2, sp = 0.5 + Math.random(); particles.emit(x, 0.3 + y0, z, vx * 0.5 + Math.cos(a) * sp, 0.5 + Math.random(), vz * 0.5 + Math.sin(a) * sp, 0.8 + Math.random() * 0.5, 0.5, 1.4, 0.6, 0.53, 0.44, 0.38, -0.2, 2.2, y0); }
   }
   function sparks(x, z, imp, y, flash = true) {   // (flash: the bright flash at the contact; off for a light knock between cars)
     if (x == null) return;
