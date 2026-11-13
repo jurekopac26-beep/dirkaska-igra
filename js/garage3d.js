@@ -2932,12 +2932,16 @@ const Garage3D = (function () {
 
   /* ---------------- the ring over the car and its two arms: nothing of them stands on the floor ----------------
      RING 9: a box-section frame (navy, a lattice of light bars on its faces, a line of light low on them) on the chamber's outline under
-     the ceiling, rods up to the deck from its corners and its short sides; in its slot the chamber's glass. On its long sides a half
-     bridge each (a box beam on the ring's top, from outside the near or the far side in over the car's middle) rides along x; under it a
-     carriage along the beam (z) with its housing, out of it a telescope of four stages down to the wrist (a drum turning round the
-     vertical: yaw) and a short forearm tilting (pitch) with the tool on its end. The near arm (0, the camera's side) never comes nearer
-     the far side than z ARM.z0[0], the far one (1) never nearer the near side than ARM.z1[1]: they never meet. A tool changes up in the
-     carriage's housing (the telescope in). Parked: both at the ring's left end, out past the cars' sides, up, their tools level */
+     the ceiling, hung from rods out past it (a bracket out from its foot to each: the bridge turns over them); in its slot the chamber's
+     glass. Over it ONE bridge (the plates an_common and an_gume: "most se obrne"): a box beam across the ring through both arms'
+     carriages, its two end trolleys riding the ring's top, a hub on it where it turns. Arm 1 (0: on the camera's side when parked) on
+     the beam's + half, arm 2 (1) on its - half: the hub always between them, they never cross. Each carriage runs along the beam (the
+     beam swinging and sliding as the two go: always the chord through both); out of its housing a telescope of four stages down to the
+     wrist (a drum turning round the vertical: yaw) and a short forearm tilting (pitch) with the tool on its end. Most shows keep each arm
+     on its own side (arm 1 never nearer the far side than z ARM.z0[0], arm 2 never nearer the near side than ARM.z1[1]); the tyres turn
+     the bridge round its hub like a turnstile (BRG.free: each anywhere in the ring, ARM.gap apart at the least: one past the car's nose,
+     the other past its tail). A tool changes up in the carriage's housing (the telescope in). Parked: the bridge along z at the ring's
+     left end, both carriages out past the cars' sides, up, their tools level */
   const TOOLS = ['camera', 'wrench', 'scanner', 'polisher', 'brush', 'nozzle'];
   // (each tool: its length from the coupling's face to its working end, its radius round its axis)
   const TL = { none: 0, camera: 0.26, wrench: 0.5, scanner: 0.3, polisher: 0.29, brush: 0.455, nozzle: 0.64, gripper: 0.3, reach: 0.78 };
@@ -2955,11 +2959,15 @@ const Garage3D = (function () {
   CH.step = CH.YS / (CH.n - 1);
   const FXC = { W: [0.9, 0.91, 0.93], NV: [0.1, 0.13, 0.26], DK: [0.13, 0.14, 0.16], ST: [0.6, 0.62, 0.66], CY: [0.62, 1.72, 2.25], YL: [0.92, 0.7, 0.1], CHN: [0.15, 0.16, 0.18], BK: [0.07, 0.07, 0.08] };
   const FX = { rails: null, ZERO: { value: 0 }, obst: [], tools: [] };
-  // (the arms: the beams' top and foot (on the ring's top), the carriage's foot, the housing's foot (the wrist's height drawn in: Y0), the
-  // stages' length and how far each may run out (EMAX the telescope's whole run), the wrist's drum, the forearm's length; each arm's way
-  // along z (z0 .. z1), its beam's inner end; the travel along x; the parked place; each arm's tools)
-  const ARM = { yb0: 4.43, yb1: 4.6, yc: 4.06, Y0: 3.3, SL: 0.78, EMAX: 2.6, WR: 0.1, FA: 0.3, z0: [0.62, -2.08], z1: [2.08, 0.05], zin: [0.5, 0.2], x0: -2.7, x1: 2.7,
-    park: [{ x: -2.7, z: 2.08 }, { x: -2.7, z: -2.08 }], tools: [['nozzle', 'scanner', 'wrench', 'gripper'], ['brush', 'polisher', 'camera', 'nozzle', 'reach']] };
+  // (the arms: the bridge's top and foot (over the ring's top), the carriage's foot, the housing's foot (the wrist's height drawn in: Y0),
+  // the stages' length and how far each may run out (EMAX the telescope's whole run), the wrist's drum, the forearm's length; each arm's
+  // way along z (z0 .. z1; zf both ways as the bridge turns), the carriages' least distance then (gap); the travel along x; the parked
+  // place; each arm's tools)
+  const ARM = { yb0: 4.43, yb1: 4.6, yc: 4.06, Y0: 3.3, SL: 0.78, EMAX: 2.6, WR: 0.1, FA: 0.3, z0: [0.62, -2.08], z1: [2.08, 0.05], zf: 2.08, gap: 0.8, x0: -2.7, x1: 2.7,
+    park: [{ x: -2.7, z: 2.08 }, { x: -2.7, z: -2.08 }], tools: [['nozzle', 'scanner', 'wrench', 'gripper', 'reach'], ['brush', 'polisher', 'camera', 'nozzle', 'reach']] };
+  // (the bridge: its hub c (where it turns: p, the point it keeps nearest, set by a show, slid along the beam as the chord moves), u along
+  // it toward arm 1, phi its turn (0: along z, arm 1 at +z), a and b its ends, len; free: the arms anywhere in the ring, the bridge turning)
+  const BRG = { c: new V3(ARM.park[0].x, 0, 0), p: new V3(ARM.park[0].x, 0, 0), u: new V3(0, 0, 1), phi: 0, a: new V3(), b: new V3(), len: 0, free: false };
   // (each arm: its state { x, z, y the wrist's height, yaw, pitch }, its tool, J (its tool's tip and way, a way across it: the service's
   // look), F (the tool's coupling as a matrix: a turning tool drawn from it), sv, sa (the brush's, the pad's turn), ext (the reach's
   // tubes out), held (what its gripper holds: { o, off }: o drawn at the tool's tip times off))
@@ -3079,15 +3087,8 @@ const Garage3D = (function () {
      of its own (only the one in its hand drawn) */
   const AP = 8;
   function buildArms() {
-    const R = FX.arms = rigB(AP * 2), g = R.g, { W, NV, DK, ST, CY, YL, BK } = FXC, GD = PAL.gold, { yb0, yb1, yc, Y0, SL, WR, FA } = ARM;
-    for (let i = 0; i < 2; i++) { const s = i ? -1 : 1, za = ARM.zin[i] * (i ? 1 : 1), zb = s * (CH.hz + 0.16), z0 = Math.min(za, zb), z1 = Math.max(za, zb), b = i * AP;
-      // the beam on the ring's top: a navy box, white on top, a line of light along its sides, a yellow and black cap at its inner end;
-      // its trolley over the ring's outer edge (two wheels' housings)
-      rigPart(R, b); rigGl(R, PAINT); World.box(g, 0, yb0, (z0 + z1) / 2, 0.26, yb1 - yb0, z1 - z0, 0, NV, W);
-      for (const x of [-0.131, 0.131]) World.box(g, x, yb0 + 0.05, (z0 + z1) / 2, 0.004, 0.018, z1 - z0 - 0.1, 0, CY);
-      hazard(g, [-0.13, yb0, za], [1, 0, 0], [0, 1, 0], 0.26, yb1 - yb0, 0.06, [0, (yb0 + yb1) / 2, za - s * 0.5]);
-      World.box(g, 0, yb1 - 0.02, zb - s * 0.12, 0.44, 0.12, 0.3, 0, DK, [0.2, 0.21, 0.24]);
-      rigGl(R, METAL); for (const x of [-0.16, 0.16]) cylA(g, [x, yb0 + 0.005, zb - s * 0.12], 'x', 0.034, 0.05, 12, ST);   // (its wheels on the ring's top)
+    const NB = AP * 2, R = FX.arms = rigB(NB + 4), g = R.g, { W, NV, DK, ST, CY, YL } = FXC, GD = PAL.gold, { yb0, yb1, yc, Y0, SL, WR, FA } = ARM;
+    for (let i = 0; i < 2; i++) { const b = i * AP;   // (part b: none of its own (each arm's half bridge gone into the one bridge: NB on))
       // the carriage (white, a navy band, its rollers on the beam's foot) and the housing under it (navy, a light ring at its foot)
       rigPart(R, b + 1); rigGl(R, PAINT); World.box(g, 0, yc + 0.12, 0, 0.32, yb0 - yc - 0.12, 0.3, 0, W, W); World.box(g, 0, yc + 0.2, 0, 0.325, 0.05, 0.305, 0, NV);
       World.box(g, 0, Y0 + 0.04, 0, 0.21, yc + 0.12 - Y0 - 0.04, 0.21, 0, NV, NV); World.box(g, 0, Y0 + 0.02, 0, 0.215, 0.025, 0.215, 0, CY);
@@ -3101,6 +3102,15 @@ const Garage3D = (function () {
       rigPart(R, b + 6); rigGl(R, PAINT); cone2(g, [0, -0.07, 0], [0, 0.07, 0], WR, WR, 22, NV); cone2(g, [0, -0.02, 0], [0, 0.0, 0], WR + 0.004, WR + 0.004, 22, CY, true);
       rigPart(R, b + 7); drumZ(g, 0, 0, 0.07, 0.17, 18); tbar(g, 0.02, FA - 0.03, 0.055, 0.05, 0.045, 0.045, 0.015, W); rigGl(R, METAL); cone2(g, [0, FA - 0.035, 0], [0, FA, 0], 0.06, 0.06, 18, GD);
     }
+    // the bridge: a navy box beam, white on top, a line of light along its sides (built a metre long along z: drawn as long as the chord
+    // through the carriages); its hub (a navy drum on its top, a yellow band round it, a gold cap: where it turns); its two end trolleys
+    // over the ring's top (a dark box on the beam's end, two wheels' housings on the ring, along it)
+    rigPart(R, NB); rigGl(R, PAINT); World.box(g, 0, yb0, 0, 0.26, yb1 - yb0, 1, 0, NV, W);
+    for (const x of [-0.131, 0.131]) World.box(g, x, yb0 + 0.05, 0, 0.004, 0.018, 0.97, 0, CY);
+    rigPart(R, NB + 1); rigGl(R, PAINT); cone2(g, [0, yb1 - 0.01, 0], [0, yb1 + 0.07, 0], 0.19, 0.19, 24, NV); cone2(g, [0, yb1 + 0.025, 0], [0, yb1 + 0.045, 0], 0.194, 0.194, 24, YL, true);
+    rigGl(R, METAL); cone2(g, [0, yb1 + 0.07, 0], [0, yb1 + 0.1, 0], 0.11, 0.08, 20, GD);
+    for (let k = 0; k < 2; k++) { rigPart(R, NB + 2 + k); rigGl(R, PAINT); World.box(g, 0, yb1 - 0.02, 0, 0.44, 0.12, 0.3, 0, DK, [0.2, 0.21, 0.24]);
+      rigGl(R, METAL); for (const x of [-0.16, 0.16]) cylA(g, [x, yb0 + 0.005, 0], 'z', 0.034, 0.05, 12, ST); }
     const m = rigMesh(R, fxMat()); m.castShadow = true; scene.add(m);
     // (the tools: each arm's own, at its forearm's end; none drawn till taken)
     STN.forEach((S, i) => { for (const k of ARM.tools[i]) { const R = k === 'reach' ? reachTool(fxMat()) : null, t = R ? R.mesh : new THREE.Mesh(toolGeo(k), fxMat()); t.matrixAutoUpdate = false; t.visible = false; t.castShadow = true; t.frustumCulled = false; scene.add(t); S.tools[k] = { mesh: t, slide: R ? R.slide : null }; FX.tools.push(t); } });
@@ -3109,11 +3119,35 @@ const Garage3D = (function () {
   // (a tool's way for a pitch and a yaw (pitch 0: down, pi/2: level, its yaw 0 toward -x, pi/2 toward +z), the forearm's turn)
   const _aq = new THREE.Matrix4(), _ar = new THREE.Matrix4(), _aw = new V3();
   function armFrame(s, out) { return out.makeRotationY(s.yaw).multiply(_ar.makeRotationZ(Math.PI - s.pitch)); }
+  // (the ring's outline as a distance (below 0 inside it: the rounded rectangle round the middle); how far from c along (ux, uz) the
+  // outline out by d is (c inside it))
+  function chSd(x, z) { const { hx, hz, r } = CH, qx = Math.abs(x) - (hx - r), qz = Math.abs(z) - (hz - r); return Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0) - r; }
+  function chOut(c, ux, uz, d) { let a = 0, b = 9; for (let k = 0; k < 24; k++) { const t = (a + b) / 2; if (chSd(c.x + ux * t, c.z + uz * t) < d) a = t; else b = t; } return a; }
+  // the bridge posed (only when a carriage or its hub moved): the chord through both carriages (u toward arm 1's), its hub the chord's
+  // point nearest p (kept 0.35 m from each carriage at the most: always between them; on the shows that keep the sides p is over the
+  // ring's middle line, as the arms go; the tyres' turnstile keeps it where it turns), its beam out past the ring's outer face, its end
+  // trolleys on the ring's top turned along it, each carriage turned with the beam
+  const _bk = [NaN, NaN, NaN, NaN, NaN, NaN], _bq = new THREE.Matrix4();
+  function poseBridge() {
+    const p0 = RB[0].s, p1 = RB[1].s, K = _bk, P = BRG.p; if (!BRG.free) P.set((p0.x + p1.x) / 2, 0, 0);
+    if (K[0] === p0.x && K[1] === p0.z && K[2] === p1.x && K[3] === p1.z && K[4] === P.x && K[5] === P.z) return;
+    K[0] = p0.x; K[1] = p0.z; K[2] = p1.x; K[3] = p1.z; K[4] = P.x; K[5] = P.z;
+    const R = FX.arms, M = R.M, NB = AP * 2; let ux = p0.x - p1.x, uz = p0.z - p1.z; const l = Math.hypot(ux, uz);
+    if (l > 1e-4) { ux /= l; uz /= l; } else { ux = Math.sin(BRG.phi); uz = Math.cos(BRG.phi); }
+    BRG.u.set(ux, 0, uz); const phi = BRG.phi = Math.atan2(ux, uz), m = Math.min(0.35, l / 2), t = clamp((P.x - p1.x) * ux + (P.z - p1.z) * uz, m, Math.max(m, l - m)), c = BRG.c.set(p1.x + ux * t, 0, p1.z + uz * t);
+    const ta = chOut(c, ux, uz, 0.16), tb = chOut(c, -ux, -uz, 0.16); BRG.a.set(c.x + ux * ta, 0, c.z + uz * ta); BRG.b.set(c.x - ux * tb, 0, c.z - uz * tb); BRG.len = ta + tb;
+    M[NB].makeRotationY(phi).multiply(_bq.makeScale(1, 1, BRG.len)).setPosition((BRG.a.x + BRG.b.x) / 2, 0, (BRG.a.z + BRG.b.z) / 2);
+    M[NB + 1].makeRotationY(phi).setPosition(c.x, 0, c.z);
+    for (let k = 0; k < 2; k++) { const sg = k ? -1 : 1, tt = chOut(c, sg * ux, sg * uz, 0.04), x = c.x + sg * ux * tt, z = c.z + sg * uz * tt, e = 1e-3;
+      M[NB + 2 + k].makeRotationY(Math.atan2(chSd(x + e, z) - chSd(x - e, z), chSd(x, z + e) - chSd(x, z - e))).setPosition(x, 0, z); }   // (its local z: the ring's outward way there)
+    for (const A of RB) M[A.i * AP + 1].makeRotationY(phi).setPosition(A.s.x, 0, A.s.z);
+    for (let k = 0; k < 4; k++) R.dirty[NB + k] = 1; R.dirty[1] = R.dirty[AP + 1] = 1;
+  }
   // an arm posed: its parts' matrices (only what moved sent again), its tool where its forearm ends, J (its tool's tip and way: the
   // service's look)
   function poseArm(i) {
     const A = RB[i], R = FX.arms, M = R.M, b = i * AP, s = A.s, e = clamp(ARM.Y0 - s.y, 0, ARM.EMAX);
-    M[b].makeTranslation(s.x, 0, 0); M[b + 1].makeTranslation(s.x, 0, s.z);
+    poseBridge();   // (the bridge through both carriages: each carriage turned with it)
     for (let k = 0; k < 4; k++) M[b + 2 + k].makeTranslation(s.x, -e * (k + 1) / 4 + 0.01 * k, s.z);
     _aw.set(s.x, s.y - 0.07, s.z);   // (over Y0: the forearm drawn up into the housing, a tool changing)
     M[b + 6].makeRotationY(s.yaw).setPosition(_aw);
@@ -3129,12 +3163,16 @@ const Garage3D = (function () {
   const tipLen = (A, tool) => { const k = tool || A.tool; return TL[k] + (k === 'reach' ? A.ext : 0); };
   // (an arm's state clamped to its reach; one for its tool's tip at tip, its way dir (null: as the arm's tool), with tool (ext: the
   // reach's tubes out as much))
-  function clampArm(i, s) { s.x = clamp(s.x, ARM.x0, ARM.x1); s.z = clamp(s.z, ARM.z0[i], ARM.z1[i]); s.y = clamp(s.y, ARM.Y0 - ARM.EMAX, ARM.Y0); return s; }
+  const armZ = (i) => BRG.free ? [-ARM.zf, ARM.zf] : [ARM.z0[i], ARM.z1[i]];   // (an arm's way along z: its side's, or the whole ring's as the bridge turns)
+  function clampArm(i, s) { const [z0, z1] = armZ(i); s.x = clamp(s.x, ARM.x0, ARM.x1); s.z = clamp(s.z, z0, z1); s.y = clamp(s.y, ARM.Y0 - ARM.EMAX, ARM.Y0); return s; }
+  // (as the bridge turns: an arm kept ARM.gap from the other's carriage (out along the beam, its own half))
+  function armGap(i, s) { const o = RB[1 - i].s, dx = s.x - o.x, dz = s.z - o.z, l = Math.hypot(dx, dz); if (l >= ARM.gap) return s;
+    const sg = i ? -1 : 1, ux = l > 1e-4 ? dx / l : BRG.u.x * sg, uz = l > 1e-4 ? dz / l : BRG.u.z * sg; s.x = o.x + ux * ARM.gap; s.z = o.z + uz * ARM.gap; return clampArm(i, s); }
   function armFor(i, tool, tip, dir, ext) { const d = v3(dir).normalize(), p = Math.acos(clamp(-d.y, -1, 1)), yaw = Math.sin(p) > 1e-3 ? Math.atan2(d.z, -d.x) : RB[i].s.yaw, L = ARM.FA + TL[tool || RB[i].tool] + (ext || 0);
     return clampArm(i, { x: tip.x - d.x * L, z: tip.z - d.z * L, y: tip.y - d.y * L + 0.07, yaw, pitch: p }); }
   const angTo = (a, b, k) => { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return a + d * k; };
   function* armTween(i, q, s, ez) { const A = RB[i], a = Object.assign({}, A.s); A.rest = false;
-    yield* tween(s, (k) => { const o = A.s; for (const n of ['x', 'z', 'y', 'pitch']) if (q[n] != null) o[n] = lerp(a[n], q[n], k); if (q.yaw != null) o.yaw = angTo(a.yaw, q.yaw, k); clampArm(i, o); A.dirty = true; }, ez || EZ.io); }
+    yield* tween(s, (k) => { const o = A.s; for (const n of ['x', 'z', 'y', 'pitch']) if (q[n] != null) o[n] = lerp(a[n], q[n], k); if (q.yaw != null) o.yaw = angTo(a.yaw, q.yaw, k); clampArm(i, o); if (BRG.free) armGap(i, o); A.dirty = true; }, ez || EZ.io); }
   // (the time a move takes: its longest way at the arm's speed (1.5 m/s along, 1.8 m/s up and down, a half turn a second), a quarter
   // second at the least)
   const armT = (A, q) => Math.max(0.25, Math.hypot((q.x == null ? 0 : q.x - A.s.x), (q.z == null ? 0 : q.z - A.s.z)) / 1.5, q.y == null ? 0 : Math.abs(q.y - A.s.y) / 1.8,
@@ -3171,9 +3209,22 @@ const Garage3D = (function () {
   }
   // (an arm parked: its tool put away, at its place at the ring's left end, up, its forearm level; at once: armsRest)
   function* armRest(i, pace) { yield* armTool(i, 'none', pace); const q = Object.assign({ y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }, ARM.park[i]); yield* armGo(i, q, pace); RB[i].rest = true; }
-  function armsRest() { for (const A of RB) { if (A.tool !== 'none') STN[A.i].tools[A.tool].mesh.visible = false; A.tool = 'none'; A.sv = A.sa = A.ext = 0; if (A.held) { if (A.held.o.parent) A.held.o.parent.remove(A.held.o); A.held = null; } Object.assign(A.s, ARM.park[A.i], { y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }); A.rest = true; A.dirty = true; } }
+  function armsRest() { for (const A of RB) { if (A.tool !== 'none') STN[A.i].tools[A.tool].mesh.visible = false; A.tool = 'none'; A.sv = A.sa = A.ext = 0; if (A.held) { if (A.held.o.parent) A.held.o.parent.remove(A.held.o); A.held = null; } Object.assign(A.s, ARM.park[A.i], { y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }); A.rest = true; A.dirty = true; } bridgeRest(); }
+  function bridgeRest() { BRG.free = false; BRG.phi = 0; BRG.u.set(0, 0, 1); _bk[0] = NaN; }
   const armsParked = () => RB.every(A => A.rest && A.tool === 'none' && Math.abs(A.s.x - ARM.park[A.i].x) < 1e-3 && Math.abs(A.s.y - ARM.Y0) < 1e-3);
-  function* armsPark(pace) { yield* par(armRest(0, pace), armRest(1, pace)); }
+  function* armsPark(pace) { if (BRG.free) yield* bridgeHome(pace); yield* par(armRest(0, pace), armRest(1, pace)); }
+  // THE TURNSTILE (the plate an_gume: "most se obrne"): the bridge turned by a about its hub in T seconds: both carriages round it, each
+  // wrist with it (its tool's way turned as much); from here on the arms anywhere in the ring (BRG.free) till bridgeHome
+  function* bridgeTurn(a, T, ez) { BRG.free = true; poseBridge(); const c = BRG.c.clone(), S = RB.map(A => Object.assign({}, A.s)); BRG.p.copy(c); for (const A of RB) A.rest = false;
+    yield* tween(T, (k) => { const t = a * k, cs = Math.cos(t), sn = Math.sin(t);
+      RB.forEach((A, j) => { const q = S[j], dx = q.x - c.x, dz = q.z - c.z; A.s.x = c.x + dx * cs + dz * sn; A.s.z = c.z - dx * sn + dz * cs; A.s.yaw = q.yaw + t; clampArm(j, A.s); A.dirty = true; }); }, ez || EZ.io); }
+  // (the bridge back as the shows that keep the sides have it: both tools put away, up, the carriages in along it to a metre each side
+  // of a point on the ring's middle line, the bridge turned back along z (arm 1 to +z) round it)
+  function* bridgeHome(pace) { const k = pace || 1; yield* par(armTool(0, 'none', k), armTool(1, 'none', k));
+    const H = new V3(clamp(BRG.c.x, -1.5, 1.5), 0, 0), u = BRG.u.clone(), q = (sg) => ({ x: H.x + u.x * sg, z: H.z + u.z * sg, y: ARM.Y0 });
+    yield* par(armTween(0, q(1), armT(RB[0], q(1)) / k), armTween(1, q(-1), armT(RB[1], q(-1)) / k)); BRG.p.copy(H);
+    const a = angTo(BRG.phi, 0, 1) - BRG.phi; if (Math.abs(a) > 1e-3) yield* bridgeTurn(a, Math.max(0.4, Math.abs(a) / 1.6) / k);
+    for (const A of RB) { A.s.x = H.x; A.dirty = true; } RB[0].s.z = 1; RB[1].s.z = -1; bridgeRest(); }
   // (a stand built in its own frame, set in place: g's vertices from v0 on moved by M (a turn about y and a move: their normals turned
   // with it))
   // (only the vertices v0 .. v1 (the end if not given); the normals by the inverse transpose, so an uneven scale keeps them right)
@@ -3210,10 +3261,11 @@ const Garage3D = (function () {
     for (let k = 0; k < n; k++) { const a = P[k], b = P[(k + 1) % n]; if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 1e-4) g.quadO([a[0], y0, a[1]], [b[0], y0, b[1]], [b[0], y1, b[1]], [a[0], y1, a[1]], col, ins); } }
   // RING 9 (in the still mesh with nothing else: it never dissolves, nor casts, nor shows in the floor): a box section round the outline
   // under the ceiling, navy, white along its top, a lattice of light bars on its outer and its inner face, a line of light low on both
-  // (CH.ring: their vertices, chamberColor), its slot underneath dark between two lips (the glass's tops in it); rods up to the deck from
-  // its corners and its short sides (the long sides free: the beams ride there)
+  // (CH.ring: their vertices, chamberColor), its slot underneath dark between two lips (the glass's tops in it); rods up to the deck out
+  // past its corners and its short sides, a bracket out to each from its foot (its top free all round: the bridge's trolleys ride there,
+  // its beam's ends turning over the rods' brackets)
   function buildRing(g, gl) {
-    const { y0, y1, o, i, hx, hz, r } = CH, { NV, W, ST } = FXC, SL = [0.035, 0.037, 0.045], LT = [0.62, 0.66, 0.74], m = (i - o) / 2, c = 0.7071 * (r - m);
+    const { y0, y1, o, i, hx, hz, r } = CH, { NV, W, ST } = FXC, SL = [0.035, 0.037, 0.045], LT = [0.62, 0.66, 0.74];
     gl(PAINT); rwall(g, -o, y0, y1 - 0.05, NV, 1); rwall(g, -o, y1 - 0.05, y1, W, 1); rwall(g, i, y0, y1, NV, -1); rflat(g, -o, i, y1, NV, 1);
     rflat(g, -o, 0.03 - o, y0, NV, -1); rflat(g, i - 0.03, i, y0, NV, -1); rwall(g, 0.03 - o, y0, y0 + 0.04, SL, -1); rwall(g, i - 0.03, y0, y0 + 0.04, SL, 1); rflat(g, 0.03 - o, i - 0.03, y0 + 0.04, SL, -1);
     // (the lattice: a pair of crossed flat bars every 0.4 m along each face, a rail along its top and its foot)
@@ -3225,7 +3277,9 @@ const Garage3D = (function () {
       for (let s = 0; s < S[n] - 0.2; s += 0.4) { bar(s, s + 0.4, ya, yb); bar(s, s + 0.4, yb, ya); }
       rwall(g, d, ya - 0.012, ya + 0.012, LT, sg); rwall(g, d, yb - 0.012, yb + 0.012, LT, sg); }
     CH.ring = [g.P.length / 3]; rwall(g, -o - 0.006, y0 + 0.05, y0 + 0.068, CH.col, 1); rwall(g, i + 0.006, y0 + 0.05, y0 + 0.068, CH.col, -1); CH.ring.push(g.P.length / 3);
-    gl(METAL); for (const [x, z] of [[hx - m, 0], [m - hx, 0], [hx - r + c, hz - r + c], [r - hx - c, hz - r + c], [r - hx - c, r - hz - c], [hx - r + c, r - hz - c]]) obox(g, [x, y1, z], [x, ROOM.h, z], 0.03, 0.03, ST);
+    gl(METAL); const ro = 0.34, cr = 0.7071 * (r + ro), d = ro - o + 0.01, q = 0.7071;
+    for (const [x, z, nx, nz] of [[hx + ro, 0, 1, 0], [-hx - ro, 0, -1, 0], [hx - r + cr, hz - r + cr, q, q], [r - hx - cr, hz - r + cr, -q, q], [r - hx - cr, r - hz - cr, -q, -q], [hx - r + cr, r - hz - cr, q, -q]]) {
+      obox(g, [x - nx * d, y0 + 0.05, z - nz * d], [x + nx * 0.03, y0 + 0.05, z + nz * 0.03], 0.05, 0.04, ST); obox(g, [x, y0 + 0.03, z], [x, ROOM.h, z], 0.03, 0.03, ST); }
   }
   // the chamber's glass and its frame (each one mesh; the glass the main camera's only): each band built
   // standing on y 0 (poseChamber moves it up to where it is): its panes on the outline in by IN j, a rail along its top, one along its foot
@@ -3768,8 +3822,8 @@ const Garage3D = (function () {
   function sendRange(a, v0, v1) { const s = a.itemSize, r = a.updateRange, o = v0 * s, e = v1 * s; if (r.count > 0) { const e0 = r.offset + r.count; r.offset = Math.min(r.offset, o); r.count = Math.max(e0, e) - r.offset; } else { r.offset = o; r.count = e - o; } a.needsUpdate = true; }
   // the fixtures at once (show(): a car set down; the pictures: _dbg.fxPose): o.arms [state | 'rest' | 'keep', ...] (a state's tool: in
   // its hand), o.chamber (its k), o.col (the chamber's lights' colour), o.dryer (the drying column's k), o.heat (its coils' heat)
-  function fxSet(o) { o = o || {};
-    if (o.arms) o.arms.forEach((q, i) => { const A = RB[i]; if (q === 'keep') return; if (!q || q === 'rest') { if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = false; A.tool = 'none'; Object.assign(A.s, ARM.park[i], { y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }); A.rest = true; A.dirty = true; return; }
+  function fxSet(o) { o = o || {}; if (o.free != null) { BRG.free = !!o.free; _bk[0] = NaN; }
+    if (o.arms) o.arms.forEach((q, i) => { const A = RB[i]; if (q === 'keep') return; if (!q || q === 'rest') { if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = false; A.tool = 'none'; Object.assign(A.s, ARM.park[i], { y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }); A.rest = true; A.dirty = true; bridgeRest(); return; }
       if (q.tool && q.tool !== A.tool) { if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = false; A.tool = q.tool; if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = true; }
       Object.assign(A.s, q.tip ? armFor(i, A.tool, v3(q.tip), q.dir || [0, -1, 0]) : q); delete A.s.tool; delete A.s.tip; delete A.s.dir; clampArm(i, A.s); A.rest = false; A.dirty = true; });
     if (o.chamber != null) setChamber(o.chamber); if (o.col !== undefined) chamberColor(o.col);
@@ -5682,7 +5736,7 @@ const Garage3D = (function () {
   function letGo(i) { const A = RB[i], H = A.held; if (!H) return null; A.held = null; return H.o; }
   // (an arm's state for its tool's tip at tip, its way d (yaw: given for a way straight down): the reach's tubes out the least that brings
   // the wrist into the arm's box; null: it cannot)
-  const wristOk = (i, s) => s.x >= ARM.x0 - 1e-6 && s.x <= ARM.x1 + 1e-6 && s.z >= ARM.z0[i] - 1e-6 && s.z <= ARM.z1[i] + 1e-6 && s.y >= ARM.Y0 - ARM.EMAX + 0.02 && s.y <= ARM.Y0 - 0.05;
+  const wristOk = (i, s) => s.x >= ARM.x0 - 1e-6 && s.x <= ARM.x1 + 1e-6 && s.z >= armZ(i)[0] - 1e-6 && s.z <= armZ(i)[1] + 1e-6 && s.y >= ARM.Y0 - ARM.EMAX + 0.02 && s.y <= ARM.Y0 - 0.05;
   function poseAt(i, tool, tip, d, yaw) {
     const dd = v3(d).normalize(), L0 = ARM.FA + TL[tool], e1 = tool === 'reach' ? REACH.EMAX : 0, pitch = Math.acos(clamp(-dd.y, -1, 1)), yw = yaw != null ? yaw : Math.sin(pitch) > 1e-3 ? Math.atan2(dd.z, -dd.x) : RB[i].s.yaw;
     for (let e = 0; e <= e1 + 1e-6; e += 0.02) { const L = L0 + e, s = { x: tip.x - dd.x * L, z: tip.z - dd.z * L, y: tip.y - dd.y * L + 0.07, yaw: yw, pitch }; if (wristOk(i, s)) return { s, ext: e, d: dd }; }
@@ -7272,6 +7326,7 @@ const Garage3D = (function () {
           for (const [v0, v1, k] of R.runs) if (k >= b && k < b + AP) for (let j = v0; j < v1; j++) { const y = a[j * 3 + 1], z = a[j * 3 + 2]; low = Math.min(low, y); if (y < 2) lane = Math.min(lane, Math.abs(z)); }
           if (A.tool !== 'none') { const m = STN[A.i].tools[A.tool].mesh, t = m.geometry.attributes.position.array; for (let j = 0; j < t.length; j += 3) { v.set(t[j], t[j + 1], t[j + 2]).applyMatrix4(m.matrix); low = Math.min(low, v.y); if (v.y < 2) lane = Math.min(lane, Math.abs(v.z)); } }
           return { s: Object.fromEntries(Object.entries(A.s).map(([k, q]) => [k, +q.toFixed(3)])), tool: A.tool, rest: A.rest, low: +low.toFixed(3), tip: A.J.tipA.toArray().map(q => +q.toFixed(3)), lane: +lane.toFixed(3), cast: R.mesh.castShadow }; }); },
+      get bridge() { const r = (v) => +v.toFixed(3); return { phi: r(BRG.phi), c: [r(BRG.c.x), r(BRG.c.z)], a: [r(BRG.a.x), r(BRG.a.z)], b: [r(BRG.b.x), r(BRG.b.z)], len: r(BRG.len), free: BRG.free }; },   // (the bridge: its turn, hub, ends)
       get dryer() { const R = DRY.R; return { k: +DRY.k.toFixed(3), heat: +DRY.heat.toFixed(3), top: +(DRY.H * DRY.k - DRY.H + 2.5).toFixed(3), drawn: !!(R && R.mesh.visible), cast: !!(R && R.mesh.castShadow), x: DRY.x, z: DRY.z }; },   // (the drying column: out (k), hot, its top's height, drawn)
       get fx() { const R = this.arms; return { arms: R, lane: Math.min(...R.map(r => r.lane)), parked: fxParked(), tools: FX.tools.filter(m => m.visible).length, pnd: SVU.uPnD.value.toArray().map(v => +v.toFixed(2)), ph: PAINT_C.h }; },   // (pnd: the fresh paint's fronts, sheen, heat)
       // (any pose at once, for the pictures: { arms: [state | { tool, tip, dir } | 'rest' | 'keep', ...], chamber, col })
