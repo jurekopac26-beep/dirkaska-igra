@@ -123,6 +123,7 @@
     chapman:   P(CESTA, { prah: [0.66, 0.60, 0.49], sPrah: 0.95, kOdsek: 0.055, barva: 0.5, kRobV: 0.3 }),   // (sand off the sandstone cliffs)
     balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7, kRobV: 0.85 }),   // (grit after every winter, the frost's patches)
     caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
+    kaligandaki: P(CESTA, { prah: [0.66, 0.58, 0.46], kPrah: 0.68, sPrah: 1.15, kOdsek: 0.1, odsek: [50, 240], barva: 0.68, rob: 0.3, kRobV: 0.85 }),   // (the arid gorge: dust and rockfall grit; the jeep road's patched, broken edges)
     pikes:     P(CESTA, { prah: [0.62, 0.53, 0.45], kPrah: 0.5, kOdsek: 0.05, kOlje: 0.08, kKol: 0, barva: 0, rob: 0.25, robV: 0.6, kRobV: 0.4 }),   // (the builder's own wheel tracks, patches and faded paint, all in the road's mesh; the granite's pink grit)
   };
 

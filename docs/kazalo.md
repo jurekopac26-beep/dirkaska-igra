@@ -227,6 +227,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
+| kaligandaki | Kali Gandaki, Nepal | kaligandaki | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kaligandaki`: soteska, prepad z ograjo, slap Rupse, generične hiše Kopčepanija) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
