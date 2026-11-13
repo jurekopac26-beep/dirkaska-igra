@@ -1381,7 +1381,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .trow :is(.best, .rate) small { display: block; height: 13px; font: 600 11.5px/13px var(--f-ui); color: var(--gold); }   /* (Best race and Rating: gold, as big, on one line; their values under them on one line) */
 .trow :is(.best, .rate) > button > b { display: flex; align-items: center; justify-content: center; height: 21px; }
 .trow :is(.best, .rate, .dif, .md) b.tm, .trow :is(.dif, .md) b { font: 800 italic 16px/1.05 var(--f-ui); color: #fff; letter-spacing: -.3px; }
-.trow :is(.dif, .md) b { text-align: center; white-space: nowrap; }
+.trow :is(.dif, .md) b { text-align: center; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; min-height: 2.1em; }   /* (two lines high with one word too: the dashes in a line, the user 13. 11. 2026) */
 .trow .newb { display: inline-block; padding: 3px 7px; border-radius: 5px; background: linear-gradient(180deg, #7fe8ff, #2fa8e6); color: #fff; text-shadow: 0 1px 1px rgba(0, 40, 70, .55); font: 900 italic 13px/1 var(--f-ui); box-shadow: 0 1px 3px rgba(0, 0, 0, .45); }   /* (NEW: light blue, white letters) */
 .dsh { display: flex; gap: 3px; }
 .dsh i { width: 9px; height: 3.5px; border-radius: 2px; background: rgba(255, 255, 255, .2); }

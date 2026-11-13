@@ -1214,7 +1214,8 @@
   window.addEventListener('resize', () => { if (sheet === twSheet) twPlace(); });
   // the dashes under a cell's name: 4, the first n lit (the difficulty, in its colour), or the one at n (the mode, green)
   const dashes = (n, cls, one) => '<span class="dsh ' + cls + '" aria-hidden="true">' + [0, 1, 2, 3].map(i => '<i' + ((one ? i === n : i < n) ? ' class="on"' : '') + '></i>').join('') + '</span>';
-  const two = (s) => { const i = s.indexOf(' '); return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<br>' + esc(s.slice(i + 1)); };
+  // (in a span: the name's box two lines high whatever its words, so the dashes under Classic race and under Medium are as high: the user, 13. 11. 2026)
+  const two = (s) => { const i = s.indexOf(' '); return '<span>' + (i < 0 ? esc(s) : esc(s.slice(0, i)) + '<br>' + esc(s.slice(i + 1))) + '</span>'; };
   const opt = (act, on, inner, dis) => '<button class="twopt' + (on ? ' on' : '') + '" data-act="' + act + '" aria-pressed="' + on + '"' + (dis ? ' disabled' : '') + '>' + inner + (on ? '<span class="ck">' + I.check + '</span>' : '') + '</button>';
 
   // the difficulty: the game's own (Settings' Difficulty, S.difficulty 0..3); Super hard is the police's, a race takes it as Hard (game.js raceDiff)
