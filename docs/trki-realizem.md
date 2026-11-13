@@ -1972,3 +1972,15 @@ Neodvisni pregled izvedbe paketa P (ultracode, več agentov; samo preverjanje, n
 - Netestirano: zmanjšanje moči motorja pri Vklop (odločitev 41), razpoke luči pri Preprostih, čas sunka ob počeni gumi, izguba vzgona krila pri Samo videz (K.5).
 
 **Referenca obremenitve Rio do Rastro (`tests/golden/perf.json`):** nova (179 klicev, največ 209; 385 tisoč oglišč, največ 469 tisoč). Izris se ni podražil: veja z jedrom `main` na istih mestih kroga da natanko staro referenco (156/174, 343/476 tisoč). Razlika je od fizike trkov: dotiki v gneči na startu peljejo igralca drugam (sam na progi vozi do številke enako), zato šest vzorcev pade na druga mesta. Meja 300 klicev in 900 tisoč oglišč ostane daleč.
+
+## Predaja (13. 11. 2026, zvečer)
+
+Stanje veje `trki/realizem` (PR #608, osnutek): paket P in popravki pregleda z več agenti so narejeni in potisnjeni; povezani testi lokalno zeleni (`npm run test:related` v dveh kosih; `perf` z novo referenco Rio do Rastro, `kit`, `crash`, `wheels`, `knock`, `aipits` posamič; `node tools/stamp.js --check`). `aipits` je v kosu enkrat padel, sam na veji in na `main` pa je zelen: nestanoviten, ni od paketa.
+
+**Pregled z več agenti** (tok `trki-poskodbe-pregled`, `tools/trki/preverjanje/pregled-poskodb-tok.txt`): tretji poskus je končal vseh 6 ključev (`voznja`, `nakljucje`, `jedro`, `izris`, `zasnova`, `obremenitev`; `failedLenses` prazen) in preverjanje skeptikov; 23 najdb, potrjene popravljene (razdelek »Pregled paketa P z več agenti« zgoraj), manjše zabeležene kot naslednje delo. **Manjkajočih ključev ni.** Tok v tej obliki (6 + 4 agenti) je nad mejo pravila »Tokovi v kosih« (`docs/varcevanje.md`): nov pregled razdeli na tokove do 5 agentov (največ 2 hkrati, ~30 min na agenta), meritve in simulacije najprej požene seja sama v datoteke, vsak agent sproti piše v `tools/trki/preverjanje/najdbe/<ključ>.md` in seja jih takoj commita.
+
+**Naslednja seja (po vrsti):**
+1. `tests/poskodbe.test.js` (P1.12: poškodovan avto pri Samo videz in Izklop vozi do številke enako kot nepoškodovan; Spa, 30 s, vsi vogali 90 %, formula brez krila, starejši model brez delov `wreck`, pravilo kolesa) in `tests/browser/poskodbe.test.mjs` (P1.13: obremenitev po trkih s Podrobnimi, udrtine preživijo ponovno gradnjo pogleda, brez `Math.random` v prizoru trka). V brskalniškem testu postavi mejo za najhujši primer (zdaj ~357 klicev in ~527 tisoč oglišč pri 22 povsem razbitih avtih; v stvarni dirki ~295).
+2. Netestirano: zmanjšanje moči motorja pri Vklop (odločitev 41), razpoke luči pri Preprostih, čas sunka ob počeni gumi, izguba vzgona krila pri Samo videz (K.5).
+3. Nestanovitni `aipits` v kosu (samo opazuj; če se ponovi na GitHubu, poišči vzrok v vrstnem redu testov).
+4. Slike zdaj in potem za uporabnika pred `main` (kamera za avtom, Spa) in vpis v `docs/vrsta.md`, ko je PR na vrsti.
