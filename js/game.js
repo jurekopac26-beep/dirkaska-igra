@@ -70,7 +70,7 @@
   // Realistično (it was Simulacija; whoever had picked another version gets it too, the older ones stay in Preizkus), Odpadli deli Vklop,
   // Odpadlo kolo Konec dirke. Poškodbe stay as chosen (Samo videz by default since v5)
   try { if (!localStorage.getItem('tdgp-defaults-v6')) { S.crV = 5; S.debris = 1; S.wheelOver = 1; localStorage.setItem('tdgp-defaults-v6', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }
-  try { if (!localStorage.getItem('tdgp-defaults-v7')) { S.dmgDet = 1; localStorage.setItem('tdgp-defaults-v7', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }   // (Podrobnosti poškodb: Podrobne, paket P1: Razbijanje's look on by default)
+  try { if (!localStorage.getItem('tdgp-defaults-v7')) { S.dmgDet = 1; for (const k of ['xBody', 'xGlass', 'xPaint', 'xRoll', 'xBump', 'xAi', 'xParts', 'xDrag', 'xDust', 'xShake']) S[k] = 0; localStorage.setItem('tdgp-defaults-v7', '1'); localStorage.setItem('tdgp-settings', JSON.stringify(S)); } } catch (_) { }   // (Podrobnosti poškodb: Podrobne, paket P1: Razbijanje's look on by default; the test build's Preizkus rows for Razbijanje (xRoll, xBump, xAi … feed xPhys and the core's crash physics) go back to the shipped 0, so the knock is the default, not a value left from testing)
   if (![0, 1, 2].includes(+S.tower)) S.tower = 1;
   // one camera, behind the car, on a phone held either way (the isometric, kino and cockpit cameras are gone): an old setting moves to it
   S.camera = 'chase';
@@ -589,7 +589,7 @@
   try { if (navigator.getBattery) navigator.getBattery().then((b) => { const up = () => { const was = saverOn(); batLow = !b.charging && b.level <= 0.2; if (saverOn() !== was) { renderSettings(); perf.sum = perf.n = 0; if (saverOn()) toast(tr('Baterija je skoraj prazna: varčni način (30 sličic na sekundo, nižja ločljivost).'), 3600); } };
     up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up); }).catch(() => { }); } catch (_) { }
   // Razbijanje · nov način: the switches of its physics (Core), all off online
-  const xPhys = (net) => net ? {} : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, glass: 1 };   // (glass: the broken glass on the road, Race._glassStep: always laid in a local race (P5); it takes grip only with damage Vklop)
+  const xPhys = (net) => net ? { net: 1 } : { roll: +S.xRoll, bump: +S.xBump, ai: +S.xAi, glass: 1 };   // (glass: the broken glass on the road, Race._glassStep: always laid in a local race (P5); it takes grip only with damage Vklop)
   const testOf = (net) => { if (net) return {}; const L = (k) => TEST_LV[k][+S[k]];   // (Preizkus: the rivals and the knocks; Trki med avti: the version, cv 1-6 as Core's KV_IDS (crV + 1), the rows of Preizkus over its numbers (Core leaves them out with Stara); never online, where both phones must drive the same: the default)
     return { aiSpr: L('tAiSpr'), aiFol: L('tAiFol'), aiPush: L('tAiPush'), aiSide: L('tAiSide'), aiKerb: L('tAiKerb'), cv: +S.crV + 1, cPm: L('crPm'), cE: L('crE'), cMu: L('crMu'), cYaw: L('crYaw'), cGl: L('crGl'), cSl: L('crSl'), cFx: L('crFx'), deb: +S.debris ? null : 0 }; };
   function applySettings() {
@@ -5030,6 +5030,7 @@
   const TYRE_RULE = WHEEL_RULE;   // (the vehicles with a tyre each of their own: Core KT, every track and way, offline; no mission: js/missions.js)
   const TYRE_COLD = ['kolibri'];   // (the vehicles whose four tyres of their own, Core Car.kt, grip less while cold after a stop, Core ktGrip; every other car's new set: Core TCOLD, 105)
   function gameOver() {
+    if (TS()) Tester.konec('odstop', tsMesto());   // (KONEC IGRE: a wheel off or the engine dead ends the race; the tester records the outcome, as retired() and the finish do)
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); Input.buzzOff(); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
     const n = race.player.wreck ? race.player.wreck.nL : 1, eng = !!(race.player.wreck && race.player.wreck.rule && race.player.wreck.rule.why === 'engine');

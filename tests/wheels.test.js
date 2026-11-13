@@ -213,6 +213,14 @@ function until(r, fn, s) {
   check('no engine trouble: a light knock (f 0.25), Samo videz (damage 1), without the rule; never on the AI', none({}, 0.25) && none({ damage: 1 }, 0.8) && none({ wheelRule: undefined }, 0.8));
   const fix = withRnd(7, () => { const r = race(); r.start(); const P = r.player; front(P, 0.6); until(r, () => false, 1); const had = !!P.eng; r.repairCar(P); return had && !P.eng; });
   check('a full repair puts a new radiator in (no eng)', fix);
+  // Nujno (_mend) leaves a new radiator with the front still bent: the baseline eng.f0 = the front damage, so the fresh radiator leaks only from a
+  // fresh knock, not at once from what Nujno left. A new radiator whose f0 is the bent front must stay cool at the throttle; the same radiator with
+  // f0 0 (no baseline) would warm straight away. (Guards engStep's fe = f - eng.f0 against a regression that drops the baseline.)
+  const mend = withRnd(7, () => { const r = race(); r.start(); const P = r.player, W = P.wreck; front(P, 0.6); until(r, () => false, 1);
+    const run = (f0) => { P.eng = { h: 0, t: 0, dead: false, hot: false, ev: '', f0 }; P.vx = P.vz = 0;
+      for (let t = 0; t < 3; t += DT) { P.inThr = 1; P.inBrk = 0; P.inSteer = 0; P.vx = P.vz = 0; r.step(DT); } return P.eng ? P.eng.h : 0; };
+    const kept = run(Math.max(P.dz[0], (P.cd[0] + P.cd[1]) / 2)), none = run(0); return { kept, none }; });
+  check('Nujno radiator: with the baseline (eng.f0 = the bent front) it stays cool at the throttle; without it (f0 0) the same front warms it', mend.kept < 0.05 && mend.none > 0.05, `h with baseline ${mend.kept.toFixed(3)}, without ${mend.none.toFixed(3)}`);
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

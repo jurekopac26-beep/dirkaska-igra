@@ -2173,7 +2173,7 @@ const Core = (function () {
   // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Only one such knock in ten (XROLL.p: every one
   // was too many): each knock counts once (another within 4 m of the last one counted is the same crash), and which ones roll is a hash
   // of the car and its count of knocks (xrK). Its numbers: none random (the race's own draws untouched)
-  const XR = { roll: 0, bump: 0, ai: 0, glass: 0 };
+  const XR = { roll: 0, bump: 0, ai: 0, glass: 0, net: 0 };   // (net: an online race (xPhys(true)): P3's pull and shared blow off, both phones as before)
   const XROLL = { p: 0.1 };
   // Preizkus: tekmeci in trki (Nastavitve; setTest). What the settings ask for, over what the driving physics gives: null = as the physics has it (the
   // default), a number = that, whatever the physics. The rivals (aiControl, Race): aiSpr the spread of their paces (a share of the difficulty's: 1
@@ -2252,13 +2252,13 @@ const Core = (function () {
   function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } KC = kvMake(); KR = !!KC && KC.id === 'real'; }
   KC = kvMake(); KR = !!KC && KC.id === 'real';
   const txv = (k, cs, nv, c) => TX[k] != null ? TX[k] : c.phys === 'nova' ? nv : cs;   // (a rival's setting: asked for, else by its physics)
-  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
+  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; XR.net = o && +o.net ? 1 : 0; }
   // damage Vklop (P3): a crushed front corner pulls the car to its side (a bent track rod: up to 0.05 of the lock, as a tyre going down
   // pulls 0.03), and a bent front wheel (that corner's cd 0.35-0.7) shakes the steering once a turn of the wheel (~1.9 m of road: the
   // wheel's own turn, c.xd.ph, laid only on a car with a bent wheel; repairCar and _mend clear it), up to 0.004 of the lock, from 30 m/s
-  // in full. Samo videz, Izklop and a car not knocked there: 0 (it drives as before)
+  // in full. Samo videz, Izklop, an online race (XR.net) and a car not knocked there: 0 (it drives as before)
   function dmgSteer(c, spd, dt) {
-    if (c.dmgMode !== 2) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
+    if (c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
     let w = 0; if (b !== 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
     return clamp((cd[1] - cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) + w;
   }
@@ -3427,10 +3427,10 @@ const Core = (function () {
   // Izklop: only the steam (the renderer's). A new radiator in the pits (repairCar; _mend Nujno)
   const ENG = { f0: 0.3, f1: 0.7, warm: 0.03, cool: 0.02, die: 3 };   // (at full throttle, all the water gone: dead in ~36 s; f 0.5 ~70 s)
   function engStep(c, dt) {
-    const f = Math.max(c.dz[0], (c.cd[0] + c.cd[1]) / 2);
-    if (!c.eng) { if (f < ENG.f0) return; c.eng = { h: 0, t: 0, dead: false, hot: false, ev: '' }; }
+    const f = Math.max(c.dz[0], (c.cd[0] + c.cd[1]) / 2), base = c.eng ? (c.eng.f0 || 0) : 0, fe = Math.max(0, f - base);   // (fe: the front's damage over the last new radiator (repairCar: 0, _mend Nujno: the front still bent); a fresh one leaks only from a fresh knock)
+    if (!c.eng) { if (fe < ENG.f0) return; c.eng = { h: 0, t: 0, dead: false, hot: false, ev: '', f0: 0 }; }
     const E = c.eng; if (E.dead) return;
-    const leak = sstep(ENG.f0, ENG.f1, f), thr = clamp(c.inThr || 0, 0, 1);
+    const leak = sstep(ENG.f0, ENG.f1, fe), thr = clamp(c.inThr || 0, 0, 1);
     E.h = clamp(E.h + (leak * (0.15 + 0.85 * thr) * ENG.warm - (1 - leak) * ENG.cool * E.h) * dt, 0, 1);
     if (E.h >= 0.5 && !E.hot) { E.hot = true; E.ev = 'hot'; } else if (E.h < 0.35) E.hot = false;
     E.t = E.h >= 1 ? E.t + dt : 0;
@@ -4204,8 +4204,9 @@ const Core = (function () {
     // the fastest of them into it before the step's first push (the loop takes them one after the other, the first one's push slows the next),
     // the dent between them, the foremost the most; square on both front corners alike, left as right, whichever the loop took first)
     let kx = 0, kz = 0, pk = hitK, fx = 0, fz = 0;
-    if (hit > 0) {
-      fx = -(hnx * ch + hnz * sh); fz = -(-hnx * sh + hnz * ch);
+    if (hit > 0) fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch);
+    if (hit > 0 && XR.net) { kx = c.corners[hitK][0]; kz = c.corners[hitK][1]; }   // (online: the knocked corner alone, as before P3)
+    else if (hit > 0) {
       const P = c.corners, dk = Math.max(0.05, -(u0x * hnx + u0z * hnz) * (dt || 1 / 120)), ph = P[hitK][0] * fx + P[hitK][1] * fz;
       let pm = ph, kw = 0, h0 = 0; for (const p of P) { const q = p[0] * fx + p[1] * fz; if (q > pm && q - ph <= dk) pm = q; }
       for (let k = 0; k < P.length; k++) { const p = P[k], q = p[0] * fx + p[1] * fz; if (Math.abs(q - ph) > dk) continue;
@@ -8619,9 +8620,9 @@ const Core = (function () {
       if (c.flt && c.flt.pw >= 0) { c.flt.pw = -1; c.flt.pk = 0; }
       if (W && W.wl) { for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.fix++; if (W.rule) W.rule.burn = 0; }
       if (!need) return;
-      c.eng = null;   // (P2.3: Nujno mends the radiator too)
       const k = c.dmg > NEED_DMG ? NEED_DMG / c.dmg : 1, M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
       c.dmg *= k; c.roofDmg *= k; for (let i = 0; i < 4; i++) { c.dz[i] *= k; c.cd[i] *= k; } c.xd = null;
+      const fMend = Math.max(c.dz[0], (c.cd[0] + c.cd[1]) / 2); c.eng = { h: 0, t: 0, dead: false, hot: false, ev: '', f0: fMend };   // (P2.3: a new radiator; the front may still be bent, so it leaks again only from a fresh knock, not from what Nujno left)
       c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.winOut = [0, 0, 0, 0]; c.lost = {}; c.detach = [];
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (W) wreck0(W);
@@ -8836,7 +8837,7 @@ const Core = (function () {
       }
       // P2.3: the engine of the wheel rule's car (Vklop) overheats after a hard knock in front (engStep); dead, the car rolls out (a dead
       // engine's drag, 0.5 a second of its speed; still steered) and once it stands the game is over (rule.why 'engine')
-      if (Q && !W.dnf && !c.finished && c.dmgMode === 2 && this.state === 'racing') {
+      if (Q && !W.dnf && !c.finished && c.dmgMode === 2 && this.state === 'racing' && !c.inPit && c.pitState !== 'repair') {
         engStep(c, dt);
         if (c.eng && c.eng.dead && !W.nL && !c.rl && !c.fall) {
           const k = Math.max(0, 1 - 0.5 * dt); c.vx *= k; c.vz *= k;

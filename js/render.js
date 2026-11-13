@@ -5134,6 +5134,7 @@ const Render = (function () {
   // scratches show, scrU: not in the far mesh's vertex colours).
   const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
   let farRb = 0;   // (cars whose far mesh was built again this frame: frame() sets it back)
+  let unRb = 0;   // (rivals taken apart for their first knock this frame (updateCars, xWait): frame() sets it back)
   let farMat = null;
   function farBuild(v) {
     v.grp.updateMatrixWorld(true);
@@ -7078,9 +7079,10 @@ const Render = (function () {
       if (v.xOn) { v.xsW = c.fxWall || 0; v.xsC = c.fxQ ? 0 : c.fxCar || 0; }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
-      if (v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR)))) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
-      if (c.dents && c.dents.length && !v.rep) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
-      if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
+      const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
+      if (v.xOn && v.mrg && !xWait && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR)))) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
+      if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
+      if (v.parts && !v.rep && !xWait) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
@@ -8908,7 +8910,7 @@ const Render = (function () {
     }
     geo.attributes.color.needsUpdate = true; if (gone) geo.attributes.position.needsUpdate = true;
     // the shards: a spray that flies (the particles), and the glass that lies on the road after (more where the pane fell out)
-    const rnd = v.kit ? rRnd : Math.random, ch = Math.cos(h), sh = Math.sin(h), wx = x + Pn.cx * ch - Pn.cz * sh, wz = z + Pn.cx * sh + Pn.cz * ch;
+    const rnd = rRnd, ch = Math.cos(h), sh = Math.sin(h), wx = x + Pn.cx * ch - Pn.cz * sh, wz = z + Pn.cx * sh + Pn.cz * ch;
     if (!k) { for (let n = 0; n < 5; n++) particles.emit(wx, y + Pn.cy, wz, c.vx * 0.5 + (rnd() - 0.5) * 2, 0.5 + rnd(), c.vz * 0.5 + (rnd() - 0.5) * 2, 0.5 + rnd() * 0.4, 0.1, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y); return; }   // (the laminated windscreen: a little glass dust, nothing on the road)
     for (let n = 0; n < 30; n++) particles.emit(wx, y + Pn.cy, wz, c.vx * 0.5 + (rnd() - 0.5) * 5, 1 + rnd() * 3, c.vz * 0.5 + (rnd() - 0.5) * 5, 0.8 + rnd() * 0.6, 0.16, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
     const out = Pn.side ? [-sh * Pn.side, ch * Pn.side] : [ch * Math.sign(Pn.cx || 1), sh * Math.sign(Pn.cx || 1)];   // (outwards from the pane's side)
@@ -10815,7 +10817,7 @@ const Render = (function () {
     if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
     updateCrew(cdt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
-    farRb = 0; updateCars(dt, alpha, opt);
+    farRb = 0; unRb = 0; updateCars(dt, alpha, opt);
     hypeStep(Math.min(dt, 0.1));
     updateRoad(dt);
     syncDebris(); syncProps(); rsGlints(target);

@@ -1952,3 +1952,21 @@ Tega nova različica ne sme pokvariti; pri lahkih dotikih, naslonu in sredinskih
 8. Stožci in bale (vrstica 1): ali naj stanejo le toliko kot v resnici (stožec pod 1 %, bala 1–3 %), čeprav potem niso več kazen za preširoko linijo?
 9. Ime različice: »Realistična«, »Fizikalna« ali »Resnični trk« (Okvir).
 10. Ali se popravka za novo fiziko (vrstici 15 in 27) sploh delata, ko uporabnik ostaja pri klasični?
+
+## Pregled paketa P z več agenti (13. 11. 2026)
+
+Neodvisni pregled izvedbe paketa P (ultracode, več agentov; samo preverjanje, ne spreminjanje kode) je potrdil 23 resnih najdb in 10 manjših. Potrjene najdbe je seja popravila, manjše je zabeležila kot naslednje delo. Spremembe so v `js/core.js`, `js/game.js`, `js/render.js`; varovala v `tests/knock.test.js` in `tests/wheels.test.js`.
+
+**Popravljeno (potrjene najdbe):**
+- **Splet — vodljivost poškodovanega avta (P3) je bila dejavna na obeh telefonih.** `dmgSteer` (zasuk zaradi zmečkanega vogala) in porazdelitev sunka po vogalih v `wallCollide` (P3) sta pri spletni dirki (`XR.net`, iz `xPhys(true)`, ko je v dirki prijateljev avto) zdaj izklopljena; oba telefona vozita poškodovani avto enako kot pred P3 (determinizem). Varovalo: `tests/knock.test.js`, »online race (net)« (neto FR 0,00°, FL 0,00°, lokalno FR 5,6°).
+- **Razbito steklo za starejše modele (P5) je uporabljalo `Math.random`.** `xBreakPane` za nekomplet vetrobran zdaj uporablja determinirani `rRnd` (brez `Math.random`), da posnetek in spletna dirka ostaneta usklajena.
+- **Pregrevanje motorja (P2.3) je avto »ubilo« tudi med postankom v boksih.** `_wreckStep` kliče `engStep` samo ob `!c.inPit && c.pitState !== 'repair'`; motor se v boksih ne pregreva.
+- **Nujno popravilo (`_mend`) ni zamenjalo hladilnika.** `_mend` nastavi svež hladilnik z izhodiščem `f0` iz trenutne škode, tako da motor po nujnem popravilu ne umre spet takoj; polno popravilo (`repairCar`) postavi `c.eng = null` (povsem svež). `engStep` meri puščanje od izhodišča `f0`, zato svež avto (eng null, base 0) teče do številke enako kot prej — zlate reference vožnje se niso premaknile. Varovalo: `tests/wheels.test.js` (preverjanje 13, izhodišče hladilnika).
+- **Skrite vrstice Razbijanje so še vedno delovale iz shranjenih nastavitev (P1).** Selitev `tdgp-defaults-v7` v `js/game.js` ponastavi preizkusne ključe (`xBody`, `xGlass`, `xPaint`, `xRoll`, `xBump`, `xAi`, `xParts`, `xDrag`, `xDust`, `xShake`) na privzeto 0, tako da obstoječi igralec ne vozi z vrednostmi, puščenimi iz preizkusa.
+- **`gameOver` ni poročal merilcu.** `gameOver` zdaj kliče `Tester.konec('odstop', tsMesto())`, kakor `retired()` in cilj (`?tester`).
+- **Sunek izrisa ob prvem trku pri kupu avtov.** `render.js` (`unRb`) omeji razstavljanje in ponovno sestavljanje ob prvem trku na 1 tekmeca na okvir; ostali čakajo v naslednjih okvirih (njihovi trki ostanejo v `c.dents`).
+
+**Zabeleženo kot naslednje delo (manjše najdbe):**
+- Najhujši primer izrisa (22 avtov, vsi povsem razbiti hkrati) doseže ~357 klicev risanja in ~527 tisoč oglišč; osnova je že nad 300, v stvarni dirki ~295, oglišč vedno pod 900 tisoč. Mejo naj postavi brskalniški test paketa P (`tests/browser/poskodbe.test.mjs`), ko nastane.
+- Node test `tests/poskodbe.test.js` (P1.12) in brskalniški `tests/browser/poskodbe.test.mjs` (P1.13) še nista dodana; invarianta »poškodovani avto pri Samo videz vozi do številke enako« je potrjena na HEAD (skripta pregleda `f3b.js`) in jo delno pokrivata dodani varovali v `tests/knock.test.js` in `tests/wheels.test.js`.
+- Netestirano: zmanjšanje moči motorja pri Vklop (odločitev 41), razpoke luči pri Preprostih, čas sunka ob počeni gumi, izguba vzgona krila pri Samo videz (K.5).

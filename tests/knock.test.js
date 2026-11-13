@@ -84,6 +84,14 @@ function pull(mode, k, amt) {
   ok('poškodbe Vklop: front-right crushed pulls right, front-left left, a few degrees', fr > 2 && fr < 12 && fl < -2 && fl > -12, 'FR ' + fr.toFixed(1) + '°, FL ' + fl.toFixed(1) + '°');
   // (both front wheels bent alike: the car is its own mirror image, so the two shakes cancel and it runs straight, as trki.test.js asks)
   ok('poškodbe Vklop: a bent front wheel (cd 0.6) shakes the turn rate once a wheel turn, a crushed corner that bends no wheel (0.3) does not; both bent alike run straight; Samo videz: nothing', bent.wob > 0.05 && bent.wob < 3 && crush.wob < 0.02 && Math.abs(both.h) < 0.01 && bent1.wob < 0.001, 'shake ' + bent.wob.toFixed(3) + '°/s, no bend ' + crush.wob.toFixed(4) + '°/s, both ' + both.h.toFixed(2) + '°, Samo videz ' + bent1.wob.toFixed(4) + '°/s');
+  // an online race (Core.setCrash({ net: 1 }), game.js xPhys(true) when a friend's car is in the race): the crushed-corner pull is off for every car,
+  // so both phones drive the knocked car the same way, as before P3. A light-knock pull that was a few degrees locally must be flat here.
+  C.setCrash({ net: 1 });
+  const netFr = pull(2, 1).h, netFl = pull(2, 0).h;
+  C.setCrash({});
+  const locFr = pull(2, 1).h;
+  ok('online race (net): the damage pull is off (both phones drive the same), while a local race still pulls', Math.abs(netFr) < 0.01 && Math.abs(netFl) < 0.01 && locFr > 2,
+    'net FR ' + netFr.toFixed(2) + '°, FL ' + netFl.toFixed(2) + '°, local FR ' + locFr.toFixed(1) + '°');
 }
 
 let bad = 0;
