@@ -4091,6 +4091,14 @@
     else if (e === 'brakes') { showMsg(tr('ZAVORE SE PREGREVAJO'), 'warn', 2.2); toast(tr('Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.'), 4200); Comm.say('brakesHot', null, 3); }
     else if (e === 'engine') { showMsg(tr('MOTOR SE PREGREVA'), 'warn', 2.2); toast(tr('Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.'), 4200); Comm.say('engineHot', null, 3); }
   }
+  // P2.3 (Core engStep; damage Vklop, the player's car offline in a race): a radiator holed in a hard knock in front, the engine overheats and dies
+  function engHUD(P) {
+    const E = P.eng; if (!E || !E.ev) return;
+    const e = E.ev; E.ev = '';
+    if (phase !== 'racing' || P.finished) return;
+    if (e === 'hot') { showMsg(tr('MOTOR SE PREGREVA'), 'warn', 2.2); toast(tr(track.def.pit ? 'Preluknjan hladilnik: motor se pregreva in bo ugasnil. Popusti plin ali zapelji v bokse.' : 'Preluknjan hladilnik: motor se pregreva in bo ugasnil. Popusti plin.'), 4800); Comm.say('engineHot', null, 3); }
+    else if (e === 'dead') showMsg(tr('MOTOR JE UGASNIL'), 'slow', 2.4);
+  }
   /* ---------------- the team radio (Nastavitve · Radio ekipe; race.mk: Core's Race.gap, pitLoss, plan) ---------------- */
   // the engineer: each lap the gaps to the cars ahead and behind; when a stop is needed (fuel, worn tyres, the wrong ones for the weather,
   // a cut or burst one, worn out, heavy damage) the window for it, and on the lap it must be made "box this lap" with where the stop puts the player; rain on
@@ -5024,8 +5032,8 @@
   function gameOver() {
     phase = 'done'; Sfx.setRunning(false); Comm.stop(); Sfx.beep(196, 0.6, 0.16); Input.buzzOff(); vibrate(260);
     paused = false; Input.reset(); clearTimeout(toast._t); $('toast').classList.remove('show');   // (the wheel's warning is answered)
-    const n = race.player.wreck ? race.player.wreck.nL : 1;
-    $('over-sub').textContent = tr(n >= 4 ? 'Odpadla so vsa štiri kolesa: avto ne more naprej.' : n === 3 ? 'Odpadla so tri kolesa: avto ne more naprej.' : n === 2 ? 'Odpadli sta dve kolesi: avto ne more naprej.' : 'Odpadlo je kolo: avto ne more naprej.');
+    const n = race.player.wreck ? race.player.wreck.nL : 1, eng = !!(race.player.wreck && race.player.wreck.rule && race.player.wreck.rule.why === 'engine');
+    $('over-sub').textContent = eng ? tr('Motor se je pregrel in ugasnil: avto ne more naprej.') : tr(n >= 4 ? 'Odpadla so vsa štiri kolesa: avto ne more naprej.' : n === 3 ? 'Odpadla so tri kolesa: avto ne more naprej.' : n === 2 ? 'Odpadli sta dve kolesi: avto ne more naprej.' : 'Odpadlo je kolo: avto ne more naprej.');
     showScreen('over');
   }
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
@@ -5274,7 +5282,7 @@
       const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
       setBest(best);
     }
-    wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); boxHUD(P); pitFightHUD(); fltHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
+    wreckHUD(P); tyreHUD(P); fcHUD(P); flagHUD(P); twHUD(dt); fuelHUD(P); boxHUD(P); pitFightHUD(); fltHUD(P); engHUD(P); teamRadioHUD(dt, P); enduStep(); reactHUD(dt, P); if (school) schoolHUD();
     if (!race.timeTrial) secHUD(P);
     if (race.drsLast) { const st = P.drs ? 'open' : P.drsA ? 'arm' : ''; if ($('h-drs').className !== st) $('h-drs').className = st; }
     // (the slipstream: no word on the screen any more, the user's; it works as ever, Core _tow)

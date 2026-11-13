@@ -138,7 +138,7 @@ Navodilo za graditelje paketa v #608 (veja `trki/realizem`, stanje `205f89b2`). 
 
 1. Videz (oba načina), `engineFx` R:9528: `f = max(c.dz[0], (c.cd[0] + c.cd[1]) / 2)`; bela para (`particles`, hitro se dviga) pri `f` 0,15–0,30, količina `sstep(0.15, 0.3, f) * (0.4 + 0.6 * plin)`; nad 0,30 para in siv dim; nad `c.dmg > 0.45` dim kot zdaj; oljni dim izpod motorja pri `f ≥ 0.45`. Isti pogoj (`xSmokes(c)`) v pragu R:9537, v `carCull` R:10670 in pri utišanju R:7068. (nepreverjeno)
 2. Madeži olja: `skids.add`, temna kratka sled na vsaka 2 m prevožene poti pri `f ≥ 0.3`. (nepreverjeno)
-3. Vklop, C: predmet `c.eng = { h: 0, t: 0 }` nastane šele pri `dmgMode === 2`, `!c.net`, `!c.pol` in `f ≥ 0.3`. `engStep(c, dt)` v `Race.step`: `leak = sstep(0.3, 0.7, f)`, `h += (leak * (0.15 + 0.85 * plin) * 0.05 - (1 - leak) * 0.02 * h) * dt`, omejen na 0..1. Moč v C:2935 in C:3178: `* (this.eng ? 1 - 0.3 * sstep(0.5, 1, this.eng.h) : 1)`. `h = 1` več kot 3 s: `retire(c)` C:8734 (igralec konča kot Odstop, ne KONEC IGRE). Ponastavita `repairCar` in `_mend`. (nepreverjeno)
+3. Vklop, C (narejeno 13. 11. 2026): samo avto s pravilom kolesa (`wreck.rule`: igralec, brez mreže, na dirki), tekmeci se ne pregrevajo. `engStep(c, dt)` v `_wreckStep`: `c.eng` nastane pri `f ≥ 0.3`; `leak = sstep(0.3, 0.7, f)`, `h += (leak * (0.15 + 0.85 * plin) * 0.03 - (1 - leak) * 0.02 * h) * dt` (ves plin, vsa voda ven: ugasne v ~36 s). Moč v obeh fizikah `* engK(this)` (od `h` 0,5 do 30 % manj, mrtev 0). `h = 1` več kot 3 s: motor ugasne, avto se izkotali (0,5 hitrosti na sekundo), ko stoji: `retire`, `rule.over`, `rule.why = 'engine'` → **KONEC IGRE** kot pri odpadlem kolesu (uporabnik 13. 11. 2026, `trki-p2-pregrevanje` = 2). Ponastavita `repairCar` in `_mend`. Igra: `engHUD` (MOTOR SE PREGREVA, MOTOR JE UGASNIL), podnapis KONEC IGRE. Test: `tests/wheels.test.js` 13.
 4. Besedila: opozorilo o vročem motorju iz Okvar (G:4011, G:4056); nove nastavitve ni. (nepreverjeno)
 5. Testi: `tests/poskodbe.test.js` (Vklop: `f` 0,5 → moč pade, motor ugasne; Samo videz in cel avto: faktor točno 1; brez `rand()`), `tests/browser/fire.test.mjs` (para pri 20 % spredaj). Reference: `sim.json` in `races.json` (dirke s trki pri Vklop) z `npm run golden:update`; `trki.json` ne.
 
@@ -171,5 +171,5 @@ Navodilo za graditelje paketa v #608 (veja `trki/realizem`, stanje `205f89b2`). 
 
 ### Odprto za uporabnika
 
-1. Imeni nove vrstice: »Podrobnosti poškodb: Preproste / Podrobne« (angleško Damage detail: Simple / Detailed).
-2. Vklop: ko motor po pregretju ugasne, igralec konča kot Odstop (predlog) ali KONEC IGRE.
+1. Imeni nove vrstice: »Podrobnosti poškodb: Preproste / Podrobne« (angleško Damage detail: Simple / Detailed): v igri tako; uporabnik je 13. 11. 2026 potrdil Realistično s pripombo »dodaj nastavitve da lahko se kaj spremenim« (`trki-cv6-slike` = 1): vrstice Trki, Poškodbe avtov, Odpadli deli, Odpadlo kolo so v Nastavitvah.
+2. Odgovorjeno 13. 11. 2026 (`trki-p2-pregrevanje` = 2): KONEC IGRE, glej P2.3.

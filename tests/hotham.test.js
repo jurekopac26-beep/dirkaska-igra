@@ -167,7 +167,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 {
   const orig = Math.random, popts = (o) => Object.assign({ numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 0, damage: 2, police: true }, o);
   let heli = 0, heatMax = 0;
-  const runs = [[11, 0], [12, 0], [13, 0], [14, 3]].map(([seed, dif]) => {
+  const runs = [[29, 0], [12, 0], [13, 0], [14, 3]].map(([seed, dif]) => {
     Math.random = seeded(3);
     const r = new C.Race(T, popts({ seed, difficulty: dif })), P = r.player, pol = r.pol, pc = pol.cars[0];
     const st = { stage: pol.stage, chk: pol.chk, goal: pol.goal, chase: pc && pc.pol.mode === 'chase', left: P.q.d < -1 };

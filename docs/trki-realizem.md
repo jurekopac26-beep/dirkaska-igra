@@ -1876,14 +1876,15 @@ Za vse velja:
 
 ## Predaja (13. 11. 2026, seja na Opusu)
 
-Na veji `trki/realizem` so commiti P1, P4, P2 (videz), P5, P3 in P6. Naslednja seja:
-1. **Odgovori:** preveri trki-cv6-slike, trki-hotham-seme in trki-uncompahgre-padec na strani Odločitve (z ArtifactData) in vprašanje »Odprto za uporabnika« v `paket-p.md`. Od tega je odvisna točka P2.3 (pregrevanje pri Vklop).
-2. ~~P5~~ in ~~P3~~: narejeno (razdelka zgoraj).
-4. ~~P6~~: narejeno (razdelek zgoraj).
-5. ~~Korak K~~: narejeno (razdelek zgoraj).
-6. **Pregled:** neodvisno preverjanje z več agenti samo enkrat, na koncu teme pred `main`. PR #608 ostane osnutek do vrste.
+Na veji `trki/realizem` je paket P cel: P1, P4, P2 (videz in pregrevanje), P5, P3, P6 in K. Odgovori uporabnika (stran Odločitve, 13. 11. 2026):
+- `trki-p2-pregrevanje` = 2: motor po pregretju ugasne → KONEC IGRE kot pri odpadlem kolesu (P2.3 v `paket-p.md`, test `tests/wheels.test.js` 13).
+- `trki-cv6-slike` = 1: privzeto Realistično; vrstice Trki, Poškodbe avtov, Odpadli deli in Odpadlo kolo so v Nastavitvah (preverjeno, `index.html` 269–273). Uporabnik vpraša, kdaj gre na `main`: po vrsti okoli 5. 12. 2026.
+- `trki-hotham-seme` = 1: seme pregona v `tests/hotham.test.js` 11 → 29 (dovoljenje v `tests/golden/testne-proge.json`).
+- `trki-uncompahgre-padec` = 1: Uncompahgre ostane, kot je, do izbrisa testnih prog.
 
-Slike ZDAJ/POTEM delaj z `tools/trki/slike.mjs <scenarij> --a-root <git worktree starega commita> --b-root . --a-nast dmgDet=1 --b-nast dmgDet=1 --oddaljenost blizu`. Slike niso v repozitoriju.
+Naslednja seja: **neodvisno preverjanje z več agenti** (samo fizika trkov, do 10 agentov) enkrat, na koncu teme pred `main`. PR #608 ostane osnutek do vrste.
+
+Slike ZDAJ/POTEM delaj z `tools/trki/slike.mjs <scenarij> --a-root <git worktree starega commita> --b-root . --a-nast dmgDet=1 --b-nast dmgDet=1 --velikost 1920x1080 --izrez 0.36,0.38,0.64,0.9` (izrez da avto od blizu). Slike niso v repozitoriju.
 
 ## Predaja (13. 11. 2026, ~12.45)
 

@@ -196,5 +196,24 @@ function until(r, fn, s) {
   check('KAZE without the rule (Vklop, the race on): no wheel off, as before', !o.w && !o.rule, `${o.w} off`);
 }
 
+// 13. P2.3 the engine (paket-p; the user, 13. 11. 2026, trki-p2-pregrevanje: KONEC IGRE): at Vklop a hard knock in front (f 0.6: the front
+//     zone and corners) holes the radiator: the engine warms with the throttle (eng.h), at 0.5 'hot' for the game, then dies; the car rolls
+//     out, stops and the game is over (rule.why 'engine'). A light knock (f under 0.3), Samo videz and the AI: no eng (power exactly as before)
+{
+  const front = (P, f) => { P.dz = [f, 0, 0, 0]; P.cd = [f, f, 0, 0]; P.dmg = f * 0.5; };
+  const v = withRnd(7, () => { const r = race(); r.start(); const P = r.player, W = P.wreck; front(P, 0.6); P.vx = Math.cos(P.h) * 12; P.vz = Math.sin(P.h) * 12;
+    for (let t = 0; t < 4; t += DT) { P.inThr = 1; P.inBrk = 0; P.inSteer = 0; P.vx = P.vz = 0; r.step(DT); }   // (full throttle on the spot: off the walls)
+    const h4 = P.eng ? P.eng.h : 0;
+    P.eng.h = 1; P.eng.t = 2.9; P.vx = Math.cos(P.h) * 12; P.vz = Math.sin(P.h) * 12; const tOver = until(r, () => W.rule.over, 12);
+    return { h4, dead: P.eng.dead, tOver, why: W.rule.why, nL: W.nL, out: r.isOut(P), v: P.speed }; });
+  check('Vklop, a hard knock in front: the engine warms with the throttle, dies, the car rolls out and stops: the game over (rule.why engine), no wheel off',
+    v.h4 > 0.05 && v.h4 < 0.3 && v.dead && v.tOver < 12 && v.why === 'engine' && v.nL === 0 && v.out && v.v < 0.6, `h after 4 s ${v.h4.toFixed(2)}, over in ${v.tOver.toFixed(1)} s, ${v.why}, dead ${v.dead}, nL ${v.nL}, out ${v.out}, v ${v.v.toFixed(2)}`);
+  const none = (o, f) => withRnd(7, () => { const r = race(o); r.start(); const P = r.player; front(P, f); until(r, () => false, 3);
+    return !P.eng && r.cars.every(c => !c.eng); });
+  check('no engine trouble: a light knock (f 0.25), Samo videz (damage 1), without the rule; never on the AI', none({}, 0.25) && none({ damage: 1 }, 0.8) && none({ wheelRule: undefined }, 0.8));
+  const fix = withRnd(7, () => { const r = race(); r.start(); const P = r.player; front(P, 0.6); until(r, () => false, 1); const had = !!P.eng; r.repairCar(P); return had && !P.eng; });
+  check('a full repair puts a new radiator in (no eng)', fix);
+}
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

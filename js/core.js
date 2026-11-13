@@ -2939,7 +2939,7 @@ const Core = (function () {
         const gr2 = M.gears[this.gear - 1] * M.final;
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
         this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);   // (an electric motor turns with the wheels only)
-        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1);   // (a hot engine: less power)
+        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1) * (this.eng ? engK(this) : 1);   // (a hot engine: less power)
         let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr * (this.man ? manK(this, M, vl) : 1);   // (the manual gearbox: the limiter, a bogging engine)
         if (this.shiftT > 0) Fsw *= 0.7;
         Fsw -= (1 - thr) * m * K.engBrk * sstep(2, 20, vl);
@@ -3182,7 +3182,7 @@ const Core = (function () {
         const gr2 = M.gears[this.gear - 1] * M.final;
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
         this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);
-        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1);
+        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1) * (this.eng ? engK(this) : 1);
         let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr * (this.man ? manK(this, M, vl) : 1);
         if (this.shiftT > 0) Fsw *= 0.7;
         Fsw -= (1 - thr) * m * KC.engBrk * sstep(2, 20, vl);
@@ -3419,6 +3419,24 @@ const Core = (function () {
   // counts the fires, the renderer draws each: Render fireCatch), the car stops (Race._wreckStep), retires there and the game is over
   // (wreck.rule.over: KONEC IGRE, game.js)
   const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08 };
+  // P2.3 the engine after a hard knock in front (damage Vklop; the wheel rule's car only, wreck.rule: the player's, offline, in a race): the
+  // radiator holed by the front's damage (f as the renderer's steam, engineFx: the front zone or its front corners' mean) loses its water,
+  // ENG.f0 to ENG.f1 of f from none to all; the engine warms with the throttle (h 0..1) and cools as much as the water left lets it. From h 0.5
+  // up to 30 % less power (engK), at 1 for ENG.die s it dies (no power) and once the car stands the game is over, as with a wheel off (the
+  // user, 13. 11. 2026, trki-p2-pregrevanje: »KONEC IGRE«; rule.why 'engine'). eng.ev for the game: 'hot' at h 0.5, 'dead'. Samo videz and
+  // Izklop: only the steam (the renderer's). A new radiator in the pits (repairCar; _mend Nujno)
+  const ENG = { f0: 0.3, f1: 0.7, warm: 0.03, cool: 0.02, die: 3 };   // (at full throttle, all the water gone: dead in ~36 s; f 0.5 ~70 s)
+  function engStep(c, dt) {
+    const f = Math.max(c.dz[0], (c.cd[0] + c.cd[1]) / 2);
+    if (!c.eng) { if (f < ENG.f0) return; c.eng = { h: 0, t: 0, dead: false, hot: false, ev: '' }; }
+    const E = c.eng; if (E.dead) return;
+    const leak = sstep(ENG.f0, ENG.f1, f), thr = clamp(c.inThr || 0, 0, 1);
+    E.h = clamp(E.h + (leak * (0.15 + 0.85 * thr) * ENG.warm - (1 - leak) * ENG.cool * E.h) * dt, 0, 1);
+    if (E.h >= 0.5 && !E.hot) { E.hot = true; E.ev = 'hot'; } else if (E.h < 0.35) E.hot = false;
+    E.t = E.h >= 1 ? E.t + dt : 0;
+    if (E.t > ENG.die) { E.dead = true; E.ev = 'dead'; }
+  }
+  const engK = (c) => c.eng ? (c.eng.dead ? 0 : 1 - 0.3 * sstep(0.5, 1, c.eng.h)) : 1;
   // The Kolibri's tyres (Race opts.tyreRule: the vehicles they are for; Car.kt on the player's car): each its own wear (w) and damage (d),
   // 0..1. The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean, whatever its length; a race on a circuit
   // KT.lap a metre (4 times the tyres' usual), a slide up to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times
@@ -8589,6 +8607,7 @@ const Core = (function () {
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
       if (c.flt) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a new tyre for a cut one)
+      c.eng = null;   // (P2.3: a new radiator)
       c.repairN = (c.repairN || 0) + 1;
     }
     // a stop's repairs as the player asked for them (c.pitPlan.fix, game.js) when not all: 'need' (Nujno) the parts lost, the wings, the lamps,
@@ -8600,6 +8619,7 @@ const Core = (function () {
       if (c.flt && c.flt.pw >= 0) { c.flt.pw = -1; c.flt.pk = 0; }
       if (W && W.wl) { for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.fix++; if (W.rule) W.rule.burn = 0; }
       if (!need) return;
+      c.eng = null;   // (P2.3: Nujno mends the radiator too)
       const k = c.dmg > NEED_DMG ? NEED_DMG / c.dmg : 1, M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
       c.dmg *= k; c.roofDmg *= k; for (let i = 0; i < 4; i++) { c.dz[i] *= k; c.cd[i] *= k; } c.xd = null;
       c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.winOut = [0, 0, 0, 0]; c.lost = {}; c.detach = [];
@@ -8813,6 +8833,15 @@ const Core = (function () {
       if (Q && !W.dnf && !c.finished && W.nL && !c.rl && !c.fall) {   // (rolling over, Razbijanje, or falling off a drop: once it is back on the road)
         parkBrake(c); const k = Math.max(0, 1 - 2.5 * dt); c.vx *= k; c.vz *= k; c.w *= k;
         if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; }
+      }
+      // P2.3: the engine of the wheel rule's car (Vklop) overheats after a hard knock in front (engStep); dead, the car rolls out (a dead
+      // engine's drag, 0.5 a second of its speed; still steered) and once it stands the game is over (rule.why 'engine')
+      if (Q && !W.dnf && !c.finished && c.dmgMode === 2 && this.state === 'racing') {
+        engStep(c, dt);
+        if (c.eng && c.eng.dead && !W.nL && !c.rl && !c.fall) {
+          const k = Math.max(0, 1 - 0.5 * dt); c.vx *= k; c.vz *= k;
+          if (c.speed < 2) { parkBrake(c); if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; Q.why = 'engine'; } }
+        }
       }
       const racing = this.state === 'racing';
       if (!W.dnf && !c.isPlayer && kitParts(c.m) && !c.finished && racing && W.nL >= 2 && !c.pitWant && !c.inPit && !this.opts.noPlayer) this.retire(c);
