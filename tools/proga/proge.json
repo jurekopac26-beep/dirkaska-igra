@@ -15,5 +15,21 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "haivan": {
+    "ime": "Hải Vân, Vietnam",
+    "okvir": [16.165, 108.1, 16.22, 108.155],
+    "pot": [[16.19243, 108.1255], [16.18748, 108.13072]],
+    "start": [16.19243, 108.1255],
+    "cilj": [16.18748, 108.13072],
+    "zalet": 160,
+    "po_cilju": 190,
+    "polsirina": 5.5,
+    "gauss": 2.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.1, "serpentine": 0.3, "serpentine_m": 22 },
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "HAIVAN_H"
   }
 }
