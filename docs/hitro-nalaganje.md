@@ -5,7 +5,9 @@ Predlog I17, odločitev uporabnika 7. 11. 2026 ob 16.05 in 8. 11. ob ~17.40 (tab
 ## Stanje
 
 - [x] Korak 1: meritve (skripte po skupinah, čas do menija in do vožnje s CPU 4× in 6×, počasno in hitro 4G, HTTP/1.1, gradnja vseh pravih prog z 2D platnom na procesorju in v procesu GPU, profili) in ta načrt (8. 11. 2026).
-- [ ] Koraki 2–10 (spodaj, »Vrstni red«): vsak svoja seja in svoj pull request; vsak izmeri učinek z `tools/zagon.mjs` in dopiše številke v tabelo »Učinek po korakih«.
+- [x] Korak 2: nujni CSS zaslona z nalaganjem v `index.html`, ostali CSS ne zavira prvega izrisa, vrstica napredka na `#loading`, CSS menija iz povezave (13. 11. 2026, #514; »Izvedba« pri koraku).
+- [x] Korak 3: hiter vstop zgradi samo progo dirke, brez naslovnega sveta in predstavitvene dirke; navaden zagon ostane, kot je (13. 11. 2026, #514).
+- [ ] Koraki 4–10 (spodaj, »Vrstni red«): vsak svoja seja in svoj pull request; vsak izmeri učinek z `tools/zagon.mjs` in dopiše številke v tabelo »Učinek po korakih«.
 
 ## Na kratko
 
@@ -72,12 +74,14 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 - `Menu.init` CSS menija vzame iz že naložene povezave (`link.sheet` ali `<link rel="preload" as="style">`), ne z drugim `fetch`.
 - Učinek: prvi izris na počasnem 4G iz 16–20 s na ~1–2 s (kot HTTP/1.1); meni je pripravljen ob `Menu.init`, ne šele po drugem prenosu CSS med prvimi slikami 3D (zdaj 1–1,7 s pozneje s CPU 4×).
 - Testi: `menu.test.mjs`, `smoke`; `stamp.js --check` (nova povezava `<link>` dobi žig sama).
+- **Izvedba** (13. 11. 2026): `<style id="ld-css">` v glavi `index.html` nariše `#loading` (barve in pisave kot `style.css`); vse povezave CSS imajo `media="not all"` in se vklopijo ob prihodu (`onload`), `style.css` ob prihodu odstrani `ld-css`. Do takrat je viden samo `#loading` (`#app>:not(#loading){visibility:hidden}`), zato se nič ne nariše brez svojega CSS. Vrstica napredka: rdeče-beli rob raste s prenesenimi bajti (`PerformanceObserver` `resource`, `encodedBodySize`) in besedilo »2,1 / 6,0 MB« (pika v angleščini); skupna velikost zadnjega zagona je v `localStorage` (`rra-nalaganje-sw` s service workerjem, `rra-nalaganje-net` brez njega; prvič 6 MB). Ob `window` `load` je vrstica spet trak, kot je bila. `Menu.init` (`menuCss` v `js/menu.js`) poveže isti `href` kot `#menu-css` v senčnem korenu menija: brskalnik list vzame iz pomnilnika, brez drugega prenosa (1–5 ms). Kopija pravil (`cssText`) ne gre, ker izgubi deklaracije `font:` z `var()`, ki jim sledi posamezna lastnost (`.money`, `.info b`). Ker je list zdaj povezava na `css/menu.css`, bi se relativni `url()` v `var(--pic)` bral iz `css/`: slike prog v `--pic` so zato absolutne (`absUrl`). Brez povezave ali ob napaki ostane `fetch` kot prej. Drugi `fetch` menija (»Kje gre čas«, 4) je bil sicer iz predpomnilnika diska (`max-age=600`), ne nov prenos. `js/sence.js` (samo Samsung ali `?sence=1`) prepiše liste strani ob `window` `load`, ko so vsi vklopljeni, lista menija ne.
 
 ### Korak 3 · Hiter vstop brez naslovnega sveta (naslovnica ostane)
 - Odločitev uporabnika 8. 11. 2026 (`hitro-nalaganje-1`, možnost 3): naslovnica ostane kot zdaj, 3D svet zadnje proge s predstavitveno dirko pred menijem (ne slika proge). Meni prej samo s korakom 2 (CSS menija iz povezave) in korakom 9 (hitrejša gradnja naslovnega sveta).
 - Hiter vstop (`?proga=`, povezave in testi): brez naslovnega sveta in predstavitvene dirke, samo ciljna proga; po dirki je naslovni svet proga dirke (že zgrajena). Naslovnica ob navadnem zagonu se ne spremeni.
 - Učinek: hiter vstop −2–6 s (CPU 4×).
 - Tveganja: testi s hitrim vstopom (`tests/README.md`) in zasloni, ki po zagonu pričakujejo `track` (garaža `garageBack`, izzivi `chalHash`, lestvica `lpHash`), predstavitvena dirka za `MS`/`ZB`.
+- **Izvedba** (13. 11. 2026): `quickTrack()` v `js/game.js` vrne progo hitrega vstopa ob istih pogojih kot `quickGo` (veljavna proga, ne izziv `#izziv=` ali duh `#duh=` prijatelja, avto igralca). `boot` takrat zgradi to progo namesto `S.track`, prevede njene senčilnike (`Render.precompile`) in predstavitvene dirke ne naredi; `ensureTrack` v `quickGo` svet vzame, kot je. Po dirki naslovnica naredi predstavitveno dirko na progi dirke (`demoShow` v zanki slik). Navaden zagon in hiter vstop z izzivom, duhom ali avtom, ki ga igralec nima, ostaneta, kot sta bila. Tveganja preverjena: `garageBack` se pri `?proga=` vrne takoj; `chalHash` in `ghHash` gresta po navadni poti; `lpHash`, `MS` in `ZB` ne rabijo naslovnega sveta ne predstavitvene dirke.
 
 ### Korak 4 · Glave prog, prave proge šele ob potrebi (glavni korak)
 - Orodje (razširitev `tools/menu-lens.js` ali novo `tools/glave-prog.mjs`) zapiše `js/tracks/glave.js`: za vsako pravo progo polja do ~2 kB (id, ime, tema, zastavice, `look`, `rainP`, `say`, `cloudTh`, `roadWear`, `grassNat`, `lawn`, `bbClassic`, `zivali` …) in izračunane podatke (dolžina, število ovinkov, krogi); ~110 kB, ~40 kB gzip. Test preveri, da se glave ujemajo s celimi datotekami (kot golden).

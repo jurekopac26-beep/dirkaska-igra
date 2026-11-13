@@ -15,12 +15,32 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="css/fonts.css">
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/napake.css">
-<link rel="stylesheet" href="css/missions.css">
-<link rel="stylesheet" href="css/zabava.css">
-<link rel="stylesheet" href="css/neskoncna.css">
+<!-- the first picture without waiting for the styles (docs/hitro-nalaganje.md, step 2): the loading screen's own rules here (a copy of css/style.css
+     #loading), the game's styles not in the way of the first picture (media="not all", each switched on as it arrives, before the game starts at
+     window load); the page under the loading screen hidden until css/style.css is in, then these rules gone -->
+<style id="ld-css">
+:root{--asphalt:#161b23;--curb:#e63b2e;--chalk:#f6f6f1;--muted:#9fb0c3;--f-display:'Racing Sans One','Arial Black',Impact,system-ui,sans-serif;--f-ui:'Chakra Petch','Segoe UI',Roboto,system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--asphalt:#12161d}}
+:root[data-theme="dark"]{--asphalt:#12161d}
+*,*::before,*::after{box-sizing:border-box}
+:root,html,body{color-scheme:dark;forced-color-adjust:none}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--asphalt);color:var(--chalk)}
+#app{position:fixed;inset:0;overflow:hidden}
+#app>:not(#loading){visibility:hidden}
+#loading{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--asphalt)}
+.ld-logo{font:400 italic clamp(26px,min(9vh,8.6vw),48px)/1 var(--f-display);text-align:center}
+.ld-bar{width:200px;height:8px;border-radius:4px;overflow:hidden;background:repeating-linear-gradient(90deg,var(--curb) 0 12px,var(--chalk) 12px 24px);background-size:24px 100%;animation:ld .9s linear infinite}
+.ld-bar i{display:none}
+@keyframes ld{from{background-position:0 0}to{background-position:24px 0}}
+#ld-msg{margin:0;font:600 14px/1.3 var(--f-ui);color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.ld-bar{animation:none}}
+</style>
+<link rel="stylesheet" href="css/fonts.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/style.css" media="not all" onload="this.media='all';var s=document.getElementById('ld-css');if(s)s.remove()" onerror="this.onload()">
+<link rel="stylesheet" href="css/napake.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/missions.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/zabava.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/neskoncna.css" media="not all" onload="this.media='all'">
 <link rel="stylesheet" id="menu-css" href="css/menu.css" media="not all">
 <script src="js/sence.js"></script>
 </head>
@@ -552,6 +572,28 @@
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">REAL ROADS ATLAS</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
+<script>
+// the loading bar (docs/hitro-nalaganje.md, step 2): until the game starts (window load) the kerb grows with the files come so far (their bodies,
+// PerformanceObserver) against what came at the last start (localStorage, from the network or from the service worker; the first time 6 MB), and
+// the message says it (2,1 / 6,0 MB); at the start the kerb is whole again and the message the game's own (the tracks' loading screen as it was)
+(function () {
+  var bar = document.querySelector('#loading .ld-bar'), msg = document.getElementById('ld-msg');
+  if (!bar || !msg || !window.PerformanceObserver) return;
+  var key = 'rra-nalaganje-' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'sw' : 'net'), total = 6e6, sum = 0, done = false, en = false;
+  try { total = +localStorage.getItem(key) || total; en = (JSON.parse(localStorage.getItem('tdgp-settings') || 'null') || {}).lang === 'en'; } catch (e) { /* (no storage) */ }
+  var txt = document.createTextNode(''), mb = function (b) { var t = (b / 1e6).toFixed(1); return en ? t : t.replace('.', ','); };
+  var show = function () { var all = Math.max(total, sum); bar.style.width = Math.round(24 + 176 * sum / all) + 'px'; txt.nodeValue = ' ' + mb(sum) + ' / ' + mb(all) + ' MB'; };
+  var add = function (list) { for (var i = 0; i < list.length; i++) sum += list[i].encodedBodySize || 0; if (!done) show(); };
+  var po = new PerformanceObserver(function (l) { add(l.getEntries()); });
+  try { po.observe({ type: 'resource', buffered: true }); } catch (e) { return; }
+  bar.style.transition = 'width .3s'; msg.appendChild(txt); show();
+  addEventListener('load', function () {
+    add(po.takeRecords()); done = true; po.disconnect();
+    try { if (sum > 1e5) localStorage.setItem(key, String(sum)); } catch (e) { /* (no storage) */ }
+    bar.style.width = bar.style.transition = ''; txt.remove();
+  });
+})();
+</script>
 
 <script src="js/vendor/three.r128.min.js"></script>
 <script src="js/tracks/jezero.js"></script>
