@@ -266,6 +266,15 @@
  },
  "musandam": {
   "s": 1900,
-  "o": "Ovinki v pečini nad zalivom"
+  "o": "Ovinki v pečini nad zalivom",
+  "cam": [
+   -535.4,
+   139.8,
+   -889.9,
+   -510.8,
+   69.8,
+   -798.1,
+   47.8
+  ]
  }
 }
