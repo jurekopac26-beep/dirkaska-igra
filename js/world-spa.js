@@ -375,10 +375,14 @@
     const pitZone = (x, z) => { if (!def.pit) return false; const i = T.nearestIdx(x, z), lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], d = dS(i * ds), dd = d > L / 2 ? d - L : d;
       return lat > 0 && lat < 80 && dd > def.pit[1] - 20 && dd < def.pit[2] + 20; };
     const SEATS = [[0.14, 0.3, 0.62], [0.72, 0.14, 0.14], [0.9, 0.72, 0.12], [0.2, 0.5, 0.3]];
+    // (the houses: the builder of js/world-stavbe.js with Belgium's kit, where the track has it; the halls, the grandstands and the pits stay here)
+    const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: def.bld || [], T, near: nrNear, gH: nrGround }) : null; let bi = -1;
     for (const [bx, bz, Lb, Wb, ang, H, k] of def.bld || []) {
+      bi++;
       if (k === 3 && pitZone(bx, bz)) continue;   // (the pit building on the pit straight is the pit lane's garages, below)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); }
+      let clash = false, y0 = 1e9, dnH = 1e9, riH = -1;   // (dnH, riH: how far beyond the road's barrier the house stands, the nearest sample)
+      for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; if (n.i >= 0 && n.dd < dnH) { dnH = n.dd; riH = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); }
       if (clash) continue;
       const g = scen.get(bx, bz); nBld++; CR.block(bx, bz, Lb, Wb, ang);   // (nobody stands inside it)
       if (k === 2) {   // grandstand: tiers climbing away from the track, a crowd on every tier's seats, a roof on steel pillars over the back half
@@ -407,7 +411,14 @@
         box(g, bx, y0 - 0.4, bz, Lb, hh + 0.4, Wb, ang, wc, [0.46, 0.48, 0.52]);
         exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 4);
       } else {   // an Ardennes house: grey stone or whitewashed walls (now and then red brick), a steep dark slate roof along the long side
-        const hh = H || 5.4 + R() * 2.2, walls = [[0.66, 0.64, 0.6], [0.94, 0.93, 0.89], [0.72, 0.7, 0.66], [0.62, 0.38, 0.3]], wc = walls[Math.floor(R() * walls.length)];
+        const hh = H || 5.4 + R() * 2.2, walls = [[0.66, 0.64, 0.6], [0.94, 0.93, 0.89], [0.72, 0.7, 0.66], [0.62, 0.38, 0.3]], uw = R(), wc = walls[Math.floor(uw * walls.length)];
+        if (HS && Lb * Wb < 1500) {   // (the builder's house: the same three draws as below, so that all else in the world stays where it was)
+          // (a small footprint is a shed or a garage unless the map says it is high; its height and every house's floors are the builder's to
+          // decide, by the map's height where it has one)
+          const small = Lb * Wb < 45;
+          HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh: small && !H ? 0 : hh, type: small && !(H > 3.6) ? 'small' : 'house', u: [uw, R(), R()], dn: dnH, ri: riH, id: bi });
+          exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 3); continue;
+        }
         box(g, bx, y0 - 0.4, bz, Lb, hh + 0.4, Wb, ang, vary(wc, R, 0.05), null, true);
         if (Lb * Wb < 1500) gable(g, bx, y0 + hh, bz, Lb + 0.5, Wb + 0.5, Math.min(5, Wb * 0.55), ang, vary([0.2, 0.22, 0.26], R, 0.08), wc);
         else box(g, bx, y0 + hh, bz, Lb, 0.5, Wb, ang, [0.36, 0.37, 0.4]);
@@ -575,6 +586,10 @@
     const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, 'Kratki levi': 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
     let nFans = 0; const crE0 = excl.length;
+    // the ways to the houses (def.yard rows from def.houseWays on: OpenStreetMap, drawn by yardWorld in js/world.js): the fans' camp keeps off them
+    const waySeg = []; if (def.houseWays >= 0) for (const w of (def.yard || []).slice(def.houseWays)) if (w[0] < 2) for (let j = 1; j + 3 < w.length; j += 2) waySeg.push([w[j], w[j + 1], w[j + 2] - w[j], w[j + 3] - w[j + 1], w[0] ? 1 : 2]);
+    const onWay = (x, z, r) => { for (const [ax, az, ux, uz, hw] of waySeg) { const t = Math.max(0, Math.min(1, ((x - ax) * ux + (z - az) * uz) / (ux * ux + uz * uz || 1))), dx = x - ax - ux * t, dz = z - az - uz * t;
+      if (dx * dx + dz * dz < (hw + r) * (hw + r)) return true; } return false; };
     for (const q of T.names) {
       const wgt = FANS[q.n]; if (!wgt) continue;
       const sm = sAt(q.d), side = roomSide(sm), half = 18 + wgt * 12;
@@ -587,7 +602,9 @@
       for (let ii = T.idx(sm - half - 6), n = 0; n < (2 * half + 12) / ds; n++, ii = (ii + 1) % N) if (!fence[side2(side)][ii]) fence[side2(side)][ii] = 1;
       if (wgt >= 2) for (let k = 0; k < wgt * 5; k++) {   // camping in the woods behind the crowd
         const s = sm + (R() - 0.5) * half * 2, [x, z, i] = onSide(s, side, 9 + R() * 22); if (nrSlope(x, z) > 0.45 || inBrook(x, z, 3)) continue;
-        if (R() < 0.55) tent(x, z, T.hd[i] + (R() - 0.5) * 0.6, tcols[Math.floor(R() * tcols.length)]); else carPk(x, z, T.hd[i] + (R() - 0.5) * 0.8, vary(fans[Math.floor(R() * fans.length)], R, 0.2));
+        const way = onWay(x, z, 3.2);   // (on a way to a house: no camp there; the random stream runs on as before)
+        if (R() < 0.55) { const rot = T.hd[i] + (R() - 0.5) * 0.6, col = tcols[Math.floor(R() * tcols.length)]; if (!way) tent(x, z, rot, col); }
+        else { const rot = T.hd[i] + (R() - 0.5) * 0.8, col = vary(fans[Math.floor(R() * fans.length)], R, 0.2); if (!way) carPk(x, z, rot, col); }
       }
       const [ex, ez] = onSide(sm, side, 14); exclPush(ex, ez, half + 10);
     }
@@ -747,12 +764,14 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats;
     return out;
   }
 
