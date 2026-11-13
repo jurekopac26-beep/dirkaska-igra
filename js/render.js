@@ -6322,10 +6322,11 @@ const Render = (function () {
      of the race's own kind (makeView) in white with a blue band along both sides reading POLICIJA and a light bar flashing blue; an
      officer in a yellow vest by each parked one. The spike strips across the road. ---------------- */
   let road = null;
-  const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x9aa0a6, 0x2b2e33, 0x121417, 0x1f3f7a, 0x8c1c1c, 0xb52a1f, 0x2e5a3a, 0x6b4a2b, 0x9fb6c9, 0xd9c7a0, 0x3a4b63, 0x7a1f3d, 0xe8e8e4, 0x5a5f66];
-  const RD_VAN = [0xf2f2f0, 0xf2f2f0, 0xdcdcd6, 0x2f5fa8, 0xc9ccd0, 0xd8b020, 0x8c1c1c];
-  const RD_TRUCK = [0xf2f2f0, 0xc0281c, 0x1f4f9a, 0xe0a020, 0x2a2c30, 0x2d6a3a, 0xd8d8d4, 0x8a1c1c];   // (the trucks' cabs)
-  const RD_BUS = [0x19a7a4, 0xf2f2ee, 0x19a7a4], RD_MOTO = [0xd8261c, 0x151515, 0x1b5fb8, 0xf2f2f2, 0xe86a10], RD_BIKE = [0xd8261c, 0x1b5fb8, 0x151515, 0xf2f2f2, 0x2aa05a, 0xe8b400];
+  // the traffic's paints: bright and light ones only, no black or dark ones (seen well on the tarmac ahead; the user, 12. 11. 2026)
+  const RD_CAR = [0xf4f4f2, 0xc9ccd0, 0x2f6fd0, 0xd02a1f, 0xe8b400, 0x3a9a4a, 0xe86a10, 0x9fc6e9, 0xd9c7a0, 0xb52a1f, 0x9aa0a6, 0x2aa5b0, 0xc84a8a, 0xe8e8e4, 0x6fa0e0, 0xf0d860];
+  const RD_VAN = [0xf2f2f0, 0xf2f2f0, 0xdcdcd6, 0x2f5fa8, 0xc9ccd0, 0xd8b020, 0xc0281c];
+  const RD_TRUCK = [0xf2f2f0, 0xc0281c, 0x1f4f9a, 0xe0a020, 0xe86a10, 0x3a9a4a, 0xd8d8d4, 0xd8b020];   // (the trucks' cabs)
+  const RD_BUS = [0x19a7a4, 0xf2f2ee, 0x19a7a4], RD_MOTO = [0xd8261c, 0xf2c200, 0x1b5fb8, 0xf2f2f2, 0xe86a10], RD_BIKE = [0xd8261c, 0x1b5fb8, 0x151515, 0xf2f2f2, 0x2aa05a, 0xe8b400];
   const RD_SHIRT = [0xc0392b, 0x2e6fb5, 0xf2f2ee, 0x3c7a3e, 0xe0a526, 0x5b3a82, 0x1f2a36, 0xd46a8f, 0x7a8b99, 0x9b2d20, 0x4aa3a0, 0xecd9b0], RD_TROU = [0x2b3a55, 0x1c1c20, 0x4a4f57, 0x6e5a42, 0x33415c, 0x8a7d66];
   const RD_HAIR = [0x2a1d14, 0x4a3222, 0x6b4a2e, 0xb8925a, 0x1a1a1a, 0x8c8c8c, 0xd9c29a], RD_PACK = [0xc0392b, 0x2e6fb5, 0xe0a526, 0x3c7a3e, 0x303438];
   const RD_MG = [1, 0, 1];   // (the colour code the instance's own colour replaces, as crewMaterial does)
@@ -6349,47 +6350,127 @@ const Render = (function () {
     const c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], P = (e, f, s, r) => [e[0] + f * px + s * qx, e[1] + f * py + s * qy, e[2] + f * pz + s * qz];
     for (const [f0, s0, f1, s1] of [[1, 1, 1, -1], [1, -1, -1, -1], [-1, -1, -1, 1], [-1, 1, 1, 1]]) g.quadO(P(a, f0, s0), P(b, f0, s0), P(b, f1, s1), P(a, f1, s1), col, c);
   }
-  function rdCarGeo(body, id) {   // a car of the traffic: the game's body (the colour code for its paint, no stripe) and its front wheels
-    const M = Core.MODELS.find(m => m.id === id), g = new GB(), fx = M.a * (M.len / 4.4) * 0.98 + 0.05;
-    for (const sd of [-1, 1]) wheelInto(g, fx, M.rw, sd * (M.wid * 0.5 - 0.1), M.rw, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68]);
-    return rdMerge([carGeometry(body, M, 0xff00ff, false), g.geometry()]);
+  // the traffic's everyday cars (the user, 12. 11. 2026: simple everyday cars instead of the racers' bodies): three shapes after the
+  // garage's road cars in js/cars/ (their look.body.secs, read only; the BODIES' own as a stand-in if one is missing), scaled to an
+  // everyday size: a city hatch (jezek), a saloon (merjasec), a boxy SUV (medved). A light shell of 8 points round each section (no
+  // detail of the garage's), the glass of the windscreen, the rear window and the side windows (a B-pillar between), the lamps, the
+  // indicators, the bumpers, the grille, the mirrors, dark arches and four simple wheels: ~1.2 thousand vertices instead of 3-4.
+  // The lights' glows stay as they are (updateRoad: by the Core's 4.3 x 1.8 m), so each shape keeps near that size
+  const RD_CARS = [{ id: 'jezek', body: 'hatch', len: 4.1, wid: 1.76, rw: 0.31 }, { id: 'merjasec', body: 'sedan', len: 4.55, wid: 1.8, rw: 0.32 },
+    { id: 'medved', body: 'hatch', len: 4.42, wid: 1.84, rw: 0.36 }];
+  function rdWheel(g, cx, cy, cz, r, wd) {   // a plain wheel: the tread, the outer sidewall, the rim's disc and its hub (10 sides; the inner face unseen)
+    const S = 10, sd = Math.sign(cz) || 1, K = [0.07, 0.07, 0.08], RM = [0.6, 0.62, 0.66], HB = [0.28, 0.29, 0.31], inn = [cx, cy, cz], out = [cx, cy, cz - sd];
+    const p = (a, z, rr) => [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, cz + z];
+    for (let i = 0; i < S; i++) { const a0 = i / S * Math.PI * 2, a1 = (i + 1) / S * Math.PI * 2, zo = sd * wd / 2;
+      g.quadO(p(a0, -wd / 2, r), p(a0, wd / 2, r), p(a1, wd / 2, r), p(a1, -wd / 2, r), K, inn);
+      g.quadO(p(a0, zo, r * 0.66), p(a0, zo, r), p(a1, zo, r), p(a1, zo, r * 0.66), K, out);
+      g.quadO(p(a0, zo, r * 0.2), p(a0, zo, r * 0.66), p(a1, zo, r * 0.66), p(a1, zo, r * 0.2), RM, out);
+      g.triO([cx, cy, cz + zo + sd * 0.01], p(a0, zo, r * 0.2), p(a1, zo, r * 0.2), HB, out);
+      g.triO([cx, cy, cz - zo], p(a0, -zo, r), p(a1, -zo, r), K, [cx, cy, cz + sd]); }   // (the inner face, dark: seen under a high body)
   }
-  function rdVanGeo(col) {   // a van: the box, the bonnet, the windscreen, side windows by the cab, lights, bumpers, wheels (5.3 x 2.0 m); col: its paint (else the colour code)
-    const g = new GB(), B = col || RD_MG, W = 2.0, hw = W / 2, K = [0.08, 0.08, 0.09], GL = GLASS;
-    World.box(g, -0.35, 0.32, 0, 4.6, 1.73, W, 0, B, [0.92, 0, 0.92]); World.box(g, 2.25, 0.32, 0, 0.8, 0.8, W * 0.98, 0, B);
-    g.quadO([2.35, 1.12, -hw * 0.97], [2.35, 1.12, hw * 0.97], [1.95, 2.02, hw * 0.97], [1.95, 2.02, -hw * 0.97], GL, [1.2, 1.2, 0]);
-    for (const sd of [-1, 1]) { const z = sd * (hw + 0.004); g.triO([1.95, 1.12, sd * hw * 0.97], [2.35, 1.12, sd * hw * 0.97], [1.95, 2.02, sd * hw * 0.97], B, [2.1, 1.5, 0]);
-      g.quadO([1.0, 1.22, z], [1.9, 1.22, z], [1.9, 1.9, z], [1.0, 1.9, z], GL, [1.4, 1.5, 0]);
-      World.box(g, 2.63, 0.64, sd * 0.68, 0.05, 0.17, 0.3, 0, [1, 0.97, 0.82]); World.box(g, -2.67, 0.72, sd * 0.86, 0.05, 0.32, 0.16, 0, [0.72, 0.06, 0.05]);
-      for (const x of [1.75, -1.85]) wheelInto(g, x, 0.36, sd * (hw - 0.12), 0.36, 0.26, K, [0.6, 0.62, 0.65]); }
-    g.quadO([-2.656, 1.25, -0.8], [-2.656, 1.25, 0.8], [-2.656, 1.85, 0.8], [-2.656, 1.85, -0.8], GL, [-2, 1.5, 0]);
-    World.box(g, 2.62, 0.28, 0, 0.14, 0.22, W, 0, K); World.box(g, -2.7, 0.28, 0, 0.14, 0.22, W, 0, K);
+  function rdCarGeo(k) {
+    const C = RD_CARS[k], VD = typeof VEHICLE_DEFS !== 'undefined' ? VEHICLE_DEFS.find(d => d.id === C.id) : null, lb = VD && VD.look && VD.look.body;
+    const src = lb && lb.secs ? lb : BODIES[C.body], sx = C.len / src.len, sz = C.wid / src.wid, B = RD_MG;
+    const S = src.secs.map(s => ({ x: s[0] * sx, w: s[1] * sz, yb: s[2], yl: s[3], wt: s[4] * sz, yt: s[5], cr: s[6], k: s[7] })), n = S.length, g = new GB();
+    rdShell(g, S, { B });
+    // the mirrors (at the windscreen's foot), the dark arches over the wheels, the wheels
+    const fw = S.find(s => s.k === 'gf'), ia = S.indexOf(fw), xb = ia >= 0 && ia < n - 1 ? S[ia + 1] : S[Math.floor(n / 2)];
+    for (const sd of [-1, 1]) World.box(g, xb.x - 0.12, xb.yl + 0.04, sd * (xb.w + 0.08), 0.16, 0.12, 0.14, 0, B);
+    const ax = C.len / 2 - (C.len < 4.3 ? 0.74 : 0.86), rr = C.rw, wd = 0.22;
+    for (const x of [ax, -ax + 0.06]) for (const sd of [-1, 1]) { const at = S.reduce((m, s) => Math.abs(s.x - x) < Math.abs(m.x - x) ? s : m, S[0]), z = sd * (at.w * 0.93 + 0.004), ra = rr + 0.07;
+      rdArch(g, x, rr, ra, z, at.yb);
+      rdWheel(g, x, rr, sd * (at.w * 0.93 - wd / 2 + 0.03), rr, wd); }
     return g.geometry();
   }
-  function rdBusGeo() {   // a coach (11.8 x 2.5 m): the body, a band of windows, the windscreen, the door on the right, lights, the route board, wheels
-    const g = new GB(), B = RD_MG, W = 2.5, hw = W / 2 + 0.005, K = [0.08, 0.08, 0.09], GL = [0.12, 0.16, 0.21];
-    World.box(g, 0, 0.36, 0, 11.8, 2.8, W, 0, B, [0.86, 0, 0.86]);
-    for (const sd of [-1, 1]) { g.quadO([-5.5, 1.45, sd * hw], [5.1, 1.45, sd * hw], [5.1, 2.8, sd * hw], [-5.5, 2.8, sd * hw], GL, [0, 1.8, 0]);
-      World.box(g, 5.88, 0.62, sd * 0.9, 0.05, 0.2, 0.36, 0, [1, 0.97, 0.82]); World.box(g, -5.92, 0.8, sd * 1.05, 0.05, 0.4, 0.16, 0, [0.72, 0.06, 0.05]);
-      for (const x of [3.9, -3.4]) wheelInto(g, x, 0.52, sd * (W / 2 - 0.22), 0.52, 0.36, K, [0.62, 0.64, 0.68]); }
-    g.quadO([5.905, 1.1, -1.18], [5.905, 1.1, 1.18], [5.905, 3.0, 1.18], [5.905, 3.0, -1.18], GL, [5, 1.8, 0]);
-    g.quadO([-5.905, 1.9, -1.0], [-5.905, 1.9, 1.0], [-5.905, 2.9, 1.0], [-5.905, 2.9, -1.0], GL, [-5, 1.8, 0]);
-    g.quadO([3.7, 0.42, hw + 0.002], [4.7, 0.42, hw + 0.002], [4.7, 2.75, hw + 0.002], [3.7, 2.75, hw + 0.002], [0.16, 0.18, 0.2], [4.2, 1.5, 0]);
-    g.quadO([5.91, 2.98, -0.8], [5.91, 2.98, 0.8], [5.91, 3.1, 0.8], [5.91, 3.1, -0.8], [1, 0.62, 0.1], [5, 3, 0]);
-    World.box(g, 5.9, 0.34, 0, 0.12, 0.3, W, 0, K); World.box(g, -5.92, 0.34, 0, 0.12, 0.3, W, 0, K);
+  // a body of sections (x, half-width, the bottom, the belt, the roof's half-width and height, the crown, the kind; the garage's look.body.secs
+  // order): the shell of 8 points round each section (the glass over a 'gf' or 'gr' run), the side windows over the 'r' run, inset (o.win:
+  // their [x0, x1] ranges, else the run's with a B-pillar in a long one; o.wy: their bottom and top on the side, 0-1), and the ends: the
+  // face (a fan), the rear window (o.rear: [y0, y1], a split between two doors with o.split; false: none), the bumper, the lamps (o.lf, o.lr:
+  // their height, else under the belt), the indicators, the grille (o.gr: [y0, y1]); o.bare: the fans only, o.back: false, the back face bare
+  function rdSecs(a) { return a.map(s => ({ x: s[0], w: s[1], yb: s[2], yl: s[3], wt: s[4], yt: s[5], cr: s[6], k: s[7] })); }
+  function rdShell(g, S, o) {
+    const n = S.length, B = o.B, GL = GLASS, K = [0.1, 0.1, 0.11], DK = [0.05, 0.05, 0.06], wy = o.wy || [0.1, 0.9];
+    const ring = s => [[s.x, s.yb, s.w * 0.93], [s.x, s.yl, s.w], [s.x, s.yt, s.wt], [s.x, s.yt + s.cr, s.wt * 0.4], [s.x, s.yt + s.cr, -s.wt * 0.4], [s.x, s.yt, -s.wt], [s.x, s.yl, -s.w], [s.x, s.yb, -s.w * 0.93]];
+    const R = S.map(ring), L = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    for (let i = 0; i < n - 1; i++) { const A = R[i], Bv = R[i + 1], gl = S[i].k === 'gf' || S[i].k === 'gr', ins = [(S[i].x + S[i + 1].x) / 2, (S[i].yb + Math.min(S[i].yt, S[i + 1].yt)) / 2, 0];
+      for (let e = 0; e < 7; e++) g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], gl && e >= 2 && e <= 4 ? GL : B, ins); }
+    const ri = S.map((s, i) => i).filter(i => i < n - 1 && S[i].k === 'r');
+    if (ri.length && !o.bare) { const x0 = S[ri[0]].x + 0.06, x1 = S[ri[ri.length - 1] + 1].x - 0.06, xm = (x0 + x1) / 2, cut = o.win || (x1 - x0 > 1.5 ? [[x0, xm - 0.06], [xm + 0.06, x1]] : [[x0, x1]]);
+      for (const i of ri) { const a = S[i].x, b = S[i + 1].x;
+        for (const [c0, c1] of cut) { const u0 = Math.max(0, (c0 - a) / (b - a)), u1 = Math.min(1, (c1 - a) / (b - a)); if (u1 <= u0) continue;
+          for (const [lo, hi, sd] of [[1, 2, 1], [6, 5, -1]]) { const P = (u, t) => { const q = L(L(R[i][lo], R[i + 1][lo], u), L(R[i][hi], R[i + 1][hi], u), t); q[2] += sd * 0.006; return q; };
+            g.quadO(P(u0, wy[0]), P(u1, wy[0]), P(u1, wy[1]), P(u0, wy[1]), GL, [(a + b) / 2, 0.9, 0]); } } } }
+    for (const [s, f] of [[S[0], -1], [S[n - 1], 1]]) { const rg = ring(s), c = [s.x, (s.yb + s.yt) / 2, 0], ins = [s.x - f, c[1], 0], x = s.x + f * 0.008, w = s.w;
+      for (let e = 0; e < 8; e++) g.triO(c, rg[e], rg[(e + 1) % 8], B, ins);
+      if (o.bare || (f < 0 && o.back === false)) continue;
+      const Q = (y0, y1, z0, z1, col) => g.quadO([x, y0, z0], [x, y0, z1], [x, y1, z1], [x, y1, z0], col, ins);
+      if (f < 0 && o.rear !== false) { const [r0, r1] = o.rear || [s.yl + 0.06, s.yt - 0.05];
+        if (r1 - r0 > 0.19) { if (o.split) for (const sd of [-1, 1]) Q(r0, r1, sd * 0.03, sd * s.wt * 0.82, GL); else Q(r0, r1, -s.wt * 0.82, s.wt * 0.82, GL); } }
+      Q(s.yb, s.yb + 0.14, -w * 0.9, w * 0.9, K);
+      const ly = (f > 0 ? o.lf : o.lr) || Math.max(s.yb + 0.2, s.yl - (f > 0 ? 0.17 : 0.2)), lh = f > 0 ? 0.11 : 0.13;
+      for (const sd of [-1, 1]) { Q(ly, ly + lh, sd * w * 0.48, sd * w * 0.86, f > 0 ? [1, 0.96, 0.84] : [0.74, 0.05, 0.04]);
+        Q(ly + (f > 0 ? -0.06 : 0), ly + (f > 0 ? -0.01 : 0.04), sd * w * 0.86, sd * w * 0.94, [1, 0.55, 0.05]); }
+      if (f > 0) { const [g0, g1] = o.gr || [s.yb + 0.17, ly + lh * 0.7]; Q(g0, g1, -w * 0.4, w * 0.4, DK); } }
+  }
+  function rdArch(g, x, rr, ra, z, yb) {   // a dark arch over a wheel, in the body's side at z (none under a high body's floor, an SUV's)
+    const sd = Math.sign(z), yc = Math.max(rr, yb), Y = a => Math.max(yc, rr + Math.sin(a) * ra), DK = [0.05, 0.05, 0.06];
+    for (let j = 0; j < 7; j++) { const a0 = j / 7 * Math.PI, a1 = (j + 1) / 7 * Math.PI;
+      g.triO([x, yc, z], [x + Math.cos(a0) * ra, Y(a0), z], [x + Math.cos(a1) * ra, Y(a1), z], DK, [x, yc, z - sd]); }
+  }
+  function rdAxles(g, S, xs, rr, wd) {   // the wheels under a body of sections, each in its arch
+    for (const x of xs) for (const sd of [-1, 1]) { const at = S.reduce((m, s) => Math.abs(s.x - x) < Math.abs(m.x - x) ? s : m, S[0]);
+      rdArch(g, x, rr, rr + 0.07, sd * (at.w * 0.93 + 0.004), at.yb); rdWheel(g, x, rr, sd * (at.w * 0.93 - wd / 2 + 0.03), rr, wd); }
+  }
+  // the traffic's working vehicles (the user, 12. 11. 2026: each as it will look finished): the shells of sections as the everyday cars'
+  // (rdShell), dark arches, mirrors, the same plain wheels. A van (5.3 x 2.0 m, the cab's windows, two rear doors; its roof at 2.05 m for the
+  // police's light bar and its sides at 1.0 for their stripes, rdPolVanGeo), col: its paint (else the colour code)
+  const RD_VAN_S = rdSecs([[-2.65, 0.97, 0.36, 1.0, 0.95, 1.98, 0.03, 'b'], [-2.6, 1.0, 0.33, 1.02, 0.98, 2.0, 0.05, 'r'], [1.4, 1.0, 0.33, 1.02, 0.98, 2.0, 0.05, 'gf'],
+    [2.05, 1.0, 0.33, 1.02, 0.95, 1.12, 0.03, 'b'], [2.55, 0.98, 0.35, 0.98, 0.92, 1.0, 0.02, 'b'], [2.65, 0.95, 0.38, 0.9, 0.88, 0.92, 0.01, 'b']]);
+  function rdVanGeo(col) {
+    const g = new GB(), B = col || RD_MG, S = RD_VAN_S, K = [0.1, 0.1, 0.11];
+    rdShell(g, S, { B, win: [[0.72, 1.36]], rear: [1.3, 1.9], split: true, lf: 0.62, lr: 0.78 });
+    for (const sd of [-1, 1]) { World.box(g, 1.9, 1.12, sd * 1.08, 0.1, 0.26, 0.14, 0, K);   // (the mirrors; the sliding door's seam)
+      g.quadO([0.62, 0.42, sd * 1.008], [0.66, 0.42, sd * 1.008], [0.66, 1.9, sd * 1.008], [0.62, 1.9, sd * 1.008], K, [0.64, 1.1, 0]); }
+    rdAxles(g, S, [1.75, -1.85], 0.36, 0.24);
     return g.geometry();
   }
-  function rdTruckGeo() {   // a truck and its semi-trailer (16.5 x 2.55 m: Los Caracoles' traffic): the cab in its colour with the sleeper on top, the windscreen, the
-    // grille and bumper, lights, the trailer's box (white-grey), the wheels of the tractor's three axles and the trailer's three
-    const g = new GB(), B = RD_MG, W = 2.55, hw = W / 2, K = [0.08, 0.08, 0.09], GL = [0.12, 0.16, 0.21], TR = [0.86, 0.86, 0.84];
-    World.box(g, 7.05, 0.62, 0, 2.3, 2.3, W - 0.06, 0, B, [0.92, 0, 0.92]); World.box(g, 6.75, 2.92, 0, 1.7, 0.6, W - 0.2, 0, B);
-    g.quadO([8.205, 1.75, -hw * 0.88], [8.205, 1.75, hw * 0.88], [8.205, 2.75, hw * 0.88], [8.205, 2.75, -hw * 0.88], GL, [7, 2.2, 0]);
-    World.box(g, 8.2, 0.62, 0, 0.08, 1.0, W * 0.78, 0, [0.7, 0.72, 0.75]); World.box(g, 8.2, 0.3, 0, 0.14, 0.3, W, 0, K);
-    for (const sd of [-1, 1]) { World.box(g, 8.24, 0.7, sd * 1.0, 0.04, 0.18, 0.3, 0, [1, 0.97, 0.82]); World.box(g, -8.24, 0.85, sd * 1.1, 0.04, 0.3, 0.16, 0, [0.72, 0.06, 0.05]);
-      g.quadO([6.0, 1.75, sd * (hw - 0.025)], [7.6, 1.75, sd * (hw - 0.025)], [7.6, 2.6, sd * (hw - 0.025)], [6.0, 2.6, sd * (hw - 0.025)], GL, [7, 2.2, 0]);
-      for (const x of [7.3, 5.0, 3.85, -4.7, -5.95, -7.2]) wheelInto(g, x, 0.52, sd * (hw - 0.2), 0.52, 0.34, K, [0.6, 0.62, 0.65]); }
-    World.box(g, 4.6, 0.75, 0, 2.6, 0.35, W - 0.5, 0, K);   // (the chassis under the coupling)
+  // a coach (11.8 x 2.5 m): a long band of windows, the raked windscreen, the door on the right, the mirrors on their arms, the roof's unit
+  const RD_BUS_S = rdSecs([[-5.9, 1.2, 0.4, 1.0, 1.18, 3.08, 0.06, 'b'], [-5.84, 1.25, 0.36, 1.02, 1.23, 3.14, 0.09, 'r'], [5.5, 1.25, 0.36, 1.02, 1.23, 3.14, 0.09, 'gf'],
+    [5.84, 1.25, 0.36, 1.02, 1.22, 1.32, 0.04, 'b'], [5.9, 1.22, 0.4, 0.96, 1.19, 1.08, 0.02, 'b']]);
+  function rdBusGeo() {
+    const g = new GB(), B = RD_MG, S = RD_BUS_S, K = [0.1, 0.1, 0.11], GL = GLASS, hw = 1.256;
+    const win = []; for (let i = 0; i < 6; i++) win.push([-5.4 + i * 1.6 + 0.05, -5.4 + (i + 1) * 1.6 - 0.05]);
+    rdShell(g, S, { B, win, wy: [0.2, 0.9], rear: [2.05, 2.95], lf: 0.72, lr: 0.82 });
+    for (const sd of [-1, 1]) { const z = sd * hw;
+      if (sd < 0) g.quadO([4.35, 1.44, z], [5.4, 1.44, z], [5.4, 2.94, z], [4.35, 2.94, z], GL, [4.8, 2, 0]);   // (the driver's window)
+      else { g.quadO([4.3, 1.02, z], [5.25, 1.02, z], [5.25, 2.94, z], [4.3, 2.94, z], GL, [4.8, 2, 0]);   // (the door: glass, its lower part dark)
+        g.quadO([4.3, 0.44, sd * 1.17], [5.25, 0.44, sd * 1.17], [5.25, 1.02, z], [4.3, 1.02, z], [0.14, 0.15, 0.17], [4.8, 0.6, 0]); }
+      rdRod(g, [5.7, 2.75, sd * 1.15], [6.12, 2.6, sd * 1.3], 0.05, K); World.box(g, 6.12, 2.0, sd * 1.3, 0.08, 0.6, 0.18, 0, K); }
+    World.box(g, -1.2, 3.18, 0, 3.2, 0.2, 1.7, 0, B, [0.9, 0, 0.9]);
+    rdAxles(g, S, [3.55, -3.0, -4.25], 0.52, 0.32);
+    return g.geometry();
+  }
+  // a truck and its semi-trailer (16.5 x 2.55 m: Los Caracoles' traffic): the cab-over cab in its colour with the roof's deflector, the
+  // windscreen, the grille, the bumper, the big mirrors, the fuel tank, the chassis; the trailer's box (white-grey) with its skirts, the
+  // rear doors' seam, the lights; the tractor's three axles and the trailer's three
+  const RD_CAB_S = rdSecs([[5.95, 1.2, 0.55, 1.55, 1.17, 2.95, 0.05, 'b'], [6.0, 1.25, 0.5, 1.6, 1.22, 3.0, 0.06, 'r'], [7.95, 1.25, 0.5, 1.6, 1.22, 3.0, 0.06, 'gf'],
+    [8.15, 1.25, 0.45, 1.6, 1.22, 1.75, 0.03, 'b'], [8.25, 1.22, 0.42, 1.5, 1.18, 1.6, 0.02, 'b']]);
+  const RD_DEF_S = rdSecs([[6.0, 1.05, 3.0, 3.06, 0.95, 3.72, 0.04, 'b'], [6.06, 1.1, 3.0, 3.06, 1.0, 3.78, 0.05, 'b'], [7.15, 1.12, 3.0, 3.06, 1.05, 3.12, 0.03, 'b'], [7.25, 1.1, 3.0, 3.05, 1.05, 3.07, 0.01, 'b']]);
+  function rdTruckGeo() {
+    const g = new GB(), B = RD_MG, W = 2.55, hw = W / 2, K = [0.1, 0.1, 0.11], TR = [0.86, 0.86, 0.84], SL = [0.6, 0.62, 0.66];
+    rdShell(g, RD_CAB_S, { B, win: [[6.95, 7.9]], back: false, lf: 0.64, gr: [0.82, 1.42] }); rdShell(g, RD_DEF_S, { B, bare: true });
+    World.box(g, 8.19, 0.28, 0, 0.1, 0.34, W - 0.05, 0, K);   // (the bumper)
+    for (const sd of [-1, 1]) { rdRod(g, [7.9, 2.55, sd * 1.24], [8.1, 2.5, sd * 1.5], 0.05, K); World.box(g, 8.08, 1.85, sd * 1.5, 0.08, 0.7, 0.22, 0, K);
+      World.box(g, 4.75, 0.5, sd * 1.0, 1.1, 0.5, 0.46, 0, SL);   // (the fuel tank, the steps)
+      World.box(g, 7.6, 0.45, sd * 1.12, 0.36, 0.08, 0.2, 0, K); World.box(g, 4.45, 1.1, sd * 1.1, 1.7, 0.06, 0.34, 0, K);   // (the mudguard over the rear axles)
+      World.box(g, -1.1, 0.42, sd * (hw - 0.02), 5.4, 0.62, 0.03, 0, [0.16, 0.17, 0.19]);   // (the trailer's skirts)
+      World.box(g, -8.24, 0.85, sd * 1.05, 0.04, 0.24, 0.3, 0, [0.72, 0.06, 0.05]); World.box(g, -8.24, 0.85, sd * 0.78, 0.04, 0.24, 0.12, 0, [1, 0.55, 0.05]);
+      rdArch(g, 7.3, 0.52, 0.6, sd * (1.25 * 0.93 + 0.004), 0.5);
+      for (const x of [7.3, 5.0, 3.85, -4.7, -5.95, -7.2]) rdWheel(g, x, 0.52, sd * (hw - 0.2), 0.52, 0.34); }
+    World.box(g, 4.4, 0.62, 0, 3.3, 0.38, W - 0.7, 0, K);   // (the chassis under the coupling)
     World.box(g, -1.1, 1.08, 0, 14.2, 2.9, W, 0, TR, [0.8, 0.8, 0.78]); World.box(g, -1.1, 0.86, 0, 14.2, 0.22, W - 0.1, 0, [0.22, 0.22, 0.24]);
+    g.quadO([-8.206, 1.15, -0.02], [-8.206, 1.15, 0.02], [-8.206, 3.9, 0.02], [-8.206, 3.9, -0.02], K, [-7, 2.5, 0]);
+    World.box(g, -8.15, 0.42, 0, 0.12, 0.16, W - 0.3, 0, K);   // (the underrun bar)
     return g.geometry();
   }
   function rdMotoGeo(col) {   // a motorbike: two wheels, the tank in its colour, the seat, the engine, the fork and bars, the lights; col: its paint (else the colour code)
@@ -6406,8 +6487,8 @@ const Render = (function () {
   const RD_FAR = 90;
   function rdFarGeo(kind, id) {
     const g = new GB(), K = [0.08, 0.08, 0.09], B = RD_MG, bx = (x, y, z, sx, sy, sz, col, top) => World.box(g, x, y, z, sx, sy, sz, 0, col, top || col, true);
-    if (kind === 'car') { const M = Core.MODELS.find(m => m.id === id), L = M.len, W = M.wid;
-      bx(0, 0, 0, L * 0.78, 0.4, W * 0.94, K); bx(0, 0.24, 0, L, 0.54, W, B); bx(-L * 0.07, 0.78, 0, L * 0.48, 0.5, W * 0.84, GLASS, B); }
+    if (kind === 'car') { const C = RD_CARS[id], L = C.len, W = C.wid, hb = id === 2 ? 0.5 : 0.3, hc = id === 2 ? 0.7 : 0.48;   // (its shape's size, RD_CARS; the SUV taller)
+      bx(0, 0, 0, L * 0.78, 0.4, W * 0.94, K); bx(0, hb - 0.06, 0, L, hc, W, B); bx(-L * 0.07, hb - 0.06 + hc, 0, L * (id === 0 ? 0.56 : 0.48), 0.5, W * 0.84, GLASS, B); }
     else if (kind === 'van') { bx(0, 0, 0, 4.4, 0.42, 1.92, K); bx(-0.35, 0.32, 0, 4.6, 1.73, 2.0, B); bx(2.25, 0.32, 0, 0.8, 0.8, 1.96, B); bx(1.94, 1.12, 0, 0.66, 0.85, 2.02, GLASS, B); }
     else if (kind === 'bus') { bx(0, 0, 0, 10.6, 0.5, 2.42, K); bx(0, 0.36, 0, 11.8, 2.8, 2.5, B); bx(0.21, 1.45, 0, 11.42, 1.35, 2.52, GLASS, B); }
     else if (kind === 'truck') { bx(0, 0, 0, 15.6, 0.66, 2.4, K); bx(7.05, 0.62, 0, 2.3, 2.3, 2.49, B); bx(6.75, 2.92, 0, 1.7, 0.6, 2.35, B); bx(7.6, 1.75, 0, 1.24, 0.95, 2.51, GLASS, B);
@@ -6571,7 +6652,7 @@ const Render = (function () {
     // over its mesh's places is not drawn, updateRoad's put. The keys as updateRoad picks the mesh: a car by its colour, a truck on its own)
     const pc = {}; if (race.en) for (const v of race.tf.veh) { const k = v.kind === 0 ? 'c' + Math.floor(v.col * 7.3) % 3 : v.kind === 2 && v.p === 5 ? 't' : v.kind; pc[k] = (pc[k] || 0) + 1; }
     const nf = (k, n) => Math.max(n, pc[k] || 0);
-    const V = { car: [mk(rdCarGeo('hatch', 'pico'), nf('c0', 40), matP, true), mk(rdCarGeo('sedan', 'vortex'), nf('c1', 40), matP, true), mk(rdCarGeo('coupe', 'kaze'), nf('c2', 24), matP, true)],
+    const V = { car: [mk(rdCarGeo(0), nf('c0', 40), matP, true), mk(rdCarGeo(1), nf('c1', 40), matP, true), mk(rdCarGeo(2), nf('c2', 24), matP, true)],
       van: mk(rdVanGeo(), nf(1, 24), matP, true), bus: mk(rdBusGeo(), nf(2, 8), matP, true), truck: mk(rdTruckGeo(), nf('t', 20), matP, true), moto: mk(rdMotoGeo(), nf(3, 12), matP, true), bike: mk(rdBikeGeo(), 64, matP, false),
       pvan: mk(rdPolVanGeo(), 4, matP, true), pmoto: mk(rdPolMotoGeo(), 6, matP, true) };   // (the police's van and motorbikes)
     const NP = 140, PG = pedGeos();
@@ -6608,7 +6689,7 @@ const Render = (function () {
     // (updateRoad): with its frustum culling off a mesh draws all its vehicles into the shadow map, at the densest traffic on the hairpin
     // roads tens of them for nothing (Tianmen, Rio do Rastro: 50-70k vertices a frame). The same geometry (disposed with the first)
     const tw = new Map(); if (race.en) for (const im of [...V.car, V.van, V.bus, V.truck, V.moto]) { const t = mk(im.geometry, im.instanceMatrix.count, matP, false); t.visible = false; tw.set(im, t); }
-    const far = race.en ? { car: [mk(rdFarGeo('car', 'pico'), nf('c0', 40), matP, false), mk(rdFarGeo('car', 'vortex'), nf('c1', 40), matP, false), mk(rdFarGeo('car', 'kaze'), nf('c2', 24), matP, false)],
+    const far = race.en ? { car: [mk(rdFarGeo('car', 0), nf('c0', 40), matP, false), mk(rdFarGeo('car', 1), nf('c1', 40), matP, false), mk(rdFarGeo('car', 2), nf('c2', 24), matP, false)],
       van: mk(rdFarGeo('van'), nf(1, 24), matP, false), bus: mk(rdFarGeo('bus'), nf(2, 8), matP, false), truck: mk(rdFarGeo('truck'), nf('t', 20), matP, false), moto: mk(rdFarGeo('moto'), nf(3, 12), matP, false) } : null;   // (and the stand-ins far away, rdFarGeo)
     if (far) for (const im of [...far.car, far.van, far.bus, far.truck, far.moto]) im.visible = false;
     scene.add(grp);

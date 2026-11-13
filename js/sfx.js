@@ -221,6 +221,49 @@ const Sfx = (function () {
     for (const f of [f0, f0 * 1.25]) { const o = ctx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.connect(lp); o.start(now); o.stop(now + dur + 0.08); }
     lp.connect(g); if (ctx.createStereoPanner) { const pn = ctx.createStereoPanner(); pn.pan.value = clamp(pan || 0, -1, 1); g.connect(pn); pn.connect(bus); } else g.connect(bus);
   }
+  // the endless drive: a vehicle of the traffic going by (vol 0..1 by the room left and the speed between the two; x, z where it is; big: a
+  // bus or a lorry, lower; rel m/s the speed between them: a quicker one shorter and its fall steeper): the rush of its air, a band of noise
+  // swept down (its Doppler shift), and its engine's low drone falling with it, on its side of the camera
+  function passBy(vol, x, z, big, rel) {
+    if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(vol) || vol <= 0.02) return;
+    const now = ctx.currentTime, v = clamp(vol, 0, 1), dur = clamp(0.95 - (rel || 0) / 80, 0.45, 0.95), up = dur * 0.4, f0 = big ? 1400 : 2300;
+    const cam = typeof Render !== 'undefined' ? Render.camera : null;
+    let pan = 0; if (cam) { const e = cam.matrixWorld.elements, dx = x - cam.position.x, dz = z - cam.position.z; pan = clamp((dx * e[0] + dz * e[2]) / Math.max(Math.hypot(dx, dz), 4), -0.85, 0.85); }
+    const pn = mkPan(0); if (pn.pan) { pn.pan.setValueAtTime(pan, now); pn.pan.linearRampToValueAtTime(pan * 0.5, now + dur); } pn.connect(bus);
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9; bp.frequency.setValueAtTime(f0, now); bp.frequency.exponentialRampToValueAtTime(f0 * 0.32, now + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(0.22 * v, now + up); g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp); bp.connect(g); g.connect(pn); src.start(now, Math.random() * 1.5); src.stop(now + dur + 0.05);
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; const h = big ? 62 : 105;
+    o.frequency.setValueAtTime(h * 1.12, now); o.frequency.setValueAtTime(h * 1.12, now + up * 0.8); o.frequency.exponentialRampToValueAtTime(h * 0.86, now + up * 1.4);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = big ? 380 : 520; lp.Q.value = 0.7;
+    const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.0001, now); g2.gain.exponentialRampToValueAtTime((big ? 0.13 : 0.08) * v, now + up); g2.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(lp); lp.connect(g2); g2.connect(pn); o.start(now); o.stop(now + dur + 0.05);
+  }
+  // the endless drive: seconds on the clock (add s; k 'pass', 'near' or 'vnear'): a bell's chime rising, a note more the more seconds
+  // (one under 1 s, up to four at 4 s and more), pitched higher and richer for a close pass (near: a fifth above with an octave's shimmer;
+  // vnear: higher again, its overtones brighter and a sparkle of noise on top). None for no seconds.
+  function bonus(add, k) {
+    if (!ctx || ctx.state !== 'running' || !Number.isFinite(add) || add <= 0) return;
+    const now = ctx.currentTime, n = add >= 4 ? 4 : add >= 2.5 ? 3 : add >= 1 ? 2 : 1, semi = k === 'vnear' ? 7 : k === 'near' ? 4 : 0;
+    const base = 784 * Math.pow(2, semi / 12) * (1 + Math.min(add, 8) / 40), step = [1, 1.25, 1.5, 2], gap = 0.075, rich = k === 'vnear' ? 2 : k === 'near' ? 1 : 0;
+    const out = ctx.createGain(); out.gain.value = 0.16; out.connect(master);
+    for (let j = 0; j < n; j++) {
+      const t = now + j * gap, f = base * step[j], dur = j === n - 1 ? 0.55 : 0.22;
+      const parts = rich === 2 ? [[1, 1], [2, 0.35], [3.01, 0.18], [4.2, 0.08]] : rich === 1 ? [[1, 1], [2, 0.3], [3.01, 0.1]] : [[1, 1], [2.76, 0.12]];
+      for (const [m, a] of parts) {
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f * m;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur / Math.sqrt(m));
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.02);
+      }
+    }
+    if (rich === 2) {
+      const t = now + (n - 1) * gap, src = ctx.createBufferSource(); src.buffer = noiseBuf;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6500;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      src.connect(hp); hp.connect(g); g.connect(out); src.start(t, Math.random()); src.stop(t + 0.32);
+    }
+  }
   // someone on foot (or on a bicycle) knocked down: a dull, soft thump
   function thud(v) {
     if (!ctx || ctx.state !== 'running' || !running || !Number.isFinite(v)) return;
@@ -1782,7 +1825,7 @@ const Sfx = (function () {
   const engines = () => ctx && eng ? { player: { kind: eng.kind, f: +eng.o.frequency.value.toFixed(1), boost: +eng.boost.toFixed(2), pops: eng.pops, bov: eng.bov || 0 }, shifts,
     ai: ai.map(v => ({ kind: v.car && v.car.m.sndP ? v.car.m.sndP.kind : v.kind, car: v.car ? v.car.name : null, dop: +v.dop.toFixed(3), gain: +v.out.gain.value.toFixed(4) })) } : null;
   const api = { resume, setEnabled, setRunning, setDuck, suspend, audio: () => ctx, update,   // (audio: the context, for the co-driver's recorded voice, Comm)
-    crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
+    crash, beep, click, radio, shiftPop, shift, engines, thunder, get thunders() { return thunders; }, knock, wrench, silence, levels, siren, carHorn, passBy, bonus, thud, pop, radioOpen, radioClose, radioBed, probe, KINDS: Object.keys(KITS), get ready() { return !!ctx && ctx.state === 'running'; } };
   window.Sfx = api;
   return api;
 })();

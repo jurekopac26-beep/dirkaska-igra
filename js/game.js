@@ -5250,9 +5250,10 @@
     const W = window.innerWidth, H = window.innerHeight, P = $('h-pit'), K = $('h-wreck'), F = $('h-prof'), X = $('h-ttsp'), RX = $('h-react'), tch = $('touch');
     const twOn = !!(tw && S.tower === 2 && hud.classList.contains('tw') && !hud.classList.contains('tt') && !hud.classList.contains('pol')), tower = W > H && twOn ? TW : null;   // (on its side: the last in the column)
     const tU = W < H && twOn && TW.getClientRects().length ? TW : null;   // (upright: the tower first, right under the map, then the texts)
-    const sh = [tU, hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
+    // (EM: the endless drive's points and traffic, js/neskoncna.js, first under the map, the messages under it; its key fixed: its text changes every frame)
+    const EM = hud.classList.contains('en-on') && $('h-en-map'), sh = [tU, EM, hud.classList.contains('tt') && hud.classList.contains('ttp') && F, K.classList.contains('show') && K, P.classList.contains('on') && P, RX.classList.contains('show') && RX, M.classList.contains('show') && M, X.classList.contains('show') && X, R.classList.contains('on') && R, T.classList.contains('show') && T];
     const lights = $('h-lights').classList.contains('show');   // (the start lights: in the middle as ever, the column stops above them)
-    const key = [W, H, tch.className, $('h-stop').className, M.className.replace(' wait', ''), hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === tU ? 't' + TW.childElementCount : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
+    const key = [W, H, tch.className, $('h-stop').className, M.className.replace(' wait', ''), hud.classList.contains('pol'), !!tower, lights, sh.map(e => e ? (e === F ? 'p' : e === tU ? 't' + TW.childElementCount : e === EM ? 'en' : e === P ? P.firstElementChild.textContent : e.textContent) : '').join('\u0001')].join('|');
     if (key === hcol.key) return; hcol.key = key;
     const m = $('h-map').getBoundingClientRect(), L = sh.filter(Boolean);
     let lim = H - COL_GAP;   // the column's foot: above whatever is below it
