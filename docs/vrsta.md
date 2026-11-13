@@ -55,6 +55,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
 | **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
+| **Boksi na vseh pravih progah** (odločitev uporabnika 13. 11. 2026 ob ~23.40 »vsa dirkališča naj imajo bokse«): bokse (boksarska steza, stavba z boksi, mehaniki) dobi vsaka prava proga brez njih (na `main` 11, v #569 skupaj ~28); na gorskih in odprtih cestah ob startu, po vzoru Spa (`pit`, `pitRow`); testne in proge na odločanju ne; obremenitev v mejah; proge, Opus z eno sejo | jure.kopac26 | ko #569 pride na `main` in je prostor za sejo s kodo; pred `main` slike zdaj/potem (kamera za avtom) |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
