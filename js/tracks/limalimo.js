@@ -36,7 +36,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#1d4a2c', text: '#f4f6f0' }, escTo: 'Na vrh',   // (and the results of an escape: 'Na vrh v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
-      {"n": "Pod robom Simiena", "d": 900.0, "say": ["Under the Simien escarpment, the basalt walls tower above you!", "Along the foot of the escarpment, and the drop is on your right!"]},
+      {"n": "Pod robom Simiena", "d": 900.0, "say": ["Under the Simien escarpment, the basalt walls tower above you!", "Along the foot of the escarpment, and the valley falls away beside you!"]},
       {"n": "Serpentina 1 · 1.849 m", "d": 2600.0, "say": ["Hairpin one, and straight into hairpin two!", "Into the first of the Limalimo hairpins!"]},
       {"n": "Serpentina 2 · 1.852 m", "d": 2641.0},
       {"n": "Serpentina 3 · 1.901 m", "d": 3227.0, "say": ["The third and last hairpin! Flat out to the top!", "Last hairpin, the lowland far below you!"]},
