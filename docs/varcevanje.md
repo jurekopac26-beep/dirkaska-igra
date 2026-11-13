@@ -64,7 +64,7 @@ Ukrepi 1–3 iz komentarja 6810475805 (»uporabi vse 4«; ukrep 4 je krajši `CL
 6. **Odpade** (popravek 12. 11. ob ~11.55, komentar 6821811805): proge ne po predlogi, vsaka proga svoja raziskava in svoj značaj; uporabniku je zelo pomembno, da si niso podobne.
 7. **Rutina** (koordinacija, Združevanje, obvestila, zbiranje vprašanj) samo na Haiku/Sonnet; Opus in Fable samo za kodo.
 
-## Tokovi v kosih (odločitev uporabnika 13. 11. 2026 ob ~15.45)
+## Tokovi v kosih (odločitev uporabnika 13. 11. 2026 ob ~16.45)
 Uporabnik: »Naslednji poskus bi moral teči v kosih, ki se lahko nadaljujejo […] da se v prihodnje to ne dogaja več«. Povod: pregled #608 (6 pregledovalcev, ~2 h na 4 jedrih) se je dvakrat prekinil, preden je končal katerikoli agent; poraba ni dala rezultata.
 1. **Kratki agenti:** agent v toku dela največ ~30 min. Dolge meritve in simulacije seja pred tokom požene enkrat sama, izpise shrani v datoteke, agenti jih samo berejo in preverijo.
 2. **Največ 2 agenta hkrati** (stroj ima 4 jedra), skupaj do 5 na tok (»Manj sklopov«, točka 5): `pipeline` ali zaporedni kosi, da vsak končan agent obstane.
