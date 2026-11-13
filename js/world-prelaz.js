@@ -515,8 +515,14 @@
     }
     const railNeed = () => {   // (where a rail or wall stands along each side, [left, right] per sample: the bends' outsides, the drops, the bridges; not near the ends, the pull-ins, the viewpoints)
       const need = [new Uint8Array(N), new Uint8Array(N)];
-      for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 8); k <= Math.min(N - 1, c.i1 + 8); k++) need[sd][k] = 1; }
-      for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
+      if (L.hills) for (const side of [-1, 1]) {   // (L.hills, the user's word of 13. 11. 2026: a wall on both sides nearly everywhere, none only under a steep hill, where no car can drive up)
+        const nd = need[side > 0 ? 1 : 0], st = new Uint8Array(N), m = Math.round(16 / T.ds);
+        for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i], gAt = (d) => { const o = side * (bar + d); return caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]; };
+          st[i] = gAt(3) > -0.6 && gAt(8) > 1.5 && gAt(12) > 3.5 ? 1 : 0; }
+        for (let i = 0; i < N;) { if (!st[i]) { i++; continue; } let j = i; while (j < N && st[j]) j++; if (j - i < m) for (let k = i; k < j; k++) st[k] = 0; i = j; }   // (a steep stretch shorter than 16 m keeps its wall)
+        for (let i = 0; i < N; i++) nd[i] = st[i] ? 0 : 1; }
+      else for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 8); k <= Math.min(N - 1, c.i1 + 8); k++) need[sd][k] = 1; }
+      if (!L.hills) for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
         for (const d of [4, 8, 13, 19, 26]) { const o = side * (bar + d);
           if (caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < T.hy[i] - (d <= 8 ? 2.4 : 2.4 + (d - 8) * 0.35)) { need[side > 0 ? 1 : 0][i] = 1; if (i + 1 < N) need[side > 0 ? 1 : 0][i + 1] = 1; break; } } }
       const noRail = [new Uint8Array(N), new Uint8Array(N)];   // (the bridges: parapets along the upper road's barriers, low walls along the lower road's, none in the arch where its abutments stand)
@@ -538,7 +544,7 @@
       const y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (bk[side > 0 ? 1 : 0][i] || kn[side > 0 ? 1 : 0][i]) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, -0.08], [bar + 0.42, -0.08], [bar + 0.42, -0.08]];   // (a bank down to the leg below, or a bridge: the wall's coping, then the bank or the face)
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
-      if (RN && !RN[side > 0 ? 1 : 0][i]) return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.06), lift(bar + 0.45, -0.07), lift(bar + 1.15, -0.1), [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (L.hills: no rail, no ditch: the verge runs on at the road's level into the ground)
+      if (RN) return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.06), lift(bar + 0.45, -0.07), lift(bar + 1.15, -0.1), [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (L.hills: no ditch, rail or not: the verge runs on at the road's level into the ground or to the wall)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     const hairS = (def.curves || []).map(([d]) => sStart + d);
