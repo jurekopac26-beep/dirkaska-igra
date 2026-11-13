@@ -2449,6 +2449,56 @@
   "nan": false,
   "digest": "3cc5040097ace0a705facbfd"
  },
+ "kaligandaki/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 89.66,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "351d3b492a2be7455f7f9226"
+ },
+ "kaligandaki/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 106.21,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2d86b2497b2406fa02350cb4"
+ },
+ "kaligandaki/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 78.32,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6c680d9fd982e52b48169b43"
+ },
+ "kaligandaki/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 79.3,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e2597fa3d59d2431e3441501"
+ },
+ "kaligandaki/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 90.76,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e7c813c4546962d4f9ce26da"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,
