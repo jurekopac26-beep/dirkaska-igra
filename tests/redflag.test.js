@@ -81,9 +81,15 @@ function run(tid, o) {
         const y = tr > 6 && F.yel.length ? r._yelAt(c.q.s) : null;
         if (y) { let d = y.s - c.q.s; d = ((d % L) + L) % L; if (d > L / 2) d -= L; if (d < 100) { S.vZone = Math.max(S.vZone, c.speed); S.nZone++; } }
       }
-      const ord = r.order.filter(c => S.Q.includes(c)).map(c => c.name).join();
-      if (prev && ord !== prev) S.passes++;
-      prev = ord;
+      // (overtaking = two cars both on the road, or both in the lane, that swap their order. A car funnelling from the road into the
+      // pit-lane queue drops back on arc length while the road cars still at racing speed reach it before they too slow into the lane:
+      // that road-to-lane transition is not a pass, so the road order and the lane order are each compared with the step before, over the
+      // cars common to the two steps)
+      const road = r.order.filter(c => S.Q.includes(c) && !lane(c)).map(c => c.name);
+      const lne = r.order.filter(c => S.Q.includes(c) && lane(c)).map(c => c.name);
+      if (prev) { const keep = (a, b) => { const s = new Set(b); return a.filter(n => s.has(n)).join(); };
+        if (keep(prev.road, road) !== keep(road, prev.road) || keep(prev.lne, lne) !== keep(lne, prev.lne)) S.passes++; }
+      prev = { road, lne };
     } else prev = null;
     if (o.stopAfterGreen != null && S.green && t > S.green + o.stopAfterGreen) break;
   }

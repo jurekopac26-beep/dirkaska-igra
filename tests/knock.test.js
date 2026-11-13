@@ -7,7 +7,8 @@
 //   alone were as many as the aggressive drivers add): on, more hard knocks between the cars and more damage than off, every rival still
 //   driving (the slowest rival at least 0.8 of the way the slowest one makes without them), nothing NaN
 // - poškodbe Vklop: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at 80 km/h, the
-//   wheel held straight); a bent front wheel on both sides (cd 0.6) shakes the heading a little and keeps it straight; Samo videz and
+//   wheel held straight); a bent front wheel (cd 0.6) shakes the turn rate once a wheel turn, a crushed corner that bends none (0.3) does not, both front
+//   wheels bent alike cancel (the mirror image) and the car runs straight; Samo videz and
 //   Izklop: the same car runs dead straight
 //   node tests/knock.test.js
 'use strict';
@@ -70,15 +71,19 @@ function race(ai, seed) {
 // a crushed front corner (cd: FL, FR, RL, RR), 80 km/h, the wheel held straight for 2 s; mode = the damage setting (0, 1, 2)
 function pull(mode, k, amt) {
   const A = H.mkCar('tornado', { v: 80 }); A.dmgMode = mode; for (const j of [].concat(k)) A.cd[j] = amt || 0.8;
-  const h0 = A.h; let t = 0, wob = 0;
-  while (t < 2) { H.step(A, { thr: 'hold', st: 0 }); t += DT; wob = Math.max(wob, Math.abs(A.h - h0) * D); }
-  return { h: (A.h - h0) * D, wob };
+  // wob: the shake, the largest swing of the turn rate (deg/s) about its straight trend over the second second (a steady pull leaves ~0)
+  const h0 = A.h; let t = 0, hp = A.h; const rs = [];
+  while (t < 2) { H.step(A, { thr: 'hold', st: 0 }); t += DT; const r = (A.h - hp) / DT * D; hp = A.h; if (t > 1) rs.push(r); }
+  const n = rs.length, xm = (n - 1) / 2, m = rs.reduce((a, r) => a + r, 0) / n;
+  const sl = rs.reduce((a, r, i) => a + (i - xm) * (r - m), 0) / rs.reduce((a, r, i) => a + (i - xm) * (i - xm), 0);
+  return { h: (A.h - h0) * D, wob: rs.reduce((a, r, i) => Math.max(a, Math.abs(r - m - sl * (i - xm))), 0) };
 }
 {
-  const off = pull(1, 1).h, iz = pull(0, 1).h, fr = pull(2, 1).h, fl = pull(2, 0).h, bent = pull(2, [0, 1], 0.6), bent1 = pull(1, [0, 1], 0.6);
+  const off = pull(1, 1).h, iz = pull(0, 1).h, fr = pull(2, 1).h, fl = pull(2, 0).h, bent = pull(2, 0, 0.6), crush = pull(2, 0, 0.3), both = pull(2, [0, 1], 0.6), bent1 = pull(1, 0, 0.6);
   ok('poškodbe Samo videz and Izklop: a crushed corner, the car runs straight', Math.abs(off) < 0.01 && Math.abs(iz) < 0.01, off.toFixed(2) + '° / ' + iz.toFixed(2) + '°');
   ok('poškodbe Vklop: front-right crushed pulls right, front-left left, a few degrees', fr > 2 && fr < 12 && fl < -2 && fl > -12, 'FR ' + fr.toFixed(1) + '°, FL ' + fl.toFixed(1) + '°');
-  ok('poškodbe Vklop: bent front wheels shake the heading a little, the car stays straight; Samo videz: nothing', bent.wob > 0.005 && bent.wob < 1.5 && Math.abs(bent.h) < 1 && bent1.wob < 0.001, 'shake ' + bent.wob.toFixed(3) + '°, heading ' + bent.h.toFixed(2) + '°, Samo videz ' + bent1.wob.toFixed(4) + '°');
+  // (both front wheels bent alike: the car is its own mirror image, so the two shakes cancel and it runs straight, as trki.test.js asks)
+  ok('poškodbe Vklop: a bent front wheel (cd 0.6) shakes the turn rate once a wheel turn, a crushed corner that bends no wheel (0.3) does not; both bent alike run straight; Samo videz: nothing', bent.wob > 0.05 && bent.wob < 3 && crush.wob < 0.02 && Math.abs(both.h) < 0.01 && bent1.wob < 0.001, 'shake ' + bent.wob.toFixed(3) + '°/s, no bend ' + crush.wob.toFixed(4) + '°/s, both ' + both.h.toFixed(2) + '°, Samo videz ' + bent1.wob.toFixed(4) + '°/s');
 }
 
 let bad = 0;
