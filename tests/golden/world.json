@@ -1391,5 +1391,37 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "quezaltepeque": {
+  "meshes": 479,
+  "verts": 392697,
+  "instances": 5534,
+  "props": 46,
+  "crowd": 10,
+  "world": "6dd517f8",
+  "propsHash": "7600c0e1",
+  "floor": "14e6777b/6440",
+  "groups": {
+   "-:MeshLambertMaterial": "ef85385a",
+   "-:MeshBasicMaterial": "be9d9bef",
+   "quezaltepeque service roads:MeshLambertMaterial": "f68b2f13",
+   "quezaltepeque dirt tracks:MeshLambertMaterial": "e505f33d",
+   "rsFar:MeshBasicMaterial": "b90bbb46",
+   "crowd:MeshLambertMaterial": "2e1c7e6",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "ba2acac3",
+   "ao:MeshBasicMaterial": "80cfa2a0",
+   "roadwear:MeshLambertMaterial": "219859e4",
+   "worn:MeshLambertMaterial": "49884f7d",
+   "brakeBoards:MeshLambertMaterial": "acc686bb",
+   "life:MeshLambertMaterial": "485e1054",
+   "lifeShadow:MeshBasicMaterial": "b1701c20",
+   "life:MeshBasicMaterial": "1ed2c9be",
+   "people:MeshLambertMaterial": "163546b9",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "90bbea13",
+   "zaslon-okvir:MeshLambertMaterial": "f1bc7602",
+   "zaslon-slika:MeshBasicMaterial": "2b45a683"
+  }
  }
 }

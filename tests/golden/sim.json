@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "quezaltepeque/race/cs": {
+  "digest": "a8f5854874a6b7615a3bb9fe",
+  "lead": 1990.1,
+  "car0": [
+   -116.94,
+   222.47
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "quezaltepeque/demo/cs": {
+  "digest": "fb423df662990ed2c7ec891c",
+  "lead": 2167.8,
+  "car0": [
+   168.21,
+   240.79
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "quezaltepeque/upg/cs": {
+  "digest": "841c10563d418d71cdc86b99",
+  "lead": 2151.5,
+  "car0": [
+   152.02,
+   241.41
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "quezaltepeque/crash/cs": {
+  "digest": "480d28929aedd63424c2a669",
+  "lead": 4495.2,
+  "car0": [
+   345.95,
+   -185.69
+  ],
+  "cover": {
+   "dmg": 0.57,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "quezaltepeque/formula/cs": {
+  "digest": "9ab1e9964b7c83ceacaaa53d",
+  "lead": 5487.8,
+  "car0": [
+   185.88,
+   87.25
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "quezaltepeque/lm/cs": {
+  "digest": "0e418c0a964ef534c678511b",
+  "lead": 5457.8,
+  "car0": [
+   210.28,
+   88.35
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "quezaltepeque/car/cs": {
+  "digest": "037a678de372126ec0f73742",
+  "lead": 4836.6,
+  "car0": [
+   457.99,
+   -78.25
+  ],
+  "cover": {
+   "dmg": 0.64,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

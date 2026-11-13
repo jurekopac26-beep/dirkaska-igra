@@ -1,0 +1,15 @@
+# Quezaltepeque, Salvador
+
+[← Vse proge](../../README.md#proge) · proga `quezaltepeque` (`js/tracks/quezaltepeque.js`, okolica `js/world-quezaltepeque.js` na skupnem graditelju `js/world-rbring.js`; načrt v [`docs/nove-proge-1-0.md`](../nove-proge-1-0.md), linija A)
+
+Dirkališče v gričih med Quezaltepequejem in San Juan Opicom severozahodno od San Salvadorja, v pravi postavitvi in pravem merilu: **3,22 km** (3.219 m na naši črti; uradno 3,21 km), v smeri urinega kazalca, **3 krogi**, z boksi in ciljno črto po OSM. Okoli 500 m nad morjem (višine v krogu 502–519 m, največ 6 % naklona), 11 ovinkov (8 desnih, 3 levi), najožji je ostri desni (8. ovinek, polmer ~21 m); v drugi polovici kroga trije lasnični.
+
+- **Krog:** s ciljne ravnine (glavna tribuna levo, boksi desno) v **desni na koncu ravnine** (1. ovinek), **dva desna** (2. in 3.), **desni pred levimi** (4.), **dolgi levi pri tribuni** (5.), **levi in desni** (6. in 7.), **ostri desni** (8.), **ravnina ob lavi**, **dolgi lasnični** (9.), **levi lasnični** (10.) in **zadnji lasnični** (11.) na ciljno ravnino.
+- **Cesta in boksi:** asfalt z rdeče-belimi robniki; asfaltne izletne cone z naslikanimi imeni krajev (QUEZALTEPEQUE, EL SALVADOR, OPICO), drugod pokošena trava. Ograje so več kot 3 m od roba ceste na 93 % kroga (najmanj 2,5 m ob zidu boksov). Boksarska steza desno od ciljne ravnine, 13 boksov in jambori z modro-belimi zastavami.
+- **Okolica (do ~60 m od ceste):** zelen hribovit svet s suhimi rumenimi lisami: trate, grmovje, gaji listavcev in palm (po rabi tal in višini krošenj), ob ravnini za 8. ovinkom stara lava (temna, siva in rjava kamnita tla z nizkim grmovjem). Tri tribune za ograjo (QUEZALTEPEQUE s streho ob ciljni ravnini, OPICO, LA LIBERTAD), 18 stavb in servisne ceste iz OSM, table s kraji (Quezaltepeque, Opico, Apopa, Nejapa, Lourdes, El Playón …), krave in čaplje na travnikih.
+- **Dlje od ceste** (poceni za telefon): teren iz višin in obzorje v desetih obročih do ~11,5 km (griči doline in ognjenik nad San Salvadorjem); morja s proge ni videti.
+- **Imena:** samo zemljepisna (mesta, vasi, lavino polje, pokrajina, država) in opisna. Imen dirkališča, podjetij, sponzorjev in prireditev v igri ni.
+- **Stranske ceste:** servisne in neklasificirane ceste so preproste površine na terenu brez črt, za ograjami (dostopi do tribun in boksov).
+- **Približki:** višine so iz satelitskega modela, od katerega sta odšteti višina krošenj in stavb, zglajene in omejene na 6 % naklona. Stavbe so škatle po tlorisu iz OSM (brez velikih hal nad 100 m). Lava je iz OSM (gola skala) in rabe tal, mehko zlita s travo.
+- **Viri:** © OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI (glej »Zasluge« v `README.md`). Orodji: `tools/proga-podatki.py` (nastavitve `tools/quezaltepeque/config.json`) in `tools/quezaltepeque/build.py`.
+- **Test:** `tests/quezaltepeque.test.js` (ime, dolžina, smer in zavitost, ovinki po vrsti in smeri, najožji 8. ovinek, razdalja med kraki, višine in nakloni, boksi, izletne cone, tribune za ograjo, teren, raba tal in lava, stavbe in servisne ceste, obzorje, imena, dirka v suhem in v dežju).

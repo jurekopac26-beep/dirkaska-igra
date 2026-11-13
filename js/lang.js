@@ -454,6 +454,7 @@
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
+    'Desni na koncu ravnine': 'Right at the End of the Straight', 'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ostri desni': 'Tight Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', 'Ciljna ravnina': 'Main Straight',   // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
