@@ -106,6 +106,7 @@ try {
     const tx = () => page.evaluate(() => Object.assign({}, Core.TX));
     const none = (t) => t.cv === 1 && Object.keys(t).filter(k => k !== 'cv').every(k => t[k] === null);   // (nothing set: Kot zdaj, the version Simulacija: the tests' own choice, lib.mjs, and the core's own)
     const pick = async (k, v) => { await page.click(`#s-settings [data-set="${k}"] [data-v="${v}"]`); await page.waitForTimeout(150); };
+    const pickH = async (k, v) => { await page.evaluate(([k, v]) => document.querySelector(`#s-settings [data-set="${k}"] [data-v="${v}"]`).click(), [k, v]); await page.waitForTimeout(150); };   // (a row Nastavitve keep hidden: Razbijanje, paket P1)
     const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}'));
     // the version row in the list (Trki: Realistično, Kot zdaj) and the older versions' row of Preizkus (old; all: what is marked in the two rows
     // together, one button), the row's note, the note of Preizkus' knock rows, the rows dimmed
@@ -237,14 +238,14 @@ try {
     // Stara: the old knock (Core.TX.cv 5): the knock rows of Preizkus keep their choice (Core leaves them out), dimmed; Razbijanje: odboji in
     // vrtenje ob trku applies (Core.XR.bump as chosen); in English; Kot zdaj again: nothing set
     await page.evaluate(() => { window.__game.onAction('to-settings'); document.getElementById('set-test').open = true; }); await page.waitForTimeout(300);
-    await pick('crE', 3); await pick('xBump', 1); await pick('crV', 4);
+    await pick('crE', 3); await pickH('xBump', 1); await pick('crV', 4);
     const o1 = await ver(), x1 = await tx(), xr1 = await page.evaluate(() => Core.XR.bump), r1 = await rows();
     T.check('Stara (the older versions\' row of Preizkus): Core.TX.cv 5, marked there and named under the row Trki, the 7 knock rows of Preizkus dimmed and keeping their choice (Odboj: Večji, cE 1.6), their note says they do not apply; Razbijanje: odboji in vrtenje ob trku not dimmed and on (Core.XR.bump 1)',
       x1.cv === 5 && x1.cE === 1.6 && o1.all === '4' && o1.old.sel === '4' && o1.sel === '' && o1.dim === CRD && /ne veljajo/.test(o1.cr) && OLDER('Stara', 'Trki kot prej').test(o1.note) && xr1 === 1 && r1[6].sel === '3:Večji', JSON.stringify({ o1, x1, xr1 }));
     await page.click('#s-settings [data-set="lang"] [data-v="en"]'); await page.waitForTimeout(300);
     const oe = await ver();
     await page.click('#s-settings [data-set="lang"] [data-v="sl"]'); await page.waitForTimeout(200);
-    await pick('crV', 0); await pick('crE', 0); await pick('xBump', 0);
+    await pick('crV', 0); await pick('crE', 0); await pickH('xBump', 0);
     const o2 = await ver(), x2 = await tx();
     T.check('Stara in English (Old marked in Older versions, "An older version from Test is chosen (Old). The knocks as before", the rows "do not apply"); Kot zdaj again: only Razbijanje dimmed, nothing set',
       oe.all === '4' && oe.old.sel === '4' && /^An older version from Test is chosen \(Old\)\. The knocks as before/.test(oe.note) && /do not apply/.test(oe.cr) && o2.sel === '0' && o2.all === '0' && o2.dim === 'xBump' && none(x2), JSON.stringify({ oe, o2, x2 }));
