@@ -28,6 +28,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Marrakesh, Maroko](docs/proge/marrakesh.md)
 - [Livorno, Italija](docs/proge/livorno.md)
 - [Bâlea, Romunija](docs/proge/balea.md)
+- [Musandam, Oman](docs/proge/musandam.md)
 
 Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Suzuka, Irohazaka in Hakone sta od 8. 11. 2026 na odločanju; iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -310,3 +311,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Bâlee: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal in raba tal Bâlee (sneg, golo tla, trava): Contains modified Copernicus Sentinel data (2025): Sentinel-2 L2A, posnetek 26. 7. 2025 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
 - Ruševje in drevesa Bâlee (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Musandam (sredinska črta obalne ceste, obala, stavbe): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/musandam.js` so na voljo pod ODbL 1.0.
+- Višine in teren Musandama (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Musandama: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); barve tal: Contains modified Copernicus Sentinel data (Sentinel-2 L2A, prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Zastava Omana (`assets/flags/oman.svg`, poenostavljen grb): narisana za igro po javni državni zastavi.

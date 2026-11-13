@@ -2449,6 +2449,56 @@
   "nan": false,
   "digest": "3cc5040097ace0a705facbfd"
  },
+ "musandam/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 107.29,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f9fd78441173332951e80920"
+ },
+ "musandam/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 129.25,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fc85b406299e7186bf614102"
+ },
+ "musandam/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 93.1,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "e9cb14b87c2dbf70bbd339f0"
+ },
+ "musandam/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 94.58,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d55a9c80cd7179b610a37bf1"
+ },
+ "musandam/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 108.12,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "60083836923b3b06953ec713"
+ },
  "livorno/cs": {
   "finished": 21,
   "cars": 21,
