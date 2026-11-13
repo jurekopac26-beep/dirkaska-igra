@@ -40,7 +40,10 @@ SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OS
 PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'}),
          # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3962 m, left) and a 22 m stub that curls back
          # beside the finish's wide verge (4914 m, right)
-         'rastro': dict(izpusti=[(3962, -1), (4914, 1)])}
+         'rastro': dict(izpusti=[(3962, -1), (4914, 1)]),
+         # Chapman's Peak: two drives on the mountain's side (2073 m and 3631 m, right), where the game's hillside stands 7 m above the road
+         # ten metres behind the barrier's line: a strip that follows the ground would climb a bank no car could
+         'chapman': dict(izpusti=[(2073, 1), (3631, 1)])}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
