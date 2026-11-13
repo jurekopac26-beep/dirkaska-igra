@@ -21,6 +21,7 @@
 // --velikost <W>x<H>: the frame the game draws (640x360) and --izrez x0,y0,x1,y1: the part of it the picture shows, in shares of the
 // frame (a scenario's izrez): a bigger frame cropped is a close-up from the game's own camera. --ime <name>: the files' name.
 // --a-opis / --b-opis <text>: what follows the version's name in a side's heading (two copies of the game with the same version).
+// --a-nast / --b-nast k=v,k=v,…: a side's own settings over the game's (e.g. --b-nast xBody=1,xGlass=1,carDet=high: Razbijanje's look on side B only).
 // The version: cv as Core's KV_IDS (1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara, ...). The page gets it as the player would
 // set it (the setting crV = cv - 1, which the game hands to Core.setTest when it applies the settings); a page whose settings do not take
 // the number but whose Core knows it gets it through Core.setTest({ cv }) (the other rows of Preizkus as they are). A version the page's
@@ -80,9 +81,12 @@ const aCv = +(flag('--a-cv') || 1), bCv = +(flag('--b-cv') || 6), aRoot = path.r
 const casiArg = flag('--casi'), progaArg = flag('--proga'), mArg = flag('--m'), avto = flag('--avto'), fizika = flag('--fizika'), outArg = flag('--out'), kb = +(flag('--kb') || 300);
 const okvirji = has('--okvirji'), zaporedno = has('--zaporedno'), ZOOM = { blizu: 1.1, srednje: 1.4, dalec: 1.7, 'daleč': 1.7 }, odd = flag('--oddaljenost');
 const deliOn = has('--deli'), skodaArg = flag('--skoda'), velikost = flag('--velikost'), imeArg = flag('--ime'), izrezArg = flag('--izrez'), aOpis = flag('--a-opis'), bOpis = flag('--b-opis');
+// --a-nast / --b-nast key=value,key=value: a side's own settings over the tool's (Nastavitve keys, e.g. xBody=1,xGlass=1: Razbijanje; numbers as numbers)
+const nast = (t) => { const o = {}; if (t) for (const kv of t.split(',')) { const [k, v] = kv.split('='); if (!/^[A-Za-z]\w*$/.test(k || '') || v === undefined) { console.log('--a-nast / --b-nast: key=value,key=value'); process.exit(2); } o[k] = v !== '' && !isNaN(+v) ? +v : v; } return o; }, aNast = nast(flag('--a-nast')), bNast = nast(flag('--b-nast'));
 const FILE = JSON.parse(fs.readFileSync(scnFile, 'utf8')), SCN = FILE.scenariji, DEF = FILE.privzeto || {};
 const usage = () => 'usage: node tools/trki/slike.mjs <scenarij> [--a-cv 1] [--b-cv 6] [--a-root <folder>] [--b-root <folder>] [--casi 0,0.3,0.9,1.8] [--proga <id>] [--m <metres>]\n' +
   '       [--avto <id>] [--fizika cs|nova] [--oddaljenost blizu|srednje|dalec] [--scenariji <file.json>] [--out <folder>] [--kb 300] [--okvirji] [--zaporedno]\n' +
+  '       [--a-nast k=v,…] [--b-nast k=v,…]\n' +
   '       [--deli] [--skoda 1|2] [--velikost 640x360] [--izrez x0,y0,x1,y1] [--ime <file name>] [--a-opis <text>] [--b-opis <text>]\n' +
   'cv (Trki med avti): 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara, 6 Realistična (once the page has it)\n' +
   'scenarios (' + path.relative(process.cwd(), scnFile) + '):\n' + Object.entries(SCN).map(([k, s]) => '  ' + k.padEnd(Math.max(7, ...Object.keys(SCN).map(x => x.length + 1))) + s.naslov + (s.opis ? ': ' + s.opis : '')).join('\n');
@@ -294,11 +298,11 @@ function stageAndRun(o) {
 }
 
 /* ---------------- one side: its copy of the game, its version of the knocks ---------------- */
-async function side(browser, tag, root, cv) {
+async function side(browser, tag, root, cv, own) {
   if (!fs.existsSync(path.join(root, 'index.html'))) throw new Error(`side ${tag}: no game in ${root} (index.html)`);
   const srv = await serve(root);
   try {
-    const set = Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', damage: skoda, crV: cv - 1 }, fizika ? { phys: fizika } : null, odd ? { zoom: ZOOM[odd] } : null);   // (damage 1: Samo videz, the game's own default)
+    const set = Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: 'day', season: 'summer', damage: skoda, crV: cv - 1 }, fizika ? { phys: fizika } : null, odd ? { zoom: ZOOM[odd] } : null, own || null);   // (damage 1: Samo videz, the game's own default)
     const q = new URLSearchParams({ proga: S.proga, t: '0.5', tekmeci: '1', vreme: 'suho' }); if (avto || S.avto) q.set('avto', avto || S.avto);   // (the scenario's own car: its rival drives that car's field)
     const w0 = Date.now(), { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?' + q, set, VIEW, { seed: 11 });
     await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
@@ -440,7 +444,7 @@ const t0 = Date.now(), out = outDir(), browser = await launch();
 let fail = '';
 try {
   fs.mkdirSync(out, { recursive: true });
-  const runA = () => side(browser, 'A', aRoot, aCv), runB = () => side(browser, 'B', bRoot, bCv);
+  const runA = () => side(browser, 'A', aRoot, aCv, aNast), runB = () => side(browser, 'B', bRoot, bCv, bNast);
   let A, B;
   if (zaporedno) { A = await runA(); B = await runB(); }
   else [A, B] = await Promise.all([runA(), runB()]);   // (the first side that fails stops the run: the browser closes under the other)

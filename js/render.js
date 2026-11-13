@@ -7073,6 +7073,7 @@ const Render = (function () {
       // --- effects ---
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
+      if (v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR)))) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
       if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
@@ -7151,9 +7152,10 @@ const Render = (function () {
     v.lens = []; v.lightBroken = [0, 0, 0, 0];
     const lz = dB.lens || [0.11, 0.28];   // (the new bodies: their own lens, or a round one)
     if (!v.kit) for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.noHead && !dB.noLens; (v.det || v.bodyG).add(m); v.lens.push(m); }   // (the kit's lenses are in its body: kitLampOut)
-    // a rival's det drawn as one mesh (remerge; not the player's, nor Razbijanje · nov način's: xMirror, xEngine take its panels one by one); det
+    // a rival's det drawn as one mesh (remerge; not the player's; Razbijanje · nov način's only while whole: unmerge at its first knock, xMirror, xEngine
+    // take its panels one by one then); det
     // itself never drawn, its matrices never updated (remerge reads its pieces' own)
-    if (v.det && !c.isPlayer && !v.xOn) { v.mrg = true; v.det.updateMatrixWorld = () => {}; ownRnd(() => remerge(v)); }
+    if (v.det && !c.isPlayer) { v.mrg = true; v.det.updateMatrixWorld = () => {}; ownRnd(() => remerge(v)); }
   }
   // the formula's parts, built with the car's mesh (the garage and the ghost show them too): front wing (bumperF), nose (hood), rear wing with the
   // DRS flap (bumperR), engine cover (trunk), mirrors, bargeboards (fenderL/R). Each is centred on its own origin (a loose one tumbles about
@@ -7193,6 +7195,10 @@ const Render = (function () {
   // instead of up to 16 (SREDNJA, VISOKA: one shadow caster instead of 8; NIZKA: none, as before). Built again whenever what det shows
   // changes (v.detDirty: a lamp smashed or burnt out, a panel lost, the crew's repair); named without Math.random (ownRnd)
   const _rmM = new THREE.Matrix4(); let matFpM = null;
+  function unmerge(v) {   // (remerge undone: det drawn again, its matrices updated again; the merged mesh gone)
+    v.mrg = false; v.detDirty = false; delete v.det.updateMatrixWorld; v.det.visible = true;
+    if (v.partsM) { v.bodyG.remove(v.partsM); v.partsM.geometry.dispose(); v.partsM = null; }
+  }
   function remerge(v) {
     v.detDirty = false; const L = []; let n = 0;
     v.det.traverse(o => { if (!o.isMesh) return; for (let p = o; p !== v.det; p = p.parent) if (!p.visible) return; L.push(o); });

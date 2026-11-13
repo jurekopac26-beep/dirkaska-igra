@@ -1758,8 +1758,35 @@ Vse štiri vrstice so v Nastavitvah v glavnem seznamu, druga pod drugo; vrstica 
 2. **Slike zdaj/potem in uporabnikov »ok«**; seznam možnosti (tabela zgoraj) gre na tablo #382 (glavna seja ali koordinacija).
 3. **Angleška imena** (Knocks, As now, Debris, Lost wheel, Race over, Race goes on) so predlog seje.
 4. **Svetovna lestvica:** ključ rekorda nima različice trkov (»Okvir«); privzeta je zdaj Realistična, ki čase s stikom z ograjo spremeni. Odloči uporabnik ali seja lestvice.
-5. **Poškodbe P1–P6** in kdaj kolo odpade pri Samo videz brez pravila koles (točka 4 zgoraj).
+5. **Poškodbe P1–P6** (P1 narejen 13. 11., razdelek »Poškodbe P1«) in kdaj kolo odpade pri Samo videz brez pravila koles (točka 4 zgoraj).
 6. Vprašanje semena v `tests/hotham.test.js` ostane odprto kot prej. **Neodvisen pregled `js/core.js`** je narejen 12. 11. (»Popravki po neodvisnem preverjanju«: 13 najdb, popravki in odloženo).
+
+## Poškodbe P1: videz Razbijanja privzeto (13. 11. 2026)
+
+Načrt je `docs/realizem/paket-p.md` (P1, odobren). Narejeno:
+
+- **Nastavitev »Podrobnosti poškodb«** (`dmgDet`; Preproste / Podrobne, privzeto Podrobne z migracijo `tdgp-defaults-v7`) skupaj vklopi videz Razbijanja: `xBody`, `xGlass`, `xPaint`, `xParts`, `xDrag`, `xDust` (`applySettings` v `js/game.js`). Pri poškodbah Izklop je izklopljena.
+- **11 vrstic »Razbijanje: …«** ostane v DOM, a skritih (`hidden`; testi jih klikajo). `tests/browser/lib.mjs` nastavi zastavico v7, da testi ostanejo pri starih privzetih nastavitvah.
+- **Fizika Razbijanja ostane izklopljena** (`xPhys` bere samo svoje vrstice):
+  - `xAi`, ker se vožnja tekmecev ne spreminja;
+  - `xHandle`, ker odločitev 41 pravi, da škoda vzame samo moč;
+  - `xRoll`, `xBump` (samo Stara) in `xShake`;
+  - steklo na cesti do P5 (P5 doda 5 % samo pri Vklop).
+- **Obremenitev:** tekmec z `xOn` je zdaj združen v en mesh, dokler je cel (`remerge`). Ob prvem udarcu, škodi, izgubljenem pokrovu ali odprtih vratih se razdruži (`unmerge` v `js/render.js`). Prej je bil nezdružen tudi nepoškodovan.
+
+**Meritev** (Spa, štartna vrsta z 22 avti, telefon 844 × 390, kakovost normalna, detajli nizki, sence; šest udarcev na avto, povprečno 66 % škode):
+
+| Način | Nepoškodovani | Po trkih |
+|---|---|---|
+| Preproste (kot prej) | 206 klicev / 484 tisoč | 221 / 495 tisoč |
+| Podrobne, pred `unmerge` | 258 / 493 tisoč | 290 / 518 tisoč |
+| Podrobne z `unmerge` | 206 / 493 tisoč | 290 / 518 tisoč |
+
+Polno telo ima vsak avto: najslabši primer (vseh 22 razbitih) je 290 klicev, pod mejo ~300. Omejitev na igralca in 5 najbližjih (predlog v paketu) zato ni potrebna. Na telefonu je treba še preveriti zatikanje ob mnogo udarcih hkrati.
+
+**Orodje:** `tools/trki/slike.mjs` ima zdaj `--a-nast` / `--b-nast k=v,…` za lastne nastavitve vsake strani. Slike P1 (`celni`, `sam120`; B z `xBody,xGlass,xPaint,xParts,xDrag,xDust=1`) so samo v scratchpadu seje, ne v repozitoriju.
+
+**Naslednje:** P4 → P2 → P5 → P3 → P6 (`paket-p.md`).
 
 ## Kar je že dobro
 
