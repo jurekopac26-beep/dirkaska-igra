@@ -1089,36 +1089,43 @@
       '<button class="wxmore" data-act="more-options" aria-label="More race options"><span class="dots3">···</span></button></div></div>';
     // the room under the picture: the row of numbers, the yard, the neighbours, Race!
     h += '<div class="room">';
-    const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', alt = t.def.alt, d = t.def, pg = IZ() && G.progress ? G.progress(d) : null;
+    const rec = t.rec, my = rec[1] !== '—' ? rec[1] : '', d = t.def, pg = IZ() && G.progress ? G.progress(d) : null;
     const cell = (lbl, val, cls) => '<div class="' + (cls || '') + '"><small>' + esc(lbl) + '</small><b>' + esc(val) + '</b></div>';
-    // the last cell: the opponents' number by the grid (its name for the readers), a race's a button (the sheet with 0..100, rivSheet);
+    // the row of numbers (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026): the flag, the best (NEW or the time), the rating,
+    // the mode, the difficulty and the opponents. A tap on one of the last five: its window from the foot up to the row (twSheet), the cell
+    // framed gold while it is open (twOn)
+    const twOn = (k) => sheet === twSheet && tw === k ? ' tw-on' : '';
+    const twB = (k, lbl, inner) => '<button data-act="' + (k === 'riv' ? 'riv' : 'tw:' + k) + '" aria-haspopup="dialog" aria-label="' + esc(lbl) + '">' + inner + '</button>';
+    // the last cell: the opponents' number by the grid (its name for the readers), a race's a button (its window: how many, 0..100);
     // a time trial's gold time, the police in a chase
     const oppN = (k) => '<small class="vh">Opponents</small><b>' + k + '</b>' + GRID;
     let last;
     if (mode === 'chase') last = cell('Police', 'On you', 'pol');
     else if (mode === 'trial') { const gold = G.medals(d); last = gold ? cell('Gold time', clock(gold[0]), 'gt') : '<div class="opp">' + oppN(0) + '</div>'; }
     else if (mode === 'endless') { const E = typeof Core !== 'undefined' && Core.EN; last = cell('Clock', (E ? E.clock[Math.max(0, Math.min(3, G.S.difficulty | 0))] : 30) + ' s', 'clk'); }   // (the clock's start at the game's level, js/core.js EN.clock; the row's last cell, as the police's)
-    else if (mode === 'race' && rivOf(d)) { const k = G.rivals(d); last = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + k + '. Choose how many">' + oppN(k) + '</button></div>'; }
+    else if (mode === 'race' && rivOf(d)) { const k = G.rivals(d); last = '<div class="opp' + twOn('riv') + '">' + twB('riv', 'Opponents: ' + k + '. Choose how many', oppN(k)) + '</div>'; }
     else last = '<div class="opp">' + oppN(mode === 'duel' || mode === 'pursuit' || mode === 'drag' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21) + '</div>';   // (Elimination: at least 5, js/zabava/elim.js E.min)
-    // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)
-    const fb = fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
-    // the flag: the quick list (js/menu-izbor.js; a country without a flag: its first letters); the best: its mark before it (a medal, a
-    // tick), NEW instead of the time on a track not driven yet
+    // the flag: the quick list (js/menu-izbor.js; a country without a flag: its first letters)
     const flagB = IZ() ? '<div class="flag"><button data-act="izbor" aria-haspopup="dialog" aria-label="' + esc((ctry ? 'Flag of ' + ctry + '. ' : '') + 'Choose a track by country') + '">' +
       (fl ? '<img src="' + fl + '" alt="">' : '<span class="nf">' + esc((ctry || t.name).slice(0, 3).toUpperCase()) + '</span>') + '</button></div>' : fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '';
-    const best = pg ? '<div class="best"><small>' + (pg.done ? IZ().mark(pg) : '') + esc(rec[0]) + '</small><b>' + (pg.done ? esc(my || '—') : IZ().mark(pg)) + '</b>' + fb + '</div>' : cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>');
-    h += '<div class="trow">' + flagB + best + cell('Length', t.km.toFixed(2) + ' km') +
-      (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) + last + '</div>';
+    // the best: NEW on a track not driven yet, else the time big and slanted; a tap: the leaderboard of the track (bestSheet)
+    const bestV = my ? '<b class="tm">' + esc(my) + '</b>' : '<b><i class="newb">NEW</i></b>';
+    const best = '<div class="best' + twOn('best') + '">' + twB('best', rec[0] + ': ' + (my || 'none yet') + '. Best times', '<small>' + (pg && pg.done && my ? IZ().mark(pg) : '') + esc(rec[0]) + '</small>' + bestV) + '</div>';
+    // the rating: the number alone (the player's own until the world's server), as the best's time; none yet: a dash
+    const rt = rateOf(t.id), rate = '<div class="rate' + twOn('rate') + '">' + twB('rate', 'Rating: ' + (rt ? rt.v.toFixed(1) : 'none yet') + '. Rate the track', '<small>Rating</small><b class="tm">' + (rt ? rt.v.toFixed(1) : '—') + '</b>') + '</div>';
+    // the difficulty: its name (two words on two lines) over 4 dashes, as many lit as the level, in the level's colour
+    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0)), dif = '<div class="dif' + twOn('diff') + '">' + twB('diff', 'Difficulty: ' + DIFFS[dv][0] + '. Choose', '<b>' + two(DIFFS[dv][0]) + '</b>' + dashes(dv + 1, 'd' + dv)) + '</div>';
+    // the mode: its full name on two lines, 4 grey dashes, the chosen mode's green (Classic race the first, Endless traffic the last)
+    const mi = ROW_MODES.findIndex(m => m[0] === mode), mname = mi >= 0 ? ROW_MODES[mi][1] : modeOf(mode).name;
+    const md = '<div class="md' + twOn('mode') + '">' + twB('mode', 'Mode: ' + mname + '. Choose', '<b>' + two(mname) + '</b>' + dashes(mi, 'm', true)) + '</div>';
+    h += '<div class="trow">' + flagB + best + rate + md + dif + last + '</div>';   // (the mode before the difficulty: the user, 12. 11. 2026)
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
-    // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
-    // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage (the name a button of its own,
-    // out of the keys' way and hidden from readers, the car's button says it: a phone's touch adjustment takes it for a target, not so a
-    // plain span with the menu's listener far up)
+    // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; no name over it (the user, 12. 11. 2026:
+    // its button says it to the readers); a tap: the garage
     const car = G.car(), c3 = car3d(car), pic = c3 ? '' : carPicOf(car), here = G.carHere();
     const on3 = !!c3 && MenuCar.live(c3);
     h += '<div class="yard' + (on3 ? ' c3d-on' : c3 ? ' c3d-wait' : '') + '"' + (on3 ? MenuCar.placed() : '') + '><div class="sign' + (t.test ? ' test' : t.def.pending ? ' pending' : '') + '" data-country="' + esc(ctry) + '"' + (IZ() ? ' data-act="izbor"' : '') + '><b>' + esc(ctry || t.name) + '</b>' + (t.test ? '<i>TEST</i>' : t.def.pending ? '<i>PENDING</i>' : '') + '</div><i class="post a"></i><i class="post b"></i>' +
-      '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button>' +
-      '<button class="cname" data-act="garage" tabindex="-1" aria-hidden="true">' + esc(car.name) + '</button></div>';
+      '<button class="car" data-act="garage" aria-label="Your car: ' + esc(car.name) + (here ? '' : ', not in your garage') + '. Open the garage">' + (c3 ? '' : pic ? '<img src="' + pic + '" alt="">' : '<span class="mono">' + esc(car.name.charAt(0)) + '</span>') + '</button></div>';   // (no name over the car: the user, 12. 11. 2026)
     // the neighbours of the list: their flags (a track without one: its name)
     const nb = (k) => {
       const u = list[(trackIdx + k + n) % n], c = countryOf(u), f = flagUrl(c), fill = f ? flagFill(f) : '';
@@ -1184,22 +1191,128 @@
       '</div><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
   }
 
+  /* ---------------- the row's windows (docs/meni-izbira-proge.md, the user's decisions of 12. 11. 2026) ----------------
+     A tap on a cell of the row: its window from the foot of the screen up to the row (on its side: from the head down to the row, as wide
+     as it), all of them as big, Close in the middle at their foot; the row stays bright over the dim, its cell framed gold, and a tap on
+     another of its cells is that one's window (twPlace: the dim with a hole where the row is). The best (the track's best times), the
+     rating, the difficulty, the mode and the opponents */
+  let tw = null, btab = 'friends';
+  const TW = { best: bestSheet, rate: rateSheet, diff: diffSheet, mode: modeSheet, riv: rivSheet };
+  const twSheet = () => tw && TW[tw] ? TW[tw]() : '';
+  const twFrame = (cls, title, body) => '<div class="sheet-bg tw" data-act="close-sheet"><div class="sheet twin ' + cls + '" role="dialog" aria-label="' + esc(title) + '"><h2>' + title + '</h2><div class="twb">' + body + '</div>' +
+    '<div class="row"><button class="go" data-act="close-sheet">Close</button></div></div></div>';
+  // the window placed: under the row (upright), or over it (on its side, where the row is at the foot), the dim round the row
+  function twPlace() {
+    const bg = $('.sheet-bg.tw', app), r = $('#s-track .trow', app), sh = bg && $('.sheet', bg); if (!sh || !r) return;
+    const A = app.getBoundingClientRect(), R = r.getBoundingClientRect(), px = (v) => Math.round(v) + 'px';
+    const x1 = R.left - A.left - 3, y1 = R.top - A.top - 3, x2 = R.right - A.left + 3, y2 = R.bottom - A.top + 3;
+    bg.style.clipPath = 'polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ' + [[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]].map(p => px(p[0]) + ' ' + px(p[1])).join(', ') + ')';
+    const below = A.height - y2 >= 200, hd = $('#s-track .thead', app), hb = hd ? hd.getBoundingClientRect().bottom - A.top : 8;
+    if (below) Object.assign(sh.style, { top: px(y2 + 3), bottom: '0px', left: '0px', right: '0px', width: 'auto' });
+    else Object.assign(sh.style, { top: px(Math.max(8, Math.min(hb + 4, y1 - 260))), bottom: px(A.height - y1 + 3), left: px(x1 + 3), width: px(x2 - x1 - 6), right: 'auto' });
+    bg.classList.toggle('up', !below);
+    sh.classList.toggle('low', sh.getBoundingClientRect().height < 340);
+  }
+  window.addEventListener('resize', () => { if (sheet === twSheet) twPlace(); });
+  // the dashes under a cell's name: 4, the first n lit (the difficulty, in its colour), or the one at n (the mode, green)
+  const dashes = (n, cls, one) => '<span class="dsh ' + cls + '" aria-hidden="true">' + [0, 1, 2, 3].map(i => '<i' + ((one ? i === n : i < n) ? ' class="on"' : '') + '></i>').join('') + '</span>';
+  // (in a span: the name's box two lines high whatever its words, so the dashes under Classic race and under Medium are as high: the user, 13. 11. 2026)
+  const two = (s) => { const i = s.indexOf(' '); return '<span>' + (i < 0 ? esc(s) : esc(s.slice(0, i)) + '<br>' + esc(s.slice(i + 1))) + '</span>'; };
+  const opt = (act, on, inner, dis) => '<button class="twopt' + (on ? ' on' : '') + '" data-act="' + act + '" aria-pressed="' + on + '"' + (dis ? ' disabled' : '') + '>' + inner + (on ? '<span class="ck">' + I.check + '</span>' : '') + '</button>';
+
+  // the difficulty: the game's own (Settings' Difficulty, S.difficulty 0..3); Super hard is the police's, a race takes it as Hard (game.js raceDiff)
+  const DIFFS = [['Easy', 'Gentle rivals and police. Room to learn the road.', '#ffd23f'], ['Medium', 'Rivals who fight back, a police that keeps up.', '#ffad5c'],
+    ['Hard', 'Quick rivals, little room for a mistake.', '#ff7a1a'], ['Super hard', 'The police at their toughest. A race takes it as Hard.', '#ff3b3b']];
+  function diffSheet() {
+    const dv = Math.max(0, Math.min(3, G.S.difficulty | 0));
+    return twFrame('dif', 'Difficulty', DIFFS.map((x, i) => opt('diff:' + i, i === dv, '<span class="tx"><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span>' + dashes(i + 1, 'd' + i))).join(''));
+  }
+  // the mode: the four of the row (the game's race, traffic, police, endless; one the track has not: not here); the police chase, its side:
+  // the getaway (the game's police mode) or the police (not yet)
+  const MI = (p) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
+  const ROW_MODES = [['race', 'Classic race', 'Closed road, a full grid of rivals.', MI('<path d="M5 3v18" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M6 4h13v9H6z" fill="#fff"/><path d="M6 4h3.3v3h3.2V4h3.2v3H19v3h-3.3v3h-3.2v-3H9.3v3H6v-3h3.3V7H6z" fill="#1b2230"/>')],
+    ['duel', 'Street race', 'Open road, real traffic, one rival.', MI('<path d="M4 15.5 6 10h12l2 5.5V19h-2.5v-1.6h-11V19H4z" fill="#fff"/><path d="M7.2 11.3h9.6l1 3H6.2z" fill="#1b2230"/><circle cx="7.4" cy="16.3" r="1.2" fill="#1b2230"/><circle cx="16.6" cy="16.3" r="1.2" fill="#1b2230"/><path d="M8 7.5h8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>')],
+    ['chase', 'Police chase', 'Pick your side.', MI('<path d="M7 18v-6a5 5 0 0 1 10 0v6z" fill="#ff4d4d"/><path d="M4.5 18.5h15v2.5h-15z" fill="#fff"/><path d="M12 2v3M4 6l2 2M20 6l-2 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>')],
+    ['endless', 'Endless traffic', 'Ever denser traffic. Close passes add time.', MI('<path d="M12 12c-2.2-3-3.6-4-5.4-4a4 4 0 0 0 0 8c1.8 0 3.2-1 5.4-4s3.6-4 5.4-4a4 4 0 0 1 0 8c-1.8 0-3.2-1-5.4-4z" fill="none" stroke="#fff" stroke-width="2.4"/>')]];
+  function modeSheet() {
+    const t = curTrack(), has = (m) => !t || t.modes.includes(GAME_MODE[m]);
+    return twFrame('mod', 'Mode', ROW_MODES.map((m, i) => {
+      const on = m[0] === mode, ok = has(m[0]);
+      let h = opt('rmode:' + m[0], on, '<span class="mi">' + m[3] + '</span><span class="tx"><b>' + esc(m[1]) + '</b><small>' + esc(ok ? m[2] : 'Open roads only') + '</small></span>' + dashes(i, 'm', true), !ok);
+      if (m[0] === 'chase' && on) h += '<div class="side" role="group" aria-label="Your side"><button class="on" aria-pressed="true" data-act="side:run">Getaway<small>You run, they chase</small></button>' +
+        '<button disabled aria-pressed="false">Police<small>Soon</small></button></div>';
+      return h;
+    }).join(''));
+  }
+  // a mode of the row: the same track in it (its place in the new list), the game's mode with it
+  function rowMode(m) {
+    const t = curTrack(); if (!t || m === mode || !t.modes.includes(GAME_MODE[m])) return;
+    mode = m; const L = TRACKS(), i = L.indexOf(t); trackIdx = i >= 0 ? i : 0; select(); render(true);
+  }
+
+  // the rating: the player's own until the world's server (docs/svetovna-lestvica.md): stars once the track has been driven to its
+  // finish, the average (the player's vote) and the weeks' averages, 8 of them (a week without a vote: the one before it)
+  const RATE_KEY = 'tdgp-ocene';
+  const rates = () => { try { return JSON.parse(localStorage.getItem(RATE_KEY)) || {}; } catch (_) { return {}; } };
+  const rateOf = (id) => { const r = rates()[id]; return r && r.v ? r : null; };
+  const weekNo = () => Math.floor((Date.now() / 864e5 + 3) / 7);
+  function rateSet(id, v) {
+    const R = rates(), r = R[id] || { v: 0, w: {} }; r.v = v; r.w = r.w || {}; r.w[weekNo()] = v; R[id] = r;
+    try { localStorage.setItem(RATE_KEY, JSON.stringify(R)); } catch (_) { /* private mode: the vote for this visit only */ }
+  }
+  function rateSheet() {
+    const t = curTrack(); if (!t) return '';
+    const r = rateOf(t.id), can = t.rec[1] !== '—', wk = weekNo(), W = [];
+    let carry = null; if (r) { const ks = Object.keys(r.w).map(Number).filter(k => k < wk - 7); if (ks.length) carry = r.w[Math.max(...ks)]; }
+    for (let k = wk - 7; k <= wk; k++) { if (r && r.w[k] != null) carry = r.w[k]; W.push(carry); }
+    const bw = 100 / 8, bars = W.map((v, i) => v == null ? '' : '<rect x="' + (i * bw + 2).toFixed(1) + '" y="' + (30 - v * 5.6).toFixed(1) + '" width="' + (bw - 4).toFixed(1) + '" height="' + (v * 5.6).toFixed(1) + '" rx="1.4"' + (i === 7 ? ' class="now"' : '') + '/>').join('');
+    const stars = [1, 2, 3, 4, 5].map(k => '<button data-act="rate:' + k + '" aria-label="' + k + (k === 1 ? ' star' : ' stars') + '" aria-pressed="' + (!!r && r.v === k) + '"' + (can ? '' : ' disabled') + '>' + STAR(!!r && k <= r.v) + '</button>').join('');
+    return twFrame('rat', 'Rating · ' + esc(t.name.split(',')[0]),
+      '<div class="ravg"><b>' + (r ? r.v.toFixed(1) : '—') + '</b><span>' + (r ? '1 vote · yours' : 'No votes yet') + '</span></div>' +
+      '<div class="stars" role="group" aria-label="Your rating">' + stars + '</div>' +
+      (can ? '' : '<p class="twnote">Finish this track once to rate it.</p>') +
+      '<svg class="rgraph" viewBox="0 0 100 31" preserveAspectRatio="none" aria-label="Average rating over the last 8 weeks"><path d="M0 30.5h100" stroke="rgba(255,255,255,.18)" stroke-width=".6"/>' + bars + '</svg>' +
+      '<div class="rends"><span>8 weeks ago</span><span>This week</span></div>' +
+      '<p class="twnote">The world\'s votes come with the game\'s server.</p>');
+  }
+  const STAR = (on) => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.5L12 17.2l-5.9 3.2 1.3-6.5-4.9-4.6 6.6-.8z" fill="' + (on ? '#ffc629' : 'none') + '" stroke="' + (on ? '#ffc629' : '#8a97ab') + '" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+
+  // the best times of the track (the way it is driven now): World, Friends, This week; the world's and the week's with the server (Soon).
+  // Friends: the game's Lestvica prijateljev (G.friends): the first 4 (1 to 3 gold), · · · where the player is further down, the player's row
+  // (framed) and the one after it; nicknames only
+  function bestSheet() {
+    const t = curTrack(); if (!t) return '';
+    const tabs = '<div class="btabs" role="tablist">' + [['world', 'World'], ['friends', 'Friends'], ['week', 'This week']].map(([k, l]) =>
+      '<button role="tab" data-act="btab:' + k + '" aria-selected="' + (btab === k) + '">' + l + (k === 'friends' ? '' : '<small>Soon</small>') + '</button>').join('') + '</div>';
+    let body;
+    if (btab !== 'friends') body = '<p class="twsoon">Soon</p><p class="twnote">' + (btab === 'world' ? 'The best times of the whole world' : 'This week\'s best times') + ' come with the game\'s server.</p>';
+    else {
+      const F = G.friends ? G.friends(t.def, true) : null, my = t.rec[1] !== '—' ? t.rec[1] : '';
+      let rows = F && F.rows.length ? F.rows : my ? [{ at: 1, name: G.S.name || 'You', time: my, me: true }] : [];
+      const me = rows.findIndex(r => r.me), row = (r) => '<li class="' + (r.me ? 'me' : '') + (r.at <= 3 ? ' podi' : '') + '"><b>' + r.at + '</b><span>' + esc(r.me ? (r.name || 'You') : r.name) + '</span><i>' + esc(r.time) + '</i></li>';
+      let L;
+      if (me < 0 || me <= 4) L = rows.slice(0, Math.max(4, me + 2)).map(row).join('');
+      else L = rows.slice(0, 4).map(row).join('') + '<li class="dots" aria-hidden="true">· · ·</li>' + rows.slice(me, me + 2).map(row).join('');
+      body = rows.length ? '<ol class="blist">' + L + '</ol>' + (F && !F.friends ? '<p class="twnote">Add friends to race their times.</p>' : '')
+        : '<p class="twnote">No times yet. Drive the track to set the first.</p>';
+    }
+    return twFrame('bst', 'Best times · ' + esc(t.name.split(',')[0]), tabs + body);
+  }
+
   // the race's opponents (the row's Opponents, a race of its own outside the career): the number big, the quick picks (0: Trial, alone
   // against the clock), a slider up to what the track takes (def.maxRivals: Pikes Peak's summit, the parking past the line of a few roads;
-  // a big vehicle's field fewer) and Done. A pick is the game's setting at once (rivals: the next race; -1, the track's own field, until the
+  // a big vehicle's field fewer) and Close. A pick is the game's setting at once (rivals: the next race; -1, the track's own field, until the
   // first pick); the slider moves the number as it goes and keeps it when let go, the screen behind it (the row) follows
-  const RIV_QUICK = [[0, 'Trial'], [1], [5], [12], [25], [50], [100]];
+  const RIV_QUICK = [[0, 'Trial'], [1], [5], [12], [21], [50], [100]];
   const rivOf = (d) => G.rivPick ? G.rivPick(d) : null;   // ({ max, car }: the most the track takes with this car, car: a big vehicle's field the limit; null: no choice here, the career)
   const rivSub = (n) => n === 0 ? 'Trial · you alone against the clock' : n === 1 ? '1 rival · 2 cars' : n + ' rivals · ' + (n + 1) + ' cars';
   function rivSheet() {
     const t = curTrack(), p = t && rivOf(t.def); if (!p) return '';
     const n = G.rivals(t.def), max = p.max, road = !!t.def.open;
-    return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet riv" role="dialog" aria-label="Opponents"><h2>Opponents</h2>' +
-      '<div class="rnum" aria-live="polite"><b>' + n + '</b><span>' + rivSub(n) + '</span></div>' +
+    return twFrame('riv', 'Opponents', '<div class="rnum" aria-live="polite"><b>' + n + '</b><span>' + rivSub(n) + '</span></div>' +
       '<div class="rquick">' + RIV_QUICK.map(([k, l]) => '<button data-act="riv-n:' + k + '" aria-pressed="' + (k === n) + '"' + (k > max ? ' disabled' : '') + '>' + k + (l ? '<small>' + l + '</small>' : '') + '</button>').join('') + '</div>' +
       '<input class="rslide" type="range" min="0" max="' + max + '" step="1" value="' + n + '" aria-label="Opponents, 0 to ' + max + '" style="--p:' + (n / Math.max(1, max) * 100).toFixed(2) + '%">' +
-      '<div class="rends"><span>0</span><span>' + (max < 100 ? max + ' at most ' + (p.car ? 'with this car' : 'on this ' + (road ? 'road' : 'track')) : '100') + '</span></div>' +
-      '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+      '<div class="rends"><span>0</span><span>' + (max < 100 ? max + ' at most ' + (p.car ? 'with this car' : 'on this ' + (road ? 'road' : 'track')) : '100') + '</span></div>');
   }
   // the sheet's number, its picks and the slider at n, and the row behind it (no new drawing: the slider keeps its drag)
   function rivPaint(n) {
@@ -1236,7 +1349,7 @@
     if (ts) M.on(ts, wxLook(), { entering: shown !== 'track', tap: wxTap, app }); else if (M) M.off();
     wxTap = null;
     shown = screen;
-    if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); }
+    if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); if (sheet === twSheet) twPlace(); }
     sheetOn = !!sheet;
     const chip = $('.chips [aria-pressed="true"]', app); if (chip) chip.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
@@ -1711,7 +1824,12 @@
       case 'zemlja': zemlja(); break;   // (the globe in the head: the Earth, js/menu-zemlja.js)   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
-      case 'riv': sheet = rivSheet; render(true); break;   // (the row's Opponents: how many, 0..100)
+      case 'riv': case 'tw': tw = k === 'riv' ? 'riv' : v; if (tw === 'riv' && !rivOf((curTrack() || {}).def || {})) break; sheet = twSheet; render(true); break;   // (the row's cells: their windows; Opponents: how many, 0..100)
+      case 'diff': G.setOption('difficulty', +v); render(true); break;
+      case 'rmode': rowMode(v); break;
+      case 'rate': { const t = curTrack(); if (t && t.rec[1] !== '—') { rateSet(t.id, +v); render(true); } break; }
+      case 'btab': btab = v; render(true); break;
+      case 'side': break;   // (the police chase's side: the getaway only, the police's side not yet)
       case 'riv-n': rivSet(+v); break;
       case 'dark-tip': sheet = darkSheet; render(true); break;
       case 'dark-never': try { localStorage.setItem('tdgp-darktip', 'off'); } catch (_) { /* private mode: it shows again next time */ } sheet = null; render(true); break;
