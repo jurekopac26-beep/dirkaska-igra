@@ -36,6 +36,23 @@
       roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
       sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
     },
+    // Kanaba (the Kigezi highlands, Uganda): the Kisoro road over the Kanaba gap, the hills terraced to their tops: green fields of beans,
+    // potatoes and sorghum in strips, the red soil between them, eucalyptus woods and bamboo in the gullies, little bare rock (weathered
+    // volcanic ash and old schists, red-brown); no snow (the line far above the Virunga tops); tin roofs of the farms and the roadside
+    // houses; generic signs (no name of a lodge, a shop or a builder of the road), the white centre line of the country's roads
+    kanaba: {
+      seed: 5400, board: 'KANABA', sub: 'KIGEZI', banner: ['KIGEZI', 'KANABA GAP · 2343 M'],
+      grass: [0.36, 0.48, 0.2], grassDry: [0.52, 0.5, 0.26], grassLush: [0.26, 0.42, 0.15], shrub: [0.16, 0.26, 0.1],
+      rock: [0.42, 0.33, 0.27], rockWarm: [0.52, 0.34, 0.24], lichen: [0.4, 0.4, 0.3], scree: [0.56, 0.36, 0.26],
+      sat: 0.6, satV: 1.25, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.42, 0.32, 0.26], [0.5, 0.36, 0.27], [0.36, 0.3, 0.27], [0.56, 0.38, 0.28], [0.44, 0.38, 0.33], [0.38, 0.33, 0.28]],   // (the weathered rock of the cuttings: red-brown, the laterite's)
+      centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed, solid through the tight bends)
+      chev: ['#111111', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.36, 0.26],
+      fans: [[0.95, 0.95, 0.93], [0.16, 0.42, 0.24], [0.9, 0.76, 0.16], [0.72, 0.16, 0.14], [0.2, 0.3, 0.6], [0.5, 0.36, 0.22], [0.12, 0.12, 0.14], [0.86, 0.84, 0.78]],
+      cars: [[0.9, 0.9, 0.88], [0.86, 0.86, 0.84], [0.16, 0.3, 0.62], [0.18, 0.18, 0.2], [0.55, 0.56, 0.58], [0.66, 0.16, 0.14]],
+      roofs: [[0.62, 0.63, 0.64], [0.5, 0.3, 0.22], [0.55, 0.56, 0.58], [0.42, 0.24, 0.18]],
+      sheep: 1, portal: 0, far: { lo: [0.3, 0.42, 0.2], hi: [0.3, 0.36, 0.22], dw: [0.22, 0.3, 0.14], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
