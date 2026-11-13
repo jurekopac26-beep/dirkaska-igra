@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Spain</title>
+  <!-- Ratio 2:3. Three horizontal bands red, yellow, red, the yellow twice as wide as each red (Constitution, art. 4.1; the flag of the
+       official buildings and the state's ceremonies adds the coat of arms, Law 39/1981). Colours: red #AA151B, yellow #F1BF00. -->
+  <rect width="900" height="150" y="0" fill="#AA151B"/>
+  <rect width="900" height="300" y="150" fill="#F1BF00"/>
+  <rect width="900" height="150" y="450" fill="#AA151B"/>
+</svg>

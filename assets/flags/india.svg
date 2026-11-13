@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>India</title>
+  <!-- Ratio 2:3 (Flag Code of India, 2002). Three equal horizontal bands saffron, white and green; in the centre of the white
+       band the Ashoka Chakra in navy blue, a wheel of 24 spokes, its diameter about the width of the white band (185 of 200).
+       Colours: saffron #FF9933, white #FFFFFF, green #138808, navy blue #000080. -->
+  <rect width="900" height="600" fill="#138808"/>
+  <rect width="900" height="400" fill="#FFFFFF"/>
+  <rect width="900" height="200" fill="#FF9933"/>
+  <g fill="#000080">
+    <circle cx="450" cy="300" r="92.5"/>
+    <circle cx="450" cy="300" r="85.0" fill="#FFFFFF"/>
+    <circle cx="450" cy="300" r="16"/>
+    <circle cx="533.3" cy="311.0" r="3.5"/><circle cx="527.6" cy="332.1" r="3.5"/><circle cx="516.6" cy="351.1" r="3.5"/><circle cx="501.1" cy="366.6" r="3.5"/><circle cx="482.1" cy="377.6" r="3.5"/><circle cx="461.0" cy="383.3" r="3.5"/><circle cx="439.0" cy="383.3" r="3.5"/><circle cx="417.9" cy="377.6" r="3.5"/><circle cx="398.9" cy="366.6" r="3.5"/><circle cx="383.4" cy="351.1" r="3.5"/><circle cx="372.4" cy="332.1" r="3.5"/><circle cx="366.7" cy="311.0" r="3.5"/><circle cx="366.7" cy="289.0" r="3.5"/><circle cx="372.4" cy="267.9" r="3.5"/><circle cx="383.4" cy="248.9" r="3.5"/><circle cx="398.9" cy="233.4" r="3.5"/><circle cx="417.9" cy="222.4" r="3.5"/><circle cx="439.0" cy="216.7" r="3.5"/><circle cx="461.0" cy="216.7" r="3.5"/><circle cx="482.1" cy="222.4" r="3.5"/><circle cx="501.1" cy="233.4" r="3.5"/><circle cx="516.6" cy="248.9" r="3.5"/><circle cx="527.6" cy="267.9" r="3.5"/><circle cx="533.3" cy="289.0" r="3.5"/>
+  </g>
+  <path fill="none" stroke="#000080" stroke-width="4" d="M466.0,300.0L535.0,300.0M465.5,304.1L532.1,322.0M463.9,308.0L523.6,342.5M461.3,311.3L510.1,360.1M458.0,313.9L492.5,373.6M454.1,315.5L472.0,382.1M450.0,316.0L450.0,385.0M445.9,315.5L428.0,382.1M442.0,313.9L407.5,373.6M438.7,311.3L389.9,360.1M436.1,308.0L376.4,342.5M434.5,304.1L367.9,322.0M434.0,300.0L365.0,300.0M434.5,295.9L367.9,278.0M436.1,292.0L376.4,257.5M438.7,288.7L389.9,239.9M442.0,286.1L407.5,226.4M445.9,284.5L428.0,217.9M450.0,284.0L450.0,215.0M454.1,284.5L472.0,217.9M458.0,286.1L492.5,226.4M461.3,288.7L510.1,239.9M463.9,292.0L523.6,257.5M465.5,295.9L532.1,278.0"/>
+</svg>

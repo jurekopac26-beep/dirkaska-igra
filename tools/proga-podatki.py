@@ -14,6 +14,7 @@
 #        places    kraji za HUD: [oznaka, id vozlišča OSM (kraj; najbližja točka ceste) ali null, s v m (kadar id manjka)]
 #        dist      (neobvezno) razdalje od ceste v m: {"bld": 60, "trees": 60, "walls": 30, "coast": 400, "cliffs": 300, "shore": 300,
 #                  "water": 100, "rail": 200, "roads": 60, "grid": 150, "lamps": 30}
+#        driveExtra (neobvezno) dodatne vrste OSM highway, po katerih sme pot (npr. ["pedestrian"]: ulica brez avtov, ki je na dirki zaprta)
 #        osmStep   (neobvezno) velikost kosov OSM v stopinjah [dlat, dlon], privzeto [0.03, 0.025] (API: največ 50.000 točk na zahtevo)
 #   2. Python: numpy in pillow sta v seji; pip install --break-system-packages scipy rasterio
 #   3. python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]   (brez korakov: vsi trije)
@@ -106,7 +107,8 @@ def step_osm(raw):
 
 # ================= 2. the route (waypoints, the shortest way between them over the drivable roads) =================
 DRIVE = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service',
-         'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+         'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link',
+         'raceway'}   # (circuits: the track itself is highway=raceway in OSM; first used by Silkeborg, docs/nove-proge-1-0.md)
 
 def ll_dist(a, b):   # metres between two [lat, lon] (local flat earth; short steps)
     k = math.cos(math.radians((a[0] + b[0]) / 2))
@@ -118,7 +120,7 @@ def step_route(raw):
     osm = os.path.join(raw, C['id'] + '-osm.json'); D = json.load(open(osm)); N, W = D['nodes'], D['ways']
     G, byname = {}, {}
     for wid, (refs, t) in W.items():
-        if t.get('highway') not in DRIVE or t.get('area') == 'yes': continue
+        if (t.get('highway') not in DRIVE and t.get('highway') not in C.get('driveExtra', ())) or t.get('area') == 'yes': continue
         nm = t.get('name', ''); f = 1.0 if nm in C['prefer'] else 4.0
         refs = [r for r in refs if r in N]
         for a, b in zip(refs, refs[1:]):
@@ -675,8 +677,22 @@ def build_vectors(F, line, L, R, D, bridges):
             for ring in rel_rings(D, mem):
                 x, z = F.xz([p[0] for p in ring], [p[1] for p in ring]); P = np.stack([x, z], 1); s_, d_ = A.query(P)
                 if np.abs(d_).min() <= DS['shore']: areas.append([t['natural'], flat(P)])
-    out['coast'] = coast; out['cliffs'] = cliffs; out['shore'] = areas; out['water'] = water
-    print('coast %d pieces, cliffs %d, beaches / rocks %d, streams %d' % (len(coast), len(cliffs), len(areas), len(water)), flush=True)
+    # lakes and rivers as areas (natural=water ways and multipolygons) with any point within DS['water'] m: whole outlines (a lake's ring only
+    # partly in the box stays open: closed 0, its ends where OSM's data stops)
+    lakes = []
+    cand = [(t, [refs]) for k, (refs, t) in W.items() if t.get('natural') == 'water' and len(refs) > 3]
+    cand += [(t, None, mem) for k, (mem, t) in D['rels'].items() if t.get('type') == 'multipolygon' and t.get('natural') == 'water']
+    for c_ in cand:
+        t = c_[0]
+        rings = [[N[r] for r in c_[1][0] if r in N]] if c_[1] is not None else rel_rings(D, c_[2])
+        for ring in rings:
+            if len(ring) < 4: continue
+            x, z = F.xz([p[0] for p in ring], [p[1] for p in ring]); P = np.stack([x, z], 1); s_, d_ = A.query(P)
+            if np.abs(d_).min() > DS['water']: continue
+            closed = 1 if np.hypot(*(P[0] - P[-1])) < 0.5 else 0
+            lakes.append([t.get('water', '') or 'water', t.get('name', '') if t.get('name', '') in C['geoWater'] else '', closed, flat(P)])
+    out['coast'] = coast; out['cliffs'] = cliffs; out['shore'] = areas; out['water'] = water; out['lakes'] = lakes
+    print('coast %d pieces, cliffs %d, beaches / rocks %d, streams %d, lakes / rivers %d' % (len(coast), len(cliffs), len(areas), len(water), len(lakes)), flush=True)
     # the railway (and the funicular), within 200 m
     rail = []
     for k, (refs, t) in W.items():
@@ -842,6 +858,7 @@ def step_data(raw):
         'trees': '[x, z, kind]: single trees (OSM) within %d m; kind p pine, c cypress, o olive, m palm, b broadleaved, \'\' unknown' % C['dist']['trees'], 'treeRows': '[kind, [x, z, ...]]',
         'walls': '[barrier (OSM: wall, retaining_wall, fence, guard_rail, hedge ...), height (0 = untagged), wall / material, [x, z, ...]]: within %d m' % C['dist']['walls'],
         'coast': '[x, z, ...]: the coastline within %d m (OSM: the land on the left of the way\'s direction, the sea on the right)' % C['dist']['coast'], 'cliffs': '[x, z, ...]: cliffs within %d m (OSM: the lower side on the right)' % C['dist']['cliffs'],
+        'lakes': '[water (OSM water=: lake, river, pond ...), name (geographic), closed (0: a ring cut off where the data ends), [x, z, ...]]: lakes and rivers as areas within %d m' % C['dist']['water'],
         'shore': '[natural (beach, bare_rock ...), [x, z, ...] outline]: within %d m' % C['dist']['shore'], 'water': '[waterway, name (geographic), culvert / tunnel, [x, z, ...]]: streams within %d m' % C['dist']['water'],
         'rail': '[railway (rail, funicular ...), bridge, tunnel, [x, z, ...]]: within %d m' % C['dist']['rail'],
         'roads': '[highway, lanes, width, 1 bridge / 2 tunnel, layer, surface, name (geographic), par (1: a carriageway alongside the route), [x, z, ...]]: other roads and paths within %d m (clipped to %d m)' % (C['dist']['roads'], C['dist']['roads'] + 20),

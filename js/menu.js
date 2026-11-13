@@ -101,12 +101,14 @@
   // every track to measure it would take seconds on a phone
   const lenOf = (d) => (D.lens || {})[d.id] || 0;
   function buildTracks() {
-    const gr = (d) => d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
+    const gr = (d) => d.test ? 'test' : (d.rally || d.descent && d.timeTrial) ? 'rally' : d.open ? 'road' : 'circuit';   // (a descent against the clock alone, Katu-Jaryk: a rally; one with a race and traffic, Sa Calobra, or with rivals, Ngorongoro: an open road)
     TR = G.defs().filter(d => !d.variantOf).map(d => {
       const en = d.en || {}, full = en.name || d.name, k = full.lastIndexOf(', ');
-      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc), group: gr(d), test: !!d.test,
-        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial, tag: ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)] };
+      const t = { id: d.id, def: d, name: k > 0 ? full.slice(0, k) : full, country: k > 0 ? full.slice(k + 2) : '', desc: shortDesc(en.desc || d.desc),
+        modes: G.modesOf ? G.modesOf(d) : d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : ['race'], trial: !!d.timeTrial };
       Object.defineProperties(t, {
+        test: { get() { return !!d.test; } }, group: { get() { return gr(d); } },   // (read as the menu makes a list, as pending: a test may make a test track real for a while)
+        tag: { get() { return ({ circuit: 'CIRCUIT', road: 'OPEN ROAD', rally: 'RALLY', test: 'TEST' })[gr(d)]; } },
         km: { get() { if (lenOf(d)) return lenOf(d) / 1000; const T = G.track(d.id); return (d.open ? T.raceLen : T.len) / 1000; } },
         corners: { get() { const n = (D.ncorners || {})[d.id]; return n != null ? n : G.track(d.id).corners.length; } },   // (the real tracks': MENU.ncorners, tools/menu-lens.js)
         laps: { get() { return d.open ? 1 : G.lapsOf(d); } },
@@ -602,7 +604,7 @@
   const GRID = '<svg class="grid" viewBox="0 0 18 17" aria-hidden="true">' + [[2, 1, 1], [11, 3.6, 1], [2, 6.2, .75], [11, 8.8, .75], [2, 11.4, .5], [11, 14, .5]].map(r => '<rect x="' + r[0] + '" y="' + r[1] + '" width="7" height="4" rx="1.6" fill="#9fb0c8" opacity="' + r[2] + '"/>').join('') + '</svg>';
   const DBL = (dir) => '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="' + (dir < 0 ? 'M13 3 6 10l7 7M22 3l-7 7 7 7' : 'M6 3l7 7-7 7M15 3l7 7-7 7') + '" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // the flags of the countries (assets/flags, drawn to their official rules); a track in another country has none
-  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'japan', 'china', 'thailand', 'russia', 'romania'];
+  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'japan', 'china', 'thailand', 'russia', 'romania', 'india', 'denmark', 'sweden', 'czechia', 'wales', 'ireland', 'spain', 'montenegro', 'latvia', 'netherlands', 'switzerland', 'cape-verde', 'georgia', 'tanzania', 'kazakhstan', 'sri-lanka', 'albania', 'portugal', 'south-korea', 'mexico', 'turkey', 'malaysia', 'indonesia', 'bahrain', 'qatar', 'argentina'];
   const flagUrl = (c) => { const f = String(c || '').toLowerCase().replace(/\s+/g, '-'); return FLAG_FILES.includes(f) ? 'assets/flags/' + f + '.svg' : ''; };
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
@@ -1085,7 +1087,7 @@
       (fl ? '<img src="' + fl + '" alt="">' : '<span class="nf">' + esc((ctry || t.name).slice(0, 3).toUpperCase()) + '</span>') + '</button></div>' : fl ? '<div class="flag"><img src="' + fl + '" alt="Flag of ' + esc(ctry) + '"></div>' : '';
     const best = pg ? '<div class="best"><small>' + (pg.done ? IZ().mark(pg) : '') + esc(rec[0]) + '</small><b>' + (pg.done ? esc(my || '—') : IZ().mark(pg)) + '</b>' + fb + '</div>' : cell(rec[0], my || '—', 'best').replace(/<\/div>$/, fb + '</div>');
     h += '<div class="trow">' + flagB + best + cell('Length', t.km.toFixed(2) + ' km') +
-      (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round(alt[1] - alt[0]))) + ' m') : cell('Corners', String(t.corners))) + last + '</div>';
+      (alt ? cell(alt[1] < alt[0] ? 'Descent' : 'Climb', (alt[1] < alt[0] ? '−' : '+') + num(Math.abs(Math.round((alt[1] < alt[0] ? alt[1] : d.altTop || alt[1]) - alt[0]))) + ' m') : cell('Corners', String(t.corners))) + last + '</div>';
     // the yard: the car before the road sign with the country (a test track: its name and TEST; one awaiting the choice: PENDING); the car in 3D with the wind round it
     // (MenuCar: its canvas over the whole yard, put in after the drawing, carOn), else its picture; its name in a small box over it (stran
     // Odločitve m6: over the car's top as MenuCar fits it, --car-top/--car-left); a tap on either: the garage (the name a button of its own,

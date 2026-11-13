@@ -67,10 +67,30 @@ const SETUPS = {
 // (the knocks of the versions, Trki med avti: Simulacija by default, kCollide in core.js, the pack moves otherwise again; from the old times these only grazed or lost
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
-// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off)
+// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off; Silkeborg rally 9: from 6 s the
+// wrecked car drives its whole first lap slowly and reaches its box too late for the repair in the 96 s; from 9 s, before the double left, it is repaired at 89 s; Izoard's muscle car 4: from 5 to 6.5 s the same as Bâlea's rally; Sa Calobra rally 5: at 6 s
+// the left lock only dents the car on the stone parapet, no panel off; its muscle car 4: the same at 6 s, no panel off;
+// Dadès 7: from 6 s the left lock only dents the rally car and the muscle car against the parapet, no panel off; from 7 s every car of the crash
+// set-ups loses panels, each of the three newer road cars too (the one the track gets depends on its place in the list: tracks added before it shift it))
+// (Ngorongoro rally 10: up to 8 s the left lock on the rim road of the run-up and past the start line only dents the rally car, no panel off; from
+// 9 s on, further down, a panel comes off every time tried, 9-14 s)
+// (Ella's formula 4: from 6 s it only grazes the verge, no panel off; its truck 5.5 (zbirna N5, Ella's car is the truck there): from 6 s
+// it only rubs the verge, no panel off; at 5.5 s it hits the bank, three panels off)
+// (Porto Moniz prototype 4: at 6 s it only dents the car, no panel off)
+// (Seoul's rally car 5 and muscle car 6.5: from 6 s the left lock only dents them against the concrete blocks, no panel off; its truck 5 (zbirna N6,
+// Seoul's car is the truck there): at 4-4.5 s and at 6-6.5 s it only dents or rubs the blocks, no panel off; at 5 s one panel off)
+// (Espinazo del Diablo's rally 5: from 6 s the left lock only dents the car against the guardrail, no panel off)
+// (Killar ev 7:
+// with Hakone before it in the list the electric car, from 5 to 6.5 s it only dents the car, from 4 s a rescue; Zürich rally 5.5: from 6 s the car only dents itself on the Limmatquai's blocks;
+// Killar's wooden fence on the left is brittle (def.fence.vBreak 0, 9. 11. 2026 at ~22.21): the left lock takes the car through it and over the edge, the
+// fall's damage, no panel off; put back on the road, a rival knocks panels off it: the rally car from 12.75 s (from 12.5 to 14 s in quarter seconds all but
+// 13.25), the formula from 8.5 s (from 8 to 9 s; from 3 s no panel off now); since the fall lands on the slope drawn below (def.floor, the user's
+// report of 9. 11. 2026 at ~23.48) the electric car from 8.25 s (from 7 s it slides on the slope, no panel off; 8, 8.25 and 8.5 s all knock one off); with the road's crests and dips (KILLAR_RAZGIBANOST, 10. 11. 2026) the formula from 7.5 s (from 7 to 8 s in quarter seconds all knock one off, at 8.5 s none); since the car
+// falls over the edge as a body and is put back on the road where it went over (FALL in core.js, 10. 11. 2026; before up to 42 m on, from where it often
+// fell or crashed again) the rally car from 15.5 s and the electric car from 4 s (at 12.75 and 8.25 s each falls once and loses no panel; picked from 4 to 16 s in half seconds))
 // (Chapman's Peak's hills behind the barrier line, def.hills: from 6 s the left lock of the rally car and the prototype drives up the hill by the
 // start, no damage; tried from 4 s on in half seconds: rally 5.5, prototype 5)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'chapman/rally': 5.5, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
+const CRASH_AT = { katu: 4.5, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'balea/rally': 6.5, 'portomoniz/lm': 4, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/rally': 5.5, 'chapman/lm': 5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5, 'zurich/rally': 5.5, 'killar/ev': 4, 'killar/rally': 15.5, 'killar/formula': 7.5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

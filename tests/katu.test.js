@@ -40,8 +40,8 @@ check('track: an open gravel road, a time trial downhill (def.descent), 4 checkp
 {
   const flat = new C.Track(Object.assign({}, def, { descent: false })), a = T.speedProfile(C.CSK.aiLatA, C.CSK.aiBrakeA, 85, C.CSK.aiWmax), b = flat.speedProfile(C.CSK.aiLatA, C.CSK.aiBrakeA, 85, C.CSK.aiWmax);
   let lower = 0, higher = 0, most = 0; for (let i = 0; i < T.N; i++) { if (a[i] < b[i] - 0.01) lower++; if (a[i] > b[i] + 1e-6) higher++; most = Math.max(most, b[i] - a[i]); }
-  check('AI: on the descent it brakes earlier for the bends (the slope pulls), never later; no other track is a descent',
-    lower > 200 && !higher && most > 1 && C.TRACKS.filter(d => d.descent).map(d => d.id).join() === 'katu', `${lower} samples slower, ${higher} faster, up to ${(most * 3.6).toFixed(1)} km/h; descents: ${C.TRACKS.filter(d => d.descent).map(d => d.id).join()}`);
+  check('AI: on the descent it brakes earlier for the bends (the slope pulls), never later; the other descents are Ngorongoro\'s crater road and Sa Calobra\'s road down to the sea',
+    lower > 200 && !higher && most > 1 && C.TRACKS.filter(d => d.descent).map(d => d.id).sort().join() === 'katu,ngorongoro,sacalobra', `${lower} samples slower, ${higher} faster, up to ${(most * 3.6).toFixed(1)} km/h; descents: ${C.TRACKS.filter(d => d.descent).map(d => d.id).join()}`);
 }
 
 // 3. a whole run on the autopilot (the stock rally car, as the medal times were set): to the flying finish without a rescue or a wall; in the rain

@@ -17,7 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Suzuka',
     grassNat: 0.9, lawn: [0.95, 1.0, 0.92],
     zivali: { a: ['sika', 'macaque'], t: ['torii', 'lantern', 'vending'] },
-    id: 'suzuka', name: 'Suzuka, Japonska', theme: 'suzuka', laps: 2, halfWidth: 6.5,
+    id: 'suzuka', test: true, name: 'Suzuka, Japonska', theme: 'suzuka', laps: 2, halfWidth: 6.5,
     desc: 'Suzuka na Japonskem, proga v obliki osmice, v pravem merilu (5,8 km): ciljna ravnina navzdol do prvega ovinka, S-zavoji navkreber, dolgi levi, dvojni desni, pod mostom do lasnice, 200R, dvojni levi Spoon, zadnja ravnina \u010dez most, hitri 130R, \u0161ikana in zadnji ovinek. Za tribunami zabavi\u0161\u010de z velikim kolesom. Podatki: \u00a9 OpenStreetMap (ODbL), Copernicus DEM.',
     en: { name: 'Suzuka, Japan', desc: 'Suzuka in Japan, the figure-of-eight circuit at full scale (5.8 km): the finish straight down to the first corner, the S curves uphill, the long left, the double right, under the bridge to the hairpin, 200R, the double left of Spoon, the back straight over the bridge, the fast 130R, the chicane and the final corner. Behind the grandstands, an amusement park with a big wheel. Data: © OpenStreetMap (ODbL), Copernicus DEM.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 1.0, inner: 4.5, side: 6, gradeForce: true, elevSmooth: 6, realKm: 5.807,

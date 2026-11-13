@@ -55,7 +55,7 @@ const gap = (T) => {
 // 2. Medvode: the four roundabouts blue (where the route runs round def.rings), their red arrows gone; the sign up while the car is in one
 {
   const T = tr('medvode'), R = T.hudSigns().filter(g => g.kind === 'ring'), at = R.map(g => Math.round(rel(T, g.s0)));
-  check('medvode: four roundabouts, at 326, 978, 2226 and 4120 m (±20)', R.length === 4 && [326, 978, 2226, 4120].every((d, k) => Math.abs(at[k] - d) <= 20), at.join(', '));
+  check('medvode: four roundabouts, at 330, 980, 2228 and 4168 m (±20)', R.length === 4 && [330, 980, 2228, 4168].every((d, k) => Math.abs(at[k] - d) <= 20), at.join(', '));
   const red = T.hudSigns().filter(g => g.kind === 'corner' && rel(T, g.s0) >= 311 && rel(T, g.s0) <= 415);
   check('medvode: no red arrow in the first roundabout (311-415 m; T.corners has three there)', !red.length && T.corners.filter(c => rel(T, c.s0) >= 311 && rel(T, c.s0) <= 415).length >= 2, red.map(g => show(T, g)).join(' '));
   const a = T.signAt(S(T, 300), 20), b = T.signAt(S(T, 360), 8), c = T.signAt(S(T, 420), 15);

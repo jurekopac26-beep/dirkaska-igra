@@ -452,13 +452,13 @@ try {
   //     Esc; the pad's B) a layer down, the cross closes it. NEUPORABNO's sheet (the title's button): the hidden tracks, a test track's
   //     card, Race!
   {
-    const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'suzuka@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
+    const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'hakone@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
     const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, null, { init: 'localStorage.setItem("tdgp-records", ' + JSON.stringify(JSON.stringify({ tracks: recs })) + ');' });
     const miss = []; page.on('response', (r) => { if (r.status() === 404) miss.push(new URL(r.url()).pathname); });
     await ready(page);
-    // (Irohazaka awaits the user's choice (pending: behind NEUPORABNO); here a real track of Japan, the list's one country of two tracks: one
-    // track per country (CLAUDE.md) leaves none else. The menu reads the flag as it makes a list, its place stays the hidden tracks' first)
-    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });
+    // (Irohazaka is a test track since 12. 11. 2026 (behind NEUPORABNO); here a real track of Japan beside Hakone, the list's one country of
+    // two tracks: one track per country (CLAUDE.md) leaves none else. The menu reads the flag as it makes a list)
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').test = false; });
     await click(page, 'single'); await click(page, 'mode:race');
     const IZ = (n) => page.waitForFunction((n) => window.MenuIzbor && (n ? MenuIzbor.isOpen() && MenuIzbor.depth() === n : !MenuIzbor.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.izb')), n, { timeout: 10000 });
     const VIEW = `const q = (s) => root.querySelector(".izb " + s), all = (s) => [...root.querySelectorAll(".izb " + s)], tx = (e) => e ? e.textContent.replace(/\\s+/g, " ").trim() : null;
@@ -485,18 +485,18 @@ try {
     const az = g.cts.every((c, i, a) => conts.includes(c) && (!i || conts.indexOf(a[i - 1]) < conts.indexOf(c))) && g.secs.every(n => n.every((c, i) => !i || n[i - 1].localeCompare(c, 'en') < 0));
     T.check('the countries by continent (Europe first, as the mockup), A to Z in each; no test tracks (no For testing tile: they are behind NEUPORABNO)',
       az && g.cts[0] === 'Europe' && !g.cts.includes('For testing') && !g.tiles.some(t => t[0] === 'TEST') && exp.test === 0 && tile('Belgium')[1] === 1 && tile('Japan')[1] >= 2, JSON.stringify({ cts: g.cts, secs: g.secs, tiles: g.tiles.map(t => t[0] + ':' + t[1]) }));
-    T.check('the marks on the flags: the shown track\'s country gold (Belgium), its best a gold 1; Japan (Suzuka 2nd) silver; Germany (Nürburg 5th) a tick; a country not driven NEW',
+    T.check('the marks on the flags: the shown track\'s country gold (Belgium), its best a gold 1; Japan (Hakone 2nd) silver; Germany (Nürburg 5th) a tick; a country not driven NEW',
       tile('Belgium')[3] === 1 && g.tiles.filter(t => t[3]).length === 1 && tile('Belgium')[2] === 'gold:1' && tile('Japan')[2] === 'silver:2' && tile('Germany')[2] === 'done:' && tile('Canada')[2] === 'new:NEW', JSON.stringify(g.tiles));
-    // a country: its tracks (Japan: Iroha, Suzuka), each with its mark, facts and best; then Suzuka's card
+    // a country: its tracks (Japan: Iroha, Hakone), each with its mark, facts and best; then Hakone's card
     await page.click('.izb-c[data-c="Japan"]'); await IZ(2);
-    const jp = await view(), suz = jp.rows.find(r => r[0] === 'suzuka') || [], iro = jp.rows.find(r => r[0] === 'iroha') || [];
-    T.check('a country (Japan): its tracks in the list\'s order, each its mark (Suzuka a silver 2 and its best: 02:02.400, 2nd; Iroha NEW) and facts; two steps in the history',
+    const jp = await view(), suz = jp.rows.find(r => r[0] === 'hakone') || [], iro = jp.rows.find(r => r[0] === 'iroha') || [];
+    T.check('a country (Japan): its tracks in the list\'s order, each its mark (Hakone a silver 2 and its best: 02:02.400, 2nd; Iroha NEW) and facts; two steps in the history',
       jp.title === 'Japan' && jp.sub === jp.rows.length + ' tracks' && jp.rows.length >= 2 && jp.depth === 2 && jp.hist === 2 && suz[1] === 'silver:2' && suz[2] === '02:02.4002nd' && /^\d+\.\d\d km · \d+ corners · Circuit$/.test(suz[3]) && iro[1] === 'new:NEW' && iro[2] === '' && /^\d+\.\d\d km · .+ · Open road$/.test(iro[3]),
       JSON.stringify(jp.rows));
-    await page.click('.izb-t[data-t="suzuka"]'); await IZ(3);
-    const cd = await view(), km = await page.evaluate(() => (MENU.lens.suzuka / 1000).toFixed(2) + ' km'), nc = await page.evaluate(() => String(MENU.ncorners.suzuka));
-    T.check('the track\'s card (Suzuka): the shape from above (a closed line), Length, Corners and Type, the player\'s best (Best lap 02:02.400, 2nd place, silver), the heights, Select and Race!',
-      cd.title === 'Suzuka' && cd.sub === 'Japan' && cd.depth === 3 && cd.hist === 3 && !!cd.card && /^M[\d ]+(L[\d ]+){6,}Z$/.test(cd.card.shape) && JSON.stringify(cd.card.facts) === JSON.stringify(['Length:' + km, 'Corners:' + nc, 'Type:Circuit']) &&
+    await page.click('.izb-t[data-t="hakone"]'); await IZ(3);
+    const cd = await view(), km = await page.evaluate(() => (MENU.lens.hakone / 1000).toFixed(2) + ' km'), nc = await page.evaluate(() => String(MENU.ncorners.hakone));
+    T.check('the track\'s card (Hakone): the shape from above (a closed line), Length, Corners and Type, the player\'s best (Best lap 02:02.400, 2nd place, silver), the heights, Select and Race!',
+      cd.title === 'Hakone' && cd.sub === 'Japan' && cd.depth === 3 && cd.hist === 3 && !!cd.card && /^M[\d ]+(L[\d ]+){6,}Z$/.test(cd.card.shape) && JSON.stringify(cd.card.facts) === JSON.stringify(['Length:' + km, 'Corners:' + nc, 'Type:Circuit']) &&
       cd.card.best === 'silver:2|Best lap|02:02.4002nd place' && cd.card.graph && JSON.stringify(cd.card.btns) === '["Select","Race!"]', JSON.stringify(cd));
     // Back: the phone's (the history), the pad's B, Esc: a layer down each, the last closes it; the screen behind as it was
     await page.evaluate(() => history.back()); await IZ(2);
@@ -528,7 +528,7 @@ try {
     // circuits, no test track), two on (either), Rally, Ice (no ice track in the game yet: it says so); all off: the countries again
     const cats = await ev(page, 'return [...root.querySelectorAll(".izb-chips button")].map(e => e.dataset.f + ":" + e.textContent.trim() + ":" + (e.querySelector("svg") ? "icon" : "-"));');
     const want = (types) => page.evaluate((types) => Menu.debug().list.filter(id => {
-      const d = Core.TRACKS.find(x => x.id === id), gr = d.ice ? 'ice' : d.test ? 'test' : (d.rally || d.descent) ? 'rally' : d.open ? 'road' : 'circuit';
+      const d = Core.TRACKS.find(x => x.id === id), gr = d.ice ? 'ice' : d.test ? 'test' : (d.rally || d.descent && d.timeTrial) ? 'rally' : d.open ? 'road' : 'circuit';   // (as js/menu.js gr: a descent against the clock alone, Katu-Jaryk, is a rally; one with a race and traffic, Sa Calobra, or with rivals, Ngorongoro, an open road)
       return !types.length || types.includes(gr);
     }), types);
     const tap = async (...ks) => { for (const k of ks) await page.click(`.izb-chips [data-f="${k}"]`); return view(); };
@@ -579,7 +579,7 @@ try {
       be.title === 'Spa' && be.sub === 'Belgium' && !!be.card && be.card.best === 'gold:1|Best lap|02:20.2101st place' && be2.title === 'Choose a country', JSON.stringify({ be: be.title, best: be.card && be.card.best, be2: be2.title }));
     // NEUPORABNO (the title's button): its sheet (no countries): NEW VERSION · TEST 1, MISSIONS and CUPS on top, then the tracks awaiting the
     // user's choice (PENDING) and the test tracks (TEST), each its row; a test track's card (its picture, no shape); Race! starts its race at once
-    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = true; });   // (awaiting the choice again, as in the game)
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').test = true; });   // (a test track again, as in the game)
     await page.keyboard.press('Escape'); await IZ(0);
     await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');
     await page.click('[data-act="nu"] >> visible=true'); await IZ(1);
@@ -628,10 +628,10 @@ try {
     v.pn.every(p => a.cur || (a.c && !p[2]) || !hit(a.r, [p[0] - 7, p[1] - 7, p[0] + 7, p[1] + 7])));
   const wrap = (a) => ((a + 180) % 360 + 360) % 360 - 180;
   {
-    const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'suzuka@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
+    const recs = { 'spa@cs': { bestLap: 140.21, bestPos: 1 }, 'hakone@cs': { bestLap: 122.4, bestPos: 2 }, 'nring@cs': { bestLap: 431.5, bestPos: 5 } };
     const { ctx, page, errors } = await open({ track: 'spa', lastTrack: 'spa' }, null, { init: 'localStorage.setItem("tdgp-records", ' + JSON.stringify(JSON.stringify({ tracks: recs })) + ');' });
     await ready(page);
-    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in the quick list above: Irohazaka a real track of Japan here)
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').test = false; });   // (as in the quick list above: Irohazaka a real track of Japan here, beside Hakone)
     await click(page, 'single'); await click(page, 'mode:race');
     const earth = () => ev(page, EARTH);
     const place = (id) => page.evaluate((id) => { const p = (MENU.globe.places || {})[id], g = GEO.tracks[id]; return p || (g ? [g.lat0, g.lon0] : null); }, id);
@@ -645,8 +645,8 @@ try {
       e1.dlg === 'dialog/true' && e1.R.night === false && e1.R.nt === 0 && e1.moon === 'false' && e1.pad && e1.depth === 1 && e1.hist === 1 && e1.title === `WORLD|${nReal} tracks · ${e1.R.countries.length} countries` && e1.R.pins === nReal && ['Belgium', 'Germany', 'Japan'].every(c => e1.R.countries.includes(c)) &&
       Math.abs(e1.R.lat - spa[0]) < 0.3 && Math.abs(wrap(e1.R.lon - spa[1])) < 0.3 && Math.abs(e1.R.d - 3.7) < 0.01 && e1.R.tex === 'assets/geo/earth.webp' && e1.R.size.join() === '4096,2048' && !e1.R.weak && e1.rested && e1.car === false,
       JSON.stringify(Object.assign({}, e1, { names: e1.names.length, pins: e1.pins.length })));
-    T.check('the pins in the colours of the player\'s progress (Spa won: gold, the track shown; Suzuka 2nd: silver; Nürburg 5th: a tick\'s green; the rest NEW); from afar the countries named (Belgium the shown one\'s), none over another or a button, none over the shown one\'s pin',
-      e1.pins.includes('spa:gold cur') && e1.pins.includes('suzuka:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 2 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
+    T.check('the pins in the colours of the player\'s progress (Spa won: gold, the track shown; Hakone 2nd: silver; Nürburg 5th: a tick\'s green; the rest NEW); from afar the countries named (Belgium the shown one\'s), none over another or a button, none over the shown one\'s pin',
+      e1.pins.includes('spa:gold cur') && e1.pins.includes('hakone:silver') && e1.pins.includes('nring:done') && e1.pins.filter(p => /:new$/.test(p)).length >= 5 && e1.names.length >= 2 && e1.names.every(n => n.c && !n.t) && e1.names.some(n => n.c === 'Belgium' && n.cur) && clean(e1),
       JSON.stringify({ pins: e1.pins, names: e1.names.map(n => n.c + (n.cur ? '*' : '')) }));
     const n0 = e1.R.n; await page.waitForTimeout(600); const n1 = await page.evaluate(() => MenuZemlja._R().n);
     const sun = await page.evaluate(() => { const s = MenuZemlja.sun(), v = MenuZemlja._R().sun, p = (s[1] + 180) * Math.PI / 180, t = (90 - s[0]) * Math.PI / 180;
@@ -656,13 +656,13 @@ try {
     // a country's name pressed (a key, the pad): its card with its tracks, the Earth turned to it, closer; close in, the tracks named
     await ev(page, 'root.querySelector(".zl.c[data-c=\\"Japan\\"]").click();'); await zem(page, 2);
     const e2 = await earth();
-    T.check('a country (Japan): its card (its tracks in the list\'s order, each its mark: Suzuka a silver 2, Iroha NEW), the Earth turned to it and closer, the tracks named there (not over the card); two steps in the history',
-      e2.R.sel === 'Japan' && e2.card && e2.card.title === 'Japan' && e2.card.sub === e2.card.rows.length + ' tracks' && e2.card.rows.includes('suzuka:silver:2') && e2.card.rows.includes('iroha:new:NEW') && e2.depth === 2 && e2.hist === 2 &&
+    T.check('a country (Japan): its card (its tracks in the list\'s order, each its mark: Hakone a silver 2, Iroha NEW), the Earth turned to it and closer, the tracks named there (not over the card); two steps in the history',
+      e2.R.sel === 'Japan' && e2.card && e2.card.title === 'Japan' && e2.card.sub === e2.card.rows.length + ' tracks' && e2.card.rows.includes('hakone:silver:2') && e2.card.rows.includes('iroha:new:NEW') && e2.depth === 2 && e2.hist === 2 &&
       e2.R.lat > 30 && e2.R.lat < 40 && e2.R.lon > 130 && e2.R.lon < 142 && e2.R.d < 2.75 && e2.names.length >= 1 && e2.names.every(n => n.t) && clean(e2), JSON.stringify({ R: e2.R, card: e2.card, names: e2.names.map(n => n.t) }));
-    await page.click('.zem-card .izb-t[data-t="suzuka"]'); await zem(page, 3);
+    await page.click('.zem-card .izb-t[data-t="hakone"]'); await zem(page, 3);
     const e3 = await earth();
-    T.check('a track\'s row: its card (Suzuka: the best, silver, Select and Race!); three steps in the history; still the pad\'s part of the screen',
-      e3.R.tc === 'suzuka' && e3.card && e3.card.title === 'Suzuka' && e3.card.sub === 'Japan' && e3.card.best === 'silver:2|02:02.4002nd place' && JSON.stringify(e3.card.btns.map(b => b[0])) === '["Select","Race!"]' && e3.depth === 3 && e3.hist === 3 && e3.pad, JSON.stringify(e3.card));
+    T.check('a track\'s row: its card (Hakone: the best, silver, Select and Race!); three steps in the history; still the pad\'s part of the screen',
+      e3.R.tc === 'hakone' && e3.card && e3.card.title === 'Hakone' && e3.card.sub === 'Japan' && e3.card.best === 'silver:2|02:02.4002nd place' && JSON.stringify(e3.card.btns.map(b => b[0])) === '["Select","Race!"]' && e3.depth === 3 && e3.hist === 3 && e3.pad, JSON.stringify(e3.card));
     // Back: the phone's (the history), the pad's B, Esc: a layer down each, the last closes it; the screen moves again
     await page.evaluate(() => history.back()); await zem(page, 2);
     const b1 = await earth();
@@ -676,12 +676,13 @@ try {
     // a pin tapped (Bâlea): its track's card at once; the card's cross: the Earth alone. (Marrakesh until 9. 11. 2026: awaiting the user's
     // choice (pending), behind NEUPORABNO, not on this Earth)
     await page.click('.thead .globe'); await zem(page, 1);
-    const pin = await ev(page, 'const r = root.querySelector(".zp[data-t=\\"balea\\"]").getBoundingClientRect(); return [r.left, r.top];');
+    // (a pin on top at its own place, Bâlea's if it is: from afar a country's name can lie over a pin and take the tap, as Albania's over Bâlea's since the new tracks, 11. 11. 2026)
+    const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(); return [r.left, r.top, p.dataset.t];');
     await page.mouse.click(pin[0], pin[1]); await zem(page, 3);
     const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
     const p2 = await earth();
-    T.check('a pin tapped (Bâlea): its track\'s card at once (Romania chosen, three steps); the card\'s cross: the Earth alone again', p1.R.tc === 'balea' && p1.R.sel === 'Romania' && p1.card && p1.card.sub === 'Romania' && !p2.card && !p2.R.sel && p2.depth === 1,
+    T.check(`a pin tapped (${pin[2]}): its track's card at once (its country chosen, three steps); the card's cross: the Earth alone again`, p1.R.tc === pin[2] && !!p1.R.sel && (pin[2] !== 'balea' || p1.R.sel === 'Romania') && p1.card && p1.card.sub === p1.R.sel && !p2.card && !p2.R.sel && p2.depth === 1,
       JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub], p2: [p2.R.sel, p2.depth, !!p2.card] }));
     // + and − come closer (the tracks named) and go back; a drag turns it (east under a finger moving west) and it glides a little after;
     // the arrows turn it; the target: back to the track shown, its country's card
@@ -699,17 +700,17 @@ try {
       Math.abs(z1.R.d - Math.max(1.5, p2.R.d / 1.45)) < 0.02 && z1.names.length && z1.names.every(n => n.t) && Math.abs(z2.R.d - z1.R.d * 1.45) < 0.02 && dlon > 5 && Math.abs(wrap(k1.R.lon - dr.R.lon) - 20) < 0.5 &&
       h1.R.sel === 'Belgium' && h1.card && h1.card.title === 'Belgium' && Math.abs(h1.R.lat - spa[0]) < 0.3 && Math.abs(wrap(h1.R.lon - spa[1])) < 0.3 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) === 'spa',
       JSON.stringify({ d0: p2.R.d, z1: z1.R.d, z1n: z1.names.map(n => n.t), z2: z2.R.d, dlon, k: wrap(k1.R.lon - dr.R.lon), h1: [h1.R.sel, h1.R.lat, h1.R.lon] }));
-    // Select on a track's card (Japan, Suzuka): the track step goes to it under the Earth going back into the globe, which turns to Japan
+    // Select on a track's card (Japan, Hakone): the track step goes to it under the Earth going back into the globe, which turns to Japan
     await ev(page, 'root.querySelector(".zl.c[data-c=\\"Japan\\"]").click();'); await zem(page, 2);
-    await page.click('.zem-card .izb-t[data-t="suzuka"]'); await zem(page, 3);
+    await page.click('.zem-card .izb-t[data-t="hakone"]'); await zem(page, 3);
     await page.click('.zem-card .izb-sel');
     const turned = await page.waitForFunction(() => Menu.debug().globe.turning, null, { timeout: 5000, polling: 'raf' }).then(() => true).catch(() => false);
     await zem(page, 0);
     await page.waitForFunction(() => !Menu.debug().globe.turning, null, { timeout: 10000 }).catch(() => null);
     const sel = await ev(page, 'const d = Menu.debug(), c = root.querySelector(".thead .globe canvas"); return { id: d.list[d.trackIdx], track: __game.S.track, head: root.querySelector(".where .w2").textContent, hist: history.state && history.state.nazaj, g: d.globe, country: c && c.dataset.country, S: c && c.width };');
-    const suz = await place('suzuka');
-    T.check('Select on the Earth (Suzuka): the track step goes to it, the Earth gone with its steps in the history; the head\'s globe turned to Japan (from Belgium, along the way)',
-      sel.id === 'suzuka' && sel.track === 'suzuka' && sel.head === 'Suzuka' && !sel.hist && turned && !sel.g.turning && Math.abs(sel.g.at[0] - suz[0]) < 0.05 && Math.abs(wrap(sel.g.at[1] - suz[1])) < 0.05 && sel.country === 'Japan' && sel.S >= 104, JSON.stringify({ sel, turned, suz }));
+    const suz = await place('hakone');
+    T.check('Select on the Earth (Hakone): the track step goes to it, the Earth gone with its steps in the history; the head\'s globe turned to Japan (from Belgium, along the way)',
+      sel.id === 'hakone' && sel.track === 'hakone' && sel.head === 'Hakone' && !sel.hist && turned && !sel.g.turning && Math.abs(sel.g.at[0] - suz[0]) < 0.05 && Math.abs(wrap(sel.g.at[1] - suz[1])) < 0.05 && sel.country === 'Japan' && sel.S >= 104, JSON.stringify({ sel, turned, suz }));
     // the head's globe in daylight (the Sun set over the next track's antipode: no night on it); the moon switched on the Earth (the night
     // there, remembered): the same globe darker at once; then the next track's at night, the one after it by day (their globes not drawn yet)
     await page.evaluate(() => { const s0 = MenuZemlja.sun; MenuZemlja.sun = (t) => { if (t || !window.__sun) return s0(t); const d = Menu.debug(), id = d.list[d.trackIdx], g = GEO.tracks[id], p = (MENU.globe.places || {})[id] || (g ? [g.lat0, g.lon0] : [0, 0]); return window.__sun === 'day' ? p : [-p[0], p[1] > 0 ? p[1] - 180 : p[1] + 180]; }; });
@@ -1059,31 +1060,31 @@ try {
     await ready(page);
     const press = async (i) => {
       const seen = await page.evaluate((i) => window.__press(i), i); await page.waitForTimeout(700);
-      const s = await ev(page, 'const f = root.querySelector(".pad-focus"), h = root.querySelector(".where .w2"); return { screen: Menu.debug().screen, sub: Menu.debug().titleSub, focus: f ? (f.dataset.act || "") : "", name: h ? h.textContent : "" };');
+      const s = await ev(page, 'const f = root.querySelector(".pad-focus"), h = root.querySelector(".where .w2"), D = Menu.debug(); return { screen: D.screen, sub: D.titleSub, focus: f ? (f.dataset.act || "") : "", name: h ? h.textContent : "", id: (D.list || [])[D.trackIdx] || "" };');
       s.seen = seen; return s;
     };
+    // (the first real track of Circuit race's list, the shortest: from the game, not named here, so a new shorter track does not break it)
+    const first = await page.evaluate(() => { const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && !d.test && !d.pending && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes('race'));
+      ds.sort((a, b) => (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1)); return ds[0].id; });
     let g = await press(9);
     T.check('pad, Start on the title: Single race opens, the highlight on the chosen mode', g.seen && g.screen === 'title' && g.sub === 'single' && g.focus === 'mode:race', JSON.stringify(g));
     g = await press(13);
     T.check('pad, down: the highlight moves to the next mode', g.focus === 'mode:chase', JSON.stringify(g));
     g = await press(12);
     g = await press(0);
-    // (the first real track of the list, the shortest: its id and its place's name from the menu's own list, which changes whenever a track becomes a
-    // test track or awaits the choice)
-    const first = await page.evaluate(() => { const id = Menu.debug().list[0], d = Core.TRACKS.find(t => t.id === id); return { id, test: !!d.test, name: ((d.en && d.en.name) || d.name).split(',')[0].trim() }; });
-    T.check('pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest; the highlight on Race!)', g.screen === 'track' && g.focus === 'race-single' && !first.test && g.name === first.name, JSON.stringify({ g, first }));
+    T.check(`pad, A: the highlighted mode is chosen (the track step on the first real track of the list, the shortest: ${first}; the highlight on Race!)`, g.screen === 'track' && g.focus === 'race-single' && g.id === first && g.name !== '', JSON.stringify(g));
     g = await press(5);
-    const next = g.name;
+    const next = g.id;
     g = await press(4);
-    T.check('pad, RB and LB: the next track and back', next !== first.name && next !== '' && g.name === first.name, JSON.stringify({ next, g, first }));
+    T.check('pad, RB and LB: the next track and back', next !== first && next !== '' && g.id === first, JSON.stringify({ next, g }));
     g = await press(12);
     T.check('pad, up: the highlight leaves Race! for another button', g.focus !== 'race-single' && g.focus !== '', JSON.stringify(g));
     g = await press(1);
     T.check('pad, B: back to the modes', g.screen === 'title' && g.sub === 'single', JSON.stringify(g));
     await press(9); await press(9);
-    await raceOn(page, first.id).catch(() => null);
+    await raceOn(page, first).catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id }));
-    T.check('pad, Start, Start: the mode, then the race on that track', r.id === first.id, JSON.stringify({ r, first }));
+    T.check('pad, Start, Start: the mode, then the race on that track', r.id === first, JSON.stringify(r));
     T.check('no page errors with the pad', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -1093,7 +1094,7 @@ try {
     const { ctx, page, errors } = await open({ track: 'nring', lastTrack: 'nring' }, { width: w, height: h });   // (the title's tile: Nürburg's model; Vršič, a test track since 6. 11. 2026, has none)
     await page.emulateMedia({ reducedMotion: 'reduce' });   // (the slide-in of a screen is off: it would still be on its way, and the screen 8 px low, when measured)
     await ready(page);
-    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in the quick list above: Japan's list two tracks, Suzuka and Irohazaka)
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').test = false; });   // (as in the quick list above: Japan's list two tracks, Hakone and Irohazaka (made real))
     const title = await ev(page, 'const p = root.querySelector(".title-panel").getBoundingClientRect(); const b = [...root.querySelectorAll(".title-panel button")].map(e => e.getBoundingClientRect()); return { top: p.top, bottom: p.bottom, w: innerWidth, h: innerHeight, over: b.filter(r => r.bottom > p.bottom + 1 || r.top < p.top - 1).length };');
     T.check(`${w}x${h}: the main menu fits the screen, every button inside its panel`, title.top >= -0.5 && title.bottom <= title.h + 0.5 && title.over === 0, JSON.stringify(title));
     await click(page, 'single');
@@ -1195,16 +1196,16 @@ try {
       JSON.stringify({ sh: q1.sh, x: q1.x, q: q1.q, chips: q1.chips.map(c => [Math.round(c.l), Math.round(c.r)]), icons: q1.icons.map(i => [Math.round(i.w), Math.round(i.h)]), cut: q1.cut }));
     await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
     const q2 = await ev(page, QL);
-    await page.click('.izb-t[data-t="suzuka"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
+    await page.click('.izb-t[data-t="hakone"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
     const q3 = await ev(page, QL);
-    T.check(`${w}x${h}: in the quick list a country's tracks (Japan) inside it, their names not cut; a track's card (Suzuka): Select and Race! in sight without scrolling, 44 px or more; the back arrow and the cross 44 px or more`,
+    T.check(`${w}x${h}: in the quick list a country's tracks (Japan) inside it, their names not cut; a track's card (Hakone): Select and Race! in sight without scrolling, 44 px or more; the back arrow and the cross 44 px or more`,
       placed(q2.sh) && q2.rows.length >= 2 && q2.rows.every(r => within(r, q2.sh)) && !q2.cut.length && placed(q3.sh) && q3.btns.length === 2 && q3.btns.every(b => within(b, q3.sh) && b.t >= q3.body.t - 0.5 && b.b <= q3.body.b + 0.5 && b.h >= 44) &&
       q3.bk && q3.bk.w >= 44 && q3.bk.h >= 44 && q3.x.w >= 44, JSON.stringify({ rows: q2.rows.length, cut: q2.cut, sh: q3.sh, body: q3.body, btns: q3.btns, bk: q3.bk }));
     await page.keyboard.press('Escape'); await page.keyboard.press('Escape'); await page.keyboard.press('Escape');
     await page.waitForFunction(() => !MenuIzbor.isOpen() && !document.getElementById('menu-host').shadowRoot.querySelector('.izb'), null, { timeout: 10000 });
     // the Earth (sklop 9): the back arrow and the column under it (closer, farther, the track shown, the moon) 44 px or more, inside the
     // screen, none over another or the title, the column upright at the right, lying at the left; a country's card (Japan) upright from the
-    // bottom the screen's width, lying at the right the screen's height (the title left of it); a track's card (Suzuka): Select and Race!
+    // bottom the screen's width, lying at the right the screen's height (the title left of it); a track's card (Hakone): Select and Race!
     // in sight without scrolling; the names over no button, no card and no other
     await page.click('.thead .globe');
     const zOpen = await zem(page, 1).then(() => null).catch(async () => page.evaluate(() => { const R = MenuZemlja._R(); return { open: MenuZemlja.isOpen(), depth: MenuZemlja.depth(), quick: MenuIzbor.isOpen(), hist: history.state && history.state.nazaj, R: R && { n: R.n, moving: R.moving, d: R.d, off: R.off, offT: R.offT, nt: R.nt } }; }));
@@ -1224,9 +1225,9 @@ try {
       const y2 = await ev(page, EARTH), u2 = await ev(page, ZB);
       const cardAt = (c) => side ? Math.abs(c[2] - u2.W) < 1 && Math.abs(c[1]) < 1 && Math.abs(c[3] - u2.H) < 1 && Math.abs(c[2] - c[0] - Math.min(412, u2.W * 0.6)) < 2
         : Math.abs(c[0]) < 1 && Math.abs(c[2] - u2.W) < 1 && Math.abs(c[3] - u2.H) < 1 && c[1] >= Math.max(u2.H - 460, u2.H <= 700 ? 120 : 150) - 0.5;
-      await page.click('.zem-card .izb-t[data-t="suzuka"]'); await zem(page, 3);
+      await page.click('.zem-card .izb-t[data-t="hakone"]'); await zem(page, 3);
       const y3 = await ev(page, EARTH), u3 = await ev(page, ZB);
-      T.check(`${w}x${h}: on the Earth a country's card (Japan) ${side ? 'at the right, the screen\'s height, the title left of it' : 'from the bottom, the screen\'s width'}, its cross 44 px or more, no name over it; a track's card (Suzuka): Select and Race! in sight without scrolling, 44 px or more; its back arrow and cross 44 px or more`,
+      T.check(`${w}x${h}: on the Earth a country's card (Japan) ${side ? 'at the right, the screen\'s height, the title left of it' : 'from the bottom, the screen\'s width'}, its cross 44 px or more, no name over it; a track's card (Hakone): Select and Race! in sight without scrolling, 44 px or more; its back arrow and cross 44 px or more`,
         !!y2.card && cardAt(y2.card.r) && big(u2.x) && clean(y2) && (!side || (u2.tb[2] <= y2.card.r[0] && u2.ts[2] <= y2.card.r[0])) && !!y3.card && cardAt(y3.card.r) && u3.btns.length === 2 &&
         u3.btns.every(b => b[1] >= u3.body[1] - 0.5 && b[3] <= u3.body[3] + 0.5 && b[3] <= u3.H + 0.5 && b[3] - b[1] >= 43.5) && big(u3.bk) && big(u3.x) && clean(y3),
         JSON.stringify({ c2: y2.card && y2.card.r, x2: u2.x, tb: u2.tb, ts: u2.ts, c3: y3.card && y3.card.r, body: u3.body, btns: u3.btns, bk: u3.bk, x3: u3.x }));
@@ -1308,16 +1309,16 @@ try {
     T.check('the Earth opened in a turn: the turn done at once (the next track), no old screen left; the screen rests under the Earth',
       e1.from === 'spa' && e1.mid.turning && e1.mid.id === 'spa' && e1.id === next && idle(e1.ring) && e1.scr === 1 && zr, JSON.stringify({ e1, zOk, zr }));
     await page.keyboard.press('Escape'); await zem(page, 0).catch(() => null); await page.waitForTimeout(300);
-    // a track picked in the quick list (Japan, Suzuka, Select): its card turns in from its side
-    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').pending = false; });   // (as in 6: Japan's list two tracks, Suzuka and Irohazaka; Irohazaka after the real ones, Spa's place in the list kept)
+    // a track picked in the quick list (Japan, Hakone, Select): its card turns in from its side
+    await page.evaluate(() => { Core.TRACKS.find(d => d.id === 'iroha').test = false; });   // (as in 6: Japan's list two tracks, Hakone and Irohazaka; Irohazaka after the real ones, Spa's place in the list kept)
     await page.click('.trow .flag button');
     await page.waitForFunction(() => window.MenuIzbor && MenuIzbor.isOpen() && MenuIzbor.depth() === 1 && document.getElementById('menu-host').shadowRoot.querySelector('.izb.on'), null, { timeout: 10000 });
     await page.click('.izb-c[data-c="Japan"]'); await page.waitForFunction(() => MenuIzbor.depth() === 2, null, { timeout: 10000 });
-    await page.click('.izb-t[data-t="suzuka"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
+    await page.click('.izb-t[data-t="hakone"]'); await page.waitForFunction(() => MenuIzbor.depth() === 3, null, { timeout: 10000 });
     await page.click('.izb-sel'); const w6 = await watch(10000);
     const izOff = await page.waitForFunction(() => !MenuIzbor.isOpen(), null, { timeout: 10000 }).then(() => true).catch(() => false);
-    T.check('a track picked in the quick list (Suzuka): its card turns in from its side, then rests; the list closed',
-      w6.some(s => s.turning && s.id === 'suzuka' && Math.abs(s.p) > 0.05) && last(w6).id === 'suzuka' && idle(last(w6)) && izOff, JSON.stringify({ w6: w6.map(s => [s.t, s.id, s.p, +s.turning, +s.fading, s.scr]), izOff }));
+    T.check('a track picked in the quick list (Hakone): its card turns in from its side, then rests; the list closed',
+      w6.some(s => s.turning && s.id === 'hakone' && Math.abs(s.p) > 0.05) && last(w6).id === 'hakone' && idle(last(w6)) && izOff, JSON.stringify({ w6: w6.map(s => [s.t, s.id, s.p, +s.turning, +s.fading, s.scr]), izOff }));
     // the car with the cards (sklop 11): the old one out to the side they go (half its place in 260 ms), a picture of it; the new one in from
     // the other side (460 ms after 160 ms), its shadow when it stands; then nothing moving
     const ca = await page.evaluate((src) => new Promise((res) => {

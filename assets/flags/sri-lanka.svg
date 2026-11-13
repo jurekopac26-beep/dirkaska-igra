@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Sri Lanka</title>
+  <!-- Ratio 1:2. Yellow border 1/15 of the height (40) round the flag; on the hoist side a green and a saffron vertical
+       stripe (150 each), then a yellow gap as wide as the border, and the maroon panel (780 x 520) on the fly side.
+       In the panel the yellow lion passant facing the hoist, a sword raised in its right forepaw, and a pipal leaf in
+       each corner with its tip towards the corner. The lion is drawn as a simple outline for the menu's small flag.
+       Colours: yellow #FFBE29, saffron #EB7400, green #00534E, maroon #8D153A. -->
+  <rect width="1200" height="600" fill="#FFBE29"/>
+  <rect x="40" y="40" width="150" height="520" fill="#00534E"/>
+  <rect x="190" y="40" width="150" height="520" fill="#EB7400"/>
+  <rect x="380" y="40" width="780" height="520" fill="#8D153A"/>
+  <defs>
+    <!-- pipal leaf, tip up: heart-shaped blade with a long drip tip, short stalk at the base -->
+    <path id="lk-leaf" d="M0 -64C5 -48 12 -38 26 -28C48 -13 51 16 31 31C19 40 7 38 0 30C-7 38 -19 40 -31 31C-51 16 -48 -13 -26 -28C-12 -38 -5 -48 0 -64ZM-3 34H3L5 52H-5Z"/>
+  </defs>
+  <g fill="#FFBE29">
+    <use href="#lk-leaf" transform="translate(440 102) rotate(-45)"/>
+    <use href="#lk-leaf" transform="translate(1098 102) rotate(45)"/>
+    <use href="#lk-leaf" transform="translate(440 498) rotate(-135)"/>
+    <use href="#lk-leaf" transform="translate(1098 498) rotate(135)"/>
+    <!-- lion: body, mane and head, standing foreleg, two hind legs, raised forepaw, tail with tuft -->
+    <path d="M598 262C700 236 862 240 962 266C1004 282 1012 332 992 370C962 410 902 414 860 404C782 398 702 404 640 400C598 394 578 350 588 302Z"/>
+    <path d="M606 118C646 136 668 190 656 242C646 292 614 324 572 324L522 304C494 294 474 274 472 248L452 234C466 218 468 204 478 192L466 170C488 166 498 152 508 140C530 114 572 104 606 118Z"/>
+    <path d="M598 376L654 382L656 478C664 494 672 506 642 512L588 512C578 506 584 494 598 488Z"/>
+    <path d="M896 376L976 356C990 418 1000 466 1010 492C1016 510 1000 514 984 512L952 512C942 506 948 494 960 488L938 428Z"/>
+    <path d="M856 388L912 394L906 488C912 504 902 514 880 512L848 512C838 506 844 494 858 488Z"/>
+    <path d="M618 292C582 298 546 304 516 310C494 314 488 342 504 348C540 348 582 344 626 346Z"/>
+    <path d="M984 286C1036 252 1030 186 1052 152" fill="none" stroke="#FFBE29" stroke-width="16" stroke-linecap="round"/>
+    <path d="M1052 152C1040 128 1052 104 1076 96C1070 116 1088 128 1080 150C1074 164 1060 166 1052 152Z"/>
+    <!-- sword: blade up from the paw, guard, grip and pommel below it -->
+    <path d="M498 318L498 116L506 92L514 116L514 318Z"/>
+    <path d="M478 318H534V332H478Z"/>
+    <path d="M500 332H512V362H500Z"/>
+    <circle cx="506" cy="368" r="9"/>
+  </g>
+  <!-- maroon detail on the lion: eye, mouth, the line between mane and body -->
+  <g fill="none" stroke="#8D153A" stroke-width="6" stroke-linecap="round">
+    <path d="M500 214L516 210"/>
+    <path d="M462 244L486 256"/>
+    <path d="M640 160C630 220 626 270 600 318"/>
+  </g>
+</svg>
