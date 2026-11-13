@@ -8,8 +8,8 @@
    player's progress (gold, silver, bronze, a tick's green, NEW dark with a light rim), the track shown white and pulsing three times; from
    afar the countries are named (flag, name, the number of tracks), close in the tracks (name, length): only those whose pin is on the
    screen, none over another. A tap on a country or its name colours it, turns the Earth to it and opens its card at the bottom (lying: at
-   the side) with its tracks (the quick list's rows, js/menu-izbor.js); a tap on a pin, a track's name or a row the track's card (the quick
-   list's: its shape, facts, best, heights, Select and Race!); a tap on the sea closes the card. Back (the phone's: the history, one with
+   the side) with its tracks (the quick list's rows, js/menu-izbor.js; one with a single track: that track's card at once, the user's of 12. 11. 2026); a tap on a pin, a track's name or a row the track's card (the quick
+   list's: its picture, shape, facts, best, heights, Select and Race!); a tap on the sea closes the card. Back (the phone's: the history, one with
    the quick list's; Esc; the pad's B): the track's card, the country's, then the Earth.
    The battery: it draws only while something moves (a flight, a drag, the glide, the zoom easing, a name fading, the card sliding), the
    screen under it rests while it covers it (o.rest, o.wake); a weak phone (navigator.deviceMemory <= 4 or a texture limit under 4096)
@@ -246,20 +246,26 @@ window.MenuZemlja = (function () {
     if (busy) R.raf = requestAnimationFrame(frame);
   }
 
-  // the card at the bottom (lying: at the side): a country's tracks (the quick list's rows), or with tc a track's card (the quick list's)
+  // the card at the bottom (lying: at the side): a country's tracks (the quick list's rows), or with tc a track's card (the quick list's,
+  // with the track's picture); a country with one track: its track's card at once, its Back the Earth (the user, 12. 11. 2026: »ni potrebe
+  // da kliknes bathurst ce imamo vedno samo 1 progo na 1 drzavo«)
+  const one = (name) => { const c = name && R.C.get(name); return c && c.ids.length === 1 ? c.ids[0] : null; };
   function card(name, tc) {
     const c = name ? R.C.get(name) : null, k = el.querySelector('.zem-card'), N = NZ();
+    if (c && !tc) tc = one(name);
     if (!c) {
       k.classList.remove('on'); el.classList.remove('carded'); R.offT = 0; kick();
-      const n = (R.card ? 1 : 0) + (R.tc ? 1 : 0); R.card = false; R.tc = null; if (n) N.drop('zemlja', n);
+      const n = (R.card ? 1 : 0) + (R.tstep ? 1 : 0); R.card = false; R.tc = null; R.tstep = false; if (n) N.drop('zemlja', n);
       return;
     }
     if (!R.card) { R.card = true; N.push('zemlja', () => R && select(null)); }   // (Back closes the track's card, then the country's, then the Earth)
-    if (tc && !R.tc) N.push('zemlja', () => R && card(R.sel));
-    else if (!tc && R.tc) N.drop('zemlja', 1);
-    R.tc = tc || null;
-    k.innerHTML = '<i class="izb-grab" aria-hidden="true"></i>' + (tc ? K.cardView(tc)
+    const st = !!tc && !one(name);   // (a track's card over its country's list: one more step back)
+    if (st && !R.tstep) N.push('zemlja', () => R && card(R.sel));
+    else if (!st && R.tstep) N.drop('zemlja', 1);
+    R.tc = tc || null; R.tstep = st;
+    k.innerHTML = '<i class="izb-grab" aria-hidden="true"></i>' + (tc ? K.cardView(tc, true)
       : K.head(c.name, K.tracks(c.ids.length), '<span class="izb-hf">' + K.flag(c.flag, c.name) + '</span>') + '<div class="izb-body in"><div class="izb-list">' + c.ids.map(id => K.row(id)).join('') + '</div></div>');
+    k.classList.toggle('tc', !!tc);
     k.setAttribute('aria-label', tc ? (byId(tc) || {}).name || '' : c.name);
     k.classList.add('on'); el.classList.add('carded');
     requestAnimationFrame(() => { if (R && el) { R.offT = SIDE ? k.offsetWidth : k.offsetHeight; kick(); } });
@@ -434,7 +440,7 @@ window.MenuZemlja = (function () {
     if (b.classList.contains('zl')) { if (!e.detail) { o.click(); pickMark(b); } return; }   // (a key's or the pad's press; a finger's tap: input())
     // the card: the quick list's buttons
     if (b.hasAttribute('data-x')) { o.click(); return select(null); }
-    if (b.hasAttribute('data-back')) { o.click(); return card(R.sel); }
+    if (b.hasAttribute('data-back')) { o.click(); return R.tstep ? card(R.sel) : select(null); }
     if (b.dataset.t) { o.click(); return select(R.sel, b.dataset.t, true); }   // (a row: its track's card)
     if (b.dataset.sel) {   // (Select: it lights up a moment, then the screen goes to it under the Earth going back into the globe)
       o.click(); b.classList.add('on'); const id = b.dataset.sel;
@@ -466,7 +472,7 @@ window.MenuZemlja = (function () {
   }
   function back() {
     if (!el) return;
-    if (R && R.tc) return card(R.sel);   // (the track's card: the country's again)
+    if (R && R.tstep) return card(R.sel);   // (the track's card: the country's again; a one-track country's: the Earth)
     if (R && R.card) return select(null);
     close();
   }
