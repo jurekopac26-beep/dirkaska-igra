@@ -8,7 +8,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
   const {
-    Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caGH, caGround, caSlope, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut,
+    Chunks, GB, IChunks, RB, TAU, VRC, VRT, atSf, box, caCar, caGH, caGround, caSlope, caTileOn, clamp, cone, crowdCtx, crowdFinish, crowdPut,
     crowdRun, cyl, gable, ico, lerp, ouCutMat, ouRod, pkGroundMat, propFloorTable, rng, roadsideProps, rock, rpHash, sstep, valueNoise2, vary,
     vrDist, vrFar, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrWater, parkOn
   } = API;
@@ -242,6 +242,13 @@
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    // the roads of the map that meet this one, for the look only (package Realizem E, World.cesta.stranske; def.stranske): measured here,
+    // drawn with the road's chunks and the scenery below. The model, the barrier's line and the cars know nothing of them
+    const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i]; for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const edgeTone = (i) => { let sd = 1; for (const u of SC.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const d = sd * w - T.rl[i]; return 0.8 - 0.13 * Math.exp(-d * d / 5.5); };   // (the asphalt's tone at its edge on the mouth's side: shade below)
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: true, drzava: 'Brazilija' }) : null;
+    if (SC) { out.cestaRob = SC.ustja.slice(); for (const k of SC.krogi) exclPush(k[0], k[1], k[2]); out.stranske = SC.n; }
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a; if (t < 1e-4) return Pt(a, o, y); const p = Pt(a, o, y), q = Pt(a + 1, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
@@ -254,12 +261,14 @@
           const sl = k === 2 ? caSlope(x, z) : 0, l = Math.sqrt(1 + sl * sl); return rrCol(x, z, T.hy[i] + y, 1 / l, Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true);
-        for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
+        const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true), cE = Math.min(c0 + 60, N - 1);
+        for (const si of [0, 1]) { const o0 = si ? w - 0.45 : -(w - 0.3), o1 = si ? w - 0.3 : -(w - 0.45);   // (the white edge lines, open at the side roads' mouths)
+          for (const run of SC ? SC.tek(si, 2, c0, cE) : [Array.from({ length: cE - c0 + 1 }, (_, k) => c0 + k)]) for (let k = 0; k + 1 < run.length; k++) { const f0 = run[k], f1 = run[k + 1];
+            gl.quadUp(PtF(f0, o0, 0.036), PtF(f0, o1, 0.036), PtF(f1, o1, 0.036), PtF(f1, o0, 0.036), [wht, wht, wht, wht]); } }
+        for (let i = c0; i < cE; i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-          for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
           for (const [o0, o1] of [[-0.21, -0.09], [0.09, 0.21]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ylw, ylw, ylw, ylw]);
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j], sc = onBr[i] ? deck : gc;
@@ -270,7 +279,9 @@
           }
         }
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat);
+        if (SC) { const gb = new RB(true); SC.robovi(gb, c0, Math.min(c0 + 60, N), rrGCol); addM(gb, gMat); }   // (the side roads' shoulders: the ground's colour and material)
       }
+      if (SC) { const sM = aMat.clone(); for (const g of SC.asfalt(RB, rrGCol)) { const m = addM(g, sM); if (m) m.userData.stranska = 1; } }   // (their strips: a clone of the asphalt's material)
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];   // chequered start and finish lines, a white line at each checkpoint
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
         gq.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
@@ -387,6 +398,8 @@
         const nd = need[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || onBr[i]) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
+        const open = SC ? SC.rez[side > 0 ? 1 : 0] : null;   // (a side road's mouth: no rail and no marker post across it)
+        if (open) for (let i = 0; i < N; i++) if (open[i] & 1) nd[i] = 0;
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
@@ -399,7 +412,7 @@
             const a = Q(i, 0.45), b = Q(i + 1, 0.45), c = Q(i + 1, 0.8), d = Q(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
             g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino);
             if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.13, 0.13, T.hd[i], postC, null, true); }
-          } else if (!nd[i] && !onBr[i] && i % 25 === 0 && i > 2 && i < iE - 2) mkPosts.push([i, side]);
+          } else if (!nd[i] && !onBr[i] && i % 25 === 0 && i > 2 && i < iE - 2 && !(open && open[i] & 1)) mkPosts.push([i, side]);
         }
       }
       const kp = rrProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
@@ -408,6 +421,18 @@
         box(g, p[0], p[1] - 0.2, p[2], 0.13, 1.2, 0.13, T.hd[i], [0.94, 0.94, 0.92], null, true); box(g, p[0], p[1] + 0.72, p[2], 0.14, 0.2, 0.14, T.hd[i], [0.1, 0.1, 0.1], null, true);
       }
     }
+
+    /* ---- the side roads' posts across each mouth on the barrier's line and their paint; the street lamps of the map (def.svetilke) behind the
+       barrier's line, off the houses, the car park and the side roads (package Realizem E: for the look, nothing to hit) ---- */
+    let nStb = 0, nLamp = 0;
+    if (SC) { nStb = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki; }
+    if (World.cesta && World.cesta.svetilka) { const LP = [];
+      for (const [lx, lz] of def.svetilke || []) {
+        const n = vrNear(lx, lz), i = n.i, sg = n.lat < 0 ? -1 : 1; if (i < 0) continue;
+        let x = lx, z = lz; if (n.dd < 0.9) { const o = sg * ((sg > 0 ? T.br[i] : T.bl[i]) + 1.0); x = T.px[i] + T.nx[i] * o; z = T.pz[i] + T.nz[i] * o; }   // (one that would stand inside the barrier's line goes behind it)
+        if (onBr[i] || excluded(x, z) || LP.some(q => (q[0] - x) ** 2 + (q[1] - z) ** 2 < 36)) continue;
+        LP.push([x, z]); World.cesta.svetilka(scen.get(x, z), x, caGround(x, z), z, Math.atan2(-sg * T.nz[i], -sg * T.nx[i])); exclPush(x, z, 1.2); CR.avoid(x, z, 0.7); nLamp++;
+      } }
 
     /* ---- the bends' signs (CURVA and the number) 30 m before each, on the right, facing the cars coming up; three chevrons on the outside of each
        hairpin; the place boards (the waterfall, the mist warning on the ladder, the plateau) ---- */
@@ -560,7 +585,7 @@
       out.dyn.rrMist = { L, root }; rrMist(out.dyn.rrMist, 0);
     }
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
+    out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length, stranske: SC ? SC.n : 0, stebricki: nStb, svetilke: nLamp };   // (read by the tests)
     return out;
   }
 

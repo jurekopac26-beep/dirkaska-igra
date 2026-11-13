@@ -16,7 +16,7 @@ two mouths that would run into each other, a road that comes back to the lap sto
 open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), an
 open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own) gets no road for the look
-beside it (own).
+beside it (own). A junction the game cannot draw is left out by hand, per track (PROGE, izpusti: hand).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
 a main road), width (m), one-way, end (0 fades into the terrain, 1 joins another of these roads), [x, z, ...]]; svetilke [x, z];
@@ -34,8 +34,13 @@ SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'li
 SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
 # per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start), how
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
-# an open road's finish line there is no junction (cilj, m)
-PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'})}
+# an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
+# the game's ground beside the road is not the map's and World.cesta.stranske cannot draw the road (its edges never cross the barrier's
+# line): the data say only what is drawn
+PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'}),
+         # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3962 m, left) and a 22 m stub that curls back
+         # beside the finish's wide verge (4914 m, right)
+         'rastro': dict(izpusti=[(3962, -1), (4914, 1)])}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
@@ -189,6 +194,7 @@ def main():
                     q = Wk[min(cut - 1, k2)] - D[k0]; o = float(Nr[k0] @ q)
                     if abs(o) > hw0 + 1: break
                 if any(sd == (1 if o > 0 else -1) and circ(sa, m if op else m % L) < OWN for m, sd in C.get('ima', [])): drop('own'); continue   # the track's own side road is there
+                if any(sd == (1 if o > 0 else -1) and abs(sa - m) < 4 for m, sd in cfg.get('izpusti', [])): drop('hand'); continue   # left out by hand (PROGE)
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
                 cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
