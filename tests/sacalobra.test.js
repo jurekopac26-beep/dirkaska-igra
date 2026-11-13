@@ -163,5 +163,47 @@ check('track: not in the big championship (an open road is no circuit); the menu
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
 }
 
+// 10. the hills where no wall is drawn (the user, 13. 11. 2026 23.06, stamp 2b259ef7, the race, lap 1, s ≈ 1141 m: »zbriši vdolbljeno korito, ki
+// je ostalo. Še vedno se zabijem v nevidno ograjo, čeprav ograje ni več«): where buildPrelaz draws no rail and no wall the verge runs on into
+// the ground (no ditch) and a hill takes the car past the barrier line (def.hills, tools/sacalobra-hribi.mjs; Track.hill), as Chapman's Peak's
+// (tests/chapman.test.js, 7.). Driven into it (10/20/30 m/s, 10/30/60°, the report's place and two more): past the line, never past the soft
+// limit, no wall's knock and no damage, never rolled over, no stop at once; on along it, or stuck and put back (the button)
+{
+  const H = T.hill, on = (sR, si) => !!(H && H.on[si][T.idx(T.startS + sR)]), len = (si) => H ? H.on[si].reduce((a, b) => a + b, 0) * T.ds : 0;
+  check('hills: at the report\'s place (1141 m, right) and on long stretches both sides (where no wall is drawn: tests/browser/world.test.mjs)',
+    on(1141, 1) && on(1700, 0) && on(3250, 0) && len(0) > 1800 && len(1) > 1800, H ? `left ${len(0).toFixed(0)} m, right ${len(1).toFixed(0)} m of ${T.raceLen.toFixed(0)} m` : 'no hills');
+  const drive = (sR, side, deg, v, secs) => {
+    const orig = Math.random; Math.random = seeded(7);
+    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player, i = T.idx(T.startS + sR), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar - 2.5), h = T.hd[i] + side * deg * Math.PI / 180;
+    P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = sR; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
+    const si = side > 0 ? 1 : 0, q2 = {}, win = []; let past = -9, over = -9, lift = 0, resc = null, back = null, wall = 0, dmg = 0, roll = 0, inHill = false, g10 = 0, end = null;
+    for (let t = 0; t < secs && !resc && back == null && end == null; t += DT) {
+      P.inThr = 0.3; P.inBrk = 0; P.inSteer = 0; P.inHand = 0; r.step(DT);
+      win.push([P.vx, P.vz]); if (win.length > 13) win.shift(); if (win.length === 13) g10 = Math.max(g10, Math.hypot(win[12][0] - win[0][0], win[12][1] - win[0][1]) / (12 * DT) / 9.81);
+      if (!H.on[si][P.q.i] || !H.on[si][Math.min(T.N - 1, P.q.i + 3)]) { end = t; break; }   // (along the road to the hill's end: a wall stands there, drawn)
+      const q = P.q, ry = T.elevAt(q.s, {}).y, ch = Math.cos(P.h), sh = Math.sin(P.h); lift = Math.max(lift, P.y - ry);
+      let deep = -9; for (const [cx, cz] of P.corners) { const qq = T.query(P.x + cx * ch - cz * sh, P.z + cx * sh + cz * ch, q.i, q2); if (Math.sign(qq.d) !== side) continue;
+        const o = Math.abs(qq.d) - (side > 0 ? qq.br : qq.bl), b = Math.min(T.N - 1, qq.a + 1); deep = Math.max(deep, o); if (o > 0) over = Math.max(over, o - (H.lim[si][qq.a] + (H.lim[si][b] - H.lim[si][qq.a]) * qq.t)); }
+      past = Math.max(past, deep); if (deep > 0) inHill = true;
+      wall = Math.max(wall, P.hitWall || 0); dmg = Math.max(dmg, +P.dmg || 0, (P.dz || []).reduce((a, x) => a + (+x || 0), 0), (P.dents || []).length, P.flat ? 1 : 0); if (P.rl) roll = 1;
+      if (inHill && lift > 0.3 && P.y - ry < 0.05) back = t;
+      if (P.stuckT > 2.5) { r.rescue(P); r.step(DT); resc = { d: P.q.d, dy: P.y - T.elevAt(P.q.s, {}).y }; } }
+    Math.random = orig; return { past, over, lift, resc, back, wall, dmg, roll, g10, end, vEnd: Math.hypot(P.vx, P.vz) };
+  };
+  if (H) {
+    const all = [], f = (x, k) => x.toFixed(k == null ? 1 : k);
+    for (const [sR, side, where] of [[1141, 1, '1141 m right'], [1700, -1, '1700 m left'], [3250, -1, '3250 m left']]) for (const v of [10, 20, 30]) for (const deg of [10, 30, 60]) all.push(Object.assign(drive(sR, side, deg, v, 6), { where, v, deg }));
+    const worst = (k) => all.reduce((a, x) => x[k] > a[k] ? x : a), say = (x) => `${x.where}, ${x.v} m/s at ${x.deg}°`;
+    check('hills: driven into the hill (three places, 10/20/30 m/s, 10/30/60°) a car goes past the barrier line, never past the soft limit',
+      all.every(x => x.past > 0.5 && x.over < 0.05), `the least past ${f(all.reduce((a, x) => Math.min(a, x.past), 9), 2)} m, the most over the limit ${f(worst('over').over, 3)} m (${say(worst('over'))})`);
+    check('hills: no wall there (no knock, no damage) and never rolled over', all.every(x => x.wall === 0 && x.dmg === 0 && !x.roll), `wall ${f(worst('wall').wall)} m/s (${say(worst('wall'))}), damage ${f(worst('dmg').dmg)}`);
+    check('hills: never a stop at once (at 30 m/s and 60° at most 20 g over 0.1 s, else at most 10 g)', all.every(x => x.g10 <= (x.v === 30 && x.deg === 60 ? 20 : 10)),
+      `the hardest ${f(worst('g10').g10)} g (${say(worst('g10'))})`);
+    check('hills: the ground there level or a slope (no hill to climb back down): the car drives on along it to the hill\'s end, or still rolls at 6 s, or held against the limit it is stuck and put back (the button)',
+      all.every(x => x.end != null || x.vEnd > 1 || (x.resc && Math.abs(x.resc.d) < T.w && Math.abs(x.resc.dy) < 0.05)),
+      `to its end ${all.filter(x => x.end != null).length}, rolling ${all.filter(x => x.end == null && !x.resc && x.vEnd > 1).length}, put back ${all.filter(x => x.resc).length} of ${all.length}`);
+  }
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;

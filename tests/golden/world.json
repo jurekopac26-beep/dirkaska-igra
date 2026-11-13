@@ -1656,20 +1656,20 @@
  },
  "sacalobra": {
   "meshes": 1714,
-  "verts": 768932,
+  "verts": 771436,
   "instances": 37011,
   "props": 68,
   "crowd": 283,
-  "world": "2dd99ca9",
+  "world": "54d76043",
   "propsHash": "75dcf3ee",
-  "floor": "c2f48a93/10556",
+  "floor": "ebddbe43/10556",
   "groups": {
-   "-:MeshLambertMaterial": "32fdff4b",
+   "-:MeshLambertMaterial": "b4c50272",
    "-:MeshPhongMaterial": "af2e2690",
    "-:MeshBasicMaterial": "4f1c46cb",
    "irFar:MeshLambertMaterial": "e555884",
    "crowd:MeshLambertMaterial": "bf2198b0",
-   "ao:MeshBasicMaterial": "a3456996",
+   "ao:MeshBasicMaterial": "f6757812",
    "tyremarks:MeshBasicMaterial": "55d8f570",
    "roadwear:MeshLambertMaterial": "8464b172"
   }

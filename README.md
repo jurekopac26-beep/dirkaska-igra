@@ -49,7 +49,6 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Llogara, Albanija](docs/proge/llogara.md)
 - [Porto Moniz, Portugalska](docs/proge/portomoniz.md)
 - [Seul, Južna Koreja](docs/proge/seoul.md)
-- [Espinazo del Diablo, Mehika](docs/proge/espinazo.md)
 - [Tuzla, Turčija](docs/proge/tuzla.md)
 - [Sepang, Malezija](docs/proge/sepang.md)
 - [Lombok, Indonezija](docs/proge/lombok.md)
@@ -97,6 +96,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Sani Pass, Južna Afrika](docs/proge/sani.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Bang Saen, Tajska](docs/proge/bangsaen.md) (resnična pot; od 5. 11. 2026 testna, se ne posodablja več)
 - [Great Alpine Road, Avstralija](docs/proge/greatalpine.md) (resnična pot; od 9. 11. 2026 testna, se ne posodablja več)
+- [Espinazo del Diablo, Mehika](docs/proge/espinazo.md) (resnična pot; od 13. 11. 2026 testna, se ne posodablja več)
 
 ## Nov meni
 

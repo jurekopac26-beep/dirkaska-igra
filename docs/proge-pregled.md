@@ -28,7 +28,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
-| Espinazo del Diablo, Mehika | `espinazo` | odprta cesta | 5,0 km | 599 | 40 % | 1 | −50 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
 | Gudauri, Gruzija | `gudauri` | odprta cesta | 4,8 km | 587 | 39 % | 5 | +260 m |
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |

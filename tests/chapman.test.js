@@ -119,10 +119,11 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 // tilted, never past the soft limit (short of the net), no wall's knock (no damage, no sparks), never a stop at once (the even stop the room
 // leaves: at most 20 g over a tenth of a second, a wall takes it in a step), not rolled over; down from the hill again (the slope's pull), or held
 // against it with the throttle, stuck and put back (the button, Race.rescue). On the sea side the wall stays; no other track has hills
+// but Sa Calobra (where no wall is drawn: tests/sacalobra.test.js)
 {
   const H = T.hill, on = (sR, si) => !!(H && H.on[si][T.idx(T.startS + sR)]), len = (si) => H ? H.on[si].reduce((a, b) => a + b, 0) * T.ds : 0;
-  check('hills: on the mountain side at the reports\' places (521, 893, 2133 m on the left) and the rock at 2133 m on the right, not on the sea side at 893 m; no other track has hills',
-    on(521, 0) && on(893, 0) && on(2133, 0) && on(2133, 1) && !on(893, 1) && len(0) > 4000 && len(1) > 1000 && C.TRACKS.every(d => d.id === 'chapman' || !d.hills),
+  check('hills: on the mountain side at the reports\' places (521, 893, 2133 m on the left) and the rock at 2133 m on the right, not on the sea side at 893 m; no other track has hills (but Sa Calobra)',
+    on(521, 0) && on(893, 0) && on(2133, 0) && on(2133, 1) && !on(893, 1) && len(0) > 4000 && len(1) > 1000 && C.TRACKS.every(d => d.id === 'chapman' || d.id === 'sacalobra' || !d.hills),
     H ? `left ${len(0).toFixed(0)} m, right ${len(1).toFixed(0)} m of ${T.raceLen.toFixed(0)} m` : 'no hills');
   const drive = (sR, side, deg, v, thr, secs) => {   // (the player 2.5 m inside the barrier line, turned deg towards it, at v m/s, the throttle held, straight on)
     const orig = Math.random; Math.random = seeded(7);

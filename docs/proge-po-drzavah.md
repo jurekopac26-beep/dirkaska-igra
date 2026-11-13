@@ -147,7 +147,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Kazahstan | Medeu (Nove proge za 1.0, B8; prej kratke, A) | narejena: osnutek PR #532 (8. 11. 2026), na `main` s skupino N5 |
 | Šrilanka | Ella (kratke, C1) | narejena (PR #552, nove proge 1.0, del 2, A10; skupina N5), čaka na vrsto za `main` |
 | Zelenortski otoki | Santo Antão (kratke, C2) | po vrsti |
-| Mehika | Espinazo del Diablo (kratke, C2) | narejena (PR #562, nove proge 1.0, del 2, A11; skupina N6), čaka na vrsto za `main` |
+| Mehika | Espinazo del Diablo (kratke, C2; PR #562, skupina N6) je od 13. 11. 2026 **testna** (`test: true`, odločitev uporabnika prek Mateja: »mehiko prestavi v test, čakamo novo progo iz Mehike«) | nova proga iz Mehike: izbere jo uporabnik; **ne začni**, dokler je ne izbere |
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
