@@ -710,6 +710,7 @@
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
       const vA = [0.93, 1.1, 0.9], vB = [0.82, 0.97, 0.8], MOW_D = vB.map((v, k) => 1 - v / vA[k]);   // the mower's stripes: light, dark (and how much darker)
+      const PH = World.rastje && World.rastje.aktivna(def) ? World.rastje.prehod : null;   // (js/world-rastje.js)
       const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, bandC = (b) => (b % 2 ? vA : vB), PD = def.pit, pitSd = PD ? Math.sign(PD[0]) : 0;
       const own = (x, z, i) => { const n = nrNear(x, z), d = Math.abs(n.i - i); return n.i >= 0 && Math.min(d, N - d) < 30; };
       const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || inBrook(x, z, 4) || !own(x, z, i)) return null;
@@ -734,7 +735,8 @@
             const bo = Math.max(1, Math.min(MOW_N + 1, Math.ceil((o2 - o1) / MOW_W - 1e-6)));   // (the band the verge ends in)
             const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], pts = pr.map(([o, h]) => Pt(i, side * o, h)), nL = pr.length;
             const g3 = nrGCol(pts[nL - 2][0], pts[nL - 2][2]), g4 = nrGCol(pts[nL - 1][0], pts[nL - 1][2]), vg = bandC(bo);
-            const cols = [vA, bandC(1), ...bc, vg, [lerp(vg[0], g3[0], 0.5), lerp(vg[1], g3[1], 0.5), lerp(vg[2], g3[2], 0.5)], g4];
+            let cols = [vA, bandC(1), ...bc, vg, [lerp(vg[0], g3[0], 0.5), lerp(vg[1], g3[1], 0.5), lerp(vg[2], g3[2], 0.5)], g4];
+            if (PH) { const oa = pr[0][0], ow = Math.max(1e-6, pr[nL - 1][0] - oa); cols = cols.map((c, k) => k === nL - 1 ? c : PH(c, g4, (pr[k][0] - oa) / ow)); }   // (Realizem G0: the soft step to the slope)
             const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
             const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
             const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
