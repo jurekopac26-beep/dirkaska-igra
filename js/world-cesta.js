@@ -52,6 +52,7 @@
     'Kanada':       { rob: 'bela', sred: 'rumena', crta: [3, 6], dvojna: true },
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
+    'Tadžikistan':  { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (the post-Soviet standard: a broken white line 3 m / 9 m outside towns, one solid line where overtaking is forbidden)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
