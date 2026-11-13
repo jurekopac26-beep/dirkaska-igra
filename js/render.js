@@ -7557,7 +7557,8 @@ const Render = (function () {
     if (!(n && v.kit) && !(bd[0] + bd[1] + bd[2] + bd[3])) return;
     const M = v.car.m, K = v.kit, hw = K ? K.E.body.hw : M.wid * 0.45, X = [M.a, M.a, -M.b, -M.b], Z = [-hw, hw, -hw, hw], t = [0, 1, 2, 3].map(k => off[k] ? -0.6 * M.rw : -0.25 * M.rw * bd[k]); if (K) K.sagV = K.ver;
     let rows;
-    if (n === 1 && K) { const k = off.indexOf(1), nb = [[1, 2], [0, 3], [0, 3], [1, 2]][k]; rows = [k, nb[0], nb[1]].map(i => [1, X[i], Z[i], t[i]]); }
+    const k1 = off.indexOf(1), nb1 = k1 >= 0 ? [[1, 2], [0, 3], [0, 3], [1, 2]][k1] : null;   // (one wheel off: the body on its three corners, unless a bent wheel's corner is the fourth: then all four, least squares)
+    if (n === 1 && K && !bd.some((b, i) => b && i !== k1 && !nb1.includes(i))) { const k = k1, nb = nb1; rows = [k, nb[0], nb[1]].map(i => [1, X[i], Z[i], t[i]]); }
     else { const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];   // (least squares: the normal equations)
       for (let i = 0; i < 4; i++) { const r = [1, X[i], Z[i]]; for (let p = 0; p < 3; p++) { b[p] += r[p] * t[i]; for (let q = 0; q < 3; q++) A[p][q] += r[p] * r[q]; } }
       rows = A.map((r, p) => [r[0], r[1], r[2], b[p]]); }

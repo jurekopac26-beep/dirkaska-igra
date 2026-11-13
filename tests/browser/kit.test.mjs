@@ -85,13 +85,13 @@ try {
   T.check('a rear wheel off: hidden, its hub shown, the middle ones on and in place', C && C.off.join() === '0,0,1,0' && !C.rl && C.hub && C.wm.every(Boolean) && C.kept, JSON.stringify(C));
   T.check('the body sags onto the middle wheels by their arch\'s clearance (wheels.gap) at most', C && C.drop && Math.min(...C.drop) >= -C.gap - 1e-3 && Math.min(...C.drop) < 0, JSON.stringify(C && { drop: C.drop, gap: C.gap }));
   // a bent wheel (P3): the front right corner crushed (c.cd[1] 0.8): that wheel leaning out (12°) and toed out (6°), the body lower there
-  const B = await page.evaluate(() => {
+  const BW = await page.evaluate(() => {
     const P = window.__game.race.player, v = Render.viewOf(P), M = P.m, at = () => { if (!v.sagQ) return 0; const n = new THREE.Vector3(0, 1, 0).applyQuaternion(v.sagQ); return v.sagP.y - n.x / n.y * M.a - n.z / n.y * v.kit.E.body.hw; };
     const y0 = at(); P.cd[1] = 0.8; Render.frame(1 / 60, 1, P, 'chase', {});
     const fr = v.wf.find(w => w.position.z > 0), fl = v.wf.find(w => w.position.z < 0);
     return { cam: +(fr.rotation.x * 180 / Math.PI).toFixed(1), toe: +((-fr.rotation.y - P.delta) * 180 / Math.PI).toFixed(1), fl: +(fl.rotation.x * 180 / Math.PI).toFixed(2), bend: v.bend.slice(), dy: +(at() - y0).toFixed(3), rw: M.rw };
   });
-  T.check('a bent wheel (cd 0.8): it leans out 10-14°, toes out ~6°, the other one straight; the body lower at that corner', B && B.cam > 10 && B.cam < 14.5 && Math.abs(B.toe - 6) < 0.6 && B.fl === 0 && B.dy < -0.02, JSON.stringify(B));
+  T.check('a bent wheel (cd 0.8): it leans out 10-14°, toes out ~6°, the other one straight; the body lower at that corner', BW && BW.cam > 10 && BW.cam < 14.5 && Math.abs(BW.toe - 6) < 0.6 && BW.fl === 0 && BW.dy < -0.02, JSON.stringify(BW));
   // a bad mid: the build fails with its message (the look as it is, wheels.mid changed)
   const D = await page.evaluate(() => {
     const L = Core.MODELS.find(m => m.id === 'titan').def.look;
