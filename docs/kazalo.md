@@ -249,6 +249,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *rio* | *Rio de Janeiro, Brazilija (test)* | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | *riverside* | *Riverside, ZDA (test)* | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | *sani* | *Sani Pass, Južna Afrika (test)* | sani | `js/world-sani.js` (`buildSani`) |
+| sogeri | Sogeri, Papua Nova Gvineja | sogeri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.sogeri`: kunai trava, tropski gozd v grapi, konglomerat v usekih; vožnja po levi) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
