@@ -15,5 +15,23 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "sogeri": {
+    "ime": "Sogeri, Papua Nova Gvineja",
+    "okvir": [-9.44, 147.33, -9.40, 147.40],
+    "pot": [[-9.41044, 147.3277], [-9.42741, 147.38907]],
+    "start": [-9.41706, 147.36858],
+    "cilj": [-9.42204, 147.37653],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 4.0,
+    "gauss": 2.5,
+    "razredi": ["tertiary"],
+    "visine": {"mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.3, "serpentine_m": 20},
+    "s2": "S2A_55LEK_20240619_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "SOGERI_H"
   }
 }
