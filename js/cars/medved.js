@@ -88,7 +88,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // windscreen's header; the fuel cap where the stock flap is; the calipers
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.28, 0.42], x: [[1.08, 2.24]], sx: [-0.8, 0.95] },
-      nalepke: { side: [[0.07, 0.78], [1.33, 2.1], [-1.66, -0.92]], y: [0.94, 1.17], hood: { x: [1.1, 2.15], z: [0.63, 0.86] } },
+      nalepke: { side: [[0.07, 0.78], [1.33, 2.1], [-1.6, -0.92]], y: [0.94, 1.17], hood: { x: [1.1, 2.15], z: [0.63, 0.86] } },
       soncni_pas: { x: [0.84, 0.885], w: 0.78 }, zamasek: { x: -1.76, y: 1.02, z: 0.93, r: 0.055 },
       celjusti: { r: [0.11, 0.19], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) the V8's bay under the bonnet, on its floor: the filter behind the block's left, the turbo
