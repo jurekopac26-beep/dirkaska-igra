@@ -15,5 +15,23 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "darvaz": {
+    "ime": "Darvaz, Tadžikistan",
+    "okvir": [38.325, 71.15, 38.39, 71.215],
+    "pot": [[38.374721, 71.173604], [38.367518, 71.177183], [38.360182, 71.180053], [38.352631, 71.183185], [38.345194, 71.186041], [38.344078, 71.195638]],
+    "start": [38.372932, 71.174884],
+    "cilj": [38.343899, 71.192566],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 5.0,
+    "gauss": 2.5,
+    "razredi": ["primary", "secondary", "tertiary", "unclassified"],
+    "visine": { "gor": false, "mediana": 40, "glajenje": 30, "naklon": 0.08, "serpentine": 0.5, "serpentine_m": 20 },
+    "s2": "S2B_42SXH_20240914_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "DARVAZ_H"
   }
 }

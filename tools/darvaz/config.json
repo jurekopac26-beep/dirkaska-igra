@@ -1,0 +1,182 @@
+{
+  "id": "darvaz",
+  "about": "Darvaz, Tadžikistan (id darvaz): ~4 km of the primary road РБ04 (M41) on the right (Tajik) bank of the Panj in the Darvaz range, about 35 km upriver from Kalaikhumb, a ledge cut into the rock wall above the river, driven upriver (docs/nove-proge.md)",
+  "box": [
+    38.332,
+    71.16,
+    38.385,
+    71.207
+  ],
+  "closed": false,
+  "route": [
+    [
+      38.37293,
+      71.17488,
+      null,
+      "start | primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.3717,
+      71.17556,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.37057,
+      71.17648,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36931,
+      71.17704,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36797,
+      71.17715,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36662,
+      71.17725,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36529,
+      71.1775,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36398,
+      71.17784,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.363,
+      71.17894,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36187,
+      71.17957,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.36062,
+      71.17996,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35929,
+      71.18014,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35796,
+      71.1804,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35663,
+      71.18068,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35536,
+      71.18125,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35424,
+      71.18221,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35305,
+      71.18297,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35192,
+      71.18377,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.35061,
+      71.18372,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34933,
+      71.18418,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34799,
+      71.18437,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34674,
+      71.18493,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34554,
+      71.18567,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34472,
+      71.18699,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34445,
+      71.18867,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34437,
+      71.19038,
+      null,
+      "primary РБ04 (M41) along the Panj"
+    ],
+    [
+      38.34407,
+      71.19204,
+      null,
+      "finish | primary РБ04 (M41) along the Panj"
+    ]
+  ],
+  "prefer": [
+    ""
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
