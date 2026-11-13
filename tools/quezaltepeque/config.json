@@ -1,0 +1,17 @@
+{
+  "id": "quezaltepeque",
+  "about": "Quezaltepeque, Salvador (id quezaltepeque): the circuit in the hills south of Quezaltepeque, one lap (docs/nove-proge-1-0.md)",
+  "box": [13.800, -89.342, 13.818, -89.322],
+  "closed": true,
+  "dist": {"grid": 600},
+  "route": [
+    [13.8086022, -89.3328436, null, "start"],
+    [13.8108099, -89.3295128, null, "raceway"],
+    [13.8084228, -89.3309950, null, "raceway"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
