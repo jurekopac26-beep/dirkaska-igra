@@ -1154,7 +1154,7 @@
     const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
       cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t }))  },
-      F ? { ty: F.ty, wxs: F.wxs } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined });
+      F ? { ty: F.ty, wxs: F.wxs, vnos: F.vnos } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined, vnos: typeof Vnos !== 'undefined' ? Vnos.out(race) : undefined });
     delete H.file; delete H.dev; return { H, frames: R.frames };
   }
   // a file's recording opened (H its header, frames the samples, js/napake.js has checked them): '' or why not
@@ -2343,7 +2343,8 @@
     const W = ch ? { rain: ch.cond.rain, wx: null, storm: false } : quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     wxWet = null;   // (the start of a changing day, rolled in the menu, is for this start only: not left over, unused by a challenge, the race after qualifying or another weather, for a later start)
     const solo = tt || quali || !!ch, lapRun = !!ch && !tt;   // (alone: a time trial, qualifying, a challenge: its time trial or a circuit's flying lap)
-    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[colNow()], playerDeli: !ch && !on && bought(M.id) && garOf(M.id) && isObj(garOf(M.id).deli) ? garOf(M.id).deli : undefined, playerNum: carNum(), playerSlide: physOf() === 'nova' && S.slide === 1, seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
+    const vnosOk = typeof Vnos !== 'undefined' && solo && !on && !school && !nv && !MS.cur && !(prvi && prvi.race);   // (Svetovna lestvica: a run alone is repeatable and its input recorded, js/vnos.js)
+    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[colNow()], playerDeli: !ch && !on && bought(M.id) && garOf(M.id) && isObj(garOf(M.id).deli) ? garOf(M.id).deli : undefined, playerNum: carNum(), playerSlide: physOf() === 'nova' && S.slide === 1, seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: (!!repro || vnosOk) && !on };
     Core.setCrash(xPhys(on));   // (Razbijanje · nov način: its physics off in an online race)
     Core.setTest(testOf(!!on));   // (Preizkus: tekmeci in trki: off online too)
     const zctx = { md, on: !!on, tt, quali, chal: !!ch, cr, school: !!school, nv: !!nv, mis: !!MS.cur, career: inCareer(), prvi: !!(prvi && prvi.race), track, nAI, pm: M };   // (Zabava: what this race is, for its novelties)
@@ -2367,6 +2368,7 @@
       tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
       voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)
     }, MS.opts(), prviOpts(), ZB.opts(zctx)));   // (a special mission: its own race, js/missions.js; Prvič na cesti: the first race; Zabava: a novelty's mode, js/zabava.js)
+    if (typeof Vnos !== 'undefined') Vnos.made(Core, race, { kind: tt ? 'tt' : quali ? 'quali' : ch ? 'chal' : 'race' });   // (a repeatable race: its input recorded from here, js/vnos.js)
     if (race.player) race.player.pitCmp = S.pitCmp;
     careerCond(M, !!(on || school || ch));   // (the career: the car's wear from its last races, till the garage's service)
     MS.made(race);   // (a special mission: its own cars, before they are drawn)
