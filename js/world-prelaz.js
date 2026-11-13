@@ -52,6 +52,21 @@
       roofs: [[0.62, 0.26, 0.16], [0.36, 0.38, 0.4], [0.7, 0.34, 0.2], [0.24, 0.3, 0.36]],
       sheep: 0, portal: 0, far: { lo: [0.16, 0.3, 0.12], hi: [0.44, 0.42, 0.36], dw: [0.12, 0.24, 0.1], snow: 9000 },
     },
+    // Savusavu (the south coast of Vanua Levu, Fiji): the coast road over a low ridge of wet tropical forest, coconut palms and gardens by the
+    // houses, red-brown volcanic soil in the cuttings, dark basalt in the few crags; no snow, no sheep, no tunnel; a steel rail where the slope falls
+    savusavu: {
+      seed: 6790, board: 'SAVUSAVU', sub: 'VANUA LEVU', banner: ['SAVUSAVU', 'VANUA LEVU'], trop: 1,
+      grass: [0.3, 0.5, 0.17], grassDry: [0.46, 0.5, 0.24], grassLush: [0.22, 0.47, 0.14], shrub: [0.13, 0.29, 0.1],
+      rock: [0.4, 0.37, 0.34], rockWarm: [0.52, 0.38, 0.28], lichen: [0.34, 0.34, 0.28], scree: [0.56, 0.44, 0.34],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.36, 0.35, 0.34], [0.42, 0.4, 0.38], [0.3, 0.3, 0.3], [0.5, 0.4, 0.32], [0.38, 0.36, 0.34], [0.44, 0.42, 0.4]],   // (basalt, reddened by the soil)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid before the blind bends)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.52, 0.46, 0.38],
+      fans: [[0.12, 0.3, 0.62], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.98, 0.84, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.66, 0.82]],
+      cars: [[0.9, 0.9, 0.88], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.14, 0.26, 0.5], [0.62, 0.12, 0.1], [0.78, 0.72, 0.6]],
+      roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.42, 0.3]],   // (corrugated iron: bare, red, blue, green)
+      sheep: 0, portal: 0, far: { lo: [0.14, 0.3, 0.12], hi: [0.3, 0.4, 0.24], dw: [0.1, 0.24, 0.1], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
