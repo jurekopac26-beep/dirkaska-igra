@@ -3,7 +3,8 @@
    measured colours of the land round the road, the light by the latitude, the soft step from the mown verge to the slope.
    Only the real tracks (not test: true, not pending: true, not the frozen ones CLAUDE.md names) and only those with measurements in MERITVE
    (tools/proga-podatki.py, step `cover`): every other track is built as before, to the number. Nothing here adds a draw call or a vertex: the
-   colours go on the materials' colour (one multiplier for a material), the light on the theme's numbers, the step on colours a verge has.
+   colours go on the materials' colour (one multiplier for a material) or, on a mountain road, into the vertex colours its ground and leaves
+   have, the light on the theme's numbers, the step on colours a verge has.
    ========================================================================= */
 (function () {
   'use strict';
@@ -29,10 +30,14 @@
   /* The measurements of the band 8–60 m from the road (what the chase camera sees), from tools/proga-podatki.py `cover`: the share of each
      class (ESA WorldCover 2021 v200, 10 m; © ESA WorldCover project, CC BY 4.0) and its median colour in the Sentinel-2 annual cloudless
      mosaic of the same year (Copernicus Sentinel-2 data, modified, the WorldCover composite; stored as 255 · reflectance^(1/2.2)).
-     lat, lon: the track's frame (its x = 0, z = 0) where the tool put it (Spa: def.lc's forest laid on WorldCover's trees, correlation 0.69). */
+     lat, lon: the track's frame (its x = 0, z = 0) where the tool put it (Spa: def.lc's forest laid on WorldCover's trees, correlation 0.69;
+     Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift).
+     drevesa: the track's own kinds where its builder draws others than its climate's kit (the Serra Geral's cloud forest and araucarias). */
   const MERITVE = {
     spa: { podnebje: 'Cfb', lat: 50.44406, lon: 5.965126, delez: { drevesa: 0.337, trava: 0.093, pozidano: 0.570 },
       barva: { drevesa: 0x393e34, trava: 0x4c5143, pozidano: 0x5d5951 } },
+    rastro: { podnebje: 'Cfb', lat: -28.395383, lon: -49.543494, delez: { drevesa: 0.653, trava: 0.311, pozidano: 0.036 },
+      barva: { drevesa: 0x333c2f, trava: 0x464638, pozidano: 0x5a574c }, drevesa: ['listavec', 'aravkarija', 'palma', 'drevesna praprot', 'bambus'] },
   };
   const aktivna = (def) => prava(def) && !!MERITVE[def.id];
 
@@ -85,6 +90,38 @@
     return out;
   }
 
+  /* The same for a mountain road, whose one ground material also draws the rock, the red earth and the concrete, and whose trees stand on
+     tall bare trunks: there a multiplier on a whole material would turn the grey rock lilac and the bark pink. Its builder asks for the
+     multipliers alone and puts them in its vertex colours where plants grow (still no draw call and no vertex more).
+     tla: the ground's multiplier (o: barvaTrave's options, asked while the builder's colours are still the game's own).
+     listje: the leaves' multiplier, from the unit trees' green vertices (g > r: the leaves, not the bark) by their instances' colours, and
+     those vertices multiplied by it in place (before addTo; the unit trees are the build's own, so nothing carries to the next build). */
+  function tla(def, o, moc) {
+    if (!aktivna(def)) return null;
+    const g = barvaTrave(o);
+    return g ? mnozilnik(g, hex3(MERITVE[def.id].barva.trava), moc == null ? MOC : moc) : null;
+  }
+  function listje(def, chunks, moc) {
+    if (!aktivna(def)) return null;
+    const s = [0, 0, 0]; let n = 0;
+    for (const ic of chunks) {
+      const ca = ic.base.attributes.color; if (!ca) continue;
+      const g = [0, 0, 0], a = ca.array; let nv = 0;
+      for (let k = 0; k < a.length; k += ca.itemSize) if (a[k + 1] > a[k]) { g[0] += a[k]; g[1] += a[k + 1]; g[2] += a[k + 2]; nv++; }
+      if (!nv) continue;
+      for (const L of ic.map.values()) for (let k = 0; k < L.length; k += 9) { s[0] += g[0] / nv * L[k + 6]; s[1] += g[1] / nv * L[k + 7]; s[2] += g[2] / nv * L[k + 8]; n++; }
+    }
+    if (!n) return null;
+    const m = mnozilnik(s.map(v => v / n), hex3(MERITVE[def.id].barva.drevesa), moc == null ? MOC : moc);
+    for (const ic of chunks) {
+      const ca = ic.base.attributes.color; if (!ca) continue;
+      const a = ca.array;
+      for (let k = 0; k < a.length; k += ca.itemSize) if (a[k + 1] > a[k]) { a[k] *= m[0]; a[k + 1] *= m[1]; a[k + 2] *= m[2]; }
+      ca.needsUpdate = true;
+    }
+    return m;
+  }
+
   /* Kos 3: the light by the latitude. The theme's sun is the sun high in a clear summer sky; at the track's latitude the summer's noon sun
      stands at 90° − |lat| + 23.44° and its light comes through more air (air mass 1 / sin of the height), which takes more blue than red
      (Rayleigh's optical depth at the zenith ≈ 0.052 red, 0.098 green, 0.236 blue, at 650 / 550 / 450 nm). The sun's colour and strength move
@@ -114,5 +151,5 @@
     return [c[0] + (g[0] - c[0]) * k * w, c[1] + (g[1] - c[1]) * k * w, c[2] + (g[2] - c[2]) * k * w];
   }
 
-  World.rastje = { prava, aktivna, PODNEBJA, MERITVE, MOC, mnozilnik, barvaDreves, barvaTrave, barve, svetloba, look, prehod };
+  World.rastje = { prava, aktivna, PODNEBJA, MERITVE, MOC, mnozilnik, barvaDreves, barvaTrave, barve, tla, listje, svetloba, look, prehod };
 })();
