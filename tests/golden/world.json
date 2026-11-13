@@ -1394,11 +1394,11 @@
  },
  "sogeri": {
   "meshes": 1248,
-  "verts": 408527,
+  "verts": 408607,
   "instances": 34852,
   "props": 55,
   "crowd": 91,
-  "world": "b59e7097",
+  "world": "df1c7121",
   "propsHash": "f50680e2",
   "floor": "7d5d29d6/4704",
   "groups": {
@@ -1409,7 +1409,7 @@
    "crowd:MeshLambertMaterial": "86798755",
    "ao:MeshBasicMaterial": "d6b5771b",
    "tyremarks:MeshBasicMaterial": "e1e84f72",
-   "roadwear:MeshLambertMaterial": "97a128dd"
+   "roadwear:MeshLambertMaterial": "d2c14d1e"
   }
  }
 }
