@@ -1,0 +1,6 @@
+{
+  "name": "svetovna-lestvica",
+  "private": true,
+  "type": "module",
+  "description": "Strežnik svetovne lestvice (Cloudflare Worker, D1, R2): docs/svetovna-lestvica.md, README.md tu"
+}
