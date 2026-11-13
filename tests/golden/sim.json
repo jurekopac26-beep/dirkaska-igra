@@ -4801,6 +4801,104 @@
    "repairs": 0
   }
  },
+ "kaligandaki/race/cs": {
+  "digest": "92d7977bc494dd57cccb84ac",
+  "lead": 2155.3,
+  "car0": [
+   -1133.24,
+   -1462.2
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kaligandaki/demo/cs": {
+  "digest": "9e25314bc6675328ca7d0967",
+  "lead": 2317.9,
+  "car0": [
+   -1272.48,
+   -1661.82
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kaligandaki/upg/cs": {
+  "digest": "38e9a4aa65020ec579e4835c",
+  "lead": 2291.8,
+  "car0": [
+   -1260.92,
+   -1624.18
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kaligandaki/crash/cs": {
+  "digest": "cec96c8d6a6420aa2a18a888",
+  "lead": 2125.6,
+  "car0": [
+   -1018.96,
+   -1398.84
+  ],
+  "cover": {
+   "dmg": 0.72,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kaligandaki/formula/cs": {
+  "digest": "15745e51f1a2b4901fd4ddb9",
+  "lead": 2457,
+  "car0": [
+   -1156.42,
+   -1489.6
+  ],
+  "cover": {
+   "dmg": 0.89,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "kaligandaki/lm/cs": {
+  "digest": "d2efaf7b771e97d3f0b13022",
+  "lead": 2437.2,
+  "car0": [
+   -1092.46,
+   -1423.99
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "kaligandaki/car/cs": {
+  "digest": "60ad801c30371c3b63274906",
+  "lead": 2125,
+  "car0": [
+   -901.15,
+   -1333.19
+  ],
+  "cover": {
+   "dmg": 0.81,
+   "loose": 3,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
  "livorno/race/cs": {
   "digest": "5b601641952b407dbb9ec42d",
   "lead": 2185.5,

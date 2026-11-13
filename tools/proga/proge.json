@@ -1,19 +1,116 @@
 {
-  "balea": {
-    "ime": "Bâlea, Romunija",
-    "okvir": [45.575, 24.56, 45.68, 24.68],
-    "pot": [[45.6116644, 24.613546], [45.6024757, 24.6140093]],
-    "start": [45.6107785, 24.6144425],
-    "cilj": [45.6042455, 24.6137231],
-    "zalet": 160,
-    "po_cilju": 196,
-    "polsirina": 5.5,
-    "gauss": 2.5,
-    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.11, "serpentine": 0.3, "serpentine_m": 22 },
-    "s2": "S2C_35TLL_20250726_0_L2A",
-    "dalec": 9000,
-    "dalec_celica": 250,
-    "drevesa": 0,
-    "ime_h": "BALEA_H"
-  }
+ "balea": {
+  "ime": "Bâlea, Romunija",
+  "okvir": [
+   45.575,
+   24.56,
+   45.68,
+   24.68
+  ],
+  "pot": [
+   [
+    45.6116644,
+    24.613546
+   ],
+   [
+    45.6024757,
+    24.6140093
+   ]
+  ],
+  "start": [
+   45.6107785,
+   24.6144425
+  ],
+  "cilj": [
+   45.6042455,
+   24.6137231
+  ],
+  "zalet": 160,
+  "po_cilju": 196,
+  "polsirina": 5.5,
+  "gauss": 2.5,
+  "visine": {
+   "mediana": 50,
+   "glajenje": 30,
+   "naklon": 0.11,
+   "serpentine": 0.3,
+   "serpentine_m": 22
+  },
+  "s2": "S2C_35TLL_20250726_0_L2A",
+  "dalec": 9000,
+  "dalec_celica": 250,
+  "drevesa": 0,
+  "ime_h": "BALEA_H"
+ },
+ "kaligandaki": {
+  "ime": "Kali Gandaki, Nepal",
+  "okvir": [
+   28.53,
+   83.628,
+   28.572,
+   83.655
+  ],
+  "pot": [
+   [
+    28.53714,
+    83.64903
+   ],
+   [
+    28.54254,
+    83.64845
+   ],
+   [
+    28.54593,
+    83.64518
+   ],
+   [
+    28.55028,
+    83.64431
+   ],
+   [
+    28.55382,
+    83.64094
+   ],
+   [
+    28.55528,
+    83.63672
+   ],
+   [
+    28.55827,
+    83.63488
+   ],
+   [
+    28.56187,
+    83.63607
+   ],
+   [
+    28.5656,
+    83.63578
+   ]
+  ],
+  "start": [
+   28.54254,
+   83.64845
+  ],
+  "cilj": [
+   28.56187,
+   83.63607
+  ],
+  "zalet": 160,
+  "po_cilju": 190,
+  "polsirina": 4.5,
+  "gauss": 2.5,
+  "visine": {
+   "mediana": 300,
+   "glajenje": 200,
+   "naklon": 0.1,
+   "serpentine": 0.5,
+   "serpentine_m": 30
+  },
+  "s2": "S2C_44RQS_20251128_0_L2A",
+  "dalec": 9000,
+  "dalec_celica": 250,
+  "drevesa": 0,
+  "ime_h": "KALIGANDAKI_H"
+ }
 }
