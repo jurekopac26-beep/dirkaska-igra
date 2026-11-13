@@ -5,7 +5,7 @@
 // big PONOVI IGRO (no results first; the HUD and the controls off; under the title: a wheel came off). PONOVI IGRO: the question of Zadnji
 // posnetki (Ne), the same race again, the car whole; no ZAMENJAJ KOLO (no button, no spare on the roof); a hard hit: two off, the whole car
 // on fire from its middle, KONEC IGRE; Rezultati: the results, the player retired. One of the ten cars without parts that come off (KAZE
-// RS): its own tyres, no wheel rule. On its side the left column (the place, the speed, the tyres) stays above the steering arrows.
+// RS): its own tyres and the rule too (paket-p K): a front wheel off, KONEC IGRE. On its side the left column (the place, the speed, the tyres) stays above the steering arrows.
 // Upright (360 x 640) and on its side (640 x 360), in English too.
 //   node tests/browser/wheels.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -69,13 +69,30 @@ try {
     T.check(`${tag}: no errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
-  // one of the ten cars without parts that come off: its own tyres, no wheel rule (its wheels never come off)
-  {
-    const { ctx, page } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, damage: 2 }, undefined, { seed: 77 });
+  // one of the ten cars without parts that come off (KAZE RS, paket-p K): its own tyres and the wheel rule as every car's; a hit at 79 %
+  // takes a front wheel (its mesh hidden, a bare hub in its place, the wheel a piece on the road), the car stops: KONEC IGRE; upright and on its side
+  for (const vw of [{ width: 640, height: 360 }, { width: 360, height: 640 }]) {
+    const tag = `KAZE ${vw.width} x ${vw.height}`;
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', damage: 2, radio: 0 }, vw, { seed: 77 });
     await page.evaluate(() => { window.__game.S.car = 0; });
     await startTrack(page, 'spa');
-    const r = await page.evaluate(() => { const P = window.__game.race.player; return { id: P.m.id, rule: !!(P.wreck && P.wreck.rule), kt: !!P.kt }; });
-    T.check('one of the ten cars without parts that come off (KAZE RS): its own tyres (Car.kt), no wheel rule', r.id === 'kaze' && !r.rule && r.kt, JSON.stringify(r));
+    const r = await page.evaluate(async () => {
+      const g = window.__game, P = g.race.player, W = P.wreck, frames = async (n) => { for (let i = 0; i < n; i++) await new Promise(r => requestAnimationFrame(r)); };
+      const id = P.m.id, rule = !!(W && W.rule), kt = !!P.kt; if (!rule) return { id, rule, kt };
+      g.sim(9, true); P.dmg = 0; P.dz = [0, 0, 0, 0]; P.cd = [0, 0, 0, 0]; P.kt = null; W.rule.kt = false;   // (the rule without its tyres: at 80 %)
+      P.dmg = 0.79; Core.applyDamage(P, 0.03, P.m.len * 0.5, 0); const wk = [0, 1, 2, 3].find(j => W.wl & (1 << j));
+      g.resume(); await frames(4); g.pause();
+      const v = Render.viewOf(P), sd = wk % 2 ? 1 : -1, w = v.wf.find(q => Math.sign(q.position.z) === sd);
+      const drawn = { off: !!v.wheelOff[wk], hidden: !!w && !w.visible, hub: !!(v.hubs[wk] && v.hubs[wk].visible) };
+      g.sim(5, true); await frames(6);
+      const sc = document.getElementById('s-over');
+      return { id, rule, kt, wk, n: W.nL, drawn, over: sc.classList.contains('show'), title: sc.querySelector('h2').textContent, out: g.race.isOut(P), v: P.speed };
+    });
+    console.log(tag, JSON.stringify(r));
+    T.check(`${tag}: its own tyres (Car.kt) and the wheel rule (paket-p K)`, r.id === 'kaze' && r.rule && r.kt, JSON.stringify({ id: r.id, rule: r.rule, kt: r.kt }));
+    T.check(`${tag}: a hit at 79 %: a front wheel off, drawn so (the wheel hidden, a bare hub there)`, r.n === 1 && (r.wk === 0 || r.wk === 1) && r.drawn && r.drawn.off && r.drawn.hidden && r.drawn.hub, JSON.stringify(r.drawn));
+    T.check(`${tag}: the car stopped, out: KONEC IGRE`, r.over && r.title === 'KONEC IGRE' && r.out && r.v < 0.6, `${r.title}, ${r.v}`);
+    T.check(`${tag}: no errors`, errors.length === 0, errors.slice(0, 3).join(' | '));
     await ctx.close();
   }
 } finally {

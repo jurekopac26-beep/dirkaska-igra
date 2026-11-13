@@ -4788,7 +4788,7 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values()]);
+    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values(), ...oldHubCache.values()]);
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
@@ -7248,6 +7248,9 @@ const Render = (function () {
     const crushed = v.xOn || v.xtR ? c.roofDmg >= 0.5 : v.roofStep * (rk ? 0.05 : 0.25) >= 0.5 - 1e-9;   // (Razbijanje · nov način, the Kolibri's roof field: roofStep stays 0 there, the core's roofDmg itself (two old steps))
     if (crushed || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c, crushed);
     if (v.kit) return;
+    // an older model's front wheel off (the wheel rule, paket-p K.3: the core's c.wreck.wl, only the front two): as a kit car's, without the sag
+    { const W = c.wreck; if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix; kitRefit(v); }
+      if (W && W.wl) for (let k = 0; k < 2; k++) if ((W.wl & (1 << k)) && !v.wheelOff[k]) oldWheelOff(v, c, k, x, y, z, h); }
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
     for (const name in v.parts) {
       const m = v.parts[name];
@@ -7505,6 +7508,22 @@ const Render = (function () {
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
   }
+  // an older model's front wheel k off (no kit: its wheel mesh in v.wf): hidden (latched), its piece that wheel (syncPiece), a bare hub and
+  // disc in its place (shared, oldHubGeo: one draw call), bits and sparks once; the hub's sparks while it moves (emitFx)
+  function oldWheelOff(v, c, k, x, y, z, h) {
+    v.wheelOff[k] = 1; const M = c.m, sd = k % 2 ? 1 : -1, w = v.wf.find(q => Math.sign(q.position.z) === sd); if (w) w.visible = false;
+    const lx = w ? w.position.x : M.a, lz = w ? w.position.z : sd * (M.wid * 0.5 - 0.1), ch = Math.cos(h), sh = Math.sin(h);
+    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(oldHubGeo(M.rw), vMat(v, matWheel)); hb.position.set(lx, M.rw, lz - sd * 0.04); v.grp.add(hb); }
+    v.hubs[k].visible = true;
+    kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
+  }
+  const oldHubCache = new Map();
+  function oldHubGeo(r) {
+    let geo = oldHubCache.get(r); if (geo) return geo;
+    const g = new GB(), D = [0.44, 0.45, 0.47], H = [0.19, 0.19, 0.21];
+    kitTube(g, [0, 0, -0.022], [0, 0, 0.022], 0.42 * r, 12, D, D, D); kitTube(g, [0, 0, -0.06], [0, 0, 0.06], 0.17 * r, 8, H, H, H);
+    oldHubCache.set(r, geo = g.geometry()); return geo;
+  }
   function kitRefit(v) {   // every wheel back on (the marshals' refit, a pit stop's new ones: repairStep), their bare hubs hidden, the body up off them
     for (let k = 0; k < 4; k++) if (v.wheelOff[k]) { v.wheelOff[k] = 0; const w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (k % 2 ? 1 : -1)); if (w) w.visible = true; if (v.hubs[k]) v.hubs[k].visible = false; }
     if (v.kit) { v.kit.ver++; kitSag(v); }
@@ -7636,6 +7655,10 @@ const Render = (function () {
     const v = byId.get(d.car);
     if (v && v.kit) { const m = kitDebrisMesh(v, d); if (m === null) return; if (!m) { d.mesh = true; return; } scene.add(m); d.mesh = m; debrisMeshes.push(d); return; }
     const src = v && v.parts && v.parts[d.part];
+    if (!src && v && v.wf && (d.part === 'wheelFL' || d.part === 'wheelFR')) {   // (an older model's front wheel, oldWheelOff: the wheel's own mesh, shared geometry and material)
+      const w = v.wf.find(q => Math.sign(q.position.z) === (d.part === 'wheelFR' ? 1 : -1)); if (!w) { d.mesh = true; return; }
+      const inner = new THREE.Mesh(w.geometry, w.material); inner.rotation.x = Math.PI / 2; inner.castShadow = !!v.car.isPlayer;
+      const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner); scene.add(m); d.mesh = m; debrisMeshes.push(d); return; }
     if (!src || src.userData.xGone) { d.mesh = true; return; }   // (xGone: a mirror Razbijanje · nov način already put on the road, xMirror)
     // a loose panel lies on its biggest face: turn the thinnest box dimension upright inside a holder
     const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); inner.castShadow = true; inner.receiveShadow = true;
@@ -9861,9 +9884,9 @@ const Render = (function () {
     c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)
-    if (v.kit && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {
+    if ((v.kit || v.hubs[0] || v.hubs[1]) && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {   // (an older model's front wheel too: oldWheelOff)
       v.hubAcc[k] += dt * (6 + spd * 1.3); if (v.hubAcc[k] < 1) continue;
-      const p = wheelWorld(c, k < 2 ? M.a : -M.b, (k % 2 ? 1 : -1) * v.kit.E.body.hw, x, z, h), px = p.x, pz = p.z;
+      const p = wheelWorld(c, k < 2 ? M.a : -M.b, (k % 2 ? 1 : -1) * (v.kit ? v.kit.E.body.hw : Math.abs(v.hubs[k].position.z) + 0.04), x, z, h), px = p.x, pz = p.z;
       if (XC.drag && skids && !c.air) {   // (P4: over 15 m/s a bare hub cuts a thin pale gouge into the asphalt, as steel on the road does; drawn only)
         const G = v.hubG || (v.hubG = []), L = G[k];
         if (spd > 15 && L && (px - L[0]) ** 2 + (pz - L[1]) ** 2 < 16) { if ((px - L[0]) ** 2 + (pz - L[1]) ** 2 > 0.36) { skids.add(L[0], L[1], px, pz, 0.05, 0.62, 0.61, 0.58, 0.8, 0.8, L[2], yb); G[k] = [px, pz, yb]; } }

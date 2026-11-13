@@ -2258,8 +2258,8 @@ const Core = (function () {
   // wheel's own turn, c.xd.ph, laid only on a car with a bent wheel; repairCar and _mend clear it), up to 0.004 of the lock, from 30 m/s
   // in full. Samo videz, Izklop and a car not knocked there: 0 (it drives as before)
   function dmgSteer(c, spd, dt) {
-    if (c.dmgMode !== 2) return 0; const cd = c.cd, b = sstep(0.35, 0.7, Math.max(cd[0], cd[1]));
-    let w = 0; if (b > 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
+    if (c.dmgMode !== 2) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
+    let w = 0; if (b !== 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
     return clamp((cd[1] - cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) + w;
   }
   // Razbijanje · nov način: odboji (xBump; off: carCollide as before). A knock turns the car it hits as hard as its impulse says (no damping
@@ -3438,7 +3438,7 @@ const Core = (function () {
   function ktGrip(c) {   // [the four wheels' grip shares, the side grip's share]
     const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = K.cg ? 1 - KT.cold * K.cold : 1;
     for (let k = 0; k < 4; k++) g[k] = (1 - loss * K.w[k]) * cd;
-    g[4] = K.hot >= 0 ? KT.burn : 1; return g;
+    g[4] = K.hot >= 0 && c.dmgMode === 2 ? KT.burn : 1; return g;   // (Samo videz: the flame a warning only, the grip as ever: paket-p K.4)
   }
   // the tyres' wear over ds metres (Race step), the set's on c.ty (the radio, the pits) the four's mean
   function ktWear(c, race, ds) {
@@ -3475,14 +3475,15 @@ const Core = (function () {
     const K = c.kt, W = c.wreck, Q = W && W.rule, d1 = c.dmg;
     if (!Q || !Q.kt || K.hot >= 0 || W.nL || W.dnf || c.finished) return;
     if (!((d0 >= WRULE.d1 && amt >= WRULE.hit) || d1 >= WRULE.d2)) return;
-    let m = k0 >= 0 ? k0 : 0; for (let k = 0; k < 4; k++) if (K.d[k] > K.d[m]) m = k;
+    const on = (k) => !!partOf(c.m, WHEELS[k]);   // (an older model: its front wheels only, partOf)
+    let m = k0 >= 0 && on(k0) ? k0 : 0; if (!on(m)) return; for (let k = 0; k < 4; k++) if (K.d[k] > K.d[m] && on(k)) m = k;
     K.hot = m;
   }
   const ruleFire = (Q, lvl) => { if (!Q.burn) Q.fn = (Q.fn || 0) + 1; if ((Q.burn || 0) < lvl) Q.burn = lvl; };
   function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on
     const W = c.wreck;
     for (let j = 0; j < n; j++) {
-      const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partsOf(c.m)[WHEELS[k]]); if (!on.length) return;
+      const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partOf(c.m, WHEELS[k])); if (!on.length) return;
       detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(rand() * on.length))]]);
     }
   }
@@ -3499,10 +3500,10 @@ const Core = (function () {
   // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road); the
   // parts mounted on it (their entry's on) come off with it, each its own piece
   function detachPart(c, name, P) {
-    P = P || partsOf(c.m)[name];
+    P = P || partOf(c.m, name);
     c.lost[name] = 1; c.detach.push(name);
     const df = P.df != null ? P.df : c.m.parts ? 0 : WING[name];
-    if (c.aeroK0 != null && df) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
+    if (c.aeroK0 != null && df && c.dmgMode === 2) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
     if (P.wh != null && c.wreck) { c.wreck.wl |= 1 << P.wh; c.wreck.nL++; c.wreck.lt = 0; }
     const PT = partsOf(c.m); for (const k in PT) if (PT[k].on === name && !c.lost[k]) detachPart(c, k, PT[k]);   // (the parts mounted on it go with it)
   }
@@ -3618,6 +3619,18 @@ const Core = (function () {
     for (const id in sp.over || {}) put(raw[id], sp.over[id]);
     return raw;
   }
+  // a wheel's entry (wh k: 0 FL 1 FR 2 RL 3 RR) on a vehicle with physics ph (len, a, b, rw)
+  const wheelEntry = (k, ph) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / (ph.len / 2), lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
+  // a part's entry: the model's table's (partsOf), else for a model with the 8 old parts (no table of its own) its front wheels, the ones
+  // the renderer can take off it (paket-p K.2: the wheel rule's wheel on the 11 older models; never by a corner, applyDamage's loop has no
+  // wheels for them)
+  const OLD_WH = new Map();
+  function partOf(M, name) {
+    const P = partsOf(M)[name]; if (P || M.parts) return P;
+    const k = name === 'wheelFL' ? 0 : name === 'wheelFR' ? 1 : -1; if (k < 0) return undefined;
+    let E = OLD_WH.get(M); if (!E) OLD_WH.set(M, E = [wheelEntry(0, M), wheelEntry(1, M)]);
+    return E[k];
+  }
   // the def's part spec -> the table (name -> { z, th, corner?, cth?, m, r, h, lx, lz, y, df?, wh? }); ph: the vehicle's physics
   function expandParts(sp, ph) {
     const hl = ph.len / 2, out = {}, res = (e) => {
@@ -3626,7 +3639,7 @@ const Core = (function () {
       o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; if (e.on != null) o.on = e.on;
       if (e.spare) o.spare = 1; if (e.tl) o.tl = 1; return o;
     };
-    const wheel = (k) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / hl, lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
+    const wheel = (k) => wheelEntry(k, ph);
     const raw = mergeParts(sp);
     for (const id in raw) { const e = raw[id]; if (e.wh != null) { out[id] = wheel(e.wh); if (e.m != null) out[id].m = e.m; } else out[id] = res(e); }
     if (ph.aero) { if (out.wing && out.wing.df == null) out.wing.df = 0.55; if (out.bumperF && out.bumperF.df == null) out.bumperF.df = 0.3; }
@@ -4088,7 +4101,7 @@ const Core = (function () {
       if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
     }
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
-    let hit = 0, hitK = 0, hnx = 0, hnz = 0;
+    let hit = 0, hitK = 0, hnx = 0, hnz = 0; const u0x = c.vx, u0z = c.vz, u0w = c.w;   // (the speeds before the step's first push: P3, the knock below)
     for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
@@ -4169,11 +4182,23 @@ const Core = (function () {
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     }
+    // (P3: the corners as far toward the barrier as the knocked one, give or take what the car goes in a step, meet it in the same step (what the car itself goes toward it in a step): the blow
+    // the fastest of them into it before the step's first push (the loop takes them one after the other, the first one's push slows the next),
+    // the dent between them, the foremost the most; square on both front corners alike, left as right, whichever the loop took first)
+    let kx = 0, kz = 0, pk = hitK, fx = 0, fz = 0;
+    if (hit > 0) {
+      fx = -(hnx * ch + hnz * sh); fz = -(-hnx * sh + hnz * ch);
+      const P = c.corners, dk = Math.max(0.05, -(u0x * hnx + u0z * hnz) * (dt || 1 / 120)), ph = P[hitK][0] * fx + P[hitK][1] * fz;
+      let pm = ph, kw = 0, h0 = 0; for (const p of P) { const q = p[0] * fx + p[1] * fz; if (q > pm && q - ph <= dk) pm = q; }
+      for (let k = 0; k < P.length; k++) { const p = P[k], q = p[0] * fx + p[1] * fz; if (Math.abs(q - ph) > dk) continue;
+        const w = clamp(1 - (pm - q) / dk, 0, 1), wx = p[0] * ch - p[1] * sh, wz = p[0] * sh + p[1] * ch, v = -((u0x - u0w * wz) * hnx + (u0z + u0w * wx) * hnz);
+        kw += w; kx += w * p[0]; kz += w * p[1]; if (v > h0 + 1e-9) { h0 = v; pk = k; } }
+      kx /= kw; kz /= kw; hit = Math.max(hit, h0);
+    }
     if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); }
     if (hit > 2.5) {   // 36 km/h into the wall ≈ 21 % (times model.knockK: the Kolibri's 6 %); which face hit follows from the wall direction seen from the car
-      const fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch), cx = c.corners[hitK][0], cz = c.corners[hitK][1];
-      const side = Math.abs(fz) > Math.abs(fx) * 0.9;
-      knock(c, (hit - 2.5) * 0.028, side ? cx * 0.45 : Math.sign(fx || cx) * Math.abs(cx) * 0.95, side ? Math.sign(fz) * Math.abs(cz) * 0.95 : cz * 0.6);
+      const side = Math.abs(fz) > Math.abs(fx) * 0.9, cx = c.corners[pk][0], cz = c.corners[pk][1];
+      knock(c, (hit - 2.5) * 0.028, side ? kx * 0.45 : Math.sign(fx || kx) * Math.abs(kx) * 0.95, side ? Math.sign(fz) * Math.abs(kz) * 0.95 : kz * 0.6);
       puncture(c, cx, cz, hit);
       if (XR.roll && side && hit > 10) xRollStart(c, -Math.sign(fz), hit);   // (Razbijanje · nov način: slammed sideways into a wall: it rolls over)
     }
@@ -7105,7 +7130,7 @@ const Core = (function () {
       // Samo videz: a burning tyre's wheel off at a real knock, the game over.
       // opts.tyreCold: the vehicles whose cold tyres after a stop grip less (kt.cg; the Kolibri's), the others' only to be seen
       { const P = this.player, TR = opts.tyreRule, TC = opts.tyreCold; if (P && !P.net && Array.isArray(TR) && TR.indexOf(P.m.id) >= 0) ktMk(P, Array.isArray(TC) && TC.indexOf(P.m.id) >= 0); }
-      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { over: false, fn: 0, burn: 0, kt: !!P.kt }; }
+      { const P = this.player, WR = opts.wheelRule; if (P && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) (P.wreck || (P.wreck = wreck0({}))).rule = { over: false, fn: 0, burn: 0, kt: !!P.kt }; }   // (an older model, no wreck of its own: one as retire's, paket-p K.1)
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -7646,7 +7671,7 @@ const Core = (function () {
 
     spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default the race's (rand); a patrol car's: the police's own, see step)
       const rnd = R || rand;
-      const P = partsOf(c.m)[name], T = P.tl && c.tl;
+      const P = partOf(c.m, name), T = P.tl && c.tl;
       // (a part on the semi-trailer, its entry's tl: from the trailer's middle, along its heading, at its speed)
       let bx = c.x, bz = c.z, bh = c.h, by = c.y || 0, bvx = c.vx, bvz = c.vz, hl = c.m.len * 0.5, hw = c.m.wid * 0.5;
       if (T) { const D = T.D, xm = D.f - D.len / 2 - T.cx; bh = T.h; bx = T.x + Math.cos(bh) * xm; bz = T.z + Math.sin(bh) * xm; by = T.yA != null ? T.yA : T.y || 0; bvx = T.vx || 0; bvz = T.vz || 0; hl = D.len * 0.5; hw = D.wid * 0.5; }
@@ -9112,7 +9137,7 @@ const Core = (function () {
 
   return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, DEB, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, partOf, applyDamage, careerWear, detachPart, DEB, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
     MAN, manRev, DRAG, PWR_MULT };
 })();
 

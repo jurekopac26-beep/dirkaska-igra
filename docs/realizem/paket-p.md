@@ -82,7 +82,7 @@ Navodilo za graditelje paketa v #608 (veja `trki/realizem`, stanje `205f89b2`). 
 
 ### Prva polovica
 
-#### K · Odpadlo kolo
+#### K · Odpadlo kolo (narejeno 13. 11. 2026; izvedba v `docs/trki-realizem.md`, »Poškodbe K«)
 
 | Poškodbe | Odpadlo kolo | Kdaj trk odtrga kolo | Kaj sledi |
 |---|---|---|---|

@@ -177,5 +177,24 @@ function until(r, fn, s) {
     `at 69 %: sokol front ${a.at69.join('+') || '-'}, sokol round ${b.at69.join('+') || '-'}, kaze ${k.at69.join('+') || '-'}, formula ${f.at69.join('+') || '-'}; at 75 %: ${a.at75.join('+')}`);
 }
 
+// 12. an older model (no kit of parts: KAZE) under the rule (paket-p K): the race's end as on the newer ones. Vklop: 80 % by small knocks
+//     takes a front wheel (only the front two: its parts are drawn so), the car stops, KONEC IGRE; Samo videz with its tyres (tyreRule):
+//     a tyre burns, the next real knock takes that wheel, the end. Without the rule: no wheel off, as before
+{
+  const KAZE = C.MODELS.find(m => m.id === 'kaze'), FW = ['wheelFL', 'wheelFR'];
+  const v = withRnd(4, () => { const r = race({ playerModel: KAZE, wheelRule: ['kaze'] }), P = r.player, W = P.wreck; P.vx = Math.cos(P.h) * 30; P.vz = Math.sin(P.h) * 30;
+    while (P.dmg < 0.8 && !W.nL) C.applyDamage(P, 0.015, P.m.len * 0.5, 0);
+    const lost = Object.keys(P.lost).filter(k => k.startsWith('wheel')), t = until(r, () => W.rule.over, 6); return { n: W.nL, lost, t, burn: W.rule.burn, dnf: W.dnf }; });
+  check('KAZE at Vklop under the rule: at 80 % a front wheel off, the whole car on fire, the car stops, the game over', v.n >= 1 && v.lost.every(k => FW.includes(k)) && v.burn === 2 && v.t < 3 && v.dnf, `${v.n} off (${v.lost.join(',')}), burn ${v.burn}, over in ${v.t.toFixed(2)} s`);
+  const s = withRnd(6, () => { const r = race({ playerModel: KAZE, wheelRule: ['kaze'], tyreRule: ['kaze'], damage: 1 }), P = r.player, W = P.wreck, K = P.kt; P.vx = Math.cos(P.h) * 30; P.vz = Math.sin(P.h) * 30;
+    let i = 0; while (K.hot < 0 && i++ < 400) C.applyDamage(P, 0.02, P.m.len * 0.5, (i & 1 ? 1 : -1) * P.m.wid * 0.5);
+    const hot = K.hot, n0 = W.nL, g = C.ktGrip(P).slice(); C.applyDamage(P, 0.01, P.m.len * 0.5, 0);
+    const lost = Object.keys(P.lost).filter(k => k.startsWith('wheel')), t = until(r, () => W.rule.over, 6); return { hot, n0, g, n: W.nL, lost, t }; });
+  check('KAZE at Samo videz with its tyres: a front tyre burns (no grip lost), the next knock takes that wheel, the car stops, the game over', (s.hot === 0 || s.hot === 1) && !s.n0 && s.g.every(x => x === 1) && s.n >= 1 && s.lost.every(k => FW.includes(k)) && s.t < 3,
+    `hot ${s.hot}, ${s.n} off (${s.lost.join(',')}), over in ${s.t.toFixed(2)} s`);
+  const o = withRnd(4, () => { const r = race({ playerModel: KAZE, wheelRule: undefined }), P = r.player; for (let i = 0; i < 80; i++) C.applyDamage(P, 0.015, P.m.len * 0.5, 0); return { w: Object.keys(P.lost).filter(k => k.startsWith('wheel')).length, rule: !!(P.wreck && P.wreck.rule) }; });
+  check('KAZE without the rule (Vklop, the race on): no wheel off, as before', !o.w && !o.rule, `${o.w} off`);
+}
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

@@ -1843,6 +1843,13 @@ Za vse velja:
   - vogal se povesi do 0,25 polmera kolesa; to velja za vse avte, preprosti dobijo samo ravnino povesa;
   - avto prijatelja na spletu se ne spremeni.
 - Testi: `knock.test.js` (vleka in tresenje samo pri Vklop) in `browser/kit.test.mjs` (nagnjeno kolo, poves).
+- **Simetrija (dopolnitev 13. 11. dopoldne):**
+  - vleka in tresenje sta zrcalna (levi vogal vleče levo, desni desno, z istim zneskom);
+  - `wallCollide` zdaj šteje udarec iz hitrosti pred prvim potiskom koraka, ker zanka obdela vogale enega za drugim in potisk prvega upočasni naslednjega;
+  - vogali, ki se ograje dotaknejo v istem koraku, si udarec delijo (najbolj spredaj največ), zato je pravokoten udarec v oba sprednja vogala levo enak desnemu;
+  - predrta guma je na vogalu z največjim udarcem;
+  - `trki.test.js` (zrcalni prizori): prizori brez zavijanja se po prvem dotiku in na koncu ujemajo do 1e-9, zavijanje 1 od 6 (meji 2 in 8);
+  - reference `trki.json`, `sim.json` in `races.json` so na novo izdelane (P3 spremeni vožnjo samo po udarcu pri Vklop).
 - **Iskre pod povešenim vogalom** (`paket-p.md`, P4.4) niso dodane. Vogal pade le za 0,25 polmera kolesa (pri preprostem avtu ~8 cm), zato podvozje ne drgne po cesti. Iskre ostanejo pri pestu brez kolesa in pri vlečenem odbijaču.
 
 ## Poškodbe P6: krčljiva cona (13. 11. 2026)
@@ -1859,13 +1866,21 @@ Za vse velja:
 - **Omejitve:** škatla trkov jedra ostane dolga kot prej (fizika se ne spreminja); senca in oddaljena mreža sta iz celega telesa.
 - Test: `browser/crash.test.mjs` 12 (tornado in rally).
 
+## Poškodbe K: odpadlo kolo za vse avte (13. 11. 2026)
+
+- **Pravilo koles** (Odpadlo kolo: Konec dirke) dobi igralčev avto vsakega modela; prej ga je dobil samo avto z deli, ki odpadejo (`wreck`), 11 starejših modelov (KAZE, VORTEX, PICO …) ni imelo ne ognja gume ne KONEC IGRE. Brez `wreck` ga priklop v `Race` ustvari (`wreck0`).
+- Starejši model ima kolo samo v izrisu: `ruleDrop` mu izbere samo sprednje kolo (`partOf`, brez novega `rand()`); izris skrije mrežo kolesa, na njeno mesto da golo pesto (`oldWheelOff`, `oldHubGeo` v `js/render.js`, en klic več), kolo odleti kot kos na cesto, pesto iskri.
+- **Samo videz**: goreča guma ne vzame oprijema (`ktGrip`, samo opozorilo s plamenom), odpadlo krilo ne vzame podtlaka (`detachPart`); oboje samo pri Vklop. Opis vrstice Odpadlo kolo (Nastavitve, `js/lang.js`) in `docs/igra.md` to povesta.
+- Avto, ki se ničesar ne dotakne, vozi enako (reference vožnje so enake); spremenijo se samo dirke s trki starejših modelov.
+- Testi: `kolibri-tyres` (goreča guma pri obeh načinih), `wheels` 12 (KAZE: Vklop, Samo videz, brez pravila), `browser/wheels` (KAZE na Spa: sprednje kolo, pesto, KONEC IGRE pokonci in ležeče).
+
 ## Predaja (13. 11. 2026, seja na Opusu)
 
 Na veji `trki/realizem` so commiti P1, P4, P2 (videz), P5, P3 in P6. Naslednja seja:
 1. **Odgovori:** preveri trki-cv6-slike, trki-hotham-seme in trki-uncompahgre-padec na strani Odločitve (z ArtifactData) in vprašanje »Odprto za uporabnika« v `paket-p.md`. Od tega je odvisna točka P2.3 (pregrevanje pri Vklop).
 2. ~~P5~~ in ~~P3~~: narejeno (razdelka zgoraj).
 4. ~~P6~~: narejeno (razdelek zgoraj).
-5. **Korak K:** odpadlo kolo.
+5. ~~Korak K~~: narejeno (razdelek zgoraj).
 6. **Pregled:** neodvisno preverjanje z več agenti samo enkrat, na koncu teme pred `main`. PR #608 ostane osnutek do vrste.
 
 Slike ZDAJ/POTEM delaj z `tools/trki/slike.mjs <scenarij> --a-root <git worktree starega commita> --b-root . --a-nast dmgDet=1 --b-nast dmgDet=1 --oddaljenost blizu`. Slike niso v repozitoriju.
