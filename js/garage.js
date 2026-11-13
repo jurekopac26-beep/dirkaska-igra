@@ -423,7 +423,7 @@
   let pp = null;
   function ppArm() { ppOff(); pp = { a: spec(S.car), car: S.car, armed: true, before: false }; }
   function ppShow() { if (!pp || !pp.armed || pp.car !== S.car) return; pp.armed = false; const b = $('g-pp'); b.textContent = tr('PREJ'); b.classList.add('on'); }
-  function ppTap() { if (!pp || pp.armed || pp.car !== S.car) return; pp.before = !pp.before; G.reshow(pp.before ? pp.a : spec(S.car)); $('g-pp').textContent = tr(pp.before ? 'POTEM' : 'PREJ'); }
+  function ppTap() { const q = pp; if (!q || q.armed || q.car !== S.car) return; q.before = !q.before; q.tap = true; $('g-pp').textContent = tr(q.before ? 'POTEM' : 'PREJ'); G.reshow(q.before ? q.a : spec(S.car)); }   // (its own show busy meanwhile: not the end of the button)
   function ppOff() { if (!pp) return; const q = pp; pp = null; $('g-pp').classList.remove('on'); if (q.before && q.car === S.car) G.reshow(spec(S.car)); }
   // (an option's place among its drawer's four, -1: not in it)
   const slotOf = (el, v) => !v || !DRAWER[el] ? -1 : DRAWER[el].findIndex(n => { const o = findOpt(el, n); return !!o && o[0] === v[0] && o[1] === v[1]; });
@@ -579,7 +579,7 @@
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
     G.onTap = onTap;
     G.onHud = (k, d) => {
-      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); steps(null); if (d) { if (pp && !pp.armed) ppOff(); } else ppShow(); return; }
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); steps(null); if (d) { if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
       if (k === 'fit') { if (d.step === 'down' && stepsAt) stepsAt.cnt = '';   // (the wheels' count: theirs only)
         if (STEP_L[d.step]) steps(STEP_L[d.step]); return; }
       if (k === 'paint') { steps(STEP_L['paint.' + d.step]); return; }

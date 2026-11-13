@@ -40,7 +40,7 @@ try {
   // (a short pause between the steps: the next show in the queue starts on a promise)
   // (moved: how far a car up on the lift (or with its arms out) went from the table's middle: none drives off it)
   // (arms: the lowest any arm's wrist came, the furthest it went out along x and z: in the ring)
-  const run = () => page.evaluate(async () => { let t = 0, lift = 0, table = 0, ang = 0, moved = 0, low = 9, ax = 0, az = 0;
+  const run = (on = page) => on.evaluate(async () => { let t = 0, lift = 0, table = 0, ang = 0, moved = 0, low = 9, ax = 0, az = 0;
     do { __garage.advance(0.5); t += 0.5; const i = Garage3D.info, L = Garage3D._dbg.lift; lift = Math.max(lift, i.lift); table = Math.max(table, Math.abs(L.table)); ang = Math.max(ang, Math.abs(i.ang));
       for (const A of Garage3D._dbg.RB) { low = Math.min(low, A.s.y); ax = Math.max(ax, Math.abs(A.s.x)); az = Math.max(az, Math.abs(A.s.z)); }
       if (i.lift > 0.01 || L.arms > 0) moved = Math.max(moved, Math.abs(Garage3D.cur.root.position.x)); await new Promise(r => setTimeout(r, 0)); } while (Garage3D.busy && t < 200);
@@ -221,7 +221,9 @@ try {
     // yellow ones after them: the LED ones back into the drawer on the trolley's way out; ↺ SERIJSKO: the car's own lamps back on
     // the trolley from the door, the yellow ones into the drawer)
     // (the far lamp by the far arm meanwhile (far, far.out, far.cart.out, far.in): kept apart from the near arm's steps)
-    const lampLog = (f, mid, end) => { const lg = f.log.split(',').filter(s => !/^far/.test(s)); return new RegExp('^plan,cart\\.in,' + mid + ',put,grab,swap,ring,').test(lg.join()) && lg.slice(-end.length).sort().join() === end.join(); };
+    // (the trolley's way off (cart.out, drawer.back) and the lights' try after the new one's taken, in any order with the ring's screws)
+    const lampLog = (f, mid, end) => { const lg = f.log.split(',').filter(s => !/^far/.test(s)), core = lg.filter(s => !end.includes(s)), g = lg.indexOf('grab');
+      return new RegExp('^plan,cart\\.in,' + mid + ',put,grab,swap,ring$').test(core.join()) && lg.filter(s => end.includes(s)).sort().join() === end.join() && end.every(s => lg.indexOf(s) > g) && lg.indexOf('lights') > lg.indexOf('ring'); };
     const farLamp = (f) => ['far.out', 'far.in', 'far.cart.out'].every(s => f.log.split(',').includes(s)) && f.log.split(',').indexOf('far.in') < f.log.split(',').indexOf('swap');
     const lampBuy = async (n) => { await page.evaluate((n) => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: n ? __garage.findOpt('zarometi', n) : null }); document.querySelector('#g-menu [data-mact="' + (n ? 'buy' : 'stock') + '"]').click(); }, n);
       const r = await run(), f = await fitOf(), u = await ui(); return { r, f, u: { money: u.S.money, parts: u.S.cars.kozorog.parts } }; };
@@ -603,7 +605,7 @@ try {
 
   // 9. from the game (index.html): its car screen, the TITAN in green chosen, a tap on the car: the garage opens with that car in that
   // colour (the profile kept: the same credits; its own MOCKUP bar); its back button: the game's car screen again on the same car (the
-  // address plain again)
+  // address plain again; the garage in the page: a frame over the game, opened without loading the second time)
   {
     const before = await page.evaluate(() => ({ money: __garage.S.money }));
     await page.goto(srv.base + '/index.html');
@@ -614,18 +616,21 @@ try {
     await page.click('#car-colors [data-col="5"]'); await page.waitForTimeout(300);
     const tap = await page.evaluate(() => { const b = document.getElementById('car-garage'), r = b.getBoundingClientRect(), s = Render.showRect(), pn = document.querySelector('#s-car .car-panel').getBoundingClientRect();
       return { on: b.classList.contains('on'), hint: b.textContent.trim(), car: Core.MODELS[__game.S.car].id, color: __game.S.color, x: r.left + r.width / 2, y: r.top + r.height * 0.4, clear: r.bottom <= pn.top + 1, over: r.left <= (s.x0 + s.x1) / 2 && r.right >= (s.x0 + s.x1) / 2 && r.top <= (s.y0 + s.y1) / 2 && r.bottom >= (s.y0 + s.y1) / 2 }; });
-    await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.mouse.click(tap.x, tap.y)]);
-    const url1 = page.url();
-    await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
+    // (the garage in the page now, Matej 13. 11. 2026: the frame #garaza over the game, opened without a new page; the game's address kept)
+    await page.mouse.click(tap.x, tap.y);
+    const fr = await (await page.waitForSelector('#garaza', { state: 'attached', timeout: 60000 })).contentFrame();
+    await fr.waitForFunction(() => window.__garage && Garage3D.ready && window.__garageEmbed && __garageEmbed.shown && __garage.S.car === 'titan', null, { timeout: 180000 });
+    const url1 = page.url(), dz = await page.evaluate(() => { const td = Core.TRACKS.find(d => d.id === __game.S.track); return td && /, /.test(td.name) ? td.name.split(', ').pop() : ''; });
+    const shown1 = await page.evaluate(() => { const f = document.getElementById('garaza'); return !f.classList.contains('off') && f.getBoundingClientRect().width > 300; });
     // (the game's own track is a real one now (NEUPORABNO: not Jezero), so the address carries its country (Romunija); the TITAN is not the
     // player's car: the button's flag is grey, so the country is read from the profile (S.flag), where the garage keeps it, or leaves it
     // empty when it has no flag for that country (the chequered flag), never another one)
-    const g = await page.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, sflag: __garage.S.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
+    const g = await fr.evaluate(() => ({ flag: document.getElementById('g-track').dataset.flag, sflag: __garage.S.flag, car: __garage.S.car, shown: Garage3D.info.car, color: Garage3D.info.color, money: __garage.S.money, demo: !document.getElementById('g-demo').classList.contains('off') }));
     T.check('from the game\'s car screen: the car (over its place, clear of the panel, "Tapni avto za garažo") tapped opens the garage with it, the TITAN in green; the profile kept (the same credits), the MOCKUP bar there',
-      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && /garaza\.html\?car=titan&color=2fa84f(&drzava=[^&]+)?$/.test(url1) && (!/drzava=/.test(url1) || g.sflag === '' || g.sflag === decodeURIComponent(url1.split('drzava=')[1])) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
-      JSON.stringify({ tap, url1, g, before }));
-    await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('.g-foot .g-btn-back')]);
-    await page.waitForFunction(() => window.__game && __game.screen === 'car', null, { timeout: 180000 });
+      tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && shown1 && /index\.html$/.test(url1) && (!dz || g.sflag === '' || g.sflag === dz) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
+      JSON.stringify({ tap, url1, dz, shown1, g, before }));
+    await fr.click('.g-foot .g-btn-back');
+    await page.waitForFunction(() => window.__game && __game.screen === 'car' && document.getElementById('garaza').classList.contains('off'), null, { timeout: 180000 });
     await page.waitForTimeout(300);
     const b = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, name: document.getElementById('car-name').textContent, url: location.search, on: document.getElementById('car-garage').classList.contains('on') }));
     T.check('the garage\'s back button: the game\'s car screen again, on the TITAN (the address plain again)', b.screen === 'car' && b.car === 'titan' && b.name === 'TITAN' && b.url === '' && b.on, JSON.stringify(b));
@@ -633,12 +638,15 @@ try {
   // the garage's Izberi progo: grey on a car not the player's (the TITAN: buy or rent it first, answer 3 of 2. 11.); on the player's
   // car the game again, on its track screen with that car
   {
-    await Promise.all([page.waitForURL(/garaza\.html/, { timeout: 60000 }), page.evaluate(() => { __game.onAction('car-garage'); }).catch(() => {})]);
-    await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
-    const g0 = await page.evaluate(() => { const b = document.getElementById('g-track'), S = __garage.S; return { car: S.car, off: b.disabled, txt: b.textContent, mine: Object.keys(S.cars).find(id => S.cars[id].own) || null }; });
-    T.check('the garage\'s Izberi progo on the TITAN (not the player\'s): grey, "Najprej kupi ali najemi avto"', g0.car === 'titan' && g0.off && g0.txt === 'Najprej kupi ali najemi avto' && !!g0.mine, JSON.stringify(g0));
-    await page.evaluate((id) => __garage.pickCar(id), g0.mine); await run();
-    await Promise.all([page.waitForURL(/index\.html/, { timeout: 60000 }), page.click('#g-track')]);
+    const t0 = Date.now();
+    await page.evaluate(() => { __game.onAction('car-garage'); });
+    const fr = page.frame({ url: /garaza\.html\?vgrajena=1/ });
+    await fr.waitForFunction(() => __garageEmbed.shown && Garage3D.ready && __garage.S.car === 'titan', null, { timeout: 60000 });
+    const fast = Date.now() - t0;   // (the second open: the garage shown at once, no loading)
+    const g0 = await fr.evaluate(() => { const b = document.getElementById('g-track'), S = __garage.S; return { car: S.car, off: b.disabled, txt: b.textContent, mine: Object.keys(S.cars).find(id => S.cars[id].own) || null }; });
+    T.check('the garage\'s Izberi progo on the TITAN (not the player\'s): grey, "Najprej kupi ali najemi avto"', g0.car === 'titan' && g0.off && g0.txt === 'Najprej kupi ali najemi avto' && !!g0.mine && fast < 5000, JSON.stringify({ g0, fast }));
+    await fr.evaluate((id) => __garage.pickCar(id), g0.mine); await run(fr);
+    await fr.click('#g-track');
     await page.waitForFunction(() => window.__game && __game.screen === 'track', null, { timeout: 180000 });
     const t = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, url: location.search }));
     T.check(`the garage's Izberi progo on the player's car (${g0.mine}): the game's track screen with it (the address plain again)`, t.screen === 'track' && t.car === g0.mine && t.url === '', JSON.stringify(t));
