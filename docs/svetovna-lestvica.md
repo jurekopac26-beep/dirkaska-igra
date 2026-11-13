@@ -76,6 +76,14 @@ Fizika v Node in v Chromu (Android, računalnik) teče na istem pogonu V8, zato 
 - Drugi pogoni: če se ne ujemajo natančno, velja dovoljeno odstopanje (npr. čas ±0,2 %, pot v pasu ceste) in oznaka »preverjeno približno«; če še to ne gre, se časi teh pogonov preverjajo samo s pregledom ob oddaji in so označeni.
 - Če ponovitev ne bi delovala niti v V8, se načrt pred kodo strežnika vrne uporabniku (vprašanje na strani Odločitve).
 
+**Meritev (seja 1, 13. 11. 2026, #672).** Spa, Belgija; Chrome 153 (Playwright, računalnik) posname, Node 22 ponovi (`tools/lestvica-preveri.mjs`, zapis `js/vnos.js`):
+
+- Kvalifikacije same do cilja (~160 s, 19.322–19.325 korakov; avtopilot kot klici ali vnos kot iz volana z vrednostjo vsakega koraka): cilj v istem koraku, čas enak do bita, pot največ ~1e-11 m od zapisa. Testni način z 21 tekmeci (66 s): pot enaka.
+- Isti brskalnik ali isti Node ponovi **do bita** (vsi povzetki stanja). Chrome in Node ne: različici V8 se razlikujeta v zadnjem bitu 21 od 24 funkcij `Math` (`sin`, `cos`, `exp`, `pow`, `atan2` …; enake so `sqrt`, `hypot`, `fround`), zato se povzetki stanja razidejo, pot pa ostane na ~1e-11 m. Pravilo za V8 velja z veliko rezervo; »natančno do bita« samo v isti različici pogona, zato preverjanje (seja 3) primerja po pravilu, ne po bitih.
+- Telefon (Android Chrome, iPhone Safari): preizkus uporabnika na predogledu #672 (vprašanje `svetovna-lestvica-telefon`).
+- Velikost zapisa: z avtopilotom 144 KB JSON (48 KB v stisnjenem `.rrp`), z vnosom, ki se spremeni vsak korak, 1,08 MB (376 KB stisnjeno), torej več od ~10–40 KB v tabeli »Kaj se shrani«. Telefon spremeni vnos največ enkrat na sličico (60/s, pol korakov). Zgoščeno obliko brez izgube (npr. binarno) in mejo velikosti določi seja 2 po meritvi s telefona.
+- Ponovitev v Node: ~0,3–0,65 s na krog (prva z gradnjo proge ~2,4 s), kot v razdelku 2.
+
 ### 4. Česar ni mogoče preprečiti
 
 Vožnja, ki jo računalnik izračuna sam (popoln vnos, »TAS«), se ponovi pravilno. Proti njej pomagajo meja `sumljivo`, prijave in brisanje skrbnika. Popolne zaščite nima nobena igra; cilj je, da so ponarejeni zahtevki in spremenjena igra brez možnosti, ostalo pa redko.
@@ -217,3 +225,4 @@ Odgovori 9. 11. 2026 v pogovoru seje (klikljiva izbira), zapisani na stran Odlo�
 
 - 8. 11. 2026: načrt in vprašanja (seja »Svetovna lestvica: načrt strežnika za izid 1. 2. (8. 11.)«, `session_01Ck3D3ULsayVNWnkwgbUbj7`, naloga Mateja); koda po odgovorih.
 - 9. 11. 2026: odgovori uporabnika (vse tri priporočene možnosti), načrt dokončan. Naslednji korak: seja 1 (ponovljivost) po tedenskem načrtu.
+- 13. 11. 2026: seja 1 (ponovljivost; croatiadata, prevzem od jure.kopac26; osnutek #672, veja `svetovna-lestvica/ponovljivost`): `js/vnos.js` (zapis vnosa ob sami vožnji in v testnem načinu, v glavi posnetka `.rrp`, brez imen), `tools/lestvica-preveri.mjs`, testa `tests/vnos.test.js` in `tests/browser/vnos.test.mjs`; meritev v razdelku 3 (pravilo za V8 velja). Odprto: preizkus na telefonu (predogled #672). Naslednji korak: seja 2 (strežnik).
