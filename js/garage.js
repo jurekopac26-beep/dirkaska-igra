@@ -346,6 +346,7 @@
     for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; }
     return inDrawer(el, t, j) ? 'drw:' + el : null; }
   function openMenu(m) {
+    ppOff();
     const c = C(); if (!c.own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : S.rent === S.car ? tr('Najet avto vozi tak, kot je.') : tr('Najprej kupi avto.'), true); return; }
     menu = m; if (!menu.sel) menu.sel = has(c, m.el) && m.el !== 'barva' ? has(c, m.el).slice() : m.el === 'servis' ? [0, 3] : [0, 0]; if (menu.tab == null) menu.tab = menu.sel[0];
     $('g-low').classList.add('hide'); drawMenu(); requestAnimationFrame(() => { if (menu) $('g-menu').classList.add('on'); });
@@ -400,11 +401,12 @@
     const m = menu, c = C(); if (!m || !c.own) return; const el = m.el;
     if (el === 'servis') { const ids = m.sel[1] === 3 ? ['clean', 'body', 'engine'] : [SRV[m.sel[1]].id], p = svcCost(c, ids).p; if (S.money < p) { pay(p); return; } closeMenu(); doService(ids); return; }   // (too little money: the menu stays, as a part's)
     const [t, j] = m.sel; if (el === 'aero' && t >= 2 && raceLocked(c)) return;
-    if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (col === c.color) return; if (S.money < p) { pay(p); return; } closeMenu(); doPaint(col, true); return; }
+    if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (col === c.color) return; if (S.money < p) { pay(p); return; } closeMenu(); lastCost = p; doPaint(col, true); return; }
     const mine = haveIt(c, el, [t, j]), p = mine ? 0 : price(el, t, j); if (!pay(p)) { drawMenu(); return; }   // (a part the car has: fitted again free)
-    const from = m.key; haveAdd(c, el, [t, j]); closeMenu(); fit(el, [t, j], from);
+    const from = m.key; haveAdd(c, el, [t, j]); closeMenu(); lastCost = p; fit(el, [t, j], from);
   }
   function fit(el, v, from) {
+    ppArm();   // (PREJ/POTEM: the car as it was, before this part)
     const c = C(), L0 = levels(c.parts), was = c.parts[el]; if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
     const name = L2(EL[el].n) + ' · ' + (v ? L2(opt(el, v[0], v[1])[0]) : tr('serijsko'));
     lastFit = name;
@@ -415,7 +417,14 @@
     const key = v ? keyOfOpt(el, v[0], v[1], from) : null, lvc = !!k && L1[k] !== L0[k], sp = spec(S.car), real = (w) => w && !isStock(el, w) ? w : null; if (lvc) sp.upg = L0;
     G.fitPart(el, sp, { src: key, from: real(was) ? optN(was) : 0, to: real(v) ? optN(v) : 0, fromK: slotOf(el, real(was)), toK: slotOf(el, real(v)), up: lvc ? [k, L1[k]] : null });
   }
-  let lastFit = null;
+  let lastFit = null, lastCost = 0;
+  // PREJ/POTEM (the plates' common end): when the show is over, a button shows the car as it was before the part or the paint and
+  // again as it is now (at once, the same view); gone with the next show, a menu or another car (the car as it is now back first)
+  let pp = null;
+  function ppArm() { ppOff(); pp = { a: spec(S.car), car: S.car, armed: true, before: false }; }
+  function ppShow() { if (!pp || !pp.armed || pp.car !== S.car) return; pp.armed = false; const b = $('g-pp'); b.textContent = tr('PREJ'); b.classList.add('on'); }
+  function ppTap() { if (!pp || pp.armed || pp.car !== S.car) return; pp.before = !pp.before; G.reshow(pp.before ? pp.a : spec(S.car)); $('g-pp').textContent = tr(pp.before ? 'POTEM' : 'PREJ'); }
+  function ppOff() { if (!pp) return; const q = pp; pp = null; $('g-pp').classList.remove('on'); if (q.before && q.car === S.car) G.reshow(spec(S.car)); }
   // (an option's place among its drawer's four, -1: not in it)
   const slotOf = (el, v) => !v || !DRAWER[el] ? -1 : DRAWER[el].findIndex(n => { const o = findOpt(el, n); return !!o && o[0] === v[0] && o[1] === v[1]; });
   function stock() { if (!menu) return; const el = menu.el; closeMenu(); fit(el, null); }
@@ -429,8 +438,8 @@
     power: '<svg viewBox="0 0 32 32"><path d="M18 3L7 18h8l-2 11 12-16h-8z" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"/></svg>',
     cond: '<svg viewBox="0 0 32 32"><path d="M20.5 4.5a6.5 6.5 0 0 0-6 9L5 23v4h4l9.5-9.5a6.5 6.5 0 0 0 9-6l-4 1.5-3-3 1.5-4z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>' };
   let lastChip = null;
-  function chip(small, big, icon) { const el = $('g-chip'); lastChip = { small, big: big.replace(/<[^>]+>/g, ''), icon: icon || '' };
-    el.innerHTML = '<small>' + (icon ? '<i>' + CHIP_I[icon] + '</i>' : '') + esc(small) + '</small><b>' + big + '</b>'; el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
+  function chip(small, big, icon, cost) { const el = $('g-chip'); lastChip = { small, big: big.replace(/<[^>]+>/g, ''), icon: icon || '', cost: cost || '' };   // (cost: what it cost, under it)
+    el.innerHTML = '<small>' + (icon ? '<i>' + CHIP_I[icon] + '</i>' : '') + esc(small) + '</small><b>' + big + '</b>' + (cost ? '<small class="c">' + esc(cost) + '</small>' : ''); el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
   function pay(p) {
     if (S.money < p) { const el = $('g-cr'); el.classList.remove('poor'); void el.offsetWidth; el.classList.add('poor'); setTimeout(() => el.classList.remove('poor'), 500); toast(tr('Premalo denarja: potrebuješ {0}, imaš {1}.', eur(p), eur(S.money)), true); return false; }
     if (p > 0) { const from = S.money; S.money -= p; countMoney(from, S.money); const el = $('g-cr'); el.classList.remove('pay'); void el.offsetWidth; el.classList.add('pay'); G.sfx('coin'); }
@@ -440,7 +449,7 @@
   function countMoney(a, b) { cancelAnimationFrame(moneyAnim); const t0 = performance.now(), el = $('g-money'); const st = (t) => { const k = Math.min(1, (t - t0) / 700); el.textContent = num(Math.round(a + (b - a) * (1 - Math.pow(1 - k, 3)))); if (k < 1) moneyAnim = requestAnimationFrame(st); }; moneyAnim = requestAnimationFrame(st); }
   function pickCar(id) {
     if (id === S.car) return;
-    closeMenu(); S.car = id; save(); render();
+    ppOff(); closeMenu(); S.car = id; save(); render();
     $('g-name').parentElement.classList.remove('new'); void $('g-name').offsetWidth; $('g-name').parentElement.classList.add('new');
     G.swap(spec(id));
   }
@@ -465,7 +474,7 @@
   function doPaint(col, paid) {
     const c = C(); if (!c.own || col === c.color) return;
     if (!pay(paid ? paintPrice(S.car) : 0)) return;
-    c.color = col; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
+    ppArm(); c.color = col; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
     G.paint(COLORS[col][0], c.stripe);
   }
   function buy() {
@@ -512,9 +521,10 @@
       case 'rent': rent(); break;
       case 'locked': toast(tr('{0} je na voljo v polni igri.', M().name)); break;
       case 'go': { const go = $('g-go'); go.classList.add('done'); go.textContent = tr('Izbran ✓'); toast(tr('{0} je izbran za naslednjo dirko.', M().name)); setTimeout(() => head(), 1600); break; }
-      case 'back': location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(S.car) : ''); break;   // (the game's car screen, on the car shown)
-      case 'track': if (!C().own && S.rent !== S.car) break; location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
+      case 'back': if (EMB) { embClose(GAME_CAR ? S.car : null, ''); break; } location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(S.car) : ''); break;   // (the game's car screen, on the car shown)
+      case 'track': if (!C().own && S.rent !== S.car) break; if (EMB) { embClose(S.car, 'proga'); break; } location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
       case 'skip': G.skip(); break;
+      case 'pp': ppTap(); break;
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
@@ -569,7 +579,7 @@
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
     G.onTap = onTap;
     G.onHud = (k, d) => {
-      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); steps(null); return; }
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); steps(null); if (d) { if (pp && !pp.armed) ppOff(); } else ppShow(); return; }
       if (k === 'fit') { if (d.step === 'down' && stepsAt) stepsAt.cnt = '';   // (the wheels' count: theirs only)
         if (STEP_L[d.step]) steps(STEP_L[d.step]); return; }
       if (k === 'paint') { steps(STEP_L['paint.' + d.step]); return; }
@@ -580,7 +590,7 @@
         if (svcChip && SRV.some(s => s.id === d.kind) && --svcChip.left <= 0) { const q = svcChip; svcChip = null;   // (the service's last item done: the state before → after)
           chip(tr('STANJE'), q.a + ' % → <em>' + q.b + ' %</em>', 'cond'); lastFit = null; return; }
         const n = { clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' }[d.kind];
-        chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓')); lastFit = null; }
+        chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓'), '', lastCost ? '−' + eur(lastCost) : ''); lastFit = null; lastCost = 0; }
     };
   }
   // a show's steps under the picture (garaza-animacije, korak 3): each step as it starts, the done ones as dots (the last 8), a wheel's
@@ -614,8 +624,8 @@
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
   // retired model's: its heir); the money and the cars stay the profile's (the real one: the career's). Without them: the profile's car
   let GAME_CAR = null;
-  function fromGame() {
-    let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
+  function fromGame(P) {
+    if (!P) try { P = new URLSearchParams(location.search); } catch (_) { return; }
     const id = heirId((P.get('car') || '').trim().toLowerCase()); if (!ORDER.includes(id)) return;
     GAME_CAR = id; S.car = id;
     const hx = parseInt(P.get('color') || '', 16), ci = COLORS.findIndex(c => c[0] === hx); if (ci >= 0) S.cars[id].color = ci;
@@ -624,7 +634,10 @@
   }
 
   let last = 0, hold = false, skip = 0;   // (hold: the tests step the clock themselves, advance)
+  let run = true, looping = false;   // (run: the loop goes on; in the game's frame only while the garage is shown)
+  function kick() { if (looping) return; looping = true; last = 0; requestAnimationFrame(loop); }
   function loop(t) {
+    if (!run) { looping = false; return; }
     const dt = last ? (t - last) / 1000 : 0.016; last = t;
     // idle (nothing moving but the dust in the light): about 30 frames a second, for the battery
     if (G.idle && !thumbQ.length && (skip += dt) < 1 / 31) { requestAnimationFrame(loop); return; }
@@ -642,9 +655,32 @@
     G.show(spec(S.car));
     setLang();
     { const e = document.querySelector('script[src^="js/garage3d.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), v = $('g-ver'); if (v && m) { v.textContent = m[1]; v.hidden = false; } }   // (the stamp, only on a published page)
-    requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
+    if (EMB) {   // (built in the background: one picture drawn (its shaders and textures made), then still till the game shows it)
+      run = false; G.frame(0.016);
+      setTimeout(() => { $('g-load').classList.add('done'); try { parent.__garageReady(); } catch (_) { } }, 0);
+    } else { looping = true; requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); }); }
     window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
+
+  /* ---------------- in the game's page (stran Odločitve, Matej 13. 11. 2026: the garage opens without loading) ---------------- */
+  // garaza.html?vgrajena=1 in a frame over the game (js/game.js garPre): built once, kept; open(p) shows it on the game's car (p: car,
+  // color, drzava, as the address has them), its Nazaj and Izberi progo hide it again (the game's __garageClose: the car, naprej); the
+  // phone's Back is its Nazaj (back). Hidden: the loop stopped, the sound off, a show cut short run to its end (what it does is saved)
+  const EMB = window.parent !== window && /[?&]vgrajena=1\b/.test(location.search);
+  function embOpen(p) {
+    S = load(); GAME_CAR = null; fromGame(new URLSearchParams(p || {})); Lang.set(S.lang);
+    $('g-demo').classList.toggle('off', S.demo === false); markMode(); $('g-snd').classList.toggle('mute', !S.sound);
+    closeMenu(); G.show(spec(S.car)); setLang(); resize(); G.sound(S.sound);
+    run = true; kick();
+    if (!S.guide && !hold) setTimeout(() => guide(0), 400);   // (the guide not seen to its end: from its start, as on the page loaded)
+  }
+  function embClose(car, naprej) {
+    run = false; G.sound(false); closeMenu();
+    if (G.busy) { G.skip(); for (let i = 0; i < 900 && G.busy; i++) G.frame(1 / 30, true); }
+    save();
+    try { parent.__garageClose({ car: car || '', naprej: naprej || '' }); } catch (_) { }
+  }
+  if (EMB) window.__garageEmbed = { open: embOpen, back: () => onAct('back'), get shown() { return run; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

@@ -6785,51 +6785,44 @@ const Garage3D = (function () {
     });
   }
 
-  // a new colour (and the stripes on or off), in the ring's glass chamber: the glass down round the car, its lights in the new colour,
-  // both arms with their nozzles (the near one along the near side, the far one over the top) run along the car from its nose to its
-  // tail; behind them the car is the new colour (the new car's body over the old one's, each cut where the nozzles are: three.js
-  // clipping planes), a mist of the paint at the nozzles. Then it dries: the chamber's lights warm, a warm glow sweeping along it,
-  // glints on the fresh paint; the glass up, the arms parked
-  const PAINT_C = { warm: 0xff7a2a };
-  function paintMist(col, n) { for (const A of RB) { if (A.tool !== 'nozzle') continue; const p = A.J.tipA, d = A.J.d;
-    for (let j = 0; j < n; j++) { const q = () => (Math.random() - 0.5) * 1.4; puffs.emit(p.x, p.y, p.z, d.x * 2.2 + q(), d.y * 2.2 + q() * 0.6, d.z * 2.2 + q(), 0.45 + Math.random() * 0.4, 0.06, 0.55, col, 0.45, -0.2, 2.2, 0.02); } } }
+  // a new colour (and the stripes on or off), in the ring's glass chamber (the plan's plate an_barvanje; Matej 13. 11. 2026: behind the
+  // curtain, no arms painting it): the glass down round the car, its lights in the new colour, the arms parked at the bridges' ends; a mist
+  // of the new colour falls from the chamber's top and the paint runs down the car from its roof to its sills, drops below its edge (the
+  // new car's body over the old one's, each cut at that height: three.js clipping planes). Then it dries: the chamber's lights warm, a
+  // warm glow sweeping along it, glints on the fresh paint; the glass up
+  const PAINT_C = { warm: 0xff7a2a, h: -9 };
   function paint(color, stripe) {
     return play(function* () {
       const cv = cur; if (!cv) return;   // (the same colour too: a new kind of work bought)
       if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(cv, false);   // (painted on the floor)
-      const K = cv.kit, W = svcPts(cv), zW = Math.max(W.zS, K.hw * 0.96);
+      const K = cv.kit, x0 = K.front + 0.25, x1 = K.rear - 0.25, up = new V3(), o = new V3();
       PAINT_C.on = true; hud('paint', { step: 'chamber' });
       yield* camTo(view({ at: [0, 0.9, 0], yaw: HOME.yaw, pitch: 0.26, dist: 8.4 }, 0.55, lift), 1.1);
       chamberColor(color);
-      yield* par(chamberTo(1, 2.4), armTool(0, 'nozzle', 1.6), armTool(1, 'nozzle', 1.6));
-      const col = hexRgb(color), x0 = K.front + 0.25, x1 = K.rear - 0.25, fwd = new V3(), o = new V3();
-      // (the near nozzle along the side, the far one over the roof (a car too tall for it under the ring: along the far side's top); past
-      // the arms' reach (a long car's ends) each leans out to the colour's edge)
-      const tipD = ARM.Y0 - 0.07 - ARM.FA - TL.nozzle, tall = K.top + 0.32 > tipD, lean = (x) => clamp((x - clamp(x, ARM.x0 + 0.2, ARM.x1 - 0.2)) * 1.6, -0.9, 0.9);
-      const near = (x) => armFor(0, 'nozzle', new V3(x, W.yA + 0.12, zW + 0.24), [lean(x), -0.55, -0.83]);
-      const L = ARM.FA + TL.nozzle, dz = clamp((-ARM.z0[1] - K.hw - 0.1) / L, 0.3, 0.7), dy = -Math.sqrt(1 - dz * dz);   // (tall: the wrist out at the ring's far edge, the tip 0.1 m out from the car's widest)
-      const top = (x) => tall ? armFor(1, 'nozzle', new V3(x, Math.min(K.top - 0.3, ARM.Y0 - 0.07 + dy * L), -(K.hw + 0.1)), [lean(x), dy, dz]) : armFor(1, 'nozzle', new V3(x, K.top + 0.32, -0.1), [lean(x), -1, 0]);
-      // (the camera, its plan's plate: nearer for the spray and along the car with the nozzles, from its front quarter to its rear one; low by
-      // the front quarter as it dries. A mist of the paint comes down from the chamber's top where the nozzles are)
+      yield* par(chamberTo(1, 2.4), armsPark(1.2));
+      const col = hexRgb(color);
+      // (the camera, its plan's plate: nearer, from the car's front quarter toward its rear one as the paint runs down; low by the front
+      // quarter as it dries)
       const dC = clamp(4.4 + (K.front - K.rear) * 0.52 + Math.max(0, K.top - 1.5) * 0.6, 6.2, 9.2), yC = K.top * 0.6;   // (farther for a long or a tall one)
       const VP0 = view({ at: [x0 * 0.4, yC, 0], yaw: 0.6, pitch: 0.2, dist: dC }), VP1 = view({ at: [x1 * 0.4, yC, 0], yaw: -0.5, pitch: 0.2, dist: dC }), VPD = view({ at: [K.front * 0.15, K.top * 0.5, 0], yaw: 0.9, pitch: 0.13, dist: dC * 0.9 });
-      const mistTop = (x, n) => { for (let j = 0; j < n; j++) { const p = carPt(cv, x + rnd(-0.7, 0.7), K.top + rnd(0.55, 0.9), rnd(-1, 1) * K.hw); puffs.emit(p.x, p.y, p.z, rnd(-0.15, 0.15), rnd(-1.3, -0.8), rnd(-0.15, 0.15), rnd(0.6, 0.95), 0.1, 0.6, col, 0.28, 0.5, 1.4, 0.02); } };
-      yield* par(armGo(0, near(x0), 1.4), armGo(1, top(x0), 1.4), camTo(VP0, 1.4));
+      // (the mist: from under the chamber's top over the whole car, falling; the drops: at the paint's edge on the car's sides, running down)
+      const mist = (n) => { for (let j = 0; j < n; j++) { const p = carPt(cv, rnd(x1, x0), K.top + rnd(0.5, 1.1), rnd(-1.1, 1.1) * K.hw); puffs.emit(p.x, p.y, p.z, rnd(-0.12, 0.12), rnd(-1.4, -0.8), rnd(-0.12, 0.12), rnd(0.6, 1), 0.1, 0.6, col, 0.3, 0.5, 1.4, 0.02); } };
+      const drip = (h, n) => { for (let j = 0; j < n; j++) { const sd = Math.random() < 0.5 ? -1 : 1, p = carPt(cv, rnd(x1 + 0.2, x0 - 0.2), h - 0.02, sd * K.hw * 1.01); puffs.emit(p.x, p.y, p.z, 0, rnd(-0.5, -0.25), 0, rnd(0.25, 0.5), 0.025, 0.04, col, 0.85, 0.2, 0.4, 0); } };
+      yield* camTo(VP0, 0.9); hud('paint', { step: 'spray' });
+      for (let i = 0; i < 6; i++) { mist(8); yield* wait(0.08); }   // (the mist first: the roof red under it)
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
       // the new body only (its wheels, shadow and parts stay the old car's), cut the other way
       nw.v.grp.traverse(o => { if (o.isMesh && !isIn(o, nw.v.bodyG)) o.visible = false; });
       for (const k in nw.parts) nw.parts[k].visible = false; nw.contact.visible = false;
       cv.root.add(nw.root); nw.root.position.set(0, 0, 0);
-      const cut = (x) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); fwd.set(1, 0, 0).transformDirection(cv.v.grp.matrixWorld); const c = fwd.dot(o) + x; cv.clip.set(fwd.clone().negate(), c); nw.clip.set(fwd.clone(), -c); };
-      cut(x0); SVU.uPnD.value.set(9, x0, 0, 0); hud('paint', { step: 'spray' });   // (the new paint wet where it is sprayed)
+      // (the cut at a height h over the car's origin: the old body below it, the new one above)
+      const cut = (h) => { cv.v.grp.updateMatrixWorld(true); o.setFromMatrixPosition(cv.v.grp.matrixWorld); up.set(0, 1, 0).transformDirection(cv.v.grp.matrixWorld); const c = up.dot(o) + h; cv.clip.set(up.clone().negate(), c); nw.clip.set(up.clone(), -c); PAINT_C.h = h; };
+      const h0 = K.top + 0.05, h1 = -0.15;
+      cut(h0); SVU.uPnD.value.set(9, -9, 0, 0);   // (the new paint wet all over (the drying's front past the nose))
       sLoop('paint', 'bandpass', 3800, 0.6, 0.16);
-      yield* par(tween(3.4, (k, u) => {
-        const s = lerp(x0, x1, EZ.sine(u)); cut(s); SVU.uPnD.value.y = s;
-        for (const [i, q] of [[0, near(s)], [1, top(s)]]) { Object.assign(RB[i].s, q); RB[i].dirty = true; }
-        paintMist(col, 2); mistTop(s, 2);
-      }), camTo(VP1, 3.4, EZ.sine));
-      sLoop('paint', 'bandpass', 3800, 0.6, 0);
+      yield* par(tween(2.6, (k, u) => { const h = lerp(h0, h1, EZ.sine(u)); cut(h); mist(3); if (h < K.top - 0.15 && h > 0.15) drip(h, 2); }), camTo(VP1, 2.6, EZ.sine));
+      sLoop('paint', 'bandpass', 3800, 0.6, 0); PAINT_C.h = -9;
       // the swap: the new car takes the old one's place (its own wheels, its parts moved over)
       cv.root.remove(nw.root); nw.v.grp.traverse(o => { if (o.isMesh) o.visible = true; }); nw.contact.visible = true;
       if (!spec.num) { nw.v.dec.visible = false; nw.v.bodyG.traverse(o2 => { if (o2.isMesh && o2.material === nw.v.dec.material) o2.visible = false; }); }
@@ -6839,7 +6832,7 @@ const Garage3D = (function () {
       freeCar(cv);
       // drying: the arms up out of the way, the chamber's lights warm, the lamps' heat along the car (the paint dries behind it), glints on the fresh paint
       hud('paint', { step: 'dry' });
-      spawn(camTo(VPD, 1.3)); yield* par(armTween(0, { y: ARM.Y0, pitch: Math.PI / 2, yaw: -Math.PI / 2 }, 0.6), armTween(1, { y: ARM.Y0, pitch: Math.PI / 2, yaw: tall ? Math.PI / 2 : -Math.PI / 2 }, 0.6));   // (level, not out through the chamber's ends; the far one away from the near one's (over the car: toward the far side))
+      yield* camTo(VPD, 1.3);
       // (the lamps warm up at the nose, then their heat runs along the car to its tail: wet, deep and dull behind it, a warm glow on the
       // paint where it is, dry and glossy ahead; the camera with it from the front quarter toward the rear one; then the fresh sheen fades)
       const PD = SVU.uPnD.value; PD.set(x0, -9, 0, 0);
@@ -7135,7 +7128,7 @@ const Garage3D = (function () {
           for (const [v0, v1, k] of R.runs) if (k >= b && k < b + AP) for (let j = v0; j < v1; j++) { const y = a[j * 3 + 1], z = a[j * 3 + 2]; low = Math.min(low, y); if (y < 2) lane = Math.min(lane, Math.abs(z)); }
           if (A.tool !== 'none') { const m = STN[A.i].tools[A.tool].mesh, t = m.geometry.attributes.position.array; for (let j = 0; j < t.length; j += 3) { v.set(t[j], t[j + 1], t[j + 2]).applyMatrix4(m.matrix); low = Math.min(low, v.y); if (v.y < 2) lane = Math.min(lane, Math.abs(v.z)); } }
           return { s: Object.fromEntries(Object.entries(A.s).map(([k, q]) => [k, +q.toFixed(3)])), tool: A.tool, rest: A.rest, low: +low.toFixed(3), tip: A.J.tipA.toArray().map(q => +q.toFixed(3)), lane: +lane.toFixed(3), cast: R.mesh.castShadow }; }); },
-      get fx() { const R = this.arms; return { arms: R, lane: Math.min(...R.map(r => r.lane)), parked: fxParked(), tools: FX.tools.filter(m => m.visible).length, pnd: SVU.uPnD.value.toArray().map(v => +v.toFixed(2)) }; },   // (pnd: the fresh paint's fronts, sheen, heat)
+      get fx() { const R = this.arms; return { arms: R, lane: Math.min(...R.map(r => r.lane)), parked: fxParked(), tools: FX.tools.filter(m => m.visible).length, pnd: SVU.uPnD.value.toArray().map(v => +v.toFixed(2)), ph: PAINT_C.h }; },   // (pnd: the fresh paint's fronts, sheen, heat)
       // (any pose at once, for the pictures: { arms: [state | { tool, tip, dir } | 'rest' | 'keep', ...], chamber, col })
       armsPose(o) { fxSet(o); },
       // (the chamber: k, its glass's lowest point, each band's foot, its ring, drawn, its lights' colour; chamberClear: the nearest the
