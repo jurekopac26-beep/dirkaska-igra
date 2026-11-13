@@ -9894,6 +9894,8 @@ const Render = (function () {
   const sc = { v: 0, t: 0, P: null, race: null };
   function startCamGo(v) { sc.v = v | 0; sc.t = 0; sc.P = null; sc.race = curRace; }
   function startCamStop() { sc.v = 0; sc.P = null; sc.race = null; }
+  // (upright the limit stays the old Blizu's, 46 m: Srednje since the upright chase view came closer, CHASE_UP, the flights as they were;
+  // a closer chase view, Blizu, it comes down to over its last 0.8 s)
   function scLim() {   // the chase view's distance from the car and height over it with Oddaljenost: Blizu (updateCamera's own numbers, the car at rest)
     const portrait = camera.aspect < 1, D = (portrait ? 46 : 30) * SC_ZOOM, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt), h = D * Math.sin(pitch);
     return { d: Math.hypot(D * Math.cos(pitch) - (portrait ? 13 : 8.5), h), h };
@@ -9964,6 +9966,9 @@ const Render = (function () {
   /* ---------------- camera ---------------- */
   // the camera behind the car: its heading and zoom eased each frame (chaseStep), its pose from them (chasePose: [px, py, pz, tx, ty, tz, fov];
   // also the pit stop's camera's view behind the car over the replay's TV cameras, pitCine)
+  // upright its distance 1.1/1.4 of what it was (the user, 11. 11. 2026: a phone held upright sees more of the road than on its side, so
+  // what was Blizu is Srednje now, Blizu closer still, Daleč about the old Srednje; Oddaljenost's steps as ever); on its side as ever, 30
+  const CHASE_UP = 46 * 1.1 / 1.4;
   function chaseStep(c, dt, h, spd, pitZ, k2, x, z) {
     // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
     // travel, so a sliding car shows its angle)
@@ -9980,7 +9985,7 @@ const Render = (function () {
   function chasePose(c, x, z, baseY) {
     // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
     const portrait = camera.aspect < 1;
-    const LK = cam.look, D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+    const LK = cam.look, D = (portrait ? CHASE_UP : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
     const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
     let back = cam.userBack || 0;
     const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)

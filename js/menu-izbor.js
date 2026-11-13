@@ -197,8 +197,8 @@ window.MenuIzbor = (function () {
   }
   // a track's card: its shape from above (the game's road from the start line, simplified: tools/menu-lens.js; the start gold, an open
   // road's finish white), its facts, the player's best there (as the screen's row names it), its heights (the screen's graph's: L, H),
-  // Select and Race!
-  function card(id) {
+  // Select and Race!; ph (the Earth's card): its picture beside the shape, the facts in a row under them (the user, 12. 11. 2026)
+  function card(id, ph) {
     const t = byId(id), S = o.shape ? o.shape(id) : null, n = S ? S.length : 0, p = prog(id), k = kindOf(p);
     let pic;
     if (n >= 4) {
@@ -214,7 +214,8 @@ window.MenuIzbor = (function () {
     const what = esc((p && p.what) || 'Best race');
     const best = k === 'new' ? '<div class="izb-best new">' + mark(p) + '<small>' + what + '</small><b>Not driven yet</b></div>'
       : '<div class="izb-best">' + mark(p) + '<small>' + what + '</small><b>' + esc(p.txt || '—') + (p.pos ? '<span>' + ord(p.pos) + ' place</span>' : '') + '</b></div>';
-    return '<div class="izb-body in izb-tc"><div class="izb-tcr">' + pic + facts + '</div>' + best + graph(o.heights ? o.heights(id) : null) +
+    const photo = ph && t.img ? '<div class="izb-photo"><img src="' + esc(t.img) + '" alt="' + esc(t.name) + '"></div>' : '';
+    return '<div class="izb-body in izb-tc' + (photo ? ' ph' : '') + '"><div class="izb-tcr">' + photo + pic + facts + '</div>' + best + graph(o.heights ? o.heights(id) : null) +
       '<div class="izb-btns"><button class="izb-sel" data-sel="' + esc(id) + '">Select</button><button class="izb-race" data-race="' + esc(id) + '">Race!</button></div></div>';
   }
   function graph(g) {
@@ -226,9 +227,9 @@ window.MenuIzbor = (function () {
       '<svg viewBox="0 0 300 100" preserveAspectRatio="none" aria-hidden="true"><path class="a" d="M0 100L' + pts + 'L300 100Z"/><path class="l" d="M' + pts + '"/></svg>' +
       '<span class="k0">0</span><span class="k1">' + (g.L / 1000).toFixed(1) + ' km</span></div>';
   }
-  function cardView(id) {
+  function cardView(id, ph) {
     const t = byId(id);
-    return head(t.name, (t.country || '') + (t.test ? (t.country ? ' · ' : '') + 'TEST' : t.pending ? ' · PENDING' : ''), backBtn('Back') + '<span class="izb-hf' + (t.test ? ' t' : '') + '">' + (t.test ? TEST : flag(t.flag, t.country)) + '</span>') + card(id);
+    return head(t.name, (t.country || '') + (t.test ? (t.country ? ' · ' : '') + 'TEST' : t.pending ? ' · PENDING' : ''), backBtn('Back') + '<span class="izb-hf' + (t.test ? ' t' : '') + '">' + (t.test ? TEST : flag(t.flag, t.country)) + '</span>') + card(id, ph);
   }
   const sheetEl = () => el && el.querySelector('.izb-sheet');
   function refresh() {   // (the answers change: the sheet keeps its height, it does not jump under the finger)
