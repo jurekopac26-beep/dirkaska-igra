@@ -1,0 +1,115 @@
+export const meta = {
+  name: 'trki-poskodbe-pregled',
+  description: 'Neodvisni pregled poškodb K in P1–P6 na veji trki/realizem: 6 pregledovalcev, nato preverjanje najdb',
+  phases: [
+    { title: 'Pregled', detail: '6 pregledovalcev, vsak s svojim vidikom' },
+    { title: 'Preverjanje', detail: 'skeptiki poskusijo najdbe ovreči' },
+  ],
+}
+
+const SCR = '<delovna mapa seje>/pregled'
+
+const COMMON = `
+You are an independent reviewer of the branch trki/realizem (PR #608, "Trki in poškodbe") in /home/user/dirkaska-igra (browser racing game, three.js; core physics js/core.js, rendering js/render.js, UI js/game.js, index.html, js/lang.js).
+
+What is under review: the damage package (steps K, P1, P4, P2, P5, P3, P6), i.e. the code diff
+  git diff 205f89b2..48c971f6 -- js css index.html tests tools ':!tests/golden'
+(205f89b2 = state before the package; 48c971f6 = last package commit; HEAD additionally has fresh main merged in, use the working tree to run things).
+The design is docs/realizem/paket-p.md, section "Zasnova izvedbe (12. 11. 2026)" (rules 1-7 and numbered points per step); what was actually built is described in docs/trki-realizem.md from the heading "## Poškodbe P1" to "## Predaja (13. 11. 2026" (read with sed -n, the file is 1900+ lines; never read js/render.js, js/core.js, docs/igra.md, tests/README.md in full: grep for function names, lines are very long, use grep -noE '.{0,150}name.{0,150}').
+
+Hard rules of this theme (a violation is a high-severity finding):
+- Driving physics does not change: a car that touches nothing drives identically to the last digit, in all three damage modes (Izklop / Samo videz / Vklop). Only collision physics may change. Damage mode "Samo videz" (dmgMode !== 2) must never change driving, also after hits.
+- No new random numbers in the core (no new rand() calls, no change in count/order of existing ones); new render code must not call Math.random (own seeded generators only) and must never write into Car or Race state.
+- Online race with friends (cars with c.net, xPhys(true), testOf(true)) stays untouched.
+- Frozen test tracks (test: true, list tests/golden/testne-proge.json) and pending tracks: none of their files or golden entries may change. Measurements and new tests only on Spa.
+- Per-track budget ~300 draw calls and ~900k vertices also after crashes.
+- Legal: no names of real persons, companies, brands, logos.
+
+Working rules for you:
+- READ-ONLY on the repository: do not edit, create, stage or commit any tracked file, do not run git checkout/stash/reset, do not run --update of golden references. Put your own scripts and outputs only under ${SCR}/<your key>/ (mkdir -p it). If you need the old code, use: git worktree add ${SCR}/<your key>/wt <commit> (and remove it at the end with git worktree remove --force).
+- The machine has only 4 CPUs and another reviewer runs at the same time: no full test suites, no 'npm test', no 'npm run test:related'. Single targeted node tests or your own short scripts are fine (tests/lib/sim.js shows how tests drive the core in Node). Keep outputs short (pipe to tail / files).
+- Report only what you verified in the code or by running something. For every finding give file:line (or function name), concrete evidence (the failing scenario / numbers / command) and a minimal suggested fix. No style nits, no speculation without evidence; if unsure, say so in the evidence and lower the severity. Deviations from the design that docs/trki-realizem.md already documents and justifies are not findings unless they break a hard rule.
+- Write titles/evidence/fix in Slovenian, concise.
+`
+
+const FINDINGS = {
+  type: 'object',
+  properties: {
+    summary: { type: 'string', description: 'kaj si pregledal in pognal, 3-6 stavkov' },
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          severity: { type: 'string', enum: ['high', 'medium', 'low'] },
+          step: { type: 'string', description: 'K, P1..P6, spoj, testi, dokumenti ali drugo' },
+          where: { type: 'string', description: 'datoteka:vrstica ali funkcija' },
+          evidence: { type: 'string' },
+          fix: { type: 'string' },
+        },
+        required: ['title', 'severity', 'where', 'evidence', 'fix'],
+      },
+    },
+  },
+  required: ['summary', 'findings'],
+}
+
+const LENSES = [
+  { key: 'voznja', prompt: `Your lens: THE DRIVING INVARIANT. (a) List every read of damage state (dmg, dz, cd, kt, aeroK, glassK, xd, lostW, wreck, lightOut, eng ...) inside the driving path (stepCS, stepNova, aiDrive, pit strategy, and whatever they call) that the package added or changed, and prove for each that at dmgMode !== 2 or for an untouched car the term is an exact identity (bit-identical, no re-association of floating point expressions). (b) Prove it by experiment in Node: on Spa, same inputs, 30+ s: a car with injected heavy damage (see Core.applyDamage or how tests/knock.test.js, tests/debris.test.js, tests/wheels.test.js inject it; all corners, 90 %) at Samo videz must match an undamaged car after every step to the last digit (state line as in tests/lib/sim.js); repeat for a formula car with a lost wing, an older model without 'wreck' parts (e.g. KAZE) and a car with the wheel rule (Odpadlo kolo: Konec dirke) that never touches anything. Also Izklop. (c) Compare tests/golden/sim.json and tests/golden/races.json between 205f89b2 and 48c971f6 (git show <commit>:path): classify which entries changed; any changed entry that is a no-contact run, or runs at Samo videz/Izklop where only Vklop physics should differ, or belongs to a frozen test track / pending track, is a finding (name the entries). (d) wallCollide was changed in P3 "simetrija" (hit counted from pre-push velocity, corners share a hit): is the change confined to damage bookkeeping or does it alter the collision response itself, and for which crash versions (cv 1-6)? State precisely what changed in behaviour for cv 1-5 ("Kot zdaj") compared with 205f89b2, with numbers from a small wall-hit script on both trees.` },
+  { key: 'nakljucje', prompt: `Your lens: RANDOMNESS, DETERMINISM, ONLINE. (a) Core: diff js/core.js 205f89b2..48c971f6 and show that no rand() call was added, removed, reordered or made conditional on new state (K: ruleDrop/partOf/wreck0 for older models; P3: xd.ph; P5: glass). Count rand() calls in an identical crash scene on both trees (wrap the core's generator in a Node script; git worktree for the old tree) for: a modern car, an older model (KAZE) with and without the wheel rule, a race with 12 cars and crashes on Spa at Samo videz and at Vklop. Where the count legitimately differs (K gives older models the rule), say whether the difference is confined to races in which that model actually crashes. (b) Render: in the js/render.js diff find any Math.random use in new code (the game seeds Math.random in tests; new code must use rRnd/ownRnd/uuRng style generators) and any write from render code into Car/Race objects that the core later reads (c.xd, c.lCr, c.dents consumption etc.): is anything the core reads being written by the renderer, which would make a headless/online peer diverge? (c) Online: cars with c.net, xPhys(true)/testOf(true) and setCrash({}) for a race with friends: prove nothing of K/P1-P6 touches them (wheel rule, glass on road, steering pull, shake phase, wreck0 creation for net cars!). (d) Replays and save/restore: any new core state (c.xd.ph, wreck0, glass patches, lCr) must be reset by repairCar/_mend/restart and must not shift stateLine in tests/lib/sim.js; check a restart of the race and 'Namesti kolo' / pit repair paths for leftovers. (e) Run node tests/trki.test.js, node tests/odpadli-deli.test.js, node tests/knock.test.js, node tests/debris.test.js, node tests/wheels.test.js, node tests/kolibri-tyres.test.js one at a time on the working tree (HEAD with main merged) and report only OK/FAIL with the failing check.` },
+  { key: 'jedro', prompt: `Your lens: CORRECTNESS BUGS IN THE CORE DIFF (js/core.js 205f89b2..48c971f6, about 80 changed long lines: K wheel rule for every model incl. wreck0, ruleDrop/partOf for older models, ktGrip and detachPart only at Vklop; P3 dmgSteer pull and shake with c.xd.ph, mirror symmetry, wallCollide hit from pre-push speed and shared between corners, puncture on the hardest-hit corner; P5 GLASS.mu 0.05 and glassK only at Vklop). Hunt real bugs: wrong corner indices or sign (left/right mirror), NaN/undefined on cars without xd/wreck/kt (trucks with trailers, police, traffic, net cars, formula, LM, older models), division by zero at speed 0, state not cleared on repair/_mend/restart/pit stop, the wheel rule ending the race in modes where the table in paket-p.md says it must not (time trial, qualifying, challenge, pursuit, online, opponents), KONEC IGRE reachable for the 11 older models exactly as for the others, energy being added by the changed wallCollide (speed after hit greater than before), double counting of damage when two corners touch in the same step, behaviour at cv 1-5. Write small Node scripts that exercise the suspicious paths (tests/lib/sim.js, tools/trki/zid.js and tools/trki/avto-avto.js show how) rather than arguing from reading alone.` },
+  { key: 'izris', prompt: `Your lens: CORRECTNESS BUGS IN THE RENDER DIFF (js/render.js 205f89b2..48c971f6, ~200 changed very long lines: P1 remerge/unmerge of opponents with xOn; P4 XSRC_WALL / colour of the other car via contactX/Z, 1-3 cm shards, black plastic, hub groove in skids; P2 xEngF/xEngSteam steam, smoke, oil stains; P5 XGL laminated windscreen vs tempered side/rear glass, xLampCrack/lCr, beam turned outward; P3 wheelBend, kitSag; P6 xCrush crumple zone with B.capF; K oldWheelOff/oldHubGeo for older models) plus js/game.js applySettings/dmgDet and the tdgp-defaults-v7 migration, index.html rows, css. Hunt real bugs by reading the surrounding code carefully: stale state when a view is rebuilt, a car is repaired (pit, 'Namesti kolo', restart, new race, garage preview), pooled meshes/geometries not restored (xCrush displacement, wheel pose, hidden wheel mesh of an older model, lamp glow factor) so that a repaired or reused car keeps damage; index out of range on models without rear wheel meshes, without panels, formula/LM (xOn never), trucks; effects not muted off-screen/carCull or in replay/photo mode/portrait; geometry/material leaks (new geometries per hit not disposed, growing arrays: dent log, skid marks for oil every 2 m, shards cap 6000); migration v7 running twice or overriding a user's explicit choice; dmgDet when Poškodbe = Izklop; settings rows hidden but still reachable; missing English translations in js/lang.js for every new Slovenian string (the new menu is English). Where a browser run is the only proof, you may run ONE targeted browser test file (e.g. node tests/browser/crash.test.mjs or kit.test.mjs or wheels.test.mjs, chromium is preinstalled, pass nothing extra) or a short Playwright script modelled on tools/trki/slike.mjs; do not run several browsers at once.` },
+  { key: 'zasnova', prompt: `Your lens: COMPLETENESS AGAINST THE DESIGN AND TEST QUALITY. Go through every numbered point of the design (K.1-7, P1.1-14, the intermediate check 1-6, P4.1-5, P2.1-5, P5.1-4, P3.1-3, P6.1-5, 'Slike zdaj in potem' 1-3) and classify: done / done differently and documented in docs/trki-realizem.md / missing / missing without any note. Known open: P2.3 (engine overheating at Vklop) waits for a user decision; tests/poskodbe.test.js and tests/browser/poskodbe.test.mjs do not exist. For each missing test obligation of the design, say whether an existing test already covers it (name the test and the check) or whether the invariant is really unguarded; for unguarded invariants (especially: damaged car at Samo videz drives identically; no Math.random in the crash scene; perf after crashes with Podrobne; dents survive view rebuild; net race untouched) propose the smallest concrete test (file, scenario on Spa, assertion). Then test quality: for the tests the package changed or added (tests/knock.test.js, debris.test.js, wheels.test.js, kolibri-tyres.test.js, browser/crash.test.mjs, kit.test.mjs, wheels.test.mjs, nova.test.mjs, lib.mjs) check by MUTATION in a git worktree copy under ${SCR}/zasnova/wt (never in the main tree) that they would catch the obvious regression (e.g. remove the dmgMode === 2 guard in ktGrip / dmgSteer / glassK and see the test go red); a test that stays green under such a mutation is a finding. Also check registration: new/changed tests listed in tests/run.js with correct --related mapping, described in tests/README.md, docs/kazalo.md updated, docs/igra.md and the settings descriptions (index.html, js/lang.js) consistent with the behaviour table for K in paket-p.md.` },
+  { key: 'obremenitev', prompt: `Your lens: LOAD, FROZEN TRACKS, LEGAL, MERGE. (a) Frozen tracks: run node tests/testne-proge.test.js and report OK/FAIL; independently verify that between origin/main and HEAD no golden entry of a frozen test track or pending track changed in tests/golden/*.json except where docs/trki-realizem.md documents it as already agreed (list test tracks from tests/golden/testne-proge.json; compare per-key with a small script using git show origin/main:path vs the working tree) and that no file of such a track is touched. (b) Load: measure on Spa, phone settings as tests/browser/perf.test.mjs (844x390, normal quality), with the default settings a new player now gets (dmgDet 1, Trki Realistično): draw calls and vertices on the start grid with a full field, undamaged and after every car received six hits (the handover claims 206/493k and 290/518k); then the worst realistic case you can construct (all cars wrecked, wheels off, shards and parts on the road, engine steam/oil active, glass on road) and the frame time spike when many hits arrive in the same frame (e.g. 22 cars x 6 hits at once: time of that frame vs a normal frame). Use ONE browser at a time; model your script on tests/browser/perf.test.mjs and tools/trki/slike.mjs (Render.crashInfo(), renderer.info). Report numbers; over ~300 calls or ~900k vertices, or a spike over ~100 ms on desktop headless, is a finding. Also run PERF_ONLY=spa node tests/browser/perf.test.mjs (no --update) and report OK/FAIL. (c) Legal: scan the package diff (git diff 205f89b2..48c971f6 -- js index.html docs tests tools) for names of real persons, companies, car brands, logos or event names in strings, comments shown to players, and docs. (d) Merge of main: the merge commit HEAD (git show --stat HEAD, conflict only in tests/run.js resolved by tools/spoji-main.mjs): check tests/run.js still lists every test of both sides exactly once (node tests/shards.test.js), node tools/stamp.js --check passes, and that main's #665 changes in js/game.js / index.html did not collide semantically with the package (settings rows, DEF keys, migration flags).` },
+]
+
+phase('Pregled')
+const reviews = await parallel(LENSES.map(l => () =>
+  agent(COMMON + '\nYour key: ' + l.key + '\n\n' + l.prompt, { label: 'pregled:' + l.key, phase: 'Pregled', schema: FINDINGS })
+    .then(r => r ? { key: l.key, summary: r.summary, findings: r.findings.map(f => ({ ...f, lens: l.key })) } : null)
+))
+const ok = reviews.filter(Boolean)
+const all = ok.flatMap(r => r.findings)
+log('Najdb: ' + all.length + ' (' + ok.map(r => r.key + ' ' + r.findings.length).join(', ') + ')')
+
+// Preverjanje: high in medium najdbe po skupinah (največ 4 skeptiki, da tok ostane pri 10 agentih); low gredo naprej nepreverjene
+const serious = all.filter(f => f.severity !== 'low')
+const low = all.filter(f => f.severity === 'low')
+if (low.length) log('Nizkih najdb brez preverjanja: ' + low.length)
+const GROUPS = [['voznja', 'nakljucje'], ['jedro'], ['izris'], ['zasnova', 'obremenitev']]
+const VERDICTS = {
+  type: 'object',
+  properties: {
+    verdicts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'naslov najdbe, dobesedno' },
+          verdict: { type: 'string', enum: ['potrjeno', 'ovrzeno', 'nejasno'] },
+          reason: { type: 'string', description: 'kaj si pognal ali prebral in kaj se je pokazalo' },
+          fix: { type: 'string', description: 'najmanjši popravek, če je potrjeno; opozorilo, če predlagani popravek krši pravilo' },
+        },
+        required: ['title', 'verdict', 'reason'],
+      },
+    },
+  },
+  required: ['verdicts'],
+}
+phase('Preverjanje')
+const checked = await parallel(GROUPS.map((g, i) => () => {
+  const fs = serious.filter(f => g.includes(f.lens))
+  if (!fs.length) return Promise.resolve({ verdicts: [] })
+  return agent(COMMON + `\nYour key: skeptik${i}\n\nYou are a SKEPTIC. Other reviewers reported the findings below. For each one try to REFUTE it: reproduce the evidence yourself (read the code at the named place, rerun or write the smallest script; old tree via git worktree under ${SCR}/skeptik${i}/wt if needed). Verdict 'potrjeno' only if you reproduced it or the code unambiguously shows it; 'ovrzeno' if the claim is wrong, already handled elsewhere, or already documented as an accepted deviation; 'nejasno' if you could not decide (say what is missing). Also judge the suggested fix: would it break one of the hard rules (driving invariant, no new rand(), frozen tracks, online untouched)? If so, give a safe alternative.\n\nFindings (JSON):\n` + JSON.stringify(fs, null, 1), { label: 'skeptik:' + g.join('+'), phase: 'Preverjanje', schema: VERDICTS })
+}))
+const verdicts = checked.filter(Boolean).flatMap(c => c.verdicts)
+const byTitle = {}
+verdicts.forEach(v => { byTitle[v.title] = v })
+return {
+  summaries: ok.map(r => ({ key: r.key, summary: r.summary })),
+  failedLenses: LENSES.map(l => l.key).filter(k => !ok.some(r => r.key === k)),
+  serious: serious.map(f => ({ ...f, check: byTitle[f.title] || null })),
+  low,
+  unmatchedVerdicts: verdicts.filter(v => !serious.some(f => f.title === v.title)),
+}

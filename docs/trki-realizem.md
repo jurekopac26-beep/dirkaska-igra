@@ -1885,6 +1885,22 @@ Na veji `trki/realizem` so commiti P1, P4, P2 (videz), P5, P3 in P6. Naslednja s
 
 Slike ZDAJ/POTEM delaj z `tools/trki/slike.mjs <scenarij> --a-root <git worktree starega commita> --b-root . --a-nast dmgDet=1 --b-nast dmgDet=1 --oddaljenost blizu`. Slike niso v repozitoriju.
 
+## Predaja (13. 11. 2026, ~12.45)
+
+Seja prevzema je spojila svež `main` (#665; spoj `02ef0478`, spor samo v seznamu testov `tests/run.js`, rešilo ga je `tools/spoji-main.mjs`) in se ustavila pri meji konteksta. Kode ni spremenila.
+
+- **Zasnova (`a7c6cb7`):** tok z načrtovalcem in pregledom zasnove se ni nikoli končal; K in P1–P6 so medtem narejeni, zato zasnove ne načrtuj znova, ampak preglej izvedbo.
+- **Neodvisni pregled izvedbe ni narejen, najdb ni.** Tok je bil pognan dvakrat in obakrat prekinjen (ponovni zagon vsebnika ob ~11.20, nato predaja), preden je končal katerikoli agent. Skripta toka je shranjena: `tools/trki/preverjanje/pregled-poskodb-tok.txt` (6 pregledovalcev: vožnja brez dotika, naključna števila in splet, jedro, izris, popolnost proti zasnovi in kakovost testov, obremenitev z zamrznjenimi progami, pravnim in spojem; nato do 4 skeptiki; skupaj največ 10 agentov). Pred zagonom zamenjaj `<delovna mapa seje>`. Stroj ima 4 jedra, zato tečeta po dva agenta hkrati (računaj ~2 h).
+- **Po spoju #665 povezani testi lokalno niso bili pognani.**
+- **Stran Odločitve:** s tega računa ni dosegljiva nobena od treh strani iz `docs/vprasanja.md`; odgovori na `trki-cv6-slike`, `trki-hotham-seme` in `trki-uncompahgre-padec` niso prebrani. Vprašanja so v opisu PR #608.
+
+Naslednja seja:
+1. Poženi pregled (skripta zgoraj), popravi potrjene najdbe; popravki `js/core.js` in `js/render.js` zaporedno, ne vzporedno.
+2. Dodaj manjkajoča testa zasnove (`paket-p.md`, P1.12 in P1.13): `tests/poskodbe.test.js` (poškodovan avto pri Samo videz vozi do številke enako kot cel; tabela K; število klicev `Math.random`) in `tests/browser/poskodbe.test.mjs` (obremenitev po trkih s Podrobnimi), razen če pregled pokaže, da to že varujejo obstoječi testi.
+3. P2.3 (pregrevanje pri Vklop) šele po uporabnikovem odgovoru.
+4. Enkrat `npm run test:related` (~2 h 25 min, v ozadju), `node tools/stamp.js --check`.
+5. Slike ZDAJ/POTEM na Spa: `git worktree add <delovna mapa>/zdaj origin/main`, nato `node tools/trki/slike.mjs <prizor> --a-root <delovna mapa>/zdaj --b-root . --a-cv 6 --b-cv 6 --a-opis zdaj --b-opis potem --b-nast dmgDet=1 --oddaljenost blizu` za `celni`, `zid30`, `tbone`, `sam120 --deli`, `kolosam --skoda 2`; do ~300 KB, ne v repozitorij. Na `main` šele po uporabnikovem »ok«.
+
 ## Kar je že dobro
 
 Tega nova različica ne sme pokvariti; pri lahkih dotikih, naslonu in sredinskih trkih naj da iste številke kot Simulacija.
