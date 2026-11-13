@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "quezaltepeque": {
+  "calls": 253,
+  "maxCalls": 292,
+  "kverts": 532,
+  "maxKverts": 642,
+  "jsMs": 2.66
  }
 }
