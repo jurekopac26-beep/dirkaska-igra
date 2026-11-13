@@ -1788,6 +1788,14 @@ Polno telo ima vsak avto: najslabši primer (vseh 22 razbitih) je 290 klicev, po
 
 **Naslednje:** P4 → P2 → P5 → P3 → P6 (`paket-p.md`).
 
+**Razlike od »Zasnove izvedbe« v `paket-p.md`.** Zasnova je osnutek (a7c6cb7, v pregledu); prišla je na vejo po tem, ko je bil P1 narejen. Razlike so štiri:
+- **Stari ključi:** `xBody` … `xDust` niso izbrisani, njihove vrstice so samo skrite. Tako testi `crash`, `kolibri` in `repair` ostanejo nespremenjeni. Na to se nanaša točka P1.13 zasnove.
+- **Privzeta vrednost:** `DEF.dmgDet` je 0, migracija v7 pa jo nastavi na 1. Za igralca je učinek enak kot v točki P1.1.
+- **Brez `X_NEAR`:** namesto omejitve na 5 najbližjih se tekmec razdruži ob prvem udarcu. Izmerjeno 290 < 300.
+- **Velikost drobcev:** drobci 1–3 cm (točka P1.11) gredo v P4 skupaj s pravimi delci. Zaradi 10-krat manjših kosov je treba spremeniti tudi njihovo število in prag v testih drobcev.
+
+Korak K (odpadlo kolo) v tem P1 ni narejen.
+
 ## Kar je že dobro
 
 Tega nova različica ne sme pokvariti; pri lahkih dotikih, naslonu in sredinskih trkih naj da iste številke kot Simulacija.
