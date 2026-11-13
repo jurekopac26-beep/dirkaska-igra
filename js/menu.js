@@ -27,6 +27,7 @@
      temni-nacin.html shows the same probe and what each way of painting looks like in such a browser. */
   const isSamsung = () => /SamsungBrowser/i.test(navigator.userAgent);
   function forcedDark() {
+    if (window.Sence && Sence.on) return false;   // (js/sence.js draws the colours past it: nothing to say)
     try {
       if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
       const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:light';
@@ -606,7 +607,38 @@
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready
   const flagEdge = {};
+  // (where the game draws its colours anew, js/sence.js: no picture, which Samsung Internet darkens even read back from a canvas (the phone,
+  // 12. 11. 2026: the right half grey), but the flag's own drawing inline, its last sliver stretched behind the flag, its shapes' colours
+  // then by the page's filters as the flag's)
+  let edgeN = 0;
+  function flagSliver(url) {
+    const key = 'svg:' + url;
+    if (key in flagEdge) return flagEdge[key];
+    flagEdge[key] = '';
+    fetch(url).then((r) => (r.ok ? r.text() : '')).then((txt) => {
+      const doc = new DOMParser().parseFromString(txt, 'image/svg+xml'), sv = doc.documentElement;
+      if (!sv || sv.localName !== 'svg' || doc.querySelector('parsererror')) return;
+      const vb = (sv.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+      const [x, y, w, h] = vb.length === 4 && vb[2] > 0 && vb[3] > 0 ? vb : [0, 0, parseFloat(sv.getAttribute('width')), parseFloat(sv.getAttribute('height'))];
+      if (!(w > 0 && h > 0)) return;
+      for (const t of Array.from(sv.querySelectorAll('title,script,foreignObject'))) t.remove();
+      // (its ids its own: the flag itself on the screen too)
+      const pre = 'nbe' + (++edgeN) + '-', ids = new Set(Array.from(sv.querySelectorAll('[id]'), (e) => e.id));
+      for (const e of Array.from(sv.querySelectorAll('*'))) for (const a of Array.from(e.attributes)) {
+        if (a.name === 'id') e.id = pre + a.value;
+        else if (/url\(#|^#/.test(a.value)) e.setAttribute(a.name, a.value.replace(/url\(#([^)]+)\)/g, (m, i) => (ids.has(i) ? 'url(#' + pre + i + ')' : m)).replace(/^#(.+)$/, (m, i) => (ids.has(i) ? '#' + pre + i : m)));
+      }
+      sv.setAttribute('viewBox', [x + w - w / 200, y, w / 200, h].join(' '));
+      sv.setAttribute('preserveAspectRatio', 'none'); sv.removeAttribute('width'); sv.removeAttribute('height');
+      sv.setAttribute('class', 'edge'); sv.setAttribute('aria-hidden', 'true');
+      flagEdge[key] = new XMLSerializer().serializeToString(sv);
+      if (app) for (const b of app.querySelectorAll('.nb[data-flag="' + url + '"]')) if (!b.querySelector('.edge')) b.insertAdjacentHTML('afterbegin', flagEdge[key]);
+    }).catch(() => {});
+    return '';
+  }
+  const senceOn = () => !!(window.Sence && window.Sence.on);
   function flagFill(url) {
+    if (senceOn()) return '';
     if (url in flagEdge) return flagEdge[url];
     flagEdge[url] = '';
     const im = new Image();
@@ -1068,7 +1100,7 @@
     const nb = (k) => {
       const u = list[(trackIdx + k + n) % n], c = countryOf(u), f = flagUrl(c), fill = f ? flagFill(f) : '';
       return '<button class="nb ' + (k < 0 ? 'l' : 'r') + (f ? '' : ' plain') + '" data-act="track:' + k + '"' + (f ? ' data-flag="' + f + '"' + (fill ? ' style="background-image:' + fill + '"' : '') : '') +
-        ' aria-label="' + (k < 0 ? 'Previous' : 'Next') + ' track: ' + esc(u.name + (c ? ', ' + c : '')) + '">' + (f ? '<img src="' + f + '" alt="">' : '<span>' + esc(u.name) + '</span>') + '<i>' + DBL(k) + '</i></button>';
+        ' aria-label="' + (k < 0 ? 'Previous' : 'Next') + ' track: ' + esc(u.name + (c ? ', ' + c : '')) + '">' + (f && senceOn() ? flagSliver(f) : '') + (f ? '<img src="' + f + '" alt="">' : '<span>' + esc(u.name) + '</span>') + '<i>' + DBL(k) + '</i></button>';
     };
     h += '<div class="nbrs">' + nb(-1) + nb(1) + '</div>';
     return h + '<div class="foot solo"><button class="go" data-act="race-single">Race!</button></div></div></section>';
@@ -1809,6 +1841,7 @@
       const l = document.getElementById('menu-css'), r = await fetch(l ? l.href : 'css/menu.css');
       if (!r.ok) throw new Error('css/menu.css: ' + r.status);
       const st = document.createElement('style'); st.textContent = await r.text(); root.insertBefore(st, app);
+      if (window.Sence) Sence.root(root);   // (js/sence.js: the colours past Samsung's forced dark)
       ready = true; flush();
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitWhere(); signOn(); });   // (the place's name and the sign's measured again in their own fonts)
     } catch (e) { fail(e); }
