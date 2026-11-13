@@ -36,6 +36,23 @@
       roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
       sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
     },
+    // Limalimo (the Simien escarpment, Ethiopia): the B30 in its hairpins under the basalt walls of the escarpment, the highland grass gold and
+    // straw-coloured in the dry season (December), dark green scrub and lone trees in the gullies, the dark basalt of the traps in crags and
+    // ledges, weathered red-brown, the red soil and scree under the walls; no snow (the line far above the tops); tin and thatch roofs of the
+    // farms; generic signs (no name of a park office, a lodge or a builder of the road), the white centre line of the country's roads
+    limalimo: {
+      seed: 5300, board: 'LIMALIMO', sub: 'SIMIEN', banner: ['SIMIEN', '3 SERPENTINES · LIMALIMO'],
+      grass: [0.62, 0.55, 0.31], grassDry: [0.74, 0.63, 0.38], grassLush: [0.44, 0.47, 0.22], shrub: [0.2, 0.26, 0.12],
+      rock: [0.34, 0.31, 0.29], rockWarm: [0.46, 0.34, 0.26], lichen: [0.4, 0.38, 0.31], scree: [0.52, 0.41, 0.32],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.3, 0.28, 0.27], [0.36, 0.32, 0.29], [0.26, 0.25, 0.25], [0.44, 0.34, 0.27], [0.39, 0.36, 0.33], [0.33, 0.3, 0.26]],   // (the basalt: near black, weathered red-brown, dusty)
+      centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed, solid through the hairpins)
+      chev: ['#111111', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.52, 0.44, 0.36],
+      fans: [[0.95, 0.95, 0.93], [0.16, 0.42, 0.24], [0.9, 0.76, 0.16], [0.72, 0.16, 0.14], [0.2, 0.3, 0.6], [0.5, 0.36, 0.22], [0.12, 0.12, 0.14], [0.86, 0.84, 0.78]],
+      cars: [[0.9, 0.9, 0.88], [0.16, 0.3, 0.62], [0.82, 0.82, 0.8], [0.18, 0.18, 0.2], [0.55, 0.56, 0.58], [0.7, 0.62, 0.5]],
+      roofs: [[0.62, 0.63, 0.64], [0.5, 0.32, 0.22], [0.56, 0.48, 0.3], [0.44, 0.45, 0.47]],
+      sheep: 1, portal: 0, far: { lo: [0.6, 0.53, 0.32], hi: [0.4, 0.34, 0.3], dw: [0.3, 0.33, 0.18], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
