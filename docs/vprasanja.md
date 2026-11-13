@@ -32,7 +32,7 @@ Stran 1: vprašanja so kartice z oštevilčenimi gumbi (številka kot tabla s š
 | `seja` | naslov seje |
 | `seja_id` | id te seje (`session_…`; `get_session` brez argumentov); sem gre odgovor |
 | `naslov` | kratko, o čem se odloča (do ~60 znakov) |
-| `vprasanje` | 1–3 stavki v preprosti slovenščini: kaj se odloča, zakaj in kaj pomeni izbira; uporabnik odloči brez odpiranja seje |
+| `vprasanje` | 1–3 stavki v preprosti slovenščini: kaj se odloča, zakaj in kaj pomeni izbira; uporabnik odloči brez odpiranja seje. **Pri preizkusu ali potrditvi** (»ok« za PR, predogled) še korak za korakom, kaj naj uporabnik preizkusi: kje odpre (povezava predogleda), kaj klikne ali odpelje (proga, avto, pokonci ali ležeče) in kaj mora videti, da je prav; sama številka PR ni dovolj (odločitev uporabnika 13. 11. 2026 ob ~15.55: »napiši malce bolj podrobno, kaj moram sploh stestirat in ne samo številke PR«) |
 | `moznosti` | 2–5 možnosti `[{k: "1", opis}]`, oštevilčene od 1; vsaka je cela odločitev (ne samo »da« ali »ne«) |
 | `priporoceno` | `k` priporočene možnosti, kadar jo seja ima |
 | `vec` | `true`: izbira več možnosti hkrati (stran pokaže »Pošlji izbiro«; `odgovor` so izbrani `k`, ločeni z vejico, npr. `1,3,5`); stran Odločitve partyslo od 6. 11. 2026, drugi dve, ko ju lastnik objavi z isto kodo |
