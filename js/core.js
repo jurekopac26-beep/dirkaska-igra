@@ -4387,6 +4387,24 @@ const Core = (function () {
     const bo = race._boxD(o); return bo != null && bo !== race._boxD(c);
   }
   function aiControl(c, race, dt) { const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
+  // Samodejno zaviranje (Nastavitve, for beginners; proposal I10, the user's choice 7. 11.): the brake a beginner needs before a corner,
+  // from the autopilot's speed profile (c.vprof || race.vprof: the corners' limit and the braking before them, rain, winter, upgraded
+  // brakes) a little ahead, AB.k of it (off the racing line there is less room). Only an input, as the autopilot's own (aiDrive's speed
+  // band): js/game.js puts it into the player's pedals (o.brk: at least that much brake, o.thr: no more throttle than that) before
+  // Race.step, so the car's physics never change and a log of the player's input (P.in*) holds it; off: nothing is touched.
+  // o = { brk: 0, thr: 1 } when not needed: slow, backwards or reversing, in a side road, no profile
+  const AB = { look: 0.25, ahead: 3, k: 0.93, tol: 0.6, band: 0.8, half: 0.45, gain: 4.5, min: 0.15, vmin: 8 };
+  function autoBrake(c, race, o) {
+    o = o || {}; o.brk = 0; o.thr = 1;
+    const T = race && race.track, vp = c && (c.vprof || race.vprof), q = c && c.q;
+    if (!T || !vp || !q || q.tx == null || q.k >= 0 || c.gear === -1) return o;
+    const v = c.vx * q.tx + c.vz * q.tz;   // (its speed along the road)
+    if (!(v > AB.vmin)) return o;
+    const vT = vp[T.idx(q.s + v * AB.look + AB.ahead)] * AB.k;
+    if (v > vT + AB.tol) { o.thr = 0; o.brk = clamp((v - vT) / AB.gain, AB.min, 1) * (1 - 0.3 * Math.min(1, Math.abs(c.inSteer || 0))); }   // (as the autopilot: not stamping on it while turning hard)
+    else if (v > vT - AB.band) o.thr = AB.half;   // (at the limit: part throttle, no brake/throttle flicker)
+    return o;
+  }
   function aiDrive(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist, RL = c.uRl || T.rl;   // (the racing line, or the player's: Race._voznja)
     const q = c.q;
@@ -8654,7 +8672,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, autoBrake, AB, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
     MAN, manRev, DRAG, PWR_MULT };
