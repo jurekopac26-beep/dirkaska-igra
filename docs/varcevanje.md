@@ -26,6 +26,7 @@ Odločitve uporabnika 3. 11. 2026 na strani Odločitve (vprašanja `zetoni-1` do
 | »uporabi vse 4« (12. 11. 2026 ob ~1.13, prek Mateja, tabla #382, komentar 6810475805) | koordinacija na Sonnetu v sveži seji, rutinske seje predaja pri ~80 tisoč; velikih sej ne budi po 1 h mirovanja; sredi seje ne menjaj modela ali napora; `CLAUDE.md` najmanj 25 % krajši (razdelek »Dražje seje«) |
 | »Vse (priporočeno)« (12. 11. 2026 ob ~11.45, prek Mateja, tabla #382, komentar 6821467471) | varčevanje 2. del: predaja vseh sej pri ~80 tisoč, `CLAUDE.md` ~6 KB, tabla 2× na dan, grafika in meni z 2–3 možnostmi naenkrat, Trki do 5 agentov, rutina na Haiku/Sonnet (razdelek »Varčevanje 2. del«) |
 | »Vse« (12. 11. 2026 ob ~19.20, prek Mateja, tabla #382) | varčevanje 3. del: krajši `docs/vrsta.md`, mehanski popravki prog na Sonnetu, grafika enkrat na progo na `main` (razdelek »Varčevanje 3. del«) |
+| »Potrjujem 1–4« (13. 11. 2026 ob ~4.40, v pogovoru z Matejem) | varčevanje 4. del: nov Matej vsak dan, pomočnik za velike izpise, dnevni sveženj »ok«, popravki naenkrat (razdelek »Manj sklopov 2. del«) |
 
 V `CLAUDE.md` so združene v ena pravila: `zetoni-4` in hitro združevanje sta eno pravilo (Postopek); predaja velike seje je glavna pot, povzetek rezerva (Seje; od 11. 11. 2026 predaja pri ~150 tisoč in povzetek pri ~144 tisoč, prej ~300 in ~350 tisoč); napor medium za rutino in koordinacijo da okolje »Koordinacija« (spodaj); osnutek ob začetku dela nadomesti prejšnje »Pull request odpri samo, če …«.
 
@@ -146,18 +147,26 @@ Odločitev uporabnika 9. 11. 2026 dopoldne (~10.50–11.05, v pogovoru z Matejem
 - **Dnevno stanje na tabli:** porabo zapiši kot »<račun>: X % (cilj Y %)«. Odstotek računa objavi Matej ali uporabnik; če ga koordinacija ne pozna, napiše »ne poznam«.
 - **V repozitorij ne spadajo** trenutni odstotki in dnevni cilji: spreminjajo se, objavljajo jih Matej in koordinacije na tabli. Ostane samo pravilo in tabela zgoraj.
 
+## Manj sklopov 2. del (odločitev uporabnika 13. 11. 2026 ob ~4.40)
+Uporabnik: »Potrjujem 1–4«.
+1. **Nov Matej vsak dan** ob 5.00 s kratko predajo; stari se ustavi. Model in napor ostaneta.
+2. **Velike izpise** (`list_sessions`, stanje PR, dnevniki) prebere majhen pomočnik in vrne največ 5 vrstic; velika seja jih ne bere sama.
+3. **»Ok« v enem dnevnem svežnju**: ob 5.00 uporabnik dobi seznam PR, ki čakajo na »ok«, s povezavami; po »ok« PR do `main` pripelje majhna seja Združevanje, ne velika seja.
+4. **Manj ponovljenih sej iste teme**: uporabnikovi popravki se zbirajo do 5.00 in gredo naenkrat v eno sejo.
+
 ## Tabla (issue #382)
 
 Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `docs/odlocitve.md`.
 
 - **Kaj se objavi:** nova tema (veja ali PR), prevzem ali predaja tujega PR, stanje vrste in kdo združuje, rdeč `main` in kdo ga popravlja, odločitve uporabnika, ki veljajo za vse (pravilo samo v `CLAUDE.md` ali `docs/` na `main`), in prošnje drugim računom. Ob vsakem branju koordinacija prebere nove komentarje in odgovori na prošnje zase.
-- **Branje 2× na dan** (odločitev uporabnika 12. 11. 2026 ob ~11.45, komentar 6821467471, točka 3; prej 4× na dan od 11. 11. 2026, 8× na dan od 7. 11.), po ljubljanskem času:
+- **Branje 2× na dan** (odločitev uporabnika 12. 11. 2026 ob ~11.45, komentar 6821467471, točka 3; prej 4× na dan od 11. 11. 2026, 8× na dan od 7. 11.), po ljubljanskem času; četrti račun croatiadata (13. 11. 2026) bere 4× na dan:
 
 | Račun | Ure branja | Urnik (`cron_expression`) |
 |---|---|---|
 | biketraveler | 6.15, 18.15 | `CRON_TZ=Europe/Ljubljana 15 6,18 * * *` |
 | partyslo | 7.15, 19.15 | `CRON_TZ=Europe/Ljubljana 15 7,19 * * *` |
 | jure.kopac26 | 8.15, 20.15 | `CRON_TZ=Europe/Ljubljana 15 8,20 * * *` |
+| croatiadata | 3.15, 9.15, 15.15, 21.15 | `CRON_TZ=Europe/Ljubljana 15 3,9,15,21 * * *` |
 
 - **Majhna sveža seja:** vsako branje je opravilo po urniku, ki ob vsakem zagonu ustvari novo sejo (`create_trigger` z `create_new_session_on_fire` `true`), v okolju »Koordinacija« (model Sonnet, napor medium). Seja ne nosi pogovora prejšnjih branj: najprej prebere svoj zadnji komentar na tabli (stanje) in komentarje za njim, nato naredi, kar je treba; kar se je spremenilo, zapiše v nov komentar, ki je stanje za naslednje branje. Ko je PR s tem pravilom na `main`, koordinacija vsakega računa svoje opravilo za tablo nastavi na te ure in na novo sejo ob vsakem zagonu, staro opravilo z 8 branji pa izbriše.
 - **Dodatno branje** (odločitev uporabnika 7. 11. 2026): če je ob rednem branju najnovejši komentar, ki ni tvoj, mlajši od 1 h, tablo prebereš še enkrat čez 30 min (ob xx.45, `send_later` v isti seji); dokler je ob dodatnem branju nov komentar, ki ni tvoj, še enkrat čez 30 min, sicer spet samo ob rednih urah. Lastni komentarji ne štejejo.

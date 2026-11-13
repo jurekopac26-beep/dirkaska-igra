@@ -4,6 +4,17 @@ Seznam je potrdil uporabnik 7. 11. 2026 ob ~21.20 v pogovoru z Matejem (tabla #3
 
 **Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; od 12. 11. ob ~19.00 tudi 10 od Hải Vâna do Batangasa (veliko jih bo zamenjanih, predvsem preveč zavite; `docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
 
+## Potrditve 13. 11. 2026 (uporabnik v pogovoru z Matejem)
+
+Nove proge niso več ustavljene za te proge; delata jih partyslo in croatiadata (ena proga na državo, vse v enem PR, proge v vrsti zadnje):
+
+- **9 novih prog** (ob ~4.10, »Potrjujem 9 načrtovanih novih prog«): Canaries (Sveta Lucija), Batangas (Filipini), Kanaba (Uganda), Hải Vân (Vietnam), Quezaltepeque (Salvador), Sogeri (Papua Nova Gvineja), Savusavu (Fidži), Koror (Palau) in Vaoala (Samoa). **Odpadejo** Barahona, Chachani, Elmenteita in Viñales.
+- **4 proge s prepadom** (ob ~4.30): Kali Gandaki (Nepal), Musandam (Oman), Limalimo (Etiopija) in Darvaz (Tadžikistan). So izjema od izletne cone; ker je padec čez rob samo na Killarju, imajo ograjo (vidno ali nevidno) na strani prepada.
+- **Ena okrogla proga** (ob ~4.30, »Naredi samo 1 okroglo progo in to je mehika in jo potrjujem«): **Aguascalientes, Mehika** (zamenja Espinazo). Rafaela in Klettwitz odpadeta; Termas de Río Hondo in Nürburg ostaneta.
+- **Proge z ledom** (ob ~4.35, »Potrjujem finska koli in norveska«): **Koli, Finska** (namesto Harju) in **Longyearbyen, Norveška**; **Envalira, Andora** je preložena na 1. 12.
+- **Švica** (ob ~4.30): ostane **Furka** (prava proga); Zürich je testna od 7. 11.
+- **Zadnji dve mesti** (ob ~5.00, »Naredi Mujib, Jordanija … Irishtown, Jamajka … ok«): **Mujib, Jordanija** in **Irishtown, Jamajka**. Načrt je s tem 70 od 70; **rezervi** sta Chamarel (Mavricij) in El Castaño (Venezuela).
+
 ## Proge
 
 Meritve so iz seje seznama (OSM, točke na 5 m, kot `tools/proge-pregled.js`). Obremenitev je ocena po podobni progi iz `tests/golden/perf.json` (meja ~300 klicev, ~900 tisoč oglišč).

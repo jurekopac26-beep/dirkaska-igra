@@ -17,6 +17,7 @@ Uporabnik dela na več računih. Seja vidi samo seje, strani in opravila po urni
 1. https://claude.ai/artifact/5XpmrynR392z1RgTtx9ACV — od 3. 11. 2026, račun sej `session_01UuPU9…`; zbiranje je nastavljeno.
 2. https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR — od 3. 11. 2026, račun sej `session_01Ck3D3…` (nova mapa, meni, orodje za napake); zbiranje je nastavljeno.
 3. https://claude.ai/artifact/1jxNEJ27WiYpCAw3YbRXEV — prvotna stran iz `CLAUDE.md` (31. 10. 2026), račun sej `session_01Wbg…` (»VSE SEJE«); zbiranje je nastavljeno.
+4. Stran Odločitve 4 za račun croatiadata (od 13. 11. 2026): naredi jo prva seja croatiadata kot kopijo strani 2 (isti videz in zbirka `vprasanja`) in povezavo vpiše sem. Dokler je ni, seje croatiadata sprašujejo v pogovoru (`AskUserQuestion`, priporočena možnost prva).
 
 Če nobena ni dosegljiva, seja vpraša v pogovoru in v poročilu napiše, da njen račun strani nima (razdelek Nastavitev).
 
