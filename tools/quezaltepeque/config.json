@@ -1,17 +1,98 @@
 {
   "id": "quezaltepeque",
   "about": "Quezaltepeque, Salvador (id quezaltepeque): the circuit in the hills south of Quezaltepeque, one lap (docs/nove-proge-1-0.md)",
-  "box": [13.800, -89.342, 13.818, -89.322],
-  "closed": true,
-  "dist": {"grid": 600},
-  "route": [
-    [13.8086022, -89.3328436, null, "start"],
-    [13.8108099, -89.3295128, null, "raceway"],
-    [13.8084228, -89.3309950, null, "raceway"]
+  "box": [
+    13.8,
+    -89.342,
+    13.818,
+    -89.322
   ],
-  "prefer": [],
+  "closed": true,
+  "dist": {
+    "grid": 600
+  },
+  "route": [
+    [
+      13.8095457,
+      -89.3328803,
+      null,
+      "start: the south-west end of the main straight, where the pit lane (OSM w141016362) leaves the raceway; clockwise, the pits on the right of the straight (build.py moves the finish line to the straight's middle by the pits) | raceway (prefer: the raceway way's OSM name, used only to keep the route on it; not in the output) w37713353"
+    ],
+    [
+      13.8115092,
+      -89.3292401,
+      null,
+      "raceway w37713353, the north-east end of the main straight"
+    ],
+    [
+      13.8105595,
+      -89.3268121,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8108624,
+      -89.3291998,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8099121,
+      -89.3287519,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8083048,
+      -89.3282479,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8081944,
+      -89.3315014,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8086044,
+      -89.3298296,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8093225,
+      -89.329633,
+      null,
+      "raceway w37713353"
+    ],
+    [
+      13.8086022,
+      -89.3328436,
+      null,
+      "raceway w37713353 (its first node; w141016351 closes the loop)"
+    ],
+    [
+      13.8089469,
+      -89.3336869,
+      null,
+      "raceway w37713353, the west hairpin"
+    ]
+  ],
+  "prefer": [
+    "Pista El Jabalí"
+  ],
   "geoRoads": [],
   "geoWater": [],
-  "marks": [],
+  "marks": [
+    [
+      "Lavino polje",
+      "Lava field",
+      "rock",
+      [
+        "w390555501"
+      ]
+    ]
+  ],
   "places": []
 }
