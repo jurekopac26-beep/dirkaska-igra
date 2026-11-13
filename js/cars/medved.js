@@ -309,14 +309,14 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-0.66, 0.5, 0, 0.52, 0.23, 1.44, 0, BOXC, null, true, IN);                                                             // the bench on its own
           C.bench(-0.62, 0.73, { w: 1.46, top: 0.78, heads: [-0.42, 0.42], col: LE, col2: LE2 });
           C.console(0.56, 0.76, { l: 0.36 });
-          K.bar([0.42, 0.86, 0.06], [0.4, 0.98, 0.06], 0.007, [0.5, 0.5, 0.52], { n: 4, inner: true, part: 'body' });                  // the transfer lever (a red knob)
+          K.bar([0.42, 0.86, 0.06], [0.4, 0.98, 0.06], 0.007, [0.5, 0.5, 0.52], { n: 3, inner: true, part: 'body' });                  // the transfer lever (a red knob)
           K.box(0.4, 0.975, 0.06, 0.035, 0.035, 0.035, 0, C.BLK, [0.75, 0.1, 0.08], true, IN);
           K.box(0.0, 0.76, 0, 0.3, 0.16, 0.22, 0, LE2, LE, true, IN);                                                                  // the arm rest between the seats
           C.pedals(0.99, 0.55, SZ, 3);
-          for (const sd of [-1, 1]) { const od = { dir: sd < 0 ? 'z' : '-z', inner: true, host: sd < 0 ? 'doorL' : 'doorR' };        // the doors' cards (two a side, on the one part), the kick panels under them
+          for (const sd of [-1, 1]) { const od = { dir: sd < 0 ? 'z' : '-z', inner: true, host: sd < 0 ? 'doorL' : 'doorR' };        // the doors' cards (the front one on its door, the rear one on the body), the front door's kick panel
             C.door(sd, { x: [0.08, 1.0], y: [0.72, 1.16], z: 0.87, insert: LE });
             C.door(sd, { x: [-0.82, -0.06], y: [0.72, 1.16], z: 0.87, insert: LE, speaker: false, host: 'body' });
-            K.rect(0.54, 0.61, sd * 0.87, 0.92, 0.2, C.PL, od); K.rect(-0.43, 0.61, sd * 0.87, 0.86, 0.2, C.PL, Object.assign({}, od, { host: 'body' }));
+            K.rect(0.54, 0.61, sd * 0.87, 0.92, 0.2, C.PL, od);
             K.box(0.01, 0.5, sd * 0.89, 0.08, 0.7, 0.06, 0, P, null, true, IN); }                                                     // (the B-pillars' feet)
           // the load behind the rear bench: a crate, a tool box; the housings over the rear wheels (the tubs are seen from
           // outside only: from the load bay they would show the tyres)
@@ -326,7 +326,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           // the V8's bay: the inner wings over the wheels, the strut tops on them, the battery and the air filter's drum (the garage's hidden
           // parts in their places: K.deli, mounts)
           for (const sd of [-1, 1]) { C.face([[1.06, 0.8, sd * 0.5], [1.94, 0.8, sd * 0.5], [1.94, 0.8, sd * 0.89], [1.06, 0.8, sd * 0.89]], K.shade(P, 0.5), [0, 1, 0]);
-            K.cyl([1.5, 0.8, sd * 0.68], [1.5, 0.86, sd * 0.68], 0.09, [0.2, 0.2, 0.22], cyl({ n: 5, capB: [0.5, 0.5, 0.53] })); }
+            K.cyl([1.5, 0.8, sd * 0.68], [1.5, 0.86, sd * 0.68], 0.09, [0.2, 0.2, 0.22], cyl({ n: 4, capB: [0.5, 0.5, 0.53] })); }
           K.engine(1.68, 0.62, 0, { l: 0.72, w: 0.66, h: 0.46 });
           K.deli('akumulator', () => K.box(2.07, 0.49, -0.5, 0.2, 0.17, 0.14, 0, [0.08, 0.08, 0.09], [0.16, 0.16, 0.18], true, IN));
           K.deli('filter_zraka', () => K.cyl([1.26, 0.8, -0.44], [1.26, 0.95, -0.44], 0.1, [0.1, 0.1, 0.11], cyl({ capA: null, capB: AL })));
