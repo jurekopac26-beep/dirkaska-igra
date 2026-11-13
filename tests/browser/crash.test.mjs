@@ -26,6 +26,7 @@
 //    round them, to a brown-black, 40 % darker or more in the dent's deep half; a reddish black's too); a pit stop's repair brings its
 //    colour back (black paint walked back along its way: at none of the 16 steps newly glass to the shader); an open car's paint never
 //    darkened so
+// 12. P6 · the crumple zone: a head-on knock over 50 km/h shortens the nose 0.4-0.7 m, the bonnet bows, the front wheels go back; the cabin as it was
 //   node tests/browser/crash.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -122,7 +123,7 @@ try {
     Core.applyDamage(P, 0.12, P.m.len / 2, 0); Render.frame(0.016, 1, P, 'chase', {});
     const I2 = Render.crashInfo(), me2 = I2.cars.find(q => q.player);
     return { XC: I.XC, XR: Object.assign({}, Core.XR), xOn: me.xOn, xd: me.xd, dense: I.cars.filter(q => q.xd).length, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, cl: me2.cl.length, shards: I2.shards, ground: I2.ground }; });
-  T.check('off by default: no switch on (Core: roll, bump, ai, handle, glass; Render: body, glass, paint, parts, drag, dust), no car dense, the body as the kit built it', JSON.stringify(off.r.XR) === '{"roll":0,"bump":0,"ai":0,"handle":0,"glass":0}' && !off.r.XC.parts && !off.r.XC.drag && !off.r.XC.dust && !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
+  T.check('off by default: no switch on (Core: roll, bump, ai; glass laid always, P5: it takes grip only with damage Vklop; Render: body, glass, paint, parts, drag, dust), no car dense, the body as the kit built it', JSON.stringify(off.r.XR) === '{"roll":0,"bump":0,"ai":0,"glass":1}' && !off.r.XC.parts && !off.r.XC.drag && !off.r.XC.dust && !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
   T.check('off: a dent the old way (no clusters), nothing on the road', off.r.cl === 0 && off.r.shards === 0 && off.r.ground === 0, JSON.stringify(off.r));
   T.check('off: no page errors', !off.errors.length, off.errors.slice(0, 3).join(' | '));
 
@@ -153,6 +154,7 @@ try {
     const panes = () => me().panes || [0, 0, 0, 0, 0, 0];
     for (const h of [[0.1, 0.3, 1], [0.1, -0.4, 1], [0.1, 0.25, 1]]) { hit(P, h); out.steps.push(panes().slice()); }
     out.sides = (v.xP || []).map(q => q.side); out.shards = Render.crashInfo().shards - s0;
+    out.out = (v.xP || []).map(q => q.broken ? [q.k, +(q.tris.filter(t => v.kit.deadV && v.kit.deadV[t * 3]).length / q.tris.length).toFixed(2)] : null).filter(Boolean);   // (P5: a broken pane's share of its glass gone)
     out.mir = me().mirrors.slice(); out.ground = Render.crashInfo().ground - g0;
     // the car drives on: the mirror stays where it fell
     for (let k = 0; k < 30; k++) { P.x += Math.cos(P.h) * 0.5; P.z += Math.sin(P.h) * 0.5; P.px = P.x; P.pz = P.z; Render.frame(1 / 30, 1, P, 'chase', {}); }
@@ -176,6 +178,8 @@ try {
   T.check('glass: each blow on the right breaks one more pane, on the right or the windscreen / rear window, never on the left',
     Gs.steps.every((s, j) => s.filter(Boolean).length === j + 1) && newIdx.every(k => k >= 0 && side(k) !== -1), JSON.stringify({ steps: Gs.steps, sides: Gs.sides }));
   T.check('glass: pieces lie on the road after', Gs.shards > 10, 'shards ' + Gs.shards);
+  T.check('glass (P5): a broken windscreen stays in its frame (laminated: cracked, none of it gone), a broken side or rear pane falls out (tempered: over half of it gone, a rim left)',
+    Gs.out.length >= 3 && Gs.out.every(([k, f]) => k ? f > 0.5 && f < 1 : f === 0), JSON.stringify(Gs.out));
   T.check('glass driven over three times through its middle: each pass less of it (some off, the rest aside and smaller), after three passes at most 85 % of the pieces and 80 % of their size left',
     Gs.run[0].n > 10 && Gs.run[1].n < Gs.run[0].n && Gs.run.every((q, k) => !k || (q.n <= Gs.run[k - 1].n && q.sc <= Gs.run[k - 1].sc + 1e-6)) && Gs.run[3].n <= 0.85 * Gs.run[0].n && Gs.run[3].sc <= 0.8 * Gs.run[0].sc, JSON.stringify(Gs.run.map(q => ({ n: q.n, sc: q.sc })))); 
   T.check('mirrors: the first right blow knocks the right one off, the left one stays', !Gs.mir[0] && Gs.mir[1] && Gs.ground === 1, JSON.stringify({ mir: Gs.mir, ground: Gs.ground }));
@@ -484,6 +488,28 @@ try {
     const v = Render.viewOf(pc); Object.assign(out, { roofDmg: +pc.roofDmg.toFixed(3), bar: v && v.polBar ? v.polBar.visible : null });
     await mode('race'); return out; });
   T.check('new way: a wrecked patrol car\'s light bar gone with its crushed roof (no blue flashes over a wreck)', po.r.cars > 0 && po.r.xOn && po.r.bar0 === true && po.r.roofDmg >= 0.5 && po.r.bar === false && !po.errors.length, JSON.stringify(po.r) + ' ' + po.errors.slice(0, 2).join(' | '));
+  // P6 · the crumple zone: a head-on knock against a wall over 50 km/h (14 m/s) shortens the nose 0.4-0.7 m (the zone's own length
+  // at most), the bonnet bows up, the front wheels go back with it; the cabin (behind the firewall) moves no more than the knock's own
+  // dent already moved it (under 2 cm more); under 50 km/h none of it; nothing NaN
+  for (const id of ['tornado', 'rally']) {
+    const cz = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal', carId: id }, () => {
+      const g = window.__game, R = g.race, P = R.player, out = {};
+      for (const sp of [0, 12, 15, 20]) { R.repairCar(P); Render.frame(0.016, 1, P, 'chase', {}); Render.frame(0.016, 1, P, 'chase', {});
+        const v = Render.viewOf(P); P.fxWall = sp; Core.applyDamage(P, 0.15, P.m.len / 2, 0.3 * P.m.wid / 2); Render.frame(0.016, 1, P, 'chase', {});
+        const xc = v.xc, B = xc.B, a = v.body.geometry.attributes.position.array, Rr = xc.rest, xf = B.x1 - B.capF, cab = []; let nose = -Infinity, nan = 0;
+        for (let i = 0; i < xc.on; i++) nose = Math.max(nose, a[i * 3]);
+        for (let i = 0; i < Rr.length / 3; i++) if (Rr[i * 3] < xf - 0.02) cab.push([a[i * 3], a[i * 3 + 1], a[i * 3 + 2]]);
+        for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) nan++;
+        out[sp] = { short: B.x1 - nose, cab, nan, cz: !!xc.cz, capF: B.capF, wf: Math.min(...v.wf.map(w => w.position.x - w.userData.xp0.x)) }; }
+      const moved = (s) => { let m = 0; out[s].cab.forEach((p, i) => { const q = out[0].cab[i]; m = Math.max(m, Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2])); }); return m; };
+      const r = {}; for (const s of [0, 12, 15, 20]) r[s] = { short: +out[s].short.toFixed(3), nan: out[s].nan, cz: out[s].cz, wf: +out[s].wf.toFixed(3), cab: +moved(s).toFixed(4) };
+      r.capF = +out[0].capF.toFixed(2); return r; });
+    const Z = cz.r;
+    T.check(`P6 crumple zone, ${id}: a head-on knock at 54 and 72 km/h shortens the nose 0.4-0.7 m, the harder the more; the front wheels back with it; under 50 km/h none of it`,
+      !Z[0].cz && !Z[12].cz && Z[15].cz && Z[15].short >= 0.4 && Z[20].short <= 0.7 && Z[20].short > Z[15].short && Z[15].wf < -0.05 && Z[12].short < 0.1, JSON.stringify(Z));
+    T.check(`P6 crumple zone, ${id}: the cabin behind the firewall moves under 2 cm more than the knock's own dent; nothing NaN; no page errors`,
+      Z[15].cab < 0.02 && Z[20].cab < 0.02 && !Z[15].nan && !Z[20].nan && !cz.errors.length, JSON.stringify(Z) + ' ' + cz.errors.slice(0, 3).join(' | '));
+  }
   // open cars, a kart: no roof field; a rollover's roof contact moves nothing; blows on the ends never lift the driver, a hoop, a roll bar
   // (xStand: they stand, as a roofed car's seats and driver)
   for (const id of ['lisica', 'blisk', 'mravlja']) {

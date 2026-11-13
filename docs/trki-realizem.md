@@ -1823,13 +1823,48 @@ Za vse velja:
 
 **Ni narejeno (naslednja seja):** posebni »gruščasti« prah ob trku v zid s cv 6. Slike ZDAJ/POTEM (Spa, celni, zid30, tbone) so samo v pripomočkih seje, ne v repozitoriju.
 
+## Poškodbe P5: steklo in luči (13. 11. 2026)
+
+- **Vetrobransko steklo je lepljeno (laminirano):** poči (zvezda, dolge razpoke, mreža; `XGL` v `js/render.js`) in ostane v okvirju; ob udarcu se dvigne le malo steklenega prahu, na cesto ne pade nič. Luknje ni več.
+- **Zadnje in stranska stekla so kaljena:** razletijo se na drobne kocke in izpadejo, v okvirju ostane rob; drobci (`xShards`) ostanejo na cesti.
+- **Steklo na cesti** (`_glassStep`, `XR.glass`) se pri lokalni dirki položi vedno. Oprijem vzame samo pri Vklop, in to 5 % (`GLASS.mu` 0,05). Pri Samo videz je `glassK` 1, zato avto vozi kot prej. Na spletu (`net`) stekla ni.
+- **Luči:** od `cd` 0,08 do 0,16 je steklo luči počeno (`v.lCr`, `xLampCrack`). Sij pade na 0,6, snop počenega žarometa se zasuče navzven (do 12°) in skrajša (do 30 %). Pri `cd` 0,16 luč ugasne kot prej (`lightOut`).
+- Testi: `debris.test.js` (steklo pri Samo videz ne spremeni vožnje, pri Vklop 0,95) in `browser/crash.test.mjs` (vetrobransko ostane, stranska in zadnje izpadejo).
+
+## Poškodbe P3: kolesa in obese (13. 11. 2026)
+
+- **Vklop (jedro, `dmgSteer` v `js/core.js`):**
+  - stikala `xHandle` ni več (Nastavitve, `XR.handle`, prevodi); vleka zmečkanega sprednjega vogala velja pri Vklop sama;
+  - zvito sprednje kolo (`cd` 0,35–0,7) trese krmilo enkrat na obrat kolesa (~1,9 m), do 0,004 zasuka, od 30 m/s v celoti;
+  - faza obrata je `c.xd.ph`; nastane samo na avtu z zvitim kolesom, `repairCar` in `_mend` jo pobrišeta;
+  - pri Samo videz, Izklop in avtu brez udarca je člen 0, zato je vožnja enaka do številke.
+- **Videz (`wheelBend`, `kitSag` v `js/render.js`):**
+  - pri `cd` vogala od 0,35 do 0,7 se kolo nagne navzven (do 12°) in obrne navzven (do 6°), platišče opleta za 2°;
+  - vogal se povesi do 0,25 polmera kolesa; to velja za vse avte, preprosti dobijo samo ravnino povesa;
+  - avto prijatelja na spletu se ne spremeni.
+- Testi: `knock.test.js` (vleka in tresenje samo pri Vklop) in `browser/kit.test.mjs` (nagnjeno kolo, poves).
+- **Iskre pod povešenim vogalom** (`paket-p.md`, P4.4) niso dodane. Vogal pade le za 0,25 polmera kolesa (pri preprostem avtu ~8 cm), zato podvozje ne drgne po cesti. Iskre ostanejo pri pestu brez kolesa in pri vlečenem odbijaču.
+
+## Poškodbe P6: krčljiva cona (13. 11. 2026)
+
+- **Čelni trk v zid nad 50 km/h** (`xCrush` v `js/render.js`, samo videz) skrajša nos tako kot pri testih trkov:
+  - globina je `0,7 m · sstep(8, 18, hitrost)`, a največ do dolžine cone (`B.capF`, do pregrade pred kabino);
+  - izmerjeno: tornado pri 54 km/h 0,49 m, pri 72 km/h 0,63 m; rally 0,53 in 0,68 m; titan (kabina nad motorjem) samo 0,34 m, kolikor je dolga njegova cona;
+  - pri trku s strani izmika se daljna stran skrajša do pol manj;
+  - kar je vdolbina gruče že potisnila nazaj, se šteje;
+  - pokrov motorja se na sredini izboči navzgor (do pol globine), sprednji kolesi gresta nazaj z nosom, žarometi (sij) tudi;
+  - kabina za pregrado ostane, kot je (manj kot 2 cm več kot sama vdolbina).
+- Hitrost je `fxWall` ali `fxCar` jedra (enako kot pri sledeh P4); pod 14 m/s, pri trku od zadaj in pri starih vdolbinah se ne zgodi nič.
+- **Kolibri, Medved, Kozorog in Lev R** imajo svojo tabelo poškodb in uporabnikovo odločitev 3B (konec ne globlje od 0,3 m do 70 %), zato jih P6 preskoči.
+- **Omejitve:** škatla trkov jedra ostane dolga kot prej (fizika se ne spreminja); senca in oddaljena mreža sta iz celega telesa.
+- Test: `browser/crash.test.mjs` 12 (tornado in rally).
+
 ## Predaja (13. 11. 2026, seja na Opusu)
 
-Na veji `trki/realizem` so commiti P1, P4 in P2 (videz). Naslednja seja:
+Na veji `trki/realizem` so commiti P1, P4, P2 (videz), P5, P3 in P6. Naslednja seja:
 1. **Odgovori:** preveri trki-cv6-slike, trki-hotham-seme in trki-uncompahgre-padec na strani Odločitve (z ArtifactData) in vprašanje »Odprto za uporabnika« v `paket-p.md`. Od tega je odvisna točka P2.3 (pregrevanje pri Vklop).
-2. **P5:** steklo in luči (`paket-p.md`; 5 % stekla samo pri Vklop).
-3. **P3:** kolesa in obese.
-4. **P6:** karoserija kot pri testih trkov.
+2. ~~P5~~ in ~~P3~~: narejeno (razdelka zgoraj).
+4. ~~P6~~: narejeno (razdelek zgoraj).
 5. **Korak K:** odpadlo kolo.
 6. **Pregled:** neodvisno preverjanje z več agenti samo enkrat, na koncu teme pred `main`. PR #608 ostane osnutek do vrste.
 

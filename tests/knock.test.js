@@ -1,13 +1,14 @@
-// Razbijanje · nov način: odboji, agresivni vozniki, poškodbe vplivajo na vožnjo (Core.setCrash({ bump, ai, handle }), Nastavitve xBump,
-// xAi, xHandle; all off by default, never online)
+// Razbijanje · nov način: odboji, agresivni vozniki (Core.setCrash({ bump, ai }), Nastavitve xBump, xAi; all off by default, never
+// online), and the damaged car's steering (with damage Vklop only, no switch: P3)
 // - odboji (with the old knock, Trki med avti: Stara; the other versions turn and spin a car themselves, trki.test.js): a car knocked on
 //   its rear quarter at speed: off, it hardly turns (the old damped tap) and loses no grip (xgl stays 0); on, it turns as hard as the knock says
 //   (a harder one spins it round) and its grip goes for under a second (xgl, gone again after); a friend's car online (net) never
 // - agresivni vozniki: a 90 s race at Bathurst (13 cars; a real track: on the test track Jezero, all off the line at once, the start's knocks
 //   alone were as many as the aggressive drivers add): on, more hard knocks between the cars and more damage than off, every rival still
 //   driving (the slowest rival at least 0.8 of the way the slowest one makes without them), nothing NaN
-// - poškodbe vplivajo na vožnjo: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at
-//   80 km/h, the wheel held straight); off, it runs straight
+// - poškodbe Vklop: a crushed front-right corner pulls the car right, a front-left one left (a few degrees in 2 s at 80 km/h, the
+//   wheel held straight); a bent front wheel on both sides (cd 0.6) shakes the heading a little and keeps it straight; Samo videz and
+//   Izklop: the same car runs dead straight
 //   node tests/knock.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -66,23 +67,22 @@ function race(ai, seed) {
   ok('agresivni vozniki on: every rival still driving (the slowest as far as 0.8 of the slowest without them), nothing NaN', on.dist > 0.8 * off.dist && on.laps >= off.laps && !on.nan, 'the slowest rival ' + off.dist.toFixed(0) + ' m / ' + on.dist.toFixed(0) + ' m, laps ' + off.laps + ' / ' + on.laps);
 }
 
-// a crushed front corner (cd: FL, FR, RL, RR), 80 km/h, the wheel held straight for 2 s
-function pull(handle, k) {
-  C.setCrash({ handle });
-  const A = H.mkCar('tornado', { v: 80 }); A.cd[k] = 0.8;
-  const h0 = A.h; let t = 0;
-  while (t < 2) { H.step(A, { thr: 'hold', st: 0 }); t += DT; }
-  C.setCrash({});
-  return (A.h - h0) * D;
+// a crushed front corner (cd: FL, FR, RL, RR), 80 km/h, the wheel held straight for 2 s; mode = the damage setting (0, 1, 2)
+function pull(mode, k, amt) {
+  const A = H.mkCar('tornado', { v: 80 }); A.dmgMode = mode; for (const j of [].concat(k)) A.cd[j] = amt || 0.8;
+  const h0 = A.h; let t = 0, wob = 0;
+  while (t < 2) { H.step(A, { thr: 'hold', st: 0 }); t += DT; wob = Math.max(wob, Math.abs(A.h - h0) * D); }
+  return { h: (A.h - h0) * D, wob };
 }
 {
-  const off = pull(0, 1), fr = pull(1, 1), fl = pull(1, 0);
-  ok('poškodbe vplivajo na vožnjo off: a crushed corner, the car runs straight', Math.abs(off) < 0.01, off.toFixed(2) + '°');
-  ok('poškodbe vplivajo na vožnjo on: front-right crushed pulls right, front-left left, a few degrees', fr > 2 && fr < 12 && fl < -2 && fl > -12, 'FR ' + fr.toFixed(1) + '°, FL ' + fl.toFixed(1) + '°');
+  const off = pull(1, 1).h, iz = pull(0, 1).h, fr = pull(2, 1).h, fl = pull(2, 0).h, bent = pull(2, [0, 1], 0.6), bent1 = pull(1, [0, 1], 0.6);
+  ok('poškodbe Samo videz and Izklop: a crushed corner, the car runs straight', Math.abs(off) < 0.01 && Math.abs(iz) < 0.01, off.toFixed(2) + '° / ' + iz.toFixed(2) + '°');
+  ok('poškodbe Vklop: front-right crushed pulls right, front-left left, a few degrees', fr > 2 && fr < 12 && fl < -2 && fl > -12, 'FR ' + fr.toFixed(1) + '°, FL ' + fl.toFixed(1) + '°');
+  ok('poškodbe Vklop: bent front wheels shake the heading a little, the car stays straight; Samo videz: nothing', bent.wob > 0.005 && bent.wob < 1.5 && Math.abs(bent.h) < 1 && bent1.wob < 0.001, 'shake ' + bent.wob.toFixed(3) + '°, heading ' + bent.h.toFixed(2) + '°, Samo videz ' + bent1.wob.toFixed(4) + '°');
 }
 
 let bad = 0;
-console.log('== odboji, agresivni vozniki, vpliv na vožnjo (Razbijanje · nov način)');
+console.log('== odboji, agresivni vozniki, vpliv poškodb na vožnjo');
 for (const c of checks) { if (!c.ok) bad++; console.log(`${c.ok ? 'OK  ' : 'FAIL'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`); }
 console.log(bad ? `FAIL: ${bad} of ${checks.length} checks` : `OK: all ${checks.length} checks`);
 process.exitCode = bad ? 1 : 0;

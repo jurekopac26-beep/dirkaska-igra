@@ -19,7 +19,7 @@
 // - prevracanje: Core.setCrash({ roll: 1 }) (Razbijanje - nov nacin, off by default): the thresholds and the one-in-ten draw by direct
 //   Core.carCollide / Core.wallCollide calls over many cars, what a roll does (Car.step: xRollStep), how often in seeded races
 // - skoda: what a knock of a given strength does to the damage (Core.carCollide, Race.step into Spa's barrier, a landing, a fall), and what a
-//   damaged car drives like with damage Samo videz (1) and Vklop (2), with XR.handle, the formula's wings, a puncture
+//   damaged car drives like with damage Samo videz (1) and Vklop (2), the crushed corner's pull and bent wheel (Vklop), the formula's wings, a puncture
 // - zanka: the pair checks of a step with 12, 20 and 100 cars (a seeded race on Spa; Race._pairs counted through the race's own method) and the
 //   time the collision calls take in Node (process.hrtime: the timings change from run to run, the counts do not)
 // - splet: two phones, each with its own car and the friend's car as the game places it (netPlace, read out of js/game.js as text and run
@@ -465,7 +465,7 @@ function vozi(id, mode, n, amt, xr) {
   const kv = id === 'formula' ? 200 : 120; c = mk(kv); let ay = 0, na = 0; for (let k = 0; k < 5 / DT; k++) { H.step(c, { st: 1, thr: 'hold' }); if (k > 4 / DT) { ay += Math.abs(c._om) * c._v; na++; } }
   c = mk(100); for (let k = 0; k < 3 / DT; k++) H.step(c, { st: 0, thr: 'hold' }); const z3 = c.z;
   C.setCrash(null);
-  return { avto: id, skode: mode, udarci: n, xHandle: xr && xr.handle ? 1 : 0, dmg, lost, v6, ay: ay / na / G, kv, z3, aero };
+  return { avto: id, skode: mode, udarci: n, dmg, lost, v6, ay: ay / na / G, kv, z3, aero };
 }
 function delSkoda() {
   const o = OUT.deli.skoda = {};
@@ -481,10 +481,9 @@ function delSkoda() {
     o.zid.map(x => [`${x.v} (${f(x.v * 3.6, 0)})`, x.th || 90, x.avto || 'rally', f(x.hit), f(x.dmg), x.lost, x.lights, x.okna]));
   o.voznja = [];
   for (const [id, n, amt] of [['rally', 0, 0], ['rally', 5, 0.1], ['rally', 10, 0.1], ['formula', 0, 0], ['formula', 5, 0.1]]) for (const mode of [1, 2]) { if (!n && mode === 1) continue; o.voznja.push(vozi(id, n ? mode : 2, n, amt)); }
-  o.voznja.push(vozi('rally', 2, 5, 0.1, { handle: 1 })); o.voznja.push(vozi('rally', 1, 5, 0.1, { handle: 1 }));
   table('SKODA 3: kako vozi poskodovan avto (udarci po 10 % v sprednji desni vogal, Core.applyDamage; ravnina). skode 1 = Samo videz, 2 = Vklop',
-    ['avto', 'skode', 'udarci', 'xHandle', 'skoda %', 'odpadli deli', '100 -> 6 s plina km/h', 'ovinek g (km/h)', 'brez rok 3 s: vstran m', 'aeroK'],
-    o.voznja.map(x => [x.avto, x.skode, x.udarci, x.xHandle, f(x.dmg, 0), x.lost, f(x.v6), `${f(x.ay, 2)} (${x.kv})`, f(x.z3, 2), x.aero ? x.aero.toExponential(2) : '0']));
+    ['avto', 'skode', 'udarci', 'skoda %', 'odpadli deli', '100 -> 6 s plina km/h', 'ovinek g (km/h)', 'brez rok 3 s: vstran m', 'aeroK'],
+    o.voznja.map(x => [x.avto, x.skode, x.udarci, f(x.dmg, 0), x.lost, f(x.v6), `${f(x.ay, 2)} (${x.kv})`, f(x.z3, 2), x.aero ? x.aero.toExponential(2) : '0']));
   // a puncture (failures on): the share of knocks that cut a tyre, by the knock's strength, in a real race's draw (Race.step into the barrier)
   const draw = SIM.seeded(7000);   // (one sequence for every crash of this measurement: the draw of each is its own)
   o.guma = [10, 12, 15, 20, 27.8].map(v => { let n = 0; const N = 200; for (let s = 1; s <= N; s++) { const T = track('spa'), r = loneRace(T, 'rally', { faults: true, seed: s }), c = r.player, i = straightIdx(T), qd = T.br[i] - 0.3 - c.m.len / 2;
