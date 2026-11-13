@@ -1,0 +1,23 @@
+{
+  "id": "savusavu",
+  "about": "Savusavu, Fidži (id savusavu): the western end of the Hibiscus Highway on Vanua Levu, from the plateau by the airfield north over the low ridge and down to the edge of Savusavu town, one run (docs/proge/savusavu.md)",
+  "box": [-16.815, 179.322, -16.765, 179.356],
+  "closed": false,
+  "dist": {"grid": 400},
+  "route": [
+    [-16.798366, 179.3391367, "Hibiscus Highway", "start: on the plateau north of the airfield, northbound"],
+    [-16.7956252, 179.3383343, "Hibiscus Highway", ""],
+    [-16.7925446, 179.3383653, "Hibiscus Highway", ""],
+    [-16.7899883, 179.337435, "Hibiscus Highway", ""],
+    [-16.7871944, 179.337265, "Hibiscus Highway", ""],
+    [-16.7857217, 179.3351769, "Hibiscus Highway", ""],
+    [-16.7837551, 179.3359455, "Hibiscus Highway", ""],
+    [-16.7811623, 179.3364845, "Hibiscus Highway", ""],
+    [-16.7800500, 179.3380000, "Hibiscus Highway", "finish: before the junction with Main Street at the edge of the town"]
+  ],
+  "prefer": ["Hibiscus Highway"],
+  "geoRoads": ["Hibiscus Highway", "Main Street", "Cross Island Road", "Savusavu to Labasa Highway", "Leisiaceva Road", "Nukubalavu Road"],
+  "geoWater": ["Savusavu Bay"],
+  "marks": [],
+  "places": [["Savusavu", null, 2500]]
+}
