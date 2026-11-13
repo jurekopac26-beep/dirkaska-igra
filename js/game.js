@@ -2449,6 +2449,8 @@
     if (race.nv) { if (nv.built && nv.home) { race.player.place(nv.home.x, nv.home.z, nv.home.h); if (typeof NVHeli !== 'undefined') NVHeli.reset(); if (typeof NVRide !== 'undefined') NVRide.reset(race.player); if (typeof NVWater !== 'undefined') NVWater.reset(race.player); } else if (!nv.built) nvStart(); }
     MS.begin(race);   // (a special mission: its panel and its run)
     ZB.begin(race, zctx);   // (Zabava: the novelties of this race, js/zabava.js)
+    if (TS()) Tester.zacni({ proga: track.def.id, avto: race.player && race.player.m ? race.player.m.name : '', vreme: (W.storm ? 'nevihta' : W.wx ? 'menljivo' : race.rain ? 'dez' : 'suho') + (S.season === 'winter' ? ' zima' : S.season === 'autumn' ? ' jesen' : ''),
+      nacin: on ? 'online' : school ? 'avtosola' : nv ? 'nova-mapa' : MS.cur ? 'misija' : ch ? 'izziv' : quali ? 'kvalifikacije' : cr >= 0 ? 'prvenstvo' : race.zbMode || md });   // (Test s prijatelji: only with ?tester, js/tester.js)
   }
   // NEW VERSION · TEST 1: js/newmap.js (loaded only now: its stamped address is a <link> of a kind the browser does not fetch), then the
   // new map built over the track (window.MK.hub4: the infield's construction site and driving school, the garages, the islands, the
@@ -2526,6 +2528,7 @@
     mkFlush();   // (a time trial left for the menu: its tyre marks kept)
     if (nv) { if (nv.built || nv.err) { location.reload(); return; } nv = null; }   // (NEW VERSION · TEST 1: the new map changed the track's world, the page again)
     Napake.pusti();   // (Zadnji posnetki: a race over the finish kept, or kept again: js/napake.js)
+    if (TS()) Tester.pusti(race && race.player && !race.player.finished ? tsMesto() : null);   // (Test s prijatelji: a race left before its end, its place then)
     stSave();   // (the km of a race left before its end)
     endPodium(); champRecord(); champRun = false; hlvClear(); replay = null; recd = null; cdOff(); $('replay-ui').classList.add('off'); $('replay-ui').classList.remove('auto');
     paused = false; phase = 'none'; race = null; bg = 'demo'; Comm.stop(); Comm.setRadioMode(false); rdOn = false; radioReset(); ghRec = ghPlay = ghLap = ghFr = null; qual = null; Render.setGhost(null, true); Render.setGhostF(null, true);
@@ -3086,10 +3089,29 @@
     hxStart();   // (again: the difference and the profile against this ghost)
     $('hud').classList.toggle('pkleg', !!(ghPlay && ghPlay.leg));
   }
+  // Test s prijatelji (js/tester.js, docs/test-s-prijatelji.md): on only with ?tester=<code> and the tester's consent; else nothing at all
+  function TS() { return typeof Tester !== 'undefined' && Tester.on; }
+  // the place for the counter, now: only in a race against rivals (not the time trial, the police, qualifying, a challenge, a mission,
+  // the driving school, the new map or a fun mode: elimination, the hunt, the endless drive, the drag race), else null (the overview: —)
+  function tsMesto() {
+    try {
+      const P = race && race.player;
+      if (!P || race.timeTrial || race.pol || race.quali || race.chal || race.zbMode || race.nv || school || MS.cur) return null;
+      const r = race.estimateResults(), i = r.findIndex(x => x.car === P); return r.length > 1 && i >= 0 ? i + 1 : null;
+    } catch (_) { return null; }
+  }
+  function tsKonec() {   // the race's end for the counter: over the finish or retired, the place (a race with rivals only)
+    try {
+      const P = race && race.player; if (!P) return;
+      const out = !P.finished && !!(race.isOut && race.isOut(P));
+      Tester.konec(out ? 'odstop' : 'cilj', out ? null : tsMesto());
+    } catch (_) { }
+  }
   function finishRace() {
     phase = 'done';
     Sfx.setRunning(false); Input.buzzOff();
     Napake.cilj();   // (over the finish: the recording kept among Zadnji posnetki, js/napake.js)
+    if (TS()) tsKonec();   // (Test s prijatelji: the race's end, only with ?tester)
     if (mp && mp.race) { netResults(); return; }
     $('res-restart').dataset.act = 'restart'; $('res-laps').classList.add('off');
     $('res-reply').classList.add('off'); $('res-chal').classList.toggle('off', !chalCan());   // (a challenge for a friend: the best run of this track, once there is one)
