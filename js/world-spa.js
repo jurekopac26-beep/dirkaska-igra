@@ -413,8 +413,10 @@
       } else {   // an Ardennes house: grey stone or whitewashed walls (now and then red brick), a steep dark slate roof along the long side
         const hh = H || 5.4 + R() * 2.2, walls = [[0.66, 0.64, 0.6], [0.94, 0.93, 0.89], [0.72, 0.7, 0.66], [0.62, 0.38, 0.3]], uw = R(), wc = walls[Math.floor(uw * walls.length)];
         if (HS && Lb * Wb < 1500) {   // (the builder's house: the same three draws as below, so that all else in the world stays where it was)
+          // (a small footprint is a shed or a garage unless the map says it is high; its height and every house's floors are the builder's to
+          // decide, by the map's height where it has one)
           const small = Lb * Wb < 45;
-          HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl: small ? 1 : hh > 8.6 ? 3 : 2, type: small ? 'small' : 'house', u: [uw, R(), R()], dn: dnH, ri: riH, id: bi });
+          HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh: small && !H ? 0 : hh, type: small && !(H > 3.6) ? 'small' : 'house', u: [uw, R(), R()], dn: dnH, ri: riH, id: bi });
           exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 3); continue;
         }
         box(g, bx, y0 - 0.4, bz, Lb, hh + 0.4, Wb, ang, vary(wc, R, 0.05), null, true);

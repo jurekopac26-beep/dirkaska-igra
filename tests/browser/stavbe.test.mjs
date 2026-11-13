@@ -5,10 +5,14 @@
 // the table (every track of PROGE a real one in the game with a kit for its country; every real track of the realism's list has its
 // country's kit; every kit's style, weights, colours, finishes and roofs are ones the styles have); Spa's houses (the world's count is
 // what is in the world, the vertices under the package's budget, every vertex a number, at a house's footprint of the track's data, its
-// place in the atlas inside the texture; one material for the walls and one for the railings, the style's one atlas); the houses show
-// from the chase camera (the picture changes with them and only with them); every country's kit builds the same footprints (each style's
-// atlas draws, the finishes and the roofs are the kit's); a track not in PROGE is built as before (Jezero), and Spa built again is the
-// same to the vertex; on NIZKA the same houses; no errors.
+// place in the atlas inside the texture; one material for the walls with the style's one atlas, and nothing the map has not: no
+// railings, balconies or yards); the houses show from the chase camera (the picture changes with them and only with them); every
+// country's kit builds the same footprints (each style's atlas draws, the finishes and the roofs are the kit's), and on them the rule of
+// the ground holds (the floor level over the ground's high side with a plinth down to the low side, a shed at most 0.6 m in the ground;
+// a small building that runs into a larger one stands square against its wall; a door only where the ground is at the floor or steps
+// reach it); what a track may ask for (yards, balconies, a fence of the map) adds to the plain houses, the railings in their own cut-out
+// material with the same atlas; a track not in PROGE is built as before (Jezero), and Spa built again is the same to the vertex; on
+// NIZKA the same houses; no errors.
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('the houses\' builder');
@@ -70,11 +74,13 @@ try {
   T.check('Spa: the houses of the track\'s data are the builder\'s, with Belgium\'s kit at the full level (most of them, some right at the road, three finishes of wall; the halls, grandstands and pits stay the track\'s own)',
     s.level === 3 && s.drzava === 'Belgija' && s.style === 'north' && s.houses >= 60 && s.houses <= spa.k0 && s.houses >= spa.k0 * 0.9 && spa.buildings > s.houses + 20 && s.byRoad >= 10 && s.byRoad < s.houses &&
     s.fin.length === 3 && s.fin.every(n => n > 0) && s.fin[0] + s.fin[1] + s.fin[2] === s.houses && s.roofs[0] + s.roofs[1] === s.houses, JSON.stringify({ st: spa.st, k0: spa.k0, buildings: spa.buildings }));
-  T.check('Spa: the world\'s count is what is in the world (the walls\' meshes and the railings\'), under the package\'s budget of 150 thousand vertices, every vertex a number, at a house\'s footprint, inside the atlas',
-    spa.hisa >= 1 && spa.ograja >= 1 && spa.hisaV + spa.ograjaV === s.vertices && s.vertices > 5000 && s.vertices < 150000 && spa.bad === 0 && spa.out < 14 && spa.v[0] >= 0 && spa.v[1] <= 1,
+  T.check('Spa: on its slopes the houses\' floors are fitted to the ground (the ground rises under some), small buildings are set square against the house they run into, steps lead to some doors and none is higher than 1.2 m',
+    s.rise > 0.5 && s.moved >= 1 && s.moved < s.houses / 4 && s.steps >= 1 && s.steps < s.houses / 2 && s.drop > 0.22 && s.drop <= 1.2, JSON.stringify({ rise: s.rise, moved: s.moved, steps: s.steps, drop: s.drop, houses: s.houses }));
+  T.check('Spa: the world\'s count is what is in the world (the walls\' meshes; no railings: the map has no yards or balconies, nothing is made up), under the package\'s budget of 150 thousand vertices, every vertex a number, at a house\'s footprint, inside the atlas',
+    spa.hisa >= 1 && spa.ograja === 0 && spa.hisaV + spa.ograjaV === s.vertices && s.vertices > 5000 && s.vertices < 150000 && spa.bad === 0 && spa.out < 14 && spa.v[0] >= 0 && spa.v[1] <= 1,
     JSON.stringify({ hisa: spa.hisa, hisaV: spa.hisaV, ograja: spa.ograja, ograjaV: spa.ograjaV, vertices: s.vertices, bad: spa.bad, out: spa.out, v: spa.v }));
-  T.check('Spa: one material for the walls and roofs and one for the railings (cut out), both with the style\'s one atlas of 1024 x 2048 (made once)',
-    spa.mats === 1 && spa.rails === 1 && spa.mat && spa.mat.lambert && spa.mat.map && spa.mat.again && spa.mat.vc && spa.mat.rail && spa.mat.size.join() === '1024,2048', JSON.stringify({ mats: spa.mats, rails: spa.rails, mat: spa.mat }));
+  T.check('Spa: one material for the walls and roofs, with the style\'s one atlas of 1024 x 2048 (made once)',
+    spa.mats === 1 && spa.rails === 0 && spa.mat && spa.mat.lambert && spa.mat.map && spa.mat.again && spa.mat.vc && spa.mat.size.join() === '1024,2048', JSON.stringify({ mats: spa.mats, rails: spa.rails, mat: spa.mat }));
 
   // the chase camera's picture where houses stand by the road (the car on the ideal line there, all else still): the same frame twice,
   // then without the builder's meshes, then with them again
@@ -105,15 +111,34 @@ try {
     pic.houses >= 3 && pic.none > pic.px * 0.004 && pic.same <= pic.px * 0.002 && pic.back <= pic.px * 0.002, JSON.stringify(pic));
 
   // every country's kit on the same footprints (Spa's houses, the track's own ground and road): each style's atlas draws, the houses
-  // are counted, the finishes and the roofs are ones the kit names, every vertex a number inside the atlas
+  // are counted, the finishes and the roofs are ones the kit names, every vertex a number inside the atlas; and the rule of the ground on
+  // every house (its record: where it stands after the fit, its floor and plinth, its door and steps)
   const kits = await page.evaluate(() => {
     const S = World.stavbe, A = World.api, T0 = window.__game.race.track, bld = (T0.def.bld || []).filter(b => !b[6] && b[2] * b[3] < 1500), out = { n: bld.length, bad: [], styles: new Set(), verts: {} };
     for (const [c, K] of Object.entries(S.KOMPLETI)) {
       const Tk = Object.create(T0); Tk.def = { id: T0.def.id, name: 'Kraj, ' + c };
       const HS = S.setup({ Chunks: A.Chunks, list: bld, T: Tk, near: A.nrNear, gH: A.nrGround });
       if (!HS) { out.bad.push('no builder: ' + c); continue; }
-      bld.forEach((b, i) => HS.put({ x: b[0], z: b[1], L: b[2], W: b[3], ang: b[4], y0: A.nrGround(b[0], b[1]), hh: b[2] * b[3] < 45 ? 3.4 : 6.4, fl: b[2] * b[3] < 45 ? 1 : 2, type: b[2] * b[3] < 45 ? 'small' : 'house', id: i }));
+      const rec = bld.map(() => ({}));
+      bld.forEach((b, i) => HS.put({ x: b[0], z: b[1], L: b[2], W: b[3], ang: b[4], y0: A.nrGround(b[0], b[1]), hh: b[2] * b[3] < 45 ? 3.4 : 6.4, fl: b[2] * b[3] < 45 ? 1 : 2, type: b[2] * b[3] < 45 ? 'small' : 'house', id: i, out: rec[i] }));
       const grp = new THREE.Group(), st = HS.stats, SY = S.STYLES[K.style]; HS.addTo(grp);
+      let moved = 0, doors = 0, steps = 0;
+      bld.forEach((b, i) => { const q = rec[i], sm = b[2] * b[3] < 45, at = q.at; if (!at || !isFinite(q.y0 + q.base)) { out.bad.push('no record: ' + c + ' ' + i); return; }
+        const ca = Math.cos(at[4]), sa = Math.sin(at[4]); let lo = 1e9, hi = -1e9;
+        for (const [u, w] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) { const y = A.nrGround(at[0] + u * at[2] / 2 * ca - w * at[3] / 2 * sa, at[1] + u * at[2] / 2 * sa + w * at[3] / 2 * ca); if (y < lo) lo = y; if (y > hi) hi = y; }
+        // (the floor over the ground: a house's over the high side, a shed's at most 0.6 m under it; the plinth down to the low side)
+        if (q.y0 < (sm ? Math.max(lo + 0.1, hi - 0.6) : hi + 0.15) - 1e-6 || q.y0 - q.base > lo + 1e-6) out.bad.push('floor: ' + c + ' ' + i + ' ' + [q.y0, q.base, lo, hi].map(n => n.toFixed(2)).join(' '));
+        // (a door: the ground a metre before it at the floor, or steps down to it; never a door high over the ground)
+        if (q.door && !q.noDoor) { doors++; if (q.steps > 0) steps++; const drop = q.y0 - A.nrGround(q.door[0] + q.n[0], q.door[1] + q.n[1]);
+          if (drop > (q.steps > 0 ? 1.2 : sm ? 0.35 : 0.22) + 1e-6 || q.steps > 7 || (sm && q.steps > 0)) out.bad.push('door: ' + c + ' ' + i + ' ' + drop.toFixed(2) + ' ' + q.steps); }
+        // (a small building that was moved: square to a larger footprint, its wall on that one's wall)
+        if (Math.hypot(at[0] - b[0], at[1] - b[1]) > 1e-6) { moved++; const HP = Math.PI / 2;
+          const ok = bld.some((e, j) => { if (j === i || e[2] * e[3] < 1.5 * b[2] * b[3]) return false; let d = at[4] - e[4]; d -= Math.round(d / HP) * HP; if (Math.abs(d) > 1e-6) return false;
+            const odd = Math.abs(Math.round((at[4] - e[4]) / HP)) % 2 === 1, hx = (odd ? at[3] : at[2]) / 2, hz = (odd ? at[2] : at[3]) / 2, ce = Math.cos(e[4]), se = Math.sin(e[4]), rx = at[0] - e[0], rz = at[1] - e[1], lx = Math.abs(rx * ce + rz * se), lz = Math.abs(-rx * se + rz * ce);
+            return (Math.abs(lx - e[2] / 2 - hx) < 1e-6 && lz < e[3] / 2 + hz) || (Math.abs(lz - e[3] / 2 - hz) < 1e-6 && lx < e[2] / 2 + hx); });
+          if (!ok || !sm) out.bad.push('moved: ' + c + ' ' + i); } });
+      if (moved !== st.moved || !moved || !doors || steps < st.steps || !st.steps) out.bad.push('ground: ' + c + ' ' + [moved, st.moved, doors, steps, st.steps].join(' '));
+      out.moved = moved; out.doors = doors; out.steps = steps;
       let v = 0, nan = 0, v0 = 1e9, v1 = -1e9, maps = new Set();
       grp.traverse(o => { if (!o.isMesh) return; const P = o.geometry.attributes.position, uv = o.geometry.attributes.uv; v += P.count; maps.add(o.material.map);
         for (let i = 0; i < P.count; i++) { const y = uv.getY(i); if (!isFinite(P.getX(i) + P.getY(i) + P.getZ(i) + uv.getX(i) + y)) nan++; if (y < v0) v0 = y; if (y > v1) v1 = y; } });
@@ -133,7 +158,30 @@ try {
     out.styles = [...out.styles]; return out;
   });
   T.check('every country\'s kit builds the same footprints: the kit\'s style and its one atlas (drawn, of many tones), every house counted, only the kit\'s finishes and roofs, the count is what is built, every vertex a number inside the atlas',
-    kits.n >= 60 && !kits.bad.length && kits.styles.length >= 5, JSON.stringify(kits));
+    kits.n >= 60 && !kits.bad.filter(e => !/^(floor|door|moved|ground|no record)/.test(e)).length && kits.styles.length >= 5, JSON.stringify(kits));
+  T.check('the rule of the ground on every house of every kit: the floor level over the ground\'s high side (a shed at most 0.6 m in it) with the plinth down to the low side, a moved small building square against a larger one\'s wall, a door only where the ground is at the floor or steps reach it (no door high over the ground)',
+    !kits.bad.filter(e => /^(floor|door|moved|ground|no record)/.test(e)).length && kits.moved >= 1 && kits.doors >= 40, JSON.stringify({ bad: kits.bad.slice(0, 6), moved: kits.moved, doors: kits.doors, steps: kits.steps }));
+
+  // what a track may ask for (the map's own, where it has them): yards and balconies at its houses, a fence of the map. Each adds to the plain
+  // houses; the railings are their own material (cut out, seen from both sides) with the same atlas; unasked there is none of them
+  const opt = await page.evaluate(() => {
+    const S = World.stavbe, A = World.api, T0 = window.__game.race.track, bld = (T0.def.bld || []).filter(b => !b[6] && b[2] * b[3] < 1500);
+    const build = (extra, fence) => { const HS = S.setup({ Chunks: A.Chunks, list: bld, T: T0, near: A.nrNear, gH: A.nrGround }), a = S.atlas(HS.stats.style);
+      bld.forEach((b, i) => HS.put(Object.assign({ x: b[0], z: b[1], L: b[2], W: b[3], ang: b[4], y0: 0, hh: b[2] * b[3] < 45 ? 3.4 : 6.4, fl: b[2] * b[3] < 45 ? 1 : 2, type: b[2] * b[3] < 45 ? 'small' : 'house', id: i }, extra)));
+      if (fence) HS.fence(bld[0][0] + 20, bld[0][1], bld[0][0] + 30, bld[0][1] + 3);
+      const grp = new THREE.Group(), r = { st: HS.stats.vertices, hisa: 0, hisaV: 0, ograja: 0, ograjaV: 0, rail: true, nan: 0 }; HS.addTo(grp); const mh = new Set();
+      grp.traverse(o => { if (o.isMesh && o.material.userData.stavbe === 'hisa') mh.add(o.material); });
+      grp.traverse(o => { if (!o.isMesh) return; const P = o.geometry.attributes.position, uv = o.geometry.attributes.uv, n = P.count;
+        for (let i = 0; i < n; i++) if (!isFinite(P.getX(i) + P.getY(i) + P.getZ(i) + uv.getX(i) + uv.getY(i))) r.nan++;
+        if (o.material.userData.stavbe === 'hisa') { r.hisa++; r.hisaV += n; } else { r.ograja++; r.ograjaV += n; if (!(o.material.alphaTest > 0) || o.material.map !== a || mh.has(o.material) || o.material.userData.stavbe !== 'ograja') r.rail = false; } });
+      grp.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
+      return r; };
+    return { plain: build({}, false), fence: build({}, true), yard: build({ yard: true }, false), balc: build({ balc: true }, false) };
+  });
+  const sum = (r) => r.hisaV + r.ograjaV === r.st && r.nan === 0 && r.rail;
+  T.check('what a track may ask for adds to the plain houses (a fence of the map, yards, balconies), the railings in their own cut-out material with the same atlas; unasked the houses have none',
+    sum(opt.plain) && opt.plain.ograja === 0 && sum(opt.fence) && opt.fence.ograja >= 1 && opt.fence.hisaV > opt.plain.hisaV && sum(opt.yard) && opt.yard.ograja >= 1 && opt.yard.st > opt.plain.st &&
+    sum(opt.balc) && opt.balc.ograja >= 1 && opt.balc.st > opt.plain.st, JSON.stringify(opt));
 
   // Spa built again (after another track): the same to the vertex
   await startTrack(page, 'jezero');
