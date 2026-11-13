@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Darvaz (Tajikistan, the Darvaz range): ~4 km of the primary road РБ04 (M41) along the right bank of the Panj, ~35 km upriver from
-  // Kalaikhumb (izhodišče 38.37293, 71.17488): a ledge cut into the foot of the rock walls of the gorge, the river ~40 m below on the left, across it only the other bank's
+  // Kalaikhumb (izhodišče 38.37293, 71.17488): a ledge cut into the foot of the rock walls of the gorge, the river below on the right, across it only the other bank's
   // walls (terrain only: no labels, no border line). Driven upriver, over the bridge on the side stream of the Pshikharv valley, along the
   // walls and the screes to the bend where the gorge turns east. The drop to the river: a guardrail and the track's wall keep every car on the
   // road; falling over the edge is Killar's alone. One card, four ways to drive it (def.modes): a race against the rivals on the closed road, a
@@ -37,7 +37,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
     names: [
       {"n": "Most čez Pšiharv", "d": 1270.0, "say": ["Over the bridge on the side stream, and back onto the ledge!", "The bridge, and the walls close in again!"]},
-      {"n": "Stena nad Panjem", "d": 2300.0, "say": ["Along the wall above the Panj, the river far below on your left!", "Rock on the right, the river on the left. Keep it tidy!"]},
+      {"n": "Stena nad Panjem", "d": 2300.0, "say": ["Along the wall above the Panj, the river far below on your right!", "Rock on the left, the river on the right. Keep it tidy!"]},
       {"n": "Soteska Darvaz", "d": 3500.0, "say": ["Into the bend where the gorge turns east!", "Through the gorge, and the finish is near!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
