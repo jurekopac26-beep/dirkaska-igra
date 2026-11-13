@@ -1984,3 +1984,21 @@ Stanje veje `trki/realizem` (PR #608, osnutek): paket P in popravki pregleda z v
 2. Netestirano: zmanjšanje moči motorja pri Vklop (odločitev 41), razpoke luči pri Preprostih, čas sunka ob počeni gumi, izguba vzgona krila pri Samo videz (K.5).
 3. Nestanovitni `aipits` v kosu (samo opazuj; če se ponovi na GitHubu, poišči vzrok v vrstnem redu testov).
 4. Slike zdaj in potem za uporabnika pred `main` (kamera za avtom, Spa) in vpis v `docs/vrsta.md`, ko je PR na vrsti.
+
+## Poškodbe P1.12 in P1.13: testi (13. 11. 2026)
+
+- **`tests/poskodbe.test.js`** (P1.12, Node, 12 preverjanj): poškodovan avto pri Samo videz in Izklop vozi do številke enako kot cel (Spa, 30 s, vsi vogali 90 %, formula brez krila K.5, starejši model); tabela K; moč motorja pri Vklop (odločitev 41); čas sunka ob počeni gumi; `Math.random` v prizoru trka; `DEF` in `applySettings`.
+- **`tests/browser/poskodbe.test.mjs`** (P1.13, 12 preverjanj): Spa, telefon, igralec in 20 tekmecev v gruči pred njim (najhujše, kar vidi kamera za avtom). Oba sta v `tests/run.js` (nabora node in brskalnik, povezava z `js/core.js`, `js/game.js`, `js/render.js`, `index.html`).
+- **Popravek: udrtine ob novem pogledu.** Pogled, zgrajen znova (Detajli avtov, zamenjava Preproste/Podrobne), je izgubil udrtine. Zdaj jih vodi dnevnik `v.dLog` (največ 40) in nov pogled jih ponovi (`v.dRe`).
+- **Popravek: kosi na cesti.** Ogledala in deli table (`xMirror0`, `xtOff0`) so ostajali na cesti brez meje: zamenjava na Preproste med dirko je dodala ~84 klicev. Zdaj je za vse kose na cesti ena meja `xGroundCap` 48 (najstarejši se sprostijo, `freeOwn` z `liveRes`). Zasnova (P1.10) je predlagala 24; 48 zadošča za meje spodaj.
+
+**Meritve** (klici / oglišča, gruča 22 avtov; prizor ima tudi na `main` več kot 300 klicev, zato meje niso absolutnih 300):
+
+| Primer | Pred udarci | 19 tekmecev, šest udarcev | Vsi razbiti (12 × 0,3) |
+|---|---|---|---|
+| Preproste (= `main`) | 328 / 595 tisoč | 309 / 640 tisoč | 392 / 645 tisoč |
+| Podrobne | 330 / 609 tisoč | 349 / 674 tisoč | 376 / 684 tisoč |
+| Podrobne → Preproste med dirko | – | 349 / 659 tisoč | 442 / 665 tisoč |
+
+Meje v testu: Podrobne pred udarci ≤ Preproste + 5; po udarcih ≤ 360; vsi razbiti ≤ 400; zamenjava med dirko ≤ 460 (kosi s ceste ostanejo, a največ 48); oglišča < 900 tisoč. Razpoka luči pri Preprostih: 0,08 spredaj da razpoko (`lCr` 0,73) na luči, ki ostane cela; 0,1 jo zlomi.
+

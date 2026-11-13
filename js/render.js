@@ -7081,7 +7081,8 @@ const Render = (function () {
       v.wasAir = !!c.air;
       const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
       if (v.xOn && v.mrg && !xWait && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR)))) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
-      if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
+      if (v.dRe && !v.rep && !xWait && !(v.xOn && v.mrg)) { for (let n = 0; n < 8 && v.dRe.length; n++) { const d = v.dRe.shift(); if (v.xOn) xDent(v, d); else applyDent(v, d); dLog(v, d); } if (!v.dRe.length) { v.dRe = null; if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); } }   // (the view built again mid-race, Nastavitve: its knocks' dents again, the dent only, 8 a frame (dLog))
+      if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { dLog(v, d); _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep && !xWait) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
         const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
@@ -7888,7 +7889,7 @@ const Render = (function () {
     if (views.length) for (let k = 0; k < views.length; k++) {   // (switched during a race: the race's cars built again, as a repair does; the safety car and the police keep theirs, held elsewhere too)
       const v = views[k]; if (!curRace || curRace.cars.indexOf(v.car) < 0) continue;
       if (!all) { const xt = xTab(v.car) && !!v.kit, cut = xt && !!XC.glass; if (!!v.xt === xt && !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) === cut) continue; }   // (xGlass alone: only a damage table's car whose table or cut changed)
-      const nv = makeView(v.car); nv.sk = v.sk; nv.acc = v.acc; disposeView(v, debrisRes()); views[k] = nv; }
+      const nv = makeView(v.car); nv.sk = v.sk; nv.acc = v.acc; if (v.dLog || v.dRe) nv.dRe = (v.dLog || []).concat(v.dRe || []).slice(-40); disposeView(v, debrisRes()); views[k] = nv; }
   }
   // for the tests: each car's body in this mode (its vertex count, how dense, its clusters' depths and caps, a torn bonnet, the engine shown)
   function crashInfo() {
@@ -8919,6 +8920,10 @@ const Render = (function () {
   }
   // a lamp between whole and smashed (P5): a knock on its corner (cd 0.08, the core breaks it at 0.16) cracks its lens; it still shines, its
   // glow 0.6 (carGlows), a head lamp's beam knocked out of aim, up to 12° outward and shorter (aimed down), by how hard (beams). The core's state only.
+  // the dents a view has taken (at most 40, the weakest out first): a view built again mid-race (setCrash: Nastavitve · Podrobnosti poškodb,
+  // Detajli avtov) takes them again as the career's old knocks, the dent only (no chips, glass, mirror or sound); a repair's new view none
+  function dLog(v, d) { const L = v.dLog || (v.dLog = []); L.push({ lx: d.lx, lz: d.lz, amt: d.amt, top: d.top, sc: d.sc, old: true });
+    if (L.length > 40) { let w = 0; for (let i = 1; i < L.length; i++) if (L[i].amt < L[w].amt) w = i; L.splice(w, 1); } }
   function xLampCrack(v, c) {
     const cd = c.cd; if (!cd || c.net) return;
     for (let k = 0; k < 4; k++) if (cd[k] >= 0.08 && !v.lightBroken[k] && !(v.lCr && v.lCr[k])) { (v.lCr || (v.lCr = [0, 0, 0, 0]))[k] = Math.min(1, cd[k] / 0.16); if (k < 2 && v.beam) beams(v); }
@@ -8952,12 +8957,13 @@ const Render = (function () {
     const p = geo.attributes.position.array, t = new THREE.Vector3(); let lo = 1e9; for (let i = 0; i < p.length; i += 3) { t.set(p[i] - cen[0], p[i + 1] - cen[1], p[i + 2] - cen[2]).applyQuaternion(q); if (t.y < lo) lo = t.y; }
     const out = 0.45 + rRnd() * 0.6, wx = x + cen[0] * ch - cen[2] * sh, wz = z + cen[0] * sh + cen[2] * ch;
     m.position.set(wx - sh * sd * out - c.vx * 0.02, y - lo + 0.005, wz + ch * sd * out - c.vz * 0.02); m.rotation.y = rRnd() * Math.PI * 2;
-    scene.add(m); xGround.push(m);
+    scene.add(m); xGround.push(m); xGroundCap();
     for (let k = 0; k < 6; k++) sparkP.emit(wx, y + cen[1], wz, (rRnd() - 0.5) * 5, 1 + rRnd() * 2, (rRnd() - 0.5) * 5, 0.25 + rRnd() * 0.2, 0.6, 0.14, 1, 0.82, 0.36, 1, 10, 1.2, y);
   }
   function xGroundReset() { for (const m of xGround) { scene.remove(m); if (m.userData.xDeb) freeOwn(m); else m.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== matCar) o.material.dispose(); }); } xGround.length = 0; }
-  // the parts kept on the road (XC.parts): at most 48 (the oldest freed first; drawn only where the camera looks, so few at a time)
-  function xGroundCap() { let n = 0; for (const m of xGround) if (m.userData.xDeb) n++; for (let i = 0; n > 48 && i < xGround.length; i++) { const m = xGround[i]; if (!m.userData.xDeb) continue; scene.remove(m); xGround.splice(i--, 1); n--; freeOwn(m, liveRes()); } }
+  // the pieces kept on the road (XC.parts' parts, the mirrors, a table's parts off): at most 48 in all (the oldest freed first; drawn only where
+  // the camera looks, so few at a time; a switch to Preproste mid-race keeps them, its cars then drawn as Preproste's: 48 at most still)
+  function xGroundCap() { if (xGround.length <= 48) return; const out = xGround.splice(0, xGround.length - 48); for (const m of out) scene.remove(m); const keep = liveRes(); for (const m of out) freeOwn(m, keep); }
   // a blow knocks chips of paint off: a few pieces in the car's colour on the road where it was hit
   const _xc = new THREE.Color();
   function xChips(v, d, c, x, y, z, h) {
@@ -9265,7 +9271,7 @@ const Render = (function () {
     const ch = Math.cos(h), sh = Math.sin(h), side = Math.abs(L.c[2]) > 0.25 * c.m.wid ? Math.sign(L.c[2]) : 0, end = side ? 0 : Math.sign(L.c[0]) || 1, out = 0.35 + rRnd() * 0.6;
     const lx = L.c[0] + end * out, lz = L.c[2] + side * out;
     m.position.set(x + lx * ch - lz * sh - c.vx * 0.02, y - lo + 0.005, z + lx * sh + lz * ch - c.vz * 0.02); m.rotation.y = rRnd() * Math.PI * 2;
-    scene.add(m); xGround.push(m);
+    scene.add(m); xGround.push(m); xGroundCap();
   }
   // (crashInfo, the tests: how far the bonnet's ridge rose; the rear bumper pushed in and the spoiler bent down in their middles and at their ends)
   function xtBent(v) {
