@@ -116,6 +116,21 @@ def turns(x, z, s, lim=1 / 60.0):
     return out, k
 
 # ---------------- heights along the road ----------------
+def profile_model(h, s, C, bends):
+    """visine `do_modela` (a road up and down): the median and the smoothing as profile(), then the grade limited without leaving the model:
+    the heights clipped forward and back to the steepest grade allowed at each metre (less through the hairpins), smoothed a little (6 m);
+    profile() keeps the net climb instead, which on a road up and down pushes the grades to the limit and the road off the model."""
+    V = C.get('visine', {}); step = s[1] - s[0]
+    med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
+    out = gaussian_filter1d(med, V.get('glajenje', 40) / step, mode='nearest'); w = np.ones_like(s)
+    for sa, tot, r in bends:
+        if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+    c = V.get('naklon', 0.12) * w * step
+    for _ in range(3):
+        for i in range(1, len(out)): out[i] = min(max(out[i], out[i - 1] - c[i]), out[i - 1] + c[i])
+        for i in range(len(out) - 2, -1, -1): out[i] = min(max(out[i], out[i + 1] - c[i]), out[i + 1] + c[i])
+    return gaussian_filter1d(out, 6 / step, mode='nearest')
+
 def profile(h, s, C, bends):
     """The road's heights from the model's along its line: a running median, monotone (an uphill road: def `gor`), smoothed, the
     grade limited and lowered through the hairpins (as built)."""
@@ -354,7 +369,7 @@ def main():
     # heights
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
-    h = D.sample(la, lo); hp = profile(h, s, C, bends)
+    h = D.sample(la, lo); hp = (profile_model if C.get('visine', {}).get('do_modela') else profile)(h, s, C, bends)
     base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i1]))]
     g = np.gradient(hp, s)
     log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], g[i0:i1].max() * 100, np.mean(np.abs(h - hp))))

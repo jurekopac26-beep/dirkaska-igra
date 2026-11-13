@@ -36,6 +36,22 @@
       roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
       sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
     },
+    // Canaries (Saint Lucia, the west coast): the coast road over the ridges north of the village, the steep volcanic slopes under a dense tropical
+    // forest of broadleaves (L.trop) with banana plots and palms down to the sea, red-brown earth in the cuttings, grey-brown andesite in the crags;
+    // no snow, no sheep, no tunnel portal; the colourful houses with tin roofs, a steel rail on the drop; white lines as on the island's roads
+    canaries: {
+      seed: 5600, board: 'CANARIES', sub: 'SAINT LUCIA', banner: ['CANARIES', 'ANSE LA VERDUE'], trop: 1,
+      grass: [0.32, 0.5, 0.17], grassDry: [0.5, 0.52, 0.26], grassLush: [0.24, 0.47, 0.14], shrub: [0.13, 0.3, 0.1],
+      rock: [0.48, 0.44, 0.4], rockWarm: [0.58, 0.44, 0.34], lichen: [0.36, 0.36, 0.3], scree: [0.6, 0.48, 0.38],
+      sat: 0.58, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.5, 0.47, 0.44], [0.56, 0.52, 0.48], [0.42, 0.4, 0.38], [0.6, 0.48, 0.38], [0.46, 0.44, 0.41], [0.53, 0.5, 0.46]],   // (andesite, a little red with the weathered earth)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the island's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpin)
+      chev: ['#1c1c1c', '#f4f4f0'], warn: 'tri', rail: 'steel', shoulder: [0.55, 0.47, 0.38],
+      fans: [[0.98, 0.84, 0.12], [0.12, 0.3, 0.7], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.2, 0.55, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.75, 0.85]],
+      cars: [[0.92, 0.92, 0.9], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.2, 0.42, 0.3]],
+      roofs: [[0.62, 0.22, 0.16], [0.5, 0.52, 0.54], [0.2, 0.38, 0.5], [0.3, 0.46, 0.28]],
+      sheep: 0, portal: 0, far: { lo: [0.15, 0.3, 0.12], hi: [0.36, 0.42, 0.28], dw: [0.11, 0.24, 0.09], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
@@ -188,7 +204,11 @@
   function plTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Norway spruce (a narrow dark spire), 1 dwarf pine (a low mat of
     // crooked branches with dark tufts), 2 juniper (a smaller, flatter, grey-green mat)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
-    if (kind === 0) {
+    if (kind === 0 && L.trop) {   // (L.trop: a broadleaf of the tropical forest instead: a slim pale trunk under a wide, lumpy, bright crown)
+      cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
+      API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.6, d = k ? 0.2 + R() * 0.08 : 0; ico(g, Math.cos(a) * d, 0.62 + (k ? R() * 0.14 : 0.12), Math.sin(a) * d, 0.24, 0.62, vary(col, R, 0.22), R, 0.3); }
+    } else if (kind === 0) {
       const col = [0.08, 0.15, 0.1], tip = [0.14, 0.25, 0.17];
       [[0.0, 0.24, 0.3, 0.05], [0.18, 0.2, 0.27, 0.045], [0.36, 0.17, 0.24, 0.04], [0.52, 0.13, 0.22, 0.035], [0.67, 0.09, 0.2, 0.03]].forEach(([y, r, h, dr], k) => {
         const kk = k % 2 ? 1.1 : 1; starCone(g, 0, y, 0, r, h, 6, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.7, dr); });
@@ -603,7 +623,7 @@
           const y = caGround(x, z); if (plSnow(x, z, y + base, 1 / Math.sqrt(1 + sl * sl), 0, 0) > 0.4) continue;
           const sp = c === 1 && r3 < 0.7 ? 0 : r3 < 0.75 ? 1 : 2;
           let hgt, wid, col;
-          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
+          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (L.trop ? 0.62 + r2 * 0.2 : 0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
           else if (sp === 1) { hgt = 0.9 + r4 * 1.4; wid = 2.2 + r2 * 3.2; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
           else { hgt = 0.5 + r4 * 0.6; wid = 1.4 + r2 * 2; col = [0.95 + r3 * 0.1, 0.98, 0.95]; }
           tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);

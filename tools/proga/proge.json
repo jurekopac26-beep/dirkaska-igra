@@ -15,5 +15,23 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "canaries": {
+    "ime": "Canaries, Sveta Lucija",
+    "okvir": [13.8915, -61.0805, 13.93, -61.0355],
+    "pot": [[13.9051635, -61.066653], [13.9052175, -61.0593124], [13.9093781, -61.0578457], [13.9139661, -61.0561482], [13.9131658, -61.0526662], [13.9143125, -61.0484507]],
+    "start": [13.905972, -61.0656946],
+    "cilj": [13.9160482, -61.0497684],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 4.5,
+    "gauss": 2.5,
+    "razredi": ["primary"],
+    "visine": { "mediana": 50, "glajenje": 40, "naklon": 0.12, "serpentine": 0.35, "serpentine_m": 18, "gor": false, "do_modela": true },
+    "s2": "S2C_20PQA_20250417_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "CANARIES_H"
   }
 }
