@@ -2002,3 +2002,10 @@ Stanje veje `trki/realizem` (PR #608, osnutek): paket P in popravki pregleda z v
 
 Meje v testu: Podrobne pred udarci ≤ Preproste + 5; po udarcih ≤ 360; vsi razbiti ≤ 400; zamenjava med dirko ≤ 460 (kosi s ceste ostanejo, a največ 48); oglišča < 900 tisoč. Razpoka luči pri Preprostih: 0,08 spredaj da razpoko (`lCr` 0,73) na luči, ki ostane cela; 0,1 jo zlomi.
 
+
+## Predaja (13. 11. 2026, 22.15)
+
+- **Narejeno:** testa P1.12 in P1.13 (zgoraj), netestirane točke pokrite, popravek popravila v boksu: ukrivljena kolesa (P3, `wheelBend`) so po zamenjavi koles (`repairStep`, `RP.wheel`) ravna, telo se dvigne (`repair.test.mjs` 25/25; prej na veji 24/25). Povezani testi za `js/render.js` zeleni, potisnjeno.
+- **Vprašanje** `trki-podrobne` na strani Odločitve (slike čelni in v bok, Spa, izrez kamere za avtom; obe strani Realistično, levo Preproste, desno Podrobne): 1 Podrobne privzeto (priporočeno), 2 samo izbira, 3 ne še. Branje odgovora ob 23.20, nato 10.50 in 14.50. Ob 1 v privzetih nastavitvah `dmgDet: 1` (`lib.mjs` testov ostane na 0) in povezani testi.
+- `trki-cv6-slike` (odgovor 1) označen kot prebran.
+- **Naprej:** PR ostane osnutek do vrste (~5. 12.); nestanovitni `aipits` samo opazuj.
