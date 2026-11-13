@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "batangas/race/cs": {
+  "digest": "c781f532ed4b6f19e84ad1f0",
+  "lead": 2114,
+  "car0": [
+   -111.88,
+   -184.23
+  ],
+  "cover": {
+   "dmg": 0.04,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "batangas/demo/cs": {
+  "digest": "52824d507654b9869ad8c1c6",
+  "lead": 2295.8,
+  "car0": [
+   -342.54,
+   -7.71
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "batangas/upg/cs": {
+  "digest": "3ed24a04e71eab07367ba225",
+  "lead": 2279.5,
+  "car0": [
+   -309.77,
+   -22.65
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "batangas/crash/cs": {
+  "digest": "78d90f0aa39ed87ee8abfda2",
+  "lead": 4915.1,
+  "car0": [
+   -323.02,
+   132.22
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "batangas/formula/cs": {
+  "digest": "f5dbc382f1da07cd01deec29",
+  "lead": 6019.3,
+  "car0": [
+   -101.65,
+   -28.14
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "batangas/lm/cs": {
+  "digest": "d0ca8248ccb8b2ed5c161232",
+  "lead": 5987.4,
+  "car0": [
+   -126.17,
+   -11.77
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "batangas/car/cs": {
+  "digest": "2270e4ac190f1c7cd415117d",
+  "lead": 5275.1,
+  "car0": [
+   -128.96,
+   -117.03
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

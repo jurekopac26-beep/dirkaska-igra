@@ -1391,5 +1391,36 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "batangas": {
+  "meshes": 424,
+  "verts": 490963,
+  "instances": 7813,
+  "props": 53,
+  "crowd": 15,
+  "world": "7e2c648c",
+  "propsHash": "39305b14",
+  "floor": "68505fb2/7196",
+  "groups": {
+   "-:MeshLambertMaterial": "440546f4",
+   "-:MeshBasicMaterial": "6ad8f5c7",
+   "batangas service roads:MeshLambertMaterial": "de62ed5d",
+   "rsFar:MeshBasicMaterial": "2f3c909",
+   "crowd:MeshLambertMaterial": "b5067e87",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "ea4100a6",
+   "ao:MeshBasicMaterial": "8dc1c263",
+   "roadwear:MeshLambertMaterial": "51b22507",
+   "worn:MeshLambertMaterial": "22b595e7",
+   "brakeBoards:MeshLambertMaterial": "cca82653",
+   "life:MeshLambertMaterial": "72540f1",
+   "lifeShadow:MeshBasicMaterial": "b1221cc5",
+   "life:MeshBasicMaterial": "520c2673",
+   "people:MeshLambertMaterial": "ae8c68e4",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "147efc53",
+   "zaslon-okvir:MeshLambertMaterial": "e1e23b75",
+   "zaslon-slika:MeshBasicMaterial": "95df7319"
+  }
  }
 }
