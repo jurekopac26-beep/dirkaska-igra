@@ -1320,3 +1320,8 @@ body.pkfly #touch { visibility: hidden; }
 .res-panel > .btns.horiz .btn { padding-left: 15px; padding-right: 15px; white-space: nowrap; }
 @media (orientation: landscape) and (max-height: 500px) { .res-panel > .btns.horiz .btn { font-size: clamp(13px, 3.9vh, 17px); padding-left: 12px; padding-right: 12px; } }
 .champ-panel > .btns.horiz { flex-wrap: wrap; row-gap: 8px; }   /* (a long "Naslednja dirka: …" on a narrow phone: the other buttons in a row above it, none off the panel) */
+
+/* the garage in the page (js/game.js garPre, stran Odločitve 13. 11. 2026): a frame over everything, loaded in the background and kept
+   hidden, its scene built, till a tap shows it */
+.garaza { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; margin: 0; padding: 0; z-index: 80; background: #0b0c0e; }
+.garaza.off { visibility: hidden; pointer-events: none; }

@@ -143,6 +143,8 @@
   try { if (!localStorage.getItem('tdgp-pikes-w7')) { const o = records.tracks.pikes; if (isObj(o) && (o.bestTime || (o.board && o.board.length))) { records.tracks['pikes-ozka'] = o; delete records.tracks.pikes; saveRecords(); } localStorage.setItem('tdgp-pikes-w7', '1'); } } catch (_) { }
   // the career (Kariera, Core.CAREER): money, the cars bought, their upgrades (bought, kept apart from the free game's); career.on: playing it
   let career = null;
+  // (read again when the garage in the page is closed: it keeps its buys in the career, js/garage.js toCareer)
+  function careerLoad() {
   try { career = JSON.parse(localStorage.getItem('tdgp-career') || 'null'); } catch (_) { career = null; }
   if (!isObj(career) || career.v !== 1) career = null;
   else {
@@ -159,6 +161,8 @@
     career.cars = cars; career.upg = {}; for (const id of cars) career.upg[id] = upg[id];
     const rv = career.rival; career.rival = isObj(rv) && Number.isInteger(rv.k) && rv.k >= 0 && rv.k < Core.DRIVER_NAMES.length ? { k: rv.k, me: num(rv.me), him: num(rv.him) } : null;   // (the standing rival: a roster index (a new one is picked from every field's, under CH_AI; an older save's kept), the head-to-head)
   }
+  }
+  careerLoad();
   const careerNew = () => ({ v: 1, on: true, money: Core.CAREER.start, cars: [Core.CAREER.car0], upg: { [Core.CAREER.car0]: upgNorm(null) }, earned: 0, races: 0, wins: 0 });
   function careerSave() { Shramba.keep('tdgp-career', JSON.stringify(career)); }
   const inCareer = () => !!(career && career.on);
@@ -268,6 +272,7 @@
   let phaseT = 0, lightsOn = 0, holdT = 0;
   let paused = false;
   let acc = 0, last = 0;
+  let garF = null, garOn = false, garReady = false, garWant = null, garCtx = null, garT = 0, garSoonT = 0;   // (the garage in the page: garPre)
   let demoTarget = null, demoSwitch = 0;
   let msgT = 0, splitT = 0, lastLapCount = 0, lastBeepLight = 0;
   const hcol = { key: '', fit: '', f: 20, cx: null, ic: '' };   // the column under the minimap (hudCol): what it was laid out for, the big message's size for its text, the text its icon is for
@@ -486,6 +491,7 @@
     for (const s of document.querySelectorAll('.screen')) s.classList.toggle('show', s.id === 's-' + sid);
     if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
+    if (name !== 'none') garSoon();   // (the garage loaded in the background, js/garage.js EMB)
     if (name === 'car') carTapLay();   // (the car's tap: over it once the screen is laid out)
     if (name === 'results') { resSave(); resPrvi(); lpRes(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
     if (name === 'settings') profNote();
@@ -784,13 +790,50 @@
   // test profile for now); its Nazaj comes back to this screen on that car (garageBack), the way this screen's Nazaj led kept for it
   // (sessionStorage GAR_KEY: the title, the new menu's track step, or the championship with the car the player had there)
   const GAR_KEY = 'tdgp-garaza';
+  // the garage in the page (stran Odločitve, Matej 13. 11. 2026: no loading on each tap): garaza.html?vgrajena=1 in a frame over the game,
+  // loaded in the background on the menus (garPre: once, where the device has the memory for it; else on the first tap) and kept, its
+  // scene built: a tap shows it at once (js/garage.js __garageEmbed.open), the game's picture still meanwhile (garOn); its Nazaj and
+  // Izberi progo hide it (__garageClose: the career read again, then as garageBack). The phone's Back: its Nazaj. Offline (the saved game,
+  // sw.js, has no garage) or a frame that never answers: the garage's page as before
+  function garPre(now) {
+    if (garF || location.protocol === 'file:' || navigator.onLine === false) return;
+    if (!now && (navigator.webdriver || (navigator.deviceMemory && navigator.deviceMemory < 4))) return;   // (the tests and a small phone: on the first tap)
+    const f = garF = document.createElement('iframe'); f.id = 'garaza'; f.className = 'garaza off'; f.title = tr('Garaža'); f.setAttribute('aria-hidden', 'true');
+    f.src = 'garaza.html?vgrajena=1'; document.body.appendChild(f);
+  }
+  window.__garageReady = () => { garReady = true; clearTimeout(garT); if (garWant) { const p = garWant; garWant = null; garF.contentWindow.__garageEmbed.open(p); } };
+  window.__garageClose = (r) => {
+    if (!garOn) return;
+    garOn = false; garF.classList.add('off'); garF.setAttribute('aria-hidden', 'true'); try { window.focus(); } catch (_) { }
+    if (window.MenuIzbor) MenuIzbor.nazaj.drop('garaza');
+    careerLoad(); last = performance.now();
+    const o = garCtx; garCtx = null; garageBack({ o, avto: r && r.car, naprej: r && r.naprej });
+  };
+  // (on the menus a few seconds, the device idle: loaded then; not in a race)
+  function garSoon() {
+    if (garF || garSoonT) return;
+    garSoonT = setTimeout(() => { garSoonT = 0; if (screen === 'none') return; const go = () => { if (screen !== 'none') garPre(); }; if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 3000 }); else go(); }, 4000);
+  }
   function garageOpen() {
     if (navigator.onLine === false) { toast(tr('Garaža se odpre, ko je naprava povezana z internetom.'), 3200); return; }   // (the saved game, sw.js, has no garage)
     const M = Core.MODELS[S.car]; save();
-    try { sessionStorage.setItem(GAR_KEY, JSON.stringify({ from: carFrom, track: !!(menuOn && Menu.fromTrack), before: (Core.MODELS[carBefore] || M).id })); } catch (_) { }
+    const o = { from: carFrom, track: !!(menuOn && Menu.fromTrack), before: (Core.MODELS[carBefore] || M).id };
     const td = Core.TRACKS.find(d => d.id === S.track), dz = td && /, /.test(td.name) ? td.name.split(', ').pop() : '';   // (the selected track's country: the flag on the garage's IZBERI PROGO)
-    location.href = 'garaza.html?car=' + encodeURIComponent(M.id) + '&color=' + PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') + (dz ? '&drzava=' + encodeURIComponent(dz) : '');
+    const p = { car: M.id, color: PLAYER_COLORS[colNow()].toString(16).padStart(6, '0') }; if (dz) p.drzava = dz;
+    garPre(true);
+    if (garF && !garOn) {
+      garCtx = o; garOn = true; garF.classList.remove('off'); garF.removeAttribute('aria-hidden'); try { garF.focus(); } catch (_) { }
+      if (window.MenuIzbor) MenuIzbor.nazaj.push('garaza', () => { try { garF.contentWindow.__garageEmbed.back(); } catch (_) { window.__garageClose({}); } });
+      if (garReady) { garF.contentWindow.__garageEmbed.open(p); return; }
+      garWant = p; clearTimeout(garT);   // (still loading: its own ODPIRAM GARAŽO meanwhile; no answer in 25 s: the page)
+      garT = setTimeout(() => { if (garReady || !garOn) return; garOn = false; try { sessionStorage.setItem(GAR_KEY, JSON.stringify(o)); } catch (_) { } location.href = garUrl(p); }, 25000);
+      return;
+    }
+    if (garOn) return;
+    try { sessionStorage.setItem(GAR_KEY, JSON.stringify(o)); } catch (_) { }
+    location.href = garUrl(p);
   }
+  const garUrl = (p) => 'garaza.html?car=' + encodeURIComponent(p.car) + '&color=' + p.color + (p.drzava ? '&drzava=' + encodeURIComponent(p.drzava) : '');
   // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2 and 3): index.html?voznja=1 turns it on, ?voznja=0
   // off (kept in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by
   // it, on every real track (not a test track, def.test, nor one still to be chosen, def.pending; new tracks too) the rest of the AI by
@@ -807,14 +850,19 @@
   // back from the garage (its Nazaj: index.html?zaslon=avto&avto=<id>): the car screen on that car, its Nazaj where it led before; the
   // address plain again (a reload: the title). Opened from the new menu's track step (its car tapped): straight back to that step (stran
   // Odločitve m8, 2), on the garage's car when it is the player's (the career: else the car it had)
-  function garageBack() {
-    let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
-    if (P.get('zaslon') !== 'avto' || P.has('proga') || screen !== 'title') return;
-    let o = null; try { o = JSON.parse(sessionStorage.getItem(GAR_KEY) || 'null'); sessionStorage.removeItem(GAR_KEY); } catch (_) { o = null; }
+  // (in the page: g the frame's answer, { o: what was saved as GAR_KEY, avto, naprej }; the screen the one it was opened from)
+  function garageBack(g) {
+    let o = null, avto = null, next = null;
+    if (g) { o = g.o; avto = g.avto; next = g.naprej; }
+    else {
+      let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
+      if (P.get('zaslon') !== 'avto' || P.has('proga') || screen !== 'title') return;
+      try { o = JSON.parse(sessionStorage.getItem(GAR_KEY) || 'null'); sessionStorage.removeItem(GAR_KEY); } catch (_) { o = null; }
+      avto = P.get('avto'); next = P.get('naprej');   // (the garage's Izberi progo: on to the track screen with that car, when it is the player's)
+      try { P.delete('zaslon'); P.delete('avto'); P.delete('naprej'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
+    }
     const ch = !!(o && o.from === 'champ' && champ), b = ch ? Core.MODELS.findIndex(m => m.id === o.before) : -1, step = !ch && !!(o && o.track && menuOn);
-    const k = Core.MODELS.findIndex(m => m.id === P.get('avto')); if (ORDER.includes(k) && k !== S.car && (!step || owned(Core.MODELS[k].id))) { S.car = k; save(); }
-    const next = P.get('naprej');   // (the garage's Izberi progo: on to the track screen with that car, when it is the player's)
-    try { P.delete('zaslon'); P.delete('avto'); P.delete('naprej'); const q = P.toString(); history.replaceState(history.state, '', location.pathname + (q ? '?' + q : '') + location.hash); } catch (_) { }
+    const k = Core.MODELS.findIndex(m => m.id === avto); if (ORDER.includes(k) && k !== S.car && (!step || owned(Core.MODELS[k].id))) { S.car = k; save(); }
     carFrom = ch ? 'champ' : 'title'; if (ch) carBefore = b >= 0 ? b : S.car;
     if (step) { showScreen('track'); return; }   // (the new menu's track step, the same track: its Back the title as before the garage)
     bg = 'show'; buildCarScreen(); showScreen('car');
@@ -6392,6 +6440,7 @@
   };
   function frame(now) {
     requestAnimationFrame(frame); fr.raf++;
+    if (garOn) { last = now; return; }   // (the garage over the game: its picture still)
     if (saverOn() && now - last < 1000 / 30 - 3) return;   // the battery saver: 30 frames a second (every other one at 60 Hz, every fourth at 120 Hz)
     fr.drawn++; PH.tick(now); Napake.okvir(now, bg === 'race' && !!race && race.state === 'racing' && screen === 'none' && !paused && !replay);   // (Orodje za napake: a hitch in the race, under 20 frames a second for over 1 s)
     let dt = (now - last) / 1000; last = now;
