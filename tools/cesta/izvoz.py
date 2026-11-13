@@ -11,8 +11,11 @@ A junction is a node of the map that a way of the track shares with another road
 no side roads. The map is laid on the game's line in three steps, because the game's line is smoothed and not everywhere to scale: one
 similarity fit of the whole track, a rigid fit of the few hundred metres round each junction, then the junction itself is put on the
 centre line. The rules for what stays are those of Livorno (tools/livorno/build.py, side_roads): the first 64 m, on along the way that
-continues it; no paths, no junction at the start, on a bridge or in a banked corner, no loops and lay-bys, the weaker of two mouths that
-would run into each other, a road that comes back to the lap stops short of it.
+continues it; no paths, no junction at the start, on a bridge, in a gallery or in a banked corner, no loops and lay-bys, the weaker of
+two mouths that would run into each other, a road that comes back to the lap stops short of it. A way of the map that goes on beyond an
+open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), and
+a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own) gets no road for the look
+beside it (own).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
 a main road), width (m), one-way, end (0 fades into the terrain, 1 joins another of these roads), [x, z, ...]]; svetilke [x, z];
@@ -30,8 +33,10 @@ SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'li
 SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
 # per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start) and
 # how close to the game's line a way of the map must lie to be the track itself (the median of its points, m)
-PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'})}
+PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'})}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'})
+RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
+                                    # this far off the line is not on the track; no road for the look this near a mouth of the track's own
 
 def side_width(cls, t):
     ow = t.get('oneway') == 'yes'
@@ -41,6 +46,14 @@ def side_width(cls, t):
         if lanes and f >= 1: return round(min(8.0, max(3.0, 3.0 * f + (1.0 if f < 2 else 0.4))), 1), ow
         if not lanes and f >= 3: return round(min(8.0, max(3.0, f)), 1), ow
     return round(min(8.0, max(3.0, SIDE_W[cls] * (0.8 if ow else 1))), 1), ow
+
+def longest(P, ok):
+    """The longest stretch (m) of the polyline P whose points are all ok."""
+    best = cur = 0.0
+    for i in range(1, len(P)):
+        cur = cur + math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]) if ok[i] and ok[i - 1] else 0.0
+        best = max(best, cur)
+    return best
 
 def similarity(P, Q, rounds=60):
     """The similarity (scale, R, t) of the map's points Q onto the track's centre line P (closest points, trimmed)."""
@@ -89,8 +102,8 @@ def main():
     trk = set()
     for wid, (refs, tg) in ways.items():
         if tg.get('highway') not in cfg['kinds'] or len(refs) < 2: continue
-        d, _ = tree.query(np.asarray(osm.dense([tuple(xz(r)) for r in refs if r in at0], 2.0)))
-        if np.median(d) < cfg['trk']: trk.add(wid)
+        P = osm.dense([tuple(xz(r)) for r in refs if r in at0], 2.0); d, _ = tree.query(np.asarray(P))
+        if np.median(d) < cfg['trk'] or op and longest(P, d < cfg['trk']) >= RUN: trk.add(wid)   # (an open road goes on beyond the game's line)
     tn = {r for w in trk for r in ways[w][0]}
     Qt = np.asarray([p for w in trk for p in osm.dense([tuple(xz(r)) for r in ways[w][0] if r in at0])]); qtree = cKDTree(Qt)
     dq, _ = cKDTree(Qt).query(G)
@@ -152,11 +165,13 @@ def main():
                 if not plain(tg): drop('bridge'); continue
                 # steps 2 and 3: the surroundings of the junction onto the game's line, the junction onto the line itself
                 P0 = np.asarray([xz(r) for r in carry(br_)]); Rl, tl = local(tree, D, Qt, qtree, P0[0]); P1 = P0 @ Rl.T + tl
-                d, kk = tree.query(P1[0]); resid.append(float(d)); P = clip([p for p in P1 + (D[kk] - P1[0])], 64.0)
+                d, kk = tree.query(P1[0])
+                if d > FAR: drop('far'); continue                                        # on the way's continuation beyond the game's line
+                resid.append(float(d)); P = clip([p for p in P1 + (D[kk] - P1[0])], 64.0)
                 d0, s0 = near(P[0]); hw0 = hw_at(s0); sa = after(s0)
                 if op and (s0 < 40 or s0 > L - 40): drop('end'); continue                # the road's own continuation beyond the game's line
                 if sa < cfg['start'][0] or sa > L - cfg['start'][1]: drop('start'); continue   # the start: the wall, the fence and the crowd
-                if any(circ(s0, b) < 24 for b in br): drop('bridge'); continue           # no junction on or under a bridge
+                if any(circ(s0, b) < 24 for b in br) or any(a - 24 < sa < b + 24 for a, b in C.get('brez', [])): drop('bridge'); continue   # no junction on or under a bridge, nor in a gallery
                 if any(a - 30 <= s0 <= b + 30 for a, b in bank): drop('bank'); continue  # nor in a banked corner
                 cls = SIDE_CLASS[hw]; w, ow = side_width(cls, tg)
                 Wk = walk(P); N_ = [near(p) for p in Wk]; left = False; ret = None
@@ -170,6 +185,7 @@ def main():
                 for k2 in (12, 20, 30, cut - 1):
                     q = Wk[min(cut - 1, k2)] - D[k0]; o = float(Nr[k0] @ q)
                     if abs(o) > hw0 + 1: break
+                if any(sd == (1 if o > 0 else -1) and circ(sa, m if op else m % L) < OWN for m, sd in C.get('ima', [])): drop('own'); continue   # the track's own side road is there
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
                 cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
