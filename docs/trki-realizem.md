@@ -1807,6 +1807,20 @@ Samo videz (`js/render.js`), samo s Podrobnimi (`v.xOn`); vožnja, jedro in `ran
 
 Testi drobcev v `crash.test` so relativni (manj in manjši po vsakem prevozu), zato se ne spremenijo.
 
+## Poškodbe P2: motor (del videza, 13. 11. 2026)
+
+Samo videz s Podrobnimi (`xEngF`, `xEngSteam` v `js/render.js`). Poškodbo motorja meri `f = max(dz[0], (cd[0] + cd[1]) / 2)`:
+- **Para:** pri `f` 0,15–0,30 se dviga bela para iz prednjega dela; več je je pri plinu.
+- **Para in dim:** nad 0,30 se pari primeša siv dim.
+- **Oljni dim:** od 0,45 se izpod motorja vleče nizek modrikast dim.
+- **Oljni madeži:** od 0,30 ostane na vsaka 2 m poti kratek temen madež v skidih.
+
+Za vse velja:
+- uporablja samo `rRnd` (`Math.random` ne);
+- učinki so utišani zunaj pogleda in v `carCull` (`v.xEF`).
+
+**Ni narejeno:** točka 3 (Vklop: pregrevanje in manjša moč v jedru) čaka uporabnikovo odločitev, »Odprto za uporabnika« 2 v `paket-p.md` (Odstop ali KONEC IGRE). Ni še niti testa `poskodbe.test.js` niti preverjanja v `fire.test`.
+
 **Ni narejeno (naslednja seja):** posebni »gruščasti« prah ob trku v zid s cv 6. Slike ZDAJ/POTEM (Spa, celni, zid30, tbone) so samo v pripomočkih seje, ne v repozitoriju.
 
 ## Kar je že dobro

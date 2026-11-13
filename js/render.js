@@ -7065,7 +7065,7 @@ const Render = (function () {
           if (v.dirtW && da > 0) v.dirtW.value += (wt - v.dirtW.value) * da / (v.dirtU.value + da);   // (the colour: the dirt's mean by where it came from)
           v.dirtU.value += Math.max(0, da); }
       }
-      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
+      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45 || v.xEF >= 0.15)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
@@ -9545,6 +9545,22 @@ const Render = (function () {
     if (B.length > FIRE_EMIT) B.sort((a, b) => Math.hypot(a.car.x - cp.x, a.car.z - cp.z) - Math.hypot(b.car.x - cp.x, b.car.z - cp.z));
     for (let i = 0; i < Math.min(FIRE_EMIT, B.length); i++) B[i].fireEmit = true;
   }
+  // Poškodbe P2 (Podrobne, drawn only: the engine's power and the race untouched): how hurt the engine is, f = the front zone's damage or the
+  // two front corners' crush, whichever is more. A holed radiator first: white steam rising fast (f 0.15-0.30, more on the throttle), then steam
+  // and grey smoke (over 0.30); oil burning on the hot exhaust under it, a low bluish smoke (from 0.45), and oil dripping on the road: a short
+  // dark stain every 2 m of the way (from 0.30). The renderer's own random numbers (rRnd), never Math.random
+  function xEngF(c) { const z = c.dz, k = c.cd; return Math.max(z ? z[0] || 0 : 0, k ? ((k[0] || 0) + (k[1] || 0)) / 2 : 0); }
+  function xEngSteam(v, c, dt, f, sx, sy, sz, y) {
+    const thr = c.inThr || 0, st = Core.sstep(0.15, 0.3, f) * (0.4 + 0.6 * thr), gy = c.roadY || 0;
+    v.xStA = (v.xStA || 0) + dt * 14 * st; let n = 0;
+    while (v.xStA >= 1 && n++ < 6) { v.xStA -= 1; const g = f > 0.3 ? 0.93 - 0.35 * Core.sstep(0.3, 0.6, f) * rRnd() : 0.95;   // (over 0.30 some puffs grey: smoke in the steam)
+      particles.emit(sx + (rRnd() - 0.5) * 0.4, sy + 0.15, sz + (rRnd() - 0.5) * 0.4, c.vx * 0.5 + (rRnd() - 0.5) * 0.5, 1.6 + rRnd() * 1.2, c.vz * 0.5 + (rRnd() - 0.5) * 0.5, 0.7 + rRnd() * 0.5, 0.35, 1.8 + rRnd() * 0.8, g, g, g * 1.02, 0.34, -1.2, 1.4, y); }
+    if (f >= 0.45) { v.xOlA = (v.xOlA || 0) + dt * (3 + 6 * thr) * Core.sstep(0.45, 0.8, f);
+      while (v.xOlA >= 1) { v.xOlA -= 1; particles.emit(sx + (rRnd() - 0.5) * 0.6, gy + 0.25, sz + (rRnd() - 0.5) * 0.6, c.vx * 0.3, 0.3 + rRnd() * 0.4, c.vz * 0.3, 1.1 + rRnd() * 0.6, 0.4, 2.2, 0.34, 0.35, 0.4, 0.3, -0.2, 1.2, gy); } }
+    if (f >= 0.3 && skids && !c.air) { const sp = Math.hypot(c.vx, c.vz); v.xOlD = (v.xOlD || 0) + sp * dt;
+      if (v.xOlD >= 2) { v.xOlD = 0; const ux = sp > 0.5 ? c.vx / sp : 0, uz = sp > 0.5 ? c.vz / sp : 0, l = 0.12 + 0.2 * rRnd();
+        skids.add(sx - ux * l, sz - uz * l, sx + ux * l, sz + uz * l, 0.12 + 0.1 * Core.sstep(0.3, 0.8, f), 0.05, 0.05, 0.06, 0.55, 0.55, gy, gy); } }
+  }
   function engineFx(v, c, dt, x, y, z, h, opt, now) {
     const M = c.m, F = v.fire, live = !(opt && opt.noFx) && !dbg.noSmoke, S0 = v.seat || (v.seat = fireSeat(v)), ch = Math.cos(h), sh = Math.sin(h);
     const S = F && F.rule ? ruleSeat(v, F, S0) : F && F.side ? v.seatF || (v.seatF = [S0[0], S0[1], F.side * FIRE_SIDE * M.wid]) : S0;   // (a hub's fire: on its side of the engine; the wheel rule's: ruleSeat)
@@ -9554,7 +9570,8 @@ const Render = (function () {
     const fc = !F ? 0 : !F.rule ? 0.3 + 0.7 * Math.min(1, e / 18) : F.hk >= 0 ? 0.14 + 0.86 * Core.sstep(0, 6, e) : 0.3 + 0.7 * Core.sstep(0, 8, e);   // (the wheel rule's: from the corner that lost its wheel over the car in 6 s, from the middle in 8)
     const cw = Math.max(0.3 * Core.sstep(0.8, 1, c.dmg || 0), fc) * (1 - rk);
     if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0] || v.charU.value.z !== S[2])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
-    if (!F && !(c.dmg > 0.45)) return;
+    const ef = v.xOn && c.dmgMode > 0 ? xEngF(c) : 0; v.xEF = ef;   // (P2: the engine's own hurt, Podrobne only)
+    if (!F && !(c.dmg > 0.45) && !(ef >= 0.15)) return;
     // where the smoke and the flames come out, in the world (with the body's roll, pitch and sag: after updateParts)
     const W3 = F && F.rule ? ruleSpots(v, S0) : null, Q = W3 ? W3[1] : fireSpot(v, S); if (!v.cull) v.bodyG.updateMatrixWorld();   // (out of the view: its smoke and glow muted, updateCars)   // (the wheel rule's whole car: the middle spot's smoke and glow)
     if (W3) for (let i = 0; i < 3; i++) _fw3[i].set(W3[i][0], W3[i][1], W3[i][2]).applyMatrix4(v.bodyG.matrixWorld);
@@ -9571,6 +9588,7 @@ const Render = (function () {
         particles.emit(sx + (r1 - 0.5) * 0.5, sy + 0.25, sz + (r2 - 0.5) * 0.5, c.vx * 0.35 + (r3 - 0.5) * 0.6, 0.9 + r4 * 0.6, c.vz * 0.35 + (r5 - 0.5) * 0.6, 1.7 + r6 * 0.9, 0.7 * ks, (3.8 + r7 * 1.6) * ks, gc, gc, gc * 1.02, 0.52 + dark * 0.2, -0.3, 0.9, y);
       }
     }
+    if (ef >= 0.15 && !F && live && !v.cull) xEngSteam(v, c, dt, ef, sx, sy, sz, y);
     if (!F) return;
     // the fire: up in 1.5 s, dying down over its last 5 s (of race time); flames over the engine's width, black smoke over them; after it,
     // heavy black smoke
@@ -10700,10 +10718,10 @@ const Render = (function () {
       let out = false;
       if (on) { const bm = v.beam && v.beam.visible ? 10.75 : 0, h = -v.grp.rotation.y;   // (the beam: from the nose to 21.5 m ahead of it; the heading updateCars gave the car)
         _ccS.center.set(v.grp.position.x + Math.cos(h) * bm, v.grp.position.y + 0.8, v.grp.position.z + Math.sin(h) * bm);
-        _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0);
+        _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 || v.xEF >= 0.15 ? 6 : 0);
         if (v.tlG) { const G = v.tlG, th = -G.rotation.y, tl = c.tl.D.len - c.tl.D.f, ex = G.position.x - Math.cos(th) * tl, ez = G.position.z - Math.sin(th) * tl;   // (a semi-trailer: the sphere round the rig, its nose to the trailer's tail)
           const nx = v.grp.position.x + Math.cos(h) * (c.m.len * 0.5 + 2 * bm), nz = v.grp.position.z + Math.sin(h) * (c.m.len * 0.5 + 2 * bm);
-          _ccS.center.set((nx + ex) / 2, v.grp.position.y + 1.2, (nz + ez) / 2); _ccS.radius = Math.hypot(nx - ex, nz - ez) / 2 + reach + 1.5 + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0); }
+          _ccS.center.set((nx + ex) / 2, v.grp.position.y + 1.2, (nz + ez) / 2); _ccS.radius = Math.hypot(nx - ex, nz - ez) / 2 + reach + 1.5 + ((v.fire && !v.fire.done) || c.dmg > 0.45 || v.xEF >= 0.15 ? 6 : 0); }
         out = _ccD.dot(_ccV.subVectors(_ccS.center, p)) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }   // (past the fog by its depth in the view, as the fog itself counts it: a car at the side of the screen as far as one ahead)
       if (out === !!v.cull) continue;
       v.cull = out; if (out) { scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); continue; }
