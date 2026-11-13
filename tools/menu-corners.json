@@ -266,6 +266,15 @@
  },
  "kanaba": {
   "s": 4508,
-  "o": "Serpentina 1, lasnica pod prelazom (levi, ~174°)"
+  "o": "Serpentina 1, lasnica pod prelazom (levi, ~174°)",
+  "cam": [
+   -2726.7,
+   -56.5,
+   -1140.4,
+   -2726.7,
+   -80.5,
+   -1090.4,
+   45.8
+  ]
  }
 }
