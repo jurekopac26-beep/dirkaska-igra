@@ -1,0 +1,43 @@
+{
+  "id": "limalimo",
+  "about": "Limalimo, Etiopija (id limalimo): ~4 km of trunk B30 up the Limalimo serpentines of the Simien escarpment (Debark–Adi Arkay), 9 hairpins, driven uphill (docs/nove-proge-1-0.md)",
+  "box": [13.362, 37.958, 13.402, 38.006],
+  "closed": false,
+  "route": [
+    [13.38441, 37.9873, null, "start | trunk B30, w108997517/w108997464, chain s 21000 m"],
+    [13.3831, 37.98702, null, "trunk B30, w108997517/w108997464, chain s 20850 m"],
+    [13.38414, 37.98683, null, "trunk B30, w108997517/w108997464, chain s 20700 m"],
+    [13.38494, 37.98585, null, "trunk B30, w108997517/w108997464, chain s 20550 m"],
+    [13.3838, 37.98629, null, "trunk B30, w108997517/w108997464, chain s 20400 m"],
+    [13.38257, 37.98574, null, "trunk B30, w108997517/w108997464, chain s 20250 m"],
+    [13.38127, 37.98535, null, "trunk B30, w108997517/w108997464, chain s 20100 m"],
+    [13.38036, 37.98487, null, "trunk B30, w108997517/w108997464, chain s 19950 m"],
+    [13.38162, 37.98485, null, "trunk B30, w108997517/w108997464, chain s 19800 m"],
+    [13.38251, 37.98415, null, "trunk B30, w108997517/w108997464, chain s 19650 m"],
+    [13.38144, 37.98405, null, "trunk B30, w108997517/w108997464, chain s 19500 m"],
+    [13.38054, 37.98387, null, "trunk B30, w108997517/w108997464, chain s 19350 m"],
+    [13.38025, 37.98391, null, "trunk B30, w108997517/w108997464, chain s 19200 m"],
+    [13.38125, 37.98318, null, "trunk B30, w108997517/w108997464, chain s 19050 m"],
+    [13.38212, 37.98255, null, "trunk B30, w108997517/w108997464, chain s 18900 m"],
+    [13.38133, 37.98263, null, "trunk B30, w108997517/w108997464, chain s 18750 m"],
+    [13.38031, 37.98268, null, "trunk B30, w108997517/w108997464, chain s 18600 m"],
+    [13.37921, 37.98334, null, "trunk B30, w108997517/w108997464, chain s 18450 m"],
+    [13.37943, 37.98215, null, "trunk B30, w108997517/w108997464, chain s 18300 m"],
+    [13.38046, 37.9813, null, "trunk B30, w108997517/w108997464, chain s 18150 m"],
+    [13.38111, 37.98009, null, "trunk B30, w108997517/w108997464, chain s 18000 m"],
+    [13.38231, 37.97961, null, "trunk B30, w108997517/w108997464, chain s 17850 m"],
+    [13.38324, 37.97863, null, "trunk B30, w108997517/w108997464, chain s 17700 m"],
+    [13.38224, 37.97877, null, "trunk B30, w108997517/w108997464, chain s 17550 m"],
+    [13.38143, 37.97892, null, "trunk B30, w108997517/w108997464, chain s 17400 m"],
+    [13.38165, 37.97779, null, "trunk B30, w108997517/w108997464, chain s 17250 m"],
+    [13.38256, 37.97778, null, "trunk B30, w108997517/w108997464, chain s 17100 m"],
+    [13.38268, 37.97664, null, "finish | trunk B30, w108997517/w108997464, chain s 16950 m"]
+  ],
+  "prefer": [
+    ""
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
