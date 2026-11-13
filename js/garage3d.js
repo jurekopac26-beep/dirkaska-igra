@@ -3268,6 +3268,83 @@ const Garage3D = (function () {
   // its lights' colour (the bands' and the ring's): the paint's (hex), the cyan's with none
   function chamberColor(hex) { const c = CH.col = hexRgb(hex == null ? 0x47c6ff : hex).map(v => v * 2.25), ra = FX.rails.geometry.attributes.color; CH.lf = null; chamberLeds();
     for (let v = CH.ring[0]; v < CH.ring[1]; v++) ra.array.set(c, v * 3); sendRange(ra, CH.ring[0], CH.ring[1]); }
+  /* THE DRYING COLUMN (the plan's plate an_barvanje, the user 13. 11. 2026: »Sušilni steber iz tal, kot na plošči«; back as it was on
+     29. 10., its hatch out past the chamber's glass now the ring is longer): in the lane before the car's nose a hatch in the floor (a
+     steel frame flush with it, yellow and black, bolted; the column's lid in it); the column rises out of it (2.5 m, white and navy as the
+     arms), the air through it: an intake grille on its back, two fans in the middle, its face to the car a big grille with the heater's
+     coils across it (dryerHeat: the coils glow, the fans spin), a line of light either side of each grille. Down, the cars drive over it.
+     (its hatch's middle, its half sizes (x along the lane, z across it), its height; k 0 down .. 1 up; heat: now and asked; a: the fans'
+     turn, fy: their heights) */
+  const DRY = { x: 3.8, z: 0, hx: 0.25, hz: 0.55, H: 2.5, k: 0, heat: 0, want: 0, a: 0, fy: [0.83, 1.65], R: null, cv: null, cs: null, glow: null, dirty: true, gd: true };
+  // its hatch (in the rails' mesh: still): a steel frame flush with the floor round the opening, its edges yellow and black, bolted down
+  // (the heads sunk), in it the column's lid (tread plate, the column's own top: it stands in for it while the column is down)
+  function buildHatch(g, gl) {
+    const { x, z, hx, hz } = DRY, e = 0.1, PL = [0.24, 0.25, 0.27], TP = [0.29, 0.3, 0.32], x0 = x - hx, x1 = x + hx, z0 = z - hz, z1 = z + hz, ins = [x, -1, z], y = 0.009;
+    gl(1.3); for (const [cx, cz, sx, sz] of [[x0 - e / 2, z, e, 2 * (hz + e)], [x1 + e / 2, z, e, 2 * (hz + e)], [x, z0 - e / 2, 2 * hx, e], [x, z1 + e / 2, 2 * hx, e]]) World.box(g, cx, 0, cz, sx, 0.012, sz, 0, PL, PL);
+    gl(PAINT); hazard(g, [x0 - e, 0.0135, z1 + e], [0, 0, -1], [1, 0, 0], 2 * (hz + e), 0.05, 0.07, ins); hazard(g, [x1 + e, 0.0135, z0 - e], [0, 0, 1], [-1, 0, 0], 2 * (hz + e), 0.05, 0.07, ins);
+    hazard(g, [x1, 0.0135, z0 - e], [-1, 0, 0], [0, 0, 1], 2 * hx, 0.05, 0.07, ins); hazard(g, [x0, 0.0135, z1 + e], [1, 0, 0], [0, 0, -1], 2 * hx, 0.05, 0.07, ins);
+    gl(METAL); for (const [bx, bz] of [[x0 - e / 2, z0 - e / 2], [x1 + e / 2, z0 - e / 2], [x0 - e / 2, z1 + e / 2], [x1 + e / 2, z1 + e / 2], [x0 - e / 2, z], [x1 + e / 2, z]]) cylA(g, [bx, 0.013, bz], 'y', 0.017, 0.0036, 6, FXC.ST);
+    gl(1.3); g.quadO([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1], TP, ins);
+    gl(MATTE); for (const s of [-1, 1]) { const zc = z + s * 0.3; g.quadO([x - 0.07, y + 0.0012, zc - 0.012], [x + 0.07, y + 0.0012, zc - 0.012], [x + 0.07, y + 0.0012, zc + 0.012], [x - 0.07, y + 0.0012, zc + 0.012], [0.05, 0.05, 0.06], ins); }   // (its lifting slots)
+  }
+  // the column (one mesh: its body (part 0), its fans (1, 2), the heater's coils (3)), built standing on y 0 at its hatch's middle: a duct
+  // from its back to its face to the car (-x), the coils across it behind a grille, two fans in their rings; white, a navy foot and a navy
+  // band under the lid, a line of light either side of each grille and over it, a navy stripe and vents on its sides
+  function buildDryer() {
+    const R = DRY.R = rigB(4), g = R.g, { W, NV, ST, CY } = FXC, { hx, hz, H } = DRY, GD = PAL.gold, TP = [0.29, 0.3, 0.32], DU = [0.045, 0.047, 0.055], gl = (k) => rigGl(R, k), za = 0.448, ya = 0.362, yb = 2.138;
+    const bands = [[0, 0.3, NV], [0.3, H - 0.16, W], [H - 0.16, H, NV]];
+    rigPart(R, 0); gl(PAINT);
+    const fr = (z0, z1, y0, y1) => { for (const [a, b, c] of bands) { const y2 = Math.max(a, y0), y3 = Math.min(b, y1); if (y3 > y2 + 1e-4) World.box(g, 0, y2, (z0 + z1) / 2, 2 * hx, y3 - y2, z1 - z0, 0, c, y3 === H ? TP : c); } };
+    fr(-hz, -0.45, 0, H); fr(0.45, hz, 0, H); fr(-0.45, 0.45, 0, 0.36); fr(-0.45, 0.45, 2.14, H);
+    gl(MATTE); const xa = -hx + 0.002, xb = hx - 0.002, q = (a, b, c, d, ins) => g.quadO(a, b, c, d, DU, ins);   // (the duct: its sides, the sill's top, the header's underside)
+    for (const s of [-1, 1]) q([xa, ya, s * za], [xb, ya, s * za], [xb, yb, s * za], [xa, yb, s * za], [0, 1.2, s]);
+    q([xa, ya, -za], [xb, ya, -za], [xb, ya, za], [xa, ya, za], [0, 0, 0]); q([xa, yb, -za], [xb, yb, -za], [xb, yb, za], [xa, yb, za], [0, H, 0]);
+    gl(PAINT); for (const fy of DRY.fy) { for (const s of [-1, 1]) gAdd(g, new THREE.RingGeometry(0.36, 0.43, 28), M4(s * 0.022, fy, 0, 0, s * Math.PI / 2, 0), [0.15, 0.16, 0.18]);
+      cylA(g, [0.09, fy, 0], 'x', 0.075, 0.08, 14, NV); for (let k = 0; k < 4; k++) { const a = (k + 0.5) / 4 * TAU; obox(g, [0.1, fy + Math.sin(a) * 0.07, Math.cos(a) * 0.07], [0.1, fy + Math.sin(a) * 0.39, Math.cos(a) * 0.39], 0.02, 0.012, [0.2, 0.21, 0.23]); } }
+    for (let i = 0; i < 6; i++) for (const s of [-1, 1]) gBox(g, null, -hx + 0.05, 0.5 + i * 0.275, s * 0.432, 0.045, 0.06, 0.032, [0.86, 0.84, 0.78]);
+    gl(METAL); for (let z = -0.42; z < 0.43; z += 0.07) obox(g, [-hx + 0.012, ya, z], [-hx + 0.012, yb, z], 0.008, 0.014, ST);
+    for (let y = ya + 0.178; y < yb - 0.05; y += 0.178) obox(g, [-hx + 0.008, y, -za], [-hx + 0.008, y, za], 0.012, 0.008, ST);
+    for (let z = -0.42; z < 0.43; z += 0.042) obox(g, [hx - 0.01, ya, z], [hx - 0.01, yb, z], 0.005, 0.01, ST);
+    for (let y = ya + 0.1; y < yb - 0.05; y += 0.1) obox(g, [hx - 0.006, y, -za], [hx - 0.006, y, za], 0.01, 0.005, ST);
+    gl(PAINT); for (const e of [-1, 1]) { const x = e * (hx + 0.001); for (const s of [-1, 1]) g.quadO([x, 0.42, s * 0.466], [x, 2.08, s * 0.466], [x, 2.08, s * 0.486], [x, 0.42, s * 0.486], CY, [0, 1.2, s * 0.476]);
+      g.quadO([x, 2.2, -0.42], [x, 2.2, 0.42], [x, 2.216, 0.42], [x, 2.216, -0.42], CY, [0, 2.2, 0]); }
+    for (const s of [-1, 1]) { const zz = s * (hz + 0.001); g.quadO([-0.06, 0.3, zz], [0.06, 0.3, zz], [0.06, H - 0.16, zz], [-0.06, H - 0.16, zz], NV, [0, 1.2, 0]);
+      for (let k = 0; k < 5; k++) { const y = 1.88 + k * 0.06; g.quadO([0.1, y, s * (hz + 0.002)], [0.21, y, s * (hz + 0.002)], [0.21, y + 0.026, s * (hz + 0.002)], [0.1, y + 0.026, s * (hz + 0.002)], [0.07, 0.07, 0.08], [0.15, y, 0]); }
+      gl(METAL); cylA(g, [0, H - 0.08, s * (hz + 0.004)], 'z', 0.018, 0.008, 10, GD); gl(PAINT); }
+    for (let f = 0; f < 2; f++) { rigPart(R, 1 + f); gl(PAINT); cylA(g, [0, 0, 0], 'x', 0.07, 0.05, 14, NV); gl(METAL); cylA(g, [-0.03, 0, 0], 'x', 0.034, 0.012, 12, GD);
+      gl(SATIN); for (let k = 0; k < 7; k++) gBox(g, M4(0, 0, 0, k / 7 * TAU, 0, 0).multiply(M4(0, 0.2, 0, 0, 0.55, 0)), 0, 0, 0, 0.01, 0.27, 0.11, [0.24, 0.25, 0.28]); }
+    // (the coils across the outlet: a ring of the wire every 35 mm, every other darker (DRY.cs: which, a face each))
+    rigPart(R, 3); gl(SATIN); DRY.cv = [g.P.length / 3]; const cs = DRY.cs = [];
+    for (let i = 0; i < 6; i++) gAdd(g, new THREE.CylinderGeometry(0.017, 0.017, 0.84, 6, 24), M4(-hx + 0.05, 0.5 + i * 0.275, 0, Math.PI / 2, 0, 0), (c) => { cs.push(Math.floor((c[1] + 0.42) / 0.035) & 1); return [0.3, 0.14, 0.1]; });
+    DRY.cv.push(g.P.length / 3);
+    const m = rigMesh(R, fxMat(FX.ZERO, 0x15181d)); m.visible = false; scene.add(m);
+    // (the heat's glow before the outlet: a soft orange light, as strong as the heat; the main camera's only)
+    const c = document.createElement('canvas'); c.width = 32; c.height = 64; const x2 = c.getContext('2d'); x2.setTransform(1, 0, 0, 2, 0, 0); const gr = x2.createRadialGradient(16, 16, 1, 16, 16, 16);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.55, 'rgba(255,255,255,0.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x2.fillStyle = gr; x2.fillRect(0, 0, 32, 32);
+    const gm = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), color: 0x000000, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    DRY.glow = mainOnly(new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.0), gm)); DRY.glow.rotation.y = -Math.PI / 2; DRY.glow.visible = false; scene.add(DRY.glow);
+  }
+  // (the coils' colours at the heat: a dull rust cold, orange hot (over 1: they glow), every other turn darker)
+  function heatCoils() { const R = DRY.R, h = DRY.heat, [v0, v1] = DRY.cv, C = R.mesh.geometry.attributes.color, pa = R.mesh.geometry.attributes.position.array;
+    for (let v = v0; v < v1; v++) { const k = DRY.cs[(v - v0) / 3 | 0] ? 1 : 0.6, f = aoK(pa[v * 3 + 1]); R.C[v * 3] = lerp(0.3, 3.4, h) * k; R.C[v * 3 + 1] = lerp(0.14, 1.05, h * h) * k; R.C[v * 3 + 2] = lerp(0.1, 0.2, h) * k;
+      for (let q = 0; q < 3; q++) C.array[v * 3 + q] = R.C[v * 3 + q] * f; }
+    sendRange(C, v0, v1); DRY.gd = true; }
+  // the column each frame (dt: the shows' clock): its heat eased to what was asked (the coils glow up in about a second, the fans spin
+  // up with them; cooling as fast while it sinks), the fans turned, posed again when it moved (drawn while it is up, casting then)
+  function stepDryer(dt) {
+    const R = DRY.R; if (!R) return; const M = R.M, y = -(1 - DRY.k) * DRY.H, on = DRY.k > 1e-4; let still = true;
+    if (DRY.heat !== DRY.want) { DRY.heat = DRY.want > DRY.heat ? Math.min(DRY.want, DRY.heat + dt * 1.1) : Math.max(DRY.want, DRY.heat - dt * 1.4); heatCoils(); dryHum(); }
+    if (DRY.heat > 1e-3 && on) { DRY.a = (DRY.a + dt * DRY.heat * 24) % TAU; R.dirty[1] = R.dirty[2] = 1; }
+    if (DRY.dirty) { R.dirty.fill(1); DRY.dirty = false; still = false; DRY.gd = true; R.mesh.visible = on; if (R.mesh.castShadow !== on) { R.mesh.castShadow = on; shadowDirty = 2; } dryHum(); }
+    if (R.dirty.some(Boolean)) { M[0].makeTranslation(DRY.x, y, DRY.z); M[3].copy(M[0]); for (let f = 0; f < 2; f++) M[1 + f].makeRotationX(f ? -DRY.a : DRY.a).setPosition(DRY.x, y + DRY.fy[f], DRY.z); rigPose(R, still); }
+    if (DRY.gd) { DRY.gd = false; const gw = DRY.glow; gw.visible = on && DRY.heat > 0.02; if (gw.visible) { gw.position.set(DRY.x - DRY.hx - 0.06, y + 1.25, DRY.z); gw.material.color.setRGB(1, 0.42, 0.12).multiplyScalar(0.55 * DRY.heat * DRY.k); } }
+  }
+  // the column up (k 1) or down (0) at once; dryerTo: in s seconds (going down the heat off: it cools as it sinks); dryerHeat: the heat
+  // asked for (0 .. 1); dryHum: its hum as hot as it is (up only). Out of the arms' reach: nothing to fold out of its way
+  function setDryer(k) { DRY.k = clamp(k, 0, 1); DRY.dirty = true; }
+  function* dryerTo(k, s) { k = clamp(k, 0, 1); if (Math.abs(k - DRY.k) < 1e-4) return; s = s == null ? 1.2 : s; if (k < DRY.k) DRY.want = 0; const k0 = DRY.k;
+    SFX.clunk(0.4); SFX.servo(s * 0.9); yield* tween(s, (e) => { DRY.k = lerp(k0, k, e); DRY.dirty = true; }, EZ.io); SFX.clunk(0.5); }
+  const dryerHeat = (k) => { DRY.want = clamp(k, 0, 1); }, dryHum = () => sLoop('dry', 'bandpass', 360, 0.8, 0.1 * DRY.heat * (DRY.k > 1e-4 ? 1 : 0));
   /* ---------------- THE REGAL (sklop 3, the user's concept: the wall regal behind the car) ----------------
      Five bays of navy shelving round the car's back (bay 0 at its left end in the home view): navy perforated posts at every corner up
      to the top board, dark boards on four storeys with navy lips (A 0.06, B 0.705, C 1.35, D 1.995; the top board at 2.66), each
@@ -3690,35 +3767,36 @@ const Garage3D = (function () {
   // (an attribute's vertices v0 .. v1 sent again: joined to a range already waiting (one range an attribute))
   function sendRange(a, v0, v1) { const s = a.itemSize, r = a.updateRange, o = v0 * s, e = v1 * s; if (r.count > 0) { const e0 = r.offset + r.count; r.offset = Math.min(r.offset, o); r.count = Math.max(e0, e) - r.offset; } else { r.offset = o; r.count = e - o; } a.needsUpdate = true; }
   // the fixtures at once (show(): a car set down; the pictures: _dbg.fxPose): o.arms [state | 'rest' | 'keep', ...] (a state's tool: in
-  // its hand), o.chamber (its k), o.col (the chamber's lights' colour)
+  // its hand), o.chamber (its k), o.col (the chamber's lights' colour), o.dryer (the drying column's k), o.heat (its coils' heat)
   function fxSet(o) { o = o || {};
     if (o.arms) o.arms.forEach((q, i) => { const A = RB[i]; if (q === 'keep') return; if (!q || q === 'rest') { if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = false; A.tool = 'none'; Object.assign(A.s, ARM.park[i], { y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }); A.rest = true; A.dirty = true; return; }
       if (q.tool && q.tool !== A.tool) { if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = false; A.tool = q.tool; if (A.tool !== 'none') STN[i].tools[A.tool].mesh.visible = true; }
       Object.assign(A.s, q.tip ? armFor(i, A.tool, v3(q.tip), q.dir || [0, -1, 0]) : q); delete A.s.tool; delete A.s.tip; delete A.s.dir; clampArm(i, A.s); A.rest = false; A.dirty = true; });
-    if (o.chamber != null) setChamber(o.chamber); if (o.col !== undefined) chamberColor(o.col); stepFixtures(0); }
-  const fxRest = () => { armsRest(); fxSet({ chamber: 0, col: null }); };
-  const fxParked = () => armsParked() && CH.k === 0;
+    if (o.chamber != null) setChamber(o.chamber); if (o.col !== undefined) chamberColor(o.col);
+    if (o.dryer != null) setDryer(o.dryer); if (o.heat != null) { DRY.want = DRY.heat = clamp(o.heat, 0, 1); heatCoils(); dryHum(); } stepFixtures(0); }
+  const fxRest = () => { armsRest(); fxSet({ chamber: 0, col: null, dryer: 0, heat: 0 }); };
+  const fxParked = () => armsParked() && CH.k === 0 && DRY.k === 0;
   // everything back to its place (a show cut short, a car to drive in): the chamber up, meanwhile the arms' tools put away, the arms parked
-  function* fxPark(s) { s = s || 1; svcStop(); yield* par(chamberTo(0, 3.2 * s), armsPark(1 / s)); }
+  function* fxPark(s) { s = s || 1; svcStop(); yield* par(chamberTo(0, 3.2 * s), armsPark(1 / s), dryerTo(0, 1.2 * s)); }
   // the fixtures each frame: what moved posed again, the chamber, the regal's parts in the car's colour
-  function stepFixtures(dt) {
+  function stepFixtures(dt, dts) {
     for (const A of RB) if (A.dirty) poseArm(A.i);
-    if (CH.dirty) poseChamber();
+    if (CH.dirty) poseChamber(); stepDryer(dts == null ? dt : dts);
     stepFront(dt); stepDrawers(dt);
     if (cur && RGL.mesh && cur.spec.color !== RGL.col) rglColor(cur.spec.color);
     if (cur && DRW.meshes.length && cur.spec.color !== DRW.col) drwColor(cur.spec.color);
   }
   function buildFixtures() {
-    const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]); buildRing(g, gl);
+    const g = new World.GB(), gls = [], gl = (k) => gls.push([g.P.length / 3, k]); buildRing(g, gl); buildHatch(g, gl);
     const geo = withGloss(g.geometry(), gls); geo.attributes.color.setUsage(THREE.DynamicDrawUsage); const m = FX.rails = new THREE.Mesh(geo, fxMat()); m.receiveShadow = true; scene.add(mainOnly(m));
-    buildChamber(); buildArms(); buildFront();
+    buildChamber(); buildDryer(); buildArms(); buildFront();
     if (RGL.on) { buildRegal(); WALLS.back.keep = (x, y, z) => !rglClear(x, y, z); }
   }
   // (after the pieces are finished: the regal's mesh (the car's colour), the obstacles round the car; the arms posed)
   function finishFixtures() {
     const mm = (p) => p.root.children.find(o => o.isMesh && o.geometry.attributes.gloss);
     FX.obst = []; if (RGL.P) { RGL.mesh = mm(RGL.P); for (const b of RGL.P.obst) FX.obst.push({ b, k: 'regal' }); }
-    CH.dirty = true; for (const A of RB) A.dirty = true; stepFixtures(0);
+    CH.dirty = DRY.dirty = true; for (const A of RB) A.dirty = true; stepFixtures(0);
   }
 
   /* ---------------- the front: the plan chest before the car, the colour wells, the lift's head ----------------
@@ -6828,7 +6906,7 @@ const Garage3D = (function () {
   // (the service begins: the chamber up, the car down unless the engine is first; the layer on; stop: all of it off and back
   // (idempotent): the loops, the beams, the marks, the pan, the layer, the floor, the tools' turn, the engine, the paint's glint)
   function* svcBegin(cv, items) {
-    if (CH.k > 0) yield* chamberTo(0, 2.4);
+    if (CH.k > 0 || DRY.k > 0) yield* par(chamberTo(0, 2.4), dryerTo(0, 1.2));
     if ((lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) && items[0] !== 'engine') yield* liftDown(cv, false);
     Object.assign(SV, { on: true, end: false, dirty: true, cv, items, item: null, step: null, t: 0, cue: {}, log: [], mv: [], done: [], P: {}, bg: [], lampLit: 0, eng: false, cam: null, plug: false, old: Object.assign({}, cv.spec.cond) }); Object.assign(SV.fx, FX0);
     svcFxBegin(cv);
@@ -6855,31 +6933,30 @@ const Garage3D = (function () {
     });
   }
 
-  // a new colour (and the stripes on or off), in the ring's glass chamber (the plan's plate an_barvanje; Matej 13. 11. 2026: behind the
-  // curtain, no arms painting it): the glass down round the car, its lights in the new colour, the arms parked at the bridges' ends; a mist
-  // of the new colour falls from the chamber's top and the paint runs down the car from its roof to its sills, drops below its edge (the
-  // new car's body over the old one's, each cut at that height: three.js clipping planes). Then it dries: the chamber's lights warm, a
-  // warm glow sweeping along it, glints on the fresh paint; the glass up
-  const PAINT_C = { warm: 0xff7a2a, h: -9 };
+  // a new colour (and the stripes on or off), as the plan's plate an_barvanje (6 s): the glass chamber down round the car, its lights in
+  // the new colour, the arms resting at the bridge's ends (1.2 s); a mist of the colour falls from the chamber's top and the paint runs
+  // down the car from its roof to its sills, drops below its edge (2.0 s: the new car's body over the old one's, each cut at that height:
+  // three.js clipping planes); the chamber up, the drying column out of its hatch before the nose, its hot air over the car (the paint
+  // dries from the nose to the tail behind it, glints on it; 1.6 s); the first view again, the column down (1.5 s)
+  const PAINT_C = { h: -9 };
   function paint(color, stripe) {
     return play(function* () {
       const cv = cur; if (!cv) return;   // (the same colour too: a new kind of work bought)
       if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(cv, false);   // (painted on the floor)
       const K = cv.kit, x0 = K.front + 0.25, x1 = K.rear - 0.25, up = new V3(), o = new V3();
       PAINT_C.on = true; hud('paint', { step: 'chamber' });
-      yield* camTo(view({ at: [0, 0.9, 0], yaw: HOME.yaw, pitch: 0.26, dist: 8.4 }, 0.55, lift), 1.1);
+      // (the camera, its plan's plate: the first view, a little nearer, as the glass comes down; drifting along the car's side as the
+      // paint runs down; the first view again, a little to the right, the column by the nose in the picture as it dries)
+      const dC = clamp(5.6 + (K.front - K.rear) * 0.52 + Math.max(0, K.top - 1.5) * 0.6, 7.2, 9.6), yC = 0.5 + K.top * 0.3;   // (farther for a long or a tall one)
+      const VP0 = view({ at: [x0 * 0.12, yC, 0], yaw: HOME.yaw + 0.1, pitch: 0.24, dist: dC }), VP1 = view({ at: [x1 * 0.12, yC, 0], yaw: HOME.yaw - 0.08, pitch: 0.24, dist: dC });
+      const VPD = view({ at: [(K.front + DRY.x) * 0.22, 0.85 + K.top * 0.15, 0], yaw: HOME.yaw + 0.12, pitch: 0.25, dist: dC + 0.8 });
       chamberColor(color);
-      yield* par(chamberTo(1, 2.4), armsPark(1.2));
+      yield* par(chamberTo(1, 1.2), armsPark(1.2), camTo(VP0, 1.2));
       const col = hexRgb(color);
-      // (the camera, its plan's plate: nearer, from the car's front quarter toward its rear one as the paint runs down; low by the front
-      // quarter as it dries)
-      const dC = clamp(4.4 + (K.front - K.rear) * 0.52 + Math.max(0, K.top - 1.5) * 0.6, 6.2, 9.2), yC = K.top * 0.6;   // (farther for a long or a tall one)
-      const VP0 = view({ at: [x0 * 0.4, yC, 0], yaw: 0.6, pitch: 0.2, dist: dC }), VP1 = view({ at: [x1 * 0.4, yC, 0], yaw: -0.5, pitch: 0.2, dist: dC }), VPD = view({ at: [K.front * 0.15, K.top * 0.5, 0], yaw: 0.9, pitch: 0.13, dist: dC * 0.9 });
       // (the mist: from under the chamber's top over the whole car, falling; the drops: at the paint's edge on the car's sides, running down)
       const mist = (n) => { for (let j = 0; j < n; j++) { const p = carPt(cv, rnd(x1, x0), K.top + rnd(0.5, 1.1), rnd(-1.1, 1.1) * K.hw); puffs.emit(p.x, p.y, p.z, rnd(-0.12, 0.12), rnd(-1.4, -0.8), rnd(-0.12, 0.12), rnd(0.6, 1), 0.1, 0.6, col, 0.3, 0.5, 1.4, 0.02); } };
       const drip = (h, n) => { for (let j = 0; j < n; j++) { const sd = Math.random() < 0.5 ? -1 : 1, p = carPt(cv, rnd(x1 + 0.2, x0 - 0.2), h - 0.02, sd * K.hw * 1.01); puffs.emit(p.x, p.y, p.z, 0, rnd(-0.5, -0.25), 0, rnd(0.25, 0.5), 0.025, 0.04, col, 0.85, 0.2, 0.4, 0); } };
-      yield* camTo(VP0, 0.9); hud('paint', { step: 'spray' });
-      for (let i = 0; i < 6; i++) { mist(8); yield* wait(0.08); }   // (the mist first: the roof red under it)
+      hud('paint', { step: 'spray' });
       const spec = Object.assign({}, cv.spec, { color, stripe, cond: Object.assign({}, cv.spec.cond, { clean: 1, body: 1 }) });
       const nw = makeCar(spec);
       // the new body only (its wheels, shadow and parts stay the old car's), cut the other way
@@ -6891,7 +6968,9 @@ const Garage3D = (function () {
       const h0 = K.top + 0.05, h1 = -0.15;
       cut(h0); SVU.uPnD.value.set(9, -9, 0, 0);   // (the new paint wet all over (the drying's front past the nose))
       sLoop('paint', 'bandpass', 3800, 0.6, 0.16);
-      yield* par(tween(2.6, (k, u) => { const h = lerp(h0, h1, EZ.sine(u)); cut(h); mist(3); if (h < K.top - 0.15 && h > 0.15) drip(h, 2); }), camTo(VP1, 2.6, EZ.sine));
+      yield* par(camTo(VP1, 2.0, EZ.sine), (function* () {
+        yield* tween(0.3, () => mist(6));   // (the mist first: the roof the colour under it)
+        yield* tween(1.7, (k, u) => { const h = lerp(h0, h1, EZ.sine(u)); cut(h); mist(3); if (h < K.top - 0.15 && h > 0.15) drip(h, 2); }); })());
       sLoop('paint', 'bandpass', 3800, 0.6, 0); PAINT_C.h = -9;
       // the swap: the new car takes the old one's place (its own wheels, its parts moved over)
       cv.root.remove(nw.root); nw.v.grp.traverse(o => { if (o.isMesh) o.visible = true; }); nw.contact.visible = true;
@@ -6900,26 +6979,21 @@ const Garage3D = (function () {
       for (const k in nw.parts) nw.parts[k].visible = true;
       tt.add(nw.root); nw.root.position.copy(cv.root.position); cur = nw; tt.remove(cv.root); nw.lp = cv.lp; planAhead(nw); idleOn(nw);   // (the same body, the same parts: the lift's pads where they were (not measured yet: now))
       freeCar(cv);
-      // drying: the arms up out of the way, the chamber's lights warm, the lamps' heat along the car (the paint dries behind it), glints on the fresh paint
+      // drying: the glass up, the column out of its hatch, hot; its air over the car from the nose (the paint wet, deep and dull behind
+      // the heat's front, a warm glow on it where it is, dry and glossy ahead), glints on the fresh paint
       hud('paint', { step: 'dry' });
-      yield* camTo(VPD, 1.3);
-      // (the lamps warm up at the nose, then their heat runs along the car to its tail: wet, deep and dull behind it, a warm glow on the
-      // paint where it is, dry and glossy ahead; the camera with it from the front quarter toward the rear one; then the fresh sheen fades)
-      const PD = SVU.uPnD.value; PD.set(x0, -9, 0, 0);
-      chamberColor(PAINT_C.warm); sLoop('dry', 'lowpass', 500, 0.7, 0.12);
-      const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(6, 3.2, 1); scene.add(warm);
+      const PD = SVU.uPnD.value; PD.set(x0, -9, 0, 0); dryerHeat(1); chamberColor(null);
+      const warm = new THREE.Sprite(new THREE.SpriteMaterial({ map: TX.glow, color: 0xff9a3a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })); warm.scale.set(5, 2.8, 1); scene.add(warm);
       const at = (x) => warm.position.copy(carPt(nw, x, K.top * 0.75, 0));
-      at(x0); yield* tween(0.8, (k, u) => { PD.w = u; warm.material.opacity = 0.6 * u; });
-      const VPD2 = view({ at: [x1 * 0.25, K.top * 0.5, 0], yaw: 0.25, pitch: 0.15, dist: dC * 0.95 });
-      yield* par(tween(4.2, (k, u) => { const x = lerp(x0, x1, u); PD.x = x; PD.z = 1; at(x); warm.material.opacity = 0.6 + 0.08 * Math.sin(u * 40); if (Math.random() < 0.35) sparkle(nw, 1); }), camTo(VPD2, 4.2, EZ.sine));
-      PD.x = x1 - 0.45; sparkle(nw, 16); SFX.ping(2093); SFX.ping(2793);   // (the heat off past the tail)
-      yield* tween(0.6, (k, u) => { PD.w = 1 - u; warm.material.opacity = 0.6 * (1 - u); });
-      PD.x = -9; scene.remove(warm); warm.material.dispose(); sLoop('dry', 'lowpass', 500, 0.7, 0);
-      chamberColor(color); yield* par(chamberTo(0, 2.2), armsPark(1.6), tween(2.2, (k, u) => { PD.z = 1 - u; })); PD.set(-9, 9, 0, 0);
-      chamberColor(null); PAINT_C.on = false;
+      const air = (n) => { for (let j = 0; j < n; j++) { const y = rnd(0.45, 2.0) - (1 - DRY.k) * DRY.H; if (y < 0.3) continue; puffs.emit(DRY.x - DRY.hx - 0.05, y, rnd(-0.42, 0.42), rnd(-3.6, -2.6), rnd(-0.1, 0.25), rnd(-0.5, 0.5), rnd(0.6, 0.9), 0.12, 0.8, [1.0, 0.5, 0.2], 0.1 * DRY.heat, -0.25, 1.1, 0.02); } };
+      at(x0);
+      yield* par(chamberTo(0, 1.0), dryerTo(1, 0.7), camTo(VPD, 0.9),
+        tween(1.6, (k, u) => { const x = lerp(x0, x1 - 0.45, smooth(0.25, 1, u)); PD.x = x; PD.z = 1; PD.w = smooth(0.15, 0.4, u) * (1 - smooth(0.88, 1, u)); at(x); warm.material.opacity = 0.55 * smooth(0.2, 0.4, u) * (1 - smooth(0.88, 1, u)); air(2); if (Math.random() < 0.3) sparkle(nw, 1); }));
+      sparkle(nw, 16); SFX.ping(2093); SFX.ping(2793); scene.remove(warm); warm.material.dispose(); dryerHeat(0);   // (dry all over: the front past the tail)
+      PAINT_C.on = false;
       hud('done', { kind: 'paint' });
-      yield* wait(0.4);
-      yield* home(1.2);
+      yield* par(home(1.0), dryerTo(0, 1.0), tween(1.5, (k, u) => { PD.z = 1 - u; }));   // (the column down, the fresh sheen fading)
+      PD.set(-9, 9, 0, 0);
     });
   }
   const isIn = (o, p) => { for (let q = o; q; q = q.parent) if (q === p) return true; return false; };
@@ -7198,6 +7272,7 @@ const Garage3D = (function () {
           for (const [v0, v1, k] of R.runs) if (k >= b && k < b + AP) for (let j = v0; j < v1; j++) { const y = a[j * 3 + 1], z = a[j * 3 + 2]; low = Math.min(low, y); if (y < 2) lane = Math.min(lane, Math.abs(z)); }
           if (A.tool !== 'none') { const m = STN[A.i].tools[A.tool].mesh, t = m.geometry.attributes.position.array; for (let j = 0; j < t.length; j += 3) { v.set(t[j], t[j + 1], t[j + 2]).applyMatrix4(m.matrix); low = Math.min(low, v.y); if (v.y < 2) lane = Math.min(lane, Math.abs(v.z)); } }
           return { s: Object.fromEntries(Object.entries(A.s).map(([k, q]) => [k, +q.toFixed(3)])), tool: A.tool, rest: A.rest, low: +low.toFixed(3), tip: A.J.tipA.toArray().map(q => +q.toFixed(3)), lane: +lane.toFixed(3), cast: R.mesh.castShadow }; }); },
+      get dryer() { const R = DRY.R; return { k: +DRY.k.toFixed(3), heat: +DRY.heat.toFixed(3), top: +(DRY.H * DRY.k - DRY.H + 2.5).toFixed(3), drawn: !!(R && R.mesh.visible), cast: !!(R && R.mesh.castShadow), x: DRY.x, z: DRY.z }; },   // (the drying column: out (k), hot, its top's height, drawn)
       get fx() { const R = this.arms; return { arms: R, lane: Math.min(...R.map(r => r.lane)), parked: fxParked(), tools: FX.tools.filter(m => m.visible).length, pnd: SVU.uPnD.value.toArray().map(v => +v.toFixed(2)), ph: PAINT_C.h }; },   // (pnd: the fresh paint's fronts, sheen, heat)
       // (any pose at once, for the pictures: { arms: [state | { tool, tip, dir } | 'rest' | 'keep', ...], chamber, col })
       armsPose(o) { fxSet(o); },
