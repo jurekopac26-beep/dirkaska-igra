@@ -32,7 +32,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: MUSANDAM_H.map((h, i) => [i / (MUSANDAM_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: { cs: [0, 0, 0], wet: { cs: [0, 0, 0] } },
+    medals: { cs: [104, 109, 117], wet: { cs: [125, 131, 141] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the one road
     // along the coast out of the town: the families' pick-ups and four-by-fours, the vans to the hamlets, the tour minibuses to the bays, a few lorries, hardly a cyclist
     traffic: { mix: [0.62, 0.2, 0.06, 0.02, 0.1], bike: 9000 },
