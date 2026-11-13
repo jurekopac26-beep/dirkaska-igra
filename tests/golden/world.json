@@ -154,15 +154,15 @@
  },
  "spa": {
   "meshes": 1390,
-  "verts": 1107795,
+  "verts": 1107867,
   "instances": 48272,
   "props": 101,
   "crowd": 401,
-  "world": "8a9312f3",
+  "world": "d368b020",
   "propsHash": "2afe5d7",
   "floor": "5755fdd4/14000",
   "groups": {
-   "-:MeshLambertMaterial": "9c759fa",
+   "-:MeshLambertMaterial": "28f142ba",
    "-:MeshBasicMaterial": "a2c28e88",
    "crowd:MeshLambertMaterial": "48cce0f",
    "flags:MeshLambertMaterial": "48125986",
