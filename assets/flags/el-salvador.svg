@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1005 567" width="1005" height="567">
+  <title>El Salvador</title>
+  <!-- Ratio 189:335. Three equal horizontal bands blue, white, blue; the coat of arms in the centre and the motto left out (the plain
+       stripes, as the menu shows them small). Colours: cobalt blue #0047AB, white #FFFFFF. -->
+  <rect x="0" y="0" width="1005" height="567" fill="#0047AB"/>
+  <rect x="0" y="189" width="1005" height="189" fill="#FFFFFF"/>
+</svg>
