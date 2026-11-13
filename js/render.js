@@ -7543,6 +7543,7 @@ const Render = (function () {
   // online: none
   function wheelBend(v, c) {
     const bd = v.bend || (v.bend = [0, 0, 0, 0]), cd = c.cd; let ch = 0;
+    if (v.rep && v.rep.wheels) return bd;   // (the crew's new wheels on: straight, repairStep)
     for (let k = 0; k < 4; k++) { const b = c.net || !cd ? 0 : Math.round(sstep(0.35, 0.7, cd[k]) * 20) / 20; if (b !== bd[k]) { bd[k] = b; ch = 1; } }
     if (ch) kitSag(v); return bd;
   }
@@ -7707,6 +7708,7 @@ const Render = (function () {
     const RP = Core.REPAIR, u = Core.repairU(c), R = v.rep; R.ku = Core.sstep(RP.body[0], RP.body[1], u);
     if (v.scrU) v.scrU.value *= 1 - R.ku; if (v.dirtU) v.dirtU.value = R.dirt0 * (1 - R.ku);   // (every frame, with the bodywork: the scratches polished out, the dirt washed off)
     if (v.xtSc) { R.sc0 = R.sc0 || v.xtSc.a.slice(); v.xtSc.a[0] = R.sc0[0] * (1 - R.ku); v.xtSc.a[1] = R.sc0[1] * (1 - R.ku); }   // (the side scrapes with them)
+    if (u >= RP.wheel && !R.wheels) { R.wheels = true; if (v.bend && v.bend.some(Boolean)) { v.bend.fill(0); kitSag(v); } }   // (a full repair's new wheels: the bent ones (P3) off with the old, wheelBend holds them straight till Race.repairCar)
     if (u >= RP.wheel && v.wheelOff.some(Boolean)) kitRefit(v);   // (every frame: with the crew's tyre men, crewLogic)
     const q = Math.floor(u * REPAIR_N); if (q === R.q) return; R.q = q; const s = q / REPAIR_N;
     if (!R.glass && s >= RP.glass) { R.glass = true; repGlass(v, R); }
