@@ -244,7 +244,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *ouninpohja* | *Ouninpohja, Finska (test)* | ouni | `js/world-ouni.js` (`buildOuni`) |
 | *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |
 | pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `js/world-pikes.js` (`buildPikes`) |
-| rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
+| rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`; križišče samo za videz iz `def.stranske` in svetilke iz `def.svetilke`, `tools/cesta/izvoz.py`, `docs/realizem/paket-e.md`, »E1«) |
 | rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
 | *rio* | *Rio de Janeiro, Brazilija (test)* | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | *riverside* | *Riverside, ZDA (test)* | riverside | `js/world-riverside.js` (`buildRiverside`) |
