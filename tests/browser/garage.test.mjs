@@ -220,12 +220,14 @@ try {
     // the new one taken, pushed in (the car the new one's now), its ring screwed, the lights tried from before the car, KONČANO; the
     // yellow ones after them: the LED ones back into the drawer on the trolley's way out; ↺ SERIJSKO: the car's own lamps back on
     // the trolley from the door, the yellow ones into the drawer)
-    const lampLog = (f, mid, end) => new RegExp('^plan,cart\\.in,' + mid + ',put,grab,swap,ring,').test(f.log) && f.log.split(',').slice(-end.length).sort().join() === end.join();
+    // (the far lamp by the far arm meanwhile (far, far.out, far.cart.out, far.in): kept apart from the near arm's steps)
+    const lampLog = (f, mid, end) => { const lg = f.log.split(',').filter(s => !/^far/.test(s)); return new RegExp('^plan,cart\\.in,' + mid + ',put,grab,swap,ring,').test(lg.join()) && lg.slice(-end.length).sort().join() === end.join(); };
+    const farLamp = (f) => ['far.out', 'far.in', 'far.cart.out'].every(s => f.log.split(',').includes(s)) && f.log.split(',').indexOf('far.in') < f.log.split(',').indexOf('swap');
     const lampBuy = async (n) => { await page.evaluate((n) => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: n ? __garage.findOpt('zarometi', n) : null }); document.querySelector('#g-menu [data-mact="' + (n ? 'buy' : 'stock') + '"]').click(); }, n);
       const r = await run(), f = await fitOf(), u = await ui(); return { r, f, u: { money: u.S.money, parts: u.S.cars.kozorog.parts } }; };
     const l1 = await lampBuy('LED');
-    T.check('the LED head lamps on a car that draws its lamps as parts of their own (the KOZOROG), by their plan\'s plate: the old lamp out first (the car\'s own, as it draws it), the trolley with the new one from the drawer, the old one onto its deck, the new one in, its ring screwed, the lights tried, KONČANO',
-      lampLog(l1.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'lights']) && l1.f.plan.lamp && l1.f.plan.real && l1.f.plan.drawer && l1.f.plan.arm === 0 && l1.f.plan.tool === 'gripper' && l1.f.old === 'real' && l1.f.put === 'cart' && l1.f.cart && !l1.f.cart.on && l1.f.cart.load === 0
+    T.check('the LED head lamps on a car that draws its lamps as parts of their own (the KOZOROG), by their plan\'s plate: the old lamp out first (the car\'s own, as it draws it), the trolley with the new one from the drawer, the old one onto its deck, the new one in, its ring screwed, the lights tried, KONČANO; the far lamp the same by the far arm off the twin trolley',
+      lampLog(l1.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'lights']) && farLamp(l1.f) && l1.f.plan.lamp && l1.f.plan.real && l1.f.plan.drawer && l1.f.plan.arm === 0 && l1.f.plan.tool === 'gripper' && l1.f.old === 'real' && l1.f.put === 'cart' && l1.f.cart && !l1.f.cart.on && l1.f.cart.load === 0
       && l1.f.parked && /KONČANO/.test(l1.f.chip) && l1.r.t <= 19.5 && !!l1.u.parts.zarometi, JSON.stringify(l1));
     const l2 = await lampBuy('Yellow');
     T.check('the yellow ones out of the same drawer: the LED ones drawn out, onto the trolley, back into their drawer on its way out', lampLog(l2.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'drawer.back', 'lights']) && l2.f.old === 'real' && l2.f.put === 'cart' && l2.f.cart && !l2.f.cart.on && l2.f.cart.load === 0 && l2.f.parked && l2.r.t <= 21.5, JSON.stringify(l2));
