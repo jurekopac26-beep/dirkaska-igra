@@ -8,6 +8,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // the traffic and a run from the police.
   TRACK_DEFS.push({
     id: 'koli', name: 'Koli, Finska', theme: 'koli', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 3.6,
+    maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line is short, 105 m to the hairpin at Ylä-Koli; a bigger field's parking would stand car on car (the game's own 21 fit)
     desc: 'Koli (Finska): zgornji del ceste Ylä-Kolintie, pozimi skozi zasnežen gozd do vasi Ylä-Koli pod vrhom Kolija nad jezerom Pielinen. 2 km, 150 m vzpona in tri lasnice. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Koli, Finland', desc: 'Koli (Finland): the top of the Ylä-Kolintie road, in winter through the snowy forest up to the village of Ylä-Koli under the summit of Koli above Lake Pielinen. 2 km, a 150 m climb and three hairpins. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Koli',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
