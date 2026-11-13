@@ -1,0 +1,115 @@
+{
+ "id": "quezaltepeque",
+ "name": "Quezaltepeque, Salvador",
+ "meas": "3,21 km, 463 °/km, ravnine 51 % (najdaljša 705 m), 13 ovinkov (4,0 na km), višinska razlika 20 m",
+ "land": "trava 63 %, gozd 32 %",
+ "items": "19 stavb (ob 11 % dolžine); 3 razgledišč; 11 stranskih cest; ograje/zidovi (OSM) ob 60 %; strmo pobočje ob cesti (DEM): navzdol 0 %, navzgor 0 %; prepad (≥15 m padca v 30 m od roba): 0 % dolžine na levo (≥25 m: 0 %), na drugi strani 0 %; padec v 30 m povprečno 0 m, največ 5 m; globina do 150 m od roba mediana 0 m, največ 21 m; stena na drugi strani ob prepadu 0 %",
+ "zone": 0.004665629860031105,
+ "M": {
+  "len": 3215.0,
+  "twist": 463.034364484314,
+  "straight": 0.5102040816326531,
+  "longest": 705.0,
+  "corners": 13,
+  "hairpins": 4,
+  "h0": 516.933349609375,
+  "h1": 516.9584350585938,
+  "hmin": 502.3675537109375,
+  "hmax": 522.4796142578125,
+  "up": 37.4010009765625,
+  "dn": 37.37591552734375,
+  "grade": 0.0007802627515047789,
+  "gmax": 5.76904296875
+ },
+ "R": {
+  "bld": [
+   0.1088646967340591,
+   19
+  ],
+  "water": [
+   0.0,
+   0
+  ],
+  "stream": [
+   0.0,
+   0
+  ],
+  "coast": [
+   0.0,
+   0
+  ],
+  "cliff": [
+   0.0,
+   0
+  ],
+  "barrier": [
+   0.6003110419906688,
+   7
+  ],
+  "view": [
+   0.013996889580093312,
+   3
+  ],
+  "farm": [
+   0.0,
+   0
+  ],
+  "wood": [
+   0.0,
+   0
+  ],
+  "road": [
+   0,
+   11
+  ],
+  "lc": {
+   "10": 0.3157076205287714,
+   "20": 0.013413685847589424,
+   "30": 0.6275272161741835,
+   "40": 0.0015552099533437014,
+   "50": 0.04121306376360809,
+   "60": 0.0005832037325038881,
+   "80": 0.0,
+   "90": 0.0,
+   "95": 0.0
+  },
+  "wcwater": 0.0,
+  "zone": 0.004665629860031105,
+  "bridges": 0,
+  "tunnels": 0,
+  "bt": 0.0,
+  "drop": 0.0,
+  "wall": 0.0,
+  "cliff2": {
+   "side": "L",
+   "L": {
+    "p15": 0.0,
+    "p25": 0.0,
+    "max30": 5.46307373046875,
+    "mean30": 0.0,
+    "deep": 0.0,
+    "deepmax": 20.7867431640625,
+    "wall": 0.0
+   },
+   "R": {
+    "p15": 0.0,
+    "p25": 0.0,
+    "max30": 5.39599609375,
+    "mean30": 0.0,
+    "deep": 0.0,
+    "deepmax": 14.975433349609375,
+    "wall": 0.0
+   },
+   "any15": 0.0,
+   "onewall": 0.0
+  }
+ },
+ "start": [
+  13.808603166692338,
+  -89.3328441887558
+ ],
+ "end": [
+  13.808626651803692,
+  -89.33280461285212
+ ]
+}

@@ -1,4 +1,4 @@
-# Nove proge 11: 4 zamenjave in 4 proge ob prepadu
+# Nove proge 11: 4 zamenjave, 4 proge ob prepadu in kartice prog iz predstavitve
 
 Želja uporabnika 12. 11. 2026: Chachani, Elmenteita, Barahona in Viñales zamenjati s progami iz drugih držav, z enakomernejšo razdelitvijo po celinah, z različnimi progami in z veliko zanimivega do 60 m ob cesti. Brez PR, `main` ni spremenjen. Mape in orodje kot na veji `slike/nove-proge-10`.
 
@@ -54,6 +54,32 @@ Pregledane in zavrnjene:
 - **Limalimo, odsek 21–24 km**: prepad ob 76–93 % desno, a manj lasnic; izbran je spust s prelaza.
 - **Darvaz, vzhodni del**: malo ovinkov, okoli 13–17 km vrzel v poti OSM.
 - Niso podrobno izmerjene: Pamir in Anzob (sneg), Kirgizija in Butan (rezerva).
+
+## Kartice: en odstavek na progo
+
+Vse številke so iz OSM (ceste, stavbe, vode, razgledišča, mostovi, ograje) in Copernicus DEM (višine, prepad) v pasu 60 m ob cesti. Ograja ali zid do 3 m od roba je spodnja meja, ker so ograje v OSM redko vrisane. Slike v vsaki mapi: `1-oblika.jpg` (oblika z višinami, 16 : 10, enak slog kot `canaries`), `2-profil.jpg`, `3-pogled.jpg` (pogled za avtom iz reliefa in OSM).
+
+### Proge iz predstavitve
+
+**Batangas, Filipini** (`batangas`): zaprto dirkališče (OSM: raceway), dolga postavitev z ozko zanko na zahodu. 3,48 km, 13 ovinkov (3,7 na km), 7 ostrih zavojev, 565 °/km, višinska razlika 11 m (99–110 m). Ob progi 26 stavb (boksi in hale, ob 17 % dolžine), trava 50 %, gozd 24 %. Obale in vode ni, razgledišč ni, mostov ni, 7 stranskih cest. Ograja ali zid do 3 m od roba: 0 % v OSM, pod pol.
+
+**Kanaba, Uganda** (`kanaba`): glavna cesta (OSM: primary) na zahodni strani sedla, vožnja navzgor proti sedlu. 1,98 km, 12 ovinkov, 1 lasnica, 564 °/km, vzpon +108 m (2148 → 2256 m, povprečno 5,4 %, največ 18,8 %). Ob cesti 16 stavb (ob 11 % dolžine), trava 59 %, gozd 15 %, polja 7 %. Obale in vode ni, razgledišč ni, mostov ni, 3 stranske ceste. Strmo pobočje nad cesto ob 56 %. Prepad ≥15 m ob 29 % na levi in 18 % na desni. Ograja ali zid do 3 m od roba: 0 %, pod pol.
+
+**Hải Vân, Vietnam** (`haivan`): glavna cesta (OSM: trunk) čez prelaz Hải Vân skozi gozd. 1,99 km, 12 ovinkov, 2 lasnici, 538 °/km, vzpon +95 m (383 → 477 m, povprečno 4,8 %, največ 8,9 %). Ob cesti 12 stavb (ob 4 % dolžine), gozd 96 %. Obale in vode v 60 m ni, 2 razgledišči, 1 most, 3 stranske ceste. Prepad ≥15 m ob 47 % na levi in 27 % na desni. Ograja ali zid do 3 m od roba: 0 %, pod pol.
+
+**Quezaltepeque, Salvador** (`quezaltepeque`): zaprto dirkališče (OSM: raceway) z dolgo ravnino (705 m). 3,21 km, 13 ovinkov (4,0 na km), 4 ostri zavoji, 463 °/km, višinska razlika 20 m (502–522 m). Ob progi 19 stavb (ob 11 % dolžine), trava 63 %, gozd 32 %. Obale in vode ni, 3 razgledišča, mostov ni, 11 stranskih cest in poti. Ograje posestva so v 60 m ob 60 % dolžine. Ograja ali zid do 3 m od roba: 0,5 %, pod pol.
+
+**Sogeri, Papua Nova Gvineja** (`sogeri`): lokalna cesta (OSM: tertiary) sredi soteske Laloki. 1,98 km, 13 ovinkov, 1 lasnica, 458 °/km, vzpon +114 m (295 → 408 m, povprečno 5,7 %, največ 10,4 %). Stavb ob cesti ni, trava 79 %, gozd 21 %, skalne stene (OSM) ob 29 %. Obale in vode ni, razgledišč ni, 1 most, 4 stranske ceste. Prepad ≥15 m ob 18 % na desni. Ograja ali zid do 3 m od roba: 23 %, pod pol.
+
+### Proge ob prepadu
+
+**Kali Gandaki, Nepal** (`kaligandaki`): glavna cesta (OSM: primary) kot makadamska polica v kanjonu med Ghaso in Lete. 3,48 km, 17 ovinkov, 4 lasnice, 502 °/km, vzpon +206 m (2168 → 2373 m, povprečno 5,9 %). Ob cesti 6 stavb (ob 3 % dolžine), gozd 45 %, skale 37 %. Potok ob 7 %, 9 razgledišč, 8 mostov, stranskih cest ni. Prepad ≥15 m ob 82 % na desni (≥25 m ob 42 %), globok do ~130 m. Ograja ali zid do 3 m od roba: 4 %, pod pol.
+
+**Musandam, Oman** (`musandam`): glavna cesta (OSM: trunk), vsekana v golo skalo, vzpon od morja čez rt. 2,59 km, 16 ovinkov, brez lasnic, 420 °/km, vzpon +194 m (2 → 195 m, povprečno 7,5 %). Stavb ob cesti ni, skale 90 %. Morje ob 23 % dolžine, razgledišč ni, 2 mosta, 2 stranski cesti. Prepad ≥15 m ob 58 % na desni (≥25 m ob 30 %), globok do ~130 m. Ograja ali zid do 3 m od roba: 0 %, pod pol.
+
+**Limalimo, Etiopija** (`limalimo`): glavna cesta (OSM: trunk), spust s prelaza Limalimo po robu gorovja Simien. 4,45 km, 26 ovinkov, 7 lasnic, 647 °/km, spust −344 m (2655 → 2311 m, povprečno 7,7 %). Stavb ob cesti ni, gozd 64 %, grmovje 19 %, skalne stene (OSM) ob 12 %. Obale in vode ni, razgledišč ni, 10 mostov, stranskih cest ni. Prepad ≥15 m ob 61 % na levi in 24 % na desni (na lasnicah menja stran), globok do ~190 m. Ograja ali zid do 3 m od roba: 0,3 %, pod pol.
+
+**Darvaz, Tadžikistan** (`darvaz`): glavna cesta (OSM: primary), ozka polica, vklesana v skalo nad reko Pjandž. 5,49 km, 10 ovinkov, brez lasnic, 183 °/km, višinska razlika 80 m (1443–1523 m, cilj 68 m višje od štarta). Stavb ob cesti ni, skale 46 %, trava 26 %. Reka ob 89 % dolžine, razgledišč ni, 9 mostov, 2 predora, 2 stranski cesti. Prepad ≥15 m ob 90 % na desni (≥25 m ob 40 %), globok do ~65 m. Ograja ali zid do 3 m od roba: 1 %, pod pol.
 
 ## Viri in licence
 

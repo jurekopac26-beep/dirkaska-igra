@@ -1,0 +1,115 @@
+{
+ "id": "batangas",
+ "name": "Batangas, Filipini",
+ "meas": "3,48 km, 565 °/km, ravnine 45 % (najdaljša 310 m), 13 ovinkov (3,7 na km), višinska razlika 11 m",
+ "land": "trava 50 %, gozd 24 %, pozidano 24 %",
+ "items": "26 stavb (ob 17 % dolžine); 7 stranskih cest; strmo pobočje ob cesti (DEM): navzdol 0 %, navzgor 0 %; prepad (≥15 m padca v 30 m od roba): 0 % dolžine na levo (≥25 m: 0 %), na drugi strani 0 %; padec v 30 m povprečno 0 m, največ 3 m; globina do 150 m od roba mediana 0 m, največ 6 m; stena na drugi strani ob prepadu 0 %",
+ "zone": 0.0,
+ "M": {
+  "len": 3485.0,
+  "twist": 564.6862190707271,
+  "straight": 0.4544138929088278,
+  "longest": 310.0,
+  "corners": 13,
+  "hairpins": 7,
+  "h0": 103.01780700683594,
+  "h1": 103.0230484008789,
+  "hmin": 99.36985778808594,
+  "hmax": 110.02041625976562,
+  "up": 23.750396728515625,
+  "dn": 23.745155334472656,
+  "grade": 0.00015039868594612926,
+  "gmax": 3.583679437637329
+ },
+ "R": {
+  "bld": [
+   0.17073170731707318,
+   26
+  ],
+  "water": [
+   0.0,
+   0
+  ],
+  "stream": [
+   0.0,
+   0
+  ],
+  "coast": [
+   0.0,
+   0
+  ],
+  "cliff": [
+   0.0,
+   0
+  ],
+  "barrier": [
+   0.0,
+   0
+  ],
+  "view": [
+   0.0,
+   0
+  ],
+  "farm": [
+   0.0,
+   0
+  ],
+  "wood": [
+   0.0,
+   0
+  ],
+  "road": [
+   0,
+   7
+  ],
+  "lc": {
+   "10": 0.24121233859397417,
+   "20": 0.0,
+   "30": 0.4951578192252511,
+   "40": 0.024390243902439025,
+   "50": 0.2392395982783357,
+   "60": 0.0,
+   "80": 0.0,
+   "90": 0.0,
+   "95": 0.0
+  },
+  "wcwater": 0.0,
+  "zone": 0.0,
+  "bridges": 0,
+  "tunnels": 0,
+  "bt": 0.0,
+  "drop": 0.0,
+  "wall": 0.0,
+  "cliff2": {
+   "side": "L",
+   "L": {
+    "p15": 0.0,
+    "p25": 0.0,
+    "max30": 2.6930465698242188,
+    "mean30": 0.0,
+    "deep": 0.0,
+    "deepmax": 5.705711364746094,
+    "wall": 0.0
+   },
+   "R": {
+    "p15": 0.0,
+    "p25": 0.0,
+    "max30": 3.4055099487304688,
+    "mean30": 0.0,
+    "deep": 0.0,
+    "deepmax": 5.2869873046875,
+    "wall": 0.0
+   },
+   "any15": 0.0,
+   "onewall": 0.0
+  }
+ },
+ "start": [
+  13.82017937673142,
+  121.2773059574798
+ ],
+ "end": [
+  13.820198117433266,
+  121.27734809515202
+ ]
+}
