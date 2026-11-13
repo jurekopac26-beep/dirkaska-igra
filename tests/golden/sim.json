@@ -4801,6 +4801,104 @@
    "repairs": 0
   }
  },
+ "limalimo/race/cs": {
+  "digest": "826f347fb94ae591e905d071",
+  "lead": 1901.2,
+  "car0": [
+   331.44,
+   1165.41
+  ],
+  "cover": {
+   "dmg": 0.11,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "limalimo/demo/cs": {
+  "digest": "a41a490e42cf8c0c5fda25fd",
+  "lead": 2117.6,
+  "car0": [
+   145.33,
+   1435.8
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "limalimo/upg/cs": {
+  "digest": "8608ed6531ed0355d4f5b551",
+  "lead": 2073.7,
+  "car0": [
+   171.93,
+   1367.64
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "limalimo/crash/cs": {
+  "digest": "650acfc48a5a3041324124c4",
+  "lead": 1894.5,
+  "car0": [
+   341.07,
+   1155.07
+  ],
+  "cover": {
+   "dmg": 0.34,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "limalimo/formula/cs": {
+  "digest": "ff07ff1d376c25540a6ca59d",
+  "lead": 2223.7,
+  "car0": [
+   142.87,
+   1430.59
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "limalimo/lm/cs": {
+  "digest": "f9cd94189679e3f6a157e248",
+  "lead": 2188.7,
+  "car0": [
+   158.38,
+   1389.34
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "limalimo/car/cs": {
+  "digest": "932bc938111f7ba4176b9148",
+  "lead": 1888,
+  "car0": [
+   348.29,
+   1034.84
+  ],
+  "cover": {
+   "dmg": 0.86,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
  "livorno/race/cs": {
   "digest": "5b601641952b407dbb9ec42d",
   "lead": 2185.5,
