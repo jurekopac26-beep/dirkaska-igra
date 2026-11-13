@@ -1,0 +1,15 @@
+# Batangas, Filipini
+
+[← Vse proge](../../README.md#proge) · proga `batangas` (`js/tracks/batangas.js`, okolica `js/world-batangas.js` na skupnem graditelju `js/world-rbring.js`; načrt v [`docs/nove-proge-1-0.md`](../nove-proge-1-0.md), linija A)
+
+Dirkališče na planoti province Batangas južno od Manile pri Rosariu, v pravi postavitvi in pravem merilu: **3,60 km** (3.598 m na naši črti; uradno 3,62 km), v smeri urinega kazalca, **3 krogi**, z boksi in ciljno črto po OSM. Skoraj ravna planota okoli 100 m nad morjem (višine v krogu 100–107 m, največ 2,5 % naklona), 13 ovinkov (8 desnih, 5 levih), najožji je zahodni ostri desni (8. ovinek, polmer ~14 m).
+
+- **Krog:** s ciljne ravnine (glavna tribuna levo, boksi desno) v **desni na koncu ravnine** (1. ovinek), **dolgi desni** (2.), **ostri levi** (3.) in **desni za ostrim levim** (4.), **trije levi** (5.–7.), **ravnina proti zahodu**, **zahodni ostri desni** (8.), **šikana** (9. in 10.), **desni za šikano** (11.) in **dvojni desni** (12. in 13.) na ciljno ravnino.
+- **Cesta in boksi:** asfalt širine 12 m z rdeče-belimi robniki; asfaltne izletne cone z naslikanimi imeni krajev (BATANGAS, ROSARIO, PILIPINAS), drugod pokošena trava. Ograje so več kot 3 m od roba ceste na 93 % kroga (najmanj 2,5 m); kjer sta kraka blizu (najmanj ~18 m narazen), ograja ostane na pol poti. Boksarska steza desno od ciljne ravnine in jambori z zastavami.
+- **Okolica (do ~60 m od ceste):** zelena tropska planota: trate in polja sladkornega trsa (rumenkasto zelena), lise rdeče prsti, grmovje, gaji listavcev in kokosovih palm (po rabi tal in višini krošenj), vaške strehe iz rjaste pločevine. Pet tribun za ograjo (BATANGAS s streho ob ciljni ravnini, ROSARIO, LIPA, IBAAN, PADRE GARCIA), 24 stavb in servisne ceste iz OSM, table s kraji pokrajine (TAAL, TAYSAN, MALVAR, SAN JUAN, LUZON …). Vodni bivoli in čaplje na travnikih.
+- **Dlje od ceste** (poceni za telefon): teren iz višin in obzorje v desetih obročih do ~11,5 km (griči in gore pokrajine okoli planote), pobarvano zeleno; morja s proge ni videti.
+- **Imena:** samo zemljepisna (pokrajina, mesta, vasi, otok Luzon, država) in opisna. Imen dirkališča, podjetij, sponzorjev in prireditev v igri ni.
+- **Stranske ceste:** servisne ceste so preproste površine na terenu brez črt, za ograjami (dostopi do tribun in boksov).
+- **Približki:** višine so iz satelitskega modela, od katerega sta odšteti višina krošenj in stavb (±1 m), zglajene; ciljna ravnina enakomerno pada ~1,2 %. Stavbe so škatle po tlorisu iz OSM.
+- **Viri:** © OpenStreetMap (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021, višina krošenj Meta in WRI (glej »Zasluge« v `README.md`). Orodji: `tools/proga-podatki.py` (nastavitve `tools/batangas/config.json`) in `tools/batangas/build.py`.
+- **Test:** `tests/batangas.test.js` (ime, dolžina, smer in zavitost, ovinki po vrsti in smeri, najožji 8. ovinek, razdalja med kraki, višine in nakloni, boksi, izletne cone, tribune za ograjo, teren in raba tal, stavbe in servisne ceste, obzorje, imena, dirka v suhem in v dežju).
