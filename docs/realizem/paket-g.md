@@ -53,6 +53,15 @@ Pred `main`: 2–3 možnosti s slikami naenkrat in slike zdaj in potem (Spa, Bel
 - **Kos 3, svetloba**: `look(t, def)` v `applyTheme` (`js/render.js`, `lookDef` iz gradnje sveta): poletno opoldansko sonce na širini proge (90° − |lat| + 23,44°), zračna masa 1/sin višine in Rayleighova optična globina (0,052 / 0,098 / 0,236) premakneta barvo in moč sonca proti soncu v zenitu. Spa: višina 63°, sonce za ~1 % šibkejše in za ~2 % manj modro; nebo in ton proge ostaneta.
 - **Kos 4, prehod**: `prehod(c, g, u)` v robu trave ob ograji Spa (`js/world-spa.js`): pasovi košnje preidejo v barvo pobočja čez širino roba (malo ob cesti, vse na koncu), namesto ostrega roba na zadnjih dveh točkah.
 
+### Predaja (13. 11. 2026)
+
+Kosi 2–4 so v igri (commiti na veji, povezani testi lokalno zeleni; referenca sveta Spa posodobljena z `WORLD_ONLY=spa node tests/browser/world.test.mjs --update`: mreže in oglišča enaki, spremenile so se samo barve). Naslednji korak:
+1. **Slike zdaj in potem** na Spa: `node tools/shot.mjs spa --m 0,900 --pred 6d10f3f` (pred kosi 2–4). Potem še možnosti moči: kopija igre z drugim `MOC` v `js/world-rastje.js` in `--root <mapa>` (0,35 je v kodi, za možnosti še 0,65 in 1). Slike obreži, do ~300 KB, ne commitaj.
+2. **Vprašanje** (`docs/vprasanja.md`, stran Odločitve računa): »Rastje: barve po meritvah«, možnosti 1) moč 35 %, 2) 65 %, 3) 100 %, vsaka s sliko Spa in sliko zdaj. Po odgovoru popravi `MOC`.
+3. Potem po `docs/realizem.md` prehod na proge (G1–G4): `tools/<id>/build.py` prenese `cover` v podatke, `MERITVE` dobi proge (podnebje po Köppen–Geiger, lat in lon iz orodja), Zasluge v `README.md` za vsako.
+- Preizkus: `npm run test:related`. Skupni zagon lahko preseže 40 min; teste lahko poženeš posamič (`node tests/run.js --related --list`). Če Playwright manjka (`ERR_MODULE_NOT_FOUND`), ga poveži z `ln -s /opt/node-tools/node_modules/playwright node_modules/playwright`.
+- Svetloba (kos 3) je po fiziki majhna (Spa ~1 % moči, ~2 % modre); večji učinek je na severnih progah (Harju).
+
 ### Predaja (12. 11. 2026)
 
 Naslednji je kos 2 (kompleti rastja po podnebju), nato 3 in 4. Za naprej:
