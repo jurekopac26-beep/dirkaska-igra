@@ -34,8 +34,8 @@ try {
           cam: el('rp-cam').textContent, mode: P ? P.cam : null, k: P ? P.k : -1, speed: el('rp-speed').textContent, play: el('rp-play').textContent, fov: cam.fov,
           along: r1(dx * Math.cos(c.h) + dz * Math.sin(c.h)), side: r1(-dx * Math.sin(c.h) + dz * Math.cos(c.h)), up: r1(cam.position.y - (c.y || 0)), camD: r1(Math.hypot(dx, dz)), dx: r1(dx), dz: r1(dz) }; }) };
   };
-  const chaseView = (v) => v.mode === 'chase' && v.cam === 'Za avtom' && v.fov === 58 && v.up > 30 && v.along < -8 && Math.abs(v.side) < -0.35 * v.along;   // (the phone upright: high behind the car; in a bend a little to its side)
-  const chaseLand = (v) => v.mode === 'chase' && v.cam === 'Za avtom' && v.fov === 46 && v.up > 15 && v.along < -5 && Math.abs(v.side) < -0.35 * v.along;   // (on its side: lower and closer behind the car, a longer lens)
+  const chaseView = (v) => v.mode === 'chase' && v.cam === 'Za avtom' && v.fov >= 58 && v.fov <= 63.001 && v.up > 30 && v.along < -8 && Math.abs(v.side) < -0.35 * v.along;   // (the phone upright: high behind the car; in a bend a little to its side; the lens up to 5 deg wider with speed)
+  const chaseLand = (v) => v.mode === 'chase' && v.cam === 'Za avtom' && v.fov >= 46 && v.fov <= 52.001 && v.up > 15 && v.along < -5 && Math.abs(v.side) < -0.35 * v.along;   // (on its side: lower and closer behind the car, a longer lens, up to 6 deg wider with speed)
   const tvView = (v) => v.mode === 'tv' && v.cam === 'TV' && v.camD > 12 && v.up < 20;   // (on a post beside the track, 9 m up)
 
   const { page, errors, act, frames, st } = await open('chase', { width: 844, height: 390 });
