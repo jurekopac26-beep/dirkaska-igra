@@ -1823,6 +1823,18 @@ Za vse velja:
 
 **Ni narejeno (naslednja seja):** posebni »gruščasti« prah ob trku v zid s cv 6. Slike ZDAJ/POTEM (Spa, celni, zid30, tbone) so samo v pripomočkih seje, ne v repozitoriju.
 
+## Predaja (13. 11. 2026, seja na Opusu)
+
+Na veji `trki/realizem` so commiti P1, P4 in P2 (videz). Naslednja seja:
+1. **Odgovori:** preveri trki-cv6-slike, trki-hotham-seme in trki-uncompahgre-padec na strani Odločitve (z ArtifactData) in vprašanje »Odprto za uporabnika« v `paket-p.md`. Od tega je odvisna točka P2.3 (pregrevanje pri Vklop).
+2. **P5:** steklo in luči (`paket-p.md`; 5 % stekla samo pri Vklop).
+3. **P3:** kolesa in obese.
+4. **P6:** karoserija kot pri testih trkov.
+5. **Korak K:** odpadlo kolo.
+6. **Pregled:** neodvisno preverjanje z več agenti samo enkrat, na koncu teme pred `main`. PR #608 ostane osnutek do vrste.
+
+Slike ZDAJ/POTEM delaj z `tools/trki/slike.mjs <scenarij> --a-root <git worktree starega commita> --b-root . --a-nast dmgDet=1 --b-nast dmgDet=1 --oddaljenost blizu`. Slike niso v repozitoriju.
+
 ## Kar je že dobro
 
 Tega nova različica ne sme pokvariti; pri lahkih dotikih, naslonu in sredinskih trkih naj da iste številke kot Simulacija.
