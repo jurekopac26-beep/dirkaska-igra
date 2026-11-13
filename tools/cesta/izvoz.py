@@ -13,7 +13,8 @@ similarity fit of the whole track, a rigid fit of the few hundred metres round e
 centre line. The rules for what stays are those of Livorno (tools/livorno/build.py, side_roads): the first 64 m, on along the way that
 continues it; no paths, no junction at the start, on a bridge, in a gallery or in a banked corner, no loops and lay-bys, the weaker of
 two mouths that would run into each other, a road that comes back to the lap stops short of it. A way of the map that goes on beyond an
-open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), and
+open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), an
+open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own) gets no road for the look
 beside it (own).
 
@@ -31,10 +32,11 @@ import osm
 SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'living_street': 1, 'tertiary': 2, 'tertiary_link': 2,
               'secondary': 3, 'secondary_link': 3, 'primary': 3, 'primary_link': 3, 'trunk': 3, 'trunk_link': 3}
 SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
-# per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start) and
-# how close to the game's line a way of the map must lie to be the track itself (the median of its points, m)
+# per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start), how
+# close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
+# an open road's finish line there is no junction (cilj, m)
 PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'})}
-PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'})
+PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
 
@@ -171,6 +173,7 @@ def main():
                 d0, s0 = near(P[0]); hw0 = hw_at(s0); sa = after(s0)
                 if op and (s0 < 40 or s0 > L - 40): drop('end'); continue                # the road's own continuation beyond the game's line
                 if sa < cfg['start'][0] or sa > L - cfg['start'][1]: drop('start'); continue   # the start: the wall, the fence and the crowd
+                if op and C.get('cilj') and sa > C['cilj'] - cfg['cilj']: drop('finish'); continue   # an open road's finish: the gantry, the crowd, the run-off
                 if any(circ(s0, b) < 24 for b in br) or any(a - 24 < sa < b + 24 for a, b in C.get('brez', [])): drop('bridge'); continue   # no junction on or under a bridge, nor in a gallery
                 if any(a - 30 <= s0 <= b + 30 for a, b in bank): drop('bank'); continue  # nor in a banked corner
                 cls = SIDE_CLASS[hw]; w, ow = side_width(cls, tg)
