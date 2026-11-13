@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "canaries": {
+  "calls": 181,
+  "maxCalls": 192,
+  "kverts": 599,
+  "maxKverts": 703,
+  "jsMs": 1.41
  }
 }
