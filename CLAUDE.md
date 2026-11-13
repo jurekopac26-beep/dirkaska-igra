@@ -37,7 +37,7 @@ Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-
 - Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
 - **Predaja vseh sej (tudi s kodo) pri ~80 tisoč konteksta**; kratka predaja, nova seja, stara se ustavi. Velikih sej ne budi po več kot 1 h mirovanja: nova seja s predajo.
 - **Model**: Opus za zasnovo, kodo, proge, meni, popravke (mehanski popravki prog: imena, oznake, slike za meni, dokumenti na Sonnetu); Fable 5.2 za grafiko in fiziko; **Trki samo Fable 5.2** (ko je porabljen, počakajo). **Rutina (koordinacija, Združevanje, obvestila, zbiranje) samo Haiku/Sonnet.** Spori, dokumenti, vrsta in Združevanje: Sonnet, napor medium. Modela in napora sredi seje ne menjaj. Napor high, max samo za trke, grafiko, težke napake, zasnovo.
-- **Več agentov samo za trke**: do 5 agentov, preverjanje z več agenti **enkrat**, na koncu teme pred `main`; vmes in drugje en agent.
+- **Več agentov samo za trke**: do 5 agentov, preverjanje z več agenti **enkrat**, na koncu teme pred `main`; vmes in drugje en agent. Tok teče **v kosih** (agent do ~30 min, največ 2 hkrati, najdbe sproti v commit; prekinjen tok se ne ponovi enak): `docs/varcevanje.md`, »Tokovi v kosih«.
 - **Poraba 100 % 12 h pred iztekom** (`docs/varcevanje.md`, »Poraba«): pod ciljem ena seja več, nad ciljem nobene nove.
 - **Fizika vožnje se ne spreminja** (samo trki; izjemi po »ok« na predogledu: »Dež in sneg« in #605, hitrejši tekmeci na Super težki in Težki, `docs/odlocitve.md`): avto brez dotika vozi enako.
 - Čakanje: na teste `subscribe_pr_activity`; drugo v zbirko `cakanje`; brez `sleep`.
