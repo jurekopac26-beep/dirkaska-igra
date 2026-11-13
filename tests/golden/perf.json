@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "koli": {
+  "calls": 159,
+  "maxCalls": 265,
+  "kverts": 496,
+  "maxKverts": 593,
+  "jsMs": 1.08
  }
 }
