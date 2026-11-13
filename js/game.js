@@ -6931,10 +6931,19 @@
   }
 
   /* ---------------- boot ---------------- */
+  // the quick entry's track when it races there (quickGo's own conditions: a track, not a friend's challenge or ghost, the car the player's):
+  // boot builds it at once instead of the title's world, and makes no title demo (docs/hitro-nalaganje.md step 3); quickGo's ensureTrack
+  // then has it ready, and the title after the race runs its demo on it (demoShow). A start without one keeps its title as it was
+  function quickTrack() {
+    const q = Core.quickArgs(location.search);
+    if (!q || !q.track || /[#&](izziv|duh)=/.test(location.hash)) return null;
+    return owned(q.car && owned(q.car) ? q.car : Core.MODELS[S.car].id) ? q.track : null;
+  }
   function boot() {
     if (typeof THREE === 'undefined') { $('ld-msg').textContent = tr('Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.'); return; }
     try {
-      track = getTrack(S.track);
+      const qt = quickTrack();
+      track = getTrack(qt || S.track);
       Render.init($('gl'));
       try { document.fonts.load('800 italic 20px ApexMenu'); } catch (e) { }   // (the HUD's face before the first race: its rows and clock laid out in it from the first frame)
       initAutoTier();   // the device's graphics tier for 'Samodejno' (before the first world is built)
@@ -6951,8 +6960,8 @@
       Render.setStorm(S.weather === 'storm');
       Input.onPad = (id, wheel) => toast(tr(!wheel ? 'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.' : ctl.pads[id] ? 'Volan je povezan.' : 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.'), 5200);
       applySettings();
-      demoMake(6); demoAt = demo;
-      Render.attachRace(demo);
+      if (qt) Render.precompile();   // (the race's track: its shaders compiled under the loading screen, as ensureTrack does)
+      else { demoMake(6); demoAt = demo; Render.attachRace(demo); }
       bindUI();
       refreshSegs();
       if (menuOn) Menu.init(MenuBridge);

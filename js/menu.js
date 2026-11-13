@@ -931,6 +931,8 @@
   }
   // the still of the chosen camera's picture (the carousel's backdrop, blurred): the map, the flyover's or the corner's first frame, else
   // the track's model (as stageView chooses)
+  // (a picture in a custom property: absolute, since the menu's sheet is a link to css/menu.css and a relative url in var() would be read from css/)
+  function absUrl(u) { try { return new URL(u, document.baseURI).href; } catch (e) { return u; } }
   function stillOf(t) {
     const R = RT[t.id];
     if (cam === 1 && R) return mapLayers(t, R.top).bg;
@@ -946,7 +948,7 @@
     const at = (k) => list[((trackIdx + k) % n + n) % n];
     const card = (k) => {
       const u = at(k), c = countryOf(u), f = flagUrl(c), [x, y, w, hh, b, r] = RING(k), fly = !!(RT[u.id] && RT[u.id].fly);
-      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + (fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
+      return '<div class="rcard' + (fly ? '' : ' mdl') + '" data-act="track:' + k + '" data-k="' + k + '" data-t="' + u.id + '" aria-hidden="true" style="--pic:url(' + absUrl(fly ? 'assets/maps/fly-' + u.id + '.webp' : trackImg(u)) + ');' + '--x:' + x + ';--y:' + y + ';--w:' + w + ';--h:' + hh + ';--b:' + b + ';--r:' + r + ';--g:0;--t:1;--lo:' + (Math.abs(k) === 1 ? 1 : 0) + '">' +
         '<div class="rlab">' + (f ? '<img src="' + f + '" alt="">' : '<span class="nf">' + esc((c || u.name).slice(0, 3).toUpperCase()) + '</span>') + '<span><b>' + esc(u.name) + '</b><small>' + esc((c ? c + ' · ' : '') + u.km.toFixed(2) + ' km') + '</small></span></div></div>';
     };
     const arw = (k) => {
@@ -954,7 +956,7 @@
       return '<button class="rarw ' + (k < 0 ? 'l' : 'r') + '" data-act="track:' + k + '" aria-label="' + (k < 0 ? 'Previous' : 'Next') + ' track: ' + esc(u.name + (c ? ', ' + c : '')) + '"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="' +
         (k < 0 ? 'M11 3.5L5.5 9l5.5 5.5' : 'M7 3.5L12.5 9 7 14.5') + '" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
     };
-    let h = '<i class="rsafe" aria-hidden="true"></i><div class="rbg" aria-hidden="true" style="--pic:url(' + stillOf(t) + ')"><i></i><b></b></div>';
+    let h = '<i class="rsafe" aria-hidden="true"></i><div class="rbg" aria-hidden="true" style="--pic:url(' + absUrl(stillOf(t)) + ')"><i></i><b></b></div>';
     for (let k = -m; k <= mr; k++) if (k) h += card(k);
     return h + (m ? arw(-1) : '') + (mr ? arw(1) : '');
   }
@@ -1970,6 +1972,20 @@
     try { console.error('the new menu failed, the old one takes over:', e && e.message ? e.message : e); } catch (_) { /* no console */ }
     if (G && G.fallback) G.fallback();
   }
+  // the menu's CSS: index.html's own link (#menu-css: fetched with the page, never on) linked again in the shadow root, the same file
+  // from the browser's memory, not fetched a second time (docs/hitro-nalaganje.md step 2; its rules copied as text, cssText, would lose
+  // a font: shorthand with var() and a longhand after it); no link, or the file not given that way, fetched into a <style> as before
+  async function menuCss(root) {
+    const l = document.getElementById('menu-css');
+    if (l) {
+      const k = document.createElement('link'); k.rel = 'stylesheet'; k.href = l.href;
+      if (await new Promise(ok => { k.onload = () => ok(true); k.onerror = () => ok(false); root.insertBefore(k, app); })) return;
+      k.remove();
+    }
+    const r = await fetch(l ? l.href : 'css/menu.css');
+    if (!r.ok) throw new Error('css/menu.css: ' + r.status);
+    const st = document.createElement('style'); st.textContent = await r.text(); root.insertBefore(st, app);
+  }
   async function init(bridge) {
     G = bridge;
     try {
@@ -1977,9 +1993,7 @@
       host = document.getElementById('menu-host'); const root = host.attachShadow({ mode: 'open' });
       app = document.createElement('div'); app.id = 'mn'; root.appendChild(app);
       buildTracks(); bind();
-      const l = document.getElementById('menu-css'), r = await fetch(l ? l.href : 'css/menu.css');
-      if (!r.ok) throw new Error('css/menu.css: ' + r.status);
-      const st = document.createElement('style'); st.textContent = await r.text(); root.insertBefore(st, app);
+      await menuCss(root);
       if (window.Sence) Sence.root(root);   // (js/sence.js: the colours past Samsung's forced dark)
       ready = true; flush();
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitWhere(); signOn(); });   // (the place's name and the sign's measured again in their own fonts)

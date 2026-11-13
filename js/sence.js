@@ -713,10 +713,12 @@
     for (const sh of Array.from(root.styleSheets || [])) rewriteSheet(sh);
     addBase(root); scan(root); watch(root);
   };
+  // (the page's own sheets once they are all in: index.html switches each on as it arrives, before the window's load (media="not all"
+  // till then, docs/hitro-nalaganje.md step 2); the menu's sheet (#menu-css, never on) left as it came: js/menu.js links it again)
   function page() {
-    for (const sh of Array.from(document.styleSheets)) rewriteSheet(sh);
+    for (const sh of Array.from(document.styleSheets)) if (!(sh.ownerNode && sh.ownerNode.id === 'menu-css')) rewriteSheet(sh);
     addBase(document); scan(document); watch(document);
   }
   if (roots) return;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', page); else page();
+  if (document.readyState === 'complete') page(); else addEventListener('load', page, { once: true });
 })();
