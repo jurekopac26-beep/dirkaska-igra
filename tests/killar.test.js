@@ -283,5 +283,20 @@ check('track: the HUD knows the places in order (Killar, the Chenab, the Hangrun
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
 }
 
+// 9. wood does not spark (the user's report of 13. 11. 2026, Killar s=755 m: »les ne iskri; iskre so samo ob kovini in kamnu«; only the look,
+//    js/render.js: the crash's physics untouched): a knock on the wooden fence's standing panel (render.js woodAt) gives splinters, not sparks;
+//    the road's other side, a broken panel and a track with no wooden fence spark as before; no flow of sparks scraping along an unfenced road (T.unf)
+{
+  const fs = require('fs'), src = fs.readFileSync(require('path').join(__dirname, '..', 'js', 'render.js'), 'utf8');
+  const m = src.match(/function woodAt\(T, c\) \{[\s\S]*?\n  \}\n/), woodAt = m ? new Function('return ' + m[0])() : null;
+  const sp = src.match(/function splinters\([\s\S]*?\n  \}\n/), FN = T.fence, [a, b] = def.drops[0], d = (a + b) / 2, i = T.idx(T.startS + d), q = T.query(T.px[i], T.pz[i], i, {});
+  const car = (side) => { const o = (side > 0 ? q.br : -q.bl) - q.d; return { x: T.px[i], z: T.pz[i], q, wallX: T.px[i] + q.nx * o, wallZ: T.pz[i] + q.nz * o }; };
+  const k = Math.floor((q.s - FN.s0) / FN.P), on = FN.on.slice(); on[k] = 0;
+  const res = woodAt ? [woodAt(T, car(-1)), woodAt(T, car(1)), woodAt({ ...T, fence: { ...FN, on } }, car(-1)), woodAt({ fence: null }, car(-1))] : [];
+  check('wood does not spark: a knock on the standing wooden panel gives splinters (no sparks among them); its other side, a broken panel and no fence spark as before; no flow of sparks on the unfenced road',
+    woodAt && res.join() === 'true,false,false,false' && sp && !/sparkP|sparks\(/.test(sp[0]) && /wallFx\(c, yb\)/.test(src) && /!\(T && T\.unf\)/.test(src) && !/fxWall > 2\.5\) sparks\(/.test(src),
+    `panel ${k} at ${d.toFixed(0)} m: ${res.join(', ')}`);
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;
