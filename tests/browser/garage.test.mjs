@@ -125,6 +125,15 @@ try {
       return out; });
     const bad = Object.entries(FR).filter(([k, q]) => !q.on || !q.hit);
     T.check('the first view: the 3 maquettes, the SERVICE button, the lift\'s plate, the 8 colour circles, the regal\'s parts and the cabinet\'s 8 drawers on the screen between the page\'s buttons, each tapped at its middle picked', !bad.length, JSON.stringify(bad.length ? bad : FR));
+    // the regal's wings: a cell over each to tap (an_spojler/tap_krila: the wing's width and 4 cm each side, its depth, from the top board
+    // up the least height that is 40 px on the phone), clear of the next wings' cells and of every other thing to tap (the parts under them keep theirs)
+    const WC = await page.evaluate(() => { const G = Garage3D, R = G._dbg.RGL, ws = R.items.filter(it => it.kind === 'wing');
+      const rest = R.items.filter(it => it.kind !== 'wing').map(it => it.key).concat(['mq0', 'mq1', 'mq2', 'service', 'lift', ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => 'col' + i), ...G.drawers.els.map(e => 'drw:' + e)]);
+      const cut = (a, b) => !!a && !!b && a.x + 0.5 < b.x + b.w && a.x + a.w > b.x + 0.5 && a.y + 0.5 < b.y + b.h && a.y + a.h > b.y + 0.5;
+      return ws.map((w, i) => { const b = G.box(w.key), h = G.pick(b.x + b.w / 2, b.y + b.h / 2); return { k: w.name, w: Math.round(b.w), h: Math.round(b.h), hit: !!h && h.key === w.key,
+        wings: ws.filter((o, j) => j !== i && cut(b, G.box(o.key))).map(o => o.name), rest: rest.filter(k => cut(b, G.box(k))) }; }); });
+    T.check('the regal\'s wings: a cell over each to tap, at least 40 x 40 px on the phone, clear of the other wings\' cells and of every other thing to tap, its middle picked',
+      WC.length === 5 && WC.every(q => q.w >= 40 && q.h >= 40 && q.hit && !q.wings.length && !q.rest.length), JSON.stringify(WC));
   }
 
   // 1c. the ring's moves through the shows' queue: the chamber down round the car and up (the glass's foot on the floor, clear of the

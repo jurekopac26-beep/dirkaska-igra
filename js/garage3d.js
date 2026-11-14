@@ -3646,16 +3646,22 @@ const Garage3D = (function () {
       // front much, the far robot's arm passes there), its name before it; b.wing: its box in the bay (x0 x1, y1, z0 z1)
       { const [nm, kind, sc, ph] = RGL_WG[k], vw = g.P.length / 3, W = wing(kind, sc, ph); placeGB(g, vw, M4(0, top + 0.0005, RGL.wz)); its.push([nm, 'wing', vw, g.P.length / 3]); shFlat(0.04, top + 0.002, RGL.wz - 0.02, 1.3 * sc * 0.9, 0.36); plate(nm, 0, top, Math.min(WMAX, W.w * 0.6), 0.32);
         const bx2 = (a, z) => { const q = new THREE.Box3(); for (let v = a * 3; v < z * 3; v += 3) q.expandByPoint(_rv.set(g.P[v], g.P[v + 1], g.P[v + 2])); return q; };
-        b.wing = bx2(W.vp, W.vf); b.stands = bx2(vw, W.vp).union(bx2(W.vf, g.P.length / 3)); }
+        b.wing = bx2(W.vp, W.vf); b.stands = bx2(vw, W.vp).union(bx2(W.vf, g.P.length / 3));
+        // (its place to tap, an_spojler/tap_krila: a cell over it, the wing's width and 4 cm each side, its depth, from the top board up by the
+        // least height that is 40 px on the phone (the plate's 0.75 m 38.5 px in today's view: 0.8 m), in the bay (its corners turned with it:
+        // pts); clear of the parts under it, the next wing's cell cut off where they overlap (screenBox))
+        b.cell = new THREE.Box3(new V3(b.wing.min.x - 0.04, top, b.wing.min.z), new V3(b.wing.max.x + 0.04, top + 0.8, b.wing.max.z)); }
       placeGB(g, v0, b.M); placeGB(A, a0, b.M); placeGB(SH, s0, b.M);
       for (const key in RGL.pcs) for (const q of RGL.pcs[key]) if (q.bay === k && !q.w0) { q.M.premultiply(b.M); q.w0 = true; }   // (the parts' frames in the room)
       // (each part a thing to tap: its outline as it stands now, in the world)
       for (const [nm, kind, a, z] of its) { const P = Float32Array.from(g.P.slice(a * 3, z * 3)), N = Float32Array.from(g.N.slice(a * 3, z * 3)), bb = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) bb.expandByPoint(_rv.set(P[i], P[i + 1], P[i + 2]));
-        RGL.items.push({ key: 'rgl:' + nm, kind, name: nm, bay: k, box: bb, P, N });
+        const it = { key: 'rgl:' + nm, kind, name: nm, bay: k, box: bb, P, N }; RGL.items.push(it);
+        if (kind === 'wing' && b.cell) { const c = b.cell; it.pts = []; for (let i = 0; i < 8; i++) it.pts.push(new V3(i & 1 ? c.max.x : c.min.x, i & 2 ? c.max.y : c.min.y, i & 4 ? c.max.z : c.min.z).applyMatrix4(b.M)); }
         if (kind !== 'tyre' && kind !== 'rim') {   // (sklop 8: the other parts as the far arm takes them: their frame the bay's at their box's middle (its face +z), their half sizes)
           const iv = b.M.clone().invert(), lb = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) lb.expandByPoint(_rv.set(P[i], P[i + 1], P[i + 2]).applyMatrix4(iv)); const c = lb.getCenter(new V3());
           RGL.pcs['rgl:' + nm] = [{ kind, g: [a, z], a: null, s: 1, M: b.M.clone().multiply(new THREE.Matrix4().makeTranslation(c.x, c.y, c.z)), hs: lb.getSize(new V3()).multiplyScalar(0.5), bay: k, w0: true }]; } }
     });
+    { const ws = RGL.items.filter(it => it.kind === 'wing'); ws.forEach((w, i) => { w.nb = [ws[i - 1], ws[i + 1]].filter(Boolean); }); }   // (the wings' cells: each shares its strip with the next ones')
     // the atlas' faces lit by the key light (baked: the mesh is unlit), the room's light on them as a whole
     { const C = A.C, N = A.N, K = KEY_DIR; for (const [v0, v1] of bake) for (let v = v0; v < v1; v++) { const nx = N[v * 3], ny = N[v * 3 + 1], nz = N[v * 3 + 2], k = 0.5 + 0.36 * Math.max(0, nx * K.x + ny * K.y + nz * K.z) + 0.14 * (0.5 + 0.5 * ny);
         C[v * 3] *= k; C[v * 3 + 1] *= k; C[v * 3 + 2] *= k; } }
@@ -4290,7 +4296,12 @@ const Garage3D = (function () {
     GH.grp = g; GH.kind = kind; if (DIM.on) { dimSet(false); dimSet(true); } const old = cv.parts[kind]; if (old) { old.visible = false; GH.hid = old; GH.hidX = (old.userData.extra || []).filter(e => e.visible); for (const e of GH.hidX) e.visible = false; } shadowDirty = 2; }   // (its extras too: the tyres' bands on the wheels)
   // (a thing's box on the screen in CSS px (x, y, w, h), its depth; null behind the camera)
   const _pk = new V3();
-  function screenBox(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box, q = it.pts;   // (pts: its own eight corners, a turned box's)
+  // (nb: the things next to it whose places it shares a strip with (the regal's wings' cells): each its half of the strip, cut at its middle)
+  function screenBox(it) { const r = boxOn(it); if (!r || !it.nb) return r;
+    for (const o of it.nb) { const q = boxOn(o); if (!q || q.y > r.y + r.h || q.y + q.h < r.y) continue; const a = Math.max(r.x, q.x), z = Math.min(r.x + r.w, q.x + q.w); if (z <= a) continue;
+      const m = (a + z) / 2; if (q.x + q.w / 2 > r.x + r.w / 2) r.w = m - r.x; else { r.w -= m - r.x; r.x = m; } }
+    return r; }
+  function boxOn(it) { camera.updateMatrixWorld(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, b = it.box, q = it.pts;   // (pts: its own eight corners, a turned box's)
     for (let i = 0; i < 8; i++) { if (q) _pk.copy(q[i]).project(camera); else _pk.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera); if (_pk.z > 1) return null; const x = (_pk.x + 1) / 2 * W, y = (1 - _pk.y) / 2 * H; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
     return { x: x0, y: y0, w: x1 - x0, h: y1 - y0, d: b.getCenter(_pk).distanceTo(camera.position) }; }
   const _rc = new THREE.Raycaster(), _rv2 = new THREE.Vector2();
