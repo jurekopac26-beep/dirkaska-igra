@@ -126,7 +126,7 @@ const RELATED = [
   [/^js\/tracks\/|^js\/menu-data\.js$|^tools\/menu-corner|^assets\/maps\/corner-/, ['menu-corner.test.js', 'browser/menu.test.mjs']],   // (the corner camera: its corners, videos and posters, MENU.corners)
   [/^js\/cars\//, ['kit.test.js', 'deli.test.js', 'fleet.test.js', 'browser/garage.test.mjs', 'browser/cars-ui.test.mjs']],   // (a vehicle must fit the garage's lane, under its door and lamps at 3.3 m, and stand in its place in the car screen's strip by its career price)
   [/^js\/core\.js$/, ['cisterna.test.js', 'zrcalni.test.js', 'novi-tovornjaki.test.js']],   // (the semi-trailer: its joint, its AI, its grid, in a race of six rigs)
-  [/^js\/cars\/(titan|zrcalni|avtovoz|vetrnica|hrast|lastovka)\.js$/, ['novi-tovornjaki.test.js']],   // (the four new trucks: what they borrow from the TITAN and the train, their races)
+  [/^js\/cars\/(titan|zrcalni|avtovoz|vetrnica|hrast|lastovka|gasilec)\.js$/, ['novi-tovornjaki.test.js']],   // (the four new trucks: what they borrow from the TITAN and the train, their races)
   [/^js\/core\.js$|^js\/cars\//, ['rezervna-kolesa.test.js']],   // (the spare wheels: off at 80 % of the damage, docs/deli.md »Rezervno kolo«)
   [/^js\/render\.js$|^js\/cars\/(kamen|pescenjak|medved|cisterna)\.js$/, ['browser/rezervna-kolesa.test.mjs']],   // (their rocking from 50 %, their pieces)
   [/^js\/deli\/(barve|skriti)\.js$/, ['deli.test.js', 'deli-barve.test.js', 'browser/deli-barve.test.mjs']],   // (the garage's parts, sklop 3)

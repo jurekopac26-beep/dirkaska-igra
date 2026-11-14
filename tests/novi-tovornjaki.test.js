@@ -1,5 +1,6 @@
 // The four new trucks (no browser; docs/titan-cisterna.md, »Novi tovornjaki«): TITAN AVTOVOZ, KRILO VETRNICE and HRAST are rigs (a
-// tractor already in the game with a semi-trailer of its own on its kingpin), LASTOVKA a coach, one body of 12 m. First what they
+// tractor already in the game with a semi-trailer of its own on its kingpin), LASTOVKA a coach, one body of 12 m; with them the fire
+// engine, GASILEC (the fiftieth car: one body, a ladder and a light bar for parts, the TITAN's mounts of its own). First what they
 // borrow: the AVTOVOZ's and the KRILO's breaking parts and the garage's mounts are the TITAN's, the HRAST's the ZRCALNI VLAK's, and so
 // are its driving numbers but for its limiter (their files keep a copy, read when first asked for); none carries a spare tyre
 // (docs/avti-kolibri.md); the blade's overhang (trailer.tail, the look's only) is in the grid's step and in the AI's look behind.
@@ -28,12 +29,15 @@ for (const [id, of] of RIGS) {
 { const A = M('hrast').def, B = M('zrcalni').def, ph = Object.assign({}, B.phys, { vLim: 145 });
   check('hrast: its driving numbers are the train\'s tractor\'s (phys but for the limiter, 145 km/h; arc; csp), one trailer on its kingpin', same(A.phys, ph) && same(A.arc, B.arc) && same(A.csp, B.csp) && !A.trailer.next,
     ['phys', 'arc', 'csp'].filter(k => !same(k === 'phys' ? ph : B[k], A[k])).join(', ')); }
-for (const id of ['avtovoz', 'vetrnica', 'hrast', 'lastovka']) {
+for (const id of ['avtovoz', 'vetrnica', 'hrast', 'lastovka', 'gasilec']) {
   const PT = C.partsOf(M(id)), sp = Object.keys(PT).filter(k => PT[k].spare || /spare/i.test(k));
   check(`${id}: no spare tyre among its parts (docs/avti-kolibri.md)`, !sp.length && Object.keys(PT).length > 0, sp.join(' ') || Object.keys(PT).length + ' parts');
 }
 check('lastovka: one body of 12 m, no trailer, its mounts its own (the garage shows it as a scale model: Render.garageK, tests/browser/garage.test.mjs)',
   COACH.len === 12 && !COACH.trailer && Object.keys(COACH.def.mounts || {}).length >= 8, `${COACH.len} m, ${Object.keys(COACH.def.mounts || {}).length} mounts`);
+{ const F = M('gasilec'), PT = C.partsOf(F), mt = Object.keys(F.def.mounts || {}).length;   // (the fire engine, the fiftieth car: docs/titan-cisterna.md, »GASILEC«)
+  check('gasilec: one body under the garage\'s door (3.3 m), no trailer, its ladder and its light bar parts of its own, a mount for every part the TITAN has one for',
+    F.len <= 6.4 && F.def.parts.ht < 3.3 && !F.trailer && !!PT.ladder && !!PT.lightbar && mt === Object.keys(M('titan').def.mounts).length, `${F.len} m long, ${F.def.parts.ht} m tall, ${mt} mounts`); }
 
 // the trailer's kingpin against the tractor's fifth wheel (m)
 const pinGap = (c) => { const T = c.tl, k = T.D.kp[0]; return Math.hypot(c.x + Math.cos(c.h) * k - (T.x - Math.cos(T.h) * T.cx), c.z + Math.sin(c.h) * k - (T.z - Math.sin(T.h) * T.cx)); };
@@ -42,7 +46,7 @@ const CK = ['x', 'z', 'y', 'h', 'vx', 'vz', 'w'], TK = ['x', 'z', 'y', 'h', 'vx'
 const track = (id) => C.TRACKS.find(d => d.id === id);
 
 // ---- each in a race of its own field ----
-const RACES = [['avtovoz', 'bathurst'], ['vetrnica', 'bathurst'], ['vetrnica', 'caracoles'], ['hrast', 'bathurst'], ['lastovka', 'bathurst']];
+const RACES = [['avtovoz', 'bathurst'], ['vetrnica', 'bathurst'], ['vetrnica', 'caracoles'], ['hrast', 'bathurst'], ['lastovka', 'bathurst'], ['gasilec', 'bathurst']];
 for (const [id, tid] of RACES) for (const phys of ['cs', 'nova']) {
   const d = track(tid); if (!d) continue;
   const PM = M(id), T = new C.Track(d), o = { numAI: 5, playerGrid: 99, playerModel: PM, laps: 99, assist: 2, phys, seed: 3, difficulty: 1, damage: 1 };

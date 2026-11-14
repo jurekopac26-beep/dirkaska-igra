@@ -527,6 +527,7 @@
     'TITAN z avtovozom: na dveh palubah pelje pet avtov iz igre; visok, dolg in težak.': 'The TITAN with a car carrier: five of the game\'s cars on two decks; tall, long and heavy.',
     'TITAN s krilom vetrnice: 27 metrov krila sega daleč čez zadnje osi prikolice.': 'The TITAN with a wind turbine blade: 27 metres of it reach far past the trailer\'s rear axles.',
     'Puščavski vlačilec z gozdarsko prikolico: dva kupa hlodov med koli, en zgib.': 'A desert tractor with a timber trailer: two stacks of logs between the stakes, one joint.',
+    'Gasilsko vozilo z lestvijo: težko in visoko, z modrimi lučmi na strehi kabine.': 'A fire engine with a turntable ladder: heavy and tall, with blue lights on its cab\'s roof.',
     'Turistični avtobus, dvanajst metrov v enem kosu, s prtljago potnikov na strehi.': 'A touring coach, twelve metres in one piece, with the passengers\' luggage on its roof.',
     'Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi.': 'A desert rally truck with the cab behind the engine, big wheels and spare wheels.',
     'Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini.': 'A racing van from the 80s and 90s with a race engine in the middle.',

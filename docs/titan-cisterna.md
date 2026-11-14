@@ -70,7 +70,7 @@ Ob vrsti (ko je pull request drugi v vrsti):
 3. `npm run test:related`, `node tools/stamp.js --check`; nato »Ready for review« in krog na GitHubu (`subscribe_pr_activity`). Po zelenem krogu pravilo »Svež main pred združitvijo« iz `CLAUDE.md`, nato združitev, vrstica #304 iz `docs/vrsta.md`, sporočila sejam iz zbirke `cakanje` (`pr` 304).
 
 ## Novi tovornjaki (13. 11. 2026)
-Odločitev uporabnika 13. 11. 2026 (`docs/realizem.md`, točka tovornjakov): štirje novi tovornjaki z mesti za dele iz garaže, brez rezervne gume, brez napisov; TITAN PLIN odpade. Oblike so z maket (`makete/tovornjaki-9-11`, ne gre na `main`).
+Odločitev uporabnika 13. 11. 2026 (`docs/realizem.md`, točka tovornjakov): štirje novi tovornjaki z mesti za dele iz garaže, brez rezervne gume, brez napisov; TITAN PLIN odpade. Peto vozilo je posebno vozilo po izbiri seje: GASILEC (spodaj). Oblike so z maket (`makete/tovornjaki-9-11`, ne gre na `main`).
 
 | Vozilo | Datoteka | Kaj je | Dolžina | 0–100 · največ · zaviranje |
 |---|---|---|---|---|
@@ -78,12 +78,13 @@ Odločitev uporabnika 13. 11. 2026 (`docs/realizem.md`, točka tovornjakov): št
 | KRILO VETRNICE | `js/cars/vetrnica.js` | TITAN + dolga prikolica z enim krilom vetrnice (11 t) | 31,7 m do konice | 8,9 s · 148 km/h · 43 m |
 | HRAST | `js/cars/hrast.js` | vlačilec ZRCALNEGA VLAKA v barvi igralca + gozdarska prikolica z dvema kupoma hlodov (14 t) | 17,3 m | 9,3 s · 142 km/h · 42 m |
 | LASTOVKA | `js/cars/lastovka.js` | potovalni avtobus, eno telo 12 m, prtljaga potnikov na strešnem nosilcu | 12 m | 7,5 s · 130 km/h · 32 m |
+| GASILEC | `js/cars/gasilec.js` | gasilsko vozilo z lestvijo na gramofonu, eno telo (posebno vozilo, 50. avto) | 6,3 m | 7,4 s · 138 km/h · 32 m |
 
 - **Vlačilci so obstoječi**: videz z `K.lookOf('titan')` oz. `K.lookOf('zrcalni')`, deli za razbijanje in mesta za dele (`partNames`, `parts`, `mounts`) so kopija TITANOVIH oz. vlakovih, prebrana ob prvi uporabi (datoteka se naloži tudi sama). HRAST ima tudi vozne številke vlaka (omejevalnik 145 km/h). Fizika obstoječih vozil je nespremenjena.
 - **Graditelj prikolice** (`js/render.js`, `tlBuild`) ima dva nova gradnika: `B.loft(prerezi, barva, { n })` (telo iz elips, krilo vetrnice) in `B.car(id, x, y, z, { k, rev })` (avto iz igre na palubi: pri igralcu prava karoserija in kolesa v eni geometriji prikolice, pri tekmecih obris, v senci kvader), zato avtovoz ne doda klicev risanja.
 - **Previs krila** (`trailer.tail`, 0–14 m): krilo sega 11,8 m čez konec prikolice in je samo videz; stene in avti se dotaknejo 16 m prikolice. `tail` upoštevata štartna mreža (`_gStep`) in pogled tekmecev nazaj (`tl.back`), da ostanejo za konico. V razstavnem prostoru in na sliki avta v meniju je previs del dolžine vlačilca s prikolico (`tlShow`), pogled se oddalji do 7,5-krat.
-- **Polje**: `fieldN` 4 (AVTOVOZ, HRAST, LASTOVKA) oz. 3 (KRILO VETRNICE), v dirki samo svoji.
+- **Polje**: `fieldN` 4 (AVTOVOZ, HRAST, LASTOVKA), 3 (KRILO VETRNICE) oz. 5 (GASILEC), v dirki samo svoji.
 - **Avtobus in garaža**: meja dolžine telesa je 13 m (prej 6,4 m; `js/core.js`). Avtobus je 12 m dolg in s prtljago 4 m visok, komora za barvanje ima 6,8 m in vrata 3,3 m, zato v garaži stoji kot **maketa v merilu 1 : 2** (`Render.garageK`, `GARAGE_LEN` 6,4 m; merilo je v sami mreži, `GK(M)` v `js/garage3d.js`). Soba, komora, vrata in roboti so za vse druge avte nespremenjeni. Kolesi dodatne osi sta del telesa, 6 cm nad cesto: brez koles se avtobus usede nanju (`tests/browser/fleet.test.mjs`).
 - **Testi**: `tests/novi-tovornjaki.test.js` (kaj si izposodijo, brez rezervne gume, dirke svojih polj na Bathurstu in Caracolesu v obeh fizikah, zaviranje v ovinku), `tests/fleet.test.js` (številke), `tests/browser/garage.test.mjs` (komora okrog vsakega avta), `tests/deli.test.js` (vsaka možnost na vsakem mestu).
-- **Posebno vozilo (50. avto)**: predlog GASILEC čaka na uporabnikov »ok« na sliki makete; do takrat ni izdelan.
+- **Posebno vozilo (50. avto): GASILEC** (uporabnikov »ok« na sliki makete 14. 11. 2026). Gasilsko vozilo z lestvijo: TITANOVA kabina (0,2 m bolj spredaj), za njo nadgradnja z roletami nad belim pasom, gramofon nad zadnjo osjo in lestev, ki leži naprej čez kabino; modre luči na strehi kabine in na zadnjih vogalih (ne utripajo), zadaj rdeča in rumena polja. Brez napisov, grbov in rezervne gume. Eno telo 6,3 m, 7800 kg, TITANOV motor in menjalnik, omejevalnik 140 km/h; kategorija Tovornjaki (številke posebnih vozil so zanj prehitre). Karoserija je v barvi igralca (rdeča je prva barva v izbiri). Deli za razbijanje: TITANOVI in še `lightbar` in `ladder` (lestev odleti v enem kosu); 28 mest za dele iz garaže kot TITAN (krilo na zadnjem robu strehe nadgradnje, zadnje luči v črnih ploščah na zadnji steni). Visok je 3,21 m, zato gre v garažo v pravi velikosti. Obremenitev na Spaju: 144/193 klicev, 390/486 tisoč oglišč.
 
