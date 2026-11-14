@@ -179,3 +179,9 @@ Prošnja uporabnika (14. 11. 2026): »Ob takih potkah postavi na vsake toliko ca
 - Na zunanji strani (stran od ceste): svetilka na ~22 m, klop (na dolgi potki dve) obrnjena k potki, na njej kdo sedi in ob avtu pogleda, koš ob klopi, nekaj smeti v travi (papir, pločevinka, lonček), stojalo z vrečkami za pasje iztrebke na koncu.
 - Sprehajalci gredo po potki tja in nazaj (`stroll()`, `act.path`): par drug ob drugem, kdo sam, kdo s psom na povodcu; vsak po svoji črti, da se srečajo.
 - Spa: 4 prizori, 17 ljudi; drugih prog ne spremeni (okolica je samo na Spaju). Svet Spaja 1452 mrež, 1 183 139 oglišč (`tests/golden/world.json`).
+
+## S1: Nürburg in Livorno (veja `realizem/s1-stavbe`, nad #668; 14. 11. 2026)
+
+Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je narejena iz `realizem/s0-stavbe` in gre na `main` za #668. Spa je narejen v S0 in se tu ne spreminja; Suzuka je testna proga (zamrznjena) in je S1 ne dela.
+
+**Obseg:** Nürburg, Nemčija (`nring`), in Livorno, Italija (`livorno`): hiše skozi skupni graditelj (`World.stavbe`, komplet države), okolica iz OSM (dovozi, potke, parkirišča do ~64 m), predmeti ob potkah kot na Spaju. Vse kot v resnici, brez imen, napisov in logotipov; fizika vožnje in odtisi trkov ostanejo.
