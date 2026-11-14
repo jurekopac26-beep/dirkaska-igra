@@ -116,8 +116,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.part('bumperR', () => K.box(-6.0, 0.44, 0, 0.06, 0.36, 2.3, 0, D));
         for (const sd of [-1, 1]) K.rect(-6.008, 1.3, sd * 1.05, 0.2, 0.78, [0.02, 0.02, 0.02], { dir: '-x', host: sd < 0 ? 'tailL' : 'tailR' });   // (each lamp's black panel a part of its own: tailL, tailR)
         K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(-6.012, 1.3, sd * 1.05, 0.14, 0.7, { host: sd < 0 ? 'tailL' : 'tailR' }); });
-        // the tag axle's tyres
-        for (const sd of [-1, 1]) K.tyre(TAG, K.M.rw, sd * K.hw, { axis: 'z', face: sd, hi: true, style: 'truck', w: 0.32 });
+        // the tag axle's tyres (the body's own, 6 cm off the road: the body leans and sinks with them, down on them with its wheels off)
+        for (const sd of [-1, 1]) K.tyre(TAG, K.M.rw + 0.06, sd * K.hw, { axis: 'z', face: sd, hi: true, style: 'truck', w: 0.32 });
       },
     },
   });
