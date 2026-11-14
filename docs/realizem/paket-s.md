@@ -180,6 +180,23 @@ Prošnja uporabnika (14. 11. 2026): »Ob takih potkah postavi na vsake toliko ca
 - Sprehajalci gredo po potki tja in nazaj (`stroll()`, `act.path`): par drug ob drugem, kdo sam, kdo s psom na povodcu; vsak po svoji črti, da se srečajo.
 - Spa: 4 prizori, 17 ljudi; drugih prog ne spremeni (okolica je samo na Spaju). Svet Spaja 1452 mrež, 1 183 139 oglišč (`tests/golden/world.json`).
 
+### Predaja 6 (14. 11. 2026): potka se ne konča sredi travnika
+
+Prošnja uporabnika (14. 11. 2026, slika pri 5315 m): »Potka se konca sredi travnika. To ni resnicno potke vedno nekam peljejo ali do hise ali do druge potke, ceste, itd...«
+
+**Orodje (`tools/dovozi-osm.mjs --okolica`, `network()`):**
+- Seme so poti do 25 m od hiš. Pot raste naprej po makadamskih poteh iz OSM, ki se je dotikajo, nato `meets()` obreže slepe konce. Vsak konec je pri hiši (4 m), pri drugi poti, ob cesti ali zunaj 64 m pasu.
+- Asfaltna pot ostane samo v **strnjenih odsekih** do 30 m od hiš (`near()` vrne odseke). Prej je ostal ves kos od prve do zadnje hiše (do 560 m skozi gozd), zato je izginilo drevje.
+- Na koncu orodje izpiše konce, ki se ne dotaknejo ničesar. Zdaj jih je 7 (prej 14), vsi pri ~40 m od ceste v gozdu, nobeden na travniku.
+
+**Spa:**
+- Potka pri 5315 m gre naprej iz slike, pri 5380 m pa do hiše.
+- Gozd pri 1500 m je enak kot prej (0,0 % razlike). Dreves je 41 652 (prej 41 635).
+- Obremenitev telefona: 186 klicev, 448 tisoč oglišč. Svet Spaja ima 1453 mrež in 1 192 789 oglišč.
+- Vrstice `yard`, `okolica.osm` in `okolica.gen` v `js/tracks/spa.js` so izpis orodja, zato jih ne popravljaj ročno.
+
+**Odprto:** nelokalni vpliv vrstic `yard` na drevesa. Ena dolga asfaltna vrstica je spremenila drevje ~390 m stran. `OK.on`, `excluded`, THIN, `maxT` in odstranjevanje na daljavo so izključeni. Če se ponovi, išči v taboru navijačev in izključitvah množic (`CR.circ`).
+
 ## S1: Nürburg in Livorno (veja `realizem/s1-stavbe`, nad #668; 14. 11. 2026)
 
 Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je narejena iz `realizem/s0-stavbe` in gre na `main` za #668. Spa je narejen v S0 in se tu ne spreminja; Suzuka je testna proga (zamrznjena) in je S1 ne dela.
