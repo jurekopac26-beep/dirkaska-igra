@@ -185,3 +185,23 @@ Prošnja uporabnika (14. 11. 2026): »Ob takih potkah postavi na vsake toliko ca
 Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je narejena iz `realizem/s0-stavbe` in gre na `main` za #668. Spa je narejen v S0 in se tu ne spreminja; Suzuka je testna proga (zamrznjena) in je S1 ne dela.
 
 **Obseg:** Nürburg, Nemčija (`nring`), in Livorno, Italija (`livorno`): hiše skozi skupni graditelj (`World.stavbe`, komplet države), okolica iz OSM (dovozi, potke, parkirišča do ~64 m), predmeti ob potkah kot na Spaju. Vse kot v resnici, brez imen, napisov in logotipov; fizika vožnje in odtisi trkov ostanejo.
+
+**Nürburg (`js/tracks/nring.js`, `js/world-nring.js`):**
+- 107 hiš gradi skupni graditelj (komplet Nemčije, slog `north`; 11 ob cesti); hale in tribuna (nad 1500 m²) ostanejo svoje.
+- Okolica iz OSM (`tools/dovozi-osm.mjs --okolica`): 1 pot do hiše, 25 asfaltnih poti, makadam in parkirišča, skromna dopolnitev pri 9 hišah (27 oblik); ob potkah 4 prizori (okoli 2,3 km in 16,3 km).
+- Drevesa in tabor navijačev se okolici umaknejo z enakimi žrebi; ostalo ostane na mestu.
+- Obremenitev 157 klicev, 271 tisoč oglišč (najbolj obremenjeno mesto 184 / 286; prej 156 / 180 in 288).
+- V kameri za avtom razlike skoraj ni: OSM ima samo 7 hiš do 40 m od ceste, zgrajene so 27–37 m od nje (zunaj slike), okolico do 25 m pa večinoma odreže ograja. Proga gre večinoma skozi gozd.
+
+**Livorno (`js/tracks/livorno.js`, `js/world-livorno.js`):**
+- 1113 od 1127 stavb gradi skupni graditelj (komplet Italije, slog `med`; 831 ob cesti): hiše, lope, garaže in bloki. Cerkve, gradovi, stolpi, ruševine, trgovine, javne stavbe in rastlinjaki ostanejo po starem.
+- Okolica iz OSM (60 oblik): 34 poti do hiš, 71 asfaltnih poti, 22 mestnih pločnikov, peš poti in stopnic brez oznake površine (narisani kot asfalt, `yard` vrsta 1), 25 parkirišč in 35 neasfaltiranih poti (makadam: samo izrecno neasfaltirane poti, kolovozi in steze brez asfaltne površine).
+- **Brez splošnega dopolnila** (`gen: []`): v mestu ulic in pločnikov ne štejemo za površino ob hiši, zato bi dopolnilo izmislilo dvorišča, dovoze ali pasove zemlje pri ~900 hišah, ki jih zemljevid nima (tabla: nič izmišljenega).
+- Ob potkah 18 prizorov; drevesa se okolici umaknejo (žreb po kraju, ne po vrsti).
+- Svet 1887 mrež, 1 279 696 oglišč; obremenitev 141 klicev, 295 tisoč oglišč (najbolj obremenjeno mesto 177 / 352).
+
+**Enaki žrebi:** veji hiš v graditeljih prog naredita iste žrebe v istem redu kot prej (bloki `u: [crH, R(), R()]` namesto dveh `vary`, hiše `R()` namesto enega), zanka dreves žreba po kraju. Predmeti, gledalci in `propsHash` so na obeh progah enaki kot prej; druge proge se ne spremenijo.
+
+**`jsMs` v `tests/golden/perf.json`** je samo za vednost: med vzporednimi testi je izmerjen čas napihnjen (Livorno 4,6–5,3 ms), zato ostane prejšnja vrednost.
+
+**Spori z E1 (#678, veja `realizem/e1-nurburg-tianmen`), samo za vednost:** `js/tracks/nring.js` (vrstica `yard` ob E1 `stranske:`), `js/world-nring.js` (pogoj `plant`: `OK.on` ob E1 `naCesti`; vrstica statistike), `js/world-livorno.js` (vrstica statistike: E1 doda `lamps`, `stops`, `mouthPosts`), `tests/golden/perf.json` in `world.json` (za `nring` in `livorno` znova). Vsi so sosednji: obdrži oboje. E1 stranske ceste (OSM `highway=service` ob progi) se na Nürburgu lahko prekrivajo z asfaltnimi potmi okolice; ob spoju preveri, da ni dvojnega risanja.
