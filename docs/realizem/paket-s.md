@@ -205,12 +205,10 @@ Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je nareje
 
 **Nürburg (`js/tracks/nring.js`, `js/world-nring.js`):**
 - 107 hiš gradi skupni graditelj (komplet Nemčije, slog `north`; 11 ob cesti); hale in tribuna (nad 1500 m²) ostanejo svoje.
-- Okolica iz OSM po pravilih S0 (Predaja 6, `tools/dovozi-osm.mjs --okolica`), 183 oblik:
-  - 1 pot do hiše;
-  - 13 asfaltnih poti (samo strnjeni odseki do 30 m od hiš);
-  - 163 makadamskih poti (zrastejo iz poti ob hišah po skupnih točkah, slepi konci so obrezani);
-  - 5 parkirišč;
-  - skromna dopolnitev pri 9 hišah (15 vrstic).
+- Okolica iz OSM po pravilih S0 (Predaja 6, `tools/dovozi-osm.mjs --okolica`):
+  - v `yard` 1 pot do hiše in 13 asfaltnih poti (samo strnjeni odseki do 30 m od hiš);
+  - v `okolica` 168 oblik: 163 makadamskih poti (zrastejo iz poti ob hišah po skupnih točkah, slepi konci so obrezani) in 5 parkirišč;
+  - skromna dopolnitev pri 9 hišah (15 vrstic `gen`).
 - Ob potkah 62 prizorov in 246 ljudi, od 0,6 do 8 km, ob gozdnih in travniških poteh.
 - Drevesa in tabor navijačev se okolici umaknejo z enakimi žrebi. Drevesa na poteh samo izginejo, nobeno se ne premakne (slike pri 4370 m).
 - Svet ima 3872 mrež in 2 525 682 oglišč.
@@ -219,12 +217,9 @@ Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je nareje
 
 **Livorno (`js/tracks/livorno.js`, `js/world-livorno.js`):**
 - 1113 od 1127 stavb gradi skupni graditelj (komplet Italije, slog `med`; 831 ob cesti): hiše, lope, garaže in bloki. Cerkve, gradovi, stolpi, ruševine, trgovine, javne stavbe in rastlinjaki ostanejo po starem.
-- Okolica iz OSM po pravilih S0 (126 oblik):
-  - 34 poti do hiš;
-  - 46 asfaltnih poti (strnjeni odseki do 30 m od hiš);
-  - 18 mestnih pločnikov, peš poti in stopnic brez oznake površine (narisani kot asfalt, `yard` vrsta 1);
-  - 25 parkirišč;
-  - 101 neasfaltirana pot (makadam: samo izrecno neasfaltirane poti, kolovozi in steze brez asfaltne površine; zrastejo po skupnih točkah, slepi konci so obrezani).
+- Okolica iz OSM po pravilih S0:
+  - v `yard` 34 poti do hiš, 46 asfaltnih poti (strnjeni odseki do 30 m od hiš) in 18 mestnih pločnikov, peš poti in stopnic brez oznake površine (narisani kot asfalt, `yard` vrsta 1);
+  - v `okolica` 126 oblik: 25 parkirišč in 101 neasfaltirana pot (makadam: samo izrecno neasfaltirane poti, kolovozi in steze brez asfaltne površine; zrastejo po skupnih točkah, slepi konci so obrezani).
 - **Brez splošnega dopolnila** (`gen: []`): v mestu ulic in pločnikov ne štejemo za površino ob hiši, zato bi dopolnilo izmislilo dvorišča, dovoze ali pasove zemlje pri ~900 hišah, ki jih zemljevid nima (tabla: nič izmišljenega).
 - Ob potkah 53 prizorov in 209 ljudi, od 1,7 do 18,8 km. 25 prizorov je v gosti mreži potk med 17,7 in 18,8 km.
 - Drevesa se okolici umaknejo (žreb po kraju, ne po vrsti).
