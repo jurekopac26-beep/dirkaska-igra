@@ -3349,7 +3349,7 @@ const Render = (function () {
   let rain = null, wet = -1, wetW = -1, dryLn = null, themeId = 'lake', birds = null, streaks = null, splash = null, pud = null;   // rain streaks; the weather drawn now (race.rain, the rain, and race.water, the water on the road; -1: not applied yet), the dry racing line, the world's theme
   let basePR = 1, dynScale = 1, saverK = 1, tierNow = 2;   // (saverK: the battery saver's lower resolution, setSaver; tierNow: the graphics detail tier the world was built at, buildWorld)
   let settings = { quality: 'high', shadows: true, camera: 'chase', carDetail: 'normal' }, carHi = false;   // (carHi: Nastavitve · Detajli avtov: Visoki)
-  const cam = { x: 0, z: 0, zoom: 1, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.3, look: null, shOn: { hit: 0, land: 0, kerb: 0, mis: 0 } };   // shOn: which shakes of the view are on (Nastavitve · Tresenje kamere: ob trku, ob pristanku, na robnikih, v misijah; all off by default; shake); userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; behind the car, scaled into the screen's room: updateCamera)
+  const cam = { x: 0, z: 0, zoom: 1, fw: 0, hs: 0, shake: 0, init: false, userZoom: 1, userBack: 0, userTilt: 0.3, look: null, shOn: { hit: 0, land: 0, kerb: 0, mis: 0 } };   // shOn: which shakes of the view are on (Nastavitve · Tresenje kamere: ob trku, ob pristanku, na robnikih, v misijah; all off by default; shake); userBack: how many metres the car sits further back/lower in the frame (Nastavitve · Položaj avta; behind the car, scaled into the screen's room: updateCamera)
   let time = 0;
   let showScene = null, showCam = null, showCar = null, showAngle = 0.6, showFloor = null, showArgs = null;
   const showFr = { k: 1, dy: 0 };   // the showroom's framing for the car on the turntable: the camera's distance x k, the view raised by dy (setShowCar)
@@ -7021,7 +7021,11 @@ const Render = (function () {
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45, 'land');
-      if (c.isPlayer && c.speed > 8 && !c.air && c.ws && (c.ws[0] === 1 || c.ws[1] === 1 || c.ws[2] === 1 || c.ws[3] === 1)) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14, 'kerb');   // (the kerbs' ridges: the view trembles while a wheel runs on them)
+      if (c.isPlayer && c.speed > 8 && !c.air && c.ws) {   // (the kerbs' ridges: the view trembles while a wheel runs on them; on loose stones, a gravel road (makadam, 5) or
+        // a gravel trap (3), more gently: the feel of speed, predlog I5; both with Nastavitve · Tresenje kamere na robnikih in makadamu, camKerb)
+        const ws = c.ws, kb = ws[0] === 1 || ws[1] === 1 || ws[2] === 1 || ws[3] === 1, gv = !kb && (ws[0] === 5 || ws[1] === 5 || ws[2] === 5 || ws[3] === 5 || ws[0] === 3 || ws[1] === 3 || ws[2] === 3 || ws[3] === 3);
+        if (kb) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14, 'kerb'); else if (gv) shake(0.03 + clamp(c.speed / 60, 0, 1) * 0.07, 'kerb');
+      }
       v.spin += c.vl * dt / M.rw;
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
@@ -9981,7 +9985,11 @@ const Render = (function () {
     const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
     cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
     cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
+    cam.fw += (chaseFw(spd, pitZ) - cam.fw) * k2;   // (the lens a little wider with speed, eased as the zoom: chasePose)
   }
+  // the feel of speed (predlog I5, the user's choice 7. 11. 2026): the chase view's lens a little wider with speed, from 36 km/h (at rest and
+  // slow as ever: 46 deg on its side, 58 upright) to 216 km/h and over (+6 deg on its side, +5 upright), never in the pit box (pitZ)
+  const chaseFw = (spd, pitZ) => pitZ < 1 ? 0 : sstep(10, 60, spd || 0);
   function chasePose(c, x, z, baseY) {
     // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
     const portrait = camera.aspect < 1;
@@ -9999,14 +10007,14 @@ const Render = (function () {
     }
     const ahead = (a0 + back) * (1 - 0.8 * clamp((1 - cam.zoom) / 0.38, 0, 1));   // (in the pit box, zoomed in: look at the car and its crew; userBack: the car sits lower/further back in the frame — Nastavitve · Položaj avta)
     const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs), tx = x + fx * ahead, tz = z + fz * ahead;
-    return [tx - fx * D * Math.cos(pitch), baseY + D * Math.sin(pitch), tz - fz * D * Math.cos(pitch), tx, baseY, tz, fov];
+    return [tx - fx * D * Math.cos(pitch), baseY + D * Math.sin(pitch), tz - fz * D * Math.cos(pitch), tx, baseY, tz, +(fov + (cam.fw || 0) * (portrait ? 5 : 6)).toFixed(2)];   // (the lens wider with speed: chaseFw; in steps of 0.01 deg)
   }
   function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && !pitOn(c) && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it (not under the pit stop's camera, pitCine: its view behind the car as ever)
-    if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
+    if (!cam.init) { cam.zoom = 1; cam.fw = chaseFw(spd, pitZ); cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
     const k2 = 1 - Math.exp(-dt * 1.4);

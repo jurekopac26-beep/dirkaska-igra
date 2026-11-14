@@ -595,7 +595,7 @@
     Core.setCrash(xPhys(race && race.player && race.cars.some(c => c.net)));   // (the rollover, the knocks, the attack, the handling: never online (a friend's car: net), where both phones must drive the same)
     Core.setTest(testOf(race && race.player && race.cars.some(c => c.net)));   // (Preizkus: tekmeci in trki, at once: the spread of the rivals' paces from the next race, it is dealt out when the race is made)
     Render.cam.userBack = [0, 2, 5, 7, 10, 15, 20][+S.carLow] || 0;   // (Položaj avta: avto v sliki toliko metrov bolj zadaj/nižje; kamera za avtom, kjer zaslon nima prostora, sorazmerno manj: Render updateCamera)
-    Render.cam.shOn = { hit: +S.camShake, land: +S.camLand, kerb: +S.camKerb, mis: +S.camMis };   // (Tresenje kamere: ob trku, ob pristanku po skoku, na robnikih, v misijah)
+    Render.cam.shOn = { hit: +S.camShake, land: +S.camLand, kerb: +S.camKerb, mis: +S.camMis };   // (Tresenje kamere: ob trku, ob pristanku po skoku, na robnikih in makadamu, v misijah)
     Render.cam.userTilt = 0.3;   // (kamera za avtom je vedno 30 % manj nagnjena navzdol: gleda dlje naprej po cesti, razdalja ostane ista; brez nastavitve)
     Comm.setEnabled(!!+S.comm); Comm.setSpeech(!!+S.sound); Comm.setNotes(+S.codrv === 1); Comm.setEngineer(!!+S.engV);   // (codrv 2: the co-driver's captions only)
     // (the voices: the commentator's, the co-driver's (the engineer's too), every one English whatever the page's language)

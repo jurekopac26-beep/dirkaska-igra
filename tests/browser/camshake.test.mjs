@@ -1,5 +1,7 @@
 // Tresenje kamere (Nastavitve): four rows, each Izklop / Vklop, all Izklop by default: ob trku (a hard knock on a barrier, another car or
-// debris), ob pristanku (landing after a jump), na robnikih (a wheel on a kerb's ridges), v misijah (the bridge of Narasla reka: m48).
+// debris), ob pristanku (landing after a jump), na robnikih in makadamu (a wheel on a kerb's ridges; more gently on a gravel road or in a
+// gravel trap), v misijah (the bridge of Narasla reka: m48). And the feel of speed (predlog I5): the chase view's lens a little wider with
+// speed (46/58 deg at rest, at most +6/+5 on its side/upright), with either setting.
 // Izklop leaves the camera still, Vklop shakes it; the choice is saved. On a real track (Spa, Belgija).
 //   node tests/browser/camshake.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -31,16 +33,21 @@ try {
     const go = (v) => { P.vx = v * Math.cos(P.heading || 0); P.vz = v * Math.sin(P.heading || 0); };   // (speed: a getter of vx, vz)
     P.ws = [0, 0, 0, 0]; go(20); P.air = true; F(); C.shake = 0; P.air = false; P.impactVY = -6; F(); out.land = +C.shake.toFixed(3);
     F(); F(); C.shake = 0; P.ws = [1, 0, 0, 0]; go(25); F(); out.kerb = +C.shake.toFixed(3);
+    F(); F(); C.shake = 0; P.ws = [5, 0, 0, 0]; go(25); F(); out.grav = +C.shake.toFixed(3);   // (makadam; the gravel trap, 3, the same)
+    P.ws = [0, 0, 0, 0]; go(0); C.init = false; F(); out.fov0 = Render.camera.fov;   // (the lens at rest; then at 250 km/h, eased in with long steps)
+    go(70); for (let k = 0; k < 10; k++) Render.frame(1, 1, P, 'chase', {}); out.fov1 = Render.camera.fov;
     C.shake = 0; Render.shake(0.3, 'mis'); out.mis = +C.shake.toFixed(3);
     Object.assign(P, keep); C.shake = 0;
     return out; }, [v, KEYS]);
 
   await startTrack(page, 'spa');
   const off = await shakes(0);
-  T.check('Izklop: a hard knock, a landing, a kerb and the mission leave the camera still; saved', off.saved === '0,0,0,0' && off.hard > 0 && off.hit === 0 && off.land === 0 && off.kerb === 0 && off.mis === 0, JSON.stringify(off));
+  T.check('Izklop: a hard knock, a landing, a kerb, makadam and the mission leave the camera still; saved', off.saved === '0,0,0,0' && off.hard > 0 && off.hit === 0 && off.land === 0 && off.kerb === 0 && off.grav === 0 && off.mis === 0, JSON.stringify(off));
   await startTrack(page, 'spa');
   const on = await shakes(1);
-  T.check('Vklop: a hard knock, a landing, a kerb and the mission shake the camera; saved', on.saved === '1,1,1,1' && on.hard > 0 && on.hit > 0 && on.land > 0 && on.kerb > 0 && on.mis > 0, JSON.stringify(on));
+  T.check('Vklop: a hard knock, a landing, a kerb, makadam (more gently) and the mission shake the camera; saved', on.saved === '1,1,1,1' && on.hard > 0 && on.hit > 0 && on.land > 0 && on.kerb > 0 && on.grav > 0 && on.grav < on.kerb && on.mis > 0, JSON.stringify(on));
+
+  T.check('the feel of speed: the chase lens (upright) 58 deg at rest, a little wider at speed (up to +5 deg), with either setting', [off, on].every(o => o.fov0 === 58 && o.fov1 > 62 && o.fov1 <= 63.001), JSON.stringify([off, on].map(o => [o.fov0, o.fov1])));
 
   T.check('no page errors', errors.length === 0, errors.join('\n'));
 } finally {
