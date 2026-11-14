@@ -558,16 +558,16 @@
   }
  },
  "rastro": {
-  "meshes": 1401,
-  "verts": 750819,
+  "meshes": 1403,
+  "verts": 755842,
   "instances": 25952,
-  "props": 81,
+  "props": 80,
   "crowd": 112,
-  "world": "66d01439",
-  "propsHash": "1599f175",
+  "world": "46bfc021",
+  "propsHash": "7cbb5097",
   "floor": "e8c675d4/10836",
   "groups": {
-   "-:MeshLambertMaterial": "3b9ee667",
+   "-:MeshLambertMaterial": "7f9f6f40",
    "-:MeshPhongMaterial": "6f171605",
    "-:MeshBasicMaterial": "8e40473e",
    "crowd:MeshLambertMaterial": "3e9dec88",
