@@ -15,5 +15,39 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "haivan": {
+    "ime": "Hải Vân, Vietnam",
+    "okvir": [16.165, 108.1, 16.22, 108.155],
+    "pot": [[16.19302, 108.12383], [16.19243, 108.1255], [16.18748, 108.13072], [16.1874, 108.13356]],
+    "start": [16.19243, 108.1255],
+    "cilj": [16.18748, 108.13072],
+    "zalet": 160,
+    "po_cilju": 190,
+    "polsirina": 5.5,
+    "gauss": 2.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.1, "serpentine": 0.15, "serpentine_m": 30 },
+    "s2": "S2A_48PZC_20240401_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "HAIVAN_H"
+  },
+  "savusavu": {
+    "ime": "Savusavu, Fidži",
+    "okvir": [-16.815, 179.322, -16.765, 179.356],
+    "pot": [[-16.8005927, 179.3403589], [-16.798366, 179.3391367], [-16.7925446, 179.3383653], [-16.7857217, 179.3351769], [-16.7811623, 179.3364845], [-16.7787487, 179.3383195], [-16.7777521, 179.3410636]],
+    "start": [-16.798366, 179.3391367],
+    "cilj": [-16.78005, 179.338],
+    "zalet": 160,
+    "po_cilju": 190,
+    "polsirina": 5.0,
+    "gauss": 2.5,
+    "visine": { "mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.15, "serpentine_m": 30, "gor": false },
+    "s2": "S2B_60KYG_20240721_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "SAVUSAVU_H"
   }
 }

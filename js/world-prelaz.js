@@ -36,6 +36,37 @@
       roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
       sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
     },
+    // Hải Vân (the Trường Sơn's spur to the sea, Vietnam): the old road over the pass, the steep slopes under a dense, bright tropical forest of
+    // broadleaves (L.trop) right down to the sea, red-brown earth in the cuttings, grey granite in the crags; no snow, no sheep, no tunnel portal
+    // at the top (the tunnels run under the pass); white concrete walls and a steel rail on the drop
+    haivan: {
+      seed: 4200, board: 'ĐÈO HẢI VÂN', sub: 'THỪA THIÊN · ĐÀ NẴNG', banner: ['HẢI VÂN', 'ĐỈNH ĐÈO · 477 m'], trop: 1,
+      grass: [0.34, 0.5, 0.18], grassDry: [0.5, 0.52, 0.26], grassLush: [0.26, 0.48, 0.15], shrub: [0.14, 0.3, 0.1],
+      rock: [0.52, 0.46, 0.4], rockWarm: [0.6, 0.44, 0.32], lichen: [0.38, 0.36, 0.3], scree: [0.62, 0.48, 0.36],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.55, 0.52, 0.5], [0.6, 0.56, 0.52], [0.47, 0.45, 0.44], [0.62, 0.5, 0.4], [0.5, 0.47, 0.44], [0.56, 0.54, 0.5]],   // (granite, a little red with the laterite)
+      centre: [0.95, 0.74, 0.14], dash: [3, 9], solidNear: 70,   // (yellow centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpins)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.48, 0.4],
+      fans: [[0.84, 0.14, 0.14], [0.98, 0.84, 0.12], [0.95, 0.95, 0.95], [0.12, 0.3, 0.62], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
+      cars: [[0.9, 0.9, 0.88], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.78, 0.72, 0.6]],
+      roofs: [[0.62, 0.26, 0.16], [0.36, 0.38, 0.4], [0.7, 0.34, 0.2], [0.24, 0.3, 0.36]],
+      sheep: 0, portal: 0, far: { lo: [0.16, 0.3, 0.12], hi: [0.44, 0.42, 0.36], dw: [0.12, 0.24, 0.1], snow: 9000 },
+    },
+    // Savusavu (the south coast of Vanua Levu, Fiji): the coast road over a low ridge of wet tropical forest, coconut palms and gardens by the
+    // houses, red-brown volcanic soil in the cuttings, dark basalt in the few crags; no snow, no sheep, no tunnel; a steel rail where the slope falls
+    savusavu: {
+      seed: 6790, board: 'SAVUSAVU', sub: 'VANUA LEVU', banner: ['SAVUSAVU', 'VANUA LEVU'], trop: 1,
+      grass: [0.3, 0.5, 0.17], grassDry: [0.46, 0.5, 0.24], grassLush: [0.22, 0.47, 0.14], shrub: [0.13, 0.29, 0.1],
+      rock: [0.4, 0.37, 0.34], rockWarm: [0.52, 0.38, 0.28], lichen: [0.34, 0.34, 0.28], scree: [0.56, 0.44, 0.34],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.36, 0.35, 0.34], [0.42, 0.4, 0.38], [0.3, 0.3, 0.3], [0.5, 0.4, 0.32], [0.38, 0.36, 0.34], [0.44, 0.42, 0.4]],   // (basalt, reddened by the soil)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid before the blind bends)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.52, 0.46, 0.38],
+      fans: [[0.12, 0.3, 0.62], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.98, 0.84, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.66, 0.82]],
+      cars: [[0.9, 0.9, 0.88], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.14, 0.26, 0.5], [0.62, 0.12, 0.1], [0.78, 0.72, 0.6]],
+      roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.42, 0.3]],   // (corrugated iron: bare, red, blue, green)
+      sheep: 0, portal: 0, far: { lo: [0.14, 0.3, 0.12], hi: [0.3, 0.4, 0.24], dw: [0.1, 0.24, 0.1], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
@@ -188,7 +219,11 @@
   function plTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Norway spruce (a narrow dark spire), 1 dwarf pine (a low mat of
     // crooked branches with dark tufts), 2 juniper (a smaller, flatter, grey-green mat)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
-    if (kind === 0) {
+    if (kind === 0 && L.trop) {   // (L.trop: a broadleaf of the tropical forest instead: a slim pale trunk under a wide, lumpy, bright crown)
+      cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
+      API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.6, d = k ? 0.2 + R() * 0.08 : 0; ico(g, Math.cos(a) * d, 0.62 + (k ? R() * 0.14 : 0.12), Math.sin(a) * d, 0.24, 0.62, vary(col, R, 0.22), R, 0.3); }
+    } else if (kind === 0) {
       const col = [0.08, 0.15, 0.1], tip = [0.14, 0.25, 0.17];
       [[0.0, 0.24, 0.3, 0.05], [0.18, 0.2, 0.27, 0.045], [0.36, 0.17, 0.24, 0.04], [0.52, 0.13, 0.22, 0.035], [0.67, 0.09, 0.2, 0.03]].forEach(([y, r, h, dr], k) => {
         const kk = k % 2 ? 1.1 : 1; starCone(g, 0, y, 0, r, h, 6, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.7, dr); });
@@ -603,7 +638,7 @@
           const y = caGround(x, z); if (plSnow(x, z, y + base, 1 / Math.sqrt(1 + sl * sl), 0, 0) > 0.4) continue;
           const sp = c === 1 && r3 < 0.7 ? 0 : r3 < 0.75 ? 1 : 2;
           let hgt, wid, col;
-          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
+          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (L.trop ? 0.62 + r2 * 0.2 : 0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
           else if (sp === 1) { hgt = 0.9 + r4 * 1.4; wid = 2.2 + r2 * 3.2; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
           else { hgt = 0.5 + r4 * 0.6; wid = 1.4 + r2 * 2; col = [0.95 + r3 * 0.1, 0.98, 0.95]; }
           tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);

@@ -103,7 +103,7 @@ window.MenuIzbor = (function () {
   [['Albania Andorra Austria Belgium Bulgaria Croatia Czechia Denmark England Estonia Finland France Germany Greece Hungary Iceland Ireland Italy Latvia ' +
     'Lithuania Luxembourg Monaco Montenegro Netherlands Norway Poland Portugal Romania Russia Scotland Serbia Slovakia Slovenia Spain Sweden Switzerland Ukraine Wales', 0],
   ['Canada Mexico USA', 1], ['Argentina Bolivia Brazil Chile Colombia Ecuador Peru Uruguay', 2], ['Kenya Morocco Namibia Tanzania Tunisia South_Africa', 3],
-  ['China India Japan Kazakhstan Malaysia Nepal South_Korea Thailand Turkey Vietnam', 4], ['Australia New_Zealand', 5]].forEach(([s, k]) => s.split(' ').forEach(c => { IN[c.replace(/_/g, ' ')] = k; }));
+  ['China India Japan Kazakhstan Malaysia Nepal South_Korea Thailand Turkey Vietnam', 4], ['Australia Fiji New_Zealand', 5]].forEach(([s, k]) => s.split(' ').forEach(c => { IN[c.replace(/_/g, ' ')] = k; }));
   const contOf = (c) => IN[c.name] != null ? IN[c.name] : c.lat == null ? 0 : c.lon < -30 ? (c.lat > 12 ? 1 : 2) : c.lon > 110 && c.lat < -10 ? 5 : c.lat < 35 && c.lon > -20 && c.lon < 52 ? 3 : c.lon > 60 ? 4 : 0;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const num = (n) => Math.round(n).toLocaleString('en-US');

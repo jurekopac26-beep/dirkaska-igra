@@ -362,5 +362,19 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "haivan": {
+  "calls": 161,
+  "maxCalls": 188,
+  "kverts": 458,
+  "maxKverts": 577,
+  "jsMs": 2.56
+ },
+ "savusavu": {
+  "calls": 166,
+  "maxCalls": 194,
+  "kverts": 384,
+  "maxKverts": 482,
+  "jsMs": 1.13
  }
 }
