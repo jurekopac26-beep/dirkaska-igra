@@ -1393,30 +1393,30 @@
   }
  },
  "aguascalientes": {
-  "meshes": 308,
-  "verts": 462296,
-  "instances": 1333,
-  "props": 11,
-  "crowd": 5,
-  "world": "54923954",
-  "propsHash": "7d83238a",
-  "floor": "4724dbc/2688",
+  "meshes": 261,
+  "verts": 542204,
+  "instances": 907,
+  "props": 6,
+  "crowd": 1,
+  "world": "3fed2e8e",
+  "propsHash": "650d3a89",
+  "floor": "bbd1c4c5/2688",
   "groups": {
-   "-:MeshLambertMaterial": "82d0c7be",
+   "-:MeshLambertMaterial": "47dfca03",
    "-:MeshBasicMaterial": "180b5f09",
-   "crowd:MeshLambertMaterial": "6c617ebb",
+   "crowd:MeshLambertMaterial": "6fa60f04",
    "jet smoke:MeshBasicMaterial": "684b759b",
-   "flags:MeshLambertMaterial": "ace5d954",
+   "flags:MeshLambertMaterial": "605d1584",
    "rsFar:MeshBasicMaterial": "9c11f2a2",
-   "ao:MeshBasicMaterial": "4199ab6d",
+   "ao:MeshBasicMaterial": "98c20f4a",
    "roadwear:MeshLambertMaterial": "f783b805",
-   "brakeBoards:MeshLambertMaterial": "85d8ef8f",
-   "life:MeshLambertMaterial": "4521e2a0",
-   "lifeShadow:MeshBasicMaterial": "bbe23a6f",
-   "life:MeshBasicMaterial": "7d6057dc",
-   "people:MeshLambertMaterial": "33a76a27",
+   "brakeBoards:MeshLambertMaterial": "3c1ff887",
+   "life:MeshLambertMaterial": "436507e2",
+   "lifeShadow:MeshBasicMaterial": "497a0a18",
+   "life:MeshBasicMaterial": "739b00ae",
+   "people:MeshLambertMaterial": "42ea6079",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "67ea126d"
+   "standSteps:MeshLambertMaterial": "518e2ae2"
   }
  }
 }
