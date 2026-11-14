@@ -6,8 +6,9 @@
 //   node tools/dovozi-osm.mjs spa --osm <mapa>     kosi OSM v <mapa> (kar manjka, prenese z glavnega API-ja; CLAUDE.md: nikoli Google)
 //   … --json f.json                                poročilo: lega, pari tlorisov, vse poti z razlogom, ograje (barrier=*) ob hišah
 //   … --do 6                                       koliko metrov od tlorisa hiše se pot še šteje za njeno (privzeto 6)
-//   … --okolica f.json                             okolica hiš (docs/realizem/paket-s.md, »Okolica hiš«): vse asfaltne poti do ~25 m od
-//                                                  hiš v pasu (vrstice def.yard), makadam in parkirišča iz OSM (def.okolica.osm) ter
+//   … --okolica f.json                             okolica hiš (docs/realizem/paket-s.md, »Okolica hiš«): asfaltne poti ob hišah (samo
+//                                                  odseki do 30 m od hiš, vrstice def.yard), pešpoti, makadam
+//                                                  (vsaka pot pelje do hiše, poti, ceste ali iz pasu) in parkirišča iz OSM (def.okolica.osm) ter
 //                                                  skromna splošna dopolnitev, kjer OSM ob hiši nima ničesar (def.okolica.gen: dvorišče,
 //                                                  kratek dovoz do najbližje ceste, nikoli čez progo, in pas uhojenih tal ob hiši)
 // Pot do hiše je (in samo to se nariše): dovoz (service=driveway), ki pride do hiše, in pot ali servisna cesta, ki se pri hiši slepo
@@ -206,7 +207,7 @@ try {
   if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify({ id, fit, pairs, rects: rects0.map(r => { const q = ap(r); return [+q[0].toFixed(2), +q[1].toFixed(2), +r[2].toFixed(2), +r[3].toFixed(2), +(r[4] + Math.atan2(fit.s, fit.c)).toFixed(3)]; }), tags: bWays.map(w => w.tags), report, rows: yardOut.map(r => r.row), potke: potke.map(r => [1, 1, 1, ...r.row.slice(1)]), barriers }, null, 1));
 
   // ---- --okolica f.json: the ground round every house the road's band holds (docs/realizem/paket-s.md, »Okolica hiš«). From the map: every way
-  // and car park within R m of a house (cut to NEAR m round the houses, to the band and clear of the barriers); asphalt ways go to def.yard (after
+  // and car park within R m of a house (to the band and clear of the barriers, every end at something: no way ends in the grass); asphalt ways go to def.yard (after
   // the rows above), unpaved ones and the car parks to def.okolica.osm. Where the map has nothing at a house (no surface within TOUCH m), a modest
   // generic completion in def.okolica.gen: a gravel yard by the side that faces the nearest drawn surface, a short gravel driveway to it (never
   // over the road: clear of its barriers) and a narrow strip of trodden ground round the walls. Nothing else: no fences, no cars, no objects. ----
@@ -225,18 +226,54 @@ try {
     for (const r of potke) osm.push({ row: [1, 1, 1, ...r.row.slice(1)], s: r.s, w: { id: r.rec.way, tags: { highway: r.rec.highway } } });   // (the gravel footways to the houses, above)
     // 1. the ways (asphalt ones: def.yard; gravel, earth, the tracks and a footway or path the map gives no paved surface: def.okolica.osm as a
     // gravel ribbon with the makadam road's relief, the footways at their 2 m)
-    for (const w of [...ways.values()].sort((p, q) => p.id - q.id)) {
-      const hwy = w.tags.highway; if (KIND2[hwy] == null || closedArea(w) || w.tags.tunnel || w.tags.covered === 'yes' || w.tags.indoor === 'yes' || +w.tags.layer < 0) continue;
-      const P = dense(line(w, XZ), 1); if (P.length < 2 || !P.some(p => nearB(p, R))) continue;
-      const kind = KIND2[hwy], paved = hwy !== 'track' && (w.tags.surface ? PAVED.test(w.tags.surface) : !kind), hw = paved ? HALF[kind] : hwy === 'track' ? 1.5 : kind ? 1.0 : 2.0;
-      const pr = await probe(P), ok = P.map((p, k) => pr[k][0] >= 0 && pr[k][1] <= BAND && pr[k][1] >= hw + GAP && !inFoot(p, -1) && nearB(p, NEAR));
+    const isPaved = (w) => w.tags.highway !== 'track' && (w.tags.surface ? PAVED.test(w.tags.surface) : !KIND2[w.tags.highway]);
+    const cand = [...ways.values()].filter(w => KIND2[w.tags.highway] != null && !closedArea(w) && !w.tags.tunnel && w.tags.covered !== 'yes' && w.tags.indoor !== 'yes' && !(+w.tags.layer < 0) && w.nds.every(r => nodes.has(r))).sort((p, q) => p.id - q.id);
+    const nearHouse = (w) => { const P = dense(line(w, XZ), 1); return P.length >= 2 && P.some(p => nearB(p, R)); };
+    // A way never ends in the grass (a path always leads somewhere): every end that touches nothing (no other way of the set, no house within
+    // END m, nothing drawn, not the road, not out of the band) is cut back node by node to where it last met something, again and again (a way
+    // left with nothing to meet goes). The set: every way near a house, and every unpaved way (gravel, earth, a track, a footway) that shares a
+    // node with one of the set and reaches into the band, again and again (asphalt does not grow so: a service road on to the next one would run
+    // on for kilometres through the woods, and the trees keep clear of every asphalt row).
+    const END = 4, npt = new Map(); for (const w of cand) for (const r of w.nds) if (!npt.has(r)) { const n = nodes.get(r); npt.set(r, XZ(n.lat, n.lon)); }
+    const nIds = [...npt.keys()], nPr = await probe(nIds.map(k => npt.get(k))), nq = new Map(nIds.map((k, i) => [k, nPr[i]]));
+    const inBand = (r) => { const q = nq.get(r); return q[0] >= 0 && q[1] <= BAND; };
+    const nearDrawn = (p) => drawn.some(d => { for (let k = 0; k + 1 < d.P.length; k++) if (segD(p, d.P[k], d.P[k + 1]) < d.hw + 2) return true; return false; });
+    // (an asphalt way keeps only the nodes round its houses, each unbroken stretch whose segments come within NEAR m of one: a service road past
+    // a house goes on through the woods, and its whole length, or the stretch between two far houses, would clear the trees there; the ends are
+    // then cut back to the house or the road)
+    const near = (w) => { const runs = []; let lo = -1;
+      for (let k = 0; k + 1 < w.nds.length; k++) { const on = dense([npt.get(w.nds[k]), npt.get(w.nds[k + 1])], 1).some(p => nearB(p, NEAR));
+        if (on && lo < 0) lo = k; if (!on && lo >= 0) { runs.push({ w, lo, hi: k }); lo = -1; } }
+      if (lo >= 0) runs.push({ w, lo, hi: w.nds.length - 1 });
+      return runs.length ? runs : [{ w, lo: 0, hi: w.nds.length - 1 }]; };
+    async function network(list, grows) {
+      const net = new Map(); for (const w of list) if (nearHouse(w)) { if (isPaved(w)) near(w).forEach((e, n) => net.set(w.id + ':' + n, e)); else net.set(w.id, { w, lo: 0, hi: w.nds.length - 1 }); }
+      const seeds = net.size;
+      for (let grew = true; grew;) { grew = false; const on = new Set(); for (const e of net.values()) for (let i = e.lo; i <= e.hi; i++) on.add(e.w.nds[i]);
+        for (const w of list) if (grows(w) && !net.has(w.id) && w.nds.some(r => on.has(r)) && w.nds.some(inBand)) { net.set(w.id, { w, lo: 0, hi: w.nds.length - 1 }); grew = true; } }
+      const meets = (e, k) => { const r = e.w.nds[k], q = nq.get(r), p = npt.get(r);
+        if (q[0] < 0 || q[1] > BAND - 2 || q[1] < 2 + GAP + 1.5) return true;   // out of the band (out of sight) or at the road
+        if (tr.bld.some(b => rectD(b, p[0], p[1]) <= END) || nearDrawn(p)) return true;   // at a house or a way drawn before
+        for (const f of net.values()) for (let i = f.lo; i <= f.hi; i++) if (f.w.nds[i] === r && (f !== e || i !== k)) return true;   // at another way
+        return false; };
+      for (let cut = true; cut;) { cut = false;
+        for (const [id, e] of net) { while (e.hi > e.lo && !meets(e, e.lo)) { e.lo++; cut = true; } while (e.hi > e.lo && !meets(e, e.hi)) { e.hi--; cut = true; }
+          if (e.hi <= e.lo) { net.delete(id); cut = true; } } }
+      console.log(`poti: ${seeds} ob hišah, ${net.size} po rasti in obrezovanju slepih koncev`);
+      for (const e of [...net.values()].sort((p, q) => p.w.id - q.w.id || p.lo - q.lo)) await drawWay({ ...e.w, nds: e.w.nds.slice(e.lo, e.hi + 1) });
+    }
+    await network(cand, w => !isPaved(w));
+    async function drawWay(w) {
+      const hwy = w.tags.highway, P = dense(line(w, XZ), 1); if (P.length < 2) return;
+      const kind = KIND2[hwy], paved = isPaved(w), hw = paved ? HALF[kind] : hwy === 'track' ? 1.5 : kind ? 1.0 : 2.0;
+      const pr = await probe(P), ok = P.map((p, k) => pr[k][0] >= 0 && pr[k][1] <= BAND && pr[k][1] >= hw + GAP && !inFoot(p, -1));
       let n = 0;
       for (let a = 0; a < P.length; a++) { if (!ok[a]) continue; let b = a; while (b + 1 < P.length && ok[b + 1]) b++;
         const run = P.slice(a, b + 1), mask = run.map(onDrawn);
         for (let i = 0; i < run.length; i++) { if (mask[i] >= 0) continue; let j = i; while (j + 1 < run.length && mask[j + 1] < 0) j++;
           if (j - i >= MINLEN) { const Q = simplifyK(join(run, mask, i, j), 0.2);
-            if (paved) { yardRows.push({ row: [kind, ...flat(Q)], s: pr[a + i][2], w }); drawn.push({ P: Q, hw }); }
-            else { osm.push({ row: [1, 1, hw, ...flat(Q)], s: pr[a + i][2], w }); drawn.push({ P: Q, hw }); }
+            if (paved) { yardRows.push({ row: [kind, ...flat(Q)], s: pr[a + i][2], w, Q }); drawn.push({ P: Q, hw }); }
+            else { osm.push({ row: [1, 1, hw, ...flat(Q)], s: pr[a + i][2], w, Q }); drawn.push({ P: Q, hw }); }
             n += j - i; }
           i = j; }
         a = b; }
@@ -277,6 +314,15 @@ try {
       for (const r of add) gen.push({ row: r, s: h.s, house: h.i });
       gaps.push([h.i, h.s, best ? +best.d.toFixed(1) : null, 'dopolnitev: ' + add.map(r => ['dvorišče', 'dovoz', 'pas'][r[0]]).join(', ')]);
     }
+    // the check: every end of a drawn way meets something (a house, another way, the road, the band's edge); the loose ones are listed
+    const loose = [];
+    for (const [rows, k0, name] of [[osm.filter(o => o.row[0] === 1), 3, 'makadam'], [yardRows, 1, 'asfalt']]) for (const o of rows) {
+      const P = unflat(o.row, k0), hw = k0 === 3 ? o.row[2] : HALF[o.row[0]], q = await probe([P[0], P[P.length - 1]]);
+      [P[0], P[P.length - 1]].forEach((p, e) => { const r = q[e];
+        if (r[0] < 0 || r[1] > BAND - 3 || r[1] < hw + GAP + 2 || tr.bld.some(b => rectD(b, p[0], p[1]) <= END + 1)) return;
+        if (drawn.some(d => d.P !== o.Q && d.P.some((a, k) => k + 1 < d.P.length && segD(p, a, d.P[k + 1]) < d.hw + hw + 1.5))) return;
+        loose.push(`${name} ${o.w.id} pri ${Math.round(r[2])} m (${r[1].toFixed(0)} m od ceste)`); }); }
+    console.log(`konci poti, ki se ne dotaknejo ničesar: ${loose.length}` + (loose.length ? '\n  ' + loose.join('\n  ') : ''));
     yardRows.sort((p, q) => p.s - q.s); osm.sort((p, q) => p.s - q.s); gen.sort((p, q) => p.s - q.s);
     console.log(`okolica: ${built.length} hiš v pasu; iz OSM ${yardRows.length} asfaltnih poti (def.yard), ${osm.filter(o => o.row[0] === 1).length} makadamskih, ${polys.length} parkirišč; dopolnitev pri ${gaps.filter(g => g[3] !== 'OSM').length} hišah (${gen.length} vrstic)`);
     for (const g of gaps) console.log(`  hiša ${String(g[0]).padStart(3)}  ${String(g[1]).padStart(5)} m  najbližja pot ${g[2] == null ? '—' : g[2] + ' m'}  ${g[3]}`);
