@@ -193,20 +193,24 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(X1 - 0.008, 0.92, sd * 0.98, 0.26, 0.1, { host: sd < 0 ? 'tailL' : 'tailR' }); });
         // ---- the rear step for a bumper (a tread plate on a dark bar) ----
         K.part('bumperR', () => { K.box(-3.04, 0.72, 0, 0.22, 0.06, 2.36, 0, ALU); K.box(-3.0, 0.5, 0, 0.14, 0.22, 2.3, 0, D); }, { hinge: [[X1, 0.7, -0.45], [X1, 0.7, 0.45]] });
-        // ---- the ladder, lying forward from the turntable over the cab: two rails, the handrails over them on a truss, the rungs, its head ----
-        K.part('ladder', () => {
-          const { xa, xb, y, hz } = LAD;
+        // ---- the ladder, lying forward from the turntable over the cab: two rails, the handrails over them on a truss, the rungs, its head.
+        // Two noCrush ranges, split behind the cab (x 0.74 | 0.8, clear of the roof's footprint and its 15 cm fade): the front one goes down
+        // whole with the cab's roof under it, the rear one over the body stays (a noCrush range moves whole: render.js crumpleRoof) ----
+        const ladder = (a, b, head) => () => {
+          const { xa, y, hz } = LAD, ha = Math.max(a, xa + 0.2), n = Math.round((b - 0.1 - a) / 0.86), d = (b - 0.1 - a) / n;
           for (const sd of [-1, 1]) {
-            K.box((xa + xb) / 2, y, sd * hz, xb - xa, 0.09, 0.07, 0, ALU);
-            K.box((xa + xb) / 2 + 0.1, y + 0.36, sd * hz, xb - xa - 0.2, 0.05, 0.05, 0, ALU);
-            for (let x = xa + 0.1; x < xb - 0.5; x += 0.86) {
-              K.bar([x, y + 0.06, sd * hz], [x + 0.43, y + 0.38, sd * hz], 0.018, ALU, { n: 4 });
-              K.bar([x + 0.43, y + 0.38, sd * hz], [x + 0.86, y + 0.06, sd * hz], 0.018, ALU, { n: 4 });
+            K.box((a + b) / 2, y, sd * hz, b - a, 0.09, 0.07, 0, ALU);
+            K.box((ha + b) / 2, y + 0.36, sd * hz, b - ha, 0.05, 0.05, 0, ALU);
+            for (let i = 0; i < n; i++) { const x = a + (a === xa ? 0.1 : 0) + i * d;
+              K.bar([x, y + 0.06, sd * hz], [x + d / 2, y + 0.38, sd * hz], 0.018, ALU, { n: 4 });
+              K.bar([x + d / 2, y + 0.38, sd * hz], [x + d, y + 0.06, sd * hz], 0.018, ALU, { n: 4 });
             }
           }
-          for (let x = xa + 0.2; x < xb; x += 0.36) K.box(x, y + 0.02, 0, 0.035, 0.035, hz * 2, 0, ALU);
-          K.box(xb + 0.02, y - 0.02, 0, 0.1, 0.42, 1.0, 0, RED);
-        }, { noCrush: true });
+          for (let x = xa + 0.2; x < LAD.xb; x += 0.36) if (x > a + 0.03 && x < b - 0.03) K.box(x, y + 0.02, 0, 0.035, 0.035, hz * 2, 0, ALU);
+          if (head) K.box(b + 0.02, y - 0.02, 0, 0.1, 0.42, 1.0, 0, RED);
+        };
+        K.part('ladder', ladder(LAD.xa, 0.74, false), { noCrush: true });
+        K.part('ladder', ladder(0.8, LAD.xb, true), { noCrush: true, sub: 'ladderF' });
         // (the garage's parts with no stock piece: the indicators, the rally lamps, the flaps, the doors' skins, the sun strip, the fuel cap,
         // the calipers: mounts.zmigavci ...)
         for (const id of ['zmigavci', 'relijske_luci', 'lovilci_blata', 'vrata', 'soncni_pas', 'zamasek', 'celjusti']) K.deli(id, () => {});
