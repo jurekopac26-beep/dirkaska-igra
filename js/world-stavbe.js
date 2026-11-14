@@ -616,7 +616,11 @@
     const ribbon = (P, hw, col) => shapes.push({ f: (x, z) => hw - segD(x, z, P), bb: bbP(P, hw), col, cell: 1, draw: true });
     const poly = (P, col, cell) => shapes.push({ f: (x, z) => (inP(x, z, P) ? 1 : -1) * segD(x, z, P.concat([P[0]])), bb: bbP(P, 0), col, cell, draw: true });
     const n0 = shapes.length;
-    for (const r of O.osm || []) if (r[0] === 0) poly(pts(r, 2), SURF[r[1]], 2); else ribbon(pts(r, 3), r[2], SURF[r[1]]);
+    // (the map's unpaved ways and footpaths: a ragged edge (a few dm in and out every few m) that fades into worn grass, as a path trodden in a
+    // meadow; no darker berm)
+    const rag = (x, z) => 0.13 * Math.sin(x * 0.73 + z * 0.21) + 0.09 * Math.sin(z * 1.37 - x * 0.41) + 0.05 * Math.sin(x * 2.3 + z * 1.9);
+    for (const r of O.osm || []) if (r[0] === 0) poly(pts(r, 2), SURF[r[1]], 2); else if (r[1] === 0) ribbon(pts(r, 3), r[2], SURF[r[1]]);
+      else { const P = pts(r, 3), hw = r[2]; shapes.push({ f: (x, z) => hw - segD(x, z, P) + rag(x, z), bb: bbP(P, hw + 0.3), col: SURF[r[1]], cell: 1, draw: true, soft: true }); }
     const gen = O.gen || [];   // (the driveways, then the yards, then the strips round the walls)
     for (const r of gen) if (r[0] === 1) ribbon(pts(r, 3), r[2], SURF[r[1]]);
     for (const r of gen) if (r[0] === 0) poly(pts(r, 2), SURF[r[1]], 1);
@@ -627,7 +631,7 @@
     const HC = 32, hash = new Map();   // (the shapes by 32 m cells, 2 m over their boxes: on(x, z, r ≤ 2))
     shapes.forEach((sh, k) => { sh.over = shapes.slice(0, k).filter(t => ov(t.bb, sh.bb));
       for (let a = Math.floor((sh.bb[0] - 2) / HC); a <= Math.floor((sh.bb[2] + 2) / HC); a++) for (let b = Math.floor((sh.bb[1] - 2) / HC); b <= Math.floor((sh.bb[3] + 2) / HC); b++) { const q = a + ',' + b; let L = hash.get(q); if (!L) hash.set(q, L = []); L.push(sh); } });
-    const clip = (x, z) => { const n = near(x, z); return n.i < 0 ? -1 : n.dd - 1.2; };
+    const clip = (x, z) => { const n = near(x, z); return n.i < 0 ? -1 : n.dd - 1.2; }, WORN = [0.62, 0.7, 0.42];   // (WORN: the tint of the trodden grass at a footpath's edge)
     const CA = new cfg.Chunks(128, true), CM = new cfg.Chunks(128, true), st = { shapes: shapes.length - n0, vertices: 0, area: 0 };
     for (const sh of shapes) { if (!sh.draw) continue;
       const cs = sh.cell, i0 = Math.floor(sh.bb[0] / cs), j0 = Math.floor(sh.bb[1] / cs), ni = Math.ceil(sh.bb[2] / cs) - i0, nj = Math.ceil(sh.bb[3] / cs) - j0, V = new Map();
@@ -643,11 +647,12 @@
         if (poly2.length < 3) continue;
         const loose = sh.col !== SURF[0], tl = loose ? 6 : 8, col = sh.col;   // (unpaved: the makadam road's texture and relief, its tile, its loose berm at the edge)
         const g = (loose ? CM : CA).get(poly2[0][0], poly2[0][1]), P3 = poly2.map(([x, z]) => [x, gH(x, z) + 0.09, z]), U = poly2.map(([x, z]) => [x / tl, -z / tl]);
-        const C3 = pv.map(v => { if (!loose) return col; const e = 1 - Math.min(1, v / 0.6); return [col[0] * (1 - 0.1 * e), col[1] * (1 - 0.03 * e), col[2] * (1 - 0.22 * e)]; });
+        const C3 = pv.map(v => { if (!loose) return col; if (sh.soft) { const e = 1 - Math.min(1, v / 0.9); return [col[0] + (WORN[0] - col[0]) * e, col[1] + (WORN[1] - col[1]) * e, col[2] + (WORN[2] - col[2]) * e]; }
+          const e = 1 - Math.min(1, v / 0.6); return [col[0] * (1 - 0.1 * e), col[1] * (1 - 0.03 * e), col[2] * (1 - 0.22 * e)]; });
         for (let k = 1; k + 1 < P3.length; k++) { g.triUp(P3[0], P3[k], P3[k + 1], [C3[0], C3[k], C3[k + 1]], [U[0], U[k], U[k + 1]]); st.vertices += 3; }
         st.area += vs.every(v => v > 0) ? cs * cs : cs * cs / 2; } }
     st.area = Math.round(st.area);
-    return { stats: st,
+    return { stats: st, clip,
       on(x, z, r) { const L = hash.get(Math.floor(x / HC) + ',' + Math.floor(z / HC)); if (!L) return false; for (const sh of L) if (x > sh.bb[0] - r && x < sh.bb[2] + r && z > sh.bb[1] - r && z < sh.bb[3] + r && sh.f(x, z) > -r) return true; return false; },
       addTo(group, tex) { CA.addTo(group, new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false, true);
         CM.addTo(group, tex.makadam ? new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.045, shininess: 7, specular: 0x1c1813, vertexColors: true })

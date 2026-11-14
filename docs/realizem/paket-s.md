@@ -167,3 +167,15 @@ Brez izmišljenih avtov, ograj in predmetov.
 **Vir:** OpenStreetMap (ODbL 1.0).
 
 **Odgovor:** uporabnik je na `realizem-s0-spa-2` odgovoril »1 · Ostane tako« (14. 11. 2026 ob ~2.10). PR #668 je pripravljen, ostane osnutek; do `main` ga pripelje seja Združevanje. Predmete in ljudi ob potkah ter mehkejši prehod med potko in travo (prošnja uporabnika 14. 11.) dela druga seja na isti veji.
+
+### Predaja 5 (14. 11. 2026): ob potkah klopi, svetilke in sprehajalci, mehak rob potke
+
+Prošnja uporabnika (14. 11. 2026): »Ob takih potkah postavi na vsake toliko casa kaksen element. Klopca, svetilka, sprehajalec s psom, sprehajalec, 2 cloveka se skupaj sprehajata, ljudje kaksen sedi na klopci, in dodaj se kar mislis da je ob teh potkah kot recimo smeti itd... te potke so dobro vidne med igro tako da naj bodo dobro napravljene naredi neznejsi prehod med potko in travo saj ke to se vedno potka in ne asfaltirana cesta«. **Odločitev:** ta novejša, izrecna prošnja velja pred pravilom »nič si ne izmišljuj«, a samo ob potkah: predmeti in ljudje ob njih niso iz OSM, so generični (brez imen, napisov, logotipov).
+
+**Mehak rob (`okolica()` v `js/world-stavbe.js`):** makadamske potke iz OSM (`osm`, širina > 0) imajo nepravilen rob (nekaj sinusov, ±0,25 m), barva pa na zadnjih 0,9 m preide v pohojeno travo (`WORN`); temnega roba makadamske ceste nimajo več. Dovozi in parkirišča so nespremenjeni.
+
+**Ob potkah (`js/world-potke.js`, prek `World.peopleKit.EXTRA` v `js/world-ljudje.js`):**
+- Vsaka potka (vrstice OSM, ki se stikajo, kot ena) je prizor `potka`: samo njen del, ki ga okolica nariše, vsaj 3 m od hiš, 8–60 m od ceste, dolg vsaj 25 m.
+- Na zunanji strani (stran od ceste): svetilka na ~22 m, klop (na dolgi potki dve) obrnjena k potki, na njej kdo sedi in ob avtu pogleda, koš ob klopi, nekaj smeti v travi (papir, pločevinka, lonček), stojalo z vrečkami za pasje iztrebke na koncu.
+- Sprehajalci gredo po potki tja in nazaj (`stroll()`, `act.path`): par drug ob drugem, kdo sam, kdo s psom na povodcu; vsak po svoji črti, da se srečajo.
+- Spa: 4 prizori, 17 ljudi; drugih prog ne spremeni (okolica je samo na Spaju). Svet Spaja 1452 mrež, 1 183 139 oglišč (`tests/golden/world.json`).

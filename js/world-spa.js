@@ -776,6 +776,7 @@
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
     if (HS) out.stats.stavbe = HS.stats; if (OK) out.stats.okolica = OK.stats;
+    out.okolica = OK;   // (js/world-potke.js: where the footpaths are drawn)
     return out;
   }
 
