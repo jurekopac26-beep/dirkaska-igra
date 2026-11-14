@@ -2009,3 +2009,4 @@ Meje v testu: Podrobne pred udarci ≤ Preproste + 5; po udarcih ≤ 360; vsi ra
 - **Vprašanje** `trki-podrobne` na strani Odločitve (slike čelni in v bok, Spa, izrez kamere za avtom; obe strani Realistično, levo Preproste, desno Podrobne): 1 Podrobne privzeto (priporočeno), 2 samo izbira, 3 ne še. Branje odgovora ob 23.20, nato 10.50 in 14.50. Ob 1 v privzetih nastavitvah `dmgDet: 1` (`lib.mjs` testov ostane na 0) in povezani testi.
 - `trki-cv6-slike` (odgovor 1) označen kot prebran.
 - **Naprej:** PR ostane osnutek do vrste (~5. 12.); nestanovitni `aipits` samo opazuj.
+- **Branje `trki-podrobne` (14. 11. 2026, 14.50):** prebrano trikrat (23.20 13. 11., 10.50 in 14.50 14. 11.), brez odgovora. `dmgDet` ostane 0 (Preproste privzeto); vprašanje ostaja odprto za koordinacijo, nova branja niso naročena. Ob odgovoru 1: `dmgDet: 1` v privzetih nastavitvah (`lib.mjs` ostane 0) in povezani testi.
