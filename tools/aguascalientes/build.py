@@ -58,11 +58,13 @@ NAMES = [
 TURNS = [330, 450, 900, 1000]
 
 DESC = ('Oval na visoki planoti južno od mesta Aguascalientes v osrednji Mehiki: 1,34 km v nasprotni smeri urinega kazalca, štirje levi '
-        'zavoji v dveh polkrogih, ravnina zadaj in lomljena ciljna ravnina mimo glavne tribune, okoli 1860 m nad morjem. Suha trava, '
-        'grmičevje in redka drevesa, polja in nizki griči na obzorju, boksi v notranjosti ovala (zapelji vanje in mehaniki ti popravijo avto).')
+        'zavoji v dveh polkrogih, okoli 1860 m nad morjem. Bel betonski zid z rjavo lovilno mrežo, zavita glavna tribuna z ložami in dva '
+        'stolpa ob ciljni ravnini, v notranjosti ovinkasta cesta z malim predorom in boksi za ograjo, kjer čakajo mehaniki. Suha trava, '
+        'grmičevje in redka drevesa, polja in nizki griči na obzorju.')
 DESC_EN = ('An oval on the high plateau south of the city of Aguascalientes in central Mexico: 1.34 km, counter-clockwise, four lefts in two '
-           'half circles, the back straight and the dogleg of the front straight past the main grandstand, about 1860 m above the sea. Dry '
-           'grass, scrub and a few trees, fields and low hills on the horizon, the pits inside the oval (drive in and the mechanics fix the car).')
+           'half circles, about 1860 m above the sea. A white concrete wall with a brown catch fence, the curved main grandstand with its '
+           'suites and two towers by the front straight, a twisty road with a little tunnel in the infield and the pits behind a fence where '
+           'the mechanics wait. Dry grass, scrub and a few trees, fields and low hills on the horizon.')
 
 # ---- the pits (Core.Track.pitAt): the lane on the left of the front straight, inside the oval (OSM's pit lane w677361305 runs from Turn 4
 # behind the dogleg and along the inside of Turns 1 and 2: here beside the front straight, 15 m from the centre line), from Turn 4's exit
@@ -70,12 +72,13 @@ DESC_EN = ('An oval on the high plateau south of the city of Aguascalientes in c
 PIT = [-15, -230, 170, -45]   # (the player's box: the 7th crew's, -50 .. -40 m: Core's crewBoxes, the box centres pitRow[0] + 5 + 10 k)
 PIT_ROW = [-110, 10]
 PIT_BOX = [-135, 35, -1]   # (the garages: World's RB_LOOK.aguascalientes.pitBox; the crews' 13 open)
-WALLS = [[-230, 170, -1, 2.5]]   # the pit wall along the lane
-# the barriers moved out (def.wide) where the main grandstand stands back from the road, outside the front straight
-WIDE = [[-150, 70, 1, 9]]
+# the walls as on the real oval (no run-off anywhere): outside the lap the concrete wall right at the asphalt's edge (0.4 m past it) all the
+# way round, inside it a low wall past a 4 m apron; the lap in two overlapping pieces (one whole lap of def.walls would ease out where it
+# starts); the pit wall 2.5 m past the road's edge along the lane last, over the apron's wall
+WALLS = [[-60, 700, 1, 0.4, 10], [650, 1390, 1, 0.4, 10], [-60, 700, -1, 4, 10], [650, 1390, -1, 4, 10], [-230, 170, -1, 2.5]]
 # grandstands [from, to, side, rows, roof, sections, orange, name]: the main grandstand outside the front straight (roofed), an open block
 # outside Turn 4; their names places of the state of Aguascalientes
-STANDS = [[-140, 60, 1, 14, 1, 4, 0, 'AGUASCALIENTES'], [1000, 1070, 1, 7, 0, 2, 0, 'CALVILLO']]
+STANDS = []   # (both of the oval's stands are models of their own: tools/aguascalientes/blender/modeli.py, js/world-aguascalientes.js)
 SECTORS = [450, 900]
 REAL_KM = 1.41
 
@@ -231,12 +234,16 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: %(turns)s,   // the apexes of Turns 1-4 (their number boards): the two half circles at the ends of the oval
     pit: %(pit)s,   // pit lane on the left of the front straight, inside the oval: [centre offset (negative: left), from, to, the player's box] (metres from the finish line)
     pitRow: %(row)s,   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.aguascalientes.pitBox)
-    walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane
-    wide: %(wide)s,   // the barriers back behind a wide verge by the main grandstand outside the front straight
+    walls: %(walls)s,   // [from, to, side, metres past the road's edge, ease]: the outer wall at the asphalt's edge, the inner one past the apron, the pit wall
     maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): a bigger field starts flying, and its column (Race._flyColumn, 4/5 of the lap at most) does not fit the 1340 m oval: its cars would stand on each other
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main grandstand outside the front straight, an open block outside Turn 4
     stands: %(stands)s,
     sectors: %(sectors)s,   // the three sectors of the timing screens: Turns 1 and 2, the back straight and Turns 3 and 4, the front straight
+    // the infield's roads off the lap ([1 the oval's piece, 0 the infield; x, z, ...]): the twisty road course inside the oval, its loop, the
+    // paddock road behind the pits and the service road out of the tunnel under the back stretch; js/world-aguascalientes.js lays them as
+    // flat asphalt and the tunnel's mouths (tools/aguascalientes/pads.py, OSM)
+    pads: %(pads)s,
+    tunnel: %(tunnel)s,   // the service road's tunnel under the oval's back stretch [x, z, x, z] (OSM w184905700, layer -1): its two mouths
     dem: %(dem)s,
     lc: %(lc)s,
     sk: %(sk)s,
@@ -246,7 +253,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
 })();
 ''' % dict(km='%.2f' % (LEN / 1000), lbh=lbh, h0='%.1f' % H0, hmin='%.0f' % H.min(), hmax='%.0f' % H.max(), desc=json.dumps(DESC, ensure_ascii=False),
            desc_en=json.dumps(DESC_EN, ensure_ascii=False), real=REAL_KM, names='\n'.join(names), turns=turns,
-           pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), wide=json.dumps(WIDE), stands=js(STANDS).replace(',', ', '), sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
+           pit=json.dumps(PIT), row=json.dumps(PIT_ROW), walls=json.dumps(WALLS), stands=js(STANDS).replace(',', ', '), sectors=json.dumps(SECTORS), pads=json.dumps([[o, mv(q)] for o, q in json.load(open(os.path.join(HERE, 'pads.json')))['pads']], separators=(', ', ': ')).replace(', ', ',').replace('],[', '], ['), tunnel=json.dumps(mv(json.load(open(os.path.join(HERE, 'pads.json')))['tunnel'])).replace(' ', ''), dem=js(D), lc=js(LC), sk=js(SK), far=js(FAR), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'aguascalientes.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights (%.1f .. %.1f m above the finish line, %.1f m a.s.l.);' % (hk.min() - H0, hk.max() - H0, H0),
           'dem', D['nx'], 'x', D['nz'], 'lo %.1f step %.2f' % (D['lo'], D['step']), '; lc', LC['nx'], 'x', LC['nz'], len(LC['rle']), 'chars; buildings', len(SK['bld']) // 6,

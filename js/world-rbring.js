@@ -633,6 +633,7 @@
       const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
       let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.88, 0.88, 0.86], [0.82, 0.82, 0.8]];
+      if (k === 1 && LK.wallLook) { const wl = LK.wallLook(i * ds, side); c = wl.c; if (wl.h !== h) p = [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, wl.h - 0.1), Pt(i, o, wl.h), Pt(i, o2, wl.h)]; }   // (a track's own paint and height: js/world-aguascalientes.js)
       if (k === 3) { const b = bi == null ? i : bi, u = crH(b, side, 51), sh = 0.84 + u * 0.24, gy = crH(b, side, 53) < 0.18 ? 0.88 : 1, ht = 0.86 + crH(b, side, 55) * 0.09, o3 = side * (bar + 0.9 + crH(b, side, 57) * 0.12);   // straw bales: two courses, each bale (a sample, 2 m) its own straw and height (a few weathered greyer), the tops lighter
         const S = (r, g, bb) => [r * sh, g * sh * gy + r * sh * (1 - gy) * 0.9, bb * sh * gy + r * sh * (1 - gy) * 0.6];
         p = [Pt(i, o, -0.2), Pt(i, o, 0.44), Pt(i, o, ht), Pt(i, o, ht), Pt(i, o3, ht)]; c = [S(0.6, 0.48, 0.26), S(0.8, 0.68, 0.39), S(0.86, 0.74, 0.43), S(0.95, 0.84, 0.54), S(0.93, 0.82, 0.52)]; }   // (the top's edge twice: a sharp edge, not a rounded one)
@@ -666,7 +667,7 @@
     }
     const nPosts = posts.addTo(root, true);
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
-    { const sb = new Chunks(128, true);
+    if (!LK.noAds) { const sb = new Chunks(128, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
         const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || kindAt((i + 1) % N, side) !== 1) continue;
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
@@ -678,11 +679,12 @@
     for (const side of [-1, 1]) {
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
-        const j = (i + 1) % N; if (!fc[i] || !fc[j] || (side === PSD && PD && (pitOpen(i) || pitOpen(j)))) { acc += ds; continue; }   // (none where the pit lane joins the circuit)
+        const j = (i + 1) % N; if (!fc[i] || !fc[j] || (side === PSD && PD && (pitOpen(i) || pitOpen(j))) || (LK.fence && !LK.fence.sides.includes(side))) { acc += ds; continue; }   // (none where the pit lane joins the circuit, nor on the sides a track keeps open)
         const e = fc[i] === 2 ? 1.25 : 0.55, Q = (ii, y) => { const o = side * (bar[ii] + e); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y, T.pz[ii] + T.nz[ii] * o]; };
         const u0 = acc / 2.5, u1 = (acc + ds) / 2.5, ins = Q(i, 1); ins[0] += T.nx[i] * side * 3; ins[2] += T.nz[i] * side * 3;
-        fenceG.quadO(Q(i, 1.0), Q(j, 1.0), Q(j, 4.2), Q(i, 4.2), [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 1.3], [u0, 1.3]]);
-        if (i % 3 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] - 0.2, p[2], 0.1, 4.45, 0.1, T.hd[i], [0.6, 0.61, 0.64]); }
+        const fl = LK.fence, fc0 = fl ? fl.col : W1, ft = fl ? fl.top : 4.2;   // (a track's own mesh colour and height)
+        fenceG.quadO(Q(i, 1.0), Q(j, 1.0), Q(j, ft), Q(i, ft), fc0, ins, [[u0, 0], [u1, 0], [u1, (ft - 1) / 2.46], [u0, (ft - 1) / 2.46]]);
+        if (i % 3 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] - 0.2, p[2], 0.1, ft + 0.25, 0.1, T.hd[i], fl ? fl.post : [0.6, 0.61, 0.64]); }
         acc += ds;
       }
     }
@@ -702,6 +704,24 @@
       board(x, y + y0, z, T.tx[i], T.tz[i], Wd, H, cellK); exclPush(x, z, 3);
     };
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.9, shirts: LK.shirts });   // spectators (instanced)
+    const PADS = typeof LK.pads === 'function' ? LK.pads(def) : LK.pads;
+    if (PADS && PADS.length) {   // (Aguascalientes: the infield's roads off the lap, [{ p: [x, z, ...], hw, k }], flat asphalt ribbons on the ground, resampled every 3 m: no trees, farms or crowds on them; cut short at the barriers and off the level pits)
+      const gp = new RB(true);
+      for (const { p, hw, k: kc } of PADS) {
+        const pts = []; let pr = -1, v = 0;
+        for (let j = 0; j + 3 < p.length; j += 2) { const ax = p[j], az = p[j + 1], bx = p[j + 2], bz = p[j + 3], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 3)); for (let q = j ? 1 : 0; q <= n; q++) pts.push([ax + (bx - ax) * q / n, az + (bz - az) * q / n]); }
+        for (let j = 0; j < pts.length; j++) {
+          const [x, z] = pts[j], a = pts[Math.max(0, j - 1)], b = pts[Math.min(pts.length - 1, j + 1)], tl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / tl, nz = (b[0] - a[0]) / tl;
+          if (j) v += Math.hypot(x - pts[j - 1][0], z - pts[j - 1][1]) / tileL;
+          const E = [-hw, 0, hw].map(o => [x + nx * o, z + nz * o]);
+          if (E.some(([ex, ez]) => { const nn = nrNear(ex, ez); return (nn.i >= 0 && nn.dd < 1.2) || P.pad(ex, ez, 0) !== 0; })) { pr = -1; continue; }
+          const r = gp.row(E.map(([ex, ez]) => [ex, nrGround(ex, ez) + 0.06, ez]), [kc, kc * 0.95, kc].map(q => [q, q, q * 1.02]), [-hw, 0, hw].map(o => [(o + hw) / tileL, v]));
+          if (pr >= 0) gp.link(pr, r, 0, 2); pr = r;
+          exclPush(x, z, hw + 4); CR.avoid(x, z, hw + 2);
+        }
+      }
+      const m = addM(gp, new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 })); if (m) m.castShadow = false;
+    }
     // (the orange smoke, the waving flags and the video walls' screens are collected on the way and built at the end; their own random stream)
     const crowdPts = [];   // where the crowds are (x, z, how many: 0..1) for the crowd's sound (Sfx, out.crowdPts)
     let podAt = null;      // the podium's place (the pit building's roof terrace): { s, f0: the garages' front there }
@@ -775,10 +795,18 @@
         if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the lane's side, sd)
           out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a }; }
         (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) });
-        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
+        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = LK.pitFence ? { band: [f0 - 0.1, 0.95, 1.75, 4.4] } : { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
         crew.set(q, tc);
       }
       T.pitStands = null;   // (no team stands on the pit wall here)
+      if (LK.pitFence) {   // Aguascalientes: no garages, the boxes open on the apron before a chain-link fence (a low concrete kerb, the mesh, posts every 3 m); the crews wait in front of it, their team's banner on the mesh (gar.band, above)
+        const KB = [0.7, 0.7, 0.68], PO = [0.56, 0.57, 0.6];
+        for (let q = q0 - 20, acc = 0; q < q1 + 20; q += 2, acc += 2) { const s0 = sAt(q), s1 = sAt(q + 2), o0 = bw(s0) + F, o1 = bw(s1) + F, Q = (s, o, y) => at(s, o, y), ins = at(s0, o0 + 3, 1);
+          fenceG.quadO(Q(s0, o0, 0.42), Q(s1, o1, 0.42), Q(s1, o1, 2.6), Q(s0, o0, 2.6), [1, 1, 1], ins, [[acc / 2.5, 0], [(acc + 2) / 2.5, 0], [(acc + 2) / 2.5, 0.9], [acc / 2.5, 0.9]]);
+          { const sm = sAt(q + 1); B(sm, bw(sm) + F, -0.3, 2.04, 0.72, 0.22, KB); }
+          if (q % 6 === 0) B(s0, o0, -0.3, 0.09, 3.0, 0.09, PO);
+          if (q % 10 === 0) { const [ex, ez] = atSf(s0, sd * (o0 + 7)); exclPush(ex, ez, 7); CR.exclAdd(ex, ez, 6); } }
+      } else {
       for (let q = q0, k = 0; q < q1; q += 10, k++) {   // the garages (F m past the pit wall, 9 m deep) and the floor above
         const s = sAt(q + 5), f0 = bw(s) + F, tc = crew.get(q), open = tc || (!PD && k % 3 === 1);
         B(s, f0 + 9, -2.5, 10, 6.5, 0.3, WH);                                                     // back wall
@@ -793,6 +821,7 @@
       { const qm = (q0 + q1) / 2 + 20, s = sAt(qm), f0 = bw(s) + F, i = T.idx(s);   // race control: a glazed tower over the middle, its name to the straight
         B(s, f0 + 5, 8.2, 12, 9, 10, [0.86, 0.87, 0.88], WH); B(s, f0 + 0.6, 12, 12.1, 4.4, 1.2, GLS); B(s, f0 + 5, 17.2, 13, 0.5, 11, WH); glass(s, f0 - 0.02, 6, 12, 16.4);
         const [bx, bz] = atSf(s, sd * (f0 - 0.1)); board(bx, hyS(s) + 9.2, bz, sd * T.nx[i], sd * T.nz[i], 11, 1.7, AT.rbr); }
+      }
       addM(gq, aMat); addM(gl, lMat); addM(fac, new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }));
     }
 
@@ -1104,6 +1133,7 @@
         out.dyn.fade = { list: fl, poly: cn, yTop: hyS(sAt(wd)) + 30, op: 1, t: null };   // (the footprint, a little wider, up to 30 m)
       }
     }
+    if (LK.build) LK.build({ def, T, L, sAt, dS, hyS, atSf, nrGround, scen, exclPush, CR, crowdG, crowdPts, root, out, W1 });   // (a track's own buildings: js/world-aguascalientes.js)
     addM(crowdG[0], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[0], vertexColors: true }), 1, 0.11, 0.1)); addM(crowdG[1], crowdUV(new THREE.MeshLambertMaterial({ map: crowdMats[1], vertexColors: true }), 1, 0.11, 0.1));
 
     /* ---- marshal posts, turn numbers, braking boards ---- */

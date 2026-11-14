@@ -364,10 +364,10 @@
   "jsMs": 1.14
  },
  "aguascalientes": {
-  "calls": 191,
-  "maxCalls": 228,
-  "kverts": 321,
-  "maxKverts": 430,
-  "jsMs": 2.04
+  "calls": 180,
+  "maxCalls": 208,
+  "kverts": 350,
+  "maxKverts": 506,
+  "jsMs": 1.56
  }
 }

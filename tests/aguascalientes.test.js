@@ -1,11 +1,12 @@
 // Aguascalientes, Mehika: the oval on the high plain south of the city of Aguascalientes (1.34 km, counter-clockwise; docs/proge/aguascalientes.md).
 // The layout at its real length, counter-clockwise; its places by plain descriptions in their order round the lap, the four lefts each turning
 // left (Turn 4, the end of the oval before the dogleg front stretch, the tightest); the heights (a plain at 1860 m: under 3 m from the lowest
-// to the highest, the front stretch level); the pits on the left of the front stretch (the infield); the run-offs and the barriers all round;
-// the scenery data (terrain, land cover, the hills on the horizon, two grandstands named after the places round it, the service roads; no
+// to the highest, the front stretch level); the pits on the left of the front stretch (the infield); the walls as in the photographs all round;
+// the scenery data (terrain, land cover, the hills on the horizon, the track's own stands and towers, the service roads; no
 // names of the circuit or the airport); a whole AI race in the dry and in the rain.
 //   node tests/aguascalientes.test.js
 'use strict';
+const fs = require('fs'), path = require('path');
 const { loadCore } = require('./lib/core.js');
 const { DT, seeded } = require('./lib/sim.js');
 
@@ -57,7 +58,8 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
 }
 // 4. the pits: the lane on the left of the front stretch (the infield) from Turn 4's exit to before Turn 1, past the start line, the stretch no
 // tighter than a 120 m radius along the boxes (the dogleg), the 13 crews' boxes in the lane, the pit wall on the left along it; the run-offs:
-// the barriers more than 3 m past the asphalt along 80 % of the lap or more, nowhere nearer than the pit wall (2.5 m): no car leaves the circuit
+// the barriers as in the photographs (the user's exception to the run-off rule, docs/odlocitve.md): outside the concrete wall at the asphalt's
+// edge (under 1 m) all round, inside the low wall 2.5 m or more past it, a barrier on both sides everywhere: no car leaves the circuit
 {
   const P = def.pit, p0 = T.pitAt(T.startS); let kmax = 0; for (let d = def.pitRow[0]; d <= def.pitRow[1]; d += T.ds) kmax = Math.max(kmax, Math.abs(T.k[T.idx(T.startS + d)]));
   const nBox = Math.round((def.pitRow[1] - def.pitRow[0]) / 10) + 1;
@@ -65,18 +67,19 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
     !!p0 && p0.t > 0.99 && p0.sd === -1 && P[0] < 0 && P[1] < -200 && P[2] > 150 && 1 / kmax > 120 && nBox === 13 && def.pitRow[0] > P[1] + 60 && def.pitRow[1] < P[2] - 30
       && P[3] > def.pitRow[0] - 100 && P[3] < def.pitRow[1] + 10 && def.walls.some(w => w[0] <= P[1] && w[1] >= P[2] && w[2] === -1),
     `lane ${P[1]} .. ${P[2]} m, ${-P[0]} m to the left, tightest radius along the boxes ${(1 / kmax).toFixed(0)} m, ${nBox} boxes`);
-  let all = 0, wide = 0, min = 1e9; for (let i = 0; i < T.N; i++) for (const b of [T.bl[i], T.br[i]]) { const e = b - T.w; all++; if (e > 3) wide++; min = Math.min(min, e); }
-  check('run-offs: the barriers more than 3 m past the asphalt along 80 % of the lap or more, nowhere nearer than the pit wall (2.5 m)', wide / all >= 0.8 && min >= 2.4, `${(wide / all * 100).toFixed(0)} % past 3 m, nearest ${min.toFixed(1)} m`);
+  let outMax = 0, outMin = 1e9, inMin = 1e9; for (let i = 0; i < T.N; i++) { const o = T.br[i] - T.w, n = T.bl[i] - T.w; outMax = Math.max(outMax, o); outMin = Math.min(outMin, o); inMin = Math.min(inMin, n); }
+  const walled = def.walls.filter(w => w[2] === 1).reduce((a, w) => a + w[1] - w[0], 0) >= T.len - 1 && def.walls.filter(w => w[2] === -1).reduce((a, w) => a + w[1] - w[0], 0) >= T.len - 1;
+  check('run-offs: the outer wall at the asphalt\'s edge (0.2-1 m) all round, the inner wall 2.5 m or more past it, walls on both sides all round',
+    outMin >= 0.2 && outMax <= 1 && inMin >= 2.4 && walled, `outside ${outMin.toFixed(1)}-${outMax.toFixed(1)} m, inside from ${inMin.toFixed(1)} m, ${walled ? '' : 'not '}walled all round`);
 }
 // 5. the scenery data (tools/aguascalientes/build.py): terrain and land cover round the track, the hills on the horizon (heights above the
-// circuit's plain, not saturated), the two grandstands (named after the places round it: the main one roofed, on the right of the front
-// stretch) behind the barrier (9 m or more from the centre line), the service roads (OSM); only place names
+// circuit's plain, not saturated), the stands and towers (the track's own models, not the shared grandstands), the service roads (OSM);
+// only place names
 {
   const sk = def.sk, inGrid = (g) => { const x1 = g.x0 + g.nx * g.cell, z1 = g.z0 + g.nz * g.cell; for (let i = 0; i < T.N; i++) if (T.px[i] < g.x0 + 300 || T.px[i] > x1 - 300 || T.pz[i] < g.z0 + 300 || T.pz[i] > z1 - 300) return false; return true; };
-  const names = 'AGUASCALIENTES,CALVILLO', roofed = def.stands.filter(s => s[4]).map(s => s[7]).join();
-  let farIn = 0; for (const [a, b, sd] of def.stands) for (let d = a; d <= b; d += 5) { const i = T.idx(T.startS + d); if ((sd > 0 ? T.br[i] : T.bl[i]) < 9) farIn++; }
-  check('scenery: terrain and land cover 300 m and more round the whole track; 2 grandstands (' + names + '), AGUASCALIENTES roofed, each on the right behind its barrier 9 m or more from the centre line; no sea',
-    inGrid(def.dem) && inGrid(def.lc) && def.stands.map(s => s[7]).join() === names && roofed === 'AGUASCALIENTES' && def.stands.every(s => s[2] === 1) && !farIn && !sk.sea, `roofed ${roofed}, ${farIn} stand places nearer`);
+  const ag = fs.readFileSync(path.join(__dirname, '..', 'js', 'world-aguascalientes.js'), 'utf8');
+  check('scenery: terrain and land cover 300 m and more round the whole track; no shared grandstands (the curved main stand, the bleacher and the two towers are the track\'s own models, js/world-aguascalientes.js); no sea',
+    inGrid(def.dem) && inGrid(def.lc) && !def.stands.length && /AG_STAND\b/.test(ag) && /AG_BLE\b/.test(ag) && /AG_TOWERS\b/.test(ag) && !sk.sea, `${def.stands.length} shared stands`);
   const F = def.far, hb = Buffer.from(F.b64, 'base64'), hs = [...hb].map(v => F.lo + v * F.step);
   check('scenery: the hills and the sierras on the horizon (def.far, 10 rings to 11.5 km), their heights round the plain (1780-2800 m), none at the top of the scale',
     F.r.length === 10 && F.r[9] === 11500 && hb.length === F.na * 10 && Math.min(...hs) > 1700 && Math.max(...hs) < 2800 && Math.max(...hb) < 255, `${Math.min(...hs)} .. ${Math.max(...hs)} m`);
