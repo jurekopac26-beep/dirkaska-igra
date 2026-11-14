@@ -22,19 +22,24 @@ var TRACK_DEFS = TRACK_DEFS || [];
     roadWear: 1.1,
     id: 'koror', name: 'Koror, Palau', theme: 'koror', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.0,
     desc: 'Koror na Palauu: 3,3 km glavne ceste od južnega roba otoka Babeldaob čez most na Koror, ob laguni po nasipih in čez gozdnati grič do vzhodnega roba mesta.',
-    en: { name: 'Koror, Palau', desc: 'Koror in Palau: 3.3 km of the main road from the southern edge of the island of Babeldaob over the bridge to Koror, along the lagoon on its causeways and over the wooded hill to the east end of the town.' },
+    en: { name: 'Koror, Palau', desc: 'Koror in Palau: 3.3 km of the main road from the southern edge of the island of Babeldaob over the bridge to Koror, along the lagoon on its causeways and over the wooded hill to the east end of the town.', escTo: 'To Koror' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: KOROR_H.map((h, i) => [i / (KOROR_H.length - 1), h / 10]),
     sea: { y: 0 },   // the lagoon: its level above the sea (js/world-vrsic.js P.sea, js/world-prelaz.js the sea plane; the gulls and the surf's sound by def.sea)
-    bridges: [[245, 675]],   // (the bridge between the two islands: its deck, the parapets, the lagoon seen under it)
-    medals: { cs: [90, 95, 101], wet: { cs: [110, 115, 123] }, winter: { cs: [105, 110, 117], wet: { cs: [128, 134, 143] } } },
+    bridges: [[245, 675]],   // (the bridge between the two islands, drawn as a walled causeway: the sea floor right past its barriers, P.brS)
+    medals: { cs: [80, 85, 90], wet: { cs: [98, 103, 110] }, winter: { cs: [92, 97, 103], wet: { cs: [112, 118, 126] } } },
     maxRivals: 90,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~190 m of road past the line
     // the traffic of the open road: [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; Palau: cars and pick-ups
     // above all, minibuses, lorries from the docks, few motorbikes and buses
     traffic: { mix: [0.58, 0.2, 0.06, 0.04, 0.12], bike: 4000 },
     police: { label: 'POLICE', band: '#1d3f8a', text: '#ffffff' }, escTo: 'Do Kororja',
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; the HUD's English: js/lang.js, Lang.place)
-    names: [],
+    names: [
+      {"n": "Most čez kanal", "d": 300.0, "say": ["Onto the bridge! The lagoon on both sides, turquoise and deep blue!", "Over the channel between the islands, flat out!"]},
+      {"n": "Nasipi ob laguni", "d": 1000.0, "say": ["Along the causeways now, nothing but sea either side of the walls!", "The causeways across the lagoon, keep it straight and keep it flat!"]},
+      {"n": "Gozdnati grič", "d": 2300.0, "say": ["Up into the jungle on the hill! The road starts to twist!", "Climbing the wooded hill, the lagoon falls away behind you!"]},
+      {"n": "Koror", "d": 3200.0, "say": ["Into Koror! The finish is right there!", "The town at last! Bring it home!"]},
+    ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
       introPass: ["Welcome to {track}! {cars} cars, three kilometres over the bridge and along the lagoon into town, and you start {grid}.", "Here we are at the tip of Babeldaob. A race over the bridge to Koror, and you line up {grid}."],
