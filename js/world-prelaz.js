@@ -36,6 +36,19 @@
       roofs: [[0.32, 0.18, 0.12], [0.26, 0.27, 0.28], [0.44, 0.2, 0.14], [0.2, 0.24, 0.22]],
       sheep: 1, portal: 1, far: { lo: [0.36, 0.44, 0.26], hi: [0.5, 0.49, 0.45], dw: [0.18, 0.26, 0.16], snow: 2250 },
     },
+    koror: {
+      seed: 7340, board: 'KOROR', sub: 'PALAU', banner: ['KOROR', 'PALAU'], trop: 1,
+      grass: [0.28, 0.5, 0.17], grassDry: [0.44, 0.5, 0.24], grassLush: [0.2, 0.46, 0.14], shrub: [0.12, 0.28, 0.1],
+      rock: [0.62, 0.6, 0.55], rockWarm: [0.66, 0.6, 0.5], lichen: [0.4, 0.42, 0.36], scree: [0.7, 0.67, 0.6],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.62, 0.6, 0.56], [0.68, 0.66, 0.6], [0.52, 0.52, 0.5], [0.58, 0.54, 0.48], [0.46, 0.47, 0.44], [0.7, 0.68, 0.64]],   // (the limestone and the weathered volcanic rock of the islands)
+      centre: [0.98, 0.8, 0.12], dash: [3, 9], solidNear: 70,   // (yellow centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid before the blind bends)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.54, 0.5],
+      fans: [[0.12, 0.3, 0.62], [0.95, 0.95, 0.95], [0.98, 0.84, 0.12], [0.84, 0.14, 0.14], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.66, 0.82]],
+      cars: [[0.9, 0.9, 0.88], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.14, 0.26, 0.5], [0.62, 0.12, 0.1], [0.78, 0.72, 0.6]],
+      roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.42, 0.3]],   // (corrugated iron: bare, red, blue, green)
+      sheep: 0, portal: 0, far: { lo: [0.13, 0.3, 0.12], hi: [0.26, 0.38, 0.22], dw: [0.1, 0.24, 0.1], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
@@ -188,7 +201,11 @@
   function plTreeGeo(kind) {   // unit trees (height 1; the instances scale and tint them): 0 Norway spruce (a narrow dark spire), 1 dwarf pine (a low mat of
     // crooked branches with dark tufts), 2 juniper (a smaller, flatter, grey-green mat)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
-    if (kind === 0) {
+    if (kind === 0 && L.trop) {   // (the tropics: a broadleaf rainforest tree, a slim trunk under a wide, lumpy crown)
+      cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
+      API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.6, d = k ? 0.2 + R() * 0.08 : 0; ico(g, Math.cos(a) * d, 0.62 + (k ? R() * 0.14 : 0.12), Math.sin(a) * d, 0.24, 0.62, vary(col, R, 0.22), R, 0.3); }
+    } else if (kind === 0) {
       const col = [0.08, 0.15, 0.1], tip = [0.14, 0.25, 0.17];
       [[0.0, 0.24, 0.3, 0.05], [0.18, 0.2, 0.27, 0.045], [0.36, 0.17, 0.24, 0.04], [0.52, 0.13, 0.22, 0.035], [0.67, 0.09, 0.2, 0.03]].forEach(([y, r, h, dr], k) => {
         const kk = k % 2 ? 1.1 : 1; starCone(g, 0, y, 0, r, h, 6, [col[0] * kk, col[1] * kk, col[2] * kk], tip, k * 0.7, dr); });
@@ -227,10 +244,11 @@
     P.c1 = valueNoise2(L.seed + 11, 140); P.c2 = valueNoise2(L.seed + 12, 60); P.c3 = valueNoise2(L.seed + 13, 190); P.c4 = valueNoise2(L.seed + 14, 110); P.c5 = valueNoise2(L.seed + 15, 24);
     P.fin = [T.px[T.finishIdx], T.pz[T.finishIdx]];
     // the buildings (def.bld [x, z, length, width, angle, height, kind 0 a hut / 1 a stall or shed / 2 a big house]), clear of the road
+    const inSea = (x, z) => P.sea !== null && caGround(x, z) < P.sea + 0.4;   // (the lagoon: nothing stands in the sea, def.sea)
     const blds = [];
     for (const [x, z, Lb, Wb, ang, hb, kind] of def.bld || []) { if (Lb < 2 || Wb < 2) continue; const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
       for (const [u, v] of [[0, 0], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]]) { const n = vrNear(x + c * u - s * v, z + s * u + c * v); if (n.i >= 0 && n.dd < 1.2) ok = false; }
-      if (ok && vrDist(x, z) < 430) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
+      if (ok && vrDist(x, z) < 430 && !inSea(x, z)) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
     // the car parks by the road (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
     for (const [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; const i = n.i, s = i * T.ds; if (s < 30 || s > T.len - 20) continue;
@@ -245,7 +263,7 @@
     const excl = [], eh = new Map(), EHC = 32;   // exclusion circles (buildings, crowds, plots) for the plants and the rocks, hashed
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lq = eh.get(k); if (!Lq) eh.set(k, Lq = []); Lq.push(e); } return e; };
     const excluded = (x, z) => { const Lq = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lq) return false; for (let k = 0; k < Lq.length; k++) { const e = Lq[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
-    const inLake = (x, z) => { for (const Lk of P.lakes) if (x > Lk.x0 - 2 && x < Lk.x1 + 2 && z > Lk.z0 - 2 && z < Lk.z1 + 2 && API.vrWater(x, z).e > -2) return true; return false; };
+    const inLake = (x, z) => { if (inSea(x, z)) return true; for (const Lk of P.lakes) if (x > Lk.x0 - 2 && x < Lk.x1 + 2 && z > Lk.z0 - 2 && z < Lk.z1 + 2 && API.vrWater(x, z).e > -2) return true; return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     exclPush(padF.x, padF.z, padF.r + 4);
@@ -307,6 +325,26 @@
         if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); out.dyn.water = tex.water; }
       }
       const big = P.lakes.reduce((a, b) => (!a || b.area > a.area ? b : a), null); if (big) out.marks.lake = [big.cx, big.cz];
+      if (P.sea !== null) {   // the sea (def.sea.y; Koror's lagoon): one plane at its level wherever the land is below it, turquoise over the shallows by the
+        // shore, deeper blue farther out, the sky in it; 8 m cells within 330 m of the road, 24 m out to 620 m, 48 m to 1.5 km, then 240 m out to the far land's edge (480 m chunks near, 3 km ones far out; culled)
+        const seaY = P.sea, sc = new Chunks(480, true), sf = new Chunks(3000, true), deep = [0.05, 0.26, 0.4], mid = [0.09, 0.44, 0.52], shal = [0.3, 0.66, 0.62], sky = [0.62, 0.76, 0.86];
+        const gH = (x, z) => vrDist(x, z) < 470 ? caGround(x, z) : vrFar(x, z), uv = (x, z) => [x / 14, -z / 14];
+        const wc = (x, z) => { const k = seaY - gH(x, z), c = k < 2 ? shal : k < 6 ? [0, 1, 2].map(q => lerp(shal[q], mid[q], sstep(2, 6, k))) : [0, 1, 2].map(q => lerp(mid[q], deep[q], sstep(6, 30, k)));
+          const ks = 0.18 * sstep(0.55, 0.85, P.n2(x * 2.4, z * 2.4)); return [0, 1, 2].map(q => lerp(c[q], sky[q], ks)); };
+        const FD = def.farDem, X0 = Math.floor(FD.x0 / 240) * 240, Z0 = Math.floor(FD.z0 / 240) * 240, X1 = FD.x0 + (FD.nx - 1) * FD.cell, Z1 = FD.z0 + (FD.nz - 1) * FD.cell;
+        for (let z0 = Z0; z0 < Z1; z0 += 240) for (let x0 = X0; x0 < X1; x0 += 240) {
+          const d = vrDist(x0 + 120, z0 + 120), bs = d < 1500 ? 48 : 240;
+          for (let zb = z0; zb < z0 + 240; zb += bs) for (let xb = x0; xb < x0 + 240; xb += bs) {
+            const db = bs < 240 ? vrDist(xb + 24, zb + 24) : d, cs = bs < 240 ? (db < 330 ? 8 : db < 620 ? 24 : 48) : 240, g = (bs < 240 ? sc : sf).get(xb + bs / 2, zb + bs / 2);
+            for (let zz = zb; zz < zb + bs; zz += cs) for (let xx = xb; xx < xb + bs; xx += cs) {
+              const lo = (a, b) => gH(a, b) < seaY + 0.4;
+              if (!(lo(xx, zz) || lo(xx + cs, zz) || lo(xx, zz + cs) || lo(xx + cs, zz + cs))) continue;
+              const A = [xx, seaY, zz], B = [xx + cs, seaY, zz], C = [xx + cs, seaY, zz + cs], E = [xx, seaY, zz + cs];
+              g.quadUp(A, B, C, E, [wc(xx, zz), wc(xx + cs, zz), wc(xx + cs, zz + cs), wc(xx, zz + cs)], [uv(xx, zz), uv(xx + cs, zz), uv(xx + cs, zz + cs), uv(xx, zz + cs)]); }
+          }
+        }
+        sc.addTo(root, wMat, false, true); sf.addTo(root, wMat, false, true); out.dyn.water = tex.water; out.sea = seaY;
+      }
     }
 
     /* ---- the road: asphalt with white edge lines and the country's centre line (dashed; solid through the hairpins), a gravel shoulder, then the verge out to a
@@ -603,7 +641,7 @@
           const y = caGround(x, z); if (plSnow(x, z, y + base, 1 / Math.sqrt(1 + sl * sl), 0, 0) > 0.4) continue;
           const sp = c === 1 && r3 < 0.7 ? 0 : r3 < 0.75 ? 1 : 2;
           let hgt, wid, col;
-          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
+          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (L.trop ? 0.62 + r2 * 0.2 : 0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
           else if (sp === 1) { hgt = 0.9 + r4 * 1.4; wid = 2.2 + r2 * 3.2; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
           else { hgt = 0.5 + r4 * 0.6; wid = 1.4 + r2 * 2; col = [0.95 + r3 * 0.1, 0.98, 0.95]; }
           tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);

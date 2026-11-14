@@ -15,5 +15,23 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "BALEA_H"
+  },
+  "koror": {
+    "ime": "Koror, Palau",
+    "okvir": [7.335, 134.485, 7.37, 134.515],
+    "pot": [[7.3656, 134.51097], [7.3629, 134.50611], [7.36134, 134.50259], [7.3536, 134.4984], [7.34454, 134.49476], [7.34515, 134.49143]],
+    "start": [7.36395, 134.50815],
+    "cilj": [7.34454, 134.49476],
+    "zalet": 160,
+    "po_cilju": 190,
+    "polsirina": 4.0,
+    "gauss": 2.5,
+    "razredi": ["secondary"],
+    "visine": {"mediana": 50, "glajenje": 30, "naklon": 0.12, "serpentine": 0.3, "serpentine_m": 20, "gor": false, "najnizje": 2.5, "mostovi": [[245, 675, 11]]}, "morje": 0,
+    "s2": "S2A_53NMJ_20230424_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "KOROR_H"
   }
 }
