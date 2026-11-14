@@ -579,37 +579,114 @@
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
     G.onTap = onTap;
     G.onHud = (k, d) => {
-      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); steps(null); if (d) { if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
-      if (k === 'fit') { if (d.step === 'down' && stepsAt) stepsAt.cnt = '';   // (the wheels' count: theirs only)
-        if (STEP_L[d.step]) steps(STEP_L[d.step]); return; }
-      if (k === 'paint') { steps(STEP_L['paint.' + d.step]); return; }
-      if (k === 'step') { if (stepsAt) { stepsAt.cnt = d.i + '/' + d.n; steps(); } return; }
-      if (k === 'power') { const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); B = null; $('g-steps').classList.remove('on'); cancelAnimationFrame(barRaf); barRaf = 0; if (d) { barZero(); if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
+      if (k === 'fit') { const s = d.step.replace(/\./g, '_');   // (a show's step: its plan the show's start (the queued one's after the one before), the element's sentences)
+        if (s === 'plan' || s === 'plain') { if (!B || B.fin) B = barNew(d.el === 'turbo' && d.lid === false ? 'turbo_c' : d.el); if (s === 'plan') { if (!B.P) B.pair = !!(d.jobs && d.jobs[0] && d.jobs[0].arm === '0+1'); B.P = d; } }
+        if (!B) B = barNew(null); barSay(s, d); return; }
+      if (k === 'paint') { if (!B || B.fin || B.el !== 'barva') B = barNew('barva'); barSay(d.step, d); return; }
+      if (k === 'step') { if (B && !B.pair) { B.cnt = d.i + '/' + d.n; bar(); } return; }   // (a wheel's count: not by the plate's pair, its sentences say it)
+      if (k === 'power') { if (B && !B.fin) barSay('power', d); const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
         chip(tr('MOČ'), Math.round(a) + ' kW → <em>' + Math.round(b) + ' kW</em>', 'power'); }
-      else if (k === 'done') { if (d.kind === 'motor') { lastFit = null; return; }
+      else if (k === 'done') { if (B && !B.fin) { B.fin = true; bar(); }   // (the bar: all its stages done, the line full)
+        if (d.kind === 'motor') { lastFit = null; return; }
         if (svcChip && SRV.some(s => s.id === d.kind) && --svcChip.left <= 0) { const q = svcChip; svcChip = null;   // (the service's last item done: the state before → after)
           chip(tr('STANJE'), q.a + ' % → <em>' + q.b + ' %</em>', 'cond'); lastFit = null; return; }
         const n = { clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' }[d.kind];
         chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓'), '', lastCost ? '−' + eur(lastCost) : ''); lastFit = null; lastCost = 0; }
     };
   }
-  // a show's steps under the picture (garaza-animacije, korak 3): each step as it starts, the done ones as dots (the last 8), a wheel's
-  // count; PRESKOČI runs the show to its end at once (Garage3D.skip: the same end, only sooner). Not shown before the first step
-  const STEP_L = { 'cart.in': 'Voziček pelje del', grab: 'Roka prime del', 'old.out': 'Stari del ven', swap: 'Novi del na avto', put: 'Stari del odložen',
-    off: 'Stara guma dol', wrench: 'Objemka', snap: 'Zaskok', screws: 'Vijaki', hoses: 'Cevi', ring: 'Obroč', lights: 'Preizkus luči',
-    'bonnet.up': 'Pokrov gor', 'bonnet.down': 'Pokrov dol', revs: 'Motor zaturira', down: 'Avto dol',
-    'paint.chamber': 'Komora', 'paint.spray': 'Brizganje', 'paint.dry': 'Sušenje' };
-  let stepsAt = null;
-  function steps(lab) {
-    const el = $('g-steps');
-    if (lab === null) { stepsAt = null; el.classList.remove('on'); return; }
-    if (!$('g-stage').classList.contains('busy')) return;   // (a plan made without a show: no bar)
-    if (lab) { if (!stepsAt) stepsAt = { n: 0, cnt: '' }; if (lab !== stepsAt.lab) { stepsAt.n++; stepsAt.lab = lab; } }
-    if (!stepsAt) return;
-    const n = Math.min(stepsAt.n, 8);
-    el.querySelector('.d').innerHTML = '<i></i>'.repeat(n - 1) + '<i class="on"></i>';
-    el.querySelector('.l').innerHTML = esc(tr(stepsAt.lab)) + (stepsAt.cnt ? '<small>' + stepsAt.cnt + '</small>' : '');
-    el.classList.add('on');
+  // a show's bar under the picture (the plates' common bar, an_common): the element's stages as capsules (the done ones ✓, the one now
+  // cyan with its name, the next ones their numbers, the last one Končano), the step now as a sentence (which arm does what, from where to
+  // where), a line as far as the show has run (its own clock, Garage3D.showTime); PRESKOČI runs the show to its end at once (Garage3D.skip:
+  // the same end, only sooner). Shown from the show's first sentence till it is over
+  const STG = { gume: ['Izberi', 'Dvig', 'Snemanje', 'Nove gume'], platisca: ['Izberi', 'Dvig', 'Snemanje', 'Nova platišča'], auspuh: ['Izberi', 'Snemanje', 'Montaža', 'Zvok'],
+    krilo: ['Tapni', 'Izberi', 'Priprava', 'Menjava', 'Montaža'], turbo: ['Izberi', 'Hauba gor', 'Montaža', 'Preizkus moči'], zarometi: ['Izberi', 'Roki dol', 'Menjava', 'Preizkus luči'],
+    barva: ['Izberi barvo', 'Komora dol', 'Barvanje', 'Sušenje'], def: ['Izberi', 'Snemanje', 'Menjava', 'Montaža'], fin: ['Končano'] };
+  STG.aero = STG.krilo; STG.turbo_c = ['Izberi', 'Montaža', 'Preizkus moči'];   // (a car without a bonnet of its own: the turbo on through the closed one)
+  // (the step's sentence: [the stage it is in, the sentence, its words] or what gives it from the step's fields (d) and the show (B);
+  // null: the sentence as it was. A word null: the arm's number; the other words through tr() too)
+  const SAY = {
+    def: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov del'], bonnet_up: [1, 'Hauba je gor, podpira jo drog'], old_out: [1, 'Roka {0} sname stari del', null],
+      grab: (d) => [2, d.rgl != null ? 'Roka {0} vzame nov del z regala' : 'Roka {0} vzame nov del z vozička', null],
+      hop: [3, 'Roka {0} namesti nov del', null], swap: [3, 'Roka {0} namesti nov del', null], snap: [3, 'Del zaskoči'], screws: [3, 'Vijaki so priviti'], hoses: [3, 'Cevi so priklopljene'],
+      put: (d) => d.where === 'regal' ? [3, 'Roka {0} postavi stari del na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari del na voziček', null] : null,
+      down: [3, 'Avto dol · roki gresta počivat'], revs: [3, 'Motor zaturira'], lights: [3, 'Preizkus luči'], cart_out: [3, 'Voziček odpelje'] },
+    // (the tyres by the plate: both arms on one wheel (the bridge turns between them), its number and the place of the next ones; the
+    // wheels one by one (the rims, a tyre without the regal): the arm, the old one off, onto the regal or the trolley, the new one on)
+    gume: { plan: [1, 'Kupljeno · avto gre na dvigalko, roki se zbudita'],
+      cart_in: (d, B) => [1, B.el === 'platisca' ? 'Vozička pripeljeta nova platišča' : 'Vozička pripeljeta nove gume'],
+      off: (d, B) => { const n = B.P && B.P.n || 4, at = d.wf ? (d.ws > 0 ? 'spredaj desno' : 'spredaj levo') : (d.ws > 0 ? 'zadaj desno' : 'zadaj levo');
+        if (!B.pair) return [2, 'Roka {0} sname {1}', null, B.el === 'platisca' ? 'staro platišče' : 'staro gumo'];
+        return !d.j ? [2, 'Roka 1 sname staro gumo s platišča · kolo {0}/{1}', 1, n] : B.ws == null || d.ws === B.ws ? [3, 'Enako še kolo {0}/{1} ({2})', d.j + 1, n, at] : [3, 'Druga stran: kolo {0}/{1} ({2})', d.j + 1, n, at]; },
+      grab: (d, B) => !B.pair ? [3, d.rgl != null ? 'Roka {0} vzame {1} z regala' : 'Roka {0} vzame {1} z vozička', null, B.el === 'platisca' ? 'novo platišče' : 'novo gumo'] : d.j ? null : [3, 'Roka 2 vzame novo gumo z regala'],
+      pass: (d) => d.j ? null : [3, 'Most se zavrti: stara guma gre k regalu, nova k avtu'],
+      swap: (d, B) => !B.pair ? [3, 'Roka {0} namesti {1}', null, B.el === 'platisca' ? 'novo platišče' : 'novo gumo'] : d.j ? null : [3, 'Roka 2 natakne novo gumo na platišče · kolo {0}/{1}', 1, B.P && B.P.n || 4],
+      put: (d, B) => { if (!B.pair) { const w = B.el === 'platisca' ? 'staro platišče' : 'staro gumo'; return d.where === 'regal' ? [2, 'Roka {0} postavi {1} na prazno mesto v regalu', null, w] : d.where === 'cart' ? [2, 'Roka {0} odloži {1} na voziček', null, w] : null; }
+        const n = B.P && B.P.n || 4; return d.j === n - 1 ? [3, n === 4 ? 'Vse 4 gume zamenjane · roki gresta gor' : 'Vse gume zamenjane · roki gresta gor'] : d.j ? null : [3, 'Roka 1 postavi staro gumo na prazno mesto v regalu']; } },
+    auspuh: { plan: [1, 'Kupljeno · roki se zbudita · avto gre gor'],
+      grab: (d) => [1, d.rgl != null ? 'Roka {0} dvigne nov auspuh z regala' : 'Roka {0} vzame nov auspuh z vozička', null],
+      wrench: (d) => d.n === 1 ? [2, 'Roka 1 z vijačnikom privije objemko'] : [1, 'Roka 1 z vijačnikom odvije objemko pod odbijačem'],
+      hop: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null], swap: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null],
+      put: (d) => d.where === 'regal' ? [3, 'Roka {0} postavi stari auspuh na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari auspuh na voziček', null] : null,
+      revs: [3, 'Motor dvakrat zarjovi'] },
+    krilo: { plan: [2, 'Kupljeno · roki se zbudita, kamera gre k pokrovu prtljažnika'], cart_in: [2, 'Voziček pripelje novo krilo'], old_out: [3, 'Roka {0} sname staro krilo s pokrova', null],
+      grab: (d) => [3, d.rgl != null ? 'Roka {0} prime krilo na regalu in ga nese k avtu' : 'Roka {0} vzame krilo z vozička in ga nese k avtu', null],
+      snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], swap: (d, B) => B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null],
+      put: (d) => d.where === 'regal' ? [4, 'Roka {0} postavi staro krilo na prazno mesto v regalu', null] : d.where === 'cart' ? [4, 'Roka {0} odloži staro krilo na voziček', null] : null,
+      cart_out: [4, 'Voziček odpelje'] },
+    // (the aero kit: the self-driving trolley with its pieces (the lip, the skirt, the diffuser), the wing last (its own plan, el krilo))
+    aero: { plan: (d) => d.el === 'krilo' ? [4, null] : [2, 'Kupljeno · roki se zbudita'], cart_in: [2, 'Samovozeči voziček pripelje aero paket'],
+      grab: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? [4, 'Roka {0} vzame krilo z vozička', null] : P.kind === 'skirt' ? [3, 'Roka {0} vzame prag z vozička', null] : P.kind === 'rear' ? [3, 'Roka {0} vzame difuzor z vozička', null] : [3, 'Roka {0} vzame sprednjo ustnico z vozička', null]; },
+      swap: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? (B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null]) : P.kind === 'skirt' ? [3, 'Roka {0} položi prag vzdolž boka', null]
+        : P.kind === 'rear' ? [3, 'Roka {0} namesti difuzor pod zadnji odbijač', null] : [3, 'Roka {0} potisne ustnico pod sprednji odbijač: zaskoči', null]; },
+      snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], put: (d, B) => d.where === 'none' ? null : [B.P && B.P.el === 'krilo' ? 4 : 3, 'Roka {0} odloži stari kos na voziček', null], cart_out: [4, 'Voziček odpelje'] },
+    turbo: { plan: [1, 'Kupljeno · roki se zbudita'], bonnet_up: [1, 'Hauba je gor, podpira jo drog'], cart_in: [1, 'Voziček pripelje nov turbo'],
+      grab: (d) => [2, d.rgl != null ? 'Roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null],
+      swap: [2, 'Roka {0} položi turbo na motor', null], screws: [2, 'Vijačnik privije turbo'], hoses: [2, 'Cevi so priklopljene'],
+      put: (d) => d.where === 'regal' ? [2, 'Roka {0} postavi stari turbo na prazno mesto v regalu', null] : d.where === 'cart' ? [2, 'Roka {0} odloži stari turbo na voziček', null] : null,
+      cart_out: [2, 'Voziček odpelje'], bonnet_down: [3, 'Hauba dol · motor zažene, preizkus moči'], revs: [3, 'Hauba dol · motor zažene, preizkus moči'] },
+    turbo_c: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov turbo'],
+      grab: (d) => [1, d.rgl != null ? 'Roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null], swap: [1, 'Roka {0} položi turbo na motor', null],
+      put: (d) => d.where === 'regal' ? [1, 'Roka {0} postavi stari turbo na prazno mesto v regalu', null] : d.where === 'cart' ? [1, 'Roka {0} odloži stari turbo na voziček', null] : null,
+      cart_out: [1, 'Voziček odpelje'], power: [2, 'Motor zažene · preizkus moči'] },
+    // (the headlamps: the near arm the near lamp, the far arm the far one at once; a drawer's: its tray with the new pair)
+    zarometi: { plan: [1, 'Kupljeno · roka {0} se spusti k žarometu', null],
+      cart_in: (d, B) => [1, B.P && B.P.drawer ? 'Voziček gre po nova žarometa v predal' : 'Voziček pripelje nova žarometa'],
+      wrench: [1, 'Roka {0} z vijačnikom odvije vijake obroča', null], hop: [2, 'Roka {0} izvleče stari žaromet iz ležišča', null], old_out: [2, 'Roka {0} izvleče stari žaromet iz ležišča', null],
+      cart_loaded: [2, 'Iz predala pride pladenj z novima lučema'], far_out: [2, 'Roka {0} hkrati zamenja še drugi žaromet', 2],
+      put: (d, B) => d.where === 'none' ? null : [2, B.P && B.P.drawer ? 'Roka {0} položi stari žaromet na pladenj' : d.where === 'regal' ? 'Roka {0} postavi stari žaromet na prazno mesto v regalu' : 'Roka {0} odloži stari žaromet na voziček', null],
+      grab: (d, B) => [2, B.P && B.P.drawer ? 'Roka {0} vzame nov žaromet s pladnja' : d.rgl != null ? 'Roka {0} vzame nov žaromet z regala' : 'Roka {0} vzame nov žaromet z vozička', null],
+      swap: [2, 'Roka {0} potisne nov žaromet v ležišče', null], ring: [2, 'Roka {0} privije obroč', null],
+      lights: [3, 'Obe luči zasvetita (preizkus luči)'], drawer_back: [3, 'Pladenj se vrne v predal'], cart_out: [3, 'Voziček odpelje'] },
+    barva: { chamber: [1, 'Komora se spusti čez avto · roki počivata'], spray: [2, 'Barva teče po bokih navzdol, zgoraj je že nova barva'], dry: [3, 'Steber piha vroč zrak čez avto · barva se suši'] } };
+  SAY.platisca = SAY.gume;
+  const BAR_T = { gume: 9.9, platisca: 12.5, turbo: 15, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 9.5, barva: 4.9, zarometi: 15.5, def: 10 };   // (a show's seconds on its own clock: the line's length)
+  const WHEEL_K = new Set(['off', 'grab', 'swap', 'put', 'pass']);   // (a wheel's steps: its count stays)
+  let B = null, barRaf = 0;
+  const barNew = (el) => ({ el: el || 'def', t0: G.showTime, st: 0, lab: null, args: [], cnt: '', fin: false, P: null, pair: false, ws: null, seen: {} });
+  // (a step: its sentence and its stage (never back); after the end only the sentence)
+  function barSay(k, d) {
+    const t = SAY[B.el] || {}, q = k in t ? t[k] : SAY.def[k], e = typeof q === 'function' ? q(d, B) : q;
+    B.seen[k] = 1; if (d.ws != null) B.ws = d.ws;   // (the side after the sentence: the next wheel's compared with this one's)
+    if (!e) return;
+    if (!B.fin) B.st = Math.max(B.st, e[0]);
+    if (e[1]) { const arm = (d.i != null ? +d.i : B.P && B.P.arm != null ? +B.P.arm : 0) + 1;
+      if (e[1] !== B.lab && !WHEEL_K.has(k)) B.cnt = '';
+      B.lab = e[1]; B.args = e.slice(2).map(a => a === null ? arm : a); }
+    bar();
+  }
+  function barZero() { const i = $('g-steps').querySelector('.pr i'); i.style.transition = 'none'; i.style.width = '0%'; void i.offsetWidth; i.style.transition = ''; }   // (a new show's line from nothing: not the last one's shrinking)
+  function bar() {
+    const el = $('g-steps'); if (!B || !B.lab || !$('g-stage').classList.contains('busy')) return;   // (a plan made without a show: no bar)
+    const S = (STG[B.el] || STG.def).concat(STG.fin), N = S.length - 1, tick = B.el === 'krilo' || B.el === 'aero';
+    el.querySelector('.d').innerHTML = S.map((s, i) => B.fin || i < B.st ? '<i class="ok">✓</i>' : i === B.st ? '<i class="on">' + (i + 1) + ' ' + esc(tr(s)) + '</i>' : '<i>' + (i === N && tick ? '✓' : i + 1) + '</i>').join('');
+    el.querySelector('.l').innerHTML = esc(tr(B.lab, ...B.args.map(a => typeof a === 'string' ? tr(a) : a))) + (B.cnt ? '<small>' + B.cnt + '</small>' : '');
+    el.classList.add('on'); if (!barRaf) barRaf = requestAnimationFrame(barLine);
+  }
+  function barLine() {
+    barRaf = 0; if (!B) return; const T = B.el === 'gume' && !B.pair ? 13 : BAR_T[B.el] || BAR_T.def;
+    $('g-steps').querySelector('.pr i').style.width = (B.fin ? 100 : Math.min(97, Math.max(0, (G.showTime - B.t0) / T * 100))).toFixed(1) + '%';
+    barRaf = requestAnimationFrame(barLine);
   }
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); $('g-demo').classList.toggle('game', S.mode === 'game'); }   // (the real profile: no reset)
   // the picture over the whole page, raised a little (its foot under the buttons): the regal's top under the buttons at the top, the plan

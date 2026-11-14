@@ -5,8 +5,8 @@ Načrt teme (grafika; prednostna tema po odločitvi uporabnika 10. 11. 2026 ob ~
 ## Vir
 
 - 8 plošč animacij je v veji `nacrti` (`nacrti/plosce/an_gume`, `an_platisca`, `an_auspuh`, `an_spojler`, `an_turbo`, `an_zarometi`, `an_barvanje`, `an_aero`; vsaka 6–14 sličic telefona pokonci 412 × 915). Veja `nacrti` se **ne združi v `main`** (objavila bi jo stran; v njej so viri cen).
-- Plošče so narisane s talnimi roboti, pred odločitvijo 7A (roki na obroču pod stropom). Kjer se plošča in poznejša odločitev razlikujeta, velja odločitev (`nacrti/odlocitve.md`): roki na obroču, sušenje s toplimi lučmi namesto sušilnega stebra, drobni deli iz predalov z vozičkom.
-- Vrstice korakov, gumba PRESKOČI, bližnjega pogleda z oblačkom in gumba PREJ/POTEM dnevnik odločitev ne potrdi in ne zavrne: vprašanje `garaza-animacije-koraki`.
+- Plošče so narisane s talnimi roboti, pred odločitvijo 7A (roki na obroču pod stropom). Kjer se plošča in poznejša odločitev razlikujeta, velja novejša odločitev (`nacrti/odlocitve.md`): roki na obroču, drobni deli iz predalov z vozičkom. **Sušenje** je po odločitvi uporabnika 13. 11. 2026 spet **sušilni steber iz tal** kot na plošči (»Za sušenje izberi: Sušilni steber iz tal, kot na plošči … vse delaj tako kot je v nacrtu.«; prej tople luči). Skupno vsem ploščam (`nacrti/naloge/an_common.txt`): noben del se ne zamenja brez roke; roka 1 odnese stari del na prazno mesto v regalu (+ stran), roka 2 prinese novega (− stran); roki se ne križata (vsaka na svoji polovici mostu), drogova sta teleskopska; na koncu čip »KONČANO …« s ceno.
+- Vrstica korakov, gumb PRESKOČI, bližnji pogled z oblačkom in gumb PREJ/POTEM so po odločitvi uporabnika 13. 11. 2026 (»… vse delaj tako kot je v nacrtu.«) po plošči (odgovor na vprašanje `garaza-animacije-koraki`).
 
 ## Razlike med načrtom in igro (11. 11. 2026, `main` ae8ca63)
 
@@ -20,7 +20,7 @@ Izmerjeno v igri pokonci 412 × 915, avto VIHAR V8 (`muscle`), ura korakana kot 
 | Krilo | pokrovčka s pokrova, krilo 12 cm nad pokrovom, nogi se zaskočita, pogled od zadaj | roka krilo položi, nato dolg obhod kamere (~11 s) | 18–20,5 s / ~8 s |
 | Turbo | pokrov motorja se dvigne in podpre, turbo na motor, vijaki, pokrov dol, motor steče | turbo pritisnjen na zaprt pokrov, nato roh in napis moči | 14–23,5 s / ~8 s |
 | Žarometi | vijaka okvirja, stari žaromet ven, novi s pladnja predala, oba žarometa, preizkus luči | voziček iz predala, bližnja roka pritisne en del, oba se zamenjata hkrati, brez preizkusa luči | 18–19,5 s / ~7 s |
-| Barvanje | megla z vrha, barva steče po bokih, sušenje | (13. 11.: po plošči) roki mirujeta ob koncih mostov, megla in barva z vrha navzdol, sušenje s toplimi lučmi | ~17 s / ~8 s |
+| Barvanje | megla z vrha, barva steče po bokih, sušenje | (13. 11.: po plošči) roki mirujeta ob koncih mostov, megla in barva z vrha navzdol, sušenje s toplimi lučmi; 13. 11.: sušilni steber iz tal | ~17 s, 13. 11.: 6,3 s / ~6 s |
 | Aero | pragova, ustnica pod odbijačem in krilo, kos za kosom z vozička | ena siva škatla pritisnjena na nos, ves paket se pojavi naenkrat | 12,5–13,5 s / ~8 s |
 
 Skupno vsem ploščam: spodaj vrstica korakov s kljukicami, napis koraka in gumb **PRESKOČI ›**; na koncu bližnji pogled na novi del z oblačkom (podatki, cena) in gumb PREJ/POTEM; stari del gre na polico z novo oznako. Igra ima napis »KONČANO · …« (2,4 s), tap na sliko animacijo pospeši, kovanci se odštejejo v 0,7 s.
@@ -32,7 +32,31 @@ Skupno vsem ploščam: spodaj vrstica korakov s kljukicami, napis koraka in gumb
 - `garaza-animacije-deli`: koliko postopkov naredim po načrtu (slike A–H; priporočeno vse).
 - `garaza-animacije-koraki`: vrstica korakov, PRESKOČI, bližnji pogled z oblačkom, PREJ/POTEM (sliki I, J; priporočeno vse).
 
-Odgovora (ko prideta) vpiši sem z datumom in dobesednim navedkom.
+Odgovor uporabnika 13. 11. 2026 (naloga teme #653): »Za sušenje izberi: Sušilni steber iz tal, kot na plošči … vse delaj tako kot je v nacrtu.« in »Animacije zdaj niso podobne ploščam; to popravi.« Velja za obe vprašanji: vsi postopki, vrstica korakov in PRESKOČI po ploščah.
+
+## Deli: plošča ali predloga (naloga teme 13. 11. 2026)
+
+Del s ploščo gre po svoji plošči; del brez plošče po najbližji plošči kot predlogi (isti koraki rok, svoje mesto na avtu, svoj stavek in stopnje v vrstici korakov). Vseh 40 elementov iz `js/data/deli.js`:
+
+| Del (`id`) | Plošča / predloga | Mesto, od kod |
+|---|---|---|
+| Gume (`gume`) | plošča `an_gume` | kolesa ×4, regal |
+| Platišča (`platisca`) | plošča `an_platisca` | kolesa ×4, regal |
+| Auspuh (`auspuh`) | plošča `an_auspuh` | zadek, regal |
+| Zadnje krilo (`krilo`) | plošča `an_spojler` (in `tap_krila`) | pokrov prtljažnika, regal |
+| Turbo (`turbo`) | plošča `an_turbo` | pod haubo, regal |
+| Žarometi (`zarometi`) | plošča `an_zarometi`, končna `podaljsek` | nos, predal |
+| Barva karoserije (`barva`) | plošča `an_barvanje` | komora |
+| Aero paket (`aero`) | plošča `an_aero` (in `barva_paketa`) | nos, boka, zadek, krilo; samovozeči voziček |
+| Luč pod avtom, zadnje luči, žmigavci, maska, zavorne čeljusti, nalepke, zavore (`luc_pod_avtom`, `zadnje_luci`, `zmigavci`, `maska`, `celjusti`, `nalepke`, `zavore`) | predloga žarometi (`podaljsek`) | predal; luči in zavore s preizkusom |
+| Relijske luči, zamašek rezervoarja (`relijske_luci`, `zamasek`) | predloga žarometi (`podaljsek`) | drobna dela: stari ven, nov noter, privije |
+| Filter zraka, čip, lahek akumulator, stopnje motorja (`filter_zraka`, `cip`, `akumulator`) | predloga turbo | pod haubo, na koncu preizkus moči |
+| Hauba (`hauba`) | predloga turbo | hauba gor, nova na tečaje |
+| Vzmeti, amortizerji, stabilizatorji, matice, dim gum (`vzmeti`, `amortizerji`, `stabilizatorji`, `matice`, `dim_gum`) | predloga gume in platišča | ob kolesih, avto na dvigalki |
+| Servis (`servis`) | predloga gume | avto na dvigalki, roki gresta od kolesa do kolesa |
+| Pokrov prtljažnika, strešna zajemalka, antena, ogledala, vlečne kljuke, lovilci blata, žaluzije (`prtljaznik`, `stresna_zajemalka`, `antena`, `ogledala`, `vlecne_kljuke`, `lovilci_blata`, `zaluzije`) | predloga krilo (`an_spojler`) | stari kos v regal, nov se zaskoči |
+| Vrata, strešno okno (`vrata`, `streha`) | predloga aero | velik kos s samovozečega vozička |
+| Zatemnitev stekel, senčni pas, dirkalne črte, številke in krogi (`zatemnitev`, `soncni_pas`, `crte`, `stevilke`) | predloga barvanje | komora, folija ali barva z vrha navzdol, steber suši |
 
 ## Koraki izdelave
 
@@ -88,3 +112,9 @@ Odgovora (ko prideta) vpiši sem z datumom in dobesednim navedkom.
   - **Pragovi in difuzor z roko** (`aeroKind`, `aeroLip`): izbire brez sprednje ustnice dobijo svoj kos z avtovega paketa (`DELI.skirts`; difuzor: trikotniki za zadnjimi kolesi), voziček ga pripelje, bližnja roka ga točno položi: prag vzdolž praga s strani, difuzor pod zadnji odbijač od zadaj (avto brez pragov, npr. gad: zadnja vogalna nastavka). KOZOROG: pragova 10,5 s, difuzor 11 s; gad 11 in 13 s. Kamera pogleda bok oz. zadek.
   - **Krilo med stopnjama 2 in 3 z roko** (`wingO`): pri RACE čez SPORT (in nazaj) roka sname staro krilo s pokrova na voziček in pritrdi novo (muscle 19 s).
   - Še ni narejeno: snetje krila ob padcu pod stopnjo 2 brez roke; turbo na avtih brez pokrova po starem; dolgi avti (tur, titan, kamen, cisterna, zrcalni, predsednik) s skokom kosa; avti, ki paketa ne rišejo (npr. titan), dobijo zaboj kot prej; snetje pragov ali difuzorja (SERIJSKO) brez kosa.
+- 13. 11. 2026, **sušilni steber iz tal** (odločitev uporabnika 13. 11.; `paint`, `dryer`; commita dea8ee5e, dd02456e): pred nosom je v tleh loputa (jeklen okvir z rumeno-črnim robom, pokrov iz rebraste pločevine); ko je barva na avtu, se iz nje dvigne bel steber (temno moder podstavek in trak, dva ventilatorja, grelne spirale za rešetko, ki zažarijo oranžno) in piha vroč zrak čez avto; za njim je barva suha in sijoča, steber se spusti, komora gre gor. Tople luči so odstranjene. Koraki po plošči: komora dol 1,2 s, barvanje 2,0 s, sušenje 1,6 s, konec 1,5 s; KONČANO po 4,8 s, konec po 6,3 s (prej ~17 s; plošča ~6 s). Test garaže: steber gor, vroč zrak, sijaj, steber dol.
+- 13. 11. 2026, **en vrtljiv most v obroču** (commita a75efb27, 4a0631d3): namesto dveh polmostov en most čez obroč, ki se vrti okrog pesta; roka 1 je na njegovi + polovici, roka 2 na −, zato se ne križata; drogova rok sta teleskopska, vozička vozita po obroču. Zadnja kolesa, ki jih avto riše v karoseriji, imajo mero (`wr`), da jih roka prime; med gumami v regalu so reže (`RGL.ty` 0,36), da roka prime vsako gumo z obeh strani.
+- 13. 11. 2026, **gume po plošči `an_gume`** (`tyreShow`; commit 616083e3): avto na dvigalko, most se zavrti h kolesu, roka 1 sname staro gumo s platišča, roka 2 vzame novo z regala, most se zavrti (stara k regalu, nova k avtu), roka 2 natakne novo, roka 1 postavi staro na prazno mesto v regalu; tako vsa štiri kolesa, najprej ena stran, nato druga. KONČANO po 9,1–10 s, konec po 11,7 s (plošča ~9,5–10,5 s).
+- 14. 11. 2026, **vrstica korakov po plošči** (`an_common`; `js/garage.js` `STG`, `SAY`, `bar`; `css/garage.css`; `garaza.html` `#g-steps`): med oddajo je spodaj vrstica s kapsulami stopenj (opravljene ✓ zeleno, trenutna cian »N Ime«, ostale s številko; zadnja, Končano, ima pri krilu in aeru kljukico), stavek koraka s številko roke in kolesa (npr. »Enako še kolo 2/4 (zadaj desno)«), črta napredka po uri oddaje in gumb **PRESKOČI ›** (oddaja takoj do konca, isti konec). Stopnje po ploščah: gume in platišča Izberi · Dvig · Snemanje · Nove gume (Nova platišča); auspuh Izberi · Snemanje · Montaža · Zvok; krilo in aero Tapni · Izberi · Priprava · Menjava · Montaža; turbo Izberi · Hauba gor · Montaža · Preizkus moči (avto brez svoje haube: Izberi · Montaža · Preizkus moči); žarometi Izberi · Roki dol · Menjava · Preizkus luči; barva Izberi barvo · Komora dol · Barvanje · Sušenje. Koraki pridejo iz `garage3d.js` (`hud('fit', {step, …})`, v načrtu turba polje `lid`); stopnja se ne vrača nazaj, črta se ob novi oddaji začne pri 0. Prevodi v `js/lang.js` (test prevodov bere tudi `STG` in `SAY`).
+  - Izmerjeno (muscle; turbo s haubo in žarometi s predalom na kozorogu; KONČANO / konec): gume 10,0 / 11,7 s; platišča 12,3 / 16,4 s; auspuh 9,4 / 11,8 s; krilo 7,1 / 9,5 s; turbo brez haube 12,9 / 14,3 s, s haubo 15,1 / 16,5 s; aero (ustnica) 10,1 / 13,0 s; žarometi 14,7 / 18,9 s, s predalom 17,1 / 20,3 s; barva 4,8 / 6,3 s. Brez napak; črta pride do konca pri vseh.
+  - Še ni po plošči: platišča, auspuh, krilo, turbo, žarometi (`podaljsek`) in aero imajo staro koreografijo (pretežno ena roka) in trajajo dlje kot plošče; krilo nima koraka »stari ven«; aero dela z roko 1 (plošča: roka 2), paket Sport ima samo ustnico in krilo (plošča: tudi pragova); tap na avto še ne odpre barv; deli s predlogo še po starem.
