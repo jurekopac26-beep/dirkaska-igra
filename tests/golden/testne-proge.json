@@ -551,7 +551,7 @@
   "tests/browser/townsville.test.mjs": "5eac204579d71b58",
   "tests/detroit.test.js": "6266b08504f0522b",
   "tests/greatalpine.test.js": "93e4b6303773d1b8",
-  "tests/hotham.test.js": "9c35161f67af97c4",
+  "tests/hotham.test.js": "aaf4977825035baa",
   "tests/longford.test.js": "f69a4eb30e3a682a",
   "tests/maunakea.test.js": "163732532460a886",
   "tests/moki.test.js": "2c7b2631ef3bebad",
@@ -809,6 +809,11 @@
    "datum": "2026-11-11",
    "proga": "rio",
    "razlog": "Uporabnik 11. 11. 2026 ob ~17.20 v seji #647 (izbira 1 na vprašanje dez-sneg-testne-proge): samo meje za dež v testu proge; datoteke proge ostanejo"
+  },
+  {
+   "datum": "2026-11-13",
+   "proga": "hotham",
+   "razlog": "Uporabnik dovolil seme pregona 11 → 29 v tests/hotham.test.js (stran Odločitve, trki-hotham-seme = 1, 13. 11. 2026)"
   }
  ]
 }

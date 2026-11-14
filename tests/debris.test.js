@@ -1,8 +1,8 @@
 // Pieces on the road (Race.debris, Core debrisHit): driven over, not knocked away (the user's). A piece lying on the road stays where it
 // lies; the car over it loses a little speed (at most 2.5 %), the phone thumps (hitDebris) and over a panel the car hops once a pass
 // (hopN, drawn by the renderer over ~2 m: hopT, hopH), no twist; a mirror's bit: the thump, no hop; driven over again later: again. A piece
-// still in the air is knocked away as before. Broken glass on the road (Razbijanje: šipe): a car on it grips 20 % less, less as it is
-// scattered by each car driven over it.
+// still in the air is knocked away as before. Broken glass on the road (always laid in a local race, P5): with damage Vklop a car on it
+// grips 5 % less, less as it is scattered by each car driven over it; Samo videz: its grip as before.
 //   node tests/debris.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -37,28 +37,30 @@ check('driven over again later: it hops again (once a pass)', hood.again === 2, 
 check('a mirror\'s bit: a light thump, no hop, hardly slower', mir.hop === 0 && mir.thump > 0 && mir.thump < 6 && loss(mir) < 0.005 + 1e-9 && mir.moved < 0.02, JSON.stringify({ hop: mir.hop, thump: mir.thump, loss: +(loss(mir) * 100).toFixed(2), moved: +mir.moved.toFixed(3) }));
 check('a piece still in the air: knocked away as before (moved over half a metre), no hop', fly.moved > 0.5 && fly.hop === 0, `moved ${fly.moved.toFixed(2)} m`);
 
-// broken glass on the road (Razbijanje: šipe, Core.setCrash({ glass })): a knock lays a patch where it broke a pane; a car on it grips 20 %
-// less (glassK 0.8: slides more), less as it is scattered: each car driven over it and off it takes a quarter; off by default: none
-function glassRun(on) {
+// broken glass on the road (Core.setCrash({ glass }), on in every local race: xPhys): a knock lays a patch where it broke a pane; with
+// damage Vklop a car on it grips 5 % less (glassK 0.95), less as it is scattered: each car driven over it and off it takes a quarter;
+// Samo videz: the patch lies there, the grip is the road's (glassK 1); off (online): none
+function glassRun(on, damage = 2) {
   C.setCrash(on ? { glass: 1 } : {});
   try {
-    const r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 3, playerModel: SOKOL, assist: 2, seed: 3, difficulty: 1, damage: 2 }); r.start();
+    const r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 3, playerModel: SOKOL, assist: 2, seed: 3, difficulty: 1, damage }); r.start();
     const P = r.player, A = r.cars.find(c => !c.isPlayer); A.place(P.x - Math.cos(P.h) * 200, P.z - Math.sin(P.h) * 200, P.h); A.locked = true;
     C.applyDamage(P, 0.1, P.m.len * 0.5, 0); r.step(DT);
     const G = r.glass || [], p = G[0], first = { n: G.length, k: p && p.k, gk: P.glassK, near: p ? Math.hypot(p.x - (P.x + Math.cos(P.h) * P.m.len * 0.5), p.z - (P.z + Math.sin(P.h) * P.m.len * 0.5)) : null };
     // the braking on it: from 20 m/s, full brake for 0.5 s (on the glass: less grip, less slowed)
     const brake = (onIt) => { P.place(onIt ? p.x : p.x + 30 * Math.cos(P.h + 1.57), onIt ? p.z : p.z + 30 * Math.sin(P.h + 1.57), P.h); P.vx = Math.cos(P.h) * 20; P.vz = Math.sin(P.h) * 20; P.glassK = 1;
-      const k0 = p.k; let t = 0; for (; t < 0.5; t += DT) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; r.step(DT); if (onIt) { p.x = P.x; p.z = P.z; p.k = k0; } } return P.speed; };   // (the patch kept under the car)
-    const vOn = p ? brake(true) : null, vOff = p ? brake(false) : null;
+      const k0 = p.k; let t = 0; for (; t < 0.5; t += DT) { P.inThr = 0; P.inBrk = 1; P.inSteer = 0; r.step(DT); if (onIt) { p.x = P.x; p.z = P.z; p.k = k0; gMin = Math.min(gMin, P.glassK == null ? 1 : P.glassK); } } return P.speed; };   // (the patch kept under the car)
+    let gMin = 1; const vOn = p ? brake(true) : null, vOff = p ? brake(false) : null;
     // three passes over it at 15 m/s
     const ks = []; if (p) { p.k = 1; p.on.length = 0; for (let pass = 0; pass < 3; pass++) { P.place(p.x - Math.cos(P.h) * 6, p.z - Math.sin(P.h) * 6, P.h); P.vx = Math.cos(P.h) * 15; P.vz = Math.sin(P.h) * 15; for (let t = 0; t < 1; t += DT) { P.inThr = 0.5; P.inBrk = 0; P.inSteer = 0; r.step(DT); } ks.push(+(G.includes(p) ? p.k : 0).toFixed(3)); } }
-    return { first, vOn, vOff, ks };
+    return { first, vOn, vOff, ks, gMin };
   } finally { C.setCrash({}); }
 }
-const gOff = glassRun(false), gOn = glassRun(true);
-check('glass off (the default): a knock lays no glass', gOff.first.n === 0, JSON.stringify(gOff.first));
-check('glass on: a knock lays a patch where it hit (within 1 m), the car on it grips 20 % less (glassK 0.8)', gOn.first.n === 1 && gOn.first.near < 1 && Math.abs(gOn.first.gk - 0.8) < 1e-9, JSON.stringify(gOn.first));
-check('braking on the glass: less grip, the car slowed less in 0.5 s than off it', gOn.vOn > gOn.vOff + 0.3, `after 0.5 s ${gOn.vOn.toFixed(2)} m/s on it, ${gOn.vOff.toFixed(2)} m/s off it`);
+const gOff = glassRun(false), gOn = glassRun(true), gLook = glassRun(true, 1);
+check('glass off (online): a knock lays no glass', gOff.first.n === 0, JSON.stringify(gOff.first));
+check('glass on, damage Vklop: a knock lays a patch where it hit (within 1 m), the car on it grips 5 % less (glassK 0.95)', gOn.first.n === 1 && gOn.first.near < 1 && Math.abs(gOn.first.gk - 0.95) < 1e-9, JSON.stringify(gOn.first));
+check('glass on, damage Samo videz: the patch lies there, the car on it grips as on the road (glassK 1 all the way)', gLook.first.n === 1 && (gLook.first.gk == null || gLook.first.gk === 1) && gLook.gMin === 1, JSON.stringify(gLook.first) + ' min ' + gLook.gMin);
+check('braking on the glass (Vklop): less grip, the car slowed less in 0.5 s than off it', gOn.vOn > gOn.vOff + 0.1, `after 0.5 s ${gOn.vOn.toFixed(2)} m/s on it, ${gOn.vOff.toFixed(2)} m/s off it`);
 check('driven over three times: a quarter scattered each pass (0.75, 0.56, 0.42)', gOn.ks.join() === '0.75,0.563,0.422', gOn.ks.join(', '));
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

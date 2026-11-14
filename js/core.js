@@ -2173,19 +2173,22 @@ const Core = (function () {
   // crushed further); then on its wheels again with 80 % of its speed: about a second lost. Only one such knock in ten (XROLL.p: every one
   // was too many): each knock counts once (another within 4 m of the last one counted is the same crash), and which ones roll is a hash
   // of the car and its count of knocks (xrK). Its numbers: none random (the race's own draws untouched)
-  const XR = { roll: 0, bump: 0, ai: 0, handle: 0, glass: 0 };
+  const XR = { roll: 0, bump: 0, ai: 0, glass: 0, net: 0 };   // (net: an online race (xPhys(true)): P3's pull and shared blow off, both phones as before)
   const XROLL = { p: 0.1 };
   // Preizkus: tekmeci in trki (Nastavitve; setTest). What the settings ask for, over what the driving physics gives: null = as the physics has it (the
   // default), a number = that, whatever the physics. The rivals (aiControl, Race): aiSpr the spread of their paces (a share of the difficulty's: 1
   // whole, 0.3 close together), aiFol the gap they keep behind a car (-1 the old rule: M.aiGap from middle to middle, with the versions' boxes RB_FOL
   // between the bumpers; 0 and up: that many metres between the bumpers), aiPush how much quicker right behind a car, aiSide the room they leave a car alongside (m),
   // aiKerb how far out over the kerbs at the apex and the exit (m; 0 none). The knocks between cars (Nastavitve: Trki med avti; carCollide, kCollide):
-  // cv the version (KV_IDS: 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara: the old knock, round ends, as it was; null the default,
-  // Simulacija) and over its numbers: cPm how many times its own weight the player's car counts against another, cE the share of the version's
-  // bounce (0 none), cMu the rub (Coulomb's mu along the contact), cYaw the share of the turn a knock gives, cGl the share of the grip a hard knock
-  // costs (the spin), cSl the time the tyres take to scrub a push sideways (x the version's), cFx 0: a knock throws no sparks or dust (the scrape
-  // marks stay). Online none of it: both phones drive the default
-  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null };
+  // cv the version (KV_IDS: 1 Simulacija, 2 Arkadna, 3 Mehka, 4 Kaskaderska, 5 Stara: the old knock, round ends, as it was, 6 Realistična: as
+  // a real crash, Simulacija's knock and four things more; null the default, Simulacija) and over its numbers: cPm how many times its own weight the
+  // player's car counts against another, cE the share of the version's bounce (0 none), cMu the rub (Coulomb's mu along the contact), cYaw the
+  // share of the turn a knock gives, cGl the share of the grip a hard knock costs (the spin), cSl the time the tyres take to scrub a push
+  // sideways (x the version's), cFx 0: a knock throws no sparks or dust (the scrape marks stay). The parts off the cars (Nastavitve: Odpadli deli;
+  // Race.step): deb 0 Izklop: a part still comes off and flies as it does (the same throw, the same random numbers), but no car touches it
+  // (no speed lost, no twitch, no hop) and one that has come to rest is taken off the road (dead, as the cap of 40 takes one: the renderer
+  // frees it, or keeps it drawn with Razbijanje: deli ostanejo na progi); null as it was (Vklop). Online none of it: both phones drive the default
+  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null, deb: null };
   /* Trki med avti: the versions (KV), each the same knock (kCollide) with its own numbers, as racing games do it: the cars' real weights, the
      push at the true contact of two boxes, the bounce, the bodies' rub, the turn by the lever about each car's middle, then each car's tyres.
        pm             the player's car weighs pm times its own against another car (an arcade game's: the rivals give way, the player hardly moves)
@@ -2206,15 +2209,39 @@ const Core = (function () {
      some 35 deg, as the reference video's hard knocks (30-40 deg); two rivals rubbing lose half as much grip). Arkadna:
      as the arcade games (the player's car 1.7x, bouncy, slippery flanks, the player turned half as much and hardly ever spun, the rivals
      spun more easily). Mehka: soft contact (little bounce, little turn, hard to spin: rubbing is racing). Kaskaderska: the crash games
-     (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late) */
+     (bouncy, a hard rub, half as much turn again, spins easily, the rivals among themselves too, the grip back late). Realistična (real,
+     the sixth choice, cv 6; in the row right after Simulacija): as a real crash (docs/trki-realizem.md, »Zasnova prototipa Realistična«):
+     Simulacija's numbers and four things more, only at a touch (every place asks krOn(c)); not for the police chase (c.ck), a truck with
+     its trailer (c.tl: the tractor and the trailer's body) nor in the pit lane (c.inPit: the old knock there, the walls, the slide and
+     the light things as Simulacija's); the new physics (phys 'nova') not 1 and 2 (kTake gives it the push before, its step is its own),
+     at the barrier the push without 3's grip; never online (the game sends no version there: the default):
+       1 the turn anywhere on the car (kTakeR): each axle's slip by the mean lever, (a + b) / 2; the grip goes as Simulacija's, and when both
+         axles are pushed past aH2 (all of it aS2 further: a hard knock in the middle) or the nose more than the tail and past aHf (aSf:
+         a knock on the nose); the knock's yaw rate goes to the car as far as its grip goes (wI), at every knock, up to wMax rad/s, the rest to
+         the attitude kick as Simulacija's; the grip back in glT x 1 to 1 + glX s (the harder pushed axle's slip from 0.3 to 0.9)
+       2 the slide after a knock (stepCS, kSlideR): a push across past max(sl0 m/s, slA of the speed) (all of it at twice that), or a car
+         without its grip, slides on at CRASH.slide g; a smaller one the tyres scrub as Simulacija's
+       3 the barrier (wallR; a corner closing faster than wall.v0 m/s, slower a car leaning on it: as Simulacija's): a rigid body's push with
+         all of its turn, at a point among the corners that bear (those within the crush, wall.face x the closing speed, wall.cr0 to wall.cr1 m,
+         of the deepest), its lever x wall.arm; the bounce wall.e0 down to wall.e1 in a hard knock (falling over wall.eV m/s, none under
+         wall.eT), the rub wall.mu at that point; the grip by 1's rule
+       4 a light thing (propCarHit, debrisHit): the car gets the push back of what the thing got (kTake: no share of its speed, no twitch) */
   const KV = {
     sim: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3 },
     arc: { pm: 1.7, e0: 0.4, e1: 0.2, eV: 5, eT: 0.5, mu: 0.15, muL: 0, muV: 0.6, yaw: 1, yawP: 0.5, aH: 0.1, aS: 0.06, glP: 0.25, glA: 1.3, glR: 0.5, glT: 0.8, slT: 0.7, wI: 3 },
     soft: { pm: 1, e0: 0.15, e1: 0.06, eV: 4, eT: 0.8, mu: 0.2, muL: 0.2, muV: 0.6, yaw: 0.6, yawP: 1, aH: 0.15, aS: 0.12, glP: 1, glA: 1, glR: 0.5, glT: 0.7, slT: 0.8, wI: 2 },
-    stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glR: 1, glT: 1.3, slT: 1.2, wI: 4 }
+    stunt: { pm: 1, e0: 0.4, e1: 0.2, eV: 6, eT: 0.5, mu: 0.5, muL: 0.6, muV: 0.3, yaw: 1.5, yawP: 1, aH: 0.06, aS: 0.04, glP: 1, glA: 1, glR: 1, glT: 1.3, slT: 1.2, wI: 4 },
+    real: { pm: 1, e0: 0.3, e1: 0.12, eV: 4, eT: 0.5, mu: 0.35, muL: 0.4, muV: 0.5, yaw: 1, yawP: 1, aH: 0.1, aS: 0.06, glP: 1, glA: 1, glR: 0.5, glT: 0.6, slT: 1, wI: 3,   // (Realistična: Simulacija's numbers,
+      aH2: 0.22, aS2: 0.1, aHf: 0.3, aSf: 0.15, wMax: 9, glX: 1, sl0: 3, slA: 0.1, wall: { v0: 1.5, e0: 0.2, e1: 0.05, eV: 6, eT: 0.5, mu: 0.35, arm: 0.55, face: 0.06, cr0: 0.03, cr1: 0.5 } }   // then its own)
   };
-  const KV_IDS = [null, 'sim', 'arc', 'soft', 'stunt', 'old'], KV_DEF = 'sim';
-  let KC = null;   // (the knock in use: the version's numbers with the settings over them; null: the old knock)
+  // the versions by their number (TX.cv; the settings' crV + 1): new ones go at the end, a number once given stays (the settings keep it, the
+  // tests and the renderer ask for Stara as 5). The order of the choices on the page is its own (index.html: Realistična after Simulacija)
+  const KV_IDS = [null, 'sim', 'arc', 'soft', 'stunt', 'old', 'real'], KV_DEF = 'sim';
+  let KC = null;   // (the knock in use: the version's numbers with the settings over them, its id on it (KC.id); null: the old knock)
+  let KR = false;   // (Realistična is the version in use, KC.id === 'real': kept beside KC to be asked cheaply, krOn: the knock (kTake), the slide (stepCS), the walls (wallCollide), the props and the loose parts (propCarHit, debrisHit); set wherever KC is)
+  // Realistična's rules for this car (the one question of all four places): not in the run from the police (c.ck: crashCollide's contacts, its own grip),
+  // not a truck with its trailer (c.tl: the tractor and, tlMake, the trailer's body) and not in the pit lane (c.inPit: the old knock there, carCollide)
+  const krOn = (c) => KR && !c.ck && !c.tl && !c.inPit;
   function kvMake() {
     const id = TX.cv != null && KV_IDS[TX.cv] ? KV_IDS[TX.cv] : KV_DEF; if (id === 'old') return null;
     const K = Object.assign({ id, fx: 1 }, KV[id]);
@@ -2222,12 +2249,19 @@ const Core = (function () {
     if (TX.cYaw != null) K.yaw = TX.cYaw; if (TX.cGl != null) { K.glP *= TX.cGl; K.glA *= TX.cGl; } if (TX.cSl != null) K.slT = TX.cSl; if (TX.cFx === 0) K.fx = 0;
     return K;
   }
-  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } KC = kvMake(); }
-  KC = kvMake();
+  function setTest(o) { for (const k in TX) { const v = o && o[k]; TX[k] = typeof v === 'number' && Number.isFinite(v) ? v : null; } KC = kvMake(); KR = !!KC && KC.id === 'real'; }
+  KC = kvMake(); KR = !!KC && KC.id === 'real';
   const txv = (k, cs, nv, c) => TX[k] != null ? TX[k] : c.phys === 'nova' ? nv : cs;   // (a rival's setting: asked for, else by its physics)
-  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.handle = o && +o.handle ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; }
-  // Razbijanje · nov način: poškodbe vplivajo na vožnjo (xHandle; damage on). A crushed front corner pulls the car to its side (a bent
-  // track rod: up to 0.05 of the lock, as a tyre going down pulls 0.03)
+  function setCrash(o) { XR.roll = o && +o.roll ? 1 : 0; XR.bump = o && +o.bump ? 1 : 0; XR.ai = o && +o.ai ? 1 : 0; XR.glass = o && +o.glass ? 1 : 0; XR.net = o && +o.net ? 1 : 0; }
+  // damage Vklop (P3): a crushed front corner pulls the car to its side (a bent track rod: up to 0.05 of the lock, as a tyre going down
+  // pulls 0.03), and a bent front wheel (that corner's cd 0.35-0.7) shakes the steering once a turn of the wheel (~1.9 m of road: the
+  // wheel's own turn, c.xd.ph, laid only on a car with a bent wheel; repairCar and _mend clear it), up to 0.004 of the lock, from 30 m/s
+  // in full. Samo videz, Izklop, an online race (XR.net) and a car not knocked there: 0 (it drives as before)
+  function dmgSteer(c, spd, dt) {
+    if (c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
+    let w = 0; if (b !== 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
+    return clamp((cd[1] - cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) + w;
+  }
   // Razbijanje · nov način: odboji (xBump; off: carCollide as before). A knock turns the car it hits as hard as its impulse says (no damping
   // of the turn) and its grip goes for a moment (xgl, fading over 0.9 s: the travel no longer follows the nose), more when hit behind its
   // middle: a tap on a rear quarter spins it
@@ -2873,7 +2907,7 @@ const Core = (function () {
       const wp = spd > 2 && this.vAngP != null ? wrapPi(vAng - this.vAngP) / dt : 0;
       this.vAngP = vAng;
       this.wPath += (wp - this.wPath) * Math.min(1, dt * 18);
-      const ft = this.flt, stIn = this.locked ? 0 : this.steer + (ft && ft.pw >= 0 ? (ft.pw & 1 ? 1 : -1) * (ft.pw < 2 ? 0.03 : 0.015) * ft.pk * Math.min(1, spd / 10) : 0) + (XR.handle && this.dmgMode === 2 ? clamp((this.cd[1] - this.cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) : 0);   // (failures: a tyre going down pulls the car to its side)
+      const ft = this.flt, stIn = this.locked ? 0 : this.steer + (ft && ft.pw >= 0 ? (ft.pw & 1 ? 1 : -1) * (ft.pw < 2 ? 0.03 : 0.015) * ft.pk * Math.min(1, spd / 10) : 0) + dmgSteer(this, spd, dt);   // (failures: a tyre going down pulls the car to its side)
       let thr = this.locked ? 0 : this.inThr, brk = this.inBrk;
       const hb = this.locked ? 0 : this.inHand;
       // ---- steering shaping: keys / buttons ramp to full in CA.stOn s and back in 0.14 s; analogue (tilt, wheel, AI) a light lag ----
@@ -2905,7 +2939,7 @@ const Core = (function () {
         const gr2 = M.gears[this.gear - 1] * M.final;
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
         this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);   // (an electric motor turns with the wheels only)
-        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1);   // (a hot engine: less power)
+        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1) * (this.eng ? engK(this) : 1);   // (a hot engine: less power)
         let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr * (this.man ? manK(this, M, vl) : 1);   // (the manual gearbox: the limiter, a bogging engine)
         if (this.shiftT > 0) Fsw *= 0.7;
         Fsw -= (1 - thr) * m * K.engBrk * sstep(2, 20, vl);
@@ -3028,7 +3062,7 @@ const Core = (function () {
       this.vx += ax * dt; this.vz += az * dt;
       if (wN !== 0) { const cr = Math.cos(wN * dt), sr = Math.sin(wN * dt), vx0 = this.vx; this.vx = vx0 * cr - this.vz * sr; this.vz = vx0 * sr + this.vz * cr; }
       this.x += this.vx * dt; this.z += this.vz * dt; this.h += this.w * dt;
-      if (slx || slz) { const sm = Math.hypot(slx, slz), aS = Math.max(0.35 * aL, Math.sqrt(Math.max(0, aL * aL - this.csAn * this.csAn))), dv = grounded ? Math.min(aS, sm / (clamp(SL_T * spd, 0.04, 0.25) * (KC ? KC.slT : 1))) * dt : 0, k = sm > dv ? 1 - dv / sm : 0;   // (the tyres scrub the push: in SL_T x speed s while it is small, at most with what grip the corner leaves, a third at least)
+      if (slx || slz) { const sm = Math.hypot(slx, slz), aS0 = Math.max(0.35 * aL, Math.sqrt(Math.max(0, aL * aL - this.csAn * this.csAn))), aS = krOn(this) ? kSlideR(aS0, sm, spd, gl) : aS0, dv = grounded ? Math.min(aS, sm / (clamp(SL_T * spd, 0.04, 0.25) * (KC ? KC.slT : 1))) * dt : 0, k = sm > dv ? 1 - dv / sm : 0;   // (the tyres scrub the push: in SL_T x speed s while it is small, at most with what grip the corner leaves, a third at least; Realistična: a big push or a car without its grip slides on, kSlideR)
         slx *= k; slz *= k; this.x += slx * dt; this.z += slz * dt; }   // (its speed put back at the end, past the stopped car's hold)
       if (trk.hasElev || trk.ground2) {   // (NEW VERSION · TEST 1: the new map's hills on a flat track)
         if (this.air) {
@@ -3116,7 +3150,7 @@ const Core = (function () {
       const wp = spd > 2 && this.vAngP != null ? wrapPi(vAng - this.vAngP) / dt : 0;
       this.vAngP = vAng;
       this.wPath += (wp - this.wPath) * Math.min(1, dt * 18);
-      const ft = this.flt, stIn = this.locked ? 0 : this.steer + (ft && ft.pw >= 0 ? (ft.pw & 1 ? 1 : -1) * (ft.pw < 2 ? 0.03 : 0.015) * ft.pk * Math.min(1, spd / 10) : 0) + (XR.handle && this.dmgMode === 2 ? clamp((this.cd[1] - this.cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) : 0);
+      const ft = this.flt, stIn = this.locked ? 0 : this.steer + (ft && ft.pw >= 0 ? (ft.pw & 1 ? 1 : -1) * (ft.pw < 2 ? 0.03 : 0.015) * ft.pk * Math.min(1, spd / 10) : 0) + dmgSteer(this, spd, dt);
       let thr = this.locked ? 0 : this.inThr, brk = this.inBrk;
       const hb = this.locked ? 0 : this.inHand;
       // ---- steering shaping (as cs) ----
@@ -3148,7 +3182,7 @@ const Core = (function () {
         const gr2 = M.gears[this.gear - 1] * M.final;
         const wr2 = Math.max(0, vl) / M.rw * gr2 * 9.5493;
         this.rpmTarget = M.ev ? wr2 : Math.max(wr2, M.idle + (M.redline * 0.62 - M.idle) * thr);
-        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1);
+        const Kp = PWR_MULT * M.kw * 1000 * 0.88 / m * (1 - 0.22 * (this.dmgMode === 2 ? this.dmg : 0)) * (this.flt ? 1 - 0.3 * sstep(ENG_HOT[0], ENG_HOT[1], this.flt.enT) : 1) * (this.eng ? engK(this) : 1);
         let Fsw = m * Kp / Math.max(Math.abs(vl), 4) * thr * (this.man ? manK(this, M, vl) : 1);
         if (this.shiftT > 0) Fsw *= 0.7;
         Fsw -= (1 - thr) * m * KC.engBrk * sstep(2, 20, vl);
@@ -3385,6 +3419,24 @@ const Core = (function () {
   // counts the fires, the renderer draws each: Render fireCatch), the car stops (Race._wreckStep), retires there and the game is over
   // (wreck.rule.over: KONEC IGRE, game.js)
   const WRULE = { d1: 0.7, d2: 0.8, hit: 0.02, hard: 0.08 };
+  // P2.3 the engine after a hard knock in front (damage Vklop; the wheel rule's car only, wreck.rule: the player's, offline, in a race): the
+  // radiator holed by the front's damage (f as the renderer's steam, engineFx: the front zone or its front corners' mean) loses its water,
+  // ENG.f0 to ENG.f1 of f from none to all; the engine warms with the throttle (h 0..1) and cools as much as the water left lets it. From h 0.5
+  // up to 30 % less power (engK), at 1 for ENG.die s it dies (no power) and once the car stands the game is over, as with a wheel off (the
+  // user, 13. 11. 2026, trki-p2-pregrevanje: »KONEC IGRE«; rule.why 'engine'). eng.ev for the game: 'hot' at h 0.5, 'dead'. Samo videz and
+  // Izklop: only the steam (the renderer's). A new radiator in the pits (repairCar; _mend Nujno)
+  const ENG = { f0: 0.3, f1: 0.7, warm: 0.03, cool: 0.02, die: 3 };   // (at full throttle, all the water gone: dead in ~36 s; f 0.5 ~70 s)
+  function engStep(c, dt) {
+    const f = Math.max(c.dz[0], (c.cd[0] + c.cd[1]) / 2), base = c.eng ? (c.eng.f0 || 0) : 0, fe = Math.max(0, f - base);   // (fe: the front's damage over the last new radiator (repairCar: 0, _mend Nujno: the front still bent); a fresh one leaks only from a fresh knock)
+    if (!c.eng) { if (fe < ENG.f0) return; c.eng = { h: 0, t: 0, dead: false, hot: false, ev: '', f0: 0 }; }
+    const E = c.eng; if (E.dead) return;
+    const leak = sstep(ENG.f0, ENG.f1, fe), thr = clamp(c.inThr || 0, 0, 1);
+    E.h = clamp(E.h + (leak * (0.15 + 0.85 * thr) * ENG.warm - (1 - leak) * ENG.cool * E.h) * dt, 0, 1);
+    if (E.h >= 0.5 && !E.hot) { E.hot = true; E.ev = 'hot'; } else if (E.h < 0.35) E.hot = false;
+    E.t = E.h >= 1 ? E.t + dt : 0;
+    if (E.t > ENG.die) { E.dead = true; E.ev = 'dead'; }
+  }
+  const engK = (c) => c.eng ? (c.eng.dead ? 0 : 1 - 0.3 * sstep(0.5, 1, c.eng.h)) : 1;
   // The Kolibri's tyres (Race opts.tyreRule: the vehicles they are for; Car.kt on the player's car): each its own wear (w) and damage (d),
   // 0..1. The wear: a run up a road (or down a stage) KT.run of it over the whole run, driven clean, whatever its length; a race on a circuit
   // KT.lap a metre (4 times the tyres' usual), a slide up to KT.slide times more, a wheel on the grass, the gravel or the sand KT.off times
@@ -3404,7 +3456,7 @@ const Core = (function () {
   function ktGrip(c) {   // [the four wheels' grip shares, the side grip's share]
     const K = c.kt, g = K.g, Ty = c.ty && tyreK(c.ty), loss = Ty ? Ty.loss : KT.loss, cd = K.cg ? 1 - KT.cold * K.cold : 1;
     for (let k = 0; k < 4; k++) g[k] = (1 - loss * K.w[k]) * cd;
-    g[4] = K.hot >= 0 ? KT.burn : 1; return g;
+    g[4] = K.hot >= 0 && c.dmgMode === 2 ? KT.burn : 1; return g;   // (Samo videz: the flame a warning only, the grip as ever: paket-p K.4)
   }
   // the tyres' wear over ds metres (Race step), the set's on c.ty (the radio, the pits) the four's mean
   function ktWear(c, race, ds) {
@@ -3441,14 +3493,15 @@ const Core = (function () {
     const K = c.kt, W = c.wreck, Q = W && W.rule, d1 = c.dmg;
     if (!Q || !Q.kt || K.hot >= 0 || W.nL || W.dnf || c.finished) return;
     if (!((d0 >= WRULE.d1 && amt >= WRULE.hit) || d1 >= WRULE.d2)) return;
-    let m = k0 >= 0 ? k0 : 0; for (let k = 0; k < 4; k++) if (K.d[k] > K.d[m]) m = k;
+    const on = (k) => !!partOf(c.m, WHEELS[k]);   // (an older model: its front wheels only, partOf)
+    let m = k0 >= 0 && on(k0) ? k0 : 0; if (!on(m)) return; for (let k = 0; k < 4; k++) if (K.d[k] > K.d[m] && on(k)) m = k;
     K.hot = m;
   }
   const ruleFire = (Q, lvl) => { if (!Q.burn) Q.fn = (Q.fn || 0) + 1; if ((Q.burn || 0) < lvl) Q.burn = lvl; };
   function ruleDrop(c, n) {   // n more wheels off, each a random one of those still on
     const W = c.wreck;
     for (let j = 0; j < n; j++) {
-      const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partsOf(c.m)[WHEELS[k]]); if (!on.length) return;
+      const on = [0, 1, 2, 3].filter(k => !(W.wl & (1 << k)) && partOf(c.m, WHEELS[k])); if (!on.length) return;
       detachPart(c, WHEELS[on[Math.min(on.length - 1, Math.floor(rand() * on.length))]]);
     }
   }
@@ -3465,10 +3518,10 @@ const Core = (function () {
   // parts: the WING table, the formula's wings are its bumper parts), a wheel into the wheel bits (stepCS: the hub on the road); the
   // parts mounted on it (their entry's on) come off with it, each its own piece
   function detachPart(c, name, P) {
-    P = P || partsOf(c.m)[name];
+    P = P || partOf(c.m, name);
     c.lost[name] = 1; c.detach.push(name);
     const df = P.df != null ? P.df : c.m.parts ? 0 : WING[name];
-    if (c.aeroK0 != null && df) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
+    if (c.aeroK0 != null && df && c.dmgMode === 2) c.aeroK = Math.max(0, c.aeroK - c.m.aero * df);   // the formula: a wing gone, its downforce with it
     if (P.wh != null && c.wreck) { c.wreck.wl |= 1 << P.wh; c.wreck.nL++; c.wreck.lt = 0; }
     const PT = partsOf(c.m); for (const k in PT) if (PT[k].on === name && !c.lost[k]) detachPart(c, k, PT[k]);   // (the parts mounted on it go with it)
   }
@@ -3584,6 +3637,18 @@ const Core = (function () {
     for (const id in sp.over || {}) put(raw[id], sp.over[id]);
     return raw;
   }
+  // a wheel's entry (wh k: 0 FL 1 FR 2 RL 3 RR) on a vehicle with physics ph (len, a, b, rw)
+  const wheelEntry = (k, ph) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / (ph.len / 2), lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
+  // a part's entry: the model's table's (partsOf), else for a model with the 8 old parts (no table of its own) its front wheels, the ones
+  // the renderer can take off it (paket-p K.2: the wheel rule's wheel on the 11 older models; never by a corner, applyDamage's loop has no
+  // wheels for them)
+  const OLD_WH = new Map();
+  function partOf(M, name) {
+    const P = partsOf(M)[name]; if (P || M.parts) return P;
+    const k = name === 'wheelFL' ? 0 : name === 'wheelFR' ? 1 : -1; if (k < 0) return undefined;
+    let E = OLD_WH.get(M); if (!E) OLD_WH.set(M, E = [wheelEntry(0, M), wheelEntry(1, M)]);
+    return E[k];
+  }
   // the def's part spec -> the table (name -> { z, th, corner?, cth?, m, r, h, lx, lz, y, df?, wh? }); ph: the vehicle's physics
   function expandParts(sp, ph) {
     const hl = ph.len / 2, out = {}, res = (e) => {
@@ -3592,7 +3657,7 @@ const Core = (function () {
       o.y = e.y != null ? e.y : sp.y0 + e.f * (sp.ht - sp.y0); if (e.df != null) o.df = e.df; if (e.on != null) o.on = e.on;
       if (e.spare) o.spare = 1; if (e.tl) o.tl = 1; return o;
     };
-    const wheel = (k) => ({ wh: k, z: k < 2 ? 0 : 1, th: 1, m: clamp(Math.round(20 * ph.rw), 4, 14), r: ph.rw, h: clamp(0.75 * ph.rw, 0.12, 0.6), lx: (k < 2 ? ph.a : -ph.b) / hl, lz: k & 1 ? 0.86 : -0.86, y: ph.rw });
+    const wheel = (k) => wheelEntry(k, ph);
     const raw = mergeParts(sp);
     for (const id in raw) { const e = raw[id]; if (e.wh != null) { out[id] = wheel(e.wh); if (e.m != null) out[id].m = e.m; } else out[id] = res(e); }
     if (ph.aero) { if (out.wing && out.wing.df == null) out.wing.df = 0.55; if (out.bumperF && out.bumperF.df == null) out.bumperF.df = 0.3; }
@@ -3639,12 +3704,52 @@ const Core = (function () {
     if (sl > e) { _en[0] = -T.tx[T.N - 1]; _en[1] = -T.tz[T.N - 1]; return sl - e; }
     return 0;
   }
+  // What stops a piece (DEB; g is the game's own, JUMP_G). Before, a piece lost speed only in the steps it was on the ground, 6.5 m/s2 on
+  // every surface, and on a road falling away it was in the air most steps: it slid on as if on ice
+  //   the air     a piece in flight, or going end over end along the road, is braked by k v^2 (k = kA r^2 / m: a tumbling sheet shows half
+  //               its face on average; 0.03 a bonnet, 0.06 a bumper's cover); a wheel hardly (kW); a piece lying flat or a wheel rolling: not
+  //   a landing   bounces (e x its fall, a wheel wE; none under vB) and takes muT x the blow off its speed along the road (Coulomb: muT x
+  //               (its fall + its bounce)), so a piece that hops loses muT g on average whatever its bounce; it keeps at least 'keep' of
+  //               its speed (it flips on over its edge)
+  //   the road    a piece on the ground stays on it (down a slope too). Faster than vT it does not lie down: it goes end over end along its
+  //               travel (muT g and the air; drawn turning, spin x its speed / its edge's height, 'edge' x r); slower it lies flat and
+  //               scrapes (muS g: sheet metal or plastic on tarmac; one number for both: their real ranges overlap), its spin about the
+  //               vertical braked by the same friction
+  //   the ground under it (T.surface at its place, the cars' own lookup): sM x the friction, sK v^2 more where it ploughs (grass,
+  //               gravel), sE x the bounce (it thuds into grass and a gravel bed)
+  //   a wheel     (wh: -1 / 1, the side of the car it came off; a spare wheel too) is on its tread from its first landing (roll 1:
+  //               upright, turning as the road turns it). Too fast to roll (over vRoll) it bounds on, hop after hop (wHop x its speed
+  //               up, wHopMax at most, never higher than it fell), each landing taking muT x the blow; slower it rolls (aRoll per
+  //               surface: far more than a real wheel's rolling drag, which would carry it half a kilometre), turning towards its own
+  //               side (veer: the slower the tighter), wobbling more and more (lean0 .. lean0 + lean1 rad), falls over under vFall
+  //               (roll 2) and scrubs to a stop on its side (muR g). A car's knock takes it off its tread (roll 0) until it lands again
+  //   own, again  the seconds a piece does not touch the car it has just left: the car that shed it (own: it goes out from under its own
+  //               car, which before ran into it step after step and was braked by it) or knocked it away (again: one knock a pass).
+  //               Each car its own time (d.by the cars, d.byT their seconds): with one slot two cars at one piece took it from each
+  //               other and were both knocked step after step. In that time the car does not drive through a piece still moving: one in
+  //               its way is shouldered aside (push m/s to its side, against the car), at no price to the car; the push gives it no speed
+  //               beyond what it had or the car's own speed and push (a piece caught between a car and a barrier, or two cars, is not shot
+  //               out along the gap), and push is under DEB_RUN.v: a piece a standing car shoulders aside lies at once (it does not dance
+  //               between two cars at push m/s until a car's time ends and it is knocked)
+  const DEB = {
+    own: 2, again: 2, push: 2.5,
+    kA: 0.72, kLo: 0.01, kHi: 0.06, kW: 0.007,
+    e: 0.28, vB: 2.5, muT: 0.9, keep: 0.3,
+    vT: 7, muS: 0.55, spin: 0.4, edge: 0.8,
+    wE: 0.5, wHop: 0.12, wHopMax: 3.5, vRoll: 8, vFall: 2.5, veer: 4, lean0: 0.06, lean1: 0.4, muR: 0.8,
+    //    asphalt kerb grass gravel paving makadam puddle cobbles (wet)
+    sM: [1, 1, 1.35, 1.8, 1, 1.15, 1.15, 1, 1],
+    sK: [0, 0, 0.02, 0.08, 0, 0.01, 0.01, 0, 0],
+    sE: [1, 1, 0.4, 0.15, 1, 0.7, 0.7, 1, 1],
+    aRoll: [5, 5, 7, 14, 5, 6, 6, 5, 5],
+  };
   function stepDebris(d, T, dt) {
+    if (d.by) for (let i = d.by.length - 1; i >= 0; i--) if ((d.byT[i] -= dt) <= 0) { d.by.splice(i, 1); d.byT.splice(i, 1); }   // (the car it has just left may touch it again: debrisHit)
     if (d.rest) return;
+    const W = d.wh || 0, re = W ? d.r : DEB.edge * d.r;           // (a piece made by hand, a test's: no wh, a panel)
     d.vy -= JUMP_G * dt;
     d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
     d.q = T.query(d.x, d.z, d.q ? d.q.i : -1, d.q || {});
-    const gy = T.yAt(d.q) + d.h * 0.5 + 0.02;
     const pen = T.wall(d.q, d.r * 0.5, _wn);                      // bounce off the barriers (a side road's limits)
     if (pen > 0) {
       const nx = _wn[0], nz = _wn[1];
@@ -3652,18 +3757,54 @@ const Core = (function () {
       const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; }
     }
     if (T.open) { const pen = endPen(T, d.q, d.r * 0.5); if (pen > 0) { const nx = _en[0], nz = _en[1]; d.x += nx * pen; d.z += nz * pen; const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; } } }   // ... and the end walls
-    if (d.y <= gy) {
-      d.y = gy;
-      if (d.vy < -2.5) { d.vy = -d.vy * 0.28; d.wx *= 0.6; d.wz *= 0.6; } else { d.vy = 0; d.ground = true; }
-    } else d.ground = false;
-    if (d.ground) {
-      const sp = Math.hypot(d.vx, d.vz), dec = 6.5 * dt;          // sliding on the road (~0.65 g)
-      if (sp <= dec) { d.vx = d.vz = 0; } else { d.vx -= d.vx / sp * dec; d.vz -= d.vz / sp * dec; }
-      d.wy *= Math.max(0, 1 - 4 * dt); d.wx = d.wz = 0;
-      d.rx = relaxAng(d.rx, dt); d.rz = relaxAng(d.rz, dt);        // settles flat (right way up or upside down)
-      if (sp < 0.05 && Math.abs(d.wy) < 0.05) d.rest = true;
-    } else { d.rx += d.wx * dt; d.rz += d.wz * dt; }
+    let sp = Math.sqrt(d.vx * d.vx + d.vz * d.vz);              // (not Math.hypot: every moving piece, every step)
+    if (!d.ground || (!W && sp > DEB.vT)) {                       // the air (k v^2, solved over the step: no overshoot)
+      const f = 1 / (1 + (W ? DEB.kW : clamp(DEB.kA * d.r * d.r / d.m, DEB.kLo, DEB.kHi)) * sp * dt); d.vx *= f; d.vz *= f; sp *= f;
+    }
+    if (d.ground) {                                               // the road: end over end, scraping, rolling
+      const s0 = T.surface(d.q), sf = s0 < DEB.sM.length ? s0 : 0, tum = !W && sp > DEB.vT;   // (a surface the tables do not know: as asphalt)
+      if (W && !d.roll) d.roll = 1;
+      const a = (d.roll === 1 ? DEB.aRoll[sf] : (tum ? DEB.muT : W ? DEB.muR : DEB.muS) * DEB.sM[sf] * JUMP_G + DEB.sK[sf] * sp * sp) * dt;
+      if (sp <= a) { d.vx = d.vz = 0; sp = 0; } else { const f = 1 - a / sp; d.vx *= f; d.vz *= f; sp -= a; }
+      if (d.roll !== 1) {
+        const aw = a * 1.33 / d.r; d.wy = Math.abs(d.wy) <= aw ? 0 : d.wy - (d.wy < 0 ? -aw : aw);   // (the spin of a disc on the road: braked by 4/3 a / r)
+        d.wx = d.wz = 0;
+        if (tum) {                                                // end over end along its travel: about whichever of its two flat axes lies more across it
+          const cy = Math.cos(d.yaw), sy = Math.sin(d.yaw), al = d.vx * cy + d.vz * sy, ac = d.vz * cy - d.vx * sy, w = DEB.spin / re * dt;
+          if (Math.abs(ac) >= Math.abs(al)) { d.rx += ac * w; d.rz = relaxAng(d.rz, dt); }
+          else { d.rz -= (Math.cos(d.rx) < 0 ? -al : al) * w; d.rx = relaxAng(d.rx, dt); }
+        } else { d.rx = relaxAng(d.rx, dt); d.rz = relaxAng(d.rz, dt); }   // settles flat (right way up or upside down)
+      }
+    } else if (d.roll !== 1) { d.rx += d.wx * dt; d.rz += d.wz * dt; }
+    if (d.roll === 1) {                                           // a wheel on its tread, bounding or rolling
+      if (d.ground) {                                             // it turns towards its own side, the slower the tighter (its speed kept)
+        const om = W * DEB.veer / Math.max(sp, 2) * dt, co = Math.cos(om), so = Math.sin(om), vx = d.vx * co - d.vz * so;
+        d.vz = d.vx * so + d.vz * co; d.vx = vx; d.yaw += om;
+      }
+      const cy = Math.cos(d.yaw), sy = Math.sin(d.yaw), al = d.vx * cy + d.vz * sy, ac = d.vz * cy - d.vx * sy;   // its speed along and across its axle
+      d.rx += ac / d.r * dt; if (sp > 0.5) d.yaw -= (ac < 0 ? -al : al) / sp * 6 * dt;     // it turns as the road turns it; its axle comes square to its travel
+      const t = (Math.floor(d.rz / Math.PI) + 0.5) * Math.PI - DEB.lean0 - DEB.lean1 * clamp((DEB.vRoll - sp) / (DEB.vRoll - DEB.vFall), 0, 1);
+      d.rz += (t - d.rz) * Math.min(1, dt * 8); d.wx = d.wz = d.wy = 0;                    // upright, wobbling the more the slower
+      if (d.ground && sp < DEB.vFall) d.roll = 2;                 // ... and over it goes
+    }
     d.yaw += d.wy * dt;
+    // how high its middle is over the road at its tilt (a disc re across, h thick: flat h / 2 as before, on its edge re); the road as the
+    // cars have it, a banked bend's height too
+    const uy = Math.cos(d.rx) * Math.cos(d.rz), gy = T.yAt(d.q) + (T.bank ? T.bankAt(d.q.s, d.q.d, _bk).dy : 0) + 0.02 + d.h * 0.5 * Math.abs(uy) + re * Math.sqrt(Math.max(0, 1 - uy * uy));
+    if (d.ground) {                                               // on the ground it stays on it (the road falling away too: only a car's knock lifts it)
+      d.y = gy; d.vy = 0;
+      if (sp < 0.05 && d.wy === 0 && d.roll !== 1 && Math.abs(uy) > 0.9998) d.rest = true;
+    } else if (d.y <= gy) {
+      d.y = gy;
+      if (d.vy <= 0) {                                            // a landing: the bounce, and what the blow takes along the road
+        const s0 = T.surface(d.q), sf = s0 < DEB.sM.length ? s0 : 0, vn = -d.vy, sE = DEB.sE[sf]; let up = vn > DEB.vB ? vn * (W ? DEB.wE : DEB.e) * sE : 0;
+        if (W && sp > DEB.vRoll) up = Math.max(up, Math.min(DEB.wHop * sp, DEB.wHopMax, vn) * sE);   // a wheel too fast to roll: off the road again
+        const f = 1 - Math.min(DEB.muT * DEB.sM[sf] * (vn + up), (1 - DEB.keep * sE) * sp) / (sp || 1);
+        d.vx *= f; d.vz *= f;
+        if (up > 0) { d.vy = up; d.wx *= 0.6; d.wz *= 0.6; } else { d.vy = 0; d.ground = true; }
+        if (W && !d.roll) d.roll = 1;                             // a wheel: onto its tread at its first landing
+      }
+    }
   }
   // a car and a piece: one lying on the road (the user's: driven over, not knocked away) stays where it lies; the car loses a little speed,
   // the phone thumps (hitDebris) and, over a panel (not a mirror's bit), the car hops as if it jumped ~2 m (drawn only: hopN, hopT s, hopH m,
@@ -3674,11 +3815,12 @@ const Core = (function () {
   // more, a car's GLASS.perCar panes) a patch of glass r m round; a car on it grips GLASS.mu less (20 %: it slides more, in a corner too),
   // as much less as is left of it: each car driven over it scatters it, k x GLASS.pass, gone under GLASS.min (as the renderer scatters its
   // pieces, xShardsRun). At most GLASS.n patches (the oldest go first)
-  const GLASS = { amt: 0.04, perCar: 6, r: 2, mu: 0.2, pass: 0.75, min: 0.15, n: 40, v: 2 };
+  const GLASS = { amt: 0.04, perCar: 6, r: 2, mu: 0.05, pass: 0.75, min: 0.15, n: 40, v: 2 };
   function debrisGone(c, d) { if (d.on) { const j = d.on.indexOf(c); if (j >= 0) d.on.splice(j, 1); } }   // (the car off the piece: a new pass next time)
   function debrisHit(c, d) {
     const dx = d.x - c.x, dz = d.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + d.r * 0.7 + 0.1;   // (beyond the car's reach: nothing to touch)
     if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) { debrisGone(c, d); return; }
+    const free = !!d.by && d.by.indexOf(c) >= 0;   // (the car it has just left, DEB.own / DEB.again: no knock, no price)
     const gone = () => debrisGone(c, d);
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lying = d.ground && Math.hypot(d.vx, d.vz) < DEB_RUN.v;
     for (let i = 0; i < c.circles.length; i++) {
@@ -3688,6 +3830,7 @@ const Core = (function () {
       if (lying) {
         if (d.on && d.on.indexOf(c) >= 0) return;   // (still over it: the same pass)
         (d.on || (d.on = [])).push(c);
+        if (free) return;   // (it lies under its car, untouched: a pass begun in the car's time is not paid in its middle when the time ends)
         const sp = Math.hypot(c.vx, c.vz); if (sp < 1.5) return;
         const k = Math.min(DEB_RUN.kMax, d.m * DEB_RUN.k); c.vx *= 1 - k; c.vz *= 1 - k;
         c.hitDebris = Math.max(c.hitDebris || 0, d.m >= DEB_RUN.m ? 6 : 2.5);
@@ -3695,14 +3838,26 @@ const Core = (function () {
         return;
       }
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
+      if (free) {   // in its car's way (going deeper into it): shouldered aside, to the side it is on. A push of its speed, not of its place (no jump), and nothing to the car
+        if ((d.vx - c.vx) * nx + (d.vz - c.vz) * nz < 0) {
+          const la = dz * ch - dx * sh, s = la < -0.05 ? -1 : la > 0.05 ? 1 : (d.id & 1 ? 1 : -1);   // (one on the car's axis, a bumper, a bonnet: to the side its number gives, half of them each way)
+          const px = -sh * s, pz = ch * s, a = DEB.push - ((d.vx - c.vx) * px + (d.vz - c.vz) * pz);
+          if (a > 0) {   // (no faster than it was or than the car and push: squeezed against a barrier or another car it is not shot out along the gap)
+            const v0 = Math.hypot(d.vx, d.vz); d.vx += a * px; d.vz += a * pz;
+            const v1 = Math.hypot(d.vx, d.vz), lim = Math.max(v0, Math.hypot(c.vx, c.vz) + DEB.push); if (v1 > lim) { d.vx *= lim / v1; d.vz *= lim / v1; }
+          }
+        }
+        return;
+      }
       d.x += nx * (r - e); d.z += nz * (r - e);
       const vrel = (c.vx - d.vx) * nx + (c.vz - d.vz) * nz;      // closing speed
       if (vrel > 0.3) {
         const kick = Math.min(24, 1.35 * vrel);
         d.vx += kick * nx; d.vz += kick * nz; d.vy = Math.max(d.vy, 1 + Math.min(4, vrel * 0.18));
-        d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false;
-        const k = Math.min(0.06, d.m * 0.004);                       // the car feels it: speed loss + twitch, more for big parts
-        c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * d.m * 0.05;
+        d.wy += (rand() - 0.5) * 10; d.wx += (rand() - 0.5) * 8; d.rest = false; d.ground = false; d.roll = 0; (d.by || (d.by = [])).push(c); (d.byT || (d.byT = [])).push(DEB.again);
+        if (krOn(c)) propPush(c, -d.m * kick * nx, -d.m * kick * nz, ax + nx * c.rad - c.x, az + nz * c.rad - c.z);   // (Realistična: the push back of what the part got, at the contact; no share of the speed, no twitch)
+        else { const k = Math.min(0.06, d.m * 0.004);                // the car feels it: speed loss + twitch, more for big parts
+          c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * d.m * 0.05; }
         c.hitDebris = Math.max(c.hitDebris || 0, vrel * Math.min(1, d.m / 8));
       }
       return;
@@ -3815,13 +3970,16 @@ const Core = (function () {
     const K = b.K; b.vx += jx / K.m; b.vy += jy / K.m; b.vz += jz / K.m;
     b.wx += (ry * jz - rz * jy) / K.I; b.wy += (rz * jx - rx * jz) / K.I; b.wz += (rx * jy - ry * jx) / K.I;
   }
-  function propFeel(c, m, vrel, kind) {   // what the driver feels: a little speed and a twitch, a thump
-    const k = Math.min(0.045, m * 0.0016) * Math.min(1, vrel / 8);
-    c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * m * 0.012;
+  function propFeel(c, m, vrel, kind, R) {   // what the driver feels: a little speed and a twitch, a thump (R, Realistična: the thump only, propPush does the rest)
+    if (!R) { const k = Math.min(0.045, m * 0.0016) * Math.min(1, vrel / 8);
+      c.vx *= 1 - k; c.vz *= 1 - k; c.w += (rand() - 0.5) * m * 0.012; }
     c.hitDebris = Math.max(c.hitDebris || 0, vrel * clamp(m / 30, 0.12, 0.35));
     if (vrel > 4) { c.propKnock = kind; c.propKnockV = vrel; }
     if (vrel > 1.5 && (!c.propSnd || vrel > c.propSndV)) { c.propSnd = kind; c.propSndV = vrel; }
   }
+  // Realistična (KR): a car's share of a push P by a thing (a prop, a loose part) at r from its middle, the push back of what the thing got: its
+  // real weight with the fuel, the knock's rule for the turn and the grip (kTake), the thing's mass against the car's, not a share of its speed
+  function propPush(c, Px, Pz, rx, rz) { const m = c.m.mass + (c.fuelKg || 0); kTake(c, Px, Pz, rx, rz, m, c.I * m / c.m.mass, KC, null); }
   function propCarHit(race, c, b) {
     const K = b.K, dx = b.x - c.x, dz = b.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + (K.reach || K.rh) + 0.1;   // (beyond the car's reach)
     if (dx * dx + dz * dz > R * R || (K.dmg != null && b.hit1 && b.age < 0.6)) return;   // (street furniture: one knock, then it is on its way for a moment)
@@ -3840,7 +3998,10 @@ const Core = (function () {
       const vcx = c.vx - c.w * rcz, vcz = c.vz + c.w * rcx, vrel = (vcx - b.vx) * nx + (vcz - b.vz) * nz;   // closing speed at the contact
       b.x += nx * (r - e); b.z += nz * (r - e); b.dirty = true;                                          // the prop gives way
       if (vrel < 0.5) return;
-      if (K.breaks) { race.breakProp(b, nx, nz, vrel, c.vx, c.vz); propFeel(c, K.m, vrel, b.kind); return; }
+      const kr = krOn(c), bvx = b.vx, bvz = b.vz;   // (Realistična: the push back of what it got, propPush; bvx, bvz its speed before)
+      if (K.breaks) { const live = !b.dead; race.breakProp(b, nx, nz, vrel, c.vx, c.vz);
+        if (kr && live && b.parts) { let qx = 0, qz = 0; for (const p of b.parts) { qx += p.K.m * (p.vx - bvx); qz += p.K.m * (p.vz - bvz); } propPush(c, -qx, -qz, rcx, rcz); }   // (a stack: what its pieces got)
+        propFeel(c, K.m, vrel, b.kind, kr); return; }
       const rx = K.legs ? px - b.x : -nx * K.rh, rz = K.legs ? pz - b.z : -nz * K.rh, ry = clamp(cy + 0.42 - b.y, -K.rb * 0.8, K.rb * 0.8);          // hit at bumper height: it topples away (a board at its leg: it turns as well)
       const ax2 = ry * nz, ay2 = rz * nx - rx * nz, az2 = -ry * nx;
       const j = 1.35 * vrel / (1 / K.m + (ax2 * ax2 + ay2 * ay2 + az2 * az2) / K.I + 1 / c.m.mass);
@@ -3851,7 +4012,8 @@ const Core = (function () {
       race.propFx(b, vrel);
       if (K.dmg != null) { if (K.dmg && vrel > 6 && !b.hit1) knock(c, K.dmg * (vrel - 6) * 0.001, (px - c.x) * ch + (pz - c.z) * sh, -(px - c.x) * sh + (pz - c.z) * ch); b.hit1 = true; }   // (heavy street furniture: a dent, once)
       const wl = Math.hypot(b.wx, b.wy, b.wz); if (wl > 14) { b.wx *= 14 / wl; b.wy *= 14 / wl; b.wz *= 14 / wl; }
-      propFeel(c, K.m, vrel, b.kind);
+      if (kr) propPush(c, -K.m * (b.vx - bvx), -K.m * (b.vz - bvz), rcx, rcz);
+      propFeel(c, K.m, vrel, b.kind, kr);
       return;
     }
   }
@@ -3924,13 +4086,40 @@ const Core = (function () {
     b.dirty = true;
   }
 
+  // Realistična (KR): the barrier's push on a car whose corner k, at (wx, wz) from its middle, comes into it faster than KC.wall.v0 (wallCollide;
+  // slower it leans on it as before). A rigid body's knock, its whole turning mass (no share of the turn): where it bears, the corners within the
+  // crush's length (face x the closing speed, cr0 to cr1 m) of the deepest one, each by how far behind it is (a flank flat on the wall bears
+  // through its middle; the order of the corners does not count), at arm of the lever. The bounce by the closing speed (e0 to e1, none for a
+  // car leaning on it, eT), the rub along it (mu of the push, at the same place). The grip by kGripR, as a knock (the new physics and a car in the
+  // air or rolling over: the push only, no grip to take). The yaw rate after it at most wMax, whichever car.
+  // k < 0: a contact that is not a corner (a round thing met along the car's side): it bears where it touches, (wx, wz), at arm of the lever
+  function wallR(c, wx, wz, nx, nz, k) {
+    const W = KC.wall; let ax = wx, az = wz;
+    if (k >= 0) { const vn0 = (c.vx - c.w * wz) * nx + (c.vz + c.w * wx) * nz, cr = clamp(-W.face * vn0, W.cr0, W.cr1), ch = Math.cos(c.h), sh = Math.sin(c.h), P = c.corners; let sw = 0, dm = 0;
+      for (let j = 0; j < P.length; j++) { const d = (P[j][0] * ch - P[j][1] * sh - wx) * nx + (P[j][0] * sh + P[j][1] * ch - wz) * nz; if (j !== k && d < dm) dm = d; }   // (dm: the deepest corner, from this one)
+      ax = 0; az = 0;
+      for (let j = 0; j < P.length; j++) { const ox = j === k ? wx : P[j][0] * ch - P[j][1] * sh, oz = j === k ? wz : P[j][0] * sh + P[j][1] * ch, t = clamp(1 - ((j === k ? 0 : (ox - wx) * nx + (oz - wz) * nz) - dm) / cr, 0, 1);
+        if (t > 0) { ax += ox * t; az += oz * t; sw += t; } }
+      ax /= sw; az /= sw; }
+    ax *= W.arm; az *= W.arm;
+    const vn = (c.vx - c.w * az) * nx + (c.vz + c.w * ax) * nz; if (vn >= 0) return;   // (there it no longer closes: nothing)
+    const I = c.I, im = 1 / c.m.mass, rn = ax * nz - az * nx, J = -(1 + (W.e1 + (W.e0 - W.e1) * Math.exp(vn / W.eV)) * sstep(W.eT, 2 * W.eT, -vn)) * vn / (im + rn * rn / I);
+    const tx = -nz, tz = nx, rt = ax * tz - az * tx, vx1 = c.vx + J * nx * im, vz1 = c.vz + J * nz * im, w1 = c.w + rn * J / I;
+    const vt = (vx1 - w1 * az) * tx + (vz1 + w1 * ax) * tz, Jt = clamp(-vt / (im + rt * rt / I), -W.mu * J, W.mu * J);
+    const Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz, dvx = Px * im, dvz = Pz * im, dw = (ax * Pz - az * Px) / I, V0 = Math.hypot(c.vx, c.vz);
+    c.vx += dvx; c.vz += dvz; c.w = clamp(c.w + dw, -KC.wMax, KC.wMax);   // (at most wMax, whichever car: as a knock's turn of one that spins on)
+    if (c.phys === 'nova' || c.air || c.rl) return;   // (no grip to take: the push only)
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
+    const G2 = kGripR(c, lt, dw, V0, Math.hypot(c.vx, c.vz), KC, c.isPlayer ? KC.glP : KC.glA), g = G2[0];
+    if (g > 0.02 && g >= (c.xgl || 0)) { c.xgl = g; c.xglT = KC.glT * (1 + KC.glX * clamp((G2[1] - 0.3) / 0.6, 0, 1)); }
+  }
   function wallCollide(c, trk, canFall, dt) {   // (canFall: a race car, which goes over the edge of a drop: Track.dropAt, Race._fall; dt: the step, for a hill's soft limit, hillSoft)
     if (trk.free) {   // (NEW VERSION · TEST 1, js/newmap.js: no barriers along the road, the car drives anywhere on the map; only the map's edge [x0, x1, z0, z1] stops it)
       const B = trk.free; if (c.x < B[0]) { c.x = B[0]; c.vx = Math.max(0, c.vx); } else if (c.x > B[1]) { c.x = B[1]; c.vx = Math.min(0, c.vx); } if (c.z < B[2]) { c.z = B[2]; c.vz = Math.max(0, c.vz); } else if (c.z > B[3]) { c.z = B[3]; c.vz = Math.min(0, c.vz); }
       if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
     }
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
-    let hit = 0, hitK = 0, hnx = 0, hnz = 0;
+    let hit = 0, hitK = 0, hnx = 0, hnz = 0; const u0x = c.vx, u0z = c.vz, u0w = c.w;   // (the speeds before the step's first push: P3, the knock below)
     for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
@@ -3984,29 +4173,51 @@ const Core = (function () {
       // corner velocity
       const vcx = c.vx - c.w * wz, vcz = c.vz + c.w * wx;
       const vn = vcx * nx + vcz * nz;
-      if (vn < 0) {
-        const rn = wx * nz - wz * nx;
-        const e = CSK.wallE, wy = CSK.wallYaw;
-        const J = -(1 + e) * vn / (1 / c.m.mass + rn * rn / c.I * wy);
-        c.vx += J * nx / c.m.mass; c.vz += J * nz / c.m.mass;
-        c.w += rn * J / c.I * wy;
-        // friction along wall
-        const tx = -nz, tz = nx;
-        const vtan = (c.vx - c.w * wz) * tx + (c.vz + c.w * wx) * tz;
-        const rt = wx * tz - wz * tx;
-        let Jt = -vtan / (1 / c.m.mass + rt * rt / c.I * wy);
-        const mu = CSK.wallMu;
-        Jt = clamp(Jt, -mu * J, mu * J);
-        c.vx += Jt * tx / c.m.mass; c.vz += Jt * tz / c.m.mass;
-        c.w += rt * Jt / c.I * wy;
+      if (krOn(c) && vn < -KC.wall.v0) { wallR(c, wx, wz, nx, nz, k); if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; } }   // (Realistična: a knock, wallR; leaning on it, in the run from the police, a semi-trailer and in the pit lane as before)
+      else if (vn < 0) {
+        const rn = wx * nz - wz * nx, vx0 = c.vx, vz0 = c.vz, w0 = c.w;
+        // (the push with wallYaw of the turn, as ever. Realistična, krOn: where that would leave the car with more energy than it came with (a corner
+        // its own spin drives into the barrier: the whole push into the speed, a part into the turn), the same push once more as a rigid body takes
+        // it, the whole turn (wy 1): that one never adds any)
+        for (let wy = CSK.wallYaw; ; wy = 1) {
+          const e = CSK.wallE;
+          const J = -(1 + e) * vn / (1 / c.m.mass + rn * rn / c.I * wy);
+          c.vx += J * nx / c.m.mass; c.vz += J * nz / c.m.mass;
+          c.w += rn * J / c.I * wy;
+          // friction along wall
+          const tx = -nz, tz = nx;
+          const vtan = (c.vx - c.w * wz) * tx + (c.vz + c.w * wx) * tz;
+          const rt = wx * tz - wz * tx;
+          let Jt = -vtan / (1 / c.m.mass + rt * rt / c.I * wy);
+          const mu = CSK.wallMu;
+          Jt = clamp(Jt, -mu * J, mu * J);
+          c.vx += Jt * tx / c.m.mass; c.vz += Jt * tz / c.m.mass;
+          c.w += rt * Jt / c.I * wy;
+          if (wy === 1 || !krOn(c) || c.m.mass * ((c.vx - vx0) * (c.vx + vx0) + (c.vz - vz0) * (c.vz + vz0)) + c.I * (c.w - w0) * (c.w + w0) <= 2e-6) break;
+          c.vx = vx0; c.vz = vz0; c.w = w0;
+        }
+        if (krOn(c)) c.w = clamp(c.w, -KC.wMax, KC.wMax);   // (Realistična: at most wMax also when it leans on the barrier, as wallR, whichever car)
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     }
+    // (P3: the corners as far toward the barrier as the knocked one, give or take what the car goes in a step, meet it in the same step (what the car itself goes toward it in a step): the blow
+    // the fastest of them into it before the step's first push (the loop takes them one after the other, the first one's push slows the next),
+    // the dent between them, the foremost the most; square on both front corners alike, left as right, whichever the loop took first)
+    let kx = 0, kz = 0, pk = hitK, fx = 0, fz = 0;
+    if (hit > 0) fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch);
+    if (hit > 0 && XR.net) { kx = c.corners[hitK][0]; kz = c.corners[hitK][1]; }   // (online: the knocked corner alone, as before P3)
+    else if (hit > 0) {
+      const P = c.corners, dk = Math.max(0.05, -(u0x * hnx + u0z * hnz) * (dt || 1 / 120)), ph = P[hitK][0] * fx + P[hitK][1] * fz;
+      let pm = ph, kw = 0, h0 = 0; for (const p of P) { const q = p[0] * fx + p[1] * fz; if (q > pm && q - ph <= dk) pm = q; }
+      for (let k = 0; k < P.length; k++) { const p = P[k], q = p[0] * fx + p[1] * fz; if (Math.abs(q - ph) > dk) continue;
+        const w = clamp(1 - (pm - q) / dk, 0, 1), wx = p[0] * ch - p[1] * sh, wz = p[0] * sh + p[1] * ch, v = -((u0x - u0w * wz) * hnx + (u0z + u0w * wx) * hnz);
+        kw += w; kx += w * p[0]; kz += w * p[1]; if (v > h0 + 1e-9) { h0 = v; pk = k; } }
+      kx /= kw; kz /= kw; hit = Math.max(hit, h0);
+    }
     if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); }
     if (hit > 2.5) {   // 36 km/h into the wall ≈ 21 % (times model.knockK: the Kolibri's 6 %); which face hit follows from the wall direction seen from the car
-      const fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch), cx = c.corners[hitK][0], cz = c.corners[hitK][1];
-      const side = Math.abs(fz) > Math.abs(fx) * 0.9;
-      knock(c, (hit - 2.5) * 0.028, side ? cx * 0.45 : Math.sign(fx || cx) * Math.abs(cx) * 0.95, side ? Math.sign(fz) * Math.abs(cz) * 0.95 : cz * 0.6);
+      const side = Math.abs(fz) > Math.abs(fx) * 0.9, cx = c.corners[pk][0], cz = c.corners[pk][1];
+      knock(c, (hit - 2.5) * 0.028, side ? kx * 0.45 : Math.sign(fx || kx) * Math.abs(kx) * 0.95, side ? Math.sign(fz) * Math.abs(kz) * 0.95 : kz * 0.6);
       puncture(c, cx, cz, hit);
       if (XR.roll && side && hit > 10) xRollStart(c, -Math.sign(fz), hit);   // (Razbijanje · nov način: slammed sideways into a wall: it rolls over)
     }
@@ -4097,8 +4308,9 @@ const Core = (function () {
      flat bumper or flank pushes square on, through the middle of the faces that touch; the overlap taken away softly (RB_*: no pop). The push J at
      the contact with the cars' real weights (their fuel too; the player's x pm) and turning masses: the bounce by the closing speed (none for a car
      leaning on another), the rub along the contact (Coulomb: at most mu of J; a car leaning on another muL of it). Each car takes its share as its
-     tyres do (kTake). A friend's car online is not moved here (its own phone moves it): the local car takes the whole separation and only its own
-     share of the push. Damage, sparks (the knock, or two flanks grinding past each other), the scrape marks: carKnockFx */
+     tyres do (kTake; Realistična: of the turn more where the two would else leave the knock with more energy than they came with, kTurnR). A
+     friend's car online is not moved here (its own phone moves it): the local car takes the whole separation and only its own share of the push.
+     Damage, sparks (the knock, or two flanks grinding past each other), the scrape marks: carKnockFx */
   function kCollide(a, b, K) {
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = (Math.hypot(a.m.len, a.m.wid) + Math.hypot(b.m.len, b.m.wid)) * 0.5 + 0.05;   // (the two boxes' reach)
     if (dx0 * dx0 + dz0 * dz0 > R * R) return 0;
@@ -4122,8 +4334,19 @@ const Core = (function () {
     const rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx, J = (1 + e) * vn / (tot + rna * rna / Ia + rnb * rnb / Ib);
     const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rta = rax * tz - raz * tx, rtb = rbx * tz - rbz * tx, mu = K.mu * (K.muL + (1 - K.muL) * sstep(K.muV, K.muV + 1, vn));
     const Jt = clamp(-vt / (tot + rta * rta / Ia + rtb * rtb / Ib), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;
-    if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K, b);
-    if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K, a);
+    let ka, kb;
+    if (KR && !a.net && !b.net) {   // (Realistična: the two cars never leave the knock with more energy than they came with, kTurnR)
+      const dax = Px / ma, daz = Pz / ma, dbx = -Px / mb, dbz = -Pz / mb, dwa = (rax * Pz - raz * Px) / Ia * K.yaw * (a.isPlayer ? K.yawP : 1), dwb = (rbz * Px - rbx * Pz) / Ib * K.yaw * (b.isPlayer ? K.yawP : 1);
+      const ta = kTurnR(a, dax, daz, dwa, K, b), tb = kTurnR(b, dbx, dbz, dwb, K, a);
+      const dE = ma * (dax * (a.vx + 0.5 * dax) + daz * (a.vz + 0.5 * daz)) + mb * (dbx * (b.vx + 0.5 * dbx) + dbz * (b.vz + 0.5 * dbz)) + Ia * ta * (a.w + 0.5 * ta) + Ib * tb * (b.w + 0.5 * tb);
+      if (dE > 1e-6) {   // (NaN, a car outside the rule: not this either)
+        const wa = a.w + ta, ra = dwa - ta, xa = wa * ra < 0 ? (Math.abs(ra) <= Math.abs(wa) ? ra : -wa) : 0, wb = b.w + tb, rb = dwb - tb, xb = wb * rb < 0 ? (Math.abs(rb) <= Math.abs(wb) ? rb : -wb) : 0;
+        const A = 0.5 * (Ia * xa * xa + Ib * xb * xb), B = Ia * wa * xa + Ib * wb * xb, D = B * B - 4 * A * dE, l = A > 0 && D >= 0 ? Math.min(1, 2 * dE / (-B + Math.sqrt(D))) : 1;
+        if (xa) ka = (ta + l * xa) / dwa; if (xb) kb = (tb + l * xb) / dwb;
+      }
+    }
+    if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K, b, ka);
+    if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K, a, kb);
     const imp = carKnockFx(a, b, vn, J, rna, rnb, Ia, Ib, false, px, pz), fx = Math.max(vn, Math.abs(vt) * 0.5 * sstep(20, 200, J));   // (two flanks grinding past each other throw sparks too, pressed hard enough)
     a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);
     return imp;
@@ -4135,11 +4358,13 @@ const Core = (function () {
   // yaw rate change for as long as a real car's tyres take to stop it, RB_TAPT x speed; a push that goes on, step after step, holds the nose that
   // much off and does not wind it further). Past what its rear tyres hold (its tail pushed across past aH of its speed, more than its nose) its
   // grip goes for a moment (xgl, back in glT s: the travel no longer follows the nose, it spins on with the yaw rate the knock gave it and slides):
-  // a hard tap on a rear quarter spins it. The player's turn and grip by yawP and glP, the others' grip by glA (o the other car: a rival's, glR of it)
-  function kTake(c, Px, Pz, rx, rz, m, I, K, o) {
+  // a hard tap on a rear quarter spins it. The player's turn and grip by yawP and glP, the others' grip by glA (o the other car: a rival's, glR of it).
+  // kMin (Realistična, kCollide's guard, kTurnR): at least that share of the turn into the yaw rate
+  function kTake(c, Px, Pz, rx, rz, m, I, K, o, kMin) {
     const pl = !!c.isPlayer, dvx = Px / m, dvz = Pz / m, dw = (rx * Pz - rz * Px) / I * K.yaw * (pl ? K.yawP : 1);
     if (c.phys === 'nova') { c.vx += dvx; c.vz += dvz; c.w += dw; return; }
-    if (c.air || c.rl) { c.vx += dvx; c.vz += dvz; return; }   // (no tyres on the road)
+    if (c.air || c.rl) { c.vx += dvx; c.vz += dvz; if (kMin > 0) c.w += dw * Math.min(1, kMin); return; }   // (no tyres on the road; kMin: Realistična, of the turn that slows its spin, kCollide)
+    if (krOn(c)) return kTakeR(c, dvx, dvz, dw, K, o, kMin);   // (Realistična, krOn: the turn anywhere on the car, kTakeR; not in the run from the police nor a semi-trailer's tractor, tlHold; the pit lane does not come here, carCollide)
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
     c.vx += dvx; c.vz += dvz; c.cSx = (c.cSx || 0) - sh * lt; c.cSz = (c.cSz || 0) + ch * lt;   // (the push across kept apart: stepCS takes it out of the speed for the drift law and scrubs it)
     { const sm = Math.hypot(c.cSx, c.cSz); c.cSr = sm > 1e-9 ? (c.vx * c.cSx + c.vz * c.cSz) / sm : null; }   // (the speed that way now: what a wall takes of it before the next step comes off the push, stepCS)
@@ -4149,6 +4374,53 @@ const Core = (function () {
     const g = c.sc ? 0 : Math.min(1, clamp((ar - Math.max(K.aH, af)) / K.aS, 0, 1) * (pl ? K.glP : K.glA * (o && !o.isPlayer && !o.net ? K.glR : 1)) * sstep(KG_V0, KG_V1, V));   // (the tail pushed across more than the nose, past aH: it breaks away; slow, the tyres catch it; the safety car never: no marshals, no reverse for it, the race would wait behind it)
     if (g > 0.02) { const g0 = c.xgl || 0; c.xgl = Math.max(g0, g); c.xglT = K.glT; if (g > g0 + 0.1) c.w += dw * Math.min(1, (g - g0) * K.wI); }   // (the yaw rate the knock gave it, as much as its tyres let go; a car already sliding is not spun on by every touch of its corners)
   }
+  // Realistična (KC.id 'real', KV.real; docs/trki-realizem.md, »Zasnova prototipa Realistična«). kGripR: the grip a push (dv across, lt; the turn,
+  // dw; the speed V0 before it, V1 after) takes from a classic car on its tyres: each axle's slip with the mean lever L (a knock anywhere on the car
+  // turns it about the same middle), the tail past its tyres (gR, as kTake), both axles past aH2 (gB: thrown across whole) or the nose past aHf
+  // and more than the tail (gF); the gate by the faster of the speeds and the axles' own push (Vr: a car standing, hit hard, slides too).
+  // Into _kg: [the grip it takes, the harder pushed axle's slip]
+  const _kg = [0, 0];
+  function kGripR(c, lt, dw, V0, V1, K, share) {
+    const Vs = Math.max(V1, 12), L = (c.m.a + c.m.b) * 0.5, ar = Math.abs(lt - L * dw) / Vs, af = Math.abs(lt + L * dw) / Vs, Vr = Math.max(V0, V1, Math.max(ar, af) * Vs);
+    const gR = clamp((ar - Math.max(K.aH, af)) / K.aS, 0, 1), gB = clamp((Math.min(ar, af) - K.aH2) / K.aS2, 0, 1), gF = clamp((af - Math.max(K.aHf, ar)) / K.aSf, 0, 1);
+    _kg[0] = c.sc ? 0 : Math.min(1, Math.max(gR, gB, gF) * share * sstep(KG_V0, KG_V1, Vr)); _kg[1] = Math.max(ar, af); return _kg;   // (the safety car never, as kTake)
+  }
+  // kTakeR: kTake for Realistična, a classic car's share of a knock anywhere on it (kTake's dv and dw): the speed and the push across as kTake
+  // (cSx, cSz); the grip by kGripR, taken only when no less than what is gone already, back in glT x (1 to 2 by the slip: a harder knock
+  // longer); the turn into the yaw rate by as much as the tyres have let go (kw, at every knock, not only a new loss; at most wMax), the rest
+  // a swing of the nose as kTake (csKc)
+  // kMin (kCollide's guard, kTurnR): at least that share of the turn into the yaw rate, the grip as it is
+  function kTakeR(c, dvx, dvz, dw, K, o, kMin) {
+    const pl = !!c.isPlayer, ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh, V0 = Math.hypot(c.vx, c.vz);
+    c.vx += dvx; c.vz += dvz; c.cSx = (c.cSx || 0) - sh * lt; c.cSz = (c.cSz || 0) + ch * lt;
+    { const sm = Math.hypot(c.cSx, c.cSz); c.cSr = sm > 1e-9 ? (c.vx * c.cSx + c.vz * c.cSz) / sm : null; }
+    const V1 = Math.hypot(c.vx, c.vz), tm = CSK.tapMax;
+    const G2 = kGripR(c, lt, dw, V0, V1, K, pl ? K.glP : K.glA * (o && !o.isPlayer && !o.net ? K.glR : 1)), g = G2[0];
+    const g0 = c.xgl || 0, gN = Math.max(g0, g), kw0 = gN > 0.02 ? Math.min(1, gN * K.wI) : 0, kw = kMin > kw0 ? Math.min(1, kMin) : kw0;
+    if (g > 0.02 && g >= g0) { c.xgl = g; c.xglT = K.glT * (1 + K.glX * clamp((G2[1] - 0.3) / 0.6, 0, 1)); }
+    if (kw > 0) c.w = clamp(c.w + dw * kw, -K.wMax, K.wMax);
+    const sw = dw * (1 - kw) * clamp(RB_TAPT * V1, RB_TAP0, RB_TAP1);
+    c.csKc = clamp(sw * c.csKc > 0 ? (Math.abs(sw) > Math.abs(c.csKc) ? sw : c.csKc) : c.csKc + sw, -tm, tm);
+  }
+  // kTurnR: the turn a car would take of a knock's dw by kTake as it stands (kTakeR's own share kw, the same numbers; the new physics the whole; a
+  // car with no wheel on the road none; NaN for a car outside the rule, krOn: kTake's rule of Simulacija). kCollide's guard with it: the push J is
+  // a free rigid body's, and a car that takes its speed whole and only a share of the turn can leave the knock with more energy than it came
+  // with, when the turn it leaves out would have slowed its own spin (found by the independent check, 12. 11. 2026: up to 17,7 kJ a knock). Where
+  // the two cars' energy would grow so, the cars whose spin the knock slows take more of that turn (at most the whole or until the spin stops),
+  // both by the same part l of it, only as much as brings the growth to nothing (all of it where that is not enough: the two then leave with no
+  // more than two rigid bodies would). Every other knock as before, to the last digit
+  function kTurnR(c, dvx, dvz, dw, K, o) {
+    if (c.phys === 'nova') return dw;
+    if (c.air || c.rl) return 0;
+    if (!krOn(c)) return NaN;
+    const ch = Math.cos(c.h), sh = Math.sin(c.h), lt = dvz * ch - dvx * sh;
+    const g = kGripR(c, lt, dw, Math.hypot(c.vx, c.vz), Math.hypot(c.vx + dvx, c.vz + dvz), K, c.isPlayer ? K.glP : K.glA * (o && !o.isPlayer && !o.net ? K.glR : 1))[0];
+    const gN = Math.max(c.xgl || 0, g), kw = gN > 0.02 ? Math.min(1, gN * K.wI) : 0;
+    return kw > 0 ? clamp(c.w + dw * kw, -K.wMax, K.wMax) - c.w : 0;
+  }
+  // kSlideR: stepCS's scrub of the push across (aS, the grip the corner leaves) for Realistična: a push of sm m/s past s0 (sl0, or slA of the
+  // speed spd), or a car without its grip (gl, xgl), slides on the road's sliding friction (CRASH.slide g) instead; a small push as before
+  function kSlideR(aS, sm, spd, gl) { const s0 = Math.max(KC.sl0, KC.slA * spd); return aS + (Math.min(aS, G * CRASH.slide) - aS) * Math.max(sstep(s0, 2 * s0, sm), gl); }
   // two cars as boxes with round corners (radius RB_R, at most 0.45 of the half width): null apart, else _rb = the overlap (pen), the normal from b
   // to a (nx, nz) and the contact (px, pz): the middle of the stretch of their faces that touch (the closest pairs within RB_EPS, weighted). The
   // normal from the closest pairs only (a face's own, or corner to corner past the end of a face: it turns smoothly from one to the other): the
@@ -6560,6 +6832,228 @@ const Core = (function () {
     for (let j = 0; j < n; j++) { let s = 0, m = 0; for (let d = -2; d <= 2; d++) { let q = j + d; if (T.open) { if (q < 0 || q >= n) continue; } else q = (q + n) % n; s += dd[q]; m++; } sm[j] = s / m; }
     return { proga: T.def.id, vreme: S.vreme || 'suho', slog: 1, razred: null, korak: k, k0: S.k0, ks: S.ks, dd: sm, vq, pl, ql, qh, wv };
   }
+  /* ---------------------------------------------------------------------
+     A FALL OVER THE EDGE: THE CAR A RIGID BODY ON THE DRAWN GROUND (Track.floor)
+     --------------------------------------------------------------------- */
+  // The user's of 10. 11. 2026 (»Analiziraj kako avto zapelje cez rob in se prevrne v prepad in popravi da bo cimbolj realisticno«, then »Vrni
+  // tako kot prej po 1,5s«): on a track whose ground beyond the edge the core knows (Track.floor, def.floor: Killar; no other track has one, so
+  // every other track's fall is as it was) a car that goes over the edge (Race._fall) is a rigid body with six degrees of freedom from the step
+  // after its middle crossed the line: a hull of points (its floor at the wheels' height, the belt line, the roof) on the road's platform inside
+  // the line, on the platform's edge and on the drawn ground beyond it (Track.floorAt), under gravity, with contacts that do not bounce and
+  // Coulomb friction. It tips about the edge as its middle passes it, falls, lands, tumbles and slides down the slope; a hard knock on the ground
+  // damages it where it struck (knock: a dent there, the roof's from above). The game shows this for FALL.cap seconds (the old fall's time), then
+  // the car is on the road again where it went over (Race.rescue, as ever), the worse for the old fall's blow at least; left to it for longer
+  // (opts.fallCap: the tests) the body comes to rest where the slope lets it. No random number, and all of its state inside c.fall (an object:
+  // the race's state lines hold no more than they did); a car with a semi-trailer falls as it always did (Race._fall's own lines).
+  //   g: gravity (m/s2, the real one, not JUMP_G); mu: the body's friction on the ground; muW: its wheels' along the car while it stands on
+  //   them (they roll); sub: substeps a second at least; iters: the solver's rounds; slop, push: the depth left in and the most it is pushed out
+  //   of the ground a round (m); angD: the turning's damping (1/s); restV, restW, restT: slower than this (m/s, rad/s) for this long (s) it
+  //   lies still; hold: how long it lies before it is put back; cap: the longest fall (s): the game shows the fall's beginning and puts the car
+  //   back as the old fall did (its 1.6 s; the user's decision of 10. 11. 2026: »Vrni tako kot prej po 1,5s«), a race may ask for a longer one
+  //   (opts.fallCap: the tests, which follow a body to where the ground lets it come to rest); outT: how long it may fall with no ground known
+  //   under it; reach: how far beyond the line the platform still matters (m); slab: the platform's thickness (m; under it only the drawn ground: a
+  //   bridge's deck); deep: how much deeper than its own way there a point may be found in the ground and still be on it (m; deeper, it is under
+  //   that ground: fallTouch); hcK: the centre of mass's height as a part of the hull's, for a model without its own (M.hcg); leadW, leadA: the
+  //   most turn and tilt it has from its leading wheels being over the edge before its middle (rad/s, rad); kick: overEdge's push, taken back out
+  //   (its speed across the edge, its hop, the two numbers of its spin); hitV, dmgK, dmgMax: a knock on the ground above this speed (m/s)
+  //   damages, this much a m/s over it, at most this much a fall; dmgCut: a fall costs at least this much, however it ends: the old fall's fixed
+  //   blow (the game cuts the fall short: the car would have gone on down); ht: the hull's height by the body, for a model without its own (m;
+  //   1.32 else)
+  const FALL = { g: 9.81, mu: 0.8, muW: 0.25, sub: 240, iters: 8, slop: 0.01, push: 0.25, angD: 0.05, restV: 0.4, restW: 0.6, restT: 0.4, hold: 0.8, cap: 1.5, outT: 0.25,
+    reach: 5, slab: 1.5, deep: 0.12, hcK: 0.36, leadW: 0.8, leadA: 0.12, kick: [4.5, 1.2, 0.6, 0.9], hitV: 3, dmgK: 0.012, dmgMax: 0.5, dmgCut: 0.32,
+    ht: { formula: 0.98, lm: 1.05, wedge: 1.16, coupe: 1.28, muscle: 1.34, sedan: 1.4, rally: 1.4, hatch: 1.44, ev: 1.46, truck: 1.9 } };
+  const _fbQ = {}, _fbF = {}, _fbK = {}, _fbL = {}, _fbE = {}, _fbG = {}, _fbO = [0, 0, 0], _fbHull = new WeakMap();
+  // the hull of a model, in the car's own axes (x forward, y up, z to the right) from its centre of mass: P its points (the first nW on its floor).
+  // As tall as the model says (M.ht; a kit vehicle as it is drawn: def.look.body.roofY, else def.parts.ht), else as its body is (FALL.ht); its
+  // centre of mass M.hcg up, else FALL.hcK of its height (never under 0.35 m, never over half its height)
+  function fallHull(M) {
+    let G = _fbHull.get(M); if (G) return G;
+    const D = M.def, L = M.len, W = M.wid, H = M.ht || (D && ((D.look && D.look.body && D.look.body.roofY) || (D.parts && D.parts.ht))) || FALL.ht[M.body] || 1.32, hc = clamp(M.hcg || FALL.hcK * H, 0.35, 0.5 * H), hl = L / 2, hw = W / 2, P = [];
+    for (const fx of [-1, -0.5, 0, 0.5, 1]) for (const fz of [-1, -0.5, 0, 0.5, 1]) P.push(fx * hl, -hc, fz * hw);   // (its floor: 25, dense enough for the platform's edge under it)
+    const yb = 0.58 * H - hc; for (const [fx, fz] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1], [1, 0], [-1, 0]]) P.push(fx * hl, yb, fz * hw);   // (the belt line: bonnet, boot, the widest part)
+    const yr = H - hc, x0 = -0.3 * L, x1 = 0.08 * L, zr = 0.36 * W; for (const [x, z] of [[x0, zr], [x0, -zr], [x1, zr], [x1, -zr], [(x0 + x1) / 2, 0]]) P.push(x, yr, z);   // (the roof)
+    G = { P: new Float64Array(P), n: P.length / 3, nW: 25, L, W, H, hc, yb }; _fbHull.set(M, G); return G;
+  }
+  // the body's axes in the world from its quaternion (B.q: x, y, z, w, as the renderer's): R, rows the world's x, y, z
+  function fallRot(B) {
+    const Q = B.q, x = Q[0], y = Q[1], z = Q[2], w = Q[3], R = B.R;
+    R[0] = 1 - 2 * (y * y + z * z); R[1] = 2 * (x * y - w * z); R[2] = 2 * (x * z + w * y);
+    R[3] = 2 * (x * y + w * z); R[4] = 1 - 2 * (x * x + z * z); R[5] = 2 * (y * z - w * x);
+    R[6] = 2 * (x * z - w * y); R[7] = 2 * (y * z + w * x); R[8] = 1 - 2 * (x * x + y * y);
+  }
+  // the world's inverse inertia times a vector, into _fbO
+  function fallInv(B, vx, vy, vz) {
+    const R = B.R, I = B.iI, a = (R[0] * vx + R[3] * vy + R[6] * vz) * I[0], b = (R[1] * vx + R[4] * vy + R[7] * vz) * I[1], c = (R[2] * vx + R[5] * vy + R[8] * vz) * I[2];
+    _fbO[0] = R[0] * a + R[1] * b + R[2] * c; _fbO[1] = R[3] * a + R[4] * b + R[5] * c; _fbO[2] = R[6] * a + R[7] * b + R[8] * c;
+  }
+  // the road's own projection at a point (Track._qMain from the nearest of the 21 samples round hint, the whole road when that is over 60 m away;
+  // no side road)
+  function fallQ(T, x, z, hint, out) {
+    const N = T.N, px = T.px, pz = T.pz, open = T.open; let bi = -1, bd = 1e18;
+    if (hint >= 0) for (let o = -10; o <= 10; o++) { const i = open ? hint + o : (hint + o + N) % N; if (open && (i < 0 || i >= N)) continue; const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    if (bi < 0 || bd > 3600) for (let i = 0; i < N; i++) { const d = (x - px[i]) ** 2 + (z - pz[i]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    return T._qMain(x, z, bi, out);
+  }
+  // the body of a car that has just gone over the edge (the first step of its fall): where and how it was moving when its middle crossed the line
+  // (overEdge's push taken back out, unless F.raw says there was none), standing on the road as it slopes there (its grade along, its tilt across:
+  // as the car is drawn on it), with the turn and the tilt it has from its leading wheels having been over the edge already (free about the wheels
+  // still on the road for the time its middle took to reach the line, capped: its floor would have sat down on the edge). B, the renderer's too:
+  // x, y, z its centre of mass (px, py, pz a step ago), q its quaternion (pq a step ago), hc the centre's height over its wheels; nx, nz the way
+  // out across the edge, x0, y0, z0 where it went over; nc the points on the ground now; hn the knocks so far, hx, hy, hz, hv, hr the last one's
+  // place, speed and whether it was the roof's; lie: how long it has lain still (s)
+  function fallStart(T, c, F, dt) {
+    const M = c.m, G = fallHull(M), m = M.mass || 1200, q = fallQ(T, c.x, c.z, c.q.i, _fbQ), sd = (q.d > 0 ? 1 : -1) / (Math.hypot(q.nx, q.nz) || 1), nx = sd * q.nx, nz = sd * q.nz, K = FALL.kick;
+    let vx = c.vx, vz = c.vz, vy = c.vy || 0, w = c.w;
+    if (!F.raw) {   // (overEdge's push: across the edge it moved as fast as its last step took it, if that was slower than the push made it)
+      const vo = vx * nx + vz * nz, vp = ((c.x - c.px) * nx + (c.z - c.pz) * nz) / dt; if (vp < K[0] && vo > vp) { const v0 = Math.max(0, vp); vx -= nx * (vo - v0); vz -= nz * (vo - v0); }
+      vy = clamp(((c.y || 0) - (c.py || 0)) / dt, -40, 40); if (Math.abs(w) >= K[3]) w = (w < 0 ? -1 : 1) * (Math.abs(w) - K[3]) / K[2];
+    }
+    // (the road under it: its grade along and its tilt across, the car standing on that as it is drawn)
+    const gr = T.hasElev ? T.elevAt(q.s, _fbL).grade : 0, sl = T.bank ? T.bankAt(q.s, q.d, _fbK).sl || 0 : 0, gx = gr * q.tx + sl * q.nx, gz = gr * q.tz + sl * q.nz, gl = Math.hypot(gx, gz), y = (c.y || 0) + G.hc * Math.hypot(gl, 1);
+    const hh = -c.h / 2, B = { G, im: 1 / m, iI: [12 / (m * (G.W * G.W + G.H * G.H)), 12 / (m * (G.L * G.L + G.W * G.W)), 12 / (m * (G.L * G.L + G.H * G.H))],   // (1 / its inertia about its x: roll, y: yaw, z: pitch)
+      x: c.x, y, z: c.z, px: c.x, py: y, pz: c.z, q: [0, Math.sin(hh), 0, Math.cos(hh)], pq: [0, 0, 0, 1], hc: G.hc,
+      vx, vy, vz, wx: 0, wy: -w, wz: 0, R: new Float64Array(9), C: [], nx, nz, x0: c.x, y0: c.y || 0, z0: c.z, hint: q.i,
+      nc: 0, none: 0, still: 0, lie: 0, out: 0, done: 0, go: 0, ps: 0, lost: 0, hn: 0, hx: 0, hy: 0, hz: 0, hv: 0, hr: 0, iv: 0, ik: -1, dmg: 0 };
+    for (let i = 0; i < G.n; i++) B.C.push({ rx: 0, ry: 0, rz: 0, nx: 0, ny: 0, nz: 0, d: 0, jn: 0, tx: 0, ty: 0, tz: 0, on: 0, hit: 0, reg: 0, un: 0, no: 0 });
+    // (the turn and the tilt it starts with: about the edge's own line, its outer side down: the axis up x out)
+    const vo = Math.max(0.5, vx * nx + vz * nz), cf = Math.cos(c.h) * nx + Math.sin(c.h) * nz, sf2 = Math.max(0, 1 - cf * cf);
+    const l = Math.abs(cf) * (M.a > 0 && M.b > 0 ? (M.a + M.b) / 2 : G.L * 0.3) + Math.sqrt(sf2) * G.W * 0.42, k2 = (cf * cf * (G.L * G.L + G.H * G.H) + sf2 * (G.W * G.W + G.H * G.H)) / 12;
+    const al = FALL.g * l / (k2 + l * l), t0 = l / vo, w0 = Math.min(FALL.leadW, al * t0), a0 = Math.min(FALL.leadA, 0.5 * al * t0 * t0), ax = nz, az = -nx;
+    B.wx += ax * w0; B.wz += az * w0;
+    if (gl > 1e-6) fallTilt(B.q, -gz / gl, gx / gl, Math.atan(gl));
+    fallTilt(B.q, ax, az, a0);
+    B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
+    return B;
+  }
+  // a quaternion turned by a radians about a level axis of the world (ax, 0, az: of length 1)
+  function fallTilt(Q, ax, az, a) {
+    const hs = Math.sin(a / 2), dw = Math.cos(a / 2), dx = ax * hs, dz = az * hs, x = Q[0], y = Q[1], z = Q[2], qw = Q[3];
+    Q[3] = dw * qw - dx * x - dz * z; Q[0] = dw * x + dx * qw - dz * y; Q[1] = dw * y + dz * x - dx * z; Q[2] = dw * z + dx * y + dz * qw;
+  }
+  // the road's platform about the body (E, from the track at its middle, once a step): E.ok while the body can still touch it; E.vl, E.vr: no
+  // drop on that side there (a verge at the road's height where no ground is drawn beyond the line)
+  function fallEdge(T, B, E) {
+    const q = fallQ(T, B.x, B.z, B.hint, _fbQ); E.ok = false; if (!(q.i >= 0)) return;
+    B.hint = q.i;
+    if (q.d > q.br + FALL.reach || -q.d > q.bl + FALL.reach) return;   // (far out: only the drawn ground)
+    const FA = T.fallAt;
+    E.ok = true; E.cx = B.x; E.cz = B.z; E.d = q.d; E.bl = q.bl; E.br = q.br; E.vl = !!FA && !FA[0][q.i]; E.vr = !!FA && !FA[1][q.i]; E.nx = q.nx; E.nz = q.nz; E.tx = q.tx; E.tz = q.tz; E.s = q.s;
+    if (T.hasElev) { const e = T.elevAt(q.s, _fbL); E.y = e.y; E.gr = e.grade; } else { E.y = 0; E.gr = 0; }
+  }
+  // the ground at a point of the hull: false above it, else G.d (how deep, along the normal) and its normal. Inside the lines the platform (a slab:
+  // FALL.slab; its top the road's own slope, its grade along and its tilt across), a point that came under it from beyond a line pushed back out
+  // across that line, not up through the road (c.reg: where the point was last, 0 over the platform, 1 beyond it); beyond a line the drawn ground
+  // (Track.floorAt), and where none is drawn (G.none: no ground known there) on a side with no drop the road's height on (a verge, for a point
+  // that came from the road)
+  function fallGround(T, E, x, y, z, G, c) {
+    if (E.ok) {
+      const dx = x - E.cx, dz = z - E.cz, d = E.d + dx * E.nx + dz * E.nz, ins = d < E.br && -d < E.bl;
+      if (ins || ((d > 0 ? E.vr : E.vl) && !T.floorAt(x, z, _fbF))) {
+        let yp = E.y + E.gr * (dx * E.tx + dz * E.tz), sl = 0; if (T.bank) { const k = T.bankAt(E.s, d, _fbK); yp += k.dy; sl = k.sl || 0; }
+        if (y >= yp) { c.reg = 0; return false; }
+        if (y > yp - FALL.slab) {
+          if (!c.reg) { const gx = E.gr * E.tx + sl * E.nx, gz = E.gr * E.tz + sl * E.nz, l = Math.hypot(gx, 1, gz); G.d = (yp - y) / l; G.nx = -gx / l; G.ny = 1 / l; G.nz = -gz / l; return true; }
+          if (ins) { const r = E.br - d, l = E.bl + d; if (r < l) { G.d = r; G.nx = E.nx; G.nz = E.nz; } else { G.d = l; G.nx = -E.nx; G.nz = -E.nz; } G.ny = 0; return true; }
+        }
+        if (!ins) { G.none = true; return false; }   // (under a verge: no ground known)
+      }
+    }
+    c.reg = 1;
+    if (!T.floorAt(x, z, _fbF)) { G.none = true; return false; }
+    const l = Math.hypot(_fbF.gx, 1, _fbF.gz), d = (_fbF.h - y) / l; if (d < 0) return false;
+    G.d = d; G.nx = -_fbF.gx / l; G.ny = 1 / l; G.nz = -_fbF.gz / l; return true;
+  }
+  // the hull's points on the ground now (B.C; B.nc how many, B.pen the deepest, B.none how many with no ground known under them). A point found
+  // deeper in the ground than it can have come since it was last looked at (its depth then, FALL.deep, what the body has been pushed out by
+  // since: B.ps, and its own way in h seconds) did not come through that ground's top: it is under it (c.un: where the platform as the body's
+  // middle sees it gives way to the drawn ground, at a hole in what is drawn or at its end, under a bridge's deck) and is not on it until it has
+  // been free of it, so a body is never thrown up or aside by ground it is already inside. A point that was over ground the track does not
+  // know when last looked at (c.no) and is under known ground now has come back from there below it: the fall is over (B.lost). The fall's
+  // first look takes every point as it finds it (B.go)
+  function fallTouch(T, B, E, h) {
+    const P = B.G.P, R = B.R, C = B.C, G = _fbG, lim = B.go ? FALL.deep + B.ps : 1e9; let nc = 0, pen = 0, none = 0;
+    for (let i = 0, n = B.G.n; i < n; i++) {
+      const c = C[i], lx = P[3 * i], ly = P[3 * i + 1], lz = P[3 * i + 2];
+      c.rx = R[0] * lx + R[1] * ly + R[2] * lz; c.ry = R[3] * lx + R[4] * ly + R[5] * lz; c.rz = R[6] * lx + R[7] * ly + R[8] * lz;
+      G.none = false;
+      let on = fallGround(T, E, B.x + c.rx, B.y + c.ry, B.z + c.rz, G, c);
+      if (!on) c.un = 0;
+      else if (c.un || G.d > (c.on ? c.d : 0) + lim + h * Math.hypot(B.vx + B.wy * c.rz - B.wz * c.ry, B.vy + B.wz * c.rx - B.wx * c.rz, B.vz + B.wx * c.ry - B.wy * c.rx)) { if (c.no && !c.un) B.lost = 1; c.un = 1; on = false; }
+      if (on) { c.on = 1; c.d = G.d; c.nx = G.nx; c.ny = G.ny; c.nz = G.nz; c.jn = 0; c.tx = c.ty = c.tz = 0; nc++; if (G.d > pen) pen = G.d; }
+      else c.on = 0;
+      if (G.none) { none++; c.no = 1; } else c.no = 0;
+    }
+    B.nc = nc; B.pen = pen; B.none = none; B.ps = 0; B.go = 1;
+  }
+  // a substep of h seconds: gravity; the contacts (sequential impulses: no approach into the ground, friction against the slide up to mu times
+  // the push; a point's first touch at more than FALL.hitV is a knock, the step's hardest kept in B.iv, B.ik); the pose; out of the ground along
+  // the deepest point's normal (up to four rounds of FALL.push at most; B.ps: the last round's, for fallTouch's next look); then how long it has
+  // lain still (B.still, B.lie: stopped dead once it has been slow for FALL.restT) and how long most of it has had no ground known under it (B.out)
+  function fallSub(T, B, E, h) {
+    const C = B.C, im = B.im, n = B.G.n, O = _fbO;
+    B.vy -= FALL.g * h; const ad = Math.max(0, 1 - FALL.angD * h); B.wx *= ad; B.wy *= ad; B.wz *= ad;
+    fallRot(B); fallTouch(T, B, E, 0);
+    const R = B.R, up = R[4];   // (its own up along the world's: on its wheels near 1)
+    if (B.nc) for (let it = 0; it < FALL.iters; it++) for (let i = 0; i < n; i++) {
+      const c = C[i]; if (!c.on) continue;
+      const rx = c.rx, ry = c.ry, rz = c.rz, nx = c.nx, ny = c.ny, nz = c.nz;
+      let ux = B.vx + B.wy * rz - B.wz * ry, uy = B.vy + B.wz * rx - B.wx * rz, uz = B.vz + B.wx * ry - B.wy * rx;
+      const vn = ux * nx + uy * ny + uz * nz;
+      if (it === 0 && !c.hit && -vn > FALL.hitV && -vn > B.iv) { B.iv = -vn; B.ik = i; }
+      fallInv(B, ry * nz - rz * ny, rz * nx - rx * nz, rx * ny - ry * nx);
+      const kn = im + (O[1] * rz - O[2] * ry) * nx + (O[2] * rx - O[0] * rz) * ny + (O[0] * ry - O[1] * rx) * nz, j1 = Math.max(0, c.jn - vn / kn), j = j1 - c.jn; c.jn = j1;
+      if (j) { B.vx += j * nx * im; B.vy += j * ny * im; B.vz += j * nz * im; B.wx += O[0] * j; B.wy += O[1] * j; B.wz += O[2] * j; }
+      ux = B.vx + B.wy * rz - B.wz * ry; uy = B.vy + B.wz * rx - B.wx * rz; uz = B.vz + B.wx * ry - B.wy * rx;
+      const un = ux * nx + uy * ny + uz * nz; let sx = ux - un * nx, sy = uy - un * ny, sz = uz - un * nz; const sl = Math.hypot(sx, sy, sz);
+      if (sl > 1e-7) {
+        sx /= sl; sy /= sl; sz /= sl;
+        fallInv(B, ry * sz - rz * sy, rz * sx - rx * sz, rx * sy - ry * sx);
+        const kt = im + (O[1] * rz - O[2] * ry) * sx + (O[2] * rx - O[0] * rz) * sy + (O[0] * ry - O[1] * rx) * sz;
+        let mu = FALL.mu; if (i < B.G.nW && up > 0.7) { const f = sx * R[0] + sy * R[3] + sz * R[6]; mu += (FALL.muW - mu) * f * f; }   // (on its wheels: they roll along the car)
+        const jt = -sl / kt, mx = mu * c.jn; let tx = c.tx + jt * sx, ty = c.ty + jt * sy, tz = c.tz + jt * sz; const tl = Math.hypot(tx, ty, tz); if (tl > mx) { const f = mx / tl; tx *= f; ty *= f; tz *= f; }
+        const dx = tx - c.tx, dy = ty - c.ty, dz = tz - c.tz; c.tx = tx; c.ty = ty; c.tz = tz;
+        B.vx += dx * im; B.vy += dy * im; B.vz += dz * im; fallInv(B, ry * dz - rz * dy, rz * dx - rx * dz, rx * dy - ry * dx); B.wx += O[0]; B.wy += O[1]; B.wz += O[2];
+      }
+    }
+    for (let i = 0; i < n; i++) C[i].hit = C[i].on;
+    B.x += B.vx * h; B.y += B.vy * h; B.z += B.vz * h;
+    const Q = B.q, qx = Q[0], qy = Q[1], qz = Q[2], qw = Q[3], hx = 0.5 * h * B.wx, hy = 0.5 * h * B.wy, hz = 0.5 * h * B.wz;
+    Q[3] = qw - hx * qx - hy * qy - hz * qz; Q[0] = qx + hx * qw + hy * qz - hz * qy; Q[1] = qy - hx * qz + hy * qw + hz * qx; Q[2] = qz + hx * qy - hy * qx + hz * qw;
+    const ql = 1 / Math.hypot(Q[0], Q[1], Q[2], Q[3]); Q[0] *= ql; Q[1] *= ql; Q[2] *= ql; Q[3] *= ql;
+    for (let p = 0; p < 4; p++) {
+      fallRot(B); fallTouch(T, B, E, p ? 0 : h); if (!(B.pen > FALL.slop)) break;
+      let b = null; for (let i = 0; i < n; i++) { const c = C[i]; if (c.on && (!b || c.d > b.d)) b = c; }
+      const m = Math.min(FALL.push, b.d - FALL.slop * 0.5); B.x += b.nx * m; B.y += b.ny * m; B.z += b.nz * m; B.ps = m;
+    }
+    const sp = Math.hypot(B.vx, B.vy, B.vz), wl = Math.hypot(B.wx, B.wy, B.wz);
+    if (B.nc && sp < FALL.restV && wl < FALL.restW) { B.still += h; if (B.still >= FALL.restT) { B.lie += h; B.vx = B.vy = B.vz = B.wx = B.wy = B.wz = 0; } } else { B.still = 0; B.lie = 0; }
+    if (B.none > n * 0.5) B.out += h; else B.out = 0;   // (most of it over ground the track does not know: no further)
+  }
+  // the time a car's last step covered: the step's own, or under LOD (a far rival worked out every k-th step) what Race._lodPlan kept of it
+  function fallLast(race, c, dt) { const L = race._lod; if (!L || !L.on) return dt; const d = L.pd[race.cars.indexOf(c)]; return d > 0 ? d : dt; }
+  // a step of a falling car's body (Race._fall on a track with Track.floor; the first makes it: fallStart): its substeps, the car's own numbers
+  // from the body (where it is and how it moves, for all that looks at a car: the camera, the map, the sound; its heading its nose's, c.y its
+  // centre less the centre's height, c.roadY with it), the step's hardest knock on the ground as damage where it struck (B.hn counts them: the
+  // game's sound and shake, the renderer's dust; no wall was hit: c.hitWall as it was), and its end (B.done): 1 at rest for FALL.hold, 2 no ground
+  // known under it for FALL.outT (or back under the known ground from where none is: B.lost), 3 the longest fall (FALL.cap, the game's; a race's
+  // own opts.fallCap). Then the fall has cost FALL.dmgCut at least and the car is on the road again where it went over (race.rescue; c.q stayed
+  // there: Race.step's progress leaves a falling body alone)
+  function fallBody(race, c, F, dt) {
+    const T = race.track, B = F.b || (F.b = fallStart(T, c, F, fallLast(race, c, dt))), E = _fbE;
+    c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y; B.px = B.x; B.py = B.y; B.pz = B.z; B.pq[0] = B.q[0]; B.pq[1] = B.q[1]; B.pq[2] = B.q[2]; B.pq[3] = B.q[3];
+    const n = Math.max(1, Math.ceil(dt * FALL.sub - 1e-9)), h = dt / n;
+    fallEdge(T, B, E); B.iv = 0; B.ik = -1;
+    for (let k = 0; k < n && !B.done; k++) { fallSub(T, B, E, h); if (B.lie >= FALL.hold) B.done = 1; else if (B.out >= FALL.outT || B.lost) B.done = 2; else if (F.t >= (race.opts.fallCap || FALL.cap)) B.done = 3; }
+    const R = B.R; fallRot(B);
+    c.x = B.x; c.z = B.z; c.y = c.roadY = B.y - B.hc; c.vx = B.vx; c.vy = B.vy; c.vz = B.vz; c.w = -B.wy; c.air = 1;
+    if (R[0] * R[0] + R[6] * R[6] > 0.09) c.h = Math.atan2(R[6], R[0]);
+    if (B.ik >= 0) {   // (the step's hardest knock: damage where it struck, in the car's own axes; the roof's a dent from above, as rolling over)
+      const P = B.G.P, k = 3 * B.ik, lx = P[k], ly = P[k + 1], lz = P[k + 2], roof = ly > B.G.yb + 0.01, amt = Math.min(FALL.dmgK * (B.iv - FALL.hitV), FALL.dmgMax - B.dmg);
+      B.hn++; B.hv = B.iv; B.hr = roof ? 1 : 0; B.hx = B.x + R[0] * lx + R[1] * ly + R[2] * lz; B.hy = B.y + R[3] * lx + R[4] * ly + R[5] * lz; B.hz = B.z + R[6] * lx + R[7] * ly + R[8] * lz;
+      if (amt > 0) { B.dmg += amt; if (roof && c.dmgMode && !c.pitG) { if (c.dents.length < 24) c.dents.push({ lx, lz, amt: 0.1, top: 1 }); c.roofDmg = Math.min(1, c.roofDmg + 0.3); knock(c, amt); } else knock(c, amt, lx, lz); }
+    }
+    if (B.done) { if (B.dmg < FALL.dmgCut) applyDamage(c, FALL.dmgCut - B.dmg); c.fall = null; c.air = 0; c.vy = 0; c.falls = (c.falls || 0) + 1; race.rescue(c); c.roadY = c.y; }   // (the road's height under it at once: the body wrote its own there, a circuit's rescue leaves it to the car's next step, and a frame may be drawn before that)
+  }
   class Race {
     constructor(track, opts) {
       if (opts.phys !== 'cs' && opts.phys !== 'nova') opts = Object.assign({}, opts, { phys: 'cs' });   // two driving physics, 'cs' and 'nova' (the old 'rally' and 'arcade' map to cs, as in Car)
@@ -6655,7 +7149,7 @@ const Core = (function () {
       // Samo videz: a burning tyre's wheel off at a real knock, the game over.
       // opts.tyreCold: the vehicles whose cold tyres after a stop grip less (kt.cg; the Kolibri's), the others' only to be seen
       { const P = this.player, TR = opts.tyreRule, TC = opts.tyreCold; if (P && !P.net && Array.isArray(TR) && TR.indexOf(P.m.id) >= 0) ktMk(P, Array.isArray(TC) && TC.indexOf(P.m.id) >= 0); }
-      { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { over: false, fn: 0, burn: 0, kt: !!P.kt }; }
+      { const P = this.player, WR = opts.wheelRule; if (P && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) (P.wreck || (P.wreck = wreck0({}))).rule = { over: false, fn: 0, burn: 0, kt: !!P.kt }; }   // (an older model, no wreck of its own: one as retire's, paket-p K.1)
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
@@ -7196,7 +7690,7 @@ const Core = (function () {
 
     spawnDebris(c, name, R) {   // (R: the random numbers for its throw, default the race's (rand); a patrol car's: the police's own, see step)
       const rnd = R || rand;
-      const P = partsOf(c.m)[name], T = P.tl && c.tl;
+      const P = partOf(c.m, name), T = P.tl && c.tl;
       // (a part on the semi-trailer, its entry's tl: from the trailer's middle, along its heading, at its speed)
       let bx = c.x, bz = c.z, bh = c.h, by = c.y || 0, bvx = c.vx, bvz = c.vz, hl = c.m.len * 0.5, hw = c.m.wid * 0.5;
       if (T) { const D = T.D, xm = D.f - D.len / 2 - T.cx; bh = T.h; bx = T.x + Math.cos(bh) * xm; bz = T.z + Math.sin(bh) * xm; by = T.yA != null ? T.yA : T.y || 0; bvx = T.vx || 0; bvz = T.vz || 0; hl = D.len * 0.5; hw = D.wid * 0.5; }
@@ -7204,9 +7698,9 @@ const Core = (function () {
       const ol = Math.hypot(ox, oz) || 1, ux = (ox * ch - oz * sh) / ol, uz = (ox * sh + oz * ch) / ol, out = 2 + rnd() * 3;
       const d = { id: ++this.debrisId, car: c.id, part: name, x, z, y: by + P.y, vx: bvx * 0.7 + ux * out, vz: bvz * 0.7 + uz * out, vy: 2.5 + rnd() * 2.5,
         yaw: bh, rx: 0, rz: 0, wx: (rnd() - 0.5) * 16, wy: (rnd() - 0.5) * 12, wz: (rnd() - 0.5) * 16, r: P.r, m: P.m, h: P.h, rest: false, ground: false,
-        q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
+        q: this.track.cross.length && c.q.i >= 0 ? { i: c.q.i } : null, dead: false, wh: P.wh != null || P.spare ? (P.lz < 0 ? -1 : 1) : 0, roll: 0, by: [c], byT: [DEB.own] };   // (a figure of eight: the part starts on its car's level, not on the nearest leg)
       this.debris.push(d);
-      if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; }   // keep the road readable
+      if (this.debris.length > 40) { const old = this.debris.shift(); old.dead = true; if (!old.rest && Math.abs(Math.cos(old.rx) * Math.cos(old.rz)) < 0.94) old.ground = false; }   // keep the road readable (one pushed off while it still tumbles or rolls is not left drawn: it would stand frozen on its edge)
     }
     start() {
       this.state = 'racing'; this.time = 0; for (const c of this.cars) { c.locked = false; c.lapStart = 0; }
@@ -7363,7 +7857,9 @@ const Core = (function () {
       for (const c of cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name); c.detach.length = 0; }
       if (this.pol) for (const c of this.pol.cars) if (c.detach.length) { for (const name of c.detach) this.spawnDebris(c, name, this.pol.RD); c.detach.length = 0; }   // (the run from the police: a battered patrol car's panels on the road too, thrown with the police's own random numbers: the race's draws stay as they were)
       for (const c of cars) if (!c.net && !Number.isFinite(c.x + c.z + c.vx + c.vz + c.h + c.w + (c.y || 0))) { c.x = c.z = c.vx = c.vz = c.w = c.h = 0; c.y = 0; c.vy = 0; c.air = 0; c.q.s = c.goodS || 0; c.q.i = -1; this.rescue(c); }
-      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt); for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (c.net || (ST && !ST[ci])) continue; const cr = c.circles[c.circles.length - 1] + c.rad, cy = c.y || 0;   // (the reach test of debrisHit first, here: most pieces are far from most cars)
+      if (this.debris.length) { for (const d of this.debris) stepDebris(d, T, dt);
+        if (TX.deb === 0) { for (let i = this.debris.length - 1; i >= 0; i--) if (this.debris[i].rest) { this.debris[i].dead = true; this.debris.splice(i, 1); } }   // (Odpadli deli: Izklop: no car touches a piece, one lying still is off the road)
+        else for (let ci = 0; ci < cars.length; ci++) { const c = cars[ci]; if (c.net || (ST && !ST[ci])) continue; const cr = c.circles[c.circles.length - 1] + c.rad, cy = c.y || 0;   // (the reach test of debrisHit first, here: most pieces are far from most cars)
         for (const d of this.debris) { if (lv && !(Math.abs(d.y - cy) < 4)) continue; const dx = d.x - c.x, dz = d.z - c.z, R = cr + d.r * 0.7 + 0.1;
           if (dx * dx + dz * dz > R * R || d.y - cy > 1.3) { if (d.on && d.on.length) debrisGone(c, d); } else debrisHit(c, d); } } }
       if (XR.glass || this.glass) this._glassStep(cars);
@@ -7371,6 +7867,7 @@ const Core = (function () {
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci];
         if (ST && !ST[ci]) continue;   // (a far car between its steps: where it was, its timers on at its next step)
+        if (c.fall && c.fall.b) continue;   // (a body falling down the slope, fallBody: its place on the road, its distance and its timers stay where it went over)
         const q = T.query(c.x, c.z, c.q.i, c.q);
         if (c.net) { c.sPrev = q.s; continue; }   // (distance, laps and the finish of the friend's car come from its phone)
         const cdt = SD ? SD[ci] : dt, m = SD ? Math.round(cdt / dt) : 1, cl = cdt > 0.0125 ? 3 * Math.round(cdt * 120) : 3;   // (m: the steps this one covers, LOD; cl: at most 3 m a 1/120 s, also in a longer step)
@@ -7515,7 +8012,7 @@ const Core = (function () {
           k = Math.max(k, p.k);
           if (j < 0) { p.on.push(c); p.run = c.speed > GLASS.v; }
         }
-        if (k || c.glassK) c.glassK = 1 - GLASS.mu * k;
+        if (k || c.glassK) c.glassK = 1 - (c.dmgMode === 2 ? GLASS.mu : 0) * k;   // (P5: the glass takes grip only with damage Vklop, 5 %; Samo videz drives as before)
       }
     }
     // a ghost from the pit road back on the circuit: solid again once no other car overlaps it (a car rejoining beside another is not thrown
@@ -7768,7 +8265,8 @@ const Core = (function () {
     // the red flag's hold: the track cleared (the debris and the glass off it, the retired cars to where they may stand)
     _redClear() {
       const T = this.track;
-      for (const d of this.debris) d.dead = true; this.debris.length = 0; if (this.glass) this.glass.length = 0;
+      for (const d of this.debris) { d.dead = true; if (!d.rest && Math.abs(Math.cos(d.rx) * Math.cos(d.rz)) < 0.94) d.ground = false; }   // (as the cap of 40: one taken off while it still tumbles or rolls is not left drawn on its edge)
+      this.debris.length = 0; if (this.glass) this.glass.length = 0;
       for (const c of this.cars) if (dnf(c) && !c.net && !c.finished && !(c.wreck.stop && (c.wreck.fin || retiredOff(T, c, -0.2)))) this._parkRetired(c);
     }
 
@@ -7944,7 +8442,8 @@ const Core = (function () {
       r.from = from; r.to = to; r.box = n0 === cur && (to === cur || now.length > 0);
       return r;
     }
-    // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one); ow: the steps since a
+    // LOD (a very big field, LOD.min): which cars are worked out this step (st) and over what time (dt: since the last one; pd: the time the step
+    // before that covered, for what reads a car's last move: fallLast); ow: the steps since a
     // car's last one, ex: how far one between its steps has gone on since (its speed over them). Null in any other race. The player, the cars
     // on the grid, in or for the pits, falling, rolling, in the air, retired or held by the marshals: the full rate. The safety car on the
     // track (driven every step, it touches every car): the full rate within LOD.r m of it as well; the queue further back as any other far car
@@ -7953,8 +8452,8 @@ const Core = (function () {
     _lodPlan(dt) {
       const cars = this.cars, P = this.player, n = cars.length;
       if (LOD.off || n <= LOD.min || !P || this.remotes.length || this.timeTrial || this.pol || this.tf) { if (this._lod) this._lod.on = false; return null; }
-      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n) });
-      L.n++; L.on = true; L.h = dt;
+      const L = this._lod || (this._lod = { on: false, n: 0, h: dt, st: new Uint8Array(n), dt: new Float64Array(n), owe: new Float64Array(n), ow: new Uint8Array(n), kk: new Uint8Array(n), ex: new Float64Array(n), nr: new Uint8Array(n), pd: new Float64Array(n) });
+      const was = L.on; L.n++; L.on = true; L.h = dt;
       const go = this.state === 'racing', X = this.fl && this.fl.sc && this.fl.sc.car;   // (X: the safety car on the track)
       for (let i = 0; i < n; i++) {
         const c = cars[i]; let k = 1;
@@ -7963,7 +8462,7 @@ const Core = (function () {
           if ((g > LOD.a || g < -LOD.b) && d2 > LOD.r * LOD.r && sx * sx + sz * sz > LOD.r * LOD.r) k = Math.abs(g) > LOD.r2 && d2 > LOD.r2 * LOD.r2 ? LOD.k2 : LOD.k;
         }
         L.kk[i] = k; L.owe[i] += dt;
-        if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)
+        if (k === 1 || (L.n + c.grid) % k === 0 || L.ow[i] + 1 >= k) { L.st[i] = 1; L.pd[i] = was ? L.dt[i] : 0; L.dt[i] = L.owe[i]; L.owe[i] = 0; L.ow[i] = 0; L.ex[i] = 0; }   // (in turn by its grid slot; never more than k steps apart)
         else { L.st[i] = 0; L.ow[i]++; L.ex[i] = L.ow[i] * dt * c.speed; }
       }
       return L;
@@ -8105,10 +8604,11 @@ const Core = (function () {
       if (c.isPlayer) c.secEv = [k, st, col];
     }
     repairCar(c) {   // good as new: body, panels, lamps, glass; the renderer rebuilds the car when repairN changes (shown bit by bit over the stop before it: REPAIR)
-      c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0;
+      c.dmg = 0; c.dz = [0, 0, 0, 0]; c.dents = []; c.cd = [0, 0, 0, 0]; c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.lost = {}; c.detach = []; c.winOut = [0, 0, 0, 0]; c.roofDmg = 0; c.xd = null;
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (c.wreck) wreck0(c.wreck);   // (a kit vehicle: its wheels back on, no wreck to shed; a retirement stays)
       if (c.flt) { c.flt.pw = -1; c.flt.pk = 0; }   // (failures: a new tyre for a cut one)
+      c.eng = null;   // (P2.3: a new radiator)
       c.repairN = (c.repairN || 0) + 1;
     }
     // a stop's repairs as the player asked for them (c.pitPlan.fix, game.js) when not all: 'need' (Nujno) the parts lost, the wings, the lamps,
@@ -8121,7 +8621,8 @@ const Core = (function () {
       if (W && W.wl) { for (const n of WHEELS) delete c.lost[n]; W.wl = 0; W.nL = 0; W.lt = 0; W.fix++; if (W.rule) W.rule.burn = 0; }
       if (!need) return;
       const k = c.dmg > NEED_DMG ? NEED_DMG / c.dmg : 1, M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5;
-      c.dmg *= k; c.roofDmg *= k; for (let i = 0; i < 4; i++) { c.dz[i] *= k; c.cd[i] *= k; }
+      c.dmg *= k; c.roofDmg *= k; for (let i = 0; i < 4; i++) { c.dz[i] *= k; c.cd[i] *= k; } c.xd = null;
+      const fMend = Math.max(c.dz[0], (c.cd[0] + c.cd[1]) / 2); c.eng = { h: 0, t: 0, dead: false, hot: false, ev: '', f0: fMend };   // (P2.3: a new radiator; the front may still be bent, so it leaks again only from a fresh knock, not from what Nujno left)
       c.lightOut = [0, 0, 0, 0]; c.lamp1 = 0; c.glassN = 0; c.winOut = [0, 0, 0, 0]; c.lost = {}; c.detach = [];
       if (c.aeroK0 != null) c.aeroK = c.aeroK0;   // (new wings)
       if (W) wreck0(W);
@@ -8241,6 +8742,7 @@ const Core = (function () {
     }
     _fall(c, dt) {
       const F = c.fall; F.t += dt;
+      if (this.track.floor && !c.tl) { fallBody(this, c, F, dt); return; }   // (the ground beyond the edge is known: it tumbles down it as a body, FALL)
       c.px = c.x; c.pz = c.z; c.ph = c.h; c.py = c.y;
       c.vy -= JUMP_G * dt; c.y += c.vy * dt; c.x += c.vx * dt; c.z += c.vz * dt; c.h += c.w * dt;
       const k = Math.max(0, 1 - 0.35 * dt); c.vx *= k; c.vz *= k; c.roadY = c.y;
@@ -8333,6 +8835,15 @@ const Core = (function () {
         parkBrake(c); const k = Math.max(0, 1 - 2.5 * dt); c.vx *= k; c.vz *= k; c.w *= k;
         if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; }
       }
+      // P2.3: the engine of the wheel rule's car (Vklop) overheats after a hard knock in front (engStep); dead, the car rolls out (a dead
+      // engine's drag, 0.5 a second of its speed; still steered) and once it stands the game is over (rule.why 'engine')
+      if (Q && !W.dnf && !c.finished && c.dmgMode === 2 && this.state === 'racing' && !c.inPit && c.pitState !== 'repair') {
+        engStep(c, dt);
+        if (c.eng && c.eng.dead && !W.nL && !c.rl && !c.fall) {
+          const k = Math.max(0, 1 - 0.5 * dt); c.vx *= k; c.vz *= k;
+          if (c.speed < 2) { parkBrake(c); if (c.speed < 0.5) { c.vx = c.vz = c.w = 0; this.retire(c); W.stop = true; Q.over = true; Q.why = 'engine'; } }
+        }
+      }
       const racing = this.state === 'racing';
       if (!W.dnf && !c.isPlayer && kitParts(c.m) && !c.finished && racing && W.nL >= 2 && !c.pitWant && !c.inPit && !this.opts.noPlayer) this.retire(c);
       if (W.dnf) {
@@ -8345,7 +8856,7 @@ const Core = (function () {
         return;
       }
       if (W.hold > 0) { W.hold -= dt; parkBrake(c); c.stuckT = 0; return; }
-      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5) this.rescue(c);
+      if (W.nL && !c.isPlayer && (!T.def.pit || this.opts.noPlayer) && !c.finished && racing && W.lt > 1.5 && !(c.fall && c.fall.b)) this.rescue(c);   // (a body falling down a slope, fallBody: when it lies)
     }
     // the marshals put a retired car where it may stand (standQ; retiredOff holds there), as retireControl parks it (its centre T.w + hw +
     // 1.6 m out, or 0.4 m short of the barrier): the nearest spot from where it is, on along the road (3 m at a time, up to 1 km), on
@@ -8656,7 +9167,7 @@ const Core = (function () {
 
   return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, partOf, applyDamage, careerWear, detachPart, DEB, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
     MAN, manRev, DRAG, PWR_MULT };
 })();
 
