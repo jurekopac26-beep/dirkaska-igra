@@ -370,17 +370,17 @@ try {
       && u8.S.money > u9.S.money && !!u9.S.cars.muscle.parts.zarometi, JSON.stringify({ f5, paid: u8.S.money - u9.S.money }));
     await page.evaluate(() => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: __garage.findOpt('zarometi', 'Yellow') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); await run(); const f6 = await fitOf();
     T.check('the yellow headlamps out of the same drawer: the LED ones back into it on the trolley\'s way out', f6.log === 'plan,cart.in,cart.loaded,cart.parked,grab,swap,put,drawer.back,cart.out' && f6.plan.drawer && f6.put === 'cart' && f6.cart && !f6.cart.on && f6.cart.load === 0 && f6.parked, JSON.stringify(f6));
-    // (the exhaust by its plan's plate, a long car's off the regal (the muscle car): the car up on the lift (0,55 m), the near arm's wrench
-    // at the clamp under the bumper (two bursts of sparks before the swap, one after it), the far arm with the pipe behind the car: beyond
-    // its reach under the body (pushed in it would go down through it: the final review of 4. 11. 2026), so it brings the pipe as near
-    // as it gets by the body, the part hops on from there and the old one back into the hand the same way, onto the regal; the car down,
-    // two revs, KONČANO; no part is put on without the arm any more)
+    // (the exhaust by its plate (an_auspuh), a long car's off the regal (the muscle car): the car up on the lift (0,55 m), roka 1's wrench
+    // at the clamp under the bumper (two bursts of sparks), roka 1 swaps it for the gripper and draws the old pipe out, roka 2 lifts the
+    // new one off the regal, the bridge's half turn (the old one to the regal, the new one to the car), roka 1 puts the old one onto the
+    // empty place (STOCK), roka 2 pushes the new one in under the bumper and tightens the clamp with its wrench (one burst); the car down,
+    // two revs, KONČANO (the plate's 7 s; ~8 s); no part is put on without the arm, the arms never cross)
     const exOf = () => page.evaluate(() => ({ lift: Garage3D.info.lift, wr: Garage3D._dbg.FIT.log.filter(q => q.step === 'wrench').map(q => q.n).join('+'), plain: Garage3D._dbg.FIT.log.find(q => q.step === 'plain') || null }));
-    const exLog = (f) => /^plan,grab,wrench,hop,swap,wrench,/.test(f.log) && f.log.split(',').slice(6).sort().join() === 'down,put,revs';
+    const exLog = (f) => /^plan,wrench,off,grab,pass,put,swap,wrench,down,revs$/.test(f.log) && f.plan.two === true && f.plan.hop === 0;
     await page.evaluate(() => { __garage.openMenu({ el: 'auspuh', key: 'rgl:SPORT', sel: __garage.findOpt('auspuh', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rx = await run();
     const fx = await fitOf(), ex = await exOf(), ux = ex.plain;
-    T.check('a long car\'s exhaust off the regal by its plan\'s plate (the muscle car): the car up on the lift, the near arm\'s wrench at the clamp (two bursts before the swap, one after); beyond the far arm\'s reach behind it, not pushed in under the body (the arm down through it): the arm holds it by the rear, the part hops on (under 1 m) and the old one back into the hand, onto the regal; the car down, the revs, KONČANO (' + rx.t + ' s: within 14); not put on without the arm; the arms parked',
-      exLog(fx) && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.lift === 0.55 && fx.plan.wrench && ex.wr === '2+1' && rx.lift > 0.5 && ex.lift === 0 && fx.plan.at[0] < -2.2 && fx.plan.hop > 0 && fx.plan.hop < 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked && /KONČANO/.test(fx.chip) && rx.t <= 14,
+    T.check('a long car\'s exhaust off the regal by its plate (the muscle car): the car up on the lift, roka 1\'s wrench at the clamp (two bursts), roka 1 draws the old one out, roka 2 the new one off the regal, the bridge\'s half turn, the old one onto the regal, the new one in under the bumper, roka 2\'s wrench (one burst); the car down, the revs, KONČANO (' + rx.t + ' s: within 11); not put on without the arm; the arms parked',
+      exLog(fx) && !ux && fx.plan.regal && fx.plan.arm === 1 && fx.plan.el === 'auspuh' && fx.plan.lift === 0.55 && fx.plan.wrench && ex.wr === '2+1' && rx.lift > 0.5 && ex.lift === 0 && fx.plan.at[0] < -2.2 && fx.plan.side === 1 && fx.offs === 1 && fx.put === 'regal' && fx.ret >= 1 && !fx.stay && fx.parked && /KONČANO/.test(fx.chip) && rx.t <= 11,
       JSON.stringify({ fx, ex, t: rx.t, lift: rx.lift }));
     // (an exhaust that lifts the engine's level: a Stage 1 map in the car's parts (+6 %), the straight pipe off the regal (+2,5 %): level 1;
     // the same fitting, then the engine's short show at the car's rear instead of the two revs: its parts on, MOČ with both numbers)

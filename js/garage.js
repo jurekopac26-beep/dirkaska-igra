@@ -624,10 +624,11 @@
       put: (d, B) => { if (!B.pair) { const w = B.el === 'platisca' ? 'staro platišče' : 'staro gumo'; return d.where === 'regal' ? [2, 'Roka {0} postavi {1} na prazno mesto v regalu', null, w] : d.where === 'cart' ? [2, 'Roka {0} odloži {1} na voziček', null, w] : null; }
         const n = B.P && B.P.n || 4; return d.j === n - 1 ? [3, n === 4 ? 'Vse 4 gume zamenjane · roki gresta gor' : 'Vse gume zamenjane · roki gresta gor'] : d.j ? null : [3, 'Roka 1 postavi staro gumo na prazno mesto v regalu']; } },
     auspuh: { plan: [1, 'Kupljeno · roki se zbudita · avto gre gor'],
-      grab: (d) => [1, d.rgl != null ? 'Roka {0} dvigne nov auspuh z regala' : 'Roka {0} vzame nov auspuh z vozička', null],
-      wrench: (d) => d.n === 1 ? [2, 'Roka 1 z vijačnikom privije objemko'] : [1, 'Roka 1 z vijačnikom odvije objemko pod odbijačem'],
+      grab: (d, B) => [B.P && B.P.two ? 2 : 1, d.rgl != null ? 'Roka {0} dvigne nov auspuh z regala' : 'Roka {0} vzame nov auspuh z vozička', null],
+      wrench: (d, B) => d.n === 1 ? [2, B.P && B.P.two ? 'Roka 2 z vijačnikom privije objemko' : 'Roka 1 z vijačnikom privije objemko'] : [1, 'Roka 1 z vijačnikom odvije objemko pod odbijačem'],
+      off: [1, 'Roka 1 izvleče stari auspuh'], pass: [2, 'Most se zavrti za pol kroga: stari auspuh k regalu, nov k avtu'],
       hop: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null], swap: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null],
-      put: (d) => d.where === 'regal' ? [3, 'Roka {0} postavi stari auspuh na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari auspuh na voziček', null] : null,
+      put: (d, B) => B.P && B.P.two ? [2, 'Roka 1 postavi stari auspuh na prazno mesto v regalu'] : d.where === 'regal' ? [3, 'Roka {0} postavi stari auspuh na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari auspuh na voziček', null] : null,
       revs: [3, 'Motor dvakrat zarjovi'] },
     krilo: { plan: [2, 'Kupljeno · roki se zbudita, kamera gre k pokrovu prtljažnika'], cart_in: [2, 'Voziček pripelje novo krilo'], old_out: [3, 'Roka {0} sname staro krilo s pokrova', null],
       grab: (d) => [3, d.rgl != null ? 'Roka {0} prime krilo na regalu in ga nese k avtu' : 'Roka {0} vzame krilo z vozička in ga nese k avtu', null],
@@ -660,7 +661,7 @@
       lights: [3, 'Obe luči zasvetita (preizkus luči)'], drawer_back: [3, 'Pladenj se vrne v predal'], cart_out: [3, 'Voziček odpelje'] },
     barva: { chamber: [1, 'Komora se spusti čez avto · roki počivata'], spray: [2, 'Barva teče po bokih navzdol, zgoraj je že nova barva'], dry: [3, 'Steber piha vroč zrak čez avto · barva se suši'] } };
   SAY.platisca = SAY.gume;
-  const BAR_T = { gume: 9.9, platisca: 12.5, turbo: 15, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 9.5, barva: 4.9, zarometi: 15.5, def: 10 };   // (a show's seconds on its own clock: the line's length)
+  const BAR_T = { gume: 9.9, platisca: 12.5, turbo: 15, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 8, barva: 4.9, zarometi: 15.5, def: 10 };   // (a show's seconds on its own clock: the line's length)
   const WHEEL_K = new Set(['off', 'grab', 'swap', 'put', 'pass']);   // (a wheel's steps: its count stays)
   let B = null, barRaf = 0;
   const barNew = (el) => ({ el: el || 'def', t0: G.showTime, st: 0, lab: null, args: [], cnt: '', fin: false, P: null, pair: false, ws: null, seen: {} });

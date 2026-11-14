@@ -85,7 +85,9 @@ const Render = (function () {
   // a rear wheel drawn in the body: the geometry's userData.wr keeps where its triangles are (a, b: its vertices) and what it is (sd, x, y, z:
   // its centre, r, wd, k: where its tyre begins, a share of r), so the garage can take the tyre off its rim (garage3d.js, fitWheels)
   function rearWheel(g, w, fn) { const a = g.P.length / 3; fn(); (g.wr || (g.wr = [])).push(Object.assign(w, { a, b: g.P.length / 3 })); }
-  const withWr = (g) => { const geo = g.geometry(); if (g.wr) geo.userData.wr = g.wr; return geo; };
+  // an exhaust drawn in the body: the geometry's userData.ex keeps where its triangles are ([a, b]: its vertices), so the garage's arm can draw it out
+  function exIn(g, fn) { const a = g.P.length / 3; fn(); (g.ex || (g.ex = [])).push([a, g.P.length / 3]); }
+  const withWr = (g) => { const geo = g.geometry(); if (g.wr) geo.userData.wr = g.wr; if (g.ex) geo.userData.ex = g.ex; return geo; };
 
   // (band: the compound's band on the sidewalls (tyreBand), the outer one only for a wheel in the body (cz off the car's middle), else both)
   function wheelInto(g, cx, cy, cz, r, wd, tire, rim, band) {
@@ -517,7 +519,7 @@ const Render = (function () {
     // the tail: a black panel round the lamps (the lamps are the tail mesh), the chrome fuel cap in the middle; twin exhausts under the bumper
     World.box(g, rear.x - 0.01, 0.62, 0, 0.04, 0.17, rear.w * 1.66, 0, K);
     discX(g, rear.x - 0.035, 0.7, 0, 0.06, 10, CH, -1);
-    for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]);
+    exIn(g, () => { for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]); });
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.13); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.3, k: 0.68 }, () => muscleWheelInto(g, rx, r, z, r, 0.3, band)); }   // (the rear wheels in the body; the fronts are meshes of their own)
     return withWr(g);
@@ -603,7 +605,7 @@ const Render = (function () {
     World.box(g, front.x - 0.18, 0.5, 0, 0.5, 0.05, 1.3, 0, K2);
     // the tail: the lamps' black surrounds (the lamps are the tail mesh), the exhaust out of the side in front of the rear wheel
     for (const sd of [-1, 1]) World.box(g, rear.x - 0.012, 0.92, sd * 0.85, 0.03, 0.23, 0.16, 0, K);
-    tubeX(g, rx + 0.95, rx + 0.62, 0.66, M.wid * 0.5 - 0.1, 0.055, 8, [0.62, 0.62, 0.64], [0.04, 0.04, 0.045]);
+    exIn(g, () => tubeX(g, rx + 0.95, rx + 0.62, 0.66, M.wid * 0.5 - 0.1, 0.055, 8, [0.62, 0.62, 0.64], [0.04, 0.04, 0.045]));
     // the flares over the wheels, the coil-overs in the arches; the rear wheels (the fronts are meshes of their own)
     for (const x of [fx, rx]) for (const sd of [-1, 1]) {
       flareInto(g, x, r, r + 0.07, r + 0.17, sd * 0.86, sd * (M.wid * 0.5 + 0.04), K);
