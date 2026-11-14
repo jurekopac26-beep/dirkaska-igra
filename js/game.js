@@ -2807,7 +2807,7 @@
     $('prvi-a').classList.remove('off'); $('prvi-b').classList.add('off');
     for (const b of document.querySelectorAll('#prvi-a [data-act="prvi-ctl"]')) b.classList.toggle('sel', b.dataset.v === S.control);
     $('prvi-pad').classList.toggle('off', !(Input.pad && Input.pad.on));
-    showScreen('prvi');
+    refreshSegs(); showScreen('prvi');   // (the language switch at the top: Slovenščina or English, the game's language; a foreign player's first screen)
   }
   function prviCtl(v) { if (!CTRL_NAME[v]) return; setOption('control', v); for (const b of document.querySelectorAll('#prvi-a [data-act="prvi-ctl"]')) b.classList.toggle('sel', b.dataset.v === S.control); }
   function prviTest() {   // the test drive (the driving school's frame: schoolStep, schoolHUD; prviTestEnd at PRVI_T s)
