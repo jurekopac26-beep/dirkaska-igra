@@ -595,5 +595,64 @@
       addTo(group, wrap) { const w = wrap || ((m) => m); C.addTo(group, w(mat(style)), true, true); F.addTo(group, w(matRail(style)), false, true); } };
   }
 
-  World.stavbe = { atlas, mat, matRail, house, plots, lines, setup, komplet, drzava, KOMPLETI, PROGE, STYLES, ST };
+  /* ---- the ground round the houses (def.okolica; docs/realizem/paket-s.md, »Okolica hiš«): a house does not stand in the bare grass. From the
+     map (osm): the car parks as mapped and the unpaved ways; where the map has nothing at a house (gen): a gravel yard by it, a short gravel
+     driveway to the nearest way and a narrow strip of trodden ground round its walls. Every shape a field (> 0 inside), cut to the road's band
+     and 1.2 m clear of its barriers (near: dd), and each one under the ones before it (def.yard's ways first: yardWorld draws them) so that no
+     two lie on each other; drawn on a grid of cells (2 m, the ways and the yards 1 m: the edge where the field crosses 0, as straight as the
+     map's) a few cm over the ground: the asphalt with the road's texture, the unpaved ground (gravel, trodden) with the makadam road's texture and
+     relief (its bump map) and a darker berm at the edge. Two Chunks, one material each.
+     cfg: Chunks, T, near, gH, yard (def.yard: the ways drawn already). Returns { on(x, z, r): on one of them (or on a way of def.yard) within
+     r m, addTo(group, tex), stats } or null where the track has none. ---- */
+  function okolica(cfg) {
+    const T = cfg.T, O = T && T.def && T.def.okolica; if (!O) return null;
+    const near = cfg.near, gH = cfg.gH, SURF = [[0.9, 0.9, 0.92], [1.0, 0.99, 0.97], [0.86, 0.77, 0.64]];   // asphalt (its texture); gravel, trodden ground (the makadam's)
+    const segD = (x, z, P) => { let b = 1e9; for (let k = 0; k + 1 < P.length; k++) { const a = P[k], c = P[k + 1], ux = c[0] - a[0], uz = c[1] - a[1], l = ux * ux + uz * uz || 1, t = Math.max(0, Math.min(1, ((x - a[0]) * ux + (z - a[1]) * uz) / l)), dx = x - a[0] - ux * t, dz = z - a[1] - uz * t, d = dx * dx + dz * dz; if (d < b) b = d; } return Math.sqrt(b); };
+    const inP = (x, z, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+    const pts = (r, k0) => { const P = []; for (let k = k0; k + 1 < r.length; k += 2) P.push([r[k], r[k + 1]]); return P; };
+    const bbP = (P, e) => { const b = [1e9, 1e9, -1e9, -1e9]; for (const p of P) { b[0] = Math.min(b[0], p[0] - e); b[1] = Math.min(b[1], p[1] - e); b[2] = Math.max(b[2], p[0] + e); b[3] = Math.max(b[3], p[1] + e); } return b; };
+    const shapes = [];   // { f, bb, col, cell, draw } in the order of priority
+    for (const r of cfg.yard || []) if (r[0] <= 1) { const P = pts(r, 1), hw = r[0] ? 1 : 2; shapes.push({ f: (x, z) => hw - segD(x, z, P), bb: bbP(P, hw) }); }
+    const ribbon = (P, hw, col) => shapes.push({ f: (x, z) => hw - segD(x, z, P), bb: bbP(P, hw), col, cell: 1, draw: true });
+    const poly = (P, col, cell) => shapes.push({ f: (x, z) => (inP(x, z, P) ? 1 : -1) * segD(x, z, P.concat([P[0]])), bb: bbP(P, 0), col, cell, draw: true });
+    const n0 = shapes.length;
+    for (const r of O.osm || []) if (r[0] === 0) poly(pts(r, 2), SURF[r[1]], 2); else ribbon(pts(r, 3), r[2], SURF[r[1]]);
+    const gen = O.gen || [];   // (the driveways, then the yards, then the strips round the walls)
+    for (const r of gen) if (r[0] === 1) ribbon(pts(r, 3), r[2], SURF[r[1]]);
+    for (const r of gen) if (r[0] === 0) poly(pts(r, 2), SURF[r[1]], 1);
+    for (const r of gen) if (r[0] === 2) { const [, sf, w, x, z, L, W, a] = r, c = Math.cos(a), s = Math.sin(a);   // (a ring: w m out from the walls, 0.3 m in under them)
+      const sd = (px, pz) => { const u = Math.abs((px - x) * c + (pz - z) * s) - L / 2, v = Math.abs(-(px - x) * s + (pz - z) * c) - W / 2; return Math.hypot(Math.max(u, 0), Math.max(v, 0)) + Math.min(Math.max(u, v), 0); };
+      const e = Math.hypot(L, W) / 2 + w; shapes.push({ f: (px, pz) => Math.min(w - sd(px, pz), sd(px, pz) + 0.3), bb: [x - e, z - e, x + e, z + e], col: SURF[sf], cell: 0.5, draw: true }); }
+    const ov = (a, b) => a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3];
+    const HC = 32, hash = new Map();   // (the shapes by 32 m cells, 2 m over their boxes: on(x, z, r ≤ 2))
+    shapes.forEach((sh, k) => { sh.over = shapes.slice(0, k).filter(t => ov(t.bb, sh.bb));
+      for (let a = Math.floor((sh.bb[0] - 2) / HC); a <= Math.floor((sh.bb[2] + 2) / HC); a++) for (let b = Math.floor((sh.bb[1] - 2) / HC); b <= Math.floor((sh.bb[3] + 2) / HC); b++) { const q = a + ',' + b; let L = hash.get(q); if (!L) hash.set(q, L = []); L.push(sh); } });
+    const clip = (x, z) => { const n = near(x, z); return n.i < 0 ? -1 : n.dd - 1.2; };
+    const CA = new cfg.Chunks(128, true), CM = new cfg.Chunks(128, true), st = { shapes: shapes.length - n0, vertices: 0, area: 0 };
+    for (const sh of shapes) { if (!sh.draw) continue;
+      const cs = sh.cell, i0 = Math.floor(sh.bb[0] / cs), j0 = Math.floor(sh.bb[1] / cs), ni = Math.ceil(sh.bb[2] / cs) - i0, nj = Math.ceil(sh.bb[3] / cs) - j0, V = new Map();
+      const val = (i, j) => { const k = i * 100003 + j; let v = V.get(k); if (v !== undefined) return v; const x = (i0 + i) * cs, z = (j0 + j) * cs; v = sh.f(x, z);
+        if (v > -cs * 1.5) { for (const t of sh.over) { const u = t.f(x, z); if (-u < v) v = -u; } v = Math.min(v, clip(x, z)); }
+        V.set(k, v); return v; };
+      for (let i = 0; i < ni; i++) for (let j = 0; j < nj; j++) {
+        const cn = [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]], vs = cn.map(([a, b]) => val(a, b)); if (vs.every(v => v <= 0)) continue;
+        const poly2 = [], pv = [];
+        for (let k = 0; k < 4; k++) { const a = cn[k], b = cn[(k + 1) % 4], va = vs[k], vb = vs[(k + 1) % 4];
+          if (va > 0) { poly2.push([(i0 + a[0]) * cs, (j0 + a[1]) * cs]); pv.push(va); }
+          if ((va > 0) !== (vb > 0)) { const t = va / (va - vb); poly2.push([(i0 + a[0] + (b[0] - a[0]) * t) * cs, (j0 + a[1] + (b[1] - a[1]) * t) * cs]); pv.push(0); } }
+        if (poly2.length < 3) continue;
+        const loose = sh.col !== SURF[0], tl = loose ? 6 : 8, col = sh.col;   // (unpaved: the makadam road's texture and relief, its tile, its loose berm at the edge)
+        const g = (loose ? CM : CA).get(poly2[0][0], poly2[0][1]), P3 = poly2.map(([x, z]) => [x, gH(x, z) + 0.09, z]), U = poly2.map(([x, z]) => [x / tl, -z / tl]);
+        const C3 = pv.map(v => { if (!loose) return col; const e = 1 - Math.min(1, v / 0.6); return [col[0] * (1 - 0.1 * e), col[1] * (1 - 0.03 * e), col[2] * (1 - 0.22 * e)]; });
+        for (let k = 1; k + 1 < P3.length; k++) { g.triUp(P3[0], P3[k], P3[k + 1], [C3[0], C3[k], C3[k + 1]], [U[0], U[k], U[k + 1]]); st.vertices += 3; }
+        st.area += vs.every(v => v > 0) ? cs * cs : cs * cs / 2; } }
+    st.area = Math.round(st.area);
+    return { stats: st,
+      on(x, z, r) { const L = hash.get(Math.floor(x / HC) + ',' + Math.floor(z / HC)); if (!L) return false; for (const sh of L) if (x > sh.bb[0] - r && x < sh.bb[2] + r && z > sh.bb[1] - r && z < sh.bb[3] + r && sh.f(x, z) > -r) return true; return false; },
+      addTo(group, tex) { CA.addTo(group, new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false, true);
+        CM.addTo(group, tex.makadam ? new THREE.MeshPhongMaterial({ map: tex.makadam, bumpMap: tex.makadamBump, bumpScale: 0.045, shininess: 7, specular: 0x1c1813, vertexColors: true })
+          : new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }), false, true); } };
+  }
+
+  World.stavbe = { atlas, mat, matRail, house, plots, lines, setup, okolica, komplet, drzava, KOMPLETI, PROGE, STYLES, ST };
 })();

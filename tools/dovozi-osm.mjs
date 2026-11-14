@@ -1,10 +1,15 @@
 // Dovozi in poti do hiš ob progi iz OpenStreetMap (docs/realizem/paket-s.md, »Dovozi in poti iz OSM«): pot do hiše samo tam, kjer je
 // v resnici; kjer je OSM nima, je ni. Orodje izpiše vrstice za def.yard proge (js/tracks/<id>.js; riše jih World yardWorld, samo videz):
-//   [0, x, z, x, z, …]  dovoz (highway=service)        [1, x, z, x, z, …]  pot (highway=footway, path, steps, pedestrian)
+//   [0, x, z, x, z, …]  dovoz (highway=service)        [1, x, z, x, z, …]  pot (highway=footway, path, steps, pedestrian; samo z
+//                                                  asfaltom po OSM, surface=asphalt …, sicer je makadamska in gre v def.okolica.osm)
 // Zaženi:
 //   node tools/dovozi-osm.mjs spa --osm <mapa>     kosi OSM v <mapa> (kar manjka, prenese z glavnega API-ja; CLAUDE.md: nikoli Google)
 //   … --json f.json                                poročilo: lega, pari tlorisov, vse poti z razlogom, ograje (barrier=*) ob hišah
 //   … --do 6                                       koliko metrov od tlorisa hiše se pot še šteje za njeno (privzeto 6)
+//   … --okolica f.json                             okolica hiš (docs/realizem/paket-s.md, »Okolica hiš«): vse asfaltne poti do ~25 m od
+//                                                  hiš v pasu (vrstice def.yard), makadam in parkirišča iz OSM (def.okolica.osm) ter
+//                                                  skromna splošna dopolnitev, kjer OSM ob hiši nima ničesar (def.okolica.gen: dvorišče,
+//                                                  kratek dovoz do najbližje ceste, nikoli čez progo, in pas uhojenih tal ob hiši)
 // Pot do hiše je (in samo to se nariše): dovoz (service=driveway), ki pride do hiše, in pot ali servisna cesta, ki se pri hiši slepo
 // konča. Cesta, ki gre samo mimo hiš ali veže dve drugi cesti, in parkirišče (service=parking_aisle) nista poti do hiše: sta v
 // poročilu, riše ju paket E (docs/realizem/paket-e.md: stranske ceste s križišči). Ograje ob hišah (barrier=*) so samo v poročilu.
@@ -19,10 +24,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const argv = process.argv.slice(2), opt = (k) => { const i = argv.indexOf(k); if (i < 0) return null; const v = argv[i + 1]; argv.splice(i, 2); return v; };
-const osmDir = opt('--osm'), jsonOut = opt('--json'), REACH = +(opt('--do') || 6), id = argv[0];
+const osmDir = opt('--osm'), jsonOut = opt('--json'), REACH = +(opt('--do') || 6), OKOL = opt('--okolica'), id = argv[0];
 if (!id || !osmDir) { console.log('raba: node tools/dovozi-osm.mjs <proga> --osm <mapa> [--json f.json] [--do 6]'); process.exit(1); }
 const UA = 'track-data-tool/1.0 (one-off map extract)';   // (a generic name: nothing of the project or its people goes to the map's server)
 const KIND = { service: 0, footway: 1, path: 1, steps: 1, pedestrian: 1 };   // (the row's kind: 0 a 4 m ribbon, 1 a 2 m one)
+const PAVED = /^(asphalt|paved|concrete|concrete:plates|concrete:lanes|paving_stones|sett|cobblestone|metal|wood)$/;   // (a surface the map calls paved)
 const HALF = [2.0, 1.0], BAND = 64, GAP = 1.0, MINLEN = 4;                    // (yardWorld's half widths; the band; clear of the barrier; the shortest piece)
 const JOIN = 5, TAPER = 8, STRAIGHT = 3;                                      // (a drawn way's end this near is the same way going on: the new row bends to it and ends on its line)
 
@@ -49,7 +55,7 @@ try {
   const T = 0.01, tiles = new Set(), dLat = 150 / 111000, dLon = 150 / (111000 * Math.cos(tr.G.lat0 * Math.PI / 180));
   for (const p of tr.pts) { const [la, lo] = toLL(p[0], p[1]); for (const a of [-dLat, 0, dLat]) for (const b of [-dLon, 0, dLon]) tiles.add(Math.floor((la + a) / T) + ',' + Math.floor((lo + b) / T)); }
   fs.mkdirSync(osmDir, { recursive: true });
-  const nodes = new Map(), ways = new Map(); let fetched = 0;
+  const nodes = new Map(), ways = new Map(), rels = new Map(); let fetched = 0;
   const get = async (w, s, e, n, depth) => {   // (one bbox, kept as a file; too many nodes in it (400): its four quarters)
     const bbox = [w, s, e, n].map(v => v.toFixed(5)).join(','), file = path.join(osmDir, bbox.replace(/,/g, '_') + '.osm');
     if (fs.existsSync(file)) return [fs.readFileSync(file, 'utf8')];
@@ -66,7 +72,7 @@ try {
     throw new Error('OSM: kos ' + bbox + ' ni prenesen');
   };
   for (const t of [...tiles].sort()) { const [iy, ix] = t.split(',').map(Number);
-    for (const xml of await get(ix * T, iy * T, (ix + 1) * T, (iy + 1) * T, 0)) { const o = osmParse(xml); for (const [k, v] of o.nodes) nodes.set(k, v); for (const w of o.ways) ways.set(w.id, w); } }
+    for (const xml of await get(ix * T, iy * T, (ix + 1) * T, (iy + 1) * T, 0)) { const o = osmParse(xml); for (const [k, v] of o.nodes) nodes.set(k, v); for (const w of o.ways) ways.set(w.id, w); for (const r of o.rels) rels.set(r.id, r); } }
   console.log(`${id}: ${tiles.size} kosov OSM po ${T}° (${fetched} prenesenih), ${nodes.size} točk, ${ways.size} poti`);
 
   // ---- the frame set on the houses' footprints: def.bld against building=* (GEO's frame is made for the globe: tens of metres and
@@ -159,16 +165,98 @@ try {
     report.push(rec);
   }
   rows.sort((p, q) => p.s - q.s);
+  // (a footway to a house the map gives no paved surface is gravel: def.okolica.osm as [1, 1, 1, x, z, …] with the makadam road's relief, whole as here)
+  const potke = rows.filter(r => r.row[0] === 1 && !PAVED.test(r.rec.surface)), yardOut = rows.filter(r => !potke.includes(r));
   const inBand = (L) => L.reduce((s, r) => s + r.pieces.filter(p => p.len >= MINLEN).reduce((a, p) => a + p.len, 0), 0), left = (t) => { const L = report.filter(r => r.own === t); return `${L.length} (${inBand(L)} m v pasu)`; };
   console.log(`poti ob hišah (do ${REACH} m od tlorisa): ${report.length} od ${cand.length}; do hiše vodi ${report.filter(r => !r.own).length}; vrstic ${rows.length}`);
   console.log(`  niso poti do hiše (paket E): ceste in povezave mimo hiš ${left('gre mimo')}, parkirišča ${left('parkirišče')}`);
   for (const r of rows) console.log(`  ${String(r.s).padStart(5)} m  hiša ${String(r.rec.house).padStart(3)}  ${r.rec.highway}${r.rec.service ? '/' + r.rec.service : ''}${r.rec.surface ? ' (' + r.rec.surface + ')' : ''}  ${r.L} m${r.cut ? ' (ostalo riše že def.yard)' : ''}  →  vrsta ${r.row[0]}`);
   console.log('\nvrstice za def.yard (na konec seznama; def.houseWays je indeks prve):');
-  console.log(rows.map(r => JSON.stringify(r.row)).join(','));
+  console.log(yardOut.map(r => JSON.stringify(r.row)).join(','));
 
   // ---- fences and walls by the houses (barrier=*), for the report only ----
   const barriers = [...ways.values()].filter(w => w.tags.barrier).map(w => { const P = dense(line(w, XZ), 2); let hd = 12, hi = -1; for (const p of P) for (const h of houses) { const d = rectD(h.b, p[0], p[1]); if (d < hd) { hd = d; hi = h.i; } } return hi < 0 ? null : { way: w.id, barrier: w.tags.barrier, house: hi, len: (P.length - 1) * 2 }; }).filter(Boolean);
   console.log(`\nograje ob hišah (barrier=*, do 12 m od tlorisa): ${barriers.length}` + (barriers.length ? ' — ' + barriers.map(b => `${b.barrier} pri hiši ${b.house} (${b.len} m)`).join(', ') : ''));
-  if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify({ id, fit, pairs, rects: rects0.map(r => { const q = ap(r); return [+q[0].toFixed(2), +q[1].toFixed(2), +r[2].toFixed(2), +r[3].toFixed(2), +(r[4] + Math.atan2(fit.s, fit.c)).toFixed(3)]; }), tags: bWays.map(w => w.tags), report, rows: rows.map(r => r.row), barriers }, null, 1));
+  if (jsonOut) fs.writeFileSync(jsonOut, JSON.stringify({ id, fit, pairs, rects: rects0.map(r => { const q = ap(r); return [+q[0].toFixed(2), +q[1].toFixed(2), +r[2].toFixed(2), +r[3].toFixed(2), +(r[4] + Math.atan2(fit.s, fit.c)).toFixed(3)]; }), tags: bWays.map(w => w.tags), report, rows: yardOut.map(r => r.row), potke: potke.map(r => [1, 1, 1, ...r.row.slice(1)]), barriers }, null, 1));
+
+  // ---- --okolica f.json: the ground round every house the road's band holds (docs/realizem/paket-s.md, »Okolica hiš«). From the map: every way
+  // and car park within R m of a house (cut to NEAR m round the houses, to the band and clear of the barriers); asphalt ways go to def.yard (after
+  // the rows above), unpaved ones and the car parks to def.okolica.osm. Where the map has nothing at a house (no surface within TOUCH m), a modest
+  // generic completion in def.okolica.gen: a gravel yard by the side that faces the nearest drawn surface, a short gravel driveway to it (never
+  // over the road: clear of its barriers) and a narrow strip of trodden ground round the walls. Nothing else: no fences, no cars, no objects. ----
+  async function okolica(out) {
+    const R = 25, NEAR = 30, TOUCH = 3, inPoly = (p, P) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+    const corners = (b, e) => { const c = Math.cos(b[4]), s = Math.sin(b[4]), L = b[2] / 2 + (e || 0), W = b[3] / 2 + (e || 0); return [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([u, v]) => [b[0] + c * u * L - s * v * W, b[1] + s * u * L + c * v * W]); };
+    const built = [];
+    for (const h of houses) { const b = h.b, pts = [[b[0], b[1]], ...corners(b)];
+      const pr = await probe(pts); if (pr[0][0] < 0 || pr.some(q => q[0] >= 0 && q[1] < 1.5) || b[2] * b[3] >= 1500) continue; built.push({ i: h.i, b, dd: pr[0][1], s: pr[0][2] }); }
+    const nearB = (p, lim) => built.some(h => Math.abs(p[0] - h.b[0]) < lim + 40 && Math.abs(p[1] - h.b[1]) < lim + 40 && rectD(h.b, p[0], p[1]) <= lim);
+    const inFoot = (p, skip) => tr.bld.some((b, i) => i !== skip && rectD(b, p[0], p[1]) === 0);
+    const r1 = (v) => +v.toFixed(1), flat = (P) => P.flatMap(p => [r1(p[0]), r1(p[1])]), unflat = (r, k0) => { const P = []; for (let k = k0; k + 1 < r.length; k += 2) P.push([r[k], r[k + 1]]); return P; };
+    for (const r of rows) drawn.push({ P: unflat(r.row, 1), hw: HALF[r.row[0]] });   // (the ways to the houses above are drawn: not twice)
+    const KIND2 = { service: 0, footway: 1, path: 1, steps: 1, pedestrian: 1, cycleway: 1, track: 0 };
+    const yardRows = [], osm = [], gen = [], why = [];
+    for (const r of potke) osm.push({ row: [1, 1, 1, ...r.row.slice(1)], s: r.s, w: { id: r.rec.way, tags: { highway: r.rec.highway } } });   // (the gravel footways to the houses, above)
+    // 1. the ways (asphalt ones: def.yard; gravel, earth, the tracks and a footway or path the map gives no paved surface: def.okolica.osm as a
+    // gravel ribbon with the makadam road's relief, the footways at their 2 m)
+    for (const w of [...ways.values()].sort((p, q) => p.id - q.id)) {
+      const hwy = w.tags.highway; if (KIND2[hwy] == null || closedArea(w) || w.tags.tunnel || w.tags.covered === 'yes' || w.tags.indoor === 'yes' || +w.tags.layer < 0) continue;
+      const P = dense(line(w, XZ), 1); if (P.length < 2 || !P.some(p => nearB(p, R))) continue;
+      const kind = KIND2[hwy], paved = hwy !== 'track' && (w.tags.surface ? PAVED.test(w.tags.surface) : !kind), hw = paved ? HALF[kind] : hwy === 'track' ? 1.5 : kind ? 1.0 : 2.0;
+      const pr = await probe(P), ok = P.map((p, k) => pr[k][0] >= 0 && pr[k][1] <= BAND && pr[k][1] >= hw + GAP && !inFoot(p, -1) && nearB(p, NEAR));
+      let n = 0;
+      for (let a = 0; a < P.length; a++) { if (!ok[a]) continue; let b = a; while (b + 1 < P.length && ok[b + 1]) b++;
+        const run = P.slice(a, b + 1), mask = run.map(onDrawn);
+        for (let i = 0; i < run.length; i++) { if (mask[i] >= 0) continue; let j = i; while (j + 1 < run.length && mask[j + 1] < 0) j++;
+          if (j - i >= MINLEN) { const Q = simplifyK(join(run, mask, i, j), 0.2);
+            if (paved) { yardRows.push({ row: [kind, ...flat(Q)], s: pr[a + i][2], w }); drawn.push({ P: Q, hw }); }
+            else { osm.push({ row: [1, 1, hw, ...flat(Q)], s: pr[a + i][2], w }); drawn.push({ P: Q, hw }); }
+            n += j - i; }
+          i = j; }
+        a = b; }
+      why.push([w.id, hwy + (w.tags.service ? '/' + w.tags.service : '') + (w.tags.surface ? ' ' + w.tags.surface : ''), n]);
+    }
+    // 2. the car parks (amenity=parking on the ground; one on grass is grass): the outline as mapped, the game cuts it to the band
+    const areaWays = [...ways.values()].filter(w => closed(w)).map(w => ({ id: 'w' + w.id, tags: w.tags, P: line(w, XZ) }));
+    for (const r of rels.values()) if (r.tags.type === 'multipolygon') for (const m of r.members) if (m.type === 'way' && m.role !== 'inner') { const w = ways.get(m.ref); if (w && closed(w)) areaWays.push({ id: 'r' + r.id, tags: r.tags, P: line(w, XZ) }); }
+    const polys = [];
+    for (const a of areaWays) { const t = a.tags; if (t.amenity !== 'parking' || /underground|multi-storey|rooftop/.test(t.parking || '') || /grass/.test(t.surface || '')) continue;
+      if (!dense(a.P, 2).some(p => nearB(p, R)) && !built.some(h => inPoly([h.b[0], h.b[1]], a.P))) continue;
+      const P = simplify(a.P, 0.3).slice(0, -1), surf = !t.surface || PAVED.test(t.surface) ? 0 : 1; polys.push(P);
+      osm.push({ row: [0, surf, ...flat(P)], s: (await probe([P[0]]))[0][2], w: { id: a.id, tags: t } }); }
+    // 3. the houses the map leaves in the grass: how far the nearest drawn surface is, and where
+    const surfPts = [...drawn.map(d => ({ P: dense(d.P, 1), hw: d.hw })), ...polys.map(P => ({ P: dense([...P, P[0]], 1), hw: 0, poly: P }))];
+    const gaps = [];
+    for (const h of built) { const b = h.b; let best = null;
+      for (const S of surfPts) { if (S.poly && corners(b).some(c => inPoly(c, S.poly))) { best = { d: 0 }; break; }
+        for (const p of S.P) { if (Math.abs(p[0] - b[0]) > 80 || Math.abs(p[1] - b[1]) > 80) continue; const d = rectD(b, p[0], p[1]) - S.hw; if (!best || d < best.d) best = { d, p, S }; } }
+      if (best && best.d <= TOUCH) { gaps.push([h.i, h.s, +best.d.toFixed(1), 'OSM']); continue; }
+      const c = Math.cos(b[4]), s = Math.sin(b[4]), loc = (p) => [(p[0] - b[0]) * c + (p[1] - b[1]) * s, -(p[0] - b[0]) * s + (p[1] - b[1]) * c], wld = (u, v) => [b[0] + u * c - v * s, b[1] + u * s + v * c];
+      const add = [];
+      if (best && best.p) {   // the side that faces the nearest surface: a gravel yard by it, 3 m deep (2 m where 3 do not fit), and a driveway on from its middle
+        const q = loc(best.p), ax = Math.abs(q[0]) / (b[2] / 2) > Math.abs(q[1]) / (b[3] / 2) ? 0 : 1, sg = Math.sign(q[ax]) || 1, half = [b[2] / 2, b[3] / 2], side = half[1 - ax] * 2;
+        const ws = Math.min(side, 6) / 2, mid = Math.max(-half[1 - ax] + ws, Math.min(half[1 - ax] - ws, q[1 - ax]));
+        for (const dep of [3, 2]) {
+          const pt = (along, out) => ax === 0 ? wld(sg * (half[0] + out), along) : wld(along, sg * (half[1] + out));
+          const Y = [pt(mid - ws, 0), pt(mid - ws, dep), pt(mid + ws, dep), pt(mid + ws, 0)], M = pt(mid, dep), inner = [pt(mid - ws, dep / 2), pt(mid + ws, dep / 2), pt(mid, dep / 2)];
+          const prY = await probe([...Y, ...inner]); if (prY.some(r => r[0] < 0 || r[1] < 2) || [...Y.slice(1, 3), ...inner].some(p => inFoot(p, h.i))) continue;
+          add.push([0, 1, ...flat(Y)]);
+          const L = Math.hypot(best.p[0] - M[0], best.p[1] - M[1]);
+          if (L > 0.5) { const D = dense([M, best.p], 1), prD = await probe(D);
+            if (L <= 30 && prD.every(r => r[0] >= 0 && r[1] >= 2.5) && !D.slice(1).some(p => inFoot(p, h.i))) add.push([1, 1, 1.5, ...flat([M, best.p])]);
+            else { add.length = 0; continue; } }
+          break; }
+      }
+      add.push([2, 2, 0.8, r1(b[0]), r1(b[1]), +b[2].toFixed(2), +b[3].toFixed(2), +b[4].toFixed(3)]);   // the trodden strip round the walls
+      for (const r of add) gen.push({ row: r, s: h.s, house: h.i });
+      gaps.push([h.i, h.s, best ? +best.d.toFixed(1) : null, 'dopolnitev: ' + add.map(r => ['dvorišče', 'dovoz', 'pas'][r[0]]).join(', ')]);
+    }
+    yardRows.sort((p, q) => p.s - q.s); osm.sort((p, q) => p.s - q.s); gen.sort((p, q) => p.s - q.s);
+    console.log(`okolica: ${built.length} hiš v pasu; iz OSM ${yardRows.length} asfaltnih poti (def.yard), ${osm.filter(o => o.row[0] === 1).length} makadamskih, ${polys.length} parkirišč; dopolnitev pri ${gaps.filter(g => g[3] !== 'OSM').length} hišah (${gen.length} vrstic)`);
+    for (const g of gaps) console.log(`  hiša ${String(g[0]).padStart(3)}  ${String(g[1]).padStart(5)} m  najbližja pot ${g[2] == null ? '—' : g[2] + ' m'}  ${g[3]}`);
+    fs.writeFileSync(out, JSON.stringify({ yard: yardRows.map(r => r.row), osm: osm.map(r => r.row), gen: gen.map(r => r.row), ways: why, gaps,
+      src: osm.map(r => [r.w.id, Object.entries(r.w.tags).filter(([k]) => /highway|service|surface|amenity|parking|tracktype/.test(k)).map(e => e.join('=')).join(' ')]) }));
+  }
+  if (OKOL) await okolica(OKOL);
   if (errors.length) console.log('NAPAKE V STRANI:\n' + errors.slice(0, 5).join('\n'));
 } finally { await browser.close(); await srv.close(); }

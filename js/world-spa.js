@@ -377,6 +377,9 @@
     const SEATS = [[0.14, 0.3, 0.62], [0.72, 0.14, 0.14], [0.9, 0.72, 0.12], [0.2, 0.5, 0.3]];
     // (the houses: the builder of js/world-stavbe.js with Belgium's kit, where the track has it; the halls, the grandstands and the pits stay here)
     const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: def.bld || [], T, near: nrNear, gH: nrGround }) : null; let bi = -1;
+    // (the ground round the houses: the map's car parks and unpaved ways and, where the map has nothing at a house, a modest yard, driveway and
+    // trodden strip; js/world-stavbe.js okolica. The trees and the fans' camp keep off it and off the ways of def.yard)
+    const OK = World.stavbe && World.stavbe.okolica ? World.stavbe.okolica({ Chunks, T, near: nrNear, gH: nrGround, yard: def.yard }) : null;
     for (const [bx, bz, Lb, Wb, ang, H, k] of def.bld || []) {
       bi++;
       if (k === 3 && pitZone(bx, bz)) continue;   // (the pit building on the pit straight is the pit lane's garages, below)
@@ -602,7 +605,7 @@
       for (let ii = T.idx(sm - half - 6), n = 0; n < (2 * half + 12) / ds; n++, ii = (ii + 1) % N) if (!fence[side2(side)][ii]) fence[side2(side)][ii] = 1;
       if (wgt >= 2) for (let k = 0; k < wgt * 5; k++) {   // camping in the woods behind the crowd
         const s = sm + (R() - 0.5) * half * 2, [x, z, i] = onSide(s, side, 9 + R() * 22); if (nrSlope(x, z) > 0.45 || inBrook(x, z, 3)) continue;
-        const way = onWay(x, z, 3.2);   // (on a way to a house: no camp there; the random stream runs on as before)
+        const way = onWay(x, z, 3.2) || (OK && OK.on(x, z, 2));   // (on a way to a house: no camp there; the random stream runs on as before)
         if (R() < 0.55) { const rot = T.hd[i] + (R() - 0.5) * 0.6, col = tcols[Math.floor(R() * tcols.length)]; if (!way) tent(x, z, rot, col); }
         else { const rot = T.hd[i] + (R() - 0.5) * 0.8, col = vary(fans[Math.floor(R() * fans.length)], R, 0.2); if (!way) carPk(x, z, rot, col); }
       }
@@ -666,7 +669,7 @@
     {
       const Lt = NRC * NRT, maxT = Math.round(140000 * dens), seen = new Set(), CRW = [0.14, 0.33, 0.2];   // (crown radius / width: spruce, beech, birch)
       const plant = (sp, far, x, z, hgt, wid, c) => {
-        if (excluded(x, z)) return false;
+        if (excluded(x, z) || (OK && OK.on(x, z, 1.5))) return false;
         const y = nrGround(x, z) - 0.1, rot = crH(x, z, 88) * TAU;
         if (far) tf[sp === 0 ? 0 : 1].add(x, y, z, rot, wid, hgt, c); else tk[sp].add(x, y, z, rot, wid, hgt, c);
         nrShade(x, z, wid * CRW[sp], sp === 0 ? 1 : 0.8); nTrees++; return true; };
@@ -765,13 +768,14 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     if (HS) HS.addTo(sceneryGroup);
+    if (OK) OK.addTo(sceneryGroup, tex);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
-    if (HS) out.stats.stavbe = HS.stats;
+    if (HS) out.stats.stavbe = HS.stats; if (OK) out.stats.okolica = OK.stats;
     return out;
   }
 
