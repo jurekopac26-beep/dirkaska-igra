@@ -43,7 +43,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.3, h: 0.08, lx: 1.0, lz: 0.7, y: 0.9, on: 'bumperF' },
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.36, h: 0.05, lx: -1.0, lz: -0.84, y: 1.3 },
         tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.36, h: 0.05, lx: -1.0, lz: 0.84, y: 1.3 },
-        luggage: { z: 0, th: 0.8, m: 14, rW: 0.5, h: 0.25, lx: -0.08, lz: 0, y: 3.74 },
+        luggage: { z: 0, th: 0.8, m: 14, rW: 0.5, h: 0.25, lx: -0.173, lz: 0.07, y: 3.73 },
       },
     },
     // where the garage's parts go (js/deli.js, look units): the wing on the roof's rear edge, behind the rack (a truck's size: s); the
@@ -105,6 +105,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(6.0, 0.42, 0, 0.06, 0.66, 2.3, 0, D);
           K.deli('maska', () => K.grille(6.032, 0.62, 0, 1.36, 0.18, { slats: 3, slatCol: [0.4, 0.41, 0.44], frame: null }));   // (the garage's grille in its place: mounts.maska)
         });
+        // each lamp in its black panel a part of its own (headL, headR); the garage's in their place (mounts.zarometi)
+        for (const sd of [-1, 1]) K.rect(6.032, 0.9, sd * 0.88, 0.44, 0.2, [0.02, 0.02, 0.02], { dir: 'x', host: sd < 0 ? 'headL' : 'headR' });
         K.deli('zarometi', () => { for (const sd of [-1, 1]) K.headLamp(6.035, 0.9, sd * 0.88, 0.08, { shape: 'rect', w: 0.38, h: 0.14, ring: null, host: sd < 0 ? 'headL' : 'headR' }); });
         // the mirrors on their arms from the roof's front corners
         for (const sd of [-1, 1]) K.part(sd < 0 ? 'mirrorL' : 'mirrorR', () => {
@@ -112,6 +114,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         // the rear: the bumper, the tall tail lamps
         K.part('bumperR', () => K.box(-6.0, 0.44, 0, 0.06, 0.36, 2.3, 0, D));
+        for (const sd of [-1, 1]) K.rect(-6.008, 1.3, sd * 1.05, 0.2, 0.78, [0.02, 0.02, 0.02], { dir: '-x', host: sd < 0 ? 'tailL' : 'tailR' });   // (each lamp's black panel a part of its own: tailL, tailR)
         K.deli('zadnje_luci', () => { for (const sd of [-1, 1]) K.tailLamp(-6.012, 1.3, sd * 1.05, 0.14, 0.7, { host: sd < 0 ? 'tailL' : 'tailR' }); });
         // the tag axle's tyres
         for (const sd of [-1, 1]) K.tyre(TAG, K.M.rw, sd * K.hw, { axis: 'z', face: sd, hi: true, style: 'truck', w: 0.32 });

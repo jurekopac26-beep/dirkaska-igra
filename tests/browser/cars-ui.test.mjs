@@ -87,8 +87,8 @@ try {
     await tap('#car-strip [data-car="' + await page.evaluate(() => Core.MODELS.findIndex(m => m.id === 'kamen')) + '"]'); await wait(150); const t2 = await now();
     await tap('#car-cats [data-cat="mali"]'); await wait(150); const t3 = await now();
     await tap('#car-cats [data-cat="tovornjaki"]'); await wait(150); const t4 = await now();
-    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN, TITAN CISTERNA, ZRCALNI VLAK: by the career price), a tap on KAMEN PUŠČAVA picks it, Mali avti its first (the KOLIBRI, the cheapest), Tovornjaki again the KAMEN (the one last looked at)',
-      t1.id === 'titan' && t1.strip === 'titan,kamen,cisterna,zrcalni' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/4$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'kolibri' && t3.sel === 'mali' && t4.id === 'kamen',
+    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN, TITAN CISTERNA, ZRCALNI VLAK, TITAN AVTOVOZ, KRILO VETRNICE, HRAST, LASTOVKA: by the career price), a tap on KAMEN PUŠČAVA picks it, Mali avti its first (the KOLIBRI, the cheapest), Tovornjaki again the KAMEN (the one last looked at)',
+      t1.id === 'titan' && t1.strip === 'titan,kamen,cisterna,zrcalni,avtovoz,vetrnica,hrast,lastovka' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/8$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'kolibri' && t3.sel === 'mali' && t4.id === 'kamen',
       JSON.stringify({ t1, t2, t3, t4 }));
 
     // 3. the gamepad: Start on "Naprej" (as ever), X / Y the categories, LB / RB the cars in the display order

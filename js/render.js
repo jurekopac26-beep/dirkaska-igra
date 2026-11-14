@@ -4784,7 +4784,7 @@ const Render = (function () {
 
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
-  const GARAGE_LEN = 6.4;   // (m: the longest body the garage shows full size, Core's limit for every vehicle but the coach; garageK)
+  const GARAGE_LEN = 6.4, GARAGE_MODEL = 6.0;   // (m: the longest body the garage shows full size, Core's limit for every vehicle but the coach; a longer one's scale model's length: garageK)
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values()]);
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
@@ -10936,8 +10936,8 @@ const Render = (function () {
 
   /* ---------------- the garage (garaza.html, js/garage3d.js): the race's own car meshes, in a scene of the garage's own ---------------- */
   // a car as the race draws it (body, wheels, lamps, the paint's dirt and scratches: dirtU, scrU), without the player's marker
-  // A body longer than 6.4 m (the coach, LASTOVKA: 12 m long, 4 m tall with its luggage; no other is) comes as a scale model as long as
-  // the garage's longest car, garageK(model) its scale: the room, the chamber (6.8 m), the door (3.3 m) and the robots' reach stay as they
+  // A body longer than 6.4 m (the coach, LASTOVKA: 12 m long, 4 m tall with its luggage; no other is) comes as a scale model 6 m long
+  // (1 : 2), garageK(model) its scale: the room, the chamber (6.8 m), the door (3.3 m) and the robots' reach stay as they
   // are for every other car (docs/titan-cisterna.md, »Novi tovornjaki«). The scale is in the mesh itself (each piece's place and geometry:
   // a shared geometry a copy of its own), so the garage's measures of the car (its rays, its boxes, the wheels' places) are the model's
   function garageCar(model, color, num, stripe, deli) {   // (deli: the garage's parts fitted, car.deli)
@@ -10956,7 +10956,7 @@ const Render = (function () {
     }
     return v;
   }
-  function garageK(model) { return model && model.len > GARAGE_LEN ? GARAGE_LEN / model.len : 1; }
+  function garageK(model) { return model && model.len > GARAGE_LEN ? GARAGE_MODEL / model.len : 1; }   // (the coach: 1 : 2, its mirrors ahead of its nose inside the chamber's glass too)
   // the paint's sun glint and the tint of the sky in it (as cgSet): the garage's key lamp (direction, colour, strength) and the room's tint
   function garageLight(dir, col, k, env) { CGU.sun.value.set(dir.x, dir.y, dir.z).normalize(); CGU.sunC.value.setHex(col).multiplyScalar(k); CGU.env.value.setHex(env == null ? 0xffffff : env); }
 

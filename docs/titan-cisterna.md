@@ -68,3 +68,22 @@ Ob vrsti (ko je pull request drugi v vrsti):
 1. `git fetch origin main`, spoj v `titan-cisterna` (brez force-pusha). Spori: `index.html`/`garaza.html` z `node tools/stamp.js --merge`; v `tests/run.js` (sklop `fleet`, `RELATED`), `tests/shards.test.js`, `docs/kazalo.md`, `tests/README.md` in `docs/vrsta.md` obdrži obe strani.
 2. Če je prišel Killar (#283), ga `tests/cisterna.test.js` vzame sam (z vejo #283 že preverjeno, 18 od 18); zažene ga `npm run test:related` (spremenjen `js/core.js`).
 3. `npm run test:related`, `node tools/stamp.js --check`; nato »Ready for review« in krog na GitHubu (`subscribe_pr_activity`). Po zelenem krogu pravilo »Svež main pred združitvijo« iz `CLAUDE.md`, nato združitev, vrstica #304 iz `docs/vrsta.md`, sporočila sejam iz zbirke `cakanje` (`pr` 304).
+
+## Novi tovornjaki (13. 11. 2026)
+Odločitev uporabnika 13. 11. 2026 (`docs/realizem.md`, točka tovornjakov): štirje novi tovornjaki z mesti za dele iz garaže, brez rezervne gume, brez napisov; TITAN PLIN odpade. Oblike so z maket (`makete/tovornjaki-9-11`, ne gre na `main`).
+
+| Vozilo | Datoteka | Kaj je | Dolžina | 0–100 · največ · zaviranje |
+|---|---|---|---|---|
+| TITAN AVTOVOZ | `js/cars/avtovoz.js` | TITAN + avtovoz z dvema palubama, na njih pet avtov iz igre (13 t) | 17,5 m | 9,8 s · 148 km/h · 43 m |
+| KRILO VETRNICE | `js/cars/vetrnica.js` | TITAN + dolga prikolica z enim krilom vetrnice (11 t) | 31,7 m do konice | 8,9 s · 148 km/h · 43 m |
+| HRAST | `js/cars/hrast.js` | vlačilec ZRCALNEGA VLAKA v barvi igralca + gozdarska prikolica z dvema kupoma hlodov (14 t) | 17,3 m | 9,3 s · 142 km/h · 42 m |
+| LASTOVKA | `js/cars/lastovka.js` | potovalni avtobus, eno telo 12 m, prtljaga potnikov na strešnem nosilcu | 12 m | 7,5 s · 130 km/h · 32 m |
+
+- **Vlačilci so obstoječi**: videz z `K.lookOf('titan')` oz. `K.lookOf('zrcalni')`, deli za razbijanje in mesta za dele (`partNames`, `parts`, `mounts`) so kopija TITANOVIH oz. vlakovih, prebrana ob prvi uporabi (datoteka se naloži tudi sama). HRAST ima tudi vozne številke vlaka (omejevalnik 145 km/h). Fizika obstoječih vozil je nespremenjena.
+- **Graditelj prikolice** (`js/render.js`, `tlBuild`) ima dva nova gradnika: `B.loft(prerezi, barva, { n })` (telo iz elips, krilo vetrnice) in `B.car(id, x, y, z, { k, rev })` (avto iz igre na palubi: pri igralcu prava karoserija in kolesa v eni geometriji prikolice, pri tekmecih obris, v senci kvader), zato avtovoz ne doda klicev risanja.
+- **Previs krila** (`trailer.tail`, 0–14 m): krilo sega 11,8 m čez konec prikolice in je samo videz; stene in avti se dotaknejo 16 m prikolice. `tail` upoštevata štartna mreža (`_gStep`) in pogled tekmecev nazaj (`tl.back`), da ostanejo za konico.
+- **Polje**: `fieldN` 4 (AVTOVOZ, HRAST, LASTOVKA) oz. 3 (KRILO VETRNICE), v dirki samo svoji.
+- **Avtobus in garaža**: meja dolžine telesa je 13 m (prej 6,4 m; `js/core.js`). Avtobus je 12 m dolg in s prtljago 4 m visok, komora za barvanje ima 6,8 m in vrata 3,3 m, zato v garaži stoji kot **maketa v merilu 1 : 2** (`Render.garageK`, `GARAGE_LEN` 6,4 m; merilo je v sami mreži, `GK(M)` v `js/garage3d.js`). Soba, komora, vrata in roboti so za vse druge avte nespremenjeni.
+- **Testi**: `tests/novi-tovornjaki.test.js` (kaj si izposodijo, brez rezervne gume, dirke svojih polj na Bathurstu in Caracolesu v obeh fizikah, zaviranje v ovinku), `tests/fleet.test.js` (številke), `tests/browser/garage.test.mjs` (komora okrog vsakega avta), `tests/deli.test.js` (vsaka možnost na vsakem mestu).
+- **Posebno vozilo (50. avto)**: predlog GASILEC čaka na uporabnikov »ok« na sliki makete; do takrat ni izdelan.
+

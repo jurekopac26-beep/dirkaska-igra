@@ -759,6 +759,10 @@ V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 70.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
 | **TITAN CISTERNA** | zadnji | 1115 KM | 5300 kg in 12 t prikolice | 75.000 kovančkov | TITAN s cisterno na sedlu: prikolica se v ovinku lomi, pri zaviranju potiska in je težka (glej spodaj). |
 | **ZRCALNI VLAK** | 4WD | 1360 KM | 7000 kg in 2 × 11 t cistern | 90.000 kovančkov | Cestni vlak: črna kabina, dve zrcalni cisterni in dolly, dva zgiba (glej spodaj). |
+| **TITAN AVTOVOZ** | zadnji | 1115 KM | 5300 kg in 13 t prikolice | 85.000 kovančkov | TITAN z avtovozom: na dveh palubah pelje pet avtov iz igre (glej spodaj). |
+| **KRILO VETRNICE** | zadnji | 1115 KM | 5300 kg in 11 t prikolice | 95.000 kovančkov | TITAN s krilom vetrnice: 27 m dolgo krilo sega daleč čez zadnje osi prikolice (glej spodaj). |
+| **HRAST** | 4WD | 1360 KM | 7000 kg in 14 t prikolice | 88.000 kovančkov | Puščavski vlačilec z gozdarsko prikolico: dva kupa hlodov med koli, en zgib (glej spodaj). |
+| **LASTOVKA** | zadnji | 1115 KM | 11.000 kg | 78.000 kovančkov | Turistični avtobus, 12 m v enem kosu, s prtljago potnikov na strehi (glej spodaj). |
 
 ### Električni
 
@@ -806,6 +810,16 @@ V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 - Cisterni imata prave trke z ograjo, robom ceste, vozili in policijo in lahko padeta čez prepad. Druga cisterna ne trči v lasten vlačilec (pri škarjah gre skozenj).
 - Kamera za avtom pokaže ves vlak; obe cisterni se vidita v posnetku dirke, v duhu in v igri na več telefonih. V garaži je samo vlačilec.
 - Z njim dirkajo do 3 tekmeci v enakih vlakih (vsak v svoji barvi), brez drugih vozil.
+
+### Novi tovornjaki
+
+Štirje tovornjaki za 1.0 (13. 11. 2026). Vsi imajo mesta za dele iz garaže, nobeden nima rezervne gume, napisov ali znamk.
+
+- **TITAN AVTOVOZ** je TITAN z avtovozom na sedlu: nizko korito, paluba nad osmi in zgornja paluba na rdečih stebrih, na njih pet avtov iz igre (SOKOL, PANTER, KUNA, JELEN, RAKETA), vsak v svoji barvi. Tvoja prikolica pelje prave avte, prikolice tekmecev njihove poenostavljene obrise. Ves tovornjak je dolg 17,5 m in visok 3,8 m. Od 0 do 100 km/h ~9,8 s, najhitreje ~148 km/h, s 100 km/h se ustavi na ~43 m. Z njim dirkajo do 4 tekmeci v enakih avtovozih.
+- **KRILO VETRNICE** je TITAN z enim krilom vetrnice: rumen okvir drži koren krila za kabino, tanka hrbtenica vodi do treh osi z ležiščem, belo krilo z rdečo konico pa sega 11,8 m čez rep prikolice (od nosu kabine do konice 31,7 m). Previs je samo videz: ograje in vozila se dotaknejo prikolice (16 m), tekmeci in štartna mreža pa držijo razdaljo do konice. Od 0 do 100 km/h ~8,9 s, najhitreje ~148 km/h, s 100 km/h se ustavi na ~43 m. Z njim dirkajo do 3 tekmeci.
+- **HRAST** je vlačilec ZRCALNEGA VLAKA v barvi igralca (ne črn) z gozdarsko prikolico: čelna stena, štirje prečniki s koli, dva kupa po štirinajst hlodov, verige. En zgib, 17,3 m, omejilnik 145 km/h. Od 0 do 100 km/h ~9,3 s, najhitreje ~142 km/h, s 100 km/h se ustavi na ~42 m. Z njim dirkajo do 4 tekmeci.
+- **LASTOVKA** je turistični avtobus v enem kosu: dolg 12 m, širok 2,5 m in visok 3,6 m, na strehi nosilec s kovčki in torbami potnikov (ob trku odleti). Od 0 do 100 km/h ~7,5 s, najhitreje ~130 km/h, s 100 km/h se ustavi na ~32 m; v ovinkih drži kot TITAN, a je dvakrat težji in se dolg zadek počasneje obrne. Z njim dirkajo do 4 tekmeci v enakih avtobusih. V garaži stoji kot **pomanjšana maketa** (merilo 1 : 2), ker je daljši od komore za barvanje in višji od vrat (3,3 m); deli, barva in servis delujejo enako kot pri drugih.
+- Prikolice se lomijo, potiskajo pri zaviranju, trčijo in padejo čez prepad kot cisterna TITAN-a (zgoraj); v garaži je samo vlačilec.
 
 ### Družina LEV
 
