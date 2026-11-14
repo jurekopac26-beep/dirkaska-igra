@@ -104,7 +104,7 @@ Odgovor na `realizem-s0-spa` je »2 · Popravi videz« (13. 11. ob 00.07, v pogo
 
 ### Predaja 3 (13. 11. 2026): popravki so v kodi, dovozi in poti iz OSM
 
-Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odločitve pod istim vprašanjem `realizem-s0-spa`; PR #668 ostane osnutek do uporabnikovega »ok«. Po slikah je uporabnik v seji prosil še za mehak zavoj potke (»Mehki zavoji« spodaj); slike na strani so posnete znova.
+Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odločitve pod istim vprašanjem `realizem-s0-spa`; PR #668 ostane osnutek do uporabnikovega »ok«. Po slikah je uporabnik v seji prosil še za mehak zavoj potke (»Mehki zavoji« spodaj); sliko zavoja prej in potem je dobil v seji. Vprašanja na strani ta seja ni spreminjala, ker je medtem že dobilo nov odgovor (»2 · Popravi videz«: potke, parkirišča in ceste ob hišah kot v resnici; izvaja ga druga seja na tej veji).
 
 **Hiše (`js/world-stavbe.js`, klic v `js/world-spa.js`):**
 - **Pravilo tal** (`put()`): hiša stoji vodoravno tam, kjer jo ima zemljevid. Tla hiše so 0,15 m nad najvišjo točko terena pod tlorisom, do najnižje sega gladek podstavek; teren se ne spremeni. Na Spaju se teren pod enim tlorisom dvigne do 4,99 m; 16 hiš ima do vrat stopnice (do 0,94 m).
