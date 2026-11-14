@@ -162,7 +162,7 @@ Odgovor na `realizem-s0-spa`: »2 · Popravi videz«, ker so hiše stale na goli
 
 Brez izmišljenih avtov, ograj in predmetov.
 
-**Številke:** svet Spaja 1444 mrež in 1 168 949 oglišč (`tests/golden/world.json`, spremenjen samo Spa); telefon __PERF__.
+**Številke:** svet Spaja 1444 mrež in 1 168 949 oglišč (`tests/golden/world.json`, spremenjen samo Spa); telefon 186 klicev risanja (največ 230) in 446 tisoč oglišč (največ 585 tisoč) na sličico, v mejah (`perf.test.mjs`, Spa).
 
 **Vir:** OpenStreetMap (ODbL 1.0).
 
