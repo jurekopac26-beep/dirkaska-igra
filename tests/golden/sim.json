@@ -798,11 +798,11 @@
   }
  },
  "ouninpohja/demo/cs": {
-  "digest": "7b9737ca9f7109f3c91ad4c0",
-  "lead": 2327.5,
+  "digest": "3c1a46c364338ae928180afd",
+  "lead": 2315.1,
   "car0": [
-   895.67,
-   -1964.51
+   884.05,
+   -1960.32
   ],
   "cover": {
    "dmg": 0,
@@ -812,7 +812,7 @@
   }
  },
  "ouninpohja/upg/cs": {
-  "digest": "b6f17bd0187a9109919304bf",
+  "digest": "e71a80b2376dae03bbb0f7b4",
   "lead": 2338.8,
   "car0": [
    907.23,
@@ -1890,7 +1890,7 @@
   }
  },
  "chapman/upg/cs": {
-  "digest": "f30b6da260e349c24b6b0cff",
+  "digest": "45c40972bd5906f96c5ed09c",
   "lead": 2235.3,
   "car0": [
    892.41,
@@ -1904,25 +1904,25 @@
   }
  },
  "chapman/crash/cs": {
-  "digest": "7c9628b234630ab204741a4a",
+  "digest": "660c94beeb3c034e22472863",
   "lead": 2000.9,
   "car0": [
-   790.24,
-   1278.93
+   773.28,
+   1277.96
   ],
   "cover": {
-   "dmg": 0.94,
+   "dmg": 0.77,
    "loose": 3,
-   "rescues": 1,
+   "rescues": 0,
    "repairs": 0
   }
  },
  "chapman/formula/cs": {
-  "digest": "2e607eeb05c34e90a294258b",
+  "digest": "e58e1752b89af770f7ad9a6b",
   "lead": 2349.7,
   "car0": [
-   873.88,
-   1299.18
+   884.21,
+   1313.33
   ],
   "cover": {
    "dmg": 1,
@@ -1932,16 +1932,16 @@
   }
  },
  "chapman/lm/cs": {
-  "digest": "526f98b814e9f11cd9ecbaaa",
-  "lead": 2313,
+  "digest": "391591afdccaae956b70aa06",
+  "lead": 2312.7,
   "car0": [
-   866.81,
-   1363.67
+   871.64,
+   1297.59
   ],
   "cover": {
-   "dmg": 0.97,
-   "loose": 3,
-   "rescues": 1,
+   "dmg": 0.84,
+   "loose": 5,
+   "rescues": 0,
    "repairs": 0
   }
  },
@@ -3934,11 +3934,11 @@
   }
  },
  "greatalpine/demo/cs": {
-  "digest": "10d4681b304f331c32f39491",
-  "lead": 2508,
+  "digest": "fad84b7ff55315737feecf63",
+  "lead": 2479.7,
   "car0": [
-   1184.33,
-   1528.84
+   1167.41,
+   1508.57
   ],
   "cover": {
    "dmg": 0,
@@ -3948,11 +3948,11 @@
   }
  },
  "greatalpine/upg/cs": {
-  "digest": "77f2ff3ed4afc03fd2dadc2f",
-  "lead": 2490.7,
+  "digest": "88a9d5dd559bae977a6d47c9",
+  "lead": 2488.6,
   "car0": [
-   1173.98,
-   1514.67
+   1172.77,
+   1513.42
   ],
   "cover": {
    "dmg": 0,

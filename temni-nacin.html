@@ -10,11 +10,15 @@
 <meta name="darkreader-lock">
 <title>Real Roads Atlas · preizkus barv</title>
 <!--
-  Preizkus barv za brskalnik, ki stran temni na silo (temni način Samsung Interneta). Stran ne potrebuje ničesar drugega iz igre.
+  Preizkus barv za brskalnik, ki stran temni na silo (temni način Samsung Interneta). Iz igre potrebuje css/menu.css in js/sence.js.
   Zgoraj je zaznava, ki jo uporablja meni (js/menu.js forcedDark: sistemska barva Canvas v svetlem elementu je bela, razen če brskalnik
-  temni na silo), spodaj ista štiri polja menija (bela tabla, zlata značka, rdeča tablica, rdeče-beli robnik), vsaka vrstica narisana
-  na drug način. Prva vrstica je canvas, ki ga brskalnik ne prebarva: vrstica, ki je v takem brskalniku enaka prvi, pomeni način, ki deluje.
+  temni na silo), in ali igra tu riše barve na nov način (js/sence.js). Spodaj ista štiri polja menija (bela tabla, zlata značka, rdeča
+  tablica, rdeče-beli robnik), vsaka vrstica narisana na drug način. Prva vrstica je canvas, ki ga brskalnik ne prebarva: vrstica, ki je
+  v takem brskalniku enaka prvi, pomeni način, ki deluje. Vrstica 10 so polja, narisana s CSS menija (css/menu.css) in z js/sence.js,
+  tako kot meni igre v Samsung Internetu (window.SenceRoots: tu nov način vedno, samo za ta polja, ostale vrstice ostanejo, kot so).
 -->
+<script>window.SenceRoots = true;</script>
+<script src="js/sence.js"></script>
 <style>
   :root, html, body { color-scheme: dark; forced-color-adjust: none; }
   * { box-sizing: border-box; }
@@ -57,6 +61,9 @@
   /* 6: every colour as its opposite, turned back by filter: invert(1) */
   .inv { filter: invert(1); }
   .note { font-size: 12.5px; color: #9fb0c3; }
+  .btn { display: inline-block; margin: 0 8px 8px 0; padding: 11px 14px; border-radius: 10px; background: #26324a; border: 1.5px solid #5d6b82; color: #fff; font: 700 14px/1 system-ui, Roboto, sans-serif; text-decoration: none; }
+  /* 10: a shadow root of its own (css/menu.css and js/sence.js, as the game's menu), the field filling the cell */
+  .mn { position: relative; height: 44px; border-radius: 7px; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -75,7 +82,11 @@
     <li>Isto stran odpri še v Chromu in naredi posnetek.</li>
     <li>Posnetke pošlji Claudu (ali tapni <b>Kopiraj podatke</b> in jih prilepi).</li>
   </ol>
-  <p class="note">V vsaki vrstici so ista štiri polja kot v meniju igre. Vrstica 0 je narisana v canvas, ki ga brskalnik ne prebarva. Vrstica, ki je enaka vrstici 0, pomeni način risanja, ki v tem brskalniku deluje. V Chromu so vse vrstice enake.</p>
+  <p class="note">V vsaki vrstici so ista štiri polja kot v meniju igre. Vrstica 0 je narisana v canvas, ki ga brskalnik ne prebarva. Vrstica, ki je enaka vrstici 0, pomeni način risanja, ki v tem brskalniku deluje. V Chromu so vse vrstice enake. <b>Vrstica 10</b> je narisana tako kot meni igre z novim načinom (v Samsung Internetu): mora biti enaka vrstici 0.</p>
+
+  <h2>Igra</h2>
+  <p><a class="btn" href="./">Igra</a><a class="btn" href="./?sence=0">Igra brez novega načina</a><a class="btn" href="./?sence=1">Igra z novim načinom</a></p>
+  <p class="note">»Igra« riše barve na nov način samo v Samsung Internetu. Povezavi z »brez« in »z« ga izklopita ali vklopita v vsakem brskalniku (za primerjavo).</p>
 
   <h2>Polja</h2>
   <div class="grid" id="grid"></div>
@@ -129,6 +140,7 @@
   const grid = document.getElementById('grid');
   let h = '<div></div>' + K.map(k => '<div class="hd">' + k.name + '</div>').join('');
   ROWS.forEach((r, i) => { h += '<div class="lb"><i>' + i + '</i> ' + r[0] + '</div>' + K.map(k => r[1](k)).join(''); });
+  h += '<div class="lb"><i>10</i> Meni igre (nov način)</div>' + K.map((k) => '<div class="mn" data-k="' + k.id + '"></div>').join('');
   h += '<div class="lb wide"><i>9</i> Velika slika (PNG, cela širina: brskalnik jo šteje za fotografijo)</div><div class="wide" id="big"></div>';
   grid.innerHTML = h;
 
@@ -146,6 +158,19 @@
     const cv = canvasOf(W, H, (ctx) => { ctx.fillStyle = '#161b23'; ctx.fillRect(0, 0, W, H); K.forEach((k, j) => draw(ctx, k, j * (cw + gap), 0, cw, H)); });
     big.innerHTML = '<img alt="" src="' + cv.toDataURL('image/png') + '">';
   }
+
+  // row 10: each field in a shadow root of its own, as the game's menu (js/menu.js init): css/menu.css, the field in its colours
+  // (the menu's own: --chalk, --gold, --curb), and js/sence.js over it (Sence.root), in every browser
+  const MN = '.f { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 900 italic 13px/1 system-ui, Roboto, sans-serif; letter-spacing: -.2px; }'
+    + '.f.bela { background: #fff; color: #111; } .f.zlata { background: var(--gold); color: var(--gold-ink); } .f.rdeca { background: var(--curb); color: #fff; }'
+    + '.f.robnik { background: repeating-linear-gradient(180deg, var(--curb) 0 10px, var(--chalk) 10px 20px); }';
+  fetch('css/menu.css').then((r) => r.ok ? r.text() : '').catch(() => '').then((css) => {
+    for (const box of grid.querySelectorAll('.mn')) {
+      const k = K.find((x) => x.id === box.dataset.k), root = box.attachShadow({ mode: 'open' });
+      root.innerHTML = '<style>' + css + '</style><style>' + MN + '</style><div class="f ' + k.id + '">' + (k.text ? '<span>' + k.text + '</span>' : '') + '</div>';
+      if (window.Sence) Sence.root(root);
+    }
+  });
 
   // the diagnosis: the same probe as the menu's (js/menu.js forcedDark), and what it reads
   function probe(scheme) {
@@ -165,6 +190,7 @@
   const D = [
     ['Brskalnik', browser],
     ['Ali brskalnik temni na silo (zaznava igre)', fd ? 'DA' : 'NE'],
+    ['Igra riše barve na nov način (js/sence.js)', (() => { const w = window.Sence && Sence.why || {}; return w.param === 0 ? 'NE (izklopljeno z ?sence=0)' : w.param === 1 ? 'DA (vklopljeno z ?sence=1)' : w.ua ? 'DA (Samsung Internet' + (w.forced ? ', temni na silo' : '') + ')' : 'NE (samo v Samsung Internetu' + (w.forced ? '; ta brskalnik temni na silo' : '') + ')'; })()],
     ['prefers-color-scheme: dark', matchMedia('(prefers-color-scheme: dark)').matches ? 'da' : 'ne'],
     ['Sonda Canvas, color-scheme: light', probe('light')],
     ['Sonda Canvas, color-scheme: only light', probe('only light')],
@@ -176,7 +202,8 @@
   document.querySelector('#diag .ua').textContent = ua;
   const v = document.getElementById('verdict');
   v.className = 'verdict ' + (fd ? 'yes' : 'no');
-  v.textContent = fd ? 'Ta brskalnik temni stran na silo. Igra bi pokazala obvestilo »Colours too dark?«.' : 'Ta brskalnik strani ne temni na silo (ali tega ni mogoče zaznati). Igra obvestila ne pokaže.';
+  v.textContent = (fd ? 'Ta brskalnik temni stran na silo.' : 'Zaznava ne pove, da ta brskalnik temni stran na silo (v Samsung Internetu tega pogosto ne pove, čeprav temni).')
+    + (window.Sence && Sence.why && Sence.why.param !== 0 && (Sence.why.ua || Sence.why.param === 1) ? ' Igra tu riše barve na nov način: vrstica 10 mora biti enaka vrstici 0.' : ' Igra tu riše barve kot vedno.');
 
   document.getElementById('copy').addEventListener('click', () => {
     const txt = 'Preizkus barv (temni-nacin.html)\n' + D.map(r => r[0] + ': ' + r[1]).join('\n') + '\nUser agent: ' + ua;
