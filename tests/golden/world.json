@@ -153,17 +153,18 @@
   }
  },
  "spa": {
-  "meshes": 1438,
-  "verts": 1166969,
+  "meshes": 1444,
+  "verts": 1168949,
   "instances": 48242,
   "props": 101,
   "crowd": 401,
-  "world": "af21aa09",
+  "world": "4911f011",
   "propsHash": "2afe5d7",
   "floor": "5755fdd4/14000",
   "groups": {
-   "-:MeshLambertMaterial": "3e518551",
+   "-:MeshLambertMaterial": "69e78441",
    "-:MeshBasicMaterial": "a2c28e88",
+   "-:MeshPhongMaterial": "7dcc7dd9",
    "crowd:MeshLambertMaterial": "48cce0f",
    "flags:MeshLambertMaterial": "818632b2",
    "ao:MeshBasicMaterial": "a22d1263",

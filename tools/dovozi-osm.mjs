@@ -17,7 +17,9 @@
 // določi po tlorisih hiš (def.bld proti building=* iz OSM: premik in zasuk, za katera glasuje največ tlorisov, nato najmanjši kvadrati);
 // če se tlorisi ne ujemajo na ~1 m, ne izpiše ničesar.
 // Pot se obreže na pas ob cesti, ki ga kamera vidi (do 64 m za ograjo proge, kot hiše), in ostane zunaj ograj proge; kar že riše
-// vrstica def.yard, se ne podvoji. Podatki OSM so pod ODbL 1.0 (zasluge v README.md).
+// vrstica def.yard, se ne podvoji. OSM da pot samo z lomi; na tleh je lom zavoj, zato se lom, ostrejši od 10°, nariše kot lok, ki se
+// dotika obeh krakov (mehak zavoj: polmer dovoza 6 m, poti 4 m; manjši, kjer je krak prekratek ali bi lok prišel do ograje proge ali
+// bliže tlorisu; konca poti ostaneta, kjer sta). Podatki OSM so pod ODbL 1.0 (zasluge v README.md).
 import { serve, launch, openGame, startTrack } from '../tests/browser/lib.mjs';
 import { osmParse, geo, minRect } from './proga-uvoz.mjs';
 import fs from 'node:fs';
@@ -31,6 +33,7 @@ const KIND = { service: 0, footway: 1, path: 1, steps: 1, pedestrian: 1 };   // 
 const PAVED = /^(asphalt|paved|concrete|concrete:plates|concrete:lanes|paving_stones|sett|cobblestone|metal|wood)$/;   // (a surface the map calls paved)
 const HALF = [2.0, 1.0], BAND = 64, GAP = 1.0, MINLEN = 4;                    // (yardWorld's half widths; the band; clear of the barrier; the shortest piece)
 const JOIN = 5, TAPER = 8, STRAIGHT = 3;                                      // (a drawn way's end this near is the same way going on: the new row bends to it and ends on its line)
+const TURN = 10, RADIUS = [6, 4], STEP = 15;                                  // (a corner sharper than TURN degrees is drawn as an arc: its radius by the row's kind, a point every STEP degrees)
 
 const srv = await serve(), browser = await launch();
 try {
@@ -130,6 +133,27 @@ try {
     return k < 0 ? [P[0], P[P.length - 1]] : simplify(P.slice(0, k + 1), tol).slice(0, -1).concat(simplify(P.slice(k), tol)); };
   const simplifyK = (Q, tol) => { const K = [...new Set([0, ...(Q.keep || []), Q.length - 1])].sort((x, y) => x - y), out = [];   // (the points join() pinned stay)
     for (let k = 0; k + 1 < K.length; k++) { const S = simplify(Q.slice(K[k], K[k + 1] + 1), tol); out.push(...(k ? S.slice(1) : S)); } return out; };
+  // the map gives a way by its corners; on the ground a corner is a bend. A corner sharper than TURN becomes an arc that touches both legs: the
+  // radius by the row's kind, smaller where a leg is too short for it (two arcs share a leg by their sizes), halved while the arc would leave the
+  // band, come to the barrier or run closer to a footprint than the corner itself does (no smaller than 1 m: then the corner stays as the map
+  // has it). The row's ends and the points join() pinned stay where they are
+  const soften = async (Q, kind, pinned) => {
+    const n = Q.length, t = new Array(n).fill(0), th = new Array(n).fill(0), u = [], out = [Q[0]], arcs = [];
+    for (let k = 0; k + 1 < n; k++) { const dx = Q[k + 1][0] - Q[k][0], dz = Q[k + 1][1] - Q[k][1], l = Math.hypot(dx, dz) || 1; u.push([dx / l, dz / l, l]); }
+    for (let k = 1; k + 1 < n; k++) { if (pinned.includes(Q[k])) continue; const a = u[k - 1], b = u[k]; th[k] = Math.atan2(a[0] * b[1] - a[1] * b[0], a[0] * b[0] + a[1] * b[1]);
+      if (Math.abs(th[k]) > TURN * Math.PI / 180) t[k] = RADIUS[kind] * Math.tan(Math.abs(th[k]) / 2); }
+    for (let k = 0; k + 1 < n; k++) { const s = t[k] + t[k + 1]; if (s > u[k][2]) { t[k] *= u[k][2] / s; t[k + 1] *= u[k][2] / s; } }
+    const arc = (k, tk) => { const a = u[k - 1], sg = Math.sign(th[k]), R = tk / Math.tan(Math.abs(th[k]) / 2), A = [Q[k][0] - a[0] * tk, Q[k][1] - a[1] * tk], C = [A[0] - a[1] * sg * R, A[1] + a[0] * sg * R];
+      const N = Math.max(2, Math.ceil(Math.abs(th[k]) * 180 / Math.PI / STEP)), P = [];   // (from the point on the first leg round the centre to the point on the second)
+      for (let m = 0; m <= N; m++) { const f = th[k] * m / N, c = Math.cos(f), s = Math.sin(f), vx = A[0] - C[0], vz = A[1] - C[1]; P.push([C[0] + vx * c - vz * s, C[1] + vx * s + vz * c]); }
+      return { P, R }; };
+    const nearB = (P, b) => Math.min(...P.map(p => rectD(b, p[0], p[1])));
+    const fine = async (P, V) => { const pr = await probe(P), O = dense([P[0], V, P[P.length - 1]], 0.5);
+      return P.every((p, m) => pr[m][0] >= 0 && pr[m][1] <= BAND && pr[m][1] >= HALF[kind] + GAP) && tr.bld.every(b => { const d = nearB(P, b); return d >= HALF[kind] || d >= nearB(O, b) - 0.01; }); };
+    for (let k = 1; k + 1 < n; k++) { let a = null;
+      for (let tk = t[k], tries = 0; tk > 0 && tries < 4 && !a; tk /= 2, tries++) { const c = arc(k, tk); if (c.R < 1) break; if (await fine(c.P, Q[k])) a = c; }
+      if (a) { out.push(...a.P); arcs.push([Math.round(Math.abs(th[k]) * 180 / Math.PI), +a.R.toFixed(1)]); } else out.push(Q[k]); }
+    out.push(Q[n - 1]); out.arcs = arcs; return out; };
 
   // ---- the ways: a house's own ones (a driveway, a way that ends at the house); cut to the band, clear of the road's barriers and of the footprints ----
   const cand = [...ways.values()].filter(w => KIND[w.tags.highway] != null && !closedArea(w) && !w.tags.tunnel && w.tags.covered !== 'yes' && w.tags.indoor !== 'yes' && !(+w.tags.layer < 0));
@@ -157,7 +181,9 @@ try {
       const piece = { from: a, len: L, s: pr[a][2], dd: [Math.min(...pr.slice(a, b + 1).map(q => q[1])), Math.max(...pr.slice(a, b + 1).map(q => q[1]))], why: own || L < MINLEN ? own || 'prekratek' : !near ? 'ne pride do hiše' : '' };
       if (!piece.why) { let n = 0;   // (what the yard draws already is not drawn twice: only the parts between)
         for (let i = 0; i < run.length; i++) { if (mask[i] >= 0) continue; let j = i; while (j + 1 < run.length && mask[j + 1] < 0) j++;
-          if (j - i >= MINLEN) { const Q = simplifyK(join(run, mask, i, j), 0.2), row = [kind]; for (const p of Q) row.push(+p[0].toFixed(1), +p[1].toFixed(1)); rows.push({ row, rec, s: pr[a + i][2], L: j - i, cut: j - i < L }); n += j - i; }
+          if (j - i >= MINLEN) { const J = join(run, mask, i, j), Q = await soften(simplifyK(J, 0.2), kind, (J.keep || []).map(k => J[k])), row = [kind];
+            for (const p of Q) { const x = +p[0].toFixed(1), z = +p[1].toFixed(1); if (row.length < 3 || row[row.length - 2] !== x || row[row.length - 1] !== z) row.push(x, z); }   // (no point twice)
+            rows.push({ row, rec, s: pr[a + i][2], L: j - i, cut: j - i < L, arcs: Q.arcs }); n += j - i; }
           i = j; }
         if (!n) piece.why = 'že narisan (def.yard)'; else if (n < L) piece.drawn = L - n; }
       rec.pieces.push(piece);
@@ -170,7 +196,7 @@ try {
   const inBand = (L) => L.reduce((s, r) => s + r.pieces.filter(p => p.len >= MINLEN).reduce((a, p) => a + p.len, 0), 0), left = (t) => { const L = report.filter(r => r.own === t); return `${L.length} (${inBand(L)} m v pasu)`; };
   console.log(`poti ob hišah (do ${REACH} m od tlorisa): ${report.length} od ${cand.length}; do hiše vodi ${report.filter(r => !r.own).length}; vrstic ${rows.length}`);
   console.log(`  niso poti do hiše (paket E): ceste in povezave mimo hiš ${left('gre mimo')}, parkirišča ${left('parkirišče')}`);
-  for (const r of rows) console.log(`  ${String(r.s).padStart(5)} m  hiša ${String(r.rec.house).padStart(3)}  ${r.rec.highway}${r.rec.service ? '/' + r.rec.service : ''}${r.rec.surface ? ' (' + r.rec.surface + ')' : ''}  ${r.L} m${r.cut ? ' (ostalo riše že def.yard)' : ''}  →  vrsta ${r.row[0]}`);
+  for (const r of rows) console.log(`  ${String(r.s).padStart(5)} m  hiša ${String(r.rec.house).padStart(3)}  ${r.rec.highway}${r.rec.service ? '/' + r.rec.service : ''}${r.rec.surface ? ' (' + r.rec.surface + ')' : ''}  ${r.L} m${r.cut ? ' (ostalo riše že def.yard)' : ''}  →  vrsta ${r.row[0]}${r.arcs.length ? ', zavoji v loku: ' + r.arcs.map(q => q[0] + '° s polmerom ' + q[1] + ' m').join(', ') : ''}`);
   console.log('\nvrstice za def.yard (na konec seznama; def.houseWays je indeks prve):');
   console.log(yardOut.map(r => JSON.stringify(r.row)).join(','));
 

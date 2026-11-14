@@ -104,7 +104,7 @@ Odgovor na `realizem-s0-spa` je »2 · Popravi videz« (13. 11. ob 00.07, v pogo
 
 ### Predaja 3 (13. 11. 2026): popravki so v kodi, dovozi in poti iz OSM
 
-Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odločitve pod istim vprašanjem `realizem-s0-spa`; PR #668 ostane osnutek do uporabnikovega »ok«.
+Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odločitve pod istim vprašanjem `realizem-s0-spa`; PR #668 ostane osnutek do uporabnikovega »ok«. Po slikah je uporabnik v seji prosil še za mehak zavoj potke (»Mehki zavoji« spodaj); sliko zavoja prej in potem je dobil v seji. Vprašanja na strani ta seja ni spreminjala, ker je medtem že dobilo nov odgovor (»2 · Popravi videz«: potke, parkirišča in ceste ob hišah kot v resnici; izvaja ga druga seja na tej veji).
 
 **Hiše (`js/world-stavbe.js`, klic v `js/world-spa.js`):**
 - **Pravilo tal** (`put()`): hiša stoji vodoravno tam, kjer jo ima zemljevid. Tla hiše so 0,15 m nad najvišjo točko terena pod tlorisom, do najnižje sega gladek podstavek; teren se ne spremeni. Na Spaju se teren pod enim tlorisom dvigne do 4,99 m; 16 hiš ima do vrat stopnice (do 0,94 m).
@@ -123,6 +123,7 @@ Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odloč
 - **Orodje:** `node tools/dovozi-osm.mjs spa --osm <mapa> [--json f.json] [--do 6]`. Kose po 0,01° prenese z `api.openstreetmap.org/api/0.6/map?bbox=…` v mapo (kar je že tam, ne prenaša znova) in izpiše vrstice za `def.yard`. Testnih prog in prog na odločanju ne obdela.
 - **Lega:** okvir Spaja v `js/geo.js` je narejen za globus in je samo približen. Orodje ga prilega na tlorise: 66 od 97 tlorisov proge (hiše in hale) se ujame z obrisi stavb iz OSM, odmik središč je 0,06 m (mediana; 90 %: 0,20 m), popravek okvira 16,82 m in 27,63 m ter zasuk 0,619°. Če se tlorisi ne ujemajo na ~1 m (vsaj 8 parov), orodje ne izpiše ničesar.
 - **Pravilo:** pot do hiše je dovoz (`service=driveway`), ki pride do hiše (do 6 m od tlorisa), in pot ali servisna cesta, ki se pri hiši slepo konča. Cesta, ki gre mimo hiš ali veže dve drugi cesti, in parkirišče to nista. Nariše se del v pasu 64 m za ograjo proge, vsaj 1 m od ograje in daljši od 4 m. Kar `def.yard` že riše, se ne nariše dvakrat.
+- **Mehki zavoji** (prošnja uporabnika v seji, 13. 11. 2026: »naj bo mehak zavoj potke«): OSM da pot samo z lomi, na tleh pa je lom zavoj. Potka do hiše 147 je bila zato oster »V« (lom 138°). Orodje lom, ostrejši od 10°, nariše kot lok, ki se dotika obeh krakov: polmer dovoza 6 m, poti 4 m; manjši, kjer je krak prekratek ali bi lok prišel do ograje proge ali bliže tlorisu (pod 1 m lom ostane, kot je v OSM). Konca poti in priključek na že narisano pot ostanejo, kjer so. Lok je v podatkih (točke na ~1 m), `yardWorld` je nespremenjen. Na Spaju: potka do hiše 147 ima en lok (138°, polmer 4 m; vrh zavoja je ~7 m dlje od proge kot lom v OSM, narisana črta je 70 m namesto 81 m), dovoz do hiše 151 pet lokov (polmer 5,8–6 m), cesta do hiše 158 dva (6 m); dovoz do hiše 17 nima loma nad 10° in je enak.
 - **Spa: 4 vrstice.** Od 230 poti v OSM ob progi jih 31 teče do 6 m od hiše, 9 je hišinih, 5 od teh v pasu nima dovolj dolgega kosa.
 
 | m od starta | hiša (vrstica `def.bld`) | pot v OSM | narisano | vrsta |
@@ -136,6 +137,6 @@ Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odloč
 - **V progi:** `houseWays: 36` v `js/tracks/spa.js` pove, od katere vrstice `def.yard` naprej so poti do hiš. Riše jih obstoječi `yardWorld` (`js/world.js` je nespremenjen), samo videz, brez trkov. Šotori in avti tabora navijačev ne stojijo več na poti do hiše (`onWay` v `js/world-spa.js`); število klicev `R()` je enako, zato se drugo okolje ne premakne.
 - **Vir:** OpenStreetMap (ODbL 1.0; `README.md`, »Zasluge«). Kjer OSM dovoza nima, ga ni.
 
-**Številke:** 84 hiš od 86 tlorisov, 24 tik ob cesti; hiše 15 258 oglišč (prej 24 360); svet Spaja 1390 mrež in 1 107 795 oglišč (`tests/golden/world.json`, spremenjen samo Spa); telefon 183 klicev risanja (največ 224) in 442 tisoč oglišč (največ 571), referenca v `tests/golden/perf.json` ostane.
+**Številke:** 84 hiš od 86 tlorisov, 24 tik ob cesti; hiše 15 258 oglišč (prej 24 360); svet Spaja 1390 mrež in 1 107 867 oglišč (`tests/golden/world.json`, spremenjen samo Spa; mehki zavoji poti dodajo 72 oglišč, tla so enaka); telefon 183 klicev risanja (največ 224) in 442 tisoč oglišč (največ 571), referenca v `tests/golden/perf.json` ostane.
 
 **Čaka:** uporabnikov »ok« na novih slikah. Pred združitvijo velja, kar piše v »Predaja (12. 11. 2026)«. Če E (#657) doda ceste ob hišah, orodje za dovoze poženi znova (isti dovoz se ne sme narisati dvakrat) in ustvari referenco sveta za Spa znova.
