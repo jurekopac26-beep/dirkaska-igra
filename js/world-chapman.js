@@ -25,7 +25,8 @@
      barriers up, no names on it; the canopy fades over the followed car: dyn.tunnel), the view points' lay-bys (def.views) with parked cars and people, baboons by the road, kelp
      beds, boats and the beach at Hout Bay, generic signs (no words); the gulls: the render's flock by the sea (def.sea); winter without snow (noSnow). South African road
      markings: yellow edge lines, a white double centre line. */
-  const CHCOL = [0, 0, 0];
+  const CHCOL = [0, 0, 0], CH1 = [1, 1, 1];
+  let CHT = null;   // the measured hue's multiplier for what grows on the ground (World.rastje.tla, Realizem G); null: the game's own colours, to the number
   function chFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief inland; under the sea (the model's 0 m) dug down
     const P = API.VR, d = vrDem(x, z), alt = d + P.D.base;
     if (alt < 4) return d - (4 - Math.max(0, alt)) * 1.6 - Math.max(0, -alt);   // (the shore: the water line at ~2.5 m of the model)
@@ -68,6 +69,7 @@
     const soil = sstep(0.62, 0.84, fine * 0.55 + f * 0.45) * sstep(0.8, 0.92, ny) * (1 - dk) * 0.7; R = lerp(R, 0.68, soil); G = lerp(G, 0.63, soil); B = lerp(B, 0.54, soil);   // sandy grey soil between the bushes
     const mo = (fine - 0.5) * 0.16 + (f - 0.5) * 0.07; R += mo; G += mo * 0.95; B += mo * 0.7;   // the bushes' own light and shade (the 5 m grid's mottle)
     R = lerp(R, 0.22, tr * 0.8); G = lerp(G, 0.3, tr * 0.8); B = lerp(B, 0.17, tr * 0.8);
+    const hm = CHT || CH1; R *= hm[0]; G *= hm[1]; B *= hm[2];   // (the fynbos and the ground under the trees; not the gardens, the rock, the sand and the trodden verge below)
     R = lerp(R, 0.4, se * 0.6); G = lerp(G, 0.5, se * 0.6); B = lerp(B, 0.28, se * 0.6);
     const line = 110 + (P.c4(x, z) - 0.5) * 50, ss = sstep(line - 15, line + 15, A), st = Math.max(sstep(0.8, 0.55, ny), bare * 0.4 * (0.5 + 0.5 * sstep(0.95, 0.8, ny)));   // the rock
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 3.2 + P.c2(x * 0.5, z * 0.5) * 6), thin = 0.5 + 0.5 * Math.sin(A * 1.7 + fine * 4), k = 0.76 + 0.18 * band + 0.06 * thin, lich = sstep(0.5, 0.78, mid) * 0.45;
@@ -223,6 +225,8 @@
     const sea = (x, z) => chGround(x, z) < seaY + 0.3;
 
     /* ---- terrain tiles, the sea (one plane at height 0: turquoise over the sand near the shore, deep blue farther out) ---- */
+    CHT = null;   // (the game's own colours first: World.rastje measures them on the fynbos 8–60 m from the road, off the rock of the steep slopes, then the ground's vertex colours take the measured hue of the open land)
+    if (World.rastje) CHT = World.rastje.tla(def, { lc: (x, z) => (vrLC(x, z) === 1 && chSlope(x, z) < 0.75 ? 0 : 1), dist: vrDist, gcol: chGCol, x0: P.G.x0, z0: P.G.z0, x1: P.G.x0 + P.G.ntx * VRC * VRT, z1: P.G.z0 + P.G.ntz * VRC * VRT }, null, 'odprto');
     let nFar = 0, nOver = 0;
     const tMat = pkGroundMat(), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
     {
@@ -572,6 +576,9 @@
           if (kind < 0) continue;
           if (sl > (kind === 3 ? 1.2 : 0.95)) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && (nn.dd < 1.6 || hillIn(nn))) continue;
+          if (c === 1 && kind < 2 && nn.i >= 0 && World.rastje) {   // (Realizem G: by the road a restio or a shrub by the measured grass among the open land of this section and side; the same plants at the same places, the game's own mix at the measured mean)
+            const g = World.rastje.trave(def, nn.i * T.ds - sStart, nn.lat > 0); if (g != null) kind = r1 < 0.24 + 0.325 * (g - 0.511) ? 0 : 1;
+          }
           if (excluded(x, z)) continue;
           const tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.88 + r4 * 0.18];
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.5 + r4 * 0.5, tint);
@@ -617,6 +624,10 @@
         const k = 0.84 + r3 * 0.28, sc = 0.8 + r1 * 1.2 - 0.008 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
         if (++nS >= maxS) break edge;
       }
+    }
+    if (World.rastje) {   // (Realizem G: the measured hue on the plants' green vertices, each kind by its own measured class; the flowers, the stems' tips, the trunks and the stones stay)
+      const lt = World.rastje.listje(def, [pk[5]]), lg = World.rastje.listje(def, [pk[1], pk[2], pk[6], pk[7]], null, 'grmovje'), lr = World.rastje.listje(def, [pk[0]], null, 'trava');
+      if (CHT || lt || lg || lr) out.rastje = { moc: World.rastje.MOC, tla: CHT, drevesa: lt, grmovje: lg, trava: lr };
     }
     for (const t of pk) t.addTo(root, false);
 
