@@ -24,7 +24,8 @@
      araucarias on the plateau, crags on the cliffs, the waterfalls (def.falls: a ribbon of water down the rock, flowing), the viewpoint with its
      railing on the cliff edge (def.mirante), the concrete walls holding the legs of the ladder, the numbered bends' signs, and the mist rising
      out of the valley (rrMist: soft banks drifting up the cliff, World.update moves them). Everything named is generic: no business on a sign. */
-  const RRCOL = [0, 0, 0];
+  const RRCOL = [0, 0, 0], RR1 = [1, 1, 1];
+  let RRT = null;   // the measured hue's multiplier for what grows on the ground (World.rastje.tla, Realizem G); null: the game's own colours, to the number
   function rrCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): the plateau's grass with straw patches (lc 0), the dark forest floor (lc 1),
     // the shrubs (lc 2), the yards by the viewpoint (lc 3); on the steep faces the rock of the escarpment in bands (basalt above ~1150 m, the pink and
     // ochre sandstone below it), streaked with moss and ferns (the road's own cuts mostly overgrown); the red earth of a trodden verge
@@ -34,12 +35,13 @@
     const straw = sstep(0.56, 0.8, q) * 0.55 * hi; R = lerp(R, 0.6, straw); G = lerp(G, 0.57, straw); B = lerp(B, 0.3, straw);
     R = lerp(R, 0.19, fo); G = lerp(G, 0.26, fo); B = lerp(B, 0.12, fo);
     R = lerp(R, 0.29, sh * 0.7); G = lerp(G, 0.38, sh * 0.7); B = lerp(B, 0.16, sh * 0.7);
+    const t = RRT || RR1; R *= t[0]; G *= t[1]; B *= t[2];   // (the grass, the forest floor, the scrub and the moss below; not the yards, the rock and the red earth)
     R = lerp(R, 0.56, se * 0.6); G = lerp(G, 0.54, se * 0.6); B = lerp(B, 0.49, se * 0.6);
     R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
     const st = sstep(0.64, 0.42, ny);
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 6.5 + P.c2(x * 0.4, z * 0.4) * 6), k = 0.8 + 0.22 * band, ss = sstep(1180, 1110, A + (P.c1(x, z) - 0.5) * 60);
       const moss = Math.max(sstep(0.42, 0.72, P.c5(x, z)) * 0.55, 0.95 * sstep(60, 22, dd)), rr = lerp(0.35, 0.66, ss) * k, rg = lerp(0.34, 0.49, ss) * k, rb = lerp(0.33, 0.4, ss) * k;
-      R = lerp(R, lerp(rr, 0.18, moss), st); G = lerp(G, lerp(rg, 0.31, moss), st); B = lerp(B, lerp(rb, 0.1, moss), st); }
+      R = lerp(R, lerp(rr, 0.18 * t[0], moss), st); G = lerp(G, lerp(rg, 0.31 * t[1], moss), st); B = lerp(B, lerp(rb, 0.1 * t[2], moss), st); }
     if (dd < 1.6) { const t = sstep(1.6, 0.2, dd) * 0.35; R = lerp(R, 0.5, t); G = lerp(G, 0.36, t); B = lerp(B, 0.24, t); }
     RRCOL[0] = R; RRCOL[1] = G; RRCOL[2] = B; return RRCOL;
   }
@@ -197,6 +199,8 @@
     out.marks = {}; if (mir) out.marks.Mirante = [mir.x, mir.z];   // (where the landmarks stand: the tests look for them)
 
     /* ---- terrain tiles, the ponds on the plateau ---- */
+    RRT = null;   // (the game's own colours first: World.rastje measures them on the open land 8–60 m from the road, then the ground's vertex colours take the measured hue)
+    if (World.rastje) RRT = World.rastje.tla(def, { lc: vrLC, dist: vrDist, gcol: rrGCol, x0: P.G.x0, z0: P.G.z0, x1: P.G.x0 + P.G.ntx * VRC * VRT, z1: P.G.z0 + P.G.ntz * VRC * VRT });
     let nFar = 0;
     const tMat = pkGroundMat();
     {
@@ -510,12 +514,14 @@
         }
       }
     }
+    const lt = World.rastje ? World.rastje.listje(def, tk) : null;   // (Realizem G: the measured hue on the leaves, i.e. the unit trees' green vertices; the trunks keep their bark)
+    if (RRT || lt) out.rastje = { moc: World.rastje.MOC, tla: RRT, drevesa: lt };
     tk.forEach((t, k) => t.addTo(root, LOD.tier > 0 || (k !== 3 && k !== 5)));   // (NIZKA: the tree ferns and the bamboo, low under the canopy, cast no shadow)
 
     /* ---- the verges and the cliffs: ferns and shrubs right behind the barrier, the red earth and rocks at the foot of the cuts, crags of dark basalt
        (pink sandstone lower down) where the slope rises steep beside the road and out on the escarpment ---- */
     {
-      const RV = rng(3351), bushC = [[0.24, 0.4, 0.13], [0.2, 0.34, 0.12], [0.3, 0.44, 0.16], [0.26, 0.42, 0.18]], basalt = [[0.32, 0.31, 0.3], [0.38, 0.36, 0.34], [0.28, 0.28, 0.27]], sand = [[0.64, 0.5, 0.4], [0.7, 0.56, 0.44], [0.6, 0.46, 0.38]];
+      const RV = rng(3351), bushC = [[0.24, 0.4, 0.13], [0.2, 0.34, 0.12], [0.3, 0.44, 0.16], [0.26, 0.42, 0.18]].map(c => lt ? [c[0] * lt[0], c[1] * lt[1], c[2] * lt[2]] : c), basalt = [[0.32, 0.31, 0.3], [0.38, 0.36, 0.34], [0.28, 0.28, 0.27]], sand = [[0.64, 0.5, 0.4], [0.7, 0.56, 0.44], [0.6, 0.46, 0.38]];
       const rockC = (A) => (A > 1150 ? basalt : sand)[Math.floor(RV() * 3)];
       API.ROCK_SMOOTH = true;
       for (let s = 4; s < T.len - 4; s += 3.4) for (const side of [-1, 1]) {
