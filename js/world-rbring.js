@@ -682,8 +682,8 @@
         const j = (i + 1) % N; if (!fc[i] || !fc[j] || (side === PSD && PD && (pitOpen(i) || pitOpen(j))) || (LK.fence && !LK.fence.sides.includes(side))) { acc += ds; continue; }   // (none where the pit lane joins the circuit, nor on the sides a track keeps open)
         const e = fc[i] === 2 ? 1.25 : 0.55, Q = (ii, y) => { const o = side * (bar[ii] + e); return [T.px[ii] + T.nx[ii] * o, T.hy[ii] + y, T.pz[ii] + T.nz[ii] * o]; };
         const u0 = acc / 2.5, u1 = (acc + ds) / 2.5, ins = Q(i, 1); ins[0] += T.nx[i] * side * 3; ins[2] += T.nz[i] * side * 3;
-        const fl = LK.fence, fc0 = fl ? fl.col : W1, ft = fl ? fl.top : 4.2;   // (a track's own mesh colour and height)
-        fenceG.quadO(Q(i, 1.0), Q(j, 1.0), Q(j, ft), Q(i, ft), fc0, ins, [[u0, 0], [u1, 0], [u1, (ft - 1) / 2.46], [u0, (ft - 1) / 2.46]]);
+        const fl = LK.fence, fc0 = fl ? fl.col : W1, ft = fl ? fl.top : 4.2, fv = fl ? (ft - 1) / 2.46 : 1.3;   // (a track's own mesh colour and height)
+        fenceG.quadO(Q(i, 1.0), Q(j, 1.0), Q(j, ft), Q(i, ft), fc0, ins, [[u0, 0], [u1, 0], [u1, fv], [u0, fv]]);
         if (i % 3 === 0) { const p = Q(i, 0); box(scen.get(p[0], p[2]), p[0], p[1] - 0.2, p[2], 0.1, ft + 0.25, 0.1, T.hd[i], fl ? fl.post : [0.6, 0.61, 0.64]); }
         acc += ds;
       }
