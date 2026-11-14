@@ -25,7 +25,7 @@ Del `docs/realizem.md` (razdeljen po paketih 11. 11. 2026, ukrep 5 »Manj sklopo
   - oglišča gozda do ceste;
   - barve in svetloba ne smejo spremeniti drugih prog (slike `gfx`).
 
-## G0 · sestavni deli (v delu)
+## G0 · sestavni deli (narejeno 14. 11. 2026, na veji)
 
 Veja `realizem/g0-rastje-teren`, jure.kopac26 (odločitev uporabnika 12. 11. 2026 ob ~19.30 prek Mateja, tabla #382, komentar 6830929804; prej partyslo od ~17. 11.). G0 na progah ne dela; prehod na proge pride po G0, skupaj s S.
 
@@ -35,7 +35,7 @@ Kosi, vsak v svojem commitu:
 3. **Svetloba in ton po državah** (`js/render.js`, kratek priklop; tabela v `js/world-rastje.js`).
 4. **Mehak prehod med travo ob cesti in pobočjem** (odločitev uporabnika 12. 11. 2026 ob ~14.25 prek Mateja): samo prave proge, zamrznjene ostanejo do pike enake.
 
-Pred `main`: 2–3 možnosti s slikami naenkrat in slike zdaj in potem (Spa, Belgija) na strani Odločitve.
+Pred `main`: 2–3 možnosti s slikami naenkrat in slike zdaj in potem (Spa, Belgija) na strani Odločitve. **Narejeno** (spodaj »Odločitev: moč 35 %«).
 
 ### Kos 1: orodje (narejeno)
 
@@ -49,7 +49,7 @@ Pred `main`: 2–3 možnosti s slikami naenkrat in slike zdaj in potem (Spa, Bel
 ### Kosi 2–4: v igri (13. 11. 2026)
 
 - **`js/world-rastje.js`** (`World.rastje`): velja samo za prave proge (`prava`: brez `test` in `pending`, ne Suzuka, Irohazaka, Medvode) **z meritvami** v `MERITVE` (`aktivna`). Meritve imata Spa (predogled v G0) in Rio do Rastro (G2, spodaj); ostale proge so do številke enake, dokler ne dobijo meritev v G1–G4. Nobenega klica risanja ali oglišča več: barve gredo na barvo materiala (en množilnik) ali, na gorski cesti, v barve oglišč, svetloba na številke teme, prehod na barve, ki jih rob trave že ima.
-- **Kos 2, kompleti in barve**: `PODNEBJA` (Köppen–Geiger) našteje vrste dreves podnebja kot oblike, ki jih graditelji že rišejo (»mehke krogle« ostanejo); deleži in barve pridejo iz meritev. `MERITVE.spa`: pas 8–60 m, drevesa 33,7 % (`393e34`), trava 9,3 % (`4c5143`), pozidano 57,0 % (`5d5951`: izletne cone in boksi); okvir proge lat 50,44406, lon 5,965126 (gozd iz `def.lc` poravnan na drevesa WorldCover, korelacija 0,69, ker OSM iz okolja ni dosegljiv). `barve()` izmeri, kakšno barvo igra zdaj riše (drevesa: barve oglišč vrst × barve primerkov; trava: barva tal na odprtem v pasu 8–60 m × povprečje slike trave) in materialu tal (`gMat`) in dreves (`tMat`) da odtenek meritve, svetlost ostane (`mnozilnik`; izmerjene barve so od zgoraj, skozi zrak, s sencami, zato svetlost ni prava za oko ob cesti). Moč `MOC` (0 nič, 1 ves odtenek) je uporabnikova izbira.
+- **Kos 2, kompleti in barve**: `PODNEBJA` (Köppen–Geiger) našteje vrste dreves podnebja kot oblike, ki jih graditelji že rišejo (»mehke krogle« ostanejo); deleži in barve pridejo iz meritev. `MERITVE.spa`: pas 8–60 m, drevesa 33,7 % (`393e34`), trava 9,3 % (`4c5143`), pozidano 57,0 % (`5d5951`: izletne cone in boksi); okvir proge lat 50,44406, lon 5,965126 (gozd iz `def.lc` poravnan na drevesa WorldCover, korelacija 0,69, ker OSM iz okolja ni dosegljiv). `barve()` izmeri, kakšno barvo igra zdaj riše (drevesa: barve oglišč vrst × barve primerkov; trava: barva tal na odprtem v pasu 8–60 m × povprečje slike trave) in materialu tal (`gMat`) in dreves (`tMat`) da odtenek meritve, svetlost ostane (`mnozilnik`; izmerjene barve so od zgoraj, skozi zrak, s sencami, zato svetlost ni prava za oko ob cesti). Moč `MOC` (0 nič, 1 ves odtenek) je uporabnikova izbira: 0,35 (spodaj »Odločitev: moč 35 %«).
 - **Kos 3, svetloba**: `look(t, def)` v `applyTheme` (`js/render.js`, `lookDef` iz gradnje sveta): poletno opoldansko sonce na širini proge (90° − |lat| + 23,44°), zračna masa 1/sin višine in Rayleighova optična globina (0,052 / 0,098 / 0,236) premakneta barvo in moč sonca proti soncu v zenitu. Spa: višina 63°, sonce za ~1 % šibkejše in za ~2 % manj modro; nebo in ton proge ostaneta.
 - **Kos 4, prehod**: `prehod(c, g, u)` v robu trave ob ograji Spa (`js/world-spa.js`): pasovi košnje preidejo v barvo pobočja čez širino roba (malo ob cesti, vse na koncu), namesto ostrega roba na zadnjih dveh točkah.
 
@@ -64,12 +64,21 @@ Prva proga prehoda (v tabeli prog v `docs/realizem.md` ima samo paket G; E pride
 - **Drugo iz paketa**: pasov košnje proga nima, pas rdeče zemlje ob asfaltu že ima, teren po meri ni potreben (pečine so narejene v graditelju). Podnebje `Cfb` je odčitano z objavljene karte Köppen–Geiger (planota Serra Geral, 1010–1421 m) in, kot pri Spa, vpisano ročno. Barve po odsekih (`cover.open` na 50 m) še niso uporabljene: en odtenek za vso progo.
 - **Obremenitev enaka**: 1401 mrež, 750.819 oglišč, 25.952 primerkov (pred in po); referenca sveta posodobljena samo za `rastro` (`WORLD_ONLY=rastro node tests/browser/world.test.mjs --update`: spremenila se je samo skupina `-:MeshLambertMaterial`). Slike zdaj in potem: `node tools/shot.mjs rastro --m 1500,3900 --pred b45f274`; pri moči 0,35 je razlika pod pragom orodja (»nobena slika se ni opazno spremenila«), vidna je v številkah in ob primerjavi slik.
 
-### Predaja (13. 11. 2026, 21.30)
+### Odločitev: moč 35 % (14. 11. 2026)
 
-Slike in vprašanje sta narejena, prva proga prehoda (Rio do Rastro) je na veji. Stanje in naslednji koraki:
-1. **Vprašanje »Rastje: barve po meritvah«** (moč 35 %, 65 % ali 100 %, vsaka s sliko Spa zdaj in potem) je v opisu PR #669; slike so na veji `slike/rastje-669` (brez PR). Račun te teme strani Odločitve ne doseže, zato vprašanje čaka na prenos na stran oziroma na odgovor v seji. Po odgovoru: popravi `MOC` v `js/world-rastje.js`, posodobi referenci sveta za Spa in Rio do Rastro (`WORLD_ONLY=spa,rastro node tests/browser/world.test.mjs --update`) in izbriši vejo `slike/rastje-669`. Pri moči 100 % debla na Spa pordečijo (množilnik je na vsem materialu dreves): takrat tudi Spa prestavi na `listje` (samo zelena oglišča).
+Na vprašanje »Rastje: barve po meritvah« (moč 35 %, 65 % ali 100 %, vsaka s sliko Spa zdaj in potem, kamera za avtom) je uporabnik 14. 11. 2026 ob 11.48 izbral **1 · moč 35 %** (klikljiva izbira v pogovoru s koordinacijo). To je vrednost, ki je že v kodi: `MOC` v `js/world-rastje.js` ostane 0,35, referenci sveta za Spa in Rio do Rastro sta narejeni pri tej moči in ostaneta. Slike za vprašanje so bile na veji `slike/rastje-669` (brez PR); po odgovoru je veja izbrisana. Slike naredi znova `node tools/shot.mjs spa --m 2600,1700 --pred 6d10f3f` (drugo moč pokaže kopija igre z drugim `MOC` in `--root`); za Rio do Rastro je ukaz pri G2 zgoraj. Če se moč kdaj poveča: pri 100 % debla na Spa pordečijo (množilnik je na vsem materialu dreves), zato takrat tudi Spa prestavi na `listje` (samo zelena oglišča).
+
+### Predaja (14. 11. 2026)
+
+G0 je narejen (kosi 1–4, slike, odločitev o moči), prva proga prehoda (Rio do Rastro) je na veji. PR #669 ostane osnutek do vrste (na `main` za S, `docs/vrsta.md`). Stanje in naslednji koraki:
+1. **Odprtega vprašanja ni**: moč barv je odločena (»Odločitev: moč 35 %« zgoraj), koda in reference sveta so nespremenjene.
 2. **Naslednje proge** po vrstnem redu tabele v `docs/realizem.md` in pravilu izmenjave (»Manj sklopov pri grafiki«; zamrznjene se preskočijo, Rio do Rastro je 5.): za račun te teme so 1. Nürburg, 3. Tianmen, 7. Montréal, 9. Chapman's Peak in 11. Katu-Jaryk. S in G gresta na progo skupaj v enem prehodu, zato proge s stavbami čakajo na sestavne dele S (S0, #668); Nürburg in Tianmen imata odprt E1 (#678), Katu-Jaryk in Pikes Peak #671 (iste datoteke). Pred začetkom preveri odprte PR.
-3. **Vzorec za gorske ceste** (Tianmen, Katu-Jaryk, Chapman's Peak, Bâlea, Los Caracoles, Pikes Peak): `MERITVE.<id>` (meritev s korakom `cover` ali z `build_cover`, okvir iz `js/geo.js`, preverjen s korelacijo `def.lc` in WorldCover), nato `World.rastje.tla` v funkcijo barve tal in `World.rastje.listje` na enotska drevesa pred `addTo`, kot v `js/world-rastro.js`. Skupni pomočniki gorskih cest niso zamrznjeni, Vršičevi deli v `js/world-vrsic.js` so.
+3. **Prekrivanje z E1 (#678) na Rio do Rastro**: oba PR spreminjata `js/world-rastro.js`, `docs/kazalo.md`, `docs/proge/rastro.md` in `tests/golden/world.json`, zato gresta na `main` drug za drugim po dogovoru, ne hkrati. Poskusni spoj obeh vej (14. 11.) da tri spore, ki jih reši PR, ki gre na `main` drugi:
+   - `docs/kazalo.md`: #678 dopolni vrstico `js/world-cesta.js`, ta veja doda za njo vrstico `js/world-rastje.js`; obdrži vrstico `js/world-cesta.js` iz #678 in vrstico `js/world-rastje.js` s te veje.
+   - `js/world-rastro.js`, ena vrstica (`const … RV = rng(3351), bushC = …`): obdrži oboje, `const off = new GB(),` na začetku iz #678 in `.map(c => lt ? [c[0] * lt[0], c[1] * lt[1], c[2] * lt[2]] : c)` za seznamom `bushC` s te veje.
+   - `tests/golden/world.json`, vnos `rastro`: po spoju ga ustvari znova (`WORLD_ONLY=rastro node tests/browser/world.test.mjs --update`).
+   - `README.md`, `docs/proge/rastro.md` in `index.html` se spojijo sami.
+4. **Vzorec za gorske ceste** (Tianmen, Katu-Jaryk, Chapman's Peak, Bâlea, Los Caracoles, Pikes Peak): `MERITVE.<id>` (meritev s korakom `cover` ali z `build_cover`, okvir iz `js/geo.js`, preverjen s korelacijo `def.lc` in WorldCover), nato `World.rastje.tla` v funkcijo barve tal in `World.rastje.listje` na enotska drevesa pred `addTo`, kot v `js/world-rastro.js`. Skupni pomočniki gorskih cest niso zamrznjeni, Vršičevi deli v `js/world-vrsic.js` so.
 - Preizkus: `npm run test:related`. Skupni zagon lahko preseže 40 min; teste lahko poženeš posamič (`node tests/run.js --related --list`). Za samo eno progo: `WORLD_ONLY=rastro node tests/browser/world.test.mjs`. Če Playwright manjka (`ERR_MODULE_NOT_FOUND`), ga poveži z `ln -s /opt/node-tools/node_modules/playwright node_modules/playwright`.
 - Svetloba (kos 3) je po fiziki majhna (Spa ~1 % moči, ~2 % modre; Rio do Rastro nič); večji učinek je na severnih progah (Harju).
 - Meritev brez `tools/<id>/config.json`: izvozi sredinsko črto proge iz igre, jo pretvori z `lat0`, `lon0` in `rot` iz `js/geo.js` ter pokliči `build_cover` iz `tools/proga-podatki.py` (skripta zunaj repozitorija, prenesene ploščice v svoji prazni mapi, Python z `-I`); `scipy` in `rasterio`: `pip install --break-system-packages -q scipy rasterio`.
