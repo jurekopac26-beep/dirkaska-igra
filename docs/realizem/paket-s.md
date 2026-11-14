@@ -205,17 +205,38 @@ Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je nareje
 
 **Nürburg (`js/tracks/nring.js`, `js/world-nring.js`):**
 - 107 hiš gradi skupni graditelj (komplet Nemčije, slog `north`; 11 ob cesti); hale in tribuna (nad 1500 m²) ostanejo svoje.
-- Okolica iz OSM (`tools/dovozi-osm.mjs --okolica`): 1 pot do hiše, 25 asfaltnih poti, makadam in parkirišča, skromna dopolnitev pri 9 hišah (27 oblik); ob potkah 4 prizori (okoli 2,3 km in 16,3 km).
-- Drevesa in tabor navijačev se okolici umaknejo z enakimi žrebi; ostalo ostane na mestu.
-- Obremenitev 157 klicev, 271 tisoč oglišč (najbolj obremenjeno mesto 184 / 286; prej 156 / 180 in 288).
-- V kameri za avtom razlike skoraj ni: OSM ima samo 7 hiš do 40 m od ceste, zgrajene so 27–37 m od nje (zunaj slike), okolico do 25 m pa večinoma odreže ograja. Proga gre večinoma skozi gozd.
+- Okolica iz OSM po pravilih S0 (Predaja 6, `tools/dovozi-osm.mjs --okolica`), 183 oblik:
+  - 1 pot do hiše;
+  - 13 asfaltnih poti (samo strnjeni odseki do 30 m od hiš);
+  - 163 makadamskih poti (zrastejo iz poti ob hišah po skupnih točkah, slepi konci so obrezani);
+  - 5 parkirišč;
+  - skromna dopolnitev pri 9 hišah (15 vrstic).
+- Ob potkah 62 prizorov in 246 ljudi, od 0,6 do 8 km, ob gozdnih in travniških poteh.
+- Drevesa in tabor navijačev se okolici umaknejo z enakimi žrebi. Drevesa na poteh samo izginejo, nobeno se ne premakne (slike pri 4370 m).
+- Svet ima 3872 mrež in 2 525 682 oglišč.
+- Obremenitev: 171 klicev in 310 tisoč oglišč, na najbolj obremenjenem mestu 198 / 326 (prej 156 / 180 klicev in 271 / 288 tisoč oglišč).
+- V kameri za avtom so hiše zunaj slike: OSM ima samo 7 hiš do 40 m od ceste, zgrajene so 27–37 m od nje. Vidijo se potke s prizori (npr. makadam s svetilkami pri 4300 m) in presledki v drevju, kjer gredo poti.
 
 **Livorno (`js/tracks/livorno.js`, `js/world-livorno.js`):**
 - 1113 od 1127 stavb gradi skupni graditelj (komplet Italije, slog `med`; 831 ob cesti): hiše, lope, garaže in bloki. Cerkve, gradovi, stolpi, ruševine, trgovine, javne stavbe in rastlinjaki ostanejo po starem.
-- Okolica iz OSM (60 oblik): 34 poti do hiš, 71 asfaltnih poti, 22 mestnih pločnikov, peš poti in stopnic brez oznake površine (narisani kot asfalt, `yard` vrsta 1), 25 parkirišč in 35 neasfaltiranih poti (makadam: samo izrecno neasfaltirane poti, kolovozi in steze brez asfaltne površine).
+- Okolica iz OSM po pravilih S0 (126 oblik):
+  - 34 poti do hiš;
+  - 46 asfaltnih poti (strnjeni odseki do 30 m od hiš);
+  - 18 mestnih pločnikov, peš poti in stopnic brez oznake površine (narisani kot asfalt, `yard` vrsta 1);
+  - 25 parkirišč;
+  - 101 neasfaltirana pot (makadam: samo izrecno neasfaltirane poti, kolovozi in steze brez asfaltne površine; zrastejo po skupnih točkah, slepi konci so obrezani).
 - **Brez splošnega dopolnila** (`gen: []`): v mestu ulic in pločnikov ne štejemo za površino ob hiši, zato bi dopolnilo izmislilo dvorišča, dovoze ali pasove zemlje pri ~900 hišah, ki jih zemljevid nima (tabla: nič izmišljenega).
-- Ob potkah 18 prizorov; drevesa se okolici umaknejo (žreb po kraju, ne po vrsti).
-- Svet 1887 mrež, 1 279 696 oglišč; obremenitev 141 klicev, 295 tisoč oglišč (najbolj obremenjeno mesto 177 / 352).
+- Ob potkah 53 prizorov in 209 ljudi, od 1,7 do 18,8 km. 25 prizorov je v gosti mreži potk med 17,7 in 18,8 km.
+- Drevesa se okolici umaknejo (žreb po kraju, ne po vrsti).
+- Svet ima 1967 mrež in 1 489 738 oglišč.
+- Obremenitev: 144 klicev in 300 tisoč oglišč, na najbolj obremenjenem mestu 182 / 381 (prej 141 / 173 klicev in 288 / 351 tisoč oglišč).
+
+**Konci poti (preverjanje v orodju):**
+- Konec poti je povezan tudi na robu pasu, merjenem od sredine ceste (64 m, kjer `nrNear` neha). Prej se je pas meril samo od ograje, zato je Nürburg kazal 124 lažnih slepih koncev.
+- Ostanejo 3 konci na Nürburgu: makadam 41795615 pri 4340 m (6 m od ceste), 923094807 pri 4850 m (11 m) in 923094808 pri 4846 m (14 m).
+- Ostanejo 4 konci v Livornu: makadam 684994078 pri 18685 m (6 m), 1395103455 pri 14503 m (4 m), 1420131325 pri 13151 m (41 m) in 1420131327 pri 13149 m (45 m).
+
+**Odprto (vprašanje v PR #696): gostota prizorov ob potkah.** Pravilo S0 da prizor vsaki potki, ki je dolga vsaj 25 m. Na Spaju so 4 prizori, na Nürburgu 62, v Livornu 53. Ko uporabnik odgovori, se odgovor vpiše sem.
 
 **Enaki žrebi:** veji hiš v graditeljih prog naredita iste žrebe v istem redu kot prej (bloki `u: [crH, R(), R()]` namesto dveh `vary`, hiše `R()` namesto enega), zanka dreves žreba po kraju. Predmeti, gledalci in `propsHash` so na obeh progah enaki kot prej; druge proge se ne spremenijo.
 
