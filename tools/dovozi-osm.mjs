@@ -51,7 +51,7 @@ try {
   if (!tr.G || tr.G.kind !== 'real') throw new Error(id + ': proge ni v GEO v pravem merilu (js/geo.js)');
   // the world's ground under a list of points: [the nearest sample of the road (-1 beyond the band), metres beyond the barrier, metres from the start]
   const probe = (P) => page.evaluate((P) => { const A = World.api, Tr = window.__game.race.track;
-    return P.map(([x, z]) => { const n = A.nrNear(x, z), i = n.i, dd = n.dd; return [i, +dd.toFixed(2), Math.round(Tr.nearestIdx(x, z) * Tr.len / Tr.px.length)]; }); }, P);
+    return P.map(([x, z]) => { const n = A.nrNear(x, z), i = n.i, dd = n.dd; return [i, +dd.toFixed(2), Math.round(Tr.nearestIdx(x, z) * Tr.len / Tr.px.length), +n.d.toFixed(2)]; }); }, P);
 
   // ---- the frame: the world's metres <-> degrees (GEO: the origin and the turn, x east, z south) ----
   const g = geo(tr.G.lat0, tr.G.lon0), r0 = tr.G.rot * Math.PI / 180, c0 = Math.cos(r0), s0 = Math.sin(r0);
@@ -317,12 +317,13 @@ try {
       for (const r of add) gen.push({ row: r, s: h.s, house: h.i });
       gaps.push([h.i, h.s, best ? +best.d.toFixed(1) : null, 'dopolnitev: ' + add.map(r => ['dvorišče', 'dovoz', 'pas'][r[0]]).join(', ')]);
     }
-    // the check: every end of a drawn way meets something (a house, another way, the road, the band's edge); the loose ones are listed
+    // the check: every end of a drawn way meets something (a house, another way, the road, the band's edge: 64 m beyond the barrier or from the
+    // centre line, where nrNear stops); the loose ones are listed
     const loose = [];
     for (const [rows, k0, name] of [[osm.filter(o => o.row[0] === 1), 3, 'makadam'], [yardRows, 1, 'asfalt']]) for (const o of rows) {
       const P = unflat(o.row, k0), hw = k0 === 3 ? o.row[2] : HALF[o.row[0]], q = await probe([P[0], P[P.length - 1]]);
       [P[0], P[P.length - 1]].forEach((p, e) => { const r = q[e];
-        if (r[0] < 0 || r[1] > BAND - 3 || r[1] < hw + GAP + 2 || tr.bld.some(b => rectD(b, p[0], p[1]) <= END + 1)) return;
+        if (r[0] < 0 || r[1] > BAND - 3 || r[3] > BAND - 3 || r[1] < hw + GAP + 2 || tr.bld.some(b => rectD(b, p[0], p[1]) <= END + 1)) return;
         if (drawn.some(d => d.P !== o.Q && d.P.some((a, k) => k + 1 < d.P.length && segD(p, a, d.P[k + 1]) < d.hw + hw + 1.5))) return;
         loose.push(`${name} ${o.w.id} pri ${Math.round(r[2])} m (${r[1].toFixed(0)} m od ceste)`); }); }
     console.log(`konci poti, ki se ne dotaknejo ničesar: ${loose.length}` + (loose.length ? '\n  ' + loose.join('\n  ') : ''));
