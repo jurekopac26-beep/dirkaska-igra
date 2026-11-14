@@ -43,7 +43,8 @@
         const join = d(A[A.length - 1], B[0]) < 2.5 ? A.concat(B.slice(1)) : d(A[A.length - 1], B[B.length - 1]) < 2.5 ? A.concat(B.slice().reverse().slice(1))
           : d(A[0], B[B.length - 1]) < 2.5 ? B.concat(A.slice(1)) : d(A[0], B[0]) < 2.5 ? B.slice().reverse().concat(A.slice(1)) : null;
         if (join) { chains[i] = { P: join, hw: Math.min(chains[i].hw, chains[j].hw) }; chains.splice(j, 1); again = true; } } }
-    const houses = (def.bld || []).map(([x, z, Lb, Wb, a]) => ({ x, z, L: Lb / 2, W: Wb / 2, c: Math.cos(a), s: Math.sin(a), r: Math.hypot(Lb, Wb) / 2 }));
+    const bld = def.bld || ((typeof window !== 'undefined' && window[{ livorno: 'LV_DATA' }[def.id]]) || {}).bld || [];   // (Livorno's houses: js/data/livorno.js)
+    const houses = bld.map(([x, z, Lb, Wb, a]) => ({ x, z, L: Lb / 2, W: Wb / 2, c: Math.cos(a), s: Math.sin(a), r: Math.hypot(Lb, Wb) / 2 }));
     const byHouse = (x, z, m) => houses.some(h => { const dx = x - h.x, dz = z - h.z; if (dx * dx + dz * dz > (h.r + m) * (h.r + m)) return false;
       return Math.abs(dx * h.c + dz * h.s) < h.L + m && Math.abs(-dx * h.s + dz * h.c) < h.W + m; });
     const out = [];
@@ -63,7 +64,7 @@
 
   const LOOKS = () => ({ shirt: pick(pal.SHIRT), pants: pick(pal.PANTS), hair: pick(['short', 'short', 'long', 'pony', 'bald']), hairCol: pick(pal.HAIR) });
 
-  const POTKE = { spa: 1, nring: 1 };   // (the tracks whose ground round the houses has its footpaths dressed: js/world-stavbe.js okolica)
+  const POTKE = { spa: 1, nring: 1, livorno: 1 };   // (the tracks whose ground round the houses has its footpaths dressed: js/world-stavbe.js okolica)
   EXTRA.push(function (o, T, gH, def) {
     if (!def || def.test || def.pending || !POTKE[def.id]) return null;   // (the footpaths of the tracks with okolica)
     const ps = pathsOf(o, T, def); if (!ps.length) return null;

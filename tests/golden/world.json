@@ -1199,24 +1199,26 @@
   }
  },
  "livorno": {
-  "meshes": 1671,
-  "verts": 1029258,
-  "instances": 34497,
+  "meshes": 1887,
+  "verts": 1279696,
+  "instances": 34348,
   "props": 9,
   "crowd": 428,
-  "world": "aec37aca",
+  "world": "45ad96a",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "23c3607b",
-   "-:MeshPhongMaterial": "b6985ac9",
+   "-:MeshLambertMaterial": "2a64269c",
+   "-:MeshPhongMaterial": "b75d64a3",
    "crowd:MeshLambertMaterial": "1e51600e",
    "flags:MeshLambertMaterial": "34784006",
-   "ao:MeshBasicMaterial": "d594bf11",
+   "ao:MeshBasicMaterial": "98a058c1",
    "tyremarks:MeshBasicMaterial": "cc70dfbf",
    "roadwear:MeshLambertMaterial": "12d606d0",
    "worn:MeshLambertMaterial": "fb5561fc",
-   "brakeBoards:MeshLambertMaterial": "43625280"
+   "brakeBoards:MeshLambertMaterial": "43625280",
+   "sceneThings:MeshLambertMaterial": "6fcc481d",
+   "people:MeshLambertMaterial": "63d8328"
   }
  },
  "jezero": {

@@ -41,9 +41,12 @@ try {
   await startTrack(page, id);
   const tr = await page.evaluate((id) => { const Tr = window.__game.race.track, def = Tr.def, G = window.GEO && GEO.tracks[id], pts = [];
     for (let i = 0; i < Tr.px.length; i += 4) pts.push([Tr.px[i], Tr.pz[i]]);
-    return { G: G || null, bld: def.bld || [], yard: def.houseWays >= 0 ? (def.yard || []).slice(0, def.houseWays) : def.yard || [], pts,   // (the yard without this tool's own rows)
+    const D = window[{ livorno: 'LV_DATA' }[id]];   // (a track whose world data is in js/data/<id>.js: its buildings are there)
+    return { G: G || null, bld: def.bld || (D && D.bld) || [], yard: def.houseWays >= 0 ? (def.yard || []).slice(0, def.houseWays) : def.yard || [], pts,   // (the yard without this tool's own rows)
       frozen: !!(def.test || def.pending), len: Tr.len, n: Tr.px.length }; }, id);
   if (tr.frozen) throw new Error(id + ': testna proga ali proga na odločanju (zamrznjena)');
+  const ownJ = new URL('./' + id + '/' + id + '.json', import.meta.url);   // (a track made by tools/proga-podatki.py and not in GEO: its frame, the origin
+  if (!tr.G && fs.existsSync(ownJ)) { const J = JSON.parse(fs.readFileSync(ownJ, 'utf8')); tr.G = { lat0: J.lat0, lon0: J.lon0, rot: 0, kind: 'real' }; }   // at the start line, no turn)
   if (!tr.G || tr.G.kind !== 'real') throw new Error(id + ': proge ni v GEO v pravem merilu (js/geo.js)');
   // the world's ground under a list of points: [the nearest sample of the road (-1 beyond the band), metres beyond the barrier, metres from the start]
   const probe = (P) => page.evaluate((P) => { const A = World.api, Tr = window.__game.race.track;
