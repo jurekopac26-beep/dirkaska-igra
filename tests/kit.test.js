@@ -196,7 +196,7 @@ function raysThrough(res) {
   console.warn = () => { };   // (the place-holders' fallback warnings as their bodies are built)
   for (const M of Core.MODELS.filter(m => m.kit && !m.retired)) {
     const I = R.kitInfo(M.id), PT = Core.partsOf(M);
-    for (const k in PT) { const p = PT[k], c = I.ranges[k] && I.ranges[k].c; if (p.wh != null) continue; n0++;
+    for (const k in PT) { const p = PT[k], c = I.ranges[k] && I.ranges[k].c; if (p.wh != null || p.tl) continue; n0++;   // (a trailer's part, tl: its look's, not the kit's)
       if (!c) { rows.push(`${M.id} ${k}: no range`); continue; }
       const d = Math.hypot(c[0] - p.lx * M.len / 2, c[1] - p.y, c[2] - p.lz * M.wid / 2); if (d > worst[1]) worst = [M.id + ' ' + k, d];
       if (d > 0.35) rows.push(`${M.id} ${k}: ${d.toFixed(2)} m (range at ${c.map(v => v.toFixed(2)).join(', ')})`); }

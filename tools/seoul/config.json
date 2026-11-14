@@ -1,10 +1,12 @@
 {
   "id": "seoul",
-  "about": "Seul, Južna Koreja (id seoul): the 2.5 km one-way park roads up Namsan hill past the old city wall and down to the finish above Huam-dong, a city track (docs/nove-proge-1-0.md)",
+  "about": "Seul, Južna Koreja (id seoul): the 2.5 km one-way park roads up Namsan hill past the old city wall and the tower on the top and down to the finish above Huam-dong, a city track (docs/nove-proge-1-0.md, Del 2, B11); the route in the one-way direction (the bus roads), with ~245 m of the south circular road before the start line (the grid) and ~240 m of road past the finish (the cars after the line)",
   "box": [37.531, 126.962, 37.567, 127.014],
   "closed": false,
   "route": [
-    [37.54514, 126.99599, "남산남측순환로", "start | service, w357958296, s 0 m"],
+    [37.545154, 126.997711, "남산남측순환로", "run-up: w357958296 node 40, 245 m before the start line"],
+    [37.544393, 126.996826, "남산남측순환로", "run-up: w357958296 node 45, 130 m before the start line"],
+    [37.54514, 126.99599, "남산남측순환로", "start line | service, w357958296 (node 55), s 0 m"],
     [37.54571, 126.99445, "남산남측순환로", "service, w357958296, s 150 m"],
     [37.54644, 126.9932, "남산남측순환로", "service, w357958296, s 298 m"],
     [37.54755, 126.99364, "남산남측순환로", "service, w357958296, s 431 m"],
@@ -21,11 +23,22 @@
     [37.55211, 126.98276, "남산공원길", "service, w379943267, s 2101 m"],
     [37.55222, 126.9812, "소월로", "secondary, w1454603281, s 2246 m"],
     [37.55268, 126.97968, "소월로3길", "secondary, w37399713, s 2398 m"],
-    [37.55334, 126.97936, "소월로3길", "finish | secondary, w37399713, s 2478 m"]
+    [37.55334, 126.97936, "소월로3길", "finish line | secondary, w37399713 (node 3), s 2478 m"],
+    [37.554271, 126.97984, "소월로3길", "run-out: w37399713 node 9, 113 m past the finish line"],
+    [37.554598, 126.980281, "소월로3길", "run-out: the end of w244399272, 166 m past the finish line"],
+    [37.554822, 126.981031, "소월로3길", "run-out: the end of w244399271, 237 m past the finish line"]
   ],
   "prefer": ["남산남측순환로", "남산공원길", "소월로3길", "소월로"],
-  "geoRoads": [],
+  "geoRoads": ["남산남측순환로", "남산공원길"],
   "geoWater": [],
-  "marks": [],
-  "places": []
+  "marks": [
+    ["Stolp", "Tower", "tower", ["w1214950317"]],
+    ["Mestno obzidje", "City wall", "citywall", ["w1279010531"]],
+    ["Osmerokotni paviljon", "Octagonal pavilion", "pavilion", ["w1555991263"]],
+    ["Parkirišče avtobusov", "Bus park", "buspark", ["w379943264"]],
+    ["Šola", "School", "school", ["w404540256"]],
+    ["Knjižnica", "Library", "library", ["w842507788"]]
+  ],
+  "places": [],
+  "dist": {"bld": 250, "walls": 60, "trees": 80, "roads": 70, "lamps": 40, "grid": 300}
 }

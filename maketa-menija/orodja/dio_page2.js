@@ -396,7 +396,7 @@ window.DIO = (function () {
   function wetWorld(B, r) {
     const { w, tex } = B, maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
     w.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
-      if (!m.color || !maps.includes(m.map)) continue;
+      if (!m.color || !(maps.includes(m.map) || m.userData.wear)) continue;   // (and a road of its own texture, as in the game: userData.wear)
       if (!m.userData.dry) m.userData.dry = m.color.clone();
       m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
     const W = w.dyn && w.dyn.wet;

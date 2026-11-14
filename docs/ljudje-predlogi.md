@@ -67,7 +67,7 @@ Na Irohazaki in Tianmenu (strme ceste med zidovi) ni ravnega prostora za prizor,
 
 ## Zdaj (meritev, 1. 11. 2026)
 
-Gledalci ob progi so instancirani kockasti ljudje (`crowdGeo` v `js/world.js`, 112 oglišč na osebo). Kamera za avtom, telefon ležeče, 12 mest na krogu:
+Gledalci ob progi so bili ob tej meritvi instancirani kockasti ljudje (`crowdGeo` v `js/world.js`, 112 oglišč na osebo; od #432 imajo človeško postavo s 115 lastnimi in 165 indeksnimi oglišči, `docs/ljudje-grafika.md`). Kamera za avtom, telefon ležeče, 12 mest na krogu:
 
 | Proga | Ljudi ob progi | Njihova oglišča na sličico (Nizka: povprečje / največ) | Visoka |
 |---|---|---|---|
@@ -115,7 +115,7 @@ Prizori stojijo na mestih, kjer je ograja blizu ceste in je pred njimi ravnina: 
 
 ## Želje po slikah 1–12 (3. 11. 2026) in kaj je narejeno (5. 11. 2026)
 
-Slike so bile: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so. Ko so proge ZDA razen Pikes Peaka postale testne in zamrznjene (odločitev uporabnika 5. 11. 2026), sta odpadla baribalka z mladiči (10, Uncompahgre) in rojstni dan na Big Suru; rojstni dan je v Longfordu. Mesta so iz OSM (API `api.openstreetmap.org/api/0.6/map?bbox=…`, nikoli Google), preverjena z `tools/ljudje/mesta.mjs --preveri` in `tests/ljudje-mesta.test.js`.
+Slike so bile: 1 ribiči, 2 seno, 3 čebelarji, 4 balinanje, 5 šah, 6 rojstni dan, 7 štorklje, 8 race in labodi, 9 koale, 10 baribalka, 11 prašiči in kokoši (Rio do Rastro), 12 konji s hlevom (Štajerska). Prizori 3, 9 in 10 ostanejo, kot so. Ko so proge ZDA razen Pikes Peaka postale testne in zamrznjene (odločitev uporabnika 5. 11. 2026), sta odpadla baribalka z mladiči (10, Uncompahgre) in rojstni dan na Big Suru; rojstni dan je v Longfordu. Ko je Great Alpine Road postala testna (izbira uporabnika 9. 11. 2026: iz Avstralije ostane Bathurst), so odpadli njeni prizori ljudi in koale (9). Mesta so iz OSM (API `api.openstreetmap.org/api/0.6/map?bbox=…`, nikoli Google), preverjena z `tools/ljudje/mesta.mjs --preveri` in `tests/ljudje-mesta.test.js`.
 
 - **1, 2, 4 in 5** (»postavi samo tam kjer je tudi v resnici«):
   - Ribiči na bregu pravega jezera, brez lastnega ribnika (`K.lake`: breg toliko metrov za ograjo; trstičje ob bregu, pomol v vodo; do ograje je daleč, zato ostanejo na mestu in mahajo): Medvode, Zbiljsko jezero, 3651 desno (breg 19,5 m za ograjo, po #153 na cesti v pravi širini); Ouninpohja, jezero ob vasi Ouni (`def.lakes`), 5640 desno (breg 18,5 m).

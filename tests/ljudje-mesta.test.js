@@ -28,7 +28,7 @@ const SITES = ctx.World.peopleKit.SITES, STAFF = ctx.World.peopleKit.STAFF_SCENE
 
 // 1. the tracks
 const defs = new Map(C.TRACKS.map(d => [d.id, d])), unknown = ids.filter(id => !defs.has(id)), test = ids.filter(id => defs.has(id) && defs.get(id).test);
-check(`${all} places on ${ids.length} tracks, all real ones (none on a test track, none on a track the game does not have)`, all > 105 && !unknown.length && !test.length,
+check(`${all} places on ${ids.length} tracks, all real ones (none on a test track, none on a track the game does not have)`, all > 85 && !unknown.length && !test.length,
   (unknown.length ? 'unknown: ' + unknown.join(', ') + '; ' : '') + (test.length ? 'test: ' + test.join(', ') : ''));
 
 const segD = (px, pz, ax, az, bx, bz) => { const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t); };

@@ -1115,6 +1115,7 @@
 
   Object.assign(API, { VRC, VRHC, VRSP, VRSQ, VRT, stubExcl, stubGeo, stubProps, stubRails, stubVerge, vrCol, vrDem, vrDist, vrFar, vrGCol, vrGH, vrGritTex, vrGround, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrSlope, vrStubAt, vrStubH, vrStubs, vrTileGeo, vrTileOn, vrTreeGeo, vrWater, vrsicProps });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { STG: { get: () => STG, set: (v) => { STG = v; } }, VR: { get: () => VR, set: (v) => { VR = v; } }, VRS: { get: () => VRS, set: (v) => { VRS = v; } } });
+  World.keep('STG', 'vrsic');   // (the side roads' table: World.build frees the last build's for the other worlds, vrStubs makes it again in each build that has side roads)
   World.keep('VR', 'vrsic');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.vrsic = (scene, tex, opts) => buildVrsic(scene, tex, opts);
 })();

@@ -4,8 +4,22 @@
 const crypto = require('crypto');
 
 const DT = 1 / 120;
-const trackIds = (C) => C.TRACKS.filter(d => !d.test).map(d => d.id);   // every real track the game has (a new track file is tested
-// automatically); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
+// PROGE=seoul,spa: only these of the real tracks (GitHub's short round of a pull request that changes only tracks: tests/lib/krog.js,
+// .github/workflows/tests.yml); without it every one. A name that is no real track of the game is an error (no test passes having run on
+// nothing), and so is --update with PROGE: the references would keep only these tracks, the others' lost
+const progeEnv = () => (process.env.PROGE || '').split(',').map(s => s.trim()).filter(Boolean);
+function izbrane(ids) {
+  const P = progeEnv();
+  if (!P.length) return ids;
+  if (process.argv.includes('--update')) throw new Error(`PROGE=${P.join(',')} with --update: the references would keep only these tracks (update without PROGE)`);
+  const tuje = P.filter(id => !ids.includes(id));
+  if (tuje.length) throw new Error('PROGE: not a real track of the game: ' + tuje.join(', '));
+  return ids.filter(id => P.includes(id));
+}
+// a check's least number of tracks (the whole list came back): with PROGE exactly as many as named (izbrane: each a real track)
+const najmanj = (n) => progeEnv().length || n;
+const trackIds = (C) => izbrane(C.TRACKS.filter(d => !d.test).map(d => d.id));   // every real track the game has (a new track file is tested
+// automatically; PROGE: only those); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
 const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
@@ -53,7 +67,20 @@ const SETUPS = {
 // (the knocks of the versions, Trki med avti: Simulacija by default, kCollide in core.js, the pack moves otherwise again; from the old times these only grazed or lost
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
-// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off; Killar ev 7:
+// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off; Silkeborg rally 9: from 6 s the
+// wrecked car drives its whole first lap slowly and reaches its box too late for the repair in the 96 s; from 9 s, before the double left, it is repaired at 89 s; Izoard's muscle car 4: from 5 to 6.5 s the same as Bâlea's rally; Sa Calobra rally 5: at 6 s
+// the left lock only dents the car on the stone parapet, no panel off; its muscle car 4: the same at 6 s, no panel off;
+// Dadès 7: from 6 s the left lock only dents the rally car and the muscle car against the parapet, no panel off; from 7 s every car of the crash
+// set-ups loses panels, each of the three newer road cars too (the one the track gets depends on its place in the list: tracks added before it shift it))
+// (Ngorongoro rally 10: up to 8 s the left lock on the rim road of the run-up and past the start line only dents the rally car, no panel off; from
+// 9 s on, further down, a panel comes off every time tried, 9-14 s)
+// (Ella's formula 4: from 6 s it only grazes the verge, no panel off; its truck 5.5 (zbirna N5, Ella's car is the truck there): from 6 s
+// it only rubs the verge, no panel off; at 5.5 s it hits the bank, three panels off)
+// (Porto Moniz prototype 4: at 6 s it only dents the car, no panel off)
+// (Seoul's rally car 5 and muscle car 6.5: from 6 s the left lock only dents them against the concrete blocks, no panel off; its truck 5 (zbirna N6,
+// Seoul's car is the truck there): at 4-4.5 s and at 6-6.5 s it only dents or rubs the blocks, no panel off; at 5 s one panel off)
+// (Espinazo del Diablo's rally 5: from 6 s the left lock only dents the car against the guardrail, no panel off)
+// (Killar ev 7:
 // with Hakone before it in the list the electric car, from 5 to 6.5 s it only dents the car, from 4 s a rescue; Zürich rally 5.5: from 6 s the car only dents itself on the Limmatquai's blocks;
 // Killar's wooden fence on the left is brittle (def.fence.vBreak 0, 9. 11. 2026 at ~22.21): the left lock takes the car through it and over the edge, the
 // fall's damage, no panel off; put back on the road, a rival knocks panels off it: the rally car from 12.75 s (from 12.5 to 14 s in quarter seconds all but
@@ -62,7 +89,9 @@ const SETUPS = {
 // falls over the edge as a body and is put back on the road where it went over (FALL in core.js, 10. 11. 2026; before up to 42 m on, from where it often
 // fell or crashed again) the rally car from 15.5 s and the electric car from 4 s (at 12.75 and 8.25 s each falls once and loses no panel; picked from 4 to 16 s in half seconds)); with the road's relief continuous from start to finish (ruts, ridges and camber, 13. 11. 2026) the rally car
 // from 8.5 s (8.5 and 9 s knock panels off, 8 and 9.5 s not), the formula from 12 s (from 10 to 14.5 s in half seconds all do), the electric car from 7.5 s
-const CRASH_AT = { katu: 4.5, 'zurich/rally': 5.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'killar/ev': 7.5, 'killar/rally': 8.5, 'killar/formula': 12 };
+// (Chapman's Peak's hills behind the barrier line, def.hills: from 6 s the left lock of the rally car and the prototype drives up the hill by the
+// start, no damage; tried from 4 s on in half seconds: rally 5.5, prototype 5)
+const CRASH_AT = { katu: 4.5, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'balea/rally': 6.5, 'portomoniz/lm': 4, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/rally': 5.5, 'chapman/lm': 5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5, 'zurich/rally': 5.5, 'killar/ev': 7.5, 'killar/rally': 8.5, 'killar/formula': 12 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
@@ -123,4 +152,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

@@ -1,7 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320">
   <title>Switzerland</title>
-  <!-- The national flag is square; here in the 2:3 frame of the menu's other flags: a red field with the white cross in the middle (the cross's arms 1/6 longer than wide, the cross 20/32 of the height). -->
-  <rect width="900" height="600" fill="#DA291C"/>
-  <rect x="393.75" y="112.5" width="112.5" height="375" fill="#FFFFFF"/>
-  <rect x="262.5" y="243.75" width="375" height="112.5" fill="#FFFFFF"/>
+  <!-- Square (Coat of Arms Protection Act, 2013, art. 3). A white, free-standing cross on red, its four equal arms each one sixth longer
+       than wide: units 6 + 20 + 6 = 32 across, the arms 6 wide and 7 long from the centre square (1 unit = 10).
+       Red: Pantone 485 C, RGB 255 0 0. -->
+  <rect width="320" height="320" fill="#FF0000"/>
+  <rect x="130" y="60" width="60" height="200" fill="#FFFFFF"/>
+  <rect x="60" y="130" width="200" height="60" fill="#FFFFFF"/>
 </svg>

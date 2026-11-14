@@ -27,7 +27,7 @@ for (const d of real) {
   if (!(s >= 0 && s < T.len) || (d.open && !(s > T.startS && s < T.finishS))) out.push(d.id + ':' + s);
   const k = c.cam; if (!Array.isArray(k) || k.length !== 7 || !k.every(Number.isFinite) || !(k[6] >= 20 && k[6] <= 70) || Math.hypot(k[0] - k[3], k[2] - k[5]) < 15) nocam.push(d.id);
 }
-check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 21 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
+check(`every real track (${real.length}) has its corner in tools/menu-corners.json, inside its race's run, with its camera (20-70 degrees, at least 15 m from what it looks at)`, real.length >= 19 && !nocfg.length && !out.length && !nocam.length, JSON.stringify({ nocfg, out, nocam }));
 const testcfg = Object.keys(CFG).filter(id => dropped.includes(id) || !defs.find(d => d.id === id));
 check('no test track but Vršič (and no track the game has not) in tools/menu-corners.json', !testcfg.length, testcfg.join(', '));
 
@@ -54,8 +54,8 @@ for (const d of real) {
   if (!w || !w.vp9 || !(w.sec >= 5.9 && w.sec <= 8.1) || b.length < 100e3 || b.length > 1.3e6) vbad.push(d.id + ': ' + JSON.stringify({ w, mb: +(b.length / 1e6).toFixed(2) }));
   if (!pd || pd[0] !== 720 || pd[1] !== 720 || q.length > 120e3) vbad.push(d.id + ' poster: ' + JSON.stringify({ pd, kb: Math.round(q.length / 1e3) }));
 }
-const total = sizes.reduce((a, b) => a + b, 0);
-check(`every real track's corner video (VP9, 6-8 s, 0.1-1.3 MB; ${(total / 1e6).toFixed(1)} MB in all) and its poster (720 x 720, at most 120 kB)`, !vbad.length && total < 45e6, vbad.join('; '));
+const total = sizes.reduce((a, b) => a + b, 0), budget = Math.max(45e6, real.length * 1e6);   // (the videos together: 45 MB at the start, then about 1 MB for each real track: every new track brings its own, 0.9 MB on average; zbirna N1-N8 + #494: 50 real tracks, 45.1 MB)
+check(`every real track's corner video (VP9, 6-8 s, 0.1-1.3 MB; ${(total / 1e6).toFixed(1)} MB in all, under ${(budget / 1e6).toFixed(0)} MB) and its poster (720 x 720, at most 120 kB)`, !vbad.length && total < budget, vbad.join('; '));
 
 // the menu's list: exactly the tracks with a video, sorted, no test track (but Vršič: KEEP)
 const have = fs.readdirSync(MAPS).map(f => /^corner-(.+)\.webm$/.exec(f)).filter(Boolean).map(m => m[1]).sort();

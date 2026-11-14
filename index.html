@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="css/napake.css">
 <link rel="stylesheet" href="css/missions.css">
 <link rel="stylesheet" href="css/zabava.css">
+<link rel="stylesheet" href="css/neskoncna.css">
 <link rel="stylesheet" id="menu-css" href="css/menu.css" media="not all">
 </head>
 <body>
@@ -282,7 +283,6 @@
         <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Inženir sporočila radia ekipe tudi izgovori, v angleščini (kot vsi glasovi v igri); ni ga slišati, ko je zvok izklopljen"><span class="rlbl">Glas inženirja</span><div class="seg" data-set="engV"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="eng-test">&#9654; Preizkusi glas</button></div>
         <div class="row" title="Radar, odsek na čas, drift cona, skok in skriti zlati smerniki ob progi, s tremi zvezdicami in rekordom"><span class="rlbl">Izzivi ob cesti</span><div class="seg" data-set="zbIzz"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row" title="Na odprti cesti se zgodi kaj nepričakovanega: kamenje, žival čez cesto, dela na cesti s semaforjem, počasen traktor"><span class="rlbl">Živa cesta</span><div class="seg" data-set="zbCesta"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Tekmec, ki ga zadeneš, se ti brani ostreje in te ne čaka; kdor vozi čisto, mu tekmeci puščajo prostor"><span class="rlbl">Tekmeci si zapomnijo</span><div class="seg" data-set="zbSpomin"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Video najboljšega trenutka po dirki</span><div class="seg" data-set="hlv"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Grafika</span><div class="seg" data-set="quality"><button data-v="retro">Retro</button><button data-v="normal">Normalno</button><button data-v="high">Visoko</button></div></div>
@@ -391,7 +391,7 @@
   <section id="s-over" class="screen"><!-- the wheel rule: two wheels off, the car stopped (game.js gameOver) -->
     <div class="panel over-panel">
       <h2>KONEC IGRE</h2>
-      <p class="desc" id="over-sub">Odpadli sta dve kolesi: avto ne more naprej.</p>
+      <p class="desc" id="over-sub">Odpadlo je kolo: avto ne more naprej.</p>
       <button class="btn primary over-go" data-act="over-again" id="over-again">PONOVI IGRO</button>
       <div class="btns horiz">
         <button class="btn ghost" data-act="to-title">Glavni meni</button>
@@ -548,7 +548,6 @@
     </div>
   </section>
 
-  <div id="wheel-swap"><button id="ws-btn" type="button" aria-label="Zamenjaj kolo"><span class="ic"></span><b id="ws-t">ZAMENJAJ KOLO</b><small id="ws-s">Pritisni tukaj za menjavo kolesa</small><i><s id="ws-bar"></s></i></button><b id="ws-l">ZAMENJAJ KOLO</b></div><!-- the wheel rule, a wheel off with the spare on the roof: a big button, its bar running out at its very foot; a tap on it puts the spare on at once (game.js swapHUD; under the title the same English words in both languages) -->
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">REAL ROADS ATLAS</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
@@ -607,9 +606,38 @@
 <script src="js/tracks/livorno.js"></script>
 <script src="js/tracks/mountbuller.js"></script>
 <script src="js/tracks/balea.js"></script>
+<script src="js/tracks/silkeborg.js"></script>
+<script src="js/tracks/kagerod.js"></script>
+<script src="js/tracks/sosnova.js"></script>
+<script src="js/tracks/izoard.js"></script>
+<script src="js/tracks/pembrey.js"></script>
+<script src="js/tracks/kildare.js"></script>
+<script src="js/tracks/sacalobra.js"></script>
+<script src="js/tracks/kotor.js"></script>
+<script src="js/tracks/bikernieki.js"></script>
+<script src="js/tracks/london.js"></script>
+<script src="js/tracks/zandvoort.js"></script>
+<script src="js/tracks/dades.js"></script>
+<script src="js/tracks/furka.js"></script>
+<script src="js/tracks/santoantao.js"></script>
+<script src="js/tracks/gudauri.js"></script>
+<script src="js/tracks/ngorongoro.js"></script>
+<script src="js/tracks/medeu.js"></script>
+<script src="js/tracks/ella.js"></script>
+<script src="js/tracks/llogara.js"></script>
+<script src="js/tracks/portomoniz.js"></script>
+<script src="js/tracks/seoul.js"></script>
+<script src="js/tracks/espinazo.js"></script>
+<script src="js/tracks/tuzla.js"></script>
+<script src="js/tracks/sepang.js"></script>
+<script src="js/tracks/lombok.js"></script>
+<script src="js/tracks/buriram.js"></script>
+<script src="js/tracks/sakhir.js"></script>
+<script src="js/tracks/lusail.js"></script>
+<script src="js/tracks/riohondo.js"></script>
+<script src="js/tracks/zurich.js"></script>
 <script src="js/tracks/hakone.js"></script>
 <script src="js/tracks/killar.js"></script>
-<script src="js/tracks/zurich.js"></script>
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js">
 <link rel="x-lazy-script" data-lazy="nvpark" href="js/nvpark.js">
 <link rel="x-lazy-script" data-lazy="nvbase" href="js/nvbase.js">
@@ -682,6 +710,7 @@
 <script src="js/tex.js"></script>
 <script src="js/world.js"></script>
 <script src="js/world-zastave.js"></script>
+<script src="js/world-cesta.js"></script>
 <script src="js/world-zivali.js"></script>
 <script src="js/world-ljudje.js"></script>
 <script src="js/world-ljudje2.js"></script>
@@ -700,6 +729,20 @@
 <script src="js/world-bathurst.js"></script>
 <script src="js/world-rio.js"></script>
 <script src="js/world-cpalace.js"></script>
+<script src="js/world-silkeborg.js"></script>
+<script src="js/world-kagerod.js"></script>
+<script src="js/world-sosnova.js"></script>
+<script src="js/world-pembrey.js"></script>
+<script src="js/world-kildare.js"></script>
+<script src="js/world-bikernieki.js"></script>
+<script src="js/world-zandvoort.js"></script>
+<script src="js/world-tuzla.js"></script>
+<script src="js/world-sakhir.js"></script>
+<script src="js/world-sepang.js"></script>
+<script src="js/world-lombok.js"></script>
+<script src="js/world-buriram.js"></script>
+<script src="js/world-lusail.js"></script>
+<script src="js/world-riohondo.js"></script>
 <script src="js/world-rbring.js"></script>
 <script src="js/world-riverside.js"></script>
 <script src="js/world-longford.js"></script>
@@ -729,10 +772,22 @@
 <script src="js/world-marrakesh.js"></script>
 <script src="js/world-troisrivieres.js"></script>
 <script src="js/world-prelaz.js"></script>
+<script src="js/world-medeu.js"></script>
+<script src="js/world-llogara.js"></script>
+<script src="js/world-portomoniz.js"></script>
 <script src="js/data/livorno.js"></script>
 <script src="js/world-livorno.js"></script>
 <script src="js/world-gore.js"></script>
 <script src="js/world-mountbuller.js"></script>
+<script src="js/data/london.js"></script>
+<script src="js/world-london.js"></script>
+<script src="js/world-dades.js"></script>
+<script src="js/world-santoantao.js"></script>
+<script src="js/world-ngorongoro.js"></script>
+<script src="js/world-ella.js"></script>
+<script src="js/data/seoul.js"></script>
+<script src="js/world-seoul.js"></script>
+<script src="js/world-espinazo.js"></script>
 <script src="js/data/hakone.js"></script>
 <script src="js/world-hakone.js"></script>
 <script src="js/data/zurich.js"></script>
@@ -752,6 +807,10 @@
 <script src="js/journey.js"></script>
 <script src="js/intro-data.js"></script>
 <script src="js/menu-car.js"></script>
+<script src="js/menu-tabla.js"></script>
+<script src="js/menu-izbor.js"></script>
+<script src="js/menu-zemlja.js"></script>
+<script src="js/menu-vreme.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/napake.js"></script>
 <script src="js/missions.js"></script>
@@ -796,9 +855,12 @@
 <script src="js/zabava/trener.js"></script>
 <script src="js/zabava/izzivi.js"></script>
 <script src="js/zabava/lov.js"></script>
-<script src="js/zabava/cesta.js"></script>
+<script src="js/zabava/beg.js"></script>
+<script src="js/zabava/drag.js"></script>
+<script src="js/neskoncna.js"></script>
 <script src="js/shramba.js"></script>
 <script src="js/data/voznja.js"></script>
+<script src="js/denar.js"></script>
 <script src="js/lestvica.js"></script>
 <script src="js/game.js"></script>
 </body>

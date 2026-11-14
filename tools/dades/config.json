@@ -1,9 +1,10 @@
 {
   "id": "dades",
-  "about": "Dadès, Maroko (id dades): 3.2 km of the RR704 up the serpentines and along the Dadès gorge, 4 hairpins (docs/nove-proge-1-0.md)",
+  "about": "Dadès, Maroko (id dades): 3.2 km of the RR704 up the serpentines and along the Dadès gorge, 4 hairpins (docs/nove-proge-1-0.md); the line from 204 m before the start line (the grid) to 256 m past the finish (the cars' slots)",
   "box": [31.511, -5.943, 31.556, -5.9],
   "closed": false,
   "route": [
+    [31.5234, -5.92742, null, "run-up for the grid | secondary, w431452482, 204 m before the start line"],
     [31.52509, -5.9266, null, "start | secondary, w431452482, s -1 m"],
     [31.5263, -5.92608, null, "secondary, w431452482, s 149 m"],
     [31.52739, -5.92596, null, "secondary, w431452482, s 291 m"],
@@ -25,11 +26,13 @@
     [31.53858, -5.91905, null, "secondary, w431452482, s 2697 m"],
     [31.53937, -5.91785, null, "secondary, w431452482, s 2843 m"],
     [31.54077, -5.91775, null, "secondary, w431452482, s 3004 m"],
-    [31.54172, -5.91628, null, "finish | secondary, w431452482, s 3233 m"]
+    [31.54172, -5.91628, null, "finish | secondary, w431452482, s 3233 m"],
+    [31.54342, -5.91452, null, "the cars' slots past the finish line | secondary, w431452482, 256 m past it"]
   ],
   "prefer": [""],
   "geoRoads": [],
   "geoWater": [],
   "marks": [],
-  "places": []
+  "places": [],
+  "dist": {"grid": 480}
 }

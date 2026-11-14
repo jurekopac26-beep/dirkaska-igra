@@ -179,7 +179,7 @@ const repack = (o) => L.pack(J(o));
 
   // 5. the size
   {
-    const table = L.keyTable(C.TRACKS), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;
+    const table = L.keyTable(C.TRACKS.filter(d => !d.test)), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;   // (the real tracks: the test ones go before the release, CLAUDE.md)
     for (const k of table.keys()) { t[k] = [60000 + Math.floor(Math.random() * 600000), 300 + (i % 20), cars[i % cars.length]]; i++; }
     const P = await player('Turbo Tina', t), l = await L.link(P.pk, []);
     check(`every record of every track (${Object.keys(t).length} times) in one link: at most 8 000 characters`, l.z.length <= 8000 && l.n === 0, l.z.length + ' characters');
@@ -198,9 +198,9 @@ const repack = (o) => L.pack(J(o));
     check('the table: the fastest first, the player in it; their place, who is ahead and by how much', rs.map(r => r.name).join() === 'lisica (2),Lisica,Tina,Kapitan K' && pl.at === 3 && pl.n === 4 && pl.ahead.name === 'Lisica' && pl.gap === 1000, J(rs.map(r => [r.name, r.ms])));
     check('an equal time: the player first; not in the table without a time', L.place(L.rows(S, 'spa@cs', { name: 'Tina', ms: 134000 })).at === 2 && L.place(L.rows(S, 'spa@cs', null)) === null);
     const table = L.keyTable(C.TRACKS);
-    const has = ['spa@cs', 'spa@nova', 'vrsic@cs', 'vrsic-tt@cs', 'vrsic-tt-wet@nova', 'vrsic-traffic@cs', 'vrsic-police@cs', 'pikes@cs', 'pikes-wet@cs', 'pikes-race@cs', 'pikesg-race@nova', 'ouninpohja2@cs', 'ouninpohja2-wet@cs'];
-    const not = ['ouninpohja@cs', 'spa-wet@cs', 'vrsic-race@cs', 'pikes-tt@cs', 'vrsic-wet@cs'];
-    check('the record keys as the game makes them (recId, the way to drive, the rain of a time trial, the physics)', has.every(k => table.has(k)) && not.every(k => !table.has(k)), has.filter(k => !table.has(k)).concat(not.filter(k => table.has(k))).join());
+    const has = ['spa@cs', 'spa@nova', 'vrsic@cs', 'vrsic-tt@cs', 'vrsic-tt-wet@nova', 'vrsic-traffic@cs', 'vrsic-police@cs', 'pikes@cs', 'pikes-wet@cs', 'pikes-race@cs', 'pikesg-race@nova', 'ouninpohja2@cs', 'ouninpohja2-wet@cs', 'balea-tt-winter@cs', 'balea-tt-winter-wet@nova', 'pikes-winter@cs', 'pikes-winter-wet@cs', 'vrsic-tt-winter@cs', 'katu-winter@cs'];
+    const not = ['ouninpohja@cs', 'spa-wet@cs', 'vrsic-race@cs', 'pikes-tt@cs', 'vrsic-wet@cs', 'balea-winter@cs', 'spa-winter@cs', 'vrsic-winter@cs', 'pikes-race-winter@cs', 'pikes-wet-winter@cs'];
+    check('the record keys as the game makes them (recId, the way to drive, the winter and the rain of a time trial, the physics)', has.every(k => table.has(k)) && not.every(k => !table.has(k)), has.filter(k => !table.has(k)).concat(not.filter(k => table.has(k))).join());
     check('which time each key is', table.get('spa@cs').kind === 'lap' && table.get('vrsic@cs').kind === 'up' && table.get('vrsic-tt@cs').kind === 'tt' && table.get('vrsic-police@cs').kind === 'police' && table.get('vrsic-traffic@cs').kind === 'traffic' && table.get('pikes@cs').kind === 'tt' && table.get('pikes-race@cs').kind === 'up' && table.get('ouninpohja2@cs').kind === 'tt');
     const day0 = L.dayOf(NOW), St = { friends: {}, hidden: [], mine: {}, seen: false };
     const recs = { 'spa@cs': { bestLap: 134.3101, bestRace: 300 }, 'vrsic-tt@cs': { bestTime: 401.5, board: [{ time: 401.5, carId: 'vortex', date: NOW - 3 * DAY }] }, 'vrsic@cs': { bestRace: 420.25 }, 'vrsic-police@cs': { bestRace: 380, escapes: 2 }, 'xx@cs': { bestLap: 5 } };

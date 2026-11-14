@@ -1,6 +1,6 @@
 /* Vehicle 'medved' — MEDVED 4x4: a boxy luxury off-roader dressed for the outback. Signature features: 1) a tall slab-sided box with flat
    glass, 2) a spare wheel on the side-hinged tailgate, a ladder beside it up to the roof, 3) a roof rack the length of the roof, a light bar
-   across its front, its load (two sand boards, two jerrycans, a bag under a tarp), 4) round headlamps and a slatted grille behind a bull bar
+   across its front, its load (two sand boards, a bag under a tarp), 4) round headlamps and a slatted grille behind a bull bar
    with a winch and two spot lamps, 5) flared arches over big all-terrain tyres, a snorkel up the right A-pillar, rock sliders under the
    doors. L 4.80 W 1.98 H 1.95, wheelbase 2.85, overhangs F 0.90 R 1.05 (m). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
@@ -20,11 +20,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 50000, pk: 'open', field: ['medved'],
     snd: { kind: 'v8', hz: 0.8, loud: 1.1 },
     expect: { t100: [3.18, 3.73], vmax: [184, 195], latG: [1.99, 2.09], d100: [25.8, 28.5] },
-    partNames: { tailgate: 'tailgate', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
+    partNames: { tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
       plate: 'number plate', wiperFront: 'windscreen wipers', wiperRear: 'rear wiper' },
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
-        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with its spare wheel and the ladder on it)
+        tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with the ladder on it, its spare wheel a part of its own on it)
+        spare: { z: 1, th: 1, m: 10, r: 0.38, h: 0.23, lx: -0.958, lz: 0, y: 1.06, on: 'tailgate', spare: 1 },   // (Core's spare: it wobbles from 50 % of the damage, off at 80 %; with the gate)
         roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.24, lz: 0, y: 1.88 },     // (with its light bar and its load)
         bullBar: { z: 0, th: 0.45, m: 10, rW: 0.22, h: 0.15, lx: 0.985, lz: 0, y: 0.97 },    // (steel: it takes the first knock, before the bumper)
         // (as KOLIBRI's: the round lamps in the fenders' pods parts of their own, mounted on the fenders (they go with them); a hit on their
@@ -218,18 +219,19 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           for (const z of [-0.46, -0.68]) K.bar([-2.205, 0.7, z], [-2.175, 1.95, z], 0.016, T, { n: 4 });
           for (const y of [0.86, 1.13, 1.4, 1.67]) K.rect(-2.205 + (y - 0.7) * 0.024, y, -0.57, 0.22, 0.026, T, { dir: '-x' });
         }, { hinge: [[-2.17, 0.66, 0.84], [-2.17, 1.74, 0.84]] });
-        // ---- the spare wheel on the tailgate (its carrier on the gate's frame): the tyre, a cover over the rim in the paint; it swings open and
-        //      leaves with the gate (or by itself: its sub-range 'spare') ----
-        K.part('tailgate', () => {
+        // ---- the spare wheel on the tailgate (its carrier on the gate's frame): the tyre, a cover over the rim in the paint; a part of its own on
+        //      the gate (parts.extra.spare, on: 'tailgate'): it swings open and leaves with the gate, or by itself (Core's spare: at 80 % of the
+        //      damage, wobbling from 50 %) ----
+        K.part('spare', () => {
           const TY = [0.045, 0.045, 0.05], ring = (x) => { const R = []; for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, r = i % 2 ? 0.35 : 0.38; R.push([x, 1.06 + Math.sin(a) * r, Math.cos(a) * r]); } return R; };
           K.skin([ring(-2.18), ring(-2.41)], TY, null, TY);                                  // the tyre: its tread in blocks (its face to the gate unseen)
           K.discX(-2.412, 1.06, 0, 0.235, 10, [0.66, 0.67, 0.7], -1);                       // the rim's edge round
           K.discX(-2.417, 1.06, 0, 0.2, 10, P, -1);                                         // a cover over it, in the paint
           K.bar([-2.2, 0.98, 0], [-2.17, 0.66, 0], 0.03, B, { n: 4 });                       // the carrier's arm down to the frame
-        }, { sub: 'spare' });   // (its own sub-range: Razbijanje · nov način knocks it off the gate in a hard crash from behind)
+        });
         // ---- the roof rack the length of the roof (never crushed): the frame on its feet, a slat either side of the start number; the light bar
-        //      as its front member (four round lamps); the load on it, seen from above: two orange sand boards along its sides, two jerrycans
-        //      lying at its back, a bag under a tarp strapped down at its front ----
+        //      as its front member (four round lamps); the load on it, seen from above: two orange sand boards along its sides, a bag under
+        //      a tarp strapped down at its front (no jerrycans: the user's decision of 9. 11. 2026, docs/avti-kolibri.md) ----
         K.part('roofRack', () => {
           for (const sd of [-1, 1]) K.box(-0.68, 1.865, sd * 0.8, 2.68, 0.095, 0.05, 0, B, null, true);   // the frame: its sides, its rear end
           K.box(-2.015, 1.865, 0, 0.05, 0.095, 1.65, 0, B, null, true);
@@ -238,12 +240,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           const RL = K.fitted.relijske_luci || 0;   // (the garage's roof bar, mounts.relijske_luci 9-12, in the light bar's place)
           if (!(RL >= 9 && RL <= 12)) { K.box(0.675, 1.86, 0, 0.1, 0.12, 1.65, 0, B, null, true);   // the light bar
             for (const z of [-0.5, -0.17, 0.17, 0.5]) K.discX(0.727, 1.92, z, 0.042, 6, K.lampHead, 1); }
-          const OR = K.rgb(0xf08a1c), ORD = [0.6, 0.29, 0.05], GN = [0.16, 0.26, 0.12], TP = [0.52, 0.48, 0.36];
+          const OR = K.rgb(0xf08a1c), ORD = [0.6, 0.29, 0.05], TP = [0.52, 0.48, 0.36];
           for (const sd of [-1, 1]) {   // the sand boards (their studded tread darker)
             K.box(-1.37, 1.9, sd * 0.6, 1.15, 0.04, 0.32, 0, OR, null, true);
             for (const x of [-1.75, -1.37, -0.99]) K.rect(x, 1.942, sd * 0.6, 0.2, 0.2, ORD, { dir: 'y' });
           }
-          for (const z of [-0.19, 0.19]) K.box(-1.74, 1.9, z, 0.47, 0.17, 0.34, 0, GN, [0.2, 0.32, 0.15], true);   // the jerrycans (dark green)
           const bag = [[-0.4, 0], [-0.43, 0.12], [-0.34, 0.24], [0.34, 0.24], [0.43, 0.12], [0.4, 0]];
           K.skin([0.0, 0.55].map(x => bag.map(([z, h]) => [x, 1.9 + h, z])), TP, TP, TP);   // the bag under its tarp, its two straps
           for (const x of [0.13, 0.42]) K.rect(x, 2.143, 0, 0.045, 0.66, B, { dir: 'y' });
@@ -262,10 +263,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.cyl([0.62, 1.2, -0.42], [0.58, 1.3, -0.42], 0.19, [0.1, 0.1, 0.11], { n: 8, inner: true, part: 'body' });
         for (const sd of [-1, 1]) K.box(0.01, 0.5, sd * 0.89, 0.08, 0.7, 0.06, 0, P, null, false, { inner: true, part: 'body' });
         K.box(0.32, 0.47, 0, 0.62, 0.42, 0.24, 0, D, null, false, { inner: true, part: 'body' });   // the console between the front seats
-        // the load behind the rear bench (what the chase camera sees once the tailgate is gone): two jerrycans, a crate; the housings over the
+        // the load behind the rear bench (what the chase camera sees once the tailgate is gone): a crate; the housings over the
         // rear wheels (the tubs are seen from outside only: from the load bay they would show the tyres)
         for (const sd of [-1, 1]) K.box(-1.35, 0.46, sd * 0.75, 0.92, 0.42, 0.26, 0, K.lining, null, true, { inner: true, part: 'body' });
-        for (const z of [0.52, 0.28]) K.box(-1.95, 0.47, z, 0.32, 0.46, 0.16, 0, [0.27, 0.33, 0.18], null, true, { inner: true, part: 'body' });
         K.box(-1.62, 0.47, -0.36, 0.48, 0.34, 0.5, 0, [0.42, 0.33, 0.22], null, true, { inner: true, part: 'body' });   // (clear of the wheel's tub)
         K.engine(1.68, 0.62, 0, { l: 0.72, w: 0.66, h: 0.46 });
         // (none stock: the garage's exhaust, tow points, kit, stripes, decals, sun strip and calipers where mounts has them; the hidden parts)

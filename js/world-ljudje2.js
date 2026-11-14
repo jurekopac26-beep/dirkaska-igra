@@ -996,7 +996,7 @@
       C.man(Object.assign({ hair: 'bald' }, PARA), { act: { a: pC[0], b: pC[1], pose: 'resevalci_kavaDol', face: Lr, hold: [['cup', 1]] }, bliza: { look: 'car' }, run: false,
         fence: { a: pC[0], b: pC[1], pose: 'resevalci_kavaDol', face: Lr, hold: [['cup', 1]], look: 'car' } });
     } };
-  site('spa', [['resevalci', 4736, 1]]); site('bathurst', [['resevalci', 5296, -1]]); site('suzuka', [['resevalci', 3510, -1]]);
+  site('spa', [['resevalci', 4736, 1]]); site('bathurst', [['resevalci', 5296, -1]]);
 
   /* 2 · Odvozna služba (Nürburg, Štajerska, Montréal: where a car went off) — the flatbed recovery truck behind the barrier with its rear
      to the coming cars, a plain car on its bed on the winch's cable, the amber beacon on the cab, stacks of old tyres and sacks of absorbent
@@ -1134,7 +1134,7 @@
       C.man(Object.assign({}, CREW, { hat: 'beanie', hatCol: 0x31406e }), { act: { a: 5.63, b: 2.7, pose: 'carryWalk', face: fC, hold: BAG },
         bliza: { pose: 'carry', face: fC, look: 'car' }, run: false });   // (where he stopped, turned to the barrier)
     } };
-  site('bathurst', [['delavci', 744, -1]]); site('suzuka', [['delavci', 4454, -1]]); site('marrakesh', [['delavci', 1424, -1]]);
+  site('bathurst', [['delavci', 744, -1]]); site('marrakesh', [['delavci', 1424, -1]]);
 
   /* 2 · TV ekipa (Spa, Montréal, Štajerska: behind the barrier on a straight) — a television crew recording a piece by the track: the
      reporter, her back to the track, talks into her microphone to the camera; the cameraman with the camera on his shoulder, the sound man
@@ -1297,9 +1297,7 @@
   // else there and no side road (a car may drive into one, the police waits in it), at least 260 m from the other fans' scenes (the staff's
   // stand by the marshals' posts: 100 m; tools/ljudje/mesta.mjs, --preveri; tests/ljudje-mesta.test.js)
   site('medvode', [['kotlicek', 1384, 1], ['badminton', 2456, 1], ['nogomet', 3208, 1]]);
-  site('ouninpohja', [['selfie', 3744, 1], ['radio', 5296, 1], ['kotlicek', 6696, 1], ['nogomet', 7024, -1]]);
   site('harju', [['plaza', 1856, -1]]);
-  site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6992, -1]]);
   site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);
   site('pikes', [['radio', 3824, 1]]);

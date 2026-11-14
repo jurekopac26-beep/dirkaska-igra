@@ -368,7 +368,7 @@ Igra bo naprodaj, zato maketa ne uporablja ničesar, kar bi bilo lahko pravno sp
   - Colorado: *Hansen's Corner* → *Reservoir Bend*,
   - Ouninpohja: *Amazon* → *Fast Crest*, *Mutanen* → *Farm Bend*.
   
-  **V igri (veja `main`) so ta imena še vedno** – igre nisem spreminjal. Pred prodajo jih je treba zamenjati tudi tam.
+  V igri so ta imena zamenjana z enakimi opisnimi imeni (Mie, Ardennes, Eifel, Colorado; *Speaker's Corner* in *Hansen's Corner* 8. 11. 2026, #526, tam tudi imena dirkališč na tablah Nürburga in Spa ter ime prireditve na Pikes Peaku). Ostala so samo na Monte Carlu (testna proga) in na Ouninpohji (gre v test po odločitvi uporabnika 8. 11. 2026), ki ju pred objavo izbrišemo.
 - Besedila so napisana na novo (nič ni prepisano).
 - Zastave držav so narisane preprosto; slovenska ima poenostavljen grb (zastava kot simbol države je dovoljena, grb je stiliziran).
 - Glasba je izvirna (glej zgoraj).

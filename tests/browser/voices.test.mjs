@@ -8,7 +8,7 @@
 // 3. Vršič, the run from the police: the police radio's captions in Slovenian, its voice the English twin of each line (the call sign in
 //    English first) in an English voice, never the Slovenian one the phone has.
 //   node tests/browser/voices.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
 
 const T = checker('the voices in English, the engineer\'s voice (cpalace, vrsic)');
 // the fake speech engine (before the game's scripts: Comm reads speechSynthesis as it loads)
@@ -18,7 +18,11 @@ const FAKE = () => {
   let cur = null; window.__said = [];
   const synth = { speaking: false, pending: false, paused: false, getVoices: () => voices.slice(), pause() { }, resume() { }, addEventListener() { }, removeEventListener() { },
     speak(u) { if (!String(u.text).trim()) return; window.__said.push({ text: u.text, lang: u.lang, voice: u.voice ? u.voice.name : '', t: performance.now() }); cur = u;   // (the unlock's empty line: not said)
-      setTimeout(() => { if (cur === u) { cur = null; if (u.onend) u.onend(); } }, 300); },
+      // (a line ends after 0.3 s of real time and two frames of the page: on a slow machine the page draws a frame in seconds, and the game's
+      // own frames, which duck the engines while he talks, must have had their turn before the line is over)
+      const t0 = performance.now(); let fr = 0;
+      const tick = () => { if (cur !== u) return; if (++fr >= 2 && performance.now() - t0 >= 300) { cur = null; if (u.onend) u.onend(); } else requestAnimationFrame(tick); };
+      requestAnimationFrame(tick); },
     cancel() { const u = cur; cur = null; if (u && u.onerror) u.onerror(); } };
   Object.defineProperty(window, 'speechSynthesis', { configurable: true, get: () => synth });
   window.SpeechSynthesisUtterance = function (t) { this.text = t; };
@@ -26,29 +30,42 @@ const FAKE = () => {
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'cpalace', weather: 'dry', damage: 0, sound: 1, comm: 0, radio: 1, length: 'long', intro: 2 },
+  // (the game's test mode, ?proga=cpalace&t=1&seme=17 (tests/README.md · Hiter vstop): the race draws its random numbers from its seed (Race
+  // opts.repro) and its start is stepped paused (quickRun), the same race every run, on any machine. Started from the menus, it drew from the
+  // page's Math.random, as the drawn frames do, and its start ran on real frames: another race each run, now and then with the first stop
+  // missed at the way in and no hand-back to see (CI of #460, 9. 11. 2026). Another seed if a change to the game's cars moves this race)
+  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=cpalace&t=1&seme=17', { quality: 'low', shadows: 0, camera: 'chase', weather: 'dry', damage: 0, sound: 1, comm: 0, radio: 1, length: 'long', intro: 2 },
     { width: 640, height: 360 }, { init: FAKE, context: { reducedMotion: 'reduce' } });
   const hide = () => page.evaluate(() => { const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
-  await startTrack(page, 'cpalace');
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
   await page.evaluate(() => { window.__game.pause(); window.__n = { open: 0, close: 0, click: 0, duck: 0 };   // (the radio's sounds and the engines ducked, counted)
     for (const [k, f] of [['open', 'radioOpen'], ['close', 'radioClose'], ['click', 'radio']]) { const o = Sfx[f]; Sfx[f] = function () { window.__n[k]++; return o.apply(this, arguments); }; }
     const d = Sfx.setDuck; Sfx.setDuck = function (v) { if (v) window.__n.duck++; return d.apply(this, arguments); }; });
   await hide();
   // in the page: on to the next stop and its hand-back (the autopilot asked for at the end of a lap; HUD frames now and then: the radio
   // follows the race), then three HUD frames; what the radio and the voice did
-  const handBack = () => page.evaluate(() => {
-    const g = window.__game, P = g.race.player, Tk = g.race.track; Render.scene.visible = false; let ap = false;
+  const handBack = () => page.evaluate(async () => {
+    const g = window.__game, P = g.race.player, Tk = g.race.track, wt = (ms) => new Promise(r => setTimeout(r, ms)); Render.scene.visible = false; let ap = false, again = 0;
     for (let k = 0; k < 60000; k++) {
-      if (P.lap >= 1 && !P.inPit && !Tk.pitAt(P.q.s) && !P.pitWant && !ap) P.pitWant = true;
+      // (a touch of another car in the crowd can spin the player's car on the autopilot into a wall, and it has no reverse: put back on the road, as pitexit does)
+      if (g.phase === 'racing' && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) g.race.rescue(P);
+      if (g.phase === 'racing' && P.lap >= 1 && !P.inPit && !Tk.pitAt(P.q.s) && !P.pitWant && !ap) P.pitWant = true;
       if (P.inPit || g.pitAuto.st) g.sim(1 / 60, false, 0, 0); else g.sim(0.1, true);
-      if (g.pitAuto.st) ap = true; else if (ap) break;   // (the autopilot gone after it drove: handed back)
+      if (g.pitAuto.st) ap = true;
+      else if (ap) {
+        if (P.inPit) break;   // (the autopilot gone after it drove, the car still in the lane: handed back)
+        // (gone outside the lane: this visit was given up before the stop, the car left the lane or was put back on the road, and there is no
+        // hand-back to see; the radio lets its last line finish, then the next visit is asked for, up to four times)
+        ap = false; if (++again > 4) break;
+        Render.scene.visible = true; await wt(800); Render.scene.visible = false;
+      }
       if (k % 10 === 0) g.hud(1 / 60);
     }
     const n0 = Object.assign({}, window.__n), s0 = window.__said.length;
     for (let k = 0; k < 3; k++) g.hud(0.05);
     Render.scene.visible = true;
     const el = document.getElementById('h-teamradio');
-    return { ap, inPit: P.inPit, lap: P.lap, box: el.classList.contains('on') ? el.lastElementChild.textContent : '', log: g.teamRadio.log.slice(-3), said: window.__said.slice(s0), n0, n: Object.assign({}, window.__n), talking: g.comm.talking() };
+    return { ap, again, inPit: P.inPit, lap: P.lap, box: el.classList.contains('on') ? el.lastElementChild.textContent : '', log: g.teamRadio.log.slice(-3), said: window.__said.slice(s0), n0, n: Object.assign({}, window.__n), talking: g.comm.talking() };
   });
   const wait = (ms) => page.waitForTimeout(ms);
 
