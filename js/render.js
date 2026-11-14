@@ -4784,6 +4784,7 @@ const Render = (function () {
 
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
+  const GARAGE_LEN = 6.4, GARAGE_MODEL = 6.0;   // (m: the longest body the garage shows full size, Core's limit for every vehicle but the coach; a longer one's scale model's length: garageK)
   function sharedCarRes() {
     const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values()]);
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
@@ -4847,6 +4848,14 @@ const Render = (function () {
   // the look's geometry (tlBuild): the builder run once a level (B.lo: 0 the look, the player's trailer and the previews; 1 the light look,
   // a rival's: fewer sides, no small parts, as the builder chooses; 2 the shadow, drawn only into the shadow map), on the full look's picture
   // (the lighter ones not painted again)
+  // a kit car's box for the trailer that carries it (B.car): its body's ends, its height and its width (its mirrors left out), kept on its entry
+  function tlCarBox(E) {
+    if (E.tlBox) return E.tlBox;
+    const p = E.geo.attributes.position.array, n = E.geo.userData.outerN; let x0 = Infinity, x1 = -Infinity, h = 0, w = 0;
+    for (let i = 0; i < n; i++) { const x = p[i * 3], y = p[i * 3 + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y > h) h = y; }
+    for (let i = 0; i < n; i++) if (p[i * 3 + 1] < h * 0.55 && Math.abs(p[i * 3 + 2]) > w) w = Math.abs(p[i * 3 + 2]);
+    return (E.tlBox = { x0, x1, h, w: w * 2 });
+  }
   function tlGeo(M, lo) {
     const D = M.trailer, P = [], N = [], C = [], UV = [], LP = [], LN = [], lamps = [], WH = [-1, -1], SPN = [];
     let cv = null, TW = 1, TH = 1;
@@ -4941,6 +4950,53 @@ const Render = (function () {
       // a part the core throws off (a spare tyre on the trailer's rack: its entry's tl and spare, Core.SPARE): what fn builds is part name's
       // ('': the bits that go with them all, their straps); tlSpare rocks them on the rack and takes them off (tlCut, tlPiece)
       spare(fn, name) { const s = P.length / 3; fn(); if (P.length / 3 > s) SPN.push({ n: name || '', s, e: P.length / 3 }); },
+      // an elliptic loft along x (the wind turbine blade's: js/cars/vetrnica.js): its sections [x, yc, ry, rz], o.n sides, smooth along and
+      // around; o.caps: its two ends closed
+      loft(S, k, o) {
+        const K = col(k), n = (o && o.n) || 12;
+        for (let j = 0; j < S.length - 1; j++) { const a = S[j], b = S[j + 1];
+          for (let i = 0; i < n; i++) { const f0 = TL_TAU * i / n, f1 = TL_TAU * (i + 1) / n;
+            const p0 = ell(a[0], a[1], a[2], a[3], f0, 1), p1 = ell(a[0], a[1], a[2], a[3], f1, 1), q0 = ell(b[0], b[1], b[2], b[3], f0, 1), q1 = ell(b[0], b[1], b[2], b[3], f1, 1);
+            const m0 = eln(a[2], a[3], f0), m1 = eln(a[2], a[3], f1), w0 = eln(b[2], b[3], f0), w1 = eln(b[2], b[3], f1);
+            tri(p0, p1, q1, m0, m1, w1, K); tri(p0, q1, q0, m0, w1, w0, K); } }
+        if (o && o.caps) for (const [e, sx] of [[S[0], S[0][0] > S[S.length - 1][0] ? 1 : -1], [S[S.length - 1], S[0][0] > S[S.length - 1][0] ? -1 : 1]]) { const c = [e[0], e[1], 0], nn = [sx, 0, 0];
+          for (let i = 0; i < n; i++) tri(c, ell(e[0], e[1], e[2], e[3], TL_TAU * i / n, 1), ell(e[0], e[1], e[2], e[3], TL_TAU * (i + 1) / n, 1), nn, nn, nn, K); }
+      },
+      // one of the game's cars standing on the trailer (the car carrier's load: js/cars/avtovoz.js): its model's id, its body's middle x, the
+      // deck under its tyres y, its middle z; o.k its colour, o.rev: its nose to the rear. The look: its kit body (the outside, in that
+      // colour) and its light wheels, in the trailer's one geometry (no draw call more); the light look (a rival's): its outline in o.n
+      // slices (the body to the waist, the glass house over it, four six-sided wheels: some 150 triangles); the shadow: a box. false: no such car
+      car(id, x, y, z, o) {
+        const Mc = Core.MODELS.find(m => m.id === id), E = Mc && Mc.kit ? kitEntry(Mc) : null; if (!E) return false;
+        const Q = tlCarBox(E), s = o && o.rev ? -1 : 1, k = o && o.k != null ? o.k : 0xc0392b, xm = (Q.x0 + Q.x1) / 2, L = Q.x1 - Q.x0, hw = E.body.hw;
+        if (lo === 2) { B.box(x, y + 0.2 + (Q.h - 0.2) / 2, z, L, Q.h - 0.2, Q.w, 0x222222); return true; }
+        if (lo === 1) {
+          const n = (o && o.n) || 8, T = new Array(n + 1).fill(0), pa = E.geo.attributes.position.array, yb = 0.2, belt = yb + 0.58 * (Q.h - yb), W2 = Q.w / 2, G2 = W2 * 0.8;
+          for (let i = 0, nv = E.geo.userData.outerN; i < nv; i++) { const j = Math.max(0, Math.min(n, Math.round((pa[i * 3] - Q.x0) / L * n))); if (pa[i * 3 + 1] > T[j] && Math.abs(pa[i * 3 + 2]) < W2 * 0.7) T[j] = pa[i * 3 + 1]; }
+          const kc = col(k), KS = [kc[0] * 0.86, kc[1] * 0.86, kc[2] * 0.86], GL = [GLASS[0], GLASS[1], GLASS[2]], X = (j) => x + s * (Q.x0 + L * j / n - xm);
+          const top = (xa, ya, xb, yb2, w, kk) => { const nn = unit([-(yb2 - ya) * Math.sign(xb - xa), Math.abs(xb - xa), 0]); quad([xa, ya, z - w], [xb, yb2, z - w], [xb, yb2, z + w], [xa, ya, z + w], nn, kk); };
+          for (let j = 0; j < n; j++) { const xa = X(j), xb = X(j + 1), t0 = Math.max(T[j], yb + 0.3), t1 = Math.max(T[j + 1], yb + 0.3), l0 = Math.min(t0, belt), l1 = Math.min(t1, belt);
+            for (const sd of [-1, 1]) quad([xa, y + yb, z + sd * W2], [xb, y + yb, z + sd * W2], [xb, y + l1, z + sd * W2], [xa, y + l0, z + sd * W2], [0, 0, sd], KS);
+            top(xa, y + l0, xb, y + l1, W2, kc);
+            if (t0 > belt + 0.04 || t1 > belt + 0.04) { const g0 = Math.max(t0, belt), g1 = Math.max(t1, belt);
+              for (const sd of [-1, 1]) quad([xa, y + belt, z + sd * G2], [xb, y + belt, z + sd * G2], [xb, y + g1, z + sd * G2], [xa, y + g0, z + sd * G2], [0, 0, sd], GL);
+              top(xa, y + g0, xb, y + g1, G2, Math.abs(g1 - g0) > 0.1 ? GL : kc); } }
+          for (const [j, sx] of [[0, -s], [n, s]]) { const xx = X(j), t = Math.min(Math.max(T[j], yb + 0.3), belt); quad([xx, y + yb, z - W2], [xx, y + yb, z + W2], [xx, y + t, z + W2], [xx, y + t, z - W2], [sx, 0, 0], KS); }
+          for (const ax of [Mc.a, -Mc.b]) for (const sd of [-1, 1]) B.cyl([x + s * (ax - xm), y + Mc.rw, z + sd * (hw - 0.12)], [x + s * (ax - xm), y + Mc.rw, z + sd * (hw + 0.1)], Mc.rw, 0x141414, { n: 6, capK: 0x7d8186 });
+          return true;
+        }
+        // (each corner as it is: its colour its own, the left wheels mirrored, their winding turned with them)
+        const put = (g, cnt, ox, oy, oz, mz, kf) => { const pa = g.attributes.position.array, na = g.attributes.normal && g.attributes.normal.array, ca = !kf && g.attributes.color && g.attributes.color.array, ix = g.index && g.index.array, nn = ix ? ix.length : cnt != null ? cnt : pa.length / 3, kk = kf || [0.08, 0.08, 0.08];
+          for (let t = 0; t + 2 < nn; t += 3) for (let c = 0; c < 3; c++) { const q = t + (mz < 0 && c ? 3 - c : c), v = (ix ? ix[q] : q) * 3;
+            P.push(x + s * (pa[v] + ox - xm), y + pa[v + 1] + oy, z + s * (mz * pa[v + 2] + oz));
+            if (na) N.push(s * na[v], na[v + 1], s * mz * na[v + 2]); else N.push(0, 1, 0);
+            if (ca) C.push(ca[v], ca[v + 1], ca[v + 2]); else C.push(kk[0], kk[1], kk[2]); UV.push(-1, -1); } };
+        const g = kitRecolour(E.geo.clone(), k, true, 0), W = kitWheels(E, false);
+        put(g, g.userData.outerN, 0, 0, 0, 1); g.dispose();
+        if (E.tail && E.tail.attributes && E.tail.attributes.position) put(E.tail, null, 0, 0, 0, 1, colArr(0x6a1212));
+        for (const sd of [-1, 1]) { put(W.f, null, Mc.a, Mc.rw, sd * hw, sd); put(W.r, null, -Mc.b, Mc.rw, sd * hw, sd); }
+        return true;
+      },
       rgb: colArr,
     };
     try { D.look.build(B); } catch (e) { console.warn('the trailer\'s look (' + M.id + (lo ? ', level ' + lo : '') + '): ' + (e && e.message)); return null; }
@@ -4974,7 +5030,7 @@ const Render = (function () {
     const D = M.trailer, R = D && D.look ? tlBuild(M) : null; if (!R) return null;
     const G = new THREE.Group(), bl = new THREE.Mesh(R.blob, matBlob); bl.renderOrder = 1;
     G.add(new THREE.Mesh(R.geo, R.mat), new THREE.Mesh(R.lgeo, matTailOff), bl); G.position.set(D.kp[0], D.kp[1], 0); v.grp.add(G);
-    let x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len); const x1 = Math.max(M.len / 2, D.kp[0] + D.f);
+    let x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len - (D.tail || 0)); const x1 = Math.max(M.len / 2, D.kp[0] + D.f);
     const N = D.next, R2 = N ? tlBuild2(M) : null;   // (the road train's second tank: on the dolly's fifth wheel, straight behind the first one)
     if (R2) { const G2 = new THREE.Group(), bl2 = new THREE.Mesh(R2.blob, matBlob); bl2.renderOrder = 1;
       G2.add(new THREE.Mesh(R2.geo, R2.mat), new THREE.Mesh(R2.lgeo, matTailOff), bl2); G2.position.set(N.kp[0], N.kp[1] - D.kp[1], 0); G.add(G2);
@@ -10748,7 +10804,7 @@ const Render = (function () {
     // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9)) (a rig: its length, its trailer's
     // height, up to 4; a road train's up to 7)
     const bg = showCar.body.geometry; if (!bg.boundingBox) bg.computeBoundingBox();
-    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? (model.trailer.next ? 7 : 4) : 1.55);   // (a road train, docs/zrcalni-vlak.md: up to 7)
+    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? (model.trailer.tail ? 7.5 : model.trailer.next ? 7 : 4) : model.len > GARAGE_LEN ? 3.2 : 1.55);   // (a road train, docs/zrcalni-vlak.md: up to 7; a load past the trailer's tail, the blade (trailer.tail, in the rig's length): up to 7.5; the coach, one body of 12 m: up to 3.2)
     showFr.k = k; showFr.dy = hr / 2 - 0.7 * k; showCar.h = h;
     const ring = Math.max(4.2, L / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)
@@ -10880,7 +10936,27 @@ const Render = (function () {
 
   /* ---------------- the garage (garaza.html, js/garage3d.js): the race's own car meshes, in a scene of the garage's own ---------------- */
   // a car as the race draws it (body, wheels, lamps, the paint's dirt and scratches: dirtU, scrU), without the player's marker
-  function garageCar(model, color, num, stripe, deli) { return makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true, deli: deli || undefined }, { noMarker: true }); }   // (deli: the garage's parts fitted, car.deli)
+  // A body longer than 6.4 m (the coach, LASTOVKA: 12 m long, 4 m tall with its luggage; no other is) comes as a scale model 6 m long
+  // (1 : 2), garageK(model) its scale: the room, the chamber (6.8 m), the door (3.3 m) and the robots' reach stay as they
+  // are for every other car (docs/titan-cisterna.md, »Novi tovornjaki«). The scale is in the mesh itself (each piece's place and geometry:
+  // a shared geometry a copy of its own), so the garage's measures of the car (its rays, its boxes, the wheels' places) are the model's
+  function garageCar(model, color, num, stripe, deli) {   // (deli: the garage's parts fitted, car.deli)
+    const v = makeCarMesh({ m: model, color, num: num || 0, stripe: stripe !== false, isPlayer: true, deli: deli || undefined }, { noMarker: true }), k = garageK(model);
+    if (k < 1) {
+      const sh = sharedCarRes().g, done = new Map();
+      v.grp.traverse(o => {
+        if (o !== v.grp) o.position.multiplyScalar(k);
+        if (o.isSprite) { o.scale.multiplyScalar(k); return; }
+        const g = o.geometry; if (!g) return;
+        let q = done.get(g); if (!q) { q = sh.has(g) ? g.clone() : g; q.scale(k, k, k); done.set(g, q); }
+        o.geometry = q;
+      });
+      for (const p of v.lights || []) if (p && p.multiplyScalar) p.multiplyScalar(k);
+      v.gk = k;
+    }
+    return v;
+  }
+  function garageK(model) { return model && model.len > GARAGE_LEN ? GARAGE_MODEL / model.len : 1; }   // (the coach: 1 : 2, its mirrors ahead of its nose inside the chamber's glass too)
   // the paint's sun glint and the tint of the sky in it (as cgSet): the garage's key lamp (direction, colour, strength) and the room's tint
   function garageLight(dir, col, k, env) { CGU.sun.value.set(dir.x, dir.y, dir.z).normalize(); CGU.sunC.value.setHex(col).multiplyScalar(k); CGU.env.value.setHex(env == null ? 0xffffff : env); }
 
@@ -10916,6 +10992,6 @@ const Render = (function () {
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
   // the dirt on a race car's body now (0..1; null: none drawn), for the career's garage (game.js careerAfter)
   const dirtOf = (c) => { const v = views && views.find(w => w.car === c); return v && v.dirtU ? v.dirtU.value : null; };
-  return { ext: EXT, dirtOf, garageCar, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
+  return { ext: EXT, dirtOf, garageCar, garageK, garageTrailer: tlShow, garageLight, garageFree: disposeCarMesh, garageShared: sharedCarRes, setCrash, crashInfo, xShOn, setDebug, fxStats, wetFx, pitWet, lookInfo, look2Info, flagInfo, casInfo, roadInfo, setAtmos, snapshot, clearSparks, get skyOn() { return !!sky && sky.mesh.visible; }, get atmos() { return atmos; }, get worldStale() { return !!(world && world.paintFor && world.paintFor(atmos.season) !== world.season); }, setGhost, pkFly, setGhostF, get ghostF() { return GV[1] ? { visible: GV[1].grp.visible, tag: GV[1].tagTxt, x: GV[1].grp.position.x, z: GV[1].grp.position.z } : null; }, init, buildWorld, applySettings, resize, attachRace, frame, burning, setStartLights, shake, resetCam, crewSnap, setShot, startCamGo, startCamStop, startCam: sc, startCamLim: scLim, goalShot, setShowCar, renderShowroom, setShowView, showBox, showRect, viewOf, debugShot, carShot, kitStatus, deliMesh, kitInfo, kitTry, kitGlassNear, setDynScale, getDynScale, setDetailDist, getDetailDist, setSaver, precompile, setTodK, rainbow, setStorm, setLine, setMarks, set onThunder(f) { storm.onThunder = f; }, get show() { return { todK, dawn, stars: !!sky && sky.mesh.visible && sky.u.uStar.value > 0, moon: !!nsky.moon && nsky.moon.visible, sky: !!sky && sky.mesh.visible, warm: sky ? sky.u.uWarmK.value : 0, win: winU.value, winMats: winCount(), bow: bow.a, storm: storm.on, strikes: storm.n, flash: storm.f, flashMax: storm.fMax || 0, flood: !!flood, pits: pitL ? { boxes: pitL.n, quads: pitL.q, lamps: pitL.lamps.length, k: +pitL.mesh.material.opacity.toFixed(3), kind: pitL.kind } : null, lamps: flood ? Array.from({ length: flood.pools.count }, (_, k) => [flood.fp[k * 3], flood.fp[k * 3 + 1], flood.fp[k * 3 + 2]]) : [], bolt: !!storm.bolt && storm.bolt.visible, streaks: streaks ? streaks.n : 0, mist: vfog ? vfog.meshes.length : 0, mistTop: vfog ? vfog.top : null, tags: views.filter(v => v.tag).map(v => v.car.name), line: rline.mesh && rline.mesh.visible ? { red: rline.red, green: rline.green, yellow: rline.yellow, brakes: rline.brakes } : null, marks: marks ? marks.children.length : 0 }; }, get pixelRatio() { return renderer.getPixelRatio(); }, info, cam, get scene() { return scene; }, get camera() { return camera; }, get world() { return world; }, get skidCount() { return skids ? skids.cur : 0; }, rutsInfo(adv) { if (!sandRuts) return null; if (adv) { sandRuts.lastFade = -1e9; sandRuts.tick(performance.now() / 1000 + adv); } let alive = 0; for (let i = 0; i < sandRuts.n; i++) if (sandRuts.born[i]) alive++; return { used: sandRuts.n, alive, fade: sandRuts.fade }; }, setOldMarks, marksRec, marksTake, marksPack, get oldMarks() { return oldMk ? oldMk.geometry.index.count / 6 : 0; }, get crew() { return crew; }, get pitCam() { return pcam.w; }, get pitCamInfo() { return pcam.dbg && Object.assign({}, pcam.dbg); }, get raining() { return !!rain && rain.mesh.visible; }, get birds() { return birds; } };
 })();
 

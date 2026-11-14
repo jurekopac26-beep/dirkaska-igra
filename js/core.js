@@ -2382,8 +2382,8 @@ const Core = (function () {
     if (!isObj(D)) return 'trailer: an object';
     const ok = isNum(D.mass, 500, 40000) && isNum(D.len, 4, 16) && isNum(D.wid, 1.5, 2.6) && isNum(D.ht, 1, 4.5) && isNum(D.f, 0, 3) && isNum(D.rw, 0.25, 0.7)
       && isNum(D.mu, 0.5, 2.5) && isNum(D.brk, 0, 14) && Array.isArray(D.ax) && D.ax.length >= 1 && D.ax.length <= 4 && D.ax.every(x => isNum(x, -D.len + D.f + 0.3, -1))
-      && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look));
-    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, look }';
+      && Array.isArray(D.kp) && D.kp.length === 2 && isNum(D.kp[0], -4, 0) && isNum(D.kp[1], 0.5, 1.6) && (D.look == null || isObj(D.look)) && (D.tail == null || isNum(D.tail, 0, 14));
+    if (!ok) return 'trailer: { mass, len, wid, ht, f, ax [x < 0 ...], kp [x, y], rw, mu, brk, tail, look }';
     if (D.next == null) return '';
     // the road train's second tank (docs/zrcalni-vlak.md): on the dolly's fifth wheel, kp[0] behind the first kingpin; dax the dolly's axles
     // (rigid to the first tank: a B-dolly), lim its fold against the first tank
@@ -2398,7 +2398,7 @@ const Core = (function () {
     const T = { tl: true, D, id: c.id, x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, y: 0, vy: 0, px: 0, pz: 0, ph: 0, py: 0,
       m: { mass: D.mass, len: L, wid: W, a: L / 2, b: L / 2, kI: Math.sqrt((L * L + W * W) / 12) }, I: D.mass * (L * L + W * W) / 12,
       cx, xa: xa - cx, axS: cx / xa,   // (the box's middle from the kingpin, < 0; the axles' middle from the box's; the axles' share of its weight)
-      back: -D.kp[0] + L - D.f - c.m.len / 2, kd2: xa * xa,   // (the AI's: its tail past the tractor's own, straight behind (m); the kingpin to the axles, squared: how far in it cuts a bend)
+      back: -D.kp[0] + L - D.f + (D.tail || 0) - c.m.len / 2, kd2: xa * xa,   // (the AI's: its tail past the tractor's own, straight behind (m); the kingpin to the axles, squared: how far in it cuts a bend)
       rel: 0, yA: 0, vyA: 0, airA: 0, yK: 0, pit: 0, slide: 0, fold: 0, fall: null, torn: 0,
       q: { i: -1 }, qa: { i: -1 }, corners: [], circles: [], rad: W * 0.5 + 0.02, phys: 'nova', dmgMode: 0, dmg: 0, dz: [0, 0, 0, 0], cd: [0, 0, 0, 0],
       isPlayer: c.isPlayer, net: false, air: 0, xgl: 0, fuelKg: 0, inPit: false, pitWant: false, pitG: false, speed: 0, csKc: 0,
@@ -2557,7 +2557,7 @@ const Core = (function () {
   // the load the kingpin puts on the tractor's fifth wheel (kg; over its drive axle: its traction, stepCS); none torn off
   const tlKing = (c) => c.tl.fall ? 0 : c.tl.m.mass * (1 - c.tl.axS);
   // a rig's tail behind its tractor's middle (m; the grid, the open road's finish parking): its trailer's, a road train's second tank's (tlChain)
-  const tlTail = (M) => { const D = M.trailer, N = D.next; return N ? -D.kp[0] - N.kp[0] + N.len - N.f : D.len - D.f - D.kp[0]; };
+  const tlTail = (M) => { const D = M.trailer, N = D.next; return N ? -D.kp[0] - N.kp[0] + N.len - N.f : D.len - D.f - D.kp[0] + (D.tail || 0); };
   // the trailer's step (Car.step, after the tractor's): see above
   function tlStep(c, dt, trk) {
     const T = c.tl, D = T.D, T2 = T.next;
@@ -8440,7 +8440,7 @@ const Core = (function () {
     car: { pico: 48000, p206: 36000, kaze: 62000, muscle: 68000, strega: 95000, vortex: 78000, truck: 350000, rally: 400000, ev: 160000, formula: 650000, lm: 600000,
       miska: 35000, kolibri: 12000, raketa: 22000, levs: 36000, levk: 40000, lisica: 18000, sokol: 65000, panter: 125000, jelen: 280000, modras: 260000, perun: 500000,
       skorpijon: 1400000, jastreb: 130000, gad: 190000, blisk: 450000, lev: 800000, zmaj: 1200000, hrosc: 28000, medved: 190000, gozdar: 300000, pescenjak: 500000,
-      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, cisterna: 850000, zrcalni: 1000000, jezek: 35000, predsednik: 150000,
+      mravlja: 7500, kozorog: 140000, strelica: 350000, tornado: 400000, bizon: 500000, tiger: 550000, titan: 500000, kamen: 800000, cisterna: 850000, zrcalni: 1000000, avtovoz: 1100000, vetrnica: 1200000, hrast: 1300000, lastovka: 1400000, gasilec: 1500000, jezek: 35000, predsednik: 150000,
       goljat: 300000, superkombi: 450000 },
     upg: [0, 4000, 7000, 12000],
     place: [15000, 11250, 8750, 7000, 5750, 4750, 4000, 3250, 2750, 2250, 1750, 1250, 750],
@@ -8540,7 +8540,7 @@ const Core = (function () {
       else if (k === 'idle') { if (!isNum(P.idle, 0, 8000)) return 'phys.idle not 0..8000'; }
       else if (!isNum(P[k], 1e-6, 1e6)) return 'phys.' + k + ' not a number > 0';
     }
-    if (P.len > 6.4 || P.wid > 3.2) return 'phys: longer than 6.4 m or wider than 3.2 m';
+    if (P.len > 13 || P.wid > 3.2) return 'phys: longer than 13 m or wider than 3.2 m';   // (the longest: the coach, js/cars/lastovka.js; the garage shows one over 6.4 m scaled down, Render.garageK)
     if (!(P.a + P.b < P.len)) return 'phys: the wheelbase (a + b) as long as the vehicle';
     if (!(P.redline > P.idle) || P.redline > 25000) return 'phys.redline not above idle (and up to 25000)';
     if (P.rw > 1.1 || P.kI > 3 || P.cDrag > 3 || P.steerMax > 1.2) return 'phys: rw, kI, cDrag or steerMax out of range';
