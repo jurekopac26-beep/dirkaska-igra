@@ -28,11 +28,11 @@
   "jsMs": 3.48
  },
  "nring": {
-  "calls": 156,
-  "maxCalls": 180,
+  "calls": 157,
+  "maxCalls": 184,
   "kverts": 271,
-  "maxKverts": 288,
-  "jsMs": 3.4
+  "maxKverts": 286,
+  "jsMs": 3.32
  },
  "spa": {
   "calls": 181,

@@ -1,6 +1,6 @@
 /* =========================================================================
    ALONG THE FOOTPATHS — benches, lamps, bins and a few walkers by the map's footpaths and unpaved ways that the chase camera sees (the
-   ground round the houses, js/world-stavbe.js okolica: on Spa only). The user, 14. 11. 2026: »Ob takih potkah postavi na vsake toliko casa
+   ground round the houses, js/world-stavbe.js okolica: on Spa and Nürburg). The user, 14. 11. 2026: »Ob takih potkah postavi na vsake toliko casa
    kaksen element. Klopca, svetilka, sprehajalec s psom, sprehajalec, 2 cloveka se skupaj sprehajata, ljudje kaksen sedi na klopci, in dodaj
    se kar mislis da je ob teh potkah kot recimo smeti itd...« (docs/realizem/paket-s.md, »Ob potkah«). Generic things only: no names, signs
    or writing.
@@ -63,8 +63,9 @@
 
   const LOOKS = () => ({ shirt: pick(pal.SHIRT), pants: pick(pal.PANTS), hair: pick(['short', 'short', 'long', 'pony', 'bald']), hairCol: pick(pal.HAIR) });
 
+  const POTKE = { spa: 1, nring: 1 };   // (the tracks whose ground round the houses has its footpaths dressed: js/world-stavbe.js okolica)
   EXTRA.push(function (o, T, gH, def) {
-    if (!def || def.test || def.pending || def.id !== 'spa') return null;   // (Spa's footpaths; okolica is Spa's only)
+    if (!def || def.test || def.pending || !POTKE[def.id]) return null;   // (the footpaths of the tracks with okolica)
     const ps = pathsOf(o, T, def); if (!ps.length) return null;
     ps.sort((p, q) => T.nearestIdx(p.P[0][0], p.P[0][1]) - T.nearestIdx(q.P[0][0], q.P[0][1]));
     return ps.map((pa, k) => {

@@ -250,9 +250,16 @@
 
     /* ---- buildings (OpenStreetMap footprints near the track) and the T13 grandstand ---- */
     let nBld = 0; const crB0 = excl.length;
+    // (the houses: the builder of js/world-stavbe.js with Germany's kit, where the track has it; the halls and the grandstand stay here)
+    const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: def.bld || [], T, near: nrNear, gH: nrGround }) : null; let bi = -1;
+    // (the ground round the houses: the map's car parks and unpaved ways and, where the map has nothing at a house, a modest yard, driveway and
+    // trodden strip; js/world-stavbe.js okolica. The trees and the fans' camp keep off it and off the ways of def.yard)
+    const OK = World.stavbe && World.stavbe.okolica ? World.stavbe.okolica({ Chunks, T, near: nrNear, gH: nrGround, yard: def.yard }) : null;
     for (const [bx, bz, L, W, ang, H, k] of def.bld || []) {
+      bi++;
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[L / 2, W / 2], [L / 2, -W / 2], [-L / 2, W / 2], [-L / 2, -W / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); }
+      let clash = false, y0 = 1e9, dnH = 1e9, riH = -1;   // (dnH, riH: how far beyond the road's barrier the house stands, the nearest sample)
+      for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.5) clash = true; if (n.i >= 0 && n.dd < dnH) { dnH = n.dd; riH = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); }
       if (clash) continue;
       const g = scen.get(bx, bz); nBld++; CR.block(bx, bz, L, W, ang);   // (nobody stands inside it)
       if (k === 2) {   // grandstand: tiers climbing away from the track, a crowd on every tier, roof on pillars
@@ -271,8 +278,15 @@
         box(g, bx, y0 - 0.4, bz, L, hh + 0.4, W, ang, wc, [0.5, 0.52, 0.55]);
         exclPush(bx, bz, Math.max(L, W) / 2 + 4);
       } else {   // house: rendered walls, a pitched roof along the long side
-        const hh = H || 5.6 + R() * 2.2, walls = [[0.93, 0.9, 0.84], [0.96, 0.95, 0.92], [0.86, 0.82, 0.74], [0.9, 0.86, 0.8]], roofs = [[0.32, 0.3, 0.32], [0.46, 0.22, 0.16], [0.24, 0.24, 0.27]];
-        box(g, bx, y0 - 0.4, bz, L, hh + 0.4, W, ang, vary(walls[Math.floor(R() * walls.length)], R, 0.06), null, true);
+        const hh = H || 5.6 + R() * 2.2, walls = [[0.93, 0.9, 0.84], [0.96, 0.95, 0.92], [0.86, 0.82, 0.74], [0.9, 0.86, 0.8]], roofs = [[0.32, 0.3, 0.32], [0.46, 0.22, 0.16], [0.24, 0.24, 0.27]], uw = R();
+        if (HS && L * W < 1500) {   // (the builder's house: the same three draws as below, so that all else in the world stays where it was)
+          // (a small footprint is a shed or a garage unless the map says it is high; its height and every house's floors are the builder's to
+          // decide, by the map's height where it has one)
+          const small = L * W < 45;
+          HS.put({ x: bx, z: bz, L, W, ang, y0, hh: small && !H ? 0 : hh, type: small && !(H > 3.6) ? 'small' : 'house', u: [uw, R(), R()], dn: dnH, ri: riH, id: bi });
+          exclPush(bx, bz, Math.max(L, W) / 2 + 3); continue;
+        }
+        box(g, bx, y0 - 0.4, bz, L, hh + 0.4, W, ang, vary(walls[Math.floor(uw * walls.length)], R, 0.06), null, true);
         if (L * W < 1500) gable(g, bx, y0 + hh, bz, L + 0.6, W + 0.6, Math.min(4.2, W * 0.42), ang, roofs[Math.floor(R() * roofs.length)], [0.8, 0.78, 0.74]);
         else box(g, bx, y0 + hh, bz, L, 0.5, W, ang, [0.5, 0.5, 0.52]);
         exclPush(bx, bz, Math.max(L, W) / 2 + 3);
@@ -333,6 +347,9 @@
     /* ---- spectators, fans' tents and cars at the famous places, catch fences in front of them ---- */
     const FANS = { 'Brünnchen': 3, 'Pflanzgarten': 3, 'Karussell': 3, 'Wippermann': 2, 'Hohe Acht': 2, 'Adenauer Forst': 2, 'Breidscheid': 2, 'Flugplatz': 2, 'Hatzenbach': 2, 'Schwalbenschwanz': 2, 'Kesselchen': 1, 'Galgenkopf': 1, 'Eschbach': 1, 'Metzgesfeld': 1, 'Ex-Mühle': 1, 'Bergwerk': 1, 'Fuchsröhre': 1, 'Aremberg': 1, 'Klostertal': 1, 'Quiddelbacher Höhe': 1, 'Döttinger Höhe': 1 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
+    // (the ways to the houses, def.yard from def.houseWays on (tools/dovozi-osm.mjs): the fans' camp keeps off them)
+    const waySeg = []; if (def.houseWays >= 0) for (const w of (def.yard || []).slice(def.houseWays)) if (w[0] < 2) for (let j = 1; j + 3 < w.length; j += 2) waySeg.push([w[j], w[j + 1], w[j + 2] - w[j], w[j + 3] - w[j + 1], w[0] ? 1 : 2]);
+    const onWay = (x, z, r) => { for (const [ax, az, ux, uz, hw] of waySeg) { const t = Math.max(0, Math.min(1, ((x - ax) * ux + (z - az) * uz) / (ux * ux + uz * uz || 1))), dx = x - ax - ux * t, dz = z - az - uz * t; if (dx * dx + dz * dz < (hw + r) * (hw + r)) return true; } return false; };
     let nFans = 0; const crE0 = excl.length;
     for (const q of T.names) {
       const wgt = FANS[q.n]; if (!wgt) continue;
@@ -346,7 +363,10 @@
       for (let ii = T.idx(sm - half - 6), n = 0; n < (2 * half + 12) / ds; n++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1;
       if (wgt >= 2) for (let k = 0; k < wgt * 5; k++) {   // camping in the woods behind the crowd (the 24 h race tradition)
         const s = sm + (R() - 0.5) * half * 2, [x, z, i] = onSide(s, side, 9 + R() * 22); if (nrSlope(x, z) > 0.45) continue;
-        if (R() < 0.55) tent(x, z, T.hd[i] + (R() - 0.5) * 0.6, tcols[Math.floor(R() * tcols.length)]); else carPk(x, z, T.hd[i] + (R() - 0.5) * 0.8, vary(fans[Math.floor(R() * fans.length)], R, 0.2));
+        // (not on a way to a house nor on the ground round one: the draws as ever, so that the other tents and cars stay where they were)
+        const way = onWay(x, z, 3.2) || (OK && OK.on(x, z, 2));
+        if (R() < 0.55) { const rot = T.hd[i] + (R() - 0.5) * 0.6, col = tcols[Math.floor(R() * tcols.length)]; if (!way) tent(x, z, rot, col); }
+        else { const rot = T.hd[i] + (R() - 0.5) * 0.8, col = vary(fans[Math.floor(R() * fans.length)], R, 0.2); if (!way) carPk(x, z, rot, col); }
       }
       const [ex, ez] = onSide(sm, side, 14); exclPush(ex, ez, half + 10);
     }
@@ -437,7 +457,7 @@
         else if (sp === 1) { const f = P.n6(x + 700, z); c[0] *= lerp(1.14, 0.9, f); c[1] *= lerp(1.1, 0.94, f); c[2] *= lerp(0.8, 1.02, f); }   // fresher or darker beech
         return 1; };
       const clear = (x, z, r) => !excluded(x + r, z) && !excluded(x - r, z) && !excluded(x, z + r) && !excluded(x, z - r);   // (low crowns keep off the spectators, not only their trunks)
-      const plant = (sp, far, x, y, z, rot, wid, hgt, c) => { if (sp === 2 && !clear(x, z, wid * 0.4)) return false; const s = tint(sp, x, z, c), K = far ? tf : tk; if (s < 1) wid *= 0.62;   // (a dead spruce: a thin crown)
+      const plant = (sp, far, x, y, z, rot, wid, hgt, c) => { if ((sp === 2 && !clear(x, z, wid * 0.4)) || (OK && OK.on(x, z, 1.5))) return false; const s = tint(sp, x, z, c), K = far ? tf : tk; if (s < 1) wid *= 0.62;   // (a dead spruce: a thin crown; no tree on the ground round the houses)
         if (sp < 2) K[sp].add(x, y, z, rot, wid, hgt, c);
         else { c[0] *= 1.25; c[1] *= 1.11; c[2] *= 1.15; if (far) K[1].add(x, y - 0.35 * hgt, z, rot, wid * 1.36, hgt * 1.16, c); else K[1].add(x, y - 0.49 * hgt, z, rot, wid * 1.32, hgt * 1.33, c); }   // bushes and young trees: a beech crown sunk into the ground (no draws of their own)
         nrShade(x, z, wid * CR0[sp], s * (sp === 2 ? 0.7 : 1)); nTrees++; return true; };
@@ -500,11 +520,14 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup);   // (the builder's houses: one material, the façade atlas)
+    if (OK) OK.addTo(sceneryGroup, tex);   // (the ground round them: the asphalt and the makadam, a material each)
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats; if (OK) out.stats.okolica = OK.stats; out.okolica = OK;   // (the ground round the houses: js/world-potke.js)
     return out;
   }
 

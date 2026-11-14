@@ -493,7 +493,7 @@
     'Kitajska': { style: 'north', walls: [[4, [0.95, 0.95, 0.93], 0], [1, [0.76, 0.75, 0.73], 1]], roofs: [[1, [0.44, 0.45, 0.47], 1]], opts: { hip: 0.6, pitch: 0.45 } } };
   // the tracks whose houses the builder makes (real tracks only: a track not here keeps its world as it is) and their level of detail: 1 better
   // shapes and roofs, 2 and the walls from the atlas, 3 and what stands by the road. d2 and d1 (m beyond the road's barrier): the two rings of detail
-  const PROGE = { spa: { raven: 3, d2: 34, d1: 64 } };
+  const PROGE = { spa: { raven: 3, d2: 34, d1: 64 }, nring: { raven: 3, d2: 34, d1: 64 } };
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
   const komplet = (d) => Object.assign({}, PRIVZETO, KOMPLETI[d], { drzava: KOMPLETI[d] ? d : '' });
   const pick = (list, u) => { let s = 0; for (const e of list) s += e[0]; let t = clamp(u, 0, 0.999999) * s; for (const e of list) { t -= e[0]; if (t < 0) return e; } return list[list.length - 1]; };
