@@ -30,6 +30,7 @@
       sat: 0.5, satV: 1.35, snowLine: 2120, snowC: [1.0, 1.02, 1.06],
       rockCols: [[0.47, 0.47, 0.46], [0.53, 0.52, 0.5], [0.41, 0.41, 0.41], [0.57, 0.56, 0.54], [0.46, 0.44, 0.42], [0.44, 0.45, 0.42]],   // (the schist: grey, a little brown, lichened)
       centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed 3 m / 6 m, solid through the hairpins)
+      // edgeL: the left edge line's colour when it is not white (a divided road's median edge: yellow in the Emirates; Jebel Hafeet)
       chev: ['#d8261c', '#ffffff'], warn: 'tri', rail: 'steel', shoulder: [0.5, 0.51, 0.49],
       fans: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.12, 0.24, 0.62], [0.98, 0.82, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
       cars: [[0.85, 0.85, 0.83], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.5, 0.52, 0.55], [0.72, 0.7, 0.66]],
@@ -208,10 +209,12 @@
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   function plFarCol(A, sl, q) {   // the land beyond the corridor (irFar): the pasture green low down, grey-brown rock higher up and on the steep faces, the dwarf pine darker
-    // on the lower slopes, snow in the high gullies
-    const F = L.far, dw = sstep(1500, 1700, A) * sstep(2100, 1850, A) * 0.6, rk = Math.min(1, sstep(2050, 2350, A) * 0.8 + sstep(0.55, 0.95, sl) * 0.8);
+    // on the lower slopes, snow in the high gullies (the look's bands: far.tree the forest's upper edge [top, full], far.dwb the dwarf pine's
+    // [from, full, to, full], far.rk the rock's [from, full]; far.fc the forest's colour)
+    const F = L.far, B = F.dwb || [1500, 1700, 2100, 1850], Rk = F.rk || [2050, 2350], Tl = F.tree || [1650, 1450], fc = F.fc || [0.12, 0.2, 0.12];
+    const dw = sstep(B[0], B[1], A) * sstep(B[2], B[3], A) * 0.6, rk = Math.min(1, sstep(Rk[0], Rk[1], A) * 0.8 + sstep(0.55, 0.95, sl) * 0.8);
     let c = [F.lo[0] + q * 0.04, F.lo[1] + q * 0.05, F.lo[2] + q * 0.03];
-    const fo = sstep(1650, 1450, A); c = [lerp(c[0], 0.12, fo), lerp(c[1], 0.2, fo), lerp(c[2], 0.12, fo)];   // the spruce forest below the treeline
+    const fo = sstep(Tl[0], Tl[1], A); c = [lerp(c[0], fc[0], fo), lerp(c[1], fc[1], fo), lerp(c[2], fc[2], fo)];   // the forest below the treeline
     c = [lerp(c[0], F.dw[0], dw), lerp(c[1], F.dw[1], dw), lerp(c[2], F.dw[2], dw)];
     c = [lerp(c[0], F.hi[0], rk), lerp(c[1], F.hi[1], rk), lerp(c[2], F.hi[2], rk)];
     const sn = sstep(F.snow, F.snow + 150, A) * sstep(0.9, 0.5, sl) * (0.5 + q); return [lerp(c[0], 0.95, sn), lerp(c[1], 0.96, sn), lerp(c[2], 0.98, sn)];
@@ -249,6 +252,7 @@
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     exclPush(padF.x, padF.z, padF.r + 4);
+    if (L.pre) L.pre({ P, exclPush, blds });   // (a pass's own landmarks, before the terrain: their level plots in P.pads, their room; out of blds the houses they replace)
     out.marks = {};   // (where the landmarks stand: the tests look for them)
 
     /* ---- the retaining walls between the legs of the hairpins: the game's road is wider than the real one (11 m against ~7 m), so where two
@@ -347,7 +351,7 @@
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-          for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
+          for (const [o0, o1, ec] of [[-(w - 0.3), -(w - 0.45), L.edgeL || wht], [w - 0.45, w - 0.3, wht]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [ec, ec, ec, ec]);
           { const sm = (i + 0.5) * T.ds, ph = ((sm % (L.dash[0] + L.dash[1])) + (L.dash[0] + L.dash[1])) % (L.dash[0] + L.dash[1]);
             if (solid(sm) || ph < L.dash[0]) gl.quadUp(Pt(i, -0.07, 0.036), Pt(i, 0.07, 0.036), Pt(j, 0.07, 0.036), Pt(j, -0.07, 0.036), [L.centre, L.centre, L.centre, L.centre]); }
           for (const side of [-1, 1]) {
@@ -702,6 +706,8 @@
       }
       sh.addTo(root, true);
     }
+
+    if (L.extra) L.extra({ scen, root, out, P, excluded, onSide, matV });   // (a pass's own landmarks, built by its own file: js/world-medeu.js)
 
     /* ---- the puddles of a race in the rain (T.puddles; as Sani Pass') ---- */
     if (T.puddles && T.puddles.length) {
