@@ -25,9 +25,9 @@ const right = (v) => v.d * v.dir > 0.5;   // (a vehicle on its own half when the
 
 // 1. the track: an open road, four ways to drive it, its checkpoints, the traffic on the right; at full scale, about 5.0 km, from ~2023 m
 // along the crest to ~1973 m; its name as the rules want it
-check('track: an open road with four ways to drive it (race, time trial, traffic, police), 4 checkpoints, the road 9 m wide, on the right, named "Kraj, Država"',
+check('track: an open road with four ways to drive it (race, time trial, traffic, police), 4 checkpoints, the road 9 m wide, on the right, named "Kraj, Država", a test track',
   def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 4.5 && !def.leftHand &&
-  def.name === 'Espinazo del Diablo, Mehika' && def.en.name === 'Espinazo del Diablo, Mexico' && def.theme === 'espinazo' && !def.test && !def.pending,
+  def.name === 'Espinazo del Diablo, Mehika' && def.en.name === 'Espinazo del Diablo, Mexico' && def.theme === 'espinazo' && def.test === true && !def.pending,   // (a test track since the user's word of 13. 11. 2026: docs/odlocitve.md)
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, ${def.alt[0]} -> ${def.alt[1]} m, modes ${(def.modes || []).join(',')}`);
 {
   let top = -1e9, low = 1e9, gmax = 0, gmin = 0;
