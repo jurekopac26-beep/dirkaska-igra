@@ -470,7 +470,6 @@
     ' (patrulje na hlodih: {0}×)': ' (patrol cars on the logs: {0}×)', 'Kartoteka': 'Rap sheet', 'Kontrola prometa': 'Traffic checkpoint', 'Prekrški': 'Offences',
     'Zapore / trakovi za tabo': 'Roadblocks / strips behind you', 'Skrivanje': 'Hiding', 'Helikopter nad tabo': 'Helicopter above you', 'Zasede': 'Ambushes', 'Pasti s hlodi': 'Log traps',
     'Škoda': 'Damage', 'super težka': 'super hard',
-    'Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)': 'Difficulty: {0} (super hard is for the police chase only; change it in the Settings)',
     'POVOZIL SI PEŠCA!': 'YOU RAN OVER SOMEONE ON FOOT!', 'POVOZIL SI KOLESARJA!': 'YOU RAN OVER A CYCLIST!', 'TEKMEC JE POVOZIL PEŠCA': 'YOUR RIVAL RAN OVER SOMEONE ON FOOT',
     'TEKMEC JE POVOZIL KOLESARJA': 'YOUR RIVAL RAN OVER A CYCLIST', 'ZBIL SI POLICISTA!': 'YOU KNOCKED DOWN A POLICEMAN!', 'TEŽKA ZAPORA NAPREJ!': 'HEAVY ROADBLOCK AHEAD!',
     'HELIKOPTER!': 'HELICOPTER!', 'ZASEDA!': 'AMBUSH!', 'NEOZNAČENA PATRULJA!': 'UNMARKED POLICE CAR!', 'IZGUBILI SO SLED!': 'THEY LOST YOU!', 'SPET TE VIDIJO!': 'THEY HAVE SEEN YOU AGAIN!',
@@ -480,7 +479,7 @@
     'Policist hoče dokumente (ali pobegni)': 'The officer wants your papers (or flee)', 'ZAPELJI OB ROB VOZIŠČA': 'PULL OVER TO THE ROADSIDE', 'Parkiraj v označeno polje': 'Park in the marked box',
     ' (ali pobegni)': ' (or flee)', 'Greš s policistom na postajo': 'You go to the station with the officer', 'SKRIVALIŠČE · {0} m': 'HIDEOUT · {0} m',
     'Garaža desno ob cesti: zapelji noter': 'The garage on the right of the road: drive in', 'Garaža levo ob cesti: zapelji noter': 'The garage on the left of the road: drive in',
-    'Super težka': 'Super hard', 'Beg pred policijo: najhujši pregon; dirke kot Težka': 'The police chase: the toughest pursuit; races as Hard', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
+    'Super težka': 'Super hard', 'Najhitrejši tekmeci na meji avta, za tabo ne čakajo; beg pred policijo: najhujši pregon': 'The fastest rivals at the limit of their cars, never waiting for you; the police chase: the toughest pursuit', 'MOTORIST {0}': 'BIKE {0}', 'CIVILNA {0}': 'UNMARKED {0}', 'KOMBI': 'VAN', 'POLICIST': 'OFFICER',
     /* ---- the vehicle fleet (js/cars): the car screen, a destroyed car, a wheel off, retiring (Odstopi), the rivals of a championship ---- */
     'Motor zadaj': 'Rear-engined', 'Izberi': 'Choose', 'Izberi avto': 'Choose a car', 'Kategorije vozil': 'Vehicle categories', 'Vozila v kategoriji': 'Vehicles in the category',
     'Tapni avto za garažo': 'Tap the car for the garage', 'Odpri garažo z izbranim avtom': 'Open the garage with this car', 'Garaža se odpre, ko je naprava povezana z internetom.': 'The garage opens when the device is online.',

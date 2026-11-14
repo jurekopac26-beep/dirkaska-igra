@@ -89,7 +89,7 @@
   if (!['summer', 'autumn', 'winter'].includes(S.season)) S.season = 'summer';
   if (!['day', 'dusk', 'night', 'dawn'].includes(S.tod)) S.tod = 'day';
   if (!['race', 'tt', 'traffic', 'police', 'elim', 'lov', 'endless', 'drag'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
-  S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
+  S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: all four in a race and the police chase; super težka a race of its own since 9. 11. 2026, before as težka)
   // Oddaljenost (Nastavitve: Blizu 1.1, Srednje 1.4, Daleč 1.7) read back never nearer than Blizu nor farther than Daleč: Super blizu (0.8,
   // on the preview of PR #650 for a day and gone again, the user 11. 11. 2026: »preblizu«) and anything nearer is Blizu, so it does not stay
   // on without a button of its own; no number at all: Srednje, the default (never NaN). Changed, it is saved at once: the preview shares the
@@ -311,7 +311,7 @@
     const all = r.order.concat(r.dnf || []); return all.length <= CH_KEYS.length && new Set(all).size === all.length && all.every(k => CH_KEYS.includes(k)) && all.includes(Core.PLAYER_KEY); };
   try {
     const j = JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), d = isObj(j) && CHAMPS.find(c => c.id === j.id);
-    if (d && j.v === 1 && [0, 1, 2].includes(j.diff) && Array.isArray(j.rounds) && j.rounds.length <= d.tracks.length && j.rounds.every((r, i) => roundOk(r, d.tracks[i])))
+    if (d && j.v === 1 && [0, 1, 2, 3].includes(j.diff) && Array.isArray(j.rounds) && j.rounds.length <= d.tracks.length && j.rounds.every((r, i) => roundOk(r, d.tracks[i])))
       champ = { v: 1, id: d.id, diff: j.diff, car: typeof j.car === 'string' && Core.MODELS.some(m => m.id === j.car) ? heirId(j.car) : Core.MODELS[S.car].id,   // (one kept before the car was: the car chosen now; a retired one: its heir)
         n: Number.isInteger(j.n) && j.n >= 1 && j.n <= CH_AI ? j.n : 12,   // (one kept before the field size was: its 12 drivers to the end)
         rounds: j.rounds.map(r => Object.assign({ track: r.track, order: r.order.slice(), rain: r.rain ? 1 : 0 }, r.dnf && r.dnf.length ? { dnf: r.dnf.slice() } : null)) };
@@ -801,10 +801,12 @@
   // the rivals on the player's driving (a trial, docs/ai-po-tvoji-liniji.md, Korak 2 and 3): index.html?voznja=1 turns it on, ?voznja=0
   // off (kept in the browser); on a track with the player's profile (js/data/voznja.js, one for each weather) the AI of its class drives by
   // it, on every real track (not a test track, def.test, nor one still to be chosen, def.pending; new tracks too) the rest of the AI by
-  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja)
+  // the player's style (VOZNJA_SLOG, in the dry) (Race opts.voznja, Race._voznja). The same switch in Nastavitve · Orodje za napake ·
+  // Nastavitve orodja, Tekmeci po moji liniji (js/napake.js, NK_HOOKS.voznja, vzSet): kept as ?voznja keeps it, from the next race
   const VZ_KEY = 'rr_voznja';
   let vzOn = false;
   try { const v = new URLSearchParams(location.search).get('voznja'); if (v === '1') localStorage.setItem(VZ_KEY, '1'); else if (v === '0') localStorage.removeItem(VZ_KEY); vzOn = localStorage.getItem(VZ_KEY) === '1'; } catch (_) { vzOn = false; }
+  const vzSet = (on) => { vzOn = !!on; try { if (vzOn) localStorage.setItem(VZ_KEY, '1'); else localStorage.removeItem(VZ_KEY); } catch (_) { } };   // (no storage: for this visit only)
   const voznjaOf = (def) => {
     if (!vzOn || typeof VOZNJA_PROFILI === 'undefined') return undefined;
     const L = VOZNJA_PROFILI.filter(p => p.proga === def.id);
@@ -1190,6 +1192,7 @@
   const NK_HOOKS = {
     replay: () => replay, rec: () => recd, info: rpInfo, toast: (t, ms) => toast(t, ms), ui: () => replayUI(),
     inLoops: rpInLoops, track: () => track, get recW() { return recd ? recd.w : REC_W; }, dev: (on) => { PH.dev = !!on; },
+    voznja: (on) => { if (on !== undefined) vzSet(on); return vzOn; },   // (Tekmeci po moji liniji in the tool's settings: ?voznja's switch, read or set)
     kje: () => (race && bg === 'race' && !(mp && mp.race) ? { t: race.time, track: track.def.id, rec: recd, lap: rpLap(race.player, race.time), s: rpS(race.player.q) } : null),   // (the race now: a note of the log, js/napake.js)
     where: rpWhere, meta: rpMeta, map: rpMap, shotAt: rpShotAt, flag: rpFlag, flags: () => (recd ? recd.flags : []),
     stop: () => { if (!replay) return; hlOff(); replay.play = false; replayUI(); },
@@ -3145,7 +3148,7 @@
     const fl = !up && best > 0 && race.cars.every(c => c === P || !c.lapTimes.length || Math.min(...c.lapTimes) >= best);   // (the fastest lap of the race)
     if (out) stRetired(); else stRace(pos, res.length, fl);   // (a retirement: a race, never a finish; see stRetired)
     if (inCareer()) {   // the career: prize money (the place, the distance, the difficulty), the fastest lap of the race (a race up the road: no laps); a retirement: nothing
-      const diff = race.champ ? champ.diff : raceDiff();
+      const diff = race.champ ? champ.diff : S.difficulty;
       career.races++; if (pos === 1 && !out) career.wins++; careerAfter();
       const prize = out ? 0 : Core.careerPrize(pos, res.length, up ? track.raceLen : track.len * race.laps, diff);
       if (out) { careerSave(); $('res-sub').textContent += tr(' Brez nagrade.'); }
@@ -3248,7 +3251,6 @@
   const ptsWord = (n) => Lang.cur === 'en' ? (n === 1 ? 'point' : 'points') : n % 100 === 1 ? 'točka' : n % 100 === 2 ? 'točki' : n % 100 === 3 || n % 100 === 4 ? 'točke' : 'točk';
   const winsWord = (n) => Lang.cur === 'en' ? (!n ? 'no wins' : n + (n === 1 ? ' win' : ' wins')) : !n ? 'brez zmage' : n + (n === 1 ? ' zmaga' : n === 2 ? ' zmagi' : n <= 4 ? ' zmage' : ' zmag');
   const DIFF_NAME = ['lahka', 'srednja', 'težka', 'super težka'];
-  const raceDiff = () => Math.min(S.difficulty, 2);   // (a race, a championship: super težka is the police's own, raced as težka)
   // a driver of the standings: the rivals' cars as in the next round (the field of the championship's car; a one-make class the player
   // drives: its own cars)
   const champDriver = (key) => { const M = Core.MODELS[S.car]; if (key === Core.PLAYER_KEY) return { name: S.name, car: M.name, color: PLAYER_COLORS[colNow()] };
@@ -3285,7 +3287,7 @@
       const CH = CHAMPS.filter(c => !!c.nu === champNu);   // (the cups behind NEUPORABNO, or the ones of version 1.0)
       if (!CH.some(c => c.id === champPick)) champPick = CH[0].id;
       $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke 25, 18, 15 …');
-      $('ch-diff').textContent = (S.difficulty > 2 ? tr('Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()])) : tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()]))) + riv;
+      $('ch-diff').textContent = tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[S.difficulty])) + riv;
       $('ch-body').innerHTML = '<div class="ch-cards">' + CH.map(c => {
         const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
         return '<button class="ch-card' + (c.id === champPick ? ' sel' : '') + '" data-champ="' + c.id + '"><h3>' + esc(Lang.of(c, 'name')) + '</h3><div class="tmeta">' + raceWord(c.tracks.length) + ' · ' + kmTxt(km, 0) + ' km</div>' +
@@ -6606,7 +6608,7 @@
       case 'champ-go': {
         if (champDone()) { champ = null; champSave(); buildChampScreen(); break; }   // (finished: "Novo prvenstvo" -> the choice of a series)
         if (!bought(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.'), 3000); break; }   // (a rented car: one race, no championship)
-        if (!champ) { const d = CHAMPS.find(c => c.id === champPick) || CHAMPS.find(c => !!c.nu === champNu); champ = { v: 1, id: d.id, diff: raceDiff(), car: Core.MODELS[S.car].id, n: CH_AI, rounds: [] }; champSave(); }   // (super težka is the police's: a championship is raced as težka; its car: the rivals' field for the whole championship)
+        if (!champ) { const d = CHAMPS.find(c => c.id === champPick) || CHAMPS.find(c => !!c.nu === champNu); champ = { v: 1, id: d.id, diff: S.difficulty, car: Core.MODELS[S.car].id, n: CH_AI, rounds: [] }; champSave(); }   // (its difficulty: the one set now, super težka too; its car: the rivals' field for the whole championship)
         if (S.control === 'tilt') enableTilt(true);
         Comm.unlock(); champRun = true; ensureTrack(champDef().tracks[champ.rounds.length], startRace); break;
       }

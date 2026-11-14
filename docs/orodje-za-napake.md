@@ -106,6 +106,7 @@ Načrt za orodje, s katerim uporabnik med igranjem označi napake in jih pošlje
   - Ob koncu (Vprašaj / Deli / Shrani);
   - Zastavica med dirko (Gumb + tipka F / Samo tipka / Izklop);
   - Velikost slike (1600 / 2400 px);
+  - Tekmeci po moji liniji (Vklop / Izklop; stikalo `?voznja=1`, od 11. 11. 2026, `docs/ai-po-tvoji-liniji.md`, »Vklop«);
   - Shranjene napake.
 - Obstoječi Foto (`photoSave` v `js/game.js`: `Render.snapshot`, Web Share, prenos) je vzor za izdelavo in pošiljanje slike.
 

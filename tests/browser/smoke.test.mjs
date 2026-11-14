@@ -34,8 +34,8 @@ try {
     await ctx.close();
   }
 
-  // 1c. four difficulty levels (Lahka, Srednja, Težka, Super težka: the police all four, a race and a championship take the last as težka);
-  //     a saved value out of range is brought into it
+  // 1c. four difficulty levels (Lahka, Srednja, Težka, Super težka: all four in the police chase, a race and a championship; super težka a
+  //     race of its own since 9. 11. 2026, before as težka); a saved value out of range is brought into it
   {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', '{"difficulty":7,"sound":0,"comm":0}');
     const r = await page.evaluate(async () => {
@@ -46,8 +46,8 @@ try {
       out.row2 = seg(); out.stored = JSON.parse(localStorage.getItem('tdgp-settings')).difficulty;
       return out;
     });
-    T.check('settings: four difficulty levels (Lahka, Srednja, Težka, Super težka), a saved 7 becomes super težka, a championship is raced as težka',
-      r.saved === 3 && r.row === 'Lahka|Srednja|Težka|Super težka*' && /^Težavnost: težka \(super težka je samo za beg pred policijo/.test(r.champ) && r.row2 === 'Lahka*|Srednja|Težka|Super težka' && r.stored === 0 && !errors.length,
+    T.check('settings: four difficulty levels (Lahka, Srednja, Težka, Super težka), a saved 7 becomes super težka, a championship is raced as super težka',
+      r.saved === 3 && r.row === 'Lahka|Srednja|Težka|Super težka*' && /^Težavnost: super težka \(spremeniš v Nastavitvah\)/.test(r.champ) && r.row2 === 'Lahka*|Srednja|Težka|Super težka' && r.stored === 0 && !errors.length,
       JSON.stringify(r) + (errors.length ? ' errors: ' + errors.join(' | ') : ''));
     await ctx.close();
   }
