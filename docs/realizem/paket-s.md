@@ -140,3 +140,30 @@ Načrt iz »Predaje 2« je izveden. Nove slike prej in potem so na strani Odloč
 **Številke:** 84 hiš od 86 tlorisov, 24 tik ob cesti; hiše 15 258 oglišč (prej 24 360); svet Spaja 1390 mrež in 1 107 867 oglišč (`tests/golden/world.json`, spremenjen samo Spa; mehki zavoji poti dodajo 72 oglišč, tla so enaka); telefon 183 klicev risanja (največ 224) in 442 tisoč oglišč (največ 571), referenca v `tests/golden/perf.json` ostane.
 
 **Čaka:** uporabnikov »ok« na novih slikah. Pred združitvijo velja, kar piše v »Predaja (12. 11. 2026)«. Če E (#657) doda ceste ob hišah, orodje za dovoze poženi znova (isti dovoz se ne sme narisati dvakrat) in ustvari referenco sveta za Spa znova.
+
+### Predaja 4 (14. 11. 2026): okolica hiš iz OSM, potke makadamske z globino
+
+Odgovor na `realizem-s0-spa`: »2 · Popravi videz«, ker so hiše stale na goli travi, v resnici pa imajo dovoze, parkirišča in poti. Pravilo: »vedno delaj tako, kot je v resnici, nič si ne izmišljuj«. Po prvih slikah je uporabnik v seji prosil: »potke naj imajo globino kot makedamske ceste«.
+
+**Okolica hiš (`okolica()` v `js/world-stavbe.js`, klic v `js/world-spa.js`, podatki `def.okolica` v `js/tracks/spa.js`):**
+- Tla okoli vsake hiše v pasu 64 m. Vsak lik je polje, odrezano na pas in 1,2 m od ograj proge. Pod že narisanim se ne nariše (poti `def.yard` so prve), zato nič ni narisano dvakrat in nič ne sega na stezo.
+- Asfalt je ena mreža z Lambertovim materialom kot `yardWorld`. Makadam je druga mreža z materialom makadamskih cest (tekstura, relief `makadamBump`, rjav rob). Material ni označen kot `userData.stavbe`.
+- `js/world.js` (`yardWorld`) je nespremenjen, druge proge tudi.
+
+**Iz OSM (`osm`, `tools/dovozi-osm.mjs spa --okolica f.json`):**
+- **Asfalt:** 44 servisnih in tlakovanih poti v `def.yard` (izrezane na 30 m okoli hiš) in 6 parkirišč (`amenity=parking`), obrisi kot v OSM.
+- **Makadam z globino:** 10 poti, med njimi vse potke (`footway`, `path`), ki jim OSM ne da tlakovane površine (pri Spaju so take vse), ter `track` in netlakovane poti.
+- Potka do hiše (prvi korak orodja) ostane cela, z mehkimi zavoji (`soften`, »Predaja 3«). Široka je 2 m.
+
+**Skromno dopolnilo, kjer OSM pri hiši do 3 m nima ničesar (`gen`, 14 hiš, 34 vrstic):**
+- kratek makadamski dovoz do najbližje poti;
+- makadamsko dvorišče pri vhodu;
+- pas uhojenih tal ob hiši.
+
+Brez izmišljenih avtov, ograj in predmetov.
+
+**Številke:** svet Spaja 1444 mrež in 1 168 949 oglišč (`tests/golden/world.json`, spremenjen samo Spa); telefon __PERF__.
+
+**Vir:** OpenStreetMap (ODbL 1.0).
+
+**Odgovor:** uporabnik je na `realizem-s0-spa-2` odgovoril »1 · Ostane tako« (14. 11. 2026 ob ~2.10). PR #668 je pripravljen, ostane osnutek; do `main` ga pripelje seja Združevanje. Predmete in ljudi ob potkah ter mehkejši prehod med potko in travo (prošnja uporabnika 14. 11.) dela druga seja na isti veji.
