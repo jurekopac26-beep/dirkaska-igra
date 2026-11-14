@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "hafit": {
+  "calls": 133,
+  "maxCalls": 165,
+  "kverts": 426,
+  "maxKverts": 632,
+  "jsMs": 1.47
  }
 }
