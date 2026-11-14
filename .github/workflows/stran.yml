@@ -1,5 +1,5 @@
 # Stran na GitHub Pages z predogledom vej (sklop 14 v docs/orodje-za-napake.md): main v korenu strani (brez maketa-menija/), vsak odprt pull
-# request iz tega repozitorija (največ 3 najnovejši, vsa stran do ~950 MB, ker Pages objavi do 1 GB) v beta/<številka>/, seznam v beta/
+# request iz tega repozitorija (največ 8 najnovejših, vsa stran do ~950 MB, ker Pages objavi do 1 GB; datoteke iz assets/, enake kot na main, predogled naloži iz korena, tools/predogled-deljene.js) v beta/<številka>/, seznam v beta/
 # (tools/predogled.mjs; dnevnik gradnje izpiše velikost vsakega drevesa in vse strani). Ob vsaki spremembi main in ob vsakem odprtju,
 # spremembi ali zaprtju pull requesta se zgradi in objavi vsa stran znova. Žigi (?v=… na povezavah v index.html in garaza.html, da brskalnik
 # in predpomnilnik ne pomešata starih in novih datotek) so samo na objavljeni strani: v repozitoriju jih ni, predogled.mjs pa vsako drevo

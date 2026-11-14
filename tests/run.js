@@ -94,7 +94,7 @@ function shareOf(list, k, n) {
 // test itself, and the tests RELATED gives for it (the big shared files, which no name matches)
 const RELATED = [
   [/^(js|css)\/|^index\.html$|^garaza\.html$|^sw\.js$|^tools\/stamp\.js$/, ['stamp.test.js']],   // (the pages' links: every file there, no stamps; the publish step's stamping)
-  [/^js\/menu(-data)?\.js$|^tools\/predogled|^\.github\/workflows\/stran\.yml$/, ['predogled.test.js']],   // (the site's previews play main's videos: the menu's vidSrc, the list the publish step writes)
+  [/^js\/menu(-data)?\.js$|^tools\/predogled|^sw\.js$|^\.github\/workflows\/stran\.yml$/, ['predogled.test.js']],   // (the site's previews: main's videos in the menu's vidSrc, main's files of assets/ through the preview's sw.js)
   [/^js\/tracks\/|^docs\/proge\/|^assets\/|^maketa-menija\//, ['testne-proge.test.js']],   // (where the test tracks' files are: frozen until they are deleted, CLAUDE.md »Testne proge«)
   [/^tools\/razdeli-proge\.mjs$|^js\/(game|render|world[\w-]*)\.js$|^js\/tracks\/|^index\.html$/, ['razdelitev.test.js']],   // (the real tracks' own settings and world parts in their own files, docs/razdelitev-prog.md)
   [/^js\/core\.js$/, ['golden.test.js', 'start.test.js', 'quick.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'serpentine.test.js', 'browser/repro.test.mjs']],

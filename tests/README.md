@@ -79,7 +79,7 @@ cesto ali boksi, dele kroga ob drugih avtih in za varnostnim avtom ter štart pr
 razlogom, natančnost); izhod `test-results/voznja/` (`profil.json`, `povzetek.txt`); `--js` zapiše podatke za igro (samo povprečja, `VOZNJA_PROFILI`, korak 2; `--k0`, `--ks`: umeritev tempa tekmecev) in slog za prave proge brez posnetkov (`VOZNJA_SLOG`, korak 3); `node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]` slog brez posnetkov izpelje znova iz suhih profilov v datoteki. Posnetkov in profilov ne shranjuj v repozitorij.
 
 **Predogled pred mainom** (`.github/workflows/stran.yml`, `tools/predogled.mjs`): stran na GitHub Pages ima `main` v korenu, vsak odprt pull
-request iz tega repozitorija (največ 3: najprej tisti z oznako »predogled«, ne glede na starost in število odprtih, nato najnovejši) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
+request iz tega repozitorija (največ 8: najprej tisti z oznako »predogled«, ne glede na starost in število odprtih, nato najnovejši) pa v `beta/<številka>/`; seznam je na `…/dirkaska-igra/beta/`. Stran se zgradi znova ob
 vsaki spremembi `main` in ob odprtju, spremembi ali zaprtju pull requesta. Deluje, ko je v Settings → Pages → Source izbrano »GitHub Actions«
 (do tedaj ostane objava z veje `main`, potek pa to samo javi). Predogled ima svoj service worker, shranjene nastavitve in napredek pa deli z glavno igro.
 Predogled nima druge kopije težkih posnetkov menija (preleti `fly-<id>.webm`, videi ovinkov `corner-<id>.webm`, helikopterski posnetki
@@ -88,6 +88,7 @@ vzame (`tools/predogled-posnetki.js`) in na konec njegovega `js/menu-data.js` za
 strani (`js/menu.js`, `vidSrc`). Posnetek, ki ga pull request doda ali spremeni, ostane v predogledu in se predvaja od tam; predogled veje,
 katere meni seznama še ne pozna (starejša od te spremembe), ohrani vse posnetke. Seznam spremeni žig predogledovega `js/menu-data.js`, zato ima
 tak predogled svojo različico spletne igre (`gameVer` v `js/game.js`): v hitri igri in sobah se sreča samo z igralci istega predogleda, ne z `main`.
+Tudi ostalih datotek iz `assets/` (slike, zemljevidi, avti; ~70 MB), enakih kot na `main`, predogled nima (`tools/predogled-deljene.js`): seznam je v `beta/<številka>/predogled-deljene.json`, predogledov `sw.js` dobi spredaj kratko obravnavo, ki take naslove naloži iz korena strani, strani `index.html` in `garaza.html` pa na začetku `<head>` kratek skript, ki ob prvem odprtju (ko stran še vodi service worker `main`) namesti predogledovega in stran odpre znova. Glasba in posnetki ostanejo zunaj tega (zahteve po kosih, Range). Brskalnik brez service workerja odpre predogled brez teh datotek (opozorilo v konzoli). Igra na `main` se ne spremeni.
 Žigi (`?v=…` na povezavah v `index.html` in `garaza.html`) so samo na objavljeni strani: `tools/predogled.mjs` vsako drevo (`main` in vsak predogled)
 označi iz njegovih datotek s `tools/stamp.js` (iz `main`), korak »Preverba žigov« nato vsako drevo preveri z `--check-stamped`; predogled s povezavo na
 manjkajočo datoteko se ne zgradi (seznam v `beta/` ga navede), `main` s tako povezavo pa ustavi objavo (ostane prejšnja stran).
