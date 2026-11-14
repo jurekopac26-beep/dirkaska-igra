@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "koror": {
+  "calls": 142,
+  "maxCalls": 164,
+  "kverts": 349,
+  "maxKverts": 553,
+  "jsMs": 1.22
  }
 }
