@@ -1,0 +1,722 @@
+/* ---------------- Sence: the game's colours past a browser that darkens the page by force ----------------
+   Samsung Internet's dark mode repaints every colour the page draws with CSS (backgrounds, borders, text, inline SVG, pictures),
+   and no page can switch it off (js/menu.js forcedDark, temni-nacin.html). It leaves alone what it does not take for a colour of the
+   page: a text-shadow's colour, the colours of an SVG filter (feFlood, feComponentTransfer) and a 2D canvas (temni-nacin.html, the
+   phone's test of 11. 11. 2026: rows 4 and 5 and the canvas row as they should be). So in that browser (its UA; ?sence=1 to try it
+   anywhere, ?sence=0 off) the game's colours are drawn that way:
+   - text: transparent, its glyphs drawn again by a text-shadow in the colour (--sd-c, beside every colour of the CSS; --sd-ts, the
+     rule's own shadows after it);
+   - a surface (background colour or gradient, border): the element's own made transparent, its colours kept in --sd-bgc, --sd-bgi,
+     --sd-bc; a layer under its content (a free ::before or ::after, [data-sdl]) draws the same box in black of a few levels of
+     opacity, and an SVG filter (ensure) turns each level into its colour (feComponentTransfer: a table of the colours, the box's
+     own edges kept). A pseudo-element with a surface of its own gets the same filter on itself ([data-sdb], [data-sda]);
+   - inline SVG: each icon flooded with its colour (feFlood);
+   - a picture (<img>): drawn into a canvas in its place (canvas[data-sdimg], the CSS's img rules for it too).
+   Elsewhere the module does nothing: the game is the same to the pixel (Sence.on false). The menu's shadow root (js/menu.js init)
+   and the game's own page (css/style.css: the HUD) are each rewritten once and watched (a MutationObserver: new elements, a changed
+   class) — a text that changes in a race (the HUD's numbers) costs nothing more than its text-shadow. */
+(function () {
+  'use strict';
+  if (typeof document === 'undefined') return;   // (outside a browser, as the tests' loadCore: nothing to paint)
+  const q = location.search;
+  // (temni-nacin.html: window.SenceRoots, on everywhere but only for the roots it hands in, its own rows of the page left as they are)
+  const roots = !!window.SenceRoots;
+  // (on: Samsung Internet by its UA only, the user's decision; another browser that darkens a light page by force gets the menu's tip
+  // instead (js/menu.js forcedDark). The probe (the system colour Canvas in a light element is dark) only for temni-nacin.html's verdict)
+  function forced() {
+    try {
+      if (matchMedia('(prefers-color-scheme: dark)').matches) return false;
+      const d = document.createElement('div'); d.style.cssText = 'display:none;background-color:canvas;color-scheme:light';
+      document.documentElement.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove();
+      const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(c);
+      return !!m && (m[4] == null || +m[4] > 0.5) && (299 * m[1] + 587 * m[2] + 114 * m[3]) / 1000 < 128;
+    } catch (_) { return false; }
+  }
+  const why = { ua: /SamsungBrowser/i.test(navigator.userAgent), forced: forced(), param: /[?&]sence=1/.test(q) ? 1 : /[?&]sence=0/.test(q) ? 0 : null };
+  const on = roots || why.param === 1 || (why.param !== 0 && why.ua);
+  const Sence = window.Sence = { on, why, root: () => {}, rewriteSheet: () => {}, stats: { rules: 0, layers: 0, filters: 0, imgs: 0, svgs: 0, ms: 0 } };
+  if (!on) return;
+  const ST = Sence.stats;
+  if (!roots) document.documentElement.setAttribute('data-sence', '');
+
+  // ---- colours ----
+  const cx = document.createElement('canvas').getContext('2d');
+  const colCache = new Map();
+  function col(s) {   // a CSS colour → [r, g, b, a] (0–255, a 0–1); null when it is none
+    s = (s || '').trim();
+    if (!s || s === 'none' || s === 'transparent') return [0, 0, 0, 0];
+    let c = colCache.get(s); if (c) return c;
+    let m = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/.exec(s);
+    if (!m) { cx.fillStyle = '#000'; cx.fillStyle = s; const f = cx.fillStyle; m = /^#([\da-f]{6})$/i.exec(f); if (m) c = [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4), 16), 1]; else m = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)$/.exec(f); }
+    if (!c) c = m ? [+m[1], +m[2], +m[3], m[4] == null ? 1 : /%$/.test(m[4]) ? parseFloat(m[4]) / 100 : +m[4]] : [0, 0, 0, 0];
+    colCache.set(s, c); return c;
+  }
+  const over = (a, b) => {   // colour a over colour b
+    const A = a[3] + b[3] * (1 - a[3]); if (A <= 0) return [0, 0, 0, 0];
+    return [0, 1, 2].map((i) => (a[i] * a[3] + b[i] * b[3] * (1 - a[3])) / A).concat(A);
+  };
+  const isColTok = (t) => /^(#|rgba?\(|hsla?\(|hwb\(|lab\(|lch\(|oklab\(|oklch\(|color\(|color-mix\(|var\()/i.test(t) || (/^[a-z]+$/i.test(t) && t !== 'none' && CSS.supports('color', t));
+
+  // ---- text splitting (top-level commas, spaces; declarations) ----
+  function split(s, sep) {
+    const out = []; let d = 0, qt = '', cur = '';
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (qt) { cur += ch; if (ch === qt && s[i - 1] !== '\\') qt = ''; continue; }
+      if (ch === '"' || ch === "'") { qt = ch; cur += ch; continue; }
+      if (ch === '(') d++; else if (ch === ')') d--;
+      if (d === 0 && (sep === ' ' ? /\s/.test(ch) : ch === sep)) { if (cur.trim() || sep !== ' ') out.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    if (cur.trim() || (sep !== ' ' && out.length)) out.push(cur.trim());
+    return out.filter((x, i) => sep !== ' ' || x);
+  }
+  const cur = (v) => v.replace(/currentcolor/gi, 'var(--sd-c)');
+  // the colour of a border shorthand (its third part; none: the text's)
+  function borderCol(v) {
+    const t = split(v, ' ').filter((x) => !/^(-?[\d.]+(px|em|rem|%|vw|vh|vmin|vmax)?|thin|medium|thick|none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|calc\(.*|initial|inherit|unset)$/i.test(x));
+    return t.length ? t.join(' ') : 'var(--sd-c)';
+  }
+  // a background shorthand → [images (the layers without the colour), colour]
+  function bgSplit(v) {
+    if (/^(none|transparent|initial|inherit|unset)$/i.test(v.trim())) return ['none', /^inherit$/i.test(v.trim()) ? 'inherit' : 'transparent'];
+    const L = split(v, ','), last = split(L[L.length - 1], ' ');
+    let c = 'transparent';
+    const hard = last.findIndex((t) => isColTok(t) && !/^var\(/i.test(t));
+    const vi = last.findIndex((t) => /^var\(/i.test(t));
+    const k = hard >= 0 ? hard : (vi >= 0 && L.length === 1 && last.length === 1 ? vi : -1);
+    if (k >= 0) { c = last[k]; last.splice(k, 1); }
+    L[L.length - 1] = last.join(' ');
+    const img = L.filter((x) => x).join(', ');
+    return [img || 'none', c];
+  }
+
+  // ---- the rules: every colour beside the browser's, in a custom property ----
+  const BGP = /^background(-color|-image)?$/, BCP = /^border(-(top|right|bottom|left|block|inline)(-(start|end))?)?(-color)?$/;
+  function decls(text) {   // a declaration block's text → [[name, value, important]]
+    return split(text, ';').filter((d) => d.includes(':')).map((d) => {
+      const i = d.indexOf(':'), n = d.slice(0, i).trim(); let v = d.slice(i + 1).trim(), imp = false;
+      if (/!\s*important$/i.test(v)) { imp = true; v = v.replace(/!\s*important$/i, '').trim(); }
+      return [n, v, imp];
+    });
+  }
+  // a box-shadow: its parts down to the last one of a colour or inset (those go into the layer's filter: the browser's darkening leaves
+  // a filter's colours as they are, and an inset one has to be over the layer) and the black outer ones under those (they stay as they
+  // are, under the layer, where they were). One that changes by the frame (calc()) stays as it was.
+  function shadowSplit(v) {
+    if (/^(none|initial|inherit|unset)$/i.test(v) || /calc\(|env\(|var\(--sd-/i.test(v)) return null;
+    const P = split(v, ','); let k = -1;
+    P.forEach((p, i) => {
+      const t = split(p, ' '), c = t.find(isColTok);
+      if (t.some((x) => /^inset$/i.test(x)) || !c || /^var\(/i.test(c) || (([r, g, b, a]) => a > 0 && r + g + b >= 6)(col(c))) k = i;
+    });
+    if (k < 0) return null;
+    return [P.slice(0, k + 1).join(', '), P.slice(k + 1).join(', ') || 'none'];
+  }
+  const join = (out) => out.map(([n, v, i]) => n + ': ' + v + (i ? ' !important' : '')).join('; ');
+  function rewriteDecls(text, plain) { const out = rewriteList(decls(text), plain); return out && join(out); }
+  // a rule's declarations rewritten into it: as a whole, or one by one where some come out of no value (the longhands of a shorthand
+  // with a var() in it that a later longhand breaks up: the hud's timer's font, a border; the whole text would lose them), those as they are
+  function rewriteStyle(st, plain) {
+    const D = decls(st.cssText), out = rewriteList(D, plain); if (!out) return false;
+    if (D.every((d) => d[1])) { st.cssText = join(out); return true; }
+    const was = new Set(D.map(([n, v, i]) => n.toLowerCase() + ':' + v + !!i));
+    for (const [n, v, i] of out) if (v && !was.has(n.toLowerCase() + ':' + v + !!i)) st.setProperty(n, v, i ? 'important' : '');
+    return true;
+  }
+  function rewriteList(D, plain) {
+    let ch = false; const out = [];
+    for (const [n, v0, imp] of D) {
+      let v = v0; const add = (nn, vv) => { out.push([nn, vv, imp]); ch = true; };
+      const N = n.toLowerCase();
+      if (!v) { out.push([n, v, imp]); continue; }
+      if (N.startsWith('--')) { out.push([n, v, imp]); continue; }
+      if (N === 'color') { out.push([n, v, imp]); add('--sd-c', /^currentcolor$/i.test(v) ? 'inherit' : cur(v)); continue; }
+      if (N === 'text-shadow') { out.push([n, v, imp]); add('--sd-ts', /^none$/i.test(v) ? '0 0 transparent' : cur(v)); continue; }
+      if (BGP.test(N) && !/url\(|image-set\(|element\(|var\(--pic/i.test(v)) {
+        if (N === 'background-color') { add('--sd-bgc', cur(v)); add(n, 'transparent'); continue; }
+        if (N === 'background-image') { add('--sd-bgi', cur(v)); add(n, 'none'); continue; }
+        const [im, c] = bgSplit(cur(v));
+        // (no picture in it, only where and how big one would be: that stays, for a picture an element gets by its style="")
+        if (im !== 'none' && !/(gradient|url|image-set|var)\(/i.test(im)) { add(n, im); add('--sd-bgi', 'none'); add('--sd-bgc', c); continue; }
+        add('--sd-bgi', im); add('--sd-bgc', c); add('background-color', 'transparent'); add('background-image', 'none');
+        continue;
+      }
+      if (BCP.test(N) && !/^border-(.*-)?(width|style|radius)$/.test(N)) {
+        if (/^(none|0|0px|hidden)$/i.test(v)) { out.push([n, v, imp]); continue; }
+        const c = N.endsWith('-color') ? split(v, ' ')[0] : borderCol(v);
+        add('--sd-bc', cur(c));
+        if (N.endsWith('-color')) add(n, 'transparent'); else { out.push([n, v, imp]); add(N === 'border' ? 'border-color' : N + '-color', 'transparent'); }
+        continue;
+      }
+      if (N === 'box-shadow' && !plain) {
+        const S = shadowSplit(cur(v));
+        if (S) { add('--sd-bs', S[0]); add('--sd-bf', cur(v)); add(n, 'var(--sd-bk, ' + S[1] + ')'); continue; }
+      }
+      if (/currentcolor/i.test(v)) { add(n, cur(v)); continue; }
+      out.push([n, v, imp]);
+    }
+    return ch ? out : null;
+  }
+  const IMG = /(^|[\s>+~(,])img(?=$|[\s.:#[>+~),])/g, CNV = /(^|[\s>+~(,])canvas(?=$|[\s.:#[>+~),])/g, SVGT = /(^|[\s>+~(,])svg(?=$|[\s.:#[>+~),])/g;
+  function rewriteRules(list) {
+    for (const r of Array.from(list)) try { rule(r); } catch (_) { ST.err = (ST.err || 0) + 1; }   // (one rule: the rest of the sheet goes on)
+  }
+  function rule(r) {
+    if (r.cssRules && !(r instanceof CSSKeyframesRule) && r.type !== 1) { rewriteRules(r.cssRules); return; }
+    if (r instanceof CSSKeyframesRule) { for (const k of Array.from(r.cssRules)) rewriteStyle(k.style, true); return; }
+    if (!r.style) return;
+    // (a picture's canvas takes the picture's rules and not the canvases' ones; :where adds nothing to a rule's weight)
+    const sel = r.selectorText;
+    if (sel && /(^|[^\w-])(img|canvas|svg)([^\w-]|$)/.test(sel)) {
+      const t = sel.replace(CNV, '$1canvas:where(:not([data-sdimg]))').replace(SVGT, '$1svg:where(:not([data-sdimg]))').replace(IMG, '$1:is(img, :where(canvas[data-sdimg], svg[data-sdimg]))');
+      if (t !== sel) r.selectorText = t;
+    }
+    if (rewriteStyle(r.style, sel && /::?(before|after)\b/i.test(sel))) ST.rules++;
+    if (r.cssRules && r.cssRules.length) rewriteRules(r.cssRules);
+  }
+  function rewriteSheet(sh) { try { if (sh && !sh.__sd) { sh.__sd = 1; rewriteRules(sh.cssRules); } } catch (_) { /* (another origin's sheet) */ } }
+  Sence.rewriteSheet = rewriteSheet;
+
+  // ---- the custom properties and the rules of the layers ----
+  try {
+    const reg = (name, syntax, inherits, initialValue) => { try { CSS.registerProperty(initialValue == null ? { name, syntax, inherits } : { name, syntax, inherits, initialValue }); } catch (_) { /* (registered) */ } };
+    reg('--sd-c', '<color>', true, getComputedStyle(document.documentElement).color || '#000');
+    reg('--sd-bgc', '<color>', false, 'transparent'); reg('--sd-bc', '<color>', false, 'transparent'); reg('--sd-bgi', '*', false); reg('--sd-bs', '*', false); reg('--sd-bf', '*', false); reg('--sd-bk', '*', false);
+  } catch (_) { /* (no CSS.registerProperty: the colours only change, not ease) */ }
+  const BASE = ':root,:host{--sd-ts:0 0 transparent}' +
+    '*:not(svg):not(svg *),*::before,*::after,*::placeholder,*::marker{color:transparent!important;caret-color:var(--sd-c)!important;text-shadow:0 0 0 var(--sd-c),var(--sd-ts)!important;-webkit-text-fill-color:transparent!important}' +
+    // (an SVG's text its own colours, svgIcon's: not the text-shadow of the text round it, which it inherits, white over its glyphs and their
+    // stroke: the menu's height profile, the phone, 12. 11. 2026)
+    'svg{color:var(--sd-c)!important;text-shadow:var(--sd-ts)!important}' +
+    // (an emoji, the coin of Lang.eur: Chromium draws a colour glyph with its fill's alpha, so in a transparent fill it is gone and the text-shadow
+    // under it a dark round; in black, which forced dark leaves, it has its own colours: the garage's prices, the phone, 12. 11. 2026)
+    '[data-sdj]{color:#000!important;-webkit-text-fill-color:#000!important;text-shadow:none!important}' +
+    '[data-sdo]{overflow:clip!important;overflow-clip-margin:border-box!important}[data-sdo=f]{display:flow-root!important}' +
+    '[data-sde]{filter:var(--sd-ef)!important}[data-sdl]{isolation:isolate}[data-sdp]{position:relative}' +
+    '[data-sdl=b]::before,[data-sdl=a]::after{content:""!important;position:absolute!important;inset:var(--sd-li,0)!important;z-index:-1!important;pointer-events:none!important;' +
+    'border-radius:inherit!important;box-sizing:border-box!important;border-style:inherit!important;border-width:inherit!important;border-color:var(--sd-lk,transparent)!important;' +
+    'background:var(--sd-lb,none)!important;background-color:var(--sd-lc,transparent)!important;background-clip:padding-box!important;filter:var(--sd-lf,none)!important;' +
+    'margin:0!important;padding:0!important;transform:none!important;opacity:1!important;width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;' +
+    'display:block!important;clip-path:none!important;-webkit-mask:none!important;mask:none!important;animation:none!important;transition:none!important;box-shadow:none!important;outline:0!important}' +
+    '[data-sdb]::before{background:var(--sd-Bb,none)!important;background-color:var(--sd-Bc,transparent)!important;border-color:var(--sd-Bk,transparent)!important;filter:var(--sd-Bf,none)!important;background-clip:padding-box!important}' +
+    '[data-sda]::after{background:var(--sd-Ab,none)!important;background-color:var(--sd-Ac,transparent)!important;border-color:var(--sd-Ak,transparent)!important;filter:var(--sd-Af,none)!important;background-clip:padding-box!important}' +
+    '[data-sdn]{background:var(--sd-nb,none)!important;background-color:var(--sd-nc,transparent)!important;border-color:var(--sd-nk,transparent)!important}' +
+    '[data-sdu]{background-image:none!important;isolation:isolate}[data-sdu][data-sdl]{background-color:transparent!important}[data-sdu][data-sdl=a]::after{z-index:-2!important}' +
+    'canvas[data-sdbg]{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:-1!important;pointer-events:none!important;border-radius:inherit;display:block!important;margin:0!important;padding:0!important;border:0!important;transform:none!important;filter:none!important;opacity:1!important}';
+
+  // ---- the filters (one per set of colours, in each tree's own <svg>) ----
+  const A0 = 0.2;
+  const lvl = (i, n) => (n === 1 ? 1 : A0 + (1 - A0) * i / (n - 1));
+  const fmt = (x) => +x.toFixed(4);
+  function defsOf(root) {
+    if (root.__sdDefs) return root.__sdDefs;
+    const host = root === document ? document.body : root;
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('aria-hidden', 'true'); s.setAttribute('width', '0'); s.setAttribute('height', '0'); s.setAttribute('data-sddefs', '');
+    s.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+    host.appendChild(s);
+    root.__sdDefs = { svg: s, ids: new Map() };
+    return root.__sdDefs;
+  }
+  let fid = 0;
+  const rgb = (c) => 'flood-color="rgb(' + c.slice(0, 3).map(Math.round).join(',') + ')" flood-opacity="' + fmt(c[3]) + '"';
+  // sh: the box's shadows ({ list: [{ i: inset, x, y, b: blur, s: spread, c }], ob: how far its border box is outside the layer,
+  // ib: how far its padding box is inside it, mx/my: the filter's region past the layer, as a share of its size)
+  function filterFor(root, pal, svgShape, sh) {
+    const D = defsOf(root), key = (svgShape ? 's' : '') + pal.map((c) => c.map((x) => fmt(x)).join(',')).join(';') + (sh ? '|' + sh.key : '');
+    let id = D.ids.get(key); if (id) return id;
+    id = 'sd' + (++fid); D.ids.set(key, id); ST.filters++;
+    const box = svgShape ? 'x="-50%" y="-50%" width="200%" height="200%"' : sh && (sh.mx || sh.my)
+      ? 'x="' + -sh.mx + '" y="' + -sh.my + '" width="' + fmt(1 + 2 * sh.mx) + '" height="' + fmt(1 + 2 * sh.my) + '"' : 'x="0" y="0" width="1" height="1"';
+    let h = '';
+    if (sh && sh.el) { /* (its own picture: the shadows under it) */ } else if (pal.length === 1) {
+      h = '<feFlood ' + rgb(pal[0]) + '/><feComposite in2="SourceAlpha" operator="in" result="S"/>';
+    } else {
+      const k = 1 / (1 - A0), b = -A0 / (1 - A0), row = '0 0 0 ' + fmt(k) + ' ' + fmt(b);
+      const tab = (i) => pal.map((c) => fmt(i < 3 ? c[i] / 255 : c[3])).join(' ');
+      h = '<feComponentTransfer in="SourceAlpha" result="m"><feFuncA type="linear" slope="' + fmt(1 / A0) + '" intercept="0"/></feComponentTransfer>' +
+        '<feColorMatrix in="SourceGraphic" type="matrix" values="' + row + ' ' + row + ' ' + row + ' 0 0 0 0 1" result="i"/>' +
+        '<feComponentTransfer result="x"><feFuncR type="table" tableValues="' + tab(0) + '"/><feFuncG type="table" tableValues="' + tab(1) + '"/><feFuncB type="table" tableValues="' + tab(2) + '"/></feComponentTransfer>' +
+        // (its alphas from the index too, through the red channel: the matrix's alpha is 1, as an alpha of the index would lose the colours under it)
+        (pal.some((c) => c[3] !== 1) ? '<feComponentTransfer in="i"><feFuncR type="table" tableValues="' + tab(3) + '"/></feComponentTransfer>' +
+          '<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0"/><feComposite in="x" operator="in"/>' : '') +
+        '<feComposite in2="m" operator="in" result="S"/>';
+    }
+    if (sh) {   // the shadows, as the browser draws a box-shadow: the outer ones under the box (none under it), the inset ones over it
+      const M = 'in="SourceAlpha"', mor = (inn, r, out) => (r ? '<feMorphology ' + inn + ' operator="' + (r > 0 ? 'dilate' : 'erode') + '" radius="' + fmt(Math.abs(r)) + '" result="' + out + '"/>' : '');
+      h += '<feComponentTransfer ' + M + ' result="M"><feFuncA type="linear" slope="' + (sh.el ? 50 : fmt(1 / A0)) + '" intercept="0"/></feComponentTransfer>';
+      if (sh.ib) h += mor('in="M"', -sh.ib, 'P');
+      if (sh.ob) h += mor('in="M"', sh.ob, 'O');
+      const P = sh.ib ? 'P' : 'M', O = sh.ob ? 'O' : 'M', outer = [], inner = [];
+      sh.list.forEach((d, j) => {
+        const r = 'h' + j; let t;
+        if (!d.i) {
+          t = mor('in="' + O + '"', d.s, r + 'a') + '<feOffset in="' + (d.s ? r + 'a' : O) + '" dx="' + d.x + '" dy="' + d.y + '" result="' + r + 'b"/>' +
+            (d.b ? '<feGaussianBlur in="' + r + 'b" stdDeviation="' + fmt(d.b / 2) + '" result="' + r + 'b"/>' : '') +
+            '<feFlood ' + rgb(d.c) + '/><feComposite in2="' + r + 'b" operator="in"/><feComposite in2="' + O + '" operator="out" result="' + r + '"/>';
+          outer.unshift(r);
+        } else {
+          t = '<feOffset in="' + P + '" dx="' + d.x + '" dy="' + d.y + '" result="' + r + 'a"/>' + mor('in="' + r + 'a"', -d.s, r + 'a') +
+            (d.b ? '<feGaussianBlur in="' + r + 'a" stdDeviation="' + fmt(d.b / 2) + '" result="' + r + 'a"/>' : '') +
+            '<feFlood ' + rgb(d.c) + '/><feComposite in2="' + r + 'a" operator="out"/><feComposite in2="' + P + '" operator="in" result="' + r + '"/>';
+          inner.unshift(r);
+        }
+        h += t;
+      });
+      h += '<feMerge>' + outer.concat(sh.el ? 'SourceGraphic' : 'S', inner).map((r) => '<feMergeNode in="' + r + '"/>').join('') + '</feMerge>';
+    }
+    D.svg.insertAdjacentHTML('beforeend', '<filter id="' + id + '" ' + box + ' color-interpolation-filters="sRGB">' + h + '</filter>');
+    return id;
+  }
+
+  // ---- stripes: a repeating gradient of hard stops down a pseudo-element (the menu's kerbs: .title-panel::before, .tile::before …) or across a box ----
+  // The levels of black and the filter's table drew those red and black on the phone (white darkened; 12. 11. 2026), so a stripe pattern
+  // is drawn only by what the phone showed right (temni-nacin.html rows 4 and 5): the pseudo-element plain black, a filter of floods, one
+  // per band, tiled down it (feTile) and kept where it is (SourceAlpha, its round corners too).
+  const PX = (t) => (/^0$/.test(t) ? 0 : /^-?[\d.]+px$/.test(t) ? parseFloat(t) : NaN);
+  function bandsOf(bgi) {
+    const m = /^repeating-linear-gradient\((.*)\)$/i.exec((bgi || '').trim()); if (!m) return null;
+    const args = split(m[1], ',');
+    let x = false;   // (down it, or across it: the loading screen's bar, 90deg)
+    if (args.length && !isColTok(split(args[0], ' ')[0])) {
+      const d = args.shift().trim();
+      if (/^(90deg|to right|0\.25turn)$/i.test(d)) x = true; else if (!/^(180deg|to bottom|0\.5turn)$/i.test(d)) return null;
+    }
+    const pts = [];
+    for (const a of args) {
+      const t = split(a, ' '); if (!t.length || !isColTok(t[0]) || t.length > 3) return null;
+      const c = col(t[0]); if (!c || c[3] !== 1) return null;
+      const ps = t.slice(1).map(PX); if (ps.some(isNaN)) return null;
+      if (!ps.length) return null;
+      for (const y of ps) pts.push({ c, y });
+    }
+    if (pts.length < 2 || pts[0].y !== 0) return null;
+    const bands = [];
+    for (let i = 0; i + 1 < pts.length; i++) {
+      const A = pts[i], B = pts[i + 1];
+      if (B.y < A.y) return null;
+      if (B.y === A.y) continue;   // (a hard stop)
+      if (A.c.join() !== B.c.join()) return null;   // (a soft blend: not a stripe)
+      bands.push({ c: A.c, y0: A.y, y1: B.y });
+    }
+    if (bands.length < 2 || bands.length > 8) return null;
+    bands.x = x; return bands;
+  }
+  function stripeFilter(root, bands) {
+    const D = defsOf(root), key = 't' + (bands.x ? 'x' : 'y') + bands.map((d) => d.c.map(fmt).join(',') + '@' + d.y0 + '-' + d.y1).join(';');
+    let id = D.ids.get(key); if (id) return id;
+    id = 'sd' + (++fid); D.ids.set(key, id); ST.filters++;
+    const P = bands[bands.length - 1].y1, [Y, H] = bands.x ? ['x', 'width'] : ['y', 'height'];
+    const h = bands.map((d, i) => '<feFlood ' + rgb(d.c) + ' ' + Y + '="' + fmt(d.y0) + '" ' + H + '="' + fmt(d.y1 - d.y0) + '" result="b' + i + '"/>').join('') +
+      '<feMerge ' + Y + '="0" ' + H + '="' + fmt(P) + '" result="T">' + bands.map((d, i) => '<feMergeNode in="b' + i + '"/>').join('') + '</feMerge>' +
+      '<feTile in="T"/><feComposite in2="SourceAlpha" operator="in"/>';
+    D.svg.insertAdjacentHTML('beforeend', '<filter id="' + id + '" x="0" y="0" width="1" height="1" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' + h + '</filter>');
+    return id;
+  }
+
+  // ---- a box's colours → what its layer draws ----
+  const GR = /(repeating-)?(linear|radial|conic)-gradient\(/gi;
+  const specCache = new Map();
+  function spec(root, bgc, bgi, bc, border, sh) {
+    const key = bgc + '|' + bgi + '|' + (border ? bc : '') + '|' + (sh ? sh.key : '');
+    let s = specCache.get(root) && specCache.get(root).get(key); if (s) return s;
+    s = make(root, bgc, bgi, bc, border, sh);
+    if (!specCache.has(root)) specCache.set(root, new Map()); specCache.get(root).set(key, s);
+    return s;
+  }
+  function make(root, bgc, bgi, bc, border, sh) {
+    const imgs = bgi && bgi !== 'none' ? bgi : '';
+    const nGr = (imgs.match(GR) || []).length;
+    if (/url\(|image-set\(/i.test(imgs) || nGr > 1 || (imgs && !nGr)) return { native: true };
+    const base = col(bgc);
+    let stops = [], pre = '', post = '', fn = '', head = null, inner = '';
+    if (nGr) {
+      GR.lastIndex = 0; const m = GR.exec(imgs); GR.lastIndex = 0;
+      let d = 0, j = m.index + m[0].length;
+      for (; j < imgs.length; j++) { const c = imgs[j]; if (c === '(') d++; else if (c === ')') { if (d === 0) break; d--; } }
+      pre = imgs.slice(0, m.index); fn = m[0]; inner = imgs.slice(m.index + m[0].length, j); post = imgs.slice(j);
+      const args = split(inner, ',');
+      if (args.length && !isColTok(split(args[0], ' ')[0])) head = args.shift();
+      for (const a of args) {
+        const t = split(a, ' '); const ci = t.findIndex(isColTok);
+        if (ci < 0) { stops.push({ hint: a }); continue; }
+        const c = t.splice(ci, 1)[0];
+        stops.push({ c: col(c), pos: t.join(' ') });
+      }
+      const real = stops.filter((x) => x.c);
+      if (real.length < 1) return { native: true };
+      // a clear stop takes its neighbour's hue (CSS blends gradients premultiplied, the table does not)
+      real.forEach((x, i) => {
+        if (x.c[3] > 0) return;
+        const nb = real.slice(i + 1).find((y) => y.c[3] > 0) || real.slice(0, i).reverse().find((y) => y.c[3] > 0);
+        if (nb) x.c = [nb.c[0], nb.c[1], nb.c[2], 0];
+      });
+    }
+    const real = stops.filter((x) => x.c);
+    const pal = [];
+    if (border) pal.push(over(col(bc), real.length ? over(real[0].c, base) : base));
+    if (real.length) for (const x of real) pal.push(over(x.c, base));
+    else if (base[3] > 0) pal.push(base);
+    const bare = !pal.length && !!sh;   // (only its shadows: the layer draws its shape, the filter none of it)
+    if (bare) pal.push([0, 0, 0, 0]);
+    if (!pal.length) return null;
+    // only black (of any alpha): the browser's darkening keeps it as it is, so no layer and no filter for it (the race's vignette over
+    // the 3D picture, the shades of dialogs: a filter there would cost every frame)
+    if (!sh && pal.every((p) => p[0] + p[1] + p[2] < 6)) return { native: true };
+    const n = pal.length, off = border ? 1 : 0, blk = (i) => 'rgba(0,0,0,' + fmt(lvl(i, n)) + ')';
+    let b = 'none', c = 'transparent';
+    if (real.length) {
+      let i = 0;
+      const a2 = stops.map((x) => (x.c ? blk(off + i++) + (x.pos ? ' ' + x.pos : '') : x.hint));
+      b = pre + fn + (head ? head + ', ' : '') + a2.join(', ') + post;
+    } else if (base[3] > 0 || bare) c = blk(off);
+    return { b, c, k: border ? blk(0) : 'transparent', f: 'url(#' + filterFor(root, pal, false, sh) + ')' };
+  }
+
+  // ---- the elements ----
+  const NOLAYER = /^(html|body|img|canvas|input|select|textarea|video|iframe|picture|br|wbr|hr|option|optgroup|template|slot|script|style|link|meta)$/;
+  const TRANSP = /^(transparent|rgba\(0, 0, 0, 0\))$/;
+  const orig = new WeakMap();
+  function boxOf(cs) {
+    const bgc = cs.getPropertyValue('--sd-bgc').trim(), bgi = cs.getPropertyValue('--sd-bgi').trim(), bc = cs.getPropertyValue('--sd-bc').trim();
+    const w = [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth].map(parseFloat);
+    const border = !!bc && !TRANSP.test(bc) && w.some((x) => x > 0);
+    const bg = (!!bgc && !TRANSP.test(bgc)) || (!!bgi && bgi !== 'none');
+    return { bgc, bgi, bc, w, border, bg };
+  }
+  function clearVars(el, pre) { for (const k of ['b', 'c', 'k', 'f', 'i']) el.style.removeProperty('--sd-' + pre + k); }
+  function setVars(el, pre, s) { el.style.setProperty('--sd-' + pre + 'b', s.b); el.style.setProperty('--sd-' + pre + 'c', s.c); el.style.setProperty('--sd-' + pre + 'k', s.k); el.style.setProperty('--sd-' + pre + 'f', s.f); }
+  // its shadows that go into its layer's filter (--sd-bs: shadowSplit) → [{ i, x, y, b, s, c }]; null: not ones it can (em, …)
+  function shadows(v, cs) {
+    const out = [];
+    for (const p of split(v, ',')) {
+      const t = split(p, ' '); let i = false, c = null; const L = [];
+      for (const x of t) {
+        if (/^inset$/i.test(x)) i = true;
+        else if (isColTok(x)) c = x;
+        else { const n = /^(-?[\d.]+)(px)?$/.exec(x); if (!n || (!n[2] && +n[1] !== 0)) return null; L.push(+n[1]); }
+      }
+      if (L.length < 2 || L.length > 4) return null;
+      out.push({ i, x: L[0], y: L[1], b: L[2] || 0, s: L[3] || 0, c: col(c || cs.getPropertyValue('--sd-c')) });
+    }
+    return out.length ? out : null;
+  }
+  const lit = (d) => d.c[3] > 0 && d.c[0] + d.c[1] + d.c[2] >= 6;
+  const free = (el, p) => { const c = getComputedStyle(el, p).content; return !c || c === 'none' || c === 'normal'; };
+  function element(el, root) {
+    const tag = el.localName;
+    if (inlineStyle(el)) { /* (moved into the custom properties) */ }
+    if (tag === 'img') { if (SVGSRC.test(el.getAttribute('src') || '')) toSvg(el, root); else toCanvas(el); return; }
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none') return;
+    const B = boxOf(cs);
+    // a picture behind it (url()): the pictures into a canvas of its own under its content, its colour and gradients into its layer
+    let bi = cs.backgroundImage;
+    if (el.hasAttribute('data-sdu')) { el.removeAttribute('data-sdu'); bi = getComputedStyle(el).backgroundImage; el.setAttribute('data-sdu', ''); }
+    if (/url\(/i.test(bi) && !NOLAYER.test(tag)) {
+      const L = split(bi, ','), rest = L.filter((x) => !/url\(/i.test(x));
+      if (!B.bgc || TRANSP.test(B.bgc)) B.bgc = cs.backgroundColor;
+      if (!B.bgi || B.bgi === 'none') B.bgi = rest.join(', ');
+      B.bg = (!!B.bgc && !TRANSP.test(B.bgc)) || !!B.bgi;
+      if (cs.position === 'static') el.setAttribute('data-sdp', '');
+      bgCanvas(el, cs, L, bi);
+    } else if (el.__sdbg) dropBg(el);
+    // its shadows
+    const SB = cs.getPropertyValue('--sd-bs').trim(), SL = SB ? shadows(SB, cs) : null;
+    // (a box that clips its content would clip its layer's outer shadows too: those go into a filter of its own, under it)
+    const clips = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
+    const SLi = SL && clips ? SL.filter((d) => d.i) : SL, SLo = SL && clips ? SL.filter((d) => !d.i) : [];
+    let shOn = !!SL && !SLi.length;
+    // the element's own surface
+    if (B.bg || B.border || (SLi && SLi.some(lit))) {
+      let slot = el.getAttribute('data-sdl');
+      if (!slot && !NOLAYER.test(tag) && !el.hasAttribute('data-sdn')) slot = free(el, '::before') ? 'b' : free(el, '::after') ? 'a' : '';
+      // a box that clips its content (overflow: hidden) would clip its own layer's border too: it clips at its border's outer edge
+      // instead (overflow: clip with overflow-clip-margin; a block keeps its own formatting context), its content painting over the
+      // border where it reaches it. One that scrolls keeps its border as it was.
+      let clip = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
+      if (clip && B.border && slot && /^(hidden|clip)$/.test(cs.overflowX) && /^(hidden|clip)$/.test(cs.overflowY) && !el.scrollTop && !el.scrollLeft) {
+        if (!el.hasAttribute('data-sdo')) el.setAttribute('data-sdo', cs.display === 'block' ? 'f' : '');
+        clip = false;
+      }
+      let sh = null;
+      if (SLi && SLi.length && slot) {
+        const SL = SLi, bw = Math.max.apply(null, B.w), lb = B.border && !clip, ob = lb ? 0 : bw, ib = lb ? bw : 0;
+        const W = el.offsetWidth - (lb ? 0 : 2 * bw), H = el.offsetHeight - (lb ? 0 : 2 * bw);
+        const far = (k) => Math.max(0, ...SL.filter((d) => !d.i).map((d) => Math.abs(d[k]) + Math.max(0, d.s) + d.b)) + (SL.some((d) => !d.i) ? ob + 2 : 0);
+        const q = (px, all) => (px && all > 0 ? Math.ceil(px / all * 20) / 20 : 0);
+        sh = { list: SL, ob, ib, mx: q(far('x'), W), my: q(far('y'), H) };
+        sh.key = JSON.stringify([SL.map((d) => [+d.i, d.x, d.y, d.b, d.s, d.c.map(fmt)]), ob, ib, sh.mx, sh.my]);
+      }
+      // (stripes across a box of its own, no border or shadows: the loading screen's bar; as the pseudo-elements' stripes below)
+      const bands = slot && !B.border && !sh && (!B.bgc || TRANSP.test(B.bgc)) ? bandsOf(B.bgi) : null;
+      const s = bands ? { b: 'none', c: '#000', k: 'transparent', f: 'url(#' + stripeFilter(root, bands) + ')' } : slot ? spec(root, B.bgc, B.bgi, B.bc, B.border && !clip, sh) : null;
+      if (s && !s.native) {
+        el.removeAttribute('data-sdn'); clearVars(el, 'n');
+        if (el.getAttribute('data-sdl') !== slot) { el.setAttribute('data-sdl', slot); ST.layers++; }
+        if (cs.position === 'static') el.setAttribute('data-sdp', '');
+        setVars(el, 'l', s); if (sh) shOn = true;
+        el.style.setProperty('--sd-li', B.border && !clip ? B.w.map((x) => -x + 'px').join(' ') : '0');
+        if (B.border && clip) { el.setAttribute('data-sdn', ''); el.style.setProperty('--sd-nk', B.bc); el.style.setProperty('--sd-nb', 'none'); el.style.setProperty('--sd-nc', 'transparent'); }
+      } else {   // no layer for it: its colours as they were (the browser's darkening and all)
+        unlayer(el);
+        el.setAttribute('data-sdn', '');
+        el.style.setProperty('--sd-nb', B.bgi || 'none'); el.style.setProperty('--sd-nc', B.bgc || 'transparent'); el.style.setProperty('--sd-nk', B.border ? B.bc : 'transparent');
+      }
+    } else if (el.hasAttribute('data-sdl') || el.hasAttribute('data-sdn')) { unlayer(el); el.removeAttribute('data-sdn'); clearVars(el, 'n'); }
+    let ef = null;
+    if (shOn && SLo.some(lit)) {
+      const W = el.offsetWidth, H = el.offsetHeight, q = (px, all) => (px && all > 0 ? Math.ceil(px / all * 20) / 20 : 0);
+      const far = (k) => Math.max(...SLo.map((d) => Math.abs(d[k]) + Math.max(0, d.s) + d.b)) + 2;
+      const sh = { list: SLo, ob: 0, ib: 0, el: true, mx: q(far('x'), W), my: q(far('y'), H) };
+      sh.key = 'e' + JSON.stringify([SLo.map((d) => [d.x, d.y, d.b, d.s, d.c.map(fmt)]), sh.mx, sh.my]);
+      let of = orig.get(el); if (!of) orig.set(el, of = {});
+      if (of.f == null) of.f = el.hasAttribute('data-sde') ? '' : (cs.filter !== 'none' ? cs.filter : '');
+      ef = 'url(#' + filterFor(root, [], false, sh) + ')' + (of.f ? ' ' + of.f : '');
+    }
+    if (SLo.length && !ef) shOn = false;
+    if (ef) { if (el.style.getPropertyValue('--sd-ef') !== ef) el.style.setProperty('--sd-ef', ef); el.setAttribute('data-sde', ''); }
+    else if (el.hasAttribute('data-sde')) { el.removeAttribute('data-sde'); el.style.removeProperty('--sd-ef'); }
+    // shadows not in its layer: as they were (the browser's darkening and all)
+    if (SB && !shOn) { const f = cs.getPropertyValue('--sd-bf').trim(); if (el.style.getPropertyValue('--sd-bk') !== f) el.style.setProperty('--sd-bk', f); }
+    else if (el.style.getPropertyValue('--sd-bk')) el.style.removeProperty('--sd-bk');
+    // its pseudo-elements' own surfaces
+    for (const [p, a, pre] of [['::before', 'data-sdb', 'B'], ['::after', 'data-sda', 'A']]) {
+      if (el.getAttribute('data-sdl') === (p === '::before' ? 'b' : 'a')) continue;
+      if (free(el, p) && !el.hasAttribute(a)) continue;
+      const pc = getComputedStyle(el, p), P = boxOf(pc);
+      if (!P.bg && !P.border) { if (el.hasAttribute(a)) { el.removeAttribute(a); clearVars(el, pre); } continue; }
+      const bands = !P.border && (!P.bgc || TRANSP.test(P.bgc)) ? bandsOf(P.bgi) : null;
+      let s = bands ? { b: 'none', c: '#000', k: 'transparent', f: 'url(#' + stripeFilter(root, bands) + ')' } : spec(root, P.bgc, P.bgi, P.bc, P.border);
+      const k = el; let of = orig.get(k); if (!of) orig.set(k, of = {});
+      if (of[p] == null) of[p] = el.hasAttribute(a) ? '' : (pc.filter !== 'none' ? pc.filter : '');
+      if (!s || s.native) s = { b: P.bgi || 'none', c: P.bgc || 'transparent', k: P.border ? P.bc : 'transparent', f: of[p] || 'none' };
+      else s = Object.assign({}, s, { f: s.f + (of[p] ? ' ' + of[p] : '') });
+      el.setAttribute(a, ''); setVars(el, pre, s);
+    }
+  }
+  function unlayer(el) { if (el.hasAttribute('data-sdl')) { el.removeAttribute('data-sdl'); el.removeAttribute('data-sdp'); clearVars(el, 'l'); el.style.removeProperty('--sd-li'); } }
+  // an element's own style="" colours (the game's buttons of a colour, the HUD's swatches) → the custom properties
+  function inlineStyle(el) {
+    const s = el.style; if (!s || !s.length) return false;
+    const t = s.cssText, own = (x) => x.replace(/--sd-[\w-]+\s*:[^;]*;?\s*/g, '');
+    // (our own rewrite coming back through the observer, or our own --sd-* set since: left as it is, else a rewrite that is not its own
+    // fixed point would go round without end in the observer's microtasks, and its own background-image: none would be read as the
+    // page's and clear the colours kept in --sd-bgi)
+    if (own(t) === el.__sdcss) return false;
+    if (!/(^|;)\s*(color|background|border|text-shadow|box-shadow)[a-z-]*\s*:/i.test(t)) return false;
+    const pick = t.split(';').filter((d) => /^\s*(color|background|border|text-shadow)/i.test(d)).join(';');
+    if (/background-color:\s*transparent|--sd-c:/.test(t) && !/(^|;)\s*color\s*:/.test(t.replace(/--sd-c:[^;]*/g, '').replace(/caret-color[^;]*/g, '')) && !/background(-image)?:\s*(?!none)[^;]*gradient|background(-color)?:\s*(?!transparent)#|background:\s*rgb/.test(pick)) return false;
+    const r = rewriteDecls(t); if (r == null) return false;
+    if (r === t) { el.__sdcss = own(t); return false; }
+    s.cssText = r; el.__sdcss = own(s.cssText); return true;
+  }
+
+  // ---- pictures and icons ----
+  // the url() pictures of an element's background, drawn as the browser would (size, position, repeat) on a canvas under its content
+  const pics = new Map();
+  function pic(u, then) {
+    let p = pics.get(u);
+    if (!p) { p = { im: new Image(), wait: new Set() }; pics.set(u, p); p.im.onload = () => { for (const f of p.wait) f(); p.wait.clear(); }; p.im.src = u; }
+    if (p.im.complete && p.im.naturalWidth) return p.im;
+    p.wait.add(then); return null;
+  }
+  const len = (t, all, rest) => (/%$/.test(t) ? parseFloat(t) / 100 * all : /px$/.test(t) ? parseFloat(t) : rest);
+  let ro = null;
+  function bgCanvas(el, cs, L, bi) {
+    const S = split(cs.backgroundSize, ','), P = split(cs.backgroundPosition, ','), R = split(cs.backgroundRepeat, ',');
+    const key = bi + '|' + cs.backgroundSize + '|' + cs.backgroundPosition + '|' + cs.backgroundRepeat;
+    let c = el.__sdbg;
+    if (!c || !c.isConnected || c.parentNode !== el) {
+      c = el.__sdbg = document.createElement('canvas'); c.setAttribute('data-sdbg', ''); c.setAttribute('aria-hidden', 'true');
+      el.appendChild(c); el.setAttribute('data-sdu', ''); ST.imgs++;
+      if (!ro && window.ResizeObserver) ro = new ResizeObserver((es) => { for (const e of es) if (e.target.__sdbg) draw(e.target); });
+      if (ro) ro.observe(el);
+    }
+    c.__k = key; c.__L = L; c.__S = S; c.__P = P; c.__R = R;
+    draw(el);
+  }
+  function draw(el) {
+    const c = el.__sdbg; if (!c) return;
+    const w = el.clientWidth, h = el.clientHeight; if (!w || !h) return;
+    const d = Math.min(window.devicePixelRatio || 1, 2), W = Math.round(w * d), H = Math.round(h * d);
+    const k = c.__k + '|' + W + 'x' + H; if (c.__drawn === k) return;
+    const ims = [];
+    for (const x of c.__L) {
+      const m = /url\(\s*(['"]?)(.*?)\1\s*\)/i.exec(x); if (!m) { ims.push(null); continue; }
+      const im = pic(m[2], () => { if (el.__sdbg === c) draw(el); }); if (!im) return; ims.push(im);
+    }
+    c.width = W; c.height = H; const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0);
+    for (let i = ims.length - 1; i >= 0; i--) {
+      const im = ims[i]; if (!im) continue;
+      const iw = im.naturalWidth, ih = im.naturalHeight;
+      const sz = (c.__S[i % c.__S.length] || 'auto').trim(), ps = split((c.__P[i % c.__P.length] || '0% 0%').trim(), ' '), rp = (c.__R[i % c.__R.length] || 'repeat').trim();
+      let dw = iw, dh = ih;
+      if (sz === 'cover' || sz === 'contain') { const r = (sz === 'cover' ? Math.max : Math.min)(w / iw, h / ih); dw = iw * r; dh = ih * r; }
+      else {
+        const [a, b = 'auto'] = split(sz, ' ');
+        const A = len(a, w, null), Bh = len(b, h, null);
+        if (A != null && Bh != null) { dw = A; dh = Bh; } else if (A != null) { dw = A; dh = ih * A / iw; } else if (Bh != null) { dh = Bh; dw = iw * Bh / ih; }
+      }
+      const px = (t, free) => (/%$/.test(t) ? parseFloat(t) / 100 * free : parseFloat(t) || 0);
+      const x0 = px(ps[0] || '0%', w - dw), y0 = px(ps[1] || ps[0] || '0%', h - dh);
+      const rx = !/^(no-repeat|repeat-y)/.test(rp), ry = !/^(no-repeat|repeat-x)/.test(rp) && !/^repeat-x/.test(rp);
+      const xs = rx ? x0 - Math.ceil(x0 / dw) * dw : x0, ys = ry ? y0 - Math.ceil(y0 / dh) * dh : y0;
+      for (let y = ys; y < (ry ? h : ys + 1); y += dh) for (let x = xs; x < (rx ? w : xs + 1); x += dw) g.drawImage(im, x, y, dw, dh);
+    }
+    c.__drawn = k;
+  }
+  function dropBg(el) { const c = el.__sdbg; el.__sdbg = null; if (c) c.remove(); el.removeAttribute('data-sdu'); if (ro) ro.unobserve(el); }
+  function toCanvas(img) {
+    if (img.__sd) return; img.__sd = 1;
+    const go = () => {
+      if (!img.isConnected || !img.naturalWidth) return;
+      // its own size (the layout the same: a CSS that sizes it by one side keeps its shape)
+      const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      try { c.getContext('2d').drawImage(img, 0, 0); } catch (_) { return; }
+      for (const a of Array.from(img.attributes)) if (a.name !== 'src' && a.name !== 'srcset' && a.name !== 'alt' && a.name !== 'loading' && a.name !== 'decoding') c.setAttribute(a.name, a.value);
+      if (img.alt) { c.setAttribute('role', 'img'); c.setAttribute('aria-label', img.alt); }
+      c.setAttribute('data-sdimg', img.getAttribute('src') || '');
+      img.replaceWith(c); ST.imgs++;
+    };
+    if (img.complete && img.naturalWidth) go(); else img.addEventListener('load', go, { once: true });
+  }
+  // a drawing (<img> of an .svg: the countries' flags) inline in its place (svg[data-sdimg], the CSS's img rules for it too), its shapes'
+  // colours then by SVG filters as an icon's (svgIcon): Samsung Internet darkens a picture drawn in a canvas too (the phone, 12. 11. 2026:
+  // the flags' white grey and Belgium's yellow ochre), never the colour of an feFlood
+  const SVGSRC = /^[^?#:]*\.svg([?#]|$)/i, svgText = new Map();
+  let svgN = 0;
+  function toSvg(img, root) {
+    if (img.__sd) return; img.__sd = 1;
+    const u = img.getAttribute('src');
+    let p = svgText.get(u);
+    if (!p) { p = fetch(u).then((r) => (r.ok ? r.text() : null)).catch(() => null); svgText.set(u, p); }
+    p.then((txt) => {
+      if (!img.isConnected) return;
+      const doc = txt && new DOMParser().parseFromString(txt, 'image/svg+xml'), src = doc && doc.documentElement;
+      if (!src || src.localName !== 'svg' || doc.querySelector('parsererror')) { img.__sd = 0; toCanvas(img); return; }
+      const svg = document.importNode(src, true);
+      for (const t of Array.from(svg.querySelectorAll('title,script,foreignObject'))) t.remove();
+      // (its ids its own: the same flag twice on a screen)
+      const pre = 'sdi' + (++svgN) + '-', ids = Array.from(svg.querySelectorAll('[id]'));
+      if (ids.length) {
+        const map = new Map(ids.map((e) => [e.id, pre + e.id]));
+        for (const e of ids) e.id = map.get(e.id);
+        for (const e of Array.from(svg.querySelectorAll('*'))) for (const a of Array.from(e.attributes)) {
+          if (/url\(#|^#/.test(a.value)) e.setAttribute(a.name, a.value.replace(/url\(#([^)]+)\)/g, (m, i) => (map.has(i) ? 'url(#' + map.get(i) + ')' : m)).replace(/^#(.+)$/, (m, i) => (map.has(i) ? '#' + map.get(i) : m)));
+        }
+      }
+      // its own size as the picture's (a CSS that sizes it by one side keeps its shape), drawn into its box as the picture (object-fit)
+      const vb = svg.viewBox && svg.viewBox.baseVal;
+      if (!svg.getAttribute('width') && vb && vb.width) svg.setAttribute('width', vb.width);
+      if (!svg.getAttribute('height') && vb && vb.height) svg.setAttribute('height', vb.height);
+      const fit = getComputedStyle(img).objectFit;
+      svg.setAttribute('preserveAspectRatio', fit === 'cover' ? 'xMidYMid slice' : fit === 'contain' || fit === 'scale-down' ? 'xMidYMid meet' : 'none');
+      for (const a of Array.from(img.attributes)) if (a.name !== 'src' && a.name !== 'srcset' && a.name !== 'alt' && a.name !== 'loading' && a.name !== 'decoding' && a.name !== 'width' && a.name !== 'height') svg.setAttribute(a.name, a.value);
+      if (img.alt) { svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', img.alt); } else svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('data-sdimg', u);
+      img.replaceWith(svg); ST.imgs++;
+      svgIcon(svg, root);
+    });
+  }
+  const SHAPES = 'path,rect,circle,ellipse,line,polyline,polygon,text,use';
+  // a paint of a shape (fill or stroke) → rgba, or null when it draws nothing or draws a picture (url(): left as it is)
+  function paint(v, op) {
+    if (!v || v === 'none' || /url\(/.test(v)) return null;
+    const c = col(v); return c[3] * op > 0 ? [c[0], c[1], c[2], c[3] * op] : null;
+  }
+  const BLACK0 = 'rgba(0,0,0,' + A0 + ')';
+  function svgIcon(svg, root) {
+    if (svg.hasAttribute('data-sddefs') || svg.closest('[data-sddefs]')) return;
+    const sh = Array.from(svg.querySelectorAll(SHAPES)).filter((e) => !e.closest('defs,clipPath,mask,pattern,symbol,filter'));
+    // (the colours as the page sets them: ours off first, so a class changed since is read anew)
+    if (svg.hasAttribute('data-sdf')) { svg.style.removeProperty('filter'); svg.removeAttribute('data-sdf'); }
+    for (const e of sh) if (e.hasAttribute('data-sdf')) { for (const p of ['filter', 'fill', 'stroke', 'fill-opacity', 'stroke-opacity']) e.style.removeProperty(p); e.removeAttribute('data-sdf'); }
+    const own = getComputedStyle(svg).filter;
+    const ps = sh.map((e) => {
+      const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden') return null;
+      const f = paint(cs.fill, +cs.fillOpacity), k = +parseFloat(cs.strokeWidth) > 0 ? paint(cs.stroke, +cs.strokeOpacity) : null;
+      // (paint-order: a stroke painted under the fill)
+      const po = (cs.paintOrder || 'normal').split(/\s+/).filter((w) => w === 'fill' || w === 'stroke');
+      return f || k ? { f, k, up: po[0] === 'stroke' } : null;
+    });
+    if (!ps.some(Boolean)) return;
+    const one = (p) => p.f && p.k ? null : p.f || p.k, ones = ps.map((p) => p && one(p));
+    const keys = new Set(ones.filter(Boolean).map((c) => c.join(',')));
+    // one colour in the whole icon, and the icon has no filter of its own: one filter on the icon
+    if (keys.size === 1 && ps.every((p) => !p || one(p)) && (!own || own === 'none')) {
+      svg.style.filter = 'url(#' + filterFor(root, [ones.find(Boolean)]) + ')'; svg.setAttribute('data-sdf', ''); ST.svgs++; return;
+    }
+    sh.forEach((e, i) => {
+      const p = ps[i]; if (!p) return;
+      if (one(p)) e.style.filter = 'url(#' + filterFor(root, [one(p)], true) + ')';
+      else {
+        // a fill and a stroke of two colours: the one under drawn faint black, the one over it black (paint-order: a stroke under the fill,
+        // as the menu's numbers have it, else the fill over it all black: the phone, 12. 11. 2026), a filter turns the two into their colours
+        e.style.fill = p.up ? '#000' : BLACK0; e.style.stroke = p.up ? BLACK0 : '#000'; e.style.fillOpacity = e.style.strokeOpacity = '1';
+        e.style.filter = 'url(#' + filterFor(root, p.up ? [p.k, p.f] : [p.f, p.k], true) + ')';
+      }
+      e.setAttribute('data-sdf', '');
+    });
+    ST.svgs++;
+  }
+
+  // ---- a tree: rewritten once, watched after ----
+  const EMO = /((?:\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F)\p{Emoji_Modifier}?(?:\u200D\p{Extended_Pictographic}\uFE0F?\p{Emoji_Modifier}?)*)/u;
+  const EMOS = new RegExp(EMO.source, 'gu');
+  function emoji(n) {   // (a text's emoji each in its own span[data-sdj])
+    const p = n.parentNode; if (!p || p.nodeType !== 1 || p.hasAttribute('data-sdj') || p.namespaceURI === 'http://www.w3.org/2000/svg' || /^(script|style|textarea|title)$/i.test(p.localName) || !EMO.test(n.data)) return;
+    const f = document.createDocumentFragment();
+    n.data.split(EMOS).forEach((t, i) => { if (!t) return; if (i % 2) { const s = document.createElement('span'); s.setAttribute('data-sdj', ''); s.textContent = t; f.appendChild(s); } else f.appendChild(document.createTextNode(t)); });
+    p.replaceChild(f, n);
+  }
+  function scan(root, top) {
+    const t0 = performance.now();
+    const list = top && top.nodeType === 1 ? [top].concat(Array.from(top.querySelectorAll('*'))) : Array.from(root.querySelectorAll('*'));
+    for (const el of list) {
+      if (el.namespaceURI === 'http://www.w3.org/2000/svg') { if (el.localName === 'svg' && !(el.parentNode && el.parentNode.namespaceURI === 'http://www.w3.org/2000/svg')) svgIcon(el, root); continue; }
+      try { element(el, root); } catch (_) { /* (one element: the rest go on) */ }
+      for (const c of Array.from(el.childNodes)) if (c.nodeType === 3) emoji(c);
+    }
+    ST.ms += performance.now() - t0;
+  }
+  function watch(root) {
+    const todo = new Set(); let raf = 0;
+    const run = () => {
+      raf = 0; const all = Array.from(todo); todo.clear();
+      for (const n of all) if (n.isConnected && !all.some((m) => m !== n && m.contains(n))) scan(root, n);
+    };
+    const mo = new MutationObserver((recs) => {
+      for (const r of recs) {
+        if (r.type === 'childList') {
+          for (const n of r.addedNodes) if (n.nodeType === 1 && !n.hasAttribute('data-sddefs') && !n.hasAttribute('data-sdbg')) todo.add(n); else if (n.nodeType === 3) emoji(n);
+          if (r.target.__sdbg && !r.target.__sdbg.isConnected) todo.add(r.target);   // (its picture's canvas went with its old content)
+        }
+        else if (r.type === 'attributes' && r.target.nodeType === 1) {
+          if (r.attributeName === 'style') { if (inlineStyle(r.target) || /(^|;)\s*background[a-z-]*\s*:[^;]*url\((?!["']?#)/i.test(r.target.getAttribute('style') || '')) todo.add(r.target); }
+          else todo.add(r.target);
+        }
+      }
+      if (todo.size && !raf) raf = requestAnimationFrame(run);
+    });
+    mo.observe(root === document ? document.documentElement : root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'src'] });
+    return mo;
+  }
+  function addBase(root) {
+    const st = document.createElement('style'); st.setAttribute('data-sence', ''); st.textContent = BASE;
+    (root === document ? document.head : root).appendChild(st);
+  }
+  // the menu's shadow root (js/menu.js init, once its <style> is in)
+  Sence.root = function (root) {
+    if (!root || root.__sd) return; root.__sd = 1;
+    for (const sh of Array.from(root.styleSheets || [])) rewriteSheet(sh);
+    addBase(root); scan(root); watch(root);
+  };
+  function page() {
+    for (const sh of Array.from(document.styleSheets)) rewriteSheet(sh);
+    addBase(document); scan(document); watch(document);
+  }
+  if (roots) return;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', page); else page();
+})();
