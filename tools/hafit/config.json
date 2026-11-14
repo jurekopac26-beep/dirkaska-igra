@@ -1,0 +1,15 @@
+{
+  "id": "hafit",
+  "about": "Džebel Hafit, Združeni arabski emirati (id hafit): the twistiest part of the mountain road up Jebel Hafeet",
+  "box": [24.04, 55.72, 24.15, 55.80],
+  "closed": false,
+  "route": [
+    [24.12, 55.74, null, "start"],
+    [24.0586, 55.7756, null, "finish"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
