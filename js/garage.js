@@ -641,11 +641,17 @@
       swap: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? (B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null]) : P.kind === 'skirt' ? [3, 'Roka {0} položi prag vzdolž boka', null]
         : P.kind === 'rear' ? [3, 'Roka {0} namesti difuzor pod zadnji odbijač', null] : [3, 'Roka {0} potisne ustnico pod sprednji odbijač: zaskoči', null]; },
       snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], put: (d, B) => d.where === 'none' ? null : [B.P && B.P.el === 'krilo' ? 4 : 3, 'Roka {0} odloži stari kos na voziček', null], cart_out: [4, 'Voziček odpelje'] },
-    turbo: { plan: [1, 'Kupljeno · roki se zbudita'], bonnet_up: [1, 'Hauba je gor, podpira jo drog'], cart_in: [1, 'Voziček pripelje nov turbo'],
-      grab: (d) => [2, d.rgl != null ? 'Roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null],
-      swap: [2, 'Roka {0} položi turbo na motor', null], screws: [2, 'Vijačnik privije turbo'], hoses: [2, 'Cevi so priklopljene'],
+    // (by the plate an_turbo (the regal's): roka 1 lifts and shuts the bonnet, roka 2 brings the turbo and bolts it down; else the bonnet by itself)
+    turbo: { plan: [1, 'Kupljeno · roki se zbudita'], bonnet_grip: [1, 'Roka 1 dvigne haubo in jo podpre z drogom'],
+      bonnet_up: (d, B) => B.seen.bonnet_grip ? null : [1, 'Hauba je gor, podpira jo drog'], cart_in: [1, 'Voziček pripelje nov turbo'],
+      grab: (d) => [2, d.rgl != null ? 'Most se obrne · roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null],
+      swap: [2, 'Roka {0} položi turbo na motor', null],
+      screws: (d, B) => B.seen.bonnet_grip ? [2, 'Roka {0} z vijačnikom privije turbo, priklopi cevi', null] : [2, 'Vijačnik privije turbo'],
+      hoses: (d, B) => B.seen.bonnet_grip ? null : [2, 'Cevi so priklopljene'],
       put: (d) => d.where === 'regal' ? [2, 'Roka {0} postavi stari turbo na prazno mesto v regalu', null] : d.where === 'cart' ? [2, 'Roka {0} odloži stari turbo na voziček', null] : null,
-      cart_out: [2, 'Voziček odpelje'], bonnet_down: [3, 'Hauba dol · motor zažene, preizkus moči'], revs: [3, 'Hauba dol · motor zažene, preizkus moči'] },
+      cart_out: [2, 'Voziček odpelje'], bonnet_close: [3, 'Roka 1 zapre haubo · motor steče'],
+      bonnet_down: (d, B) => B.seen.bonnet_close ? null : [3, 'Hauba dol · motor zažene, preizkus moči'],
+      revs: (d, B) => B.seen.bonnet_close ? [3, 'Motor steče · preizkus moči'] : [3, 'Hauba dol · motor zažene, preizkus moči'] },
     turbo_c: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov turbo'],
       grab: (d) => [1, d.rgl != null ? 'Roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null], swap: [1, 'Roka {0} položi turbo na motor', null],
       put: (d) => d.where === 'regal' ? [1, 'Roka {0} postavi stari turbo na prazno mesto v regalu', null] : d.where === 'cart' ? [1, 'Roka {0} odloži stari turbo na voziček', null] : null,
@@ -660,8 +666,17 @@
       swap: [2, 'Roka {0} potisne nov žaromet v ležišče', null], ring: [2, 'Roka {0} privije obroč', null],
       lights: [3, 'Obe luči zasvetita (preizkus luči)'], drawer_back: [3, 'Pladenj se vrne v predal'], cart_out: [3, 'Voziček odpelje'] },
     barva: { chamber: [1, 'Komora se spusti čez avto · roki počivata'], spray: [2, 'Barva teče po bokih navzdol, zgoraj je že nova barva'], dry: [3, 'Steber piha vroč zrak čez avto · barva se suši'] } };
-  SAY.platisca = SAY.gume;
-  const BAR_T = { gume: 9.9, platisca: 12.5, turbo: 15, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 8, barva: 4.9, zarometi: 15.5, def: 10 };   // (a show's seconds on its own clock: the line's length)
+  // (the rims by the plate (an_platisca): arm 1 the wheel off its hub and down on the floor, the old rim out of the tyre; arm 2 the new one
+  // into the tyre, the wheel back on and its 5 nuts, the next wheels the same; without the plate's plan (pair false): the tyres' sentences)
+  const byRim = (k, f) => (d, B) => { if (B.pair) return f(d, B); const g = SAY.gume[k]; return typeof g === 'function' ? g(d, B) : g || null; };
+  SAY.platisca = { plan: SAY.gume.plan, cart_in: SAY.gume.cart_in,
+    off: byRim('off', (d, B) => { const n = B.P && B.P.n || 4, at = d.wf ? (d.ws > 0 ? 'spredaj desno' : 'spredaj levo') : (d.ws > 0 ? 'zadaj desno' : 'zadaj levo');
+      return !d.j ? [2, 'Roka 1 s prijemalom sname kolo s pesta'] : B.ws == null || d.ws === B.ws ? [3, 'Enako še kolo {0}/{1} ({2})', d.j + 1, n, at] : [3, 'Druga stran: kolo {0}/{1} ({2})', d.j + 1, n, at]; }),
+    lay: (d) => d.j ? null : [2, 'Roka 1 položi kolo na tla'], regrip: (d) => d.j ? null : [2, 'Roka 1 izvleče staro platišče iz gume'],
+    grab: byRim('grab', () => null), pass: byRim('pass', () => null), press: (d) => d.j ? null : [3, 'Roka 2 vtisne novo platišče v gumo · roka 1 nese staro k regalu'],
+    swap: byRim('swap', (d, B) => d.j ? null : [3, 'Roka 2 natakne kolo z novim platiščem, nato privije 5 matic · kolo {0}/{1}', 1, B.P && B.P.n || 4]),
+    put: byRim('put', (d, B) => { const n = B.P && B.P.n || 4; return d.j === n - 1 ? [3, n === 4 ? 'Vsa 4 platišča zamenjana · roki gresta gor' : 'Vsa platišča zamenjana · roki gresta gor'] : null; }) };
+  const BAR_T = { gume: 9.9, platisca: 9.8, turbo: 6.3, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 8, barva: 4.9, zarometi: 15.5, def: 10 };   // (a show's seconds on its own clock: the line's length)
   const WHEEL_K = new Set(['off', 'grab', 'swap', 'put', 'pass']);   // (a wheel's steps: its count stays)
   let B = null, barRaf = 0;
   const barNew = (el) => ({ el: el || 'def', t0: G.showTime, st: 0, lab: null, args: [], cnt: '', fin: false, P: null, pair: false, ws: null, seen: {} });
@@ -685,7 +700,7 @@
     el.classList.add('on'); if (!barRaf) barRaf = requestAnimationFrame(barLine);
   }
   function barLine() {
-    barRaf = 0; if (!B) return; const T = B.el === 'gume' && !B.pair ? 13 : BAR_T[B.el] || BAR_T.def;
+    barRaf = 0; if (!B) return; const T = B.el === 'gume' && !B.pair ? 13 : B.el === 'turbo' && B.P && B.P.lg === false ? 15 : BAR_T[B.el] || BAR_T.def;   // (the turbo with its bonnet up by itself: the longer one)
     $('g-steps').querySelector('.pr i').style.width = (B.fin ? 100 : Math.min(97, Math.max(0, (G.showTime - B.t0) / T * 100))).toFixed(1) + '%';
     barRaf = requestAnimationFrame(barLine);
   }

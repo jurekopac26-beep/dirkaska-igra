@@ -245,13 +245,14 @@ try {
     const l3 = await lampBuy(null);
     T.check('↺ SERIJSKO: the car\'s own lamps back on the trolley from the door (no drawer), the yellow ones out and into their drawer; no lamp on the car\'s parts any more',
       lampLog(l3.f, '((hop,)?old\\.out,cart\\.parked|cart\\.parked,(hop,)?old\\.out)', ['cart.out', 'drawer.back', 'lights']) && l3.f.plan.lamp && !l3.f.plan.drawer && l3.f.old === 'real' && l3.f.put === 'cart' && l3.f.parked && /serijsko/i.test(l3.f.chip) && l3.r.t <= 17 && !l3.u.parts.zarometi, JSON.stringify(l3));
-    // (the turbo by its plan's plate on a car built from the kit (the KOZOROG): the bonnet up on its prop, the turbo from the regal set
-    // down onto the engine, its four screws done with the key, its two hoses on, the bonnet down over it, the engine revved: MOČ)
+    // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
+    // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
+    // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)
     const tm0 = (await ui()).S.money;
     await page.evaluate(() => { __garage.openMenu({ el: 'turbo', key: 'rgl:TURBO', sel: __garage.findOpt('turbo', 'Turbo') }); document.querySelector('#g-menu [data-mact="buy"]').click(); });
     const tr = await run(), tf = await fitOf(), tu = await ui();
-    T.check('the turbo on the KOZOROG (a kit car), by its plan\'s plate: the bonnet up on its prop, the turbo from the regal onto the engine, its screws, its hoses, the bonnet down, the engine revved (MOČ); paid, the engine\'s level 1, the table still',
-      tf.log === 'plan,bonnet.up,grab,swap,screws,hoses,bonnet.down,revs' && tf.plan.regal && /MOČ/.test(tf.chip) && tm0 - tu.S.money > 0 && tu.info.upg.motor === 1 && !!tu.S.cars.kozorog.parts.turbo && tr.table === 0 && tr.t <= 17, JSON.stringify({ tf, t: tr.t, upg: tu.info.upg }));
+    T.check('the turbo on the KOZOROG (a kit car), by its plan\'s plate: roka 1 lifts the bonnet (its gripper on the edge) onto its prop, roka 2 brings the turbo from the regal onto the engine, its screws, its hoses, roka 1 shuts the bonnet, the engine revved (MOČ); paid, the engine\'s level 1, the table still',
+      tf.log === 'plan,bonnet.grip,grab,bonnet.up,swap,screws,hoses,bonnet.close,bonnet.down,revs' && tf.plan.regal && tf.plan.lg === true && /MOČ/.test(tf.chip) && tm0 - tu.S.money > 0 && tu.info.upg.motor === 1 && !!tu.S.cars.kozorog.parts.turbo && tr.table === 0 && tr.t <= 12.5, JSON.stringify({ tf, t: tr.t, upg: tu.info.upg }));
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
@@ -323,6 +324,16 @@ try {
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); await run(); const f3 = await fitOf(), u6 = await ui();
     T.check('the slicks again: the car\'s own (tvoj), NAMESTI, free; off the regal again, the tyres\' level 3', d6.tiles[0].p === 'tvoj' && d6.buy === 'NAMESTI' && d6.can && u6.S.money === u5.S.money && /^plan,/.test(f3.log) && f3.plan.regal && f3.swaps === 4 && f3.puts === 'regal,regal,regal,regal' && u6.info.upg.gume === 3,
       JSON.stringify({ d6: { buy: d6.buy, t0: d6.tiles[0] }, f3, paid: u5.S.money - u6.S.money }));
+    // the rims by their plate (an_platisca; all four wheels, the tyres stay): arm 1 grips each wheel and pulls it off its hub, lays it on
+    // the floor and pulls the old rim out of the tyre; arm 2 brings the gold rim from the regal and presses it into the tyre while arm 1
+    // carries the old one to the regal's place just emptied; arm 2 puts the wheel back on and tightens its 5 nuts; KONČANO, the arms parked
+    const ur0 = await ui(), pr = await page.evaluate(() => __garage.price('platisca', 2, 1));
+    await page.evaluate(() => { __garage.openMenu({ el: 'platisca', key: 'rgl:GOLD 5-SPOKE', sel: __garage.findOpt('platisca', 'Gold, 5 spokes') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rr = await run();
+    const fr = await fitOf(), ur1 = await ui(), nOf = (k) => fr.log.split(',').filter(s => s === k).length, rwhy = await page.evaluate(() => Garage3D._dbg.FIT.why);
+    T.check('the gold rims off the regal by the plate (' + rr.t + ' s): arm 1 each wheel off its hub, onto the floor, the old rim out of the tyre and onto the regal; arm 2 the new rim into the tyre, the wheel back on, 5 nuts; four times; the tyres stay; KONČANO; the arms parked',
+      /^plan,/.test(fr.log) && /,done$/.test(fr.log) && !rwhy && fr.plan.regal && fr.plan.n === 4 && /^0\+1:regal:rim(:virt)?(,0\+1:regal:rim(:virt)?){3}$/.test(fr.jobs)
+      && nOf('off') === 4 && nOf('lay') === 4 && nOf('press') === 4 && nOf('swap') === 4 && nOf('nuts') === 4 && fr.puts === 'regal,regal,regal,regal' && !fr.stay && fr.parked && /KONČANO/.test(fr.chip) && rr.t <= 13
+      && ur0.S.money - ur1.S.money === pr && ur1.S.cars.muscle.parts.platisca.join() === '2,1' && ur1.S.cars.muscle.parts.gume.join() === ur0.S.cars.muscle.parts.gume.join(), JSON.stringify({ fr, rwhy, rr, paid: ur0.S.money - ur1.S.money, pr }));
     // the wing by its plan's plate (krilo): the GT wing off the regal onto the bare lid: the far arm's reach brings it, the near one's
     // gripper takes the two caps off the lid, the wing stands 12 cm over it, snaps on (no old part: nothing back onto the regal), its aero
     // level's parts on with it (no show of the level after), the look from behind, KONČANO: within 11 s (20,5 s before); SERIJSKO: off
