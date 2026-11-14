@@ -26,7 +26,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Jebel Hafeet',
     zivali: { a: ['goatW', 'camel'], t: ['waterTank', 'signPost'], open: true },   // (the wild goats on the ledges, a camel or two by the foot of the ridge)
     id: 'hafit', name: 'Džebel Hafit, Združeni arabski emirati', theme: 'hafit', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.0,
-    maxRivals: 95,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line, as Musandam's
+    maxRivals: 90,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line, as Musandam's
     desc: 'Džebel Hafit, osamljen apnenčast greben na meji z Omanom južno od Al Aina: 4,8 km najbolj ovinkastega dela gorske ceste na njegov severni konec. Od vznožja grebena na 380 m skozi prvi niz lasnic na golem pobočju nad prodnato ravnino, po zaseku v apnenčasti steni in skozi zadnje ovinke do 770 m. Cesta ima dva vozna pasova navzgor in ločen pas navzdol; od prepada jo ves čas loči jeklena ograja.',
     en: { name: 'Jebel Hafeet, United Arab Emirates', desc: 'Jebel Hafeet, a lone limestone ridge on the border with Oman, south of Al Ain: 4.8 km of the twistiest part of the mountain road up its northern end. From the foot of the ridge at 380 m through the first string of hairpins on the bare slope above the gravel plain, along the cut in the limestone face and through the last bends to 770 m. Two lanes uphill and a separate lane down; a steel barrier keeps you from the drop all the way.' },
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,

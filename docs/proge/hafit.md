@@ -4,7 +4,7 @@
 
 Gorska cesta na severni konec Džebel Hafita, osamljenega apnenčastega grebena na meji z Omanom južno od Al Aina, v pravem merilu (4,85 km): najbolj ovinkast del ceste. Proga se začne ob vznožju grebena (376 m, ~24,10° S, 55,76° V), gre skozi prvo vrsto lasnic na golem pobočju nad prodnato ravnino, po useku v apnenčasti steni in skozi zadnje ovinke do ~769 m; cilj je tik za tem. Ves čas navzgor, devet lasnic.
 
-- **Dirka**: 21 tekmecev (v meniju *Opponents* do 95, `maxRivals`), štart ob vznožju, en vzpon do vrha. Kvalifikacij ni (odprta cesta).
+- **Dirka**: 21 tekmecev (v meniju *Opponents* do 90, `maxRivals`), štart ob vznožju, en vzpon do vrha. Kvalifikacij ni (odprta cesta).
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica, duh in medalje (zlata 2:20, srebrna 2:27, bronasta 2:38, v dežju 2:50 / 2:59 / 3:12; zlato je čas relijskega avta na avtopilotu).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti (avtomobili, kombiji, avtobusi, kak tovornjak, motoristi, ob cesti kolesarji).
 - **Policija**: beg pred policijo do vrha; patrulje imajo samo generičen napis POLICE.
