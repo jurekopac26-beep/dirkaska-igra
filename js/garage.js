@@ -663,7 +663,9 @@
       cart_loaded: [2, 'Iz predala pride pladenj z novima lučema'], far_out: [2, 'Roka {0} hkrati zamenja še drugi žaromet', 2],
       put: (d, B) => d.where === 'none' ? null : [2, B.P && B.P.drawer ? 'Roka {0} položi stari žaromet na pladenj' : d.where === 'regal' ? 'Roka {0} postavi stari žaromet na prazno mesto v regalu' : 'Roka {0} odloži stari žaromet na voziček', null],
       grab: (d, B) => [2, B.P && B.P.drawer ? 'Roka {0} vzame nov žaromet s pladnja' : d.rgl != null ? 'Roka {0} vzame nov žaromet z regala' : 'Roka {0} vzame nov žaromet z vozička', null],
-      swap: [2, 'Roka {0} potisne nov žaromet v ležišče', null], ring: [2, 'Roka {0} privije obroč', null],
+      swap: (d) => d.pod ? null : [2, 'Roka {0} potisne nov žaromet v ležišče', null], ring: [2, 'Roka {0} privije obroč', null],
+      pod_out: [2, 'Predal se odpre · roka 2 iztegne podaljšek in vzame nov žaromet'], pass: [2, 'Roka 2 poda nov žaromet roki 1 nad avtom'],
+      fit: [2, 'Roka 1 vstavi in privije nov žaromet, roka 2 ga drži'], far: [2, 'Enako še drugi žaromet'], pod_back: [2, 'Roka 2 se spet iztegne in odloži stari žaromet v predal'],
       lights: [3, 'Obe luči zasvetita (preizkus luči)'], drawer_back: [3, 'Pladenj se vrne v predal'], cart_out: [3, 'Voziček odpelje'] },
     barva: { chamber: [1, 'Komora se spusti čez avto · roki počivata'], spray: [2, 'Barva teče po bokih navzdol, zgoraj je že nova barva'], dry: [3, 'Steber piha vroč zrak čez avto · barva se suši'] } };
   // (the rims by the plate (an_platisca): arm 1 the wheel off its hub and down on the floor, the old rim out of the tyre; arm 2 the new one
@@ -676,7 +678,7 @@
     grab: byRim('grab', () => null), pass: byRim('pass', () => null), press: (d) => d.j ? null : [3, 'Roka 2 vtisne novo platišče v gumo · roka 1 nese staro k regalu'],
     swap: byRim('swap', (d, B) => d.j ? null : [3, 'Roka 2 natakne kolo z novim platiščem, nato privije 5 matic · kolo {0}/{1}', 1, B.P && B.P.n || 4]),
     put: byRim('put', (d, B) => { const n = B.P && B.P.n || 4; return d.j === n - 1 ? [3, n === 4 ? 'Vsa 4 platišča zamenjana · roki gresta gor' : 'Vsa platišča zamenjana · roki gresta gor'] : null; }) };
-  const BAR_T = { gume: 9.9, platisca: 9.8, turbo: 6.3, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 8, barva: 4.9, zarometi: 15.5, def: 10 };   // (a show's seconds on its own clock: the line's length)
+  const BAR_T = { gume: 9.9, platisca: 9.8, turbo: 6.3, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 8, barva: 4.9, zarometi: 9.3, def: 10 };   // (a show's seconds on its own clock: the line's length)
   const WHEEL_K = new Set(['off', 'grab', 'swap', 'put', 'pass']);   // (a wheel's steps: its count stays)
   let B = null, barRaf = 0;
   const barNew = (el) => ({ el: el || 'def', t0: G.showTime, st: 0, lab: null, args: [], cnt: '', fin: false, P: null, pair: false, ws: null, seen: {} });

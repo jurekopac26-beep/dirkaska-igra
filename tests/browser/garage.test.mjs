@@ -65,7 +65,7 @@ try {
   // old tyres taken off their rims, the jobs as planned (their part's source, the way it goes on, virt: a rear wheel drawn with the body))
   const fitOf = () => page.evaluate(() => { const D = Garage3D._dbg, L = D.FIT.log, st = (k) => L.find(q => q.step === k) || {}, all = (k) => L.filter(q => q.step === k);
     return { log: L.map(q => q.step).join(), plan: st('plan'), rgl: (L.find(q => q.step === 'grab' && q.rgl != null) || {}).rgl, put: st('put').where, puts: all('put').map(q => q.where).sort().join(), swaps: all('swap').length, offs: all('off').length,
-      jobs: (st('plan').jobs || []).map(j => j.arm + ':' + j.src + ':' + j.mode + (j.virt ? ':virt' : '')).join(), old: st('swap').old, parked: D.fx.parked, stay: !!D.RGL.P.stay, ret: D.RGL.ret.length, cart: D.cart, cartB: D.cartB, chip: document.getElementById('g-chip').textContent }; });
+      jobs: (st('plan').jobs || []).map(j => j.arm + ':' + j.src + ':' + j.mode + (j.virt ? ':virt' : '')).join(), old: st('swap').old, parked: D.fx.parked, stay: !!D.RGL.P.stay, ret: D.RGL.ret.length, cart: D.cart, cartB: D.cartB, lamp: D.FIT.lamp, chip: document.getElementById('g-chip').textContent }; });
 
   // 0. a fresh garage: the real profile (the career's, odlocitve denarnica-mockup 1): Kariera marked in the MOCKUP row, the career's
   // 10.000 coins and its PICO TURBO, no reset; then the mockup's Polna igra for the rest (its own test money: 11.500, a worn PICO)
@@ -224,27 +224,24 @@ try {
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
     T.check('bought: the KOZOROG TC for 140.000 🪙 (the veteran\'s money less 140.000), the go button now chooses it', u2.S.cars.kozorog.own && u2.S.money === vt.vm - 140000 && u2.go === 'Izberi' && u2.info.car === 'kozorog', JSON.stringify({ money: u2.S.money, go: u2.go }));
-    // (the head lamps by their plan's plate on a car that draws them as parts of their own (the KOZOROG): the near arm's hand draws the
-    // old lamp out first (its seat left dark) while the trolley fetches the new one from the drawer; the old one onto the trolley's deck,
-    // the new one taken, pushed in (the car the new one's now), its ring screwed, the lights tried from before the car, KONČANO; the
-    // yellow ones after them: the LED ones back into the drawer on the trolley's way out; ↺ SERIJSKO: the car's own lamps back on
-    // the trolley from the door, the yellow ones into the drawer)
-    // (the far lamp by the far arm meanwhile (far, far.out, far.cart.out, far.in): kept apart from the near arm's steps)
-    // (the trolley's way off (cart.out, drawer.back) and the lights' try after the new one's taken, in any order with the ring's screws)
-    const lampLog = (f, mid, end) => { const lg = f.log.split(',').filter(s => !/^(far|wrench$)/.test(s)), core = lg.filter(s => !end.includes(s)), g = lg.indexOf('grab');
-      return new RegExp('^plan,cart\\.in,' + mid + ',put,grab,swap,ring$').test(core.join()) && lg.filter(s => end.includes(s)).sort().join() === end.join() && end.every(s => lg.indexOf(s) > g) && lg.indexOf('lights') > lg.indexOf('ring'); };
-    const farLamp = (f) => ['far.out', 'far.in', 'far.cart.out'].every(s => f.log.split(',').includes(s)) && f.log.split(',').indexOf('far.in') < f.log.split(',').indexOf('swap');
+    // (the head lamps by their plan's last plate (an_zarometi: podaljsek) on a car that draws them as parts of their own (the KOZOROG):
+    // the cabinet stays; roka 1 draws the old lamp out of its seat and lays it on the bonnet while the drawer opens (its cell 35 cm out)
+    // and roka 2 reaches into it on its podaljšek (pod) for the new one; roka 2 hands it to roka 1 over the car (pass), roka 1 pushes it
+    // in (swap) and screws it while roka 2 holds it (fit), the far lamp the same (far); roka 2 takes the old one off the bonnet into its
+    // own cell (pod.back: the one it was bought from, a stock one the next cell), the drawer in; the lights tried, KONČANO, ~9 s in all;
+    // the yellow ones after them: the LED ones back into their cell; ↺ SERIJSKO: the stock ones out of the drawer, the yellow ones in)
+    const LAMP = 'plan,old.out,pod.out,pass,swap,fit,far,pod.back,lights';
+    const lampOk = (f) => f.log === LAMP && !!f.lamp && f.lamp.pod > 0 && f.lamp.hood && f.lamp.pass && f.lamp.back && f.lamp.far && f.lamp.hold2 && f.plan.lamp && f.plan.real && f.plan.arm === 0 && f.plan.tool === 'gripper' && f.old === 'real' && f.parked;
     const lampBuy = async (n) => { await page.evaluate((n) => { __garage.openMenu({ el: 'zarometi', key: 'drw:zarometi', sel: n ? __garage.findOpt('zarometi', n) : null }); document.querySelector('#g-menu [data-mact="' + (n ? 'buy' : 'stock') + '"]').click(); }, n);
       const r = await run(), f = await fitOf(), u = await ui(); return { r, f, u: { money: u.S.money, parts: u.S.cars.kozorog.parts } }; };
     const l1 = await lampBuy('LED');
-    T.check('the LED head lamps on a car that draws its lamps as parts of their own (the KOZOROG), by their plan\'s plate: the old lamp out first (the car\'s own, as it draws it), the trolley with the new one from the drawer, the old one onto its deck, the new one in, its ring screwed, the lights tried, KONČANO; the far lamp the same by the far arm off the twin trolley',
-      lampLog(l1.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'lights']) && farLamp(l1.f) && l1.f.plan.lamp && l1.f.plan.real && l1.f.plan.drawer && l1.f.plan.arm === 0 && l1.f.plan.tool === 'gripper' && l1.f.old === 'real' && l1.f.put === 'cart' && l1.f.cart && !l1.f.cart.on && l1.f.cart.load === 0
-      && l1.f.parked && /KONČANO/.test(l1.f.chip) && l1.r.t <= 19.5 && !!l1.u.parts.zarometi, JSON.stringify(l1));
+    T.check('the LED head lamps on a car that draws its lamps as parts of their own (the KOZOROG), by their plan\'s last plate (podaljsek): roka 1 the old one out onto the bonnet, the drawer out, roka 2\'s podaljšek into it for the new one, handed to roka 1 over the car, pushed in and screwed while roka 2 holds it, the far lamp the same, the old one into the drawer, the lights tried, KONČANO',
+      lampOk(l1.f) && l1.f.plan.drawer && l1.f.lamp.kN === 0 && l1.f.lamp.kO === 1 && /KONČANO/.test(l1.f.chip) && l1.r.t <= 11.2 && !!l1.u.parts.zarometi, JSON.stringify(l1));
     const l2 = await lampBuy('Yellow');
-    T.check('the yellow ones out of the same drawer: the LED ones drawn out, onto the trolley, back into their drawer on its way out', lampLog(l2.f, '(hop,)?old\\.out,cart\\.loaded,cart\\.parked', ['cart.out', 'drawer.back', 'lights']) && l2.f.old === 'real' && l2.f.put === 'cart' && l2.f.cart && !l2.f.cart.on && l2.f.cart.load === 0 && l2.f.parked && l2.r.t <= 21.5, JSON.stringify(l2));
+    T.check('the yellow ones out of the same drawer: the LED ones back into their own cell', lampOk(l2.f) && l2.f.lamp.kN === 1 && l2.f.lamp.kO === 0 && l2.r.t <= 11.2, JSON.stringify(l2));
     const l3 = await lampBuy(null);
-    T.check('↺ SERIJSKO: the car\'s own lamps back on the trolley from the door (no drawer), the yellow ones out and into their drawer; no lamp on the car\'s parts any more',
-      lampLog(l3.f, '((hop,)?old\\.out,cart\\.parked|cart\\.parked,(hop,)?old\\.out)', ['cart.out', 'drawer.back', 'lights']) && l3.f.plan.lamp && !l3.f.plan.drawer && l3.f.old === 'real' && l3.f.put === 'cart' && l3.f.parked && /serijsko/i.test(l3.f.chip) && l3.r.t <= 17 && !l3.u.parts.zarometi, JSON.stringify(l3));
+    T.check('↺ SERIJSKO: the stock ones out of the drawer (the cell next to the yellow ones\'), the yellow ones into their own; no lamp on the car\'s parts any more',
+      lampOk(l3.f) && l3.f.lamp.kO === 1 && l3.f.lamp.kN === 2 && /serijsko/i.test(l3.f.chip) && l3.r.t <= 11.2 && !l3.u.parts.zarometi, JSON.stringify(l3));
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)

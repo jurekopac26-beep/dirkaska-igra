@@ -2950,6 +2950,9 @@ const Garage3D = (function () {
   // up to EMAX: the regal past the ring's edge); the tubes' length, how far each stays in the one before, their foot in the sleeve, radii)
   const REACH = { L: 0.42, lap: 0.05, y0: 0.16, R: [0.04, 0.035, 0.03, 0.025, 0.02] };
   REACH.EMAX = 4 * (REACH.L - REACH.lap);
+  // (roka 2's hidden extension, the plate podaljsek: thinner white tubes with yellow-black ends inside its reach's last one, out past
+  // REACH.EMAX only while on (the lamps' show: over the chest to its drawer))
+  const POD = { on: false, n: 7 }; POD.EMAX = REACH.EMAX + POD.n * (REACH.L - REACH.lap);
   // (the chamber: its outline round the car and the lift (half sizes, the corners' radius); the ring's box under the ceiling (its foot at
   // y0, its top y1, out o and in i from the outline); its glass bands (n, each BH high, each IN in from the one round it; the outer one fixed
   // in the ring (its foot at YS, its top in the slot), the others stored inside it; down each runs out of the one round it by step, the
@@ -3064,7 +3067,7 @@ const Garage3D = (function () {
   }
   // (the reach: its coupling, sleeve and first tube (the tool's mesh), the four tubes that run out and the gripper's head (its children,
   // moved along y by slide(ext): each tube a quarter of ext further out than the one before it, the head at the last one's end))
-  function reachTool(mat) {
+  function reachTool(mat, pod) {
     const { W, NV, DK, ST, CY } = FXC, RD = REACH, mk = (f) => { const g = new World.GB(), gl = [], gk = (q) => gl.push([g.P.length / 3, q]); f(g, gk);
         const geo = g.geometry(), n = geo.attributes.position.count, ga = new Float32Array(n).fill(1); gl.forEach(([j, q], m) => ga.fill(q, j, m + 1 < gl.length ? gl[m + 1][0] : n)); geo.setAttribute('gloss', new THREE.BufferAttribute(ga, 1)); return geo; };
     const c = (g, y0, y1, r0, r1, col, n, open) => cone2(g, [0, y0, 0], [0, y1, 0], r0, r1, n || 14, col, open);
@@ -3079,8 +3082,12 @@ const Garage3D = (function () {
     const head = new THREE.Mesh(mk((g, gk) => { gk(PAINT); c(g, hy, hy + 0.04, 0.034, 0.05, NV, 14); World.box(g, 0, hy + 0.04, 0, 0.19, 0.06, 0.1, 0, DK); World.box(g, 0, hy + 0.065, 0.0505, 0.14, 0.01, 0.003, 0, CY);
       gk(METAL); for (const s of [-1, 1]) { World.box(g, s * 0.064, hy + 0.09, 0, 0.022, 0.11, 0.07, 0, ST); gk(MATTE); World.box(g, s * 0.05, hy + 0.12, 0, 0.006, 0.07, 0.055, 0, [0.07, 0.07, 0.08]); gk(METAL); } }), mat);
     parts.push(head); base.add(head);
-    for (const m of parts) { m.castShadow = true; m.frustumCulled = false; }
-    return { mesh: base, slide(e) { for (let k = 0; k < 4; k++) parts[k].position.y = e * (k + 1) / 4; head.position.y = e; } };
+    const xs = []; if (pod) for (let j = 1; j <= POD.n; j++) { const r = RD.R[4] - 0.0016 * j, y0 = RD.y0 + 0.016 + 0.0012 * j, y1 = y0 + RD.L;
+      const m = new THREE.Mesh(mk((g, gk) => { gk(PAINT); c(g, y0, y1 - 0.04, r, r, W, 10); c(g, y1 - 0.04, y1 - 0.02, r + 0.001, r + 0.001, FXC.YL, 10); c(g, y1 - 0.02, y1, r + 0.001, r + 0.001, FXC.BK, 10); }), mat);
+      xs.push(m); base.add(m); }
+    for (const m of parts.concat(xs)) { m.castShadow = true; m.frustumCulled = false; }
+    return { mesh: base, slide(e) { const e1 = Math.min(e, RD.EMAX), e2 = e - e1; for (let k = 0; k < 4; k++) parts[k].position.y = e1 * (k + 1) / 4;
+      xs.forEach((m, j) => { m.position.y = e1 + e2 * (j + 1) / xs.length; }); head.position.y = e; } };
   }
   /* the arms (one mesh, both, with their beams: each part's vertices moved by its matrix as it moves, rigPose): per arm its beam (0),
      the carriage with its housing (1), the telescope's four stages (2 .. 5), the wrist's drum (6), the forearm (7); its tools each a mesh
@@ -3113,7 +3120,7 @@ const Garage3D = (function () {
       rigGl(R, METAL); for (const x of [-0.16, 0.16]) cylA(g, [x, yb0 + 0.005, 0], 'z', 0.034, 0.05, 12, ST); }
     const m = rigMesh(R, fxMat()); m.castShadow = true; scene.add(m);
     // (the tools: each arm's own, at its forearm's end; none drawn till taken)
-    STN.forEach((S, i) => { for (const k of ARM.tools[i]) { const R = k === 'reach' ? reachTool(fxMat()) : null, t = R ? R.mesh : new THREE.Mesh(toolGeo(k), fxMat()); t.matrixAutoUpdate = false; t.visible = false; t.castShadow = true; t.frustumCulled = false; scene.add(t); S.tools[k] = { mesh: t, slide: R ? R.slide : null }; FX.tools.push(t); } });
+    STN.forEach((S, i) => { for (const k of ARM.tools[i]) { const R = k === 'reach' ? reachTool(fxMat(), i === 1) : null, t = R ? R.mesh : new THREE.Mesh(toolGeo(k), fxMat()); t.matrixAutoUpdate = false; t.visible = false; t.castShadow = true; t.frustumCulled = false; scene.add(t); S.tools[k] = { mesh: t, slide: R ? R.slide : null }; FX.tools.push(t); } });
     for (const A of RB) A.dirty = true;
   }
   // (a tool's way for a pitch and a yaw (pitch 0: down, pi/2: level, its yaw 0 toward -x, pi/2 toward +z), the forearm's turn)
@@ -5787,7 +5794,7 @@ const Garage3D = (function () {
   // the wrist into the arm's box; null: it cannot)
   const wristOk = (i, s) => s.x >= ARM.x0 - 1e-6 && s.x <= ARM.x1 + 1e-6 && s.z >= armZ(i)[0] - 1e-6 && s.z <= armZ(i)[1] + 1e-6 && s.y >= ARM.Y0 - ARM.EMAX + 0.02 && s.y <= ARM.Y0 - 0.05;
   function poseAt(i, tool, tip, d, yaw) {
-    const dd = v3(d).normalize(), L0 = ARM.FA + TL[tool], e1 = tool === 'reach' ? REACH.EMAX : 0, pitch = Math.acos(clamp(-dd.y, -1, 1)), yw = yaw != null ? yaw : Math.sin(pitch) > 1e-3 ? Math.atan2(dd.z, -dd.x) : RB[i].s.yaw;
+    const dd = v3(d).normalize(), L0 = ARM.FA + TL[tool], e1 = tool === 'reach' ? (i === 1 && POD.on ? POD.EMAX : REACH.EMAX) : 0, pitch = Math.acos(clamp(-dd.y, -1, 1)), yw = yaw != null ? yaw : Math.sin(pitch) > 1e-3 ? Math.atan2(dd.z, -dd.x) : RB[i].s.yaw;
     for (let e = 0; e <= e1 + 1e-6; e += 0.02) { const L = L0 + e, s = { x: tip.x - dd.x * L, z: tip.z - dd.z * L, y: tip.y - dd.y * L + 0.07, yaw: yw, pitch }; if (wristOk(i, s)) return { s, ext: e, d: dd }; }
     return null;
   }
@@ -7004,108 +7011,118 @@ const Garage3D = (function () {
     if (exS && exS.wr) { exS.off = false; spawn((function* () { yield* armTool(0, 'wrench'); yield* waitFor(() => exS.up, 8); yield* armCarry(0, exS.wr.pre.s, 0, 1.0); exS.at = true; })()); }
     if (cart && !o.cartAt) { cart.position.set(CART.out, 0, 0); cart.visible = true; }
     if (tb) { if (LG) spawn(lidUp()); else yield* par(camTo(VB, 1.2), lidUp()); }   // (the turbo: the bonnet up and propped first, seen from before the bay (by the plate: roka 1's, as roka 2 goes to the regal))
-    // THE HEAD LAMPS by their plan's plate (zarometi; a car that draws its lamps as parts of their own, lampPart): the near arm's hand on
-    // the old lamp, its screws out (two turns: sparks round it), the lamp drawn out of its seat (left dark, its light out) while the
-    // trolley fetches the new one (a drawer's: the drawer out as the camera comes to it); the old one onto the trolley's deck beside the
-    // new one, that one taken (the trolley off with the old one, back into its drawer), pushed into the seat (the car the new one's now),
-    // its ring screwed; then the lights tried, seen from before the car: on, off, on, in the new lamps' colour; KONČANO
+    // THE HEAD LAMPS by their plan's last plate (an_zarometi: podaljsek; a car that draws its lamps as parts of their own, lampPart): the
+    // cabinet stays where it is. Roka 1's hand on the old lamp, its screws out, the lamp drawn out of its seat (left dark) and laid on the
+    // bonnet; meanwhile the drawer out (its cell 35 cm), roka 2's reach out on its hidden stages (POD: the plate's »+1 m«, as far as the
+    // drawer is) to the LED one lying in it, that one brought over the car and handed to roka 1, which pushes it into the seat and screws
+    // it while roka 2 holds it; the far lamp the same; roka 2 then takes the old one off the bonnet into the drawer (its own cell: the
+    // STOCK one), the drawer in; then the lights tried, seen from before the car: on, off, on; KONČANO (the plate's PREJ/POTEM)
     if (lampO) {
-      const Fo = inCar(lampO), FN = inCar(np), PL = new V3().setFromMatrixPosition(FN), st = { out: false, loaded: false, parked: false, gone: false, rest: false };
+      if (cart && !o.cartAt) cart.visible = false;
+      const Fo = inCar(lampO), FN = inCar(np), PL = new V3().setFromMatrixPosition(FN), UP = new V3(0, 1, 0);
+      const Tm = (p) => new THREE.Matrix4().makeTranslation(p.x, p.y, p.z), at = (M) => new V3().setFromMatrixPosition(M), inv = (M) => M.clone().invert();
       const screwsAt = (P0, h, O, n) => { for (let j = 0; j < n; j++) { const a = Math.random() * 6.283, p = P0.clone().addScaledVector(ax(0, 1, 0), Math.sin(a) * h.y * 0.9).addScaledVector(ax(0, 0, 1), Math.cos(a) * h.z * 0.9).addScaledVector(O, h.x + 0.01);
           sparks.emit(p.x, p.y, p.z, O.x * rnd(0.4, 1.5) + rnd(-0.7, 0.7), rnd(-0.3, 1.1), O.z * rnd(0.4, 1.5) + rnd(-0.7, 0.7), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02); } SFX.wrench(); };
       const screws = (n) => screwsAt(PL, np.hs, S.out, n);
-      const VD = ds ? view({ at: [ds.stop[0] - 0.1, 0.45, ds.stop[1] - 0.45], yaw: FRONT.ry + 0.45, pitch: 0.38, dist: 3.4, fov: 34 }) : null;
       const VL = view({ at: [K.front - 0.2, S.p.y + 0.02, 0], yaw: Math.PI / 2 - 0.36, pitch: 0.08, dist: clamp(3.0 + K.hw * 1.5, 3.9, 5.2), fov: 34 });   // (the lights' try: low before the car, a little to the near side)
-      // THE FAR LAMP (the plate's »both lamps«): the far arm's reach on it the same way meanwhile, off the trolley's twin beside the nose on
-      // the far side (the old one onto its deck, the new one off it, pushed into its seat: drawn there till the car is the new one); none
-      // (no lamp parts of its own there, beyond the reach): it changes with the near one, as before
-      const FL = (() => { const a = lampPart(cv, -sd), b = lampPart(nw, -sd); if (!a || !b) { for (const q of [a, b]) if (q) disposeTree(q.o); return null; }
-        const SF = partSpot(cv, el, -sd), dF = inDirs(SF.out), NF = { k: 200 }, clrF = (tip, s) => clearOf(G, tip, s, NF), UPv = ax(0, 1, 0);
-        const pdF = SF.out.clone().multiplyScalar(0.5).add(UPv).normalize(), W = (P, x, z) => new THREE.Matrix4().makeTranslation(x, 0, z).multiply(deckAt(P, 0, 0));
-        const pz = -sd * clamp(K.hw + 0.62, 0.64, 2.06), xm = ARM.x1 - 0.5, dxO = clamp(a.hs.x + b.hs.x + 0.08, 0.22, CART.L / 2 - a.hs.x - 0.02);
-        const ways = [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2], [[0, -1, 0], 0], [[0, -1, 0], Math.PI]];
-        for (const px0 of [K.front - 0.3, K.front - 0.8, K.front + 0.2, K.front - 1.3]) { const px = clamp(px0, -xm, xm);
-          for (const [, yw] of ways) { const top = new V3(px, CART.deck + 0.006 + 2 * b.hs.y, pz), g = poseAt(1, 'reach', top, [0, -1, 0], yw), pre = g && poseAt(1, 'reach', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], yw); if (!pre) continue;
-            g.pre = pre; g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(W(b, px, pz)); let pl = null;
-            for (const q of [pdF, UPv]) if (!pl) pl = framePlan(1, 'reach', g.off, inCar(b), dF, q, 0.3, clrF); if (!pl) continue;
-            const offA = tipM(pl.s, TL.reach + pl.ext).invert().multiply(inCar(a)); let put = null, dx = 0;
-            for (const q of [dxO, -dxO]) if (!put) { put = framePlan(1, 'reach', offA, W(a, px + q, pz), ways, UPv, 0.35); dx = q; } if (!put) continue;
-            return { a, b, g, pl, put, dx, pk: [px, pz], R: cartOf(1), P: new V3().setFromMatrixPosition(inCar(b)), O: SF.out.clone(), done: false, rest: false, gone: false, sock: null }; } }
-        disposeTree(a.o); disposeTree(b.o); return null; })();
-      fitLog('far', { lamp: !!FL });
-      if (FL) spawn((function* () { const { a, b, R, pk } = FL, F0 = FL.pl;
-        R.position.set(CART.out + 2, 0, 0); R.visible = true; R.add(b.o); b.o.matrixAutoUpdate = false; b.o.matrix.copy(deckAt(b, 0, 0)); b.o.matrixWorldNeedsUpdate = true;
-        yield* par((function* () { yield* wait(0.5); yield* cartGo([[K.front + 2.1, 0], [K.front + 2.1, pk[1]], pk], 4.2, R); })(), (function* () { yield* armTool(1, 'reach'); yield* armCarry(1, F0.pre.s, F0.pre.ext, 1.3); })());
-        // (the old one: the reach on it, its screws out, drawn out of its seat (left dark), onto the twin's deck beside the new one)
-        yield* armExt(1, F0.s, F0.ext, 0.4, EZ.sine); SFX.clunk(0.3); screwsAt(FL.P, a.hs, FL.O, 4); yield* wait(0.24); screwsAt(FL.P, a.hs, FL.O, 4); yield* wait(0.2);
-        FL.sock = lampSocket(cv, a); const gF = cv.head[sd > 0 ? 0 : 1]; if (gF) { gF.material.opacity = 0; gF.visible = false; }
-        hold(1, a.o, inCar(a)); yield* armExt(1, F0.pre.s, F0.pre.ext, 0.45, EZ.sine); fitLog('far.out');
-        yield* par(armCarry(1, FL.put.pre.s, FL.put.pre.ext, 1.3), holdTo(1, FL.put.off, 1.2));
-        yield* armExt(1, FL.put.s, FL.put.ext, 0.4); SFX.clunk(0.3); letGo(1); R.add(a.o); a.o.matrix.copy(deckAt(a, FL.dx, 0)); a.o.matrixWorldNeedsUpdate = true;
-        yield* armExt(1, FL.put.pre.s, FL.put.pre.ext, 0.3);
-        // (the new one off the deck (the twin off with the old one), into the seat, its ring screwed)
-        yield* armCarry(1, FL.g.pre.s, FL.g.pre.ext, 0.7); yield* armExt(1, FL.g.s, FL.g.ext, 0.4); SFX.clunk(0.3); R.updateMatrixWorld(true); hold(1, b.o, b.o.matrixWorld.clone());
-        yield* armExt(1, FL.g.pre.s, FL.g.pre.ext, 0.35);
-        spawn((function* () { yield* cartGo([[K.front + 2.1, pk[1]], [K.front + 2.1, 0], [CART.out + 2, 0]], 4.6, R); R.visible = false; for (const q of R.children.slice(1)) disposeTree(q); FL.gone = true; fitLog('far.cart.out'); })());
-        yield* par(armCarry(1, F0.pre.s, F0.pre.ext, 1.3), holdTo(1, F0.off, 1.2)); yield* armExt(1, F0.s, F0.ext, 0.45, EZ.sine); SFX.clunk(0.5);
-        letGo(1); b.o.matrix.copy(inCar(b)); b.o.matrixWorldNeedsUpdate = true; fitLog('far.in'); FL.done = true;
-        yield* wait(0.12); screwsAt(FL.P, b.hs, FL.O, 5); yield* wait(0.24); screwsAt(FL.P, b.hs, FL.O, 5); yield* wait(0.2);
-        yield* armExt(1, F0.pre.s, F0.pre.ext, 0.4, EZ.sine); yield* armRest(1, 1.2); FL.rest = true; })());
-      spawn((function* () {   // (the trolley meanwhile: a drawer's lamp onto its deck as the old one is out and the camera there)
-        if (ds) { fitLog('cart.in'); SFX.click(); yield* cartGo([[CAB.x, 0], [CAB.x, CAB.z], ds.stop], 4.2); yield* waitFor(() => st.out, 8); yield* wait(0.5);
-          DRW.want = di; yield* wait(0.45); scene.add(np.o); np.o.matrixAutoUpdate = false; const q0 = new THREE.Quaternion();
-          SFX.whoosh(0.4); yield* hop(np.o, ds.p, q0, new V3(ds.stop[0], CART.deck + 0.004 + np.hs.y, ds.stop[1]), q0, 0.6); deckPut(np); SFX.clunk(0.2); DRW.want = -1; fitLog('cart.loaded'); st.loaded = true;
-          yield* cartGo([[CAB.x, CAB.z], lane, park], 4.2); }
-        else { deckPut(np); fitLog('cart.in'); SFX.click(); st.loaded = true; yield* cartGo([[K.front + 0.95, 0], [K.front + 0.95, park[1]], park], 4.2); }
-        SFX.ping(1320); fitLog('cart.parked'); st.parked = true; })());
-      // the old lamp: the hand to it, on it; its screws out; drawn out of its seat (beyond the arm's reach: it hops into the hand)
-      if (lampW) {   // (the wrench at the frame's screws; then the tool changed in the housing, the gripper onto the lamp)
-        yield* par(camTo(V2, 1.3), (function* () { yield* armTool(i, 'wrench'); yield* armCarry(i, lampW.pre.s, 0, 1.3); })());
-        yield* armExt(i, lampW.s, 0, 0.22); for (let k = 0; k < 2; k++) { screws(4); SFX.click(); yield* wait(0.18); }
-        yield* armExt(i, lampW.pre.s, 0, 0.2); fitLog('wrench', { n: 2 });
-        yield* armTool(i, tool, 1.8); yield* armCarry(i, plan.pre.s, plan.pre.ext, 0.55); yield* armExt(i, plan.s, plan.ext, 0.3, EZ.sine); SFX.clunk(0.3);
-      } else {
-        yield* par(camTo(V2, 1.3), (function* () { yield* armTool(i, tool); yield* armCarry(i, plan.pre.s, plan.pre.ext, 1.3); })());
-        yield* armExt(i, plan.s, plan.ext, 0.4, EZ.sine); SFX.clunk(0.3);
-        screws(4); yield* wait(0.24); screws(4); yield* wait(0.2);
-      }
+      // the drawer (its cell out 35 cm, the plate's): the LED one lying in its cell lens up, across it; the old one back into its own
+      // (the one it was bought from; a stock one, which has no cell of its own, the next cell: the STOCK caption on it)
+      const dI = di >= 0 ? di : Math.max(0, DRW.els.indexOf(el)), nK = (DRW.geo[di >= 0 ? di : Math.max(0, DRW.els.indexOf(el))].parts || []).length || 4, kN0 = o.toK != null && o.toK >= 0 ? o.toK : -1, kO0 = o.fromK != null && o.fromK >= 0 && o.fromK !== kN0 ? o.fromK : -1, kN = kN0 >= 0 ? kN0 : kO0 >= 0 ? (kO0 + 1) % nK : 0, kO = kO0 >= 0 ? kO0 : (kN + 1) % nK, out0 = DRW.out, OUT = 0.35;
+      DRW.out = OUT; const DN = drwSpot(dI, kN), DO = drwSpot(dI, kO); DRW.out = out0;
+      const bsc = new V3().setFromMatrixScale(BW), Msc = new THREE.Matrix4().makeScale(bsc.x, bsc.y, bsc.z), RZ0 = new THREE.Matrix4().makeRotationZ(Math.PI / 2);
+      const RZ = new THREE.Matrix4().makeRotationY(Math.atan2(DRW.dir.x, DRW.dir.z)).multiply(RZ0).multiply(Msc);
+      const F_D = Tm(DN.p.clone().addScaledVector(UP, np.hs.x + 0.002)).multiply(RZ), F_C = Tm(DO.p.clone().addScaledVector(UP, lampO.hs.x + 0.002)).multiply(RZ);
+      const ride = (q, F) => { q.matrix.copy(F).premultiply(Tm(DRW.dir.clone().multiplyScalar(-OUT * (1 - EZ.sine(DRW.k[dI]))))); q.matrixWorldNeedsUpdate = true; };
+      // roka 2's reach down into the drawer from over the cabinet's back (the rail's end), the old one's spot on the bonnet (beside the
+      // seat, inboard: roka 1 lays it there and roka 2 takes it from there)
+      const dIn = (tip) => tip.clone().sub(new V3(tip.x, 3.15, 2.0)).normalize();
+      BRG.free = true; poseBridge(); BRG.p.copy(BRG.c); POD.on = true;
+      const tN = DN.p.clone().addScaledVector(UP, 2 * np.hs.x + 0.007), tO = DO.p.clone().addScaledVector(UP, 2 * lampO.hs.x + 0.007);
+      const P2 = poseAt(1, 'reach', tN, dIn(tN)), P2O = poseAt(1, 'reach', tO, dIn(tO));
+      const hx = PL.x - lampO.hs.x - 0.35, hz = PL.z * 0.55, yb = cv.probe && cv.probe.top ? cv.probe.top(hx, hz) : null, yl = yb != null && isFinite(yb) && yb > 0.2 ? yb : PL.y + lampO.hs.y + 0.12;
+      const HOOD = Tm(new V3(hx, yl + lampO.hs.x + 0.004, hz)).multiply(new THREE.Matrix4().extractRotation(BW)).multiply(RZ0).multiply(Msc);
+      const tH = at(HOOD).addScaledVector(UP, lampO.hs.x + 0.006), PH = poseAt(0, 'gripper', tH, new V3(0, -1, 0), plan.s.yaw), P2B = poseAt(1, 'reach', tH, new V3(0, -1, 0));
+      const VC = view({ at: [PL.x - 0.1, PL.y + 0.1, PL.z * 0.6], yaw: 0.75 * sd, pitch: 0.28, dist: 3.4, fov: 36 });
+      const VD = view({ at: [(DN.p.x + PL.x) / 2, 0.95, (DN.p.z + PL.z) / 2], yaw: 0.35, pitch: 0.42, dist: 5.6, fov: 42 });
+      const tipOf = (i, s, e) => at(tipM(s, TL[RB[i].tool] + (RB[i].tool === 'reach' ? e || 0 : 0)));
+      // 1. the arms down: roka 1 before the old lamp, roka 2 (its reach) over the drawer; the drawer out (its cell 35 cm)
+      if (DRW.k[dI] > 0) { DRW.want = -1; yield* waitFor(() => DRW.k[dI] === 0, 1); }
+      DRW.out = OUT; DRW.want = dI; scene.add(np.o); np.o.matrixAutoUpdate = false; ride(np.o, F_D);
+      yield* par(camTo(VC, 1.0), (function* () { yield* armTool(0, 'gripper', 2); yield* armCarry(0, plan.pre.s, plan.pre.ext, 0.7); })(),
+        (function* () { yield* armTool(1, 'reach', 2); if (P2) yield* armCarry(1, Object.assign({}, P2.s), 0, 0.7); })(),
+        (function* () { yield* waitFor(() => { ride(np.o, F_D); return DRW.k[dI] >= 1; }, 1.2); })());
+      // 2. the old one out (0,8 s): roka 1 to it, its screws out, drawn out of its seat (the seat dark, its light out)
+      yield* armExt(0, plan.s, plan.ext, 0.3); screws(2); yield* wait(0.12);
       const sock = lampSocket(cv, lampO), gN = cv.head[sd > 0 ? 1 : 0]; if (gN) { gN.material.opacity = 0; gN.visible = false; }
-      if (toss) { poseArm(i); const Mh = tipM(RB[i].s, tipLen(RB[i])).multiply(plan.off); scene.add(lampO.o); lampO.o.matrixAutoUpdate = false; lampO.o.matrix.copy(Fo); SFX.whoosh(0.3); fitLog('hop', { d: +toss.d.toFixed(2) });
-        yield* fly(lampO.o, Fo, Mh); hold(i, lampO.o, lampO.o.matrix.clone()); }
-      else hold(i, lampO.o, Fo);
-      yield* armExt(i, plan.pre.s, plan.pre.ext, 0.45, EZ.sine); fitLog('old.out'); st.out = true;
-      // onto the trolley's deck beside the new one's place (the hand over it as the trolley comes; the camera: the drawer, the trolley)
-      const dxO = clamp(np.hs.x + lampO.hs.x + 0.08, 0.22, Math.max(0.22, CART.L / 2 - lampO.hs.x - 0.02)), ways = [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2]];
-      let put = null, dx = 0; for (const q of [-dxO, dxO]) if (!put) { put = framePlan(i, tool, RB[i].held.a, deckAt(lampO, park[0] + q, park[1]), ways, new V3(0, 1, 0), 0.35); dx = q; }
-      yield* par((function* () { if (VD) { yield* camTo(VD, 1.1); yield* waitFor(() => st.loaded, 8); } yield* camTo(V1, VD ? 1.6 : 1.2); })(),
-        put ? par(armCarry(i, put.pre.s, put.pre.ext, 1.3), holdTo(i, put.off, 1.2)) : null, waitFor(() => st.parked, 16));
-      if (put) { yield* armExt(i, put.s, put.ext, 0.4); SFX.clunk(0.3); letGo(i); deckPut(lampO); lampO.o.matrix.makeTranslation(dx, CART.deck + 0.004 + lampO.hs.y, 0); lampO.o.matrixWorldNeedsUpdate = true; fitLog('put', { where: 'cart' });
-        yield* armExt(i, put.pre.s, 0, 0.3); }
-      else { fitLog('put', { where: 'none' }); disposeTree(letGo(i)); }
-      // the new one off the deck (the trolley off with the old one), to the seat, pushed in: the car the new one's now; its ring screwed
-      yield* armCarry(i, grab.pre.s, grab.pre.ext, 0.7);
-      yield* armExt(i, grab.s, grab.ext, 0.4); SFX.clunk(0.3); cart.updateMatrixWorld(true); hold(i, np.o, np.o.matrixWorld.clone()); fitLog('grab', { rgl: null });
-      yield* armExt(i, grab.pre.s, grab.pre.ext, 0.35);
-      spawn((function* () { yield* cartOff(put ? lampO : null); st.gone = true; })());
-      yield* par(armCarry(i, plan.pre.s, plan.pre.ext, 1.3), holdTo(i, plan.off, 1.2), camTo(V2, 1.3));
-      yield* armExt(i, plan.s, plan.ext, 0.45, EZ.sine);
-      if (toss) { poseArm(i); const ob = RB[i].held.o, Mh = ob.matrix.clone(); letGo(i); SFX.whoosh(0.4); yield* fly(ob, Mh, FN); disposeTree(ob); } else disposeTree(letGo(i));
-      if (FL) { yield* waitFor(() => FL.done, 16); if (FL.sock) disposeTree(FL.sock); disposeTree(FL.b.o); }   // (the far one in its seat first: the new car draws it there)
-      SFX.clunk(0.5); disposeTree(sock); fitSwap(cv, nw, false); lamps(cur, 0, 0.35);   // (its lights off till they are tried)
-      fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'real' });
-      yield* wait(0.12); screws(5); yield* wait(0.24); screws(5); yield* wait(0.2); fitLog('ring');
-      // the lights tried (the arm away meanwhile)
-      spawn((function* () { yield* armExt(i, plan.pre.s, plan.pre.ext, 0.4, EZ.sine); yield* armRest(i, 1.2); st.rest = true; })());
-      yield* camTo(VL, 1.0);
-      // (on, off, on: their glow larger, their light on the floor before the car in the lamps' colour; both back to the idling car's as the camera goes home)
+      scene.add(lampO.o); hold(0, lampO.o, Fo); yield* armExt(0, plan.pre.s, plan.pre.ext, 0.3); fitLog('old.out', { i: 0 });
+      // 3. the LED one taken (1,2 s): roka 2's reach out to it in the drawer; roka 1 lays the old one on the bonnet meanwhile
+      const ptH = { ...plan.pre.s };
+      yield* par(camTo(VD, 0.7), (function* () {
+        if (PH) { const b = inv(tipM(PH.s, TL.gripper + PH.ext)).multiply(HOOD); yield* par(armCarry(0, PH.s, PH.ext, 0.7), holdTo(0, b, 0.6)); }
+        const q = letGo(0); if (q) { q.matrix.copy(HOOD); q.matrixWorldNeedsUpdate = true; } SFX.clunk(0.3);
+        yield* armExt(0, ptH, plan.pre.ext, 0.35); })(),
+        (function* () { if (P2) { yield* armExt(1, P2.s, P2.ext, 0.85, EZ.sine); } ride(np.o, F_D); hold(1, np.o, np.o.matrix.clone()); SFX.clunk(0.4); yield* wait(0.1);
+          if (P2) yield* armExt(1, { y: P2.s.y + 0.12 }, P2.ext * 0.85, 0.25); })());
+      fitLog('pod.out', { i: 1 });
+      // 4. handed over (0,8 s): roka 2 brings it over the car to roka 1 (up over its seat, as roka 1 holds it to push it in): roka 1 takes it
+      const tP = tipOf(0, plan.pre.s, plan.pre.ext), tS = tipOf(0, plan.s, plan.ext), lift = Math.max(0.1, Math.min(Math.max(0.45, K.top + 0.22 - PL.y), ARM.Y0 - 0.06 - plan.pre.s.y));
+      const F_H = Tm(tP.clone().sub(tS).addScaledVector(UP, lift)).multiply(FN), s1H = { ...plan.pre.s, y: plan.pre.s.y + lift };
+      const w1 = new V3(s1H.x, 0, s1H.z), tipH = at(F_H).addScaledVector(UP, np.hs.y + 0.005), h = new V3(tipH.x - w1.x, 0, tipH.z - w1.z);
+      if (h.lengthSq() < 1e-4) h.set(-S.out.x, 0, -S.out.z); h.normalize();
+      const d2 = new V3(h.x * 0.85, -0.53, h.z * 0.85).normalize(), P2H = poseAt(1, 'reach', tipH, d2) || poseAt(1, 'reach', tipH, new V3(h.x * 0.5, -0.87, h.z * 0.5));
+      yield* par(camTo(VC, 0.6), armExt(0, s1H, plan.pre.ext, 0.5), (function* () {
+        if (P2H) { const b = inv(tipM(P2H.s, TL.reach + P2H.ext)).multiply(F_H); yield* par(armExt(1, P2H.s, P2H.ext, 0.75), holdTo(1, b, 0.7)); }
+        else { const qa = new THREE.Quaternion().setFromRotationMatrix(np.o.matrix), qb = new THREE.Quaternion().setFromRotationMatrix(F_H); yield* hop(np.o, at(np.o.matrix), qa, at(F_H), qb, 0.75); } })());
+      { const q = letGo(1) || np.o; q.matrix.copy(F_H); q.matrixWorldNeedsUpdate = true; hold(0, q, F_H); SFX.clunk(0.3); }
+      fitLog('pass', { i: 1 });
+      // 5. in (1,2 s): roka 1 pushes it into its seat and screws it, roka 2's reach on it; the far lamp the same
+      const FO = lampPart(cv, -sd);
+      const tipS = PL.clone().addScaledVector(UP, np.hs.y + 0.005), gapOk = (q, sg) => q && Math.min(q.s.z - plan.s.z, q.s.z - plan.pre.s.z) * sg >= ARM.gap + 0.05;
+      // (roka 2's carriage on the lamp's outer side of roka 1's, the gap kept: as it stays on that side for the far one)
+      let P2S = poseAt(1, 'reach', tipS, d2); if (!gapOk(P2S, sd)) for (const k of [0.6, 0.85, 1.2, 1.7, 2.4]) { const q = poseAt(1, 'reach', tipS, new V3(0, -1, k * sd)); if (gapOk(q, sd)) { P2S = q; break; } }
+      yield* par(armExt(0, plan.pre.s, plan.pre.ext, 0.2), P2S ? armExt(1, P2S.s, P2S.ext, 0.2) : wait(0.2));
+      yield* armExt(0, plan.s, plan.ext, 0.2, EZ.sine);
+      disposeTree(letGo(0)); SFX.clunk(0.5); disposeTree(sock); fitSwap(cv, nw, false); lamps(cur, 0, 0.35); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'real', pod: true });
+      if (FO) { FO.o.position.copy(FO.c); FO.o.scale.setScalar(1.02); cur.v.bodyG.add(FO.o); }
+      screws(2); yield* wait(0.18); fitLog('fit', { i: 0 });
+      const mz = (s) => ({ x: s.x, y: s.y, z: -s.z, yaw: -s.yaw, pitch: s.pitch }), sF = mz(plan.s), sFp = mz(plan.pre.s);
+      // (roka 2 holds the far one from inboard: its carriage kept the gap on its own side of roka 1's, the arms never crossing; roka 1
+      // across first, roka 2 up, over and down after it)
+      const tipF = tipS.clone(); tipF.z = -tipF.z; let P2F = null;
+      for (const k of [0.8, 1.1, 1.5, 2.2, 3.2]) { const q = poseAt(1, 'reach', tipF, new V3(0, -1, -k * sd)); if (q && Math.min(q.s.z - sF.z, q.s.z - sFp.z) * sd >= ARM.gap + 0.05) { P2F = q; break; } }
+      const okF = wristOk(0, sF) && wristOk(0, sFp), up2 = (q) => ({ ...q, y: Math.min(ARM.Y0 - 0.05, Math.max(q.y, RB[1].s.y) + 0.4) });
+      if (FO && okF) {
+        yield* par((function* () { yield* armExt(0, plan.pre.s, plan.pre.ext, 0.12); yield* armExt(0, sFp, plan.pre.ext, 0.2); })(),
+          (function* () { if (!P2F) return; yield* wait(0.1); yield* armExt(1, up2(RB[1].s), 0, 0.12); yield* armExt(1, up2(P2F.s), 0, 0.25); })());
+        yield* par(armExt(0, sF, plan.ext, 0.12, EZ.sine), P2F ? armExt(1, P2F.s, P2F.ext, 0.15, EZ.sine) : wait(0.12));
+        const fP = PL.clone(); fP.z = -fP.z; const fO = S.out.clone(); fO.z = -fO.z; screwsAt(fP, np.hs, fO, 2);
+        yield* wait(0.12); fitLog('far', { i: 0, p2: P2F ? [+P2F.s.z.toFixed(2), +P2F.ext.toFixed(2)] : null });
+      }
+      if (FO) disposeTree(FO.o);
+      // 6. the old one back (1,0 s): roka 2's reach off the lamp, to the old one on the bonnet, with it back into its cell in the
+      // drawer (the drawer still out), let go; the drawer in with it; roka 1 up out of the way meanwhile
+      const s1U = FO && okF ? sFp : plan.pre.s;
+      yield* par(armExt(0, { ...s1U, y: Math.min(ARM.Y0 - 0.05, s1U.y + 0.35) }, 0, 0.3), (function* () {
+        if (P2B) { yield* armExt(1, P2B.s, P2B.ext, 0.3); const q = lampO.o; hold(1, q, q.parent === scene ? q.matrix.clone() : HOOD); SFX.clunk(0.25); }
+        if (P2O) { const b = inv(tipM(P2O.s, TL.reach + P2O.ext)).multiply(F_C); yield* par(armExt(1, P2O.s, P2O.ext, 0.45, EZ.sine), RB[1].held ? holdTo(1, b, 0.4) : wait(0.4)); } })());
+      { const q = letGo(1) || lampO.o; q.matrix.copy(F_C); q.matrixWorldNeedsUpdate = true; }
+      fitLog('pod.back', { i: 1 });
+      DRW.want = -1;
+      yield* par(P2O ? armExt(1, { y: P2O.s.y + 0.15 }, 0, 0.3) : wait(0.3), waitFor(() => { ride(lampO.o, F_C); return DRW.k[dI] <= 0; }, 0.6));
+      disposeTree(lampO.o); scene.remove(lampO.o); DRW.out = out0;
+      // (the arms home meanwhile: not wanted for the lights; the podaljšek's stages in only when roka 2 is home)
+      let parked = false; spawn((function* () { yield* armsPark(2); POD.on = false; parked = true; })());
+      // 7. the lights tried (1,5 s): from before the car, on, off, on; KONČANO
+      yield* camTo(VL, 0.6);
       const pool = mainOnly(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: TX.glow, color: cur.head[0] ? cur.head[0].material.color.getHex() : 0xffffff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })));
       pool.material.userData.own = true; pool.rotation.x = -Math.PI / 2; pool.position.set(K.front + 1.25, 0.03, 0); pool.scale.set(3.2, 2.4 + K.hw, 1); pool.renderOrder = 9; cur.root.add(pool);
       const lit = (k) => { lamps(cur, k > 0 ? 1 : 0, 0.35); pool.material.opacity = 0.6 * k; for (const q of cur.head) q.scale.setScalar(0.9 * (1 + 0.7 * k)); };
       for (const k of [1, 0, 1]) { lit(k); if (k) SFX.click(); yield* wait(k ? 0.32 : 0.16); }
       fitLog('lights'); SFX.ping(1760); done(); yield* wait(0.5);
-      yield* par(home(1.4), tween(0.8, (k) => { pool.material.opacity = 0.6 * (1 - k); for (const q of cur.head) q.scale.setScalar(0.9 * (1 + 0.7 * (1 - k))); }), waitFor(() => st.rest, 6), waitFor(() => st.gone, 14), waitFor(() => !FL || (FL.rest && FL.gone), 14));
-      disposeTree(pool);
-      return;
+      FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F };
+      yield* par(home(1.1), tween(0.8, (k) => { pool.material.opacity = 0.6 * (1 - k); for (const q of cur.head) q.scale.setScalar(0.9 * (1 + 0.7 * (1 - k))); }), waitFor(() => parked, 4));
+      POD.on = false;
+      disposeTree(pool); return;
     }
     if (ds) {
       fitLog('cart.in'); SFX.click();
