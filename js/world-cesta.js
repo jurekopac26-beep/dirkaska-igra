@@ -52,6 +52,7 @@
     'Kanada':       { rob: 'bela', sred: 'rumena', crta: [3, 6], dvojna: true },
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
+    'Tadžikistan':  { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (the post-Soviet standard: a broken white line 3 m / 9 m outside towns, one solid line where overtaking is forbidden)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
@@ -124,6 +125,7 @@
     balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7, kRobV: 0.85 }),   // (grit after every winter, the frost's patches)
     caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
     pikes:     P(CESTA, { prah: [0.62, 0.53, 0.45], kPrah: 0.5, kOdsek: 0.05, kOlje: 0.08, kKol: 0, barva: 0, rob: 0.25, robV: 0.6, kRobV: 0.4 }),   // (the builder's own wheel tracks, patches and faded paint, all in the road's mesh; the granite's pink grit)
+    darvaz:    P(CESTA, { prah: [0.64, 0.59, 0.5], kPrah: 0.65, sPrah: 1.1, kOdsek: 0.07, odsek: [60, 300], barva: 0.7, kRobV: 0.85 }),   // (the gorge's dust and fallen grit everywhere, the lorries' road: its edges broken, much patched)
   };
 
   /* ---- the noise both shaders read: one 128 x 128 RGBA tile (it wraps both ways, with mipmaps), made once, seeded (the same on every

@@ -245,7 +245,15 @@ def far(C, G, X, Z, D):
         a, o = G.to_ll(GX + ox, GZ + oz); acc = np.maximum(acc, np.nan_to_num(Dbig.sample(a, o), nan=0.0))
     H = 0.5 * H + 0.5 * acc
     lo_ = int(math.floor(H.min() / 10) * 10); v = np.clip(np.round((H - lo_) * 2), 0, 65535).astype('>u2')
-    wet = worldcover(la, lo) == 80; runs = []; cur = False; k = 0
+    wet = worldcover(la, lo) == 80
+    # (a river in a gorge narrower than the cell: its node sits in a pit far below all its neighbours, a dark funnel on the coarse grid,
+    # not a lake. Such a node stays dry land; the near terrain draws the river itself)
+    Hp = np.pad(H, 1, mode='edge'); lo8 = np.full(H.shape, np.inf)
+    for dj in (-1, 0, 1):
+        for di in (-1, 0, 1):
+            if di or dj: lo8 = np.minimum(lo8, Hp[1 + dj:1 + dj + H.shape[0], 1 + di:1 + di + H.shape[1]])
+    wet &= ~(H < lo8 - 25)
+    runs = []; cur = False; k = 0
     for w in wet.ravel():
         if bool(w) != cur: runs.append(k); k = 0; cur = not cur
         k += 1

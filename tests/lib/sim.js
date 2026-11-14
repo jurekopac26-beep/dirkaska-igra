@@ -67,10 +67,11 @@ const SETUPS = {
 // (the knocks of the versions, Trki med avti: Simulacija by default, kCollide in core.js, the pack moves otherwise again; from the old times these only grazed or lost
 // no panel: NürburgRing rally 4.5, Tianmen rally 4, Sani Pass rally 4.5, formula 8.5, prototype 9.5, truck 4, Riverside prototype 4, Detroit rally 4, Rastro rally 5,
 // Mount Baldy muscle 4: the first times that crash, tried from 4 s on in half seconds; with the rivals among themselves losing half the grip a knock
-// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off)
+// costs: Uncompahgre's electric car 4, Newcastle's truck 4; Bâlea rally 6.5: from 6 s the left lock only dents the car, no panel off;
+// Darvaz formula 6.5: from 6 s it only dents the wing, no panel off)
 // (Chapman's Peak's hills behind the barrier line, def.hills: from 6 s the left lock of the rally car and the prototype drives up the hill by the
 // start, no damage; tried from 4 s on in half seconds: rally 5.5, prototype 5)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'chapman/rally': 5.5, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
+const CRASH_AT = { katu: 4.5, 'darvaz/formula': 6.5, 'balea/rally': 6.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'chapman/rally': 5.5, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);

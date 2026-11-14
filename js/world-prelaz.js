@@ -208,10 +208,12 @@
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
   function plFarCol(A, sl, q) {   // the land beyond the corridor (irFar): the pasture green low down, grey-brown rock higher up and on the steep faces, the dwarf pine darker
-    // on the lower slopes, snow in the high gullies
-    const F = L.far, dw = sstep(1500, 1700, A) * sstep(2100, 1850, A) * 0.6, rk = Math.min(1, sstep(2050, 2350, A) * 0.8 + sstep(0.55, 0.95, sl) * 0.8);
+    // on the lower slopes, snow in the high gullies (the look's bands: far.tree the forest's upper edge [top, full], far.dwb the dwarf pine's
+    // [from, full, to, full], far.rk the rock's [from, full]; far.fc the forest's colour)
+    const F = L.far, B = F.dwb || [1500, 1700, 2100, 1850], Rk = F.rk || [2050, 2350], Tl = F.tree || [1650, 1450], fc = F.fc || [0.12, 0.2, 0.12];
+    const dw = sstep(B[0], B[1], A) * sstep(B[2], B[3], A) * 0.6, rk = Math.min(1, sstep(Rk[0], Rk[1], A) * 0.8 + sstep(0.55, 0.95, sl) * 0.8);
     let c = [F.lo[0] + q * 0.04, F.lo[1] + q * 0.05, F.lo[2] + q * 0.03];
-    const fo = sstep(1650, 1450, A); c = [lerp(c[0], 0.12, fo), lerp(c[1], 0.2, fo), lerp(c[2], 0.12, fo)];   // the spruce forest below the treeline
+    const fo = sstep(Tl[0], Tl[1], A); c = [lerp(c[0], fc[0], fo), lerp(c[1], fc[1], fo), lerp(c[2], fc[2], fo)];   // the forest below the treeline
     c = [lerp(c[0], F.dw[0], dw), lerp(c[1], F.dw[1], dw), lerp(c[2], F.dw[2], dw)];
     c = [lerp(c[0], F.hi[0], rk), lerp(c[1], F.hi[1], rk), lerp(c[2], F.hi[2], rk)];
     const sn = sstep(F.snow, F.snow + 150, A) * sstep(0.9, 0.5, sl) * (0.5 + q); return [lerp(c[0], 0.95, sn), lerp(c[1], 0.96, sn), lerp(c[2], 0.98, sn)];
@@ -249,6 +251,7 @@
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     exclPush(padF.x, padF.z, padF.r + 4);
+    if (L.pre) L.pre({ P, exclPush, blds });   // (a pass's own landmarks, before the terrain: their level plots in P.pads, their room; out of blds the houses they replace)
     out.marks = {};   // (where the landmarks stand: the tests look for them)
 
     /* ---- the retaining walls between the legs of the hairpins: the game's road is wider than the real one (11 m against ~7 m), so where two
@@ -290,9 +293,10 @@
         const on = plTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
         const m = new THREE.Mesh(plTileGeo(ti, tj, on), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
-      const wMat = new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 70, specular: 0x2a3a44 });
+      const wMat = new THREE.MeshPhongMaterial({ map: (L.water || {}).map === false ? null : tex.water, vertexColors: true, shininess: 70, specular: 0x2a3a44 });
+      if (!wMat.map) wMat.customProgramCacheKey = () => 'water|silt';   // (water.map false: a silty river's own colour, not the lake's blue picture; the key: the ambience still hears it)
       for (const Lk of P.lakes) {   // a 4 m grid near the road, 8 m farther out: the glacial lake's deep blue-green, paler at the shore, the sky in it
-        const deep = [0.05, 0.2, 0.26], shal = [0.22, 0.4, 0.4], sky = [0.5, 0.62, 0.74];
+        const Wc = L.water || {}, deep = Wc.deep || [0.05, 0.2, 0.26], shal = Wc.shal || [0.22, 0.4, 0.4], sky = Wc.sky || [0.5, 0.62, 0.74];   // (L.water: a river's own)
         const g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14], cc = new Map();
         const wc = (x, z) => { const key = Math.round(x) + ',' + Math.round(z); let c = cc.get(key); if (c) return c;
           const e = API.vrWater(x, z).e, ks = 0.35 * sstep(0.55, 0.8, P.n2(x * 2.2, z * 2.2)); c = [0, 1, 2].map(k => lerp(lerp(shal[k], deep[k], sstep(2, 26, e)), sky[k], ks)); cc.set(key, c); return c; };
@@ -702,6 +706,8 @@
       }
       sh.addTo(root, true);
     }
+
+    if (L.extra) L.extra({ scen, root, out, P, excluded, onSide, matV });   // (a pass's own landmarks, built by its own file: js/world-medeu.js)
 
     /* ---- the puddles of a race in the rain (T.puddles; as Sani Pass') ---- */
     if (T.puddles && T.puddles.length) {
