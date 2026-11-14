@@ -2928,7 +2928,7 @@ const Garage3D = (function () {
       yield* tween(T, (e) => { const y = lerp(h0, 0, e); if (follow) rig.ty += y - lift; setLift(y); }, EZ.io); setLift(0); SFX.clunk(0.6); if (cv) yield* settle(cv, 0.012, k); }
     if (LIFT.on) { LIFT.on = false; yield* carriageTo(LIFT.plan ? LIFT.plan.cs : LIFT.c0, 0.3 * k); }
   }
-  function* liftDown(cv, follow) { yield* lowerCar(cv, follow); yield* armsTo(0, 1.1); yield* carriageTo(LIFT.c0, 0.25); }
+  function* liftDown(cv, follow, k) { k = k || 1; yield* lowerCar(cv, follow, k); yield* armsTo(0, 1.1 * k); yield* carriageTo(LIFT.c0, 0.25 * k); }
 
   /* ---------------- the ring over the car and its two arms: nothing of them stands on the floor ----------------
      RING 9: a box-section frame (navy, a lattice of light bars on its faces, a line of light low on them) on the chamber's outline under
@@ -3819,6 +3819,9 @@ const Garage3D = (function () {
   const bxd = (b, x, y, z) => { let dx, dz; const o = b.ob; if (o) { const px = x - o.x, pz = z - o.z, lx = px * o.c - pz * o.s, lz = px * o.s + pz * o.c; dx = Math.abs(lx) - o.hx; dz = Math.max(o.z0 - lz, lz - o.z1); }
     else { dx = Math.max(b.min.x - x, x - b.max.x); dz = Math.max(b.min.z - z, z - b.max.z); } const dy = Math.max(b.min.y - y, y - b.max.y);
     return dx > 0 || dy > 0 || dz > 0 ? Math.hypot(Math.max(0, dx), Math.max(0, dy), Math.max(0, dz)) : Math.max(dx, dy, dz); };
+  // (the regal's boxes three at a time (a bay's) with a box round them: a point that far from it is as far from each of them)
+  const obstG = () => { if (FX.obsG && FX.obsG.of === FX.obst) return FX.obsG; const G = []; G.of = FX.obst;
+    for (let i = 0; i < FX.obst.length; i += 3) { const L = FX.obst.slice(i, i + 3), u = new THREE.Box3(); for (const o of L) u.union(o.b); G.push({ u, L }); } return (FX.obsG = G); };
   // (an attribute's vertices v0 .. v1 sent again: joined to a range already waiting (one range an attribute))
   function sendRange(a, v0, v1) { const s = a.itemSize, r = a.updateRange, o = v0 * s, e = v1 * s; if (r.count > 0) { const e0 = r.offset + r.count; r.offset = Math.min(r.offset, o); r.count = Math.max(e0, e) - r.offset; } else { r.offset = o; r.count = e - o; } a.needsUpdate = true; }
   // the fixtures at once (show(): a car set down; the pictures: _dbg.fxPose): o.arms [state | 'rest' | 'keep', ...] (a state's tool: in
@@ -5715,11 +5718,39 @@ const Garage3D = (function () {
       for (let j = 0; j < 3; j++) { const v = t + j, z = P[v * 3 + 2]; oP.push(P[v * 3], P[v * 3 + 1], z); oN.push(N[v * 3], N[v * 3 + 1], N[v * 3 + 2]); zf = Math.max(zf, z); zb = Math.min(zb, z); rx = Math.max(rx, Math.hypot(P[v * 3], P[v * 3 + 1]));
         if (C) oC.push(C[v * cs] * mc.r, C[v * cs + 1] * mc.g, C[v * cs + 2] * mc.b); else oC.push(0.2, 0.2, 0.22); } }
     if (src !== w.obj.geometry) src.dispose(); if (!oP.length) return null;
-    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(oP, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(oN, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(oC, 3));
-    geo.setAttribute('gloss', new THREE.BufferAttribute(new Float32Array(oP.length / 3).fill(tyre ? MATTE : PAINT), 1)); geo.computeBoundingSphere();
-    const o = new THREE.Mesh(geo, fxMat()); o.material.userData.own = true; o.castShadow = true; o.frustumCulled = false; o.matrixAutoUpdate = false;
-    return { o, r: rx, rr, zf, zb };
+    return Object.assign(partMesh(oP, oN, oC, tyre ? MATTE : PAINT), { r: rx, rr, zf, zb });
   }
+  // (a part's mesh of its own from its triangles (positions, normals, colours): its gloss all matte or all paint, its own material)
+  function partMesh(oP, oN, oC, gl) {
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(oP, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(oN, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(oC, 3));
+    geo.setAttribute('gloss', new THREE.BufferAttribute(new Float32Array(oP.length / 3).fill(gl), 1)); geo.computeBoundingSphere();
+    const o = new THREE.Mesh(geo, fxMat()); o.material.userData.own = true; o.castShadow = true; o.frustumCulled = false; o.matrixAutoUpdate = false; return { o };
+  }
+  // (a rear wheel drawn in the body (w.wr: its middle in the body, its radius, its rim's share, its vertices a .. b): its tyre as a mesh
+  // of its own in the wheel's frame as wheelPart's (the far side's turned round: its outer face toward +z); tris: the tyre's triangles
+  // in the body, to fold away (bodyCut) as an arm takes it off)
+  function bodyTyre(cv, w) {
+    const W = w.wr, body = cv.v.body, geo = body && body.geometry; if (!W || !geo || geo.index) return null;
+    const A = geo.attributes, P = A.position.array, N = A.normal.array, C = A.color ? A.color.array : null, cs = A.color ? A.color.itemSize : 3, sg = W.sd < 0 ? -1 : 1, rk = W.r * (W.k || 0.62) * 0.97;
+    const mc = body.material && body.material.color ? body.material.color : { r: 1, g: 1, b: 1 }, oP = [], oN = [], oC = [], tris = []; let zf = -9, zb = 9, rx = 0;
+    for (let t = W.a; t + 2 < W.b; t += 3) { let lo = 9; for (let j = 0; j < 3; j++) { const v = (t + j) * 3; lo = Math.min(lo, Math.hypot(P[v] - W.x, P[v + 1] - W.y)); } if (lo <= rk) continue; tris.push(t);
+      for (let j = 0; j < 3; j++) { const v = t + j, x = (P[v * 3] - W.x) * sg, y = P[v * 3 + 1] - W.y, z = (P[v * 3 + 2] - W.z) * sg; oP.push(x, y, z); oN.push(N[v * 3] * sg, N[v * 3 + 1], N[v * 3 + 2] * sg);
+        zf = Math.max(zf, z); zb = Math.min(zb, z); rx = Math.max(rx, Math.hypot(x, y)); if (C) oC.push(C[v * cs] * mc.r, C[v * cs + 1] * mc.g, C[v * cs + 2] * mc.b); else oC.push(0.2, 0.2, 0.22); } }
+    if (!tris.length) return null;
+    return Object.assign(partMesh(oP, oN, oC, MATTE), { r: rx, zf, zb, tris, W, body });
+  }
+  // (a tyre's mesh moved to its own middle along its axle (zm): held and shown at its frame's T(0, 0, zm); zf zb stay the wheel's)
+  function midPart(p) { if (!p) return p; p.zm = (p.zf + p.zb) / 2; p.o.geometry.translate(0, 0, -p.zm); p.o.geometry.computeBoundingSphere(); return p; }
+  // (a body's tyre folded away (each triangle into its first corner) or back from its copy; the body's own geometry a copy of the
+  // car's first (bodyOwn): the car's shared one stays whole)
+  function bodyCut(T, on) { const a = T.body.geometry.attributes.position, P = a.array, W = T.W;
+    if (on) { if (!T.bk) T.bk = P.slice(W.a * 3, W.b * 3); for (const t of T.tris) for (let j = 1; j < 3; j++) for (let c = 0; c < 3; c++) P[(t + j) * 3 + c] = P[t * 3 + c]; }
+    else if (T.bk) P.set(T.bk, W.a * 3);
+    sendRange(a, W.a, W.b); }
+  // (a rear wheel's frame in the body as bodyTyre's: where the body is now (its shake with it))
+  function bodyFrame(cv, w) { const W = w.wr; cv.root.updateMatrixWorld(true); const F = cv.v.body.matrixWorld.clone().multiply(new THREE.Matrix4().makeTranslation(W.x, W.y, W.z)); if (W.sd < 0) F.multiply(new THREE.Matrix4().makeRotationY(Math.PI)); return F; }
+  // (a hold's offset by another point of the part: off takes h to the tip; the same offset taking h2 there)
+  const offAt = (off, h, h2) => off.clone().multiply(new THREE.Matrix4().makeTranslation(h.x - h2.x, h.y - h2.y, h.z - h2.z));
   // (a wheel's frame in the room: its middle (the car up by h on the lift, or as it stands now), its axle out from the car as z (a far
   // wheel's turned round, not mirrored: the same wheel to the eye), its turn round the axle; a wheel in the body (no object of its
   // own): where the car has it)
@@ -5734,9 +5765,9 @@ const Garage3D = (function () {
   const _tm = new THREE.Matrix4();
   function tipM(s, tl, out) { out = out || new THREE.Matrix4(); armFrame(s, out).setPosition(s.x, s.y - 0.07, s.z); return out.multiply(_tm.makeTranslation(0, ARM.FA + tl, 0)); }
   // (what an arm holds: drawn at its tool's tip times its offset, eased from a (as it took it) to b (as it is to be put on or down) by k)
-  const _hp = [new V3(), new V3()], _hq = [new THREE.Quaternion(), new THREE.Quaternion()], _hs = new V3();
-  function holdOff(H) { if (!H.b || H.k <= 0) return H.a; if (H.k >= 1) return H.b; H.a.decompose(_hp[0], _hq[0], _hs); H.b.decompose(_hp[1], _hq[1], _hs);
-    return H.m.compose(_hp[0].lerp(_hp[1], H.k), _hq[0].slerp(_hq[1], H.k), _h1); }
+  const _hp = [new V3(), new V3()], _hq = [new THREE.Quaternion(), new THREE.Quaternion()], _hs = new V3(), _hz = [new V3(), new V3()];
+  function holdOff(H) { if (!H.b || H.k <= 0) return H.a; if (H.k >= 1) return H.b; H.a.decompose(_hp[0], _hq[0], _hz[0]); H.b.decompose(_hp[1], _hq[1], _hz[1]);
+    return H.m.compose(_hp[0].lerp(_hp[1], H.k), _hq[0].slerp(_hq[1], H.k), _hz[0].lerp(_hz[1], H.k)); }   // (a part held to a size: its size too)
   function hold(i, o, F) { const A = RB[i]; poseArm(i); const off = tipM(A.s, tipLen(A)).invert().multiply(F);
     if (o.parent !== scene) { if (o.parent) o.parent.remove(o); scene.add(o); } o.matrixAutoUpdate = false; o.matrix.copy(F); o.matrixWorldNeedsUpdate = true;
     A.held = { o, a: off, b: null, k: 0, m: new THREE.Matrix4() }; A.dirty = true; return A.held; }
@@ -5750,10 +5781,10 @@ const Garage3D = (function () {
     return null;
   }
   // (the way in to a part: n straight in (level), turned and tilted down as little as the arm's box lets it)
-  function reachPlan(i, tool, tip, n) {
+  function reachPlan(i, tool, tip, n, clr) {
     let best = null; const h = new V3(n.x, 0, n.z).normalize();
     for (let ti = 0; ti <= 24; ti++) for (let ai = 0; ai <= 40; ai++) { const a = (ai % 2 ? 1 : -1) * Math.ceil(ai / 2) * 0.05, th = ti * 0.025, c = Math.cos(a), sn = Math.sin(a);
-      const d = new V3((h.x * c + h.z * sn) * Math.cos(th), -Math.sin(th), (-h.x * sn + h.z * c) * Math.cos(th)), p = poseAt(i, tool, tip, d); if (!p) continue;
+      const d = new V3((h.x * c + h.z * sn) * Math.cos(th), -Math.sin(th), (-h.x * sn + h.z * c) * Math.cos(th)), p = poseAt(i, tool, tip, d); if (!p || (clr && !clr(tip, p.s))) continue;
       const sc = Math.abs(a) + th * 0.8 + p.ext * 0.2; if (!best || sc < best.sc) best = Object.assign(p, { sc }); }
     return best;
   }
@@ -5846,6 +5877,213 @@ const Garage3D = (function () {
   }
   function unstageCar(nw) { if (!nw.staged) return; for (const c of nw.staged) c.visible = true; nw.staged = null; }
 
+  // THE TYRES BY THE PLATE (an_gume): wheel by wheel (FR, RR, FL, RL) arm 1 (0) takes the old tyre off and stands it in the regal's
+  // place the new one came from, arm 2 (1) brings the new one off the regal and puts it on, both at once; between the wheels the bridge
+  // turns round its hub like a turnstile (one way only), the two never cross. tyrePlan: every wheel's plan, null (FIT.why) when one cannot
+  const T_DN = [0, -1, 0], T_UP = new V3(0, 1, 0), T_HP = Math.PI / 2;
+  const tyreSide = (cv, sd) => { const L = cv.wheels.filter(w => w.sd === sd), f = L.find(w => w.front && w.obj), r = L.filter(w => !w.front).sort((a, b) => a.x - b.x)[0]; return [f, r].filter(Boolean); };
+  // (an arm's mast and its tool clear of the lift's post and of the regal (but where its tool's tip works: in a bay))
+  function tyreClear(tip, s) {
+    const B = LIFT.piece.box, wy = s.y - 0.07, mt = wy < B.max.y ? B.max.y - 1e-3 : wy; if (bxd(B, s.x, mt, s.z) < 0.15) return false;
+    const dx = tip.x - s.x, dy = tip.y - wy, dz = tip.z - s.z, L = Math.hypot(dx, dy, dz) || 1, e = Math.max(0, L - 0.3);
+    for (let k = 1; k <= 10; k++) { const l = e * k / 10, t = l / L, x = s.x + dx * t, y = wy + dy * t, z = s.z + dz * t; if (bxd(B, x, y, z) < 0.1) return false;
+      if (L - l > 0.45) for (const q of FX.obst) if (bxd(q.b, x, y, z) < 0.03) return false; }
+    return true;
+  }
+  // (and clear of the car's body on the lift, the last bit by the tip (on the tyre) let be)
+  const tyreCar = (C) => (tip, s) => { const wy = s.y - 0.07, dx = tip.x - s.x, dy = tip.y - wy, dz = tip.z - s.z, L = Math.hypot(dx, dy, dz) || 1, e = Math.max(0, L - 0.25);
+    for (let k = 0; k <= 10; k++) { const t = e * k / 10 / L; if (carPen(C, s.x + dx * t, wy + dy * t, s.z + dz * t, 0.05) > 0.005) return false; }
+    return tyreClear(tip, s); };
+  const tyreGap = (p, q) => Math.hypot(p.s.x - q.s.x, p.s.z - q.s.z) >= ARM.gap + 0.02;
+  // (the ways down onto a wheel's tread top: straight down (four turns in the wrist), tilted out from the car, then toward the car's end)
+  const tyreDirs = (J) => { const D = [[T_DN, 0], [T_DN, Math.PI], [T_DN, T_HP], [T_DN, -T_HP]];
+    for (const a of [0.12, 0.24, 0.36, 0.48]) D.push([[0, -Math.cos(a), -J.tz * Math.sin(a)], null]);
+    for (const a of [0.12, 0.24, 0.36, 0.48]) D.push([[-J.sx * Math.sin(a), -Math.cos(a), 0], null]); return D; };
+  // (a wheel's job with the regal's piece pc taken by its tread's front at its edge zg: arm 2's grab and fit, arm 1's off and put (the
+  // old tyre into the piece's place, scaled to it as it goes in), the two arms' wrists apart at each pair of moves made together)
+  function tyreJob(J, pc, zg, carOk) {
+    const M = pc.M, hg = new V3(-pc.r - 0.004, 0, zg), tip = hg.clone().applyMatrix4(M), g = reachPlan(1, 'reach', tip, new V3().setFromMatrixColumn(M, 0), tyreClear); if (!g) return null;
+    g.tip = tip; g.pre = poseAt(1, 'reach', tip.clone().addScaledVector(g.d, -0.7), g.d, g.s.yaw); if (!g.pre) return null;
+    g.off = tipM(g.s, TL.reach + g.ext).invert().multiply(M);
+    const kr = J.nr / pc.r, S = new THREE.Matrix4().makeScale(kr, kr, J.nwd / pc.w), cN = J.c0.clone().addScaledVector(J.t, J.nzm);
+    const fit = placePlan(1, 'reach', offAt(g.off, hg, hg.clone().applyMatrix4(S)), cN, J.t.clone().multiplyScalar(Math.sign(zg)), false, tyreDirs(J), J.t, 0.32, carOk); if (!fit) return null;
+    fit.offS = fit.off.clone().multiply(S);
+    const O = J.oldP, ro = O.r, wo = O.zf - O.zb, tipO = J.c0.clone().addScaledVector(T_UP, ro + 0.004).addScaledVector(J.t, O.zf + 0.035); let off = null;
+    for (const [d, yw] of tyreDirs(J)) { const p = poseAt(0, 'reach', tipO, d, yw); if (p && carOk(tipO, p.s)) { off = p; break; } } if (!off) return null;
+    off.tip = tipO; off.pre = poseAt(0, 'reach', tipO.clone().addScaledVector(off.d, -0.35), off.d, off.s.yaw); off.out = poseAt(0, 'reach', tipO.clone().addScaledVector(J.t, wo + 0.12), off.d, off.s.yaw); if (!off.pre || !off.out) return null;
+    const offOld = tipM(off.s, TL.reach + off.ext).invert().multiply(J.Fo), ho = tipO.clone().applyMatrix4(J.Fo.clone().invert());
+    const k2 = (pc.r + 0.004) / (ro + 0.004), h2 = new V3(ho.x * k2, ho.y * k2, Math.sign(ho.z) * (pc.w / 2 + 0.035)), Sd = new THREE.Matrix4().makeScale(pc.r / ro, pc.r / ro, pc.w / wo);
+    const dirs = [[g.d, null]]; for (const a of [0.08, -0.08, 0.16, -0.16, 0.24, -0.24]) for (const th of [0, 0.06, 0.12]) dirs.push([turnDir(g.d, a, th), null]);
+    const put = placePlan(0, 'reach', offAt(offOld, ho, h2), new V3().setFromMatrixPosition(M), new V3().setFromMatrixColumn(M, 2), true, dirs, g.d.clone().negate(), 0.6, tyreClear); if (!put) return null;
+    put.offS = put.off.clone().multiply(Sd);
+    if (!tyreGap(off, g) || !tyreGap(off.out, g.pre) || !tyreGap(off.pre, g.pre) || !tyreGap(put, fit) || !tyreGap(put.pre, fit.pre) || !tyreGap(put, fit.pre) || !tyreGap(put.pre, fit)) return null;
+    return { pc, zg, grab: g, fit, off, put };
+  }
+  function tyrePlan(cv, nw, pcs, bay) {
+    const W = tyreSide(cv, 1).concat(tyreSide(cv, -1)), f0 = BRG.free, Js = [];
+    const fail = (why) => { for (const J of Js) for (const p of [J.oldP, J.rim, J.newV]) if (p && p.o) disposeTree(p.o); BRG.free = f0; FIT.why = why; return null; };
+    if (W.length !== 4 || pcs.length < 4) return fail('wheels');
+    BRG.free = true; const C = { G: bodyGrid(cv), cx: cv.root.position.x, ly: FIT.lift }, carOk = tyreCar(C);
+    for (const w of W) { const wN = nw.wheels[cv.wheels.indexOf(w)], virt = !w.obj;
+      if (!wN || !!wN.obj !== !!w.obj || (virt && (!w.wr || !wN.wr))) return fail('match');
+      const J = { j: Js.length, w, wN, virt, sx: w.x > 0 ? 1 : -1, tz: w.sd }; Js.push(J);
+      J.oldP = midPart(virt ? bodyTyre(cv, w) : wheelPart(cv, w, 'gume')); if (!J.oldP) return fail('old');
+      if (!virt) { J.rim = wheelPart(cv, w, 'platisca'); if (!J.rim) return fail('rim'); }
+      let T; if (virt) { T = J.newV = midPart(bodyTyre(nw, wN)); if (!T) return fail('new'); } else { T = wheelPart(nw, wN, 'gume'); if (!T) return fail('new'); disposeTree(T.o); }
+      J.nr = T.r; J.nwd = T.zf - T.zb; J.nzm = (T.zf + T.zb) / 2;
+      J.F0 = virt ? new THREE.Matrix4().makeTranslation(0, FIT.lift - cv.v.grp.position.y, 0).multiply(bodyFrame(cv, w)) : wheelFrame(cv, w, FIT.lift).F;
+      J.Fo = J.F0.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, J.oldP.zm)); J.c0 = new V3().setFromMatrixPosition(J.F0); J.t = new V3().setFromMatrixColumn(J.F0, 2).normalize(); }
+    const P = pcs.slice().sort((a, b) => (b.bx || 0) - (a.bx || 0)), pref = [0, 3, 1, 2], used = new Set();
+    for (const J of Js) { const p0 = P[pref[J.j]], order = [p0].concat(P.filter(q => q !== p0)); let best = null;
+      for (const pc of order) { if (!pc || used.has(pc)) continue; const k = P.indexOf(pc), zs = k === 0 ? [1] : k === P.length - 1 ? [-1] : [1, -1];
+        for (const s of zs) { best = tyreJob(J, pc, s * (pc.w / 2 + 0.03), carOk); if (best) break; } if (best) break; }
+      if (!best) return fail('job' + J.j); used.add(best.pc); Object.assign(J, best); }
+    BRG.free = f0; return { Js, pcs, bay };
+  }
+  // (the two arms from where they are to a and b (states with ext) in T seconds as one: the bridge's hub along a curve, the line between
+  // the wrists drawn in (the arms near the hub), turned round it (the shorter way or the longer) and let out again; up high in between,
+  // the tools out along the bridge or across it; an arm off the regal up first and onto it down last (straight down there); hb: what each
+  // holds turned in its hand meanwhile, [arm, offset, its radius]; of the ways the one that touches the least (the car, the post, the regal))
+  const tyreTh = (p, q) => Math.atan2(p.x - q.x, p.z - q.z);
+  const tyreRg = (s) => s.z < -1.5 && s.y < 2.2;
+  // (a pass's way looked for: the arms from S (their exts E0) to Q (each { s, ext }), HR the radii of the tyres they hold (0: none). W.g
+  // looks a share at a time (it yields once it has run 2.5 ms of a frame) unless W.sync (all at once); W.r: the way found)
+  function passMk(S, E0, Q, HR) {
+    const cv = cur, th0 = tyreTh(S[0], S[1]); let dS = tyreTh(Q[0].s, Q[1].s) - th0; while (dS > Math.PI) dS -= TAU; while (dS <= -Math.PI) dS += TAU;
+    const H0 = [(S[0].x + S[1].x) / 2, (S[0].z + S[1].z) / 2], H1 = [(Q[0].s.x + Q[1].s.x) / 2, (Q[0].s.z + Q[1].s.z) / 2], r0 = Math.hypot(S[0].x - S[1].x, S[0].z - S[1].z) / 2, r1 = Math.hypot(Q[0].s.x - Q[1].s.x, Q[0].s.z - Q[1].s.z) / 2;
+    const WR = [0, 1].map(i => [tyreRg(S[i]) ? 0.24 : 0.38, tyreRg(Q[i].s) ? 0.78 : 0.62]);
+    const sg3 = (s, l, e, k, f, w) => k < w[0] ? f(s, l, EZ.io(k / w[0])) : k > w[1] ? f(l, e, EZ.io((k - w[1]) / (1 - w[1]))) : l;
+    // the bridge at k: its hub on a curve, the arms pulled in to rm, the bridge turned by D, the arms let out
+    const fr = (c, k, f) => { const u = EZ.io(clamp((k - 0.17) / 0.62, 0, 1)), w = 1 - u, mx = (H0[0] + H1[0]) / 2 + 2 * c.dx, mz = (H0[1] + H1[1]) / 2 + 2 * c.dz, rm = Math.min(c.rm, r0, r1);
+      const v = c.hd ? EZ.io(clamp((u - c.hd) / (1 - 2 * c.hd), 0, 1)) : u, vw = 1 - v;
+      f.x = vw * vw * H0[0] + 2 * v * vw * mx + v * v * H1[0]; f.z = vw * vw * H0[1] + 2 * v * vw * mz + v * v * H1[1]; f.rr = EZ.io(clamp((u - 0.22) / 0.56, 0, 1)); f.t = th0 + c.D * f.rr;
+      f.rho = u < 0.5 ? lerp(r0, rm, EZ.io(clamp(u / 0.3, 0, 1))) : lerp(rm, r1, EZ.io(clamp((u - 0.7) / 0.3, 0, 1))); return f; };
+    // arm i on its half: up to the top, its tool's yaw to the bridge from m.ya over the turn to m.yb (null: kept as at its start, its end), pitch m.pl, down
+    const arm = (c, m, i, k, f, q) => { const s0 = S[i], s1 = Q[i].s, W = WR[i], g = i ? -1 : 1, sh = i ? Math.PI : 0, y0 = s0.yaw - th0, y1 = s1.yaw - th0 - c.D, ya = m.ya == null ? y0 : m.ya - sh, yb = m.yb == null ? y1 : m.yb - sh, ym = angTo(ya, yb, f.rr);
+      q.x = f.x + g * f.rho * Math.sin(f.t); q.z = f.z + g * f.rho * Math.cos(f.t); q.y = sg3(s0.y, ARM.Y0, s1.y, k, lerp, W); q.pitch = sg3(s0.pitch, m.pl, s1.pitch, k, lerp, W);
+      q.yaw = f.t + sg3(y0, ym, y1, k, angTo, W); q.ext = sg3(E0[i], 0, Q[i].ext, k, lerp, W); clampArm(i, q); return q; };
+    const C = { G: bodyGrid(cv), cx: cv.root.position.x, ly: Math.max(lift, FIT.lift || 0) }, LB = LIFT.piece.box, OG = obstG(), f = {}, q = {};
+    // (the held tyre's own depth in the regal's measure at the pass's ends, as it stands there: allowed on the way up from and down to them)
+    const hDep = (i, s, e) => { const hr = HR[i]; if (!hr) return 0; const wy = s.y - 0.07, sp = Math.sin(s.pitch), l = ARM.FA + TL.reach + e + hr + 0.004, x = s.x - sp * Math.cos(s.yaw) * l, y = wy - Math.cos(s.pitch) * l, z = s.z + sp * Math.sin(s.yaw) * l;
+      let d = 0; for (const ob of FX.obst) d = Math.max(d, hr * 0.8 - bxd(ob.b, x, y, z)); return d; };
+    const HA = [0, 1].map(i => [hDep(i, S[i], E0[i]) + 0.002, hDep(i, Q[i].s, Q[i].ext) + 0.002]);
+    // (lim: a way already worse than the best stops being measured; the steps the middle first, so a bad one shows soon)
+    const JO = [12, 6, 18, 3, 9, 15, 21, 1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22, 23];
+    const pen = (c, m, i, B, lim) => { let p = 0; const ad = B ? (n, v, j) => { B[n] = (B[n] || 0) + v; (B.at || (B.at = {}))[n + i] = (B.at[n + i] || []).concat(j); p += v; } : (n, v) => { p += v; };
+      for (const j of JO) { if (p >= lim) return p; const k = j / 24, s = arm(c, m, i, k, fr(c, k, f), q), wy = s.y - 0.07, sp = Math.sin(s.pitch), dx = -sp * Math.cos(s.yaw), dy = -Math.cos(s.pitch), dz = sp * Math.sin(s.yaw), L = ARM.FA + TL.reach + s.ext;
+        const dm = bxd(LB, s.x, wy < LB.max.y ? LB.max.y - 1e-3 : wy, s.z); if (dm < 0.15) ad('mast', 0.15 - dm, j);
+        for (let n = 1; n <= 6; n++) { const l = L * n / 6, x = s.x + dx * l, y = wy + dy * l, z = s.z + dz * l, dc = bxd(LB, x, y, z), cp = carPen(C, x, y, z, 0.06); if (cp > 0) ad('car', cp, j); if (dc < 0.1) ad('col', 0.1 - dc, j);
+          for (const G of OG) if (bxd(G.u, x, y, z) < 0.03) for (const ob of G.L) { const d = bxd(ob.b, x, y, z); if (d < 0.03) ad('rgl', 0.03 - d, j); } }
+        const hr = HR[i]; if (hr) { const l = L + hr + 0.004, x = s.x + dx * l, y = wy + dy * l, z = s.z + dz * l, cp = carPen(C, x, y, z, hr * 0.8), dc = bxd(LB, x, y, z) - hr * 0.8; if (cp > 0) ad('hcar', cp, j); if (dc < 0.03) ad('hcol', 0.03 - dc, j);
+          const ha = k < WR[i][0] ? HA[i][0] : k > WR[i][1] ? HA[i][1] : 0, th = hr * 0.8 - ha; for (const G of OG) if (bxd(G.u, x, y, z) < th) for (const ob of G.L) { const d = bxd(ob.b, x, y, z) - hr * 0.8; if (d < -ha) ad('hrgl', -d - ha, j); } } }
+      return p; };
+    // the search: the bridge's ways (the short turn first, then the long one; the hub's curve; how far in) and, for each, each arm's own best tool
+    const W = { S, E0, Q, HR, fr, arm, r: null, t: 0, sl: 0, sync: false };
+    W.g = (function* () {
+      const Ds = Math.abs(dS) < 0.3 ? [dS] : [dS, dS - Math.sign(dS) * TAU], YO = [null, T_HP, 0, Math.PI], M = [];
+      for (const ya of YO) for (const yb of YO) for (const pl of [1.0, 0.75, 1.3]) M.push({ ya, yb, pl });
+      let best = null; W.sl = performance.now();
+      for (const hd of [0, 0.22]) for (const D of Ds) for (const rm of [0.45, 0.75]) for (const [dx, dz] of [[0, 0], [0.35, 0], [-0.35, 0], [0, 0.35], [0, -0.35], [0.35, 0.35], [-0.35, 0.35], [0.6, 0.3], [-0.6, 0.3], [0.3, 0.6], [-0.3, 0.6], [0, 0.9], [0.9, 0], [-0.9, 0], [0.6, 0.9], [-0.6, 0.9]]) {
+        if (!W.sync && performance.now() - W.sl > 2.5) { W.t += performance.now() - W.sl; yield; W.sl = performance.now(); }
+        const c = { D, rm, dx, dz, hd }, ms = [], ps = []; let p = 0;
+        for (let i = 0; i < 2 && (!best || p < best.p); i++) { let bp = Infinity; for (const m of M) { const v = pen(c, m, i, null, Math.min(bp, best ? best.p - p : Infinity)); if (v < bp) { bp = v; ms[i] = m; if (v < 1e-3) break; } } ps[i] = bp; p += bp; }
+        if (ms.length === 2 && (!best || p < best.p)) best = { c, ms, p }; if (best && best.p < 1e-3) break; }
+      const BD = {}; if (best.p > 1e-3) { pen(best.c, best.ms[0], 0, BD, Infinity); pen(best.c, best.ms[1], 1, BD, Infinity); }
+      W.t += performance.now() - W.sl; W.r = Object.assign(best, { BD });
+    })();
+    return W;
+  }
+  // (the pass: the way looked for ahead (W) if the arms stand where it was looked for from, else one looked for now; h: how long the
+  // look took here)
+  function* tyrePass(a, b, T, hb, W) {
+    const HR = [0, 0]; for (const [i, , r] of hb || []) HR[i] = r || 0;
+    const at = (i) => { const s = RB[i].s, p = W.S[i]; return Math.abs(s.x - p.x) + Math.abs(s.y - p.y) + Math.abs(s.z - p.z) + Math.abs(s.pitch - p.pitch) + 2 * Math.abs(Math.sin((s.yaw - p.yaw) / 2)) + Math.abs(RB[i].ext - W.E0[i]) < 2e-3; };
+    if (W && (W.Q[0] !== a || W.Q[1] !== b || W.HR[0] !== HR[0] || W.HR[1] !== HR[1] || !at(0) || !at(1))) { W.sync = true; W = null; }
+    if (!W) W = passMk([Object.assign({}, RB[0].s), Object.assign({}, RB[1].s)], [RB[0].ext, RB[1].ext], [a, b], HR);
+    const t0 = performance.now(); W.sync = true; while (!W.g.next().done);
+    const { c, ms, BD } = W.r, fr = W.fr, arm = W.arm, f = {}, q = {};
+    const nm = (v) => v == null ? 'k' : v === T_HP ? 'o' : v === 0 ? 't' : 'T';
+    (FIT.pass || (FIT.pass = [])).push({ T: +T.toFixed(2), p: +W.r.p.toFixed(3), c: [+c.D.toFixed(2), c.rm, c.dx, c.dz].concat(c.hd ? ['hd' + c.hd] : []).join(' ') + ' | ' + ms.map(m => nm(m.ya) + nm(m.yb) + m.pl).join(' '), ms: +W.t.toFixed(0), h: +(performance.now() - t0).toFixed(0), bd: BD });
+    const hs = (hb || []).map(([i, off]) => { const H = RB[i].held; if (!H) return null; H.a = holdOff(H).clone(); H.b = off; H.k = 0; return H; });
+    for (const A of RB) A.rest = false; SFX.servo(T * 0.9 / showRate());
+    yield* tween(T, (k) => { fr(c, k, f); for (let i = 0; i < 2; i++) { const A = RB[i], s = arm(c, ms[i], i, k, f, q); A.s.x = s.x; A.s.z = s.z; A.s.y = s.y; A.s.pitch = s.pitch; A.s.yaw = s.yaw; A.ext = s.ext; A.dirty = true; }
+      BRG.p.set(f.x, 0, f.z); for (const H of hs) if (H) H.k = EZ.io(k); }, (u) => u);
+    for (const H of hs) if (H) { H.a = H.b; H.b = null; H.k = 0; }
+  }
+  // the show: the lift up as the arms take their reaches and come over the first wheel and the regal; each wheel: arm 1 pulls the old
+  // tyre off along the axle (the bare rim left on the car) as arm 2 takes the new one off the regal; the bridge turns (each tyre turned
+  // in its hand as it is to go on or in); arm 2 pushes the new one on (the new car's wheel shown) as arm 1 stands the old one in the
+  // regal's place; the bridge turns on to the next wheel. The camera as the plate's panels
+  function* tyreShow(cv, nw, R, el) {
+    const Js = R.Js, J0 = Js[0], bay = R.bay, N = Js.length, added = [], F = { up: false }; let g0 = null, g1 = null, n = 0;
+    BRG.free = true; poseBridge(); BRG.p.copy(BRG.c); FIT.pass = [];
+    fitLog('plan', { regal: true, n: N, arm: 1, tool: 'reach', wheel: J0.w.front ? 'front' : 'rear', side: J0.w.sd, bay: J0.pc.bay, at: J0.c0.toArray().map(q => +q.toFixed(2)), piece: R.pcs.indexOf(J0.pc),
+      ext: +J0.grab.ext.toFixed(2), turn: +J0.fit.turn.toFixed(2), jobs: Js.map(J => ({ arm: '0+1', src: 'regal', mode: 'swap', virt: J.virt, wheel: J.w.front ? 'front' : 'rear', side: J.w.sd, turn: +J.fit.turn.toFixed(2) })) });
+    RGL.P.stay = true;
+    const dust = (J, k) => { const p0 = J.c0, t = J.t; for (let q = 0; q < k; q++) puffs.emit(p0.x, p0.y, p0.z, rnd(-0.5, 0.5), rnd(0.1, 0.7), t.z * rnd(0.2, 0.9), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02); };
+    const zM = (z) => new THREE.Matrix4().makeTranslation(0, 0, z);
+    const takeOff = (J) => { const O = J.oldP;
+      if (J.virt) { if (!g1) { g0 = cv.v.body.geometry; g1 = g0.clone(); cv.v.body.geometry = g1; } bodyCut(O, true);
+        const gp = cv.parts.gume; J.rg = gp ? gp.children.find(o => o.userData.wheel === J.w) : null; if (J.rg) J.rg.visible = false;
+        hold(0, O.o, bodyFrame(cv, J.w).multiply(zM(O.zm))); }
+      else { cv.root.updateMatrixWorld(true); const rim = J.rim.o; rim.matrix.copy(J.w.obj.matrixWorld); scene.add(rim); rim.matrixWorldNeedsUpdate = true; added.push(rim);
+        hold(0, O.o, wheelFrame(cv, J.w).F.multiply(zM(O.zm))); J.w.obj.visible = false; }
+      fitLog('off', { j: J.j }); dust(J, 6); SFX.wrench(); };
+    const grab = (J) => { const cp = rglCopy(J.pc); rglHide(J.pc, true); J.pc.take = FIT.n; hold(1, cp, J.pc.M); fitLog('grab', { j: J.j, piece: J.pc.kind, hid: J.pc.hid, rgl: +RGL.P.k.toFixed(2) }); SFX.clunk(0.3); };
+    const fitOn = (J) => { poseArm(1); disposeTree(letGo(1));
+      if (J.virt) { const W = J.wN.wr, o = J.newV.o, M = new THREE.Matrix4().makeTranslation(W.x, W.y, W.z); if (W.sd < 0) M.multiply(new THREE.Matrix4().makeRotationY(Math.PI));
+        o.matrixAutoUpdate = false; o.matrix.copy(M.multiply(zM(J.newV.zm))); cv.v.body.add(o); o.matrixWorldNeedsUpdate = true; added.push(o); J.newV.o = null;
+        const gq = nw.parts.gume, rn = gq && gq.children.find(q => q.userData.wheel === J.wN);
+        if (rn) { const r2 = new THREE.Mesh(rn.geometry, rn.material); r2.position.copy(rn.position); r2.rotation.copy(rn.rotation); r2.userData.share = true; (cv.parts.gume || cv.v.grp).add(r2); added.push(r2); } }
+      else { added.splice(added.indexOf(J.rim.o), 1); disposeTree(J.rim.o); J.rim = null; J.wN.obj.visible = true; }
+      J.fitted = true; dust(J, 10); SFX.wrench(); SFX.clunk(0.5); fitLog('swap', { j: J.j }); n++; hud('step', { kind: el, i: n, n: N }); };
+    const putBack = (J) => { poseArm(0); const ob = letGo(0); RGL.ret.push(ob); if (ob.material.userData.own) ob.material.dispose(); ob.material = fxMat(RGL.P.u); ob.material.userData.own = true; fitLog('put', { j: J.j, where: 'regal' }); SFX.clunk(0.3); };
+    const TM = [[0.7, 0.45, 0.75, 0.45], [0.44, 0.36, 0.52, 0.36]];   // (each wheel's: the pass there, the grip and take, the pass with both, the fit and put)
+    // (the passes' ways looked for ahead, a share a frame (look), from where the arms will stand: each wheel's pass there (from the last
+    // wheel's fit and put), its pass with both tyres (from the old one off and the new one taken), then the park; one not looked for
+    // to the end by its time is then)
+    const cp = (o) => Object.assign({}, o), pk = (i) => ({ s: Object.assign({ y: ARM.Y0, yaw: 0, pitch: Math.PI / 2 }, ARM.park[i]), ext: 0 }), Jz = Js[N - 1];
+    const PE = Js.map((J, q) => q ? passMk([cp(Js[q - 1].put.pre.s), cp(Js[q - 1].fit.pre.s)], [Js[q - 1].put.pre.ext, Js[q - 1].fit.pre.ext], [J.off.pre, J.grab.pre], [0, 0]) : null);
+    const PL = Js.map(J => passMk([cp(J.off.out.s), cp(J.grab.pre.s)], [J.off.out.ext, J.grab.pre.ext], [J.put.pre, J.fit.pre], [J.oldP.r || 0, J.nr || 0]));
+    const PK = passMk([cp(Jz.put.pre.s), cp(Jz.fit.pre.s)], [Jz.put.pre.ext, Jz.fit.pre.ext], [pk(0), pk(1)], [0, 0]);
+    const look = function* () { for (const W of Js.flatMap((J, q) => q ? [PE[q], PL[q]] : [PL[q]]).concat(PK)) while (!W.r && !W.sync && !F.end) { W.g.next(); yield; } };
+    const arms = function* () {
+      yield* par(armTool(0, 'reach', 3), armTool(1, 'reach', 3));
+      for (const J of Js) { const tm = TM[Math.min(J.j, 1)], one = !J.j;
+        yield* tyrePass(J.off.pre, J.grab.pre, tm[0], null, PE[J.j]);
+        // (the first wheel as the plate's panels 5, 6: the old tyre off, then (the camera at the regal) the new one taken)
+        yield* par((function* () { yield* waitFor(() => F.up, 9); yield* armExt(0, J.off.s, J.off.ext, tm[1] * 0.5); takeOff(J); J.off1 = true; yield* armExt(0, J.off.out.s, J.off.out.ext, tm[1] * 0.5, EZ.sine); })(),
+          (function* () { if (one) { yield* waitFor(() => J.off1, 9); yield* wait(0.3); } yield* armExt(1, J.grab.s, J.grab.ext, tm[1] * 0.55); grab(J); yield* armExt(1, J.grab.pre.s, J.grab.pre.ext, tm[1] * 0.45); })());
+        J.loaded = true;
+        yield* tyrePass(J.put.pre, J.fit.pre, tm[2], [[0, J.put.offS, J.oldP.r], [1, J.fit.offS, J.nr]], PL[J.j]);
+        J.near = true;
+        // (the first wheel's fit, then (the camera at the regal) the old tyre stood in: the panels 8, 9; the others' at once)
+        yield* par((function* () { yield* armExt(1, J.fit.s, J.fit.ext, tm[3] * 0.55, EZ.sine); fitOn(J); yield* armExt(1, J.fit.pre.s, J.fit.pre.ext, tm[3] * 0.45, EZ.sine); })(),
+          (function* () { if (one) { yield* waitFor(() => J.fitted, 9); yield* wait(0.35); } else yield* wait(tm[3] * 0.15); yield* armExt(0, J.put.s, J.put.ext, tm[3] * 0.45); putBack(J); yield* armExt(0, J.put.pre.s, J.put.pre.ext, tm[3] * 0.4); })());
+        J.done = true; }
+      F.end = true;
+    };
+    const c = J0.c0, near = view({ at: [c.x, c.y + 0.3, c.z], yaw: 0.3, pitch: 0.1, dist: 2.6, fov: 36 });
+    const cams = function* () { const c1 = Js[1].c0, c2 = Js[2].c0;
+      yield* camTo(view({ at: [c.x - 0.4, c.y + 0.55, c.z - 0.2], yaw: 0.35, pitch: 0.12, dist: 3.6, fov: 36 }), 1.0);   // (4, 5: the first wheel)
+      yield* waitFor(() => J0.off1, 9); yield* camTo(rglView(J0.grab, bay), 0.45);   // (6: the regal's place)
+      yield* waitFor(() => J0.loaded, 9); yield* camTo(view({ at: [0, 2.2, 0], yaw: 0, pitch: 0.14, dist: 6.2, fov: 40 }), 0.45); yield* wait(0.05);   // (7: wide, the bridge turned)
+      yield* camTo(near, 0.38);   // (8: the fit close)
+      yield* waitFor(() => J0.fitted, 9); yield* wait(0.05); yield* camTo(rglView(J0.grab, bay), 0.4);   // (9: the old one stood in)
+      yield* waitFor(() => J0.done, 9); yield* camTo(view({ at: [c1.x + 0.6, c1.y + 0.9, c1.z], yaw: 0.15, pitch: -0.12, dist: 3.8, fov: 40 }), 0.5);   // (10: the rear one)
+      yield* waitFor(() => Js[1].done, 12); yield* camTo(view({ at: [0.2, c2.y + 0.4, -0.9], yaw: -2.3, pitch: 0.16, dist: 4.4, fov: 38 }), 0.6);   // (11: the far side from behind)
+    };
+    yield* par(arms(), cams(), (function* () { fitLog('lift'); yield* liftUp(cv, FIT.lift, false, 0.35); F.up = true; })(), look());
+    for (const o of added) { if (o.userData.share) { if (o.parent) o.parent.remove(o); } else disposeTree(o); }
+    if (g1) { cv.v.body.geometry = g0; g1.dispose(); } for (const J of Js) if (J.rg) J.rg.visible = true;
+    if (Js.some(J => J.virt)) lamps(nw, 1, 0.35);
+    unstageCar(nw); fitSwap(cv, nw, true); fitLog('done', { deli: deliKey(cur.spec), car: cur === nw, n });
+    // (12-14: the arms up and home as the camera comes round to the first new tyre (KONČANO), then home as the car comes down)
+    // (the arms up off the last wheel and the regal and over to their places as the bridge turns home: one pass; their tools put away there)
+    const park = function* () { yield* tyrePass(PK.Q[0], PK.Q[1], 1.4, null, PK); bridgeRest(); yield* par(armRest(0, 2.4), armRest(1, 2.4)); };
+    yield* par(park(), rglUnstay(1.4), (function* () { yield* camTo(near, 0.55); hud('done', { kind: el }); sparkle(cur, 6); SFX.ping(1760);
+      yield* par((function* () { yield* wait(0.3); yield* home(1.0); })(), liftDown(cur, false, 0.5)); })());
+  }
   // the show: el 'gume' or 'platisca', spec the car with the new part, o.src the regal's part ('rgl:NAME') or none (the trolleys)
   function* fitWheels(el, spec, o) {
     const cv = cur; if (!cv) return; FIT.n++; FIT.log.length = 0; const kind = el === 'gume' ? 'gume' : 'platisca', tyre = kind === 'gume', K = cv.kit;
@@ -5905,6 +6143,8 @@ const Garage3D = (function () {
       for (const J of C.Js) { const ob = J.newT.o; C.cart.add(ob); ob.matrix.copy(J.L); ob.matrixWorldNeedsUpdate = true; }
       C.cart.position.set(CART.out + k * 2, 0, 0); return C;
     };
+    // the tyres by the plate: both arms at each wheel off the regal (else, no plan: the trolleys' show below)
+    if (tyre && regal) { FIT.why = null; const R = tyrePlan(cv, nw, pcs, bay); if (R) { yield* tyreShow(cv, nw, R, el); return; } }
     // the jobs: the far wheels off the regal by the far arm's reach (each wheel its part: the most wheels done, then the least turns);
     // the near ones off the trolley by the near arm's gripper; nothing on the regal (or out of the reach's way there): the far ones off
     // the trolley's twin by the reach

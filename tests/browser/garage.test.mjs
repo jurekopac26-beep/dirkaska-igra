@@ -292,15 +292,14 @@ try {
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); const r2 = await run();
     const u3 = await ui();
     T.check('the track slicks (on offer: 1.600 🪙 -> 1.300 🪙) bought: the tyres\' level 3 (DIRKALNE, from PREMIUM), the car up on the lift (>= 0.4 m) and down, the table still', d5.tabs[3][2] && d5.tabs[3][1] === '1.300–6.000 🪙' && d5.tiles[0].old && u2.S.money - u3.S.money === 1300 && u3.info.upg.gume === 3 && r2.lift >= 0.4 && u3.info.lift === 0 && r2.table === 0, JSON.stringify({ paid: u2.S.money - u3.S.money, upg: u3.info.upg, r2, d5 }));
-    // the arms at the work (sklop 7; all four wheels: the plans' plates): the far one's reach takes the slicks off the regal (the regal
-    // in the picture) and presses them on the far wheels, the old ones back on the regal; the near one's gripper pulls the old tyre off
-    // the near front wheel (its bare rim left on the car) onto the trolley and pushes the trolley's new one on; the rear wheels (the
-    // VIHAR draws them with its body) go on last, the two arms together, the whole car changed. The gravel tyres (not on the regal) come
-    // on two trolleys, one to each side; the slicks again: the car's own (tvoj), NAMESTI, free, off the regal again
+    // the arms at the work by the tyres' plate (an_gume; all four wheels): the bridge turns to each wheel in turn; arm 1 (the bridge's
+    // + half) takes the old tyre off and puts it into the regal's place just emptied, arm 2 (the − half) takes the new one from the regal
+    // and fits it; the rear wheels (the VIHAR draws them with its body) the same; KONČANO, the arms parked, within 13 s. The gravel tyres
+    // (not on the regal) come on two trolleys, one to each side; the slicks again: the car's own (tvoj), NAMESTI, free, off the regal again
     const f1 = await fitOf();
-    T.check('the slicks on all four wheels by the two arms: the far one\'s reach to the regal (the regal in the picture), on the far wheels, their old tyres back on the regal; the near one\'s gripper: the old tyre off the near front wheel onto the trolley, the trolley\'s new ones on; the trolley off; KONČANO; the arms parked after',
-      /^plan,/.test(f1.log) && /,done,cart\.out$/.test(f1.log) && f1.plan.regal && f1.plan.n === 4 && f1.plan.arm === 1 && f1.plan.tool === 'reach' && f1.plan.side === -1 && f1.jobs === '1:regal:press,1:regal:press:virt,0:cart:off,0:cart:press:virt'
-      && f1.rgl === 0 && f1.swaps === 4 && f1.offs === 1 && f1.puts === 'cart,cart,regal,regal' && f1.ret === 2 && f1.cart && !f1.cart.on && f1.cart.load === 0 && !f1.stay && f1.parked && /KONČANO/.test(f1.chip), JSON.stringify(f1));
+    T.check('the slicks on all four wheels by the plate (' + r2.t + ' s): the bridge to each wheel; arm 1 the old tyre off and into the regal\'s place just emptied, arm 2 the new one from the regal onto the wheel, four times; no trolley; KONČANO; the arms parked after',
+      /^plan,/.test(f1.log) && /,done$/.test(f1.log) && f1.plan.regal && f1.plan.n === 4 && f1.plan.arm === 1 && f1.plan.tool === 'reach' && f1.plan.side === 1 && f1.jobs === '0+1:regal:swap,0+1:regal:swap:virt,0+1:regal:swap,0+1:regal:swap:virt'
+      && f1.rgl === 0 && f1.swaps === 4 && f1.offs === 4 && f1.puts === 'regal,regal,regal,regal' && f1.ret === 4 && (!f1.cart || !f1.cart.on) && !f1.stay && f1.parked && /KONČANO/.test(f1.chip) && r2.t <= 13, JSON.stringify(f1));
     // (this one with PRESKOČI: the steps' bar under the picture once its first step runs; a tap on PRESKOČI and the show at its end at once, the same end (below))
     const bar = () => page.evaluate(() => { const e = document.getElementById('g-steps'); return { on: e.classList.contains('on'), l: e.querySelector('.l').textContent, d: e.querySelectorAll('.d i').length }; });
     await page.evaluate(() => { __garage.openMenu({ el: 'gume', key: null, sel: __garage.findOpt('gume', 'Gravel') }); document.querySelector('#g-menu [data-mact="buy"]').click(); __garage.advance(4); });
@@ -313,7 +312,7 @@ try {
       && u3.S.money - u5.S.money === pg && u5.S.cars.muscle.parts.gume.join() === '1,1', JSON.stringify({ f2, paid: u3.S.money - u5.S.money }));
     await page.evaluate(() => __garage.openMenu({ el: 'gume', key: null, sel: __garage.findOpt('gume', 'Track Slick') })); const d6 = await menuDom();
     await page.evaluate(() => document.querySelector('#g-menu [data-mact="buy"]').click()); await run(); const f3 = await fitOf(), u6 = await ui();
-    T.check('the slicks again: the car\'s own (tvoj), NAMESTI, free; off the regal again, the tyres\' level 3', d6.tiles[0].p === 'tvoj' && d6.buy === 'NAMESTI' && d6.can && u6.S.money === u5.S.money && /^plan,/.test(f3.log) && f3.plan.regal && f3.swaps === 4 && f3.puts === 'cart,cart,regal,regal' && u6.info.upg.gume === 3,
+    T.check('the slicks again: the car\'s own (tvoj), NAMESTI, free; off the regal again, the tyres\' level 3', d6.tiles[0].p === 'tvoj' && d6.buy === 'NAMESTI' && d6.can && u6.S.money === u5.S.money && /^plan,/.test(f3.log) && f3.plan.regal && f3.swaps === 4 && f3.puts === 'regal,regal,regal,regal' && u6.info.upg.gume === 3,
       JSON.stringify({ d6: { buy: d6.buy, t0: d6.tiles[0] }, f3, paid: u5.S.money - u6.S.money }));
     // the wing by its plan's plate (krilo): the GT wing off the regal onto the bare lid: the far arm's reach brings it, the near one's
     // gripper takes the two caps off the lid, the wing stands 12 cm over it, snaps on (no old part: nothing back onto the regal), its aero
