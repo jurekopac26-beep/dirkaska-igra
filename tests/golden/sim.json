@@ -6846,14 +6846,14 @@
   }
  },
  "sacalobra/car/cs": {
-  "digest": "0b8175d31d47c23a795422a8",
-  "lead": 1421.3,
+  "digest": "a3398a8bec291e6ce152edb2",
+  "lead": 1421.1,
   "car0": [
-   -191.07,
-   110.68
+   -190.28,
+   125.87
   ],
   "cover": {
-   "dmg": 0.46,
+   "dmg": 0.3,
    "loose": 2,
    "rescues": 1,
    "repairs": 0
