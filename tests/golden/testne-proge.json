@@ -152,8 +152,6 @@
   "assets/geo/l3-uncompahgre.webp": "6d15cf7cc751a3e2",
   "assets/geo/l3-vrsic-h.png": "4fbc660367ac717c",
   "assets/geo/l3-vrsic.webp": "b0d0fc55efc85c51",
-  "assets/maps/corner-espinazo.webm": "582f7966b55fc855",
-  "assets/maps/corner-espinazo.webp": "0d8222c4e852a118",
   "assets/maps/corner-iroha.webm": "7a3d0c5cec5a906b",
   "assets/maps/corner-iroha.webp": "bc7cff375b30fb06",
   "assets/maps/corner-suzuka.webm": "27df73a632877fef",
@@ -623,7 +621,7 @@
   "tests/browser/rio.test.mjs": "f83193ae2e3cf134",
   "tests/browser/townsville.test.mjs": "5eac204579d71b58",
   "tests/detroit.test.js": "6266b08504f0522b",
-  "tests/espinazo.test.js": "86965dad6632e6ee",
+  "tests/espinazo.test.js": "4ba2ae4a3310574b",
   "tests/greatalpine.test.js": "93e4b6303773d1b8",
   "tests/hotham.test.js": "9c35161f67af97c4",
   "tests/iroha.test.js": "b9f650777b47df1b",
@@ -922,6 +920,11 @@
    "datum": "2026-11-13",
    "proga": "espinazo",
    "razlog": "uporabnik 13. 11. 2026: mehiko prestavi v test, čakamo novo progo iz Mehike"
+  },
+  {
+   "datum": "2026-11-14",
+   "proga": "espinazo",
+   "razlog": "uporabnik 13. 11. 2026: mehiko prestavi v test, čakamo novo progo iz Mehike; test proge ve, da je testna; zbrisan video ovinka v meniju"
   }
  ]
 }
