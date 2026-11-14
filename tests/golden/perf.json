@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "aguascalientes": {
+  "calls": 180,
+  "maxCalls": 208,
+  "kverts": 350,
+  "maxKverts": 506,
+  "jsMs": 1.56
  }
 }

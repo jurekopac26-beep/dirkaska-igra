@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "aguascalientes/race/cs": {
+  "digest": "cf5dca0790a1301cb5c62615",
+  "lead": 2453.6,
+  "car0": [
+   -107.75,
+   -226.24
+  ],
+  "cover": {
+   "dmg": 0.03,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "aguascalientes/demo/cs": {
+  "digest": "fa572c304c9ef5912437fe84",
+  "lead": 2641.6,
+  "car0": [
+   -23.89,
+   -29.37
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "aguascalientes/upg/cs": {
+  "digest": "802f2340d9e10982eaf5d145",
+  "lead": 2675.4,
+  "car0": [
+   -0.41,
+   -7.42
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "aguascalientes/crash/cs": {
+  "digest": "f0cbd4f93505f4e4b21fa37d",
+  "lead": 3198.3,
+  "car0": [
+   -74.45,
+   -309.37
+  ],
+  "cover": {
+   "dmg": 0.77,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "aguascalientes/formula/cs": {
+  "digest": "0a413fe83ba417267f8229d1",
+  "lead": 4864.7,
+  "car0": [
+   -103.22,
+   -247.78
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "aguascalientes/lm/cs": {
+  "digest": "5efb88fb3fc5480f8e0f78de",
+  "lead": 4743.3,
+  "car0": [
+   22.63,
+   -343.89
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 1
+  }
+ },
+ "aguascalientes/car/cs": {
+  "digest": "146d883e8c25238eb3b7fb92",
+  "lead": 3983.5,
+  "car0": [
+   336.08,
+   -45.38
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 9,
+   "rescues": 0,
+   "repairs": 1
+  }
  }
 }

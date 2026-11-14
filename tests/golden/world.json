@@ -1391,5 +1391,32 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "aguascalientes": {
+  "meshes": 261,
+  "verts": 542204,
+  "instances": 907,
+  "props": 6,
+  "crowd": 1,
+  "world": "3fed2e8e",
+  "propsHash": "650d3a89",
+  "floor": "bbd1c4c5/2688",
+  "groups": {
+   "-:MeshLambertMaterial": "47dfca03",
+   "-:MeshBasicMaterial": "180b5f09",
+   "crowd:MeshLambertMaterial": "6fa60f04",
+   "jet smoke:MeshBasicMaterial": "684b759b",
+   "flags:MeshLambertMaterial": "605d1584",
+   "rsFar:MeshBasicMaterial": "9c11f2a2",
+   "ao:MeshBasicMaterial": "98c20f4a",
+   "roadwear:MeshLambertMaterial": "f783b805",
+   "brakeBoards:MeshLambertMaterial": "3c1ff887",
+   "life:MeshLambertMaterial": "436507e2",
+   "lifeShadow:MeshBasicMaterial": "497a0a18",
+   "life:MeshBasicMaterial": "739b00ae",
+   "people:MeshLambertMaterial": "42ea6079",
+   "umbrellas:MeshLambertMaterial": "80253bfd",
+   "standSteps:MeshLambertMaterial": "518e2ae2"
+  }
  }
 }

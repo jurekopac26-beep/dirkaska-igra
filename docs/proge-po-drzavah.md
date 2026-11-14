@@ -141,7 +141,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Kazahstan | Medeu (kratke, A) | po vrsti |
 | Šrilanka | Ella (kratke, C1) | po vrsti |
 | Zelenortski otoki | Santo Antão (kratke, C2) | po vrsti |
-| Mehika | Espinazo del Diablo (kratke, C2) | po vrsti |
+| Mehika | Aguascalientes (oval, 1,34 km, PR #687) | v delu; Espinazo del Diablo (kratke, C2) odpade (ena proga na državo) |
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Quito (zavite, 2) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
