@@ -223,7 +223,7 @@ window.MenuCar = (function () {
   }
 
   /* ---------------- the view: the showroom's camera for the car's size, the car into the button ---------------- */
-  // a box in the yard as laid out (a new track's sign and car sliding in, their transforms, do not move it: the car drawn where it stands)
+  // a box in the yard as laid out (a new track's sign sliding in, its transform, does not move it: the car drawn where it stands)
   const boxIn = (e) => e ? { left: e.offsetLeft, top: e.offsetTop, width: e.offsetWidth, height: e.offsetHeight } : null;
   function frameCar() {
     const M = car.M, h = car.h, G = car.rig, k = clamp(Math.max((G ? G.len : M.len) / 4.4, h / 1.45, (G ? G.wid : M.wid) / 1.9), 0.75, G ? 4 : 1.55), dy = h / 2 - 0.7 * k;   // (a rig: framed by its length, as the showroom's)
@@ -236,7 +236,10 @@ window.MenuCar = (function () {
     // the button's box (where the menu wants the car: left, in front of the sign), the car in it whole, at its bottom left
     const bt = yard.querySelector('.car'), br = boxIn(bt) || { left: 0, top: 0, width: W * 0.62, height: H };
     const tx0 = -1 + 2 * br.left / W, tx1 = -1 + 2 * (br.left + br.width) / W, ty0 = 1 - 2 * (br.top + br.height) / H, ty1 = 1 - 2 * br.top / H;
-    const sc = Math.min((tx1 - tx0) / Math.max(1e-3, bx1 - bx0), (ty1 - ty0) / Math.max(1e-3, by1 - by0)), ox = tx0 - sc * bx0, oy = ty0 - sc * by0;
+    // (on its side, under the neighbour's card: in the middle of the button, css/menu.css --car-mid)
+    const mid = !!bt && getComputedStyle(bt).getPropertyValue('--car-mid').trim() === '1';
+    const sc = Math.min((tx1 - tx0) / Math.max(1e-3, bx1 - bx0), (ty1 - ty0) / Math.max(1e-3, by1 - by0));
+    const ox = mid ? (tx0 + tx1) / 2 - sc * (bx0 + bx1) / 2 : tx0 - sc * bx0, oy = mid ? (ty0 + ty1) / 2 - sc * (by0 + by1) / 2 : ty0 - sc * by0;
     cam.projectionMatrix.premultiply(new THREE.Matrix4().set(sc, 0, 0, ox, 0, sc, 0, oy, 0, 0, 1, 0, 0, 0, 0, 1));
     cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
     car.fit = { sc, box: [bx0 * sc + ox, by0 * sc + oy, bx1 * sc + ox, by1 * sc + oy] };
@@ -284,7 +287,7 @@ window.MenuCar = (function () {
     // (the road sign's lower edge as seen: a line comes in at the right edge under it, the sign's name stays clear)
     const yr = yard.getBoundingClientRect(), sg = yard.querySelector('.sign'), sr = sg ? sg.getBoundingClientRect() : null;
     const yMax = sr && sr.width ? 1 - 2 * (sr.bottom - yr.top + 5) / H : 1, xa = S.x1 + 1.1, xb = S.x0 - 1.4, n = Math.ceil((xa - xb) / 0.05);
-    const pos = [], aW = [], aN = [], aE = [], aS = [], aU = [], aA = [], aL = [], aC = [], idx = [];
+    const pos = [], aW = [], aN = [], aE = [], aS = [], aU = [], aA = [], aL = [], aC = [], aF = [], idx = [];
     // (smoothed over a third of a metre: no corner where the body's grid steps)
     const sm = (V) => V.map((v, i) => { let t = 0, w = 0; for (let k = -3; k <= 3; k++) { const q = V[Math.max(0, Math.min(V.length - 1, i + k))], f = 4 - Math.abs(k); t += q * f; w += f; } return Math.max(v - 0.02, t / w); });
     let li = -1;
@@ -334,50 +337,54 @@ window.MenuCar = (function () {
       // the ribbon: a pair of points each, as wide on the screen everywhere (its side across the line and the view, its width from the depth)
       let sAt = 0; const base = pos.length / 3, tot = all.reduce((t, p, i) => i ? t + p.distanceTo(all[i - 1]) : 0, 0);
       const col = COLS[li % COLS.length];
+      // (unseen where it comes in at the yard's edge, slowly seen as it comes to the car, full from half a metre before its nose; and so
+      // out again behind it: the user, 12. 11. 2026)
+      const upTo = (j) => all.slice(0, j + 1).reduce((t, p, i, A) => i ? t + p.distanceTo(A[i - 1]) : 0, 0);
+      const dIn = upTo(fr.length) + 0.6, dOut = tot - upTo(fr.length + pts.length - 1) + 0.8, ease = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
       for (let i = 0; i < all.length; i++) {
         const p = all[i], pr = all[Math.max(0, i - 1)], nx = all[Math.min(all.length - 1, i + 1)];
         if (i) sAt += p.distanceTo(pr);
         const t = nx.clone().sub(pr).normalize(), view = p.clone().sub(camP), dep = Math.max(0.5, view.dot(fwd));
         const side = new THREE.Vector3().crossVectors(t, view.normalize()); if (side.lengthSq() < 1e-8) side.set(0, 1, 0); side.normalize().multiplyScalar(dep * tanH / sc);
-        for (const e of [-1, 1]) { pos.push(p.x, p.y, p.z); aW.push(side.x, side.y, side.z); aN.push(nrm[i].x, nrm[i].y, nrm[i].z); aE.push(e); aS.push(sAt); aU.push(tot > 0 ? sAt / tot : 0); aA.push(amps[i]); aL.push(li); aC.push(col[0], col[1], col[2]); }
+        for (const e of [-1, 1]) { pos.push(p.x, p.y, p.z); aW.push(side.x, side.y, side.z); aN.push(nrm[i].x, nrm[i].y, nrm[i].z); aE.push(e); aS.push(sAt); aU.push(tot > 0 ? sAt / tot : 0); aA.push(amps[i]); aL.push(li); aC.push(col[0], col[1], col[2]); aF.push(ease(sAt / dIn) * ease((tot - sAt) / dOut)); }
         if (i) { const q = base + (i - 1) * 2; idx.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); }
       }
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('aW', new THREE.Float32BufferAttribute(aW, 3)); g.setAttribute('aN', new THREE.Float32BufferAttribute(aN, 3));
     g.setAttribute('aE', new THREE.Float32BufferAttribute(aE, 1)); g.setAttribute('aS', new THREE.Float32BufferAttribute(aS, 1)); g.setAttribute('aU', new THREE.Float32BufferAttribute(aU, 1));
-    g.setAttribute('aA', new THREE.Float32BufferAttribute(aA, 1)); g.setAttribute('aL', new THREE.Float32BufferAttribute(aL, 1)); g.setAttribute('aC', new THREE.Float32BufferAttribute(aC, 3));
+    g.setAttribute('aA', new THREE.Float32BufferAttribute(aA, 1)); g.setAttribute('aL', new THREE.Float32BufferAttribute(aL, 1)); g.setAttribute('aC', new THREE.Float32BufferAttribute(aC, 3)); g.setAttribute('aF', new THREE.Float32BufferAttribute(aF, 1));
     g.setIndex(idx); g.computeBoundingSphere();
     const mesh = new THREE.Mesh(g, wind0()); mesh.frustumCulled = false; mesh.renderOrder = 10;
     scene.add(mesh);
     wind = { mesh, lines: li + 1, verts: pos.length / 3 };
   }
   // the lines' material (one for all of them): the waves run along each line from the nose to the tail, the line sways with them
-  // (across it, less near the body) and is brighter on their crests; a slow gust over it all; soft at its edges and at its ends
+  // (across it, less near the body) and is brighter on their crests; a slow gust over it all; soft at its edges, faded in and out at its ends
   let windMat = null;
   function wind0() {
     if (windMat) return windMat;
     windMat = new THREE.ShaderMaterial({
       uniforms: { uT: { value: 0 }, uHW: { value: 0.01 } },
       vertexShader: [
-        'attribute vec3 aW; attribute vec3 aN; attribute float aE; attribute float aS; attribute float aU; attribute float aA; attribute float aL; attribute vec3 aC;',
+        'attribute vec3 aW; attribute vec3 aN; attribute float aE; attribute float aS; attribute float aU; attribute float aA; attribute float aL; attribute vec3 aC; attribute float aF;',
         'uniform float uT; uniform float uHW;',
-        'varying float vE; varying float vU; varying float vK; varying vec3 vC; varying float vL;',
+        'varying float vE; varying float vU; varying float vK; varying vec3 vC; varying float vL; varying float vF;',
         'void main() {',
         '  float lam = 2.3 + 0.8 * fract(aL * 0.618), k = 6.2832 / lam;',
         '  float ph = (aS - uT * 1.05) * k + aL * 2.39;',
         '  float gust = 0.78 + 0.22 * sin(uT * 0.5 + aL * 1.3);',
         '  vec3 p = position + aN * (aA * gust * sin(ph)) + aW * (uHW * aE);',
-        '  vE = aE; vU = aU; vC = aC; vL = aL;',
+        '  vE = aE; vU = aU; vC = aC; vL = aL; vF = aF;',
         '  vK = 0.5 + 0.5 * sin(ph + 1.2);',
         '  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);',
         '}'].join('\n'),
       fragmentShader: [
         'uniform float uT;',
-        'varying float vE; varying float vU; varying float vK; varying vec3 vC; varying float vL;',
+        'varying float vE; varying float vU; varying float vK; varying vec3 vC; varying float vL; varying float vF;',
         'void main() {',
         '  float e = 1.0 - smoothstep(0.2, 1.0, abs(vE));',
-        '  float f = smoothstep(0.0, 0.05, vU) * (1.0 - smoothstep(0.95, 1.0, vU));',
+        '  float f = vF;',
         '  float a = (0.34 + 0.38 * vK * vK) * e * f * (0.85 + 0.15 * sin(uT * 0.7 + vL * 2.1));',
         '  gl_FragColor = vec4(vC * (0.82 + 0.3 * vK), a);',
         '}'].join('\n'),
@@ -405,11 +412,9 @@ window.MenuCar = (function () {
     return W > 0;
   }
   const SUN = { x: -6, y: 10, z: 7 };
-  let shIn = null;   // (the shadow coming in after a new track's car: { t: when it starts, ms })
   function draw(now) {
     if (!car || !fit()) return;
     windMat.uniforms.uT.value = calm() ? 0 : (now - t0) / 1000;
-    if (shMat) { const k = shIn ? clamp((now - shIn.t) / shIn.ms, 0, 1) : 1; shMat.opacity = k; if (k >= 1) shIn = null; }
     Render.garageLight(SUN, 0xfff2dd, 0.55, 0xffffff);
     const b = performance.now(); renderer.render(scene, cam); busy = busy * 0.9 + (performance.now() - b) * 0.1;
     frames++;
@@ -444,13 +449,14 @@ window.MenuCar = (function () {
     if (!on) { on = true; last = 0; if (!raf) raf = requestAnimationFrame(loop); }
     return drawn;
   }
-  function detach() { on = false; cancelAnimationFrame(raf); raf = 0; shIn = null; }
+  function detach() { on = false; cancelAnimationFrame(raf); raf = 0; }
   function rest() {
     detach();
     if (renderer && !failed) { renderer.setSize(1, 1, false); W = H = 0; lay = ''; dirty = true; drawn = false; }   // (back from the race: drawn afresh, faded in)
   }
   function live(spec) { return !!car && drawn && !failed && key === spec.id + '|' + spec.color + '|' + (spec.num || 0); }
-  // the car as it is drawn now, in a picture of its own (the old screen's, going out as a new track's comes in: js/menu.js trackTo)
+  // the car as it is drawn now, in a picture of its own (the old screen's as it fades over a new track's, the car at the same place in
+  // both: js/menu.js trackGo, ringLand)
   function snap() {
     if (!car || !renderer || failed || !drawn || !canvas.isConnected) return null;
     try { draw(performance.now()); } catch (_) { return null; }
@@ -475,8 +481,6 @@ window.MenuCar = (function () {
     }
     return { cv: alCv, key: alKey, pr: alCv.width / W };
   }
-  // a new track's car: its shadow comes when it stands (ms after now, over fade ms); none on a device that asks for less motion
-  function shadeIn(after, fade) { shIn = calm() || !shMat ? null : { t: performance.now() + after, ms: Math.max(1, fade) }; if (shMat && shIn) shMat.opacity = 0; }
   function info() {
     const ri = renderer ? renderer.info : null;
     return { on, drawn, failed, frames, builds, car: car ? car.M.id : null, size: [W, H], calls: ri ? ri.render.calls : 0, tris: ri ? ri.render.triangles : 0, lines: wind ? wind.lines : 0, verts: wind ? wind.verts : 0,
@@ -512,5 +516,5 @@ window.MenuCar = (function () {
     return { right: +(right / Math.max(1, nR)).toFixed(4), car: +(inCar / Math.max(1, nC)).toFixed(4), col: right ? [r, gg, b].map(v => +(v / right / 255).toFixed(3)) : null, rows: Math.round(rows / 255), px: [o.width, o.height], shade };
   }
   const cover = () => cov, watch = (fn) => { watcher = fn || null; };
-  return { supported, attach, detach, rest, live, placed, info, sample, snap, shadeIn, cover, watch, alpha };
+  return { supported, attach, detach, rest, live, placed, info, sample, snap, cover, watch, alpha };
 })();

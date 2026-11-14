@@ -7,11 +7,11 @@
   "jsMs": 1.39
  },
  "pikesg": {
-  "calls": 111,
-  "maxCalls": 127,
-  "kverts": 287,
-  "maxKverts": 365,
-  "jsMs": 1.09
+  "calls": 114,
+  "maxCalls": 131,
+  "kverts": 307,
+  "maxKverts": 367,
+  "jsMs": 1.59
  },
  "ouninpohja": {
   "calls": 146,
@@ -63,18 +63,18 @@
   "jsMs": 1.03
  },
  "katu": {
-  "calls": 143,
-  "maxCalls": 160,
-  "kverts": 435,
-  "maxKverts": 553,
-  "jsMs": 0.56
+  "calls": 141,
+  "maxCalls": 161,
+  "kverts": 447,
+  "maxKverts": 582,
+  "jsMs": 0.84
  },
  "harju": {
   "calls": 172,
   "maxCalls": 204,
-  "kverts": 487,
-  "maxKverts": 698,
-  "jsMs": 0.4
+  "kverts": 490,
+  "maxKverts": 706,
+  "jsMs": 0.47
  },
  "bathurst": {
   "calls": 167,
@@ -574,10 +574,10 @@
   "jsMs": 4.38
  },
  "killar": {
-  "calls": 146,
-  "maxCalls": 162,
-  "kverts": 282,
-  "maxKverts": 353,
-  "jsMs": 1.99
+  "calls": 144,
+  "maxCalls": 164,
+  "kverts": 281,
+  "maxKverts": 336,
+  "jsMs": 1.5
  }
 }

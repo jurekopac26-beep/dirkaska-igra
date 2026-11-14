@@ -2978,7 +2978,7 @@
       for (const sd of [-1, 1]) { const X = Object.assign({}, J, { sd, a: sd > 0 ? J.a : PI - J.a, close: 'tape', vol: sd > 0 ? 1 : 0, cross: 0, name: null }), o = one(X);
         if (o) for (const k of [0, 1]) { const p = at(o.S, o.tC + 1.4 + k * 0.9, (k - 0.5) * 0.9); person(p, -o.r.P[1][0] + o.r.P[0][0], -o.r.P[1][1] + o.r.P[0][1], K.fans[(k * 3 + (sd > 0 ? 1 : 4)) % K.fans.length]); } }
       for (let o = -w + 0.55; o < w - 0.5; o += 1.2) { const s1 = J.s - 1.6, s2 = J.s + 1.6, ts = [s1]; for (let q = Math.ceil(s1 / ds) * ds; q < s2 - 0.05; q += ds) if (q > s1 + 0.05) ts.push(q); ts.push(s2);   // (continental bars, over the lines)
-        const P = (s, oo) => { const q = crAt(s); return [q.px + q.nx * oo, q.hy + 0.042, q.pz + q.nz * oo]; };
+        const P = (s, oo) => { const q = crAt(s); return [q.px + q.nx * oo, q.hy + 0.042 + (typeof MakadamCesta !== 'undefined' ? MakadamCesta.y(T, s, oo) : 0), q.pz + q.nz * oo]; };   // (on the gravel road's relief)
         for (let k = 0; k + 1 < ts.length; k++) { const a = P(ts[k], o), b = P(ts[k], o + 0.6), c = P(ts[k + 1], o + 0.6), d = P(ts[k + 1], o); K.noShadow(a[0], a[2]).quadUp(a, b, c, d, [Wc, Wc, Wc, Wc]); } }
       for (let b = 0; b <= 24; b += 4) { const q = frame(J.s - 45 - b), o = (q.br + 2.2), x = q.px + q.nx * o, z = q.pz + q.nz * o; if (near(x, z).dd < 1.8 || K.excluded(x, z)) continue;
         const an = Math.atan2(-q.tz, -q.tx) - 0.45; post2(x, z, Math.cos(an), Math.sin(an), 2.2, 0.55, 1.35, XING, 0.2, steel); K.excl.push({ x, z, r: 1.6 }); st.signs++; break; }
@@ -4090,8 +4090,11 @@
     }
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     {
-      const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = mk ? (i, o) => { const rl = T.rl[i], k = 0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
+      // (the gravel's relief, js/makadam-cesta.js: the road drawn every 0.2 w across, its ruts and tilt in the mesh, the stones laid on them; the user, 13. 11. 2026)
+      const MC = mk && typeof MakadamCesta !== 'undefined' && MakadamCesta.has(T), sun = T.def.look && T.def.look.sunOff;
+      const offs = MC ? [-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1].map(f => f * w) : [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
+      const Pr = MC ? (i, o) => Pt(i, o, 0.02 + MakadamCesta.y(T, i * T.ds, o)) : (i, o) => Pt(i, o, 0.02);
+      const shade = mk ? (i, o) => { const rl = T.rl[i], k = (0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5)) * (MC ? MakadamCesta.lit(T, i, o, sun) : 1); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
         : (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
       const yel = [0.98, 0.74, 0.1], wht = [0.95, 0.95, 0.92], gc = [0.92, 0.84, 0.78], sw = 0.9;
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
@@ -4113,10 +4116,10 @@
       const xAt = (s) => Math.min(XN - 1, Math.floor(clamp(s / T.ds, 0, N - 2) / RC)), keep = (s0, s1) => ![sStart, sFin].concat(T.cpS).some(q => s1 > q - 4 && s0 < q + 4);
       // a decal quad [s, o] x 4 (up-facing order) draped on the asphalt: cut at its triangles (the offs columns, the samples, each quad's a-c diagonal, as built below), lifted by y over them
       // (a flat quad between the samples' heights sank up to ~9 mm into the asphalt on the twisted cells of the tight graded bends)
-      const aTri = (i, c, h) => { const j = i + 1, a = Pt(i, offs[c], 0.02), b = Pt(i, offs[c + 1], 0.02), d = Pt(j, offs[c + 1], 0.02), e = Pt(j, offs[c], 0.02); return h ? [a, d, e] : [a, b, d]; };
+      const aTri = (i, c, h) => { const j = i + 1, a = Pr(i, offs[c]), b = Pr(i, offs[c + 1]), d = Pr(j, offs[c + 1]), e = Pr(j, offs[c]); return h ? [a, d, e] : [a, b, d]; };
       const decal = (g, Q, col, y, uvs, tol) => { const V = Q.map(([s, o]) => PF(s, o, 0)), S = Q.map(q => q[0]), O = Q.map(q => q[1]), s0 = Math.min(...S), s1 = Math.max(...S), o0 = Math.min(...O), o1 = Math.max(...O);
         const i0 = clamp(Math.floor(s0 / T.ds) - 1, 0, N - 2), i1 = clamp(Math.floor(s1 / T.ds) + 1, 0, N - 2), U = uvs || Q.map(([s, o]) => ruv(s, o)), C = Array.isArray(col[0]) ? col : [col, col, col, col], poly = V.map((p, k) => [p[0], p[2], y, ...C[k], ...U[k]]), TT = [], tg = new GB(true); let nv = 0;   // (col: one colour or one per corner; returns the vertices added)
-        for (let i = i0; i <= i1; i++) for (let c = 0; c < 4; c++) { if (offs[c + 1] < o0 - 0.3 || offs[c] > o1 + 0.3) continue; for (let h = 0; h < 2; h++) TT.push(aTri(i, c, h)); }
+        for (let i = i0; i <= i1; i++) for (let c = 0; c < offs.length - 1; c++) { if (offs[c + 1] < o0 - 0.3 || offs[c] > o1 + 0.3) continue; for (let h = 0; h < 2; h++) TT.push(aTri(i, c, h)); }
         for (const A of TT) nv += drape(tg, poly, A);
         // where the asphalt is flat enough (most of the road) the plain quad, its corners on the asphalt + y, stays within tol of that everywhere (checked at the corners of its own two
         // triangles' pieces, where the creases of both surfaces cross): 6 vertices instead of the pieces
@@ -4167,7 +4170,7 @@
         for (let i = c0; i < Math.min(c0 + RC, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
-            gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
+            gr.quadUp(Pr(i, o0), Pr(i, o1), Pr(j, o1), Pr(j, o0), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           if (!mk) [[-0.27, -0.12, yel], [0.12, 0.27, yel], [-(w - 0.28), -(w - 0.5), wht], [w - 0.5, w - 0.28, wht]].forEach(([o0, o1, col], q) => { const fi = fade[q][i], fj = fade[q][j], ci = fc(col, fi), cj = fc(col, fj), si = i * T.ds, sj = j * T.ds;
             for (const [a, b] of q < 2 ? [[si, sj]] : jCut(si, sj, q === 3 ? 1 : -1)) { const ca = ci.map((v, m) => lerp(v, cj[m], (a - si) / T.ds)), cb = ci.map((v, m) => lerp(v, cj[m], (b - si) / T.ds));
               pp.push([decal(gl, [[a, o0], [a, o1], [b, o1], [b, o0]], [ca, ca, cb, cb], 0.016, null, 0.004), 1 - 0.5 * Math.max(fi, fj)]); } });   // (pp: [vertices, paint] per piece of line)

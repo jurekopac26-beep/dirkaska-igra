@@ -537,11 +537,14 @@
     const VP = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; }), VT = [-1, 1].map(side => { const a = new Uint8Array(N); for (let i = 0; i < N; i++) a[i] = vType(i, side); return a; });
     {
       const tileL = 7, grav = [1.2, 1.25, 1.3], pave = [0.84, 0.8, 0.77];   // (grav: the esker's pale, grey-beige sand and gravel over the shared makadam picture)
-      const cols = (i) => { const wi = WA[i], rl = clamp(T.rl[i], -wi + 2.3, wi - 2.3); return [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; };
+      // (the gravel's relief, js/makadam-cesta.js: on the gravel the road also every 0.2 w across, its ruts and tilt in the mesh; the user, 13. 11. 2026)
+      const MC = typeof MakadamCesta !== 'undefined' && MakadamCesta.has(T), sun = def.look && def.look.sunOff, RX = [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8];
+      const cols = (i, ex) => { const wi = WA[i], rl = clamp(T.rl[i], -wi + 2.3, wi - 2.3), c = [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; return ex ? c.concat(RX.map(f => f * wi)).sort((a, b) => a - b) : c; };
+      const Pr = MC ? (i, o) => Pt(i, o, 0.02 + MakadamCesta.y(T, i * ds, o)) : (i, o) => Pt(i, o, 0.02);
       const shade = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o), wi = WA[i], s = SF[i];
         if (s === 5) { let k = 1.0 - 0.2 * trk + 0.06 * sstep(0.5, 0.2, a);
           const outer = Math.sign(o) === -Math.sign(T.k[i]) ? sstep(1 / 400, 1 / 60, Math.abs(T.k[i])) : 0; k += (0.06 + 0.08 * outer) * sstep(wi - 1.3 - 1.4 * outer, wi - 0.3, ao) * (1 - trk);
-          k *= 0.93 + 0.12 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7); return [grav[0] * k, grav[1] * k, grav[2] * k]; }
+          k *= 0.93 + 0.12 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7); if (MC) k *= MakadamCesta.lit(T, i, o, sun); return [grav[0] * k, grav[1] * k, grav[2] * k]; }
         if (s === 4) { const k = 0.95 + 0.08 * P.n3(T.px[i] + o, T.pz[i]); return [pave[0] * k, pave[1] * k, pave[2] * k]; }
         const k = (1.0 - 0.08 * trk - 0.05 * sstep(wi - 0.8, wi, ao)) * (0.95 + 0.08 * P.n2(T.px[i] * 0.5, T.pz[i] * 0.5)); return [k, k, k * 1.01]; };
       const KC = [0.64, 0.64, 0.62], KT = [0.72, 0.72, 0.7], WH = [1, 1, 1];
@@ -558,9 +561,9 @@
       for (let c0 = 0; c0 < N - 1; c0 += 100) {
         const gA = new GB(true), gK = new GB(true), gP = new GB(true), gK2 = new GB(), gV = new GB(true);   // (tarmac, gravel, paving, kerbs, grass)
         for (let i = c0; i < Math.min(c0 + 100, N - 1); i++) {
-          const j = i + 1, v0 = i * ds / tileL, v1 = j * ds / tileL, oi = cols(i), oj = cols(j), s = SF[i], gr = s === 5 ? gK : s === 4 ? gP : gA, us = s === 4 ? 2 : tileL;
+          const j = i + 1, v0 = i * ds / tileL, v1 = j * ds / tileL, ex = MC && (SF[i] === 5 || SF[j] === 5), oi = cols(i, ex), oj = cols(j, ex), s = SF[i], gr = s === 5 ? gK : s === 4 ? gP : gA, us = s === 4 ? 2 : tileL;
           for (let c = 0; c < oi.length - 1; c++) { const a0 = oi[c], a1 = oi[c + 1], b0 = oj[c], b1 = oj[c + 1];
-            gr.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + WA[i]) / us, v0 * tileL / us], [(a1 + WA[i]) / us, v0 * tileL / us], [(b1 + WA[j]) / us, v1 * tileL / us], [(b0 + WA[j]) / us, v1 * tileL / us]]); }
+            gr.quadUp(Pr(i, a0), Pr(i, a1), Pr(j, b1), Pr(j, b0), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + WA[i]) / us, v0 * tileL / us], [(a1 + WA[i]) / us, v0 * tileL / us], [(b1 + WA[j]) / us, v1 * tileL / us], [(b0 + WA[j]) / us, v1 * tileL / us]]); }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, qi = VP[si][i], qj = VP[si][j], kinds = VK[VT[si][i]] || VK[2];
             for (let k = 0; k < 5; k++) { const a = Pt(i, side * qi[k][0], qi[k][1]), b = Pt(i, side * qi[k + 1][0], qi[k + 1][1]), c = Pt(j, side * qj[k + 1][0], qj[k + 1][1]), d = Pt(j, side * qj[k][0], qj[k][1]), kind = kinds[k];
