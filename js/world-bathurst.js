@@ -113,9 +113,10 @@
         const n = P.n5(x * 0.55 + 700, z * 0.55), m = P.n3(x * 1.6 + 300, z * 1.6), k = 0.92 + (n - 0.5) * 0.2 + (m - 0.5) * 0.12, fm = nrLCf(x, z, 0);
         { const L = (c[0] + c[1] + c[2]) / 3; c[0] = lerp(c[0], L, 0.45); c[1] = lerp(c[1], L, 0.45); c[2] = lerp(c[2], L, 0.45); }   // (half the tint of the hay and stubble fields: these are pastures, and red on the soil in the grass turns rusty)
         c[0] *= k * 0.97; c[1] *= k; c[2] *= k * 0.95;
+        if (!(fm > 0)) return;   // (no farmland around: dry and lush are 0, the colour stays as it is; the two noises not drawn)
         const dry = sstep(0.5, 0.74, P.n3(x * 0.8 + 90, z * 0.8 - 40)) * 0.7 * fm, lush = sstep(0.6, 0.8, P.n1(x * 1.2 - 210, z * 1.2 + 75)) * 0.5 * fm;
-        c[0] = lerp(c[0], c[0] * 1.2 + 0.04, dry); c[1] = lerp(c[1], c[1] * 1.06 + 0.02, dry); c[2] = lerp(c[2], c[2] * 1.1 + 0.04, dry);   // (drying off: paler and yellower, not orange)
-        c[0] = lerp(c[0], c[0] * 0.84, lush); c[2] = lerp(c[2], c[2] * 0.92, lush);
+        if (dry > 0) { c[0] = lerp(c[0], c[0] * 1.2 + 0.04, dry); c[1] = lerp(c[1], c[1] * 1.06 + 0.02, dry); c[2] = lerp(c[2], c[2] * 1.1 + 0.04, dry); }   // (drying off: paler and yellower, not orange)
+        if (lush > 0) { c[0] = lerp(c[0], c[0] * 0.84, lush); c[2] = lerp(c[2], c[2] * 0.92, lush); }
       } },
   });
   Object.assign(API, { auTreeGeo, auRooGeo, auRoos, btGrassTex, btGumGeo });   // (what js/world-rbring.js, World and the other worlds use: tools/razdeli-proge.mjs)
