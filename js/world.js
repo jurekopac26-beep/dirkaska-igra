@@ -616,12 +616,18 @@ const World = (function () {
     }
   }
   const _nr = { i: -1, dist: 999, lat: 0, bar: 0 };
+  const NR_ORD = (() => { const L = []; for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) L.push([a, b]); L.sort((p, q) => Math.max(Math.abs(p[0]), Math.abs(p[1])) - Math.max(Math.abs(q[0]), Math.abs(q[1])) || Math.hypot(p[0], p[1]) - Math.hypot(q[0], q[1])); return Int8Array.from(L.flat()); })();   // (nearest's cells, the middle first)
   function nearest(x, z) {
     const cx = Math.floor(x / HC), cz = Math.floor(z / HC);
-    let bi = -1, bd = 1e18;
-    for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
-      const arr = hash.get((cx + a) * 65536 + cz + b); if (!arr) continue;
-      for (const i of arr) { const dx = x - T.px[i], dz = z - T.pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
+    // the same 5 × 5 cells and the same winner as a scan in (a, b) order: the middle cells first, a cell farther (with a margin) than the
+    // nearest so far skipped, and a tie won by the sample the old order met first (rank: the cell's place in that order, then the sample's)
+    let bi = -1, bd = 1e18, br = 1e9; const px = T.px, pz = T.pz;
+    for (let o = 0; o < 25; o++) {
+      const a = NR_ORD[o * 2], b = NR_ORD[o * 2 + 1], arr = hash.get((cx + a) * 65536 + cz + b); if (!arr) continue;
+      const ex = Math.max(0, (cx + a) * HC - x, x - (cx + a + 1) * HC), ez = Math.max(0, (cz + b) * HC - z, z - (cz + b + 1) * HC);
+      if (ex * ex + ez * ez > bd * 1.0001 + 1e-3) continue;
+      const r0 = ((a + 2) * 5 + b + 2) * 1e6;
+      for (let q = 0; q < arr.length; q++) { const i = arr[q], dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz; if (d < bd || (d === bd && r0 + q < br)) { bd = d; bi = i; br = r0 + q; } }
     }
     _nr.i = bi;
     if (bi < 0) { _nr.dist = 999; _nr.lat = 999; _nr.bar = 0; return _nr; }
