@@ -732,9 +732,10 @@
       const vA = [0.93, 1.1, 0.9], vB = [0.82, 0.97, 0.8], MOW_D = vB.map((v, k) => 1 - v / vA[k]);   // the mower's stripes: light, dark (and how much darker)
       const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, bandC = (b) => (b % 2 ? vA : vB), PD = def.pit, pitSd = PD ? Math.sign(PD[0]) : 0;
       const own = (x, z, i) => { const ni = nearI(x, z), d = Math.abs(ni - i); return ni >= 0 && Math.min(d, N - d) < 30; };
-      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || inBrook(x, z, 4) || !own(x, z, i)) return null;
-        const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * (1 - nrLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i])), c = nrGCol(x, z);
-        return f < 0.05 ? null : { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
+      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2];   // (all pure lookups: the cheap ones first, the road's nearest point last)
+        const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * (1 - nrLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i]));
+        if (f < 0.05 || excluded(x, z) || inBrook(x, z, 4) || !own(x, z, i)) return null;
+        const c = nrGCol(x, z); return { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
       for (let c0 = 0; c0 < N; c0 += CH) {
         const gv = new RB(true), pv = [-1, -1], pw = [null, null], pm = [new Array(MOW_B).fill(-1), new Array(MOW_B).fill(-1)];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
