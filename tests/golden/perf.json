@@ -366,8 +366,8 @@
  "luanda": {
   "calls": 110,
   "maxCalls": 144,
-  "kverts": 211,
+  "kverts": 212,
   "maxKverts": 293,
-  "jsMs": 2.16
+  "jsMs": 1.28
  }
 }
