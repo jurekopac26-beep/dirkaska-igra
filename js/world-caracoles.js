@@ -52,7 +52,7 @@
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = API.vrFar(x, z);
     else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, API.vrFar(x, z), sstep(1, 42, dd)); }
-    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
+    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 12, dx = x - p.x, dz = z - p.z, R = p.r + pb; if (dx >= R || dx <= -R || dz >= R || dz <= -R) continue; const d = Math.hypot(dx, dz); if (d < R) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
     for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
       const dx = x - b.x, dz = z - b.z, al = Math.abs(dx * b.tx + dz * b.tz), lat = Math.abs(dx * b.nx + dz * b.nz);
