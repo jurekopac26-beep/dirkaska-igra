@@ -165,24 +165,34 @@
     const S = 64;   // cells per chunk side (256 m)
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
-      const P = [], Cl = [], U = [], I = [];
-      for (let j = 0; j <= nj; j++) for (let i = 0; i <= ni; i++) {
+      const W1 = ni + 1, nv = W1 * (nj + 1), P = new Float32Array(nv * 3), Cl = new Float32Array(nv * 3), U = new Float32Array(nv * 2);
+      for (let j = 0, v = 0; j <= nj; j++) for (let i = 0; i <= ni; i++, v++) {   // (straight into the typed arrays: the same sums as before, nothing allocated per vertex)
         const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
-        const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
-        let col = KCOL[kd].map(v => v * n2 * (0.96 + 0.08 * n1));
-        const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); col = [lerp(col[0], 0.72, t), lerp(col[1], 0.69, t), lerp(col[2], 0.6, t)]; }   // (the banks: stony, rip-rap)
-        if (h < WL) { const t = sstep(WL, WL - 2, h); col = [lerp(col[0], 0.42, t), lerp(col[1], 0.42, t), lerp(col[2], 0.36, t)]; }
-        P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 14, -z / 14);
+        const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007), f = 0.96 + 0.08 * n1, kc = KCOL[kd];
+        let c0 = kc[0] * n2 * f, c1 = kc[1] * n2 * f, c2 = kc[2] * n2 * f;
+        const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); c0 = lerp(c0, 0.72, t); c1 = lerp(c1, 0.69, t); c2 = lerp(c2, 0.6, t); }   // (the banks: stony, rip-rap)
+        if (h < WL) { const t = sstep(WL, WL - 2, h); c0 = lerp(c0, 0.42, t); c1 = lerp(c1, 0.42, t); c2 = lerp(c2, 0.36, t); }
+        P[v * 3] = x; P[v * 3 + 1] = h; P[v * 3 + 2] = z; Cl[v * 3] = c0; Cl[v * 3 + 1] = c1; Cl[v * 3 + 2] = c2; U[v * 2] = x / 14; U[v * 2 + 1] = -z / 14;
       }
-      const W1 = ni + 1;
+      let I = new Uint16Array(ni * nj * 6), ni6 = 0;
       for (let j = 0; j < nj; j++) for (let i = 0; i < ni; i++) {
-        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1;
-        if (Math.max(P[a * 3 + 1], P[b * 3 + 1], P[c * 3 + 1], P[d * 3 + 1]) < WL - 0.6) continue;   // (deep under the water)
-        I.push(a, c, b, b, c, d);
+        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1, k = (cj + j) * G.nx + ci + i;
+        if (Math.max(G.H[k], G.H[k + 1], G.H[k + G.nx], G.H[k + G.nx + 1]) < WL - 0.6) continue;   // (deep under the water)
+        I[ni6++] = a; I[ni6++] = c; I[ni6++] = b; I[ni6++] = b; I[ni6++] = c; I[ni6++] = d;
       }
-      if (!I.length) continue;
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-      g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere();
+      if (!ni6) continue;
+      I = I.slice(0, ni6);
+      // the vertex normals as BufferGeometry.computeVertexNormals makes them (the same face sums, summed in the float32 array in the same order, then normalised), inline
+      const Nr = new Float32Array(nv * 3);
+      for (let u = 0; u < ni6; u += 3) {
+        const ia = I[u] * 3, ib = I[u + 1] * 3, ic = I[u + 2] * 3;
+        const bx = P[ib], by = P[ib + 1], bz = P[ib + 2], cx = P[ic] - bx, cy = P[ic + 1] - by, cz = P[ic + 2] - bz, ax = P[ia] - bx, ay = P[ia + 1] - by, az = P[ia + 2] - bz;
+        const qx = cy * az - cz * ay, qy = cz * ax - cx * az, qz = cx * ay - cy * ax;
+        Nr[ia] += qx; Nr[ia + 1] += qy; Nr[ia + 2] += qz; Nr[ib] += qx; Nr[ib + 1] += qy; Nr[ib + 2] += qz; Nr[ic] += qx; Nr[ic + 1] += qy; Nr[ic + 2] += qz;
+      }
+      for (let v = 0; v < nv * 3; v += 3) { const x = Nr[v], y = Nr[v + 1], z = Nr[v + 2], s = 1 / (Math.sqrt(x * x + y * y + z * z) || 1); Nr[v] = x * s; Nr[v + 1] = y * s; Nr[v + 2] = z * s; }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('color', new THREE.BufferAttribute(Cl, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2));
+      g.setIndex(new THREE.BufferAttribute(I, 1)); g.setAttribute('normal', new THREE.BufferAttribute(Nr, 3)); g.computeBoundingSphere();
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
     }
     // the car parks (asphalt), the plazas (paving) and the beaches (sand): OSM outlines, a few cm over the ground
