@@ -7,7 +7,18 @@
    ========================================================================= */
 (function () {
   'use strict';
-  const D = window.MENU, RT = window.ROUTES || {}, XI = window.INTRO || {};
+  const D = window.MENU;
+  // the route maps, the flights and the globe's journey (js/routes.js, js/journey.js, js/intro-data.js: 0.14 MB gzip) come only with
+  // the track step (I17, step 6: index.html <link data-lazy="karte">); until then a track has no map, and the step is drawn again once
+  // they are here. A race waits for them in beforeRace (its flight). js/geo.js stays at the start: the race's sound reads its climate.
+  let RT = window.ROUTES || {}, XI = window.INTRO || {}, karteOk = !!window.ROUTES, karteAsk = false;
+  function karte(next) {
+    if (karteOk || !G || !G.lazy) { if (next) next(); return; }
+    const done = () => { karteOk = true; RT = window.ROUTES || {}; XI = window.INTRO || {}; };
+    if (next) { G.lazy('karte', () => { done(); next(); }, next); return; }
+    if (karteAsk) return; karteAsk = true;
+    G.lazy('karte', () => { done(); refresh(); }, () => { karteAsk = false; });
+  }
   let G = null;                 // the game's bridge (Menu.init)
   let host = null, app = null;  // the element in the game's page, and the menu's own frame in its shadow root
   const $ = (s, el) => (el || app).querySelector(s);
@@ -1348,6 +1359,7 @@
     const M = MV(), ts = M && screen === 'track' && $('#s-track', app);   // (the weather over the screen, after the car: its outline)
     if (ts) M.on(ts, wxLook(), { entering: shown !== 'track', tap: wxTap, app }); else if (M) M.off();
     wxTap = null;
+    if (screen === 'track' && !karteOk) karte();
     shown = screen;
     if (sheet) { app.insertAdjacentHTML('beforeend', typeof sheet === 'function' ? sheet() : sheet); if (sheetOn) $('.sheet-bg', app).classList.add('still'); if (sheet === twSheet) twPlace(); }
     sheetOn = !!sheet;
@@ -1570,6 +1582,7 @@
     });
   }
   function beforeRace(R, go) {
+    if (!karteOk) { karte(() => beforeRace(R, go)); return; }   // (the flight's map data first: here at once when the track step was up)
     cancelAnimationFrame(ixRaf); ixStop();
     const t = R.track, under = $('#track-stage .dio.fly video', app); if (under) under.pause(); cancelAnimationFrame(flyRaf); cancelAnimationFrame(graphRaf);
     if (window.MenuCar) MenuCar.rest();   // (the car's canvas: its buffers freed for the race)
