@@ -28,7 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: AT_H.map((h, i) => [i / (AT_H.length - 1), h / 10]),
     widths: [[-120.0, 4.8], [2221.4, 4.8], [2245.4, 5.4], [2409.9, 5.4], [2433.9, 4.8], [2768.7, 4.8], [2792.7, 5.4], [4010.9, 5.4]],
     // medal times of the time trial (s), dry and in the rain, in summer and in winter (cs: Circuit Superstars physics); estimated, docs/proge/atimpoku.md
-    medals: {cs:[83,87,94],wet:{cs:[95,100,108]},winter:{cs:[93,97,105],wet:{cs:[113,119,128]}}},
+    medals: {cs:[87,91,98],wet:{cs:[100,105,113]},winter:{cs:[97,102,110],wet:{cs:[118,124,134]}}},
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck], a cyclist every so many metres each way
     traffic: { mix: [0.5, 0.2, 0.14, 0.08, 0.08], bike: 3000 },
     police: { label: 'POLICE', band: '#1c2f6b', text: '#ffffff' }, escTo: 'Na vzhodni breg',
