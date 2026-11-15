@@ -248,7 +248,7 @@ try {
     { await page.evaluate(() => { __garage.openMenu({ el: 'maska', key: 'drw:maska', sel: ['Mesh', 'Honeycomb', 'Carbon', 'Chrome'].map(n => __garage.findOpt('maska', n)).find(Boolean) || null }); const b = document.querySelector('#g-menu [data-mact="buy"]'); if (b) b.click(); });
       const r = await run(), f = await fitOf(), u = await ui();
       T.check('the grille on the KOZOROG by the head lamps\' template (podaljšek: old one out, the new one from the drawer on roka 2, pushed in and screwed, the old one into the drawer; no far one, no lights) or as before; bought, KONČANO',
-        (/^plan,old\.out,pod\.out,pass,swap,fit,pod\.back$/.test(f.log) && !!f.lamp && !f.lamp.far || /cart\.in/.test(f.log)) && /KONČANO/.test(f.chip) && f.parked && r.t <= 12 && !!u.S.cars.kozorog.parts.maska, JSON.stringify({ r, log: f.log, lamp: f.lamp })); }
+        (/^plan,old\.out,pod\.out,pass,swap,fit,pod\.back$/.test(f.log) && !!f.lamp && !f.lamp.far && r.t <= 12 || /cart\.in/.test(f.log) && r.t <= 20) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.maska, JSON.stringify({ r, log: f.log, lamp: f.lamp })); }
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)

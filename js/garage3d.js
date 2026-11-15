@@ -6962,7 +6962,7 @@ const Garage3D = (function () {
     const wrenchAt = function* (n, f) { const W = exS.wr; yield* armExt(0, W.s, 0, 0.3 * f); for (let k = 0; k < n; k++) { burst(W.tip); yield* wait(0.22 * f); } yield* armExt(0, W.pre.s, 0, 0.25 * f); };
     // to the part: the arm's tool over it; the trolley in from the door (for a drawer's part to the cabinet first: the drawer out, the part
     // onto its deck, the drawer in; then across the room's right and along the car's near side)
-    const cart = regal ? null : CART.root || buildCart(); if (cart) cartPaint(el === 'aero');
+    const cart = regal ? null : CART.root || buildCart(); if (cart) cartPaint(el === 'aero' || !!o.cartAt);   // (the aero kit's wing: on the kit's trolley still)
     const ds = di >= 0 ? drwSpot(di, o.toK == null ? -1 : o.toK) : null, lane = park ? [CAB.x, park[1]] : null;
     // (the trolley off with the old part on its deck (old; none: empty): one of a drawer's back into it on the way, the new one from there or not)
     const cartOff = function* (old) { const bi = DRW.els.indexOf(el), back = old && bi >= 0 && o.fromK != null && o.fromK >= 0 ? drwSpot(bi, o.fromK) : null;
