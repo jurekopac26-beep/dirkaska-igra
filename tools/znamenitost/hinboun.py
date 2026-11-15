@@ -7,7 +7,7 @@ the vertex colours, no textures).
   python -I tools/znamenitost/hinboun.py /tmp/tla.json        (python with bpy: pip install bpy)
 
 The model: a field of sharp, fluted grey spires of weathered limestone (5-22 m, in clusters, leaning a little, darker at the foot, with
-green shrubs in the clefts and at their feet), none nearer than 14 m to the road's centre line, and a plain lookout by the road: a stone
+green shrubs in the clefts and at their feet), none nearer than 14 m to the road's centre line, and a plain lookout where OSM has the viewpoint, ~22 m from the road: a stone
 platform with a low wall and an open timber shelter under a tiled roof. No inscriptions, no flags, no statues.
 The far level: fewer, coarser spires and the shelter's roof, nothing smaller.
 Coordinates: the game's (x, y, z) with y up and metres above the sea, relative to the stone forest's centre (x, z) (the game puts the
@@ -114,8 +114,9 @@ def shrub(G, rnd, x, y, z, r, n):
         G.face([mid[i], mid[j], top], 'shrub', (x, y, z))
 
 
-def place(detail):
-    """the spires' feet: clusters inside 46 m of the centre, none nearer than 14 m to the road's centre line (the lookout keeps its view)"""
+def place(detail, look):
+    """the spires' feet: clusters inside 46 m of the centre, none nearer than 14 m to the road's centre line nor on the lookout's
+    platform (look: its centre), so the lookout keeps its view"""
     rnd = random.Random(8)
     heads = [(rnd.uniform(-38, 38), rnd.uniform(-38, 38)) for _ in range(9)]
     out = []
@@ -125,6 +126,7 @@ def place(detail):
         x, z = CX + hx + rnd.gauss(0, 9), CZ + hz + rnd.gauss(0, 9)
         if math.hypot(x - CX, z - CZ) > 46 or road(x, z) < 14: continue
         r0 = rnd.uniform(2.0, 4.4)
+        if math.hypot(x - look[0], z - look[1]) < r0 + 6: continue
         if any(math.hypot(x - a, z - b) < (r0 + c) * 0.9 for a, b, c, _ in out): continue
         far = min(1.0, (road(x, z) - 14) / 30)
         h = rnd.uniform(4, 10) + far * rnd.uniform(3, 9) + r0 * 1.4
@@ -132,16 +134,26 @@ def place(detail):
     return out
 
 
-def lookout(G, detail):
-    """by the road towards the spires, ~11-13 m from the centre line (past the barrier): a stone platform with a low wall on three
-    sides and an open timber shelter with a hipped tiled roof"""
+# OSM's viewpoint by road 8 (node 1164277586, tools/hinboun/build.py LOOKOUT: 18.17808 N, 104.48406 E) in the game's metres
+LOOK_OSM = ((104.48406 - 104.4735906) * 111320 * math.cos(math.radians(18.1775048)), -(18.17808 - 18.1775048) * 110574)
+
+
+def lookout_pos():
+    """where OSM has the lookout (the viewpoint by road 8, ~22 m from the road's centre line towards the spires): the point of the
+    grid 20-24 m from the road nearest OSM's viewpoint node"""
     best = None
     for k in range(NX * NZ):
         x, z = X0 + (k % NX) * ST, Z0 + (k // NX) * ST
-        if 11 <= DR[k] <= 13:
-            dd = math.hypot(x - CX, z - CZ)
+        if 20 <= DR[k] <= 24:
+            dd = math.hypot(x - LOOK_OSM[0], z - LOOK_OSM[1])
             if best is None or dd < best[0]: best = (dd, x, z)
-    _, x, z = best
+    return best[1], best[2]
+
+
+def lookout(G, detail, look):
+    """at OSM's viewpoint (look), facing the spires: a stone platform with a low wall on three sides and an open timber shelter with a
+    hipped tiled roof (OSM: the viewpoint's sala)"""
+    x, z = look
     ang = math.atan2(CZ - z, CX - x)   # facing the spires
     y = max(ground(x + dx, z + dz) for dx in (-4, 0, 4) for dz in (-4, 0, 4)) + 0.3
     c, s = math.cos(ang), math.sin(ang)
@@ -170,17 +182,18 @@ def lookout(G, detail):
 def build(detail):
     G = Mesh()
     rnd = random.Random(15)
-    sp = place(detail)
+    look = lookout_pos()
+    sp = place(detail, look)
     for (x, z, r0, h) in sp:
         gy = spire(G, rnd, x, z, r0, h, 8 if detail else 5, 7 if detail else 3)
         if detail:
             for _ in range(rnd.randint(1, 3)):
                 a = rnd.uniform(0, 2 * math.pi); sx, sz = x + math.cos(a) * (r0 + 0.6), z + math.sin(a) * (r0 + 0.6)
-                if road(sx, sz) > 12: shrub(G, rnd, sx, ground(sx, sz), sz, rnd.uniform(0.9, 1.8), 6)
+                if road(sx, sz) > 12 and math.hypot(sx - look[0], sz - look[1]) > 5.5: shrub(G, rnd, sx, ground(sx, sz), sz, rnd.uniform(0.9, 1.8), 6)
             if h > 12 and rnd.random() < 0.5:   # a tuft in a cleft half way up
                 t = rnd.uniform(0.35, 0.55); a = rnd.uniform(0, 2 * math.pi); rr = r0 * (1 - t) ** 0.75
                 shrub(G, rnd, x + math.cos(a) * rr, gy + h * t, z + math.sin(a) * rr, rnd.uniform(0.6, 1.0), 5)
-    lx, lz = lookout(G, detail)
+    lx, lz = lookout(G, detail, look)
     return G, len(sp), (lx, lz)
 
 

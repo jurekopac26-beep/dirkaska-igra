@@ -12,7 +12,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 4 | Mombasa | Kenija | stavba | jure.kopac26 | čaka |
 | 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |
 | 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
-| 7 | Phou Hin Boun (bil Bokor) | Laos | druga: kraški stolpi (kamniti gozd) ob razgledišču | jure.kopac26 | v delu (veja `proge/zamenjava-7`, #720): cesta 8 skozi Phou Hin Boun, ~4,5 km vzpona z ovinki, kamniti gozd s središčem ~50 m od ceste pri ~41 % dirke (razgledna ploščad 11–13 m od ceste); proga, model, meni, test in opis narejeni; Kambodža odpade (pri Kiriromu ob cesti samo razvaline rezidence, kip in slap v gozdu) |
+| 7 | Phou Hin Boun (bil Bokor) | Laos | druga: kraški stolpi (kamniti gozd) ob razgledišču | jure.kopac26 | v delu (veja `proge/zamenjava-7`, #720): cesta 8 skozi Phou Hin Boun, ~4,5 km vzpona z ovinki, kamniti gozd s središčem ~50 m od ceste pri ~41 % dirke (razgledišče s paviljonom ~22 m od ceste, kjer ga ima OSM); proga, model, meni, test in opis narejeni; Kambodža odpade (pri Kiriromu ob cesti samo razvaline rezidence, kip in slap v gozdu) |
 | 8 | El Jem | Tunizija | stavba | biketraveler | čaka |
 | 9 | Portobelo | Panama | stavba | biketraveler | čaka |
 | 10 | *zamenjava* (bila Trongsa, delujoč samostan) | Butan ali rezerva | druga: naravna oblika ali zgradba | biketraveler | izbere seja po resetu |

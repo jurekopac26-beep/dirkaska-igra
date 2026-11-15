@@ -35,8 +35,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       {"n": "Vznožje", "d": 60, "say": ["Off the line at the foot of the climb!", "Up into the karst, the forest all round!"]},
       {"n": "Kraški vzpon", "d": 700, "say": ["The road winds up between the limestone!", "Climbing now, bend after bend!"]},
+      {"n": "Prelaz", "d": 1860, "say": ["Over the top of the pass!", "The top of the climb, and down the other side!"]},
       {"n": "Kamniti gozd", "d": 1930, "say": ["The stone forest on the right, a sea of grey spires!", "Past the lookout, the limestone towers above the trees!"]},
-      {"n": "Prelaz", "d": 2350, "say": ["Over the top of the pass!", "The top of the climb, and down the other side!"]},
       {"n": "Spust", "d": 3200, "say": ["Down through the forest!", "The long way down, the bends come thick and fast!"]},
       {"n": "Dolina", "d": 4300, "say": ["Into the valley for the finish!", "The last bends before the valley!"]},
     ],

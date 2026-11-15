@@ -30,8 +30,8 @@ def widths():
 NAMES = [
     ('Vznožje', 60, ['Off the line at the foot of the climb!', 'Up into the karst, the forest all round!']),
     ('Kraški vzpon', 700, ['The road winds up between the limestone!', 'Climbing now, bend after bend!']),
+    ('Prelaz', 1860, ['Over the top of the pass!', 'The top of the climb, and down the other side!']),
     ('Kamniti gozd', 1930, ['The stone forest on the right, a sea of grey spires!', 'Past the lookout, the limestone towers above the trees!']),
-    ('Prelaz', 2350, ['Over the top of the pass!', 'The top of the climb, and down the other side!']),
     ('Spust', 3200, ['Down through the forest!', 'The long way down, the bends come thick and fast!']),
     ('Dolina', 4300, ['Into the valley for the finish!', 'The last bends before the valley!']),
 ]
