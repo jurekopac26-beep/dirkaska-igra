@@ -4010,7 +4010,14 @@
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [];   // tree exclusion circles (landmarks, crowds)
-    const excluded = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const exG = new Map(), exBig = []; let exN = 0;   // (excluded's index: the circles in 16 m cells, big ones in a list; the new ones added as asked, the answer as a scan of all)
+    const excluded = (x, z) => {
+      for (; exN < excl.length; exN++) { const e = excl[exN]; if (e.r > 32) { exBig.push(e); continue; } for (let b = Math.floor((e.z - e.r) / 16); b <= Math.floor((e.z + e.r) / 16); b++) for (let a = Math.floor((e.x - e.r) / 16); a <= Math.floor((e.x + e.r) / 16); a++) { const k = a * 65536 + b, L = exG.get(k); if (L) L.push(e); else exG.set(k, [e]); } }
+      const L = exG.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16));
+      if (L) for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; }
+      for (let k = 0; k < exBig.length; k++) { const e = exBig[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; }
+      return false;
+    };
 
     /* ---- terrain tiles (their meshes are made at the end: the verge and the far scenery that casts no shadow are merged into them, no draw calls of their own) ---- */
     let nFar = 0;   // coarse outer tiles

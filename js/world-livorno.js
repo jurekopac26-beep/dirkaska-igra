@@ -73,12 +73,13 @@
     const CO = [], CH = 48, chash = new Map();
     for (const fl of LD.coast) { for (let k = 0; k + 3 < fl.length; k += 2) CO.push([fl[k], fl[k + 1], fl[k + 2], fl[k + 3]]); }
     CO.forEach((e, n) => { const x0 = Math.floor(Math.min(e[0], e[2]) / CH), x1 = Math.floor(Math.max(e[0], e[2]) / CH), z0 = Math.floor(Math.min(e[1], e[3]) / CH), z1 = Math.floor(Math.max(e[1], e[3]) / CH);
-      for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i + ',' + j; let Lc = chash.get(k); if (!Lc) chash.set(k, Lc = []); Lc.push(n); } });
+      for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i * 65536 + j; let Lc = chash.get(k); if (!Lc) chash.set(k, Lc = []); Lc.push(n); } });   // (number keys: a cell (i, j) of 48 m, |j| far below 32768)
+    const COF = Float64Array.from(CO.flat());   // (the pieces' ends in one array: quicker to read than the little arrays, the same numbers)
     const seaD = (x, z) => {
       let bd = 1e9, bs = 1; const i0 = Math.floor(x / CH), j0 = Math.floor(z / CH);
       for (let r = 0; r <= 3 && bd > r * CH - CH; r++) for (let i = i0 - r; i <= i0 + r; i++) for (let j = j0 - r; j <= j0 + r; j++) {
-        if (Math.max(Math.abs(i - i0), Math.abs(j - j0)) !== r) continue; const Lc = chash.get(i + ',' + j); if (!Lc) continue;
-        for (const k of Lc) { const [ax, az, bx, bz] = CO[k], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, d = Math.hypot(dx, dz);
+        if (Math.max(Math.abs(i - i0), Math.abs(j - j0)) !== r) continue; const Lc = chash.get(i * 65536 + j); if (!Lc) continue;
+        for (let q = 0; q < Lc.length; q++) { const o = Lc[q] * 4, ax = COF[o], az = COF[o + 1], bx = COF[o + 2], bz = COF[o + 3], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, d = Math.hypot(dx, dz);
           if (d < bd) { bd = d; bs = (dx * vz - dz * vx) > 0 ? -1 : 1; } } }
       if (bd > 25 || bd > 1e8) { const sea = nrDem(x, z) < SEA + 0.6; return (bd > 1e8 ? 200 : bd) * (sea ? 1 : -1); }   // (away from the line its side by the heights: past a piece's end the line's own side is unreliable)
       return bd * bs; };
