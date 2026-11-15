@@ -1412,5 +1412,24 @@
    "life:MeshLambertMaterial": "98d13852",
    "lifeShadow:MeshBasicMaterial": "cb5bcbdc"
   }
+ },
+ "portobelo": {
+  "meshes": 246,
+  "verts": 216830,
+  "instances": 1584,
+  "props": 0,
+  "crowd": 81,
+  "world": "e804773f",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "9af8d2e4",
+   "-:MeshPhongMaterial": "ce91aa65",
+   "crowd:MeshLambertMaterial": "cd25d89c",
+   "flags:MeshLambertMaterial": "8d45e55b",
+   "ao:MeshBasicMaterial": "f9c70eef",
+   "tyremarks:MeshBasicMaterial": "dcbb4980",
+   "roadwear:MeshLambertMaterial": "7344ee0a"
+  }
  }
 }
