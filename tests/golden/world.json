@@ -418,11 +418,11 @@
   "instances": 12643,
   "props": 43,
   "crowd": 16,
-  "world": "1c31cac9",
+  "world": "8c1f7495",
   "propsHash": "ac014ea9",
   "floor": "cea23551/10332",
   "groups": {
-   "-:MeshLambertMaterial": "7a324873",
+   "-:MeshLambertMaterial": "279b423d",
    "-:MeshPhongMaterial": "b702964d",
    "-:MeshBasicMaterial": "822d7cbb",
    "crowd:MeshLambertMaterial": "807af1b4",
