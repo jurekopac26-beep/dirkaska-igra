@@ -240,11 +240,16 @@
     // nearer than that the least distance is the same, beyond it the step is 4 either way)
     const LC = 32, LR = 100 + HJB * HJC * 0.71 + 1, lx0 = Math.min(...sx), lz0 = Math.min(...sz), lnx = Math.floor((Math.max(...sx) - lx0) / LC) + 1, lnz = Math.floor((Math.max(...sz) - lz0) / LC) + 1;
     const bins = new Array(lnx * lnz); for (let k = 0; k < sx.length; k++) { const c = Math.floor((sz[k] - lz0) / LC) * lnx + Math.floor((sx[k] - lx0) / LC); (bins[c] || (bins[c] = [])).push(k); }
+    // (the step needs only whether the least squared distance d2 gives sqrt(d2) - c under 14, else under 100: sqrt and the subtraction never decrease
+    // as d2 grows, so that holds for the least one exactly when it holds for some sample; each such sample is looked for with the same arithmetic, and
+    // the search stops at the first: under 14 among the cells within 14 + c, 1 m to spare (they hold every sample that near), then under 100 among all)
+    const LCc = HJB * HJC * 0.71, LQ1 = (14 + LCc + 0.01) * (14 + LCc + 0.01), LQ2 = (100 + LCc + 0.01) * (100 + LCc + 0.01);
+    const lodAny = (x, z, R, T, Q) => { const a0 = Math.max(0, Math.floor((x - R - lx0) / LC)), a1 = Math.min(lnx - 1, Math.floor((x + R - lx0) / LC)), b0 = Math.max(0, Math.floor((z - R - lz0) / LC)), b1 = Math.min(lnz - 1, Math.floor((z + R - lz0) / LC));
+      for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) { const L = bins[b * lnx + a]; if (L) for (let q = 0; q < L.length; q++) { const k = L[q], dx = x - sx[k], dz = z - sz[k], d = dx * dx + dz * dz; if (d < Q && Math.sqrt(d) - HJB * HJC * 0.71 < T) return true; } }
+      return false; };
     for (let bj = 0; bj < nbz; bj++) for (let bi = 0; bi < nb; bi++) {
-      const x = G.x0 + (bi + 0.5) * HJB * HJC, z = G.z0 + (bj + 0.5) * HJB * HJC; let d2 = 1e18;
-      const a0 = Math.max(0, Math.floor((x - LR - lx0) / LC)), a1 = Math.min(lnx - 1, Math.floor((x + LR - lx0) / LC)), b0 = Math.max(0, Math.floor((z - LR - lz0) / LC)), b1 = Math.min(lnz - 1, Math.floor((z + LR - lz0) / LC));
-      for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) { const L = bins[b * lnx + a]; if (L) for (const k of L) { const dx = x - sx[k], dz = z - sz[k], d = dx * dx + dz * dz; if (d < d2) d2 = d; } }
-      const d = Math.sqrt(d2) - HJB * HJC * 0.71; bs[bj * nb + bi] = d < 14 ? 1 : d < 100 ? 2 : 4;
+      const x = G.x0 + (bi + 0.5) * HJB * HJC, z = G.z0 + (bj + 0.5) * HJB * HJC;
+      bs[bj * nb + bi] = lodAny(x, z, 14 + LCc + 1, 14, LQ1) ? 1 : lodAny(x, z, LR, 100, LQ2) ? 2 : 4;
     }
     const hr = G.hr = new Float32Array(G.nx * G.nz).fill(NaN), W = G.nx;
     for (let bj = 0; bj < nbz; bj++) for (let bi = 0; bi < nb; bi++) { const s = bs[bj * nb + bi];
@@ -264,8 +269,9 @@
     if (!G.hr) { const i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;   // (before the levels of detail are set: the fine grid)
       if (u + v <= 1) { const a = hjGH(i, j); return a + u * (hjGH(i + 1, j) - a) + v * (hjGH(i, j + 1) - a); }
       const d = hjGH(i + 1, j + 1); return d + (1 - u) * (hjGH(i, j + 1) - d) + (1 - v) * (hjGH(i + 1, j) - d); }
-    const s = G.bs[Math.min(G.nbz - 1, Math.floor(gz / HJB)) * G.nbx + Math.min(G.nbx - 1, Math.floor(gx / HJB))], i = Math.min(Math.floor(gx / s) * s, G.nx - 1 - s), j = Math.min(Math.floor(gz / s) * s, G.nz - 1 - s);
-    const u = (gx - i) / s, v = (gz - j) / s, H = G.hr, W = G.nx;
+    // (s is 1, 2 or 4: dividing by it and multiplying by its exact reciprocal give the same double, as / 8 and * 0.125 do)
+    const s = G.bs[Math.min(G.nbz - 1, Math.floor(gz * 0.125)) * G.nbx + Math.min(G.nbx - 1, Math.floor(gx * 0.125))], rs = s === 1 ? 1 : s === 2 ? 0.5 : 0.25, i = Math.min(Math.floor(gx * rs) * s, G.nx - 1 - s), j = Math.min(Math.floor(gz * rs) * s, G.nz - 1 - s);
+    const u = (gx - i) * rs, v = (gz - j) * rs, H = G.hr, W = G.nx;
     if (u + v <= 1) { const a = H[j * W + i]; return a + u * (H[j * W + i + s] - a) + v * (H[(j + s) * W + i] - a); }
     const d = H[(j + s) * W + i + s]; return d + (1 - u) * (H[(j + s) * W + i] - d) + (1 - v) * (H[j * W + i + s] - d);
   }
@@ -320,18 +326,25 @@
     return o;
   }
   function hjTileGeo(ti, tj) {   // one 160 m terrain tile: its 8 x 8 blocks, each at its own step (hjLOD), indexed; normals from the true heights
-    const G = HJ.G, n = HJT + 1, map = new Int32Array(n * n).fill(-1), pos = [], nor = [], col = [], uv = [], idx = [], i0 = ti * HJT, j0 = tj * HJT, nbt = HJT / HJB;
+    // (written straight into Float32Arrays, which round each value as Float32BufferAttribute's copy of an array would; the index as the Uint16BufferAttribute
+    // setIndex makes of an array whose largest entry is under 65536: a tile has at most 65 x 65 vertices)
+    const G = HJ.G, n = HJT + 1, map = new Int32Array(n * n).fill(-1), i0 = ti * HJT, j0 = tj * HJT, nbt = HJT / HJB;
+    const S = hjTileS || (hjTileS = { pos: new Float32Array(n * n * 3), nor: new Float32Array(n * n * 3), col: new Float32Array(n * n * 3), uv: new Float32Array(n * n * 2), idx: new Uint16Array(HJT * HJT * 6) });
+    const pos = S.pos, nor = S.nor, col = S.col, uv = S.uv, idx = S.idx; let nv = 0, ni = 0;
     const vert = (a, b, s) => { const k = b * n + a; if (map[k] >= 0) return map[k];
       const i = i0 + a, j = j0 + b, x = G.x0 + i * HJC, z = G.z0 + j * HJC, h = G.hr[j * G.nx + i];
       let nx = -(hjGH(i + s, j) - hjGH(i - s, j)) / (2 * HJC * s), nz = -(hjGH(i, j + s) - hjGH(i, j - s)) / (2 * HJC * s), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
-      const c = hjCol(x, z, ny, j * G.nx + i); map[k] = pos.length / 3; pos.push(x, h, z); nor.push(nx, ny, nz); col.push(c[0], c[1], c[2]); uv.push(x / 7, -z / 7); return map[k]; };
+      const c = hjCol(x, z, ny, j * G.nx + i), o = nv * 3; pos[o] = x; pos[o + 1] = h; pos[o + 2] = z; nor[o] = nx; nor[o + 1] = ny; nor[o + 2] = nz; col[o] = c[0]; col[o + 1] = c[1]; col[o + 2] = c[2];
+      uv[nv * 2] = x / 7; uv[nv * 2 + 1] = -z / 7; map[k] = nv; return nv++; };
     for (let bb = 0; bb < nbt; bb++) for (let ba = 0; ba < nbt; ba++) { const s = G.bs[(tj * nbt + bb) * G.nbx + ti * nbt + ba];
-      for (let b = 0; b < HJB; b += s) for (let a = 0; a < HJB; a += s) { const A = ba * HJB + a, B = bb * HJB + b, p = vert(A, B, s), q = vert(A + s, B, s), c = vert(A, B + s, s), d = vert(A + s, B + s, s); idx.push(p, c, q, q, c, d); } }
+      for (let b = 0; b < HJB; b += s) for (let a = 0; a < HJB; a += s) { const A = ba * HJB + a, B = bb * HJB + b, p = vert(A, B, s), q = vert(A + s, B, s), c = vert(A, B + s, s), d = vert(A + s, B + s, s);
+        idx[ni] = p; idx[ni + 1] = c; idx[ni + 2] = q; idx[ni + 3] = q; idx[ni + 4] = c; idx[ni + 5] = d; ni += 6; } }
     const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos.subarray(0, nv * 3), 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor.subarray(0, nv * 3), 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col.subarray(0, nv * 3), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv.subarray(0, nv * 2), 2)); g.setIndex(new THREE.Uint16BufferAttribute(idx.subarray(0, ni), 1));
     g.computeBoundingSphere(); return g;
   }
+  let hjTileS = null;   // (hjTileGeo's scratch arrays: the same sizes every build, their used part copied out per tile)
   // the far ring: 20 m cells round the terrain grid (a hole where the grid is), the woods and the town round Jyväskylä in the haze; in chunks of 12 x 12
   // cells (240 m), each its own mesh, so the chase camera's short far plane culls them (seen only in the wide views); normals from the whole grid (no seams)
   function hjFarGeo() {
@@ -590,7 +603,8 @@
       r.d = dense(r.pts, 2.0); const hw = RHW[r.cls];
       for (let q = 0; q < r.d.length - 1; q++) hjMarkSeg(r.d[q][0], r.d[q][1], r.d[q + 1][0], r.d[q + 1][1], hw + (r.cls <= 3 ? 0.9 : 0.4), 1);
       if (r.cls > 3 && r.cls !== 9) continue;
-      for (let q = 0; q < r.d.length - 1; q++) { const [x, z] = r.d[q], n = hjNI(x, z); if (n.i < 0) continue; const i = n.i, al = Math.abs(n.lat);
+      r.ni = []; r.nl = [];   // (hjNI's i and lat at the points, kept for the manholes and the give-way teeth below: the same answers, once)
+      for (let q = 0; q < r.d.length - 1; q++) { const [x, z] = r.d[q], n = hjNI(x, z); r.ni[q] = n.i; r.nl[q] = n.lat; if (n.i < 0) continue; const i = n.i, al = Math.abs(n.lat);
         if (al > WA[i] + 12 || al < WA[i] - 0.5) continue;
         const dx = r.d[q + 1][0] - x, dz = r.d[q + 1][1] - z, l = Math.hypot(dx, dz) || 1; if (Math.abs((dx * T.tx[i] + dz * T.tz[i]) / l) > 0.72) continue;   // (running along the stage: its own street)
         const si = n.lat > 0 ? 1 : 0, m = Math.ceil((hw + 2.5) / ds); for (let j = Math.max(0, i - m); j <= Math.min(N - 1, i + m); j++) mouth[si][j] = 1; }
@@ -712,7 +726,7 @@
         for (let s = Math.max(2, sStart - 30); s < T.len - 6; s += 22 + 12 * crH(s, side, 87)) { const i = T.idx(s); if (SF[i] !== 0 || VT[si][i] !== 4 || inChic(s)) continue;
           const o = side * (WA[i] - 0.3); rect(s - 0.32, s + 0.32, o - 0.22, o + 0.22, 0.045, GFR); rect(s - 0.25, s + 0.25, o - 0.15, o + 0.15, 0.049, GRT); out.grates++; } }
       for (const r of roads) { if (r.cls > 2 || r.surf !== 0) continue;
-        const D = r.d, M = D.length, hw = RHW[r.cls], lift = RLIFT[r.cls] + 0.012, near = D.map(([x, z]) => { const n = hjNI(x, z); return n.i >= 0 && Math.abs(n.lat) < WA[n.i] + 0.3; });
+        const D = r.d, M = D.length, hw = RHW[r.cls], lift = RLIFT[r.cls] + 0.012, near = D.map(([x, z], q) => { let i, lat; if (r.ni && q < r.ni.length) { i = r.ni[q]; lat = r.nl[q]; } else { const n = hjNI(x, z); i = n.i; lat = n.lat; } return i >= 0 && Math.abs(lat) < WA[i] + 0.3; });
         let run = 0;
         for (let q = 0; q < M - 1; q++) {
           if (!near[q] && !near[q + 1] && (run += Math.hypot(D[q + 1][0] - D[q][0], D[q + 1][1] - D[q][1])) > 35 + 20 * crH(D[q][0], D[q][1], 88)) { run = 0; const [x, z] = D[q]; if (!onBld(x, z)) manhole(x, hjGround(x, z) + lift, z); }
@@ -741,11 +755,12 @@
           continue;
         }
         const col = kind === 2 ? SC[r.surf] || SC[0] : kind === 1 ? [0.92, 0.9, 0.87] : [0.95, 0.95, 0.97];   // (the tarmac as the stage's)
+        // (each edge point [x, its ground + lift, z] and its UV once: a quad's far edge is the next quad's near edge; quadUp only reads them)
+        const us = kind === 1 ? 2 : 7, ch = kind === 0 ? gA : kind === 1 ? gP : gG, cc = [col, col, col, col], EP = [new Array(M), new Array(M)], EU = [new Array(M), new Array(M)], U4 = [null, null, null, null];
+        const pt = (q, sd) => { let e = EP[sd][q]; if (!e) { const p = D[q], n = L[q], o = sd ? hw : -hw, x = p[0] + n[0] * o, z = p[1] + n[1] * o; e = EP[sd][q] = [x, hjGround(x, z) + lift, z]; EU[sd][q] = [e[0] / us, -e[2] / us]; } return e; };
         for (let q = 0; q < M - 1; q++) { if (!keep[q] || !keep[q + 1]) continue;
-          const pt = (p, n, o) => { const x = p[0] + n[0] * o, z = p[1] + n[1] * o; return [x, hjGround(x, z) + lift, z]; };
-          const a = pt(D[q], L[q], -hw), b = pt(D[q], L[q], hw), c = pt(D[q + 1], L[q + 1], hw), d = pt(D[q + 1], L[q + 1], -hw), us = kind === 1 ? 2 : 7, uv = (p) => [p[0] / us, -p[2] / us];
-          const ch = kind === 0 ? gA : kind === 1 ? gP : gG, cc = kind === 2 ? [col, col, col, col] : [col, col, col, col];
-          ch.get(D[q][0], D[q][1]).quadUp(a, b, c, d, cc, [uv(a), uv(b), uv(c), uv(d)]); }
+          const a = pt(q, 0), b = pt(q, 1), c = pt(q + 1, 1), d = pt(q + 1, 0); U4[0] = EU[0][q]; U4[1] = EU[1][q]; U4[2] = EU[1][q + 1]; U4[3] = EU[0][q + 1];
+          ch.get(D[q][0], D[q][1]).quadUp(a, b, c, d, cc, U4); }
       }
       const rA = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       const rP = new THREE.MeshLambertMaterial({ map: tex.paving, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
@@ -927,7 +942,13 @@
     // nobody behind the concrete blocks between the two carriageways (a car passes on either side), nor on the islands the hairpins turn round (def.hairpin [[x, z, r], ...])
     const nearBld = (x, z) => { for (let a = -7; a <= 7; a += 2.5) for (let b = -7; b <= 7; b += 2.5) if (onBld(x + a, z + b)) return true; return false; };   // (no crowd on the pavements by the blocks: the user's decision, 31. 10. 2026)
     const HP = def.hairpin ? (Array.isArray(def.hairpin[0]) ? def.hairpin : [def.hairpin]) : [], crowdOut = (x, z) => { if (hard(x, z) || nearBld(x, z)) return true; for (const h of HP) if (Math.hypot(x - h[0], z - h[1]) < h[2] + 1.5) return true;
-      const n = hjNI(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
+      if (!b4Near(x, z)) return false; const n = hjNI(x, z); return n.i >= 0 && barType(n.i, n.lat > 0 ? 1 : -1) === 4; };
+    // (b4Near: whether any sample hjNI could answer with, the packed samples of the 5 x 5 cells it searches, has the concrete blocks on either side; none: no hjNI call)
+    let B4 = null; function b4Near(x, z) { const P = HJ;
+      if (!B4) { B4 = new Uint8Array(P.pk.length); for (let c = 0; c < P.pk.length; c++) { const A = P.pk[c]; if (A) for (let o = 0; o < A.length; o += 10) if (barType(A[o + 9], 1) === 4 || barType(A[o + 9], -1) === 4) { B4[c] = 1; break; } } }
+      const cx = Math.floor(x / HJHC) - P.cx0, cz = Math.floor(z / HJHC) - P.cz0; if (!(cx >= -2 && cz >= -2 && cx < P.ncx + 2 && cz < P.ncz + 2)) return false;
+      for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) if (B4[b * P.ncx + a]) return true;
+      return false; }
     // a Finnish summer evening's crowd: blue and white, black rally merchandise, light summer clothes, a few in orange and red
     const SHIRTS = [[0.94, 0.94, 0.92], [0.9, 0.91, 0.92], [0.16, 0.36, 0.78], [0.2, 0.42, 0.86], [0.1, 0.11, 0.13], [0.14, 0.15, 0.17], [0.55, 0.6, 0.66], [0.4, 0.62, 0.85], [0.82, 0.16, 0.13], [0.95, 0.8, 0.2], [0.2, 0.5, 0.3], [0.96, 0.52, 0.12], [0.35, 0.36, 0.38], [0.74, 0.72, 0.62]];
     const CR = crowdCtx({ gH: hjGround, near: nearDD, excluded: crowdOut, maxSlope: 0.95, chunk: 32, shirts: SHIRTS }), crSoft = new Set();   // (64 m chunks: the chase view draws ~1/3 of the people a 128 m chunk would)
@@ -1058,13 +1079,14 @@
     const TK = {}, TKF = {}; for (const k of [0, 1, 2, 4]) TK[k] = new IChunks(hjTreeGeo(k), tMat, k === 1 ? 128 : 192);   // (the pines, most of the trees, in 128 m chunks: the view and the sun's shadow box draw fewer of them outside)
     TKF[1] = TKF[0] = new IChunks(hjTreeGeo(1, true), tMat, 256); TKF[4] = TKF[2] = new IChunks(hjTreeGeo(4, true), tMat, 256);   // (over 50 m from the road: the plain pine and the plain broadleaf, casting no shadow)
     let nTrees = 0; const tHash = new Map(), THC = 4;   // (the planted trees in 4 m cells: the fill keeps 3.4 m from them)
-    const treeOK = (x, z) => { if (onBld(x, z) || onPaved(x, z) || excluded(x, z)) return false; const n = hjNI(x, z); return !(n.i >= 0 && n.dd < 1.2); };
+    let tqx = NaN, tqz = NaN, tqi = -1, tqd = 0;   // (treeOK's last hjNI answer and its point: plant at the same point reads it, hjNI being a pure function of the point)
+    const treeOK = (x, z) => { if (onBld(x, z) || onPaved(x, z) || excluded(x, z)) return false; const n = hjNI(x, z); tqx = x; tqz = z; tqi = n.i; tqd = n.dd; return !(n.i >= 0 && n.dd < 1.2); };
     const plant = (x, z, h, sp, r1, r2) => {
       const y = hjGround(x, z), wid = h * (sp === 0 ? 0.5 + r2 * 0.14 : sp === 1 ? 0.62 + r2 * 0.22 : sp === 2 ? 0.6 + r2 * 0.2 : 0.8 + r2 * 0.25), cv = 0.86 + r1 * 0.24;
       const old = sp === 1 && crH(x, z, 51) < 0.3 ? [1.07, 0.97, 0.86] : [1, 1, 1];   // (some old pines' crowns bronze-tinted, from the position: the seeded draws stay)
-      const n = hjNI(x, z); (n.i >= 0 && n.dd < 50 ? TK : TKF)[sp].add(x, y - 0.15, z, r1 * 70, wid, h, [cv * (0.95 + r2 * 0.08) * old[0], cv * old[1], cv * (0.95 + r1 * 0.08) * old[2]]); nTrees++;
-      const k = Math.floor(x / THC) + ',' + Math.floor(z / THC); let L = tHash.get(k); if (!L) tHash.set(k, L = []); L.push(x, z); };
-    const nearTree = (x, z) => { const cx = Math.floor(x / THC), cz = Math.floor(z / THC); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = tHash.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((L[q] - x) ** 2 + (L[q + 1] - z) ** 2 < 11.6) return true; } return false; };
+      let ni = tqi, nd = tqd; if (x !== tqx || z !== tqz) { const n = hjNI(x, z); ni = n.i; nd = n.dd; } (ni >= 0 && nd < 50 ? TK : TKF)[sp].add(x, y - 0.15, z, r1 * 70, wid, h, [cv * (0.95 + r2 * 0.08) * old[0], cv * old[1], cv * (0.95 + r1 * 0.08) * old[2]]); nTrees++;
+      const kx = Math.floor(x / THC), kz = Math.floor(z / THC); let C = tHash.get(kx); if (!C) tHash.set(kx, C = new Map()); let L = C.get(kz); if (!L) C.set(kz, L = []); L.push(x, z); };
+    const nearTree = (x, z) => { const cx = Math.floor(x / THC), cz = Math.floor(z / THC); for (let a = -1; a <= 1; a++) { const C = tHash.get(cx + a); if (C) for (let b = -1; b <= 1; b++) { const L = C.get(cz + b); if (L) for (let q = 0; q < L.length; q += 2) if ((L[q] - x) ** 2 + (L[q + 1] - z) ** 2 < 11.6) return true; } } return false; };
     {
       const TR = hjI16(S.trees), RT = rng(8141);
       for (let k = 0; k < TR.length; k += 3) { const x = TR[k] / 2, z = TR[k + 1] / 2, v = TR[k + 2], h = Math.max(4, (v & 255) / 4), sp = v >> 8, r1 = RT(), r2 = RT();
@@ -1097,7 +1119,7 @@
       const vY = (i, side, o) => { const pr = VP[side > 0 ? 1 : 0][i]; if (o <= pr[0][0]) return T.hy[i];   // the verge ribbon's surface at offset o; beyond it the ground
         for (let k = 0; k < pr.length - 1; k++) if (o <= pr[k + 1][0]) return T.hy[i] + lerp(pr[k][1], pr[k + 1][1], (o - pr[k][0]) / (pr[k + 1][0] - pr[k][0]));
         return hjGround(T.px[i] + T.nx[i] * side * o, T.pz[i] + T.nz[i] * side * o); };
-      const ok = (x, z, i) => { if (excluded(x, z) || onPaved(x, z) || onBld(x, z)) return false; const nn = hjNI(x, z); return !(nn.i >= 0 && Math.abs(nn.i - i) * ds > 24 && nn.dd < 0.5); };   // (not on another part of the stage)
+      let okDD = 0; const ok = (x, z, i) => { if (excluded(x, z) || onPaved(x, z) || onBld(x, z)) return false; const nn = hjNI(x, z); okDD = nn.dd; return !(nn.i >= 0 && Math.abs(nn.i - i) * ds > 24 && nn.dd < 0.5); };   // (not on another part of the stage)
       const soft = (x, z) => { const t = G.gt[Math.max(0, gIdx(x, z))]; return t === 0 || t === 9 || t === 10 || t === 13 || t === 255; };   // (lawns, the woods and the park, the yards: not the pitch, the car parks, the squares)
       const sA = Math.max(4, sStart - 30), sB = Math.min(T.len - 6, sFin + 30);
       for (let s = sA; s < sB; s += 0.8) for (const side of [-1, 1]) {
@@ -1113,7 +1135,7 @@
       }
       for (let s = sA; s < sB; s += 0.9) for (const side of [-1, 1]) {   // the forest floor beside the stage: mats of bilberry and lingonberry, heather on the sandy slopes, a fern here and there
         const i = T.idx(s), bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 2.2 + Math.pow(RV(), 1.4) * 16, x = T.px[i] + T.nx[i] * side * o + (RV() - 0.5) * 2, z = T.pz[i] + T.nz[i] * side * o + (RV() - 0.5) * 2, r1 = RV();
-        const k = gIdx(x, z), t = k >= 0 ? G.gt[k] : 255; if (k < 0 || !(t === 9 || t === 10 || (t === 0 && hjCanopy(x, z) >= 1)) || !ok(x, z, i) || hjNI(x, z).dd < 1.8) continue;
+        const k = gIdx(x, z), t = k >= 0 ? G.gt[k] : 255; if (k < 0 || !(t === 9 || t === 10 || (t === 0 && hjCanopy(x, z) >= 1)) || !ok(x, z, i) || okDD < 1.8) continue;   // (okDD: ok's hjNI at this same x, z; ok true means it ran)
         const y = hjGround(x, z) - 0.03, g = veg.get(x, z), sandy = G.dd[k] > 0 && P.n1(x * 1.3 + 80, z * 1.3 - 40) > 0.62;
         if (sandy || r1 < 0.18) dome(g, x, y, z, 0.45 + RV() * 0.45, 0.2 + RV() * 0.14, vary(HEATH, RV, 0.12), 6);
         else if (r1 < 0.62) dome(g, x, y, z, 0.5 + RV() * 0.55, 0.25 + RV() * 0.2, BIL[Math.floor(RV() * 3)], 7);
