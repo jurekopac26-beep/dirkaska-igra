@@ -32,7 +32,7 @@
       roofs: [[0.22, 0.32, 0.26], [0.5, 0.18, 0.14], [0.3, 0.32, 0.34], [0.62, 0.64, 0.66], [0.16, 0.2, 0.26]] },
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
     signs: 'diamond', crowd: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.2, 0.5, 0.32], [0.95, 0.72, 0.16], [0.46, 0.66, 0.86], [0.12, 0.14, 0.2], [0.9, 0.45, 0.14]],
-    animals: [], dust: null, extra: null,
+    animals: [], dust: null, extra: null, prep: null, clear: [], dryLakes: false, seaY: null,
   };
   const SNOW = [0.93, 0.95, 0.99], PISTE = [0.97, 0.98, 1.0], SLUSH = [0.62, 0.62, 0.63];
   let S = DEF, SN = 1, SNL = 1e9;   // (the style of the build under way; snow everywhere (1) or above SNL)
@@ -170,6 +170,19 @@
     } else if (kind === 'pine') {   // a pine: a tall bare trunk, a flat-topped crown
       cyl(g, 0, -0.02, 0, 0.03, 0.7, 5, [0.42, 0.3, 0.22], null, 0.02);
       for (const [x, y, z, r] of [[0, 0.82, 0, 0.26], [0.18, 0.76, 0.08, 0.18], [-0.16, 0.78, -0.1, 0.18]]) { ico(g, x, y, z, r, 0.4, vary([0.2, 0.32, 0.16], R, 0.14), R, 0.3); cap(x, y, z, r, 0.4); }
+    } else if (kind === 'palm') {   // a coconut palm: a thin pale trunk curving up out of a lean, a crown of eight long arching fronds (no snow)
+      const tr = [0.6, 0.55, 0.46], lean = 0.14 + R() * 0.06, top = [lean, 0.94, 0];
+      ouRod(g, [0, -0.03, 0], [lean * 0.25, 0.36, 0], 0.03, tr, 5); ouRod(g, [lean * 0.25, 0.36, 0], [lean * 0.65, 0.68, 0], 0.025, tr, 5); ouRod(g, [lean * 0.65, 0.68, 0], top, 0.021, vary(tr, R, 0.08), 5);
+      for (let f = 0; f < 8; f++) {
+        const a = f / 8 * TAU + R() * 0.4, ca = Math.cos(a), sa = Math.sin(a), L = 0.34 + R() * 0.1, w = 0.07, c = vary(f % 2 ? [0.3, 0.42, 0.16] : [0.36, 0.46, 0.18], R, 0.12), cd = c.map(v => v * 0.75);
+        const at = (t, rise, off) => [top[0] + ca * L * t - sa * off, top[1] + rise, top[2] + sa * L * t + ca * off];
+        const b = at(0, 0, 0), m = at(0.5, 0.06 - R() * 0.04, 0), tip = at(1, -0.16 - R() * 0.1, 0);
+        const pl = at(0.28, 0.04, w), pr = at(0.28, 0.04, -w), ml = at(0.7, -0.02, w * 0.8), mr = at(0.7, -0.02, -w * 0.8);
+        const tri = (p, q, r, c1, c2, c3) => { const cx = (p[0] + q[0] + r[0]) / 3, cy = (p[1] + q[1] + r[1]) / 3, cz = (p[2] + q[2] + r[2]) / 3;   // both faces (seen from under the crown too)
+          g.triO(p, q, r, c1, [cx, cy - 1, cz], c2, c3); g.triO(p, q, r, c1.map(v => v * 0.7), [cx, cy + 1, cz], c2.map(v => v * 0.7), c3.map(v => v * 0.7)); };
+        tri(b, pl, m, cd, c, c); tri(b, m, pr, cd, c, c); tri(m, pl, ml, c, c, c); tri(m, mr, pr, c, c, c); tri(m, ml, tip, c, c, cd); tri(m, tip, mr, c, cd, c);
+      }
+      ico(g, top[0], top[1] - 0.02, top[2], 0.05, 1, [0.34, 0.3, 0.16], R, 0.2);   // the nuts at the crown
     } else {   // 'broad': a round leafy crown on a short trunk
       cyl(g, 0, -0.02, 0, 0.035, 0.42, 5, [0.34, 0.28, 0.22], null, 0.024);
       for (const [x, y, z, r, sy] of [[0, 0.66, 0, 0.32, 0.72], [0.16, 0.54, 0.06, 0.22, 0.8], [-0.15, 0.56, -0.08, 0.22, 0.8]]) { ico(g, x, y, z, r, sy, vary([0.24, 0.38, 0.16], R, 0.16), R, 0.32); cap(x, y, z, r, sy); }
@@ -277,11 +290,13 @@
     if (SN) { out.ownSeason = true; out.season = 'winter'; }   // (a ski resort in the season: as built in every season, the render's winter adds the falling snow)
     vrPrep(); vrStubs();
     const P = API.VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
+    if (typeof S.prep === 'function') S.prep(P);   // (the track's own changes to the terrain model before any of it is built: the sea floor under the coast)
     ZN = def.zones || [];
     const isRun = (x, z) => vrLC(x, z) === 6;   // (a ski run: land cover class 6)
     // the buildings (def.bld [x, z, length, width, angle, height (0: unknown), kind]), clear of the road and the side roads
     const blds = [];
-    for (const b of def.bld || []) { const [x, z, L, W, ang, hgt, kind] = b; if (L < 2.5 || W < 2.5) continue;
+    const clr = S.clear || [], inClr = (x, z) => clr.some(([cx, cz, r]) => (x - cx) * (x - cx) + (z - cz) * (z - cz) < r * r);   // (S.clear [x, z, r]: the track's own landmark there, no buildings, trees or rocks)
+    for (const b of def.bld || []) { const [x, z, L, W, ang, hgt, kind] = b; if (L < 2.5 || W < 2.5 || inClr(x, z)) continue;
       const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
       for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 1.5) || vrStubAt(px, pz, 0.8)) ok = false; }
       if (ok) blds.push({ x, z, L: Math.min(L, 46), W: Math.min(W, 26), ang, hgt, kind }); }
@@ -295,10 +310,12 @@
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 32;   // exclusion circles (buildings, crowds, plots, lifts) for the trees and the skiers, hashed
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
-    const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const exclIn = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const SEA = S.seaY, excluded = SEA == null ? exclIn : (x, z) => vrFar(x, z) < SEA + 0.8 || exclIn(x, z);   // (S.seaY: the sea's level; nothing stands on the sea floor)
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     stubExcl(exclPush);
+    for (const [x, z, r] of clr) exclPush(x, z, r);
 
     /* ---- terrain tiles (four to a mesh), the lakes (ice in a snowy world) ---- */
     let nFar = 0, nTile = 0;
@@ -317,7 +334,7 @@
       }
       const wMat = SN ? new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 30, specular: 0x30343a }) : new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 50, specular: 0x24303a });
       const deep = SN ? [0.78, 0.84, 0.9] : [0.1, 0.2, 0.26], shal = SN ? [0.9, 0.92, 0.96] : [0.3, 0.38, 0.36];   // (a snowy world's lake frozen: ice and drifted snow)
-      for (const L of P.lakes) {
+      for (const L of P.lakes) { if (S.dryLakes) { exclPush(L.cx, L.cz, Math.max(L.x1 - L.x0, L.z1 - L.z0) / 2 + 6); continue; }   // (S.dryLakes: a dry ditch, as a fortress's moat)
         const cs = 4, x0 = L.x0 - 8, z0 = L.z0 - 8, nx = Math.ceil((L.x1 - L.x0 + 16) / cs) + 1, nz = Math.ceil((L.z1 - L.z0 + 16) / cs) + 1, wet = new Uint8Array(nx * nz);
         for (let b = 0; b < nz; b++) for (let a = 0; a < nx; a++) wet[b * nx + a] = vrGround(x0 + a * cs, z0 + b * cs) < L.h + 0.4 ? 1 : 0;
         const wc = (a, b) => { const e = vrWater(x0 + a * cs, z0 + b * cs).e; return [0, 1, 2].map(k => lerp(shal[k], deep[k], sstep(1, 10, e))); };
@@ -329,7 +346,7 @@
         if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
         exclPush(L.cx, L.cz, Math.max(L.x1 - L.x0, L.z1 - L.z0) / 2 + 6);
       }
-      if (P.lakes.length && !SN) out.dyn.water = tex.water;
+      if (P.lakes.length && !SN && !S.dryLakes) out.dyn.water = tex.water;
     }
 
     /* ---- the road: asphalt with its lines (S.road: white or yellow, a broken centre line, the double unbroken one through the sharper bends, the

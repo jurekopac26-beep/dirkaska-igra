@@ -58,6 +58,7 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 14 | `puntadeleste` | Punta del Este, Urugvaj | Punta del Este, Uruguay | desna | -54.965,-34.97,-54.935,-34.95 |
 | 15 | `greenpoint` | Green Point, Južna Afrika | Green Point, South Africa | leva | 18.395,-33.91,18.42,-33.895 |
 | 16 | `puertomadero` | Puerto Madero, Argentina | Puerto Madero, Argentina | desna | -58.372,-34.622,-58.355,-34.600 |
+| 17 | `morro` | Santiago de Cuba, Kuba | Santiago de Cuba, Cuba | desna | -75.885,19.962,-75.855,19.995 |
 
 ### Smučišča (1–4)
 
@@ -87,6 +88,7 @@ Krog z boksi po vzoru obstoječih cestnih dirkališč (npr. `newcastle`, `detroi
 14. **Punta del Este**: ~2,8 km po ulicah polotoka ob pristanišču (postavitev cestnih dirk električnih avtov 2014–2018). Ob obalni cesti (poimenovana po osebi) je v pasu 60 m morje na 3,3 km, plaža na 1,7 km in pristanišče z jahtami na 1,1 km. Brez kipa roke na plaži, brez imen hotelov in igralnice.
 15. **Green Point**: ~2,9 km, ulični krog ob stadionu in obali (postavitev cestne dirke električnih avtov 2023). Ob obalni cesti (Beach Road) je v pasu 60 m morje na 0,9 km in plaža na 1,2 km; cesta pride do vode na 12 m (-33.90655,18.39793). Stadion generičen. Vožnja po levi.
 16. **Puerto Madero**: ~2,5 km, ulični krog ob dokih (postavitev cestnih dirk električnih avtov 2015–2017). Voda dokov je ob ulicah na 0,6–1,4 km (ulice so poimenovane po osebah: brez imen). Oblikovanega mostu čez dok ne modeliraj po resničnem.
+17. **Santiago de Cuba**: zadnjih 0,76 km obalne ceste (Carretera de Ciudamar) do trdnjave El Morro, rahlo navzgor (odobreno 0,85 km; 200 m izteka za parkiranje po dirki). Opis: `docs/proge/morro.md`, PR #707.
 
 ## Podatki
 
@@ -165,3 +167,4 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 | C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | Yungas: ne začni (brez izletne cone, 5. 11. 2026); Ella preneseno: A10 v `docs/nove-proge-1-0.md` (del 2, N5) |
 | C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | preneseno v `docs/nove-proge-1-0.md` (del 2): Dadès A7 (PR #508), Santo Antão A8 (PR #521), Espinazo del Diablo A11 |
 | D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | odpade (Punta del Este in Puerto Madero: ne začni, brez izletne cone, 5. 11. 2026) |
+| 17 | Santiago de Cuba (odobritev uporabnika prek Mateja, 15. 11. 2026) | `proga/morro` | PR #707 (osnutek) |

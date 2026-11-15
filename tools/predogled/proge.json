@@ -439,5 +439,45 @@
   },
   "n": 16,
   "bbox": "-58.372,-34.622,-58.355,-34.600"
+ },
+ "morro": {
+  "key": "Ciudamar",
+  "sec": [
+   [
+    19.969338,
+    -75.862566
+   ],
+   [
+    19.968471,
+    -75.869652
+   ]
+  ],
+  "ime": "Santiago de Cuba, Kuba",
+  "en": "Santiago de Cuba, Cuba",
+  "vozi": "desna",
+  "uvoz": {
+   "pred": 100,
+   "grid": 200,
+   "izt": 200,
+   "za": 200,
+   "poti": [
+    "48866894"
+   ]
+  },
+  "focus": "landmark",
+  "cfg": {
+   "ground": "coast",
+   "cover": "sparse",
+   "tree": "palm",
+   "snow": "none",
+   "center": "white",
+   "fog": 14542054,
+   "bld": 15260868,
+   "roof": 11556410,
+   "sea": 1,
+   "rock": 10128500
+  },
+  "n": 17,
+  "bbox": "-75.885,19.962,-75.855,19.995"
  }
 }

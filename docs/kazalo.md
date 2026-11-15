@@ -240,6 +240,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *mountbuller* | *Mount Buller, Avstralija (test)* | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | *newcastle* | *Newcastle, Avstralija (test)* | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
+| morro | Santiago de Cuba, Kuba | morro | `js/world-morro.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | *ouninpohja* | *Ouninpohja, Finska (test)* | ouni | `js/world-ouni.js` (`buildOuni`) |
 | *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |

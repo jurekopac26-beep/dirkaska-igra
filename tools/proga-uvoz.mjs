@@ -194,9 +194,10 @@ function chainByKey(O, key) {
   return best;
 }
 // the chain lengthened at one end (atStart) by the roads that go on from it: the straightest car road (the higher class first among the nearly
-// as straight), until it is metres longer or no road goes on
-function extendChain(O, C, atStart, metres, xy) {
-  const byNode = new Map(); for (const w of O.ways) if (w.nds.length > 1 && isCar(w.tags)) for (const n of w.nds) { const L = byNode.get(n) || []; L.push(w); byNode.set(n, L); }
+// as straight), until it is metres longer or no road goes on; allow: the ids of ways closed to cars that the race takes all the same (uvoz.poti: e.g.
+// the last stretch up to a landmark, closed for the race; it may turn off more sharply)
+function extendChain(O, C, atStart, metres, xy, allow = []) {
+  const byNode = new Map(); for (const w of O.ways) if (w.nds.length > 1 && (isCar(w.tags) || allow.includes(w.id))) for (const n of w.nds) { const L = byNode.get(n) || []; L.push(w); byNode.set(n, L); }
   const own = new Set(C.way.map(w => w.id)); let added = 0;
   while (added < metres) {
     const nds = C.nds, n0 = atStart ? nds[0] : nds[nds.length - 1], n1 = atStart ? nds[1] : nds[nds.length - 2], p0 = xy(n0), p1 = xy(n1);
@@ -206,7 +207,7 @@ function extendChain(O, C, atStart, metres, xy) {
       for (const dir of [1, -1]) { const seq = []; for (let q = k; q >= 0 && q < w.nds.length; q += dir) seq.push(w.nds[q]); if (seq.length < 2) continue;
         let j = 1, d = 0; while (j < seq.length - 1 && d < 25) { d += Math.hypot(xy(seq[j])[0] - xy(seq[j - 1])[0], xy(seq[j])[1] - xy(seq[j - 1])[1]); j++; }
         const q = xy(seq[j]), v = [q[0] - p0[0], q[1] - p0[1]], ang = Math.acos(Math.max(-1, Math.min(1, (v[0] * out[0] + v[1] * out[1]) / ((Math.hypot(v[0], v[1]) || 1) * ol)))) * 180 / Math.PI;
-        const sc = ang - 6 * (RANK[w.tags.highway] || 0); if (ang < 75 && (!best || sc < best.sc)) best = { sc, w, seq }; } }
+        const sc = ang - 6 * (RANK[w.tags.highway] || 0); if (ang < (allow.includes(w.id) ? 120 : 75) && (!best || sc < best.sc)) best = { sc, w, seq }; } }
     if (!best) break;
     own.add(best.w.id); let L = 0; for (let q = 1; q < best.seq.length; q++) L += Math.hypot(xy(best.seq[q])[0] - xy(best.seq[q - 1])[0], xy(best.seq[q])[1] - xy(best.seq[q - 1])[1]);
     if (atStart) { C.nds = best.seq.slice().reverse().concat(C.nds.slice(1)); C.way = new Array(best.seq.length - 1).fill(best.w).concat(C.way); }
@@ -396,8 +397,8 @@ async function main() {
   // lengthened where the section leaves too little road for the grid before the start or the run-out past the finish
   const before = U.pred + U.grid + 20 - cum[kA], after = U.izt + 10 - (cum[cum.length - 1] - cum[kB]);
   let extA = 0, extB = 0;
-  if (before > 0) { const n0 = C.nds.length; extA = extendChain(O, C, true, before, xy); kA += C.nds.length - n0; kB += C.nds.length - n0; }
-  if (after > 0) extB = extendChain(O, C, false, after, xy);
+  if (before > 0) { const n0 = C.nds.length; extA = extendChain(O, C, true, before, xy, U.poti); kA += C.nds.length - n0; kB += C.nds.length - n0; }
+  if (after > 0) extB = extendChain(O, C, false, after, xy, U.poti);
   cum = cumOf();
   // the line: every 2 m, smoothed, the hairpins opened; each sample's OSM way (its surface)
   const P0 = C.nds.map(xy), Ls = cum[cum.length - 1];

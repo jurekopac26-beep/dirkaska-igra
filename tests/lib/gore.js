@@ -1,7 +1,7 @@
 // The checks every short road of docs/gorske-proge.md has (tests/<id>.test.js: const G = goreTrack(id); its own checks with G.check; G.done()):
 // 1. the name: "Kraj, Država" as in the plan's table, the English one too, the side of the road they drive on; an open road with four ways to drive
 //    it (the race, the time trial, the duel in the traffic, the run from the police), four checkpoints, no round of the big championship
-// 2. the stage: 2.5-3 km between the lines (the plan), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
+// 2. the stage: 2.5-3 km between the lines (the plan; goreTrack(id, { km: [a, b] }) for a shorter one), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
 //    the finish
 // 3. the data of the import (tools/proga-uvoz.mjs): the terrain and the land cover decode to their grids, the bends in order and turning the way
 //    they say, the legs of the hairpins apart and the barriers off the asphalt, the grades, the side roads in order within the road drawn, the lifts
@@ -15,7 +15,7 @@ const path = require('path');
 const { loadCore, ROOT } = require('./core.js');
 const { DT, seeded } = require('./sim.js');
 
-function goreTrack(id) {
+function goreTrack(id, o = {}) {
   const C = loadCore();
   let bad = 0, n = 0;
   const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
@@ -23,7 +23,8 @@ function goreTrack(id) {
   if (!def) { console.log('FAIL no track ' + id); process.exit(1); }
   const T = new C.Track(def), wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
   const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-  const row = fs.readFileSync(path.join(ROOT, 'docs', 'gorske-proge.md'), 'utf8').split('\n').map(l => l.split('|').map(c => c.trim())).find(c => c[2] === '`' + id + '`') || [];
+  const row = fs.readFileSync(path.join(ROOT, 'docs', 'gorske-proge.md'), 'utf8').split('\n').map(l => l.split('|').map(c => c.trim())).find(c => c[2] === '`' + id + '`') || (() => { const E = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'predogled', 'proge.json'), 'utf8'))[id] || {}; return E.ime ? ['', '', '', E.ime, E.en, E.vozi || 'desna'] : []; })();
+  const km = o.km || [2.5, 3];   // (the stage's length: 2.5-3 km in the plan; a short track with a landmark its own, docs/proge-po-drzavah.md)
   const left = /^leva/.test(row[5] || '');
 
   // 1. the name, the ways to drive it
@@ -32,7 +33,7 @@ function goreTrack(id) {
   check('track: an open road with four ways to drive it (race, time trial, traffic, police), 4 checkpoints, not a round of the big championship',
     def.open && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes(id), `${T.cpS.length} checkpoints`);
   // 2. the stage
-  check('stage: 2.5-3 km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish', T.raceLen > 2450 && T.raceLen < 3050 &&
+  check(`stage: ${km.join('-')} km between the lines, the altitudes the road's own, room for 22 on the grid and a run-out past the finish`, T.raceLen > km[0] * 1000 - 50 && T.raceLen < km[1] * 1000 + 50 &&
     Math.abs(T.altAt(T.hStart) - def.alt[0]) < 1.5 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1.5 && T.startS >= 13 + 21 * 7.5 && T.len - T.finishS >= 100,
     `race ${Math.round(T.raceLen)} m, ${def.alt.join(' -> ')} m, ${Math.round(T.startS)} m below the start, ${Math.round(T.len - T.finishS)} m past the finish`);
   // 3. the data
