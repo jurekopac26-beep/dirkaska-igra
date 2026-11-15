@@ -69,11 +69,11 @@
   const inPoly = (x, z, P) => { let a = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > z) !== (P[j][1] > z) && x < (P[j][0] - P[i][0]) * (z - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) a = !a; return a; };
   const segD = (x, z, L) => { let b = 1e9; for (let i = 0; i + 1 < L.length; i++) { const [ax, az] = L[i], [bx, bz] = L[i + 1], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz))); b = Math.min(b, Math.hypot(ax + dx * t - x, az + dz * t - z)); } return b; };
 
-  function extra(ctx) {
+  /* THE LANDMARK, one replaceable function (decision 15. 11. 2026, docs/odlocitve.md, PR #701: the main landmark will come from Blender as a .glb in
+     assets/landmarks/): the old stone village on the canyon's wall. To swap it, replace this function's body with the model's placement; it returns the
+     footprints it took ([x, z, r]) and keeps the scenery out of them with exclPush. Called first in extra (the random draws of the rest follow it). */
+  function landmark(ctx, roadAt) {
     const { scen, R, exclPush } = ctx, A = World.api, T = A.T, gH = A.vrGround;
-    // the road's height and distance near (x, z): the nearest of the track's samples
-    const roadAt = (x, z) => { let bd = 1e9, bi = 0; for (let i = 0; i < T.N; i += 2) { const d = Math.hypot(T.px[i] - x, T.pz[i] - z); if (d < bd) { bd = d; bi = i; } } return [bd, T.hy[bi], bi]; };
-
     /* the village: spots on the canyon's side of the road, 24-62 m out, 6-48 m under the road, on the wall (steep), clustered round the viewpoint */
     const S0 = T.startS + 115, S1 = T.startS + 385, placed = [];
     for (let s = S0; s < S1; s += 3.5) {
@@ -91,6 +91,15 @@
         placed.push([x, z, Math.max(w, dd) * 0.5]); exclPush(x, z, Math.max(w, dd) * 0.75);
       }
     }
+    return placed;
+  }
+
+  function extra(ctx) {
+    const { scen, R, exclPush } = ctx, A = World.api, T = A.T, gH = A.vrGround;
+    // the road's height and distance near (x, z): the nearest of the track's samples
+    const roadAt = (x, z) => { let bd = 1e9, bi = 0; for (let i = 0; i < T.N; i += 2) { const d = Math.hypot(T.px[i] - x, T.pz[i] - z); if (d < bd) { bd = d; bi = i; } } return [bd, T.hy[bi], bi]; };
+
+    const placed = landmark(ctx, roadAt);
 
     /* the palms of the oasis: on the canyon's floor (over 50 m under the road), in the orchard or along the river, within about 150 m of the road */
     let np = 0;
