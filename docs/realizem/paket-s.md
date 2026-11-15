@@ -254,3 +254,13 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #699. Obe progi imata v `PROG
 - Postaja: ravna streha, višina do ploščadi vrvi (2 nadstropji); ploščad nad streho nadomesti prejšnji kvader.
 - `rise` do 21 m: postaja in velike hiše stojijo na strmem DEM, enaki kamniti podstavki so bili že prej. Postaja je 47 m od ceste.
 - Obremenitev: 156 klicev in 361 tisoč oglišč, na najbolj obremenjenem mestu 187 / 436 (enako kot prej).
+
+## S4: Štajerska (veja `realizem/s4-stajerska`, nad #699; 15. 11. 2026)
+
+Odločitev Mateja na tabli #382 (15. 11. 2026). PR #713. Graditelj je skupni `js/world-rbring.js` (Štajerska, Bathurst, Rio, Crystal Palace): spremembe so samo v vnosih Štajerske, vrstni red R()/RX() je enak, reference drugih prog se ne spremenijo.
+- **Hiš ni**: v pasu do 64 m od ceste sta v OSM samo 2 stavbi (ena v paddocku za boksi, ena 62–71 m od ceste), zato ni kompleta stavb in ne vnosa v `PROGE`.
+- **Tribune na obrisih iz OSM** (`def.stands`, 9. polje `front`: sprednji rob od sredine ceste, število ali [na začetku, na koncu]): Start-Ziel 21 m, Steiermark 20 m, tribuna na hribu v treh kosih (43 m; 32 → 24 m; 31 → 50 m), T10 48 → 32 m. Sprednji rob ostane vsaj 2,6 m za ograjo. T3, Nord in T9 v OSM nimajo para blizu ceste in ostanejo kot prej (vprašanje v PR); Mitte, Ost in Nord iz OSM so 44–113 m od ceste in niso narejene.
+- **Krilo** na Start-Ziel se premakne s tribuno (`wing[2]` 6,9 m).
+- **Boksi**: stavba na obrisu iz OSM (`pitBuilding` −165…140, prej krajša); spredaj ostane pri garažah. Ravna tla kompleksa (`pitPad` −235…140) so na začetku enaka kot prej, vozna površina (`pit`) se ne spremeni.
+- **Prehod pred tribunami** (`World.people`, skupni): tlakovan od tribune do ograje, z `def.standApron` največ 6 m (privzeto 14, druge proge enake), naprej trava.
+- Obremenitev: 208 klicev in 490 tisoč oglišč, na najbolj obremenjenem mestu 247 / 664 (prej 215 / 262 klicev in 480 / 669 tisoč oglišč).
