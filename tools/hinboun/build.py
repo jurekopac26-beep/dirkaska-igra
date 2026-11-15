@@ -46,7 +46,7 @@ DESC_EN = ('A mountain road in Laos: road 8 climbs through the limestone karst o
 # at 18.17808 N, 104.48406 E, ~22 m from the road)
 LOOKOUT = (18.17808, 104.48406)
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [205, 215, 231], 'wet': {'cs': [236, 248, 266]}, 'winter': {'cs': [230, 241, 259]}}
+MEDALS = {'cs': [158, 166, 179], 'wet': {'cs': [182, 191, 206]}, 'winter': {'cs': [177, 186, 200]}}   # (dry: the autopilot 156.6 s; the wet and the winter by the ratios of the similar tracks, not driven)
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
