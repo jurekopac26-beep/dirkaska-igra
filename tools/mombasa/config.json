@@ -1,19 +1,76 @@
 {
   "id": "mombasa",
-  "about": "Mombasa, Kenya (id mombasa): a city course along the shore road above the Likoni channel and up past the old fort at the harbour entrance (draft route, to be checked against OSM)",
-  "box": [-4.080, 39.650, -4.050, 39.690],
-  "closed": false,
-  "dist": {"grid": 500},
-  "route": [
-    [-4.0735, 39.6620, null, "start: the shore road above the Likoni channel, eastbound (draft)"],
-    [-4.0715, 39.6700, null, "the shore road (draft)"],
-    [-4.0675, 39.6770, null, "the shore road turns north (draft)"],
-    [-4.0640, 39.6790, null, "past the old fort (draft)"],
-    [-4.0620, 39.6740, null, "finish (draft)"]
+  "about": "Mombasa, Kenya (id mombasa): a city course from the town centre east past the old Portuguese fort at the harbour entrance, south through the residential quarter to the shore road above the Likoni channel and west along it (docs/proge/mombasa.md)",
+  "box": [
+    -4.08,
+    39.66,
+    -4.055,
+    39.685
   ],
-  "prefer": [],
+  "closed": false,
+  "dist": {
+    "grid": 500
+  },
+  "route": [
+    [
+      -4.0627,
+      39.6716,
+      "Nkrumah Road",
+      "start: the town centre, eastbound"
+    ],
+    [
+      -4.0633,
+      39.6741,
+      "Nkrumah Road",
+      ""
+    ],
+    [
+      -4.0642,
+      39.6781,
+      null,
+      "towards the harbour entrance"
+    ],
+    [
+      -4.0624,
+      39.678,
+      "Fort Jesus Road",
+      "the old fort (about 50 m)"
+    ],
+    [
+      -4.0647,
+      39.6787,
+      null,
+      "south past the fort"
+    ],
+    [
+      -4.0723,
+      39.68,
+      "Mama Ngina Drive",
+      "the shore road above the channel"
+    ],
+    [
+      -4.0761,
+      39.6667,
+      "Mama Ngina Drive",
+      "finish at the west end of the shore road"
+    ]
+  ],
+  "prefer": [
+    "Nkrumah Road",
+    "Fort Jesus Road",
+    "Mama Ngina Drive"
+  ],
   "geoRoads": [],
   "geoWater": [],
-  "marks": [],
+  "marks": [
+    [
+      "Trdnjava",
+      "Fortress",
+      "castle",
+      [
+        "w94444068"
+      ]
+    ]
+  ],
   "places": []
 }
