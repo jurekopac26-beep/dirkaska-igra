@@ -43,10 +43,10 @@
  },
  "rbring": {
   "calls": 208,
-  "maxCalls": 247,
-  "kverts": 490,
-  "maxKverts": 664,
-  "jsMs": 2.08
+  "maxCalls": 246,
+  "kverts": 495,
+  "maxKverts": 666,
+  "jsMs": 2.62
  },
  "suzuka": {
   "calls": 192,
