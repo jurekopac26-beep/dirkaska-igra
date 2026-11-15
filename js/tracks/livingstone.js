@@ -31,7 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the old bridge over the gorge, metres after the start line (Core: fenceRuns leaves the run of the barrier out there; the bridge's own railing is the world's)
     bridges: [[2884.3, 3086.1]],
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {cs:[120,126,135],wet:{cs:[138,145,156]},winter:{cs:[135,142,152],wet:{cs:[165,173,186]}}},
+    medals: {cs:[88,92,99],wet:{cs:[101,106,115]},winter:{cs:[99,104,112],wet:{cs:[121,127,136]}}},
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck], a cyclist every so many metres each way
     traffic: { mix: [0.6, 0.18, 0.1, 0.08, 0.04], bike: 3000 },
     police: { label: 'POLICE', band: '#1d3f86', text: '#ffffff' }, escTo: 'Na drugi breg',

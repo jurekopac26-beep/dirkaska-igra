@@ -54,7 +54,7 @@ DESC_EN = ('A course by Livingstone in Zambia: down the trunk road south of the 
            'the gorge of the Zambezi by the falls and over the old steel arch bridge, a hundred metres above the river, to the far bank. '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [120, 126, 135], 'wet': {'cs': [138, 145, 156]}, 'winter': {'cs': [135, 142, 152], 'wet': {'cs': [165, 173, 186]}}}
+MEDALS = {'cs': [88, 92, 99], 'wet': {'cs': [101, 106, 115]}, 'winter': {'cs': [99, 104, 112], 'wet': {'cs': [121, 127, 136]}}}
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 

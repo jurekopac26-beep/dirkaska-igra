@@ -65,8 +65,9 @@ for (const id of ids) {
   }
   check(`${id}: the far level lighter than the near one`, verts.far < verts.near, `${verts.near} > ${verts.far}`);
   const B = verts.box || [0, 0, 0, 0, 0, 0];
+  // (the track's own heights: Livingstone's bridge reaches down to its seats in the gorge, ~90 m below the deck and the start)
   check(`${id}: about its own place (the model's middle within 30 m of (0, 0), at most 400 m across, its heights metres above the sea)`,
-    Math.abs((B[0] + B[1]) / 2) < 30 && Math.abs((B[4] + B[5]) / 2) < 30 && B[1] - B[0] < 400 && B[5] - B[4] < 400 && B[2] > -50 && B[3] < 5000,
+    Math.abs((B[0] + B[1]) / 2) < 30 && Math.abs((B[4] + B[5]) / 2) < 30 && B[1] - B[0] < 400 && B[5] - B[4] < 400 && B[2] > -150 && B[3] < 5000,
     `x ${B[0].toFixed(0)}..${B[1].toFixed(0)}, y ${B[2].toFixed(0)}..${B[3].toFixed(0)}, z ${B[4].toFixed(0)}..${B[5].toFixed(0)}`);
   const own = tracks.find(t => new RegExp(`id:\\s*'${id}'`).test(t));
   check(`${id}: placed by a world file (World.znamenitost.add('${id}', ...)) of a real track (not a test one, not pending)`,

@@ -7,7 +7,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | # | Proga | Država | Vrsta | Kdo | Stanje |
 |---|---|---|---|---|---|
 | 1 | Luanda | Angola | stavba: trdnjava na griču | jure.kopac26 | pripravljena (#711) |
-| 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | čaka (veja `proge/luanda`) |
+| 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | model in proga narejena, čaka v #719 (veja `proge/livingstone`; čez most v Zimbabve) |
 | 3 | *zamenjava* (bil Antananarivo) | Madagaskar ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 4 | Mombasa | Kenija | stavba | jure.kopac26 | čaka |
 | 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |

@@ -8,6 +8,7 @@ import { serve, launch, openGame, startTrack, trackIds, najmanj, checker } from 
 
 const T = checker('graphics: car glint, water, worn tarmac');
 const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno', 'luanda'];   // (with a shore band; Livorno: the Ligurian Sea; Luanda: its bay; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
+const GORGE = ['livingstone'];   // (water without a shore band: Livingstone's Zambezi at the bottom of its gorge, ~100 m below the road)
 const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass and the Moki Dugway: gravel roads)
 const srv = await serve();
 const browser = await launch();
@@ -39,7 +40,7 @@ try {
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
     const wet = WATER.includes(id);
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
-    if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
+    if ((wet || pk || GORGE.includes(id)) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
     const worn = !NO_WEAR.includes(id);
     if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < 500 || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));
     if (why.length) bad.push(id + ': ' + why.join('; '));
