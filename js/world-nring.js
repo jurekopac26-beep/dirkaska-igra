@@ -62,21 +62,30 @@
       const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i] + nrBankY(i, side * w), lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
       return [[w, 0.0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
     };
+    // (the rows go through scratch arrays: RB.row copies the numbers at once, so each row needs no arrays of its own; the same values as Pt / shade)
+    const nO = offs.length, sP = offs.map(() => [0, 0, 0]), sC = offs.map(() => [0, 0, 0]), sU = offs.map(() => [0, 0]), sP4 = [0, 1, 2, 3].map(() => [0, 0, 0]), sU4 = [0, 1, 2, 3].map(() => [0, 0]), PtS = (p, i, o, y) => { p[0] = T.px[i] + T.nx[i] * o; p[1] = T.hy[i] + y + nrBankY(i, o); p[2] = T.pz[i] + T.nz[i] * o; return p; };
+    const wl = [0.94, 0.94, 0.9], wlC = [wl, wl, wl, wl], lO = [-w + 0.2, -w + 0.5, w - 0.5, w - 0.2];
+    const kcw = T.curbW, kpf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + kcw - 0.12, 0.085], [w + kcw + 0.02, 0.03]], ksh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), kus = [0, 0.1, 0.92, 1], kO = [[3, 2, 1, 0], [0, 1, 2, 3]];
+    const kC = kO.map(o => o.map(k => ksh[k]));
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
       let pr = -1, pl = -1, pk = [-1, -1];
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
-        const i = ii % N, v = ii * ds / tileL;
-        const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
-        if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
-        const wl = [0.94, 0.94, 0.9], l = gl.row([Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], [wl, wl, wl, wl]);
+        const i = ii % N, v = ii * ds / tileL, rl = T.rl[i], bk = brk[i], st = secT[i];
+        for (let q = 0; q < nO; q++) { const o = offs[q], c = sC[q], u = sU[q]; PtS(sP[q], i, o, 0.02);
+          let k = (0.8 - (0.15 + 0.1 * bk) * Math.exp(-((o - rl) * (o - rl)) / 5)) * st; if (Math.abs(o) > w * 0.92) k -= 0.03;   // (shade)
+          c[0] = k; c[1] = k; c[2] = k * 1.02; u[0] = (o + w) / tileL; u[1] = v; }
+        const r = gr.row(sP, sC, sU);
+        if (pr >= 0) gr.link(pr, r, 0, nO - 1); pr = r;
+        for (let q = 0; q < 4; q++) PtS(sP4[q], i, lO[q], 0.034);
+        const l = gl.row(sP4, wlC);
         if (pl >= 0) { const bs = bowl(i) ? T.bankSide[i] : 0; if (bs >= 0) gl.link(pl, l, 0, 1); if (bs <= 0) gl.link(pl, l, 2, 3); } pl = l;   // (no edge line along a bowl's concrete)
-        for (const side of [-1, 1]) {
-          const si = side > 0 ? 1 : 0;
+        for (let si = 0; si < 2; si++) {
+          const side = si ? 1 : -1;
           if (kerb[si][i]) {   // red/white kerb in 1 m blocks: a sloped inner edge, a flat top, a low outer lip
-            const cw = T.curbW, pf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + cw - 0.12, 0.085], [w + cw + 0.02, 0.03]], v = ii * ds / 2;
-            const sh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), us = [0, 0.1, 0.92, 1], o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];
-            const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], v]));
+            const v = ii * ds / 2, o = kO[si];
+            for (let q = 0; q < 4; q++) { const k = o[q]; PtS(sP4[q], i, side * kpf[k][0], kpf[k][1]); sU4[q][0] = kus[k]; sU4[q][1] = v; }
+            const rk = gk.row(sP4, kC[si], sU4);
             if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk;
           } else pk[si] = -1;
         }
@@ -110,13 +119,14 @@
     const KND = new Uint8Array(N); for (let i = 0; i < N; i++) KND[i] = onBridge(i) ? 2 : t13(i) ? 1 : 0;
     const kind = (i) => KND[i];   // 0 armco, 1 wall + fence, 2 parapet
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.72, 0.72, 0.7], concD = [0.6, 0.6, 0.58];
+    const RRC0 = [[steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]]], RRC1 = [[concD, conc, conc, [0.84, 0.84, 0.82], [0.8, 0.8, 0.78]]]; RRC0.push(RRC0[0].slice().reverse()); RRC1.push(RRC1[0].slice().reverse());
+    const RRO0 = [0, 0, 0, 0, 1], RRO1 = [0, 0, 0, 0, 1], RRY0 = [0.32, 0.6, 0.66, 0.95, 0.95], RRY1 = [-0.4, 0.1, 0, 0, 0], RRP = [0, 1, 2, 3, 4].map(() => [0, 0, 0]);
     const railRow = (gr, i, side, k) => {   // guardrail / wall cross-section at sample i (rows run so that the faces look at the road)
       const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = k === 1 ? 1.05 : 1.15;
       const o2 = side * (bar + (k === 0 ? 0.42 : 0.45));   // the top: the rail's back (a W-beam is ~0.3 m deep) / the wall's thickness, seen from the high cameras
-      let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
-      let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.84, 0.84, 0.82], [0.8, 0.8, 0.78]];
-      if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
-      return gr.row(p, c);
+      const O = k === 0 ? RRO0 : RRO1, Y = k === 0 ? RRY0 : (RRY1[2] = h - 0.1, RRY1[3] = RRY1[4] = h, RRY1), so = side < 0;   // (into scratch rows: RB.row copies them)
+      for (let q = 0; q < 5; q++) PtS(RRP[so ? 4 - q : q], i, O[q] ? o2 : o, Y[q]);
+      return gr.row(RRP, k === 0 ? RRC0[so ? 1 : 0] : RRC1[so ? 1 : 0]);
     };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB();
@@ -366,7 +376,10 @@
        nobody, both sides of the T13 straight, groups along Döttinger Höhe and small groups everywhere; chain link in front of the bigger crowds ---- */
     {
       const fanE = new Set(excl.slice(crE0)), bldE = new Set(excl.slice(crB0, crB1));   // (the famous places' and the buildings' tree exclusions are large; the new crowds may stand inside them, the footprints are culled)
-      const hard = (x, z) => { const L = eh.get(Math.floor(x / EHC) * 65536 + Math.floor(z / EHC)); if (!L) return false; for (const e of L) { if (fanE.has(e) || bldE.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+      const hardC = new Map();   // (per cell: its circles without the famous places' and the buildings', in the same order; eh does not change during the runs)
+      const hard = (x, z) => { const ck = Math.floor(x / EHC) * 65536 + Math.floor(z / EHC); let L = hardC.get(ck);
+        if (L === undefined) { const L0 = eh.get(ck); L = L0 ? L0.filter(e => !fanE.has(e) && !bldE.has(e)) : null; hardC.set(ck, L); }
+        if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
       const M = { first: 1.2, gap: 1.15, excluded: hard, below: 3, above: 8, sit: 0.3, flag: 0.07 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) fence[side > 0 ? 1 : 0][ii] = 1; return n; };
@@ -455,15 +468,15 @@
           if (r1 > p) {   // no tree by the land cover: the edge of the woods may still grow here
             if (far || cl === 1 || cl === 3) continue;
             const e = nrEdge(x, z); if (!e || crH(x, z, 5) >= e) continue;
-            let dd = 99; if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0) dd = nn.dd; } if (dd < 3.2 || (dd < 7 && crH(x, z, 6) < 0.35) || excluded(x, z)) continue;
+            if (excluded(x, z)) continue; let dd = 99; if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0) dd = nn.dd; } if (dd < 3.2 || (dd < 7 && crH(x, z, 6) < 0.35)) continue;
             const h = crH(x, z, 7), hq = crH(x, z, 8), young = dd < 8 || h < 0.5, sp = young ? (h < 0.3 ? 2 : h < 0.42 ? 0 : 1) : P.n1(x * 2.2 + 500, z * 2.2) < 0.55 ? 0 : 1;
             const hgt = sp === 2 ? Math.min(2.4 + hq * 3.6, (dd - 0.6) * 1.8) : young ? 4.5 + hq * 4 : sp === 0 ? 9 + hq * 5 : 7.5 + hq * 4.5, cv = 0.86 + crH(x, z, 9) * 0.28;   // (a bush by the rails stays clear of them)
             if (sp !== 2 && !clear(x, z, hgt * 0.28)) continue;
             if (plant(sp, false, x, nrGround(x, z) - 0.1, z, crH(x, z, 10) * TAU, hgt * (sp === 2 ? 1.15 : sp === 1 ? 1.05 : 0.95), hgt, [cv, cv, cv * (0.95 + hq * 0.1)])) nEdge++;
             continue;
           }
+          if (excluded(x, z)) continue;   // (before nrNear: both only skip the spot, neither draws from R; NRN is read only right after nrH's own nrNear)
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.2) continue; if (nn.i >= 0 && nn.dd < 7 && r2 < 0.35) continue; }   // (farther out no tree can reach the barriers)
-          if (excluded(x, z)) continue;
           const y = nrGround(x, z), sp = cl === 1 ? (P.n1(x * 2.2 + 500, z * 2.2) < 0.55 + (R() - 0.5) * 0.3 ? 0 : 1) : cl === 2 ? 2 : 1;
           const hgt = sp === 0 ? (10 + R() * 5.5) * (far ? 1.15 : 1) : sp === 1 ? (8.5 + R() * 4.5) * (far ? 1.2 : 1) : 1.6 + R() * 2.4, wid = hgt * (sp === 0 ? 1 : sp === 1 ? 0.95 + R() * 0.25 : 1.1);
           const cv = 0.86 + R() * 0.28; plant(sp, far, x, y - 0.1, z, R() * TAU, wid, hgt, [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
@@ -489,9 +502,12 @@
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
           const i = ii % N, wr = 0.2 + 0.6 * sstep(0.4, 0.85, P.n7(T.px[i], T.pz[i])), vw = [lerp(vg[0], dirt[0], wr), lerp(vg[1], dirt[1], wr), lerp(vg[2], dirt[2], wr)];
           for (const side of [-1, 1]) {
-            const si = side > 0 ? 1 : 0, vr = vergeRow(i, side), pts = vr.map(([o, h]) => Pt(i, side * o, h)), cols = vr.map(([o], k) => { const p = pts[k]; if (k === 0) return vw; if (k < 3) return vg; const gc = nrGCol(p[0], p[2]); return k === 3 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; });
-            const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
-            const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
+            const si = side > 0 ? 1 : 0, vr = vergeRow(i, side), nv = vr.length, pts = new Array(nv), cols = new Array(nv), uvs = new Array(nv);
+            for (let k = 0; k < nv; k++) pts[k] = Pt(i, side * vr[k][0], vr[k][1]);
+            for (let k = 0; k < nv; k++) { if (k === 0) { cols[k] = vw; continue; } if (k < 3) { cols[k] = vg; continue; } const p = pts[k], gc = nrGCol(p[0], p[2]); cols[k] = k === 3 ? [lerp(vg[0], gc[0], 0.5), lerp(vg[1], gc[1], 0.5), lerp(vg[2], gc[2], 0.5)] : gc; }
+            if (side < 0) { pts.reverse(); cols.reverse(); }   // rows run left -> right
+            for (let k = 0; k < nv; k++) { const p = pts[k]; uvs[k] = [p[0] / 14, -p[2] / 14]; }   // (the terrain tiles' grass scale: no seam)
+            const rv = gv.row(pts, cols, uvs);
             if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
           }
         }
