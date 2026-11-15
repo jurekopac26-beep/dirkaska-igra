@@ -79,19 +79,26 @@
     const d = caGH(i + 1, j + 1); return d + (1 - u) * (caGH(i, j + 1) - d) + (1 - v) * (caGH(i + 1, j) - d);
   }
   function caSlope(x, z) { const a = caGround(x - 2.5, z), b = caGround(x + 2.5, z), c = caGround(x, z - 2.5), d = caGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
-  function caSnow(x, z, A, ny, sz) {   // how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
+  const CALC = [0, 0, 0, 0, 0];   // caLC4: the shares of land cover classes 1-4 around (x, z), each as API.vrLCf gives it (the same sums), in one pass
+  function caLC4(x, z) {
+    const P = API.VR, L = P.L, lc = P.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const cl = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? -1 : lc[b * L.nx + a]), c00 = cl(i, j), c10 = cl(i + 1, j), c01 = cl(i, j + 1), c11 = cl(i + 1, j + 1);
+    for (let c = 1; c <= 4; c++) CALC[c] = ((c00 === c ? 1 : 0) * (1 - u) + (c10 === c ? 1 : 0) * u) * (1 - v) + ((c01 === c ? 1 : 0) * (1 - u) + (c11 === c ? 1 : 0) * u) * v;
+    return CALC;
+  }
+  function caSnow(x, z, A, ny, sz, s4) {   // (s4: the share of land cover 4 when the caller has it) how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
     // components): above ~3350 m on the sunny north faces, from ~2690 m on the shady south faces (the southern hemisphere), in patches and in the
     // hollows, off the steepest faces; and the snowfields WorldCover maps (lc 4)
     const P = API.VR, line = 3020 - 330 * clamp(sz * 2.4, -1, 1) + (P.c4(x, z) - 0.5) * 240;
     const k = sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, P.c5(x, z) + 0.3 * sstep(line, line + 450, A));
-    return Math.max(k, API.vrLCf(x, z, 4) * sstep(0.32, 0.6, ny));
+    return Math.max(k, (s4 === undefined ? API.vrLCf(x, z, 4) : s4) * sstep(0.32, 0.6, ny));
   }
   function caCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the scree and rock in grey-brown, banded with rust and ochre (the
     // volcanic layers of the range), pale with ash here and there, darker and banded on the steep faces; on the slopes the scree's fans and runnels down the
     // fall line (sx, sz: the ground's east and south components); straw in patches where the bunch grass grows (lc 1: thin on the scree, the tufts
     // themselves are the plants), olive under the shrubs (lc 2), gravel yards in Portillo (lc 3), the summer snow, a trodden gravel verge
     const P = API.VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), r = P.c3(x, z), f = P.n4(x, z);
-    const gr = API.vrLCf(x, z, 1), sh = API.vrLCf(x, z, 2), se = API.vrLCf(x, z, 3);
+    const LC = caLC4(x, z), gr = LC[1], sh = LC[2], se = LC[3], s4 = LC[4];
     let R = 0.575, G = 0.555, B = 0.53;
     const rust = sstep(0.6, 0.86, m), och = sstep(0.58, 0.84, q) * (1 - 0.6 * rust), dark = sstep(0.6, 0.84, r), ash = sstep(0.6, 0.86, P.c4(x * 1.4, z * 1.4)) * (1 - rust) * (1 - dark);
     R = lerp(R, 0.62, rust); G = lerp(G, 0.5, rust); B = lerp(B, 0.43, rust);
@@ -107,7 +114,7 @@
     R = lerp(R, 0.69, gk); G = lerp(G, 0.64, gk); B = lerp(B, 0.5, gk);
     R = lerp(R, 0.52, sh * 0.6); G = lerp(G, 0.52, sh * 0.6); B = lerp(B, 0.35, sh * 0.6);
     R = lerp(R, 0.68, se * 0.5); G = lerp(G, 0.65, se * 0.5); B = lerp(B, 0.6, se * 0.5);
-    const sn = caSnow(x, z, A, ny, sz); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
+    const sn = caSnow(x, z, A, ny, sz, s4); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.45 * (1 - sn); R = lerp(R, 0.6, t); G = lerp(G, 0.57, t); B = lerp(B, 0.52, t); }
     CACOL[0] = R; CACOL[1] = G; CACOL[2] = B; return CACOL;
   }
