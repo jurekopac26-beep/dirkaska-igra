@@ -1391,5 +1391,26 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "luanda": {
+  "meshes": 347,
+  "verts": 309080,
+  "instances": 782,
+  "props": 0,
+  "crowd": 45,
+  "world": "808868fe",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "b0328509",
+   "-:MeshPhongMaterial": "de617b90",
+   "crowd:MeshLambertMaterial": "f328cadd",
+   "flags:MeshLambertMaterial": "7307d96c",
+   "ao:MeshBasicMaterial": "5f430c1e",
+   "tyremarks:MeshBasicMaterial": "b1124dba",
+   "roadwear:MeshLambertMaterial": "b8ff8a8b",
+   "life:MeshLambertMaterial": "98d13852",
+   "lifeShadow:MeshBasicMaterial": "cb5bcbdc"
+  }
  }
 }
