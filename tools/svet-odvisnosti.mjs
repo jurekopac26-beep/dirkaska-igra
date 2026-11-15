@@ -134,13 +134,15 @@ export function manifest(html) {
   return { lazy, eager: A.files.filter(f => eager.has(f)), themes, tracks: real, problems };
 }
 
-// index.html, kot mora biti: vrstica lene datoteke je <link rel="x-lazy-script" data-svet="<teme>" href="…"> na mestu, kjer je bila
+// ključ lene datoteke za js/leno.js: svet-<ime> (js/world-<ime>.js) ali svet-podatki-<ime> (js/data/<ime>.js)
+export const lazyKey = (f) => 'svet-' + f.replace(/^js\/world-/, '').replace(/^js\/data\//, 'podatki-').replace(/\.js$/, '');
+// index.html, kot mora biti: vrstica lene datoteke je <link rel="x-lazy-script" data-lazy="<ključ>" data-svet="<teme>" href="…"> na mestu, kjer je bila
 // <script src>; datoteka, ki se je ne da več naložiti leno (rabi jo kaj ob zagonu), spet <script src>
 export function rewrite(html) {
   const M = manifest(html);
-  return html.replace(/^(?:<script src="(js\/(?:world-[a-z0-9]+|data\/[a-z0-9]+)\.js)"><\/script>|<link rel="x-lazy-script" data-svet="[^"]*" href="(js\/(?:world-[a-z0-9]+|data\/[a-z0-9]+)\.js)">)$/gm, (line, a, b) => {
+  return html.replace(/^(?:<script src="(js\/(?:world-[a-z0-9]+|data\/[a-z0-9]+)\.js)"><\/script>|<link rel="x-lazy-script" data-lazy="[^"]*" data-svet="[^"]*" href="(js\/(?:world-[a-z0-9]+|data\/[a-z0-9]+)\.js)">)$/gm, (line, a, b) => {
     const f = a || b;
-    return M.lazy.includes(f) ? `<link rel="x-lazy-script" data-svet="${M.themes[f].join(' ')}" href="${f}">` : `<script src="${f}"></script>`;
+    return M.lazy.includes(f) ? `<link rel="x-lazy-script" data-lazy="${lazyKey(f)}" data-svet="${M.themes[f].join(' ')}" href="${f}">` : `<script src="${f}"></script>`;
   });
 }
 

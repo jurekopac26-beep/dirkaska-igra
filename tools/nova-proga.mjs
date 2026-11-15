@@ -109,7 +109,7 @@ if (!onlyMedals) {
   if (!h.includes('js/tracks/' + id + '.js')) { const L = [...h.matchAll(/<script src="js\/tracks\/[a-z0-9]+\.js[^"]*"><\/script>\n/g)].pop(); h = h.slice(0, L.index + L[0].length) + `<script src="js/tracks/${id}.js"></script>\n` + h.slice(L.index + L[0].length); }
   if (!h.includes('js/world-gore.js')) h = h.replace(/<script src="js\/render\.js/, '<script src="js/world-gore.js"></script>\n<script src="js/render.js');
   // svet nove proge se naloži šele ob potrebi (World.need, I17 korak 5): lena povezava; node tools/svet-odvisnosti.mjs --check
-  if (!h.includes('js/world-' + id + '.js')) h = h.replace(/<script src="js\/render\.js/, `<link rel="x-lazy-script" data-svet="${id}" href="js/world-${id}.js">\n<script src="js/render.js`);
+  if (!h.includes('js/world-' + id + '.js')) h = h.replace(/<script src="js\/render\.js/, `<link rel="x-lazy-script" data-lazy="svet-${id}" data-svet="${id}" href="js/world-${id}.js">\n<script src="js/render.js`);
   if (h !== rd('index.html')) wr('index.html', h);
   let r = rd('README.md');
   if (!r.includes('(docs/proge/' + id + '.md)')) { const k = r.indexOf('\n\nZa izbris · samo za testiranje'); r = r.slice(0, k) + `\n- [${name}](docs/proge/${id}.md)` + r.slice(k); }

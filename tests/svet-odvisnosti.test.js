@@ -1,5 +1,5 @@
 // Svetovi, ki se naložijo šele ob potrebi (I17, korak 5, docs/hitro-nalaganje.md; tools/svet-odvisnosti.mjs): index.html ima lene
-// povezave (<link rel="x-lazy-script" data-svet="<teme>" href>) natanko za datoteke, ki jih orodje izračuna iz kode svetov; lena je samo
+// povezave (<link rel="x-lazy-script" data-lazy="svet-<ime>" data-svet="<teme>" href>, ključi za js/leno.js) natanko za datoteke, ki jih orodje izračuna iz kode svetov; lena je samo
 // datoteka, ki jo rabijo samo prave proge (zamrznjene, testne in proge na odločanju ostanejo ob zagonu, CLAUDE.md »Testne proge«); lena
 // datoteka rabi samo datoteke ob zagonu in lene pred seboj za iste teme; vsaka lena datoteka spada vsaj k eni pravi progi.
 //   node tests/svet-odvisnosti.test.js
@@ -21,6 +21,7 @@ const ok = (c, m) => { if (!c) { fails++; console.log('FAIL ' + m); } };
   for (const f of M.lazy) {
     ok(!html.includes(`<script src="${f}"`), f + ': lena, a v index.html še <script src>');
     ok(M.themes[f] && M.themes[f].length, f + ': lena brez proge');
+    ok(html.includes(`data-lazy="${T.lazyKey(f)}" data-svet=`), f + ': lena brez ključa ' + T.lazyKey(f) + ' (js/leno.js)');
   }
   // zamrznjene proge: vse njihove datoteke ob zagonu
   const A = T.analyse(html);

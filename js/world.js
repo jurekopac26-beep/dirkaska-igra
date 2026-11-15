@@ -1438,29 +1438,19 @@ const World = (function () {
       valueNoise2, waterMat, shoreBand, waterline, mergeBands, addShore, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, swayMat, treeMark, treesTo, nrLump, pitOpen, pitKerbs, pitJunction };
   }
 
-  /* ---- the worlds loaded only when needed (I17, docs/hitro-nalaganje.md, step 5): a real track's builder and its data are
-     <link rel="x-lazy-script" data-svet="<themes>" href="…"> in index.html (in their load order; tools/svet-odvisnosti.mjs writes them
-     and checks that each needs only what loads at start or before it). World.need(theme): a Promise, done once they have loaded ---- */
-  const NEED = {}, LOADED = {};
-  function lazyTags(theme) {
-    if (typeof document === 'undefined' || !document.querySelectorAll) return [];
-    return [...document.querySelectorAll('link[rel="x-lazy-script"][data-svet]')].filter(l => l.getAttribute('data-svet').split(' ').includes(theme));
-  }
-  function loadTag(l) {
-    const href = l.getAttribute('href');
-    return LOADED[href] || (LOADED[href] = new Promise((ok, no) => {
-      const sc = document.createElement('script'); sc.src = href; sc.async = false;
-      sc.onload = () => ok(); sc.onerror = () => { delete LOADED[href]; sc.remove(); no(new Error('World.need: ' + href + ' did not load')); };
-      document.head.appendChild(sc);
-    }));
-  }
+  /* ---- the worlds loaded only when needed (I17, docs/hitro-nalaganje.md, step 5): a real track's builder and its data are lazy links of
+     js/leno.js, <link rel="x-lazy-script" data-lazy="svet-<name>" data-svet="<themes>" href="…"> in index.html (name: world-<name>.js,
+     data/<name>.js as podatki-<name>; data-svet: the themes that need it; tools/svet-odvisnosti.mjs writes them and checks that each
+     needs only what loads at start or before it). World.need(theme): a Promise, done once they have run (Leno.loadSeq, the page's order) ---- */
+  const lazyKeys = (theme) => typeof Leno === 'undefined' || typeof document === 'undefined' || !document.querySelectorAll ? [] :
+    [...document.querySelectorAll('link[rel="x-lazy-script"][data-lazy][data-svet]')].filter(l => l.getAttribute('data-svet').split(' ').includes(theme)).map(l => l.getAttribute('data-lazy'));
+  const lazyTags = (theme) => lazyKeys(theme).filter(k => !Leno.has(k));
   // vsi leni svetovi (testi, ki gradijo poljubne proge: tests/browser/lib.mjs openGame; v igri ga ne kliče nič)
-  function needAll() { if (typeof document === 'undefined' || !document.querySelectorAll) return Promise.resolve(); return [...document.querySelectorAll('link[rel="x-lazy-script"][data-svet]')].reduce((p, l) => p.then(() => loadTag(l)), Promise.resolve()); }
+  function needAll() { return typeof Leno === 'undefined' ? Promise.resolve() : Leno.loadSeq(Leno.keys('svet-')); }
   function need(theme) {
     if (!theme || EXT[theme]) return Promise.resolve();
-    const tags = lazyTags(theme);
-    if (!tags.length) return Promise.resolve();
-    return NEED[theme] || (NEED[theme] = tags.reduce((p, l) => p.then(() => loadTag(l)), Promise.resolve()).catch((e) => { delete NEED[theme]; throw e; }));
+    const ks = lazyKeys(theme);
+    return ks.length ? Leno.loadSeq(ks) : Promise.resolve();
   }
 
   /* ---------------- BUILD ---------------- */
