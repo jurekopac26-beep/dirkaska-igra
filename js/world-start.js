@@ -157,7 +157,7 @@
 
   // ---- where it stands: t the side of the hut, p of the teams (0: none), after: the teams past the line (the verge before it is narrow);
   //      m: the start scene's place (metres from the line), off: the teams moved down the road (behind the hut, on its side)
-  const CFG = { pikes: { t: -1, p: 1, fans: true, poles: false }, pikesg: { t: -1, p: 1, fans: true, poles: false }, chapman: { t: 1, p: 1, m: -5, off: -9, fans: false },
+  const CFG = { pikes: { t: -1, p: 1, fans: true }, pikesg: { t: -1, p: 1, fans: true }, chapman: { t: 1, p: 1, m: -5, off: -9, fans: false },
     balea: { t: -1, p: -1, after: true, fans: true, opt: { flag: vert([0x002b7f, 0xfcd116, 0xce1126]) } }, rastro: { t: -1, p: -1, after: true, fans: true },
     tianmen: { t: 1, p: 0, fans: false, reduced: true }, caracoles: { t: -1, p: 1, fans: true }, katu: { t: -1, p: 1, fans: true }, harju: { t: -1, p: 1, fans: true } };
   for (const id in CFG) { const c = CFG[id], opt = Object.assign({ cfg: c }, c.opt); site(id, [['start', c.m || 0, c.t, opt]].concat(c.p ? [['startPark', c.after ? 21 : -20 + (c.off || 0), c.p, opt]] : [])); }
