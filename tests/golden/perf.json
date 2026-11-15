@@ -363,13 +363,6 @@
   "maxKverts": 436,
   "jsMs": 1.14
  },
- "ucka": {
-  "calls": 144,
-  "maxCalls": 242,
-  "kverts": 485,
-  "maxKverts": 521,
-  "jsMs": 1.56
- },
  "ujarras": {
   "calls": 123,
   "maxCalls": 191,

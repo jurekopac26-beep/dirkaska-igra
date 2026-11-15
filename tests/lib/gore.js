@@ -48,7 +48,7 @@ function goreTrack(id, len = [2450, 3050]) {   // (len: the stage's bounds betwe
     const okB = B.every((b, k) => (!k || b[0] > B[k - 1][0]) && Math.sign(turn[k]) === b[2] && Math.abs(turn[k]) > 0.8);
     check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
     let dmin = 1e9; for (let i = 0; i < T.N; i += 2) for (let j = i + 40; j < T.N; j += 2) dmin = Math.min(dmin, Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]));
-    let bmin = 1e9; for (let i = 0; i < T.N; i++) { const nw = T.wa ? Math.max(0, T.w - T.wa[i]) : 0; bmin = Math.min(bmin, T.bl[i] + nw, T.br[i] + nw); }   // (nw: where the road is narrower than its base width, as Učka's gravel, past its own edge)
+    let bmin = 1e9; for (let i = 0; i < T.N; i++) { const nw = T.wa ? Math.max(0, T.w - T.wa[i]) : 0; bmin = Math.min(bmin, T.bl[i] + nw, T.br[i] + nw); }   // (nw: where the road is narrower than its base width, e.g. a gravel stretch, past its own edge)
     let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));
     check('the road: the legs of the hairpins 20 m apart or more, the barriers 3 m past the asphalt or more, nowhere steeper than 12 %', dmin >= 20 && bmin >= T.w + 2.9 && gmax < 0.12,
       `legs ${dmin.toFixed(1)} m apart at the closest, barriers ${(bmin - T.w).toFixed(2)} m past the edge, steepest ${(gmax * 100).toFixed(1)} %`);
