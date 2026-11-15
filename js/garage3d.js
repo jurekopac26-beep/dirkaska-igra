@@ -6607,14 +6607,14 @@ const Garage3D = (function () {
   }
   // (a part to carry: option n as the car draws it (Render.deliMesh; of a pair the one on side sd; its middle the frame's origin, the car's
   // axes; c: its middle in the car body's frame), else a parts case (grey, an amber band round it); hs: its half sizes)
-  function partObj(cv, el, n, sd) {
+  function partObj(cv, el, n, sd, lim) {   // (lim: the largest part, 1.7 m; the whole wing longer)
     let g = null; if (n && !PART_AT.wheels.includes(el) && Render.deliMesh) try { g = Render.deliMesh(cv.M, el, n, cv.spec.color); } catch (_) { g = null; }
     if (g) {   // (deliMesh's own geometry the car's or new and never drawn: left as it is; the halves new: the show's, disposed with the part)
       const w = new THREE.Group(), b = new THREE.Box3();
       g.traverse(q => { if (!q.isMesh) return; const h = halfGeo(q.geometry.index ? q.geometry.toNonIndexed() : q.geometry, sd); if (!h) return;
         h.computeBoundingBox(); b.union(h.boundingBox); const m = new THREE.Mesh(h, q.material); m.castShadow = true; w.add(m); });
       const sz = b.getSize(new V3());
-      if (w.children.length && sz.length() < 1.7) { const c = b.getCenter(new V3()); for (const m of w.children) { m.geometry.translate(-c.x, -c.y, -c.z); m.geometry.computeBoundingSphere(); }
+      if (w.children.length && sz.length() < (lim || 1.7)) { const c = b.getCenter(new V3()); for (const m of w.children) { m.geometry.translate(-c.x, -c.y, -c.z); m.geometry.computeBoundingSphere(); }
         return { o: w, c, real: true, hs: sz.multiplyScalar(0.5) }; }
       for (const m of w.children) m.geometry.dispose(); }
     const w = new THREE.Group(), m = fxMat(); m.userData.own = true;
@@ -7086,7 +7086,7 @@ const Garage3D = (function () {
       // 2: roka 1's reach onto the old wing, off with it (the car the new one's, its wing folded away; the old one as the car drew it, else the regal's piece)
       yield* armExt(0, PL.s, PL.ext, 0.3, EZ.sine); poseArm(0); SFX.wrench();
       if (o.op && o.op.o.parent) o.op.o.parent.remove(o.op.o);
-      const Mh = tipM(RB[0].s, tipLen(RB[0])).multiply(PL.off), op = o.op || (() => { const P = o.from ? partObj(cv, el, o.from) : null; if (P && P.real) return P; if (P) disposeTree(P.o); return { o: rglCopy(pc), real: false }; })(), Fo = op.real && !PART_AT.hidden.includes(el) ? inCar(op) : Mh;   // (the old wing as the car drew it, else the regal's in its place)
+      const Mh = tipM(RB[0].s, tipLen(RB[0])).multiply(PL.off), op = o.op || (() => { const P = o.from ? partObj(cv, el, o.from, undefined, 3) : null; if (P && P.real) return P; if (P) disposeTree(P.o); return { o: rglCopy(pc), real: false }; })(), Fo = op.real && !PART_AT.hidden.includes(el) ? inCar(op) : Mh;   // (the old wing as the car drew it, else the regal's in its place)
       fitSwap(cv, nw, false); fold(true); puff(); hold(0, op.o, Fo); fitLog('off');
       // 3: roka 1 up with it as roka 2 lifts the new one off the regal, the camera to the regal
       yield* par(armExt(0, pp.s, pp.ext, 0.3), camTo(V1, 0.5), armExt(1, grab.s, grab.ext, 0.4));
