@@ -273,7 +273,10 @@ def osm(C, G, box, X, Z, name):
     T = cKDTree(np.stack([X[::2], Z[::2]], 1))
     near = lambda x, z: T.query([x, z])[0]
     bld = []
-    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry'], name):
+    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'sources', 'geometry'], name):
+        # only OpenStreetMap's own buildings: Overture adds machine-traced footprints of other datasets (Google Open Buildings, Microsoft),
+        # and the game takes its data from OpenStreetMap alone (CLAUDE.md, »Pravna varnost«)
+        if not any((q or {}).get('dataset') == 'OpenStreetMap' for q in (r.get('sources') or [])): continue
         g = wkb.loads(r['geometry'])
         if g.geom_type == 'MultiPolygon': g = max(g.geoms, key=lambda q: q.area)
         c = np.array(g.exterior.coords); x, z = G.to_xz(c[:, 1], c[:, 0]); p = Polygon(np.stack([x, z], 1))

@@ -144,7 +144,7 @@ OVERTURE = os.environ.get('OVERTURE', '2026-10-21.0')
 def overture(theme, typ, box, cols, name):
     """Every feature of theme/type whose bbox reaches into box (lat0, lon0, lat1, lon1), as a list of dicts (geometry: WKB), cached."""
     import pickle
-    p = os.path.join(RAW, 'ov-%s-%s.pkl' % (name, typ))
+    p = os.path.join(RAW, 'ov-%s-%s%s.pkl' % (name, typ, '-src' if 'sources' in cols else ''))   # (a cache with the sources apart: older ones lack them)
     if os.path.exists(p): return pickle.load(open(p, 'rb'))
     import pyarrow.dataset as ds, pyarrow.fs as fs
     la0, lo0, la1, lo1 = box

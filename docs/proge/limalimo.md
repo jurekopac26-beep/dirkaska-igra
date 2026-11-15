@@ -15,7 +15,7 @@ Cesta B30 po serpentinah Limalimo pod severnim robom gorovja Simien v Etiopiji, 
 Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom `PL_LOOK.limalimo`):
 
 - **Suha doba**: jasno jutro, sonce visoko z vzhoda, prašna meglica nad nižino. Pobočja so suha visokogorska trava s šopi in grmovjem (raba tal iz ESA WorldCover, satelitskega posnetka Sentinel-2 z 11. 12. 2024 in karte višin krošenj), temne bazaltne skale in rdečkasta prst, melišča pod stenami. Barve tal so iz satelitskega posnetka Sentinel-2.
-- **Hiše**: obrisi stavb iz OpenStreetMap ob cesti (generične, brez imen in napisov).
+- **Hiše**: samo stavbe iz OpenStreetMap (generične, brez imen in napisov); OpenStreetMap ima tu eno, ~450 m od starta. Strojno narisanih obrisov drugih zbirk (Google Open Buildings, Microsoft), ki jih doda Overture, orodje ne jemlje.
 - **Obzorje**: onstran pasu ob cesti pravi teren ~9 km naokoli (Copernicus DEM, mreža 250 m): rob Simiena nad progo in nižina proti severu.
 - **Cesta**: bela prekinjena sredinska črta (v serpentinah neprekinjena), jeklene ograje, kjer teren pada, opozorilni trikotniki in table s puščicami (črno-rumene) v serpentinah; nobenih imen podjetij ali znakov služb.
 - **Dirka**: start z lučmi pod portalom START, portali kontrolnih točk z višino, cilj FINISH s tablo LIMALIMO in višino, transparent SIMIEN (samo zemljepisna imena), gledalci ob startu, cilju in kontrolnih točkah.
