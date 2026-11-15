@@ -44,7 +44,7 @@ DESC_EN = ('The open RN7 in the south of Madagascar, by the Isalo National Park:
            'through the bends by the cliffs and past the Queen of Isalo, a rock shaped like a crowned head right by the road, then across the plain '
            'to the south. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [100, 105, 113], 'wet': {'cs': [114, 120, 129]}, 'winter': {'cs': [112, 118, 127], 'wet': {'cs': [137, 144, 155]}}}   # (estimated; measure with tools/nova-proga.mjs --medalje)
+MEDALS = {'cs': [69, 72, 77], 'wet': {'cs': [77, 81, 87]}, 'winter': {'cs': [75, 79, 85], 'wet': {'cs': [90, 95, 102]}}}   # (measured: the stock rally car on the autopilot x 1.01, 1.06, 1.14; tools/nova-proga.mjs --medalje)
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 

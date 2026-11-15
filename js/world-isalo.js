@@ -20,7 +20,7 @@
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
-  const QUEEN = [-1700.6, 851.4];   // the Queen of Isalo (the rock's OSM node, natural=peak), 30 m left of the road at 2.0 km
+  const QUEEN = [-1700.6, 851.4];   // the Queen of Isalo (the rock's OSM node, natural=rock), 30 m left of the road at 2.0 km
 
   // ---- the trees (unit height 1, instanced): 0 a fan palm (a stout grey trunk, a round head of stiff fan leaves), 1 a small round-crowned
   //      tree of the plain, 2 a tuft of the tall dry grass (squat, sunk) ----
