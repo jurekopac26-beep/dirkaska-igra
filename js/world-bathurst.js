@@ -7,7 +7,7 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api;
-  const { GB, TAU, box, clamp, cyl, ico, lerp, nrLCf, nrLump, nrPN, pixAvg, rng, sstep } = API;
+  const { GB, TAU, box, clamp, cyl, ico, lerp, nrLCf, nrLump, pixAvg, rng, sstep } = API;
   // Bathurst on the same builder (theme 'bathurst'): its own banners (no names of the circuit, its races or sponsors: the town and the state),
   // 18 turn numbers, the cells after them
   const BT_BAN = [['BATHURST', '#0b3b2a', '#f2c21a', '#f2c21a'], ['START · FINISH', '#16181c', '#fff', '#f2c21a'], ['GRANDSTAND', '#0b3b2a', '#fff', '#f2c21a'],
@@ -57,14 +57,25 @@
     }
     D.mesh.instanceMatrix.needsUpdate = true;
   }
+  function btPN(P, seed, S) {   // nrPN (js/world.js) over the pixels of an S × S picture (u = i / S, v = j / S), row by row: the same grid and the
+    // same arithmetic, the cells and the eased weights of each column and of the row worked out once (btGrassTex: 4 noises × 65 536 pixels)
+    const q = rng(seed), g = new Float32Array(P * P); for (let k = 0; k < g.length; k++) g[k] = q();
+    const a0 = new Int32Array(S), a1 = new Int32Array(S), sw = new Float64Array(S);
+    for (let i = 0; i < S; i++) { const u = i / S * P, ii = Math.floor(u), f = u - ii; a0[i] = ii % P; a1[i] = (ii + 1) % P; sw[i] = f * f * (3 - 2 * f); }
+    let b0 = 0, b1 = 0, t = 0;
+    return {
+      row(j) { const v = j / S * P, jj = Math.floor(v), e = v - jj; b0 = (jj % P) * P; b1 = ((jj + 1) % P) * P; t = e * e * (3 - 2 * e); },
+      at(i) { const s = sw[i], p0 = g[b0 + a0[i]], p1 = g[b0 + a1[i]], q0 = g[b1 + a0[i]], q1 = g[b1 + a1[i]], x0 = p0 + (p1 - p0) * s; return x0 + (q0 + (q1 - q0) * s - x0) * t; },
+    };
+  }
   function btGrassTex(aniso) {   // Bathurst's pasture under the vertex colours (256 px = 14 m, tileable): short spring grass mottled in patches of a metre or two,
     // tussocks dark at the heart and dry at the tips, straw blades, specks of the red-brown soil (made for the high camera: half a metre and more)
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(4801);
-    const n1 = nrPN(4, 4802), n2 = nrPN(12, 4803), n3 = nrPN(40, 4804), n4 = nrPN(8, 4805);
-    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
-      const u = i / S, v = j / S, n = n1(u, v) * 0.35 + n2(u, v) * 0.4 + n3(u, v) * 0.25, k = 0.8 + n * 0.38 + (r() - 0.5) * 0.12, dry = sstep(0.55, 0.82, n4(u, v)) * 0.6, o = (j * S + i) * 4;
+    const n1 = btPN(4, 4802, S), n2 = btPN(12, 4803, S), n3 = btPN(40, 4804, S), n4 = btPN(8, 4805, S);   // (nrPN at the pixels' own u, v: the same numbers)
+    for (let j = 0; j < S; j++) { n1.row(j); n2.row(j); n3.row(j); n4.row(j); for (let i = 0; i < S; i++) {
+      const n = n1.at(i) * 0.35 + n2.at(i) * 0.4 + n3.at(i) * 0.25, k = 0.8 + n * 0.38 + (r() - 0.5) * 0.12, dry = sstep(0.55, 0.82, n4.at(i)) * 0.6, o = (j * S + i) * 4;
       d[o] = clamp(lerp(86, 132, dry) * k, 0, 255); d[o + 1] = clamp(lerp(120, 118, dry) * k, 0, 255); d[o + 2] = clamp(lerp(54, 70, dry) * k, 0, 255); d[o + 3] = 255;
-    }
+    } }
     x.putImageData(img, 0, 0); const avg = pixAvg(d);
     const wrap = (px, py, rad, fn) => { for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const qx = px + a * S, qy = py + b * S; if (qx > -rad && qx < S + rad && qy > -rad && qy < S + rad) fn(qx, qy); } };   // (across the edges too: tileable)
     for (let k = 0; k < 150; k++) { const px = r() * S, py = r() * S, rad = 3 + r() * 8, dr = r() < 0.35;   // tussocks (a third with dry tops)
