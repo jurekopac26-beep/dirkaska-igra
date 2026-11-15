@@ -1,0 +1,24 @@
+{
+  "id": "hiva",
+  "about": "Hiva, Uzbekistan (id hiva): OSNUTEK, poti se ni preverilo. Krog po cestah zunaj obzidja Ičan Kale (OSM w185036984, obzidje w167449164 in sosednji deli city_wall); tocke so zamaknjene ~80 m ven od obrisa in se pripnejo na najblizjo cesto, preveri na sliki",
+  "box": [41.366, 60.346, 41.390, 60.374],
+  "closed": true,
+  "dist": {"grid": 500},
+  "route": [
+    [41.3781, 60.3550, null, "start: west of the West Gate, northbound"],
+    [41.3824, 60.3556, null, "north-west corner outside the wall"],
+    [41.3826, 60.3598, null, "north side"],
+    [41.3820, 60.3644, null, "north-east corner"],
+    [41.3780, 60.3645, null, "east side, by the East Gate"],
+    [41.3738, 60.3640, null, "south-east corner"],
+    [41.3737, 60.3595, null, "south side"],
+    [41.3742, 60.3551, null, "south-west corner"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [
+    ["Obzidje", "City wall", "city_wall", ["w185036984"]]
+  ],
+  "places": []
+}
