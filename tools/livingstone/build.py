@@ -129,7 +129,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     path = os.path.join(ROOT, 'js', 'tracks', 'livingstone.js'); open(path, 'w').write(src)
     print('wrote', path, len(src) // 1024, 'KB;', NP, 'points, the race', round(S1 - S0), 'm')
 
-# ---- the scenery data for js/world-livingstone.js (js/data/livingstone.js: var LV_DATA) ----
+# ---- the scenery data for js/world-livingstone.js (js/data/livingstone.js: var LS_DATA) ----
 A64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'   # (World's NR_A64)
 
 def grid(name):
@@ -169,7 +169,7 @@ HEAD = """/* Livingstone (theme 'livingstone'): the scenery data for js/world-li
    derived data here under the ODbL 1.0); Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence
    and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and
    World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0). Only geographic and descriptive labels. */
-var LV_DATA = """
+var LS_DATA = """
 
 def on_road():
     """the markings across the road, from OSM's nodes on the lap's own ways (J['onRoad']): [s, kind, x]. kind 0: a marked pedestrian crossing

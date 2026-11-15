@@ -53,7 +53,7 @@
   }
 
   function buildLivingstone(scene, tex, opts) {
-    const R = rng(2175), N = T.N, ds = T.ds, sStart = T.startS, sFin = T.finishS, iE = N - 1, def = T.def, L = T.len, LD = LV_DATA;
+    const R = rng(2175), N = T.N, ds = T.ds, sStart = T.startS, sFin = T.finishS, iE = N - 1, def = T.def, L = T.len, LD = LS_DATA;
     if (!def.dem) { def.dem = LD.dem; def.lc = LD.lc; }   // (nrPrep reads the corridor's terrain and land cover from the track)
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, groundH: nrGround, camFloor: nrGround, props: [], farClip: true, ownTex: [], dust: [0.78, 0.68, 0.52] };
