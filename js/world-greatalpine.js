@@ -68,7 +68,7 @@
     return h;
   }
   function gaGH(i, j) {   // terrain height at grid vertex (i, j), computed once (VR.G: Vršič's grid)
-    const G = API.VR.G; i = clamp(i, 0, G.nx - 1); j = clamp(j, 0, G.nz - 1); const k = j * G.nx + i; let h = G.h[k];
+    const G = API.VR.G; if (i < 0) i = 0; else if (i > G.nx - 1) i = G.nx - 1; if (j < 0) j = 0; else if (j > G.nz - 1) j = G.nz - 1; const k = j * G.nx + i; let h = G.h[k];
     if (h !== h) { h = G.h[k] = gaH(G.x0 + i * VRC, G.z0 + j * VRC); G.dd[k] = CAN.i >= 0 ? CAN.dd : 999; (G.up || (G.up = new Float32Array(G.h.length)))[k] = CAN.i >= 0 ? h - CAN.h : 0; }   // (up: above the road's blend there)
     return h;
   }
