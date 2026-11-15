@@ -12,17 +12,18 @@
   /* ---------------- the mogotes ----------------
      [x, z, r, top]: the towers' centres and radii (metres, the track's flat world: x east, z south from the start) and their tops (metres above the
      sea), measured from Copernicus GLO-30 along the race: the massif on the east side from ~28 % to ~67 % of the race (its foot 30-45 m from
-     the road's centre), the lower one on the west side from ~55 % to ~88 %. A tower: near-vertical walls of grey limestone streaked dark, with
+     the road's centre; three towers by the road itself, their foot ~14 m from the centre at ~34, ~47 and ~58 %, as the chase camera sees
+     ~25 m to the side), the lower one on the west side from ~55 % to ~88 %. A tower: near-vertical walls of grey limestone streaked dark, with
      green on the ledges and a rounded top under forest. */
   const MOGOTES = [[105, -234, 13, 193], [225, -224, 34, 226], [145, -244, 34, 228], [105, -254, 10, 193], [195, -274, 34, 252], [105, -274, 12, 232],
-    [135, -304, 34, 252], [225, -324, 34, 285], [95, -314, 10, 248], [175, -354, 34, 272], [85, -344, 12, 243], [115, -374, 34, 254], [75, -364, 11, 243],
-    [145, -424, 34, 268], [65, -394, 14, 230], [-135, -324, 34, 186], [55, -414, 12, 228], [85, -444, 34, 259], [45, -434, 11, 239], [-135, -384, 34, 183],
-    [115, -494, 34, 270], [35, -464, 13, 223], [55, -504, 34, 256], [125, -554, 34, 270], [15, -494, 10, 222], [65, -564, 34, 253], [-5, -524, 11, 177],
+    [135, -304, 34, 252], [225, -324, 34, 285], [86, -311, 15, 248], [175, -354, 34, 272], [85, -344, 12, 243], [115, -374, 34, 254], [75, -364, 11, 243],
+    [145, -424, 34, 268], [65, -394, 14, 230], [-135, -324, 34, 186], [55, -414, 12, 228], [85, -444, 34, 259], [36, -430, 15, 239], [-135, -384, 34, 183],
+    [115, -494, 34, 270], [35, -464, 13, 223], [55, -504, 34, 256], [125, -554, 34, 270], [15, -494, 10, 222], [65, -564, 34, 253], [-14, -516, 13, 190],
     [-135, -444, 34, 193], [5, -564, 34, 212], [65, -624, 34, 243], [-195, -444, 34, 215], [-135, -504, 34, 201], [5, -624, 34, 217], [-195, -504, 34, 212],
     [-135, -554, 21, 172], [-185, -564, 34, 183], [-15, -684, 34, 182], [-245, -564, 34, 174], [-35, -744, 34, 176], [-45, -804, 34, 177]];
   const TS = [0, 0.14, 0.3, 0.46, 0.6, 0.71, 0.8, 0.88, 0.94, 0.98];   // the rings' heights (share of the tower's height)
   const NS = 14;   // sides
-  const ROCK = [0.66, 0.65, 0.6], STREAK = [0.4, 0.4, 0.37], GREEN = [0.22, 0.34, 0.15], GREEN2 = [0.32, 0.42, 0.2], FOOT = [0.36, 0.38, 0.24];
+  const ROCK = [0.8, 0.79, 0.73], STREAK = [0.5, 0.49, 0.45], GREEN = [0.22, 0.34, 0.15], GREEN2 = [0.32, 0.42, 0.2], FOOT = [0.36, 0.38, 0.24];
   const prof = (t) => (t < 0.6 ? 1 + 0.05 * Math.sin(Math.PI * t / 0.6) : Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.6) / 0.4, 2))) * 0.97 + 0.03);
 
   function mogotes(ctx) {
@@ -46,7 +47,7 @@
       const col = (k, i, ny) => {   // limestone with dark streaks down the wall, green on the ledges, the forest on the top, the foot in scrub
         const t = k >= K ? 1 : TS[k], s = rpHash(m * 17 + i, 5), dark = sstep(0.55, 0.85, s) * 0.8;
         let c = [lerp(ROCK[0], STREAK[0], dark), lerp(ROCK[1], STREAK[1], dark), lerp(ROCK[2], STREAK[2], dark)];
-        const g = Math.max(sstep(0.3, 0.6, ny), sstep(0.6, 0.72, t), rpHash(m * 13 + k, i) < 0.22 ? 0.75 : 0), gc = rpHash(m, i + k) < 0.5 ? GREEN : GREEN2;
+        const g = Math.max(sstep(0.3, 0.6, ny), sstep(0.6, 0.72, t), rpHash(m * 13 + k, i) < 0.3 ? 0.8 : 0), gc = rpHash(m, i + k) < 0.5 ? GREEN : GREEN2;
         c = [lerp(c[0], gc[0], g), lerp(c[1], gc[1], g), lerp(c[2], gc[2], g)];
         if (k === 0) c = [lerp(c[0], FOOT[0], 0.7), lerp(c[1], FOOT[1], 0.7), lerp(c[2], FOOT[2], 0.7)];
         const v = 0.92 + rpHash(m * 7 + k, i * 3) * 0.14; return [c[0] * v, c[1] * v, c[2] * v]; };
@@ -61,7 +62,7 @@
       }
       n++;
     });
-    ctx.out.stats.mogotes = n;
+    ctx.out.mogotes = n;   // (out.stats is made after S.extra)
   }
 
   World.ext.vinales = (scene, tex, opts) => World.gore.build(scene, tex, opts, {
