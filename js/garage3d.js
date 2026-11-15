@@ -6740,7 +6740,10 @@ const Garage3D = (function () {
     const ex = el === 'auspuh', l0 = lift; if (ex) setLift(FIT.lift);
     // (the aero kit by its plate (an_aero_plosca): roka 2's reach takes its lip and its wing off the trolley, which parks by the car's far
     // side under its half of the ring (-z); roka 1 lifts the lid's caps for the wing)
-    const arm2 = !regal && (el === 'aero' || (el === 'krilo' && !!o.cartAt));
+    // (a part under the bonnet not from the regal (the turbo's other options, the filter, the chip, the battery): by the turbo's plate
+    // too, roka 2 takes it off the trolley as roka 1 lifts the bonnet)
+    const tb = BAY_EL.includes(el) ? bonnet(cv) : null;
+    const arm2 = !regal && (el === 'aero' || (el === 'krilo' && !!o.cartAt) || !!tb);
     const i = regal || arm2 ? 1 : 0, tool = regal || arm2 ? 'reach' : 'gripper', sd = regal || arm2 ? -1 : 1, pc = regal ? pcs[0] : null, S = partSpot(cv, el, sd), K = cv.kit; let up = S.out.y > 0.7;
     const nw = makeCar(spec); nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);   // (its shaders made now: no stutter at the swap)
     // (a head lamp: the car's own as it draws it, the old car's and the new one's (lampPart: a car with lamp parts of their own); else the
@@ -6760,7 +6763,7 @@ const Garage3D = (function () {
     cv.v.bodyG.updateMatrixWorld(true); const BW = cv.v.bodyG.matrixWorld.clone(), inCar = (P) => BW.clone().multiply(new THREE.Matrix4().makeTranslation(P.c.x, P.c.y, P.c.z));
     // THE TURBO by its plan's plate (a car with a bonnet of its own, bonnet()): the bonnet up and propped, the turbo down into the bay (its
     // place there), its screws in, its hoses on, the bonnet down, the engine run (else through the shut bonnet, a case, as before)
-    const tb = BAY_EL.includes(el) ? bonnet(cv) : null, tbO = tb ? bayObj(el) : null;
+    const tbO = tb ? bayObj(el) : null;
     if (tb) { tb.hs = tbO.hs; tb.hose = tbO.hose; if (np) { disposeTree(np.o); Object.assign(np, tbO); } else disposeTree(tbO.o); S.p.copy(tb.bay(BW)).y -= 0.03; S.out.set(0, 1, 0); up = true; tb.open = false; tb.up = 72 * Math.PI / 180; }
     if (np && np.kind && np.kind !== 'lip') { S.p.setFromMatrixPosition(inCar(np)); S.out.copy(np.kind === 'skirt' ? ax(0, 0, sd) : ax(-1, 0, 0)); }   // (the kit's sill or tail piece: its spot where the car draws it)
     // (how it goes on: its face (its frame's z) out from the body; on the top upright, a wing's along the car (its span across it), the

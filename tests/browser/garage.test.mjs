@@ -265,6 +265,13 @@ try {
       T.check(`the ${el} on the KOZOROG by the turbo's template: the bonnet up, the part from the regal onto the engine, its screws, its hose(s), the bonnet down, the revs`,
         /^plan,(bonnet\.grip,)?grab,bonnet\.up,swap,screws,hoses,(bonnet\.close,)?bonnet\.down,revs$/.test(bf.log) && bf.plan.regal && bf.plan.lid && !!bu.S.cars.kozorog.parts[el] && br.table === 0 && br.t <= 12.5, JSON.stringify({ bf, t: br.t }));
     }
+    // (a turbo not on the regal (another of its options) by the same plate: roka 1 lifts the bonnet, roka 2 takes it off the trolley)
+    { await page.evaluate(() => { const E = GarageShop.EL.turbo, R = Object.values(__garage.REGAL).filter(q => q[0] === 'turbo').map(q => q[1]); let sel = null;
+        for (let t = 0; t < 4 && !sel; t++) E.c[t][1].forEach((q, j) => { if (!sel && !R.includes(q[0][1]) && !(t === 0 && j === 0)) sel = [t, j]; });
+        __garage.openMenu({ el: 'turbo', key: null, sel }); document.querySelector('#g-menu [data-mact="buy"]').click(); });
+      const r = await run(), f = await fitOf();
+      T.check('a turbo off the trolley (not on the regal) by the same plate: roka 1 lifts the bonnet, roka 2 brings it, its screws, its hoses, the bonnet down by roka 1, the revs',
+        /^plan,cart\.in,bonnet\.grip,(bonnet\.up,cart\.parked|cart\.parked,bonnet\.up),grab,swap,screws,hoses,bonnet\.close,bonnet\.down,(cart\.out,)?revs$/.test(f.log) && !f.plan.regal && f.plan.arm === 1 && f.plan.lg === true && r.table === 0 && r.t <= 14, JSON.stringify({ log: f.log, plan: f.plan, t: r.t })); }
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
