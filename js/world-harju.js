@@ -54,6 +54,10 @@
     // every road sample in a hash grid (the samples are 2 m apart; the hairpins and the lane change need them all)
     const M = 100; P.cx0 = Math.floor((x0 - M) / HJHC); P.cz0 = Math.floor((z0 - M) / HJHC); P.ncx = Math.floor((x1 + M) / HJHC) - P.cx0 + 1; P.ncz = Math.floor((z1 + M) / HJHC) - P.cz0 + 1; P.cells = new Array(P.ncx * P.ncz);
     for (let i = 0; i < N; i++) { const k = (Math.floor(T.pz[i] / HJHC) - P.cz0) * P.ncx + Math.floor(T.px[i] / HJHC) - P.cx0; (P.cells[k] || (P.cells[k] = [])).push(i); }
+    // (each cell's samples packed in one array, in the same order: px, pz, tx, tz, nx, nz, br, bl, hy, i; hjNear reads them in a row)
+    P.pk = new Array(P.cells.length); P.bmax = 0; for (let i = 0; i < N; i++) P.bmax = Math.max(P.bmax, T.br[i], T.bl[i]);
+    for (let k = 0; k < P.cells.length; k++) { const L = P.cells[k]; if (!L) continue; const A = P.pk[k] = new Float64Array(L.length * 10);
+      for (let q = 0; q < L.length; q++) { const i = L[q], o = q * 10; A[o] = T.px[i]; A[o + 1] = T.pz[i]; A[o + 2] = T.tx[i]; A[o + 3] = T.tz[i]; A[o + 4] = T.nx[i]; A[o + 5] = T.nz[i]; A[o + 6] = T.br[i]; A[o + 7] = T.bl[i]; A[o + 8] = T.hy[i]; A[o + 9] = i; } }
     // the real ground: the inner 5 m grid (bare earth, m above the start line) and the far ring (20 m); the lakes' beds under the far ring
     P.D = S.dem; P.dem = hjGrid(S.dem); P.F = S.far; P.far = hjGrid(S.far);
     P.lakes = (S.water || []).map(w => { const a = hjI16(w.p), poly = []; let lx0 = 1e9, lx1 = -1e9, lz0 = 1e9, lz1 = -1e9;
@@ -113,16 +117,24 @@
   function hjNear(x, z) {   // Shepard blend of the road heights around (x, z): weights fall with the distance beyond each sample's barrier
     const P = HJ, cx = Math.floor(x / HJHC) - P.cx0, cz = Math.floor(z / HJHC) - P.cz0, ds = T.ds;
     let ws = 0, hs = 0, bd = 1e9, bi = -1, bl = 0, ba = 0, bdd = 1e9;
+    // (only samples nearer than 64 m count: d >= sqrt(dx² + dz²) - ds / 2, so a cell or a sample farther than R is skipped, 1 m to spare; the
+    // rest in the same order as before, so the sums are the same to the last bit)
+    const R = 64 + ds * 0.5 + 1, R2 = R * R, hds = ds * 0.5;
     if (cx >= -2 && cz >= -2 && cx < P.ncx + 2 && cz < P.ncz + 2)
-    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
-      const L = P.cells[b * P.ncx + a]; if (!L) continue;
-      for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds * 0.5), d = Math.sqrt(lat * lat + ex * ex);
-        if (d >= 64) continue;
-        const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
-        ws += wq; hs += wq * T.hy[i];
-        if (d < bd) { bd = d; bi = i; bl = lat; ba = al; }
-        if (dd < bdd) bdd = dd;
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const cz0 = (b + P.cz0) * HJHC, ez = z < cz0 ? cz0 - z : z > cz0 + HJHC ? z - cz0 - HJHC : 0; if (ez >= R) continue;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+        const A = P.pk[b * P.ncx + a]; if (!A) continue;
+        const cx0 = (a + P.cx0) * HJHC, ex0 = x < cx0 ? cx0 - x : x > cx0 + HJHC ? x - cx0 - HJHC : 0; if (ex0 * ex0 + ez * ez >= R2) continue;
+        for (let o = 0; o < A.length; o += 10) {
+          const dx = x - A[o], dz = z - A[o + 1]; if (dx * dx + dz * dz >= R2) continue;
+          const al = dx * A[o + 2] + dz * A[o + 3], lat = dx * A[o + 4] + dz * A[o + 5], ex = Math.max(0, Math.abs(al) - hds), d = Math.sqrt(lat * lat + ex * ex);
+          if (d >= 64) continue;
+          const dd = Math.max(0, d - (lat > 0 ? A[o + 6] : A[o + 7])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
+          ws += wq; hs += wq * A[o + 8];
+          if (d < bd) { bd = d; bi = A[o + 9]; bl = lat; ba = al; }
+          if (dd < bdd) bdd = dd;
+        }
       }
     }
     HJN.i = bi; HJN.d = bd; HJN.dd = bdd; HJN.lat = bl;
@@ -130,6 +142,26 @@
     HJN.h = hs / ws;
     const f = clamp(bi + ba / ds, 0, T.N - 1), i0 = Math.min(T.N - 2, Math.floor(f)); HJN.hn = T.hy[i0] + (T.hy[i0 + 1] - T.hy[i0]) * (f - i0);   // the road's height across from the point
     return HJN;
+  }
+  function hjDD(x, z) {   // hjNear's dd alone where it is under 8 m (999 when it is not, or no sample is within 64 m): only the samples that can be
+    // that near are looked at (dd < 8 needs d < the barrier + 8), in the same arithmetic, so a test against up to 8 m answers as hjNear's would
+    const P = HJ, ds = T.ds, hds = ds * 0.5, R = P.bmax + 8 + hds + 1, R2 = R * R, cx = Math.floor(x / HJHC) - P.cx0, cz = Math.floor(z / HJHC) - P.cz0;
+    let bdd = 999;
+    if (cx >= -2 && cz >= -2 && cx < P.ncx + 2 && cz < P.ncz + 2)
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const cz0 = (b + P.cz0) * HJHC, ez = z < cz0 ? cz0 - z : z > cz0 + HJHC ? z - cz0 - HJHC : 0; if (ez >= R) continue;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+        const A = P.pk[b * P.ncx + a]; if (!A) continue;
+        const cx0 = (a + P.cx0) * HJHC, ex0 = x < cx0 ? cx0 - x : x > cx0 + HJHC ? x - cx0 - HJHC : 0; if (ex0 * ex0 + ez * ez >= R2) continue;
+        for (let o = 0; o < A.length; o += 10) {
+          const dx = x - A[o], dz = z - A[o + 1]; if (dx * dx + dz * dz >= R2) continue;
+          const al = dx * A[o + 2] + dz * A[o + 3], lat = dx * A[o + 4] + dz * A[o + 5], ex = Math.max(0, Math.abs(al) - hds), d = Math.sqrt(lat * lat + ex * ex);
+          if (d >= 64) continue;
+          const dd = Math.max(0, d - (lat > 0 ? A[o + 6] : A[o + 7])); if (dd < bdd) bdd = dd;
+        }
+      }
+    }
+    return bdd < 8 ? bdd : 999;
   }
   function hjH(x, z) {   // terrain height: under the verge ribbons inside the barriers (0.3 m below the road), up to the sidewalks' level where they end
     // (1.9 m past the barrier), then over 12 m into the real ground
@@ -472,7 +504,7 @@
     const onBld = (x, z) => { const k = gIdx(x, z); return k >= 0 && G.bm[k] === 1; }, onPaved = (x, z) => { const k = gIdx(x, z); return k >= 0 && G.pv[k] > 0; };
     const sAt = (d) => clamp(sStart + d, 0, T.len - 0.01);   // (metres after the start line -> s)
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
-    const nearDD = (x, z) => { const n = hjNear(x, z); return n.i < 0 ? 999 : n.dd; };
+    const nearDD = hjDD;   // (hjNear's dd where it is under 8 m, else 999: every use here asks about less)
 
     /* ---- terrain: the tiles, the far ring, the lakes ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ouGTex(), vertexColors: true });
