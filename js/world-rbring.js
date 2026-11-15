@@ -475,9 +475,9 @@
     const PARK = LK.park && def.cp ? cpPrep(P) : null;   // (Crystal Palace: the lakes and the terrace walls cut into the ground)
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
-    const excl = [], eh = new Map(), EHC = 64;   // tree exclusion circles (buildings, stands, crowds), hashed
-    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
-    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const excl = [], eh = new Map(), EHC = 64;   // tree exclusion circles (buildings, stands, crowds), hashed (64 m cells, a numeric key)
+    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = (a + 32768) * 65536 + b + 32768; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
+    const excluded = (x, z) => { const Lc = eh.get((Math.floor(x / EHC) + 32768) * 65536 + Math.floor(z / EHC) + 32768); if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
 
     /* ---- terrain tiles: which ones (they are built at the end, when the trees have darkened the ground under them) ---- */
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex((LK.grass === 'bt' ? btGrassTex : nrGrassTex)(tex.grass.anisotropy)), vertexColors: true }), tiles = [];   // (the Nordschleife's meadow grass: no mowing stripes; the vertex colours make it Styrian; Bathurst: its own pasture)
