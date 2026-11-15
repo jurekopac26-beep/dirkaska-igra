@@ -104,10 +104,14 @@
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.45 * (1 - sn); R = lerp(R, 0.6, t); G = lerp(G, 0.57, t); B = lerp(B, 0.52, t); }
     CACOL[0] = R; CACOL[1] = G; CACOL[2] = B; return CACOL;
   }
+  let caGCC = null, caGCG = null, caGCF = null;   // (caGCol's colours of the grid vertices, each worked out once: the grid, the colouring they are for)
   function caGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in caTileGeo)
     const G = API.VR.G, gx = clamp((x - G.x0) / API.VRC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / API.VRC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
-    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = caGH(ii, jj);
-      const nx = -(caGH(ii + 1, jj) - caGH(ii - 1, jj)) / (2 * API.VRC), nz = -(caGH(ii, jj + 1) - caGH(ii, jj - 1)) / (2 * API.VRC), l = Math.hypot(nx, 1, nz), c = (API.VR.col || caCol)(G.x0 + ii * API.VRC, G.z0 + jj * API.VRC, h, 1 / l, nz / l, G.dd[jj * G.nx + ii], nx / l);
+    const cf = API.VR.col || caCol; if (caGCG !== G || caGCF !== cf) { caGCC = new Map(); caGCG = G; caGCF = cf; }
+    for (let q = 0; q < 4; q++) { const a = q & 1, b = q >> 1, w = q === 0 ? (1 - u) * (1 - v) : q === 1 ? u * (1 - v) : q === 2 ? (1 - u) * v : u * v, ii = i + a, jj = j + b, kk = jj * G.nx + ii;
+      let c = caGCC.get(kk);
+      if (!c) { const h = caGH(ii, jj), nx = -(caGH(ii + 1, jj) - caGH(ii - 1, jj)) / (2 * API.VRC), nz = -(caGH(ii, jj + 1) - caGH(ii, jj - 1)) / (2 * API.VRC), l = Math.hypot(nx, 1, nz), r = cf(G.x0 + ii * API.VRC, G.z0 + jj * API.VRC, h, 1 / l, nz / l, G.dd[kk], nx / l);
+        c = [r[0], r[1], r[2]]; caGCC.set(kk, c); }
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
   }
