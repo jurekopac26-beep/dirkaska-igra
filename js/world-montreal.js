@@ -39,10 +39,17 @@
   function chamfer(G, seed) {
     const n = G.nx * G.nz, D = new Float32Array(n), c = G.c, d2 = c * Math.SQRT2;
     for (let k = 0; k < n; k++) D[k] = seed(k) ? 0 : 1e9;
-    for (let j = 0; j < G.nz; j++) for (let i = 0; i < G.nx; i++) { const k = j * G.nx + i; let v = D[k];
-      if (i > 0) v = Math.min(v, D[k - 1] + c); if (j > 0) { v = Math.min(v, D[k - G.nx] + c); if (i > 0) v = Math.min(v, D[k - G.nx - 1] + d2); if (i < G.nx - 1) v = Math.min(v, D[k - G.nx + 1] + d2); } D[k] = v; }
-    for (let j = G.nz - 1; j >= 0; j--) for (let i = G.nx - 1; i >= 0; i--) { const k = j * G.nx + i; let v = D[k];
-      if (i < G.nx - 1) v = Math.min(v, D[k + 1] + c); if (j < G.nz - 1) { v = Math.min(v, D[k + G.nx] + c); if (i < G.nx - 1) v = Math.min(v, D[k + G.nx + 1] + d2); if (i > 0) v = Math.min(v, D[k + G.nx - 1] + d2); } D[k] = v; }
+    const nx = G.nx, nz = G.nz;   // (the same minima as before, the edges taken out of the inner loops)
+    for (let j = 0; j < nz; j++) { const r = j * nx;
+      if (j === 0) { for (let i = 1; i < nx; i++) { const k = i, a = D[k - 1] + c; if (a < D[k]) D[k] = a; } continue; }
+      { const k = r; let v = D[k], a = D[k - nx] + c; if (a < v) v = a; a = D[k - nx + 1] + d2; if (a < v) v = a; D[k] = v; }
+      for (let i = 1; i < nx - 1; i++) { const k = r + i; let v = D[k], a = D[k - 1] + c; if (a < v) v = a; a = D[k - nx] + c; if (a < v) v = a; a = D[k - nx - 1] + d2; if (a < v) v = a; a = D[k - nx + 1] + d2; if (a < v) v = a; D[k] = v; }
+      if (nx > 1) { const k = r + nx - 1; let v = D[k], a = D[k - 1] + c; if (a < v) v = a; a = D[k - nx] + c; if (a < v) v = a; a = D[k - nx - 1] + d2; if (a < v) v = a; D[k] = v; } }
+    for (let j = nz - 1; j >= 0; j--) { const r = j * nx;
+      if (j === nz - 1) { for (let i = nx - 2; i >= 0; i--) { const k = r + i, a = D[k + 1] + c; if (a < D[k]) D[k] = a; } continue; }
+      { const k = r + nx - 1; let v = D[k], a = D[k + nx] + c; if (a < v) v = a; if (nx > 1) { a = D[k + nx - 1] + d2; if (a < v) v = a; } D[k] = v; }
+      for (let i = nx - 2; i >= 1; i--) { const k = r + i; let v = D[k], a = D[k + 1] + c; if (a < v) v = a; a = D[k + nx] + c; if (a < v) v = a; a = D[k + nx + 1] + d2; if (a < v) v = a; a = D[k + nx - 1] + d2; if (a < v) v = a; D[k] = v; }
+      if (nx > 1) { const k = r; let v = D[k], a = D[k + 1] + c; if (a < v) v = a; a = D[k + nx] + c; if (a < v) v = a; a = D[k + nx + 1] + d2; if (a < v) v = a; D[k] = v; } }
     return D;
   }
 
@@ -170,14 +177,14 @@
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
       const W1 = ni + 1, nv = W1 * (nj + 1), P = new Float32Array(nv * 3), Cl = new Float32Array(nv * 3), U = new Float32Array(nv * 2);
-      for (let j = 0, v = 0; j <= nj; j++) for (let i = 0; i <= ni; i++, v++) {   // (straight into the typed arrays: the same sums as before, nothing allocated per vertex)
-        const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
-        const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007), f = 0.96 + 0.08 * n1, kc = KCOL[kd];
+      for (let j = 0, v = 0; j <= nj; j++) { const z = G.z0 + (cj + j) * G.c, sz = Math.sin(z * 0.027) * 2, z23 = z * 0.023; for (let i = 0; i <= ni; i++, v++) {   // (straight into the typed arrays: the same sums as before, nothing allocated per vertex; the row's own sine once)
+        const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
+        const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + sz) * Math.sin(z23 + x * 0.007), f = 0.96 + 0.08 * n1, kc = KCOL[kd];
         let c0 = kc[0] * n2 * f, c1 = kc[1] * n2 * f, c2 = kc[2] * n2 * f;
         const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); c0 = lerp(c0, 0.72, t); c1 = lerp(c1, 0.69, t); c2 = lerp(c2, 0.6, t); }   // (the banks: stony, rip-rap)
         if (h < WL) { const t = sstep(WL, WL - 2, h); c0 = lerp(c0, 0.42, t); c1 = lerp(c1, 0.42, t); c2 = lerp(c2, 0.36, t); }
         P[v * 3] = x; P[v * 3 + 1] = h; P[v * 3 + 2] = z; Cl[v * 3] = c0; Cl[v * 3 + 1] = c1; Cl[v * 3 + 2] = c2; U[v * 2] = x / 14; U[v * 2 + 1] = -z / 14;
-      }
+      } }
       let I = new Uint16Array(ni * nj * 6), ni6 = 0;
       for (let j = 0; j < nj; j++) for (let i = 0; i < ni; i++) {
         const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1, k = (cj + j) * G.nx + ci + i;
