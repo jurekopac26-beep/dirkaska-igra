@@ -377,6 +377,10 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = L.fans;
     const CR = crowdCtx({ gH: caGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: inLake, shirts: fans }), crSoft = new Set();
+    // the shared start's place (js/world-start.js): the old start (gantry, lights, hut) and what would stand in its ground go into SINK and sinkB (never drawn),
+    // so every draw from the random streams and every exclusion circle stays and nothing moves anywhere else
+    const sOwn = def.id === 'balea' && !!(World.startOwn && World.startOwn(def)), sGr = sOwn && World.startGround ? World.startGround(T) : [], SINK = new Chunks(110), sinkB = new GB(true);
+    const inStart = (x, z) => { for (const [cx, cz, r] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; return false; };
     const bannerQ = (cx, cy, cz, tx, tz, Wd, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1; tilt leans its top towards +t
       const ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = Wd / 2 * f;
@@ -385,11 +389,11 @@
     };
     const row = (k) => [1 - (k + 1) / 8, 1 - k / 8];   // atlas row k (0 = top) -> [v0, v1]
     const cell = (k) => { const u0 = (k % 8) / 8, v1 = 1 - Math.floor(k / 8) / 8; return [v1 - 1 / 8, v1, u0, u0 + 1 / 8]; };   // a small sign of the second atlas
-    const arch = (s, rowK, postCol, beamCol) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i]
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = scen.get(x, z), hd = T.hd[i];
+    const arch = (s, rowK, postCol, beamCol, hide) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i] (hide: into SINK)
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = (hide ? SINK : scen).get(x, z), hd = T.hd[i];
       box(g, x - nx * L1, y - 0.6, z - nz * L1, 0.6, 7.4, 0.6, hd, postCol); box(g, x + nx * L2, y - 0.6, z + nz * L2, 0.6, 7.4, 0.6, hd, postCol);
       const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2; box(g, cx, y + 6.1, cz, 0.55, 0.65, L1 + L2 + 0.6, hd, beamCol);
-      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1);
+      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1, 0, 1, hide ? sinkB : null);
       const e = exclPush(x, z, Math.max(L1, L2) + 6); crSoft.add(e); return [x, y, z, i];
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, caGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
@@ -427,17 +431,17 @@
 
     /* ---- START: gantry with the start lights, the timing hut, pennants along the grid, the road closed behind it ---- */
     {
-      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i];
-      box(scen.get(x, z), x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
+      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18], sOwn), nx = T.nx[i], nz = T.nz[i];
+      box((sOwn ? SINK : scen).get(x, z), x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = caGround(hx, hz), gh = scen.get(hx, hz);   // the timing hut
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; if (!sOwn) root.add(m); lights.push(m); }
+      if (!sOwn) out.dyn.lights = lights;   // (the shared start brings its own five)
+      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = caGround(hx, hz), gh = (sOwn ? SINK : scen).get(hx, hz);   // the timing hut
       box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
       const pc = [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.95, 0.72, 0.16]];
       for (let s = 8, k = 0; s < sStart + 50; s += 12, k++) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue;   // pennants on poles
-        const g = scen.get(px, pz), py = caGround(px, pz); cyl(g, px, py - 0.2, pz, 0.05, 5.2, 5, [0.9, 0.9, 0.92]);
+        const g = (inStart(px, pz) ? SINK : scen).get(px, pz), py = caGround(px, pz); cyl(g, px, py - 0.2, pz, 0.05, 5.2, 5, [0.9, 0.9, 0.92]);
         const tri = (yy, c) => { const a = [px, py + yy, pz], b = [px, py + yy - 1.0, pz], cc = [px + T.tx[ii] * 1.6, py + yy - 0.5, pz + T.tz[ii] * 1.6]; g.triO(a, b, cc, c, [px - T.nx[ii], py + yy, pz - T.nz[ii]]); g.triO(a, cc, b, c, [px + T.nx[ii], py + yy, pz + T.nz[ii]]); };
         tri(4.9, pc[(k + (side > 0 ? 1 : 0)) % 4]); }
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road below: concrete barriers across it
@@ -606,7 +610,7 @@
           if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
           else if (sp === 1) { hgt = 0.9 + r4 * 1.4; wid = 2.2 + r2 * 3.2; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
           else { hgt = 0.5 + r4 * 0.6; wid = 1.4 + r2 * 2; col = [0.95 + r3 * 0.1, 0.98, 0.95]; }
-          tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
+          if (!inStart(x, z)) tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);   // (none in the shared start's ground)
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -642,7 +646,8 @@
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
           if (excluded(x, z) || inLake(x, z)) continue;
           const ny = 1 / Math.sqrt(1 + sl * sl); if (plSnow(x, z, y0 + base, ny, 0, 0) > 0.35) continue;
-          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.45 + r3 * 0.5, 0.25 + r4 * 0.3, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9 + r4 * 0.16]);
+          if (inStart(x, z)) { /* the shared start's ground */ }
+          else if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.45 + r3 * 0.5, 0.25 + r4 * 0.3, [0.92 + r2 * 0.16, 0.95 + r3 * 0.1, 0.9 + r4 * 0.16]);
           else if (kind === 1) pk[1].add(x, y0 - 0.06, z, r2 * TAU, 0.4 + r3 * 0.6, 0.25 + r4 * 0.25, flowerC[Math.floor(r4 * flowerC.length)]);
           else { const q = rc[Math.floor(r2 * rc.length)], k = (0.85 + r3 * 0.3) / 0.62; pk[kind].add(x, y0 - (kind === 2 ? 0.15 : 0.04), z, r4 * TAU, kind === 2 ? 0.6 + r3 * 1.8 : 0.8 + r3, kind === 2 ? 0.45 + r4 * 1.2 : 0.8 + r4, [q[0] * k, q[1] * k, q[2] * k]); }
           if (++nPlants >= maxT) break grid;
@@ -653,7 +658,7 @@
         const o = 1.7 + Math.pow(RS(), 2) * 30, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
         if (vrNear(x, z).dd < 1.2 || excluded(x, z) || inLake(x, z)) continue;
         const y0 = caGround(x, z), sl = caSlope(x, z), c = vrLC(x, z); if (sl > 1.15 || (c !== 4 && c !== 7 && r1 < 0.5)) continue;
-        const q = rc[Math.floor(r2 * rc.length)], k = (0.84 + r3 * 0.28) / 0.62, sc = 0.8 + r1 * 1.1; pk[3].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [q[0] * k, q[1] * k, q[2] * k]);
+        const q = rc[Math.floor(r2 * rc.length)], k = (0.84 + r3 * 0.28) / 0.62, sc = 0.8 + r1 * 1.1; if (!inStart(x, z)) pk[3].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [q[0] * k, q[1] * k, q[2] * k]);
         if (++nS >= maxS) break edge;
       }
     }
@@ -667,7 +672,7 @@
         if (RV() > 0.32) continue;
         const o = 1.6 + Math.pow(RV(), 1.5) * 36, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.4; if (vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || inLake(x, z) || vrDist(x, z) > LOD.cap(90)) continue;
         const y = caGround(x, z), sl = caSlope(x, z), c = vrLC(x, z); if (sl < 0.3 && c !== 4 && c !== 7) continue;
-        rock(scen.get(x, z), x, y + sz * 0.3, z, sz * 1.25, sz, sz, RV() * TAU, vary(rc[Math.floor(RV() * rc.length)], RV, 0.1), RV, 0.28);
+        rock((inStart(x, z) ? SINK : scen).get(x, z), x, y + sz * 0.3, z, sz * 1.25, sz, sz, RV() * TAU, vary(rc[Math.floor(RV() * rc.length)], RV, 0.1), RV, 0.28);
       }
       for (let s = 16; s < T.len - 16; s += 14) for (const side of [-1, 1]) {   // crags and slabs where the slope is steep (the schist: flatter, tilted slabs)
         if (RV() < 0.4) continue;
@@ -675,7 +680,7 @@
         const sl = caSlope(x, z); if (sl < 0.6 && vrLC(x, z) !== 4) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rc[Math.floor(RV() * rc.length)], RV, 0.06);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 4, qx = x + (RV() - 0.5) * 9, qz = z + (RV() - 0.5) * 9, qy = caGround(qx, qz); if (vrNear(qx, qz).dd < r0 + 1) continue;
-          rock(g, qx, qy + r0 * 0.15, qz, r0 * 1.3, r0 * (0.4 + RV() * 0.3), r0 * (0.8 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.06), RV, 0.22); }
+          rock(inStart(qx, qz) ? SINK.get(qx, qz) : g, qx, qy + r0 * 0.15, qz, r0 * 1.3, r0 * (0.4 + RV() * 0.3), r0 * (0.8 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.06), RV, 0.22); }
       }
       API.ROCK_SMOOTH = true;
       const G = P.G, Lt = VRC * VRT;   // the old snow: flat white patches where the snow lies, on the full tiles
