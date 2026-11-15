@@ -161,6 +161,7 @@ Vsak korak dopiše vrstico (CPU 4×, `node tools/zagon.mjs --cpu 4 --net slow4g 
 |---|---|---|---|
 | 1 (8. 11. 2026, izhodišče) | 16,5–20,5 / 43,2–44,4 / 50,8 s | 6,9–12,2 / 9,2–12,8 s (platno na procesorju 6,7–13,2 / 11,8–14,8 s) | 5,97 MB |
 | 2 in 3 (13. 11. 2026) | 1,4–6,8 / 45,1–48,1 / 47,2 s | 7,7–10,4 / 9,3–9,4 s | 6,36 MB (main je od koraka 1 zrasel) |
+| 6 (15. 11. 2026) | 4,5–7,3 / 41,9–44,7 / 43,5 s | 7,2–12,3 / 7,5–7,6 s | 6,01 MB (−0,35 MB: 194 skript namesto 234; prej na istem stroju 5,1–7,0 / 44,0–46,9 / 45,7 s, 6,6–11,6 / 8,4–8,6 s) |
 
 Koraka 2 in 3: zaslon nalaganja z vrstico napredka je viden takoj (prvi izris ~10 s prej); do menija odloča še prenos skript (zadnja prispe ~37,5 s, koraki 4–6). Hiter vstop gradi samo progo dirke (pri vožnji »svet za naslovnico« je že Bathurst, svet dirke 0,0 s), zato je vožnja ~3,5 s prej; ponovni obisk do vožnje brez nihanja (prej 9,2–12,8 s).
 
