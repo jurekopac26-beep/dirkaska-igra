@@ -487,8 +487,9 @@
     if (menuOn) { if (sid === 'menu') Menu.show(name); else Menu.hide(); }
     fitSegs();
     if (name === 'car') carTapLay();   // (the car's tap: over it once the screen is laid out)
-    if (name === 'results') { resSave(); resPrvi(); lpRes(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
-    if (name === 'settings') profNote();
+    if (name === 'results') { resSave(); resPrvi(); lpRes(); svRes(); resMe(); Shramba.persist(); }   // (the offer to save the profile first: the table's height with it; the browser asked once a visit to keep the saved game, js/shramba.js)
+    if (name === 'settings') { profNote(); svSet(); }
+    if (name === 'title' || name === 'track') svFlush();   // (Svetovna lestvica: the queue sent when the menu opens)
     if (lpZ && (name === 'title' || name === 'track' || name === 'board')) { const z = lpZ; lpZ = null; setTimeout(() => lpOpen(z), 0); }   // (a friend's link opened in a race: now)
     const inRace = name === 'none';
     $('hud').classList.toggle('off', !(bg === 'race' && (name === 'none' || name === 'pause')));
@@ -1749,10 +1750,11 @@
       cond: { rain: race.rain ? 1 : 0, tod: race.endu ? 'day' : S.tod, season: S.season, upg: Object.assign({}, upgOf(M.id)), setup: Object.assign({}, setupOf(id)) } });   // (how the run was driven: a challenge takes it along)
     if (j.length > GH_BYTES) return;
     Shramba.keep(ghKey(id), j);   // (a full storage: older ghosts make room for the new best)
+    return j;   // (the world leaderboard sends it with the time)
   }
   function ghSave(id, time) {   // a new personal best: store the recorded run (the old ghost goes with its record)
     const G = ghRec; ghRec = null;
-    if (G && G.done) ghWrite(id, G, time, false); else try { localStorage.removeItem(ghKey(id)); } catch (_) { }
+    if (G && G.done) return ghWrite(id, G, time, false); else try { localStorage.removeItem(ghKey(id)); } catch (_) { }
   }
   // a stored ghost ({ v, dt, n, t, car, color, stripe, lap?, q0, d }): checked and unpacked to its poses (null: not a ghost of this game)
   function ghParse(o) {
@@ -2161,6 +2163,134 @@
       : '<p class="desc small">' + tr(nf ? 'Prijatelji na tej progi še nimajo časov.' : 'Na lestvici še ni prijateljev. Pošlji jim svoje čase: ko ti pošljejo svoje, jih vidiš tukaj.') + '</p>') +
       '<div class="btns horiz gh-btns"><button class="btn mini" data-act="lp-send">' + tr('Pošlji svoje čase') + '</button>' + (nf ? '<button class="btn mini" data-act="lp-list">' + tr('Prijatelji ({0})', nf) + '</button>' : '') + '</div></div>';
   }
+  /* ---------------- the world leaderboard (Svetovna lestvica, docs/svetovna-lestvica.md, »V igri«): js/svet.js sends a new best time trial
+     and reads the world's tables (nothing waits in a race); here only its places: the results line, the Leaderboard's World, Settings, the
+     menu's World (G.world). Without the server's address (Svet.CFG.url, set once the server is up) none of it shows ---------------- */
+  const SV = LPX && typeof Svet !== 'undefined' ? Svet : null;
+  const svOk = () => !!SV && SV.avail();
+  const svKey = (id) => { const k = recKey(id), I = lpTable().get(k); return I && I.kind === 'tt' ? k : null; };   // (a time trial's key: laps later)
+  const svPolicy = () => Lang.cur === 'en' ? 'privacy.html' : 'zasebnost.html';
+  const svAt = (at) => new Date(at).toLocaleTimeString(Lang.locale, { hour: '2-digit', minute: '2-digit' });
+  const svName = (r) => r.ime == null ? tr('Voznik #{0}', r.oznaka || '?') : r.ime;
+  const svW = new Map();   // key -> { b, p, at } the menu's last look (the board and the player's place), read again after a minute
+  if (SV) {
+    SV.config({ on: (what) => { if (what === 'state' && screen === 'settings') svSet(); if (what === 'flush') svFlushed(); } });
+    window.addEventListener('online', () => { if (SV.on()) SV.flush(); });
+  }
+  const svFlush = () => { if (SV && SV.on()) SV.flush(); };
+  // a new best time trial (ttFinish): its fields, the record of its input (js/vnos.js) and its ghost into the queue, then sent; race.sv the state
+  // for the results line ('q' waiting, 'ok', 'later', 'ime', 'drop'; null: not one for the world)
+  function svSend(id, time, ghost) {
+    if (!svOk() || !SV.on() || typeof ghost !== 'string' || typeof Vnos === 'undefined') return;
+    const R = Vnos.out(race), k = svKey(id), P = race.player;
+    if (!k || !R || !R.ok || R.kind !== 'tt' || R.fs == null || !(R.n >= R.fs)) return;
+    const M = Core.MODELS[S.car], t = Math.round(time * 1000), s1 = R.fs;
+    const f = { kljuc: k, avto: M.id, nad: upgNorm(upgOf(M.id)), pomoc: S.assist | 0, t, zig: { igra: R.stamp.game, jedro: R.stamp.core }, eng: R.eng,
+      vmes: P.splits.slice(0, track.cpS.length).map(x => Math.round(x * 1000)), n: R.n, s0: s1 - Math.round(t * 0.12), s1, fs: s1 };
+    let rj; try { rj = JSON.stringify(R); } catch (_) { return; }
+    const rc = race; rc.sv = { k, st: 'q', at: 0, n: 0 };
+    SV.add(f, rj, ghost).then(ok => { if (!ok) { rc.sv = null; return null; } return SV.flush(); }).then(out => {
+      const e = Array.isArray(out) && out.find(x => x.k === k); if (!e || !rc.sv) return;
+      rc.sv.st = e.r;
+      if (e.r === 'ok') return SV.place(k).then(p => { if (p && p.j && !p.old && rc.sv) { rc.sv.at = p.j.mesto || 0; rc.sv.n = p.j.skupaj || 0; } });
+    }).catch(() => { }).then(() => { if (race === rc && screen === 'results') svRes(); });
+  }
+  function svFlushed() { if (screen === 'results') svRes(); if (screen === 'settings') svSet(); }
+  function svRes() {   // the results: the world's line (the run sent, waiting for the check; waiting for the network; not joined yet)
+    const ln = $('res-svt'); if (!ln) return; ln.classList.add('off');
+    if (!svOk() || !race || !track || school || (mp && mp.race) || race.chal || !svKey(track.def.id) || !race.sv && SV.state().on !== null) return;
+    const V = race.sv, Q = V ? SV.queue().find(e => e.k === V.k) : null;
+    let t;
+    if (!V) t = tr('Svet: tvoji časi so lahko na svetovni lestvici (Nastavitve).');
+    else if (V.st === 'ok') t = V.at ? tr('Svet: #{0} od {1} (čaka na preverjanje).', Lang.thou(V.at), Lang.thou(V.n)) : tr('Svet: čas je poslan (čaka na preverjanje).');
+    else if (V.st === 'ime' || (Q && Q.why === 'ime')) t = tr('Svet: vpiši vzdevek za svetovno lestvico v Nastavitvah, potem čas odide.');
+    else if (V.st === 'drop') t = tr('Svet: strežnik tega časa ni sprejel.');
+    else if (V.st === 'later' && navigator.onLine === false) t = tr('Svet: ni povezave; čas odide, ko bo.');
+    else if (V.st === 'later') t = tr('Svetovna lestvica trenutno ni na voljo; čas počaka in odide pozneje.');
+    else t = tr('Svet: pošiljam čas …');
+    ln.textContent = t; ln.classList.remove('off');
+  }
+  function svJoin() {   // the consent, then the nickname the server keeps (the friends' one when it is not the default)
+    if (!svOk()) { toast(tr('Svetovna lestvica trenutno ni na voljo.'), 3000); return false; }
+    if (!confirm(tr('Tvoj vzdevek, časi in posnetki voženj gredo na naš strežnik v EU, na javno svetovno lestvico. Vpiši vzdevek, ne pravega imena. Izbris je v Nastavitvah. Pod 15 let vprašaj starše.'))) return false;
+    SV.join();
+    if (lpDefName(S.name) || !cleanName(S.name)) { toast(tr('Vpiši vzdevek za svetovno lestvico v Nastavitvah.'), 3200); onAction('to-settings'); const el = $('set-svet'); if (el) el.open = true; }
+    else svNick(S.name);
+    return true;
+  }
+  async function svNick(n) {
+    const r = await SV.nick(n);
+    if (r.ok) { toast(r.skrit ? tr('Vzdevek je shranjen, a skrit, dokler ga ne pregledamo.') : tr('Vzdevek na svetovni lestvici: {0}', r.ime), 3000); svFlush(); }
+    else toast(r.why === 'mreza' || r.st >= 500 || r.st === 429 ? tr('Svetovna lestvica trenutno ni na voljo.') : tr('Ta vzdevek ni dovoljen.'), 3200);
+    if (screen === 'settings') svSet();
+    return r;
+  }
+  async function svErase() {
+    if (!confirm(tr('Izbrišem tvoj vzdevek, čase in posnetke s svetovne lestvice? Tega ni mogoče razveljaviti.'))) return false;
+    const ok = await SV.erase();
+    toast(ok ? tr('Tvoji podatki so izbrisani s svetovne lestvice.') : tr('Svetovna lestvica trenutno ni na voljo.'), 3200);
+    svW.clear(); if (screen === 'settings') svSet();
+    return ok;
+  }
+  async function svReport(id, name) {
+    if (!id || !confirm(tr('Prijavim vzdevek {0} kot žaljiv ali neprimeren?', name || '?'))) return false;
+    const ok = await SV.report(id);
+    toast(ok ? tr('Prijava je poslana. Hvala.') : tr('Svetovna lestvica trenutno ni na voljo.'), 3000);
+    return ok;
+  }
+  function svSet() {   // Settings → Svetovna lestvica: joined or not, the nickname, the player's id, what waits, Izbriši moje podatke, Pravilnik o zasebnosti
+    const box = $('set-svet'), b = $('svet-body'); if (!box || !b) return;
+    box.classList.toggle('off', !svOk()); if (!svOk()) return;
+    const T = SV.state(), n = SV.queue().length;
+    b.innerHTML = '<div class="set-note">' + tr('Na svetovni lestvici so najboljši časi kronometrov vseh igralcev. Brez pridružitve igra ničesar ne pošlje.') + '</div>' +
+      '<div class="row"><span class="rlbl">' + tr('Sodelujem') + '</span><button class="btn mini" data-act="' + (T.on ? 'sv-leave' : 'sv-join') + '">' + tr(T.on ? 'Izstopi' : 'Pridruži se') + '</button></div>' +
+      (T.on ? '<div class="row"><span class="rlbl">' + tr('Vzdevek') + '</span><input id="sv-nick" type="text" maxlength="16" autocomplete="off" value="' + esc(T.ime || (lpDefName(S.name) ? '' : S.name)) + '"><button class="btn mini" data-act="sv-nick">' + tr('Shrani') + '</button></div>' : '') +
+      (T.id ? '<div class="set-note">' + tr('Id igralca: {0}', T.id) + (T.skrit ? ' · ' + tr('vzdevek je skrit do pregleda') : '') + '</div>' : '') +
+      (n ? '<div class="set-note">' + tr('Časi, ki čakajo na pošiljanje: {0}', n) + '</div>' : '') +
+      (T.ban ? '<div class="set-note">' + tr('Pošiljanje časov ti je onemogočeno.') + '</div>' : '') +
+      '<div class="row">' + (T.id ? '<button class="btn mini" data-act="sv-erase">' + tr('Izbriši moje podatke na svetovni lestvici') + '</button>' : '') +
+      '<a class="btn mini" href="' + svPolicy() + '" target="_blank" rel="noopener">' + tr('Pravilnik o zasebnosti') + '</a></div>';
+  }
+  // the Leaderboard's World of a track: the kept table at once, the server's when it comes (the box filled again where it still shows)
+  function svBoardHTML(d) {
+    if (!svOk()) return '';
+    const k = svKey(d.id); if (!k) return '';
+    setTimeout(() => { Promise.all([SV.board(k, 0, 100), SV.place(k)]).then(([b, p]) => { svW.set(k, { b, p, t: Date.now() }); const el = $('sv-box'); if (el && el.dataset.k === k) el.innerHTML = svBoxIn(d, b, p, false); }).catch(() => { }); }, 0);
+    return '<div class="lp-box" id="sv-box" data-k="' + k + '">' + svBoxIn(d, SV.kept(k), SV.keptPlace(k), true) + '</div>';
+  }
+  function svBoxIn(d, b, p, first) {
+    const T = SV.state(), J = b && b.j, rows = J && Array.isArray(J.vrstice) ? J.vrstice : [];
+    let h = '<p class="ltab-h">' + tr('Svet · {0}', esc(Lang.of(d, 'name'))) + condTxt(d) + '</p>';
+    if (!J) h += '<p class="desc small">' + (first ? tr('Nalagam …') : tr('Svetovna lestvica trenutno ni na voljo.')) + '</p>';
+    else if (!rows.length) h += '<p class="desc small">' + tr('Na tej lestvici še ni časov.') + '</p>';
+    else {
+      const first0 = rows[0].ms, mine = rows.some(r => r.id === T.id), P = p && p.j;
+      h += '<table class="ltab lp sv"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th><th>' + tr('Avto') + '</th><th>' + tr('Čas') + '</th><th>' + tr('Zaostanek') + '</th><th></th></tr></thead><tbody>' +
+        rows.map(r => '<tr class="' + (r.id === T.id ? 'me' : '') + '"><td>' + r.mesto + '</td><td class="nm">' + esc(svName(r)) + '</td><td class="nm">' + esc(lpCar(r.avto) || '–') + '</td><td>' + (r.priblizno ? '≈' : '') + fmt(r.ms / 1000, true) + '</td><td>' + (r.mesto > 1 ? sgn((r.ms - first0) / 1000) : '') + '</td><td>' +
+          (r.id !== T.id && r.ime != null ? '<button class="btn mini" data-act="sv-report" data-id="' + esc(r.id) + '" data-nm="' + esc(r.ime) + '">' + tr('Prijavi') + '</button>' : '') + '</td></tr>').join('') +
+        (!mine && P && P.mesto ? '<tr class="me"><td>' + P.mesto + '</td><td class="nm">' + esc(T.ime || S.name) + '</td><td></td><td>' + fmt(P.ms / 1000, true) + '</td><td>' + sgn((P.ms - first0) / 1000) + '</td><td></td></tr>' : '') + '</tbody></table>' +
+        '<p class="desc small">' + tr('{0} voznikov na lestvici.', Lang.thou(J.skupaj || rows.length)) + '</p>';
+    }
+    if (J && b.old) h += '<p class="desc small">' + tr('Stanje ob {0}.', svAt(b.at)) + '</p>';
+    if (!T.on) h += '<div class="btns horiz gh-btns"><button class="btn mini" data-act="sv-join">' + tr('Pridruži se') + '</button></div>';
+    return h;
+  }
+  // the menu's World of a track in the way it is driven now (G.world): { on (joined), rows: [{ at, name, car, time, me }] (the top n), me: { at,
+  // n } the player's place, n (all on it), old ('14.32': the table kept, the server not reached), na (not available, nothing kept), wait
+  // (the first look, nothing kept yet) }; null without the world leaderboard. The server is asked once a minute a key, then Menu.refresh()
+  function svWorld(d0, n) {
+    if (!svOk() || !d0) return null;
+    const d = pkRoadDef(d0), k = svKey(d.id); if (!k) return null;
+    const T = SV.state(); let W = svW.get(k);
+    if (!W || Date.now() - W.t > 60e3) {
+      if (!W) { W = { b: SV.kept(k), p: SV.keptPlace(k), t: 0 }; svW.set(k, W); }
+      if (!W.busy) { W.busy = true; Promise.all([SV.board(k, 0, 100), SV.place(k)]).then(([b, p]) => { svW.set(k, { b, p, t: Date.now() }); if (menuOn && typeof Menu !== 'undefined') Menu.refresh(); }).catch(() => { W.busy = false; }); }
+    }
+    const J = W.b && W.b.j, rows = J && Array.isArray(J.vrstice) ? J.vrstice : [], P = W.p && W.p.j;
+    const me = P && P.mesto ? { at: P.mesto, n: P.skupaj || 0 } : null;
+    return { on: T.on === true, asked: T.on !== null, wait: !J && !W.t, na: !J && !!W.t, old: J && W.b.old ? svAt(W.b.at) : '', n: J ? J.skupaj || rows.length : 0, me,
+      rows: rows.slice(0, n || 5).map(r => ({ at: r.mesto, name: svName(r), car: lpCar(r.avto), time: (r.priblizno ? '≈' : '') + fmt(r.ms / 1000), me: !!T.id && r.id === T.id })) };
+  }
   function lpListHTML() {   // the Leaderboard's Prijatelji: each friend (the nickname, the times, the last link), Odstrani
     const S0 = lpS(), nm = LPX.names(S0), ids = Object.keys(S0.friends).sort((a, b) => S0.friends[b].got - S0.friends[a].got);
     return '<p class="ltab-h">' + tr('Prijatelji na lestvici: {0} (največ {1})', ids.length, LPX.MAX_FRIENDS) + '</p>' + (ids.length
@@ -2536,7 +2666,7 @@
     const splits = P.splits.slice(0, track.cpS.length).concat([time]);
     const prev = R0.bestTime > 0 ? R0.bestTime : 0, prevSplits = Array.isArray(R0.bestSplits) ? R0.bestSplits.slice() : null;
     const newPB = !prev || time < prev;
-    if (newPB) { R0.bestTime = time; R0.bestSplits = splits.slice(); ghSave(track.def.id, time); } else ghRec = null;
+    if (newPB) { R0.bestTime = time; R0.bestSplits = splits.slice(); const gj = ghSave(track.def.id, time); try { svSend(track.def.id, time, gj); } catch (_) { } } else ghRec = null;   // (Svetovna lestvica: the new best to the world)
     mkSave();
     const M = Core.MODELS[S.car], date = Date.now();
     const entry = { name: S.name, car: M.name, carId: M.id, time, splits, date, upg: Object.assign({}, upgOf(M.id)) };
@@ -2643,6 +2773,7 @@
         (F ? '<p class="desc small">' + tr('Duh prijatelja: {0} · {1}', esc(F.name), fmt(F.t, true)) + '</p>' : '') +
         '<div class="btns horiz gh-btns">' + (F ? '<button class="btn mini" data-act="gh-del">' + tr('Izbriši prijateljevega') + '</button>' : '') + '<button class="btn mini" data-act="gh-import">' + tr('Uvozi duha') + '</button></div></div>'; }
     h += lpBoardHTML(d);   // (the friends' times on it: Lestvica prijateljev)
+    h += svBoardHTML(d);   // (the world's: Svetovna lestvica)
     $('board-body').innerHTML = h; $('board-body').scrollTop = 0;
   }
   // Dosežki (from the title): the player's numbers, then every achievement (unlocked: the date; the counting ones: how far)
@@ -6533,6 +6664,11 @@
       case 'to-chal': chalShow(); break;
       case 'chal-go': chalGo(); break;
       case 'chal-later': showScreen('title'); break;
+      case 'sv-join': svJoin(); if (screen === 'board') buildBoardScreen(); break;   // (Svetovna lestvica: the consent; Settings, the Leaderboard's World)
+      case 'sv-leave': SV.leave(); svSet(); break;
+      case 'sv-nick': { const el = $('sv-nick'); svNick(el ? el.value : ''); break; }
+      case 'sv-erase': svErase(); break;
+      case 'sv-report': svReport(el.dataset.id, el.dataset.nm); break;
       case 'lp-send': lpSend(); break;   // (Lestvica prijateljev: the player's times as a link)
       case 'lp-later': lpDone(); break;
       case 'lp-list': lpList = true; buildBoardScreen(); break;
@@ -6710,6 +6846,7 @@
     statsChip: () => ACH.filter(a => st.ach[a[0]]).length + ' OF ' + ACH.length + ' UNLOCKED',
     chal: () => !!chal,
     friends: (d, build) => lpFriends(d, build),   // (the Friends view of the track step: the friends' times there, Lestvica prijateljev; null without it)
+    world: (d, n) => svWorld(d, n), worldJoin: () => svJoin(),   // (the World view of the track step: the world's top and the player's place, Svetovna lestvica; null without it)
     sendTimes: () => { lpSend(); },
     fsAvailable: () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && !installedApp(),
     installAvailable: () => !!installEvt && !installedApp(),
@@ -6953,6 +7090,7 @@
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)),
         lp: { get on() { return !!LPX; }, get store() { return LPX ? lpS() : null; }, key: (id) => recKey(id), open: (z) => lpOpen(z), send: () => lpSend(), mine: () => LPX ? lpMine() : null, bound: (k) => LPX ? lpBound(k, true) : 0, friends: (id) => lpFriends(Core.TRACKS.find(d => d.id === id)) },   // (tests: Lestvica prijateljev)
+        svet: { get on() { return svOk(); }, key: (id) => svKey(id), res: () => { svRes(); const e = $('res-svt'); return e && !e.classList.contains('off') ? e.textContent : ''; }, get race() { return race && race.sv ? Object.assign({}, race.sv) : null; }, world: (id, n) => svWorld(Core.TRACKS.find(d => d.id === id), n), join: () => svJoin(), erase: () => svErase(), report: (id, nm) => svReport(id, nm), nick: (n) => svNick(n), set: () => { svSet(); return $('svet-body').innerHTML; } },   // (tests: Svetovna lestvica)
         get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: (recd.pit || []).map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
