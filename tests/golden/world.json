@@ -1412,5 +1412,27 @@
    "life:MeshLambertMaterial": "98d13852",
    "lifeShadow:MeshBasicMaterial": "cb5bcbdc"
   }
+ },
+ "atimpoku": {
+  "meshes": 376,
+  "verts": 366411,
+  "instances": 1934,
+  "props": 0,
+  "crowd": 99,
+  "world": "475a9b17",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "2838eba8",
+   "-:MeshPhongMaterial": "469ff44d",
+   "crowd:MeshLambertMaterial": "5b4e46cd",
+   "flags:MeshLambertMaterial": "e78df80d",
+   "ao:MeshBasicMaterial": "d5795e73",
+   "tyremarks:MeshBasicMaterial": "204a29f1",
+   "roadwear:MeshLambertMaterial": "fd15e671",
+   "life:MeshLambertMaterial": "45397b0e",
+   "lifeShadow:MeshBasicMaterial": "e557628b",
+   "life:MeshBasicMaterial": "f4b64a2b"
+  }
  }
 }
