@@ -224,6 +224,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | cpalace | Crystal Palace, Anglija | cpalace | `js/world-rbring.js` (`buildRbring`) in `js/world-cpalace.js` (lastni deli: `cpPrep`, `cpPark`, `cpTrees`, videz v `RB_LOOK` prek `API.rbLook`) |
 | *detroit* | *Detroit, ZDA (test)* | detroit | `js/world-detroit.js` (`buildDetroit`) |
 | *greatalpine* | *Great Alpine Road, Avstralija (test)* | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
+| cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |

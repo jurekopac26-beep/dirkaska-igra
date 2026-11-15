@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "cusco": {
+  "calls": 124,
+  "maxCalls": 169,
+  "kverts": 273,
+  "maxKverts": 361,
+  "jsMs": 1.53
  }
 }

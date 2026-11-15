@@ -15,7 +15,7 @@ const path = require('path');
 const { loadCore, ROOT } = require('./core.js');
 const { DT, seeded } = require('./sim.js');
 
-function goreTrack(id) {
+function goreTrack(id, len = [2450, 3050]) {   // (len: the stage's bounds between the lines, m; the plan's 2.5-3 km, a shorter road its own)
   const C = loadCore();
   let bad = 0, n = 0;
   const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
@@ -32,7 +32,7 @@ function goreTrack(id) {
   check('track: an open road with four ways to drive it (race, time trial, traffic, police), 4 checkpoints, not a round of the big championship',
     def.open && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes(id), `${T.cpS.length} checkpoints`);
   // 2. the stage
-  check('stage: 2.5-3 km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish', T.raceLen > 2450 && T.raceLen < 3050 &&
+  check(`stage: ${(len[0] / 1000).toFixed(2)}-${(len[1] / 1000).toFixed(2)} km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish`, T.raceLen > len[0] && T.raceLen < len[1] &&
     Math.abs(T.altAt(T.hStart) - def.alt[0]) < 1.5 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1.5 && T.startS >= 13 + 21 * 7.5 && T.len - T.finishS >= 100,
     `race ${Math.round(T.raceLen)} m, ${def.alt.join(' -> ')} m, ${Math.round(T.startS)} m below the start, ${Math.round(T.len - T.finishS)} m past the finish`);
   // 3. the data
@@ -48,7 +48,7 @@ function goreTrack(id) {
     const okB = B.every((b, k) => (!k || b[0] > B[k - 1][0]) && Math.sign(turn[k]) === b[2] && Math.abs(turn[k]) > 0.8);
     check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
     let dmin = 1e9; for (let i = 0; i < T.N; i += 2) for (let j = i + 40; j < T.N; j += 2) dmin = Math.min(dmin, Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]));
-    let bmin = 1e9; for (let i = 0; i < T.N; i++) bmin = Math.min(bmin, T.bl[i], T.br[i]);
+    let bmin = 1e9; for (let i = 0; i < T.N; i++) { const nw = T.wa ? Math.max(0, T.w - T.wa[i]) : 0; bmin = Math.min(bmin, T.bl[i] + nw, T.br[i] + nw); }   // (nw: where the road is narrower than its base width, as Učka's gravel, past its own edge)
     let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));
     check('the road: the legs of the hairpins 20 m apart or more, the barriers 3 m past the asphalt or more, nowhere steeper than 12 %', dmin >= 20 && bmin >= T.w + 2.9 && gmax < 0.12,
       `legs ${dmin.toFixed(1)} m apart at the closest, barriers ${(bmin - T.w).toFixed(2)} m past the edge, steepest ${(gmax * 100).toFixed(1)} %`);

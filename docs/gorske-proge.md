@@ -58,6 +58,7 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 14 | `puntadeleste` | Punta del Este, Urugvaj | Punta del Este, Uruguay | desna | -54.965,-34.97,-54.935,-34.95 |
 | 15 | `greenpoint` | Green Point, Južna Afrika | Green Point, South Africa | leva | 18.395,-33.91,18.42,-33.895 |
 | 16 | `puertomadero` | Puerto Madero, Argentina | Puerto Madero, Argentina | desna | -58.372,-34.622,-58.355,-34.600 |
+| 21 | `cusco` | Cusco, Peru | Cusco, Peru | desna | -71.9895,-13.5175,-71.9755,-13.4985 |
 
 ### Smučišča (1–4)
 
