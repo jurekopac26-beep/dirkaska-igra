@@ -75,6 +75,27 @@
     }
     return false;
   }
+  function caNearDd(x, z) {   // API.vrNear(x, z).dd alone (the least distance beyond a barrier over the samples within 64 m, 1e9 without one): the same minimum, cells and samples that cannot lower it skipped
+    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds, HC = API.VRHC;
+    if (caMBT !== T) { caMBT = T; caMB = 0; for (let i = 0; i < T.N; i++) caMB = Math.max(caMB, T.br[i], T.bl[i]); }
+    let bdd = 1e9;
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const zl = (b + P.cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+        const L = P.cells[b * P.ncx + a]; if (!L) continue;
+        const xl = (a + P.cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0, R = Math.min(66, bdd + caMB + 2) + ds; if (gx * gx + gz * gz >= R * R) continue;
+        for (let q = 0; q < L.length; q++) {
+          const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i];
+          if (lat >= 64 || lat <= -64) continue;
+          const bar = lat > 0 ? T.br[i] : T.bl[i]; if ((lat > 0 ? lat : -lat) - bar >= bdd + 1e-6) continue;   // (d >= |lat|: no lower)
+          const ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+          if (d >= 64) continue;
+          const dd = Math.max(0, d - bar); if (dd < bdd) bdd = dd;
+        }
+      }
+    }
+    return bdd;
+  }
   function caH(x, z) {   // terrain height (as vrH, on caNear: the road's blend near it, the real terrain farther out; never above the road around)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = API.vrFar(x, z);
@@ -425,7 +446,7 @@
     const scen = new Chunks(110), fac = new Chunks(110, true), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (fac: the walls with windows; ban: the race's boards, ban2: the signs)
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.84, 0.12, 0.12], [0.95, 0.95, 0.95], [0.1, 0.24, 0.66], [0.46, 0.7, 0.92], [0.95, 0.95, 0.95], [0.96, 0.78, 0.18], [0.84, 0.12, 0.12], [0.12, 0.14, 0.2], [0.2, 0.55, 0.32], [1, 0.55, 0.1]];   // (Chile's red, white and blue, Argentina's sky blue)
-    const CR = crowdCtx({ gH: caGround, near: (x, z) => API.vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => API.vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
+    const CR = crowdCtx({ gH: caGround, near: caNearDd, excluded, maxSlope: 0.6, water: (x, z) => API.vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1; tilt leans its top towards +t
       const ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = W / 2 * f;
