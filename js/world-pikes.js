@@ -209,7 +209,7 @@
     let sum = 0;
     for (let k = 0; k < S * S; k++) { const o = k * 4; d[o] = clamp(A[k], 0, 1) * 255; d[o + 1] = clamp(H[k], 0, 1) * 190; d[o + 2] = r() < 0.03 ? 120 + r() * 135 : 0; d[o + 3] = 255; sum += d[o]; }   // (g kept below r: the season code must not take the map for grass)
     x.putImageData(img, 0, 0);
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.pix = d;   // (pix: its pixels, for vrGritTex without reading the canvas back)
     pkGMean = sum / (S * S) / 255;   // steep faces fade to this (pkGroundMat)
     return (pkGTex = t);
   }

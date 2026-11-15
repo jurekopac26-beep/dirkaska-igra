@@ -376,8 +376,9 @@
   let vrGTex = null;
   function vrGritTex() {
     if (vrGTex) return vrGTex;
-    const src = API.pkTex().image, S = src.width, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
-    x.drawImage(src, 0, 0); const img = x.getImageData(0, 0, S, S), d = img.data; for (let o = 0; o < d.length; o += 4) d[o + 1] = d[o + 2] = d[o];
+    const P = API.pkTex(), src = P.image, S = src.width, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
+    let img; if (P.pix) { img = x.createImageData(S, S); img.data.set(P.pix); } else { x.drawImage(src, 0, 0); img = x.getImageData(0, 0, S, S); }   // (its pixels as made, opaque: no read back, which waits for the graphics card)
+    const d = img.data; for (let o = 0; o < d.length; o += 4) d[o + 1] = d[o + 2] = d[o];
     x.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
     return (vrGTex = t);
   }
