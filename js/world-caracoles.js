@@ -29,20 +29,22 @@
     // by a leg the blend is that leg's height, between two legs of a hairpin ladder it passes smoothly from one to the other (no seam where the
     // nearest leg changes); env: the highest the ground may lie under every part of the road around (0.3 m below it inside its barriers, rising
     // behind them: gently for 5 m, then at 2 in 1)
-    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds;
+    const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds, ds2 = 2 * ds;
     let ws = 0, hs = 0, bd = 1e9, bi = -1, bdd = 1e9, env = 1e9;
     const HC = API.VRHC, RR = (66 + ds) * (66 + ds);   // (a cell farther than 64 m + ds (+2 m slack) holds no sample within d < 64: d >= the true distance - ds)
-    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
-      const zl = (b + P.cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0, gz2 = gz * gz; if (gz2 >= RR) continue;
-      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
-      const L = P.cells[b * P.ncx + a]; if (!L) continue;
-      const xl = (a + P.cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0; if (gx * gx + gz2 >= RR) continue;
-      for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; if (lat >= 64 || lat <= -64) continue;   // (64 m or more aside: d >= 64 whatever al is)
-        const al = dx * T.tx[i] + dz * T.tz[i], ex = Math.max(0, Math.abs(al) - ds); if (ex >= 64) continue;
+    const cells = P.cells, ncx = P.ncx, cx0 = P.cx0, cz0 = P.cz0, a0 = Math.max(0, cx - 2), a1 = Math.min(ncx - 1, cx + 2), b1 = Math.min(P.ncz - 1, cz + 2);
+    const px = T.px, pz = T.pz, tx = T.tx, tz = T.tz, nx = T.nx, nz = T.nz, br = T.br, bl = T.bl, hy = T.hy, grade = T.grade;   // (the road's arrays, read once)
+    for (let b = Math.max(0, cz - 2); b <= b1; b++) {
+      const zl = (b + cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0, gz2 = gz * gz; if (gz2 >= RR) continue;
+      for (let a = a0; a <= a1; a++) {
+      const L = cells[b * ncx + a]; if (!L) continue;
+      const xl = (a + cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0; if (gx * gx + gz2 >= RR) continue;
+      for (let q = 0, nq = L.length; q < nq; q++) {
+        const i = L[q], dx = x - px[i], dz = z - pz[i], lat = dx * nx[i] + dz * nz[i]; if (lat >= 64 || lat <= -64) continue;   // (64 m or more aside: d >= 64 whatever al is)
+        const al = dx * tx[i] + dz * tz[i], ex = Math.max(0, Math.abs(al) - ds); if (ex >= 64) continue;
         const d = Math.sqrt(lat * lat + ex * ex);
         if (d >= 64) continue;
-        const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), hc = T.hy[i] + T.grade[i] * clamp(al, -2 * ds, 2 * ds), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
+        const dd = Math.max(0, d - (lat > 0 ? br[i] : bl[i])), hc = hy[i] + grade[i] * (al < -ds2 ? -ds2 : al > ds2 ? ds2 : al), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
         ws += wq; hs += wq * hc;
         if (d < bd) { bd = d; bi = i; }
         if (dd < bdd) bdd = dd;
@@ -101,7 +103,7 @@
     if (i < 0) h = API.vrFar(x, z);
     else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, API.vrFar(x, z), sstep(1, 42, dd)); }
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 12, dx = x - p.x, dz = z - p.z, R = p.r + pb; if (dx >= R || dx <= -R || dz >= R || dz <= -R) continue; const d = Math.hypot(dx, dz); if (d < R) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
-    for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
+    const gul = API.VR.gul; if (i >= 0 && gul.length) for (const b of gul) {   // the stream bed under the bridge (as vrH; i < 0: none)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
       const dx = x - b.x, dz = z - b.z, al = Math.abs(dx * b.tx + dz * b.tz), lat = Math.abs(dx * b.nx + dz * b.nz);
       if (al < b.half + 14 && lat < 60) h = Math.min(h, lerp(h, b.y, sstep(60, 22, lat)) + Math.max(0, al - b.bw / 2) * 1.2);
@@ -125,15 +127,16 @@
   const CALC = [0, 0, 0, 0, 0];   // caLC4: the shares of land cover classes 1-4 around (x, z), each as API.vrLCf gives it (the same sums), in one pass
   function caLC4(x, z) {
     const P = API.VR, L = P.L, lc = P.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
-    const cl = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? -1 : lc[b * L.nx + a]), c00 = cl(i, j), c10 = cl(i + 1, j), c01 = cl(i, j + 1), c11 = cl(i + 1, j + 1);
+    const W = L.nx, H = L.nz, i1 = i + 1, j1 = j + 1, iin = i >= 0 && i < W, i1n = i1 >= 0 && i1 < W, jn = j >= 0 && j < H, j1n = j1 >= 0 && j1 < H;   // (the cells' classes, -1 off the map)
+    const c00 = iin && jn ? lc[j * W + i] : -1, c10 = i1n && jn ? lc[j * W + i1] : -1, c01 = iin && j1n ? lc[j1 * W + i] : -1, c11 = i1n && j1n ? lc[j1 * W + i1] : -1;
     for (let c = 1; c <= 4; c++) CALC[c] = ((c00 === c ? 1 : 0) * (1 - u) + (c10 === c ? 1 : 0) * u) * (1 - v) + ((c01 === c ? 1 : 0) * (1 - u) + (c11 === c ? 1 : 0) * u) * v;
     return CALC;
   }
-  function caSnow(x, z, A, ny, sz, s4) {   // (s4: the share of land cover 4 when the caller has it) how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
+  function caSnow(x, z, A, ny, sz, s4, c5) {   // (s4: the share of land cover 4 when the caller has it) how much of the old summer snow lies at (x, z) (A: metres above the sea, ny / sz: the ground's up and south
     // components): above ~3350 m on the sunny north faces, from ~2690 m on the shady south faces (the southern hemisphere), in patches and in the
     // hollows, off the steepest faces; and the snowfields WorldCover maps (lc 4)
     const P = API.VR, line = 3020 - 330 * clamp(sz * 2.4, -1, 1) + (P.c4(x, z) - 0.5) * 240;
-    const k = A <= line || ny <= 0.42 ? 0 : sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, P.c5(x, z) + 0.3 * sstep(line, line + 450, A));   // (below the line or flatter than 0.42: a factor is 0, the noise is not read)
+    const k = A <= line || ny <= 0.42 ? 0 : sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, (c5 === undefined ? P.c5(x, z) : c5) + 0.3 * sstep(line, line + 450, A));   // (below the line or flatter than 0.42: a factor is 0, the noise is not read)
     return Math.max(k, (s4 === undefined ? API.vrLCf(x, z, 4) : s4) * sstep(0.32, 0.6, ny));
   }
   function caCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the scree and rock in grey-brown, banded with rust and ochre (the
@@ -151,13 +154,14 @@
     R += (f - 0.5) * 0.09; G += (f - 0.5) * 0.085; B += (f - 0.5) * 0.08;
     const st = sstep(0.8, 0.52, ny);   // the steep faces: rock in bands along the height
     const hz = Math.hypot(sx || 0, sz), fan = sstep(0.12, 0.3, hz) * (1 - st);   // the scree slopes: fans of fresher, paler scree and darker runnels down the fall line
-    if (fan > 0) { const u = (z * (sx || 0) - x * sz) / hz, w = Math.sin(u * 0.23 + P.c5(x, z) * 6 + P.n2(x, z) * 4), k = w * fan * (0.06 + 0.09 * P.n3(x, z)); R += k; G += k * 0.97; B += k * 0.92; }
+    let c5;   // (P.c5(x, z), read once for the fans and the snow)
+    if (fan > 0) { c5 = P.c5(x, z); const u = (z * (sx || 0) - x * sz) / hz, w = Math.sin(u * 0.23 + c5 * 6 + P.n2(x, z) * 4), k = w * fan * (0.06 + 0.09 * P.n3(x, z)); R += k; G += k * 0.97; B += k * 0.92; }
     if (st > 0) { const band = 0.5 + 0.5 * Math.sin(A / 7.5 + P.c2(x * 0.4, z * 0.4) * 7), k = 0.8 + 0.18 * band; R = lerp(R, 0.57 * k + rust * 0.06, st); G = lerp(G, 0.53 * k, st); B = lerp(B, 0.5 * k, st); }
     const gk = gr * sstep(0.4, 0.78, P.n2(x * 1.9, z * 1.9)) * 0.55 * (1 - 0.7 * st);
     R = lerp(R, 0.69, gk); G = lerp(G, 0.64, gk); B = lerp(B, 0.5, gk);
     R = lerp(R, 0.52, sh * 0.6); G = lerp(G, 0.52, sh * 0.6); B = lerp(B, 0.35, sh * 0.6);
     R = lerp(R, 0.68, se * 0.5); G = lerp(G, 0.65, se * 0.5); B = lerp(B, 0.6, se * 0.5);
-    const sn = caSnow(x, z, A, ny, sz, s4); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
+    const sn = caSnow(x, z, A, ny, sz, s4, c5); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.45 * (1 - sn); R = lerp(R, 0.6, t); G = lerp(G, 0.57, t); B = lerp(B, 0.52, t); }
     CACOL[0] = R; CACOL[1] = G; CACOL[2] = B; return CACOL;
   }
@@ -178,12 +182,13 @@
   }
   function caTileGeo(ti, tj, st) {   // one 100 m terrain tile (every st-th grid vertex), as vrTileGeo, coloured by caCol (or the road's own, VR.col: the Moki Dugway's)
     const G = API.VR.G, m = API.VRT / st, n = m + 1, pos = new Float32Array(n * n * 3), nor = new Float32Array(n * n * 3), col = new Float32Array(n * n * 3), uv = new Float32Array(n * n * 2), stp = new Float32Array(n * n), i0 = ti * API.VRT, j0 = tj * API.VRT;
+    const cf = API.VR.col || caCol, VRC = API.VRC, dn = 2 * VRC * st, gnx = G.nx, gnz1 = G.nz - 1, dd = G.dd;   // (per tile: the colouring, the normals' denominator)
     let k = 0;
     for (let b = 0; b < n; b++) for (let a = 0; a < n; a++, k++) {
-      const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * API.VRC, z = G.z0 + j * API.VRC, h = caGH(i, j);
-      let nx = -(caGH(i + st, j) - caGH(i - st, j)) / (2 * API.VRC * st), nz = -(caGH(i, j + st) - caGH(i, j - st)) / (2 * API.VRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
+      const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * VRC, z = G.z0 + j * VRC, h = caGH(i, j);
+      let nx = -(caGH(i + st, j) - caGH(i - st, j)) / dn, nz = -(caGH(i, j + st) - caGH(i, j - st)) / dn, l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
-      const c = (API.VR.col || caCol)(x, z, h, ny, nz, G.dd[clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1)], nx); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
+      const c = cf(x, z, h, ny, nz, dd[clamp(j, 0, gnz1) * gnx + clamp(i, 0, gnx - 1)], nx); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
       uv[k * 2] = x / 10; uv[k * 2 + 1] = -z / 10; stp[k] = sstep(0.78, 0.5, ny);
     }
     if (st === 1) {   // (no cracks against a coarse neighbour: as vrTileGeo)
@@ -746,14 +751,15 @@
     let nPlants = 0;
     {
       const G = P.G, Lt = API.VRC * API.VRT, maxT = Math.round(70000 * dens), RT = rng(2961), SP = 3.4 / Math.sqrt(dens);
+      const R230 = LOD.radius(230), R70 = LOD.radius(70), vrDist = API.vrDist, vrLC = API.vrLC;   // (hoisted: pure, the same for every spot)
       grid: for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt - 0.01; zz += SP) for (let xx = xa; xx < xa + Lt - 0.01; xx += SP) {
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
-          const hd = API.vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
-          if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
-          const c = API.vrLC(x, z);
+          const hd = vrDist(x, z); if (hd > R230) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
+          if (hd > R70 && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
+          const c = vrLC(x, z);
           let kind = -1;   // (the kind first, from the land cover and r1 alone: the ground's height and slope only for the spots that grow something)
           if (c === 1) kind = r1 < 0.52 ? 0 : r1 < 0.56 ? 1 : -1;
           else if (c === 2) kind = r1 < 0.3 ? 1 : r1 < 0.42 ? 0 : -1;
