@@ -231,10 +231,10 @@
     let nBld = 0, nFill = 0, nStone = 0;
 
     /* ---- the fortress on the hill: the simple one (one mesh) until the model of assets/landmarks/mombasa.glb has loaded (World.znamenitost):
-       its walls along the outline, battered, ochre, a white cordon under the parapet, the parapet's merlons, a sentry box on each bastion's
-       point, two low buildings with tiled roofs in the yard ---- */
+       its walls along the outline, battered, ochre, a white cordon under the parapet, the parapet's merlons, and the four buildings of
+       the OSM outlines in the yard, white and flat-roofed ---- */
     if (fort) {
-      const gF = new GB(), u = fort.pts, och = [0.86, 0.68, 0.46], ochT = [0.8, 0.64, 0.46], wht = [0.95, 0.94, 0.9], roof = [0.68, 0.34, 0.22];
+      const gF = new GB(), u = fort.pts, och = [0.86, 0.68, 0.46], ochT = [0.8, 0.64, 0.46], wht = [0.95, 0.94, 0.9];
       let area = 0; for (let k = 0; k + 1 < u.length; k++) area += u[k][0] * u[k + 1][1] - u[k + 1][0] * u[k][1];
       const ori = Math.sign(area) || 1;
       for (let k = 0; k + 1 < u.length; k++) {
@@ -245,17 +245,11 @@
         const nx = -Math.sin(ang) * ori, nz = Math.cos(ang) * ori, ox = mx - nx * 1.3, oz = mz - nz * 1.3, n = Math.max(1, Math.round(len / 2.4));   // (the parapet on the outer edge)
         for (let q = 0; q < n; q++) { const t = (q + 0.5) / n - 0.5; box(gF, ox + Math.cos(ang) * t * len, top, oz + Math.sin(ang) * t * len, len / n - 0.7, 0.9, 0.8, ang, och, ochT, true); }
       }
-      for (let k = 0; k + 1 < u.length; k++) {   // the sentry boxes on the bastions' points (the sharp outward corners)
-        const p = u[k], a = u[(k - 1 + u.length - 1) % (u.length - 1)], b = u[k + 1], e1 = Math.atan2(p[1] - a[1], p[0] - a[0]), e2 = Math.atan2(b[1] - p[1], b[0] - p[0]);
-        let tn = e2 - e1; while (tn > Math.PI) tn -= TAU; while (tn < -Math.PI) tn += TAU;
-        if (tn * ori < 0.9) continue;
-        const y = nrDem(p[0], p[1]) + 7.5; cyl(gF, p[0], y, p[1], 0.95, 2.3, 8, wht, null, 0.95); cone(gF, p[0], y + 2.3, p[1], 1.1, 1.2, 8, wht, wht, 0);
-      }
-      {   // the yard's two low buildings
-        const [cx, cz] = FC, y = nrDem(cx, cz); let lg = 0, la = 0;
-        for (let k = 0; k + 1 < u.length; k++) { const l = Math.hypot(u[k + 1][0] - u[k][0], u[k + 1][1] - u[k][1]); if (l > lg) { lg = l; la = Math.atan2(u[k + 1][1] - u[k][1], u[k + 1][0] - u[k][0]); } }
-        box(gF, cx, y - 1, cz, 30, 6.5, 9, la, wht, null, true); gable(gF, cx, y + 5.5, cz, 30.6, 9.6, 2.2, la, roof, wht);
-        const bx = cx - Math.sin(la) * 16, bz = cz + Math.cos(la) * 16; if (inPoly(fort.pts, bx, bz)) { box(gF, bx, y - 1, bz, 14, 5.5, 8, la, och, null, true); gable(gF, bx, y + 4.5, bz, 14.6, 8.6, 2, la, roof, och); }
+      // the yard's buildings as OSM draws them (way id: centre x, z, length, width, angle; tools/znamenitost/mombasa.py, YARD), white, flat-roofed
+      for (const [x, z, lx, lz, la] of [[1306.0, 110.9, 47.7, 11.6, -0.393] /* w99904283 */, [1227.0, 84.7, 10.6, 6.5, -0.586] /* w263829114 */,
+                                        [1275.0, 136.5, 13.9, 7.3, -0.417] /* w263829119 */, [1305.1, 60.5, 12.1, 5.7, -0.364] /* w263829120 */]) {
+        if (!inPoly(fort.pts, x, z)) continue;
+        const y = nrDem(x, z); box(gF, x, y - 1, z, lx, 6.5, lz, la, wht, wht, true);
       }
       const fm = new THREE.Mesh(gF.geometry(), matV); fm.castShadow = fm.receiveShadow = true; fm.matrixAutoUpdate = false; root.add(fm);
       exclPush(FC[0], FC[1], FR + 6); nStone++;

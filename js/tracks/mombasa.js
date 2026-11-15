@@ -16,7 +16,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xd6e1e6, sun: 0xfff3dc, sunI: 1.24, sky: 0x9fc6ea, gnd: 0x66684a, hemiI: 0.64, tint: [1.02, 1.0, 0.96], sat: 1.1, sunOff: [55, 86, 40], split: [[0.97, 1.0, 1.05], [1.04, 1.0, 0.95]] },   // Mombasa: a humid afternoon on the coast, the sun high in the south
     say: 'Mombasa',
-    zivali: { a: ['egret'], t: ['palmHut'], city: true },
+    zivali: { a: ['egret'], t: [], city: true },
     id: 'mombasa', name: 'Mombasa, Kenija', theme: 'mombasa', open: true, leftHand: true, sea: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~130 m of road past the line, two rows a side
     halfWidth: 5.4,

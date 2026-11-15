@@ -8,7 +8,7 @@ The game reads both with js/znamenitost.js (one draw call each, the materials' b
 
 The model: the high battered curtain walls of weathered ochre coral stone along the outline (its four angular bastions, the man's shape
 of the plan), their feet below the ground with a darker weathered band, the walkway on top, the plain parapet with its few wide gun
-ports, an arched gate in the wall facing the road, and in the yard a plain white flat-roofed house and a long low white hall. No
+ports, an arched gate where OSM puts it, and in the yard the four white flat-roofed buildings of the OSM outlines. No
 inscriptions, no flags, no statues.
 The far level: the walls, their top and the buildings' blocks, nothing smaller.
 Coordinates: the game's (x, y, z) with y up and metres above the sea, relative to the fort's centre (x, z) (the game puts the model there).
@@ -22,7 +22,8 @@ D = json.load(open(sys.argv[sys.argv.index('--') + 1] if '--' in sys.argv else s
 PTS, (CX, CZ) = [tuple(p) for p in D['pts']], D['FC']
 if PTS[0] == PTS[-1]: PTS = PTS[:-1]
 X0, Z0, ST, NX, NZ, H = D['x0'], D['z0'], D['st'], D['nx'], D['nz'], D['h']
-RX, RZ = D['road']   # (the road's nearest point: the gate faces it)
+RX, RZ = D['road']   # (the road's nearest point)
+GATE = (1293.9, 50.8)   # (OSM node 2694778606, barrier=gate, on the fort's outline; the game's x, z)
 
 # the materials: the weathered coral stone (ochre, paler on the tops, darker and greyer at the feet), the white plaster of the houses
 MATS = [('ochre', (0.80, 0.64, 0.44)), ('ochre_top', (0.76, 0.64, 0.50)), ('white', (0.93, 0.92, 0.88)), ('weather', (0.52, 0.46, 0.38)),
@@ -221,20 +222,18 @@ def sentries(G, rows, n_side, rows_dome):
 
 
 def gate(G, rows):
-    """the gate: a dark arched opening in the outer face of the longest wall facing the road"""
-    best = None
-    for k in range(N):
-        (ax, az), (bx, bz) = PTS[k], PTS[(k + 1) % N]
-        l = math.hypot(bx - ax, bz - az); nx, nz = enorm(k)
-        mx, mz = (ax + bx) / 2, (az + bz) / 2; dl = math.hypot(RX - mx, RZ - mz) or 1
-        sc = l * max(0.0, nx * (RX - mx) / dl + nz * (RZ - mz) / dl)   # (the walls facing the road)
-        if l > 12 and (best is None or sc > best[0]): best = (sc, k)
-    if not best: return
+    """the gate: a dark arched opening where OSM puts it (the barrier=gate node 2694778606 on the outline, in the small notch of the
+    north-west wall), in the longer of the two walls meeting at that corner"""
+    gk = min(range(N), key=lambda k: math.hypot(PTS[k][0] - GATE[0], PTS[k][1] - GATE[1]))
+    if math.hypot(PTS[gk][0] - GATE[0], PTS[gk][1] - GATE[1]) > 3: return
+    lens = {k: math.hypot(PTS[(k + 1) % N][0] - PTS[k][0], PTS[(k + 1) % N][1] - PTS[k][1]) for k in ((gk - 1) % N, gk)}
+    best = (0, max(lens, key=lens.get))
     k = best[1]; (ax, az), (bx, bz) = PTS[k], PTS[(k + 1) % N]; nx, nz = enorm(k)
     mx, mz = (ax + bx) / 2, (az + bz) / 2; g = ground(mx + nx * W_FOOT, mz + nz * W_FOOT)
     ux, uz = (bx - ax), (bz - az); l = math.hypot(ux, uz); ux, uz = ux / l, uz / l
     o = W_FOOT - W_TOP / 2 + 0.06 - 0.25
-    w, h = 2.0, 3.6
+    w, h = min(2.0, (math.hypot(bx - ax, bz - az) - 1.6) / 2), 3.6
+    if w < 1.0: return
     pts = [(-w, 0), (w, 0), (w, h)] + [(w * math.cos(a * math.pi / 8), h + w * 0.7 * math.sin(a * math.pi / 8)) for a in range(1, 8)] + [(-w, h)]
     P = lambda a, y: (mx + ux * a + nx * o, g + y, mz + uz * a + nz * o)
     G.quad([P(a, y) for a, y in pts], 'dark', d=(nx, 0, nz))
@@ -242,17 +241,20 @@ def gate(G, rows):
     for s in (-1, 1): G.box(mx + ux * s * (w + 0.35) + nx * (o + 0.1), g, mz + uz * s * (w + 0.35) + nz * (o + 0.1), 0.7, h + w * 0.7, 0.5, math.atan2(uz, ux), 'stone')
 
 
+# the yard's buildings as OSM draws them (way id: the centre x, z, the length along the angle, the width, the angle atan2(dz, dx) of the
+# length, all from the minimum-area rectangle of the outline in the game's frame); OSM gives no heights, so plain single-storey ones
+YARD = [(1306.0, 110.9, 47.7, 11.6, -0.393),   # w99904283 (the long hall along the south-east side)
+        (1227.0, 84.7, 10.6, 6.5, -0.586),     # w263829114
+        (1275.0, 136.5, 13.9, 7.3, -0.417),    # w263829119
+        (1305.1, 60.5, 12.1, 5.7, -0.364)]     # w263829120
+
+
 def yard(G, detail):
-    """the yard's buildings: a long low white hall along the longest wall's direction at the centre, a white two-storey house beside it,
-    both flat-roofed with a low parapet"""
-    lg, la = 0, 0
-    for k in range(N):
-        (ax, az), (bx, bz) = PTS[k], PTS[(k + 1) % N]; l = math.hypot(bx - ax, bz - az)
-        if l > lg: lg, la = l, math.atan2(bz - az, bx - ax)
-    c, s = math.cos(la), math.sin(la)
-    blds = [(CX, CZ, 30, 8, 5.0, 'white', 0), (CX - s * 15, CZ + c * 15, 12, 9, 8.0, 'white', 0)]
-    for (x, z, lx, lz, h, mat, rh) in blds:
+    """the yard's buildings: the four OSM footprints inside the walls, white, flat-roofed with a low parapet"""
+    blds = [(x, z, lx, lz, 5.5, 'white', a) for (x, z, lx, lz, a) in YARD]
+    for (x, z, lx, lz, h, mat, la) in blds:
         if not inside(x, z): continue
+        c, s = math.cos(la), math.sin(la)
         corners = [(x + c * a - s * b, z + s * a + c * b) for a in (-lx / 2, lx / 2) for b in (-lz / 2, lz / 2)]
         y0 = min(ground(*p) for p in corners) - 1.0; y = ground(x, z)
         G.box(x, y0, z, lx, (y + h - 1) - y0, lz, la, mat, 'stone')
