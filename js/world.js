@@ -4944,7 +4944,12 @@ const World = (function () {
   function crFree(C, x, z) {   // nobody closer than 0.55 m, no small obstacle
     const cx = Math.floor(x / 0.8), cz = Math.floor(z / 0.8);
     for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = C.spN.get((cx + a) * 131072 + cz + b); if (L) for (let q = 0; q < L.length; q += 2) if ((x - L[q]) ** 2 + (z - L[q + 1]) ** 2 < 0.3) return false; }   // (spN: the same lists as sp under a number key, faster to look up)
-    for (const [ax, az, r] of C.avoidL) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false;
+    const AL = C.avoidL; if (AL.length < 24) { for (const [ax, az, r] of AL) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false; return true; }
+    // many: the same circles in 8 m cells (each in every cell its square touches; built anew whenever the list has grown)
+    let G = C.avoidG; if (!G || G.n !== AL.length || G.a !== AL) { G = C.avoidG = { n: AL.length, a: AL, m: new Map(), big: [] }; for (const e of AL) { const [ax, az, r] = e; if (!(r > 0 && r <= 64)) { G.big.push(e); continue; }   // (a huge or odd one: checked always)
+      for (let i = Math.floor((ax - r) / 8) - 1; i <= Math.floor((ax + r) / 8) + 1; i++) for (let j = Math.floor((az - r) / 8) - 1; j <= Math.floor((az + r) / 8) + 1; j++) { const k = i * 131072 + j; let L = G.m.get(k); if (!L) G.m.set(k, L = []); L.push(e); } } }
+    for (const [ax, az, r] of G.big) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false;
+    const L = G.m.get(Math.floor(x / 8) * 131072 + Math.floor(z / 8)); if (L) for (const [ax, az, r] of L) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false;
     return true;
   }
   // one spectator at (x, y, z) facing (fx, fz); o: sit (share sitting in the front row), flag (share with a flag), shirts; row 0 = front
