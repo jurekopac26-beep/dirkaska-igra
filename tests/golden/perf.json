@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "vinales": {
+  "calls": 122,
+  "maxCalls": 217,
+  "kverts": 151,
+  "maxKverts": 214,
+  "jsMs": 1.98
  }
 }
