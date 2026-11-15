@@ -1,8 +1,8 @@
 // Musandam: an open road with four ways to drive it on one card, as Bâlea and Llogara (def.modes: the race, the time trial, the duel in the
 // traffic and the run from the police). The road: the real line of the coastal road west of Khasab on the Musandam peninsula (Oman), at full
 // scale and about 3.9 km: along the shore a metre or two above the bay, past the hamlet of Hanna on its spit, then up the bare limestone cliffs
-// by a string of bends, past the viewpoint high above the bay and the hamlet on its ledge, to the line near the top of the climb (~188 m). Its
-// data as tools/proga-podatki.py wrote it and the shared world of the passes (js/world-prelaz.js, with Musandam's own sea, boats, palms and
+// by a string of bends, high above the bay and past the hamlet on its ledge, to the line near the top of the climb (~188 m). Its
+// data as tools/proga-podatki.py wrote it and the shared world of the passes (js/world-prelaz.js, with Musandam's own sea, boats, acacias and
 // houses in js/world-musandam.js) reads it: the terrain's rows, the land cover's run-length code (8 classes: bare ground, scree and rock most of
 // it), the satellite colours (one RGB 5-6-5 per terrain cell near the road), the far view's grid with the sea in it, the map's buildings
 // (OpenStreetMap's only). The drop to the sea: no fall anywhere (only Killar has one): the steel rails, seen or unseen, hold the car. The open

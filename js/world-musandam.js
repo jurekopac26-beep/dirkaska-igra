@@ -1,12 +1,11 @@
 /* =========================================================================
    WORLD — Musandam, Oman (docs/proge/musandam.md): the coast road along the bay and up the limestone cliffs above it, built by the shared world
    of the mountain passes (js/world-prelaz.js, buildPrelaz) with a look of its own (PL_LOOK.musandam) and its own landmarks (L.pre, L.extra): the
-   sea of the bay (one sheet of water at the sea's level, the model's sea floor dug down under it; the far view's
-   water in the Gulf's blue-green), the fishing skiffs pulled up on the shingle and the wooden boats at anchor, the date palms of the village at
-   the shore, the flat-roofed houses of the hamlet on the climb (OpenStreetMap's footprints, in place of the shared builder's huts) and a few by
-   the bay, the acacias of the dry wadis, the viewpoint over the bay. The steel guardrails on the side of the drop are the shared builder's; the
-   car cannot fall (no def.drops, the user's decision of 13. 11. 2026). Places from OpenStreetMap (ODbL 1.0); all generic: no names, letters
-   or signs
+   sea of the bay (one sheet of water at the sea's level, the model's sea floor dug down under it; the far view's water in the Gulf's
+   blue-green), the fishing skiffs pulled up on the shingle and the wooden boats at anchor, the flat-roofed houses on OpenStreetMap's
+   footprints (the hamlet on the climb, in place of the shared builder's huts; none the map has not got), the acacias of the dry wadis on
+   the land cover's open ground. The steel guardrails on the side of the drop are the shared builder's; the car cannot fall (no def.drops,
+   the user's decision of 13. 11. 2026). Places from OpenStreetMap (ODbL 1.0); all generic: no names, letters or signs
    ========================================================================= */
 (function () {
   'use strict';
@@ -35,20 +34,13 @@
     far: { lo: [0.6, 0.53, 0.42], hi: [0.66, 0.61, 0.53], dw: [0.55, 0.5, 0.4], snow: 9000, tree: [9500, 9400], fc: [0.5, 0.46, 0.36], dwb: [9000, 9100, 9800, 9700], rk: [120, 600], wet: [0.12, 0.38, 0.44] },
   };
 
-  const marks = [];   // (the build under way: [what, x, z, the road's heading, the side, the road's index])
   let HOUSES = [], LC0 = null;   // (OpenStreetMap's buildings, taken from the shared builder; the land cover as the data has it)
-  const VIEW_S = 2385, PALM_S = [760, 1340], BAY_S = [380, 1160], VILLAGE_S = [700, 1400];   // (metres from the start line: the viewpoint, the village's palms, the boats, its houses)
-
-  // a place beside the road at s metres from the start line, o metres beyond the barrier on the side sd (+1 the right): [x, z, heading, sd, i]
-  function atS(s, sd, o) {
-    const i = T.idx(T.startS + s), bar = sd > 0 ? T.br[i] : T.bl[i], d = sd * (bar + o);
-    return [T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i], sd, i];
-  }
+  const BAY_S = [380, 1160];   // (metres from the start line: the boats of the bay)
 
   /* ---- before the terrain: the sea floor dug down under the water, the forest and the snow of the land cover (there is none: noise in the
-     data) left to the shrubs and the rock, the shared builder's huts taken over (the flat-roofed houses: L.extra), the viewpoint's level plot ---- */
-  LOOK.pre = function ({ P, exclPush, blds }) {
-    marks.length = 0; HOUSES = blds.splice(0, blds.length);
+     data) left to the shrubs and the rock, the shared builder's huts taken over (the flat-roofed houses: L.extra) ---- */
+  LOOK.pre = function ({ P, blds }) {
+    HOUSES = blds.splice(0, blds.length);
     const seaY = -P.D.base;
     // (the model's sea at 0 m: the floor ~8 m under the water; only the low ground joined to the open sea at the grid's edge: a dry wadi's bed at
     // a metre behind the beach stays land, lifted just above the water)
@@ -61,27 +53,10 @@
     const lc = P.lc; LC0 = Uint8Array.from(lc);
     for (let k = 0; k < lc.length; k++) { if (lc[k] === 1) lc[k] = 2; else if (lc[k] === 6) lc[k] = 4; }
     for (let k = P.lakes.length - 1; k >= 0; k--) if (P.lakes[k].h < seaY + 12) P.lakes.splice(k, 1);   // (the pools at the shore: the sea's)
-    const pad = (x, z, i, r) => { P.pads.push({ x, z, r, b: 8, h: T.hy[i] - 0.25 }); exclPush(x, z, r + 2); };
-    { const [x, z, hd, sd, i] = atS(VIEW_S, 1, 4.5); pad(x, z, i, 6); marks.push(['view', x, z, hd, sd, i]); }
   };
 
-  /* ---- the plants and the boats in the soft look of the game's trees (Drevesa A, docs/drevesa-a.md: AB, aPuff, aTrunk); unit height 1 (a
+  /* ---- the acacia and the boats in the soft look of the game's trees (Drevesa A, docs/drevesa-a.md: AB, aPuff, aTrunk); unit height 1 (a
      boat: unit length), the instances scale and tint them ---- */
-  function dateGeo() {   // a date palm: a slender ringed trunk, a crown of stiff fronds rising and arching out, a few dry ones hanging below
-    const g = new GB(), tr = [0.5, 0.42, 0.32], fr = [0.3, 0.38, 0.2], dead = [0.58, 0.5, 0.34];
-    cyl(g, 0, 0, 0, 0.032, 0.84, 7, tr, tr, 0.028);
-    for (let k = 0; k < 12; k++) {
-      const a = k / 12 * TAU + (k % 2) * 0.25, ca = Math.cos(a), sa = Math.sin(a), px = -sa, pz = ca, d = k % 4 === 3, c = d ? dead : fr;
-      const pts = d ? [[0.02, 0.83], [0.09, 0.72], [0.12, 0.58]] : k % 2 ? [[0.02, 0.84], [0.12, 1.0], [0.22, 1.06], [0.32, 1.02]] : [[0.02, 0.84], [0.17, 0.94], [0.31, 0.92], [0.4, 0.82]];
-      for (let q = 0; q + 1 < pts.length; q++) {
-        const [r0, y0] = pts[q], [r1, y1] = pts[q + 1], w0 = 0.055 * (1 - q / pts.length), w1 = 0.055 * (1 - (q + 1) / pts.length) + 0.004;
-        const A = [ca * r0 - px * w0, y0, sa * r0 - pz * w0], B = [ca * r0 + px * w0, y0, sa * r0 + pz * w0], C = [ca * r1 + px * w1, y1, sa * r1 + pz * w1], D = [ca * r1 - px * w1, y1, sa * r1 - pz * w1];
-        const mid = [(r0 + r1) / 2 * ca, (y0 + y1) / 2, (r0 + r1) / 2 * sa];
-        g.quadO(A, B, C, D, c, [mid[0], mid[1] - 1, mid[2]]); g.quadO(A, D, C, B, c, [mid[0], mid[1] + 1, mid[2]]);
-      }
-    }
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
-  }
   function acaciaGeo() {   // an acacia of the wadis: a short forked trunk under a wide flat crown of grey-green (~80 faces)
     const b = new API.AB(), R = rng(6817), col = [0.36, 0.4, 0.24];
     API.aTrunk(b, 0, -0.02, 0, 0.04, 0.5, 5, [0.42, 0.36, 0.3]);
@@ -110,38 +85,17 @@
     const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
   }
 
-  /* ---- the landmarks, the houses, the plants, the boats and the sea, after the rest of the road is built ---- */
+  /* ---- the houses, the acacias, the boats and the sea, after the rest of the road is built ---- */
   LOOK.extra = function ({ scen, root, out, P, excluded, matV }) {
     const RL = rng(LOOK.seed + 71), G = (x, z) => caGround(x, z), seaY = -P.D.base, dens = Math.min(1, LOD.dens != null ? LOD.dens : 1), sFin = T.finishS;
-    const st = { houses: 0, windows: 0, tanks: 0, palms: 0, acacias: 0, skiffs: 0, dhows: 0, views: 0, sea: 0, farSea: 0 };
-    const lime = [0.86, 0.82, 0.74], stoneP = [0.66, 0.6, 0.5];
+    const st = { houses: 0, windows: 0, tanks: 0, acacias: 0, skiffs: 0, dhows: 0, sea: 0, farSea: 0 };
     const lcAt = (x, z) => { const L = P.L, i = Math.floor((x - L.x0) / L.cell), j = Math.floor((z - L.z0) / L.cell); return i < 0 || j < 0 || i >= L.nx || j >= L.nz ? 0 : LC0[j * L.nx + i]; };
-    for (const [what, x, z, hd, sd, i] of marks) {
-      const g = scen.get(x, z), c = Math.cos(hd), s = Math.sin(hd), nx = -s * sd, nz = c * sd;   // (nx, nz: the way from the road out to it)
-      if (what === 'view') {   // the viewpoint: a paved lay-by beside the road, a low limestone parapet on its outer edge, a shade of two posts and a flat roof
-        const yy = T.hy[i] - 0.25;
-        for (let k = -3; k <= 3; k++) { const u = k * 1.6, px = x + c * u + nx * 4.4, pz = z + s * u + nz * 4.4;
-          box(g, px, Math.min(yy, G(px, pz)) - 0.6, pz, 1.7, yy - Math.min(yy, G(px, pz)) + 1.4, 0.45, hd, lime, stoneP); }
-        for (const u of [-1.8, 1.8]) box(g, x + c * u + nx * 1.5, yy, z + s * u + nz * 1.5, 0.14, 2.5, 0.14, hd, [0.5, 0.5, 0.52]);
-        box(g, x + nx * 1.5, yy + 2.5, z + nz * 1.5, 4.4, 0.12, 2.6, hd, [0.86, 0.84, 0.78], [0.72, 0.7, 0.66]);
-        box(g, x + nx * 2.2, yy, z + nz * 2.2, 2.0, 0.45, 0.5, hd, stoneP);
-        st.views++;
-      }
-      out.marks[what] = (out.marks[what] || 0) + 1;
-    }
-
-    // the houses: OpenStreetMap's footprints (the hamlet on the climb, the village across the bay) and a few more by the shore at the village of
-    // the bay (the map has none there): flat-roofed blocks of rendered concrete in sand and white on a plinth down the slope, a parapet round the
-    // roof, a water tank on some, the small dark windows of those near the road
+    // the houses: OpenStreetMap's footprints only (the hamlet on the ledge, the village across the bay; the map's, none added): flat-roofed
+    // blocks of rendered concrete in sand and white on a plinth down the slope, a parapet round the roof, a water tank on some, the small dark
+    // windows of those near the road
     {
       const RB = rng(LOOK.seed + 21), WALL = [[0.9, 0.86, 0.77], [0.94, 0.92, 0.87], [0.84, 0.76, 0.62], [0.88, 0.8, 0.66], [0.8, 0.72, 0.6], [0.92, 0.9, 0.84]];
-      const list = HOUSES.slice();
-      const room = (x, z, r) => list.every(b => Math.hypot(b.x - x, b.z - z) > r + Math.hypot(b.L, b.W) / 2);
-      for (let s = VILLAGE_S[0]; s < VILLAGE_S[1]; s += 9 + RB() * 8) for (const sd of [-1, 1]) { if (list.length >= HOUSES.length + 18) break;   // (the village: either side, beyond the barrier, where the ground is dry and gentle)
-        const o = 7 + RB() * 20, [x, z, hd, , i] = atS(s, sd, o), L = 8 + RB() * 7, W = 6 + RB() * 4;
-        if (G(x, z) < seaY + 1.5 || caSlope(x, z) > 0.3 || excluded(x, z) || !room(x, z, Math.hypot(L, W) / 2 + 3)) continue;
-        list.push({ x, z, L, W, ang: hd + (RB() - 0.5) * 0.15, h: 0, kind: 0, i });
-      }
+      const list = HOUSES;
       for (const b of list) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang), d = vrDist(b.x, b.z); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const yq = G(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, yq); hi = Math.max(hi, yq); }
@@ -160,17 +114,10 @@
       }
     }
 
-    // the date palms of the village (both sides, beyond the barrier, in its gardens on the dry ground) and the acacias of the wadis (on the shrubs'
-    // and the bare ground's cells, sparse, low down, off the steep faces), instanced per 160 m chunk
+    // the acacias of the wadis (on the land cover's grass, shrubs, built-up and bare ground cells, sparse, low down, off the steep faces), instanced
+    // per 160 m chunk
     {
-      const tp = new IChunks(dateGeo(), matV, 160), ta = new IChunks(acaciaGeo(), matV, 160), RT = rng(LOOK.seed + 61);
-      for (let s = PALM_S[0]; s < PALM_S[1]; s += 3.5 / Math.sqrt(dens)) for (const sd of [-1, 1]) {
-        if (RT() > 0.4) continue;
-        const [x, z] = atS(s, sd, 2 + RT() * 30), y = G(x, z);
-        if (y < seaY + 1.2 || excluded(x, z) || caSlope(x, z) > 0.5) continue;
-        const n = vrNear(x, z); if (n.i >= 0 && n.dd < 2.5) continue;
-        const r = RT(); tp.add(x, y - 0.1, z, r * TAU, 6 + r * 3, 8 + r * 6, [0.92 + r * 0.16, 0.95, 0.9]); st.palms++;
-      }
+      const ta = new IChunks(acaciaGeo(), matV, 160), RT = rng(LOOK.seed + 61);
       const maxA = Math.round(900 * dens);
       for (let s = Math.max(6, T.startS - 150); s < Math.min(T.len - 6, sFin + 150) && st.acacias < maxA; s += 5) {
         const i = T.idx(s);
@@ -182,7 +129,7 @@
           const r = RT(), h = 3 + r * 3; ta.add(x, y - 0.15, z, r * TAU, h * (1.3 + RT() * 0.3), h, [0.92 + r * 0.16, 0.95 + RT() * 0.08, 0.9]); st.acacias++;
         }
       }
-      tp.addTo(root, true); ta.addTo(root, true);
+      ta.addTo(root, true);
     }
 
     // the boats of the bay: the fishing skiffs pulled up on the shingle at the water line and a few wooden boats at anchor offshore, on the sea's
