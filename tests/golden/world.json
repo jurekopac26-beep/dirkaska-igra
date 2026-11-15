@@ -1415,19 +1415,19 @@
  },
  "mombasa": {
   "meshes": 314,
-  "verts": 266917,
+  "verts": 267329,
   "instances": 1178,
   "props": 0,
   "crowd": 50,
-  "world": "c7ae397b",
+  "world": "f373c19",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "8a54b923",
+   "-:MeshLambertMaterial": "25844fda",
    "-:MeshPhongMaterial": "8cb27484",
    "crowd:MeshLambertMaterial": "8ef2b948",
    "flags:MeshLambertMaterial": "bfe5308d",
-   "ao:MeshBasicMaterial": "e7cffc3d",
+   "ao:MeshBasicMaterial": "a4955bd1",
    "tyremarks:MeshBasicMaterial": "ad9c1e16",
    "roadwear:MeshLambertMaterial": "eecdde75"
   }
