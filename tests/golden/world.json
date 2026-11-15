@@ -1414,16 +1414,16 @@
   }
  },
  "livingstone": {
-  "meshes": 464,
-  "verts": 435240,
+  "meshes": 465,
+  "verts": 426174,
   "instances": 4262,
   "props": 0,
   "crowd": 143,
-  "world": "f9ebf351",
+  "world": "f66689dd",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "214abad2",
+   "-:MeshLambertMaterial": "18f45ecc",
    "-:MeshPhongMaterial": "6117db77",
    "crowd:MeshLambertMaterial": "63443e61",
    "flags:MeshLambertMaterial": "1393ea6c",
