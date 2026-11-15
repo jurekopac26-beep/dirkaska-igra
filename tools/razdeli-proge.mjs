@@ -83,8 +83,9 @@ const lineEnd = (s, i) => { const e = s.indexOf('\n', i); return e < 0 ? s.lengt
 const comOf = (rest) => { const m = /\/\/\s?(.*)$/.exec(rest); return m ? m[1].trim() : ''; };   // the // comment in the rest of a line
 
 /* ---- the tracks: every js/tracks/*.js in index.html's order, run in a sandbox (the defs as the game has them), which file declares what ---- */
-const pageScripts = () => [...rd('index.html').matchAll(/<script\b[^>]*\bsrc="([^"?#]+)[^"]*"/g)].map(m => m[1]);
-const trackFiles = () => pageScripts().filter(f => /^js\/tracks\/[a-z0-9]+\.js$/.test(f));
+// (a real track's file may be a lazy link, <link rel="x-lazy-script" … href="js/tracks/<id>.js">, I17 korak 4; js/tracks/glave.js has the heads only)
+const pageScripts = () => [...rd('index.html').matchAll(/<(?:script\b[^>]*\bsrc|link\b[^>]*\brel="x-lazy-script"[^>]*\bhref)="([^"?#]+)[^"]*"/g)].map(m => m[1]);
+const trackFiles = () => pageScripts().filter(f => /^js\/tracks\/[a-z0-9]+\.js$/.test(f) && f !== 'js/tracks/glave.js');
 function defsOf(texts) {   // file -> [def, ...] (texts: the files' current text)
   const ctx = vm.createContext({ console }), out = new Map();
   vm.runInContext('var TRACK_DEFS = [];', ctx);

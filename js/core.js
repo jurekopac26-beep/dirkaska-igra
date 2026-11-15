@@ -45,6 +45,8 @@ const Core = (function () {
     const h = TRACKS.find(x => x.id === d.id);
     if (!h) TRACKS.push(d); else if (h.head && !d.head) mergeHead(h, d);
   }
+  // the menu's order (TRACK_ORDER, js/tracks/glave.js: the heads come before every track file), ids it does not list after, as they came
+  if (typeof TRACK_ORDER !== 'undefined') { const at = (d) => { const i = TRACK_ORDER.indexOf(d.id); return i < 0 ? 1e9 : i; }; TRACKS.sort((a, b) => at(a) - at(b)); }
   const trackLoaded = (id) => { const d = TRACKS.find(x => x.id === id); return !!d && !d.head; };
   const trackWait = {};
   // Promise of the full definition (the same object as in TRACKS); rejects for an unknown id or a file that did not load (offline)
@@ -53,7 +55,8 @@ const Core = (function () {
     if (!d) return Promise.reject(new Error('unknown track: ' + id));
     if (!d.head) return Promise.resolve(d);
     if (typeof Leno === 'undefined') return Promise.reject(new Error('track not loaded: ' + id));
-    return trackWait[id] || (trackWait[id] = Leno.load('proga-' + id).then(() => {
+    // (a variant, Pikes Peak on its gravel road: its file copies the track it is a variant of, so that one first)
+    return trackWait[id] || (trackWait[id] = (d.variantOf ? loadTrack(d.variantOf) : Promise.resolve()).then(() => Leno.load('proga-' + id)).then(() => {
       const full = TRACK_DEFS.filter(x => x.id === id && !x.head && x !== d).pop();
       if (!full) throw new Error('track file has no definition: ' + id);
       return mergeHead(d, full);

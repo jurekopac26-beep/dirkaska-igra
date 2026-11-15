@@ -427,6 +427,7 @@
     'Celoten zaslon tukaj ni na voljo. Odpri igro v Chromu ali jo dodaj na začetni zaslon.': 'Full screen is not available here. Open the game in Chrome or add it to the home screen.',
     'Igra je nameščena: odpreš jo z ikono Roads Atlas na začetnem zaslonu.': 'The game is installed: open it with the Roads Atlas icon on your home screen.', 'Nova različica igre: nalagam …': 'A new version of the game: loading …',
     'Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.': 'The 3D graphics library could not be loaded. Check the connection and reload the page.',
+    'Proge ni bilo mogoče naložiti. Preveri povezavo in poskusi znova.': 'The track could not be loaded. Check the connection and try again.',
     'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.': 'Gamepad connected: the left stick steers, RT throttle, LT brake, Start pause. In the menus choose with the stick and A, B goes back.',
     'Napaka pri zagonu: {0}': 'Error at start-up: {0}',
 
