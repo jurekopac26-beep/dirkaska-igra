@@ -7544,7 +7544,7 @@ const Garage3D = (function () {
   const PAINT_C = { h: -9 };
   function paint(color, stripe) {
     return play(function* () {
-      const cv = cur; if (!cv) return;   // (the same colour too: a new kind of work bought)
+      previewOff(); const cv = cur; if (!cv) return;   // (the same colour too: a new kind of work bought)
       if (lift > 1e-3 || LIFT.on || LIFT.s > 1e-3) yield* liftDown(cv, false);   // (painted on the floor)
       const K = cv.kit, x0 = K.front + 0.25, x1 = K.rear - 0.25, up = new V3(), o = new V3();
       PAINT_C.on = true; hud('paint', { step: 'chamber' });
@@ -7600,6 +7600,22 @@ const Garage3D = (function () {
     });
   }
   const isIn = (o, p) => { for (let q = o; q; q = q.parent) if (q === p) return true; return false; };
+  // the paint's preview (plate an_barvanje 1/6): the chosen colour on the car before it is bought, the old body hidden, the new one
+  // in its place on the old car's springs (its pose read from it); off with the menu, a paint or another car
+  const PV = { cv: null, nw: null, color: null, hid: [] };
+  function previewOff() { if (!PV.nw) return; if (PV.nw.root.parent) PV.nw.root.parent.remove(PV.nw.root); freeCar(PV.nw); for (const o of PV.hid) o.visible = true; PV.cv = PV.nw = PV.color = null; PV.hid = []; shadowDirty = 2; }
+  function preview(color) {
+    const cv = cur; if (color == null || !cv || busy || color === cv.spec.color) { previewOff(); return; }
+    if (PV.nw && PV.cv === cv && PV.color === color) return; previewOff();
+    const nw = makeCar(Object.assign({}, cv.spec, { color }));
+    nw.v.grp.traverse(o => { if (o.isMesh && !isIn(o, nw.v.bodyG)) o.visible = false; });
+    for (const k in nw.parts) nw.parts[k].visible = false; nw.contact.visible = false;
+    if (!cv.spec.num) { nw.v.dec.visible = false; nw.v.bodyG.traverse(o => { if (o.isMesh && o.material === nw.v.dec.material) o.visible = false; }); }
+    for (const k of ['pitch', 'roll', 'bounce', 'shake', 'spin']) Object.defineProperty(nw, k, { get: () => cv[k], set() {} });
+    const parts = Object.values(cv.parts);
+    cv.v.bodyG.traverse(o => { if (o.isMesh && o.visible && !parts.some(q => isIn(o, q))) { o.visible = false; PV.hid.push(o); } });
+    cv.root.add(nw.root); nw.root.position.set(0, 0, 0); PV.cv = cv; PV.nw = nw; PV.color = color; shadowDirty = 2;
+  }
 
   /* ---------------- the picture's last pass: the room drawn into a target of its own (HDR: half-float, 4x MSAA), its bright parts
      bloomed at a quarter size, one composite to the screen: exposure, a soft shoulder over the highlights, a gentle S, cool shade and
@@ -7834,7 +7850,7 @@ const Garage3D = (function () {
     // the marks; the parts seen through on the car; a thing's box on the screen ('car': the car on the table);
     // the things to tap; the cabinet's maquettes (cars: the three cars' specs, null none), its lamps (lit: the maquette 0..2, 3 none), its
     // locked maquettes, its tags' prices; the lift's plate)
-    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, get ghosted() { return GH.kind; },
+    shift(px, free) { SHIFT.y = px || 0; SHIFT.free = free > 0.2 ? free : 1; SHIFT.short = 0; SHIFT.zm = 1; }, fitShift, get shifted() { return Object.assign({}, SHIFT); }, pick, mark: tapMark, markOff: tapMarkOff, ghost, ghostOff, preview, get previewed() { return PV.color; }, get ghosted() { return GH.kind; },
     box(key) { if (key === 'car') { const c = carBox(); return c ? screenBox({ box: new THREE.Box3(new V3(c.x0, c.bot, -c.hw), new V3(c.x1, c.top, c.hw)) }) : null; } const it = tapOf(key); return it ? screenBox(it) : null; },
     get items() { return tapAll().map(it => ({ key: it.key, kind: it.kind, name: it.name, i: it.i, hex: it.hex, el: it.el })); },
     // (a drawer of the cabinet out: its element's (DRW.els), the others in; null: all in)

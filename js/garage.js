@@ -357,7 +357,7 @@
     if (!b) { if (t) t.classList.remove('on'); return; }
     if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
     t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); t.style.left = Math.round(b.x + b.w / 2) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }
-  function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.drawer(null); G.drop(0); }
+  function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -395,6 +395,7 @@
     G.mark(kb, keysOf(el), !!m.car);   // (the car bright in the veil only when it was tapped)
     G.drawer(kb && kb.startsWith('drw:') ? el : null);   // (the chosen part's drawer out)
     colTag(el === 'barva' && kb && kb.startsWith('col') ? kb : null, el === 'barva' ? m.color != null ? m.color : c.color : 0);
+    G.preview(el === 'barva' && m.color != null && m.color !== c.color ? COLORS[m.color][0] : null);   // (the chosen colour on the car, not bought yet)
     const E = EL[el]; if (E && E.k) { const P = Object.assign({}, c.parts, { [el]: m.sel }), L0 = levels(c.parts), L1 = levels(P); if (L1[E.k] !== L0[E.k]) G.ghost(E.k, L1[E.k]); else G.ghostOff(); } else G.ghostOff();
     // the menu at the bottom when at the top it would cover what was tapped; a drawer: the menu stays at the top, the picture lowered
     // till the drawer is under it (when it fits on the screen; measured as the picture stands without it)
