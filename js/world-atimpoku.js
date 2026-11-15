@@ -257,6 +257,15 @@
       nStone++;
       const pc = atS(sAc, 0);
       out.bridge = fm; out.marks = { 'Most Adomi': [pc[0], pc[1]] };
+      // (for tools/znamenitost/atimpoku-tla.mjs: the road over the bridge every 2 m, as the model in Blender is built on it)
+      out.bridgeTool = () => {
+        const r = { c: [pc[0], pc[1]], s: [sB0, sB1, sA0, sA1], p: [] };
+        for (let s = sB0 - 8; s <= sB1 + 8.01; s += 2) {
+          const i = I(s), p = PtS(s, 0, 0), oc = (half(s, 1) - half(s, -1)) / 2, x = p[0] + T.nx[i] * oc, z = p[2] + T.nz[i] * oc;
+          r.p.push([s, p[0], p[1], p[2], T.nx[i], T.nz[i], half(s, -1), half(s, 1), Math.min(nrDem(x, z), nrGround(x, z))]);
+        }
+        return r;
+      };
       if (World.znamenitost) World.znamenitost.add('atimpoku', root, { x: pc[0], z: pc[1], fallback: fm, out });
     }
 
