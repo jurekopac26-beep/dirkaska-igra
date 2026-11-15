@@ -371,10 +371,10 @@
   "jsMs": 1.28
  },
  "isalo": {
-  "calls": 91,
-  "maxCalls": 97,
-  "kverts": 225,
-  "maxKverts": 235,
-  "jsMs": 1.73
+  "calls": 93,
+  "maxCalls": 103,
+  "kverts": 219,
+  "maxKverts": 230,
+  "jsMs": 1.34
  }
 }

@@ -5094,5 +5094,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "isalo/race/cs": {
+  "digest": "3902d9e569ba8f664acc25eb",
+  "lead": 2626.3,
+  "car0": [
+   -2203.28,
+   1295.87
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isalo/demo/cs": {
+  "digest": "e449b7895618ac575c38e3ba",
+  "lead": 416,
+  "car0": [
+   -399.7,
+   357.39
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isalo/upg/cs": {
+  "digest": "66f7972776538e16d81a81a4",
+  "lead": 2650,
+  "car0": [
+   -2199.64,
+   1292.29
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isalo/crash/cs": {
+  "digest": "2b88ffd250987b93ce85613a",
+  "lead": 2615.3,
+  "car0": [
+   -2210.92,
+   1313.03
+  ],
+  "cover": {
+   "dmg": 0.61,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isalo/formula/cs": {
+  "digest": "d0143136d4e45c64c07eebf4",
+  "lead": 2680.1,
+  "car0": [
+   -2243.59,
+   1344.7
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 6,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isalo/lm/cs": {
+  "digest": "4121251dc750240d1c37cef2",
+  "lead": 2679.1,
+  "car0": [
+   -2267.82,
+   1358.5
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 7,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isalo/car/cs": {
+  "digest": "fa68a3ab21dbd41cdf3c3859",
+  "lead": 2620.4,
+  "car0": [
+   -2223.6,
+   1315.6
+  ],
+  "cover": {
+   "dmg": 0.62,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

@@ -132,7 +132,7 @@
     /* ---- the barriers (Core's T.bl / T.br): on the open plain a low earth bank with white marker posts on it (the posts every 25 m, the bank
        keeps the car on the road as the walls do elsewhere); at the start and at the finish white walls with a catch fence and the crowd behind
        it; a barrier across the road at both its ends ---- */
-    const startArea = (i) => { const d = dS(i * ds); return d < 140 || d > dFin - 100; };
+    const finA = dFin + 60, startArea = (i) => { const d = dS(i * ds); return d < 140 || (d > dFin - 100 && d < finA); };   // (the walls end 60 m past the line: the plain beyond it has the bank)
     const kindAt = (i) => (startArea(i) ? 1 : 0);   // 0 the low bank, 1 white wall and fence
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const bank = [0.8, 0.6, 0.42], bankT = [0.86, 0.74, 0.48], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72];
@@ -157,7 +157,7 @@
       addM(gr, rMat, true);
     }
     const scen = new Chunks(128);
-    for (let d = 140; d < dFin - 100; d += 25) for (const side of [-1, 1]) {   // the white marker posts on the bank (a red band on top)
+    for (let d = 140; d < L - sStart - 2; d += 25) if (d < dFin - 100 || d > finA) for (const side of [-1, 1]) {   // the white marker posts on the bank (a red band on top)
       const i = T.idx(sAt(d)), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z), y = T.hy[i] + 0.5;
       box(g, x, y, z, 0.18, 0.75, 0.18, T.hd[i], [0.94, 0.94, 0.92]); box(g, x, y + 0.75, z, 0.19, 0.18, 0.19, T.hd[i], [0.78, 0.16, 0.14]);
     }
@@ -167,7 +167,7 @@
     }
     {   // the catch fence along the white walls at the start and the finish
       const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide }), gf = new RB(true);
-      for (const [d0, d1] of [[-110, 140], [dFin - 100, L - sStart - 2]]) for (const side of [-1, 1]) { let pr = -1, acc = 0;
+      for (const [d0, d1] of [[-110, 140], [dFin - 100, finA]]) for (const side of [-1, 1]) { let pr = -1, acc = 0;
         for (let d = d0; d <= d1; d += 2) { const i = T.idx(sAt(d)), bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.15);
           let p = [Pt(i, o, 1.1), Pt(i, o, 3.8)]; if (side < 0) p = p.reverse();
           const r = gf.row(p, [W1, W1], [[acc / 3, 0], [acc / 3, 1]]); if (pr >= 0) gf.link(pr, r, 0, 1); pr = r; acc += 2; } }
@@ -184,7 +184,7 @@
     let nStone = 0;
 
     /* ---- the Queen of Isalo: the simple one (one mesh) until the model of assets/landmarks/isalo.glb has loaded (World.znamenitost): a
-       weathered sandstone block, on it the seated figure's body and shoulders, the head and the crown of three knobs, a scree of blocks at
+       weathered sandstone block, on it the seated figure's body and shoulders, the head and its knobs (the crown), a scree of blocks at
        its foot ---- */
     {
       const gQ = new GB(), y = nrDem(QX, QZ), sa = [0.86, 0.68, 0.5], saD = [0.7, 0.54, 0.42], saG = [0.62, 0.58, 0.52], Rq = rng(2220), rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = false;

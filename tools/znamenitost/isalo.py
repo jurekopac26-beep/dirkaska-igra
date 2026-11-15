@@ -5,9 +5,10 @@ from 420 m). The game reads both with js/znamenitost.js (one draw call each, the
   node tools/znamenitost/isalo-tla.mjs /tmp/tla.json
   python -I tools/znamenitost/isalo.py /tmp/tla.json        (python with bpy: pip install bpy)
 
-The model: a weathered block of layered sandstone (the beds as ledges, their colours in bands of pale ochre, pink and a grey crust),
-on it the figure: the lap, the body narrowing to the shoulders, the neck, the head and on it a crown of three knobs, all of the same
-eroded stone; a scree of fallen blocks at its foot. Its shape is the rock's (a rock that looks like a figure), no statue, no inscription.
+The model (data: the OSM point, node 726552822, and the public DEM, see below): a weathered plinth of layered sandstone drawn out
+towards the rise, its beds tilted, on it the figure: the lap, the body narrowing to the shoulders, the neck, the head and on it a crown
+of four knobs, all of the same eroded stone (lumps and runnels, ochre with pink and pale patches washed down the faces, a grey crust);
+a scree of fallen blocks at its foot, most towards the rise. Its shape is the rock's (a rock that looks like a figure), no statue, no inscription.
 The far level: the same rock with fewer rings and points, no scree.
 Coordinates: the game's (x, y, z) with y up and metres above the sea, relative to the rock's point (x, z) (the game puts the model there).
 Budget (docs/proge/isalo.md): <= 8 materials, <= 60k vertices; the far level well under the near one."""
@@ -62,105 +63,152 @@ class Mesh:
         b = len(s.v); s.v.extend(ps); s.f.append(tuple(range(b, b + len(ps)))); s.m.append(M[mat])
 
 
-# ---- the figure's profile: half widths (a along the shoulders, b front to back) at the height y above the block's foot; the shoulders'
-#      axis at the angle ANG (the figure looks across the road) ----
-ANG = 0.6
-PROF = [  # (y, a, b)
-    (0.0, 6.6, 5.4), (1.2, 6.4, 5.2), (1.3, 6.0, 4.9), (2.4, 5.8, 4.7), (2.5, 5.2, 4.3), (3.0, 5.0, 4.1),   # the block, its beds as ledges
-    (3.1, 4.0, 3.3), (3.6, 3.9, 3.1),                                                                         # the lap
-    (3.7, 3.4, 2.7), (5.0, 3.1, 2.4), (5.9, 3.6, 2.3), (6.4, 3.3, 2.1),                                       # the body and the shoulders
-    (6.8, 1.8, 1.4), (7.1, 1.05, 0.95), (7.4, 1.0, 0.95),                                                     # the neck
-    (7.7, 1.45, 1.35), (8.3, 1.62, 1.5), (8.9, 1.5, 1.4), (9.3, 1.15, 1.05), (9.5, 0.7, 0.65),               # the head
+# ---- the shape. What the data say: OSM has the rock as a point (natural=rock, node 726552822); Copernicus DEM GLO-30 has a cell ~5-6 m
+#      above its neighbours on that point, on the northern foot of a rocky rise that climbs ~15 m to the south and south-west within 90 m.
+#      So: a rock ~10 m high above the ground at its point, on a broad rocky plinth drawn out towards the rise (SPA), its beds tilting up
+#      that way (TILT), the fallen blocks mostly on that side. Above the plinth the eroded mass the name comes from: a broad seated body,
+#      narrower at the top, leaning, a waist and a knob of a head with a few weathered knobs on it; every section off-centre and lumpy
+#      (harmonics with their own phases up the rock), cut by vertical runnels. No statue: all of it the same weathered stone. ----
+ANG = 0.6    # the body's long axis (it looks across the road)
+SPA = 2.05   # the plinth's long axis: towards the rise (south-south-west in the game's frame, x east, z south)
+TILT = (-0.035, 0.07)   # the beds' rise per metre (x, z): up towards the rise
+# the sections: (y above the ground at the rock's point, half width along the axis, across, the axis' angle, the centre's offset x, z)
+SECT = [
+    (-1.6, 9.0, 6.4, SPA, 0.9, 2.6), (0.15, 8.5, 6.0, SPA, 0.9, 2.4),                       # the plinth: its lowest bed under the ground
+    (0.55, 7.6, 5.5, SPA, 0.8, 2.1), (1.15, 7.2, 5.2, SPA, 0.7, 1.9),                         # its second bed, a sloping ledge
+    (1.6, 5.5, 4.3, SPA, 0.6, 1.5), (2.1, 4.7, 3.8, 1.4, 0.5, 1.2),                           # its third
+    (2.6, 4.0, 3.3, ANG, 0.3, 0.6), (3.2, 3.8, 3.1, ANG, 0.25, 0.5),                          # the lap
+    (3.7, 3.3, 2.7, ANG, 0.15, 0.4), (4.8, 3.1, 2.45, ANG, 0.0, 0.3), (5.8, 3.5, 2.3, ANG, -0.15, 0.15),   # the body, the shoulders
+    (6.3, 3.0, 2.0, ANG, -0.25, 0.05), (6.75, 1.7, 1.35, ANG, -0.4, -0.05),
+    (7.05, 1.1, 0.95, ANG, -0.5, -0.12), (7.35, 1.05, 0.92, ANG, -0.55, -0.15),               # the waist (the neck)
+    (7.7, 1.45, 1.3, ANG, -0.6, -0.2), (8.3, 1.62, 1.45, ANG, -0.68, -0.24), (8.9, 1.48, 1.32, ANG, -0.72, -0.28),   # the head
+    (9.3, 1.1, 1.0, ANG, -0.75, -0.3), (9.5, 0.7, 0.62, ANG, -0.76, -0.3),
 ]
+JOINTS = [0.35, 1.38, 2.35, 3.45, 6.55]   # the bed joints (dark), where the sections step in
+YTOP = SECT[-1][0]
 
 
-def prof(y):
-    for k in range(len(PROF) - 1):
-        (y0, a0, b0), (y1, a1, b1) = PROF[k], PROF[k + 1]
+def sect(y):
+    """the section at the height y: (a, b, angle, ox, oz), smooth between the rows"""
+    if y <= SECT[0][0]: return SECT[0][1:]
+    for k in range(len(SECT) - 1):
+        y0, y1 = SECT[k][0], SECT[k + 1][0]
         if y <= y1:
-            t = 0 if y1 == y0 else (y - y0) / (y1 - y0); t = t * t * (3 - 2 * t) if (a1 - a0) * (a1 - a0) < 0.5 else t
-            return a0 + (a1 - a0) * t, b0 + (b1 - b0) * t
-    return PROF[-1][1], PROF[-1][2]
+            t = (y - y0) / (y1 - y0); t = t * t * (3 - 2 * t)
+            return tuple(SECT[k][i] + (SECT[k + 1][i] - SECT[k][i]) * t for i in range(1, 6))
+    return SECT[-1][1:]
+
+
+def shape(th, y, seed):
+    """the section's radius factor at the angle th: lumps (harmonics whose phases and sizes drift up the rock, each bed its own) and the
+    runnels (narrow vertical grooves, deeper up the body)"""
+    bed = sum(1 for j in JOINTS if y > j)
+    f, low = 1.0, 1.0 + 0.9 * max(0.0, min(1.0, (2.2 - y) / 2.0))   # the plinth broken more than the body
+    for h, amp in ((2, 0.09 * low), (3, 0.075 * low), (4, 0.045 * low), (6, 0.025)):
+        ph = 2 * math.pi * (hsh(bed, h, seed) + 0.35 * vnoise(y * 0.3, h * 3.1, seed + h))
+        f += amp * (0.6 + 0.8 * vnoise(y * 0.45, h * 1.7, seed + 10 + h)) * math.cos(h * th + ph)
+    deep = 0.0 if y < 1.5 else min(1.0, (y - 1.5) / 2.0) * (0.0 if y > 6.6 else 1.0)
+    for g in range(6):
+        gt = 2 * math.pi * hsh(g, 41, seed); dth = (th - gt + math.pi) % (2 * math.pi) - math.pi
+        f -= deep * (0.07 + 0.06 * hsh(g, 42, seed)) * math.exp(-(dth / 0.09) ** 2)
+    return f
 
 
 def band(y, th):
-    """the colour of the stone at the height y, the angle th: beds of pale ochre and pink, a grey crust on the weather side, dark in the
-    joints (the ledges)"""
-    bed = math.floor(y / 0.55); w = vnoise(th * 2.0, y * 0.8, 7)
-    for (yy, *_r) in PROF[:8]:
-        if abs(y - yy) < 0.06 and yy > 0.5: return 'dark'
-    if w > 0.68: return 'crust'
-    if y < 1.0 and vnoise(th * 3, y, 9) > 0.6: return 'lichen'
-    return ('ochre', 'pink', 'pale', 'ochre')[int(hsh(bed, 3) * 4)]
+    """the colour of the stone at the height y (above the ground at the point), the angle th: ochre with pink and pale patches drawn out
+    down the faces (the wash of the rain), a grey crust in streaks on the weather side and on the head, lichen low down, dark in the
+    two deep joints only (the others are steps, not cracks)"""
+    for j in (JOINTS[1], JOINTS[4]):
+        if abs(y - j) < 0.07: return 'dark'
+    w = vnoise(th * 2.0, y * 0.35, 7)
+    if w > 0.68 or (y > 7.0 and w > 0.52): return 'crust'
+    if y < 1.0 and vnoise(th * 3, y, 9) > 0.58: return 'lichen'
+    v = vnoise(th * 3.5, y * 0.22 + 0.1 * math.sin(th * 2), 5)
+    return 'pink' if v < 0.36 else 'pale' if v > 0.66 else 'ochre'
 
 
-def column(G, cx, cz, y0, ys, prof_fn, npts, seed, rough, cap=True):
-    """a lathe of rings at the heights ys (the profile prof_fn(y) -> (a, b)), the radius roughened by noise (the eroded faces)"""
-    c, s = math.cos(ANG), math.sin(ANG)
+def lift(x, z):
+    """the beds' tilt at (x, z) (none at the foot: the plinth's lowest ring stays under the ground)"""
+    return TILT[0] * (x - CX) + TILT[1] * (z - CZ)
+
+
+def rock(G, gc, detail):
+    """the rock as rings up its height: each ring the section with its lumps and runnels, roughened by noise (the eroded faces);
+    the lowest ring under the ground wherever it stands, the beds tilted"""
+    npts, step, rough = (48, 0.14, 0.13) if detail else (14, 0.55, 0.08)
+    ys, y = [], SECT[0][0]
+    while y < YTOP: ys.append(round(y, 3)); y += step
+    for j in JOINTS: ys += [j - 0.07, j + 0.07] if detail else [j]
+    ys = sorted(set(ys + [YTOP]))
     rings = []
-    for y in ys:
-        a, b = prof_fn(y); ring = []
+    for q, y in enumerate(ys):
+        a, b, ang, ox, oz = sect(y); c, s = math.cos(ang), math.sin(ang); ring = []
+        tl = max(0.0, min(1.0, (y + 0.5) / 1.5))
         for k in range(npts):
             th = 2 * math.pi * k / npts
-            n = 1 + rough * (vnoise(math.cos(th) * 1.6 + 5, y * 0.9 + math.sin(th) * 1.6, seed) - 0.5) + rough * 0.5 * (vnoise(th * 5, y * 3, seed + 1) - 0.5)
+            n = shape(th, y, 3) * (1 + rough * (vnoise(math.cos(th) * 1.6 + 5, y * 0.9 + math.sin(th) * 1.6, 3) - 0.5) + rough * 0.5 * (vnoise(th * 5, y * 3, 4) - 0.5))
             u, v = a * math.cos(th) * n, b * math.sin(th) * n
-            ring.append((cx + c * u - s * v, y0 + y, cz + s * u + c * v))
+            x, z = CX + ox + c * u - s * v, CZ + oz + s * u + c * v
+            yy = ground(x, z) - 0.5 if q == 0 else gc + y + tl * lift(x, z)
+            ring.append((x, yy, z))
         rings.append(ring)
     for j in range(len(rings) - 1):
-        ym = (ys[j] + ys[j + 1]) / 2
+        ym = (ys[j] + ys[j + 1]) / 2; a, b, ang, ox, oz = sect(ym); ctr = (CX + ox, gc + ym, CZ + oz)
         for k in range(npts):
             ps = [rings[j][k], rings[j][(k + 1) % npts], rings[j + 1][(k + 1) % npts], rings[j + 1][k]]
-            G.quad(ps, band(ym, 2 * math.pi * (k + 0.5) / npts), (cx, y0 + ym, cz))
-    if cap:
-        top = rings[-1]; tc = (cx, y0 + ys[-1] + 0.25, cz)
-        for k in range(npts): G.quad([top[k], top[(k + 1) % npts], tc], 'crust', d=(0, 1, 0))
-    return rings
+            G.quad(ps, band(ym, 2 * math.pi * (k + 0.5) / npts), ctr)
+    top = rings[-1]; a, b, ang, ox, oz = sect(YTOP); tc = (CX + ox, gc + YTOP + 0.2 + lift(CX + ox, CZ + oz), CZ + oz)
+    for k in range(npts): G.quad([top[k], top[(k + 1) % npts], tc], 'crust', d=(0, 1, 0))
+    return tc
 
 
-def scree(G, y_foot, n, detail):
-    """the fallen blocks at the foot: irregular boxes, tilted, half sunk"""
+def knob(G, x, y, z, hgt, r, lean, seed, detail):
+    """a weathered knob on the head: a short irregular column, leaning, rounded at the top"""
+    npts, nr = (10, 6) if detail else (5, 2)
+    rings = []
+    for t in range(nr + 1):
+        f = t / nr; rr = r * (1.0 - 0.75 * f ** 2.2) * (1 + 0.25 * (vnoise(f * 3, seed, seed) - 0.5)); ring = []
+        for k in range(npts):
+            th = 2 * math.pi * k / npts; n = 1 + 0.22 * (vnoise(math.cos(th) * 1.3 + seed, math.sin(th) * 1.3 + f * 2, seed) - 0.5)
+            ring.append((x + lean[0] * f * hgt + rr * n * math.cos(th), y + f * hgt, z + lean[1] * f * hgt + rr * n * 0.85 * math.sin(th)))
+        rings.append(ring)
+    for j in range(nr):
+        ctr = (x + lean[0] * (j + 0.5) / nr * hgt, y + (j + 0.5) / nr * hgt, z + lean[1] * (j + 0.5) / nr * hgt)
+        for k in range(npts):
+            G.quad([rings[j][k], rings[j][(k + 1) % npts], rings[j + 1][(k + 1) % npts], rings[j + 1][k]], 'pale' if (j + seed) % 3 == 0 else 'crust', ctr)
+    tc = (x + lean[0] * hgt, y + hgt + r * 0.15, z + lean[1] * hgt)
+    for k in range(npts): G.quad([rings[-1][k], rings[-1][(k + 1) % npts], tc], 'crust', d=(0, 1, 0))
+
+
+def scree(G, n):
+    """the fallen blocks: irregular boxes, tilted, half sunk; most on the side of the rise (the plinth's long axis)"""
     for q in range(n):
-        a = hsh(q, 11) * 2 * math.pi; d = 7.5 + hsh(q, 12) * 4.5
-        x, z = CX + math.cos(a) * d, CZ + math.sin(a) * d
-        r = 0.5 + hsh(q, 13) * 1.1; y = ground(x, z) - r * 0.35
-        ang, tl = hsh(q, 14) * math.pi, (hsh(q, 15) - 0.5) * 0.5
+        a = SPA + (hsh(q, 11) - 0.5) * (2.6 if q % 3 else 6.2); d = 8.0 + hsh(q, 12) * 6.0
+        x, z = CX + 0.8 + math.cos(a) * d, CZ + 2.2 + math.sin(a) * d
+        r = 0.4 + hsh(q, 13) * 1.2; y = ground(x, z) - r * 0.35
+        ang, tl = hsh(q, 14) * math.pi, (hsh(q, 15) - 0.5) * 0.6
         c, s = math.cos(ang), math.sin(ang)
-        lx, ly, lz = r * (1.2 + hsh(q, 16) * 0.6), r * (0.7 + hsh(q, 17) * 0.4), r * (0.9 + hsh(q, 18) * 0.5)
+        lx, ly, lz = r * (1.1 + hsh(q, 16) * 0.8), r * (0.6 + hsh(q, 17) * 0.5), r * (0.8 + hsh(q, 18) * 0.6)
         P = lambda u, h, v: (x + c * u - s * v, y + h + u * tl * 0.5, z + s * u + c * v)
-        j = lambda k: 0.85 + hsh(q, k) * 0.3
+        j = lambda k: 0.8 + hsh(q, k) * 0.4
         b = [P(-lx * j(20), 0, -lz * j(21)), P(lx * j(22), 0, -lz * j(23)), P(lx * j(24), 0, lz * j(25)), P(-lx * j(26), 0, lz * j(27))]
-        t = [P(-lx * 0.8 * j(28), ly, -lz * 0.8 * j(29)), P(lx * 0.8 * j(30), ly * j(31), -lz * 0.8), P(lx * 0.8, ly * j(32), lz * 0.8 * j(33)), P(-lx * 0.8, ly, lz * 0.8)]
-        o = (x, y + ly / 2, z); mat = ('ochre', 'pink', 'crust')[q % 3]
+        t = [P(-lx * 0.75 * j(28), ly, -lz * 0.8 * j(29)), P(lx * 0.8 * j(30), ly * j(31), -lz * 0.7), P(lx * 0.7, ly * j(32), lz * 0.8 * j(33)), P(-lx * 0.8, ly * j(34), lz * 0.75)]
+        o = (x, y + ly / 2, z); mat = ('ochre', 'pink', 'crust', 'pale')[q % 4]
         for k in range(4): G.quad([b[k], b[(k + 1) % 4], t[(k + 1) % 4], t[k]], mat, o)
-        G.quad(t, 'crust' if q % 2 else mat, d=(0, 1, 0))
+        G.quad(t, 'crust' if q % 2 else 'lichen' if q % 5 == 0 else mat, d=(0, 1, 0))
 
 
 def build(detail):
     G = Mesh()
-    foot = [ground(CX + 7 * math.cos(a / 8 * math.pi), CZ + 7 * math.sin(a / 8 * math.pi)) for a in range(16)]
-    y0 = min(foot) - 1.2   # (the block's foot under the ground all round)
-    lift = ground(CX, CZ) - y0   # (the profile's heights are above the ground at the centre: the block rises from y0)
-    pf = lambda y: prof(max(0.0, y - lift + 1.2)) if y > lift - 1.2 else prof(0.0)
-    top = PROF[-1][0] + lift - 1.2
-    step = 0.12 if detail else 0.6
-    ys, y = [], 0.0
-    while y < top: ys.append(round(y, 3)); y += step
-    for (yy, *_r) in PROF:   # (the ledges exactly where the profile breaks)
-        Y = yy + lift - 1.2
-        if 0 < Y < top: ys += [Y - 0.03, Y + 0.03] if detail else [Y]
-    ys = sorted(set(ys + [top]))
-    column(G, CX, CZ, y0, ys, pf, 44 if detail else 14, 3, 0.16 if detail else 0.1)
-    # the crown: three knobs on the head, in a row across
-    c, s = math.cos(ANG), math.sin(ANG)
-    hy = y0 + top - 0.35
-    for k, (off, hgt, r) in enumerate(((-0.62, 1.15, 0.42), (0.0, 1.45, 0.46), (0.62, 1.1, 0.4))):
-        kx, kz = CX + c * off, CZ + s * off
-        kp = lambda yy, r=r, hgt=hgt: (r * (1.0 - 0.55 * max(0, (yy - hgt * 0.6) / (hgt * 0.4)) ** 2), r * 0.9 * (1.0 - 0.55 * max(0, (yy - hgt * 0.6) / (hgt * 0.4)) ** 2))
-        kys = [hgt * t / (8 if detail else 3) for t in range((8 if detail else 3) + 1)]
-        column(G, kx, kz, hy, kys, kp, 12 if detail else 6, 20 + k, 0.12)
-    if detail: scree(G, y0, 14, detail)
+    gc = ground(CX, CZ)
+    tc = rock(G, gc, detail)
+    # the knobs on the head (the "crown"): four of different heights, not in a row, leaning out
+    a, b, ang, ox, oz = sect(YTOP - 0.3); c, s = math.cos(ang), math.sin(ang)
+    for k, (u, v, hgt, r) in enumerate(((-0.55, 0.15, 0.95, 0.36), (0.05, -0.2, 1.25, 0.42), (0.6, 0.25, 0.8, 0.33), (0.1, 0.45, 0.55, 0.3))):
+        kx, kz = CX + ox + c * u - s * v, CZ + oz + s * u + c * v
+        knob(G, kx, gc + YTOP - 0.45 + lift(kx, kz), kz, hgt, r, (0.12 * u, 0.12 * v), 20 + k, detail)
+    if detail: scree(G, 16)
     return G
-
 
 def to_blender(G, name):
     me = bpy.data.meshes.new(name)

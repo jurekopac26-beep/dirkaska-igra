@@ -76,7 +76,6 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Isalo',
     zivali: { a: ['egret'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road)
     id: 'isalo', name: 'Isalo, Madagaskar', theme: 'isalo', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
-    maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~150 m of road past the line, two rows a side
     halfWidth: 5.0,
     desc: %(desc)s,
     en: { name: 'Isalo, Madagascar', desc: %(desc_en)s, escTo: 'To the plain' },

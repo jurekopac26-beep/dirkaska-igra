@@ -18,7 +18,6 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Isalo',
     zivali: { a: ['egret'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road)
     id: 'isalo', name: 'Isalo, Madagaskar', theme: 'isalo', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
-    maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~150 m of road past the line, two rows a side
     halfWidth: 5.0,
     desc: "Odprta cesta RN7 na jugu Madagaskarja, ob narodnem parku Isalo: s travnate planote na višini 860 m med skale iz rdečega peščenjaka, skozi zavoje ob stenah in mimo Kraljice Isala, skale v obliki glave s krono, ki stoji tik ob cesti, nato po ravnini proti jugu. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
     en: { name: 'Isalo, Madagascar', desc: "The open RN7 in the south of Madagascar, by the Isalo National Park: down off the grass plateau at 860 m among the red sandstone rocks, through the bends by the cliffs and past the Queen of Isalo, a rock shaped like a crowned head right by the road, then across the plain to the south. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the plain' },
