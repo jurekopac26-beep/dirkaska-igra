@@ -1,6 +1,6 @@
 {
   "id": "hiva",
-  "about": "Hiva, Uzbekistan (id hiva): OSNUTEK, poti se ni preverilo. Krog po cestah zunaj obzidja Ičan Kale (OSM w185036984, obzidje w167449164 in sosednji deli city_wall); tocke so zamaknjene ~80 m ven od obrisa in se pripnejo na najblizjo cesto, preveri na sliki",
+  "about": "Hiva, Uzbekistan (id hiva): mestna proga, krog okoli obzidja Ičan Kale (OSM w185036984, obzidje barrier=city_wall). Zahod: ob obzidju mimo zahodnih vrat (trg in pešpot pred vrati, allowWays); sever in jug tik ob obzidju; vzhod: lok po ulicah vzhodno od vzhodnih vrat (ob vzhodnem zidu ni ceste)",
   "box": [
     41.366,
     60.346,
@@ -13,16 +13,28 @@
   },
   "route": [
     [
-      41.3776,
-      60.35613,
+      41.377662,
+      60.356259,
       null,
-      "start: the road along the west wall, northbound"
+      "start: Tinchlik street by the west wall, northbound"
     ],
     [
-      41.38,
-      60.357,
+      41.37834,
+      60.356738,
       null,
-      "west wall"
+      "the square before the West Gate"
+    ],
+    [
+      41.379019,
+      60.356834,
+      null,
+      "the path under the north-west wall"
+    ],
+    [
+      41.380375,
+      60.357696,
+      null,
+      "the road along the north-west wall"
     ],
     [
       41.38176,
@@ -74,5 +86,10 @@
       ]
     ]
   ],
-  "places": []
+  "places": [],
+  "allowWays": [
+    "w1092202046",
+    "w1330160948",
+    "w1426824516"
+  ]
 }
