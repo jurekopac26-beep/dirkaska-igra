@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "luanda/race/cs": {
+  "digest": "9cbde33712409bd2f0ba5c66",
+  "lead": 2645.4,
+  "car0": [
+   1253.75,
+   -1003.27
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "luanda/demo/cs": {
+  "digest": "e7ec5dc69ecf4444df5decef",
+  "lead": 2829,
+  "car0": [
+   1496.49,
+   -1016.46
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "luanda/upg/cs": {
+  "digest": "7026c3d7da59725a2300ef6b",
+  "lead": 2895,
+  "car0": [
+   1562.63,
+   -1026.99
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "luanda/crash/cs": {
+  "digest": "c14e3c49d9571c65da95bd49",
+  "lead": 2611.6,
+  "car0": [
+   1143.99,
+   -1038.87
+  ],
+  "cover": {
+   "dmg": 0.61,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "luanda/formula/cs": {
+  "digest": "ffffd7f7934cb601f52db718",
+  "lead": 3374.1,
+  "car0": [
+   1700.11,
+   -1049.71
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "luanda/lm/cs": {
+  "digest": "714d3b07d90f9c6fa8af34a2",
+  "lead": 3305.7,
+  "car0": [
+   1692.7,
+   -1048.47
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "luanda/car/cs": {
+  "digest": "9ab98f0e2c496d3a422f1c53",
+  "lead": 2607.7,
+  "car0": [
+   1080.8,
+   -1083.06
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
