@@ -593,7 +593,7 @@
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
     G.onTap = onTap;
     G.onHud = (k, d) => {
-      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); B = null; $('g-steps').classList.remove('on'); cancelAnimationFrame(barRaf); barRaf = 0; if (d) { barZero(); if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); B = null; stepsOff(!d); cancelAnimationFrame(barRaf); barRaf = 0; if (d) { barZero(); if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
       if (k === 'fit') { const s = d.step.replace(/\./g, '_');   // (a show's step: its plan the show's start (the queued one's after the one before), the element's sentences)
         if (s === 'plan' || s === 'plain') { if (!B || B.fin) B = barNew(d.el === 'turbo' && d.lid === false ? 'turbo_c' : d.el); if (s === 'plan') { if (!B.P) B.pair = !!(d.jobs && d.jobs[0] && d.jobs[0].arm === '0+1'); B.P = d; } }
         if (!B) B = barNew(null); barSay(s, d); return; }
@@ -644,7 +644,7 @@
       hop: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null], swap: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null],
       put: (d, B) => B.P && B.P.two ? [2, 'Roka 1 postavi stari auspuh na prazno mesto v regalu'] : d.where === 'regal' ? [3, 'Roka {0} postavi stari auspuh na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari auspuh na voziček', null] : null,
       revs: [3, 'Motor dvakrat zarjovi'] },
-    krilo: { plan: [2, 'Kupljeno · roki se zbudita, kamera gre k pokrovu prtljažnika'], cart_in: [2, 'Voziček pripelje novo krilo'], old_out: [3, 'Roka {0} sname staro krilo s pokrova', null],
+    krilo: { plan: [2, 'Kupljeno · roki se zbudita'], cart_in: [2, 'Voziček pripelje novo krilo'], old_out: [3, 'Roka {0} sname staro krilo s pokrova', null],
       grab: (d) => [3, d.rgl != null ? 'Roka {0} prime krilo na regalu in ga nese k avtu' : 'Roka {0} vzame krilo z vozička in ga nese k avtu', null],
       snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], swap: (d, B) => B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null],
       put: (d) => d.where === 'regal' ? [4, 'Roka {0} postavi staro krilo na prazno mesto v regalu', null] : d.where === 'cart' ? [4, 'Roka {0} odloži staro krilo na voziček', null] : null,
@@ -707,6 +707,8 @@
       B.lab = e[1]; B.args = e.slice(2).map(a => a === null ? arm : a); }
     bar();
   }
+  // (the bar off: at a show's end at once, not fading 0.2 s over the table's parts)
+  function stepsOff(now) { const el = $('g-steps'); if (now && el.classList.contains('on')) { el.style.transition = 'none'; el.classList.remove('on'); void el.offsetWidth; el.style.transition = ''; } else el.classList.remove('on'); }
   function barZero() { const i = $('g-steps').querySelector('.pr i'); i.style.transition = 'none'; i.style.width = '0%'; void i.offsetWidth; i.style.transition = ''; }   // (a new show's line from nothing: not the last one's shrinking)
   function bar() {
     const el = $('g-steps'); if (!B || !B.lab || !$('g-stage').classList.contains('busy')) return;   // (a plan made without a show: no bar)

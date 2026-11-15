@@ -586,7 +586,7 @@
     'Roka 1 postavi stari auspuh na prazno mesto v regalu': 'Arm 1 stands the old exhaust in the empty place on the rack', 'Roka 1 z vijačnikom odvije objemko pod odbijačem': 'Arm 1 undoes the clamp under the bumper with the wrench',
     'Roka {0} potisne nov auspuh pod odbijač v objemko': 'Arm {0} pushes the new exhaust under the bumper into the clamp', 'Roka {0} postavi stari auspuh na prazno mesto v regalu': 'Arm {0} puts the old exhaust in an empty place on the rack',
     'Roka {0} odloži stari auspuh na voziček': 'Arm {0} puts the old exhaust on the trolley', 'Motor dvakrat zarjovi': 'The engine roars twice',
-    'Kupljeno · roki se zbudita, kamera gre k pokrovu prtljažnika': 'Bought · both arms wake up, the camera goes to the boot lid', 'Voziček pripelje novo krilo': 'A trolley brings the new wing',
+    'Voziček pripelje novo krilo': 'A trolley brings the new wing',
     'Roka {0} sname staro krilo s pokrova': 'Arm {0} lifts the old wing off the lid', 'Roka {0} prime krilo na regalu in ga nese k avtu': 'Arm {0} grips the wing on the rack and carries it to the car',
     'Roka {0} vzame krilo z vozička in ga nese k avtu': 'Arm {0} takes the wing from the trolley and carries it to the car', 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji': 'Arm {0} pushes the wing down: both legs click into the holes',
     'Roka {0} postavi krilo na pokrov prtljažnika': 'Arm {0} sets the wing on the boot lid', 'Roka {0} postavi staro krilo na prazno mesto v regalu': 'Arm {0} puts the old wing in an empty place on the rack',
