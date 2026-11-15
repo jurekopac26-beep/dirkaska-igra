@@ -394,6 +394,7 @@
         const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz); if (nn.i >= 0 && nn.dd < 0.8) continue;
         const y = nrGround(mx, mz), ang = Math.atan2(bz - az, bx - ax), g = scen.get(mx, mz);
         if (k === 2) box(g, mx, y - 0.2, mz, len + 0.3, 1.6, 1.1, ang, vary([0.28, 0.4, 0.2], R, 0.08), [0.32, 0.44, 0.22], true);
+        else if (k === 0 && gladeD(mx, mz) < 12) box(g, mx, y - 0.4, mz, len + 0.2, 1.5, 0.6, ang, vary([0.62, 0.6, 0.55], R, 0.04), [0.56, 0.55, 0.5], true);   // (the fort's outer walls, OSM city_wall: coral stone as the fort, not paint)
         else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 1.8 : 1.5, 0.35, ang, vary([0.94, 0.92, 0.88], R, 0.04), [0.9, 0.88, 0.84], true);
       }
     }

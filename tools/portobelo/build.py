@@ -35,8 +35,8 @@ NAMES = [
     ('Ob zalivu', 40, ['Along the bay of Portobelo!', 'The bay on the left, the jungle on the right!']),
     ('Obalna cesta', 650, ['The coast road, flowing bends by the water!', 'Down the coast road, the hills all green!']),
     ('Nad zalivom', 1250, ['Up over the bay and down again!', 'A crest above the water, then down to the town!']),
-    ('Trdnjava', 1600, ['Past the old coral-stone fort by the water!', 'The fort on the left, three centuries of it!']),
-    ('Staro mesto', 1820, ['Into the old town, the cannons on the walls!', 'Through the old town, the walls on the left!']),
+    ('Trdnjava', 1600, ['Past the old coral-stone fort above the road!', 'The fort on the right, three centuries of it!']),
+    ('Staro mesto', 1820, ['Into the old town, houses on both sides!', 'Through the old town, the bay on the left!']),
     ('Most čez potok', 1980, ['Over the stream and on!', 'The little bridge, keep it straight!']),
     ('Vzhodni breg', 2250, ['Out along the east of the bay to the finish!', 'The last of the bay, flat out!']),
 ]
@@ -64,7 +64,7 @@ def build_track():
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Portobelo, Panama: an open road on the Caribbean coast (docs/proge/portobelo.md): along the bay of Portobelo between the green hills, over
-  // a crest above the water, past the ruins of the Spanish coastal fort of coral stone by the water (the 17th-18th century battery: the game's
+  // a crest above the water, past the ruins of the Spanish coastal fort of coral stone on the slope to the right (the 17th-18th century fort: the game's
   // model, assets/landmarks/portobelo.glb, World.znamenitost), through the old town and out along the east shore of the bay: %(km)s km of
   // racing. One card, four ways to drive it (def.modes). They drive on the right in Panama.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/portobelo/config.json); metres, origin = the

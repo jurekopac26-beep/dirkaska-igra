@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Portobelo, Panama: an open road on the Caribbean coast (docs/proge/portobelo.md): along the bay of Portobelo between the green hills, over
-  // a crest above the water, past the ruins of the Spanish coastal fort of coral stone by the water (the 17th-18th century battery: the game's
+  // a crest above the water, past the ruins of the Spanish coastal fort of coral stone on the slope to the right (the 17th-18th century fort: the game's
   // model, assets/landmarks/portobelo.glb, World.znamenitost), through the old town and out along the east shore of the bay: 2.57 km of
   // racing. One card, four ways to drive it (def.modes). They drive on the right in Panama.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/portobelo/config.json); metres, origin = the
@@ -37,8 +37,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
       {"n": "Ob zalivu", "d": 40, "say": ["Along the bay of Portobelo!", "The bay on the left, the jungle on the right!"]},
       {"n": "Obalna cesta", "d": 650, "say": ["The coast road, flowing bends by the water!", "Down the coast road, the hills all green!"]},
       {"n": "Nad zalivom", "d": 1250, "say": ["Up over the bay and down again!", "A crest above the water, then down to the town!"]},
-      {"n": "Trdnjava", "d": 1600, "say": ["Past the old coral-stone fort by the water!", "The fort on the left, three centuries of it!"]},
-      {"n": "Staro mesto", "d": 1820, "say": ["Into the old town, the cannons on the walls!", "Through the old town, the walls on the left!"]},
+      {"n": "Trdnjava", "d": 1600, "say": ["Past the old coral-stone fort above the road!", "The fort on the right, three centuries of it!"]},
+      {"n": "Staro mesto", "d": 1820, "say": ["Into the old town, houses on both sides!", "Through the old town, the bay on the left!"]},
       {"n": "Most čez potok", "d": 1980, "say": ["Over the stream and on!", "The little bridge, keep it straight!"]},
       {"n": "Vzhodni breg", "d": 2250, "say": ["Out along the east of the bay to the finish!", "The last of the bay, flat out!"]},
     ],
