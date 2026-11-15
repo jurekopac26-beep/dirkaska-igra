@@ -1918,14 +1918,14 @@
   }
  },
  "chapman/formula/cs": {
-  "digest": "2f0a774d842a289270bbfe41",
-  "lead": 2424.3,
+  "digest": "a46719c906a097ff42e19fe3",
+  "lead": 2422.5,
   "car0": [
-   813.57,
-   1925.31
+   822.63,
+   1907.91
   ],
   "cover": {
-   "dmg": 0.96,
+   "dmg": 0.95,
    "loose": 3,
    "rescues": 0,
    "repairs": 0
