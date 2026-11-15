@@ -6591,7 +6591,7 @@ const Garage3D = (function () {
   // (the rest of the bay's parts by the turbo's show (an_turbo's template, docs/garaza-animacije.md): the air filter (a round element on
   // its plate, its intake hose to the front), the chip (a box, its cable to the near side), the battery (a black block, its two cables);
   // as turboObj: the middle the frame's origin, hs the half sizes, hose its hoses (from, to in its frame; how high between; thickness; colour))
-  const BAY_EL = ['turbo', 'filter_zraka', 'cip', 'akumulator'], POD_EL = ['zarometi', 'zmigavci', 'maska'];
+  const BAY_EL = ['turbo', 'filter_zraka', 'cip', 'akumulator'], POD_EL = ['zarometi', 'zmigavci', 'maska', 'zadnje_luci'];
   function bayObj(el) {
     if (el === 'turbo') return turboObj();
     const w = new THREE.Group(), add = (g, m, x, y, z) => { const q = new THREE.Mesh(g, m); q.position.set(x, y, z); q.castShadow = true; w.add(q); return q; };
@@ -6740,6 +6740,14 @@ const Garage3D = (function () {
   // the show: el an element (not the wheels' two, not the paint), spec the car with its new part (spec.upg: the levels before, when the
   // part changes one: o.up [kind, level], its upgrade's show at the end, its chips), o.src its thing ('rgl:NAME', 'drw:el', none: the trolley), o.from o.to the old
   // and the new option's numbers (0: stock), o.fromK o.toK their places in the drawer (-1: not in it)
+  // the tail lamps (an_common, by the head lamps' template POD_EL): roka 1 draws the old one out of the tail onto the boot lid, roka 2's
+  // podaljšek brings the new one from the drawer, roka 1 pushes it in; the old one back into the drawer on roka 2; tried: a red blink
+  const TAIL = { els: ['zadnje_luci'],
+    on: (el) => TAIL.els.includes(el),
+    hoodX: (el, PL, hs) => TAIL.on(el) ? PL.x + hs + 0.35 : PL.x - hs - 0.35,   // (the old one's spot: the boot lid, inboard of the lamp)
+    view: (el, S, K) => TAIL.on(el) ? { at: [K.rear + 0.2, S.p.y + 0.05, 0], yaw: -1.22, pitch: 0.08, dist: clamp(3.0 + K.hw * 1.5, 3.9, 5.2), fov: 34 } : null,
+    *show(el, PL, FO) { const fP = PL.clone(); fP.z = -fP.z;   // (tried: brake light on, off, on, off, on)
+      for (const k of [1, 0, 1, 0, 1]) { if (k) { glint(PL, 0.32, 0xff2a1a); if (FO) glint(fP, 0.32, 0xff2a1a); SFX.click(); } yield* wait(k ? 0.3 : 0.2); } fitLog('lights'); } };
   function* fitPart(el, spec, o) {
     const cv = cur; if (!cv) return; if (!o.np) { FIT.n++; FIT.log.length = 0; }   // (o.np: the aero kit's wing after its lip, the same show on)
     spawn(rglRestock());
@@ -7126,7 +7134,7 @@ const Garage3D = (function () {
       const screwsAt = (P0, h, O, n) => { for (let j = 0; j < n; j++) { const a = Math.random() * 6.283, p = P0.clone().addScaledVector(ax(0, 1, 0), Math.sin(a) * h.y * 0.9).addScaledVector(ax(0, 0, 1), Math.cos(a) * h.z * 0.9).addScaledVector(O, h.x + 0.01);
           sparks.emit(p.x, p.y, p.z, O.x * rnd(0.4, 1.5) + rnd(-0.7, 0.7), rnd(-0.3, 1.1), O.z * rnd(0.4, 1.5) + rnd(-0.7, 0.7), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02); } SFX.wrench(); };
       const screws = (n) => screwsAt(PL, np.hs, S.out, n);
-      const VL = view({ at: [K.front - 0.2, S.p.y + 0.02, 0], yaw: Math.PI / 2 - 0.36, pitch: 0.08, dist: clamp(3.0 + K.hw * 1.5, 3.9, 5.2), fov: 34 });   // (the lights' try: low before the car, a little to the near side)
+      const VL = view(TAIL.view(el, S, K) || { at: [K.front - 0.2, S.p.y + 0.02, 0], yaw: Math.PI / 2 - 0.36, pitch: 0.08, dist: clamp(3.0 + K.hw * 1.5, 3.9, 5.2), fov: 34 });   // (the lights' try: low before the car, a little to the near side)
       // the drawer (its cell out 35 cm, the plate's): the LED one lying in its cell lens up, across it; the old one back into its own
       // (the one it was bought from; a stock one, which has no cell of its own, the next cell: the STOCK caption on it)
       const dI = di >= 0 ? di : Math.max(0, DRW.els.indexOf(el)), nK = (DRW.geo[di >= 0 ? di : Math.max(0, DRW.els.indexOf(el))].parts || []).length || 4, kN0 = o.toK != null && o.toK >= 0 ? o.toK : -1, kO0 = o.fromK != null && o.fromK >= 0 && o.fromK !== kN0 ? o.fromK : -1, kN = kN0 >= 0 ? kN0 : kO0 >= 0 ? (kO0 + 1) % nK : 0, kO = kO0 >= 0 ? kO0 : (kN + 1) % nK, out0 = DRW.out, OUT = 0.35;
@@ -7141,7 +7149,7 @@ const Garage3D = (function () {
       BRG.free = true; poseBridge(); BRG.p.copy(BRG.c); POD.on = true;
       const tN = DN.p.clone().addScaledVector(UP, 2 * np.hs.x + 0.007), tO = DO.p.clone().addScaledVector(UP, 2 * lampO.hs.x + 0.007);
       const P2 = poseAt(1, 'reach', tN, dIn(tN)), P2O = poseAt(1, 'reach', tO, dIn(tO));
-      const hx = PL.x - lampO.hs.x - 0.35, hz = PL.z * 0.55, yb = cv.probe && cv.probe.top ? cv.probe.top(hx, hz) : null, yl = yb != null && isFinite(yb) && yb > 0.2 ? yb : PL.y + lampO.hs.y + 0.12;
+      const hx = TAIL.hoodX(el, PL, lampO.hs.x), hz = PL.z * 0.55, yb = cv.probe && cv.probe.top ? cv.probe.top(hx, hz) : null, yl = yb != null && isFinite(yb) && yb > 0.2 ? yb : PL.y + lampO.hs.y + 0.12;
       const HOOD = Tm(new V3(hx, yl + lampO.hs.x + 0.004, hz)).multiply(new THREE.Matrix4().extractRotation(BW)).multiply(RZ0).multiply(Msc);
       const tH = at(HOOD).addScaledVector(UP, lampO.hs.x + 0.006), PH = poseAt(0, 'gripper', tH, new V3(0, -1, 0), plan.s.yaw), P2B = poseAt(1, 'reach', tH, new V3(0, -1, 0));
       const VC = view({ at: [PL.x - 0.1, PL.y + 0.1, PL.z * 0.6], yaw: 0.75 * sd, pitch: 0.28, dist: 3.4, fov: 36 });
@@ -7216,7 +7224,7 @@ const Garage3D = (function () {
       let parked = false; spawn((function* () { yield* armsPark(2); POD.on = false; parked = true; })());
       // 7. the lights tried (1,5 s): from before the car, on, off, on; KONČANO (the indicators: blinked three times; the grille: none)
       yield* camTo(VL, 0.6);
-      if (el !== 'zarometi') { if (el === 'zmigavci') { const fP = PL.clone(); fP.z = -fP.z;
+      if (el !== 'zarometi') { if (TAIL.on(el)) yield* TAIL.show(el, PL, FO); if (el === 'zmigavci') { const fP = PL.clone(); fP.z = -fP.z;
           for (const k of [1, 0, 1, 0, 1]) { if (k) { glint(PL, 0.3, 0xffa020); if (FO) glint(fP, 0.3, 0xffa020); SFX.click(); } yield* wait(k ? 0.28 : 0.2); } fitLog('lights'); }
         SFX.ping(1760); done(); yield* wait(0.5);
         FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F };
