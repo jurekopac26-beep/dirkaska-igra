@@ -793,5 +793,6 @@
 
   Object.assign(API, { CAN, CA_SNC, caCar, caCondorGeo, caCondors, caGCol, caGH, caGround, caH, caNear, caPlantGeo, caProps, caSlope, caTileGeo, caTileOn });   // (what World and the other worlds use of this one)
   World.keep('VR', 'caracoles');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
-  World.ext.caracoles = (scene, tex, opts) => buildCaracoles(scene, tex, opts);
+  World.ext.caracoles = (scene, tex, opts) => { try { return buildCaracoles(scene, tex, opts); } finally { CAT = null; } };   // (Realizem G: the hue stays
+  // this track's: the other worlds' caCol, caGCol and caTileGeo calls get the game's own colours)
 })();
