@@ -95,11 +95,16 @@
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5, v = su ? [0.52, 0.5, 0.36] : [0.42, 0.47, 0.31]; R = lerp(R, v[0], t); G = lerp(G, v[1], t); B = lerp(B, v[2], t); }   // the verge
     GACOL[0] = R; GACOL[1] = G; GACOL[2] = B; return GACOL;
   }
+  function gaVCol(ii, jj) {   // gaCol at grid vertex (ii, jj) with the fine grid's normal (as gaTileGeo at st 1), computed once per build (G.cc, NaN: not yet)
+    const G = API.VR.G, k = jj * G.nx + ii, C = G.cc || (G.cc = new Float64Array(G.nx * G.nz * 3).fill(NaN)), o = 3 * k;
+    if (C[o] !== C[o]) { const h = gaGH(ii, jj), nx = -(gaGH(ii + 1, jj) - gaGH(ii - 1, jj)) / (2 * VRC), nz = -(gaGH(ii, jj + 1) - gaGH(ii, jj - 1)) / (2 * VRC), l = Math.hypot(nx, 1, nz), c = gaCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / l, G.dd[k], G.up[k]);
+      C[o] = c[0]; C[o + 1] = c[1]; C[o + 2] = c[2]; }
+    return o;
+  }
   function gaGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in gaTileGeo)
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / VRC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
-    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = gaGH(ii, jj);
-      const nx = -(gaGH(ii + 1, jj) - gaGH(ii - 1, jj)) / (2 * VRC), nz = -(gaGH(ii, jj + 1) - gaGH(ii, jj - 1)) / (2 * VRC), l = Math.hypot(nx, 1, nz), c = gaCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / l, G.dd[jj * G.nx + ii], G.up[jj * G.nx + ii]);
-      o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
+    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const q = gaVCol(i + a, j + b), C = G.cc;
+      o[0] += C[q] * w; o[1] += C[q + 1] * w; o[2] += C[q + 2] * w; }
     return o;
   }
   function gaTileGeo(ti, tj, st) {   // one 100 m terrain tile (every st-th grid vertex), as caTileGeo, coloured by gaCol
@@ -109,7 +114,8 @@
       const i = i0 + a * st, j = j0 + b * st, x = G.x0 + i * VRC, z = G.z0 + j * VRC, h = gaGH(i, j);
       let nx = -(gaGH(i + st, j) - gaGH(i - st, j)) / (2 * VRC * st), nz = -(gaGH(i, j + st) - gaGH(i, j - st)) / (2 * VRC * st), l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
       pos[k * 3] = x; pos[k * 3 + 1] = h; pos[k * 3 + 2] = z; nor[k * 3] = nx; nor[k * 3 + 1] = ny; nor[k * 3 + 2] = nz;
-      const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = gaCol(x, z, h, ny, G.dd[kk], G.up[kk]); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2];
+      if (st === 1) { const q = gaVCol(i, j), C = G.cc; col[k * 3] = C[q]; col[k * 3 + 1] = C[q + 1]; col[k * 3 + 2] = C[q + 2]; }   // (st 1: the vertex's colour shared with the neighbouring tiles and gaGCol)
+      else { const kk = clamp(j, 0, G.nz - 1) * G.nx + clamp(i, 0, G.nx - 1), c = gaCol(x, z, h, ny, G.dd[kk], G.up[kk]); col[k * 3] = c[0]; col[k * 3 + 1] = c[1]; col[k * 3 + 2] = c[2]; }
       uv[k * 2] = x / 10; uv[k * 2 + 1] = -z / 10; stp[k] = sstep(0.78, 0.5, ny);
     }
     if (st === 1) {   // (no cracks against a coarse neighbour: as vrTileGeo)
@@ -280,8 +286,8 @@
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the trees and boulders between the camera and the car fade out)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
     const excl = [], eh = new Map(), EHC = 32;   // exclusion circles (crowds, signs, plots) for the plants and the boulders, hashed
-    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
-    const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a * 65536 + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
+    const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) * 65536 + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     exclPush(padF.x, padF.z, padF.r + 4);
     stubExcl(exclPush);   // (nothing grows or stands on the side roads)
     out.marks = {};
