@@ -19,7 +19,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xe2d8c4, sun: 0xfff0d2, sunI: 1.28, sky: 0xa9c4e0, gnd: 0x8a7656, hemiI: 0.6, tint: [1.04, 1.0, 0.94], sat: 1.04, sunOff: [70, 88, -40], split: [[0.97, 1.0, 1.05], [1.05, 1.0, 0.94]] },   // Khiva: a dry, dusty afternoon in the oasis, the sun high
     say: 'Khiva',
-    zivali: { a: ['stork'], city: true },
+    zivali: { a: ['stork'], t: [], city: true },
     id: 'hiva', name: 'Hiva, Uzbekistan', theme: 'hiva', laps: 3, halfWidth: 4.6,
     desc: "Mestna proga v Hivi v Uzbekistanu, krog okoli obzidja Ičan Kale, starega mesta za zidovi iz blatne opeke: čez trg pred zahodnimi vrati, tik ob obzidju mimo severnih vrat, po ulicah zunanjega mesta na vzhodu, nazaj mimo vzhodnih vrat in ob južnem obzidju na štart. Krog 3,05 km, minareti nad zidovi.",
     en: { name: 'Khiva, Uzbekistan', desc: "A city course in Khiva in Uzbekistan, a lap round the walls of Itchan Kala, the old town behind its mud-brick walls: across the square before the west gate, right along the walls past the north gate, through the streets of the outer town to the east, back past the east gate and along the south wall to the line. A lap of 3.05 km, the minarets above the walls." },

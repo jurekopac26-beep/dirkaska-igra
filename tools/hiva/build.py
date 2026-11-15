@@ -104,7 +104,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xe2d8c4, sun: 0xfff0d2, sunI: 1.28, sky: 0xa9c4e0, gnd: 0x8a7656, hemiI: 0.6, tint: [1.04, 1.0, 0.94], sat: 1.04, sunOff: [70, 88, -40], split: [[0.97, 1.0, 1.05], [1.05, 1.0, 0.94]] },   // Khiva: a dry, dusty afternoon in the oasis, the sun high
     say: 'Khiva',
-    zivali: { a: ['stork'], city: true },
+    zivali: { a: ['stork'], t: [], city: true },
     id: 'hiva', name: 'Hiva, Uzbekistan', theme: 'hiva', laps: 3, halfWidth: 4.6,
     desc: %(desc)s,
     en: { name: 'Khiva, Uzbekistan', desc: %(desc_en)s },
