@@ -266,7 +266,11 @@
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       if (inFort(bx, bz, 4)) continue;   // (the fortress's own buildings are its model's)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
+      // Velike tlorise (skladišča v pristanišču, 100+ m) izpusti: zakrijejo pogled za avtom. Cesto preveri po mreži čez cel tloris, ne samo v ogliščih.
+      if (Math.max(Lb, Wb) > 70) continue;
+      let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
+      const nu = Math.ceil(Lb / 4), nv = Math.ceil(Wb / 4);
+      for (let u = 0; u <= nu && !clash; u++) for (let v = 0; v <= nv; v++) { const a = (u / nu - 0.5) * Lb, b = (v / nv - 0.5) * Wb, n = nrNear(bx + ca * a - sa * b, bz + sa * a + ca * b); if (n.i >= 0 && n.dd < 1.2) { clash = true; break; } }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
       const hh = Hb || (big ? (3 + Math.floor(hk * 2)) * 3.1 : area < 45 || k0 === 4 ? 3 + hk : 6.2 + hk * 1.4);
