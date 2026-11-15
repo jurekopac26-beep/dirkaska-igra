@@ -75,7 +75,7 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
 
-    // ---- the fortress on the hill (LD.marks 'castle'): its outline, centre and reach; the ground inside it (and 12 m round) as the heights are,
+    // ---- the amphitheatre (LD.marks 'ruins'): its outline, centre and reach; the ground inside it (and 12 m round) one level terrace,
     //      without the far terrain's noise, so that the model (built on the same heights) stands on it ----
     const marks = LD.marks.map(([lab, kind, s, d, fl]) => { const pts = []; for (let k = 0; k + 1 < fl.length; k += 2) pts.push([fl[k], fl[k + 1]]); return { lab, kind, s, d, pts }; });
     const fort = marks.find(m => m.kind === 'ruins' && m.pts.length > 3);
@@ -90,8 +90,10 @@
     const inFort = (x, z, m) => !!fort && x > FB[0] + 14 - m && x < FB[1] - 14 + m && z > FB[2] + 14 - m && z < FB[3] - 14 + m && (inPoly(fort.pts, x, z) || segD(fort.pts, x, z) < m);
 
     const seaD = () => -200;   // (no sea at El Jem: the town lies inland on the plain)
+    // (the amphitheatre stands on one level terrace: its ground at the outline's mean height, eased into the town's over 12 m round it)
+    const FY = fort ? fort.pts.reduce((a, p) => a + nrDem(p[0], p[1]), 0) / fort.pts.length : 0;
     P.pad = (x, z, h) => {
-      const fw = fortW(x, z); if (fw > 0) h = lerp(h, nrDem(x, z), fw);
+      const fw = fortW(x, z); if (fw > 0) h = lerp(h, FY, fw);
       return h; };
     // the ground's colours (the dry Sahel of Tunisia): the pale ochre dust and the tilled soil of the olive groves, dry grass in patches, the
     // trees' canopy, the dust of the town, the bare banks
