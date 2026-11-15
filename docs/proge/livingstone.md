@@ -5,7 +5,7 @@ Proga #2 s seznama `docs/proge-z-znamenitostjo.md`. Znamenitost vrste »druga«:
 ## Podatki (OSM, 15. 11. 2026, `tools/livingstone/config.json`)
 - Cesta: glavna cesta iz Livingstona proti jugu (OSM pot 23591193, ref T1, brez imena), ~5,96 km od mesta do zambijskega konca mostu. Ovinki so blagi; zadnjih ~1,2 km (od vhoda v park in mejnega prehoda do mostu) zavije proti zahodu in se spusti k soteski.
 - Most: OSM pot 22083857 (`bridge=yes`, ~202 m), obris mostu 1425593384. Slapovi: OSM `natural=cliff` (Eastern Cataract 584420041, Rainbow Falls 585168375, Main Falls 579843539 …), od ceste ~100–300 m.
-- Osnutek poti: ~4,5 km od južnega roba Livingstona do mostu.
+- Osnutek poti: korak `route` da 4895 m (70 vozlišč OSM, ena cesta) od južnega roba Livingstona do zambijskega konca mostu; koraka `data` (DEM, svet) še ni.
 
 ## Odprto (za naslednjo sejo)
 1. **Znamenitost pri 25–75 % dirke in ~40–60 m od ceste**: most je na koncu zambijske ceste (cesta pelje nanj). Možnosti: (a) cilj pred mejnim prehodom, most in slapovi vidni levo/desno v zadnjem delu (preveri razdalje in vidnost s kamere za avtom); (b) proga čez most v Zimbabve (Livingstone Way, ~1,4 km do ~-17.924, 25.844), most pri ~60 % — a proga bi tekla čez dve državi in mejo; ne izbiraj sam, vprašaj (stran Odločitve).
