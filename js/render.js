@@ -8220,8 +8220,8 @@ const Render = (function () {
     const colAt = (A, x) => { const f = (x - gx0) / gs - 0.5; if (f <= 0) return A[0]; if (f >= NX - 1) return A[NX - 1]; const i = Math.floor(f); return A[i] + (A[i + 1] - A[i]) * (f - i); };
     let Lmax = 0; for (let i = 0; i < NX; i++) { const x = gx0 + (i + 0.5) * gs; if (x >= C.x0 && x <= C.x1) Lmax = Math.max(Lmax, Ls[i]); }
     // 6. a point's weight: the footprint's fade along it (over fl), at its sides (only what sticks out), up from the band's foot
-    // (a cab-over truck's in XT_MIN (Titan, Cisterna: the cage, the cab's rear wall right behind the footprint): the fade no wider than 15 cm)
-    const fl = XT_MIN.has(M.id) && K && K.E.body.cage ? 0.15 : Math.max(0.15, 0.6 * Lmax), xf = (x) => Math.max(0, 1 - Math.max(C.x0 - x, x - C.x1, 0) / fl), zf = (z) => clamp(1 - (Math.abs(z) - C.z - 0.25) / 0.1, 0, 1);
+    // (a cab-over truck's (XT_CAB: Titan, Cisterna, the cab's rear wall right behind the footprint): the fade no wider than 15 cm; the other caged cars' as before)
+    const fl = XT_CAB.has(M.id) && K ? 0.15 : Math.max(0.15, 0.6 * Lmax), xf = (x) => Math.max(0, 1 - Math.max(C.x0 - x, x - C.x1, 0) / fl), zf = (z) => clamp(1 - (Math.abs(z) - C.z - 0.25) / 0.1, 0, 1);
     const Wf = (x, y, z) => { const a = xf(x) * zf(z); if (!(a > 0)) return 0; const b = colAt(bc, x); return a * Math.pow(clamp((y - b) / (colAt(crown, x) - b), 0, 1), 1.25); };
     // the roof's triangle over a point (x, z) as built (the up-facing shell's that holds it in plan: a coarse panel's sliver whose box only
     // covers the cell never counts) and the point's place in it (bl); dir 1: the lowest at or over y (what a post's top, a cage stands
@@ -9088,6 +9088,7 @@ const Render = (function () {
   })();
   // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
   // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
+  const XT_CAB = new Set(['titan', 'cisterna']);   // (the cab-over trucks: xRoofBuild's narrow fade)
   const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
