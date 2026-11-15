@@ -8,8 +8,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // the traffic and a run from the police. They drive on the left here (def.leftHand).
   TRACK_DEFS.push({
     id: 'isuna', name: 'Isuna, Butan', theme: 'isuna', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.6, leftHand: true,
-    desc: 'Isuna (Butan): kratka zavita cesta. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
-    en: { name: 'Isuna, Bhutan', desc: 'Isuna (Bhutan): a short, twisting road. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
+    desc: 'Kratka proga v dolini reke Paro Chhu v Butanu, po cesti od Chuzoma proti Paru: ob reki, pod gozdom modrega bora, mimo starega železnega verižnega mostu čez reko z belima stolpoma vrat. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
+    en: { name: 'Isuna, Bhutan', desc: 'A short course in the valley of the Paro Chhu in Bhutan, on the road from Chuzom towards Paro: by the river, under the blue pine forest, past the old iron chain bridge over the river with its two white gatehouses. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Isuna',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
@@ -19,12 +19,18 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLICE', band: '#16181c', text: '#f4f6f0' }, escTo: 'Do cilja',
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xc9d3dc, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
-    names: [],
+    // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }): plain descriptions
+    names: [
+      {"n": "Ob reki", "d": 60, "say": ["Along the river, the pine forest above!", "The river right beside the road!"]},
+      {"n": "Dolina", "d": 800, "say": ["Up the valley!", "The valley opens up ahead!"]},
+      {"n": "Verižni most", "d": 1560, "say": ["The old iron chain bridge, down by the river!", "Past the chain bridge and its white gatehouses!"]},
+      {"n": "Proti Paru", "d": 2500, "say": ["On up the valley towards Paro!", "The last stretch up the valley!"]},
+    ],
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars on a short, twisting road, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
-      goPass: ["And away they go!", "They're off! Every bend counts on a road this short!", "The race is on!"],
+      introPass: ["Welcome to {track}! {cars} cars on a short road up the river valley, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
+      goPass: ["And away they go!", "They're off! Every metre counts on a road this short!", "The race is on!"],
       introPassTT: ["Welcome to {track}! Just you and the clock.", "Here we are at {track}. {cps} checkpoints between you and the finish."],
-      goPassTT: ["Green light! The clock is running!", "Go! Attack every bend!"],
+      goPassTT: ["Green light! The clock is running!", "Go! Flat out up the valley!"],
       introTraffic: ["Welcome to {track}, and the road is open today. Just you and {rival}, first to the finish wins!"],
       introPolice: ["Welcome to {track}! The police are right behind you. Get to the finish without getting caught!"],
       escaped: ["You made it! The police will have to wait for another day!", "Escaped!"],
