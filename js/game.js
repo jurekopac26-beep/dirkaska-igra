@@ -6814,22 +6814,13 @@
   };
 
   // the special missions (js/missions.js): a mission's race on its track (no menu, no qualifying), the game's actions for its buttons
-  // the lazy scripts (I17 step 6): a group of index.html's <link rel="x-lazy-script" data-lazy="<k>"> (their stamped href, never a path of
-  // its own), fetched at once and run in their order (async false), then next(); loaded once (a second call waits on the first); a file
-  // that fails: fail() (offline, never fetched before)
-  const lazyAt = {};
+  // the lazy scripts (I17 step 6): a group of index.html's <link rel="x-lazy-script" data-lazy="<k>-<file>"> (js/leno.js loads each once,
+  // from its stamped href): all asked at once, run in the page's order (async=false); next() once all have run, fail() if one could not
+  // be loaded (the next call tries again)
   function lazyJs(k, next, fail) {
-    let L = lazyAt[k];
-    if (L && L.ok) { next(); return; }
-    if (!L) {
-      L = lazyAt[k] = { ok: false, end: false, wait: [] };
-      const tags = [...document.querySelectorAll('link[data-lazy="' + k + '"]')];
-      const settle = (ok) => { if (L.end) return; L.end = true; L.ok = ok; if (!ok) delete lazyAt[k]; const w = L.wait; L.wait = []; for (const [n, f] of w) { if (ok) n(); else if (f) f(); } };
-      let left = tags.length;
-      for (const t of tags) { const sc = document.createElement('script'); sc.async = false; sc.src = t.getAttribute('href'); sc.onload = () => { if (--left === 0) settle(true); }; sc.onerror = () => settle(false); document.head.appendChild(sc); }
-      if (!left) setTimeout(() => settle(true));
-    }
-    L.wait.push([next, fail]);
+    const ks = Leno.keys(k + '-');
+    if (ks.every(Leno.has)) { next(); return; }
+    Promise.all(ks.map(Leno.load)).then(() => next(), () => { if (fail) fail(); });
   }
   // the special missions (js/missions.js, js/missions/): loaded on opening them (the MISSIONS tile, ?misija=, the new map's kit), till then
   // the stand-in below (no mission chosen)

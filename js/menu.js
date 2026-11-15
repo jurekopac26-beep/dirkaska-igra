@@ -9,7 +9,7 @@
   'use strict';
   const D = window.MENU;
   // the route maps, the flights and the globe's journey (js/routes.js, js/journey.js, js/intro-data.js: 0.14 MB gzip) come only with
-  // the track step (I17, step 6: index.html <link data-lazy="karte">); until then a track has no map, and the step is drawn again once
+  // the track step (I17, step 6: index.html <link data-lazy="karte-…">, js/leno.js); until then a track has no map, and the step is drawn again once
   // they are here. A race waits for them in beforeRace (its flight). js/geo.js stays at the start: the race's sound reads its climate.
   let RT = window.ROUTES || {}, XI = window.INTRO || {}, karteOk = !!window.ROUTES, karteAsk = false;
   function karte(next) {
