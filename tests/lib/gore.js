@@ -1,7 +1,7 @@
 // The checks every short road of docs/gorske-proge.md has (tests/<id>.test.js: const G = goreTrack(id); its own checks with G.check; G.done()):
 // 1. the name: "Kraj, Država" as in the plan's table, the English one too, the side of the road they drive on; an open road with four ways to drive
 //    it (the race, the time trial, the duel in the traffic, the run from the police), four checkpoints, no round of the big championship
-// 2. the stage: 2.5-3 km between the lines (the plan; goreTrack(id, { km: [a, b] }) for a shorter one), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
+// 2. the stage: 2.5-3 km between the lines (the plan; goreTrack(id, { km: [a, b] }) for a shorter one, { gentle: true } for a road without bends), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
 //    the finish
 // 3. the data of the import (tools/proga-uvoz.mjs): the terrain and the land cover decode to their grids, the bends in order and turning the way
 //    they say, the legs of the hairpins apart and the barriers off the asphalt, the grades, the side roads in order within the road drawn, the lifts
@@ -47,7 +47,10 @@ function goreTrack(id, o = {}) {
   {
     const B = def.bends || [], turn = B.map(([d]) => { const a = T.idx(T.startS + d - 45), b = T.idx(T.startS + d + 45); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); return s; });
     const okB = B.every((b, k) => (!k || b[0] > B[k - 1][0]) && Math.sign(turn[k]) === b[2] && Math.abs(turn[k]) > 0.8);
-    check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
+    if (o.gentle) {   // (a valley road with gentle bends only: no bend listed and none over ~45 degrees within 90 m)
+      let tmax = 0; for (let s = T.startS; s < T.finishS; s += 5) { const a = T.idx(s - 45), b = T.idx(s + 45); let t = 0; for (let i = a; i < b; i++) t += wrap(T.hd[i + 1] - T.hd[i]); tmax = Math.max(tmax, Math.abs(t)); }
+      check('bends: a gentle road, no bend listed and none over ~45 degrees within 90 m', B.length === 0 && tmax < 0.8, `sharpest ${Math.round(tmax * 57.3)} degrees within 90 m`);
+    } else check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
     let dmin = 1e9; for (let i = 0; i < T.N; i += 2) for (let j = i + 40; j < T.N; j += 2) dmin = Math.min(dmin, Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]));
     let bmin = 1e9; for (let i = 0; i < T.N; i++) bmin = Math.min(bmin, T.bl[i], T.br[i]);
     let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));
