@@ -91,9 +91,13 @@
     for (const [, rings] of D.water) for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) {
       const ax = r[b][0], az = r[b][1], bx = r[a][0], bz = r[a][1]; if (Math.max(ax, bx) < G.x0 - 20 || Math.min(ax, bx) > G.x0 + G.nx * c + 20 || Math.max(az, bz) < G.z0 - 20 || Math.min(az, bz) > G.z0 + G.nz * c + 20) continue;
       for (let qa = Math.floor(Math.min(ax, bx) / EC); qa <= Math.floor(Math.max(ax, bx) / EC); qa++) for (let qb = Math.floor(Math.min(az, bz) / EC); qb <= Math.floor(Math.max(az, bz) / EC); qb++) { const key = qa * 65536 + qb; let L = EH.get(key); if (!L) EH.set(key, L = []); L.push(ax, az, bx, bz); } }
-    const edgeD = (x, z) => { let best = 1e9; const a0 = Math.floor(x / EC), b0 = Math.floor(z / EC);
+    const EHC = new Map();   // (per 16 m cell the edges of its 3 x 3 cells in one list, in the same order: start, direction, squared length)
+    const edgesAt = (a0, b0) => { const key = a0 * 65536 + b0; let S = EHC.get(key); if (S) return S; const q = [];
       for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = EH.get(a * 65536 + b); if (!L) continue;
-        for (let q = 0; q < L.length; q += 4) { const ax = L[q], az = L[q + 1], vx = L[q + 2] - ax, vz = L[q + 3] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+        for (let r = 0; r < L.length; r += 4) { const ax = L[r], az = L[r + 1], vx = L[r + 2] - ax, vz = L[r + 3] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } }
+      EHC.set(key, S = new Float64Array(q)); return S; };
+    const edgeD = (x, z) => { let best = 1e9; const S = edgesAt(Math.floor(x / EC), Math.floor(z / EC));
+      for (let q = 0; q < S.length; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; }
       return Math.sqrt(best); };
     const H = new Float32Array(n), SD = new Float32Array(n);
     for (let k = 0; k < n; k++) {
