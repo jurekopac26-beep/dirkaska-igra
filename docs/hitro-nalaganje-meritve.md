@@ -186,6 +186,17 @@ Glavna tabela (najbližje telefonu z grafičnim procesorjem): platna riše glavn
 | `caracoles` | 5,4 | 5,8 (šum; svet enak) |
 | `bathurst` | 4,4 | 4,3 |
 
+#### `nring` samo v `js/world-nring.js` (15. 11. 2026)
+
+Isti ukaz z `--samo nring`, izmenično pred/po, `World.build` v s (indeks stroja v oklepaju; stroj je med meritvami nihal 1635–2296):
+
+| krog | pred | po |
+|---|---|---|
+| 1 | 11,5 (2001) | 9,6 (1740) |
+| 2 | 10,0 (1635) | 10,8 (2296) |
+
+Razlika je pod šumom; svet enak (zlata referenca). Profil `--profil nring --platno-cpu --net none` (CPU 4×): koda v `js/world-nring.js` sama vzame ~1,3 s, ostalo so pomočniki v `js/world.js`, ki jih kliče: `nrTileGeo` 1,24 s, `crowdRun` 1,03 s, `RB.geometry` 0,50 s, `IChunks.add` 0,48 s, `nrGround` 0,47 s, `nrNear` 0,54 s, `IChunks.addTo` 0,44 s, `nringProps` 0,32 s, `crowdFinish` 0,31 s, `rng` 0,29 s, `nrShade` 0,19 s; po `World.ext.nring` še skupni `finish` ~5 s (`World.people` 2,9 s, `standsOf` 1,5 s, `World.life` 1,2 s). Cilj ~5 s zato ni dosegljiv samo v datoteki proge.
+
 ### 15 prog v svežem zavihku, 2D platno v procesu GPU (SwiftShader)
 
 Platna riše SwiftShader v procesu GPU, ki ga CDP ne upočasni. `getImageData` v gradnji sveta in preverjanje senčilnikov (`getShaderInfoLog`, `getProgramInfoLog`) čakajo, da proces GPU nariše 2D platna (teksture sveta, zemljevidi na karticah zaslona s progami): »senčilniki« in ostanek do vožnje sta tu večinoma to čakanje (profili spodaj), ne prevajanje. Telefon z grafičnim procesorjem platna nariše hitreje. Tabela je urejena po času; proge so šle po vrsti bathurst, spa, nring, suzuka, medvode, caracoles, bangsaen, livorno, ouninpohja, pikes, katu, toronto, balea, tianmen, greatalpine; proces GPU obdrži prevedene programe za vse zavihke istega brskalnika.
