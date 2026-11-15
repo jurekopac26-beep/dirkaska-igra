@@ -155,6 +155,7 @@ Mestne proge po središču velikih mest ostanejo generične (`CLAUDE.md`). Stavb
 | Čile | Los Caracoles | ni preverjeno: čl. 71F zakona o avtorski pravici, dela na javnih mestih prosto | hotel ob jezeru brez imena, poenostavljen |
 | ZDA | Pikes Peak | ni preverjeno: §120(a), stavbe, vidne z javnega mesta, na slikah prosto; 3D ni potrjeno | stavba na vrhu poenostavljena, brez imena |
 | Brazilija | Rio do Rastro | ni preverjeno: čl. 48 zakona 9.610, dela na javnih mestih prosto | razgledišče generično |
+| Lihtenštajn | Vaduz | ni preverjeno: zakon o avtorski pravici (URG), izjema za dela na javnih mestih; 3D in prodaja nista potrjena | grad samo od zunaj, preproste oblike po obrisih OSM, brez napisov, grbov, zastav, kipov in umetnin |
 | Kitajska | Tianmen | ni preverjeno: čl. 24(10), dopolnitev 2020; prodajna raba ni potrjena | Nebeška vrata so naravna jama, ne delo |
 
 Viri (8. 11. 2026):

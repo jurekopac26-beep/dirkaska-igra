@@ -256,6 +256,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |
 | *troisrivieres* | *Trois-Rivières, Kanada (test)* | troisrivieres | `js/world-troisrivieres.js` (`buildTroisRivieres`) |
 | *uncompahgre* | *Uncompahgre, ZDA (test)* | uncompahgre | `js/world-uncompahgre.js` (`buildUncompahgre`) |
+| vaduz | Vaduz, Lihtenštajn | vaduz | `js/world-vaduz.js` (`PL_LOOK.vaduz` za `buildPrelaz`: grad iz 15 delov `building:part` iz OSM, samo od zunaj, en mesh) |
 | *vrsic* | *Vršič, Slovenija (test)* | vrsic | `js/world-vrsic.js` (`buildVrsic`) |
 | *gora* | *Gorski reli (test)* | mountain | splošni `build()` |
 | *gozd* | *Bakreni gozd (test)* | forest | splošni `build()` |

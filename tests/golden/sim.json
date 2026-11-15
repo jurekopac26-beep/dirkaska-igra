@@ -4996,5 +4996,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "vaduz/race/cs": {
+  "digest": "c6205406e132cc3ae096d082",
+  "lead": 959.9,
+  "car0": [
+   173.23,
+   618.8
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaduz/demo/cs": {
+  "digest": "da227e339357c39b6ec86b85",
+  "lead": 771.1,
+  "car0": [
+   -0.76,
+   11.47
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaduz/upg/cs": {
+  "digest": "02add3a99a253cff4f26e9cd",
+  "lead": 958.9,
+  "car0": [
+   185.41,
+   556.52
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaduz/crash/cs": {
+  "digest": "31df0503b6ae7dff064e0ebc",
+  "lead": 959.9,
+  "car0": [
+   173.23,
+   618.8
+  ],
+  "cover": {
+   "dmg": 0.48,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaduz/formula/cs": {
+  "digest": "1d4aaa912f120aea19a6d116",
+  "lead": 959.4,
+  "car0": [
+   173.54,
+   634.87
+  ],
+  "cover": {
+   "dmg": 0.78,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaduz/lm/cs": {
+  "digest": "f3fe0a5fc078d9b14886d3ab",
+  "lead": 959.9,
+  "car0": [
+   178.94,
+   634.64
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 8,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaduz/car/cs": {
+  "digest": "2deb72c87603019be15ef598",
+  "lead": 959.4,
+  "car0": [
+   173.58,
+   634.91
+  ],
+  "cover": {
+   "dmg": 0.23,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

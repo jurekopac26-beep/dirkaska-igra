@@ -73,6 +73,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Envalira, Andora | proge z ledom | OSM 0 % (krog na ledu, okoli sneg) | izletna cona je |
 | Tuzla, Turčija; Sepang, Malezija; Lombok, Indonezija; Buriram, Tajska; Sakhir, Bahrajn; Lusail, Katar | Nove proge za 1.0, linija A (A12–A16, A18) | OSM 0–12 % kroga (ograja, dirkališča) | izletna cona je |
 | Cromwell, Nova Zelandija; Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A17, A19) | ni izmerjeno (v OSM ni odprte sredinske črte) | seja proge najprej preveri na satelitskem posnetku iz odprtega vira (nikoli Google); **ne začni**, če je ograja do 3 m od roba na več kot pol dolžine |
+| Vaduz, Lihtenštajn | PR #705 | 44 % (v igri: zidovi in hiše mesta, ograja) | izletna cona je; kratka proga z znamenitostjo (odločitev uporabnika 15. 11. 2026); padca ni (ograja) |
 | Koli, Finska | proge z ledom (zimska) | OSM 2 % (stavbe), ograj, zidov in sten ni | izletna cona je |
 
 ## Države s progo v igri: izbira uporabnika
@@ -103,6 +104,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test); zamrznjena kot testna (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostane do izbire | London (mestna proga po središču velikega mesta; #492, del N3 #500): tudi na odločanju, `pending: true` doda seja partyslo (od 8. 11. 2026 ob 22.03 ni več izjema od pravila ena proga na državo) | – |
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
+| Lihtenštajn | Vaduz (PR #705) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
