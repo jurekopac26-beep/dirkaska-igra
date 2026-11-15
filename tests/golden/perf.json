@@ -363,6 +363,13 @@
   "maxKverts": 436,
   "jsMs": 1.14
  },
+ "luanda": {
+  "calls": 110,
+  "maxCalls": 144,
+  "kverts": 212,
+  "maxKverts": 293,
+  "jsMs": 1.28
+ },
  "hinboun": {
   "calls": 123,
   "maxCalls": 147,
