@@ -173,6 +173,19 @@ Glavna tabela (najbližje telefonu z grafičnim procesorjem): platna riše glavn
 | `mountbuller` | 4,1 | 2,6 | 2,5 | 0,2 | 5 (vseh 34) | 165 | 39 |
 | `tianmen` | 3,2 | 2,0 | 1,9 | 0,2 | 9 (vseh 39) | 151 | 41 |
 
+### Korak 9: pred in po (15. 11. 2026)
+
+`--tracks --fresh --platno-cpu --menu-only --cpu 4 --net none`, isti stroj (indeks 2991 / 2921), `World.build` v s:
+
+| proga | pred | po |
+|---|---|---|
+| `livorno` | 9,3 | 5,6 |
+| `pikes` | 9,1 | 8,4 |
+| `nring` | 7,6 | 7,6 |
+| `spa` | 5,4 | 6,0 (šum; svet enak) |
+| `caracoles` | 5,4 | 5,8 (šum; svet enak) |
+| `bathurst` | 4,4 | 4,3 |
+
 ### 15 prog v svežem zavihku, 2D platno v procesu GPU (SwiftShader)
 
 Platna riše SwiftShader v procesu GPU, ki ga CDP ne upočasni. `getImageData` v gradnji sveta in preverjanje senčilnikov (`getShaderInfoLog`, `getProgramInfoLog`) čakajo, da proces GPU nariše 2D platna (teksture sveta, zemljevidi na karticah zaslona s progami): »senčilniki« in ostanek do vožnje sta tu večinoma to čakanje (profili spodaj), ne prevajanje. Telefon z grafičnim procesorjem platna nariše hitreje. Tabela je urejena po času; proge so šle po vrsti bathurst, spa, nring, suzuka, medvode, caracoles, bangsaen, livorno, ouninpohja, pikes, katu, toronto, balea, tianmen, greatalpine; proces GPU obdrži prevedene programe za vse zavihke istega brskalnika.
