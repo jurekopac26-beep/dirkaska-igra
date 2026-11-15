@@ -411,7 +411,7 @@
         if (!near) continue;
         const i0 = Math.max(1, Math.floor((x - G.x0) / NRC)), j0 = Math.max(1, Math.floor((z - G.z0) / NRC)), i1 = Math.min(G.nx - 2, i0 + 64), j1 = Math.min(G.nz - 2, j0 + 64);
         const band = shoreBand(G.x0 + i0 * NRC, G.z0 + j0 * NRC, G.x0 + i1 * NRC, G.z0 + j1 * NRC, SEA + 0.015, waterline(nrGH, G.x0, G.z0, NRC, i0, i1, j0, j1, SEA), 18, { F: 4 });
-        if (band && band.attributes.shore.array.some(v => v <= -1.99)) addShore(root, band, sea.material, WO);
+        if (band && band.attributes.shore.array.some(v => v <= -1.99) && band.attributes.shore.array.some(v => v >= 9.99)) addShore(root, band, sea.material, WO);
       }
     }
 
