@@ -45,10 +45,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // behind it), Steiermark (Turn 1), Red Bull (from Turn 1 up the hill, in three parts), T3, Nord (Turn 4, covered), T9 and T10 (covered);
     // orange: full of Dutch fans; front: the front's offset from the centre line, from the stand's OSM outline (a number, or [at from, at to]),
     // never nearer than 2.6 m behind the barrier. Start-Ziel, Steiermark, Red Bull and T10 on their OSM outlines (paket S, docs/realizem/paket-s.md);
-    // T3, Nord and T9 have none near the road
+    // T3, Nord and T9 have none near the road and stay; Mitte, Ost and Nord on their OSM outlines 44-115 m from the road (the user's choice, 15. 11. 2026)
     stands: [[-244, 175, -1, 18, 1, 1, 0, 'START · ZIEL', 21], [273, 333, -1, 10, 0, 1, 0, 'STEIERMARK', 20], [415, 452, -1, 10, 0, 1, 1, 'BERG', 43],
       [454, 645, -1, 16, 0, 8, 1, 'BERG', [32, 24]], [656, 842, -1, 18, 0, 7, 1, 'BERG', [31, 50]], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
-      [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3786, 3876, -1, 12, 1, 1, 0, 'T10', [48, 32]]],
+      [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3786, 3876, -1, 12, 1, 1, 0, 'T10', [48, 32]],
+      [2990, 3040, -1, 14, 0, 2, 0, 'MITTE', [53, 44]], [3718, 3777, -1, 12, 0, 2, 0, 'OST', [70, 53]], [2078, 2102, -1, 10, 0, 1, 0, 'NORD', 115]],
     standApron: 6,               // the paved walkway in front of the stands (World.people): at most 6 m wide, the grass on to the barrier where a stand stands far back
     wing: [-60, -1, 6.9],        // the voestalpine wing (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side, moved out (m): with the stand]
     ga: [[1370, 1900, -1], [900, 1180, 1], [2600, 2860, 1]],   // spectators on the grass: [from, to, side] (the hill between Turns 3 and 4 and the infield)
