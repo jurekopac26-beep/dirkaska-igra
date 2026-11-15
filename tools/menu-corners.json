@@ -279,6 +279,15 @@
  },
  "hiva": {
   "s": 210,
-  "o": "Zahodna vrata ob obzidju"
+  "o": "Zahodna vrata ob obzidju",
+  "cam": [
+   130.4,
+   122.3,
+   -221.7,
+   69.8,
+   97.4,
+   -186.7,
+   59.1
+  ]
  }
 }
