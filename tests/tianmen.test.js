@@ -24,7 +24,7 @@ const turn = (s, h) => { const a = T.idx(s - h), b = T.idx(s + h); let t = 0; fo
 check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 4 checkpoints, the road 9 m wide',
   def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 4.5,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
-check('track: from the straight past bend 61 (~789 m) up to the square below Tianmen Cave (~1218 m), 4.1-4.4 km', Math.abs(def.alt[0] - 789) < 20 && Math.abs(def.alt[1] - 1218) < 20 && T.raceLen > 4100 && T.raceLen <= 4400 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
+check('track: from the straight past bend 61 (~791 m) up to the square below Tianmen Cave (~1218 m), 4.1-4.4 km', Math.abs(def.alt[0] - 791) < 20 && Math.abs(def.alt[1] - 1218) < 20 && T.raceLen > 4100 && T.raceLen <= 4400 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('tianmen'));
 

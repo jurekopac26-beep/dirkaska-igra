@@ -1052,52 +1052,52 @@
  "tianmen/cs": {
   "finished": 13,
   "cars": 13,
-  "winner": 185.8,
+  "winner": 185.24,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "167bb393522fd52a041722f0"
+  "digest": "260f73008c5242cf45880e81"
  },
  "tianmen/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 218.73,
+  "winner": 218.25,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e7f910619c09a73b809b27ba"
+  "digest": "f011c1bd6341e26f11824c1d"
  },
  "tianmen/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 174.93,
+  "winner": 174.36,
   "spins": 0,
-  "walls": 3,
-  "rescues": 1,
+  "walls": 4,
+  "rescues": 0,
   "nan": false,
-  "digest": "8bf894ac0b1b0b8d7aae5bf4"
+  "digest": "6185ece9e20262ca970bdcfc"
  },
  "tianmen/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 177.28,
+  "winner": 176.7,
   "spins": 0,
-  "walls": 3,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7c635c1bb8adb7438645f1df"
+  "digest": "aebde60426bce21069e9a883"
  },
  "tianmen/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 185.84,
+  "winner": 185.34,
   "spins": 0,
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "6ac1cdc9dc57ee98ac7bf28f"
+  "digest": "85628bcf20419ff9b9a60b4b"
  },
  "uncompahgre/cs": {
   "finished": 13,
