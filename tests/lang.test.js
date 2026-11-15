@@ -121,8 +121,8 @@ check(`tr(): all ${keysUsed.size} texts of the game have their English`, !missin
   for (const c of C.CHAMPS) { if (!c.en || !c.en.desc) miss.push('championship desc ' + c.id); if (!(c.en && c.en.name) && !SAME_NAME.has(c.name)) miss.push('championship name ' + c.id); }
   check('Core: upgrades, credit, tracks, championships and jumps in English', !miss.length, miss.join(' | '));
   const sl = [];
-  for (const d of C.TRACKS) if (d.en && /[čšžČŠŽ]/.test((d.en.desc || '').replace(/Vršič/g, '') + (d.en.name || '').replace(/Vršič/g, ''))) sl.push(d.id);
-  check('Core: the English descriptions have no Slovenian letters (but the name Vršič)', !sl.length, sl.join(', '));
+  for (const d of C.TRACKS) if (d.en && /[čšžČŠŽ]/.test((d.en.desc || '').replace(/Vršič|Učka/g, '') + (d.en.name || '').replace(/Vršič|Učka/g, ''))) sl.push(d.id);
+  check('Core: the English descriptions have no Slovenian letters (but the names Vršič and Učka)', !sl.length, sl.join(', '));
 }
 
 // 6. the helpers in both languages: tr() with its slots, of(), numbers, money, places, the place names on the HUD
