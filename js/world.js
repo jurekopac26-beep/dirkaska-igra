@@ -5218,7 +5218,7 @@ const World = (function () {
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, ownRnd, parkOn, pikesProps, pitExcl, pitJunction, pitKerbs, pitLaneScenery, pitOpen, pitRoadAt, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
-    shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wrapS
+    shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wornTex, wrapS
   };
   Object.defineProperties(API, {
     LOD: { get: () => LOD },

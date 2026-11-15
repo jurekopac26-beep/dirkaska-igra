@@ -1,4 +1,4 @@
-// The places of the people's scenes (js/world-ljudje.js SITES, js/world-ljudje2.js and js/world-ljudje3.js site()), on every track, without a browser:
+// The places of the people's scenes (js/world-ljudje.js SITES, js/world-ljudje2.js, js/world-ljudje3.js and js/world-start.js site()), on every track, without a browser:
 // 1. only on the real tracks (the test ones have none), each on its track as World.people puts it: on an open road within its length (from the
 //    start), on a circuit anywhere on the lap (its metres wrapped), its side -1, 1 or 'room' (the wider verge there)
 // 2. no scene on a side road: its ground (12 m either way along the road, 1-13 m past the barrier, where tools/ljudje/mesta.mjs measures it)
@@ -7,7 +7,9 @@
 //    Saen; its half width, the pavement and 0.6 m; the other towns' streets mesta.mjs finds in the built world: asphalt under the ground)
 // 3. not in the pit lane on its side (def.pit: the pit wall's scene is the boksi, its own)
 // 4. apart: the fans' scenes at least 250 m from each other (the camera sees one group at a time; mesta.mjs places them 260 m apart), the
-//    staff's (STAFF_SCENES: marshals, firemen, the track's crews …) at least 100 m from any other (by the marshals' posts, as on a circuit)
+//    staff's (STAFF_SCENES: marshals, firemen, the track's crews …) at least 100 m from any other (by the marshals' posts, as on a circuit);
+//    the start of an open road (js/world-start.js START_SCENES: the gantry and the teams) is one place: its two scenes lie close together,
+//    at least 30 m from any other scene
 //   node tests/ljudje-mesta.test.js
 'use strict';
 const vm = require('vm'), fs = require('fs'), path = require('path');
@@ -23,8 +25,8 @@ const ctx = { console, performance: require('perf_hooks').performance, setTimeou
 ctx.self = ctx; ctx.window = ctx; vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/vendor/three.r128.min.js'), 'utf8'), ctx);
 ctx.World = {}; ctx.Tex = { STAND_KIT: new Proxy({}, { get: () => [0, 0, 1, 1] }), standKit: () => null, crowdSeats: () => null };
-for (const f of ['js/world-ljudje.js', 'js/world-ljudje2.js', 'js/world-ljudje3.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
-const SITES = ctx.World.peopleKit.SITES, STAFF = ctx.World.peopleKit.STAFF_SCENES, ids = Object.keys(SITES).sort(), all = ids.reduce((a, id) => a + SITES[id].length, 0);
+for (const f of ['js/world-ljudje.js', 'js/world-ljudje2.js', 'js/world-ljudje3.js', 'js/world-start.js']) vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf8'), ctx, { filename: f });
+const SITES = ctx.World.peopleKit.SITES, STAFF = ctx.World.peopleKit.STAFF_SCENES, START = ctx.World.peopleKit.START_SCENES || new Set(), ids = Object.keys(SITES).sort(), all = ids.reduce((a, id) => a + SITES[id].length, 0);
 
 // 1. the tracks
 const defs = new Map(C.TRACKS.map(d => [d.id, d])), unknown = ids.filter(id => !defs.has(id)), test = ids.filter(id => defs.has(id) && defs.get(id).test);
@@ -57,6 +59,8 @@ for (const id of ids) {
   }
   for (let p = 0; p < list.length; p++) for (let q = p + 1; q < list.length; q++) {
     let d = Math.abs(list[p][1] - list[q][1]); if (!T.open) d = Math.min(d, L - d);
+    const s1 = START.has(list[p][0]), s2 = START.has(list[q][0]);
+    if (s1 || s2) { if (!(s1 && s2) && d < 30) close.push(`${id} ${list[p][0]} ${list[p][1]} ~ ${list[q][0]} ${list[q][1]} (${Math.round(d)} m)`); continue; }
     const fans = !STAFF.has(list[p][0]) && !STAFF.has(list[q][0]);
     if (d < (fans ? 250 : 100)) close.push(`${id} ${list[p][0]} ${list[p][1]} ~ ${list[q][0]} ${list[q][1]} (${Math.round(d)} m)`);
   }
@@ -68,7 +72,7 @@ check('no scene on a town\'s street or path', !onStreet.length, onStreet.join(';
 // 3. the pit lane
 check('no scene in the pit lane on its side (the pit wall has its own)', !inPit.length, inPit.join('; '));
 // 4. apart
-check('apart: the fans\' scenes at least 250 m from each other, the staff\'s at least 100 m from any other', !!STAFF && !close.length, close.join('; '));
+check('apart: the fans\' scenes at least 250 m from each other, the staff\'s at least 100 m from any other, the start\'s at least 30 m', !!STAFF && !close.length, close.join('; '));
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exit(bad ? 1 : 0);
