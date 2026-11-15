@@ -2010,3 +2010,11 @@ Meje v testu: Podrobne pred udarci ≤ Preproste + 5; po udarcih ≤ 360; vsi ra
 - `trki-cv6-slike` (odgovor 1) označen kot prebran.
 - **Naprej:** PR ostane osnutek do vrste (~5. 12.); nestanovitni `aipits` samo opazuj.
 - **Branje `trki-podrobne` (14. 11. 2026, 14.50):** prebrano trikrat (23.20 13. 11., 10.50 in 14.50 14. 11.), brez odgovora. `dmgDet` ostane 0 (Preproste privzeto); vprašanje ostaja odprto za koordinacijo, nova branja niso naročena. Ob odgovoru 1: `dmgDet: 1` v privzetih nastavitvah (`lib.mjs` ostane 0) in povezani testi.
+
+## Vrata: predstavitev treh velikosti (15. 11. 2026)
+
+- **Odgovor `trki-podrobne`: 3 »Ne še«.** Opomba: vrata so prevelika, ponekod sta dvoje vrat zlita v ena (medved: `doorL` od −0,86 do 1,06 m). Želja: predstavitev, vsi avti s slik z odprtimi sprednjimi in zadnjimi vrati in 25 % razbitih oken, 3 različice manjših vrat. `dmgDet` ostane 0.
+- **Predstavitev** (skript ostal v začasni mapi seje, ne v repozitoriju; slike na strani Odločitve, ne v repozitoriju): Spa, kamera za avtom (`zoom` 0,45), izrez okoli avta, avti kolibri, medved, kozorog, lev, ris. Rezanje: trikotniki telesa in stekla s pretežno stransko normalo (|n·z| ≥ 0,55) v škatli vrat (x1 ≤ x ≤ x0, `doorL.y`, |z| ≥ 0,5 polovične širine), Sutherland–Hodgman; ostanek trikotnika gre k naslednjim vratom (sicer zadnja vrata ostanejo prazna). Tečaj spredaj (x0), odpiranje 62° in 58°.
+- **Mere vrat:** xF = a − rw − 0,07, xR = −b + rw + 0,07, S = xF − xR. Sprednja: x0 = xF − odmik, x1 = x0 − kf·S; zadnja (samo medved, kozorog): r0 = x1 − 0,05, r1 = r0 − kr·S, spodaj +0,04. V1: odmik 0,05, kf 0,56 (dvovratni) / 0,47 (štirivratni), kr 0,40; V2: 0,10, 0,49 / 0,42, 0,36; V3: 0,15, 0,42 / 0,37, 0,31. Medved V1/V2/V3: 0,92 + 0,78, 0,82 + 0,70, 0,72 + 0,60 m (zdaj 1,92 m); kolibri 0,92 / 0,81 / 0,69 m (zdaj 1,14 m).
+- **Vprašanje `trki-vrata`** (stran Odločitve): 1 V2 (priporočeno), 2 V1, 3 V3, 4 ne še; slike za vsako možnost in ZDAJ. Branje odgovora ob 10.50 (15. 11.), nato 14.50 in 23.20.
+- **Naprej po izbiri:** v kompletu poškodb (`js/render.js`, regije `doorL`/`doorR`) izbrane mere; štirivratni avti dobijo ločeni regiji sprednjih in zadnjih vrat (udrtine, odpadanje, steklo). Nato povezani testi `js/render.js` in slike ZDAJ/POTEM.
