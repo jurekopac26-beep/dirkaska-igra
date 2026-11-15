@@ -6,8 +6,8 @@ The game reads both with js/znamenitost.js (one draw call each, the materials' b
   python -I tools/znamenitost/luanda.py /tmp/tla.json        (python with bpy: pip install bpy)
 
 The model: the battered ochre curtain walls along the outline, their feet below the ground, the walkway on top, a white cordon under
-the parapet, the parapet with its embrasures, a white sentry box with a domed cap on each bastion's point, a gate in the wall towards the
-road, and the yard's low white and ochre buildings with red tiled roofs. No inscriptions, no flags, no statues.
+the parapet, the parapet with its embrasures, a white sentry box with a domed cap on each bastion's point, and the yard's two buildings on
+their OSM footprints (white, a low red roof slab). No gate (OSM maps no entrance). No inscriptions, no flags, no statues.
 The far level: the walls, their top and the buildings' blocks and roofs, nothing smaller.
 Coordinates: the game's (x, y, z) with y up and metres above the sea, relative to the fort's centre (x, z) (the game puts the model there).
 Budget (docs/proge/luanda.md): <= 8 materials, <= 60k vertices; the far level well under the near one."""
@@ -226,56 +226,86 @@ def sentries(G, rows, n_side, rows_dome):
     return put
 
 
-def gate(G, rows):
-    """the gate: a dark arched opening in the outer face of the longest wall nearest the road (towards +x, the bay's side)"""
+# the fort's outline and the yard's two buildings from OpenStreetMap (lat, lon; way 776638420, the outer ring of relation 10755449, and the
+# buildings 530687962 and 776638432, ODbL): the buildings are put into the game's frame by the fit of this ring onto the outline in PTS
+OSM_RING = [(-8.8084142, 13.2228533), (-8.8083004, 13.2228774), (-8.8076769, 13.2227485), (-8.8075168, 13.2225703), (-8.8072719, 13.2225910),
+            (-8.8069760, 13.2223538), (-8.8069504, 13.2226861), (-8.8068759, 13.2227287), (-8.8070238, 13.2230738), (-8.8072787, 13.2229524),
+            (-8.8074148, 13.2231438), (-8.8073619, 13.2234292), (-8.8075659, 13.2235615), (-8.8076208, 13.2238522), (-8.8078644, 13.2237093),
+            (-8.8081523, 13.2237079), (-8.8082990, 13.2237934), (-8.8084139, 13.2238776), (-8.8086829, 13.2238549), (-8.8085968, 13.2236076),
+            (-8.8084849, 13.2236029), (-8.8084846, 13.2235300), (-8.8084842, 13.2233991), (-8.8084825, 13.2233424), (-8.8084773, 13.2231589),
+            (-8.8084767, 13.2231385), (-8.8085802, 13.2231398), (-8.8086746, 13.2228820)]
+OSM_YARD = [[(-8.8070540, 13.2226725), (-8.8073028, 13.2227419), (-8.8072734, 13.2228496), (-8.8070246, 13.2227802)],
+            [(-8.8083135, 13.2237580), (-8.8084247, 13.2238349), (-8.8084213, 13.2236776), (-8.8083382, 13.2235566), (-8.8083382, 13.2231655),
+             (-8.8084221, 13.2230469), (-8.8084217, 13.2228986), (-8.8083168, 13.2229471), (-8.8083159, 13.2230718), (-8.8082329, 13.2230720),
+             (-8.8082349, 13.2233291), (-8.8082351, 13.2233834), (-8.8082347, 13.2236563), (-8.8083119, 13.2236560)]]
+
+
+def osm_frame():
+    """the similarity (scale, rotation, shift) taking the OSM ring (local metres, x east, z south) onto PTS: tried at every start point and
+    both directions, the least squares fit kept; returns (f, rms) with f(lat, lon) -> (x, z)"""
+    la0, lo0 = OSM_RING[0]; kx = 111320 * math.cos(math.radians(la0))
+    loc = lambda la, lo: ((lo - lo0) * kx, -(la - la0) * 110574)
+    R = [loc(*p) for p in OSM_RING]
+    if len(R) != len(PTS): raise SystemExit('the OSM ring has %d points, the outline %d' % (len(R), len(PTS)))
     best = None
-    for k in range(N):
-        (ax, az), (bx, bz) = PTS[k], PTS[(k + 1) % N]
-        l = math.hypot(bx - ax, bz - az); nx, nz = enorm(k)
-        sc = l * max(0.0, nx)                   # (the walls facing the road: east)
-        if l > 18 and (best is None or sc > best[0]): best = (sc, k)
-    if not best: return
-    k = best[1]; (ax, az), (bx, bz) = PTS[k], PTS[(k + 1) % N]; nx, nz = enorm(k)
-    mx, mz = (ax + bx) / 2, (az + bz) / 2; g = ground(mx + nx * W_FOOT, mz + nz * W_FOOT)
-    ux, uz = (bx - ax), (bz - az); l = math.hypot(ux, uz); ux, uz = ux / l, uz / l
-    o = W_FOOT - W_TOP / 2 + 0.06 - 0.25
-    w, h = 2.0, 3.6
-    pts = [(-w, 0), (w, 0), (w, h)] + [(w * math.cos(a * math.pi / 8), h + w * 0.7 * math.sin(a * math.pi / 8)) for a in range(1, 8)] + [(-w, h)]
-    P = lambda a, y: (mx + ux * a + nx * o, g + y, mz + uz * a + nz * o)
-    G.quad([P(a, y) for a, y in pts], 'dark', d=(nx, 0, nz))
-    G.box(mx + nx * (o + 0.1), g + h + w * 0.7, mz + nz * (o + 0.1), 2 * w + 1.4, 0.6, 0.5, math.atan2(uz, ux), 'white')   # (the stone frame's lintel)
-    for s in (-1, 1): G.box(mx + ux * s * (w + 0.35) + nx * (o + 0.1), g, mz + uz * s * (w + 0.35) + nz * (o + 0.1), 0.7, h + w * 0.7, 0.5, math.atan2(uz, ux), 'white')
+    for rev in (False, True):
+        Q = PTS[::-1] if rev else PTS
+        for sh in range(len(Q)):
+            T = Q[sh:] + Q[:sh]; n = len(T)
+            ax, az = sum(p[0] for p in R) / n, sum(p[1] for p in R) / n; bx, bz = sum(p[0] for p in T) / n, sum(p[1] for p in T) / n
+            sxx = sxz = ss = 0.0
+            for (u, v), (x, z) in zip(R, T):
+                u, v, x, z = u - ax, v - az, x - bx, z - bz
+                sxx += u * x + v * z; sxz += u * z - v * x; ss += u * u + v * v
+            sc = math.hypot(sxx, sxz) / ss; c, s = sxx / math.hypot(sxx, sxz) * sc, sxz / math.hypot(sxx, sxz) * sc
+            f = (lambda c, s, ax, az, bx, bz: lambda la, lo: (lambda u, v: (bx + c * (u - ax) - s * (v - az), bz + s * (u - ax) + c * (v - az)))(*loc(la, lo)))(c, s, ax, az, bx, bz)
+            e = math.sqrt(sum((f(*p)[0] - x) ** 2 + (f(*p)[1] - z) ** 2 for p, (x, z) in zip(OSM_RING, T)) / n)
+            if best is None or e < best[1]: best = (f, e)
+    return best
 
 
 def yard(G, detail):
-    """the yard's low buildings: the long white one along the longest wall's direction at the centre, an ochre one beside it"""
-    lg, la = 0, 0
-    for k in range(N):
-        (ax, az), (bx, bz) = PTS[k], PTS[(k + 1) % N]; l = math.hypot(bx - ax, bz - az)
-        if l > lg: lg, la = l, math.atan2(bz - az, bx - ax)
-    c, s = math.cos(la), math.sin(la)
-    blds = [(CX, CZ, 30, 9, 6.5, 'white', 2.2), (CX - s * 16, CZ + c * 16, 14, 8, 5.5, 'ochre', 2.0)]
-    for (x, z, lx, lz, h, mat, rh) in blds:
-        if not inside(x, z): continue
-        corners = [(x + c * a - s * b, z + s * a + c * b) for a in (-lx / 2, lx / 2) for b in (-lz / 2, lz / 2)]
-        y0 = min(ground(*p) for p in corners) - 1.0; y = ground(x, z)
-        G.box(x, y0, z, lx, (y + h - 1) - y0, lz, la, mat)
-        G.gable(x, y + h - 1, z, lx + 0.6, lz + 0.6, rh, la, 'roof', mat)
-        if not detail: continue
-        # the windows and the doors: dark openings a little off the long walls, regularly spaced; the shutters' sills white
-        nw = int(lx // 3.2)
-        for side in (-1, 1):
-            for q in range(nw):
-                a = -lx / 2 + (q + 0.5) * lx / nw; b = side * (lz / 2 + 0.03)
-                door = (q == nw // 2)
-                hh, ww, yb = (2.4, 1.3, y - 0.9) if door else (1.4, 0.9, y + 1.6)
-                P = lambda da, yy: (x + c * (a + da) - s * b, yy, z + s * (a + da) + c * b)
-                quad = [P(-ww / 2, yb), P(ww / 2, yb), P(ww / 2, yb + hh), P(-ww / 2, yb + hh)]
-                G.quad(quad, 'dark', d=(-s * side, 0, c * side))
-                if not door:
-                    P2 = lambda da, yy, e: (x + c * (a + da) - s * (b + side * e), yy, z + s * (a + da) + c * (b + side * e))
-                    sill = [P2(-ww / 2 - 0.1, yb - 0.12, 0.02), P2(ww / 2 + 0.1, yb - 0.12, 0.02), P2(ww / 2 + 0.1, yb, 0.02), P2(-ww / 2 - 0.1, yb, 0.02)]
-                    G.quad(sill, 'stone' if mat == 'white' else 'white', d=(-s * side, 0, c * side))
+    """the yard's two buildings on their OSM footprints: white walls of one floor and a half (OSM gives no height), their feet below the
+    ground, a low red roof slab on top; the far level the same (they are blocks)"""
+    f, e = osm_frame()
+    print('OSM ring onto the outline: rms %.2f m' % e)
+    if e > 2.0: raise SystemExit('the OSM ring does not fit the outline (rms %.1f m)' % e)
+    for fp in OSM_YARD:
+        P = [f(*p) for p in fp]
+        S = shrink(P, 0.4)
+        lo = lambda x, z: ground(x, z) - 1.0; hi = lambda x, z: ground(x, z) + 5.5   # (the walls and the roof follow the slope of the hill)
+        for k in range(len(P)):
+            (ax, az), (bx, bz) = P[k], P[(k + 1) % len(P)]
+            nx, nz = bz - az, -(bx - ax)
+            if in_poly(P, (ax + bx) / 2 + nx * 0.01, (az + bz) / 2 + nz * 0.01): nx, nz = -nx, -nz   # (outwards)
+            G.quad([(ax, lo(ax, az), az), (bx, lo(bx, bz), bz), (bx, hi(bx, bz), bz), (ax, hi(ax, az), az)], 'white', d=(nx, 0, nz))
+            (ax, az), (bx, bz) = S[k], S[(k + 1) % len(P)]
+            G.quad([(ax, hi(ax, az), az), (bx, hi(bx, bz), bz), (bx, hi(bx, bz) + 0.5, bz), (ax, hi(ax, az) + 0.5, az)], 'roof', d=(nx, 0, nz))
+        G.quad([(x, hi(x, z), z) for x, z in P], 'stone', d=(0, 1, 0))
+        G.quad([(x, hi(x, z) + 0.5, z) for x, z in S], 'roof', d=(0, 1, 0))
+
+
+def in_poly(P, x, z):
+    c, n = False, len(P)
+    for k in range(n):
+        (ax, az), (bx, bz) = P[k], P[(k + 1) % n]
+        if (az > z) != (bz > z) and x < ax + (z - az) * (bx - ax) / (bz - az): c = not c
+    return c
+
+
+def shrink(P, d):
+    """the polygon P moved inwards by d along each corner's mitre (small d; either winding)"""
+    out, n = [], len(P)
+    for k in range(n):
+        (px, pz), (x, z), (qx, qz) = P[k - 1], P[k], P[(k + 1) % n]
+        e1 = (x - px, z - pz); e2 = (qx - x, qz - z)
+        l1, l2 = math.hypot(*e1), math.hypot(*e2)
+        n1 = (-e1[1] / l1, e1[0] / l1); n2 = (-e2[1] / l2, e2[0] / l2)
+        mx, mz = n1[0] + n2[0], n1[1] + n2[1]; ml = math.hypot(mx, mz) or 1.0
+        cs = max(0.3, (mx * n1[0] + mz * n1[1]) / ml)
+        out.append((x - mx / ml * d / cs, z - mz / ml * d / cs))
+    area = lambda Q: abs(sum(Q[k - 1][0] * Q[k][1] - Q[k][0] * Q[k - 1][1] for k in range(len(Q))))
+    return out if area(out) < area(P) else shrink(P, -d) if d > 0 else out
 
 
 def build(detail):
@@ -283,7 +313,6 @@ def build(detail):
     rows = walls(G, 3.0 if detail else 9.0, detail)
     if detail: parapet(G, rows)
     ns = sentries(G, rows, 12 if detail else 6, 3 if detail else 0)
-    if detail: gate(G, rows)
     yard(G, detail)
     return G, ns
 

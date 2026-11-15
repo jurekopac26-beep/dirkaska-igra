@@ -221,9 +221,9 @@
 
     /* ---- the fortress on the hill: the simple one (one mesh) until the model of assets/landmarks/luanda.glb has loaded (World.znamenitost):
        its walls along the outline, battered, ochre, a white cordon under the parapet, the parapet's merlons, a sentry box on each bastion's
-       point, two low buildings with tiled roofs in the yard ---- */
+       point (the yard's buildings are only the model's, on their OSM footprints) ---- */
     if (fort) {
-      const gF = new GB(), u = fort.pts, och = [0.86, 0.68, 0.46], ochT = [0.8, 0.64, 0.46], wht = [0.95, 0.94, 0.9], roof = [0.68, 0.34, 0.22];
+      const gF = new GB(), u = fort.pts, och = [0.86, 0.68, 0.46], ochT = [0.8, 0.64, 0.46], wht = [0.95, 0.94, 0.9];
       let area = 0; for (let k = 0; k + 1 < u.length; k++) area += u[k][0] * u[k + 1][1] - u[k + 1][0] * u[k][1];
       const ori = Math.sign(area) || 1;
       for (let k = 0; k + 1 < u.length; k++) {
@@ -239,12 +239,6 @@
         let tn = e2 - e1; while (tn > Math.PI) tn -= TAU; while (tn < -Math.PI) tn += TAU;
         if (tn * ori < 0.9) continue;
         const y = nrDem(p[0], p[1]) + 7.5; cyl(gF, p[0], y, p[1], 0.95, 2.3, 8, wht, null, 0.95); cone(gF, p[0], y + 2.3, p[1], 1.1, 1.2, 8, wht, wht, 0);
-      }
-      {   // the yard's two low buildings
-        const [cx, cz] = FC, y = nrDem(cx, cz); let lg = 0, la = 0;
-        for (let k = 0; k + 1 < u.length; k++) { const l = Math.hypot(u[k + 1][0] - u[k][0], u[k + 1][1] - u[k][1]); if (l > lg) { lg = l; la = Math.atan2(u[k + 1][1] - u[k][1], u[k + 1][0] - u[k][0]); } }
-        box(gF, cx, y - 1, cz, 30, 6.5, 9, la, wht, null, true); gable(gF, cx, y + 5.5, cz, 30.6, 9.6, 2.2, la, roof, wht);
-        const bx = cx - Math.sin(la) * 16, bz = cz + Math.cos(la) * 16; if (inPoly(fort.pts, bx, bz)) { box(gF, bx, y - 1, bz, 14, 5.5, 8, la, och, null, true); gable(gF, bx, y + 4.5, bz, 14.6, 8.6, 2, la, roof, och); }
       }
       const fm = new THREE.Mesh(gF.geometry(), matV); fm.castShadow = fm.receiveShadow = true; fm.matrixAutoUpdate = false; root.add(fm);
       exclPush(FC[0], FC[1], FR + 6); nStone++;
