@@ -10,7 +10,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | čaka (veja `proge/luanda`) |
 | 3 | *zamenjava* (bil Antananarivo) | Madagaskar ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 4 | Mombasa | Kenija | stavba | jure.kopac26 | čaka |
-| 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |
+| 5 | Hiva | Uzbekistan | stavba: obzidje Ičan Kale in minareta | jure.kopac26 | v delu (#723; ostane model iz Blenderja) |
 | 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 8 | El Jem | Tunizija | stavba | biketraveler | čaka |
