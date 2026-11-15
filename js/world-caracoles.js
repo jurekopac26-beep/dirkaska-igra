@@ -31,8 +31,12 @@
     // behind them: gently for 5 m, then at 2 in 1)
     const P = API.VR, cx = Math.floor(x / API.VRHC) - P.cx0, cz = Math.floor(z / API.VRHC) - P.cz0, ds = T.ds;
     let ws = 0, hs = 0, bd = 1e9, bi = -1, bdd = 1e9, env = 1e9;
-    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+    const HC = API.VRHC, RR = (66 + ds) * (66 + ds);   // (a cell farther than 64 m + ds (+2 m slack) holds no sample within d < 64: d >= the true distance - ds)
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const zl = (b + P.cz0) * HC, gz = z < zl ? zl - z : z > zl + HC ? z - zl - HC : 0, gz2 = gz * gz; if (gz2 >= RR) continue;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
       const L = P.cells[b * P.ncx + a]; if (!L) continue;
+      const xl = (a + P.cx0) * HC, gx = x < xl ? xl - x : x > xl + HC ? x - xl - HC : 0; if (gx * gx + gz2 >= RR) continue;
       for (let q = 0; q < L.length; q++) {
         const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; if (lat >= 64 || lat <= -64) continue;   // (64 m or more aside: d >= 64 whatever al is)
         const al = dx * T.tx[i] + dz * T.tz[i], ex = Math.max(0, Math.abs(al) - ds); if (ex >= 64) continue;
@@ -43,6 +47,7 @@
         if (d < bd) { bd = d; bi = i; }
         if (dd < bdd) bdd = dd;
         const e = hc - 0.3 + (dd < 5 ? 0.2 * dd * dd : 5 + 2 * (dd - 5)); if (e < env) env = e;
+      }
       }
     }
     CAN.i = bi; CAN.d = bd; CAN.dd = bdd; CAN.h = bi < 0 ? 0 : hs / ws; CAN.env = env;
