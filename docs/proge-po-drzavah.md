@@ -156,6 +156,16 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
+| Angola | Luanda (proge z znamenitostjo, 1) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Zambija | Livingstone (proge z znamenitostjo, 2) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Madagaskar | Antananarivo (proge z znamenitostjo, 3) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Kenija | Mombasa (proge z znamenitostjo, 4) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Uzbekistan | Hiva (proge z znamenitostjo, 5) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Gana | Elmina (proge z znamenitostjo, 6) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Kambodža | Bokor (proge z znamenitostjo, 7) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Tunizija | El Jem (proge z znamenitostjo, 8) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Panama | Portobelo (proge z znamenitostjo, 9) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Butan | Trongsa (proge z znamenitostjo, 10) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 
