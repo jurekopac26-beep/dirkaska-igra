@@ -66,6 +66,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+      # (esbuild za pomanjšanje spodaj: različica iz package-lock.json)
+      - run: npm ci --no-audit --no-fund
       - run: node tools/predogled.mjs _site
         env:
           GH_TOKEN: ${{ github.token }}
@@ -76,6 +79,10 @@ jobs:
             [ -f "$d/index.html" ] || continue
             GAME_ROOT="$d" node tools/stamp.js --check-stamped || exit 1
           done
+      # I17 korak 7 (docs/hitro-nalaganje.md): JS vsakega drevesa pomanjšan (~−22 % gzip), po žigih, zato žigi ostanejo žigi datotek iz
+      # repozitorija (tools/stamp.js --find najde commit žiga iz poročila o napaki); repozitorij in testi ostanejo nepomanjšani
+      - name: Pomanjšanje
+        run: node tools/pomanjsaj.mjs _site _site/beta/*/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
