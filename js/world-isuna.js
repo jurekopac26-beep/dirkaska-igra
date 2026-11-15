@@ -1,7 +1,7 @@
 /* =========================================================================
    WORLD — Isuna, Butan (theme 'isuna'): the data-driven builder of the short roads (World.gore, js/world-gore.js) with this road's style; its own
    things in S.extra. Made by tools/nova-proga.mjs (the style from tools/predogled/proge.json).
-   The road from Chuzom up the valley of the Paro Chhu (PNH 6), blue pine forest on the slopes, the river beside the road (def.rivers), and the
+   The road from Chuzom up the valley of the Paro Chhu (PNH 6), blue pine forest on the slopes, the river beside the road (def.riverBeds), and the
    landmark: the old iron chain footbridge over the river below the road (OSM way 452848825), with a whitewashed stone gatehouse at each end
    (a red-brown band under a dark shingled roof, a small gilded pinnacle), the deck hung from the chains, strings of plain coloured flags along
    them (no inscriptions). The model is made in Blender (tools/znamenitost/isuna.py: assets/landmarks/isuna.glb, isuna-far.glb, World.znamenitost);

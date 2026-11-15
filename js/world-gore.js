@@ -331,7 +331,7 @@
         if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
         exclPush(L.cx, L.cz, Math.max(L.x1 - L.x0, L.z1 - L.z0) / 2 + 6);
       }
-      for (const R of P.rivers) {   // a river (def.rivers): a ribbon of water down its bed, its edges 4 m into the banks (vrFar), only where the corridor's terrain is
+      for (const R of P.rivers) {   // a river (def.riverBeds): a ribbon of water down its bed, its edges 4 m into the banks (vrFar), only where the corridor's terrain is
         const g = new GB(true), hw = R.w / 2, O = [-hw - 4, -hw * 0.5, 0, hw * 0.5, hw + 4], n = R.pts.length, uv = (q) => [q[0] / 14, -q[2] / 14];
         const col = (o) => [0, 1, 2].map(k => lerp(shal[k], deep[k], sstep(1, 8, hw - Math.abs(o)))), row = (k) => { const p = R.pts[k], q = R.pts[Math.min(n - 1, k + 1)], r = R.pts[Math.max(0, k - 1)], tx = q[0] - r[0], tz = q[1] - r[1], l = Math.hypot(tx, tz) || 1;
           return O.map(o => [p[0] - tz / l * o, R.h[k], p[1] + tx / l * o]); };

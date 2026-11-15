@@ -67,9 +67,9 @@
       for (const [x, z] of poly) { lx0 = Math.min(lx0, x); lx1 = Math.max(lx1, x); lz0 = Math.min(lz0, z); lz1 = Math.max(lz1, z); h = Math.min(h, vrDem(x, z)); cx += x / poly.length; cz += z / poly.length; }
       const i = T.nearestIdx(cx, cz);
       return { poly, x0: lx0, x1: lx1, z0: lz0, z1: lz1, h: Math.min(h - 0.6, T.hy[i] - 1.8), area: a[0], cx, cz, near: Math.min(...poly.map(([x, z]) => { const k = T.nearestIdx(x, z); return Math.hypot(x - T.px[k], z - T.pz[k]); })) }; }).filter(L => L.near < 380);   // (only those the corridor reaches)
-    // the rivers (def.rivers [width, x, z, ...] every ~8 m, downstream; tools/proga-uvoz.mjs): the water level at each point the lowest real ground
+    // the rivers (def.riverBeds [width, x, z, ...] every ~8 m, downstream; tools/proga-uvoz.mjs): the water level at each point the lowest real ground
     // across the bed, smoothed over ~80 m, never rising downstream and well below the road; the bed dug under it (vrFar), its segments in 32 m cells
-    P.rivers = (def.rivers || []).map((a) => { const w = a[0], pts = []; for (let k = 1; k + 1 < a.length; k += 2) pts.push([a[k], a[k + 1]]);
+    P.rivers = (def.riverBeds || []).map((a) => { const w = a[0], pts = []; for (let k = 1; k + 1 < a.length; k += 2) pts.push([a[k], a[k + 1]]);
       const n = pts.length, m = new Float32Array(n), h = new Float32Array(n);
       for (let k = 0; k < n; k++) { const p = pts[k], q = pts[Math.min(n - 1, k + 1)], r = pts[Math.max(0, k - 1)], tx = q[0] - r[0], tz = q[1] - r[1], l = Math.hypot(tx, tz) || 1; let lo = 1e9;
         for (let o = -w / 2; o <= w / 2 + 0.01; o += w / 4) lo = Math.min(lo, vrDem(p[0] - tz / l * o, p[1] + tx / l * o));

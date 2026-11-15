@@ -523,7 +523,7 @@ async function main() {
     bends: bRace, elevSmooth: 12, elevDm: H5, surf, widths,
     dem: { x0, z0, nx: dnx, nz: dnz, cell, base: +base.toFixed(2), tr: ED.tr, rows: ED.rows, res: ED.res },
     lc: { x0, z0, nx: lnx, nz: lnz, cell: lcell, rle: rleLC(lc) },
-    zones, lifts, bld, lakes, rivers, pulls, vistas, trees, sideRoads: SR, points: P5,
+    zones, lifts, bld, lakes, riverBeds: rivers, pulls, vistas, trees, sideRoads: SR, points: P5,
   };
   let gmax = 0; for (let i = iS; i < iF; i++) gmax = Math.max(gmax, Math.abs(HT.h[i + 1] - HT.h[i]) / ds);
   console.log(`zapis: dirka ${data.realKm} km, ${data.alt[0]} -> ${data.alt[1]} m (najstrmeje ${(gmax * 100).toFixed(1)} %), ovinkov ${bRace.length} (serpentin ${bRace.filter(b => b[3] > 140).length}), ` +
@@ -563,7 +563,7 @@ function writeTrack(f, d) {
     `    zones: ${J(d.zones)}, lifts: ${J(d.lifts)},`,
     `    bld: ${J(d.bld)},`,
     `    lakes: ${J(d.lakes)}, pulls: ${J(d.pulls)}, vistas: ${J(d.vistas)}, trees: ${J(d.trees)},`,
-    ...(d.rivers && d.rivers.length ? [`    rivers: ${J(d.rivers)},`] : []),
+    ...(d.riverBeds && d.riverBeds.length ? [`    riverBeds: ${J(d.riverBeds)},`] : []),
     ...(d.sideRoads.length ? [`    sideRoads: ${J(d.sideRoads)},`] : []),
     `    points: ${J(d.points)},`,
   ];
