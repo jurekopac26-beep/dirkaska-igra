@@ -94,12 +94,16 @@
   function hjFill(poly, fn, grow) {
     const G = HJ.G; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of poly) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
     const g = grow || 0, i0 = Math.max(0, Math.ceil((x0 - g - G.x0) / HJC)), i1 = Math.min(G.nx - 1, Math.floor((x1 + g - G.x0) / HJC)), j0 = Math.max(0, Math.ceil((z0 - g - G.z0) / HJC)), j1 = Math.min(G.nz - 1, Math.floor((z1 + g - G.z0) / HJC));
-    // (a vertex outside the footprint's box is not in it, and no nearer to it than to the box: those tests are skipped, a hair to spare, so the same vertices pass)
-    const gg = g + 1e-6;
-    for (let j = j0; j <= j1; j++) { const z = G.z0 + j * HJC, ez = z < z0 ? z0 - z : z > z1 ? z - z1 : 0;
-      for (let i = i0; i <= i1; i++) { const x = G.x0 + i * HJC, ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0;
-        if (ex > 1e-6 || ez > 1e-6) { if (!(g > 0) || ex * ex + ez * ez >= gg * gg) continue; if (polyDist(poly, x, z) < g) fn(j * G.nx + i); continue; }
-        if (inPoly(poly, x, z) || (g > 0 && polyDist(poly, x, z) < g)) fn(j * G.nx + i); } }
+    // (row by row: the edges a row crosses, at inPoly's own crossing x (the same arithmetic), sorted; a vertex is in the polygon when an odd number
+    // lie beyond it, as inPoly counts them. A vertex outside the footprint's box is no nearer to it than to the box: polyDist is skipped there, a hair to spare)
+    const gg = g + 1e-6, n = poly.length, xs = [];
+    for (let j = j0; j <= j1; j++) { const z = G.z0 + j * HJC, ez = z < z0 ? z0 - z : z > z1 ? z - z1 : 0; xs.length = 0;
+      for (let a = 0, b = n - 1; a < n; b = a++) { const xi = poly[a][0], zi = poly[a][1], xj = poly[b][0], zj = poly[b][1]; if ((zi > z) !== (zj > z)) xs.push((xj - xi) * (z - zi) / (zj - zi) + xi); }
+      xs.sort((p, q) => p - q); let c = 0;   // (c: the crossings at or before x)
+      for (let i = i0; i <= i1; i++) { const x = G.x0 + i * HJC; while (c < xs.length && !(x < xs[c])) c++;
+        if ((xs.length - c) & 1) { fn(j * G.nx + i); continue; }
+        if (!(g > 0)) continue; const ex = x < x0 ? x0 - x : x > x1 ? x - x1 : 0; if ((ex > 1e-6 || ez > 1e-6) && ex * ex + ez * ez >= gg * gg) continue;
+        if (polyDist(poly, x, z) < g) fn(j * G.nx + i); } }
   }
   // grid vertices within r of the segment a-b -> G.pv (the paved mask: no trees, no crowd there), or the raster M
   function hjMarkSeg(ax, az, bx, bz, r, val, M) {
@@ -217,9 +221,14 @@
   function hjLOD() {
     const G = HJ.G, nb = G.nbx = (G.nx - 1) / HJB, nbz = G.nbz = (G.nz - 1) / HJB, bs = G.bs = new Uint8Array(nb * nbz), sx = [], sz = [];
     for (let i = 0; i < T.N; i += 3) { sx.push(T.px[i]); sz.push(T.pz[i]); }
+    // (only the samples within reach of the 100 m step count: binned into 32 m cells, a block looks at the cells within that reach, 1 m to spare;
+    // nearer than that the least distance is the same, beyond it the step is 4 either way)
+    const LC = 32, LR = 100 + HJB * HJC * 0.71 + 1, lx0 = Math.min(...sx), lz0 = Math.min(...sz), lnx = Math.floor((Math.max(...sx) - lx0) / LC) + 1, lnz = Math.floor((Math.max(...sz) - lz0) / LC) + 1;
+    const bins = new Array(lnx * lnz); for (let k = 0; k < sx.length; k++) { const c = Math.floor((sz[k] - lz0) / LC) * lnx + Math.floor((sx[k] - lx0) / LC); (bins[c] || (bins[c] = [])).push(k); }
     for (let bj = 0; bj < nbz; bj++) for (let bi = 0; bi < nb; bi++) {
       const x = G.x0 + (bi + 0.5) * HJB * HJC, z = G.z0 + (bj + 0.5) * HJB * HJC; let d2 = 1e18;
-      for (let k = 0; k < sx.length; k++) { const dx = x - sx[k], dz = z - sz[k], d = dx * dx + dz * dz; if (d < d2) d2 = d; }
+      const a0 = Math.max(0, Math.floor((x - LR - lx0) / LC)), a1 = Math.min(lnx - 1, Math.floor((x + LR - lx0) / LC)), b0 = Math.max(0, Math.floor((z - LR - lz0) / LC)), b1 = Math.min(lnz - 1, Math.floor((z + LR - lz0) / LC));
+      for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) { const L = bins[b * lnx + a]; if (L) for (const k of L) { const dx = x - sx[k], dz = z - sz[k], d = dx * dx + dz * dz; if (d < d2) d2 = d; } }
       const d = Math.sqrt(d2) - HJB * HJC * 0.71; bs[bj * nb + bi] = d < 14 ? 1 : d < 100 ? 2 : 4;
     }
     const hr = G.hr = new Float32Array(G.nx * G.nz).fill(NaN), W = G.nx;
@@ -581,10 +590,17 @@
     // the verge's cross-section per sample and side: six points [offset, height above the road] from the road's edge out to 1.9 m past the barrier
     // (lifted over the ground where it rises), and the kind of each of the five strips (0 tarmac, 1 kerb, 2 grass, 4 sidewalk, 5 gravel)
     const VK = { 4: [1, 1, 4, 4, 4], 0: [0, 0, 0, 0, 0], 2: [2, 2, 2, 2, 2], 3: [5, 5, 5, 2, 2], 5: [5, 5, 5, 2, 2] };
+    const farBeside = (i, R) => {   // a sample more than 24 m along the stage from i within R of it? (the nearest sample to a point o from i, where
+      // sample i is o away, can only be another part's when that part comes within 2 o + ds / 2 of i)
+      const P = HJ, x = T.px[i], z = T.pz[i], R2 = R * R, a0 = Math.max(0, Math.floor((x - R) / HJHC) - P.cx0), a1 = Math.min(P.ncx - 1, Math.floor((x + R) / HJHC) - P.cx0),
+        b0 = Math.max(0, Math.floor((z - R) / HJHC) - P.cz0), b1 = Math.min(P.ncz - 1, Math.floor((z + R) / HJHC) - P.cz0);
+      for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) { const L = P.cells[b * P.ncx + a]; if (L) for (const j of L) if (Math.abs(j - i) * ds > 24) { const dx = T.px[j] - x, dz = T.pz[j] - z; if (dx * dx + dz * dz < R2) return true; } }
+      return false; };
     const vEnd = (i, side, e) => {   // how far the verge goes: short of the centre of a tight bend on its inside, and of another part of the stage beside it (the
       // other carriageway: to the middle between the two), at most e
       let km = 0; for (let j = Math.max(0, i - 4); j <= Math.min(N - 1, i + 4); j++) if (Math.sign(T.k[j]) === side) km = Math.max(km, Math.abs(T.k[j]));
       if (km > 0) e = Math.min(e, Math.max(WA[i] + 0.3, 1 / km - 0.4));
+      if (!farBeside(i, 2 * e + ds * 0.5 + 2)) return e;   // (no other part of the stage that near: every point's nearest sample is one of this part's)
       for (let o = WA[i] + 0.3; o <= e + 0.01; o += 0.5) { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o, n = hjNI(x, z);
         if (n.i >= 0 && Math.abs(n.i - i) * ds > 24 && Math.abs(n.lat) < o) return Math.max(WA[i] + 0.25, (o + Math.abs(n.lat)) / 2 - 0.1); }
       return e; };
@@ -703,10 +719,11 @@
       const rG = new THREE.MeshLambertMaterial({ map: ouGTex(), vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
       // car parks (tarmac) and squares (paving) laid on the ground: the polygons triangulated and cut into ~3 m triangles that follow it
       const cA = gA, cP = gP;   // (the car parks and squares in the streets' own chunks: fewer draws)
+      const layH = new Map();   // (the ground under each corner, once: the corners and the midpoints are shared by the triangles round them)
       const lay = (ch, a, b, c, us, col, dep) => { const l = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), Math.hypot(b[0] - c[0], b[1] - c[1]), Math.hypot(c[0] - a[0], c[1] - a[1]));
         if (l > 3.2 && dep < 7) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2]; lay(ch, a, ab, ca, us, col, dep + 1); lay(ch, ab, b, bc, us, col, dep + 1); lay(ch, ca, bc, c, us, col, dep + 1); lay(ch, ab, bc, ca, us, col, dep + 1); return; }
         const mx = (a[0] + b[0] + c[0]) / 3, mz = (a[1] + b[1] + c[1]) / 3; if (nearDD(mx, mz) < 0.5 || onBld(mx, mz)) return;
-        const P3 = (p) => [p[0], hjGround(p[0], p[1]) + 0.05, p[1]], A = P3(a), B = P3(b), C = P3(c);
+        const P3 = (p) => { let y = layH.get(p); if (y === undefined) { y = hjGround(p[0], p[1]); layH.set(p, y); } return [p[0], y + 0.05, p[1]]; }, A = P3(a), B = P3(b), C = P3(c);
         ch.get(mx, mz).triO(A, B, C, col, [mx, Math.min(A[1], B[1], C[1]) - 5, mz], col, col, [A[0] / us, -A[2] / us], [B[0] / us, -B[2] / us], [C[0] / us, -C[2] / us]); };
       for (const ar of P.areas) { if (ar.t !== 5 && ar.t !== 6) continue;
         const tris = THREE.ShapeUtils.triangulateShape(ar.poly.map(([x, z]) => new THREE.Vector2(x, z)), []), park = ar.t === 5, col = park ? [0.93, 0.93, 0.95] : [0.9, 0.88, 0.84];
