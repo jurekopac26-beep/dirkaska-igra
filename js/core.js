@@ -1144,16 +1144,17 @@ const Core = (function () {
     }
     // the marbles' band (MARB, Race mb; closed circuits): per sample its middle (c, m from the centre line), its half width (h) and how thick
     // it gets at most (k, 0..1: by how tight the racing line bends there, over ±16 m, and the room between the line and the road's edge on
-    // the outside of the bend: none where the line runs along the edge). Found once
-    marbles() {
-      if (this._mb) return this._mb;
-      const N = this.N, rk = this.rk, rl = this.rl, wa = this.wa, M = MARB, c = new Float32Array(N), h = new Float32Array(N), k = new Float32Array(N);
+    // the outside of the bend: none where the line runs along the edge). Found once. marblesAlong: the same band off another line (the
+    // rubber's, Track gl: only for the look of it, js/render.js; not kept, the grip is the computed line's)
+    marbles() { return this._mb || (this._mb = this.marblesAlong(this.rl)); }
+    marblesAlong(rl) {
+      const N = this.N, rk = this.rk, wa = this.wa, M = MARB, c = new Float32Array(N), h = new Float32Array(N), k = new Float32Array(N);
       for (let i = 0; i < N; i++) {
         let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; s /= 17;
         const so = s > 0 ? -1 : 1, u0 = so * rl[i] + M.gap, u1 = Math.min(u0 + M.wd, (wa ? wa[i] : this.w) - M.edge);   // (so: the outside of the bend; +n is to the right, a right bend's inside)
         k[i] = sstep(1 / M.r0, 1 / M.r1, Math.abs(s)) * sstep(0.6, 1.4, u1 - u0); c[i] = so * (u0 + u1) / 2; h[i] = Math.max(0, (u1 - u0) / 2);
       }
-      return (this._mb = { c, h, k });
+      return { c, h, k };
     }
     // how much of the band is under a car at sample i, d m from the centre line (0..1 of its thickest there): from a wheel on its edge (the
     // car's middle 0.8 m outside it) to all of it with the car's middle 0.4 m inside
