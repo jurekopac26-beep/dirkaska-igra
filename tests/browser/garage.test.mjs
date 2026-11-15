@@ -451,6 +451,13 @@ try {
         /^plan,cart\.in,cart\.parked,grab,swap/.test(fs.log) && /cart\.out$/.test(fs.log) && ps[0] && ps[0].el === 'aero' && ps[0].exact && ps[0].real && !ps[0].hop
         && (rear ? o[0] === -1 : Math.abs(o[2] || 0) === 1) && fs.cart && !fs.cart.on && fs.parked && /KONČANO/.test(fs.chip) && rs.t <= 13.5, JSON.stringify({ fs, ps, t: rs.t }));
     }
+    // (the splitter and skirts after the diffuser (a kit that brings sills): the lip first, then the near sill off the trolley by the same
+    // arm (its own pass: the car without it till then), each exactly where the car draws it; KONČANO once, the trolley off after the sill)
+    { await page.evaluate(n => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', n) }); document.querySelector('#g-menu [data-mact="buy"]').click(); }, 'Splitter and skirts'); const rs = await run();
+      const fs = await fitOf(), ps = await page.evaluate(() => Garage3D._dbg.FIT.log.filter(q => q.step === 'plan').map(q => ({ kind: q.kind, sill: !!q.sill, exact: !!q.exact, real: !!q.real, arm: q.arm, out: q.out })));
+      T.check('the splitter and skirts: the lip, then the near sill by roka 2 off the trolley (both exactly where the car draws them), the trolley off after; KONČANO (' + rs.t + ' s: within 20); the arms parked',
+        /^plan,cart\.in,cart\.parked,grab,swap,(put,)?plan,grab,swap,(put,)?cart\.out$/.test(fs.log) && ps.length === 2 && ps[0].kind === 'lip' && !ps[0].sill && ps[1].kind === 'skirt' && ps[1].sill && ps[1].arm === 1
+        && ps.every(q => q.exact && q.real) && Math.abs(ps[1].out[2] || 0) === 1 && fs.cart && !fs.cart.on && fs.parked && /KONČANO/.test(fs.chip) && rs.t <= 20, JSON.stringify({ fs, ps, t: rs.t })); }
     await page.evaluate(k => { __garage.closeMenu(); __garage.S.cars.kozorog = JSON.parse(k); __garage.pickCar('muscle'); }, kz0); await run();
     // the cabinet's three cars: YOUR CAR the muscle car (the lamps over it), FOR SALE and RENT A CAR the next two cars not owned (FOR SALE
     // locked, its price on its tag; the rent on RENT A CAR's), their names under them, all three drawn; a tap on FOR SALE's maquette:

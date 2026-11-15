@@ -6676,6 +6676,14 @@ const Garage3D = (function () {
     const pc = aeroPiece(m, -0.16, kind === 'skirt' ? 0 : kind === 'rear' ? Math.PI / 2 : -Math.PI / 2, kind === 'lip'); if (!pc) return null;
     pc.kind = kind; if (kind === 'skirt') pc.long = true; if (kind === 'rear') pc.gx = -Math.max(0, pc.hs.x - 0.03); return pc;
   }
+  // (the kit's near sill folded away on car cv's body (its tagged triangles between the arches on side zs, deli.aero: as aeroLip's skirt
+  // takes them), the sill the arm brings after the lip (paket Sport: an_aero_plosca's pragova); a copy of its geometry (shared by cars
+  // of one look). false: nothing to fold)
+  function sillFold(cv, zs) { const b = cv.v && cv.v.body, g0 = b && b.geometry, R = g0 && !g0.index && g0.userData.deli && g0.userData.deli.aero, M = cv.M; if (!R || !R.length || !M) return false;
+    const g = g0.clone(), P = g.attributes.position.array; let n = 0;
+    for (const [p, q] of R) for (let t = p; t + 2 < q; t += 3) { const x = (P[t * 3] + P[t * 3 + 3] + P[t * 3 + 6]) / 3, z = (P[t * 3 + 2] + P[t * 3 + 5] + P[t * 3 + 8]) / 3;
+      if (x > -M.b + M.rw && x < M.a - M.rw && z * zs > 0) { for (let j = 1; j < 3; j++) for (let c = 0; c < 3; c++) P[(t + j) * 3 + c] = P[t * 3 + c]; n++; } }
+    if (!n) { g.dispose(); return false; } g.attributes.position.needsUpdate = true; b.geometry = g; return true; }
   // (the ways in to a spot: straight down first, then tilted toward the way out (o) and turned round it by steps (an arm comes in from its
   // own side), level at the most)
   function inDirs(o) {
@@ -6755,10 +6763,14 @@ const Garage3D = (function () {
     if (lampQ && !lampO) for (const q of lampQ) if (q) disposeTree(q.o);
     // (the aero kit by its plan's plate: its lip under the front bumper the car's own, the old one's and the new one's (aeroLip; none: a
     // case as before); its level's wing onto a lid bare till now after it (aeroWing: the wing's own show then, below)
-    const lvA = el === 'aero' && !regal ? [cv.spec.upg.aero || 0, o.up && o.up[0] === 'aero' ? o.up[1] : cv.spec.upg.aero || 0] : null;
+    const lvA = el === 'aero' && !regal && !o.sill ? [cv.spec.upg.aero || 0, o.up && o.up[0] === 'aero' ? o.up[1] : cv.spec.upg.aero || 0] : null;
     let kA = lvA ? aeroKind(nw, o.to || o.from) : null, aeroN = lvA ? aeroLip(nw, o.to, lvA[1], kA, sd) : null;
     if (lvA && !aeroN && kA === 'skirt' && o.to) { kA = 'rear'; aeroN = aeroLip(nw, o.to, lvA[1], kA, sd); }   // (a car with no sills: the tail's corner lips in the skirts' place)
     const aeroO = lvA ? aeroLip(cv, o.from, lvA[0], kA, sd) : null, wingA = lvA && o.up && lvA[1] >= 2 && lvA[0] !== lvA[1] && !K.winged ? aeroWing(nw, lvA[1]) : null, wingO = wingA && lvA[0] >= 2 ? aeroWing(cv, lvA[0]) : null;   // (wingO: the old level's wing, on its lid till the arm takes it off (level 2 to 3 and back))
+    // (paket Sport (an option that brings sills to a car without them, one that draws its kit): after the lip its near sill, the arm's side,
+    // off the trolley too (its own pass, o.sill; the car without it till then), then the wing)
+    let sillA = lvA && kA === 'lip' && aeroN && o.to && aeroDrawn(nw, o.to) && DELI.skirts && DELI.skirts(o.to) && !(o.from && DELI.skirts(o.from)) ? aeroLip(nw, o.to, lvA[1], 'skirt', sd) : null;
+    if (sillA) { sillA.dz = 0.3; if (!sillFold(nw, sd)) { disposeTree(sillA.o); sillA = null; } }
     const np = regal ? null : o.np || lampN || aeroN || partObj(cv, el, o.to, sd), G = cv.v.grp, gq = G.getWorldQuaternion(new THREE.Quaternion()), ax = (x, y, z) => new V3(x, y, z).applyQuaternion(gq);
     cv.v.bodyG.updateMatrixWorld(true); const BW = cv.v.bodyG.matrixWorld.clone(), inCar = (P) => BW.clone().multiply(new THREE.Matrix4().makeTranslation(P.c.x, P.c.y, P.c.z));
     // THE TURBO by its plan's plate (a car with a bonnet of its own, bonnet()): the bonnet up and propped, the turbo down into the bay (its
@@ -6881,11 +6893,11 @@ const Garage3D = (function () {
       for (const dy of [0, -0.26, -0.5, -0.9]) for (const [wo, ws] of [[1, 0], [1, 0.6], [0.6, 1], [0, 1], [1, -0.6]]) { if (lampW) break; const d = o.clone().multiplyScalar(wo).addScaledVector(sz, ws).setY(dy).normalize();
         const q = poseAt(0, 'wrench', tip, d), q2 = q && poseAt(0, 'wrench', tip.clone().addScaledVector(q.d, -0.25), q.d, q.s.yaw);
         if (q2 && clearOf(G, tip, q.s, NW)) { q.pre = q2; q.tip = tip; lampW = q; } } }
-    const done = () => { if (!o.up) hud('done', { kind: el }); };
+    const done = () => { if (!o.up && !o.more) hud('done', { kind: el }); };
     if (!plan || !grab) {   // (no arm can: the new car in the old one's place with a puff at the spot)
       if (ex) S.p.y -= FIT.lift - l0;   // (the exhaust's spot was measured with the car up on the lift)
-      fitLog('plain', { regal, el, why, at: S.p.toArray().map(q => +q.toFixed(2)), hs: hs.toArray().map(q => +q.toFixed(2)) }); if (np) disposeTree(np.o); for (const q of [lampO, aeroO, wingA, wingO]) if (q) disposeTree(q.o);
-      if (o.cartAt) spawn((function* () { const R = CART.root; yield* cartGo([[K.front + 0.95, R.position.z], [K.front + 0.95, 0], [CART.out, 0]], 4.6); R.visible = false; for (const q of R.children.slice(1)) disposeTree(q); fitLog('cart.out'); })());   // (the aero kit's wing: its trolley off)
+      fitLog('plain', { regal, el, why, at: S.p.toArray().map(q => +q.toFixed(2)), hs: hs.toArray().map(q => +q.toFixed(2)) }); if (np) disposeTree(np.o); for (const q of [lampO, aeroO, wingA, wingO, sillA]) if (q) disposeTree(q.o);
+      if (o.cartAt && !o.more) spawn((function* () { const R = CART.root; yield* cartGo([[K.front + 0.95, R.position.z], [K.front + 0.95, 0], [CART.out, 0]], 4.6); R.visible = false; for (const q of R.children.slice(1)) disposeTree(q); fitLog('cart.out'); })());   // (the aero kit's wing: its trolley off)
       for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, rnd(-0.5, 0.5), rnd(0.2, 0.8), rnd(-0.5, 0.5), 0.6, 0.12, 0.5, [0.75, 0.75, 0.78], 0.4, -0.3, 2, 0.02);
       SFX.clunk(0.4); fitSwap(cv, nw); done(); if (o.up) yield* upShow(o.up[0], o.up[1]); return;
     }
@@ -6900,7 +6912,7 @@ const Garage3D = (function () {
       for (const k of [0, 0.25, 0.5, 0.75, 1]) if (!G.pose(tb, (tb.up + 0.12) * k) || !G.pose(tb, (tb.up + 0.12) * k, 0.15)) return null;
       return G; })() : null;
     const gripTo = (B, th, up) => { const p = LG.pose(B, th, up); if (!p) return; const A = RB[0]; Object.assign(A.s, p.s); A.ext = 0; A.rest = false; clampArm(0, A.s); A.dirty = true; };
-    { const SP = exS && exS.R ? exS.R.S1 : S; fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, lid: !!tb, lg: tb ? !!LG : null, kind: np && np.kind || null, exact, real: !!(np && np.real), hop: toss && !(exS && exS.R) ? +toss.d.toFixed(2) : 0, caps: wing ? wing.caps.length : 0, lift: exS ? FIT.lift : 0, wrench: !!(exS && exS.wr) || !!lampW, two: !!(exS && exS.R), lamp: !!lampO, side: SP.sd, hit: SP.hit, at: SP.p.toArray().map(q => +q.toFixed(2)), out: SP.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +(exS && exS.R ? exS.R.PL : plan).turn.toFixed(2) }); }
+    { const SP = exS && exS.R ? exS.R.S1 : S; fitLog('plan', { regal, drawer: di >= 0, arm: i, tool, el, sill: !!o.sill, lid: !!tb, lg: tb ? !!LG : null, kind: np && np.kind || null, exact, real: !!(np && np.real), hop: toss && !(exS && exS.R) ? +toss.d.toFixed(2) : 0, caps: wing ? wing.caps.length : 0, lift: exS ? FIT.lift : 0, wrench: !!(exS && exS.wr) || !!lampW, two: !!(exS && exS.R), lamp: !!lampO, side: SP.sd, hit: SP.hit, at: SP.p.toArray().map(q => +q.toFixed(2)), out: SP.out.toArray().map(q => +q.toFixed(2)), ext: +grab.ext.toFixed(2), turn: +(exS && exS.R ? exS.R.PL : plan).turn.toFixed(2) }); }
     if (regal) RGL.P.stay = true;   // (the regal in the picture till the part is back on it)
     // (the camera at the part's own place when it goes on exactly where the car draws it: a flat one (a decal on the bonnet) from over the top)
     const PX = exact ? new V3().setFromMatrixPosition(inCar(np)) : null, flat = exact && np.hs.y < 0.06 && np.hs.y * 3 < Math.min(np.hs.x, np.hs.z);
@@ -7173,7 +7185,7 @@ const Garage3D = (function () {
       SFX.ping(1320); fitLog('cart.parked');
     } else if (cart && o.cartAt) yield* par(camTo(V1, 1.3), toPart(), cartGo([park], 4.2));   // (the aero kit's wing: on the trolley by the car since its lip came: along the car to the lid)
     else if (cart) {
-      deckPut(np); if (wingA) deckPut(wingA); fitLog('cart.in'); SFX.click();
+      deckPut(np); if (sillA) deckPut(sillA); if (wingA) deckPut(wingA); fitLog('cart.in'); SFX.click();
       yield* par(camTo(V1, 1.3), toPart(), (function* () { yield* cartGo([[K.front + 0.95, 0], [K.front + 0.95, park[1]], park], 4.2); SFX.ping(1320); fitLog('cart.parked'); })());
     } else if (LG) yield* par((function* () { yield* camTo(VB, 0.7); yield* wait(0.3); yield* camTo(V1, 0.5); })(), toPart());   // (the bonnet going up, then the regal)
     else yield* par(camTo(V1, 1.3), toPart());
@@ -7209,7 +7221,7 @@ const Garage3D = (function () {
     for (let k = 0; k < 10; k++) puffs.emit(S.p.x, S.p.y, S.p.z, S.out.x * rnd(0.2, 0.8) + rnd(-0.3, 0.3), rnd(0.1, 0.6), S.out.z * rnd(0.2, 0.8) + rnd(-0.3, 0.3), 0.55, 0.1, 0.45, [0.78, 0.78, 0.8], 0.35, -0.2, 2.2, 0.02);
     SFX.clunk(0.5);
     if (o.op && o.op.o.parent) o.op.o.parent.remove(o.op.o);   // (the old level's wing off the old car: in the hand below)
-    const held = letGo(i), op = o.op ? o.op : tb || (wing && wing.bare) ? null : regal ? { o: rglCopy(pc), real: false } : lvA ? aeroO : partObj(cv, el, o.from, sd), Fo = !op ? null : op.real && !PART_AT.hidden.includes(el) ? inCar(op) : held.matrix.clone();
+    const held = letGo(i), op = o.op ? o.op : tb || (wing && wing.bare) ? null : regal ? { o: rglCopy(pc), real: false } : lvA ? aeroO : o.sill ? null : partObj(cv, el, o.from, sd), Fo = !op ? null : op.real && !PART_AT.hidden.includes(el) ? inCar(op) : held.matrix.clone();
     if (tb) {   // (the turbo left in the bay, the new car's bonnet up as the old one's (one geometry the showroom keeps: the same; else the old one's shut), the prop with it)
       tb.nw = bonnet(nw); if (tb.nw) { tb.nw.set(tb.th); if (tb.nw.G !== tb.G) tb.set(0); } nw.v.bodyG.add(rod);
       let hb = held; const CB = cv.v.bodyG; CB.updateMatrixWorld(true);   // (the new car not yet in the old one's place: the old one's frame)
@@ -7219,7 +7231,7 @@ const Garage3D = (function () {
     else disposeTree(held);
     fitSwap(cv, nw, ex); if (op) hold(i, op.o, Fo); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: !op ? 'none' : op.real ? 'real' : regal ? 'regal' : 'case' });
     if (toss && op) { letGo(i); SFX.whoosh(0.3); yield* fly(op.o, Fo, Mh); hold(i, op.o, op.o.matrix.clone()); }   // (the old part back into the hand the same way)
-    if (lvA) {   // (the aero kit's lip clicked in under the bumper: sparks at its ends, glints along the near sill (the skirts are on with it); its level's parts on (a wing to come by hand: without it till then))
+    if (lvA || o.sill) {   // (the aero kit's lip clicked in under the bumper: sparks at its ends, glints along the near sill (the skirts are on with it); its level's parts on (a wing to come by hand: without it till then))
       const Q = np.real ? np : op, C = Q ? new V3().setFromMatrixPosition(inCar(Q)) : S.p.clone(), hz = Q ? Q.hs.z * 0.8 : 0.3, hx = Q ? Q.hs.x * 0.8 : 0.3, kd = np.kind || 'lip'; SFX.click();
       for (const sz of [-1, 1]) for (let k = 0; k < 6; k++) { if (kd === 'skirt') sparks.emit(C.x + sz * hx, C.y, C.z + sd * 0.03, sz * rnd(0, 0.8), rnd(-0.2, 0.9), sd * rnd(0.3, 1.4), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02);
         else sparks.emit(C.x + (kd === 'rear' ? -0.03 : 0.03), C.y, C.z + sz * hz, (kd === 'rear' ? -1 : 1) * rnd(0.3, 1.4), rnd(-0.2, 0.9), sz * rnd(0, 0.8), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02); }
@@ -7259,8 +7271,10 @@ const Garage3D = (function () {
     // when the old one went back meanwhile), glints on it, KONČANO; its level's parts are on since the snap)
     // (the aero kit: its level's wing onto the bare lid next, the wing's own show on from here (the trolley along the car with it; the caps,
     // the snap, the look from behind, KONČANO); else the look at the lip from before the car, KONČANO)
+    if (sillA) { yield* fitPart('aero', spec, { np: sillA, sill: true, cartAt: true, from: o.to, to: o.to, more: !!wingA }); if (!wingA) return; }   // (paket Sport: its sill next, then its wing)
+    if (o.sill && o.more) { yield* wait(0.3); return; }   // (the sill on: the wing's show next, the trolley with it)
     if (wingA) { yield* fitPart('krilo', spec, { np: wingA, op: wingO, from: 0, to: 0, up: o.up, cartAt: true }); return; }
-    if (lvA) { const kd = np.kind || 'lip', lookA = function* () { yield* camTo(zoneView(cur, 'aero', kd === 'skirt' ? 'side' : kd === 'rear' ? 'rear' : 'front'), 1.1); SFX.ping(1760); hud('done', { kind: el });
+    if (lvA || o.sill) { const kd = np.kind || 'lip', lookA = function* () { yield* camTo(zoneView(cur, 'aero', kd === 'skirt' ? 'side' : kd === 'rear' ? 'rear' : 'front'), 1.1); SFX.ping(1760); hud('done', { kind: el });
         for (let k = 0; k < 5; k++) { const gy = G.position.y; glint(kd === 'skirt' ? new V3(lerp(K.wrx + K.wr, K.wfx - K.wr, rnd(0.05, 0.95)), K.bottom + gy + rnd(0.02, 0.08), sd * (K.hw + 0.03)) : kd === 'rear' ? new V3(K.rear - rnd(-0.05, 0.08), K.bottom + gy + rnd(0.04, 0.12), rnd(-1, 1) * K.hw * 0.7)
           : new V3(K.front + rnd(-0.05, 0.08), K.frontLow + gy + rnd(-0.02, 0.06), rnd(-1, 1) * K.hw * 0.8), 0.3, 0xffffff); yield* wait(0.12); }
         yield* wait(0.2); yield* home(1.4); };
