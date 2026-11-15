@@ -4054,16 +4054,30 @@
       { let x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18; for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < z0) z0 = p[1]; if (p[1] > z1) z1 = p[1]; }   // (the polygon wholly beside the triangle: nothing to cut, the same 0 as below, sooner)
         const e = 1e-3; if (x1 < Math.min(A[0][0], A[1][0], A[2][0]) - e || x0 > Math.max(A[0][0], A[1][0], A[2][0]) + e || z1 < Math.min(A[0][2], A[1][2], A[2][2]) - e || z0 > Math.max(A[0][2], A[1][2], A[2][2]) + e) return 0; }
       const sg = Math.sign((A[1][0] - A[0][0]) * (A[2][2] - A[0][2]) - (A[1][2] - A[0][2]) * (A[2][0] - A[0][0])); if (!sg) return 0;
-      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = A[e], pb = A[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], side = (p) => sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), np = [];
-        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = side(p), dq = side(q);
-          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq); np.push(p.map((v, m) => v + (q[m] - v) * t)); } }
-        poly = np.filter((p, k) => { const q = np[(k + 1) % np.length]; return Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5; }); }
+      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = A[e], pb = A[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], np = [];
+        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), dq = sg * (ex * (q[1] - pa[2]) - ez * (q[0] - pa[0]));
+          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq), r = new Array(p.length); for (let m = 0; m < p.length; m++) r[m] = p[m] + (q[m] - p[m]) * t; np.push(r); } }
+        poly = []; for (let k = 0; k < np.length; k++) { const p = np[k], q = np[(k + 1) % np.length]; if (Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5) poly.push(p); } }
       if (poly.length < 3) return 0;
       let ar = 0; for (let k = 1; k + 1 < poly.length; k++) ar += Math.abs((poly[k][0] - poly[0][0]) * (poly[k + 1][1] - poly[0][1]) - (poly[k][1] - poly[0][1]) * (poly[k + 1][0] - poly[0][0]));
       if (ar < 2e-5) return 0;
       const pts = poly.map(p => [p[0], (hAt ? hAt(p[0], p[1]) : planeY(A, p[0], p[1], 1)) + p[2], p[1]]), cs = poly.map(p => [p[3], p[4], p[5]]), us = poly[0].length > 6 ? poly.map(p => [p[6], p[7]]) : null, dn = [pts[0][0], pts[0][1] - 5, pts[0][2]];
       for (let k = 1; k + 1 < pts.length; k++) g.triO(pts[0], pts[k], pts[k + 1], cs[0], dn, cs[k], cs[k + 1], us && us[0], us && us[k], us && us[k + 1]);
       return (pts.length - 2) * 3;
+    };
+    const drapeOk = (poly, B, A, tol) => {   // drape(poly on B) with positions only ([x, z, y] points): false if a piece's corner lies more than tol above triangle A's plane (the same cut, the same test, no mesh)
+      { let x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18; for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < z0) z0 = p[1]; if (p[1] > z1) z1 = p[1]; }
+        const e = 1e-3; if (x1 < Math.min(B[0][0], B[1][0], B[2][0]) - e || x0 > Math.max(B[0][0], B[1][0], B[2][0]) + e || z1 < Math.min(B[0][2], B[1][2], B[2][2]) - e || z0 > Math.max(B[0][2], B[1][2], B[2][2]) + e) return true; }
+      const sg = Math.sign((B[1][0] - B[0][0]) * (B[2][2] - B[0][2]) - (B[1][2] - B[0][2]) * (B[2][0] - B[0][0])); if (!sg) return true;
+      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = B[e], pb = B[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], np = [];
+        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), dq = sg * (ex * (q[1] - pa[2]) - ez * (q[0] - pa[0]));
+          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq); np.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t]); } }
+        poly = []; for (let k = 0; k < np.length; k++) { const p = np[k], q = np[(k + 1) % np.length]; if (Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5) poly.push(p); } }
+      if (poly.length < 3) return true;
+      let ar = 0; for (let k = 1; k + 1 < poly.length; k++) ar += Math.abs((poly[k][0] - poly[0][0]) * (poly[k + 1][1] - poly[0][1]) - (poly[k][1] - poly[0][1]) * (poly[k + 1][0] - poly[0][0]));
+      if (ar < 2e-5) return true;
+      for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (!(planeY(A, p[0], p[1], 1) >= planeY(B, p[0], p[1], 1) + p[2] - tol)) return false; }
+      return true;
     };
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     aMat.onBeforeCompile = (sh) => {   // the paint (attribute paint = 1) takes its vertex colour only, without the asphalt's grain (faded paint 0.5-1: some grain; patches 0.02, asphalt 0);
@@ -4133,8 +4147,7 @@
         // triangles' pieces, where the creases of both surfaces cross): 6 vertices instead of the pieces
         const aH = (x, z) => { for (const A of TT) { const h = planeY(A, x, z); if (h != null) return h; } return null; }, Pq = V.map(p => { const h = aH(p[0], p[2]); return h == null ? null : [p[0], h + y, p[2]]; });
         if (Pq.every(p => p)) { let ok = true;
-          for (const [p, q, r] of [[0, 1, 2], [0, 2, 3]]) { const tq = new GB(true), A = [Pq[p], Pq[q], Pq[r]]; for (const B of TT) drape(tq, [poly[p], poly[q], poly[r]], B);
-            for (let k = 0; k < tq.P.length && ok; k += 3) ok = planeY(A, tq.P[k], tq.P[k + 2], 1) >= tq.P[k + 1] - tol; }
+          for (const [p, q, r] of [[0, 1, 2], [0, 2, 3]]) { if (!ok) break; const A = [Pq[p], Pq[q], Pq[r]], tp = [poly[p], poly[q], poly[r]].map(v => [v[0], v[1], v[2]]); for (const B of TT) if (!(ok = drapeOk(tp, B, A, tol))) break; }
           if (ok) { g.quadUp(Pq[0], Pq[1], Pq[2], Pq[3], C, U); return 6; } }
         for (const A of TT) nv += drape(tg, poly, A);   // (the pieces only where the plain quad will not do)
         g.P.push(...tg.P); g.N.push(...tg.N); g.C.push(...tg.C); g.U.push(...tg.U); return nv; };
