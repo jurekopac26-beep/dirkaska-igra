@@ -159,8 +159,8 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Slovaška | Krásna Hôrka (kratka z znamenitostjo, 15. 11. 2026; Spiš ne ustreza) | v delu (jure.kopac26) |
 | Madžarska | Visegrád (kratka z znamenitostjo, 15. 11. 2026; Tihany ne ustreza) | v delu (jure.kopac26) |
 | Hrvaška | Učka (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
-| Luksemburg | Bourscheid (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
-| Lihtenštajn | Vaduz (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
+| Vietnam | Hải Vân (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
+| Jordanija | Ajloun (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
