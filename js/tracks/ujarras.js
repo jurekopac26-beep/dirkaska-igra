@@ -11,6 +11,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: 'Ujarrás (Kostarika): kratek zavit vzpon skozi tropski gozd nad dolino Orosi. Na sredini proge greš tik mimo razgledišča s teraso, belo balustrado in nadstreškom. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Ujarrás, Costa Rica', desc: 'Ujarrás (Costa Rica): a short, twisting climb through the tropical forest above the Orosi valley. Halfway up you pass right by a lookout with a terrace, a white balustrade and a shelter. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Ujarrás',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
+    maxRivals: 30,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): a 0.7 km road, a bigger field's flying start would run onto itself (32 at most, 30 with a margin)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
     medals: {cs:[23,24,26],wet:{cs:[28,30,32]},winter:{cs:[27,28,31],wet:{cs:[35,36,39]}}},
