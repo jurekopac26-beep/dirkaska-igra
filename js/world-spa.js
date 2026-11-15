@@ -680,7 +680,7 @@
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za + 1.55; zz < za + Lt; zz += 3.1) for (let xx = xa + 1.55; xx < xa + Lt; xx += 3.1) {
           const rd = nrDist(xx, zz); if (rd > 250) continue;
-          const cl = nrLC(xx, zz), far = rd > 70, h1 = crH(xx, zz, 81);
+          const cl = nrLC(xx, zz), far = rd > 70;
           if (cl === 1) {
             const C = comp(xx, zz);
             if (C.kind === 0 || C.kind === 1) {   // a spruce plantation: the lattice point of this spot's row
@@ -694,6 +694,7 @@
               if (plant(0, far, x, z, hgt, hgt * (far ? 0.82 : 0.7), [cv * 0.96, cv, cv * (0.97 + crH(x, z, 86) * 0.08)])) nRows++;
               continue;
             }
+            const h1 = crH(xx, zz, 81);   // (a pure hash: computed only where it is used)
             if (C.kind === 2) {   // felled: a few birches and saplings in the bracken
               if (h1 < 0.035 && nearOk(xx, zz, rd, 1)) { const bi = crH(xx, zz, 87) < 0.5, hgt = bi ? 6 + h1 * 120 : 2 + h1 * 60; plant(bi ? 2 : 0, far, xx + (crH(xx, zz, 89) - 0.5) * 2.5, zz, hgt, hgt * (bi ? 0.75 : 0.72), [1, 1, 1]); }
               continue;
@@ -705,7 +706,7 @@
             continue;
           }
           if (far) continue;
-          const e = cl === 0 ? nrEdge(xx, zz) : 0;
+          const h1 = crH(xx, zz, 81), e = cl === 0 ? nrEdge(xx, zz) : 0;
           if (cl === 2 || e > 0) {   // the edge of the woods and the scrub: birches and young spruce
             if (h1 < (cl === 2 ? 0.1 : e * 0.16) && nearOk(xx, zz, rd, h1 * 6)) { const bi = crH(xx, zz, 95) < 0.6, hgt = bi ? 7 + crH(xx, zz, 96) * 9 : 3 + crH(xx, zz, 96) * 6;
               plant(bi ? 2 : 0, false, xx + (crH(xx, zz, 97) - 0.5) * 2.5, zz + (crH(xx, zz, 98) - 0.5) * 2.5, hgt, hgt * (bi ? 0.75 : 0.72), [1, 1, 1]); }
