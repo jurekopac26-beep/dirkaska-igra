@@ -108,12 +108,13 @@ Na strani 3 (`docs/vprasanja.md`) je uporabnik 3. 11. 2026 izbral »Vse (A–G)�
 Odločitev uporabnika 9. 11. 2026 dopoldne (~10.50–11.05, v pogovoru z Matejem): »Vsak račun vsakič porabi 100 % 12 h pred iztekom porabe.« Objava: tabla #382, komentar 6737552977. Kratko pravilo je v `CLAUDE.md`, razdelek Seje.
 
 - **Cilj:** tedenska poraba teče enakomerno od reseta do roka, 156 h po resetu (168 h − 12 h). Cilj v odstotkih = 100 × (ure od reseta) / 156. Zadnjih 12 h pred iztekom račun ne porablja ničesar; takrat njegove PR vodi drug račun (spodaj).
+- **jure.kopac26: 100 % 6 h pred iztekom** (odločitev uporabnika 15. 11. 2026 ob ~2.20, v pogovoru z Matejem, dobesedno: »prosim zoorganizeraj da jure.kopac26 izkoristi vse tokene do 6h pred iztekom. Za ostale racune velja se vedno 12h«). Za jure.kopac26 je rok 162 h po resetu, cilj = 100 × (ure od reseta) / 162; luknja je 6 h. Drugi računi ostanejo na 12 h (156).
 - **Reset, rok, predaja in vodenje PR v 12 h luknji** (ure po ljubljanskem času; vsak teden enako):
 
 | Račun | Reset | 100 % do | Predaja | V 12 h luknji PR računa vodi |
 |---|---|---|---|---|
 | partyslo | pet 3.00 | čet 15.00 | čet ~10.00 | biketraveler (čet 15.00 – pet 3.00) |
-| jure.kopac26 | ned 10.00 | sob 22.00 | sob ~17.00 | partyslo (sob 22.00 – ned 10.00) |
+| jure.kopac26 | ned 10.00 | ned 4.00 | sob ~23.00 | partyslo (ned 4.00 – ned 10.00) |
 | biketraveler | pon 0.00 | ned 12.00 | ned ~7.00 | jure.kopac26 (ned 12.00 – pon 0.00) |
 
 - **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija zažene eno sejo s kodo več (največ 2 hkrati, `CLAUDE.md`, razdelek Seje). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
