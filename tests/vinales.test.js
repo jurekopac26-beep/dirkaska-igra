@@ -4,5 +4,5 @@
 //   node tests/vinales.test.js
 'use strict';
 const { goreTrack } = require('./lib/gore.js');
-const G = goreTrack('vinales', { km: [0.5, 1], gentle: true });
+const G = goreTrack('vinales', { km: [1, 1.5] });
 G.done();
