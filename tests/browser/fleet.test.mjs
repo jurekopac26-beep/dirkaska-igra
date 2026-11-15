@@ -198,7 +198,7 @@ try {
   // ---- 4. in a race on Bakreni gozd: each vehicle as the player and as a rival ----
   await page.evaluate((id) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === id); }, kits.length ? kits[0].id : 'rally');
   await startTrack(page, 'gozd');
-  const R4 = [], bodyKey = (id) => id === 'kolibri' ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's body: its side scrapes' own program, render.js XT_SCR)
+  const R4 = [], XT_MIN = ['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter'], bodyKey = (id) => XT_MIN.includes(id) ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's and the pilot cars' bodies: the side scrapes' own program, render.js XT_MIN, XT_SCR)
   for (const m of kits) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
@@ -242,15 +242,17 @@ try {
       // a crushed roof (roofDmg 1: four steps): nothing moves outside the roof's footprint (body.crush, fading over 15 cm in x, 10 cm in z);
       // a noCrush range moves whole (if at all); every lining point keeps its offset from the shell's point it is inset from; the rest of the
       // inner block (the cabin, the floor, the engine) stays. Then three hard dents: no noDent vertex moves. The KOLIBRI's roof its roof field
-      // (render.js xtRoof, variant D): its posts' tops (G.fI) go down and in with the roof, what lies on it (a rider: the spoiler) down whole
-      // as A + B x (a tilt), its lining never deeper than its twin (held at its own limit); a dent never moves a noDent point but by the field
+      // (render.js xtRoof, variant D; the pilot cars' too, XT_MIN): its posts' tops (G.fI) go down and in with the roof, what lies on it (a
+      // rider: the spoiler) down whole as A + B x (a tilt), its lining never deeper than its twin (held at its own limit); a dent never moves
+      // a noDent point but by the field; its footprint's sides the field's own (35 cm out, fading: zOut)
       const pa = gP.attributes.position.array, P0 = Float32Array.from(pa), C = E.body.crush, n = UP.outerN, mv = (i, Q) => Math.hypot(pa[i * 3] - Q[i * 3], pa[i * 3 + 1] - Q[i * 3 + 1], pa[i * 3 + 2] - Q[i * 3 + 2]);
       P.roofDmg = 1; Render.frame(0, 1, P, 'chase', { noFx: true });
       const xr = Render.viewOf(P).xtR, G = xr && xr.rf ? xr.rf.G : null, fol = new Set(G ? G.fI : []), lin = new Set(G ? G.lI : []), rid = new Set();
       if (G) for (const Q of G.rid) for (const [s0, s1] of Q.ranges) for (let i = s0; i < s1; i++) rid.add(i);
       const fld = (i) => !!G && (G.vE[i] >= 0 || fol.has(i) || lin.has(i) || rid.has(i));   // (a point the roof field moves)
       const cr = { moved: 0, outside: 0, spread: 0, lining: 0, stray: 0, nc: (UP.noCrush || []).length, field: !!G };
-      for (let i = 0; i < n; i++) if (mv(i, P0) > 1e-6) { cr.moved++; const x = P0[i * 3], z = P0[i * 3 + 2]; if (x < C.x0 - 0.1501 || x > C.x1 + 0.1501 || Math.abs(z) > C.z + 0.1001) cr.outside++; }
+      const zOut = G ? 0.3501 : 0.1001;   // (a roof field's sides: what sticks out of the footprint by up to 35 cm goes with it, its zf: the MEDVED's snorkel up its post, the TIGER GT's haunches)
+      for (let i = 0; i < n; i++) if (mv(i, P0) > 1e-6) { cr.moved++; const x = P0[i * 3], z = P0[i * 3 + 2]; if (x < C.x0 - 0.1501 || x > C.x1 + 0.1501 || Math.abs(z) > C.z + zOut) cr.outside++; }
       for (const [s0, s1] of UP.noCrush || []) for (let j = 0; j < 3; j++) { let A = 0, B = 0;
         if (G && j === 1 && rid.has(s0)) { let mx = 0, md = 0, sxx = 0, sxd = 0; const N = s1 - s0; for (let i = s0; i < s1; i++) { mx += P0[i * 3] / N; md += (pa[i * 3 + 1] - P0[i * 3 + 1]) / N; }   // (a rider: its tilt along the car taken out)
           for (let i = s0; i < s1; i++) { sxx += (P0[i * 3] - mx) ** 2; sxd += (P0[i * 3] - mx) * (pa[i * 3 + 1] - P0[i * 3 + 1] - md); } B = sxx > 1e-9 ? sxd / sxx : 0; A = md - B * mx; }

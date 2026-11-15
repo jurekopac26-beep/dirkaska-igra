@@ -12,6 +12,7 @@
    vzmeti seat: the coils' foot, a number or [front, rear] (K.rw + 0.04 if not given; a high body over low arms, GOZDAR's: on the arm, on the axle);
    stabilizatorji floor: the height of the floor under the bars, a number or [front, rear], K.rw - 0.06 if not given;
    amortizerji mid: false (no reservoirs at a middle axle's wheels: TUR's six within the room for one car with parts);
+   vzmeti, amortizerji hiN: the sides of their coils and bodies on Visoki (default 8; TUR's six wheels: 6, as on Normalni, within the room);
    dim_gum w: the rear tyre's width, its inner wall the band's place (none: look.wheels.w; MRAVLJA's wider rear tyres)) */
 (function () {
   'use strict';
@@ -76,14 +77,16 @@
   const wheels = (K, fn) => { for (const A of K.arches) for (const sd of [-1, 1]) fn(A.x, sd, A === K.arches[0], A === K.arches[2]); };   // (front; mid: a middle axle's, look.wheels.mid)
   function vzmeti(K, n, m) {
     const low = DELI.effect('vzmeti', n).lower || 0, k = 3, col = [AL, RED, AL, AL, YEL, YEL, RED, PUR, BLU, BLU, BLU, GRN, RED, ORA, YEL, GOLD][n - 1], ti = m.in || 0.13, top = (m.top || 0.66) - low;
+    const hn = K.hi && m.hiN ? { n: m.hiN } : null;   // (hiN: the coils' sides on Visoki)
     wheels(K, (x, sd, front) => { const z = sd * (K.hw - ti), y0 = m.seat == null ? K.rw + 0.04 : [].concat(m.seat)[front ? 0 : [].concat(m.seat).length - 1], h = (top - y0) / (k * 2 - 1);   // (seat: the coils' foot on a low arm)
-      for (let i = 0; i < k; i++) cyl(K, [x, y0 + i * 2 * h, z], [x, y0 + (i * 2 + 1) * h, z], 0.06, col, { capA: null, capB: null });   // (its coils: bands with gaps)
+      for (let i = 0; i < k; i++) cyl(K, [x, y0 + i * 2 * h, z], [x, y0 + (i * 2 + 1) * h, z], 0.06, col, Object.assign({ capA: null, capB: null }, hn));   // (its coils: bands with gaps)
       cyl(K, [x, y0 - 0.01, z], [x, top, z], 0.036, DK, { n: 4, capA: null, capB: null }); });   // (the strut inside)
   }
   function amortizerji(K, n, m) {
     const col = [DK, YEL, YEL, RED, RED, BLU, BLU, GOLD, RED, BLU, ORA, GRN, GOLD, YEL, BLU, RED][n - 1], ti = (m.in || 0.13) + 0.005, top = m.top || 0.66;
+    const hn = K.hi && m.hiN ? { n: m.hiN } : null;   // (hiN: the bodies' sides on Visoki)
     wheels(K, (x, sd, front, mid) => { const z = sd * (K.hw - ti), y0 = K.rw + 0.02;
-      cyl(K, [x, y0, z], [x, y0 + (top - y0) * 0.6, z], 0.032, col, { capA: null });
+      cyl(K, [x, y0, z], [x, y0 + (top - y0) * 0.6, z], 0.032, col, Object.assign({ capA: null }, hn));
       cyl(K, [x, y0 + (top - y0) * 0.6, z], [x, top + 0.02, z], 0.012, CHR, { n: 4, capA: null, capB: null });
       if (n >= 6) box(K, x, top - 0.02, z, 0.06, 0.03, 0.06, n >= 13 ? GOLD : AL);   // (its top mount, adjustable)
       if ((n === 10 || n >= 15) && !(mid && m.mid === false)) cyl(K, [x + 0.038, y0 + 0.08, z - sd * 0.038], [x + 0.038, y0 + 0.2, z - sd * 0.038], 0.022, col, { n: 5, capA: null, capB: AL }); });   // (a reservoir, against the body; mid false: none at a middle axle's)
