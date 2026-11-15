@@ -20,7 +20,7 @@ try {
     const r = await page.evaluate((theme) => ({ ext: !!World.ext[theme], scripts: [...document.querySelectorAll('script[src]')].map(s => (s.getAttribute('src') || '').replace(/\?.*$/, '')).filter(s => /^js\/(world-|data\/)/.test(s)) }), want.theme).catch(e => ({ err: String(e) }));
     T.check(id + ': naložena', !r.err, r.err || '');
     if (!r.err) {
-      T.check(id + ': graditelj teme ' + want.theme, r.ext);
+      T.check(id + ': graditelj teme ' + want.theme, r.ext || !want.files.length);   // (privzeti svet, npr. lake: brez graditelja)
       const lazyHere = r.scripts.filter(s => M.lazy.includes(s));
       T.check(id + ': samo njene lene datoteke', JSON.stringify(lazyHere) === JSON.stringify(want.lazy), JSON.stringify(lazyHere) + ', manifest ' + JSON.stringify(want.lazy));
     }
