@@ -1,0 +1,117 @@
+{
+ "id": "visegrad",
+ "about": "Visegrád, Madžarska (id visegrad): last ~0.95 km of Panoráma út climbing to the hilltop fortress above the Danube bend (Matej, 15. 11. 2026: option 1 instead of Tihany)",
+ "box": [
+  47.772,
+  18.955,
+  47.806,
+  19.003
+ ],
+ "closed": false,
+ "route": [
+  [
+   47.787538,
+   18.97964,
+   "Panoráma út",
+   "start | tertiary, w448506534, s 0 m"
+  ],
+  [
+   47.788225,
+   18.979922,
+   "Panoráma út",
+   "tertiary, w448506534, s 80 m"
+  ],
+  [
+   47.788739,
+   18.980662,
+   "Panoráma út",
+   "tertiary, w448506534, s 160 m"
+  ],
+  [
+   47.789182,
+   18.981503,
+   "Panoráma út",
+   "tertiary, w448506534, s 240 m"
+  ],
+  [
+   47.789623,
+   18.982348,
+   "Panoráma út",
+   "tertiary, w448506534, s 320 m"
+  ],
+  [
+   47.790011,
+   18.983246,
+   "Panoráma út",
+   "tertiary, w448506534, s 400 m"
+  ],
+  [
+   47.790394,
+   18.984144,
+   "Panoráma út",
+   "tertiary, w448506534, s 480 m"
+  ],
+  [
+   47.791007,
+   18.984684,
+   "Panoráma út",
+   "tertiary, w448506534, s 560 m"
+  ],
+  [
+   47.791696,
+   18.984966,
+   "Panoráma út",
+   "tertiary, w448506534, s 640 m"
+  ],
+  [
+   47.792307,
+   18.984926,
+   "Panoráma út",
+   "tertiary, w448506534, s 720 m"
+  ],
+  [
+   47.792308,
+   18.98388,
+   "Panoráma út",
+   "tertiary, w448506534, s 800 m"
+  ],
+  [
+   47.792579,
+   18.983007,
+   "Panoráma út",
+   "tertiary, w448506534, s 880 m"
+  ],
+  [
+   47.793174,
+   18.982759,
+   "Panoráma út",
+   "finish | tertiary, w448506534, s 949 m"
+  ]
+ ],
+ "prefer": [
+  "Panoráma út"
+ ],
+ "geoRoads": [
+  "Panoráma út"
+ ],
+ "geoWater": [
+  "Duna"
+ ],
+ "marks": [
+  [
+   "trdnjava",
+   "hilltop fortress",
+   "landmark",
+   [
+    "w121239989"
+   ]
+  ]
+ ],
+ "places": [
+  [
+   "Visegrád",
+   null,
+   951
+  ]
+ ]
+}
