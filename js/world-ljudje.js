@@ -1653,11 +1653,15 @@
   const kv = (band, f) => 1 - (band[0] + 0.5 + Math.max(0, Math.min(1, f)) * (band[1] - band[0] - 1)) / KIT.H;   // (a band's v: f 0 its top row, 1 its bottom)
   const kq = (band, u0, u1, f0, f1) => [[u0, kv(band, f0)], [u1, kv(band, f0)], [u1, kv(band, f1)], [u0, kv(band, f1)]];   // (a quad a b c d: a-b at f0, d-c at f1)
   class SB {   // a stand's geometry, non-indexed with flat normals: per vertex the concrete's colour (the seasons paint it), the seat's own (aSeat), the kit's uv
-    constructor() { this.P = []; this.N = []; this.C = []; this.S = []; this.U = []; }
-    get empty() { return !this.P.length; }
+    constructor() { this.nt = 0; this.cap = 0; this.P = this.N = this.C = this.S = this.U = null; }   // (Float32Arrays grown by doubling: nt triangles written)
+    get empty() { return !this.nt; }
     tri(a, b, c, col, seat, ua, ub, uc, n) {
-      this.P.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); this.U.push(ua[0], ua[1], ub[0], ub[1], uc[0], uc[1]);
-      for (let k = 0; k < 3; k++) { this.N.push(n[0], n[1], n[2]); this.C.push(col[0], col[1], col[2]); this.S.push(seat[0], seat[1], seat[2]); }
+      if (this.nt === this.cap) { const cap = this.cap ? this.cap * 2 : 256, g = (A, w) => { const B = new Float32Array(cap * w); if (A) B.set(A); return B; };
+        this.P = g(this.P, 9); this.N = g(this.N, 9); this.C = g(this.C, 9); this.S = g(this.S, 9); this.U = g(this.U, 6); this.cap = cap; }
+      const i = this.nt * 9, P = this.P, N = this.N, C = this.C, S = this.S, U = this.U, j = this.nt * 6; this.nt++;
+      P[i] = a[0]; P[i + 1] = a[1]; P[i + 2] = a[2]; P[i + 3] = b[0]; P[i + 4] = b[1]; P[i + 5] = b[2]; P[i + 6] = c[0]; P[i + 7] = c[1]; P[i + 8] = c[2];
+      U[j] = ua[0]; U[j + 1] = ua[1]; U[j + 2] = ub[0]; U[j + 3] = ub[1]; U[j + 4] = uc[0]; U[j + 5] = uc[1];
+      for (let k = i; k < i + 9; k += 3) { N[k] = n[0]; N[k + 1] = n[1]; N[k + 2] = n[2]; C[k] = col[0]; C[k + 1] = col[1]; C[k + 2] = col[2]; S[k] = seat[0]; S[k + 1] = seat[1]; S[k + 2] = seat[2]; }
     }
     quad(a, b, c, d, out, col, seat, uv) {   // a b c d around, facing out (a direction)
       const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
@@ -1683,7 +1687,7 @@
       for (const s of [1, -1]) this.quad(a, b, [b[0], b[1] + h, b[2]], [a[0], a[1] + h, a[2]], [s * f[0], 0, s * f[1]], col, null, U);
     }
     geometry() {
-      const g = new THREE.BufferGeometry(), F = (a, n) => new THREE.Float32BufferAttribute(a, n);
+      const g = new THREE.BufferGeometry(), F = (a, n) => new THREE.Float32BufferAttribute(a.subarray(0, this.nt * n * 3), n);
       g.setAttribute('position', F(this.P, 3)); g.setAttribute('normal', F(this.N, 3)); g.setAttribute('color', F(this.C, 3)); g.setAttribute('aSeat', F(this.S, 3)); g.setAttribute('uv', F(this.U, 2));
       g.computeBoundingSphere(); return g;
     }
@@ -1796,14 +1800,21 @@
     let near2 = [];
     // (the rays only at the meshes whose box in the world they pass through, 1 cm round it: looser than the raycaster's own test of each
     // mesh's box, so the same hits, without inverting every mesh's matrix for every ray)
-    const RB = [], cast = (list, far) => { const O = rc.ray.origin, D = rc.ray.direction, E = 0.01; RB.length = 0;
-      for (const e of list) { const b = e.b; let t0 = 0, t1 = far + E, ok = true;
-        for (const [o0, d0, lo, hi] of [[O.x, D.x, b.min.x, b.max.x], [O.y, D.y, b.min.y, b.max.y], [O.z, D.z, b.min.z, b.max.z]]) {
-          if (Math.abs(d0) < 1e-12) { if (o0 < lo - E || o0 > hi + E) { ok = false; break; } continue; }
-          const a = (lo - E - o0) / d0, c = (hi + E - o0) / d0; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) { ok = false; break; } }
-        if (ok) RB.push(e.m); }
-      return rc.intersectObjects(RB, false); };
-    const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (cast(near2, rc.far).length) return false; } return true; };
+    const RB = [], boxes = (list, far) => { const O = rc.ray.origin, D = rc.ray.direction, E = 0.01, ox = O.x, oy = O.y, oz = O.z, dx = D.x, dy = D.y, dz = D.z, px = Math.abs(dx) < 1e-12, py = Math.abs(dy) < 1e-12, pz = Math.abs(dz) < 1e-12; RB.length = 0;
+      for (let i = 0, n = list.length; i < n; i++) { const e = list[i], mn = e.b.min, mx = e.b.max; let t0 = 0, t1 = far + E, a, c;
+        if (px) { if (ox < mn.x - E || ox > mx.x + E) continue; } else { a = (mn.x - E - ox) / dx; c = (mx.x + E - ox) / dx; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) continue; }
+        if (py) { if (oy < mn.y - E || oy > mx.y + E) continue; } else { a = (mn.y - E - oy) / dy; c = (mx.y + E - oy) / dy; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) continue; }
+        if (pz) { if (oz < mn.z - E || oz > mx.z + E) continue; } else { a = (mn.z - E - oz) / dz; c = (mx.z + E - oz) / dz; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) continue; }
+        RB.push(e.m); } };
+    const cast = (list, far) => { boxes(list, far); return rc.intersectObjects(RB, false); };
+    const HB = [], hitAny = (list, far) => { boxes(list, far); let hit = false;   // (free only asks whether anything is there: the first mesh hit is enough)
+      for (let i = 0, n = RB.length; i < n; i++) { const m = RB[i]; if (!m.layers.test(rc.layers)) continue;
+        if (hit) { if (m.material !== undefined && m.geometry.boundingSphere === null) m.geometry.computeBoundingSphere(); continue; }   // (the raycaster's one lasting side effect on the meshes it skips now)
+        m.raycast(rc, HB); if (HB.length) { hit = true; HB.length = 0; } }
+      return hit; };
+    const FL = [], free = (x, z, r) => { const E = 0.01, x0 = x - r, x1 = x + r, z0 = z - r, z1 = z + r; FL.length = 0;   // (only the boxes one of its five rays can pass: the same ones cast keeps)
+      for (const e of near2) { const b = e.b; if (x1 < b.min.x - E || x0 > b.max.x + E || z1 < b.min.z - E || z0 > b.max.z + E) continue; FL.push(e); }
+      for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (hitAny(FL, rc.far)) return false; } return true; };
     for (const f of feet) {
       if (f.fr3.length < 2 || f.bk3.length < 2) continue;
       near2 = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40));
