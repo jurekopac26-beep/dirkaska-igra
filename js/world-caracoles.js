@@ -100,6 +100,9 @@
     R = lerp(R, 0.69, gk); G = lerp(G, 0.64, gk); B = lerp(B, 0.5, gk);
     R = lerp(R, 0.52, sh * 0.6); G = lerp(G, 0.52, sh * 0.6); B = lerp(B, 0.35, sh * 0.6);
     R = lerp(R, 0.68, se * 0.5); G = lerp(G, 0.65, se * 0.5); B = lerp(B, 0.6, se * 0.5);
+    if (CAT) { const wg = Math.min(1, gr + sh), ws = Math.min(se, 1 - wg), wb = 1 - wg - ws, T0 = CAT.trava, T1 = CAT.golo, T2 = CAT.pozidano;   // (Realizem G: the
+      // measured hue on the scree, the rock and the bunch grass, by WorldCover's class; the snow and the trodden verge below keep the game's own)
+      R *= T0[0] * wg + T1[0] * wb + T2[0] * ws; G *= T0[1] * wg + T1[1] * wb + T2[1] * ws; B *= T0[2] * wg + T1[2] * wb + T2[2] * ws; }
     const sn = caSnow(x, z, A, ny, sz); R = lerp(R, CA_SNC[0], sn); G = lerp(G, CA_SNC[1], sn); B = lerp(B, CA_SNC[2], sn);
     if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.45 * (1 - sn); R = lerp(R, 0.6, t); G = lerp(G, 0.57, t); B = lerp(B, 0.52, t); }
     CACOL[0] = R; CACOL[1] = G; CACOL[2] = B; return CACOL;
@@ -247,6 +250,28 @@
       m.rotation.set(-b.bank * Math.sign(b.sp), -(a + Math.sign(b.sp) * Math.PI / 2), 0, 'YXZ');
     }
   }
+  /* Realizem G (docs/realizem/paket-g.md, docs/proge/caracoles.md): the band 8-60 m from the road as tools/proga-podatki.py `cover` measured it
+     (ESA WorldCover 2021, 5 m cells, 232 sections of 50 m; Sentinel-2 summer colours; the frame of js/geo.js, whose def.lc grass lies on
+     WorldCover's with a correlation of 0.82 by cell, no shift). Bare rock and scree 76.5 % (golo), grass 22.1 %, built-up 1.3 %, shrubs 0.1 %,
+     no trees, no water and no snow in the band (the game's summer snow lies higher, beyond it). The climate (Köppen) was not read here: podnebje
+     stays empty. Only the hue moves (World.rastje.MOC, the brightness kept), on the ground's vertex colours by class; no plant and no draw call more. */
+  let CAT = null;   // { trava, golo, pozidano }: the measured hue's multipliers (null: the game's own colours, to the number)
+  if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.caracoles) {
+    World.rastje.MERITVE.caracoles = { podnebje: null, lat: -32.86507, lon: -70.154635, delez: { drevesa: 0, trava: 0.221, pozidano: 0.013, golo: 0.765, grmovje: 0.001 },
+      barva: { trava: 0x60584d, pozidano: 0x6c6156, golo: 0x645e54 }, drevesa: [] };
+  }
+  function caRastje(def) {   // the multipliers, from the game's own ground colours on each class 8-60 m from the road (as World.rastje's barvaTrave: every 8 m)
+    const W = World.rastje; if (!W || !W.aktivna || !W.aktivna(def)) return null;
+    const M = W.MERITVE[def.id], G = API.VR.G, L = API.VRC * API.VRT, s = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], hx = (h) => [((h >> 16) & 255) / 255, ((h >> 8) & 255) / 255, (h & 255) / 255];
+    for (let z = G.z0; z < G.z0 + G.ntz * L; z += 8) for (let x = G.x0; x < G.x0 + G.ntx * L; x += 8) {
+      const c = API.vrLC(x, z), k = c === 1 || c === 2 ? 0 : c === 0 ? 1 : c === 3 ? 2 : -1; if (k < 0) continue;
+      const d = API.vrDist(x, z); if (d < 8 || d > 60) continue;
+      const g = caGCol(x, z), S = s[k]; S[0] += g[0]; S[1] += g[1]; S[2] += g[2]; S[3]++;
+    }
+    const m = (S, h) => S[3] ? W.mnozilnik([S[0] / S[3], S[1] / S[3], S[2] / S[3]], hx(h), W.MOC) : [1, 1, 1];
+    return { trava: m(s[0], M.barva.trava), golo: m(s[1], M.barva.golo), pozidano: m(s[2], M.barva.pozidano) };
+  }
+
   function buildCaracoles(scene, tex, opts) {
     const R = rng(2911), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
@@ -287,6 +312,8 @@
     out.marks = {};   // (where the landmarks stand: the tests look for them)
     for (const b of blds) if (b.name) out.marks[b.name] = [b.x, b.z];
     exclPush(padF.x, padF.z, padF.r + 4); exclPush(padS.x, padS.z, padS.r + 4);
+
+    CAT = null; CAT = caRastje(def);   // (Realizem G: the game's own colours measured first, then every tile takes the measured hue)
 
     /* ---- terrain tiles, the lakes (the Laguna del Inca's emerald water, two greener ponds by the river) ---- */
     let nFar = 0;
@@ -759,6 +786,7 @@
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
+    if (CAT) out.rastje = { moc: World.rastje.MOC, tla: CAT.trava, golo: CAT.golo, pozidano: CAT.pozidano, drevesa: null };   // (Realizem G: no leaves to tint, docs/proge/caracoles.md)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), railway: nRailway, galleries: GAL.length, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
