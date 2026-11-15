@@ -473,6 +473,22 @@
       for (let m = 1; m < rowsP.length - 1; m += 3) { const r = rowsP[m], p = atSf(r.s, side * (r.o1 + 0.3)); mtFlag(scen.get(p[0], p[1]), p[0], p[1], r.top + 3.2, T.hd[T.idx(r.s)], ((m / 3) | 0) % 2); }
       for (const r of rowsP) { const p = atSf(r.s, side * (r.prof[0][0] + rows * dep * 0.5)); exclPush(p[0], p[1], rows * dep / 2 + 5); CR.exclAdd(p[0], p[1], rows * dep / 2 + 3); }
     }
+    // the bleachers on their real outlines (def.bleachers; docs/realizem/paket-s.md, S2): steel rows rising from the front, the side towards the
+    // road, up to 20 rows (the rest of a deeper outline a flat deck behind them), a rail along the back; no one on them (CLAUDE.md: few fans).
+    // The front is kept 3 m beyond the road's edge
+    for (const [bx, bz, L, W0, ang] of def.bleachers || []) {
+      const c = Math.cos(ang), s = Math.sin(ang), P = (u, v) => [bx + u * c - v * s, bz + u * s + v * c];
+      let v0 = -W0 / 2; for (let k = 0; k < 3; k++) { let m = 1e9; for (let u = -L / 2; u <= L / 2 + 0.01; u += L / 12) { const p = P(u, v0); m = Math.min(m, near(p[0], p[1])); } if (m >= 3) break; v0 += 3 - m; }
+      const W = W0 / 2 - v0, rows = Math.min(20, Math.floor(W / 0.95)), dep = 0.95, rise = 0.62, g = scen.get(bx, bz);
+      let y0 = 1e9; for (const [u, v] of [[-L / 2, v0], [L / 2, v0], [-L / 2, W0 / 2], [L / 2, W0 / 2], [0, 0]]) { const p = P(u, v); y0 = Math.min(y0, Math.max(-0.3, mtGround(p[0], p[1]))); }
+      for (let k = 0; k < rows; k++) { const v = v0 + (k + 0.5) * dep, p = P(0, v), h = 0.55 + k * rise;
+        box(g, p[0], y0 - 0.3, p[1], L, h + 0.3, dep, ang, k % 2 ? [0.45, 0.47, 0.5] : [0.4, 0.42, 0.46], k % 2 ? [0.62, 0.64, 0.67] : [0.56, 0.58, 0.62], true); }
+      const top = 0.55 + (rows - 1) * rise, vb = v0 + rows * dep;
+      if (W0 / 2 - vb > 0.5) { const p = P(0, (vb + W0 / 2) / 2); box(g, p[0], y0 - 0.3, p[1], L, top + 0.3, W0 / 2 - vb, ang, [0.42, 0.44, 0.48], [0.5, 0.52, 0.55], true); }
+      { const p = P(0, Math.min(W0 / 2, vb + 0.4) - 0.1); box(g, p[0], y0 + top, p[1], L, 1.1, 0.12, ang, [0.6, 0.62, 0.66]); }   // (the rail along the back)
+      const vm = (v0 + W0 / 2) / 2, rr = Math.hypot(W / 2, W / 4) + 1.5, nc = Math.max(1, Math.ceil(L / (W / 2)));   // (the clearing: circles along it)
+      for (let k = 0; k <= nc; k++) { const p = P(-L / 2 + L * k / nc, vm); exclPush(p[0], p[1], rr + 1); CR.exclAdd(p[0], p[1], rr); }
+    }
     if (!crowdG.empty) addM(crowdG, K.crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     // fans on the grass
     for (const [a, b, side] of def.ga || []) K.crowdRun(CR, sStart + a, sStart + b, side, { rows: 3, dens: 0.55, first: 1.6, gap: 0.9, clump: 0.6, sit: 0.3, flag: 0.08, below: 1.2, above: 2, label: 'ga' });
@@ -577,10 +593,33 @@
   const BDEF = [6, 12, 10, 5.5, 8, 14, 7.5];
   function mtBuildings(C) {
     const { D, root, scen, exclPush, near } = C, glass = [0.26, 0.34, 0.42], roofC = [0.5, 0.5, 0.5];
+    // the small plain buildings (under 1500 m², near enough rectangles on the map, without a name: the houses, the sheds, the club houses)
+    // by the builder of houses (js/world-stavbe.js: Canada's kit, flat roofs on most; docs/realizem/paket-s.md, S2), on their outlines'
+    // smallest rectangles, as tall as the map says; the pavilions, the halls and the odd shapes stay on their own outlines below
+    const gH = (x, z) => Math.max(mtGround(x, z), -0.3), list = [], put = [];
+    for (const [kd, h0, mh, name, ring] of D.bld) {
+      if (name || ring.length < 4 || mh) continue;
+      const area = Math.abs(ring.reduce((a, p, k) => { const q = ring[(k + 1) % ring.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
+      if (area >= 1500) continue;
+      let bx = null;   // (the smallest rectangle round the outline: along one of its edges)
+      for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length], an = Math.atan2(b[1] - a[1], b[0] - a[0]), c = Math.cos(an), s = Math.sin(an);
+        let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9; for (const p of ring) { const u = p[0] * c + p[1] * s, v = -p[0] * s + p[1] * c; if (u < u0) u0 = u; if (u > u1) u1 = u; if (v < v0) v0 = v; if (v > v1) v1 = v; }
+        const A = (u1 - u0) * (v1 - v0); if (!bx || A < bx.A) { const um = (u0 + u1) / 2, vm = (v0 + v1) / 2; bx = { A, x: um * c - vm * s, z: um * s + vm * c, L: u1 - u0, W: v1 - v0, ang: an }; } }
+      if (!bx || area < 0.8 * bx.A || bx.L < 2 || bx.W < 2) continue;
+      if (near(bx.x, bx.z).d < 1) continue;
+      const H = h0 > 0 ? h0 : BDEF[kd] * (0.85 + 0.3 * hash(Math.round(bx.x), Math.round(bx.z)));
+      put.push(ring); list.push([bx.x, bx.z, bx.L, bx.W, bx.ang, H, 0]);
+    }
+    const HS = World.stavbe && list.length ? World.stavbe.setup({ Chunks: K.Chunks, list, T: C.T, near: (x, z) => { const n = near(x, z); return { i: n.i, dd: n.d }; }, gH }) : null;
+    const byHS = new Set();
+    if (HS) list.forEach((b, i) => { const [x, z, L, W, ang, H] = b, sm = H < 3.6 || L * W < 40, fl = H > 9 || L * W > 600;
+      HS.put({ x, z, L, W, ang, y0: gH(x, z), hh: H, fl: Math.max(1, Math.round(H / 3.3)), type: sm ? 'small' : fl ? 'flats' : 'house', id: i });
+      byHS.add(put[i]); });
     for (const [kd, h0, mh, name, ring] of D.bld) {
       if (name === 'Paddocks' || name === 'Biosphère' || ring.length < 3) continue;
       let cx = 0, cz = 0; for (const p of ring) { cx += p[0]; cz += p[1]; } cx /= ring.length; cz /= ring.length;
       if (near(cx, cz).d < 1) continue;
+      if (byHS.has(ring)) { let r = 0; for (const p of ring) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz)); exclPush(cx, cz, r * 0.9 + 1); if (C.CR) C.CR.exclAdd(cx, cz, r); continue; }   // (the builder's: its clearing as before)
       const area = Math.abs(ring.reduce((a, p, k) => { const q = ring[(k + 1) % ring.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
       const H = h0 > 0 ? h0 : BDEF[kd] * (0.85 + 0.3 * hash(Math.round(cx), Math.round(cz))), y0 = Math.max(mtGround(cx, cz), -0.3) + (mh || 0) - 0.2, y1 = y0 + 0.2 + H;
       const hv = hash(Math.round(cz), Math.round(cx)), base = BCOL[kd], col = base.map(v => v * (0.92 + 0.14 * hv)), fins = area > 3000 && Math.hypot(cx + 290, cz + 1390) < 260;
@@ -611,6 +650,7 @@
       box(mid.get(x, z), x, y0 - 0.5, z, Lx, h + 0.5, Wz, -a, col, [0.42, 0.42, 0.44]);
     }
     mid.addTo(root, C.matV, true, true);
+    if (HS) { HS.addTo(root); C.out.stats = Object.assign(C.out.stats || {}, { stavbe: HS.stats }); }   // (the builder's houses: one material, the façade atlas)
   }
   function mtDome(C, cx, cz) {   // the dome: a 2x-subdivided icosahedron's edges as struts (the bottom quarter in the ground), an inner building
     const g = new GB(), R0 = 38, yc = 62 - R0 - 0.3, V = [], F = [], st = [0.78, 0.8, 0.84];

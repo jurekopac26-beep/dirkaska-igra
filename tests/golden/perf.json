@@ -224,10 +224,10 @@
   "jsMs": 1.2
  },
  "montreal": {
-  "calls": 185,
-  "maxCalls": 242,
-  "kverts": 443,
-  "maxKverts": 535,
+  "calls": 189,
+  "maxCalls": 246,
+  "kverts": 456,
+  "maxKverts": 554,
   "jsMs": 1.77
  },
  "greatalpine": {
@@ -359,7 +359,7 @@
  "balea": {
   "calls": 156,
   "maxCalls": 187,
-  "kverts": 362,
+  "kverts": 361,
   "maxKverts": 436,
   "jsMs": 1.14
  }

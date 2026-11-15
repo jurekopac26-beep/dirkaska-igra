@@ -238,3 +238,19 @@ Odločitev Mateja na tabli #382 (14. 11. 2026): »S1: prevzemi«. Veja je nareje
 **`jsMs` v `tests/golden/perf.json`** je samo za vednost: med vzporednimi testi je izmerjen čas napihnjen (Livorno 4,6–5,3 ms), zato ostane prejšnja vrednost.
 
 **Spori z E1 (#678, veja `realizem/e1-nurburg-tianmen`), samo za vednost:** `js/tracks/nring.js` (vrstica `yard` ob E1 `stranske:`), `js/world-nring.js` (pogoj `plant`: `OK.on` ob E1 `naCesti`; vrstica statistike), `js/world-livorno.js` (vrstica statistike: E1 doda `lamps`, `stops`, `mouthPosts`), `tests/golden/perf.json` in `world.json` (za `nring` in `livorno` znova). Vsi so sosednji: obdrži oboje. E1 stranske ceste (OSM `highway=service` ob progi) se na Nürburgu lahko prekrivajo z asfaltnimi potmi okolice; ob spoju preveri, da ni dvojnega risanja.
+
+## S2: Montréal in Bâlea (veja `realizem/s2-montreal-balea`, nad #696; 15. 11. 2026)
+
+Odločitev Mateja na tabli #382 (15. 11. 2026). PR #699. Obe progi imata v `PROGE` raven 3 (`d2` 34, `d1` 64).
+
+**Montréal (`js/world-montreal.js`, `js/tracks/montreal.js`):**
+- 360 manjših stavb brez imena (pod 1500 m², skoraj pravokotnih) gradi skupni graditelj na obrisih iz podatkov (komplet Kanade, 60 % ravnih streh). Višina je iz podatkov, sicer privzeta za vrsto. Paviljoni, boksi (`pitBld`, enak obrisu Paddocks) in velike stavbe ostanejo svoji, na svojih obrisih.
+- Izključitve dreves ostanejo enake kot prej (isti krogi v istem redu), zato se drevesa drugod ne premaknejo (0 % razlike pri 1300, 2000 in 3400 m).
+- Tribune na obrisih iz OSM (`def.bleachers`, 4 obrisi `leisure=bleachers`): do 20 vrst, ki se dvigajo od ceste. Zadaj je ploščad z ograjo, na tribunah ni ljudi (malo gledalcev). Sprednji rob ostane vsaj 3 m za robom ceste. Približne začasne tribune (`def.stands`) ostanejo; vprašanje je v PR.
+- Obremenitev: 189 klicev in 456 tisoč oglišč, na najbolj obremenjenem mestu 246 / 554 (prej 185 / 242 klicev in 443 / 535 tisoč oglišč).
+
+**Bâlea (`js/world-prelaz.js`):**
+- 14 koč in hotelov ter postajo žičnice gradi skupni graditelj na pravih obrisih (komplet Romunije, slog `gora`).
+- Postaja: ravna streha, višina do ploščadi vrvi (2 nadstropji); ploščad nad streho nadomesti prejšnji kvader.
+- `rise` do 21 m: postaja in velike hiše stojijo na strmem DEM, enaki kamniti podstavki so bili že prej. Postaja je 47 m od ceste.
+- Obremenitev: 156 klicev in 361 tisoč oglišč, na najbolj obremenjenem mestu 187 / 436 (enako kot prej).
