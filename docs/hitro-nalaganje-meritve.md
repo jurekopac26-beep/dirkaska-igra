@@ -185,6 +185,7 @@ Glavna tabela (najbližje telefonu z grafičnim procesorjem): platna riše glavn
 | `spa` | 5,4 | 6,0 (šum; svet enak) |
 | `caracoles` | 5,4 | 5,8 (šum; svet enak) |
 | `bathurst` | 4,4 | 4,3 |
+| `katu` | 9,5 | 6,4 (`--samo katu`, dvakrat izmenično; mreže za blazinice, reko in celice v `js/world-katu.js`, svet enak) |
 
 ### 15 prog v svežem zavihku, 2D platno v procesu GPU (SwiftShader)
 
