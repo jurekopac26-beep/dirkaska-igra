@@ -1,15 +1,15 @@
 /* Track definition 'ujarras'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Ujarrás, Kostarika (Ujarrás, Costa Rica): the short road of docs/gorske-proge.md (track 20). Made by tools/nova-proga.mjs; the data between the two marks by
+  // Ujarrás, Kostarika (Ujarrás, Costa Rica): the short road of docs/gorske-proge.md (track 20), up past the lookout over the Orosi valley (at ~40 % of the race). Made by tools/nova-proga.mjs; the data between the two marks by
   // tools/proga-uvoz.mjs from OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0: the centre line, the side roads, the buildings, the lifts,
   // the ski runs, the water, the car parks), Copernicus DEM GLO-30 (the heights) and ESA WorldCover 2021 (the land cover, CC BY 4.0); derived data
   // under ODbL 1.0. One card, four ways to drive it (def.modes), as Vršič: a race against the rivals over the closed road, a time trial, a duel in
   // the traffic and a run from the police.
   TRACK_DEFS.push({
     id: 'ujarras', name: 'Ujarrás, Kostarika', theme: 'ujarras', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 3.3,
-    desc: 'Ujarrás (Kostarika): kratka zavita cesta. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
-    en: { name: 'Ujarrás, Costa Rica', desc: 'Ujarrás (Costa Rica): a short, twisting road. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
+    desc: 'Ujarrás (Kostarika): kratek zavit vzpon skozi tropski gozd nad dolino Orosi. Na sredini proge greš tik mimo razgledišča s teraso, belo balustrado in nadstreškom. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
+    en: { name: 'Ujarrás, Costa Rica', desc: 'Ujarrás (Costa Rica): a short, twisting climb through the tropical forest above the Orosi valley. Halfway up you pass right by a lookout with a terrace, a white balustrade and a shelter. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Ujarrás',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
@@ -21,9 +21,9 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xccd6e0, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [],
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars on a short, twisting road, and you start {grid}.", "Here we are at {track}. One run to the finish, and you line up {grid}."],
+      introPass: ["Welcome to {track}! {cars} cars on a short, twisting climb above the valley, and you start {grid}.", "Here we are at {track}. One run to the finish, past the lookout halfway up, and you line up {grid}."],
       goPass: ["And away they go!", "They're off! Every bend counts on a road this short!", "The race is on!"],
-      introPassTT: ["Welcome to {track}! Just you and the clock.", "Here we are at {track}. {cps} checkpoints between you and the finish."],
+      introPassTT: ["Welcome to {track}! Just you and the clock.", "Here we are at {track}. {cps} checkpoints between you and the finish, and the lookout halfway up."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack every bend!"],
       introTraffic: ["Welcome to {track}, and the road is open today. Just you and {rival}, first to the finish wins!"],
       introPolice: ["Welcome to {track}! The police are right behind you. Get to the finish without getting caught!"],

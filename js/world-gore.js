@@ -32,7 +32,7 @@
       roofs: [[0.22, 0.32, 0.26], [0.5, 0.18, 0.14], [0.3, 0.32, 0.34], [0.62, 0.64, 0.66], [0.16, 0.2, 0.26]] },
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
     signs: 'diamond', crowd: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.2, 0.5, 0.32], [0.95, 0.72, 0.16], [0.46, 0.66, 0.86], [0.12, 0.14, 0.2], [0.9, 0.45, 0.14]],
-    animals: [], dust: null, extra: null, ownBld: null,   // (ownBld(x, z, L, W): true for the buildings S.extra draws itself)
+    animals: [], dust: null, extra: null, ownBld: null, clear: null,   // (ownBld(x, z, L, W): true for the buildings S.extra draws itself)
   };
   const SNOW = [0.93, 0.95, 0.99], PISTE = [0.97, 0.98, 1.0], SLUSH = [0.62, 0.62, 0.63];
   let S = DEF, SN = 1, SNL = 1e9;   // (the style of the build under way; snow everywhere (1) or above SNL)
@@ -298,6 +298,7 @@
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
+    for (const [x, z, r] of S.clear || []) exclPush(x, z, r);   // (S.clear: circles the track's own things keep free of the trees, as Ujarrás's lookout)
     stubExcl(exclPush);
 
     /* ---- terrain tiles (four to a mesh), the lakes (ice in a snowy world) ---- */
