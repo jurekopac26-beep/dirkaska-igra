@@ -13,7 +13,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 <!-- meritve:začetek -->
 | Proga | `id` | Vrsta | Dolžina | °/km | Ravnine | Lasnice | Višina |
 |---|---|---|---|---|---|---|---|
-| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1338 | 23 % | 14 | +429 m |
+| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
 | Irohazaka, Japonska | `iroha` | odprta cesta | 5,0 km | 947 | 25 % | 19 | +322 m |
 | Rio do Rastro, Brazilija | `rastro` | odprta cesta | 4,2 km | 912 | 35 % | 9 | +324 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
