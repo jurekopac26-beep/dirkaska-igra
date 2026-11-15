@@ -1793,11 +1793,12 @@
     const solids = [], DOWN = new THREE.Vector3(0, -1, 0); o.root.updateMatrixWorld(true);
     const onGround = (m) => { for (let p = m; p; p = p.parent) if (p === o.ground) return true; return false; };   // (the ground's own pieces: its mesh may stand a little over groundH)
     o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position || (o.ground && onGround(m))) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox.clone().applyMatrix4(m.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solids.push({ m, b }); });   // (not the ground's big pieces: under the rays' reach, and many triangles)
-    let near2 = [];
-    const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (rc.intersectObjects(near2, false).length) return false; } return true; };
+    let near2 = [], near2B = [];
+    const FRO = new THREE.Vector3(), FRH = [], free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0), px = x + dx, pz = z + dz; rc.set(FRO.set(px, g0 + 30, pz), DOWN); rc.far = 29.65;
+      for (const { m, b } of near2B) { if (px < b.min.x - 0.05 || px > b.max.x + 0.05 || pz < b.min.z - 0.05 || pz > b.max.z + 0.05 || b.max.y < g0 + 0.3 || b.min.y > g0 + 30.05) continue; FRH.length = 0; if (rc.intersectObject(m, false, FRH).length) return false; } } return true; };   // (a ray down can only hit a solid whose box in the world it passes through: the others are not tested)
     for (const f of feet) {
       if (f.fr3.length < 2 || f.bk3.length < 2) continue;
-      near2 = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40)).map(e => e.m);
+      near2B = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40)); near2 = near2B.map(e => e.m);
       let nx = 0, nz = 0; for (const e of f.fr3) { nx += e.f[0]; nz += e.f[1]; } const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;   // (towards the road)
       const tx = f.tx, tz = f.tz, B = f.bk3, Fr = f.fr3, len = Math.hypot(Fr[Fr.length - 1].p[0] - Fr[0].p[0], Fr[Fr.length - 1].p[2] - Fr[0].p[2]);
       const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10); });
