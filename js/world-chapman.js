@@ -237,7 +237,10 @@
         const c = k < 0.6 ? foam : k < 3 ? [0, 1, 2].map(q => lerp(foam[q], shal[q], sstep(0.6, 3, k))) : k < 10 ? [0, 1, 2].map(q => lerp(shal[q], mid[q], sstep(3, 10, k))) : [0, 1, 2].map(q => lerp(mid[q], deep[q], sstep(10, 30, k)));
         const ks = 0.12 * sstep(0.55, 0.85, P.n2(x * 2.4, z * 2.4)); return [0, 1, 2].map(q => lerp(c[q], 0.8, ks)); };
       const D = P.D, X0 = D.x0, Z0 = D.z0, X1 = D.x0 + (D.nx - 1) * D.cell, Z1 = D.z0 + (D.nz - 1) * D.cell, uv = (x, z) => [x / 14, -z / 14];
-      const lo = (a, b) => (vrDist(a, b) < 470 ? chGround(a, b) : chFar(a, b)) < seaY + 0.4;
+      const lo0 = (a, b) => (vrDist(a, b) < 470 ? chGround(a, b) : chFar(a, b)) < seaY + 0.4;
+      // (lo at each corner once: the cells of a block share them; the corners are whole metres, the key exact)
+      const loC = new Map(), ck = (a, b) => (a + 20000) * 40000 + (b + 20000);
+      const lo = (a, b) => { const k = ck(a, b); let v = loC.get(k); if (v === undefined) loC.set(k, v = lo0(a, b)); return v; };
       for (let z0 = Z0; z0 < Z1; z0 += 48) for (let x0 = X0; x0 < X1; x0 += 48) {   // 48 m blocks where any corner is under water: 8 m cells by the shore near the road (the surf), 24 m out to 600 m, else one
         const d = vrDist(x0 + 24, z0 + 24), cs = d < 330 ? 8 : d < 620 ? 24 : 48, g = sc.get(x0 + 24, z0 + 24);
         for (let zz = z0; zz < z0 + 48; zz += cs) for (let xx = x0; xx < x0 + 48; xx += cs) {
@@ -252,7 +255,9 @@
       // the surf: a band of white foam along the shore within 420 m of the road (4 m cells where the water line runs, a fainter one a cell out to sea),
       // in the water's own moving picture (dyn.water scrolls it); 480 m chunks
       { const fc = new Chunks(480, true), fm = new THREE.MeshBasicMaterial({ map: tex.water, vertexColors: true, transparent: true, depthWrite: false }), cs = 4;
-        const wet = (a, b) => chGround(a, b) < seaY + 0.15, F = (al) => [0.97, 0.99, 1, al];
+        // (wet on the 4 m lattice from the model's corner, each point once: the cells and their neighbours share them; the model's corner and the cells are whole metres, so a + cs is the lattice point exactly)
+        const WX = Math.ceil((X1 - D.x0) / cs) + 4, WZ = Math.ceil((Z1 - D.z0) / cs) + 4, WC = new Int8Array(WX * WZ).fill(-1);
+        const wet = (a, b) => { const k = (Math.round((b - D.z0) / cs) + 1) * WX + Math.round((a - D.x0) / cs) + 1; let v = WC[k]; if (v < 0) v = WC[k] = chGround(a, b) < seaY + 0.15 ? 1 : 0; return v === 1; }, F = (al) => [0.97, 0.99, 1, al];
         for (let z0 = D.z0; z0 < Z1; z0 += cs) for (let x0 = D.x0; x0 < X1; x0 += cs) {
           if (vrDist(x0, z0) > 420) { x0 += 28; continue; }
           const n = (wet(x0, z0) ? 1 : 0) + (wet(x0 + cs, z0) ? 1 : 0) + (wet(x0, z0 + cs) ? 1 : 0) + (wet(x0 + cs, z0 + cs) ? 1 : 0);
