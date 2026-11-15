@@ -10,12 +10,30 @@
   const {
     Chunks, GB, ICO1, IChunks, NRC, NRT, RB, TAU, WSKY, addShore, atS, atSf, box, campLot, parkedCar, clamp, cone, crAt, crH, crowdCtx, crowdFinish, crowdPut,
     crowdRun, crowdUV, cyl, gable, ico, inPoly, lerp, mergeBands, nrDecalTex, nrDem, nrDist, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf,
-    nrLump, nrNear, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
+    nrLump, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo, nrTileOn, nrTreeGeo, pixAvg, polyDist, propFloorTable, puff, rng, roadsideProps, rock,
     shoreBand, sstep, tvHeli, vary, waterMat, waterline, wrapS, pitJunction, pitKerbs, pitOpen
   } = API;
   const { auTreeGeo, auRooGeo, auRoos, btGrassTex, btGumGeo, RIO_TP, rioTreeGeo, rioFlowerGeo, RIO_BLOOM, rioTree, rioWet, rioPits, rioExtra, rioPylon, rioPre, cpPrep, cpPark, cpTrees } = API;   // (the own parts of the worlds on this builder, in js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js, loaded before this file: tools/razdeli-proge.mjs)
   let LOD, T, THEME;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T, THEME } = API); });
+  // nrNear's nearest road sample and distance beyond the barriers alone, without its height blend (the same 32 m hash cells, order and picks:
+  // the same results, a third of the work); RBN.dd as nrNear's dd
+  const RBN = { dd: 1e9 };
+  function rbNear(x, z) {
+    const P = API.NR, cx = Math.floor(x / 32) - P.cx0, cz = Math.floor(z / 32) - P.cz0, cells = P.cells, W = P.ncx, px = T.px, pz = T.pz, tx = T.tx, tz = T.tz, nx = T.nx, nz = T.nz, br = T.br, bl = T.bl, ds = T.ds;
+    let bd = 1e9, bi = -1, bdd = 1e9;
+    for (let b = Math.max(0, cz - 2), b1 = Math.min(P.ncz - 1, cz + 2); b <= b1; b++) for (let a = Math.max(0, cx - 2), a1 = Math.min(W - 1, cx + 2); a <= a1; a++) {
+      const Lc = cells[b * W + a]; if (!Lc) continue;
+      for (let q = 0; q < Lc.length; q++) {
+        const j = Lc[q], dx = x - px[j], dz = z - pz[j], al = dx * tx[j] + dz * tz[j], lat = dx * nx[j] + dz * nz[j], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+        if (d >= 64) continue;
+        const dd = Math.max(0, d - (lat > 0 ? br[j] : bl[j]));
+        if (d < bd) { bd = d; bi = j; }
+        if (dd < bdd) bdd = dd;
+      }
+    }
+    RBN.dd = bdd; return bi;
+  }
 
   /* ================= RED BULL RING (theme 'rbring') =================
      The Formula 1 circuit at Spielberg in Styria (4.3 km), in its real layout and heights. The terrain tiles, the land cover forest and the
@@ -701,7 +719,7 @@
       for (const o of [-Wd / 2 + 0.2, Wd / 2 - 0.2]) box(g, x + nx * o + T.tx[i] * 0.16, y - 0.3, z + nz * o + T.tz[i] * 0.16, 0.1, y0 + H + 0.3, 0.1, T.hd[i], [0.55, 0.56, 0.58]);
       board(x, y + y0, z, T.tx[i], T.tz[i], Wd, H, cellK); exclPush(x, z, 3);
     };
-    const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.9, shirts: LK.shirts });   // spectators (instanced)
+    const CR = crowdCtx({ gH: nrGround, near: (x, z) => (rbNear(x, z), RBN.dd), maxSlope: 0.9, shirts: LK.shirts });   // spectators (instanced)
     // (the orange smoke, the waving flags and the video walls' screens are collected on the way and built at the end; their own random stream)
     const crowdPts = [];   // where the crowds are (x, z, how many: 0..1) for the crowd's sound (Sfx, out.crowdPts)
     let podAt = null;      // the podium's place (the pit building's roof terrace): { s, f0: the garages' front there }
@@ -1374,7 +1392,7 @@
           const cl = nrLC(x, z), far = rd > 70;
           const p = RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
-          if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }
+          if (rd < 48 && rbNear(x, z) >= 0 && (RBN.dd < 3.5 || (RBN.dd < 8 && r2 < 0.4))) continue;
           if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
           const y = nrGround(x, z); let sp, hgt, wid;
           if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);
@@ -1401,7 +1419,7 @@
       // colour and grass, a deeper green, fading out 20-36 m out), 5 cm over the ground; not on the pit side of the pit lane, under the stands and
       // the buildings, where the lawn is another part of the track's, nor where the inside of a bend would fold them; woods and scrub keep their
       // own ground (the land cover's built-up cells by the track are mostly its own lawns: striped too)
-      const own = (x, z, i) => { const n = nrNear(x, z), d = Math.abs(n.i - i); return n.i >= 0 && Math.min(d, N - d) < 30; };
+      const own = (x, z, i) => { const j = rbNear(x, z), d = Math.abs(j - i); return j >= 0 && Math.min(d, N - d) < 30; };
       const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || !own(x, z, i)) return null;
         const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i])), c = nrGCol(x, z);
         return f < 0.05 ? null : { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
