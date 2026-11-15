@@ -2598,5 +2598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "8c40735102e252d82e1820cf"
+ },
+ "hiva/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 175.43,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bafcaf60b91b5d07bc6f4b54"
+ },
+ "hiva/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 206.72,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "6bf71cf81c20b5a978fc7b92"
+ },
+ "hiva/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 158.56,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "fe2c6b2bd14413e57deb7790"
+ },
+ "hiva/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 160.09,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "20cf780ac7c3b89ed7c61c18"
+ },
+ "hiva/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 175.03,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "23b6b8cfb3c81d8198c05bb8"
  }
 }
