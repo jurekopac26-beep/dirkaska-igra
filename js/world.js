@@ -611,7 +611,7 @@ const World = (function () {
   function buildHash() {
     hash = new Map();
     for (let i = 0; i < T.N; i++) {
-      const k = Math.floor(T.px[i] / HC) + ',' + Math.floor(T.pz[i] / HC);
+      const k = Math.floor(T.px[i] / HC) * 65536 + Math.floor(T.pz[i] / HC);   // (numeric key: faster than a string, same cells)
       let a = hash.get(k); if (!a) { a = []; hash.set(k, a); } a.push(i);
     }
   }
@@ -620,7 +620,7 @@ const World = (function () {
     const cx = Math.floor(x / HC), cz = Math.floor(z / HC);
     let bi = -1, bd = 1e18;
     for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
-      const arr = hash.get((cx + a) + ',' + (cz + b)); if (!arr) continue;
+      const arr = hash.get((cx + a) * 65536 + cz + b); if (!arr) continue;
       for (const i of arr) { const dx = x - T.px[i], dz = z - T.pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
     }
     _nr.i = bi;
