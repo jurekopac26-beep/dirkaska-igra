@@ -1415,15 +1415,15 @@
  },
  "hinboun": {
   "meshes": 448,
-  "verts": 404211,
+  "verts": 403945,
   "instances": 5402,
   "props": 0,
   "crowd": 31,
-  "world": "e02b398b",
+  "world": "5f0964af",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "50910748",
+   "-:MeshLambertMaterial": "4a0f6f9d",
    "crowd:MeshLambertMaterial": "e5755b8b",
    "flags:MeshLambertMaterial": "72491ae3",
    "ao:MeshBasicMaterial": "1865d087",
