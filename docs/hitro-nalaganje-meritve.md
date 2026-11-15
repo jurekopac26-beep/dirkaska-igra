@@ -186,6 +186,8 @@ Glavna tabela (najbližje telefonu z grafičnim procesorjem): platna riše glavn
 | `caracoles` | 5,4 | 5,8 (šum; svet enak) |
 | `bathurst` | 4,4 | 4,3 |
 
+Drugi krog za Pikes (popoldne, Matejev cilj ≤ ~5 s pri `pikes`, `pikesg`; svet enak): nalepke preverijo ploskev brez rezanja (`drapeOk`) in režejo samo, kjer je treba (nalepke 1,76 → 0,69 s s CPU 4×), `pkNear` preskoči celice in vzorce 64 m stran, `pkH` oddaljene ploščadi. Na počasnejšem stroju (indeks ~1600–1900, zato ni primerljivo z zgornjo tabelo) `World.build` s CPU 4×: `pikes` 10,3 s, `pikesg` 8,9 s; s CPU 1× ~3,0–3,3 s. Ostanek je razpršen: `pkNear` 1,2 s, `pkGH` 1,2 s, `tri`/`triO` 1,6 s, rastje ~1,9 s, ploskve terena ~1,6 s (profil s CPU 4×). Cilj ~5 s z enakim svetom ni dosegljiv; potreben bi bil vnaprej izračunan teren v datoteki proge (spremeni golden) ali gradnja v kosih.
+
 ### 15 prog v svežem zavihku, 2D platno v procesu GPU (SwiftShader)
 
 Platna riše SwiftShader v procesu GPU, ki ga CDP ne upočasni. `getImageData` v gradnji sveta in preverjanje senčilnikov (`getShaderInfoLog`, `getProgramInfoLog`) čakajo, da proces GPU nariše 2D platna (teksture sveta, zemljevidi na karticah zaslona s progami): »senčilniki« in ostanek do vožnje sta tu večinoma to čakanje (profili spodaj), ne prevajanje. Telefon z grafičnim procesorjem platna nariše hitreje. Tabela je urejena po času; proge so šle po vrsti bathurst, spa, nring, suzuka, medvode, caracoles, bangsaen, livorno, ouninpohja, pikes, katu, toronto, balea, tianmen, greatalpine; proces GPU obdrži prevedene programe za vse zavihke istega brskalnika.
