@@ -74,7 +74,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     look: { fog: 0xdfe2dc, sun: 0xfff0d4, sunI: 1.26, sky: 0x8fbbe6, gnd: 0x8a6a45, hemiI: 0.6, tint: [1.04, 1.0, 0.95], sat: 1.1, sunOff: [55, 80, -50], split: [[0.97, 1.0, 1.05], [1.05, 1.0, 0.94]] },   // Isalo: a clear dry-season afternoon over the grass, the sun high in the north
     say: 'Isalo',
-    zivali: { a: ['egret'], t: ['palmHut'], open: true },
+    zivali: { a: ['egret'], t: [], open: true },   // (no huts: OSM has no buildings within 60 m of this road)
     id: 'isalo', name: 'Isalo, Madagaskar', theme: 'isalo', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~150 m of road past the line, two rows a side
     halfWidth: 5.0,
