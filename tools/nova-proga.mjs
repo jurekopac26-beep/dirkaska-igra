@@ -5,7 +5,7 @@
 //     js/tracks/<id>.js       osnutek (ime, opisa, ime za komentatorja say, načini, levi promet, slog look, imena serpentin, komentator) z oznakama za podatke uvoza;
 //                             če podatkov še ni, požene tools/proga-uvoz.mjs <id>; nato izračuna medalje (relijski avto na avtopilotu)
 //     js/world-<id>.js        svet: World.gore z njegovim slogom (iz cfg), posebnosti proge dopiši v S.extra
-//     index.html              <script> proge (za zadnjo progo), js/world-gore.js in js/world-<id>.js (pred js/render.js)
+//     index.html              lena povezava proge (<link rel="x-lazy-script" data-lazy="proga-<id>">, za zadnjo progo; glava v js/tracks/glave.js: tools/glave-prog.js), js/world-gore.js in js/world-<id>.js (pred js/render.js)
 //     README.md               vrstica v »Proge« in v »Zasluge«
 //     docs/proge/<id>.md      osnutek opisa
 //     docs/kazalo.md          vrstica v tabeli prog
@@ -106,7 +106,8 @@ if (!onlyMedals && !fs.existsSync(path.join(REPO, worldF))) {
 /* ---- registrations (each only once) ---- */
 if (!onlyMedals) {
   let h = rd('index.html');
-  if (!h.includes('js/tracks/' + id + '.js')) { const L = [...h.matchAll(/<script src="js\/tracks\/[a-z0-9]+\.js[^"]*"><\/script>\n/g)].pop(); h = h.slice(0, L.index + L[0].length) + `<script src="js/tracks/${id}.js"></script>\n` + h.slice(L.index + L[0].length); }
+  // (a real track's file is a lazy link after the last track's line, its head in js/tracks/glave.js: tools/glave-prog.js below; I17 korak 4)
+  if (!h.includes('js/tracks/' + id + '.js')) { const L = [...h.matchAll(/<(?:script src|link rel="x-lazy-script" data-lazy="proga-[a-z0-9]+" href)="js\/tracks\/[a-z0-9]+\.js[^"]*">(?:<\/script>)?\n/g)].pop(); h = h.slice(0, L.index + L[0].length) + `<link rel="x-lazy-script" data-lazy="proga-${id}" href="js/tracks/${id}.js">\n` + h.slice(L.index + L[0].length); }
   if (!h.includes('js/world-gore.js')) h = h.replace(/<script src="js\/render\.js/, '<script src="js/world-gore.js"></script>\n<script src="js/render.js');
   if (!h.includes('js/world-' + id + '.js')) h = h.replace(/<script src="js\/render\.js/, `<script src="js/world-${id}.js"></script>\n<script src="js/render.js`);
   if (h !== rd('index.html')) wr('index.html', h);
@@ -160,7 +161,7 @@ G.done();
   console.log(`  medalje: avtopilot ${d.toFixed(1)} s (dež ${w.toFixed(1)} s, zima ${zd.toFixed(1)} s, sneg ${zw.toFixed(1)} s) -> ${M}`);
 }
 /* ---- the new menu's tables (js/menu-data.js): the length and the heights for the graph, the place on the globe (from the import marker) ---- */
-if (!onlyMedals) for (const t of ['menu-lens.js', 'menu-globe.mjs']) { console.log('  (meni: node tools/' + t + ')'); execFileSync(process.execPath, [path.join(REPO, 'tools', t)], { stdio: 'inherit', cwd: REPO }); }
+if (!onlyMedals) for (const t of ['glave-prog.js', 'menu-lens.js', 'menu-globe.mjs']) { console.log('  (meni: node tools/' + t + ')'); execFileSync(process.execPath, [path.join(REPO, 'tools', t)], { stdio: 'inherit', cwd: REPO }); }
 // the corner camera of the menu (camera 3): the first hairpin (else the sharpest bend), its video found and drawn by tools/menu-corner.mjs
 if (!onlyMedals) {
   const cf = 'tools/menu-corners.json', CF = JSON.parse(rd(cf)), { loadCore } = require(path.join(REPO, 'tests', 'lib', 'core.js')), C2 = loadCore(), d2 = C2.TRACKS.find(d => d.id === id);
