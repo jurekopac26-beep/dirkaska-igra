@@ -2,7 +2,8 @@
 // Los Caracoles (def.modes: the race, the time trial, the duel in the traffic and the run from the police). The road: the real line up the
 // numbered bends 54 to 99 (def.curves, numbered from the foot of the road as its name has them), each a bend the way its sign says, the
 // climb on the legs between the hairpins (the hairpins flatter), the loop at bend 90 where the road crosses itself on a bridge (Track.cross:
-// an open road may have one too), the race no longer than 5 km. The open road's traffic is its own mix (def.traffic): the scenic area's
+// an open road may have one too), the race no longer than 5 km (since 15. 11. 2026 from the straight past
+// bend 61, the bends before it behind the start). The open road's traffic is its own mix (def.traffic): the scenic area's
 // buses and vans outnumber the cars, no trucks. A whole race up to the cave (12 AI + the player on autopilot): every car finishes and pulls
 // up in its own slot past the line, none snaps from one level of the loop to the other; a whole duel in the traffic on autopilot: both reach
 // the cave and the traffic keeps moving. The medal times of the time trial: the stock rally car on the autopilot.
@@ -23,7 +24,7 @@ const turn = (s, h) => { const a = T.idx(s - h), b = T.idx(s + h); let t = 0; fo
 check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 4 checkpoints, the road 9 m wide',
   def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 4.5,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
-check('track: from bend 54 (~729 m) up to the square below Tianmen Cave (~1218 m), 4.5-5 km', Math.abs(def.alt[0] - 729) < 20 && Math.abs(def.alt[1] - 1218) < 20 && T.raceLen > 4500 && T.raceLen <= 5000 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
+check('track: from the straight past bend 61 (~789 m) up to the square below Tianmen Cave (~1218 m), 4.1-4.4 km', Math.abs(def.alt[0] - 789) < 20 && Math.abs(def.alt[1] - 1218) < 20 && T.raceLen > 4100 && T.raceLen <= 4400 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('tianmen'));
 
@@ -38,7 +39,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     `${cv.length} bends, ${hair} hairpins, turns ${tn.map(a => Math.round(a * 57.3)).join(' ')}`);
   check('bends: 54 to 98 before the finish, 99 just past it; each sign\'s altitude the road\'s', cv[44][0] < T.raceLen && cv[45][0] > T.raceLen && own,
     `bend 54 ${Math.round(alt[0])} m, bend 98 ${Math.round(alt[44])} m, bend 99 ${Math.round(alt[45])} m`);
-  check('bends: the HUD and the commentator know them (Ovinek 54 .. Ovinek 98, the loop, the cave at the finish)', T.names.filter(q => /^Ovinek \d+ · /.test(q.n)).length === 45 && T.names.some(q => q.n === 'Zanka' && q.say) && /^Tianmenska jama/.test(T.names[T.names.length - 1].n),
+  check('bends: the HUD and the commentator know them (Ovinek 62 .. Ovinek 98 past the start, the loop, the cave at the finish)', T.names.filter(q => /^Ovinek \d+ · /.test(q.n)).length === 37 && /^Ovinek 62 /.test(T.names[0].n) && T.names.some(q => q.n === 'Zanka' && q.say) && /^Tianmenska jama/.test(T.names[T.names.length - 1].n),
     T.names.length + ' places');
   // the climb is on the legs: the grade through the hairpins' apexes (+-10 m) lower than on the legs between them; nowhere steeper than ~12.5 %
   const hp = cv.filter((c, k) => Math.abs(wide[k]) > 2.6).map(c => c[0]);
