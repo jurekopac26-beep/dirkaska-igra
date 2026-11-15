@@ -2,7 +2,7 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Atimpoku, Ghana: a road by the Volta river on today's roads (docs/proge/atimpoku.md): down from the Akosombo side through Atimpoku, round
-  // the roundabout (the line through it smoothed: tools/atimpoku/build.py) and over the Adomi suspension bridge of 1957 high above the Volta
+  // the roundabout (the line through it smoothed: tools/atimpoku/build.py) and over the Adomi arch bridge of 1957 (its deck hung from the arch) high above the Volta
   // (the steel arch and its deck: the game's model, assets/landmarks/atimpoku.glb, World.znamenitost), then up the main road on the east bank:
   // 4.01 km of racing. One card, four ways to drive it (def.modes). They drive on the right in Ghana.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/atimpoku/config.json); metres, origin = the
@@ -20,8 +20,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     id: 'atimpoku', name: 'Atimpoku, Gana', theme: 'atimpoku', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1,
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~130 m of road past the line, two rows a side
     halfWidth: 5.4,
-    desc: "Cesta ob reki Volti v Gani: od strani Akosomba skozi Atimpoku, okoli krožišča in čez viseči most Adomi iz leta 1957 visoko nad Volto, nato po glavni cesti na vzhodnem bregu. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
-    en: { name: 'Atimpoku, Ghana', desc: "A road by the Volta river in Ghana: down from the Akosombo side through Atimpoku, round the roundabout and over the Adomi suspension bridge of 1957, high above the Volta, then up the main road on the east bank. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the east bank' },
+    desc: "Cesta ob reki Volti v Gani: od strani Akosomba skozi Atimpoku, okoli krožišča in čez ločni most Adomi z obešenim voziščem iz leta 1957 visoko nad Volto, nato po glavni cesti na vzhodnem bregu. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
+    en: { name: 'Atimpoku, Ghana', desc: "A road by the Volta river in Ghana: down from the Akosombo side through Atimpoku, round the roundabout and over the Adomi arch bridge of 1957, high above the Volta, then up the main road on the east bank. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the east bank' },
     realKm: 4.01, alt: [32, 23],
     start: [49.9, 110.2], finish: [2791.5, 1712.8], cps: [[558.5, 727.8], [1138.0, 1162.5], [1485.1, 1777.6], [2108.7, 1993.3]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,

@@ -289,28 +289,7 @@
       house(g, bx, bz, Lb, Wb, ang, y0, hh, big || crH(bx, bz, 15) < 0.7, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
-    // more of the city where the land cover says it is built up and OpenStreetMap has no footprints (15-55 m from the road, square to it)
-    {
-      const Lt = NRC * 32;
-      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
-        if (!G.on[tj * G.ntx + ti]) continue;
-        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
-        for (let zz = za; zz < za + Lt; zz += 18) for (let xx = xa; xx < xa + Lt; xx += 18) {
-          if (crH(xx, zz, 40) > 0.55) continue;
-          const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
-          if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
-          const Lb = 9 + crH(x, z, 43) * 7, Wb = 8 + crH(x, z, 44) * 6;
-          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || seaD(x, z) > -8) continue;
-          const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
-          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
-          let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
-          if (hi - lo > 4) continue;
-          const fl = 2 + Math.floor(crH(x, z, 45) * 4);
-          house(scen.get(x, z), x, z, Lb, Wb, ang, lo, fl * 3.1, crH(x, z, 46) < 0.85, vary(WALL[Math.floor(crH(x, z, 47) * WALL.length)], R, 0.05));
-          nFill++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 2);
-        }
-      }
-    }
+    // (no houses beyond OSM's footprints: what OpenStreetMap does not have is not made up; stats.fill stays 0)
 
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
     for (const s0 of [sStart, sFin]) {

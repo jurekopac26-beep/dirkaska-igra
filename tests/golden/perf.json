@@ -364,11 +364,11 @@
   "jsMs": 1.14
  },
  "atimpoku": {
-  "calls": 104,
+  "calls": 103,
   "maxCalls": 132,
-  "kverts": 248,
-  "maxKverts": 290,
-  "jsMs": 1.05
+  "kverts": 242,
+  "maxKverts": 289,
+  "jsMs": 1.83
  },
  "luanda": {
   "calls": 110,

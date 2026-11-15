@@ -69,13 +69,13 @@ NAMES = [
 ]
 EN_NAMES = {'Cesta iz Akosomba': 'Road from Akosombo', 'Krožišče': 'The Roundabout', 'Most Adomi': 'Adomi Bridge', 'Čez Volto': 'Over the Volta', 'Vzhodni breg': 'East Bank'}
 
-DESC = ('Cesta ob reki Volti v Gani: od strani Akosomba skozi Atimpoku, okoli krožišča in čez viseči most Adomi iz leta 1957 visoko nad Volto, '
+DESC = ('Cesta ob reki Volti v Gani: od strani Akosomba skozi Atimpoku, okoli krožišča in čez ločni most Adomi z obešenim voziščem iz leta 1957 visoko nad Volto, '
         'nato po glavni cesti na vzhodnem bregu. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.')
-DESC_EN = ('A road by the Volta river in Ghana: down from the Akosombo side through Atimpoku, round the roundabout and over the Adomi suspension '
+DESC_EN = ('A road by the Volta river in Ghana: down from the Akosombo side through Atimpoku, round the roundabout and over the Adomi arch '
            'bridge of 1957, high above the Volta, then up the main road on the east bank. '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
-# medal times (s): estimated from Luanda's by length (the medal run of tools/nova-proga.mjs --medalje is still to be made: docs/proge/atimpoku.md)
-MEDALS = {'cs': [83, 87, 94], 'wet': {'cs': [95, 100, 108]}, 'winter': {'cs': [93, 97, 105], 'wet': {'cs': [113, 119, 128]}}}
+# medal times (s): the stock rally car on the autopilot x 1.01 (tests/atimpoku.test.js checks them)
+MEDALS = {'cs': [87, 91, 98], 'wet': {'cs': [100, 105, 113]}, 'winter': {'cs': [97, 102, 110], 'wet': {'cs': [118, 124, 134]}}}
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
@@ -91,7 +91,7 @@ def build_track():
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Atimpoku, Ghana: a road by the Volta river on today's roads (docs/proge/atimpoku.md): down from the Akosombo side through Atimpoku, round
-  // the roundabout (the line through it smoothed: tools/atimpoku/build.py) and over the Adomi suspension bridge of 1957 high above the Volta
+  // the roundabout (the line through it smoothed: tools/atimpoku/build.py) and over the Adomi arch bridge of 1957 (its deck hung from the arch) high above the Volta
   // (the steel arch and its deck: the game's model, assets/landmarks/atimpoku.glb, World.znamenitost), then up the main road on the east bank:
   // %(km)s km of racing. One card, four ways to drive it (def.modes). They drive on the right in Ghana.
   // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL) by tools/proga-podatki.py (tools/atimpoku/config.json); metres, origin = the
