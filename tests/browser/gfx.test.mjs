@@ -7,7 +7,7 @@
 import { serve, launch, openGame, startTrack, trackIds, najmanj, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
-const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno', 'luanda'];   // (with a shore band; Livorno: the Ligurian Sea; Luanda: its bay; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
+const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno', 'luanda', 'mombasa'];   // (with a shore band; Livorno: the Ligurian Sea; Luanda: its bay; Mombasa: the Likoni channel and the ocean; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
 const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass and the Moki Dugway: gravel roads)
 const srv = await serve();
 const browser = await launch();

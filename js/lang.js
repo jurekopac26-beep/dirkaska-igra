@@ -451,6 +451,7 @@
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Zaliv Praia do Bispo': 'Praia do Bispo Bay', 'Pod gričem': 'Under the Hill', 'Obroč pod gričem': 'Round the Hill', 'Trdnjava': 'Fortress', 'Ob zalivu': 'Along the Bay', 'Marginal': 'Marginal', 'Do konca zaliva': 'To the end of the bay',   // (Luanda: the HUD, the results of an escape)
+    'Mestno središče': 'Town Centre', 'Stari del mesta': 'Old Town', 'Obalna cesta': 'Shore Road', 'Kanal Likoni': 'Likoni Channel', 'Do obalne ceste': 'To the shore road',   // (Mombasa: the HUD, the results of an escape; 'Trdnjava' and 'Krožišče' are already in)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
