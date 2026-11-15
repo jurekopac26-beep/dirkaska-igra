@@ -231,6 +231,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
+| isuna | Isuna, Butan | isuna | `js/world-isuna.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | luanda | Luanda, Angola | luanda | `js/world-luanda.js` (`buildLuanda`; podatki `js/data/luanda.js` in proga iz `tools/luanda/build.py track`; trdnjava na griču: model iz Blenderja prek `World.znamenitost`, nadomestek v datoteki) |
