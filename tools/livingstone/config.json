@@ -1,9 +1,9 @@
 {
   "id": "livingstone",
-  "about": "Livingstone, Zambia (id livingstone): the trunk road (OSM way 23591193, ref T1) from Livingstone south past the falls to the old bridge over the gorge of the Zambezi (docs/proge/livingstone.md); draft route, ~4.5 km to the bridge",
+  "about": "Livingstone, Zambia (id livingstone): the trunk road T1 (OSM way 23591193) from the south of Livingstone past the falls, over the old bridge across the gorge of the Zambezi (w22083857) and on along the trunk road on the far bank (Livingstone Way) (docs/proge/livingstone.md)",
   "box": [
-    -17.935,
-    25.835,
+    -17.945,
+    25.825,
     -17.88,
     25.875
   ],
@@ -13,16 +13,10 @@
   },
   "route": [
     [
-      -17.8964,
-      25.857,
+      -17.911,
+      25.8622,
       null,
-      "start on the trunk road south of Livingstone, southbound (draft)"
-    ],
-    [
-      -17.9098,
-      25.8614,
-      null,
-      ""
+      "start on the trunk road south of Livingstone, southbound"
     ],
     [
       -17.9199,
@@ -40,17 +34,37 @@
       -17.9289,
       25.8623,
       null,
-      "down towards the gorge, east cataract about 100-300 m to the north"
+      "down towards the gorge, the eastern cataract 100-300 m to the north"
     ],
     [
       -17.929,
       25.8577,
       null,
-      "finish at the Zambian end of the old bridge (draft; see docs/proge/livingstone.md)"
+      "the Zambian end of the old bridge"
+    ],
+    [
+      -17.9275,
+      25.8566,
+      null,
+      "the far end of the bridge"
+    ],
+    [
+      -17.9267,
+      25.8496,
+      "Livingstone Way",
+      ""
+    ],
+    [
+      -17.9241,
+      25.8445,
+      "Livingstone Way",
+      "finish on the trunk road on the far bank"
     ]
   ],
   "prefer": [],
-  "geoRoads": [],
+  "geoRoads": [
+    "Livingstone Way"
+  ],
   "geoWater": [
     "Zambezi"
   ],
