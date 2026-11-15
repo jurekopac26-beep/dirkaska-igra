@@ -7,8 +7,11 @@
    dyn.lights, recoloured in the scene's unlit mesh; the hut, the booth, the timekeepers, the marshal, the photographer, cones, poles, a tape and the
    fans) and 'startPark' (the teams: before the line, or after it where the verge before it is narrow). A thing is placed only where it fits (beyond
    the barrier, on even ground, clear of side roads and of the others); what does not fit is left out (o.startStats). Tianmen: the reduced start, with
-   no paddock. Chapman: the hut and the teams on one side before the line (a side road just past it, a rock wall across), no fans. The trampled grass: one mesh (startWorn, one draw call), slush in winter. All generic: no text, logos, brands or numbers; the exception
-   from fewFans is for the start only.
+   no paddock. Chapman: the hut and the teams on one side before the line (a side road just past it, a rock wall across), no fans.
+   Harju: the reduced start on the right (houses about 2.5 m beyond the barrier; on the left the same stage's other carriageway), kept out of the
+   buildings and with no trampled grass on the tarmac (o.startAvoid, o.startPaved).
+   The trampled grass: one mesh (startWorn, one draw call), slush in winter. All generic: no text, logos, brands or numbers; the exception from
+   fewFans is for the start only.
    The worlds ask World.startOwn(def) whether to leave out their own start and World.startGround(T) for the circles their posts keep out of.
    Uses no THREE, World.api or document at load (the scene test loads the kit in a bare context). */
 (function () {
@@ -27,7 +30,8 @@
   const tm = () => TM || (TM = { M: new THREE.Matrix4(), P: new THREE.Vector3(), Q: new THREE.Quaternion(), E: new THREE.Euler(), S1: new THREE.Vector3(1, 1, 1) });
   const lamC = new Map(), lamOf = (c) => { let m = lamC.get(c); if (!m) lamC.set(c, m = new THREE.MeshLambertMaterial({ color: c })); return m; };
   const lamb = (o) => { o.traverse(m => { if (m.material && m.material.isMeshBasicMaterial) m.material = lamOf(m.material.color.getHex()); }); return o; };   // (no unlit mesh, no draw call more)
-  const fresh = (o) => ({ used: [], worn: [], gH: o && o.groundH, lamps: null, placed: 0, skipped: 0 });
+  const fresh = (o) => ({ used: [], worn: [], gH: o && o.groundH, avoid: (o && o.startAvoid) || null, paved: (o && o.startPaved) || null, lamps: null, placed: 0, skipped: 0 });   // (avoid, paved: a world's
+  //  buildings and its paved ground (o.startAvoid, o.startPaved), where it has them: nothing stands in a building, no trampled grass on tarmac)
 
   // ---- where (d: metres from the line along the road, + ahead; sd: the side, + right; bb: metres beyond the barrier)
   function at(T, d, sd, bb) { const s = Math.max(0, Math.min(T.len - T.ds, T.startS + d)), i = T.idx(s), e = s - i * T.ds, bar = sd > 0 ? T.br[i] : T.bl[i], nx = T.nx[i] * sd, nz = T.nz[i] * sd;
@@ -47,7 +51,7 @@
       for (let k = 0; k + 1 < st.n; k++) if (segDist(px, pz, st.x[k], st.z[k], st.x[k + 1], st.z[k + 1]) - (st.hw || 3) < 2) return true; } return false; }   // (within 2 m of a side road)
   function fits(pl, T, x, z, ux, uz, hl, hw, spread) { const A = World.api, vx = -uz, vz = ux;
     const pts = [[x, z], [x + ux * hl + vx * hw, z + uz * hl + vz * hw], [x + ux * hl - vx * hw, z + uz * hl - vz * hw], [x - ux * hl + vx * hw, z - uz * hl + vz * hw], [x - ux * hl - vx * hw, z - uz * hl - vz * hw]]; let lo = Infinity, hi = -Infinity;
-    for (const [px, pz] of pts) { if (!(A.clearance(px, pz) >= 0.4)) return false; const h = pl.gH(px, pz); if (!Number.isFinite(h)) return false; lo = Math.min(lo, h); hi = Math.max(hi, h);
+    for (const [px, pz] of pts) { if (!(A.clearance(px, pz) >= 0.4) || (pl.avoid && pl.avoid(px, pz))) return false; const h = pl.gH(px, pz); if (!Number.isFinite(h)) return false; lo = Math.min(lo, h); hi = Math.max(hi, h);
       if (onStub(T, px, pz)) return false; for (const r of pl.used) if (inRect(r, px, pz)) return false; }
     const me = { x, z, ux, uz, hl, hw }; for (const r of pl.used) if (inRect(me, r.x, r.z)) return false;
     if (hi - lo > spread) return false; const nr = A.nearest(x, z); if (nr.i >= 0 && T.hy && Math.abs(pl.gH(x, z) - T.hy[nr.i]) > 1.5) return false;
@@ -56,7 +60,7 @@
     if (!p.ok || !fits(pl, World.api.T, p.x, p.z, zdir[0], zdir[1], hz, hx, spread)) { pl.skipped++; return null; }
     pl.placed++; return putZ(C, F, lamb(obj), p.x, p.z, zdir[0], zdir[1], sink); }
   function who(C, F, pl, look, p, face, act, opt) { opt = opt || {};
-    if (!p.ok || !(World.api.clearance(p.x, p.z) >= 0.4) || onStub(World.api.T, p.x, p.z)) { pl.skipped++; return null; }
+    if (!p.ok || !(World.api.clearance(p.x, p.z) >= 0.4) || onStub(World.api.T, p.x, p.z) || (pl.avoid && pl.avoid(p.x, p.z))) { pl.skipped++; return null; }
     const [a, b] = toF(F, p.x, p.z); if (b < -1.5 || Math.abs(a) > 23 || (!opt.inside && pl.used.some(r => inRect(r, p.x, p.z)))) { pl.skipped++; return null; }
     const A = Object.assign({ a, b, face: dirF(F, face[0], face[1]) }, act); let st;
     if (opt.fan) { const [fa, fb] = toF(F, opt.fan.x, opt.fan.z); st = { act: A, fence: { a: fa, b: fb, pose: 'cheer', t: 0.8 }, run: { f: 0.55 } }; }
@@ -159,7 +163,7 @@
   //      m: the start scene's place (metres from the line), off: the teams moved down the road (behind the hut, on its side)
   const CFG = { pikes: { t: -1, p: 1, fans: true }, pikesg: { t: -1, p: 1, fans: true }, chapman: { t: 1, p: 1, m: -5, off: -9, fans: false },
     balea: { t: -1, p: -1, after: true, fans: true, opt: { flag: vert([0x002b7f, 0xfcd116, 0xce1126]) } }, rastro: { t: -1, p: -1, after: true, fans: true },
-    tianmen: { t: 1, p: 0, fans: false, reduced: true }, caracoles: { t: -1, p: 1, fans: true }, katu: { t: -1, p: 1, fans: true }, harju: { t: -1, p: 1, fans: true } };
+    tianmen: { t: 1, p: 0, fans: false, reduced: true }, caracoles: { t: -1, p: 1, fans: true }, katu: { t: -1, p: 1, fans: true }, harju: { t: 1, p: 0, fans: false, reduced: true } };
   for (const id in CFG) { const c = CFG[id], opt = Object.assign({ cfg: c }, c.opt); site(id, [['start', c.m || 0, c.t, opt]].concat(c.p ? [['startPark', c.after ? 21 : -20 + (c.off || 0), c.p, opt]] : [])); }
   KIT.START_SCENES = new Set(['start', 'startPark']);
   World.startOwn = (def) => !!(def && !def.test && !def.pending && CFG[def.id]);
@@ -184,7 +188,7 @@
     for (const w of pl.worn) { const nr = Math.max(2, Math.round(w.len / 1.2)), nc = Math.max(2, Math.round(2 * w.hw / 1.2)), vx = -w.uz, vz = w.ux;
       const u0 = (w.cell % 2) * 0.5 + 0.01, v0 = 1 - Math.floor(w.cell / 2) * 0.5 - 0.01, V = []; let lo = Infinity, hi = -Infinity, ok = true;
       for (let k = 0; k <= nr && ok; k++) for (let e = 0; e <= nc; e++) { const fa = w.len * (k / nr - 0.5), fb = 2 * w.hw * (e / nc - 0.5), x = w.x + w.ux * fa + vx * fb, z = w.z + w.uz * fa + vz * fb, y = gH(x, z);
-        if (!Number.isFinite(y)) { ok = false; break; } const n = A.nearest(x, z); if (n.i >= 0 && Math.abs(n.lat) < (T.wAt ? T.wAt(n.i) : T.w) + 0.3) { ok = false; break; }
+        if (!Number.isFinite(y) || (pl.avoid && pl.avoid(x, z)) || (pl.paved && pl.paved(x, z))) { ok = false; break; } const n = A.nearest(x, z); if (n.i >= 0 && Math.abs(n.lat) < (T.wAt ? T.wAt(n.i) : T.w) + 0.3) { ok = false; break; }
         lo = Math.min(lo, y); hi = Math.max(hi, y); V.push(x, y + 0.04, z, u0 + 0.48 * e / nc, v0 - 0.48 * k / nr); }
       if (!ok || hi - lo > 1.6) continue; const b0 = P.length / 3;
       for (let q = 0; q < V.length; q += 5) { P.push(V[q], V[q + 1], V[q + 2]); UV.push(V[q + 3], V[q + 4]); CO.push(1, 1, 1, 0.75 + 0.25 * R()); }

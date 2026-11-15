@@ -726,25 +726,31 @@
       for (const f of [-1, 1]) { const ox = tx * 0.04 * f, oz = tz * 0.04 * f, hw = Wd / 2 * f;
         const A = [cx + ox - ux * hw, cy, cz + oz - uz * hw], B = [cx + ox + ux * hw, cy, cz + oz + uz * hw], C = [B[0], cy + H, B[2]], D = [A[0], cy + H, A[2]];
         (gb || ban).quadO(A, B, C, D, W1, [cx - tx * f, cy + H / 2, cz - tz * f], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]); } };
-    const arch = (s, rowK, postCol, beamCol) => {   // a gantry over the road: two posts beyond the verge, a beam, a board both ways
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = WA[i] + 1.6, g = scen.get(x, z), hd = T.hd[i];
+    // the shared start's place (js/world-start.js): the old start (its gantry, lights and hut) and the flags in its ground go into SINK and sinkB (never
+    // drawn), so every exclusion circle stays and nothing moves anywhere else; the new start keeps out of the buildings, its trampled grass off the tarmac
+    const sOwn = def.id === 'harju' && !!(World.startOwn && World.startOwn(def)), sGr = sOwn && World.startGround ? World.startGround(T) : [], SINK = new Chunks(110), sinkB = new GB(true);
+    const inStart = (x, z) => { for (const [cx, cz, r] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; return false; };
+    if (sOwn) { out.startAvoid = onBld; out.startPaved = onPaved; }
+    const arch = (s, rowK, postCol, beamCol, hide) => {   // a gantry over the road: two posts beyond the verge, a beam, a board both ways
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = WA[i] + 1.6, g = (hide ? SINK : scen).get(x, z), hd = T.hd[i];
       for (const o of [-L1, L1]) box(g, x + nx * o, y - 0.5, z + nz * o, 0.5, 7.0, 0.5, hd, postCol);
       box(g, x, y + 5.9, z, 0.5, 0.6, 2 * L1 + 0.5, hd, beamCol);
-      const [v0, v1] = row(rowK); bannerQ(x, y + 4.2, z, T.tx[i], T.tz[i], Math.min(12.5, 2 * L1 - 0.6), 1.56 * Math.min(1, (2 * L1 - 0.6) / 12.5), v0, v1);
+      const [v0, v1] = row(rowK); bannerQ(x, y + 4.2, z, T.tx[i], T.tz[i], Math.min(12.5, 2 * L1 - 0.6), 1.56 * Math.min(1, (2 * L1 - 0.6) / 12.5), v0, v1, 0, 1, hide ? sinkB : null);
       exclPush(x, z, WA[i] + 6); return [x, y, z, i]; };
     const flagAt = (x, z, rot, h) => { ouFlag(scen.get(x, z), x, hjGround(x, z), z, rot, h || 7); exclPush(x, z, 1); };
     {
-      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.1, 0.2, 0.46]), nx = T.nx[i], nz = T.nz[i], g = scen.get(x, z);
+      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.1, 0.2, 0.46], sOwn), nx = T.nx[i], nz = T.nz[i], g = (sOwn ? SINK : scen).get(x, z);
       box(g, x, y + 6.5, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);   // the start lights' panel
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.05, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 6, 1, 0.6), hy = hjGround(hx, hz), gh = scen.get(hx, hz);   // the timing hut on the sidewalk
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.05, z + nz * o); m.rotation.y = -T.hd[i]; if (!sOwn) root.add(m); lights.push(m); }
+      if (!sOwn) out.dyn.lights = lights;   // (else the shared start's lamps: js/world-start.js)
+      const [hx, hz] = onSide(sStart - 6, 1, 0.6), hy = hjGround(hx, hz), gh = (sOwn ? SINK : scen).get(hx, hz);   // the timing hut on the sidewalk
       box(gh, hx, hy, hz, 3.4, 2.6, 2.4, T.hd[i], [0.93, 0.92, 0.88], [0.3, 0.3, 0.32], true); box(gh, hx, hy + 1.2, hz, 3.45, 0.8, 2.45, T.hd[i], [0.16, 0.24, 0.36], null, true); exclPush(hx, hz, 3);
-      { const [bx, bz, bi] = onSide(sStart + 16, -1, 0.5), by = hjGround(bx, bz), gb = scen.get(bx, bz);   // the stage's banner beside the road after the line
+      { const [bx, bz, bi] = onSide(sStart + 16, -1, 0.5), by = hjGround(bx, bz), hb = sOwn && [-3.1, 0, 3.1].some(o => inStart(bx + T.tx[bi] * o, bz + T.tz[bi] * o)), gb = (hb ? SINK : scen).get(bx, bz);   // the stage's banner beside the road after the line
         for (const o of [-3.1, 3.1]) box(gb, bx + T.tx[bi] * o, by - 0.2, bz + T.tz[bi] * o, 0.14, 2.9, 0.14, T.hd[bi], [0.3, 0.3, 0.32]);
-        const [v0, v1] = row(4); bannerQ(bx, by + 1.4, bz, -T.nx[bi], -T.nz[bi], 6.4, 0.8, v0, v1); exclPush(bx, bz, 4); }
-      for (let s = sStart - 40; s < sStart + 40; s += 16) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 0.4); if (!onBld(px, pz)) flagAt(px, pz, T.hd[ii], 6.5); }
+        const [v0, v1] = row(4); bannerQ(bx, by + 1.4, bz, -T.nx[bi], -T.nz[bi], 6.4, 0.8, v0, v1, 0, 1, hb ? sinkB : null); exclPush(bx, bz, 4); }
+      for (let s = sStart - 40; s < sStart + 40; s += 16) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 0.4); if (onBld(px, pz)) continue;
+        if (sOwn && inStart(px, pz)) exclPush(px, pz, 1); else flagAt(px, pz, T.hd[ii], 6.5); }   // (in the shared start's ground only its circle stays)
     }
     const kmS = (s) => ((s - sStart) / 1000).toFixed(1).replace('.', ',') + ' km';
     T.cpS.forEach((s, k) => { arch(s, 2 + k, [0.86, 0.86, 0.88], [0.1, 0.2, 0.46]); });
