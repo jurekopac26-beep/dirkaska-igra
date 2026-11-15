@@ -81,10 +81,18 @@
   }
   function chGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, as caGCol)
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / VRC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
-    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = chGH(ii, jj);
-      const nx = (chGH(ii + 1, jj) - chGH(ii - 1, jj)) / (2 * VRC), nz = (chGH(ii, jj + 1) - chGH(ii, jj - 1)) / (2 * VRC), c = chCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / Math.hypot(nx, 1, nz), G.dd[jj * G.nx + ii]);
+    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, c = chVCol(ii, jj);
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
+  }
+  function chVCol(i, j) {   // chGCol's colour of an inner grid vertex (1 .. n-2), computed once: kept only when its five heights were all in the grid
+    // already (chGH returns a height's unrounded value the first time, the grid's float32 after, so a colour with a new height would differ by a hair)
+    const G = API.VR.G, C = G.chC || (G.chC = new Float64Array(G.nx * G.nz * 3).fill(NaN)), H = G.h, k = j * G.nx + i, W = G.nx;
+    if (C[k * 3] === C[k * 3]) { CHCOL[0] = C[k * 3]; CHCOL[1] = C[k * 3 + 1]; CHCOL[2] = C[k * 3 + 2]; return CHCOL; }
+    const keep = H[k] === H[k] && H[k + 1] === H[k + 1] && H[k - 1] === H[k - 1] && H[k + W] === H[k + W] && H[k - W] === H[k - W];
+    const h = chGH(i, j), nx = (chGH(i + 1, j) - chGH(i - 1, j)) / (2 * VRC), nz = (chGH(i, j + 1) - chGH(i, j - 1)) / (2 * VRC), c = chCol(G.x0 + i * VRC, G.z0 + j * VRC, h, 1 / Math.hypot(nx, 1, nz), G.dd[k]);
+    if (keep) { C[k * 3] = c[0]; C[k * 3 + 1] = c[1]; C[k * 3 + 2] = c[2]; }
+    return c;
   }
   function chTileOn(ti, tj) {   // 0: none, 1: full tile (5 m cells), 2: coarse outer ring (10 m cells, in the haze); round the start wider (the beach of Hout Bay)
     const G = API.VR.G, L = VRC * VRT, x = G.x0 + (ti + 0.5) * L, z = G.z0 + (tj + 0.5) * L, d = vrDist(x, z), df = Math.hypot(x - API.VR.st[0], z - API.VR.st[1]);
