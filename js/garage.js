@@ -23,6 +23,8 @@
   const model = (id) => MODELS.find(m => m.id === id);
   const heirId = (id) => { const M = model(id); return M ? Core.heirOf(M).id : id; };
   // each car's colour in a new profile (the 10 older ones as before; the others in turn round the colours by their place in the order)
+  // the paint menu's two tabs (plate an_barvanje 2/6) and each colour's few words
+  const CTAB = [['Klasične', [0, 1, 4, 2]], ['Žive', [3, 5, 6, 7]]], CDESC = ['dirkalna klasika', 'svetla, čista', 'globoka in mirna', 'vidna od daleč', 'globok sijaj', 'stara dirkalna', 'topla in živa', 'drzna izbira'];
   const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
   const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
   // service: w = 1 - the row's state; f = (the car's worth / 68.000)^0.8 (the wash ^0.3); the wash (20 + 280 w) f, the body (150 +
@@ -329,7 +331,7 @@
     if (!thumbQ.length || G.busy || G.thumbed) return;
     const [id, col] = thumbQ.shift(), k = S.cars[id];
     try { (thumbs[id] = thumbs[id] || {})[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: k.stripe, upg: levels(k.parts) }, 160, 72, { back: 0.5 }); } catch (e) { console.error(e); return; }
-    head();
+    head(); const pi = id === S.car && document.querySelector('#g-menu [data-col="' + col + '"] .pi'); if (pi) pi.innerHTML = '<img alt="" src="' + thumbs[id][col] + '">';   // (a paint card's car in its colour)
   }
 
   /* ---------------- the menu of a tapped part: four tabs (its categories: the name and the prices), four tiles (the options: the chosen
@@ -356,7 +358,7 @@
     let t = $('g-tag'); const b = key && G.box(key);
     if (!b) { if (t) t.classList.remove('on'); return; }
     if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
-    t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); t.style.left = Math.round(b.x + b.w / 2) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }
+    t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); const hw = t.offsetWidth / 2 + 4, W = $('g-stage').clientWidth; t.style.left = Math.round(Math.max(hw, Math.min(W - hw, b.x + b.w / 2))) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }   // (kept on the screen)
   function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
@@ -367,9 +369,11 @@
         GarageShop.SERVICE.map((q, i) => { const p = i < 3 ? ps[i] : all, done = !p; return '<button class="g-tl' + (m.sel[1] === i ? ' sel' : '') + (done ? ' fit' : '') + '" data-tile="0,' + i + '"><span class="pi">' + ICON.servis(i) + '</span><div><b>' + esc(L2(q[0])) + '</b><small>' + esc(i < 3 ? tr('Stanje {0} %', Math.round(c.cond[SRV[i].id] * 100)) : L2(q[1])) + '</small><i>' + (done ? '✓' : eur(p)) + '</i></div></button>'; }).join('') + '</div>';
       const p = m.sel[1] < 3 ? ps[m.sel[1]] : all; ok = !p; buy = ok ? tr('KOT NOV ✓') : tr('SERVIS · {0}', eur(p)); can = !ok;
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
-    } else if (el === 'barva') {   // (the eight colours as the circles round the ring, one price: the car's size)
-      const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car);
-      html += '<div class="g-mh"><h3>' + esc(L2(EL.barva.n)) + '</h3><span>' + esc(tr(COLORS[cur][1])) + '</span></div><div class="g-mg g-mc">' + COLORS.map((q, i) => '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + ICON.barva(0, 0, q[0]) + '</span></button>').join('') + '</div>';
+    } else if (el === 'barva') {   // (plate an_barvanje 2/6: two tabs of four colours, each a card with the car in it; ⏱ the chamber's time; one price: the car's size)
+      const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (m.ctab == null) m.ctab = CTAB.findIndex(g => g[1].includes(cur)); const g = CTAB[m.ctab][1];
+      for (const i of g) if (!(thumbs[S.car] && thumbs[S.car][i]) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
+      html += '<div class="g-mh g-ch"><h3>' + esc(L2(EL.barva.n)) + '</h3>' + CTAB.map((q, i) => '<button class="g-cp' + (i === m.ctab ? ' sel' : '') + '" data-ctab="' + i + '">' + esc(tr(q[0])) + '</button>').join('') + '<span class="g-ct">⏱ 6 s</span></div><div class="g-mg g-mc">' +
+        g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + (i === c.color ? esc(tr('nameščeno')) : eur(p)) + '</i></div></button>'; }).join('') + '</div>';
       ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : tr('KUPI IN NAMESTI · {0}', eur(p));
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
       if (m.car) html += '<div class="g-mx"><button data-mact="aero">' + esc(tr('AERO PAKET')) + ' ›</button></div>';   // (opened from the car: its aero kits a tap away)
@@ -579,6 +583,7 @@
       if (t.dataset.act) return onAct(t.dataset.act);
       if (t.dataset.tab) { G.sound(S.sound); if (menu) { menu.tab = +t.dataset.tab; drawMenu(); } return; }
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
+      if (t.dataset.ctab) { G.sound(S.sound); if (menu) { menu.ctab = +t.dataset.ctab; drawMenu(); } return; }
       if (t.dataset.col) { G.sound(S.sound); if (menu) { menu.color = +t.dataset.col; drawMenu(); } return; }
       if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); else if (t.dataset.mact === 'aero') { menu = null; openMenu({ el: 'aero', key: null, car: true }); } return; }
       if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }

@@ -195,9 +195,19 @@ svg { display: block; }
 .g-tl.sel { background: #e9f6ff; border-color: #36aef2; box-shadow: 0 0 0 3px rgba(54, 174, 242, .25), 0 3px 8px rgba(20, 32, 51, .14); }
 .g-tl.fit::after { content: '✓'; position: absolute; right: 6px; top: 4px; font: 900 13px/1 var(--f); color: #23894a; }
 .g-tl.lock { opacity: .62; }
-/* the paint's eight colours (one price): four a row, the colour alone */
-.g-mg.g-mc { grid-template-columns: repeat(4, 1fr); }
-.g-mc .g-tl { justify-content: center; min-height: 58px; padding: 6px 4px; }
+/* the paint (plate an_barvanje 2/6): two pill tabs and the chamber's time in the head, four cards (the car in the colour, its name, a few words, the price) */
+.g-ch { align-items: center; flex-wrap: wrap; gap: 6px; }
+.g-ch h3 { margin-right: 2px; }
+.g-cp { padding: 3px 10px; border-radius: 999px; background: #e3e8f0; color: #46546c; font: 800 11.5px/1.2 var(--f); }
+.g-cp.sel { background: #36aef2; color: #fff; }
+.g-ch .g-ct { margin-left: auto; padding: 3px 8px; border-radius: 999px; background: #eef1f6; font: 800 11px/1.2 var(--f); color: #142033; }
+.g-mc .g-tl { gap: 6px; padding: 6px 6px; }
+.g-mc .g-tl .pi { width: 64px; height: 34px; }
+.g-mc .g-tl .pi img { width: 64px; height: auto; display: block; }
+.g-mc .g-tl .pi svg { width: 34px; height: 34px; }
+.g-mc .g-tl b { font-size: 13px; }
+.g-mc .g-tl small { font-size: 10.5px; }
+.g-mc .g-tl i { font-size: 11.5px; color: #23894a; }
 .g-tl .pi { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; filter: drop-shadow(0 2px 2px rgba(20, 32, 51, .3)); }
 .g-tl .pi svg { width: 44px; height: 44px; }
 .g-tl > div { min-width: 0; }
