@@ -27,3 +27,7 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Pravno**: cesta je znana iz televizije; v igri in opisih ni nobene omembe oddaje ali njenih voditeljev. Samo zemljepisna imena (Bâlea, Transfăgărășan, Făgăraș, Valea Bâlii, Lacul Bâlea).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py balea --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
+
+## Realizem G: rastje po meritvah
+
+V delu (veja `realizem/g-balea`): rastje in tla ob cesti po meritvah ESA WorldCover 2021 in mozaika Sentinel-2 v pasu 8–60 m (`docs/realizem.md`, »G«).
