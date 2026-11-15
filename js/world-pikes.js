@@ -108,7 +108,7 @@
     const n = pkNear(x, z), i = n.i, dd = n.dd, hn = n.hn; let h;
     if (i < 0) h = pkFar(x, z, 200);
     else { const hr = lerp(hn, n.h, sstep(0, 6, dd)) - 0.3; h = dd <= 1 ? hr : lerp(hr, pkFar(x, z, dd), sstep(1, 45, dd)); }
-    const pads = PK.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z); const pb = p.b || 16; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // flat paddock / car park
+    const pads = PK.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 16, R = p.r + pb; if (Math.abs(x - p.x) >= R || Math.abs(z - p.z) >= R) continue; const d = Math.hypot(x - p.x, z - p.z); if (d < R) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // flat paddock / car park
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, and only a gentle rise right behind them
     PKN.dd = i >= 0 ? dd : 999;
     return h;
