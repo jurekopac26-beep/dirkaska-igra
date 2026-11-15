@@ -312,7 +312,7 @@ try {
   // theirs too (the spoiler: a wing where the car has one); a crushed end caves the roof in, the harder the knock the deeper (the roof's
   // own top, what lies on it left out). A front bumper that carries an aero car's downforce (the Superkombi's: its splitter is no part of
   // its own) comes off as before, the core's rule (core.js maskHeld): the bonnet still neither hangs nor comes off
-  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'modras', 'sakal', 'ris']) {   // (not perun: its rear window in the front strong row, no quarter panes, open in docs/avti-kolibri.md; not titan, cisterna: out of XT_MIN, the roof field moved the cab's rear wall; not kamen, orel: the cage right under the roof, a knock from behind sinks it under 15 % of rlim, as on main)
+  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'modras', 'sakal', 'ris', 'perun']) {   // (perun: noQ, no quarter panes; not titan, cisterna: a cab-over truck's own table (a strong front knock: windscreen 70 %, door windows 50 %, its nose slower to 60 %), in XT_MIN for the roof (section 11); not kamen, orel: the cage right under the roof, a knock from behind sinks it under 15 % of rlim, as on main)
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
@@ -330,9 +330,9 @@ try {
         for (const w of [0, 0.3, -0.3, 0.15, -0.15, 0]) { hit(P, [0.1, 1, w]); settle(); const x = me(); out.n6.push({ dmg: +P.dmg.toFixed(3), end: endMax(), ajar: x.xt.ajar, dead: x.xt.dead, torn: x.torn }); } }
       const a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
       return out; }, hitFn);
-    const C = ct.r, rf = [C.bl, C.bm, C.bs].map(q => q.roof.mean);
+    const C = ct.r, rf = [C.bl, C.bm, C.bs].map(q => q.roof.mean), noQ = ['perun'].includes(id);   // (noQ: no quarter panes; with #661 the union, ['gozdar', 'perun'])
     T.check(`${id}: the table (front strong: windscreen 100 %, door windows 75 %; rear light: only the rear window 50 %)` + (C.wing ? '; rear medium: its wing hangs from 70 %, under it it stays on (the user\'s 2B, a wing for downforce too)' : ''),
-      eq(C.fs.panes, { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && eq(C.bl.panes, { R: 0.5 }) && (!C.wing || (C.bm7.ajar.includes('wing') && !C.bm.ajar.includes('wing') && !C.bm.dead.includes('wing'))), JSON.stringify({ fs: C.fs.panes, bl: C.bl.panes, bm: C.bm.ajar, bm7: C.bm7.ajar }));
+      eq(C.fs.panes, noQ ? { W: 1, DL: 0.75, DR: 0.75 } : { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && (!noQ || !('QL' in C.fs.panes || 'QR' in C.fs.panes)) && eq(C.bl.panes, { R: 0.5 }) && (!C.wing || (C.bm7.ajar.includes('wing') && !C.bm.ajar.includes('wing') && !C.bm.dead.includes('wing'))), JSON.stringify({ fs: C.fs.panes, bl: C.bl.panes, bm: C.bm.ajar, bm7: C.bm7.ajar }));
     T.check(`${id}: the first knock on the front breaks its nearer head lamp, on the rear its nearer rear lamp (the user's 1B)`, C.fl.lamps[1] && !C.fl.lamps[0] && C.rl.lamps[2] && !C.rl.lamps[3], JSON.stringify({ front: C.fl.lamps, rear: C.rl.lamps }));
     const face = C.dfF ? /^hood$/ : /^(bumperF|hood)$/;
     T.check(`${id}: the nose knocked again and again to ~60 %: its end no deeper than 0.3 m, the bumper and the bonnet neither hang nor off, the bonnet not torn (the user's 2B, 3B)` + (C.dfF ? '; its bumper carries downforce: off as before' : ''),
@@ -353,7 +353,7 @@ try {
   // posts as built (darkFn); then a pit stop's repair (the crew's work stepped as repair.test.mjs does it) brings the colours back to the
   // car's as built, and Race.repairCar builds it afresh in them
   const RSEQ = [[0.15, -1, 0], [0.15, 1, -0.6], [0.15, 0.1, -1], [0.15, -1, 0.6], [0.3, 1, 0], [0.3, 0, 1], [0.05, -1, -0.6], 'top', [0.15, 1, 0.6], [0.15, -0.1, 1]], NK = RSEQ.length;
-  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'kamen', 'orel', 'sakal', 'ris'];   // (render.js XT_MIN, not titan, cisterna: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
+  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris'];   // (render.js XT_MIN: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
   // the crew's repair stepped by hand (repair.test.mjs) on the car Q (frames(k): k frames drawn): the painted points' colours against the
   // car's as built (xc.col0), the roof's and all of them, before, through it and after (Race.repairCar: built afresh); and at every one of
   // its 16 steps (REPAIR_N; the middle of each, and 0, 0.3, 0.65, 0.95) the roof shell's points (nNew) and the area (in plan) of its facets,
