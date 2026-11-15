@@ -1074,9 +1074,9 @@ const World = (function () {
     const r = rng(seed), P = 64, g = new Float32Array(P * P); for (let i = 0; i < g.length; i++) g[i] = r();
     return (x, z) => {
       x /= scale; z /= scale; const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
-      const I = (a, b) => g[(((b % P) + P) % P) * P + (((a % P) + P) % P)];
+      const a0 = xi & 63, a1 = (xi + 1) & 63, b0 = (zi & 63) * P, b1 = ((zi + 1) & 63) * P;   // (& 63 = the wrap ((n % P) + P) % P for P = 64, the same cells)
       const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
-      return lerp(lerp(I(xi, zi), I(xi + 1, zi), u), lerp(I(xi, zi + 1), I(xi + 1, zi + 1), u), v);
+      return lerp(lerp(g[b0 + a0], g[b0 + a1], u), lerp(g[b1 + a0], g[b1 + a1], u), v);
     };
   }
 
