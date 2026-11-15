@@ -90,6 +90,13 @@
   if (!['day', 'dusk', 'night', 'dawn'].includes(S.tod)) S.tod = 'day';
   if (!['race', 'tt', 'traffic', 'police', 'elim', 'lov', 'endless', 'drag'].includes(S.mode)) S.mode = 'race';   // (Vršič: the race against the rivals, the time trial, the duel in the traffic, the run from the police)
   S.difficulty = Number.isFinite(+S.difficulty) ? clamp(Math.round(+S.difficulty), 0, 3) : DEF.difficulty;   // (lahka, srednja, težka, super težka: the police all four, a race takes the last as težka)
+  // Oddaljenost (Nastavitve: Blizu 1.1, Srednje 1.4, Daleč 1.7) read back never nearer than Blizu nor farther than Daleč: Super blizu (0.8,
+  // on the preview of PR #650 for a day and gone again, the user 11. 11. 2026: »preblizu«) and anything nearer is Blizu, so it does not stay
+  // on without a button of its own; no number at all: Srednje, the default (never NaN). Changed, it is saved at once: the preview shares the
+  // storage with the game on main, which then finds Blizu too. A distance between the steps stays (1.2: the tests' own and the load
+  // measurements', tests/golden/perf.json)
+  { const z = Number.isFinite(+S.zoom) ? clamp(+S.zoom, 1.1, 1.7) : DEF.zoom;
+    if (z !== S.zoom) { S.zoom = z; try { localStorage.setItem('tdgp-settings', JSON.stringify(S)); } catch (_) { } } }
   if (S.lang !== 'en') S.lang = 'sl';
   S.intro = [0, 1, 2].includes(+S.intro) ? +S.intro : 0; S.music = +S.music === 0 ? 0 : 1; S.menuCam = [1, 2, 3, 4].includes(+S.menuCam) ? +S.menuCam : 1; delete S.mapV;   // (the race intro: Full, Short, Off; the music before the race; the camera of the menu's track step: 1 the map (the default), 2 the flyover, 3 the corner, 4 the friends' times (Lestvica prijateljev); mapV, its two versions before the three cameras, is gone)
   S.rivals = Number.isInteger(+S.rivals) && +S.rivals >= 0 && +S.rivals <= RIV_MAX ? +S.rivals : -1;   // (the menu's Opponents: 0..RIV_MAX rivals in a race, -1 the track's own field: see rivSet)
