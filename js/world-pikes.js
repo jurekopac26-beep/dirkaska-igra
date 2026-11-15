@@ -72,8 +72,11 @@
     let ws = 0, hs = 0, bd = 1e9, bi = -1, bl = 0, ba = 0, bdd = 1e9;
     for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
       const L = P.cells[b * P.ncx + a]; if (!L) continue;
+      { const gx = Math.max(0, (a + P.cx0) * PKHC - x, x - (a + P.cx0 + 1) * PKHC), gz = Math.max(0, (b + P.cz0) * PKHC - z, z - (b + P.cz0 + 1) * PKHC); if (gx * gx + gz * gz > (66 + ds) * (66 + ds)) continue; }   // (the whole cell 64 m + a sample beyond: all its samples would be skipped below)
       for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d2 = lat * lat + ex * ex;
+        if (d2 >= 4096) continue;   // (d >= 64 for sure; the sqrt only for the rest)
+        const d = Math.sqrt(d2);
         if (d >= 64) continue;
         const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
         ws += wq; hs += wq * T.hy[i];
@@ -4048,6 +4051,8 @@
       return any || (l1 > -1e-4 && l2 > -1e-4 && l3 > -1e-4) ? l1 * A[0][1] + l2 * A[1][1] + l3 * A[2][1] : null;
     };
     const drape = (g, poly, A, hAt) => {
+      { let x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18; for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < z0) z0 = p[1]; if (p[1] > z1) z1 = p[1]; }   // (the polygon wholly beside the triangle: nothing to cut, the same 0 as below, sooner)
+        const e = 1e-3; if (x1 < Math.min(A[0][0], A[1][0], A[2][0]) - e || x0 > Math.max(A[0][0], A[1][0], A[2][0]) + e || z1 < Math.min(A[0][2], A[1][2], A[2][2]) - e || z0 > Math.max(A[0][2], A[1][2], A[2][2]) + e) return 0; }
       const sg = Math.sign((A[1][0] - A[0][0]) * (A[2][2] - A[0][2]) - (A[1][2] - A[0][2]) * (A[2][0] - A[0][0])); if (!sg) return 0;
       for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = A[e], pb = A[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], side = (p) => sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), np = [];
         for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = side(p), dq = side(q);
@@ -4124,7 +4129,6 @@
       const decal = (g, Q, col, y, uvs, tol) => { const V = Q.map(([s, o]) => PF(s, o, 0)), S = Q.map(q => q[0]), O = Q.map(q => q[1]), s0 = Math.min(...S), s1 = Math.max(...S), o0 = Math.min(...O), o1 = Math.max(...O);
         const i0 = clamp(Math.floor(s0 / T.ds) - 1, 0, N - 2), i1 = clamp(Math.floor(s1 / T.ds) + 1, 0, N - 2), U = uvs || Q.map(([s, o]) => ruv(s, o)), C = Array.isArray(col[0]) ? col : [col, col, col, col], poly = V.map((p, k) => [p[0], p[2], y, ...C[k], ...U[k]]), TT = [], tg = new GB(true); let nv = 0;   // (col: one colour or one per corner; returns the vertices added)
         for (let i = i0; i <= i1; i++) for (let c = 0; c < 4; c++) { if (offs[c + 1] < o0 - 0.3 || offs[c] > o1 + 0.3) continue; for (let h = 0; h < 2; h++) TT.push(aTri(i, c, h)); }
-        for (const A of TT) nv += drape(tg, poly, A);
         // where the asphalt is flat enough (most of the road) the plain quad, its corners on the asphalt + y, stays within tol of that everywhere (checked at the corners of its own two
         // triangles' pieces, where the creases of both surfaces cross): 6 vertices instead of the pieces
         const aH = (x, z) => { for (const A of TT) { const h = planeY(A, x, z); if (h != null) return h; } return null; }, Pq = V.map(p => { const h = aH(p[0], p[2]); return h == null ? null : [p[0], h + y, p[2]]; });
@@ -4132,6 +4136,7 @@
           for (const [p, q, r] of [[0, 1, 2], [0, 2, 3]]) { const tq = new GB(true), A = [Pq[p], Pq[q], Pq[r]]; for (const B of TT) drape(tq, [poly[p], poly[q], poly[r]], B);
             for (let k = 0; k < tq.P.length && ok; k += 3) ok = planeY(A, tq.P[k], tq.P[k + 2], 1) >= tq.P[k + 1] - tol; }
           if (ok) { g.quadUp(Pq[0], Pq[1], Pq[2], Pq[3], C, U); return 6; } }
+        for (const A of TT) nv += drape(tg, poly, A);   // (the pieces only where the plain quad will not do)
         g.P.push(...tg.P); g.N.push(...tg.N); g.C.push(...tg.C); g.U.push(...tg.U); return nv; };
       const patch = (s0, s1, o0, o1, col) => { if (!keep(s0, s1)) return; const g = xP[xAt(s0)], ss = [s0]; for (let s = (Math.floor(s0 / T.ds) + 1) * T.ds; s < s1 - 0.2; s += T.ds) ss.push(s); ss.push(s1);
         for (let k = 0; k + 1 < ss.length; k++) { const a = ss[k], b = ss[k + 1]; decal(g, [[a, o0], [a, o1], [b, o1], [b, o0]], col, 0.007, null, 0.001); } };
