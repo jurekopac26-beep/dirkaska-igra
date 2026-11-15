@@ -808,8 +808,9 @@
     const f = garF = document.createElement('iframe'); f.id = 'garaza'; f.className = 'garaza off'; f.title = tr('Garaža'); f.setAttribute('aria-hidden', 'true');
     f.src = 'garaza.html?vgrajena=1'; document.body.appendChild(f);
   }
-  window.__garageReady = () => { garReady = true; clearTimeout(garT); if (garWant) { const p = garWant; garWant = null; garF.contentWindow.__garageEmbed.open(p); } };
+  window.__garageReady = () => { garReady = true; clearTimeout(garT); if (garWant && garOn) { const p = garWant; garWant = null; garF.contentWindow.__garageEmbed.open(p); } };
   window.__garageClose = (r) => {
+    garWant = null; clearTimeout(garT);   // (closed while still loading: not opened when it is ready)
     if (!garOn) return;
     garOn = false; garF.classList.add('off'); garF.setAttribute('aria-hidden', 'true'); try { window.focus(); } catch (_) { }
     if (window.MenuIzbor) MenuIzbor.nazaj.drop('garaza');

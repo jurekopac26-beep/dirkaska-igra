@@ -602,7 +602,7 @@
       if (k === 'power') { if (B && !B.fin) barSay('power', d); const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
         chip(tr('MOČ'), Math.round(a) + ' kW → <em>' + Math.round(b) + ' kW</em>', 'power'); }
       else if (k === 'done') { if (B && !B.fin) { B.fin = true; bar(); }   // (the bar: all its stages done, the line full)
-        if (d.kind === 'motor') { lastFit = null; return; }
+        if (d.kind === 'motor') { lastFit = null; lastCost = 0; return; }   // (its MOČ chip: the price not left for the next KONČANO)
         if (svcChip && SRV.some(s => s.id === d.kind) && --svcChip.left <= 0) { const q = svcChip; svcChip = null;   // (the service's last item done: the state before → after)
           chip(tr('STANJE'), q.a + ' % → <em>' + q.b + ' %</em>', 'cond'); lastFit = null; return; }
         const n = { clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' }[d.kind];
@@ -779,7 +779,9 @@
   // color, drzava, as the address has them), its Nazaj and Izberi progo hide it again (the game's __garageClose: the car, naprej); the
   // phone's Back is its Nazaj (back). Hidden: the loop stopped, the sound off, a show cut short run to its end (what it does is saved)
   const EMB = window.parent !== window && /[?&]vgrajena=1\b/.test(location.search);
+  function ppDrop() { pp = null; $('g-pp').classList.remove('on'); }   // (PREJ/POTEM of the garage shown before: not on this one)
   function embOpen(p) {
+    ppDrop();
     S = load(); GAME_CAR = null; fromGame(new URLSearchParams(p || {})); Lang.set(S.lang);
     $('g-demo').classList.toggle('off', S.demo === false); markMode(); $('g-snd').classList.toggle('mute', !S.sound);
     closeMenu(); G.show(spec(S.car)); setLang(); resize(); G.sound(S.sound);
@@ -787,7 +789,7 @@
     if (!S.guide && !hold) setTimeout(() => guide(0), 400);   // (the guide not seen to its end: from its start, as on the page loaded)
   }
   function embClose(car, naprej) {
-    run = false; G.sound(false); closeMenu();
+    run = false; G.sound(false); closeMenu(); ppDrop();
     if (G.busy) { G.skip(); for (let i = 0; i < 900 && G.busy; i++) G.frame(1 / 30, true); }
     save();
     try { parent.__garageClose({ car: car || '', naprej: naprej || '' }); } catch (_) { }
