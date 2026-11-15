@@ -69,9 +69,13 @@
     const dT = chamfer(G, (k) => seedT[k] === 1);
     { const TH = new Map(), TC = 16;   // within 45 m of the road the true distance to its centre line (the chamfer's octagons would step the banks)
       for (let i = 0; i < T.N; i++) { const key = Math.floor(T.px[i] / TC) * 65536 + Math.floor(T.pz[i] / TC); let L = TH.get(key); if (!L) TH.set(key, L = []); L.push(i); }
-      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, a0 = Math.floor(x / TC), b0 = Math.floor(z / TC); let best = 1e18;
+      const SC = new Map();   // (per 16 m cell the segments of its 7 x 7 cells: start, direction, squared length)
+      const segsAt = (a0, b0) => { const key = a0 * 65536 + b0; let S = SC.get(key); if (S) return S; const q = [];
         for (let a = a0 - 3; a <= a0 + 3; a++) for (let b = b0 - 3; b <= b0 + 3; b++) { const L = TH.get(a * 65536 + b); if (!L) continue;
-          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } }
+        SC.set(key, S = new Float64Array(q)); return S; };
+      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, S = segsAt(Math.floor(x / TC), Math.floor(z / TC)); let best = 1e18;
+        for (let q = 0; q < S.length; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; }
         dT[k] = Math.sqrt(best); } }
     // near the shores the true distance to the water's outline (the polygons' edges, hashed in 16 m cells): smooth banks, no steps
     const EH = new Map(), EC = 16;
@@ -130,8 +134,8 @@
     const scen = new K.Chunks(192);   // vertex coloured scenery in 192 m chunks
     // tree / building exclusion (hashed circles) and where the junctions' mouths are
     const eh = new Map(), EHC = 32;
-    const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
-    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a * 65536 + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
+    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) * 65536 + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
     const ctx = { T, D, def, N, w, ds, L, sStart, R, root, out, tex, opts, ownTex, matV, dS, sAt, Pt, atSf, addM, scen, exclPush, excluded };
     ctx.near = mtNear(T);
     const tag = (f, nm) => { const n0 = root.children.length; f(); for (let k = n0; k < root.children.length; k++) if (!root.children[k].name) root.children[k].name = nm; };   // (each part's meshes named after it)
@@ -454,7 +458,7 @@
   const MT_SHIRTS = [[0.86, 0.1, 0.12], [0.95, 0.95, 0.94], [0.86, 0.1, 0.12], [0.12, 0.16, 0.36], [0.98, 0.78, 0.12], [0.16, 0.36, 0.8], [0.12, 0.13, 0.16], [0.94, 0.5, 0.1], [0.18, 0.55, 0.3], [0.6, 0.18, 0.5], [0.86, 0.1, 0.12], [0.95, 0.95, 0.94]];   // (lots of red and white)
   function mtStands(C) {
     const { T, def, ds, sStart, scen, atSf, addM, exclPush, tex } = C, crowdG = new GB(true), W1 = [1, 1, 1];
-    const near = (x, z) => { const i = T.nearestIdx(x, z), dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
+    const nIdx = mtNearestIdx(T), near = (x, z) => { const i = nIdx(x, z), dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
     const CR = K.crowdCtx({ gH: mtGround, near, excluded: (x, z) => C.excluded(x, z), water: (x, z) => mtKind(x, z) === 3 || mtGround(x, z) < -0.6, maxSlope: 0.5, shirts: MT_SHIRTS, chunk: 256 });
     C.CR = CR;
     for (const [a, b, side, rows, roof] of def.stands || []) {
@@ -498,13 +502,28 @@
   }
 
   /* ---- the nearest road sample to (x, z) through a 32 m hash of the samples; its lateral offset and the barrier on that side ---- */
+  /* ---- T.nearestIdx through a 16 m hash of the samples, searched ring by ring: the same sample (the same squared distances, the lowest
+     index of equal ones; a ring stops the search when nothing beyond it can be as near); far from every sample the full scan ---- */
+  function mtNearestIdx(T) {
+    const H = new Map(), c = 16;
+    for (let i = 0; i < T.N; i++) { const k = Math.floor(T.px[i] / c) * 65536 + Math.floor(T.pz[i] / c); let L = H.get(k); if (!L) H.set(k, L = []); L.push(i); }
+    return (x, z) => {
+      const a0 = Math.floor(x / c), b0 = Math.floor(z / c); let best = -1, bd = 1e18;
+      for (let r = 0; r <= 12; r++) {
+        for (let a = a0 - r; a <= a0 + r; a++) for (let b = b0 - r; b <= b0 + r; b++) { if (Math.max(Math.abs(a - a0), Math.abs(b - b0)) !== r) continue; const L = H.get(a * 65536 + b); if (L) for (const i of L) { const dx = T.px[i] - x, dz = T.pz[i] - z, d = dx * dx + dz * dz; if (d < bd || (d === bd && i < best)) { bd = d; best = i; } } }
+        if (best >= 0 && bd < (r * c) * (r * c) * (1 - 1e-9)) return best;
+      }
+      return T.nearestIdx(x, z);
+    };
+  }
+
   function mtNear(T) {
     const H = new Map(), c = 32;
-    for (let i = 0; i < T.N; i++) { const k = Math.floor(T.px[i] / c) + ',' + Math.floor(T.pz[i] / c); let L = H.get(k); if (!L) H.set(k, L = []); L.push(i); }
+    for (let i = 0; i < T.N; i++) { const k = Math.floor(T.px[i] / c) * 65536 + Math.floor(T.pz[i] / c); let L = H.get(k); if (!L) H.set(k, L = []); L.push(i); }
     const o = { i: -1, lat: 0, bar: 0, d: 1e9 };
     return (x, z) => {
       const a0 = Math.floor(x / c), b0 = Math.floor(z / c); let bi = -1, bd = 1e18;
-      for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = H.get(a + ',' + b); if (L) for (const i of L) { const dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } } }
+      for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = H.get(a * 65536 + b); if (L) for (const i of L) { const dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } } }
       o.i = bi; if (bi < 0) { o.lat = 1e9; o.bar = 0; o.d = 1e9; return o; }
       o.lat = (x - T.px[bi]) * T.nx[bi] + (z - T.pz[bi]) * T.nz[bi]; o.bar = o.lat > 0 ? T.br[bi] : T.bl[bi]; o.d = Math.abs(o.lat) - o.bar; return o;
     };
