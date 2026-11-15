@@ -369,5 +369,12 @@
   "kverts": 212,
   "maxKverts": 293,
   "jsMs": 1.28
+ },
+ "isuna": {
+  "calls": 125,
+  "maxCalls": 155,
+  "kverts": 156,
+  "maxKverts": 202,
+  "jsMs": 1.53
  }
 }

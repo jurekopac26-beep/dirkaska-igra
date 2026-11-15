@@ -5094,5 +5094,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "isuna/race/cs": {
+  "digest": "a2b1569ec63f42d6fcc061e1",
+  "lead": 2538.9,
+  "car0": [
+   -2211.5,
+   331.04
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isuna/demo/cs": {
+  "digest": "be9fd9952b77324df153ba6f",
+  "lead": 2754.6,
+  "car0": [
+   -2406.31,
+   511.09
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isuna/upg/cs": {
+  "digest": "7ddee43a2e40dea400cda1b6",
+  "lead": 2807.4,
+  "car0": [
+   -2444.83,
+   548.47
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isuna/crash/cs": {
+  "digest": "e0616e40ac05725ed69d1445",
+  "lead": 2521.9,
+  "car0": [
+   -2166.03,
+   330.03
+  ],
+  "cover": {
+   "dmg": 0.4,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isuna/formula/cs": {
+  "digest": "f92302f51f26c35feae59bc4",
+  "lead": 3099.2,
+  "car0": [
+   -2629.67,
+   572.69
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isuna/lm/cs": {
+  "digest": "c837e14c16f0d49554ead86a",
+  "lead": 3038.1,
+  "car0": [
+   -2546.37,
+   590.14
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "isuna/car/cs": {
+  "digest": "25e17fb0c7cec2d8932affe9",
+  "lead": 2549.2,
+  "car0": [
+   -2222.09,
+   333.92
+  ],
+  "cover": {
+   "dmg": 0.38,
+   "loose": 3,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
