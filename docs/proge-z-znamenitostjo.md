@@ -11,7 +11,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 3 | *zamenjava* (bil Antananarivo) | Madagaskar ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 4 | Mombasa | Kenija | stavba | jure.kopac26 | čaka |
 | 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |
-| 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
+| 6 | *zamenjava* (bila Elmina, občutljiva): kandidat Akosombo, Gana | Gana | druga: star most (viseči most Adomi, 1957) ob cesti Atimpoku–Akosombo | jure.kopac26 | v izbiri (veja `proge/zamenjava-6`); jez Akosombo odpade (do 60 m samo službene ceste elektrarne) |
 | 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 8 | El Jem | Tunizija | stavba | biketraveler | čaka |
 | 9 | Portobelo | Panama | stavba | biketraveler | čaka |
