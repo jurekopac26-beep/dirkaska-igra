@@ -364,11 +364,11 @@
   "jsMs": 1.14
  },
  "eljem": {
-  "calls": 98,
-  "maxCalls": 117,
-  "kverts": 258,
-  "maxKverts": 367,
-  "jsMs": 1.38
+  "calls": 97,
+  "maxCalls": 114,
+  "kverts": 251,
+  "maxKverts": 354,
+  "jsMs": 1.34
  },
  "luanda": {
   "calls": 110,

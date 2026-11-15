@@ -3,7 +3,7 @@
    Its own builder (World.ext.eljem) in a file of its own, on World's shared corridor helpers (World.api: nrPrep's terrain from the track's
    dem and land cover) and the scenery data of js/data/eljem.js (OpenStreetMap, Copernicus DEM, ESA WorldCover, Meta / WRI canopy).
    The 60 m rule: the detailed things only within ~60 m of the road, as far as the chase camera sees them: the white and sandstone houses of
-   the town in their OSM footprints and more of the same where the land is built up (flat roofs with their parapets), the olive trees and
+   the town in their OSM footprints only (flat roofs with their parapets), the olive trees and
    the palms on the dry ochre ground, the concrete barriers, and by the road the Roman amphitheatre (its oval of arcades after its OSM outline:
    the model of assets/landmarks/eljem.glb, made in Blender by tools/znamenitost/, World.znamenitost; until it has loaded, or if it cannot,
    the simpler one built here). Farther out only the terrain from the heights and the far land. Only geographic and plain names.
@@ -208,7 +208,7 @@
 
     /* ---- the spectators' context ---- */
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nFill = 0, nStone = 0;
+    let nBld = 0, nStone = 0;
 
     /* ---- the amphitheatre: the simple one (one mesh) until the model of assets/landmarks/eljem.glb has loaded (World.znamenitost): its oval
        outer wall along the OSM outline in three storeys of arches (piers and the dark openings between them, a cornice over each storey), a
@@ -256,35 +256,18 @@
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
       if (inFort(bx, bz, 4)) continue;   // (nothing in the amphitheatre)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
+      // big footprints (the market halls and the walled yards, 70+ m) left out: they would wall in the view behind the car; the road checked on a grid over the whole footprint, not only at its corners
+      if (Math.max(Lb, Wb) > 70) continue;
+      let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
+      const nu = Math.ceil(Lb / 4), nv = Math.ceil(Wb / 4);
+      for (let u = 0; u <= nu && !clash; u++) for (let v = 0; v <= nv; v++) { const a = (u / nu - 0.5) * Lb, b = (v / nv - 0.5) * Wb, n = nrNear(bx + ca * a - sa * b, bz + sa * a + ca * b); if (n.i >= 0 && n.dd < 1.2) { clash = true; break; } }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
       const hh = Hb || (big ? (3 + Math.floor(hk * 2)) * 3.1 : area < 45 || k0 === 4 ? 3 + hk : 6.2 + hk * 1.4);
       house(g, bx, bz, Lb, Wb, ang, y0, hh, big || crH(bx, bz, 15) < 0.96, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
-    // more of the city where the land cover says it is built up and OpenStreetMap has no footprints (15-55 m from the road, square to it)
-    {
-      const Lt = NRC * 32;
-      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
-        if (!G.on[tj * G.ntx + ti]) continue;
-        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
-        for (let zz = za; zz < za + Lt; zz += 18) for (let xx = xa; xx < xa + Lt; xx += 18) {
-          if (crH(xx, zz, 40) > 0.55) continue;
-          const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
-          if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
-          const Lb = 9 + crH(x, z, 43) * 7, Wb = 8 + crH(x, z, 44) * 6;
-          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || seaD(x, z) > -8 || inFort(x, z, 18)) continue;
-          const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
-          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
-          let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
-          if (hi - lo > 4) continue;
-          const fl = 2 + Math.floor(crH(x, z, 45) * 4);
-          house(scen.get(x, z), x, z, Lb, Wb, ang, lo, fl * 3.1, crH(x, z, 46) < 0.85, vary(WALL[Math.floor(crH(x, z, 47) * WALL.length)], R, 0.05));
-          nFill++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 2);
-        }
-      }
-    }
+    // (no houses where OpenStreetMap has no footprints: only what is in the map)
 
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
     for (const s0 of [sStart, sFin]) {
@@ -416,7 +399,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: 0 };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, rocks: 0 };   // (read by the tests)
     return out;
   }
 
