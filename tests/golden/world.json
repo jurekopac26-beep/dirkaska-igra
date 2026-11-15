@@ -1414,24 +1414,24 @@
   }
  },
  "isalo": {
-  "meshes": 352,
-  "verts": 299657,
+  "meshes": 348,
+  "verts": 298037,
   "instances": 1274,
   "props": 0,
   "crowd": 84,
-  "world": "8b76ef5b",
+  "world": "3c5cc1cc",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "62e12dc3",
+   "-:MeshLambertMaterial": "cb9391e",
    "crowd:MeshLambertMaterial": "bbf55e50",
    "flags:MeshLambertMaterial": "c3d43254",
    "ao:MeshBasicMaterial": "36b72c06",
    "tyremarks:MeshBasicMaterial": "4d6cc912",
    "roadwear:MeshLambertMaterial": "f32e54cf",
-   "life:MeshLambertMaterial": "830d2b8d",
-   "lifeShadow:MeshBasicMaterial": "874abe73",
-   "life:MeshBasicMaterial": "ad90f02e"
+   "life:MeshLambertMaterial": "bd4336a3",
+   "lifeShadow:MeshBasicMaterial": "1e1501c3",
+   "life:MeshBasicMaterial": "c8dc7e11"
   }
  }
 }
