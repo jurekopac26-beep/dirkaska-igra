@@ -242,6 +242,13 @@ try {
     const l3 = await lampBuy(null);
     T.check('↺ SERIJSKO: the stock ones out of the drawer (the cell next to the yellow ones\'), the yellow ones into their own; no lamp on the car\'s parts any more',
       lampOk(l3.f) && l3.f.lamp.kO === 1 && l3.f.lamp.kN === 2 && /serijsko/i.test(l3.f.chip) && l3.r.t <= 11.2 && !l3.u.parts.zarometi, JSON.stringify(l3));
+    // (the grille by the head lamps' template (podaljšek): the old one out onto the bonnet, the new one out of the drawer on roka 2's
+    // podaljšek, handed over, pushed in and screwed; no far one (the grille: one part), no lights; or, on a car that does not draw it as
+    // a part of its own, as before (the drawer, the trolley))
+    { await page.evaluate(() => { __garage.openMenu({ el: 'maska', key: 'drw:maska', sel: ['Mesh', 'Honeycomb', 'Carbon', 'Chrome'].map(n => __garage.findOpt('maska', n)).find(Boolean) || null }); const b = document.querySelector('#g-menu [data-mact="buy"]'); if (b) b.click(); });
+      const r = await run(), f = await fitOf(), u = await ui();
+      T.check('the grille on the KOZOROG by the head lamps\' template (podaljšek: old one out, the new one from the drawer on roka 2, pushed in and screwed, the old one into the drawer; no far one, no lights) or as before; bought, KONČANO',
+        (/^plan,old\.out,pod\.out,pass,swap,fit,pod\.back$/.test(f.log) && !!f.lamp && !f.lamp.far || /cart\.in/.test(f.log)) && /KONČANO/.test(f.chip) && f.parked && r.t <= 12 && !!u.S.cars.kozorog.parts.maska, JSON.stringify({ r, log: f.log, lamp: f.lamp })); }
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)
@@ -250,6 +257,14 @@ try {
     const tr = await run(), tf = await fitOf(), tu = await ui();
     T.check('the turbo on the KOZOROG (a kit car), by its plan\'s plate: roka 1 lifts the bonnet (its gripper on the edge) onto its prop, roka 2 brings the turbo from the regal onto the engine, its screws, its hoses, roka 1 shuts the bonnet, the engine revved (MOČ); paid, the engine\'s level 1, the table still',
       tf.log === 'plan,bonnet.grip,grab,bonnet.up,swap,screws,hoses,bonnet.close,bonnet.down,revs' && tf.plan.regal && tf.plan.lg === true && /MOČ/.test(tf.chip) && tm0 - tu.S.money > 0 && tu.info.upg.motor === 1 && !!tu.S.cars.kozorog.parts.turbo && tr.table === 0 && tr.t <= 12.5, JSON.stringify({ tf, t: tr.t, upg: tu.info.upg }));
+    // (the rest of the bay's parts by the turbo's template (point 3): the air filter and the light battery from the regal, the same way:
+    // the bonnet up, the part onto the engine, its screws, its hose or cables, the bonnet down, the engine revved)
+    for (const [key, el, en] of [['rgl:AIR FILTER', 'filter_zraka', 'Air filter'], ['rgl:LIGHT BATTERY', 'akumulator', 'Light battery']]) {
+      await page.evaluate(([key, el, en]) => { __garage.openMenu({ el, key, sel: __garage.findOpt(el, en) }); document.querySelector('#g-menu [data-mact="buy"]').click(); }, [key, el, en]);
+      const br = await run(), bf = await fitOf(), bu = await ui();
+      T.check(`the ${el} on the KOZOROG by the turbo's template: the bonnet up, the part from the regal onto the engine, its screws, its hose(s), the bonnet down, the revs`,
+        /^plan,(bonnet\.grip,)?grab,bonnet\.up,swap,screws,hoses,(bonnet\.close,)?bonnet\.down,revs$/.test(bf.log) && bf.plan.regal && bf.plan.lid && !!bu.S.cars.kozorog.parts[el] && br.table === 0 && br.t <= 12.5, JSON.stringify({ bf, t: br.t }));
+    }
   }
 
   // 4. the menus on the muscle car: a part of the regal tapped (the turbo): its menu with four tabs (the categories, their prices), four
@@ -353,6 +368,9 @@ try {
     T.check('the aero kits\' menu on its RACING tab: its tiles locked (nothing to buy)', dR.tabs[2][2] && !dR.can && /ZAKLENJENO/.test(dR.buy), JSON.stringify(dR));
     await page.evaluate(() => { __garage.closeMenu(); __garage.openMenu({ el: 'aero', key: null, sel: __garage.findOpt('aero', 'Sport') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const ra = await run();
     const u4 = await ui(), fa = await fitOf(), pa = await page.evaluate(() => Garage3D._dbg.FIT.log.filter(q => q.step === 'plan').map(q => ({ el: q.el, exact: !!q.exact, real: !!q.real, hop: q.hop || 0, caps: q.caps || 0 })));
+    const cpb = await page.evaluate(() => { const C = Garage3D._dbg.CART, a = C.root.children[0].geometry.attributes.color, n = a.itemSize, [v0, v1] = C.pv, o = { b: !!C.b2, yl: 0, cy: 0, nv: 0 };
+      for (let v = v0; v < v1; v++) { const r = a.array[v * n], g = a.array[v * n + 1], bl = a.array[v * n + 2]; if (r > 0.8 && g > 0.6 && bl < 0.2) o.yl++; else if (g > 1.2) o.cy++; else if (r < 0.15 && bl > 0.2 && bl < 0.3) o.nv++; } return o; });
+    T.check('the aero kit\'s trolley in its own paint (the plate an_aero, colour b: yellow, its band dark blue)', cpb.b && cpb.yl > 0 && cpb.nv > 0 && !cpb.cy, JSON.stringify(cpb));
     T.check('the SPORT kit bought (2.600 🪙): the aero level from it', uw2.S.money - u4.S.money === 2600 && u4.info.upg.aero === 2, JSON.stringify({ paid: uw2.S.money - u4.S.money, upg: u4.info.upg }));
     // (the kit by its plan's plate (aero): the trolley brings its lip and its wing lying along its deck; the near arm's gripper takes the lip
     // by its front edge and pushes it in under the front bumper exactly where the car draws it (the click: no case, no hop; no old part on
