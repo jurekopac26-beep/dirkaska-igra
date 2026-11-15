@@ -5850,7 +5850,7 @@ const Garage3D = (function () {
   const CART = { root: null, b: null, L: 0.96, W: 0.62, deck: 0.43, out: 10.8 };
   function buildCart() {
     const g = new World.GB(), gl = [], gk = (q) => gl.push([g.P.length / 3, q]), { W, NV, DK, ST, CY, BK } = FXC, L = CART.L / 2, Wd = CART.W / 2, D = CART.deck, GR = [0.7, 0.72, 0.75];
-    gk(PAINT); World.box(g, 0, 0.1, 0, CART.L, D - 0.13, CART.W, 0, NV, W); World.box(g, 0, 0.2, 0, CART.L + 0.006, 0.02, CART.W + 0.006, 0, CY);
+    gk(PAINT); const v0 = g.P.length / 3; World.box(g, 0, 0.1, 0, CART.L, D - 0.13, CART.W, 0, NV, W); World.box(g, 0, 0.2, 0, CART.L + 0.006, 0.02, CART.W + 0.006, 0, CY); CART.pv = [v0, g.P.length / 3];
     gk(SATIN); World.box(g, 0, D - 0.03, 0, CART.L - 0.03, 0.03, CART.W - 0.03, 0, GR, [0.78, 0.8, 0.83]);
     gk(PAINT); for (const s of [-1, 1]) { World.box(g, 0, D, s * (Wd - 0.02), CART.L - 0.03, 0.035, 0.025, 0, W); World.box(g, s * (L - 0.02), D, 0, 0.025, 0.035, CART.W - 0.03, 0, W); }
     for (const s of [-1, 1]) for (let k = 0; k < 7; k++) World.box(g, s * (L + 0.008), 0.11, (k - 3) * CART.W / 7, 0.016, 0.07, CART.W / 7, 0, k % 2 ? BK : [0.95, 0.72, 0.08]);
@@ -5862,6 +5862,13 @@ const Garage3D = (function () {
     const m = new THREE.Mesh(geo, fxMat()); m.castShadow = true; m.receiveShadow = true;
     const R = CART.root = new THREE.Group(); R.add(m); R.position.set(CART.out, 0, 0); R.visible = false; scene.add(R); return R;
   }
+  // (the trolley's paint: b, the aero kit's (yellow, its band dark blue: the plate an_aero, colour b), else its own (navy, the cyan band);
+  // the body and the band only, both trolleys (one geometry))
+  function cartPaint(b) { const R = CART.root || buildCart(), C = R.children[0].geometry.attributes.color, [v0, v1] = CART.pv, { NV, CY, YL } = FXC; if (!C || !!CART.b2 === !!b) return;
+    const n = C.itemSize; if (!CART.c0) CART.c0 = C.array.slice(v0 * n, v1 * n);
+    const eq = (a, i, c) => Math.abs(a[i] - c[0]) + Math.abs(a[i + 1] - c[1]) + Math.abs(a[i + 2] - c[2]) < 1e-3;
+    for (let v = v0, j = 0; v < v1; v++, j += n) { const c = !b ? CART.c0.subarray(j, j + 3) : eq(CART.c0, j, NV) ? YL : eq(CART.c0, j, CY) ? NV : CART.c0.subarray(j, j + 3); C.array.set(c, v * n); }
+    C.needsUpdate = true; CART.b2 = !!b; }
   // (along [x, z] points, each leg eased in and out, at v m/s at the most; its motor's hum)
   // (the trolleys: the one that comes to the car's near side (0) and its twin for the far side (1: the same mesh again, made when it is
   // first needed))
@@ -6579,7 +6586,24 @@ const Garage3D = (function () {
     add(Z(new THREE.CylinderGeometry(0.042, 0.048, 0.05, 16)), PM.black, 0, 0.01, 0.07);
     add(new THREE.CylinderGeometry(0.026, 0.026, 0.09, 12).rotateZ(Math.PI / 2), PM.chrome, 0.05, 0.075, -0.02);
     add(new THREE.BoxGeometry(0.17, 0.02, 0.15), PM.black, 0, -0.085, 0);
-    return { o: w, c: null, real: false, hs: new V3(0.11, 0.095, 0.1) };
+    return { o: w, c: null, real: false, hs: new V3(0.11, 0.095, 0.1), hose: [[[0.14, 0.075, -0.02], [0.42, -0.04, -0.06], 0.06, 0.022, 0x2a5fb8], [[0, 0.01, 0.1], [0.08, -0.02, 0.36], 0.08, 0.022, 0x2a5fb8]] };
+  }
+  // (the rest of the bay's parts by the turbo's show (an_turbo's template, docs/garaza-animacije.md): the air filter (a round element on
+  // its plate, its intake hose to the front), the chip (a box, its cable to the near side), the battery (a black block, its two cables);
+  // as turboObj: the middle the frame's origin, hs the half sizes, hose its hoses (from, to in its frame; how high between; thickness; colour))
+  const BAY_EL = ['turbo', 'filter_zraka', 'cip', 'akumulator'], POD_EL = ['zarometi', 'zmigavci', 'maska'];
+  function bayObj(el) {
+    if (el === 'turbo') return turboObj();
+    const w = new THREE.Group(), add = (g, m, x, y, z) => { const q = new THREE.Mesh(g, m); q.position.set(x, y, z); q.castShadow = true; w.add(q); return q; };
+    if (el === 'filter_zraka') { add(new THREE.BoxGeometry(0.17, 0.02, 0.17), PM.black, 0, -0.045, 0); add(new THREE.CylinderGeometry(0.085, 0.085, 0.06, 24), PM.red, 0, -0.005, 0);
+      add(new THREE.CylinderGeometry(0.06, 0.06, 0.012, 20), PM.chrome, 0, 0.031, 0); add(new THREE.CylinderGeometry(0.03, 0.03, 0.05, 12).rotateZ(Math.PI / 2), PM.black, 0.1, -0.005, 0);
+      return { o: w, c: null, real: false, hs: new V3(0.12, 0.055, 0.09), hose: [[[0.12, -0.005, 0], [0.42, -0.04, -0.04], 0.05, 0.026, 0x1b1c1f]] }; }
+    if (el === 'cip') { add(new THREE.BoxGeometry(0.16, 0.035, 0.11), PM.chrome, 0, 0, 0); add(new THREE.BoxGeometry(0.03, 0.022, 0.06), PM.black, 0.09, 0, 0);
+      add(new THREE.BoxGeometry(0.17, 0.008, 0.12), PM.black, 0, -0.021, 0);
+      return { o: w, c: null, real: false, hs: new V3(0.105, 0.03, 0.065), hose: [[[0.1, 0, 0], [0.3, -0.04, 0.2], 0.05, 0.008, 0x141518]] }; }
+    add(new THREE.BoxGeometry(0.2, 0.14, 0.13), PM.black, 0, -0.01, 0); add(new THREE.BoxGeometry(0.21, 0.012, 0.14), PM.carbonFlat, 0, 0.064, 0);
+    add(new THREE.CylinderGeometry(0.012, 0.012, 0.022, 10), PM.red, 0.065, 0.08, 0.04); add(new THREE.CylinderGeometry(0.012, 0.012, 0.022, 10), PM.black, -0.065, 0.08, 0.04);
+    return { o: w, c: null, real: false, hs: new V3(0.105, 0.09, 0.07), hose: [[[0.065, 0.09, 0.04], [0.32, -0.04, 0.12], 0.06, 0.01, 0xc0201a], [[-0.065, 0.09, 0.04], [-0.12, -0.05, 0.3], 0.05, 0.01, 0x141518]] };
   }
   // (a part to carry: option n as the car draws it (Render.deliMesh; of a pair the one on side sd; its middle the frame's origin, the car's
   // axes; c: its middle in the car body's frame), else a parts case (grey, an amber band round it); hs: its half sizes)
@@ -6635,14 +6659,14 @@ const Garage3D = (function () {
   // draws no kit of its own: always its level's lip)
   const aeroDrawn = (cv, n) => !!(n && typeof DELI !== 'undefined' && DELI.clean({ aero: n }, cv.M).aero);
   const aeroKind = (cv, n) => !aeroDrawn(cv, n) || !DELI.frontLip || DELI.frontLip(n) ? 'lip' : DELI.skirts && DELI.skirts(n) ? 'skirt' : 'rear';
-  function aeroLip(cv, n, lv, kind) {
-    kind = kind || 'lip';
+  function aeroLip(cv, n, lv, kind, zs) {
+    kind = kind || 'lip'; zs = zs || 1;   // (zs: the sill's side, the arm's)
     if (!aeroDrawn(cv, n)) return kind === 'lip' ? aeroItem(cv, lv, 'front', -0.16, -Math.PI / 2) : null;
     if (!DELI.frontLip || (kind === 'lip' && !DELI.frontLip(n)) || !Render.deliMesh) return null;   // (the car draws its kit: an option with no lip there: none)
     let g = null; try { g = Render.deliMesh(cv.M, 'aero', n, cv.spec.color, true); } catch (_) { g = null; }
     const q = g && g.children[0], A = q && q.geometry && q.geometry.attributes, P = A && A.position; if (!P || q.geometry.index || !A.normal || !A.color) return null;
     const M = cv.M, xT = M.a + M.rw + 0.16, keep = [], cx = (t) => (P.getX(t) + P.getX(t + 1) + P.getX(t + 2)) / 3, cz = (t) => (P.getZ(t) + P.getZ(t + 1) + P.getZ(t + 2)) / 3;
-    const inK = kind === 'lip' ? (t) => cx(t) > xT : kind === 'skirt' ? (t) => cx(t) > -M.b + M.rw && cx(t) < M.a - M.rw && cz(t) > 0 : (t) => cx(t) < -M.b - M.rw * 0.5;
+    const inK = kind === 'lip' ? (t) => cx(t) > xT : kind === 'skirt' ? (t) => cx(t) > -M.b + M.rw && cx(t) < M.a - M.rw && cz(t) * zs > 0 : (t) => cx(t) < -M.b - M.rw * 0.5;
     for (let t = 0; t < P.count; t += 3) if (inK(t)) keep.push(t);
     if (!keep.length) return null;
     const ge = new THREE.BufferGeometry();
@@ -6714,24 +6738,30 @@ const Garage3D = (function () {
     const pcs = o.src && o.src.startsWith('rgl:') && RGL.pcs && RGL.pcs[o.src], regal = !!(pcs && pcs.length && pcs[0].hs), di = !regal && o.src === 'drw:' + el ? DRW.els.indexOf(el) : -1;
     // (the exhaust goes on with the car up on the lift (its plan's plate): its place, the arms' ways and the camera planned as it will stand there)
     const ex = el === 'auspuh', l0 = lift; if (ex) setLift(FIT.lift);
-    const i = regal ? 1 : 0, tool = regal ? 'reach' : 'gripper', sd = regal ? -1 : 1, pc = regal ? pcs[0] : null, S = partSpot(cv, el, sd), K = cv.kit; let up = S.out.y > 0.7;
+    // (the aero kit by its plate (an_aero_plosca): roka 2's reach takes its lip and its wing off the trolley, which parks by the car's far
+    // side under its half of the ring (-z); roka 1 lifts the lid's caps for the wing)
+    const arm2 = !regal && (el === 'aero' || (el === 'krilo' && !!o.cartAt));
+    const i = regal || arm2 ? 1 : 0, tool = regal || arm2 ? 'reach' : 'gripper', sd = regal || arm2 ? -1 : 1, pc = regal ? pcs[0] : null, S = partSpot(cv, el, sd), K = cv.kit; let up = S.out.y > 0.7;
     const nw = makeCar(spec); nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);   // (its shaders made now: no stutter at the swap)
     // (a head lamp: the car's own as it draws it, the old car's and the new one's (lampPart: a car with lamp parts of their own); else the
     // option's part or a case)
-    const lampQ = el === 'zarometi' && !regal ? [lampPart(cv, sd), lampPart(nw, sd)] : null, lampO = lampQ && lampQ[0] && lampQ[1] ? lampQ[0] : null, lampN = lampO ? lampQ[1] : null;
+    // (the front's other drawer parts by the headlamp's template (podaljšek, docs/garaza-animacije.md): the indicators and the grille, the
+    // old option's and the new one's as the car draws them (partObj, both real; a stock one or a case: as before))
+    const realOr = (q) => { if (q && q.real) return q; if (q) disposeTree(q.o); return null; };
+    const lampQ = !regal && el === 'zarometi' ? [lampPart(cv, sd), lampPart(nw, sd)] : !regal && POD_EL.includes(el) && o.from && o.to ? [realOr(partObj(cv, el, o.from, sd)), realOr(partObj(cv, el, o.to, sd))] : null, lampO = lampQ && lampQ[0] && lampQ[1] ? lampQ[0] : null, lampN = lampO ? lampQ[1] : null;
     if (lampQ && !lampO) for (const q of lampQ) if (q) disposeTree(q.o);
     // (the aero kit by its plan's plate: its lip under the front bumper the car's own, the old one's and the new one's (aeroLip; none: a
     // case as before); its level's wing onto a lid bare till now after it (aeroWing: the wing's own show then, below)
     const lvA = el === 'aero' && !regal ? [cv.spec.upg.aero || 0, o.up && o.up[0] === 'aero' ? o.up[1] : cv.spec.upg.aero || 0] : null;
-    let kA = lvA ? aeroKind(nw, o.to || o.from) : null, aeroN = lvA ? aeroLip(nw, o.to, lvA[1], kA) : null;
-    if (lvA && !aeroN && kA === 'skirt' && o.to) { kA = 'rear'; aeroN = aeroLip(nw, o.to, lvA[1], kA); }   // (a car with no sills: the tail's corner lips in the skirts' place)
-    const aeroO = lvA ? aeroLip(cv, o.from, lvA[0], kA) : null, wingA = lvA && o.up && lvA[1] >= 2 && lvA[0] !== lvA[1] && !K.winged ? aeroWing(nw, lvA[1]) : null, wingO = wingA && lvA[0] >= 2 ? aeroWing(cv, lvA[0]) : null;   // (wingO: the old level's wing, on its lid till the arm takes it off (level 2 to 3 and back))
+    let kA = lvA ? aeroKind(nw, o.to || o.from) : null, aeroN = lvA ? aeroLip(nw, o.to, lvA[1], kA, sd) : null;
+    if (lvA && !aeroN && kA === 'skirt' && o.to) { kA = 'rear'; aeroN = aeroLip(nw, o.to, lvA[1], kA, sd); }   // (a car with no sills: the tail's corner lips in the skirts' place)
+    const aeroO = lvA ? aeroLip(cv, o.from, lvA[0], kA, sd) : null, wingA = lvA && o.up && lvA[1] >= 2 && lvA[0] !== lvA[1] && !K.winged ? aeroWing(nw, lvA[1]) : null, wingO = wingA && lvA[0] >= 2 ? aeroWing(cv, lvA[0]) : null;   // (wingO: the old level's wing, on its lid till the arm takes it off (level 2 to 3 and back))
     const np = regal ? null : o.np || lampN || aeroN || partObj(cv, el, o.to, sd), G = cv.v.grp, gq = G.getWorldQuaternion(new THREE.Quaternion()), ax = (x, y, z) => new V3(x, y, z).applyQuaternion(gq);
     cv.v.bodyG.updateMatrixWorld(true); const BW = cv.v.bodyG.matrixWorld.clone(), inCar = (P) => BW.clone().multiply(new THREE.Matrix4().makeTranslation(P.c.x, P.c.y, P.c.z));
     // THE TURBO by its plan's plate (a car with a bonnet of its own, bonnet()): the bonnet up and propped, the turbo down into the bay (its
     // place there), its screws in, its hoses on, the bonnet down, the engine run (else through the shut bonnet, a case, as before)
-    const tb = el === 'turbo' ? bonnet(cv) : null;
-    if (tb) { if (np) { disposeTree(np.o); Object.assign(np, turboObj()); } S.p.copy(tb.bay(BW)).y -= 0.03; S.out.set(0, 1, 0); up = true; tb.open = false; tb.up = 72 * Math.PI / 180; }
+    const tb = BAY_EL.includes(el) ? bonnet(cv) : null, tbO = tb ? bayObj(el) : null;
+    if (tb) { tb.hs = tbO.hs; tb.hose = tbO.hose; if (np) { disposeTree(np.o); Object.assign(np, tbO); } else disposeTree(tbO.o); S.p.copy(tb.bay(BW)).y -= 0.03; S.out.set(0, 1, 0); up = true; tb.open = false; tb.up = 72 * Math.PI / 180; }
     if (np && np.kind && np.kind !== 'lip') { S.p.setFromMatrixPosition(inCar(np)); S.out.copy(np.kind === 'skirt' ? ax(0, 0, sd) : ax(-1, 0, 0)); }   // (the kit's sill or tail piece: its spot where the car draws it)
     // (how it goes on: its face (its frame's z) out from the body; on the top upright, a wing's along the car (its span across it), the
     // rest's to the near side; the regal's exhaust's to the side (its pipe along the car, its end in under the bumper, the arm up off it:
@@ -6750,10 +6780,10 @@ const Garage3D = (function () {
           for (const q of [pd, ax(0, 1, 0)]) if (!plan) plan = placePlan(1, 'reach', g.off, cT, face, false, dirs, q, 0.3, clr);   // (back out along the way out and up, else (a long car's end) straight up)
           if (!plan) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(1, 'reach', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
     } else {   // (the part on the deck by the car's near side, before its spot; the gripper down onto its top, toward its near end)
-      park = [clamp(S.p.x - (up ? 0.9 : 0.75), K.rear + 0.5, K.front - 0.5), K.hw + 0.62];
-      if (np.ry || np.long) park[1] = Math.min(park[1], ARM.z1[0] - 0.2);   // (a long piece lies along the deck, the lip and the wing side by side: a wide vehicle's trolley close by its side, both under the ring)
-      const dz0 = Math.min(np.hs.z * 0.6, 0.45), ry = np.ry || 0, deckGrab = (pk, dz, dx) => { const top = new V3(pk[0] + dz * Math.sin(ry) + (dx || 0) * Math.cos(ry), CART.deck + 0.006 + 2 * np.hs.y, pk[1] + dz * Math.cos(ry) - (dx || 0) * Math.sin(ry) + (np.dz || 0)), g = poseAt(0, 'gripper', top, [0, -1, 0], -Math.PI / 2); if (!g) return null;
-        g.tip = top; g.pre = poseAt(0, 'gripper', top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL.gripper).invert().multiply(deckAt(np, pk[0], pk[1])); return g; };
+      park = [clamp(S.p.x - (up ? 0.9 : 0.75), K.rear + 0.5, K.front - 0.5), sd * (K.hw + 0.62)];
+      if (np.ry || np.long) park[1] = sd > 0 ? Math.min(park[1], ARM.z1[0] - 0.2) : Math.max(park[1], ARM.z0[1] + 0.2);   // (a long piece lies along the deck, the lip and the wing side by side: a wide vehicle's trolley close by its side, both under the ring)
+      const dz0 = Math.min(np.hs.z * 0.6, 0.45), ry = np.ry || 0, deckGrab = (pk, dz, dx) => { const top = new V3(pk[0] + dz * Math.sin(ry) + (dx || 0) * Math.cos(ry), CART.deck + 0.006 + 2 * np.hs.y, pk[1] + dz * Math.cos(ry) - (dx || 0) * Math.sin(ry) + (np.dz || 0)), g = poseAt(i, tool, top, [0, -1, 0], -Math.PI / 2); if (!g) return null;
+        g.tip = top; g.pre = poseAt(i, tool, top.clone().add(new V3(0, 0.35, 0)), [0, -1, 0], -Math.PI / 2); g.off = tipM(g.s, TL[tool] + (tool === 'reach' ? g.ext || 0 : 0)).invert().multiply(deckAt(np, pk[0], pk[1])); return g; };
       let g = deckGrab(park, dz0);
       // (a long or a wide vehicle: the trolley as near its spot as the arm still gets to it, the gripper onto the part's middle or its end by the car)
       if (!g || !g.pre) { const pk = [clamp(park[0], ARM.x0 + 0.3, ARM.x1 - 0.3), park[1]]; for (const dz of [dz0, 0, -dz0]) { const q = deckGrab(pk, dz); if (q && q.pre) { g = q; park = pk; break; } } }
@@ -6761,15 +6791,15 @@ const Garage3D = (function () {
       // the ring's inner edge, else by that end, else nearer its middle: the first of them it goes on by exactly where the car draws it)
       if (np.gx) { let g1 = null;
         for (const dz of [Math.min(np.hs.z - 0.08, 0.64), np.hs.z - 0.08, dz0]) { const q = deckGrab(park, dz, np.gx); if (!q || !q.pre) continue; if (!g1) g1 = q; NC.k = 120;
-          for (const w of [pd, ax(0, 1, 0)]) if (!plan) plan = framePlan(0, 'gripper', q.off, inCar(np), dirs, w, 0.3, clr);
+          for (const w of [pd, ax(0, 1, 0)]) if (!plan) plan = framePlan(i, tool, q.off, inCar(np), dirs, w, 0.3, clr);
           if (plan) { g = q; exact = true; break; } }
         if (!plan && g1) g = g1; }
       if (g) {
         if (g.pre) { grab = g; why = 'place';
           for (const q of [pd, ax(0, 1, 0)]) { if (plan) break;   // (back out along the way out and up, else (a long car's end beyond the arm's reach that way) straight up)
-            if (np.real && !PART_AT.hidden.includes(el)) { plan = framePlan(0, 'gripper', g.off, inCar(np), dirs, q, 0.3, clr); exact = !!plan; }
-            if (!plan && !(np.ry || np.long)) plan = placePlan(0, 'gripper', g.off, cT, face, false, dirs, q, 0.3, clr); }   // (a long piece, the aero kit's: where the car draws it or by a hop, never pressed on turned)
-          if (!plan && !(np.ry || np.long)) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(0, 'gripper', g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
+            if (np.real && !PART_AT.hidden.includes(el)) { plan = framePlan(i, tool, g.off, inCar(np), dirs, q, 0.3, clr); exact = !!plan; }
+            if (!plan && !(np.ry || np.long)) plan = placePlan(i, tool, g.off, cT, face, false, dirs, q, 0.3, clr); }   // (a long piece, the aero kit's: where the car draws it or by a hop, never pressed on turned)
+          if (!plan && !(np.ry || np.long)) { const c = cT.clone().addScaledVector(S.out, -0.06); plan = placePlan(i, tool, g.off, c, face, false, dirs, ax(0, 1, 0), 0.3, clr); if (plan) cT.copy(c); } } }   // (just beyond the reach: pressed on a little deeper)
     }
     // (no way on for the arm: a spot beyond its reach (a long vehicle's end), one in under the body (the arm down through it): the part
     // to the nearest place by the spot the arm gets to clear of the car: out from the spot, to the arm's own side of it, higher (a tall
@@ -6783,15 +6813,15 @@ const Garage3D = (function () {
     if (grab && !plan && np && (np.ry || np.long)) { const FL = inCar(np), cL = new V3().setFromMatrixPosition(FL), qL = new THREE.Quaternion().setFromRotationMatrix(FL), gy = G.position.y, hx = np.hs.x, hy = np.hs.y, hz = np.hs.z, C0 = [], Y = new V3(0, 1, 0);
       const tipL = new V3().setFromMatrixPosition(grab.off.clone().invert()), fwd = cL.x >= (K.front + K.rear) / 2 ? 1 : -1;
       const add = (c, a) => { const ex = a ? hz : hx, ez = a ? hx : hz; if (!(c.x + ex > K.rear - 0.04 && c.x - ex < K.front + 0.04 && Math.abs(c.z) - ez < K.hw + 0.04 && c.y - hy < K.top + gy + 0.04)) C0.push([c, c.distanceTo(cL) + (a ? 0.3 : 0), a]); };
-      for (const a of [0.1, 0.25, 0.4, 0.6, 0.9, 1.2]) for (const h of [0, 0.15, 0.3, 0.6, 1]) for (const sz of [0, 0.3, 0.6]) { const c = cL.clone().addScaledVector(S.out, a); c.y += h; c.z += sz; add(c, 0); }
+      for (const a of [0.1, 0.25, 0.4, 0.6, 0.9, 1.2]) for (const h of [0, 0.15, 0.3, 0.6, 1]) for (const sz of [0, 0.3, 0.6]) { const c = cL.clone().addScaledVector(S.out, a); c.y += h; c.z += sd * sz; add(c, 0); }
       for (const y of up ? [cL.y, 2.3, 1.9, 1.5] : [cL.y, cL.y + 0.2, cL.y + 0.5]) for (const e of [0.8, 0.5, 0.2, -0.1, -0.4, -0.8]) for (const sz of [0, 0.25])
-        add(new V3((fwd > 0 ? K.front : K.rear) + fwd * (e - hz), y, K.hw + hx + 0.1 + sz), -fwd * Math.PI / 2);
+        add(new V3((fwd > 0 ? K.front : K.rear) + fwd * (e - hz), y, sd * (K.hw + hx + 0.1 + sz)), -fwd * Math.PI / 2);
       C0.sort((p, q) => p[1] - q[1]); NC.k = 200; const DNW = [0, -1, 0], anyClr = (tip, s) => clearOf(G, tip, s, NC);
       for (const [c, , a] of C0) { if (NC.k <= 0) break;
         const F = new THREE.Matrix4().compose(c, a ? new THREE.Quaternion().setFromAxisAngle(Y, a).multiply(qL) : qL, _h1), tip = tipL.clone().applyMatrix4(F);
-        const ux = tip.x - clamp(tip.x, ARM.x0, ARM.x1), uz = tip.z - clamp(tip.z, ARM.z0[0], ARM.z1[0]), ul = Math.hypot(ux, uz), ways = [[DNW, null], [DNW, 0], [DNW, Math.PI / 2], [DNW, -Math.PI / 2], [DNW, Math.PI]];
+        const ux = tip.x - clamp(tip.x, ARM.x0, ARM.x1), uz = tip.z - clamp(tip.z, ARM.z0[i], ARM.z1[i]), ul = Math.hypot(ux, uz), ways = [[DNW, null], [DNW, 0], [DNW, Math.PI / 2], [DNW, -Math.PI / 2], [DNW, Math.PI]];
         if (ul > 0.02) for (const th of [0.35, 0.7, 1.05]) ways.push([[ux / ul * Math.sin(th), -Math.cos(th), uz / ul * Math.sin(th)], null]);
-        const q = framePlan(0, 'gripper', grab.off, F, ways, Y, 0.25, anyClr); if (q) { plan = q; toss = { c, d: c.distanceTo(cL) }; break; } }
+        const q = framePlan(i, tool, grab.off, F, ways, Y, 0.25, anyClr); if (q) { plan = q; toss = { c, d: c.distanceTo(cL) }; break; } }
       if (!plan) why = 'hop:' + C0.length + ':' + NC.k;
     } else if (grab && !plan) { const m = new V3().setFromMatrixPosition(grab.off).length() + 0.12, fx = (x) => clamp(x, ARM.x0 + m, ARM.x1 - m), fz = (z) => clamp(z, ARM.z0[i] + m, ARM.z1[i] - m), gy = G.position.y, hm = Math.max(hs.x, hs.y, hs.z), sdA = i ? -1 : 1, C0 = [];
       const inCarBox = (c) => c.x > K.rear - hm - 0.04 && c.x < K.front + hm + 0.04 && Math.abs(c.z) < K.hw + hm + 0.04 && c.y < K.top + gy + hs.y + 0.04;   // (the body in the way there)
@@ -6903,7 +6933,7 @@ const Garage3D = (function () {
     // forward to the bay's front and from its inlet to the near side (the car's frame; blue, its own; kept in the body till the bonnet's down))
     const turboFix = function* () { const H = tb.in[0], P = H.parent; P.updateMatrixWorld(true);
       { const p0 = new V3(), q0 = new THREE.Quaternion(), s0 = new V3(), q1 = new THREE.Quaternion(), O = new V3(1, 1, 1);   // (set down: onto the engine, the car's axes)
-        H.matrix.decompose(p0, q0, s0); const p1 = (tb.nw || tb).bay(P.matrixWorld).add(new V3(0, 0.095, 0)).applyMatrix4(P.matrixWorld.clone().invert());
+        H.matrix.decompose(p0, q0, s0); const p1 = (tb.nw || tb).bay(P.matrixWorld).add(new V3(0, tb.hs.y, 0)).applyMatrix4(P.matrixWorld.clone().invert());
         yield* tween(LG ? 0.2 : 0.3, (k) => { H.matrix.compose(p0.clone().lerp(p1, k), q0.clone().slerp(q1, k), O); H.matrixWorldNeedsUpdate = true; }, EZ.in); SFX.clunk(0.4); }
       H.updateMatrixWorld(true);
       const W = (x, y, z) => new V3(x, y, z).applyMatrix4(H.matrixWorld), Pi = P.matrixWorld.clone().invert();
@@ -6911,18 +6941,19 @@ const Garage3D = (function () {
         spawn((function* () { const a = LG.pose(B, tb.up, 0.15), b = LG.pose(B, tb.up); if (a) yield* armExt(0, a.s, 0, 0.4); if (b) yield* armExt(0, b.s, 0, 0.12, EZ.sine); LG.at = true; })());
         yield* armExt(1, plan.pre.s, plan.pre.ext, 0.15, EZ.sine); yield* armTool(1, 'wrench', 7); }
       let n = 0;
-      for (const [x, z] of [[-0.07, -0.06], [0.07, -0.06], [0.07, 0.06], [-0.07, 0.06]]) { const q = W(x, -0.075, z);
+      for (const [x, z] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { const q = W(x * tb.hs.x * 0.65, 0.02 - tb.hs.y, z * tb.hs.z * 0.6);
         if (LG) { const tp = q.clone().add(new V3(0, 0.01, 0)), sb = clamp((tp.z - (ARM.z1[1] - 0.01)) / (ARM.FA + TL.wrench), 0, 0.6), p = poseAt(1, 'wrench', tp, new V3(0, -Math.sqrt(1 - sb * sb), sb), Math.PI / 2);
           if (p) { if (n++) yield* armExt(1, p.s, p.ext, 0.1, EZ.sine); else yield* armCarry(1, p.s, p.ext, 0.3); } }
         SFX.wrench(); for (let k = 0; k < 5; k++) sparks.emit(q.x, q.y, q.z, rnd(-0.6, 0.6), rnd(0.2, 1.0), rnd(-0.6, 0.6), rnd(0.15, 0.3), 0.035, 0.01, SPK, 1, 8, 0.5, 0.02);
         yield* wait(LG ? 0.08 : 0.22); }
-      fitLog('screws'); const hm = new THREE.MeshStandardMaterial({ color: 0x2a5fb8, roughness: 0.55, metalness: 0.1 }); hm.userData.own = true;
-      const tube = (a, b, up) => { const m = a.clone().lerp(b, 0.5); m.y += up; const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a, m, b]), 20, 0.022, 8, false).applyMatrix4(Pi);
+      fitLog('screws');
+      const tube = (a, b, up, r, col) => { const m = a.clone().lerp(b, 0.5); m.y += up; const g = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a, m, b]), 20, r, 8, false).applyMatrix4(Pi);
+        const hm = new THREE.MeshStandardMaterial({ color: col, roughness: 0.55, metalness: 0.1 }); hm.userData.own = true;
         const t = new THREE.Mesh(g, hm); t.castShadow = true; g.setDrawRange(0, 0); P.add(t); tb.in.push(t); return t; };
-      const o1 = W(0.14, 0.075, -0.02), o2 = W(0, 0.01, 0.1), hs = [tube(o1, W(0.42, -0.04, -0.06), 0.06), tube(o2, W(0.08, -0.02, 0.36), 0.08)];
+      const hs = tb.hose.map(([a, b, up, r, col]) => tube(W(...a), W(...b), up, r, col));
       SFX.whoosh(0.15); yield* tween(LG ? 0.4 : 0.8, (k) => { for (const t of hs) t.geometry.setDrawRange(0, Math.ceil(k * 20) * 8 * 6); }, EZ.out);
       SFX.click(); fitLog('hoses'); };
-    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - 0.2], yaw: 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = tb ? VB : wing && !toss ? view({ at: [S.p.x, S.p.y + 0.1, 0], yaw: -1.0, pitch: 0.3, dist: 3.3, fov: 34 }) : exS ? view({ at: [K.rear - 0.05, S.p.y + 0.12, 0], yaw: -1.22, pitch: 0.1, dist: 3.4, fov: 34 }) : spotView(exact ? { p: PX, out: flat ? ax(0, 1, 0) : S.out } : S);
+    const V1 = regal ? rglView(grab, RGL.bays[pc.bay]) : view({ at: [park[0], 0.75, park[1] - sd * 0.2], yaw: sd > 0 ? 0.55 : Math.PI - 0.55, pitch: 0.3, dist: 4.2, fov: 34 }), V2 = tb ? VB : wing && !toss ? view({ at: [S.p.x, S.p.y + 0.1, 0], yaw: -1.0, pitch: 0.3, dist: 3.3, fov: 34 }) : exS ? view({ at: [K.rear - 0.05, S.p.y + 0.12, 0], yaw: -1.22, pitch: 0.1, dist: 3.4, fov: 34 }) : spotView(exact ? { p: PX, out: flat ? ax(0, 1, 0) : S.out } : S);
     // (the wing's look from behind, a little to the near side, at the end)
     const VH = wing ? view({ at: [S.p.x + 0.1, cT.y, 0], yaw: -1.27, pitch: 0.27, dist: 3.1, fov: 33 }) : null;
     // (the exhaust's: the car's rear on the lift from behind, a little to the near side (V2); the same down on its wheels for the revs)
@@ -6931,7 +6962,8 @@ const Garage3D = (function () {
     const wrenchAt = function* (n, f) { const W = exS.wr; yield* armExt(0, W.s, 0, 0.3 * f); for (let k = 0; k < n; k++) { burst(W.tip); yield* wait(0.22 * f); } yield* armExt(0, W.pre.s, 0, 0.25 * f); };
     // to the part: the arm's tool over it; the trolley in from the door (for a drawer's part to the cabinet first: the drawer out, the part
     // onto its deck, the drawer in; then across the room's right and along the car's near side)
-    const cart = regal ? null : CART.root || buildCart(), ds = di >= 0 ? drwSpot(di, o.toK == null ? -1 : o.toK) : null, lane = park ? [CAB.x, park[1]] : null;
+    const cart = regal ? null : CART.root || buildCart(); if (cart) cartPaint(el === 'aero' || !!o.cartAt);   // (the aero kit's wing: on the kit's trolley still)
+    const ds = di >= 0 ? drwSpot(di, o.toK == null ? -1 : o.toK) : null, lane = park ? [CAB.x, park[1]] : null;
     // (the trolley off with the old part on its deck (old; none: empty): one of a drawer's back into it on the way, the new one from there or not)
     const cartOff = function* (old) { const bi = DRW.els.indexOf(el), back = old && bi >= 0 && o.fromK != null && o.fromK >= 0 ? drwSpot(bi, o.fromK) : null;
       if (back) { yield* cartGo([lane, [CAB.x, CAB.z], back.stop], 4.6); DRW.want = bi; yield* wait(0.4);
@@ -7053,7 +7085,7 @@ const Garage3D = (function () {
         (function* () { yield* waitFor(() => { ride(np.o, F_D); return DRW.k[dI] >= 1; }, 1.2); })());
       // 2. the old one out (0,8 s): roka 1 to it, its screws out, drawn out of its seat (the seat dark, its light out)
       yield* armExt(0, plan.s, plan.ext, 0.3); screws(2); yield* wait(0.12);
-      const sock = lampSocket(cv, lampO), gN = cv.head[sd > 0 ? 1 : 0]; if (gN) { gN.material.opacity = 0; gN.visible = false; }
+      const sock = lampSocket(cv, lampO), gN = el === 'zarometi' && cv.head ? cv.head[sd > 0 ? 1 : 0] : null; if (gN) { gN.material.opacity = 0; gN.visible = false; }
       scene.add(lampO.o); hold(0, lampO.o, Fo); yield* armExt(0, plan.pre.s, plan.pre.ext, 0.3); fitLog('old.out', { i: 0 });
       // 3. the LED one taken (1,2 s): roka 2's reach out to it in the drawer; roka 1 lays the old one on the bonnet meanwhile
       const ptH = { ...plan.pre.s };
@@ -7076,13 +7108,13 @@ const Garage3D = (function () {
       { const q = letGo(1) || np.o; q.matrix.copy(F_H); q.matrixWorldNeedsUpdate = true; hold(0, q, F_H); SFX.clunk(0.3); }
       fitLog('pass', { i: 1 });
       // 5. in (1,2 s): roka 1 pushes it into its seat and screws it, roka 2's reach on it; the far lamp the same
-      const FO = lampPart(cv, -sd);
+      const FO = el === 'zarometi' ? lampPart(cv, -sd) : (() => { const q = realOr(partObj(cv, el, o.from, -sd)); if (q && q.c.z * lampO.c.z < -1e-3) return q; if (q) disposeTree(q.o); return null; })();   // (a pair's far one; the grille: none)
       const tipS = PL.clone().addScaledVector(UP, np.hs.y + 0.005), gapOk = (q, sg) => q && Math.min(q.s.z - plan.s.z, q.s.z - plan.pre.s.z) * sg >= ARM.gap + 0.05;
       // (roka 2's carriage on the lamp's outer side of roka 1's, the gap kept: as it stays on that side for the far one)
       let P2S = poseAt(1, 'reach', tipS, d2); if (!gapOk(P2S, sd)) for (const k of [0.6, 0.85, 1.2, 1.7, 2.4]) { const q = poseAt(1, 'reach', tipS, new V3(0, -1, k * sd)); if (gapOk(q, sd)) { P2S = q; break; } }
       yield* par(armExt(0, plan.pre.s, plan.pre.ext, 0.2), P2S ? armExt(1, P2S.s, P2S.ext, 0.2) : wait(0.2));
       yield* armExt(0, plan.s, plan.ext, 0.2, EZ.sine);
-      disposeTree(letGo(0)); SFX.clunk(0.5); disposeTree(sock); fitSwap(cv, nw, false); lamps(cur, 0, 0.35); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'real', pod: true });
+      disposeTree(letGo(0)); SFX.clunk(0.5); disposeTree(sock); fitSwap(cv, nw, false); if (el === 'zarometi') lamps(cur, 0, 0.35); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'real', pod: true });
       if (FO) { FO.o.position.copy(FO.c); FO.o.scale.setScalar(1.02); cur.v.bodyG.add(FO.o); }
       screws(2); yield* wait(0.18); fitLog('fit', { i: 0 });
       const mz = (s) => ({ x: s.x, y: s.y, z: -s.z, yaw: -s.yaw, pitch: s.pitch }), sF = mz(plan.s), sFp = mz(plan.pre.s);
@@ -7112,8 +7144,13 @@ const Garage3D = (function () {
       disposeTree(lampO.o); scene.remove(lampO.o); DRW.out = out0;
       // (the arms home meanwhile: not wanted for the lights; the podaljšek's stages in only when roka 2 is home)
       let parked = false; spawn((function* () { yield* armsPark(2); POD.on = false; parked = true; })());
-      // 7. the lights tried (1,5 s): from before the car, on, off, on; KONČANO
+      // 7. the lights tried (1,5 s): from before the car, on, off, on; KONČANO (the indicators: blinked three times; the grille: none)
       yield* camTo(VL, 0.6);
+      if (el !== 'zarometi') { if (el === 'zmigavci') { const fP = PL.clone(); fP.z = -fP.z;
+          for (const k of [1, 0, 1, 0, 1]) { if (k) { glint(PL, 0.3, 0xffa020); if (FO) glint(fP, 0.3, 0xffa020); SFX.click(); } yield* wait(k ? 0.28 : 0.2); } fitLog('lights'); }
+        SFX.ping(1760); done(); yield* wait(0.5);
+        FIT.lamp = { pod: P2 ? +P2.ext.toFixed(2) : -1, kN, kO, hood: !!PH, pass: !!P2H, back: !!(P2B && P2O), far: !!(FO && okF), hold2: !!P2F };
+        yield* par(home(1.1), waitFor(() => parked, 4)); POD.on = false; return; }
       const pool = mainOnly(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: TX.glow, color: cur.head[0] ? cur.head[0].material.color.getHex() : 0xffffff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })));
       pool.material.userData.own = true; pool.rotation.x = -Math.PI / 2; pool.position.set(K.front + 1.25, 0.03, 0); pool.scale.set(3.2, 2.4 + K.hw, 1); pool.renderOrder = 9; cur.root.add(pool);
       const lit = (k) => { lamps(cur, k > 0 ? 1 : 0, 0.35); pool.material.opacity = 0.6 * k; for (const q of cur.head) q.scale.setScalar(0.9 * (1 + 0.7 * k)); };
@@ -7173,7 +7210,7 @@ const Garage3D = (function () {
     if (tb) {   // (the turbo left in the bay, the new car's bonnet up as the old one's (one geometry the showroom keeps: the same; else the old one's shut), the prop with it)
       tb.nw = bonnet(nw); if (tb.nw) { tb.nw.set(tb.th); if (tb.nw.G !== tb.G) tb.set(0); } nw.v.bodyG.add(rod);
       let hb = held; const CB = cv.v.bodyG; CB.updateMatrixWorld(true);   // (the new car not yet in the old one's place: the old one's frame)
-      if (regal) { const t = turboObj().o, q = new THREE.Quaternion(), P = new V3(); CB.matrixWorld.decompose(P, q, new V3()); P.setFromMatrixPosition(held.matrix);   // (the regal's own turbo, a turbo of the car's axes in its place)
+      if (regal) { const t = bayObj(el).o, q = new THREE.Quaternion(), P = new V3(); CB.matrixWorld.decompose(P, q, new V3()); P.setFromMatrixPosition(held.matrix);   // (the regal's own turbo, a turbo of the car's axes in its place)
         t.matrixAutoUpdate = false; t.matrix.compose(P, q, new V3(1, 1, 1)); disposeTree(held); hb = t; }
       const M = CB.matrixWorld.clone().invert().multiply(hb.matrix); nw.v.bodyG.add(hb); hb.matrix.copy(M); hb.matrixWorldNeedsUpdate = true; tb.in = [hb]; }
     else disposeTree(held);
@@ -7181,12 +7218,12 @@ const Garage3D = (function () {
     if (toss && op) { letGo(i); SFX.whoosh(0.3); yield* fly(op.o, Fo, Mh); hold(i, op.o, op.o.matrix.clone()); }   // (the old part back into the hand the same way)
     if (lvA) {   // (the aero kit's lip clicked in under the bumper: sparks at its ends, glints along the near sill (the skirts are on with it); its level's parts on (a wing to come by hand: without it till then))
       const Q = np.real ? np : op, C = Q ? new V3().setFromMatrixPosition(inCar(Q)) : S.p.clone(), hz = Q ? Q.hs.z * 0.8 : 0.3, hx = Q ? Q.hs.x * 0.8 : 0.3, kd = np.kind || 'lip'; SFX.click();
-      for (const sz of [-1, 1]) for (let k = 0; k < 6; k++) { if (kd === 'skirt') sparks.emit(C.x + sz * hx, C.y, C.z + 0.03, sz * rnd(0, 0.8), rnd(-0.2, 0.9), rnd(0.3, 1.4), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02);
+      for (const sz of [-1, 1]) for (let k = 0; k < 6; k++) { if (kd === 'skirt') sparks.emit(C.x + sz * hx, C.y, C.z + sd * 0.03, sz * rnd(0, 0.8), rnd(-0.2, 0.9), sd * rnd(0.3, 1.4), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02);
         else sparks.emit(C.x + (kd === 'rear' ? -0.03 : 0.03), C.y, C.z + sz * hz, (kd === 'rear' ? -1 : 1) * rnd(0.3, 1.4), rnd(-0.2, 0.9), sz * rnd(0, 0.8), rnd(0.2, 0.42), 0.045, 0.012, SPK, 1, 8, 0.5, 0.02); }
       if (o.up) levelNow(o.up[0], o.up[1]);
       if (wingA) { const Gp = cur.parts.aero, k = Gp ? Gp.userData.items.findIndex(q => q.from === 'drop') : -1; if (k >= 0) { disposeTree(Gp.userData.items[k].o); Gp.userData.items.splice(k, 1); }
         if (wingO) { wingO.o.position.copy(wingO.c); cur.v.bodyG.add(wingO.o); } }   // (the old level's wing stays on its lid till its show)
-      for (let k = 0; k < 5; k++) glint(kd === 'rear' ? new V3(K.rear - 0.03, K.bottom + G.position.y + 0.08, lerp(-K.hw, K.hw, (k + 0.5) / 5) * 0.8) : new V3(lerp(K.wrx + K.wr, K.wfx - K.wr, (k + 0.5) / 5), K.bottom + G.position.y + 0.06, K.hw + 0.03), 0.28, 0xffffff); }
+      for (let k = 0; k < 5; k++) glint(kd === 'rear' ? new V3(K.rear - 0.03, K.bottom + G.position.y + 0.08, lerp(-K.hw, K.hw, (k + 0.5) / 5) * 0.8) : new V3(lerp(K.wrx + K.wr, K.wfx - K.wr, (k + 0.5) / 5), K.bottom + G.position.y + 0.06, sd * (K.hw + 0.03)), 0.28, 0xffffff); }
     if (wing) { if (o.up) levelNow(o.up[0], o.up[1]); if (!toss) spawn(settle(cur, 0.01)); }   // (the wing's level's parts on with it: on a car that draws no wing of its own the level's wing is the one snapped on)
     yield* wait(LG ? 0.1 : 0.15); SFX.wrench();
     if (tb) yield* turboFix();
@@ -7205,7 +7242,7 @@ const Garage3D = (function () {
     if (!op) { /* (nothing to take back) */ }
     else if (regal) { const ways = [[grab.d, null]]; for (const a of [0.08, -0.08, 0.16, -0.16, 0.24, -0.24]) for (const th of [0, 0.06, 0.12]) ways.push([turnDir(grab.d, a, th), null]);
       put = framePlan(1, 'reach', RB[1].held.a, pc.M, ways, grab.d.clone().negate(), 0.5); }
-    else put = framePlan(0, 'gripper', RB[0].held.a, deckAt(op, park[0], park[1]), [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2]], new V3(0, 1, 0), 0.35);
+    else put = framePlan(i, tool, RB[i].held.a, deckAt(op, park[0], park[1]), [[[0, -1, 0], -Math.PI / 2], [[0, -1, 0], Math.PI / 2]], new V3(0, 1, 0), 0.35);
     if (put) {
       yield* par(armCarry(i, put.pre.s, put.pre.ext, 1.4), holdTo(i, put.off, 1.3), wing ? camTo(VH, 1.0) : exS ? null : camTo(V1, 1.4));
       yield* armExt(i, put.s, put.ext, regal ? 0.5 : 0.4); SFX.clunk(0.3);
@@ -7221,7 +7258,7 @@ const Garage3D = (function () {
     // the snap, the look from behind, KONČANO); else the look at the lip from before the car, KONČANO)
     if (wingA) { yield* fitPart('krilo', spec, { np: wingA, op: wingO, from: 0, to: 0, up: o.up, cartAt: true }); return; }
     if (lvA) { const kd = np.kind || 'lip', lookA = function* () { yield* camTo(zoneView(cur, 'aero', kd === 'skirt' ? 'side' : kd === 'rear' ? 'rear' : 'front'), 1.1); SFX.ping(1760); hud('done', { kind: el });
-        for (let k = 0; k < 5; k++) { const gy = G.position.y; glint(kd === 'skirt' ? new V3(lerp(K.wrx + K.wr, K.wfx - K.wr, rnd(0.05, 0.95)), K.bottom + gy + rnd(0.02, 0.08), K.hw + 0.03) : kd === 'rear' ? new V3(K.rear - rnd(-0.05, 0.08), K.bottom + gy + rnd(0.04, 0.12), rnd(-1, 1) * K.hw * 0.7)
+        for (let k = 0; k < 5; k++) { const gy = G.position.y; glint(kd === 'skirt' ? new V3(lerp(K.wrx + K.wr, K.wfx - K.wr, rnd(0.05, 0.95)), K.bottom + gy + rnd(0.02, 0.08), sd * (K.hw + 0.03)) : kd === 'rear' ? new V3(K.rear - rnd(-0.05, 0.08), K.bottom + gy + rnd(0.04, 0.12), rnd(-1, 1) * K.hw * 0.7)
           : new V3(K.front + rnd(-0.05, 0.08), K.frontLow + gy + rnd(-0.02, 0.06), rnd(-1, 1) * K.hw * 0.8), 0.3, 0xffffff); yield* wait(0.12); }
         yield* wait(0.2); yield* home(1.4); };
       yield* par(lookA(), armRest(i, 1.2), cartOut); return; }
