@@ -552,7 +552,7 @@
     'Barvanje {0}': 'Paint job {0}', 'Dirkalne črte': 'Racing stripes', 'Druga barva na pokrovu in bokih · {0}': 'A second colour on the bonnet and the sides · {0}', 'Da': 'Yes',
     'Premalo kovančkov: potrebuješ {0}, imaš {1}.': 'Not enough coins: you need {0}, you have {1}.', '{0} je izbran za naslednjo dirko.': '{0} is selected for the next race.',
     'V POLNI IGRI': 'IN THE FULL GAME', 'KOT NOV ✓': 'AS NEW ✓', 'SERVIS · {0}': 'SERVICE · {0}', '🔒 najprej športni paket': '🔒 the sport kit first', 'NAMEŠČENO ✓': 'FITTED ✓', '🔒 ZAKLENJENO': '🔒 LOCKED',
-    'KUPI IN NAMESTI · {0}': 'BUY AND FIT · {0}', 'premalo denarja · imaš {0}': 'not enough money · you have {0}', 'SERIJSKO': 'STOCK', 'NAZAJ': 'BACK', 'Kovanci': 'Coins',
+    'KUPI IN NAMESTI · {0}': 'BUY AND FIT · {0}', 'premalo denarja · imaš {0}': 'not enough money · you have {0}', 'SERIJSKO': 'STOCK', 'AERO PAKET': 'AERO KIT', 'NAZAJ': 'BACK', 'Kovanci': 'Coins',
     'Premalo denarja: potrebuješ {0}, imaš {1}.': 'Not enough money: you need {0}, you have {1}.', 'Imaš {0}.': 'You have {0}.', 'Razumem': 'Got it',
     'Deli na regalu': 'Parts on the rack', 'Tapni del na regalu: odpre se meni z možnostmi in cenami. Izbrani del vidiš prosojno na avtu.': 'Tap a part on the rack: a menu opens with the options and their prices. The one you pick shows see-through on the car.',
     'Predali': 'Drawers', 'V predalih omarice so luči, maske, nalepke, čeljusti in zavore. Tapni predal in izvleče se.': 'The cabinet\'s drawers hold lamps, grilles, decals, calipers and brakes. Tap a drawer and it slides out.',

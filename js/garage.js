@@ -366,6 +366,7 @@
       html += '<div class="g-mh"><h3>' + esc(L2(EL.barva.n)) + '</h3><span>' + esc(tr(COLORS[cur][1])) + '</span></div><div class="g-mg g-mc">' + COLORS.map((q, i) => '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + ICON.barva(0, 0, q[0]) + '</span></button>').join('') + '</div>';
       ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : tr('KUPI IN NAMESTI · {0}', eur(p));
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
+      if (m.car) html += '<div class="g-mx"><button data-mact="aero">' + esc(tr('AERO PAKET')) + ' ›</button></div>';   // (opened from the car: its aero kits a tap away)
     } else {
       const E = EL[el], t = m.tab;
       html += '<div class="g-mt">' + E.c.map((q, i) => '<button class="' + (i === t ? 'sel' : '') + '" data-tab="' + i + '"><b>' + esc(L2(q[0])) + '</b><small>' + tabRange(el, i) + '</small></button>').join('') + '</div>';
@@ -506,7 +507,7 @@
     else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
-    else if (h.key === 'car:body') m = { el: 'aero', key: null, car: true };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
+    else if (h.key === 'car:body') m = { el: 'barva', key: null, car: true, sel: [0, 0] };   // (the paint: a tap on the car's body (plate barvni_krogi_B f, 15. 11.); the aero kits: AERO › in its menu)
     else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
@@ -571,7 +572,7 @@
       if (t.dataset.tab) { G.sound(S.sound); if (menu) { menu.tab = +t.dataset.tab; drawMenu(); } return; }
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
       if (t.dataset.col) { G.sound(S.sound); if (menu) { menu.color = +t.dataset.col; drawMenu(); } return; }
-      if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); return; }
+      if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); else if (t.dataset.mact === 'aero') { menu = null; openMenu({ el: 'aero', key: null, car: true }); } return; }
       if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
