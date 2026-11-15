@@ -94,23 +94,37 @@
     const P = KT, D = P.D, gx = clamp((x - D.x0) / D.cell, 0, D.nx - 1.001), gz = clamp((z - D.z0) / D.cell, 0, D.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, W = D.nx, a = P.dem;
     return (a[j * W + i] * (1 - u) + a[j * W + i + 1] * u) * (1 - v) + (a[(j + 1) * W + i] * (1 - u) + a[(j + 1) * W + i + 1] * u) * v;
   }
+  function ktPackCells() {   // (for ktNear: each cell's samples in a row, x, z, tangent, normal, barriers, height and index, in the cell's order)
+    const P = KT, C = P.cells, CF = P.cf = new Array(C.length);
+    for (let k = 0; k < C.length; k++) { const L = C[k]; if (!L) continue; const F = CF[k] = new Float64Array(L.length * 10);
+      for (let q = 0; q < L.length; q++) { const i = L[q], o = q * 10; F[o] = T.px[i]; F[o + 1] = T.pz[i]; F[o + 2] = T.tx[i]; F[o + 3] = T.tz[i]; F[o + 4] = T.nx[i]; F[o + 5] = T.nz[i];
+        F[o + 6] = T.br[i]; F[o + 7] = T.bl[i]; F[o + 8] = T.hy[i]; F[o + 9] = i; } }
+    return CF;
+  }
   function ktNear(x, z) {   // Shepard blend of the road heights around (x, z): weights fall with the distance beyond each sample's barrier, so the legs of a hairpin blend smoothly
     // and the cap there: never above a road inside its barriers, only a gentle rise right behind them (the lowest over the samples near: continuous)
     const P = KT, cx = Math.floor(x / KTHC) - P.cx0, cz = Math.floor(z / KTHC) - P.cz0, ds = T.ds;
-    let ws = 0, hs = 0, bd = 1e9, bi = -1, bl = 0, ba = 0, bdd = 1e9, cap = 1e9;
-    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
-      const L = P.cells[b * P.ncx + a]; if (!L) continue;
-      for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
-        if (d >= 64) continue;
-        const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
-        ws += wq; hs += wq * T.hy[i];
-        if (dd < 4.5) cap = Math.min(cap, T.hy[i] - 0.3 + 0.12 * dd * dd + 200 * sstep(3, 4.5, dd));
-        if (d < bd) { bd = d; bi = i; bl = lat; ba = al; }
+    const CF = P.cf || ktPackCells(), ncx = P.ncx;
+    // (only the cells and samples that can lie under 64 m: a sample farther than 64 + ds from (x, z) is farther than that from its own stretch of road;
+    // + 1 m for the rounding of the unit vectors. The same samples in the same order, so the same sums)
+    const RN = 64 + ds + 1, RN2 = RN * RN;
+    let ws = 0, hs = 0, bd = 1e9, bi = -1, bl_ = 0, ba = 0, bdd = 1e9, cap = 1e9;
+    const b0 = Math.max(0, cz - 2, Math.floor((z - RN) / KTHC) - P.cz0), b1 = Math.min(P.ncz - 1, cz + 2, Math.floor((z + RN) / KTHC) - P.cz0);
+    const a0 = Math.max(0, cx - 2, Math.floor((x - RN) / KTHC) - P.cx0), a1 = Math.min(ncx - 1, cx + 2, Math.floor((x + RN) / KTHC) - P.cx0);
+    for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) {
+      const F = CF[b * ncx + a]; if (!F) continue;
+      for (let o = 0; o < F.length; o += 10) {
+        const dx = x - F[o], dz = z - F[o + 1]; if (dx * dx + dz * dz >= RN2) continue;
+        const al = dx * F[o + 2] + dz * F[o + 3], lat = dx * F[o + 4] + dz * F[o + 5], ex = Math.max(0, Math.abs(al) - ds), s2 = lat * lat + ex * ex;
+        if (s2 >= 4096) continue;   // (d >= 64, without the root)
+        const i = F[o + 9], hi = F[o + 8], d = Math.sqrt(s2), dd = Math.max(0, d - (lat > 0 ? F[o + 6] : F[o + 7])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
+        ws += wq; hs += wq * hi;
+        if (dd < 4.5) cap = Math.min(cap, hi - 0.3 + 0.12 * dd * dd + 200 * sstep(3, 4.5, dd));
+        if (d < bd) { bd = d; bi = i; bl_ = lat; ba = al; }
         if (dd < bdd) bdd = dd;
       }
     }
-    KTN.i = bi; KTN.d = bd; KTN.dd = bdd; KTN.lat = bl; KTN.cap = cap;
+    KTN.i = bi; KTN.d = bd; KTN.dd = bdd; KTN.lat = bl_; KTN.cap = cap;
     if (bi < 0) return KTN;
     KTN.h = hs / ws;
     const f = clamp(bi + ba / ds, 0, T.N - 1), i0 = Math.min(T.N - 2, Math.floor(f)); KTN.hn = T.hy[i0] + (T.hy[i0 + 1] - T.hy[i0]) * (f - i0);   // road height across from the point
@@ -176,9 +190,42 @@
     const gx = clamp((x - P.x0) / R.c, 0, R.nx - 1.001), gz = clamp((z - P.z0) / R.c, 0, R.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;
     const at = (a, b) => { const k = b * R.nx + a; let e = R.e[k]; if (e !== e) {
       const px = P.x0 + a * R.c, pz = P.z0 + b * R.c; e = -60;
-      for (const r of P.riv) { if (px < r.x0 - 60 || px > r.x1 + 60 || pz < r.z0 - 60 || pz > r.z1 + 60) continue; const s = (inPoly(r.poly, px, pz) ? 1 : -1) * Math.min(60, polyDist(r.poly, px, pz)); if (s > e) e = s; }
+      for (const r of P.riv) { if (px < r.x0 - 60 || px > r.x1 + 60 || pz < r.z0 - 60 || pz > r.z1 + 60) continue; const s = (ktInPoly(r, px, pz) ? 1 : -1) * Math.min(60, ktPolyDist(r, px, pz)); if (s > e) e = s; }
       R.e[k] = e; } return e; };
     return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - v) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * v;
+  }
+  // inPoly and polyDist on a river's banks, the same arithmetic over only the edges that can matter (hashed once per bank: by z for the crossings,
+  // in 16 m cells for the distance, which ktRiv caps at 60 m): the same answers, much faster
+  function ktRivIdx(r) {
+    const poly = r.poly, n = poly.length, RB = 8, RD = 16, zb = r.z0, zi = [], ga = Math.floor(r.x0 / RD), gb = Math.floor(r.z0 / RD), gn = Math.floor(r.x1 / RD) - ga + 1, gm = Math.floor(r.z1 / RD) - gb + 1, dg = new Array(gn * gm);
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const xa = poly[j][0], za = poly[j][1], xb = poly[i][0], zc = poly[i][1];
+      for (let b = Math.floor((Math.min(za, zc) - zb) / RB); b <= Math.floor((Math.max(za, zc) - zb) / RB); b++) (zi[b] || (zi[b] = [])).push(i);
+      for (let a = Math.floor(Math.min(xa, xb) / RD); a <= Math.floor(Math.max(xa, xb) / RD); a++) for (let b = Math.floor(Math.min(za, zc) / RD); b <= Math.floor(Math.max(za, zc) / RD); b++) {
+        const k = (b - gb) * gn + a - ga; (dg[k] || (dg[k] = [])).push(i); }
+    }
+    return (r.ix = { RB, RD, zi, ga, gb, gn, gm, dg, seen: new Uint32Array(n), stamp: 0 });
+  }
+  function ktInPoly(r, x, z) {   // (inPoly: an edge counts only if it crosses the row z, and those all lie in the row's bucket)
+    const X = r.ix || ktRivIdx(r), poly = r.poly, n = poly.length, L = X.zi[Math.floor((z - r.z0) / X.RB)]; if (!L) return false;
+    let c = false;
+    for (let q = 0; q < L.length; q++) { const i = L[q], j = i ? i - 1 : n - 1, xi = poly[i][0], zi = poly[i][1], xj = poly[j][0], zj = poly[j][1];
+      if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; }
+    return c;
+  }
+  function ktPolyDist(r, x, z) {   // (polyDist, over the edges within 60 m: farther ones cannot bring it under the cap of 60; ring by ring of 16 m cells
+    // out from the one with (x, z), until the next ring lies farther than the nearest edge so far: the same least distance)
+    const X = r.ix || ktRivIdx(r), poly = r.poly, n = poly.length, RD = X.RD, st = ++X.stamp, ca = Math.floor(x / RD) - X.ga, cb = Math.floor(z / RD) - X.gb; let d = 1e9;
+    for (let R = 0; R <= 5 && (R - 1) * RD < Math.min(d, 60); R++) for (let b = cb - R; b <= cb + R; b++) {
+      if (b < 0 || b >= X.gm) continue; const edge = b === cb - R || b === cb + R;
+      for (let a = ca - R; a <= ca + R; a += edge ? 1 : 2 * R) {
+        if (a < 0 || a >= X.gn) continue; const L = X.dg[b * X.gn + a]; if (!L) continue;
+        for (let q = 0; q < L.length; q++) { const i = L[q]; if (X.seen[i] === st) continue; X.seen[i] = st; const j = i ? i - 1 : n - 1;
+          const ax = poly[j][0], az = poly[j][1], vx = poly[i][0] - ax, vz = poly[i][1] - az, l2 = vx * vx + vz * vz || 1; const t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); d = Math.min(d, Math.hypot(x - ax - vx * t, z - az - vz * t)); }
+        if (R === 0) break;
+      }
+    }
+    return d;
   }
   function ktFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief, the river's bed under its water and its banks above it
     const P = KT; let f = ktDem(x, z) + (P.n1(x, z) - 0.5) * 5 + (P.n2(x, z) - 0.5) * 2;
@@ -207,11 +254,19 @@
     const a = Y[j], b = Y[j + 1], f = clamp((d - (a[3] - 1.9)) / Math.max(1e-6, b[3] - a[3]), 0, 1);
     return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
   }
+  function ktPadGrid() {   // (for ktHx: the pads in 32 m cells, each cell's in their order; again whenever more are added)
+    const pads = KT.pads, m = new Map();
+    for (let k = 0; k < pads.length; k++) { const p = pads[k], rr = p.r + (p.b || 12);
+      for (let a = Math.floor((p.x - rr) / 32); a <= Math.floor((p.x + rr) / 32); a++) for (let b = Math.floor((p.z - rr) / 32); b <= Math.floor((p.z + rr) / 32); b++) {
+        const key = a * 65536 + b; let L = m.get(key); if (!L) m.set(key, L = []); L.push(k); } }
+    return (KT.pg = { n: pads.length, m });
+  }
   function ktHx(x, z) {   // terrain height (exact: as the strips along the road draw it; the grid: ktGH)
     const n = ktNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = ktFar(x, z);
-    else h = lerp(n.h - 0.3, ktFar(x, z), sstep(1, 42, dd));   // (the roads' heights near them, eased into the land farther out)
-    const pads = KT.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the kiosks, the camps
+    else h = dd <= 1 ? n.h - 0.3 : lerp(n.h - 0.3, ktFar(x, z), sstep(1, 42, dd));   // (the roads' heights near them, eased into the land farther out; within 1 m the land has no weight)
+    const pads = KT.pads, PL = pads.length ? (KT.pg && KT.pg.n === pads.length ? KT.pg : ktPadGrid()).m.get(Math.floor(x / 32) * 65536 + Math.floor(z / 32)) : null;
+    if (PL) for (let q = 0; q < PL.length; q++) { const p = pads[PL[q]], pb = p.b || 12, rr = p.r + pb; if (Math.abs(x - p.x) >= rr || Math.abs(z - p.z) >= rr) continue; const d = Math.hypot(x - p.x, z - p.z); if (d < rr) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the kiosks, the camps
     if (i >= 0) h = Math.min(h, n.cap);   // never above a road inside its barriers, only a gentle rise right behind them
     if (API.STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads (the tracks and camp roads off it): the ground levelled under them
     KTN.dd = i >= 0 ? dd : 999;
