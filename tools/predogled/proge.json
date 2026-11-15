@@ -443,7 +443,7 @@
  "isuna": {
   "key": "Chunzom - Paro Highway",
   "sec": [[27.33233, 89.51750], [27.32867, 89.48855]],
-  "uvoz": {"pred": 120, "grid": 200, "izt": 150, "hw": 4.6, "hwG": 4.2},
+  "uvoz": {"pred": 120, "grid": 200, "izt": 250, "hw": 4.6, "hwG": 4.2},
   "focus": "bridge",
   "cfg": {"ground": "grass", "cover": "patchy", "tree": "pine", "snow": "none", "center": "white", "fog": 13226972, "bld": 15328978, "roof": 9056036, "animals": "cow"},
   "n": 17,
