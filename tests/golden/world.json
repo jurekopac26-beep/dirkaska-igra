@@ -1412,5 +1412,23 @@
    "life:MeshLambertMaterial": "98d13852",
    "lifeShadow:MeshBasicMaterial": "cb5bcbdc"
   }
+ },
+ "eljem": {
+  "meshes": 193,
+  "verts": 278780,
+  "instances": 279,
+  "props": 0,
+  "crowd": 118,
+  "world": "778145f7",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "9c86ac60",
+   "crowd:MeshLambertMaterial": "77f175ee",
+   "flags:MeshLambertMaterial": "45378d95",
+   "ao:MeshBasicMaterial": "b6319958",
+   "tyremarks:MeshBasicMaterial": "2cff9da6",
+   "roadwear:MeshLambertMaterial": "4e730b51"
+  }
  }
 }

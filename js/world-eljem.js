@@ -161,6 +161,10 @@
     const kindAt = (i) => (startArea(i) ? 1 : 0);   // 0 concrete, 1 white wall and fence
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const conc = [0.84, 0.82, 0.78], concD = [0.64, 0.62, 0.58], concT = [0.9, 0.88, 0.84], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72];
+    // (does the barrier's line at i run backwards from where it was at j: its step against the road's)
+    const back = (j, i, side) => { const oj = side * ((side > 0 ? T.br[j] : T.bl[j]) + 0.1), oi = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.1);
+      const dx = T.px[i] + T.nx[i] * oi - T.px[j] - T.nx[j] * oj, dz = T.pz[i] + T.nz[i] * oi - T.pz[j] - T.nz[j] * oj;
+      return dx * (T.px[i] - T.px[j]) + dz * (T.pz[i] - T.pz[j]) <= 0; };
     const wallRow = (gr, i, side, k) => {
       const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 0.85, tone = 0.94 + crH(i >> 3, side, 71) * 0.1;
       const c0 = k === 1 ? whD : concD.map(v => v * tone), c1 = k === 1 ? wh : conc.map(v => v * tone), c2 = k === 0 ? concT : wh;
@@ -171,9 +175,11 @@
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB();
       for (const side of [-1, 1]) {
-        let prev = -1, pk = -1;
+        let prev = -1, pk = -1, li = -1;
         for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
           const k = kindAt(i);
+          if (li >= 0 && back(li, i, side)) continue;   // (inside a bend tighter than the barrier's offset its line would loop back: left out)
+          li = i;
           if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
           const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
         }

@@ -46,7 +46,7 @@ DESC_EN = ('A short town course in El Jem, Tunisia: from the road in from the so
            'right by the arches and north through the white town to the olive groves. '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [52, 55, 59], 'wet': {'cs': [60, 63, 68]}, 'winter': {'cs': [59, 62, 67], 'wet': {'cs': [71, 75, 81]}}}
+MEDALS = {'cs': [36, 38, 41], 'wet': {'cs': [42, 44, 47]}, 'winter': {'cs': [41, 43, 46], 'wet': {'cs': [50, 52, 56]}}}
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 

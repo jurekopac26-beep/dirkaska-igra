@@ -28,7 +28,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     elev: EJ_H.map((h, i) => [i / (EJ_H.length - 1), h / 10]),
     widths: [[-400.0, 5.2], [498, 5.2], [522, 5.6], [748, 5.6], [772, 5.0], [1486.4, 5.0]],
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {cs:[52,55,59],wet:{cs:[60,63,68]},winter:{cs:[59,62,67],wet:{cs:[71,75,81]}}},
+    medals: {cs:[36,38,41],wet:{cs:[42,44,47]},winter:{cs:[41,43,46],wet:{cs:[50,52,56]}}},
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck], a cyclist every so many metres each way
     traffic: { mix: [0.6, 0.18, 0.1, 0.08, 0.04], bike: 3000 },
     police: { label: 'POLICE', band: '#1d4f9a', text: '#ffffff' }, escTo: 'Do severnega roba mesta',

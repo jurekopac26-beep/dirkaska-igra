@@ -13,7 +13,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |
 | 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
-| 8 | El Jem | Tunizija | stavba | biketraveler | čaka |
+| 8 | El Jem | Tunizija | stavba: rimski amfiteater | biketraveler | v delu (#727, veja `proge/el-jem` na `proge/luanda`) |
 | 9 | Portobelo | Panama | stavba | biketraveler | čaka |
 | 10 | *zamenjava* (bila Trongsa, delujoč samostan) | Butan ali rezerva | druga: naravna oblika ali zgradba | biketraveler | izbere seja po resetu |
 
