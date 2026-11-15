@@ -1794,8 +1794,30 @@
     const onGround = (m) => { for (let p = m; p; p = p.parent) if (p === o.ground) return true; return false; };   // (the ground's own pieces: its mesh may stand a little over groundH)
     o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position || (o.ground && onGround(m))) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox.clone().applyMatrix4(m.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solids.push({ m, b }); });   // (not the ground's big pieces: under the rays' reach, and many triangles)
     let near2 = [], near2B = [];
+    // a ray down (rc) on a solid: what THREE's Mesh.raycast finds (the same tests on the same triangles), only the triangles whose box in the
+    // world (on the ground) holds the ray's (x, z) tested, and done at the first hit: the triangles of each in a grid of 4 m, made at its first ray
+    const DH = new Map(), DS = new THREE.Sphere(), DR = new THREE.Ray(), DA = new THREE.Vector3(), DB = new THREE.Vector3(), DC = new THREE.Vector3(), DP = new THREE.Vector3(), DW = new THREE.Vector3();
+    const dhOf = (m) => { let h = DH.get(m); if (h !== undefined) return h; const g = m.geometry, M = m.material, d = g.drawRange, Pa = g.attributes.position, I = g.index;
+      if (m.raycast !== THREE.Mesh.prototype.raycast || m.isSkinnedMesh || Array.isArray(M) || !M || !g.isBufferGeometry || (g.morphAttributes.position && M.morphTargets) || d.start !== 0 || d.count < (I ? I.count : Pa.count)) { DH.set(m, null); return null; }
+      const n = I ? I.count : Pa.count, cells = new Map(), big = [], e = m.matrixWorld.elements, Q = 4, pad = 1e-3;
+      for (let t = 0; t + 2 < n; t += 3) { let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+        for (let j = 0; j < 3; j++) { DA.fromBufferAttribute(Pa, I ? I.getX(t + j) : t + j).applyMatrix4(m.matrixWorld); if (DA.x < x0) x0 = DA.x; if (DA.x > x1) x1 = DA.x; if (DA.z < z0) z0 = DA.z; if (DA.z > z1) z1 = DA.z; }
+        if (!(x0 <= x1 && z0 <= z1)) { big.push(t); continue; }
+        const i0 = Math.floor((x0 - pad) / Q), i1 = Math.floor((x1 + pad) / Q), j0 = Math.floor((z0 - pad) / Q), j1 = Math.floor((z1 + pad) / Q);
+        if ((i1 - i0 + 1) * (j1 - j0 + 1) > 256) { big.push(t); continue; }
+        for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = i * 1048576 + j; let L = cells.get(k); if (!L) cells.set(k, L = []); L.push(t); } }
+      h = { cells, big, Q, I, Pa, inv: new THREE.Matrix4().copy(m.matrixWorld).invert() }; DH.set(m, h); return h; };
+    const downTri = (m, h, t) => { const I = h.I, M = m.material; DA.fromBufferAttribute(h.Pa, I ? I.getX(t) : t); DB.fromBufferAttribute(h.Pa, I ? I.getX(t + 1) : t + 1); DC.fromBufferAttribute(h.Pa, I ? I.getX(t + 2) : t + 2);
+      const l = M.side === THREE.BackSide ? DR.intersectTriangle(DC, DB, DA, true, DP) : DR.intersectTriangle(DA, DB, DC, M.side !== THREE.DoubleSide, DP); if (l === null) return false;
+      DW.copy(DP).applyMatrix4(m.matrixWorld); const c = rc.ray.origin.distanceTo(DW); return !(c < rc.near || c > rc.far); };
+    const downHit = (m, px, pz) => { const h = dhOf(m); if (!h) { FRH.length = 0; return rc.intersectObject(m, false, FRH).length > 0; }
+      if (!m.layers.test(rc.layers)) return false; const g = m.geometry; if (g.boundingSphere === null) g.computeBoundingSphere();
+      DS.copy(g.boundingSphere).applyMatrix4(m.matrixWorld); if (!rc.ray.intersectsSphere(DS)) return false;
+      DR.copy(rc.ray).applyMatrix4(h.inv); if (g.boundingBox !== null && !DR.intersectsBox(g.boundingBox)) return false;
+      for (const t of h.big) if (downTri(m, h, t)) return true;
+      const L = h.cells.get(Math.floor(px / h.Q) * 1048576 + Math.floor(pz / h.Q)); if (L) for (const t of L) if (downTri(m, h, t)) return true; return false; };
     const FRO = new THREE.Vector3(), FRH = [], free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0), px = x + dx, pz = z + dz; rc.set(FRO.set(px, g0 + 30, pz), DOWN); rc.far = 29.65;
-      for (const { m, b } of near2B) { if (px < b.min.x - 0.05 || px > b.max.x + 0.05 || pz < b.min.z - 0.05 || pz > b.max.z + 0.05 || b.max.y < g0 + 0.3 || b.min.y > g0 + 30.05) continue; FRH.length = 0; if (rc.intersectObject(m, false, FRH).length) return false; } } return true; };   // (a ray down can only hit a solid whose box in the world it passes through: the others are not tested)
+      for (const { m, b } of near2B) { if (px < b.min.x - 0.05 || px > b.max.x + 0.05 || pz < b.min.z - 0.05 || pz > b.max.z + 0.05 || b.max.y < g0 + 0.3 || b.min.y > g0 + 30.05) continue; if (downHit(m, px, pz)) return false; } } return true; };   // (a ray down can only hit a solid whose box in the world it passes through: the others are not tested)
     for (const f of feet) {
       if (f.fr3.length < 2 || f.bk3.length < 2) continue;
       near2B = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40)); near2 = near2B.map(e => e.m);
