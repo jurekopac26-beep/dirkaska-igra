@@ -720,8 +720,8 @@
       // car parks (tarmac) and squares (paving) laid on the ground: the polygons triangulated and cut into ~3 m triangles that follow it
       const cA = gA, cP = gP;   // (the car parks and squares in the streets' own chunks: fewer draws)
       const layH = new Map();   // (the ground under each corner, once: the corners and the midpoints are shared by the triangles round them)
-      const lay = (ch, a, b, c, us, col, dep) => { const l = Math.max(Math.hypot(a[0] - b[0], a[1] - b[1]), Math.hypot(b[0] - c[0], b[1] - c[1]), Math.hypot(c[0] - a[0], c[1] - a[1]));
-        if (l > 3.2 && dep < 7) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2]; lay(ch, a, ab, ca, us, col, dep + 1); lay(ch, ab, b, bc, us, col, dep + 1); lay(ch, ca, bc, c, us, col, dep + 1); lay(ch, ab, bc, ca, us, col, dep + 1); return; }
+      const lay = (ch, a, b, c, us, col, dep) => { const ux = a[0] - b[0], uz = a[1] - b[1], vx = b[0] - c[0], vz = b[1] - c[1], wx = c[0] - a[0], wz = c[1] - a[1];
+        if (dep < 7 && Math.max(ux * ux + uz * uz, vx * vx + vz * vz, wx * wx + wz * wz) > 10.24) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2]; lay(ch, a, ab, ca, us, col, dep + 1); lay(ch, ab, b, bc, us, col, dep + 1); lay(ch, ca, bc, c, us, col, dep + 1); lay(ch, ab, bc, ca, us, col, dep + 1); return; }
         const mx = (a[0] + b[0] + c[0]) / 3, mz = (a[1] + b[1] + c[1]) / 3; if (nearDD(mx, mz) < 0.5 || onBld(mx, mz)) return;
         const P3 = (p) => { let y = layH.get(p); if (y === undefined) { y = hjGround(p[0], p[1]); layH.set(p, y); } return [p[0], y + 0.05, p[1]]; }, A = P3(a), B = P3(b), C = P3(c);
         ch.get(mx, mz).triO(A, B, C, col, [mx, Math.min(A[1], B[1], C[1]) - 5, mz], col, col, [A[0] / us, -A[2] / us], [B[0] / us, -B[2] / us], [C[0] / us, -C[2] / us]); };
