@@ -371,10 +371,10 @@
   "jsMs": 1.28
  },
  "livingstone": {
-  "calls": 108,
+  "calls": 110,
   "maxCalls": 138,
-  "kverts": 288,
-  "maxKverts": 362,
-  "jsMs": 1.33
+  "kverts": 294,
+  "maxKverts": 361,
+  "jsMs": 1.26
  }
 }

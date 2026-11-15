@@ -1414,25 +1414,25 @@
   }
  },
  "livingstone": {
-  "meshes": 465,
-  "verts": 426174,
-  "instances": 4262,
+  "meshes": 479,
+  "verts": 433387,
+  "instances": 4058,
   "props": 0,
-  "crowd": 143,
-  "world": "f66689dd",
+  "crowd": 120,
+  "world": "2d4417a4",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "18f45ecc",
+   "-:MeshLambertMaterial": "d690d3fd",
    "-:MeshPhongMaterial": "6117db77",
-   "crowd:MeshLambertMaterial": "63443e61",
+   "crowd:MeshLambertMaterial": "fbb22f03",
    "flags:MeshLambertMaterial": "1393ea6c",
-   "ao:MeshBasicMaterial": "7b7b5983",
+   "ao:MeshBasicMaterial": "8f2bc795",
    "tyremarks:MeshBasicMaterial": "57ec102c",
    "roadwear:MeshLambertMaterial": "37430fb8",
-   "life:MeshLambertMaterial": "75cf1585",
-   "lifeShadow:MeshBasicMaterial": "bf7f8bda",
-   "life:MeshBasicMaterial": "daa3936e"
+   "life:MeshLambertMaterial": "c6270377",
+   "lifeShadow:MeshBasicMaterial": "9ae6d990",
+   "life:MeshBasicMaterial": "3060e810"
   }
  }
 }

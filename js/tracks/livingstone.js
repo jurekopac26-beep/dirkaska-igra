@@ -39,8 +39,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     names: [
       {"n": "Južno od mesta", "d": 60, "say": ["South out of town, through the dry woodland!", "The long road south, the spray of the falls ahead!"]},
       {"n": "Gozdna savana", "d": 1105, "say": ["Through the dry woodland, flat out!", "Mopane and acacia on both sides!"]},
-      {"n": "Mejni prehod", "d": 1945, "say": ["Past the border post!", "The border post, and the gorge is close now!"]},
-      {"n": "Nad sotesko", "d": 2385, "say": ["Down towards the gorge, the falls thunder on the right!", "The spray of the falls over the trees!"]},
+      {"n": "Mejni prehod", "d": 2290, "say": ["Past the border post!", "The border post, and the gorge is close now!"]},
+      {"n": "Nad sotesko", "d": 2480, "say": ["Down towards the gorge, the falls thunder on the right!", "The spray of the falls over the trees!"]},
       {"n": "Stari most", "d": 2904, "say": ["Onto the old bridge, a hundred metres above the river!", "The steel arch over the gorge, the river far below!"]},
       {"n": "Drugi breg", "d": 3126, "say": ["Off the bridge and onto the far bank!", "Across the border, and on to the finish!"]},
       {"n": "Zadnji kilometer", "d": 3475, "say": ["The last kilometre, give it everything!", "Up the far bank to the finish!"]},

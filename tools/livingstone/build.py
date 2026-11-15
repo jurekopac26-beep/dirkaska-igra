@@ -38,8 +38,8 @@ def widths():
 NAMES = [
     ('Južno od mesta', 60, ['South out of town, through the dry woodland!', 'The long road south, the spray of the falls ahead!']),
     ('Gozdna savana', 1105, ['Through the dry woodland, flat out!', 'Mopane and acacia on both sides!']),
-    ('Mejni prehod', 1945, ['Past the border post!', 'The border post, and the gorge is close now!']),
-    ('Nad sotesko', 2385, ['Down towards the gorge, the falls thunder on the right!', 'The spray of the falls over the trees!']),
+    ('Mejni prehod', 2290, ['Past the border post!', 'The border post, and the gorge is close now!']),
+    ('Nad sotesko', 2480, ['Down towards the gorge, the falls thunder on the right!', 'The spray of the falls over the trees!']),
     ('Stari most', BD[0] + 20, ['Onto the old bridge, a hundred metres above the river!', 'The steel arch over the gorge, the river far below!']),
     ('Drugi breg', BD[1] + 40, ['Off the bridge and onto the far bank!', 'Across the border, and on to the finish!']),
     ('Zadnji kilometer', round(S1 - S0 - 900), ['The last kilometre, give it everything!', 'Up the far bank to the finish!']),

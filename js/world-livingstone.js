@@ -148,6 +148,17 @@
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const stl = [0.72, 0.74, 0.76], stlD = [0.52, 0.54, 0.56], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72], brS = [0.6, 0.62, 0.6], brSD = [0.44, 0.46, 0.45];
     const scen = new Chunks(128);
+    // the railway on the old bridge (OpenStreetMap: one track of Cape gauge in the deck beside the road's centre line): two rails flush
+    // with the asphalt, at the offset of the OSM line from the road at each sample on the bridge (only a look: the car drives over them)
+    const railO = new Float32Array(N).fill(NaN), rlH = [0.56, 0.56, 0.57], rlS = [0.36, 0.31, 0.27];
+    for (const B of BR) for (let i = B.i0; i <= B.i1; i++) {
+      let best = 8, o = NaN;
+      for (const r of (LD.rail || [])) if (r[0]) { const p = r[2]; for (let k = 0; k + 3 < p.length; k += 2) {
+        const ax = p[k], az = p[k + 1], ex = p[k + 2] - ax, ez = p[k + 3] - az, u = clamp(((T.px[i] - ax) * ex + (T.pz[i] - az) * ez) / Math.max(1e-6, ex * ex + ez * ez), 0, 1);
+        const qx = ax + ex * u, qz = az + ez * u, dd = Math.hypot(qx - T.px[i], qz - T.pz[i]);
+        if (dd < best) { best = dd; o = (qx - T.px[i]) * T.nx[i] + (qz - T.pz[i]) * T.nz[i]; } } }
+      if (o === o) railO[i] = clamp(o, -(T.wAt(i) - 1.0), T.wAt(i) - 1.0);
+    }
     const wallRow = (gr, i, side, k) => {
       const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1);
       let p, c;
@@ -165,6 +176,13 @@
           const k = kindAt(i);
           if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
           const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
+        }
+      }
+      for (const e of [-0.535, 0.535]) { let prev = -1;   // (the rails, in the same mesh as the barriers: no draw call more)
+        for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
+          if (railO[i] !== railO[i]) { prev = -1; continue; }
+          const o = railO[i] + e, r = gr.row([Pt(i, o - 0.04, -0.01), Pt(i, o - 0.035, 0.035), Pt(i, o + 0.035, 0.035), Pt(i, o + 0.04, -0.01)], [rlS, rlH, rlH, rlS]);
+          if (prev >= 0) gr.link(prev, r, 0, 3); prev = r;
         }
       }
       addM(gr, rMat, true);
@@ -194,7 +212,7 @@
 
     /* ---- the spectators' context ---- */
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nFill = 0, nStone = 0;
+    let nBld = 0, nStone = 0;
 
     /* ---- the bridge, the simple one (one mesh) until the model of assets/landmarks/livingstone.glb has loaded (World.znamenitost): the deck
        (its steel girders and fascias), the railing's posts, the two arch ribs from the gorge's walls (box sections with a lattice of
@@ -242,6 +260,41 @@
       if (World.znamenitost && mark) World.znamenitost.add('livingstone', root, { x: T.px[ic], z: T.pz[ic], fallback: fm, out });
     }
 
+    /* ---- the railway beside the road (OpenStreetMap, one track of Cape gauge, 15-50 m from the road for most of the way): a bed of ballast
+       on the ground and two rails, where it is within ~70 m of the road; where it runs into the road (the bridge's ends) only the rails, at
+       the road's height. On the bridge itself it lies in the deck (the rails with the barriers above). Only a look: nothing to hit ---- */
+    {
+      const bal = [0.43, 0.4, 0.36], balT = [0.5, 0.47, 0.42], GA = 0.535;
+      let gr = null, nRow = 0, prevB = -1, prevR = [-1, -1];
+      const flush = () => { if (gr) addM(gr, rMat); gr = null; nRow = 0; prevB = -1; prevR = [-1, -1]; };
+      for (const r of (LD.rail || [])) { if (r[0]) continue; const p = r[2];
+        for (let k = 0; k + 3 < p.length; k += 2) {
+          const ax = p[k], az = p[k + 1], ex = p[k + 2] - ax, ez = p[k + 3] - az, l = Math.hypot(ex, ez); if (l < 0.01) continue;
+          const nx = -ez / l, nz = ex / l, n = Math.ceil(l / 4);
+          for (let q = (k ? 1 : 0); q <= n; q++) {
+            const x = ax + ex * q / n, z = az + ez * q / n;
+            if (nrDist(x, z) > 70) { flush(); continue; }
+            const nn = nrNear(x, z), ni = nn.i;
+            if (ni >= 0 && onBr[ni] && nn.d < 12) { flush(); continue; }   // (on the bridge: the rails in the deck, above)
+            const onRoad = ni >= 0 && nn.d < T.wAt(ni) + 4, yR = onRoad ? nn.hn : 0;
+            if (!gr) gr = new RB();
+            const Q = (o, dy) => { const qx = x + nx * o, qz = z + nz * o; return [qx, (onRoad ? yR : nrGround(qx, qz)) + dy, qz]; };
+            if (!onRoad) {
+              const yT = Math.max(nrGround(x, z), nrGround(x + nx * 1.5, z + nz * 1.5), nrGround(x - nx * 1.5, z - nz * 1.5)) + 0.32;
+              const rb = gr.row([Q(-2.7, -0.2), [x - nx * 1.5, yT, z - nz * 1.5], [x + nx * 1.5, yT, z + nz * 1.5], Q(2.7, -0.2)], [bal, balT, balT, bal]);
+              if (prevB >= 0) gr.link(prevB, rb, 0, 3); prevB = rb; exclPush(x, z, 3.5);
+              [-GA, GA].forEach((e, j) => { const ox = x + nx * e, oz = z + nz * e, rr = gr.row([[ox - nx * 0.04, yT, oz - nz * 0.04], [ox - nx * 0.035, yT + 0.16, oz - nz * 0.035], [ox + nx * 0.035, yT + 0.16, oz + nz * 0.035], [ox + nx * 0.04, yT, oz + nz * 0.04]], [rlS, rlH, rlH, rlS]); if (prevR[j] >= 0) gr.link(prevR[j], rr, 0, 3); prevR[j] = rr; });
+            } else {
+              prevB = -1;
+              [-GA, GA].forEach((e, j) => { const rr = gr.row([Q(e - 0.04, -0.01), Q(e - 0.035, 0.035), Q(e + 0.035, 0.035), Q(e + 0.04, -0.01)], [rlS, rlH, rlH, rlS]); if (prevR[j] >= 0) gr.link(prevR[j], rr, 0, 3); prevR[j] = rr; });
+            }
+            if (++nRow >= 128) { flush(); q--; }   // (a mesh every ~500 m, the far ones culled; this sample again as the next one's first)
+          }
+        }
+        flush();
+      }
+    }
+
     /* ---- the buildings (OSM footprints within 60 m): the houses of the town's edge and the border post, low, whitewashed or cream, with
        roofs of corrugated iron (grey or rusty) or of red tiles; the bigger ones (the border post's sheds) in two floors ---- */
     const WALL = [[0.94, 0.9, 0.82], [0.96, 0.94, 0.9], [0.88, 0.8, 0.66], [0.84, 0.74, 0.6], [0.9, 0.86, 0.78]];
@@ -261,27 +314,6 @@
       const hh = Hb || (big ? 6.2 + hk * 1.2 : 3 + hk * 0.8);
       house(g, bx, bz, Lb, Wb, ang, y0, hh, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
-    }
-    // a few more houses where the land cover says it is built up and OpenStreetMap has no footprints (18-55 m from the road, square to it)
-    {
-      const Lt = NRC * 32;
-      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
-        if (!G.on[tj * G.ntx + ti]) continue;
-        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
-        for (let zz = za; zz < za + Lt; zz += 22) for (let xx = xa; xx < xa + Lt; xx += 22) {
-          if (crH(xx, zz, 40) > 0.45) continue;
-          const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
-          if (rd < 18 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
-          const Lb = 8 + crH(x, z, 43) * 6, Wb = 6 + crH(x, z, 44) * 4;
-          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || nearBr(x, z)) continue;
-          const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
-          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
-          let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
-          if (hi - lo > 3) continue;
-          house(scen.get(x, z), x, z, Lb, Wb, ang, lo, 3 + crH(x, z, 45) * 0.8, vary(WALL[Math.floor(crH(x, z, 47) * WALL.length)], R, 0.05));
-          nFill++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 2);
-        }
-      }
     }
 
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls; a banner at the finish too ---- */
@@ -444,7 +476,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, rocks: out.rocks, river: RV.length ? +rvY.toFixed(1) : null };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, rocks: out.rocks, river: RV.length ? +rvY.toFixed(1) : null };   // (read by the tests)
     return out;
   }
 
