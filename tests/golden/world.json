@@ -129,11 +129,11 @@
   "instances": 116555,
   "props": 805,
   "crowd": 475,
-  "world": "92295bee",
+  "world": "defac9b7",
   "propsHash": "fcc23a7",
   "floor": "e5170eee/41384",
   "groups": {
-   "-:MeshLambertMaterial": "e42433e2",
+   "-:MeshLambertMaterial": "f96d0b65",
    "-:MeshBasicMaterial": "b05a2926",
    "crowd:MeshLambertMaterial": "357c4c7e",
    "flags:MeshLambertMaterial": "852b46c",

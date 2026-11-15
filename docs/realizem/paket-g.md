@@ -64,6 +64,25 @@ Prva proga prehoda (v tabeli prog v `docs/realizem.md` ima samo paket G; E pride
 - **Drugo iz paketa**: pasov košnje proga nima, pas rdeče zemlje ob asfaltu že ima, teren po meri ni potreben (pečine so narejene v graditelju). Podnebje `Cfb` je odčitano z objavljene karte Köppen–Geiger (planota Serra Geral, 1010–1421 m) in, kot pri Spa, vpisano ročno. Barve po odsekih (`cover.open` na 50 m) še niso uporabljene: en odtenek za vso progo.
 - **Obremenitev enaka**: 1401 mrež, 750.819 oglišč, 25.952 primerkov (pred in po); referenca sveta posodobljena samo za `rastro` (`WORLD_ONLY=rastro node tests/browser/world.test.mjs --update`: spremenila se je samo skupina `-:MeshLambertMaterial`). Slike zdaj in potem: `node tools/shot.mjs rastro --m 1500,3900 --pred b45f274`; pri moči 0,35 je razlika pod pragom orodja (»nobena slika se ni opazno spremenila«), vidna je v številkah in ob primerjavi slik.
 
+### G1 · Nürburg, Nemčija (15. 11. 2026)
+
+Naročilo na tabli #382 (15. 11.), PR #700 na veji `realizem/g-nurburg` (osnova `realizem/g0-rastje-teren`). Samo G; stavbe (S) pridejo s S0/S1.
+
+- **Meritev** (pas 8–60 m ob vsem krogu, 20.690 m, 414 odsekov po 50 m; `build_cover` iz `tools/proga-podatki.py`, skripta zunaj repozitorija kot pri Rio do Rastro): drevesa 75,5 % (`394036`), trava 17,9 % (`4a5041`), polja 0,5 %, pozidano 6,1 % (`57564f`). Okvir proge je iz `js/geo.js` brez zamika; korelacija gozda iz `def.lc` z drevesi WorldCover po odsekih je 0,57, zamik do 10 m je ne izboljša (najboljša 0,59).
+- **»82 % gozda« iz tabele prog** se z meritvijo ne potrdi: WorldCover da 75,5 % dreves. Podobna številka, 82,4 %, je ujemanje rabe tal v igri z OSM (spodaj).
+- **Razporeditev gozda ostane, ker že ustreza OSM.** `def.lc` (gozd iz OSM v celicah 16 m) ima v pasu 56,7 % gozda, 37,2 % odprtega, 3,0 % grmičja in 3,1 % naselja. OSM 15. 11. 2026 (`api.openstreetmap.org/api/0.6/map`, `landuse`/`natural`) ima 55,8 % gozda, 25,4 % travnikov in trave, 3,6 % grmičja in 9,6 % brez oznake; z `def.lc` se ujema v 82,4 % celic. Razlika do WorldCover je ob asfaltu:
+
+  | pas | gozd v igri | OSM gozd | WorldCover drevesa |
+  |---|---|---|---|
+  | 8–15 m | 32,7 % | 41,0 % | 80,8 % |
+  | 15–30 m | 57,5 % | 49,4 % | 77,8 % |
+  | 30–60 m | 62,0 % | 62,5 % | 73,2 % |
+
+  Pas trave med ograjo in gozdom (OSM ga riše) je v pikslih 10 m WorldCover zabrisan in prekrit s krošnjami, zato WorldCover ob cesti kaže več dreves, kot jih stoji. Več dreves do ceste bi tudi povečalo oglišča, ki so že pri 1,57 milijona.
+- **Odtenek**: `World.rastje.listje(def, …)` na zelena oglišča enotskih dreves pred `addTo` (kot Rio do Rastro) in `World.rastje.tla(def, …)` na barvo materiala tal in robov (`gMat`, kot Spa, a z množilnikom iz trave v igri 8–60 m od ceste); oboje v `js/world-nring.js`, pri moči 0,35. Številke: tla × 1,054 / 0,978 / 1,245, listje × 1,132 / 0,969 / 1,214 (manj nasičeno zeleno, več modre; svetlost ostane). Podnebje `Cfb` (Eifel), vpisano ročno.
+- **Obremenitev enaka**: 3455 mrež, 1.571.755 oglišč, 116.555 primerkov (pred in po); referenca sveta posodobljena samo za `nring` (spremenila se je samo skupina `-:MeshLambertMaterial`).
+- **Slike** zdaj in potem: `docs/realizem/g1-nurburg.jpg` (pri 3,0 in 11,5 km, ležeče; `node tools/shot.mjs nring --m 3000,11500 --pred 526396c`). Razlika je majhna kot pri Rio do Rastro (orodje šteje 0 %, ker je pod pragom): trava manj rumena, krošnje manj nasičene; na vsaki sliki se 76 % pikslov premakne za več kot 3 stopnje od 255, v povprečju za 6–7.
+
 ### Odločitev: moč 35 % (14. 11. 2026)
 
 Na vprašanje »Rastje: barve po meritvah« (moč 35 %, 65 % ali 100 %, vsaka s sliko Spa zdaj in potem, kamera za avtom) je uporabnik 14. 11. 2026 ob 11.48 izbral **1 · moč 35 %** (klikljiva izbira v pogovoru s koordinacijo). To je vrednost, ki je že v kodi: `MOC` v `js/world-rastje.js` ostane 0,35, referenci sveta za Spa in Rio do Rastro sta narejeni pri tej moči in ostaneta. Slike za vprašanje so na veji `slike/rastje-669` (brez PR, samo štiri slike). Veja ni več potrebna, a je seja te teme ne more izbrisati (GitHub je izbris zavrnil z napako 403), zato jo po želji izbriše lastnik repozitorija na GitHubu. Slike naredi znova `node tools/shot.mjs spa --m 2600,1700 --pred 6d10f3f` (drugo moč pokaže kopija igre z drugim `MOC` in `--root`); za Rio do Rastro je ukaz pri G2 zgoraj. Če se moč kdaj poveča: pri 100 % debla na Spa pordečijo (množilnik je na vsem materialu dreves), zato takrat tudi Spa prestavi na `listje` (samo zelena oglišča).

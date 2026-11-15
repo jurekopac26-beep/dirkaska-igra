@@ -31,13 +31,16 @@
      class (ESA WorldCover 2021 v200, 10 m; © ESA WorldCover project, CC BY 4.0) and its median colour in the Sentinel-2 annual cloudless
      mosaic of the same year (Copernicus Sentinel-2 data, modified, the WorldCover composite; stored as 255 · reflectance^(1/2.2)).
      lat, lon: the track's frame (its x = 0, z = 0) where the tool put it (Spa: def.lc's forest laid on WorldCover's trees, correlation 0.69;
-     Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift).
+     Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift; Nürburg: the frame of js/geo.js as it is,
+     0.57 with no shift and no better within 10 m, def.lc being OSM's woods in 16 m cells, which OSM of 15. 11. 2026 still matches).
      drevesa: the track's own kinds where its builder draws others than its climate's kit (the Serra Geral's cloud forest and araucarias). */
   const MERITVE = {
     spa: { podnebje: 'Cfb', lat: 50.44406, lon: 5.965126, delez: { drevesa: 0.337, trava: 0.093, pozidano: 0.570 },
       barva: { drevesa: 0x393e34, trava: 0x4c5143, pozidano: 0x5d5951 } },
     rastro: { podnebje: 'Cfb', lat: -28.395383, lon: -49.543494, delez: { drevesa: 0.653, trava: 0.311, pozidano: 0.036 },
       barva: { drevesa: 0x333c2f, trava: 0x464638, pozidano: 0x5a574c }, drevesa: ['listavec', 'aravkarija', 'palma', 'drevesna praprot', 'bambus'] },
+    nring: { podnebje: 'Cfb', lat: 50.33792, lon: 6.950668, delez: { drevesa: 0.755, trava: 0.184, pozidano: 0.061 },
+      barva: { drevesa: 0x394036, trava: 0x4a5041, pozidano: 0x57564f } },
   };
   const aktivna = (def) => prava(def) && !!MERITVE[def.id];
 
