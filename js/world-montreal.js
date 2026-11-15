@@ -76,13 +76,15 @@
     const dT = chamfer(G, (k) => seedT[k] === 1);
     { const TH = new Map(), TC = 16;   // within 45 m of the road the true distance to its centre line (the chamfer's octagons would step the banks)
       for (let i = 0; i < T.N; i++) { const key = Math.floor(T.px[i] / TC) * 65536 + Math.floor(T.pz[i] / TC); let L = TH.get(key); if (!L) TH.set(key, L = []); L.push(i); }
-      const SC = new Map();   // (per 16 m cell the segments of its 7 x 7 cells: start, direction, squared length)
-      const segsAt = (a0, b0) => { const key = a0 * 65536 + b0; let S = SC.get(key); if (S) return S; const q = [];
-        for (let a = a0 - 3; a <= a0 + 3; a++) for (let b = b0 - 3; b <= b0 + 3; b++) { const L = TH.get(a * 65536 + b); if (!L) continue;
-          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } }
-        SC.set(key, S = new Float64Array(q)); return S; };
-      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, S = segsAt(Math.floor(x / TC), Math.floor(z / TC)); let best = 1e18;
-        for (let q = 0; q < S.length; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; }
+      const SC = new Map();   // (per 16 m cell the segments of its 7 x 7 cells, ring by ring outward: start, direction, squared length; E = where each ring ends)
+      let sMax = 0; for (let i = 0; i < T.N; i++) { const j = (i + 1) % T.N; sMax = Math.max(sMax, Math.hypot(T.px[j] - T.px[i], T.pz[j] - T.pz[i])); }
+      const LB = [0, 0, 2, 3].map(r => { const l = (r - 1) * TC - sMax - 1e-6; return l > 0 ? l * l * (1 - 1e-9) : -1; });   // (a segment from ring r is at least (r-1) cells off, less its own length: the rings past the nearest found are left out, the same minimum)
+      const segsAt = (a0, b0) => { const key = a0 * 65536 + b0; let S = SC.get(key); if (S) return S; const q = [], E = [];
+        for (let r = 0; r <= 3; r++) { for (let a = a0 - r; a <= a0 + r; a++) for (let b = b0 - r; b <= b0 + r; b++) { if (Math.max(Math.abs(a - a0), Math.abs(b - b0)) !== r) continue; const L = TH.get(a * 65536 + b); if (!L) continue;
+          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } } E.push(q.length); }
+        SC.set(key, S = { s: new Float64Array(q), E }); return S; };
+      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, SS = segsAt(Math.floor(x / TC), Math.floor(z / TC)), S = SS.s; let best = 1e18;
+        for (let r = 0, q = 0; r <= 3; r++) { if (best < LB[r]) break; for (const qe = SS.E[r]; q < qe; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
         dT[k] = Math.sqrt(best); } }
     // near the shores the true distance to the water's outline (the polygons' edges, hashed in 16 m cells): smooth banks, no steps
     const EH = new Map(), EC = 16;
