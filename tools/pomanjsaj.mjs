@@ -1,5 +1,5 @@
 // I17 korak 7 (docs/hitro-nalaganje.md): the published site's JavaScript minified, after its stamps (.github/workflows/stran.yml, after
-// »Preverba žigov«). The repository and the tests stay as written; only the copy that goes out to GitHub Pages is smaller (~−22 % gzip).
+// »Preverba žigov«). The repository and the tests stay as written; only the copy that goes out to GitHub Pages is smaller (~−26 % gzip).
 // The stamps (?v=…) stay those of the files as written (tools/stamp.js stamps and checks each tree before this), so tools/stamp.js --find
 // still finds the commit of a stamp from an error report (RRA-NAPAKE). A file's stamp changes whenever its source does; the minified copy
 // is a function of the source and of the pinned esbuild version (package.json), so one stamp is always one file.
