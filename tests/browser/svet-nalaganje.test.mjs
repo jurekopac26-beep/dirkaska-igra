@@ -32,7 +32,7 @@ try {
   if (other) {
     const { page, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, track: ids[0] }, { width: 480, height: 270 }, { lazy: true });
     await page.waitForFunction(() => document.getElementById('loading').classList.contains('off'), null, { timeout: 180000 });
-    const msg = await page.evaluate((id) => { try { Render.buildWorld(new Core.Track(Core.TRACKS.find(d => d.id === id)), 1); return ''; } catch (e) { return String(e.message || e); } }, other);
+    const msg = await page.evaluate(async (id) => { await Core.loadTrack(id); try { Render.buildWorld(new Core.Track(Core.TRACKS.find(d => d.id === id)), 1); return ''; } catch (e) { return String(e.message || e); } }, other);
     T.check(other + ' brez World.need: napaka', /not loaded/.test(msg), msg || 'zgrajen');
     const ok2 = await page.evaluate(async (id) => { const def = Core.TRACKS.find(d => d.id === id); await World.need(def.theme); Render.buildWorld(new Core.Track(def), 1); return !!World.ext[def.theme]; }, other);
     T.check(other + ': po World.need zgrajen', ok2);
