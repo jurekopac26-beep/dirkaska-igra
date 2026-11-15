@@ -4,16 +4,18 @@
 // still finds the commit of a stamp from an error report (RRA-NAPAKE). A file's stamp changes whenever its source does; the minified copy
 // is a function of the source and of the pinned esbuild version (package.json), so one stamp is always one file.
 // esbuild transform, one file at a time (no bundling: the game's scripts are classic scripts that share the page's globals, so their
-// top-level names stay as they are; esbuild renames only names inside functions), --keep-names (Function.name: the error tool's v_krogu=[…]
-// and anything that reads a function's or class's name), target es2020 (no newer syntax than the game's own: the minifier would otherwise
-// write ||= and the like), comments out but licence comments (/*! … */, @license) kept. js/vendor/ is minified already and left as it is.
+// top-level names stay as they are; esbuild renames only names inside functions), and never with esbuild's helpers: a helper (such as
+// the one --keep-names needs) is a top-level var with a short name, and the files' short names then overwrite one another in the page's
+// shared globals (the game breaks). So no --keep-names (nothing in the game reads a function's name), and a file whose output declares
+// a helper is left as written. Target es2020 (no newer syntax than the game's own: the minifier would otherwise write ||= and the like),
+// comments out but licence comments (/*! … */, @license) kept. js/vendor/ is minified already and left as it is.
 // A file esbuild cannot read is left as written (and named in the log): the site still goes out.
 //   node tools/pomanjsaj.mjs <tree> [<tree> …]     (e.g. _site and each _site/beta/<n>/: every .js under <tree>/js and <tree>/sw.js)
 import fs from 'node:fs';
 import path from 'node:path';
 import { transformSync } from 'esbuild';
 
-const OPTS = { loader: 'js', minify: true, keepNames: true, target: 'es2020', legalComments: 'inline', charset: 'utf8' };
+const OPTS = { loader: 'js', minify: true, target: 'es2020', legalComments: 'inline', charset: 'utf8' };
 const SKIP = (rel) => rel.startsWith('js/vendor/');
 
 function files(dir, root, out) {
@@ -35,6 +37,8 @@ export function minifyTree(root) {
     before += Buffer.byteLength(src);
     try {
       const { code } = transformSync(src, Object.assign({ sourcefile: rel }, OPTS));
+      // (an esbuild helper: `var __x=` at the top before minifying, a short `var a=Object.…` after; the game itself writes none such)
+      if (/^var [\w$]+=Object\.(defineProperty|getOwnProperty|create|getPrototypeOf|assign)\b/.test(code) && !/^var [\w$]+\s*=\s*Object\./.test(src)) throw new Error('esbuild helper in output');
       fs.writeFileSync(p, code); after += Buffer.byteLength(code);
     } catch (e) {
       bad.push(rel + ': ' + String(e.message).split('\n')[0]); after += Buffer.byteLength(src);
