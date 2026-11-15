@@ -10,7 +10,7 @@
   const {
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caNear, caProps, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, ico,
     lerp, ouCutMat, pkGroundMat, rng, rock, rpHash, sstep, stubExcl, stubGeo, stubProps, stubRails, stubVerge, tuftWindMat, valueNoise2, vary,
-    vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrStubH, parkOn
+    vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrNear, vrPrep, vrStubH, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -55,12 +55,18 @@
     let d = H[k + G.nx + 1], c = H[k + G.nx], b = H[k + 1]; if (d !== d) d = chGH(i + 1, j + 1); if (c !== c) c = chGH(i, j + 1); if (b !== b) b = chGH(i + 1, j); return d + (1 - u) * (c - d) + (1 - v) * (b - d);
   }
   function chSlope(x, z) { const a = chGround(x - 2.5, z), b = chGround(x + 2.5, z), c = chGround(x, z - 2.5), d = chGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
+  const CHLC = new Float64Array(6);
+  function chLCf(x, z) {   // vrLCf's shares of land cover classes 0, 2, 3 and 4 in one pass (the same sums, to the last bit), into CHLC[class]
+    const L = API.VR.L, lc = API.VR.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const at = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? -1 : lc[b * L.nx + a]), c00 = at(i, j), c10 = at(i + 1, j), c01 = at(i, j + 1), c11 = at(i + 1, j + 1);
+    for (let c = 0; c < 5; c++) { if (c === 1) continue; CHLC[c] = ((c00 === c ? 1 : 0) * (1 - u) + (c10 === c ? 1 : 0) * u) * (1 - v) + ((c01 === c ? 1 : 0) * (1 - u) + (c11 === c ? 1 : 0) * u) * v; }
+  }
   function chCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): the fynbos as a mosaic (lc 1): grey-green shrubland, dark olive thickets, rusty
     // restio beds, silvery patches and dry ochre ground, sandy grey soil between them on the gentle slopes; darker under the trees (lc 2), gardens in
     // Hout Bay (lc 3), pale beach sand (lc 4) and wet sand at the water; the rock on every steep face and the outcrops (lc 0): grey granite low down,
     // the brown sandstone above (the line at ~110 m, ragged) in pale and dark layers; a trodden verge
     const P = API.VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), f = P.n4(x, z), fine = P.n6(x, z), mid = P.n7(x, z);
-    const tr = vrLCf(x, z, 2), se = vrLCf(x, z, 3), sa = vrLCf(x, z, 4), bare = vrLCf(x, z, 0);
+    chLCf(x, z); const tr = CHLC[2], se = CHLC[3], sa = CHLC[4], bare = CHLC[0];
     let R = 0.42 + (m - 0.5) * 0.08, G = 0.45 + (m - 0.5) * 0.07, B = 0.31 + (m - 0.5) * 0.04;   // fynbos: grey-green
     const dk = sstep(0.46, 0.66, P.c3(x, z) * 0.45 + mid * 0.55); R = lerp(R, 0.22, dk * 0.85); G = lerp(G, 0.3, dk * 0.85); B = lerp(B, 0.17, dk * 0.85);   // dense, dark olive thickets
     const rs = sstep(0.56, 0.8, q * 0.55 + f * 0.45) * (1 - dk); R = lerp(R, 0.56, rs * 0.8); G = lerp(G, 0.38, rs * 0.8); B = lerp(B, 0.22, rs * 0.8);   // restio beds: rusty brown
