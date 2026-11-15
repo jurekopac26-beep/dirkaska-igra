@@ -49,6 +49,9 @@ check('track: the lap 2.95-3.1 km (realKm 3.05)', T.len > 2950 && T.len < 3100, 
   const nw = (D.cwall || []).reduce((a, [, fl]) => a + fl.length / 2, 0);
   check('world: the data: the corridor\'s terrain and land cover, the buildings within 60 m, the walls of the old town (OSM city_wall)',
     D.dem && D.lc && D.far && D.bld.length > 30 && (D.cwall || []).length >= 5 && nw > 100, `${D.bld.length} buildings, ${(D.cwall || []).length} wall lines (${nw} points)`);
+  // the landmark only after OSM (tools/hiva/obzidje.py): its defensive towers and the four gates' footprints, no towers spaced by the builder
+  check('world: the landmark after OSM: the towers at OSM\'s defensive towers, the four gates in their footprints, no invented towers or houses',
+    (D.towers || []).length >= 30 && (D.gates || []).length === 4 && !/acc \+= 28|nFill/.test(w), `${(D.towers || []).length} towers, ${(D.gates || []).length} gates`);
 }
 
 // 3. a race on the autopilot: 13 cars, one lap, every car to the flag

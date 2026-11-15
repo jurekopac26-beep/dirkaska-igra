@@ -235,7 +235,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | luanda | Luanda, Angola | luanda | `js/world-luanda.js` (`buildLuanda`; podatki `js/data/luanda.js` in proga iz `tools/luanda/build.py track`; trdnjava na griču: model iz Blenderja prek `World.znamenitost`, nadomestek v datoteki) |
-| hiva | Hiva, Uzbekistan | hiva | `js/world-hiva.js` (`World.ext.hiva`; podatki `js/data/hiva.js` in proga iz `tools/hiva/build.py track world`; obzidje Ičan Kale in minareta: gradnik v datoteki, model iz Blenderja prek `World.znamenitost` še ni narejen, `HAS_GLB`) |
+| hiva | Hiva, Uzbekistan | hiva | `js/world-hiva.js` (`World.ext.hiva`; podatki `js/data/hiva.js` in proga iz `tools/hiva/build.py track world`; obzidje Ičan Kale (zidovi, stolpi in vrata iz OSM, `tools/hiva/obzidje.py`) in minareta: gradnik v datoteki, model iz Blenderja prek `World.znamenitost` še ni narejen, `HAS_GLB`) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |

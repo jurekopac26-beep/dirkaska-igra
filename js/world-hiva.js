@@ -4,7 +4,7 @@
    World's shared corridor helpers (World.api: nrPrep's terrain from the track's dem and land cover) and the scenery data of js/data/hiva.js
    (OpenStreetMap, Copernicus DEM, ESA WorldCover, Meta / WRI canopy).
    The 60 m rule: the detailed things only within ~60 m of the road, as far as the chase camera sees them: the flat-roofed houses of the oasis
-   town in mud-brick and loess plaster in their OSM footprints and more of the same between them where the land is built up, the poplars,
+   town in mud-brick and loess plaster in their OSM footprints (none where OSM has none), the poplars,
    the mulberries and the elms, the low concrete barriers of the streets, and the landmark: the mud-brick walls of the old town with their
    round towers and battlements, the gates, and over them the two minarets (the short wide one in green and blue tiles and the tall slender
    one): the model of assets/landmarks/hiva.glb when it is there (made in Blender by tools/znamenitost/, World.znamenitost; HAS_GLB below),
@@ -76,7 +76,13 @@
 
     // ---- the walls of the old town (LD.cwall: OSM's city_wall lines, [height, [x, z, ...]]): their segments hashed for the distance to them ----
     const WS = [], WH = 32, whash = new Map();
-    for (const [hgt, fl] of LD.cwall || []) for (let k = 0; k + 3 < fl.length; k += 2) WS.push([fl[k], fl[k + 1], fl[k + 2], fl[k + 3], hgt || 9]);
+    // (most are closed outlines of the wall's footprint, ~7 m thick: each segment knows its outward side, sd; the open lines have both, 0)
+    for (const [hgt, fl] of LD.cwall || []) {
+      const n = fl.length / 2, closed = n > 3 && Math.hypot(fl[0] - fl[fl.length - 2], fl[1] - fl[fl.length - 1]) < 0.5;
+      let ar = 0; if (closed) for (let k = 0; k + 3 < fl.length; k += 2) ar += fl[k] * fl[k + 3] - fl[k + 2] * fl[k + 1];
+      const sd = !closed ? 0 : ar > 0 ? -1 : 1;
+      for (let k = 0; k + 3 < fl.length; k += 2) WS.push([fl[k], fl[k + 1], fl[k + 2], fl[k + 3], hgt || 9, sd]);
+    }
     WS.forEach((e, n) => { const x0 = Math.floor((Math.min(e[0], e[2]) - 20) / WH), x1 = Math.floor((Math.max(e[0], e[2]) + 20) / WH), z0 = Math.floor((Math.min(e[1], e[3]) - 20) / WH), z1 = Math.floor((Math.max(e[1], e[3]) + 20) / WH);
       for (let i = x0; i <= x1; i++) for (let j = z0; j <= z1; j++) { const k = i + ',' + j; let Lc = whash.get(k); if (!Lc) whash.set(k, Lc = []); Lc.push(n); } });
     const wallD = (x, z) => { const Lc = whash.get(Math.floor(x / WH) + ',' + Math.floor(z / WH)); if (!Lc) return 1e9; let bd = 1e9;
@@ -84,7 +90,9 @@
       return bd; };
     let WC = [0, 0];
     if (WS.length) { let sx = 0, sz = 0; for (const e of WS) { sx += e[0] + e[2]; sz += e[1] + e[3]; } WC = [sx / WS.length / 2, sz / WS.length / 2]; }
-    const nearLandmark = (x, z, m) => wallD(x, z) < m || MINARETS.some(([mx, mz, , r]) => Math.hypot(x - mx, z - mz) < r + m);
+    const TOW = LD.towers || [], GATES = LD.gates || [];
+    const nearLandmark = (x, z, m) => wallD(x, z) < m || MINARETS.some(([mx, mz, , r]) => Math.hypot(x - mx, z - mz) < r + m) ||
+      GATES.some(([, fl]) => { for (let k = 0; k < fl.length; k += 2) if (Math.hypot(x - fl[k], z - fl[k + 1]) < m + 3) return true; return false; });
 
     // the ground's colours (the dry autumn of the Khorezm oasis): pale loess dust, the dry grass of the verges in patches, the green of the
     // irrigated gardens and the trees' canopy farther out, the leaf litter under the crowns near the road, the trodden earth of the town
@@ -183,35 +191,44 @@
 
     /* ---- the spectators' context ---- */
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
-    let nBld = 0, nFill = 0, nStone = 0;
+    let nBld = 0, nStone = 0;
 
-    /* ---- the landmark, the simple one (one mesh) until the model of assets/landmarks/hiva.glb has loaded (World.znamenitost): the walls of
-       the old town along OSM's lines (battered mud brick, a walkway, the rounded battlements), the round towers along them and the bigger
-       pairs at the lines' ends (the gates), the two minarets (the short wide one banded in green and blue tiles, the tall slender one in
-       bands of brick and tile with its lantern) ---- */
+    /* ---- the landmark, the simple one (one mesh) until the model of assets/landmarks/hiva.glb has loaded (World.znamenitost), all after
+       OpenStreetMap (tools/hiva/obzidje.py): the walls of the old town along the outlines of their footprints (battered mud brick, the
+       rounded battlements on the outer edges), the round towers at OSM's defensive towers, the four gates as blocks in their footprints with
+       a parapet, the two minarets (the short wide one banded in green and blue tiles, the tall slender one in bands of brick and tile with its
+       lantern) ---- */
     if (WS.length) {
       const gF = new GB(), mud = [0.8, 0.66, 0.48], mudD = [0.7, 0.56, 0.4], mudT = [0.86, 0.73, 0.55];
       const gH = (x, z) => nrGround(x, z);
-      for (const [ax, az, bx, bz, hgt] of WS) {
+      for (const [ax, az, bx, bz, hgt, os] of WS) {
         const len = Math.hypot(bx - ax, bz - az); if (len < 0.5) continue;
         const ang = Math.atan2(bz - az, bx - ax), mx = (ax + bx) / 2, mz = (az + bz) / 2, y0 = Math.min(gH(ax, az), gH(bx, bz), gH(mx, mz)) - 1;
         box(gF, mx, y0, mz, len + 1.2, hgt * 0.55 + 1, 7.5, ang, mudD, mud, true);   // (the battered foot)
         box(gF, mx, y0, mz, len + 0.8, hgt + 1, 5, ang, mud, mudT, true);
         const n = Math.max(1, Math.round(len / 2.6)), ca = Math.cos(ang), sa = Math.sin(ang);
-        for (const sd of [-1, 1]) for (let q = 0; q < n; q++) { const t = (q + 0.5) / n - 0.5, px = mx + ca * t * len - sa * 2.1 * sd, pz = mz + sa * t * len + ca * 2.1 * sd;
+        for (const sd of os ? [os] : [-1, 1]) for (let q = 0; q < n; q++) { const t = (q + 0.5) / n - 0.5, px = mx + ca * t * len - sa * 2.1 * sd, pz = mz + sa * t * len + ca * 2.1 * sd;
           box(gF, px, y0 + hgt + 1, pz, len / n - 0.9, 1.1, 0.7, ang, mud, mudT, true); }
       }
-      // the round towers every ~28 m along each line, and a pair of bigger ones at each line's end (the gates and the corners)
-      for (const [hgt, fl] of LD.cwall) {
-        let acc = 14;
-        for (let k = 0; k + 3 < fl.length; k += 2) {
-          const ax = fl[k], az = fl[k + 1], bx = fl[k + 2], bz = fl[k + 3], len = Math.hypot(bx - ax, bz - az);
-          for (; acc < len; acc += 28) { const t = acc / len, x = ax + (bx - ax) * t, z = az + (bz - az) * t, y = gH(x, z) - 1;
-            cyl(gF, x, y, z, 3.6, (hgt || 9) + 2.2, 10, mud, mudT, 3.1); }
-          acc -= len;
+      // the round towers where OSM has them (tower:type=defensive), a little higher than the wall
+      for (const [x, z] of TOW) { const y = gH(x, z) - 1; cyl(gF, x, y, z, 3.6, 9 + 2.2, 10, mud, mudT, 3.1); }
+      // the gates: a block in each footprint (its smallest bounding rectangle), the height from OSM, a parapet round the top
+      for (const [h, fl] of GATES) {
+        const P2 = []; for (let k = 0; k < fl.length; k += 2) P2.push([fl[k], fl[k + 1]]);
+        let best = null;
+        for (let k = 0; k + 1 < P2.length; k++) {
+          const a = Math.atan2(P2[k + 1][1] - P2[k][1], P2[k + 1][0] - P2[k][0]), ca = Math.cos(a), sa = Math.sin(a);
+          let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9;
+          for (const [x, z] of P2) { const u = x * ca + z * sa, v = -x * sa + z * ca; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
+          if (!best || (u1 - u0) * (v1 - v0) < best.ar) best = { ar: (u1 - u0) * (v1 - v0), a, ca, sa, u: (u0 + u1) / 2, v: (v0 + v1) / 2, Lb: u1 - u0, Wb: v1 - v0 };
         }
-        for (const e of [0, fl.length - 2]) { const x = fl[e], z = fl[e + 1], y = gH(x, z) - 1, h = (hgt || 9) + 4.5;
-          cyl(gF, x, y, z, 5.2, h, 12, mud, mudT, 4.4); cone(gF, x, y + h, z, 4.6, 0.8, 12, mudT, mudT, 0); }
+        if (!best) continue;
+        const cx = best.u * best.ca - best.v * best.sa, cz = best.u * best.sa + best.v * best.ca;
+        let y0 = 1e9; for (const [x, z] of P2) y0 = Math.min(y0, gH(x, z)); y0 -= 1;
+        box(gF, cx, y0, cz, best.Lb, h + 1, best.Wb, best.a, mud, mudT, true);
+        for (const [du, dv, l, w] of [[0, best.Wb / 2 - 0.35, best.Lb, 0.7], [0, -best.Wb / 2 + 0.35, best.Lb, 0.7], [best.Lb / 2 - 0.35, 0, 0.7, best.Wb], [-best.Lb / 2 + 0.35, 0, 0.7, best.Wb]])
+          box(gF, cx + du * best.ca - dv * best.sa, y0 + h + 1, cz + du * best.sa + dv * best.ca, l, 1.1, w, best.a, mud, mudT, true);
+        nStone++;
       }
       // the minarets
       const tile = [[0.24, 0.6, 0.58], [0.2, 0.42, 0.66], [0.9, 0.88, 0.8], [0.7, 0.56, 0.4]];
@@ -250,28 +267,7 @@
       house(g, bx, bz, Lb, Wb, ang, y0, hh, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
-    // more of the town where the land cover says it is built up and OpenStreetMap has no footprints (15-55 m from the road, square to it)
-    {
-      const Lt = NRC * 32;
-      for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) {
-        if (!G.on[tj * G.ntx + ti]) continue;
-        const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
-        for (let zz = za; zz < za + Lt; zz += 18) for (let xx = xa; xx < xa + Lt; xx += 18) {
-          if (crH(xx, zz, 40) > 0.55) continue;
-          const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
-          if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
-          const Lb = 9 + crH(x, z, 43) * 7, Wb = 8 + crH(x, z, 44) * 6;
-          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || nearLandmark(x, z, 14)) continue;
-          const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
-          const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
-          let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
-          if (hi - lo > 4) continue;
-          const fl = 1 + Math.floor(crH(x, z, 45) * 2.4);
-          house(scen.get(x, z), x, z, Lb, Wb, ang, lo, fl * 3.1 + 0.4, vary(WALL[Math.floor(crH(x, z, 47) * WALL.length)], R, 0.05));
-          nFill++; CR.block(x, z, Lb, Wb, ang); exclPush(x, z, Math.max(Lb, Wb) / 2 + 2);
-        }
-      }
-    }
+    // (no houses beyond OpenStreetMap's footprints: where it has none, the town is left to the land cover's colour and the trees)
 
     /* ---- the start: a banner over the road on two masts at the line (no words), flags along the walls ---- */
     {
@@ -399,7 +395,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, fill: nFill, stone: nStone, fans: nFans, wall: WS.length };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, wall: WS.length };   // (read by the tests)
     return out;
   }
 

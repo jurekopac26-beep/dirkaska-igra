@@ -9,6 +9,7 @@ from scipy import ndimage
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 J = json.load(open(os.path.join(HERE, 'hiva.json')))
+OB = json.load(open(os.path.join(HERE, 'obzidje.json')))   # (the landmark from OSM: python3 -I tools/hiva/obzidje.py)
 STEP = J['step']; LINE0 = np.array(J['line']).reshape(-1, 2); H0 = np.array(J['h']); L = J['length']; NP = len(LINE0)
 
 # ---- the start line: on the straight north along the west side (the data's s = 3010, ~35 m before its first point), the grid behind it ----
@@ -161,7 +162,9 @@ HEAD = """/* Hiva (theme 'hiva'): the scenery data for js/world-hiva.js (metres,
    form); lc: the land cover (16 m cells, run-length coded as World.nrPrep reads it: 0 open, 1 forest, 2 scrub, 3 settlement; ESA WorldCover, OSM,
    the canopy); far: the surface (200 m cells, bytes of 2 m); bld: OSM buildings within 60 m [x, z, length, width, angle, height (0 unknown),
    kind: 0 house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats]; walls [0 wall, 1 retaining,
-   2 hedge, 3 fence, 4 guard rail, [x, z, ...]] (the city wall is not here: it is the landmark's, cwall [height, [x, z, ...]]); marks [label,
+   2 hedge, 3 fence, 4 guard rail, [x, z, ...]] (the city wall is not here: it is the landmark's,
+   from tools/hiva/obzidje.py: cwall [height, [x, z, ...]] OSM's city_wall outlines, towers [x, z] its defensive towers, gates [height, [x, z, ...]]
+   the four gates' footprints); marks [label,
    kind, s, d, outline]; onRoad [s, kind, x]: OSM's nodes on the lap's own ways (kind 0 a marked pedestrian crossing, x 1 on a primary or
    secondary road; 1 a stop sign, 2 a give-way sign, x the lane the line lies across: 1 the lap's own, -1 the oncoming one); s: metres after the
    start line. Data: © OpenStreetMap contributors (ODbL 1.0: the derived data here under the ODbL 1.0); Copernicus DEM GLO-30 (produced using
@@ -216,7 +219,8 @@ def build_world():
         'dem': D, 'lc': LC, 'far': FAR,
         'bld': [[round(b[0] - O[0], 1), round(b[1] - O[1], 1), b[2], b[3], round(b[4], 2), b[5], b[6]] for b in J['bld'] if max(b[2], b[3]) < 90],
         'walls': [[KIND_W.get(w[0], 3), sh(w[3])] for w in J['walls'] if w[0] != 'city_wall'],
-        'cwall': [[w[1] or 9.0, sh(w[3])] for w in J['walls'] if w[0] == 'city_wall'],
+        'cwall': [[h, sh(fl)] for _, h, fl in OB['cwall']],   # (tools/hiva/obzidje.py: OSM's walls whole, not clipped at 30 m)
+        'towers': [sh(t[1:]) for t in OB['towers']], 'gates': [[h, sh(fl)] for _, h, fl in OB['gates']],
         'marks': [[m[0], m[2], dd(m[3]), m[4], sh(m[5])] for m in J['landmarks']],
         'onRoad': on_road(),
     }
