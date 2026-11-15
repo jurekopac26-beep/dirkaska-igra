@@ -48,7 +48,7 @@ DESC_EN = ('An open road on the Caribbean coast of Panama: along the bay of Port
            'ruins of a Spanish coastal fort of coral stone and through the old town to the east shore of the bay. '
            'A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [60, 63, 68], 'wet': {'cs': [70, 73, 79]}, 'winter': {'cs': [68, 71, 77], 'wet': {'cs': [83, 87, 94]}}}   # (provisional: rerun tools/nova-proga.mjs --medalje)
+MEDALS = {'cs': [60, 63, 68], 'wet': {'cs': [71, 75, 80]}, 'winter': {'cs': [69, 72, 78], 'wet': {'cs': [85, 89, 96]}}}
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 

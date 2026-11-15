@@ -85,11 +85,26 @@
     if (fort) {
       const u = fort.pts.slice(0, -1); FC = [u.reduce((a, p) => a + p[0], 0) / u.length, u.reduce((a, p) => a + p[1], 0) / u.length];
       for (const [x, z] of u) FR = Math.max(FR, Math.hypot(x - FC[0], z - FC[1]));
-      FB = [Math.min(...u.map(p => p[0])) - 14, Math.max(...u.map(p => p[0])) + 14, Math.min(...u.map(p => p[1])) - 14, Math.max(...u.map(p => p[1])) + 14];
+      FB = [Math.min(...u.map(p => p[0])) - 30, Math.max(...u.map(p => p[0])) + 30, Math.min(...u.map(p => p[1])) - 30, Math.max(...u.map(p => p[1])) + 30];
     }
+    // the fort's terrace: 2.5 m over the road where it passes nearest (the heights put the ruins ~20 m up the wooded slope, where the
+    // camera behind the car, looking down at the road, never has them in its frame; on a terrace by the road it does), and a glade from
+    // the fort down to the road (the ground as low, no trees nor houses), so that nothing stands between the road and the walls
+    // (the glade: between the walls and the road from 1400 to 1650 m of the race, where the fort is ahead of the car and beside it)
+    let TH = 0, RN = null, GB0 = null; const GL = [], RD = [];
+    if (fort) { let bd = 1e18; for (let i = 0; i < N; i++) { const d = (T.px[i] - FC[0]) ** 2 + (T.pz[i] - FC[1]) ** 2; if (d < bd) { bd = d; TH = T.hy[i] + 2.5; RN = [T.px[i], T.pz[i]]; } }
+      for (let m = 1400; m <= 1650; m += 10) { const i = T.idx(Math.min(sStart + m, sFin)); GL.push([T.px[i], T.pz[i]]); }
+      for (let m = 1340; m <= 1710; m += 2) { const i = T.idx(Math.min(sStart + m, sFin)); RD.push([T.px[i], T.pz[i], T.hy[i]]); }
+      const xs = GL.map(p => p[0]).concat(FC[0]), zs = GL.map(p => p[1]).concat(FC[1]); GB0 = [Math.min(...xs) - FR - 30, Math.max(...xs) + FR + 30, Math.min(...zs) - FR - 30, Math.max(...zs) + FR + 30]; }
+    const glade = (x, z) => { if (!GB0 || x < GB0[0] || x > GB0[1] || z < GB0[2] || z > GB0[3]) return null; let bd = 1e9, rd = 1e18, ry = TH;
+      for (const [rx, rz] of GL) { const vx = rx - FC[0], vz = rz - FC[1], t = clamp(((x - FC[0]) * vx + (z - FC[1]) * vz) / (vx * vx + vz * vz || 1), 0, 1); bd = Math.min(bd, Math.hypot(x - FC[0] - vx * t, z - FC[1] - vz * t)); }
+      for (const [rx, rz, y] of RD) { const d = (x - rx) ** 2 + (z - rz) ** 2; if (d < rd) { rd = d; ry = y; } }
+      return [bd - FR, TH + (ry - 0.3 - TH) * sstep(28, 9, Math.sqrt(rd))]; };   // (its distance out of the glade; the height it slopes at from the terrace up or down to the road's)
+    const gladeD = (x, z) => { const g = glade(x, z); return g ? g[0] : 1e9; };
+    const inGlade = (x, z) => gladeD(x, z) < 8;
     const segD = (pts, x, z) => { let bd = 1e9; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1); bd = Math.min(bd, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return bd; };
-    const fortW = (x, z) => { if (!fort || x < FB[0] || x > FB[1] || z < FB[2] || z > FB[3]) return 0; if (inPoly(fort.pts, x, z)) return 1; return sstep(12, 0, segD(fort.pts, x, z)); };
-    const inFort = (x, z, m) => !!fort && x > FB[0] + 14 - m && x < FB[1] - 14 + m && z > FB[2] + 14 - m && z < FB[3] - 14 + m && (inPoly(fort.pts, x, z) || segD(fort.pts, x, z) < m);
+    const fortW = (x, z) => { if (!fort || x < FB[0] || x > FB[1] || z < FB[2] || z > FB[3]) return 0; if (inPoly(fort.pts, x, z)) return 1; return sstep(28, 6, segD(fort.pts, x, z)); };
+    const inFort = (x, z, m) => !!fort && x > FB[0] + 30 - m && x < FB[1] - 30 + m && z > FB[2] + 30 - m && z < FB[3] - 30 + m && (inPoly(fort.pts, x, z) || segD(fort.pts, x, z) < m);
 
     // ---- the coast: the signed distance to OSM's coastline (+ on the sea: the land lies on the left of each line), the sea's floor under the shore ----
     const CO = [], CH = 48, chash = new Map();
@@ -108,7 +123,8 @@
       const sd = seaD(x, z);
       if (sd > 0) h = Math.min(h, SEA - 0.6 - Math.min(sd, 70) * 0.07);   // the sea's floor, deeper away from the shore
       else if (sd > -30) h = Math.max(h, SEA + 0.4 + Math.min(-sd, 30) * 0.03);   // (the shore stays above the water)
-      const fw = fortW(x, z); if (fw > 0) h = lerp(h, nrDem(x, z), fw);
+      const gw = glade(x, z), fw = fortW(x, z), ww = gw ? sstep(30, 10, gw[0]) : 0;
+      if (fw > 0 || ww > 0) { const tg = Math.min(nrDem(x, z), fw >= ww || !gw ? TH : gw[1]); h = lerp(h, tg, Math.max(fw, ww)); }
       return h; };
     // the ground's colours (the wet tropics on the Caribbean coast of Panama): lush grass and the dark leaf litter of the rainforest, the
     // trampled earth of the town, the dark grey stone of the steep banks, the pale sand of the little beaches
@@ -279,7 +295,7 @@
           const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
           if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
           const Lb = 7 + crH(x, z, 43) * 5, Wb = 6 + crH(x, z, 44) * 4;
-          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || seaD(x, z) > -8 || inFort(x, z, 18)) continue;
+          if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z) || seaD(x, z) > -8 || inFort(x, z, 18) || inGlade(x, z)) continue;
           const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
           const ang = T.hd[ni], ca = Math.cos(ang), sa = Math.sin(ang);
           let lo = 1e9, hi = -1e9; for (const [a, b] of [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]]) { const h = nrGround(x + ca * a - sa * b, z + sa * a + ca * b); lo = Math.min(lo, h); hi = Math.max(hi, h); }
@@ -350,7 +366,7 @@
           const p = cl === 1 ? 0.72 : cl === 2 ? 0.4 : cl === 3 ? 0.12 : 0.06;
           if (h1 > p) continue;
           const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni >= 0 && ndd < 3) continue;
-          if (excluded(x, z) || seaD(x, z) > -2 || inFort(x, z, 6)) continue;
+          if (excluded(x, z) || seaD(x, z) > -2 || inFort(x, z, 6) || inGlade(x, z)) continue;
           const hq = crH(x, z, 25), hs = crH(x, z, 26), cv = 0.86 + crH(x, z, 27) * 0.28, col = [cv * (0.95 + hq * 0.1), cv, cv * (0.94 + hs * 0.1)];
           let sp;
           if (cl === 1) sp = hs < 0.12 ? 0 : hs < 0.86 ? 1 : 2;
