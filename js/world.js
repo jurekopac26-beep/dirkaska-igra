@@ -4577,7 +4577,7 @@ const World = (function () {
     NRN.i = bi; NRN.d = bd; NRN.dd = bdd; NRN.lat = bl;
     if (bi < 0) return NRN;
     NRN.h = hs / ws;
-    const f = bi + ba / ds, fi = Math.floor(f), i0 = ((fi % N) + N) % N, i1 = (i0 + 1) % N; NRN.hn = T.hy[i0] + (T.hy[i1] - T.hy[i0]) * (f - fi) + nrBankY(i0, bl);   // road height across from the point (the loop wraps; the banked edge)
+    const f = bi + ba / ds, fi = Math.floor(f), op = T.open, i0 = op ? clamp(fi, 0, N - 2) : ((fi % N) + N) % N, i1 = op ? i0 + 1 : (i0 + 1) % N, tf = op ? clamp(f - i0, 0, 1) : f - fi; NRN.hn = T.hy[i0] + (T.hy[i1] - T.hy[i0]) * tf + nrBankY(i0, bl);   // road height across from the point (the loop wraps; an open road's ends hold their height; the banked edge)
     return NRN;
   }
   function nrBankY(i, o) { const b = T.bank ? T.bank[i] : 0; return b > 0 ? -b * clamp(o * T.bankSide[i], -T.w, T.w + 6) : 0; }   // banked corner: height offset at lateral offset o (as Track.bankAt)
