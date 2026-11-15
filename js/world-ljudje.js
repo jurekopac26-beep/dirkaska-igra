@@ -2090,7 +2090,7 @@
       let keep = false, built = false; mid++;
       const e = m.matrixWorld.elements, I = g.index ? g.index.array : null, n = I ? I.length : Pa.count, BU = 0.05;
       // the parts of the surface (two stands across the road share their uvs; a stepped stand's tiers are a part each): its triangles joined where they share a corner
-      const tris = [], par = new Map(), find = (k) => { let r = k; while (par.get(r) !== r) r = par.get(r); let c = k; while (c !== r) { const nx = par.get(c); par.set(c, r); c = nx; } return r; };
+      const tris = [], kid = new Map(), par = [], find = (k) => { let r = k; while (par[r] !== r) r = par[r]; let c = k; while (c !== r) { const nx = par[c]; par[c] = r; c = nx; } return r; };   // (a corner's key once to a number: the same joins in the same order)
       const key = (q) => Math.round(q.x * 50) + ',' + Math.round(q.y * 50) + ',' + Math.round(q.z * 50);
       // (each corner once: an indexed surface's triangles share them; only read after)
       const VC = new Array(Pa.count), vert = (k) => { let q = VC[k]; if (q) return q; const x = Pa.getX(k), y = Pa.getY(k), z = Pa.getZ(k);
@@ -2098,8 +2098,8 @@
       for (let t = 0; t + 2 < n; t += 3) {
         const T = I ? [vert(I[t]), vert(I[t + 1]), vert(I[t + 2])] : [vert(t), vert(t + 1), vert(t + 2)];
         const den = (T[1].v - T[2].v) * (T[0].u - T[2].u) + (T[2].u - T[1].u) * (T[0].v - T[2].v); if (Math.abs(den) < 1e-12) continue;
-        for (const q of T) if (q.k === null) { q.k = key(q); if (!par.has(q.k)) par.set(q.k, q.k); }
-        const r0 = find(T[0].k); for (let j = 1; j < 3; j++) { const r = find(T[j].k); if (r !== r0) par.set(r, r0); }
+        for (const q of T) if (q.k === null) { const s = key(q); let id = kid.get(s); if (id === undefined) { id = par.length; kid.set(s, id); par.push(id); } q.k = id; }
+        const r0 = find(T[0].k); for (let j = 1; j < 3; j++) { const r = find(T[j].k); if (r !== r0) par[r] = r0; }
         tris.push({ T, den, k: T[0].k });
       }
       const isl = new Map(); for (const tr of tris) { const r = find(tr.k); let L = isl.get(r); if (!L) isl.set(r, L = []); L.push(tr); }
