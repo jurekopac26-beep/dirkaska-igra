@@ -50,8 +50,9 @@
   }
   function chGround(x, z) {   // height of the terrain mesh surface (the same two triangles per cell as the tiles)
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 0, G.nx - 1.001), gz = clamp((z - G.z0) / VRC, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;
-    if (u + v <= 1) { const a = chGH(i, j); return a + u * (chGH(i + 1, j) - a) + v * (chGH(i, j + 1) - a); }
-    const d = chGH(i + 1, j + 1); return d + (1 - u) * (chGH(i, j + 1) - d) + (1 - v) * (chGH(i + 1, j) - d);
+    const H = G.h, k = j * G.nx + i;   // (the vertices read straight from the grid when computed: i, j and their next are inside it, chGH's clamp a no-op)
+    if (u + v <= 1) { let a = H[k], b = H[k + 1], c = H[k + G.nx]; if (a !== a) a = chGH(i, j); if (b !== b) b = chGH(i + 1, j); if (c !== c) c = chGH(i, j + 1); return a + u * (b - a) + v * (c - a); }
+    let d = H[k + G.nx + 1], c = H[k + G.nx], b = H[k + 1]; if (d !== d) d = chGH(i + 1, j + 1); if (c !== c) c = chGH(i, j + 1); if (b !== b) b = chGH(i + 1, j); return d + (1 - u) * (c - d) + (1 - v) * (b - d);
   }
   function chSlope(x, z) { const a = chGround(x - 2.5, z), b = chGround(x + 2.5, z), c = chGround(x, z - 2.5), d = chGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function chCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): the fynbos as a mosaic (lc 1): grey-green shrubland, dark olive thickets, rusty
@@ -566,7 +567,7 @@
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
           if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
-          const c = vrLC(x, z), y0 = chGround(x, z), A = y0 + base, sl = chSlope(x, z);
+          const c = vrLC(x, z), y0 = chGround(x, z), A = y0 + base;
           if (A < 4 || c === 4 || c === 5) continue;
           let kind = -1;
           if (c === 2) kind = r1 < 0.16 ? 5 : r1 < 0.4 ? 1 : -1;
@@ -575,7 +576,7 @@
           else { const pr = sstep(0.5, 0.8, P.c3(x * 1.6, z * 1.6)), er = sstep(0.6, 0.82, P.n5(x * 1.8 + 40, z * 1.8)), pc = sstep(0.62, 0.84, P.n3(x * 2.1 - 70, z * 2.1)), nr = sstep(70, 25, hd);   // (proteas, heaths and pincushions in patches; thicker by the road)
             kind = r1 < 0.24 ? 0 : r1 < 0.5 + 0.12 * nr ? 1 : r1 < 0.5 + 0.12 * nr + 0.16 * pr ? 2 : r1 < 0.62 + 0.12 * nr + 0.3 * er ? 6 : r1 < 0.7 + 0.12 * nr + 0.25 * pc ? 7 : r1 < 0.76 && A < 120 ? 3 : -1; }
           if (kind < 0) continue;
-          if (sl > (kind === 3 ? 1.2 : 0.95)) continue;
+          if (chSlope(x, z) > (kind === 3 ? 1.2 : 0.95)) continue;   // (the slope only for a plant that would grow there)
           const nn = vrNear(x, z); if (nn.i >= 0 && (nn.dd < 1.6 || hillIn(nn))) continue;
           if (excluded(x, z)) continue;
           const tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.88 + r4 * 0.18];
