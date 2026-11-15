@@ -1309,7 +1309,7 @@
     const pp = P.parts, np = pp.length; if (np) { const a = pp[0].o, b = pp[np - 1].o + pp[np - 1].P.length; if (a < D0) D0 = a; if (b > D1) D1 = b; }
     for (const pt of P.parts) {
       const o = pt.o, p = pt.P, n = pt.N, L = p.length;
-      if (pt.k && !(show && show.has(pt.k))) { pos.fill(0, o, o + L); continue; }   // (not held now: nothing drawn)
+      if (pt.k && !(show && show.has(pt.k))) { pos.fill(0, o, o + L); nor.fill(0, o, o + L); continue; }   // (not held now: nothing drawn; its normals back to as built too, so a pose is the same whether the thing was held before or not)
       const e = P.J[pt.b].matrixWorld.elements;
       for (let i = 0; i < L; i += 3) {
         const x = p[i], y = p[i + 1], z = p[i + 2], a = n[i], b = n[i + 1], c = n[i + 2];
