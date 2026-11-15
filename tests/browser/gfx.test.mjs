@@ -42,7 +42,7 @@ try {
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
     if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
     const worn = !NO_WEAR.includes(id);
-    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < Math.min(500, L.wear.len * 0.15) || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));   // (500 patches' vertices, on a short road 0.15 a metre of the track: Ghoufi's 905 m have some 160)
+    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < (L.wear.len < 1000 ? L.wear.len * 0.15 : 500) || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));   // (500 patches' vertices; only a short landmark track under 1 km may have fewer, 0.15 a metre: Ghoufi's 905 m have some 160)
     if (why.length) bad.push(id + ': ' + why.join('; '));
     console.log(`  ${id.padEnd(11)} cars ${JSON.stringify(L.cars.body)} water ${L.water.length} bands ${L.bands.map(b => b[2]).join('+') || 0} wear ${L.wear.meshes}/${L.wear.verts}`);
   }
