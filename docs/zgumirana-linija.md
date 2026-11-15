@@ -27,6 +27,16 @@ Načrt 9. 11. 2026 (Matej), prototip za slike 10. 11. (osnutek #623), izvedba 15
 - `tests/zgumirana-linija.test.js` (brez brskalnika): linija (Tianmen izmerjena, Spa iz sloga, vedno na asfaltu), oprijem gume in kroglic na izračunani liniji, ista dirka z linijo in brez nje enaka do bita (Spa z gumami, Tianmen).
 - `tests/browser/zgumirana-linija.test.mjs` (~214 s): Spa (ena mreža, 7 stolpcev, 6,2 m, kroglice ob liniji, cesta temnejša), Tianmen (kosi, bližnji narisani in daljni ne, v dežju brez plasti), zamrznjene proge (Crystal Palace, Jezero, Suzuka, Medvode: brez linije, stara plast).
 - Povezani testi: `tests/run.js`, `RELATED` (`js/core.js`, `js/render.js`, `js/game.js`, `js/data/voznja.js`).
+- **Odtis sveta** (`tests/golden/world.json`): nove vrednosti samo za 15 pravih prog, ker so se temni pas, obraba in sledi premaknili na uporabnikovo linijo (do +408 oglišč na progo; število mrež enako, razen Chapman's Peak +1 in Livorno −1). Vnosi zamrznjenih prog so nespremenjeni. Ukaz: `WORLD_ONLY=<prave proge, z vejico> node tests/browser/world.test.mjs --update`.
+- **Dirke in fizika**: `tests/golden/races.json` in `tests/golden/sim.json` sta nespremenjena (`node tests/races.test.js`).
+
+## Obremenitev
+Meritev 15. 11. 2026: `PERF_ONLY=<prave proge, z vejico> node tests/browser/perf.test.mjs`. Vseh 15 pravih prog ostane pod 300 klici risanja in 900 tisoč oglišči, v povprečju in na najbolj obremenjenem mestu; `tests/golden/perf.json` ni spremenjen (vse je v dovoljenem odstopanju testa). Spodaj klici risanja in tisoč oglišč na najbolj obremenjenem mestu, prej → zdaj.
+- Dirkališča z boksi (guma dirke; ista ena mreža, le širša): Spa 222 → 222 klicev, 573 → 587 tisoč oglišč; Štajerska 262 → 262, 669 → 677; Bathurst 249 → 249, 472 → 484; Montréal 242 → 243, 535 → 545.
+- Odprte asfaltne ceste (kosi plasti, risani do konca megle): Tianmen 213 → 220, 555 → 587; Los Caracoles 190 → 198, 394 → 430; Bâlea 187 → 193, 436 → 464; Harju 204 → 209, 698 → 717; Rio do Rastro 172 → 176, 476 → 494; Pikes Peak 128 → 131, 337 → 346; Chapman's Peak 147 → 148, 487 → 492.
+- Brez plasti in brez spremembe: Nürburg in Livorno (krožni progi brez boksov; Livorno 351 → 352 zaradi sledi), Pikes Peak (makadam) in Katu-Jaryk (plast je samo na asfaltu, `rubberW`).
+- Na mestih meritve v testu teme: Spa 203 klicev s plastjo in 202 brez nje, Tianmen 181 in 179.
 
 ## Slike zdaj/potem
 - `node tools/shot.mjs spa --m 2860 --guma 0.8 --velika --lezece --pred main` in `node tools/shot.mjs tianmen --m 940 --velika --lezece --pred main` (kamera za avtom; `--guma`: guma, nabrana pozno v dolgi dirki, ker je ob štartu ni). Slik ne shranjuj v repozitorij.
+- Slike za uporabnikov »ok« pred `main` (Spa in Tianmen, zdaj in potem) so na strani Odločitve računa partyslo, vprašanje `zgumirana-linija-2` (`docs/vprasanja.md`).
