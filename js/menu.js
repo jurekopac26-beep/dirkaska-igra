@@ -1066,7 +1066,7 @@
     const n = list.length, t = list[trackIdx], ctry = countryOf(t), fl = flagUrl(ctry);
     fr = G.friends ? G.friends(t.def, cam === 4) : null;   // (the friends' times: the Friends view builds the track for the check of its times, the place's badge waits for it)
     if (cam === 4 && !fr) cam = 1;   // (a game without the friends' leaderboard: the map)
-    wd = fr && G.world ? G.world(t.def, window.matchMedia && matchMedia('(orientation: landscape)').matches ? 6 : 5) : null;   // (the world's: Svetovna lestvica)
+    wd = fr && G.world ? G.world(t.def, 6) : null;   // (the world's: Svetovna lestvica; the top 6, upright the CSS shows 5: a turned phone keeps the table)
     h += ringView(list, t);   // (on its side: the carousel's backdrop, the neighbours' cards and the arrows)
     // the head: the back arrow (to the modes), the place (fitWhere: smaller where a long one would reach the globe; the country for the
     // readers), the globe (its country gold: globe.on)

@@ -546,6 +546,18 @@ Najboljše čase si lahko izmenjaš s prijatelji brez strežnika in brez računa
 
 Lestvica sprejme do 40 prijateljev; prostor naredi tisti, od katerega povezave ni bilo najdlje. Ključ za podpis nastane ob prvem pošiljanju in je del profila: izvoz in uvoz profila (Nastavitve) ga preneseta na drug telefon, kjer si za prijatelje isti igralec. Lestvica potrebuje brskalnik s spletno kriptografijo in stiskanjem (`crypto.subtle`, `CompressionStream`); drugje gumba *Friends* ni.
 
+## Svetovna lestvica
+
+Najboljši časi kronometrov na pravih progah vseh igralcev na enem strežniku (načrt in pravila: `docs/svetovna-lestvica.md`; strežnik `streznik/svetovna-lestvica/`, logika igre `js/svet.js`). Dokler igra ne pozna naslova strežnika (`Svet.CFG.url`), je vse skrito in igra ničesar ne pošlje.
+
+**Pridružitev:** v Nastavitvah (razdelek **Svetovna lestvica**) ali v zavihku *World* pogleda *Friends* na izbiri proge: soglasje (vzdevek, časi in posnetki voženj gredo na strežnik v EU), nato vzdevek (filter na strežniku; neprimeren je skrit do pregleda). Brez pridružitve igra ničesar ne pošlje, lestvico pa lahko gledaš.
+
+**Kje so časi:** na izbiri proge zavihek *World* ob *Friends* (prvih 5, ležeče 6, tvoja vrstica zlata in »#3 of 8«; značka mesta ob najboljšem času); na **Lestvici** pri vsaki progi razdelek **Svet** (prvih 100, tvoja vrstica, **Prijavi** ob tujem vzdevku); na rezultatih vrstica »Svet: #3 od 8 (čaka na preverjanje)«.
+
+**Pošiljanje:** po novem najboljšem času kronometra igra pošlje podpisan zapis vožnje (vnos, čas, avto, pogoji). Brez povezave ali ob napaki strežnika čas počaka v vrsti (`tdgp-sl-vrsta`, ponovni poskus od 1 minute do 1 ure; ob odprtju menija, dogodku `online` in po vožnji); zadnje lestvice so v `tdgp-sl-cache` z napisom »stanje ob …«. Med dirko igra na strežnik ne čaka.
+
+**Nastavitve:** sodelovanje (*Izstopi*), vzdevek, id igralca, časi v vrsti, **Izbriši moje podatke na svetovni lestvici** (vse na strežniku in v igri) in povezava na pravilnik o zasebnosti.
+
 ## Igralni plošček
 
 Igro lahko igraš z igralnim ploščkom (Xbox, PlayStation ali drug plošček s standardno razporeditvijo), ki ga povežeš s telefonom ali računalnikom (Bluetooth ali kabel). Ob prvem pritisku se pokaže kratko navodilo, gumbi na zaslonu pa se skrijejo (ko se dotakneš zaslona, se vrnejo).

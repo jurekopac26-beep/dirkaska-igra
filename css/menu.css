@@ -423,6 +423,7 @@ svg { display: block; }
 .ftabs [aria-selected="true"] { background: var(--cyan); color: #04121c; }
 .wtab th:nth-child(4), .wtab td:nth-child(4) { width: 66px; padding-right: 7px; text-align: right; }
 .wtab th:first-child, .wtab td:first-child { width: 34px; }
+@media (orientation: portrait) { .wtab tbody tr:nth-child(n+6) { display: none; } }   /* (the world's top 6 on its side, 5 upright) */
 .wline { flex: 0 0 auto; display: flex; justify-content: center; align-items: baseline; gap: 8px; margin: 0 0 auto; font: 800 italic 14px/1.2 var(--f-ui); color: #fff; font-variant-numeric: tabular-nums; }
 .wline small { font: 500 11px/1.2 var(--f-ui); color: var(--lbl); }
 .fjoin { margin: 0 0 auto; overflow-y: auto; min-height: 0; }
