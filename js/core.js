@@ -4519,7 +4519,7 @@ const Core = (function () {
     const vpA = (c.vprof || race.vprof)[ia], offErr = Math.abs(q.d - (RL[q.i] + c.aiOff)), offLine = Math.abs(c.aiOff) > 1.2 || offErr > 1.2;
     let sk = Math.min(c.skill * c.rubber, c.skCap || 1.14) * (c.isPlayer || !T.def.aiPace ? 1 : (T.def.aiPace[c.phys] || T.def.aiPace.cs || 1));   // (def.aiPace: quicker rivals on a track with room for them, skill and cap; never the player's autopilot)
     if (sk > 1 && offLine) sk = 1 + (sk - 1) * 0.3;   // away from the ideal line (overtaking, defending, knocked aside) the extra pace is not there
-    let vT = vpA * (sk <= 1 ? sk : 1 + (sk - 1) * sstep(11, 24, vpA));
+    let vT = vpA * (sk <= 1 ? sk : 1 + (sk - 1) * (!c.isPlayer && race.diff === DIFF[3] ? 1 : sstep(11, 24, vpA)));   // (super težka: its rivals at their skill in the hairpins too, 15. 11. 2026; the player's autopilot and the others as before)
     if (c.uT) {   // the player's driving (Race._voznja): their pace here (uT), on the line up to VZ_CAP over its profile; off it as its own skill's
       const u = c.uT[ia], cap = 1 + ((c.skCap || 1.14) - 1) * sstep(11, 24, vpA), rb = c.rubber > 1 ? 1 + (c.rubber - 1) * sstep(11, 24, vpA) : c.rubber;   // (the catch-up: none in the slowest hairpins)
       if (u === u) vT = Math.min(u * rb, Math.max(u, vpA * cap), vpA * (offLine ? 1 + (cap - 1) * 0.3 : VZ_CAP));   // (NaN: no measurement there, its own pace; the catch-up as without it: not past its cap, the player's pace may be there already)
@@ -6461,9 +6461,9 @@ const Core = (function () {
   const DIFF = [
     [0.78, 0.86, 0.06, 60, 0.05, 40],    // lahka
     [0.88, 0.97, 0.04, 90, 0.05, 40],    // srednja
-    [1.03, 1.12, 0.01, 200, 0.06, 30, 1.09],   // težka: the front runners near the limit, they hardly wait for anyone
-    [1.07, 1.12, 0, 200, 0.06, 30, 1.12],   // super težka (a race of its own since 9. 11. 2026, before as težka): the front runners at the
-                                            // cars' limit (as the player's autopilot at 1.12, a good player), never waiting for anyone
+    [1.03, 1.12, 0.01, 200, 0.06, 30, 1.11],   // težka: the front runners near the limit, they hardly wait for anyone (cap 1.09 to 1.11, 15. 11. 2026)
+    [1.12, 1.20, 0, 200, 0.06, 30, 1.20],   // super težka (a race of its own since 9. 11. 2026, before as težka): past the autopilot's limit
+                                            // (15. 11. 2026, the user: a good player fights for 3rd; Tianmen: the winner ~190.3 s, 3rd ~193.4 s), never waiting for anyone
   ];
   // super težka besides (DIFF[3]): its drivers' mistakes under pressure (opts.chars) err x the others', their reactions at the start re s
   // (LAUNCH.ai: the others'), the player's driving (Race._voznja) up to lam (1: the player's quicker laps; on their own profile of the track
