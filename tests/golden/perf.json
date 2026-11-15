@@ -362,12 +362,5 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
- },
- "morro": {
-  "calls": 134,
-  "maxCalls": 180,
-  "kverts": 210,
-  "maxKverts": 248,
-  "jsMs": 1.6
  }
 }

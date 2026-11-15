@@ -440,44 +440,38 @@
   "n": 16,
   "bbox": "-58.372,-34.622,-58.355,-34.600"
  },
- "morro": {
-  "key": "Ciudamar",
+ "vinales": {
+  "key": "w:129513790,88375393",
   "sec": [
    [
-    19.969338,
-    -75.862566
+    22.6116386,
+    -83.7349534
    ],
    [
-    19.968471,
-    -75.869652
+    22.6190881,
+    -83.7373489
    ]
   ],
-  "ime": "Santiago de Cuba, Kuba",
-  "en": "Santiago de Cuba, Cuba",
+  "ime": "Viñales, Kuba",
+  "en": "Viñales, Cuba",
   "vozi": "desna",
   "uvoz": {
-   "pred": 100,
-   "grid": 200,
    "izt": 200,
-   "za": 200,
-   "poti": [
-    "48866894"
-   ]
+   "dno": 50
   },
   "focus": "landmark",
   "cfg": {
-   "ground": "coast",
-   "cover": "sparse",
+   "ground": "tropic",
+   "cover": "patchy",
    "tree": "palm",
    "snow": "none",
    "center": "white",
-   "fog": 14542054,
-   "bld": 15260868,
-   "roof": 11556410,
-   "sea": 1,
-   "rock": 10128500
+   "fog": 14081494,
+   "bld": 14735040,
+   "roof": 10111538,
+   "rock": 10855836
   },
   "n": 17,
-  "bbox": "-75.885,19.962,-75.855,19.995"
+  "bbox": "-83.765,22.598,-83.715,22.632"
  }
 }

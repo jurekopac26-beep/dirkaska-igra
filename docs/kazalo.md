@@ -240,7 +240,6 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *mountbuller* | *Mount Buller, Avstralija (test)* | mountbuller | `js/world-mountbuller.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | *mulholland* | *Santa Monica Mountains, ZDA (test)* | mulholland | `js/world-mulholland.js` (`buildMulholland`) |
 | *newcastle* | *Newcastle, Avstralija (test)* | newcastle | `js/world-newcastle.js` (`buildNewcastle`) |
-| morro | Santiago de Cuba, Kuba | morro | `js/world-morro.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | nring | Nürburg, Nemčija | nring | `js/world-nring.js` (`buildNring`) |
 | *ouninpohja* | *Ouninpohja, Finska (test)* | ouni | `js/world-ouni.js` (`buildOuni`) |
 | *palomar* | *Palomar Mountain, ZDA (test)* | palomar | `js/world-palomar.js` (`buildPalomar`) |
@@ -252,6 +251,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *sani* | *Sani Pass, Južna Afrika (test)* | sani | `js/world-sani.js` (`buildSani`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
+| vinales | Viñales, Kuba | vinales | `js/world-vinales.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
 | *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |

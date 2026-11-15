@@ -1,5 +1,5 @@
 // Uvoz proge iz OpenStreetMap, višinskega modela in rabe tal (sklop kratkih prog, docs/gorske-proge.md). Podatke proge vzame iz
-// tools/predogled/proge.json (obseg OSM bbox, ime ceste key, odsek sec, slog cfg; dodatno uvoz: { pred, grid, izt, hw, hwG, polmer, naklon }) in
+// tools/predogled/proge.json (obseg OSM bbox, ime ceste key, odsek sec, slog cfg; dodatno uvoz: { pred, grid, izt, hw, hwG, polmer, naklon, dno }) in
 // naredi podatke datoteke proge v oblikah, ki jih berejo Vršičevi pomočniki koridorja (vrPrep v js/world-vrsic.js) in podatkovni graditelj
 // js/world-gore.js: sredinsko črto (zglajeno, serpentine odprte na najmanjši polmer, kraki narazen, kot na Irohazaki), višine ob njej
 // (očiščene, omejen naklon, serpentine bolj položne), pas terena (dem), rabo tal (lc: ESA WorldCover in OSM: voda, smučarske proge), podlago
@@ -175,7 +175,9 @@ const isCar = (t) => CAR.has(t.highway) && t.area !== 'yes' && t.access !== 'no'
 // the road of the track: the ways whose name, English name or number holds the key, joined end to end; the longest chain (by its nodes), as
 // tools/predogled/prep.py. Returns its nodes and, per segment, its way
 function chainByKey(O, key) {
-  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key));
+  // (key "w:<id>,<id>": the ways by their OSM ids, for a road with no name)
+  const ids = key.startsWith('w:') ? key.slice(2).split(',') : null;
+  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && (ids ? ids.includes(String(w.id)) : ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key)));
   if (!sel.length) throw new Error('cesta: ni poti s ključem "' + key + '"');
   const adj = new Map(), add = (n, i) => { const L = adj.get(n) || []; L.push(i); adj.set(n, L); };
   sel.forEach((w, i) => { add(w.nds[0], i); add(w.nds[w.nds.length - 1], i); });
@@ -304,8 +306,11 @@ function bends(P, ds, win, minDeg) {
 // the model's heights every ds metres, cleaned: a running median (the model sees the slope beside a road cut into it), smoothed, the grade
 // limited (forwards and backwards), the bends (hairpins) flatter than the legs between them: the rise between anchors every ~150 m kept, spread
 // along by a weight that is lower through the bends. Returns metres above the sea for each sample
+// (o.dno: metres either side; the lowest height across the road within them, for a line the model puts into the foot of a cliff beside it)
 function roadHeights(P, ds, at, o) {
-  const n = P.length, raw = P.map(([x, z]) => at(x, z));
+  const n = P.length, dn = o.dno || 0, raw = P.map(([x, z], i) => { if (!dn) return at(x, z);
+    const q = P[Math.min(n - 1, i + 1)], p = P[Math.max(0, i - 1)], l = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1, nx = -(q[1] - p[1]) / l, nz = (q[0] - p[0]) / l;
+    let m = 1e9; for (let t = -dn; t <= dn; t += 4) m = Math.min(m, at(x + nx * t, z + nz * t)); return m; });
   const med = (a, r) => a.map((_, i) => { const w = a.slice(Math.max(0, i - r), Math.min(a.length, i + r + 1)).sort((p, q) => p - q); return w[w.length >> 1]; });
   let h = med(raw, Math.round((o.median || 60) / 2 / ds));
   const gs = (a, sig) => { const r = Math.ceil(3 * sig), w = []; for (let k = -r; k <= r; k++) w.push(Math.exp(-k * k / (2 * sig * sig)));
@@ -417,7 +422,7 @@ async function main() {
   const i0 = Math.round(d0 / ds), i1 = Math.round(d1 / ds), iS = Math.round(sStart / ds) - i0, iF = Math.round(sFin / ds) - i0;
   const llS = G0.ll(...Q[i0 + iS]), G = geo(llS[0], llS[1]), toG = ([x, z]) => G.xz(...G0.ll(x, z)), at = (x, z) => { const [la, lo] = G.ll(x, z); return dem.lin(la, lo); };
   const S = Q.slice(i0, i1 + 1).map(toG), n = S.length, Sway = []; for (let i = i0; i <= i1; i++) Sway.push(wayAt(i));
-  const HT = roadHeights(S, ds, at, { grade: U.naklon, flat: U.ravno }), base = HT.h[iS];
+  const HT = roadHeights(S, ds, at, { grade: U.naklon, flat: U.ravno, dno: U.dno }), base = HT.h[iS];
   const RC = 64, rg = new Map(); for (let i = 0; i < n; i++) { const k = Math.floor(S[i][0] / RC) + ',' + Math.floor(S[i][1] / RC); let Lq = rg.get(k); if (!Lq) rg.set(k, Lq = []); Lq.push(i); }
   const near = (x, z, lim) => { let m = 1e9, mi = -1; const r = Math.ceil(lim / RC); for (let a = Math.floor(x / RC) - r; a <= Math.floor(x / RC) + r; a++) for (let b = Math.floor(z / RC) - r; b <= Math.floor(z / RC) + r; b++) { const Lq = rg.get(a + ',' + b); if (Lq) for (const i of Lq) { const d = Math.hypot(x - S[i][0], z - S[i][1]); if (d < m) { m = d; mi = i; } } } return { d: m, i: mi }; };
   const dRoad = (x, z, lim) => near(x, z, lim).d, pt = (nid) => { const nd = O.nodes.get(nid); return G.xz(nd.lat, nd.lon); };
