@@ -1,6 +1,6 @@
 {
   "id": "mombasa",
-  "about": "Mombasa, Kenya (id mombasa): a city course from the town centre east past the old Portuguese fort at the harbour entrance, south through the residential quarter to the shore road above the Likoni channel and west along it (docs/proge/mombasa.md)",
+  "about": "Mombasa, Kenya (id mombasa): a city course from Moi Avenue east along Nkrumah Road, past the west wall of the old Portuguese fort at the harbour entrance, south through the residential quarter to the shore road above the Likoni channel and west along it (docs/proge/mombasa.md)",
   "box": [
     -4.08,
     39.66,
@@ -13,10 +13,16 @@
   },
   "route": [
     [
+      -4.062,
+      39.6683,
+      "Moi Avenue",
+      "start: the town centre, eastbound"
+    ],
+    [
       -4.0627,
       39.6716,
       "Nkrumah Road",
-      "start: the town centre, eastbound"
+      "through the roundabout"
     ],
     [
       -4.0633,
@@ -25,20 +31,14 @@
       ""
     ],
     [
-      -4.0642,
-      39.6781,
+      -4.06324,
+      39.67832,
       null,
-      "towards the harbour entrance"
+      "the lane under the west wall of the old fort (about 50 m)"
     ],
     [
-      -4.0624,
-      39.678,
-      "Fort Jesus Road",
-      "the old fort (about 50 m)"
-    ],
-    [
-      -4.0647,
-      39.6787,
+      -4.06399,
+      39.6792,
       null,
       "south past the fort"
     ],
@@ -49,15 +49,15 @@
       "the shore road above the channel"
     ],
     [
-      -4.0761,
-      39.6667,
+      -4.0786,
+      39.6722,
       "Mama Ngina Drive",
-      "finish at the west end of the shore road"
+      "finish on the shore road"
     ]
   ],
   "prefer": [
+    "Moi Avenue",
     "Nkrumah Road",
-    "Fort Jesus Road",
     "Mama Ngina Drive"
   ],
   "geoRoads": [],
