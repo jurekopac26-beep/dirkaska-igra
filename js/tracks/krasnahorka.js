@@ -12,6 +12,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: 'Krásna Hôrka (Slovaška): kratka zavita cesta v klanec do gradu na vrhu hriba. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
     en: { name: 'Krásna Hôrka, Slovakia', desc: 'Krásna Hôrka (Slovakia): a short, twisting road up to the castle on the hilltop. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the finish' },
     say: 'Krásna Hôrka',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
+    maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): ~170 m of road before the line for the flying
+    // column and ~100 m past it to the castle's gate (a dead end) for the parking: a bigger field would stand car on car (the big vehicles' already at 22)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
     medals: {cs:[22,23,25],wet:{cs:[27,28,30]},winter:{cs:[29,31,33],wet:{cs:[33,35,37]}}},
