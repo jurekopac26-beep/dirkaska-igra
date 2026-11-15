@@ -437,6 +437,16 @@ try {
     T.check('the GT wing again with the SPORT kit\'s wing on the lid: no caps, the snap, the old part back onto the regal, KONČANO (' + rw3.t + ' s: within 12.5); the arms parked',
       fw3.log === 'plan,grab,snap,swap,put' && fw3.plan.caps === 0 && fw3.old === 'regal' && fw3.put === 'regal' && fw3.ret >= 1 && !fw3.stay && fw3.parked && /KONČANO/.test(fw3.chip) && rw3.t <= 12.5 && uw3.info.upg.aero >= 2 && !!uw3.S.cars.muscle.parts.krilo,
       JSON.stringify({ fw3, rw3, upg: uw3.info.upg }));
+    // (the GT wing for a ducktail on a car that draws its wing (a kit's, K.deli: the Merjasec): by both arms (an_common) roka 1 takes the old
+    // one off as the car drew it, roka 2 the new one off the regal, the bridge's half turn, the old one onto the regal, the new one down to
+    // 12 cm over the lid and snapped on; the car's own wing folded till then)
+    const mj0 = await page.evaluate(() => { const S = __garage.S, k = JSON.stringify(S.cars.merjasec); S.cars.merjasec.own = true; S.cars.merjasec.parts.krilo = __garage.findOpt('krilo', 'Ducktail'); __garage.pickCar('merjasec'); return k; }); await run();
+    await page.evaluate(() => { __garage.openMenu({ el: 'krilo', key: 'rgl:GT WING', sel: __garage.findOpt('krilo', 'GT wing') }); document.querySelector('#g-menu [data-mact="buy"]').click(); }); const rw4 = await run();
+    const fw4 = await fitOf(), uw4 = await ui();
+    T.check('the GT wing for the Merjasec\'s ducktail by both arms: roka 1 the old one off (as the car drew it), roka 2 the new one off the regal, the bridge\'s half turn, the old one onto the regal, the snap (no caps), KONČANO (' + rw4.t + ' s: within 12.5); the arms parked',
+      fw4.log === 'plan,off,grab,pass,put,snap,swap' && fw4.plan.two === true && fw4.plan.caps === 0 && (fw4.old === 'real' || fw4.old === 'regal') && fw4.put === 'regal' && fw4.ret >= 1 && !fw4.stay && fw4.parked && /KONČANO/.test(fw4.chip) && rw4.t <= 12.5 && !!uw4.S.cars.merjasec.parts.krilo,
+      JSON.stringify({ fw4, rw4, why: await page.evaluate(() => Garage3D._dbg.FIT.why) }));
+    await page.evaluate(k => { __garage.closeMenu(); __garage.S.cars.merjasec = JSON.parse(k); __garage.pickCar('muscle'); }, mj0); await run();
     // (the side skirts and the diffuser (DODATKI): the trolley brings the piece, the near arm's gripper puts it on where the car draws it:
     // the skirts along the sill from the side (on a car with no sill its rear corner lips), the diffuser under the rear bumper from behind;
     // the car's own piece, exactly, no hop; KONČANO within 13.5 s)
