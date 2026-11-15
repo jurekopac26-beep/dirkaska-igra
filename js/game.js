@@ -2210,9 +2210,9 @@
     else t = tr('Svet: pošiljam čas …');
     ln.textContent = t; ln.classList.remove('off');
   }
-  function svJoin() {   // the consent, then the nickname the server keeps (the friends' one when it is not the default)
+  function svJoin(asked) {   // the consent (asked: the menu's World tab showed it), then the nickname the server keeps (the friends' one when it is not the default)
     if (!svOk()) { toast(tr('Svetovna lestvica trenutno ni na voljo.'), 3000); return false; }
-    if (!confirm(tr('Tvoj vzdevek, časi in posnetki voženj gredo na naš strežnik v EU, na javno svetovno lestvico. Vpiši vzdevek, ne pravega imena. Izbris je v Nastavitvah. Pod 15 let vprašaj starše.'))) return false;
+    if (!asked && !confirm(tr('Tvoj vzdevek, časi in posnetki voženj gredo na naš strežnik v EU, na javno svetovno lestvico. Vpiši vzdevek, ne pravega imena. Izbris je v Nastavitvah. Pod 15 let vprašaj starše.'))) return false;
     SV.join();
     if (lpDefName(S.name) || !cleanName(S.name)) { toast(tr('Vpiši vzdevek za svetovno lestvico v Nastavitvah.'), 3200); onAction('to-settings'); const el = $('set-svet'); if (el) el.open = true; }
     else svNick(S.name);
@@ -6846,7 +6846,7 @@
     statsChip: () => ACH.filter(a => st.ach[a[0]]).length + ' OF ' + ACH.length + ' UNLOCKED',
     chal: () => !!chal,
     friends: (d, build) => lpFriends(d, build),   // (the Friends view of the track step: the friends' times there, Lestvica prijateljev; null without it)
-    world: (d, n) => svWorld(d, n), worldJoin: () => svJoin(),   // (the World view of the track step: the world's top and the player's place, Svetovna lestvica; null without it)
+    world: (d, n) => svWorld(d, n), worldJoin: (asked) => svJoin(!!asked),   // (the World view of the track step: the world's top and the player's place, Svetovna lestvica; null without it)
     sendTimes: () => { lpSend(); },
     fsAvailable: () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && !installedApp(),
     installAvailable: () => !!installEvt && !installedApp(),

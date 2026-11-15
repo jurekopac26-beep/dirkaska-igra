@@ -994,6 +994,23 @@
     'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',
     'Neskončna vožnja': 'Endless traffic', 'Za hitrost': 'For speed', 'Za tesna prehitevanja': 'For close passes', 'Tesno / zelo tesno': 'Close / very close',
     'Najdaljši niz': 'Longest combo', 'Promet na koncu': 'Traffic at the end', 'Vozi znova': 'Drive again', 'Najboljših 10 · {0} · {1}': 'Top 10 · {0} · {1}',
+    // Svetovna lestvica (js/svet.js, game.js sv*: the results line, the World table of the Leaderboard, Settings)
+    'Svetovna lestvica': 'World leaderboard', 'Voznik #{0}': 'Driver #{0}', 'Svet: tvoji časi so lahko na svetovni lestvici (Nastavitve).': 'World: your times can be on the world leaderboard (Settings).',
+    'Svet: #{0} od {1} (čaka na preverjanje).': 'World: #{0} of {1} (waiting for the check).', 'Svet: čas je poslan (čaka na preverjanje).': 'World: time sent (waiting for the check).',
+    'Svet: vpiši vzdevek za svetovno lestvico v Nastavitvah, potem čas odide.': 'World: set your world leaderboard nickname in Settings, then the time is sent.',
+    'Svet: strežnik tega časa ni sprejel.': 'World: the server did not accept this time.', 'Svet: ni povezave; čas odide, ko bo.': 'World: no connection; the time is sent when there is one.',
+    'Svetovna lestvica trenutno ni na voljo; čas počaka in odide pozneje.': 'World leaderboard is not available right now; the time waits and is sent later.',
+    'Svet: pošiljam čas …': 'World: sending the time …', 'Svetovna lestvica trenutno ni na voljo.': 'World leaderboard is not available right now.',
+    'Tvoj vzdevek, časi in posnetki voženj gredo na naš strežnik v EU, na javno svetovno lestvico. Vpiši vzdevek, ne pravega imena. Izbris je v Nastavitvah. Pod 15 let vprašaj starše.': 'Your nickname, times and replays go to our server in the EU, onto a public world leaderboard. Use a nickname, not your real name. You can delete them in Settings. Under 15? Ask a parent first.',
+    'Vpiši vzdevek za svetovno lestvico v Nastavitvah.': 'Set your world leaderboard nickname in Settings.', 'Vzdevek je shranjen, a skrit, dokler ga ne pregledamo.': 'The nickname is saved but hidden until we check it.',
+    'Vzdevek na svetovni lestvici: {0}': 'World leaderboard nickname: {0}', 'Ta vzdevek ni dovoljen.': 'This nickname is not allowed.',
+    'Izbrišem tvoj vzdevek, čase in posnetke s svetovne lestvice? Tega ni mogoče razveljaviti.': 'Delete your nickname, times and replays from the world leaderboard? This cannot be undone.',
+    'Tvoji podatki so izbrisani s svetovne lestvice.': 'Your data is deleted from the world leaderboard.', 'Prijavim vzdevek {0} kot žaljiv ali neprimeren?': 'Report the nickname {0} as offensive or inappropriate?',
+    'Prijava je poslana. Hvala.': 'Report sent. Thank you.', 'Na svetovni lestvici so najboljši časi kronometrov vseh igralcev. Brez pridružitve igra ničesar ne pošlje.': 'The world leaderboard has every player\'s best time trial times. Unless you join, the game sends nothing.',
+    'Sodelujem': 'Taking part', 'Izstopi': 'Leave', 'Shrani': 'Save', 'Id igralca: {0}': 'Player id: {0}', 'vzdevek je skrit do pregleda': 'the nickname is hidden until checked',
+    'Časi, ki čakajo na pošiljanje: {0}': 'Times waiting to be sent: {0}', 'Pošiljanje časov ti je onemogočeno.': 'Sending times is blocked for you.',
+    'Izbriši moje podatke na svetovni lestvici': 'Delete my world leaderboard data', 'Pravilnik o zasebnosti': 'Privacy policy', 'Svet · {0}': 'World · {0}', 'Nalagam …': 'Loading …',
+    'Na tej lestvici še ni časov.': 'No times on this leaderboard yet.', 'Prijavi': 'Report', '{0} voznikov na lestvici.': '{0} drivers on the leaderboard.', 'Stanje ob {0}.': 'As of {0}.',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);
