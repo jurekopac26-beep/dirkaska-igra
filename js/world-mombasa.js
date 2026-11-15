@@ -133,7 +133,13 @@
       o[0] = r; o[1] = g; o[2] = b; return o; };
     const gMat = new THREE.MeshLambertMaterial({ map: ownTex(moGroundTex()), vertexColors: true });
     const tiles = [];
-    for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
+    const loop = [];   // (a tile inside the road's convex hull that the corridor leaves out gets the coarse ring's tile: no hole of far land in the menu's model or from the hill)
+    { const pts = []; for (let i = 0; i < T.N; i += 8) pts.push([T.px[i], T.pz[i]]); pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]), lo = [], hi = [];
+      for (const p of pts) { while (lo.length > 1 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+      for (let k = pts.length - 1; k >= 0; k--) { const p = pts[k]; while (hi.length > 1 && cr(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop(); hi.push(p); }
+      loop.push(...lo.slice(0, -1), ...hi.slice(0, -1)); }
+    for (let tj = 0; tj < G.ntz; tj++) for (let ti = 0; ti < G.ntx; ti++) { const on = nrTileOn(ti, tj) || ([[0.5, 0.5], [0, 0], [1, 0], [0, 1], [1, 1]].some(([a, b]) => inPoly(loop, G.x0 + (ti + a) * NRC * 32, G.z0 + (tj + b) * NRC * 32)) ? 2 : 0); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; tiles.push(ti, tj, on); }
 
     /* ---- the road: asphalt (resurfaced in sections, darker on the racing line), white edge lines and the centre line by the country's rules
        (World.cesta's crte), the markings across the road where OpenStreetMap has them (World.cesta's precne); the chequered lines at the start
@@ -425,12 +431,17 @@
     {
       const F = LD.far, bin = atob(F.b64), n = F.n, H = (i, j) => F.lo + bin.charCodeAt(clamp(j, 0, n - 1) * n + clamp(i, 0, n - 1)) * F.step, gf = new GB();
       const colF = (h, x, z) => { const t = clamp(h / 120, 0, 1), k = 0.9 + crH(Math.floor(x / 200), Math.floor(z / 200), 3) * 0.15; return h < SEA + 3 ? [0.9, 0.82, 0.66] : [lerp(0.72, 0.52, t) * k, lerp(0.62, 0.5, t) * k, lerp(0.44, 0.34, t) * k]; };
-      const inner = (x, z) => x > P.x0 + 200 && x < P.x1 - 200 && z > P.z0 + 200 && z < P.z1 - 200 && nrDist(x, z) < 560;
+      // (under the near tiles: a far cell is left out only where the near tiles cover all four of its corners, else the sea shows through the gap)
+      const LT = NRC * 32, onT = new Set(); for (let k = 0; k < tiles.length; k += 3) onT.add(tiles[k] + ',' + tiles[k + 1]);
+      const inG = (x, z) => x > G.x0 + NRC && x < G.x0 + (G.nx - 2) * NRC && z > G.z0 + NRC && z < G.z0 + (G.nz - 2) * NRC;   // (inside the corridor's grid: the near terrain's own height and colour, so a gap between the near tiles (inside the loop) matches them)
+      const inner = (x, z) => onT.has(Math.floor((x - G.x0) / LT) + ',' + Math.floor((z - G.z0) / LT));
       for (let j = 0; j + 1 < n; j++) for (let i = 0; i + 1 < n; i++) {
-        const x = F.x0 + (i + 1) * F.cell, z = F.z0 + (j + 1) * F.cell; if (inner(x, z)) continue;
-        const q = (a, b) => { const xx = F.x0 + (a + 0.5) * F.cell, zz = F.z0 + (b + 0.5) * F.cell; return [xx, H(a, b) - (inner(xx, zz) ? 14 : 2.5), zz]; };
+        const xa = F.x0 + (i + 0.5) * F.cell, za = F.z0 + (j + 0.5) * F.cell, xb = xa + F.cell, zb = za + F.cell;
+        if (inner(xa, za) && inner(xb, za) && inner(xa, zb) && inner(xb, zb)) continue;
+        const q = (a, b) => { const xx = F.x0 + (a + 0.5) * F.cell, zz = F.z0 + (b + 0.5) * F.cell; return [xx, (inG(xx, zz) ? nrGround(xx, zz) : H(a, b)) - (inner(xx, zz) ? 14 : 2.5), zz]; };
         const A = q(i, j), B2 = q(i + 1, j), C = q(i + 1, j + 1), Dd = q(i, j + 1); if (Math.max(A[1], B2[1], C[1], Dd[1]) < SEA - 0.5) continue;
-        gf.quadUp(A, Dd, C, B2, [colF(A[1], A[0], A[2]), colF(Dd[1], Dd[0], Dd[2]), colF(C[1], C[0], C[2]), colF(B2[1], B2[0], B2[2])]);
+        const cf = (p) => inG(p[0], p[2]) && p[1] > SEA + 1 ? API.nrGCol(p[0], p[2]).map(c => c * 0.72) : colF(p[1], p[0], p[2]);
+        gf.quadUp(A, Dd, C, B2, [cf(A), cf(Dd), cf(C), cf(B2)]);
       }
       const fm = addM(gf, matV); if (fm) fm.castShadow = false;
     }

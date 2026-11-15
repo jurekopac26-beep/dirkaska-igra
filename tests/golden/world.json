@@ -1414,16 +1414,16 @@
   }
  },
  "mombasa": {
-  "meshes": 308,
-  "verts": 266497,
+  "meshes": 314,
+  "verts": 266917,
   "instances": 1178,
   "props": 0,
   "crowd": 50,
-  "world": "a24f3fef",
+  "world": "c7ae397b",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "e251abe1",
+   "-:MeshLambertMaterial": "8a54b923",
    "-:MeshPhongMaterial": "8cb27484",
    "crowd:MeshLambertMaterial": "8ef2b948",
    "flags:MeshLambertMaterial": "bfe5308d",
