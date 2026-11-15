@@ -2065,12 +2065,15 @@
       // the parts of the surface (two stands across the road share their uvs; a stepped stand's tiers are a part each): its triangles joined where they share a corner
       const tris = [], par = new Map(), find = (k) => { let r = k; while (par.get(r) !== r) r = par.get(r); let c = k; while (c !== r) { const nx = par.get(c); par.set(c, r); c = nx; } return r; };
       const key = (q) => Math.round(q.x * 50) + ',' + Math.round(q.y * 50) + ',' + Math.round(q.z * 50);
+      // (each corner once: an indexed surface's triangles share them; only read after)
+      const VC = new Array(Pa.count), vert = (k) => { let q = VC[k]; if (q) return q; const x = Pa.getX(k), y = Pa.getY(k), z = Pa.getZ(k);
+        q = VC[k] = { u: uv.getX(k), v: uv.getY(k), x: e[0] * x + e[4] * y + e[8] * z + e[12], y: e[1] * x + e[5] * y + e[9] * z + e[13], z: e[2] * x + e[6] * y + e[10] * z + e[14], k: null }; return q; };
       for (let t = 0; t + 2 < n; t += 3) {
-        const T = [0, 1, 2].map(j => { const k = I ? I[t + j] : t + j, x = Pa.getX(k), y = Pa.getY(k), z = Pa.getZ(k);
-          return { u: uv.getX(k), v: uv.getY(k), x: e[0] * x + e[4] * y + e[8] * z + e[12], y: e[1] * x + e[5] * y + e[9] * z + e[13], z: e[2] * x + e[6] * y + e[10] * z + e[14] }; });
+        const T = I ? [vert(I[t]), vert(I[t + 1]), vert(I[t + 2])] : [vert(t), vert(t + 1), vert(t + 2)];
         const den = (T[1].v - T[2].v) * (T[0].u - T[2].u) + (T[2].u - T[1].u) * (T[0].v - T[2].v); if (Math.abs(den) < 1e-12) continue;
-        const ks = T.map(key); for (const k of ks) if (!par.has(k)) par.set(k, k); const r0 = find(ks[0]); for (const k of ks.slice(1)) { const r = find(k); if (r !== r0) par.set(r, r0); }
-        tris.push({ T, den, k: ks[0] });
+        for (const q of T) if (q.k === null) { q.k = key(q); if (!par.has(q.k)) par.set(q.k, q.k); }
+        const r0 = find(T[0].k); for (let j = 1; j < 3; j++) { const r = find(T[j].k); if (r !== r0) par.set(r, r0); }
+        tris.push({ T, den, k: T[0].k });
       }
       const isl = new Map(); for (const tr of tris) { const r = find(tr.k); let L = isl.get(r); if (!L) isl.set(r, L = []); L.push(tr); }
       // each part: p(u, v) on it, its u stations, its rows (a tier each: from its front vf to its back vb)
