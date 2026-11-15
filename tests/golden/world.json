@@ -5,7 +5,7 @@
   "instances": 474,
   "props": 352,
   "crowd": 428,
-  "world": "775e5748",
+  "world": "57341ecc",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -28,7 +28,7 @@
    "ao:MeshBasicMaterial": "6ab2b0bf",
    "tyremarks:MeshBasicMaterial": "64ffa4d2",
    "sceneThings:MeshLambertMaterial": "e297d396",
-   "people:MeshLambertMaterial": "f943ce22",
+   "people:MeshLambertMaterial": "1d79d1b4",
    "sceneLamps:MeshBasicMaterial": "31eaacf2",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "startWorn:MeshLambertMaterial": "4a841eac"
@@ -258,7 +258,7 @@
   "instances": 56118,
   "props": 277,
   "crowd": 427,
-  "world": "24591919",
+  "world": "16d0a799",
   "propsHash": "936a6b1c",
   "floor": "b5b3e5da/22736",
   "groups": {
@@ -274,7 +274,7 @@
    "life:MeshBasicMaterial": "bc4abaea",
    "sceneThings:MeshLambertMaterial": "adc4f48f",
    "sceneLamps:MeshBasicMaterial": "d3976674",
-   "people:MeshLambertMaterial": "e6b36eef",
+   "people:MeshLambertMaterial": "3e317a29",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "startWorn:MeshLambertMaterial": "45da3294"
   }
@@ -374,7 +374,7 @@
   "instances": 78692,
   "props": 188,
   "crowd": 29,
-  "world": "1f7d8dc4",
+  "world": "7ded894",
   "propsHash": "8581e956",
   "floor": "86d0eaad/10808",
   "groups": {
@@ -390,7 +390,7 @@
    "life:MeshBasicMaterial": "c697d752",
    "sceneThings:MeshLambertMaterial": "63a80fa3",
    "sceneLamps:MeshBasicMaterial": "66ff31b",
-   "people:MeshLambertMaterial": "aa268204",
+   "people:MeshLambertMaterial": "6dc94848",
    "startWorn:MeshLambertMaterial": "e3e7e63e"
   }
  },
@@ -1385,7 +1385,7 @@
   "instances": 31941,
   "props": 53,
   "crowd": 123,
-  "world": "c65f0029",
+  "world": "f5180c7d",
   "propsHash": "bfa2e11d",
   "floor": "6872273c/8792",
   "groups": {
@@ -1398,7 +1398,7 @@
    "roadwear:MeshLambertMaterial": "ad759754",
    "sceneThings:MeshLambertMaterial": "4ef8cdb5",
    "sceneLamps:MeshBasicMaterial": "f1a9fde1",
-   "people:MeshLambertMaterial": "101a4c0d",
+   "people:MeshLambertMaterial": "694b4f6f",
    "umbrellas:MeshLambertMaterial": "80253bfd",
    "startWorn:MeshLambertMaterial": "16079253"
   }
