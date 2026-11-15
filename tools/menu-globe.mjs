@@ -19,9 +19,9 @@ const { loadCore, ROOT } = require('../tests/lib/core.js');
 
 // the start lines of the real tracks without a place in geo.js (their track files: js/tracks/<id>.js, the comment at the top; the short roads'
 // from their import marker, fromFile below)
-const PLACES = { bathurst: [-33.4393, 149.55846], luanda: [-8.81885, 13.21693], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444] };
+const PLACES = { bathurst: [-33.4393, 149.55846], luanda: [-8.81885, 13.21693], portobelo: [9.54719, -79.67182], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444] };
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
-const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Angola: ['Angola', 'Cabinda'] };
+const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Angola: ['Angola', 'Cabinda'], Panama: ['Panama'] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;
