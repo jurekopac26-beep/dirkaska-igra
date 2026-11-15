@@ -190,11 +190,11 @@
   "instances": 11162,
   "props": 79,
   "crowd": 133,
-  "world": "1827875c",
+  "world": "16d6274a",
   "propsHash": "7dce562f",
   "floor": "106192fc/8652",
   "groups": {
-   "-:MeshLambertMaterial": "d4398027",
+   "-:MeshLambertMaterial": "d13be5a",
    "-:MeshBasicMaterial": "b5f37b36",
    "crowd:MeshLambertMaterial": "572d53bb",
    "smoke:ShaderMaterial": "38d0b4e8",
