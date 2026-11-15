@@ -84,11 +84,11 @@
   "jsMs": 1.19
  },
  "chapman": {
-  "calls": 141,
-  "maxCalls": 147,
-  "kverts": 419,
-  "maxKverts": 487,
-  "jsMs": 1.47
+  "calls": 149,
+  "maxCalls": 195,
+  "kverts": 389,
+  "maxKverts": 438,
+  "jsMs": 1.26
  },
  "bigsur": {
   "calls": 138,
@@ -98,11 +98,11 @@
   "jsMs": 1.91
  },
  "tianmen": {
-  "calls": 146,
-  "maxCalls": 213,
-  "kverts": 394,
-  "maxKverts": 555,
-  "jsMs": 0.96
+  "calls": 174,
+  "maxCalls": 197,
+  "kverts": 456,
+  "maxKverts": 562,
+  "jsMs": 0.86
  },
  "uncompahgre": {
   "calls": 161,
@@ -140,11 +140,11 @@
   "jsMs": 1.74
  },
  "rastro": {
-  "calls": 156,
-  "maxCalls": 172,
-  "kverts": 343,
-  "maxKverts": 476,
-  "jsMs": 1.17
+  "calls": 179,
+  "maxCalls": 222,
+  "kverts": 380,
+  "maxKverts": 509,
+  "jsMs": 0.9
  },
  "moki": {
   "calls": 129,
@@ -357,10 +357,10 @@
   "jsMs": 0.99
  },
  "balea": {
-  "calls": 156,
-  "maxCalls": 187,
-  "kverts": 362,
-  "maxKverts": 436,
+  "calls": 147,
+  "maxCalls": 158,
+  "kverts": 323,
+  "maxKverts": 371,
   "jsMs": 1.14
  }
 }
