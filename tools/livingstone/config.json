@@ -1,0 +1,16 @@
+{
+  "id": "livingstone",
+  "about": "Livingstone, Zambia (id livingstone): the road from Livingstone south to the falls and the old bridge over the gorge of the Zambezi (docs/proge/livingstone.md); the route points are a first draft to be checked against OSM",
+  "box": [-17.935, 25.835, -17.880, 25.875],
+  "closed": false,
+  "dist": {"grid": 500},
+  "route": [
+    [-17.8930, 25.8520, null, "start on the road from Livingstone, southbound (draft)"],
+    [-17.9220, 25.8550, null, "finish before the border post above the gorge (draft)"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": ["Zambezi"],
+  "marks": [],
+  "places": []
+}
