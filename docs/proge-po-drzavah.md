@@ -165,7 +165,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Kambodža | Bokor (proge z znamenitostjo, 7) | se zamenja z naravno znamenitostjo ali zgradbo (`docs/proge-z-znamenitostjo.md`); bil v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Tunizija | El Jem (proge z znamenitostjo, 8) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Panama | Portobelo (proge z znamenitostjo, 9) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
-| Butan | Trongsa (proge z znamenitostjo, 10) | odpade (delujoč samostan), zamenjava v `docs/proge-z-znamenitostjo.md`; bila v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Butan | Isuna (proge z znamenitostjo, 10; namesto Trongse) | v delu (veja `proge/butan`, PR #728): verižni most čez Paro Chhu ob cesti Chuzom–Paro; Trongsa odpade (delujoč samostan); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 
