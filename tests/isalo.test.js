@@ -1,6 +1,6 @@
 // Isalo: the open RN7 in the south of Madagascar (def.open, the four ways to drive it on one card as Luanda: the race, the time trial,
 // the duel in the traffic and the run from the police), down off the grass plateau among the sandstone rocks, past the Queen of Isalo and
-// across the plain to the south: 3-4 km in the real scale (OSM, Copernicus DEM), the Queen by the road at the race's middle (docs/proge/isalo.md).
+// across the plain to the south: 2.5 km in the real scale (OSM, Copernicus DEM; the finish where the straight across the plain begins), the Queen by the road in the race's second half (docs/proge/isalo.md).
 // A whole race on autopilot (12 AI + the player): every car reaches the line; a whole duel in the traffic: both reach the line, no one on
 // foot knocked down. The medal times of the time trial: the stock rally car on the autopilot.
 //   node tests/isalo.test.js
@@ -21,16 +21,16 @@ check('track: »Isalo, Madagaskar« (English »Isalo, Madagascar«), its own wor
   def.name === 'Isalo, Madagaskar' && def.en && def.en.name === 'Isalo, Madagascar' && def.theme === 'isalo' && def.open && !def.leftHand &&
   (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && !def.test && !def.pending,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, modes ${(def.modes || []).join(',')}`);
-check('track: 3.4-3.9 km of race in the real scale, on the plateau (the heights ~810-870 m)', T.raceLen > 3400 && T.raceLen < 3900 && Math.max(...T.hy) < 880 && Math.min(...T.hy) > 800,
+check('track: 2.3-2.7 km of race in the real scale, on the plateau (the heights ~810-870 m)', T.raceLen > 2300 && T.raceLen < 2700 && Math.max(...T.hy) < 880 && Math.min(...T.hy) > 800,
   `race ${T.raceLen.toFixed(0)} m, heights ${Math.min(...T.hy).toFixed(1)}..${Math.max(...T.hy).toFixed(1)} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('isalo'));
 {
   const ws = (def.widths || []).map(w => w[1]);
   check('road: the RN7 widened to 9-12 m', ws.length > 0 && ws.every(w => w >= 4.5 && w <= 6.0), ws.join(' '));
   const ns = def.names.map(q => q.n || q[1]), ds = T.names.map(q => q.d);
-  check('road: the places on the HUD in their order along the road, each with its English in js/lang.js, the Queen of Isalo at the race\'s middle',
+  check('road: the places on the HUD in their order along the road, each with its English in js/lang.js, the Queen of Isalo between a quarter and three quarters of the race',
     ns.length >= 4 && ds.every((d, k) => !k || d > ds[k - 1]) && ns.every(x => lang.includes(`'${x}':`)) &&
-    T.names.some(q => q.n === 'Kraljica Isala' && (q.d - T.startS) / T.raceLen > 0.25 && (q.d - T.startS) / T.raceLen < 0.75),
+    T.names.some(q => q.n === 'Kraljica Isala' && (q.d - T.startS) / T.raceLen > 0.25 && (q.d - T.startS) / T.raceLen < 0.8),
     T.names.map(q => `${q.n}@${Math.round(q.d)}`).join(', '));
 }
 

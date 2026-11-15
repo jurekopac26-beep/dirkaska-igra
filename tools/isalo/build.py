@@ -15,7 +15,7 @@ def sidx(s): return max(0, min(NP - 1, int(round(s / STEP))))   # (an open road:
 def xz(s): i = sidx(s); return [round(float(LINE[i, 0]), 1), round(float(LINE[i, 1]), 1)]
 
 S0 = 120.0          # the start line, metres along the road's line (the grid lines up behind it)
-S1 = L - 150.0      # the finish line, on the long straight across the plain south of the rocks (the road past it: a slot for every car of the field, tests/rivals-n.test.js)
+S1 = S0 + 2500.0    # the finish line, 2.5 km on, where the long straight across the plain begins (shortened 15. 11. 2026 by the user's choice: the ~1.3 km of straight after it is only road) (the road past it: a slot for every car of the field, tests/rivals-n.test.js)
 def d2s(d): return S0 + d   # metres after the start line -> along the line
 
 # ---- half widths by road (metres after the start line): the real roads in proportion, widened to race width ----
@@ -33,7 +33,7 @@ NAMES = [
     ('Planota Isalo', 60, ['Down off the Isalo plateau!', 'The grass plain all round, the rocks ahead!']),
     ('Pod skalami', 700, ['Into the bends under the sandstone!', 'The rocks close in, left and right now!']),
     ('Kraljica Isala', 1850, ['There she is on the left, the Queen of Isalo!', 'Past the Queen of Isalo, the rock that looks like a crowned head!']),
-    ('Ravnina proti jugu', 2500, ['Out onto the plain, flat out to the south!', 'The long straight across the grass, nothing but sky!']),
+    ('Ravnina proti jugu', 2250, ['Out onto the plain, flat out to the south!', 'The long straight across the grass, nothing but sky!']),
 ]
 EN_NAMES = {'Planota Isalo': 'Isalo Plateau', 'Pod skalami': 'Under the Rocks', 'Kraljica Isala': 'Queen of Isalo', 'Ravnina proti jugu': 'The Plain to the South'}
 
@@ -44,7 +44,7 @@ DESC_EN = ('The open RN7 in the south of Madagascar, by the Isalo National Park:
            'through the bends by the cliffs and past the Queen of Isalo, a rock shaped like a crowned head right by the road, then across the plain '
            'to the south. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.')
 # medal times (s): the stock rally car on the autopilot x 1.01, 1.06, 1.14 (the medal run of tools/nova-proga.mjs --medalje)
-MEDALS = {'cs': [69, 72, 77], 'wet': {'cs': [77, 81, 87]}, 'winter': {'cs': [75, 79, 85], 'wet': {'cs': [90, 95, 102]}}}   # (measured: the stock rally car on the autopilot x 1.01, 1.06, 1.14; tools/nova-proga.mjs --medalje)
+MEDALS = {'cs': [50, 52, 56], 'wet': {'cs': [57, 60, 65]}, 'winter': {'cs': [56, 59, 63], 'wet': {'cs': [68, 71, 76]}}}   # (measured: the stock rally car on the autopilot x 1.01, 1.06, 1.14; tools/nova-proga.mjs --medalje)
 
 def f1(v): return ('%.1f' % v).rstrip('0').rstrip('.') if abs(v - round(v)) > 1e-9 else str(int(round(v)))
 
