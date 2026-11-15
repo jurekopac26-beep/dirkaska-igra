@@ -254,3 +254,13 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #699. Obe progi imata v `PROG
 - Postaja: ravna streha, višina do ploščadi vrvi (2 nadstropji); ploščad nad streho nadomesti prejšnji kvader.
 - `rise` do 21 m: postaja in velike hiše stojijo na strmem DEM, enaki kamniti podstavki so bili že prej. Postaja je 47 m od ceste.
 - Obremenitev: 156 klicev in 361 tisoč oglišč, na najbolj obremenjenem mestu 187 / 436 (enako kot prej).
+
+## S3: Los Caracoles (veja `realizem/s3-caracoles`; 15. 11. 2026)
+
+Odločitev Mateja na tabli #382 (15. 11. 2026). PR #714. Proga ima v `PROGE` raven 3 (`d2` 34, `d1` 64), komplet Čila (slog `gora`).
+
+**Los Caracoles (`js/world-caracoles.js`, `js/tracks/caracoles.js`):**
+- Do 82 stavb brez imena (koče, domovi in hiše ob jezeru in ob cilju) gradi skupni graditelj na polnih obrisih iz podatkov (prej skrajšanih na 48 × 26 m; dolga stavba ob cilju ima zdaj 53 m). Višina je iz podatkov, sicer po tlorisu 1–3 nadstropja. Žrebi `RB` ostanejo v enakem redu, zato se drugo (drevesa, skale) ne premakne.
+- Hotel stoji na pravem obrisu iz OSM (`def.hotel`, 22 točk, ~3170 m², z ukrivljenim krilom): rumene stene z okni po nadstropjih, beli pasovi in venec, kamniti podstavek, ravna temna streha, napis brez imena proti jezeru. Brez obrisa ostane prejšnji kvader. Hotel je ~190 m od ceste.
+- `caH` (PR #694) ostane nespremenjen; Oktogon in železnica ostaneta svoja.
+- Obremenitev: 154 klicev in 269 tisoč oglišč, na najbolj obremenjenem mestu 190 / 393 (prej 154 / 190 klicev in 269 / 394 tisoč oglišč).
