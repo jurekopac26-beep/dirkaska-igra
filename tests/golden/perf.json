@@ -224,10 +224,10 @@
   "jsMs": 1.2
  },
  "montreal": {
-  "calls": 189,
-  "maxCalls": 246,
-  "kverts": 456,
-  "maxKverts": 554,
+  "calls": 184,
+  "maxCalls": 243,
+  "kverts": 429,
+  "maxKverts": 532,
   "jsMs": 1.77
  },
  "greatalpine": {
