@@ -43,7 +43,7 @@
 ## Korak 2: poskus na eni progi (4. 11. 2026)
 
 - Uporabnik: »ali lahko danes sprobava samo na eni progi nastimat« (Tianmen, 5 posnetkov) in »v kategoriji lazje vozijo bolj podobno kot jaz v pocasnih voznjah in super teska tako kot jaz v hitrih voznjah. ampak se vedno pa nekje vsi vozijo po liniji mojega povprecja in bremzajo tudi tam kot jaz, prav tako kdaj zavijajo in kdaj dajo gas, tudi ai naj gre kdaj cez travo in to naj ge na tistih delih kjer sem sel jaz«.
-- **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj je v datoteki en profil: Tianmen, suho, avto Perun, 5 voženj.
+- **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj sta v datoteki dva profila: Tianmen (suho, avto Perun, 5 voženj) in Chapman's Peak (suho, avto Zmaj, 4 vožnje); posnetki po progah so v razdelku »Posnetki po progah«. `--js` profile drugih prog in vremen v datoteki ohrani, profil iste proge in vremena zamenja.
 - **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake); z vklopom tekmeci na pravih progah brez profila vozijo po slogu (korak 3). Enako stikalo je od 11. 11. 2026 v Nastavitve → Orodje za napake → Nastavitve orodja, vrstica »Tekmeci po moji liniji« (Vklop / Izklop; isti `rr_voznja`, velja od naslednje dirke s tekmeci, dirka med vožnjo ostane, kakršna je; `NK_HOOKS.voznja` v `js/game.js`, vrstica v `js/napake.js`).
 - **Linija** (enaka za vse težavnosti): idealna linija in igralčev odmik od linije avtopilota v istem avtu (`dd`, `c.uRl`). Rezanje ovinkov z volanom je v obeh, zato ni šteto dvakrat. Prehitevanje in obramba ostaneta.
 - **Hitrost** (`c.uT`) je igralčev delež tempa po tleh (`vq`) krat lastni profil tekmeca (njegov avto, vreme in zavore).
@@ -75,7 +75,7 @@
 
 - **Odločitev uporabnika** (8. 11. 2026 ~23.00, `ai-linija-brez-posnetkov`, možnost 2; citat v razdelku »Korak 2«, »Proge brez uporabnikovih posnetkov«): dokler posnetkov proge ni, tekmeci vozijo, kot bi po posnetkih Tianmna predvidoma vozil uporabnik.
 - **Kje velja**: z vklopom `?voznja=1` na vseh pravih progah (ne `test: true`, ne `pending: true`; tudi prihodnje nove proge), samo na suhem in ne pozimi. Pravilo je v `Race._voznja` (`js/core.js`): `voznjaOf` v `js/game.js` slog vedno doda, `Race._voznja` ga ne uporabi na testni progi, na progi na odločanju (Bathurst in Great Alpine Road do izbire) in v dežju. Izmerjeni profil proge ima prednost: na Tianmnu avti razreda profila (Perun) vozijo po profilu, drugi po slogu.
-- **Podatki**: `VOZNJA_SLOG` v `js/data/voznja.js` (profil Tianmna ostane, kot je). Izpelje ga `node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]` iz suhih profilov v datoteki (`slogOf`; `--js` ga zapiše skupaj s profili). Ovinki profila so razdeljeni v razrede po polmeru idealne linije v temenu (meji 12 in 30 m, razred z vsaj 3 ovinki); zdaj sta razreda r 7,3 m (23 ovinkov) in r 17,1 m (7 ovinkov). Vsak razred ima dve tabeli:
+- **Podatki**: `VOZNJA_SLOG` v `js/data/voznja.js` (profil Tianmna ostane, kot je). Izpelje ga `node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]` iz suhih profilov v datoteki (`slogOf`; `--js` ga zapiše skupaj s profili). Ovinki profila so razdeljeni v razrede po polmeru idealne linije v temenu (meji 12 in 30 m, razred z vsaj 3 ovinki); zdaj (Tianmen in Chapman's Peak) sta razreda r 7,3 m (23 ovinkov) in r 19,5 m (13 ovinkov). Vsak razred ima dve tabeli:
   - po fazi zaviranja `fe` (−1 začetek zaviranja … 0 teme): delež tempa `vq`, plin `pl` ter tempo počasnejših in hitrejših krogov `ql`, `qh`;
   - po razdalji od temena `m` (−80 … 80 m): odmik od linije avtopilota `dd` glede na smer ovinka (igralec gre v teme pozneje in širše od idealne linije).
 - **Ob dirki** (`Core.voznjaFaze`, `Core.voznjaIzSloga`): igra na profilu hitrosti tekmeca poišče ovinke. Teme je najnižja hitrost na ±60 m, vsaj 3 m/s pod najvišjo na 500 m pred njim; polmer je najtesnejša idealna linija na ±12 m. Iz tabel sestavi profil na mreži 5 m z istimi polji kot izmerjeni (`dd`, `vq`, `pl`, `ql`, `qh` in utež `wv`), iz katerega `Race._voznja` naredi `uRl`, `uT` in `uLim` kot pri izmerjenem profilu.
@@ -94,6 +94,28 @@
   - Polpriklopniki (`c.tl`) vozijo svoj tempo in svojo linijo: na Spa jih je slog v dveh dirkah 5-krat vrnil na cesto (lastni AI enkrat), na Rio do Rastro 35 izletov proti 9. Izmerjeni profil jih zadene samo, če so v razredu profila.
 - **Test**: `tests/voznja.test.js`, razdelek 7 (opis v `tests/README.md`).
 
+## Posnetki po progah
+
+Stanje 15. 11. 2026. Profil proge potrebuje 3–5 čistih voženj (suho, brez trka in zleta s ceste, cel krog); vožnja s trkom ali zletom se izpusti. Tekmeci po profilu vozijo v razredu avta, s katerim je proga posneta; ostali avti in proge brez profila vozijo po slogu. Testne proge in proge na odločanju (tudi Suzuka in Medvode) profila ne dobijo. **Ko imajo vse proge v tabeli profil, gre na `main`** (odločitev uporabnika, 15. 11. 2026).
+
+| Proga | Čistih voženj | Še potrebnih | Avto |
+|---|---|---|---|
+| Tianmen, Kitajska | 5 | 0 | Perun |
+| Chapman's Peak, Južna Afrika | 4 (od 6) | 0 (1 do 5) | Zmaj |
+| Pikes Peak, ZDA | 0 | 3–5 | |
+| Pikes Peak (makadam), ZDA | 0 | 3–5 | |
+| Nürburg, Nemčija | 0 | 3–5 | |
+| Spa, Belgija | 0 | 3–5 | |
+| Štajerska, Avstrija | 0 | 3–5 | |
+| Los Caracoles, Čile | 0 | 3–5 | |
+| Katu-Jaryk, Rusija | 0 | 3–5 | |
+| Harju, Finska | 0 | 3–5 | |
+| Bathurst, Avstralija | 0 | 3–5 | |
+| Rio do Rastro, Brazilija | 0 | 3–5 | |
+| Montréal, Kanada | 0 | 3–5 | |
+| Livorno, Italija | 0 | 3–5 | |
+| Bâlea, Romunija | 0 | 3–5 | |
+
 ## Stanje
 
 - 4. 11. 2026: korak 1 narejen (orodje z avtopilotom za primerjavo, test `tests/voznja.test.js`, glava posnetka v `js/game.js`, preverjanje v `tests/browser/napake-posnetek.test.mjs`); čaka posnetke uporabnika.
@@ -102,3 +124,4 @@
 - 8. 11. 2026: korak 3 v #305 (odločitev uporabnika na `ai-linija-brez-posnetkov`, možnost 2): slog na vseh pravih progah (`VOZNJA_SLOG`, `voznjaIzSloga`), test v razdelku 7; #305 je prvi v vrsti za `main`.
 - 9. 11. 2026: #305 na `main` (ob 5.35, 4a24ef5, squash). Ostane: profili drugih prog, ko pridejo posnetki uporabnika (`tools/voznja.mjs --js`), in stikalo `?voznja=1` do objave na Google Play.
 - 11. 11. 2026: stikalo »Tekmeci po moji liniji« v Nastavitvah orodja za napake (isti `rr_voznja` kot `?voznja=1`, od naslednje dirke; test `tests/browser/napake-samodejno.test.mjs`, razdelek 8), v #605 (veja `ai/super-tezka`).
+- 15. 11. 2026: profil Chapman's Peaka (6 posnetkov, 4 čisti krogi, povprečno 1:45,5, najboljši 1:44,4; avtopilot v istem avtu 2:01,8), slog iz Tianmna in Chapmana; `--js` ohrani profile drugih prog. Tabela »Posnetki po progah«; na `main`, ko imajo vse proge profil.

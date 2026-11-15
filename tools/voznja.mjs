@@ -651,7 +651,8 @@ if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {
   const sumFile = path.basename(json) === 'profil.json' ? path.join(path.dirname(json), 'povzetek.txt') : json.replace(/\.json$/i, '.txt');
   fs.writeFileSync(json, JSON.stringify(r.profil)); fs.writeFileSync(sumFile, r.text + '\n');
   let jsNote = '';
-  if (jsArg) { const L = gameData(r.profil, { k0: k0 != null ? +k0 : 0, ks: ks != null ? +ks : 0 }), S = slogOf(L, null, { previdno: pv }); fs.writeFileSync(path.resolve(jsArg), gameDataJs(L, today, S)); jsNote = ', ' + rel(path.resolve(jsArg)) + ' (' + L.map(p => p.proga + ' ' + p.vreme + ' ' + p.krogov).join('; ') + (S ? '; slog iz ' + S.iz.join(', ') : '') + ')'; }
+  if (jsArg) { const nov = gameData(r.profil, { k0: k0 != null ? +k0 : 0, ks: ks != null ? +ks : 0 }), staro = fs.existsSync(path.resolve(jsArg)) ? readGameData(path.resolve(jsArg)) : [],
+      L = staro.filter(o => !nov.some(p => p.proga === o.proga && p.vreme === o.vreme)).concat(nov), S = slogOf(L, null, { previdno: pv }); fs.writeFileSync(path.resolve(jsArg), gameDataJs(L, today, S)); jsNote = ', ' + rel(path.resolve(jsArg)) + ' (' + L.map(p => p.proga + ' ' + p.vreme + ' ' + p.krogov).join('; ') + (S ? '; slog iz ' + S.iz.join(', ') : '') + ')'; }
   console.log(r.text + '\n\n→ ' + rel(json) + ', ' + rel(sumFile) + jsNote);
   process.exit(r.profil.proge.some(p => p.krogi.uporabljeni.length) ? 0 : 1);
 }
