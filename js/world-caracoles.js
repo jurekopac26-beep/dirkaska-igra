@@ -34,7 +34,9 @@
     for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
       const L = P.cells[b * P.ncx + a]; if (!L) continue;
       for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; if (lat >= 64 || lat <= -64) continue;   // (64 m or more aside: d >= 64 whatever al is)
+        const al = dx * T.tx[i] + dz * T.tz[i], ex = Math.max(0, Math.abs(al) - ds); if (ex >= 64) continue;
+        const d = Math.sqrt(lat * lat + ex * ex);
         if (d >= 64) continue;
         const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), hc = T.hy[i] + T.grade[i] * clamp(al, -2 * ds, 2 * ds), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
         ws += wq; hs += wq * hc;
@@ -554,7 +556,7 @@
     {
       const mkPosts = [], need = [new Uint8Array(N), new Uint8Array(N)];
       for (const c of T.corners) if (c.sev >= 2) { const sd = -c.dir > 0 ? 1 : 0; for (let k = Math.max(0, c.i0 - 8); k <= Math.min(N - 1, c.i1 + 8); k++) need[sd][k] = 1; }
-      for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i];
+      for (let i = 0; i < N; i += 2) for (const side of [-1, 1]) { const bar = side > 0 ? T.br[i] : T.bl[i], nd = need[side > 0 ? 1 : 0]; if (nd[i] && (i + 1 >= N || nd[i + 1])) continue;   // (already railed: a curve's)
         for (const d of [4, 8, 13, 19, 26]) { const o = side * (bar + d);
           if (caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < T.hy[i] - (d <= 8 ? 2.4 : 2.4 + (d - 8) * 0.35)) { need[side > 0 ? 1 : 0][i] = 1; if (i + 1 < N) need[side > 0 ? 1 : 0][i + 1] = 1; break; } } }
       const iS0 = T.idx(sStart + 40), iS1 = T.idx(sFin - 40), steel = [0.8, 0.82, 0.84], steelB = [0.56, 0.58, 0.6], postC = [0.48, 0.49, 0.52];
@@ -696,12 +698,13 @@
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = API.vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
           if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;   // (farther out every other spot)
-          const c = API.vrLC(x, z), y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
-          let kind = -1;
+          const c = API.vrLC(x, z);
+          let kind = -1;   // (the kind first, from the land cover and r1 alone: the ground's height and slope only for the spots that grow something)
           if (c === 1) kind = r1 < 0.52 ? 0 : r1 < 0.56 ? 1 : -1;
           else if (c === 2) kind = r1 < 0.3 ? 1 : r1 < 0.42 ? 0 : -1;
-          else if (c === 0) kind = r1 < 0.05 ? 0 : r1 < 0.065 ? 3 : A > 2620 && r1 < 0.085 ? 2 : r1 < 0.09 ? 1 : -1;
+          else if (c === 0) kind = r1 < 0.05 ? 0 : r1 < 0.065 ? 3 : r1 >= 0.09 ? -1 : r1 < 0.085 && caGround(x, z) + base > 2620 ? 2 : 1;
           if (kind < 0) continue;
+          const y0 = caGround(x, z), A = y0 + base, sl = caSlope(x, z);
           if (sl > (kind === 3 ? 1.1 : 0.85)) continue;
           if (API.vrWater(x, z).e > -3) continue;
           const nn = API.vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
