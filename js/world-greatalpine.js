@@ -33,7 +33,8 @@
   const GACOL = [0, 0, 0];
   function gaWaterPrep() {
     const HC = 32, H = new Map(), rv = (T.def.rivers || []).map((a) => { let mh = 0; for (let k = 3; k < a.length; k += 4) mh = Math.max(mh, a[k]); return { a, n: a.length / 4, wide: mh >= 4 }; });
-    rv.forEach((R, r) => { const a = R.a;
+    rv.forEach((R, r) => { const a = R.a, bb = R.bb = new Float64Array(5 * Math.max(R.n - 1, 0));   // (bb: each segment's box and its wider half-width, for gaWat's cheap skip)
+      for (let k = 0; k + 1 < R.n; k++) { const o = 4 * k; bb[5 * k] = Math.min(a[o], a[o + 4]); bb[5 * k + 1] = Math.max(a[o], a[o + 4]); bb[5 * k + 2] = Math.min(a[o + 1], a[o + 5]); bb[5 * k + 3] = Math.max(a[o + 1], a[o + 5]); bb[5 * k + 4] = Math.max(a[o + 3], a[o + 7]); }
       for (let k = 0; k + 1 < R.n; k++) { const x0 = a[4 * k], z0 = a[4 * k + 1], x1 = a[4 * k + 4], z1 = a[4 * k + 5], m = Math.max(a[4 * k + 3], a[4 * k + 7]) + 16;
         for (let i = Math.floor((Math.min(x0, x1) - m) / HC); i <= Math.floor((Math.max(x0, x1) + m) / HC); i++) for (let j = Math.floor((Math.min(z0, z1) - m) / HC); j <= Math.floor((Math.max(z0, z1) + m) / HC); j++) {
           const key = i * 65536 + j; let L = H.get(key); if (!L) H.set(key, L = []); L.push(r, k); } } });
@@ -41,7 +42,9 @@
   }
   function gaWat(x, z) {   // the water nearest (x, z) (GAWV; r -1: none within 16 m of its banks)
     const W = GAWV; W.e = -16; W.r = -1; const L = GAW && GAW.H.get(Math.floor(x / GAW.HC) * 65536 + Math.floor(z / GAW.HC)); if (!L) return W;
-    for (let q = 0; q < L.length; q += 2) { const a = GAW.rv[L[q]].a, k = L[q + 1], o = 4 * k, x0 = a[o], z0 = a[o + 1], dx = a[o + 4] - x0, dz = a[o + 5] - z0, l2 = dx * dx + dz * dz || 1;
+    for (let q = 0; q < L.length; q += 2) { const R = GAW.rv[L[q]], k = L[q + 1], bb = R.bb, b = 5 * k, m = bb[b + 4] - W.e + 0.01;   // (a segment whose box lies farther than its half-width beyond the best so far cannot win: skipped)
+      const bx = bb[b] - x > 0 ? bb[b] - x : x - bb[b + 1] > 0 ? x - bb[b + 1] : 0, bz = bb[b + 2] - z > 0 ? bb[b + 2] - z : z - bb[b + 3] > 0 ? z - bb[b + 3] : 0; if (bx * bx + bz * bz > m * m) continue;
+      const a = R.a, o = 4 * k, x0 = a[o], z0 = a[o + 1], dx = a[o + 4] - x0, dz = a[o + 5] - z0, l2 = dx * dx + dz * dz || 1;
       const t = clamp(((x - x0) * dx + (z - z0) * dz) / l2, 0, 1), px = x0 + dx * t - x, pz = z0 + dz * t - z, hw = a[o + 3] + (a[o + 7] - a[o + 3]) * t, e = hw - Math.sqrt(px * px + pz * pz);
       if (e > W.e) { W.e = e; W.r = L[q]; W.k = k; W.t = t; W.hw = hw; W.lv = a[o + 2] + (a[o + 6] - a[o + 2]) * t; } }
     return W;
