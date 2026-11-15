@@ -548,15 +548,16 @@
     const { D, root, tex, addM, scen, exclPush } = C, near = C.near, G = MG;
     const road = new K.Chunks(192, true), path = new K.Chunks(192, true), mark = new K.Chunks(192), aMat = C.aMat;
     const legs = C.legs || [];
-    const inLeg = (x, z) => { for (const L of legs) { const dx = x - L.cx, dz = z - L.cz, r = dx * L.ux + dz * L.uz, v = -dx * L.uz + dz * L.ux; if (r > L.r0 - 2 && r < L.rEnd + 4 && Math.abs(v) < L.hw + 3) return true; } return false; };
-    const yel = [0.95, 0.75, 0.12], W1 = [1, 1, 1];
+    const legR2 = legs.map(L => { const M = Math.max(Math.abs(L.r0 - 2), Math.abs(L.rEnd + 4)), V = L.hw + 3, s2 = L.ux * L.ux + L.uz * L.uz; return ((M * M + V * V) / s2) * 1.01 + 1; });   // (a bounding circle round each leg's box: only skips points the box test rejects)
+    const inLeg = (x, z) => { for (let li = 0; li < legs.length; li++) { const L = legs[li], dx = x - L.cx, dz = z - L.cz; if (dx * dx + dz * dz > legR2[li]) continue; const r = dx * L.ux + dz * L.uz, v = -dx * L.uz + dz * L.ux; if (r > L.r0 - 2 && r < L.rEnd + 4 && Math.abs(v) < L.hw + 3) return true; } return false; };
+    const yel = [0.95, 0.75, 0.12], W1 = [1, 1, 1], yel4 = [yel, yel, yel, yel], W14 = [W1, W1, W1, W1];   // (the colours are copied into the geometry: one array of four serves every quad)
     const lampAt = [], rm = new Uint8Array(G.nx * G.nz), mk = (x, z, r) => { const i0 = Math.floor((x - r - G.x0) / G.c), i1 = Math.ceil((x + r - G.x0) / G.c), j0 = Math.floor((z - r - G.z0) / G.c), j1 = Math.ceil((z + r - G.z0) / G.c);
       for (let j = Math.max(0, j0); j <= Math.min(G.nz - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(G.nx - 1, i1); i++) rm[j * G.nx + i] = 1; };
     C.roadMask = (x, z) => { const i = Math.round((x - G.x0) / G.c), j = Math.round((z - G.z0) / G.c); return i >= 0 && j >= 0 && i < G.nx && j < G.nz && rm[j * G.nx + i] === 1; };
     for (const [cls, hw, lv, pts] of D.roads) {
       if (lv) continue;
       const c0 = cls.split('.')[0], isPath = /^(footway|path|cycleway|steps|pedestrian|track)$/.test(c0), half = isPath ? Math.min(hw, 1.1) : hw, y = isPath ? -0.1 : -0.085;
-      const tgt = isPath ? path : road, col = isPath ? (c0 === 'cycleway' ? [0.62, 0.6, 0.58] : [0.84, 0.82, 0.76]) : [0.82, 0.82, 0.84];
+      const tgt = isPath ? path : road, col = isPath ? (c0 === 'cycleway' ? [0.62, 0.6, 0.58] : [0.84, 0.82, 0.76]) : [0.82, 0.82, 0.84], col4 = [col, col, col, col];
       // densify, drop the parts on the circuit's corridor or in a junction's leg
       const P = []; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let q = 0; q < n; q++) P.push([ax + (bx - ax) * q / n, az + (bz - az) * q / n]); }
       P.push(pts[pts.length - 1]);
@@ -568,8 +569,8 @@
             const a = run[Math.max(0, k - 1)], b = run[Math.min(run.length - 1, k + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l, nz = tx / l, p = run[k];
             if (k) acc += Math.hypot(p[0] - run[k - 1][0], p[1] - run[k - 1][1]);
             const Lp = [p[0] + nx * half, y, p[1] + nz * half], Rp = [p[0] - nx * half, y, p[1] - nz * half];
-            if (prevL) { const g = tgt.get(p[0], p[1]); g.quadUp(prevR, Rp, Lp, prevL, [col, col, col, col], [[prevR[0] / 8, -prevR[2] / 8], [Rp[0] / 8, -Rp[2] / 8], [Lp[0] / 8, -Lp[2] / 8], [prevL[0] / 8, -prevL[2] / 8]]);
-              if (!isPath && half >= 3.5 && Math.floor(acc / 4) % 3 === 0) { const q0 = run[k - 1], ml = mark.get(p[0], p[1]); ml.quadUp([q0[0] + nx * 0.07, y + 0.012, q0[1] + nz * 0.07], [q0[0] - nx * 0.07, y + 0.012, q0[1] - nz * 0.07], [p[0] - nx * 0.07, y + 0.012, p[1] - nz * 0.07], [p[0] + nx * 0.07, y + 0.012, p[1] + nz * 0.07], [yel, yel, yel, yel]); }
+            if (prevL) { const g = tgt.get(p[0], p[1]); g.quadUp(prevR, Rp, Lp, prevL, col4, [[prevR[0] / 8, -prevR[2] / 8], [Rp[0] / 8, -Rp[2] / 8], [Lp[0] / 8, -Lp[2] / 8], [prevL[0] / 8, -prevL[2] / 8]]);
+              if (!isPath && half >= 3.5 && Math.floor(acc / 4) % 3 === 0) { const q0 = run[k - 1], ml = mark.get(p[0], p[1]); ml.quadUp([q0[0] + nx * 0.07, y + 0.012, q0[1] + nz * 0.07], [q0[0] - nx * 0.07, y + 0.012, q0[1] - nz * 0.07], [p[0] - nx * 0.07, y + 0.012, p[1] - nz * 0.07], [p[0] + nx * 0.07, y + 0.012, p[1] + nz * 0.07], yel4); }
               if (!isPath && Math.floor(acc / 38) !== Math.floor((acc - 4) / 38)) lampAt.push([p[0] + nx * (half + 1.2), p[1] + nz * (half + 1.2), Math.atan2(-nz, -nx)]); }
             prevL = Lp; prevR = Rp;
           }
@@ -593,12 +594,13 @@
     for (const [cl, ring] of D.lu) { if (cl !== 'parking') continue;
       let best = 0, ux = 1, uz = 0; for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length], l = Math.hypot(b[0] - a[0], b[1] - a[1]); if (l > best) { best = l; ux = (b[0] - a[0]) / l; uz = (b[1] - a[1]) / l; } }
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      const bx0 = x0 - 0.01, bx1 = x1 + 0.01;   // (outside the ring's box inPoly is false: skip those points before it)
       const vx = -uz, vz = ux, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, ext = Math.hypot(x1 - x0, z1 - z0) / 2;
       for (let a = -ext; a < ext; a += 2.6) for (let b = -ext; b < ext; b += 6.2) {
         const row = Math.round(b / 6.2), x = cx + ux * a + vx * b, z = cz + uz * a + vz * b;
-        if (!K.inPoly(ring, x, z) || K.polyDist(ring, x, z) < 1.5 || near(x, z).d < 2 || C.excluded(x, z)) continue;
+        if (z < z0 || z > z1 || x < bx0 || x > bx1 || !K.inPoly(ring, x, z) || K.polyDist(ring, x, z) < 1.5 || near(x, z).d < 2 || C.excluded(x, z)) continue;
         const ins = ring.length > 2;
-        if (ins && Math.abs(row) % 2 === 0) { const g = mark.get(x, z), yb = Math.max(mtGround(x, z), WL + 0.05) + 0.06, p = (s, t) => [x + ux * s + vx * t, yb, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), [W1, W1, W1, W1]); }
+        if (ins && Math.abs(row) % 2 === 0) { const g = mark.get(x, z), yb = Math.max(mtGround(x, z), WL + 0.05) + 0.06, p = (s, t) => [x + ux * s + vx * t, yb, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), W14); }
         if (R() < 0.5 && C.near(x, z).d < 260) { const yaw = Math.atan2(vz, vx) + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.06, col = CARC[Math.floor(R() * CARC.length)], k = 0.85 + 0.25 * R();
           cars.add(x + ux * (R() - 0.5) * 0.3, Math.max(mtGround(x, z), WL + 0.05) + 0.04, z + uz * (R() - 0.5) * 0.3, -yaw, 1, 1, [col[0] * k, col[1] * k, col[2] * k]); nCars++; }
       }
@@ -638,7 +640,8 @@
           g.quadO(A, B, [B[0], yt, B[2]], [A[0], yt, A[2]], glass, ins); }
       }
       // the roof: a fan from the centre (the outlines are near enough convex; a darker rim)
-      for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length]; g.triO([cx, y1, cz], [a[0], y1, a[1]], [b[0], y1, b[1]], roofC.map(v => v * (0.9 + 0.2 * hv)), [cx, y1 - 5, cz]); }
+      const rc = roofC.map(v => v * (0.9 + 0.2 * hv)), rIn = [cx, y1 - 5, cz];   // (copied into the geometry: one per building)
+      for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length]; g.triO([cx, y1, cz], [a[0], y1, a[1]], [b[0], y1, b[1]], rc, rIn); }
       let r = 0; for (const p of ring) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz)); exclPush(cx, cz, r * 0.9 + 1); if (C.CR) C.CR.exclAdd(cx, cz, r);
     }
     // the dome: a geodesic sphere of steel struts (76 m across, 62 m tall), a museum inside it
