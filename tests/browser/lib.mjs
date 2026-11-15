@@ -103,6 +103,9 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   if (opts.init) await page.addInitScript(opts.init);   // (a test's own set-up, run before the game's scripts)
   await page.goto(address, { timeout: 180000 });   // (as long as the wait for the game below: Playwright's own 30 s are too short on a slow machine)
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
+  // (the worlds loaded only when needed, World.need, I17 step 5: all of them now, so a test can build any track's world at once, as before;
+  // opts.lazy: only what the game itself loads, tests/browser/svet-nalaganje.test.mjs)
+  if (!opts.lazy) await page.evaluate(() => window.World && World.needAll ? World.needAll() : null);
   return { ctx, page, errors };
 }
 

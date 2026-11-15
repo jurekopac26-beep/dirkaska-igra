@@ -1689,7 +1689,7 @@
     if (track && track.def.id === id && !Render.worldStale) { cb(); return; }   // (the same track: rebuilt only when it paints itself for the season and that changed: Vršič)
     $('ld-msg').textContent = tr('Nalagam progo {0}…', Lang.of(Core.TRACKS.find(d => d.id === id), 'name') || '');
     $('loading').classList.remove('off');
-    setTimeout(() => {
+    setTimeout(() => needWorld(id).then(() => {
       const t0 = performance.now();
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
@@ -1700,8 +1700,10 @@
       loadMs = performance.now() - t0;
       $('loading').classList.add('off');
       cb();
-    }, 40);
+    }, () => { $('ld-msg').textContent = tr('Proge ni bilo mogoče naložiti. Preveri povezavo in osveži stran.'); }), 40);   // (its world's file did not come)
   }
+  // the track's world files, loaded only when a track needs them (docs/hitro-nalaganje.md step 5: World.need; the eager ones are there)
+  function needWorld(id) { const d = Core.TRACKS.find(x => x.id === id); return World.need ? World.need(d ? d.theme : '') : Promise.resolve(); }
   let loadMs = 0;   // (tests: how long the last track took to load)
   // the title demo: ten cars racing on the loaded track behind the menus, their first seconds driven at once
   function demoMake(sec) {
@@ -7007,6 +7009,6 @@
       $('ld-msg').textContent = tr('Napaka pri zagonu: {0}', e.message);
     }
   }
-  window.addEventListener('load', () => setTimeout(boot, 30));
+  window.addEventListener('load', () => setTimeout(() => { let id = S.track; try { id = quickTrack() || S.track; } catch (e) { } needWorld(id).then(boot, boot); }, 30));   // (the first track's world before boot builds it)
 })();
 

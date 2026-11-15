@@ -104,7 +104,7 @@ function tabele(nove = []) {
 // index.html, garaza.html: only the tracks' own script lines (js/tracks/<id>.js, js/data/<id>.js, js/world-<theme>.js); a new track's line
 // after every other track's (Core.TRACKS keeps the scripts' order: the cars of the other tracks' races, races.test.js /car, go by it)
 function strani(stara, nova, { Pt }) {
-  const SKR = /^\s*<script src="js\/(?:tracks\/|data\/|world-)([\w-]+)\.js"><\/script>\s*$/, svoja = (l) => { const m = SKR.exec(l); return !!(m && Pt.has(m[1])); };
+  const SKR = /^\s*(?:<script src="js\/(?:tracks\/|data\/|world-)([\w-]+)\.js"><\/script>|<link rel="x-lazy-script" data-svet="[^"]*" href="js\/(?:data\/|world-)([\w-]+)\.js">)\s*$/, svoja = (l) => { const m = SKR.exec(l); return !!(m && Pt.has(m[1] || m[2])); };
   const a = stara.split('\n').filter(l => !svoja(l)), b = nova.split('\n').filter(l => !svoja(l));
   if (a.join('\n') !== b.join('\n')) return 'other lines than the tracks\' scripts';
   const red = (t) => t.split('\n').map(l => (/^\s*<script src="js\/tracks\/([\w-]+)\.js"><\/script>/.exec(l) || [])[1]).filter(Boolean);

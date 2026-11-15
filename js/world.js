@@ -1438,6 +1438,31 @@ const World = (function () {
       valueNoise2, waterMat, shoreBand, waterline, mergeBands, addShore, crowdCtx, crowdRun, crowdPut, crowdFinish, crowdUV, swayMat, treeMark, treesTo, nrLump, pitOpen, pitKerbs, pitJunction };
   }
 
+  /* ---- the worlds loaded only when needed (I17, docs/hitro-nalaganje.md, step 5): a real track's builder and its data are
+     <link rel="x-lazy-script" data-svet="<themes>" href="…"> in index.html (in their load order; tools/svet-odvisnosti.mjs writes them
+     and checks that each needs only what loads at start or before it). World.need(theme): a Promise, done once they have loaded ---- */
+  const NEED = {}, LOADED = {};
+  function lazyTags(theme) {
+    if (typeof document === 'undefined' || !document.querySelectorAll) return [];
+    return [...document.querySelectorAll('link[rel="x-lazy-script"][data-svet]')].filter(l => l.getAttribute('data-svet').split(' ').includes(theme));
+  }
+  function loadTag(l) {
+    const href = l.getAttribute('href');
+    return LOADED[href] || (LOADED[href] = new Promise((ok, no) => {
+      const sc = document.createElement('script'); sc.src = href; sc.async = false;
+      sc.onload = () => ok(); sc.onerror = () => { delete LOADED[href]; sc.remove(); no(new Error('World.need: ' + href + ' did not load')); };
+      document.head.appendChild(sc);
+    }));
+  }
+  // vsi leni svetovi (testi, ki gradijo poljubne proge: tests/browser/lib.mjs openGame; v igri ga ne kliče nič)
+  function needAll() { if (typeof document === 'undefined' || !document.querySelectorAll) return Promise.resolve(); return [...document.querySelectorAll('link[rel="x-lazy-script"][data-svet]')].reduce((p, l) => p.then(() => loadTag(l)), Promise.resolve()); }
+  function need(theme) {
+    if (!theme || EXT[theme]) return Promise.resolve();
+    const tags = lazyTags(theme);
+    if (!tags.length) return Promise.resolve();
+    return NEED[theme] || (NEED[theme] = tags.reduce((p, l) => p.then(() => loadTag(l)), Promise.resolve()).catch((e) => { delete NEED[theme]; throw e; }));
+  }
+
   /* ---------------- BUILD ---------------- */
   function build(scene, track, tex, opts) {
     LOD = makeLOD(opts.tier); THIN.n = 0;   // the graphics detail tier for this build (every builder below consults the shared LOD)
@@ -1447,6 +1472,7 @@ const World = (function () {
     T = track; THEME = (track.def && track.def.theme) || 'lake'; CSX = THEME === 'forest' || THEME === 'italia' || THEME === 'kamp'; ROCK_SMOOTH = CSX; SEA = (track.def && track.def.sea) || null; RIVER = track.def.river || null; RW = track.def.riverW || 26; CASTLE = track.def.castle || null; buildHash();
     for (const f of SYNC) f();   // (the worlds in files of their own: the track being built, its theme, the detail tier)
     for (const k in KEEP) if (!KEEP[k].includes(THEME)) { if (k === 'NR') NR = null; else API[k] = null; }   // free the last build's grids this world does not keep (World.keep(key, theme) in the world files: tools/razdeli-proge.mjs)
+    if (!EXT[THEME] && lazyTags(THEME).length) throw new Error('World.build: the world of \'' + THEME + '\' is not loaded (World.need first)');   // (a real track's builder loads only when needed, World.need: never the default world in its place)
     if (EXT[THEME]) { const F = API.flags; if (F) F.begin(); const o = EXT[THEME](scene, tex, opts, extAPI()); if (F) F.done(o); return finish(o, tex); }   // a world built in a file of its own (js/world-<theme>.js: World.ext[theme], with the helpers of extAPI); its flags waving in one mesh (js/world-zastave.js)
     const R = rng(4242);
     hillN = valueNoise2(77, 60);
@@ -5306,6 +5332,6 @@ const World = (function () {
   }
   const _hjV = new THREE.Vector3();
 
-  return { build, update, view, api: API, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT, keep: (k, th) => { (KEEP[k] = KEEP[k] || []).push(th); }, nrDecalTex };   // (nrDecalTex: the Nordschleife's paint on the asphalt, also the new map's ring road's, js/newmap.js nordRoad)   // (heli: the TV helicopter's model, also the police's on Vršič)
+  return { build, need, needAll, update, view, api: API, GB, box, cyl, cone, ico, gable, hex, vary, waterSky: WSKY, heli: tvHeli, ext: EXT, keep: (k, th) => { (KEEP[k] = KEEP[k] || []).push(th); }, nrDecalTex };   // (nrDecalTex: the Nordschleife's paint on the asphalt, also the new map's ring road's, js/newmap.js nordRoad)   // (heli: the TV helicopter's model, also the police's on Vršič)
 })();
 
