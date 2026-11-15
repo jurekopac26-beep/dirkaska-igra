@@ -1,34 +1,32 @@
-# Zgumirana linija po uporabnikovi vožnji (načrt)
+# Zgumirana linija po uporabnikovi vožnji
 
-Zapiski raziskave 9. 11. 2026 (Matej, brez sprememb kode). Številke vrstic so približne in veljajo za `main` tistega dne: seja jih pred delom preveri.
+Načrt 9. 11. 2026 (Matej), prototip za slike 10. 11. (osnutek #623), izvedba 15. 11. 2026 (PR #717, račun partyslo). Številke vrstic so približne.
 
 ## Odločitve uporabnika
 - 9. 11. 2026 ob ~23.54: »zgimirana linija naj gre po moji voznji po moji liniji tam kjer je posneta tam kjer pa ni pa naj zaenkrat predvideva dokler ne posnamem vseh prog«.
 - 9. 11. 2026 ob ~23.55: »zgumirano linijo daj prvo v sliki v predogled in ne zacni z delom dokler je ne potrdim«.
-- 10. 11. 2026 ob ~00.57, po slikah: »Da, tudi na odprtih cestah«. Guma gre po uporabnikovi liniji, samo videz, in pride tudi na ceste brez boksov (npr. Tianmen), kjer je zdaj ni.
+- 10. 11. 2026 ob ~00.57, po slikah: »Da, tudi na odprtih cestah«. Guma gre po uporabnikovi liniji, samo videz, in pride tudi na ceste brez boksov (npr. Tianmen), kjer je prej ni bilo.
+- 10. 11. 2026 med ~02.00 in ~03.00, po slikah prototipa: »Plast gume naj bo sirsa« (6,2 m namesto 3,5 m).
+- 10. 11. 2026 ob ~03.30 (tabla #382, komentar 6757283997; vprašanje `zgumirana-linija-1`): **možnost 1**, vse po uporabnikovi liniji: guma, ki se nabira, in stalne sledi v svetu (temni pas, sledi zaviranja), na dirkališčih in na odprtih cestah.
+- Zagon izvedbe: Matej 15. 11. 2026 ob ~2.25 (tabla #382, komentar 6887191720).
 
 ## Obseg
-- Guma (temna sled na liniji vožnje) se riše po liniji uporabnikove vožnje, kjer je posneta; kjer ni, po predvideni liniji iz sloga vožnje. Ko uporabnik posname nove proge, jih guma prevzame brez spremembe kode.
-- **Samo videz.** Oprijem ostane na izračunani liniji (`rubberAt`, +2 %, in `marbles()`, −6 %): fizika vožnje se ne spreminja (`CLAUDE.md`, Seje, »Fizika vožnje se ne spreminja«). Reference `tests/golden/races.json` in `tests/golden/sim.json` se ne smejo spremeniti.
-- Nov sloj na odprtih cestah brez boksov: preveri obremenitev telefona (`perf`, do ~300 klicev risanja).
-- **Ni v potrjenem obsegu:** stalni pasovi gume in sledi gum v svetovih (`js/world-tianmen.js` ~257, `js/world-spa.js` ~161, `tyreMarks` v `js/world.js` ~3686, okoli 17 svetov; +4–6 h). Ostanejo na izračunani liniji; ob predogledu to pokaži uporabniku in vprašaj.
-
-## Mesta v kodi
-- Graditelj: `js/render.js` ~3907, `rubberLine(R)`; pas na `T.rl[ii] + RUB_O` (~3916), jakost iz `R.mb.rb` (~3909), prosojnost 0,22 + 0,5 · rb (~3936).
-- Guma je danes samo v dirkah z gumami na zaprtih dirkališčih z boksi (`js/core.js` ~6479, `js/game.js` ~2338): Spa, Štajerska, Crystal Palace, Montréal (Bathurst je na odločanju); rb = 1 − e^(−d / (60 · dolžina)).
-- Uporabnikova linija: `Race._voznja` (`js/core.js` ~6701). Profil je odmik `dd` od linije avtopilota na vsakih 5 m, linija je `T.rl + dd`. Posnet je samo Tianmen (`VOZNJA_PROFILI` v `js/data/voznja.js`: suho, 5 voženj); drugje velja slog (`VOZNJA_SLOG`, `voznjaIzSloga` ~6320; ne na testnih progah, progah na odločanju in v dežju). Danes deluje samo z `?voznja=1` in v dirki s tekmeci; za gumo mora veljati vedno.
-- Razlika med linijama: Tianmen največ 5,6 m (s ≈ 1958 m), mediana 1,5 m; Spa največ 2,8 m pri s ≈ 2420 m.
-
-## Prototip, s katerim so nastale slike (2 datoteki, +7/−5)
-- V `_voznja()`: ob ponastavitvi `this.rubRl = null`; po pripravi profilov `RU = RV || RS`, `rubRl[i] = clamp(T.rl[i] + RU.dd[i], −li, li)`, `li = (T.wa ? T.wa[i] : T.w) − 1,7`.
-- V `rubberLine`: `RL = R.rubRl || T.rl`; zanka do `iE = T.open ? N − 1 : N`.
-- Kroglice gume se potem rišejo ob izračunani liniji, guma pa ob uporabnikovi: pokaži na sliki in presodi, ali se izris kroglic premakne z gumo (samo videz, oprijem ostane).
-
-## Testi in reference
-- `tests/browser/marbles.test.mjs`, `tests/voznja.test.js` in nov test: guma sledi posneti liniji, na progi brez posnetka predvideni, odprta cesta ima gumo.
-- `tests/golden/perf.json` za proge z novim slojem; `tests/golden/world.json` samo, če se premaknejo stalni pasovi.
+- Guma (temna sled na liniji vožnje) se riše po liniji uporabnikove vožnje, kjer je posneta (zdaj Tianmen); kjer ni, po predvideni liniji iz sloga vožnje. Ko uporabnik posname nove proge, jih guma prevzame brez spremembe kode.
+- Po isti liniji gredo kroglice gume ob njej in stalne sledi v svetovih: temni pas, kolesnice in sledi zaviranja (možnost 1).
+- **Samo videz.** Oprijem ostane na izračunani liniji (`rubberAt`, +2 %, in `marbles()`, −6 %), tekmeci vozijo po svojih linijah kot prej: fizika vožnje se ne spreminja (`CLAUDE.md`, Seje, »Fizika vožnje se ne spreminja«). Reference `tests/golden/races.json` in `tests/golden/sim.json` se ne smejo spremeniti.
+- **Samo prave proge.** Testne proge, proge na odločanju ter Suzuka in Medvode (zamrznjeni brez oznake) ostanejo na izračunani liniji s staro plastjo; njihovi svetovi niso spremenjeni.
 
 ## Izvedba
-- Grafika: Fable 5.2, ena seja, brez več agentov (`CLAUDE.md`, Seje). Ocena: ~3 h dirkališča in 1–2 h odprte ceste.
-- Pred `main`: slike zdaj/potem za uporabnika (kamera za avtom; Spa in Tianmen). Testne proge ostanejo zamrznjene.
-- Račun: partyslo (tabla #382, komentar 6755119724; `docs/vrsta.md`, »Načrtovano«).
+- **`js/core.js`**: `Track.gl` je linija gume (m od sredine ceste, kot `rl`), `Track.gld` obremenitev gum ob njej (0..1: zaviranje in ovinki; teža plasti). Brez uporabnikove linije je `gl` kar `rl` (isti seznam) in `gld` `null`. `Track.voznjaLinija(profili)` (~1117) ju nastavi: izmerjen suh profil te proge (`VOZNJA_PROFILI`, `js/data/voznja.js`) ima prednost, sicer linija iz sloga (`VOZNJA_SLOG`, `voznjaIzSloga`); odmik da `voznjaOdmik` (~6568), linija ostane na asfaltu (1,7 m od roba oziroma do izračunane linije, če je ta bolj zunaj). Vrne, ali proga linijo ima; klic s praznim seznamom jo vzame. `Track.marblesAlong(gl)` da pas kroglic za videz; `marbles()` (oprijem) ostane ob `rl`.
+- **`js/game.js`** (~237): `getTrack` pokliče `voznjaLinija` za vsako pravo progo, torej brez `test`, `pending` in `GUMA_BREZ` (Suzuka, Medvode: iz seznama gresta, ko dobita oznako).
+- **`js/render.js`** (~3905–4012), `rubberLine(R)`: na progi z linijo sedem stolpcev (`RUB_OW`, 6,2 m, proti robu zbledi, nikoli čez rob asfalta), teža 0,4 + 0,6 · gld^0,7. Dirkališče (`rubberLap`): ena mreža, raste z gumo dirke kot prej (prosojnost 0,22 + 0,5 · rb). Odprta cesta (`rubberRoad`): stalna raven `RUB_OPEN` 0,6 (v snegu × `RUB_SNOW`, na mokri cesti izgine), v kosih po `RUB_CH` = 128 vzorcev, riše se samo do konca megle. Kroglice (`marbles`) ležijo ob isti liniji. Proga brez linije: stara plast (5 stolpcev, 3,5 m), odprta cesta brez linije nima plasti.
+- **Svetovi**: stalni temni pas, kolesnice in sledi zaviranja berejo `T.gl || T.rl`: `js/world.js` (`tyreMarks` in pasovi), skupni pomočniki `js/world-cesta.js`, `js/world-gore.js`, `js/world-prelaz.js` ter svetovi pravih prog (caracoles, chapman, harju, katu, livorno, montreal, nring, pikes, rastro, rbring, spa, tianmen). Pri zamrznjenih progah je `gl === rl`, zato skupni pomočniki zanje rišejo enako kot prej.
+- Razlika med linijama: Tianmen največ 5,6 m, Spa največ 2,8 m (v ovinkih); na ravninah se liniji ujemata.
+
+## Testi in reference
+- `tests/zgumirana-linija.test.js` (brez brskalnika): linija (Tianmen izmerjena, Spa iz sloga, vedno na asfaltu), oprijem gume in kroglic na izračunani liniji, ista dirka z linijo in brez nje enaka do bita (Spa z gumami, Tianmen).
+- `tests/browser/zgumirana-linija.test.mjs` (~214 s): Spa (ena mreža, 7 stolpcev, 6,2 m, kroglice ob liniji, cesta temnejša), Tianmen (kosi, bližnji narisani in daljni ne, v dežju brez plasti), zamrznjene proge (Crystal Palace, Jezero, Suzuka, Medvode: brez linije, stara plast).
+- Povezani testi: `tests/run.js`, `RELATED` (`js/core.js`, `js/render.js`, `js/game.js`, `js/data/voznja.js`).
+
+## Slike zdaj/potem
+- `node tools/shot.mjs spa --m 2860 --guma 0.8 --velika --lezece --pred main` in `node tools/shot.mjs tianmen --m 940 --velika --lezece --pred main` (kamera za avtom; `--guma`: guma, nabrana pozno v dolgi dirki, ker je ob štartu ni). Slik ne shranjuj v repozitorij.
