@@ -502,12 +502,13 @@
       : (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; if (LK.road) k = LK.road(i, o, k); return [k, k, k * 1.02]; };   // (LK.road: Rio's worn asphalt)
     const MOW_D = LK.trees === 'rio' ? [0.05, 0.035, 0.045] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
+    const offU = offs.map(o => (o + w) / tileL), wlE = [0.94, 0.94, 0.9], kCw = T.curbW, kPf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + kCw - 0.12, 0.085], [w + kCw + 0.02, 0.03]], kSh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), kUs = [0, 0.1, 0.92, 1], kO = [[3, 2, 1, 0], [0, 1, 2, 3]], kShO = kO.map(o => o.map(k => kSh[k]));   // (per-row constants, hoisted: RB.row copies the values)
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
       let pr = -1, pl = -1; const pk = [-1, -1];
       for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
         const i = ii % N, v = ii * ds / tileL;
-        const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offs.map(o => [(o + w) / tileL, v]));
+        const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o)), offU.map(u => [u, v]));
         if (pr >= 0) gr.link(pr, r, 0, offs.length - 1); pr = r;
         if (PER) {   // the 1930s: along each edge a strip of dust and loose grit over the road's edge and the verge, its grass edge ragged
           const ed = (sd) => { const q = ii * ds, j = 0.5 + 0.28 * Math.sin(q * 0.23 + sd * 2.1) + 0.14 * Math.sin(q * 0.71 + sd * 0.4) + (crH(i, sd, 41) - 0.5) * 0.22, v = 0.92 + crH(i, sd, 43) * 0.16;   // (j: how far the grit reaches, 0..1)
@@ -518,14 +519,13 @@
           const l = gl.row([...L.p.slice().reverse(), ...W, ...R.p], [...L.c.slice().reverse(), wl, wl, wl, wl, ...R.c]);
           if (pl >= 0) { gl.link(pl, l, 0, 3); gl.link(pl, l, 4, 5); gl.link(pl, l, 6, 7); gl.link(pl, l, 8, 11); } pl = l;
         } else {
-        const wl = [0.94, 0.94, 0.9], l = gl.row([Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], [wl, wl, wl, wl]);
+        const wl = wlE, l = gl.row([Pt(i, -w + 0.2, 0.034), Pt(i, -w + 0.5, 0.034), Pt(i, w - 0.5, 0.034), Pt(i, w - 0.2, 0.034)], [wl, wl, wl, wl]);
         if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); } pl = l; }
         for (const side of [-1, 1]) {
           const si = side > 0 ? 1 : 0;
           if (kerb[si][i]) {   // red/white kerb in 1 m blocks: a sloped inner edge, a flat top, a low outer lip
-            const cw = T.curbW, pf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + cw - 0.12, 0.085], [w + cw + 0.02, 0.03]], v = ii * ds / 2;
-            const sh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), us = [0, 0.1, 0.92, 1], o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];
-            const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], v]));
+            const pf = kPf, v = ii * ds / 2, us = kUs, o = kO[si];
+            const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), kShO[si], o.map(k => [us[k], v]));
             if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk;
           } else pk[si] = -1;
         }
@@ -648,6 +648,8 @@
       const d = dS(i * ds); if (d > -420 && d < 280) return 1;
       return wallOn[side2(side)][i] ? 1 : 0;
     };
+    const kindA = [new Int8Array(N), new Int8Array(N)];   // (kindAt once per sample and side: it reads nothing that changes below)
+    for (let i = 0; i < N; i++) { kindA[0][i] = kindAt(i, -1); kindA[1][i] = kindAt(i, 1); }
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
@@ -676,9 +678,9 @@
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(), gt = new RB(true);
       for (const side of [-1, 1]) {
-        let prev = -1, pk = -2, acc = c0 * ds;
+        let prev = -1, pk = -2, acc = c0 * ds; const kA = kindA[side2(side)];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++, acc += ds) {
-          const i = ii % N, k = kindAt(i, side);
+          const i = ii % N, k = kA[i];
           const ib = (i - 1 + N) % N;   // (the bale that ends at sample i)
           if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, i, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, i, side, pk, ib), 0, 4); prev = -1; }   // the old kind runs up to here
           if (k < 0) { pk = k; continue; }
@@ -693,8 +695,8 @@
     const nPosts = posts.addTo(root, true);
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
     { const sb = new Chunks(128, true);
-      for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
-        const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || kindAt((i + 1) % N, side) !== 1) continue;
+      for (const side of [-1, 1]) for (let i = 0, n = 0, kA = kindA[side2(side)]; i + 2 <= N; i += 2) {
+        const j = (i + 2) % N; if (kA[i] !== 1 || kA[j] !== 1 || kA[(i + 1) % N] !== 1) continue;
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
         const A = Pt(i, o(i), 0.14), B = Pt(j, o(j), 0.14), C = Pt(j, o(j), 0.96), D = Pt(i, o(i), 0.96), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
         sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
@@ -743,7 +745,7 @@
       let n = 0;
       for (const side of [-1, 1]) for (let d = -150; d < L - 150; d += 8) {
         const s = sAt(d), i = T.idx(s), near = Math.abs(d) < 170 || baleOn[side2(side)][i] || wallOn[side2(side)][i];
-        if (!near || kindAt(i, side) < 3 || crH(d, side, 17) < 0.25 || (side === PSD && PD && (T.pitAt(s) || T.pitAt(s + 30) || T.pitAt(s - 30)))) continue;
+        if (!near || kindA[side2(side)][i] < 3 || crH(d, side, 17) < 0.25 || (side === PSD && PD && (T.pitAt(s) || T.pitAt(s + 30) || T.pitAt(s - 30)))) continue;
         const [x, z] = atSf(s, side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.9)), y = nrGround(x, z), k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, nx = T.nx[i] * side, nz = T.nz[i] * side, g = scen.get(x, z);
         board(x, y + 1.25, z, nx, nz, 3.6, 0.9, AT.ads + k);   // (the text read from the road)
         for (const q of [-1.5, 1.5]) box(g, x + nz * q + nx * 0.1, y - 0.3, z - nx * q + nz * 0.1, 0.14, 2.45, 0.14, T.hd[i], [0.4, 0.32, 0.24]);
@@ -1019,8 +1021,8 @@
         // stations every 5 m: the tiers run as straight lines along the stand (the ground at the front, smoothed over +-15 m), the whole
         // profile lifted where the slope behind would come through a tier (that lift smoothed too)
         for (let d = a; d <= b + 0.01; d += Math.min(5, Math.max(1, b - d))) {
-          const s = sAt(d), i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 2.6, g0 = nrGround(...atSf(s, side * f0).slice(0, 2)) + 0.1; let lift = 0;
-          for (let k = 0; k < rows; k++) lift = Math.max(lift, nrGround(...atSf(s, side * (f0 + (k + 1) * dep)).slice(0, 2)) + 0.35 - (g0 + 0.55 + k * rise));
+          const s = sAt(d), i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 2.6, q0 = atSf(s, side * f0), g0 = nrGround(q0[0], q0[1]) + 0.1; let lift = 0;
+          for (let k = 0; k < rows; k++) { const qk = atSf(s, side * (f0 + (k + 1) * dep)); lift = Math.max(lift, nrGround(qk[0], qk[1]) + 0.35 - (g0 + 0.55 + k * rise)); }
           st.push({ s, f0, g0, lift });
         }
         const sm = (f, r) => st.map((q, m) => { let t = 0, n = 0; for (let e = -r; e <= r; e++) { t += f(st[clamp(m + e, 0, st.length - 1)]); n++; } return t / n; });
@@ -1029,7 +1031,7 @@
         st.forEach((q, m) => {   // (the front line smoothed too: round the outside of a bend the barrier's offset wanders)
           const s = q.s, f0 = Math.max(F0[m], q.f0 - 0.4), gy = G0[m] + Math.max(0, L0[m]), prof = [[f0 - 0.3, Math.min(gy, q.g0) - 0.6]]; let y = gy;
           for (let k = 0; k < rows; k++) { const o = f0 + k * dep; y = gy + 0.55 + k * rise; prof.push([o, y], [o + dep, y]); }
-          const back = f0 + rows * dep; prof.push([back, y + 1.2], [back + 0.35, y + 1.2], [back + 0.35, nrGround(...atSf(s, side * (back + 0.5)).slice(0, 2)) - 0.5]);
+          const back = f0 + rows * dep; prof.push([back, y + 1.2], [back + 0.35, y + 1.2], [back + 0.35, (qb => nrGround(qb[0], qb[1]))(atSf(s, side * (back + 0.5))) - 0.5]);
           const pts = prof.map(([o, yy]) => { const [x, z] = atSf(s, side * o); return [x, yy, z]; });
           rows2.push({ s, pts, prof, top: y + 1.2 + 3.1, o0: f0 + rows * dep * 0.48, o1: back + 0.95 });   // (the roof over the upper half: the low cameras still see the track past it)
         });
@@ -1390,18 +1392,20 @@
     let nTrees = PARK ? cpTrees({ root, R, excluded, dens }) : 0;   // (Crystal Palace: the park's old trees)
     if (!PARK) {
       const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CR0 = RIO ? [0.3, 0.42, 0.45] : AU ? [0.24, 0.4] : [0.3, 0.33];   // (crown radius / width of a spruce, a beech (a eucalypt, a wattle): the forest floor under it)
+      const rFar = LOD.radius(260), rMid = LOD.radius(70);   // (the same each spot)
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
         for (let zz = za; zz < za + Lt; zz += 6.2) for (let xx = xa; xx < xa + Lt; xx += 6.2) {
           const x = xx + (R() - 0.5) * 5.4, z = zz + (R() - 0.5) * 5.4, rd = nrDist(x, z), r1 = R(), r2 = R();
-          if (rd > LOD.radius(260)) continue;
-          if (rd > LOD.radius(70) && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees
+          if (rd > rFar) continue;
+          if (rd > rMid && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees
           const cl = nrLC(x, z), far = rd > 70;
           const p = RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
+          if (excluded(x, z)) continue;   // (before rbNear: both pure, the cheaper first)
           if (rd < 48 && rbNear(x, z) >= 0 && (RBN.dd < 3.5 || (RBN.dd < 8 && r2 < 0.4))) continue;
-          if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
+          if (P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
           const y = nrGround(x, z); let sp, hgt, wid;
           if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);
           else if (AU) { sp = R() < (cl === 1 ? 0.8 : cl === 2 ? 0.3 : 0.85) ? 0 : 1;   // a eucalypt 15-27 m (crowns high and loose), or a wattle 3-6 m
@@ -1428,9 +1432,10 @@
       // the buildings, where the lawn is another part of the track's, nor where the inside of a bend would fold them; woods and scrub keep their
       // own ground (the land cover's built-up cells by the track are mostly its own lawns: striped too)
       const own = (x, z, i) => { const j = rbNear(x, z), d = Math.abs(j - i); return j >= 0 && Math.min(d, N - d) < 30; };
-      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || !own(x, z, i)) return null;
-        const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i])), c = nrGCol(x, z);
-        return f < 0.05 ? null : { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
+      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2];   // (the cheap test first: all pure, the same points)
+        const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i]));
+        if (f < 0.05 || excluded(x, z) || !own(x, z, i)) return null; const c = nrGCol(x, z);
+        return { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
       for (let c0 = 0; c0 < N; c0 += CH) {
         const gv = new RB(true), pv = [-1, -1], pw = [null, null], pm = [new Array(MOW_B).fill(-1), new Array(MOW_B).fill(-1)];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
