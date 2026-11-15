@@ -133,7 +133,7 @@
     // components): above ~3350 m on the sunny north faces, from ~2690 m on the shady south faces (the southern hemisphere), in patches and in the
     // hollows, off the steepest faces; and the snowfields WorldCover maps (lc 4)
     const P = API.VR, line = 3020 - 330 * clamp(sz * 2.4, -1, 1) + (P.c4(x, z) - 0.5) * 240;
-    const k = sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, P.c5(x, z) + 0.3 * sstep(line, line + 450, A));
+    const k = A <= line || ny <= 0.42 ? 0 : sstep(line, line + 160, A) * sstep(0.42, 0.7, ny) * sstep(0.42, 0.66, P.c5(x, z) + 0.3 * sstep(line, line + 450, A));   // (below the line or flatter than 0.42: a factor is 0, the noise is not read)
     return Math.max(k, (s4 === undefined ? API.vrLCf(x, z, 4) : s4) * sstep(0.32, 0.6, ny));
   }
   function caCol(x, z, h, ny, sz, dd, sx) {   // ground colour (times the grey grit map): the scree and rock in grey-brown, banded with rust and ochre (the
