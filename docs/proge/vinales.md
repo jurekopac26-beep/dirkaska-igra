@@ -2,9 +2,9 @@
 
 [← Vse proge](../../README.md#proge) · proga `vinales` (`js/tracks/vinales.js`, svet `js/world-vinales.js` na podatkovnem graditelju `js/world-gore.js`)
 
-Viñales (Kuba): 0,92 km asfaltne ceste po dolini Viñales, rahlo navzdol, med mogoti (strmimi apnenčastimi stolpi, porasli z gozdom). Proga 17 sklopa kratkih prog (`docs/gorske-proge.md`), namesto Santiaga de Cube (El Morro je na slepi cesti).
+Viñales (Kuba): 1,34 km asfaltne ceste: 110 m po glavni cesti, desni zavoj (~103°) in po dolini Viñales, rahlo navzdol, med mogoti (strmimi apnenčastimi stolpi, porasli z gozdom). Proga 17 sklopa kratkih prog (`docs/gorske-proge.md`), namesto Santiaga de Cube (El Morro je na slepi cesti).
 
-- **Znamenitost**: mogoti, vzhodni masiv od ~28 % do ~67 % dirke 36–43 m od sredine ceste (60–150 m visoko), nižji zahodni od ~55 % do ~88 %; lege in višine iz Copernicus GLO-30. Vse v eni zamenljivi funkciji `mogotes()` v `js/world-vinales.js` (podatki `MOGOTES`, graditelju znana samo prek `S.extra` in `S.clear`): model `.glb` iz `assets/landmarks/` jo lahko zamenja.
+- **Znamenitost**: mogoti, vzhodni masiv od ~47 % do ~88 % dirke 28–45 m od sredine ceste (60–150 m visoko; trije stolpi ~14 m od sredine pri ~51, ~61 in ~68 %), nižji zahodni od ~58 % do ~80 %; prvih ~600 m (glavna cesta in dno doline) je brez mogotov; lege in višine iz Copernicus GLO-30. Vse v eni zamenljivi funkciji `mogotes()` v `js/world-vinales.js` (podatki `MOGOTES`, graditelju znana samo prek `S.extra` in `S.clear`): model `.glb` iz `assets/landmarks/` jo lahko zamenja.
 - **Brez**: stenske poslikave v dolini (umetnina), napisov in imen lokalov.
 
 - **Dirka**, **kronometer**, **promet**, **policija**: kot na Vršiču (štiri vožnje na eni kartici).

@@ -364,10 +364,10 @@
   "jsMs": 1.14
  },
  "vinales": {
-  "calls": 122,
-  "maxCalls": 217,
-  "kverts": 151,
-  "maxKverts": 214,
+  "calls": 121,
+  "maxCalls": 182,
+  "kverts": 133,
+  "maxKverts": 161,
   "jsMs": 1.48
  }
 }

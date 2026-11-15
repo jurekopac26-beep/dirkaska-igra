@@ -13,7 +13,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Viñales',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
     // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[22,23,25],wet:{cs:[26,28,30]},winter:{cs:[26,27,29],wet:{cs:[32,33,36]}}},
+    medals: {cs:[32,33,36],wet:{cs:[37,39,42]},winter:{cs:[36,38,41],wet:{cs:[44,46,50]}}},
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck]
     traffic: { mix: [0.62, 0.18, 0.06, 0.1, 0.04] },
     police: { label: 'POLICE', band: '#16181c', text: '#f4f6f0' }, escTo: 'Do cilja',

@@ -11,9 +11,9 @@
 
   /* ---------------- the mogotes ----------------
      [x, z, r, top]: the towers' centres and radii (metres, the track's flat world: x east, z south from the start) and their tops (metres above the
-     sea), measured from Copernicus GLO-30 along the race: the massif on the east side from ~28 % to ~67 % of the race (its foot 30-45 m from
-     the road's centre; three towers by the road itself, their foot ~14 m from the centre at ~34, ~47 and ~58 %, as the chase camera sees
-     ~25 m to the side), the lower one on the west side from ~55 % to ~88 %. A tower: near-vertical walls of grey limestone streaked dark, with
+     sea), measured from Copernicus GLO-30 along the race: the massif on the east side from ~47 % to ~88 % of the race (its foot 28-45 m from
+     the road's centre; three towers by the road itself, their foot ~14 m from the centre at ~51, ~61 and ~68 %, as the chase camera sees
+     ~25 m to the side), the lower one on the west side from ~58 % to ~80 %; the first 600 m (the main road and the valley floor) have none. A tower: near-vertical walls of grey limestone streaked dark, with
      green on the ledges and a rounded top under forest. */
   const MOGOTES = [[21, -472, 13, 193], [141, -462, 34, 226], [61, -482, 34, 228], [21, -492, 10, 193], [111, -512, 34, 252], [21, -512, 12, 232],
     [51, -542, 34, 252], [141, -562, 34, 285], [2, -549, 15, 248], [91, -592, 34, 272], [1, -582, 12, 243], [31, -612, 34, 254], [-9, -602, 11, 243],
