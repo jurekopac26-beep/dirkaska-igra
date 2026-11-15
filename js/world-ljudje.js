@@ -1794,19 +1794,28 @@
     const onGround = (m) => { for (let p = m; p; p = p.parent) if (p === o.ground) return true; return false; };   // (the ground's own pieces: its mesh may stand a little over groundH)
     o.root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.visible || (m.userData && m.userData.lj) || !m.geometry || !m.geometry.attributes.position || (o.ground && onGround(m))) return; const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox(); const b = g.boundingBox.clone().applyMatrix4(m.matrixWorld); if (b.max.x - b.min.x > 300 && b.max.z - b.min.z > 300) return; solids.push({ m, b }); });   // (not the ground's big pieces: under the rays' reach, and many triangles)
     let near2 = [];
-    const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (rc.intersectObjects(near2, false).length) return false; } return true; };
+    // (the rays only at the meshes whose box in the world they pass through, 1 cm round it: looser than the raycaster's own test of each
+    // mesh's box, so the same hits, without inverting every mesh's matrix for every ray)
+    const RB = [], cast = (list, far) => { const O = rc.ray.origin, D = rc.ray.direction, E = 0.01; RB.length = 0;
+      for (const e of list) { const b = e.b; let t0 = 0, t1 = far + E, ok = true;
+        for (const [o0, d0, lo, hi] of [[O.x, D.x, b.min.x, b.max.x], [O.y, D.y, b.min.y, b.max.y], [O.z, D.z, b.min.z, b.max.z]]) {
+          if (Math.abs(d0) < 1e-12) { if (o0 < lo - E || o0 > hi + E) { ok = false; break; } continue; }
+          const a = (lo - E - o0) / d0, c = (hi + E - o0) / d0; t0 = Math.max(t0, Math.min(a, c)); t1 = Math.min(t1, Math.max(a, c)); if (t0 > t1) { ok = false; break; } }
+        if (ok) RB.push(e.m); }
+      return rc.intersectObjects(RB, false); };
+    const free = (x, z, r) => { for (const [dx, dz] of [[0, 0], [r, r], [r, -r], [-r, r], [-r, -r]]) { const g0 = gr(x + dx, z + dz, 0); rc.set(new THREE.Vector3(x + dx, g0 + 30, z + dz), DOWN); rc.far = 29.65; if (cast(near2, rc.far).length) return false; } return true; };
     for (const f of feet) {
       if (f.fr3.length < 2 || f.bk3.length < 2) continue;
-      near2 = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40)).map(e => e.m);
+      near2 = solids.filter(({ b }) => !(b.max.x < f.bb[0] - 40 || b.min.x > f.bb[1] + 40 || b.max.z < f.bb[2] - 40 || b.min.z > f.bb[3] + 40));
       let nx = 0, nz = 0; for (const e of f.fr3) { nx += e.f[0]; nz += e.f[1]; } const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;   // (towards the road)
       const tx = f.tx, tz = f.tz, B = f.bk3, Fr = f.fr3, len = Math.hypot(Fr[Fr.length - 1].p[0] - Fr[0].p[0], Fr[Fr.length - 1].p[2] - Fr[0].p[2]);
-      const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10); });
+      const near = ms.filter(m => { const bb = m.geometry.boundingBox || (m.geometry.computeBoundingBox(), m.geometry.boundingBox); return !(bb.max.x < f.bb[0] - 10 || bb.min.x > f.bb[1] + 10 || bb.max.z < f.bb[2] - 10 || bb.min.z > f.bb[3] + 10);}).map(m => ({ m, b: m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld) }));
       // the back wall's outer face (a ray from 6 m behind the back row towards the road, under the top tread): how far behind the back row it is
       // (a temporary stand: none (no wall of its own), no rays)
       const offs = []; let hi = 0; if (!temp) for (let k = 0; k < Math.min(8, B.length); k++) { const e = B[Math.round(k * (B.length - 1) / Math.max(1, Math.min(8, B.length) - 1))], g0 = gr(e.p[0], e.p[2], e.p[1] - 3);
         rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, Math.min(e.p[1] - 0.4, g0 + 1.6), e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); rc.far = 6.6;
-        const h = rc.intersectObjects(near, false)[0]; if (h) offs.push(6 - h.distance);
-        if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = rc.intersectObjects(near, false)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
+        const h = cast(near, rc.far)[0]; if (h) offs.push(6 - h.distance);
+        if (h && e.p[1] - 1.2 > g0 + 2.6) { rc.set(new THREE.Vector3(e.p[0] - e.f[0] * 6, e.p[1] - 1.2, e.p[2] - e.f[1] * 6), new THREE.Vector3(e.f[0], 0, e.f[1])); const h2 = cast(near, rc.far)[0]; if (h2 && Math.abs(h2.distance - h.distance) < 0.3) hi++; } }   // (the same face higher up: a wall that stands)
       offs.sort((a, b) => a - b); (f.at || (f.at = {})).wall = [offs.length, hi, Math.min(8, B.length)]; const wall = !temp && offs.length >= Math.min(8, B.length) * 0.6 ? Math.max(0, offs[offs.length >> 1]) : null, wo = (wall != null ? wall : 0.3) + 0.05, clad = wall != null && hi >= 2 && hi >= offs.length * 0.6;
       // its floodlights, lit in the evening and at night (js/render-vecer.js): under a roof's front edge (below), where it has none on masts along its back
       const lampAt = (x, y, z, ax, az, roof) => (o.standLamps || (o.standLamps = [])).push(x, y, z, ax, az, roof);
