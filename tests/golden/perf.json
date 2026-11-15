@@ -362,5 +362,12 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "mombasa": {
+  "calls": 111,
+  "maxCalls": 188,
+  "kverts": 230,
+  "maxKverts": 265,
+  "jsMs": 1.04
  }
 }

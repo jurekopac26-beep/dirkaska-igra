@@ -89,6 +89,11 @@
     }
     const segD = (pts, x, z) => { let bd = 1e9; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], vx = bx - ax, vz = bz - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1), 0, 1); bd = Math.min(bd, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return bd; };
     const fortW = (x, z) => { if (!fort || x < FB[0] || x > FB[1] || z < FB[2] || z > FB[3]) return 0; if (inPoly(fort.pts, x, z)) return 1; return sstep(12, 0, segD(fort.pts, x, z)); };
+    // the view of the fortress from the road: the open ground in front of it (the lawns and the square between the road and the walls) keeps
+    // the buildings and the trees off a 40 m wide corridor from the road's nearest point to the walls
+    let FV = null;
+    if (fort) { let bi = 0, bd = 1e9; for (let i = 0; i < N; i++) { const d = Math.hypot(T.px[i] - FC[0], T.pz[i] - FC[1]); if (d < bd) { bd = d; bi = i; } } FV = [[T.px[bi], T.pz[bi]], FC]; }
+    const inView = (x, z, m) => !!FV && segD(FV, x, z) < 20 + m;
     const inFort = (x, z, m) => !!fort && x > FB[0] + 14 - m && x < FB[1] - 14 + m && z > FB[2] + 14 - m && z < FB[3] - 14 + m && (inPoly(fort.pts, x, z) || segD(fort.pts, x, z) < m);
 
     // ---- the coast: the signed distance to OSM's coastline (+ on the sea: the land lies on the left of each line), the sea's floor under the shore ----
@@ -248,6 +253,7 @@
       }
       const fm = new THREE.Mesh(gF.geometry(), matV); fm.castShadow = fm.receiveShadow = true; fm.matrixAutoUpdate = false; root.add(fm);
       exclPush(FC[0], FC[1], FR + 6); nStone++;
+      { const [[ax, az], [bx, bz]] = FV, n = Math.ceil(Math.hypot(bx - ax, bz - az) / 10); for (let k = 0; k <= n; k++) exclPush(ax + (bx - ax) * k / n, az + (bz - az) * k / n, 20); }   // (the view: no trees, no fill)
       out.fort = fm; out.marks = { Trdnjava: FC.slice() };
       if (World.znamenitost) World.znamenitost.add('mombasa', root, { x: FC[0], z: FC[1], fallback: fm, out });
     }
@@ -264,7 +270,7 @@
       else gable(g, bx, y0 + hh, bz, Lb + 0.6, Wb + 0.6, Math.min(2.4, Wb * 0.22), ang, ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], wc);
     };
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
-      if (inFort(bx, bz, 4)) continue;   // (the fortress's own buildings are its model's)
+      if (inFort(bx, bz, 4) || inView(bx, bz, Math.max(Lb, Wb) / 2)) continue;   // (the fortress's own buildings are its model's; the view of it stays open)
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
       let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
@@ -314,8 +320,8 @@
     }
     let nFans = 0;
     {   // few spectators (fewFans): at the start, under the fortress, at the finish
-      const runs = [[-100, 120, 2, 0.4], [dFin - 90, dFin + 20, 2, 0.35]];
-      const at = { 'Trdnjava': [80, 2, 0.35] };
+      const runs = [[-60, 80, 1, 0.35], [dFin - 60, dFin + 20, 1, 0.3]];   // (one row: the start and the finish are inland, both sides dry)
+      const at = { 'Trdnjava': [50, 1, 0.3] };
       for (const q of T.names) { const a = at[q.n]; if (a) runs.push([q.d - 40, q.d + a[0], a[1], a[2]]); }
       const okSide = (s, side) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 2.5), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; return seaD(x, z) < -3; };
       for (const [a, b, rows, dens] of runs) for (const side of [-1, 1]) {
