@@ -431,7 +431,7 @@
     // (the straight is straight here: a point is projected on the chord between its two ends); none without pits
     P.pad = (x, z, h) => h;
     if (PD && !LK.pitBox) {
-      const a = atS(sAt(PB[0] - 60), 0), b = atS(sAt(PB[1] + 60), 0), sa = sAt(PB[0] - 60);
+      const PP = def.pitPad || PB, a = atS(sAt(PP[0] - 60), 0), b = atS(sAt(PP[1] + 60), 0), sa = sAt(PP[0] - 60);   // (pitPad: where the level ground is, if not under the pit building only)
       const ux = b[0] - a[0], uz = b[1] - a[1], Lp = Math.hypot(ux, uz), tx = ux / Lp, tz = uz / Lp, nx = -tz, nz = tx;
       P.pad = (x, z, h) => { const al = (x - a[0]) * tx + (z - a[1]) * tz, lat = (x - a[0]) * nx + (z - a[1]) * nz;
         if (al < -40 || al > Lp + 40 || lat < 11.5 || lat > 125) return h;
@@ -986,14 +986,15 @@
     const crowdMats = [ownTex(PER ? Tex.crowdPic(['#3a3a3e', '#4d4236', '#6e6352', '#2c3040', '#8a7f6a', '#5c5c60', '#d8d4c8', '#665040', '#3d4a3c', '#9a8c72'], 79) : rbCrowdTex(false)), ownTex(rbCrowdTex(true))], crowdG = [new GB(true), new GB(true)];
     const TC = LK.tier || [[0.7, 0.71, 0.74], [0.58, 0.59, 0.62], [0.62, 0.63, 0.66]], RC = LK.roof || [[0.93, 0.94, 0.95], [0.62, 0.64, 0.68], [0.85, 0.86, 0.88]];   // (the tiers' and the roof's colours: concrete and steel, or the 1930s' timber)
     let nStands = 0;
-    for (const [sa, sb, side, rows, roof, sections, orange, name] of def.stands || []) {
+    for (const [sa, sb, side, rows, roof, sections, orange, name, front] of def.stands || []) {   // (front: the stand's front from the centre line, from its OSM outline: a number, or [at sa, at sb])
+      const frontAt = (d) => Array.isArray(front) ? front[0] + (front[1] - front[0]) * clamp((d - sa) / (sb - sa), 0, 1) : front || 0;
       const dep = 0.95, rise = 0.6, secL = (sb - sa) / sections, gap = sections > 1 ? 3 : 0, cg = crowdG[orange ? 1 : 0];
       for (let sec = 0; sec < sections; sec++) {
         const a = sa + sec * secL + gap / 2, b = sa + (sec + 1) * secL - gap / 2, rows2 = [], st = [];
         // stations every 5 m: the tiers run as straight lines along the stand (the ground at the front, smoothed over +-15 m), the whole
         // profile lifted where the slope behind would come through a tier (that lift smoothed too)
         for (let d = a; d <= b + 0.01; d += Math.min(5, Math.max(1, b - d))) {
-          const s = sAt(d), i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 2.6, g0 = nrGround(...atSf(s, side * f0).slice(0, 2)) + 0.1; let lift = 0;
+          const s = sAt(d), i = T.idx(s), f0 = Math.max((side > 0 ? T.br[i] : T.bl[i]) + 2.6, frontAt(d)), g0 = nrGround(...atSf(s, side * f0).slice(0, 2)) + 0.1; let lift = 0;
           for (let k = 0; k < rows; k++) lift = Math.max(lift, nrGround(...atSf(s, side * (f0 + (k + 1) * dep)).slice(0, 2)) + 0.35 - (g0 + 0.55 + k * rise));
           st.push({ s, f0, g0, lift });
         }
@@ -1054,7 +1055,7 @@
         // near edge of the road (height < 0.88 x offset - 4.4 m); its own mesh, faded out while such a camera is inside it (out.dyn.fade)
         const [wd, wsd] = def.wing, S0 = wd - 45, S1 = wd + 45, nav = [0.11, 0.15, 0.3], red = [0.86, 0.12, 0.16];
         const stl = [0.8, 0.83, 0.87], stl2 = [0.72, 0.75, 0.8], stlD = [0.56, 0.59, 0.64], und = [0.3, 0.33, 0.38], gls = [0.28, 0.4, 0.52], band = [0.9, 0.9, 0.9], flp = [0.1, 0.34, 0.66];
-        const WQ = (d, o, y) => { const s = sAt(d), [x, z] = atSf(s, wsd * o); return [x, hyS(s) + y, z]; }, gRel = (d, o) => { const q = WQ(d, o, 0); return nrGround(q[0], q[2]) - q[1]; };
+        const wsh = def.wing[2] || 0, WQ = (d, o, y) => { const s = sAt(d), [x, z] = atSf(s, wsd * (o + wsh)); return [x, hyS(s) + y, z]; }, gRel = (d, o) => { const q = WQ(d, o, 0); return nrGround(q[0], q[2]) - q[1]; };
         const g = new GB();
         const up = [[23.2, 13.6], [24.5, 14.4], [27, 15.6], [31, 17.2], [36, 19.0], [41, 20.6]], lo = [[23.5, 12.8], [25, 13.2], [27, 14.0], [31, 15.9], [36, 18.1], [41, 20.2]];
         const fU = [[40.2, 22.0], [42.5, 23.2], [45, 24.3], [47.5, 25.0]], fL = [[40.4, 21.6], [42.5, 22.7], [45, 23.9], [47.5, 24.7]];
