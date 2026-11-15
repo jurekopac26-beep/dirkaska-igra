@@ -38,7 +38,7 @@
       const f = f0 < hr ? Math.max(seaL + 0.5 * Math.max(0, f0 - seaL), f0 - (hr - f0) * ex) : f0; h = dd <= 1 ? hr : lerp(hr, f, sstep(1, 42, dd));
       if (dd > 1.5 && f > hr) h = Math.max(h, Math.min(f, hr + 1.7 * (dd - 1.5)));   // (uphill: the road cut into the rock, a steep face behind it)
       else if (dd > 2 && f < hr) h = Math.min(h, Math.max(f, hr - 2.4 * (dd - 2))); }   // (downhill: the cliff under the road, falling steeply to the ground (the model blurs it to a gentle slope))
-    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start
+    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 12, ex = x - p.x, ez = z - p.z, R = p.r + pb + 1; if (ex * ex + ez * ez > R * R) continue; const d = Math.hypot(ex, ez); if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start (the far ones skipped before the root)
     if (i >= 0) h = Math.min(h, n.env);
     if (API.STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     return h;
@@ -227,9 +227,9 @@
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the houses and boulders between the camera and the car fade out)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
-    const excl = [], eh = new Map(), EHC = 32;
-    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
-    const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const excl = [], eh = new Map(), EHC = 32;   // (eh: the 32 m cells' lists by a number, (a + 32768) * 65536 + b + 32768, not a string built at every look-up)
+    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = (a + 32768) * 65536 + b + 32768; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
+    const excluded = (x, z) => { const L = eh.get((Math.floor(x / EHC) + 32768) * 65536 + Math.floor(z / EHC) + 32768); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     stubExcl(exclPush);   // (nothing grows or stands on the side roads)
     for (const S of T.stubs || []) { const H = S.hill, ds = S.Lend / Math.max(1, S.n - 1); if (H) for (let si = 0; si < 2; si++) for (let j = 0; j < S.n; j++) if (H.on[si][j]) {   // (nor on a hill beside one, Track.hill: up to 0.6 m past its soft limit, where the cars drive)
       const sd = si ? 1 : -1, l = H.lim[si][j], u = sd * (T.stubHw(S, j * ds, sd) + S.lim + l / 2); exclPush(S.x[j] - S.tz[j] * u, S.z[j] + S.tx[j] * u, l / 2 + 1.1); } }
