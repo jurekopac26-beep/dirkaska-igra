@@ -15,7 +15,7 @@ const path = require('path');
 const { loadCore, ROOT } = require('./core.js');
 const { DT, seeded } = require('./sim.js');
 
-function goreTrack(id) {
+function goreTrack(id, len = [2450, 3050]) {   // (len: the stage's bounds between the lines, m; the plan's 2.5-3 km, a shorter road its own)
   const C = loadCore();
   let bad = 0, n = 0;
   const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
@@ -32,7 +32,7 @@ function goreTrack(id) {
   check('track: an open road with four ways to drive it (race, time trial, traffic, police), 4 checkpoints, not a round of the big championship',
     def.open && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes(id), `${T.cpS.length} checkpoints`);
   // 2. the stage
-  check('stage: 2.5-3 km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish', T.raceLen > 2450 && T.raceLen < 3050 &&
+  check(`stage: ${(len[0] / 1000).toFixed(2)}-${(len[1] / 1000).toFixed(2)} km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish`, T.raceLen > len[0] && T.raceLen < len[1] &&
     Math.abs(T.altAt(T.hStart) - def.alt[0]) < 1.5 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1.5 && T.startS >= 13 + 21 * 7.5 && T.len - T.finishS >= 100,
     `race ${Math.round(T.raceLen)} m, ${def.alt.join(' -> ')} m, ${Math.round(T.startS)} m below the start, ${Math.round(T.len - T.finishS)} m past the finish`);
   // 3. the data

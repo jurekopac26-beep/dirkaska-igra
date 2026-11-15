@@ -1,5 +1,5 @@
 // Uvoz proge iz OpenStreetMap, višinskega modela in rabe tal (sklop kratkih prog, docs/gorske-proge.md). Podatke proge vzame iz
-// tools/predogled/proge.json (obseg OSM bbox, ime ceste key, odsek sec, slog cfg; dodatno uvoz: { pred, grid, izt, hw, hwG, polmer, naklon }) in
+// tools/predogled/proge.json (obseg OSM bbox, ime ceste key ali seznam id-jev poti OSM, odsek sec, slog cfg; dodatno uvoz: { pred, grid, izt, hw, hwG, polmer, naklon }) in
 // naredi podatke datoteke proge v oblikah, ki jih berejo Vršičevi pomočniki koridorja (vrPrep v js/world-vrsic.js) in podatkovni graditelj
 // js/world-gore.js: sredinsko črto (zglajeno, serpentine odprte na najmanjši polmer, kraki narazen, kot na Irohazaki), višine ob njej
 // (očiščene, omejen naklon, serpentine bolj položne), pas terena (dem), rabo tal (lc: ESA WorldCover in OSM: voda, smučarske proge), podlago
@@ -175,7 +175,8 @@ const isCar = (t) => CAR.has(t.highway) && t.area !== 'yes' && t.access !== 'no'
 // the road of the track: the ways whose name, English name or number holds the key, joined end to end; the longest chain (by its nodes), as
 // tools/predogled/prep.py. Returns its nodes and, per segment, its way
 function chainByKey(O, key) {
-  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key));
+  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && (Array.isArray(key) ? key.includes(String(w.id))   // (key: a list of OSM way ids, where the name won't do)
+    : ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key)));
   if (!sel.length) throw new Error('cesta: ni poti s ključem "' + key + '"');
   const adj = new Map(), add = (n, i) => { const L = adj.get(n) || []; L.push(i); adj.set(n, L); };
   sel.forEach((w, i) => { add(w.nds[0], i); add(w.nds[w.nds.length - 1], i); });
