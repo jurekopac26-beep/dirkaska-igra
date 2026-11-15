@@ -12,7 +12,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 4 | Mombasa | Kenija | stavba | jure.kopac26 | čaka |
 | 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |
 | 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
-| 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva (Laos) | druga: naravna oblika ali zgradba | jure.kopac26 | v izbiri (veja `proge/zamenjava-7`): Kambodža najprej (Kirirom), sicer Laos (kraške skale ob cesti 13 pri Vang Viengu); kandidata še nista preverjena z OSM in DEM |
+| 7 | Phou Hin Boun (bil Bokor) | Laos | druga: kraški stolpi (kamniti gozd) ob razgledišču | jure.kopac26 | v delu (veja `proge/zamenjava-7`, #720): cesta 8 skozi Phou Hin Boun, ~4,5 km vzpona z ovinki, razgledišče ~23 m od ceste pri ~37 % dirke; Kambodža odpade (pri Kiriromu ob cesti samo razvaline rezidence, kip in slap v gozdu) |
 | 8 | El Jem | Tunizija | stavba | biketraveler | čaka |
 | 9 | Portobelo | Panama | stavba | biketraveler | čaka |
 | 10 | *zamenjava* (bila Trongsa, delujoč samostan) | Butan ali rezerva | druga: naravna oblika ali zgradba | biketraveler | izbere seja po resetu |
