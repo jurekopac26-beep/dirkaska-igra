@@ -74,8 +74,9 @@
   }
   function gaGround(x, z) {   // height of the terrain mesh surface (the same two triangles per cell as the tiles)
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 0, G.nx - 1.001), gz = clamp((z - G.z0) / VRC, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;
-    if (u + v <= 1) { const a = gaGH(i, j); return a + u * (gaGH(i + 1, j) - a) + v * (gaGH(i, j + 1) - a); }
-    const d = gaGH(i + 1, j + 1); return d + (1 - u) * (gaGH(i, j + 1) - d) + (1 - v) * (gaGH(i + 1, j) - d);
+    const H = G.h, k = j * G.nx + i;   // (i + 1 <= nx - 1, j + 1 <= nz - 1: the heights read straight from the grid, gaGH only where not yet computed, in the same order)
+    if (u + v <= 1) { let a = H[k]; if (a !== a) a = gaGH(i, j); let b = H[k + 1]; if (b !== b) b = gaGH(i + 1, j); let c = H[k + G.nx]; if (c !== c) c = gaGH(i, j + 1); return a + u * (b - a) + v * (c - a); }
+    let d = H[k + G.nx + 1]; if (d !== d) d = gaGH(i + 1, j + 1); let c = H[k + G.nx]; if (c !== c) c = gaGH(i, j + 1); let b = H[k + 1]; if (b !== b) b = gaGH(i + 1, j); return d + (1 - u) * (c - d) + (1 - v) * (b - d);
   }
   function gaSlope(x, z) { const a = gaGround(x - 2.5, z), b = gaGround(x + 2.5, z), c = gaGround(x, z - 2.5), d = gaGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   function gaCol(x, z, h, ny, dd, up) {   // ground colour (times the grey grit map): the forest floor of grey-brown leaf litter and bark, patches of grass where the canopy
