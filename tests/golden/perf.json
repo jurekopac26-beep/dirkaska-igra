@@ -593,5 +593,12 @@
   "kverts": 218,
   "maxKverts": 259,
   "jsMs": 1.05
+ },
+ "ghoufi": {
+  "calls": 127,
+  "maxCalls": 215,
+  "kverts": 185,
+  "maxKverts": 234,
+  "jsMs": 1.41
  }
 }

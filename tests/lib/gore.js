@@ -1,7 +1,7 @@
 // The checks every short road of docs/gorske-proge.md has (tests/<id>.test.js: const G = goreTrack(id); its own checks with G.check; G.done()):
 // 1. the name: "Kraj, Država" as in the plan's table, the English one too, the side of the road they drive on; an open road with four ways to drive
 //    it (the race, the time trial, the duel in the traffic, the run from the police), four checkpoints, no round of the big championship
-// 2. the stage: 2.5-3 km between the lines (the plan), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
+// 2. the stage: 2.5-3 km between the lines (the plan; a short road to a landmark its own, goreTrack(id, { km })), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
 //    the finish
 // 3. the data of the import (tools/proga-uvoz.mjs): the terrain and the land cover decode to their grids, the bends in order and turning the way
 //    they say, the legs of the hairpins apart and the barriers off the asphalt, the grades, the side roads in order within the road drawn, the lifts
@@ -15,7 +15,8 @@ const path = require('path');
 const { loadCore, ROOT } = require('./core.js');
 const { DT, seeded } = require('./sim.js');
 
-function goreTrack(id, len = [2450, 3050]) {   // (len: the stage's bounds between the lines, m; the plan's 2.5-3 km, a shorter road its own)
+function goreTrack(id, o = {}) {   // (o: { km: [min, max] } or, as the older tests, [min, max] in metres: the stage's bounds between the lines; the plan's 2.5-3 km, a short road to a landmark its own)
+  const len = Array.isArray(o) ? o : o.km ? o.km.map(x => x * 1000) : [2450, 3050];
   const C = loadCore();
   let bad = 0, n = 0;
   const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };

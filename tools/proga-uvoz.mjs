@@ -175,8 +175,9 @@ const isCar = (t) => CAR.has(t.highway) && t.area !== 'yes' && t.access !== 'no'
 // the road of the track: the ways whose name, English name or number holds the key, joined end to end; the longest chain (by its nodes), as
 // tools/predogled/prep.py. Returns its nodes and, per segment, its way
 function chainByKey(O, key) {
-  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && (Array.isArray(key) ? key.includes(String(w.id))   // (key: a list of OSM way ids, where the name won't do)
-    : ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key)));
+  // (a key of way ids, where the name won't do: a list of OSM way ids, or "w4684750,w4209126": those ways, for a road without a name or number)
+  const ids = Array.isArray(key) ? new Set(key.map(String)) : /^w\d+(,w\d+)*$/.test(key) ? new Set(key.split(',').map(x => x.slice(1))) : null;
+  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && (ids ? ids.has(String(w.id)) : ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key)));
   if (!sel.length) throw new Error('cesta: ni poti s ključem "' + key + '"');
   const adj = new Map(), add = (n, i) => { const L = adj.get(n) || []; L.push(i); adj.set(n, L); };
   sel.forEach((w, i) => { add(w.nds[0], i); add(w.nds[w.nds.length - 1], i); });

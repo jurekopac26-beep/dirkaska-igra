@@ -64,6 +64,7 @@ Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Lon
 
 Iz Avstralije ostane Bathurst (zgoraj; izbira uporabnika 9. 11. 2026 med Bathurstom in Great Alpine Road, ki sta bila od 6. 11. 2026 na odločanju); Great Alpine Road je od 9. 11. 2026 testna, prav tako od 6. 11. 2026 Longford, Mount Hotham, Newcastle in Townsville (spodaj).
 - [Ujarrás, Kostarika](docs/proge/ujarras.md)
+- [Ghoufi, Alžirija](docs/proge/ghoufi.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -485,3 +486,4 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Drevesa Luande (višina krošenj, tla pod drevesi): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Zastava Angole v meniju (`assets/flags/angola.svg`): narisana po uradnem opisu zastave (državni simbol, javna domena).
 - Proga Ujarrás (sredinska črta, stranske ceste, razgledišče, parkirišča): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/ujarras.js` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Ghoufi (sredinska črta, reka in sadovnjak oaze): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/ghoufi.js` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

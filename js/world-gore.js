@@ -281,7 +281,7 @@
     const isRun = (x, z) => vrLC(x, z) === 6;   // (a ski run: land cover class 6)
     // the buildings (def.bld [x, z, length, width, angle, height (0: unknown), kind]), clear of the road and the side roads
     const blds = [];
-    for (const b of def.bld || []) { const [x, z, L, W, ang, hgt, kind] = b; if (L < 2.5 || W < 2.5) continue;
+    for (const b of def.bld || []) { const [x, z, L, W, ang, hgt, kind] = b; if (L < 2.5 || W < 2.5 || (S.bldOmit && S.bldOmit(x, z, b))) continue;   // (S.bldOmit: the ones the track builds itself)
       const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
       for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 1.5) || vrStubAt(px, pz, 0.8)) ok = false; }
       if (ok) blds.push({ x, z, L: Math.min(L, 46), W: Math.min(W, 26), ang, hgt, kind, own: !!(S.ownBld && S.ownBld(x, z, L, W)) }); }   // (own: the track's S.extra draws it itself, e.g. a landmark)
@@ -290,6 +290,7 @@
     for (const [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; const i = n.i, s = i * T.ds; if (s < 30 || s > T.len - 30) continue;
       if (blds.some(b => Math.hypot(b.x - x, b.z - z) < Math.max(b.L, b.W) / 2 + r * 0.6)) continue;
       const pad = { x, z, r: Math.max(6, Math.min(r, 22)), b: 12, h: T.hy[i] - 0.25, i }; P.pads.push(pad); pulls.push(pad); }
+    if (S.pads) for (const p of S.pads(T)) P.pads.push(p);   // (the track's own levelled plots {x, z, r, b, h}: a castle's hilltop the surface model has its roofs in)
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the trees and the buildings between the camera and the car fade out)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
@@ -300,6 +301,7 @@
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
     for (const [x, z, r] of S.clear || []) exclPush(x, z, r);   // (S.clear: circles the track's own things keep free of the trees, as Ujarrás's lookout)
     stubExcl(exclPush);
+    if (S.excl) for (const [x, z, r] of S.excl) exclPush(x, z, r);   // (the track's own: no trees where it builds, a castle)
 
     /* ---- terrain tiles (four to a mesh), the lakes (ice in a snowy world) ---- */
     let nFar = 0, nTile = 0;
@@ -653,7 +655,8 @@
     {
       const hard = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k]; if (crSoft.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
       const M = { first: 2.6, gap: 1.05, below: 1.2, maxSlope: 0.55, excluded: hard, sit: SN ? 0 : 0.25, flag: 0.12, keepBar: 1.6 };
-      const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, Object.assign({}, M, o));
+      const FD = S.fans == null ? 1 : S.fans;   // (S.fans: fewer of them, a share of the usual density)
+      const run = (sa, sb, side, o) => crowdRun(CR, Math.max(sa, 8), Math.min(sb, T.len - 8), side, FD === 1 ? Object.assign({}, M, o) : Object.assign({}, M, o, { dens: o.dens * FD, rows: 1 }));
       for (const sd of [-1, 1]) { run(sStart - 60, sStart + 60, sd, { rows: 2, dens: 0.55, label: 'GO start' }); run(sFin - 70, sFin + 12, sd, { rows: 2, dens: 0.55, label: 'GO finish' }); }
       T.cpS.forEach((s0) => { const i = T.idx(s0), side = T.br[i] > T.bl[i] ? 1 : -1; run(s0 - 20, s0 + 16, side, { rows: 2, dens: 0.5, label: 'GO cp' }); });
       for (const [d, , dir, deg] of def.bends || []) if (deg > 100) run(sStart + d - 18, sStart + d + 18, -dir, { rows: 2, dens: 0.4, flag: 0.18, label: 'GO bend' });
