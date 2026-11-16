@@ -267,3 +267,14 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #714. Proga ima v `PROGE` rav
 - Hotel stoji na pravem obrisu iz OSM (`def.hotel`, 22 točk, ~3170 m², z ukrivljenim krilom): rumene stene z okni po nadstropjih, beli pasovi in venec, kamniti podstavek, ravna temna streha, napis brez imena proti jezeru. Brez obrisa ostane prejšnji kvader. Hotel je ~190 m od ceste.
 - `caH` (PR #694) ostane nespremenjen; Oktogon in železnica ostaneta svoja.
 - Obremenitev: 154 klicev in 269 tisoč oglišč, na najbolj obremenjenem mestu 190 / 393 (prej 154 / 190 klicev in 269 / 394 tisoč oglišč).
+
+## S4: Štajerska (veja `realizem/s4-stajerska`, nad #699; 15. 11. 2026)
+
+Odločitev Mateja na tabli #382 (15. 11. 2026). PR #713. Graditelj je skupni `js/world-rbring.js` (Štajerska, Bathurst, Rio, Crystal Palace): spremembe so samo v vnosih Štajerske, vrstni red R()/RX() je enak, reference drugih prog se ne spremenijo.
+- **Hiš ni**: v pasu do 64 m od ceste sta v OSM samo 2 stavbi (ena v paddocku za boksi, ena 62–71 m od ceste), zato ni kompleta stavb in ne vnosa v `PROGE`.
+- **Tribune na obrisih iz OSM** (`def.stands`, 9. polje `front`: sprednji rob od sredine ceste, število ali [na začetku, na koncu]): Start-Ziel 21 m, Steiermark 20 m, tribuna na hribu v treh kosih (43 m; 32 → 24 m; 31 → 50 m), T10 48 → 32 m. Sprednji rob ostane vsaj 2,6 m za ograjo. T3, Nord in T9 v OSM nimajo para blizu ceste in ostanejo kot prej; Mitte (53 → 44 m), Ost (70 → 53 m) in Nord (115 m) stojijo na obrisih iz OSM, čeprav jih kamera za avtom ne vidi (odločitev uporabnika 15. 11. 2026: 1.1 in 2.2).
+- **Krilo** na Start-Ziel se premakne s tribuno (`wing[2]` 6,9 m).
+- **Boksi**: stavba na obrisu iz OSM (`pitBuilding` −165…140, prej krajša); spredaj ostane pri garažah. Ravna tla kompleksa (`pitPad` −235…140) so na začetku enaka kot prej, vozna površina (`pit`) se ne spremeni.
+- **Prehod pred tribunami** (`World.people`, skupni): tlakovan od tribune do ograje, z `def.standApron` največ 6 m (privzeto 14, druge proge enake), naprej trava.
+- Obremenitev: 208 klicev in 495 tisoč oglišč, na najbolj obremenjenem mestu 246 / 666 (prej 215 / 262 klicev in 480 / 669 tisoč oglišč; `tests/golden/perf.json`).
+- `tests/browser/ljudje.test.mjs`: sprehajalec sredi stopnice, višje od 0,3 m (na prehodih tribun so do 0,53 m, tudi prej do 0,47 m), na svoji poti nad stopnico pred njo ni »v zraku«; prej je test uspel samo zato, ker v izbranem trenutku nihče ni bil sredi take stopnice.

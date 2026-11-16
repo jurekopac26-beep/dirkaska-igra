@@ -42,11 +42,11 @@
   "jsMs": 2.01
  },
  "rbring": {
-  "calls": 215,
-  "maxCalls": 262,
-  "kverts": 480,
-  "maxKverts": 669,
-  "jsMs": 1.49
+  "calls": 208,
+  "maxCalls": 246,
+  "kverts": 495,
+  "maxKverts": 666,
+  "jsMs": 2.62
  },
  "suzuka": {
   "calls": 192,

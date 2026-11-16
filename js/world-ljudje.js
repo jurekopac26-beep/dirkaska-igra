@@ -1847,7 +1847,7 @@
       // the strip in front: paved from the stand's front to a metre off the barrier (the vendors' walkway)
       { let prev = null, d = 0;
         for (let k = 0; k < Fr.length; k++) {
-          const e = Fr[k]; let gap = 0; for (let s = 0.5; s <= 14; s += 0.5) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < 1.0) break; gap = s; }
+          const e = Fr[k]; let gap = 0; for (let s = 0.5; s <= (def.standApron || 14); s += 0.5) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < 1.0) break; gap = s; }   // (def.standApron: at most so wide, a stand far behind the barrier)
           if (k) d += Math.hypot(e.p[0] - Fr[k - 1].p[0], e.p[2] - Fr[k - 1].p[2]);
           const cur = gap >= 1.0 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
           if (cur) { cur.i[1] = gr(cur.i[0], cur.i[2], 0) + 0.07; cur.o[1] = gr(cur.o[0], cur.o[2], 0) + 0.07; clear((cur.i[0] + cur.o[0]) / 2, (cur.i[2] + cur.o[2]) / 2, gap / 2 + 1.5); }
