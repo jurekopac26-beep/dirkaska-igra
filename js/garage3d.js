@@ -1829,8 +1829,8 @@ const Garage3D = (function () {
       { const [a, b, c, d] = UV.pan, w = c - a, h = d - b; x.save(); x.translate(a, b); x.beginPath(); x.rect(0, 0, w, h); x.clip();
         const gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#141a36'); gr.addColorStop(1, '#222b52'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
         for (const [o, s, col] of [[-0.05, 0.16, '#e8b53a'], [0.13, 0.05, '#5cc4f2'], [0.2, 0.025, '#e8b53a'], [0.25, 0.012, '#5cc4f2']]) { x.fillStyle = col; x.beginPath(); x.moveTo(w * o, h); x.lineTo(w * (o + s), h); x.lineTo(w * (o + s + 0.42), 0); x.lineTo(w * (o + 0.42), 0); x.closePath(); x.fill(); }
-        x.fillStyle = '#f2f2ee'; x.font = font('italic 900', 20); x.textAlign = 'right'; x.textBaseline = 'alphabetic'; x.fillText('APEX RACING', w - 10, h - 14);
-        x.fillStyle = '#e8b53a'; x.fillRect(w - 118, h - 10, 108, 2);
+        x.fillStyle = '#f2f2ee'; x.font = font('italic 900', 17); x.textAlign = 'right'; x.textBaseline = 'alphabetic'; x.fillText('REAL ROADS ATLAS', w - 10, h - 14);
+        const tw = Math.ceil(x.measureText('REAL ROADS ATLAS').width); x.fillStyle = '#e8b53a'; x.fillRect(w - 10 - tw, h - 10, tw, 2);
         x.restore(); }
       // the pit boards: black, a white border, the place, the gap, the lap (yellow and white)
       for (const [k, l1, l2, l3] of [['pb1', 'P2', '+1.4', 'L12'], ['pb2', 'P5', '-0.3', 'L13']]) { const [a, b, c, d] = UV[k], w = c - a, h = d - b; x.save(); x.translate(a, b);
@@ -2625,9 +2625,9 @@ const Garage3D = (function () {
     g.fillStyle = '#081221'; g.fillRect(0, 0, w, h);
     const bg = g.createLinearGradient(0, 0, w, h); bg.addColorStop(0, 'rgba(40,110,190,0.25)'); bg.addColorStop(1, 'rgba(10,20,40,0)'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
     g.fillStyle = '#d9453a'; g.fillRect(0, 0, 10, h); for (let y = 0; y < h; y += 28) { g.fillStyle = '#f2efe8'; g.fillRect(0, y + 14, 10, 14); }   // (the kerb stripe of the menu)
-    g.fillStyle = '#ffd23f'; g.font = 'italic 900 22px Roboto, Arial, sans-serif'; g.fillText('APEX RACING', 28, 36);
+    g.fillStyle = '#ffd23f'; g.font = 'italic 900 20px Roboto, Arial, sans-serif'; g.fillText('REAL ROADS ATLAS', 28, 36); const nx = 28 + Math.ceil(g.measureText('REAL ROADS ATLAS').width) + 16;
     const tr = (s) => typeof Lang !== 'undefined' ? Lang.tr(s) : s;
-    g.fillStyle = '#a3b2d3'; g.font = 'italic 700 16px Roboto, Arial, sans-serif'; g.fillText(tr('GARAŽA · V ŽIVO'), 190, 36);
+    g.fillStyle = '#a3b2d3'; g.font = 'italic 700 16px Roboto, Arial, sans-serif'; g.fillText(tr('GARAŽA · V ŽIVO'), Math.max(190, nx), 36);
     if (M) {
       const st = Core.upgStats(M, up);
       g.fillStyle = '#ffffff'; g.font = 'italic 900 46px Roboto, Arial, sans-serif'; g.fillText(M.name, 28, 92, 330);
