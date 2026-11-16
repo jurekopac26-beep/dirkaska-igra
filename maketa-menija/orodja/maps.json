@@ -465,5 +465,60 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "mogyorod",
+  "top",
+  "top-mogyorod",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "sindia",
+  "top",
+  "top-sindia",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "yahuarcocha",
+  "top",
+  "top-yahuarcocha",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "houli",
+  "top",
+  "top-houli",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "parnu",
+  "top",
+  "top-parnu",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]

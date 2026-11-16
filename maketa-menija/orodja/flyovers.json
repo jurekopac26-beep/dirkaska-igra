@@ -1155,5 +1155,177 @@
     }
    ]
   }
+ ],
+ [
+  "mogyorod",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Right Hairpin",
+     "d": 610
+    },
+    {
+     "n": "Spring Corner",
+     "d": 1310
+    },
+    {
+     "n": "Blind Left",
+     "d": 1780
+    },
+    {
+     "n": "Chicane",
+     "d": 2370
+    },
+    {
+     "n": "Danube Corner",
+     "d": 2920
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 3770
+    },
+    {
+     "n": "Last Corner",
+     "d": 4040
+    }
+   ],
+   "alt": [
+    236,
+    236
+   ]
+  }
+ ],
+ [
+  "sindia",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left over the Top",
+     "d": 440
+    },
+    {
+     "n": "Fast Esses",
+     "d": 950
+    },
+    {
+     "n": "Baobab Corner",
+     "d": 2320
+    },
+    {
+     "n": "Triple Bend",
+     "d": 2819
+    },
+    {
+     "n": "Right at the Bottom",
+     "d": 3959
+    }
+   ],
+   "alt": [
+    39,
+    39
+   ]
+  }
+ ],
+ [
+  "yahuarcocha",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Long Right",
+     "d": 880
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 2120
+    },
+    {
+     "n": "Lakeside Straight",
+     "d": 2899
+    },
+    {
+     "n": "Lakeside Esses",
+     "d": 3199
+    }
+   ],
+   "alt": [
+    2204,
+    2204
+   ]
+  }
+ ],
+ [
+  "houli",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "First Right",
+     "d": 420
+    },
+    {
+     "n": "South-west Hairpin",
+     "d": 940
+    },
+    {
+     "n": "North Esses",
+     "d": 1540
+    },
+    {
+     "n": "Hotel Chicane",
+     "d": 2030
+    },
+    {
+     "n": "East Hairpin",
+     "d": 2450
+    },
+    {
+     "n": "Infield Esses",
+     "d": 3220
+    }
+   ],
+   "alt": [
+    236,
+    236
+   ]
+  }
+ ],
+ [
+  "parnu",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left Hairpin",
+     "d": 390
+    },
+    {
+     "n": "South Loop",
+     "d": 1180
+    },
+    {
+     "n": "The Twists",
+     "d": 1760
+    },
+    {
+     "n": "North Hairpin",
+     "d": 2160
+    },
+    {
+     "n": "Right-hand Loop",
+     "d": 2769
+    },
+    {
+     "n": "Last Corner",
+     "d": 2989
+    }
+   ],
+   "alt": [
+    4,
+    4
+   ]
+  }
  ]
 ]
