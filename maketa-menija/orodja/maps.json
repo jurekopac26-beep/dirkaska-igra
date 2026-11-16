@@ -710,5 +710,76 @@
    "H": 830,
    "wet": true
   }
+ ],
+ [
+  "kanaba",
+  "top",
+  "top-kanaba",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "koror",
+  "top",
+  "top-koror",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "limalimo",
+  "top",
+  "top-limalimo",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "musandam",
+  "top",
+  "top-musandam",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "quezaltepeque",
+  "top",
+  "top-quezaltepeque",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "savusavu",
+  "top",
+  "top-savusavu",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "sogeri",
+  "top",
+  "top-sogeri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]

@@ -1652,5 +1652,185 @@
     }
    ]
   }
+ ],
+ [
+  "kanaba",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Dip",
+     "d": 880
+    },
+    {
+     "n": "Kanaba Gap · 2,343 m",
+     "d": 2350
+    },
+    {
+     "n": "Hairpin 1",
+     "d": 4350
+    }
+   ],
+   "alt": [
+    2313,
+    2195
+   ]
+  }
+ ],
+ [
+  "koror",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Channel Bridge",
+     "d": 300
+    },
+    {
+     "n": "Lagoon Causeways",
+     "d": 1000
+    },
+    {
+     "n": "Wooded Hill",
+     "d": 2300
+    },
+    {
+     "n": "Koror",
+     "d": 3200
+    }
+   ],
+   "alt": [
+    5,
+    56
+   ]
+  }
+ ],
+ [
+  "limalimo",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Under the Simien Escarpment",
+     "d": 900
+    },
+    {
+     "n": "Hairpin 1 · 1,849 m",
+     "d": 2600
+    },
+    {
+     "n": "Hairpin 3 · 1,901 m",
+     "d": 3227
+    },
+    {
+     "n": "Limalimo · 1,972 m",
+     "d": 4020
+    }
+   ],
+   "alt": [
+    1684,
+    1972
+   ]
+  }
+ ],
+ [
+  "musandam",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hanna · 1 m",
+     "d": 1059
+    },
+    {
+     "n": "The Cliffs · 80 m",
+     "d": 1755
+    },
+    {
+     "n": "Above the Bay · 103 m",
+     "d": 2385
+    },
+    {
+     "n": "Top of the Climb · 194 m",
+     "d": 3500
+    }
+   ],
+   "alt": [
+    9,
+    188
+   ]
+  }
+ ],
+ [
+  "quezaltepeque",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Two Rights",
+     "d": 620
+    },
+    {
+     "n": "Lava Straight",
+     "d": 1580
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 2260
+    },
+    {
+     "n": "Last Hairpin",
+     "d": 2846
+    }
+   ]
+  }
+ ],
+ [
+  "savusavu",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Airfield Plateau",
+     "d": 300
+    },
+    {
+     "n": "Ridge · 78 m",
+     "d": 1615
+    },
+    {
+     "n": "Above Savusavu Bay",
+     "d": 2150
+    }
+   ],
+   "alt": [
+    5,
+    12
+   ]
+  }
+ ],
+ [
+  "sogeri",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Laloki Gorge",
+     "d": 250
+    },
+    {
+     "n": "Hairpin 1",
+     "d": 1399
+    },
+    {
+     "n": "Sogeri Escarpment",
+     "d": 1750
+    }
+   ],
+   "alt": [
+    293,
+    410
+   ]
+  }
  ]
 ]
