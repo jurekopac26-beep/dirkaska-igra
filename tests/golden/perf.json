@@ -362,24 +362,5 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
- },
- "haivan": {
-  "calls": 161,
-  "maxCalls": 188,
-  "kverts": 458,
-  "maxKverts": 577,
-  "jsMs": 2.56
- "batangas": {
-  "calls": 249,
-  "maxCalls": 282,
-  "kverts": 805,
-  "maxKverts": 854,
-  "jsMs": 2.57
- "sogeri": {
-  "calls": 144,
-  "maxCalls": 150,
-  "kverts": 306,
-  "maxKverts": 391,
-  "jsMs": 1.17
  }
 }
