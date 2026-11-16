@@ -8120,14 +8120,14 @@
   }
  },
  "luanda/car/cs": {
-  "digest": "9ab98f0e2c496d3a422f1c53",
+  "digest": "dd3c3a61a4895c3e263e669b",
   "lead": 2607.7,
   "car0": [
-   1080.8,
-   -1083.06
+   1024.5,
+   -1124.84
   ],
   "cover": {
-   "dmg": 1,
+   "dmg": 0.88,
    "loose": 4,
    "rescues": 0,
    "repairs": 0
@@ -8218,16 +8218,16 @@
   }
  },
  "mombasa/car/cs": {
-  "digest": "5e6ee989c806e29df31b205f",
-  "lead": 1865.1,
+  "digest": "f262d43d8a4d1a68f703ce6d",
+  "lead": 1869.2,
   "car0": [
-   1196.44,
-   339.53
+   1170.1,
+   286.67
   ],
   "cover": {
-   "dmg": 0.73,
-   "loose": 12,
-   "rescues": 0,
+   "dmg": 1,
+   "loose": 11,
+   "rescues": 1,
    "repairs": 0
   }
  },

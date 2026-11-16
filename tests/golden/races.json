@@ -4142,12 +4142,12 @@
  "luanda/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 76.74,
+  "winner": 77.06,
   "spins": 0,
-  "walls": 1,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8c40735102e252d82e1820cf"
+  "digest": "9871e7ebabb93c424f004a7d"
  },
  "mombasa/cs": {
   "finished": 13,
@@ -4192,12 +4192,12 @@
  "mombasa/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 94.71,
-  "spins": 1,
-  "walls": 5,
-  "rescues": 1,
+  "winner": 94.65,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
   "nan": false,
-  "digest": "63e430c8297d0d32dde721e8"
+  "digest": "4d877430583d11869d31e95b"
  },
  "isalo/cs": {
   "finished": 13,
@@ -4292,12 +4292,12 @@
  "eljem/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 37.81,
+  "winner": 37.89,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "af2f5c0aac3e85c4438d7718"
+  "digest": "e889508762540ec5be4b35ef"
  },
  "isuna/cs": {
   "finished": 13,
@@ -4348,5 +4348,205 @@
   "rescues": 0,
   "nan": false,
   "digest": "c77ccddf434c49e519ffdc4a"
+ },
+ "ujarras/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 23.96,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5e97c597916c4e828816e589"
+ },
+ "ujarras/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 29.49,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2ac4cf9971d72b09caed599b"
+ },
+ "ujarras/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 21.19,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "a080058a6a7650839a019ab3"
+ },
+ "ujarras/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 21.55,
+  "spins": 0,
+  "walls": 1,
+  "rescues": 0,
+  "nan": false,
+  "digest": "28d272a5712f26ece355fc25"
+ },
+ "ujarras/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 23.98,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "3e54a7cd85a31b8f04b3c1ca"
+ },
+ "ghoufi/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 19.07,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d5a6aa07b22a62a8edcfbcd9"
+ },
+ "ghoufi/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 23.3,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9f06867d129fc6ca45fbd8ec"
+ },
+ "ghoufi/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 16.78,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "bd14959d43e228bdf92e4f2c"
+ },
+ "ghoufi/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 17.05,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d5f02802e7973d482ddfef0c"
+ },
+ "ghoufi/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 19.07,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2609a325b2e8325212ee44b5"
+ },
+ "cusco/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 28.39,
+  "spins": 1,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "5be6b2ae60c3fca18b06a98b"
+ },
+ "cusco/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 34.53,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "f4a5bf3c4e39b114a4e9dc4b"
+ },
+ "cusco/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 24.77,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "b4f4a72010fb71b839ac491a"
+ },
+ "cusco/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 25.1,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "20794190dab0740e3e52c635"
+ },
+ "cusco/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 28.45,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "03906ac739a99c649a03b3b9"
+ },
+ "portobelo/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 62.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "18132f3e060b412d6590865c"
+ },
+ "portobelo/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 73.59,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "9797402a0331a5d906793575"
+ },
+ "portobelo/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 52.06,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "25ea2d1ee2ea34cb309a49c8"
+ },
+ "portobelo/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 53.13,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "ebaa6067388d587c6c718d59"
+ },
+ "portobelo/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 63.22,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "31192f992fcde8bccb78a2ee"
  }
 }

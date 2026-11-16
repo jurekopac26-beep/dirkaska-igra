@@ -2346,5 +2346,25 @@
    "tyremarks:MeshBasicMaterial": "bb1cc883",
    "roadwear:MeshLambertMaterial": "c5f07f46"
   }
+ },
+ "cusco": {
+  "meshes": 203,
+  "verts": 254474,
+  "instances": 1259,
+  "props": 34,
+  "crowd": 140,
+  "world": "de0dfac5",
+  "propsHash": "ccc40cb3",
+  "floor": "53b31916/2576",
+  "groups": {
+   "-:MeshLambertMaterial": "a9154e81",
+   "-:MeshPhongMaterial": "12921d35",
+   "-:MeshBasicMaterial": "109a44c4",
+   "crowd:MeshLambertMaterial": "5875b18c",
+   "flags:MeshLambertMaterial": "fc5bf0eb",
+   "ao:MeshBasicMaterial": "686e59e0",
+   "tyremarks:MeshBasicMaterial": "24043501",
+   "roadwear:MeshLambertMaterial": "1dd83a71"
+  }
  }
 }
