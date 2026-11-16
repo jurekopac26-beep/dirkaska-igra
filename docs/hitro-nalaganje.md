@@ -105,6 +105,8 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 ### Korak 6 · Ostali moduli kasneje
 - Misije (`js/missions.js`, `js/missions/`: 35 datotek, 0,19 MB): ob odprtju misij (`MS.init` ob zagonu samo vmesnik). Zabava (8): ob izbiri načina. Splet (`peerjs`, `net.js`): ob odprtju igre s prijatelji. Zemljevid in prelet menija (`routes.js`, `geo.js`, `journey.js`, `intro-data.js`, 0,22 MB): ob prikazu. `js/napake.js` odide s sklopom 8 orodja za napake (pred Google Play) ali leno.
 - Učinek: −0,5 MB gzip (−2,8 s).
+- **Narejeno** (veja `i17/korak-6`): `<link rel="x-lazy-script" data-lazy="<skupina>-<datoteka>">` v `index.html` (`Leno` iz koraka 4), `lazyJs(skupina, next, fail)` v `js/game.js` naloži vse ključe skupine hkrati z `Leno.load` (`async = false`: vzporedni prenos, izvedba po vrsti). `misije` (35): ob gumbu misij, `?misija=` in pred novo mapo (`nvwater`, `nvride` rabita `MisKit`); `MS` je do takrat nadomestek. `spletna` (`peerjs`, `net.js`): ob zaslonu igre s prijatelji (`openOnline`; dotik pred prihodom počaka). `karte` (`routes.js`, `journey.js`, `intro-data.js`): ob koraku proge v meniju, ki se nariše znova, ko pridejo; dirka iz menija jih počaka v `beforeRace` (prelet).
+- **Ostane ob zagonu**: `geo.js` (0,09 MB; podnebje zvoka dirke, `sfx-okolje.js`, tudi pri hitrem vstopu; leno, ko ga bo nalagalnik proge lahko počakal), Zabava (0,03 MB; `Zabava.modes` rabi meni ob izrisu, načini tečejo v navadnih dirkah) in `napake.js` (0,04 MB; klici v vsaki sliki, lovi napake od začetka; odide s sklopom 8).
 
 ### Korak 7 · Pomanjšanje ob objavi
 - `tools/predogled.mjs` (objava, `.github/workflows/stran.yml`) po žigih pomanjša JS z esbuild (`--minify --keep-names`; imena iz kode rabijo poročila o napakah `v_krogu=[…]`); repozitorij in testi ostanejo nepomanjšani.
@@ -162,6 +164,7 @@ Vsak korak dopiše vrstico (CPU 4×, `node tools/zagon.mjs --cpu 4 --net slow4g 
 |---|---|---|---|
 | 1 (8. 11. 2026, izhodišče) | 16,5–20,5 / 43,2–44,4 / 50,8 s | 6,9–12,2 / 9,2–12,8 s (platno na procesorju 6,7–13,2 / 11,8–14,8 s) | 5,97 MB |
 | 2 in 3 (13. 11. 2026) | 1,4–6,8 / 45,1–48,1 / 47,2 s | 7,7–10,4 / 9,3–9,4 s | 6,36 MB (main je od koraka 1 zrasel) |
+| 6 (15. 11. 2026) | 4,5–7,3 / 41,9–44,7 / 43,5 s | 7,2–12,3 / 7,5–7,6 s | 6,01 MB (−0,35 MB: 194 skript namesto 234; prej na istem stroju 5,1–7,0 / 44,0–46,9 / 45,7 s, 6,6–11,6 / 8,4–8,6 s) |
 
 Koraka 2 in 3: zaslon nalaganja z vrstico napredka je viden takoj (prvi izris ~10 s prej); do menija odloča še prenos skript (zadnja prispe ~37,5 s, koraki 4–6). Hiter vstop gradi samo progo dirke (pri vožnji »svet za naslovnico« je že Bathurst, svet dirke 0,0 s), zato je vožnja ~3,5 s prej; ponovni obisk do vožnje brez nihanja (prej 9,2–12,8 s).
 
