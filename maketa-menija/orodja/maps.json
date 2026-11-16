@@ -737,5 +737,25 @@
    "H": 620,
    "wet": true
   }
+ ],
+ [
+  "gudauri",
+  "top",
+  "top-gudauri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "izoard",
+  "top",
+  "top-izoard",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]

@@ -1832,5 +1832,53 @@
     2416
    ]
   }
+ ],
+ [
+  "gudauri",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1 · 2,012 m",
+     "d": 971
+    },
+    {
+     "n": "Aragvi Valley View",
+     "d": 3250
+    },
+    {
+     "n": "Gudauri",
+     "d": 3800
+    }
+   ],
+   "alt": [
+    1953,
+    2213
+   ]
+  }
+ ],
+ [
+  "izoard",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Ravin d'Izoard",
+     "d": 140
+    },
+    {
+     "n": "Hairpin 9 · 2,117 m",
+     "d": 1889
+    },
+    {
+     "n": "Col d'Izoard · 2,360 m",
+     "d": 4944
+    }
+   ],
+   "alt": [
+    1973,
+    2360
+   ]
+  }
  ]
 ]
