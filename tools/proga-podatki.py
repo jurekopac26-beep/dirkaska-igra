@@ -121,7 +121,7 @@ def step_route(raw):
     osm = os.path.join(raw, C['id'] + '-osm.json'); D = json.load(open(osm)); N, W = D['nodes'], D['ways']
     G, byname = {}, {}
     for wid, (refs, t) in W.items():
-        if (t.get('highway') not in DRIVE and t.get('highway') not in C.get('driveExtra', ())) | set(C.get('drive', [])) or t.get('area') == 'yes': continue
+        if (t.get('highway') not in DRIVE | set(C.get('drive', [])) and t.get('highway') not in C.get('driveExtra', ())) or t.get('area') == 'yes': continue
         nm = t.get('name', ''); f = 1.0 if nm in C['prefer'] else 4.0
         refs = [r for r in refs if r in N]
         for a, b in zip(refs, refs[1:]):
