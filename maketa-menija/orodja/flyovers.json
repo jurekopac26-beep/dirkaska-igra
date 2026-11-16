@@ -1641,6 +1641,30 @@
   }
  ],
  [
+  "killar",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Killar",
+     "d": 10
+    },
+    {
+     "n": "Chenab River",
+     "d": 900
+    },
+    {
+     "n": "Hangrung Nala",
+     "d": 4036
+    }
+   ],
+   "alt": [
+    2402,
+    2412
+   ]
+  }
+ ],
+ [
   "hakone",
   {
    "kbps": 450,
