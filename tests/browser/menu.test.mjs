@@ -1596,7 +1596,7 @@ try {
         return { id, lap: +(run.t - go).toFixed(2), best: +best.toFixed(2), n, head: w[n] > 0, last: w[n - 1] > 0, mid: w[Math.floor(n / 2)], narrow: w.some(x => x > 0 && x < w[n]) };`, mo);
       T.check(`a track with only its map (${mo}): the point at the flyovers' even pace, at the finish straight on into a new lap (${mp.lap} s into it); its trail round the start line, narrowing, not over the whole lap`,
         mp.lap > 0.4 && mp.best < 2.5 && mp.head && mp.last && mp.mid === 0 && mp.narrow, JSON.stringify(mp));
-    }
+    } else console.log('  skip: a track with only its map (every real circuit has its flyover)');
     T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
