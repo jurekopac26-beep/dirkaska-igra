@@ -50,7 +50,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Svetovna lestvica (`docs/svetovna-lestvica.md`), seje 1–6 | jure.kopac26 | po tedenskem načrtu; za izid 1. 2. 2027 |
 | Zima na severu: Silkeborg, Kågeröd (po N1 #485) | po načrtu 9. 11. | ko je N1 na `main` |
 | Prvi zagon z angleškim menijem (I2), samo preizkus | jure.kopac26 | po tedenskem načrtu |
-| Samsungov temni način: meni in vmesnik enaka kot brez njega; Fable 5.2 (prej #98, #242) | biketraveler ali jure.kopac26 | biketraveler, če je pred nedeljo >5 točk pod ciljem; sicer jure.kopac26 15. 11. |
 | Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
 | Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
 | **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
@@ -81,6 +80,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 10.10 | #650 | Kamera in meni (brez »Super blizu«): pokonci kamera za avtom bližje, ležeča izbira proge (vrstica in *Race!* na dnu, *Back* velik kot *Race!*), gorske proge ležeče kot pokonci, avto ob menjavi proge miruje; mesto 3 načrta 11. 11. | jure.kopac26 | uporabnik »ok« na predogledu 11. 11. 2026 ob ~12.30 (»Kamera sem stestiral je ok«, prek Mateja); svež `main` spojen 11. 11. (spor samo v `docs/igra.md`); vodi koordinacija jure.kopac26; ob spoju #246 (preleti v `js/menu.js`) preveri prekrivanje |
 | 9.9 | veja `pravila/12-11` (#664) | pravila 12. 11.: ukrepi 1–4, Trki samo Fable 5.2, teme »Načrtovano« | jure.kopac26 | osnutek |
 | 10.11 | #569 Zbirna N1–N7 + #494 Proge | 29 pravih prog; popravi se samo, kar ovira `main`; na `main` ~15.–16. 11. po meniju; oznake `test`/`pending` kot na `main` | jure.kopac26 | **pripravljen 13. 11.** (povezani testi lokalno zeleni); predaja v opisu #569; do `main` ga vodi Združevanje (jure.kopac26) |
 | 13a–13r | #485, #498, #500, #550, #556, #564, #576, #582, #588, #592, #603, #607 (N1–N8), #283, #261, #153, #465 (#494) | nove proge, vse v #569 oz. #494 | partyslo, jure.kopac26 | osnutki se zaprejo; podrobnosti v arhivu |
