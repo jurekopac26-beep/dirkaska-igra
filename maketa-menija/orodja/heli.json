@@ -212,5 +212,17 @@
  },
  "savusavu": {
   "sea": true
+ },
+ "kotor": {
+  "sea": true
+ },
+ "llogara": {
+  "sea": true
+ },
+ "lombok": {
+  "sea": true
+ },
+ "lusail": {
+  "sea": true
  }
 }

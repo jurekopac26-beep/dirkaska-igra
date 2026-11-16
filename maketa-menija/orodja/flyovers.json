@@ -1142,6 +1142,10 @@
      "n": "North Hairpin",
      "d": 853
     }
+   ],
+   "alt": [
+    89,
+    89
    ]
   }
  ],
@@ -1830,6 +1834,154 @@
    "alt": [
     293,
     410
+   ]
+  }
+ ],
+ [
+  "kagerod",
+  {
+   "alt": [
+    83,
+    83
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Long Right",
+     "d": 760
+    },
+    {
+     "n": "Hilltop Hairpin",
+     "d": 1206
+    },
+    {
+     "n": "Forest Corner",
+     "d": 1650
+    }
+   ]
+  }
+ ],
+ [
+  "kotor",
+  {
+   "alt": [
+    599,
+    839
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1 · 618 m",
+     "d": 203
+    },
+    {
+     "n": "Hairpin 7 · 709 m",
+     "d": 2099
+    },
+    {
+     "n": "Above the Bay of Kotor · 862 m",
+     "d": 4984
+    }
+   ]
+  }
+ ],
+ [
+  "llogara",
+  {
+   "alt": [
+    897,
+    899
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 3 · 933 m",
+     "d": 449
+    },
+    {
+     "n": "Llogara Pass · 1,027 m",
+     "d": 1720
+    },
+    {
+     "n": "Paragliders' Launch · 905 m",
+     "d": 3990
+    }
+   ]
+  }
+ ],
+ [
+  "lombok",
+  {
+   "alt": [
+    11,
+    11
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Double Left",
+     "d": 794
+    },
+    {
+     "n": "Straight to the Sea",
+     "d": 1960
+    },
+    {
+     "n": "Long Right",
+     "d": 3561
+    }
+   ]
+  }
+ ],
+ [
+  "lusail",
+  {
+   "alt": [
+    12,
+    12
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Fast Right Kink",
+     "d": 1046
+    },
+    {
+     "n": "Hairpin",
+     "d": 1916
+    },
+    {
+     "n": "Long Left",
+     "d": 3120
+    },
+    {
+     "n": "Last Right",
+     "d": 4700
+    }
+   ]
+  }
+ ],
+ [
+  "medeu",
+  {
+   "alt": [
+    1669,
+    1960
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Medeu · 1,682 m",
+     "d": 221
+    },
+    {
+     "n": "Medeu Dam",
+     "d": 2650
+    },
+    {
+     "n": "Kishi Almaty Gorge · 1,966 m",
+     "d": 4990
+    }
    ]
   }
  ]
