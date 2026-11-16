@@ -88,6 +88,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     // flare), the front doors with their glass, the bumpers, the mirrors
     look: {
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver, the tyres in 64)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
       body: { len: 4.4, wid: 1.95,
         //       x      w      yb    ybelt  wt     yt     cr     kind  tuck
         secs: [[-2.17, 0.9, 0.24, 0.84, 0.8, 0.975, 0.01, 'b', 0.1],      // the tail's face: the lamps along its top, the bumper under them
@@ -266,12 +267,22 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.part('body', () => K.deli('antena', () => { const y0 = L.topY(-0.8, 0.3); K.box(-0.8, y0 - 0.004, 0.3, 0.04, 0.02, 0.02, 0, B, null, false, { part: 'body' }); K.bar([-0.8, y0 + 0.012, 0.3], [-1.1, y0 + 0.28, 0.3], 0.0035, B, { n: 4, part: 'body' }); }));   // (the garage's aerials in its place: mounts.antena)
           K.driver(-0.5, 1.03, -0.3, { inner: true, r: 0.12, lean: 0.35, hands: [0.18, 0.86, 0.15], feet: [0.55, 0.22, 0.11], suit: [0.14, 0.16, 0.2], helmet: [0.93, 0.93, 0.9] });
         } else { K.deli('zamasek', () => {}); K.part('body', () => K.deli('antena', () => {})); }   // (Normalni: no stock filler or aerial; the garage's in their place)
-        // ---- inside (seen once a part is off): the bucket seat, the dashboard and the wheel, the roll cage, the extinguisher; the
-        //      transverse four in the bay ----
-        K.seat(-0.42, 0.36, -0.3, { w: 0.5, l: 0.48, back: 0.78, tilt: 0.24 });
-        K.box(0.5, 0.6, 0, 0.3, 0.24, 1.5, 0, D, null, false, { inner: true, part: 'body' });
-        K.cyl([0.24, 0.84, -0.3], [0.2, 0.86, -0.3], 0.17, B, { n: 8, inner: true, part: 'body' });
-        K.cyl([-0.2, 0.2, 0.42], [0.25, 0.2, 0.42], 0.07, RD, { n: 6, inner: true, part: 'body' });
+        // ---- inside (the inner block: seen once a door opens, a pane breaks or a part is off; K.cab's pieces, docs/avti-kolibri.md): the
+        //      bare floor and the firewall, the tunnel, the race dashboard and its wheel (left-hand drive), one shell bucket with its
+        //      harness, the sequential lever, the pedals, the bare door cards, the extinguisher on the floor; the roll cage, the transverse
+        //      four in the bay ----
+        { const C = K.cab, IN = C.IN, SZ = -0.3, FL = [0.08, 0.08, 0.085], SH = [0.08, 0.08, 0.09], SC = [0.15, 0.15, 0.16];
+          C.face([[-1.1, 0.2, -0.82], [0.77, 0.2, -0.82], [0.77, 0.2, 0.82], [-1.1, 0.2, 0.82]], FL, [0, 1, 0]);                   // the floor
+          C.face([[0.77, 0.2, -0.82], [0.77, 0.2, 0.82], [0.77, 0.84, 0.82], [0.77, 0.84, -0.82]], FL, [-1, 0, 0]);                // the firewall
+          K.box(0.05, 0.2, 0, 1.2, 0.17, 0.24, 0, C.PL2, C.PL, true, IN);                                                             // the tunnel
+          C.dash({ x: 0.48, y: 0.82, d: 0.34, w: 0.7, dz: SZ, col: [0.09, 0.09, 0.1], col2: [0.15, 0.15, 0.16], style: 'race' });
+          C.steer({ c: [0.22, 0.85, SZ], ax: [0.75, -0.66], r: 0.165, rr: 0.017, to: [0.44, 0.72, SZ] });
+          K.box(-0.42, 0.2, SZ, 0.4, 0.16, 0.38, 0, C.PL, null, true, IN);                                                             // the seat's rails
+          C.seat(-0.42, 0.36, SZ, { w: 0.5, top: 0.72, lean: 0.34, shell: true, belt: 'harness', col: SH, col2: SC, strap: RD });
+          C.console(0.1, 0.37, { l: 0.3, seq: true, brake: false });
+          C.pedals(0.6, 0.23, SZ, 3);
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.56, 0.73], y: [0.32, 0.84], z: 0.86, insert: SC, crank: false, speaker: false, strap: RD });
+          K.cyl([-0.2, 0.27, 0.42], [0.25, 0.27, 0.42], 0.07, RD, { n: 6, inner: true, part: 'body' }); }   // (the extinguisher)
         const cg = [0.75, 0.76, 0.78];
         K.cage([
           [[-0.66, 0.16, -0.8], [-0.66, 1.22, -0.6]], [[-0.66, 0.16, 0.8], [-0.66, 1.22, 0.6]], [[-0.66, 1.22, -0.6], [-0.66, 1.22, 0.6]],

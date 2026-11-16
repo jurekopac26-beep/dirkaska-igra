@@ -8233,7 +8233,8 @@ const Render = (function () {
     const colAt = (A, x) => { const f = (x - gx0) / gs - 0.5; if (f <= 0) return A[0]; if (f >= NX - 1) return A[NX - 1]; const i = Math.floor(f); return A[i] + (A[i + 1] - A[i]) * (f - i); };
     let Lmax = 0; for (let i = 0; i < NX; i++) { const x = gx0 + (i + 0.5) * gs; if (x >= C.x0 && x <= C.x1) Lmax = Math.max(Lmax, Ls[i]); }
     // 6. a point's weight: the footprint's fade along it (over fl), at its sides (only what sticks out), up from the band's foot
-    const fl = Math.max(0.15, 0.6 * Lmax), xf = (x) => Math.max(0, 1 - Math.max(C.x0 - x, x - C.x1, 0) / fl), zf = (z) => clamp(1 - (Math.abs(z) - C.z - 0.25) / 0.1, 0, 1);
+    // (a cab-over truck's (XT_CAB: Titan, Cisterna, the cab's rear wall right behind the footprint): the fade no wider than 15 cm; the other caged cars' as before)
+    const fl = XT_CAB.has(M.id) && K ? 0.15 : Math.max(0.15, 0.6 * Lmax), xf = (x) => Math.max(0, 1 - Math.max(C.x0 - x, x - C.x1, 0) / fl), zf = (z) => clamp(1 - (Math.abs(z) - C.z - 0.25) / 0.1, 0, 1);
     const Wf = (x, y, z) => { const a = xf(x) * zf(z); if (!(a > 0)) return 0; const b = colAt(bc, x); return a * Math.pow(clamp((y - b) / (colAt(crown, x) - b), 0, 1), 1.25); };
     // the roof's triangle over a point (x, z) as built (the up-facing shell's that holds it in plan: a coarse panel's sliver whose box only
     // covers the cell never counts) and the point's place in it (bl); dir 1: the lowest at or over y (what a post's top, a cage stands
@@ -9077,7 +9078,7 @@ const Render = (function () {
      A hit from behind also dents the rear bumper in a V (some 10 cm in its middle on a light one, creased) with the tailgate's foot, and
      bends the spoiler down in its middle (xPush: xc.vr). The table's wheels are the core's (it decides when one comes off). A picture is
      drawn one pane a frame (a rival's: one over all of them), the player's car never waiting on a rival's */
-  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter']);   // (the cars being reworked: the table theirs first, the others later)
+  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris']);   // (the cars being reworked: the table theirs first, the others later)
   const xTab = (c) => !!(XC.glass || XC.body) && !!c && !!c.m && XT_CARS.has(c.m.id) && !!c.m.kit;
   const XT_ST = [0, 0.5, 0.7, 0.75, 1], XT_KEYS = ['W', 'R', 'DL', 'DR', 'QL', 'QR'];
   const XT_ROWS = {
@@ -9100,7 +9101,8 @@ const Render = (function () {
   })();
   // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
   // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
-  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
+  const XT_CAB = new Set(['titan', 'cisterna']);   // (the cab-over trucks: xRoofBuild's narrow fade)
+  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris', 'lev']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
     const sd = w < 0 ? 'L' : 'R';
