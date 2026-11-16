@@ -302,5 +302,18 @@
    242.5,
    61.1
   ]
+ },
+ "aguascalientes": {
+  "s": 1004,
+  "o": "Najostrejši zavoj ovala (pred tribuno ob zavoju)",
+  "cam": [
+   -153,
+   39.6,
+   -231.6,
+   -85.8,
+   0.5,
+   -298.8,
+   40.6
+  ]
  }
 }

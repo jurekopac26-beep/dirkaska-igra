@@ -213,6 +213,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
+| aguascalientes | Aguascalientes, Mehika | aguascalientes | `js/world-rbring.js` (`buildRbring`) in `js/world-aguascalientes.js` (videz v `RB_LOOK` prek `API.rbLook`: napisi krajev, zastavica `mx`, suha trava `colMod`; obzorje `def.far` prek `API.rsFar` iz `js/world-riverside.js` v ovoju `World.ext.aguascalientes`) |
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
