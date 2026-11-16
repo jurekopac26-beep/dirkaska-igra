@@ -678,7 +678,7 @@ try {
     await page.click('.thead .globe'); await zem(page, 1);
     // (a pin on top at its own place, Bâlea's if it is: from afar a country's name can lie over a pin and take the tap, as Albania's over Bâlea's since the new tracks, 11. 11. 2026;
     // its country's one track: two steps, else three)
-    const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(), one = [...MenuZemlja._R().C.values()].some(c => c.ids.length === 1 && c.ids[0] === p.dataset.t); return [r.left, r.top, p.dataset.t, one ? 2 : 3];');
+    const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(), tp = Core.TRACKS.find(d => d.id === p.dataset.t), k = tp.country || tp.name, one = Core.TRACKS.filter(d => !d.test && d.lat != null && d.lon != null && (d.country || d.name) === k).length === 1; return [r.left, r.top, p.dataset.t, one ? 2 : 3];');
     await page.mouse.click(pin[0], pin[1]); await zem(page, pin[3]);
     const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
