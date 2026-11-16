@@ -59,8 +59,8 @@
   "calls": 154,
   "maxCalls": 190,
   "kverts": 269,
-  "maxKverts": 394,
-  "jsMs": 1.03
+  "maxKverts": 393,
+  "jsMs": 1.5
  },
  "katu": {
   "calls": 143,
@@ -73,8 +73,8 @@
   "calls": 172,
   "maxCalls": 204,
   "kverts": 487,
-  "maxKverts": 698,
-  "jsMs": 0.4
+  "maxKverts": 697,
+  "jsMs": 0.29
  },
  "bathurst": {
   "calls": 167,
@@ -84,11 +84,11 @@
   "jsMs": 1.19
  },
  "chapman": {
-  "calls": 141,
-  "maxCalls": 147,
-  "kverts": 419,
-  "maxKverts": 487,
-  "jsMs": 1.47
+  "calls": 140,
+  "maxCalls": 145,
+  "kverts": 410,
+  "maxKverts": 478,
+  "jsMs": 1.1
  },
  "bigsur": {
   "calls": 138,
@@ -140,11 +140,11 @@
   "jsMs": 1.74
  },
  "rastro": {
-  "calls": 156,
-  "maxCalls": 172,
+  "calls": 155,
+  "maxCalls": 171,
   "kverts": 343,
   "maxKverts": 476,
-  "jsMs": 1.17
+  "jsMs": 1.12
  },
  "moki": {
   "calls": 129,
@@ -276,8 +276,8 @@
   "calls": 183,
   "maxCalls": 237,
   "kverts": 667,
-  "maxKverts": 785,
-  "jsMs": 1.11
+  "maxKverts": 784,
+  "jsMs": 0.88
  },
  "troisrivieres": {
   "calls": 211,
@@ -289,9 +289,9 @@
  "livorno": {
   "calls": 141,
   "maxCalls": 173,
-  "kverts": 288,
-  "maxKverts": 351,
-  "jsMs": 3.1
+  "kverts": 289,
+  "maxKverts": 352,
+  "jsMs": 3.48
  },
  "jezero": {
   "calls": 172,
@@ -376,5 +376,61 @@
   "kverts": 384,
   "maxKverts": 482,
   "jsMs": 1.13
+ },
+ "quezaltepeque": {
+  "calls": 228,
+  "maxCalls": 257,
+  "kverts": 609,
+  "maxKverts": 720,
+  "jsMs": 1.18
+ },
+ "aguascalientes": {
+  "calls": 182,
+  "maxCalls": 208,
+  "kverts": 349,
+  "maxKverts": 506,
+  "jsMs": 0.98
+ },
+ "koli": {
+  "calls": 159,
+  "maxCalls": 265,
+  "kverts": 496,
+  "maxKverts": 593,
+  "jsMs": 0.89
+ },
+ "kanaba": {
+  "calls": 172,
+  "maxCalls": 218,
+  "kverts": 444,
+  "maxKverts": 590,
+  "jsMs": 1.31
+ },
+ "canaries": {
+  "calls": 181,
+  "maxCalls": 192,
+  "kverts": 599,
+  "maxKverts": 703,
+  "jsMs": 1.16
+ },
+ "koror": {
+  "calls": 142,
+  "maxCalls": 164,
+  "kverts": 349,
+  "maxKverts": 553,
+  "jsMs": 1.19
+ },
+ "batangas": {
+  "calls": 242,
+  "maxCalls": 281,
+  "kverts": 804,
+  "maxKverts": 850,
+  "jsMs": 1.16
+ },
+ "sogeri": {
+  "calls": 144,
+  "maxCalls": 150,
+  "kverts": 306,
+  "maxKverts": 391,
+  "jsMs": 1.07
  }
 }
