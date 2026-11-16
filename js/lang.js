@@ -452,7 +452,7 @@
     'Nad zalivom Lăng Cô': 'Above Lăng Cô Bay', 'Serpentina': 'Hairpin', 'Đỉnh đèo Hải Vân': 'Hải Vân summit', 'Do sedla': 'To the saddle',   // (Hải Vân)
     'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)
     'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau',   // (Sogeri: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
-    'Greben': 'Ridge', 'Dolina': 'Valley', 'Serpentina': 'Hairpin',   // (Canaries: the HUD; the heights by the rules of Lang.place)
+    'Greben': 'Ridge', 'Dolina': 'Valley',   // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
@@ -465,7 +465,7 @@
     'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Prvi levi': 'Turn One', 'Drugi levi': 'Turn Two', 'Tretji levi': 'Turn Three', 'Četrti levi': 'Turn Four', 'Lomljena ravnina': 'Dogleg Straight',   // (Aguascalientes; Zadnja ravnina is in the dictionary already)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
-    'Desni na koncu ravnine': 'Right at the End of the Straight', 'Ostri levi': 'Tight Left', 'Desni za ostrim levim': 'Right after the Tight Left', 'Trije levi': 'Three Lefts', 'Ravnina proti zahodu': 'West Straight', 'Zahodni ostri desni': 'West Hairpin', 'Desni za šikano': 'Right after the Chicane', 'Ciljna ravnina': 'Main Straight',   // (Batangas)
+ 'Ostri levi': 'Tight Left', 'Desni za ostrim levim': 'Right after the Tight Left', 'Trije levi': 'Three Lefts', 'Ravnina proti zahodu': 'West Straight', 'Zahodni ostri desni': 'West Hairpin', 'Desni za šikano': 'Right after the Chicane',   // (Batangas)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',
