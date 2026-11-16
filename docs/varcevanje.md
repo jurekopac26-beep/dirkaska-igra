@@ -117,7 +117,7 @@ Odločitev uporabnika 15. 11. 2026 ob ~10.08 (v pogovoru z Matejem, dobesedno): 
 | biketraveler | pon 0.00 | ned 0.00 | sob ~19.00 | partyslo (ned 0.00 – 10.00), nato jure.kopac26 (ned 10.00 – pon 0.00) |
 | croatiadata | ned 22.59 | sob 22.59 | sob ~18.00 | partyslo (sob 22.59 – ned 10.00), nato jure.kopac26 (ned 10.00 – 22.59) |
 
-- **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija zažene eno sejo s kodo več (največ 2 hkrati, `CLAUDE.md`, razdelek Seje). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
+- **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija dodaja seje s kodo, dokler račun ne pride v pas (največ 10 hkrati, `CLAUDE.md`, razdelek Seje; najprej seje, ki vodijo končano delo do `main`). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
 - **Predaja:** ob uri v stolpcu Predaja vsaka seja računa napiše predajo v opis svojega PR in se ustavi; končane PR drug račun vodi na `main` (`CLAUDE.md`, »Tabla med računi«, in `docs/vrsta.md`, »Prevzem zdaj«). Koordinacija računa v luknji ne zaganja novih sej.
 - **Dnevno stanje na tabli:** porabo zapiši kot »<račun>: X % (cilj Y %)«. Odstotek računa objavi Matej ali uporabnik; če ga koordinacija ne pozna, napiše »ne poznam«.
 - **V repozitorij ne spadajo** trenutni odstotki in dnevni cilji: spreminjajo se, objavljajo jih Matej in koordinacije na tabli. Ostane samo pravilo in tabela zgoraj.
