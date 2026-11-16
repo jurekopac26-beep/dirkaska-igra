@@ -31,13 +31,23 @@
      class (ESA WorldCover 2021 v200, 10 m; © ESA WorldCover project, CC BY 4.0) and its median colour in the Sentinel-2 annual cloudless
      mosaic of the same year (Copernicus Sentinel-2 data, modified, the WorldCover composite; stored as 255 · reflectance^(1/2.2)).
      lat, lon: the track's frame (its x = 0, z = 0) where the tool put it (Spa: def.lc's forest laid on WorldCover's trees, correlation 0.69;
-     Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift).
-     drevesa: the track's own kinds where its builder draws others than its climate's kit (the Serra Geral's cloud forest and araucarias). */
+     Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift; Chapman's Peak: the frame of js/geo.js as it is,
+     def.lc's class the same as WorldCover's in 92.6 % of the band's cells, in fewer with any shift).
+     drevesa: the track's own kinds where its builder draws others than its climate's kit (the Serra Geral's cloud forest and araucarias).
+     grmovje, golo, voda: WorldCover's shrubs, bare ground and water, where the band has them. odprto (a colour only): the grass and the shrubs
+     together, the one class a builder's land cover has for both (Chapman's Peak's fynbos).
+     trave: the grass among that open land (grass / (grass + shrubs)) by the section of `odsek` metres from the start line, left and right of
+     the road (the builder's side 0 and 1), a digit 0–9 for 0–100 %, '-' where under a tenth of the section's band is open land. */
   const MERITVE = {
     spa: { podnebje: 'Cfb', lat: 50.44406, lon: 5.965126, delez: { drevesa: 0.337, trava: 0.093, pozidano: 0.570 },
       barva: { drevesa: 0x393e34, trava: 0x4c5143, pozidano: 0x5d5951 } },
     rastro: { podnebje: 'Cfb', lat: -28.395383, lon: -49.543494, delez: { drevesa: 0.653, trava: 0.311, pozidano: 0.036 },
       barva: { drevesa: 0x333c2f, trava: 0x464638, pozidano: 0x5a574c }, drevesa: ['listavec', 'aravkarija', 'palma', 'drevesna praprot', 'bambus'] },
+    chapman: { podnebje: 'Csb', lat: -34.048739, lon: 18.361913, delez: { drevesa: 0.324, grmovje: 0.314, trava: 0.328, pozidano: 0.028, golo: 0.003, voda: 0.004 },
+      barva: { drevesa: 0x373b27, grmovje: 0x434031, trava: 0x474532, odprto: 0x454232, pozidano: 0x5e5b4e, golo: 0x6f685e },
+      drevesa: ['pinija', 'fynbos', 'protea', 'resa', 'restio'], odsek: 49.84,
+      trave: ['---78--199998799997737899999999998989--026--6--835000-9999966454500044000136327001132000000000000035',
+        '21-779999998013983075799869897----9-----2----7--4613-20288-424839----2549659644464785013000000000019'] },
   };
   const aktivna = (def) => prava(def) && !!MERITVE[def.id];
 
@@ -95,14 +105,16 @@
      multipliers alone and puts them in its vertex colours where plants grow (still no draw call and no vertex more).
      tla: the ground's multiplier (o: barvaTrave's options, asked while the builder's colours are still the game's own).
      listje: the leaves' multiplier, from the unit trees' green vertices (g > r: the leaves, not the bark) by their instances' colours, and
-     those vertices multiplied by it in place (before addTo; the unit trees are the build's own, so nothing carries to the next build). */
-  function tla(def, o, moc) {
+     those vertices multiplied by it in place (before addTo; the unit trees are the build's own, so nothing carries to the next build).
+     kljuc: the measured class whose colour they take (tla: 'trava', listje: 'drevesa' unless given; a track with shrubs measured apart
+     asks for each of its plants' classes on its own). */
+  function tla(def, o, moc, kljuc) {
     if (!aktivna(def)) return null;
-    const g = barvaTrave(o);
-    return g ? mnozilnik(g, hex3(MERITVE[def.id].barva.trava), moc == null ? MOC : moc) : null;
+    const g = barvaTrave(o), c = MERITVE[def.id].barva[kljuc || 'trava'];
+    return g && c != null ? mnozilnik(g, hex3(c), moc == null ? MOC : moc) : null;
   }
-  function listje(def, chunks, moc) {
-    if (!aktivna(def)) return null;
+  function listje(def, chunks, moc, kljuc) {
+    if (!aktivna(def) || MERITVE[def.id].barva[kljuc || 'drevesa'] == null) return null;
     const s = [0, 0, 0]; let n = 0;
     for (const ic of chunks) {
       const ca = ic.base.attributes.color; if (!ca) continue;
@@ -112,7 +124,7 @@
       for (const L of ic.map.values()) for (let k = 0; k < L.length; k += 9) { s[0] += g[0] / nv * L[k + 6]; s[1] += g[1] / nv * L[k + 7]; s[2] += g[2] / nv * L[k + 8]; n++; }
     }
     if (!n) return null;
-    const m = mnozilnik(s.map(v => v / n), hex3(MERITVE[def.id].barva.drevesa), moc == null ? MOC : moc);
+    const m = mnozilnik(s.map(v => v / n), hex3(MERITVE[def.id].barva[kljuc || 'drevesa']), moc == null ? MOC : moc);
     for (const ic of chunks) {
       const ca = ic.base.attributes.color; if (!ca) continue;
       const a = ca.array;
@@ -120,6 +132,18 @@
       ca.needsUpdate = true;
     }
     return m;
+  }
+  /* The grass among the open land (MERITVE's trave) `s` metres after the start line, left (desno false) or right of the road: 0–1, between
+     the sections' centres linearly. null where the measurement has no open land (both sections round it '-'), beyond the measured stretch
+     and on a track with no such measurement: there the builder keeps its own mix of plants. */
+  function trave(def, s, desno) {
+    if (!aktivna(def)) return null;
+    const M = MERITVE[def.id], t = M.trave && M.trave[desno ? 1 : 0];
+    if (!t || !(s >= 0) || s >= t.length * M.odsek) return null;
+    const u = s / M.odsek - 0.5, a = Math.max(0, Math.floor(u)), b = Math.min(t.length - 1, a + 1), f = Math.max(0, u - a);
+    const va = t.charCodeAt(a) - 48, vb = t.charCodeAt(b) - 48, oa = va >= 0 && va <= 9, ob = vb >= 0 && vb <= 9;
+    if (!oa && !ob) return null;
+    return (oa && ob ? va + (vb - va) * f : oa ? va : vb) / 9;
   }
 
   /* Kos 3: the light by the latitude. The theme's sun is the sun high in a clear summer sky; at the track's latitude the summer's noon sun
@@ -151,5 +175,5 @@
     return [c[0] + (g[0] - c[0]) * k * w, c[1] + (g[1] - c[1]) * k * w, c[2] + (g[2] - c[2]) * k * w];
   }
 
-  World.rastje = { prava, aktivna, PODNEBJA, MERITVE, MOC, mnozilnik, barvaDreves, barvaTrave, barve, tla, listje, svetloba, look, prehod };
+  World.rastje = { prava, aktivna, PODNEBJA, MERITVE, MOC, mnozilnik, barvaDreves, barvaTrave, barve, tla, listje, trave, svetloba, look, prehod };
 })();
