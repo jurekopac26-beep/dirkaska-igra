@@ -56,9 +56,13 @@ try {
   await msgs(); await simTo(22);
   const h1 = await hud(), m1 = await msgs();
   T.check('the rain starts: "DEŽ", the hint to come in for rain tyres', h1.rain > 0 && m1.includes('DEŽ') && /dežne gume/.test(h1.toast), JSON.stringify({ h1, m1 }));
-  await page.evaluate(() => { window.__game.race.player.pitWant = true; });   // (the autopilot takes the pit lane next time by: if it misses the way in, the next lap's)
+  // (the player asks for the pits and keeps asking until the stop: the autopilot takes the pit lane next time by; if it misses the way in,
+  // the next lap's. Asked once only, a miss was for good: over the lane's line at the way in and back out again (the Red Bull Ring's way
+  // in, where the lane's line begins close to the autopilot's), the pit autopilot gives the car back and drops the call it took over
+  // (game.js pitCtl, pitFree), so the car ran on to the finish on slicks: CI run 1832 of #322, 8. 11. 2026, docs/nestabilni-testi.md)
+  const ask = () => page.evaluate(() => { const P = window.__game.race.player; if (!P.inPit && P.ty.k !== 'wet') P.pitWant = true; });
   let h2 = null, hb = null; await msgs();
-  for (let k = 0; k < 300; k++) { await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 10 min: the car comes round to the pit lane, at the end of the first lap or, missed, of the second or third)
+  for (let k = 0; k < 300; k++) { await ask(); await sim(2); h2 = await hud(); if (!hb && h2.ty.k === 'dry' && h2.water > 0.4) hb = h2; if (h2.ty.k === 'wet') break; }   // (up to 10 min: the car comes round to the pit lane, at the end of the first lap or, missed, of the second or third)
   const h2b = await hud(), m2 = await msgs();
   T.check('slicks on a wet road: the word on a red chip on the HUD (the wrong tyres) until the stop', !!hb && /^on kt dry c[SMH] bad:(MEHKE|SREDNJE|TRDE)$/.test(hb.tyre), JSON.stringify(hb));
   await sim(0.6); const h3 = await hud();

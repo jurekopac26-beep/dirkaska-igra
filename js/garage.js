@@ -307,9 +307,9 @@
     else { go.textContent = tr('Kupi · {0}', eur(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
     // the cars before and after it: their pictures (as they stand in their colour, half a metre further back), their names to the ear
     const i = ORDER.indexOf(S.car), pv = ORDER[(i - 1 + ORDER.length) % ORDER.length], nx = ORDER[(i + 1) % ORDER.length];
-    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : '';
+    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : ''; el.querySelector('.nm').textContent = model(id).name;
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
-    queueThumbs([pv, nx]);
+    fitNames(); queueThumbs([pv, nx]);
     // IZBERI PROGO: the flag, for the player's car or one rented; else grey, its words: buy or rent the car first (answer 3 of 2. 11.)
     const tb = $('g-track');
     if (own || rented) { tb.disabled = false; tb.classList.remove('not'); flagButton(); }
@@ -518,7 +518,7 @@
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
       case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
-      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); break;
+      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;   // (the buttons at the top higher: the picture fitted again)
     }
   }
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
@@ -579,15 +579,14 @@
     };
   }
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); $('g-demo').classList.toggle('game', S.mode === 'game'); }   // (the real profile: no reset)
-  // the picture over the whole page, raised a little (its foot under the buttons)
-  // (lying down: raised more and its view taller by how little is free between the buttons at the top and the car's name, the car and
-  // the cabinet between them)
-  // (upright: raised so the cabinet's front is whole over the car's name, the car under the buttons at the top (Garage3D.fitShift))
-  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect();
-    const wide = r.width > r.height * 1.25, a = $('g-track').getBoundingClientRect(), b = $('g-name').getBoundingClientRect(), free = b.top > a.bottom ? (b.top - a.bottom) / r.height : 0.55;
-    if (wide) G.shift(Math.round(r.height * 0.29 * free), free);   // (first: resize sizes the dust by the view)
+  // the picture over the whole page, raised a little (its foot under the buttons): the regal's top under the buttons at the top, the plan
+  // chest down to the cars' buttons (Garage3D.fitShift; lying down the whole regal, odlocitve 8. 11.)
+  // (the cars' names in their buttons: a word not broken, the letters smaller till the longest fits (a narrow button: lying down))
+  function fitNames() { for (const el of [$('g-prev'), $('g-next')]) { const n = el.querySelector('.nm'); n.style.fontSize = ''; for (let f = 12; f > 8 && n.scrollWidth > n.clientWidth + 0.5; ) n.style.fontSize = --f + 'px'; } }
+  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); fitNames();
+    const a = $('g-track').getBoundingClientRect(), b = $('g-prev').getBoundingClientRect();
     G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2));
-    if (!wide) G.fitShift(a.bottom - r.top, b.top - r.top); }
+    G.fitShift(a.bottom - r.top, b.top - r.top); }
 
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
   // retired model's: its heir); the money and the cars stay the profile's (the real one: the career's). Without them: the profile's car
