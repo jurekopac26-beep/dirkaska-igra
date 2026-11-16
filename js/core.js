@@ -2256,9 +2256,13 @@ const Core = (function () {
   // damage Vklop (P3): a crushed front corner pulls the car to its side (a bent track rod: up to 0.05 of the lock, as a tyre going down
   // pulls 0.03), and a bent front wheel (that corner's cd 0.35-0.7) shakes the steering once a turn of the wheel (~1.9 m of road: the
   // wheel's own turn, c.xd.ph, laid only on a car with a bent wheel; repairCar and _mend clear it), up to 0.004 of the lock, from 30 m/s
-  // in full. Samo videz, Izklop, an online race (XR.net) and a car not knocked there: 0 (it drives as before)
+  // in full. Samo videz, Izklop, an online race (XR.net) and a car not knocked there: 0 (it drives as before). Only a wheel a person
+  // holds is pulled and shaken: a car the autopilot steers in this step (_aiS, nothing on the Car: filled by aiControl, stubDrive, the Race for its rivals and
+  // the police for its patrol cars, emptied here) gets 0, as before P3 - the autopilot does not steer against the pull, so a
+  // knocked rival drifted into the car beside it (a crowded start piled up)
+  const _aiS = new WeakSet();
   function dmgSteer(c, spd, dt) {
-    if (c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
+    if (_aiS.delete(c) || c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
     let w = 0; if (b !== 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
     return clamp((cd[1] - cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) + w;
   }
@@ -4119,7 +4123,7 @@ const Core = (function () {
       if (!trk.wall2) return;   // (its walls: the tunnel under the hill, trk.wall2(x, z, y, out) → out [nx, nz, depth])
     }
     const ch = Math.cos(c.h), sh = Math.sin(c.h);
-    let hit = 0, hitK = 0, hnx = 0, hnz = 0; const u0x = c.vx, u0z = c.vz, u0w = c.w;   // (the speeds before the step's first push: P3, the knock below)
+    let tch = 0, hit = 0, hitK = 0, hnx = 0, hnz = 0; const u0x = c.vx, u0z = c.vz, u0w = c.w;   // (the speeds before the step's first push: P3, the knock below)
     for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
@@ -4167,7 +4171,7 @@ const Core = (function () {
             c.fall = { t: 0 }; c.air = 1; c.vy = Math.max(0, c.vy || 0) + 1.2; c.w = c.w * 0.6 + (c.w >= 0 ? 0.9 : -0.9); return; }
         }
       }
-      c.wallX = px; c.wallZ = pz;
+      tch |= 1 << k; c.wallX = px; c.wallZ = pz;
       // positional correction
       c.x += nx * pen; c.z += nz * pen;
       // corner velocity
@@ -4201,7 +4205,8 @@ const Core = (function () {
       }
     }
     // (P3: the corners as far toward the barrier as the knocked one, give or take what the car goes in a step, meet it in the same step (what the car itself goes toward it in a step): the blow
-    // the fastest of them into it before the step's first push (the loop takes them one after the other, the first one's push slows the next),
+    // the fastest of those that touched it in this step (tch; a corner that only stands as far forward, the far one of a car scraping a post in a spin,
+    // shares the dent and gives no blow) into it before the step's first push (the loop takes them one after the other, the first one's push slows the next),
     // the dent between them, the foremost the most; square on both front corners alike, left as right, whichever the loop took first)
     let kx = 0, kz = 0, pk = hitK, fx = 0, fz = 0;
     if (hit > 0) fx = -(hnx * ch + hnz * sh), fz = -(-hnx * sh + hnz * ch);
@@ -4211,7 +4216,7 @@ const Core = (function () {
       let pm = ph, kw = 0, h0 = 0; for (const p of P) { const q = p[0] * fx + p[1] * fz; if (q > pm && q - ph <= dk) pm = q; }
       for (let k = 0; k < P.length; k++) { const p = P[k], q = p[0] * fx + p[1] * fz; if (Math.abs(q - ph) > dk) continue;
         const w = clamp(1 - (pm - q) / dk, 0, 1), wx = p[0] * ch - p[1] * sh, wz = p[0] * sh + p[1] * ch, v = -((u0x - u0w * wz) * hnx + (u0z + u0w * wx) * hnz);
-        kw += w; kx += w * p[0]; kz += w * p[1]; if (v > h0 + 1e-9) { h0 = v; pk = k; } }
+        kw += w; kx += w * p[0]; kz += w * p[1]; if ((tch >> k & 1) && v > h0 + 1e-9) { h0 = v; pk = k; } }
       kx /= kw; kz /= kw; hit = Math.max(hit, h0);
     }
     if (hit > 0) { c.hitWall = Math.max(c.hitWall, hit); c.fxWall = Math.max(c.fxWall || 0, hit); }
@@ -4658,7 +4663,7 @@ const Core = (function () {
     const pa = T.pitAt(o.q.s); if (!pa || !(o.q.d * pa.sd > pa.lout) || o.pitDone) return false;
     const bo = race._boxD(o); return bo != null && bo !== race._boxD(c);
   }
-  function aiControl(c, race, dt) { const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
+  function aiControl(c, race, dt) { _aiS.add(c); const R0 = RAND; RAND = race.rnd || MR; try { aiDrive(c, race, dt); } finally { RAND = R0; } }   // (the AI's reactions and mistakes: the race's numbers, rand)
   function aiDrive(c, race, dt) {
     const T = race.track, M = c.m, A = c.assist, RL = c.uRl || T.rl;   // (the racing line, or the player's: Race._voznja)
     const q = c.q;
@@ -6102,7 +6107,7 @@ const Core = (function () {
         if (c.locked && pc.mode === 'chase' && race.state === 'racing' && race.time >= pc.delay) c.locked = false;
         polControl(c, race, dt);
         c.steer += clamp(c.inSteer - c.steer, -10 * dt, 10 * dt);
-        c.step(dt, T);
+        _aiS.add(c); c.step(dt, T);
       }
     }
     // the helicopter: over the player, ~30 m behind them, 16 m to one side, 44 m up (a velocity towards that point, the acceleration limited:
@@ -6624,7 +6629,7 @@ const Core = (function () {
      far right of its middle (- left). Returns true when done (out: back at the road; in: stopped at the end). The car's own state (where along
      it, the turn) in a WeakMap: nothing on the Car. A patrol car backs up only while turning round (Car.noReverse) ---- */
   const _sd = new WeakMap(), _sdP = {};
-  function stubDrive(c, race, k, dir, off) {
+  function stubDrive(c, race, k, dir, off) { _aiS.add(c);
     const T = race.track, S = T.stubs && T.stubs[k]; if (!S) return true;
     let st = _sd.get(c); if (!st || st.k !== k) _sd.set(c, st = { k, S: null, j: -1, f: 0, t: 0, u: 0, kx: 1, kz: 0, ph: 0, pt: 0, side: 1 });
     T._stubProj(S, c.x, c.z, st);
@@ -7798,7 +7803,7 @@ const Core = (function () {
       for (let ci = 0; ci < cars.length; ci++) {
         const c = cars[ci];
         if (c.isPlayer || c.net || (ST && !ST[ci])) continue;   // (a far car between its steps)
-        const cdt = SD ? SD[ci] : dt;
+        const cdt = SD ? SD[ci] : dt; _aiS.add(c);
         if (c.relT > 0 && this.state === 'racing') { c.relT -= cdt; if (c.relT <= 0) c.locked = false; }   // (open-road demo: staggered start)
         if (P && !c.finished) {
           const gap = c.dist - P.dist; // + ahead of player

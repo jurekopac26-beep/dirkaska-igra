@@ -20,7 +20,7 @@ Najboljše poškodbe so v igri že zdaj, a izklopljene (Nastavitve, Razbijanje).
 | P4 Sledi trkov in pravi delci | na avtu barva drugega avta ali siva odrgnina od zidu; na cesti drobni črni koščki plastike, drobci stekla, luske barve; iskre in brazde, ko podvozje drgne po tleh | ves videz | enako | +1–2 klica (vsi delci v enem nizu) | 1–2 |
 | P2 Motor: para, pregrevanje, olje | para iz hladilnika pri 15–30 % poškodbe (zdaj dim šele nad 45 %), oljni dim in madeži | para in dim | še pregrevanje: motor izgublja moč in se ustavi | 0 (sistem dima) | 1–2 |
 | P5 Steklo in luči | vetrobransko steklo poči v pajčevino in ostane; stranska in zadnja razpadejo v kocke; žaromet poči, luč ugasne ali sveti postrani | ves videz; steklo na cesti ne vzame oprijema | steklo na cesti vzame največ 5 % oprijema (zdaj 20 %, ko je vklopljeno Razbijanje) | 0 | 1 |
-| P3 Kolesa in obese | zvita spona ali platišče, nagnjeno kolo, povešen vogal, iskre pod podvozjem | kolo je vidno zvito | avto vleče na stran, pri hitrosti trese | 0 | 1–2 |
+| P3 Kolesa in obese | zvita spona ali platišče, nagnjeno kolo, povešen vogal, iskre pod podvozjem | kolo je vidno zvito | avto vleče na stran, pri hitrosti trese (od 16. 11. samo avto, ki ga krmili človek) | 0 | 1–2 |
 | P6 Karoserija kot pri testih trkov | močan čelni trk skrajša prednji del za 0,4–0,7 m, pokrov se zloži v obrnjen V, pri trku z vogalom gre kolo nazaj, kabina ostane cela | skrajša se samo telo | enako | 0 | 2–3 |
 
 P6 ima visoko tveganje (testi trkov, tekmeci in reference), zato je zadnji.
@@ -154,6 +154,7 @@ Navodilo za graditelje paketa v #608 (veja `trki/realizem`, stanje `205f89b2`). 
 1. Videz (oba načina), poza koles R:7027–7030: `b = sstep(0.35, 0.7, c.cd[k])`; nagib kolesa do 12°, stekanje do 6°, opletanje platišča `2° * b` po kotu vrtenja; poves vogala do `0.25 * rw * b` prek `v.sagQ`/`v.sagP` (`kitSag` R:7514). Model brez mrež zadnjih koles: samo poves. To je tudi videz praga iz tabele K pri Samo videz. (nepreverjeno)
 2. Vklop, C:2903 in C:3146: pogoj `XR.handle && this.dmgMode === 2` postane `this.dmgMode === 2`; tresenje je dodaten člen `+ (this.dmgMode === 2 && b > 0 ? 0.004 * b * Math.sin(pot / 0.3) * Math.min(1, spd / 30) : 0)` iz prevožene poti. Vrstica in ključ `xHandle` se izbrišeta (G:49, G:590, H, L). (nepreverjeno)
 3. Testi: `tests/knock.test.js` (vlečenje brez stikala; Samo videz nič), `tests/browser/kit.test.mjs` (nagnjeno kolo, poves). Reference: `sim.json`, `races.json` z `npm run golden:update`.
+4. Popravek 16. 11. 2026: vleka in tresenje samo za avto, ki ga krmili človek; avto, ki ga v koraku vodi samodejno krmilo, dobi 0 (`_aiS` v jedru). Razlog in meritve: `docs/trki-realizem.md`, »Popravka po rdečih testih«.
 
 #### P6 · Karoserija kot pri testih trkov
 
