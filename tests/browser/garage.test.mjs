@@ -37,6 +37,11 @@ try {
   await page.evaluate(() => { __garage.hold = true; });
   // the animations to their end (the clock stepped half a second at a time while a show plays or waits); returns the seconds it took
   // and what the lift and the turntable did meanwhile (the car's highest on the lift, the table's height and angle at their most)
+  // (a tap that closes the embedded garage: the button visible, enabled and on top at its middle, then clicked on a timer; the click
+  // itself hands the game its screen, which on a slow machine kept the frame's thread past Playwright's 30 s for the click's answer)
+  const tapLate = async (fr, sel) => { await fr.waitForFunction((q) => { const b = document.querySelector(q); if (!b || b.disabled) return false;
+    const r = b.getBoundingClientRect(), e = r.width > 0 && document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !!e && (e === b || b.contains(e)); }, sel, { timeout: 30000 });
+    await fr.evaluate((q) => { setTimeout(() => document.querySelector(q).click(), 0); }, sel); };
   // (a short pause between the steps: the next show in the queue starts on a promise)
   // (moved: how far a car up on the lift (or with its arms out) went from the table's middle: none drives off it)
   // (arms: the lowest any arm's wrist came, the furthest it went out along x and z: in the ring)
@@ -267,6 +272,13 @@ try {
       const r = await run(), f = await fitOf(), u = await ui();
       T.check('čeljusti na KOZOROGU po skupnem pravilu (roka 1 stare ven, roka 2 nove iz predala, privite na obeh straneh, stare v predal) ali kot prej; kupljeno, KONČANO',
         (/^plan,old\.out,pod\.out,pass,swap,fit,(far,)?pod\.back$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 13 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.celjusti, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
+    // (nalepke po skupnem pravilu (POD_EL, stkPart v garage3d.js): roka 1 odlepi stari list (nalepke se olupijo), roka 2 prinese nov list iz
+    // predala in ga pritisne tja, kjer so nalepke (plameni iz predala so na pokrovu: list leži ravno, kamera od zgoraj; nalepke na boku: list
+    // pokonci), nove se razlijejo od lista naprej; stari list v predal; avto brez nalepk na vidnem mestu: kot prej)
+    { await page.evaluate(() => { __garage.openMenu({ el: 'nalepke', key: 'drw:nalepke', sel: __garage.findOpt('nalepke', 'Flames') }); const b = document.querySelector('#g-menu [data-mact="buy"]'); if (b) b.click(); });
+      const r = await run(), f = await fitOf(), u = await ui();
+      T.check('nalepke na KOZOROGU po skupnem pravilu (roka 1 stari list ven, roka 2 nov iz predala, pritisnjen na pokrov, stari v predal) ali kot prej; kupljeno, KONČANO',
+        (/^plan,old\.out,pod\.out,pass,swap,fit,pod\.back$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 13 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.nalepke, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)
@@ -728,7 +740,7 @@ try {
     T.check('from the game\'s car screen: the car (over its place, clear of the panel, "Tapni avto za garažo") tapped opens the garage with it, the TITAN in green; the profile kept (the same credits), the MOCKUP bar there',
       tap.on && tap.over && tap.clear && tap.hint === 'Tapni avto za garažo' && tap.car === 'titan' && tap.color === 5 && shown1 && /index\.html$/.test(url1) && (!dz || g.sflag === '' || g.sflag === dz) && g.car === 'titan' && g.shown === 'titan' && g.color === 0x2fa84f && g.money === before.money && g.demo,
       JSON.stringify({ tap, url1, dz, shown1, g, before }));
-    await fr.click('.g-foot .g-btn-back');
+    await tapLate(fr, '.g-foot .g-btn-back');   // (closing the garage: tapLate, below)
     await page.waitForFunction(() => window.__game && __game.screen === 'car' && document.getElementById('garaza').classList.contains('off'), null, { timeout: 180000 });
     await page.waitForTimeout(300);
     const b = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, name: document.getElementById('car-name').textContent, url: location.search, on: document.getElementById('car-garage').classList.contains('on') }));
@@ -745,7 +757,7 @@ try {
     const g0 = await fr.evaluate(() => { const b = document.getElementById('g-track'), S = __garage.S; return { car: S.car, off: b.disabled, txt: b.textContent, mine: Object.keys(S.cars).find(id => S.cars[id].own) || null }; });
     T.check('the garage\'s Izberi progo on the TITAN (not the player\'s): grey, "Najprej kupi ali najemi avto"', g0.car === 'titan' && g0.off && g0.txt === 'Najprej kupi ali najemi avto' && !!g0.mine && fast < 5000, JSON.stringify({ g0, fast }));
     await fr.evaluate((id) => __garage.pickCar(id), g0.mine); await run(fr);
-    await fr.click('#g-track');
+    await tapLate(fr, '#g-track');
     await page.waitForFunction(() => window.__game && __game.screen === 'track', null, { timeout: 180000 });
     const t = await page.evaluate(() => ({ screen: __game.screen, car: Core.MODELS[__game.S.car].id, url: location.search }));
     T.check(`the garage's Izberi progo on the player's car (${g0.mine}): the game's track screen with it (the address plain again)`, t.screen === 'track' && t.car === g0.mine && t.url === '', JSON.stringify(t));

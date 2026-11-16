@@ -6591,7 +6591,7 @@ const Garage3D = (function () {
   // (the rest of the bay's parts by the turbo's show (an_turbo's template, docs/garaza-animacije.md): the air filter (a round element on
   // its plate, its intake hose to the front), the chip (a box, its cable to the near side), the battery (a black block, its two cables);
   // as turboObj: the middle the frame's origin, hs the half sizes, hose its hoses (from, to in its frame; how high between; thickness; colour))
-  const BAY_EL = ['turbo', 'filter_zraka', 'cip', 'akumulator'], POD_EL = ['zarometi', 'zmigavci', 'maska', 'zadnje_luci', 'luc_pod_avtom', 'celjusti'];
+  const BAY_EL = ['turbo', 'filter_zraka', 'cip', 'akumulator'], POD_EL = ['zarometi', 'zmigavci', 'maska', 'zadnje_luci', 'luc_pod_avtom', 'celjusti', 'nalepke'];
   function bayObj(el) {
     if (el === 'turbo') return turboObj();
     const w = new THREE.Group(), add = (g, m, x, y, z) => { const q = new THREE.Mesh(g, m); q.position.set(x, y, z); q.castShadow = true; w.add(q); return q; };
@@ -6687,6 +6687,47 @@ const Garage3D = (function () {
     g.translate(-c.x, -c.y, -c.z); g.computeBoundingSphere();
     const w = new THREE.Group(), m = new THREE.Mesh(g, lampMatQ || (lampMatQ = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 }))); m.castShadow = true; w.add(m);
     return { o: w, c, real: true, hs: sz.multiplyScalar(0.5) };
+  }
+  // (the decals' sheet to carry (an_common): a small white sheet with the option's colours on it, upright on the near (sd) side as on the
+  // car, at the middle of its decals there (stkTris: the body's triangles of the side, geo.userData.deli.nalepke); ref: a blank film at
+  // ref's place (a stock car: none to peel off). null: none on that side)
+  let stkTop = false;   // (the decals being changed lie on the top (the bonnet's): their sheets flat in the drawer as on the car)
+  function stkTris(cv, sd) {
+    const b = cv.v.body, G = b && b.geometry, A = G && G.attributes, R = G && !G.index && G.userData.deli && G.userData.deli.nalepke; if (!R || !R.length || !A.color) return null;
+    const Mb = new THREE.Matrix4(); let q = b; for (; q && q !== cv.v.bodyG; q = q.parent) { q.updateMatrix(); Mb.premultiply(q.matrix); } if (!q) return null;
+    const P = A.position.array, C = A.color, p = [new V3(), new V3(), new V3()], a = new V3(), e = new V3(), v = new V3();
+    const G2 = [0, 1].map(() => ({ keep: [], xs: [], bb: new THREE.Box3(), col: [0, 0, 0] }));   // (0: the side's own; 1: the top's (the bonnet's, the roof's) on that side)
+    for (const [p0, p1] of R) for (let t = p0; t + 2 < p1; t += 3) {
+      for (let j = 0; j < 3; j++) p[j].set(P[(t + j) * 3], P[(t + j) * 3 + 1], P[(t + j) * 3 + 2]).applyMatrix4(Mb);
+      a.subVectors(p[1], p[0]).cross(e.subVectors(p[2], p[0])); const l = a.length(); if (l < 1e-9) continue;
+      v.copy(p[0]).add(p[1]).add(p[2]).multiplyScalar(1 / 3); if (v.z * sd <= 0) continue;
+      const q = Math.abs(a.z) >= 0.5 * l ? G2[0] : Math.abs(a.y) >= 0.5 * l ? G2[1] : null; if (!q) continue;
+      q.keep.push(t); q.xs.push(v.x); q.bb.expandByPoint(v); q.col[0] += C.getX(t); q.col[1] += C.getY(t); q.col[2] += C.getZ(t); }
+    const top = !G2[0].keep.length, g = G2[top ? 1 : 0]; if (!g.keep.length) return null;
+    const c = g.bb.getCenter(new V3()); if (top) c.y = g.bb.max.y + 0.004; else c.z = sd > 0 ? g.bb.max.z + 0.004 : g.bb.min.z - 0.004;
+    return { keep: g.keep, xs: g.xs, c, top, col: g.col.map(q => q / g.keep.length) };
+  }
+  function stkPart(cv, sd, ref) {
+    const T = ref ? null : stkTris(cv, sd); if (!T && !ref) return null;
+    const W = 0.15, H = 0.115, D = 0.004, w = new THREE.Group(), mat = lampMatQ || (lampMatQ = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 80, specular: 0x505050 }));
+    const box = (sx, sy, sz, z, c) => { const g = new THREE.BoxGeometry(sx, sy, sz), cc = new Float32Array(g.attributes.position.count * 3); for (let i = 0; i < cc.length; i += 3) cc.set(c, i);
+      g.setAttribute('color', new THREE.BufferAttribute(cc, 3)); g.translate(0, 0, z); const m = new THREE.Mesh(g, mat); m.castShadow = true; w.add(m); };
+    const top = T ? T.top : ref.top, f = top ? 1 : sd;   // (a top's sheet lies flat, its face up; a side's stands, its face out)
+    box(W, H, D, 0, ref ? [0.78, 0.8, 0.8] : [0.92, 0.92, 0.9]);   // (the backing; the old film off a stock car greyer)
+    if (T) { box(W * 0.74, H * 0.62, 0.0015, f * (D / 2 + 0.0008), T.col); box(W * 0.5, H * 0.14, 0.0015, f * (D / 2 + 0.0016), T.col.map(q => q * 0.35)); }
+    if (top) for (const m of w.children) m.geometry.rotateX(-Math.PI / 2);
+    return { o: w, c: T ? T.c : ref.c.clone(), real: true, top, hs: top ? new V3(W / 2, D / 2, H / 2) : new V3(W / 2, H / 2, D / 2) };
+  }
+  // (the decals peeled off or pressed on: the near side's (stkTris) shown as far as k (0..1) of them from x0 out along the car, on a copy of
+  // the body's geometry; done: the car's own back)
+  function stkMask(cv, sd, x0) {
+    const T = stkTris(cv, sd), b = cv.v.body; if (!T) return null;
+    const G0 = b.geometry, G = G0.clone(), A = G.attributes.position, P0 = G0.attributes.position.array, ord = T.keep.map((t, j) => [Math.abs(T.xs[j] - x0), t]).sort((p, q) => p[0] - q[0]).map(q => q[1]);
+    b.geometry = G; let m = -1;
+    return { set(k) { const n = Math.round(clamp(k, 0, 1) * ord.length); if (n === m) return; m = n;
+        for (let j = 0; j < ord.length; j++) { const t = ord[j] * 3; if (j < n) A.array.set(P0.subarray(t, t + 9), t); else for (let d = 3; d < 9; d++) A.array[t + d] = P0[t + d % 3]; }
+        A.needsUpdate = true; },
+      done() { if (b.geometry === G) b.geometry = G0; G.dispose(); } };
   }
   function lampSocket(cv, P) {
     const m = new THREE.Mesh(P.o.children[0].geometry.clone(), sockMatQ || (sockMatQ = new THREE.MeshLambertMaterial({ color: 0x15171b })));
@@ -6803,10 +6844,11 @@ const Garage3D = (function () {
   // into the drawer; tried: seen low from the side, the glow on the floor off, on, off, on (a stock one: none to try)
   const GLW = { els: ['luc_pod_avtom'],
     on: (el) => GLW.els.includes(el),
-    rot: (el, R) => GLW.on(el) || el === 'celjusti' ? new THREE.Matrix4() : R,   // (a strip lies as it sits on the car; a lamp on its back, lens up)
-    hv: (el, q) => GLW.on(el) || el === 'celjusti' ? q.hs.y : q.hs.x,   // (its half height lying so)
-    view: (el, S, K, sd) => GLW.on(el) ? { at: [(K.front + K.rear) / 2, S.p.y + 0.05, 0], yaw: Math.atan2(0.45, 0.89 * sd), pitch: 0.2, dist: clamp(4.2 + K.hw * 1.5, 4.9, 6.4), fov: 40 } : null,
-    near: (el, PL, sd) => GLW.on(el) || el === 'celjusti' ? { at: [PL.x, PL.y + 0.12, PL.z * 0.8], yaw: Math.atan2(0.4, 0.92 * sd), pitch: 0.14, dist: 3.2, fov: 38 } : null,
+    rot: (el, R) => el === 'nalepke' ? (stkTop ? new THREE.Matrix4() : new THREE.Matrix4().makeRotationX(-Math.PI / 2)) : GLW.on(el) || el === 'celjusti' ? new THREE.Matrix4() : R,   // (a sheet of decals flat, its face up)   // (a strip lies as it sits on the car; a lamp on its back, lens up)
+    hv: (el, q) => el === 'nalepke' ? Math.min(q.hs.y, q.hs.z) : GLW.on(el) || el === 'celjusti' ? q.hs.y : q.hs.x,   // (its half height lying so)
+    view: (el, S, K, sd) => GLW.on(el) || el === 'nalepke' ? { at: [(K.front + K.rear) / 2, S.p.y + 0.05, 0], yaw: Math.atan2(0.45, 0.89 * sd), pitch: el === 'nalepke' && stkTop ? 0.48 : 0.2, dist: clamp(4.2 + K.hw * 1.5, 4.9, 6.4), fov: 40 } : null,
+    near: (el, PL, sd) => el === 'nalepke' && stkTop ? { at: [PL.x, PL.y, PL.z * 0.5], yaw: Math.atan2(0.4, 0.92 * sd), pitch: 0.62, dist: 3.4, fov: 38 }   // (a bonnet's decal: from above, its top in view)
+      : GLW.on(el) || el === 'celjusti' || el === 'nalepke' ? { at: [PL.x, PL.y + 0.12, PL.z * 0.8], yaw: Math.atan2(0.4, 0.92 * sd), pitch: 0.14, dist: 3.2, fov: 38 } : null,
     *show(el, cv) { const g = cv && cv.root && cv.root.getObjectByName('deli:luc_pod_avtom');
       const C = g && g.geometry.attributes.color, A0 = C && C.array.slice(), lit = (k) => { if (!C) return; for (let i = 0; i < A0.length; i++) C.array[i] = A0[i] * k; C.needsUpdate = true; };
       if (g) for (const k of [0, 1, 0, 1]) { g.visible = !!k; lit(k ? 2.6 : 1); SFX.click(); yield* wait(k ? 0.4 : 0.22); }   // (brighter while it blinks: the showroom's own glow is faint under the lamps)
@@ -6834,8 +6876,10 @@ const Garage3D = (function () {
     const realOr = (q) => { if (q && q.real) return q; if (q) disposeTree(q.o); return null; };
     const calQ = (s) => { const a = o.from ? calPart(cv, s) : null, b = o.to ? calPart(nw, s) : null;   // (the calipers: a stock one grey in the new one's shape (or the old's))
       return [a || (b ? calPart(cv, s, b) : null), b || (a ? calPart(nw, s, a) : null)]; };
+    const stkQ = (s) => { const b = stkPart(nw, s); let a = b ? o.from && stkPart(cv, s) : null; if (a && a.top !== b.top) { disposeTree(a.o); a = null; }
+      if (b && !a) a = stkPart(cv, s, b); stkTop = !!(b && b.top); return [a, b]; };   // (the decals: the old ones' sheet (a stock car's a blank film), the new ones')
     const tailQ = (c, n, s) => n ? realOr(partObj(cv, el, n, s)) : tailPart(c, s);   // (a tail lamp: an option's as the car draws it, the stock one the car's own)
-    const lampQ = !regal && el === 'zarometi' ? [lampPart(cv, sd), lampPart(nw, sd)] : !regal && TAIL.on(el) && (o.from || o.to) ? [tailQ(cv, o.from, sd), tailQ(nw, o.to, sd)] : !regal && GLW.on(el) && (o.from || o.to) && GLW.can(o.to ? nw : cv) ? [glowPart(cv, o.from, sd), glowPart(nw, o.to, sd)] : !regal && el === 'celjusti' ? calQ(sd) : !regal && POD_EL.includes(el) && o.from && o.to ? [realOr(partObj(cv, el, o.from, sd)), realOr(partObj(cv, el, o.to, sd))] : null, lampO = lampQ && lampQ[0] && lampQ[1] ? lampQ[0] : null, lampN = lampO ? lampQ[1] : null;
+    const lampQ = !regal && el === 'zarometi' ? [lampPart(cv, sd), lampPart(nw, sd)] : !regal && TAIL.on(el) && (o.from || o.to) ? [tailQ(cv, o.from, sd), tailQ(nw, o.to, sd)] : !regal && GLW.on(el) && (o.from || o.to) && GLW.can(o.to ? nw : cv) ? [glowPart(cv, o.from, sd), glowPart(nw, o.to, sd)] : !regal && el === 'celjusti' ? calQ(sd) : !regal && el === 'nalepke' && o.to ? stkQ(sd) : !regal && POD_EL.includes(el) && o.from && o.to ? [realOr(partObj(cv, el, o.from, sd)), realOr(partObj(cv, el, o.to, sd))] : null, lampO = lampQ && lampQ[0] && lampQ[1] ? lampQ[0] : null, lampN = lampO ? lampQ[1] : null;
     if (lampQ && !lampO) for (const q of lampQ) if (q) disposeTree(q.o);
     // (the aero kit by its plan's plate: its lip under the front bumper the car's own, the old one's and the new one's (aeroLip; none: a
     // case as before); its level's wing onto a lid bare till now after it (aeroWing: the wing's own show then, below)
@@ -7231,9 +7275,10 @@ const Garage3D = (function () {
         (function* () { yield* armTool(1, 'reach', 2); if (P2) yield* armCarry(1, Object.assign({}, P2.s), 0, 0.7); })(),
         (function* () { yield* waitFor(() => { ride(np.o, F_D); return DRW.k[dI] >= 1; }, 1.2); })());
       // 2. the old one out (0,8 s): roka 1 to it, its screws out, drawn out of its seat (the seat dark, its light out)
-      yield* armExt(0, plan.s, plan.ext, 0.3); screws(2); yield* wait(0.12);
-      const sock = lampSocket(cv, lampO), gN = el === 'zarometi' && cv.head ? cv.head[sd > 0 ? 1 : 0] : null; if (gN) { gN.material.opacity = 0; gN.visible = false; }
-      scene.add(lampO.o); hold(0, lampO.o, Fo); yield* armExt(0, plan.pre.s, plan.pre.ext, 0.3); fitLog('old.out', { i: 0 });
+      const STK = el === 'nalepke', mO = STK ? stkMask(cv, sd, lampO.c.x) : null;   // (the decals: no screws, no seat; peeled off the side as the sheet comes away)
+      yield* armExt(0, plan.s, plan.ext, 0.3); if (!STK) screws(2); yield* wait(0.12);
+      const sock = STK ? null : lampSocket(cv, lampO), gN = el === 'zarometi' && cv.head ? cv.head[sd > 0 ? 1 : 0] : null; if (gN) { gN.material.opacity = 0; gN.visible = false; }
+      scene.add(lampO.o); hold(0, lampO.o, Fo); yield* (mO ? par(armExt(0, plan.pre.s, plan.pre.ext, 0.3), tween(0.3, (k) => mO.set(1 - k))) : armExt(0, plan.pre.s, plan.pre.ext, 0.3)); fitLog('old.out', { i: 0 });
       // 3. the LED one taken (1,2 s): roka 2's reach out to it in the drawer; roka 1 lays the old one on the bonnet meanwhile
       const ptH = { ...plan.pre.s };
       yield* par(camTo(VD, 0.7), (function* () {
@@ -7255,15 +7300,16 @@ const Garage3D = (function () {
       { const q = letGo(1) || np.o; q.matrix.copy(F_H); q.matrixWorldNeedsUpdate = true; hold(0, q, F_H); SFX.clunk(0.3); }
       fitLog('pass', { i: 1 });
       // 5. in (1,2 s): roka 1 pushes it into its seat and screws it, roka 2's reach on it; the far lamp the same
-      const FO = el === 'zarometi' ? lampPart(cv, -sd) : TAIL.on(el) && !o.from ? tailPart(cv, -sd) : GLW.on(el) ? glowPart(cv, o.from, -sd) : el === 'celjusti' ? (() => { const a = o.from ? calPart(cv, -sd) : null; if (a || !o.to) return a; const b = calPart(nw, -sd); const q = b ? calPart(cv, -sd, b) : null; if (b) disposeTree(b.o); return q; })() : (() => { const q = realOr(partObj(cv, el, o.from, -sd)); if (q && q.c.z * lampO.c.z < -1e-3) return q; if (q) disposeTree(q.o); return null; })();   // (a pair's far one; the grille: none)
+      const FO = STK ? null : el === 'zarometi' ? lampPart(cv, -sd) : TAIL.on(el) && !o.from ? tailPart(cv, -sd) : GLW.on(el) ? glowPart(cv, o.from, -sd) : el === 'celjusti' ? (() => { const a = o.from ? calPart(cv, -sd) : null; if (a || !o.to) return a; const b = calPart(nw, -sd); const q = b ? calPart(cv, -sd, b) : null; if (b) disposeTree(b.o); return q; })() : (() => { const q = realOr(partObj(cv, el, o.from, -sd)); if (q && q.c.z * lampO.c.z < -1e-3) return q; if (q) disposeTree(q.o); return null; })();   // (a pair's far one; the grille: none)
       const tipS = PL.clone().addScaledVector(UP, np.hs.y + 0.005), gapOk = (q, sg) => q && Math.min(q.s.z - plan.s.z, q.s.z - plan.pre.s.z) * sg >= ARM.gap + 0.05;
       // (roka 2's carriage on the lamp's outer side of roka 1's, the gap kept: as it stays on that side for the far one)
       let P2S = poseAt(1, 'reach', tipS, d2); if (!gapOk(P2S, sd)) for (const k of [0.6, 0.85, 1.2, 1.7, 2.4]) { const q = poseAt(1, 'reach', tipS, new V3(0, -1, k * sd)); if (gapOk(q, sd)) { P2S = q; break; } }
       yield* par(armExt(0, plan.pre.s, plan.pre.ext, 0.2), P2S ? armExt(1, P2S.s, P2S.ext, 0.2) : wait(0.2));
       yield* armExt(0, plan.s, plan.ext, 0.2, EZ.sine);
-      disposeTree(letGo(0)); SFX.clunk(0.5); disposeTree(sock); fitSwap(cv, nw, false); if (el === 'zarometi') lamps(cur, 0, 0.35); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'real', pod: true });
+      disposeTree(letGo(0)); SFX.clunk(0.5); disposeTree(sock); if (mO) mO.done(); fitSwap(cv, nw, false); if (el === 'zarometi') lamps(cur, 0, 0.35); fitLog('swap', { deli: deliKey(cur.spec), car: cur === nw, old: 'real', pod: true });
       if (FO) { FO.o.position.copy(FO.c); FO.o.scale.setScalar(1.02); cur.v.bodyG.add(FO.o); }
-      screws(2); yield* wait(0.18); fitLog('fit', { i: 0 });
+      if (STK) { const mN = stkMask(cur, sd, PL.x); if (mN) { mN.set(0); yield* tween(0.45, (k) => mN.set(k)); mN.done(); } SFX.click(); } else screws(2);   // (the new ones pressed on from the sheet's spot out)
+      yield* wait(0.18); fitLog('fit', { i: 0 });
       const mz = (s) => ({ x: s.x, y: s.y, z: -s.z, yaw: -s.yaw, pitch: s.pitch }), sF = mz(plan.s), sFp = mz(plan.pre.s);
       // (roka 2 holds the far one from inboard: its carriage kept the gap on its own side of roka 1's, the arms never crossing; roka 1
       // across first, roka 2 up, over and down after it)
