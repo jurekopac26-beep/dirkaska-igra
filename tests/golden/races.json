@@ -2462,12 +2462,12 @@
  "mapileng/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 41.68,
+  "winner": 46.07,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0a525efdf892265f6956b511"
+  "digest": "65401aa12aec025950118b4c"
  },
  "mapileng/cs/formula": {
   "finished": 13,
@@ -2512,12 +2512,12 @@
  "mujib/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 43.64,
+  "winner": 48.31,
   "spins": 0,
-  "walls": 0,
+  "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "23e05f79d4919470bef7fc8b"
+  "digest": "714b56c36505ebf3a49b445d"
  },
  "mujib/cs/formula": {
   "finished": 13,
@@ -2562,12 +2562,12 @@
  "sanssouci/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 45.49,
+  "winner": 50.45,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2d87996787b768f3ba7ec7c7"
+  "digest": "5bf1bd0ffdb73bf3a4f2b5e9"
  },
  "sanssouci/cs/formula": {
   "finished": 13,
@@ -2612,12 +2612,12 @@
  "banaue/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 43.98,
+  "winner": 48.18,
   "spins": 1,
   "walls": 1,
-  "rescues": 0,
+  "rescues": 1,
   "nan": false,
-  "digest": "c6205afc9a978e53c00a7b0b"
+  "digest": "eec1b1da8b6b75de9f1157f5"
  },
  "banaue/cs/formula": {
   "finished": 13,
@@ -2762,12 +2762,12 @@
  "atitlan/cs/rain": {
   "finished": 13,
   "cars": 13,
-  "winner": 37,
+  "winner": 40.43,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b7c68d0062f1f02eb6372862"
+  "digest": "3d976e08c18600930c06495f"
  },
  "atitlan/cs/formula": {
   "finished": 13,
