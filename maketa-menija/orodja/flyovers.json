@@ -1587,5 +1587,25 @@
     }
    ]
   }
+ ],
+ [
+  "mogyorod",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Right Hairpin",
+     "d": 614
+    },
+    {
+     "n": "Chicane",
+     "d": 2374
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 3768
+    }
+   ]
+  }
  ]
 ]
