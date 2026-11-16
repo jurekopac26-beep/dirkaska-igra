@@ -25,9 +25,16 @@
      marshals in orange. */
   function spaGrassTex(aniso) {   // the Ardennes pasture under the vertex colours (256 px = 14 m, tileable): a fresh, cool green grazed short, clover, daisies, a few buttercups
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'), img = x.createImageData(S, S), d = img.data, r = rng(4501);
-    const n1 = nrPN(8, 4502), n2 = nrPN(24, 4503), n3 = nrPN(64, 4504);
+    // (nrPN(8, 4502), nrPN(24, 4503), nrPN(64, 4504) evaluated with the same arithmetic, their per-column and per-row parts tabulated once)
+    const pn = (P, seed) => { const q = rng(seed), g = new Float32Array(P * P); for (let k = 0; k < g.length; k++) g[k] = q(); return g; };
+    const axis = (P, off) => { const a0 = new Int32Array(S), a1 = new Int32Array(S), s = new Float64Array(S);
+      for (let i = 0; i < S; i++) { const u = (off ? i / S + off : i / S) * P, a = Math.floor(u), f = u - a; a0[i] = a % P; a1[i] = (a + 1) % P; s[i] = f * f * (3 - 2 * f); }
+      return { a0, a1, s }; };
+    const ev = (g, P, X, Y, i, j) => { const b0 = Y.a0[j] * P, b1 = Y.a1[j] * P, a0 = X.a0[i], a1 = X.a1[i], s = X.s[i], t = Y.s[j];
+      const p = g[b0 + a0], q = g[b0 + a1], m = g[b1 + a0], w = g[b1 + a1], l0 = p + (q - p) * s, l1 = m + (w - m) * s; return l0 + (l1 - l0) * t; };
+    const g1 = pn(8, 4502), g2 = pn(24, 4503), g3 = pn(64, 4504), X1 = axis(8, 0), X2 = axis(24, 0), X3 = axis(64, 0), X2s = axis(24, 0.31), Y2s = axis(24, 0.57);
     for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {   // (fine detail only: the vertex colours make the patches)
-      const u = i / S, v = j / S, n = n1(u, v) * 0.3 + n2(u, v) * 0.4 + n3(u, v) * 0.3, k = 0.86 + n * 0.26 + (r() - 0.5) * 0.12, y = n2(u + 0.31, v + 0.57) - 0.5, o = (j * S + i) * 4;
+      const n = ev(g1, 8, X1, X1, i, j) * 0.3 + ev(g2, 24, X2, X2, i, j) * 0.4 + ev(g3, 64, X3, X3, i, j) * 0.3, k = 0.86 + n * 0.26 + (r() - 0.5) * 0.12, y = ev(g2, 24, X2s, Y2s, i, j) - 0.5, o = (j * S + i) * 4;
       d[o] = clamp((64 + y * 10) * k, 0, 255); d[o + 1] = clamp((126 + y * 6) * k, 0, 255); d[o + 2] = clamp((62 + y * 4) * k, 0, 255); d[o + 3] = 255;
     }
     x.putImageData(img, 0, 0); const avg = pixAvg(d);
@@ -277,11 +284,13 @@
     const tyreOn = [new Uint8Array(N), new Uint8Array(N)];
     for (const c of T.corners) { if (c.sev < 2) continue; const i1c = c.i1 < c.i0 ? c.i1 + N : c.i1, si = side2(-c.dir);
       for (let k = c.i0 - 10; k <= i1c + 14; k++) { const ii = ((k % N) + N) % N; if ((si ? T.gravR : T.gravL)[ii]) tyreOn[si][ii] = 1; } }
-    const kindAt = (i, side) => {   // -1 none (where the pit lane leaves and joins the circuit), 0 armco, 1 concrete wall, 2 tyre wall
+    const kindAt0 = (i, side) => {   // -1 none (where the pit lane leaves and joins the circuit), 0 armco, 1 concrete wall, 2 tyre wall
       if (side > 0 && def.pit) { if (pitOpen(i)) return -1; const p = T.pitAt(i * ds); if (p) return p.gap ? -1 : 1; }   // (pitOpen: the deceleration and acceleration lanes too)
       if (tyreOn[side2(side)][i]) return 2;
       return t13(i) || wallOn[side2(side)][i] ? 1 : 0;
     };
+    const KA = [new Int8Array(N).fill(-9), new Int8Array(N).fill(-9)];   // (kindAt memoised: wallOn and tyreOn are final here)
+    const kindAt = (i, side) => { const A = KA[side2(side)]; let k = A[i]; if (k === -9) k = A[i] = kindAt0(i, side); return k; };
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
@@ -616,7 +625,10 @@
        straight (the pits are on its right), the Kemmel straight, small groups everywhere; chain link in front of the bigger crowds ---- */
     {
       const fanE = new Set(excl.slice(crE0)), bldE = new Set(excl.slice(crB0, crB1));   // (the famous places' and the buildings' tree exclusions are large; the new crowds may stand inside them)
-      const hard = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) * 1048576 + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) { if (fanE.has(e) || bldE.has(e)) continue; const dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+      const ehF = new Map();   // (eh's cells without fanE and bldE; eh does not change while the crowds are placed)
+      const hard = (x, z) => { const key = Math.floor(x / EHC) * 1048576 + Math.floor(z / EHC); let Lc = ehF.get(key);
+        if (Lc === undefined) { const L0 = eh.get(key); Lc = L0 ? L0.filter(e => !fanE.has(e) && !bldE.has(e)) : null; ehF.set(key, Lc); }
+        if (!Lc) return false; for (let k = 0; k < Lc.length; k++) { const e = Lc[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
       const M = { first: 1.2, gap: 1.15, excluded: hard, below: 3, above: 8, sit: 0.3, flag: 0.07 };
       const run = (d0, d1, side, o, fc) => { const n = crowdRun(CR, sStart + d0, sStart + d1, side, Object.assign({}, M, o));
         if (n && fc) for (let ii = T.idx(sStart + d0 - 6), k = 0; k < (d1 - d0 + 12) / ds; k++, ii = (ii + 1) % N) if (!fence[side2(side)][ii]) fence[side2(side)][ii] = 1; return n; };
@@ -735,7 +747,7 @@
       const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2];   // (all pure lookups: the cheap ones first, the road's nearest point last)
         const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * (1 - nrLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i]));
         if (f < 0.05 || excluded(x, z) || inBrook(x, z, 4) || !own(x, z, i)) return null;
-        const c = nrGCol(x, z); return { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
+        const c = nrGCol(x, z); return { p: [x, nrGround(x, z) + 0.05, z], c: [c[0] * (1 - MOW_D[0] * f), c[1] * (1 - MOW_D[1] * f), c[2] * (1 - MOW_D[2] * f)] }; };
       for (let c0 = 0; c0 < N; c0 += CH) {
         const gv = new RB(true), pv = [-1, -1], pw = [null, null], pm = [new Array(MOW_B).fill(-1), new Array(MOW_B).fill(-1)];
         for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
@@ -756,9 +768,9 @@
             const pr = [vr[0], vr[1], ...band, vr[2], vr[3], vr[4]], pts = pr.map(([o, h]) => Pt(i, side * o, h)), nL = pr.length;
             const g3 = nrGCol(pts[nL - 2][0], pts[nL - 2][2]), g4 = nrGCol(pts[nL - 1][0], pts[nL - 1][2]), vg = bandC(bo);
             const cols = [vA, bandC(1), ...bc, vg, [lerp(vg[0], g3[0], 0.5), lerp(vg[1], g3[1], 0.5), lerp(vg[2], g3[2], 0.5)], g4];
-            const ordered = side > 0 ? { p: pts, c: cols } : { p: pts.slice().reverse(), c: cols.slice().reverse() };   // rows run left -> right
-            const rv = gv.row(ordered.p, ordered.c, ordered.p.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
-            const ow = side > 0 ? pr.map(e => e[0]) : pr.map(e => e[0]).reverse(), qw = pw[si];
+            const ow = pr.map(e => e[0]), qw = pw[si];
+            if (side < 0) { pts.reverse(); cols.reverse(); ow.reverse(); }   // rows run left -> right
+            const rv = gv.row(pts, cols, pts.map(p => [p[0] / 14, -p[2] / 14]));   // (the terrain tiles' grass scale: no seam)
             if (pv[si] >= 0) for (let k = 0; k < nL - 1; k++) if (Math.abs(ow[k + 1] - ow[k]) > 1e-3 || Math.abs(qw[k + 1] - qw[k]) > 1e-3) gv.link(pv[si], rv, k, k + 1);   // (not the bands of no width)
             pv[si] = rv; pw[si] = ow;
           }
