@@ -87,9 +87,15 @@
   }
   function ktLCf(x, z, c) {   // share of land cover class c around (x, z), bilinear over the cell centres (soft edges for the ground colours)
     const L = KT.L, lc = KT.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
-    const at = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? 0 : lc[b * L.nx + a] === c ? 1 : 0);
-    return (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - v) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * v;
+    const nx = L.nx, nz = L.nz, c00 = i < 0 || j < 0 || i >= nx || j >= nz ? -1 : lc[j * nx + i], c10 = i + 1 < 0 || j < 0 || i + 1 >= nx || j >= nz ? -1 : lc[j * nx + i + 1],
+      c01 = i < 0 || j + 1 < 0 || i >= nx || j + 1 >= nz ? -1 : lc[(j + 1) * nx + i], c11 = i + 1 < 0 || j + 1 < 0 || i + 1 >= nx || j + 1 >= nz ? -1 : lc[(j + 1) * nx + i + 1];
+    if (c === undefined) {   // (all five shares at once, KTLCF[1..5]: the same sums as one class at a time)
+      for (let q = 1; q <= 5; q++) KTLCF[q] = ((c00 === q ? 1 : 0) * (1 - u) + (c10 === q ? 1 : 0) * u) * (1 - v) + ((c01 === q ? 1 : 0) * (1 - u) + (c11 === q ? 1 : 0) * u) * v;
+      return KTLCF;
+    }
+    return ((c00 === c ? 1 : 0) * (1 - u) + (c10 === c ? 1 : 0) * u) * (1 - v) + ((c01 === c ? 1 : 0) * (1 - u) + (c11 === c ? 1 : 0) * u) * v;
   }
+  const KTLCF = new Float64Array(6);
   function ktDem(x, z) {   // the real terrain (bilinear on the 32 m grid)
     const P = KT, D = P.D, gx = clamp((x - D.x0) / D.cell, 0, D.nx - 1.001), gz = clamp((z - D.z0) / D.cell, 0, D.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, W = D.nx, a = P.dem;
     return (a[j * W + i] * (1 - u) + a[j * W + i + 1] * u) * (1 - v) + (a[(j + 1) * W + i] * (1 - u) + a[(j + 1) * W + i + 1] * u) * v;
@@ -289,7 +295,7 @@
     // down on the valley floor), the darker olive of the shrub slopes, needles and moss under the larches, trampled grass in the camps, brown-grey
     // schist on the cliffs and every steep face, the river's pale gravel bars, a trodden verge
     const P = KT, m = P.n3(x, z), q = P.n4(x, z), A = h + P.D.base, low = sstep(820, 700, A);
-    const fo = ktLCf(x, z, 1), sh = ktLCf(x, z, 2), cp = ktLCf(x, z, 3), rk = ktLCf(x, z, 4), wa = ktLCf(x, z, 5);
+    const F = ktLCf(x, z), fo = F[1], sh = F[2], cp = F[3], rk = F[4], wa = F[5];
     let r = 0.7 + (m - 0.5) * 0.12 + (q - 0.5) * 0.08, g = 0.62 + (m - 0.5) * 0.1 + (q - 0.5) * 0.06, b = 0.37 + (m - 0.5) * 0.05;
     const gr = Math.max(sstep(0.48, 0.78, P.n2(x, z)) * 0.45, low * 0.75); r = lerp(r, 0.44, gr); g = lerp(g, 0.53, gr); b = lerp(b, 0.26, gr);
     r = lerp(r, 0.52 + m * 0.06, sh * 0.4); g = lerp(g, 0.51 + m * 0.05, sh * 0.4); b = lerp(b, 0.3, sh * 0.4);
@@ -303,7 +309,7 @@
   }
   function ktGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in ktTileGeo)
     const G = KT.G, gx = clamp((x - G.x0) / KTC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / KTC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
-    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = ktGH(ii, jj);
+    for (let q = 0; q < 4; q++) { const a = q & 1, b = q >> 1, w = q === 0 ? (1 - u) * (1 - v) : q === 1 ? u * (1 - v) : q === 2 ? (1 - u) * v : u * v, ii = i + a, jj = j + b, h = ktGH(ii, jj);
       const nx = (ktGH(ii + 1, jj) - ktGH(ii - 1, jj)) / (2 * KTC), nz = (ktGH(ii, jj + 1) - ktGH(ii, jj - 1)) / (2 * KTC), c = ktCol(G.x0 + ii * KTC, G.z0 + jj * KTC, h, 1 / Math.hypot(nx, 1, nz), G.dd[jj * G.nx + ii]);
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
