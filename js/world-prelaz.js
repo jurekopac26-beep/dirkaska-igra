@@ -52,6 +52,23 @@
       roofs: [[0.62, 0.26, 0.16], [0.36, 0.38, 0.4], [0.7, 0.34, 0.2], [0.24, 0.3, 0.36]],
       sheep: 0, portal: 0, far: { lo: [0.16, 0.3, 0.12], hi: [0.44, 0.42, 0.36], dw: [0.12, 0.24, 0.1], snow: 9000 },
     },
+    // Sogeri (the Owen Stanley foothills above Port Moresby, Papua New Guinea): the Sogeri road up the Laloki gorge to the plateau, the slopes
+    // under tall dry grass (kunai) with pale eucalypts, a dense tropical forest of broadleaves (L.trop) in the gully of the river, grey-brown
+    // conglomerate and red earth in the cuttings and the rock walls along the road; no snow, no sheep, no tunnel portal; white lines (the
+    // country's Australian-style markings), a steel rail on the drop; generic signs only (no name of a lodge, a plantation or a builder)
+    sogeri: {
+      seed: 6100, board: 'SOGERI', sub: 'CENTRAL', banner: ['SOGERI', 'LALOKI'], trop: 1,
+      grass: [0.44, 0.5, 0.22], grassDry: [0.62, 0.56, 0.3], grassLush: [0.3, 0.46, 0.16], shrub: [0.16, 0.3, 0.1],
+      rock: [0.5, 0.44, 0.38], rockWarm: [0.6, 0.42, 0.3], lichen: [0.4, 0.38, 0.3], scree: [0.6, 0.48, 0.36],
+      sat: 0.58, satV: 1.25, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.5, 0.45, 0.4], [0.56, 0.46, 0.38], [0.44, 0.41, 0.38], [0.62, 0.46, 0.34], [0.48, 0.44, 0.4], [0.54, 0.5, 0.45]],   // (the conglomerate of the gorge, a little red with the earth)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the tight bends)
+      chev: ['#111111', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.58, 0.44, 0.32],
+      fans: [[0.84, 0.14, 0.14], [0.98, 0.8, 0.12], [0.95, 0.95, 0.95], [0.12, 0.12, 0.14], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.14, 0.3, 0.62], [0.55, 0.62, 0.7]],
+      cars: [[0.9, 0.9, 0.88], [0.86, 0.86, 0.84], [0.16, 0.18, 0.2], [0.55, 0.56, 0.58], [0.62, 0.14, 0.12], [0.2, 0.32, 0.56]],
+      roofs: [[0.62, 0.63, 0.64], [0.55, 0.56, 0.58], [0.5, 0.3, 0.22], [0.36, 0.4, 0.42]],
+      sheep: 0, portal: 0, far: { lo: [0.36, 0.44, 0.2], hi: [0.22, 0.34, 0.16], dw: [0.14, 0.26, 0.1], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)

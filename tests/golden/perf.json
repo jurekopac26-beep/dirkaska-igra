@@ -375,5 +375,11 @@
   "kverts": 805,
   "maxKverts": 854,
   "jsMs": 2.57
+ "sogeri": {
+  "calls": 144,
+  "maxCalls": 150,
+  "kverts": 306,
+  "maxKverts": 391,
+  "jsMs": 1.17
  }
 }

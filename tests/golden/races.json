@@ -2603,6 +2603,10 @@
   "finished": 13,
   "cars": 13,
   "winner": 199.14,
+ "sogeri/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 67.53,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
@@ -2613,6 +2617,12 @@
   "finished": 13,
   "cars": 13,
   "winner": 236.73,
+  "digest": "e9d91e4d65e7b3a815b68305"
+ },
+ "sogeri/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 80.95,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
@@ -2623,6 +2633,12 @@
   "finished": 13,
   "cars": 13,
   "winner": 175.79,
+  "digest": "551d325a4609438ab760802c"
+ },
+ "sogeri/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 68.24,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
@@ -2633,6 +2649,12 @@
   "finished": 13,
   "cars": 13,
   "winner": 177.08,
+  "digest": "6f99ad2f8b9cafd9a745d25a"
+ },
+ "sogeri/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 62.7,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
@@ -2643,10 +2665,17 @@
   "finished": 13,
   "cars": 13,
   "winner": 202.47,
+  "digest": "011b789e9cb0e5bc67c70c38"
+ },
+ "sogeri/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 61.78,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
   "digest": "d75ff09954205e1ed4fac27e"
+  "digest": "4e852e709dba2c3da1fb3a9a"
  }
 }
