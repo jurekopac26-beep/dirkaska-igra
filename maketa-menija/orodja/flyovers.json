@@ -1299,5 +1299,133 @@
     }
    ]
   }
+ ],
+ [
+  "santoantao",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Delgadim · 652 m",
+     "d": 261
+    },
+    {
+     "n": "Hairpin 3 · 631 m",
+     "d": 1612
+    },
+    {
+     "n": "Ribeira Grande · 343 m",
+     "d": 4900
+    }
+   ],
+   "alt": [
+    672,
+    336
+   ]
+  }
+ ],
+ [
+  "seoul",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "City Wall · 227 m",
+     "d": 575
+    },
+    {
+     "n": "Namsan · 241 m",
+     "d": 990
+    },
+    {
+     "n": "Huam-dong · 106 m",
+     "d": 2421
+    }
+   ],
+   "alt": [
+    184,
+    107
+   ]
+  }
+ ],
+ [
+  "sepang",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left Hairpin",
+     "d": 790
+    },
+    {
+     "n": "Hairpin at the Bottom",
+     "d": 3176
+    },
+    {
+     "n": "Last Hairpin",
+     "d": 5166
+    }
+   ]
+  }
+ ],
+ [
+  "silkeborg",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Grandstand Corner",
+     "d": 616
+    },
+    {
+     "n": "Forest Corner",
+     "d": 1286
+    },
+    {
+     "n": "Heath Corner",
+     "d": 1805
+    }
+   ]
+  }
+ ],
+ [
+  "tuzla",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Long Right in the Dip",
+     "d": 430
+    },
+    {
+     "n": "Long Left with Four Apexes",
+     "d": 2392
+    },
+    {
+     "n": "Chicane Right",
+     "d": 4762
+    }
+   ]
+  }
+ ],
+ [
+  "zandvoort",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin at the End of the Straight",
+     "d": 366
+    },
+    {
+     "n": "Dune Crest",
+     "d": 1120
+    },
+    {
+     "n": "Banked Final Corner",
+     "d": 3760
+    }
+   ]
+  }
  ]
 ]
