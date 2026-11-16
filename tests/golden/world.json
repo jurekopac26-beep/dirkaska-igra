@@ -124,12 +124,12 @@
   }
  },
  "nring": {
-  "meshes": 3872,
-  "verts": 2525682,
+  "meshes": 3870,
+  "verts": 2366379,
   "instances": 114690,
   "props": 805,
   "crowd": 475,
-  "world": "75070aba",
+  "world": "26f5d186",
   "propsHash": "fcc23a7",
   "floor": "e5170eee/41384",
   "groups": {
@@ -145,7 +145,7 @@
    "life:MeshLambertMaterial": "d83d2bba",
    "lifeShadow:MeshBasicMaterial": "c78585c6",
    "life:MeshBasicMaterial": "da586069",
-   "sceneThings:MeshLambertMaterial": "6e8ce14d",
+   "sceneThings:MeshLambertMaterial": "9e36a5be",
    "sceneLamps:MeshBasicMaterial": "39d7248",
    "people:MeshLambertMaterial": "b3cfacda",
    "sceneSmoke:MeshLambertMaterial": "c07dbe68",
@@ -1200,11 +1200,11 @@
  },
  "livorno": {
   "meshes": 1967,
-  "verts": 1489738,
+  "verts": 1475608,
   "instances": 34278,
   "props": 9,
   "crowd": 428,
-  "world": "5fb394db",
+  "world": "4dbcc8c1",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
@@ -1217,7 +1217,7 @@
    "roadwear:MeshLambertMaterial": "12d606d0",
    "worn:MeshLambertMaterial": "fb5561fc",
    "brakeBoards:MeshLambertMaterial": "43625280",
-   "sceneThings:MeshLambertMaterial": "57e3f324",
+   "sceneThings:MeshLambertMaterial": "b7ea6afc",
    "people:MeshLambertMaterial": "fe1208af"
   }
  },

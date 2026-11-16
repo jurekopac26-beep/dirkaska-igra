@@ -28,10 +28,10 @@
   "jsMs": 3.48
  },
  "nring": {
-  "calls": 171,
+  "calls": 170,
   "maxCalls": 198,
-  "kverts": 310,
-  "maxKverts": 326,
+  "kverts": 298,
+  "maxKverts": 322,
   "jsMs": 3.4
  },
  "spa": {
@@ -288,9 +288,9 @@
  },
  "livorno": {
   "calls": 144,
-  "maxCalls": 182,
-  "kverts": 300,
-  "maxKverts": 381,
+  "maxCalls": 179,
+  "kverts": 299,
+  "maxKverts": 374,
   "jsMs": 3.1
  },
  "jezero": {
