@@ -103,25 +103,16 @@
       const A = this.alive(race);
       if (!P.zbOut && A.length === 1 && A[0] === P && R.mine == null) { R.mine = +G.netClock().toFixed(3); S.end = { msg: tr('ZMAGA! ZADNJI NA PROGI'), cls: 'gold', say: 'win' }; }
     },
-    // the room (host): the switch Eliminacija under the championship's; a friend sees it when it is on
-    room(host, busy) {
-      const G = Z.G, mp = G && G.mp(), ref = Z.el('on-chrow'); if (!ref || !mp) return;
-      let row = Z.el('zb-elrow');
-      if (!row) {
-        row = document.createElement('div'); row.className = 'row'; row.id = 'zb-elrow';
-        row.innerHTML = '<span class="rlbl">' + Z.esc(tr('Eliminacija')) + '</span><div class="seg"><button type="button" data-zbel="0">' + Z.esc(tr('Izklop')) + '</button><button type="button" data-zbel="1">' + Z.esc(tr('Vklop')) + '</button></div>';
-        ref.insertAdjacentElement('afterend', row);
-        row.addEventListener('click', (e) => { const b = e.target.closest('[data-zbel]'); const M = Z.G.mp(); if (!b || b.disabled || !M || M.role !== 'host') return; e.preventDefault(); e.stopPropagation(); this.netSet(b.dataset.zbel === '1'); });
-      }
-      for (const b of row.querySelectorAll('[data-zbel]')) { b.classList.toggle('sel', (b.dataset.zbel === '1') === this.net.on); b.disabled = !host || !!busy || !!mp.race; }
-      row.classList.toggle('off', !host && !this.net.on);
-    },
-    netSet(on) { this.net.on = !!on; this.netSetup(); const G = Z.G, mp = G && G.mp(); this.room(!!mp && mp.role === 'host', !!(mp && mp.setup)); },
+    // the room: Eliminacija in the row Način (js/zabava.js, under the championship's switch: the host taps it, a friend sees it when it
+    // is on); one mode at a time (Z.netOne: the pursuit off)
+    netMode: { label: 'Eliminacija', fits: () => true },
+    netSet(on) { this.net.on = !!on; if (on) Z.netOne(this); this.netSetup(); },
+    netOff() { if (this.net.on) this.netSet(false); },
     netSetup() { const G = Z.G, mp = G && G.mp(); if (mp && mp.role === 'host' && typeof Net !== 'undefined') for (const id of Net.ids) Net.sendTo(id, { t: 'zb', k: 'el', on: this.net.on ? 1 : 0 }); },
     net(m, from, host, race) {
       if (!m || host) return;   // (only the host decides)
       const G = Z.G, mp = G && G.mp();
-      if (m.k === 'el') { this.net.on = m.on === 1; if (mp) this.room(false, !!mp.setup); }
+      if (m.k === 'el') { this.net.on = m.on === 1; if (mp && typeof document !== 'undefined') Z.room(false, !!mp.setup); }
       else if (m.k === 'cut' && race && race.zbMode === 'elim' && mp && mp.race && m.no === mp.race.no && Array.isArray(m.ids) && Number.isFinite(m.at)) this.applyCut(race, m);
     },
     over(race) {

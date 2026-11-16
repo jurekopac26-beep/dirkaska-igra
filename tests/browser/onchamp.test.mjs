@@ -34,6 +34,9 @@ try {
   for (const p of pages.slice(1)) await until(p, () => { const n = window.__game.net; return !!(n && n.players.length === 3 && n.synced); });
 
   // 2. the championship: on, Jezero Ring and Riviera, one lap; the friends see its list
+  // (both are test tracks, behind NEUPORABNO: the host's choice lists only the real tracks and the game's own, so every page's select gets the two
+  // by hand, as the list of every track had them before; the game takes any track that races (netTracks), the list of the choice is only its offer)
+  for (const p of pages) await p.evaluate(() => { const t = document.getElementById('on-track'); for (const [id, nm] of [['jezero', 'Jezero Ring'], ['riviera', 'Riviera, Francija']]) if (![...t.options].some(o => o.value === id)) t.add(new Option(nm, id)); });
   await A.page.evaluate(() => { const g = window.__game, t = document.getElementById('on-track'), l = document.getElementById('on-laps');
     t.value = 'jezero'; t.dispatchEvent(new Event('change')); l.value = '1'; l.dispatchEvent(new Event('change'));
     g.onAction('net-ch-on'); t.value = 'riviera'; t.dispatchEvent(new Event('change')); g.onAction('net-ch-add');

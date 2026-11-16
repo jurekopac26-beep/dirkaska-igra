@@ -5,7 +5,7 @@
 // Checks that every car finishes and compares with tests/golden/races.json: the exact result (finish order, finish times
 // and the final state of every car, as a digest) must be the same. When it is not, the other values show how big the
 // change is: spins (at most 2 more than the reference), wall contacts, rescues and the winner's time (within +-3 %).
-// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (6-9 % on most tracks).
+// A race in the rain must also be slower than the same race in the dry, by 0.5-30 % (15-21 % on most tracks: the wet road grips a third less, docs/dez-sneg.md).
 //   node tests/races.test.js [--update] [--only=gozd,cs] [--only=spa,rain]
 'use strict';
 const fs = require('fs');

@@ -5,8 +5,8 @@ Vozilo »zrcalni cestni vlak«: verzija 1 zrcalne cisterne, ki jo je uporabnik i
 Vir opisa: seja session_01QiZPCZFYZECemerxaNXvMZ (»Kamion s cisternama - 6 verzij«, 18. 10. in 4. 11. 2026).
 
 ## Opis (verzija 1)
-- **Vlačilec**: na osnovi KAMNA PUŠČAVA (`js/cars/kamen.js`: tovornjak 4×4 z nosom pred kabino). Črna kabina, kromirana izpuha, odbojni lok, strešni nosilec s kanticami in rezervna guma, zadaj sedlo. Brez znamke.
-- **Cisterni**: zrcalno polirana nerjavna pločevina, obroči, pohodna pot z ograjo, bočni odbijač, rdeča omarica. Med njima dolly (oje, dve osi, svoje sedlo).
+- **Vlačilec**: na osnovi KAMNA PUŠČAVA (`js/cars/kamen.js`: tovornjak 4×4 z nosom pred kabino). Črna kabina, kromirana izpuha, odbojni lok, zadaj sedlo. Brez znamke. Strešnega nosilca s kanticami in rezervno gumo na kabini ni več (odločitev uporabnika 9. 11. 2026: brez rezervnih koles na strehi in rezervnega bencina).
+- **Cisterni**: zrcalno polirana nerjavna pločevina, obroči, pohodna pot z ograjo, okrogli pokrovi na vrhu (ostanejo: odstranitev 9. 11. 2026 ob ~11.05 je uporabnik ob ~12.25 preklical, `docs/titan-cisterna.md`), bočni odbijač, rdeča omarica. Med njima dolly (oje, dve osi, svoje sedlo).
 - **Odsev za telefon**: vnaprej pripravljen odsev neba in okolice v teksturi (gradient neba, obzorje, tla), ne živo zrcalo. Malo klicev risanja.
 - Vlak je dolg ~25 m.
 
@@ -135,5 +135,5 @@ Vožnja (`expect`): t100 14,0 s, vmax 137 km/h, latG 1,25 g, d100 44,2 m.
   - Zdaj: Nürburgring 163 klicev in 387k oglišč, Jezero 160 klicev in 603k (TITAN 377k in 594k, kot prej).
 
 ## Po spoju z mainom (8. 11. 2026, seja računa partyslo): garaža in cena
-- **Garaža** (sklopi 6–8 na `main`, `js/garage3d.js`): na poti iz vrat so spodnja letev dvignjene zavese vrat in svetilke na 3,46 m, zato noben del avta ne sme biti nad 3,3 m (KAMEN 3,28 m). Vlačilec je segal do 3,67 m (dve rezervni gumi na nosilcu, kantice 0,36 m), `laneWay` je javil »garage: no clear way for zrcalni«, `garage.test.mjs` je padel (korak 4/6 na GitHubu). Zdaj: ena rezervna guma (0,22 m široka, leži na strehi), kantice ležeče (0,2 m), izpuha do 3,28 m, trak čez kantice na 3,28 m; najvišji del je 3,29 m. Pogoj za vsako novo vozilo: `node tests/browser/garage.test.mjs` (»no page errors« ne sme javiti »no clear way«).
+- **Garaža** (sklopi 6–8 na `main`, `js/garage3d.js`): na poti iz vrat so spodnja letev dvignjene zavese vrat in svetilke na 3,46 m, zato noben del avta ne sme biti nad 3,3 m (KAMEN 3,28 m). Vlačilec je segal do 3,67 m (dve rezervni gumi na nosilcu, kantice 0,36 m), `laneWay` je javil »garage: no clear way for zrcalni«, `garage.test.mjs` je padel (korak 4/6 na GitHubu). Nato: ena rezervna guma (0,22 m široka, leži na strehi), kantice ležeče (0,2 m), izpuha do 3,28 m, trak čez kantice na 3,28 m; najvišji del je bil 3,29 m. Od 9. 11. 2026 strešnega nosilca ni (gume in kantic na kabini ni): najvišji so izpuha in strešne luči do 3,28 m. Pogoj za vsako novo vozilo: `node tests/browser/garage.test.mjs` (»no page errors« ne sme javiti »no clear way«).
 - **Cena**: v tabeli `CAREER.car` (`js/core.js`) TITAN CISTERNA 850.000 in ZRCALNI VLAK 1.000.000 kovančkov (TITAN 500.000, KAMEN PUŠČAVA 800.000), da so na zaslonu avta v vrstnem redu `ord` 1–4 (TITAN, KAMEN, CISTERNA, ZRCALNI; zaslon uredi po ceni iz tabele). Cena v datoteki vozila (75.000 in 90.000, stara lestvica) velja le, če vnosa v tabeli ni; takrat sta vozili stali pred TITAN-om in `browser/cars-ui.test.mjs` je padel. Preverja `tests/zrcalni.test.js` (vrstni red cen) in `cars-ui`.

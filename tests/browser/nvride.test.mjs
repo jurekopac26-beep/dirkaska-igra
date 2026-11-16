@@ -7,7 +7,7 @@
 // in the bay), back in its place BACK TO YOUR CAR; a restart at HOME gives the car back. The site's machines and the park's rides move (near the
 // car), the dump truck going round its loop is a wall for the car.
 //   node tests/browser/nvride.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, checker, tapNewVersion } from './lib.mjs';
 
 const T = checker('nvride');
 const srv = await serve();
@@ -15,7 +15,7 @@ const browser = await launch();
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { intro: 2, quali: 0 }, { width: 412, height: 915 }, { menu: true });
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
-  await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+  await tapNewVersion(page);
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
 
   // 1. the gondola as built: the stations, the tower off every way, the cabins at their docks with the doors to the stations down, not merged

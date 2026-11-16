@@ -17,6 +17,9 @@ module.exports = function handling(C, phys = 'cs') {
     query(x, z, h, o) { o = o || {}; Object.assign(o, { i: 0, a: 0, s: x, d: z, tx: 1, tz: 0, nx: 0, nz: 1, x, z, bl: 1e9, br: 1e9 }); return o; },
     surface() { return planeSurf; } };
   const surf = (k) => { planeSurf = k; };
+  // a car's own weather (oprijem.test.js): wear(fn) dresses every car made from now on (fn(car): the grip a race gave its car, say); wear() none
+  let dress = null;
+  const wear = (fn) => { dress = fn || null; };
   // a model by id or the model itself (fleet tests hand in models that are not in MODELS)
   const modelOf = (id) => typeof id === 'string' ? C.MODELS.find(m => m.id === id) : id;
 
@@ -28,6 +31,7 @@ module.exports = function handling(C, phys = 'cs') {
     const v = (o.v || 0) / 3.6; c.vx = v; c.vz = 0;
     for (let g = 1; g <= M.gears.length; g++) { c.gear = g; if (v / M.rw * M.gears[g - 1] * M.final * 9.5493 < M.redline * 0.9) break; }   // a sensible gear
     c._thrI = 0.3; c._vT = v; c._t = 0; c._v = v; c._om = 0;
+    if (dress) dress(c);
     return c;
   }
   // one step; steering moves at the game's own rate for the player (keys 6/s in, 10/s back; analogue 16/s); thr 'hold' keeps the start speed
@@ -97,5 +101,5 @@ module.exports = function handling(C, phys = 'cs') {
   const t200 = (id) => { const c = mkCar(id, { v: 0 }); let t = 0; while (c._v * 3.6 < 200 && t < 30) { step(c, { thr: 1 }); t += DT; } return t; };
   const spinTo = (id) => { const c = mkCar(id, { v: 0 }); let v = 0; for (let i = 0; i < 30 / DT; i++) { step(c, { thr: 1 }); if (c.spin > 0.24) v = c._v * 3.6; } return v; };   // (the renderer smokes from 0.24)
 
-  return { DT, G, D, tauLaw, mean, plane, surf, mkCar, step, rec, push, steady, turnExit, pedal, longi, topOf, t200, spinTo };
+  return { DT, G, D, tauLaw, mean, plane, surf, wear, mkCar, step, rec, push, steady, turnExit, pedal, longi, topOf, t200, spinTo };
 };

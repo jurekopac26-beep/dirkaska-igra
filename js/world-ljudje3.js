@@ -561,7 +561,6 @@
   // the barrier; the hay on a mown meadow (Vršič: OSM's meadow by the road; Ouninpohja: a field, def.fields); the bocce and the chess have
   // no place: no court or board by any of the tracks (Medvode, Livorno: none within 200 m of the road); the beekeepers and the birthdays
   // where they were (tools/ljudje/mesta.mjs: flat, seen from the chase camera, 250 m from the other groups)
-  site('ouninpohja', [['ribici', 5640, 1, { lake: 18.5 }], ['seno', 1900, -1]]);
   site('medvode', [['cebelarji', 2144, -1], ['ribici', 3604, 1, { lake: 28.0 }]]);
   for (const n of ['ribici', 'seno', 'cebelarji', 'balinanje', 'sah', 'rojstnidan']) { SUMMER.add(n); BUSY_HANDS.add(n); }   // (a summer's day's; their hands full: no umbrellas)
 })();

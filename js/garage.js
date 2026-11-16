@@ -80,12 +80,20 @@
     for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; };
   // (a save kept safe as the game's: a full storage makes room by dropping ghosts, js/shramba.js)
   const keepItem = (k, v) => { try { if (typeof Shramba !== 'undefined') Shramba.keep(k, v); else localStorage.setItem(k, v); } catch (_) { } };
+  // (the veteran's test money (the user's wish 9. 11. 2026, to test with: any car can be bought): the dearest car, every part for it (all 16
+  // options of each element the shop sells, js/data/deli.js) and its paint, up to the next 100.000 (2.100.000 with the cars and parts of
+  // 9. 11. 2026); a veteran saved before it (no vm) gets it once when opened again, one saved since keeps what it has left)
+  const VET_V = 2;
+  function vetMoney() { const top = ORDER.reduce((a, id) => (PRICE[id] || 0) > (PRICE[a] || 0) ? id : a, ORDER[0]);
+    let s = (PRICE[top] || 0) + paintPrice(top);
+    for (const el in EL) if (el !== 'barva') EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { s += price(el, t, j); }));
+    return Math.ceil(s / 100000) * 100000; }
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
     const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, rent: null, lang: S0lang(), sound: true, guide: 0, flag: '' };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
     S.cars.pico.cond = { clean: 0.35, body: 0.6, engine: 0.42 };
     if (mode === 'vet') {
-      S.money = 248500; S.car = 'kaze';
+      S.money = vetMoney(); S.vm = VET_V; S.car = 'kaze';
       const set = (id, P, c) => { const k = S.cars[id]; k.own = true; for (const el in P) { const o = findOpt(el, P[el]); if (o) k.parts[el] = o; } if (c) k.cond = c; };
       set('pico', { turbo: 'Turbo', cip: 'Chip', gume: 'Track Semi-slick', zavore: 'Sport pads', krilo: 'Arch' }, { clean: 0.9, body: 0.85, engine: 0.8 });
       set('kaze', { turbo: 'Turbo kit', cip: 'Stage 3 map', auspuh: 'Titanium', gume: 'Track Slick', zavore: 'Racing discs', aero: 'Sport', krilo: 'GT wing' }, { clean: 0.55, body: 0.72, engine: 0.66 });
@@ -105,11 +113,13 @@
   function load() {
     let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { s = null; }
     // the real profile: a new player's, an older garage's (the mockup's only before: g unset), or chosen
-    if (!s || s.v !== 2 || !s.g || s.mode === 'game') { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
+    // (the test money in the address, js/denar.js: the real profile, to show it)
+    if (!s || s.v !== 2 || !s.g || s.mode === 'game' || (typeof Denar !== 'undefined' && Denar.set)) { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
     if (!s.cars || !s.mode) { const d = profile(s.mode || 'full'); if (s.lang === 'en') d.lang = 'en'; return d; }
     const d = profile(s.mode);
     for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
     d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; pageOwn(d, s);
+    if (d.mode === 'vet' && s.vm !== VET_V) d.money = Math.max(d.money, vetMoney());   // (a veteran saved before 9. 11. 2026: the new test money)
     if (!d.cars.pico.own) d.cars.pico.own = true;
     d.rent = rentFrom(s.rent, d); for (const id of ORDER) haveFitted(d.cars[id]);
     return d;
@@ -297,9 +307,9 @@
     else { go.textContent = tr('Kupi · {0}', eur(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
     // the cars before and after it: their pictures (as they stand in their colour, half a metre further back), their names to the ear
     const i = ORDER.indexOf(S.car), pv = ORDER[(i - 1 + ORDER.length) % ORDER.length], nx = ORDER[(i + 1) % ORDER.length];
-    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : '';
+    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : ''; el.querySelector('.nm').textContent = model(id).name;
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
-    queueThumbs([pv, nx]);
+    fitNames(); queueThumbs([pv, nx]);
     // IZBERI PROGO: the flag, for the player's car or one rented; else grey, its words: buy or rent the car first (answer 3 of 2. 11.)
     const tb = $('g-track');
     if (own || rented) { tb.disabled = false; tb.classList.remove('not'); flagButton(); }
@@ -508,7 +518,7 @@
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
       case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
-      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); break;
+      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;   // (the buttons at the top higher: the picture fitted again)
     }
   }
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
@@ -569,15 +579,14 @@
     };
   }
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); $('g-demo').classList.toggle('game', S.mode === 'game'); }   // (the real profile: no reset)
-  // the picture over the whole page, raised a little (its foot under the buttons)
-  // (lying down: raised more and its view taller by how little is free between the buttons at the top and the car's name, the car and
-  // the cabinet between them)
-  // (upright: raised so the cabinet's front is whole over the car's name, the car under the buttons at the top (Garage3D.fitShift))
-  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect();
-    const wide = r.width > r.height * 1.25, a = $('g-track').getBoundingClientRect(), b = $('g-name').getBoundingClientRect(), free = b.top > a.bottom ? (b.top - a.bottom) / r.height : 0.55;
-    if (wide) G.shift(Math.round(r.height * 0.29 * free), free);   // (first: resize sizes the dust by the view)
+  // the picture over the whole page, raised a little (its foot under the buttons): the regal's top under the buttons at the top, the plan
+  // chest down to the cars' buttons (Garage3D.fitShift; lying down the whole regal, odlocitve 8. 11.)
+  // (the cars' names in their buttons: a word not broken, the letters smaller till the longest fits (a narrow button: lying down))
+  function fitNames() { for (const el of [$('g-prev'), $('g-next')]) { const n = el.querySelector('.nm'); n.style.fontSize = ''; for (let f = 12; f > 8 && n.scrollWidth > n.clientWidth + 0.5; ) n.style.fontSize = --f + 'px'; } }
+  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); fitNames();
+    const a = $('g-track').getBoundingClientRect(), b = $('g-prev').getBoundingClientRect();
     G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2));
-    if (!wide) G.fitShift(a.bottom - r.top, b.top - r.top); }
+    G.fitShift(a.bottom - r.top, b.top - r.top); }
 
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
   // retired model's: its heir); the money and the cars stay the profile's (the real one: the career's). Without them: the profile's car
@@ -610,7 +619,7 @@
     G.show(spec(S.car));
     setLang();
     requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
-    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

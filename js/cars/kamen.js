@@ -22,8 +22,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     parts: { set: 'truck', ht: 3.3, y0: 0.75,
       extra: {
         hood: { lx: 0.7, y: 1.48, h: 0.35 },                                         // (the tilting front: the bonnet with its wings; h: it lies 1.02 m tall)
-        spareL: { z: 2, th: 0.62, m: 12, r: 0.6, h: 0.4, lx: -0.356, lz: -0.928, y: 1.88 },
-        spareR: { z: 3, th: 0.62, m: 12, r: 0.6, h: 0.4, lx: -0.356, lz: 0.928, y: 1.88 },
+        // (the spare wheels: Core's spare, they wobble from 50 % of the damage and come off at 80 %, docs/deli.md »Rezervno kolo«)
+        spareL: { z: 2, th: 0.62, m: 12, r: 0.6, h: 0.4, lx: -0.356, lz: -0.928, y: 1.88, spare: 1 },
+        spareR: { z: 3, th: 0.62, m: 12, r: 0.6, h: 0.4, lx: -0.356, lz: 0.928, y: 1.88, spare: 1 },
         // (as KOLIBRI's: the head lamps with their black frames parts of their own, mounted on the tilting front (they go with it, turn with
         // it); a hit on their corner knocks one out. Each lamp cluster at the back (the tail lamp, the indicator, their black panel) likewise;
         // the two wipers one part)

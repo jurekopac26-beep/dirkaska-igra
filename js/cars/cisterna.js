@@ -3,7 +3,7 @@
    body of its own on the kingpin (model.trailer, Core: tlStep): it folds in a bend, pushes on the brakes, jackknifes, knocks the walls and
    the cars and falls over a drop's edge, on its own too. Its look (trailer.look, built by the renderer's trailer builder: js/render.js,
    tlBuild): a sun-faded tank, heavy rust, six grey riveted plates welded on, its hoops and manhole covers, the railing on top, the walkway
-   along its side with its rusty railing (two tubes gone), the ladder up to it (a rung gone), the spare tyres and the cans on its rear rack
+   along its side with its rusty railing (two tubes gone), the ladder up to it (a rung gone), the spare tyres on its rear rack
    strapped down, a yellow bumper. Tractor L 5.90 W 2.50 H 3.00; the trailer L 12.40 W 2.50 H 3.56, its kingpin 0.90 behind its front,
    three axles 7.5, 8.8 and 10.1 m behind the kingpin (m). */
 var VEHICLE_DEFS = VEHICLE_DEFS || [];
@@ -14,6 +14,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   // ---- the tank: its size (m: x from the kingpin, its middle yc above the ground, half its height ry, half its width rz), its hoops and covers ----
   const TK = { x0: -10.2, x1: 0.55, yc: 2.2, ry: 1.0, rz: 1.12, dome: 0.32 };
   const HOOPS = [-0.75, -2.65, -4.55, -6.45, -8.35, -9.95], COVERS = [-1.7, -4.2, -6.7, -9.1];
+  const RACK = [-0.87, -0.29, 0.29, 0.87];   // (the rear rack's four spare tyres across (z): the look's, the parts tlSpare1..4)
   // its picture (1024 x 512 px): the skin (x0 to x1 along; around from the bottom up the +z side, over the top, down the -z side), the domed
   // ends (as seen from outside), the walkway's grating (x along, z down), the bumper's label
   const PIC = { skin: [0, 0, 1024, 380], end: [0, 384, 128, 512], grate: [128, 384, 1016, 448], label: [128, 448, 672, 512] };
@@ -174,17 +175,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       }
     }
     for (const sd of [-1, 1]) { B.box(-8.8, 1.1, sd * 1.04, 3.9, 0.05, 0.42, BLK); if (!sh) B.box(-10.78, 0.68, sd * 1.04, 0.02, 0.8, 0.4, BLK); }
-    // the rear rack: its floor, posts and bars; four spare tyres side by side, the shelf over them with twelve cans (red and green), all strapped down
+    // the rear rack: its floor, posts and the shelf on them; four spare tyres side by side under the shelf, strapped down (no cans on it:
+    // the user's decision of 9. 11. 2026, docs/titan-cisterna.md). The tyres are the core's parts tlSpare1..4 (spare, tl: from half the
+    // rig's damage the stack rocks on the rack, at 80 % they come off; the user's decision of 9. 11. 2026, docs/deli.md »Rezervno kolo«):
+    // B.spare, each tyre its part's, the straps (and the shadow's block) go with them
+    const SP = B.spare || ((f) => f());
     B.box(-11.02, 0.6, 0, 0.82, 0.05, 2.4, BLK);
-    const CAN = [0xa3281f, 0xa3281f, 0x2e6a33, 0xa3281f, 0x2e6a33, 0x2e6a33, 0xa3281f, 0x2e6a33, 0xa3281f, 0xa3281f, 0x2e6a33, 0xa3281f];
-    if (sh) { B.box(-11.12, 0.905, 0, 0.24, 0.56, 2.3, TYRE); B.box(-11.05, 1.3, 0, 0.75, 0.43, 2.4, BLK); }   // (the shadow: the tyres, the shelf and its cans as blocks)
+    if (sh) { SP(() => B.box(-11.12, 0.905, 0, 0.24, 0.56, 2.3, TYRE), ''); B.box(-11.05, 1.245, 0, 0.75, 0.05, 2.4, BLK); }   // (the shadow: the tyres as a block, the shelf)
     else {
-      for (const sd of [-1, 1]) { if (full) B.box(-10.8, 0.8, sd * 0.5, 0.08, 0.4, 0.1, DK); for (const x of [-11.4, -10.65]) B.box(x, 1.12, sd * 1.18, 0.05, 1.04, 0.05, BLK); B.box(-11.02, 1.62, sd * 1.18, 0.8, 0.04, 0.04, BLK); }
-      for (const z of [-0.87, -0.29, 0.29, 0.87]) { B.cyl([-11.0, 0.905, z], [-11.24, 0.905, z], 0.28, TYRE, { n: full ? 12 : 8, capK: 0x262626 }); if (full) B.cyl([-11.24, 0.905, z], [-11.255, 0.905, z], 0.16, RIM, { n: 10 }); }
+      for (const sd of [-1, 1]) { if (full) B.box(-10.8, 0.8, sd * 0.5, 0.08, 0.4, 0.1, DK); for (const x of [-11.4, -10.65]) B.box(x, 0.935, sd * 1.18, 0.05, 0.67, 0.05, BLK); }
+      RACK.forEach((z, i) => SP(() => { B.cyl([-11.0, 0.905, z], [-11.24, 0.905, z], 0.28, TYRE, { n: full ? 12 : 8, capK: 0x262626 }); if (full) B.cyl([-11.24, 0.905, z], [-11.255, 0.905, z], 0.16, RIM, { n: 10 }); }, 'tlSpare' + (i + 1)));
       B.box(-11.05, 1.245, 0, 0.75, 0.05, 2.4, BLK);
-      CAN.forEach((c, i) => { const z = -1.045 + i * 0.19; B.box(-11.15, 1.435, z, 0.3, 0.33, 0.17, c); if (full) B.box(-11.06, 1.625, z + 0.04, 0.06, 0.05, 0.05, i % 3 ? 0x1a1a1a : 0xd8c23a); });
-      for (const sd of [-1, 1]) { B.box(-11.265, 0.92, sd * 0.58, 0.012, 0.62, 0.05, YEL); B.box(-11.305, 1.445, sd * 0.58, 0.012, 0.36, 0.05, YEL); if (full) B.box(-11.15, 1.607, sd * 0.58, 0.31, 0.012, 0.05, YEL); }
-      B.box(-11.265, 0.905, 0, 0.012, 0.05, 2.36, YEL); B.box(-11.305, 1.47, 0, 0.012, 0.05, 2.36, YEL);
+      SP(() => { for (const sd of [-1, 1]) B.box(-11.265, 0.92, sd * 0.58, 0.012, 0.62, 0.05, YEL); B.box(-11.265, 0.905, 0, 0.012, 0.05, 2.36, YEL); }, '');
     }
     // the yellow bumper with its label, the lamps' housings at its ends, its brackets; the tail lamps
     B.box(-11.44, 0.42, 0, 0.08, 0.2, 1.7, 0xdbb11f, { face: '-x', uv: PIC.label });
@@ -204,7 +206,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'diesel', hz: 0.95, turbo: 0.8, loud: 1.35 },
     // (the TITAN's parts and mounts, as in js/cars/titan.js: its tractor is the TITAN's look; tests/cisterna.test.js keeps them the same)
     partNames: { grille: 'front grille', deflector: 'roof deflector', skirtL: 'left side skirt', skirtR: 'right side skirt', headL: 'left head lamps', headR: 'right head lamps',
-      tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wipers' },
+      tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wipers',
+      tlSpare1: 'spare tyre', tlSpare2: 'spare tyre', tlSpare3: 'spare tyre', tlSpare4: 'spare tyre' },
     parts: { set: 'truck', ht: 3, y0: 0.6,
       extra: {
         grille: { z: 0, th: 0.6, m: 6, rW: 0.35, h: 0.08, lx: 1, lz: 0, f: 0.35 },
@@ -218,6 +221,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -0.991, lz: -0.576, y: 1.0 },
         tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -0.991, lz: 0.576, y: 1.0 },
         wiperFront: { z: 0, th: 0.65, m: 0.6, r: 0.5, h: 0.03, lx: 0.944, lz: -0.04, y: 2.04 },
+        // (the trailer's: the four spare tyres on its rear rack, tl: lx / lz from its middle (x -5.3, half 6.2 m long, 1.25 m wide), y their
+        // middles; spare: from half the rig's damage they rock, at 80 % they come off, docs/deli.md »Rezervno kolo«. Not the TITAN's)
+        ...Object.fromEntries(RACK.map((z, i) => ['tlSpare' + (i + 1), { z: 1, th: 1, m: 10, r: 0.28, h: 0.24, lx: -0.939, lz: +(z / 1.25).toFixed(3), y: 0.905, spare: 1, tl: 1 }])),
       },
       // (where the look has them: the cab's doors and mirrors are far forward on a cab-over; a lost one flies off from there)
       over: { doorL: { lx: 0.64, y: 1.84 }, doorR: { lx: 0.64, y: 1.84 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 }, bumperF: { h: 0.2 } },

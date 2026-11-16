@@ -23,6 +23,7 @@
 //    knocked off (three seeds each: invariants, not one seed's outcome); attrition: one Nordschleife race in each of the eight one-make
 //    fields with the most retirements (five of them with wider AI spacing): no race with more than 4 retired, at most 6 in the eight;
 //    SOKOL R and PANTER 6 (they race the four road cars) within 2.5 % of the KAZE RS's lap on three tracks
+//  - the GT3 class: the OREL GT3's field (OREL GT3 and TIGER GT in turn), its autopilot lap within 1 % of the TIGER GT's at Bathurst and Spa
 //  - patch defs and broken defs (a throwaway Core with extra defs): a patch attaches its fields (a part table: that model breaks apart
 //    as a registered one does), a glb model joins a field only with a look of its own, a retired model never, a bad def is skipped and
 //    listed (nothing of a def silently dropped or replaced)
@@ -38,7 +39,7 @@ const { DT, seeded } = require('./lib/sim.js');
 
 // the registration order (= the script tags' order, append-only: a shipped vehicle is retired, never removed or moved)
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
-  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'cisterna', 'zrcalni'];
+  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
@@ -740,6 +741,25 @@ if (!only.length) {
     }
   }
   info(`golden crash set-up in new vehicles (60 s): a wheel knocked off in ${wl} of ${nr} runs (the most in one car: ${rows.join(', ')})`);
+}
+
+// ---- 12. the GT3 class: the OREL GT3 races the TIGER GT (its field: the two in turn; the TIGER GT keeps its own one-make field), their
+//      autopilot laps within 1 % of each other at Bathurst and Spa (a mixed field: neither runs away from the other) ----
+if (!only.length || only.includes('orel') || only.includes('tiger')) {
+  const O = model('orel'), G = model('tiger');
+  check('the GT3 field: aiModel with the OREL GT3 as the player\'s car: OREL GT3 and TIGER GT in turn (drivers 0-11), with the TIGER GT\'s: TIGER GTs',
+    Array.from({ length: 12 }, (_, k) => C.aiModel(k, O) === (k % 2 ? G : O) && C.aiModel(k, G) === G).every(Boolean), Array.from({ length: 4 }, (_, k) => C.aiModel(k, O).id).join(', '));
+  const lap = (id, tid) => {   // the player alone on autopilot, damage off: its second lap, a flying one (as in 9.)
+    const T = track(tid); Math.random = seeded(61);
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 2, playerModel: model(id), assist: 2, seed: 61, difficulty: 1, damage: 0 });
+    r.start(); const P = r.player;
+    for (let k = 1; k < (T.len * 2 / 15 + 60) / DT && !P.finished; k++) { Math.random = seeded(61000 + k); C.aiControl(P, r, DT); r.step(DT); if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
+    return P.lapTimes[1];
+  };
+  for (const tid of ['bathurst', 'spa']) {
+    const t = lap('tiger', tid), o = lap('orel', tid);
+    check(`${tid}: the OREL GT3's autopilot lap within 1 % of the TIGER GT's (the GT3 class)`, t > 0 && o > 0 && Math.abs(o / t - 1) <= 0.01, `tiger ${t.toFixed(2)} s, orel ${(100 * (o / t - 1)).toFixed(2)} %`);
+  }
 }
 
 Math.random = orig;
