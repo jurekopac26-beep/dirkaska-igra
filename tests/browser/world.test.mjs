@@ -25,6 +25,8 @@ try {
   for (const id of await trackIds(page)) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
+    if (id === 'pikes' || id === 'pikesg') { const g = await page.evaluate(() => { const G = World.api.PK.G; return [G.pre, G.lzb]; });   // (Pikes' precomputed terrain grid, def.teren: taken, and every vertex the build reads in it)
+      T.check(`${id}: the terrain grid from def.teren (else node tools/pikes-teren.mjs)`, g[0] === 'ok' && g[1] === 0, `G.pre ${g[0]}, ${g[1]} vertices computed in the build`); }
     if (id === 'chapman' && !update) { const h = hills(await page.evaluate(hillProbe, HILL_DL)), have = hillsFile();   // (Chapman's Peak's hills behind the barrier line, def.hills: as its terrain gives them now)
       T.check('chapman: def.hills as its terrain gives them (else node tools/chapman-hribi.mjs)', have === hillsLine(h), have ? `${h.stats.length} hills, ${h.stats.reduce((a, x) => a + x[2], 0)} m` : 'no def.hills');
       const nc = await page.evaluate(() => { const T = window.__game.race.track, H = T.hill; let worst = 99, n = 0;   // (the rockfall nets the world built: the cars' soft limit short of each, its posts 0.3 m nearer the road)
