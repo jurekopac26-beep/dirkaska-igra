@@ -54,7 +54,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Hongkong, Kitajska | zavite 3 | OSM 33 % (zidovi 21 %, ograje 8 %) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): podporni zidovi in ograje ob ozki cesti |
 | Shimla, Indija | zavite 4 | OSM 15 % (hiše vrisane ob 65 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše, bazar in zidovi ob cesti |
 | Darjeeling, Indija | zavite 4 | OSM 6 % (hiše vrisane ob 32 % poti) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): hiše in železnica tik ob ozki cesti |
-| Yungas, Bolivija | kratke C1, Nove proge 6 | OSM brez vrisanih ovir | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozka polica v steni, prepad brez ograje (kot Killar). Od 8. 11. 2026 je Yungas proga za cisterno (izjema, razdelek »Proge za cisterno«); odseka iz verig odpadeta |
+| Yungas, Bolivija | kratke C1, Nove proge 6 | OSM brez vrisanih ovir | **v delu kot proga za cisterno** (PR #539; odločitev uporabnika 16. 11. 2026, tabla #382, komentar 6906260656: dokončajo se vse proge za cisterno, tudi Yungas). Prej **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ozka polica v steni, prepad brez ograje (kot Killar). Od 8. 11. 2026 je Yungas proga za cisterno (izjema, razdelek »Proge za cisterno«); odseka iz verig odpadeta |
 | Medeu, Kazahstan | kratke A, Načrtovano | OSM 12 % (ograje) | izletna cona je |
 | Milford Sound, Nova Zelandija | kratke B | OSM 37 %, obe 37 % (predor 1,2 km je tretjina poti, mostovi) | izletna cona je (razen v predoru); odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
 | Ella, Šrilanka | kratke C1 | OSM 2 % | izletna cona je |
@@ -81,7 +81,7 @@ Odločitev uporabnika 3. 11. 2026 (v pogovoru, na vprašanja `ena-proga-<država
 
 Odločitev uporabnika 5. 11. 2026 zvečer: »Od prog iz Brazilije naj ostane samo Rio do Rastro.« Rio de Janeiro je odtlej testna (PR #365), izbrana nova proga Ouro Preto odpade; Brazilija nove proge nima.
 
-Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, komentar 6727185416): (1) država z dvema ali več progami, pri kateri uporabnik še ni izbral ene, ima vse te proge na odločanju (`pending: true`) do izbire; (2) iz države na odločanju novih prog ne delamo, ker jo `pending` že pokriva. Na odločanju so: **Avstralija** (Bathurst, Great Alpine Road), **Anglija** (Crystal Palace, London; London ni več izjema), **Maroko** (Marrakesh, Dadès) in **Japonska** (Irohazaka, Hakone; Suzuka ostane). Stanje 8. 11.: Avstralija je od 9. 11. odločena (Bathurst), Japonska prav tako (Hakone; Suzuka in Irohazaka gresta v test). **Finska ni na odločanju** (potrdil uporabnik ob 22.08): nova proga je Koli (razdelek »Finska: Koli«), Ouninpohja je testna, Harju gre v test, ko je Koli na `main`. Pravila: `CLAUDE.md`, »Ena proga na državo«.
+Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, komentar 6727185416): (1) država z dvema ali več progami, pri kateri uporabnik še ni izbral ene, ima vse te proge na odločanju (`pending: true`) do izbire; (2) iz države na odločanju novih prog ne delamo, ker jo `pending` že pokriva. Na odločanju so: **Avstralija** (Bathurst, Great Alpine Road), **Anglija** (Crystal Palace, London; London ni več izjema), **Maroko** (Marrakesh, Dadès) in **Japonska** (Irohazaka, Hakone; Suzuka ostane). Stanje 8. 11.: Avstralija je od 9. 11. odločena (Bathurst), Japonska prav tako (Hakone; Suzuka in Irohazaka gresta v test). **Finska ni na odločanju** (potrdil uporabnik ob 22.08): nova proga je Koli (razdelek »Finska: Koli«), Ouninpohja je testna, Harju gre v test, ko je Koli na `main`. Od 16. 11. 2026 je po tem pravilu na odločanju tudi **Papua Nova Gvineja** (Tapini, proga za cisterno, PR #539; Sogeri, PR #691). Pravila: `CLAUDE.md`, »Ena proga na državo«.
 
 | Država | V igri | Izbrana nova proga | Odpadejo |
 |---|---|---|---|
@@ -132,7 +132,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Francija | Pau (Nove proge); stara veja: Montvernier (ni v načrtu) | Pau: **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Nova Zelandija | Cromwell (dirkališče, Nove proge za 1.0, A17); odpadejo Milford Sound (kratke, B), Wellington (zavite, 4), Crown Range in Coronet Peak | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.05; izletno cono najprej preveri njegova seja) |
 | Bolivija | Yungas v dveh verigah (kratke, C1, in Nove proge; ista cesta) | **v delu kot proga za cisterno** (odločitev uporabnika 8. 11. 2026, `docs/proge-cisterna.md`); odseka iz verig odpadeta |
-| Islandija, Pakistan, Malavi, Papua Nova Gvineja | proge za cisterno: Svalvogar, Fairy Meadows, Manchewe, Tapini | **v delu** (odločitev uporabnika 8. 11. 2026, `docs/proge-cisterna.md`); druge proge iz teh držav odpadejo |
+| Islandija, Pakistan, Malavi, Papua Nova Gvineja | proge za cisterno: Svalvogar, Fairy Meadows, Manchewe, Tapini | **v delu** (odločitev uporabnika 8. 11. 2026, `docs/proge-cisterna.md`; 16. 11. 2026 uporabnik reče, naj se dokončajo vse, tabla #382, komentar 6906260656); druge proge iz teh držav odpadejo; **Papua Nova Gvineja je na odločanju** (Tapini z `pending: true` in Sogeri, PR #691) |
 | Švica | Furka (Nove proge) | po vrsti |
 | Gruzija | Gudauri (Nove proge) | po vrsti |
 | Albanija | Llogara (Nove proge) | po vrsti |

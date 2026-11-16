@@ -7,7 +7,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // surface (def.bumps), so short and hard that the tanker is not raced but coaxed to the finish: only the TITAN CISTERNA (def.vehicle, whatever
   // the player's own car), alone against the clock (def.timeTrial).
   TRACK_DEFS.push({
-    id: 'tapini', name: 'Tapini, Papua Nova Gvineja', theme: 'tapini', open: true, timeTrial: true, vehicle: 'cisterna', laps: 1, halfWidth: 2,
+    id: 'tapini', pending: true, name: 'Tapini, Papua Nova Gvineja', theme: 'tapini', open: true, timeTrial: true, vehicle: 'cisterna', laps: 1, halfWidth: 2,
     desc: 'Zemljena cesta v gorah Papue Nove Gvineje blizu Tapinija: 483 m spusta (−9,5 %) po strmem gozdnatem pobočju doline, prepad brez ograje na desni skoraj vso pot, grbine v rjavi zemlji. Samo cisterna, na čas: pripelji jo do cilja.',
     en: { name: 'Tapini, Papua New Guinea', desc: 'The earth road in the mountains of Papua New Guinea near Tapini: 483 m of descent (−9.5 %) along the steep forested side of a valley, a drop with no barrier on the right nearly all the way, bumps in the brown earth. Only the tanker, against the clock: get it to the finish.' },
     say: 'Tapini',   // its name in the commentator's English (js/game.js EN_NAME takes it from here)

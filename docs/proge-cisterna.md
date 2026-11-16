@@ -6,6 +6,7 @@ Načrt, odločitve, podatki in stanje petih prog, ki jih je uporabnik naročil 8
 
 - **Prošnja:** »Začni z delom 5 prog, v vsakem kontinentu 1. Proge naj bodo zelo kratke, do 500 m, in naj bodo težke, ozke, z neravnim podnom, ozke s prepadom; ceste naj bodo ozke zaradi razgibanega terena, težko prevozne za vožnjo po njih s cisterno. Proge naj bodo tako težke, da s cisterno ne dirkaš, ampak se trudiš, da speljes po progi do cilja.«
 - **Nabor prog (izbira A):** Svalvogar, Islandija (Evropa); Fairy Meadows, Pakistan (Azija); Manchewe, Malavi (Afrika); Yungas, Bolivija (Amerika); Tapini, Papua Nova Gvineja (Oceanija).
+- **Dokončanje in Tapini na odločanju (16. 11. 2026):** uporabnik reče, naj se dokončajo vseh pet prog (tabla #382, komentar 6906260656), tudi Yungas. Papua Nova Gvineja ima še Sogeri (PR #691), zato je Tapini na odločanju (`pending: true`, `CLAUDE.md`, »Ena proga na državo«).
 - **Vozilo (izbira »Samo cisterna«):** na teh petih progah igra vedno da TITAN CISTERNO (`js/cars/cisterna.js`, `docs/titan-cisterna.md`), tudi če je igralec nima; izbire vozila ni. Samo vožnja na čas do cilja, brez tekmecev in prometa; medalje so za cisterno.
 - **Ovinki (izbira »Prevozni naprej«):** najožji ovinki so odprti toliko, da jih cisterna zvozi brez vzvratne vožnje, a samo počasi in natančno: prikolica reže notranji rob, zunaj je prepad. Test preveri, da avtopilot pripelje cisterno do cilja.
 
