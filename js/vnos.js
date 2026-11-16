@@ -166,7 +166,7 @@ const Vnos = (() => {
       if (!S.done && (S.inStep || S.inCall) && cur === S) { const k = pkey(S.race, ix, b), L = A[k] || (A[k] = []), v = enc(y, S.X, 0), m = L.length; if (m && L[m - 2] === v) L[m - 1]++; else L.push(v, 1); }
       return y;
     };
-    Object.defineProperty(w, 'inset', { get: () => fl.inset, configurable: true });   // (Core propStep reads it from the floor)
+    Object.defineProperty(w, 'inset', { get: () => fl.inset, set: v => { fl.inset = v; }, configurable: true });   // (Core propStep reads it from the floor; a write goes to the floor itself, not lost)
     return w;
   }
   function insetOf(fl, X) {   // (the floor's inset: the place and value of each one not 0; null: none)
