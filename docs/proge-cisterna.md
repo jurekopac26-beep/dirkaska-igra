@@ -56,7 +56,7 @@ Posnetka ovinka za meni (`tools/menu-corner.mjs`) te proge nimajo: posnetek kaž
 | Yungas | stara enopasovna cesta v pobočju oblačnega gozda: globoke mokre kolesnice, blato, luže, prehodi potokov | nanosi plazov s stene, odriniti le do polovice (`slides`) | cesta se zoži, mehka zemlja in kamni na notranji strani |
 | Tapini | glinasta cesta, ki jo je zgradil buldožer: zelo globoke kolesnice, blatne jame, dolgi valovi | hlodi, položeni počez čez najhujše blato (`logs`) | tresenje po hlodih, moker les drsi |
 
-- **Medalje** po razgibani cesti (avtopilot s cisterno × 1,02, 1,15, 1,40; suho / dež): Svalvogar 57/64/78 in 71/80/98 s, Fairy Meadows 67/76/92 in 78/88/107 s, Manchewe 61/69/84 in 67/76/92 s, Yungas 67/75/91 in 74/83/101 s, Tapini 72/82/99 in 80/90/110 s.
+- **Medalje** po razgibani cesti (avtopilot s cisterno × 1,02, 1,15, 1,40; suho / dež): Svalvogar 57/64/78 in 71/80/98 s, Fairy Meadows 67/76/92 in 78/88/107 s, Manchewe 61/69/84 in 73/83/100 s, Yungas 67/75/91 in 81/92/111 s, Tapini 72/82/99 in 80/90/110 s (dež po mokri fiziki #647 za Manchewe in Yungas; Svalvogar in Fairy Meadows v dežju zdaj ne pripeljeta do cilja, Tapini je zamrznjen: po orodju bi bil dež 88/100/121 s).
 - **Test** (`tests/lib/cisterna-proge.js`, točka 7): površje vsaj 5 cm gor in dol, vsaj tri vrste površja, znak države, recept, ki ga nima nobena druga proga za cisterno; vzmeti delajo (obremenitev koles pod 0,6 in nad 1,4 svojega deleža, teren nagne vozilo vsaj za 2°); tudi v dežju do cilja brez padca in reševanja. Preizkus trka v `golden` za cisterno zahteva vsaj 3 % škode (na razgibani cesti vozi 6–10 m/s), čas trka po progah v `tests/lib/sim.js` (`CRASH_AT`).
 
 ## Postopek in stanje
