@@ -20,13 +20,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 50000, pk: 'open', field: ['medved'],
     snd: { kind: 'v8', hz: 0.8, loud: 1.1 },
     expect: { t100: [3.18, 3.73], vmax: [184, 195], latG: [1.99, 2.09], d100: [25.8, 28.5] },
-    partNames: { door2L: 'rear left door', door2R: 'rear right door', tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
+    partNames: { tailgate: 'tailgate', spare: 'spare wheel', roofRack: 'roof rack', bullBar: 'bull bar', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp',
       plate: 'number plate', wiperFront: 'windscreen wipers', wiperRear: 'rear wiper' },
     parts: { set: 'car', ht: 1.95, y0: 0.32, drop: ['trunk'],
       extra: {
-        // (the rear doors, parts of their own between the B-pillar and the quarters, as PREDSEDNIK's: the front door is the set's doorL / doorR)
-        door2L: { z: 2, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: -0.18, lz: -1, y: 1.1 },
-        door2R: { z: 3, th: 0.72, m: 9, r: 0.6, h: 0.08, lx: -0.18, lz: 1, y: 1.1 },
         tailgate: { z: 1, th: 0.78, m: 12, rW: 0.4, h: 0.11, lx: -0.94, lz: 0, y: 1.11 },   // (with the ladder on it, its spare wheel a part of its own on it)
         spare: { z: 1, th: 1, m: 10, r: 0.38, h: 0.23, lx: -0.958, lz: 0, y: 1.06, on: 'tailgate', spare: 1 },   // (Core's spare: it wobbles from 50 % of the damage, off at 80 %; with the gate)
         roofRack: { z: 1, th: 0.7, m: 6, rW: 0.4, h: 0.15, lx: -0.24, lz: 0, y: 1.88 },     // (with its light bar and its load)
@@ -102,7 +99,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     },
     // the look (KIT API v1, render.js; look units = metres): one loft, the box: slab sides, flat glass leaning in a little, a flat roof (the
     // stripe colour: a two-tone roof), an upright windscreen, a flat bonnet; its end caps the grille's panel (front) and the tailgate (rear,
-    // over the bumper). Each side: the fender, the front door and the rear door (a part each, their glass with them; the sill under them stays), the quarter under
+    // over the bumper). Each side: the fender, both doors (one part, their glass with them; the sill under them stays), the quarter under
     // the belt (its long window and the pillars stay with the roof). The bumpers, the bull bar in front of the grille, the tailgate with the
     // spare and the ladder on it, the roof rack with the light bar and the load, the black flares over the tyres (with the fenders and the
     // quarters), the snorkel (with the right fender) in their parts. What the two cameras see first (from above, from behind) gets the
@@ -127,8 +124,6 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       regions: [
         { part: 'doorL', x: [0.01, 1.06], bands: ['side', 'window'], side: 'L', y: [0.5, 1.85] },
         { part: 'doorR', x: [0.01, 1.06], bands: ['side', 'window'], side: 'R', y: [0.5, 1.85] },
-        { part: 'door2L', x: [-0.86, 0.01], bands: ['side', 'window'], side: 'L', y: [0.5, 1.85] },   // (the rear doors: their own parts)
-        { part: 'door2R', x: [-0.86, 0.01], bands: ['side', 'window'], side: 'R', y: [0.5, 1.85] },
         { part: 'fenderL', x: [1.06, 2.3], bands: ['tuck', 'side', 'window'], side: 'L', y: [-1, 1.3] },
         { part: 'fenderR', x: [1.06, 2.3], bands: ['tuck', 'side', 'window'], side: 'R', y: [-1, 1.3] },
         { part: 'quarterL', x: [-2.3, -0.86], bands: ['tuck', 'side'], side: 'L', y: [-1, 1.25] },
@@ -162,7 +157,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         for (const x of [0.01, -0.86, 1.05]) LD.side([[x - 0.008, 0.58], [x + 0.008, 0.58], [x + 0.008, 1.19], [x - 0.008, 1.19]], DK, null, 0.01);
         K.deli('vrata', () => { LD.side([[-0.84, 0.8], [1.02, 0.8], [1.02, 0.87], [-0.84, 0.87]], B, null, 0.008);   // (the strip and the front doors' handles: the garage's doors in their place, mounts.vrata)
           for (const sd of [-1, 1]) K.rect(0.16, 1.06, sd * 0.942, 0.17, 0.035, CH, { dir: sd < 0 ? '-z' : 'z' }); });
-        for (const sd of [-1, 1]) K.rect(-0.72, 1.06, sd * 0.942, 0.17, 0.035, CH, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'door2L' : 'door2R' });   // (the rear doors' handles)
+        for (const sd of [-1, 1]) K.rect(-0.72, 1.06, sd * 0.942, 0.17, 0.035, CH, { dir: sd < 0 ? '-z' : 'z' });   // (the rear doors' handles)
         K.deli('zamasek', () => K.rect(-1.76, 1.02, 0.938, 0.11, 0.11, DK, { dir: 'z' }));   // the fuel filler's flap (right quarter; the garage's cap: mounts.zamasek)
         // ---- the flares over the big tyres (black), the arch's ledge under them ----
         for (const A of K.arches) for (const sd of [-1, 1]) K.flare(A.x, 0.44, 0.54, sd * 0.86, sd * 0.995, D, { n: 5 });
@@ -263,7 +258,6 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         });
         K.hinge('hood', [1.08, 1.19, -0.8], [1.08, 1.19, 0.8]);
         K.hinge('doorL', [1.05, 0.6, -0.93], [1.05, 1.2, -0.93]); K.hinge('doorR', [1.05, 0.6, 0.93], [1.05, 1.2, 0.93]);
-        K.hinge('door2L', [0.0, 0.6, -0.93], [0.0, 1.2, -0.93]); K.hinge('door2R', [0.0, 0.6, 0.93], [0.0, 1.2, 0.93]);   // (the rear doors on the B-pillar)
         // ---- Visoki (Nastavitve · Detajli avtov: Visoki; the player's and the showroom's car): a generic badge in the grille and on the
         //      spare's cover (no make's), the plates' frames and characters' bars, the bonnet's shut lines, washer jets and rubber catches,
         //      the handles' grips, the doors' shut line at the sill, the lamps' bulbs and the tail lamps' sections (the stock lamps'), the
@@ -279,9 +273,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             K.box(1.13, L.topY(1.13, sd * 0.3) - 0.002, sd * 0.3, 0.03, 0.012, 0.05, 0, B, null, true);
             K.box(2.13, L.topY(2.13, sd * 0.78) - 0.002, sd * 0.78, 0.07, 0.014, 0.035, 0, B, null, true); } });
           for (const sd of [-1, 1]) { const door = LR('door', sd);
-            for (const x of [0.16, -0.72]) if (x < 0 || !K.fitted.vrata) K.box(x, 1.052, sd * 0.949, 0.13, 0.016, 0.014, 0, [0.12, 0.12, 0.13], null, false, { host: x > 0 ? door : LR('door2', sd) });
+            for (const x of [0.16, -0.72]) if (x < 0 || !K.fitted.vrata) K.box(x, 1.052, sd * 0.949, 0.13, 0.016, 0.014, 0, [0.12, 0.12, 0.13], null, false, x > 0 ? { host: door } : { part: 'body' });
             LD.side([[0.01, 0.5], [1.05, 0.5], [1.05, 0.508], [0.01, 0.508]], DK, [sd], 0.006, { host: door });
-            LD.side([[-0.86, 0.5], [0.01, 0.5], [0.01, 0.508], [-0.86, 0.508]], DK, [sd], 0.006, { host: LR('door2', sd) });
+            LD.side([[-0.86, 0.5], [0.01, 0.5], [0.01, 0.508], [-0.86, 0.508]], DK, [sd], 0.006, { part: 'body' });
             if (!K.fitted.zarometi) { const h = { host: LR('head', sd) }; K.discX(2.2895, 0.88, sd * 0.69, 0.04, 8, [1, 0.99, 0.94], 1, h); K.rect(2.2898, 0.88, sd * 0.69, 0.2, 0.007, [0.7, 0.72, 0.76], h); }
             if (!K.fitted.zadnje_luci) { const h = bx({ host: LR('tail', sd) });
               K.rect(-2.1942, 1.05, sd * 0.8, 0.11, 0.07, K.rgb(0xff9a1e), h); K.rect(-2.1942, 0.79, sd * 0.8, 0.11, 0.06, [0.9, 0.9, 0.88], h);
@@ -319,9 +313,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(0.4, 0.975, 0.06, 0.035, 0.035, 0.035, 0, C.BLK, [0.75, 0.1, 0.08], true, IN);
           K.box(0.0, 0.76, 0, 0.3, 0.16, 0.22, 0, LE2, LE, true, IN);                                                                  // the arm rest between the seats
           C.pedals(0.99, 0.55, SZ, 3);
-          for (const sd of [-1, 1]) { const od = { dir: sd < 0 ? 'z' : '-z', inner: true, host: sd < 0 ? 'doorL' : 'doorR' };        // the doors' cards (each on its door), the front door's kick panel
+          for (const sd of [-1, 1]) { const od = { dir: sd < 0 ? 'z' : '-z', inner: true, host: sd < 0 ? 'doorL' : 'doorR' };        // the doors' cards (the front one on its door, the rear one on the body), the front door's kick panel
             C.door(sd, { x: [0.08, 1.0], y: [0.72, 1.16], z: 0.87, insert: LE });
-            C.door(sd, { x: [-0.82, -0.06], y: [0.72, 1.16], z: 0.87, insert: LE, speaker: false, host: sd < 0 ? 'door2L' : 'door2R' });
+            C.door(sd, { x: [-0.82, -0.06], y: [0.72, 1.16], z: 0.87, insert: LE, speaker: false, host: 'body' });
             K.rect(0.54, 0.61, sd * 0.87, 0.92, 0.2, C.PL, od);
             K.box(0.01, 0.5, sd * 0.89, 0.08, 0.7, 0.06, 0, P, null, true, IN); }                                                     // (the B-pillars' feet)
           // the load behind the rear bench: a crate, a tool box; the housings over the rear wheels (the tubs are seen from
