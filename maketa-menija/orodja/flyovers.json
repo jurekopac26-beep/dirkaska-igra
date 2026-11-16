@@ -1193,5 +1193,25 @@
     }
    ]
   }
+ ],
+ [
+  "cromwell",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Under the Bridge",
+     "d": 1300
+    },
+    {
+     "n": "West Hairpin",
+     "d": 2140
+    },
+    {
+     "n": "The Bridge",
+     "d": 3062
+    }
+   ]
+  }
  ]
 ]

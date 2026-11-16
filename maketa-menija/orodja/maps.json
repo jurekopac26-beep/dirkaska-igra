@@ -455,5 +455,16 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "cromwell",
+  "top",
+  "top-cromwell",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]
