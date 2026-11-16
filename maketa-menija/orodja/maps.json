@@ -574,5 +574,71 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "ngorongoro",
+  "top",
+  "top-ngorongoro",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "pembrey",
+  "top",
+  "top-pembrey",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "portomoniz",
+  "top",
+  "top-portomoniz",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "riohondo",
+  "top",
+  "top-riohondo",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "sacalobra",
+  "top",
+  "top-sacalobra",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "sakhir",
+  "top",
+  "top-sakhir",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]

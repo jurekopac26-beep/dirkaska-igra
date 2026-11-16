@@ -189,5 +189,14 @@
  "bangsaen": {
   "kbps": 550,
   "sea": true
+ },
+ "pembrey": {
+  "sea": true
+ },
+ "portomoniz": {
+  "sea": true
+ },
+ "sacalobra": {
+  "sea": true
  }
 }

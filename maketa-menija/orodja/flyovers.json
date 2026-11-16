@@ -1427,5 +1427,165 @@
     }
    ]
   }
+ ],
+ [
+  "ngorongoro",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Gate · 2,157 m",
+     "d": 197
+    },
+    {
+     "n": "Crater Wall · 2,055 m",
+     "d": 1000
+    },
+    {
+     "n": "The Ledge · 1,984 m",
+     "d": 1500
+    },
+    {
+     "n": "Crater Floor · 1,831 m",
+     "d": 2800
+    }
+   ],
+   "alt": [
+    2169,
+    1818
+   ]
+  }
+ ],
+ [
+  "pembrey",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "North Hairpin",
+     "d": 372
+    },
+    {
+     "n": "Paddock Left",
+     "d": 904
+    },
+    {
+     "n": "East Hairpin",
+     "d": 1405
+    },
+    {
+     "n": "Woods Right",
+     "d": 1805
+    }
+   ]
+  }
+ ],
+ [
+  "portomoniz",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1 · 390 m",
+     "d": 694
+    },
+    {
+     "n": "Viewpoint · 290 m",
+     "d": 1684
+    },
+    {
+     "n": "Hairpin 6 · 193 m",
+     "d": 2584
+    },
+    {
+     "n": "Hairpin 8 · 128 m",
+     "d": 3211
+    }
+   ],
+   "alt": [
+    465,
+    29
+   ]
+  }
+ ],
+ [
+  "riohondo",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Tight Left",
+     "d": 756
+    },
+    {
+     "n": "Fast Left",
+     "d": 2440
+    },
+    {
+     "n": "Infield Left",
+     "d": 3390
+    },
+    {
+     "n": "Right Kink",
+     "d": 4240
+    }
+   ]
+  }
+ ],
+ [
+  "sacalobra",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Font de sa Mata",
+     "d": 620
+    },
+    {
+     "n": "Hairpin 5 · 561 m",
+     "d": 1609
+    },
+    {
+     "n": "Hairpin 8 · 481 m",
+     "d": 2739
+    },
+    {
+     "n": "Torrent d'Es Racó",
+     "d": 3574
+    },
+    {
+     "n": "Rock Gate",
+     "d": 4505
+    }
+   ],
+   "alt": [
+    679,
+    337
+   ]
+  }
+ ],
+ [
+  "sakhir",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Right Hairpin",
+     "d": 540
+    },
+    {
+     "n": "Hairpin in the Valley",
+     "d": 2086
+    },
+    {
+     "n": "Fast Right",
+     "d": 3570
+    },
+    {
+     "n": "Last Right",
+     "d": 4826
+    }
+   ]
+  }
  ]
 ]
