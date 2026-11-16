@@ -3,7 +3,7 @@
 // none; a race at Medvode with the sound on (the Sava heard, a church's bells as the car passes it, quieter with the speed, at most 25 nodes
 // and 1.5 MB of buffers); the beds and the calls under the engine (rendered offline: SfxOkolje.probe against Sfx.probe); the setting (Normalno
 // by default, Tiho half of it, Glasno twice, Izklop nothing; kept between launches); the night, the rain and the winter (no birds, no insects); the load (a frame's share,
-// an offline render); Ouninpohja's birds and forest; Pikes Peak without our wind; on a second page with the browser's speech stubbed, Spa's
+// an offline render); Rio do Rastro's birds and forest (Ouninpohja, a test track since 8. 11. 2026, stood here before); Pikes Peak without our wind; on a second page with the browser's speech stubbed, Spa's
 // announcer and shouts (never over the commentator, cut off by him), its cows' bells, Marrakesh's traffic and pigeons.
 //   node tests/browser/okolje.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -146,7 +146,7 @@ try {
   const frozen = await page.evaluate(() => Core.TRACKS.filter(d => d.test || SfxOkolje.NO.includes(d.id)).map(d => [d.id, SfxOkolje.eligible(d) || SfxOkolje.zones({}, { def: d }) !== null]));
   T.check('the test tracks (and the roads counted with them): no zones', frozen.length >= 12 && frozen.every(f => !f[1]), frozen.filter(f => f[1]).map(f => f[0]).join(', ') || frozen.length + ' tracks');
   T.check('Medvode: its villages, the Sava and the lake, its churches', has('medvode', 'vas') && has('medvode', 'reka') && has('medvode', 'jezero') && Z.medvode.rows.filter(r => r[2] === 'zvon').length >= 3, JSON.stringify(Z.medvode.rows.slice(0, 12)));
-  T.check('Ouninpohja: the forest most of the way, and its villages', cover('ouninpohja', 'gozd') > 0.5 && has('ouninpohja', 'vas'), 'forest ' + cover('ouninpohja', 'gozd').toFixed(2));
+  T.check('Nürburg: the forest most of the way, and its villages', cover('nring', 'gozd') > 0.5 && has('nring', 'vas'), 'forest ' + cover('nring', 'gozd').toFixed(2));
   T.check('Katu-Jaryk: the wind stronger at the top than at the bottom', Z.katu.windHi > Z.katu.windLo + 0.1, JSON.stringify([Z.katu.windLo, Z.katu.windHi]));
   T.check("Chapman's Peak: the sea", cover('chapman', 'morje') > 0.2, 'sea ' + cover('chapman', 'morje').toFixed(2));
   T.check('Marrakesh (in the town): little forest, no village of its own', cover('marrakesh', 'gozd') < 0.2 && !has('marrakesh', 'vas'), 'forest ' + cover('marrakesh', 'gozd').toFixed(2));
@@ -155,7 +155,7 @@ try {
   const sets = JSON.stringify({ krave: list('krave'), ovce: list('ovce'), mesto: list('mesto'), razglas: list('razglas') });
   T.check('Spa: its herds of cows by the road, the announcer by the stands; Red Bull Ring: cows', cnt('spa', 'krave') >= 3 && has('spa', 'razglas') && has('rbring', 'krave'), sets);
   T.check('Marrakesh: the town (its traffic, its pigeons) and the announcer; Bathurst: the announcer, no town', has('marrakesh', 'mesto') && has('marrakesh', 'razglas') && has('bathurst', 'razglas') && !has('bathurst', 'mesto'), sets);
-  T.check('no announcer on a stage (Ouninpohja), no herd at Medvode, no wind of ours at Pikes Peak (its own: js/sfx.js)', !has('ouninpohja', 'razglas') && !has('medvode', 'krave') && Z.pikes && !has('pikes', 'veter'), sets);
+  T.check('no announcer on an open road (Rio do Rastro), no herd at Medvode, no wind of ours at Pikes Peak (its own: js/sfx.js)', Z.rastro && !has('rastro', 'razglas') && !has('medvode', 'krave') && Z.pikes && !has('pikes', 'veter'), sets);
 
   // 2. a race at Medvode with the sound on (the autopilot, the church's bell certain: SfxOkolje.opts)
   await page.evaluate(() => Sfx.resume());
@@ -256,7 +256,7 @@ try {
       T.check('the load on the sound\'s own thread: the sounds by the road at most 15 % more (off and on in turn, birds, beds)', more <= 0.15 && on.every(x => x[1] > 3), JSON.stringify({ more: +more.toFixed(3), on, off }));
     }
 
-    // 7. Ouninpohja: the birds (ten times as often) and the forest's rustle along the stage; 8. Pikes Peak: no wind of ours (the mountain's
+    // 7. Rio do Rastro: the birds (ten times as often) and the forest's rustle along the road; 8. Pikes Peak: no wind of ours (the mountain's
     // own, js/sfx.js), the birds below the treeline
     const run = async (id, n) => {
       await startTrack(page, id);
@@ -266,8 +266,8 @@ try {
       for (let k = 0; k < n; k++) F.push(await frame(0.5));
       return { ok: p[0], songs: p[1].songs, birds: F[F.length - 1].L.n.birds - p[1].n.birds, rustle: F.map(x => x.L.beds.rustle || 0), wind: F.map(x => x.L.tg.wind || 0), s: [F[0].s, F[F.length - 1].s] };
     };
-    const oun = await run('ouninpohja', 12);
-    T.check('Ouninpohja: the birds and the forest', oun.ok && oun.birds >= 1 && oun.rustle.some(v => v > 0.01), JSON.stringify(oun));
+    const rr = await run('rastro', 12);
+    T.check('Rio do Rastro: the birds and the forest', rr.ok && rr.birds >= 1 && rr.rustle.some(v => v > 0.01), JSON.stringify(rr));
     const pk = await run('pikes', 8);
     T.check('Pikes Peak: no wind of ours, its birds', pk.ok && pk.wind.every(v => v === 0) && pk.songs >= 3, JSON.stringify(pk));
     await page.evaluate(() => { SfxOkolje.opts.birdP = 1; });

@@ -308,13 +308,14 @@ if (pB) {
     const tA = race(tdef, { voznja: [V, S] }), tS = race(tdef, { voznja: [S] }), tP = race(tdef, { voznja: [V, S], playerModel: perun }), tV = race(tdef, { voznja: [V], playerModel: perun });
     check('Tianmen: the rivals of the profile\'s class (Perun) by the player\'s profile, the others by the style',
       !!V && tA.AI.every(c => !V.razred.includes(c.m.id)) && same(tA, tS) && tP.AI.every(c => V.razred.includes(c.m.id)) && same(tP, tV), `${tA.AI.map(c => c.m.id).join('/')} | ${tP.AI.map(c => c.m.id).join('/')}`);
-    // none in the rain, on Bathurst (still to be chosen, pending) or Spa as a test track, nor for a semi-trailer (the tankers' race on Spa);
+    // none in the rain, on a track still to be chosen (pending: Bathurst's definition with the flag, as it was until the user's choice on 9. 11. 2026,
+    // when it became a real track again) or Spa as a test track, nor for a semi-trailer (the tankers' race on Spa);
     // on a makadam road (Katu-Jaryk, a stage without rivals: the style made for it) the line but none of the pace
-    const spa = C.TRACKS.find(d => d.id === 'spa'), wet = race(spa, { voznja: [S], rain: 1 }), bt = race(C.TRACKS.find(d => d.id === 'bathurst'), { voznja: [S] }), tst = race(Object.assign({}, spa, { test: true }), { voznja: [S] }), tl = race(spa, { voznja: [S], playerModel: C.MODELS.find(m => m.id === 'cisterna') });
+    const spa = C.TRACKS.find(d => d.id === 'spa'), wet = race(spa, { voznja: [S], rain: 1 }), bt = race(Object.assign({}, C.TRACKS.find(d => d.id === 'bathurst'), { pending: true }), { voznja: [S] }), tst =race(Object.assign({}, spa, { test: true }), { voznja: [S] }), tl = race(spa, { voznja: [S], playerModel: C.MODELS.find(m => m.id === 'cisterna') });
     const mk = race(C.TRACKS.find(d => d.id === 'katu'), {}), PS = C.voznjaIzSloga(mk.T, mk.r.vprof, S), PR = C.voznjaIzSloga(new C.Track(C.TRACKS.find(d => d.id === 'rastro')), race(C.TRACKS.find(d => d.id === 'rastro'), {}).r.vprof, S);
-    check('none of the style in the rain, on Bathurst (pending), a test track or for a semi-trailer; on Katu-Jaryk (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
+    check('none of the style in the rain, on a pending track (Bathurst\'s definition with the flag), a test track or for a semi-trailer; on Katu-Jaryk (makadam) its line, none of its pace (wv 0), on Rio do Rastro (asphalt) its pace',
       [wet, bt, tst, tl].every(x => x.AI.every(c => !c.uT)) && tl.AI.every(c => c.tl) && mk.T.def.roadSurface === 'makadam' && !mk.T.def.test && PS.wv.every(x => x === 0) && PS.dd.some(x => Math.abs(x) > 0.5) && PR.wv.some(x => x > 0.5),
-      `rain ${wet.AI.filter(c => c.uT).length}, Bathurst ${bt.AI.filter(c => c.uT).length}, test ${tst.AI.filter(c => c.uT).length}, semi-trailers ${tl.AI.filter(c => c.uT).length} of 5; Katu-Jaryk wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
+      `rain ${wet.AI.filter(c => c.uT).length}, pending ${bt.AI.filter(c => c.uT).length}, test${tst.AI.filter(c => c.uT).length}, semi-trailers ${tl.AI.filter(c => c.uT).length} of 5; Katu-Jaryk wv max ${Math.max(...PS.wv).toFixed(2)}, Rio do Rastro ${Math.max(...PR.wv).toFixed(2)}`);
   }
 }
 

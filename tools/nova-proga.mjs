@@ -52,8 +52,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: ${jsq(en)}, desc: ${jsq(enPlace + ' (' + enCountry + '): a short, twisting road. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.')}, escTo: 'To the finish' },
     say: ${jsq(enPlace)},   // its name in the commentator's English (js/game.js EN_NAME takes it from here)
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, noHeli: true,
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[0,0,0],wet:{cs:[0,0,0]}},
+    // medal times of the time trial (s), dry and in the rain, in summer and in winter: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (tools/nova-proga.mjs --medalje)
+    medals: {cs:[0,0,0],wet:{cs:[0,0,0]},winter:{cs:[0,0,0],wet:{cs:[0,0,0]}}},
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck]
     traffic: { mix: [0.62, 0.18, 0.06, 0.1, 0.04] },
     police: { label: 'POLICE', band: '#16181c', text: '#f4f6f0' }, escTo: 'Do cilja',
@@ -141,23 +141,23 @@ G.done();
 // the side roads' test: every open road with side roads is on its list
 { const src = rd(trackF), j = rd('tests/junctions.test.js'); if (/\n\s+sideRoads: \[/.test(src) && !j.includes("'" + id + "'")) { wr('tests/junctions.test.js', j.replace(/(const IDS = \[[^\]]*?)\];/, `$1, '${id}'];`)); } }
 
-/* ---- the medals: the stock rally car on the autopilot, dry and in the rain ---- */
+/* ---- the medals: the stock rally car on the autopilot, dry and in the rain, in summer and in winter ---- */
 {
   const { loadCore } = require(path.join(REPO, 'tests', 'lib', 'core.js')), { DT, seeded } = require(path.join(REPO, 'tests', 'lib', 'sim.js')), C = loadCore();
   const def = C.TRACKS.find(d => d.id === id); if (!def || !def.points) { console.log('  (medalje: proga še nima podatkov)'); process.exit(0); }
-  const T = new C.Track(def), run = (rain) => { const orig = Math.random; Math.random = seeded(3);
-    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, tt: true, rain }), P = r.player; r.start();
+  const T = new C.Track(def), run = (rain, winter) => { const orig = Math.random; Math.random = seeded(3);
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, tt: true, rain, winter: !!winter }), P = r.player; r.start();
     let t = 0, k = 0; while (!P.finished && t < 900) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
     Math.random = orig; return P.finished ? P.finishTime : null; };
-  const d = run(0), w = run(1); if (!d || !w) { console.log('  (medalje: avtopilot ni prišel do cilja)'); process.exit(1); }
-  const m = (t) => [Math.round(t * 1.01), Math.round(t * 1.06), Math.round(t * 1.14)], M = `medals: {cs:[${m(d)}],wet:{cs:[${m(w)}]}},`;
-  let src = rd(trackF), out = src.replace(/medals: \{cs:\[[^\]]*\],wet:\{cs:\[[^\]]*\]\}\},/, M);
+  const d = run(0), w = run(1), zd = run(0, 1), zw = run(1, 1); if (!d || !w || !zd || !zw) { console.log('  (medalje: avtopilot ni prišel do cilja)'); process.exit(1); }
+  const m = (t) => [Math.round(t * 1.01), Math.round(t * 1.06), Math.round(t * 1.14)], M = `medals: {cs:[${m(d)}],wet:{cs:[${m(w)}]},winter:{cs:[${m(zd)}],wet:{cs:[${m(zw)}]}}},`;
+  let src = rd(trackF), out = src.replace(/medals: \{cs:\[[^\]]*\],wet:\{cs:\[[^\]]*\]\}(?:,winter:\{cs:\[[^\]]*\],wet:\{cs:\[[^\]]*\]\}\})?\},/, M);
   // the HUD's names, when there are none yet: the hairpins (over 140 degrees within 80 m, the plan's measure) in order, a line for the commentator on a few
   if (/\n    names: \[\],/.test(out)) { const hp = (def.bends || []).filter(b => b[3] > 140), say = ["Into the hairpin!", "Hairpin {n}! Hard on the brakes!", "Round the hairpin, and away!"];
     const L = hp.map((b, k) => `      {"n":"Serpentina ${k + 1}","d":${b[0]}${k % 2 === 0 ? `,"say":[${JSON.stringify(say[k % 3].replace('{n}', k + 1))}]` : ''}},`);
     out = out.replace(/\n    names: \[\],/, L.length ? '\n    names: [\n' + L.join('\n') + '\n    ],' : '\n    names: [],'); }
   if (out !== src) wr(trackF, out);
-  console.log(`  medalje: avtopilot ${d.toFixed(1)} s (dež ${w.toFixed(1)} s) -> ${M}`);
+  console.log(`  medalje: avtopilot ${d.toFixed(1)} s (dež ${w.toFixed(1)} s, zima ${zd.toFixed(1)} s, sneg ${zw.toFixed(1)} s) -> ${M}`);
 }
 /* ---- the new menu's tables (js/menu-data.js): the length and the heights for the graph, the place on the globe (from the import marker) ---- */
 if (!onlyMedals) for (const t of ['menu-lens.js', 'menu-globe.mjs']) { console.log('  (meni: node tools/' + t + ')'); execFileSync(process.execPath, [path.join(REPO, 'tools', t)], { stdio: 'inherit', cwd: REPO }); }

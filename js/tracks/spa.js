@@ -31,7 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     wide: [[5640, 5760, 1, 12]],
     gravelStrips: [[990, 1110, -1, 24], [2268, 2340, -1, 20], [2344, 2422, 1, 20], [2866, 3030, -1, 22], [3620, 3800, 1, 24], [5010, 5110, -1, 22], [5640, 5760, 1, 24]],
     // the apexes of the 19 numbered turns (as in Formula 1): 1 La Source, 2 Eau Rouge, 3-4 Raidillon, 5-7 Les Combes and Malmedy, 8 Bruxelles,
-    // 9 Speaker's Corner, 10-11 Pouhon, 12-13 Fagnes, 14 Campus, 15 the long right (Dolgi desni), 16 the kink before Blanchimont, 17 Blanchimont, 18-19 the Bus Stop
+    // 9 the short left (Kratki levi), 10-11 Pouhon, 12-13 Fagnes, 14 Campus, 15 the long right (Dolgi desni), 16 the kink before Blanchimont, 17 Blanchimont, 18-19 the Bus Stop
     turns: [[-123.7, -234.3], [378.7, 176.2], [447.5, 224.2], [492.7, 356.2], [881.9, 1412.6], [823.9, 1480.2], [845.7, 1613.1], [505.2, 1792.3], [646.5, 1655], [521.9, 1131.3],
       [320.2, 1122.8], [114.8, 1515.5], [-41.2, 1492], [-215, 1703.9], [-380.9, 1600], [-194.1, 1252.1], [76.9, 1091.3], [95.4, 288.5], [150.9, 277]],
     // the two DRS zones of the Belgian Grand Prix: [turn, detection, activation (metres before / after that turn), the next turn]: the Kemmel
@@ -49,7 +49,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       ['Les Combes', 880.9, 1388.9, ['Hard on the brakes for Les Combes!', 'Les Combes, right and left at the top of the hill!', 'Into Les Combes, the highest part of the lap!']],
       ['Malmedy', 845.3, 1599.2, ['Malmedy, a quick right!', 'Through Malmedy, and down the hill!']],
       ['Bruxelles', 577.6, 1821.1, ['Down to Bruxelles, the tight right hander!', 'Bruxelles, slow in, fast out!']],
-      ["Speaker's Corner", 627.8, 1672.7, ["Past Speaker's Corner!", "A quick left at Speaker's Corner!"]],
+      ['Kratki levi', 627.8, 1672.7, ['Past the short left!', 'A quick flick through the short left!']],
       ['Pouhon', 545.7, 1167.8, ['Pouhon! The fast double left, downhill!', 'Through Pouhon, a real test of courage!', 'The double left at Pouhon!']],
       ['Fagnes', 145.9, 1479.9, ['Through Fagnes, right and left!', 'Fagnes, keep it tidy!']],
       ['Campus', -192.5, 1687.7, ['Campus, a quick right!', 'Down through Campus!']],

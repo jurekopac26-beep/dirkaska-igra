@@ -85,7 +85,7 @@ try {
   const kits = models.filter(m => m.kit);
   const K1 = await page.evaluate((ids) => ids.map(id => {
     const M = Core.MODELS.find(m => m.id === id), I = Render.kitInfo(id), PT = Core.partsOf(M), noRange = [];
-    for (const n in PT) if (PT[n].wh == null && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);
+    for (const n in PT) if (PT[n].wh == null && !PT[n].tl && !(I.ranges[n] && I.ranges[n].o[1] > I.ranges[n].o[0])) noRange.push(n);   // (a trailer's part, tl: its look's, not the kit's)
     return { id, status: I.status, look: !!M.def.look, tris: I.tris, budget: I.budget, noRange, hi: I.wheels.hi, lo: I.wheels.lo, vis: I.hi, mid: I.wheels.mid };
   }), kits.map(m => m.id));
   const badStatus = K1.filter(k => k.look ? k.status !== 'ok' : !/^fallback:look null/.test(k.status)), held = K1.filter(k => !k.look).length;
@@ -95,7 +95,7 @@ try {
   T.check('the body within its triangle budget (outer shell / inner block: a car 1400 / 800, the big ones 2400 / 1200)', !overB.length,
     (overB.length ? overB : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.tris.outer}/${k.budget.outer} ${k.tris.inner}/${k.budget.inner}`).join(', '));
   const noR = K1.filter(k => k.noRange.length);
-  T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
+  T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes, a trailer\'s parts its look\'s)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
   const wBad = K1.filter(k => k.hi.some(t => t > 400) || k.lo.some(t => t > 160));
   T.check('the wheels\' detail: the player\'s and the showroom\'s <= 400 triangles, a rival\'s <= 160', !wBad.length, (wBad.length ? wBad : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.hi.join('/')} | ${k.lo.join('/')}`).join(', '));
   // (Nastavitve · Detajli avtov: Visoki, a computer's: a look with small details (look.hi) built again for the player and the showroom)
@@ -319,7 +319,8 @@ try {
       const far = []; for (const n in PT) { const p = PT[n], rc = E.ranges[n] && E.ranges[n].c; if (p.wh != null || !rc) continue; const d = Math.hypot(rc[0] - p.lx * M.len / 2, rc[1] - p.y, rc[2] - p.lz * M.wid / 2); if (d > 0.35) far.push(n + ' ' + d.toFixed(2) + ' m'); }
       // loose: the part with the biggest outer range, its zone at 65 % of its threshold (not one of the face or the tail, which hang loose
       // only once the car is 70 % gone: Core.maskHeld)
-      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
+      // (not a spare wheel: it rocks by the car's damage, not by its zone, Core.SPARE: rezervna-kolesa.test.mjs; KAMEN's are its biggest)
+      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !PT[n].spare && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
       const P0 = Float32Array.from(pa); P.dz[PT[lp].z] = Math.max(P.dz[PT[lp].z], 0.65 * PT[lp].th); F(1);
       let lmx = 0, lrig = 0; const idx = []; for (const [s, e] of [LR.o, LR.i]) for (let i = s; i < e; i++) idx.push(i);
       for (const i of idx) lmx = Math.max(lmx, Math.hypot(pa[i * 3] - P0[i * 3], pa[i * 3 + 1] - P0[i * 3 + 1], pa[i * 3 + 2] - P0[i * 3 + 2]));
@@ -341,10 +342,11 @@ try {
       const f0 = Render.fxStats(); Core.wreckCar(P); g.sim(1 / 120, true); Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
       const f1 = Render.fxStats(); v = Render.viewOf(P); const full = geo.drawRange.count === U.N;
       const lost = Object.keys(P.lost), dead = [], notOne = [], pieces = [], pkey = (o) => (o && o.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? o.customProgramCacheKey() : ''); let frozen = null;
-      for (const n of lost) { const p = PT[n]; if (p.wh != null) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);
+      for (const n of lost) { const p = PT[n]; if (p.wh != null || p.tl) continue; const Rr = U.ranges[n]; if (!v.kit.dead[n]) dead.push(n);   // (a trailer's part, tl: its look's, not the kit's)
         const at = Rr.o[1] > Rr.o[0] ? Rr.o[0] : Rr.i[0]; for (const [s, e] of [Rr.o, Rr.i]) for (let i = s; i < e; i++) if (pa[i * 3] !== pa[at * 3] || pa[i * 3 + 1] !== pa[at * 3 + 1] || pa[i * 3 + 2] !== pa[at * 3 + 2]) { notOne.push(n); break; } }
       for (const d of R.debris.filter(q => q.car === P.id)) {
-        const p = PT[d.part], ms = []; if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
+        const p = PT[d.part], ms = []; if (p && p.tl) continue;   // (a trailer's tyre: its look's piece, rezervna-kolesa.test.mjs)
+        if (d.mesh && d.mesh.traverse) d.mesh.traverse(o => { if (o.isMesh) ms.push(o); });
         if (ms.length !== 1) { pieces.push(d.part + ': ' + ms.length + ' meshes'); continue; }
         const mm = ms[0], gg = mm.geometry; if (!gg.boundingBox) gg.computeBoundingBox();
         const bb = gg.boundingBox, vol = (bb.max.x - bb.min.x) * (bb.max.y - bb.min.y) * (bb.max.z - bb.min.z);

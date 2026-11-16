@@ -1,6 +1,6 @@
 /* Vehicle 'zrcalni' — ZRCALNI VLAK: a road train (docs/zrcalni-vlak.md). A black bonneted off-road tractor (the KAMEN PUŠČAVA's cab and
-   running gear, its service body off: a fifth wheel over its rear axle, two chrome stacks behind the cab, a roof rack with cans and a
-   spare tyre, the grille guard), a mirror-polished stainless tank semi-trailer on its fifth wheel, a dolly behind that one (a B-dolly:
+   running gear, its service body off: a fifth wheel over its rear axle, two chrome stacks behind the cab, the grille guard), a
+   mirror-polished stainless tank semi-trailer on its fifth wheel, a dolly behind that one (a B-dolly:
    two drawbars hold it in line with the first tank; its own fifth wheel) and a second mirror tank on the dolly. Two joints: the tractor's
    fifth wheel and the dolly's (Core: tlStep, model.trailer and its next). The tanks' mirror is no live mirror: the picture has the sky,
    the horizon and the ground baked in it (paint), and the renderer mixes in its sky's reflection (trailer.look.mirror: the race's
@@ -163,7 +163,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [1.19, 1.17, 1.3, 2.2, 1.1, 2.22, 0.03, 'b', 0.06],
           [1.25, 1.15, 1.3, 2.16, 1.1, 2.18, 0.02, 'b', 0.06]],
         eye: { x: 0.5, y: 2.5, near: 0.25, tilt: 0.1, style: 'closed' },
-        decalX: 2.1, decalY: 2.07, decalRz: 0, decalS: 0.9,               // (the start number on the bonnet: the roof has the rack)
+        decalX: 2.1, decalY: 2.07, decalRz: 0, decalS: 0.9,               // (the start number on the bonnet)
         crush: { x0: -0.3, x1: 1.12, z: 1.06 }, cage: true },
       wheels: { style: 'knob', w: 0.42, rimK: 0.48, rim: [0.8, 0.8, 0.78], gap: 0.1 },
       regions: 'none',
@@ -262,16 +262,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
             K.box(-0.46, 2.3, sd * 0.98, 0.16, 0.06, 0.06, 0, D);
           }
         }, { noCrush: true });
-        // ---- the roof rack: its rails and posts, a spare tyre lying on it, three cans each side, strapped (nothing above 3.28 m: the garage's
-        // door and lamps hang at 3.46 m, js/garage3d.js; a second tyre on the first stood at 3.66 m: no clear way out of the garage) ----
-        K.part('body', () => {
-          for (const sd of [-1, 1]) { K.bar([-0.34, 3.12, sd * 1.0], [0.74, 3.12, sd * 1.0], 0.022, D, { n: 4 }); for (const x of [-0.3, 0.7]) K.box(x, 2.99, sd * 1.0, 0.04, 0.13, 0.04, 0, D); }
-          for (const x of [-0.32, 0.2, 0.72]) K.bar([x, 3.06, -1.0], [x, 3.06, 1.0], 0.02, D, { n: 4 });
-          K.tyre(0.2, 3.16, 0, { axis: 'y', face: 1, r: 0.58, w: 0.22 });
-          const CAN = [K.rgb(0xa3281f), K.rgb(0x2e6a33), K.rgb(0xa3281f)];
-          for (const sd of [-1, 1]) CAN.forEach((cc, i) => K.box(-0.18 + i * 0.36, 3.08, sd * 0.86, 0.32, 0.2, 0.15, 0, cc));   // (lying on their sides: 0.2 m high, K.box's y is the bottom)
-          for (const sd of [-1, 1]) K.box(0.18, 3.265, sd * 0.86, 1.1, 0.015, 0.17, 0, K.rgb(0xe0b21c));
-        }, { noCrush: true });
+        // (no roof rack on the cab: no spare tyre nor cans on its roof, the user's decision of 9. 11. 2026, docs/zrcalni-vlak.md)
         // ---- the frame, the axles, the drive shafts, the fuel tanks, the steps, the rear mud guards and flaps ----
         K.part('body', () => {
           for (const sd of [-1, 1]) K.box(-0.05, 0.94, sd * 0.45, 6.0, 0.24, 0.1, 0, FRM);
