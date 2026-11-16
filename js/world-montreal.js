@@ -26,23 +26,34 @@
   // ---- a raster of polygons (even-odd, holes included) on a grid: fills M[k] = v where the cell centre lies inside ----
   function rasterPoly(M, G, rings, v) {
     let z0 = 1e9, z1 = -1e9; for (const r of rings) for (const p of r) { z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
-    const j0 = Math.max(0, Math.floor((z0 - G.z0) / G.c)), j1 = Math.min(G.nz - 1, Math.ceil((z1 - G.z0) / G.c)), xs = [];
+    const j0 = Math.max(0, Math.floor((z0 - G.z0) / G.c)), j1 = Math.min(G.nz - 1, Math.ceil((z1 - G.z0) / G.c));
+    if (j1 < j0) return;
+    const RX = []; for (let j = j0; j <= j1; j++) RX.push([]);   // (each edge's crossings put on the rows it spans, the same test and value per row; sorted, so their order does not matter)
+    for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const za = r[a][1], zb = r[b][1]; if (za === zb) continue;
+      const jl = Math.max(j0, Math.floor((Math.min(za, zb) - G.z0) / G.c) - 1), jh = Math.min(j1, Math.ceil((Math.max(za, zb) - G.z0) / G.c) + 1);
+      for (let j = jl; j <= jh; j++) { const z = G.z0 + j * G.c; if ((za > z) !== (zb > z)) RX[j - j0].push(r[a][0] + (z - za) / (zb - za) * (r[b][0] - r[a][0])); } }
     for (let j = j0; j <= j1; j++) {
-      const z = G.z0 + j * G.c; xs.length = 0;
-      for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const za = r[a][1], zb = r[b][1]; if ((za > z) !== (zb > z)) xs.push(r[a][0] + (z - za) / (zb - za) * (r[b][0] - r[a][0])); }
+      const xs = RX[j - j0];
       xs.sort((p, q) => p - q);
       for (let k = 0; k + 1 < xs.length; k += 2) { const i0 = Math.max(0, Math.ceil((xs[k] - G.x0) / G.c)), i1 = Math.min(G.nx - 1, Math.floor((xs[k + 1] - G.x0) / G.c)); for (let i = i0; i <= i1; i++) M[j * G.nx + i] = v; }
     }
   }
   // (the grid's vertices: (x0 + i c, z0 + j c))
   // two-pass chamfer distance (metres) to the cells where seed(k) is true
-  function chamfer(G, seed) {
+  function chamfer(G, S, sv) {   // (the seeds: the cells where S[k] === sv)
     const n = G.nx * G.nz, D = new Float32Array(n), c = G.c, d2 = c * Math.SQRT2;
-    for (let k = 0; k < n; k++) D[k] = seed(k) ? 0 : 1e9;
-    for (let j = 0; j < G.nz; j++) for (let i = 0; i < G.nx; i++) { const k = j * G.nx + i; let v = D[k];
-      if (i > 0) v = Math.min(v, D[k - 1] + c); if (j > 0) { v = Math.min(v, D[k - G.nx] + c); if (i > 0) v = Math.min(v, D[k - G.nx - 1] + d2); if (i < G.nx - 1) v = Math.min(v, D[k - G.nx + 1] + d2); } D[k] = v; }
-    for (let j = G.nz - 1; j >= 0; j--) for (let i = G.nx - 1; i >= 0; i--) { const k = j * G.nx + i; let v = D[k];
-      if (i < G.nx - 1) v = Math.min(v, D[k + 1] + c); if (j < G.nz - 1) { v = Math.min(v, D[k + G.nx] + c); if (i < G.nx - 1) v = Math.min(v, D[k + G.nx + 1] + d2); if (i > 0) v = Math.min(v, D[k + G.nx - 1] + d2); } D[k] = v; }
+    for (let k = 0; k < n; k++) D[k] = S[k] === sv ? 0 : 1e9;
+    const nx = G.nx, nz = G.nz;   // (the same minima as before, the edges taken out of the inner loops)
+    for (let j = 0; j < nz; j++) { const r = j * nx;
+      if (j === 0) { for (let i = 1; i < nx; i++) { const k = i, a = D[k - 1] + c; if (a < D[k]) D[k] = a; } continue; }
+      { const k = r; let v = D[k], a = D[k - nx] + c; if (a < v) v = a; a = D[k - nx + 1] + d2; if (a < v) v = a; D[k] = v; }
+      for (let i = 1; i < nx - 1; i++) { const k = r + i; let v = D[k], a = D[k - 1] + c; if (a < v) v = a; a = D[k - nx] + c; if (a < v) v = a; a = D[k - nx - 1] + d2; if (a < v) v = a; a = D[k - nx + 1] + d2; if (a < v) v = a; D[k] = v; }
+      if (nx > 1) { const k = r + nx - 1; let v = D[k], a = D[k - 1] + c; if (a < v) v = a; a = D[k - nx] + c; if (a < v) v = a; a = D[k - nx - 1] + d2; if (a < v) v = a; D[k] = v; } }
+    for (let j = nz - 1; j >= 0; j--) { const r = j * nx;
+      if (j === nz - 1) { for (let i = nx - 2; i >= 0; i--) { const k = r + i, a = D[k + 1] + c; if (a < D[k]) D[k] = a; } continue; }
+      { const k = r + nx - 1; let v = D[k], a = D[k + nx] + c; if (a < v) v = a; if (nx > 1) { a = D[k + nx - 1] + d2; if (a < v) v = a; } D[k] = v; }
+      for (let i = nx - 2; i >= 1; i--) { const k = r + i; let v = D[k], a = D[k + 1] + c; if (a < v) v = a; a = D[k + nx] + c; if (a < v) v = a; a = D[k + nx + 1] + d2; if (a < v) v = a; a = D[k + nx - 1] + d2; if (a < v) v = a; D[k] = v; }
+      if (nx > 1) { const k = r; let v = D[k], a = D[k + 1] + c; if (a < v) v = a; a = D[k + nx] + c; if (a < v) v = a; a = D[k + nx + 1] + d2; if (a < v) v = a; D[k] = v; } }
     return D;
   }
 
@@ -59,33 +70,46 @@
     for (const [, rings] of D.water) rasterPoly(wet, G, rings, 1);
     // land cover (10 m cells) under the polygons
     const LC = D.lc, lcA = new Uint8Array(LC.nx * LC.nz); { const r = b64(LC.rle); let p = 0; for (const v of r) { lcA.fill(v >> 6, p, p + (v & 63)); p += v & 63; } }
-    for (let j = 0; j < G.nz; j++) for (let i = 0; i < G.nx; i++) { const x = G.x0 + i * c, z = G.z0 + j * c, a = Math.floor((x - LC.x0) / LC.cell), b = Math.floor((z - LC.z0) / LC.cell);
-      const v = a >= 0 && b >= 0 && a < LC.nx && b < LC.nz ? lcA[b * LC.nx + a] : 0; kind[j * G.nx + i] = v === 3 ? 0 : v; }
+    { const LA = new Int32Array(G.nx); for (let i = 0; i < G.nx; i++) { const x = G.x0 + i * c, a = Math.floor((x - LC.x0) / LC.cell); LA[i] = a >= 0 && a < LC.nx ? a : -1; }   // (each column's and row's land-cover cell once)
+      for (let j = 0; j < G.nz; j++) { const z = G.z0 + j * c, b = Math.floor((z - LC.z0) / LC.cell), r = j * G.nx;
+        if (!(b >= 0 && b < LC.nz)) { kind.fill(0, r, r + G.nx); continue; }
+        const o = b * LC.nx; for (let i = 0; i < G.nx; i++) { const a = LA[i], v = a >= 0 ? lcA[o + a] : 0; kind[r + i] = v === 3 ? 0 : v; } } }
     const LU = { sand: 4, beach: 4, parking: 5, pedestrian: 8, plaza: 8, garden: 6, flowerbed: 6, pitch: 7, grass: 0, park: 0, wood: 1, scrub: 1 };
     for (const [cl, ring] of D.lu) if (LU[cl] != null) rasterPoly(kind, G, [ring], LU[cl]);
-    const sdW = chamfer(G, (k) => wet[k] === 1), sdL = chamfer(G, (k) => wet[k] === 0);   // (to the water; to the land)
+    const sdW = chamfer(G, wet, 1), sdL = chamfer(G, wet, 0);   // (to the water; to the land)
     // distance to the circuit's centre line: its samples seeded, then the chamfer
     const seedT = new Uint8Array(n); for (let i = 0; i < T.N; i++) { const a = Math.round((T.px[i] - G.x0) / c), b = Math.round((T.pz[i] - G.z0) / c); if (a >= 0 && b >= 0 && a < G.nx && b < G.nz) seedT[b * G.nx + a] = 1; }
-    const dT = chamfer(G, (k) => seedT[k] === 1);
+    const dT = chamfer(G, seedT, 1);
     { const TH = new Map(), TC = 16;   // within 45 m of the road the true distance to its centre line (the chamfer's octagons would step the banks)
       for (let i = 0; i < T.N; i++) { const key = Math.floor(T.px[i] / TC) * 65536 + Math.floor(T.pz[i] / TC); let L = TH.get(key); if (!L) TH.set(key, L = []); L.push(i); }
-      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, a0 = Math.floor(x / TC), b0 = Math.floor(z / TC); let best = 1e18;
-        for (let a = a0 - 3; a <= a0 + 3; a++) for (let b = b0 - 3; b <= b0 + 3; b++) { const L = TH.get(a * 65536 + b); if (!L) continue;
-          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+      const SC = new Map();   // (per 16 m cell the segments of its 7 x 7 cells, ring by ring outward: start, direction, squared length; E = where each ring ends)
+      let sMax = 0; for (let i = 0; i < T.N; i++) { const j = (i + 1) % T.N; sMax = Math.max(sMax, Math.hypot(T.px[j] - T.px[i], T.pz[j] - T.pz[i])); }
+      const LB = [0, 0, 2, 3].map(r => { const l = (r - 1) * TC - sMax - 1e-6; return l > 0 ? l * l * (1 - 1e-9) : -1; });   // (a segment from ring r is at least (r-1) cells off, less its own length: the rings past the nearest found are left out, the same minimum)
+      const segsAt = (a0, b0) => { const key = a0 * 65536 + b0; let S = SC.get(key); if (S) return S; const q = [], E = [];
+        for (let r = 0; r <= 3; r++) { for (let a = a0 - r; a <= a0 + r; a++) for (let b = b0 - r; b <= b0 + r; b++) { if (Math.max(Math.abs(a - a0), Math.abs(b - b0)) !== r) continue; const L = TH.get(a * 65536 + b); if (!L) continue;
+          for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } } E.push(q.length); }
+        SC.set(key, S = { s: new Float64Array(q), E }); return S; };
+      for (let j = 0, k = 0, la = NaN, lb = NaN, SS = null; j < G.nz; j++) for (let i = 0; i < G.nx; i++, k++) { if (dT[k] > 45) continue; const x = G.x0 + i * c, z = G.z0 + j * c, a0 = Math.floor(x / TC), b0 = Math.floor(z / TC);
+        if (a0 !== la || b0 !== lb) { SS = segsAt(a0, b0); la = a0; lb = b0; } const S = SS.s; let best = 1e18;
+        for (let r = 0, q = 0; r <= 3; r++) { if (best < LB[r]) break; for (const qe = SS.E[r]; q < qe; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
         dT[k] = Math.sqrt(best); } }
     // near the shores the true distance to the water's outline (the polygons' edges, hashed in 16 m cells): smooth banks, no steps
     const EH = new Map(), EC = 16;
     for (const [, rings] of D.water) for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) {
       const ax = r[b][0], az = r[b][1], bx = r[a][0], bz = r[a][1]; if (Math.max(ax, bx) < G.x0 - 20 || Math.min(ax, bx) > G.x0 + G.nx * c + 20 || Math.max(az, bz) < G.z0 - 20 || Math.min(az, bz) > G.z0 + G.nz * c + 20) continue;
       for (let qa = Math.floor(Math.min(ax, bx) / EC); qa <= Math.floor(Math.max(ax, bx) / EC); qa++) for (let qb = Math.floor(Math.min(az, bz) / EC); qb <= Math.floor(Math.max(az, bz) / EC); qb++) { const key = qa * 65536 + qb; let L = EH.get(key); if (!L) EH.set(key, L = []); L.push(ax, az, bx, bz); } }
-    const edgeD = (x, z) => { let best = 1e9; const a0 = Math.floor(x / EC), b0 = Math.floor(z / EC);
+    const EHC = new Map();   // (per 16 m cell the edges of its 3 x 3 cells in one list, in the same order: start, direction, squared length)
+    const edgesAt = (a0, b0) => { const key = a0 * 65536 + b0; let S = EHC.get(key); if (S) return S; const q = [];
       for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = EH.get(a * 65536 + b); if (!L) continue;
-        for (let q = 0; q < L.length; q += 4) { const ax = L[q], az = L[q + 1], vx = L[q + 2] - ax, vz = L[q + 3] - az, t = clamp(((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1e-9), 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
+        for (let r = 0; r < L.length; r += 4) { const ax = L[r], az = L[r + 1], vx = L[r + 2] - ax, vz = L[r + 3] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } }
+      EHC.set(key, S = new Float64Array(q)); return S; };
+    const edgeD = (x, z) => { let best = 1e9; const S = edgesAt(Math.floor(x / EC), Math.floor(z / EC));
+      for (let q = 0; q < S.length; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; }
       return Math.sqrt(best); };
     const H = new Float32Array(n), SD = new Float32Array(n);
-    for (let k = 0; k < n; k++) {
+    for (let j = 0, k = 0; j < G.nz; j++) for (let i = 0; i < G.nx; i++, k++) {
       let sd = wet[k] ? -sdL[k] : sdW[k];
-      if (Math.abs(sd) < 14) { const e = edgeD(G.x0 + (k % G.nx) * c, G.z0 + Math.floor(k / G.nx) * c); if (e < 15) sd = wet[k] ? -e : e; }
+      if (Math.abs(sd) < 14) { const e = edgeD(G.x0 + i * c, G.z0 + j * c); if (e < 15) sd = wet[k] ? -e : e; }
       SD[k] = sd;   // (+ on the land, metres to the waterline)
       // the height, from the distance to the water only near its edge (a smooth waterline): the bed under the water, the bank rising out of it,
       // steep (3 m) beside the circuit, where the verges stay level with the road, gentle (9 m) elsewhere
@@ -130,8 +154,8 @@
     const scen = new K.Chunks(192);   // vertex coloured scenery in 192 m chunks
     // tree / building exclusion (hashed circles) and where the junctions' mouths are
     const eh = new Map(), EHC = 32;
-    const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
-    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a * 65536 + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
+    const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) * 65536 + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
     const ctx = { T, D, def, N, w, ds, L, sStart, R, root, out, tex, opts, ownTex, matV, dS, sAt, Pt, atSf, addM, scen, exclPush, excluded };
     ctx.near = mtNear(T);
     const tag = (f, nm) => { const n0 = root.children.length; f(); for (let k = n0; k < root.children.length; k++) if (!root.children[k].name) root.children[k].name = nm; };   // (each part's meshes named after it)
@@ -165,24 +189,35 @@
     const S = 64;   // cells per chunk side (256 m)
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
-      const P = [], Cl = [], U = [], I = [];
-      for (let j = 0; j <= nj; j++) for (let i = 0; i <= ni; i++) {
-        const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
-        const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
-        let col = KCOL[kd].map(v => v * n2 * (0.96 + 0.08 * n1));
-        const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); col = [lerp(col[0], 0.72, t), lerp(col[1], 0.69, t), lerp(col[2], 0.6, t)]; }   // (the banks: stony, rip-rap)
-        if (h < WL) { const t = sstep(WL, WL - 2, h); col = [lerp(col[0], 0.42, t), lerp(col[1], 0.42, t), lerp(col[2], 0.36, t)]; }
-        P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 14, -z / 14);
-      }
       const W1 = ni + 1;
+      let I = new Uint16Array(ni * nj * 6), ni6 = 0;
       for (let j = 0; j < nj; j++) for (let i = 0; i < ni; i++) {
-        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1;
-        if (Math.max(P[a * 3 + 1], P[b * 3 + 1], P[c * 3 + 1], P[d * 3 + 1]) < WL - 0.6) continue;   // (deep under the water)
-        I.push(a, c, b, b, c, d);
+        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1, k = (cj + j) * G.nx + ci + i;
+        if (Math.max(G.H[k], G.H[k + 1], G.H[k + G.nx], G.H[k + G.nx + 1]) < WL - 0.6) continue;   // (deep under the water)
+        I[ni6++] = a; I[ni6++] = c; I[ni6++] = b; I[ni6++] = b; I[ni6++] = c; I[ni6++] = d;
       }
-      if (!I.length) continue;
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(Cl, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2));
-      g.setIndex(I); g.computeVertexNormals(); g.computeBoundingSphere();
+      if (!ni6) continue;   // (all deep under the water: no vertices worked out either)
+      const nv = W1 * (nj + 1), P = new Float32Array(nv * 3), Cl = new Float32Array(nv * 3), U = new Float32Array(nv * 2);
+      for (let j = 0, v = 0; j <= nj; j++) { const z = G.z0 + (cj + j) * G.c, sz = Math.sin(z * 0.027) * 2, z23 = z * 0.023; for (let i = 0; i <= ni; i++, v++) {   // (straight into the typed arrays: the same sums as before, nothing allocated per vertex; the row's own sine once)
+        const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
+        const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + sz) * Math.sin(z23 + x * 0.007), f = 0.96 + 0.08 * n1, kc = KCOL[kd];
+        let c0 = kc[0] * n2 * f, c1 = kc[1] * n2 * f, c2 = kc[2] * n2 * f;
+        const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); c0 = lerp(c0, 0.72, t); c1 = lerp(c1, 0.69, t); c2 = lerp(c2, 0.6, t); }   // (the banks: stony, rip-rap)
+        if (h < WL) { const t = sstep(WL, WL - 2, h); c0 = lerp(c0, 0.42, t); c1 = lerp(c1, 0.42, t); c2 = lerp(c2, 0.36, t); }
+        P[v * 3] = x; P[v * 3 + 1] = h; P[v * 3 + 2] = z; Cl[v * 3] = c0; Cl[v * 3 + 1] = c1; Cl[v * 3 + 2] = c2; U[v * 2] = x / 14; U[v * 2 + 1] = -z / 14;
+      } }
+      I = I.slice(0, ni6);
+      // the vertex normals as BufferGeometry.computeVertexNormals makes them (the same face sums, summed in the float32 array in the same order, then normalised), inline
+      const Nr = new Float32Array(nv * 3);
+      for (let u = 0; u < ni6; u += 3) {
+        const ia = I[u] * 3, ib = I[u + 1] * 3, ic = I[u + 2] * 3;
+        const bx = P[ib], by = P[ib + 1], bz = P[ib + 2], cx = P[ic] - bx, cy = P[ic + 1] - by, cz = P[ic + 2] - bz, ax = P[ia] - bx, ay = P[ia + 1] - by, az = P[ia + 2] - bz;
+        const qx = cy * az - cz * ay, qy = cz * ax - cx * az, qz = cx * ay - cy * ax;
+        Nr[ia] += qx; Nr[ia + 1] += qy; Nr[ia + 2] += qz; Nr[ib] += qx; Nr[ib + 1] += qy; Nr[ib + 2] += qz; Nr[ic] += qx; Nr[ic + 1] += qy; Nr[ic + 2] += qz;
+      }
+      for (let v = 0; v < nv * 3; v += 3) { const x = Nr[v], y = Nr[v + 1], z = Nr[v + 2], s = 1 / (Math.sqrt(x * x + y * y + z * z) || 1); Nr[v] = x * s; Nr[v + 1] = y * s; Nr[v + 2] = z * s; }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('color', new THREE.BufferAttribute(Cl, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2));
+      g.setIndex(new THREE.BufferAttribute(I, 1)); g.setAttribute('normal', new THREE.BufferAttribute(Nr, 3)); g.computeBoundingSphere();
       const m = new THREE.Mesh(g, mat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
     }
     // the car parks (asphalt), the plazas (paving) and the beaches (sand): OSM outlines, a few cm over the ground
@@ -444,7 +479,7 @@
   const MT_SHIRTS = [[0.86, 0.1, 0.12], [0.95, 0.95, 0.94], [0.86, 0.1, 0.12], [0.12, 0.16, 0.36], [0.98, 0.78, 0.12], [0.16, 0.36, 0.8], [0.12, 0.13, 0.16], [0.94, 0.5, 0.1], [0.18, 0.55, 0.3], [0.6, 0.18, 0.5], [0.86, 0.1, 0.12], [0.95, 0.95, 0.94]];   // (lots of red and white)
   function mtStands(C) {
     const { T, def, ds, sStart, scen, atSf, addM, exclPush, tex } = C, crowdG = new GB(true), W1 = [1, 1, 1];
-    const near = (x, z) => { const i = T.nearestIdx(x, z), dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
+    const nIdx = mtNearestIdx(T), near = (x, z) => { const i = nIdx(x, z), dx = x - T.px[i], dz = z - T.pz[i], lat = dx * T.nx[i] + dz * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
     const CR = K.crowdCtx({ gH: mtGround, near, excluded: (x, z) => C.excluded(x, z), water: (x, z) => mtKind(x, z) === 3 || mtGround(x, z) < -0.6, maxSlope: 0.5, shirts: MT_SHIRTS, chunk: 256 });
     C.CR = CR;
     for (const [a, b, side, rows, roof] of def.stands || []) {
@@ -488,13 +523,28 @@
   }
 
   /* ---- the nearest road sample to (x, z) through a 32 m hash of the samples; its lateral offset and the barrier on that side ---- */
+  /* ---- T.nearestIdx through a 16 m hash of the samples, searched ring by ring: the same sample (the same squared distances, the lowest
+     index of equal ones; a ring stops the search when nothing beyond it can be as near); far from every sample the full scan ---- */
+  function mtNearestIdx(T) {
+    const H = new Map(), c = 16;
+    for (let i = 0; i < T.N; i++) { const k = Math.floor(T.px[i] / c) * 65536 + Math.floor(T.pz[i] / c); let L = H.get(k); if (!L) H.set(k, L = []); L.push(i); }
+    return (x, z) => {
+      const a0 = Math.floor(x / c), b0 = Math.floor(z / c); let best = -1, bd = 1e18;
+      for (let r = 0; r <= 12; r++) {
+        for (let a = a0 - r; a <= a0 + r; a++) for (let b = b0 - r; b <= b0 + r; b++) { if (Math.max(Math.abs(a - a0), Math.abs(b - b0)) !== r) continue; const L = H.get(a * 65536 + b); if (L) for (const i of L) { const dx = T.px[i] - x, dz = T.pz[i] - z, d = dx * dx + dz * dz; if (d < bd || (d === bd && i < best)) { bd = d; best = i; } } }
+        if (best >= 0 && bd < (r * c) * (r * c) * (1 - 1e-9)) return best;
+      }
+      return T.nearestIdx(x, z);
+    };
+  }
+
   function mtNear(T) {
     const H = new Map(), c = 32;
-    for (let i = 0; i < T.N; i++) { const k = Math.floor(T.px[i] / c) + ',' + Math.floor(T.pz[i] / c); let L = H.get(k); if (!L) H.set(k, L = []); L.push(i); }
+    for (let i = 0; i < T.N; i++) { const k = Math.floor(T.px[i] / c) * 65536 + Math.floor(T.pz[i] / c); let L = H.get(k); if (!L) H.set(k, L = []); L.push(i); }
     const o = { i: -1, lat: 0, bar: 0, d: 1e9 };
     return (x, z) => {
       const a0 = Math.floor(x / c), b0 = Math.floor(z / c); let bi = -1, bd = 1e18;
-      for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = H.get(a + ',' + b); if (L) for (const i of L) { const dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } } }
+      for (let a = a0 - 1; a <= a0 + 1; a++) for (let b = b0 - 1; b <= b0 + 1; b++) { const L = H.get(a * 65536 + b); if (L) for (const i of L) { const dx = x - T.px[i], dz = z - T.pz[i], d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } } }
       o.i = bi; if (bi < 0) { o.lat = 1e9; o.bar = 0; o.d = 1e9; return o; }
       o.lat = (x - T.px[bi]) * T.nx[bi] + (z - T.pz[bi]) * T.nz[bi]; o.bar = o.lat > 0 ? T.br[bi] : T.bl[bi]; o.d = Math.abs(o.lat) - o.bar; return o;
     };
@@ -506,15 +556,16 @@
     const { D, root, tex, addM, scen, exclPush } = C, near = C.near, G = MG;
     const road = new K.Chunks(192, true), path = new K.Chunks(192, true), mark = new K.Chunks(192), aMat = C.aMat;
     const legs = C.legs || [];
-    const inLeg = (x, z) => { for (const L of legs) { const dx = x - L.cx, dz = z - L.cz, r = dx * L.ux + dz * L.uz, v = -dx * L.uz + dz * L.ux; if (r > L.r0 - 2 && r < L.rEnd + 4 && Math.abs(v) < L.hw + 3) return true; } return false; };
-    const yel = [0.95, 0.75, 0.12], W1 = [1, 1, 1];
+    const legR2 = legs.map(L => { const M = Math.max(Math.abs(L.r0 - 2), Math.abs(L.rEnd + 4)), V = L.hw + 3, s2 = L.ux * L.ux + L.uz * L.uz; return ((M * M + V * V) / s2) * 1.01 + 1; });   // (a bounding circle round each leg's box: only skips points the box test rejects)
+    const inLeg = (x, z) => { for (let li = 0; li < legs.length; li++) { const L = legs[li], dx = x - L.cx, dz = z - L.cz; if (dx * dx + dz * dz > legR2[li]) continue; const r = dx * L.ux + dz * L.uz, v = -dx * L.uz + dz * L.ux; if (r > L.r0 - 2 && r < L.rEnd + 4 && Math.abs(v) < L.hw + 3) return true; } return false; };
+    const yel = [0.95, 0.75, 0.12], W1 = [1, 1, 1], yel4 = [yel, yel, yel, yel], W14 = [W1, W1, W1, W1];   // (the colours are copied into the geometry: one array of four serves every quad)
     const lampAt = [], rm = new Uint8Array(G.nx * G.nz), mk = (x, z, r) => { const i0 = Math.floor((x - r - G.x0) / G.c), i1 = Math.ceil((x + r - G.x0) / G.c), j0 = Math.floor((z - r - G.z0) / G.c), j1 = Math.ceil((z + r - G.z0) / G.c);
       for (let j = Math.max(0, j0); j <= Math.min(G.nz - 1, j1); j++) for (let i = Math.max(0, i0); i <= Math.min(G.nx - 1, i1); i++) rm[j * G.nx + i] = 1; };
     C.roadMask = (x, z) => { const i = Math.round((x - G.x0) / G.c), j = Math.round((z - G.z0) / G.c); return i >= 0 && j >= 0 && i < G.nx && j < G.nz && rm[j * G.nx + i] === 1; };
     for (const [cls, hw, lv, pts] of D.roads) {
       if (lv) continue;
       const c0 = cls.split('.')[0], isPath = /^(footway|path|cycleway|steps|pedestrian|track)$/.test(c0), half = isPath ? Math.min(hw, 1.1) : hw, y = isPath ? -0.1 : -0.085;
-      const tgt = isPath ? path : road, col = isPath ? (c0 === 'cycleway' ? [0.62, 0.6, 0.58] : [0.84, 0.82, 0.76]) : [0.82, 0.82, 0.84];
+      const tgt = isPath ? path : road, col = isPath ? (c0 === 'cycleway' ? [0.62, 0.6, 0.58] : [0.84, 0.82, 0.76]) : [0.82, 0.82, 0.84], col4 = [col, col, col, col];
       // densify, drop the parts on the circuit's corridor or in a junction's leg
       const P = []; for (let k = 0; k + 1 < pts.length; k++) { const [ax, az] = pts[k], [bx, bz] = pts[k + 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let q = 0; q < n; q++) P.push([ax + (bx - ax) * q / n, az + (bz - az) * q / n]); }
       P.push(pts[pts.length - 1]);
@@ -526,8 +577,8 @@
             const a = run[Math.max(0, k - 1)], b = run[Math.min(run.length - 1, k + 1)], tx = b[0] - a[0], tz = b[1] - a[1], l = Math.hypot(tx, tz) || 1, nx = -tz / l, nz = tx / l, p = run[k];
             if (k) acc += Math.hypot(p[0] - run[k - 1][0], p[1] - run[k - 1][1]);
             const Lp = [p[0] + nx * half, y, p[1] + nz * half], Rp = [p[0] - nx * half, y, p[1] - nz * half];
-            if (prevL) { const g = tgt.get(p[0], p[1]); g.quadUp(prevR, Rp, Lp, prevL, [col, col, col, col], [[prevR[0] / 8, -prevR[2] / 8], [Rp[0] / 8, -Rp[2] / 8], [Lp[0] / 8, -Lp[2] / 8], [prevL[0] / 8, -prevL[2] / 8]]);
-              if (!isPath && half >= 3.5 && Math.floor(acc / 4) % 3 === 0) { const q0 = run[k - 1], ml = mark.get(p[0], p[1]); ml.quadUp([q0[0] + nx * 0.07, y + 0.012, q0[1] + nz * 0.07], [q0[0] - nx * 0.07, y + 0.012, q0[1] - nz * 0.07], [p[0] - nx * 0.07, y + 0.012, p[1] - nz * 0.07], [p[0] + nx * 0.07, y + 0.012, p[1] + nz * 0.07], [yel, yel, yel, yel]); }
+            if (prevL) { const g = tgt.get(p[0], p[1]); g.quadUp(prevR, Rp, Lp, prevL, col4, [[prevR[0] / 8, -prevR[2] / 8], [Rp[0] / 8, -Rp[2] / 8], [Lp[0] / 8, -Lp[2] / 8], [prevL[0] / 8, -prevL[2] / 8]]);
+              if (!isPath && half >= 3.5 && Math.floor(acc / 4) % 3 === 0) { const q0 = run[k - 1], ml = mark.get(p[0], p[1]); ml.quadUp([q0[0] + nx * 0.07, y + 0.012, q0[1] + nz * 0.07], [q0[0] - nx * 0.07, y + 0.012, q0[1] - nz * 0.07], [p[0] - nx * 0.07, y + 0.012, p[1] - nz * 0.07], [p[0] + nx * 0.07, y + 0.012, p[1] + nz * 0.07], yel4); }
               if (!isPath && Math.floor(acc / 38) !== Math.floor((acc - 4) / 38)) lampAt.push([p[0] + nx * (half + 1.2), p[1] + nz * (half + 1.2), Math.atan2(-nz, -nx)]); }
             prevL = Lp; prevR = Rp;
           }
@@ -551,12 +602,13 @@
     for (const [cl, ring] of D.lu) { if (cl !== 'parking') continue;
       let best = 0, ux = 1, uz = 0; for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length], l = Math.hypot(b[0] - a[0], b[1] - a[1]); if (l > best) { best = l; ux = (b[0] - a[0]) / l; uz = (b[1] - a[1]) / l; } }
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of ring) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+      const bx0 = x0 - 0.01, bx1 = x1 + 0.01;   // (outside the ring's box inPoly is false: skip those points before it)
       const vx = -uz, vz = ux, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, ext = Math.hypot(x1 - x0, z1 - z0) / 2;
       for (let a = -ext; a < ext; a += 2.6) for (let b = -ext; b < ext; b += 6.2) {
         const row = Math.round(b / 6.2), x = cx + ux * a + vx * b, z = cz + uz * a + vz * b;
-        if (!K.inPoly(ring, x, z) || K.polyDist(ring, x, z) < 1.5 || near(x, z).d < 2 || C.excluded(x, z)) continue;
+        if (z < z0 || z > z1 || x < bx0 || x > bx1 || !K.inPoly(ring, x, z) || K.polyDist(ring, x, z) < 1.5 || near(x, z).d < 2 || C.excluded(x, z)) continue;
         const ins = ring.length > 2;
-        if (ins && Math.abs(row) % 2 === 0) { const g = mark.get(x, z), yb = Math.max(mtGround(x, z), WL + 0.05) + 0.06, p = (s, t) => [x + ux * s + vx * t, yb, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), [W1, W1, W1, W1]); }
+        if (ins && Math.abs(row) % 2 === 0) { const g = mark.get(x, z), yb = Math.max(mtGround(x, z), WL + 0.05) + 0.06, p = (s, t) => [x + ux * s + vx * t, yb, z + uz * s + vz * t]; g.quadUp(p(-1.3, -2.6), p(-1.18, -2.6), p(-1.18, 2.6), p(-1.3, 2.6), W14); }
         if (R() < 0.5 && C.near(x, z).d < 260) { const yaw = Math.atan2(vz, vx) + (R() < 0.5 ? Math.PI : 0) + (R() - 0.5) * 0.06, col = CARC[Math.floor(R() * CARC.length)], k = 0.85 + 0.25 * R();
           cars.add(x + ux * (R() - 0.5) * 0.3, Math.max(mtGround(x, z), WL + 0.05) + 0.04, z + uz * (R() - 0.5) * 0.3, -yaw, 1, 1, [col[0] * k, col[1] * k, col[2] * k]); nCars++; }
       }
@@ -596,7 +648,8 @@
           g.quadO(A, B, [B[0], yt, B[2]], [A[0], yt, A[2]], glass, ins); }
       }
       // the roof: a fan from the centre (the outlines are near enough convex; a darker rim)
-      for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length]; g.triO([cx, y1, cz], [a[0], y1, a[1]], [b[0], y1, b[1]], roofC.map(v => v * (0.9 + 0.2 * hv)), [cx, y1 - 5, cz]); }
+      const rc = roofC.map(v => v * (0.9 + 0.2 * hv)), rIn = [cx, y1 - 5, cz];   // (copied into the geometry: one per building)
+      for (let k = 0; k < ring.length; k++) { const a = ring[k], b = ring[(k + 1) % ring.length]; g.triO([cx, y1, cz], [a[0], y1, a[1]], [b[0], y1, b[1]], rc, rIn); }
       let r = 0; for (const p of ring) r = Math.max(r, Math.hypot(p[0] - cx, p[1] - cz)); exclPush(cx, cz, r * 0.9 + 1); if (C.CR) C.CR.exclAdd(cx, cz, r);
     }
     // the dome: a geodesic sphere of steel struts (76 m across, 62 m tall), a museum inside it
