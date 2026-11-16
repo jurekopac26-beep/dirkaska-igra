@@ -40,12 +40,7 @@
  [
   "pikes",
   {
-   "speed": 280,
-   "back": 360,
-   "up": 230,
-   "ahead": 180,
-   "fogNear": 650,
-   "fogFar": 2600,
+   "kbps": 450,
    "places": [
     {
      "n": "Halfway Picnic Grounds",
@@ -180,13 +175,7 @@
  [
   "rbring",
   {
-   "kbps": 850,
-   "speed": 200,
-   "back": 260,
-   "up": 165,
-   "ahead": 130,
-   "fogNear": 560,
-   "fogFar": 2200,
+   "kbps": 450,
    "places": []
   }
  ],
@@ -206,13 +195,7 @@
  [
   "spa",
   {
-   "kbps": 900,
-   "speed": 250,
-   "back": 320,
-   "up": 205,
-   "ahead": 160,
-   "fogNear": 700,
-   "fogFar": 2700,
+   "kbps": 450,
    "places": [
     {
      "n": "Steep Climb",
@@ -232,13 +215,7 @@
  [
   "nring",
   {
-   "kbps": 900,
-   "speed": 540,
-   "back": 700,
-   "up": 450,
-   "ahead": 350,
-   "fogNear": 1200,
-   "fogFar": 4600,
+   "kbps": 450,
    "places": [
     {
      "n": "Flugplatz",
@@ -263,12 +240,6 @@
   "medvode",
   {
    "kbps": 450,
-   "speed": 225,
-   "back": 292,
-   "up": 184,
-   "ahead": 146,
-   "fogNear": 630,
-   "fogFar": 2430,
    "places": [
     {
      "n": "Zbilje",
