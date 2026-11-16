@@ -194,5 +194,8 @@
  "livorno": {
   "sea": true,
   "ownFar": false
+ },
+ "portobelo": {
+  "sea": true
  }
 }
