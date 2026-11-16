@@ -116,6 +116,10 @@ K temu pride proga prve dirke s svojim svetom (pomanjšano gzip): 31 kB (`bathur
 ### Korak 8 · Predpomnjenje (service worker)
 - Danes `sw.js` ob namestitvi shrani vse povezano (igra brez povezave). Z lenimi datotekami: ob prvem obisku najprej to, kar rabi prva dirka, ostalo v ozadju po začetku prve dirke (ali samo na Wi-Fi, `navigator.connection`), da ne tekmuje s prvim prenosom; igra brez povezave ostane (`docs/igra.md`).
 - Tveganja: posodobitev (žigi) in brisanje starih datotek (`activate`) za lene datoteke; test `sw` (če obstaja) in ročni preizkus brez povezave.
+- **Narejeno (#731, samo `sw.js`):** ob namestitvi se shrani stran in vse povezano razen lenih skript (`<link rel="x-lazy-script">`); lena datoteka, ki jo igra naloži, se shrani ob prenosu. Ostale lene skripte se shranijo v ozadju (po 2 hkrati, nizka prednost, 3 s po namestitvi): takoj na Wi-Fi ali kjer brskalnik ne pove (računalnik), na mobilnih podatkih (`cellular`, `saveData`) šele po začetku prve dirke. Znak za dirko brez spremembe `js/game.js`: lena proga, zahtevana več kot 10 s po odprtju strani (prej je to proga naslovnice), ali sporočilo `'leno-vse'` delavcu.
+- Posodobitev: nova stran znova prenese lene datoteke, ki so bile shranjene (po poti), zato proga brez povezave nikoli ne izgine; stare različice (žigi) in tuje vnose pobriše `activate` in vsako shranjevanje strani.
+- Test `tests/browser/sw.test.mjs` (telefon in Wi-Fi, brez povezave, posodobitev); `app.test` ostane zelen.
+- Ostane: `js/game.js` naj ob začetku dirke pošlje `navigator.serviceWorker.controller?.postMessage('leno-vse')` (zdaj na mobilnih podatkih prva dirka v prvih 10 s ali na že naloženi progi ozadja ne sproži).
 
 ### Korak 9 · Hitrejša gradnja težkih svetov
 - Najprej meritev na pravem telefonu (Chrome z oddaljenim razhroščevanjem, plošča Performance): gradnja, senčilniki, prve slike. SwiftShader in upočasnitev CDP tega ne posnemata natančno (platno v procesu GPU 26–41 s, na procesorju 3–24 s).
