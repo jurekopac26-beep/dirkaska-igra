@@ -616,12 +616,18 @@ const World = (function () {
     }
   }
   const _nr = { i: -1, dist: 999, lat: 0, bar: 0 };
+  const NR_ORD = (() => { const L = []; for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) L.push([a, b]); L.sort((p, q) => Math.max(Math.abs(p[0]), Math.abs(p[1])) - Math.max(Math.abs(q[0]), Math.abs(q[1])) || Math.hypot(p[0], p[1]) - Math.hypot(q[0], q[1])); return Int8Array.from(L.flat()); })();   // (nearest's cells, the middle first)
   function nearest(x, z) {
     const cx = Math.floor(x / HC), cz = Math.floor(z / HC);
-    let bi = -1, bd = 1e18;
-    for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
-      const arr = hash.get((cx + a) * 65536 + cz + b); if (!arr) continue;
-      for (const i of arr) { const dx = x - T.px[i], dz = z - T.pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
+    // the same 5 × 5 cells and the same winner as a scan in (a, b) order: the middle cells first, a cell farther (with a margin) than the
+    // nearest so far skipped, and a tie won by the sample the old order met first (rank: the cell's place in that order, then the sample's)
+    let bi = -1, bd = 1e18, br = 1e9; const px = T.px, pz = T.pz;
+    for (let o = 0; o < 25; o++) {
+      const a = NR_ORD[o * 2], b = NR_ORD[o * 2 + 1], arr = hash.get((cx + a) * 65536 + cz + b); if (!arr) continue;
+      const ex = Math.max(0, (cx + a) * HC - x, x - (cx + a + 1) * HC), ez = Math.max(0, (cz + b) * HC - z, z - (cz + b + 1) * HC);
+      if (ex * ex + ez * ez > bd * 1.0001 + 1e-3) continue;
+      const r0 = ((a + 2) * 5 + b + 2) * 1e6;
+      for (let q = 0; q < arr.length; q++) { const i = arr[q], dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz; if (d < bd || (d === bd && r0 + q < br)) { bd = d; bi = i; br = r0 + q; } }
     }
     _nr.i = bi;
     if (bi < 0) { _nr.dist = 999; _nr.lat = 999; _nr.bar = 0; return _nr; }
@@ -874,7 +880,14 @@ const World = (function () {
   const MC_ROCK = { x0: -124.2, x1: 447.7, z0: 501.3, z1: 703.9, h: 55 };
   let MC_TER = null;   // terrace under the Fairmont hairpin's retaining wall (set per build)
   function inPoly(poly, x, z) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const xi = poly[i][0], zi = poly[i][1], xj = poly[j][0], zj = poly[j][1]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; }
-  function polyDist(poly, x, z) { let d = 1e9; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const ax = poly[j][0], az = poly[j][1], vx = poly[i][0] - ax, vz = poly[i][1] - az, l2 = vx * vx + vz * vz || 1; const t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); d = Math.min(d, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return d; }
+  // polyDist: the same sums as ever, segment by segment; a segment whose box lies (with a margin) farther than the nearest so far is skipped,
+  // since it cannot lower the minimum (PD_SEG caches each polygon's segment boxes; built once per polygon array and length)
+  const PD_SEG = new WeakMap();
+  function polyDist(poly, x, z) { const n = poly.length; let S = PD_SEG.get(poly); if (!S || S.n !== n) { const b = new Float64Array(n * 4); for (let i = 0, j = n - 1; i < n; j = i++) { const ax = poly[j][0], az = poly[j][1], bx = poly[i][0], bz = poly[i][1]; b[i * 4] = Math.min(ax, bx); b[i * 4 + 1] = Math.max(ax, bx); b[i * 4 + 2] = Math.min(az, bz); b[i * 4 + 3] = Math.max(az, bz); } PD_SEG.set(poly, S = { n, b }); }
+    const B = S.b; let d = 1e9, lim = 1e30;
+    for (let i = 0, j = n - 1; i < n; j = i++) { const ex = Math.max(0, B[i * 4] - x, x - B[i * 4 + 1]), ez = Math.max(0, B[i * 4 + 2] - z, z - B[i * 4 + 3]); if (ex * ex + ez * ez > lim) continue;
+      const ax = poly[j][0], az = poly[j][1], vx = poly[i][0] - ax, vz = poly[i][1] - az, l2 = vx * vx + vz * vz || 1; const t = clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1); const nd = Math.min(d, Math.hypot(x - ax - vx * t, z - az - vz * t)); if (nd !== d) { d = nd; lim = d * d * 1.0001 + 1e-6; } }
+    return d; }
 
   /* ---------------- water (every lake, sea, river and pond; Pikes Peak's mountain lake and creek have shaders of their own): the sky mirrored in it
      (more of it where the view grazes the water: a Fresnel term; the race's sky, WSKY, which the renderer sets every frame), trains of wavelets
@@ -4578,18 +4591,22 @@ const World = (function () {
   }
   function nrNear(x, z) {   // Shepard blend of the road heights around (x, z): weights fall with the distance beyond each sample's barrier
     const P = NR, cx = Math.floor(x / NRHC) - P.cx0, cz = Math.floor(z / NRHC) - P.cz0, ds = T.ds, N = T.N;
-    let ws = 0, hs = 0, bd = 1e9, bi = -1, bl = 0, ba = 0, bdd = 1e9;
-    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
+    let ws = 0, hs = 0, bd = 1e9, bi = -1, bl = 0, ba = 0, bdd = 1e9; const rr = (66 + ds) * (66 + ds), px = T.px, pz = T.pz, tx = T.tx, tz = T.tz, nx = T.nx, nz = T.nz;   // (rr: samples farther than this can't be within 64 m, d >= straight distance - ds; skipping them, or a whole hash cell that far, changes nothing)
+    for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) {
+      const ez = Math.max(0, (b + P.cz0) * NRHC - z, z - (b + P.cz0 + 1) * NRHC), ez2 = ez * ez; if (ez2 > rr) continue;
+      for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
       const Lc = P.cells[b * P.ncx + a]; if (!Lc) continue;
+      const ex0 = Math.max(0, (a + P.cx0) * NRHC - x, x - (a + P.cx0 + 1) * NRHC); if (ex0 * ex0 + ez2 > rr) continue;
       for (let q = 0; q < Lc.length; q++) {
-        const i = Lc[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+        const i = Lc[q], dx = x - px[i], dz = z - pz[i]; if (dx * dx + dz * dz > rr) continue;
+        const al = dx * tx[i] + dz * tz[i], lat = dx * nx[i] + dz * nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
         if (d >= 64) continue;
         const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
         ws += wq; hs += wq * (T.hy[i] + nrBankY(i, lat));
         if (d < bd) { bd = d; bi = i; bl = lat; ba = al; }
         if (dd < bdd) bdd = dd;
       }
-    }
+    } }
     NRN.i = bi; NRN.d = bd; NRN.dd = bdd; NRN.lat = bl;
     if (bi < 0) return NRN;
     NRN.h = hs / ws;
@@ -4929,7 +4946,7 @@ const World = (function () {
   // tree-exclusion circles (exclTest).
   function crowdCtx(o) {
     const U = { uTime: { value: 0 }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uHype: { value: 0 } };
-    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
+    const C = Object.assign({ U, ppl: new CrowdChunks(U, o && o.chunk), strip: new Chunks(384), runs: 0, n: 0, busy: false, sp: new Map(), spN: new Map(), eh: new Map(), circ: [], blocks: [], avoidL: [], shirts: CR_SHIRTS, maxSlope: 0.6, log: [] }, o);
     CROWDS.push(C);
     if (C.grid && !C.gH) { const G = C.grid; C.gH = (x, z) => {   // height of the ground mesh surface (the same two triangles per cell)
       const gx = clamp((x - G.x0) / G.cell, 0, G.nx - 1.001), gz = clamp((z - G.z0) / G.cell, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, A = G.arr, Y = (a, b) => A[((j + b) * G.nx + i + a) * 3 + 1];
@@ -4942,8 +4959,13 @@ const World = (function () {
   }
   function crFree(C, x, z) {   // nobody closer than 0.55 m, no small obstacle
     const cx = Math.floor(x / 0.8), cz = Math.floor(z / 0.8);
-    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = C.sp.get((cx + a) + ',' + (cz + b)); if (L) for (let q = 0; q < L.length; q += 2) if ((x - L[q]) ** 2 + (z - L[q + 1]) ** 2 < 0.3) return false; }
-    for (const [ax, az, r] of C.avoidL) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const L = C.spN.get((cx + a) * 131072 + cz + b); if (L) for (let q = 0; q < L.length; q += 2) if ((x - L[q]) ** 2 + (z - L[q + 1]) ** 2 < 0.3) return false; }   // (spN: the same lists as sp under a number key, faster to look up)
+    const AL = C.avoidL; if (AL.length < 24) { for (const [ax, az, r] of AL) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false; return true; }
+    // many: the same circles in 8 m cells (each in every cell its square touches; built anew whenever the list has grown)
+    let G = C.avoidG; if (!G || G.n !== AL.length || G.a !== AL) { G = C.avoidG = { n: AL.length, a: AL, m: new Map(), big: [] }; for (const e of AL) { const [ax, az, r] = e; if (!(r > 0 && r <= 64)) { G.big.push(e); continue; }   // (a huge or odd one: checked always)
+      for (let i = Math.floor((ax - r) / 8) - 1; i <= Math.floor((ax + r) / 8) + 1; i++) for (let j = Math.floor((az - r) / 8) - 1; j <= Math.floor((az + r) / 8) + 1; j++) { const k = i * 131072 + j; let L = G.m.get(k); if (!L) G.m.set(k, L = []); L.push(e); } } }
+    for (const [ax, az, r] of G.big) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false;
+    const L = G.m.get(Math.floor(x / 8) * 131072 + Math.floor(z / 8)); if (L) for (const [ax, az, r] of L) if ((x - ax) ** 2 + (z - az) ** 2 < r * r) return false;
     return true;
   }
   // one spectator at (x, y, z) facing (fx, fz); o: sit (share sitting in the front row), flag (share with a flag), shirts; row 0 = front
@@ -4957,7 +4979,7 @@ const World = (function () {
     CRP = 1; CRS = !!(o && o.staff);
     C.ppl.put(x, y, z, Math.atan2(fx, fz) + (h(8) - 0.5) * 0.5, sxz, sy, [sc[0] * k, sc[1] * k, sc[2] * k], pose + h(9) * 0.998, variant);
     CRP = 0;
-    const key = Math.floor(x / 0.8) + ',' + Math.floor(z / 0.8); let L = C.sp.get(key); if (!L) C.sp.set(key, L = []); L.push(x, z);
+    const kx = Math.floor(x / 0.8), kz = Math.floor(z / 0.8), key = kx + ',' + kz; let L = C.sp.get(key); if (!L) { C.sp.set(key, L = []); C.spN.set(kx * 131072 + kz, L); } L.push(x, z);
     C.n++; return true;
   }
   // one spectator of an existing crowd loop at track distance s, 'extra' beyond the barrier on 'side': interpolated between the samples (the old
@@ -5070,7 +5092,7 @@ const World = (function () {
       // the few groups' own made under ownRnd
       const c0 = CULLM.length, tmp = ownRnd(() => new THREE.Group()); C.ppl.addTo(tmp); C.strip.addTo(tmp, sm, false, false); CULLM.length = c0;
       const F = C.ppl.fans, gone = (x, z) => !!F && F.has(x + ',' + z) && crH(Math.floor(x / 30), Math.floor(z / 30), 77) >= crKeep();
-      if (F) { C.ppl.cull(gone); for (const [k, L] of [...C.sp]) { const L2 = []; for (let q = 0; q < L.length; q += 2) if (!gone(L[q], L[q + 1])) L2.push(L[q], L[q + 1]); if (L2.length) C.sp.set(k, L2); else C.sp.delete(k); } }
+      if (F) { C.ppl.cull(gone); for (const [k, L] of [...C.sp]) { const L2 = []; for (let q = 0; q < L.length; q += 2) if (!gone(L[q], L[q + 1])) L2.push(L[q], L[q + 1]); const kk = k.split(','), nk = +kk[0] * 131072 + +kk[1]; if (L2.length) { C.sp.set(k, L2); C.spN.set(nk, L2); } else { C.sp.delete(k); C.spN.delete(nk); } } }
       return ownRnd(() => C.ppl.addTo(grp));
     }
     const n = C.ppl.addTo(grp);
