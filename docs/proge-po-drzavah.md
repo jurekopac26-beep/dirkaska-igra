@@ -44,6 +44,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Kanaba, Uganda | PR #690 (»Vse proge v enem PR«) | 0 % v OpenStreetMap (zidov in ograj ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
 | Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
 | Savusavu, Fidži | PR #693 | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
+| Koror, Palau | PR #694 | 0 % (v igri, povprečno 5,7 m) | izletna cona je |
 | Killar, Indija | PR #283 | 99 %, obe 58 % (v igri, povprečno 2,3 m) | brez izletne cone (prepad in stena ob ozki polici); v PR, samo javljeno |
 | Pau, Francija | Nove proge 7 | ulična proga | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026) |
 | Puerto Madero, Argentina | kratke D, Načrtovano | 75 %, obe 38 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
@@ -113,6 +114,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Uganda | Kanaba (PR #690, osnutek; na `main` z »Vse proge v enem PR«) | – | – |
 | Papua Nova Gvineja | Sogeri (PR #691, osnutek; na `main` z »Vse proge v enem PR«) | – | – |
 | Fidži | Savusavu (PR #693) | – | – |
+| Palau | Koror (PR #694) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 

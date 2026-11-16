@@ -447,6 +447,7 @@
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of the Santa Monica Mountains road)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
+    'Most čez kanal': 'Channel Bridge', 'Nasipi ob laguni': 'Lagoon Causeways', 'Gozdnati grič': 'Wooded Hill', 'Do Kororja': 'To Koror',   // (Koror: the HUD, the results of an escape)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Nad zalivom Lăng Cô': 'Above Lăng Cô Bay', 'Serpentina': 'Hairpin', 'Đỉnh đèo Hải Vân': 'Hải Vân summit', 'Do sedla': 'To the saddle',   // (Hải Vân)
     'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)

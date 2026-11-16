@@ -235,6 +235,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | koli | Koli, Finska | koli | `js/world-koli.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| koror | Koror, Palau | koror | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.koror`: laguna `def.sea`, most in nasipi z zidovi, tropski gozd, rumena sredinska črta) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | quezaltepeque | Quezaltepeque, Salvador | quezaltepeque | `js/world-quezaltepeque.js` na `js/world-rbring.js` (`API.rbLook.quezaltepeque`: tribune, table krajev, zastave, stara lava `sk.lava`, travniki s suhimi lisami) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |

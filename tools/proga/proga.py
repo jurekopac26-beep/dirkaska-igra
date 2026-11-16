@@ -131,10 +131,16 @@ def profile_model(h, s, C, bends):
         for i in range(len(out) - 2, -1, -1): out[i] = min(max(out[i], out[i + 1] - c[i]), out[i + 1] + c[i])
     return gaussian_filter1d(out, 6 / step, mode='nearest')
 
-def profile(h, s, C, bends):
+def profile(h, s, C, bends, s0=0.0):
     """The road's heights from the model's along its line: a running median, monotone (an uphill road: def `gor`), smoothed, the
-    grade limited and lowered through the hairpins (as built)."""
+    grade limited and lowered through the hairpins (as built). By the sea (visine.najnizje, visine.mostovi) the model reads the water's
+    level on the causeways and the bridges: the road at least `najnizje` metres up, and over each bridge [a, b, top] (metres after the
+    start line) a gentle arch up to `top` at its middle."""
     V = C.get('visine', {}); step = s[1] - s[0]
+    if V.get('najnizje') is not None:
+        lo = V['najnizje']; h = np.maximum(h, lo)
+        for a, b, top in V.get('mostovi', []):
+            m = (s >= s0 + a) & (s <= s0 + b); u = (s[m] - s0 - a) / (b - a); h[m] = np.maximum(h[m], lo + (top - lo) * (1 - (2 * u - 1) ** 2))
     med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
     if V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
     sm = gaussian_filter1d(med, V.get('glajenje', 40) / step, mode='nearest')
@@ -219,6 +225,8 @@ def landcover(C, G, geo, D, lakes, scene):
     wet = np.zeros(cls.shape, bool)
     for L in lakes: wet |= contains_xy(Polygon(np.array(L[1:]).reshape(-1, 2)), GX, GZ)
     cls[(cls == 5) & ~wet] = 0; cls[wet] = 5
+    if C.get('morje') is not None:   # (an island by the sea: WorldCover's water low by the shore is the sea, its mangroves forest; the road's own cells stay land)
+        Hs = ndimage.zoom(H, 2, order=1)[:lnz, :lnx]; cls[(wc == 80) & (Hs < C['morje'] + 3)] = 5; cls[wc == 95] = 1
     cnt = {k: int(np.sum(cls == k)) for k in range(8)}
     return {'x0': float(x0), 'z0': float(z0), 'nx': lnx, 'nz': lnz, 'cell': c2, 'rle': rle64(cls)}, cls, cnt
 
@@ -371,7 +379,7 @@ def main():
     # heights
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
-    h = D.sample(la, lo); hp = (profile_model if C.get('visine', {}).get('do_modela') else profile)(h, s, C, bends)
+    h = D.sample(la, lo); hp = profile_model(h, s, C, bends) if C.get('visine', {}).get('do_modela') else profile(h, s, C, bends, s[i0])
     base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i1]))]
     g = np.gradient(hp, s)
     log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], g[i0:i1].max() * 100, np.mean(np.abs(h - hp))))
