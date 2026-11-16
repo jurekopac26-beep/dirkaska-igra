@@ -34,6 +34,13 @@ GUESS = {
     'tianmen': (29.0570, 110.4800, 2500),     # bend 54 (the heights on the cliffs say little: here by the road)
     'caracoles': (-32.865047, -70.154688, 150),
     'katu': (50.909479, 88.210047, 150),
+    'kagerod': (55.986747, 13.114833, 300),   # (B2: first guess from the OSM route of tools/kagerod/config.json)
+    'kildare': (53.257001, -6.745099, 300),   # (B2: first guess from the OSM route of tools/kildare/config.json)
+    'kotor': (42.404033, 18.779666, 300),   # (B2: first guess from the OSM route of tools/kotor/config.json)
+    'llogara': (40.206804, 19.585018, 300),   # (B2: first guess from the OSM route of tools/llogara/config.json)
+    'lombok': (-8.895406, 116.304559, 300),   # (B2: first guess from the OSM route of tools/lombok/config.json)
+    'lusail': (25.489051, 51.449740, 300),   # (B2: first guess from the OSM route of tools/lusail/config.json)
+    'medeu': (43.160007, 77.057775, 300),   # (B2: first guess from the OSM route of tools/medeu/config.json)
 }
 SKIP = {'townsville': [(0.40, 0.89)]}   # parts of the lap whose road is not in Overture (the raceway through the park): left out of the score
 CELL = 2.0   # metres per cell of the distance map

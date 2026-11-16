@@ -789,5 +789,68 @@
    "H": 620,
    "wet": true
   }
+ ],
+ [
+  "kagerod",
+  "top",
+  "top-kagerod",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "kotor",
+  "top",
+  "top-kotor",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "llogara",
+  "top",
+  "top-llogara",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "lombok",
+  "top",
+  "top-lombok",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "lusail",
+  "top",
+  "top-lusail",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "medeu",
+  "top",
+  "top-medeu",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]
