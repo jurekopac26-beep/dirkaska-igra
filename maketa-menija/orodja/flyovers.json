@@ -1155,5 +1155,144 @@
     }
    ]
   }
+ ],
+ [
+  "koli",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 1726
+    }
+   ],
+   "alt": [
+    158,
+    308
+   ]
+  }
+ ],
+ [
+  "kanaba",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Dip",
+     "d": 880
+    },
+    {
+     "n": "Kanaba Gap · 2,343 m",
+     "d": 2350
+    },
+    {
+     "n": "Virunga Viewpoint",
+     "d": 2600
+    },
+    {
+     "n": "Hairpin 1",
+     "d": 4350
+    }
+   ],
+   "alt": [
+    2300,
+    2176
+   ]
+  }
+ ],
+ [
+  "canaries",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Anse La Verdue",
+     "d": 575
+    },
+    {
+     "n": "Ridge · 177 m",
+     "d": 1780
+    },
+    {
+     "n": "Valley · 82 m",
+     "d": 4040
+    },
+    {
+     "n": "Hairpin",
+     "d": 4200
+    }
+   ],
+   "alt": [
+    49,
+    174
+   ]
+  }
+ ],
+ [
+  "savusavu",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Airfield Plateau",
+     "d": 300
+    },
+    {
+     "n": "Ridge · 78 m",
+     "d": 1615
+    },
+    {
+     "n": "Above Savusavu Bay",
+     "d": 2150
+    },
+    {
+     "n": "Savusavu",
+     "d": 2480
+    }
+   ],
+   "alt": [
+    9,
+    14
+   ]
+  }
+ ],
+ [
+  "koror",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Channel Bridge",
+     "d": 300
+    },
+    {
+     "n": "Lagoon Causeways",
+     "d": 1000
+    },
+    {
+     "n": "Wooded Hill",
+     "d": 2300
+    },
+    {
+     "n": "Koror",
+     "d": 3200
+    }
+   ],
+   "alt": [
+    6,
+    55
+   ]
+  }
+ ],
+ [
+  "vinales",
+  {
+   "kbps": 450,
+   "places": [],
+   "alt": [
+    138,
+    122
+   ]
+  }
  ]
 ]

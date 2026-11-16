@@ -200,5 +200,14 @@
  },
  "mombasa": {
   "sea": true
+ },
+ "savusavu": {
+  "sea": true
+ },
+ "canaries": {
+  "sea": true
+ },
+ "koror": {
+  "sea": true
  }
 }

@@ -63,6 +63,12 @@ CFG = {
     'mombasa': dict(kind='real', start='Mombasa', finish='Likoni Channel', country='Kenya', region='Mombasa', l1='kenyacoast'),
     'livingstone': dict(kind='real', start='Livingstone', finish='Zambezi Gorge', country='Zambia', region='Southern Province', l1='zambezi'),
     'hinboun': dict(kind='real', start='Phou Hin Boun', finish='Stone Forest', country='Laos', region='Khammouane', l1='khammouane'),
+    'koli': dict(kind='real', start='Koli', finish='Ylä-Koli', country='Finland', region='North Karelia', l1='finland_e'),
+    'kanaba': dict(kind='real', start='Kanaba Gap', country='Uganda', region='Kigezi', l1='kigezi'),
+    'canaries': dict(kind='real', start='Canaries', country='Saint Lucia', region='Saint Lucia', l1='lucia'),
+    'savusavu': dict(kind='real', start='Savusavu', country='Fiji', region='Vanua Levu', l1='fiji'),
+    'koror': dict(kind='real', start='Koror', country='Palau', region='Koror', l1='palau'),
+    'vinales': dict(kind='real', start='Viñales', country='Cuba', region='Pinar del Río', l1='pinar'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -73,7 +79,8 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700),
       'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600),
       'costarica': (9.8, -83.9, 600), 'aures': (35.1, 6.2, 700), 'cusco': (-13.5, -72.0, 700), 'angola': (-8.9, 13.3, 700),
-      'kenyacoast': (-4.0, 39.7, 600), 'zambezi': (-17.9, 25.9, 700), 'khammouane': (18.0, 104.6, 700)}
+      'kenyacoast': (-4.0, 39.7, 600), 'zambezi': (-17.9, 25.9, 700), 'khammouane': (18.0, 104.6, 700),
+      'finland_e': (63.1, 29.8, 700), 'kigezi': (-1.25, 29.8, 600), 'lucia': (13.9, -61.0, 400), 'fiji': (-16.8, 179.3, 500), 'palau': (7.4, 134.5, 400), 'pinar': (22.6, -83.7, 600)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
