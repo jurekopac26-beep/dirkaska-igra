@@ -1153,5 +1153,25 @@
     }
    ]
   }
+ ],
+ [
+  "kildare",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Fast Left",
+     "d": 234
+    },
+    {
+     "n": "West Hairpin",
+     "d": 446
+    },
+    {
+     "n": "North Hairpin",
+     "d": 853
+    }
+   ]
+  }
  ]
 ]

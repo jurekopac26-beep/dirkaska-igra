@@ -433,5 +433,16 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "kildare",
+  "top",
+  "top-kildare",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]
