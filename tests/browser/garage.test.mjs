@@ -279,6 +279,12 @@ try {
       const r = await run(), f = await fitOf(), u = await ui();
       T.check('nalepke na KOZOROGU po skupnem pravilu (roka 1 stari list ven, roka 2 nov iz predala, pritisnjen na pokrov, stari v predal) ali kot prej; kupljeno, KONČANO',
         (/^plan,old\.out,pod\.out,pass,swap,fit,pod\.back$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 13 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.nalepke, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
+    // (zavorni diski po skupnem pravilu (POD_EL, brkPart v garage3d.js): roka 1 sname stari disk s prednjega kolesa, roka 2 prinese
+    // novega iz predala in ga natakne; stari v predal (serijski nima svojega predalčka: najbližji, ki ga roka 2 doseže); KONČANO)
+    { await page.evaluate(() => { __garage.openMenu({ el: 'zavore', key: 'drw:zavore', sel: __garage.findOpt('zavore', 'Racing discs') }); const b = document.querySelector('#g-menu [data-mact="buy"]'); if (b) b.click(); });
+      const r = await run(), f = await fitOf(), u = await ui();
+      T.check('zavorni diski na KOZOROGU po skupnem pravilu (roka 1 stari disk ven, roka 2 nov iz predala na kolo, stari v predal) ali kot prej; kupljeno, KONČANO',
+        (/^plan,old\.out,pod\.out,pass,swap,fit,(far,)?pod\.back$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 13 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.zavore, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)
