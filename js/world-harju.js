@@ -772,9 +772,12 @@
       const LA = [0, 0, 0], LB = [0, 0, 0], LC = [0, 0, 0], LI = [0, 0, 0], LUA = [0, 0], LUB = [0, 0], LUC = [0, 0];
       let lCh = null, lKx = 0, lKz = 0, lG = null;
       const P3 = (p, o, uv, us) => { let y = p[2]; if (y !== y) { y = hjGround(p[0], p[1]); p[2] = y; } o[0] = p[0]; o[1] = y + 0.05; o[2] = p[1]; uv[0] = o[0] / us; uv[1] = -o[2] / us; };
+      // (an edge's midpoint once, shared by the triangles on both sides of it, so its ground is looked up once: (a + b) / 2 is the same either way round)
+      const mid = (a, b) => { const L = a.mc; if (L) for (let k = 0; k < L.length; k += 2) if (L[k] === b) return L[k + 1];
+        const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, NaN]; (L || (a.mc = [])).push(b, m); (b.mc || (b.mc = [])).push(a, m); return m; };
       const lay = (ch, a, b, c, us, col, dep) => { const ux = a[0] - b[0], uz = a[1] - b[1], vx = b[0] - c[0], vz = b[1] - c[1], wx = c[0] - a[0], wz = c[1] - a[1];
-        if (dep < 7 && Math.max(ux * ux + uz * uz, vx * vx + vz * vz, wx * wx + wz * wz) > 10.24) { const ab = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, NaN], bc = [(b[0] + c[0]) / 2, (b[1] + c[1]) / 2, NaN], ca = [(c[0] + a[0]) / 2, (c[1] + a[1]) / 2, NaN]; lay(ch, a, ab, ca, us, col, dep + 1); lay(ch, ab, b, bc, us, col, dep + 1); lay(ch, ca, bc, c, us, col, dep + 1); lay(ch, ab, bc, ca, us, col, dep + 1); return; }
-        const mx = (a[0] + b[0] + c[0]) / 3, mz = (a[1] + b[1] + c[1]) / 3; if (nearDD(mx, mz) < 0.5 || onBld(mx, mz)) return;
+        if (dep < 7 && Math.max(ux * ux + uz * uz, vx * vx + vz * vz, wx * wx + wz * wz) > 10.24) { const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a); lay(ch, a, ab, ca, us, col, dep + 1); lay(ch, ab, b, bc, us, col, dep + 1); lay(ch, ca, bc, c, us, col, dep + 1); lay(ch, ab, bc, ca, us, col, dep + 1); return; }
+        const mx = (a[0] + b[0] + c[0]) / 3, mz = (a[1] + b[1] + c[1]) / 3; if (onBld(mx, mz) || nearDD(mx, mz) < 0.5) return;   // (the cheap test first: both only read)
         P3(a, LA, LUA, us); P3(b, LB, LUB, us); P3(c, LC, LUC, us); LI[0] = mx; LI[1] = Math.min(LA[1], LB[1], LC[1]) - 5; LI[2] = mz;
         const kx = Math.floor(mx / ch.size), kz = Math.floor(mz / ch.size); if (ch !== lCh || kx !== lKx || kz !== lKz) { lG = ch.get(mx, mz); lCh = ch; lKx = kx; lKz = kz; }
         lG.triO(LA, LB, LC, col, LI, col, col, LUA, LUB, LUC); };
