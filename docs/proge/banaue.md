@@ -2,6 +2,8 @@
 
 [← Vse proge](../../README.md#proge) · proga `banaue` (`js/tracks/banaue.js`)
 
+**Na odločanju** (`pending: true`, od 16. 11. 2026): iz Filipinov ostane ena od Banaueja in Batangasa (#684); obe se dokončata, nato uporabnik izbere (tabla #382, komentar 6906260656; `docs/proge-po-drzavah.md`). V meniju je do izbire za gumbom NEUPORABNO, z oznako PENDING.
+
 Cesta iz Bontoca v Banaue na severu Luzona (pokrajina Ifugao, Filipini), v pravem merilu: kilometer gorske ceste po pobočju nad riževimi terasami, malo nad mestom Banaue. Proga se začne na 1.247 m (16,9263° S, 121,0552° V), najvišji točki, gre mimo razgledišč in skozi vas nad terasami, nato po serpentini (zavije se za ~156°) do cilja na 1.185 m, najnižji točki: 0,99 km in ~62 m spusta, največ 12 % naklona. Pred startom je ~200 m ceste za štartno mrežo, za ciljem ~250 m za mesta avtov po dirki. Četrta od petih kratkih prog zunaj Evrope (`docs/nove-proge-1-0.md`, Del 4: K4). Vozi se po desni. Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija** (kot na Mã Pí Lèngu, Wadi Mujibu in Sans Souciju):
 
 - **Dirka**: tekmeci (v meniju *Opponents* od 0 do največ 96: pred startom je le ~200 m ceste za kolono letečega starta; `maxRivals`), leteči start kot na vseh odprtih cestah, ena vožnja do cilja. Pod mestom so prevoženi kilometri in nadmorska višina; po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta).

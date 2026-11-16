@@ -26,8 +26,8 @@ const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 
 // 1. the track: an open road, four ways to drive it, its checkpoints; at full scale and no longer than 1 km (the user's short roads); its name
 // as the rules want it; the traffic on the right
-check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 2 checkpoints, the road 9 m wide, the traffic on the right, named "Kraj, Država"',
-  def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 2 && T.w === 4.5 && !def.leftHand && def.name === 'Banaue, Filipini' && def.en.name === 'Banaue, Philippines',
+check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 2 checkpoints, the road 9 m wide, the traffic on the right, named "Kraj, Država", awaiting a choice of the user (def.pending, not def.test: the Philippines keeps one of it and Batangas, 16. 11. 2026)',
+  def.pending === true && !def.test && def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 2 && T.w === 4.5 && !def.leftHand && def.name === 'Banaue, Filipini' && def.en.name === 'Banaue, Philippines',
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, ${def.alt[0]} -> ${def.alt[1]} m, modes ${(def.modes || []).join(',')}`);
 let top = -1e9, low = 1e9;
 for (let i = T.startIdx; i <= T.finishIdx; i++) { const a = T.altAt(T.hy[i]); top = Math.max(top, a); low = Math.min(low, a); }
