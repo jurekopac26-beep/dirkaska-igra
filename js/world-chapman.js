@@ -10,7 +10,7 @@
   const {
     CAN, Chunks, GB, IChunks, TAU, VRC, VRT, atSf, box, caCar, caNear, caProps, clamp, cone, crowdCtx, crowdFinish, crowdPut, crowdRun, cyl, ico,
     lerp, ouCutMat, pkGroundMat, rng, rock, rpHash, sstep, stubExcl, stubGeo, stubProps, stubRails, stubVerge, tuftWindMat, valueNoise2, vary,
-    vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrStubH, parkOn
+    vrDem, vrDist, vrGritTex, vrHouse, vrLC, vrNear, vrPrep, vrStubH, parkOn
   } = API;
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
@@ -26,6 +26,16 @@
      beds, boats and the beach at Hout Bay, generic signs (no words); the gulls: the render's flock by the sea (def.sea); winter without snow (noSnow). South African road
      markings: yellow edge lines, a white double centre line. */
   const CHCOL = [0, 0, 0];
+  function chNoise2(seed, scale) {   // valueNoise2 with the same grid and the same arithmetic, without a closure per call (the index & 63 = the wrap of an integer into 0..63)
+    const r = rng(seed), g = new Float32Array(64 * 64); for (let i = 0; i < g.length; i++) g[i] = r();
+    return (x, z) => {
+      x /= scale; z /= scale; const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+      const a0 = xi & 63, a1 = (xi + 1) & 63, b0 = (zi & 63) * 64, b1 = ((zi + 1) & 63) * 64;
+      const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+      const p = g[b0 + a0], q = g[b0 + a1], s = g[b1 + a0], t = g[b1 + a1], l0 = p + (q - p) * u, l1 = s + (t - s) * u;
+      return l0 + (l1 - l0) * v;
+    };
+  }
   function chFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief inland; under the sea (the model's 0 m) dug down
     const P = API.VR, d = vrDem(x, z), alt = d + P.D.base;
     if (alt < 4) return d - (4 - Math.max(0, alt)) * 1.6 - Math.max(0, -alt);   // (the shore: the water line at ~2.5 m of the model)
@@ -38,7 +48,7 @@
       const f = f0 < hr ? Math.max(seaL + 0.5 * Math.max(0, f0 - seaL), f0 - (hr - f0) * ex) : f0; h = dd <= 1 ? hr : lerp(hr, f, sstep(1, 42, dd));
       if (dd > 1.5 && f > hr) h = Math.max(h, Math.min(f, hr + 1.7 * (dd - 1.5)));   // (uphill: the road cut into the rock, a steep face behind it)
       else if (dd > 2 && f < hr) h = Math.min(h, Math.max(f, hr - 2.4 * (dd - 2))); }   // (downhill: the cliff under the road, falling steeply to the ground (the model blurs it to a gentle slope))
-    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start
+    const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 12, ex = x - p.x, ez = z - p.z, R = p.r + pb + 1; if (ex * ex + ez * ez > R * R) continue; const d = Math.hypot(ex, ez); if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the lay-bys, the start (the far ones skipped before the root)
     if (i >= 0) h = Math.min(h, n.env);
     if (API.STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     return h;
@@ -50,16 +60,23 @@
   }
   function chGround(x, z) {   // height of the terrain mesh surface (the same two triangles per cell as the tiles)
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 0, G.nx - 1.001), gz = clamp((z - G.z0) / VRC, 0, G.nz - 1.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j;
-    if (u + v <= 1) { const a = chGH(i, j); return a + u * (chGH(i + 1, j) - a) + v * (chGH(i, j + 1) - a); }
-    const d = chGH(i + 1, j + 1); return d + (1 - u) * (chGH(i, j + 1) - d) + (1 - v) * (chGH(i + 1, j) - d);
+    const H = G.h, k = j * G.nx + i;   // (the vertices read straight from the grid when computed: i, j and their next are inside it, chGH's clamp a no-op)
+    if (u + v <= 1) { let a = H[k], b = H[k + 1], c = H[k + G.nx]; if (a !== a) a = chGH(i, j); if (b !== b) b = chGH(i + 1, j); if (c !== c) c = chGH(i, j + 1); return a + u * (b - a) + v * (c - a); }
+    let d = H[k + G.nx + 1], c = H[k + G.nx], b = H[k + 1]; if (d !== d) d = chGH(i + 1, j + 1); if (c !== c) c = chGH(i, j + 1); if (b !== b) b = chGH(i + 1, j); return d + (1 - u) * (c - d) + (1 - v) * (b - d);
   }
   function chSlope(x, z) { const a = chGround(x - 2.5, z), b = chGround(x + 2.5, z), c = chGround(x, z - 2.5), d = chGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
+  const CHLC = new Float64Array(6);
+  function chLCf(x, z) {   // vrLCf's shares of land cover classes 0, 2, 3 and 4 in one pass (the same sums, to the last bit), into CHLC[class]
+    const L = API.VR.L, lc = API.VR.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j;
+    const at = (a, b) => (a < 0 || b < 0 || a >= L.nx || b >= L.nz ? -1 : lc[b * L.nx + a]), c00 = at(i, j), c10 = at(i + 1, j), c01 = at(i, j + 1), c11 = at(i + 1, j + 1);
+    for (let c = 0; c < 5; c++) { if (c === 1) continue; CHLC[c] = ((c00 === c ? 1 : 0) * (1 - u) + (c10 === c ? 1 : 0) * u) * (1 - v) + ((c01 === c ? 1 : 0) * (1 - u) + (c11 === c ? 1 : 0) * u) * v; }
+  }
   function chCol(x, z, h, ny, dd) {   // ground colour (times the grey grit map): the fynbos as a mosaic (lc 1): grey-green shrubland, dark olive thickets, rusty
     // restio beds, silvery patches and dry ochre ground, sandy grey soil between them on the gentle slopes; darker under the trees (lc 2), gardens in
     // Hout Bay (lc 3), pale beach sand (lc 4) and wet sand at the water; the rock on every steep face and the outcrops (lc 0): grey granite low down,
     // the brown sandstone above (the line at ~110 m, ragged) in pale and dark layers; a trodden verge
     const P = API.VR, A = h + P.D.base, m = P.c1(x, z), q = P.c2(x, z), f = P.n4(x, z), fine = P.n6(x, z), mid = P.n7(x, z);
-    const tr = vrLCf(x, z, 2), se = vrLCf(x, z, 3), sa = vrLCf(x, z, 4), bare = vrLCf(x, z, 0);
+    chLCf(x, z); const tr = CHLC[2], se = CHLC[3], sa = CHLC[4], bare = CHLC[0];
     let R = 0.42 + (m - 0.5) * 0.08, G = 0.45 + (m - 0.5) * 0.07, B = 0.31 + (m - 0.5) * 0.04;   // fynbos: grey-green
     const dk = sstep(0.46, 0.66, P.c3(x, z) * 0.45 + mid * 0.55); R = lerp(R, 0.22, dk * 0.85); G = lerp(G, 0.3, dk * 0.85); B = lerp(B, 0.17, dk * 0.85);   // dense, dark olive thickets
     const rs = sstep(0.56, 0.8, q * 0.55 + f * 0.45) * (1 - dk); R = lerp(R, 0.56, rs * 0.8); G = lerp(G, 0.38, rs * 0.8); B = lerp(B, 0.22, rs * 0.8);   // restio beds: rusty brown
@@ -80,10 +97,18 @@
   }
   function chGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, as caGCol)
     const G = API.VR.G, gx = clamp((x - G.x0) / VRC, 1, G.nx - 2.001), gz = clamp((z - G.z0) / VRC, 1, G.nz - 2.001), i = Math.floor(gx), j = Math.floor(gz), u = gx - i, v = gz - j, o = [0, 0, 0];
-    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, h = chGH(ii, jj);
-      const nx = (chGH(ii + 1, jj) - chGH(ii - 1, jj)) / (2 * VRC), nz = (chGH(ii, jj + 1) - chGH(ii, jj - 1)) / (2 * VRC), c = chCol(G.x0 + ii * VRC, G.z0 + jj * VRC, h, 1 / Math.hypot(nx, 1, nz), G.dd[jj * G.nx + ii]);
+    for (const [a, b, w] of [[0, 0, (1 - u) * (1 - v)], [1, 0, u * (1 - v)], [0, 1, (1 - u) * v], [1, 1, u * v]]) { const ii = i + a, jj = j + b, c = chVCol(ii, jj);
       o[0] += c[0] * w; o[1] += c[1] * w; o[2] += c[2] * w; }
     return o;
+  }
+  function chVCol(i, j) {   // chGCol's colour of an inner grid vertex (1 .. n-2), computed once: kept only when its five heights were all in the grid
+    // already (chGH returns a height's unrounded value the first time, the grid's float32 after, so a colour with a new height would differ by a hair)
+    const G = API.VR.G, C = G.chC || (G.chC = new Float64Array(G.nx * G.nz * 3).fill(NaN)), H = G.h, k = j * G.nx + i, W = G.nx;
+    if (C[k * 3] === C[k * 3]) { CHCOL[0] = C[k * 3]; CHCOL[1] = C[k * 3 + 1]; CHCOL[2] = C[k * 3 + 2]; return CHCOL; }
+    const keep = H[k] === H[k] && H[k + 1] === H[k + 1] && H[k - 1] === H[k - 1] && H[k + W] === H[k + W] && H[k - W] === H[k - W];
+    const h = chGH(i, j), nx = (chGH(i + 1, j) - chGH(i - 1, j)) / (2 * VRC), nz = (chGH(i, j + 1) - chGH(i, j - 1)) / (2 * VRC), c = chCol(G.x0 + i * VRC, G.z0 + j * VRC, h, 1 / Math.hypot(nx, 1, nz), G.dd[k]);
+    if (keep) { C[k * 3] = c[0]; C[k * 3 + 1] = c[1]; C[k * 3 + 2] = c[2]; }
+    return c;
   }
   function chTileOn(ti, tj) {   // 0: none, 1: full tile (5 m cells), 2: coarse outer ring (10 m cells, in the haze); round the start wider (the beach of Hout Bay)
     const G = API.VR.G, L = VRC * VRT, x = G.x0 + (ti + 0.5) * L, z = G.z0 + (tj + 0.5) * L, d = vrDist(x, z), df = Math.hypot(x - API.VR.st[0], z - API.VR.st[1]);
@@ -196,7 +221,9 @@
     const out = { root, dyn: {}, groundH: chGround, camFloor: chGround, props: [], farClip: true, ownTex: [], dust: [0.7, 0.64, 0.54], noSnow: true };   // (noSnow: the Cape's winter is green and rainy)
     vrPrep();
     const P = API.VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base, seaY = -base;
-    P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 50); P.c3 = valueNoise2(733, 160); P.c4 = valueNoise2(734, 260);
+    P.c1 = chNoise2(731, 120); P.c2 = chNoise2(732, 50); P.c3 = chNoise2(733, 160); P.c4 = chNoise2(734, 260);
+    // (vrPrep's noises, the same seeds and scales, in the faster form: the same values)
+    P.n1 = chNoise2(611, 90); P.n2 = chNoise2(612, 30); P.n3 = chNoise2(613, 55); P.n4 = chNoise2(614, 14); P.n5 = chNoise2(615, 70); P.n6 = chNoise2(616, 7); P.n7 = chNoise2(617, 38);
     P.st = [T.px[T.idx(sStart)], T.pz[T.idx(sStart)]];
     // the buildings (def.bld [x, z, length, width, angle, height, kind]: the houses of Hout Bay): clear of the road and the sea
     const blds = [];
@@ -212,9 +239,9 @@
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const cut = out.dyn.ouCut = { uCam: { value: new THREE.Vector3() }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) } };   // (the houses and boulders between the camera and the car fade out)
     const matV = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut); out.matV = matV;
-    const excl = [], eh = new Map(), EHC = 32;
-    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
-    const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const excl = [], eh = new Map(), EHC = 32;   // (eh: the 32 m cells' lists by a number, (a + 32768) * 65536 + b + 32768, not a string built at every look-up)
+    const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = (a + 32768) * 65536 + b + 32768; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
+    const excluded = (x, z) => { const L = eh.get((Math.floor(x / EHC) + 32768) * 65536 + Math.floor(z / EHC) + 32768); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     stubExcl(exclPush);   // (nothing grows or stands on the side roads)
     for (const S of T.stubs || []) { const H = S.hill, ds = S.Lend / Math.max(1, S.n - 1); if (H) for (let si = 0; si < 2; si++) for (let j = 0; j < S.n; j++) if (H.on[si][j]) {   // (nor on a hill beside one, Track.hill: up to 0.6 m past its soft limit, where the cars drive)
       const sd = si ? 1 : -1, l = H.lim[si][j], u = sd * (T.stubHw(S, j * ds, sd) + S.lim + l / 2); exclPush(S.x[j] - S.tz[j] * u, S.z[j] + S.tx[j] * u, l / 2 + 1.1); } }
@@ -237,7 +264,10 @@
         const c = k < 0.6 ? foam : k < 3 ? [0, 1, 2].map(q => lerp(foam[q], shal[q], sstep(0.6, 3, k))) : k < 10 ? [0, 1, 2].map(q => lerp(shal[q], mid[q], sstep(3, 10, k))) : [0, 1, 2].map(q => lerp(mid[q], deep[q], sstep(10, 30, k)));
         const ks = 0.12 * sstep(0.55, 0.85, P.n2(x * 2.4, z * 2.4)); return [0, 1, 2].map(q => lerp(c[q], 0.8, ks)); };
       const D = P.D, X0 = D.x0, Z0 = D.z0, X1 = D.x0 + (D.nx - 1) * D.cell, Z1 = D.z0 + (D.nz - 1) * D.cell, uv = (x, z) => [x / 14, -z / 14];
-      const lo = (a, b) => (vrDist(a, b) < 470 ? chGround(a, b) : chFar(a, b)) < seaY + 0.4;
+      const lo0 = (a, b) => (vrDist(a, b) < 470 ? chGround(a, b) : chFar(a, b)) < seaY + 0.4;
+      // (lo at each corner once: the cells of a block share them; the corners are whole metres, the key exact)
+      const loC = new Map(), ck = (a, b) => (a + 20000) * 40000 + (b + 20000);
+      const lo = (a, b) => { const k = ck(a, b); let v = loC.get(k); if (v === undefined) loC.set(k, v = lo0(a, b)); return v; };
       for (let z0 = Z0; z0 < Z1; z0 += 48) for (let x0 = X0; x0 < X1; x0 += 48) {   // 48 m blocks where any corner is under water: 8 m cells by the shore near the road (the surf), 24 m out to 600 m, else one
         const d = vrDist(x0 + 24, z0 + 24), cs = d < 330 ? 8 : d < 620 ? 24 : 48, g = sc.get(x0 + 24, z0 + 24);
         for (let zz = z0; zz < z0 + 48; zz += cs) for (let xx = x0; xx < x0 + 48; xx += cs) {
@@ -252,7 +282,9 @@
       // the surf: a band of white foam along the shore within 420 m of the road (4 m cells where the water line runs, a fainter one a cell out to sea),
       // in the water's own moving picture (dyn.water scrolls it); 480 m chunks
       { const fc = new Chunks(480, true), fm = new THREE.MeshBasicMaterial({ map: tex.water, vertexColors: true, transparent: true, depthWrite: false }), cs = 4;
-        const wet = (a, b) => chGround(a, b) < seaY + 0.15, F = (al) => [0.97, 0.99, 1, al];
+        // (wet on the 4 m lattice from the model's corner, each point once: the cells and their neighbours share them; the model's corner and the cells are whole metres, so a + cs is the lattice point exactly)
+        const WX = Math.ceil((X1 - D.x0) / cs) + 4, WZ = Math.ceil((Z1 - D.z0) / cs) + 4, WC = new Int8Array(WX * WZ).fill(-1);
+        const wet = (a, b) => { const k = (Math.round((b - D.z0) / cs) + 1) * WX + Math.round((a - D.x0) / cs) + 1; let v = WC[k]; if (v < 0) v = WC[k] = chGround(a, b) < seaY + 0.15 ? 1 : 0; return v === 1; }, F = (al) => [0.97, 0.99, 1, al];
         for (let z0 = D.z0; z0 < Z1; z0 += cs) for (let x0 = D.x0; x0 < X1; x0 += cs) {
           if (vrDist(x0, z0) > 420) { x0 += 28; continue; }
           const n = (wet(x0, z0) ? 1 : 0) + (wet(x0 + cs, z0) ? 1 : 0) + (wet(x0, z0 + cs) ? 1 : 0) + (wet(x0 + cs, z0 + cs) ? 1 : 0);
@@ -561,18 +593,23 @@
           const x = xx + (RT() - 0.5) * SP * 0.9, z = zz + (RT() - 0.5) * SP * 0.9, r1 = RT(), r2 = RT(), r3 = RT(), r4 = RT();
           const hd = vrDist(x, z); if (hd > LOD.radius(230)) continue;   // (LOD: a shorter plant/tree draw distance on the lower tiers)
           if (hd > LOD.radius(70) && ((Math.floor(xx / SP) + Math.floor(zz / SP)) & 1)) continue;
-          const c = vrLC(x, z), y0 = chGround(x, z), A = y0 + base, sl = chSlope(x, z);
+          const c = vrLC(x, z), y0 = chGround(x, z), A = y0 + base;
           if (A < 4 || c === 4 || c === 5) continue;
           let kind = -1;
           if (c === 2) kind = r1 < 0.16 ? 5 : r1 < 0.4 ? 1 : -1;
           else if (c === 3) kind = r1 < 0.06 ? 5 : r1 < 0.12 ? 1 : -1;
           else if (c === 0) kind = r1 < 0.05 ? 3 : r1 < 0.1 ? 0 : -1;
-          else { const pr = sstep(0.5, 0.8, P.c3(x * 1.6, z * 1.6)), er = sstep(0.6, 0.82, P.n5(x * 1.8 + 40, z * 1.8)), pc = sstep(0.62, 0.84, P.n3(x * 2.1 - 70, z * 2.1)), nr = sstep(70, 25, hd);   // (proteas, heaths and pincushions in patches; thicker by the road)
-            kind = r1 < 0.24 ? 0 : r1 < 0.5 + 0.12 * nr ? 1 : r1 < 0.5 + 0.12 * nr + 0.16 * pr ? 2 : r1 < 0.62 + 0.12 * nr + 0.3 * er ? 6 : r1 < 0.7 + 0.12 * nr + 0.25 * pc ? 7 : r1 < 0.76 && A < 120 ? 3 : -1; }
+          else if (r1 < 0.24) kind = 0;   // (proteas, heaths and pincushions in patches; thicker by the road; each patch's noise only when the draw reaches it)
+          else { const nr = sstep(70, 25, hd), b = 0.12 * nr;
+            if (r1 < 0.5 + b) kind = 1;
+            else if (r1 < 0.5 + b + 0.16 * sstep(0.5, 0.8, P.c3(x * 1.6, z * 1.6))) kind = 2;
+            else if (r1 < 0.62 + b + 0.3 * sstep(0.6, 0.82, P.n5(x * 1.8 + 40, z * 1.8))) kind = 6;
+            else if (r1 < 0.7 + b + 0.25 * sstep(0.62, 0.84, P.n3(x * 2.1 - 70, z * 2.1))) kind = 7;
+            else if (r1 < 0.76 && A < 120) kind = 3; }
           if (kind < 0) continue;
-          if (sl > (kind === 3 ? 1.2 : 0.95)) continue;
+          if (chSlope(x, z) > (kind === 3 ? 1.2 : 0.95)) continue;   // (the slope only for a plant that would grow there)
+          if (excluded(x, z)) continue;   // (the cheap test first; neither has side effects)
           const nn = vrNear(x, z); if (nn.i >= 0 && (nn.dd < 1.6 || hillIn(nn))) continue;
-          if (excluded(x, z)) continue;
           const tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.88 + r4 * 0.18];
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.5 + r4 * 0.5, tint);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.8 + r3 * 1.1, 0.6 + r4 * 0.8, r2 < 0.3 ? [0.98 + r3 * 0.1, 1.04, 0.92] : r2 < 0.55 ? [0.82, 0.9, 0.8] : tint);   // (some greyer and silvery, some darker)
@@ -612,7 +649,7 @@
       const RS = rng(3047), maxS = Math.round(14000 * dens); let nS = 0;
       edge: for (let s = 12; s < T.len - 12; s += 1.4 / dens) for (const side of [-1, 1]) {
         const o = 1.7 + Math.pow(RS(), 2) * 30, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
-        const nv = vrNear(x, z); if (nv.dd < 1.2 || hillIn(nv) || excluded(x, z) || sea(x, z) || chGround(x, z) + base < 4) continue;
+        if (excluded(x, z)) continue; const nv = vrNear(x, z); if (nv.dd < 1.2 || hillIn(nv) || sea(x, z) || chGround(x, z) + base < 4) continue;
         const y0 = chGround(x, z), sl = chSlope(x, z); if (sl > 1.2 || (vrLC(x, z) === 1 && r1 < 0.5)) continue;
         const k = 0.84 + r3 * 0.28, sc = 0.8 + r1 * 1.2 - 0.008 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
         if (++nS >= maxS) break edge;
