@@ -26,6 +26,16 @@
      beds, boats and the beach at Hout Bay, generic signs (no words); the gulls: the render's flock by the sea (def.sea); winter without snow (noSnow). South African road
      markings: yellow edge lines, a white double centre line. */
   const CHCOL = [0, 0, 0];
+  function chNoise2(seed, scale) {   // valueNoise2 with the same grid and the same arithmetic, without a closure per call (the index & 63 = the wrap of an integer into 0..63)
+    const r = rng(seed), g = new Float32Array(64 * 64); for (let i = 0; i < g.length; i++) g[i] = r();
+    return (x, z) => {
+      x /= scale; z /= scale; const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+      const a0 = xi & 63, a1 = (xi + 1) & 63, b0 = (zi & 63) * 64, b1 = ((zi + 1) & 63) * 64;
+      const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+      const p = g[b0 + a0], q = g[b0 + a1], s = g[b1 + a0], t = g[b1 + a1], l0 = p + (q - p) * u, l1 = s + (t - s) * u;
+      return l0 + (l1 - l0) * v;
+    };
+  }
   function chFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief inland; under the sea (the model's 0 m) dug down
     const P = API.VR, d = vrDem(x, z), alt = d + P.D.base;
     if (alt < 4) return d - (4 - Math.max(0, alt)) * 1.6 - Math.max(0, -alt);   // (the shore: the water line at ~2.5 m of the model)
@@ -211,7 +221,9 @@
     const out = { root, dyn: {}, groundH: chGround, camFloor: chGround, props: [], farClip: true, ownTex: [], dust: [0.7, 0.64, 0.54], noSnow: true };   // (noSnow: the Cape's winter is green and rainy)
     vrPrep();
     const P = API.VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base, seaY = -base;
-    P.c1 = valueNoise2(731, 120); P.c2 = valueNoise2(732, 50); P.c3 = valueNoise2(733, 160); P.c4 = valueNoise2(734, 260);
+    P.c1 = chNoise2(731, 120); P.c2 = chNoise2(732, 50); P.c3 = chNoise2(733, 160); P.c4 = chNoise2(734, 260);
+    // (vrPrep's noises, the same seeds and scales, in the faster form: the same values)
+    P.n1 = chNoise2(611, 90); P.n2 = chNoise2(612, 30); P.n3 = chNoise2(613, 55); P.n4 = chNoise2(614, 14); P.n5 = chNoise2(615, 70); P.n6 = chNoise2(616, 7); P.n7 = chNoise2(617, 38);
     P.st = [T.px[T.idx(sStart)], T.pz[T.idx(sStart)]];
     // the buildings (def.bld [x, z, length, width, angle, height, kind]: the houses of Hout Bay): clear of the road and the sea
     const blds = [];
@@ -587,12 +599,17 @@
           if (c === 2) kind = r1 < 0.16 ? 5 : r1 < 0.4 ? 1 : -1;
           else if (c === 3) kind = r1 < 0.06 ? 5 : r1 < 0.12 ? 1 : -1;
           else if (c === 0) kind = r1 < 0.05 ? 3 : r1 < 0.1 ? 0 : -1;
-          else { const pr = sstep(0.5, 0.8, P.c3(x * 1.6, z * 1.6)), er = sstep(0.6, 0.82, P.n5(x * 1.8 + 40, z * 1.8)), pc = sstep(0.62, 0.84, P.n3(x * 2.1 - 70, z * 2.1)), nr = sstep(70, 25, hd);   // (proteas, heaths and pincushions in patches; thicker by the road)
-            kind = r1 < 0.24 ? 0 : r1 < 0.5 + 0.12 * nr ? 1 : r1 < 0.5 + 0.12 * nr + 0.16 * pr ? 2 : r1 < 0.62 + 0.12 * nr + 0.3 * er ? 6 : r1 < 0.7 + 0.12 * nr + 0.25 * pc ? 7 : r1 < 0.76 && A < 120 ? 3 : -1; }
+          else if (r1 < 0.24) kind = 0;   // (proteas, heaths and pincushions in patches; thicker by the road; each patch's noise only when the draw reaches it)
+          else { const nr = sstep(70, 25, hd), b = 0.12 * nr;
+            if (r1 < 0.5 + b) kind = 1;
+            else if (r1 < 0.5 + b + 0.16 * sstep(0.5, 0.8, P.c3(x * 1.6, z * 1.6))) kind = 2;
+            else if (r1 < 0.62 + b + 0.3 * sstep(0.6, 0.82, P.n5(x * 1.8 + 40, z * 1.8))) kind = 6;
+            else if (r1 < 0.7 + b + 0.25 * sstep(0.62, 0.84, P.n3(x * 2.1 - 70, z * 2.1))) kind = 7;
+            else if (r1 < 0.76 && A < 120) kind = 3; }
           if (kind < 0) continue;
           if (chSlope(x, z) > (kind === 3 ? 1.2 : 0.95)) continue;   // (the slope only for a plant that would grow there)
+          if (excluded(x, z)) continue;   // (the cheap test first; neither has side effects)
           const nn = vrNear(x, z); if (nn.i >= 0 && (nn.dd < 1.6 || hillIn(nn))) continue;
-          if (excluded(x, z)) continue;
           const tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.88 + r4 * 0.18];
           if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.5 + r4 * 0.5, tint);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.8 + r3 * 1.1, 0.6 + r4 * 0.8, r2 < 0.3 ? [0.98 + r3 * 0.1, 1.04, 0.92] : r2 < 0.55 ? [0.82, 0.9, 0.8] : tint);   // (some greyer and silvery, some darker)
@@ -632,7 +649,7 @@
       const RS = rng(3047), maxS = Math.round(14000 * dens); let nS = 0;
       edge: for (let s = 12; s < T.len - 12; s += 1.4 / dens) for (const side of [-1, 1]) {
         const o = 1.7 + Math.pow(RS(), 2) * 30, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
-        const nv = vrNear(x, z); if (nv.dd < 1.2 || hillIn(nv) || excluded(x, z) || sea(x, z) || chGround(x, z) + base < 4) continue;
+        if (excluded(x, z)) continue; const nv = vrNear(x, z); if (nv.dd < 1.2 || hillIn(nv) || sea(x, z) || chGround(x, z) + base < 4) continue;
         const y0 = chGround(x, z), sl = chSlope(x, z); if (sl > 1.2 || (vrLC(x, z) === 1 && r1 < 0.5)) continue;
         const k = 0.84 + r3 * 0.28, sc = 0.8 + r1 * 1.2 - 0.008 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
         if (++nS >= maxS) break edge;
