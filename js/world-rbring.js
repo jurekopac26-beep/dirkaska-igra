@@ -17,6 +17,16 @@
   let LOD, T, THEME;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T, THEME } = API); });
 
+  /* Realizem G (docs/realizem/paket-g.md): the measured band 8–60 m from the road (tools/proga-podatki.py `cover`, ESA WorldCover 2021 and
+     the Sentinel-2 mosaic of the same year; 86 sections of 50 m, the frame of js/geo.js: def.lc's forest on WorldCover's trees with a
+     correlation of 0.99 by section and side, no shift). Built-up 48.4 % (the circuit's run-offs, paddock and car parks), grass 42.2 %, trees
+     6.7 %, crops 2.7 %. Only the hue of the plants moves (World.rastje.MOC); the builder draws no tree more. Keyed by the track's id: the other
+     themes of this builder (Bathurst, Rio, Crystal Palace) stay as they are. */
+  if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.rbring) {
+    World.rastje.MERITVE.rbring = { podnebje: 'Dfb', lat: 47.220015, lon: 14.765109, delez: { drevesa: 0.067, trava: 0.422, pozidano: 0.484 },
+      barva: { drevesa: 0x353a2d, trava: 0x525344, pozidano: 0x66635c }, drevesa: ['smreka', 'bukev'] };
+  }
+
   /* ================= RED BULL RING (theme 'rbring') =================
      The Formula 1 circuit at Spielberg in Styria (4.3 km), in its real layout and heights. The terrain tiles, the land cover forest and the
      road ribbons are the Nordschleife's corridor builder (nrPrep and the nr* helpers read def.dem and def.lc); the scenery is its own: pale
@@ -1388,6 +1398,12 @@
         }
       }
     }
+    // Realizem G: the measured hue (js/world-rastje.js) on the leaves (the unit trees' green vertices, the trunks keep theirs) and on the ground's
+    // material, asked while the ground's colours are still the game's own; World.rastje.aktivna leaves every other track as it was
+    const rbLt = World.rastje ? World.rastje.listje(def, tk.concat(tf)) : null;
+    const rbRt = World.rastje ? World.rastje.tla(def, { lc: nrLC, dist: nrDist, gcol: nrGCol, avg: gMat.map.avgCol, x0: G.x0, z0: G.z0, x1: G.x0 + G.ntx * NRC * NRT, z1: G.z0 + G.ntz * NRC * NRT }) : null;
+    if (rbRt) gMat.color.setRGB(rbRt[0], rbRt[1], rbRt[2]);
+    if (rbRt || rbLt) out.rastje = { moc: World.rastje.MOC, tla: rbRt, drevesa: rbLt };
     for (const t of tk) t.addTo(root, true);
     if (fl) fl.addTo(root, false);   // (no shadows of their own: a few draws less)
     for (const t of tf) t.addTo(root, false);
