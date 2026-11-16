@@ -39,6 +39,9 @@ SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OS
 # the game's ground beside the road is not the map's and World.cesta.stranske cannot draw the road (its edges never cross the barrier's
 # line): the data say only what is drawn
 PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'}),
+         # Spa: the service road at the corner after the long straight (2519 m, left) meets the circuit behind an asphalt run-off wider
+         # than the 22 m a strip may run inside the barrier's line
+         'spa': dict(kinds={'raceway'}, izpusti=[(2519, -1)]),
          # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3962 m, left) and a 22 m stub that curls back
          # beside the finish's wide verge (4914 m, right)
          'rastro': dict(izpusti=[(3962, -1), (4914, 1)]),

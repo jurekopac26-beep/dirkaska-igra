@@ -15,6 +15,8 @@
 // (World.cesta.stranske: a strip through an opening in the wall at each mouth), OpenStreetMap's lamps and stops, the track's model untouched.
 // Package E1 (docs/realizem/paket-e.md): the same roads for the look on a circuit (Nürburg: the edge line runs on across the mouths) and on
 // an open public road (Rio do Rastro: the edge line open at the mouths, the street lamps' poles at the finish on the plateau).
+// Package E2: Spa's access roads (every road of the track's data drawn; where one crosses a gravel trap the trap lies over its strip up to the
+// opening in the barrier; no grass clump of the verge stands on a strip).
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('the road\'s look');
@@ -256,6 +258,41 @@ try {
   T.check('Nürburg: OpenStreetMap\'s access roads for the look (a strip through an opening in the rail at each mouth, the mouths 3 to 40 m wide, a row of orange posts across each, none within 2 m of the asphalt; the circuit\'s edge line runs on across every mouth); the track\'s model as a track built alone has it',
     nq.n >= nq.osm * 0.8 && nq.n <= nq.osm && nq.mouths === nq.n && nq.wMin >= 3 && nq.wMax <= 40 && nq.strips >= 1 && nq.stripV > nq.n * 20 && nq.stripV <= 4000 && nq.far === 0 && nq.open === 0 &&
     nq.posts >= nq.n * 2 && nq.posts <= nq.n * 27 && nq.rows === nq.n && nq.road >= 2 && nq.stat[0] === nq.n && nq.stat[1] === nq.posts && nq.model, JSON.stringify(nq));
+
+  // a circuit with run-offs (package E2, Spa): every road of the track's data is drawn (the export leaves out what the builder cannot draw);
+  // the run-offs lie flat at the road's height, so where an access road crosses a gravel trap the trap is lifted a little and lies over
+  // the strip (the gravel stays gravel, as the cars feel it; the road shows from the opening in the barrier on); the verge's grass clumps
+  // keep off the strips (the shared verge() reads the builder's cestaKrogi)
+  // (spaQ: grav, the strips' triangles whose middle lies on the model's gravel, 3.5 m and more from the asphalt and 1.5 m and more inside the
+  // barrier; bare, those of them with nothing but the strip under a ray from above; tufts, the verge's clumps standing on a strip's triangle)
+  const spaQ = () => page.evaluate(() => {
+    const W = Render.world, T = window.__game.race.track, q = {}, tri = [], oth = [], tf = []; W.root.updateMatrixWorld(true);
+    W.root.traverse(o => { if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return; const e = o.matrixWorld.elements;
+      if (o.isInstancedMesh) { if (o.parent && o.parent.name === 'verge') { const a = o.instanceMatrix.array; for (let k = 0; k < o.count; k++) { const x = a[k * 16 + 12], y = a[k * 16 + 13], z = a[k * 16 + 14]; tf.push(e[0] * x + e[4] * y + e[8] * z + e[12], e[2] * x + e[6] * y + e[10] * z + e[14]); } } return; }
+      if (!o.userData.stranska) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); oth.push([o, o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld)]); return; }
+      const p = o.geometry.attributes.position, ix = o.geometry.index, n = ix ? ix.count : p.count;
+      for (let k = 0; k < n; k += 3) { const t = []; for (let j = 0; j < 3; j++) { const v = ix ? ix.getX(k + j) : k + j; t.push(p.getX(v), p.getY(v), p.getZ(v)); } tri.push(t); } });
+    const rc = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), org = new THREE.Vector3(); let grav = 0, bare = 0, tufts = 0;
+    for (const t of tri) { const x = (t[0] + t[3] + t[6]) / 3, y = (t[1] + t[4] + t[7]) / 3, z = (t[2] + t[5] + t[8]) / 3; let m = 1e18, i = 0;
+      for (let k = 0; k < T.N; k++) { const d = (x - T.px[k]) ** 2 + (z - T.pz[k]) ** 2; if (d < m) { m = d; i = k; } }
+      const lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i], d = Math.abs(lat), bar = lat > 0 ? T.br[i] : T.bl[i];
+      if (d < T.wAt(i) + 3.5 || d > bar - 1.5 || T.surface(T.query(x, z, i, q)) !== 3) continue;
+      grav++; org.set(x, y + 2, z); rc.set(org, down); rc.far = 4;
+      const c = oth.filter(u => u[1].min.x <= x && x <= u[1].max.x && u[1].min.z <= z && z <= u[1].max.z && u[1].max.y >= y).map(u => u[0]);
+      if (!rc.intersectObjects(c, false).some(h => h.point.y > y + 0.01)) bare++; }
+    for (let k = 0; k < tf.length; k += 2) { const x = tf[k], z = tf[k + 1];
+      for (const t of tri) { const d = (t[5] - t[8]) * (t[0] - t[6]) + (t[6] - t[3]) * (t[2] - t[8]); if (Math.abs(d) < 1e-9) continue;
+        const u = ((t[5] - t[8]) * (x - t[6]) + (t[6] - t[3]) * (z - t[8])) / d, v = ((t[8] - t[2]) * (x - t[6]) + (t[0] - t[6]) * (z - t[8])) / d;
+        if (u >= 0 && v >= 0 && u + v <= 1) { tufts++; break; } } }
+    return { tris: tri.length, grav, bare, clumps: tf.length / 2, tufts, krogi: (W.cestaKrogi || []).length };
+  });
+  await startTrack(page, 'spa');
+  const sq = await sideQ('spa'), sx = await spaQ();
+  T.check('Spa: OpenStreetMap\'s access roads for the look (every road of the track\'s data drawn: a strip through an opening in the barrier at each mouth, the mouths 3 to 40 m wide, a row of orange posts across each, none within 2 m of the asphalt; the circuit\'s edge line runs on across every mouth); the track\'s model as a track built alone has it',
+    sq.n >= 1 && sq.n === sq.osm && sq.mouths === sq.n && sq.wMin >= 3 && sq.wMax <= 40 && sq.strips >= 1 && sq.stripV > sq.n * 20 && sq.stripV <= 4000 && sq.far === 0 && sq.open === 0 &&
+    sq.posts >= sq.n * 2 && sq.posts <= sq.n * 27 && sq.rows === sq.n && sq.road >= 2 && sq.stat[0] === sq.n && sq.stat[1] === sq.posts && sq.model, JSON.stringify(sq));
+  T.check('Spa: where an access road crosses a gravel trap the trap lies over its strip; no grass clump of the verge stands on a strip',
+    sx.grav >= 10 && sx.bare === 0 && sx.clumps > 200 && sx.tufts === 0 && sx.krogi >= sq.n, JSON.stringify(sx));
 
   // an open public road's junctions (package E1, Rio do Rastro): every road of the track's data is drawn (the export leaves out what the
   // builder cannot draw), the guardrail open at each mouth with a row of posts, the white edge line broken off there (a public road's

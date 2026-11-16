@@ -250,7 +250,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *rio* | *Rio de Janeiro, Brazilija (test)* | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | *riverside* | *Riverside, ZDA (test)* | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | *sani* | *Sani Pass, Južna Afrika (test)* | sani | `js/world-sani.js` (`buildSani`) |
-| spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
+| spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`; dovozne ceste samo za videz iz `def.stranske`, `tools/cesta/izvoz.py`, `docs/realizem/paket-e.md`, »E2«; `out.cestaKrogi` bere `verge()` v `js/world.js`: brez šopov trave na traku) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`; postaja iz OSM v `def.postaje`, `docs/realizem/paket-e.md`, »E1«) |
 | *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
