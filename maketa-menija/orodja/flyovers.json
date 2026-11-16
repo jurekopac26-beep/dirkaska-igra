@@ -40,12 +40,7 @@
  [
   "pikes",
   {
-   "speed": 280,
-   "back": 360,
-   "up": 230,
-   "ahead": 180,
-   "fogNear": 650,
-   "fogFar": 2600,
+   "kbps": 450,
    "places": [
     {
      "n": "Halfway Picnic Grounds",
@@ -180,13 +175,7 @@
  [
   "rbring",
   {
-   "kbps": 850,
-   "speed": 200,
-   "back": 260,
-   "up": 165,
-   "ahead": 130,
-   "fogNear": 560,
-   "fogFar": 2200,
+   "kbps": 450,
    "places": []
   }
  ],
@@ -206,13 +195,7 @@
  [
   "spa",
   {
-   "kbps": 900,
-   "speed": 250,
-   "back": 320,
-   "up": 205,
-   "ahead": 160,
-   "fogNear": 700,
-   "fogFar": 2700,
+   "kbps": 450,
    "places": [
     {
      "n": "Steep Climb",
@@ -232,13 +215,7 @@
  [
   "nring",
   {
-   "kbps": 900,
-   "speed": 540,
-   "back": 700,
-   "up": 450,
-   "ahead": 350,
-   "fogNear": 1200,
-   "fogFar": 4600,
+   "kbps": 450,
    "places": [
     {
      "n": "Flugplatz",
@@ -263,12 +240,6 @@
   "medvode",
   {
    "kbps": 450,
-   "speed": 225,
-   "back": 292,
-   "up": 184,
-   "ahead": 146,
-   "fogNear": 630,
-   "fogFar": 2430,
    "places": [
     {
      "n": "Zbilje",
@@ -542,12 +513,6 @@
   "chapman",
   {
    "kbps": 450,
-   "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "East Fort",
@@ -628,12 +593,6 @@
   "montreal",
   {
    "kbps": 450,
-   "speed": 156,
-   "back": 203,
-   "up": 128,
-   "ahead": 101,
-   "fogNear": 437,
-   "fogFar": 1685,
    "places": [
     {
      "n": "Turn 1",
@@ -970,12 +929,6 @@
   "harju",
   {
    "kbps": 450,
-   "speed": 88,
-   "back": 114,
-   "up": 72,
-   "ahead": 57,
-   "fogNear": 246,
-   "fogFar": 950,
    "places": [
     {
      "n": "Harjun nousu",
@@ -1004,12 +957,7 @@
   "caracoles",
   {
    "kbps": 450,
-   "speed": 385,
-   "back": 500,
-   "up": 316,
-   "ahead": 250,
-   "fogNear": 1078,
-   "fogFar": 4158,
+   "start": 4,
    "places": [
     {
      "n": "Curva 1 · 2,271 m",
@@ -1038,12 +986,6 @@
   "rastro",
   {
    "kbps": 450,
-   "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "Hairpin 8 · 1,209 m",
@@ -1068,12 +1010,6 @@
   "katu",
   {
    "kbps": 450,
-   "speed": 166,
-   "back": 216,
-   "up": 136,
-   "ahead": 108,
-   "fogNear": 465,
-   "fogFar": 1793,
    "places": [
     {
      "n": "Katu-Yaryk Pass · 1,206 m",
@@ -1098,12 +1034,6 @@
   "tianmen",
   {
    "kbps": 450,
-   "speed": 172,
-   "back": 224,
-   "up": 141,
-   "ahead": 112,
-   "fogNear": 482,
-   "fogFar": 1858,
    "places": [
     {
      "n": "Bend 66 · 839 m",
@@ -1150,6 +1080,966 @@
     {
      "n": "Laem Thaen",
      "d": 2548
+    }
+   ]
+  }
+ ],
+ [
+  "balea",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1 · 1,782 m",
+     "d": 195
+    },
+    {
+     "n": "Bâlea Valley",
+     "d": 1150
+    },
+    {
+     "n": "Hairpin 5 · 1,947 m",
+     "d": 2726
+    }
+   ],
+   "alt": [
+    1768,
+    2034
+   ]
+  }
+ ],
+ [
+  "bathurst",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turn 2",
+     "d": 1360
+    },
+    {
+     "n": "Turn 8",
+     "d": 3176
+    },
+    {
+     "n": "Turn 16",
+     "d": 5376
+    }
+   ]
+  }
+ ],
+ [
+  "livorno",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Montenero",
+     "d": 3196
+    },
+    {
+     "n": "Castellaccio",
+     "d": 7456
+    },
+    {
+     "n": "Romito",
+     "d": 11595
+    },
+    {
+     "n": "Calafuria",
+     "d": 13931
+    },
+    {
+     "n": "Antignano",
+     "d": 16847
+    }
+   ]
+  }
+ ],
+ [
+  "atimpoku",
+  {
+   "alt": [
+    32,
+    23
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Atimpoku",
+     "d": 1973
+    },
+    {
+     "n": "Adomi Bridge",
+     "d": 2432
+    },
+    {
+     "n": "East Bank",
+     "d": 2841
+    }
+   ]
+  }
+ ],
+ [
+  "isalo",
+  {
+   "alt": [
+    852,
+    819
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Isalo Plateau",
+     "d": 60
+    },
+    {
+     "n": "Under the Rocks",
+     "d": 700
+    },
+    {
+     "n": "Queen of Isalo",
+     "d": 1850
+    }
+   ]
+  }
+ ],
+ [
+  "hiva",
+  {
+   "alt": [
+    96,
+    96
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "West Gate",
+     "d": 170
+    },
+    {
+     "n": "North Gate",
+     "d": 760
+    },
+    {
+     "n": "East Gate",
+     "d": 1969
+    },
+    {
+     "n": "South Gate",
+     "d": 2399
+    }
+   ]
+  }
+ ],
+ [
+  "portobelo",
+  {
+   "alt": [
+    4,
+    9
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Coast Road",
+     "d": 650
+    },
+    {
+     "n": "Fortress",
+     "d": 1600
+    },
+    {
+     "n": "The East Shore",
+     "d": 2250
+    }
+   ]
+  }
+ ],
+ [
+  "eljem",
+  {
+   "alt": [
+    110,
+    106
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Amphitheatre",
+     "d": 470
+    },
+    {
+     "n": "Through the Town",
+     "d": 900
+    },
+    {
+     "n": "North Way Out",
+     "d": 1300
+    }
+   ]
+  }
+ ],
+ [
+  "isuna",
+  {
+   "alt": [
+    2135,
+    2167
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Valley",
+     "d": 800
+    },
+    {
+     "n": "Chain Bridge",
+     "d": 1560
+    },
+    {
+     "n": "Towards Paro",
+     "d": 2500
+    }
+   ]
+  }
+ ],
+ [
+  "mogyorod",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Right Hairpin",
+     "d": 610
+    },
+    {
+     "n": "Spring Corner",
+     "d": 1310
+    },
+    {
+     "n": "Blind Left",
+     "d": 1780
+    },
+    {
+     "n": "Chicane",
+     "d": 2370
+    },
+    {
+     "n": "Danube Corner",
+     "d": 2920
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 3770
+    },
+    {
+     "n": "Last Corner",
+     "d": 4040
+    }
+   ],
+   "alt": [
+    236,
+    236
+   ]
+  }
+ ],
+ [
+  "sindia",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left over the Top",
+     "d": 440
+    },
+    {
+     "n": "Fast Esses",
+     "d": 950
+    },
+    {
+     "n": "Baobab Corner",
+     "d": 2320
+    },
+    {
+     "n": "Triple Bend",
+     "d": 2819
+    },
+    {
+     "n": "Right at the Bottom",
+     "d": 3959
+    }
+   ],
+   "alt": [
+    39,
+    39
+   ]
+  }
+ ],
+ [
+  "yahuarcocha",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Long Right",
+     "d": 880
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 2120
+    },
+    {
+     "n": "Lakeside Straight",
+     "d": 2899
+    },
+    {
+     "n": "Lakeside Esses",
+     "d": 3199
+    }
+   ],
+   "alt": [
+    2204,
+    2204
+   ]
+  }
+ ],
+ [
+  "houli",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "First Right",
+     "d": 420
+    },
+    {
+     "n": "South-west Hairpin",
+     "d": 940
+    },
+    {
+     "n": "North Esses",
+     "d": 1540
+    },
+    {
+     "n": "Hotel Chicane",
+     "d": 2030
+    },
+    {
+     "n": "East Hairpin",
+     "d": 2450
+    },
+    {
+     "n": "Infield Esses",
+     "d": 3220
+    }
+   ],
+   "alt": [
+    236,
+    236
+   ]
+  }
+ ],
+ [
+  "parnu",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left Hairpin",
+     "d": 390
+    },
+    {
+     "n": "South Loop",
+     "d": 1180
+    },
+    {
+     "n": "The Twists",
+     "d": 1760
+    },
+    {
+     "n": "North Hairpin",
+     "d": 2160
+    },
+    {
+     "n": "Right-hand Loop",
+     "d": 2769
+    },
+    {
+     "n": "Last Corner",
+     "d": 2989
+    }
+   ],
+   "alt": [
+    4,
+    4
+   ]
+  }
+ ],
+ [
+  "ujarras",
+  {
+   "kbps": 450,
+   "alt": [
+    1216,
+    1259
+   ]
+  }
+ ],
+ [
+  "luanda",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Praia do Bispo Bay",
+     "d": 60
+    },
+    {
+     "n": "Under the Hill",
+     "d": 1000
+    },
+    {
+     "n": "Round the Hill",
+     "d": 1545
+    },
+    {
+     "n": "Fortress",
+     "d": 1977
+    },
+    {
+     "n": "Along the Bay",
+     "d": 2300
+    },
+    {
+     "n": "Marginal",
+     "d": 2900
+    }
+   ],
+   "alt": [
+    1,
+    4
+   ]
+  }
+ ],
+ [
+  "ghoufi",
+  {
+   "kbps": 450,
+   "alt": [
+    724,
+    735
+   ]
+  }
+ ],
+ [
+  "cusco",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Sacsayhuamán",
+     "d": 270
+    },
+    {
+     "n": "Hairpin 1 · 3,572 m",
+     "d": 540
+    },
+    {
+     "n": "Hairpin 2 · 3,577 m",
+     "d": 674
+    }
+   ],
+   "alt": [
+    3519,
+    3592
+   ]
+  }
+ ],
+ [
+  "mombasa",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Town Centre",
+     "d": 40
+    },
+    {
+     "n": "Roundabout",
+     "d": 265
+    },
+    {
+     "n": "Old Town",
+     "d": 520
+    },
+    {
+     "n": "Fortress",
+     "d": 1130
+    },
+    {
+     "n": "Shore Road",
+     "d": 1340
+    },
+    {
+     "n": "Likoni Channel",
+     "d": 2300
+    }
+   ],
+   "alt": [
+    25,
+    5
+   ]
+  }
+ ],
+ [
+  "livingstone",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "South of Town",
+     "d": 60
+    },
+    {
+     "n": "Dry Woodland",
+     "d": 1105
+    },
+    {
+     "n": "Border Post",
+     "d": 2290
+    },
+    {
+     "n": "Above the Gorge",
+     "d": 2480
+    },
+    {
+     "n": "Old Bridge",
+     "d": 2904
+    },
+    {
+     "n": "Far Bank",
+     "d": 3126
+    },
+    {
+     "n": "Last Kilometre",
+     "d": 3475
+    }
+   ],
+   "alt": [
+    893,
+    900
+   ]
+  }
+ ],
+ [
+  "hinboun",
+  {
+   "kbps": 450,
+   "start": 4,
+   "places": [
+    {
+     "n": "The Foot",
+     "d": 60
+    },
+    {
+     "n": "The Karst Climb",
+     "d": 700
+    },
+    {
+     "n": "The Pass",
+     "d": 1860
+    },
+    {
+     "n": "The Stone Forest",
+     "d": 1930
+    },
+    {
+     "n": "The Descent",
+     "d": 3200
+    },
+    {
+     "n": "The Valley",
+     "d": 4300
+    }
+   ],
+   "alt": [
+    365,
+    298
+   ]
+  }
+ ],
+ [
+  "kaligandaki",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Kali Gandaki",
+     "d": 700
+    },
+    {
+     "n": "Rupse Falls",
+     "d": 2050
+    },
+    {
+     "n": "Hairpin 1 · 1,620 m",
+     "d": 2489
+    },
+    {
+     "n": "Hairpin 2 · 1,629 m",
+     "d": 2609
+    },
+    {
+     "n": "Kopchepani · 1,672 m",
+     "d": 3044
+    }
+   ],
+   "alt": [
+    1443,
+    1672
+   ]
+  }
+ ],
+ [
+  "musandam",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hanna · 1 m",
+     "d": 1059
+    },
+    {
+     "n": "The Cliffs · 80 m",
+     "d": 1755
+    },
+    {
+     "n": "Above the Bay · 103 m",
+     "d": 2385
+    },
+    {
+     "n": "Hamlet · 156 m",
+     "d": 2990
+    },
+    {
+     "n": "Top of the Climb · 194 m",
+     "d": 3500
+    }
+   ],
+   "alt": [
+    9,
+    188
+   ]
+  }
+ ],
+ [
+  "limalimo",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Under the Simien Escarpment",
+     "d": 900
+    },
+    {
+     "n": "Hairpin 1 · 1,849 m",
+     "d": 2600
+    },
+    {
+     "n": "Hairpin 2 · 1,852 m",
+     "d": 2641
+    },
+    {
+     "n": "Hairpin 3 · 1,901 m",
+     "d": 3227
+    },
+    {
+     "n": "Limalimo · 1,972 m",
+     "d": 4020
+    }
+   ],
+   "alt": [
+    1684,
+    1972
+   ]
+  }
+ ],
+ [
+  "darvaz",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Pshikharv Bridge",
+     "d": 1270
+    },
+    {
+     "n": "Wall above the Panj",
+     "d": 2300
+    },
+    {
+     "n": "Darvaz Gorge",
+     "d": 3500
+    }
+   ],
+   "alt": [
+    1504,
+    1507
+   ]
+  }
+ ],
+ [
+  "quezaltepeque",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Two Rights",
+     "d": 620
+    },
+    {
+     "n": "Long Left by the Grandstand",
+     "d": 1040
+    },
+    {
+     "n": "Tight Right",
+     "d": 1390
+    },
+    {
+     "n": "Long Hairpin",
+     "d": 1800
+    },
+    {
+     "n": "Last Hairpin",
+     "d": 2846
+    }
+   ]
+  }
+ ],
+ [
+  "koli",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 1726
+    }
+   ],
+   "alt": [
+    158,
+    308
+   ]
+  }
+ ],
+ [
+  "kanaba",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Dip",
+     "d": 880
+    },
+    {
+     "n": "Kanaba Gap · 2,343 m",
+     "d": 2350
+    },
+    {
+     "n": "Virunga Viewpoint",
+     "d": 2600
+    },
+    {
+     "n": "Hairpin 1",
+     "d": 4350
+    }
+   ],
+   "alt": [
+    2300,
+    2176
+   ]
+  }
+ ],
+ [
+  "canaries",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Anse La Verdue",
+     "d": 575
+    },
+    {
+     "n": "Ridge · 177 m",
+     "d": 1780
+    },
+    {
+     "n": "Valley · 82 m",
+     "d": 4040
+    },
+    {
+     "n": "Hairpin",
+     "d": 4200
+    }
+   ],
+   "alt": [
+    49,
+    174
+   ]
+  }
+ ],
+ [
+  "savusavu",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Airfield Plateau",
+     "d": 300
+    },
+    {
+     "n": "Ridge · 78 m",
+     "d": 1615
+    },
+    {
+     "n": "Above Savusavu Bay",
+     "d": 2150
+    },
+    {
+     "n": "Savusavu",
+     "d": 2480
+    }
+   ],
+   "alt": [
+    9,
+    14
+   ]
+  }
+ ],
+ [
+  "koror",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Channel Bridge",
+     "d": 300
+    },
+    {
+     "n": "Lagoon Causeways",
+     "d": 1000
+    },
+    {
+     "n": "Wooded Hill",
+     "d": 2300
+    },
+    {
+     "n": "Koror",
+     "d": 3200
+    }
+   ],
+   "alt": [
+    6,
+    55
+   ]
+  }
+ ],
+ [
+  "vinales",
+  {
+   "kbps": 450,
+   "places": [],
+   "alt": [
+    138,
+    122
+   ]
+  }
+ ],
+ [
+  "tocancipa",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "West Loop",
+     "d": 560
+    },
+    {
+     "n": "Middle Esses",
+     "d": 806
+    },
+    {
+     "n": "East Loop",
+     "d": 1610
+    },
+    {
+     "n": "South Hairpin",
+     "d": 2170
+    }
+   ]
+  }
+ ],
+ [
+  "cromwell",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Under the Bridge",
+     "d": 1300
+    },
+    {
+     "n": "West Hairpin",
+     "d": 2140
+    },
+    {
+     "n": "The Bridge",
+     "d": 3062
+    }
+   ]
+  }
+ ],
+ [
+  "serres",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Double Left",
+     "d": 860
+    },
+    {
+     "n": "Esses",
+     "d": 1320
+    },
+    {
+     "n": "South-west Hairpin",
+     "d": 2066
+    },
+    {
+     "n": "Long Right",
+     "d": 2490
+    }
+   ]
+  }
+ ],
+ [
+  "aguascalientes",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turn Two",
+     "d": 450
+    },
+    {
+     "n": "Back Straight",
+     "d": 640
+    },
+    {
+     "n": "Turn Four",
+     "d": 999
     }
    ]
   }

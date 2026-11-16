@@ -18,7 +18,12 @@ DETAIL = {0: (38, 74, 116), 10: (44, 70, 34), 20: (92, 100, 56), 30: (108, 132, 
 SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1480.0, 1570.0), 'game': True},
           'monterey': {'dry': 1.0}, 'mulholland': {'dry': 1.0}, 'palomar': {'dry': 0.8}, 'riverside': {'dry': 1.0},
           'baldy': {'dry': 0.6}, 'bigsur': {'dry': 0.6},
-          'marrakesh': {'dry': 1.0}, 'longford': {'dry': 0.7}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
+          'marrakesh': {'dry': 1.0}, 'longford': {'dry': 0.7},
+          'ghoufi': {'dry': 1.0}, 'livingstone': {'dry': 0.8}, 'luanda': {'dry': 0.8}, 'cusco': {'dry': 0.5},
+          'musandam': {'dry': 1.0}, 'darvaz': {'dry': 0.8}, 'limalimo': {'dry': 0.5},
+          'sindia': {'dry': 1.0}, 'mogyorod': {'dry': 0.5},
+          'cromwell': {'dry': 1.0}, 'aguascalientes': {'dry': 0.8}, 'serres': {'dry': 0.5},
+          'koli': {'snow': (-400.0, -300.0)}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
 
 def box_km(lat, lon, km):
     M, N = radii(lat); d = km * 500

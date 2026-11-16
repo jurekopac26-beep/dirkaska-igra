@@ -32,6 +32,31 @@ GUESS = {
     'rastro': (-28.3930, -49.5390, 2500),      # below the hairpins (from the viewpoint at the top back along the road)
     'katu': (50.9100, 88.2200, 3000),          # the edge of the Ulagan plateau above the Chulyshman
     'tianmen': (29.0570, 110.4800, 2500),      # bend 54 (from the square below the cave back along the road)
+    # (the worlds whose origin is known: the start line of the track's own data, tools/proga/proge.json, the track's header, tools/livorno/livorno.json;
+    # the search only checks it: `moved` stays within the heights' own cells)
+    'balea': (45.6107785, 24.6144425, 150),
+    'bathurst': (-33.43930, 149.55846, 150),
+    'livorno': (43.51202, 10.3188882, 150),
+    'ujarras': (9.835612, -83.838903, 150),
+    'ghoufi': (35.054359, 6.165256, 150),
+    'cusco': (-13.510739, -71.982265, 150),
+    'luanda': (-8.8199022, 13.2168586, 150),
+    'mombasa': (-4.0618471, 39.6680345, 150),
+    'livingstone': (-17.9104589, 25.8624333, 150),
+    'hinboun': (18.1775048, 104.4735906, 150),
+    'haivan': (16.19243, 108.1255, 150),
+    'kaligandaki': (28.54254, 83.64845, 150),
+    'musandam': (26.22741, 56.22045, 150),
+    'limalimo': (13.2761495, 37.8783177, 150),
+    'darvaz': (38.372932, 71.174884, 150),
+    'batangas': (13.8201794, 121.2773059, 150),
+    'quezaltepeque': (13.8106821, -89.3307735, 150),
+    'koli': (63.101285, 29.784938, 150),
+    'kanaba': (-1.2573039, 29.8005022, 150),
+    'canaries': (13.9059485, -61.0656915, 150),
+    'savusavu': (-16.798366, 179.3391367, 150),
+    'koror': (7.3629003, 134.5061099, 150),
+    'vinales': (22.60949, -83.734136, 150),
 }
 SKIP = {'monaco': [(0.52, 0.65)]}   # parts of the lap whose road is not on the land (the tunnel)
 
