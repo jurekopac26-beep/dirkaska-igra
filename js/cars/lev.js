@@ -139,7 +139,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           [2.0, 0.62, 0.08, 0.49, 0.5, 0.535, 0.015, 'b', 0.07]],           // the bumper's face: the mouth (the end cap)
         eye: { x: -0.3, y: 1.14, style: 'closed' },
         door: [0.785, -0.495], bumpF: 0.41, bumpR: 0.115, bumpY: [0.58, 0.62],
-        crush: { x0: -1.77, x1: 0.5, z: 0.62 }, cage: true,                 // (the roof to the wing's trailing edge: the wing goes down whole with it)
+        crush: { x0: -0.7, x1: 0.15, z: 0.62 }, cage: true,                 // (the roof between the cage's main hoop and its front bars, where they leave it room: crash.test 11)
         decalX: -0.82, decalY: 1.425, decalRz: 0.05, decalS: 0.55,               // (the start number on the roof, behind the scoop)
         lamps: [[1.976, 0.665, 0.565], [-1.86, 0.8, 0.715]],                 // (the glow: the head lamps' projectors, not the fog lamps; the tail's lit lenses)
       },

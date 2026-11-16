@@ -127,7 +127,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: -0.32, y: 0.98, style: 'closed' },
         door: [0.95, -0.3], bumpF: 0.3, bumpR: 0.24, bumpY: [0.3, 0.46], cage: true,
         decalX: -0.02, decalY: 1.2, decalS: 0.5,                       // (the start number on the roof ahead of the duct)
-        crush: { x0: -0.7, x1: 0.42, z: 0.55 } },                       // (the roof and the windscreen's top)
+        crush: { x0: -0.1, x1: 0.42, z: 0.55 } },                       // (the roof's front, where its cage leaves it room, and the windscreen's top: a knock from behind sinks it, crash.test 10)
       hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
       budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
       wheels: { style: 'slick', w: 0.3, wR: 0.33, gap: 0.05, seg: 32, segHi: 64 },
