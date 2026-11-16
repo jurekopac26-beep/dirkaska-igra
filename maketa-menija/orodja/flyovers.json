@@ -1155,5 +1155,93 @@
     }
    ]
   }
+ ],
+ [
+  "tocancipa",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "West Loop",
+     "d": 560
+    },
+    {
+     "n": "Middle Esses",
+     "d": 806
+    },
+    {
+     "n": "East Loop",
+     "d": 1610
+    },
+    {
+     "n": "South Hairpin",
+     "d": 2170
+    }
+   ]
+  }
+ ],
+ [
+  "cromwell",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Under the Bridge",
+     "d": 1300
+    },
+    {
+     "n": "West Hairpin",
+     "d": 2140
+    },
+    {
+     "n": "The Bridge",
+     "d": 3062
+    }
+   ]
+  }
+ ],
+ [
+  "serres",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Double Left",
+     "d": 860
+    },
+    {
+     "n": "Esses",
+     "d": 1320
+    },
+    {
+     "n": "South-west Hairpin",
+     "d": 2066
+    },
+    {
+     "n": "Long Right",
+     "d": 2490
+    }
+   ]
+  }
+ ],
+ [
+  "aguascalientes",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turn Two",
+     "d": 450
+    },
+    {
+     "n": "Back Straight",
+     "d": 640
+    },
+    {
+     "n": "Turn Four",
+     "d": 999
+    }
+   ]
+  }
  ]
 ]

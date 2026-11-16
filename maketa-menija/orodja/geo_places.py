@@ -70,6 +70,11 @@ CFG = {
     'darvaz': dict(kind='real', start='Darvaz', finish='Panj Gorge', country='Tajikistan', region='Gorno-Badakhshan', l1='pamir'),
     'batangas': dict(kind='real', start='Rosario', country='Philippines', region='Batangas', l1='luzon'),
     'quezaltepeque': dict(kind='real', start='Quezaltepeque', country='El Salvador', region='La Libertad', l1='salvador'),
+    # (circuits from open pull requests, placed by their track data's own frame: the game's line fitted onto the data's OSM line)
+    'tocancipa': dict(kind='real', start='Tocancipá', country='Colombia', region='Cundinamarca', l1='bogota'),
+    'cromwell': dict(kind='real', start='Cromwell', country='New Zealand', region='Otago', l1='otago'),
+    'serres': dict(kind='real', start='Serres', country='Greece', region='Central Macedonia', l1='macedonia'),
+    'aguascalientes': dict(kind='real', start='Aguascalientes', country='Mexico', region='Aguascalientes', l1='bajio'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -82,7 +87,8 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'costarica': (9.8, -83.9, 600), 'aures': (35.1, 6.2, 700), 'cusco': (-13.5, -72.0, 700), 'angola': (-8.9, 13.3, 700),
       'kenyacoast': (-4.0, 39.7, 600), 'zambezi': (-17.9, 25.9, 700), 'khammouane': (18.0, 104.6, 700),
       'vietnam': (16.2, 108.0, 700), 'himalaya': (28.6, 83.7, 800), 'hormuz': (26.1, 56.3, 700), 'ethiopia': (13.2, 38.0, 800), 'pamir': (38.4, 71.3, 800),
-      'luzon': (14.0, 121.2, 700), 'salvador': (13.8, -89.3, 700)}
+      'luzon': (14.0, 121.2, 700), 'salvador': (13.8, -89.3, 700),
+      'bogota': (4.9, -74.0, 700), 'otago': (-45.0, 169.2, 600), 'macedonia': (41.1, 23.5, 700), 'bajio': (21.9, -102.3, 700)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
