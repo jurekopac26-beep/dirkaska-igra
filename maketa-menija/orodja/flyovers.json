@@ -1157,6 +1157,154 @@
   }
  ],
  [
+  "atimpoku",
+  {
+   "alt": [
+    32,
+    23
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Atimpoku",
+     "d": 1973
+    },
+    {
+     "n": "Adomi Bridge",
+     "d": 2432
+    },
+    {
+     "n": "East Bank",
+     "d": 2841
+    }
+   ]
+  }
+ ],
+ [
+  "isalo",
+  {
+   "alt": [
+    852,
+    819
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Isalo Plateau",
+     "d": 60
+    },
+    {
+     "n": "Under the Rocks",
+     "d": 700
+    },
+    {
+     "n": "Queen of Isalo",
+     "d": 1850
+    }
+   ]
+  }
+ ],
+ [
+  "hiva",
+  {
+   "alt": [
+    96,
+    96
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "West Gate",
+     "d": 170
+    },
+    {
+     "n": "North Gate",
+     "d": 760
+    },
+    {
+     "n": "East Gate",
+     "d": 1969
+    },
+    {
+     "n": "South Gate",
+     "d": 2399
+    }
+   ]
+  }
+ ],
+ [
+  "portobelo",
+  {
+   "alt": [
+    4,
+    9
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Coast Road",
+     "d": 650
+    },
+    {
+     "n": "Fortress",
+     "d": 1600
+    },
+    {
+     "n": "The East Shore",
+     "d": 2250
+    }
+   ]
+  }
+ ],
+ [
+  "eljem",
+  {
+   "alt": [
+    110,
+    106
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Amphitheatre",
+     "d": 470
+    },
+    {
+     "n": "Through the Town",
+     "d": 900
+    },
+    {
+     "n": "North Way Out",
+     "d": 1300
+    }
+   ]
+  }
+ ],
+ [
+  "isuna",
+  {
+   "alt": [
+    2135,
+    2167
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Valley",
+     "d": 800
+    },
+    {
+     "n": "Chain Bridge",
+     "d": 1560
+    },
+    {
+     "n": "Towards Paro",
+     "d": 2500
+    }
+   ]
+  }
+ ],
+ [
   "mogyorod",
   {
    "kbps": 450,

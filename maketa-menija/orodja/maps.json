@@ -467,6 +467,61 @@
   }
  ],
  [
+  "atimpoku",
+  "top",
+  "top-atimpoku",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "isalo",
+  "top",
+  "top-isalo",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "portobelo",
+  "top",
+  "top-portobelo",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "eljem",
+  "top",
+  "top-eljem",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "isuna",
+  "top",
+  "top-isuna",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
   "mogyorod",
   "top",
   "top-mogyorod",
