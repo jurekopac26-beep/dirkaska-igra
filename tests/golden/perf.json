@@ -586,5 +586,12 @@
   "kverts": 212,
   "maxKverts": 293,
   "jsMs": 1.28
+ },
+ "ujarras": {
+  "calls": 123,
+  "maxCalls": 191,
+  "kverts": 218,
+  "maxKverts": 259,
+  "jsMs": 1.05
  }
 }

@@ -307,6 +307,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | seoul | Seul, Južna Koreja | seoul | `js/world-seoul.js` (`buildSeoul`; podatki `js/data/seoul.js` iz `tools/seoul/build.py world`, proga iz `build.py track`) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
+| ujarras | Ujarrás, Kostarika | ujarras | `js/world-ujarras.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
 | *townsville* | *Townsville, Avstralija (test)* | townsville | `js/world-townsville.js` |

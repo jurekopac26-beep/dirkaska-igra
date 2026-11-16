@@ -33,7 +33,7 @@ try {
   for (const id of ids) {
     await startTrack(page, id);
     await frames(3);
-    const L = await look(), pk = id === 'pikes' || id === 'pikesg', why = [];
+    const L = await look(), len = await page.evaluate(() => window.__game.race.track.len), pk = id === 'pikes' || id === 'pikesg', why = [];
     const bodies = Object.keys(L.cars.body), paints = Object.keys(L.cars.paint);
     if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg') && k !== 'dirtyCarCgS')) why.push('bodies ' + JSON.stringify(L.cars.body));   // (dirtyCarCgS: a KOLIBRI's, its side scrapes)
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
@@ -41,7 +41,7 @@ try {
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
     if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
     const worn = !NO_WEAR.includes(id);
-    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < 500 || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));
+    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < (len < 2000 ? 150 : 500) || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));   // (a short road: fewer patches)
     if (why.length) bad.push(id + ': ' + why.join('; '));
     console.log(`  ${id.padEnd(11)} cars ${JSON.stringify(L.cars.body)} water ${L.water.length} bands ${L.bands.map(b => b[2]).join('+') || 0} wear ${L.wear.meshes}/${L.wear.verts}`);
   }

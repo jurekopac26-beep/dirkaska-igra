@@ -149,6 +149,7 @@ Mestne proge po središču velikih mest ostanejo generične (`CLAUDE.md`). Stavb
 | Italija | Livorno | ne: izjeme za panoramo ni; zakonik o kulturni dediščini (čl. 107–108) za prodajno rabo podob javne kulturne dediščine zahteva dovoljenje in plačilo | cerkve, gradova ob obali in obalni stolp generično (tloris in višina, ne prepoznavna kopija) |
 | Južna Afrika | Chapman's Peak | ne: izjeme za panoramo ni; ali je dopolnitev zakona že v veljavi, ni preverjeno | cestninska postaja generična |
 | Maroko | Marrakesh, Dadès (na odločanju) | ne: za prodajo izjeme ni | generično, če se proga vrne |
+| Kostarika | Ujarrás | ni preverjeno | razgledišče generično (terasa, balustrada, nadstrešek, kiosk), na legi iz OpenStreetMap; brez napisov in podob |
 | Slovenija | Medvode | ni preverjeno: čl. 55 ZASP; drugotni viri pravijo, da samo nekomercialno; zakon o varstvu kulturne dediščine lahko doda omejitve | generično |
 | Nemčija | Nürburg | ni preverjeno: §59 UrhG, pogled z javnega mesta, samo zunanjost, na sliki ali filmu; prostorska kopija ni zajeta | zunanjost poenostavljena ali generična, brez napisov |
 | Romunija | Bâlea | ni preverjeno: dovoljeno, če delo ni glavni motiv; za prodajo ni potrjeno | koče in žičnica v ozadju, ledeni hotel generičen |

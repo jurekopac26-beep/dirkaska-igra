@@ -2209,5 +2209,25 @@
    "life:MeshLambertMaterial": "98d13852",
    "lifeShadow:MeshBasicMaterial": "cb5bcbdc"
   }
+ },
+ "ujarras": {
+  "meshes": 182,
+  "verts": 124297,
+  "instances": 2953,
+  "props": 36,
+  "crowd": 151,
+  "world": "71b99803",
+  "propsHash": "d16e5841",
+  "floor": "d0779776/2212",
+  "groups": {
+   "-:MeshLambertMaterial": "6dd586ba",
+   "-:MeshPhongMaterial": "92600b3f",
+   "-:MeshBasicMaterial": "2ebecc8c",
+   "crowd:MeshLambertMaterial": "b295c1d7",
+   "flags:MeshLambertMaterial": "70e85fef",
+   "ao:MeshBasicMaterial": "d5d8626c",
+   "tyremarks:MeshBasicMaterial": "cb35e157",
+   "roadwear:MeshLambertMaterial": "8356ae71"
+  }
  }
 }

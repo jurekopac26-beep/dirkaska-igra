@@ -24,7 +24,7 @@ const PLACES = { bathurst: [-33.4393, 149.55846], luanda: [-8.81885, 13.21693], 
 const SUBUNITS = { England: ['England'], Wales: ['Wales'], Ireland: ['Ireland'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Denmark: ['Denmark'], Sweden: ['Sweden'], Czechia: ['Czechia'], Spain: ['Spain', 'Balearic Islands'], Montenegro: ['Montenegro'], Latvia: ['Latvia'], Netherlands: ['Netherlands'], Switzerland: ['Switzerland'], 'Cape Verde': ['Cabo Verde'], Georgia: ['Georgia'], Tanzania: ['Tanzania', 'Zanzibar'], Kazakhstan: ['Kazakhstan'], 'Sri Lanka': ['Sri Lanka'], Albania: ['Albania'], Portugal: ['Portugal', 'Madeira'], 'South Korea': ['South Korea', 'Jejudo'], Mexico: ['Mexico'], Turkey: ['Turkey'], Malaysia: ['Malaysia'], Indonesia: ['Indonesia'], Bahrain: ['Bahrain'], Qatar: ['Qatar'], Argentina: ['Argentina'], India: ['India'], Angola: ['Angola', 'Cabinda'] };   // (India: the mainland; its islands are specks on the globe)
 // an archipelago's outline coarser (its smallest island kept, deg², and the simplification, deg; the others 0.02 and 0.02): its hundreds of
 // islands at the globe's 44 px are a few dots, only the big ones kept (Indonesia: 22 rings instead of 82, Lombok among them)
-const COARSE = { Indonesia: [0.3, 0.08] };
+const COARSE = { Indonesia: [0.3, 0.08], 'Costa Rica': ['Costa Rica'] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;
