@@ -698,6 +698,70 @@
   }
  ],
  [
+  "koli",
+  "top",
+  "top-koli",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "kanaba",
+  "top",
+  "top-kanaba",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "canaries",
+  "top",
+  "top-canaries",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "savusavu",
+  "top",
+  "top-savusavu",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "koror",
+  "top",
+  "top-koror",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
+ ],
+ [
+  "vinales",
+  "top",
+  "top-vinales",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
   "tocancipa",
   "top",
   "top-tocancipa",
