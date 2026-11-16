@@ -1206,7 +1206,7 @@ try {
         if (side && m.names) {   // (on its side, camera 1: an open road's map turned in its card, every card its size)
           const open = await page.evaluate((id) => { const d = Core.TRACKS.find(x => x.id === id), R = (window.ROUTES || {})[id]; return !d.test && !d.rally && !d.descent && !!d.open && !!(R && R.open); }, id);
           if (m.tall !== open) tallBad.push(id);
-          if (m.tall) { talls.push(id); if (m.hit.length) hits.push(id + ': ' + m.hit.join(' ')); if (!/^rotate\(-90 /.test(m.rot || '')) shape.push(id + ' not turned'); }
+          if (m.tall) { talls.push(id); if (m.hit.length) hits.push(id + ': ' + m.hit.join(' ')); if (!/^rotate\((-90|-?180) /.test(m.rot || '')) shape.push(id + ' not turned'); }
           if (Math.abs(m.st.h - 236 * g.k) > 1 || Math.abs(m.st.w - 384 * g.k) > 1) shape.push(id);
         }
         if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !(side && m.tall ? along(m.land, m.pic) : covers(m.land, m.pic))) bare.push(m.name + (side && m.tall ? ' ' + across(m.land, m.pic).toFixed(2) : '')); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); if (m.names.length === 2 && share(...m.names) > (w === 640 ? 0.15 : 0)) close.push(m.name + ' ' + share(...m.names).toFixed(2)); }
