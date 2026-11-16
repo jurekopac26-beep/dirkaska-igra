@@ -21,6 +21,7 @@ SEASON = {'vrsic': {'autumn': 1.0, 'snow': (1480.0, 1570.0), 'game': True},
           'marrakesh': {'dry': 1.0}, 'longford': {'dry': 0.7},
           'ghoufi': {'dry': 1.0}, 'livingstone': {'dry': 0.8}, 'luanda': {'dry': 0.8}, 'cusco': {'dry': 0.5},
           'musandam': {'dry': 1.0}, 'darvaz': {'dry': 0.8}, 'limalimo': {'dry': 0.5},
+          'sindia': {'dry': 1.0}, 'mogyorod': {'dry': 0.5},
           'koli': {'snow': (-400.0, -300.0)}}   # (the first snow as in the game's own world: from ~1480 m, on all but the steepest faces)
 
 def box_km(lat, lon, km):
