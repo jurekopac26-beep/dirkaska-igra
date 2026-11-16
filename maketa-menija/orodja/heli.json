@@ -194,5 +194,11 @@
  "livorno": {
   "sea": true,
   "ownFar": false
+ },
+ "luanda": {
+  "sea": true
+ },
+ "mombasa": {
+  "sea": true
  }
 }

@@ -56,6 +56,13 @@ CFG = {
     'balea': dict(kind='real', start='Bâlea Valley', finish='Bâlea Lake', country='Romania', region='Făgăraș Mountains', l1='carpathians'),
     'bathurst': dict(kind='real', start='Bathurst', country='Australia', region='New South Wales', l1='nsw'),
     'livorno': dict(kind='real', start='Livorno', country='Italy', region='Tuscany', l1='tuscany'),
+    'ujarras': dict(kind='real', start='Ujarrás', finish='Orosi Valley', country='Costa Rica', region='Cartago', l1='costarica'),
+    'ghoufi': dict(kind='real', start='Ghoufi', finish='Ghoufi Canyon', country='Algeria', region='Aurès', l1='aures'),
+    'cusco': dict(kind='real', start='Cusco', finish='Sacsayhuamán', country='Peru', region='Cusco', l1='cusco'),
+    'luanda': dict(kind='real', start='Praia do Bispo', finish='Bay of Luanda', country='Angola', region='Luanda', l1='angola'),
+    'mombasa': dict(kind='real', start='Mombasa', finish='Likoni Channel', country='Kenya', region='Mombasa', l1='kenyacoast'),
+    'livingstone': dict(kind='real', start='Livingstone', finish='Zambezi Gorge', country='Zambia', region='Southern Province', l1='zambezi'),
+    'hinboun': dict(kind='real', start='Phou Hin Boun', finish='Stone Forest', country='Laos', region='Khammouane', l1='khammouane'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -64,7 +71,9 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'morocco': (31.7, -7.6, 800),
       'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600),
       'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700),
-      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600)}
+      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600),
+      'costarica': (9.8, -83.9, 600), 'aures': (35.1, 6.2, 700), 'cusco': (-13.5, -72.0, 700), 'angola': (-8.9, 13.3, 700),
+      'kenyacoast': (-4.0, 39.7, 600), 'zambezi': (-17.9, 25.9, 700), 'khammouane': (18.0, 104.6, 700)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
