@@ -1157,6 +1157,519 @@
   }
  ],
  [
+  "atimpoku",
+  {
+   "alt": [
+    32,
+    23
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Atimpoku",
+     "d": 1973
+    },
+    {
+     "n": "Adomi Bridge",
+     "d": 2432
+    },
+    {
+     "n": "East Bank",
+     "d": 2841
+    }
+   ]
+  }
+ ],
+ [
+  "isalo",
+  {
+   "alt": [
+    852,
+    819
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Isalo Plateau",
+     "d": 60
+    },
+    {
+     "n": "Under the Rocks",
+     "d": 700
+    },
+    {
+     "n": "Queen of Isalo",
+     "d": 1850
+    }
+   ]
+  }
+ ],
+ [
+  "hiva",
+  {
+   "alt": [
+    96,
+    96
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "West Gate",
+     "d": 170
+    },
+    {
+     "n": "North Gate",
+     "d": 760
+    },
+    {
+     "n": "East Gate",
+     "d": 1969
+    },
+    {
+     "n": "South Gate",
+     "d": 2399
+    }
+   ]
+  }
+ ],
+ [
+  "portobelo",
+  {
+   "alt": [
+    4,
+    9
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Coast Road",
+     "d": 650
+    },
+    {
+     "n": "Fortress",
+     "d": 1600
+    },
+    {
+     "n": "The East Shore",
+     "d": 2250
+    }
+   ]
+  }
+ ],
+ [
+  "eljem",
+  {
+   "alt": [
+    110,
+    106
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Amphitheatre",
+     "d": 470
+    },
+    {
+     "n": "Through the Town",
+     "d": 900
+    },
+    {
+     "n": "North Way Out",
+     "d": 1300
+    }
+   ]
+  }
+ ],
+ [
+  "isuna",
+  {
+   "alt": [
+    2135,
+    2167
+   ],
+   "kbps": 450,
+   "places": [
+    {
+     "n": "The Valley",
+     "d": 800
+    },
+    {
+     "n": "Chain Bridge",
+     "d": 1560
+    },
+    {
+     "n": "Towards Paro",
+     "d": 2500
+    }
+   ]
+  }
+ ],
+ [
+  "mogyorod",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Right Hairpin",
+     "d": 610
+    },
+    {
+     "n": "Spring Corner",
+     "d": 1310
+    },
+    {
+     "n": "Blind Left",
+     "d": 1780
+    },
+    {
+     "n": "Chicane",
+     "d": 2370
+    },
+    {
+     "n": "Danube Corner",
+     "d": 2920
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 3770
+    },
+    {
+     "n": "Last Corner",
+     "d": 4040
+    }
+   ],
+   "alt": [
+    236,
+    236
+   ]
+  }
+ ],
+ [
+  "sindia",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left over the Top",
+     "d": 440
+    },
+    {
+     "n": "Fast Esses",
+     "d": 950
+    },
+    {
+     "n": "Baobab Corner",
+     "d": 2320
+    },
+    {
+     "n": "Triple Bend",
+     "d": 2819
+    },
+    {
+     "n": "Right at the Bottom",
+     "d": 3959
+    }
+   ],
+   "alt": [
+    39,
+    39
+   ]
+  }
+ ],
+ [
+  "yahuarcocha",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Long Right",
+     "d": 880
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 2120
+    },
+    {
+     "n": "Lakeside Straight",
+     "d": 2899
+    },
+    {
+     "n": "Lakeside Esses",
+     "d": 3199
+    }
+   ],
+   "alt": [
+    2204,
+    2204
+   ]
+  }
+ ],
+ [
+  "houli",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "First Right",
+     "d": 420
+    },
+    {
+     "n": "South-west Hairpin",
+     "d": 940
+    },
+    {
+     "n": "North Esses",
+     "d": 1540
+    },
+    {
+     "n": "Hotel Chicane",
+     "d": 2030
+    },
+    {
+     "n": "East Hairpin",
+     "d": 2450
+    },
+    {
+     "n": "Infield Esses",
+     "d": 3220
+    }
+   ],
+   "alt": [
+    236,
+    236
+   ]
+  }
+ ],
+ [
+  "parnu",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Left Hairpin",
+     "d": 390
+    },
+    {
+     "n": "South Loop",
+     "d": 1180
+    },
+    {
+     "n": "The Twists",
+     "d": 1760
+    },
+    {
+     "n": "North Hairpin",
+     "d": 2160
+    },
+    {
+     "n": "Right-hand Loop",
+     "d": 2769
+    },
+    {
+     "n": "Last Corner",
+     "d": 2989
+    }
+   ],
+   "alt": [
+    4,
+    4
+   ]
+  }
+ ],
+ [
+  "ujarras",
+  {
+   "kbps": 450,
+   "alt": [
+    1216,
+    1259
+   ]
+  }
+ ],
+ [
+  "luanda",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Praia do Bispo Bay",
+     "d": 60
+    },
+    {
+     "n": "Under the Hill",
+     "d": 1000
+    },
+    {
+     "n": "Round the Hill",
+     "d": 1545
+    },
+    {
+     "n": "Fortress",
+     "d": 1977
+    },
+    {
+     "n": "Along the Bay",
+     "d": 2300
+    },
+    {
+     "n": "Marginal",
+     "d": 2900
+    }
+   ],
+   "alt": [
+    1,
+    4
+   ]
+  }
+ ],
+ [
+  "ghoufi",
+  {
+   "kbps": 450,
+   "alt": [
+    724,
+    735
+   ]
+  }
+ ],
+ [
+  "cusco",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Sacsayhuamán",
+     "d": 270
+    },
+    {
+     "n": "Hairpin 1 · 3,572 m",
+     "d": 540
+    },
+    {
+     "n": "Hairpin 2 · 3,577 m",
+     "d": 674
+    }
+   ],
+   "alt": [
+    3519,
+    3592
+   ]
+  }
+ ],
+ [
+  "mombasa",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Town Centre",
+     "d": 40
+    },
+    {
+     "n": "Roundabout",
+     "d": 265
+    },
+    {
+     "n": "Old Town",
+     "d": 520
+    },
+    {
+     "n": "Fortress",
+     "d": 1130
+    },
+    {
+     "n": "Shore Road",
+     "d": 1340
+    },
+    {
+     "n": "Likoni Channel",
+     "d": 2300
+    }
+   ],
+   "alt": [
+    25,
+    5
+   ]
+  }
+ ],
+ [
+  "livingstone",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "South of Town",
+     "d": 60
+    },
+    {
+     "n": "Dry Woodland",
+     "d": 1105
+    },
+    {
+     "n": "Border Post",
+     "d": 2290
+    },
+    {
+     "n": "Above the Gorge",
+     "d": 2480
+    },
+    {
+     "n": "Old Bridge",
+     "d": 2904
+    },
+    {
+     "n": "Far Bank",
+     "d": 3126
+    },
+    {
+     "n": "Last Kilometre",
+     "d": 3475
+    }
+   ],
+   "alt": [
+    893,
+    900
+   ]
+  }
+ ],
+ [
+  "hinboun",
+  {
+   "kbps": 450,
+   "start": 4,
+   "places": [
+    {
+     "n": "The Foot",
+     "d": 60
+    },
+    {
+     "n": "The Karst Climb",
+     "d": 700
+    },
+    {
+     "n": "The Pass",
+     "d": 1860
+    },
+    {
+     "n": "The Stone Forest",
+     "d": 1930
+    },
+    {
+     "n": "The Descent",
+     "d": 3200
+    },
+    {
+     "n": "The Valley",
+     "d": 4300
+    }
+   ],
+   "alt": [
+    365,
+    298
+   ]
+  }
+ ],
+ [
   "kaligandaki",
   {
    "kbps": 450,
