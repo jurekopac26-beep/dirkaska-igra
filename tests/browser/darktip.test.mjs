@@ -6,7 +6,10 @@
 //   the game was opened with; elsewhere: the browser's settings), OK closes it, a reload in the same tab does not bring it back, a notice
 //   the game hid at once comes back with the title, the link under the title opens it again, "Don't show this again" is kept over a
 //   reload (the link stays); the notice fits upright and on its side
-// - temni-nacin.html: its verdict and its ten rows of fields, in a plain and in a forced browser
+// - Samsung Internet draws the game's colours its own way (js/sence.js): no notice; with ?sence=0 (the way of painting off) the notice
+// - the garage (garaza.html) the same way: Samsung Internet in force dark draws it with js/sence.js (the coins' emoji in black, which force dark
+//   leaves: span[data-sdj]); a plain browser and another one in force dark do not
+// - temni-nacin.html: its verdict and its eleven rows of fields (row 10: the game's menu drawn the new way), in a plain and in a forced browser
 //   node tests/browser/darktip.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -33,10 +36,19 @@ try {
     await ctx.close();
   }
 
-  // 2. forced, as Samsung Internet on a phone: the notice once a visit, Open in Chrome, OK, a reload, hidden at once, the link, Don't show
-  // this again over a reload
+  // 2a. Samsung Internet: the game draws its colours its own way (js/sence.js), so no notice and no link
   {
-    const { ctx, page, errors } = await open(forced, 'light', null, SAMSUNG, '?x=1#y=2');
+    const { ctx, page, errors } = await open(forced, 'light', null, SAMSUNG);
+    await ready(page); await page.waitForTimeout(300);
+    const s = await state(page), on = await page.evaluate(() => !!(window.Sence && Sence.on && document.documentElement.hasAttribute('data-sence') && Sence.stats.rules > 0));
+    T.check('Samsung Internet (forced dark): the game paints its colours the new way (js/sence.js), no notice, no link; no errors', on && !s.sheet && !s.link && !errors.length, JSON.stringify({ on, s, errors }));
+    await ctx.close();
+  }
+
+  // 2. forced, as Samsung Internet on a phone with the new way off (?sence=0): the notice once a visit, Open in Chrome, OK, a reload,
+  // hidden at once, the link, Don't show this again over a reload
+  {
+    const { ctx, page, errors } = await open(forced, 'light', null, SAMSUNG, '?sence=0&x=1#y=2');
     await ready(page); await page.waitForTimeout(300);
     const s = await state(page);
     T.check('forced (Samsung Internet, Android): the title opens "Colours too dark?" with Samsung Internet\'s settings and Open in Chrome',
@@ -44,7 +56,7 @@ try {
     await settled(page);
     const fit = await ev(page, 'const r = root.querySelector(".sheet.dtip").getBoundingClientRect(), b = root.querySelector(".sheet.dtip .go").getBoundingClientRect(); return { top: r.top, bottom: r.bottom, ok: b.bottom, h: innerHeight };');
     T.check('the notice fits the phone upright (412 × 915), its OK on the screen', fit.top >= 0 && fit.bottom <= fit.h + 1 && fit.ok <= fit.h + 1, JSON.stringify(fit));
-    const intent = await page.evaluate(() => Menu.debug().chrome), u = srv.base + '/index.html?x=1#y=2';
+    const intent = await page.evaluate(() => Menu.debug().chrome), u = srv.base + '/index.html?sence=0&x=1#y=2';
     T.check('Open in Chrome: an intent for Chrome with the address the game was opened with and its scheme; without Chrome the same address',
       intent === 'intent://' + u.replace(/^https?:\/\//, '') + '#Intent;scheme=' + new URL(u).protocol.slice(0, -1) + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(u) + ';end', intent);
     await page.click('.sheet.dtip .go[data-act="close-sheet"]'); await page.waitForTimeout(250);
@@ -81,16 +93,37 @@ try {
     await ctx.close();
   }
 
-  // 4. temni-nacin.html: the verdict, the ten rows, no errors
+  // 4. temni-nacin.html: the verdict, the eleven rows, no errors
   for (const [name, browser, yes] of [['a plain browser', plain, false], ['forced', forced, true]]) {
     const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, colorScheme: 'light' }), page = await ctx.newPage(), errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     await page.goto(srv.base + '/temni-nacin.html');
     await page.waitForFunction(() => document.querySelectorAll('#big img').length === 1, null, { timeout: 30000 });
-    const r = await page.evaluate(() => ({ verdict: document.getElementById('verdict').className, rows: document.querySelectorAll('.grid .lb').length, cells: document.querySelectorAll('.grid .c').length, refs: document.querySelectorAll('.c.ref canvas').length, small: document.querySelectorAll('.c.small img').length }));
-    T.check(`temni-nacin.html, ${name}: "${yes ? 'DA' : 'NE'}", ten rows (nine of four fields and the big picture), the canvas and picture fields drawn`,
-      r.verdict === 'verdict ' + (yes ? 'yes' : 'no') && r.rows === 10 && r.cells === 36 && r.refs === 4 && r.small === 4 && !errors.length, JSON.stringify({ r, errors }));
+    await page.waitForFunction(() => [...document.querySelectorAll('.grid .mn')].every((m) => m.shadowRoot && m.shadowRoot.querySelector('.f')), null, { timeout: 30000 }).catch(() => {});
+    const r = await page.evaluate(() => ({ verdict: document.getElementById('verdict').className, rows: document.querySelectorAll('.grid .lb').length, cells: document.querySelectorAll('.grid .c').length, refs: document.querySelectorAll('.c.ref canvas').length, small: document.querySelectorAll('.c.small img').length, mn: document.querySelectorAll('.grid .mn').length, mnDrawn: [...document.querySelectorAll('.grid .mn')].filter((m) => m.shadowRoot && m.shadowRoot.querySelector('.f')).length }));
+    T.check(`temni-nacin.html, ${name}: "${yes ? 'DA' : 'NE'}", eleven rows (ten of four fields and the big picture), the canvas and picture fields drawn, row 10 drawn by the game's menu code`,
+      r.verdict === 'verdict ' + (yes ? 'yes' : 'no') && r.rows === 11 && r.cells === 36 && r.refs === 4 && r.small === 4 && r.mn === 4 && r.mnDrawn === 4 && !errors.length, JSON.stringify({ r, errors }));
+    await ctx.close();
+  }
+
+  // 5. the garage: drawn by js/sence.js only in Samsung Internet in force dark, its coins' emoji in black spans; no errors
+  for (const [name, browser, ua, yes] of [['a plain browser', plain, undefined, false], ['forced, not Samsung Internet', forced, undefined, false], ['Samsung Internet, forced', forced, SAMSUNG, true]]) {
+    const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, colorScheme: 'light', ...(ua ? { userAgent: ua } : {}) }), page = await ctx.newPage(), errors = [];
+    page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+    await page.addInitScript(() => { try { localStorage.setItem('apex-garage', JSON.stringify({ v: 2, mode: 'full', guide: 1, demo: false, flag: 'ZDA' })); } catch (_) {} });
+    await page.goto(srv.base + '/garaza.html');
+    await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
+    await page.evaluate(() => { const b = Garage3D.box('rgl:TURBO'); __garage.onTap(b.x + b.w / 2, b.y + b.h / 2); __garage.advance(1); });   // (the turbo's parts, with prices)
+    await page.waitForTimeout(500);
+    const r = await page.evaluate(() => {
+      const j = [...document.querySelectorAll('[data-sdj]')], c = j.find((e) => /\u{1FA99}/u.test(e.textContent));
+      return { on: !!(window.Sence && Sence.on), attr: document.documentElement.hasAttribute('data-sence'), rules: window.Sence ? Sence.stats.rules : 0, sdj: j.length,
+        coin: c ? getComputedStyle(c).webkitTextFillColor : null, coins: /\u{1FA99}/u.test(document.body.textContent) };
+    });
+    T.check(`garaza.html, ${name}: ${yes ? "drawn by js/sence.js, the coins of the turbo parts' prices in black spans" : 'left as it is'}; no errors`,
+      (yes ? r.on && r.attr && r.rules > 0 && r.coins && r.coin === 'rgb(0, 0, 0)' : !r.on && !r.attr && r.sdj === 0) && !errors.length, JSON.stringify({ r, errors }));
     await ctx.close();
   }
 } finally {

@@ -88,6 +88,7 @@ const dAt = (s) => Math.round(s - T.startS);   // (metres after the start line)
   const M = hd.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2];
   check('Harju: medals gold < silver < bronze, dry and wet; the rain slower', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0],
     `cs ${M.cs}, wet cs ${M.wet.cs}`);
+  const Z = M.winter; check('Harju: winter medals gold < silver < bronze, in winter and in the snow; slower than the summer\'s, the snow slowest', !!Z && asc(Z.cs) && asc(Z.wet.cs) && Z.cs[0] > M.cs[0] && Z.wet.cs[0] >= Z.cs[0] && Z.wet.cs[0] > M.wet.cs[0], Z ? `winter cs ${Z.cs}, snow cs ${Z.wet.cs}` : 'none');
 }
 
 console.log(bad ? `FAIL: ${bad} check(s)` : 'OK: all rally checks');
