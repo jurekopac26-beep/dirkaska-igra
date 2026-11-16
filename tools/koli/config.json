@@ -1,0 +1,17 @@
+{
+  "id": "koli",
+  "about": "Koli, Finska (id koli): the upper part of the asphalt road Ylä-Kolintie, uphill from the forest to Ylä-Koli under the top of Koli above Lake Pielinen, point to point, in winter (docs/proge-po-drzavah.md, Finska: Koli)",
+  "box": [63.0813, 29.7555, 63.1147, 29.836],
+  "closed": false,
+  "dist": {"grid": 160},
+  "route": [
+    [63.10218, 29.78308, "Ylä-Kolintie", "the run-up: 160 m back down the same road"],
+    [63.10116, 29.7853, "Ylä-Kolintie", "start (156 m)"],
+    [63.09611, 29.80614, "Ylä-Kolintie", "finish: Ylä-Koli under the top (313 m)"]
+  ],
+  "prefer": ["Ylä-Kolintie"],
+  "geoRoads": ["Ylä-Kolintie"],
+  "geoWater": ["Pielinen"],
+  "marks": [],
+  "places": []
+}
