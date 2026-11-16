@@ -6,7 +6,7 @@
 //    envelope as the server reads it (the signature, the record's gzip and the ghost's hashes); a slower run of the key not queued, a faster one is
 // 3. the queue: kept in the store (a reload keeps it), the best of each key, at most 20; 503 and the network down: tried again after 1 min,
 //    then 2; 429: as long as the server says; a refused run (400) dropped with its code; a banned player (403) sends nothing more
-// 4. the tables: a board and a place read and kept; the server down: the kept one with its time; the cache at most 200 KB
+// 4. the tables: a board and a place read and kept; a circuit's lap with its ghost (Race ghost); Hide driver; the server down: the kept one with its time; the cache at most 200 KB
 // 5. a request that does not answer gives up (the timeout); a report; the player's data deleted on the server and on the device
 // Invented nicknames only; no network, no key.
 //   node tests/svet.test.js
@@ -39,15 +39,15 @@ function lazniR2() {
     async delete(k) { for (const x of Array.isArray(k) ? k : [k]) m.delete(x); } };
 }
 const MEJE = { v: 1, jedro: 'lokalno', vmax: 90, vk: 1.15, segK: 0.8, avti: ['hitri', 'pocasni'], nad: ['motor', 'gume', 'zavore', 'aero'], nadMax: 3, pomoc: 3,
-  kljuci: { 'gora@cs': { k: 'tt', b: 60, d: 2000, seg: [20, 25, 15] }, 'dolina@cs': { k: 'tt', b: 30, d: 1000, seg: [12, 18] } } };
+  kljuci: { 'gora@cs': { k: 'tt', b: 60, d: 2000, seg: [20, 25, 15] }, 'dolina@cs': { k: 'tt', b: 30, d: 1000, seg: [12, 18] }, 'krog@cs': { k: 'lap', b: 30, d: 1000 } } };
 
 // a run's fields as js/game.js makes them (ttFinish), its record (JSON) and ghost (ghWrite's JSON: samples moving 1.25 × the line's length)
 function voznja(o = {}) {
-  const kljuc = o.kljuc || 'gora@cs', e = MEJE.kljuci[kljuc], t = o.t || 80000, s1 = 200 + Math.round(t * 0.12);
-  const vmes = e.seg.slice(0, -1).map((_, i, a) => Math.round(t * (a.slice(0, i + 1).reduce((x, y) => x + y, 0) + 1) / (e.b + 2)));
+  const kljuc = o.kljuc || 'gora@cs', e = MEJE.kljuci[kljuc], t = o.t || 80000, s1 = 200 + Math.round(t * 0.12), lap = e.k === 'lap';
+  const vmes = lap ? [] : e.seg.slice(0, -1).map((_, i, a) => Math.round(t * (a.slice(0, i + 1).reduce((x, y) => x + y, 0) + 1) / (e.b + 2)));
   const gn = Math.floor(t / 100) + 2, b = Buffer.alloc(gn * 14), x = Math.round(1.25 * e.d * 100 / (gn - 1));
   for (let k = 1; k < gn; k++) b.writeInt16LE(x, k * 14);
-  const ghost = JSON.stringify({ v: 1, dt: 0.1, n: gn, t: t / 1000, car: 'hitri', color: 0x1c5fd6, stripe: 0, q0: [0, 0, 0], d: b.toString('base64'), cond: { rain: 0 } });
+  const ghost = JSON.stringify({ v: 1, dt: 0.1, n: gn, t: t / 1000, car: 'hitri', color: 0x1c5fd6, stripe: 0, q0: [0, 0, 0], d: b.toString('base64'), cond: { rain: 0 }, lap: lap ? 1 : undefined });   // (a circuit's lap: its qualifying lap, svSend's lap)
   const f = { kljuc, avto: 'hitri', nad: o.nad || { motor: 1, gume: 2, zavore: 0, aero: 3 }, pomoc: 2, t, zig: { igra: 'lokalno', jedro: 'lokalno' }, eng: 'node', vmes, n: s1 + 90, s0: s1 - Math.round(t * 0.12), s1, fs: s1 };
   return { f, rec: JSON.stringify({ v: 1, ok: true, track: kljuc.split('@')[0], t, inp: [1, 2, 3] }), ghost };
 }
@@ -145,6 +145,28 @@ function voznja(o = {}) {
   check('lestvica: odgovor strežnika (časi še čakajo: prazna)', b && !b.old && b.j && b.j.kljuc === 'gora@cs' && Array.isArray(b.j.vrstice) && b.at === now, JSON.stringify(b && b.j));
   let pl = await Svet.place('gora@cs');
   check('mesto prebrano', pl && (pl.j || pl.err), JSON.stringify(pl));
+  { // a circuit's qualifying lap (no checkpoints, the ghost a lap), checked: in the table with its ghost, Race ghost downloads it
+    const vk = voznja({ kljuc: 'krog@cs', t: 40000 });
+    check('krog: v vrsti in poslan', await Svet.add(vk.f, vk.rec, vk.ghost) && (await Svet.flush(), Svet.queue().length === 0) && env.DB.vrstice("SELECT COUNT(*) c FROM casi WHERE kljuc = 'krog@cs'")[0].c === 1);
+    env.DB.vrstice("UPDATE casi SET stanje = 'ok' WHERE kljuc = 'krog@cs'");
+    const bk = await Svet.board('krog@cs'), row = bk && bk.j && bk.j.vrstice[0];
+    check('krog: preverjen na lestvici z duhom', row && row.id === me.id && row.ms === 40000 && row.duh === true && row.vmes.length === 0, JSON.stringify(bk && bk.j));
+    const g = await Svet.ghost('krog@cs', me.id);
+    check('Race ghost: duh kroga prenesen', g && g.lap === 1 && g.car === 'hitri' && Math.abs(g.t - 40) < 1e-9 && typeof g.d === 'string', JSON.stringify(g && Object.keys(g)));
+    check('Race ghost: neveljaven ključ ali id ne vpraša strežnika', await (async () => { const k0 = klicev; const a = await Svet.ghost('krog', me.id), c = await Svet.ghost('krog@cs', 'x'); return a === null && c === null && klicev === k0; })());
+    check('Race ghost: voznik brez duha 404, nič', (await Svet.ghost('krog@cs', 'abcdefghijkl')) === null);
+  }
+  { // Hide driver: on this device only (never sent), valid ids, at most MAX_HID, shown again
+    const k0 = klicev;
+    check('skrij voznika', Svet.hide('abcdefghijkl') && Svet.hidden().join() === 'abcdefghijkl' && JSON.parse(St.getItem(Svet.HID)).length === 1);
+    check('skrij neveljaven id: ne', !Svet.hide('x y') && Svet.hidden().length === 1);
+    Svet.hide('abcdefghijkl'); check('dvakrat skrit: enkrat na seznamu', Svet.hidden().length === 1);
+    for (let i = 0; i < Svet.MAX_HID + 5; i++) Svet.hide('drv' + String(i).padStart(9, '0'));
+    check('največ MAX_HID skritih, najnovejši ostanejo', Svet.hidden().length === Svet.MAX_HID && Svet.hidden().includes('drv' + String(Svet.MAX_HID + 4).padStart(9, '0')) && !Svet.hidden().includes('abcdefghijkl'));
+    for (const id of Svet.hidden()) Svet.hide(id, false);
+    St.setItem(Svet.HID, JSON.stringify(['abcdefghijkl', 5, 'x', null]));
+    check('pokaži skrite; pokvarjen seznam prebran varno; strežnik ni vprašan', Svet.hidden().join() === 'abcdefghijkl' && Svet.hide('abcdefghijkl', false) && Svet.hidden().length === 0 && klicev === k0);
+  }
   const at0 = now; now += 6e5;
   streznik = async () => { throw new TypeError('Failed to fetch'); };
   b = await Svet.board('gora@cs');

@@ -10,8 +10,11 @@
 //  4. a run while the server is down (503): kept in the queue (Settings: one waiting); the server back: the queue sent, the run posted
 //     once, the queue empty; a 429 waits as long as the server says.
 //  5. the server down with the table kept: the kept rows and "as of HH.MM"; nothing kept: "World leaderboard is not available right now".
-//  6. Settings: joined, the nickname, the id; Prijavi on the Leaderboard's World row (prijava posted with that driver's id); Izbriši moje
-//     podatke (asked first): izbris posted, the player out, nothing left waiting.
+//  6. Settings: joined, the nickname, the id; Prijavi on the Leaderboard's World row (prijava posted with that driver's id); the
+//     Leaderboard's World: Duh / Skrij / Prijavi on the others' rows, none on the player's; Skrij (asked first): the row gone on this device
+//     only (nothing posted), Pokaži skrite voznike (1) brings it back; Duh of a driver without a ghost: a toast, no race; Duh of Hitri Jaka:
+//     the ghost downloaded, the time trial started with it as the second ghost; Izbriši moje podatke (asked first): izbris posted, the player
+//     out, nothing left waiting.
 //   node tests/browser/svet.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -25,7 +28,9 @@ const URL0 = 'https://svet.test', ME = 'LisicaAbc123';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // the test's server: the world's table of one key (7 drivers, the player's run makes 8), what was posted
-const F = { down: 0, retry: 0, rows: [], posts: [], key: '' };
+const F = { down: 0, retry: 0, rows: [], posts: [], key: '', gets: [] };
+// a driver's ghost (Race ghost: GET /v1/duh): only Hitri Jaka's (the game's ghost JSON, js/game.js ghParse: 2 samples of 7 channels)
+const GHOST = { v: 1, dt: 0.1, t: 600, n: 2, ch: 7, q0: [0, 0, 0], d: Buffer.alloc(28).toString('base64'), car: 'x' };
 const others = () => ['Hitri Jaka', 'Megla', 'Kozorog', 'Sova', 'Burja', 'Polž', 'Zadnji'].map((ime, i) => ({ id: 'drv' + String(i).padStart(9, '0'), ime, oznaka: 'A' + i, ms: 600000 + i * 9000 + (i > 1 ? 20000 : 0), avto: 0 }));
 const table = () => F.rows.slice().sort((a, b) => a.ms - b.ms).map((r, i) => Object.assign({ mesto: i + 1, vmes: [], nad: 0, pomoc: 0, priblizno: false, duh: true }, r));
 const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, OPTIONS' };
@@ -35,7 +40,8 @@ async function route(page) {
     if (rq.method() === 'OPTIONS') return rt.fulfill({ status: 204, headers: CORS });
     if (F.down) return send(F.down, { ok: false, napaka: F.down === 429 ? 'prehitro' : 'dol', cez: F.down === 429 ? F.retry : undefined });
     if (rq.method() === 'GET') {
-      const t = table();
+      const t = table(); F.gets.push(p + '?' + u.searchParams.toString());
+      if (p === 'duh') return u.searchParams.get('id') === 'drv000000000' && u.searchParams.get('kljuc') === F.key ? send(200, GHOST) : send(404, { ok: false, napaka: 'ni-duha' });
       if (p === 'lestvica') return send(200, { ok: true, kljuc: u.searchParams.get('kljuc'), od: 0, skupaj: t.length, vrstice: t.slice(0, +u.searchParams.get('n') || 100) });
       if (p === 'mesto') { const r = t.find(x => x.id === u.searchParams.get('id')); return r ? send(200, { ok: true, kljuc: u.searchParams.get('kljuc'), id: r.id, mesto: r.mesto, ms: r.ms, skupaj: t.length }) : send(404, { ok: false, napaka: 'ni-casa' }); }
       return send(404, { ok: false, napaka: 'ni' });
@@ -158,6 +164,29 @@ try {
   await pa.evaluate(() => __game.svet.report('drv000000004', 'Burja'));
   const rep = await until(pa, () => true, null, 100) && await (async () => { for (let i = 0; i < 30 && !posts('prijava').length; i++) await sleep(100); return posts('prijava'); })();
   T.check('Prijavi a driver (asked first): prijava posted with that driver\'s id', rep.length === 1 && rep[0].id === 'drv000000004', J(rep));
+  // the Leaderboard's World: Duh, Skrij, Pokaži skrite (the Leaderboard of Pikes Peak, the table from the server)
+  const box = () => pa.evaluate(() => { const b = document.getElementById('sv-box'); return b && { rows: [...b.querySelectorAll('tbody tr')].map(r => ({ nm: (r.querySelector('.nm') || {}).textContent, me: r.classList.contains('me'), acts: [...r.querySelectorAll('[data-act]')].map(e => e.dataset.act) })), un: [...b.querySelectorAll('[data-act="sv-unhide"]')].map(e => e.textContent), w: Math.round(b.querySelector('table') ? b.querySelector('table').getBoundingClientRect().right : 0), W: innerWidth }; });
+  const hit = (act, id) => pa.evaluate(([a, i]) => document.querySelector('#sv-box [data-act="' + a + '"]' + (i ? '[data-id="' + i + '"]' : '')).click(), [act, id]);
+  await pa.evaluate(() => __game.onAction('to-board'));
+  await until(pa, () => !!document.querySelector('#sv-box [data-act="sv-ghost"]'), null, 10000);
+  const b7 = await box(), oth = b7 && b7.rows.filter(r => !r.me), mine7 = b7 && b7.rows.find(r => r.me);
+  T.check('the Leaderboard\'s World of Pikes Peak: 8 rows, the others\' with Duh, Skrij and Prijavi, the player\'s own (Lisica) with none; the table within 360 px',
+    b7 && b7.rows.length === 8 && oth.length === 7 && oth.every(r => J(r.acts) === J(['sv-ghost', 'sv-hide', 'sv-report'])) && mine7 && mine7.nm === 'Lisica' && !mine7.acts.length && !b7.un.length && b7.w > 0 && b7.w <= b7.W, J(b7));
+  const np = F.posts.length;
+  await hit('sv-hide', 'drv000000001'); await sleep(200);
+  const b7b = await box(), h7 = await pa.evaluate(() => Svet.hidden()), w7 = await pa.evaluate(() => { const w = __game.svet.world('pikes', 8); return w && w.rows.map(r => r.name); });
+  T.check('Skrij Megla (asked first): the row gone, "Pokaži skrite voznike (1)", kept on this device only (nothing posted); the menu\'s World without her too',
+    b7b.rows.length === 7 && !b7b.rows.some(r => r.nm === 'Megla') && J(b7b.un) === J(['Pokaži skrite voznike (1)']) && J(h7) === J(['drv000000001']) && F.posts.length === np && w7 && !w7.includes('Megla'), J({ b7b, h7, w7 }));
+  await hit('sv-unhide'); await sleep(200);
+  const b7c = await box();
+  T.check('Pokaži skrite voznike: Megla back, nothing hidden', b7c.rows.length === 8 && b7c.rows.some(r => r.nm === 'Megla') && !b7c.un.length && !(await pa.evaluate(() => Svet.hidden())).length, J(b7c));
+  await hit('sv-ghost', 'drv000000001');
+  const t7 = await until(pa, () => /ni mogoče naložiti/.test(document.getElementById('toast').textContent), null, 5000);
+  T.check('Duh of a driver without a ghost (404): "Duha tega voznika ni mogoče naložiti.", no race, no ghost', t7 && !(await pa.evaluate(() => __game.ghostF)) && !!(await pa.evaluate(() => document.getElementById('sv-box'))) && F.gets.some(g => g === 'duh?' + new URLSearchParams({ kljuc: F.key, id: 'drv000000001' })), J(F.gets.filter(g => /^duh/.test(g))));
+  await hit('sv-ghost', 'drv000000000');
+  const g7ok = await until(pa, () => !!(window.__game.ghostF && window.__game.race), null, 30000), g7 = await pa.evaluate(() => ({ f: __game.ghostF, tt: !!(__game.race && __game.race.timeTrial), id: __game.race && __game.race.track && __game.race.track.def && __game.race.track.def.id }));
+  T.check('Duh of Hitri Jaka: the ghost downloaded (GET /v1/duh with the key and his id), the time trial on Pikes Peak started with him as the second ghost (Hitri Jaka, 10:00.000, not a lap)',
+    g7ok && g7.f && g7.f.name === 'Hitri Jaka' && Math.abs(g7.f.t - 600) < 1e-9 && g7.f.lap === false && g7.tt && F.gets.includes('duh?' + new URLSearchParams({ kljuc: F.key, id: 'drv000000000' })), J(g7));
   await pa.evaluate(() => __game.svet.erase());
   for (let i = 0; i < 30 && !posts('izbris').length; i++) await sleep(100);
   await until(pa, () => !Svet.state().id, null, 5000);

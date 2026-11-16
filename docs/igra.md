@@ -548,15 +548,15 @@ Lestvica sprejme do 40 prijateljev; prostor naredi tisti, od katerega povezave n
 
 ## Svetovna lestvica
 
-Najboljši časi kronometrov na pravih progah vseh igralcev na enem strežniku (načrt in pravila: `docs/svetovna-lestvica.md`; strežnik `streznik/svetovna-lestvica/`, logika igre `js/svet.js`). Dokler igra ne pozna naslova strežnika (`Svet.CFG.url`), je vse skrito in igra ničesar ne pošlje.
+Najboljši časi kronometrov in kvalifikacijskih letečih krogov (brez tekmecev) na pravih progah vseh igralcev na enem strežniku (načrt in pravila: `docs/svetovna-lestvica.md`; strežnik `streznik/svetovna-lestvica/`, logika igre `js/svet.js`). Dokler igra ne pozna naslova strežnika (`Svet.CFG.url`), je vse skrito in igra ničesar ne pošlje.
 
 **Pridružitev:** v Nastavitvah (razdelek **Svetovna lestvica**) ali v zavihku *World* pogleda *Friends* na izbiri proge: soglasje (vzdevek, časi in posnetki voženj gredo na strežnik v EU), nato vzdevek (filter na strežniku; neprimeren je skrit do pregleda). Brez pridružitve igra ničesar ne pošlje, lestvico pa lahko gledaš.
 
-**Kje so časi:** na izbiri proge zavihek *World* ob *Friends* (prvih 5, ležeče 6, tvoja vrstica zlata in »#3 of 8«; značka mesta ob najboljšem času); na **Lestvici** pri vsaki progi razdelek **Svet** (prvih 100, tvoja vrstica, **Prijavi** ob tujem vzdevku); na rezultatih vrstica »Svet: #3 od 8 (čaka na preverjanje)«.
+**Kje so časi:** na izbiri proge zavihek *World* ob *Friends* (prvih 5, ležeče 6, tvoja vrstica zlata in »#3 of 8«; značka mesta ob najboljšem času); na **Lestvici** pri vsaki progi razdelek **Svet** (prvih 100, tvoja vrstica; ob tujem vozniku **Duh** prenese njegovo vožnjo in začne vožnjo proti njemu, **Skrij** ga skrije samo na tej napravi, **Pokaži skrite voznike** jih vrne, **Prijavi** prijavi vzdevek; pokonci brez stolpcev Avto in Zaostanek); na rezultatih vrstica »Svet: #3 od 8 (čaka na preverjanje)«.
 
-**Pošiljanje:** po novem najboljšem času kronometra igra pošlje podpisan zapis vožnje (vnos, čas, avto, pogoji). Brez povezave ali ob napaki strežnika čas počaka v vrsti (`tdgp-sl-vrsta`, ponovni poskus od 1 minute do 1 ure; ob odprtju menija, dogodku `online` in po vožnji); zadnje lestvice so v `tdgp-sl-cache` z napisom »stanje ob …«. Med dirko igra na strežnik ne čaka.
+**Pošiljanje:** po novem najboljšem času kronometra ali kvalifikacijskega kroga igra pošlje podpisan zapis vožnje (vnos, čas, avto, pogoji). Brez povezave ali ob napaki strežnika čas počaka v vrsti (`tdgp-sl-vrsta`, ponovni poskus od 1 minute do 1 ure; ob odprtju menija, dogodku `online` in po vožnji); zadnje lestvice so v `tdgp-sl-cache` z napisom »stanje ob …«. Med dirko igra na strežnik ne čaka.
 
-**Nastavitve:** sodelovanje (*Izstopi*), vzdevek, id igralca, časi v vrsti, **Izbriši moje podatke na svetovni lestvici** (vse na strežniku in v igri) in povezava na pravilnik o zasebnosti.
+**Nastavitve:** sodelovanje (*Izstopi*), vzdevek, id igralca, časi v vrsti, **Izbriši moje podatke na svetovni lestvici** (vse na strežniku in v igri) in povezava na pravilnik o zasebnosti (`zasebnost.html`, v angleščini `privacy.html`; brez skript, upravljavec in kontakt dopolni skrbnik pred objavo).
 
 ## Igralni plošček
 

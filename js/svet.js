@@ -8,12 +8,14 @@
    - The player is the friends' leaderboard's key (js/lestvica.js, me): each request is signed with it (ECDSA P-256, SHA-256) in the envelope
      <packet JSON>\n<signature>\n<the rest> (a run: the record gzipped, then the ghost's JSON). The world's tables are kept (tdgp-sl-cache, at most
      200 KB) and shown with their time when the server cannot be reached. Every request gives up after 5 s.
+   - The Leaderboard's World: Race ghost (ghost: a driver's run of the top 100 to race against) and Hide driver (hide: kept on this device
+     only, tdgp-sl-skriti, at most 200). A circuit's lap goes like a time trial (js/game.js finishQuali: a qualifying's new best lap, alone).
    - Nothing is sent before the player joins (state.on true, the join dialog's consent) and has a nickname; the server address (CFG.url) is set
      once the server is up: without it the world leaderboard is not available and the game shows nothing of it.
    ========================================================================= */
 const Svet = (function () {
   'use strict';
-  const STATE = 'tdgp-sl', QUEUE = 'tdgp-sl-vrsta', CACHE = 'tdgp-sl-cache';
+  const STATE = 'tdgp-sl', QUEUE = 'tdgp-sl-vrsta', CACHE = 'tdgp-sl-cache', HID = 'tdgp-sl-skriti', MAX_HID = 200;
   const APP = 'apex-racing', V = 1, MAX_Q = 20, Q_BYTES = 1.5e6, C_BYTES = 2e5, TIMEOUT = 5000, WAIT0 = 60e3, WAIT1 = 36e5;
   const KEY_RE = /^[a-z0-9][a-z0-9-]{0,47}@[a-z]{1,8}$/, ID_RE = /^[\w-]{12}$/;
   // the server's address (https://…, no slash at the end): empty till the server is up (docs/svetovna-lestvica.md, »Stanje«)
@@ -170,7 +172,8 @@ const Svet = (function () {
   }
   const board = (k, od, n) => KEY_RE.test(k) ? read('l|' + k + '|' + (od | 0), '/v1/lestvica?' + q({ kljuc: k, od: od | 0, n: n || 100 })) : Promise.resolve(null);
   async function place(k) { const id = state().id; return KEY_RE.test(k) && id ? read('m|' + k, '/v1/mesto?' + q({ kljuc: k, id })) : null; }
-  async function ghost(k, id) { try { return await call('GET', '/v1/duh?' + q({ kljuc: k, id })); } catch (_) { return null; } }
+  // a player's ghost of a key (the game's ghost JSON, js/game.js ghParse checks it): the Race ghost of the Leaderboard's World; null: none
+  async function ghost(k, id) { if (!KEY_RE.test(k) || !ID_RE.test(id)) return null; try { return await call('GET', '/v1/duh?' + q({ kljuc: k, id })); } catch (_) { return null; } }
   // a table kept, without asking the server (the menu's first look: nothing waits)
   const kept = (k) => { const c = cache('l|' + k + '|0'); return c && Object.assign(c, { old: true }); };
   const keptPlace = (k) => { const c = cache('m|' + k); return c && Object.assign(c, { old: true }); };
@@ -189,6 +192,13 @@ const Svet = (function () {
       return { ok: true, ime: state().ime, id: state().id, skrit: state().skrit };
     } catch (err) { return { ok: false, why: (err.j && err.j.razlog) || err.code || 'mreza', st: err.st || 0 }; }
   }
+  // the drivers the player hid on this device (Hide driver: their rows left out of the world's tables here, nothing sent), the newest last
+  function hidden() { const a = get(HID, []); return Array.isArray(a) ? a.filter(id => typeof id === 'string' && ID_RE.test(id)).slice(-MAX_HID) : []; }
+  function hide(id, on) {
+    if (!ID_RE.test(id)) return false;
+    const a = hidden().filter(x => x !== id); if (on !== false) a.push(id);
+    return put(HID, a.slice(-MAX_HID));
+  }
   async function report(id) { if (!ID_RE.test(id)) return false; try { await post('prijava', { id }); return true; } catch (_) { return false; } }
   async function mine() { try { return await post('moje', {}); } catch (_) { return null; } }
   // the player's data off the server (the runs, the records, the ghosts, the reports) and off this device (the queue, the cache): true when done
@@ -201,6 +211,6 @@ const Svet = (function () {
 
   function config(o) { cfg = Object.assign({}, cfg, o || {}); if ('url' in (o || {})) CFG.url = String(o.url || '').replace(/\/+$/, ''); mem = null; busy = null; }
 
-  return { CFG, STATE, QUEUE, CACHE, MAX_Q, TIMEOUT, config, avail, on, state, join, leave, add, flush, queue: () => queue().slice(), board, place, ghost, kept, keptPlace, nick, report, mine, erase };
+  return { CFG, STATE, QUEUE, CACHE, HID, MAX_Q, MAX_HID, TIMEOUT, config, avail, on, state, join, leave, add, flush, queue: () => queue().slice(), board, place, ghost, kept, keptPlace, nick, hidden, hide, report, mine, erase };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = Svet;
