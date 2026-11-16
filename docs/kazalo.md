@@ -216,6 +216,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
+| batangas | Batangas, Filipini | batangas | `js/world-batangas.js` na `js/world-rbring.js` (`API.rbLook.batangas`: tribune, table krajev, zastave, polja sladkornega trsa, rdeča prst) |
 | bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`) in `js/world-bathurst.js` (lastni deli: evkalipti `btGumGeo`, kenguruji `auRoos`; videz v `RB_LOOK` prek `API.rbLook`: tekstura pašnika `btGrassTex`, obrabljen rob ob asfaltu `edge`, usek pri 4. zavoju `cut` in breg nad njim `cutBank`) |
 | *beartooth* | *Beartooth, ZDA (test)* | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
 | *bigsur* | *Big Sur, ZDA (test)* | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
