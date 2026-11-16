@@ -1391,5 +1391,25 @@
    "tyremarks:MeshBasicMaterial": "6d7d8dcd",
    "roadwear:MeshLambertMaterial": "ad759754"
   }
+ },
+ "haivan": {
+  "meshes": 933,
+  "verts": 353966,
+  "instances": 28157,
+  "props": 33,
+  "crowd": 182,
+  "world": "b41cb94",
+  "propsHash": "624c8695",
+  "floor": "61e8e778/4704",
+  "groups": {
+   "-:MeshLambertMaterial": "59e56b4b",
+   "-:MeshPhongMaterial": "6a288998",
+   "-:MeshBasicMaterial": "de21c921",
+   "irFar:MeshLambertMaterial": "a5042f7",
+   "crowd:MeshLambertMaterial": "b04cdd58",
+   "ao:MeshBasicMaterial": "4e767c98",
+   "tyremarks:MeshBasicMaterial": "64c29179",
+   "roadwear:MeshLambertMaterial": "331d7170"
+  }
  }
 }
