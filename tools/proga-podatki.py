@@ -16,19 +16,24 @@
 #                  "water": 100, "rail": 200, "roads": 60, "grid": 150, "lamps": 30}
 #        osmStep   (neobvezno) velikost kosov OSM v stopinjah [dlat, dlon], privzeto [0.03, 0.025] (API: največ 50.000 točk na zahtevo)
 #   2. Python: numpy in pillow sta v seji; pip install --break-system-packages scipy rasterio
-#   3. python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]   (brez korakov: vsi trije)
+#   3. python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data] [cover]   (brez korakov: osm, route, data)
 #        RAW: mapa ZUNAJ repozitorija za surove prenose (npr. scratchpad seje): RAW/osm/ (kosi), RAW/<id>-osm.json, RAW/<id>-route.json,
 #        RAW/<id>-ground.npz (predpomnilnik tal). Korak data piše tools/<id>/<id>.json (opis vsakega ključa v njegovem "about") ter
-#        dem.png, far.png, lc.png, lu.png, chm.png. Ponovni zagon prenese samo, česar še ni v RAW.
+#        dem.png, far.png, lc.png, lu.png, chm.png, col.png. Ponovni zagon prenese samo, česar še ni v RAW.
+#        Korak cover (realizem, paket G: docs/realizem/paket-g.md) prebere že narejeni tools/<id>/<id>.json (črto in izhodišče) in mu
+#        doda samo ključ "cover" in mrežo col.png: deleže razredov ESA WorldCover v pasu ob cesti po odsekih, levo in desno, ter barve
+#        tal iz letnega mozaika Sentinel-2. Drugih ključev ne spremeni in OSM ne prenaša znova; korak data naredi isto sam.
 #   4. Preveri pot na sliki (npr. preprost izris `line` in `places`) in v viru o progi; popravi točke v config.json in ponovi route + data.
 #
 # Kaj nastane (podrobno v "about" izhoda): sredinska črta vsakih ~5 m (OSM, vogali zaobljeni), višine ceste (Copernicus DEM GLO-30, ki je
 # površinski model, brez krošenj Meta/WRI in stavb OSM; zglajene, strmine do MAXG, mostovi ravni), ceste poti po s, ovinki, stavbe, drevesa,
 # zidovi, obala, pečine, plaže, potoki, železnica, druge in stranske ceste, prehodi, luči, postajališča, mostovi, znamenitosti, kraji;
-# mreže: tla (20 m), površina od daleč (100 m, ±12 km), raba tal ESA WorldCover in OSM ter višina krošenj (10 m, ob cesti).
+# mreže: tla (20 m), površina od daleč (100 m, ±12 km), raba tal ESA WorldCover in OSM, višina krošenj in barve tal Sentinel-2 (10 m, ob
+# cesti); rastje v pasu ob cesti ("cover": deleži razredov in barve po odsekih, levo in desno).
 # Koordinate: metri, izhodišče = prva točka poti (štart), x proti vzhodu, z proti jugu (Geo iz maketa-menija/orodja/geo_lib.py, rot 0).
-# Viri: OSM API (api.openstreetmap.org; overpass-api.de je v oblačnih sejah blokiran), Copernicus DEM GLO-30, ESA WorldCover 2021 in
-# Meta/WRI višina krošenj na AWS (rasterio bere samo potrebne dele datotek). Licence so v "sources" izhoda (za README, »Zasluge«).
+# Viri: OSM API (api.openstreetmap.org; overpass-api.de je v oblačnih sejah blokiran), Copernicus DEM GLO-30, ESA WorldCover 2021 z
+# letnim mozaikom Sentinel-2 in Meta/WRI višina krošenj na AWS (rasterio bere samo potrebne dele datotek). Licence so v "sources"
+# izhoda (za README, »Zasluge«).
 import heapq, json, math, os, sys, time, urllib.error, urllib.request
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -202,6 +207,12 @@ def wc_urls(la0, lo0, la1, lo1):    # ESA WorldCover 2021, 3 x 3 degree tiles
         for lo in range(math.floor(lo0 / 3) * 3, math.floor((lo1 - 1e-9) / 3) * 3 + 1, 3):
             out.append('https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_%s%s_Map.tif' % (_ns(la, 2), _ew(lo, 3)))
     return out
+def s2_urls(la0, lo0, la1, lo1):    # ESA WorldCover's Sentinel-2 composite of 2021 (bands: red, green, blue, near infrared), 1 x 1 degree tiles named by their south-west corner
+    out = []
+    for la in range(math.floor(la0), math.floor(la1 - 1e-9) + 1):
+        for lo in range(math.floor(lo0), math.floor(lo1 - 1e-9) + 1):
+            out.append('https://esa-worldcover-s2.s3.eu-central-1.amazonaws.com/rgbnir/2021/%s/ESA_WorldCover_10m_2021_v200_%s%s_S2RGBNIR.tif' % (_ns(la, 2), _ns(la, 2), _ew(lo, 3)))
+    return out
 def chm_urls(la0, lo0, la1, lo1):   # Meta / WRI canopy height, web mercator zoom-9 tiles named by their quadkey
     def txy(lat, lon):
         n = 512; x = int((lon + 180) / 360 * n); r = math.radians(lat); y = int((1 - math.log(math.tan(r) + 1 / math.cos(r)) / math.pi) / 2 * n); return x, y
@@ -212,7 +223,7 @@ def chm_urls(la0, lo0, la1, lo1):   # Meta / WRI canopy height, web mercator zoo
             out.append('https://dataforgood-fb-data.s3.amazonaws.com/forests/v1/alsgedi_global_v6_float/chm/%s.tif' % q)
     return out
 
-def read_window(url, lat0, lon0, lat1, lon1, out_shape=None, resampling='nearest'):
+def read_window(url, lat0, lon0, lat1, lon1, out_shape=None, resampling='nearest', bands=1):
     import rasterio
     from rasterio.windows import from_bounds
     from rasterio.enums import Resampling
@@ -223,12 +234,12 @@ def read_window(url, lat0, lon0, lat1, lon1, out_shape=None, resampling='nearest
         win = from_bounds(*b, src.transform).round_offsets().round_lengths()
         if out_shape == 'quarter': out_shape = (int(win.height // 4), int(win.width // 4))
         elif out_shape == 'third': out_shape = (int(win.height // 3), int(win.width // 3))
-        a = src.read(1, window=win, out_shape=out_shape, resampling=getattr(Resampling, resampling))
+        a = src.read(bands, window=win, out_shape=out_shape, resampling=getattr(Resampling, resampling))   # (bands: one number, or a list: an array of [band, row, col])
         T = src.window_transform(win)
         if out_shape: T = T * T.scale(win.width / out_shape[1], win.height / out_shape[0])
         return a, T, src.crs.to_epsg()
 
-def read_mosaic(urls, lat0, lon0, lat1, lon1, out_shape=None, resampling='nearest', fill=0):
+def read_mosaic(urls, lat0, lon0, lat1, lon1, out_shape=None, resampling='nearest', fill=0, bands=1):
     """A window of one raster, or of several tiles merged (rasterio.merge; tiles that do not exist, e.g. the open sea, left out)."""
     import rasterio
     have = []
@@ -237,7 +248,7 @@ def read_mosaic(urls, lat0, lon0, lat1, lon1, out_shape=None, resampling='neares
             with rasterio.open('/vsicurl/' + u): have.append(u)
         except Exception: print('  (no tile: %s)' % u.rsplit('/', 1)[-1])
     if not have: raise RuntimeError('no tile over the box')
-    if len(have) == 1: return read_window(have[0], lat0, lon0, lat1, lon1, out_shape, resampling)
+    if len(have) == 1: return read_window(have[0], lat0, lon0, lat1, lon1, out_shape, resampling, bands)
     from rasterio.merge import merge
     from rasterio.enums import Resampling
     from rasterio.warp import transform_bounds
@@ -246,8 +257,9 @@ def read_mosaic(urls, lat0, lon0, lat1, lon1, out_shape=None, resampling='neares
         epsg = srcs[0].crs.to_epsg(); b = (lon0, lat0, lon1, lat1)
         if epsg != 4326: b = transform_bounds('EPSG:4326', srcs[0].crs, *b)
         f = 4 if out_shape == 'quarter' else 3 if out_shape == 'third' else 1
-        a, T = merge(srcs, bounds=b, res=(abs(srcs[0].res[0]) * f, abs(srcs[0].res[1]) * f), resampling=getattr(Resampling, resampling), nodata=fill)
-        return a[0], T, epsg
+        many = isinstance(bands, (list, tuple))
+        a, T = merge(srcs, bounds=b, res=(abs(srcs[0].res[0]) * f, abs(srcs[0].res[1]) * f), resampling=getattr(Resampling, resampling), nodata=fill, indexes=list(bands) if many else [bands])
+        return (a if many else a[0]), T, epsg
     finally:
         for s in srcs: s.close()
 
@@ -532,6 +544,97 @@ def build_grids(F, line, dsm, gnd, T, D, out):
     vals, cnt = np.unique(lu[near], return_counts=True); print('lu near:', dict(zip(vals.tolist(), cnt.tolist())))
     print('chm near: trees (>3 m) in %.0f %% of the cells within %d m, mean height %.1f m' % (100 * (ch[near] > 3).mean(), NEAR, ch[near][ch[near] > 3].mean()))
     return info
+
+# ================= the land cover beside the road (realism, package G: docs/realizem/paket-g.md) =================
+COVER = {0: 'no data', 10: 'trees', 20: 'shrubs', 30: 'grass', 40: 'crops', 50: 'built-up', 60: 'bare', 70: 'snow', 80: 'water', 90: 'wetland', 95: 'mangroves', 100: 'moss'}
+COVER_OPEN = (20, 30, 40, 60, 90, 100)   # the open ground: its colour is the ground's (over class 10 the satellite sees the crowns)
+COVER_BAND = (8.0, 60.0)                 # m from the centre line: what the camera behind the car sees, without the road itself
+COVER_COL = 15.0                         # the colours from this far out (a 10 m pixel nearer the road holds some asphalt)
+COVER_STEP = 50.0                        # a section along the road (m; the lap or the road is divided into equal sections of about this length)
+S2_SOURCE = 'ESA WorldCover Sentinel-2 composite 2021 (© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium; CC BY 4.0)'
+
+def s2_colour(dn):
+    """Sentinel-2 reflectance (the composite's numbers: reflectance * 10000) into 8 bits: 255 * reflectance ^ (1 / 2.2). No gain and no
+    normalisation: the same everywhere, so that tracks stay comparable (the game sets the tone)."""
+    return np.clip(np.round(255.0 * np.clip(np.asarray(dn, float) / 10000.0, 0, 1) ** (1 / 2.2)), 0, 255).astype(np.uint8)
+
+def hex_colour(dn):
+    return '%02x%02x%02x' % tuple(int(v) for v in s2_colour(dn))
+
+def cover_about():
+    return ('the land cover of the band %d-%d m from the centre line (ESA WorldCover 2021 on a 5 m grid; every cell belongs to its nearest point of line): step = the length of a section (m; the %s in equal sections); '
+            'classes = the WorldCover classes that occur (10 trees, 20 shrubs, 30 grass, 40 crops, 50 built-up, 60 bare / sparse, 70 snow / ice, 80 water, 90 wetland, 95 mangroves, 100 moss / lichen), names; '
+            'share = %% of the whole band by class; colour = the median colour of each class (\'\' = under 20 cells); left / right (of the travel direction), one entry for every section from the start line: '
+            'share = [%% by class], open = the median colour of the open ground (classes %s), canopy = of the trees (class 10) (\'\' = under 6 cells in the section). '
+            'The colours: \'rrggbb\', 255 * reflectance ^ (1 / 2.2) of the Sentinel-2 composite of 2021 (the median of the year), from %d m out (a pixel nearer the road holds asphalt); no gain and no normalisation, the game sets the tone'
+            % (COVER_BAND[0], COVER_BAND[1], 'lap' if C['closed'] else 'road', ', '.join(str(v) for v in COVER_OPEN), COVER_COL))
+
+def build_cover(F, line, step, out):
+    """The band beside the road on a 5 m grid: ESA WorldCover's class and the Sentinel-2 colour of every cell, each cell with the s and the
+    side of its nearest point of the centre line; from them the shares and the colours by sections and sides (see cover_about). Also col.png:
+    the colours on the grid of lc.png."""
+    NEAR = C['dist']['grid']; lo, hi = COVER_BAND
+    cg = 10.0; gx0, gz0, gnx, gnz = grid_box(line, NEAR + 20, cg); GX, GZ, glat, glon = cell_centres(F, gx0, gz0, gnx, gnz, cg)
+    gb = (float(glat.min()) - 0.002, float(glon.min()) - 0.002, float(glat.max()) + 0.002, float(glon.max()) + 0.002)
+    wc, Tw, ew = read_mosaic(wc_urls(*gb), *gb)
+    s2, Ts, es = read_mosaic(s2_urls(*gb), *gb, bands=[1, 2, 3]); have = s2.min(0) > 0
+    # col.png: the colours on the 10 m grid of lc.png
+    near = road_distance(line, GX, GZ) <= NEAR
+    img = s2_colour(np.stack([sample_grid(s2[i], Ts, es, glat.ravel(), glon.ravel()).reshape(gnz, gnx) for i in range(3)], 2)); img[~near] = 0
+    Image.fromarray(img, 'RGB').save(os.path.join(out, 'col.png'), optimize=True)
+    grid = dict(file='col.png', x0=gx0, z0=gz0, nx=gnx, nz=gnz, cell=cg, enc='RGB, 8 bits a channel: 255 * reflectance ^ (1 / 2.2) of the Sentinel-2 composite of 2021 (red, green, blue; bilinear), no gain; 0 = farther than %d m from the road' % NEAR)
+    # the band: 5 m cells, each with its section and side
+    A = Along(line, step); L = A.L
+    c = 5.0; x0, z0, nx, nz = grid_box(line, hi + c, c)
+    X, Z = np.meshgrid(x0 + (np.arange(nx) + 0.5) * c, z0 + (np.arange(nz) + 0.5) * c); pts = np.stack([X.ravel(), Z.ravel()], 1)
+    dd, _ = A.kd.query(pts, distance_upper_bound=hi + step); pts = pts[np.isfinite(dd)]
+    s, d = A.query(pts); m = (np.abs(d) >= lo) & (np.abs(d) <= hi); pts, s, d = pts[m], s[m], d[m]
+    lat, lon = F.ll(pts[:, 0], pts[:, 1])
+    cls = sample_grid(wc, Tw, ew, lat, lon, order=0).astype(np.int32)
+    dn = np.stack([sample_grid(s2[i], Ts, es, lat, lon) for i in range(3)], 1)
+    ok = (sample_grid(have, Ts, es, lat, lon, order=0) > 0.5) & (np.abs(d) >= COVER_COL)
+    n = max(1, int(round(L / COVER_STEP))); sec = np.minimum((s / (L / n)).astype(int), n - 1); side = (d > 0).astype(int)   # side: 0 left, 1 right
+    codes = [int(v) for v in np.unique(cls)]; ci = np.searchsorted(codes, cls)
+    cnt = np.zeros((2, n, len(codes))); np.add.at(cnt, (side, sec, ci), 1)
+    pct = np.round(100 * cnt / np.maximum(cnt.sum(2, keepdims=True), 1)).astype(int)
+    share = [r1(100 * v / cnt.sum()) for v in cnt.sum((0, 1))]
+    colour = [hex_colour(np.median(dn[ok & (cls == v)], 0)) if (ok & (cls == v)).sum() >= 20 else '' for v in codes]
+    def by_section(mask):   # the median colour of the cells of mask in every section, left and right
+        key = (side * n + sec)[mask]; v = dn[mask]; o = np.argsort(key, kind='stable'); key = key[o]; v = v[o]
+        cut = np.searchsorted(key, np.arange(2 * n + 1))
+        res = [hex_colour(np.median(v[cut[k]:cut[k + 1]], 0)) if cut[k + 1] - cut[k] >= 6 else '' for k in range(2 * n)]
+        return res[:n], res[n:]
+    opn = by_section(ok & np.isin(cls, COVER_OPEN)); can = by_section(ok & (cls == 10))
+    cover = {'step': round(L / n, 3), 'band': [lo, hi], 'colourFrom': COVER_COL, 'classes': codes, 'names': [COVER.get(v, str(v)) for v in codes], 'share': share, 'colour': colour,
+             'left': {'share': pct[0].tolist(), 'open': opn[0], 'canopy': can[0]}, 'right': {'share': pct[1].tolist(), 'open': opn[1], 'canopy': can[1]}}
+    print('cover: %d sections of %.1f m, the band %d-%d m (%d cells); ' % (n, L / n, lo, hi, len(cls)) + ', '.join('%s %.1f %% %s' % (COVER.get(v, v), p, h or '-') for v, p, h in zip(codes, share, colour)))
+    return cover, grid
+
+def write_data(path, data):   # one key a line
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('{\n' + ',\n'.join(json.dumps(k) + ': ' + json.dumps(v, ensure_ascii=False, separators=(',', ':')) for k, v in data.items()) + '\n}\n')
+
+def step_cover():
+    """The land cover of the band for a track that already has its tools/<id>/<id>.json (the data step): reads its line and origin, adds the
+    key 'cover' and the grid col.png. The other keys stay as they are (nothing of OSM is downloaded again)."""
+    path = os.path.join(C['_dir'], C['id'] + '.json'); data = json.load(open(path, encoding='utf-8'))
+    C['closed'] = data['closed']; F = Frame(data['lat0'], data['lon0']); line = np.array(data['line'], float).reshape(-1, 2)
+    cover, grid = build_cover(F, line, data['step'], C['_dir'])
+    out = {}
+    for k, v in data.items():
+        if k == 'cover': continue
+        if k == 'about':
+            v = dict(v); v.pop('cover', None); a = {}
+            for ka, va in v.items():
+                if ka == 'sources' and 'Sentinel-2' not in va: va = va + '; ' + S2_SOURCE
+                a[ka] = va
+                if ka == 'grids': a['cover'] = cover_about()
+            v = a
+        if k == 'grids': v = dict(v, col=grid)
+        out[k] = v
+        if k == 'grids': out['cover'] = cover
+    write_data(path, out)
+    print('wrote', path, os.path.getsize(path) // 1024, 'KB (cover added); col.png %d KB' % (os.path.getsize(os.path.join(C['_dir'], 'col.png')) // 1024))
 
 # ================= vectors near the road (OSM) =================
 # only geographic or descriptive labels go into the files (OSM's own names stay in RAW: many streets and places are named after people):
@@ -829,6 +932,7 @@ def step_data(raw):
         a = float(sN[i0]); b = float(sN[i1]) if i1 < len(sN) else L
         ways.append([r1(a), r1(b), nm if nm in C['geoRoads'] else '', hw, tg.get('lanes', ''), tg.get('width', ''), tg.get('oneway', ''), tg.get('surface', ''), tg.get('maxspeed', ''), 1 if tg.get('bridge') else 0])
     step = L / len(line) if closed else L / (len(line) - 1)
+    cover, grids['col'] = build_cover(F, np.array(flat(line, 2), float).reshape(-1, 2), round(step, 4), out_dir)   # (the line and the step as written below: the cover step reads them back and gives the same)
     about = {
         'track': C.get('about', C['id']),
         'frame': 'metres; origin = the start line (lat0, lon0: the first point of the route); x east, z south; x = (lon - lon0) * N cos(lat0), z = -(lat - lat0) * M (WGS84 radii at lat0)',
@@ -849,25 +953,25 @@ def step_data(raw):
         'onRoad': '[s, kind (crossing, traffic_signals, stop, give_way, calming), detail]', 'lamps': '[x, z]: street lamps within %d m' % C['dist']['lamps'], 'stops': '[s, side, distance, shelter]: bus stops within %d m' % C['dist']['lamps'],
         'bridges': '[s0, s1]: the route on a bridge', 'over': '[s, rail / road, kind]: a railway or road on a bridge over the route',
         'landmarks': '[label (game, Slovenian), English, kind, s, d, [x, z, ...] outline]: s and d of its nearest point', 'places': '[label, x, z, s, d of OSM\'s place from the road]: the HUD\'s places',
-        'grids': 'PNG files next to this one (see each entry)',
-        'sources': '© OpenStreetMap contributors (ODbL 1.0; the derived data here under the ODbL 1.0), downloaded %s; Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0)' % R.get('date', ''),
+        'grids': 'PNG files next to this one (see each entry)', 'cover': cover_about(),
+        'sources': '© OpenStreetMap contributors (ODbL 1.0; the derived data here under the ODbL 1.0), downloaded %s; Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0)' % R.get('date', '') + '; ' + S2_SOURCE,
         'tools': 'tools/proga-podatki.py with %s/config.json (see the tool\'s header)' % os.path.relpath(out_dir, os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     }
     data = {'about': about, 'lat0': round(F.lat0, 7), 'lon0': round(F.lon0, 7), 'closed': closed, 'length': r1(L, 2), 'step': round(step, 4),
-            'line': flat(line, 2), 'h': [r1(v) for v in h], 'hRaw': [r1(v) for v in h0], 'ways': ways, 'bends': bends(line), 'grids': grids}
+            'line': flat(line, 2), 'h': [r1(v) for v in h], 'hRaw': [r1(v) for v in h0], 'ways': ways, 'bends': bends(line), 'grids': grids, 'cover': cover}
     data.update(vec)
     path = os.path.join(out_dir, C['id'] + '.json')
-    with open(path, 'w') as f:
-        f.write('{\n' + ',\n'.join(json.dumps(k) + ': ' + json.dumps(v, ensure_ascii=False, separators=(',', ':')) for k, v in data.items()) + '\n}\n')
+    write_data(path, data)
     print('wrote', path, os.path.getsize(path) // 1024, 'KB; grids:', ', '.join('%s %d KB' % (g['file'], os.path.getsize(os.path.join(out_dir, g['file'])) // 1024) for g in grids.values()))
 
 def main():
-    if len(sys.argv) < 3: print(__doc__ or 'usage: python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]'); sys.exit(2)
+    if len(sys.argv) < 3: print(__doc__ or 'usage: python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data] [cover]'); sys.exit(2)
     C.update(load_config(sys.argv[1])); raw = sys.argv[2]; os.makedirs(raw, exist_ok=True)
-    steps = [a for a in sys.argv[3:] if a in ('osm', 'route', 'data')] or ['osm', 'route', 'data']
+    steps = [a for a in sys.argv[3:] if a in ('osm', 'route', 'data', 'cover')] or ['osm', 'route', 'data']
     if 'osm' in steps: step_osm(raw)
     if 'route' in steps: step_route(raw)
     if 'data' in steps: step_data(raw)
+    elif 'cover' in steps: step_cover()   # (the data step makes the cover itself)
 
 if __name__ == '__main__':
     main()

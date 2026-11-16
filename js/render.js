@@ -3446,6 +3446,7 @@ const Render = (function () {
     skids.onWorld(world);
     if (!world.farClip && camera.far !== 700) { camera.far = 700; camera.updateProjectionMatrix(); }
     { const d = track.def; if (d && d.look && d.theme && !THEMES[d.theme]) { THEMES[d.theme] = d.look; if (d.look.split) SPLIT[d.theme] = d.look.split; } }   // (a track with its own look in its file: the short roads of docs/gorske-proge.md)
+    lookDef = track.def || null;   // (the light by the latitude of a real track with measurements: js/world-rastje.js, in applyTheme)
     applyTheme((track.def && track.def.theme) || 'lake'); wet = wetW = -1;   // (the weather again on the new world's road)
     curTrack = track; seasonWorld(); floodlights(); pitLights(); litWindows(); asphaltWorld();   // (the season and the time of day on the new world; the asphalt's sheen)
     if (dryLn) { scene.remove(dryLn); dryLn.geometry.dispose(); dryLn.material.dispose(); dryLn = null; }
@@ -3774,8 +3775,9 @@ const Render = (function () {
     return o;
   }
   const _bl = _st();
+  let lookDef = null;
   function applyTheme(id) {
-    const t = THEMES[id] || THEMES.lake, r = Math.max(0, wet); themeId = id;
+    const t0 = THEMES[id] || THEMES.lake, t = (World.rastje && World.rastje.look(t0, lookDef)) || t0, r = Math.max(0, wet); themeId = id;
     // rain: an overcast sky (grey haze, a weak sun, more light from the whole sky), a cooler, paler grade
     const mix = (hex, to, k) => _c1.setHex(hex).lerp(_c2.setHex(to), k * r), [D, K, N] = TD, s0 = t.sunOff || [-80, 96, 70];   // (low evening sun where the theme asks for it: long shadows)
     D.fog.copy(mix(t.fog, 0x949ea7, 0.75)); D.sky.copy(mix(t.sky, 0xaab4bd, 0.7)); D.gnd.copy(mix(t.gnd, 0x3a4032, 0.5)); D.sunC.copy(mix(t.sun, 0xe8eef4, 0.8));

@@ -27,3 +27,31 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Pravno**: cesta je znana iz televizije; v igri in opisih ni nobene omembe oddaje ali njenih voditeljev. Samo zemljepisna imena (Bâlea, Transfăgărășan, Făgăraș, Valea Bâlii, Lacul Bâlea).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py balea --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
+
+## Realizem G: rastje po meritvah
+
+Paket G (`docs/realizem.md`, »G«; `docs/realizem/paket-g.md`) samo na Bâlei (Matejeva odločitev 15. 11. 2026 ob 15.45, točka 2b, in ob 19.00). Trava, ruševje in listje dobijo odtenek izmerjene pokrovnosti; nobena rastlina ni dodana ali premaknjena.
+
+**Meritev** (ESA WorldCover 2021 in mozaik Sentinel-2 2021, pas 8–60 m od roba ceste, 12961 celic po 10 m; barve so mediane celic od 15 m naprej):
+
+| razred | delež | barva |
+|---|---|---|
+| trava (planinski pašniki) | 88,9 % | `#4f5b4d` |
+| drevesa (smreka, ruševje) | 4,7 % | `#353e37` |
+| pozidano (koče, parkirišče) | 2,6 % | `#737169` |
+| golo (skala, melišče) | 1,7 % | `#6f6f68` |
+| mah in lišaji | 1,6 % | `#5e6158` |
+| voda | 0,4 % | – |
+
+**Okvir:** težišče vodnih celic WorldCover je pri x −87, z 900 m od starta, na jezeru Bâlea v igri, zato je okvir pravilen brez zamika.
+
+**Podnebje:** `ET` (alpska tundra nad gozdno mejo, cesta je večinoma nad 1500 m). To je ocena po višini, ne podatek iz karte Köppen-Geiger. Ker `ET` v `World.rastje.PODNEBJA` nima dreves, ima vnos svoje vrste: smreka, ruševje, brin.
+
+**V igri** (`js/world-prelaz.js`, en ločen blok; graditelj prelazov uporablja samo Bâlea):
+- Tla: množilnik ×0,98/1,00/1,09 (moč 0,35, svetlost ostane). Velja samo za travo in preproge ruševja v barvi terena, ne za tla ob kočah, melišča, skalo ali sneg. Enak množilnik dobijo zelena oglišča šopov trave.
+- Listje: ×1,12/0,97/1,14 na zelenih ogliščih smrek in ruševja (`World.rastje.listje`).
+- Trava je malo manj rumena, modri kanal je v povprečju +3 do +5 (od 255). Cvetje, skale, kamni, daljni teren in cesta ostanejo enaki.
+
+**Obremenitev** je prej in potem enaka: 156 klicev na sliko (največ 187) in 362 tisoč oglišč (največ 436 tisoč). Število mrež, oglišč in primerkov v referenci sveta je enako (1300 / 652011 / 31948); spremenil se je samo prstni odtis barv.
+
+**Ostane:** stavbe iz #699 sprememba ne zadeva (samo barve, nobene nove postavitve). Vrstico Bâlea v »Zaslugah« (`README.md`, Realizem G) doda seja, ki ureja skupne datoteke.
