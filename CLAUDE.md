@@ -92,7 +92,7 @@ Kratka pravila. Podrobnosti, citati odločitev uporabnika, datumi, številke kom
 ## Pred izidom: NEUPORABNO
 - Kar ne gre v 1.0 (testne proge, pokala »Domači pokal« in »Kratke proge«, vse misije, nova mapa), se pred izidom skrije za gumb **NEUPORABNO**; koda in testi ostanejo. Orodje za napake in `?denar` se skrijeta ob zamrznitvi 23. 12.
 - Privzeta proga postane prva prava proga; avtošola gre z Jezera na pravo kratko progo (izbere seja teme in javi).
-- **Prednost zdaj: fizika (samo trki) in grafika** na računih biketraveler in jure.kopac26; partyslo dela nove proge, nato grafiko (`docs/realizem.md`, »Čas in vrsta«).
+- **Prednost zdaj: fizika (samo trki) in grafika** na računih biketraveler in jure.kopac26; partyslo dela grafiko že zdaj (Realizem na pravih progah brez PR; od 16. 11.), novih prog ne začne brez potrjenega seznama (`docs/realizem.md`, »Čas in vrsta«).
 
 ## Posebne misije (`docs/misije.md`)
 - **Nova mapa in misije** (z garažami misij in menijem NEW VERSION · TEST 1) gredo v različico 2.0; delo na njih je **ustavljeno**, dokler uporabnik ne reče drugače. Dovoljen je samo najmanjši popravek, da testi ostanejo zeleni; če skupna sprememba pokvari test nove mape ali misij, ga popravi seja, ki jo je naredila. Novo delo na njih je v vrsti zadnje, za progami.
