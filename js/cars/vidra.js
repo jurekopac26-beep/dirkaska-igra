@@ -68,11 +68,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       zavore: { s: 1 },
       matice: { k: 5, r: 0.2 },
       // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet and the boot deck (none over the glass roof), the side ones
-      // between the arches; the decals on the doors beside the number, the fenders ahead of the arches and the quarters, on the bonnet;
-      // the sun strip on the windscreen's top; the calipers; the charge flap on the right rear quarter (none stock)
+      // between the arches; the decals on the doors beside the number, the fenders ahead of the arches and the quarters, on the bonnet
+      // (from 1.3 on: +300 triangles); the sun strip on the windscreen's top; the calipers; the charge flap on the right rear quarter
+      // (none stock)
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.24, 0.38], x: [[1.06, 2.43], [-2.25, -2.06]], sx: [-1.18, 1.1] },
-      nalepke: { side: [[0.45, 0.97], [-0.45, 0.05], [1.92, 2.18], [-1.05, -0.65]], y: [0.48, 0.86], hood: { x: [1.15, 2.13], z: [0.26, 0.46] } },
+      nalepke: { side: [[0.45, 0.97], [-0.45, 0.05], [1.92, 2.18], [-1.05, -0.65]], y: [0.48, 0.86], hood: { x: [1.3, 2.13], z: [0.26, 0.46] } },
       soncni_pas: { x: [0.05, 0.19] }, zamasek: { x: -1.08, y: 0.83, z: 0.965, r: 0.045 },
       celjusti: { r: [0.085, 0.16], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js: no air filter and no turbo, the electric's) the 12 V battery on the bay's floor ahead of

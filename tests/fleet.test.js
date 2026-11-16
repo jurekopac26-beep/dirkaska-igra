@@ -42,7 +42,7 @@ const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen
   'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // patch files of the 11 (docs/avti-kolibri.md, skupina starejsi): js/cars/<file> with patch defs only, of these ids, after the roster's files
-const PATCH_FILES = { 'stari.js': ['kaze', 'vortex', 'pico', 'strega', 'muscle', 'rally', 'truck', 'ev'] }, NPATCH = Object.values(PATCH_FILES).reduce((a, l) => a + l.length, 0);
+const PATCH_FILES = { 'stari.js': ['kaze', 'vortex', 'pico', 'strega', 'muscle', 'rally', 'truck', 'ev', 'formula', 'lm'] }, NPATCH = Object.values(PATCH_FILES).reduce((a, l) => a + l.length, 0);
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
 // the road cars, 18.3 formula, 19.9 lm): each category's own members inside it, widened for what the category adds (a 38 kW micro

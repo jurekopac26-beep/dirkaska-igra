@@ -24,12 +24,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     price: 75000, pk: 'open', field: ['vran'],
     snd: { kind: 'v8', hz: 0.85, loud: 1.3 },
     expect: { t100: [2.8, 3.15], vmax: [192, 208], latG: [2.05, 2.15], d100: [23.7, 25.5] },   // (measured 2.93 / 200 / 2.10 / 24.6)
-    partNames: { tailgate: 'tailgate', spare: 'spare wheel', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
-    // the closed car's set (no boot lid: the tailgate in its place) and its own: the tailgate with the rear window, the spare on it, each lamp
+    partNames: { tailgate: 'tailgate', headL: 'left head lamp', headR: 'right head lamp', tailL: 'left tail lamp', tailR: 'right tail lamp' },
+    // the closed car's set (no boot lid: the tailgate in its place) and its own: the tailgate with the rear window and the spare, each lamp
     parts: { set: 'car', ht: 2.0, y0: 0.62, drop: ['trunk'],
       extra: {
-        tailgate: { z: 1, th: 0.78, m: 14, rW: 0.42, h: 0.13, lx: -0.9, lz: 0, y: 1.2 },   // (with the rear window; the spare wheel is on it)
-        spare: { z: 1, th: 1, m: 14, r: 0.45, h: 0.28, lx: -0.935, lz: 0, y: 0.98, on: 'tailgate', spare: 1 },   // (Core's spare: it rocks from 50 % of the damage, off at 80 %; with the gate)
+        tailgate: { z: 1, th: 0.78, m: 14, rW: 0.42, h: 0.13, lx: -0.9, lz: 0, y: 1.2 },   // (with the rear window and the spare wheel on it)
         headL: { z: 0, th: 0.42, corner: 0, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: 0.94, lz: -0.58, y: 0.99 },
         headR: { z: 0, th: 0.42, corner: 1, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: 0.94, lz: 0.58, y: 0.99 },
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.15, h: 0.05, lx: -0.875, lz: -0.69, y: 0.95 },
@@ -54,7 +53,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       // bumper's top), the LED bar low on the bumper's face, the roof bar in the stock light bar's place, the pod over the grille
       aero: { xf: 2.42, xr: -2.222, w: 0.93, yf: 0.47, yr: 0.43, ws: 1.1, canY: 0.52, partF: 'bumperF', partR: 'bumperR' },
       hauba: { x0: 0.82, x1: 2.16, w: 0.7, rel: true },
-      maska: { x: 2.262, y0: 0.9, lean: 0, yc: 0.9, w: 0.56, h: 0.3, part: 'body' },
+      maska: { x: 2.262, y0: 0.9, lean: 0, yc: 0.9, w: 0.56, h: 0.3, comb: 1.1, part: 'body' },   // (the honeycomb's cells 10 % up: +300 triangles)
       zmigavci: { front: { x: 2.26, y: 0.84, z: 0.79, w: 0.08, h: 0.05, parts: ['fenderL', 'fenderR'] }, side: { x: 1.95, y: 1.0, z: 0.93, hosts: ['fenderL', 'fenderR'] },
         rear: { x: -2.222, y: 0.5, z: 0.78, part: 'bumperR' }, mirror: { x: 0.7555, y: 1.33, z: 0.98, w: 0.07, parts: ['mirrorL', 'mirrorR'] } },
       relijske_luci: { bumper: [2.412, 0.6, 0.38], nose: [2.237, 0.92], foot: 0.69, feet: 0.5, intake: [2.42, 0.53, 1.2, 0.12], roof: [0.425, 0.7], pod: [2.245, 0.76, 1.08, 0.45], part: 'bumperF' },
@@ -80,11 +79,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         frame: [-0.12, -0.07, 0.94, 0.99], rub: 0.84, crease: [0.76, 1.0], rubSide: true, lexOut: -0.002 },
       zavore: { s: 1 }, matice: { k: 6, r: 0.2 },
       // (sklop 3 · barve, js/deli/barve.js) the stripes over the bonnet outboard of the scoop (the roof in the stripe colour: none), along
-      // the sides between the flares; the decals on the doors and the front fenders ahead of the flares, on the bonnet outboard of the
-      // scoop, on the roof; the sun strip under the windscreen's header; the fuel cap on the right rear quarter over the flare
+      // the sides between the flares; the decals on the doors behind the windscreen's foot (+300 triangles, tests/deli.test.js) and the
+      // front fenders ahead of the flares, on the bonnet outboard of the scoop, on the roof; the sun strip under the windscreen's header;
+      // the fuel cap on the right rear quarter over the flare
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.42, 0.56], x: [[0.82, 2.2]], sx: [-0.88, 0.78], dy: 0.34 },
-      nalepke: { side: [[-0.08, 0.7], [1.92, 2.2], [-0.9, -0.18]], y: [0.86, 1.16], hood: { x: [1.05, 2.1], z: [0.45, 0.82] }, roof: { x: [-1.9, 0.25] } },
+      nalepke: { side: [[-0.08, 0.5], [1.92, 2.2], [-0.9, -0.18]], y: [0.86, 1.16], hood: { x: [1.05, 2.1], z: [0.45, 0.82] }, roof: { x: [-1.9, 0.25] } },
       soncni_pas: { x: [0.535, 0.6] }, zamasek: { x: -1.11, y: 1.13, z: 0.93, r: 0.045 },
       celjusti: { r: [0.11, 0.19], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) the V8's bay under the bonnet: the filter against the block's left side, the turbo on
@@ -190,15 +190,15 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
           K.box(-2.16, 0.42, 0, 0.12, 0.16, 1.8, 0, DK, null, true);
           if (!VK) for (const sd of [-1, 1]) K.rect(-2.222, 0.46, sd * 0.62, 0.05, 0.08, RED, { dir: '-x' });
         }, { hinge: [[-2.12, 0.42, -0.85], [-2.12, 0.42, 0.85]] });
-        // ---- the tailgate (hinged on its left): the rear window, its handle; the spare wheel low on its carrier, a part of its own on the
-        //      gate (parts.extra.spare, on: 'tailgate'): it swings open and leaves with the gate, or by itself (Core's spare) ----
+        // ---- the tailgate (hinged on its left): the rear window, its handle; the spare wheel low on its carrier (with
+        //      it, or by itself: the sub-range 'spare') ----
         K.part('tailgate', () => {
           K.rect(-2.103, 1.64, 0, 1.2, 0.4, G, { dir: '-x' });
           K.rect(-2.102, 1.1, 0.62, 0.12, 0.04, B, { dir: '-x' });
         }, { hinge: [[-2.1, 0.72, -0.86], [-2.1, 1.85, -0.86]] });
-        K.part('spare', () => {
+        K.part('tailgate', () => {
           K.tyre(-2.245, 0.98, 0, { axis: 'x', face: -1, w: 0.28 });
-        });
+        }, { sub: 'spare' });
         // ---- the rock sliders under the doors, the rear axle under the short tail (in sight from behind) ----
         K.part('body', () => {
           for (const sd of [-1, 1]) K.bar([-0.96, 0.56, sd * 0.97], [0.76, 0.56, sd * 0.97], 0.035, T, { n: 4 });

@@ -96,9 +96,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         eye: { x: 2.12, y: 2.27, near: 0.25, tilt: 0.1, style: 'closed' },   // (high up behind the windscreen)
         decalX: 1.5, decalY: 2.895, decalRz: -0.14, decalS: 1.25, decalPart: 'deflector',   // (the start number on the deflector's flat top)
         engine: [2.05, 1.2], crush: { x0: 0.72, x1: 2.58, z: 1.12 }, cage: true },     // (the engine under the cab; only the cab's roof crushes)
-      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 64)
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details and the driver at the end of build, the tyres in 48: its rims' nuts within the parts' 850)
       budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cabin, K.cab's pieces: the inner block over a car's 800 / 1200; drawn only once a door opens, a pane breaks or a part is off)
-      wheels: { style: 'truck', w: 0.34, wR: 0.36, gap: 0.06, rim: [0.84, 0.85, 0.87], seg: 32, segHi: 64 },
+      wheels: { style: 'truck', w: 0.34, wR: 0.36, gap: 0.06, rim: [0.84, 0.85, 0.87], segHi: 32 },
       regions: 'none',
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, D = [0.16, 0.16, 0.17], CH = K.chrome, G = K.GLASS, FRM = [0.2, 0.2, 0.22];

@@ -111,6 +111,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         engine: [1.72, 2.3], crush: { x0: -0.4, x1: 0.5, z: 0.98 } },          // (the fire from the blower's foot; only the cab's roof crushes)
       wheels: { style: 'monster', w: 0.9, gap: 0.08, rimK: 0.44, rim: [0.74, 0.75, 0.79] },
       regions: 'none',
+      hi: true,   // (Nastavitve · Detajli avtov: Visoki: the small details at the end of build, the driver's legs)
+      budget: { inner: 1400 }, budgetHi: { inner: 1750 },   // (its cab, as KOLIBRI's: the inner block over a car's 800 / 1200; drawn only once a door opens or a part is off)
       build(K) {
         const P = K.paint, S = K.strp, B = K.black, G = K.GLASS, CH = K.chrome, D = [0.11, 0.11, 0.115], CHS = K.shade(S, 0.62), ALU = [0.7, 0.71, 0.74],
           FLR = K.shade(P, 0.8), SEAT = [0.1, 0.1, 0.1], LINE = K.shade(P, 0.4);
@@ -264,8 +266,31 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         K.cage([[[0.82, 1.34, -0.86], [0.82, 2.2, -0.88]], [[0.82, 1.34, 0.86], [0.82, 2.2, 0.88]]], 0.035, CHS, { n: 5, inner: true, noCrush: true, noDent: true, part: 'body' });   // (its front legs: in the dashboard, behind the doors)
         K.inner(() => K.part('body', () => {   // (under the seat, under the windows' line: the inner block, seen once a part is off)
           K.box(0.0, 1.33, 0, 0.42, 0.69, 0.42, 0, D);                                           // the seat's pedestal
-          K.box(0.8, 1.95, 0, 0.28, 0.29, 1.9, 0, SEAT);                                          // the dashboard
         }));
+        // (the cab, as KOLIBRI's, all in the inner block: the shell's own walls close it (the firewall at 0.95, the back at -0.3, the floor at
+        //  1.33): the race dash under the windscreen's foot (the logger left of the wheel, the switch panel right), the wheel before the
+        //  driver in the middle, the raised footbox with two pedals, the door cards with their straps, the extinguisher by the pedestal, the
+        //  shifter right of the seat; under the roof's crush (x -0.4..0.5) nothing over the pedestal's top (2.02))
+        { const C = K.cab, AL2 = [0.5, 0.51, 0.54], AL3 = [0.4, 0.41, 0.44];
+          C.dash({ x: 0.6, y: 2.24, d: 0.34, w: 1.06, dz: -0.36, style: 'race', sz: 0.4, col: D, col2: AL2 });
+          C.steer({ c: [0.58, 2.36, 0], ax: [0.97, -0.24], r: 0.2, rr: 0.017, to: [0.78, 2.12, 0] });
+          K.box(0.75, 1.34, 0, 0.38, 0.42, 0.66, 0, AL2, AL2, true, C.IN);                                // the footbox
+          C.pedals(0.84, 1.76, 0, 2);
+          for (const sd of [-1, 1]) C.door(sd, { x: [-0.28, 0.93], y: [1.38, 2.18], z: 1.095, col: AL2, insert: AL3, strap: [0.7, 0.1, 0.08] });
+          K.cyl([-0.15, 1.4, 0.5], [0.25, 1.4, 0.5], 0.06, [0.75, 0.1, 0.08], Object.assign({ n: 8, capB: [0.1, 0.1, 0.1] }, C.IN));   // the extinguisher, its straps
+          for (const x of [-0.06, 0.16]) K.box(x, 1.335, 0.5, 0.03, 0.13, 0.13, 0, C.BLK, null, false, C.IN);
+          K.box(0.53, 1.333, 0.6, 0.12, 0.45, 0.1, 0, D, null, false, C.IN);                                 // the shifter: its stand, the gate, the lever
+          K.box(0.53, 1.783, 0.6, 0.16, 0.04, 0.06, 0, AL3, null, false, C.IN);
+          K.bar([0.53, 1.82, 0.6], [0.55, 2.1, 0.6], 0.011, ALU, Object.assign({ n: 4 }, C.IN));
+          K.box(0.55, 2.08, 0.6, 0.04, 0.05, 0.04, 0, C.BLK, null, false, C.IN);
+          if (K.hi) K.inner(() => K.part('body', () => {   // (Visoki: the driver's legs, from the seat to the pedals, under the wheel's rim)
+            const SU = [0.22, 0.22, 0.24], BT = [0.06, 0.06, 0.065];
+            K.box(0.06, 2.14, 0, 0.26, 0.12, 0.36, 0, SU);
+            for (const sd of [-1, 1]) { K.bar([0.06, 2.22, sd * 0.1], [0.48, 2.12, sd * 0.13], 0.07, SU, { n: 5 });
+              K.bar([0.48, 2.12, sd * 0.13], [0.76, 1.86, sd * 0.07], 0.055, SU, { n: 5 });
+              K.box(0.77, 1.78, sd * 0.07, 0.13, 0.09, 0.09, 0, BT); }
+          }, { noCrush: true, noDent: true }));
+        }
         K.seat(0.0, 2.14, 0, { w: 0.56, l: 0.48, back: 0.8, tilt: 0.16, inner: false, col: SEAT, part: 'body' });
         K.part('body', () => {
           const hx = 0.08, hy = 2.82, HC = [0.95, 0.95, 0.93], V = [0.2, 0.2, 0.21], SU = [0.22, 0.22, 0.24];   // (the helmet, its visor, the suit: off the glass colours)

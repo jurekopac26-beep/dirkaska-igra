@@ -40,11 +40,11 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       zarometi: { x: 2.0, y0: 0.55, lean: 0, zc: 0.56, yc: 0.55, s: 0.32, hosts: ['headL', 'headR'], depth: 0.04, shape: SLIM, bulge: 0, ringW: 0.01 },
       platisca: {},
       // (sklop 2 · spredaj, js/deli/spredaj.js) the nose's face and the tail's (the stock lip and the dark diffuser under them; the lip, kept,
-      // down to the bay's floor: the stock one hangs under the nose), the sills between the arches; the bonnet between its shut lines; the
-      // mesh mouth's room; the indicators beside the mouth under the lamps' outer ends, the repeaters on the fenders ahead of the arches, the
-      // rear's on the rear bumper beside the tow strap; the extra lamps before the mouth, before the nose between the lamps, on the roof's
-      // front edge
-      aero: { xf: 2.0, xr: -2.28, w: 0.78, yf: 0.24, yr: 0.32, sill: [-1.17, 0.65], ws: 0.85, ys: 0.28, lipF: [1.94, 0.16, 0.24, 0.115, 1.76], lipR: [-2.22, 0.15, 0.14, 0.13, 1.3], exh: [0, 0.075], archIn: 0 },
+      // down to the bay's floor: the stock one hangs under the nose; the diffuser's gap round the centre exit without fins along its edges:
+      // +300 triangles, tests/deli.test.js), the sills between the arches; the bonnet between its shut lines; the mesh mouth's room; the
+      // indicators beside the mouth under the lamps' outer ends, the repeaters on the fenders ahead of the arches, the rear's on the rear
+      // bumper beside the tow strap; the extra lamps before the mouth, before the nose between the lamps, on the roof's front edge
+      aero: { xf: 2.0, xr: -2.28, w: 0.78, yf: 0.24, yr: 0.32, sill: [-1.17, 0.65], ws: 0.85, ys: 0.28, lipF: [1.94, 0.16, 0.24, 0.115, 1.76], lipR: [-2.22, 0.15, 0.14, 0.13, 1.3], exh: [0, 0.075], archIn: 0, gapFins: false },
       hauba: { x0: 1.0, x1: 1.9, w: 0.6, bulge: 0.6 },
       maska: { x: 2.003, y0: 0.38, lean: 0, yc: 0.38, w: 1.3, h: 0.22, comb: 1.6, part: 'bumperF' },
       zmigavci: { front: { x: 2.0, y: 0.47, z: 0.71, w: 0.1, h: 0.04, part: 'bumperF' }, side: { x: 1.55, y: 0.66, z: 0.91, hosts: ['fenderL', 'fenderR'] },
@@ -72,12 +72,12 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         win: [[-0.6, 0.07], [0.6, 0.07], [0.1, 0.9], [-0.6, 0.9]], frame: [-0.62, -0.6, 0.9, 0.97] },
       zavore: { s: 1 },
       matice: { k: 5, r: 0.2 },
-      // (sklop 3 · barve, js/deli/barve.js) the stripes over the dark bonnet inside the white ones, the decals on the doors, the fenders
-      // ahead of the arches and the quarters, on the bonnet and the white roof; the sun strip on the windscreen's top; the calipers; the
-      // fuel cap on the right rear quarter (none stock)
+      // (sklop 3 · barve, js/deli/barve.js) the stripes over the dark bonnet inside the white ones, the decals on the doors (behind the
+      // windscreen's foot: +300 triangles), the fenders ahead of the arches and the quarters, on the bonnet and the white roof; the sun strip
+      // on the windscreen's top; the calipers; the fuel cap on the right rear quarter (none stock)
       barva: {}, zatemnitev: {}, luc_pod_avtom: {}, gume: {},
       crte: { z: [0.24, 0.38] },
-      nalepke: { side: [[-0.6, 0.62], [1.42, 1.8], [-1.17, -0.66]], y: [0.44, 0.84], hood: { x: [1.05, 1.85], z: [0.2, 0.4] }, roof: { x: [-1.15, 0.05] } },
+      nalepke: { side: [[-0.5, 0.62], [1.42, 1.8], [-1.17, -0.66]], y: [0.44, 0.84], hood: { x: [1.05, 1.85], z: [0.2, 0.4] }, roof: { x: [-1.15, 0.05] } },
       soncni_pas: { x: [0.1, 0.25] }, zamasek: { x: -0.95, y: 0.72, z: 0.9, r: 0.045 },
       celjusti: { r: [0.08, 0.15], a: [70, 125] },
       // (sklop 3 · skriti deli, js/deli/skriti.js) round the transverse four in the bay: the filter against the block's left side, the

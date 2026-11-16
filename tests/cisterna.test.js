@@ -22,11 +22,9 @@ const TRACKS = ['bathurst', 'vrsic', 'caracoles', 'killar'].map(id => C.TRACKS.f
 const pinGap = (c) => { const T = c.tl, k = T.D.kp[0]; return Math.hypot(c.x + Math.cos(c.h) * k - (T.x - Math.cos(T.h) * T.cx), c.z + Math.sin(c.h) * k - (T.z - Math.sin(T.h) * T.cx)); };
 const finite = (o, keys) => keys.every(k => Number.isFinite(o[k]));
 const CK = ['x', 'z', 'y', 'h', 'vx', 'vz', 'w'], TK = ['x', 'z', 'y', 'h', 'vx', 'vz', 'w', 'rel', 'yA'];
-{ const TI = C.MODELS.find(m => m.id === 'titan'), K3 = ['partNames', 'parts', 'mounts'], tl = (o) => JSON.stringify(o, (k, v) => /^tlSpare\d$/.test(k) ? undefined : v);   // (the trailer's spare tyres: its own, tl)
-  const diff = K3.filter(k => tl(CI.def[k]) !== tl(TI.def[k]));
+{ const TI = C.MODELS.find(m => m.id === 'titan'), K3 = ['partNames', 'parts', 'mounts'];
+  const diff = K3.filter(k => JSON.stringify(CI.def[k]) !== JSON.stringify(TI.def[k]));
   check('the tractor\'s breaking parts and the garage\'s mounts are the TITAN\'s (partNames, parts, mounts)', !diff.length, diff.join(', ') || Object.keys(CI.def.mounts).length + ' mounts'); }
-{ const PT = C.partsOf(CI), sp = Object.keys(PT).filter(k => PT[k].spare);
-  check('the trailer\'s four spare tyres are parts on it (spare, tl: docs/deli.md »Rezervno kolo«)', sp.length === 4 && sp.every(k => PT[k].tl && /^tlSpare\d$/.test(k) && PT[k].lx < -0.9), sp.join(' ')); }
 
 for (const d of TRACKS) for (const phys of ['cs', 'nova']) {
   const T = new C.Track(d), o = { numAI: 5, playerGrid: 99, playerModel: CI, laps: 99, assist: 2, phys, seed: 3, difficulty: 1, damage: 1 };

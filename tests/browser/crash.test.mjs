@@ -8,7 +8,7 @@
 // 4. the mirrors: the first side blow knocks that side's mirror off, it lies on the road and stays there while the car drives on
 // 5. repeated side blows: the roof sinks on that side (its edge lower than the other side's); the rear door swung open, its window broken
 // 6. one of the 11 (the rally car) dense too; switched off during a race the cars are built again as before
-// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Normalni within 6 % more vertices than off, Visoki within 30 %
+// 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track, the Tornado V8): Normalni within 6 % more vertices than off, Visoki within 30 %
 // 8. xParts, xDust, xDrag: a rear bumper knocked loose (the car 70 % gone: the tail hangs loose only from then) drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
 //    knocked off lies on the road and, pushed out of the core's 40 pieces, stays drawn there; off: none of it (the piece freed as before);
 //    rolling over: the car's black underside (floor, subframes, tunnel, exhaust, tank) drawn while it rolls, not before nor after
@@ -33,7 +33,9 @@ const T = checker('Razbijanje · nov način: dense bodies, deeper crush, glass, 
 const srv = await serve();
 const browser = await launch();
 try {
-  const base = { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.1, damage: 2, weather: 'dry', carId: 'tornado', carV: 3 };
+  // the base car one not being reworked (not in render.js XT_CARS, not of the 30 of docs/avti-kolibri.md): the glass, mirrors, rear doors,
+  // bonnet and grey engine the generic way; the 30 have the Kolibri's table (10, 11; the Tornado V8 one of them since #661)
+  const base = { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.1, damage: 2, weather: 'dry', carId: 'merjasec', carV: 3 };
   const run = async (settings, fn, arg) => {
     const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, settings), { width: 640, height: 296 }, { seed: 4242 });
     await startTrack(page, 'jezero');
@@ -121,7 +123,7 @@ try {
   const off = await run({}, () => { const P = window.__game.race.player, I = Render.crashInfo(), me = I.cars.find(q => q.player);
     Core.applyDamage(P, 0.12, P.m.len / 2, 0); Render.frame(0.016, 1, P, 'chase', {});
     const I2 = Render.crashInfo(), me2 = I2.cars.find(q => q.player);
-    return { XC: I.XC, XR: Object.assign({}, Core.XR), xOn: me.xOn, xd: me.xd, dense: I.cars.filter(q => q.xd).length, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, cl: me2.cl.length, shards: I2.shards, ground: I2.ground }; });
+    return { XC: I.XC, XR: Object.assign({}, Core.XR), xOn: me.xOn, xd: me.xd, dense: I.cars.filter(q => q.xd).length, outerN: me.outerN, kit: Render.kitInfo('merjasec').outerN, cl: me2.cl.length, shards: I2.shards, ground: I2.ground }; });
   T.check('off by default: no switch on (Core: roll, bump, ai, handle, glass; Render: body, glass, paint, parts, drag, dust), no car dense, the body as the kit built it', JSON.stringify(off.r.XR) === '{"roll":0,"bump":0,"ai":0,"handle":0,"glass":0}' && !off.r.XC.parts && !off.r.XC.drag && !off.r.XC.dust && !off.r.XC.body && !off.r.XC.glass && !off.r.XC.paint && !off.r.xOn && off.r.dense === 0 && off.r.outerN === off.r.kit, JSON.stringify(off.r));
   T.check('off: a dent the old way (no clusters), nothing on the road', off.r.cl === 0 && off.r.shards === 0 && off.r.ground === 0, JSON.stringify(off.r));
   T.check('off: no page errors', !off.errors.length, off.errors.slice(0, 3).join(' | '));
@@ -130,7 +132,7 @@ try {
   const on = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal' }, (hs) => {
     const hit = eval(hs), g = window.__game, P = g.race.player, info = () => Render.crashInfo().cars.find(q => q.player), out = {};
     const me = info(), v = Render.viewOf(P), geo = v.body.geometry, U = geo.userData;
-    out.dense = { xd: me.xd, outerN: me.outerN, kit: Render.kitInfo('tornado').outerN, rivals: Render.crashInfo().cars.filter(q => !q.player && q.xd).length };
+    out.dense = { xd: me.xd, outerN: me.outerN, kit: Render.kitInfo('merjasec').outerN, rivals: Render.crashInfo().cars.filter(q => !q.player && q.xd).length };
     let okR = true; for (const n in U.ranges) { const R = U.ranges[n]; if (R.o[0] > R.o[1] || R.o[1] > U.outerN || R.o[0] % 3 || R.o[1] % 3) okR = false; if (R.i && (R.i[0] < U.outerN || R.i[1] > U.N)) okR = false; }
     out.ranges = okR && U.paint.i.length > 0 && Math.max(...U.paint.i) < U.N && geo.drawRange.count === U.outerN;
     // the nose, blow after blow
@@ -180,7 +182,7 @@ try {
     Gs.run[0].n > 10 && Gs.run[1].n < Gs.run[0].n && Gs.run.every((q, k) => !k || (q.n <= Gs.run[k - 1].n && q.sc <= Gs.run[k - 1].sc + 1e-6)) && Gs.run[3].n <= 0.85 * Gs.run[0].n && Gs.run[3].sc <= 0.8 * Gs.run[0].sc, JSON.stringify(Gs.run.map(q => ({ n: q.n, sc: q.sc })))); 
   T.check('mirrors: the first right blow knocks the right one off, the left one stays', !Gs.mir[0] && Gs.mir[1] && Gs.ground === 1, JSON.stringify({ mir: Gs.mir, ground: Gs.ground }));
   T.check('mirrors: it stays on the road while the car drives on', Gs.ground2 === 1, 'ground ' + Gs.ground2);
-  T.check('roof: after blows on the left again and again it sinks on the left (the shell; more than the right, hit three times first: the Tornado\'s cage holds both sides\' rails within some 4 cm)', Gs.roofL < -0.03 && Gs.roofL < Gs.roofR - 0.005, 'left ' + Gs.roofL.toFixed(3) + ' right ' + Gs.roofR.toFixed(3));
+  T.check('roof: after blows on the left again and again it sinks on the left (the shell; more than the right, hit three times first)', Gs.roofL < -0.03 && Gs.roofL < Gs.roofR - 0.005, 'left ' + Gs.roofL.toFixed(3) + ' right ' + Gs.roofR.toFixed(3));
   T.check('glass: a rear door swung open has its window broken (both panes on that side)', Gs.rd[0] && Gs.leftPanes.length === 2 && Gs.leftPanes.every(Boolean), JSON.stringify({ rearDoors: Gs.rd, leftPanes: Gs.leftPanes }));
   T.check('glass / mirrors / roof: no page errors', !gl.errors.length, gl.errors.slice(0, 3).join(' | '));
 
@@ -306,13 +308,13 @@ try {
   const ko = await run({ carId: 'kolibri' }, () => { const P = window.__game.race.player, v = Render.viewOf(P); Core.applyDamage(P, 0.3, P.m.len / 2, 0); for (let k = 0; k < 6; k++) Render.frame(0.05, 1, P, 'chase', {});
     return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: v.body.material.customProgramCacheKey(), mesh: !!v.xtO }; });
   const tt = await run({ xBody: 1, xGlass: 1 }, () => { const P = window.__game.race.player; return { xt: Render.crashInfo().cars.find(q => q.player).xt, key: Render.viewOf(P).body.material.customProgramCacheKey() }; });
-  T.check('Kolibri off (the default): no table, the body\'s material as ever but for its side scrapes (dirtyCarCgS: kolibri.test.mjs); another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCgS' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, tornado: tt.r }));
+  T.check('Kolibri off (the default): no table, the body\'s material as ever but for its side scrapes (dirtyCarCgS: kolibri.test.mjs); another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCgS' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, merjasec: tt.r }));
 
   // 10. the cars being reworked (the Medved, the Kozorog, the Lev R; the pilot's Tiger GT and Superkombi, docs/avti-kolibri.md): the table
   // theirs too (the spoiler: a wing where the car has one); a crushed end caves the roof in, the harder the knock the deeper (the roof's
   // own top, what lies on it left out). A front bumper that carries an aero car's downforce (the Superkombi's: its splitter is no part of
   // its own) comes off as before, the core's rule (core.js maskHeld): the bonnet still neither hangs nor comes off
-  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'modras', 'sakal', 'ris', 'perun', 'kamen', 'orel']) {   // (perun: noQ, no quarter panes; not titan, cisterna: a cab-over truck's own table (a strong front knock: windscreen 70 %, door windows 50 %, its nose slower to 60 %), in XT_MIN for the roof (section 11); kamen: a truck's frame (dmgK 0.55), its knocks as hard for it (h / dmgK), no rear window, no quarter panes; orel: its crush footprint from x -0.1, where its cage leaves the roof room)
+  for (const id of ['kozorog', 'lev', 'medved', 'tiger', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter', 'levs', 'zmaj', 'jastreb', 'modras', 'sakal', 'ris', 'perun', 'kamen', 'orel']) {   // (perun: noQ, no quarter panes; not titan, cisterna: a cab-over truck's own table (a strong front knock: windscreen 70 %, door windows 50 %, its nose slower to 60 %), in XT_MIN for the roof (section 11); kamen: a truck's frame (dmgK 0.55), its knocks as hard for it (h / dmgK), no rear window, no quarter panes; orel: its crush footprint from x -0.1, where its cage leaves the roof room)
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player), hit0 = eval(hs), kd = P.m.dmgK || 1, hit = (Q, h) => hit0(Q, [h[0] / kd, h[1], h[2]]);   // (a truck's frame, dmgK: as hard a knock for it)
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
@@ -330,8 +332,8 @@ try {
         for (const w of [0, 0.3, -0.3, 0.15, -0.15, 0]) { hit(P, [0.1, 1, w]); settle(); const x = me(); out.n6.push({ dmg: +P.dmg.toFixed(3), end: endMax(), ajar: x.xt.ajar, dead: x.xt.dead, torn: x.torn }); } }
       const a = Render.viewOf(P).body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++; out.nan = bad;
       return out; }, hitFn);
-    const C = ct.r, rf = [C.bl, C.bm, C.bs].map(q => q.roof.mean), noQ = ['perun', 'kamen'].includes(id), noR = ['kamen'].includes(id);   // (noQ: no quarter panes; with #661 the union, ['gozdar', 'perun', 'kamen']; noR: no rear window, the cab's rear wall behind the box: rear light the nearer door window 50 %, xtMin)
-    T.check(`${id}: the table (front strong: windscreen 100 %, door windows 75 %; rear light: only the rear window 50 %${noR ? ', without one a door window' : ''})` + (C.wing ? '; rear medium: its wing hangs from 70 %, under it it stays on (the user\'s 2B, a wing for downforce too)' : ''),
+    const C = ct.r, rf = [C.bl, C.bm, C.bs].map(q => q.roof.mean), noQ = ['gozdar', 'perun', 'kamen'].includes(id), noR = ['kamen'].includes(id);   // (noQ: no quarter panes; gozdar: its door window ends at the B-pillar; noR: no rear window, the cab's rear wall behind the box: rear light the nearer door window 50 %, xtMin)
+    T.check(`${id}: the table (front strong: windscreen 100 %, door windows 75 %${noQ ? ', no rear side windows' : ''}; rear light: only the rear window 50 %${noR ? ', without one a door window' : ''})` + (C.wing ? '; rear medium: its wing hangs from 70 %, under it it stays on (the user\'s 2B, a wing for downforce too)' : ''),
       eq(C.fs.panes, noQ ? { W: 1, DL: 0.75, DR: 0.75 } : { W: 1, DL: 0.75, DR: 0.75, QL: 0.5, QR: 0.5 }) && (!noQ || !('QL' in C.fs.panes || 'QR' in C.fs.panes)) && (noR ? ['DL', 'DR'].some(k => eq(C.bl.panes, { [k]: 0.5 })) : eq(C.bl.panes, { R: 0.5 })) && (!C.wing || (C.bm7.ajar.includes('wing') && !C.bm.ajar.includes('wing') && !C.bm.dead.includes('wing'))), JSON.stringify({ fs: C.fs.panes, bl: C.bl.panes, bm: C.bm.ajar, bm7: C.bm7.ajar }));
     T.check(`${id}: the first knock on the front breaks its nearer head lamp, on the rear its nearer rear lamp (the user's 1B)`, C.fl.lamps[1] && !C.fl.lamps[0] && C.rl.lamps[2] && !C.rl.lamps[3], JSON.stringify({ front: C.fl.lamps, rear: C.rl.lamps }));
     const face = C.dfF ? /^hood$/ : /^(bumperF|hood)$/;
@@ -353,7 +355,7 @@ try {
   // posts as built (darkFn); then a pit stop's repair (the crew's work stepped as repair.test.mjs does it) brings the colours back to the
   // car's as built, and Race.repairCar builds it afresh in them
   const RSEQ = [[0.15, -1, 0], [0.15, 1, -0.6], [0.15, 0.1, -1], [0.15, -1, 0.6], [0.3, 1, 0], [0.3, 0, 1], [0.05, -1, -0.6], 'top', [0.15, 1, 0.6], [0.15, -0.1, 1]], NK = RSEQ.length;
-  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris', 'lev'];   // (render.js XT_MIN: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
+  const XTM = ['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris', 'lev'];   // (render.js XT_MIN: the Kolibri's roof theirs too, the pilot of docs/avti-kolibri.md)
   // the crew's repair stepped by hand (repair.test.mjs) on the car Q (frames(k): k frames drawn): the painted points' colours against the
   // car's as built (xc.col0), the roof's and all of them, before, through it and after (Race.repairCar: built afresh); and at every one of
   // its 16 steps (REPAIR_N; the middle of each, and 0, 0.3, 0.65, 0.95) the roof shell's points (nNew) and the area (in plan) of its facets,
@@ -389,7 +391,7 @@ try {
   // (black paint, a car's dark trim too, on its warm way as the black car's: on it, as dark as it should be or stopped at the glass's
   // edge or held back with its facet, never lighter, no nearer the glass colours than 0.066 or than it was)
   const bkOk = (DK) => DK.bk === 0 || (DK.offWay < 1e-4 && DK.bkErr < 1e-4 && DK.bkStopBad === 0 && DK.bkUp === 0 && (DK.bkFar === null || DK.bkFar >= 0.066 - 1e-4) && (DK.bkNear === null || DK.bkNear >= -1e-4));
-  for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['tiger', 'normal'], ['superkombi', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {
+  for (const [id, det, rival] of [['kolibri', 'normal'], ['kolibri', 'high'], ['kolibri', 'normal', 1], ['medved', 'normal'], ['tiger', 'normal'], ['superkombi', 'normal'], ['sokol', 'normal'], ['tornado', 'normal'], ['gozdar', 'normal'], ['tur', 'normal'], ['gams', 'normal'], ['jelen', 'normal'], ['panter', 'normal'], ['kozorog', 'normal'], ['lev', 'normal'], ['goljat', 'normal'], ['rally', 'normal'], ['truck', 'normal']]) {   // (not the Škorpijon H: its roof mostly a glass canopy, the painted rest on its doors and quarters, under 0.5 m² of it left after these knocks; docs/avti-kolibri.md)
     const rr = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: det, carId: rival ? 'tornado' : id }, (A) => {
       const SEQ = A[0], g = window.__game, R = g.race, P = R.player;
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
@@ -510,8 +512,9 @@ try {
   }
 
   // 7. the load (as perf.test.mjs counts it, NIZKA, chase camera, six places round the lap): off, Normalni and Visoki drawn in turn at
-  // each place, the same frame (switched as in Nastavitve: the cars built again), so only the cars' own geometry differs
-  const { page: lp, ctx: lc } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, { camera: 'chase', zoom: 1.2 }), { width: 844, height: 390 }, { seed: 12345 });
+  // each place, the same frame (switched as in Nastavitve: the cars built again), so only the cars' own geometry differs; the Tornado V8,
+  // the car it measured before the base car became the Merjasec V8 (docs/avti-kolibri.md, »15 avtov biketraveler«)
+  const { page: lp, ctx: lc } = await openGame(browser, srv.base + '/index.html', Object.assign({}, base, { camera: 'chase', zoom: 1.2, carId: 'tornado' }), { width: 844, height: 390 }, { seed: 12345 });
   await lp.evaluate(() => { window.__gl = { calls: 0, verts: 0 }; const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
     const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]); });

@@ -119,7 +119,7 @@ const race = (rain) => {
 {
   const d = race(0), w = race(1);
   check('race in the dry: all 13 to the line after two laps', d.all && d.n === 13, `${d.fin}/${d.n}, the winner ${d.win.toFixed(2)} s, ${d.resc} rescues`);
-  check('race in the rain: all 13 to the line, 3-15 % slower than in the dry', w.all && w.n === 13 && w.win / d.win > 1.03 && w.win / d.win < 1.15, `${w.fin}/${w.n}, the winner ${w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower), ${w.resc} rescues`);
+  check('race in the rain: all 13 to the line, 10-25 % slower than in the dry (a third less grip in the wet, docs/dez-sneg.md)', w.all && w.n === 13 && w.win / d.win > 1.1 && w.win / d.win < 1.25, `${w.fin}/${w.n}, the winner ${w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower), ${w.resc} rescues`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

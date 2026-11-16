@@ -396,7 +396,7 @@ const Render = (function () {
   // on the rain tyres, as the HUD's tyre label), a dark rim, a flat aero cover with two lighter spokes (so the spin shows) and a gold nut (12
   // sides: ~200 triangles, a phone draws 52 of them)
   const fWheelCache = new Map(), F_WET = 0x2b86e6, F_SOFT = 0xe02119;
-  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : c.wet < 0.9 ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, else softs)
+  const tyreCol = (c) => c.ty ? (c.ty.k === 'wet' ? F_WET : c.ty.c ? Core.TYRE_CMP[c.ty.c].col : F_SOFT) : (c.wx ? c.wx.w > 0.5 : c.wet < 0.9) ? F_WET : F_SOFT;   // (no tyres in the race: wets in the rain, by the water under the car, else softs)
   // every other car's tyres carry the same band in a race with compounds (c.ty with a compound, or rain tyres); null: none, the tyres as
   // they always were (no compounds, the showroom, a ghost). The band is in the wheels' own geometry (its variant with the band, cached like
   // the rest: no draw call more); a pit stop's new set shows once the car is built afresh at its end (Race.repairCar: frame)
@@ -1050,6 +1050,8 @@ const Render = (function () {
                                frame (a colour: a line over and under it), frameH, box (a solid panel instead of a flat one), host }
        K.mirror(x, y, z, o)            a door mirror (z > 0 the right one): its housing (o.col, default the paint) at (x, y, z), the glass
                                facing back, the arm in to o.z0; o { w, h, d, arm (colour), part }: part mirrorL / mirrorR when the table has it
+       K.mirGlass(rim, M)              a mirror of the car's own shape (its housing K.skin, the cap left open): its glass in the rim's outline,
+                               that cracks as K.mirror's; M { x, y, z, w, h, d, root, r }: the housing's middle and size, the stalk's foot
        K.exhaust(x, y, z, r, len, o)   a pipe ending at x (o.dir -1: pointing back), dark inside; o { n, col (K.chrome), hole (the inside's colour) }
        K.number(x, y, z, h, o)         a start-number panel (door, side, bonnet: no draw call of its own): the car's own number in seven-segment
                                digits, lit per car; centred at (x, y, z) on the surface, h tall, facing o.dir ('z' the right side, '-z' the
@@ -1907,6 +1909,17 @@ const Render = (function () {
       if (o.crack) { const c = [gx, y + 0.2 * gh, z + sd * 0.25 * gd], rim = [[gx, y - gh, z - gd], [gx, y - gh, z], [gx, y - gh, z + gd], [gx, y + gh, z + gd], [gx, y + gh, z], [gx, y + gh, z - gd]];
         kx.prim(x - w / 2, y, z, () => { for (let i = 0; i < 6; i++) g.triO(c, rim[i], rim[(i + 1) % 6], KIT_MIRROR, [gx + 1, y, z]); }, Object.assign({}, o, { part, sub: 'mglass' + side }));
         if (part) (kx.mirs || (kx.mirs = {}))[part] = { x: x * sx, y, z: z * sz, w: w * sx, h, d: d * sz, sd, root: [(x + 0.03) * sx, y - h * 0.45, z0 * sz], r: 0.014 }; }
+    };
+    // a door mirror of the car's own shape (not K.mirror) with K.mirror's crack: rim, its glass's outline (an upright face looking back, its
+    // points in order round it), drawn as the same fan round a point a little up and out of its middle (mglassL / mglassR: xtMirGlass), and
+    // the mirror's place for its fold (kitFold): M { x, y, z (its housing's middle), w, h, d (its size along, up, across), root (its stalk's
+    // foot on the body), r (the stalk's radius: 0.014) }. In place of the housing's own glass (K.skin's cap left open there)
+    K.mirGlass = (rim, M) => {
+      if (!Array.isArray(rim) || rim.length < 3 || !M || !Array.isArray(M.root)) kitFail('mirGlass: a rim of 3+ points and the mirror { x, y, z, w, h, d, root }');
+      const sd = M.z < 0 ? -1 : 1, side = sd < 0 ? 'L' : 'R', part = 'mirror' + side, n = rim.length, gx = rim.reduce((s, p) => s + p[0], 0) / n;
+      const c = [gx, M.y + 0.2 * (M.h / 2 - 0.01), M.z + sd * 0.25 * (M.d / 2 - 0.01)];
+      kx.prim(gx, M.y, M.z, () => { for (let i = 0; i < n; i++) g.triO(c, rim[i], rim[(i + 1) % n], KIT_MIRROR, [gx + 1, M.y, M.z]); }, { part, sub: 'mglass' + side });
+      (kx.mirs || (kx.mirs = {}))[part] = { x: M.x * sx, y: M.y, z: M.z * sz, w: M.w * sx, h: M.h, d: M.d * sz, sd, root: [M.root[0] * sx, M.root[1], M.root[2] * sz], r: M.r || 0.014 };
     };
     K.exhaust = (x, y, z, r, len, o) => { o = o || {}; const dir = o.dir || -1; kx.prim(x - dir * len / 2, y, z, () => tubeX(g, x - dir * len, x, y, z, r, o.n || 8, o.col || K.chrome, o.hole || [0.03, 0.03, 0.035]), o); };   // (o.hole: the dark inside; o.inner as for any primitive)
     // a start-number panel: the car's own number (1..100) in seven-segment digits (two places and a middle one for a single digit), lit per car
@@ -5680,7 +5693,7 @@ const Render = (function () {
     if (q && q.br != null && spd > 3 && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && !c.inPit) {   // (on the pit road, c.inPit: no rail beside the car either, the circuit's barriers are not the lane's walls; in a side road, or in its mouth: no rail beside the car; the new map's free driving, T.free: no rails at all)
       const nx = q.nx, nz = q.nz, fn = fx * nx + fz * nz, ln = lx * nx + lz * nz, L = M.len * 0.5, H = M.wid * 0.5, e = L * Math.abs(fn) + H * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if (gap < 0.12 || (c.fxWall > 0 && c.fxWall <= 2.5)) {
+      if ((gap < 0.12 && !hillOn(T, q, side)) || (c.fxWall > 0 && c.fxWall <= 2.5)) {   // (a hill behind the line: no rail there to rub, hillOn)
         const sx = Math.sign(fn * side) * L, sz = Math.sign(ln * side) * H, px = X + fx * sx + lx * sz + nx * side * Math.max(0, gap), pz = Z + fz * sx + lz * sz + nz * side * Math.max(0, gap);
         f.sc += (c.fxWall > 0 ? 8 : 0) + clamp(spd / 18, 0.3, 1.6) * 110 * dt;
         while (f.sc >= 1) { f.sc -= 1; sparkP.emit(px, gy + 0.35 + R() * 0.3, pz, c.vx * 0.55 + (R() - 0.5) * 3 - nx * side * R() * 2, 1 + R() * 3, c.vz * 0.55 + (R() - 0.5) * 3 - nz * side * R() * 2, 0.2 + R() * 0.3, 0.85, 0.2, 1, 0.72 + R() * 0.2, 0.3, 1, 11, 1.2, gy); }
@@ -7163,9 +7176,9 @@ const Render = (function () {
       v.roll += (clamp(-lat * 0.0042 * sw, -0.06 * sw, 0.06 * sw) - v.roll) * Math.min(1, dt * 7);
       v.pitch += (clamp(c.axF * 0.0035 * sw, -0.045 * sw, 0.04 * sw) - v.pitch) * Math.min(1, dt * 7);
       // pitch with the road slope (nose up on climbs), or follow the arc while airborne
-      const pitchTarget = c.air ? Math.atan2(c.vy, Math.max(Math.abs(c.vl), 6)) * 0.8 : Math.atan(c.gradeNow || 0);
+      const hl = c.hl && c.hl.on && !c.air ? c.hl : null, pitchTarget = c.air ? Math.atan2(c.vy, Math.max(Math.abs(c.vl), 6)) * 0.8 : Math.atan(c.gradeNow || 0) + (hl ? clamp(Math.atan(hl.lon), -0.8, 0.8) : 0);   // (hl: up a hill behind the barrier line, Chapman's Peak: its tilt, the core's hillGround; never more than ~45°)
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
-      const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0;   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
+      const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = (c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0) - (hl ? clamp(Math.atan(hl.lat), -0.8, 0.8) : 0);   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
       v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
@@ -9065,7 +9078,7 @@ const Render = (function () {
      A hit from behind also dents the rear bumper in a V (some 10 cm in its middle on a light one, creased) with the tailgate's foot, and
      bends the spoiler down in its middle (xPush: xc.vr). The table's wheels are the core's (it decides when one comes off). A picture is
      drawn one pane a frame (a rival's: one over all of them), the player's car never waiting on a rival's */
-  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris']);   // (the cars being reworked: the table theirs first, the others later)
+  const XT_CARS = new Set(['kolibri', 'medved', 'kozorog', 'lev', 'tiger', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris']);   // (the cars being reworked: the table theirs first, the others later)
   const xTab = (c) => !!(XC.glass || XC.body) && !!c && !!c.m && XT_CARS.has(c.m.id) && !!c.m.kit;
   const XT_ST = [0, 0.5, 0.7, 0.75, 1], XT_KEYS = ['W', 'R', 'DL', 'DR', 'QL', 'QR'];
   const XT_ROWS = {
@@ -9089,7 +9102,7 @@ const Render = (function () {
   // every crash at least one pane a stage on (xtMin; the user's, the Kolibri's only): a zone's own panes, those its three rows break (the
   // front's the windscreen and the side windows, the rear's the rear window and the side windows, a side's that side's)
   const XT_CAB = new Set(['titan', 'cisterna']);   // (the cab-over trucks: xRoofBuild's narrow fade)
-  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris', 'lev']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
+  const XT_MIN = new Set(['kolibri', 'tiger', 'medved', 'superkombi', 'sokol', 'tornado', 'gozdar', 'tur', 'gams', 'skorpijon', 'jelen', 'panter', 'levs', 'zmaj', 'jastreb', 'perun', 'modras', 'titan', 'cisterna', 'kamen', 'orel', 'sakal', 'ris', 'lev']), XT_MINK = {}; for (const zn in XT_TAB.T) XT_MINK[zn] = XT_KEYS.filter(k => XT_TAB.T[zn].some(r => k in r.g));
   // a blow's place (u, w: along the car's half length and half width, w < 0 its left) and its strength (0 light, 1 medium, 2 strong)
   function xtZone(u, w) {
     const sd = w < 0 ? 'L' : 'R';
@@ -9414,6 +9427,9 @@ const Render = (function () {
   // ~11 cm at most in one place; xDent's cluster, applyDent's depth times the same share). On NIZKA only the player's (a rival's dented body gives up its far mesh, farStep). A contact point
   // the core left as it was (a person on foot's: no point of its own) is no graze
   const XT_SCR = { ev: 0.07, m: 0.004, gap: 0.03, gapT: 0.3, dent: 0.015, dk: 0.75 };
+  // a hill behind the barrier line on that side of the car's place (Chapman's Peak, Core.Track.hill): no rail there, the car drives up the
+  // slope (the core's wallCollide, the same test), so no sparks off the line and no graze (carFx, xtScrape); a knock of its own (fxWall) still shows
+  function hillOn(T, q, side) { const H = T && T.hill; if (!H || q.k >= 0) return false; const on = H.on[side > 0 ? 1 : 0]; return !!(on[q.a] || on[Math.min(T.N - 1, q.a + 1)]); }
   function xtScrape(v, c, dt) {
     const S = v.xtSc || (v.xtSc = { a: [0, 0], t: [-1e9, -1e9], n: [0, 0], dn: [0, 0] }), M = c.m, hl = M.len * 0.5, hw = M.wid * 0.5, fresh = c.contactX !== S.cx || c.contactZ !== S.cz;
     S.cx = c.contactX; S.cz = c.contactZ;
@@ -9422,7 +9438,7 @@ const Render = (function () {
     if (q && q.br != null && !(T && T.free) && !(q.k >= 0 && (q.deep || T.gap[q.d > 0 ? 1 : 0][q.a])) && c.speed > 1) {   // (a barrier beside it, as carFx has it)
       const fn = ch * q.nx + sh * q.nz, ln = -sh * q.nx + ch * q.nz, e = hl * Math.abs(fn) + hw * Math.abs(ln);
       const gR = q.br - (q.d + e), gL = q.bl - (-q.d + e), side = gR < gL ? 1 : -1, gap = Math.min(gR, gL);
-      if (Math.abs(ln) > Math.abs(fn) && (gap < XT_SCR.gap || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
+      if (Math.abs(ln) > Math.abs(fn) && ((gap < XT_SCR.gap && !hillOn(T, q, side)) || c.fxWall > 0)) { const k = ln * side < 0 ? 0 : 1; hit[k] = Math.abs(c.vx * q.nz - c.vz * q.nx);   // (its flank on the rail: the speed along it; where: the core's contact, else its middle)
         at[k] = c.fxWall > 0 && c.wallX != null ? (c.wallX - c.x) * ch + (c.wallZ - c.z) * sh : 0; }
     }
     if (c.fxCar > 0 && c.contactX != null && fresh) {   // (another car, the traffic: the contact on its flank, a point of its own)
@@ -10046,6 +10062,8 @@ const Render = (function () {
   const sc = { v: 0, t: 0, P: null, race: null };
   function startCamGo(v) { sc.v = v | 0; sc.t = 0; sc.P = null; sc.race = curRace; }
   function startCamStop() { sc.v = 0; sc.P = null; sc.race = null; }
+  // (upright the limit stays the old Blizu's, 46 m: Srednje since the upright chase view came closer, CHASE_UP, the flights as they were;
+  // a closer chase view, Blizu, it comes down to over its last 0.8 s)
   function scLim() {   // the chase view's distance from the car and height over it with Oddaljenost: Blizu (updateCamera's own numbers, the car at rest)
     const portrait = camera.aspect < 1, D = (portrait ? 46 : 30) * SC_ZOOM, pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt), h = D * Math.sin(pitch);
     return { d: Math.hypot(D * Math.cos(pitch) - (portrait ? 13 : 8.5), h), h };
@@ -10116,6 +10134,9 @@ const Render = (function () {
   /* ---------------- camera ---------------- */
   // the camera behind the car: its heading and zoom eased each frame (chaseStep), its pose from them (chasePose: [px, py, pz, tx, ty, tz, fov];
   // also the pit stop's camera's view behind the car over the replay's TV cameras, pitCine)
+  // upright its distance 1.1/1.4 of what it was (the user, 11. 11. 2026: a phone held upright sees more of the road than on its side, so
+  // what was Blizu is Srednje now, Blizu closer still, Daleč about the old Srednje; Oddaljenost's steps as ever); on its side as ever, 30
+  const CHASE_UP = 46 * 1.1 / 1.4;
   function chaseStep(c, dt, h, spd, pitZ, k2, x, z) {
     // in a drift, look along the direction of travel, with a lazy swing (Circuit Superstars: the view reads the drift along the
     // travel, so a sliding car shows its angle)
@@ -10132,7 +10153,7 @@ const Render = (function () {
   function chasePose(c, x, z, baseY) {
     // phone held upright: higher camera, wider lens, long view ahead, car in the lower part of the screen
     const portrait = camera.aspect < 1;
-    const LK = cam.look, D = (portrait ? 46 : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
+    const LK = cam.look, D = (portrait ? CHASE_UP : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
     const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
     let back = cam.userBack || 0;
     const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)
