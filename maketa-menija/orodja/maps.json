@@ -466,5 +466,27 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "bikernieki",
+  "top",
+  "top-bikernieki",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "buriram",
+  "top",
+  "top-buriram",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]

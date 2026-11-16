@@ -1213,5 +1213,45 @@
     }
    ]
   }
+ ],
+ [
+  "bikernieki",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin",
+     "d": 560
+    },
+    {
+     "n": "Lakeside Left",
+     "d": 1340
+    },
+    {
+     "n": "North Corner",
+     "d": 2390
+    }
+   ]
+  }
+ ],
+ [
+  "buriram",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin",
+     "d": 1320
+    },
+    {
+     "n": "Left before the Pond",
+     "d": 2220
+    },
+    {
+     "n": "Long Right",
+     "d": 3449
+    }
+   ]
+  }
  ]
 ]
