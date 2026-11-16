@@ -7,6 +7,7 @@
 // 3. the glass: each blow breaks the unbroken pane nearest to it, never one on the other side of the car; glass on the road after
 // 4. the mirrors: the first side blow knocks that side's mirror off, it lies on the road and stays there while the car drives on
 // 5. repeated side blows: the roof sinks on that side (its edge lower than the other side's); the rear door swung open, its window broken
+//    (the computed rear door: a car with four doors drawn and no rear door part of its own, the Tornado; not on a two-door car)
 // 6. one of the 11 (the rally car) dense too; switched off during a race the cars are built again as before
 // 7. the phone's load (NIZKA tier, as perf.test.mjs counts it, one track): Normalni within 6 % more vertices than off, Visoki within 30 %
 // 8. xParts, xDust, xDrag: a rear bumper knocked loose (the car 70 % gone: the tail hangs loose only from then) drags on the road throwing sparks; a hard knock throws dust and bits; the bumper
@@ -17,7 +18,9 @@
 //    The user's rules over the table (1B, 2B, 3B): the first knock on an end breaks one of its lamps; the face and the tail (bumpers, bonnet,
 //    spoiler) neither hang nor come off till the car is 70 % gone, then as the table has it; an end crushed no deeper than 0.3 m till then
 // 10. the Medved, the Kozorog, the Lev R: the table theirs too, the user's rules over it as the Kolibri's; a crushed end caves the roof in,
-//    the harder the knock the deeper
+//    the harder the knock the deeper. The doors by their drawn shut lines (docs/trki-realizem.md, »Vrata v poškodbah«): the four-door Medved and
+//    Kozorog have a rear door of their own (door2L / door2R): a blow ahead of the shut line is the front door's, behind it the rear door's;
+//    the two-door Lev R and Ris have one door a side and nothing is cut out of the quarter behind it
 // 11. the roof field: every knock (any side, a rollover's roof contact, a landing) caves the roof in more, never past its limit, never
 //    through the seats, the driver, a cage (Goljat's outer one too), the posts' tops never through it (a rival's coarse body too); a
 //    wreck's start number and a patrol car's light bar gone; open cars and karts none, their drivers and hoops never lifted; the roof's
@@ -313,7 +316,8 @@ try {
   T.check('Kolibri off (the default): no table, the body\'s material as ever but for its side scrapes (dirtyCarCgS: kolibri.test.mjs); another car with the switches on: no table either', ko.r.xt === null && ko.r.key === 'dirtyCarCgS' && !ko.r.mesh && tt.r.xt === null && tt.r.key === 'dirtyCarCg' && !ko.errors.length && !tt.errors.length, JSON.stringify({ off: ko.r, tornado: tt.r }));
 
   // 10. the cars being reworked (the Medved, the Kozorog, the Lev R): the table theirs too (the spoiler: a wing where the car has one);
-  // a crushed end caves the roof in, the harder the knock the deeper (the roof's own top, what lies on it left out)
+  // a crushed end caves the roof in, the harder the knock the deeper (the roof's own top, what lies on it left out); the doors by their
+  // drawn shut lines (four on the Medved and the Kozorog, two on the Lev R)
   for (const id of ['kozorog', 'lev', 'medved']) {
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
@@ -323,6 +327,14 @@ try {
       out.fs = scene([0.3, 1, 0]); out.bl = scene([0.05, -1, 0]); out.bm = scene([0.15, -1, 0]); out.bs = scene([0.3, -1, 0]); out.bm7 = scene([0.15, -1, 0], 0.7);
       out.fl = scene([0.05, 1, 0.3]); out.rl = scene([0.05, -1, -0.3]);   // (the first knock on an end: its nearer lamp, the user's 1B)
       out.wing = !!Render.viewOf(P).body.geometry.userData.ranges.wing;
+      // the doors (docs/trki-realizem.md, »Vrata v poškodbah«): a blow on the middle of the side ahead of the drawn shut line is the front door's,
+      // behind it the rear door's (a four-door car: door2L / door2R, whole, with its own glass); a two-door car has its one door for both
+      out.d2 = !!Render.viewOf(P).body.geometry.userData.ranges.door2L;
+      out.df = scene([0.15, 0.1, -1]); out.dr = scene([0.15, -0.2, -1]);
+      if (out.d2) { out.dfs = scene([0.3, 0.1, -1]); out.drs = scene([0.3, -0.2, -1]); out.drR = scene([0.15, -0.2, 1]); }
+      // both sides knocked on both doors: every door open, nothing cut out of a quarter (the computed rear door is not for these cars)
+      { R.repairCar(P); Render.frame(0.016, 1, P, 'chase', {}); for (const w of [-1, 1]) for (const u of [0.1, -0.2]) { hit(P, [0.15, u, w]); settle(); }
+        const K = Render.viewOf(P).kit; out.sd = { ajar: Object.keys(K.ajar), dead: Object.keys(K.dead), xOpen: !!K.xOpen, rearDoors: me().rearDoors }; }
       // the nose knocked again and again to ~60 %: its end no deeper than 0.3 m (the roof field's own points apart), nothing of the face loose (3B, 2B)
       { R.repairCar(P); Render.frame(0.016, 1, P, 'chase', {}); out.n6 = [];
         const endMax = () => { const v = Render.viewOf(P), xc = v.xc, a = v.body.geometry.attributes.position.array, Rr = xc.rest, n = Rr.length / 3, skip = new Uint8Array(n), G = xc.rf && xc.rf.G, dv = v.kit && v.kit.deadV;
@@ -338,7 +350,29 @@ try {
     T.check(`${id}: the nose knocked again and again to ~60 %: its end no deeper than 0.3 m, the bumper and the bonnet neither hang nor off, the bonnet not torn (the user's 2B, 3B)`,
       C.n6.every(q => q.dmg < 0.7 && q.end <= 0.3 + 1e-3 && !q.ajar.some(n => /^(bumperF|hood)$/.test(n)) && !q.dead.some(n => /^(bumperF|hood)$/.test(n)) && !q.torn) && C.n6[5].dmg >= 0.5, JSON.stringify(C.n6));
     T.check(`${id}: from behind the roof caves in, the harder the knock the deeper (mean drop light < medium < strong, the strong one 3 cm or more; a caged roof 15 % of the deepest it can go)`, rf[0] > 0 && rf[0] < rf[1] && rf[1] < rf[2] && rf[2] >= Math.min(0.03, 0.15 * C.bs.rf.rlim) && C.bs.roof.max < 0.3, JSON.stringify([C.bl.roof, C.bm.roof, C.bs.roof, C.bs.rf]));
+    T.check(`${id}: the doors: ${C.d2 ? 'four (a rear door of its own a side, door2L / door2R)' : 'two (no rear door)'}; a medium blow on the middle of the side ahead of the shut line: the front door hangs, its window 70 %, the one behind 50 %` + (C.d2 ? '; behind the shut line: the rear door hangs, its window 70 %, the front door\'s 50 %, the front door shut; the same on the right' : '; further back still its one door'),
+      C.d2 === (id !== 'lev') && eq(C.df.panes, { DL: 0.7, QL: 0.5 }) && C.df.ajar.includes('doorL') && !C.df.ajar.includes('door2L') && !C.df.dead.some(n => /^door/.test(n))
+        && (C.d2 ? eq(C.dr.panes, { QL: 0.7, DL: 0.5 }) && C.dr.ajar.includes('door2L') && !C.dr.ajar.includes('doorL') && !C.dr.dead.some(n => /^door/.test(n)) && eq(C.drR.panes, { QR: 0.7, DR: 0.5 }) && C.drR.ajar.includes('door2R') && !C.drR.ajar.includes('doorR')
+          : eq(C.dr.panes, { DL: 0.7, QL: 0.5 }) && C.dr.ajar.includes('doorL') && !C.dr.dead.some(n => /^door/.test(n))), JSON.stringify({ d2: C.d2, df: [C.df.panes, C.df.ajar, C.df.dead], dr: [C.dr.panes, C.dr.ajar, C.dr.dead], drR: C.drR && [C.drR.panes, C.drR.ajar] }));
+    if (C.d2) T.check(`${id}: a strong blow on a door takes that door off (its window 100 %, the other door's 75 %, the windscreen 50 %), the other door of that side stays on`,
+      eq(C.dfs.panes, { W: 0.5, DL: 1, QL: 0.75 }) && C.dfs.dead.includes('doorL') && !C.dfs.dead.includes('door2L') && eq(C.drs.panes, { W: 0.5, QL: 1, DL: 0.75 }) && C.drs.dead.includes('door2L') && !C.drs.dead.includes('doorL'), JSON.stringify({ dfs: [C.dfs.panes, C.dfs.dead], drs: [C.drs.panes, C.drs.dead] }));
+    T.check(`${id}: both sides knocked on both doors: every door open, none off, nothing cut out of a quarter (no computed rear door)`,
+      (C.d2 ? ['doorL', 'door2L', 'doorR', 'door2R'] : ['doorL', 'doorR']).every(n => C.sd.ajar.includes(n)) && !C.sd.dead.some(n => /^door/.test(n)) && !C.sd.xOpen && C.sd.rearDoors === null, JSON.stringify(C.sd));
     T.check(`${id}: no NaN, no page errors`, C.nan === 0 && !ct.errors.length, ct.errors.slice(0, 3).join(' | '));
+  }
+
+  // the two-door Ris (not a table car): both sides knocked on the door and behind it: its one door a side opens, nothing is cut out of its
+  // quarter (the computed rear door is not for a two-door car: the user's decision of 16. 11. 2026, docs/trki-realizem.md, »Vrata v poškodbah«)
+  {
+    const rr = await run({ xBody: 1, xGlass: 1, xParts: 1, carDet: 'normal', carId: 'ris' }, (hs) => {
+      const hit = eval(hs), g = window.__game, R = g.race, P = R.player;
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      for (const w of [-1, 1]) for (const u of [0.1, -0.2]) { hit(P, [0.15, u, w]); for (let k = 0; k < 12; k++) Render.frame(0.05, 1, P, 'chase', {}); }
+      const v = Render.viewOf(P), K = v.kit, a = v.body.geometry.attributes.position.array; let bad = 0; for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) bad++;
+      return { ajar: Object.keys(K.ajar), xOpen: !!K.xOpen, rearDoors: Render.crashInfo().cars.find(q => q.player).rearDoors, d2: !!v.body.geometry.userData.ranges.door2L, nan: bad }; }, hitFn);
+    const Q = rr.r;
+    T.check('Ris (two doors): both sides knocked on the door and behind it: its doors open, nothing cut out of a quarter (no rear door, xOpen false), no NaN, no page errors',
+      !Q.d2 && Q.ajar.includes('doorL') && Q.ajar.includes('doorR') && !Q.xOpen && Q.rearDoors === null && Q.nan === 0 && !rr.errors.length, JSON.stringify(Q) + ' ' + rr.errors.slice(0, 3).join(' | '));
   }
 
   // 11. the roof field (the user's: seen from above, the roof more caved in after every crash, on every closed car, never through the

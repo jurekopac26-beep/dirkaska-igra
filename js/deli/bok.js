@@ -97,7 +97,9 @@
   // x0 to x1 and its top from t0 to t1 under the roof, up to the A-pillar; rub: the rubbing strip's middle height (0.595; a high door,
   // GOZDAR's: its own), crease: [y, y] the pressed lines' heights (0.6, 0.72), lexOut: the light glass (11, 15) that much further out
   // (0; a window band whose skin's triangles bulge past its line, SKAKAČ's), rubSide: true, the rubbing strip's bolts (3, Visoki) each on
-  // the side's own line (none: at the handle's; a door whose side narrows towards the front, SKAKAČ's) }. The door's panel a decal on the loft's side (lift 3.5 mm: the
+  // the side's own line (none: at the handle's; a door whose side narrows towards the front, SKAKAČ's), split: a four-door car's whose skin
+  // x covers both doors of a side (MEDVED's): the rear door's front edge, what is behind it hosted on door2L / door2R (the mount names the
+  // four doors, parts: [...]; none: all of it the front door's) }. The door's panel a decal on the loft's side (lift 3.5 mm: the
   // stripe, the shut lines over it); its frame round the glass in the door's colour, the rear shut line on up to the roof (the door's
   // outline closed); the handle (or a strap pull), the window's net (a real one: webbing in squares, its border, the rod it hangs on, the
   // latch) or the light glass (lexan: clearer, its black printed border, a sliding hatch or a vent)
@@ -132,7 +134,14 @@
     const pt = (px, t, l, sd) => [px, LD.prop(px, 'ybelt') + (LD.prop(px, 'yt') - LD.prop(px, 'ybelt')) * t, sd * (LD.prop(px, 'w') + (LD.prop(px, 'wt') - LD.prop(px, 'w')) * t + l)];   // (a point of the window band)
     for (const sd of [-1, 1]) {
       const host = sd < 0 ? 'doorL' : 'doorR', o = { host }, dir = sd < 0 ? '-z' : 'z', S = [sd];
-      const side = (pts, col, l) => LD.side(pts, col, S, l, o), band = (pts, col, l) => LD.band(pts, col, S, l, o), win0 = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); }, win = win0, nwin = (pts, col, l) => win(pts, col, l - ni);
+      // (split: the skin over both doors of a side cut at the rear door's front edge; what is behind it is the rear door's, door2L / door2R,
+      // and goes with that one: each panel in two, the bolts, the pins and the handle by their place)
+      const sp = m.split, o2 = sp != null ? { host: sd < 0 ? 'door2L' : 'door2R' } : o, oAt = (px) => sp != null && px < sp ? o2 : o;
+      const half = (pts, A) => { const c = clip(pts, A).filter((p, i, C) => { const q = C[(i + C.length - 1) % C.length]; return C.length < 2 || Math.abs(p[0] - q[0]) > 1e-9 || Math.abs(p[1] - q[1]) > 1e-9; });
+        let ar = 0; for (let i = 0; i < c.length; i++) { const p = c[i], q = c[(i + 1) % c.length]; ar += p[0] * q[1] - q[0] * p[1]; } return c.length >= 3 && Math.abs(ar) > 1e-8 ? c : null; };
+      const two = (emit) => sp == null ? (pts, col, l) => emit(pts, col, l, o) : (pts, col, l) => { const f = half(pts, [[sp, -9], [9, -9], [9, 9], [sp, 9]]), r = half(pts, [[-9, -9], [sp, -9], [sp, 9], [-9, 9]]);
+        if (f) emit(f, col, l, o); if (r) emit(r, col, l, o2); };
+      const side = two((pts, col, l, oo) => LD.side(pts, col, S, l, oo)), band = two((pts, col, l, oo) => LD.band(pts, col, S, l, oo)), win0 = (pts, col, l) => { const c = clip(pts, W); if (c.length >= 3) band(c, col, l); }, win = win0, nwin = (pts, col, l) => win(pts, col, l - ni);
       if (O.skin) side([[xa, ya], [xb, ya], [xb, yb], [xa, yb]], O.skin, 0.0035);
       // the frame: its rear upright and its top in the door's colour, the rear shut line on up to the roof
       if (F) { const fc = O.frame || O.skin || P;
@@ -146,16 +155,16 @@
       if (O.mould) { const [r0, r1, r2, r3, rm] = m.rub != null ? [m.rub - 0.035, m.rub - 0.006, m.rub + 0.006, m.rub + 0.035, m.rub] : [0.56, 0.589, 0.601, 0.63, 0.595];   // (rub: its middle's height)
         side([[xa + 0.02, r0], [xb - 0.02, r0], [xb - 0.02, r3], [xa + 0.02, r3]], O.mould, 0.008);
         side([[xa + 0.02, r1], [xb - 0.02, r1], [xb - 0.02, r2], [xa + 0.02, r2]], [0.16, 0.16, 0.17], 0.0095);
-        if (K.hi) for (let i = 0; i < 4; i++) { const bx = xa + 0.08 + i * (xb - xa - 0.16) / 3; K.discX(bx, rm, sd * (m.rubSide ? LD.prop(bx, 'w') + 0.0105 : hz + 0.01), 0.009, 6, AL2, 1, o); } }   // (rubSide: each bolt on the side's own line)
+        if (K.hi) for (let i = 0; i < 4; i++) { const bx = xa + 0.08 + i * (xb - xa - 0.16) / 3; K.discX(bx, rm, sd * (m.rubSide ? LD.prop(bx, 'w') + 0.0105 : hz + 0.01), 0.009, 6, AL2, 1, oAt(bx)); } }   // (rubSide: each bolt on the side's own line)
       if (O.seal) { side([[xa, ya], [xb, ya], [xb, ya + 0.012], [xa, ya + 0.012]], BLK, 0.0045); side([[xa, ya], [xa + 0.012, ya], [xa + 0.012, yb], [xa, yb]], BLK, 0.0045); side([[xb - 0.012, ya], [xb, ya], [xb, yb], [xb - 0.012, yb]], BLK, 0.0045); }
       if (O.rivets && K.hi) for (const ry of [ya + 0.05, yb - 0.04]) for (let i = 0; i < 9; i++) { const rx = xa + 0.04 + i * (xb - xa - 0.08) / 8;
         side([[rx - 0.006, ry - 0.006], [rx + 0.006, ry - 0.006], [rx + 0.006, ry + 0.006], [rx - 0.006, ry + 0.006]], AL2, 0.0045); }
       // the handle
       const hc = O.handle === 'stock' ? BLK : O.handle === 'paint' || O.handle === 'flush' ? P : O.handle === 'alu' ? AL : O.handle === 'carbon' ? CF2 : null;
-      if (hc) { K.rect(hx, hy, sd * hz, hw, hh, hc, Object.assign({ dir }, o));
-        if (O.handle === 'alu' || O.handle === 'flush') K.rect(hx, hy - hh * 0.25, sd * (hz + 0.001), hw * 0.8, hh * 0.3, BLK, Object.assign({ dir }, o)); }
-      else K.rect(hx + 0.02, hy - 0.01, sd * (hz + 0.002), 0.09, 0.022, RED, Object.assign({ dir }, o));   // (a strap pull, red)
-      if (O.pins) for (const py of [ya + 0.14, yb - 0.1]) K.discX(xa + 0.035, py, sd * (hz - 0.012), 0.014, 6, CHR, 1, o);   // (the quick-release pins at its rear edge)
+      if (hc) { K.rect(hx, hy, sd * hz, hw, hh, hc, Object.assign({ dir }, oAt(hx)));
+        if (O.handle === 'alu' || O.handle === 'flush') K.rect(hx, hy - hh * 0.25, sd * (hz + 0.001), hw * 0.8, hh * 0.3, BLK, Object.assign({ dir }, oAt(hx))); }
+      else K.rect(hx + 0.02, hy - 0.01, sd * (hz + 0.002), 0.09, 0.022, RED, Object.assign({ dir }, oAt(hx)));   // (a strap pull, red)
+      if (O.pins) for (const py of [ya + 0.14, yb - 0.1]) K.discX(xa + 0.035, py, sd * (hz - 0.012), 0.014, 6, CHR, 1, oAt(xa + 0.035));   // (the quick-release pins at its rear edge)
       // a window net: black webbing in squares (8 up, 5 across) inside its border, hung on a rod along the belt, its latch at the top front (red)
       if (O.net && W) { const a = u0 + 0.025, b = u1, c = t0 + 0.03, e = t1 - 0.04, s = 0.009, k = 0.022;
         nwin([[a, c], [b, c], [b, c + k], [a, c + k]], BLK, 0.014); nwin([[a, e - k], [b, e - k], [b, e], [a, e]], BLK, 0.014); nwin([[a, c], [a + k, c], [a + k, e], [a, e]], BLK, 0.014);

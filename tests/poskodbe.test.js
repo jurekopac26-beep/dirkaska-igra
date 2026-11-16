@@ -4,7 +4,8 @@
 // does not. Then the table K (docs/realizem/paket-p.md, »K · Odpadlo kolo«) on two vehicles with parts and two older ones, the count of
 // Math.random draws in a crash scene (as on 205f89b2, before the package), the settings (js/game.js, index.html: Podrobnosti poškodb),
 // and the points the package's review left untested: the engine's power at Vklop (decision 41), the wing's downforce (K.5), a cut tyre
-// (the corner it is on, mirrored, and the time it takes to go down).
+// (the corner it is on, mirrored, and the time it takes to go down). Last the doors (docs/trki-realizem.md, »Vrata v poškodbah«): a four-door
+// car's rear door (door2L / door2R) goes in the same blow as its front door, two pieces on the road; a two-door car has one.
 //   node tests/poskodbe.test.js
 'use strict';
 const fs = require('fs');
@@ -137,6 +138,32 @@ const run = (mid, mode, hurt, sec) => withRnd(7, () => { const r = race(mid, mod
   const det = row('dmgDet');
   check('index.html: the row Podrobnosti poškodb (Preproste / Podrobne) shown; the ten rows of Razbijanje hidden', det != null && !/\bhidden\b/.test(det) && /data-set="dmgDet"><button data-v="0">Preproste<\/button><button data-v="1">Podrobne/.test(H) && X.every(k => /\bhidden\b/.test(row(k) || 'none') || !H.includes(`data-set="${k}"`)),
     X.filter(k => H.includes(`data-set="${k}"`) && !/\bhidden\b/.test(row(k) || '')).join(','));
+}
+
+// ---- 8. the doors (docs/trki-realizem.md, »Vrata v poškodbah«): the four-door MEDVED 4x4 and KOZOROG TC have a rear door of their own
+//         (door2L / door2R) in the front door's zone with its threshold. Blows on the left side (one on the front door, the next on the
+//         rear one, 15 % each): both doors of that side stay on till the zone's damage reaches the threshold, then both go in the same
+//         blow, never one without the other; the other side's doors stay on; a step later two door pieces lie on the road. The two-door
+//         KOLIBRI: no rear door in its table, one door piece. At Samo videz and at Vklop alike ----
+{
+  const doors = (L) => L.filter(q => /^door/.test(q)).sort().join(',');
+  const rows = []; let all = true;
+  for (const id of ['medved', 'kozorog', 'kolibri']) for (const mode of [1, 2]) {
+    const o = withRnd(7, () => {
+      const r = race(id, mode); r.start();
+      const P = r.player, hl = P.m.len / 2, hw = P.m.wid / 2, PT = C.partsOf(P.m), four = !!PT.door2L, log = [];
+      let apart = 0, k = 0;
+      while (!P.lost.doorL && k < 8) { C.applyDamage(P, 0.15, (k % 2 ? -0.2 : 0.1) * hl, -hw); k++; if (four && !!P.lost.doorL !== !!P.lost.door2L) apart++; log.push(P.dz[2]); }
+      const queued = doors(P.detach); r.step(DT);
+      return { four, k, apart, th: PT.doorL.th, th2: four ? PT.door2L.th : null, z: PT.doorL.z, z2: four ? PT.door2L.z : null, log, queued, pieces: doors(r.debris.filter(d => d.car === P.id).map(d => d.part)), lost: doors(Object.keys(P.lost)) };
+    });
+    const want = o.four ? 'door2L,doorL' : 'doorL';
+    const good = o.four === (id !== 'kolibri') && o.k >= 2 && o.log[o.k - 1] >= o.th && o.log[o.k - 2] < o.th && o.queued === want && o.pieces === want && o.lost === want
+      && (!o.four || (o.th2 === o.th && o.z2 === o.z && o.apart === 0));
+    if (!good) all = false;
+    rows.push(`${id} (${mode === 1 ? 'Samo videz' : 'Vklop'}): ${o.four ? 'four' : 'two'} doors, zone ${o.log.map(q => q.toFixed(3)).join(' → ')} (threshold ${o.th}${o.four ? ', rear ' + o.th2 : ''}), off [${o.lost}], on the road [${o.pieces}]${o.apart ? ', APART ' + o.apart : ''}`);
+  }
+  check('the doors: a four-door car\'s rear door (door2L) has the front door\'s zone and threshold and goes in the same blow as it (never one without the other, the other side\'s stay on): two door pieces on the road; the two-door KOLIBRI has no rear door, one piece', all, rows.join('; '));
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);

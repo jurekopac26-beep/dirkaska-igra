@@ -1277,9 +1277,15 @@ const Render = (function () {
       return t;
     };
     kx.emit = (a, b, c, ca, cb, cc, nn) => {
-      const t = kx.target(), g = t.g, n0 = g.P.length / 3, qa = kitColour(ca), qb = kitColour(cb), qc = kitColour(cc);
       const A = [a[0] * sx, a[1], a[2] * sz], Bv = [b[0] * sx, b[1], b[2] * sz], C = [c[0] * sx, c[1], c[2] * sz];
       if (![...A, ...Bv, ...C].every(Number.isFinite)) kitFail('a point is not a number (NaN)');
+      // a door's glass (kx.dg: a loft's glass panel in a door's region): only side glass leaves with the door. A triangle that faces up or along the car
+      // (|n.z| < 0.5: the wedge at the windscreen pillar's foot, by findGlass often a triangle of the windscreen) stays on the body, so a door that
+      // swings or falls never takes a piece of the windscreen or of the rear window with it (a triangle of no area stays where it was)
+      if (kx.dg) { const ux = Bv[0] - A[0], uy = Bv[1] - A[1], uz = Bv[2] - A[2], vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2];
+        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz);
+        if (l > 1e-9 && Math.abs(nz) < 0.5 * l) return kx.scope('dg', 0, () => kx.scope('pr', { part: 'body', sub: '' }, () => kx.emit(a, b, c, ca, cb, cc, nn))); }
+      const t = kx.target(), g = t.g, n0 = g.P.length / 3, qa = kitColour(ca), qb = kitColour(cb), qc = kitColour(cc);
       if (nn) { const f = (n) => { const x = n[0] / sx, y = n[1], z = n[2] / sz, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }; g.triN(A, Bv, C, f(nn[0]), f(nn[1]), f(nn[2]), qa, qb, qc); }
       else g.tri(A, Bv, C, qa, qb, qc);
       if (qa.kt) t.tag.push(n0, qa.kt === 's' ? 1 : 0, qa.kk); if (qb.kt) t.tag.push(n0 + 1, qb.kt === 's' ? 1 : 0, qb.kk); if (qc.kt) t.tag.push(n0 + 2, qc.kt === 's' ? 1 : 0, qc.kk);
@@ -1435,7 +1441,7 @@ const Render = (function () {
           g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], c, inside);
           if (lining && !glass) kx.scope('pr', Object.assign({}, kx.pr || { part: part || 'body', sub: '' }, { inner: inn }), () => flip(Ai[e], Bi[e], Bi[e + 1], Ai[e + 1], KIT_LINE, inside));
         };
-        if (explicit) emit(); else kx.scope('pr', { part, sub: '' }, emit);
+        if (explicit) emit(); else kx.scope('pr', { part, sub: '' }, glass && /^door/.test(part) ? () => kx.scope('dg', 1, emit) : emit);
       }
     }
     // the open runs' own pieces (the outer shell): a rim on each free edge along a segment (the shell's edge to its lining's: a door's top),
@@ -7294,6 +7300,7 @@ const Render = (function () {
        then builds the car afresh
      Its random numbers: the renderer's own (rRnd). */
   const KIT_LOOSE = { hood: ['lid', 18], trunk: ['lid', 30], tailgate: ['lid', 30], cover: ['lid', 20], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 28], doorR: ['door', 28],
+    door2L: ['door', 28], door2R: ['door', 28],   // (a rear door of its own, a four-door car's: a door as the front one, on its own front edge)
     fenderL: ['side', 12], fenderR: ['side', 12], quarterL: ['side', 12], quarterR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
   const KIT_WHEEL = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
   function kitParts(v, c, x, y, z, h) {
@@ -8686,9 +8693,15 @@ const Render = (function () {
     if (torn) { v.body.geometry.attributes.position.needsUpdate = true; K.xTorn = true; K.ver++; }
   }
   // a rear door (the new mode): the quarter's panel from the front door's rear edge to the rear wheel's arch, above the sill, turned out
-  // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it
+  // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it. Not on a two-door car (the user's
+  // decision of 16. 11. 2026, docs/trki-realizem.md, »Vrata v poškodbah«: the KOLIBRI, the LEV and the RIS have one door a side; what
+  // lies behind it is their quarter and stays shut) and not on a car with rear doors of its own
+  const X_2DOOR = new Set(['kolibri', 'lev', 'ris']);
   function xRearDoor(v, c, sd, x, y, z, h) {
-    const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return; (K.xRD || (K.xRD = [0, 0]))[si] = 1;
+    const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return;
+    if (X_2DOOR.has(c.m.id)) return;   // (a two-door car: nothing is cut out of its quarter)
+    if (v.body.geometry.userData.ranges[sd < 0 ? 'door2L' : 'door2R']) return;   // (a car with rear doors of its own, door2L / door2R: those open and fall themselves, kitLoosen and xTabHit; nothing is cut out of its quarter)
+    (K.xRD || (K.xRD = [0, 0]))[si] = 1;
     const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
     if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
     const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
@@ -9364,6 +9377,12 @@ const Render = (function () {
     if (v.xc) for (const i of ids) v.xc.am[i] = Math.max(v.xc.am[i], 0.05);   // (pushed: the paint pass scrapes it)
   }
   // a blow on the Kolibri (the core's dent): its row of the table, as above
+  // a four-door car's side (its rear doors parts of their own, door2L / door2R): a blow behind the rear door's front edge (its region's:
+  // the drawn line) is the rear door's: the table's door then is that one (it hangs, it comes off; the front door and its mirror stay),
+  // the two side panes change places (the rear door's glass is the rear side pane, QL / QR) and the blows on it are counted by themselves
+  function xtRear(v, c, d) { const K = v.kit, n = d.lz < 0 ? 'door2L' : 'door2R'; if (!K || !v.body.geometry.userData.ranges[n]) return null;
+    const C = K.xD2 || (K.xD2 = {}); if (C[n] == null) { const E = K.E, r = (E.regions || []).find(q => q.part === n); C[n] = r ? Math.max(r.x[0], r.x[1]) * (c.m.len / E.body.len) : -Infinity; }
+    return d.lx < C[n] ? n : null; }
   function xTabHit(v, d, c, x, y, z, h) {
     const S = v.xtS || (v.xtS = { z: {}, rear: 0, rt: -1e9, ct: -1e9 });
     if (XT_MIN.has(c.m.id)) { if (time - S.ct >= 0.35) S.owe = { d, b: v.xtB || 0 }; else if (S.owe && d.amt > S.owe.d.amt) S.owe.d = d; S.ct = time; }   // (a crash: blows under 0.35 s apart, any zone; xtMin after the frame's)
@@ -9375,11 +9394,13 @@ const Render = (function () {
       if (s === 2) { G('R', 0.5); G('D' + (sd === 'L' ? 'R' : 'L'), 0.5); }
       return;
     }
-    const pk = xtPick(c.m, d), zone = pk.zone, Z = S.z[zone] || (S.z[zone] = { n: 0, t: -1e9, s: -1 }), again = time - Z.t < 0.35; Z.t = time;
+    const pk = xtPick(c.m, d), zone = pk.zone, d2 = zone[0] === 'S' && XT_TAB.H[zone][0] === 'D' ? xtRear(v, c, d) : null, zk = d2 ? zone + '2' : zone, Z = S.z[zk] || (S.z[zk] = { n: 0, t: -1e9, s: -1 }), again = time - Z.t < 0.35; Z.t = time;
     const rear = zone[0] === 'B', rAgain = rear && time - S.rt < 0.35; if (rear) S.rt = time;   // (the rear's order: one crash however many of its zones it touches)
     if (again && pk.s <= Z.s) return;   // (the same crash: only a harder knock in it counts)
     if (!again) Z.n++; Z.s = again ? Math.max(Z.s, pk.s) : pk.s;
-    const s = rear ? pk.s : Math.max(pk.s, Z.n >= 5 ? 2 : Z.n >= 3 ? 1 : 0), row = XT_TAB.T[zone][s], hit = XT_TAB.H[zone], fx = { g: Object.assign({}, row.g), lamp: row.lamp.slice(), hang: row.hang.slice(), off: row.off.slice(), fold: row.fold.map(q => q.slice()) };
+    const s = rear ? pk.s : Math.max(pk.s, Z.n >= 5 ? 2 : Z.n >= 3 ? 1 : 0), row = XT_TAB.T[zone][s], hit = d2 ? 'Q' + zone[1] : XT_TAB.H[zone], fx = { g: Object.assign({}, row.g), lamp: row.lamp.slice(), hang: row.hang.slice(), off: row.off.slice(), fold: row.fold.map(q => q.slice()) };
+    if (d2) { const sd = zone[1], g = fx.g, gd = g['D' + sd], gq = g['Q' + sd], dn = 'door' + sd, sw = (L) => L.filter(n => n !== 'mirror' + sd).map(n => n === dn ? d2 : n);   // (the rear door's blow: the row read for it)
+      delete g['D' + sd]; delete g['Q' + sd]; if (gd != null) g['Q' + sd] = gd; if (gq != null) g['D' + sd] = gq; fx.hang = sw(fx.hang); fx.off = sw(fx.off); }
     if (rear && !rAgain) { const n = ++S.rear, R1 = XT_TAB.T[zone][1];   // (the user's order from behind)
       if (n === 2) fx.lamp.push(...R1.lamp); if (n === 3) fx.hang.push('spoiler'); if (n >= 4) fx.off.push('spoiler'); }
     for (const key in fx.g) G(key, fx.g[key], key === hit ? d : null);
