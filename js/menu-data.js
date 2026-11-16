@@ -493,6 +493,16 @@ window.MENU = {
   "track": { "dry": "dry track", "wet": "wet track", "change": "may change" },
   "sky": { "sun": "Sunny", "part": "Mostly sunny", "clear": "Clear", "rain": "Rain", "storm": "Storm", "change": "Changeable" }
  },
+ "side": {
+  "kick": "Police chase",
+  "title": "Pick your side",
+  "run": { "name": "Getaway", "role": "You run", "what": "They chase", "goal": "Reach the end of the road" },
+  "cop": { "name": "Police", "role": "You chase", "what": "They run", "goal": "Stop the getaway car" },
+  "soon": "Coming soon",
+  "hint": "The police side comes in a later version.",
+  "go": "Race!",
+  "goSub": "Don't get caught"
+ },
  "credits": [
   [
    "Roads",
