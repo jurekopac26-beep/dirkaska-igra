@@ -55,6 +55,12 @@ CFG = {
     # (their origins known, the start line of the track's own data: geo_match.py only checks them, match.json keeps the known ones)
     'balea': dict(kind='real', start='Bâlea Valley', finish='Bâlea Lake', country='Romania', region='Făgăraș Mountains', l1='carpathians'),
     'bathurst': dict(kind='real', start='Bathurst', country='Australia', region='New South Wales', l1='nsw'),
+    'atimpoku': dict(kind='real', lat0=6.2556015, lon0=0.0803798, rot=0.0, start='Akosombo', finish='Atimpoku', country='Ghana', region='Eastern Region', l1='westafrica'),
+    'isalo': dict(kind='real', lat0=-22.6205622, lon0=45.3554222, rot=0.0, start='Isalo', finish='Isalo', country='Madagascar', region='Ihorombe', l1='madagascar'),
+    'hiva': dict(kind='real', lat0=41.3776622, lon0=60.3562594, rot=0.0, start='Khiva', country='Uzbekistan', region='Khorezm', l1='aral'),
+    'portobelo': dict(kind='real', lat0=9.5471944, lon0=-79.6718176, rot=0.0, start='Portobelo', finish='Portobelo', country='Panama', region='Colón', l1='panama'),
+    'eljem': dict(kind='real', lat0=35.2900942, lon0=10.7008579, rot=0.0, start='El Jem', finish='El Jem', country='Tunisia', region='Mahdia', l1='tunisia'),
+    'isuna': dict(kind='real', lat0=27.331833, lon0=89.518573, rot=0.0, start='Isuna', finish='Isuna', country='Bhutan', region='Paro', l1='bhutan'),
     'livorno': dict(kind='real', start='Livorno', country='Italy', region='Tuscany', l1='tuscany'),
     'ujarras': dict(kind='real', start='Ujarrás', finish='Orosi Valley', country='Costa Rica', region='Cartago', l1='costarica'),
     'ghoufi': dict(kind='real', start='Ghoufi', finish='Ghoufi Canyon', country='Algeria', region='Aurès', l1='aures'),
@@ -88,6 +94,7 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'kenyacoast': (-4.0, 39.7, 600), 'zambezi': (-17.9, 25.9, 700), 'khammouane': (18.0, 104.6, 700),
       'vietnam': (16.2, 108.0, 700), 'himalaya': (28.6, 83.7, 800), 'hormuz': (26.1, 56.3, 700), 'ethiopia': (13.2, 38.0, 800), 'pamir': (38.4, 71.3, 800),
       'luzon': (14.0, 121.2, 700), 'salvador': (13.8, -89.3, 700),
+      'westafrica': (6.3, 0.1, 700), 'madagascar': (-21.5, 46.0, 800), 'aral': (41.8, 60.5, 700), 'panama': (9.2, -79.6, 500), 'tunisia': (35.3, 10.3, 600), 'bhutan': (27.4, 90.0, 500),
       'bogota': (4.9, -74.0, 700), 'otago': (-45.0, 169.2, 600), 'macedonia': (41.1, 23.5, 700), 'bajio': (21.9, -102.3, 700)}
 
 def bearing(la1, lo1, la2, lo2):
