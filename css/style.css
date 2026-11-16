@@ -980,6 +980,10 @@ select.txt:disabled { opacity: .75; }
 .lp-box { margin-top: 10px; }
 .lp-box .desc { margin: 4px 0; }
 .ltab.lp td.nm { max-width: 9em; }
+/* Svetovna lestvica: the World's rows with Duh, Skrij and Prijavi (compact; upright without Avto and Zaostanek, so 360 px is enough) */
+.ltab.sv td:last-child { text-align: right; }
+.ltab.sv td:last-child .btn.mini { padding: 4px 7px; min-height: 30px; margin-left: 3px; }
+@media (orientation: portrait) { .ltab.sv th:nth-child(3), .ltab.sv td:nth-child(3), .ltab.sv th:nth-child(5), .ltab.sv td:nth-child(5) { display: none; } }
 .res-lpt { margin: 6px 0 0; font: 600 clamp(11px, 3vh, 14px)/1.3 var(--f-ui); color: var(--lcd); }
 .lp-nick { margin: 10px 0 4px; }
 .lp-nick .txt { width: 100%; box-sizing: border-box; }

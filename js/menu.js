@@ -340,12 +340,28 @@
   // (G.friends: the place, the nickname, the car, the time, the gap; the player's row lit), Send my times under them; none yet: a line
   // that says so. It stays chosen while the tracks are leafed through (cam), track by track
   let fr = null;   // the friends' times of the track shown (vTrack: G.friends), null where the game has none
+  // its World tab (Svetovna lestvica, docs/svetovna-lestvica.md): the world's top 5 (6 on its side) in the way the track is driven now and the
+  // player's place (#123 of 4,567), a stale table with its time (as of 14.32), the server down in one line; not joined yet: what goes where
+  // (the consent), Join / Not now and the privacy policy. Only where the game has a world leaderboard (G.world: its server's address set)
+  let wd = null, fwTab = 'f';   // (the world's table of the track shown (G.world), null without it; the tab chosen: 'f' Friends, 'w' World)
+  function worldView(t) {
+    const W = wd;
+    if (!W.on) return '<div class="fnone fjoin"><b>Join the world leaderboard</b><small>Your nickname, times and replays go to our server in the EU and show on a public world leaderboard. Use a nickname, not your real name. You can delete them in Settings. Under 15? Ask a parent first.</small>' +
+      '<div class="fjb"><button class="fsend" data-act="world-join">Join</button><button class="flater" data-act="ftab:f">Not now</button></div><a class="fpol" href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></div>';
+    const tab = W.rows.length ? '<div class="ftab wtab"><table aria-label="World times on ' + esc(t.name) + '"><thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Time</th></tr></thead><tbody>' +
+      W.rows.map(r => '<tr' + (r.me ? ' class="me"' : '') + '><td>' + num(r.at) + '</td><td class="nm">' + esc(r.name) + '</td><td class="nm">' + esc(r.car || '–') + '</td><td>' + esc(r.time) + '</td></tr>').join('') + '</tbody></table></div>'
+      : '<div class="fnone"><b>' + (W.wait ? 'Loading the world leaderboard…' : W.na ? 'World leaderboard is not available right now' : 'No world times on ' + esc(t.name) + ' yet') + '</b></div>';
+    const line = (W.me ? '<b>#' + num(W.me.at) + ' of ' + num(W.me.n || W.n) + '</b>' : W.n ? '<b>' + num(W.n) + (W.n === 1 ? ' driver' : ' drivers') + '</b>' : '') + (W.old ? '<small>as of ' + esc(W.old) + '</small>' : '');
+    return tab + (line ? '<p class="wline">' + line + '</p>' : '');
+  }
   function friendsView(t) {
+    const tabs = wd ? '<div class="ftabs" role="tablist"><button role="tab" aria-selected="' + (fwTab !== 'w') + '" data-act="ftab:f">Friends</button><button role="tab" aria-selected="' + (fwTab === 'w') + '" data-act="ftab:w">World</button></div>' : '';
+    if (wd && fwTab === 'w') return '<div class="dio friends world" data-friends="' + t.id + '">' + tabs + worldView(t) + '</div>';
     const F = fr, rows = F.rows || [];
     const tab = F.n ? '<div class="ftab"><table aria-label="Friends\' times on ' + esc(t.name) + '"><thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Time</th><th>Gap</th></tr></thead><tbody>' +
       rows.map(r => '<tr' + (r.me ? ' class="me"' : '') + '><td>' + r.at + '</td><td class="nm">' + esc(r.name) + '</td><td class="nm">' + esc(r.car || '–') + '</td><td>' + esc(r.time) + '</td><td>' + esc(r.gap) + '</td></tr>').join('') + '</tbody></table></div>'
       : '<div class="fnone"><b>No friends\' times on ' + esc(t.name) + ' yet</b>' + (F.friends ? '' : '<small>Send your times to friends. When they send theirs back, they show up here.</small>') + '</div>';
-    return '<div class="dio friends" data-friends="' + t.id + '">' + tab + '<button class="fsend" data-act="send-times">Send my times</button></div>';
+    return '<div class="dio friends" data-friends="' + t.id + '">' + tabs + tab + '<button class="fsend" data-act="send-times">Send my times</button></div>';
   }
   // the box (x0, y0, x1, y1) of a route in the map's pixels, with the map turned by a degrees about its middle (0: as drawn)
   function routeBox(T, a) {
@@ -1050,6 +1066,7 @@
     const n = list.length, t = list[trackIdx], ctry = countryOf(t), fl = flagUrl(ctry);
     fr = G.friends ? G.friends(t.def, cam === 4) : null;   // (the friends' times: the Friends view builds the track for the check of its times, the place's badge waits for it)
     if (cam === 4 && !fr) cam = 1;   // (a game without the friends' leaderboard: the map)
+    wd = fr && G.world ? G.world(t.def, 6) : null;   // (the world's: Svetovna lestvica; the top 6, upright the CSS shows 5: a turned phone keeps the table)
     h += ringView(list, t);   // (on its side: the carousel's backdrop, the neighbours' cards and the arrows)
     // the head: the back arrow (to the modes), the place (fitWhere: smaller where a long one would reach the globe; the country for the
     // readers), the globe (its country gold: globe.on)
@@ -1078,7 +1095,7 @@
     else if (mode === 'race' && rivOf(d)) { const k = G.rivals(d); last = '<div class="opp"><button data-act="riv" aria-haspopup="dialog" aria-label="Opponents: ' + k + '. Choose how many">' + oppN(k) + '</button></div>'; }
     else last = '<div class="opp">' + oppN(mode === 'duel' || mode === 'pursuit' || mode === 'drag' ? 1 : mode === 'elim' ? Math.max(5, G.rivals ? G.rivals(d) : 21) : G.rivals ? G.rivals(d) : 21) + '</div>';   // (Elimination: at least 5, js/zabava/elim.js E.min)
     // (by the best time: the player's place among the friends, 2/5 (no time yet: –/4); a tap opens the Friends view)
-    const fb = fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
+    const fb = wd && fwTab === 'w' && wd.me ? '<button class="fbadge" data-act="cam:4" aria-label="Your world place: ' + wd.me.at + ' of ' + (wd.me.n || wd.n) + '">#' + num(wd.me.at) + '</button>' : fr && !fr.wait && (fr.place || fr.n) ? '<button class="fbadge" data-act="cam:4" aria-label="' + (fr.place ? 'Your place among friends: ' + fr.place.at + ' of ' + fr.place.n : 'Friends\' times: ' + fr.n) + '">' + (fr.place ? fr.place.at + '/' + fr.place.n : '–/' + fr.n) + '</button>' : '';
     // the flag: the quick list (js/menu-izbor.js; a country without a flag: its first letters); the best: its mark before it (a medal, a
     // tick), NEW instead of the time on a track not driven yet
     const flagB = IZ() ? '<div class="flag"><button data-act="izbor" aria-haspopup="dialog" aria-label="' + esc((ctry ? 'Flag of ' + ctry + '. ' : '') + 'Choose a track by country') + '">' +
@@ -1672,6 +1689,8 @@
       case 'tsub': titleSub = v || null; render(true); break;
       case 'mode': mode = v; enterTrack(); screen = 'track'; cam = CAM_OPEN || G.S.menuCam; render(); break;   // (a tap on a mode goes straight to its tracks)
       case 'cam': cam = +v; G.setOption('menuCam', cam); render(true); break;
+      case 'ftab': fwTab = v === 'w' ? 'w' : 'f'; render(true); break;   // (the Friends view's tabs: Friends, World)
+      case 'world-join': if (G.worldJoin && G.worldJoin(true)) render(true); break;   // (the consent given on the World tab: the game joins, asks for the nickname)
       case 'send-times': if (G.sendTimes) G.sendTimes(); break;   // (the Friends view: the player's times to friends as a link, the game's Lestvica prijateljev)
       case 'track': {   // (on its side the carousel turns, then the screen is the new track's: ringLand)
         const n = TRACKS().length; if (!n) break;
