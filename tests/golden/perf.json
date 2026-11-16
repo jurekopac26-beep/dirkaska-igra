@@ -614,5 +614,12 @@
   "kverts": 230,
   "maxKverts": 265,
   "jsMs": 1.45
+ },
+ "isalo": {
+  "calls": 93,
+  "maxCalls": 103,
+  "kverts": 219,
+  "maxKverts": 230,
+  "jsMs": 1.34
  }
 }

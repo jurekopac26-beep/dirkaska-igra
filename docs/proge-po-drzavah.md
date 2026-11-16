@@ -164,7 +164,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 | Angola | Luanda (proge z znamenitostjo, 1) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Zambija | Livingstone (proge z znamenitostjo, 2) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
-| Madagaskar | Antananarivo (proge z znamenitostjo, 3) | se zamenja z naravno znamenitostjo ali zgradbo (`docs/proge-z-znamenitostjo.md`); bil v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Madagaskar | Isalo (proge z znamenitostjo, 3; zamenjava za Antananarivo) | v delu (jure.kopac26), #722, veja `proge/zamenjava-3` (`docs/proge/isalo.md`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Kenija | Mombasa (proge z znamenitostjo, 4) | pripravljena (#718, veja `proge/mombasa` na `proge/luanda`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Uzbekistan | Hiva (proge z znamenitostjo, 5) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Gana | Elmina (proge z znamenitostjo, 6) | odpade (občutljiv kraj), zamenjava v `docs/proge-z-znamenitostjo.md`; bila v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
