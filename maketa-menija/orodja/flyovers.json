@@ -1607,5 +1607,182 @@
     }
    ]
   }
+ ],
+ [
+  "serres",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "Double Left",
+     "d": 860
+    },
+    {
+     "n": "Esses",
+     "d": 1320
+    },
+    {
+     "n": "South-west Hairpin",
+     "d": 2070
+    },
+    {
+     "n": "Long Right",
+     "d": 2490
+    }
+   ]
+  }
+ ],
+ [
+  "sindia",
+  {
+   "kbps": 450,
+   "speed": 166,
+   "back": 216,
+   "up": 136,
+   "ahead": 108,
+   "fogNear": 465,
+   "fogFar": 1793,
+   "places": [
+    {
+     "n": "Left over the Top",
+     "d": 440
+    },
+    {
+     "n": "Fast Esses",
+     "d": 950
+    },
+    {
+     "n": "Baobab Corner",
+     "d": 2320
+    },
+    {
+     "n": "Triple Bend",
+     "d": 2819
+    },
+    {
+     "n": "Right at the Bottom",
+     "d": 3959
+    }
+   ]
+  }
+ ],
+ [
+  "sosnova",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "Chicane",
+     "d": 220
+    },
+    {
+     "n": "West Hairpin",
+     "d": 580
+    },
+    {
+     "n": "The Esses",
+     "d": 1110
+    }
+   ]
+  }
+ ],
+ [
+  "tocancipa",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "West Loop",
+     "d": 560
+    },
+    {
+     "n": "Middle Esses",
+     "d": 810
+    },
+    {
+     "n": "East Loop",
+     "d": 1610
+    },
+    {
+     "n": "South Hairpin",
+     "d": 2170
+    }
+   ]
+  }
+ ],
+ [
+  "yahuarcocha",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "places": [
+    {
+     "n": "Long Right",
+     "d": 880
+    },
+    {
+     "n": "Left Hairpin",
+     "d": 2120
+    },
+    {
+     "n": "Lakeside Straight",
+     "d": 2899
+    },
+    {
+     "n": "Lakeside Hairpin",
+     "d": 3319
+    }
+   ]
+  }
+ ],
+ [
+  "koli",
+  {
+   "kbps": 450,
+   "speed": 130,
+   "back": 169,
+   "up": 107,
+   "ahead": 84,
+   "fogNear": 364,
+   "fogFar": 1404,
+   "season": "winter",
+   "places": [
+    {
+     "n": "Hairpin 1",
+     "d": 1726
+    },
+    {
+     "n": "Hairpin 2",
+     "d": 1962
+    }
+   ],
+   "alt": [
+    159,
+    306
+   ]
+  }
  ]
 ]
