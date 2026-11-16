@@ -857,7 +857,9 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 /* (greyed by colour alone: a filter or opacity on the turned page is drawn wrong by some GPUs) */
 .wk:not(.on) .wk-q .wk-hd { background: #9aa3b2; color: #202733; }
 .wk:not(.on) .wk-q .wk-sname { text-decoration: line-through; text-decoration-thickness: 2px; }
-/* the police chase's side (.sd): the police's page greyed the same way (not yet to be chosen: its stamp, not struck through), its car grey */
+/* the police chase's side (.sd): the side not chosen greyed the same way (not struck through), its car grey; a tap on a page chooses it */
+.wk.sd .wk-pg { cursor: pointer; transition: transform .18s ease-out; -webkit-tap-highlight-color: transparent; }
+.wk.sd .wk-pg[aria-disabled="true"] { cursor: default; }
 .wk.sd .wk-q .wk-sname { text-decoration: none; }
 .wk.sd .wk-q .wk-dw svg path { fill: #a8a69f; } .wk.sd .wk-q .wk-dw svg path:nth-child(2) { fill: #85878d; }
 .wk.sd .wk-dw { padding-top: 4px; padding-bottom: 2px; }

@@ -1562,25 +1562,39 @@
       G.click(); ({ back: ctl.back, go: ctl.go, q: ctl.quali })[b.dataset.wk]();
     });
   }
-  /* the police chase's side before the race (the user, 16. 11. 2026): the race weekend's frame, its two pages the sides. The getaway (the
-     game's police mode: the police chase the player) is the one in play; the police (the player chasing a getaway car) shows, not yet to be
-     chosen: Coming soon. Race! goes on to the intro as ever; Back to the track screen */
+  /* the police chase's side before the race (the user, 16. 11. 2026): the race weekend's frame, its two pages the sides, the one chosen
+     upright and framed red, the other turned aside and grey; a tap on a page (the pad's LB and RB) chooses it, remembered for the next time.
+     The getaway: the game's police mode (the police chase the player); the police: the game's pursuit (js/zabava/lov.js, the player's patrol
+     car chases a getaway car). Race! goes on to the intro as ever; Back to the track screen */
   const SIDE_IC = {
     run: '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><path d="M7 31l4-10.5h22l5 10.5v6h-4.5v-3h-22v3H7z" fill="#d81f2a"/><path d="M13.4 22.6h17.8l2.6 6.2H11z" fill="#1b2230"/><circle cx="13.5" cy="33" r="2.6" fill="#1b2230"/><circle cx="30.5" cy="33" r="2.6" fill="#1b2230"/><path d="M2 24h4M1 29h4M3 34h3" stroke="#6b7384" stroke-width="2.4" stroke-linecap="round"/></svg>',
     cop: '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><path d="M7 31l4-10.5h26l4 10.5v6h-4.5v-3h-25v3H7z" fill="#1f4fa8"/><path d="M13.4 22.6h21.2l2.4 6.2H11z" fill="#1b2230"/><circle cx="14" cy="33" r="2.6" fill="#1b2230"/><circle cx="34" cy="33" r="2.6" fill="#1b2230"/><path d="M18 17h5.5v3.5H18z" fill="#d81f2a"/><path d="M24.5 17H30v3.5h-5.5z" fill="#3fa0ff"/></svg>',
   };
+  let chSide = 'run';   // (the side chosen last, for the next time)
   function chaseSide(R, go) {
-    const t = R.track, X = D.side;
-    // (the police's page first, turned aside and grey as Saturday's when qualifying is off; the getaway's framed red as Sunday's)
-    const page = (k, q) => '<div class="wk-pg sd-' + k + (q ? ' wk-q' : ' wk-r') + '"' + (q ? ' aria-disabled="true"' : '') + '><div class="wk-hd">' + esc(X[k].name.toUpperCase()) + '</div>' +
+    const t = R.track, X = D.side, can = t.modes.includes('lov'), K = ['cop', 'run'];
+    if (!can) chSide = 'run';
+    const page = (k) => '<div class="wk-pg sd-' + k + '" data-wk="side" data-s="' + k + '" role="button" tabindex="0"' + (k === 'cop' && !can ? ' aria-disabled="true"' : '') + '><div class="wk-hd">' + esc(X[k].name.toUpperCase()) + '</div>' +
       '<div class="wk-dw">' + SIDE_IC[k] + '</div><div class="wk-ses"><span class="wk-line"><span class="wk-sname">' + esc(X[k].role) + '</span></span><span class="wk-sdet">' + esc(X[k].what) + '</span></div>' +
-      '<div class="wk-ft"><span class="wk-gl">' + esc(X[k].goal.toUpperCase()) + '</span></div>' + (q ? '<span class="wk-stamp">' + esc(X.soon.toUpperCase()) + '</span>' : '') + '</div>';
+      '<div class="wk-ft"><span class="wk-gl">' + esc(X[k].goal.toUpperCase()) + '</span></div></div>';
     const { el, close } = wkShell(t, R.wet, ' sd', X.title,
-      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b>' + esc(X.run.name) + '</b> · ' + esc(G.car().name) + '</p></div>' +
-        '<div class="wk-cal">' + page('cop', true) + page('run') + '</div><p class="wk-note">' + esc(X.hint) + '</p>' +
-        '<button class="go wk-go" data-wk="go">' + esc(X.go) + '<small>' + esc(X.goSub.toUpperCase()) + '</small></button></div>');
-    const ctl = el.__wk = { back() { close(); render(); }, go() { close(); go(); } };
-    el.addEventListener('click', (e) => { const b = e.target.closest('[data-wk]'); if (!b) return; G.click(); ctl[b.dataset.wk](); });
+      '<div class="wk-pnl"><div class="wk-ttl"><p class="wk-kick">' + esc(X.kick) + '</p><h1>' + esc(X.title) + '</h1><p class="wk-what"><b class="sd-name"></b> · ' + esc(G.car().name) + '</p></div>' +
+        '<div class="wk-cal">' + K.map(page).join('') + '</div><p class="wk-note">' + esc(X.hint) + '</p>' +
+        '<button class="go wk-go" data-wk="go">' + esc(X.go) + '<small class="sd-sub"></small></button></div>');
+    // the side shown: its page upright and framed (as Sunday's), the other turned aside and grey (as Saturday's when qualifying is off)
+    const show = () => {
+      for (const k of K) { const p = $('.sd-' + k, el); p.classList.toggle('wk-r', k === chSide); p.classList.toggle('wk-q', k !== chSide); p.setAttribute('aria-pressed', k === chSide); }
+      $('.sd-name', el).textContent = X[chSide].name; $('.sd-sub', el).textContent = X[chSide].goSub.toUpperCase();
+    };
+    show();
+    const ctl = el.__wk = {
+      back() { close(); render(); },
+      // (the police: the same track in the pursuit; the track is the one loaded, the mode is read at the start)
+      go() { close(); if (chSide === 'cop') G.select(t.id, 'lov'); go(); },
+      side(k) { k = k || (chSide === 'cop' ? 'run' : 'cop'); if (k === 'cop' && !can) return; chSide = k; show(); },
+    };
+    el.addEventListener('click', (e) => { const b = e.target.closest('[data-wk]'); if (!b) return; G.click(); ctl[b.dataset.wk](b.dataset.s); });
+    el.addEventListener('keydown', (e) => { const b = e.target.closest('[data-wk="side"]'); if (b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ctl.side(b.dataset.s); } });
   }
   function beforeRace(R, go) {
     cancelAnimationFrame(ixRaf); ixStop();
@@ -1870,7 +1884,7 @@
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
     const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
-    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
+    if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } if ((k === 'lb' || k === 'rb') && wk.__wk.side) { G.click(); wk.__wk.side(k === 'lb' ? 'cop' : 'run'); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
     if (izOpen() || zemOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)

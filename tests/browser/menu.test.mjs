@@ -1059,13 +1059,15 @@ try {
 
   // 5a2. the row's mode and difficulty (the user, 16. 11. 2026): a tap the next one, no window (Chapman's Peak: Classic race, Street race,
   //      Police chase, round again; Endless traffic, which it has not, skipped; Spa, a circuit: Classic race alone, a tap leaves it so); Easy,
-  //      Medium, Hard, Super hard, round again. Police chase, Race!: the side first, in the race weekend's frame: the police's page not to be
-  //      chosen (Coming soon), Back to the tracks; the getaway's Race! the race in the police mode (upright, then on its side)
+  //      Medium, Hard, Super hard, round again. Police chase, Race!: the side first, in the race weekend's frame: the getaway chosen, the
+  //      police's page grey; a tap on it chooses it, Back to the tracks, Race! again: the police remembered, Race! the pursuit (the player's
+  //      patrol car, js/zabava/lov.js); on its side the pad's LB and RB the sides, Start the getaway's race in the police mode
   {
     const row = (page) => ev(page, 'const q = (s) => root.querySelector(".trow " + s); return { md: q(".md").textContent, dif: q(".dif").textContent, sheet: !!root.querySelector(".sheet, .intro"), mode: Menu.debug().mode, at: Menu.debug().list[Menu.debug().trackIdx], diff: __game.S.difficulty, popup: [...root.querySelectorAll(".trow :is(.md, .dif) button")].some(b => b.hasAttribute("aria-haspopup")) };');
     const side = (page) => ev(page, `const w = root.querySelector('.intro.wk.sd'); if (!w) return null; const r = w.querySelector('.wk-go').getBoundingClientRect(), cal = w.querySelector('.wk-cal').getBoundingClientRect();
-      return { pages: [...w.querySelectorAll('.wk-hd')].map(e => e.textContent), cop: w.querySelector('.sd-cop').getAttribute('aria-disabled'), copGrey: w.querySelector('.sd-cop').classList.contains('wk-q'), stamp: w.querySelector('.sd-cop .wk-stamp').textContent,
-        runOnly: !w.querySelector('.sd-run .wk-stamp'), go: w.querySelector('.wk-go').textContent, title: w.querySelector('.wk-ttl h1').textContent, head: w.querySelector('.ix-name h2').firstChild.textContent,
+      const on = (k) => w.querySelector('.sd-' + k).classList.contains('wk-r') && !w.querySelector('.sd-' + k).classList.contains('wk-q') && w.querySelector('.sd-' + k).getAttribute('aria-pressed') === 'true';
+      return { pages: [...w.querySelectorAll('.wk-hd')].map(e => e.textContent), side: on('cop') && !on('run') ? 'cop' : on('run') && !on('cop') ? 'run' : '?', off: !w.querySelector('[aria-disabled], .wk-stamp'),
+        what: w.querySelector('.wk-what b').textContent, go: w.querySelector('.wk-go').textContent, title: w.querySelector('.wk-ttl h1').textContent, head: w.querySelector('.ix-name h2').firstChild.textContent,
         inView: r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5 && cal.left >= 0 && cal.right <= innerWidth + 0.5 && cal.bottom <= r.top, race: !!window.__game.race };`);
     const { ctx, page, errors } = await open({ intro: 0, track: 'chapman', mode: 'race', lastTrack: 'chapman', difficulty: 1 }, { width: 360, height: 640 });
     await ready(page);
@@ -1083,20 +1085,23 @@ try {
     await click(page, 'race-single');
     await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk.sd'), null, { timeout: 120000 }); await page.waitForTimeout(300);
     let sd = await side(page);
-    T.check('Police chase, Race!: the side first (Pick your side: Police, Getaway; the police\'s page grey, Coming soon, not to be chosen; Race! on the page), no race yet',
-      sd && JSON.stringify(sd.pages) === '["POLICE","GETAWAY"]' && sd.cop === 'true' && sd.copGrey && sd.stamp === 'COMING SOON' && sd.runOnly && /^Race!/.test(sd.go) && sd.title === 'Pick your side' && sd.head === "Chapman's Peak" && sd.inView && !sd.race, JSON.stringify(sd));
-    await page.click('.intro.wk.sd .sd-cop', { force: true }); await page.waitForTimeout(200);
-    const still = await side(page);
-    T.check('the police\'s page tapped: nothing (the side stays open, no race)', still && !still.race, JSON.stringify(still));
+    T.check('Police chase, Race!: the side first (Pick your side: Police, Getaway; the getaway chosen, the police\'s page grey but to be chosen; Race! on the page), no race yet',
+      sd && JSON.stringify(sd.pages) === '["POLICE","GETAWAY"]' && sd.side === 'run' && sd.off && sd.what === 'Getaway' && /^Race!Don't get caught/i.test(sd.go) && sd.title === 'Pick your side' && sd.head === "Chapman's Peak" && sd.inView && !sd.race, JSON.stringify(sd));
+    await page.click('.intro.wk.sd .sd-cop', { force: true }); await page.waitForTimeout(250);
+    const cop = await side(page);
+    T.check('the police\'s page tapped: the police chosen (its page upright and framed, the getaway\'s grey), the side stays open, no race', cop && cop.side === 'cop' && cop.what === 'Police' && /^Race!Catch them/i.test(cop.go) && cop.inView && !cop.race, JSON.stringify(cop));
     await page.click('.intro.wk.sd [data-wk="back"]');
-    const back = await ev(page, 'return { intro: !!root.querySelector(".intro"), screen: Menu.debug().screen, mode: Menu.debug().mode };');
-    T.check('Back: to the tracks, still Police chase', !back.intro && back.screen === 'track' && back.mode === 'chase', JSON.stringify(back));
+    const back = await ev(page, 'return { intro: !!root.querySelector(".intro"), screen: Menu.debug().screen, mode: Menu.debug().mode, game: __game.S.mode };');
+    T.check('Back: to the tracks, still Police chase (the game\'s mode the police chase)', !back.intro && back.screen === 'track' && back.mode === 'chase' && back.game === 'police', JSON.stringify(back));
     await click(page, 'race-single');
-    await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk.sd'), null, { timeout: 120000 });
+    await page.waitForFunction(() => document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk.sd'), null, { timeout: 120000 }); await page.waitForTimeout(200);
+    const again = await side(page);
+    T.check('Race! again: the police remembered', again && again.side === 'cop', JSON.stringify(again));
     await page.click('.intro.wk.sd [data-wk="go"]');
     await raceOn(page, 'chapman').catch(() => null);
-    const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, mode: __game.S.mode, police: !!(__game.race && __game.race.opts && __game.race.opts.police), intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro') }));
-    T.check('Getaway, Race!: the race on Chapman\'s Peak in the police mode (the police chase the player)', r.id === 'chapman' && r.mode === 'police' && !r.intro, JSON.stringify(r));
+    await page.waitForTimeout(500);
+    const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, mode: __game.S.mode, zb: __game.race && __game.race.zbMode, police: !!(__game.race && __game.race.opts && __game.race.opts.police), intro: !!document.getElementById('menu-host').shadowRoot.querySelector('.intro') }));
+    T.check('Police, Race!: the pursuit on Chapman\'s Peak (the game\'s lov: the player\'s patrol car chases the getaway car)', r.id === 'chapman' && r.mode === 'lov' && r.zb === 'lov' && !r.intro, JSON.stringify(r));
     T.check('no page errors in the row and the police chase\'s side', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -1120,6 +1125,9 @@ try {
     const sd = await ev(page, `const w = root.querySelector('.intro.wk.sd'), r = w.querySelector('.wk-go').getBoundingClientRect(), P = [...w.querySelectorAll('.wk-pg')].map(e => e.getBoundingClientRect());
       return { go: [Math.round(r.right), Math.round(r.bottom), innerWidth, innerHeight], pages: P.every(p => p.top >= 0 && p.bottom <= r.top && p.right <= innerWidth + 0.5 && p.left >= innerWidth * 0.4) };`);
     T.check('the police chase\'s side on its side (640 x 360): the pages at the right, Race! at the very bottom right', sd.pages && sd.go[2] - sd.go[0] <= 24 && sd.go[3] - sd.go[1] <= 24, JSON.stringify(sd));
+    const pick = (k) => page.evaluate((k) => { const r = Menu.padKey(k), w = document.getElementById('menu-host').shadowRoot.querySelector('.intro.wk.sd'); return [r, w && w.querySelector('.wk-r').classList.contains('sd-cop') ? 'cop' : 'run']; }, k);
+    const lb = await pick('lb'), rb = await pick('rb');
+    T.check('the pad on the side: LB the police, RB the getaway', lb[0] && lb[1] === 'cop' && rb[0] && rb[1] === 'run', JSON.stringify({ lb, rb }));
     const ps = await page.evaluate(() => Menu.padKey('start'));
     await raceOn(page, 'chapman').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, mode: __game.S.mode }));
