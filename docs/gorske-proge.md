@@ -60,6 +60,7 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 16 | `puertomadero` | Puerto Madero, Argentina | Puerto Madero, Argentina | desna | -58.372,-34.622,-58.355,-34.600 |
 | 20 | `ujarras` | Ujarrás, Kostarika | Ujarrás, Costa Rica | desna | -83.856,9.826,-83.828,9.848 |
 | 17 | `ghoufi` | Ghoufi, Alžirija | Ghoufi, Algeria | desna | 6.140,35.040,6.185,35.070 |
+| 21 | `cusco` | Cusco, Peru | Cusco, Peru | desna | -71.9895,-13.5175,-71.9755,-13.4985 |
 
 ### Smučišča (1–4)
 

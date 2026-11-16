@@ -264,7 +264,7 @@
   const FLAGS = {
     'Slovenija': [hz('#fff', '#0b4ea2', '#ed1c24'), '<g transform="translate(3 0)"><path d="M5.6 3.6h6.4v5.8c0 2.9-1.6 4.4-3.2 5.1-1.6-.7-3.2-2.2-3.2-5.1z" fill="#0b4ea2" stroke="#ed1c24" stroke-width=".7"/><path d="M6.1 10.4l1.3-2.2.9 1.3.5-.8 1.6 2.6c-.6 1.4-1.4 2.1-1.6 2.3-.4-.2-2.1-1.3-2.7-3.2z" fill="#fff"/><g fill="#ffd200"><circle cx="7" cy="5.2" r=".45"/><circle cx="8.8" cy="4.7" r=".45"/><circle cx="10.6" cy="5.2" r=".45"/></g></g>', 'xMinYMid'],
     'Nemčija': [hz('#000', '#dd0000', '#ffce00')], 'Avstrija': [hz('#c8102e', '#fff', '#c8102e')], 'Rusija': [hz('#fff', '#0039a6', '#d52b1e')], 'Monako': [hz('#ce1126', '#fff')],
-    'Belgija': [vt('#000', '#fdda24', '#ef3340')], 'Francija': [vt('#0055a4', '#fff', '#ef4135')], 'Italija': [vt('#009246', '#fff', '#ce2b37')],
+    'Belgija': [vt('#000', '#fdda24', '#ef3340')], 'Peru': [vt('#d91023', '#fff', '#d91023')], 'Francija': [vt('#0055a4', '#fff', '#ef4135')], 'Italija': [vt('#009246', '#fff', '#ce2b37')],
     'Kostarika': ['<rect width="30" height="20" fill="#002b7f"/><rect y="3.33" width="30" height="13.34" fill="#fff"/><rect y="6.67" width="30" height="6.67" fill="#ce1126"/>'],
     'Tajska': ['<rect width="30" height="20" fill="#a51931"/><rect y="3.33" width="30" height="13.34" fill="#f4f5f8"/><rect y="6.67" width="30" height="6.67" fill="#2d2a4a"/>'],
     'Finska': ['<rect width="30" height="20" fill="#fff"/><rect y="7.25" width="30" height="5.5" fill="#002f6c"/>', '<rect x="8" width="5.5" height="20" fill="#002f6c"/>', 'xMinYMid'],

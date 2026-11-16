@@ -32,7 +32,7 @@
       roofs: [[0.22, 0.32, 0.26], [0.5, 0.18, 0.14], [0.3, 0.32, 0.34], [0.62, 0.64, 0.66], [0.16, 0.2, 0.26]] },
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
     signs: 'diamond', crowd: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.2, 0.5, 0.32], [0.95, 0.72, 0.16], [0.46, 0.66, 0.86], [0.12, 0.14, 0.2], [0.9, 0.45, 0.14]],
-    animals: [], dust: null, extra: null, ownBld: null, clear: null,   // (ownBld(x, z, L, W): true for the buildings S.extra draws itself)
+    animals: [], dust: null, extra: null, ownBld: null, clear: null, keepOut: null,   // (ownBld(x, z, L, W): true for the buildings S.extra draws itself)
   };
   const SNOW = [0.93, 0.95, 0.99], PISTE = [0.97, 0.98, 1.0], SLUSH = [0.62, 0.62, 0.63];
   let S = DEF, SN = 1, SNL = 1e9;   // (the style of the build under way; snow everywhere (1) or above SNL)
@@ -302,6 +302,7 @@
     for (const [x, z, r] of S.clear || []) exclPush(x, z, r);   // (S.clear: circles the track's own things keep free of the trees, as Ujarrás's lookout)
     stubExcl(exclPush);
     if (S.excl) for (const [x, z, r] of S.excl) exclPush(x, z, r);   // (the track's own: no trees where it builds, a castle)
+    if (typeof S.keepOut === 'function') S.keepOut(exclPush);   // (the track's own things that S.extra draws later, kept clear of the trees)
 
     /* ---- terrain tiles (four to a mesh), the lakes (ice in a snowy world) ---- */
     let nFar = 0, nTile = 0;
