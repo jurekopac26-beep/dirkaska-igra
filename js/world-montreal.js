@@ -182,7 +182,15 @@
     const S = 64;   // cells per chunk side (256 m)
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
-      const W1 = ni + 1, nv = W1 * (nj + 1), P = new Float32Array(nv * 3), Cl = new Float32Array(nv * 3), U = new Float32Array(nv * 2);
+      const W1 = ni + 1;
+      let I = new Uint16Array(ni * nj * 6), ni6 = 0;
+      for (let j = 0; j < nj; j++) for (let i = 0; i < ni; i++) {
+        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1, k = (cj + j) * G.nx + ci + i;
+        if (Math.max(G.H[k], G.H[k + 1], G.H[k + G.nx], G.H[k + G.nx + 1]) < WL - 0.6) continue;   // (deep under the water)
+        I[ni6++] = a; I[ni6++] = c; I[ni6++] = b; I[ni6++] = b; I[ni6++] = c; I[ni6++] = d;
+      }
+      if (!ni6) continue;   // (all deep under the water: no vertices worked out either)
+      const nv = W1 * (nj + 1), P = new Float32Array(nv * 3), Cl = new Float32Array(nv * 3), U = new Float32Array(nv * 2);
       for (let j = 0, v = 0; j <= nj; j++) { const z = G.z0 + (cj + j) * G.c, sz = Math.sin(z * 0.027) * 2, z23 = z * 0.023; for (let i = 0; i <= ni; i++, v++) {   // (straight into the typed arrays: the same sums as before, nothing allocated per vertex; the row's own sine once)
         const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
         const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + sz) * Math.sin(z23 + x * 0.007), f = 0.96 + 0.08 * n1, kc = KCOL[kd];
@@ -191,13 +199,6 @@
         if (h < WL) { const t = sstep(WL, WL - 2, h); c0 = lerp(c0, 0.42, t); c1 = lerp(c1, 0.42, t); c2 = lerp(c2, 0.36, t); }
         P[v * 3] = x; P[v * 3 + 1] = h; P[v * 3 + 2] = z; Cl[v * 3] = c0; Cl[v * 3 + 1] = c1; Cl[v * 3 + 2] = c2; U[v * 2] = x / 14; U[v * 2 + 1] = -z / 14;
       } }
-      let I = new Uint16Array(ni * nj * 6), ni6 = 0;
-      for (let j = 0; j < nj; j++) for (let i = 0; i < ni; i++) {
-        const a = j * W1 + i, b = a + 1, c = a + W1, d = c + 1, k = (cj + j) * G.nx + ci + i;
-        if (Math.max(G.H[k], G.H[k + 1], G.H[k + G.nx], G.H[k + G.nx + 1]) < WL - 0.6) continue;   // (deep under the water)
-        I[ni6++] = a; I[ni6++] = c; I[ni6++] = b; I[ni6++] = b; I[ni6++] = c; I[ni6++] = d;
-      }
-      if (!ni6) continue;
       I = I.slice(0, ni6);
       // the vertex normals as BufferGeometry.computeVertexNormals makes them (the same face sums, summed in the float32 array in the same order, then normalised), inline
       const Nr = new Float32Array(nv * 3);
