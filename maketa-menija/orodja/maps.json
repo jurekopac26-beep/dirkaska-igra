@@ -717,5 +717,25 @@
    "wet": true,
    "skirt": false
   }
+ ],
+ [
+  "ella",
+  "top",
+  "top-ella",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "furka",
+  "top",
+  "top-furka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]
