@@ -45,6 +45,7 @@
   }
   function tmSlope(x, z) { const a = tmGround(x - 2.5, z), b = tmGround(x + 2.5, z), c = tmGround(x, z - 2.5), d = tmGround(x, z + 2.5); return Math.hypot(b - a, d - c) / 5; }
   const TMCOL = [0, 0, 0];
+  let TMT = null;   // the measured hue's multiplier for what grows on the ground (World.rastje.tla, Realizem G); null: the game's own colours, to the number
   function tmCol(x, z, h, ny, dd, sx, sz) {   // ground colour (times the grey grit map): the dark forest floor (lc 0), greener scrub and grass (lc 1), the
     // limestone on the steep faces (pale grey, streaked dark down the fall line where the rain runs, rusty stains, moss in the cracks), bare
     // rock (lc 2), concrete where it is built up (lc 3), a trodden verge of grit by the road
@@ -55,7 +56,19 @@
     R = lerp(R, 0.47, fld * 0.7); G = lerp(G, 0.5, fld * 0.7); B = lerp(B, 0.27, fld * 0.7);
     const lit = sstep(0.55, 0.85, m) * 0.6; R = lerp(R, 0.34, lit * 0.5); G = lerp(G, 0.37, lit * 0.5); B = lerp(B, 0.19, lit * 0.5);   // (the litter of leaves, browner)
     R += (f - 0.5) * 0.07; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
-    const st = Math.max(sstep(0.78, 0.5, ny), bare * 0.8);   // the rock: the steep faces, the bare ground
+    const fo = vrLCf(x, z, 0), ou = sstep(3, 10, dd), cl = sstep(0.78, 0.5, ny);   // (cl: the steep faces) the forest (Realizem G: in WorldCover it is dense right down to the road, 85 % of the 8-60 m band; the trees
+    if (fo > 0) {   // by the road are thinned, World.js THIN): beyond the barrier its ground reads as the crowns seen from the road (dark, mottled, the gaps darker
+      // still); inside the barrier, on the shoulder, as the shaded undergrowth under them (ferns and shrubs, flecks of sun), the grit thinner
+      const cr = sstep(0.3, 0.72, P.c6(x + (h || 0) * 0.8 * cl, z - (h || 0) * 0.6 * cl))   // (on a steep face the crowns follow the height, not squeezed)
+         * (0.75 + 0.25 * f), cf = fo * (0.85 * ou + 0.8 * (1 - ou));
+      const r = lerp(lerp(0.14, 0.21, cr), lerp(0.12, 0.21, cr), ou), g = lerp(lerp(0.2, 0.28, cr), lerp(0.17, 0.29, cr), ou), b = lerp(lerp(0.1, 0.14, cr), lerp(0.11, 0.17, cr), ou);
+      R = lerp(R, r, cf); G = lerp(G, g, cf); B = lerp(B, b, cf);
+    }
+    if (TMT) { R *= TMT[0]; G *= TMT[1]; B *= TMT[2]; }   // (the measured hue: what grows, not the rock, the concrete and the grit below)
+    // the rock: the bare ground, and the steep faces. Measured (Realizem G, teren): WorldCover has 1.2 % bare rock 8-60 m from the road, the
+    // steep faces between the legs are 48 % of that band, so where it grows (forest, scrub) a steep face keeps its plants and only the
+    // near-vertical walls show the limestone, in patches (c4) where the trees cannot hold; the game's own look (TMT null) rocks every steep face
+    const st = Math.max(cl * (TMT ? lerp(1, sstep(0.32, 0.14, ny) * sstep(0.45, 0.62, P.c4(x, z)), 1 - bare) : 1), bare * 0.8);
     if (st > 0) {
       const hz = Math.hypot(sx || 0, sz || 0) || 1, u = (z * (sx || 0) - x * (sz || 0)) / hz, streak = 0.5 + 0.5 * Math.sin(u * 0.31 + P.c5(x, z) * 7 + P.n2(x * 0.6, z * 0.6) * 5);
       let r = 0.68, g = 0.67, b = 0.63; const k = 0.78 + 0.26 * streak * streak; r *= k; g *= k; b *= k;
@@ -64,7 +77,7 @@
       R = lerp(R, r, st); G = lerp(G, g, st); B = lerp(B, b, st);
     }
     R = lerp(R, 0.6, built * 0.6); G = lerp(G, 0.59, built * 0.6); B = lerp(B, 0.56, built * 0.6);
-    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5; R = lerp(R, 0.5, t); G = lerp(G, 0.48, t); B = lerp(B, 0.43, t); }
+    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5 * (1 - 0.5 * fo); R = lerp(R, 0.5, t); G = lerp(G, 0.48, t); B = lerp(B, 0.43, t); }
     TMCOL[0] = R; TMCOL[1] = G; TMCOL[2] = B; return TMCOL;
   }
   function tmGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in tmTileGeo)
@@ -173,7 +186,7 @@
     const out = { root, dyn: {}, groundH: tmGround, camFloor: tmGround, props: [], farClip: true, ownTex: [], dust: [0.6, 0.57, 0.5] };
     TMC = null; vrPrep();
     const P = API.VR, iE = N - 1, sStart = T.startS, sFin = T.finishS, base = P.D.base;
-    P.c1 = valueNoise2(811, 150); P.c2 = valueNoise2(812, 64); P.c3 = valueNoise2(813, 40); P.c4 = valueNoise2(814, 120); P.c5 = valueNoise2(815, 26);
+    P.c1 = valueNoise2(811, 150); P.c2 = valueNoise2(812, 64); P.c3 = valueNoise2(813, 40); P.c4 = valueNoise2(814, 120); P.c5 = valueNoise2(815, 26); P.c6 = valueNoise2(816, 9);
     P.fin = [T.px[T.finishIdx], T.pz[T.finishIdx]];
     // the cave (def.cave: its mouth's foot, the axis into the mountain, the arch's width, height and depth) and the steps up to it from the end of the road
     const CV = def.cave, sp = def.steps.p, ux = Math.cos(CV.ang), uz = Math.sin(CV.ang), mx0 = sp[2], mz0 = sp[3], yE = T.hy[iE];
@@ -201,6 +214,9 @@
     exclPush(padF.x, padF.z, padF.r + 4); exclPush(padS.x, padS.z, padS.r + 4);
     for (let a = -10; a < st.L + 6; a += 8) exclPush(st.x0 + st.ux * a, st.z0 + st.uz * a, 6);
     out.marks = { cave: [TMC.x, TMC.z], steps: [st.x0, st.z0] };   // (where the landmarks stand: the tests look for them)
+
+    TMT = null;   // (the game's own colours first: World.rastje measures them on the open land 8-60 m from the road, scrub and fields, lc 1 and 4; then the ground's vertex colours take the measured hue)
+    if (World.rastje) TMT = World.rastje.tla(def, { lc: (x, z) => { const c = vrLC(x, z); return c === 1 || c === 4 ? 0 : 1; }, dist: vrDist, gcol: tmGCol, x0: P.G.x0, z0: P.G.z0, x1: P.G.x0 + P.G.ntx * VRC * VRT, z1: P.G.z0 + P.G.ntz * VRC * VRT });
 
     /* ---- terrain tiles ---- */
     let nFar = 0;
@@ -582,6 +598,8 @@
         }
       }
     }
+    const lt = World.rastje ? World.rastje.listje(def, pk.slice(0, 4)) : null;   // (Realizem G: the measured hue on the leaves, the unit plants' green vertices; the trunks and the boulders keep theirs)
+    if (TMT || lt) out.rastje = { moc: World.rastje.MOC, tla: TMT, drevesa: lt };
     pk.forEach((t, k) => t.addTo(root, k < 3));   // (the trees cast shadows, the shrubs and the boulders do not)
     {   // crags: limestone boulders where the slope beside the road is steep
       const RV = rng(3991), rockC = [[0.68, 0.67, 0.63], [0.6, 0.6, 0.57], [0.64, 0.6, 0.54], [0.52, 0.53, 0.5]];
