@@ -520,5 +520,75 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "ujarras",
+  "top",
+  "top-ujarras",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "luanda",
+  "top",
+  "top-luanda",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "ghoufi",
+  "top",
+  "top-ghoufi",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "cusco",
+  "top",
+  "top-cusco",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "mombasa",
+  "top",
+  "top-mombasa",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "livingstone",
+  "top",
+  "top-livingstone",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "hinboun",
+  "top",
+  "top-hinboun",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]

@@ -1303,5 +1303,198 @@
     }
    ]
   }
+ ],
+ [
+  "ujarras",
+  {
+   "kbps": 450,
+   "alt": [
+    1216,
+    1259
+   ]
+  }
+ ],
+ [
+  "luanda",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Praia do Bispo Bay",
+     "d": 60
+    },
+    {
+     "n": "Under the Hill",
+     "d": 1000
+    },
+    {
+     "n": "Round the Hill",
+     "d": 1545
+    },
+    {
+     "n": "Fortress",
+     "d": 1977
+    },
+    {
+     "n": "Along the Bay",
+     "d": 2300
+    },
+    {
+     "n": "Marginal",
+     "d": 2900
+    }
+   ],
+   "alt": [
+    1,
+    4
+   ]
+  }
+ ],
+ [
+  "ghoufi",
+  {
+   "kbps": 450,
+   "alt": [
+    724,
+    735
+   ]
+  }
+ ],
+ [
+  "cusco",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Sacsayhuamán",
+     "d": 270
+    },
+    {
+     "n": "Hairpin 1 · 3,572 m",
+     "d": 540
+    },
+    {
+     "n": "Hairpin 2 · 3,577 m",
+     "d": 674
+    }
+   ],
+   "alt": [
+    3519,
+    3592
+   ]
+  }
+ ],
+ [
+  "mombasa",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Town Centre",
+     "d": 40
+    },
+    {
+     "n": "Roundabout",
+     "d": 265
+    },
+    {
+     "n": "Old Town",
+     "d": 520
+    },
+    {
+     "n": "Fortress",
+     "d": 1130
+    },
+    {
+     "n": "Shore Road",
+     "d": 1340
+    },
+    {
+     "n": "Likoni Channel",
+     "d": 2300
+    }
+   ],
+   "alt": [
+    25,
+    5
+   ]
+  }
+ ],
+ [
+  "livingstone",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "South of Town",
+     "d": 60
+    },
+    {
+     "n": "Dry Woodland",
+     "d": 1105
+    },
+    {
+     "n": "Border Post",
+     "d": 2290
+    },
+    {
+     "n": "Above the Gorge",
+     "d": 2480
+    },
+    {
+     "n": "Old Bridge",
+     "d": 2904
+    },
+    {
+     "n": "Far Bank",
+     "d": 3126
+    },
+    {
+     "n": "Last Kilometre",
+     "d": 3475
+    }
+   ],
+   "alt": [
+    893,
+    900
+   ]
+  }
+ ],
+ [
+  "hinboun",
+  {
+   "kbps": 450,
+   "start": 4,
+   "places": [
+    {
+     "n": "The Foot",
+     "d": 60
+    },
+    {
+     "n": "The Karst Climb",
+     "d": 700
+    },
+    {
+     "n": "The Pass",
+     "d": 1860
+    },
+    {
+     "n": "The Stone Forest",
+     "d": 1930
+    },
+    {
+     "n": "The Descent",
+     "d": 3200
+    },
+    {
+     "n": "The Valley",
+     "d": 4300
+    }
+   ],
+   "alt": [
+    365,
+    298
+   ]
+  }
  ]
 ]
