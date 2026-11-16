@@ -86,6 +86,22 @@
       roofs: [[0.62, 0.63, 0.64], [0.55, 0.56, 0.58], [0.5, 0.3, 0.22], [0.36, 0.4, 0.42]],
       sheep: 0, portal: 0, far: { lo: [0.36, 0.44, 0.2], hi: [0.22, 0.34, 0.16], dw: [0.14, 0.26, 0.1], snow: 9000 },
     },
+    // Canaries (Saint Lucia, the west coast): the coast road over the ridges north of the village, the steep volcanic slopes under a dense tropical
+    // forest of broadleaves (L.trop) with banana plots and palms down to the sea, red-brown earth in the cuttings, grey-brown andesite in the crags;
+    // no snow, no sheep, no tunnel portal; the colourful houses with tin roofs, a steel rail on the drop; white lines as on the island's roads
+    canaries: {
+      seed: 5600, board: 'CANARIES', sub: 'SAINT LUCIA', banner: ['CANARIES', 'ANSE LA VERDUE'], trop: 1,
+      grass: [0.32, 0.5, 0.17], grassDry: [0.5, 0.52, 0.26], grassLush: [0.24, 0.47, 0.14], shrub: [0.13, 0.3, 0.1],
+      rock: [0.48, 0.44, 0.4], rockWarm: [0.58, 0.44, 0.34], lichen: [0.36, 0.36, 0.3], scree: [0.6, 0.48, 0.38],
+      sat: 0.58, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.5, 0.47, 0.44], [0.56, 0.52, 0.48], [0.42, 0.4, 0.38], [0.6, 0.48, 0.38], [0.46, 0.44, 0.41], [0.53, 0.5, 0.46]],   // (andesite, a little red with the weathered earth)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the island's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpin)
+      chev: ['#1c1c1c', '#f4f4f0'], warn: 'tri', rail: 'steel', shoulder: [0.55, 0.47, 0.38],
+      fans: [[0.98, 0.84, 0.12], [0.12, 0.3, 0.7], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.2, 0.55, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.75, 0.85]],
+      cars: [[0.92, 0.92, 0.9], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.2, 0.42, 0.3]],
+      roofs: [[0.62, 0.22, 0.16], [0.5, 0.52, 0.54], [0.2, 0.38, 0.5], [0.3, 0.46, 0.28]],
+      sheep: 0, portal: 0, far: { lo: [0.15, 0.3, 0.12], hi: [0.36, 0.42, 0.28], dw: [0.11, 0.24, 0.09], snow: 9000 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)
