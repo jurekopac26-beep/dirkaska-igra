@@ -261,6 +261,12 @@ try {
       const r = await run(), f = await fitOf(), u = await ui();
       T.check('luč pod avtom na KOZOROGU po skupnem pravilu (roka 1 stari trak ven, roka 2 novi iz predala, privit pod prag na obeh straneh, stari v predal, sij utripne) ali kot prej; kupljeno, KONČANO',
         (/^plan,old\.out,pod\.out,pass,swap,fit,far,pod\.back,lights$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 12 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.luc_pod_avtom, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
+    // (zavorne čeljusti po skupnem pravilu (POD_EL, calPart v garage3d.js): roka 1 staro čeljust iz platišča na pokrov, roka 2 novo iz
+    // predala (bolj položno, predal je daleč), privita v platišče, tudi na drugi strani; stara v predal; avto brez čeljusti: voziček; KONČANO)
+    { await page.evaluate(() => { __garage.openMenu({ el: 'celjusti', key: 'drw:celjusti', sel: __garage.findOpt('celjusti', 'Red') }); const b = document.querySelector('#g-menu [data-mact="buy"]'); if (b) b.click(); });
+      const r = await run(), f = await fitOf(), u = await ui();
+      T.check('čeljusti na KOZOROGU po skupnem pravilu (roka 1 stare ven, roka 2 nove iz predala, privite na obeh straneh, stare v predal) ali kot prej; kupljeno, KONČANO',
+        (/^plan,old\.out,pod\.out,pass,swap,fit,(far,)?pod\.back$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 13 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.celjusti, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)
