@@ -216,9 +216,16 @@
         for (let k = 0; k < n; k++) { const t = (k + 0.5) / n - 0.5, ax = alongX ? lx + t * len : lx, az = alongX ? lz : lz + t * len;
           box(g, x + c * ax - s * az, y, z + s * ax + c * az, 0.7, 0.8, 0.7, ang, col, null, true); } }
     };
+    // the houses, the sheds and the blocks of flats by the builder of houses (js/world-stavbe.js: Italy's kit, the walls from the atlas; docs/realizem/
+    // paket-s.md), the ground round them from the map (def.okolica); the churches, the castles, the towers, the ruins, the shops and works, the
+    // public buildings and the greenhouses as before. (The same draws of R in the same order: the world's other things stay where they were.)
+    const HS = World.stavbe ? World.stavbe.setup({ Chunks, list: LD.bld, T, near: nrNear, gH: nrGround }) : null; let bi = -1;
+    const OK = World.stavbe && World.stavbe.okolica ? World.stavbe.okolica({ Chunks, T, near: nrNear, gH: nrGround, yard: def.yard }) : null;
     for (const [bx, bz, Lb, Wb, ang, Hb, k0] of LD.bld) {
+      bi++;
       const ca = Math.cos(ang), sa = Math.sin(ang), corners = [[Lb / 2, Wb / 2], [Lb / 2, -Wb / 2], [-Lb / 2, Wb / 2], [-Lb / 2, -Wb / 2]].map(([a, b]) => [bx + ca * a - sa * b, bz + sa * a + ca * b]);
-      let clash = false, y0 = 1e9, sea = false; for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
+      let clash = false, y0 = 1e9, sea = false, dnH = 1e9, riH = -1;
+      for (const [cx, cz] of corners.concat([[bx, bz]])) { const n = nrNear(cx, cz); if (n.i >= 0 && n.dd < 1.2) clash = true; if (n.i >= 0 && n.dd < dnH) { dnH = n.dd; riH = n.i; } y0 = Math.min(y0, nrGround(cx, cz)); if (seaD(cx, cz) > 2) sea = true; }
       if (clash || sea || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, ck = castleAt(bx, bz);
       const kind = ck === 'castle' ? 3 : ck === 'tower' ? 2 : k0 === 0 && area > 240 ? 9 : k0;
@@ -234,13 +241,24 @@
         const tx = bx + ca * (Lb / 2 - 1.8), tz = bz + sa * (Lb / 2 - 1.8), th = hh + 8; box(g, tx, y0 - 0.5, tz, 3.4, th + 0.5, 3.4, ang, wc, null, true); cone(g, tx, y0 + th, tz, 2.3, 2.6, 4, rc, rc, ang + Math.PI / 4);
         exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 3);
       } else if (kind === 9 || kind === 5 || kind === 6) {   // flats, shops, a school: three to five floors, a flat roof with its parapet
-        const fl = kind === 9 ? 3 + Math.floor(hk * 3) : 2 + Math.floor(hk * 2), hh = Hb || fl * 3.1, wc = vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
+        const fl = kind === 9 ? 3 + Math.floor(hk * 3) : 2 + Math.floor(hk * 2), hh = Hb || fl * 3.1;
+        if (HS && kind === 9 && area < 1500) {   // (a block of flats: the builder's; R's two draws as below)
+          HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh, fl: Hb ? Math.max(1, Math.round(Hb / 3.1)) : fl, type: 'flats', u: [crH(bx, bz, 12), R(), R()], dn: dnH, ri: riH, id: bi });
+          exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2); continue;
+        }
+        const wc = vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
         box(g, bx, y0 - 0.5, bz, Lb, hh + 0.5, Wb, ang, wc, vary([0.72, 0.68, 0.62], R, 0.05), true);
         box(g, bx, y0 + hh, bz, Lb, 0.5, Wb, ang, wc.map(v => v * 0.92), [0.66, 0.6, 0.54]);
         for (let f = 1; f <= Math.round(hh / 3.1); f++) box(g, bx, y0 + f * 3.1 - 1.8, bz, Lb + 0.05, 0.9, Wb + 0.05, ang, SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)].map(v => v * 0.75), null, true);   // (the rows of windows and shutters)
         exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
       } else {   // a house or a villa: two floors (one if small), a terracotta roof, its shutters
-        const small = area < 45 || kind === 4 || kind === 7, hh = Hb || (small ? 3 + hk : 5.8 + hk * 1.6), wc = kind === 7 ? [0.86, 0.9, 0.88] : vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
+        const small = area < 45 || kind === 4 || kind === 7;
+        if (HS && kind !== 7) {   // (a house or a shed: the builder's; R's one draw as below. A shed, a garage: low plain walls; a small house the map gives taller: a house)
+          const sm = kind === 4 || (area < 45 && !(Hb > 3.6));
+          HS.put({ x: bx, z: bz, L: Lb, W: Wb, ang, y0, hh: Hb || (sm ? 0 : 5.8 + hk * 1.6), type: sm ? 'small' : 'house', u: [crH(bx, bz, 12), R(), crH(bx, bz, 14)], dn: dnH, ri: riH, id: bi });
+          exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2); continue;
+        }
+        const hh = Hb || (small ? 3 + hk : 5.8 + hk * 1.6), wc = kind === 7 ? [0.86, 0.9, 0.88] : vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
         box(g, bx, y0 - 0.5, bz, Lb, hh + 0.5, Wb, ang, wc, null, true);
         if (!small) box(g, bx, y0 + hh * 0.55, bz, Lb + 0.04, 1.1, Wb + 0.04, ang, SHUT[Math.floor(crH(bx, bz, 13) * SHUT.length)], null, true);
         gable(g, bx, y0 + hh, bz, Lb + 0.6, Wb + 0.6, Math.min(2.6, Wb * 0.24), ang, ROOF[Math.floor(crH(bx, bz, 14) * ROOF.length)], wc);
@@ -355,7 +373,7 @@
           const p = park ? 0.3 : cl === 1 ? 0.86 : cl === 2 ? 0.5 : cl === 3 ? 0.07 : 0.025;
           if (h1 > p) continue;
           const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3) continue;
-          if (excluded(x, z) || seaD(x, z) > -2) continue;
+          if (excluded(x, z) || seaD(x, z) > -2 || (OK && OK.on(x, z, 1.5))) continue;   // (not on the ground round the houses: a yard, a drive, a car park)
           const hq = crH(x, z, 25), hs = crH(x, z, 26), cv = 0.86 + crH(x, z, 27) * 0.28, col = [cv * (0.95 + hq * 0.1), cv, cv * (0.94 + hs * 0.1)];
           const coastal = seaD(x, z) > -450 || nrGround(x, z) < 70;
           let sp;
@@ -456,8 +474,11 @@
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (HS) HS.addTo(sceneryGroup);   // (the builder's houses: one material, the façade atlas)
+    if (OK) OK.addTo(sceneryGroup, tex);   // (the ground round them: the asphalt and the makadam, a material each)
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
+    if (HS) out.stats.stavbe = HS.stats; if (OK) out.stats.okolica = OK.stats; out.okolica = OK;   // (the ground round the houses: js/world-potke.js)
     return out;
   }
 

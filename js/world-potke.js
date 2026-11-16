@@ -1,13 +1,15 @@
 /* =========================================================================
    ALONG THE FOOTPATHS — benches, lamps, bins and a few walkers by the map's footpaths and unpaved ways that the chase camera sees (the
-   ground round the houses, js/world-stavbe.js okolica: on Spa only). The user, 14. 11. 2026: »Ob takih potkah postavi na vsake toliko casa
+   ground round the houses, js/world-stavbe.js okolica: on Spa and Nürburg). The user, 14. 11. 2026: »Ob takih potkah postavi na vsake toliko casa
    kaksen element. Klopca, svetilka, sprehajalec s psom, sprehajalec, 2 cloveka se skupaj sprehajata, ljudje kaksen sedi na klopci, in dodaj
    se kar mislis da je ob teh potkah kot recimo smeti itd...« (docs/realizem/paket-s.md, »Ob potkah«). Generic things only: no names, signs
    or writing.
    Each path (the map's rows that touch, as one; only its stretch that okolica draws, at least 3 m clear of the houses, 8 to 60 m from the
    road) is a scene of World.people (js/world-ljudje.js, its kit's EXTRA): its frame at the track's sample nearest the path's middle, the
    path in that frame. Along it: a lamp every ~22 m and a bench (or two on a long one) on the far side, facing the path, someone sitting on
-   it, a bin beside it, a dog-bag post at one end, some litter in the grass; the walkers go there and back along the path at a stroll
+   it, a bin beside it, a dog-bag post at one end, some litter in the grass (the lamps, the bin, the post and the litter only by a path
+   with some point within 40 m of a house: by the forest and meadow ways far from the houses only the bench and the walkers; the user,
+   16. 11. 2026, PR #696); the walkers go there and back along the path at a stroll
    (stroll(): the act's path), a couple side by side, someone alone, someone with a dog on its leash, kept apart sideways so that they
    pass each other. As the car comes they look at it and walk on.
    ========================================================================= */
@@ -43,7 +45,8 @@
         const join = d(A[A.length - 1], B[0]) < 2.5 ? A.concat(B.slice(1)) : d(A[A.length - 1], B[B.length - 1]) < 2.5 ? A.concat(B.slice().reverse().slice(1))
           : d(A[0], B[B.length - 1]) < 2.5 ? B.concat(A.slice(1)) : d(A[0], B[0]) < 2.5 ? B.slice().reverse().concat(A.slice(1)) : null;
         if (join) { chains[i] = { P: join, hw: Math.min(chains[i].hw, chains[j].hw) }; chains.splice(j, 1); again = true; } } }
-    const houses = (def.bld || []).map(([x, z, Lb, Wb, a]) => ({ x, z, L: Lb / 2, W: Wb / 2, c: Math.cos(a), s: Math.sin(a), r: Math.hypot(Lb, Wb) / 2 }));
+    const bld = def.bld || ((typeof window !== 'undefined' && window[{ livorno: 'LV_DATA' }[def.id]]) || {}).bld || [];   // (Livorno's houses: js/data/livorno.js)
+    const houses = bld.map(([x, z, Lb, Wb, a]) => ({ x, z, L: Lb / 2, W: Wb / 2, c: Math.cos(a), s: Math.sin(a), r: Math.hypot(Lb, Wb) / 2 }));
     const byHouse = (x, z, m) => houses.some(h => { const dx = x - h.x, dz = z - h.z; if (dx * dx + dz * dz > (h.r + m) * (h.r + m)) return false;
       return Math.abs(dx * h.c + dz * h.s) < h.L + m && Math.abs(-dx * h.s + dz * h.c) < h.W + m; });
     const out = [];
@@ -56,21 +59,24 @@
         return OK.clip(x, z) > 1.5 && lat > 8 && lat < 60 && !byHouse(x, z, 3); });
       let best = [0, -1];   // (the longest good stretch)
       for (let i = 0; i < S.length; i++) { if (!ok[i]) continue; let j = i; while (j + 1 < S.length && ok[j + 1]) j++; if (j - i > best[1] - best[0]) best = [i, j]; i = j; }
-      if (best[1] - best[0] >= 25) out.push({ P: S.slice(best[0], best[1] + 1), hw: ch.hw, byHouse });
+      if (best[1] - best[0] < 25) continue;
+      const P = S.slice(best[0], best[1] + 1);
+      out.push({ P, hw: ch.hw, byHouse, near: P.some(([x, z]) => byHouse(x, z, 40)) });   // (near: some point of it within 40 m of a house)
     }
     return out;
   }
 
   const LOOKS = () => ({ shirt: pick(pal.SHIRT), pants: pick(pal.PANTS), hair: pick(['short', 'short', 'long', 'pony', 'bald']), hairCol: pick(pal.HAIR) });
 
+  const POTKE = { spa: 1, nring: 1, livorno: 1 };   // (the tracks whose ground round the houses has its footpaths dressed: js/world-stavbe.js okolica)
   EXTRA.push(function (o, T, gH, def) {
-    if (!def || def.test || def.pending || def.id !== 'spa') return null;   // (Spa's footpaths; okolica is Spa's only)
+    if (!def || def.test || def.pending || !POTKE[def.id]) return null;   // (the footpaths of the tracks with okolica)
     const ps = pathsOf(o, T, def); if (!ps.length) return null;
     ps.sort((p, q) => T.nearestIdx(p.P[0][0], p.P[0][1]) - T.nearestIdx(q.P[0][0], q.P[0][1]));
     return ps.map((pa, k) => {
       const m = pa.P[pa.P.length >> 1], i = T.nearestIdx(m[0], m[1]), side = ((m[0] - T.px[i]) * T.nx[i] + (m[1] - T.pz[i]) * T.nz[i]) >= 0 ? 1 : -1;
       const len = pa.P.length - 1, cy = gH(m[0], m[1]) + 1.5;
-      return { name: 'potka', s: i * T.ds, side, seed: 17 + k * 13, path: true, box: [m[0], cy, m[1], len / 2 + 10],
+      return { name: 'potka', s: i * T.ds, side, seed: 17 + k * 13, path: true, near: pa.near, box: [m[0], cy, m[1], len / 2 + 10],
         build(C, F) {
           const ab = ([x, z]) => [(x - F.px) * F.tx + (z - F.pz) * F.tz, (x - F.px) * F.nx + (z - F.pz) * F.nz - F.bar];
           const pts = pa.P.map(ab), cum = [0]; for (let j = 1; j < pts.length; j++) cum.push(cum[j - 1] + Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]));
@@ -82,20 +88,22 @@
           const free = (a, b) => { const [x, z] = F.w(a, b); return b > 2 && !pa.byHouse(x, z, 1.2) && !(o.okolica.on && o.okolica.on(x, z, 0.3)); };
           const put = (obj, d, off, dir, r) => { const q = at(d), [nx, nz] = far(q), a = q.a + nx * off, b = q.b + nz * off; if (!free(a, b)) return null;
             C.prop(obj, a, b, dir === 'path' ? [-nx, -nz] : dir); clear.push([a, b, r || 1]); return { a, b, nx, nz, q }; };
+          const near = pa.near;   // (the lamps, the bin, the dog-bag post and the litter: only by the paths near the houses)
           // lamps every ~22 m on the far side
-          const nl = Math.max(1, Math.round(Lp / 22)); for (let j = 0; j < nl; j++) put(lamp(), (j + 0.5) * Lp / nl, hw + 0.7, null, 0.8);
+          const nl = near ? Math.max(1, Math.round(Lp / 22)) : 0; for (let j = 0; j < nl; j++) put(lamp(), (j + 0.5) * Lp / nl, hw + 0.7, null, 0.8);
           // a bench (two on a long path) facing the path, a bin beside it, someone on it; litter in the grass round it
           const benches = Lp > 55 ? [0.3, 0.72] : [0.42]; let sat = 0;
           for (const [bi, f] of benches.entries()) {
             const B = put(L.bench(pick([0x7c5a3a, 0x8a6a45, 0x5f4a35])), f * Lp + (bi ? 3 : -2), hw + 0.85, 'path', 1.3); if (!B) continue;
-            put(L.bin(0x2a5a3a), f * Lp + (bi ? 3 : -2) + 1.25, hw + 0.75, 'path', 0.6);
+            if (near) put(L.bin(0x2a5a3a), f * Lp + (bi ? 3 : -2) + 1.25, hw + 0.75, 'path', 0.6);
             if (bi === 0 || rnd() < 0.5) {   // someone sitting (facing the path: as the bench, 5 cm back), now and then a look at the car
               const P = C.man(Object.assign(LOOKS(), { long: rnd() < 0.5, scale: 0.97 + rnd() * 0.06 }), { act: { a: B.a + B.nx * 0.05, b: B.b + B.nz * 0.05, pose: 'sit', face: [-B.nx, -B.nz] },
                 bliza: { look: 'car' }, run: false }); P.noUm = rnd() < 0.5; sat++; }
             for (let j = 0; j < 2 + (rnd() < 0.5 ? 1 : 0); j++) { const d = f * Lp + (rnd() - 0.5) * 7, q = at(d), [nx, nz] = far(q), off = hw + 0.5 + rnd() * 1.6;
-              const a = q.a + nx * off, b = q.b + nz * off; if (free(a, b)) C.prop(litter(j % 3), a, b, [rnd() - 0.5, rnd() - 0.5]); }
+              const a = q.a + nx * off, b = q.b + nz * off; if (!free(a, b)) continue;
+              const dir = [rnd() - 0.5, rnd() - 0.5]; if (near) C.prop(litter(j % 3), a, b, dir); }   // (far from the houses: the same draws, no litter)
           }
-          put(bagPost(), k % 2 ? Lp - 4 : 4, hw + 0.6, 'path', 0.6);   // (the dog-bag post near an end)
+          if (near) put(bagPost(), k % 2 ? Lp - 4 : 4, hw + 0.6, 'path', 0.6);   // (the dog-bag post near an end)
           // the walkers: there and back at a stroll, each on its own line beside the path's middle (off: + to the left of the way out)
           const W = (v, off, ph) => ({ pts, cum, L: Lp, v, tr: 1.3, off, ph });
           const walker = (look, w, hold) => C.man(look, { act: Object.assign({ a: pts[0][0], b: pts[0][1], pose: 'walk', face: [1, 0], path: w, y: 0.08 }, hold ? { hold } : {}), run: false });
