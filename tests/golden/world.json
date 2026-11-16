@@ -2308,5 +2308,23 @@
    "tyremarks:MeshBasicMaterial": "dcbb4980",
    "roadwear:MeshLambertMaterial": "7344ee0a"
   }
+ },
+ "eljem": {
+  "meshes": 185,
+  "verts": 245288,
+  "instances": 354,
+  "props": 0,
+  "crowd": 120,
+  "world": "fa02a6ed",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "8d6847d2",
+   "crowd:MeshLambertMaterial": "e0968893",
+   "flags:MeshLambertMaterial": "45378d95",
+   "ao:MeshBasicMaterial": "b6319958",
+   "tyremarks:MeshBasicMaterial": "2cff9da6",
+   "roadwear:MeshLambertMaterial": "4e730b51"
+  }
  }
 }

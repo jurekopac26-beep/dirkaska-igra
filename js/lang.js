@@ -497,6 +497,7 @@
     'Mestno središče': 'Town Centre', 'Stari del mesta': 'Old Town', 'Obalna cesta': 'Shore Road', 'Kanal Likoni': 'Likoni Channel', 'Do obalne ceste': 'To the shore road',   // (Mombasa: the HUD, the results of an escape; 'Trdnjava' and 'Krožišče' are already in)
     'Planota Isalo': 'Isalo Plateau', 'Pod skalami': 'Under the Rocks', 'Kraljica Isala': 'Queen of Isalo', 'Ravnina proti jugu': 'The Plain to the South', 'Do ravnine': 'To the plain',   // (Isalo: the HUD, the results of an escape)
     'Obalna cesta': 'The Coast Road', 'Nad zalivom': 'Above the Bay', 'Staro mesto': 'The Old Town', 'Most čez potok': 'The Stream Bridge', 'Vzhodni breg': 'The East Shore', 'Do vzhodnega brega': 'To the east shore',   // (Portobelo: the HUD, the results of an escape; 'Ob zalivu' and 'Trdnjava' above)
+    'Proti amfiteatru': 'To the Amphitheatre', 'Amfiteater': 'The Amphitheatre', 'Za areno': 'Behind the Arena', 'Skozi mesto': 'Through the Town', 'Severni izhod': 'North Way Out', 'Do severnega roba mesta': 'To the north edge of the town',   // (El Jem)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)

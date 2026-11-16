@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -40 120 80" width="900" height="600">
+<title>Tunisia</title>
+<rect x="-60" y="-40" width="120" height="80" fill="#e70013"/>
+<circle r="20" fill="#fff"/>
+<circle r="15" fill="#e70013"/>
+<circle cx="4" r="12" fill="#fff"/>
+<path d="M-5 0 11.281-5.29 1.22 8.56V-8.56L11.281 5.29z" fill="#e70013"/>
+</svg>
