@@ -1279,5 +1279,25 @@
     }
    ]
   }
+ ],
+ [
+  "houli",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "South-west Hairpin",
+     "d": 936
+    },
+    {
+     "n": "Hotel Chicane",
+     "d": 2026
+    },
+    {
+     "n": "Double Right",
+     "d": 2832
+    }
+   ]
+  }
  ]
 ]

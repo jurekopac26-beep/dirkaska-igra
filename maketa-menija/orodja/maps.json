@@ -499,5 +499,16 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "houli",
+  "top",
+  "top-houli",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]
