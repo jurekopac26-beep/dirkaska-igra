@@ -94,7 +94,7 @@ Stranske ceste po progah (le v dolžini dirke; parkirišča razgledišč so v ig
 - **Katu-Jaryk** (4): makadamske poti na planoti in v dolini Čulišmana ter dovoz do kampa.
 - **Vršič** (37): ulice Kranjske Gore, dovozi in gozdne ceste (glej zgoraj).
 
-Sani Pass, Tianmen, Irohazaka in Beartooth v dolžini dirke nimajo cestnih odcepov (le pešpoti in parkirišča razgledišč, ki so že v igri). Bâlea, Romunija zaenkrat nima stranskih cest (dovozi h kočam in k žičnici ob jezeru še niso narejeni).
+Sani Pass, Tianmen, Irohazaka in Beartooth v dolžini dirke nimajo cestnih odcepov (le pešpoti in parkirišča razgledišč, ki so že v igri). Bâlea, Romunija zaenkrat nima stranskih cest (dovozi h kočam in k žičnici ob jezeru še niso narejeni). Džebel Hafit, Združeni arabski emirati zaenkrat nima stranskih cest (dovozi k hišam in parkirišča razgledišč so v igri le kot ravne ploščadi).
 
 ## Table pred zaviranjem (dirkališča)
 

@@ -676,7 +676,8 @@ try {
     // a pin tapped (Bâlea): its track's card at once; the card's cross: the Earth alone. (Marrakesh until 9. 11. 2026: awaiting the user's
     // choice (pending), behind NEUPORABNO, not on this Earth)
     await page.click('.thead .globe'); await zem(page, 1);
-    const pin = await ev(page, 'const r = root.querySelector(".zp[data-t=\\"balea\\"]").getBoundingClientRect(); return [r.left, r.top];');
+    // (the pin's own spot, a few pixels around it where no name lies over it: a long country's name from afar may (the United Arab Emirates', 14. 11. 2026))
+    const pin = await ev(page, 'const r = root.querySelector(".zp[data-t=\\"balea\\"]").getBoundingClientRect(); for (const [dx, dy] of [[0, 0], [0, -4], [-4, 0], [4, 0], [0, 4], [0, -8], [-8, 0], [8, 0], [-4, -4], [4, -4]]) { const e = root.elementFromPoint(r.left + dx, r.top + dy); if (!e || !e.closest(".zl")) return [r.left + dx, r.top + dy]; } return [r.left, r.top];');
     await page.mouse.click(pin[0], pin[1]); await zem(page, 2);
     const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
