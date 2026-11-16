@@ -34,7 +34,8 @@
      Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift; Chapman's Peak: the frame of js/geo.js as it is,
      def.lc's class the same as WorldCover's in 92.6 % of the band's cells, in fewer with any shift;
      Nürburg: the frame of js/geo.js as it is, 0.57 with no shift and no better within 10 m, def.lc being OSM's woods in 16 m cells, which OSM
-     of 15. 11. 2026 still matches).
+     of 15. 11. 2026 still matches); Tianmen: the frame of js/geo.js, 0.85 with no shift, the best within 60 m; its built-up land, under 20 cells,
+     has no colour and takes Rio do Rastro's concrete, which no ground of its uses).
      drevesa: the track's own kinds where its builder draws others than its climate's kit (the Serra Geral's cloud forest and araucarias).
      grmovje, golo, voda: WorldCover's shrubs, bare ground and water, where the band has them. odprto (a colour only): the grass and the shrubs
      together, the one class a builder's land cover has for both (Chapman's Peak's fynbos).
@@ -52,6 +53,8 @@
         '21-779999998013983075799869897----9-----2----7--4613-20288-424839----2549659644464785013000000000019'] },
     nring: { podnebje: 'Cfb', lat: 50.33792, lon: 6.950668, delez: { drevesa: 0.755, trava: 0.184, pozidano: 0.061 },
       barva: { drevesa: 0x394036, trava: 0x4a5041, pozidano: 0x57564f } },
+    tianmen: { podnebje: 'Cfa', lat: 29.06208, lon: 110.480365, delez: { drevesa: 0.847, trava: 0.139, pozidano: 0.002 },
+      barva: { drevesa: 0x374539, trava: 0x566255, pozidano: 0x5a574c }, drevesa: ['listavec', 'bor', 'bambus'] },
   };
   const aktivna = (def) => prava(def) && !!MERITVE[def.id];
 
