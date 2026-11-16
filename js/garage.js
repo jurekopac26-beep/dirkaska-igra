@@ -183,7 +183,7 @@
   const worth = (id) => Math.max(20000, PRICE[id] || 48000);
   // the paint: one price by the car's size (the user's choice 2. and 3. 11. 2026: no tabs of finishes): a kart (under 4 m² of ground)
   // 600, a truck (4 t and more) 12.000, any other car 3.500
-  const paintPrice = (id) => { const Mm = model(id); return Mm.len * Mm.wid < 4 ? 600 : Mm.mass >= 4000 ? 12000 : 3500; };
+  const paintPrice = () => 0;   // (the paint free, as the plate an_barvanje 2/6 says: the user's answer to garaza-barva-okvircek, 16. 11. 2026, option 2)
   const srvPrice = (s, c, id) => { const w = 1 - c.cond[s.id]; if (w < 0.02) return 0; const f = Math.pow(worth(id) / 68000, s.e); return round((s.a + s.b * Math.pow(w, s.p)) * f); };
   const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), deli: toDeli(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
   // (the aero kits' RACE tab is locked till the SPORT kit or more is fitted)
@@ -373,8 +373,8 @@
       const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (m.ctab == null) m.ctab = CTAB.findIndex(g => g[1].includes(cur)); const g = CTAB[m.ctab][1];
       for (const i of g) if (!(thumbs[S.car] && thumbs[S.car][i]) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
       html += '<div class="g-mh g-ch"><h3>' + esc(L2(EL.barva.n)) + '</h3>' + CTAB.map((q, i) => '<button class="g-cp' + (i === m.ctab ? ' sel' : '') + '" data-ctab="' + i + '">' + esc(tr(q[0])) + '</button>').join('') + '<span class="g-ct">⏱ 6 s</span></div><div class="g-mg g-mc">' +
-        g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + (i === c.color ? esc(tr('nameščeno')) : eur(p)) + '</i></div></button>'; }).join('') + '</div>';
-      ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : tr('KUPI IN NAMESTI · {0}', eur(p));
+        g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
+      ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : p ? tr('KUPI IN NAMESTI · {0}', eur(p)) : tr('BARVAJ · BREZPLAČNO');
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
       if (m.car) html += '<div class="g-mx"><button data-mact="aero">' + esc(tr('AERO PAKET')) + ' ›</button></div>';   // (opened from the car: its aero kits a tap away)
     } else {
@@ -399,7 +399,7 @@
     G.mark(kb, keysOf(el), !!m.car);   // (the car bright in the veil only when it was tapped)
     G.drawer(kb && kb.startsWith('drw:') ? el : null);   // (the chosen part's drawer out)
     colTag(el === 'barva' && kb && kb.startsWith('col') ? kb : null, el === 'barva' ? m.color != null ? m.color : c.color : 0);
-    G.preview(el === 'barva' && m.color != null && m.color !== c.color ? COLORS[m.color][0] : null);   // (the chosen colour on the car, not bought yet)
+    G.preview(null);   // (no preview of the chosen colour: the car keeps its old one till it is painted, the user's answer to garaza-barva-predogled, 16. 11. 2026, option 3)
     const E = EL[el]; if (E && E.k) { const P = Object.assign({}, c.parts, { [el]: m.sel }), L0 = levels(c.parts), L1 = levels(P); if (L1[E.k] !== L0[E.k]) G.ghost(E.k, L1[E.k]); else G.ghostOff(); } else G.ghostOff();
     // the menu at the bottom when at the top it would cover what was tapped; a drawer: the menu stays at the top, the picture lowered
     // till the drawer is under it (when it fits on the screen; measured as the picture stands without it)
