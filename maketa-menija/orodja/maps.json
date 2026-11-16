@@ -433,5 +433,489 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "balea",
+  "top",
+  "top-balea",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "bathurst",
+  "top",
+  "top-bathurst",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "livorno",
+  "top",
+  "top-livorno",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "kildare",
+  "top",
+  "top-kildare",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "abudabi",
+  "top",
+  "top-abudabi",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "bikernieki",
+  "top",
+  "top-bikernieki",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "buriram",
+  "top",
+  "top-buriram",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "santoantao",
+  "top",
+  "top-santoantao",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "seoul",
+  "top",
+  "top-seoul",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "sepang",
+  "top",
+  "top-sepang",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "silkeborg",
+  "top",
+  "top-silkeborg",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "tuzla",
+  "top",
+  "top-tuzla",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "zandvoort",
+  "top",
+  "top-zandvoort",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "ngorongoro",
+  "top",
+  "top-ngorongoro",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "pembrey",
+  "top",
+  "top-pembrey",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "portomoniz",
+  "top",
+  "top-portomoniz",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "riohondo",
+  "top",
+  "top-riohondo",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "sacalobra",
+  "top",
+  "top-sacalobra",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "sakhir",
+  "top",
+  "top-sakhir",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "sosnova",
+  "top",
+  "top-sosnova",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "ella",
+  "top",
+  "top-ella",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "furka",
+  "top",
+  "top-furka",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "gudauri",
+  "top",
+  "top-gudauri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "izoard",
+  "top",
+  "top-izoard",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "killar",
+  "top",
+  "top-killar",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "hakone",
+  "top",
+  "top-hakone",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 0.15
+  }
+ ],
+ [
+  "kanaba",
+  "top",
+  "top-kanaba",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "koror",
+  "top",
+  "top-koror",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "limalimo",
+  "top",
+  "top-limalimo",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "musandam",
+  "top",
+  "top-musandam",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "quezaltepeque",
+  "top",
+  "top-quezaltepeque",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "savusavu",
+  "top",
+  "top-savusavu",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "sogeri",
+  "top",
+  "top-sogeri",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "kagerod",
+  "top",
+  "top-kagerod",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "kotor",
+  "top",
+  "top-kotor",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "llogara",
+  "top",
+  "top-llogara",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "lombok",
+  "top",
+  "top-lombok",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "lusail",
+  "top",
+  "top-lusail",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "medeu",
+  "top",
+  "top-medeu",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "aguascalientes",
+  "top",
+  "top-aguascalientes",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "batangas",
+  "top",
+  "top-batangas",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "canaries",
+  "top",
+  "top-canaries",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "darvaz",
+  "top",
+  "top-darvaz",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "hafit",
+  "top",
+  "top-hafit",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "haivan",
+  "top",
+  "top-haivan",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "kaligandaki",
+  "top",
+  "top-kaligandaki",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]
