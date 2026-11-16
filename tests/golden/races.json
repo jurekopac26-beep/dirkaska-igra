@@ -2462,12 +2462,12 @@
  "svalvogar/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 69.97,
+  "winner": 67.85,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "67d0c0401c5594ac3841467a"
+  "digest": "45c9acbe9451614f558c03e9"
  },
  "fairymeadows/cs": {
   "finished": 1,
@@ -2482,12 +2482,12 @@
  "fairymeadows/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 76.35,
+  "winner": 79.87,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f2fe66ca12a09acdc84fb0c8"
+  "digest": "613f2bd5dd1edfc9f03cb840"
  },
  "manchewe/cs": {
   "finished": 1,
@@ -2502,12 +2502,12 @@
  "manchewe/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 71.77,
+  "winner": 71.14,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5fc62d1a09b3f195349ca77a"
+  "digest": "270558c629bc5c67969da7cf"
  },
  "yungas/cs": {
   "finished": 1,
@@ -2522,12 +2522,12 @@
  "yungas/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 79.59,
+  "winner": 77.33,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "18de1454d52a0ba6ed3010f8"
+  "digest": "663a8bb002d768a3bb0d88fb"
  },
  "tapini/cs": {
   "finished": 1,
@@ -2542,12 +2542,12 @@
  "tapini/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 86.61,
+  "winner": 85.83,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0b62cc7ccdecd708d9c075e7"
+  "digest": "7d3e022bf35039948b156b0e"
  },
  "livorno/cs": {
   "finished": 21,
