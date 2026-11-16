@@ -87,5 +87,6 @@ Poraba do resetov (odločitve uporabnika 11. 11. 2026 ob ~11.00, ~11.05 in ~11.2
 | 13s | #686 | Nova proga Quezaltepeque, Salvador (Nove proge za 1.0, linija A, potrjena na tabli #382); gre v »Vse proge v enem PR« (vrstica 10 v »Različica 1.0«) | partyslo | osnutek, povezani testi lokalno zeleni |
 | 13s | #689 | Nova proga Koli, Finska (zimska, nadomesti Harju; Harju dobi `test: true` po združitvi); z novimi progami v #569 ali takoj za njim | partyslo | osnutek, povezani testi lokalno zeleni |
 | 13s | #691 | Sogeri, Papua Nova Gvineja (nova proga, 2,0 km) | partyslo | osnutek, povezani testi lokalno zeleni; gre v #569 (»Vse proge v enem PR«) |
+| 13t | #693 Savusavu, Fidži | nova proga (potrjena z odločitvijo uporabnika 13. 11. 2026, tabla #382); gre na `main` v »Vse proge v enem PR« z #569 | partyslo | osnutek, lokalno zeleno |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, usklajevanje 5. 11., odprti PR drugih računov) je v `docs/arhiv/vrsta-zgodovina.md`.
