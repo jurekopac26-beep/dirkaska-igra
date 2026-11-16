@@ -108,11 +108,11 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Rusija | Katu-Jaryk | – | – |
 | Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test); zamrznjena kot testna (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostane do izbire | London (mestna proga po središču velikega mesta; #492, del N3 #500): tudi na odločanju, `pending: true` doda seja partyslo (od 8. 11. 2026 ob 22.03 ni več izjema od pravila ena proga na državo) | – |
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
-| Vietnam | Hải Vân (PR #676) | – | – |
-| Filipini | Batangas (PR #684, Nove proge za 1.0, linija A) | – | – |
+| Vietnam | Hải Vân (PR #676): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
+| Filipini | Batangas (PR #684, Nove proge za 1.0, linija A): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
 | Salvador | Quezaltepeque (PR #686, Nove proge za 1.0, linija A) | – | – |
 | Uganda | Kanaba (PR #690, osnutek; na `main` z »Vse proge v enem PR«) | – | – |
-| Papua Nova Gvineja | Sogeri (PR #691, osnutek; na `main` z »Vse proge v enem PR«) | – | – |
+| Papua Nova Gvineja | Sogeri (PR #691): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
 | Fidži | Savusavu (PR #693) | – | – |
 | Palau | Koror (PR #694) | – | – |
 

@@ -22,8 +22,8 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
   let area = 0; for (let i = 0; i < T.N; i++) { const j = (i + 1) % T.N; area += T.px[i] * -T.pz[j] - T.px[j] * -T.pz[i]; }   // (shoelace with north up: negative = clockwise)
   let turn = 0; for (let i = 0; i < T.N; i++) turn += Math.abs(T.k[i]) * T.ds;
   const perKm = turn * 180 / Math.PI / (T.len / 1000);
-  check('track: "Batangas, Filipini" (English "Batangas, Philippines"), a closed circuit, 3 laps, 3.62 km within 3 % (realKm 3.62), clockwise, not a test track, at least 350 °/km of turning',
-    def.name === 'Batangas, Filipini' && def.en.name === 'Batangas, Philippines' && !T.open && def.laps === 3 && Math.abs(T.len / 3620 - 1) < 0.03 && def.realKm === 3.62 && area < 0 && !def.test && !def.pending && perKm > 350,
+  check('track: "Batangas, Filipini" (English "Batangas, Philippines"), a closed circuit, 3 laps, 3.62 km within 3 % (realKm 3.62), clockwise, not a test track, pending (two tracks in the Philippines, docs/proge-po-drzavah.md), at least 350 °/km of turning',
+    def.name === 'Batangas, Filipini' && def.en.name === 'Batangas, Philippines' && !T.open && def.laps === 3 && Math.abs(T.len / 3620 - 1) < 0.03 && def.realKm === 3.62 && area < 0 && !def.test && def.pending === true && perKm > 350,
     `${T.len.toFixed(1)} m (${((T.len / 3620 - 1) * 100).toFixed(1)} %), area ${Math.round(area / 2)} m², ${Math.round(perKm)} °/km`);
 }
 // 2. the corners by plain descriptions (no names of people, firms or the circuit), in their order round the lap from the start line, each

@@ -28,9 +28,9 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Quezaltepeque, Salvador | `quezaltepeque` | krog | 3,2 km | 455 | 51 % | 4 | 16 m razpona |
 | Sogeri, Papua Nova Gvineja | `sogeri` | odprta cesta | 2,0 km | 448 | 52 % | 1 | +117 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 448 | 59 % | 4 | +183 m |
+| Savusavu, Fidži | `savusavu` | odprta cesta | 2,5 km | 431 | 50 % | 0 | +7 m |
 | Batangas, Filipini | `batangas` | krog | 3,6 km | 422 | 50 % | 2 | ravno |
 | Koli, Finska | `koli` | odprta cesta | 2,0 km | 407 | 59 % | 2 | +147 m |
-| Savusavu, Fidži | `savusavu` | odprta cesta | 2,5 km | 431 | 50 % | 0 | +7 m |
 | Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 5,0 km | 406 | 48 % | 1 | +134 m |
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
