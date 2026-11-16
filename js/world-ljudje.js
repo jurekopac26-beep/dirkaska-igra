@@ -2147,7 +2147,8 @@
         const a = parts[i], b = parts[j], lo = Math.max(a.U[0], b.U[0]), hi = Math.min(a.U[a.U.length - 1], b.U[b.U.length - 1]);
         if (hi - lo < 0.3 * Math.min(a.U[a.U.length - 1] - a.U[0], b.U[b.U.length - 1] - b.U[0])) continue;
         const uo = (lo + hi) / 2;
-        const meets = (p, q) => p.rows.some(r => q.rows.some(s => { if (s.y <= r.y) return false; const rb = p.Q(uo, r.vb), sf2 = q.Q(uo, s.vf); return rb && sf2 && H2(rb, sf2) < 1.3 && sf2[1] - rb[1] < 1.6; }));
+        const meets = (p, q) => { const SF = new Array(q.rows.length); return p.rows.some(r => { let rb; return q.rows.some((s, k) => { if (s.y <= r.y) return false;   // (Q has no side effects: each edge's point once)
+          if (rb === undefined) rb = p.Q(uo, r.vb); if (!rb) return false; let sf2 = SF[k]; if (sf2 === undefined) sf2 = SF[k] = q.Q(uo, s.vf); return sf2 && H2(rb, sf2) < 1.3 && sf2[1] - rb[1] < 1.6; }); }); };
         if (meets(a, b) || meets(b, a)) sp[sf(i)] = sf(j);
       }
       const stands = new Map(); for (let i = 0; i < parts.length; i++) { const r = sf(i); let L = stands.get(r); if (!L) stands.set(r, L = []); L.push(parts[i]); }
