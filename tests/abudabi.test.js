@@ -17,13 +17,14 @@ const dS = (s) => { let d = s - T.startS; d = ((d % T.len) + T.len) % T.len; ret
 const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.ds), off: Math.hypot(T.px[i] - x, T.pz[i] - z) }; };
 
 // 1. the track: its name (a place and its country), a closed circuit of 3 laps, 5.281 km within 3 % (realKm 5.281), anticlockwise, not a
-// test track and not pending; at least 220 degrees of turning a kilometre (the game's smoothed line: about 280)
+// test track but awaiting the user's choice (pending: the United Arab Emirates have two tracks, Abu Dabi and Džebel Hafit, the user's
+// decision 16. 11. 2026); at least 220 degrees of turning a kilometre (the game's smoothed line: about 280)
 {
   let area = 0; for (let i = 0; i < T.N; i++) { const j = (i + 1) % T.N; area += T.px[i] * -T.pz[j] - T.px[j] * -T.pz[i]; }   // (shoelace with north up: positive = anticlockwise)
   let turn = 0; for (let i = 0; i < T.N; i++) turn += Math.abs(T.k[i]) * T.ds;
   const perKm = turn * 180 / Math.PI / (T.len / 1000);
-  check('track: "Abu Dabi, ZAE" (English "Abu Dhabi, UAE"), a closed circuit, 3 laps, 5.281 km within 3 % (realKm 5.281), anticlockwise, not a test track, at least 220 °/km of turning',
-    def.name === 'Abu Dabi, ZAE' && def.en.name === 'Abu Dhabi, UAE' && !T.open && def.laps === 3 && Math.abs(T.len / 5281 - 1) < 0.03 && def.realKm === 5.281 && area > 0 && !def.test && !def.pending && perKm > 220,
+  check('track: "Abu Dabi, ZAE" (English "Abu Dhabi, UAE"), a closed circuit, 3 laps, 5.281 km within 3 % (realKm 5.281), anticlockwise, not a test track, awaiting the choice (pending), at least 220 °/km of turning',
+    def.name === 'Abu Dabi, ZAE' && def.en.name === 'Abu Dhabi, UAE' && !T.open && def.laps === 3 && Math.abs(T.len / 5281 - 1) < 0.03 && def.realKm === 5.281 && area > 0 && !def.test && def.pending === true && perKm > 220,
     `${T.len.toFixed(1)} m (${((T.len / 5281 - 1) * 100).toFixed(1)} %), area ${Math.round(area / 2)} m², ${Math.round(perKm)} °/km`);
 }
 // 2. the corners by plain descriptions (no names of people, firms, the circuit or the hotel), in their order round the lap from the start

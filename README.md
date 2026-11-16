@@ -51,7 +51,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Sindia, Senegal](docs/proge/sindia.md)
 - [Yahuarcocha, Ekvador](docs/proge/yahuarcocha.md)
 
-Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
+Na odločanju (`pending: true`, odločitev uporabnika 6. 11. 2026): iz Avstralije ostane ena proga, ki jo izbere uporabnik med Bathurstom in Great Alpine Road, ostale so od 6. 11. 2026 testne (spodaj: Longford, Mount Hotham, Newcastle in Townsville). Do izbire sta Bathurst in Great Alpine Road (zgoraj) pravi progi v igri in testih; meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«). Iz Združenih arabskih emiratov ostane ena med Abu Dabijem (zgoraj) in Džebel Hafitom (PR #695); obe sta na odločanju od 16. 11. 2026 (odločitev uporabnika 16. 11. 2026 ob ~2.02 prek Mateja, tabla #382, komentar 6904481015: »ubedve progi prestavi v pending«).
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 

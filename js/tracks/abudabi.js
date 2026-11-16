@@ -29,7 +29,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Abu Dhabi', rainP: 0.04,
     grassNat: 0.3, lawn: [0.96, 1.04, 0.86],
     zivali: { a: ['egret'], t: [], city: true },
-    id: 'abudabi', name: 'Abu Dabi, ZAE', theme: 'abudabi', laps: 3, halfWidth: 7.5,
+    id: 'abudabi', pending: true, name: 'Abu Dabi, ZAE', theme: 'abudabi', laps: 3, halfWidth: 7.5,
     desc: "Dirkališče na otoku Yas v Abu Dabiju: 5,3 km, 16 ovinkov, v nasprotni smeri urinega kazalca. Levi na koncu ciljne ravnine, hitri levi, dolgi desni in lasnica, več kot kilometer dolga ravnina do šikane, druga ravnina do dolgega levega, nato ovinki ob marini, pod hotelom, ki stoji čez progo, in zadnji ovinek. Ob progi pesek, palme in zalivane trate, velika pokrita tribuna nasproti boksov (zapelji vanje in mehaniki ti popravijo avto).",
     en: { name: 'Abu Dhabi, UAE', desc: "A circuit on Yas Island in Abu Dhabi: 5.3 km, 16 corners, anticlockwise. The left at the end of the main straight, the fast left, the long right and the hairpin, a straight of more than a kilometre to the chicane, another to the long left, then the corners by the marina, under the hotel that stands over the track, and the last corner. Sand, palms and watered lawns by the track, the big covered grandstand facing the pits (drive in and the mechanics fix your car)." },
     start: [0, 0], runoff: 1.0, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 10, realKm: 5.281,

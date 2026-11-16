@@ -255,7 +255,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Abu Dhabi', rainP: 0.04,
     grassNat: 0.3, lawn: [0.96, 1.04, 0.86],
     zivali: { a: ['egret'], t: [], city: true },
-    id: 'abudabi', name: 'Abu Dabi, ZAE', theme: 'abudabi', laps: 3, halfWidth: 7.5,
+    id: 'abudabi', pending: true, name: 'Abu Dabi, ZAE', theme: 'abudabi', laps: 3, halfWidth: 7.5,
     desc: %(desc)s,
     en: { name: 'Abu Dhabi, UAE', desc: %(desc_en)s },
     start: [0, 0], runoff: 1.0, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 10, realKm: %(real)s,

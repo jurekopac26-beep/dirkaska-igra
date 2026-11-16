@@ -137,7 +137,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Yahuarcocha (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`); Quito (zavite, 2) | Yahuarcocha v delu (biketraveler); Quito odpade (tudi **ne začni**: brez izletne cone, 5. 11. 2026) |
 | Madžarska | Mogyoród (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v delu (biketraveler) |
-| Združeni arabski emirati | Abu Dabi (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v delu (biketraveler) |
+| Združeni arabski emirati | Abu Dabi (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`; PR #547) in Džebel Hafit (PR #695, jure.kopac26) | obe na odločanju (`pending: true`; odločitev uporabnika 16. 11. 2026 ob ~2.02 prek Mateja, tabla #382, komentar 6904481015: »ubedve progi prestavi v pending«); po izbiri izbrana postane prava, druga dobi `test: true`; novih prog iz ZAE ne delamo |
 | Senegal | Sindia (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v delu (biketraveler) |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
