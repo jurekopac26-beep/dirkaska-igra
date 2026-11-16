@@ -1,5 +1,5 @@
 // The co-driver on the real open roads (docs/sovoznik.md): the roads he reads (Core.codrvRoad: every real open road, not a test track, not
-// the roads of the USA but Pikes Peak), the grades of the bends by their tightest radius (Core.noteGrade), the calls of every road
+// the roads of the USA but Pikes Peak, not the tanker's short roads, def.vehicle), the grades of the bends by their tightest radius (Core.noteGrade), the calls of every road
 // (Track.paceNotes: in order along the run, apart, as many as a co-driver reads, every slow corner in a slow note, only the co-driver's own
 // words), the English the voice says (Core.codrvSay) and the captions in both languages with every note of the call, short enough for a
 // phone (Core.codrvCap: one line, a long one two), the road's own crests from its heights (none on a flat road; a crest, a jump, a big jump
@@ -17,15 +17,16 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 
 // 1. the roads: the 15 of the plan (Pikes Peak twice: tarmac and gravel) but those since moved to the test tracks (one track a country,
 // the user's choices of 5 and 6. 11. 2026: Vršič #394, Mount Buller and Sani #379; frozen until deleted), a new road on its own; no test
-// track, no road of the USA but Pikes Peak
+// track, no road of the USA but Pikes Peak, none of the tanker's short roads (def.vehicle: alone against the clock, the user's choice of
+// 16. 11. 2026, docs/proge-cisterna.md)
 const PLAN = ['tianmen', 'iroha', 'sani', 'rastro', 'vrsic', 'mountbuller', 'caracoles', 'medvode', 'chapman', 'hotham', 'greatalpine', 'harju', 'ouninpohja', 'katu', 'pikes', 'pikesg'];
 const ROADS = PLAN.filter(id => { const d = C.TRACKS.find(x => x.id === id); return d && !d.test; });
 const US = ['baldy', 'beartooth', 'bigsur', 'maunakea', 'moki', 'mulholland', 'palomar', 'uncompahgre'];
-const roads = C.TRACKS.filter(d => C.codrvRoad(d));
+const roads = C.TRACKS.filter(d => C.codrvRoad(d)), TANK = C.TRACKS.filter(d => d.vehicle).map(d => d.id);
 {
   const ids = roads.map(d => d.id);
-  check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, no circuit',
-    ROADS.length >= 10 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test) && !ids.some(id => US.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
+  check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, none of the tanker\'s, no circuit',
+    ROADS.length >= 10 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test && !d.vehicle) && !ids.some(id => US.includes(id) || TANK.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
     `${ids.length}: ${ids.join(' ')}${ROADS.length < PLAN.length ? ' (of the plan now test tracks: ' + PLAN.filter(id => !ROADS.includes(id)).join(' ') + ')' : ''}`);
 }
 
