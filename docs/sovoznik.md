@@ -21,7 +21,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - **Imena krajev in komentator**: `track.names`, napis pod uro ~70 m prej in `Comm.say`. Sovoznik imen ne bere (razdelek Pravna varnost).
 - **Table pred zaviranjem** (`Track.brakeBoards`): samo dirkališča. Ostanejo.
 - **Misije**: misija »PACE NOTES« na novi mapi (`js/nvmenu.js`, `js/missions/`) ima svoje klice. `MisKit.backRoad` skrije puščico na cesti, prevoženi v obratni smeri. Misije ostanejo, kot so.
-- **#250 (Zabava, osnutek)**: izzivi ob cesti (radar, odsek, drift cona, skok, zlati smerniki) in Živa cesta (kamenje, žival, dela na cesti, traktor) govorijo prek `Comm.say` in sovoznika ne podvajajo. Ko bo #250 na `main`, lahko sovoznik doda še »pozor, kamenje« ipd. (pozneje, ni v tem sklopu).
+- **#250 (Zabava, osnutek)**: izzivi ob cesti (radar, odsek, drift cona, skok, zlati smerniki) govorijo prek `Comm.say` in sovoznika ne podvajajo.
 
 ## Lestvica ostrine
 

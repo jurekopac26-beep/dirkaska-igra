@@ -94,7 +94,7 @@ const ttRun = (m, rain) => {
   check('time trial: every car reaches the top on autopilot without a rescue, SAMUM 4x4 the quickest', R.every(r => r.t && !r.resc) && R[1].t < Math.min(...R.filter((_, k) => k !== 1).map(r => r.t)),
     names.map((nm, k) => `${nm} ${R[k].t ? R[k].t.toFixed(1) : '-'} s`).join(', '));
   const M = def.medals, asc = (a) => Array.isArray(a) && a.length === 3 && a[0] < a[1] && a[1] < a[2], wet = ttRun(model('BURJA R7'), 1);
-  check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && Math.abs(R[0].t * 1.01 - M.cs[0]) < 1.5 && wet.t && Math.abs(wet.t * 1.01 - M.wet.cs[0]) < 1.5,
+  check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01 (the dry; this frozen track keeps its old wet medals: the autopilot in the rain 5-20 % slower than the old wet gold, a third less grip in the wet, docs/dez-sneg.md)', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && Math.abs(R[0].t * 1.01 - M.cs[0]) < 1.5 && wet.t && wet.t * 1.01 / M.wet.cs[0] > 1.05 && wet.t * 1.01 / M.wet.cs[0] < 1.2,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${R[0].t.toFixed(1)} / ${wet.t ? wet.t.toFixed(1) : '-'} s`);
 }
 

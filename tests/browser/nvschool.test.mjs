@@ -4,7 +4,7 @@
 // cone, over the line, too slow, outside the cones), a knocked cone (+2 s); the result card (PONOVI, NAZAJ: back to the school's floor, its menu at
 // the licence); the places kept (localStorage rra-avtosola).
 //   node tests/browser/nvschool.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, checker, tapNewVersion } from './lib.mjs';
 
 const T = checker('nvschool');
 const srv = await serve();
@@ -12,7 +12,7 @@ const browser = await launch();
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { intro: 2, quali: 0 }, { width: 412, height: 915 }, { menu: true });
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
-  await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+  await tapNewVersion(page);
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
   T.check('the school loaded with the new map: its cones (6 of the slalom, 4 of the parallel box), all 36 tasks built', await page.evaluate(() => typeof NVSchool !== 'undefined' && NVSchool.cones().length === 10 && ['c', 'm', 'k'].every(l => [...Array(12).keys()].every(i => NVSchool.has(l, i)))));
 

@@ -1,6 +1,6 @@
 /* =========================================================================
    ZABAVA — the novelties that make the game more interesting (docs/zabava.md): the team's goals, the elimination race, rivals who
-   remember, the coach, the challenges by the road, the pursuit, the living road. Each one is a file of its own in js/zabava/
+   remember, the coach, the challenges by the road, the pursuit. Each one is a file of its own in js/zabava/
    (Zabava.add); the game has only short hooks (ZB in js/game.js, next to the special missions' MS).
    ========================================================================= */
 const Zabava = (function () {
@@ -99,6 +99,38 @@ const Zabava = (function () {
     P.prev = b; P.ax = ax;
   }
 
+  // the room online: one row Način, the race and the novelties' modes with a switch of their own (f.netMode: { label, fits(mp) }: the
+  // elimination race, the pursuit). The host taps one (f.netSet; one at a time: netOne), a friend sees the host's while one is on (each
+  // one's net.on, from its messages). A mode that does not fit the room (the pursuit: an open road with traffic, a private room) is not
+  // offered; on the host's phone it goes off when the room changes so (another track, the championship)
+  function modeRow(host, busy) {
+    const mp = G && G.mp && G.mp(), ref = el('on-chrow'); if (!ref || !mp) return;
+    const M = F.filter(f => f.netMode && f.net);
+    if (host) for (const f of M) if (f.net.on && !f.netMode.fits(mp)) f.netSet(false);
+    let row = el('zb-mode');
+    if (!row) {
+      row = document.createElement('div'); row.className = 'row'; row.id = 'zb-mode';
+      row.innerHTML = '<span class="rlbl"></span><div class="seg"></div>';
+      ref.insertAdjacentElement('afterend', row);
+      row.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-zbm]'), P = G && G.mp(); if (!b || b.disabled || !P || P.role !== 'host') return;
+        e.preventDefault(); e.stopPropagation();
+        const L = F.filter(f => f.netMode && f.net), f = L.find(x => x.id === b.dataset.zbm);
+        if (f) { if (!f.net.on) f.netSet(true); } else for (const x of L) if (x.net.on) x.netSet(false);
+        api.room(true, !!P.setup);
+      });
+    }
+    const cur = M.find(f => f.net.on), seg = row.querySelector('.seg'), O = [{ id: '', label: 'Dirka', ok: true }].concat(M.map(f => ({ id: f.id, label: f.netMode.label, ok: !!f.netMode.fits(mp) })));
+    row.querySelector('.rlbl').textContent = tr('Način');
+    const html = O.map(o => '<button type="button" data-zbm="' + o.id + '">' + esc(tr(o.label)) + '</button>').join('');
+    if (seg.dataset.h !== html) { seg.innerHTML = html; seg.dataset.h = html; }
+    for (const b of seg.querySelectorAll('[data-zbm]')) {
+      const o = O.find(x => x.id === b.dataset.zbm) || O[0];
+      b.classList.toggle('sel', o.id === (cur ? cur.id : '')); b.classList.toggle('off', !o.ok); b.disabled = !host || !!busy || !!mp.race;
+    }
+    row.classList.toggle('off', !host && !cur);
+  }
+
   /* ---- the hooks the game calls (js/game.js) ---- */
   const each = (fn) => { for (const f of F) { try { fn(f); } catch (e) { if (typeof console !== 'undefined') console.error('zabava', f.id, e); } } };
   const api = {
@@ -125,10 +157,14 @@ const Zabava = (function () {
     resBase(info) { if (R) each(f => f.resBase && f.resBase(R, info)); },
     resPay(info) { let s = ''; if (R) each(f => { if (f.resPay) s += f.resPay(R, info) || ''; }); return s; },
     resEnd(kind, info) { if (R) each(f => { if (f.resEnd) resAdd(f.resEnd(R, kind, info || {})); }); },
-    // online: a message of the novelties ({ t: 'zb', k }), the room (host: the switches), the host's setup about to go to every phone
+    // online: a message of the novelties ({ t: 'zb', k }), the room (the row Način, then each novelty's own), the host's setup about to go to every phone
     net(m, from, host) { each(f => f.net && f.net(m, from, host, R)); },
-    room(host, busy) { each(f => f.room && f.room(host, busy)); },
-    netSetup() { each(f => f.netSetup && f.netSetup()); },
+    room(host, busy) { try { modeRow(host, busy); } catch (e) { if (typeof console !== 'undefined') console.error('zabava', 'room', e); } each(f => f.room && f.room(host, busy)); },
+    netSetup(grid) { each(f => f.netSetup && f.netSetup(grid)); },   // (grid: the players of the race about to start, the host's order)
+    // online: one novelty's mode in the room at a time: switching one on switches the others off
+    netOne(f) { each(o => { if (o !== f && o.netOff) o.netOff(); }); },
+    // online, the results: a mode with results of its own (the pursuit: the patrol, those who got away, those caught): { win, waiting, draw() }
+    netRes() { if (!R) return null; for (const f of F) { const o = f.netRes && f.netRes(R); if (o) return o; } return null; },
     stop() { cardClose(); each(f => f.stop && f.stop(R)); R = null; },
     // for the novelties
     on, forced, auto, tr, ord, dec, esc, el, part, save, cardOpen, cardClose, resAdd,

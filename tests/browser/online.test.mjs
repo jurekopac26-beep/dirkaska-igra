@@ -5,8 +5,9 @@
 // - the clocks: the friend's clock matches the host's
 // - the race: both start at the same planned moment, each sees the other's car where the other really is, both finish, and
 //   both result screens show the same two times
-// - the host's weather: the second race in the rain on both phones
-// - the friend leaves in the middle of a race: the host is told, the race goes on alone, the friend is shown as gone
+// - the host's weather: the second race in the rain on both phones; it is the pursuit with friends (js/zabava/beg.js): the room's
+//   choice, the same traffic on both, the friend's patrol car, the host caught and the end on both phones
+// - the friend leaves in the middle of a (third) race: the host is told, the race goes on alone, the friend is shown as gone
 // - quick match (no code): the first waits, the next connects at once; a third comes into the same room (up to 22); the host
 //   starts before the room is full: the race is for the three in it (a big grid's states here from three cars on: 10 a second, passed
 //   on by the host in batches; each sees the others move), the room takes nobody more and the next one waits in a new room; two
@@ -122,15 +123,54 @@ try {
   T.check('back to the room: the host can start only once the friend is back; the car that left is off the track', hideB.title === qB.title && waitA.go && /vrne v sobo/.test(waitA.status) && /v sobi/.test(inA),
     `friend's results: ${hideB.title}, host's car off the track | host waiting: "${waitA.status}", start disabled ${waitA.go} | then: "${inA}"`);
 
-  // 6. a second race (the friend on the left of the front row this time), in the rain the host chose (the friend's own setting is dry);
-  //    the friend leaves in the middle of it
-  await A.page.evaluate(() => document.querySelector('[data-set="weather"] button[data-v="rain"]').click());
+  // 6. a second race (the friend on the left of the front row this time), in the rain the host chose (the friend's own setting is dry):
+  //    the pursuit with friends up Rio do Rastro (js/zabava/beg.js, docs/novosti-e.md Novost 2). The host taps Pregon in the room's row
+  //    Način and picks the friend for the patrol car; the traffic the same on both phones from the host's seed (B1), the patrol car's look
+  //    on both (B2), no police of the game; the host's car 150 m up the road. Neither on the autopilot: the host's car stands, the friend's
+  //    patrol car is held 8 m behind it: after 5 s caught (the host decides), the end and the results on both
+  await A.page.evaluate(() => { document.querySelector('[data-set="weather"] button[data-v="rain"]').click();
+    const t = document.getElementById('on-track'); t.value = 'rastro'; t.dispatchEvent(new Event('change')); });
+  const ui = await A.page.evaluate(() => { const b = document.querySelector('#zb-mode [data-zbm="beg"]'), vis = !!b && !b.classList.contains('off') && !b.disabled; if (b) b.click();
+    const s = document.getElementById('zb-bgsel'), opts = s ? [...s.options].map(o => o.textContent) : []; if (s) { s.value = 'g1'; s.dispatchEvent(new Event('change')); }
+    return { vis, sel: !!document.querySelector('#zb-mode [data-zbm="beg"].sel'), row: !!s && !document.getElementById('zb-bgpol').classList.contains('off'), opts }; });
+  const uiB = await until(B.page, () => { const r = document.getElementById('zb-mode'), b = document.querySelector('#zb-mode [data-zbm="beg"]'), s = document.getElementById('zb-bgsel');
+    return r && !r.classList.contains('off') && b && b.classList.contains('sel') && s && s.value === 'g1' ? { locked: b.disabled && s.disabled } : null; }, null, 20000);
+  T.check('room, the pursuit: the host taps Pregon (row Način, an open road with traffic) and the friend for the patrol car (Po vrsti first); the friend sees both, locked',
+    ui.vis && ui.sel && ui.row && ui.opts.length === 3 && /^Po vrsti/.test(ui.opts[0]) && uiB.locked, JSON.stringify(ui) + ' ' + JSON.stringify(uiB));
+  for (const p of [A.page, B.page]) await p.evaluate(() => { window.__game.autoDrive = false; });
   await A.page.evaluate(() => window.__game.onAction('net-go'));
   await until(B.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing'); }, null, 60000);
   const gA = await A.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]), gB = await B.page.evaluate(() => [window.__game.race.player.grid, window.__game.race.remote.grid]);
   T.check('second race: the sides of the front row change', gA.join() === '2,1' && gB.join() === '1,2', `host ${gA}, friend ${gB}`);
   const wx = await Promise.all([A.page, B.page].map(p => p.evaluate(() => ({ rain: window.__game.race.rain, wet: window.__game.race.player.wet, own: window.__game.S.weather }))));
   T.check("second race: the host's weather (rain) on both phones", wx.every(w => w.rain === 1 && w.wet < 1) && wx[1].own === 'dry', JSON.stringify(wx));
+  const tf = await Promise.all([A.page, B.page].map(p => p.evaluate(() => { const r = window.__game.race, b = window.Zabava.list.find(f => f.id === 'beg');
+    return { track: r.track.def.id, n: r.tf ? r.tf.veh.length : 0, sig: r.tf ? r.tf.veh.map(v => v.id + ':' + v.kind + ':' + v.dir + ':' + v.v0.toFixed(4) + ':' + v.col.toFixed(4)).join(' ') : '', pol: !!r.pol, me: !!r.player.police, it: !!r.remote.police,
+      mode: r.zbMode, mine: b.st && b.st.mine, gap: r.player.police ? r.remote.dist - r.player.dist : r.player.dist - r.remote.dist }; })));
+  T.check('second race, the pursuit: the same traffic on both phones (the host\'s seed), the friend in the patrol car on both, no police of the game',
+    tf.every(x => x.track === 'rastro' && x.n > 5 && !x.pol) && tf[0].sig === tf[1].sig && !tf[0].me && tf[0].it && tf[1].me && !tf[1].it,
+    tf.map(x => `${x.track}: ${x.n} vehicles, patrol me ${x.me} / friend ${x.it}, game police ${x.pol}`).join(' | ') + ` | the same vehicles: ${tf[0].sig === tf[1].sig}`);
+  T.check('second race, the pursuit (zbMode beg) on both: the host runs, the friend drives the patrol, the host\'s car ~150 m up the road on both', tf.every(x => x.mode === 'beg') && tf[0].mine === 'run' && tf[1].mine === 'pol' && tf.every(x => Math.abs(x.gap - 150) < 10),
+    tf.map(x => `${x.mode} ${x.mine} ${x.gap.toFixed(1)} m`).join(' | '));
+  await B.page.evaluate(() => { const g = window.__game; window.__hold = setInterval(() => { const r = g.race; if (!r || !r.remote || g.phase !== 'racing') return;
+    const o = r.remote, P = r.player; P.place(o.x - Math.cos(o.h) * 8, o.z - Math.sin(o.h) * 8, o.h); P.y = P.py = o.y; P.vx = P.vz = P.vy = P.w = 0; P.q = r.track.query(P.x, P.z, -1, P.q); }, 40); });
+  const caught = await Promise.all([A.page, B.page].map(p => until(p, () => { const t = document.getElementById('res-title').textContent;
+    return document.getElementById('s-results').classList.contains('show') && /Ulovljen|Ujel si/.test(t) ? { title: t, rows: [...document.querySelectorAll('#res-table tbody tr')].map(r => r.textContent), out: window.__game.race.isOut(window.__game.race.player), mine: window.__game.net.race.mine } : null; }, null, 90000)));
+  await B.page.evaluate(() => clearInterval(window.__hold));
+  T.check('the pursuit: the patrol 8 m behind for 5 s: the host caught (Ulovljen!, pulled over, its finish 100000 s less the time), the friend\'s chase over (Ujel si 1 od 1); on both the patrol first, then the caught',
+    caught[0].title === 'Ulovljen!' && caught[0].out && caught[0].mine > 99000 && caught[1].title === 'Ujel si 1 od 1' && caught.every(x => x.rows.length === 2 && /Bor/.test(x.rows[0]) && /Ujel 1 od 1/.test(x.rows[0]) && /Ana/.test(x.rows[1]) && /Ulovljen po/.test(x.rows[1])),
+    caught.map(x => `${x.title}: ${x.rows.join(' / ')}`).join(' | '));
+  // 6b. back to the room (by turn the host's patrol next: Po vrsti (Ana)), the race again (Dirka), Jezero; the friend leaves in the middle
+  await A.page.evaluate(() => window.__game.onAction('net-room')); await B.page.evaluate(() => window.__game.onAction('net-room'));
+  await until(A.page, () => !document.getElementById('on-go').disabled || null, null, 20000);
+  const turn = await A.page.evaluate(() => { const s = document.getElementById('zb-bgsel'), first = s ? s.options[0].textContent : ''; document.querySelector('#zb-mode [data-zbm=""]').click();
+    const t = document.getElementById('on-track'); t.value = 'jezero'; t.dispatchEvent(new Event('change')); return { first, off: document.getElementById('zb-bgpol').classList.contains('off'), sel: !!document.querySelector('#zb-mode [data-zbm=""].sel') }; });
+  T.check('room again: by turn the host next (Po vrsti (Ana)); back to Dirka, the patrol\'s choice hidden', turn.first === 'Po vrsti (Ana)' && turn.off && turn.sel, JSON.stringify(turn));
+  for (const p of [A.page, B.page]) await p.evaluate(() => { window.__game.autoDrive = true; });
+  await A.page.evaluate(() => window.__game.onAction('net-go'));
+  await until(B.page, () => { const g = window.__game; return !!(g.race && g.race.state === 'racing'); }, null, 60000);
+  const plain = await A.page.evaluate(() => ({ mode: window.__game.race.zbMode || '', tf: !!window.__game.race.tf, it: !!window.__game.race.remote.police }));
+  T.check('third race: a race again (no pursuit, no traffic, no patrol car)', !plain.mode && !plain.tf && !plain.it, JSON.stringify(plain));
   await wait(3000);
   await B.ctx.close();
   const gone = await until(A.page, () => { const n = window.__game.net; return n && n.race && n.race.left ? { toast: document.getElementById('toast').textContent, dist: window.__game.race.remote.dist, state: window.__game.race.state } : null; }, null, 40000);

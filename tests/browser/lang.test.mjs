@@ -70,10 +70,13 @@ try {
   await page.evaluate(() => document.querySelector('[data-board="pikes"]').click()); await page.waitForTimeout(200);
   const b5p = await txt('board-body'), s5p = await slovene();
   T.check('leaderboard in English (a circuit\'s records, a time trial\'s board)', /^Records · Jezero Ring · 3 laps/.test(b5) && /Best lap/.test(b5) && /No times on this track yet\. Drive the climb/.test(b5p) && !s5.length && !s5p.length, JSON.stringify({ b5, b5p, s5, s5p }));
+  const champCards = () => page.evaluate(() => ({ cards: [...document.querySelectorAll('.ch-card h3')].map(h => h.textContent).join('/'), meta: document.querySelector('.ch-card .tmeta').textContent, go: document.getElementById('ch-go').textContent, diff: document.getElementById('ch-diff').textContent }));
   await act('to-champ'); await page.waitForTimeout(250);
-  const h5 = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.ch-card h3')].map(h => h.textContent).join('/'), meta: document.querySelector('.ch-card .tmeta').textContent, go: document.getElementById('ch-go').textContent, diff: document.getElementById('ch-diff').textContent }));
-  const sh = await slovene();
-  T.check('championship in English: Home Cup / Short tracks / Legends / Grand Championship, "3 races", Start the championship', h5.cards === 'Home Cup/Short tracks/Legends/Grand Championship' && /^3 races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length, JSON.stringify({ h5, sh }));
+  const h5 = await champCards(), sh = await slovene();
+  await act('to-champ-nu'); await page.waitForTimeout(250);   // (the cups of the test tracks: behind NEUPORABNO)
+  const h5n = await champCards(), shn = await slovene();
+  T.check('championship in English: Legends / Grand Championship (behind NEUPORABNO Home Cup / Short tracks, "3 races"), Start the championship', h5.cards === 'Legends/Grand Championship' && /^\d+ races · \d+ km$/.test(h5.meta) && h5.go === 'Start the championship' && /^Difficulty: medium/.test(h5.diff) && !sh.length &&
+    h5n.cards === 'Home Cup/Short tracks' && /^3 races · \d+ km$/.test(h5n.meta) && !shn.length, JSON.stringify({ h5, h5n, sh, shn }));
   await act('to-career'); await page.waitForTimeout(200);
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)

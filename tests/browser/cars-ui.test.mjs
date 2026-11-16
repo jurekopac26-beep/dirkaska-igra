@@ -269,7 +269,7 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', name: 'Ana', carV: 3, carId: 'titan', quali: 0, damage: 1 }, { width: 480, height: 270 });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
     const rivals = () => page.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, cars: [...new Set(r.cars.filter(c => !c.isPlayer).map(c => c.m.id))].join(), me: r.player.m.id, champ: !!r.champ }; });
-    await act('to-champ'); await wait(250);
+    await act('to-champ-nu'); await wait(250);   // (Domači pokal: behind NEUPORABNO, a cup of the test tracks)
     const pick0 = await page.evaluate(() => document.getElementById('ch-diff').textContent);
     await page.evaluate(() => document.querySelector('[data-champ="domaci"]').click()); await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'jezero'); }, null, { timeout: 90000 });

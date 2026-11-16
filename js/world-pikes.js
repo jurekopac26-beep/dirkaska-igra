@@ -1893,7 +1893,7 @@
 
     /* ---- the winners' podium on the summit, where the portrait chase camera looks once the car has stopped past the line (the game brakes it straight on, ~46 m):
        in the upper part of that view, beside the last metres of the road, clear of the cog railway, the car park and the crowds, on a stage where the ground slopes;
-       three steps with their numbers, the sponsor backdrop "RACE TO THE CLOUDS" between two chequered flags, a red carpet, the three winners on the steps, officials
+       three steps with their numbers, the sponsor backdrop "UP TO THE SUMMIT" between two chequered flags, a red carpet, the three winners on the steps, officials
        beside them, photographers and fans in front; facing the stopped car (or turned towards the road where that fits better) ---- */
     {
       const iF = T.idx(sFin), hx = T.tx[iF], hz = T.tz[iF], nx = -hz, nz = hx, ax = T.px[iF] + hx * 46, az = T.pz[iF] + hz * 46, pE = K.padE;
@@ -1955,7 +1955,7 @@
       c2.fillStyle = 'rgba(0,0,0,0.4)'; for (let y = y0 + 46; y < y0 + 256; y += 4) c2.fillRect(x0, y, 512, 1); for (let x = x0; x < x0 + 512; x += 4) c2.fillRect(x, y0 + 46, 1, 210); }
     { const [x0, y0] = AT.back, gr = c2.createLinearGradient(0, y0, 0, y0 + 256); gr.addColorStop(0, '#2a67b8'); gr.addColorStop(1, '#0f2b5e'); c2.fillStyle = gr; c2.fillRect(x0, y0, 512, 256);   // the podium's backdrop
       poly([[x0, y0 + 196], [x0, y0 + 176], [x0 + 110, y0 + 118], [x0 + 172, y0 + 146], [x0 + 256, y0 + 84], [x0 + 332, y0 + 138], [x0 + 402, y0 + 110], [x0 + 512, y0 + 170], [x0 + 512, y0 + 196]], 'rgba(255,255,255,0.2)');   // the peak
-      txt('RACE TO THE', x0 + 256, y0 + 50, 46, '#fff', 430, 'italic 900 46px Arial, sans-serif'); txt('CLOUDS', x0 + 256, y0 + 118, 88, '#fff', 470, 'italic 900 88px Arial, sans-serif');
+      txt('UP TO THE', x0 + 256, y0 + 50, 46, '#fff', 430, 'italic 900 46px Arial, sans-serif'); txt('SUMMIT', x0 + 256, y0 + 118, 88, '#fff', 470, 'italic 900 88px Arial, sans-serif');   // (generic: no event's name or slogan)
       rect(x0, y0 + 196, 512, 60, '#f2f2f0'); [['REAL ROADS ATLAS', '#e02a1f'], ['SUMMIT OIL', '#13306b'], ['ROCKY TYRES', '#1b2f6e'], ['14ER COFFEE', '#4a2c1a']].forEach(([n, col], k) => txt(n, x0 + 64 + k * 128, y0 + 226, n.length > 12 ? 19 : 22, col, 116)); }   // (fictional sponsors, as the banners)
     const tx = new THREE.CanvasTexture(cv); tx.anisotropy = 4; K.out.ownTex.push(tx);
     tb.addTo(new THREE.MeshLambertMaterial({ map: tx }));
@@ -3619,7 +3619,7 @@
         c2.textAlign = 'left'; c2.fillText(n, x0 + 34, 0); c2.fillText(who, x0 + 74, 0, 250); c2.textAlign = 'right'; c2.fillText(t, x0 + 482, 0); c2.restore(); });
       c2.strokeStyle = '#141414'; c2.lineWidth = 3; c2.beginPath(); c2.moveTo(x0 + 380, y0 + 304); c2.lineTo(x0 + 486, y0 + 296); c2.stroke();   // a time struck through, the right one above it
       c2.save(); c2.translate(x0 + 430, y0 + 272); c2.rotate(-0.05); txt('10:41.30', 0, 0, HW(20), '#c8231d', 110); c2.restore();
-      c2.save(); c2.translate(x0 + 256, y0 + 476); c2.rotate(0.01); txt('PIKES PEAK INT\'L HILL CLIMB', 0, 0, HW(26), '#1b2a8a', 440); c2.restore(); }
+      c2.save(); c2.translate(x0 + 256, y0 + 476); c2.rotate(0.01); txt('HILL CLIMB  ·  COLORADO', 0, 0, HW(26), '#1b2a8a', 440); c2.restore(); }
     ['TIMING  ·  CP 1', 'TIMING  ·  CP 2', 'TIMING  ·  CP 3', 'TIMING  ·  CP 4', 'FINISH  TIMING'].forEach((s, k) => { const y0 = 768 + k * 48;   // the timing huts' boards: white letters on green
       c2.fillStyle = k === 4 ? '#7d1d16' : '#244a2e'; c2.fillRect(768, y0, 256, 48); c2.strokeStyle = '#efe6cc'; c2.lineWidth = 3; c2.strokeRect(772, y0 + 4, 248, 40); txt(s, 896, y0 + 26, SANS(28, 800), '#f3ecd6', 236); });
     c2.fillStyle = '#8b8d8f'; c2.fillRect(768, 1008, 256, 16);   // the plain grey back of a road sign
@@ -4159,6 +4159,7 @@
       const gv = (i, k) => { const q = 0.9 + 0.2 * nF(i * T.ds / 9, 40 + k); return [gc[0] * q, gc[1] * q, gc[2] * q]; }, gIn = [0.66, 0.63, 0.6];   // the gravel's tone varies along it, greyer where it meets the asphalt
       // the side roads' mouths (PK_JN): the white edge line broken across them, [side, s0, s1] (the mouth's flared edges meet the Highway's edge at s -+ half its width / sin of its angle)
       const jGap = PK_JN.filter(J => J.sd).map(J => { const h = (J.W / 2 + J.fl) / Math.sin(J.a); return [J.sd, J.s - h, J.s + h]; });
+      out.cestaRob = jGap.map(([sd, a, b]) => [a - 1, b + 1, sd]);   // (World.cesta: the asphalt's edge whole across the mouths)
       const jCut = (a, b, sd) => { let P = [[a, b]]; for (const [g, g0, g1] of jGap) if (g === sd && g1 > a && g0 < b) P = [].concat(...P.map(([x, y]) => [[x, Math.min(y, g0)], [Math.max(x, g1), y]].filter(([u, v]) => v - u > 0.05))); return P; };
       let gs = null;   // (the gravel strip: few vertices, chunks 4 times as long)
       for (let c0 = 0; c0 < N - 1; c0 += RC) {

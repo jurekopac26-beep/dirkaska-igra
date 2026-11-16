@@ -9,7 +9,7 @@ Zapiski raziskave 9. 11. 2026 (Matej, brez sprememb kode). Številke vrstic so p
 
 ## Obseg
 - Guma (temna sled na liniji vožnje) se riše po liniji uporabnikove vožnje, kjer je posneta; kjer ni, po predvideni liniji iz sloga vožnje. Ko uporabnik posname nove proge, jih guma prevzame brez spremembe kode.
-- **Samo videz.** Oprijem ostane na izračunani liniji (`rubberAt`, +2 %, in `marbles()`, −6 %): fizika vožnje se ne spreminja (`CLAUDE.md`, Seje, »Proge in grafika«). Reference `tests/golden/races.json` in `tests/golden/sim.json` se ne smejo spremeniti.
+- **Samo videz.** Oprijem ostane na izračunani liniji (`rubberAt`, +2 %, in `marbles()`, −6 %): fizika vožnje se ne spreminja (`CLAUDE.md`, Seje, »Fizika vožnje se ne spreminja«). Reference `tests/golden/races.json` in `tests/golden/sim.json` se ne smejo spremeniti.
 - Nov sloj na odprtih cestah brez boksov: preveri obremenitev telefona (`perf`, do ~300 klicev risanja).
 - **Ni v potrjenem obsegu:** stalni pasovi gume in sledi gum v svetovih (`js/world-tianmen.js` ~257, `js/world-spa.js` ~161, `tyreMarks` v `js/world.js` ~3686, okoli 17 svetov; +4–6 h). Ostanejo na izračunani liniji; ob predogledu to pokaži uporabniku in vprašaj.
 
