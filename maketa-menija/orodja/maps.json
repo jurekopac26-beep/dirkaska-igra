@@ -444,5 +444,16 @@
    "wet": true,
    "pad": 1.0
   }
+ ],
+ [
+  "abudabi",
+  "top",
+  "top-abudabi",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
  ]
 ]
