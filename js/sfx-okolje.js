@@ -48,7 +48,7 @@
     livorno: [[730, -1, 26], [1230, 1, 26], [3230, 1, 56], [4210, 1, 558], [6730, 1, 19], [17070, 1, 15], [17330, 1, 49], [17890, 1, 440]],   // (Livorno, Montenero, Antignano)
     nring: [[20380, 1, 236]],   // (Nürburg)
     harju: [[50, 1, 239], [1430, 1, 452]],   // (Jyväskylä)
-    chapman: [[-140, 1, 385]],   // (Hout Bay)
+    chapman: [[-466, 1, 385]],   // (Hout Bay; the start moved 326 m up the road)
   };
 
   /* ---------------- the zones ---------------- */

@@ -1298,7 +1298,7 @@
   // stand by the marshals' posts: 100 m; tools/ljudje/mesta.mjs, --preveri; tests/ljudje-mesta.test.js)
   site('medvode', [['kotlicek', 1384, 1], ['badminton', 2408, 1], ['nogomet', 3160, 1]]);
   site('harju', [['plaza', 1856, -1]]);
-  site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);
+  site('rastro', [['motoristi', 3280, 1], ['glasba', 4000, -1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);
   site('pikes', [['radio', 3824, 1]]);
   site('katu', [['lestve', 64, 1], ['navijaci', 392, -1, { club: [0x1c3f94, 0xf2f2f2] }]]);
