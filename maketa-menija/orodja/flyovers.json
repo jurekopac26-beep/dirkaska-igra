@@ -1155,5 +1155,153 @@
     }
    ]
   }
+ ],
+ [
+  "kaligandaki",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Kali Gandaki",
+     "d": 700
+    },
+    {
+     "n": "Rupse Falls",
+     "d": 2050
+    },
+    {
+     "n": "Hairpin 1 · 1,620 m",
+     "d": 2489
+    },
+    {
+     "n": "Hairpin 2 · 1,629 m",
+     "d": 2609
+    },
+    {
+     "n": "Kopchepani · 1,672 m",
+     "d": 3044
+    }
+   ],
+   "alt": [
+    1443,
+    1672
+   ]
+  }
+ ],
+ [
+  "musandam",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hanna · 1 m",
+     "d": 1059
+    },
+    {
+     "n": "The Cliffs · 80 m",
+     "d": 1755
+    },
+    {
+     "n": "Above the Bay · 103 m",
+     "d": 2385
+    },
+    {
+     "n": "Hamlet · 156 m",
+     "d": 2990
+    },
+    {
+     "n": "Top of the Climb · 194 m",
+     "d": 3500
+    }
+   ],
+   "alt": [
+    9,
+    188
+   ]
+  }
+ ],
+ [
+  "limalimo",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Under the Simien Escarpment",
+     "d": 900
+    },
+    {
+     "n": "Hairpin 1 · 1,849 m",
+     "d": 2600
+    },
+    {
+     "n": "Hairpin 2 · 1,852 m",
+     "d": 2641
+    },
+    {
+     "n": "Hairpin 3 · 1,901 m",
+     "d": 3227
+    },
+    {
+     "n": "Limalimo · 1,972 m",
+     "d": 4020
+    }
+   ],
+   "alt": [
+    1684,
+    1972
+   ]
+  }
+ ],
+ [
+  "darvaz",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Pshikharv Bridge",
+     "d": 1270
+    },
+    {
+     "n": "Wall above the Panj",
+     "d": 2300
+    },
+    {
+     "n": "Darvaz Gorge",
+     "d": 3500
+    }
+   ],
+   "alt": [
+    1504,
+    1507
+   ]
+  }
+ ],
+ [
+  "quezaltepeque",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Two Rights",
+     "d": 620
+    },
+    {
+     "n": "Long Left by the Grandstand",
+     "d": 1040
+    },
+    {
+     "n": "Tight Right",
+     "d": 1390
+    },
+    {
+     "n": "Long Hairpin",
+     "d": 1800
+    },
+    {
+     "n": "Last Hairpin",
+     "d": 2846
+    }
+   ]
+  }
  ]
 ]
