@@ -69,8 +69,12 @@ var TRACK_DEFS = TRACK_DEFS || [];
     pitApron: 3.7,                 // the apron in front of the paddock building (metres past the lane's outer edge): a shallow box, the car turns in less (Core Track.bayDim)
     pitRow: [-60, 60],             // the first and the last of the 13 crews' boxes (in front of the paddock building, -106 .. 220 m)
     pitBld: [-106, 220, 22.2, 47.5],   // the paddock building (OSM): from, to (metres after the start line), front and back (metres left of the centre line)
-    // grandstands [from, to, side, rows, roof]: temporary stands at the usual places (approximate)
-    stands: [[-175, 110, 1, 14, 1], [362, 452, 1, 10, 0], [1440, 1530, 1, 9, 0], [2785, 2860, -1, 10, 0], [-430, -310, 1, 10, 0], [880, 960, -1, 6, 0]],
+    // grandstands [from, to, side, rows, roof]: none; only the stands that really stand there are built (the bleachers below, from OSM;
+    // the user's decision, 15. 11. 2026: the approximate temporary stands are gone)
+    stands: [],
+    // the bleachers on their OpenStreetMap outlines (leisure=bleachers; the smallest rectangles round them) [x, z, length, depth, angle]: the rows
+    // rise from the front (at -depth/2 on the rectangle's second axis, the side towards the road)
+    bleachers: [[-203.5, -1170.3, 104.8, 19.5, -1.929], [-260.9, -1368.0, 114.4, 25.5, -1.755], [53.5, 564.6, 91.1, 25.6, 0.492], [133.5, 529.7, 89.4, 36.1, -1.197]],
     // spectators on the grass [from, to, side]
     ga: [[600, 700, 1, 0], [1000, 1110, 1, 0], [1180, 1300, -1, 0], [1560, 1660, 1, 0], [1880, 2060, 1, 0], [2180, 2240, -1, 0], [2380, 2600, 1, 0], [2960, 3060, 1, 0], [-1240, -1060, -1, 0], [-820, -720, -1, 0]],
     sectors: [1600, 3060],
