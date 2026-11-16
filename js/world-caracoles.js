@@ -253,11 +253,11 @@
   /* Realizem G (docs/realizem/paket-g.md, docs/proge/caracoles.md): the band 8-60 m from the road as tools/proga-podatki.py `cover` measured it
      (ESA WorldCover 2021, 5 m cells, 232 sections of 50 m; Sentinel-2 summer colours; the frame of js/geo.js, whose def.lc grass lies on
      WorldCover's with a correlation of 0.82 by cell, no shift). Bare rock and scree 76.5 % (golo), grass 22.1 %, built-up 1.3 %, shrubs 0.1 %,
-     no trees, no water and no snow in the band (the game's summer snow lies higher, beyond it). The climate (Köppen) was not read here: podnebje
-     stays empty. Only the hue moves (World.rastje.MOC, the brightness kept), on the ground's vertex colours by class; no plant and no draw call more. */
+     no trees, no water and no snow in the band (the game's summer snow lies higher, beyond it). The climate (Köppen–Geiger, Beck et al. 2018) is ET (tundra), an estimate
+     for the high Andes at 2400–3200 m, not read off the map (the download was refused here). Nothing reads podnebje yet. Only the hue moves (World.rastje.MOC, the brightness kept), on the ground's vertex colours by class; no plant and no draw call more. */
   let CAT = null;   // { trava, golo, pozidano }: the measured hue's multipliers (null: the game's own colours, to the number)
   if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.caracoles) {
-    World.rastje.MERITVE.caracoles = { podnebje: null, lat: -32.86507, lon: -70.154635, delez: { drevesa: 0, trava: 0.221, pozidano: 0.013, golo: 0.765, grmovje: 0.001 },
+    World.rastje.MERITVE.caracoles = { podnebje: 'ET', lat: -32.86507, lon: -70.154635, delez: { drevesa: 0, trava: 0.221, pozidano: 0.013, golo: 0.765, grmovje: 0.001 },
       barva: { trava: 0x60584d, pozidano: 0x6c6156, golo: 0x645e54 }, drevesa: [] };
   }
   function caRastje(def) {   // the multipliers, from the game's own ground colours on each class 8-60 m from the road (as World.rastje's barvaTrave: every 8 m)
