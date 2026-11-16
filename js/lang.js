@@ -493,6 +493,7 @@
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
     'Bunkerji': 'Bunkers', 'Qafa e Llogarasë': 'Llogara Pass', 'Spomenik': 'Monument', 'Znamenje': 'Wayside Shrine', 'Vzletišče': 'Paragliders\' Launch', 'Čez prelaz': 'Over the pass',   // (Llogara: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
     'Kapelica': 'Wayside Shrine', 'Do morja': 'Down to the sea',   // (Porto Moniz: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place, the town as it is)
+    'Zaliv Praia do Bispo': 'Praia do Bispo Bay', 'Pod gričem': 'Under the Hill', 'Obroč pod gričem': 'Round the Hill', 'Trdnjava': 'Fortress', 'Ob zalivu': 'Along the Bay', 'Marginal': 'Marginal', 'Do konca zaliva': 'To the end of the bay',   // (Luanda: the HUD, the results of an escape)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
