@@ -1206,14 +1206,29 @@
   // holds goes round with it: the dog on its leash walks round it, not across), then the walk to the other end; its place at a time tt
   const PACE = { per: 7.2, turn: 0.25, d: 1.6 };
   function pace(s, tt) {
+    if (s.path) return stroll(s.path, tt);
     const fc = s.face && s.face !== 'road' ? s.face : [1, 0], L0 = Math.hypot(fc[0], fc[1]) || 1, ux = fc[0] / L0, uz = fc[1] / L0;
     const u = ((tt / PACE.per) % 1 + 1) % 1, back = u >= 0.5, h = back ? u * 2 - 1 : u * 2, w = Math.max(0, (h - PACE.turn) / (1 - PACE.turn)), d = (back ? 1 - 2 * w : 2 * w - 1) * PACE.d;
     return { a: s.a + ux * d, b: s.b + uz * d, ux, uz, back, turn: Math.min(1, h / PACE.turn) };
+  }
+  // a walker on a footpath (world-potke.js, its act's path W: pts [[a, b], …], cum, L, v, tr, off, ph): there and back along the path at its
+  // speed, a turn on the spot at each end (as the pacer's, pace's shape: walking forwards from its start to its end, back from its end), off: beside
+  // the path's middle (a couple side by side); its heading from the path a little before and after (round the bends softly)
+  function strollAt(W, d) {
+    const P = W.pts, c = W.cum; d = clamp(d, 0, W.L); let k = 1; while (k < P.length - 1 && c[k] < d) k++;
+    const f = (d - c[k - 1]) / ((c[k] - c[k - 1]) || 1); return [P[k - 1][0] + (P[k][0] - P[k - 1][0]) * f, P[k - 1][1] + (P[k][1] - P[k - 1][1]) * f];
+  }
+  function stroll(W, tt) {
+    const tw = W.L / W.v, per = 2 * (W.tr + tw), u = ((tt / per) % 1 + 1) % 1, back = u >= 0.5, h = (back ? u - 0.5 : u) * per;
+    const w = Math.max(0, h - W.tr) / tw, d = (back ? 1 - w : w) * W.L, p = strollAt(W, d), q1 = strollAt(W, d - 0.8), q2 = strollAt(W, d + 0.8);
+    let ux = q2[0] - q1[0], uz = q2[1] - q1[1]; const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; const o = W.off || 0;
+    return { a: p[0] - uz * o, b: p[1] + ux * o, ux, uz, back, turn: Math.min(1, h / W.tr) };
   }
   const pacing = (s) => !s.still && (s.pose === 'walk' || s.pose === 'carryWalk') && !!MOTION[s.pose];
   // at the alert: the way out (each person its reaction time d0 and its speed v); a pacer from where it is then, not its pacing's middle
   function planOut(p, al) {
     const st = p.st, R = st.run, Fe = st.fence, segs = [], t1 = al + p.d0;
+    if (st.act && st.act.path) return [{ t0: al, t1: 1e9, s: st.act, act: true, fence: true }];   // (a walker on a footpath: on its way, looking at the car)
     const pc = pacing(st.act) ? pace(st.act, al + p.ph * 17 + (p.po || 0)) : null;   // (a pacer: where it is then, facing the way it walks then)
     const A = pc ? Object.assign({}, st.act, { a: pc.a, b: pc.b, face: (pc.turn >= 0.5) !== pc.back ? [pc.ux, pc.uz] : [-pc.ux, -pc.uz] }) : st.act;
     const turn = (s) => pc ? Object.assign(s, { ff: pc.back ? [pc.ux, pc.uz] : [-pc.ux, -pc.uz], fk: pc.turn * pc.turn * (3 - 2 * pc.turn), tf: al }) : s;   // (and turning from its facing then to the stop's: poseOne)
@@ -1236,6 +1251,7 @@
   }
   // ~4 s after the car has passed: back to what it was doing, at a walk (from wherever it is now)
   function planBack(p, Sc, t) {
+    if (p.st.act && p.st.act.path) { p.segs = [{ t0: t, t1: 1e9, s: p.st.act, act: true }]; return t; }   // (a walker on a footpath: it never stopped)
     const now = segAt(p, Sc, t), A = p.st.act, from = now.mv ? lerpPlace(now.mv, clamp((t - now.t0) / (now.t1 - now.t0), 0, 1)) : at0(now.s), segs = [];
     const tb = t + p.bd, mv0 = now.mv, da = mv0 ? mv0.to.a - mv0.from.a : 0, db = mv0 ? mv0.to.b - mv0.from.b : 0;   // (still on its way: it stops where it is, facing the way it went, what it holds in its hands)
     segs.push(mv0 ? { t0: t, t1: tb, s: Object.assign({}, from, { pose: 'stand', face: Math.abs(da) + Math.abs(db) > 1e-3 ? [da, db] : null }), show: mv0.hold, fence: !!now.fence } : { t0: t, t1: tb, s: now.s, fence: !!now.fence });
@@ -1284,8 +1300,8 @@
         const m = MOTION[pose], tt = t + p.ph * 17 + (p.po || 0);   // (p.po: a pacer's clock set back on its return, planBack)
         if (m && m.alt) { let u = 0.5 - 0.5 * Math.cos((tt * m.hz) * TAU); if (m.snap) u = u * u * (3 - 2 * u); J = mixJ(poseJ(pose, s.t || 0), poseJ(m.alt, 0), u); }
         else if (m && (pose === 'walk' || pose === 'carryWalk')) {   // pacing back and forth along its facing (carrying a crate, a tyre, the dog on its leash)
-          const pc = pace(s, tt), k = pc.turn * pc.turn * (3 - 2 * pc.turn); placeOf(Sc, { a: pc.a, b: pc.b, y: s.y || 0 }, _w);
-          yaw = (pc.back ? F.yaw(pc.ux, pc.uz) : F.yaw(-pc.ux, -pc.uz)) + Math.PI * k; J = poseJ(pose, tt * 4.6);   // (turning round from the way it came)
+          const tp = s.path ? t + s.path.ph : tt, pc = pace(s, tp), k = pc.turn * pc.turn * (3 - 2 * pc.turn); placeOf(Sc, { a: pc.a, b: pc.b, y: s.y || 0 }, _w);   // (a footpath's walkers: their own clock, a couple's the same)
+          yaw = (pc.back ? F.yaw(pc.ux, pc.uz) : F.yaw(-pc.ux, -pc.uz)) + Math.PI * k; J = poseJ(pose, tp * (s.path ? STRIDE.walk * s.path.v : 4.6));   // (turning round from the way it came)
         }
         else if (m) J = poseJ(pose, (s.t || 0) + tt * m.rate);
         else { J = poseJ(pose, s.t || 0); J.look = (J.look || 0) + 0.35 * Math.sin(tt * 0.37) * Math.sin(tt * 0.11 + 1.3); J.lean = (J.lean || 0) + 0.02 * Math.sin(tt * 0.6); }
@@ -1573,6 +1589,9 @@
     }
     smokeStep(W, t, false); umbStep(W);
   }
+
+  // scenes that find their own places (fn(o, T, groundH, def) → [{ name, s, side, seed, build(C, F), box?, clear?, path? }]): world-potke.js
+  const EXTRA = [];
 
   /* ---------------- where: the scenes of each real track [scene, metres after the start line, side (+1 right, -1 left), options] ---------------- */
   // (the 12 proposals' places from the pictures; the others found by tools/ljudje/mesta.mjs --plan: a straight before, the barrier near, flat ground,
@@ -2406,9 +2425,10 @@
   World.people = function (o) {
     const A = World.api, T = A.T, def = T && T.def;
     if (!def || def.test || !o || !o.root || typeof o.groundH !== 'function') return null;
-    const list = (SITES[def.id] || []).slice();
+    const list = (SITES[def.id] || []).slice(), extra = [];
+    for (const fn of EXTRA) { const r = fn(o, T, o.groundH, def); if (r) extra.push(...r); }   // (scenes of their own places: the footpaths' walkers, world-potke.js)
     // (no scene at the player's box on a circuit: its world builds the team stands on the pit wall's strip, the renderer seats the engineer and the crews)
-    if (!list.length && !(STANDS && hasStands(o))) return null;
+    if (!list.length && !extra.length && !(STANDS && hasStands(o))) return null;
     const t0 = performance.now(), LOD = A.LOD, gH = o.groundH, K0 = FLAGS[def.id] || {}, hsh = Math.abs([...def.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7));
     const W = { T, scenes: [], frame: 0, wx: 0.8, wz: 0.6, smoke: null, q: {}, hint: -1, cs: null, v: 0, lt: 0,
       rShow: LOD.tier >= 2 ? 650 : LOD.tier === 1 ? 420 : 280, rPpl: LOD.tier >= 2 ? 240 : LOD.tier === 1 ? 170 : 120, rPose: LOD.tier >= 2 ? 200 : LOD.tier === 1 ? 150 : 110 };
@@ -2463,6 +2483,13 @@
       addScene(name, F, s, sd, d, C, si, at);
     });
     if (STANDS) standsOf(o, T, gH, LOD, hsh, list.length, addScene, stats, circles);
+    extra.forEach((d, k) => {   // EXTRA's scenes: their place (s, side) and their build their own; P.noUm: no umbrella (a hand busy, the dog's leash)
+      seed(1000 + (d.seed || 5) * 7919 + hsh + (900 + k) * 31);
+      const F = frame(T, gH, d.s, d.side), C = ctxOf(F); d.build(C, F);
+      const Sc = addScene(d.name, F, d.s, d.side, d, C, list.length + 500 + k, Math.round(d.s - (T.startS || 0)), d.box);
+      for (const p of Sc.people) if (p.P.noUm) p.um = false;
+      stats.scenes[stats.scenes.length - 1].path = !!d.path;
+    });
     if (!W.scenes.length) return null;
     if (nPuff) {   // the smoke of every scene of this world: one instanced mesh (ROAD DECAL ORDER: blended over the road's decals, as Longford's)
       const M = W.smoke = new THREE.InstancedMesh(puffGeo(), new THREE.MeshLambertMaterial({ transparent: true, opacity: 0.32, depthWrite: false }), nPuff);
@@ -2494,5 +2521,5 @@
   };
   // the kit for more scene types in files of their own (js/world-ljudje2.js, js/world-ljudje3.js): the scenes, the props, more hand things, hats and poses, the motions, the
   // places, the scene's own random numbers (seeded per scene by World.people: a scene's build uses rnd and pick only), the palettes
-  World.peopleKit = { S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, HATX, SUMMER, BUSY_HANDS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
+  World.peopleKit = { EXTRA, S, L, ITEMX, POSEX, MOTION, RATE, SITES, FLAGS, STAFF_SCENES, HATX, SUMMER, BUSY_HANDS, rnd, pick, seed, box, cyl, sph, grp, bar, item, pal: { SKIN, HAIR, SHIRT, PANTS } };
 })();
