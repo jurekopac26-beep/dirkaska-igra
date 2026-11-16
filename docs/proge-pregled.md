@@ -14,13 +14,13 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Proga | `id` | Vrsta | Dolžina | °/km | Ravnine | Lasnice | Višina |
 |---|---|---|---|---|---|---|---|
 | Fairy Meadows, Pakistan | `fairymeadows` | kronometer | 0,5 km | 1525 | 9 % | 3 | +24 m |
-| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,8 km | 1347 | 22 % | 16 | +489 m |
+| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
 | Yungas, Bolivija | `yungas` | kronometer | 0,5 km | 980 | 12 % | 0 | −36 m |
 | Irohazaka, Japonska | `iroha` | odprta cesta | 5,0 km | 947 | 25 % | 19 | +322 m |
-| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
+| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 4,2 km | 912 | 35 % | 9 | +324 m |
 | Manchewe, Malavi | `manchewe` | kronometer | 0,5 km | 824 | 16 % | 1 | −44 m |
-| Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
+| Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
 | Tapini, Papua Nova Gvineja | `tapini` | kronometer | 0,5 km | 618 | 30 % | 0 | −46 m |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
@@ -28,7 +28,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
 | Svalvogar, Islandija | `svalvogar` | kronometer | 0,5 km | 463 | 26 % | 0 | −4 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 448 | 59 % | 4 | +183 m |
-| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 5,0 km | 406 | 48 % | 1 | +134 m |
+| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 4,7 km | 405 | 49 % | 1 | +119 m |
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
 | Suzuka, Japonska | `suzuka` | krog | 5,8 km | 286 | 62 % | 1 | 41 m razpona |
