@@ -9,6 +9,7 @@ Načrt 9. 11. 2026 (Matej), prototip za slike 10. 11. (osnutek #623), izvedba 15
 - 10. 11. 2026 med ~02.00 in ~03.00, po slikah prototipa: »Plast gume naj bo sirsa« (6,2 m namesto 3,5 m).
 - 10. 11. 2026 ob ~03.30 (tabla #382, komentar 6757283997; vprašanje `zgumirana-linija-1`): **možnost 1**, vse po uporabnikovi liniji: guma, ki se nabira, in stalne sledi v svetu (temni pas, sledi zaviranja), na dirkališčih in na odprtih cestah.
 - Zagon izvedbe: Matej 15. 11. 2026 ob ~2.25 (tabla #382, komentar 6887191720).
+- 16. 11. 2026 ob ~2.32, po slikah zdaj/potem (Spa, Tianmen), kot klikljiva izbira v pogovoru s koordinacijo računa partyslo (vprašanje `zgumirana-linija-2`): **možnost 1**, »V redu, na main«. PR #717 gre po vrsti na `main`.
 
 ## Obseg
 - Guma (temna sled na liniji vožnje) se riše po liniji uporabnikove vožnje, kjer je posneta (zdaj Tianmen); kjer ni, po predvideni liniji iz sloga vožnje. Ko uporabnik posname nove proge, jih guma prevzame brez spremembe kode.
@@ -39,4 +40,4 @@ Meritev 15. 11. 2026: `PERF_ONLY=<prave proge, z vejico> node tests/browser/perf
 
 ## Slike zdaj/potem
 - `node tools/shot.mjs spa --m 2860 --guma 0.8 --velika --lezece --pred main` in `node tools/shot.mjs tianmen --m 940 --velika --lezece --pred main` (kamera za avtom; `--guma`: guma, nabrana pozno v dolgi dirki, ker je ob štartu ni). Slik ne shranjuj v repozitorij.
-- Slike za uporabnikov »ok« pred `main` (Spa in Tianmen, zdaj in potem) so na strani Odločitve računa partyslo, vprašanje `zgumirana-linija-2` (`docs/vprasanja.md`).
+- Slike za uporabnikov »ok« pred `main` (Spa in Tianmen, zdaj in potem) so na strani Odločitve računa partyslo, vprašanje `zgumirana-linija-2` (`docs/vprasanja.md`); »ok« je dan 16. 11. 2026 (»Odločitve uporabnika«).
