@@ -9,6 +9,8 @@
 //    its own and stays there
 // 5. a duel in the traffic on autopilot: both reach the finish, nobody on foot hit, no vehicle stuck for long
 // 6. the medal times of the time trial: gold < silver < bronze, the rain slower, gold the stock rally car on the autopilot x 1.01
+// The options (goreTrack(id, o)): o.km, the stage's length when the plan gives the road another ([lo, hi] km; Isuna, the landmark's road: 3-3.6);
+// o.valley, a road up a valley without a bend over 70 degrees within 80 m (the import's bends none): the check is then that it has none
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -47,7 +49,10 @@ function goreTrack(id, o = {}) {   // (o: { km: [min, max] } or, as the older te
   {
     const B = def.bends || [], turn = B.map(([d]) => { const a = T.idx(T.startS + d - 45), b = T.idx(T.startS + d + 45); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); return s; });
     const okB = B.every((b, k) => (!k || b[0] > B[k - 1][0]) && Math.sign(turn[k]) === b[2] && Math.abs(turn[k]) > 0.8);
-    check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
+    if (o.valley) {   // (a valley road: no bend in the import, and none on the road over 70 degrees within 80 m)
+      let tmax = 0; for (let d = 0; d < T.raceLen; d += 5) { const a = T.idx(T.startS + d - 40), b = T.idx(T.startS + d + 40); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); tmax = Math.max(tmax, Math.abs(s)); }
+      check('bends: a road up a valley, none over 70 degrees within 80 m (none in the import)', !B.length && tmax < 70 / 57.3, `the sharpest ${Math.round(tmax * 57.3)} degrees`);
+    } else check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
     let dmin = 1e9; for (let i = 0; i < T.N; i += 2) for (let j = i + 40; j < T.N; j += 2) dmin = Math.min(dmin, Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]));
     let bmin = 1e9; for (let i = 0; i < T.N; i++) { const nw = T.wa ? Math.max(0, T.w - T.wa[i]) : 0; bmin = Math.min(bmin, T.bl[i] + nw, T.br[i] + nw); }   // (nw: where the road is narrower than its base width, e.g. a gravel stretch, past its own edge)
     let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));

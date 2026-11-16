@@ -64,6 +64,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Isalo, Madagaskar](docs/proge/isalo.md)
 - [Portobelo, Panama](docs/proge/portobelo.md)
 - [El Jem, Tunizija](docs/proge/eljem.md)
+- [Isuna, Butan](docs/proge/isuna.md)
 
 Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Hakone (Suzuka in Irohazaka sta po odločitvi 9. 11. 2026 testni); iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -509,3 +510,5 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal El Jema: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Drevesa El Jema (višina krošenj, tla pod drevesi): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Zastava Tunizije v meniju (`assets/flags/tunisia.svg`): narisana po uradnem opisu zastave (državni simbol, javna domena).
+- Zastava Butana v meniju (`assets/flags/bhutan.svg`): poenostavljena po uradnem opisu zastave (državni simbol, javna domena).
+- Proga Isuna (sredinska črta, stranske ceste, stavbe, voda, reka Paro Chhu, lega verižnega mostu, parkirišča): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/isuna.js` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

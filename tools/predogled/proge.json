@@ -544,5 +544,39 @@
   },
   "n": 21,
   "bbox": "-71.9895,-13.5175,-71.9755,-13.4985"
+ },
+ "isuna": {
+  "key": "Chunzom - Paro Highway",
+  "sec": [
+   [
+    27.33233,
+    89.5175
+   ],
+   [
+    27.32867,
+    89.48855
+   ]
+  ],
+  "uvoz": {
+   "pred": 120,
+   "grid": 200,
+   "izt": 250,
+   "hw": 4.6,
+   "hwG": 4.2
+  },
+  "focus": "bridge",
+  "cfg": {
+   "ground": "grass",
+   "cover": "patchy",
+   "tree": "pine",
+   "snow": "none",
+   "center": "white",
+   "fog": 13226972,
+   "bld": 15328978,
+   "roof": 9056036,
+   "animals": "cow"
+  },
+  "n": 17,
+  "bbox": "89.47,27.31,89.53,27.345"
  }
 }
