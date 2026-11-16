@@ -611,7 +611,7 @@ const World = (function () {
   function buildHash() {
     hash = new Map();
     for (let i = 0; i < T.N; i++) {
-      const k = Math.floor(T.px[i] / HC) + ',' + Math.floor(T.pz[i] / HC);
+      const k = Math.floor(T.px[i] / HC) * 65536 + Math.floor(T.pz[i] / HC);   // (numeric key: faster than a string, same cells)
       let a = hash.get(k); if (!a) { a = []; hash.set(k, a); } a.push(i);
     }
   }
@@ -620,7 +620,7 @@ const World = (function () {
     const cx = Math.floor(x / HC), cz = Math.floor(z / HC);
     let bi = -1, bd = 1e18;
     for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
-      const arr = hash.get((cx + a) + ',' + (cz + b)); if (!arr) continue;
+      const arr = hash.get((cx + a) * 65536 + cz + b); if (!arr) continue;
       for (const i of arr) { const dx = x - T.px[i], dz = z - T.pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
     }
     _nr.i = bi;
@@ -1074,9 +1074,9 @@ const World = (function () {
     const r = rng(seed), P = 64, g = new Float32Array(P * P); for (let i = 0; i < g.length; i++) g[i] = r();
     return (x, z) => {
       x /= scale; z /= scale; const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
-      const I = (a, b) => g[(((b % P) + P) % P) * P + (((a % P) + P) % P)];
+      const a0 = xi & 63, a1 = (xi + 1) & 63, b0 = (zi & 63) * P, b1 = ((zi + 1) & 63) * P;   // (& 63 = the wrap ((n % P) + P) % P for P = 64, the same cells)
       const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
-      return lerp(lerp(I(xi, zi), I(xi + 1, zi), u), lerp(I(xi, zi + 1), I(xi + 1, zi + 1), u), v);
+      return lerp(lerp(g[b0 + a0], g[b0 + a1], u), lerp(g[b1 + a0], g[b1 + a1], u), v);
     };
   }
 
