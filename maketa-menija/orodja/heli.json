@@ -201,10 +201,19 @@
  "mombasa": {
   "sea": true
  },
- "savusavu": {
+ "haivan": {
+  "sea": true
+ },
+ "musandam": {
+  "sea": true
+ },
+ "portobelo": {
   "sea": true
  },
  "canaries": {
+  "sea": true
+ },
+ "savusavu": {
   "sea": true
  },
  "koror": {
