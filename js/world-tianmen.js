@@ -56,15 +56,19 @@
     R = lerp(R, 0.47, fld * 0.7); G = lerp(G, 0.5, fld * 0.7); B = lerp(B, 0.27, fld * 0.7);
     const lit = sstep(0.55, 0.85, m) * 0.6; R = lerp(R, 0.34, lit * 0.5); G = lerp(G, 0.37, lit * 0.5); B = lerp(B, 0.19, lit * 0.5);   // (the litter of leaves, browner)
     R += (f - 0.5) * 0.07; G += (f - 0.5) * 0.08; B += (f - 0.5) * 0.05;
-    const fo = vrLCf(x, z, 0), ou = sstep(3, 10, dd);   // the forest (Realizem G: in WorldCover it is dense right down to the road, 85 % of the 8-60 m band; the trees
+    const fo = vrLCf(x, z, 0), ou = sstep(3, 10, dd), cl = sstep(0.78, 0.5, ny);   // (cl: the steep faces) the forest (Realizem G: in WorldCover it is dense right down to the road, 85 % of the 8-60 m band; the trees
     if (fo > 0) {   // by the road are thinned, World.js THIN): beyond the barrier its ground reads as the crowns seen from the road (dark, mottled, the gaps darker
       // still); inside the barrier, on the shoulder, as the shaded undergrowth under them (ferns and shrubs, flecks of sun), the grit thinner
-      const cr = sstep(0.3, 0.72, P.c6(x, z)) * (0.75 + 0.25 * f), cf = fo * (0.85 * ou + 0.8 * (1 - ou));
+      const cr = sstep(0.3, 0.72, P.c6(x + (h || 0) * 0.8 * cl, z - (h || 0) * 0.6 * cl))   // (on a steep face the crowns follow the height, not squeezed)
+         * (0.75 + 0.25 * f), cf = fo * (0.85 * ou + 0.8 * (1 - ou));
       const r = lerp(lerp(0.14, 0.21, cr), lerp(0.12, 0.21, cr), ou), g = lerp(lerp(0.2, 0.28, cr), lerp(0.17, 0.29, cr), ou), b = lerp(lerp(0.1, 0.14, cr), lerp(0.11, 0.17, cr), ou);
       R = lerp(R, r, cf); G = lerp(G, g, cf); B = lerp(B, b, cf);
     }
     if (TMT) { R *= TMT[0]; G *= TMT[1]; B *= TMT[2]; }   // (the measured hue: what grows, not the rock, the concrete and the grit below)
-    const st = Math.max(sstep(0.78, 0.5, ny), bare * 0.8);   // the rock: the steep faces, the bare ground
+    // the rock: the bare ground, and the steep faces. Measured (Realizem G, teren): WorldCover has 1.2 % bare rock 8-60 m from the road, the
+    // steep faces between the legs are 48 % of that band, so where it grows (forest, scrub) a steep face keeps its plants and only the
+    // near-vertical walls show the limestone, in patches (c4) where the trees cannot hold; the game's own look (TMT null) rocks every steep face
+    const st = Math.max(cl * (TMT ? lerp(1, sstep(0.32, 0.14, ny) * sstep(0.45, 0.62, P.c4(x, z)), 1 - bare) : 1), bare * 0.8);
     if (st > 0) {
       const hz = Math.hypot(sx || 0, sz || 0) || 1, u = (z * (sx || 0) - x * (sz || 0)) / hz, streak = 0.5 + 0.5 * Math.sin(u * 0.31 + P.c5(x, z) * 7 + P.n2(x * 0.6, z * 0.6) * 5);
       let r = 0.68, g = 0.67, b = 0.63; const k = 0.78 + 0.26 * streak * streak; r *= k; g *= k; b *= k;
