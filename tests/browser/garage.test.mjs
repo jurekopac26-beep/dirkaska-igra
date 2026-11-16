@@ -255,6 +255,12 @@ try {
       const r = await run(), f = await fitOf(), u = await ui();
       T.check('zadnje luči na KOZOROGU po skupnem pravilu (roka 1 stari ven, roka 2 novi iz predala, stari nazaj v predal, rdeč utrip) ali kot prej; kupljeno, KONČANO',
         (/^plan,old\.out,pod\.out,pass,swap,fit,(far,)?pod\.back,lights$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 13 || /cart\.in/.test(f.log) && r.t <= 20) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.zadnje_luci, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
+    // (luč pod avtom po skupnem pravilu (GLW v garage3d.js): roka 1 stari trak izpod praga na pokrov, roka 2 novega iz predala, privit pod
+    // prag, tudi na drugi strani; stari v predal; preizkus: sij pod avtom utripne; avto, ki sija ne riše: kot prej (predal, voziček); KONČANO)
+    { await page.evaluate(() => { __garage.openMenu({ el: 'luc_pod_avtom', key: 'drw:luc_pod_avtom', sel: __garage.findOpt('luc_pod_avtom', 'Blue') }); const b = document.querySelector('#g-menu [data-mact="buy"]'); if (b) b.click(); });
+      const r = await run(), f = await fitOf(), u = await ui();
+      T.check('luč pod avtom na KOZOROGU po skupnem pravilu (roka 1 stari trak ven, roka 2 novi iz predala, privit pod prag na obeh straneh, stari v predal, sij utripne) ali kot prej; kupljeno, KONČANO',
+        (/^plan,old\.out,pod\.out,pass,swap,fit,far,pod\.back,lights$/.test(f.log) && !!f.lamp && f.lamp.pod > 0 && f.lamp.back && r.t <= 12 || /cart\.in/.test(f.log) && r.t <= 25) && /KONČANO/.test(f.chip) && f.parked && !!u.S.cars.kozorog.parts.luc_pod_avtom, JSON.stringify({ r, log: f.log, lamp: f.lamp, chip: f.chip })); }
     // (the turbo by its plan's plate (an_turbo) on a car built from the kit (the KOZOROG): roka 1's gripper lifts the bonnet onto its prop
     // while roka 2 takes the turbo from the regal, sets it down onto the engine, does its four screws with the key and its two hoses; roka 1
     // shuts the bonnet over it, the engine revved: MOČ; the show ~6 s to the bonnet down by the plate)
