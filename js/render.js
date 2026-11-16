@@ -1279,12 +1279,6 @@ const Render = (function () {
     kx.emit = (a, b, c, ca, cb, cc, nn) => {
       const A = [a[0] * sx, a[1], a[2] * sz], Bv = [b[0] * sx, b[1], b[2] * sz], C = [c[0] * sx, c[1], c[2] * sz];
       if (![...A, ...Bv, ...C].every(Number.isFinite)) kitFail('a point is not a number (NaN)');
-      // a door's glass (kx.dg: a loft's glass panel in a door's region): only side glass leaves with the door. A triangle that faces up or along the car
-      // (|n.z| < 0.5: the wedge at the windscreen pillar's foot, by findGlass often a triangle of the windscreen) stays on the body, so a door that
-      // swings or falls never takes a piece of the windscreen or of the rear window with it (a triangle of no area stays where it was)
-      if (kx.dg) { const ux = Bv[0] - A[0], uy = Bv[1] - A[1], uz = Bv[2] - A[2], vx = C[0] - A[0], vy = C[1] - A[1], vz = C[2] - A[2];
-        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, l = Math.hypot(nx, ny, nz);
-        if (l > 1e-9 && Math.abs(nz) < 0.5 * l) return kx.scope('dg', 0, () => kx.scope('pr', { part: 'body', sub: '' }, () => kx.emit(a, b, c, ca, cb, cc, nn))); }
       const t = kx.target(), g = t.g, n0 = g.P.length / 3, qa = kitColour(ca), qb = kitColour(cb), qc = kitColour(cc);
       if (nn) { const f = (n) => { const x = n[0] / sx, y = n[1], z = n[2] / sz, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }; g.triN(A, Bv, C, f(nn[0]), f(nn[1]), f(nn[2]), qa, qb, qc); }
       else g.tri(A, Bv, C, qa, qb, qc);
@@ -1441,7 +1435,7 @@ const Render = (function () {
           g.quadO(A[e], Bv[e], Bv[e + 1], A[e + 1], c, inside);
           if (lining && !glass) kx.scope('pr', Object.assign({}, kx.pr || { part: part || 'body', sub: '' }, { inner: inn }), () => flip(Ai[e], Bi[e], Bi[e + 1], Ai[e + 1], KIT_LINE, inside));
         };
-        if (explicit) emit(); else kx.scope('pr', { part, sub: '' }, glass && /^door/.test(part) ? () => kx.scope('dg', 1, emit) : emit);
+        if (explicit) emit(); else kx.scope('pr', { part, sub: '' }, emit);
       }
     }
     // the open runs' own pieces (the outer shell): a rim on each free edge along a segment (the shell's edge to its lining's: a door's top),
@@ -2667,12 +2661,19 @@ const Render = (function () {
     const geo = v.body.geometry, p = geo.attributes.position.array, c = geo.attributes.color && geo.attributes.color.array, groups = [[], [], [], []];
     if (!c) return groups;
     const isGlass = (i) => (Math.abs(c[i] - 0.1) < 0.02 && Math.abs(c[i + 1] - 0.13) < 0.02 && Math.abs(c[i + 2] - 0.19) < 0.02) || (Math.abs(c[i] - 0.04) < 0.02 && Math.abs(c[i + 1] - 0.05) < 0.02 && Math.abs(c[i + 2] - 0.08) < 0.02);
+    // a door's glass is side glass of its side whichever way a triangle of it faces: the wedge of a door window's warped front quad faces up or
+    // forward (by its normal a triangle of the windscreen or of the rear window), yet it swings and falls with the door, so it frosts and cracks with
+    // the door's pane (doorL, door2L: the left panes, group 2; doorR, door2R: the right ones, group 3; a view without parts' ranges: by the normals alone)
+    const RG = geo.userData && geo.userData.ranges, DR = [];
+    if (RG) for (const n in RG) { const m = /^door2?([LR])$/.exec(n); if (m) for (const r of [RG[n].o, RG[n].i]) if (r && r[1] > r[0]) DR.push([r[0], r[1], m[1] === 'L' ? 2 : 3]); }
+    const door = (i) => { for (const r of DR) if (i >= r[0] && i < r[1]) return r[2]; return 0; };
     for (let t = 0; t < p.length / 9; t++) {
       const o = t * 9; if (!isGlass(o) || !isGlass(o + 3) || !isGlass(o + 6)) continue;
       const ax = p[o + 3] - p[o], ay = p[o + 4] - p[o + 1], az = p[o + 5] - p[o + 2], bx = p[o + 6] - p[o], by = p[o + 7] - p[o + 1], bz = p[o + 8] - p[o + 2];
       const nx = ay * bz - az * by, nz = ax * by - ay * bx, cx = (p[o] + p[o + 3] + p[o + 6]) / 3;
       const l = Math.hypot(nx, ay * 0 + (az * bx - ax * bz), nz) || 1, ux = nx / l, uz = nz / l;
-      groups[Math.abs(uz) > 0.45 ? (uz < 0 ? 2 : 3) : (Math.abs(ux) > 0.3 ? (ux > 0 ? 0 : 1) : (cx > 0 ? 0 : 1))].push(t);
+      const d = door(t * 3);
+      groups[d ? d : Math.abs(uz) > 0.45 ? (uz < 0 ? 2 : 3) : (Math.abs(ux) > 0.3 ? (ux > 0 ? 0 : 1) : (cx > 0 ? 0 : 1))].push(t);
     }
     return groups;
   }

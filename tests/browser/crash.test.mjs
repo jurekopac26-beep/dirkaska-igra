@@ -21,6 +21,7 @@
 //    the harder the knock the deeper. The doors by their drawn shut lines (docs/trki-realizem.md, »Vrata v poškodbah«): the four-door Medved and
 //    Kozorog have a rear door of their own (door2L / door2R): a blow ahead of the shut line is the front door's, behind it the rear door's;
 //    the two-door Lev R and Ris have one door a side and nothing is cut out of the quarter behind it
+//    (a door's glass is its side's pane whichever way a triangle of it faces: none of it in the windscreen's or the rear window's group)
 // 11. the roof field: every knock (any side, a rollover's roof contact, a landing) caves the roof in more, never past its limit, never
 //    through the seats, the driver, a cage (Goljat's outer one too), the posts' tops never through it (a rival's coarse body too); a
 //    wreck's start number and a patrol car's light bar gone; open cars and karts none, their drivers and hoops never lifted; the roof's
@@ -322,6 +323,13 @@ try {
     const ct = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal', carId: id }, (hs) => {
       const hit = eval(hs), g = window.__game, R = g.race, P = R.player, out = {}, me = () => Render.crashInfo().cars.find(q => q.player);
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      // a door's glass is its side's pane whichever way a triangle of it faces (render.js findGlass: the wedge of a door window's warped front quad faces
+      // up or forward, by its normal a triangle of the windscreen or of the rear window, yet it swings and falls with the door): of the glass in the doors'
+      // ranges none in the windscreen's or the rear window's group (the view as built: nothing knocked yet, no part off)
+      { const v = Render.viewOf(P), U = v.body.geometry.userData.ranges, where = new Map(), gl = { all: 0, own: 0, wr: 0, other: 0 }; v.glassTris.forEach((G, k) => { for (const t of G) where.set(t, k); });
+        for (const n in U) { if (!/^door/.test(n)) continue; for (const q of [U[n].o, U[n].i]) if (q && q[1] > q[0]) for (let t = q[0] / 3; t < q[1] / 3; t++) { const k = where.get(t); if (k === undefined) continue;
+          gl.all++; if (k < 2) gl.wr++; else if (k === (/L$/.test(n) ? 2 : 3)) gl.own++; else gl.other++; } }
+        out.gl = gl; }
       const settle = () => { for (let k = 0; k < 12; k++) Render.frame(0.05, 1, P, 'chase', {}); };
       const scene = (h, d0) => { R.repairCar(P); if (d0) P.dmg = d0; Render.frame(0.016, 1, P, 'chase', {}); hit(P, h); settle(); const x = me(); return { panes: x.xt && x.xt.panes, ajar: x.xt && x.xt.ajar, dead: x.xt && x.xt.dead, lamps: x.xt && x.xt.lamps, roof: x.roof, rf: x.rf && { lref: x.rf.lref, rlim: x.rf.rlim } }; };
       out.fs = scene([0.3, 1, 0]); out.bl = scene([0.05, -1, 0]); out.bm = scene([0.15, -1, 0]); out.bs = scene([0.3, -1, 0]); out.bm7 = scene([0.15, -1, 0], 0.7);
@@ -358,6 +366,8 @@ try {
       eq(C.dfs.panes, { W: 0.5, DL: 1, QL: 0.75 }) && C.dfs.dead.includes('doorL') && !C.dfs.dead.includes('door2L') && eq(C.drs.panes, { W: 0.5, QL: 1, DL: 0.75 }) && C.drs.dead.includes('door2L') && !C.drs.dead.includes('doorL'), JSON.stringify({ dfs: [C.dfs.panes, C.dfs.dead], drs: [C.drs.panes, C.drs.dead] }));
     T.check(`${id}: both sides knocked on both doors: every door open, none off, nothing cut out of a quarter (no computed rear door)`,
       (C.d2 ? ['doorL', 'door2L', 'doorR', 'door2R'] : ['doorL', 'doorR']).every(n => C.sd.ajar.includes(n)) && !C.sd.dead.some(n => /^door/.test(n)) && !C.sd.xOpen && C.sd.rearDoors === null, JSON.stringify(C.sd));
+    T.check(`${id}: a door's glass is its side's pane whichever way a triangle of it faces: none of it in the windscreen's or the rear window's group`,
+      C.gl.all >= 2 * (C.d2 ? 4 : 2) && C.gl.own === C.gl.all && !C.gl.wr && !C.gl.other, JSON.stringify(C.gl));
     T.check(`${id}: no NaN, no page errors`, C.nan === 0 && !ct.errors.length, ct.errors.slice(0, 3).join(' | '));
   }
 

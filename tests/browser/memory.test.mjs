@@ -53,8 +53,11 @@ try {
   // body sagged; the fire, the soot, the cracked panes, the stock panels' own charred copies of their materials), Race.repairCar (the car
   // built afresh while its pieces lie on the road); RAKETA's third wreck pushes the first one's pieces out (the cap of 40): freed with
   // nothing a car still draws; the next race the rest
+  // (the KAZE RS with »Odpadlo kolo: Dirka teče naprej«, S.wheelOver 0: since 13. 11. 2026 (paket-p K) the 11 older models are under the wheel
+  // rule in a race at Vklop too, where a car at 80 % loses a wheel and the game is over (wheels.test.js 12); their wreck that burns and is
+  // repaired where it stands is one of a race without the rule. The RAKETA keeps the rule: Core.wreckCar takes its wheels, its fire the rule's)
   const kitWreck = async (id) => {
-    const S0 = await page.evaluate((id) => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === id); return s; }, id);
+    const S0 = await page.evaluate((id) => { const g = window.__game, s = g.S.car; g.S.car = Core.MODELS.findIndex(m => m.id === id); g.S.wheelOver = id === 'kaze' ? 0 : 1; return s; }, id);
     await startTrack(page, 'gozd');
     const r = await page.evaluate(async () => {
       const g = window.__game, P = g.race.player, raf = () => new Promise(r => requestAnimationFrame(r)); g.pause();
@@ -68,7 +71,7 @@ try {
       dead = 3 * Object.keys(Core.partsOf(P.m)).length - g.race.debris.length; g.resume(); await raf();
       return { pieces, dead, fire, cracks, sooted, kit: !!Render.viewOf(P).kit };
     });
-    await page.evaluate((s) => { window.__game.S.car = s; }, S0);
+    await page.evaluate((s) => { const g = window.__game; g.S.car = s; g.S.wheelOver = 1; }, S0);
     return r;
   };
   // browse the car menu: through every car twice (each change builds a new showroom car); every car is drawn before the
