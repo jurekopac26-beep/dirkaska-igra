@@ -26,19 +26,23 @@
   // ---- a raster of polygons (even-odd, holes included) on a grid: fills M[k] = v where the cell centre lies inside ----
   function rasterPoly(M, G, rings, v) {
     let z0 = 1e9, z1 = -1e9; for (const r of rings) for (const p of r) { z0 = Math.min(z0, p[1]); z1 = Math.max(z1, p[1]); }
-    const j0 = Math.max(0, Math.floor((z0 - G.z0) / G.c)), j1 = Math.min(G.nz - 1, Math.ceil((z1 - G.z0) / G.c)), xs = [];
+    const j0 = Math.max(0, Math.floor((z0 - G.z0) / G.c)), j1 = Math.min(G.nz - 1, Math.ceil((z1 - G.z0) / G.c));
+    if (j1 < j0) return;
+    const RX = []; for (let j = j0; j <= j1; j++) RX.push([]);   // (each edge's crossings put on the rows it spans, the same test and value per row; sorted, so their order does not matter)
+    for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const za = r[a][1], zb = r[b][1]; if (za === zb) continue;
+      const jl = Math.max(j0, Math.floor((Math.min(za, zb) - G.z0) / G.c) - 1), jh = Math.min(j1, Math.ceil((Math.max(za, zb) - G.z0) / G.c) + 1);
+      for (let j = jl; j <= jh; j++) { const z = G.z0 + j * G.c; if ((za > z) !== (zb > z)) RX[j - j0].push(r[a][0] + (z - za) / (zb - za) * (r[b][0] - r[a][0])); } }
     for (let j = j0; j <= j1; j++) {
-      const z = G.z0 + j * G.c; xs.length = 0;
-      for (const r of rings) for (let a = 0, b = r.length - 1; a < r.length; b = a++) { const za = r[a][1], zb = r[b][1]; if ((za > z) !== (zb > z)) xs.push(r[a][0] + (z - za) / (zb - za) * (r[b][0] - r[a][0])); }
+      const xs = RX[j - j0];
       xs.sort((p, q) => p - q);
       for (let k = 0; k + 1 < xs.length; k += 2) { const i0 = Math.max(0, Math.ceil((xs[k] - G.x0) / G.c)), i1 = Math.min(G.nx - 1, Math.floor((xs[k + 1] - G.x0) / G.c)); for (let i = i0; i <= i1; i++) M[j * G.nx + i] = v; }
     }
   }
   // (the grid's vertices: (x0 + i c, z0 + j c))
   // two-pass chamfer distance (metres) to the cells where seed(k) is true
-  function chamfer(G, seed) {
+  function chamfer(G, S, sv) {   // (the seeds: the cells where S[k] === sv)
     const n = G.nx * G.nz, D = new Float32Array(n), c = G.c, d2 = c * Math.SQRT2;
-    for (let k = 0; k < n; k++) D[k] = seed(k) ? 0 : 1e9;
+    for (let k = 0; k < n; k++) D[k] = S[k] === sv ? 0 : 1e9;
     const nx = G.nx, nz = G.nz;   // (the same minima as before, the edges taken out of the inner loops)
     for (let j = 0; j < nz; j++) { const r = j * nx;
       if (j === 0) { for (let i = 1; i < nx; i++) { const k = i, a = D[k - 1] + c; if (a < D[k]) D[k] = a; } continue; }
@@ -66,14 +70,16 @@
     for (const [, rings] of D.water) rasterPoly(wet, G, rings, 1);
     // land cover (10 m cells) under the polygons
     const LC = D.lc, lcA = new Uint8Array(LC.nx * LC.nz); { const r = b64(LC.rle); let p = 0; for (const v of r) { lcA.fill(v >> 6, p, p + (v & 63)); p += v & 63; } }
-    for (let j = 0; j < G.nz; j++) for (let i = 0; i < G.nx; i++) { const x = G.x0 + i * c, z = G.z0 + j * c, a = Math.floor((x - LC.x0) / LC.cell), b = Math.floor((z - LC.z0) / LC.cell);
-      const v = a >= 0 && b >= 0 && a < LC.nx && b < LC.nz ? lcA[b * LC.nx + a] : 0; kind[j * G.nx + i] = v === 3 ? 0 : v; }
+    { const LA = new Int32Array(G.nx); for (let i = 0; i < G.nx; i++) { const x = G.x0 + i * c, a = Math.floor((x - LC.x0) / LC.cell); LA[i] = a >= 0 && a < LC.nx ? a : -1; }   // (each column's and row's land-cover cell once)
+      for (let j = 0; j < G.nz; j++) { const z = G.z0 + j * c, b = Math.floor((z - LC.z0) / LC.cell), r = j * G.nx;
+        if (!(b >= 0 && b < LC.nz)) { kind.fill(0, r, r + G.nx); continue; }
+        const o = b * LC.nx; for (let i = 0; i < G.nx; i++) { const a = LA[i], v = a >= 0 ? lcA[o + a] : 0; kind[r + i] = v === 3 ? 0 : v; } } }
     const LU = { sand: 4, beach: 4, parking: 5, pedestrian: 8, plaza: 8, garden: 6, flowerbed: 6, pitch: 7, grass: 0, park: 0, wood: 1, scrub: 1 };
     for (const [cl, ring] of D.lu) if (LU[cl] != null) rasterPoly(kind, G, [ring], LU[cl]);
-    const sdW = chamfer(G, (k) => wet[k] === 1), sdL = chamfer(G, (k) => wet[k] === 0);   // (to the water; to the land)
+    const sdW = chamfer(G, wet, 1), sdL = chamfer(G, wet, 0);   // (to the water; to the land)
     // distance to the circuit's centre line: its samples seeded, then the chamfer
     const seedT = new Uint8Array(n); for (let i = 0; i < T.N; i++) { const a = Math.round((T.px[i] - G.x0) / c), b = Math.round((T.pz[i] - G.z0) / c); if (a >= 0 && b >= 0 && a < G.nx && b < G.nz) seedT[b * G.nx + a] = 1; }
-    const dT = chamfer(G, (k) => seedT[k] === 1);
+    const dT = chamfer(G, seedT, 1);
     { const TH = new Map(), TC = 16;   // within 45 m of the road the true distance to its centre line (the chamfer's octagons would step the banks)
       for (let i = 0; i < T.N; i++) { const key = Math.floor(T.px[i] / TC) * 65536 + Math.floor(T.pz[i] / TC); let L = TH.get(key); if (!L) TH.set(key, L = []); L.push(i); }
       const SC = new Map();   // (per 16 m cell the segments of its 7 x 7 cells, ring by ring outward: start, direction, squared length; E = where each ring ends)
@@ -83,7 +89,8 @@
         for (let r = 0; r <= 3; r++) { for (let a = a0 - r; a <= a0 + r; a++) for (let b = b0 - r; b <= b0 + r; b++) { if (Math.max(Math.abs(a - a0), Math.abs(b - b0)) !== r) continue; const L = TH.get(a * 65536 + b); if (!L) continue;
           for (const i of L) { const j = (i + 1) % T.N, ax = T.px[i], az = T.pz[i], vx = T.px[j] - ax, vz = T.pz[j] - az; q.push(ax, az, vx, vz, vx * vx + vz * vz || 1e-9); } } E.push(q.length); }
         SC.set(key, S = { s: new Float64Array(q), E }); return S; };
-      for (let k = 0; k < n; k++) { if (dT[k] > 45) continue; const x = G.x0 + (k % G.nx) * c, z = G.z0 + Math.floor(k / G.nx) * c, SS = segsAt(Math.floor(x / TC), Math.floor(z / TC)), S = SS.s; let best = 1e18;
+      for (let j = 0, k = 0, la = NaN, lb = NaN, SS = null; j < G.nz; j++) for (let i = 0; i < G.nx; i++, k++) { if (dT[k] > 45) continue; const x = G.x0 + i * c, z = G.z0 + j * c, a0 = Math.floor(x / TC), b0 = Math.floor(z / TC);
+        if (a0 !== la || b0 !== lb) { SS = segsAt(a0, b0); la = a0; lb = b0; } const S = SS.s; let best = 1e18;
         for (let r = 0, q = 0; r <= 3; r++) { if (best < LB[r]) break; for (const qe = SS.E[r]; q < qe; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; } }
         dT[k] = Math.sqrt(best); } }
     // near the shores the true distance to the water's outline (the polygons' edges, hashed in 16 m cells): smooth banks, no steps
@@ -100,9 +107,9 @@
       for (let q = 0; q < S.length; q += 5) { const ax = S[q], az = S[q + 1], vx = S[q + 2], vz = S[q + 3], t = clamp(((x - ax) * vx + (z - az) * vz) / S[q + 4], 0, 1), dx = x - ax - vx * t, dz = z - az - vz * t, dd = dx * dx + dz * dz; if (dd < best) best = dd; }
       return Math.sqrt(best); };
     const H = new Float32Array(n), SD = new Float32Array(n);
-    for (let k = 0; k < n; k++) {
+    for (let j = 0, k = 0; j < G.nz; j++) for (let i = 0; i < G.nx; i++, k++) {
       let sd = wet[k] ? -sdL[k] : sdW[k];
-      if (Math.abs(sd) < 14) { const e = edgeD(G.x0 + (k % G.nx) * c, G.z0 + Math.floor(k / G.nx) * c); if (e < 15) sd = wet[k] ? -e : e; }
+      if (Math.abs(sd) < 14) { const e = edgeD(G.x0 + i * c, G.z0 + j * c); if (e < 15) sd = wet[k] ? -e : e; }
       SD[k] = sd;   // (+ on the land, metres to the waterline)
       // the height, from the distance to the water only near its edge (a smooth waterline): the bed under the water, the bank rising out of it,
       // steep (3 m) beside the circuit, where the verges stay level with the road, gentle (9 m) elsewhere
