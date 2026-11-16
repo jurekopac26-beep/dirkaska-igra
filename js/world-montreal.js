@@ -115,6 +115,15 @@
   }
   const mtKind = (x, z) => { const G = MG, i = Math.round((x - G.x0) / G.c), j = Math.round((z - G.z0) / G.c); return i < 0 || j < 0 || i >= G.nx || j >= G.nz ? 3 : G.wet[j * G.nx + i] ? 3 : G.kind[j * G.nx + i]; };
 
+  /* Realizem G (docs/realizem/paket-g.md, docs/proge/montreal.md): the band 8-60 m from the road as tools/proga-podatki.py `cover` measured it
+     (ESA WorldCover 2021, 5 m cells, 87 sections of 50 m; the frame of tools/montreal/montreal.json, whose WorldCover in D.lc lies on the
+     measured trees with a correlation of 0.98 by section and side, the built-up 0.94, the water 0.99, no shift). Water 22.0 %, bare 2.9 % and
+     crops 0.2 % besides these three. Only the hue of the plants moves (World.rastje.MOC); the builder draws no tree more. */
+  if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.montreal) {
+    World.rastje.MERITVE.montreal = { podnebje: 'Dfb', lat: 45.50178, lon: -73.52325, delez: { drevesa: 0.352, trava: 0.101, pozidano: 0.296 },
+      barva: { drevesa: 0x4b4d44, trava: 0x5c5a53, pozidano: 0x65625d }, drevesa: ['javor', 'lipa', 'topol', 'vrba'] };
+  }
+
   function buildMontreal(scene, tex, opts) {
     const T = K.T, D = MTL_DATA, def = T.def, N = T.N, w = T.w, ds = T.ds, L = T.len, sStart = T.startS, R = rng(4361);
     const root = new THREE.Group(); scene.add(root);
@@ -163,6 +172,12 @@
   function mtGroundMesh(C) {
     const G = MG, mat = new THREE.MeshLambertMaterial({ map: C.tex.grass, vertexColors: true }), grp = new THREE.Group(); C.root.add(grp); C.out.ground = grp;
     const S = 64;   // cells per chunk side (256 m)
+    // Realizem G: the measured hue on the plants' colours (the grass, the trees' ground, the gardens and pitches; not the built-up land, car
+    // parks, plazas, sand, banks and water), asked from the game's own colours of the open land before any chunk is made
+    const PLANT = [1, 1, 0, 0, 0, 0, 1, 1, 0], cell = (x, z) => Math.max(0, Math.min(G.nx - 1, Math.round((x - G.x0) / G.c))) + Math.max(0, Math.min(G.nz - 1, Math.round((z - G.z0) / G.c))) * G.nx;
+    const VG = World.rastje ? World.rastje.tla(C.def, { lc: (x, z) => { const k = cell(x, z); return G.wet[k] ? 3 : G.kind[k]; }, dist: (x, z) => G.dT[cell(x, z)],
+      gcol: (x, z) => KCOL[G.kind[cell(x, z)]].slice(), avg: (C.tex.grass && C.tex.grass.avgCol || [0.35, 0.53, 0.23]).map(v => v * 255), x0: G.x0, z0: G.z0, x1: G.x1, z1: G.z1 }) : null;
+    C.rastjeTla = VG;
     for (let cj = 0; cj < G.nz - 1; cj += S) for (let ci = 0; ci < G.nx - 1; ci += S) {
       const ni = Math.min(S, G.nx - 1 - ci), nj = Math.min(S, G.nz - 1 - cj);
       const P = [], Cl = [], U = [], I = [];
@@ -170,6 +185,7 @@
         const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
         const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
         let col = KCOL[kd].map(v => v * n2 * (0.96 + 0.08 * n1));
+        if (VG && PLANT[kd]) col = col.map((v, q) => v * VG[q]);
         const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); col = [lerp(col[0], 0.72, t), lerp(col[1], 0.69, t), lerp(col[2], 0.6, t)]; }   // (the banks: stony, rip-rap)
         if (h < WL) { const t = sstep(WL, WL - 2, h); col = [lerp(col[0], 0.42, t), lerp(col[1], 0.42, t), lerp(col[2], 0.36, t)]; }
         P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 14, -z / 14);
@@ -239,7 +255,7 @@
           if (kb) { const cw = T.curbW, pf = [[w - 0.02, 0.035], [w + 0.14, 0.078], [w + cw - 0.12, 0.085], [w + cw + 0.02, 0.03]], vv = ii * ds / 2, sh = [0.84, 1, 1, 0.78].map(k => [k, k, k]), us = [0, 0.1, 0.92, 1], o = side > 0 ? [0, 1, 2, 3] : [3, 2, 1, 0];
             const rk = gk.row(o.map(k => Pt(i, side * pf[k][0], pf[k][1])), o.map(k => sh[k]), o.map(k => [us[k], vv])); if (pk[si] >= 0) gk.link(pk[si], rk, 0, 3); pk[si] = rk; } else pk[si] = -1;
           // the verge from the kerb (or the edge) to the barrier: grass, paved in the run-offs (the barrier far out) and the junctions' mouths
-          const paved = (side > 0 ? T.gravR : T.gravL)[i] && !(jMouth[si][i] > 0.01), gc = [0.72, 0.78, 0.62], ys = -0.02;
+          const paved = (side > 0 ? T.gravR : T.gravL)[i] && !(jMouth[si][i] > 0.01), gc = C.rastjeTla ? [0.72, 0.78, 0.62].map((v, q) => v * C.rastjeTla[q]) : [0.72, 0.78, 0.62], ys = -0.02;
           if (!kb) { const vp = [Pt(i, side * w, 0.022), Pt(i, side * (w + 0.7), -0.02)], vc = [gc, gc], op = side > 0 ? vp : vp.slice().reverse();   // (a narrow grass edge along the asphalt; the ground mesh beyond)
             const rv = gv.row(op, vc, op.map(p => [p[0] / 14, -p[2] / 14])); if (pv[si] >= 0) gv.link(pv[si], rv, 0, 1); pv[si] = rv; } else pv[si] = -1;
           if (paved) { const pc = [1.02, 1.02, 1.04], q0 = Pt(i, side * (e0 + 0.05), 0.026), q1 = Pt(i, side * Math.max(e0 + 0.3, bar - 0.3), 0.026), qq = side > 0 ? [q0, q1] : [q1, q0];
@@ -652,8 +668,10 @@
       const tone = 0.85 + 0.3 * R(), col = [tone * (0.95 + 0.1 * R()), tone, tone * (0.9 + 0.1 * R())];
       IC[sp].add(x, mtGround(x, z) - 0.1, z, R() * TAU, sp === 1 ? h * 0.9 : h, h, col); n++;
     }
+    const LT = World.rastje ? World.rastje.listje(C.def, IC) : null;   // (Realizem G: the leaves' measured hue, js/world-rastje.js)
     for (const ic of IC) ic.addTo(root, true);
     C.out.treeN = n;
+    if (C.rastjeTla || LT) C.out.rastje = { moc: World.rastje.MOC, tla: C.rastjeTla, drevesa: LT };
   }
 
   /* ---- the junctions (def.junctions): the side road's leg from the circuit's edge out past its fence (the barrier opens into its mouth up to

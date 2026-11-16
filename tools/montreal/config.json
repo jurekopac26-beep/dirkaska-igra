@@ -1,0 +1,14 @@
+{
+ "id": "montreal",
+ "about": "Montréal, Kanada (id montreal): the circuit on Île Notre-Dame; this folder only holds the land cover of the band beside the road (step cover, realism package G); the scenery data are in js/data/montreal.js",
+ "box": [
+  45.49,
+  -73.54,
+  45.52,
+  -73.51
+ ],
+ "closed": true,
+ "dist": {
+  "grid": 500
+ }
+}
