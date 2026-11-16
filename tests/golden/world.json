@@ -1202,11 +1202,11 @@
   "instances": 34497,
   "props": 9,
   "crowd": 428,
-  "world": "aec37aca",
+  "world": "1be2bf3",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "23c3607b",
+   "-:MeshLambertMaterial": "6a61fe63",
    "-:MeshPhongMaterial": "b6985ac9",
    "crowd:MeshLambertMaterial": "1e51600e",
    "flags:MeshLambertMaterial": "34784006",
