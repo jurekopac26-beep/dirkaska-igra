@@ -2502,12 +2502,12 @@
  "manchewe/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 65.65,
+  "winner": 71.77,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fca6736a4312535607463227"
+  "digest": "5fc62d1a09b3f195349ca77a"
  },
  "yungas/cs": {
   "finished": 1,
@@ -2522,12 +2522,12 @@
  "yungas/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 72.33,
+  "winner": 79.59,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2b25db5eaddb4507275d0502"
+  "digest": "18de1454d52a0ba6ed3010f8"
  },
  "tapini/cs": {
   "finished": 1,
@@ -2542,12 +2542,12 @@
  "tapini/cs/rain": {
   "finished": 1,
   "cars": 1,
-  "winner": 78.66,
+  "winner": 86.61,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d40095c28be67bd09467d24d"
+  "digest": "0b62cc7ccdecd708d9c075e7"
  },
  "livorno/cs": {
   "finished": 21,
