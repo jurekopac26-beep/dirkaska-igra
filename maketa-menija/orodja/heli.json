@@ -195,6 +195,18 @@
   "sea": true,
   "ownFar": false
  },
+ "luanda": {
+  "sea": true
+ },
+ "mombasa": {
+  "sea": true
+ },
+ "haivan": {
+  "sea": true
+ },
+ "musandam": {
+  "sea": true
+ },
  "portobelo": {
   "sea": true
  }

@@ -62,6 +62,20 @@ CFG = {
     'eljem': dict(kind='real', lat0=35.2900942, lon0=10.7008579, rot=0.0, start='El Jem', finish='El Jem', country='Tunisia', region='Mahdia', l1='tunisia'),
     'isuna': dict(kind='real', lat0=27.331833, lon0=89.518573, rot=0.0, start='Isuna', finish='Isuna', country='Bhutan', region='Paro', l1='bhutan'),
     'livorno': dict(kind='real', start='Livorno', country='Italy', region='Tuscany', l1='tuscany'),
+    'ujarras': dict(kind='real', start='Ujarrás', finish='Orosi Valley', country='Costa Rica', region='Cartago', l1='costarica'),
+    'ghoufi': dict(kind='real', start='Ghoufi', finish='Ghoufi Canyon', country='Algeria', region='Aurès', l1='aures'),
+    'cusco': dict(kind='real', start='Cusco', finish='Sacsayhuamán', country='Peru', region='Cusco', l1='cusco'),
+    'luanda': dict(kind='real', start='Praia do Bispo', finish='Bay of Luanda', country='Angola', region='Luanda', l1='angola'),
+    'mombasa': dict(kind='real', start='Mombasa', finish='Likoni Channel', country='Kenya', region='Mombasa', l1='kenyacoast'),
+    'livingstone': dict(kind='real', start='Livingstone', finish='Zambezi Gorge', country='Zambia', region='Southern Province', l1='zambezi'),
+    'hinboun': dict(kind='real', start='Phou Hin Boun', finish='Stone Forest', country='Laos', region='Khammouane', l1='khammouane'),
+    'haivan': dict(kind='real', start='Lăng Cô Bay', finish='Hải Vân Pass', country='Vietnam', region='Thừa Thiên Huế', l1='vietnam'),
+    'kaligandaki': dict(kind='real', start='Dana', finish='Kopchepani', country='Nepal', region='Myagdi', l1='himalaya'),
+    'musandam': dict(kind='real', start='Khasab', finish='Musandam', country='Oman', region='Musandam', l1='hormuz'),
+    'limalimo': dict(kind='real', start='Limalimo', finish='Simien Mountains', country='Ethiopia', region='Amhara', l1='ethiopia'),
+    'darvaz': dict(kind='real', start='Darvaz', finish='Panj Gorge', country='Tajikistan', region='Gorno-Badakhshan', l1='pamir'),
+    'batangas': dict(kind='real', start='Rosario', country='Philippines', region='Batangas', l1='luzon'),
+    'quezaltepeque': dict(kind='real', start='Quezaltepeque', country='El Salvador', region='La Libertad', l1='salvador'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -70,8 +84,12 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'morocco': (31.7, -7.6, 800),
       'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600),
       'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700),
-      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600), 'westafrica': (6.3, 0.1, 700),
-      'madagascar': (-21.5, 46.0, 800), 'aral': (41.8, 60.5, 700), 'panama': (9.2, -79.6, 500), 'tunisia': (35.3, 10.3, 600), 'bhutan': (27.4, 90.0, 500)}
+      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600),
+      'costarica': (9.8, -83.9, 600), 'aures': (35.1, 6.2, 700), 'cusco': (-13.5, -72.0, 700), 'angola': (-8.9, 13.3, 700),
+      'kenyacoast': (-4.0, 39.7, 600), 'zambezi': (-17.9, 25.9, 700), 'khammouane': (18.0, 104.6, 700),
+      'vietnam': (16.2, 108.0, 700), 'himalaya': (28.6, 83.7, 800), 'hormuz': (26.1, 56.3, 700), 'ethiopia': (13.2, 38.0, 800), 'pamir': (38.4, 71.3, 800),
+      'luzon': (14.0, 121.2, 700), 'salvador': (13.8, -89.3, 700),
+      'westafrica': (6.3, 0.1, 700), 'madagascar': (-21.5, 46.0, 800), 'aral': (41.8, 60.5, 700), 'panama': (9.2, -79.6, 500), 'tunisia': (35.3, 10.3, 600), 'bhutan': (27.4, 90.0, 500)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)
