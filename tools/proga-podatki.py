@@ -106,7 +106,8 @@ def step_osm(raw):
 
 # ================= 2. the route (waypoints, the shortest way between them over the drivable roads) =================
 DRIVE = {'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'residential', 'living_street', 'service',
-         'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link'}
+         'motorway_link', 'trunk_link', 'primary_link', 'secondary_link', 'tertiary_link',
+         'raceway'}   # (circuits: the track itself is highway=raceway in OSM; first used by Silkeborg, docs/nove-proge-1-0.md)
 
 def ll_dist(a, b):   # metres between two [lat, lon] (local flat earth; short steps)
     k = math.cos(math.radians((a[0] + b[0]) / 2))

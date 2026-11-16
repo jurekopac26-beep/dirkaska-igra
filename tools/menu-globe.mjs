@@ -22,6 +22,9 @@ const { loadCore, ROOT } = require('../tests/lib/core.js');
 const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], haivan: [16.19243, 108.1255] };
 // a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
 const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Vietnam: ['Vietnam'] };
+const PLACES = { bathurst: [-33.4393, 149.55846], cpalace: [51.42089, -0.06643], livorno: [43.51202, 10.31889], balea: [45.61078, 24.61444], batangas: [13.82018, 121.27731] };
+// a country of the game (its English name, as the menu shows it) and the Natural Earth map subunits that make it
+const SUBUNITS = { England: ['England'], France: ['France', 'Corsica'], Italy: ['Italy', 'Sicily', 'Sardinia', 'Pantelleria'], Romania: ['Romania'], Philippines: ['Philippines'] };
 const NE = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson';
 
 global.window = global;

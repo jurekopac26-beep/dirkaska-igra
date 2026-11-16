@@ -369,5 +369,11 @@
   "kverts": 458,
   "maxKverts": 577,
   "jsMs": 2.56
+ "batangas": {
+  "calls": 249,
+  "maxCalls": 282,
+  "kverts": 805,
+  "maxKverts": 854,
+  "jsMs": 2.57
  }
 }

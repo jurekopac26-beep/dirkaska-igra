@@ -466,7 +466,7 @@
     const kerb = [new Uint8Array(N), new Uint8Array(N)];   // inside of every bend, outside in the tighter ones
     for (let i = 0; i < N; i++) if (T.curb[i]) { const k = T.k[i]; for (const side of [-1, 1]) { const inside = side * k > 0; if (inside || Math.abs(k) > 1 / 70) kerb[side > 0 ? 1 : 0][i] = 1; } }
     pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
-    const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
+    const CH = 128 * (LK.ck || 1), offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;   // (LK.ck: bigger road-side chunks on an open plateau where much of the lap is in view at once: fewer draws, Batangas)
     // asphalt tone: resurfaced sections of 120-260 m (seams across the road), the rubbered racing line, darker still in the braking zones of the
     // slower corners (as on the Nordschleife; an F1 circuit is younger and more even)
     const secT = new Float32Array(N), brk = new Float32Array(N);
@@ -510,7 +510,7 @@
        gravR; with def.runoffTarmac the cars drive on asphalt there), tapering in and out; a green band along the track limit ---- */
     const roMat = new THREE.MeshLambertMaterial({ map: LK.gravel ? tex.sand : tex.asphalt, vertexColors: true });   // (LK.gravel: sand traps instead, Rio in the 1980s)
     {
-      const rc = new Chunks(128, true), gb = new Chunks(128), roC = LK.gravel ? [0.84, 0.8, 0.7] : [1.02, 1.02, 1.04], grn = [0.22, 0.55, 0.32];
+      const rc = new Chunks(CH, true), gb = new Chunks(CH), roC = LK.gravel ? [0.84, 0.8, 0.7] : [1.02, 1.02, 1.04], grn = [0.22, 0.55, 0.32];
       for (const side of [-1, 1]) {
         const flag = side > 0 ? T.gravR : T.gravL, bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) {
@@ -666,7 +666,7 @@
     }
     const nPosts = posts.addTo(root, true);
     // advertising boards on the concrete walls (the game's own brands, tex.sponsors: 4 m boards, the text read from the road)
-    { const sb = new Chunks(128, true);
+    { const sb = new Chunks(CH, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
         const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || kindAt((i + 1) % N, side) !== 1) continue;
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
@@ -674,7 +674,7 @@
         sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
       sb.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true); }
     // debris fences (chain link on posts) behind the walls and the tyre walls
-    const scen = new Chunks(128), ban = new GB(true), fenceG = new GB(true);
+    const scen = new Chunks(CH), ban = new GB(true), fenceG = new GB(true);
     for (const side of [-1, 1]) {
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
@@ -710,6 +710,7 @@
       gg: [[0.02, 0.45, 0.22], [0.98, 0.78, 0.1]], au: [[0.05, 0.14, 0.42], [0.95, 0.95, 0.94], [0.05, 0.14, 0.42]], tm: [[0.86, 0.12, 0.14], [0.95, 0.95, 0.94]],
       br: [[0.02, 0.56, 0.27], [1, 0.85, 0.12], [0.02, 0.56, 0.27]],
       cpA: [[0.9, 0.85, 0.7]], cpB: [[0.18, 0.34, 0.24]], cpC: [[0.5, 0.12, 0.12]] };   // (Crystal Palace: plain bunting of the 1930s)   // (Bathurst: green and gold, navy and white, a team's red and white)
+    if (LK.fl) Object.assign(FL, LK.fl);   // (a world's own flags: Silkeborg's Danish flag)
     const flagAt = (x, y, z, h, k, W) => { W = W || 1.6; cyl(scen.get(x, z), x, y - 0.2, z, 0.05, h + 0.2, 5, [0.86, 0.86, 0.88]); flagL.push([x, y + h, z, WROT + (RX() - 0.5) * 0.3, FL[k], W, W * 0.66]); };   // (the cloth flies downwind)
     const pick = (o) => { let u = RX(); for (const k in o) { if (u < o[k]) return k; u -= o[k]; } return Object.keys(o)[0]; };
 
@@ -1343,6 +1344,7 @@
     }
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
+    const xSt = LK.extra ? LK.extra({ root, tex, scen, exclPush, excluded, CR, out, matV }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
 
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {
@@ -1357,13 +1359,13 @@
 
     /* ---- the woods: spruce and beech where the land cover has forest, bushes on the scrub, lone trees on the meadows and round the farms ---- */
     const tMat = new THREE.MeshLambertMaterial({ vertexColors: true });
-    const AU = LK.trees === 'au' || LK.trees === 'bt', RIO = LK.trees === 'rio', TG = RIO ? rioTreeGeo : LK.trees === 'bt' ? btGumGeo : AU ? auTreeGeo : nrTreeGeo, NSP = RIO ? 3 : 2;   // (Styria: spruce and beech; Bathurst: eucalypts and wattle; Rio: palms, tropical trees, mangroves)
+    const WD = LK.woods, AU = LK.trees === 'au' || LK.trees === 'bt', RIO = LK.trees === 'rio', TG = WD ? WD.geo : RIO ? rioTreeGeo : LK.trees === 'bt' ? btGumGeo : AU ? auTreeGeo : nrTreeGeo, NSP = WD ? WD.n : RIO ? 3 : 2;   // (LK.woods: a world's own trees, Silkeborg's)   // (Styria: spruce and beech; Bathurst: eucalypts and wattle; Rio: palms, tropical trees, mangroves)
     const tk = PARK ? [] : [...Array(NSP)].map((q, k) => new IChunks(TG(k), tMat, 128));   // near the road: casting shadows
     const tf = PARK ? [] : [...Array(NSP)].map((q, k) => new IChunks(TG(k + NSP), tMat, 192));   // more than 70 m out: cheaper, no shadows (as on the Nordschleife)
     const fl = RIO ? new IChunks(rioFlowerGeo(), tMat, 512) : null; let nBloom = 0;   // (Rio: the trees in bloom, in big chunks: a few draws)
     let nTrees = PARK ? cpTrees({ root, R, excluded, dens }) : 0;   // (Crystal Palace: the park's old trees)
     if (!PARK) {
-      const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CR0 = RIO ? [0.3, 0.42, 0.45] : AU ? [0.24, 0.4] : [0.3, 0.33];   // (crown radius / width of a spruce, a beech (a eucalypt, a wattle): the forest floor under it)
+      const Lt = NRC * NRT, maxT = Math.round(60000 * dens), CR0 = WD ? WD.cr : RIO ? [0.3, 0.42, 0.45] : AU ? [0.24, 0.4] : [0.3, 0.33];   // (crown radius / width of a spruce, a beech (a eucalypt, a wattle): the forest floor under it)
       for (let tj = 0; tj < G.ntz && nTrees < maxT; tj++) for (let ti = 0; ti < G.ntx && nTrees < maxT; ti++) {
         if (!G.on[tj * G.ntx + ti]) continue;
         const xa = G.x0 + ti * Lt, za = G.z0 + tj * Lt;
@@ -1372,12 +1374,13 @@
           if (rd > LOD.radius(260)) continue;
           if (rd > LOD.radius(70) && ((Math.floor(xx / 6.2) + Math.floor(zz / 6.2)) & 1)) continue;   // farther out every other spot, bigger trees
           const cl = nrLC(x, z), far = rd > 70;
-          const p = RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
+          const p = WD ? WD.p[cl] : RIO ? RIO_TP[cl] : AU ? (cl === 1 ? (LK.trees === 'bt' ? 0.42 : 0.55) : cl === 2 ? 0.2 : 0.022) : cl === 1 ? 0.9 : cl === 2 ? 0.003 : cl === 3 ? 0.012 : 0.012;   // (Styria: class 2 is farmland; Bathurst: open eucalypt woods, lone gums in the paddocks)
           if (r1 > p) continue;
           if (rd < 48) { const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 3.5) continue; if (nn.i >= 0 && nn.dd < 8 && r2 < 0.4) continue; }
           if (excluded(x, z) || P.pad(x, z, 0) !== 0 || (RIO && (rioWet(x, z, 3) || rioPylon(x, z)))) continue;   // (not on the level pit complex either, nor in the lagoon)
           const y = nrGround(x, z); let sp, hgt, wid;
-          if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);
+          if (WD) [sp, hgt, wid] = WD.pick(cl, R, far, x, z);
+          else if (RIO) [sp, hgt, wid] = rioTree(cl, R, far);
           else if (AU) { sp = R() < (cl === 1 ? 0.8 : cl === 2 ? 0.3 : 0.85) ? 0 : 1;   // a eucalypt 15-27 m (crowns high and loose), or a wattle 3-6 m
             hgt = sp === 0 ? (15 + R() * 12) * (far ? 1.05 : 1) : 3 + R() * 3.5; wid = hgt * (sp === 0 ? 0.62 + R() * 0.2 : 1.1 + R() * 0.3); }
           else { sp = cl === 1 ? (P.n1(x * 2.2 + 500, z * 2.2) < 0.62 + (R() - 0.5) * 0.3 ? 0 : 1) : 1;
@@ -1463,11 +1466,12 @@
       P.smoke = rbSmoke(fl, CR.U.uTime, smTex); P.smoke.visible = false; root.add(P.smoke);
     }
     out.crowdPts = Float32Array.from(crowdPts);
-    if (!PER) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s
+    if (!PER && LK.air !== false) out.dyn.air = out.air = rbAir(root, ownTex, nrGround, LK.jets);   // the helicopter's pass, the jets before the start (game.js: air.go, air.shot); not in the 1930s, nor where the look has none (LK.air false: Sosnová's club circuit)
     if (out.air) out.air.finOnly = !!LK.heliFin;   // (Rio: the helicopter only over the finish, after the race)
     if (!scrG.empty) { const st = ownTex(rbScreenTex(LK)); addM(scrG, new THREE.MeshBasicMaterial({ map: st })); out.dyn.screens = { tex: st, f: -1 }; }
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, stands: nStands, boxes: nBoxes, camp: nCamp, farms: nFarm, cars: nCars, houses: nHouse, tv: nTV, decals: nDecals, smoke: smokeL.length, flags: flagL.length, screens: nScr, photographers: nPh, park: parkSt };   // (read by the tests)
     if (RIO) { out.stats.rio = rioExtra(scene, root, out, ownTex, tex, excluded, exclPush); out.stats.rio.bloom = nBloom; }   // Rio: the lagoon, palms along the straights, the mountains round the basin
+    if (xSt) out.stats.extra = xSt;   // (a world's own scenery: LK.extra)
     if (flagL.length) root.add(rbFlags(flagL, CR.U.uTime));   // (last: the build's other flags are in API.flags by now)
     return out;
   }
