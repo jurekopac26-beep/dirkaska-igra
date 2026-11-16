@@ -300,8 +300,9 @@ try {
   //          each part's range centroid within 0.35 m of where the core throws its piece from; the panes without the lost parts' glass; the
   //          lamps out (the head lenses dark, the tail mesh's sides collapsed); the wheels hidden, the body down on its corners; 60 frames on
   //          (the pit crew at work round the car each frame): the wheels stay hidden, no new burst of bits; the car limping through a corner
-  //          on its hubs, then the marshals' refit (wreck.fix): the wheels back, the body up, no offset left; a repair: the car built afresh,
-  //          its pieces on the road still drawn; the materials' program keys ----
+  //          on its hubs, then the marshals' refit (wreck.fix): the wheels back, the body up off its hubs (the bent wheels' level drop of at
+  //          most 0.25 rw stays, paket-p P3), no tilt, no offset left; a repair: the car built afresh, its pieces on the road still drawn; the
+  //          materials' program keys ----
   const R5 = [], t5 = Date.now();
   await page.setViewportSize({ width: 320, height: 180 });   // (a small picture: the 60 frames a vehicle draws cost little; what is checked does not depend on it)
   for (const m of kits) {
@@ -373,12 +374,14 @@ try {
       if (frozen) { if (v.fire) { v.fire.t0 -= 10; Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); }   // (on the grid the race's clock stands: the fire 10 s older, the car's char spreads on)
         frozen.w1 = frozen.m.userData.char.value.w; frozen.c1 = v.charU.value.w; }
       // the car limping through a corner on its hubs (the body's roll from c.w * c.speed, frames only), then the marshals' refit (what
-      // Race.rescue does on a track without pits): the wheels back, the body up, back on its wheels (nothing of the sag's offset left)
+      // Race.rescue does on a track without pits): the wheels back, the body up off its hubs, back on its wheels (nothing of the sag's
+      // offset left). The refit does not mend the corners (c.cd stays), so the wheels it puts back still count as bent (paket-p P3) and
+      // keep the body level but lower by at most 0.25 rw (kitSag), never lower than it sat on its hubs
       for (let i = 0; i < 30; i++) { P.w = 0.45; P.speed = 22; Render.frame(1 / 60, 1, P, 'chase', { noFx: true }); }
-      const drift = Math.hypot(v.bodyG.position.x, v.bodyG.position.z); P.w = 0; P.speed = 0;
+      const drift = Math.hypot(v.bodyG.position.x, v.bodyG.position.z), drop0 = v.sagP ? -v.sagP.y : 0; P.w = 0; P.speed = 0;   // (drop0: how far down the body sat on its hubs)
       if (P.wreck) { for (const n of ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR']) delete P.lost[n]; P.wreck.wl = 0; P.wreck.nL = 0; P.wreck.fix++; }
       Render.frame(1 / 60, 1, P, 'chase', { noFx: true });
-      const refit = { shown: [...v.wf, ...v.wr].filter(w => w.visible).length, sagGone: !v.sagQ, hubs: v.hubs.filter(hb => hb && hb.visible).length, xz: Math.hypot(v.bodyG.position.x, v.bodyG.position.z), drift: +drift.toFixed(3) };
+      const refit = { shown: [...v.wf, ...v.wr].filter(w => w.visible).length, tilt: v.sagQ ? 2 * Math.acos(Math.min(1, Math.abs(v.sagQ.w))) : 0, drop: v.sagP ? -v.sagP.y : 0, drop0, rw: M.rw, hubs: v.hubs.filter(hb => hb && hb.visible).length, xz: Math.hypot(v.bodyG.position.x, v.bodyG.position.z), drift: +drift.toFixed(3) };
       // the materials (the player's view and its pieces)
       const keys = [], key = (o) => (o && o.customProgramCacheKey !== THREE.Material.prototype.customProgramCacheKey ? o.customProgramCacheKey() : '');
       const mats = (root) => root.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const mt = o.material;
@@ -414,7 +417,10 @@ try {
     R5.map(r => `${r.id} wl ${r.sag.wl} hidden ${r.sag.hidden} hubs ${r.sag.hubs} corners ${r.sag.corners.join(' ')} (want ${r.sag.want.toFixed(3)}, lowest ${r.sag.low == null ? '-' : r.sag.low.toFixed(3)})`).slice(0, 6).join(' | '));
   T.check('60 frames on with the pit crew round the car (Bakreni gozd): the lost wheels stay hidden, the bits came once (no new burst)', R5.every(r => r.crew && !r.shown && r.after <= 40 && r.burst > 0),
     R5.map(r => `${r.id} crew ${r.crew}, shown ${r.shown}, bits ${r.burst} then ${r.after}`).slice(0, 6).join(', '));
-  T.check('the marshals\' refit (wreck.fix): the wheels back on, the body up, no bare hubs, nothing of the sag\'s offset left (it limped through a corner on its hubs first)', R5.every(r => !r.sag.wl || (r.refit.shown === 4 && r.refit.sagGone && !r.refit.hubs && r.refit.xz < 1e-9)), R5.map(r => r.id + ' ' + JSON.stringify(r.refit)).slice(0, 4).join(', '));
+  // (the refit does not mend the corners: the wheels it puts back still count as bent, paket-p P3, and hold the body level, down by at most 0.25 rw)
+  const refitOk = (r) => !r.sag.wl || (r.refit.shown === 4 && !r.refit.hubs && r.refit.xz < 1e-9 && r.refit.tilt < 1e-4 && r.refit.drop <= 0.25 * r.refit.rw + 1e-6 && r.refit.drop <= r.refit.drop0 + 1e-3);
+  T.check('the marshals\' refit (wreck.fix): the wheels back on, no bare hubs, the body up off its hubs (level, down by the bent wheels\' 0.25 rw at most, P3, and no lower than it sat on its hubs, give or take 1 mm), nothing of the sag\'s offset left (it limped through a corner on its hubs first)', R5.every(refitOk),
+    R5.filter(r => !refitOk(r)).concat(R5).slice(0, 4).map(r => `${r.id} shown ${r.refit.shown} hubs ${r.refit.hubs} xz ${r.refit.xz.toExponential(1)} tilt ${r.refit.tilt.toExponential(1)} drop ${r.refit.drop.toFixed(4)} (on its hubs ${r.refit.drop0.toFixed(4)}, 0.25 rw ${(0.25 * r.refit.rw).toFixed(4)})`).join(', '));
   T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
   T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', the KOLIBRI\'s \'dirtyCarCgS\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
 
@@ -433,7 +439,7 @@ try {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
       let seed = 5150; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-      g.S.car = Core.MODELS.indexOf(M); g.onAction('restart'); g.pause();
+      g.S.car = Core.MODELS.indexOf(M); g.S.wheelOver = M.kit ? 1 : 0; g.onAction('restart'); g.pause();   // (a car without parts that come off: »Odpadlo kolo: Dirka teče naprej«, see below)
       const R = g.race, P = R.player, S = Render.scene, world = S.children.filter(o => !o.isLight && !o.isPoints && !R.cars.some(c => Render.viewOf(c) && Render.viewOf(c).grp === o));
       const tl0 = P.tl; P.tl = null;   // (a semi-trailer's rig: its trailer off for the pictures (Render's tlDraw hides it): from behind its tank hides the tractor's fire, docs/titan-cisterna.md)
       const vis0 = world.map(o => o.visible); for (const o of world) o.visible = false;   // (the world hidden throughout; the cars, their pieces, the effects (points) drawn)
@@ -456,7 +462,10 @@ try {
       const intact = FL.costOf(v, P), f0 = Render.fxStats();
       // two frames free (the camera's own), the wreck, its fire burning six frames, then the wreck from the chase camera, pinned as before.
       // A car under the wheel rule (every vehicle with parts since 1. 11. 2026, its own tyres): the whole car's fire grows from its middle
-      // over render.js FIRE_SPREAD (3 s), so it burns 3 s first
+      // over render.js FIRE_SPREAD (3 s), so it burns 3 s first. The cars without parts that come off are under the rule too since paket-p K
+      // (13. 11. 2026), but Core.wreckCar takes no wheel off them, so the rule would light no fire and the renderer burns a rule's car only
+      // by its rule: they are wrecked in a race with »Odpadlo kolo: Dirka teče naprej« (S.wheelOver 0, no rule: the wreck burns as before K);
+      // the rule's own way with such a car (a wheel off at 80 %, the fire, the race over) is in browser/wheels.test.mjs
       Render.setShot(null); run(2, 'chase', false);
       Core.wreckCar(P); run(P.wreck && P.wreck.rule ? 30 : 6, 'chase', true);
       // the wreck from the chase camera, then the same frame without the particles (the flames, the smoke, the bits: what they add is what
@@ -483,6 +492,7 @@ try {
       for (const k in r.pics) fs.writeFileSync(path.join(dir, `${r.id}-${k}.png`), Buffer.from(r.pics[k].split(',')[1], 'base64')); delete r.pics; }
     R6.push(r);
   }
+  await page.evaluate(() => { window.__game.S.wheelOver = 1; });   // (»Odpadlo kolo: Konec dirke« again for the sections below)
   // ---- 4e. a field on fire (stage B2's caps): every car of a race wrecked where it stands (the field held still: no contact sparks, no
   //          dust), burning: at most 6 emit (the nearest to the camera), each at most 40 flames (sparks) and 12 smoke particles a second; the
   //          player's car under the wheel rule (every vehicle with parts since 1. 11. 2026) burns as the whole car's fire of its rule, out of
