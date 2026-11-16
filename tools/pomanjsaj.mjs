@@ -37,8 +37,10 @@ export function minifyTree(root) {
     before += Buffer.byteLength(src);
     try {
       const { code } = transformSync(src, Object.assign({ sourcefile: rel }, OPTS));
-      // (an esbuild helper: `var __x=` at the top before minifying, a short `var a=Object.…` after; the game itself writes none such)
-      if (/^var [\w$]+=Object\.(defineProperty|getOwnProperty|create|getPrototypeOf|assign)\b/.test(code) && !/^var [\w$]+\s*=\s*Object\./.test(src)) throw new Error('esbuild helper in output');
+      // (an esbuild helper, e.g. `var __defProp=` for a syntax es2020 lacks: the same file once without minifying shows it by name; the game itself writes no `__x` top-level names)
+      const plain = transformSync(src, { loader: 'js', target: OPTS.target, sourcefile: rel }).code;
+      const helper = (plain.match(/^var (__[A-Za-z]+)\s*=/gm) || []).filter(h => !src.includes(h.trim()));
+      if (helper.length) throw new Error('esbuild helper in output: ' + helper[0]);
       fs.writeFileSync(p, code); after += Buffer.byteLength(code);
     } catch (e) {
       bad.push(rel + ': ' + String(e.message).split('\n')[0]); after += Buffer.byteLength(src);

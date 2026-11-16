@@ -5792,7 +5792,7 @@
   const netLoad = (next) => lazyJs('spletna', next, () => onErr(netErr('browser-incompatible')));
   function privOpen(on) { $('on-priv').classList.toggle('off', !on); $('on-priv-btn').setAttribute('aria-expanded', on ? 'true' : 'false'); }
   function netStart(role) {   // 'quick' (wait for whoever comes: up to 22), or a private room (up to four): 'host' (with a new code) / 'guest' (with the friend's code)
-    if (typeof Net === 'undefined') { netLoad(() => netStart(role)); return; }   // (a tap before the online code arrived: the same tap once it is here)
+    if (typeof Net === 'undefined') { netLoad(() => { if (screen === 'online' && !mp) netStart(role); }); return; }   // (a tap before the online code arrived: the same tap once it is here, if Spletna is still up and in no room)
     const code = role === 'guest' ? Net.normCode($('on-code').value) : '';
     if (role === 'guest' && code.length !== 4) { onErr(tr('Vpiši kodo sobe (4 znaki), ki ti jo je poslal prijatelj.')); return; }
     if (!Net.available()) { onErr(netErr('browser-incompatible')); return; }
