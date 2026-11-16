@@ -38,22 +38,22 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
 | Seul, Južna Koreja | `seoul` | odprta cesta | 2,5 km | 501 | 44 % | 0 | −77 m |
-| Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
+| Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
 | Cusco, Peru | `cusco` | odprta cesta | 0,9 km | 440 | 47 % | 1 | +61 m |
 | Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 5,0 km | 406 | 48 % | 1 | +134 m |
-| Medeu, Kazahstan | `medeu` | odprta cesta | 5,0 km | 400 | 55 % | 2 | +297 m |
 | Ghoufi, Alžirija | `ghoufi` | odprta cesta | 0,6 km | 406 | 35 % | 0 | +17 m |
+| Medeu, Kazahstan | `medeu` | odprta cesta | 5,0 km | 400 | 55 % | 2 | +297 m |
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
 | Zandvoort, Nizozemska | `zandvoort` | krog | 4,3 km | 366 | 55 % | 4 | ravno |
+| Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
+| El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
 | Sepang, Malezija | `sepang` | krog | 5,5 km | 304 | 63 % | 4 | 21 m razpona |
 | Pembrey, Wales | `pembrey` | krog | 2,3 km | 297 | 64 % | 1 | ravno |
 | Lombok, Indonezija | `lombok` | krog | 4,3 km | 297 | 62 % | 1 | ravno |
 | Killar, Indija | `killar` | odprta cesta | 4,4 km | 285 | 65 % | 1 | +10 m |
 | Tuzla, Turčija | `tuzla` | krog | 5,3 km | 281 | 69 % | 1 | 40 m razpona |
-| Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
-| El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
 | Montréal, Kanada | `montreal` | krog | 4,4 km | 279 | 75 % | 2 | ravno |
 | Termas de Río Hondo, Argentina | `riohondo` | krog | 4,8 km | 275 | 63 % | 3 | ravno |
 | Lusail, Katar | `lusail` | krog | 5,4 km | 275 | 68 % | 3 | ravno |
