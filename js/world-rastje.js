@@ -32,7 +32,9 @@
      mosaic of the same year (Copernicus Sentinel-2 data, modified, the WorldCover composite; stored as 255 · reflectance^(1/2.2)).
      lat, lon: the track's frame (its x = 0, z = 0) where the tool put it (Spa: def.lc's forest laid on WorldCover's trees, correlation 0.69;
      Rio do Rastro: the frame of js/geo.js as it is, the same check gives 0.98 with no shift; Chapman's Peak: the frame of js/geo.js as it is,
-     def.lc's class the same as WorldCover's in 92.6 % of the band's cells, in fewer with any shift).
+     def.lc's class the same as WorldCover's in 92.6 % of the band's cells, in fewer with any shift;
+     Nürburg: the frame of js/geo.js as it is, 0.57 with no shift and no better within 10 m, def.lc being OSM's woods in 16 m cells, which OSM
+     of 15. 11. 2026 still matches).
      drevesa: the track's own kinds where its builder draws others than its climate's kit (the Serra Geral's cloud forest and araucarias).
      grmovje, golo, voda: WorldCover's shrubs, bare ground and water, where the band has them. odprto (a colour only): the grass and the shrubs
      together, the one class a builder's land cover has for both (Chapman's Peak's fynbos).
@@ -48,6 +50,8 @@
       drevesa: ['pinija', 'fynbos', 'protea', 'resa', 'restio'], odsek: 49.84,
       trave: ['---78--199998799997737899999999998989--026--6--835000-9999966454500044000136327001132000000000000035',
         '21-779999998013983075799869897----9-----2----7--4613-20288-424839----2549659644464785013000000000019'] },
+    nring: { podnebje: 'Cfb', lat: 50.33792, lon: 6.950668, delez: { drevesa: 0.755, trava: 0.184, pozidano: 0.061 },
+      barva: { drevesa: 0x394036, trava: 0x4a5041, pozidano: 0x57564f } },
   };
   const aktivna = (def) => prava(def) && !!MERITVE[def.id];
 

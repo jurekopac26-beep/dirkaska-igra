@@ -77,6 +77,25 @@ Druga proga prehoda (veja `realizem/g-chapmans-peak`, račun partyslo, PR #697; 
 - **Drugo iz paketa**: pasov košnje proga nima, pas ob asfaltu (shojena bankina) že ima. Podnebje `Csb` je odčitano z objavljene karte Köppen–Geiger in, kot pri Spa, vpisano ročno. Barva po odsekih (`cover.open`) še ni uporabljena: en odtenek na razred za vso progo.
 - **Stavbe (S)**: S0 (#668) je 14. 11. osnutek v sporu z `main` in čaka na E (#657). Komplet »Južna Afrika« v `js/world-stavbe.js` obstaja, priklopljena (`PROGE`) je samo Spa. Hiše Hout Baya zato ostanejo; ko je S0 na `main`, dobi proga S s priklopom `chapman` v `PROGE` (pozidanega je 2,8 % pasu, 7,4 % v prvih 500 m).
 - **Obremenitev**: 2277 mrež, 1.171.358 oglišč, 78.834 primerkov (pred in po). Klici risanja 140 na sličico (največ 145) pred in po; oglišča na sličico 410 tisoč (največ 478 tisoč) → 403 tisoč (največ 446 tisoč), ker ima restija manj oglišč kot grm. Referenca sveta posodobljena samo za `chapman` (`WORLD_ONLY=chapman node tests/browser/world.test.mjs --update`: skupini `-:MeshLambertMaterial` in `-:MeshPhongMaterial`); `tests/golden/perf.json` ostane. Slike zdaj in potem: `node tools/shot.mjs chapman --m 1000,2300,4200 --lezece --pred 845419fd`; pri moči 0,35 je razlika pod pragom orodja (0,1 % slike pri 1000 m, 0 % pri 2300 in 4200 m: »nobena slika se ni opazno spremenila«), vidna je v številkah in ob primerjavi slik (zamenjane rastline na pobočjih).
+### G1 · Nürburg, Nemčija (15. 11. 2026)
+
+Naročilo na tabli #382 (15. 11.), PR #700 na veji `realizem/g-nurburg` (osnova `realizem/g0-rastje-teren`). Samo G; stavbe (S) pridejo s S0/S1.
+
+- **Meritev** (pas 8–60 m ob vsem krogu, 20.690 m, 414 odsekov po 50 m; `build_cover` iz `tools/proga-podatki.py`, skripta zunaj repozitorija kot pri Rio do Rastro): drevesa 75,5 % (`394036`), trava 17,9 % (`4a5041`), polja 0,5 %, pozidano 6,1 % (`57564f`). Okvir proge je iz `js/geo.js` brez zamika; korelacija gozda iz `def.lc` z drevesi WorldCover po odsekih je 0,57, zamik do 10 m je ne izboljša (najboljša 0,59).
+- **»82 % gozda« iz tabele prog** se z meritvijo ne potrdi: WorldCover da 75,5 % dreves. Podobna številka, 82,4 %, je ujemanje rabe tal v igri z OSM (spodaj).
+- **Razporeditev gozda ostane, ker že ustreza OSM.** `def.lc` (gozd iz OSM v celicah 16 m) ima v pasu 56,7 % gozda, 37,2 % odprtega, 3,0 % grmičja in 3,1 % naselja. OSM 15. 11. 2026 (`api.openstreetmap.org/api/0.6/map`, `landuse`/`natural`) ima 55,8 % gozda, 25,4 % travnikov in trave, 3,6 % grmičja in 9,6 % brez oznake; z `def.lc` se ujema v 82,4 % celic. Razlika do WorldCover je ob asfaltu:
+
+  | pas | gozd v igri | OSM gozd | WorldCover drevesa |
+  |---|---|---|---|
+  | 8–15 m | 32,7 % | 41,0 % | 80,8 % |
+  | 15–30 m | 57,5 % | 49,4 % | 77,8 % |
+  | 30–60 m | 62,0 % | 62,5 % | 73,2 % |
+
+  Pas trave med ograjo in gozdom (OSM ga riše) je v pikslih 10 m WorldCover zabrisan in prekrit s krošnjami, zato WorldCover ob cesti kaže več dreves, kot jih stoji. Več dreves do ceste bi tudi povečalo oglišča, ki so že pri 1,57 milijona.
+- **Odtenek**: `World.rastje.listje(def, …)` na zelena oglišča enotskih dreves pred `addTo` (kot Rio do Rastro) in `World.rastje.tla(def, …)` na barvo materiala tal in robov (`gMat`, kot Spa, a z množilnikom iz trave v igri 8–60 m od ceste); oboje v `js/world-nring.js`, pri moči 0,35. Številke: tla × 1,054 / 0,978 / 1,245, listje × 1,132 / 0,969 / 1,214 (manj nasičeno zeleno, več modre; svetlost ostane). Podnebje `Cfb` (Eifel), vpisano ročno.
+- **Svetloba (kos 3)** velja sama, ker ima proga vnos v `MERITVE`: `look` v `applyTheme` postavi poletno opoldansko sonce na 50,34° na 63,1° (zračna masa 1,12), barva sonca × 1,006 / 1,000 / 0,983, jakost × 0,988; nebo in ton ostaneta (ponovno preverjanje 15. 11.).
+- **Obremenitev enaka**: 3455 mrež, 1.571.755 oglišč, 116.555 primerkov (pred in po); referenca sveta posodobljena samo za `nring` (spremenila se je samo skupina `-:MeshLambertMaterial`).
+- **Slike** zdaj in potem: `docs/realizem/g1-nurburg.jpg` (pri 3,0 in 11,5 km, ležeče; `node tools/shot.mjs nring --m 3000,11500 --pred 526396c`). Razlika je majhna kot pri Rio do Rastro (orodje šteje 0 %, ker je pod pragom): trava manj rumena, krošnje manj nasičene; na vsaki sliki se 76 % pikslov premakne za več kot 3 stopnje od 255, v povprečju za 6–7.
 
 ### Odločitev: moč 35 % (14. 11. 2026)
 

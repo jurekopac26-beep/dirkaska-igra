@@ -473,6 +473,7 @@
         plant(1, false, x, nrGround(x, z) - 0.1, z, crH(d, side, 65) * TAU, hgt * (pop ? 0.42 : 0.9), hgt, [cv * (pop ? 0.92 : 1), cv * (pop ? 1.05 : 1), cv * 0.9]);
       }
     }
+    const lt = World.rastje ? World.rastje.listje(def, tk.concat(tf)) : null;   // (Realizem G: the leaves' measured hue, js/world-rastje.js)
     for (const t of tk) t.addTo(root, true);
     for (const t of tf) t.addTo(root, false);
 
@@ -495,6 +496,10 @@
         }
         addM(gv, gMat);
       }
+      // (Realizem G: the ground's measured hue on its material, asked while G.col is still the game's own; js/world-rastje.js)
+      const rt = World.rastje ? World.rastje.tla(def, { lc: nrLC, dist: nrDist, gcol: nrGCol, avg: gMat.map.avgCol, x0: G.x0, z0: G.z0, x1: G.x0 + G.ntx * NRC * NRT, z1: G.z0 + G.ntz * NRC * NRT }) : null;
+      if (rt) gMat.color.setRGB(rt[0], rt[1], rt[2]);
+      if (rt || lt) out.rastje = { moc: World.rastje.MOC, tla: rt, drevesa: lt };
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
