@@ -2156,11 +2156,18 @@
     const I = lpTable().get(k); if (!I || (!build && !trackCache.has(I.id)) || !Core.trackLoaded(I.id)) return 0;
     const b = LPX.bound(getTrack(I.id), I, Core.MODELS); lpB.set(k, b); return b;
   }
+  const lpLoading = new Set();
+  function lpLoad(k) {   // a key's track not loaded yet: load it, then show the Leaderboard again if it is still on that track
+    const I = lpTable().get(k); if (!I || Core.trackLoaded(I.id) || lpLoading.has(I.id)) return;
+    lpLoading.add(I.id);
+    Core.loadTrack(I.id).then(() => { lpLoading.delete(I.id); if (screen === 'board' && !lpList && recKey(boardId) === k) buildBoardScreen(); }, () => lpLoading.delete(I.id));
+  }
   function lpRowsOf(k, build) {   // the table of a key: the friends' times and the player's, the fastest first ([{ id, name, ms, day, car, me }]);
     // build false: a track not built yet is not built for it, its friends' times wait for the check (the rows' wait)
     const S0 = lpS(), m = lpMine()[k], any = Object.keys(S0.friends).some(id => S0.friends[id].t[k]), me = m ? { name: S.name, ms: m[0], day: m[1], car: m[2] } : null;
     const b = any ? lpBound(k, build !== false) : 0;
-    if (any && build === false && !lpB.has(k)) return Object.assign(LPX.rows({ friends: {} }, k, me, 0), { wait: true });
+    // (also build true while its track is not loaded yet (I17): load it, the Leaderboard on show again after; never the unchecked times)
+    if (any && !lpB.has(k)) { if (build !== false) lpLoad(k); return Object.assign(LPX.rows({ friends: {} }, k, me, 0), { wait: true }); }
     return LPX.rows(S0, k, me, b);
   }
   // the menu's Friends view of a track in the way it is driven now: { n (friends' times), friends, place: { at, n } (the player's, with a
@@ -2189,7 +2196,7 @@
     return '<div class="lp-box"><p class="ltab-h">' + tr('Prijatelji · {0}', esc(Lang.of(d, 'name'))) + condTxt(d) + '</p>' + (rs.some(r => !r.me)
       ? '<table class="ltab lp"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th><th>' + tr('Avto') + '</th><th>' + tr('Čas') + '</th><th>' + tr('Zaostanek') + '</th><th>' + tr('Datum') + '</th></tr></thead><tbody>' +
         rs.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm">' + esc(r.name) + '</td><td class="nm">' + esc(lpCar(r.car) || '–') + '</td><td>' + fmt(r.ms / 1000, true) + '</td><td>' + (i ? sgn((r.ms - first) / 1000) : '') + '</td><td>' + lpDate(r.day) + '</td></tr>').join('') + '</tbody></table>'
-      : '<p class="desc small">' + tr(nf ? 'Prijatelji na tej progi še nimajo časov.' : 'Na lestvici še ni prijateljev. Pošlji jim svoje čase: ko ti pošljejo svoje, jih vidiš tukaj.') + '</p>') +
+      : '<p class="desc small">' + (rs.wait ? tr('Nalagam progo…') : tr(nf ? 'Prijatelji na tej progi še nimajo časov.' : 'Na lestvici še ni prijateljev. Pošlji jim svoje čase: ko ti pošljejo svoje, jih vidiš tukaj.')) + '</p>') +
       '<div class="btns horiz gh-btns"><button class="btn mini" data-act="lp-send">' + tr('Pošlji svoje čase') + '</button>' + (nf ? '<button class="btn mini" data-act="lp-list">' + tr('Prijatelji ({0})', nf) + '</button>' : '') + '</div></div>';
   }
   function lpListHTML() {   // the Leaderboard's Prijatelji: each friend (the nickname, the times, the last link), Odstrani
