@@ -62,6 +62,17 @@
       const bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i] + nrBankY(i, side * w), lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
       return [[w, 0.0], [w + 1.2, -0.04], lift(Math.max(w + 1.8, bar - 0.4), -0.1), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
     };
+    /* ---- the side roads for the look (World.cesta's stranske, def.stranske from OpenStreetMap: the circuit's access roads): measured
+       here, before the barriers, whose rails leave the mouths open; the strips (over the verges), their shoulders and the posts across
+       the openings are built with the terrain. Nothing of the track's model changes: the invisible barrier stays on the fence line, and
+       a circuit's white edge line and kerbs run on across a mouth ---- */
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
+    const barF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, j = (i + 1) % N; return side > 0 ? lerp(T.br[i], T.br[j], f - a) : lerp(T.bl[i], T.bl[j], f - a); };
+    const vergeAt = (i, side, d) => { const pr = vergeRow(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => 0.8 * secT[i] - 0.03, drzava: 'Nemčija' }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    const naCesti = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] + m; if ((x - k[0]) * (x - k[0]) + (z - k[1]) * (z - k[1]) < r * r) return true; } return false; };   // (on a side road or within m of its edge + 1.8 m)
+    if (SC) { out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; }
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
       let pr = -1, pl = -1, pk = [-1, -1];
@@ -109,8 +120,8 @@
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (set below where the spectators stand)
     const kind = (i) => (onBridge(i) ? 2 : t13(i) ? 1 : 0);   // 0 armco, 1 wall + fence, 2 parapet
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.72, 0.72, 0.7], concD = [0.6, 0.6, 0.58];
-    const railRow = (gr, i, side, k) => {   // guardrail / wall cross-section at sample i (rows run so that the faces look at the road)
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = k === 1 ? 1.05 : 1.15;
+    const railRow = (gr, i, side, k) => {   // guardrail / wall cross-section at station i (a fractional one beside a side road's mouth; rows run so that the faces look at the road)
+      const bar = barF(i, side), o = side * (bar + 0.12), h = k === 1 ? 1.05 : 1.15, Pt = PtF;
       const o2 = side * (bar + (k === 0 ? 0.42 : 0.45));   // the top: the rail's back (a W-beam is ~0.3 m deep) / the wall's thickness, seen from the high cameras
       let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.84, 0.84, 0.82], [0.8, 0.8, 0.78]];
@@ -119,13 +130,13 @@
     };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB();
-      for (const side of [-1, 1]) {
-        let prev = -1, pk = -1;
-        for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++) {
-          const i = ii % N, k = kind(i);
-          if (prev >= 0 && k !== pk) { gr.link(prev, railRow(gr, i, side, pk), 0, 4); prev = -1; }   // the old kind of barrier runs up to here, the new one starts here
-          const r = railRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 4); prev = r; pk = k;
-          if (k === 0 && ii % 2 === 0 && ii < c0 + CH) { const p = Pt(i, side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }
+      for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + CH, N))) {   // (open at the side roads' mouths)
+        let prev = -1, pk = -1; const nR = run.length;
+        for (let q = 0; q < nR; q++) {
+          const ii = run[q], i = Math.round(ii) % N, k = kind(i), e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
+          if (prev >= 0 && k !== pk) { gr.link(prev, railRow(gr, ii, side, pk), 0, 4); prev = -1; }   // the old kind of barrier runs up to here, the new one starts here
+          const r = railRow(gr, ii, side, k); if (prev >= 0) gr.link(prev, r, 0, 4); prev = r; pk = k;
+          if (k === 0 && (e0 || e1 || (ii === i && ii % 2 === 0 && ii < c0 + CH))) { const f = ii + (e0 ? 0.05 : e1 ? -0.05 : 0), p = PtF(f, side * (barF(f, side) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }   // (a post at the rail's ends by a mouth too)
         }
       }
       addM(gr, rMat, true);
@@ -192,6 +203,7 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.9, 0.2, 0.15], [0.96, 0.82, 0.2], [0.2, 0.45, 0.9], [0.95, 0.95, 0.95], [0.2, 0.7, 0.3], [1, 0.55, 0.1], [0.15, 0.5, 0.55], [0.7, 0.2, 0.5], [0.12, 0.14, 0.2]];
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.8 });   // spectators (instanced)
+    if (SC) for (const k of SC.krogi) CR.avoid(k[0], k[1], k[2]);   // (nobody stands on a side road)
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);
       parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const DR = rng(9330);   // (the camp props' own random stream: R() is not drawn from)
@@ -393,6 +405,7 @@
       }
     }
     // catch fences (chain link on posts) right behind the rails where the fences were asked for, sponsor banners on them
+    if (SC) for (let si = 0; si < 2; si++) for (let i = 0; i < N; i++) if (SC.rez[si][i] & 1) fence[si][i] = 0;   // (none across a side road's mouth)
     const spC = new Chunks(256, true);
     for (const side of [-1, 1]) {
       const fc = fence[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl; let acc = 0;
@@ -437,7 +450,8 @@
         else if (sp === 1) { const f = P.n6(x + 700, z); c[0] *= lerp(1.14, 0.9, f); c[1] *= lerp(1.1, 0.94, f); c[2] *= lerp(0.8, 1.02, f); }   // fresher or darker beech
         return 1; };
       const clear = (x, z, r) => !excluded(x + r, z) && !excluded(x - r, z) && !excluded(x, z + r) && !excluded(x, z - r);   // (low crowns keep off the spectators, not only their trunks)
-      const plant = (sp, far, x, y, z, rot, wid, hgt, c) => { if (sp === 2 && !clear(x, z, wid * 0.4)) return false; const s = tint(sp, x, z, c), K = far ? tf : tk; if (s < 1) wid *= 0.62;   // (a dead spruce: a thin crown)
+      const plant = (sp, far, x, y, z, rot, wid, hgt, c) => { if (sp === 2 && !clear(x, z, wid * 0.4)) return false; if (naCesti(x, z, sp === 2 ? wid * 0.4 : 0)) return false;   // (no tree on a side road: asked here, after the draws, so that the forest elsewhere stays as it was)
+        const s = tint(sp, x, z, c), K = far ? tf : tk; if (s < 1) wid *= 0.62;   // (a dead spruce: a thin crown)
         if (sp < 2) K[sp].add(x, y, z, rot, wid, hgt, c);
         else { c[0] *= 1.25; c[1] *= 1.11; c[2] *= 1.15; if (far) K[1].add(x, y - 0.35 * hgt, z, rot, wid * 1.36, hgt * 1.16, c); else K[1].add(x, y - 0.49 * hgt, z, rot, wid * 1.32, hgt * 1.33, c); }   // bushes and young trees: a beech crown sunk into the ground (no draws of their own)
         nrShade(x, z, wid * CR0[sp], s * (sp === 2 ? 0.7 : 1)); nTrees++; return true; };
@@ -477,7 +491,7 @@
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges (256 m chunks), coloured now: the forest floor under the trees ---- */
-    let nTiles = 0;
+    let nTiles = 0, nStb = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
@@ -493,7 +507,13 @@
             if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + CH, N), nrGCol);
         addM(gv, gMat);
+      }
+      if (SC) {   // (the side roads' strips and the orange posts across their openings in the rails)
+        const sMat = aMat.clone();
+        for (const g of SC.asfalt(RB, nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
+        nStb = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki;   // (where the posts stand: read by the tests)
       }
       G.col = G.cov = P.edge = null;   // (build only)
     }
@@ -504,7 +524,7 @@
     addM(crowdG, crowdUV(new THREE.MeshLambertMaterial({ map: tex.crowd, vertexColors: true }), 1, 0.11, 0.1));
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, edgeTrees: nEdge, posts: nPosts, buildings: nBld, fans: nFans, decals: nDecals, stranske: SC ? SC.n : 0, stebricki: nStb };   // (read by the tests)
     return out;
   }
 
