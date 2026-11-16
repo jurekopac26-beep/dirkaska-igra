@@ -1984,5 +1984,185 @@
     }
    ]
   }
+ ],
+ [
+  "aguascalientes",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turns 1–2",
+     "d": 390
+    },
+    {
+     "n": "Back Straight",
+     "d": 670
+    },
+    {
+     "n": "Turns 3–4",
+     "d": 955
+    }
+   ]
+  }
+ ],
+ [
+  "batangas",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Turn 1",
+     "d": 360
+    },
+    {
+     "n": "Hairpin",
+     "d": 1270
+    },
+    {
+     "n": "Maligaya",
+     "d": 2430
+    },
+    {
+     "n": "Mabato",
+     "d": 3320
+    }
+   ]
+  }
+ ],
+ [
+  "canaries",
+  {
+   "kbps": 450,
+   "alt": [
+    44,
+    178
+   ],
+   "places": [
+    {
+     "n": "Canaries Bay",
+     "d": 150
+    },
+    {
+     "n": "Ridge · 177 m",
+     "d": 1780
+    },
+    {
+     "n": "Anse La Verdue",
+     "d": 2734
+    },
+    {
+     "n": "Valley · 82 m",
+     "d": 4040
+    }
+   ]
+  }
+ ],
+ [
+  "darvaz",
+  {
+   "kbps": 450,
+   "alt": [
+    1504,
+    1507
+   ],
+   "places": [
+    {
+     "n": "Bridge over the Pshikharv",
+     "d": 1270
+    },
+    {
+     "n": "Kuhi-Ruzan",
+     "d": 1570
+    },
+    {
+     "n": "Wall above the Panj",
+     "d": 2300
+    },
+    {
+     "n": "Darvaz Gorge",
+     "d": 3500
+    }
+   ]
+  }
+ ],
+ [
+  "hafit",
+  {
+   "kbps": 450,
+   "alt": [
+    376,
+    769
+   ],
+   "places": [
+    {
+     "n": "Hairpin 1 · 480 m",
+     "d": 1188
+    },
+    {
+     "n": "Limestone Wall · 555 m",
+     "d": 2476
+    },
+    {
+     "n": "Viewpoint · 671 m",
+     "d": 3750
+    },
+    {
+     "n": "Jebel Hafeet · 758 m",
+     "d": 4676
+    }
+   ]
+  }
+ ],
+ [
+  "haivan",
+  {
+   "kbps": 450,
+   "alt": [
+    387,
+    478
+   ],
+   "places": [
+    {
+     "n": "Above Lăng Cô",
+     "d": 420
+    },
+    {
+     "n": "Hairpin · 429 m",
+     "d": 1245
+    },
+    {
+     "n": "Hai Van Pass · 477 m",
+     "d": 1990
+    }
+   ]
+  }
+ ],
+ [
+  "kaligandaki",
+  {
+   "kbps": 450,
+   "alt": [
+    1443,
+    1672
+   ],
+   "places": [
+    {
+     "n": "Kali Gandaki",
+     "d": 700
+    },
+    {
+     "n": "Rupse Waterfalls",
+     "d": 2052
+    },
+    {
+     "n": "Hairpin 1 · 1,620 m",
+     "d": 2489
+    },
+    {
+     "n": "Kopchepani · 1,672 m",
+     "d": 3044
+    }
+   ]
+  }
  ]
 ]

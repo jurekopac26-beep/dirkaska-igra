@@ -224,5 +224,11 @@
  },
  "lusail": {
   "sea": true
+ },
+ "canaries": {
+  "sea": true
+ },
+ "haivan": {
+  "sea": true
  }
 }

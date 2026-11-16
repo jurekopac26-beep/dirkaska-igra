@@ -845,5 +845,77 @@
    "H": 620,
    "wet": true
   }
+ ],
+ [
+  "aguascalientes",
+  "top",
+  "top-aguascalientes",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "batangas",
+  "top",
+  "top-batangas",
+  {
+   "W": 1100,
+   "H": 830,
+   "wet": true,
+   "pad": 1.0
+  }
+ ],
+ [
+  "canaries",
+  "top",
+  "top-canaries",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "darvaz",
+  "top",
+  "top-darvaz",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "hafit",
+  "top",
+  "top-hafit",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "haivan",
+  "top",
+  "top-haivan",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "kaligandaki",
+  "top",
+  "top-kaligandaki",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true
+  }
  ]
 ]
