@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>Seychelles</title>
+  <!-- Ratio 1:2. Five oblique bands radiating from the bottom of the hoist: the top edge in thirds (blue, yellow, red), the fly in thirds
+       (red, white, green). Colours: blue #003F87, yellow #FCD856, red #D62828, white #FFFFFF, green #007A3D. -->
+  <polygon fill="#003F87" points="0,500 0,0 333.33,0"/>
+  <polygon fill="#FCD856" points="0,500 333.33,0 666.67,0"/>
+  <polygon fill="#D62828" points="0,500 666.67,0 1000,0 1000,166.67"/>
+  <polygon fill="#FFFFFF" points="0,500 1000,166.67 1000,333.33"/>
+  <polygon fill="#007A3D" points="0,500 1000,333.33 1000,500"/>
+</svg>

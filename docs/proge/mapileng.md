@@ -1,0 +1,29 @@
+# Mã Pí Lèng, Vietnam (dirka, kronometer, promet, policija)
+
+[← Vse proge](../../README.md#proge) · proga `mapileng` (`js/tracks/mapileng.js`)
+
+Državna cesta QL4C med Đồng Vănom in Mèo Vạcom na kraški planoti Đồng Văn (provinca Hà Giang, skrajni sever Vietnama), v pravem merilu: kratek kos ceste tik pod prelazom Mã Pí Lèng, ki se s tremi serpentinami vzpne po pobočju nad kanjonom reke Nho Quế. Proga se začne na 1184 m (23,2504° S, 105,3895° V), gre skozi tri serpentine na greben pri spomeniku graditeljem ceste (1256 m, najvišja točka) in se malo spusti do cilja (1245 m): 0,99 km, 72 m vzpona in 11 m spusta. Pred startom je ~220 m ceste za štartno mrežo, za ciljem ~245 m za mesta avtov po dirki in razgledišče. Prva od petih kratkih prog zunaj Evrope (`docs/nove-proge-1-0.md`, Del 4: K1). Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija** (kot na Dadèsu):
+
+- **Dirka**: tekmeci (v meniju *Opponents* od 0 do največ 95: pred startom je le ~220 m ceste za kolono letečega starta; `maxRivals`), leteči start kot na vseh odprtih cestah, ena vožnja do cilja. Pod mestom so prevoženi kilometri in nadmorska višina (v HUD med višinama starta in cilja: na grebenu pri spomeniku pokaže višino cilja); po cilju vsak avto zapelje na svoje mesto ob cesti. Kvalifikacij ni (odprta cesta).
+- **Kronometer**: sam proti uri, dve kontrolni točki z vmesnimi časi in višino, lestvica najboljših 10, duh in medalje (zlata 0:37, srebrna 0:38, bronasta 0:41, v dežju 0:40 / 0:42 / 0:45; zlato je čas relijskega avta na avtopilotu, kot na Vršiču).
+- **Promet**: dvoboj z enim tekmecem po odprti cesti: največ motoristov, kot na gorskih cestah Hà Gianga, minibusi in avtomobili; redki kolesarji.
+- **Policija**: beg pred policijo (pregon se začne že na štartu, pobegneš čez cilj). Patrulje imajo ob bokih modro progo s splošnim napisom CẢNH SÁT (»policija«, brez imena ali znaka katere koli službe), v rezultatih pobega piše »Do prelaza Mã Pí Lèng v …«.
+- **Serpentine**: na pravi cesti niso oštevilčene; igra jih šteje od spodaj navzgor. Pod uro se izpišejo z višino (Serpentina 1 · 1.210 m, Serpentina 2 · 1.216 m, Serpentina 3 · 1.243 m), na grebenu še Spomenik (brez višine, ker višina v HUD ne gre nad višino cilja); komentator ima na tej progi svoje stavke ob startu, ob cilju in ob pobegu.
+- **Oblika in višine**: sredinska črta je iz OpenStreetMap (vsakih 5 m, zglajena), taka, kot je: prva in druga serpentina sta cik-cak s kraki ~15 m narazen, konice imajo polmer 7–13 m, druga se zavije za 225°. Prava cesta je široka ~6 m, v igri 9 m. Višine so iz višinskega modela Copernicus DEM GLO-30, ki ceste v strmem pobočju ne vidi natančno: profil se mu približa z naklonom največ 12 % in z bolj položnimi konicami serpentin (kot so zgrajene).
+
+Okolica (gradi jo skupni graditelj kratkih prog `buildKratke` v `js/world-kratke.js` s slogom `KR.mapileng`; teren s pomožnimi funkcijami Vršiča in Los Caracoles kot Dadès, zidovi med kraki kot na prelazih, `js/world-prelaz.js` ostane nespremenjen):
+
+- **Kraška planota**: svetlo dopoldne v rahli meglici. Travnata pobočja, skozi katera povsod v zaplatah pogleda sivi apnenec, skupine sivih skalnih stolpičev in balvanov v travi, koruza v žepih prsti med skalami s suhozidi okoli njiv, grmičevje in redka drevesa (bori in listavci), kjer jih kaže zemljevid (raba tal iz ESA WorldCover 2021 in OpenStreetMap, barve po rabi tal in naklonu); na strmih pobočjih pasovi skale s travnatimi policami.
+- **Cesta**: ozek asfalt s črtkano belo sredinsko črto, ob robu pas makadama. Nizki betonski parapeti na robu, kjer teren pada, okoli serpentin v rdečih in belih blokih; podporni zidovi pod robom zgornjega kraka serpentin (kot na prelazih); smerni stebrički, table s puščicami v serpentinah.
+- **Greben**: spomenik graditeljem ceste (bel obelisk na stopničastem podstavku) z majhnim svetiščem ob njem, majhen muzej in kavarna s teraso ob cesti, informacijska tabla (lega iz OpenStreetMap; generični, brez imen in napisov); malo gledalcev pri spomeniku.
+- **Razgledišče**: terasa ob cesti ~205 m za ciljem s tablo ĐIỂM NGẮM CẢNH (»razgledišče«) in ljudmi.
+- **Obzorje**: onstran pasu ob cesti pravi teren ~12 km naokoli (Copernicus DEM, mreža 300 m): kraški vrhovi v meglici in globoki kanjon pod cesto.
+- **Dirka**: start z lučmi pod portalom XUẤT PHÁT, modri portali kontrolnih točk z višino v rumenem, cilj VỀ ĐÍCH s tablo MÃ PÍ LÈNG, transparent MÃ PÍ LÈNG · ĐỒNG VĂN · QL4C (samo zemljepisna imena in splošne besede), table krajev (Đồng Văn, Lũng Cú, Mèo Vạc, Mã Pí Lèng, QL4C), ĐƯỜNG ĐÈO NGUY HIỂM (»nevarna prelaška cesta«), ĐI CHẬM (»vozi počasi«); malo gledalcev (redarji in redke mirne skupine ob startu, cilju in spomeniku).
+- **Živali**: krave, konji, koze in prašiči ob cesti (`zivali`).
+- **Fotografije**: videz je narejen po podatkih (OpenStreetMap, ESA WorldCover, višinski model) in splošnem poznavanju kraja, brez Google Maps, Google Earth ali Street View.
+- **Približki**: drevesa, koruza, grmičevje, skale in kamni so razporejeni po rabi tal in naklonu, ne po resničnih legah. Spomenik, svetišče, muzej in kavarna so generični (lega iz OpenStreetMap, oblika splošna); terasa razgledišča stoji ob cesti (v OpenStreetMap je točka na cesti sami).
+- **Pravno**: samo zemljepisna imena (Mã Pí Lèng, Đồng Văn, Mèo Vạc, Lũng Cú, QL4C) in splošne besede; spomenik in muzej sta brez imen in napisov.
+
+Obremenitev telefona (`tests/golden/perf.json`, nizka podrobnost): v povprečju 138 klicev risanja in 229 tisoč oglišč, največ 170 klicev in 273 tisoč oglišč.
+
+Podatke proge pripravita orodji `tools/proga-podatki.py` (nastavitve v `tools/mapileng/config.json`) in skupno orodje kratkih prog `tools/kratke/build.py` (`python3 -I tools/kratke/build.py mapileng --osm <surovi OSM>`: podatkovni blok in višine `MAPILENG_H` v `js/tracks/mapileng.js`, zanimivosti ob cesti v `tools/mapileng/extra.json`; `--png` načrt in profil). Vire glej v `README.md` pod »Zasluge«.

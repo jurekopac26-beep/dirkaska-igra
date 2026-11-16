@@ -1,0 +1,34 @@
+{
+  "id": "banaue",
+  "about": "Banaue, Filipini (id banaue): 1 km of road 109 on the slope above the rice terraces north of Banaue, past the viewpoints (docs/nove-proge-1-0.md, Del 4)",
+  "box": [16.9067, 121.0404, 16.9398, 121.0706],
+  "closed": false,
+  "dist": {
+    "grid": 480
+  },
+  "route": [
+    [16.927489, 121.055956, "Nueva Vizcaya - Ifugao - Mountain Province Road", "run-up for the grid | primary, w245021759, 210 m before the start line"],
+    [16.926564, 121.055934, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, 104 m before the start line"],
+    [16.92625, 121.05523, "Nueva Vizcaya - Ifugao - Mountain Province Road", "start | primary, w245021759, s 0 m"],
+    [16.92559, 121.05484, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 100 m"],
+    [16.92483, 121.05512, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 200 m"],
+    [16.92416, 121.05554, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 300 m"],
+    [16.92357, 121.05487, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 400 m"],
+    [16.92285, 121.05444, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 500 m"],
+    [16.92213, 121.05456, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 600 m"],
+    [16.92158, 121.05519, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 700 m"],
+    [16.92079, 121.05516, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 800 m"],
+    [16.92088, 121.05592, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, s 900 m"],
+    [16.92026, 121.05649, "Nueva Vizcaya - Ifugao - Mountain Province Road", "finish | primary, w245021759, s 1000 m"],
+    [16.919475, 121.057026, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, 108 m past the finish line"],
+    [16.918697, 121.057208, "Nueva Vizcaya - Ifugao - Mountain Province Road", "primary, w245021759, 202 m past the finish line"],
+    [16.918823, 121.057723, "Nueva Vizcaya - Ifugao - Mountain Province Road", "past the finish | primary, w245021759, 260 m past the finish line"]
+  ],
+  "prefer": [
+    "Nueva Vizcaya - Ifugao - Mountain Province Road"
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

@@ -86,7 +86,7 @@
   // camera's far plane (nearer ones nearer: the ridges cover what lies behind them), so the distant mountains show above the haze of the near
   // world and behind every part of it; hazed towards the fog's colour with their real distance (and all the way near the corridor's edge); not
   // where the corridor is (the nodes within 470 m of the road). irFarUpdate moves it with the camera (World.update)
-  function irFar(colFn) {   // (colFn(A, slope, q): a road's own colours of the land, Mount Hotham's; else Nikko's)
+  function irFar(colFn, wetC) {   // (colFn(A, slope, q): a road's own colours of the land, Mount Hotham's; else Nikko's; wetC: its lakes' colour, Atitlán's)
     const F = T.def.farDem; if (!F) return null;
     const nx = F.nx, nz = F.nz, n = nx * nz, b = atob(F.b64), base = API.VR.D.base, H = new Float32Array(n), wet = new Uint8Array(n), dr = new Float32Array(n);
     const lo = F.lo != null ? F.lo : 400;   // (the lowest height of the grid: 400 m unless the data says otherwise, tools/proga)
@@ -101,7 +101,7 @@
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
       const k = j * nx + i, h = H[k], A = h + base, sl = Math.hypot(H[j * nx + Math.min(nx - 1, i + 1)] - H[j * nx + Math.max(0, i - 1)], H[Math.min(nz - 1, j + 1) * nx + i] - H[Math.max(0, j - 1) * nx + i]) / (2 * F.cell), q = rpHash(i, j) - 0.5;
       let c;
-      if (wet[k]) c = [0.18, 0.27, 0.3];
+      if (wet[k]) c = wetC || [0.18, 0.27, 0.3];
       else if (colFn) c = colFn(A, sl, q);
       else {
         c = su ? [0.2 + q * 0.04, 0.33 + q * 0.05, 0.14] : [0.5 + q * 0.12, 0.3 + q * 0.06, 0.14];   // the broadleaf woods (green; autumn's reds and browns)

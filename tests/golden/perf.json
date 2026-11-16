@@ -362,5 +362,40 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "mapileng": {
+  "calls": 138,
+  "maxCalls": 169,
+  "kverts": 230,
+  "maxKverts": 272,
+  "jsMs": 2.17
+ },
+ "mujib": {
+  "calls": 118,
+  "maxCalls": 148,
+  "kverts": 223,
+  "maxKverts": 294,
+  "jsMs": 1.24
+ },
+ "sanssouci": {
+  "calls": 161,
+  "maxCalls": 184,
+  "kverts": 402,
+  "maxKverts": 498,
+  "jsMs": 1.03
+ },
+ "banaue": {
+  "calls": 168,
+  "maxCalls": 182,
+  "kverts": 318,
+  "maxKverts": 360,
+  "jsMs": 1.11
+ },
+ "atitlan": {
+  "calls": 179,
+  "maxCalls": 227,
+  "kverts": 286,
+  "maxKverts": 326,
+  "jsMs": 1.89
  }
 }

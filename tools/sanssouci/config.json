@@ -1,0 +1,33 @@
+{
+  "id": "sanssouci",
+  "about": "Sans Souci, Sejšeli (id sanssouci): 1 km of the Sans Souci road over the mountains of Mahé through the village of Sans Souci (docs/nove-proge-1-0.md, Del 4)",
+  "box": [-4.6564, 55.4368, -4.6242, 55.4668],
+  "closed": false,
+  "dist": {
+    "grid": 480
+  },
+  "route": [
+    [-4.636829, 55.450645, "Sans Souci Road", "run-up for the grid | secondary, w791481215, 210 m before the start line"],
+    [-4.637112, 55.451442, "Sans Souci Road", "secondary, w791481215, 105 m before the start line"],
+    [-4.63785, 55.45166, "Sans Souci Road", "start | secondary, w791481215, s 0 m"],
+    [-4.6382, 55.45236, "Sans Souci Road", "secondary, w791481215, s 100 m"],
+    [-4.63876, 55.45303, "Sans Souci Road", "secondary, w791481215, s 200 m"],
+    [-4.63955, 55.45328, "Sans Souci Road", "secondary, w791481215, s 300 m"],
+    [-4.63994, 55.45269, "Sans Souci Road", "secondary, w791481215, s 400 m"],
+    [-4.64083, 55.45251, "Sans Souci Road", "secondary, w791481215, s 500 m"],
+    [-4.64081, 55.45167, "Sans Souci Road", "secondary, w999288744, s 600 m"],
+    [-4.64092, 55.45083, "Sans Souci Road", "secondary, w999288745, s 700 m"],
+    [-4.64156, 55.45095, "Sans Souci Road", "secondary, w999288733, s 800 m"],
+    [-4.64223, 55.45076, "Sans Souci Road", "secondary, w999288733, s 900 m"],
+    [-4.6428, 55.4503, "Sans Souci Road", "finish | secondary, w999288733, s 1000 m"],
+    [-4.643284, 55.44949, "Sans Souci Road", "secondary, w999288733, 102 m past the finish line"],
+    [-4.64459, 55.449041, "Sans Souci Road", "past the finish | secondary, w999288733, 260 m past the finish line"]
+  ],
+  "prefer": [
+    "Sans Souci Road"
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}
