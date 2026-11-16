@@ -2289,5 +2289,24 @@
    "lifeShadow:MeshBasicMaterial": "1e1501c3",
    "life:MeshBasicMaterial": "c8dc7e11"
   }
+ },
+ "portobelo": {
+  "meshes": 246,
+  "verts": 216830,
+  "instances": 1584,
+  "props": 0,
+  "crowd": 81,
+  "world": "aec9e6a4",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "acc521b0",
+   "-:MeshPhongMaterial": "ce91aa65",
+   "crowd:MeshLambertMaterial": "cd25d89c",
+   "flags:MeshLambertMaterial": "8d45e55b",
+   "ao:MeshBasicMaterial": "3c23c188",
+   "tyremarks:MeshBasicMaterial": "dcbb4980",
+   "roadwear:MeshLambertMaterial": "7344ee0a"
+  }
  }
 }

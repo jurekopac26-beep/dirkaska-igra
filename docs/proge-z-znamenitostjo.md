@@ -14,7 +14,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 8 | El Jem | Tunizija | stavba | biketraveler | čaka |
-| 9 | Portobelo | Panama | stavba | biketraveler | čaka |
+| 9 | Portobelo | Panama | stavba | biketraveler | v delu (veja `proge/portobelo`) |
 | 10 | *zamenjava* (bila Trongsa, delujoč samostan) | Butan ali rezerva | druga: naravna oblika ali zgradba | biketraveler | izbere seja po resetu |
 
 **Zamenjave 3, 6, 7, 10:** asfaltna cesta 1–5 km z naravno znamenitostjo ali zgradbo (skalni lok ali stolp, slap, vulkan, sipine, velikansko drevo, star most, svetilnik, jez, terase, solne tvorbe). Najprej v isti državi, sicer rezerva ali naslednja država iz TOP 20 (npr. Namibija: sipine ali skale ob cesti pri Lüderitzu). Analizo naredi prva seja po resetu porabe (15. 11. ob 10.00), izbor zapiše sem, v `docs/proge-po-drzavah.md` in na stran Odločitve ter pošlje Mateju samo zamenjane vrstice.

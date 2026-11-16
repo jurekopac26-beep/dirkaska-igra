@@ -62,6 +62,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Cusco, Peru](docs/proge/cusco.md)
 - [Mombasa, Kenija](docs/proge/mombasa.md)
 - [Isalo, Madagaskar](docs/proge/isalo.md)
+- [Portobelo, Panama](docs/proge/portobelo.md)
 
 Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Hakone (Suzuka in Irohazaka sta po odločitvi 9. 11. 2026 testni); iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
@@ -497,3 +498,8 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Isala: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Drevesa Isala (višina krošenj, tla pod drevesi): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Zastava Madagaskarja v meniju (`assets/flags/madagascar.svg`): narisana po uradnem opisu zastave (državni simbol, javna domena).
+- Proga Portobelo (sredinska črta, ceste, stavbe, obala, obris obalne trdnjave, raba tal): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek `api.openstreetmap.org`). Iz njih izpeljani podatki v `js/tracks/portobelo.js`, `js/data/portobelo.js` in model trdnjave `assets/landmarks/portobelo.glb`, `portobelo-far.glb` (narejen v Blenderju, `tools/znamenitost/portobelo.py`) so na voljo pod ODbL 1.0.
+- Višine in teren Portobela (tudi daljna okolica): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Portobela: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Drevesa Portobela (višina krošenj, tla pod drevesi): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Zastava Paname v meniju (`assets/flags/panama.svg`): narisana po uradnem opisu zastave (državni simbol, javna domena).

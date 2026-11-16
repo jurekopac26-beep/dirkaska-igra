@@ -496,6 +496,7 @@
     'Zaliv Praia do Bispo': 'Praia do Bispo Bay', 'Pod gričem': 'Under the Hill', 'Obroč pod gričem': 'Round the Hill', 'Trdnjava': 'Fortress', 'Ob zalivu': 'Along the Bay', 'Marginal': 'Marginal', 'Do konca zaliva': 'To the end of the bay',   // (Luanda: the HUD, the results of an escape)
     'Mestno središče': 'Town Centre', 'Stari del mesta': 'Old Town', 'Obalna cesta': 'Shore Road', 'Kanal Likoni': 'Likoni Channel', 'Do obalne ceste': 'To the shore road',   // (Mombasa: the HUD, the results of an escape; 'Trdnjava' and 'Krožišče' are already in)
     'Planota Isalo': 'Isalo Plateau', 'Pod skalami': 'Under the Rocks', 'Kraljica Isala': 'Queen of Isalo', 'Ravnina proti jugu': 'The Plain to the South', 'Do ravnine': 'To the plain',   // (Isalo: the HUD, the results of an escape)
+    'Obalna cesta': 'The Coast Road', 'Nad zalivom': 'Above the Bay', 'Staro mesto': 'The Old Town', 'Most čez potok': 'The Stream Bridge', 'Vzhodni breg': 'The East Shore', 'Do vzhodnega brega': 'To the east shore',   // (Portobelo: the HUD, the results of an escape; 'Ob zalivu' and 'Trdnjava' above)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
