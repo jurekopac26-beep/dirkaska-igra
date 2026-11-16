@@ -106,6 +106,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
 | Vietnam | Hải Vân (PR #676) | – | – |
 | Filipini | Batangas (PR #684, Nove proge za 1.0, linija A) | – | – |
+| Salvador | Quezaltepeque (PR #686, Nove proge za 1.0, linija A) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
