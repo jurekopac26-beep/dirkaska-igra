@@ -1253,5 +1253,31 @@
     }
    ]
   }
+ ],
+ [
+  "aguascalientes",
+  {
+   "kbps": 450,
+   "speed": 48,
+   "back": 114,
+   "up": 72,
+   "ahead": 57,
+   "fogNear": 246,
+   "fogFar": 950,
+   "places": [
+    {
+     "n": "Turns 1–2",
+     "d": 390
+    },
+    {
+     "n": "Back Straight",
+     "d": 670
+    },
+    {
+     "n": "Turns 3–4",
+     "d": 955
+    }
+   ]
+  }
  ]
 ]
