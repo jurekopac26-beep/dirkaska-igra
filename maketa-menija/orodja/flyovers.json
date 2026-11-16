@@ -1197,26 +1197,6 @@
   }
  ],
  [
-  "cromwell",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "Under the Bridge",
-     "d": 1300
-    },
-    {
-     "n": "West Hairpin",
-     "d": 2140
-    },
-    {
-     "n": "The Bridge",
-     "d": 3062
-    }
-   ]
-  }
- ],
- [
   "bikernieki",
   {
    "kbps": 450,
@@ -1252,46 +1232,6 @@
     {
      "n": "Long Right",
      "d": 3449
-    }
-   ]
-  }
- ],
- [
-  "aguascalientes",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "Turns 1–2",
-     "d": 390
-    },
-    {
-     "n": "Back Straight",
-     "d": 670
-    },
-    {
-     "n": "Turns 3–4",
-     "d": 955
-    }
-   ]
-  }
- ],
- [
-  "houli",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "South-west Hairpin",
-     "d": 936
-    },
-    {
-     "n": "Hotel Chicane",
-     "d": 2026
-    },
-    {
-     "n": "Double Right",
-     "d": 2832
     }
    ]
   }
@@ -1585,78 +1525,6 @@
   }
  ],
  [
-  "mogyorod",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "Right Hairpin",
-     "d": 614
-    },
-    {
-     "n": "Chicane",
-     "d": 2374
-    },
-    {
-     "n": "Left Hairpin",
-     "d": 3768
-    }
-   ]
-  }
- ],
- [
-  "serres",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "Double Left",
-     "d": 860
-    },
-    {
-     "n": "Esses",
-     "d": 1320
-    },
-    {
-     "n": "South-west Hairpin",
-     "d": 2070
-    },
-    {
-     "n": "Long Right",
-     "d": 2490
-    }
-   ]
-  }
- ],
- [
-  "sindia",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "Left over the Top",
-     "d": 440
-    },
-    {
-     "n": "Fast Esses",
-     "d": 950
-    },
-    {
-     "n": "Baobab Corner",
-     "d": 2320
-    },
-    {
-     "n": "Triple Bend",
-     "d": 2819
-    },
-    {
-     "n": "Right at the Bottom",
-     "d": 3959
-    }
-   ]
-  }
- ],
- [
   "sosnova",
   {
    "kbps": 450,
@@ -1672,75 +1540,6 @@
     {
      "n": "The Esses",
      "d": 1110
-    }
-   ]
-  }
- ],
- [
-  "tocancipa",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "West Loop",
-     "d": 560
-    },
-    {
-     "n": "Middle Esses",
-     "d": 810
-    },
-    {
-     "n": "East Loop",
-     "d": 1610
-    },
-    {
-     "n": "South Hairpin",
-     "d": 2170
-    }
-   ]
-  }
- ],
- [
-  "yahuarcocha",
-  {
-   "kbps": 450,
-   "places": [
-    {
-     "n": "Long Right",
-     "d": 880
-    },
-    {
-     "n": "Left Hairpin",
-     "d": 2120
-    },
-    {
-     "n": "Lakeside Straight",
-     "d": 2899
-    },
-    {
-     "n": "Lakeside Hairpin",
-     "d": 3319
-    }
-   ]
-  }
- ],
- [
-  "koli",
-  {
-   "alt": [
-    159,
-    306
-   ],
-   "kbps": 450,
-   "season": "winter",
-   "places": [
-    {
-     "n": "Hairpin 1",
-     "d": 1726
-    },
-    {
-     "n": "Hairpin 2",
-     "d": 1962
     }
    ]
   }
@@ -1838,6 +1637,26 @@
    "alt": [
     1973,
     2360
+   ]
+  }
+ ],
+ [
+  "hakone",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Miyanoshita",
+     "d": 5910
+    },
+    {
+     "n": "Lake Shōjin",
+     "d": 13826
+    },
+    {
+     "n": "Seven Bends",
+     "d": 18660
+    }
    ]
   }
  ]

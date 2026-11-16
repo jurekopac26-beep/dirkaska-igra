@@ -489,17 +489,6 @@
   }
  ],
  [
-  "cromwell",
-  "top",
-  "top-cromwell",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
   "bikernieki",
   "top",
   "top-bikernieki",
@@ -514,28 +503,6 @@
   "buriram",
   "top",
   "top-buriram",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
-  "aguascalientes",
-  "top",
-  "top-aguascalientes",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
-  "houli",
-  "top",
-  "top-houli",
   {
    "W": 1100,
    "H": 830,
@@ -674,39 +641,6 @@
   }
  ],
  [
-  "mogyorod",
-  "top",
-  "top-mogyorod",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
-  "serres",
-  "top",
-  "top-serres",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
-  "sindia",
-  "top",
-  "top-sindia",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
   "sosnova",
   "top",
   "top-sosnova",
@@ -715,39 +649,6 @@
    "H": 830,
    "wet": true,
    "pad": 1.0
-  }
- ],
- [
-  "tocancipa",
-  "top",
-  "top-tocancipa",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
-  "yahuarcocha",
-  "top",
-  "top-yahuarcocha",
-  {
-   "W": 1100,
-   "H": 830,
-   "wet": true,
-   "pad": 1.0
-  }
- ],
- [
-  "koli",
-  "top",
-  "top-koli",
-  {
-   "W": 824,
-   "H": 620,
-   "wet": true,
-   "skirt": false
   }
  ],
  [
@@ -787,6 +688,16 @@
   {
    "W": 824,
    "H": 620,
+   "wet": true
+  }
+ ],
+ [
+  "hakone",
+  "top",
+  "top-hakone",
+  {
+   "W": 1100,
+   "H": 830,
    "wet": true
   }
  ]
