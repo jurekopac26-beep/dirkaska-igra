@@ -61,8 +61,9 @@
   };
 
   // LK.extra: the burial mounds (domes of turf and heather), the buildings by the circuit (OSM outlines as boxes), its fences (chain link
-  // on posts; not where they would stand in the circuit's barriers or run-offs); before the crowds and the trees, which keep clear of them
-  function skExtra({ root, tex, scen, exclPush, CR }) {
+  // on posts; not where they would stand in the circuit's barriers or run-offs, open where a side road goes through: def.stranske); before
+  // the crowds and the trees, which keep clear of them
+  function skExtra({ root, tex, scen, exclPush, CR, naCesti }) {
     const T = API.T, sk = T.def.sk || {}, R = rng(5611), st = { mounds: 0, buildings: 0, fence: 0 };
     for (const [x, z, r, h] of sk.mounds || []) {   // a mound: a low dome, 16 sides, turf and heather in rings, sunk a little into the ground
       const g = scen.get(x, z), y = nrGround(x, z) - 0.25, S = 16, RG = 5, col = (q) => [lerp(0.33, 0.4, q), lerp(0.4, 0.33, q), lerp(0.2, 0.3, q)];   // (grass round its foot, heather on its top)
@@ -86,7 +87,7 @@
         const ax = f[k - 2], az = f[k - 1], bx = f[k], bz = f[k + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / 3));
         for (let q = 0; q < n; q++) {
           const x0 = ax + (bx - ax) * q / n, z0 = az + (bz - az) * q / n, x1 = ax + (bx - ax) * (q + 1) / n, z1 = az + (bz - az) * (q + 1) / n, d = L / n;
-          if (!keep(x0, z0) || !keep(x1, z1)) { acc += d; continue; }
+          if (!keep(x0, z0) || !keep(x1, z1) || (naCesti && (naCesti(x0, z0, 0.3) || naCesti(x1, z1, 0.3) || naCesti((x0 + x1) / 2, (z0 + z1) / 2, 0.3)))) { acc += d; continue; }
           const y0 = nrGround(x0, z0), y1 = nrGround(x1, z1), u0 = acc / 2.5, u1 = (acc + d) / 2.5, ins = [(x0 + x1) / 2 - (z1 - z0), y0 + 1, (z0 + z1) / 2 + (x1 - x0)];
           fg.quadO([x0, y0 + 0.05, z0], [x1, y1 + 0.05, z1], [x1, y1 + 2.05, z1], [x0, y0 + 2.05, z0], [1, 1, 1], ins, [[u0, 0], [u1, 0], [u1, 0.8], [u0, 0.8]]);
           box(scen.get(x0, z0), x0, y0 - 0.2, z0, 0.08, 2.35, 0.08, Math.atan2(bz - az, bx - ax), [0.58, 0.6, 0.62]);
