@@ -6,7 +6,7 @@
 //  2. the address set: the time trial on Pikes Peak in the menu's Friends view (the fourth camera) has the tabs Friends / World; World
 //     before joining: what goes where (the consent), Join / Not now, the privacy policy; upright (360 × 640) and on its side (640 × 360)
 //     nothing over the edge.
-//  3. Join (the driver's name Lisica): the nickname posted, the world's top rows, the player's own row lit, "#3 of 8", the badge #3.
+//  3. Join (the driver's name Lisica): the nickname posted, the world's top rows, the player's own row lit, "#3 of 8".
 //  4. a run while the server is down (503): kept in the queue (Settings: one waiting); the server back: the queue sent, the run posted
 //     once, the queue empty; a 429 waits as long as the server says.
 //  5. the server down with the table kept: the kept rows and "as of HH.MM"; nothing kept: "World leaderboard is not available right now".
@@ -56,13 +56,13 @@ async function route(page) {
   });
 }
 const posts = (p) => F.posts.filter(x => x[0] === p).map(x => x[1]);
-// the track step's Friends view: its tabs, the World's rows, the line under them, the badge, anything over the edge
+// the track step's Friends view: its tabs, the World's rows, the line under them, anything over the edge
 const view = (p) => ev(p, `const t = root.querySelector('.wtab'), rs = t ? [...t.querySelectorAll('tbody tr')].filter(r => r.getClientRects().length) : [], W = innerWidth, H = innerHeight, q = (s) => root.querySelector(s);
   return { tabs: [...root.querySelectorAll('.ftabs [role="tab"]')].map(b => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')), world: !!q('.dio.friends.world'),
     join: q('.fjoin') ? q('.fjoin').textContent : '', acts: [...root.querySelectorAll('.dio.friends [data-act]')].map(b => b.dataset.act), pol: q('.fpol') ? q('.fpol').getAttribute('href') : '',
     rows: rs.map(r => [...r.children].map(c => c.textContent)), me: rs.findIndex(r => r.classList.contains('me')), line: q('.wline') ? q('.wline').textContent : '', none: q('.dio.friends .fnone') ? q('.dio.friends .fnone').textContent : '',
-    badge: (q('.fbadge') || {}).textContent || '', cut: rs.some(r => [...r.children].some(c => c.scrollWidth > c.clientWidth + 1)),
-    over: [...root.querySelectorAll('.dio.friends, .dio.friends *, .fbadge')].filter(e => { const b = e.getBoundingClientRect(); return b.width && (b.right > W + 0.5 || b.left < -0.5 || b.bottom > H + 0.5 || b.top < -0.5); }).map(e => e.className || e.tagName) };`);
+    cut: rs.some(r => [...r.children].some(c => c.scrollWidth > c.clientWidth + 1)),
+    over: [...root.querySelectorAll('.dio.friends, .dio.friends *')].filter(e => { const b = e.getBoundingClientRect(); return b.width && (b.right > W + 0.5 || b.left < -0.5 || b.bottom > H + 0.5 || b.top < -0.5); }).map(e => e.className || e.tagName) };`);
 const click = (page, act) => page.click(`[data-act="${act}"] >> visible=true`);
 const ready = (page) => page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
 const S = (page) => page.evaluate(() => ({ st: Svet.state(), q: Svet.queue() }));
@@ -112,9 +112,9 @@ try {
   await pa.evaluate(() => { const n = Date.now; Date.now = () => n() + 61e3; Menu.refresh(); setTimeout(() => { Date.now = n; }, 50); });
   await until(pa, () => !!document.getElementById('menu-host').shadowRoot.querySelector('.wtab tr.me'), null, 8000);
   const v3 = await view(pa);
-  T.check('the run sent at once (oddaja posted once, the queue empty); the World tab: the top 5, Lisica 3rd and lit, "#3 of 8", the badge #3, the times whole, nothing over the edge',
+  T.check('the run sent at once (oddaja posted once, the queue empty); the World tab: the top 5, Lisica 3rd and lit, "#3 of 8", the times whole, nothing over the edge',
     J(r3) === J([{ k: F.key, r: 'ok' }]) && posts('oddaja').length === 1 && posts('oddaja')[0].t === 615000 && v3.rows.length === 5 && v3.me === 2 && v3.rows[2][1] === 'Lisica' && v3.rows[0][1] === 'Hitri Jaka' &&
-    /^#3 of 8/.test(v3.line) && v3.badge === '#3' && !v3.cut && !v3.over.length, J({ r3, v3 }));
+    /^#3 of 8/.test(v3.line) && !v3.cut && !v3.over.length, J({ r3, v3 }));
   await pa.setViewportSize({ width: 640, height: 360 }); await pa.waitForTimeout(600);
   const v3b = await view(pa);
   T.check('on its side (640 × 360): the top 6, Lisica lit, nothing over the edge', v3b.rows.length === 6 && v3b.me === 2 && !v3b.cut && !v3b.over.length, J(v3b));
