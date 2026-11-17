@@ -482,8 +482,8 @@
     const secT = new Float32Array(N), brk = new Float32Array(N);
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = PER ? 18 + Math.floor(crH(k, 3, 97) * 50) : 60 + Math.floor(crH(k, 3, 97) * 70), t = PER ? 0.9 + crH(k, 5, 97) * 0.15 : 0.94 + crH(k, 5, 97) * 0.09; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }   // (the 1930s: tar macadam laid in shorter, more uneven stretches)
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = PER ? (i, o) => { const rl = T.rl[i]; let k = (0.84 - (0.1 + 0.08 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.6) k += 0.06 * sstep(w * 0.6, w, Math.abs(o)); return [k * 1.04, k, k * 0.92]; }   // (the 1930s: a warmer tar macadam, the racing line less rubbered, its edges paler where the cars seldom run and the dust settles)
-      : (i, o) => { const rl = T.rl[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; if (LK.road) k = LK.road(i, o, k); return [k, k, k * 1.02]; };   // (LK.road: Rio's worn asphalt)
+    const shade = PER ? (i, o) => { const rl = (T.gl || T.rl)[i]; let k = (0.84 - (0.1 + 0.08 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.6) k += 0.06 * sstep(w * 0.6, w, Math.abs(o)); return [k * 1.04, k, k * 0.92]; }   // (the 1930s: a warmer tar macadam, the racing line less rubbered, its edges paler where the cars seldom run and the dust settles)
+      : (i, o) => { const rl = (T.gl || T.rl)[i]; let k = (0.85 - (0.16 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.92) k -= 0.03; if (LK.road) k = LK.road(i, o, k); return [k, k, k * 1.02]; };   // (LK.road: Rio's worn asphalt)
     const MOW_D = LK.trees === 'rio' ? [0.05, 0.035, 0.045] : [0.22, 0.15, 0.18].map(v => v * (LK.mow || 1)), vg = LK.vg || (LK.trees === 'rio' ? [0.92, 0.95, 0.78] : [0.9, 0.99, 0.86]), vgD = vg.map((v, k) => v * (1 - MOW_D[k]));   // (Rio: the verge drier in the sun, the stripes fainter)   // the verge inside the barriers: mown, in stripes along the track (MOW_W m bands, dark and light in turn, from 1.2 m past the edge; the dark ones a deeper green)
     const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5;   // (MOW_B: the darker bands, MOW_O m wide, on the lawns out past the barrier)
     for (let c0 = 0; c0 < N; c0 += CH) {
@@ -583,7 +583,7 @@
         const cu = cell % 4, cv = Math.floor(cell / 4), u0 = cu / 4 + 1 / 512, u1 = (cu + 1) / 4 - 1 / 512, vt = 1 - cv / 8 - 1 / 1024, vb = 1 - (cv + 1) / 8 + 1 / 1024, col = [1, 1, 1, a];
         let pr = -1;
         for (let k = 0; k <= n; k++) {
-          const i = (i0 + k) % N, cc = clamp((fol ? T.rl[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
+          const i = (i0 + k) % N, cc = clamp((fol ? (T.gl || T.rl)[i] : 0) + c, -(w - 0.7 - hw), w - 0.7 - hw), v = vb + (vt - vb) * k / n;
           const r = rb.row([Pt(i, cc - hw, 0.05), Pt(i, cc + hw, 0.05)], [col, col], [[u0, v], [u1, v]]);
           if (pr >= 0) rb.link(pr, r, 0, 1); pr = r;
         }
