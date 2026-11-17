@@ -4034,18 +4034,21 @@ const Render = (function () {
   // the marbles (Race mb, a race with tyres): the rubber the tyres shed, a dark speckled band just off the racing line on the outside of the
   // corners (Track.marbles: its middle and width, how thick it gets there in the vertices' alpha), as dark as the race has laid it (mb.lv;
   // the rain washes it away). One mesh over the lap (a row every 4 m, only where there is a band; a strip ends where the band changes
-  // sides), built the first time it shows; a new world: built again for its track. Its picture: Tex.marbles, made once
+  // sides), built the first time it shows; a new world: built again for its track. Its picture: Tex.marbles, made once.
+  // A track with the player's line (Track gl, docs/zgumirana-linija.md): the band is drawn off that line, beside the rubber drawn there
+  // (Track.marblesAlong; the look only: the grip of it stays off the computed line, Track.marbleAt)
   let mbLn = null, mbTex = null;
   function marbles(R) {
-    if (mbLn && mbLn.userData.w !== world) { scene.remove(mbLn); mbLn.geometry.dispose(); mbLn.material.dispose(); mbLn = null; }
-    const T = R && R.track, lv = R && R.mb && T === curTrack ? R.mb.lv : 0;
+    const T = R && R.track, cur = !!T && T === curTrack, GL = cur && T.gl && T.gl !== T.rl ? T.gl : null;
+    if (mbLn && (mbLn.userData.w !== world || (cur && mbLn.userData.gl !== GL))) { scene.remove(mbLn); mbLn.geometry.dispose(); mbLn.material.dispose(); mbLn = null; }
+    const lv = R && R.mb && cur ? R.mb.lv : 0;
     if (lv > 0.01 && !mbLn && world) {
-      const M = T.marbles(), N = T.N, st = 2, n = Math.ceil(N / st), kAt = (j) => M.k[((j * st) % N + N) % N], O = [-1, -0.45, 0.45, 1], A = [0, 1, 1, 0];
+      const M = GL ? T.marblesAlong(GL) : T.marbles(), LN = GL || T.rl, N = T.N, st = 2, n = Math.ceil(N / st), kAt = (j) => M.k[((j * st) % N + N) % N], O = [-1, -0.45, 0.45, 1], A = [0, 1, 1, 0];
       const pos = [], col = [], uv = [], idx = [], bk = { dy: 0, sl: 0 };
       let last = -2, side = 0;
       for (let j = 0; j <= n; j++) {
         if (Math.max(kAt(j - 1), kAt(j), kAt(j + 1)) < 0.02) continue;
-        const i = (j * st) % N, k = kAt(j), sd = M.c[i] > T.rl[i] ? 1 : -1, b = pos.length / 3;
+        const i = (j * st) % N, k = kAt(j), sd = M.c[i] > LN[i] ? 1 : -1, b = pos.length / 3;
         for (let v = 0; v < 4; v++) {
           const o = M.c[i] + O[v] * M.h[i]; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035;
           if (T.bank) y += T.bankAt(i * T.ds, o, bk).dy;
@@ -4059,7 +4062,7 @@ const Render = (function () {
       g.computeVertexNormals();
       if (!mbTex) mbTex = Tex.marbles();
       const m = new THREE.MeshLambertMaterial({ map: mbTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-      mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length }; scene.add(mbLn);
+      mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length, gl: GL }; scene.add(mbLn);
     }
     if (mbLn) { mbLn.visible = lv > 0.01 && !mbLn.userData.none; mbLn.material.opacity = Math.min(1, lv); }
   }
@@ -4068,39 +4071,97 @@ const Render = (function () {
   // there). RUB_O: the columns across (m from the line), RUB_A their alpha, RUB_C their colour; a little more of it in the bends (the line's
   // curvature over ±16 m) than on the straights. As the race lays it (rb) it darkens and its sheen grows (a Phong highlight, bluish).
   // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
-  // again for its track. Its picture: Tex.rubber
+  // again for its track. Its picture: Tex.rubber.
+  // A track with the player's line (Track gl, gld: docs/zgumirana-linija.md) has the layer along that line and wider (RUB_OW, RUB_AW,
+  // RUB_CW; kept on the road), darker where the tyres work (gld: braking and cornering) and fainter on the straights, and only on the
+  // asphalt (rubberW). The look only: the grip of it stays on the computed line (Track.rubberAt). An open road has no race laying it:
+  // there it lies at RUB_OPEN, matt, fading as the road gets wet (the rain washes it off) and fainter in the snow (RUB_SNOW), a row at
+  // every sample in pieces of RUB_CH samples (rubberRoad), of which only those this side of the fog's end are drawn
   const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
+  const RUB_OW = [-3.1, -2.1, -1.05, 0, 1.05, 2.1, 3.1], RUB_AW = [0, 0.4, 0.85, 1, 0.85, 0.4, 0], RUB_CW = [0.3, 0.25, 0.16, 0.12, 0.16, 0.25, 0.3];
+  const RUB_OPEN = 0.6, RUB_SNOW = 0.6, RUB_CH = 128;
   let rbLn = null, rbTex = null;
-  function rubberLine(R) {
-    if (rbLn && rbLn.userData.w !== world) { scene.remove(rbLn); rbLn.geometry.dispose(); rbLn.material.dispose(); rbLn = null; }
-    const T = R && R.track, rb = R && R.mb && T === curTrack && T.rl ? R.mb.rb || 0 : 0;
-    if (rb > 0.005 && !rbLn && world) {
-      const N = T.N, nc = RUB_O.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
-      for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
-      for (let i = 0, j = 0; i <= N; j++) {
-        const ii = i % N, kb = 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), b0 = pos.length / 3;
-        for (let v = 0; v < nc; v++) {
-          const o = T.rl[ii] + RUB_O[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
-          if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
-          pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
-          col.push(RUB_C[v], RUB_C[v] * 0.96, RUB_C[v] * 0.92, RUB_A[v] * kb); uv.push(RUB_O[v] / 4, i * T.ds / 8);
-        }
-        if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
-        if (i === N) break;
-        let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
-        i = Math.min(N, i + st);
+  const rubberOff = () => { scene.remove(rbLn); (rbLn.isMesh ? [rbLn] : rbLn.children).forEach(c => c.geometry.dispose()); rbLn.userData.m.dispose(); rbLn = null; };
+  // (the wide layer's weight per sample: how hard the tyres work there (gld), none off the asphalt, fading in over the first 10 m of it; an open road: fading over 30 m at its two ends)
+  function rubberW(T) {
+    const N = T.N, open = T.open, at = (i) => open ? Math.max(0, Math.min(N - 1, i)) : ((i % N) + N) % N, a = new Uint8Array(N), e = new Uint8Array(N), w = new Float32Array(N);
+    for (let i = 0; i < N; i++) a[i] = !(T.settAt && T.settAt[i]) && (T.sf ? T.sf[i] === 0 : T.def.roadSurface !== 'makadam' || !!(T.pavedAt && T.pavedAt[i])) ? 1 : 0;
+    for (let i = 0; i < N; i++) { let m = 1; for (let o = -3; o <= 3; o++) m &= a[at(i + o)]; e[i] = m; }
+    for (let i = 0; i < N; i++) { let s = 0; for (let o = -2; o <= 2; o++) s += e[at(i + o)]; w[i] = (0.4 + 0.6 * Math.pow(T.gld[i], 0.7)) * s / 5 * (open ? Core.sstep(0, 15, i) * Core.sstep(0, 15, N - 1 - i) : 1); }
+    return w;
+  }
+  // (a lap's rubber, one mesh: the old layer along the computed line, or with GL the wide one along the player's line)
+  function rubberLap(T, GL, m) {
+    const RO = GL ? RUB_OW : RUB_O, RA = GL ? RUB_AW : RUB_A, RC = GL ? RUB_CW : RUB_C, w = GL ? rubberW(T) : null;
+    const N = T.N, nc = RO.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
+    for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
+    for (let i = 0, j = 0; i <= N; j++) {
+      const ii = i % N, kb = w ? w[ii] : 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), lim = GL ? (T.wa ? T.wa[ii] : T.w) - 0.1 : 0, b0 = pos.length / 3;
+      for (let v = 0; v < nc; v++) {
+        const o = GL ? Core.clamp(GL[ii] + RO[v], -lim, lim) : T.rl[ii] + RO[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
+        if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
+        pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
+        col.push(RC[v], RC[v] * 0.96, RC[v] * 0.92, RA[v] * kb); uv.push(RO[v] / 4, i * T.ds / 8);
       }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
-      g.computeVertexNormals();
+      if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+      if (i === N) break;
+      let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
+      i = Math.min(N, i + st);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    g.computeVertexNormals();
+    const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.renderOrder = 1; return o;
+  }
+  // (an open road's rubber along the player's line GL: a row at every sample, none off the asphalt, in pieces of RUB_CH samples under one plain
+  // Object3D: a Group's renderOrder would be its pieces' group order)
+  function rubberRoad(T, GL, m) {
+    const N = T.N, nc = RUB_OW.length, w = rubberW(T), bk = { dy: 0, sl: 0 }, row = new Int32Array(N).fill(-1), pos = [], col = [], uv = [], idx = [];
+    let nr = 0;
+    for (let i = 0; i < N; i++) {
+      if (Math.max(w[Math.max(0, i - 1)], w[i], w[Math.min(N - 1, i + 1)]) < 0.004) continue;
+      const lim = (T.wa ? T.wa[i] : T.w) - 0.1;
+      for (let v = 0; v < nc; v++) {
+        const o = Core.clamp(GL[i] + RUB_OW[v], -lim, lim); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.05;
+        if (T.bank) y += T.bankAt(i * T.ds, o, bk).dy;
+        pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o);
+        col.push(RUB_CW[v], RUB_CW[v] * 0.96, RUB_CW[v] * 0.92, RUB_AW[v] * w[i]); uv.push(RUB_OW[v] / 4, i * T.ds / 8);
+      }
+      if (i && row[i - 1] >= 0) for (let v = 0; v < nc - 1; v++) { const a = (nr - 1) * nc + v, c = nr * nc + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+      row[i] = nr++;
+    }
+    const P = new Float32Array(pos), C = new Float32Array(col), U = new Float32Array(uv), g0 = new THREE.BufferGeometry();
+    g0.setAttribute('position', new THREE.BufferAttribute(P, 3)); g0.setIndex(idx); g0.computeVertexNormals();   // (the normals over the whole strip: the pieces' seams shade alike)
+    const Nn = g0.attributes.normal.array; g0.dispose();
+    const grp = new THREE.Object3D();
+    for (let i0 = 0; i0 < N - 1; i0 += RUB_CH) {
+      const i1 = Math.min(N - 1, i0 + RUB_CH), ix = []; let r0 = -1, r1 = -1;   // (the seam's row in both pieces)
+      for (let i = i0; i <= i1; i++) if (row[i] >= 0) { if (r0 < 0) r0 = row[i]; r1 = row[i]; if (i > i0 && row[i - 1] >= 0) for (let v = 0; v < nc - 1; v++) { const a = (row[i - 1] - r0) * nc + v, c = a + nc; ix.push(a, a + 1, c, a + 1, c + 1, c); } }
+      if (!ix.length) continue;
+      const g = new THREE.BufferGeometry(), v0 = r0 * nc, v1 = (r1 + 1) * nc;
+      g.setAttribute('position', new THREE.BufferAttribute(P.slice(v0 * 3, v1 * 3), 3)); g.setAttribute('normal', new THREE.BufferAttribute(Nn.slice(v0 * 3, v1 * 3), 3));
+      g.setAttribute('color', new THREE.BufferAttribute(C.slice(v0 * 4, v1 * 4), 4)); g.setAttribute('uv', new THREE.BufferAttribute(U.slice(v0 * 2, v1 * 2), 2)); g.setIndex(ix); g.computeBoundingSphere();
+      const c = new THREE.Mesh(g, m); c.receiveShadow = true; c.renderOrder = 1; c.matrixAutoUpdate = false; grp.add(c);
+    }
+    return grp;
+  }
+  function rubberLine(R) {
+    const T = R && R.track, on = !!T && T === curTrack && !!T.rl, GL = on && T.gl && T.gl !== T.rl && T.gld ? T.gl : null;
+    if (rbLn && (rbLn.userData.w !== world || (on && rbLn.userData.gl !== GL))) rubberOff();
+    const road = !!GL && T.open;   // (an open road: no race lays it, it lies there as the dry days left it)
+    const rb = !on ? 0 : R.mb ? R.mb.rb || 0 : road ? RUB_OPEN * (1 - Core.sstep(0.1, 0.6, Math.max(0, wetW))) * (snowy() ? RUB_SNOW : 1) : 0;
+    if (rb > 0.005 && !rbLn && world) {
       if (!rbTex) rbTex = Tex.rubber();
       const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
-      rbLn = new THREE.Mesh(g, m); rbLn.name = 'rubberline'; rbLn.receiveShadow = true; rbLn.renderOrder = 1; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1 }; scene.add(rbLn);
+      rbLn = road ? rubberRoad(T, GL, m) : rubberLap(T, GL, m);
+      rbLn.name = 'rubberline'; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1, gl: GL, m, road }; scene.add(rbLn);
     }
     if (rbLn) {
+      const ud = rbLn.userData;
       rbLn.visible = rb > 0.005;
+      if (rbLn.visible && ud.road) { const p = camera.position, f = scene.fog ? scene.fog.far + 20 : Infinity; for (const c of rbLn.children) { const s = c.geometry.boundingSphere; c.visible = s.center.distanceTo(p) - s.radius < f; } }   // (as cullByDistance: the haze hides the far pieces anyway)
       const k = Math.round(Math.min(1, rb) * 100) / 100;   // (in steps: the material only when it changes)
-      if (k !== rbLn.userData.k) { rbLn.userData.k = k; rbLn.material.opacity = 0.22 + 0.5 * k; rbLn.material.specular.setRGB(0.05 + 0.13 * k, 0.06 + 0.15 * k, 0.08 + 0.2 * k); }
+      if (k !== ud.k) { const sk = ud.road ? 0.2 : 1; ud.k = k; ud.m.opacity = ud.road ? (0.3 / RUB_OPEN + 0.6) * k : 0.22 + 0.5 * k; ud.m.specular.setRGB((0.05 + 0.13 * k) * sk, (0.06 + 0.15 * k) * sk, (0.08 + 0.2 * k) * sk); }
     }
   }
 

@@ -308,7 +308,7 @@
       skip: (i, side) => !!(onBr[i] || SB.mouthV[side > 0 ? 1 : 0][i] || stubVerge(SB, i, side, w + sw, side > 0 ? T.br[i] : T.bl[i])), nets: [] };
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k * 0.99, k * 0.97]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k * 0.99, k * 0.97]; };
       const wht = [0.95, 0.95, 0.92], ylw = [0.97, 0.78, 0.15], gc = [0.74, 0.68, 0.58], deck = [0.64, 0.63, 0.6];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
