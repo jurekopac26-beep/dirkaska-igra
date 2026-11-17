@@ -22,7 +22,7 @@
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
-  const HAS_GLB = false;   // (true once assets/landmarks/hiva.glb and hiva-far.glb are in the repository: then World.znamenitost fetches them)
+  const HAS_GLB = true;   // (assets/landmarks/hiva.glb and hiva-far.glb are in the repository: World.znamenitost fetches them)
   // the two minarets inside the walls (OSM nodes, the track's frame: metres from the start line, x east, z south): [x, z, height, base radius]
   const MINARETS = [[153.6, -109.7, 29, 7.0, 'short'], [332.6, 84.3, 45, 4.8, 'tall']];
 
