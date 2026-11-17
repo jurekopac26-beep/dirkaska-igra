@@ -1102,19 +1102,59 @@ const Core = (function () {
       for (let i = 0; i < N; i++) { const b = (i + 1) % N; rds[i] = Math.hypot(rx[b] - rx[i], rz[b] - rz[i]); }
       if (open) rds[N - 1] = 0;
       this.rds = rds;
+      this.gl = this.rl; this.gld = null;   // (the rubber's line: the computed one until voznjaLinija gives the track the player's)
+    }
+    // the rubber's line (docs/zgumirana-linija.md): where the LOOK of the rubber goes, the layer that builds up on the road (Render) and the
+    // worlds' darker band, wheel tracks and braking marks. gl, per sample as rl (m from the centre line): the player's own line, rl + the
+    // offset dd of their profile for this track (all: VOZNJA_PROFILI's measured one, in the dry) or, where they have not driven yet, of
+    // their style on it (VOZNJA_SLOG: voznjaIzSloga over the dry race's speed profile), kept on the road (the car's half width and a
+    // margin, 1.7 m, inside the edge, or where the computed line itself runs if that is further out). gld: how hard the tyres work there
+    // (0..1: the braking, 8 m/s² and more is all of it, and the cornering, 10 m/s² and more, of that speed profile, with the line's
+    // curvature over ±16 m, smoothed over ±8 m), the layer's weight (Render: 0.4 + 0.6 · gld^0.7). The look only: the grip (rubberAt,
+    // marbles) and the cars' own lines (Race._voznja) stay on rl. Without a profile, and until this is called (the game calls it for
+    // every real track, js/game.js getTrack; the tests' own tracks never), gl is rl itself, the same array: gl !== rl says the track has
+    // the player's line. Returns whether it has
+    voznjaLinija(all) {
+      const T = this, N = T.N, ds = T.ds, rl = T.rl, open = T.open, rk = T.rk;
+      T.gl = rl; T.gld = null;
+      if (!rl || !all || !all.length) return false;
+      const dry = (p) => !!p && !/^mokro/.test(p.vreme || '') && !/zima/.test(p.vreme || '');
+      const vp = T.speedProfile(CSK.aiLatA, CSK.aiBrakeA, 85, CSK.aiWmax, 0, 0.9, 0, 0);
+      let P = all.find(p => dry(p) && !p.razredi && p.proga === T.def.id && p.dd && p.dd.length > 1) || null;
+      if (!P) { const S = all.find(p => dry(p) && p.razredi && p.razredi.length) || null; if (S) P = voznjaIzSloga(T, vp, S); }
+      if (!P || !P.dd || P.dd.length < 2) return false;
+      const dd = voznjaOdmik(T, P), gl = new Float32Array(N);
+      let moved = false;
+      for (let i = 0; i < N; i++) {
+        const lim = Math.max(Math.max(0, T.wAt(i) - 1.7), Math.abs(rl[i]));
+        gl[i] = dd[i] ? clamp(rl[i] + dd[i], -lim, lim) : rl[i];
+        if (gl[i] !== rl[i]) moved = true;
+      }
+      if (!moved) return false;
+      const at = (i) => open ? (i < 0 || i >= N ? -1 : i) : ((i % N) + N) % N, iF = open ? T.idx(T.finishS) : N;
+      const raw = new Float32Array(N), ld = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        let s = 0, c = 0; for (let o = -8; o <= 8; o++) { const j = at(i + o); if (j >= 0) { s += rk[j]; c++; } }
+        const j = at(i + 1), br = j >= 0 && i < iF ? Math.max(0, (vp[i] * vp[i] - vp[j] * vp[j]) / (2 * ds)) : 0;   // (an open road: not the profile's stop at the far end)
+        raw[i] = Math.min(1, Math.max(br / 8, vp[i] * vp[i] * Math.abs(s / c) / 10));
+      }
+      for (let i = 0; i < N; i++) { let s = 0, c = 0; for (let o = -4; o <= 4; o++) { const j = at(i + o); if (j >= 0) { s += raw[j]; c++; } } ld[i] = s / c; }
+      T.gl = gl; T.gld = ld;
+      return true;
     }
     // the marbles' band (MARB, Race mb; closed circuits): per sample its middle (c, m from the centre line), its half width (h) and how thick
     // it gets at most (k, 0..1: by how tight the racing line bends there, over ±16 m, and the room between the line and the road's edge on
-    // the outside of the bend: none where the line runs along the edge). Found once
-    marbles() {
-      if (this._mb) return this._mb;
-      const N = this.N, rk = this.rk, rl = this.rl, wa = this.wa, M = MARB, c = new Float32Array(N), h = new Float32Array(N), k = new Float32Array(N);
+    // the outside of the bend: none where the line runs along the edge). Found once. marblesAlong: the same band off another line (the
+    // rubber's, Track gl: only for the look of it, js/render.js; not kept, the grip is the computed line's)
+    marbles() { return this._mb || (this._mb = this.marblesAlong(this.rl)); }
+    marblesAlong(rl) {
+      const N = this.N, rk = this.rk, wa = this.wa, M = MARB, c = new Float32Array(N), h = new Float32Array(N), k = new Float32Array(N);
       for (let i = 0; i < N; i++) {
         let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; s /= 17;
         const so = s > 0 ? -1 : 1, u0 = so * rl[i] + M.gap, u1 = Math.min(u0 + M.wd, (wa ? wa[i] : this.w) - M.edge);   // (so: the outside of the bend; +n is to the right, a right bend's inside)
         k[i] = sstep(1 / M.r0, 1 / M.r1, Math.abs(s)) * sstep(0.6, 1.4, u1 - u0); c[i] = so * (u0 + u1) / 2; h[i] = Math.max(0, (u1 - u0) / 2);
       }
-      return (this._mb = { c, h, k });
+      return { c, h, k };
     }
     // how much of the band is under a car at sample i, d m from the centre line (0..1 of its thickest there): from a wheel on its edge (the
     // car's middle 0.8 m outside it) to all of it with the car's middle 0.4 m inside
@@ -6540,6 +6580,25 @@ const Core = (function () {
     }
     return { C, k, fe, lk, lm };
   }
+  // a profile's offset of the line (P.dd: one value every P.korak m from the start line) at each sample of the track, read as Race._voznja
+  // reads it for the cars: an open road has none before the start line and past the profile's last node, a circuit goes round the lap (its
+  // last node back to the first). For the rubber's line (Track.voznjaLinija)
+  function voznjaOdmik(T, P) {
+    const N = T.N, ds = T.ds, L = T.len, k = P.korak || 5, A = P.dd, n = A.length, out = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      let sp = i * ds - T.startS, j0, j1, f;
+      if (T.open) {
+        if (sp < 0 || sp > (n - 1) * k) continue;
+        const g = clamp(sp / k, 0, n - 1), j = Math.min(n - 2, Math.floor(g)); j0 = j; j1 = j + 1; f = g - j;
+      } else {
+        sp = ((sp % L) + L) % L;
+        const j = Math.min(n - 1, Math.floor(sp / k)), s1 = j < n - 1 ? (j + 1) * k : L;
+        j0 = j; j1 = j < n - 1 ? j + 1 : 0; f = clamp((sp - j * k) / Math.max(1e-6, s1 - j * k), 0, 1);
+      }
+      out[i] = A[j0] + (A[j1] - A[j0]) * f;
+    }
+    return out;
+  }
   // a profile of the player's style on this track (Race._voznja; VOZNJA_SLOG from tools/voznja.mjs slogOf), on the grid of a measured one
   // (korak m from the start line), by the corners of the race's speed profile (voznjaFaze) and the style's tables for the kind of corner
   // (razredi: by the apex's radius r, between two by it). The speed by the zone: before the apex (fe -1..0) the player's share of the pace
@@ -8674,7 +8733,7 @@ const Core = (function () {
 
   return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, autoBrake, AB, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
-    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga,
+    DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };
 })();
 
