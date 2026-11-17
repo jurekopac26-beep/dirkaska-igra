@@ -176,7 +176,7 @@
       s += L;
     }
     for (let k = 0; k < NP; k++) {
-      const i = at(Math.round((k + 0.5) / NP * len / ds)), rl = T.rl ? T.rl[i] : 0;
+      const i = at(Math.round((k + 0.5) / NP * len / ds)), GL = T.gl || T.rl, rl = GL ? GL[i] : 0;   // (the rubber's line: the player's where the track has it, Track.voznjaLinija)
       D[k * 4] = Math.round(clamp(rl / (2 * RLMAX) + 0.5, 0, 1) * 255); D[k * 4 + 1] = Math.round(brk[i] * 255);
       D[k * 4 + 2] = tone[0][k] * 16 + tone[1][k]; D[k * 4 + 3] = Math.round(clamp(T.wAt(i) / WMAX, 0, 1) * 255);
     }

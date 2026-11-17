@@ -562,7 +562,7 @@
     const FB = KN.length ? { gr: new GB(true), gl: new GB(), gs: new GB(true), gv: new GB(true), gw: new GB(true) } : null;   // (the bridges' deck, verges, masonry and parapets: their own meshes, they fade)
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; k *= 0.96 + 0.08 * P.n2(T.px[i] * 0.5 + o, T.pz[i] * 0.5); return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; k *= 0.96 + 0.08 * P.n2(T.px[i] * 0.5 + o, T.pz[i] * 0.5); return [k, k, k * 1.02]; };
       const wht = [0.95, 0.95, 0.92], gc = L.shoulder;
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
