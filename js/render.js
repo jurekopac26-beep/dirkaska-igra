@@ -10150,8 +10150,6 @@ const Render = (function () {
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && !pitOn(c) && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it (not under the pit stop's camera, pitCine: its view behind the car as ever)
-    if (cam.init && cam.lc === c && (x - cam.lx) ** 2 + (z - cam.lz) ** 2 > 60 * 60) resetCam();   // (the followed car far away since the last frame, a jump no car drives: the view there at once, as on a new race, not eased across the gap)
-    cam.lc = c; cam.lx = x; cam.lz = z;
     fallCam(c, x, z);   // (the followed car over the edge, or just back on the road)
     if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
