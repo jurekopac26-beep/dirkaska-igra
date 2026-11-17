@@ -43,8 +43,9 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # Biķernieki and Buriram: the ways that cross a run-off (a sand trap or a pale asphalt apron the game draws from the edge to
          # the barrier's far line, T.gravL/gravR): the strip would lie on it, 2 mm under its surface (most of them stranske drops anyway:
          # the barrier stands more than 22 m out; 2961 m left, 2481 m and 3755 m right it would draw them); Buriram 1728 m left: a 28 m
-         # drive that ends before the barrier's line, which steps out to a run-off there
-         'bikernieki': dict(kinds={'raceway'}, predmeti=False, izpusti=[(537, -1), (1920, -1), (2392, -1), (2935, 1), (2961, -1)]),
+         # drive that ends before the barrier's line, which steps out to a run-off there; Biķernieki 218 m left: a drive that would run
+         # across the pit lane's exit and through the end of the pit wall (def.pit, def.walls)
+         'bikernieki': dict(kinds={'raceway'}, predmeti=False, izpusti=[(218, -1), (537, -1), (1920, -1), (2392, -1), (2935, 1), (2961, -1)]),
          'buriram': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1728, -1), (2246, 1), (2481, 1), (2567, 1), (2648, 1), (2716, 1), (3399, -1), (3656, 1), (3755, 1)]),
          # Furka: a farm track that runs along the road just inside the barrier's line (4346 m, left); Gudauri: a drive that runs 20 m along
          # the road inside it (849 m, right) and a street that meets the road at a shallow angle (3660 m, left): their edges cross the

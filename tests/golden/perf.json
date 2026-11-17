@@ -443,9 +443,9 @@
  "bikernieki": {
   "calls": 186,
   "maxCalls": 235,
-  "kverts": 418,
-  "maxKverts": 486,
-  "jsMs": 2.04
+  "kverts": 424,
+  "maxKverts": 493,
+  "jsMs": 2.5
  },
  "london": {
   "calls": 172,
