@@ -26,6 +26,11 @@ try {
   page.on('requestfailed', r => errors.push('request failed: ' + r.url()));
   await page.goto(srv.base + '/garaza.html');
   await page.waitForFunction(() => window.__garage && Garage3D.ready, null, { timeout: 180000 });
+  // the buttons of the cars before and after: their pictures there at once, the page opened (drawn with the page, not waited for)
+  const btnPics = () => page.evaluate(() => { const O = __garage.ORDER, i = O.indexOf(__garage.S.car), t = __garage.thumbs();
+    return [[O[(i - 1 + O.length) % O.length], 'g-prev'], [O[(i + 1) % O.length], 'g-next']].map(([id, el]) => { const m = document.querySelector('#' + el + ' .th img'), c = __garage.S.cars[id].color;
+      return !!(m && /^data:image\/png/.test(m.src) && t[id] && m.src === t[id][c]); }); });
+  { const b = await btnPics(); T.check('the cars\' buttons: both pictures there at once, the page opened', b.every(Boolean), JSON.stringify(b)); }
   await page.waitForTimeout(800);
   // the guide on the first visit (a fresh profile): six steps, each a ring round what to tap and a bubble; done, it is not shown again
   {
@@ -437,11 +442,13 @@ try {
   // 8. the buttons of the cars before and after the one shown: their pictures (in their colours, half a metre further back), their
   // names to the ear; tapped: that car drives in
   {
-    const b = await page.evaluate(async () => { for (let i = 0; i < 40 && document.querySelectorAll('.g-cb .th img').length < 2; i++) { __garage.advance(0.05); await new Promise(r => setTimeout(r, 120)); }
+    const b = await page.evaluate(async () => {
       const O = __garage.ORDER, i = O.indexOf(__garage.S.car); return { imgs: [...document.querySelectorAll('.g-cb .th img')].map(m => /^data:image\/png/.test(m.src)), prev: document.getElementById('g-prev').getAttribute('aria-label'), next: document.getElementById('g-next').getAttribute('aria-label'),
         want: [Core.MODELS.find(m => m.id === O[(i - 1 + O.length) % O.length]).name, Core.MODELS.find(m => m.id === O[(i + 1) % O.length]).name, O[(i + 1) % O.length]] }; });
     T.check('the cars\' buttons: each with its car\'s picture, the names of the cars before and after', b.imgs.length === 2 && b.imgs.every(Boolean) && b.prev.endsWith(b.want[0]) && b.next.endsWith(b.want[1]), JSON.stringify(b));
-    await page.evaluate(() => document.getElementById('g-next').click()); await run();
+    await page.evaluate(() => document.getElementById('g-next').click());
+    { const n = await btnPics(); T.check('the next car tapped: both buttons\' pictures (its cars before and after) there at once, before its show', n.every(Boolean), JSON.stringify(n)); }
+    await run();
     const u = await ui();
     T.check('the next car\'s button: that car on the table', u.info.car === b.want[2] && u.S.car === b.want[2], JSON.stringify({ car: u.info.car, want: b.want[2] }));
   }
