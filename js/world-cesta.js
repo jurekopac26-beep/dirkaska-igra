@@ -458,7 +458,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
   function stranske(T, ceste, o) {
     o = o || {};
     const N = T.N, ds = T.ds, L = T.len, px = T.px, pz = T.pz, nx = T.nx, nz = T.nz, hy = T.hy, tla = o.tla, rob = o.rob || null, ton = o.ton || (() => 0.8), odprta = !!o.odprta;
-    const C = CRTE[o.drzava] || CRTE.Italija, wrap = (i) => ((i % N) + N) % N, mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+    const C = Object.assign({}, PRIVZETO, CRTE[o.drzava] || CRTE.Italija), wrap = (i) => ((i % N) + N) % N, mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
     const hsh = (a, b) => { let h = Math.imul(a + 1, 374761393) ^ Math.imul(b + 7, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
     // the main road: the nearest point of its centre line (the samples in a grid, both segments at each sample)
     const CELL = 24, grid = new Map(), key = (cx, cz) => cx * 73856093 ^ cz * 19349663;
