@@ -562,7 +562,7 @@
     'Kupi': 'Buy', 'Najemi': 'Rent', 'NAJET ZA ENO DIRKO': 'RENTED FOR ONE RACE', '{0} je vrnjen, najemnina povrnjena.': '{0} returned, its rent refunded.', 'Najprej kupi ali najemi avto': 'Buy or rent the car first', 'Najet avto vozi tak, kot je.': 'A rented car is driven as it is.',
     'tvoj': 'yours', 'NAMESTI': 'FIT',
     'Profil je ponastavljen.': 'The profile is reset.', 'MOČ': 'POWER', 'KONČANO': 'DONE', 'GARAŽA · V ŽIVO': 'GARAGE · LIVE', 'ORODJA': 'TOOLS', 'DELI': 'PARTS', 'PLATIŠČA': 'RIMS', 'AERO PAKETI': 'AERO KITS',
-    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple',
+    'Rdeča': 'Red', 'Bela': 'White', 'Modra': 'Blue', 'Rumena': 'Yellow', 'Črna': 'Black', 'Zelena': 'Green', 'Oranžna': 'Orange', 'Vijolična': 'Purple', 'Srebrna': 'Silver', 'Siva': 'Grey', 'Temno modra': 'Navy', 'Bordo': 'Burgundy', 'Turkizna': 'Turquoise', 'Roza': 'Pink', 'Limeta': 'Lime', 'Bronasta': 'Bronze',
     'Kupe': 'Coupé', 'Limuzina': 'Saloon', 'Športni avto': 'Sports car', 'Prototip': 'Prototype', 'Terenec': 'Off-roader',
     'Pranje': 'Wash', 'Pena, voda, vosek': 'Foam, water, wax', 'Karoserija': 'Bodywork', 'Praske in udrtine': 'Scratches and dents', 'Motor in olje': 'Engine and oil', 'Olje, filtri, svečke': 'Oil, filters, spark plugs',
     'Športni izpuh': 'Sports exhaust', 'Dvojni izpuh, zračniki': 'Twin exhaust, bonnet vents', 'Štirje izpuhi, zajemalnik': 'Quad exhaust, bonnet scoop', 'Bel napis': 'White lettering', 'Rumen pas': 'Yellow band', 'Rdeč pas': 'Red band',

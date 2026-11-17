@@ -25,6 +25,8 @@ try {
   await Q.evaluate(() => window.__game.resume()); await Q.waitForTimeout(400);
   await Q.keyboard.press('KeyF'); await Q.waitForTimeout(500);
   await Q.evaluate(() => window.__game.pause());
+  // (the player's car's look, js/videz.js: in the header (lk), on the car of the replay opened from the file)
+  await Q.evaluate(() => { const c = window.__game.race.player; c.deli = Object.assign({}, c.deli, { barva: 5, platisca: 7 }); c.stripeCol = 0xff8800; });
   const r0 = await Q.evaluate(() => ({ sum: window.__game.recSum(), flags: window.__game.recFlags, ver: (/[?&]v=(\w+)/.exec(document.querySelector('script[src^="js/game.js"]').getAttribute('src')) || [0, 'lokalno'])[1],
     cars: window.__game.race.cars.map(c => c.name), pl: window.__game.race.cars.indexOf(window.__game.race.player) }));
 
@@ -45,11 +47,11 @@ try {
     const sum = eval(SUM), blob = new Blob([Uint8Array.from(atob(b64), c => c.charCodeAt(0))]), { H, frames } = await Napake.rrp.beri(blob);
     const me = H.cars.find(c => c.pl) || {}, O = window.__game.race.opts;
     return { sum: sum(frames), n: frames.length, track: H.track, ver: H.ver, mode: H.mode, wx: H.wx, w: H.w, nc: H.n, cars: H.cars.map(c => c.name), pl: H.cars.findIndex(c => c.pl), flags: H.flags, dev: H.dev, date: H.date, laps: H.laps, lap1: H.cars[0].lap,
-      pf: me.pf || null, pfs: H.cars.filter(c => c.pf).length, ty: H.ty, wxs: H.wxs === undefined ? 'none' : H.wxs, upg: JSON.stringify(O.playerUpg || null), setup: JSON.stringify(O.playerSetup || null) };
+      lk: JSON.stringify(me.lk || null), pf: me.pf || null, pfs: H.cars.filter(c => c.pf).length, ty: H.ty, wxs: H.wxs === undefined ? 'none' : H.wxs, upg: JSON.stringify(O.playerUpg || null), setup: JSON.stringify(O.playerSetup || null) };
   }, [b64, SUM]);
-  T.check('read back: the same samples to the last bit (digest as __game.recSum), the header: Bathurst, the game\'s version, 22 cars as in the race, the player, the flag',
+  T.check('read back: the same samples to the last bit (digest as __game.recSum), the header: Bathurst, the game\'s version, 22 cars as in the race, the player (its look: lk), the flag',
     r1.sum === r0.sum.h && r1.n === r0.sum.n && r1.track === 'bathurst' && r1.ver === r0.ver && r1.w === 7 && r1.nc === 22 && JSON.stringify(r1.cars) === JSON.stringify(r0.cars) && r1.pl === r0.pl &&
-    r1.flags.length === 1 && Math.abs(r1.flags[0].t - r0.flags[0].t) < 1e-9 && /^race/.test(r1.mode) && /^suho/.test(r1.wx) && typeof r1.dev === 'string' && r1.date > 0,
+    r1.flags.length === 1 && Math.abs(r1.flags[0].t - r0.flags[0].t) < 1e-9 && /"barva":5/.test(r1.lk) && /"platisca":7/.test(r1.lk) && /"s":16746496/.test(r1.lk) && /^race/.test(r1.mode) && /^suho/.test(r1.wx) && typeof r1.dev === 'string' && r1.date > 0,
     JSON.stringify({ r1: Object.assign({}, r1, { cars: r1.cars.length }), sum0: r0.sum, ver: r0.ver }));
   // (AI po tvoji liniji, tools/voznja.mjs: the player's car as the race built it, the tyres, a changing weather: none in the quick entry)
   T.check('the header for tools/voznja.mjs: the player\'s car (pf: its upgrades, set-up and assist as the race has them), no other car\'s; ty 1 (Bathurst\'s race with tyres); no wxs (the weather does not change)',
@@ -76,9 +78,9 @@ try {
   await P.waitForTimeout(500);
   const o1 = await P.evaluate(() => { const g = window.__game, el = (id) => document.getElementById(id);
     return { sum: g.recSum(), cars: g.race.cars.map(c => c.name), pl: g.race.cars.indexOf(g.race.player), set: !!el('nk-set'), ui: !el('replay-ui').classList.contains('off'), screen: g.screen,
-      flags: el('rp-flags').textContent, info: el('rp-info').textContent, t0: g.replay.t0, t1: g.replay.t1, nflag: document.querySelectorAll('#rp-line .nk-flag').length }; });
-  T.check('Shrani greyed with no race; Odpri …: the replay of the file on Bathurst (the panel closed, its controls), the same samples, the same cars and player, the flag on the timeline (Zastavice (1))',
-    sb && o1.sum.h === r0.sum.h && o1.sum.n === r0.sum.n && JSON.stringify(o1.cars) === JSON.stringify(r0.cars) && o1.pl === r0.pl && !o1.set && o1.ui && o1.screen === 'none' && o1.flags === 'Zastavice (1)' && o1.nflag === 1 && /^Ti · /.test(o1.info),
+      lk: [g.race.player.deli && g.race.player.deli.barva, g.race.player.deli && g.race.player.deli.platisca, g.race.player.stripeCol].join(), flags: el('rp-flags').textContent, info: el('rp-info').textContent, t0: g.replay.t0, t1: g.replay.t1, nflag: document.querySelectorAll('#rp-line .nk-flag').length }; });
+  T.check('Shrani greyed with no race; Odpri …: the replay of the file on Bathurst (the panel closed, its controls), the same samples, the same cars and player (its look: lk), the flag on the timeline (Zastavice (1))',
+    sb && o1.sum.h === r0.sum.h && o1.sum.n === r0.sum.n && JSON.stringify(o1.cars) === JSON.stringify(r0.cars) && o1.pl === r0.pl && !o1.set && o1.ui && o1.screen === 'none' && o1.flags === 'Zastavice (1)' && o1.nflag === 1 && /^Ti · /.test(o1.info) && o1.lk === '5,7,16746496',
     JSON.stringify(Object.assign({}, o1, { cars: o1.cars.length, sum0: r0.sum })));
   const rp1 = await P.evaluate(() => { const r = window.__game.rpPit; return r && { n: r.log.length, cur: r.cur }; });
   T.check('a replay opened from a file has no pit log (the file holds none): __game.rpPit an empty list, none posed, no error', !!rp1 && rp1.n === 0 && rp1.cur === null, JSON.stringify(rp1));

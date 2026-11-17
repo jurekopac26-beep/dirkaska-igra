@@ -6687,7 +6687,7 @@ const Core = (function () {
         } else if (remoteAt.has(g)) {
           const RM = remoteAt.get(g);
           c = new Car(RM.model || MODELS[0], { id: g, net: true, phys: opts.phys, name: RM.name || 'Prijatelj', color: RM.color });
-          c.netOf = { id: RM.id || 'h', num: RM.num || 2 }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
+          c.netOf = { id: RM.id || 'h', num: RM.num || 2, look: RM.look || null }; this.remotes.push(c);   // (in an object: the golden references digest only the plain fields)
           if (RM.police) patrolCar(c);   // (online, beg s prijatelji: the friend drives the patrol car)
         } else {
           const s = aiSpecs[order ? order[ai++] : ai++];
@@ -6717,6 +6717,9 @@ const Core = (function () {
       { const P = this.player, WR = opts.wheelRule; if (P && P.wreck && (P.dmgMode === 2 || (P.kt && P.dmgMode === 1)) && Array.isArray(WR) && WR.indexOf(P.m.id) >= 0) P.wreck.rule = { over: false, fn: 0, burn: 0, kt: !!P.kt }; }
       if (this.remotes.length) this.remote = this.remotes[0];   // (the friend: the first of them)
       for (const c of this.remotes) c.num = c.netOf.num;
+      // the look (js/videz.js): the player's where the garage's parts do not count (opts.playerLook without playerDeli: a challenge, online, ...),
+      // a friend's (RM.look, Videz.read); only the look, the physics untouched (the numbers: playerNum, RM.num)
+      if (typeof Videz !== 'undefined') { if (this.player && opts.playerLook && !opts.playerDeli) Videz.dress(this.player, opts.playerLook, true); for (const c of this.remotes) if (c.netOf.look) Videz.dress(c, c.netOf.look, true); }
       if (opts.chars) this.chr = { q: [] };   // the characters' events for the game ({ k, c }, taken by it): 'mistake' (under pressure), 'duel' and 'duelEnd' (with the player)
       // winter (opts.winter): cold tarmac grips less (x COLD.road), a gravel road packed with snow much less (x COLD.snow): on every car's grip, its brakes and the AI's profile
       this.cold = { gk: opts.winter ? (track.def.roadSurface === 'makadam' ? COLD.snow : COLD.road) : 1, mk: opts.winter && track.sf ? COLD.snow / COLD.road : 0, rk: opts.winter && track.def.roadSurface === 'makadam' ? 0 : 1 };   // (in an object: the golden references digest only the plain fields; mk: a stage of tarmac and gravel, its gravel's grip on top of the tarmac's)
