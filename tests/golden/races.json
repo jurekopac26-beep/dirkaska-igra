@@ -4592,11 +4592,11 @@
  "hiva/cs/car": {
   "finished": 13,
   "cars": 13,
-  "winner": 175.03,
+  "winner": 179.68,
   "spins": 0,
-  "walls": 1,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "23b6b8cfb3c81d8198c05bb8"
+  "digest": "f99a6b7baf9a726876051970"
  }
 }
