@@ -140,11 +140,11 @@
   "jsMs": 1.74
  },
  "rastro": {
-  "calls": 179,
-  "maxCalls": 209,
-  "kverts": 385,
-  "maxKverts": 469,
-  "jsMs": 1.93
+  "calls": 171,
+  "maxCalls": 200,
+  "kverts": 343,
+  "maxKverts": 532,
+  "jsMs": 2.04
  },
  "moki": {
   "calls": 129,
