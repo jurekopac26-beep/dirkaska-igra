@@ -1,4 +1,4 @@
-# Vrsta za `main` (vsi trije računi)
+# Vrsta za `main` (vsi štirje računi)
 
 Skupna vrsta PR za `main` vseh računov (`CLAUDE.md`, Postopek). Naenkrat gre na `main` en PR. Citati, datumi in dolgi opisi: `docs/vrsta-arhiv.md` (12. 11. 2026) in `docs/arhiv/vrsta-zgodovina.md`.
 
@@ -8,7 +8,7 @@ Skupna vrsta PR za `main` vseh računov (`CLAUDE.md`, Postopek). Naenkrat gre na
 - Boljša grafika. **Prednost: fizika (samo trki) in grafika**; nove proge tečejo naprej (partyslo); več agentov samo za trke. Fizika vožnje se ne spreminja.
 - **Japonska**: ostane Hakone; Suzuka in Irohazaka gresta med testne (vrstica spodaj).
 - **Mejniki**: 23. 12. vseh 70 prog, nato brez novih funkcij; 15. 1. 2027 kandidat; 1. 2. 2027 izid; testne proge se pred izidom izbrišejo.
-- **Nove proge ustavljene** (12. 11. ob ~19.00 in 11. 11. ob ~12.35): nobena seja ne začne nove proge brez datoteke, dokler je uporabnik ne potrdi znova (tudi 10 od Hải Vâna do Batangasa); proge z datoteko (#569, #494, osnutki) ostanejo. Opomnik za pregled: 30. 11. ob 10.25.
+- **Nove proge ustavljene** (12. 11. ob ~19.00 in 11. 11. ob ~12.35): nobena seja ne začne nove proge brez datoteke, dokler je uporabnik ne potrdi znova (tudi 10 od Hải Vâna do Batangasa); proge z datoteko (#569, #494, osnutki) ostanejo. Opomnik za pregled: 30. 11. ob 10.25. **13. 11. potrjene** (`docs/nove-proge-1-0.md`, »Potrditve 13. 11. 2026«): 9 novih prog, 4 s prepadom, Aguascalientes, Koli, Longyearbyen, Mujib in Irishtown (70 od 70; rezervi Chamarel in El Castaño); Envalira 1. 12.
 - Proge so v vrsti zadnje, za njimi nova mapa z misijami. Vrstni red sme premikati tudi Matej (objavi na tabli #382, uporabnik prekliče).
 
 ## Pravila
@@ -33,7 +33,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Realizem S · Stavbe, ~21 sej | po tedenskem načrtu | za E; Medvode po #494 |
 | Realizem G · Rastje in teren, ~16 sej | po tedenskem načrtu | za S |
 | Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
-| Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo | ustavljene do potrditve (glej zgoraj); brez izletne cone se ne začnejo |
+| Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |
 | Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |
 | Suzuka in Irohazaka v test (`test: true`, zbirna veja C #611) | partyslo | ko je prostor |
 | Hitro nalaganje, korak 2 (I17) | biketraveler | po zbirnih A (#583) in B (#579) |
@@ -41,19 +41,21 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Garaža z Dež in sneg v eni zbirni veji: animacije (8 plošč, #546) | biketraveler | prednost; pred `main` ok na posnetku |
 | Avti na raven KOLIBRIJA: preostalih 13 v #480 (+ #626) | biketraveler | pred Trki; na `main` ~17. 11. |
 | **30 avtov na raven KOLIBRIJA** (`docs/avti-kolibri.md`, »Prednost: 30 avtov«) | biketraveler | po #480, pred Trki; ~47 h, ~25. 11. |
-| 5 novih tovornjakov (50 avtov) z mesti za dele ob izdelavi | biketraveler | za grafiko; na `main` ~20. 12. |
+| 4 novi tovornjaki (TITAN PLIN odpade 13. 11.; + 1 posebno vozilo po izbiri seje, najprej slika = 50 avtov) z mesti za dele ob izdelavi | biketraveler | za grafiko; na `main` ~20. 12. |
 | Občutek hitrosti pri kameri za avtom (I5) | jure.kopac26 | po tedenskem načrtu; pred `main` preizkus uporabnika |
 | Analiza kroga (I12) | biketraveler | v delu od 8. 11.; pred progami |
 | Samodejno zaviranje pred ovinki za začetnike (I10) | jure.kopac26 | po tedenskem načrtu |
 | Vrstica podatkov na izbiri proge (`docs/meni-izbira-proge.md`) | jure.kopac26 | po tedenskem načrtu |
-| Svetovna lestvica (`docs/svetovna-lestvica.md`), seje 1–6 | jure.kopac26 | po tedenskem načrtu; za izid 1. 2. 2027 |
+| Svetovna lestvica (`docs/svetovna-lestvica.md`), seje 1–6 (#672) | jure.kopac26, croatiadata | po tedenskem načrtu; za izid 1. 2. 2027 |
 | Zima na severu: Silkeborg, Kågeröd (po N1 #485) | po načrtu 9. 11. | ko je N1 na `main` |
-| Prvi zagon z angleškim menijem (I2), samo preizkus | jure.kopac26 | po tedenskem načrtu |
+| Prvi zagon z angleškim menijem (I2), samo preizkus (#673) | jure.kopac26, croatiadata | po tedenskem načrtu |
 | Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
 | Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
 | **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
 | Odprte ceste: predaja na začetku ravnine, tik za tekmecem (popravek uporabnika 14. 11. ob ~16.45; Chapman's Peak, Bâlea, Tianmen in Rio do Rastro dobijo start na začetku ravnine, proge krajše) | jure.kopac26 | v delu (15. 11., `popravki/2026-11-15`) |
+| **Boksi na vseh krožnih progah** (odločitve uporabnika 13. 11. 2026 ob ~23.40 »vsa dirkališča naj imajo bokse« ter 14. 11. ob ~0.05 »samo dirkališča, ki so v krogu, imajo bokse« in »gorske in odprte ceste: tam jih ne delamo«): bokse (boksarska steza, stavba z boksi, mehaniki) po vzoru Spa (`pit`, `pitRow`) dobijo prave krožne proge brez njih: Livorno, Nürburg (na `main`), Hakone, Kildare, Sosnova (#569); odprte ceste in kronometri ne; start odprtih cest: 3 predlogi v slikah za uporabnika; testne in proge na odločanju ne; obremenitev v mejah; proge, Opus z eno sejo | jure.kopac26 | ko #569 pride na `main` in je prostor za sejo s kodo; pred `main` slike zdaj/potem (kamera za avtom) |
+| **Nova proga: Džebel Hafit, Združeni arabski emirati** (odločitev uporabnika 14. 11. 2026 ob ~1.55 »ok začni 1. Džebel Hafit«, po opozorilu o izletni coni, torej izjema): gorska cesta na Džebel Hafit (~12 km, ~60 ovinkov; navzgor 2 pasova, navzdol 1, smeri večinoma ločeni), odsek 1–5 km najbolj ovinkastega dela po OSM (`tools/proga-podatki.py`); ograja prepreči padec; nova država; preveri pasove in ograje v OSM; slike za meni; proge, Opus z eno sejo | jure.kopac26 | ko je prostor za sejo s kodo |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
@@ -69,7 +71,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 7. Mesta za dele (#480 + #626) in 30 avtov KOLIBRI, biketraveler, ~25. 11.
 8. (združeno v 7.)
 9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
-10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge ustavljene, jure.kopac26 in partyslo
+10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge potrjene 13. 11. (19 prog do 70), partyslo in croatiadata
 11. Preleti (#246), partyslo, ~7. 12.
 12. Grafika (E, S, G), jure.kopac26 in partyslo, ~8. 12.
 13. 5 tovornjakov, biketraveler, ~16. 12.
