@@ -75,10 +75,10 @@ try {
     await click(page, 'single');
     const m = await ev(page, 'return [...root.querySelectorAll(".t-sub .mode b")].map(e => e.textContent);');
     T.check('Single race: the eight modes (Elimination, Pursuit and Drag race: Zabava, docs/zabava.md; Endless traffic: docs/neskoncna-voznja.md; Drag race: docs/drag-dirka.md)', JSON.stringify(m) === '["Circuit race","Police chase","Time trial","Traffic duel","Elimination","Pursuit","Endless traffic","Drag race"]', JSON.stringify(m));
-    // Endless traffic: Bathurst its only track (Core.EN.tracks), the clock at the start (the game's level, Srednja: 30 s) in the row's last cell (the new menu's row: flag, best, length, climb, then this)
+    // Endless traffic: its four tracks (Core.EN.tracks: Bathurst and three open roads with normal traffic), the clock at the start (the game's level, Srednja: 30 s) in the row's last cell (the new menu's row: flag, best, length, climb, then this)
     await click(page, 'mode:endless');
     const en = await page.evaluate(() => { const root = document.getElementById('menu-host').shadowRoot, c = root.querySelector('.trow > div:last-child'); return { list: Menu.debug().list, cell: c ? [c.querySelector('small').textContent, c.querySelector('b').textContent] : null }; });
-    T.check('Endless traffic: Bathurst only; the last cell Clock 30 s', JSON.stringify(en.list) === '["bathurst"]' && JSON.stringify(en.cell) === '["Clock","30 s"]', JSON.stringify(en));
+    T.check('Endless traffic: Bathurst, Chapman\'s Peak, Caracoles and Bălea; the last cell Clock 12 s', JSON.stringify([...en.list].sort()) === '["balea","bathurst","caracoles","chapman"]' && JSON.stringify(en.cell) === '["Clock","12 s"]', JSON.stringify(en));
     await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
 
     // 3. the tracks of every mode: one list, no groups (the real tracks from the shortest to the longest; equal lengths by id), every track

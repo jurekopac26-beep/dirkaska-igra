@@ -88,7 +88,7 @@
   const MODES = D.modes.concat([{ id: 'duel', name: 'Traffic duel', sub: 'One rival, real traffic on the open road.', chip: '1 RIVAL · TRAFFIC', img: 'assets/menu/multiplayer.webp' },
     { id: 'elim', name: 'Elimination', sub: 'Every 30 s the last cars are out.', chip: 'LAST ONE LEFT', img: 'assets/menu/mode-race.webp' },
     { id: 'pursuit', name: 'Pursuit', sub: 'Drive the patrol car, catch the fugitive.', chip: 'CATCH IN 3:00', img: 'assets/menu/mode-chase.webp' },   // (Zabava: docs/zabava.md)
-    { id: 'endless', name: 'Endless traffic', sub: 'Ever denser traffic. Close passes add time.', chip: 'ONE TOUCH ENDS IT', img: 'assets/menu/mode-endless.webp' },   // (docs/neskoncna-voznja.md)
+    { id: 'endless', name: 'Endless traffic', sub: 'Ever denser traffic. Overtakes add time.', chip: 'THREE HITS AND OUT', img: 'assets/menu/mode-endless.webp' },   // (docs/neskoncna-voznja.md)
     { id: 'drag', name: 'Drag race', sub: '402 m from a standstill, you shift the gears.', chip: '1 RIVAL · 402 M', img: 'assets/menu/mode-trial.webp' }]);   // (Zabava, the drag race: docs/drag-dirka.md)
   const GAME_MODE = { race: 'race', chase: 'police', trial: 'tt', duel: 'traffic', elim: 'elim', pursuit: 'lov', endless: 'endless', drag: 'drag' }, MENU_MODE = { race: 'race', police: 'chase', tt: 'trial', traffic: 'duel', elim: 'elim', lov: 'pursuit', endless: 'endless', drag: 'drag' };
   const W_SET = ['dry', 'rain', 'random', 'change'];   // (the rain over the picture: none, falling, coming and going; Changing the same, slower)
