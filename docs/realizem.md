@@ -171,7 +171,7 @@ Država se premakne iz »ni preverjeno«, ko seja doda vir in uporabnik potrdi.
 - **S in G**: prvi seji S in G naredita sestavne dele (orodje, graditelje, komplete; S0 in G0), nato gresta S in G **skupaj v enem prehodu na progo** (ena seja na progo naredi stavbe ter rastje in teren).
 - **Proge si računa izmenjujeta** po vrstnem redu v razdelku »Proge in vrstni red«: jure.kopac26 vzame 1., 3., 5. …, partyslo 2., 4., 6. …; zamrznjene proge (`test`, `pending`) se preskočijo.
 - **Predelava novih prog po #569** ostane pri partyslo.
-- Seja dela do ~150 tisoč konteksta, nato predaja (`CLAUDE.md`, Seje).
+- Seja dela do ~80 tisoč konteksta, nato predaja (`CLAUDE.md`, Seje).
 
 Vrsta za `main` z ocenami je v `docs/vrsta.md` (»Posodobljen načrt 11. 11. 2026«, »Manj sklopov«); tu se ne ponavlja.
 

@@ -2,7 +2,7 @@
 
 Seznam je potrdil uporabnik 7. 11. 2026 ob ~21.20 v pogovoru z Matejem (tabla #382, komentar 6712589851; predlog s podrobnostmi: komentar 6709785463). Pravila za vse nove proge za 1.0 (1–5 km, merili zavitosti in »do 60 m ob cesti«, izletna cona, mestne proge) so v `CLAUDE.md` (»Ena proga na državo«) in v `docs/proge-po-drzavah.md`, razdelek »Nove proge za 1.0«. O seznamu prog za 1.0 (cilj 70 od 9. 11. 2026, prej 50; vprašanje `nove-proge-1-0-50`) se uporabnik odloča po delih (`docs/proge-po-drzavah.md`, »Nove proge za 1.0«): 11 prog s čakanja je potrdil 8. 11. 2026 (razdelek »Del 2« spodaj), druge proge na čakanju se do njegove odločitve ne začnejo. Osem dirkališč izven Evrope je potrdil 8. 11. 2026 ob 20.45 (razdelek »Del 3« spodaj).
 
-**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; naprej samo 10 od Hải Vâna do Batangasa (`docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
+**Ustavljeno 11. 11. 2026:** potrjene nove proge brez datoteke proge čakajo na ponovno potrditev uporabnika; od 12. 11. ob ~19.00 tudi 10 od Hải Vâna do Batangasa (veliko jih bo zamenjanih, predvsem preveč zavite; `docs/vrsta.md`, »Različica 1.0«, »Nove proge ustavljene do ponovne potrditve«).
 
 ## Proge
 
