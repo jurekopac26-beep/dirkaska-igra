@@ -555,7 +555,7 @@
     const edgeTone = (i) => { let sd = 1; for (const u of SR.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const o = sd * w, d = o - T.rl[i]; return (0.8 - 0.12 * Math.exp(-d * d / 5.5)) * (0.96 + 0.08 * P.n2(T.px[i] * 0.5 + o, T.pz[i] * 0.5)); };   // (the asphalt's tone at its edge on the mouth's side: shade below)
     const drzava = ((c) => World.cesta && World.cesta.CRTE && World.cesta.CRTE[c] ? c : null)(String(def.name || '').split(',').pop().trim());   // (the country in the track's name, if World.cesta's CRTE knows its lines)
     const SR = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: true, drzava: drzava || undefined, barva: drzava ? undefined : false }) : null;
-    const naSR = (x, z) => !!SR && excluded(x, z, 2), off = SR ? new GB() : null; let nStb = 0;   // (what stands in a side road's circle is still drawn, into off, never shown: the random sequence behind it stays)
+    const naSR = (x, z) => !!SR && excluded(x, z, 2), off = SR ? new GB() : null; let nStb = 0, nStop = 0;   // (what stands in a side road's circle is still drawn, into off, never shown: the random sequence behind it stays)
     if (SR) { out.cestaRob = (out.cestaRob || []).concat(SR.ustja); for (const k of SR.krogi) exclPush(k[0], k[1], k[2]).sc = 1; out.stranske = SR.n; lMat.userData.crte = 1; }
     const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a; if (t < 1e-4) return Pt(a, o, y); const p = Pt(a, o, y), q = Pt(a + 1, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
     const hairS = (def.curves || []).map(([d]) => sStart + d);
@@ -885,6 +885,11 @@
         }
       }
       if (SR) { nStb = SR.predmeti((x, z) => scen.get(x, z)); out.stebricki = SR.stebricki; }   // (the posts across each mouth on the barrier's line; their paint only where the rules are known)
+      if (SR && World.cesta.postaja) for (const [sd, side, dist, shel] of def.postaje || []) for (const k of [0, 2, -2, 4, -4, 6, -6]) {   // (the bus stops of the map, def.postaje: [s from the start, side, m from the centre line, shelter]; behind the barrier's line, off the walls, the bridges and the scenery's circles)
+        const i = T.idx(sStart + sd + k * T.ds), si = side > 0 ? 1 : 0; if (bk[si][i] || kn[si][i]) continue;
+        const o = side * Math.max(dist, (side > 0 ? T.br[i] : T.bl[i]) + (shel ? 1.3 : 1.0)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = caGround(x, z);
+        if (Math.abs(y - T.hy[i]) > 1.5 || excluded(x, z)) continue;
+        World.cesta.postaja(scen.get(x, z), x, y, z, Math.atan2(-side * T.nz[i], -side * T.nx[i]), shel); exclPush(x, z, shel ? 2.6 : 1.4).sc = 1; out.postaja = [x, y, z]; nStop++; break; }
       if (wallG) addM(wallG, wallMat);
       if (FB) {   // the bridges' own meshes and materials: they fade while the followed car drives under (Render: dyn.tunnel; Sfx: the engine rings under the arch)
         const mA = aMat.clone(), mL = lMat.clone(), mS = sMat.clone(), mG = gMat.clone(), mW = wallMat.clone();
@@ -1223,7 +1228,7 @@
         const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - T.hy[i]; },
       skip: (i, side) => { const si = side > 0 ? 1 : 0; return !!(RN[si][i] || bk[si][i] || kn[si][i] || vp[si][i][2][1] < -2.6); } };
     out.stats = { trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), snow: nSnow, sheep: nSheep, pylons: nPyl, poles: nPole, lakes: P.lakes.length, pulls: pulls.length, sat: !!SAT };   // (read by the tests)
-    if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb });
+    if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb, stops: nStop });
     return out;
   }
 

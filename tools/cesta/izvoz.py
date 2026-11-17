@@ -67,6 +67,11 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'medeu': dict(izpusti=[(226, -1), (232, -1), (4098, 1)]),
          # the circuits of group 569c: the map's raceway is the track
          'lombok': dict(kinds={'raceway'}), 'lusail': dict(kinds={'raceway'}),
+         # Porto Moniz: three streets of the town that leave the road at a slant and run along it inside the game's 16 m verge (268 m, 665 m
+         # and 3128 m, left): their edges cross the barrier's line only beyond the builder's 22 m, so it cannot open the fence for them
+         'portomoniz': dict(izpusti=[(268, -1), (665, -1), (3128, -1)]),
+         # Pembrey and Termas de Río Hondo: circuits (the map's raceway is the track)
+         'pembrey': dict(kinds={'raceway'}), 'riohondo': dict(kinds={'raceway'}),
          # Kågeröd and Kildare: circuits, fitted to their own line (raceway) as the Nürburgring
          'kagerod': dict(kinds={'raceway'}, predmeti=False), 'kildare': dict(kinds={'raceway'}, predmeti=False),
          # the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md: those are for the 15

@@ -123,6 +123,9 @@
     const RL = rng(LOOK.seed + 71), G = (x, z) => caGround(x, z), seaY = -P.D.base, dens = Math.min(1, LOD.dens != null ? LOD.dens : 1), sFin = T.finishS;
     const st = { houses: 0, windows: 0, walls: 0, corrals: 0, eucalyptus: 0, laurels: 0, palms: 0, agapanthus: 0, views: 0, shrines: 0, rounds: 0, lights: 0, sea: 0, surf: 0, farSea: 0 };
     const white = [0.93, 0.92, 0.88], basalt = [0.3, 0.29, 0.28], stoneP = [0.62, 0.6, 0.56];
+    // (a side road of the map's, drawn for the look (Realizem E, excluded(x, z) true but excluded(x, z, 1) not): a wall, plot or clump on it is
+    // left out after its random numbers are drawn, a wall or plot drawn into a builder thrown away, so the sequence after it stays as it was)
+    const off = new GB();
     const lcAt = (x, z) => { const L = P.L, i = Math.floor((x - L.x0) / L.cell), j = Math.floor((z - L.z0) / L.cell); return i < 0 || j < 0 || i >= L.nx || j >= L.nz ? 0 : LC0[j * L.nx + i]; };
     const tp = new IChunks(palmGeo(), matV, 160);
     for (const [what, x, z, hd, sd, i] of marks) {
@@ -200,9 +203,9 @@
             const ux = gx / gl, uz = gz / gl, t = (Math.round((yc - seaY) / lvl) * lvl + seaY - yc) / (gl / 2);   // (t: metres up the slope to the level)
             if (Math.abs(t) > C4 / 2) continue;
             const x = xc + ux * t, z = zc + uz * t, c = lcAt(x, z), n = vrNear(x, z);
-            if (!(c === 0 || c === 3 || (c === 2 && RW() < 0.6)) || n.i < 0 || n.dd < 3 || excluded(x, z) || RW() > 0.85) continue;
+            if (!(c === 0 || c === 3 || (c === 2 && RW() < 0.6)) || n.i < 0 || n.dd < 3 || excluded(x, z, 1) || RW() > 0.85) continue;
             const yUp = G(x + ux * 0.9, z + uz * 0.9), y0 = G(x - ux * 0.9, z - uz * 0.9) - 0.45, q = RW();
-            box(scen.get(x, z), x + ux * -0.3, y0, z + uz * -0.3, 4.7, Math.max(0.7, yUp + 0.12 - y0), 0.55, Math.atan2(-ux, uz), vary([0.34 + q * 0.06, 0.32 + q * 0.05, 0.29 + q * 0.04], RW, 0.04), [0.36, 0.43, 0.25], true); st.walls++;
+            box(excluded(x, z) ? off : scen.get(x, z), x + ux * -0.3, y0, z + uz * -0.3, 4.7, Math.max(0.7, yUp + 0.12 - y0), 0.55, Math.atan2(-ux, uz), vary([0.34 + q * 0.06, 0.32 + q * 0.05, 0.29 + q * 0.04], RW, 0.04), [0.36, 0.43, 0.25], true); st.walls++;
           }
         }
       }
@@ -216,11 +219,12 @@
         for (const side of [-1, 1]) {
           if (RV() > 0.42) continue;
           const bar = side > 0 ? T.br[i] : T.bl[i], o = bar + 7 + RV() * 26, x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o, y = G(x, z);
-          const c = lcAt(x, z), n = vrNear(x, z); if (!(c === 0 || c === 2 || c === 3) || n.i < 0 || n.dd < 4 || excluded(x, z)) continue;
+          const c = lcAt(x, z), n = vrNear(x, z); if (!(c === 0 || c === 2 || c === 3) || n.i < 0 || n.dd < 4 || excluded(x, z, 1)) continue;
           if (y > seaY + 240 || caSlope(x, z) > 0.6) continue;
-          const Lp = 7 + RV() * 4, Wp = 4.5 + RV() * 2, hd = T.hd[i] + (RV() - 0.5) * 0.2, cc = Math.cos(hd), ss = Math.sin(hd), g = scen.get(x, z), hc = vary(heath, RV, 0.08);
-          let ok = true; for (const [u, v] of [[-Lp / 2, -Wp / 2], [Lp / 2, -Wp / 2], [Lp / 2, Wp / 2], [-Lp / 2, Wp / 2]]) { const qx = x + cc * u - ss * v, qz = z + ss * u + cc * v, m = vrNear(qx, qz); if ((m.i >= 0 && m.dd < 3) || excluded(qx, qz)) ok = false; }
+          const Lp = 7 + RV() * 4, Wp = 4.5 + RV() * 2, hd = T.hd[i] + (RV() - 0.5) * 0.2, cc = Math.cos(hd), ss = Math.sin(hd), g0 = scen.get(x, z), hc = vary(heath, RV, 0.08);
+          let ok = true, sc = excluded(x, z); for (const [u, v] of [[-Lp / 2, -Wp / 2], [Lp / 2, -Wp / 2], [Lp / 2, Wp / 2], [-Lp / 2, Wp / 2]]) { const qx = x + cc * u - ss * v, qz = z + ss * u + cc * v, m = vrNear(qx, qz); if ((m.i >= 0 && m.dd < 3) || excluded(qx, qz, 1)) ok = false; else if (excluded(qx, qz)) sc = true; }
           if (!ok) continue;
+          const g = sc ? off : g0;
           const at = (u, v) => [x + cc * u - ss * v, z + ss * u + cc * v];
           for (const v of [-Wp / 2, Wp / 2]) { const [qx, qz] = at(0, v); box(g, qx, G(qx, qz) - 0.3, qz, Lp, 1.75, 0.22, hd, hc, null, true); }
           for (const u of [-Lp / 2, Lp / 2]) { const [qx, qz] = at(u, 0); box(g, qx, G(qx, qz) - 0.3, qz, 0.22, 1.75, Wp, hd, hc, null, true); }
@@ -262,8 +266,9 @@
           if (RA() > 0.5 + 0.4 * Math.sin(s * 0.013 + side)) continue;
           const o = (side > 0 ? T.br[i] : T.bl[i]) + 0.9 + RA() * 2.2, x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
           const n = vrNear(x, z); if (n.i >= 0 && Math.abs(n.i - i) * T.ds > 12) continue;
-          if (excluded(x, z) || caSlope(x, z) > 1.1) continue;
+          if (excluded(x, z, 1) || caSlope(x, z) > 1.1) continue;
           const r = RA(), w = r < 0.18 ? [1.5, 1.5, 1.3] : [0.92 + r * 0.16, 0.95, 0.95 + r * 0.1];   // (one in six white)
+          if (excluded(x, z)) continue;
           ta.add(x, G(x, z) - 0.05, z, r * TAU, 0.9 + r * 0.5, 0.8 + r * 0.4, w); st.agapanthus++;
         }
       }

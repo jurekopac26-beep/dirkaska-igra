@@ -444,6 +444,59 @@ try {
     T.check(name + (open ? ': an open road: the edge line breaks off at every mouth' : ': a circuit: the edge line goes on across every mouth on the asphalt (none on the gravel)') + (paint ? ', the side roads\' stop lines (Japan: 0.3 m, white)' : ', no paint on the side roads (no rule of the country in CRTE, or class 0)'),
       (open ? q.broken === q.mouths - q.gravel && q.through === 0 : q.broken === 0 && q.through === q.mouths - q.gravel) && (paint ? q.sidePaint >= 60 : q.sidePaint === 0), JSON.stringify(q));
   }
+  // the side roads of OpenStreetMap for the look on the tracks of the group 569d (docs/realizem/paket-e.md »569d«): Pembrey (a circuit), Porto
+  // Moniz and Sa Calobra (open roads): every row of the track's data built, a strip through each opening, a row of posts across it on the
+  // fence line (evenly, on the surface under it, off the road's asphalt), Porto Moniz's bus stops; the track's model as a track built alone has it
+  for (const id of ['pembrey', 'portomoniz', 'sacalobra']) {
+    await startTrack(page, id);
+    const sv = await look(page);
+    const s5 = await page.evaluate((id) => {
+      const W = Render.world, T = window.__game.race.track, def = Core.TRACKS.find(d => d.id === id), F = new Core.Track(def);
+      const same = (a, b) => { if (!a || !b || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+      const M = (W.cestaRob || []).filter(u => u[2] !== 0), wid = M.map(u => u[1] - u[0]), V = []; let strips = 0;
+      W.root.traverse(o => { if (!o.isMesh || !o.userData.stranska) return; strips++; const P = o.geometry.attributes.position; for (let k = 0; k < P.count; k++) V.push(P.getX(k), P.getZ(k)); });
+      let far = 0, worst = 0;
+      for (const [a, b, sd] of M) {   // (the fence line across the mouth: the strip's rows of vertices pass through it)
+        let m = 1e9;
+        for (let j = 0; j <= 8; j++) { const i = T.idx(a + (b - a) * j / 8), o = sd * (sd > 0 ? T.br[i] : T.bl[i]), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+          for (let k = 0; k < V.length; k += 2) { const d = (V[k] - x) ** 2 + (V[k + 1] - z) ** 2; if (d < m) m = d; } }
+        m = Math.sqrt(m); if (m > worst) worst = m; if (m > 4.5) far++;
+      }
+      // the posts: rows by road, the gaps along a row, the distance from the road's asphalt, the surface under each (a ray down)
+      const P = W.stebricki || [], n = P.length / 4, rows = new Map(), meshes = [];
+      for (let k = 0; k < n; k++) { const ri = P[k * 4 + 3]; if (!rows.has(ri)) rows.set(ri, []); rows.get(ri).push(k); }
+      let gMin = 1e9, gMax = 0, lone = 0, road = 1e9, none = 0, off = 0;
+      for (const ks of rows.values()) {
+        if (ks.length < 2) lone++;
+        for (let j = 1; j < ks.length; j++) { const a = ks[j - 1] * 4, b = ks[j] * 4, g = Math.hypot(P[b] - P[a], P[b + 2] - P[a + 2]); gMin = Math.min(gMin, g); gMax = Math.max(gMax, g); }
+      }
+      for (let k = 0; k < n; k++) {
+        const x = P[k * 4], z = P[k * 4 + 2]; let m = 1e18, mi = 0;
+        for (let i = 0, e = T.open ? T.N - 1 : T.N; i < e; i++) {
+          const j = (i + 1) % T.N, dx = T.px[j] - T.px[i], dz = T.pz[j] - T.pz[i], t = Math.max(0, Math.min(1, ((x - T.px[i]) * dx + (z - T.pz[i]) * dz) / (dx * dx + dz * dz))), d = (x - T.px[i] - dx * t) ** 2 + (z - T.pz[i] - dz * t) ** 2;
+          if (d < m) { m = d; mi = i; }
+        }
+        road = Math.min(road, Math.sqrt(m) - T.wAt(mi));
+      }
+      W.root.updateMatrixWorld(true);
+      W.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.visible) meshes.push(o); });
+      const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), from = new THREE.Vector3();
+      for (let k = 0; k < n; k++) {
+        const y0 = P[k * 4 + 1]; let top = -1e9;
+        rc.set(from.set(P[k * 4], y0 + 3, P[k * 4 + 2]), dn); rc.far = 6;
+        for (const h of rc.intersectObjects(meshes, false)) { const y = h.point.y; if (Math.abs(y - (y0 + 1)) > 2e-3 && Math.abs(y - (y0 + 0.04)) > 2e-3 && y < y0 + 0.6 && y > top) top = y; }
+        if (top < -1e8) none++; else off = Math.max(off, Math.abs(y0 - top));
+      }
+      return { n: W.stranske, rows0: (def.stranske || []).length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, worst: +worst.toFixed(2),
+        posts: W.stats.stebricki, pn: n, prow: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), road: +road.toFixed(2), none, off: +off.toFixed(3),
+        stops: W.stats.stops || 0, stops0: (def.postaje || []).length, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
+    }, id);
+    T.check(id + ': OpenStreetMap\'s side roads for the look (every row of the track\'s data, a strip of asphalt through an opening at each mouth, the mouths 3 to 40 m wide), its bus stops behind the barrier\'s line; the track\'s model as a track built alone has it',
+      s5.n === s5.rows0 && s5.n >= 1 && s5.mouths === s5.n && s5.wMin >= 3 && s5.wMax <= 40 && s5.strips >= 1 && s5.stripV > s5.n * 20 && s5.stripV <= sv.verts * 0.05 && s5.far === 0 &&
+      s5.stops === s5.stops0 && s5.model, JSON.stringify(s5));
+    T.check(id + ': a row of posts across each opening on the fence line (1 to 2.2 m apart, two or more a row), each on the surface drawn under it (within 3 cm: a ray down against the world\'s meshes), none on the road\'s asphalt',
+      s5.pn === s5.posts && s5.prow === s5.n && s5.lone === 0 && s5.gMin >= 1 && s5.gMax <= 2.2 && s5.none === 0 && s5.off <= 0.03 && s5.road >= 0.5, JSON.stringify(s5));
+  }
   T.check('no errors (the road\'s and the paint\'s programs compile)', errors.length === 0, errors.slice(0, 3).join(' | '));
 
   const low = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase' }, { width: 640, height: 360 });
