@@ -1,9 +1,10 @@
 {
   "id": "ngorongoro",
-  "about": "Ngorongoro, Tanzanija (id ngorongoro): 3 km of the one-way stone-paved descent road from the crater rim to the foot of the crater wall (docs/nove-proge-1-0.md)",
+  "about": "Ngorongoro, Tanzanija (id ngorongoro): 3 km of the one-way stone-paved descent road from the crater rim to the foot of the crater wall (docs/nove-proge-1-0.md); the line from 205 m before the start line (the grid, on the rim road) to 262 m past the finish (the cars' slots, on the crater floor)",
   "box": [-3.183, 35.462, -3.14, 35.505],
   "closed": false,
   "route": [
+    [-3.1559, 35.47435, null, "run-up for the grid | primary (the rim road), w427251814, 205 m before the start line"],
     [-3.15494, 35.47587, "Seneto Descent Road", "start | tertiary, w477776174, s 0 m"],
     [-3.15448, 35.47729, "Seneto Descent Road", "tertiary, w477776174, s 174 m"],
     [-3.15416, 35.47841, "Seneto Descent Road", "tertiary, w31021527, s 304 m"],
@@ -24,11 +25,13 @@
     [-3.168, 35.48706, "Seneto Descent Road", "tertiary, w31021527, s 2548 m"],
     [-3.16781, 35.48825, "Seneto Descent Road", "tertiary, w31021527, s 2685 m"],
     [-3.16839, 35.48987, "Seneto Descent Road", "tertiary, w31021527, s 2876 m"],
-    [-3.16869, 35.49086, "Seneto Descent Road", "finish | tertiary, w31021527, s 2991 m"]
+    [-3.16869, 35.49086, "Seneto Descent Road", "finish | tertiary, w31021527, s 2991 m"],
+    [-3.16988, 35.4929, "Seneto Descent Road", "the cars' slots past the finish line | tertiary, w31021527, 262 m past it"]
   ],
   "prefer": ["Seneto Descent Road"],
   "geoRoads": [],
   "geoWater": [],
   "marks": [],
-  "places": []
+  "places": [],
+  "dist": {"grid": 480}
 }

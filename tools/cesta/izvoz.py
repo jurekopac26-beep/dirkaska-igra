@@ -42,12 +42,18 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # Spa: the service road at the corner after the long straight (2519 m, left) meets the circuit behind an asphalt run-off wider
          # than the 22 m a strip may run inside the barrier's line
          'spa': dict(kinds={'raceway'}, izpusti=[(2519, -1)]),
-         # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3962 m, left) and a 22 m stub that curls back
-         # beside the finish's wide verge (4914 m, right)
-         'rastro': dict(izpusti=[(3962, -1), (4914, 1)]),
-         # Chapman's Peak: two drives on the mountain's side (2073 m and 3631 m, right), where the game's hillside stands 7 m above the road
+         # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3180 m, left) and a 22 m stub that curls back
+         # beside the finish's wide verge (4132 m, right)
+         'rastro': dict(izpusti=[(3180, -1), (4132, 1)]),
+         # Chapman's Peak: two drives on the mountain's side (1749 m and 3307 m, right), where the game's hillside stands 7 m above the road
          # ten metres behind the barrier's line: a strip that follows the ground would climb a bank no car could
-         'chapman': dict(izpusti=[(2073, 1), (3631, 1)])}
+         # (metres after the start line: when a track's start moves, these move with it; 16. 11. 2026: Rio do Rastro -782 m, Chapman's Peak -324 m)
+         'chapman': dict(izpusti=[(1749, 1), (3307, 1)]),
+         # Medeu: the one-way lanes that turn back along the road in front of the rink (226 m and 232 m, left) and a street that runs
+         # along the barrier's line 16 m from the road (4098 m, right): built alone, none gives World.cesta.stranske a mouth
+         'medeu': dict(izpusti=[(226, -1), (232, -1), (4098, 1)]),
+         # the circuits of group 569c: the map's raceway is the track
+         'lombok': dict(kinds={'raceway'}), 'lusail': dict(kinds={'raceway'})}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
