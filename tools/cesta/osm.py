@@ -4,8 +4,8 @@
   node tools/cesta/crte.js <id> > crte.json
   python3 -I tools/cesta/osm.py crte.json <id> <raw-dir>      (downloads the tiles the track's corridor touches, fits the map to the track)
 
-So far it downloads and measures the fit (docs/realizem/paket-e.md, "Prenos OSM"); the extract of the side roads, lamps and stops in the
-game's coordinates is the next step. The downloads stay outside the repository (<raw-dir>, kept between runs). Needs numpy and scipy.
+It downloads and measures the fit (docs/realizem/paket-e.md, "Prenos OSM"); tools/cesta/izvoz.py then writes the side roads, lamps and
+stops in the game's coordinates. The downloads stay outside the repository (<raw-dir>, kept between runs). Needs numpy and scipy.
 
 Data: (c) OpenStreetMap contributors, ODbL 1.0 (api.openstreetmap.org/api/0.6/map). Names are never read."""
 import sys, os, json, math, ssl, time, shutil, urllib.request, urllib.error, xml.etree.ElementTree as ET
