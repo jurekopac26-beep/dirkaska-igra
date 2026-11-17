@@ -21,7 +21,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       holes: { n: 10, r: [0.25, 0.55], h: [0.06, 0.13], wet: 0.65 }, stones: { n: 30, r: [0.06, 0.16], h: [0.04, 0.09] }, windrows: { h: 0.1, at: 0.55, w: 0.22, cover: 0.85, g: 0.78 },
       tilt: { side: 'drop', base: 0.008, amp: 0.022, l: 45 }, ai: { v: 11, k: 26, min: 5 } },
     // medal times of the time trial (s), dry and in the rain: the tanker on the autopilot x 1.02 (gold), 1.15 (silver), 1.40 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[57,64,78],wet:{cs:[69,78,95]}},
+    medals: {cs:[57,64,78],wet:{cs:[69,78,95]},winter:{cs:[73,82,100],wet:{cs:[81,92,112]}}},
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xc4ccd2, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [],

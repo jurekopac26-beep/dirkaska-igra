@@ -20,7 +20,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
       dips: { n: 0.6, n0: 2, l: [3.5, 5.5], h: [0.12, 0.2], wet: true }, holes: { n: 9, r: [0.3, 0.6], h: [0.05, 0.12], wet: 0.85 },
       stones: { n: 18, r: [0.08, 0.2], h: [0.05, 0.11] }, slides: { n: 1, n0: 4, l: [3, 7], w: [0.9, 1.6], h: [0.15, 0.28], g: 0.74 }, tilt: { side: 'drop', base: 0.025, amp: 0.035, l: 42 }, ai: { v: 10, k: 28, min: 4.5 } },
     // medal times of the time trial (s), dry and in the rain: the tanker on the autopilot x 1.02 (gold), 1.15 (silver), 1.40 (bronze) (tools/nova-proga.mjs --medalje)
-    medals: {cs:[67,75,91],wet:{cs:[79,89,108]},winter:{cs:[86,97,118],wet:{cs:[93,104,127]}}},
+    medals: {cs:[67,75,91],wet:{cs:[79,89,108]},winter:{cs:[77,87,106],wet:{cs:[91,103,125]}}},
     // the look of the light and the haze (render's theme for this road: js/render.js reads def.look when it has none of its own)
     look: { fog: 0xdfe4e2, sun: 0xfff2dc, sunI: 1.28, sky: 0xb4cff0, gnd: 0x5a5e40, hemiI: 0.62, tint: [1.0, 1.0, 1.0], sat: 1.04, sunOff: [-64, 96, -58], split: [[0.96, 0.99, 1.06], [1.04, 1.0, 0.95]] },
     names: [],

@@ -2062,9 +2062,15 @@ const Core = (function () {
   const tlWxB = (c, trk, sf) => (c.wx ? c.wx.b : 1) * (trk.snowK && (sf === 5 || sf === 6) ? trk.snowK / (c.wx ? c.wx.rb : 1) : 1);   // a trailer's brakes: what its car's weather leaves them (and the snow on a stage's gravel under it)
   // the tanker's own roads (def.vehicle: a short, steep and bumpy time trial for that one vehicle, docs/proge-cisterna.md): in the rain
   // its driven wheels get the weather's lost grip back at a standstill (WET_LAUNCH of it), less as it gathers speed, none from 9 m/s on,
-  // so it pulls away up a wet ramp. On no other road, and never on a dry one (wx.r 1: exactly 1); winter's share (g) stays as it is
+  // so it pulls away up a wet ramp. On no other road, and never on a dry summer one (wx.k 1: exactly 1); winter's share (g) as well, as the rain's
+  // (the user's choice of 17. 11. 2026, cisterna-zima-539): the weather's whole share wx.k, the rain's and winter's together, and sk, the snow
+  // packed on a mixed stage's gravel under its wheels (their mean share, Car skG: 1 off winter)
   const WET_LAUNCH = 1;
-  const wetLaunch = (c, trk, vl) => trk.def.vehicle && c.wx.r < 1 ? 1 + (1 / c.wx.r - 1) * WET_LAUNCH * (1 - sstep(0.5, 9, Math.abs(vl))) : 1;
+  const wxLaunchK = (k, vl) => 1 + (1 / k - 1) * WET_LAUNCH * (1 - sstep(0.5, 9, Math.abs(vl)));
+  const wetLaunch = (c, trk, vl, sk) => { const k = c.wx.k * (sk || 1); return trk.def.vehicle && k < 1 ? wxLaunchK(k, vl) : 1; };
+  // and winter's part of it (the weather's whole share over the rain's) on the friction ellipse's cap of the drive too (cs: the cornering grip shrinks
+  // with winter's, the rain's own launch did without it): exactly 1 off winter, so the rain's launch stays as it was
+  const winLaunch = (c, trk, vl, sk) => { const k = c.wx.k * (sk || 1), r = c.wx.r; return trk.def.vehicle && k < r ? wxLaunchK(k, vl) / (r < 1 ? wxLaunchK(r, vl) : 1) : 1; };
   const tyreFor = (w) => w > 0.3 ? 'wet' : 'dry';   // the tyres to fit for a road with this much water
   // compounds of the slicks (Race opts compounds): g x their grip, wr x their wear, loss: the grip lost when worn out (the medium is the
   // slick above; the soft quicker and short-lived, the hard slower and lasting); col: the band on a formula's sidewalls (the renderer)
@@ -3269,7 +3275,7 @@ const Core = (function () {
       const lchK = this.lch && !this.lch.done ? this.lch.k : 1;   // (the start: a late reaction, the driven wheels spinning away, see LAUNCH)
       const plx = this.plx ? this.plx.k : 0, plxK = 1 + PIT_LAUNCH.boost * plx;   // (a perfect exit out of the pits: more drive and grip, no wheelspin, see PIT_LAUNCH)
       if (plx && F > 0) F *= plxK;
-      const Fdmax = (this.tl ? this.tracG * G * (m * share + tlKing(this)) : this.tracG * G * m * share) * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK * plxK * wetLaunch(this, trk, vl);   // (the formula's wings press the driven wheels down too; a semi-trailer's kingpin the drive axle: tlKing)
+      const Fdmax = (this.tl ? this.tracG * G * (m * share + tlKing(this)) : this.tracG * G * m * share) * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK * plxK * wetLaunch(this, trk, vl, skG);   // (the formula's wings press the driven wheels down too; a semi-trailer's kingpin the drive axle: tlKing)
       let spin = 0;
       if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
       this.spin = thr > 0.2 && grounded ? spin * (M.spinK || 1) * (1 - Math.min(1, 2 * plx)) : 0;   // (a perfect exit: none while half of it or more is left)
@@ -3329,7 +3335,8 @@ const Core = (function () {
       let wN = lo * rho * (att - (1 - K.kickPath * (CP.tv || 1)) * (this.csK + this.csKc)) / tv + (1 - lo) * wD;   // (CP.tv: the same path swing from a kick as the road cars)
       if (!fwd || !grounded) wN = 0;
       const aC = K.comb * aL, aNeed = Math.min(aL, Math.abs(wN) * v);
-      if (F > 0 && fwd) F = Math.min(F, m * Math.sqrt(Math.max(0, aC * aC - aNeed * aNeed)));   // power costs grip: the drive gets what the cornering leaves
+      const aCd = aC * winLaunch(this, trk, vl, skG);   // (the tanker's own roads in winter: the drive's share of the ellipse at a launch, winLaunch)
+      if (F > 0 && fwd) F = Math.min(F, m * Math.sqrt(Math.max(0, aCd * aCd - aNeed * aNeed)));   // power costs grip: the drive gets what the cornering leaves
       const aX = Math.max(Math.abs(F), fb) / m;                                                  // (brakes first: the cornering gets what they leave)
       const aN = Math.min(aL, Math.sqrt(Math.max(0, aC * aC - aX * aX)));
       wN = clamp(wN, -aN / v, aN / v);
@@ -3513,7 +3520,7 @@ const Core = (function () {
       if (!grounded) F = 0;
       const share = M.drive === 'AWD' ? 0.68 : M.drive === 'FF' ? 0.6 : M.drive === 'RR' ? 0.62 : 0.55;
       const lchK = this.lch && !this.lch.done ? this.lch.k : 1;
-      const Fdmax = (this.tl ? this.tracG * G * (m * share + tlKing(this)) : this.tracG * G * m * share) * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK * wetLaunch(this, trk, vl);   // (a semi-trailer's kingpin presses the drive axle: tlKing, as in cs)
+      const Fdmax = (this.tl ? this.tracG * G * (m * share + tlKing(this)) : this.tracG * G * m * share) * muDrv * (0.42 + 0.58 * sstep(0.5, 9, Math.abs(vl))) * (M.aero ? 1 + this.aeroK * spd * spd : 1) * lchK * wetLaunch(this, trk, vl, skG);   // (a semi-trailer's kingpin presses the drive axle: tlKing, as in cs)
       let spin = 0;
       if (Math.abs(F) > Fdmax) { spin = Math.abs(F) / Fdmax - 1; F = Math.sign(F) * Fdmax; }
       this.spin = thr > 0.2 && grounded ? spin * (M.spinK || 1) : 0;
