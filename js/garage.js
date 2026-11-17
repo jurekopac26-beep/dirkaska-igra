@@ -310,7 +310,8 @@
     // (a button's picture missing: drawn now, no show playing (the tap's moment, the page opened); else first in the queue, drawn the
     // next frame even over a show; the car shown and the cars two before and after drawn ahead, when nothing moves: there at the next tap)
     const at = (d) => ORDER[(i + d + 2 * ORDER.length) % ORDER.length];
-    for (const id of [pv, nx]) if (!thumbOf(id, S.cars[id].color)) { if (G.busy) queueThumbs([id], true); else try { drawThumb(id, S.cars[id].color); } catch (e) { console.error(e); queueThumbs([id], true); } }
+    // (a missing button picture: drawn now, unless a show runs and the button still shows one, then first in the queue, the next frame)
+    for (const [b, id] of [['g-prev', pv], ['g-next', nx]]) if (!thumbOf(id, S.cars[id].color)) { if (!G.ready || (G.busy && $(b).querySelector('.th img'))) queueThumbs([id], true); else try { drawThumb(id, S.cars[id].color); } catch (e) { console.error(e); queueThumbs([id], true); } }
     for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbOf(id, k.color), th = el.querySelector('.th'), was = th.firstElementChild;
       if (!t) th.innerHTML = ''; else if (!was || was.getAttribute('src') !== t) th.innerHTML = '<img alt="" src="' + t + '">';   // (the same picture: not set again)
       el.querySelector('.nm').textContent = model(id).name;
