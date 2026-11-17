@@ -518,18 +518,18 @@
   "jsMs": 1.02
  },
  "sepang": {
-  "calls": 184,
-  "maxCalls": 226,
-  "kverts": 684,
-  "maxKverts": 861,
-  "jsMs": 1.14
+  "calls": 185,
+  "maxCalls": 225,
+  "kverts": 706,
+  "maxKverts": 862,
+  "jsMs": 2.45
  },
  "sakhir": {
-  "calls": 200,
-  "maxCalls": 229,
-  "kverts": 695,
-  "maxKverts": 782,
-  "jsMs": 0.93
+  "calls": 203,
+  "maxCalls": 231,
+  "kverts": 731,
+  "maxKverts": 822,
+  "jsMs": 2.38
  },
  "portomoniz": {
   "calls": 208,
@@ -539,11 +539,11 @@
   "jsMs": 2.66
  },
  "seoul": {
-  "calls": 134,
-  "maxCalls": 146,
-  "kverts": 455,
-  "maxKverts": 564,
-  "jsMs": 0.75
+  "calls": 136,
+  "maxCalls": 148,
+  "kverts": 468,
+  "maxKverts": 576,
+  "jsMs": 1.15
  },
  "espinazo": {
   "calls": 162,

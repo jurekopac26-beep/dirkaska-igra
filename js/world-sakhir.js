@@ -82,8 +82,9 @@
     'varying vec2 vSkW; varying float vSkD; uniform vec3 uSkAvg;',
     'float skHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
     'float skNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(skHash(i), skHash(i + vec2(1.0, 0.0)), u.x), mix(skHash(i + vec2(0.0, 1.0)), skHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+  let skAvg = [0.35, 0.49, 0.22];
   function skGround(m) {
-    const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22];
+    const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22]; skAvg = avg;
     m.userData.grassLook = true;
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uSkAvg = { value: new THREE.Vector3(avg[0], avg[1], avg[2]) };
@@ -106,6 +107,11 @@
     m.customProgramCacheKey = () => 'skGround';
     m.needsUpdate = true;
   }
+  // the colour a side road's strip fades into at its end (LK.stranskaBarva; World.cesta.stranske's strips are on a clone of the asphalt's
+  // material): the ground's vertex colours mean a colour over the grass picture's average (skGround), the strip's over the asphalt's
+  // (js/tex.js: about 0.40, 0.41, 0.43; the end takes 1.2 times the colour it is given), so the sand shows as sand there, not lilac
+  const SK_ASF = [0.40 * 1.2, 0.41 * 1.2, 0.43 * 1.2];
+  const skStranska = (x, z, g) => { const c = g(x, z); return [c[0] * skAvg[0] / SK_ASF[0], c[1] * skAvg[1] / SK_ASF[1], c[2] * skAvg[2] / SK_ASF[2]]; };
 
   // the ways on the ground (def.sk.svc: OSM's highway=service, 5 m wide; def.sk.alt: the asphalt of the circuit's other layouts, 13 m wide,
   // the drag strip (a negative count) 18 m): plain asphalt on the terrain, its two edges every 4 m, 8 cm over it and drawn over it; the
@@ -356,7 +362,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     sakhir: { ban: SK_BAN, at: SK_AT, nums: 15, numC: ['#ce1126', '#fff', '#fff'], shirts: SK_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.7, 1.2, 2.3], gravel: false, noVid: true,
       pitBox: [-210, 180, 1], mow: 0.001, vg: [2.12, 1.42, 2.22],   // (the pit garages on the right of the main straight; the verges inside the barriers sand, no mowing stripes)
-      woods: SK_WOODS, extra: skExtra, pad: skPad, ground: skGround, lane: true, fl: { bh: BH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: SK_WOODS, extra: skExtra, pad: skPad, ground: skGround, stranskaBarva: skStranska, lane: true, fl: { bh: BH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
       flags: { stand: [{ bh: 0.8, tm: 0.2 }, { bh: 0.7, tm: 0.2, rb: 0.1 }], ga: { bh: 0.8, tm: 0.2 }, camp: { bh: 0.85, tm: 0.15 }, pole: 'bh', podium: 'bh' },
       vid: [], poles: [-150, 160, -1], runoff: ['SAKHIR', 'BAHRAIN', 'MANAMA'], straight: [-120, 120, -1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.62, 0.6, 0.56], end: [0.9, 0.87, 0.8], barn: [0.75, 0.68, 0.56], barnRoof: [0.6, 0.6, 0.6], barnEnd: [0.72, 0.65, 0.54] },
