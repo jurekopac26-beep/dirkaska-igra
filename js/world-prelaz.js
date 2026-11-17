@@ -549,13 +549,14 @@
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     // the roads of the map that meet this one, for the look only (package Realizem E, World.cesta.stranske; def.stranske, from OpenStreetMap through
     // tools/cesta/izvoz.py): measured here, drawn with the road's chunks and the scenery below; the model, the barrier's line and the cars know nothing
-    // of them. A pass is an open road: its edge line is broken at the mouths and the rail opens there. L.drzava: the country whose rules for the lines
+    // of them. A pass is an open road: its edge line is broken at the mouths and the rail opens there. drzava (from the track's name): the country whose rules for the lines
     // are known (World.cesta's CRTE); without it the mouths stay without paint (no stop line, no broken line across)
     const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i]; for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
     const edgeTone = (i) => { let sd = 1; for (const u of SR.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const o = sd * w, d = o - T.rl[i]; return (0.8 - 0.12 * Math.exp(-d * d / 5.5)) * (0.96 + 0.08 * P.n2(T.px[i] * 0.5 + o, T.pz[i] * 0.5)); };   // (the asphalt's tone at its edge on the mouth's side: shade below)
-    const SR = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: true, drzava: L.drzava, barva: L.drzava ? undefined : false }) : null;
+    const drzava = ((c) => World.cesta && World.cesta.CRTE && World.cesta.CRTE[c] ? c : null)(String(def.name || '').split(',').pop().trim());   // (the country in the track's name, if World.cesta's CRTE knows its lines)
+    const SR = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: true, drzava: drzava || undefined, barva: drzava ? undefined : false }) : null;
     const naSR = (x, z) => !!SR && excluded(x, z, 2), off = SR ? new GB() : null; let nStb = 0;   // (what stands in a side road's circle is still drawn, into off, never shown: the random sequence behind it stays)
-    if (SR) { out.cestaRob = (out.cestaRob || []).concat(SR.ustja); for (const k of SR.krogi) exclPush(k[0], k[1], k[2]).sc = 1; out.stranske = SR.n; }
+    if (SR) { out.cestaRob = (out.cestaRob || []).concat(SR.ustja); for (const k of SR.krogi) exclPush(k[0], k[1], k[2]).sc = 1; out.stranske = SR.n; lMat.userData.crte = 1; }
     const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a; if (t < 1e-4) return Pt(a, o, y); const p = Pt(a, o, y), q = Pt(a + 1, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
     const hairS = (def.curves || []).map(([d]) => sStart + d);
     let wallG = null, wallMat = null;   // (the walls' masonry: one mesh, finished after the stone parapets where there are any)
@@ -584,7 +585,7 @@
           for (const si of [0, 1]) { const o0 = si ? w - 0.45 : -(w - 0.3), o1 = si ? w - 0.3 : -(w - 0.45);
             for (const run of SR.tek(si, 2, c0, cE)) for (let k = 0; k + 1 < run.length; k++) { const f0 = run[k], f1 = run[k + 1], g = FB && fadeI[Math.floor(f0)] ? FB.gl : gl0;
               g.quadUp(PtF(f0, o0, 0.036), PtF(f0, o1, 0.036), PtF(f1, o1, 0.036), PtF(f1, o0, 0.036), [wht, wht, wht, wht]); } }
-          if (L.drzava) for (const [f0, f1, sd] of SR.prekinjena(c0, Math.min(c0 + 60, N))) { const o0 = sd > 0 ? w - 0.45 : -(w - 0.3), o1 = sd > 0 ? w - 0.3 : -(w - 0.45);
+          if (drzava) for (const [f0, f1, sd] of SR.prekinjena(c0, Math.min(c0 + 60, N))) { const o0 = sd > 0 ? w - 0.45 : -(w - 0.3), o1 = sd > 0 ? w - 0.3 : -(w - 0.45);
             gl0.quadUp(PtF(f0, o0, 0.036), PtF(f0, o1, 0.036), PtF(f1, o1, 0.036), PtF(f1, o0, 0.036), [wht, wht, wht, wht]); } }
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const fb = FB && fadeI[i], gr = fb ? FB.gr : gr0, gl = fb ? FB.gl : gl0, gs = fb ? FB.gs : gs0, gv = fb ? FB.gv : gv0;

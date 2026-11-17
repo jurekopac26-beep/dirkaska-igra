@@ -624,7 +624,7 @@
     const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => 0.85 * secT[i] - 0.03, drzava }) : null;
     const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
     const naCesti = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] + m; if ((x - k[0]) * (x - k[0]) + (z - k[1]) * (z - k[1]) < r * r) return true; } return false; };   // (on a side road or within m of its edge + 1.8 m)
-    if (SC) { out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; }
+    if (SC) { out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; lMat.userData.crte = 1; }   // (crte: the edge lines' material, for the tests)
 
     /* ---- barriers: concrete walls along the straight, the pit wall and in front of the spectators, tyre walls round the outside of the slow
        corners, double armco on posts elsewhere; debris fences behind the walls and the tyre walls ---- */

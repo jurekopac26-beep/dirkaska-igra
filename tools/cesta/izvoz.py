@@ -66,7 +66,12 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # along the barrier's line 16 m from the road (4098 m, right): built alone, none gives World.cesta.stranske a mouth
          'medeu': dict(izpusti=[(226, -1), (232, -1), (4098, 1)]),
          # the circuits of group 569c: the map's raceway is the track
-         'lombok': dict(kinds={'raceway'}), 'lusail': dict(kinds={'raceway'})}
+         'lombok': dict(kinds={'raceway'}), 'lusail': dict(kinds={'raceway'}),
+         # Kågeröd and Kildare: circuits, fitted to their own line (raceway) as the Nürburgring
+         'kagerod': dict(kinds={'raceway'}, predmeti=False), 'kildare': dict(kinds={'raceway'}, predmeti=False),
+         # the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md: those are for the 15
+         # tracks of main; 16. 11. 2026, group 569b)
+         'hakone': dict(predmeti=False), 'izoard': dict(predmeti=False)}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
@@ -277,7 +282,7 @@ def main():
               '    // [m after the start line, side, distance from the centre line, shelter]; nobody drives there\n' if lamps or stops else
               '    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]]; nobody drives there\n'))
     blk += ''.join('    %s: %s,\n' % (k, json.dumps(v, separators=(',', ':'))) for k, v in data if v)
-    m = re.search(r'^    points: ', src, re.M); assert m, 'no points line in ' + path
+    m = ([None] + list(re.finditer(r'^    points: ', src, re.M)))[-1]; assert m, 'no points line in ' + path   # (the last: Hakone's own data block has one too)
     if any(v for k, v in data): src = src[:m.start()] + blk + src[m.start():]
     open(path, 'w', encoding='utf-8').write(src); print('written: js/tracks/%s.js' % C['id'])
 
