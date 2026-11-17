@@ -9,7 +9,7 @@ Skupna vrsta PR za `main` vseh računov (`CLAUDE.md`, Postopek). Naenkrat gre na
 - **Japonska**: ostane Hakone; Suzuka in Irohazaka gresta med testne (vrstica spodaj).
 - **Mejniki**: 23. 12. vseh 70 prog, nato brez novih funkcij; 15. 1. 2027 kandidat; 1. 2. 2027 izid; testne proge se pred izidom izbrišejo.
 - **Nove proge ustavljene** (12. 11. ob ~19.00 in 11. 11. ob ~12.35): nobena seja ne začne nove proge brez datoteke, dokler je uporabnik ne potrdi znova (tudi 10 od Hải Vâna do Batangasa); proge z datoteko (#569, #494, osnutki) ostanejo. Opomnik za pregled: 30. 11. ob 10.25. **13. 11. potrjene** (`docs/nove-proge-1-0.md`, »Potrditve 13. 11. 2026«): 9 novih prog, 4 s prepadom, Aguascalientes, Koli, Longyearbyen, Mujib in Irishtown (70 od 70; rezervi Chamarel in El Castaño); Envalira 1. 12.
-- Proge so v vrsti zadnje, za njimi nova mapa z misijami. Vrstni red sme premikati tudi Matej (objavi na tabli #382, uporabnik prekliče).
+- **Proge gredo na `main` čim prej** (od 16. 11., odločitev uporabnika ob ~2.52; »Nov vrstni red 16. 11. 2026« spodaj), za njimi nova mapa z misijami (zaustavljene do 2.0). Vrstni red sme premikati tudi Matej (objavi na tabli #382, uporabnik prekliče).
 
 ## Pravila
 - **Pred združitvijo**: `git fetch origin main && git show origin/main:docs/vrsta.md`; združi samo, če je tvoj PR prvi ali pred njim ni nikogar zelenega.
@@ -36,13 +36,13 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |
 | Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |
 | Suzuka in Irohazaka v test (`test: true`, zbirna veja C #611) | partyslo | ko je prostor |
-| Hitro nalaganje, korak 2 (I17) | biketraveler | po zbirnih A (#583) in B (#579) |
+| Hitro nalaganje, korak 2 (I17; #758 s #767 in #725; od 17. 11. ob ~2.57 prevzame croatiadata) | croatiadata | po zbirnih A (#583) in B (#579) |
 | Videz avta povsod (`docs/novosti-e.md`) | partyslo | po potrditvi načrta in #297; oceno da Matej 16. 11. |
 | Garaža z Dež in sneg v eni zbirni veji: animacije (8 plošč, #546) | biketraveler | prednost; pred `main` ok na posnetku |
-| Avti na raven KOLIBRIJA: preostalih 13 v #480 (+ #626) | biketraveler | pred Trki; na `main` ~17. 11. |
-| **30 avtov na raven KOLIBRIJA** (`docs/avti-kolibri.md`, »Prednost: 30 avtov«) | biketraveler | po #480, pred Trki; ~47 h, ~25. 11. |
+| **Prevzem dela 17. 11. 2026** (odločitev uporabnika 17. 11. 2026 ob ~2.57, tabla #382): KOLIBRI #480 (s #661 in #662) vodi **partyslo**; Hitro nalaganje #758 (s #767 in #725) vodi **croatiadata**; **biketraveler dela samo Trke #608** | partyslo, croatiadata, biketraveler | takoj; predaja v opisih PR |
+| Avti na raven KOLIBRIJA: preostalih 13 v #480 (+ #626; s #661 in #662 od 17. 11. ob ~2.57 prevzame partyslo) | partyslo | pred Trki; na `main` ~17. 11. |
+| **30 avtov na raven KOLIBRIJA** (`docs/avti-kolibri.md`, »Prednost: 30 avtov«; od 17. 11. partyslo) | partyslo | po #480, pred Trki; ~47 h, ~25. 11. |
 | 4 novi tovornjaki (TITAN PLIN odpade 13. 11.; + 1 posebno vozilo po izbiri seje, najprej slika = 50 avtov) z mesti za dele ob izdelavi | biketraveler | za grafiko; na `main` ~20. 12. |
-| Občutek hitrosti pri kameri za avtom (I5) | jure.kopac26 | po tedenskem načrtu; pred `main` preizkus uporabnika |
 | Analiza kroga (I12) | biketraveler | v delu od 8. 11.; pred progami |
 | Samodejno zaviranje pred ovinki za začetnike (I10) | jure.kopac26 | po tedenskem načrtu |
 | Vrstica podatkov na izbiri proge (`docs/meni-izbira-proge.md`) | jure.kopac26 | po tedenskem načrtu |
@@ -59,6 +59,14 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
+**Nov vrstni red 16. 11. 2026** (odločitvi uporabnika 16. 11. 2026 ob ~2.47 »uporabi vse 4 predloge« in ob ~2.52 »Sprememba. Proge naj gredo na main cimprej«, prek Mateja; `docs/odlocitve.md`, »Seje«; velja pred načrtom 11. 11. in tabelo spodaj, kjer si nasprotujeta). En PR naenkrat na `main`, »Ready for review« imata samo prva dva v vrsti; vsak račun ima eno sejo Združevanje.
+1. Majhni PR, ki zmanjšajo spore (jure.kopac26 po vrsti): #698 Popravki 15. 11. (združen) → zbirni PR pravil 12.–17. 11. (#664 + #674 + #701 v enem, odločitev uporabnika 17. 11. ob ~3.00: pravila enkrat na dan) → #709; majhni PR drugih računov enako, po vrsti na tabli.
+   Vrstni red (seja Združevanje, 16. 11.): #698 → #569 → zbirni PR pravil (#664 + #674 + #701) → #709 → #669 → #657/#678 (nikoli hkrati; #669 pred #678) → #663 → #670 → #702; #668 za #657. #671 in #675 gredo skupaj s #569.
+2. **Proge: #569 (vse proge, z #494)**, jure.kopac26: ne čaka več na Trke (#608); mesto med prvima dvema dobi takoj, ko je pripravljen (svež `main`, oznake `pending` in `test`, povezani testi), vzporedno z majhnimi PR iz točke 1. Drugi računi svoje pripravljene proge zberejo v en PR na račun in ga vpišejo sem.
+3. Zbirne veje, ena na temo (`zbirna/<ime>`, vodi račun teme): Hitro nalaganje (#514 in koraki, biketraveler), Realizem G (#669 in proge), Realizem S (#668 in proge), Realizem E (#657, #678), Svetovna lestvica (#672, #688, #743), Prvi zagon (#673). Pregled z več agenti enkrat na zbirno vejo.
+4. Ostale teme po načrtu 11. 11. spodaj; Trki + Poškodbe (#608), ko so pripravljeni; Preleti (#246) ostanejo za Trki, dokler uporabnik ne reče drugače.
+5. Nova mapa in misije zadnje.
+
 **Načrt 12. 11. ob ~19.30** (Matej; velja pred 11. 11.): #569 + #494 (29 prog) na `main` ~15.–16. 11. takoj po meniju (pravih 44); 9 dirkališč iz #547, #591, #619 ~25. 11. (53); vse razen novih prog ~16. 12.; do 70 manjka 17; ob potrditvi seznama do ~15. 11. ~18. 12., ob potrditvi 30. 11. 70 do 23. 12. ni verjetnih.
 
 **Načrt 11. 11.** (Matej, komentar 6793233105), vse na `main` ~16. 12.:
@@ -68,7 +76,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 4. (združeno v 2.)
 5. Garaža (#653), biketraveler, ~14. 11. po »ok«
 6. Najboljše vožnje, jure.kopac26, ~14. 11.
-7. Mesta za dele (#480 + #626) in 30 avtov KOLIBRI, biketraveler, ~25. 11.
+7. Mesta za dele (#480 + #626) in 30 avtov KOLIBRI, partyslo (od 17. 11.), ~25. 11.
 8. (združeno v 7.)
 9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
 10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge potrjene 13. 11. (19 prog do 70), partyslo in croatiadata
@@ -82,11 +90,8 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 10.10 | #650 | Kamera in meni (brez »Super blizu«): pokonci kamera za avtom bližje, ležeča izbira proge (vrstica in *Race!* na dnu, *Back* velik kot *Race!*), gorske proge ležeče kot pokonci, avto ob menjavi proge miruje; mesto 3 načrta 11. 11. | jure.kopac26 | uporabnik »ok« na predogledu 11. 11. 2026 ob ~12.30 (»Kamera sem stestiral je ok«, prek Mateja); svež `main` spojen 11. 11. (spor samo v `docs/igra.md`); vodi koordinacija jure.kopac26; ob spoju #246 (preleti v `js/menu.js`) preveri prekrivanje |
-| 9.9 | veja `pravila/12-11` (#664) | pravila 12. 11.: ukrepi 1–4, Trki samo Fable 5.2, teme »Načrtovano« | jure.kopac26 | osnutek |
-| 10.11 | #569 Zbirna N1–N7 + #494 Proge | 29 pravih prog; popravi se samo, kar ovira `main`; na `main` ~15.–16. 11. po meniju; oznake `test`/`pending` kot na `main` | jure.kopac26 | **pripravljen 13. 11.** (povezani testi lokalno zeleni); predaja v opisu #569; do `main` ga vodi Združevanje (jure.kopac26) |
+| 10.11 | #569 Zbirna N1–N7 + #494 Proge | 29 pravih prog; **ne čaka več na Trke, na `main` čim prej** (odločitev uporabnika 16. 11. ob ~2.52); popravi se samo, kar ovira `main`; vanj pride še 10 novih prog (partyslo, ~7. 12.); člene (#283, #261, #153, #465, #494) zapre Združevanje po združitvi; oznake `test`/`pending` kot na `main` | jure.kopac26 | **pripravljen 13. 11.** (povezani testi lokalno zeleni); predaja v opisu #569; do `main` ga vodi Združevanje (jure.kopac26) |
 | 13a–13r | #485, #498, #500, #550, #556, #564, #576, #582, #588, #592, #603, #607 (N1–N8), #283, #261, #153, #465 (#494) | nove proge, vse v #569 oz. #494 | partyslo, jure.kopac26 | osnutki se zaprejo; podrobnosti v arhivu |
-| 10.12 | #246 | preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva; ~8. 12. | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
-| 10.13 | #698 Popravki 15. 11. | jure.kopac26 | predaja na začetku ravnine na Chapman's Peaku, Bâlei, Tianmenu in Rio do Rastru (krajše proge, rekordi in duhovi ločeni z `recId` …2); uporabnik »1 · Ok, na main« na strani Odločitve 16. 11. 2026 (vprašanje `predaja-ravnina-1`, prek Mateja ob 1.38); povezani testi lokalno zeleni; predaja v opisu PR; osnutek do vrste, združi seja Združevanje |
+| 10.12 | #246 | **za Trki (#608), ~8. 12.**; preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva, tudi pri nekrožnih progah brez pospeševanja; ostalih 11 prog počaka na boljšo grafiko (`claude/preleti-posnetki`) | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.

@@ -16,9 +16,9 @@ Citati, datumi in zgodovina so v `docs/odlocitve.md` (razdelki kot tu); podrobno
 - Proge na odločanju ostanejo v igri in testih; do izbrisa morata delovati **Jezero** (privzeta proga, avtošola, testi) in **Toskana** (nova mapa); kar od tega pokvari skupna sprememba, popravi v skupni kodi.
 
 ## Ena proga na državo
-- Iz vsake države samo **ena** nova proga (`docs/proge-po-drzavah.md`, preveri pred novo progo); nov načrt predlaga največ eno na državo in izpusti države s progo. Država s progo v igri: nova samo po izbiri uporabnika (`ena-proga-<država>`).
+- Iz vsake države samo **ena** nova proga (`docs/proge-po-drzavah.md`, preveri pred novo progo, tudi v odprtih PR); nov načrt predlaga največ eno na državo in izpusti države s progo. Država s progo v igri: nova samo po izbiri uporabnika (`ena-proga-<država>`).
 - Država z dvema ali več progami brez izbire je **na odločanju**: vse njene proge dobijo `pending: true` (tudi že v delu), novih ne delamo; po izbiri izbrana postane prava, ostale dobijo `test: true`.
-- Stanje prog in seznam prog na odločanju: `docs/proge-po-drzavah.md`.
+- Stanje prog in seznam prog na odločanju: `docs/proge-po-drzavah.md`; na odločanju so tudi Džebel Hafit in Abu Dabi (ZAE, ko prideta na `main`), Hải Vân in Mã Pí Lèng (Vietnam), Batangas in Banaue (Filipini), Sogeri in Tapini (Papua Nova Gvineja) (#701).
 - **Sever v snegu**: Norveška, Švedska, Danska in Finska imajo zimo za privzeto vreme; nova finska proga je Koli, zimska.
 - **Nove proge za 1.0** (`docs/proge-po-drzavah.md`): dolge 1–5 km, ovinkaste, z malo ravninami in čim več zanimivega do 60 m ob cesti; seznam potrdi uporabnik, nobena nova proga se ne začne pred njegovim odgovorom.
 - **Izletna cona**: proga z ograjo, zidom, hišami ali prepadom do ~3 m od roba asfalta na več kot pol dolžine se ne začne (`docs/proge-po-drzavah.md`); izjema so **mestne proge** po središču velikih mest (1–5 km, široke ulice, nabrežja, generične stavbe).
@@ -54,10 +54,10 @@ Citati, datumi in zgodovina so v `docs/odlocitve.md` (razdelki kot tu); podrobno
 
 ## Seje
 - Ena tema na sejo; večji korak je nova seja s kratkim povzetkom. Seja dela samostojno, poroča ob koncu ali ob odločitvi, ki je res uporabnikova (seznam PR: račun in 1–3 stavki); ure po ljubljanskem času.
-- **Med čakanjem na »ok«** seja napiše predajo in se ustavi; račun začne naslednje delo v mejah 2 sej, 6 tem in porabe.
-- Največ 2 seji s kodo hkrati na račun (čakanje na teste ne šteje); zaganja jih koordinacija ali veriga; pred zagonom preveri `list_sessions` in odprte PR; seja s kodo dobi `source_url`.
+- **Med čakanjem na »ok«** seja napiše predajo in se ustavi; račun začne naslednje delo v mejah 10 sej, 6 tem in porabe.
+- **Največ 10 sej s kodo hkrati na račun** (vsi računi, od 16. 11.; čakanje na teste ne šteje): 10 je zgornja meja, ne cilj; število določa poraba, kakovost pred hitrostjo. Izjema: croatiadata do 20 sej do 22. 11. Dodatne seje najprej vodijo končano delo do `main`, šele nato nove teme; zaganja jih koordinacija ali veriga; pred zagonom preveri `list_sessions` in odprte PR; seja s kodo dobi `source_url`.
 - **Največ 6 odprtih tem na račun** (PR in osnutki, zbirna veja = ena): pri 6 nove ne začni, dokončuj in na strani Odločitve predlagaj, kaj zapreti ali združiti; izjeme: popravek rdečega `main`, kratek PR s pravili ali dokumenti za isti dan, tema, ki jo uporabnik začne kljub opozorilu.
-- **Poraba 100 % 12 h pred iztekom** (cilj = 100 % × ure od reseta / 156): več kot 5 točk pod ciljem ena seja s kodo več, nad ciljem nobene nove (`docs/varcevanje.md`, »Poraba«).
+- **Poraba 100 % 24 h pred iztekom** (vsi računi, od 15. 11.; cilj = 100 % × ure od reseta / 144): več kot 5 točk pod ciljem seje s kodo dodajaj (največ 10), nad ciljem nobene nove (`docs/varcevanje.md`, »Poraba«).
 - **Model in napor**: Opus (`claude-opus-5-5`) za zasnovo, novo kodo, težke napake, proge, meni, popravke in izbrise; Fable 5.2 (`claude-fable-5-2`) za grafiko in fiziko; Sonnet za opise, spore in manjše popravke; brez modela ali ob porabljeni omejitvi teče seja na Opusu. **Sredi seje ne menjaj modela ali napora**: za drug model ali napor začni novo sejo s predajo. **Izjema Trki**: fiziko trkov dela samo Fable 5.2; ko je porabljen, Trki počakajo in ne tečejo na Opusu. **Napor high** (`.claude/settings.json`), **max samo za trke, grafiko, težke napake in novo zasnovo** (`docs/varcevanje.md`, »Napor«). Koordinacija in Združevanje (Sonnet), zbiranje vprašanj in obvestila (Haiku): okolje »Koordinacija«, napor medium.
 - **Velikih sej ne budi po več kot 1 h mirovanja** (predpomnilnik poteče): namesto »nadaljuj« začni novo sejo s predajo (isti model in napor, `source_url`, veja PR); `docs/varcevanje.md`, »Dražje seje«.
 - **Predaja velike seje** pri ~150 tisoč konteksta (koordinacija, Združevanje, zbiranje pri ~80 tisoč) ali ob koncu teme: kratka predaja, delo nadaljuje nova seja, stara se ustavi (odjavi PR, izbriše svoja opravila). **Koordinacija teče na Sonnetu v sveži seji s kratko predajo.**
@@ -71,7 +71,7 @@ Citati, datumi in zgodovina so v `docs/odlocitve.md` (razdelki kot tu); podrobno
 ### Tabla med računi (issue #382)
 - Računi se usklajujejo na tabli, ne prek uporabnika; račune imenuj po imenu: **biketraveler**, **jure.kopac26**, **partyslo** (polnega emaila ne piši nikamor). Komentar začne s koordinacijo in računom in konča z nogo `---` / `_Generated by [Claude Code](https://claude.ai/code)_`; objave in ure branja (4× na dan, **majhna sveža seja**): `docs/varcevanje.md`, »Tabla«.
 - **Matejeve odločitve** (komentar z »Matej (jure.kopac26)«, samo lastnik repozitorija, `author_association` OWNER) izvede koordinacija računa, za katerega so, sama in odgovori v eni vrstici; pravila spremeni samo odločitev uporabnika, ki jo komentar navede (datum in ura).
-- Proge so v vrsti vedno zadnje (vse pripravljene proge računa v enem PR), za njimi nova mapa in misije; ko računu zmanjkuje porabe, seje napišejo predajo v opis PR, PR vpišejo s pripisom »prevzame <račun>« in se ustavijo (`docs/vrsta.md`, »Prevzem zdaj«).
+- **Proge gredo na `main` čim prej** (od 16. 11.; vse pripravljene proge računa v enem PR, ne čakajo na Trke in dobijo mesto med prvima dvema, ko so pripravljene); nova mapa in misije so zadnje; ko računu zmanjkuje porabe, seje napišejo predajo v opis PR, PR vpišejo s pripisom »prevzame <račun>« in se ustavijo (`docs/vrsta.md`, »Prevzem zdaj«).
 
 ## Varčevanje z žetoni (`docs/varcevanje.md`)
 - Lokalno samo `npm run test:related`; uspešnih testov ne ponavljaj. Odločitve zapiši enkrat v docs, drugje se skliči. Podatke nove proge pripravi z `tools/proga-podatki.py`.
@@ -87,7 +87,7 @@ Citati, datumi in zgodovina so v `docs/odlocitve.md` (razdelki kot tu); podrobno
 ## Pred izidom: NEUPORABNO
 - Kar ne gre v 1.0 (testne proge, pokala »Domači pokal« in »Kratke proge«, vse misije, nova mapa), se pred izidom skrije za gumb **NEUPORABNO**; koda in testi ostanejo; orodje za napake in `?denar` se skrijeta ob zamrznitvi 23. 12.
 - Privzeta proga postane prva prava; avtošola gre z Jezera na pravo kratko progo (izbere in javi seja teme).
-- **Prednost zdaj: fizika (samo trki) in grafika** na računih biketraveler in jure.kopac26; partyslo dela nove proge, nato grafiko.
+- **Prednost zdaj: fizika (samo trki) in grafika** na računih biketraveler in jure.kopac26; partyslo dela grafiko že zdaj (Realizem na pravih progah brez PR; od 16. 11.), novih prog ne začne brez potrjenega seznama.
 
 ## Posebne misije (`docs/misije.md`)
 - **Nova mapa in misije** gredo v različico 2.0; delo na njih je **ustavljeno**, dokler uporabnik ne reče drugače; dovoljen je samo najmanjši popravek, da testi ostanejo zeleni (pokvarjen test popravi seja, ki ga je povzročila); novo delo je v vrsti zadnje.

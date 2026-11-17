@@ -189,6 +189,7 @@ Vrsta za `main` z ocenami je v `docs/vrsta.md` (»Posodobljen načrt 11. 11. 202
   3. E Cesta in predmeti na vseh pravih progah od 15. 11.; ~22. 11.
   4. S Stavbe ~30. 11., nato predelava prog.
 - **partyslo, proge, nato grafika:**
+  0. **Od 16. 11. grafika že zdaj** (odločitev uporabnika 16. 11. ob ~3.25, `docs/odlocitve.md`, »Seje«): Realizem na pravih progah, ki še nimajo PR, in lastni končani PR do `main`; novih prog ne začne brez potrjenega seznama. Datumi spodaj so prejšnji načrt.
   1. Prelet Spa (#246) 10. 11.; #569 na `main` ~26. 11., takoj za 30 avtov (komentar 6784739386; prej v sredo); od petka zadnje 3 proge (2 makadamski, 1 ledena) in Koli; preostali 3 preleti po uporabnikovem »ok« na Spa. #246 gre na `main` šele ~8. 12. (zgoraj) in do takrat na njem ni dela; prosti čas porabe gre grafiki po progah (G Rastje in teren, predelava prog) (komentar 6784505738).
   2. Od ~17. 11. G Rastje in teren; na `main` za S, ~1. 12.
   3. Od ~23. 11. predelava prog iz PR, nato nove proge po novem postopku; vse prave proge z novo grafiko ~6. 12.
