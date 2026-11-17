@@ -1394,14 +1394,14 @@
  "llogara": {
   "meshes": 1965,
   "verts": 714805,
-  "instances": 53817,
+  "instances": 53845,
   "props": 83,
   "crowd": 190,
-  "world": "6f15a981",
+  "world": "10d2c425",
   "propsHash": "715f287f",
   "floor": "ac0be231/8708",
   "groups": {
-   "-:MeshLambertMaterial": "bd21dd43",
+   "-:MeshLambertMaterial": "7365d312",
    "-:MeshPhongMaterial": "dce678bb",
    "-:MeshBasicMaterial": "ea147380",
    "paragliders:MeshLambertMaterial": "1f9731fd",
