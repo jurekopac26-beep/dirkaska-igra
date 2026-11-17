@@ -513,6 +513,7 @@
         K.z[si] = [i0, i1]; }
       KN.push(K);
     }
+    let SC = null;   // (the roads of the map that meet this one, def.stranske: measured once the verges' profiles are known, below; L.hills' rails are known before them)
     const railNeed = () => {   // (where a rail or wall stands along each side, [left, right] per sample: the bends' outsides, the drops, the bridges; not near the ends, the pull-ins, the viewpoints)
       const need = [new Uint8Array(N), new Uint8Array(N)];
       if (L.hills) for (const side of [-1, 1]) {   // (L.hills, the user's word of 13. 11. 2026: a wall on both sides nearly everywhere, none only under a steep hill, where no car can drive up)
@@ -534,6 +535,8 @@
         const nd = need[side > 0 ? 1 : 0], bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || near(i, side)) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < (L.hills ? 14 : 12)) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
+        const open = SC ? SC.rez[side > 0 ? 1 : 0] : null;   // (a side road's mouth: no rail across it)
+        if (open) for (let i = 0; i < N; i++) if (open[i] & 1) nd[i] = 0;
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
         const nearV = (i) => { const o = side * (bar[i] + 0.12), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; for (const p of pulls) if (p.view && Math.hypot(x - p.x, z - p.z) < p.r - 0.3) return true; return false; };
         for (let i = 0; i < N; i++) if (noRail[side > 0 ? 1 : 0][i] || (L.view && nearV(i))) nd[i] = 0;   // (L.view: the viewpoints' plots open to the road, their gaps not closed)
@@ -547,6 +550,13 @@
       if (RN) return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.06), lift(bar + 0.45, -0.07), lift(bar + 1.15, -0.1), [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (L.hills: no ditch, rail or not: the verge runs on at the road's level into the ground or to the wall)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    // the roads of the map that meet this one, for the look only (package Realizem E, World.cesta.stranske; def.stranske): measured here,
+    // drawn with the road's chunks and the scenery below. The model, the barrier's line and the cars know nothing of them
+    const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i]; for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const edgeTone = (i) => { let sd = 1; for (const u of SC.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const d = sd * w - T.rl[i]; return 0.8 - 0.12 * Math.exp(-d * d / 5.5); };   // (the asphalt's tone at its edge on the mouth's side: shade below)
+    SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: !!T.open, drzava: 'Francija' }) : null;
+    if (SC) { out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; lMat.userData.crte = 1; for (const k of SC.krogi) exclPush(k[0], k[1], k[2]).sc = 1; }
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a; if (t < 1e-4) return Pt(a, o, y); const p = Pt(a, o, y), q = Pt(a + 1, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
     const hairS = (def.curves || []).map(([d]) => sStart + d);
     let wallG = null, wallMat = null;   // (the walls' masonry: one mesh, finished after the stone parapets where there are any)
     const FB = KN.length ? { gr: new GB(true), gl: new GB(), gs: new GB(true), gv: new GB(true), gw: new GB(true) } : null;   // (the bridges' deck, verges, masonry and parapets: their own meshes, they fade)
@@ -575,7 +585,7 @@
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
-          for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
+          if (!SC) for (const [o0, o1] of [[-(w - 0.3), -(w - 0.45)], [w - 0.45, w - 0.3]]) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1, 0.036), Pt(j, o0, 0.036), [wht, wht, wht, wht]);
           { const sm = (i + 0.5) * T.ds, ph = ((sm % (L.dash[0] + L.dash[1])) + (L.dash[0] + L.dash[1])) % (L.dash[0] + L.dash[1]);
             if (solid(sm) || ph < L.dash[0]) gl.quadUp(Pt(i, -0.07, 0.036), Pt(i, 0.07, 0.036), Pt(j, 0.07, 0.036), Pt(j, -0.07, 0.036), [L.centre, L.centre, L.centre, L.centre]); }
           for (const side of [-1, 1]) {
@@ -599,8 +609,14 @@
                 gv.quadUp(a, b, c, d, [bc(i, r), bc(i, r + 1), bc(j, r + 1), bc(j, r)], [[u0, a[1] / 4], [u0, b[1] / 4], [u1, c[1] / 4], [u1, d[1] / 4]]); } }
           }
         }
+        if (SC) { const cE = Math.min(c0 + 60, N - 1);   // (the edge lines, broken at the side roads' mouths: SC.tek)
+          for (const si of [0, 1]) { const o0 = si ? w - 0.45 : -(w - 0.3), o1 = si ? w - 0.3 : -(w - 0.45);
+            for (const run of SC.tek(si, 2, c0, cE)) for (let k = 0; k + 1 < run.length; k++) { const f0 = run[k], f1 = run[k + 1], g = FB && fadeI[Math.floor(f0)] ? FB.gl : gl0;
+              g.quadUp(PtF(f0, o0, 0.036), PtF(f0, o1, 0.036), PtF(f1, o1, 0.036), PtF(f1, o0, 0.036), [wht, wht, wht, wht]); } } }
         addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); addM(gv0, gMat);
+        if (SC) { const gb = new API.RB(true); SC.robovi(gb, c0, Math.min(c0 + 60, N), plGCol); addM(gb, gMat); }   // (the side roads' grassy edges where they leave this one)
       }
+      if (SC) { const sM = aMat.clone(); for (const g of SC.asfalt(API.RB, plGCol)) { const m = addM(g, sM); if (m) m.userData.stranska = 1; } }   // (the side roads' asphalt, to ~60 m)
       // the bridges (KN): the face walls under the upper road's verges (to the arch, with a ring of lighter dressed stones round it, and either side of it to
       // the ground; at the ends on to the verge's ditch), the arch's barrel, darker, and its abutments at the lower road's barriers
       for (const K of KN) {
@@ -872,10 +888,11 @@
       }
       out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => { const si = side > 0 ? 1 : 0, b = bk[si][i], q = vp[si][i]; return b ? [q[0], q[1], q[2], [b.p[1][0] + 0.01, b.p[1][1]], ...(b.bank ? [b.bank[1]] : []), [b.o1, b.hl - T.hy[i] - 0.35]] : q; });   // (at a wall between the legs: down its face (and its bank) to the shelf)
       const spots = [];
-      for (let i = T.idx(sStart + 30); i < T.idx(sFin - 30); i += 25) for (const side of [-1, 1]) if (!need[side > 0 ? 1 : 0][i] && !near(i)) spots.push([i, side]);   // (white delineator posts where there is no rail)
+      for (let i = T.idx(sStart + 30); i < T.idx(sFin - 30); i += 25) for (const side of [-1, 1]) if (!need[side > 0 ? 1 : 0][i] && !near(i) && !(SC && SC.rez[side > 0 ? 1 : 0][i] & 1)) spots.push([i, side]);   // (white delineator posts where there is no rail)
       out.propStats = roadsideProps(out.props, { spots, postEdge: [1.2, 1.6], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
         floor: out.propFloor, skip: (i) => { const s = i * T.ds; return s < sStart + 30 || s > sFin - 30; } });
     }
+    let nStb = 0; if (SC) { nStb = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki; }   // (the side roads' posts at their mouths, their stop lines)
     (def.curves || []).forEach(([d, , turn], k) => {
       const r = signPost(sStart + d - 90, 1, 0.9, turn > 0 ? 0 : 1, 0.95, 0.85, 2.3);
       if (r && k < 24 && L.plates !== 0) { const [px, py, pz, ii] = r, c2 = cell(8 + k); bannerQ(px, py + 0.2, pz, -T.tx[ii], -T.tz[ii], 0.5, 0.5, c2[0], c2[1], c2[2], c2[3], ban2); }
@@ -1201,6 +1218,7 @@
         const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - T.hy[i]; },
       skip: (i, side) => { const si = side > 0 ? 1 : 0; return !!(RN[si][i] || bk[si][i] || kn[si][i] || vp[si][i][2][1] < -2.6); } };
     out.stats = { trees: nTrees, plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), snow: nSnow, sheep: nSheep, pylons: nPyl, poles: nPole, lakes: P.lakes.length, pulls: pulls.length, sat: !!SAT };   // (read by the tests)
+    if (SC) Object.assign(out.stats, { stranske: SC.n, stebricki: nStb });
     return out;
   }
 

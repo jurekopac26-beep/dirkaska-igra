@@ -52,6 +52,8 @@
     'Kanada':       { rob: 'bela', sred: 'rumena', crta: [3, 6], dvojna: true },
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
+    'Japonska':     { rob: 'bela', sred: 'bela', crta: [5, 5], dvojna: false, stop: 0.3 },   // (the ministry's 1974 notice on the lines: 5 m and 5 m outside towns; a single yellow line where overtaking is forbidden; the stop line 30 cm, 45 cm on two lanes or more; no give-way triangles, no line across a mouth)
+    'Francija':     { rob: 'bela', sred: 'bela', crta: [3, 10], dvojna: false },   // (the IISR, part 7: the T1 centre line, one solid line where overtaking is forbidden; the edge line broken off at a mouth; no paved side road on its track yet: no stop or give-way line)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
