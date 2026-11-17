@@ -166,5 +166,20 @@ const run = (mid, mode, hurt, sec) => withRnd(7, () => { const r = race(mid, mod
   check('the doors: a four-door car\'s rear door (door2L) has the front door\'s zone and threshold and goes in the same blow as it (never one without the other, the other side\'s stay on): two door pieces on the road; the two-door KOLIBRI has no rear door, one piece', all, rows.join('; '));
 }
 
+// ---- the steering pull after a knock (P3) at Vklop: by default every car is pulled, the autopilot's too (the user's choice 17. 11. 2026,
+// question trki-vlecenje-tekmeci = 2); »Samo moj avto« (Nastavitve, Core TX.pull 0) leaves a car the autopilot steers in the step as a whole one,
+// the wheel a hand holds is pulled either way ----
+{
+  const orig = Math.random;
+  const run = (tx, bent, ai) => { C.setTest(tx); try { Math.random = seeded(7); const r = race('sokol', 2, { wheelRule: undefined }); r.start(); const P = r.player; if (bent) P.cd = [0.9, 0, 0, 0];
+    P.vx = Math.cos(P.h) * 30; P.vz = Math.sin(P.h) * 30; const out = [];
+    for (let k = 1; k <= 180; k++) { Math.random = seeded(1000 + k); if (ai) C.aiControl(P, r, DT); else { P.inThr = 0.5; P.inBrk = 0; P.inSteer = 0; } r.step(DT); out.push([P.x, P.z, P.h, P.steer].join(',')); }
+    return { s: out.join(';'), h: P.h }; } finally { Math.random = orig; C.setTest(null); } };
+  const aW = run(null, 0, 1), aB = run(null, 1, 1), aB0 = run({ pull: 0 }, 1, 1), aW0 = run({ pull: 0 }, 0, 1), hB = run(null, 1, 0), hB0 = run({ pull: 0 }, 1, 0), hW = run(null, 0, 0);
+  check('the steering pull at Vklop: by default a car with a crushed front corner is pulled under the autopilot too; »Samo moj avto« (TX.pull 0) leaves the autopilot\'s car as a whole one, to the last digit, and the hand-held wheel pulled as before',
+    aB.s !== aW.s && aB0.s === aW.s && aW0.s === aW.s && hB.s === hB0.s && hB.s !== hW.s && C.TX.pull === null,
+    `3 s from 108 km/h, heading: autopilot whole ${aW.h.toFixed(4)}, crushed ${aB.h.toFixed(4)}, crushed with Samo moj avto ${aB0.h.toFixed(4)}; by hand whole ${hW.h.toFixed(4)}, crushed ${hB.h.toFixed(4)} (Samo moj avto ${hB0.h.toFixed(4)})`);
+}
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

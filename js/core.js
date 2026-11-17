@@ -2228,7 +2228,7 @@ const Core = (function () {
   // Race.step): deb 0 Izklop: a part still comes off and flies as it does (the same throw, the same random numbers), but no car touches it
   // (no speed lost, no twitch, no hop) and one that has come to rest is taken off the road (dead, as the cap of 40 takes one: the renderer
   // frees it, or keeps it drawn with Razbijanje: deli ostanejo na progi); null as it was (Vklop). Online none of it: both phones drive the default
-  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null, deb: null };
+  const TX = { aiSpr: null, aiFol: null, aiPush: null, aiSide: null, aiKerb: null, cv: null, cPm: null, cE: null, cMu: null, cYaw: null, cGl: null, cSl: null, cFx: null, deb: null, pull: null };
   /* Trki med avti: the versions (KV), each the same knock (kCollide) with its own numbers, as racing games do it: the cars' real weights, the
      push at the true contact of two boxes, the bounce, the bodies' rub, the turn by the lever about each car's middle, then each car's tyres.
        pm             the player's car weighs pm times its own against another car (an arcade game's: the rivals give way, the player hardly moves)
@@ -2296,13 +2296,14 @@ const Core = (function () {
   // damage Vklop (P3): a crushed front corner pulls the car to its side (a bent track rod: up to 0.05 of the lock, as a tyre going down
   // pulls 0.03), and a bent front wheel (that corner's cd 0.35-0.7) shakes the steering once a turn of the wheel (~1.9 m of road: the
   // wheel's own turn, c.xd.ph, laid only on a car with a bent wheel; repairCar and _mend clear it), up to 0.004 of the lock, from 30 m/s
-  // in full. Samo videz, Izklop, an online race (XR.net) and a car not knocked there: 0 (it drives as before). Only a wheel a person
-  // holds is pulled and shaken: a car the autopilot steers in this step (_aiS, nothing on the Car: filled by aiControl, stubDrive, the Race for its rivals and
-  // the police for its patrol cars, emptied here) gets 0, as before P3 - the autopilot does not steer against the pull, so a
-  // knocked rival drifted into the car beside it (a crowded start piled up)
+  // in full. Samo videz, Izklop, an online race (XR.net) and a car not knocked there: 0 (it drives as before). Every car is
+  // pulled and shaken, the rivals too (the user's choice 17. 11. 2026, question trki-vlecenje-tekmeci = 2; Nastavitve »Vleka krmila po
+  // trku: Vsi avti«, the default). »Samo moj avto« (TX.pull 0): only a wheel a person holds - a car the autopilot steers in this step
+  // (_aiS, nothing on the Car: filled by aiControl, stubDrive, the Race for its rivals and the police for its patrol cars, emptied
+  // here) gets 0, as before P3 (the autopilot does not steer against the pull: a knocked rival drifts towards the car beside it)
   const _aiS = new WeakSet();
   function dmgSteer(c, spd, dt) {
-    if (_aiS.delete(c) || c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
+    const ai = _aiS.delete(c); if ((ai && TX.pull === 0) || c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
     let w = 0; if (b !== 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
     return clamp((cd[1] - cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) + w;
   }
