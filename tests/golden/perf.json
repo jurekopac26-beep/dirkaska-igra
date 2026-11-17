@@ -642,5 +642,12 @@
   "kverts": 156,
   "maxKverts": 202,
   "jsMs": 1.53
+ },
+ "hiva": {
+  "calls": 142,
+  "maxCalls": 177,
+  "kverts": 411,
+  "maxKverts": 448,
+  "jsMs": 1.92
  }
 }
