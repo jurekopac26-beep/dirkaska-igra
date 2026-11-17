@@ -154,7 +154,7 @@ Odločitev uporabnika 15. 11. 2026 ob ~10.08 (v pogovoru z Matejem, dobesedno): 
 
 Ta teden (16.–22. 11. 2026) ima croatiadata drug rok: vse do torka, 17. 11., zvečer in do 20 sej s kodo hkrati ves teden, do nedelje, 22. 11. (odločitev uporabnika 16. 11. ob ~3.35); cilj porabe od srede naprej in mejo po 22. 11. določi uporabnik (`docs/odlocitve.md`, »Seje«).
 
-- **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija dodaja seje s kodo, dokler račun ne pride v pas (največ 10 hkrati, `CLAUDE.md`, razdelek Seje; najprej seje, ki vodijo končano delo do `main`). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
+- **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija dodaja seje s kodo, dokler račun ne pride v pas (največ 10 hkrati; meja 2 seji s kodo velja samo za račun **nad** pričakovano porabo, odločitev 17. 11., točka 13; `CLAUDE.md`, razdelek Seje; najprej seje, ki vodijo končano delo do `main`). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
 - **Predaja:** ob uri v stolpcu Predaja vsaka seja računa napiše predajo v opis svojega PR in se ustavi; končane PR drug račun vodi na `main` (`CLAUDE.md`, »Tabla med računi«, in `docs/vrsta.md`, »Prevzem zdaj«). Koordinacija računa v luknji ne zaganja novih sej.
 - **Dnevno stanje na tabli:** porabo zapiši kot »<račun>: X % (cilj Y %)«. Odstotek računa objavi Matej ali uporabnik; če ga koordinacija ne pozna, napiše »ne poznam«.
 - **V repozitorij ne spadajo** trenutni odstotki in dnevni cilji: spreminjajo se, objavljajo jih Matej in koordinacije na tabli. Ostane samo pravilo in tabela zgoraj.
@@ -171,18 +171,18 @@ Uporabnik: »Potrjujem 1–4«.
 Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `docs/odlocitve.md`.
 
 - **Kaj se objavi:** nova tema (veja ali PR), prevzem ali predaja tujega PR, stanje vrste in kdo združuje, rdeč `main` in kdo ga popravlja, odločitve uporabnika, ki veljajo za vse (pravilo samo v `CLAUDE.md` ali `docs/` na `main`), in prošnje drugim računom. Ob vsakem branju koordinacija prebere nove komentarje in odgovori na prošnje zase.
-- **Branje 2× na dan** (odločitev uporabnika 12. 11. 2026 ob ~11.45, komentar 6821467471, točka 3; prej 4× na dan od 11. 11. 2026, 8× na dan od 7. 11.), po ljubljanskem času; četrti račun croatiadata (13. 11. 2026) bere 4× na dan:
+- **Branje 2× na dan** (odločitev uporabnika 12. 11. 2026 ob ~11.45, komentar 6821467471, točka 3; prej 4× na dan od 11. 11. 2026, 8× na dan od 7. 11.), po ljubljanskem času; četrti račun croatiadata (13. 11. 2026) bere 4× na dan; od 17. 11. 2026 (odločitev uporabnika, komentar 6953506391, točka 8) croatiadata bere ob 2.15, 8.15, 14.15 in 20.15, s tem tudi branja jure.kopac26, ki ima opravila po urniku izklopljena:
 
 | Račun | Ure branja | Urnik (`cron_expression`) |
 |---|---|---|
 | biketraveler | 6.15, 18.15 | `CRON_TZ=Europe/Ljubljana 15 6,18 * * *` |
 | partyslo | 7.15, 19.15 | `CRON_TZ=Europe/Ljubljana 15 7,19 * * *` |
-| jure.kopac26 | 8.15, 20.15 | `CRON_TZ=Europe/Ljubljana 15 8,20 * * *` |
-| croatiadata | 3.15, 9.15, 15.15, 21.15 | `CRON_TZ=Europe/Ljubljana 15 3,9,15,21 * * *` |
+| jure.kopac26 | od 17. 11. izklopljeno (branja prevzame croatiadata); prej 8.15, 20.15 | prej `CRON_TZ=Europe/Ljubljana 15 8,20 * * *` |
+| croatiadata | 2.15, 8.15, 14.15, 20.15 (od 17. 11.; prej 3.15, 9.15, 15.15, 21.15) | `CRON_TZ=Europe/Ljubljana 15 2,8,14,20 * * *` |
 
 - **Majhna sveža seja:** vsako branje je opravilo po urniku, ki ob vsakem zagonu ustvari novo sejo (`create_trigger` z `create_new_session_on_fire` `true`), v okolju »Koordinacija« (model Sonnet, napor medium). Seja ne nosi pogovora prejšnjih branj: najprej prebere svoj zadnji komentar na tabli (stanje) in komentarje za njim, nato naredi, kar je treba; kar se je spremenilo, zapiše v nov komentar, ki je stanje za naslednje branje. Ko je PR s tem pravilom na `main`, koordinacija vsakega računa svoje opravilo za tablo nastavi na te ure in na novo sejo ob vsakem zagonu, staro opravilo z 8 branji pa izbriše.
 - **Dodatno branje** (odločitev uporabnika 7. 11. 2026): če je ob rednem branju najnovejši komentar, ki ni tvoj, mlajši od 1 h, tablo prebereš še enkrat čez 30 min (ob xx.45, `send_later` v isti seji); dokler je ob dodatnem branju nov komentar, ki ni tvoj, še enkrat čez 30 min, sicer spet samo ob rednih urah. Lastni komentarji ne štejejo.
-- **Dnevno stanje** (odločitev uporabnika 5. 11. 2026): koordinacija vsakega računa enkrat na dan, ob večernem branju (biketraveler 18.15, partyslo 19.15, jure.kopac26 20.15), objavi en komentar: kaj teče (seja, PR), kaj čaka v vrsti, odprta vprašanja na strani Odločitve svojega računa (število in povezava), tedenska poraba, če jo pozna (»<račun>: X % (cilj Y %)«, razdelek Poraba), in za vsak svoj PR v vrsti oceno »na `main` do <dan, ura>« (~1,5 h na krog testov, dva kroga hkrati).
+- **Dnevno stanje** (odločitev uporabnika 5. 11. 2026): koordinacija vsakega računa enkrat na dan, ob večernem branju (biketraveler 18.15, partyslo 19.15, croatiadata 20.15; jure.kopac26 od 17. 11. brez opravil po urniku), objavi en komentar: kaj teče (seja, PR), kaj čaka v vrsti, odprta vprašanja na strani Odločitve svojega računa (število in povezava), tedenska poraba, če jo pozna (»<račun>: X % (cilj Y %)«, razdelek Poraba), in za vsak svoj PR v vrsti oceno »na `main` do <dan, ura>« (~1,5 h na krog testov, dva kroga hkrati).
 - **Ustavitev in ponovni začetek:** ko se račun ustavi (poraba, odločitev uporabnika), objavi »<ime> stoji do <čas>« in katere PR vodi kdo; ob ponovnem začetku »<ime> spet dela« in katere PR prevzame nazaj.
 - **Spori med PR:** ko dva PR (tudi različnih računov) spreminjata iste datoteke ali isto mesto v igri, seja, ki to opazi, objavi, kdo gre na `main` prvi in kdo po spoju preveri; dogovor zapiše tudi v `docs/vrsta.md` (Usklajevanje med računi).
 - **Matejeve odločitve:** Matej odločitve za biketravelerja in partyslo objavi v komentarju, ki se začne z »Matej (jure.kopac26)« in pove, za kateri račun je; koordinacija tega računa jih ob branju izvede sama, brez lepljenja uporabnika, in v eni vrstici odgovori, kaj je naredila. Velja samo za komentarje lastnika repozitorija (`author_association` OWNER); pravila spremeni samo odločitev uporabnika, ki jo komentar navede (datum in ura).
@@ -190,6 +190,22 @@ Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `d
 - **Tedenski načrt:** Matej vsak ponedeljek ob ~10.40 uporabniku predlaga, kaj ta teden dela kateri račun (vrsta, poraba, reset vsakega računa); potrjen načrt objavi na tabli, koordinacije ga upoštevajo pri zagonu sej.
 - Strani Odločitve ostanejo ločene (seja ne more brati strani drugega računa), zato dnevno stanje vsakega računa na tabli kaže, kje uporabnika čakajo vprašanja.
 - **Pravila enkrat na dan v en PR** (odločitev 11. 11. 2026, točka b4): spremembe pravil (`CLAUDE.md`, `docs/`) istega dne gredo v en PR s pravili; če je odprt, se dodajo vanj.
+
+## Varčevanje 17. 11. (odločitev uporabnika 17. 11. 2026 ob 17.05)
+
+Matejevi predlogi 11–20, komentar 6953506391 na tabli #382 (uporabnik: »brez 4«, 13 spremenjen); partyslo jih je vpisal v PR s pravili dneva (#769, komentar 6954276035). Kratka pravila so v `CLAUDE.md`, razdelek Seje.
+
+- **11 Mirujoče ali ponavljajoče seje:** koordinacija ob branju table ustavi sejo, ki 2 h ni commitala ali se ponavlja pri povzemanju, in začne svežo s predajo.
+- **12 Model in napor ob zagonu:** koordinacija ob zagonu seje preveri model in napor. Fable samo za trke in grafiko, Sonnet za združevanje, spore in dokumente, Haiku za obvestila; max samo za trke.
+- **13 Meja 2 sej (spremenjeno):** meja 2 seji s kodo velja samo za račun, ki je **nad** pričakovano porabo (razdelek Poraba, pas ±5); račun pod ciljem jih sme imeti več, največ 10.
+- **14 Zbirna veja:** ena zbirna veja na temo, en celoten krog in en pregled.
+- **15 Tabla:** koordinacija bere samo nove komentarje (`since=`).
+- **16 Lokalni testi:** lokalno samo `test:related` brez ponavljanja; celoten krog samo na zbirnih vejah in ponoči.
+- **17 `CLAUDE.md`:** skrajšati na ~polovico brez spremembe pravil; podrobnosti v `docs/odlocitve.md`; naredi partyslo v posebnem PR (po #769).
+- **18 Nove proge:** samo prek `tools/proga-podatki.py` in obstoječega vzorca testov.
+- **19 Sveže seje:** sveže male seje s predajo namesto zbujanja starih velikih.
+- **20 Brez preverjanja v zanki:** na teste `subscribe_pr_activity`, drugače vpis v zbirko `cakanje`.
+- **Povzetek ob 21.00** (točka 9): koordinacija partyslo vsak dan ob 21.00 napiše na stran Odločitve povzetek stanja v 5 vrsticah.
 
 ## Stanje
 
@@ -202,3 +218,4 @@ Kratka pravila so v `CLAUDE.md`, »Tabla med računi«; citati in zgodovina v `d
 - 11. 11. 2026: »Vse štiri ukrepe« v PR #651 (račun jure.kopac26): `CLAUDE.md` 51,7 KB → ~18 KB, podrobnosti v `docs/odlocitve.md`; napor high, okno 200 tisoč (povzetek pri ~144 tisoč), predaja ~150 tisoč, tabla 4× na dan. `CLAUDE_CODE_EFFORT_LEVEL` iz nastavitev je povozil napor seje (seja, ustvarjena s high, je tekla z max), zato je odstranjen; prva seja z `effort` `max` po združitvi preveri `echo $CLAUDE_EFFORT` in zapiše sem.
 - 12. 11. 2026: ukrepi 1–4 (»Dražje seje«) v PR s pravili dneva (račun jure.kopac26): `CLAUDE.md` 18,9 KB → ~14,2 KB (najmanj 25 %); rutinske seje predaja pri ~80 tisoč, velikih sej ne budi po 1 h, modela ali napora sredi seje ne menjaj.
 - 12. 11. 2026 ob ~11.45: varčevanje 2. del v istem PR s pravili (jure.kopac26): `CLAUDE.md` 14,2 KB → ~6 KB, celotno prejšnje besedilo v `docs/pravila-podrobno.md`; ure table 2× na dan (opravila po urniku popravi vsak račun).
+- 17. 11. 2026: Varčevanje 11–20, točke 1, 8, 9 in 10 (jure.kopac26 po resetu 22. 11. ob 10.00 največ 2 seji, samo Trki #608; branja table jure.kopac26 prevzame croatiadata 2.15, 8.15, 14.15, 20.15) v PR #769 (partyslo).
