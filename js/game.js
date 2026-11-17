@@ -1800,6 +1800,7 @@
   // the title demo: ten cars racing on the loaded track behind the menus, their first seconds driven at once
   function demoMake(sec) {
     demo = new Core.Race(track, Object.assign({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys: physOf(), rain: demoRain() }, demoField()));   // (the AI in the field of the demo's category: demoField)
+    for (const c of demo.cars) c.noPull = 1;   // (the cars behind the menus drive 9999 laps without repairs: no steering pull after a knock, as before, whatever the settings)
     demo.start(); for (let i = 0; i < 120 * sec; i++) demo.step(STEP);
     demoTarget = null; demoSwitch = 0;   // the title camera picks a car of the new demo right away (not one left over from the previous track)
   }

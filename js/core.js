@@ -2303,7 +2303,7 @@ const Core = (function () {
   // here) gets 0, as before P3 (the autopilot does not steer against the pull: a knocked rival drifts towards the car beside it)
   const _aiS = new WeakSet();
   function dmgSteer(c, spd, dt) {
-    const ai = _aiS.delete(c); if ((ai && TX.pull === 0) || c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
+    const ai = _aiS.delete(c); if ((ai && (TX.pull === 0 || c.noPull)) || c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
     let w = 0; if (b !== 0) { const x = c.xd || (c.xd = { ph: 0 }); x.ph = (x.ph + spd * dt / 0.3) % (2 * Math.PI); w = 0.004 * b * Math.sin(x.ph) * Math.min(1, spd / 30); }
     return clamp((cd[1] - cd[0]) * 0.06, -0.05, 0.05) * Math.min(1, spd / 10) + w;
   }
