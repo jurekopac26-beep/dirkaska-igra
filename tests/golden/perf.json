@@ -392,11 +392,11 @@
   "jsMs": 1.55
  },
  "kagerod": {
-  "calls": 225,
-  "maxCalls": 255,
-  "kverts": 467,
-  "maxKverts": 523,
-  "jsMs": 1.43
+  "calls": 227,
+  "maxCalls": 271,
+  "kverts": 484,
+  "maxKverts": 578,
+  "jsMs": 2.78
  },
  "sosnova": {
   "calls": 187,
@@ -406,11 +406,11 @@
   "jsMs": 1.48
  },
  "izoard": {
-  "calls": 181,
-  "maxCalls": 231,
-  "kverts": 545,
-  "maxKverts": 754,
-  "jsMs": 1.49
+  "calls": 168,
+  "maxCalls": 217,
+  "kverts": 349,
+  "maxKverts": 443,
+  "jsMs": 1.84
  },
  "pembrey": {
   "calls": 187,
@@ -421,10 +421,10 @@
  },
  "kildare": {
   "calls": 205,
-  "maxCalls": 231,
-  "kverts": 439,
-  "maxKverts": 511,
-  "jsMs": 1.95
+  "maxCalls": 233,
+  "kverts": 444,
+  "maxKverts": 520,
+  "jsMs": 1.57
  },
  "sacalobra": {
   "calls": 222,
@@ -568,10 +568,10 @@
  },
  "hakone": {
   "calls": 184,
-  "maxCalls": 196,
-  "kverts": 253,
-  "maxKverts": 273,
-  "jsMs": 4.38
+  "maxCalls": 198,
+  "kverts": 254,
+  "maxKverts": 275,
+  "jsMs": 5.05
  },
  "killar": {
   "calls": 146,
