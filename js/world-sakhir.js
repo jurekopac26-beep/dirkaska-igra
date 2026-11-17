@@ -113,17 +113,18 @@
   // the barriers (they end at them, closed off); the trees and the people off them
   // how far past the barrier on its side of the road a point is (negative: inside it, in the run-off; i: the road's nearest index)
   const skLat = (x, z, i) => { const T = API.T, lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
-  function skWays({ root, exclPush, CR }, ways, tex, st) {
-    const rb = new RB(true);
+  function skWays({ root, exclPush, CR, naCesti }, ways, tex, st) {
+    const rb = new RB(true), na = (p) => !!naCesti && naCesti(p[0], p[1], -1.8);   // (on a side road's asphalt: World.cesta's, def.stranske)
     for (const [S, hw, gap, col] of ways) for (let k = 0; k < S.length;) {
       const n0 = S[k], n = Math.abs(n0), HW = n0 < 0 ? hw[1] : hw[0], p = []; for (let q = 0; q < n; q++) p.push([S[k + 1 + q * 2], S[k + 2 + q * 2]]); k += 1 + n * 2;
       const pts = []; for (let q = 0; q + 1 < n; q++) { const [ax, az] = p[q], [bx, bz] = p[q + 1], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let t = 0; t < m; t++) pts.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); }
       pts.push(p[n - 1]);
-      let prev = -1, along = 0;
+      let prev = -1, along = 0; const on = naCesti ? pts.map(na) : null;
       for (let q = 0; q < pts.length; q++) {
         const [x, z] = pts[q], a = pts[Math.max(0, q - 1)], b = pts[Math.min(pts.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
         if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
         const nn = nrNear(x, z); if (nn.i >= 0 && (nn.dd < gap + (gap > 3 ? HW : 0) || (gap > 3 && skLat(x, z, nn.i) < HW + 0.5))) { prev = -1; continue; }   // (the service roads not inside the run-offs' barriers)
+        if (on && on[q] && on[Math.max(0, q - 1)] && on[Math.min(pts.length - 1, q + 1)]) { prev = -1; continue; }   // (the side road is drawn there already; one step over its end, no gap)
         const nx = -dz / dl, nz = dx / dl, row = [-HW, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; });   // (left to right in the way's direction: (nx, nz) its right)
         const r = rb.row(row, [col, col], row.map((e, j) => [j * HW / 2, along / 4]));
         if (prev >= 0) rb.link(prev, r, 0, 1); prev = r;
