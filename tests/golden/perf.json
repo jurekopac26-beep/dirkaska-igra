@@ -371,11 +371,11 @@
   "jsMs": 1.34
  },
  "ella": {
-  "calls": 166,
-  "maxCalls": 205,
+  "calls": 167,
+  "maxCalls": 207,
   "kverts": 324,
   "maxKverts": 488,
-  "jsMs": 1.61
+  "jsMs": 1.64
  },
  "medeu": {
   "calls": 158,
@@ -441,11 +441,11 @@
   "jsMs": 1.39
  },
  "bikernieki": {
-  "calls": 183,
+  "calls": 186,
   "maxCalls": 235,
-  "kverts": 435,
-  "maxKverts": 517,
-  "jsMs": 1.22
+  "kverts": 418,
+  "maxKverts": 486,
+  "jsMs": 2.04
  },
  "london": {
   "calls": 172,
@@ -469,11 +469,11 @@
   "jsMs": 1.06
  },
  "furka": {
-  "calls": 159,
-  "maxCalls": 192,
-  "kverts": 314,
-  "maxKverts": 426,
-  "jsMs": 1.54
+  "calls": 155,
+  "maxCalls": 186,
+  "kverts": 300,
+  "maxKverts": 411,
+  "jsMs": 1.46
  },
  "santoantao": {
   "calls": 167,
@@ -483,11 +483,11 @@
   "jsMs": 1.14
  },
  "gudauri": {
-  "calls": 156,
-  "maxCalls": 187,
-  "kverts": 362,
-  "maxKverts": 483,
-  "jsMs": 1.14
+  "calls": 154,
+  "maxCalls": 183,
+  "kverts": 345,
+  "maxKverts": 477,
+  "jsMs": 1.36
  },
  "ngorongoro": {
   "calls": 141,
@@ -504,11 +504,11 @@
   "jsMs": 1.17
  },
  "buriram": {
-  "calls": 195,
+  "calls": 196,
   "maxCalls": 247,
-  "kverts": 668,
-  "maxKverts": 844,
-  "jsMs": 1
+  "kverts": 673,
+  "maxKverts": 850,
+  "jsMs": 1.3
  },
  "lombok": {
   "calls": 188,

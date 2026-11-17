@@ -222,6 +222,49 @@ try {
   T.check('Pikes Peak takes the look: every road mesh (its own paint, crack seals and patches in it: only the asphalt wears; no separate lines\' meshes), an open road\'s, its edge broken',
     pk.cesta && pk.cesta.asfalt >= 30 && pk.road === pk.cesta.asfalt && pk.cesta.barva === 0 && pk.paint === 0 && pkx.own >= 1 && pkx.rob && pk.cesta.rob >= 80 && pk.mat && pk.mat.dirka === 0 && pk.mat.only && pk.mat.profil.join() === '4096,2',
     JSON.stringify({ cesta: pk.cesta, road: pk.road, paint: pk.paint, plain: pk.plain, mat: pk.mat, pkx }));
+
+  // the side roads of OpenStreetMap on the tracks of group 569a (package E, docs/realizem/paket-e.md): Biķernieki and Buriram circuits,
+  // Ella, Furka and Gudauri open roads, each built by its own builder; a strip through each mouth, a row of posts across it, the track's
+  // model untouched; their countries have no lines of their own in World.cesta.CRTE (no public rules found): no paint at the mouths
+  for (const id of ['bikernieki', 'buriram', 'ella', 'furka', 'gudauri']) {
+    await startTrack(page, id);
+    const q = await page.evaluate((id) => {
+      const W = Render.world, T = window.__game.race.track, d = Core.TRACKS.find(t => t.id === id), F = new Core.Track(d), dr = d.name.slice(d.name.lastIndexOf(',') + 1).trim();
+      const same = (a, b) => { if (!a || !b || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+      const M = (W.cestaRob || []).filter(u => u[2] !== 0), wid = M.map(u => u[1] - u[0]), V = [], meshes = []; let strips = 0, verts = 0;
+      W.root.traverse(o => { if (!o.isMesh || !o.geometry.attributes.position) return; verts += o.geometry.attributes.position.count; if (!o.userData.stranska) return; strips++;
+        const P = o.geometry.attributes.position; for (let k = 0; k < P.count; k++) V.push(P.getX(k), P.getZ(k)); });
+      let far = 0;
+      for (const [a, b, sd] of M) { let m = 1e9;   // (the strip's rows of vertices pass through the fence line across the mouth)
+        for (let j = 0; j <= 8; j++) { const i = T.idx(a + (b - a) * j / 8), o = sd * (sd > 0 ? T.br[i] : T.bl[i]), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+          for (let k = 0; k < V.length; k += 2) { const e = (V[k] - x) ** 2 + (V[k + 1] - z) ** 2; if (e < m) m = e; } }
+        if (Math.sqrt(m) > 4.5) far++; }
+      // the posts: evenly along the fence line, two or more a row, each on the surface drawn under it (or set into it), behind the barriers of every leg
+      // of the road near it as the walls see it (Track.queryRoute from that leg's nearest sample, a car's hint there), or reaching them by at most a post's
+      // radius (10 cm: on the outside of a tight hairpin the fence line's chords, World.cesta.stranske's 0.3 m past the barrier, dip by their sagitta), off the asphalt
+      const P = W.stebricki || [], n = P.length / 4, rows = new Map(), qo = {}; let gMin = 1e9, gMax = 0, lone = 0, road = 1e9, bar = 1e9, none = 0, fl = -1e9, sk = 0;
+      for (let k = 0; k < n; k++) { const r = P[k * 4 + 3]; if (!rows.has(r)) rows.set(r, []); rows.get(r).push(k); }
+      for (const ks of rows.values()) { if (ks.length < 2) lone++;
+        for (let j = 1; j < ks.length; j++) { const a = ks[j - 1] * 4, b = ks[j] * 4, g = Math.hypot(P[b] - P[a], P[b + 2] - P[a + 2]); gMin = Math.min(gMin, g); gMax = Math.max(gMax, g); } }
+      for (let k = 0; k < n; k++) { const x = P[k * 4], z = P[k * 4 + 2], D = i => (T.px[i] - x) ** 2 + (T.pz[i] - z) ** 2;
+        for (let h = 0; h < T.N; h++) { const e = D(h), hp = h > 0 ? h - 1 : T.open ? -1 : T.N - 1, hn = h < T.N - 1 ? h + 1 : T.open ? -1 : 0;
+          if (e > 900 || (hp >= 0 && D(hp) < e) || (hn >= 0 && D(hn) < e)) continue;   // (a leg's nearest sample: the distance's local minimum)
+          T.queryRoute(x, z, h, qo); const a = qo.a, b = (a + 1) % T.N, t = qo.t, B = qo.d > 0 ? T.br[a] * (1 - t) + T.br[b] * t : T.bl[a] * (1 - t) + T.bl[b] * t;
+          bar = Math.min(bar, Math.abs(qo.d) - B); road = Math.min(road, Math.abs(qo.d) - T.wAt(a)); } }
+      W.root.updateMatrixWorld(true);
+      W.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && o.visible) meshes.push(o); });
+      const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), from = new THREE.Vector3();
+      for (let k = 0; k < n; k++) { const y0 = P[k * 4 + 1]; let top = -1e9; rc.set(from.set(P[k * 4], y0 + 3, P[k * 4 + 2]), dn); rc.far = 6;
+        for (const h of rc.intersectObjects(meshes, false)) { const y = h.point.y; if (Math.abs(y - (y0 + 1)) > 2e-3 && Math.abs(y - (y0 + 0.04)) > 2e-3 && y < y0 + 0.6 && y > top) top = y; }
+        if (top < -1e8) none++; else { fl = Math.max(fl, y0 - top); sk = Math.max(sk, top - y0); } }
+      return { n: W.stranske, osm: (d.stranske || []).length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, verts, far,
+        posts: n, stats: W.stats.stebricki, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), bar: +bar.toFixed(2), road: +road.toFixed(2), none, fl: +fl.toFixed(3), sk: +sk.toFixed(3),
+        open: !!T.open, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])), drzava: dr, crte: !!World.cesta.CRTE[dr] };
+    }, id);
+    T.check(`${id}: OpenStreetMap's side roads for the look (a strip through each mouth 3 to 40 m wide, a row of posts across each, 1 to 2.2 m apart, standing on the surface drawn under them or set into it by at most 25 cm, every post behind the barriers of each leg of the road near it or reaching them by at most its radius, at least ${q.open ? '1.5' : '2'} m from the asphalt; no lines of ${q.drzava}'s own: no paint), the track's model as a track built alone has it`,
+      q.n >= 1 && q.n >= q.osm * 0.8 && q.n <= q.osm && q.mouths === q.n && q.wMin >= 3 && q.wMax <= 40 && q.strips >= 1 && q.stripV > q.n * 20 && q.stripV <= q.verts * 0.1 && q.far === 0 &&
+      q.posts === q.stats && q.rows === q.n && q.lone === 0 && q.gMin >= 1 && q.gMax <= 2.2 && q.none === 0 && q.fl <= 0.03 && q.sk <= 0.25 && q.bar > -0.1 && q.road >= (q.open ? 1.5 : 2) && q.model && !q.crte, JSON.stringify(q));
+  }
   T.check('no errors (the road\'s and the paint\'s programs compile)', errors.length === 0, errors.slice(0, 3).join(' | '));
 
   const low = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase' }, { width: 640, height: 360 });
