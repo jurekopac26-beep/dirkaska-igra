@@ -1224,9 +1224,9 @@
   const two = (s) => { const i = s.indexOf(' '); return '<span>' + (i < 0 ? esc(s) : esc(s.slice(0, i)) + '<br>' + esc(s.slice(i + 1))) + '</span>'; };
   const opt = (act, on, inner, dis) => '<button class="twopt' + (on ? ' on' : '') + '" data-act="' + act + '" aria-pressed="' + on + '"' + (dis ? ' disabled' : '') + '>' + inner + (on ? '<span class="ck">' + I.check + '</span>' : '') + '</button>';
 
-  // the difficulty: the game's own (Settings' Difficulty, S.difficulty 0..3); Super hard is the police's, a race takes it as Hard (game.js raceDiff)
+  // the difficulty: the game's own (Settings' Difficulty, S.difficulty 0..3); Super hard is a level of its own in a race too (#605: the fastest rivals) and the police's toughest
   const DIFFS = [['Easy', 'Gentle rivals and police. Room to learn the road.', '#ffd23f'], ['Medium', 'Rivals who fight back, a police that keeps up.', '#ffad5c'],
-    ['Hard', 'Quick rivals, little room for a mistake.', '#ff7a1a'], ['Super hard', 'The police at their toughest. A race takes it as Hard.', '#ff3b3b']];
+    ['Hard', 'Quick rivals, little room for a mistake.', '#ff7a1a'], ['Super hard', 'The fastest rivals at the limit of their cars, never waiting for you. The police at their toughest.', '#ff3b3b']];
   function diffSheet() {
     const dv = Math.max(0, Math.min(3, G.S.difficulty | 0));
     return twFrame('dif', 'Difficulty', DIFFS.map((x, i) => opt('diff:' + i, i === dv, '<span class="tx"><b>' + esc(x[0]) + '</b><small>' + esc(x[1]) + '</small></span>' + dashes(i + 1, 'd' + i))).join(''));
