@@ -1481,7 +1481,7 @@
         }
         addM(gb, gMat);
       }
-      if (SC) { const sMat = aMat.clone(); for (const g of SC.asfalt(RB, nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; } nStb = SC.predmeti(World.cesta.CRTE[drzava] ? (x, z) => scen.get(x, z) : (x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }); out.stebricki = SC.stebricki; }   // the side roads (look only: OpenStreetMap, World.cesta; no paint at a mouth where the country has no row in CRTE)
+      if (SC) { const sMat = aMat.clone(); for (const g of SC.asfalt(RB, LK.stranskaBarva ? (x, z) => LK.stranskaBarva(x, z, nrGCol) : nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; } nStb = SC.predmeti(World.cesta.CRTE[drzava] ? (x, z) => scen.get(x, z) : (x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }); out.stebricki = SC.stebricki; }   // the side roads (look only: OpenStreetMap, World.cesta; no paint at a mouth where the country has no row in CRTE)
       G.col = G.cov = P.edge = null;   // (build only)
     }
 

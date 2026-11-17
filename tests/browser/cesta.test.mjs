@@ -498,6 +498,59 @@ try {
       s5.pn === s5.posts && s5.prow === s5.n && s5.lone === 0 && s5.gMin >= 1 && s5.gMax <= 2.2 && s5.none === 0 && s5.off <= 0.03 && s5.road >= 0.5, JSON.stringify(s5));
   }
   T.check('no errors (the road\'s and the paint\'s programs compile)', errors.length === 0, errors.slice(0, 3).join(' | '));
+  // the side roads of OpenStreetMap for the look on the tracks of group 569e (docs/realizem/paket-e.md »569e«): Sakhir and Sepang
+  // (circuits, js/world-rbring.js) and Seoul (a street circuit: its blocks, its fence and its edge lines open at each mouth; Santo Antão
+  // has none within 60 m): every row of the track's data built, a strip through an opening at each mouth, a row of orange posts across
+  // it on the fence line (evenly, two or more, on the surface drawn under it, off the road's asphalt); Seoul's white edge line broken
+  // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
+  // mouth it meets the paint's material); no paint at a mouth (Bahrain's and Malaysia's rows are service roads, Korea has no row of
+  // markings in CRTE); the track's model as a track built alone has it; no errors
+  for (const [id, name] of [['sakhir', 'Sakhir'], ['sepang', 'Sepang'], ['seoul', 'Seoul']]) {
+    await startTrack(page, id);
+    const sx = await page.evaluate((id) => {
+      const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
+      const same = (a, b) => { if (!a || !b || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+      const M = (W.cestaRob || []).filter(u => u[2] !== 0), wid = M.map(u => u[1] - u[0]), V = [], meshes = []; let strips = 0, verts = 0;
+      W.root.updateMatrixWorld(true);
+      W.root.traverse(o => { if (!o.isMesh || !o.geometry.attributes.position) return; verts += o.geometry.attributes.position.count; if (!o.isInstancedMesh && !o.isSkinnedMesh && o.visible) meshes.push(o);
+        if (!o.userData.stranska) return; strips++; const P = o.geometry.attributes.position; for (let k = 0; k < P.count; k++) V.push(P.getX(k), P.getZ(k)); });
+      let far = 0, worst = 0;
+      for (const [a, b, sd] of M) {   // (the fence line about the mouth: the strip's vertices pass through it, a road leaving at a slant some metres on)
+        let m = 1e9; const nj = Math.ceil(b - a + 40);
+        for (let j = 0; j <= nj; j++) { const i = T.idx(a - 20 + (b - a + 40) * j / nj), o = sd * (sd > 0 ? T.br[i] : T.bl[i]), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+          for (let k = 0; k < V.length; k += 2) { const d = (V[k] - x) ** 2 + (V[k + 1] - z) ** 2; if (d < m) m = d; } }
+        m = Math.sqrt(m); if (m > worst) worst = m; if (m > 4.5) far++;
+      }
+      // (the posts by rows: the gaps, each one's distance from the road's asphalt, and the highest surface under it but its own top and foot)
+      const P = W.stebricki || [], np = P.length / 4, rows = new Map(), rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), from = new THREE.Vector3();
+      for (let k = 0; k < np; k++) { const r = P[k * 4 + 3]; if (!rows.has(r)) rows.set(r, []); rows.get(r).push(k); }
+      let gMin = 1e9, gMax = 0, lone = 0, road = 1e9, none = 0, off = 0;
+      for (const ks of rows.values()) { if (ks.length < 2) lone++; for (let j = 1; j < ks.length; j++) { const a = ks[j - 1] * 4, b = ks[j] * 4, g = Math.hypot(P[b] - P[a], P[b + 2] - P[a + 2]); gMin = Math.min(gMin, g); gMax = Math.max(gMax, g); } }
+      for (let k = 0; k < np; k++) {
+        const x = P[k * 4], y0 = P[k * 4 + 1], z = P[k * 4 + 2]; let m = 1e18, mi = 0, top = -1e9;
+        for (let i = 0, e = T.open ? T.N - 1 : T.N; i < e; i++) { const j = (i + 1) % T.N, dx = T.px[j] - T.px[i], dz = T.pz[j] - T.pz[i], t = Math.max(0, Math.min(1, ((x - T.px[i]) * dx + (z - T.pz[i]) * dz) / (dx * dx + dz * dz))), d = (x - T.px[i] - dx * t) ** 2 + (z - T.pz[i] - dz * t) ** 2; if (d < m) { m = d; mi = i; } }
+        road = Math.min(road, Math.sqrt(m) - T.wAt(mi));
+        rc.set(from.set(x, y0 + 3, z), dn); rc.far = 6;
+        for (const h of rc.intersectObjects(meshes, false)) { const y = h.point.y; if (Math.abs(y - (y0 + 1)) > 2e-3 && Math.abs(y - (y0 + 0.04)) > 2e-3 && y < y0 + 0.6 && y > top) top = y; }
+        if (top < -1e8) none++; else off = Math.max(off, Math.abs(y0 - top));
+      }
+      // (the edge line's middle 0.3 m inside the asphalt's edge: the material of the highest surface there)
+      const tp = (s, sd) => { const i = T.idx(s), o = sd * (T.wAt(i) - 0.3), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; rc.set(from.set(x, T.hy[i] + 1.5, z), dn); rc.far = 4;
+        const h = rc.intersectObjects(meshes, false)[0]; return h ? h.object.material : null; };
+      const side = [], mid = []; for (const [a, b, sd] of M) { side.push(tp(a - 12, sd), tp(b + 12, sd)); mid.push(tp((a + b) / 2, sd)); }
+      const tally = new Map(); for (const m of side) if (m) tally.set(m, (tally.get(m) || 0) + 1);
+      const line = ([...tally.entries()].sort((p, q) => q[1] - p[1])[0] || [null])[0];
+      let whole = 0, broken = 0; M.forEach((u, k) => { if (side[2 * k] === line || side[2 * k + 1] === line) whole++; if (mid[k] && mid[k] !== line) broken++; });
+      return { n: W.stranske, osm: (T.def.stranske || []).length, stats: W.stats.stranske, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2,
+        worldV: verts, far, worst: +worst.toFixed(2), posts: W.stats.stebricki, np, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), road: +road.toFixed(1), none, off: +off.toFixed(3),
+        whole, broken, paint: !!(line && line.isMeshLambertMaterial && !line.map && line !== W.asphaltMat), model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
+    }, id);
+    T.check(`${name}: OpenStreetMap's side roads for the look (every row of the track's data: a strip of asphalt through an opening at each mouth, 3 to 40 m wide, a row of orange posts across it, evenly on the fence line, each on the surface drawn under it, none within 1 m of the road's asphalt)${id === 'seoul' ? '; the white edge line broken across each mouth and whole beside it' : ''}; the track's model as a track built alone has it`,
+      sx.osm >= 3 && sx.n === sx.osm && sx.stats === sx.n && sx.mouths === sx.n && sx.wMin >= 3 && sx.wMax <= 40 && sx.strips >= 1 && sx.stripV > sx.n * 20 && sx.stripV <= sx.worldV * 0.05 && sx.far === 0 &&
+      sx.posts === sx.np && sx.posts >= sx.n * 2 && sx.posts <= sx.n * 27 && sx.rows === sx.n && sx.lone === 0 && sx.gMin >= 1 && sx.gMax <= 2.2 && sx.none === 0 && sx.off <= 0.03 && sx.road >= 1 &&
+      (id !== 'seoul' || (sx.whole === sx.n && sx.broken === sx.n && sx.paint)) && sx.model, JSON.stringify(sx));
+  }
+  T.check('no errors on the tracks of group 569e', errors.length === 0, errors.slice(0, 3).join(' | '));
 
   const low = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase' }, { width: 640, height: 360 });
   await startTrack(low.page, 'spa');
