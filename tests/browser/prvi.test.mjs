@@ -1,5 +1,6 @@
 // Prvič na cesti (the first start, js/game.js prviShow): a fresh browser on a plain start (the new menu, a phone upright 390 × 844)
-// opens on #s-prvi: the three ways to drive, Tipke marked; the panel inside the screen upright and on its side (844 × 390). Volan
+// opens on #s-prvi: the three ways to drive, Tipke marked; the panel inside the screen upright and on its side (844 × 390); the language
+// switch beside the title (English, also at 360 × 640 and 640 × 360). Volan
 // chosen (the setting). Poskusna vožnja: alone on Štajerska (Avstrija) in the player's car, the racing line on, POSKUSNA VOŽNJA · še
 // N s at the top, after 45 s how it went (km, top speed, Volan). Drugo upravljanje: the choice again. Prva dirka: Štajerska, 6 cars,
 // 2 laps, Lahka, the player 4th on the grid, the line on, the first start noted; at the line the results show what comes next (Šola
@@ -27,6 +28,22 @@ try {
   await pa.setViewportSize({ width: 390, height: 844 }); await pa.waitForTimeout(200);
   T.check('a fresh browser, a plain start: Prvič na cesti (the three ways to drive, Tipke marked), the panel inside the screen upright and on its side',
     a1.screen === 'prvi' && a1.show && a1.a && !a1.b && a1.cards.join() === 'buttons*,wheel,tilt' && a1.prvi.fresh && a1.prvi.can && !a1.prvi.seen && up && side, JSON.stringify({ a1, up, side }));
+  // the language switch beside the title (a foreign player's first screen): English, the panel inside a small phone (360 × 640) upright
+  // and on its side, the menu's settings follow; back to Slovenščina
+  const lng = () => ev(() => ({ lang: window.__game.S.lang, h: document.querySelector('#prvi-a h2').textContent, test: document.querySelector('#prvi-a [data-act="prvi-test"]').textContent,
+    sel: [...document.querySelectorAll('#prvi-a .prvi-lang button.sel')].map(b => b.dataset.v).join(), html: document.documentElement.lang }));
+  const l0 = await lng();
+  await pa.setViewportSize({ width: 360, height: 640 }); await pa.waitForTimeout(200);
+  await ev(() => document.querySelector('#prvi-a .prvi-lang [data-v="en"]').click()); await pa.waitForTimeout(200);
+  const l1 = await lng(), f1 = await fit();
+  await pa.setViewportSize({ width: 640, height: 360 }); await pa.waitForTimeout(300);
+  const f2 = await fit();
+  await ev(() => document.querySelector('#prvi-a .prvi-lang [data-v="sl"]').click()); await pa.waitForTimeout(200);
+  const l2 = await lng(), f3 = await fit();
+  await pa.setViewportSize({ width: 390, height: 844 }); await pa.waitForTimeout(200);
+  T.check('the language switch beside the title: Slovenščina marked; English (First time on the road, Test drive), the panel inside 360 × 640 and 640 × 360; back to Slovenščina',
+    l0.lang === 'sl' && l0.sel === 'sl' && l1.lang === 'en' && l1.sel === 'en' && l1.html === 'en' && l1.h === 'First time on the road' && l1.test === 'Test drive' && f1 && f2 &&
+    l2.lang === 'sl' && l2.sel === 'sl' && l2.h === 'Prvič na cesti' && f3, JSON.stringify({ l0, l1, l2, f1, f2, f3 }));
   await pa.reload(); await pa.waitForFunction(() => window.__game, null, { timeout: 180000 }); await pa.waitForTimeout(800);
   const a0 = await ev(() => ({ screen: window.__game.screen, state: window.__game.prvi.state }));
   T.check('the game closed on it (the settings saved meanwhile): shown again at the next start (tdgp-prvi 0)', a0.screen === 'prvi' && a0.state === '0', JSON.stringify(a0));
