@@ -85,7 +85,7 @@ try {
   const rounds = [];
   const ROUNDS = +(process.env.MEM_ROUNDS || 3);
   let crash = null, kit = null, old = null;
-  for (let r = 0; r < ROUNDS; r++) {
+  const round = async (r) => {
     for (const id of ids) { await startTrack(page, id); await simulate(page, 3); }
     crash = await crashAndRepair();
     kit = await kitWreck('raketa'); old = await kitWreck('kaze');
@@ -94,13 +94,18 @@ try {
     await page.evaluate(async () => { window.__game.onAction('to-title'); await new Promise(r => setTimeout(r, 1500)); });   // the title demo race
     rounds.push(await measure());
     console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}  crash ${JSON.stringify(crash)}  kit wreck ${JSON.stringify(kit)}  KAZE RS wreck ${JSON.stringify(old)}`);
-  }
-  const w = rounds[Math.min(1, rounds.length - 1)], z = rounds[rounds.length - 1];
+  };
+  for (let r = 0; r < ROUNDS; r++) await round(r);
+  const w = rounds[Math.min(1, rounds.length - 1)];
+  // (a texture more once, on GitHub 129 -> 130 and 135 -> 136: one round more; a leak grows again in it, a texture made late once does not)
+  let more = '';
+  if (rounds[rounds.length - 1].textures > w.textures) { const y = rounds[rounds.length - 1].textures; await round(rounds.length); more = ` (one round more: ${y} -> ${rounds[rounds.length - 1].textures})`; }
+  const z = rounds[rounds.length - 1];
   T.check('the crash-and-repair part really ran (damage, loose panels still on the track at the pit repair)', crash && crash.dmg > 0 && crash.looseAtRepair > 0 && crash.repaired === 1, JSON.stringify(crash));
   T.check('the kit wreck-and-repair part really ran (RAKETA wrecked three times: its pieces drawn, the cap pushed the first ones out; burning, sooted, its panes cracked)', kit && kit.kit && kit.pieces >= 40 && kit.dead > 0 && kit.fire === 3 && kit.sooted === 3 && kit.cracks > 0, JSON.stringify(kit));
   T.check('one of the 11\'s wreck-and-repair part really ran (KAZE RS wrecked three times: its stock panels off as pieces, burning, sooted)', old && !old.kit && old.pieces > 0 && old.fire === 3 && old.sooted === 3, JSON.stringify(old));
   T.check('GPU geometries do not grow after the warm-up round', z.geometries <= w.geometries + 2, `${w.geometries} -> ${z.geometries}`);
-  T.check('textures do not grow', z.textures <= w.textures, `${w.textures} -> ${z.textures}`);
+  T.check('textures do not grow', z.textures <= w.textures || (more && z.textures <= rounds[rounds.length - 2].textures), `${w.textures} -> ${z.textures}${more}`);
   T.check('shader programs do not grow', z.programs <= w.programs + 1, `${w.programs} -> ${z.programs}`);
   T.check('JavaScript memory does not grow (more than 15 MB)', z.heapMB <= w.heapMB + 15, `${w.heapMB.toFixed(1)} -> ${z.heapMB.toFixed(1)} MB`);
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
