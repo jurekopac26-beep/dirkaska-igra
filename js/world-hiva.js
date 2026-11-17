@@ -245,7 +245,7 @@
       }
       const fm = new THREE.Mesh(gF.geometry(), matV); fm.castShadow = fm.receiveShadow = true; fm.matrixAutoUpdate = false; root.add(fm);
       out.landmarkFallback = fm; out.marks = { Obzidje: WC.slice() };
-      if (HAS_GLB && World.znamenitost) World.znamenitost.add('hiva', root, { x: WC[0], z: WC[1], fallback: fm, out });
+      if (HAS_GLB && World.znamenitost) World.znamenitost.add('hiva', root, { x: WC[0], z: WC[1], fallback: fm, out, far: 700 });   // (the walls ~600 x 800 m, the road 200–630 m from their middle: the near level all the way round)
     }
 
     /* ---- the buildings (OSM footprints within 60 m): the flat-roofed houses of the oasis in mud brick and loess plaster, a low parapet on the
