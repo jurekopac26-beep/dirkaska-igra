@@ -37,11 +37,24 @@ SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OS
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
 # an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
 # the game's ground beside the road is not the map's and World.cesta.stranske cannot draw the road (its edges never cross the barrier's
-# line): the data say only what is drawn
+# line): the data say only what is drawn; predmeti=False: a track outside the 15 of the packages gets the side roads only (no street lamps,
+# no bus stops: docs/realizem.md)
 PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'}),
          # Spa: the service road at the corner after the long straight (2519 m, left) meets the circuit behind an asphalt run-off wider
          # than the 22 m a strip may run inside the barrier's line
          'spa': dict(kinds={'raceway'}, izpusti=[(2519, -1)]),
+         # Biķernieki and Buriram: the ways that cross a run-off (a sand trap or a pale asphalt apron the game draws from the edge to
+         # the barrier's far line, T.gravL/gravR): the strip would lie on it, 2 mm under its surface (most of them stranske drops anyway:
+         # the barrier stands more than 22 m out; 2961 m left, 2481 m and 3755 m right it would draw them); Buriram 1728 m left: a 28 m
+         # drive that ends before the barrier's line, which steps out to a run-off there; Biķernieki 218 m left: a drive that would run
+         # across the pit lane's exit and through the end of the pit wall (def.pit, def.walls)
+         'bikernieki': dict(kinds={'raceway'}, predmeti=False, izpusti=[(218, -1), (537, -1), (1920, -1), (2392, -1), (2935, 1), (2961, -1)]),
+         'buriram': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1728, -1), (2246, 1), (2481, 1), (2567, 1), (2648, 1), (2716, 1), (3399, -1), (3656, 1), (3755, 1)]),
+         # Furka: a farm track that runs along the road just inside the barrier's line (4346 m, left); Gudauri: a drive that runs 20 m along
+         # the road inside it (849 m, right) and a street that meets the road at a shallow angle (3660 m, left): their edges cross the
+         # barrier's line more than 22 m on
+         'furka': dict(predmeti=False, izpusti=[(4346, -1)]), 'gudauri': dict(predmeti=False, izpusti=[(849, 1), (3660, -1)]),
+         'ella': dict(predmeti=False),
          # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3180 m, left) and a 22 m stub that curls back
          # beside the finish's wide verge (4132 m, right)
          'rastro': dict(izpusti=[(3180, -1), (4132, 1)]),
@@ -249,6 +262,7 @@ def main():
         if tg['highway'] == 'street_lamp': lamps.append([round(float(p[0]), 1), round(float(p[1]), 1)])
         else: stops.append([int(round(after(kk * st))), 1 if float(Nr[kk] @ (p - D[kk])) > 0 else -1, round(float(d), 1), 1 if tg.get('shelter') == 'yes' else 0])
     lamps.sort(); stops.sort()
+    if not cfg.get('predmeti', True): lamps, stops = [], []
     print('%s: %d side roads (dropped: %s); the junctions lay %.1f m (median), %.1f m (most) off the line before the last step; %d lamps, %d stops'
           % (C['id'], len(rows), ', '.join('%s %d' % kv for kv in sorted(why.items())) or 'none', np.median(resid) if resid else 0, max(resid) if resid else 0, len(lamps), len(stops)))
     data = [('stranske', rows), ('svetilke', lamps), ('postaje', stops)]
@@ -259,8 +273,9 @@ def main():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'js', 'tracks', C['id'] + '.js'); src = open(path, encoding='utf-8').read()
     src = re.sub(r'    // roads for the look only .*?\n(?:    (?://|stranske:|svetilke:|postaje:).*\n)*', '', src)
     blk = ('    // roads for the look only (package Realizem E, World.cesta.stranske; tools/cesta/izvoz.py from OpenStreetMap, ODbL): the roads that\n'
-           '    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]], street lamps [x, z] and bus stops\n'
-           '    // [m after the start line, side, distance from the centre line, shelter]; nobody drives there\n')
+           + ('    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]], street lamps [x, z] and bus stops\n'
+              '    // [m after the start line, side, distance from the centre line, shelter]; nobody drives there\n' if lamps or stops else
+              '    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]]; nobody drives there\n'))
     blk += ''.join('    %s: %s,\n' % (k, json.dumps(v, separators=(',', ':'))) for k, v in data if v)
     m = re.search(r'^    points: ', src, re.M); assert m, 'no points line in ' + path
     if any(v for k, v in data): src = src[:m.start()] + blk + src[m.start():]
