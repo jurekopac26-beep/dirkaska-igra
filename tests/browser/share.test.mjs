@@ -71,7 +71,7 @@ try {
   await pb.evaluate(() => { localStorage.removeItem('tdgp-fghost-jezero'); window.__game.onAction('to-board'); });
   await pb.waitForTimeout(300);
   const [fc] = await Promise.all([pb.waitForEvent('filechooser'), pb.evaluate(() => window.__game.onAction('gh-import'))]);
-  await fc.setFiles(gpath); await pb.waitForTimeout(600);
+  await fc.setFiles(gpath); await pb.waitForFunction(() => localStorage.getItem('tdgp-fghost-jezero') && /Duh prijatelja/.test(document.querySelector('.gh-box').innerText), null, { timeout: 15000 }).catch(() => {});
   const g2 = await pb.evaluate(() => ({ stored: !!localStorage.getItem('tdgp-fghost-jezero'), box: document.querySelector('.gh-box').innerText.replace(/\s+/g, ' ') }));
   T.check('a ghost from a file: kept, shown on the leaderboard (Duh prijatelja: Ana)', g2.stored && /Duh prijatelja: Ana · \d\d:\d\d\.\d{3}/.test(g2.box), JSON.stringify(g2));
 

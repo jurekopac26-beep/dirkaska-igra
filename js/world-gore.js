@@ -386,7 +386,7 @@
     if (RD.double) for (const c of T.corners) if (c.sev >= 2) for (let k = Math.max(0, c.i0 - 25); k <= Math.min(N - 1, c.i1 + 25); k++) bendAt[k] = 1;
     {
       const tileL = 8, gc = SN ? [0.66, 0.67, 0.69] : RD.shoulder;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
       const BANK = [[0.6, 0.6, 0.62], [0.74, 0.74, 0.76], [0.8, 0.83, 0.9], [0.93, 0.95, 0.99], [0.97, 0.98, 1.0], [0.95, 0.96, 0.99]];   // (the wall: grey slush at the shoulder, its dirty foot, the plough's cut face bluish, white on top)
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i], bk = bankH(i, side) > 0 && !SB.mouthV[si][i], dirt = 0.94 + 0.08 * rpHash(i >> 1, side + 9);
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;

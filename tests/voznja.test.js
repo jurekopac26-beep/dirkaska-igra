@@ -269,8 +269,12 @@ if (pB) {
   const read = (f) => { const cx = vm.createContext({}); try { vm.runInContext(fs.readFileSync(f, 'utf8') + '\n;this.L = VOZNJA_PROFILI; this.S = VOZNJA_SLOG;', cx); } catch (e) { return {}; } return cx; };
   const G = read(src), G2 = read(cp), S = G.S, K = S && S.razredi;
   const shape = !!K && K.length >= 1 && K.every((c, j) => c.vq.length === S.fe.length && c.pl.length === S.fe.length && c.ql.length === S.fe.length && c.qh.length === S.fe.length && c.dd.length === S.m.length && (!j || c.r > K[j - 1].r) && !('rob' in c));
-  check('the style: from Tianmen\'s dry profile, its classes by the apex\'s radius (each table one value per node), no verge, previdno 0-1; the tool makes it anew as it is, the profiles left as they were',
-    r7.status === 0 && shape && S.iz.includes('tianmen') && S.previdno > 0 && S.previdno <= 1 && JSON.stringify(G2.S) === JSON.stringify(S) && JSON.stringify(G2.L) === JSON.stringify(G.L),
+  // the one exception, Tianmen only: since its start moved 614 m on to a straight (#698, 15. 11. 2026) its profile was moved with it (the
+  // first 614 m dropped), and the style made anew would lose the corners there; the style stays frozen as it was (the rivals' driving
+  // unchanged), so from Tianmen alone the tool only has to make one of the same shape (the same keys, as many classes)
+  const frozen = !!S && S.iz.join() === 'tianmen' && !!G2.S && Object.keys(G2.S).join() === Object.keys(S).join() && (G2.S.razredi || []).length === K.length;
+  check('the style: from Tianmen\'s dry profile, its classes by the apex\'s radius (each table one value per node), no verge, previdno 0-1; the tool makes it anew as it is (Tianmen: frozen, of the same shape), the profiles left as they were',
+    r7.status === 0 && shape && S.iz.includes('tianmen') && S.previdno > 0 && S.previdno <= 1 && (JSON.stringify(G2.S) === JSON.stringify(S) || frozen) && JSON.stringify(G2.L) === JSON.stringify(G.L),
     K ? K.map(c => `r ${c.r} m: ${c.ovinkov} corners, apex vq ${c.vq[c.vq.length - 1]}`).join('; ') + `, previdno ${S.previdno}` : `exit ${r7.status}`);
   if (S) {
     const orig = Math.random;
