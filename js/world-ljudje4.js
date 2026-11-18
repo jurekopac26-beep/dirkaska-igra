@@ -435,7 +435,7 @@
   site('pikesg', [['m_hlodi', 4672, 1]]);
   site('caracoles', [['m_zabojniki', 5664, 1]]);
   site('balea', [['m_hlodi', 848, 1]]);
-  site('katu', [['m_balon', 4678, 1]]);
+  site('katu', [['m_balon', 4282, 1]]);
   site('harju', [['m_staro8', 2440, -1]]);
   site('chapman', [['m_staro8', 4496, 1]]);
   site('rastro', [['m_prtljazniki', 1256, 1]]);
