@@ -21,6 +21,7 @@ Krogi `.github/workflows/tests.yml` na `main` in v pull requestih od 1388 do 183
 | `share` | #698 (16. 11.) | 1: duh iz datoteke preverjen po 600 ms, uvoz še ni bil končan | popravljeno (čaka na duha v shrambi in na lestvici) |
 | `zrcalni` | #698 (16. 11.) | 1: dirka je med obračanjem zaslona tekla naprej, pogled je padel ali prestal po trenutku | popravljeno (dirka ustavljena, vsi štirje pogledi ob 18,3 s) |
 | `memory` | #698 (16. 11.), prej 129 → 130 | ena tekstura več (135 → 136) samo enkrat | popravljeno (ob rasti en krog več: puščanje raste znova) |
+| `haptics` | 44128443086 (#569, 18. 11., tudi ponovitev) | 4, 3: dirka iz menija vsakič druga; na počasnem stroju je avto zapustil stezo boksov po 0,6 s ali do boksov sploh ni prišel | popravljeno (testni način `?proga=bathurst&t=1&seme=7`, rešitev obtičanega avta; isti izid do številke pri semenih 1–4, 7, 17 in na enem jedru) |
 | `redflag` | #605 (17. 11.) | sporočilo na HUD se bere šele po `sim(2)`: v istem koraku je KAZEN +5 s (prehitel avto, ki je za varnostnim avtom zavil v bokse) prepisala ZELENA ZASTAVA! | popravljeno (zelena šteje tudi po ključu komentatorja `green`) |
 | po enkrat | `pitstats`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
 
