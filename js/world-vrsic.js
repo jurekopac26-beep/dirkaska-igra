@@ -137,6 +137,7 @@
     }
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, only a gentle rise right behind them
     if (STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
+    if (VR.hfix) h = VR.hfix(x, z, h, i >= 0 ? dd : 999);   // a world's own shaping of the ground after vrPrep (Hakone: the railway's bed)
     VRN.dd = i >= 0 ? dd : 999;
     return h;
   }
@@ -1114,6 +1115,7 @@
 
   Object.assign(API, { VRC, VRHC, VRSP, VRSQ, VRT, stubExcl, stubGeo, stubProps, stubRails, stubVerge, vrCol, vrDem, vrDist, vrFar, vrGCol, vrGH, vrGritTex, vrGround, vrHouse, vrLC, vrLCf, vrNear, vrPrep, vrSlope, vrStubAt, vrStubH, vrStubs, vrTileGeo, vrTileOn, vrTreeGeo, vrWater, vrsicProps });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { STG: { get: () => STG, set: (v) => { STG = v; } }, VR: { get: () => VR, set: (v) => { VR = v; } }, VRS: { get: () => VRS, set: (v) => { VRS = v; } } });
+  World.keep('STG', 'vrsic');   // (the side roads' table: World.build frees the last build's for the other worlds, vrStubs makes it again in each build that has side roads)
   World.keep('VR', 'vrsic');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.vrsic = (scene, tex, opts) => buildVrsic(scene, tex, opts);
 })();

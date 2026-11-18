@@ -229,6 +229,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     walls: %(walls)s,   // the pit wall 2.5 m past the road's edge along the lane
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main stand opposite the pits, the stands on the dunes outside the hairpin, the banked left and the banked last corner
     stands: %(stands)s,
+    zaslon: { d: -49, side: -1, off: 16.5 },   // the big screen (js/world-zaslon.js) by the grandstand on the left, turned towards the cars coming (node tools/zaslon-mesto.mjs zandvoort)
     sectors: %(sectors)s,   // the three sectors of the timing screens: to the esses, the loop at the far end, the back straight and the banked last corner
     dem: %(dem)s,
     lc: %(lc)s,

@@ -264,6 +264,8 @@ node check.mjs                                   # vsi zasloni v vseh stanjih ->
 node flow.mjs                                    # odigra današnjo dirko, vse tri načine, izbiro avta in vremena, uvod pred dirko, vse štiri načine kariere in multiplayer -> shots/
 ```
 
+Maketa sveta, ki ima teren le ob cesti (koridor): kar ostane odprto, pokrije podlaga v barvi `fillCol` (v vrstici `proge_igra.json`); daljni pogled, ki brez kamere stoji na svojem mestu v tančici, skrije `hide` z imeni njegovih mrež (Hakone: `["hkFar", "hkFuji"]`, podlaga v barvi gozda).
+
 Zemljevidi prog potrebujejo igro z Vršičem v `maketa-menija/game_vrsic/` in ffmpeg z VP9 (paket `imageio-ffmpeg`):
 
 ```
@@ -366,7 +368,7 @@ Igra bo naprodaj, zato maketa ne uporablja ničesar, kar bi bilo lahko pravno sp
   - Colorado: *Hansen's Corner* → *Reservoir Bend*,
   - Ouninpohja: *Amazon* → *Fast Crest*, *Mutanen* → *Farm Bend*.
   
-  **V igri (veja `main`) so ta imena še vedno** – igre nisem spreminjal. Pred prodajo jih je treba zamenjati tudi tam.
+  V igri so ta imena zamenjana z enakimi opisnimi imeni (Mie, Ardennes, Eifel, Colorado; *Speaker's Corner* in *Hansen's Corner* 8. 11. 2026, #526, tam tudi imena dirkališč na tablah Nürburga in Spa ter ime prireditve na Pikes Peaku). Ostala so samo na Monte Carlu (testna proga) in na Ouninpohji (gre v test po odločitvi uporabnika 8. 11. 2026), ki ju pred objavo izbrišemo.
 - Besedila so napisana na novo (nič ni prepisano).
 - Zastave držav so narisane preprosto; slovenska ima poenostavljen grb (zastava kot simbol države je dovoljena, grb je stiliziran).
 - Glasba je izvirna (glej zgoraj).

@@ -3,7 +3,8 @@
 // round on the next track; the championship kept over a reload of the page (the title button shows the round); a round left
 // before the finish does not count, a restart drives the same round again; giving it up takes a second tap; the last round of a
 // series ends it: the final standings and the record of the series. A championship has 19 rivals (20 cars) in every round; one kept
-// before there were 19 (no field size saved) goes on with its 12.
+// before there were 19 (no field size saved) goes on with its 12. The cups of the test tracks (Domači pokal, Kratke proge) are behind
+// NEUPORABNO (to-champ-nu, its own choice of series); Prvenstvo shows the others, their hidden tracks (test, pending) left out.
 //   node tests/browser/champ.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -32,11 +33,17 @@ try {
   });
   const PTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
-  // 1. the choice of a series
+  // 1. the choice of a series: the cups of version 1.0, their hidden tracks left out; behind NEUPORABNO the two of the test tracks
+  const cards = () => page.evaluate(() => ({ screen: window.__game.screen, cards: [...document.querySelectorAll('[data-champ]')].map(b => b.dataset.champ + (b.classList.contains('sel') ? '*' : '')),
+    go: document.getElementById('ch-go').textContent, quit: document.getElementById('ch-quit').classList.contains('off'),
+    hid: [...document.querySelectorAll('[data-champ] .ttracks')].flatMap(e => e.textContent.split(' · ')).filter(n => Core.TRACKS.some(d => (d.test || d.pending) && Lang.of(d, 'name') === n)) }));
   await act('to-champ'); await page.waitForTimeout(300);
-  const pick = await page.evaluate(() => ({ screen: window.__game.screen, cards: [...document.querySelectorAll('[data-champ]')].map(b => b.dataset.champ + (b.classList.contains('sel') ? '*' : '')),
-    go: document.getElementById('ch-go').textContent, quit: document.getElementById('ch-quit').classList.contains('off') }));
-  T.check('Prvenstvo: the series to choose from (the first one chosen), no "Opusti" before one starts', pick.screen === 'champ' && pick.cards.length >= 3 && pick.cards[0].endsWith('*') && pick.go === 'Začni prvenstvo' && pick.quit, JSON.stringify(pick));
+  const pick = await cards();
+  T.check('Prvenstvo: the series to choose from (the first one chosen), not Domači pokal nor Kratke proge, no hidden track in a series; no "Opusti" before one starts', pick.screen === 'champ' && pick.cards.length >= 2 && pick.cards[0].endsWith('*') &&
+    !pick.cards.some(c => /^(domaci|superstars)\b/.test(c)) && !pick.hid.length && pick.go === 'Začni prvenstvo' && pick.quit, JSON.stringify(pick));
+  await act('to-title'); await act('to-champ-nu'); await page.waitForTimeout(300);
+  const nu = await cards();
+  T.check('behind NEUPORABNO (to-champ-nu): Domači pokal and Kratke proge only, the first one chosen', nu.screen === 'champ' && nu.cards.join() === 'domaci*,superstars' && nu.go === 'Začni prvenstvo' && nu.quit, JSON.stringify(nu));
 
   // 2. "Domači pokal": round 1 on its first track, driven to the finish; the points on the results
   await page.evaluate(() => document.querySelector('[data-champ="domaci"]').click());
@@ -75,7 +82,7 @@ try {
   const ask = await page.evaluate(() => ({ btn: document.getElementById('ch-quit').textContent, saved: !!localStorage.getItem('tdgp-champ') }));
   await page.evaluate(() => document.getElementById('ch-quit').click()); await page.waitForTimeout(300);
   const gone = await page.evaluate(() => ({ saved: localStorage.getItem('tdgp-champ'), go: document.getElementById('ch-go').textContent, cards: document.querySelectorAll('[data-champ]').length }));
-  T.check('"Opusti": asks first ("Res opustim?"), a second tap gives it up (the choice again)', ask.btn === 'Res opustim?' && ask.saved && gone.saved === null && gone.go === 'Začni prvenstvo' && gone.cards >= 3, JSON.stringify({ ask, gone }));
+  T.check('"Opusti": asks first ("Res opustim?"), a second tap gives it up (the choice again: its kind, the cups behind NEUPORABNO)', ask.btn === 'Res opustim?' && ask.saved && gone.saved === null && gone.go === 'Začni prvenstvo' && gone.cards === 2, JSON.stringify({ ask, gone }));
 
   // 7. the last round of a series: two rounds already driven (the player 2nd, 1st), the third one (Riviera) to the finish
   await page.evaluate(() => {

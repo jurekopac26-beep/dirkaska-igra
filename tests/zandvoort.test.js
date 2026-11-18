@@ -98,7 +98,7 @@ const near = (x, z) => { const i = T.nearestIdx(x, z); return { i, d: dS(i * T.d
     `${sk.sand.length} sand outlines, ${sk.bld.length / 6} buildings`);
   check('the ponds: the mask whole (its runs fill its cells), 8 or more ponds, each at least 3 m past the barriers', k === M.length && ponds >= 8 && clear >= 3, `${ponds} ponds, nearest ${clear.toFixed(1)} m past the barriers`);
 }
-// 7. a whole race: 12 AI and the player on the autopilot, 2 laps, everyone to the finish without a rescue; in the rain 3-15 % slower (seed
+// 7. a whole race: 12 AI and the player on the autopilot, 2 laps, everyone to the finish without a rescue; in the rain 10-25 % slower (a third less grip in the wet: docs/dez-sneg.md) (seed
 // 13: with seed 11 a car spun in the rain in the melee off the grid, came to rest against the pit wall facing back and held the player
 // behind it 3 s, a start's chance, not the track's: the seeds 12-16 have no rescue, dry or wet)
 const race = (rain) => {
@@ -114,7 +114,7 @@ const race = (rain) => {
 {
   const d = race(0), w = race(1);
   check('race: 13 cars, 2 laps, all to the finish, no rescue; the winner in 3-5 min', d.fin === 13 && d.cars === 13 && !d.resc && d.win > 180 && d.win < 300, `${d.fin}/${d.cars}, winner ${d.win && d.win.toFixed(2)} s, ${d.resc} rescues`);
-  check('race in the rain: all to the finish, no rescue, the winner 3-15 % slower', w.fin === 13 && !w.resc && w.win / d.win > 1.03 && w.win / d.win < 1.15, `${w.fin}/${w.cars}, winner ${w.win && w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower), ${w.resc} rescues`);
+  check('race in the rain: all to the finish, no rescue, the winner 10-25 % slower', w.fin === 13 && !w.resc && w.win / d.win > 1.1 && w.win / d.win < 1.25, `${w.fin}/${w.cars}, winner ${w.win && w.win.toFixed(2)} s (${((w.win / d.win - 1) * 100).toFixed(1)} % slower), ${w.resc} rescues`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

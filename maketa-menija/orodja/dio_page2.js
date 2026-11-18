@@ -160,6 +160,9 @@ window.DIO = (function () {
   function prepare(id, opt) {
     if (built && built.id === id && built.key === JSON.stringify([opt.margin, opt.extra, opt.soil, opt.crop])) return built;
     const B = buildWorld(id), { T, sc, w, def } = B;
+    // opt.hide: meshes of these names left out (Hakone's far view, hkFar and hkFuji: with no camera it stands half hazed in its own place, pale
+    // over the cut; the ground under it is then the fill, opt.fillCol)
+    if (opt.hide) w.root.traverse(o => { if (opt.hide.includes(o.name)) o.visible = false; });
     // 1. cut outline: convex hull of the centre line (+ extra anchor points), grown by the margin, reduced to few edges
     const pts = []; for (let i = 0; i < T.N; i += 2) pts.push([T.px[i], T.pz[i]]);
     (opt.extra || []).forEach(p => pts.push(p));
@@ -393,7 +396,7 @@ window.DIO = (function () {
   function wetWorld(B, r) {
     const { w, tex } = B, maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);
     w.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) {
-      if (!m.color || !maps.includes(m.map)) continue;
+      if (!m.color || !(maps.includes(m.map) || m.userData.wear)) continue;   // (and a road of its own texture, as in the game: userData.wear)
       if (!m.userData.dry) m.userData.dry = m.color.clone();
       m.color.copy(m.userData.dry).multiplyScalar(1 - (m.map === tex.curb ? 0.22 : 0.36) * r); } });
     const W = w.dyn && w.dyn.wet;

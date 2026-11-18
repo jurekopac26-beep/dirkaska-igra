@@ -22,7 +22,8 @@
     [0.3, 0.55, 0.85], [0.92, 0.92, 0.9], [0.56, 0.44, 0.32], [0.86, 0.32, 0.12]];   // the fans' shirts at the end of the summer: red and white, navy, grey and black, a few bright ones
   let SAND = () => 0;   // (the sand's mask of the build under way: colMod makes it, the verges use it)
   const SK_SANDC = [2.1, 1.46, 2.3];   // (the sand's colour over the grass picture: pale, not green, so the grass shader leaves it)
-  const DK = Object.assign([[0.78, 0.06, 0.16]], { cross: [[0.95, 0.95, 0.94], 12 / 37, 16 / 37, 12 / 28, 16 / 28] });   // the Danish flag: a white Nordic cross on red (rbFlags: cols.cross)
+  const nordic = (f, c, u0, u1, v0, v1) => ({ grid: [[0, u0, u1, 1], [0, v0, v1, 1], [[f, c, f], [c, c, c], [f, c, f]]] });   // (a Nordic cross: World.flagMesh's grid, the cross c from u0 to u1 along the flag (0 at the pole) and from v0 to v1 down it, the field f)
+  const DK = nordic([0.78, 0.06, 0.16], [0.95, 0.95, 0.94], 12 / 37, 16 / 37, 12 / 28, 16 / 28);   // the Danish flag: a white Nordic cross on red
 
   // the sand round the circuit (def.sk.sand: OSM outlines) as a soft mask, 4 m cells: 0 outside .. 1 inside, a cell's blur at the edges
   function skSand(def) {

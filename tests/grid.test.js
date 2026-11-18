@@ -5,7 +5,8 @@
 // with the game's car and its field, in the formula (the longest field, 5.2 m) and in the prototype. A field of 13 keeps the grid it always
 // had (the golden references): the two staggered columns. Then the finish parking past the line of an open road: the slots for the whole
 // field (22 cars), none past the end of the road, none on another (Pikes Peak's summit: two rows a side); and the career's prize for a
-// big field by the place (the first 13 as the table). Test tracks (def.test) are left out.
+// big field by the place (the first 13 as the table); the semi-trailers' grids (the TITAN CISTERNA: no tractor or trailer on another, the
+// title demo's respawn). Test tracks (def.test) are left out.
 //   node tests/grid.test.js
 'use strict';
 const { loadCore } = require('./lib/core.js');
@@ -124,6 +125,50 @@ function grid(T, opts) {
     C.careerPrize(1, 13, d, 1, 'pico') === P[0] && C.careerPrize(1, 13, d, 1, 'mravlja') === P[0] && Math.abs(k('formula') - Math.sqrt(C.CAREER.car.formula / 50000)) < 1e-9 &&
     C.careerPrize(1, 13, d, 1, 'formula') === Math.round(P[0] * k('formula') / 50) * 50 && C.MODELS.every(M => k(M.id) >= 1 && k(M.id) <= 5),
     `formula ${C.careerPrize(1, 13, d, 1, 'formula')} · truck ${C.careerPrize(1, 13, d, 1, 'truck')}`);
+}
+
+// 7. semi-trailers (the TITAN CISTERNA, model.trailer: its tail 13.3 m behind the tractor's middle): a race of rigs on every real track with a
+// race (its own field: fieldN 5 rivals), up an open road its flying start too, the title demo's field of rigs and a room of 4 phones (rigs and
+// a car): no two bodies (tractors and trailers) on each other, every corner of each on the asphalt, up an open road none below the bottom end
+// of the road (its wall 0.5 m in), all behind the line (the flying start: the race already under way). The title demo up an open road puts a
+// rig back at the start (Race._serveRespawn, _tlFree) clear of the others, its trailer too
+{
+  const CI = model('cisterna'), S = require('./lib/sim.js'), fails = [], notes = [];
+  const base = { playerGrid: 99, laps: 1, assist: 2, phys: 'cs', seed: 11, difficulty: 1, tt: false };
+  const look = (T, r, only) => {   // (only: that car's bodies against all the others)
+    const B = []; for (const c of r.cars) { B.push([c, c]); if (c.tl && !c.tl.fall) B.push([c, c.tl]); }
+    let pairs = 0, off = 0, low = 0;
+    for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) if (B[i][0] !== B[j][0] && (!only || B[i][0] === only || B[j][0] === only) && overlap(B[i][1], B[j][1])) pairs++;
+    for (const [c, b] of B) {
+      if (only && c !== only) continue;
+      const ch = Math.cos(b.h), sh = Math.sin(b.h), l = b.m.len / 2, w = b.m.wid / 2;
+      for (const [p, q] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) { const Q = T.query(b.x + ch * l * p - sh * w * q, b.z + sh * l * p + ch * w * q, -1, {}); if (Math.abs(Q.d) > T.wAt(Q.i) - 0.05) off++; if (T.open && Q.s < 0.5) low++; }
+    }
+    return { pairs, off, low };
+  };
+  const rem = (n) => Array.from({ length: n }, (_, k) => ({ model: k === 1 ? model('kaze') : CI, color: 0xff0000, num: 40 + k, name: 'F' + k, grid: 2 + k, id: 'f' + k }));
+  let rigs = 0;
+  for (const d of tracks) {
+    const T = new C.Track(d), runs = [['race', { numAI: 21, playerModel: CI }], ['online', { numAI: 0, playerGrid: 1, playerModel: CI, remote: rem(3) }], ['demo', { numAI: 10, noPlayer: true, fieldModel: CI, difficulty: 2, laps: 9999 }]];
+    if (d.open) runs.push(['flying', { numAI: 21, playerModel: CI, flying: 15 }]);
+    for (const [k, o] of runs) {
+      const r = new C.Race(T, Object.assign({}, base, o)); if (k === 'flying') r.start();
+      const g = look(T, r), behind = k === 'flying' || r.cars.every(c => c.dist < 0), tl = r.cars.filter(c => c.tl).length;
+      rigs += tl;
+      if (g.pairs || g.off || g.low || !behind || tl < r.cars.length - (k === 'online' ? 1 : 0)) fails.push(`${d.id}/${k}: ${r.cars.length} cars (${tl} rigs), ${g.pairs} on each other, ${g.off} corners off the asphalt, ${g.low} below the road's end${behind ? '' : ', not behind the line'}`);
+      if (k === 'race' && d.open) notes.push(Math.max(...r.cars.map(c => -c.dist + c.m.len / 2 + (c.tl ? c.tl.back : 0))));   // (the last tail behind the line)
+    }
+    if (d.open) {   // the title demo: its leader put back at the start once there is room for it
+      const r = new C.Race(T, Object.assign({}, base, { numAI: 10, noPlayer: true, fieldModel: CI, difficulty: 2, laps: 9999 }));
+      r.start(); let k = 0;
+      for (; k < 6 / S.DT; k++) S.stepRace(C, r, k);
+      const c = r.cars.reduce((a, b) => b.dist > a.dist ? b : a); r._queueRespawn(c);
+      while (c.parkQ && k < 40 / S.DT) S.stepRace(C, r, k++);
+      const g = look(T, r, c);
+      if (c.parkQ || g.pairs || g.off || g.low) fails.push(`${d.id}/respawn: ${c.parkQ ? 'not put back in 34 s' : `${g.pairs} on another, ${g.off} corners off the asphalt, ${g.low} below the road's end`}`);
+    }
+  }
+  check(`semi-trailers: a race of rigs on the grid of every real track with a race (${tracks.length}), the flying start, the title demo, a room of 4 phones — no tractor or trailer on another, all on the asphalt, none below the road's end, behind the line; the demo's respawn clear of the others`, !fails.length && rigs > 0, fails.join(' | ') || `${rigs} rigs; up an open road the last tail ${Math.min(...notes).toFixed(0)}–${Math.max(...notes).toFixed(0)} m behind the line`);
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

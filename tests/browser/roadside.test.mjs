@@ -1,21 +1,21 @@
-// The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Medvode and Ouninpohja (Vršič's, a test
-// track since 6. 11. 2026, is not built):
+// The roadside equipment of the real open roads (World's roadside: obcestna oprema, only what is needed) on Medvode (Vršič's, a test track since
+// 6. 11. 2026, and Ouninpohja's, a test track since 8. 11. 2026, are not built; Pikes Peak has none):
 // 1. place-name boards only at the settlements whose real name the track's data knows (def.names, the track's description), the board struck
 //    through where the road leaves the settlement; the speed limit after them (50 in; out: 70 at Medvode); chevron
 //    boards on the outside of every sharpest bend (radius 17 m or under, or more than 150 degrees round; not round a roundabout) and nowhere else;
 //    the signs on the ground beside the road, not on the asphalt, facing the cars coming
 // 2. what a car can reach is knockable (Core's rssign, rschev, rsboard; the white delineators the heavier dpost): driven into one at 90 km/h the
 //    car loses a little speed (under 6 %) and takes a small dent (under 2 %), the sign flies off; a board collides at its legs (a car between
-//    them passes under it, one leg knocks it over); Medvode's signs stand behind the fence, out of reach: fixed, in the static mesh
-// 3. at night the street lamps light the road only in the settlements (Render's floodlights: none on Pikes Peak and Ouninpohja, no settlement
-//    on them whose name is known), the sign faces shine; the same world again from a second build
+//    them passes under it, one leg knocks it over); Medvode (def.barrier: the barrier ~5 m out, the run-off between) has no delineators (the
+//    barrier all along the road): its signs stand on the run-off where the real road has them, knockable, behind the barrier only where it is too close
+// 3. at night the street lamps light the road only in the settlements (Render's floodlights: none where no settlement
+//    has a name the track's data knows: no road of the list is left that has none, w.dark waits for the next one), the sign faces shine; the same world again from a second build
 //   node tests/browser/roadside.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const T = checker('roadside equipment of the open roads');
 const WANT = {   // the boards each road must have (the real names), the limits in and out (none: no settlement on the road), dark: no lamps at night
-  medvode: { boards: ['MEDVODE (konec)', 'ZBILJE', 'ZBILJE (konec)', 'VALBURGA', 'VALBURGA (konec)', 'SMLEDNIK', 'SMLEDNIK (konec)'], lim: [50, 70], fixed: true },
-  ouninpohja: { boards: ['OUNI', 'KAKARISTO'], lim: null, dark: true },   // (the hamlets: the name only; the added section's village has no name that could be checked)
+  medvode: { boards: ['MEDVODE (konec)', 'ZBILJE', 'ZBILJE (konec)', 'VALBURGA', 'VALBURGA (konec)', 'SMLEDNIK', 'SMLEDNIK (konec)'], lim: [50, 70], posts: false },   // (posts: false: no delineators)
 };
 const srv = await serve();
 const browser = await launch();
@@ -32,15 +32,16 @@ try {
       const bendsCovered = sharp.filter(c => !c.ring).map(c => chev.some(h => h.d >= c.d0 - 2 && h.d <= c.d1 + 2 && h.side === c.side));
       const strayChev = chev.filter(h => !sharp.some(c => h.d >= c.d0 - 2 && h.d <= c.d1 + 2)).length;
       // on the ground beside the road, off the asphalt, facing the cars coming (towards the start: against the road's way, within 75 degrees)
-      const Q = {}; let onRoad = 0, facing = 0, floating = 0;
+      const Q = {}, Q2 = {}; let onRoad = 0, facing = 0, floating = 0;
+      const ground = (x, z, i) => { if (def.barrier) { const q = Tr.query(x, z, i, Q2); if (Math.abs(q.d) < (q.d > 0 ? q.br : q.bl)) return Tr.yAt(q); } return W.groundH(x, z); };   // (def.barrier: inside the barrier the ground is the run-off's, Track.yAt: World draws it there)
       for (const it of items) { const q = Tr.query(it.x, it.z, it.i, Q), hw = it.kind === 'board' ? 1.85 : 0.75;
         if (Math.abs(q.d) - hw < Tr.wAt(q.i) - 0.05) onRoad++;
         const i = it.i, back = -(it.nx * Tr.tx[i] + it.nz * Tr.tz[i]); if (it.kind === 'chev' ? false : back < Math.cos(75 * Math.PI / 180)) facing++;
-        const gy = W.groundH(it.x, it.z); if (it.y > gy + 0.75) floating++; }
+        const gy = ground(it.x, it.z, it.i); if (it.y > gy + 0.75) floating++; }
       // the knockable ones in the race, by kind; the white delineators
       const kinds = {}; for (const b of R.props) kinds[b.kind] = (kinds[b.kind] || 0) + 1;
       // the knockable ones as Core stands them: the pole's foot (1 m under its base, Render) in the ground, the base not sunk
-      let propFloat = 0, propSunk = 0, worst = 0; for (const b of R.props) { if (!['rssign', 'rschev', 'rsboard'].includes(b.kind)) continue; const base = b.y - b.K.h0, g0 = W.groundH(b.x, b.z); worst = Math.max(worst, base - g0); if (base - 1 > g0 + 0.02) propFloat++; if (base < g0 - 0.9) propSunk++; }
+      let propFloat = 0, propSunk = 0, worst = 0; for (const b of R.props) { if (!['rssign', 'rschev', 'rsboard'].includes(b.kind)) continue; const base = b.y - b.K.h0, g0 = ground(b.x, b.z, b.qi); worst = Math.max(worst, base - g0); if (base - 1 > g0 + 0.02) propFloat++; if (base < g0 - 0.9) propSunk++; }
       const allowed = (def.names || []).map(n => n.n.toUpperCase()).concat([(def.en && def.en.desc || '').toUpperCase(), (def.desc || '').toUpperCase()]);
       const names = items.filter(it => it.kind === 'board').map(it => it.name);
       const real = names.every(n => { const b = n.replace(' (konec)', ''); return allowed.some(a => a.includes(b)); });
@@ -58,7 +59,8 @@ try {
     else T.check(`${id}: the speed limits: ${w.lim[0]} in each settlement, ${w.lim[1]} on the road out of it`, r.lims.some(l => l[0] === 'lim:' + w.lim[0]) && r.lims.some(l => l[0] === 'lim:' + w.lim[1]) && r.lims.every(l => l[0] === 'lim:' + w.lim[0] || l[0] === 'lim:' + w.lim[1]), JSON.stringify(r.lims));
     T.check(`${id}: chevron boards on the outside of the sharpest bends (all but one at most), none elsewhere`, r.nSharp > 0 && r.covered >= r.nSharp - 1 && r.strayChev === 0, `${r.covered} of ${r.nSharp} bends, ${r.nChev} chevrons, ${r.strayChev} elsewhere`);
     T.check(`${id}: every sign beside the road (none on the asphalt), on the ground, the boards and limits facing the cars coming`, r.onRoad === 0 && r.floating === 0 && r.facing === 0 && r.propFloat === 0 && r.propSunk === 0, `on the asphalt ${r.onRoad}, floating ${r.floating} (knockable: ${r.propFloat} floating, ${r.propSunk} sunk; the base at most ${r.worst} m over the ground), facing away ${r.facing}`);
-    T.check(`${id}: the white delineators are the heavier plastic ones (dpost), none of the old`, (r.kinds.dpost || 0) > 0 && !r.kinds.post, JSON.stringify(r.kinds));
+    if (w.posts === false) T.check(`${id}: no delineators (the barrier along the whole road)`, !r.kinds.dpost && !r.kinds.post, JSON.stringify(r.kinds));
+    else T.check(`${id}: the white delineators are the heavier plastic ones (dpost), none of the old`, (r.kinds.dpost || 0) > 0 && !r.kinds.post, JSON.stringify(r.kinds));
     if (w.fixed) T.check(`${id}: behind the fence all signs and boards stay fixed (in the static mesh, none knockable), each wholly past the barrier line`, r.fixed === r.n && r.n > 10 && r.mesh && r.meshVerts > 0 && !r.kinds.rssign && !r.kinds.rschev && !r.kinds.rsboard && r.fixedOk, `${r.fixed} of ${r.n} fixed, ${r.meshVerts} vertices`);
     else T.check(`${id}: what a car can reach is knockable (rssign, rschev, rsboard in the race)`, (r.kinds.rssign || 0) + (r.kinds.rschev || 0) + (r.kinds.rsboard || 0) >= r.n - r.fixed && r.n - r.fixed > 0 && r.fixedOk, `${r.n - r.fixed} knockable of ${r.n}`);
 
@@ -113,7 +115,7 @@ try {
   for (const [id, want] of [['pikes', 'none'], ['spa', 'all']]) {
     await startTrack(page, id);
     const n = await page.evaluate(() => { const g = window.__game, Tr = g.race.track; g.S.tod = 'night'; Render.setAtmos({ season: 'summer', tod: 'night' }, true); const n = (Render.show.lamps || []).length; g.S.tod = 'day'; Render.setAtmos({ season: 'summer', tod: 'day' }, true); return { n, all: Math.floor(Tr.len / 30) }; });
-    T.check(want === 'none' ? `${id}: a road with no settlement on it is dark at night (no street lamps)` : `${id}: a circuit keeps its floodlights every 30 m at night`, want === 'none' ? n.n === 0 : n.n === n.all, `${n.n} lamps (every 30 m: ${n.all})`);
+    T.check(want === 'none' ? `${id}: a road with no settlement on it is dark at night (no street lamps)` : `${id}: a circuit keeps its floodlights every 30 m at night`, want === 'none' ? n.n === 0 : n.n >= n.all, `${n.n} lamps (every 30 m: ${n.all}; by a stand its roof lamps' pools instead of a pole: js/render-vecer.js)`);
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
 } finally {

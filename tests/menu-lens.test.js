@@ -2,7 +2,9 @@
 // the shortest real track to the longest, then the test tracks, without building every track): every track of the game is in it with its
 // length as the game measures it (an open road: the race from the start to the finish; a circuit: the lap), to the metre; no track that
 // is not in the game. MENU.profs, the heights along the run for the height graph of every track without a route map in js/routes.js: as
-// the game's road (121 heights from the start line, to 0.1 m), a real track's with its start line's height above the sea.
+// the game's road (121 heights from the start line, to 0.1 m), a real track's with its start line's height above the sea. MENU.shapes and
+// MENU.ncorners, the quick list's cards and facts (js/menu-izbor.js): every real track's shape from above (from its start line to its
+// finish, a circuit round to its start again; the longer side 200) and its corners as the game counts them; none for a test track.
 // After a new track or a changed road: node tools/menu-lens.js
 //   node tests/menu-lens.test.js
 'use strict';
@@ -15,10 +17,10 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 global.window = {};
 require(path.join(ROOT, 'js', 'menu-data.js'));
 const L = window.MENU.lens || {}, ids = C.TRACKS.filter(d => !d.variantOf).map(d => d.id);
-const off = [];
+const off = [], built = new Map();
 for (const d of C.TRACKS) {
   if (d.variantOf) continue;
-  const T = new C.Track(d), m = Math.round(d.open ? T.raceLen : T.len);
+  const T = new C.Track(d), m = Math.round(d.open ? T.raceLen : T.len); built.set(d.id, T);
   if (L[d.id] !== m) off.push(d.id + ': ' + L[d.id] + ' (the game: ' + m + ')');
 }
 check(`every track of the game (${ids.length}) has its length in the menu's table, to the metre (node tools/menu-lens.js)`, !off.length, off.join(', '));
@@ -29,7 +31,7 @@ check('no track in the table that is not in the game', !extra.length, extra.join
 global.window.ROUTES = undefined; require(path.join(ROOT, 'js', 'routes.js'));
 const RT = window.ROUTES || {}, P = window.MENU.profs || {}, need = C.TRACKS.filter(d => !d.variantOf && !RT[d.id]), poff = [];
 for (const d of need) {
-  const p = P[d.id], T = new C.Track(d), Lr = d.open ? T.raceLen : T.len;
+  const p = P[d.id], T = built.get(d.id), Lr = d.open ? T.raceLen : T.len;
   if (!p || p.prof.length !== 121 || p.len !== Math.round(Lr)) { poff.push(d.id + (p ? ': ' + p.prof.length + ' heights over ' + p.len + ' m' : ': none')); continue; }
   let worst = 0;
   for (let k = 0; k <= 120; k++) {
@@ -44,5 +46,24 @@ const nobase = need.filter(d => !d.test && !(P[d.id] && P[d.id].base > -500)).ma
 check('every real one with its start line\'s height above the sea (the graph\'s heights, the head\'s top)', !nobase.length, nobase.join(', '));
 const pextra = Object.keys(P).filter(id => !need.some(d => d.id === id));
 check('no heights in the table for a track that has a route map, or is not in the game', !pextra.length, pextra.join(', '));
+
+// the real tracks' shapes and corners (node tools/menu-lens.js): the start line first, the finish last (a circuit: its start again), the
+// longer side 200 (the simplification may leave out the very corner of the box: at least 196), integers in the box; the corners as
+// the game's Track counts them
+const SH = window.MENU.shapes || {}, NC = window.MENU.ncorners || {}, reals = C.TRACKS.filter(d => !d.variantOf && !d.test), soff = [];
+for (const d of reals) {
+  const T = built.get(d.id), s = SH[d.id];
+  if (NC[d.id] !== T.corners.length) soff.push(d.id + ': ' + NC[d.id] + ' corners (the game: ' + T.corners.length + ')');
+  if (!Array.isArray(s) || s.length < 8 || s.length % 2 || s.length > 400 || s.some(v => !Number.isInteger(v) || v < 0 || v > 200)) { soff.push(d.id + ': shape ' + (Array.isArray(s) ? s.length / 2 + ' points' : 'none')); continue; }
+  const N = T.N, a = T.startIdx, b = (d.open ? T.finishIdx : T.startIdx + N) % N;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let i = T.startIdx; i <= (d.open ? T.finishIdx : T.startIdx + N); i++) { const k = i % N; x0 = Math.min(x0, T.px[k]); x1 = Math.max(x1, T.px[k]); y0 = Math.min(y0, T.pz[k]); y1 = Math.max(y1, T.pz[k]); }
+  const k = 200 / Math.max(x1 - x0, y1 - y0), at = (i) => [(T.px[i] - x0) * k, (T.pz[i] - y0) * k], n2 = s.length, far = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]) > 1.5;
+  let wx = 0, wy = 0; for (let i = 0; i < n2; i += 2) { wx = Math.max(wx, s[i]); wy = Math.max(wy, s[i + 1]); }
+  if (far([s[0], s[1]], at(a)) || far([s[n2 - 2], s[n2 - 1]], at(b)) || Math.max(wx, wy) < 196) soff.push(d.id + ': its ends or its size not the road\'s');
+}
+check(`every real track (${reals.length}) has its shape from above and its corners for the quick list, as the game's road (node tools/menu-lens.js)`, !soff.length, soff.join(', '));
+const sextra = [...Object.keys(SH), ...Object.keys(NC)].filter(id => !reals.some(d => d.id === id));
+check('no shape or corners for a test track or a track that is not in the game (the test tracks are frozen)', !sextra.length, [...new Set(sextra)].join(', '));
 console.log(`\n${n - bad}/${n} passed`);
 process.exit(bad ? 1 : 0);

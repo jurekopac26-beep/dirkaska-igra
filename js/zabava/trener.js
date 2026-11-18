@@ -85,7 +85,7 @@
   }
   const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
-  const gold = new Map();   // the gold ghosts made in this visit (track, car, physics, wet): made once, used by every run after
+  const gold = new Map();   // the gold ghosts made in this visit (track, car, physics, wet, winter): made once, used by every run after
   const feat = {
     id: 'trener', profile, analyze, corners, stretch, gold,
     ref: null, sim: null, key: '', lapN: 0, lastLap: null,
@@ -97,7 +97,7 @@
       // the gold ghost: a time trial (not a challenge) with the setting on and a gold time for this track
       const S = G && G.S, gt = G && G.gold ? G.gold() : 0;
       if (!race.timeTrial || race.chal || !S || !(S.zbGold === 1 || Z.forced('zlati')) || !(gt > 0)) return;
-      this.key = [race.track.def.id, race.player.m.id, race.opts.phys || 'cs', race.rain ? 'wet' : 'dry'].join('|');
+      this.key = [race.track.def.id, race.player.m.id, race.opts.phys || 'cs', race.rain ? 'wet' : 'dry', race.opts.winter ? 'winter' : 'summer'].join('|');
       const have = gold.get(this.key);
       if (have) this.show(have, gt);
       else this.sim = { r: null, t: 0, n: 0, f: null, gt, done: false };

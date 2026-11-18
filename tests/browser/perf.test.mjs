@@ -15,7 +15,7 @@
 //   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept)
 import fs from 'node:fs';
 import path from 'node:path';
-import { REPO, serve, launch, openGame, startTrack, trackIds, checker } from './lib.mjs';
+import { REPO, serve, launch, openGame, startTrack, trackIds, checker, tapNewVersion } from './lib.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'perf.json');
 // the camera's shake on (Nastavitve · Tresenje kamere, off by default since 2. 11. 2026), as when the references were recorded: its jitter
@@ -37,7 +37,7 @@ async function newMap() {
     wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
   });
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 120000 });
-  await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+  await tapNewVersion(page);
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 600000, polling: 500 });
   const r = await page.evaluate(() => {
     const g = window.__game, P = g.race.player, H3 = window.__H3; g.pause();

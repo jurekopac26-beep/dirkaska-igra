@@ -62,8 +62,8 @@
     'Avto je v sliki bolj zadaj in nižje, da vidiš več ceste pred seboj (velja za kamero za avtom; ves avto vedno ostane na zaslonu)': 'The car sits further back and lower in the frame, so you see more road ahead (applies to the chase camera; the whole car always stays on the screen)',
     'Nizka': 'Low', 'Srednja': 'Medium', 'Visoka': 'High', 'Težavnost': 'Difficulty', 'Lahka': 'Easy', 'Težka': 'Hard', 'Samodejni plin': 'Auto throttle',
     'Opozorila za ovinke': 'Corner warnings', 'Duh najboljše vožnje': 'Ghost of the best run', 'Komentator (angleščina)': 'Commentator (English)',
-    '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik na reliju (angleščina)': 'Rally co-driver (English)', 'Poškodbe avtov': 'Car damage', 'Zgoraj': 'At the top', 'Ob zemljevidu': 'By the map', 'Samo videz': 'Looks only',
-    'Grafika': 'Graphics', 'Normalno': 'Normal', 'Visoko': 'High', 'Podrobnosti': 'Detail', 'Detajli avtov': 'Car detail', 'Normalni': 'Normal', 'Visoki': 'High', 'Drobni detajli tvojega avta in avta v garaži (znaki, kljuke, letvice, reže med paneli, okrogle gume); pri razbijanju gosta karoserija samo za tvoj avto (Normalni) ali za vse avte (Visoki). Visoki je za računalnik, Normalni za telefon.': 'Small details of your car and the car in the garage (badges, handles, trims, panel gaps, round tyres); for crashes, a dense body for your car only (Normal) or for every car (High). High is for a computer, Normal for a phone.', 'Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone.': 'How much trackside detail (spectators, trees, cliffs, props …). Auto picks it from your device and adjusts on the fly to keep the game smooth; Low is for weaker phones.', 'Sence': 'Shadows', 'Zvok': 'Sound', 'Vibracija': 'Vibration', 'Osnovno': 'Basic', 'Vse': 'All', 'Osnovno: kratki sunki ob trkih in pristankih, v boksih le postanek, izpust in VOZIŠ TI!. Vse: v boksih še vsak trenutek dela mehanikov ter pot v bokse in iz njih.': 'Basic: short pulses on crashes and landings, in the pits only the stop, the release and YOU DRIVE!. All: in the pits also every moment of the crew\'s work and the way in and out.', 'Končano': 'Done',
+    '▶ Preizkusi glas': '▶ Test the voice', 'Sovoznik': 'Co-driver', 'Napis': 'Captions', 'Glas in napis': 'Voice and captions', 'Poškodbe avtov': 'Car damage', 'Zgoraj': 'At the top', 'Ob zemljevidu': 'By the map', 'Samo videz': 'Looks only',
+    'Grafika': 'Graphics', 'Normalno': 'Normal', 'Visoko': 'High', 'Podrobnosti': 'Detail', 'Detajli avtov': 'Car detail', 'Normalni': 'Normal', 'Visoki': 'High', 'Drobni detajli tvojega avta in avta v garaži (znaki, kljuke, letvice, reže med paneli, okrogle gume); pri razbijanju gosta karoserija samo za tvoj avto (Normalni) ali za vse avte (Visoki). Visoki je za računalnik, Normalni za telefon.': 'Small details of your car and the car in the garage (badges, handles, trims, panel gaps, round tyres); for crashes, a dense body for your car only (Normal) or for every car (High). High is for a computer, Normal for a phone.', 'Koliko podrobnosti ob progi (gledalci, drevesa, čeri, props …). Samodejno izbere glede na napravo in sproti prilagaja, da igra teče gladko; Nizka je za šibkejše telefone.': 'How much trackside detail (spectators, trees, cliffs, props …). Auto picks it from your device and adjusts on the fly to keep the game smooth; Low is for weaker phones.', 'Sence': 'Shadows', 'Zvok': 'Sound', 'Zvoki okolja': 'Ambient sounds', 'Tiho': 'Quiet', 'Glasno': 'Loud', 'Vibracija': 'Vibration', 'Osnovno': 'Basic', 'Vse': 'All', 'Osnovno: kratki sunki ob trkih in pristankih, v boksih le postanek, izpust in VOZIŠ TI!. Vse: v boksih še vsak trenutek dela mehanikov ter pot v bokse in iz njih.': 'Basic: short pulses on crashes and landings, in the pits only the stop, the release and YOU DRIVE!. All: in the pits also every moment of the crew\'s work and the way in and out.', 'Končano': 'Done',
     'Razbijanje: nove poškodbe karoserije': 'Crashes: new body damage', 'Razbijanje: šipe': 'Crashes: glass', 'Razbijanje: prevračanje': 'Crashes: rollovers', 'Približno vsak deseti močan bočni trk avto prevrne: zavrti se enkrat ali dvakrat in pristane na kolesih, izgubiš okoli sekundo': 'About one hard knock on the side in ten rolls the car over: it turns once or twice and lands on its wheels, about a second lost', 'Razbijanje: odrgnjena barva in rja': 'Crashes: scraped paint and rust',
     'Razbijanje: odboji in vrtenje ob trku': 'Crashes: knocks and spins', 'Udarec avto zavrti, kolikor je bil močan; za trenutek izgubi oprijem. Udarec v zadnji vogal ga lahko zavrti naokoli. Velja samo s Trki med avti: Stara (druge različice to delajo same)': 'A knock turns the car as hard as it was; for a moment it loses grip. A knock on a rear corner can spin it round. Only with Car knocks: Old (the other versions do this themselves)',
     'Razbijanje: agresivni vozniki': 'Crashes: aggressive drivers', 'Tretjina tekmecev občasno napade: nekaj sekund ciljajo zadnji vogal avta pred sabo': 'A third of the rivals attack now and then: for a few seconds they aim at the rear corner of the car ahead',
@@ -219,7 +219,7 @@
     ' · dvoboj z enim tekmecem · promet na cesti': ' · duel with one rival · traffic on the road', ' (najboljša dirka {0})': ' (best race {0})', ' · dirka na vrh · {0} nasprotnikov': ' · race to the top · {0} rivals',
     ' (rekord kroga {0})': ' (lap record {0})', ' · {0} nasprotnikov': ' · {0} rivals', ' Rekord kroga: {0}.': ' Lap record: {0}.', ' Upravljanje: {0}. Spremeniš v nastavitvah.': ' Controls: {0}. Change them in the settings.',
     'Ta brskalnik ne podpira govora – komentatorja ne bo slišati.': 'This browser does not support speech – the commentator will not be heard.', 'Glas: {0} ({1})': 'Voice: {0} ({1})',
-    'privzeti angleški': 'default English', ' – moški': ' – male', ' – nižji ton': ' – lower pitch', ' · sovoznik in inženir: {0}': ' · co-driver and engineer: {0}',
+    'privzeti angleški': 'default English', ' – moški': ' – male', ' – nižji ton': ' – lower pitch', ' · sovoznik in inženir: {0}': ' · co-driver and engineer: {0}', ' · sovoznik: posnet glas': ' · co-driver: recorded voice',
     ' · vsi glasovi govorijo angleško (tudi policijski radio)': ' · every voice speaks English (the police radio too)',
     'malo krila': 'low wing', 'srednje krilo': 'medium wing', 'veliko krila': 'high wing', 'kratke prestave': 'short gears', 'srednje prestave': 'medium gears', 'dolge prestave': 'long gears',
     'Nastavitev za {0}: {1}, {2}.': 'Setup for {0}: {1}, {2}.',
@@ -250,14 +250,14 @@
     'Kupil si {0} za {1}. Ostane {2}.': 'You bought the {0} for {1}. {2} left.',
     ' (pravih {0} km)': ' (real {0} km)', ' · vzpon {0} m': ' · climb {0} m', ' · spust {0} m': ' · descent {0} m', ' · dvoboj z enim tekmecem v prometu': ' · duel with one rival in traffic', ' · rekord {0}': ' · record {0}',
     ' · beg pred policijo': ' · police chase', ' · najhitrejši pobeg {0}': ' · fastest escape {0}', ' · dirka z {0} tekmeci': ' · race with {0} rivals', ' · kronometer': ' · time trial',
-    ' · kronometer v dežju': ' · time trial in the rain', '{0} ovinkov': '{0} corners', 'Način vožnje': 'Driving mode', 'Nalagam progo {0}…': 'Loading {0}…',
+    '{0} ovinkov': '{0} corners', 'Način vožnje': 'Driving mode', 'Nalagam progo {0}…': 'Loading {0}…',
     'Zaostanek': 'Gap', 'Najboljši štartni položaj!': 'Pole position!', 'Tvoj krog {0}': 'Your lap {0}', ' (nov rekord proge)': ' (new track record)',
     '. Na štartu boš {0} od {1}.': '. You will start {0} of {1}.', ' {0}, dirka {1}/{2}.': ' {0}, race {1}/{2}.', 'Na štart': 'To the grid', 'Za prvo štartno mesto': 'For pole position',
     'ČASI TEKMECEV …': 'RIVALS’ TIMES …', 'POLICIJA': 'POLICE', ' · DEŽ': ' · RAIN', 'POLNI PLIN!': 'FLAT OUT!', 'VZPON NA VRH!': 'CLIMB TO THE TOP!', 'SPUST V DOLINO!': 'DOWN TO THE VALLEY!',
     'DIRKA {0}/{1} · ': 'RACE {0}/{1} · ', 'KVALIFIKACIJE': 'QUALIFYING', 'POLICIJA TE LOVI!': 'THE POLICE ARE AFTER YOU!', 'DVOBOJ V PROMETU!': 'DUEL IN TRAFFIC!', 'DIRKA NA VRH!': 'RACE TO THE TOP!',
     'CILJ': 'FINISH', 'Datum': 'Date', 'Povprečno': 'Average', 'Točke': 'Points', 'Nov osebni rekord!': 'New personal best!', 'Cilj': 'Finish',
     'Prejšnji rekord {0} ({1}).': 'Previous record {0} ({1}).', 'Prvi čas na tej progi.': 'The first time on this track.', '{0} za rekordom (rekord {1}).': '{0} behind the record (record {1}).',
-    ' v dežju': ' in the rain', '{0} mesto na lestvici.': '{0} on the leaderboard.', 'izven prvih 10.': 'outside the top 10.',
+    ' v dežju': ' in the rain', ' pozimi': ' in winter', ' v snegu': ' in the snow', '{0} mesto na lestvici.': '{0} on the leaderboard.', 'izven prvih 10.': 'outside the top 10.',
     'Nagrada za medaljo': 'Medal prize', 'Nagrada za osebni rekord': 'Prize for a personal best', 'Nagrada': 'Prize', 'Vmesni časi': 'Split times', 'Točka': 'Point', 'Rekord': 'Record',
     'Lestvica · {0}': 'Leaderboard · {0}', 'Na tej progi še ni časov. Odpelji vzpon in postavi prvi rekord!': 'No times on this track yet. Drive the climb and set the first record!',
     'Na tej progi še ni časov. Odpelji preizkušnjo in postavi prvi rekord!': 'No times on this track yet. Drive the stage and set the first record!',
@@ -282,7 +282,7 @@
     ' · {0} {1} (tvoj rekord {2}, {3} {4} m)': ' · {0} {1} (your record {2}, {3} {4} m)',
     'lahka': 'easy', 'srednja': 'medium', 'težka': 'hard', 'točke 25, 18, 15 …': 'points 25, 18, 15 …', 'Težavnost: {0} (spremeniš v Nastavitvah)': 'Difficulty: {0} (change it in the Settings)',
     'Prvak {0}×': 'Champion {0}×', 'Najboljše: {0} mesto': 'Best: {0} place', 'Začni prvenstvo': 'Start the championship', 'končano': 'finished', 'dirka {0}/{1}': 'race {0}/{1}',
-    'Težavnost: {0}': 'Difficulty: {0}', ' (dež)': ' (rain)', 'Prvak!': 'Champion!', 'Na stopničkah prvenstva!': 'On the championship podium!', 'Konec prvenstva': 'The championship is over',
+    'Težavnost: {0}': 'Difficulty: {0}', ' (dež)': ' (rain)', ' (zima)': ' (winter)', ' (sneg)': ' (snow)', 'Prvak!': 'Champion!', 'Na stopničkah prvenstva!': 'On the championship podium!', 'Konec prvenstva': 'The championship is over',
     '{0} {1}, {2}. Zmagovalec {3} ({4}).': '{0} {1}, {2}. Winner: {3} ({4}).', 'Zmage': 'Wins', 'Zadnja': 'Last', 'Novo prvenstvo': 'New championship', 'Naslednja dirka: {0}': 'Next race: {0}',
     'Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.': 'The racing line is dry: wet tyres wear quickly on a dry road. Pit for dry tyres.',
     'ZBIL SI PEŠCA!': 'YOU HIT A PEDESTRIAN!', 'ZBIL SI KOLESARJA!': 'YOU HIT A CYCLIST!', 'TEKMEC JE ZBIL PEŠCA': 'YOUR RIVAL HIT A PEDESTRIAN', 'TEKMEC JE ZBIL KOLESARJA': 'YOUR RIVAL HIT A CYCLIST',
@@ -435,17 +435,19 @@
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
-    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!', 'PREDALEČ OD CESTE!': 'TOO FAR OFF THE ROAD!',   // (Uncompahgre; Killar: a road with no barriers, too far off it)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs', 'Smučarska vas': 'Ski Village',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
+    'Vrh': 'Summit', 'Jezero Shōjin': 'Lake Shōjin', 'Sedem ovinkov': 'Seven Bends',   // (Hakone: the HUD; the names of the places stay as they are)
     'Terasa ob morju': 'Seafront Terrace', 'Pod železnico': 'Under the Railway', 'Lasnice Savolano': 'Savolano Hairpins', 'Stolp Castellaccio': 'Castellaccio Tower', 'Vzhodna lasnica': 'East Hairpin', 'Lasnici nad Romitom': 'Romito Hairpins', 'Grad Antignano': 'Antignano Castle',   // (Livorno: the descriptive names on the HUD; the rest are places)
-    'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner',   // (Nürburg, Spa, Suzuka, Monte Carlo: corners named after people or a bar get the plain names from the menu)
+    'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Kratki levi': 'Short Left', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner', 'Ovinek pri zbiralniku': 'Reservoir Bend',   // (Nürburg, Spa, Suzuka, Monte Carlo, Pikes Peak: corners named after people, a bar or the commentary box get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of the Santa Monica Mountains road)
+    'Borov gozd': 'Pine Wood', 'Mestno obzidje': 'City Wall', 'Pod stolpom': 'Below the Tower', 'V mesto': 'Into the City',   // (Seoul: the HUD, the results of an escape; Razgledišče and Dvojni desni are in the dictionary already, Namsan and Huam-dong stay as they are)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Dvojni levi': 'Double Left', 'Hitri desni': 'Fast Right', 'Ovinek pri tribunah': 'Grandstand Corner', 'Gozdni ovinek': 'Forest Corner', 'Ovinek pri gomili': 'Barrow Corner', 'Ovinek ob resavi': 'Heath Corner', 'Ciljna ravnina': 'Finish Straight',   // (Silkeborg: its corners by plain descriptions, the burial mound and the heath by them)
@@ -465,28 +467,56 @@
     'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
     'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
     'Desni pred zadnjim': 'Right before the Last', 'Nagnjeni zadnji ovinek': 'Banked Final Corner',   // (Zandvoort: its corners by plain descriptions, the dunes and the ponds by them)
-    'Desna lasnica': 'Right Hairpin', 'Levi v dolino': 'Left into the Valley', 'Ovinek pri izviru': 'Spring Corner', 'Slepi levi': 'Blind Left',
-    'Ovinek Buda': 'Buda Corner', 'Ovinek Pešta': 'Pest Corner', 'Ovinek Donava': 'Danube Corner', 'Leva lasnica': 'Left Hairpin',   // (Mogyoród: its corners by plain descriptions and by the place names of the real ones)
-    'Ovinek pri baobabu': 'Baobab Corner', 'Trojni ovinek': 'Triple Bend', 'Desni na dnu': 'Right at the Bottom',   // (Sindia: its corners by plain descriptions)
+    'Spust v prvi levi': 'Drop into the First Left', 'Dolgi desni v dolini': 'Long Right in the Dip', 'Vzpon na hrib': 'Climb up the Hill', 'Desni na dnu': 'Right at the Bottom',
+    'Dolgi levi s štirimi temeni': 'Long Left with Four Apexes', 'Spust v dolino': 'Drop into the Valley', 'Levi po spustu': 'Left after the Drop', 'Desni na zadnjo ravnino': 'Right onto the Back Straight',
+    'Levi na koncu ravnine': 'Left at the End of the Straight', 'Desni v šikani': 'Chicane Right', 'Levi na ciljno ravnino': 'Left onto the Main Straight',   // (Tuzla: its corners by plain descriptions, the hills by them)
+    'Zapirajoči se desni': 'Tightening Right', 'Leva lasnica': 'Left Hairpin', 'Hitri desni v dolini': 'Fast Right in the Dip', 'Vzpon iz doline': 'Climb out of the Dip',
+    'Ostri desni na vrhu': 'Sharp Right at the Top', 'Spust proti lasnici': 'Drop to the Hairpin', 'Lasnica na dnu': 'Hairpin at the Bottom', 'Desni v klanec': 'Right up the Hill',
+    'Desni na vrhu hriba': 'Right on the Crest', 'Levi navzdol': 'Left Downhill',   // (Sepang: its corners by plain descriptions, the dips and the crests by them)
+    'Desni na koncu ravnine': 'Right at the End of the Straight', 'Desni pred esom': 'Right before the Esses', 'Desni pod hribom': 'Right under the Hill', 'Desni proti zahodu': 'Right to the West',
+    'Levi ob tribunah': 'Left by the Grandstands', 'Ravnina proti morju': 'Straight to the Sea', 'Desni ob morju': 'Right by the Sea', 'Desni pod gričem': 'Right under the Knoll',
+    'Levi na sever': 'Left to the North', 'Levi proti zahodu': 'Left to the West', 'Desni na zahodni strani': 'Right on the West Side', 'Zadnji levi': 'Last Left',   // (Lombok: its corners by plain descriptions, the sea, the hills and the compass)
+    'Hitri levi pregib': 'Fast Left Kink', 'Ravnina proti jugu': 'South Straight', 'Levi pred ribnikom': 'Left before the Pond',
+    'Ostri levi': 'Tight Left', 'Levi ob ribniku': 'Pond Left', 'Desni proti severu': 'Right Heading North', 'Desni ob mokrišču': 'Wetland Right', 'Levi na vzhodu': 'East Left',   // (Buriram: its corners by plain descriptions, the pond and the wetland by them)
+    'Levi proti severu': 'Left Heading North', 'Desni proti jugu': 'Right Heading South', 'Levi pregib': 'Left Kink',
+    'Tretji hitri desni': 'Third Fast Right', 'Levi pred zadnjim': 'Left before the Last',   // (Lusail: its corners by plain descriptions, the compass and their order; Hitri desni pregib and Zadnji desni with Sakhir)
+    'Desna lasnica': 'Right Hairpin', 'Hitri desni pregib': 'Fast Right Kink', 'Desni na vrhu': 'Right at the Top', 'Desni v esih': 'Right in the Esses', 'Levi v dolino': 'Left into the Valley',
+    'Lasnica v dolini': 'Hairpin in the Valley', 'Dolgi levi pod klancem': 'Long Left below the Climb', 'Desni na vrhu klanca': 'Right at the Top of the Climb',
+    'Zadnji desni': 'Last Right',   // (Sakhir: its corners by plain descriptions, by the hills and the valley of the desert; Ostri levi and Desni na koncu ravnine as above)
+    'Desni na dolgo ravnino': 'Right onto the Long Straight', 'Levi v notranjosti': 'Infield Left', 'Desni pred ciljem': 'Right before the Finish',   // (Termas de Río Hondo: its corners by plain descriptions; its others as above)
+    'Ovinek pri izviru': 'Spring Corner', 'Slepi levi': 'Blind Left',
+    'Ovinek Buda': 'Buda Corner', 'Ovinek Pešta': 'Pest Corner', 'Ovinek Donava': 'Danube Corner',   // (Mogyoród: its corners by plain descriptions and by the place names of the real ones)
+    'Ovinek pri baobabu': 'Baobab Corner', 'Trojni ovinek': 'Triple Bend',   // (Sindia: its corners by plain descriptions)
     'Rahli desni': 'Gentle Right', 'Desni ob poljih': 'Right by the Fields', 'Levi v klanec': 'Uphill Left', 'Desni navzdol': 'Downhill Right', 'Ravnina ob jezeru': 'Lakeside Straight', 'Esa ob jezeru': 'Lakeside Esses', 'Lasnica ob jezeru': 'Lakeside Hairpin',   // (Yahuarcocha: its corners by plain descriptions)
     'Esi': 'Esses', 'Južna zanka': 'South Loop', 'Vzhodna ravnina': 'East Straight', 'Vijuge': 'The Twists', 'Desni okljuk': 'Right-hand Loop',   // (Pärnu: its corners by plain descriptions)
     'Prvi desni': 'First Right', 'Levi pred lasnico': 'Left before the Hairpin', 'Jugozahodna lasnica': 'South-west Hairpin', 'Levi ob kartingu': 'Karting Left', 'Severni esi': 'North Esses',
-    'Šikana pri hotelih': 'Hotel Chicane', 'Vzhodni levi': 'East Left', 'Levi v notranjosti': 'Infield Left', 'Notranji esi': 'Infield Esses',   // (Houli: its corners by plain descriptions)
+    'Šikana pri hotelih': 'Hotel Chicane', 'Vzhodni levi': 'East Left', 'Notranji esi': 'Infield Esses',   // (Houli: its corners by plain descriptions)
     'Zahodna zanka': 'West Loop', 'Levi za zanko': 'Left after the Loop', 'Srednji esi': 'Middle Esses', 'Vzhodna zanka': 'East Loop', 'Povratna ravnina': 'Return Straight',
     'Južna lasnica': 'South Hairpin',   // (Tocancipá: its corners by plain descriptions)
     'Jugovzhodna zanka': 'South-east Loop', 'Levi proti mostu': 'Left to the Bridge', 'Zanka ob kartingu': 'Karting Loop', 'Desni pred lasnico': 'Right before the Hairpin',
     'Ovinki proti mostu': 'Bends to the Bridge', 'Levi-desni pred mostom': 'Left-right before the Bridge', 'Most': 'The Bridge', 'Severni levi': 'North Left', 'Ob ribniku': 'By the Pond',   // (Cromwell: its corners by plain descriptions)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
+    'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)
+    'Do El Palmita': 'To El Palmito',   // (Espinazo del Diablo: the results of an escape; Espinazo del Diablo, La Tolva and El Palmito stay as they are, Razgledišče, Lasnica and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
+    'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
+    'Bunkerji': 'Bunkers', 'Qafa e Llogarasë': 'Llogara Pass', 'Spomenik': 'Monument', 'Znamenje': 'Wayside Shrine', 'Vzletišče': 'Paragliders\' Launch', 'Čez prelaz': 'Over the pass',   // (Llogara: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
+    'Kapelica': 'Wayside Shrine', 'Do morja': 'Down to the sea',   // (Porto Moniz: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place, the town as it is)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
+    'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
+    'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
+    'Jez Medeu': 'Medeu Dam', 'Za jezom': 'Behind the Dam', 'Soteska Gorelnik': 'Gorelnik Gorge', 'Most čez Kiši Almati': 'Kishi Almaty Bridge', 'Soteska Kiši Almati': 'Kishi Almaty Gorge', 'Po soteski': 'Up the gorge',   // (Medeu: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
     'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
+    'Zapornica': 'The Gate', 'Serpentina': 'Hairpin', 'Stena kraterja': 'Crater Wall', 'Polica': 'The Ledge', 'Dno kraterja': 'Crater Floor',   // (Ngorongoro: the HUD; Windy Gap, Seneto and Magadi stay as they are, the heights by the rules of Lang.place)
+    'Do Elle': 'To Ella',   // (Ella: the results of an escape; Ella Rock and Pattiyakumbura stay as they are, Serpentina N and the heights by the rules of Lang.place)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',
@@ -520,8 +550,8 @@
     '\u21ba Namesti kolo': '\u21ba Fit a wheel', 'KOLO JE ODPADLO!': 'WHEEL OFF!', 'Izgubil si kolo: v boksih ti namestijo novo.': 'You lost a wheel: the crew fits a new one in the pits.',
     'Izgubil si kolo: tapni Namesti kolo (6 s) ali vozi naprej na treh.': 'You lost a wheel: tap Fit a wheel (6 s) or drive on, on three.', 'NOVO KOLO \u00b7 {0} s': 'NEW WHEEL \u00b7 {0} s',
     'ODSTOP': 'OUT', 'TEKMEC JE ODSTOPIL': 'RIVAL RETIRED', ' Stalni tekmec {0}: odstop (skupaj ti {1}, tekmec {2}).': ' Your rival {0}: retired (overall you {1}, rival {2}).',
-    'KONEC IGRE': 'GAME OVER', 'PONOVI IGRO': 'PLAY AGAIN', 'Rezultati': 'Results', 'Odpadli sta dve kolesi: avto ne more naprej.': 'Two wheels came off: the car can go no further.', 'Odpadla so tri kolesa: avto ne more naprej.': 'Three wheels came off: the car can go no further.', 'Odpadla so vsa štiri kolesa: avto ne more naprej.': 'All four wheels came off: the car can go no further.',
-    'KOLO JE ODPADLO': 'WHEEL OFF', 'ZAMENJAJ KOLO': 'CHANGE TYRE', 'KOLO ZAMENJANO': 'WHEEL CHANGED', 'NAZAJ NA OBALO': 'BACK ON THE SHORE', 'brez rezerve': 'no spare', 'Zamenjaj kolo': 'Change tyre', 'Pritisni tukaj za menjavo kolesa': 'Press here to change tyre', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
+    'KONEC IGRE': 'GAME OVER', 'PONOVI IGRO': 'PLAY AGAIN', 'Rezultati': 'Results', 'Odpadlo je kolo: avto ne more naprej.': 'A wheel came off: the car can go no further.', 'Odpadli sta dve kolesi: avto ne more naprej.': 'Two wheels came off: the car can go no further.', 'Odpadla so tri kolesa: avto ne more naprej.': 'Three wheels came off: the car can go no further.', 'Odpadla so vsa štiri kolesa: avto ne more naprej.': 'All four wheels came off: the car can go no further.',
+    'KOLO JE ODPADLO': 'WHEEL OFF', 'NAZAJ NA OBALO': 'BACK ON THE SHORE', 'brez rezerve': 'no spare', 'Res odstopiš?': 'Really retire?', 'Tapni še enkrat, če res odstopiš: dirka je zate končana.': 'Tap again if you really want to retire: the race is over for you.',
     // the categories (Core.CATS; Dirkalni is above: Racing)
     'Mali avti': 'Small cars', 'Športni': 'Sports cars', 'Superšportni': 'Supercars', 'Klasika': 'Classics', 'Reli': 'Rally', 'Terenski': 'Off-road', 'Tovornjaki': 'Trucks', 'Električni': 'Electric', 'Posebni': 'Specials',
     // the descriptions of the vehicles (def.desc in js/cars; their names stay as they are)
@@ -552,12 +582,24 @@
     'Dirkalni kart: voznik na očeh, stranska oklepa in sprednji spojler.': 'A racing kart: the driver in plain view, side pods and a front spoiler.',
     'Odprt dirkalnik iz leta 1970 z velikim motorjem in visokim krilom na nosilcih.': 'An open sports racer from 1970 with a big engine and a high wing on struts.',
     'Dirkalni tovornjak: kabina nad motorjem, strešni deflektor in omejilnik pri 160 km/h.': 'A racing truck: the cab over the engine, a roof deflector and a limiter at 160 km/h.',
+    'TITAN s cisterno: prikolica se v ovinku lomi, pri zaviranju potiska in je težka.': 'The TITAN with a tanker: the trailer folds in bends, pushes on the brakes and is heavy.',
+    'Cestni vlak: črna kabina, dve zrcalni cisterni in dolly; dva zgiba, 28 metrov.': 'A road train: a black cab, two mirror tanks and a dolly; two joints, 28 metres long.',
     'Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi.': 'A desert rally truck with the cab behind the engine, big wheels and spare wheels.',
     'Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini.': 'A racing van from the 80s and 90s with a race engine in the middle.',
     'Raztegnjena limuzina z zastavicama na blatnikih in obilo kroma.': 'A stretched limousine with two flags on the front wings and plenty of chrome.',
+    'Limuzina z V8 za drift: štiri vrata, široki blatniki, kratek rep in štirje izpuhi.': 'A V8 saloon made for drifting: four doors, wide arches, a ducktail and four pipes.',
+    'Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča.': 'A front-drive hot hatch made for drifting: a white roof, a tall wing, gold rims.',
+    'Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi.': 'A wide 4x4 gymkhana coupe: a big wing, wide arches and a scoop on the roof.',
+    'Električni fastback z dvema motorjema za drift: steklena streha, svetlobna pasova.': 'An electric fastback with two motors, made for drifting: a glass roof, two light bars.',
+    'Terenski poltovornjak na šestih gnanih kolesih: snorkel, svetlobni pas, dolg keson.': 'An off-road pickup on six driven wheels: a snorkel, a light bar, a long bed.',
+    'Izvenserijski velik terenec 4x4 s trdo streho, vitlom in rezervnim kolesom zadaj.': 'A one-off big 4x4 with a hardtop, a winch and a spare wheel on the back.',
     'Pošastni tovornjak: lupina poltovornjaka na cevni šasiji in ogromna kolesa.': 'A monster truck: a pickup body on a tube chassis and huge wheels.',
     'Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih.': 'A light three-door hatchback with big almond-shaped headlamps, lively in the corners.',
     'Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar.': 'The LEV family\u2019s convertible: a metal roof folded into the boot, two seats and a roll bar.',
+    'Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler.': 'A modern hot hatch with four-wheel drive: wide arches, a black roof and a big roof spoiler.',
+    'Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles.': 'A modern competition drift coupe: wide arches, a big wing and a big steering lock.',
+    'Sodoben relijski hibrid: veliko krilo, odprtine na blatnikih, zračnik na strehi.': 'A modern hybrid rally car: a big wing, vented arches and a roof scoop.',
+    'Dirkalnik GT3 z motorjem v sredini, zračnikom na strehi in velikim krilom s stranicama.': 'A mid-engined GT3 racer with a scoop on the roof and a big wing with tall endplates.',
     /* ---- the menu (js/menu.js is in English only): its settings in the page ---- */
     'Uvod pred dirko (globus in helikopter)': 'Race intro (globe and helicopter)', 'Polni': 'Full', 'Kratki': 'Short', 'Glasba v uvodu': 'Music in the intro',
     /* ---- the garage (garaza.html, js/garage.js) ---- */
@@ -855,7 +897,7 @@
     'Robnik! Vagonček je zadel robnik, potniki so poskočili.': 'Kerb! A wagon hit the kerb and the passengers jumped.', 'Potniki so prestrašeni: preveč robnikov.': 'The passengers are frightened: too many kerbs.',
     'Zapeljal si mimo razgledne točke.': 'You drove past the viewpoint.', 'Zapeljal si mimo okvirja: zapelji vzvratno do razgleda.': 'You drove past the box: reverse back to the viewpoint.',
     'Ustavi v rumenem okvirju ob razgledni točki.': 'Stop in the yellow box at the viewpoint.', 'Pelji mirno: potniki uživajo v razgledu.': 'Drive smoothly: the passengers are enjoying the view.',
-    /* ---- Zabava (js/zabava.js, js/zabava/): the team goals, the elimination race, the rivals who remember, the coach, the challenges by the road, the pursuit, the living road ---- */
+    /* ---- Zabava (js/zabava.js, js/zabava/): the team goals, the elimination race, the rivals who remember, the coach, the challenges by the road, the pursuit ---- */
     'Pridobi vsaj {0} mest': 'Gain at least {0} places',
     'Pridobi vsaj {0} mesta': 'Gain at least {0} places',
     'Brez dotika ograje': 'No touching the barrier',
@@ -933,17 +975,85 @@
     'Lov': 'Pursuit',
     'Begunec': 'Fugitive',
     'Ponovi lov': 'Chase again',
-    'Živa cesta': 'Living road',
-    'Na odprti cesti se zgodi kaj nepričakovanega: kamenje, žival čez cesto, dela na cesti s semaforjem, počasen traktor': 'Something unexpected happens on the open road: rocks, an animal crossing, road works with lights, a slow tractor',
-    'POZOR: KAMENJE NA CESTI': 'CAUTION: ROCKS ON THE ROAD',
-    'POZOR: ŽIVAL NA CESTI': 'CAUTION: ANIMAL ON THE ROAD',
-    'POZOR: DELA NA CESTI': 'CAUTION: ROAD WORKS',
-    'POZOR: POČASEN TRAKTOR': 'CAUTION: SLOW TRACTOR',
-    'ŽIVAL! UPOČASNI': 'ANIMAL! SLOW DOWN',
-    'TRAKTOR! PREHITEVAJ PREVIDNO': 'TRACTOR! PASS WITH CARE',
-    'KAMEN!': 'ROCK!',
-    'RDEČA LUČ! +3 s KAZNI': 'RED LIGHT! +3 s PENALTY',
-    'STOŽCI!': 'CONES!',
+    // Zabava · Pregon s prijatelji (js/zabava/beg.js): online, one friend in the patrol car, the others run
+    'Pregon': 'Police chase',
+    'Patrulja': 'Patrol car',
+    'Po vrsti': 'In turn',
+    'Po vrsti ({0})': 'In turn ({0})',
+    'PATRULJA · ULOVI BEGUNCE!': 'PATROL · CATCH THE FUGITIVES!',
+    'BEŽI PRED PATRULJO!': 'RUN FROM THE PATROL!',
+    'Patruljo vozi {0}.': '{0} drives the patrol car.',
+    'PATRULJA {0} m · {1}': 'PATROL {0} m · {1}',
+    'UJEL SI {0} OD {1}': 'YOU CAUGHT {0} OF {1}',
+    'Pobegnil je: {0}': 'Got away: {0}',
+    'Ujel si: {0}': 'You caught: {0}',
+    'Patrulja je ujela: {0}': 'The patrol caught: {0}',
+    'ULOVLJEN': 'BUSTED',
+    'cilj': 'finish',
+    'predaleč': 'too far',
+    'brez patrulje': 'no patrol',
+    'Pobegnil ({0})': 'Got away ({0})',
+    'Ulovljen po {0}': 'Caught after {0}',
+    'beži …': 'running …',
+    'lovi …': 'chasing …',
+    'Ujel {0} od {1}': 'Caught {0} of {1}',
+    'Lov še traja …': 'The chase goes on …',
+    ' Lov še traja …': ' The chase goes on …',
+    'Ujel si {0} od {1}': 'You caught {0} of {1}',
+    'Begunci še bežijo.': 'The fugitives are still running.',
+    'Lov je končan po {0}.': 'The chase was over after {0}.',
+    'Ulovljen po {0}.': 'Caught after {0}.',
+    'Pripeljal si do konca ceste.': 'You made it to the end of the road.',
+    'Patrulja je bila predaleč.': 'The patrol was too far behind.',
+    'Patrulje ni več za tabo.': 'The patrol is no longer after you.',
+    'Zdržal si {0}.': 'You held out for {0}.',
+    'Izid': 'Result',
+    'Vloga': 'Role',
+    // the drag race (js/zabava/drag.js)
+    'DRAG DIRKA · 402 m': 'DRAG RACE · 402 m',
+    'Tvoja prednost: {0} m (počasnejše vozilo).': 'Your head start: {0} m (the slower vehicle).',
+    'Prednost tekmeca: {0} m (počasnejše vozilo).': 'The rival\'s head start: {0} m (the slower vehicle).',
+    'RDEČA LUČ!': 'RED LIGHT!',
+    'SPUSTI PLIN, POČAKAJ NA LUČI': 'OFF THE GAS, WAIT FOR THE LIGHTS',
+    'RDEČA LUČ · PORAZ': 'RED LIGHT · LOST',
+    'PORAZ': 'LOST',
+    'ČAS JE POTEKEL': 'TIME IS UP',
+    'Prestava gor': 'Shift up',
+    'POPOLNO': 'PERFECT',
+    'DOBRO': 'GOOD',
+    'PREZGODAJ': 'EARLY',
+    'PREPOZNO': 'LATE',
+    'Rdeča luč': 'Red light',
+    'Čas je potekel': 'Time is up',
+    'Poraz': 'Lost',
+    'Plin si pritisnil, preden so ugasnile luči.': 'You pressed the gas before the lights went out.',
+    'Na cilju si bil {0} s pred tekmecem ({1}).': 'You crossed the line {0} s ahead of the rival ({1}).',
+    'Tekmec ({0}) je bil na cilju {1} s pred tabo.': 'The rival ({0}) crossed the line {1} s ahead of you.',
+    'Drag dirka': 'Drag race',
+    'Tekmec': 'Rival',
+    'Reakcija': 'Reaction',
+    'rdeča luč': 'red light',
+    'Do cilja': 'To the line',
+    'Čas od luči': 'From the lights',
+    'Hitrost na cilju': 'Speed at the line',
+    'Prednost': 'Head start',
+    'Vozilo': 'Vehicle',
+    'Ponovi dvoboj': 'Race again',
+    'Menjave: {0} · popolno {1}, dobro {2}, prezgodaj {3}, prepozno {4}': 'Shifts: {0} · perfect {1}, good {2}, early {3}, late {4}',
+    'Menjave: nobene (prestave prestavljaš sam).': 'Shifts: none (you change gear yourself).',
+    'Električni avto: brez menjav.': 'Electric car: no gears to shift.',
+    'Proti avtu': 'Against a car',
+    'Proti tovornjaku': 'Against a truck',
+    /* ---- Neskončna vožnja v prometu (js/neskoncna.js, docs/neskoncna-voznja.md) ---- */
+    'NESKONČNA VOŽNJA!': 'ENDLESS TRAFFIC!', 'TOČKE': 'POINTS', 'NIZ ×{0}': 'COMBO ×{0}', 'PROMET ×{0}': 'TRAFFIC ×{0}',
+    'TESNO!': 'CLOSE!', 'ZELO TESNO!': 'VERY CLOSE!', 'NIZ PREKINJEN': 'COMBO BROKEN', 'TRK! KONEC VOŽNJE': 'CRASH! THE RUN IS OVER',
+    'DOTIK! KONEC VOŽNJE': 'CONTACT! THE RUN IS OVER', 'ČAS JE POTEKEL!': 'OUT OF TIME!', 'ČAS SE IZTEKA!': 'TIME IS RUNNING OUT!',
+    'Dotik vozila.': 'Touched a vehicle.', 'Dodan čas': 'Time added',
+    'Trk z vozilom.': 'Crashed into a vehicle.', 'Trk v ograjo.': 'Crashed into the barrier.', 'Avto se je prevrnil.': 'The car rolled over.',
+    'Avto je zgrmel v prepad.': 'The car went over the edge.', 'Avto je izgubil kolesi.': 'The car lost two wheels.',
+    'Nov rekord!': 'New record!', 'Konec vožnje': 'Run over', '{0} točk · {1} km · {2}.': '{0} points · {1} km · {2}.',
+    'Neskončna vožnja': 'Endless traffic', 'Za hitrost': 'For speed', 'Za tesna prehitevanja': 'For close passes', 'Tesno / zelo tesno': 'Close / very close',
+    'Najdaljši niz': 'Longest combo', 'Promet na koncu': 'Traffic at the end', 'Vozi znova': 'Drive again', 'Najboljših 10 · {0} · {1}': 'Top 10 · {0} · {1}',
   };
   // words that read the same in both languages (the page check in tests/lang.test.js lets them be)
   const SAME = new Set(['MOCKUP', 'CR', 'Veteran', 'Hatchback', 'Formula', 'Muscle car', 'REAL ROADS ATLAS', 'RACING GAME', 'TV', 'DRS', 'KM/H', 'Retro', 'Filter', 'Start', 'Slick', 'Drift', 'Slovenščina', 'English', 'RADIO', '2 m', '5 m', '7 m', '10 m', '15 m', '20 m', '\u22125 s', '+5 s']);

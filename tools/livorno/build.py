@@ -157,11 +157,27 @@ HEAD = """/* Livorno (theme 'livorno'): the scenery data for js/world-livorno.js
    the canopy); far: the surface (100 m cells, +-12 km, bytes of 2 m); bld: OSM buildings within 60 m [x, z, length, width, angle, height
    (0 unknown), kind: 0 house, 1 church, 2 tower, 3 castle, 4 shed, 5 commercial, 6 public, 7 greenhouse, 8 ruin, 9 flats]; walls [0 wall,
    1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]]; coast (the land on the left of each line); cliffs (the lower side on the right);
-   rail [bridge, tunnel, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind]; bridges [s0, s1] (the road on a bridge). Data: © OpenStreetMap contributors (ODbL 1.0: the
+   rail [bridge, tunnel, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind]; bridges [s0, s1] (the road on a bridge);
+   onRoad [s, kind, x]: OSM's nodes on the lap's own ways (kind 0 a marked pedestrian crossing, x 1 on a primary or secondary road; 1 a stop
+   sign, 2 a give-way sign, x the lane the line lies across: 1 the lap's own, -1 the oncoming one). Data: © OpenStreetMap contributors (ODbL 1.0: the
    derived data here under the ODbL 1.0); Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence
    and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and
    World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0). Only geographic and descriptive labels. */
 var LV_DATA = """
+
+def on_road():
+    """the markings across the road, from OSM's nodes on the lap's own ways (J['onRoad']): [s, kind, x]. kind 0: a marked pedestrian crossing
+    (crossing = zebra / uncontrolled; one of unknown marking is left out), x 1 on a primary or secondary road (its stripes longer); kind 1 a
+    stop sign, 2 a give-way sign: x the lane the line lies across, 1 the lap's own, -1 the oncoming one (OSM has the sign's place, not its
+    direction: the junction it stands at is taken to be the nearer end of the route's way there). Speed bumps are not drawn"""
+    ends = sorted(set([round(w[0]) for w in J['ways']] + [round(w[1]) for w in J['ways']])); out = []
+    for s, kind, det in J['onRoad']:
+        if kind == 'crossing' and det in ('zebra', 'uncontrolled'):
+            hw = next((w[3] for w in J['ways'] if w[0] <= s <= w[1]), ''); out.append([s, 0, 1 if hw in ('primary', 'secondary', 'trunk') else 0])
+        elif kind in ('stop', 'give_way'):
+            ahead = min([e - s for e in ends if e >= s] or [1e9]); behind = min([s - e for e in ends if e < s] or [1e9])
+            out.append([s, 1 if kind == 'stop' else 2, 1 if ahead <= behind else -1])
+    return out
 
 def build_world():
     P = game_line(); M = 800
@@ -204,6 +220,7 @@ def build_world():
         'marks': [[m[0], m[2], m[3], m[4], pl(m[5])] for m in J['landmarks']],
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'bridges': [[round(a_, 1), round(b_, 1)] for a_, b_ in J['bridges']],
+        'onRoad': on_road(),
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'livorno.js'); open(path, 'w').write(src)

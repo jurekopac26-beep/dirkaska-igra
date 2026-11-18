@@ -21,8 +21,9 @@
   const KG_AT = { num: 0, brake: 0, ban: 3, rbr: 3, spielberg: 4 };   // atlas cells: the braking boards (no turn numbers), the banners
   const KG_SHIRTS = [[0.1, 0.34, 0.66], [0.98, 0.8, 0.12], [0.95, 0.95, 0.93], [0.12, 0.18, 0.36], [0.4, 0.42, 0.46], [0.14, 0.14, 0.16], [0.78, 0.1, 0.16], [0.2, 0.48, 0.3],
     [0.3, 0.55, 0.85], [0.92, 0.92, 0.9], [0.56, 0.44, 0.32], [0.86, 0.32, 0.12]];   // the fans' shirts in summer: blue and yellow, white, navy, grey and black, a few red and bright ones
-  const SE = Object.assign([[0.0, 0.33, 0.6]], { cross: [[1.0, 0.8, 0.05], 5 / 16, 7 / 16, 4 / 10, 6 / 10] });   // the Swedish flag: a yellow Nordic cross on blue (rbFlags: cols.cross)
-  const SC = Object.assign([[0.8, 0.07, 0.15]], { cross: [[1.0, 0.8, 0.05], 5 / 16, 7 / 16, 4 / 10, 6 / 10] });   // Skåne's: the yellow cross on red
+  const nordic = (f, c, u0, u1, v0, v1) => ({ grid: [[0, u0, u1, 1], [0, v0, v1, 1], [[f, c, f], [c, c, c], [f, c, f]]] });   // (a Nordic cross: World.flagMesh's grid, the cross c from u0 to u1 along the flag (0 at the pole) and from v0 to v1 down it, the field f)
+  const SE = nordic([0.0, 0.33, 0.6], [1.0, 0.8, 0.05], 5 / 16, 7 / 16, 4 / 10, 6 / 10);   // the Swedish flag: a yellow Nordic cross on blue
+  const SC = nordic([0.8, 0.07, 0.15], [1.0, 0.8, 0.05], 5 / 16, 7 / 16, 4 / 10, 6 / 10);   // Skåne's: the yellow cross on red
 
   // the trees (LK.woods, on the builder's land cover: 0 open, 1 the woods, 2 the fields, 3 built-up): 0 beech (js/world.js's), 1 Norway
   // spruce, 2 silver birch (js/world-harju.js's); 3-5 the plainer ones far from the road. The woods mostly beech, the spruce planted in

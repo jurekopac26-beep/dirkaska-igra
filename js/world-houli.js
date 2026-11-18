@@ -11,7 +11,7 @@
    slower corners, armco on posts, concrete along the pit straight; the villages' townhouses with water tanks on their roofs, farmhouses and
    sheds (def.sk.hs, sk.bld); farther out the amusement park's two big wheels and its rides, the high-speed railway on its viaduct and the
    power lines' pylons (sk.lm: drawn at their place in the picture though beyond what the camera draws), the hills on the horizon (def.far:
-   Riverside's rsFar); Taiwan's flags (rbFlags: cols.canton). Of the shared parts only the low-level ones (terrain, crowds, flags, the
+   Riverside's rsFar); Taiwan's flags (rbFlags: World.flagMesh's grid). Of the shared parts only the low-level ones (terrain, crowds, flags, the
    horizon); the composition and the look its own. Only place names on its boards (no names of the circuit, its people, races, sponsors,
    the hotels or the park).
    ========================================================================= */
@@ -27,7 +27,8 @@
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
 
-  const TW = [[0.86, 0.06, 0.09]]; TW.canton = [[0.05, 0.09, 0.52], [0.98, 0.98, 0.96]];   // Taiwan's flag (rbFlags: cols.canton): the red field, the blue canton, the white sun
+  const TW = (() => { const f = [0.86, 0.06, 0.09], k = [0.05, 0.09, 0.52], s = [0.98, 0.98, 0.96], e = [0, 0.17, 0.33, 0.5, 1];   // Taiwan's flag (World.flagMesh's grid, js/world-zastave.js): the red field, the blue canton, the white sun in its middle
+    return { grid: [e, e, [[k, k, k, f], [k, s, k, f], [k, k, k, f], [f, f, f, f]]] }; })();
   const TEAM = [[0.85, 0.16, 0.13], [0.16, 0.36, 0.8], [0.95, 0.95, 0.94], [0.18, 0.62, 0.3], [0.96, 0.72, 0.12], [0.14, 0.14, 0.16], [0.95, 0.45, 0.1], [0.5, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55], [0.7, 0.1, 0.1]];
   const RIDE = [[0.85, 0.2, 0.15], [0.95, 0.74, 0.14], [0.16, 0.4, 0.8], [0.2, 0.64, 0.36], [0.9, 0.9, 0.92], [0.6, 0.26, 0.7]];
 

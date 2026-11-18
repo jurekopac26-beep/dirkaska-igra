@@ -29,7 +29,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Crystal Palace',
     grassNat: 0.6, lawn: [0.96, 1.0, 0.88], bbClassic: 1,
     zivali: { a: ['fox', 'magpie', 'goose'], t: ['logPile', 'fallenTree', 'signPost'], city: true },
-    id: 'cpalace', name: 'Crystal Palace, Anglija', theme: 'cpalace', laps: 2, halfWidth: 4.5,
+    id: 'cpalace', pending: true, name: 'Crystal Palace, Anglija', theme: 'cpalace', laps: 2, halfWidth: 4.5,
     desc: 'Krožna proga v parku Crystal Palace v Londonu, kakršna je bila od leta 1937 do 1939, v pravem merilu: 3,2 km in 26 m višinske razlike. Ravnina ob stadionu z boksi, vzpon pod terasami nekdanje palače, vijuge med starimi drevesi v gornjem delu parka, lasnica ob jezeru in spust nazaj k stadionu. Bale slame, lesene ograje in gledalci na brežinah, ob jezeru kipi dinozavrov iz leta 1854. Podatki: © OpenStreetMap (ODbL), © Environment Agency (OGL), letalski posnetki Ordnance Survey 1944–50.',
     en: { name: 'Crystal Palace, England', desc: 'The circuit in Crystal Palace Park in London as it was from 1937 to 1939, at full scale: 3.2 km and 26 m of height difference. The straight by the stadium with the pits, the climb under the terraces of the old palace, the bends among the old trees in the upper park, the hairpin by the lake and the drop back to the stadium. Straw bales, wooden fences and spectators on the banks, the dinosaur sculptures of 1854 by the lake. Data: © OpenStreetMap (ODbL), © Environment Agency (OGL), Ordnance Survey air photos 1944–50.' },
     start: [0, 0], runoff: 0.5, inner: 3, side: 3.5, gradeForce: true, elevSmooth: 10, realKm: 3.219, noCurbs: true, noGravel: true,

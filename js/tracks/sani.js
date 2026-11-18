@@ -25,7 +25,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     look: { fog: 0xc8d6e4, sun: 0xfff0d8, sunI: 1.28, sky: 0xb8d0f0, gnd: 0x5e5a40, hemiI: 0.6, tint: [1.02, 1.0, 0.97], sat: 1.08, sunOff: [-70, 92, -58], split: [[0.96, 1.0, 1.05], [1.04, 1.0, 0.95]] },   // Sani Pass: a clear afternoon in the Drakensberg, the high sun in the north (the southern hemisphere)
     say: 'Sani Pass',
     zivali: { a: ['eland', 'horseG', 'cowK', 'baboon'], t: [], open: true },
-    id: 'sani', name: 'Sani Pass, Južna Afrika', theme: 'sani', open: true, modes: ['race', 'tt', 'traffic'], laps: 1, halfWidth: 4.5, leftHand: true,
+    id: 'sani', test: true, name: 'Sani Pass, Južna Afrika', theme: 'sani', open: true, modes: ['race', 'tt', 'traffic'], laps: 1, halfWidth: 4.5, leftHand: true,
     maxRivals: 75,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line: the second row of a bigger field's parking would stand at the barrier
     desc: 'Makadamska cesta čez Drakensberg med KwaZulu-Natalom (Južnoafriška republika) in Lesotom: zadnjih 5 km od potoka Mkhomazana na 2.229 m po 13 serpentinah pod bazaltnimi stenami do vrha na 2.872 m. Ozka in strma (ponekod do 24 %), za terenska vozila. Dirka z 21 tekmeci, vzpon proti uri ali dvoboj v prometu, ki vozi po levi.',
     en: { name: 'Sani Pass, South Africa', desc: 'A gravel road over the Drakensberg between KwaZulu-Natal (South Africa) and Lesotho: the last 5 km from the Mkhomazana stream at 2,229 m up 13 hairpins under the basalt cliffs to the top at 2,872 m. Narrow and steep (up to 24 % in places), a road for four-wheel drives. A race against 21 rivals, a climb against the clock or a duel in the traffic, which keeps to the left.' },

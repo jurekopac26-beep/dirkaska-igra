@@ -28,7 +28,8 @@
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
 
-  const NZ = [[0.0, 0.14, 0.49]]; NZ.canton = [[0.78, 0.76, 0.86], [0.8, 0.07, 0.15]];   // New Zealand's flag: the blue field, the Union Jack in the canton (its red cross in the middle; rbFlags)
+  const NZ = (() => { const f = [0.0, 0.14, 0.49], k = [0.78, 0.76, 0.86], s = [0.8, 0.07, 0.15], e = [0, 0.17, 0.33, 0.5, 1];   // New Zealand's flag (World.flagMesh's grid, js/world-zastave.js): the blue field, the Union Jack in the canton (its red cross in the middle)
+    return { grid: [e, e, [[k, k, k, f], [k, s, k, f], [k, k, k, f], [f, f, f, f]]] }; })();
   const TEAM = [[0.85, 0.16, 0.13], [0.16, 0.36, 0.8], [0.95, 0.95, 0.94], [0.18, 0.62, 0.3], [0.96, 0.72, 0.12], [0.14, 0.14, 0.16], [0.95, 0.45, 0.1], [0.5, 0.26, 0.7], [0.1, 0.62, 0.72], [0.85, 0.2, 0.5], [0.4, 0.42, 0.46], [0.2, 0.3, 0.55], [0.7, 0.1, 0.1]];
   const CW_SEA = { color: 0x3f5a52, wo: { len: 1.0, amp: 0.2, refl: 0.55, land: 0.5, shal: 0.6, lap: 0.3, surf: 0 } };   // the pond: still, dark green, the willows' and the sky's reflections
 
