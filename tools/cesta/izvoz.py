@@ -16,7 +16,8 @@ two mouths that would run into each other, a road that comes back to the lap sto
 open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), an
 open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own; def.views: a view point's
-lay-by) gets no road for the look beside it (own). A junction the game cannot draw (the road would climb the game's hillside) is left
+lay-by; a short track's def.lanes: js/world-kratke.js draws the map's lanes itself, with a mouth in the barrier) gets no road for the
+look beside it (own). A junction the game cannot draw (the road would climb the game's hillside) is left
 out by hand, per track (PROGE, izpusti: hand).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
