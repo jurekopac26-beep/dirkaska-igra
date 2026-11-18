@@ -107,7 +107,7 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   // opts.lazy: only what the game itself loads, tests/browser/svet-nalaganje.test.mjs)
   if (!opts.lazy) await page.evaluate(() => window.World && World.needAll ? World.needAll() : null);
   // (and the whole tracks, I17 lazy tracks: the track screen otherwise loads them all first, and a card shows only then)
-  if (!opts.lazy) await page.evaluate(() => window.Core && Core.loadTracks ? Core.loadTracks(Core.TRACKS.map(d => d.id)) : null);
+  if (!opts.lazy) await page.evaluate(() => typeof Core !== 'undefined' && Core.loadTracks ? Core.loadTracks(Core.TRACKS.map(d => d.id)) : null);
   return { ctx, page, errors };
 }
 
