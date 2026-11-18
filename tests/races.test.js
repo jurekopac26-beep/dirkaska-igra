@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadCore } = require('./lib/core.js');
 const crypto = require('crypto');
-const { DT, trackIds, PHYSICS, NEW_CARS, seeded, raceState } = require('./lib/sim.js');
+const { DT, trackIds, ownModel, PHYSICS, NEW_CARS, seeded, raceState } = require('./lib/sim.js');
 
 const FILE = path.join(__dirname, 'golden', 'races.json');
 const update = process.argv.includes('--update');
@@ -24,9 +24,9 @@ function race(tid, phys, rain, model) {
   const orig = Math.random;
   try {
     Math.random = seeded(3);
-    const T = new C.Track(C.TRACKS.find(d => d.id === tid)), tt = !!T.def.timeTrial;
+    const T = new C.Track(C.TRACKS.find(d => d.id === tid)), tt = !!T.def.timeTrial, own = ownModel(C, tid);
     const laps = tt || tid === 'nring' || tid === 'livorno' ? 1 : 2;   // (the long laps: the Nordschleife, Livorno)
-    const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: model || C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain });
+    const r = new C.Race(T, { numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps, playerModel: model || own || C.MODELS[4], assist: 2, phys, seed: 11, difficulty: 1, rain });
     r.start();
     const P = r.player, st = new Map(r.cars.map(c => [c, { spins: 0, spinning: false, walls: 0, resc: 0 }]));
     const tmax = T.len * laps / 12 + 120;
@@ -40,7 +40,7 @@ function race(tid, phys, rain, model) {
         const b = Math.abs(c.beta || 0);
         if (b > 1.05 && !s.spinning) { s.spinning = true; s.spins++; } if (b < 0.5) s.spinning = false;
         if (c.hitWall > 3) s.walls++; c.hitWall = 0; c.hitCar = 0;
-        if (c.isPlayer && (c.stuckT > 3 || c.wrongT > 3)) { r.rescue(c); s.resc++; }
+        if (c.isPlayer && (c.stuckT > (own ? 8 : 3) || c.wrongT > 3)) { r.rescue(c); s.resc++; }   // (the tanker on its roads, own: a loaded rig is slow off the line, stuck only after 8 s)
       }
     }
     const fin = r.cars.filter(c => c.finished).sort((a, b) => a.finishTime - b.finishTime);
@@ -53,6 +53,7 @@ function race(tid, phys, rain, model) {
 const out = {}; let bad = 0; const t0 = Date.now();
 const model = (id) => C.MODELS.find(m => m.id === id);
 for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 'rain', 'formula', 'lm', 'car']) {
+  if (ownModel(C, tid) && (v === 'formula' || v === 'lm' || v === 'car')) continue;   // (a track with its own vehicle, the tanker's: no other car drives it)
   const rain = v === 'rain' ? 1 : 0, key = `${tid}/${phys}` + (v ? '/' + v : '');
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
   const r = race(tid, phys, rain, v === 'formula' || v === 'lm' ? model(v) : v === 'car' ? model(NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) : null); out[key] = r;

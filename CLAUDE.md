@@ -24,6 +24,7 @@ Kratka pravila. Podrobnosti, citati odločitev uporabnika, datumi, številke kom
 
 ## Mejniki do izida
 - Cilj 1.0: **70 pravih prog** in **50 avtov**. Do 23. 12. 2026 vseh 70 na `main` (`docs/vrsta.md`, »Različica 1.0«); od 23. 12. samo popravki, proge in dodelava; 15. 1. 2027 kandidat; 1. 2. 2027 izid.
+- **Proge za cisterno** (odločitev uporabnika 8. 11. 2026): pet zelo kratkih prog (do 500 m), ozkih, z neravnim podom in prepadom, ena na celino (Svalvogar, Fairy Meadows, Manchewe, Yungas, Tapini), ki jih vozi samo TITAN CISTERNA na čas; zanje ne veljata pravili 1–5 km in izletne cone. Načrt in stanje: `docs/proge-cisterna.md`.
 
 ## Kamere in grafika
 - Samo kamera **za avtom** (`chase`), pokonci in ležeče; drugih kamer ne dodajaj. V posnetku še TV kamere ob progi; foto način ostane.

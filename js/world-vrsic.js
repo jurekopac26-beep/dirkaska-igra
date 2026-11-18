@@ -120,7 +120,8 @@
     return VRW;
   }
   function vrFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief, the lake basins
-    const P = VR; let f = vrDem(x, z) + (P.n1(x, z) - 0.5) * 5 + (P.n2(x, z) - 0.5) * 2;
+    const P = VR, d0 = vrDem(x, z); let f = d0 + (P.n1(x, z) - 0.5) * 5 + (P.n2(x, z) - 0.5) * 2;
+    if (P.sea != null && d0 < P.sea + 3) f = Math.min(f, lerp(P.sea - 2.5, f, sstep(P.sea + 0.3, P.sea + 3, d0)));   // (a builder's sea, P.sea: its level; the ground under it, no made-up islets)
     const W = vrWater(x, z), L = W.L;
     if (L) { const e = W.e, shore = L.h + 0.9 - 0.35 * e; if (e > -30) f = Math.min(f, e > 0 ? Math.max(L.h - 3.5, shore) : lerp(shore, f, sstep(0, -30, e))); }   // (the water line ~3 m inside the shore polygon)
     return f;
@@ -137,6 +138,7 @@
     }
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, only a gentle rise right behind them
     if (STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
+    if (VR.edgeH && i >= 0) h = VR.edgeH(x, z, h, i, dd, n.lat);   // (a builder's own shaping by the road: World.gore's ledge, the tanker's roads)
     VRN.dd = i >= 0 ? dd : 999;
     return h;
   }
