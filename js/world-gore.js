@@ -385,6 +385,7 @@
     if (SR) { out.cestaRob = (out.cestaRob || []).concat(SR.ustja); for (const k of SR.krogi) exclPush(k[0], k[1], k[2]).sc = 1; out.stranske = SR.n; }
     const naSR = (x, z) => { if (SR) for (const k of SR.krogi) if ((x - k[0]) ** 2 + (z - k[1]) ** 2 < k[2] * k[2]) return true; return false; };
     const off = new GB();   // (what lands on a side road: built and dropped, so the generators' sequences stay as they were)
+    const carSR = (x, z, rot) => { if (!SR) return false; const c = Math.cos(rot), s = Math.sin(rot); for (const u of [-2.2, 0, 2.2]) for (const v of [-0.9, 0.9]) if (naSR(x + c * u - s * v, z + s * u + c * v)) return true; return false; };   // (a parked car's footprint, either way round, on a side road)
     const bendAt = new Uint8Array(N);
     if (RD.double) for (const c of T.corners) if (c.sev >= 2) for (let k = Math.max(0, c.i0 - 25); k <= Math.min(N - 1, c.i1 + 25); k++) bendAt[k] = 1;
     {
@@ -525,7 +526,7 @@
           if (vrNear(x, z).dd < 4 || vrStubAt(x, z, 2)) continue; const rx = 1.4 + RH() * 1.2, ry = 0.9 + RH() * 0.7, y = Math.max(vrGround(x, z), p.h);
           const rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true; rock(naSR(x, z) ? off : scen.get(x, z), x, y + ry * 0.25, z, rx, ry, rx * (0.7 + RH() * 0.4), RH() * TAU, [0.9, 0.91, 0.95], RH, 0.3); API.ROCK_SMOOTH = rs; exclPush(x, z, rx + 1); } }
       const RC = rng(S.seed * 7 + 3 + p.i), hh = T.hd[p.i], c = Math.cos(hh), sn = Math.sin(hh), n = Math.min(10, Math.floor(p.r / 2.4));
-      for (let k = 0; k < n; k++) { if (RC() < 0.35) continue; const a = (k % 5 - 2) * 5, b = (k < 5 ? -1 : 1) * 3.2, px = p.x - sn * b + c * a, pz = p.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5 || excluded(px, pz, 1) && Math.hypot(px - p.x, pz - p.z) > p.r) continue; parked(naSR(px, pz) ? off : scen.get(px, pz), px, vrGround(px, pz), pz, hh + PI / 2 + (RC() < 0.5 ? 0 : PI), RC); }
+      for (let k = 0; k < n; k++) { if (RC() < 0.35) continue; const a = (k % 5 - 2) * 5, b = (k < 5 ? -1 : 1) * 3.2, px = p.x - sn * b + c * a, pz = p.z + c * b + sn * a; if (vrNear(px, pz).dd < 1.5 || excluded(px, pz, 1) && Math.hypot(px - p.x, pz - p.z) > p.r) continue; parked(carSR(px, pz, hh + PI / 2) ? off : scen.get(px, pz), px, vrGround(px, pz), pz, hh + PI / 2 + (RC() < 0.5 ? 0 : PI), RC); }
     }
 
     const m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), eu = new THREE.Euler(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), tmp = [0, 0, 0, 0];

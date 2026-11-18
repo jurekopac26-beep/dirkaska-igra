@@ -33,6 +33,7 @@ import osm
 SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'living_street': 1, 'tertiary': 2, 'tertiary_link': 2,
               'secondary': 3, 'secondary_link': 3, 'primary': 3, 'primary_link': 3, 'trunk': 3, 'trunk_link': 3}
 SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
+UNPAVED = {'unpaved', 'gravel', 'fine_gravel', 'dirt', 'earth', 'ground', 'compacted', 'sand', 'mud', 'grass', 'pebblestone', 'rock'}   # OSM surface=*: such a road looks like a track
 # per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start), how
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
 # an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
@@ -202,7 +203,8 @@ def main():
                 if op and C.get('cilj') and sa > C['cilj'] - cfg['cilj']: drop('finish'); continue   # an open road's finish: the gantry, the crowd, the run-off
                 if any(circ(s0, b) < 24 for b in br) or any(a - 24 < sa < b + 24 for a, b in C.get('brez', [])): drop('bridge'); continue   # no junction on or under a bridge, nor in a gallery
                 if any(a - 30 <= s0 <= b + 30 for a, b in bank): drop('bank'); continue  # nor in a banked corner
-                cls = SIDE_CLASS[hw]; w, ow = side_width(cls, tg)
+                cls = rank = SIDE_CLASS[hw]; w, ow = side_width(cls, tg)
+                if tg.get('surface') in UNPAVED: cls = 0                                # unpaved: drawn as a track (pale gravel, no paint), its width and rank its class's
                 Wk = walk(P); N_ = [near(p) for p in Wk]; left = False; ret = None
                 for k2, (d, sm) in enumerate(N_):   # away from the lap (its own width clear of the edge), then back at it
                     if not left: left = d > hw0 + 6 + w / 2
@@ -217,11 +219,11 @@ def main():
                 if any(sd == (1 if o > 0 else -1) and circ(sa, m if op else m % L) < OWN for m, sd in C.get('ima', [])): drop('own'); continue   # the track's own side road is there
                 if any(sd == (1 if o > 0 else -1) and abs(sa - m) < 4 for m, sd in cfg.get('izpusti', [])): drop('hand'); continue   # left out by hand (PROGE)
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
-                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
+                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, rank=rank, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
     # the higher class first, then the longer road: two mouths on the same side that would run into each other leave one; a road that runs
     # into another of these roads ends there (end 1), and so does the other one where it is met at its tip
-    cand.sort(key=lambda e: (-e['cls'], -e['cut'])); out = []
+    cand.sort(key=lambda e: (-e['rank'], -e['cut'])); out = []
     for e in cand:
         if any(f['side'] == e['side'] and circ(e['s'], f['s']) < (e['mouth'] + f['mouth']) / 2 + 7 for f in out): drop('pair'); continue
         hit = None
