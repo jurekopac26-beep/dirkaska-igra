@@ -86,9 +86,11 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'sakhir': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1680, 1), (1816, 1), (4727, -1)]),
          'sepang': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1496, -1)]),
          'santoantao': dict(predmeti=False), 'seoul': dict(predmeti=False, izpusti=[(979, 1), (2398, -1)]),
-         # the group "lastne" (Kali Gandaki, Musandam, Lima Limo, Darvaz): tracks from pull requests, the side roads only
-         'kaligandaki': dict(predmeti=False, makadam=True), 'musandam': dict(predmeti=False, makadam=True), 'limalimo': dict(predmeti=False, makadam=True),
-         'darvaz': dict(predmeti=False, makadam=True)}
+         # the group "lastne" (Kali Gandaki, Musandam, Lima Limo, Darvaz): tracks from pull requests, the side roads only. Left out where
+         # World.cesta.stranske finds no opening: Kali Gandaki 2680 m left and Darvaz 335 m left fork off at about 17 degrees and run
+         # inside the barrier's line (15 to 17 m out, the open verge) for some 45 m, beyond the 22 m a strip may run there
+         'kaligandaki': dict(predmeti=False, makadam=True, izpusti=[(2680, -1)]), 'musandam': dict(predmeti=False, makadam=True),
+         'limalimo': dict(predmeti=False, makadam=True), 'darvaz': dict(predmeti=False, makadam=True, izpusti=[(335, -1)])}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own

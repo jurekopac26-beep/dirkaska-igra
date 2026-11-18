@@ -1413,16 +1413,16 @@
   }
  },
  "musandam": {
-  "meshes": 1693,
-  "verts": 751077,
-  "instances": 46526,
+  "meshes": 1698,
+  "verts": 754677,
+  "instances": 46491,
   "props": 105,
   "crowd": 121,
-  "world": "e6c257bc",
+  "world": "8786310d",
   "propsHash": "ea07b914",
   "floor": "83fd9c85/8540",
   "groups": {
-   "-:MeshLambertMaterial": "c0ca12a1",
+   "-:MeshLambertMaterial": "c9f82cee",
    "-:MeshPhongMaterial": "f459a477",
    "-:MeshBasicMaterial": "16946259",
    "irFar:MeshLambertMaterial": "4f13be3",
@@ -1456,16 +1456,16 @@
   }
  },
  "darvaz": {
-  "meshes": 1703,
-  "verts": 853879,
-  "instances": 25992,
+  "meshes": 1705,
+  "verts": 855481,
+  "instances": 25962,
   "props": 82,
   "crowd": 116,
-  "world": "c337f11e",
+  "world": "54385c1b",
   "propsHash": "fe75757d",
   "floor": "b89e15dc/8596",
   "groups": {
-   "-:MeshLambertMaterial": "c0990d13",
+   "-:MeshLambertMaterial": "e1c1cfa0",
    "-:MeshPhongMaterial": "a28e3877",
    "-:MeshBasicMaterial": "7e67dd14",
    "irFar:MeshLambertMaterial": "fcd49bdf",
