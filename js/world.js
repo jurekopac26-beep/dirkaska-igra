@@ -1610,14 +1610,14 @@ const World = (function () {
       const offs = makadam ? Array.from({ length: 15 }, (_, k) => -w + 2 * w * k / 14) : THEME === 'italia' ? [-w, -(w - 0.28), -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w - 0.28, w] : [-w, -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w];
       const ashE = (i, o, c) => { const side = o > 0 ? 1 : -1; if (THEME !== 'italia' || Math.abs(o) < w - 1e-6 || (T.curb[i] && !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035))) return c; return [c[0] * 1.07, c[1] * 1.04, c[2] * 0.96]; };   // (V2: grey dust off the gravel)
       const shade = (i, o) => {
-        const rl = T.rl[i];
+        const rl = (T.gl || T.rl)[i];
         let k = 1 - 0.2 * Math.exp(-((o - rl) * (o - rl)) / 5.5);
         k -= Math.abs(o) > w * 0.9 ? 0.04 : 0;
         return [k, k, k * 1.01];
       };
       // makadam: compacted, darker driven line; loose lighter gravel elsewhere; patches and damp spots along the road
       const shadeM = (i, o) => {
-        const rl = T.rl[i], rut = Math.exp(-((o - rl) * (o - rl)) / 7.5);
+        const rl = (T.gl || T.rl)[i], rut = Math.exp(-((o - rl) * (o - rl)) / 7.5);
         const pat = 0.94 + 0.08 * Math.sin(i * 0.071 + o * 0.35) * Math.sin(i * 0.023 + 1.3) + 0.05 * Math.sin(i * 0.53 + o * 1.1);
         const damp = Math.max(0, Math.sin(i * 0.047 + 0.6) * Math.sin(i * 0.019 + o * 0.21) - 0.72) * 1.6;   // occasional darker wet patches
         let k = pat * (1.05 - 0.3 * rut) * (1 - damp * 0.35);
@@ -3733,7 +3733,7 @@ const World = (function () {
       for (let k = 0; k <= n; k++) {
         const i = at(i0 + k), f = k / n, a = a0 * Math.min(1, f / 0.2, (1 - f) / 0.12) * (grow ? 0.45 + 0.55 * f : 1);
         if (deck(i) || (T.sf && T.sf[i] !== 0)) { prev = null; continue; }   // (a stage of mixed surfaces: rubber on its tarmac only)
-        const o = T.rl[i] + off + Math.sin(i * 0.37 + off * 3) * 0.08, lim = (T.wa ? T.wa[i] : T.w) - 0.25; if (Math.abs(o) > lim) { prev = null; continue; }
+        const o = (T.gl || T.rl)[i] + off + Math.sin(i * 0.37 + off * 3) * 0.08, lim = (T.wa ? T.wa[i] : T.w) - 0.25; if (Math.abs(o) > lim) { prev = null; continue; }
         const y = (q) => { let h = HYi(i) + 0.03; if (T.bank) h += T.bankAt(i * ds, q, bk).dy; return h; };
         const l = [T.px[i] + T.nx[i] * (o - wd), y(o - wd), T.pz[i] + T.nz[i] * (o - wd)], r = [T.px[i] + T.nx[i] * (o + wd), y(o + wd), T.pz[i] + T.nz[i] * (o + wd)];
         if (prev && prev.a + a > 0.01) cell(l).quadUp(prev.l, prev.r, r, l, [[0.05, 0.05, 0.06, prev.a], [0.05, 0.05, 0.06, prev.a], [0.05, 0.05, 0.06, a], [0.05, 0.05, 0.06, a]]);
@@ -3802,7 +3802,7 @@ const World = (function () {
     // patches, every 40-100 m, more often in a wheel track than not
     for (let s = R() * 50; s < len - 6; s += (40 + R() * 60) * sp / Math.sqrt(kw)) {
       const i = at(Math.round(s / ds)); if (deck(i) || bare(s)) continue;
-      const li = limAt(i), hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * wAt(i)) + (R() - 0.5) * 0.6, -li + hw, li - hw), k = R() < 0.55 ? 0.84 + R() * 0.08 : 1.04 + R() * 0.06;
+      const li = limAt(i), hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? (T.gl || T.rl)[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * wAt(i)) + (R() - 0.5) * 0.6, -li + hw, li - hw), k = R() < 0.55 ? 0.84 + R() * 0.08 : 1.04 + R() * 0.06;
       const rot = (R() - 0.5) * 0.08; if (bare(s - hl) || bare(s + hl)) continue;
       decal(s, lo, hl, hw, rot, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
     }
@@ -3833,7 +3833,7 @@ const World = (function () {
       for (const sd of [-1, 1]) {
         let prev = null;
         for (let k = 0; k <= N; k += st) {
-          const i = at(k), cc = T.rl[i] + sd * 0.78;
+          const i = at(k), cc = (T.gl || T.rl)[i] + sd * 0.78;
           if (deck(i) || Math.abs(cc) > w - 0.5) { prev = null; continue; }
           const a = (0.1 + 0.46 * use[i]) * (0.8 + 0.4 * R()), row = [cc - 0.36, cc - 0.13, cc + 0.13, cc + 0.36].map(lo => pt(i * ds, lo)), c = chunk(row[1]);
           const put = (R4, al) => R4.map((p, q) => vtx(c, p, [0.07, 0.07, 0.08, q === 1 || q === 2 ? al : 0], [[0.53, 0.66, 0.84, 0.97][q], 0.25])), ids = put(row, a);

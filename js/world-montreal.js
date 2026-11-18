@@ -258,7 +258,7 @@
     K.pitKerbs(kerb);   // (none on the pit lane's side where it joins the circuit)
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -60; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-60, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = (i, o) => { const rl = T.rl[i]; let k = (0.84 - (0.15 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * (0.96 + 0.06 * Math.sin(i * 0.013)); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
+    const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = (0.84 - (0.15 + 0.12 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5)) * (0.96 + 0.06 * Math.sin(i * 0.013)); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.02]; };
     const jMouth = C.jm = [new Float32Array(N), new Float32Array(N)];   // per sample: how far the junction mouth paving reaches (0: none)
     for (const [d, sd, ang, hw] of C.def.junctions || []) { const half = hw / Math.max(0.35, Math.sin(ang * Math.PI / 180)) + 4.5;
       for (let q = -half - 3; q <= half + 3; q += ds) { const i = T.idx(C.sAt(d + q)), f = Math.min(sstep(-half - 3, -half, q), sstep(half + 3, half, q)); jMouth[sd > 0 ? 1 : 0][i] = Math.max(jMouth[sd > 0 ? 1 : 0][i], f); } }

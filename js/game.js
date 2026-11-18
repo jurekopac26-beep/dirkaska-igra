@@ -234,11 +234,18 @@
   const lapWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' LAP' : ' LAPS') : n + (n === 1 ? ' KROG' : n === 2 ? ' KROGA' : n <= 4 ? ' KROGI' : ' KROGOV');
   const placeWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' PLACE' : ' PLACES') : n + (n % 100 === 1 ? ' MESTO' : n % 100 === 2 ? ' MESTI' : n % 100 === 3 || n % 100 === 4 ? ' MESTA' : ' MEST');   // 1 MESTO, 2 MESTI, 3 MESTA, 5 MEST
   const trackCache = new Map();
+  // the rubber's line (docs/zgumirana-linija.md): each real track gets the player's line for the look of its rubber (Track.voznjaLinija:
+  // their measured profile for it, js/data/voznja.js, else their style), always: ?voznja=1 below is the rivals' driving, not this. Not
+  // the frozen tracks (CLAUDE.md, Testne proge): the test ones, those still to be chosen, and Suzuka and Medvode, frozen before they
+  // carry the mark (GUMA_BREZ: drop them from it once they do): their rubber and their worlds stay on the computed line
+  const GUMA_BREZ = { suzuka: 1, medvode: 1 };
   const getTrack = (id) => {
     if (!trackCache.has(id)) {
       const d = Core.TRACKS.find(x => x.id === id) || Core.TRACKS[0];
       if (d.head) throw new Error('track not loaded: ' + d.id + ' (Core.loadTrack first)');   // (a lazy track's head, js/tracks/glave.js: no road in it)
-      trackCache.set(id, new Core.Track(d));
+      const T = new Core.Track(d);
+      if (!d.test && !d.pending && !GUMA_BREZ[d.id] && typeof VOZNJA_PROFILI !== 'undefined') T.voznjaLinija(VOZNJA_PROFILI.filter(p => p.proga === d.id).concat(typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG ? [VOZNJA_SLOG] : []));
+      trackCache.set(id, T);
     }
     return trackCache.get(id);
   };
