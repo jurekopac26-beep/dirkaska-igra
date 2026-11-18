@@ -34,7 +34,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: MUJIB_H.map((h, i) => [i / (MUJIB_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.06 (silver), x 1.14 (bronze), dry and wet (cs: Circuit Superstars physics)
-    medals: { cs: [38, 40, 43], wet: { cs: [42, 44, 48] } },
+    medals: { cs: [38, 40, 43], wet: { cs: [47, 49, 53] } },
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // road through the canyon: cars and pick-ups above all, vans, the tourists' buses, a few lorries and motorbikes, rare cyclists on the climb
     traffic: { mix: [0.5, 0.24, 0.1, 0.05, 0.11], bike: 9000 },

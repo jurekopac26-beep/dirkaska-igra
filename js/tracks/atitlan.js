@@ -35,7 +35,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'grass', gradeForce: true, elevSmooth: 6,
     elev: ATITLAN_H.map((h, i) => [i / (ATITLAN_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), x 1.06 (silver), x 1.14 (bronze), dry and wet (cs: Circuit Superstars physics)
-    medals: { cs: [32, 34, 36], wet: { cs: [35, 37, 40] } },   // (the autopilot 32.0 s dry, 34.9 s in the rain)
+    medals: { cs: [32, 34, 36], wet: { cs: [39, 41, 44] } },   // (the autopilot 32.0 s dry, 34.9 s in the rain)
     // the traffic of the open road (the duel, the run from the police): [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; the
     // road from Sololá down to Panajachel: cars and pick-ups, the minibuses and the old school buses painted in their colours, tuk-tuks and
     // motorbikes, a few lorries, rare cyclists on the hill
