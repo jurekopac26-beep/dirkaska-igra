@@ -10,7 +10,8 @@
 // 4. merging: each time the best its owner ever sent; the same link twice changes nothing; an older packet after a newer one spoils
 //    nothing (the nickname of the newest); the player's own link; a hidden friend (and the player's yes); times faster than the bound
 //    dropped; at most 40 friends (the one heard from longest ago goes) and 600 times
-// 5. the size: every record of every track (both physics, the rain, every way to drive) in one link: at most 8 000 characters
+// 5. the size: every record of every track (both physics, the rain, every way to drive) in one link: at most 10 000 characters (8 000 until
+//    18. 11. 2026: 68 tracks and 592 times take ~9 100; MAX_LINK is 16 000)
 // 6. the nickname: printable, at most 16 characters; two players with one nickname: (2); the player's own times from the records
 //    (the time, its day and car as first seen) and the record keys as the game makes them
 //   node tests/lestvica.test.js
@@ -182,7 +183,7 @@ const repack = (o) => L.pack(J(o));
     const table = L.keyTable(C.TRACKS.filter(d => !d.test)), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;   // (the real tracks: the test ones go before the release, CLAUDE.md)
     for (const k of table.keys()) { t[k] = [60000 + Math.floor(Math.random() * 600000), 300 + (i % 20), cars[i % cars.length]]; i++; }
     const P = await player('Turbo Tina', t), l = await L.link(P.pk, []);
-    check(`every record of every track (${Object.keys(t).length} times) in one link: at most 8 000 characters`, l.z.length <= 8000 && l.n === 0, l.z.length + ' characters');
+    check(`every record of every track (${Object.keys(t).length} times) in one link: at most 10 000 characters`, l.z.length <= 10000 && l.n === 0, l.z.length + ' characters');
     check('...and it opens with all of them', ((await L.readLink(l.z, NOW)) || { packets: [{ t: {} }] }).packets[0].t && Object.keys((await L.readLink(l.z, NOW)).packets[0].t).length === Object.keys(t).length);
   }
 
