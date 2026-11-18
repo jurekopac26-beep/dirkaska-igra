@@ -6,6 +6,7 @@
 // 4. the player's dents survive its view built again (Detajli avtov Visoki and back: Render.crashInfo().cl the same, dLog)
 // 5. every car smashed (12 × 0.3): Podrobne ≤ 400 calls, switched to Preproste mid-race ≤ 460 (its cars Preproste's, the 48 pieces on the road kept),
 //    back to Podrobne as before; vertices < 900 thousand
+// 6. the older bodies (no kit): smashed, their doors, bonnet and boot stand open (rally; the prototype: doors and engine cover; the formula: none)
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('Poškodbe: Podrobne on the phone (P1.13)');
 const srv = await serve(); const browser = await launch();
@@ -61,6 +62,21 @@ try {
   T.check('5. every car smashed: Podrobne ≤ 400 calls', r.worst1[0] <= 400 && V(r.worst1), String(r.worst1));
   T.check('5. switched to Preproste mid-race ≤ 460 calls', r.worst0[0] <= 460 && V(r.worst0) && r.iw0.xOn === 0, `${r.worst0a} → ${r.worst0}`);
   T.check('5. back to Podrobne: as before', Math.abs(r.worst1b[0] - r.worst1[0]) <= 3 && V(r.worst1b), `${r.worst1} / ${r.worst1b}`);
+  // 6. the older bodies (no kit): doors, bonnet and boot stand open once smashed (the prototype: doors and engine cover; the formula: none)
+  const rcs = [];   // (Math.random calls of the 20 frames: the smoke's, the same with doors to open and without)
+  for (const [id, want] of [['rally', 'doorL,doorR,hood,trunk'], ['lm', 'doorL,doorR,trunk'], ['formula', '']]) {
+    const o = await openGame(browser, srv.base + '/index.html', { ...base, carId: id }, { width: 844, height: 390 }, { seed: 12345 });
+    await startTrack(o.page, 'spa');
+    const q = await o.page.evaluate(() => { const g = window.__game, R = g.race, P = R.player, C = R.cars.find(c => !c.isPlayer && !Render.viewOf(c).kit); g.pause();
+      const fr = (n) => { for (let i = 0; i < n; i++) Render.frame(1 / 60, 1, P, 'chase', {}); }, keys = (c) => Object.keys(Render.viewOf(c).oAjar || {}).sort().join(',');
+      fr(5); const k0 = keys(P), MR = Math.random; let rc = 0; Math.random = () => { rc++; return MR(); };
+      for (const c of [P, C]) if (c) { c.dmg = 0.75; c.dz[0] = 0.49; c.dz[1] = 0.49; c.dz[2] = 0.5; c.dz[3] = 0.5; }
+      fr(20); Math.random = MR; const V = Render.viewOf(P), dr = V.oAjar && V.oAjar.doorL;
+      return { id: P.m.id, k0, k: keys(P), rc, turned: !!dr && Math.abs(dr[0].rotation.y) > 0.4, rival: C ? keys(C) : null }; });
+    T.check(`6. ${id}: whole, nothing open; smashed: ${want || 'nothing'} open`, q.id === id && q.k0 === '' && q.k === want && (!want || q.turned) && (q.rival == null || q.rival !== '' || !want), JSON.stringify(q));
+    T.check(`6. ${id}: no page errors`, !o.errors.length, o.errors.slice(0, 2).join(' | ')); rcs.push(q.rc); await o.page.close();
+  }
+  T.check('6. opening them does not call Math.random (as many calls as the formula, which has nothing to open)', rcs[0] === rcs[2] && rcs[1] === rcs[2], String(rcs));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } finally { await browser.close(); await srv.close(); }
 T.done();

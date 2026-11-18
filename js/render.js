@@ -7157,7 +7157,7 @@ const Render = (function () {
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
-        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
+        xEngine(v, c); if (v.kit && v.xc) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones, once the car has its damage field: the quarter is cut by its panels as built, xc.rest, not as dented)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
@@ -7221,6 +7221,10 @@ const Render = (function () {
         if (y1 - y0 > 0.08) for (const [name, sd] of [['fenderL', -1], ['fenderR', 1]]) add(name, new THREE.BoxGeometry(1.0, y1 - y0, 0.035), paint, fx, (y0 + y1) / 2, sd * (a[1] * sz + 0.014), 0, new THREE.BoxGeometry(0.96, y1 - y0, 0.02)); }
       // door mirrors at the base of the windscreen
       if (iGF >= 0) { const a = at(S[iGF][0]); for (const [name, sd] of [['mirrorL', -1], ['mirrorR', 1]]) add(name, new THREE.BoxGeometry(0.15, 0.1, 0.2), paint, S[iGF][0] * sx + 0.05, a[3] + 0.1, sd * (a[1] * sz + 0.1), 0); }
+      // the doors (one a side: from the front wing back to the rear arch, sill to belt): only their place here, the panel is made when a knock
+      // swings it open (oldAjar); a whole car's look and its draws stay as they were
+      { const k = (M.len / 4.4) * 0.98, x1 = M.a * k + 0.05 - 0.54, x0 = Math.max(x1 - 1.15, -M.b * k + M.rw * 1.3), a = at(x1 / sx), b = at(x0 / sx), m = at((x0 + x1) / 2 / sx);
+        if (x1 - x0 > 0.5) v.oDoor = { x0, x1, y0: m[2] + 0.06, y1: Math.min(a[3], b[3], m[3]) - 0.02, z: Math.max(a[1], b[1], m[1]) * sz }; }
     }
     v.parts = parts; v.under = under;
     v.glassTris = findGlass(v); v.winBroken = [0, 0, 0, 0]; v.roofStep = 0;
@@ -7293,6 +7297,50 @@ const Render = (function () {
     else { v.partsM.geometry.dispose(); v.partsM.geometry = geo; v.partsM.material = mat; }
     v.partsM.castShadow = tierNow > 0; v.partsM.visible = n > 0; v.det.visible = false;
   }
+  // an older model's doors, bonnet and boot stand open after a hard knock (the kit's loose stage, kitLoosen, for the models without a kit:
+  // only looks, the core knows nothing of it). The bonnet (hinged at the windscreen, 18°) and the boot lid (hinged at the rear glass, 30°; a
+  // hatchback's tailgate at its top) are the panels of buildParts, turned about their hinge edge once their zone's damage passes 60 % of
+  // the part's threshold and the core no longer holds them (Core.maskHeld: the face and the tail stay shut till 70 %); what is under them
+  // shows. A door (one a side, hinged at its front edge, 28°, or 62° with Razbijanje · nov način's body) is made at that moment: a painted
+  // panel and the dark doorway behind it (side damage past 60 % of 0.72, the kit doors' threshold; nov način 35 %). The prototype: its
+  // engine cover and doors (the nose is its crash structure, it does not open); the formula and the kart have none. A pit repair shuts
+  // them all (repTrim, repPart). v.oAjar: name -> the panel's pose as built, or a door's two objects
+  const O_LM_DOOR = { x0: -0.38, x1: 0.72, y0: 0.55, y1: 0.9, z: 0.475 };
+  function oldAjar(v, c) {
+    if ((v.fp && !v.fp.lm) || v.rep || c.pitState === 'repair') return;   // (in the box they are being shut: repPart, repTrim)
+    const A = v.oAjar || (v.oAjar = {}), PT = Core.partsOf(c.m), D = Math.PI / 180;
+    for (const name of ['hood', 'trunk']) {
+      const m = v.parts[name], P = PT[name];
+      if (A[name] || !m || !m.visible || !P || P.th == null || c.lost[name] || (v.fp && name === 'hood') || Core.maskHeld(c, name, P) || c.dz[P.z] < 0.6 * P.th) continue;
+      const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox();
+      const B = g.boundingBox, tall = B.max.y - B.min.y > B.max.x - B.min.x, r0 = m.rotation.z, r1 = r0 + (name === 'hood' ? 18 : -30) * D;
+      const hx = tall ? 0 : name === 'hood' ? B.min.x : B.max.x, hy = tall ? B.max.y : 0;
+      A[name] = [m.position.x, m.position.y, r0];
+      m.position.x += hx * (Math.cos(r0) - Math.cos(r1)) - hy * (Math.sin(r0) - Math.sin(r1)); m.position.y += hx * (Math.sin(r0) - Math.sin(r1)) + hy * (Math.cos(r0) - Math.cos(r1));
+      m.rotation.z = r1; if (v.under[name]) v.under[name].visible = true; v.detDirty = true;
+    }
+    const d = v.fp ? O_LM_DOOR : v.oDoor; if (!d) return;
+    for (const sd of [-1, 1]) {
+      const key = sd < 0 ? 'doorL' : 'doorR';
+      if (A[key] || !(c.dz[sd < 0 ? 2 : 3] >= (XC.body ? 0.35 : 0.6) * 0.72)) continue;
+      ownRnd(() => {
+        const L = d.x1 - d.x0, H = d.y1 - d.y0, ym = (d.y0 + d.y1) / 2, box = v.det || v.bodyG;
+        const paint = v.partMats ? v.partMats[0] : v.oPaint || (v.oPaint = cgMat(new THREE.MeshPhongMaterial({ color: c.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg'));
+        const piv = new THREE.Group(), m = new THREE.Mesh(new THREE.BoxGeometry(L, H, 0.03).translate(-L / 2, 0, 0), paint), u = new THREE.Mesh(new THREE.BoxGeometry(L * 0.96, H * 0.94, 0.012), matUnder);
+        m.castShadow = !!c.isPlayer || tierNow > 0; piv.add(m); piv.position.set(d.x1, ym, sd * (d.z + 0.02)); piv.rotation.y = sd * (XC.body ? 62 : 28) * D;
+        u.position.set((d.x0 + d.x1) / 2, ym, sd * (d.z + 0.003)); box.add(u); box.add(piv); A[key] = [piv, u];
+      });
+      v.detDirty = true;
+    }
+  }
+  // one of them shut again (a pit repair): the panel back as built, a door's panel and doorway gone
+  function oldShut(v, name) {
+    const A = v.oAjar, s = A && A[name]; if (!s) return;
+    const m = v.parts[name];
+    if (m) { m.position.x = s[0]; m.position.y = s[1]; m.rotation.z = s[2]; if (m.visible && v.under[name]) v.under[name].visible = false; }
+    else for (const o of s) { if (o.parent) o.parent.remove(o); o.traverse(q => { if (q.geometry) q.geometry.dispose(); }); }
+    delete A[name]; v.detDirty = true;
+  }
   function updateParts(v, c, x, y, z, h) {
     const rnd = v.kit ? rRnd : Math.random;   // (the kit's effects: the renderer's own random numbers; the 11's as they always were)
     // lamps
@@ -7322,6 +7370,7 @@ const Render = (function () {
     // an older model's front wheel off (the wheel rule, paket-p K.3: the core's c.wreck.wl, only the front two): as a kit car's, without the sag
     { const W = c.wreck; if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix; kitRefit(v); }
       if (W && W.wl) for (let k = 0; k < 2; k++) if ((W.wl & (1 << k)) && !v.wheelOff[k]) oldWheelOff(v, c, k, x, y, z, h); }
+    oldAjar(v, c);   // (doors, bonnet and boot standing open: before a part goes for good)
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
     for (const name in v.parts) {
       const m = v.parts[name];
@@ -7871,7 +7920,7 @@ const Render = (function () {
   }
   function repPart(v, R, name) {
     const K = v.kit;
-    if (!K) { v.parts[name].visible = true; if (v.under[name]) v.under[name].visible = false; v.detDirty = true; return; }
+    if (!K) { v.parts[name].visible = true; if (v.under[name]) v.under[name].visible = false; oldShut(v, name); v.detDirty = true; return; }
     const A = v.body.geometry.attributes, Rg = v.body.geometry.userData.ranges[name]; delete K.dead[name]; K.ver++;
     if (Rg && R.P) for (const [a, b] of [Rg.o, Rg.i]) if (b > a) {
       for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !R.P[pk]) continue; const s = R.P[pk].subarray(a * 3, b * 3); A[key].array.set(s, a * 3); R.D[pk].set(s, a * 3); A[key].needsUpdate = true; }
@@ -7897,6 +7946,7 @@ const Render = (function () {
   function repTrim(v) {
     for (const o of [v.dec, v.polBar, v.scBar]) if (o && o.userData.dmgHid) { o.visible = true; o.userData.dmgHid = 0; }
     if (v.kit) { v.kit.ajar = {}; v.kit.ver++; }
+    else if (v.oAjar) for (const n of Object.keys(v.oAjar)) oldShut(v, n);   // (an older model's doors, bonnet and boot shut: oldAjar)
   }
 
   // push the bodywork in around the hit point (deterministic jitter → no cracks) and scrape the paint; the dent's size and depth with the

@@ -2071,3 +2071,15 @@ Odgovor uporabnika na `trki-vlecenje-tekmeci` = 2 (»naj bo pod defaultom, 1 lah
 - **Reference:** `trki.json` 0 sprememb od 150, `sim.json` 112 od 140 scenarijev pravih prog, `races.json` 85 od 100 dirk pravih prog, `perf.json` samo Rio do Rastro (po spoju `main`); vnosi testnih prog so ostali. Prvo ustvarjanje referenc je ustavila časovna omejitev opravila v ozadju (med dirkami), dirke so bile ustvarjene znova posebej.
 - **Obremenitev, Chapman's Peak (18. 11.):** referenca `perf.json` obnovljena (`PERF_ONLY=chapman`): klici risanja 141 → 152, največ 147 → 197; oglišča 419 → 399 tisoč, največ 487 → 447. Pod mejo ~300, vzorec kot pri Rio do Rastro. Vzrok ni izmerjen (domneva: avti so ob vzorcih drugje); pred `main` preveri, da ne gre za dražji izris.
 - **Test policijskega pregona, Mount Baldy (18. 11.):** po uporabnikovem odgovoru (Odločitve `trki-testi-policije-17-11`, možnost 1) ima `tests/baldy.test.js` v preverjanju pobega druga semena (14, 15, 16 namesto 11, 12, 13); vsebina preverjanja je ista. Od semen 14–40 avtopilot pobegne v ~60 %, stara tri so bila po vleki krmila za vse avte vsa ujeta. `tests/greatalpine.test.js` je zelen brez spremembe. Dovoljenje v `tests/golden/testne-proge.json` (`--dovoli baldy`).
+
+## Vrata, pokrov in prtljažnik starejših modelov (18. 11. 2026)
+
+Odgovor uporabnika na `trki-vrata-slike-17-11` = 2: odpiranje dobijo tudi starejši modeli, ki vrata imajo.
+
+- **Kateri:** `kaze`, `strega`, `truck`, `vortex`, `rally`, `muscle`, `pico`, `ev` (vrata, pokrov motorja, prtljažnik) in `lm` (vrata in pokrov motorja zadaj; nos je deformacijska struktura in se ne odpira). Formula in `mravlja` (gokart) vrat nimata in ostaneta brez.
+- **Kako** (`oldAjar`, `oldShut` v `js/render.js`, samo videz): pokrov in prtljažnik sta plošči iz `buildParts`, zasukani okrog tečaja (pokrov 18°, prtljažnik in peta vrata 30°), ko škoda cone doseže 60 % praga dela in jedro dela ne drži več (`Core.maskHeld`, do 70 % skupne škode). Vrata (ena na stran, tečaj spredaj, 28°; z »Razbijanje · nov način« 62° in prej, pri 35 %) nastanejo ob odprtju: plošča v barvi avta in temna odprtina za njo (mesto `v.oDoor` iz mer modela, pri `lm` `O_LM_DOOR`). Popravilo v boksih jih zapre (`repPart`, `repTrim`).
+- **Jedro in fizika:** `js/core.js` ni spremenjen; vrata teh modelov ne odpadejo in ne vplivajo na vožnjo ali trke. Odpiranje ne kliče `Math.random` (`ownRnd`), zato potek dirk ostane enak.
+- **Obremenitev:** pri tekmecih gredo vrata v skupno mrežo avta (`remerge`), zato dodatnih klicev risanja ni; pri igralcu do 4 klici, ko sta odprti obe strani.
+- **Test:** `tests/browser/poskodbe.test.mjs`, razdelek 6 (`rally`, `lm`, formula; igralec in tekmec; brez klicev `Math.random`). Zapiranja ob popravilu test ne preverja.
+- **Popravek možne napake (3) iz predaje:** `xRearDoor` se kliče šele, ko ima avto polje poškodb (`v.xc`), da se bok izreže po ploščah, kot so bile narejene, ne po že vdrtih; do takrat poskusi vsako sličico znova.
+- **Odprto ostane:** (1) referenci obremenitve, (2) test vleke krmila in (4) kot pokrova 18° ter ozka izračunana zadnja vrata iz predaje niso bili obdelani.
