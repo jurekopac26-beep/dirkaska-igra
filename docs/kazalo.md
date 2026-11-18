@@ -246,10 +246,14 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 
 | id | Ime | Tema | Graditelj (`js/world.js`, razen kjer piše drugače) |
 |---|---|---|---|
+| aguascalientes | Aguascalientes, Mehika | aguascalientes | `js/world-rbring.js` (`buildRbring`) in `js/world-aguascalientes.js` (videz v `RB_LOOK` prek `API.rbLook`: napisi krajev, zastavica `mx`, suha trava `colMod`; obzorje `def.far` prek `API.rsFar` iz `js/world-riverside.js` v ovoju `World.ext.aguascalientes`) |
 | balea | Bâlea, Romunija | balea | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.balea`: portal predora, žičnica, jezero, ovce) |
 | gudauri | Gudauri, Gruzija | gudauri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.gudauri`: hoteli in apartmajski bloki (`hotels`), sedežnice s sedeži (`chairs`), daljnovod, plazovna galerija (`portal: 2`), ovce) |
+| kanaba | Kanaba, Uganda | kanaba | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kanaba`: zelena polja na rdeči prsti, pločevinaste strehe, drobnica; vožnja po levi) |
+| canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
+| batangas | Batangas, Filipini | batangas | `js/world-batangas.js` na `js/world-rbring.js` (`API.rbLook.batangas`: tribune, table krajev, zastave, polja sladkornega trsa, rdeča prst) |
 | bathurst | Bathurst, Avstralija | bathurst | `js/world-rbring.js` (`buildRbring`) in `js/world-bathurst.js` (lastni deli: evkalipti `btGumGeo`, kenguruji `auRoos`; videz v `RB_LOOK` prek `API.rbLook`: tekstura pašnika `btGrassTex`, obrabljen rob ob asfaltu `edge`, usek pri 4. zavoju `cut` in breg nad njim `cutBank`) |
 | *beartooth* | *Beartooth, ZDA (test)* | beartooth | `js/world-beartooth.js` (`buildBeartooth`) |
 | *bigsur* | *Big Sur, ZDA (test)* | bigsur | `js/world-bigsur.js` (`buildBigSur`) |
@@ -264,6 +268,8 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | *greatalpine* | *Great Alpine Road, Avstralija (test)* | greatalpine | `js/world-greatalpine.js` (`buildGreatAlpine`) |
 | ghoufi | Ghoufi, Alžirija | ghoufi | `js/world-ghoufi.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
+| savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
 | hakone | Hakone, Japonska | hakone | `js/world-hakone.js` (`buildHakone`, podatki `js/data/hakone.js`): Vršičevi pomočniki koridorja `vrPrep` … z ožjim koridorjem (`hkTileOn`, `hkTileGeo`: polne ploščice do 190 m, grobe do 340 m) in lastnimi barvami tal (`hkCol`, `hkGCol`); oblika tal `hkFix` (prek `VR.hfix`: nasip železnice `hkBench`, griči s predori na oddaljenih koncih prog `hkHill`, gladina jezera Ashi); razdalja do železnice `hkRailD` (rastline ne na gredi); rastline `hkPlantGeo` (cedra, listavec, javor, bambus, hortenzija, sasa); vasi (stavbe iz `HK_DATA.bld`, strehe `gable` in `hip`, električni drogovi z žicami), gorska železnica (vsi podatki do ~170 m od ceste: greda, tirnice, vozna mreža, mostovi, most čez cesto v Deyami, portali, prosti konci z odbojnikom ali portalom v griču `HKR.ends`, nivojski prehod v Kowakidaniju, peroni, hortenzije), gozd (`HK_DATA.trees` in dopolnitev, zredčen za telefon, cedrov drevored), stara pot, torii, jezeri Shōjin in Otama-ga-ike, gledalci (štart in nekaj skupin), portal na štartu; daljni pogled `hkFar` / `hkFarUpdate` (`out.dyn.ext`, na vsake 4 m kamere; bloki z ovojnicami `hkFarBounds`, izločeni zunaj vidnega polja; mreži `far` in `fuji`, jezero Ashi z vrati in ladjami `hkBoatAt`, morje, Fuji; `def.fuji` `'real'` (proga: Fuji zakrijejo grebeni) ali brez tega masiv `hkFuji` nad grebeni; brez kamere poza za test sveta, `F.rest`); življenje v gozdu `ZIV.hakone` v `js/world-zivali.js` (jeleni sika, divji prašiči, makaki, serov) |
@@ -272,6 +278,8 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | isuna | Isuna, Butan | isuna | `js/world-isuna.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | killar | Killar, Indija | killar | `js/world-killar.js` (kopija `buildUncompahgre` s podobo Killarja: `UNK`; hiše `klHouse`, molilne zastavice `klFlags`, table `KL_BOARDS`, lesena ograja levo `T.fence`, pregrada proti kamenju in mreža po pobočju `ukNetMat`, travnik do roba ceste brez bankine in jarka `mead`, senčenje hrbtov in kotanj na vozišču `uk` po `def.roadBase`) |
+| koli | Koli, Finska | koli | `js/world-koli.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| koror | Koror, Palau | koror | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.koror`: laguna `def.sea`, most in nasipi z zidovi, tropski gozd, rumena sredinska črta) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
 | london | London, Anglija | london | `js/world-london.js` (`buildLondon`: ulice, betonske ograje ulične dirke, nabrežje Temze z zidom in ladjami, Westminstrski in železniški most, znamenitosti kot generične oblike po oznakah `marks`, stavbe iz OSM; podatki `js/data/london.js` (`LN_DATA`) iz `tools/london/build.py world`, proga iz `build.py track`) |
 | llogara | Llogara, Albanija | llogara | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.llogara`) in `js/world-llogara.js` (znamenitosti prek `L.pre`/`L.extra`: bunkerji, korita izvirov, spomenik, znamenje, kažipot, vzletišče z vetrno vrečo, krili in jadralnimi padalci v zraku; črni bori in makija; Jonsko morje v daljnem pogledu) |
@@ -282,6 +290,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | portobelo | Portobelo, Panama | portobelo | `js/world-portobelo.js` (`buildPortobelo`; podatki `js/data/portobelo.js` in proga iz `tools/portobelo/build.py track`; obalna trdnjava na terasi ob cesti z jaso: model iz Blenderja prek `World.znamenitost`, nadomestek v datoteki) |
 | eljem | El Jem, Tunizija | eljem | `js/world-eljem.js` (podatki `js/data/eljem.js` in proga iz `tools/eljem/build.py`; amfiteater: model iz Blenderja prek `World.znamenitost`, ravna terasa pod njim in nadomestek v datoteki; ograje brez zank v ostrih ovinkih) |
 | hiva | Hiva, Uzbekistan | hiva | `js/world-hiva.js` (`World.ext.hiva`; podatki `js/data/hiva.js` in proga iz `tools/hiva/build.py track world`; obzidje Ičan Kale (zidovi, stolpi in vrata iz OSM, `tools/hiva/obzidje.py`) in minareta: gradnik v datoteki, model iz Blenderja prek `World.znamenitost`, `tools/znamenitost/hiva.py`, nadomestek v datoteki) |
+| quezaltepeque | Quezaltepeque, Salvador | quezaltepeque | `js/world-quezaltepeque.js` na `js/world-rbring.js` (`API.rbLook.quezaltepeque`: tribune, table krajev, zastave, stara lava `sk.lava`, travniki s suhimi lisami) |
 | *longford* | *Longford, Avstralija (test)* | longford | `js/world-longford.js` (`buildLongford`) |
 | marrakesh | Marrakesh, Maroko | marrakesh | `js/world-marrakesh.js` (`buildMarrakesh`) |
 | *maunakea* | *Mauna Kea, ZDA (test)* | maunakea | `js/world-maunakea.js` (`buildMaunakea`) |
@@ -318,6 +327,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | zandvoort | Zandvoort, Nizozemska | zandvoort | `js/world-rbring.js` (`buildRbring`) in `js/world-zandvoort.js` (lastni deli: drevesa `ZV_WOODS`, `zvExtra` z ribniki (`zvPonds`: gladina iz terena ob bregu pod prelivom iz kotanje, pas plitvin ob bregu `shoreBand`, struga `zvPad`, trstičje), sipinami (`zvDunes`: rakitovec, šopi trave) in stavbami, sipine, pesek in trate v `colMod`, nizozemska in oranžna zastava; videz v `RB_LOOK` prek `API.rbLook`) |
 | santoantao | Santo Antão, Zelenortski otoki | santoantao | `js/world-santoantao.js` (`buildSantoAntao`: teren v olivno zeleni in slamnati barvi z rdečerjavo prstjo, pasovi bazalta in tufa v stenah, cesta iz bazaltnih kock `saCobbleTex` (tudi za druge tlakovane ceste: `API.saCobble`), zidovi med kraki serpentin kot v `js/world-prelaz.js` prek `API.caBank`, nizki bazaltni parapeti, razgledišči na sedlu Delgadim, hiše, ciprese, evkalipti, akacije, agave, morje v daljnem pogledu; podatki `tools/santoantao/build.py`) |
 | seoul | Seul, Južna Koreja | seoul | `js/world-seoul.js` (`buildSeoul`; podatki `js/data/seoul.js` iz `tools/seoul/build.py world`, proga iz `build.py track`) |
+| sogeri | Sogeri, Papua Nova Gvineja | sogeri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.sogeri`: kunai trava, tropski gozd v grapi, konglomerat v usekih; vožnja po levi) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | ujarras | Ujarrás, Kostarika | ujarras | `js/world-ujarras.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
