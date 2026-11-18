@@ -2251,20 +2251,20 @@
   }
  },
  "mombasa": {
-  "meshes": 314,
-  "verts": 267329,
-  "instances": 1178,
+  "meshes": 321,
+  "verts": 301419,
+  "instances": 1141,
   "props": 0,
   "crowd": 50,
-  "world": "f373c19",
+  "world": "80e25b9",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "25844fda",
+   "-:MeshLambertMaterial": "9284e625",
    "-:MeshPhongMaterial": "8cb27484",
    "crowd:MeshLambertMaterial": "8ef2b948",
    "flags:MeshLambertMaterial": "bfe5308d",
-   "ao:MeshBasicMaterial": "a4955bd1",
+   "ao:MeshBasicMaterial": "76acb83f",
    "tyremarks:MeshBasicMaterial": "ad9c1e16",
    "roadwear:MeshLambertMaterial": "eecdde75"
   }
