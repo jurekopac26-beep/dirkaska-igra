@@ -13,6 +13,7 @@
 //   node tools/shot.mjs suzuka --m 0 --cas vecer                        (the time of day: jutro, dan (default), vecer, noc)
 //   node tools/shot.mjs --nabor --pred HEAD^1                           (the set the workflow uses: NABOR and the real tracks the change touches)
 //   node tools/shot.mjs spa --m 400 --avto miska --pred main            (--avto <id>: the player's car, as the quick entry's avto=)
+//   node tools/shot.mjs livorno --m 270 --q <key>=<value>               (--q <query>: more of the address's parameters, for a build's temporary switch)
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -30,12 +31,12 @@ const CHANGED = 0.5;   // (a picture counts as changed from this share of change
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
 const CAS = { jutro: 'dawn', dan: 'day', vecer: 'dusk', 'večer': 'dusk', noc: 'night', 'noč': 'night' };
-const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
+const mArg = flag('--m'), tArg = flag('--t'), vreme = flag('--vreme'), avto = flag('--avto'), cas = flag('--cas'), pred = flag('--pred'), extra = flag('--q'), out = path.resolve(flag('--out') || path.join(REPO, 'test-results', 'shots'));
 const root = path.resolve(flag('--root') || process.env.GAME_ROOT || REPO), nabor = has('--nabor'), nizka = has('--nizka');   // (--nizka: the graphics detail NIZKA, as perf.test.mjs measures the phone's load)
 let orient = ['pokonci', 'lezece'].filter(o => has('--' + o)); if (!orient.length) orient = ['pokonci', 'lezece'];
 const ids = args.filter(a => !a.startsWith('--')), bad = args.filter(a => a.startsWith('--'));
 if ((!ids.length && !nabor) || bad.length || (vreme && !/^(suho|dez|dež)$/.test(vreme)) || (cas && !CAS[cas])) {
-  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
+  console.log('usage: node tools/shot.mjs <id …> [--m 1284[,400…]] [--t <s>] [--pokonci] [--lezece] [--vreme suho|dez] [--cas jutro|dan|vecer|noc] [--nizka] [--q <query>] [--pred <ref|folder>] [--root <folder>] [--out <folder>]\n' +
     '       node tools/shot.mjs --nabor [--pred <ref|folder>]' + (bad.length ? '\nunknown: ' + bad.join(' ') : ''));
   process.exit(2);
 }
@@ -85,7 +86,7 @@ async function takeAll(browser, gameRoot, tag) {
   try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', Object.assign({ quality: 'high', shadows: 1, camera: 'chase', weather: 'dry', tod: cas ? CAS[cas] : 'day', season: 'summer' }, nizka ? { quality: 'normal', detail: 'low' } : {}), SIZE[orient[0]], { seed: 11 });
     for (const [id, places] of jobs) {
-      const q = new URLSearchParams({ proga: id, t: String(t != null ? t : places ? 0.5 : 3) }); if (vreme) q.set('vreme', vreme); if (avto) q.set('avto', avto);
+      const q = new URLSearchParams({ proga: id, t: String(t != null ? t : places ? 0.5 : 3) }); if (vreme) q.set('vreme', vreme); if (avto) q.set('avto', avto); if (extra) for (const [k, v] of new URLSearchParams(extra)) q.set(k, v);
       const n0 = errors.length;
       await page.goto(srv.base + '/index.html?' + q);
       await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
