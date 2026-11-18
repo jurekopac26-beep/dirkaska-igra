@@ -45,6 +45,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     turns: [[306.5,28.4],[339.5,-81.9],[-3.3,-349.5],[-88.5,-302]],   // the apexes of Turns 1-4 (their number boards): the two half circles at the ends of the oval
     pit: [-15, -230, 170, -45],   // pit lane on the left of the front straight, inside the oval: [centre offset (negative: left), from, to, the player's box] (metres from the finish line)
     pitRow: [-110, 10],   // the first and the last of the 13 crews' boxes (the garages: RB_LOOK.aguascalientes.pitBox)
+    zaslon: { d: 234, side: 1, off: 16 },   // the big screen (js/world-zaslon.js) on the right by the start (across from the pits), turned towards the cars coming (node tools/zaslon-mesto.mjs aguascalientes)
     walls: [[-60, 700, 1, 0.4, 10], [650, 1390, 1, 0.4, 10], [-60, 700, -1, 4, 10], [650, 1390, -1, 4, 10], [-230, 170, -1, 2.5]],   // [from, to, side, metres past the road's edge, ease]: the outer wall at the asphalt's edge, the inner one past the apron, the pit wall
     maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): a bigger field starts flying, and its column (Race._flyColumn, 4/5 of the lap at most) does not fit the 1340 m oval: its cars would stand on each other
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: the main grandstand outside the front straight, an open block outside Turn 4

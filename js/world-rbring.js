@@ -689,6 +689,7 @@
       sb.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true); }
     // debris fences (chain link on posts) behind the walls and the tyre walls
     const scen = new Chunks(128 * CKF), ban = new GB(true), fenceG = new GB(true);
+    const garZ = [];   // (the garages' middles, LK.pitBox: a world's own scenery, LK.extra, keeps out of them)
     for (const side of [-1, 1]) {
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
@@ -808,8 +809,8 @@
         strip(gl, sAt(q - 0.09), sAt(q + 0.09), base, base + 9, base, base + 9, 0.034, wl);   // the box's divider line
         if (mine) { const sb = sAt(q + 5), cx = T.px[i] + nx * (base + 4.2) + tx * 5, cz = T.pz[i] + nz * (base + 4.2) + tz * 5, bp = T.bayPose(PD[3]);   // (the car stops in its box on the apron, parked straight in front of the garage: Core's BAY; turned to the lane's side, sd)
           out.pitBox = { s: sb, x: cx, z: cz, hd: T.hd[i], tx, tz, nx, nz, lane: p.o, wallO: p.wall, apron0: base, garage0: base + 9, stop: atSf(sb, sd * bp.o), stopO: bp.o, stopA: sd * bp.a }; }
-        (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx, tz, nx, nz, hd: T.hd[i], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) });
-        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = LK.pitFence ? { band: [f0 - 0.1, 0.95, 1.75, 4.4] } : { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
+        { const im = T.idx(s0 + 5); (out.pitBoxes = out.pitBoxes || []).push({ k, s: s0 + 5, ox: oc[0], oz: oc[1], tx: T.tx[im], tz: T.tz[im], nx: sd * T.nx[im], nz: sd * T.nz[im], hd: T.hd[im], base, lane: p.o, wall: p.wall, team: tc, mine, y: hyS(s0 + 5) }); }   // (its frame at its middle, where the garage's door is: Quezaltepeque's lane on a bend)
+        { const f0 = bw(sAt(q + 5)) + F; out.pitBoxes[out.pitBoxes.length - 1].gar = LK.pitFence ? { band: [f0, 0.95, 1.75, 4.4] } : { band: [f0 - 0.06, 3.4, 3.9, 4.7], wall: [f0, 0.02, 3.38, 4.76], jamb: [f0, 4.9, 0.25, 3.4], road: 'jamb' }; }   // (its garage, below, for the renderer's team colours: the band; a door before the dark inside, between the side walls; their fronts)
         crew.set(q, tc);
       }
       T.pitStands = null;   // (no team stands on the pit wall here)
@@ -818,10 +819,10 @@
         for (let q = q0 - 20, acc = 0; q < q1 + 20; q += 2, acc += 2) { const s0 = sAt(q), s1 = sAt(q + 2), o0 = bw(s0) + F, o1 = bw(s1) + F, Q = (s, o, y) => at(s, o, y), ins = at(s0, o0 + 3, 1);
           fenceG.quadO(Q(s0, o0, 0.42), Q(s1, o1, 0.42), Q(s1, o1, 2.6), Q(s0, o0, 2.6), [1, 1, 1], ins, [[acc / 2.5, 0], [(acc + 2) / 2.5, 0], [(acc + 2) / 2.5, 0.9], [acc / 2.5, 0.9]]);
           { const sm = sAt(q + 1); B(sm, bw(sm) + F, -0.3, 2.04, 0.72, 0.22, KB); }
-          if (q % 6 === 0) B(s0, o0, -0.3, 0.09, 3.0, 0.09, PO);
-          if (q % 10 === 0) { const [ex, ez] = atSf(s0, sd * (o0 + 7)); exclPush(ex, ez, 7); CR.exclAdd(ex, ez, 6); } }
+          if (acc % 6 === 0) B(s0, o0 + 0.05, -0.3, 0.09, 3.0, 0.09, PO);   // (the posts just behind the mesh: the banners hang on its face)
+          if (acc % 10 === 0) { const [ex, ez] = atSf(s0, sd * (o0 + 7)); exclPush(ex, ez, 7); CR.exclAdd(ex, ez, 6); } }
       } else {
-      for (let q = q0, k = 0; q < q1; q += 10, k++) {   // the garages (F m past the pit wall, 9 m deep) and the floor above
+      for (let q = pq0 - Math.floor((pq0 - q0) / 10) * 10, k = 0; q < q1; q += 10, k++) {   // the garages (F m past the pit wall, 9 m deep) and the floor above, in step with the crews' boxes (def.pitRow: a garage behind each box)
         const s = sAt(q + 5), f0 = bw(s) + F, tc = crew.get(q), open = tc || (!PD && k % 3 === 1);
         B(s, f0 + 9, -2.5, 10, 6.5, 0.3, WH);                                                     // back wall
         for (const e of [-4.9, 4.9]) B(sAt(q + 5 + e), f0 + 4.5, -2.5, 0.25, 6.5, 9, WH);           // side walls
@@ -830,7 +831,7 @@
         else B(s, f0 + 0.1, 0, 9.4, 3.6, 0.1, SH);                                                 // a shutter
         B(s, f0 + 5.2, 4.4, 10.02, 3.4, 7.8, GLS, WH); glass(s, f0 + 1.28, 5, 4.4, 7.8);           // the glazed floor, set back
         B(s, f0 + 4.4, 7.8, 10.02, 0.45, 10.4, WH, [0.84, 0.85, 0.87]);                             // the roof, overhanging the apron
-        const [ex, ez] = atSf(s, sd * (f0 + 4.5)); exclPush(ex, ez, 12); CR.exclAdd(ex, ez, 10);
+        const [ex, ez] = atSf(s, sd * (f0 + 4.5)); exclPush(ex, ez, 12); CR.exclAdd(ex, ez, 10); garZ.push(ex, ez);
       }
       { const qm = (q0 + q1) / 2 + 20, s = sAt(qm), f0 = bw(s) + F, i = T.idx(s);   // race control: a glazed tower over the middle, its name to the straight
         B(s, f0 + 5, 8.2, 12, 9, 10, [0.86, 0.87, 0.88], WH); B(s, f0 + 0.6, 12, 12.1, 4.4, 1.2, GLS); B(s, f0 + 5, 17.2, 13, 0.5, 11, WH); glass(s, f0 - 0.02, 6, 12, 16.4);
@@ -1387,7 +1388,8 @@
     }
 
     const PK = { root, tex, scen, exclPush, CR, out, matV }, parkSt = PARK ? cpPark(PK) : null;   // (Crystal Palace: the lakes, the sculptures, the terraces, the mast, the houses)
-    const xSt = LK.extra ? LK.extra({ root, tex, scen, exclPush, excluded, CR, out, matV }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
+    const xScen = garZ.length ? Object.assign(Object.create(scen), { get(x, z) { for (let k = 0; k < garZ.length; k += 2) if ((x - garZ[k]) ** 2 + (z - garZ[k + 1]) ** 2 < 49) return xScen.off || (xScen.off = new GB()); return scen.get(x, z); } }) : scen;   // (not where a garage stands: Batangas' OSM pit building, its front 0.8 m before the player's garage; the piece is built and dropped)
+    const xSt = LK.extra ? LK.extra({ root, tex, scen: xScen, exclPush, excluded, CR, out, matV }) : null;   // (a world's own scenery, before the crowds and the trees keep clear of it: Silkeborg's mounds, buildings, fences)
 
     /* ---- spectators on the grass (the hill between Turns 3 and 4, the infield), fans along the fences, a few everywhere ---- */
     {

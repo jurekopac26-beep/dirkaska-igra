@@ -89,6 +89,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck], a cyclist every so many metres each way
     traffic: { mix: [0.45, 0.2, 0.15, 0.08, 0.12], bike: 4000 },
     police: { label: 'POLISY', band: '#1e5aa8', text: '#ffffff' }, escTo: 'Do ravnine',
+    hudSigns: [[1916, 1938, 'bend']],   // the corner sign (Core hudSigns: a track's own bends): the one bend of the road sharp enough, 98 m, by the Queen of Isalo (the other bends gentler than 250 m: no corner, no fast bend of 0.35 rad)
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
 %(names)s
