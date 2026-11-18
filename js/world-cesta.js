@@ -460,7 +460,8 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
        SC.asfalt(RB, barva)           // the strips: a few meshes for a clone of the asphalt's material
        SC.predmeti(get)               // a row of orange posts across each opening on the fence line and the paint; returns the posts' count
      o: tla(x, z) the ground's height; rob(i, side, d) the verge's height above the road at the sample i, d metres from the centre line;
-     ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE) */
+     ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE); barva: false leaves
+     the mouths without paint (a country whose rules were not found: no stop line and no triangles) */
   function stranske(T, ceste, o) {
     o = o || {};
     const N = T.N, ds = T.ds, L = T.len, px = T.px, pz = T.pz, nx = T.nx, nz = T.nz, hy = T.hy, tla = o.tla, rob = o.rob || null, ton = o.ton || (() => 0.8), odprta = !!o.odprta;
@@ -681,7 +682,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
           for (let j = 0; j < POST.length; j++) { cyl(g, x, y, z, 0.1, POST[j][0], 6, POST[j][1], j === POST.length - 1 ? OR : null); y += POST[j][0]; }
           posts++; stebricki.push(x, y0, z, ri);
         }
-        if (!r.razred) continue;
+        if (!r.razred || o.barva === false) continue;
         // the paint on the apron (the first two rows), 1.5 cm over the strip
         const AP = (e, t) => { const cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc), f = cc - k, a = mix3(r.V[0][k], r.V[0][k + 1], f), b = mix3(r.V[1][k], r.V[1][k + 1], f); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
         const tt = (x) => Math.min(0.97, x / r.dp), la = -(r.hw - 0.15), lb = r.eno ? r.hw - 0.15 : -0.1;
