@@ -4094,8 +4094,8 @@
       const MC = mk && typeof MakadamCesta !== 'undefined' && MakadamCesta.has(T), sun = T.def.look && T.def.look.sunOff;
       const offs = MC ? [-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1].map(f => f * w) : [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
       const Pr = MC ? (i, o) => Pt(i, o, 0.02 + MakadamCesta.y(T, i * T.ds, o)) : (i, o) => Pt(i, o, 0.02);
-      const shade = mk ? (i, o) => { const rl = T.rl[i], k = (0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5)) * (MC ? MakadamCesta.lit(T, i, o, sun) : 1); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
-        : (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
+      const shade = mk ? (i, o) => { const rl = (T.gl || T.rl)[i], k = (0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5)) * (MC ? MakadamCesta.lit(T, i, o, sun) : 1); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
+        : (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
       const yel = [0.98, 0.74, 0.1], wht = [0.95, 0.95, 0.92], gc = [0.92, 0.84, 0.78], sw = 0.9;
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       // verge cross-section per sample and side: [offset, height above the road] from the gravel strip out past the barrier, lifted onto the ground where the slope starts to rise

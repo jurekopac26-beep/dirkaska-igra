@@ -539,9 +539,9 @@
       const tileL = 7, grav = [1.2, 1.25, 1.3], pave = [0.84, 0.8, 0.77];   // (grav: the esker's pale, grey-beige sand and gravel over the shared makadam picture)
       // (the gravel's relief, js/makadam-cesta.js: on the gravel the road also every 0.2 w across, its ruts and tilt in the mesh; the user, 13. 11. 2026)
       const MC = typeof MakadamCesta !== 'undefined' && MakadamCesta.has(T), sun = def.look && def.look.sunOff, RX = [-0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8];
-      const cols = (i, ex) => { const wi = WA[i], rl = clamp(T.rl[i], -wi + 2.3, wi - 2.3), c = [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; return ex ? c.concat(RX.map(f => f * wi)).sort((a, b) => a - b) : c; };
+      const cols = (i, ex) => { const wi = WA[i], rl = clamp((T.gl || T.rl)[i], -wi + 2.3, wi - 2.3), c = [-wi, -wi + 0.5, rl - 1.7, rl - 1.2, rl - 0.7, rl - 0.25, rl + 0.25, rl + 0.7, rl + 1.2, rl + 1.7, wi - 0.5, wi]; return ex ? c.concat(RX.map(f => f * wi)).sort((a, b) => a - b) : c; };
       const Pr = MC ? (i, o) => Pt(i, o, 0.02 + MakadamCesta.y(T, i * ds, o)) : (i, o) => Pt(i, o, 0.02);
-      const shade = (i, o) => { const a = Math.abs(o - T.rl[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o), wi = WA[i], s = SF[i];
+      const shade = (i, o) => { const a = Math.abs(o - (T.gl || T.rl)[i]), trk = sstep(0.45, 0.72, a) * sstep(1.45, 1.18, a), ao = Math.abs(o), wi = WA[i], s = SF[i];
         if (s === 5) { let k = 1.0 - 0.2 * trk + 0.06 * sstep(0.5, 0.2, a);
           const outer = Math.sign(o) === -Math.sign(T.k[i]) ? sstep(1 / 400, 1 / 60, Math.abs(T.k[i])) : 0; k += (0.06 + 0.08 * outer) * sstep(wi - 1.3 - 1.4 * outer, wi - 0.3, ao) * (1 - trk);
           k *= 0.93 + 0.12 * P.n2(T.px[i] * 0.7 + 50, T.pz[i] * 0.7); if (MC) k *= MakadamCesta.lit(T, i, o, sun); return [grav[0] * k, grav[1] * k, grav[2] * k]; }

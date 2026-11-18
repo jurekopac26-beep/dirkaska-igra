@@ -467,6 +467,12 @@
         add(y0, [want, at(!right)]); add(y0, by.sort(near)); add(y1, [x - 3 - w, x + f.width + 3].sort(near));
         if (y2 <= fb.height - 2) add(y2, [want, at(!right)].concat(by).sort(near));
       }
+      // last, with none of those (the weather's row right over a finish flag low in a narrow card): just under what lies over its place
+      for (const s of [1, 0.86, 0.74]) {
+        const w = w0 * s, h = h0 * s, want = right ? x + f.width + 3 - w : x - 3, top = f.top - fb.top - 3;
+        K.forEach(k => { const y = k[3] + h + 1; if (k[0] < want + w && k[1] > want && k[3] > top - h && y <= fb.height - 2)
+          [want, right ? x - 3 : x + f.width + 3 - w].forEach(l => { if (l >= 4 && l + w <= W - 4 && !K.some(q => l < q[1] && l + w > q[0] && y - h < q[3] && y > q[2])) out.push([s, l, y, w, h]); }); });
+      }
       return out;
     };
     const rect = (a, m) => [a[1] - m, a[1] + a[3] + m, a[2] - a[4] - m, a[2] + m];   // (a place's box, as keep's: left, right, top, bottom)

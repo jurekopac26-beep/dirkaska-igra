@@ -676,15 +676,15 @@ try {
     // a pin tapped (Bâlea): its track's card at once; the card's cross: the Earth alone. (Marrakesh until 9. 11. 2026: awaiting the user's
     // choice (pending), behind NEUPORABNO, not on this Earth)
     await page.click('.thead .globe'); await zem(page, 1);
-    // (a pin on top at its own place, Bâlea's if it is: from afar a country's name can lie over a pin and take the tap, as Albania's over Bâlea's since the new tracks, 11. 11. 2026)
-    const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(); return [r.left, r.top, p.dataset.t];');
-    await page.mouse.click(pin[0], pin[1]);   // (its country with one track: two steps, else three)
-    await page.waitForFunction(() => MenuZemlja.depth() >= 2 && MenuZemlja._R() && !MenuZemlja._R().moving && !document.getElementById('menu-host').shadowRoot.querySelector('.zem-load'), null, { timeout: 20000 });
-    const p1 = await earth(), pone = await ev(page, 'const e = [...root.querySelectorAll(".zl.c")].find(e => e.dataset.c === MenuZemlja._R().sel); return !!e && !e.querySelector("small");');
+    // (a pin on top at its own place, Bâlea's if it is: from afar a country's name can lie over a pin and take the tap, as Albania's over Bâlea's since the new tracks, 11. 11. 2026;
+    // its country's one track: two steps, else three)
+    const pin = await ev(page, 'const on = (e) => { const r = e.getBoundingClientRect(), t = root.elementsFromPoint(r.left, r.top)[0]; return !!t && e.contains(t); }, ps = [...root.querySelectorAll(".zp")].filter(e => +e.style.opacity > 0.5 && on(e)), p = ps.find(e => e.dataset.t === "balea") || ps[0], r = p.getBoundingClientRect(), cty = (d) => { const f = (d.en || {}).name || d.name; return f.slice(f.lastIndexOf(", ") + 2); }, k = cty(Core.TRACKS.find(d => d.id === p.dataset.t)), one = Core.TRACKS.filter(d => !d.test && !d.variantOf && cty(d) === k).length === 1; return [r.left, r.top, p.dataset.t, one ? 2 : 3];');
+    await page.mouse.click(pin[0], pin[1]); await zem(page, pin[3]);
+    const p1 = await earth();
     await page.click('.zem-card [data-x]'); await zem(page, 1);
     const p2 = await earth();
-    T.check(`a pin tapped (${pin[2]}): its track's card at once (its country chosen; a country with one track: two steps, else three); the card's cross: the Earth alone again`, p1.R.tc === pin[2] && !!p1.R.sel && (pin[2] !== 'balea' || p1.R.sel === 'Romania') && p1.card && p1.card.sub === p1.R.sel && p1.depth === (pone ? 2 : 3) && !p2.card && !p2.R.sel && p2.depth === 1,
-      JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub, p1.depth, pone], p2: [p2.R.sel, p2.depth, !!p2.card] }));
+    T.check(`a pin tapped (${pin[2]}): its track's card at once (its country chosen; its one track: two steps, else three); the card's cross: the Earth alone again`, p1.R.tc === pin[2] && !!p1.R.sel && (pin[2] !== 'balea' || p1.R.sel === 'Romania') && p1.card && p1.card.sub === p1.R.sel && p1.depth === pin[3] && !p2.card && !p2.R.sel && p2.depth === 1,
+      JSON.stringify({ p1: [p1.R.tc, p1.R.sel, p1.card && p1.card.title, p1.card && p1.card.sub, p1.depth], p2: [p2.R.sel, p2.depth, !!p2.card] }));
     // a country with one track (Belgium: Spa): its track's card at once, with its picture (the user, 12. 11. 2026: »ni potrebe da kliknes
     // bathurst ce imamo vedno samo 1 progo na 1 drzavo«); the card's Back: the Earth alone (no country list between)
     await ev(page, 'root.querySelector(".zl.c[data-c=\\"Belgium\\"]").click();'); await zem(page, 2);
@@ -1208,7 +1208,7 @@ try {
         if (side && m.names) {   // (on its side, camera 1: an open road's map turned in its card, every card its size)
           const open = await page.evaluate((id) => { const d = Core.TRACKS.find(x => x.id === id), R = (window.ROUTES || {})[id]; return !d.test && !d.rally && !d.descent && !!d.open && !!(R && R.open); }, id);
           if (m.tall !== open) tallBad.push(id);
-          if (m.tall) { talls.push(id); if (m.hit.length) hits.push(id + ': ' + m.hit.join(' ')); if (!/^rotate\(-90 /.test(m.rot || '')) shape.push(id + ' not turned'); }
+          if (m.tall) { talls.push(id); if (m.hit.length) hits.push(id + ': ' + m.hit.join(' ')); if (!/^rotate\((-90|-?180) /.test(m.rot || '')) shape.push(id + ' not turned'); }
           if (Math.abs(m.st.h - 236 * g.k) > 1 || Math.abs(m.st.w - 384 * g.k) > 1) shape.push(id);
         }
         if (m.names) { maps++; if (!inPic(m.line, m.pic, 6) || !m.names.every(n => inPic(n, m.pic, 1))) cut.push(m.name); if (m.land && !(side && m.tall ? along(m.land, m.pic) : covers(m.land, m.pic))) bare.push(m.name + (side && m.tall ? ' ' + across(m.land, m.pic).toFixed(2) : '')); if (m.names.some(n => m.keep.some(k => over(n, k)))) under.push(m.name); if (m.names.length === 2 && share(...m.names) > (w === 640 ? 0.15 : 0)) close.push(m.name + ' ' + share(...m.names).toFixed(2)); }

@@ -59,7 +59,8 @@ function own(T, i, sd) {
 }
 
 // 2. Tianmen at 190 m (bends 55 and 56): the lower leg's run-off on the right ends ~1 m short of the middle towards the upper leg
-const def = C.TRACKS.find(d => d.id === 'tianmen'), T = new C.Track(def), S0 = T.startS, i190 = T.idx(S0 + 190);
+// (S0 the old start line: since #698, 15. 11. 2026, the start is 614 m further on, on a straight; bends 55 and 56 the same places on the road)
+const def = C.TRACKS.find(d => d.id === 'tianmen'), T = new C.Track(def), S0 = T.startS - 614, i190 = T.idx(S0 + 190);
 const p190 = pastMiddle(T, i190);
 check('Tianmen at 190 m: the run-off on the right ends 0.5-2 m short of the middle towards the upper leg (still a run-off)',
   p190 && p190[2] > 0 && p190[0] < -0.5 && p190[0] > -2 && T.br[i190] > T.w + 4,

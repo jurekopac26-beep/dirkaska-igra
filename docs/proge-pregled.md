@@ -13,19 +13,19 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 <!-- meritve:začetek -->
 | Proga | `id` | Vrsta | Dolžina | °/km | Ravnine | Lasnice | Višina |
 |---|---|---|---|---|---|---|---|
-| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,8 km | 1347 | 22 % | 16 | +489 m |
+| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
 | Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
 | Santo Antão, Zelenortski otoki | `santoantao` | odprta cesta | 5,0 km | 936 | 27 % | 6 | −336 m |
+| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 4,2 km | 912 | 35 % | 9 | +324 m |
 | Kotor, Črna gora | `kotor` | odprta cesta | 5,0 km | 899 | 31 % | 13 | +253 m |
-| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
 | Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
-| Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
+| Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
@@ -39,7 +39,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
 | Seul, Južna Koreja | `seoul` | odprta cesta | 2,5 km | 501 | 44 % | 0 | −77 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
-| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 5,0 km | 406 | 48 % | 1 | +134 m |
+| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 4,7 km | 405 | 49 % | 1 | +119 m |
 | Medeu, Kazahstan | `medeu` | odprta cesta | 5,0 km | 400 | 55 % | 2 | +297 m |
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
