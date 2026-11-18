@@ -4,8 +4,22 @@
 const crypto = require('crypto');
 
 const DT = 1 / 120;
-const trackIds = (C) => C.TRACKS.filter(d => !d.test).map(d => d.id);   // every real track the game has (a new track file is tested
-// automatically); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
+// PROGE=seoul,spa: only these of the real tracks (GitHub's short round of a pull request that changes only tracks: tests/lib/krog.js,
+// .github/workflows/tests.yml); without it every one. A name that is no real track of the game is an error (no test passes having run on
+// nothing), and so is --update with PROGE: the references would keep only these tracks, the others' lost
+const progeEnv = () => (process.env.PROGE || '').split(',').map(s => s.trim()).filter(Boolean);
+function izbrane(ids) {
+  const P = progeEnv();
+  if (!P.length) return ids;
+  if (process.argv.includes('--update')) throw new Error(`PROGE=${P.join(',')} with --update: the references would keep only these tracks (update without PROGE)`);
+  const tuje = P.filter(id => !ids.includes(id));
+  if (tuje.length) throw new Error('PROGE: not a real track of the game: ' + tuje.join(', '));
+  return ids.filter(id => P.includes(id));
+}
+// a check's least number of tracks (the whole list came back): with PROGE exactly as many as named (izbrane: each a real track)
+const najmanj = (n) => progeEnv().length || n;
+const trackIds = (C) => izbrane(C.TRACKS.filter(d => !d.test).map(d => d.id));   // every real track the game has (a new track file is tested
+// automatically; PROGE: only those); not the test tracks (test: true): frozen until they are deleted before Google Play, nothing is checked on them (CLAUDE.md »Testne proge«)
 const PHYSICS = ['cs'];   // (one driving physics: Circuit Superstars)
 
 // Park-Miller generator (the same one the physics comparisons used during development)
@@ -57,7 +71,9 @@ const SETUPS = {
 // wrecked car drives its whole first lap slowly and reaches its box too late for the repair in the 96 s; from 9 s, before the double left, it is repaired at 89 s; Izoard's muscle car 4: from 5 to 6.5 s the same as Bâlea's rally; Sa Calobra rally 5: at 6 s
 // the left lock only dents the car on the stone parapet, no panel off; its muscle car 4: the same at 6 s, no panel off; Abu Dabi rally 6.5: at 6 s the left lock
 // only dents the car on the barrier by the main straight, no panel off)
-const CRASH_AT = { 'abudabi/rally': 6.5, katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4 };
+// (Chapman's Peak's hills behind the barrier line, def.hills: from 6 s the left lock of the rally car and the prototype drives up the hill by the
+// start, no damage; tried from 4 s on in half seconds: rally 5.5, prototype 5)
+const CRASH_AT = { 'abudabi/rally': 6.5, katu: 4.5, 'balea/rally': 6.5, toronto: 6.5, london: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 5, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, 'chapman/rally': 5.5, 'chapman/lm': 5 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
@@ -118,4 +134,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

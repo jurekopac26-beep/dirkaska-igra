@@ -354,12 +354,14 @@
   }
   // unit trees (height 1, instances scale them): 0 Norway spruce, 1 Scots pine (the ridge's old pines: a long bare trunk, grey below and orange up high, a deep
   // uneven crown of needle cushions in its top 40 %), 2 silver birch, 4 a linden or maple of the streets and yards; far: the plainer ones far from the road (one lump)
+  const { AB, aStar, aTier } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
   function hjTreeGeo(kind, far) {
     const g = new GB(), R = rng(8230 + kind * 7 + (far ? 1 : 0));
-    if (kind === 0) { const col = [0.085, 0.175, 0.11], tip = [0.17, 0.3, 0.19], rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = false;
-      if (far) { starCone(g, 0, 0.02, 0, 0.3, 0.5, 4, col, tip, 0.2, 0.05); cone(g, 0, 0.45, 0, 0.16, 0.55, 3, col, tip, 0.9); }
-      else { [[0.02, 0.31, 0.36, 0.06], [0.3, 0.23, 0.33, 0.05], [0.55, 0.15, 0.28, 0.04]].forEach(([y, r, h, dr], k) => starCone(g, 0, y, 0, r, h, 4, col, tip, k * 0.7, dr)); cone(g, 0, 0.78, 0, 0.06, 0.22, 3, col, tip, 0.4); }
-      API.ROCK_SMOOTH = rs; }
+    if (kind === 0) {   // (the spruce soft, in the kit A)
+      const b = new AB(), col = [0.085, 0.175, 0.11], tip = [0.17, 0.3, 0.19];
+      if (far) { aStar(b, 0, 0.02, 0, 0.3, 0.5, 4, col, tip, 0.2, 0.05); aTier(b, 0, 0.45, 0, 0.16, 0.55, 3, col, tip, 0.9); }
+      else { [[0.02, 0.31, 0.36, 0.06], [0.3, 0.23, 0.33, 0.05], [0.55, 0.15, 0.28, 0.04]].forEach(([y, r, h, dr], k) => aStar(b, 0, y, 0, r, h, 4, col, tip, k * 0.7, dr)); aTier(b, 0, 0.78, 0, 0.06, 0.22, 3, col, tip, 0.4); }
+      return b.geometry(); }
     else if (far) {   // (the plain ones, over 50 m from the road)
       if (kind === 1) { hjTrunk(g, -0.02, 0.8, 0.017, 0.009, [0.38, 0.32, 0.27], [0.7, 0.42, 0.22]); hjLump(g, 0.02, 0.84, 0, 0.19, 0.42, [0.14, 0.26, 0.12], R, 5); }
       else if (kind === 2) { hjTrunk(g, -0.02, 0.62, 0.018, 0.01, [0.3, 0.28, 0.26], [0.9, 0.9, 0.86]); hjLump(g, 0, 0.68, 0, 0.17, 1.4, [0.27, 0.42, 0.13], R, 5, 0.7); }

@@ -20,7 +20,7 @@
   const SN_AT = { num: 0, brake: 0, ban: 3, rbr: 3, spielberg: 4 };   // atlas cells: the braking boards (no turn numbers), the banners
   const SN_SHIRTS = [[0.0, 0.52, 0.25], [0.99, 0.84, 0.0], [0.89, 0.11, 0.14], [0.95, 0.95, 0.93], [0.12, 0.18, 0.36], [0.3, 0.55, 0.85], [0.86, 0.32, 0.12], [0.56, 0.24, 0.5],
     [0.14, 0.14, 0.16], [0.92, 0.6, 0.12], [0.2, 0.62, 0.62], [0.95, 0.95, 0.93]];   // the fans' shirts: green, yellow and red, white, navy, light blue, orange, purple, black, saffron, teal
-  const SN = Object.assign([[0.0, 0.52, 0.25], [0.99, 0.84, 0.0], [0.89, 0.11, 0.14]], { vert: true });   // the Senegalese flag: green, yellow, red, vertical (World.rbFlags: cols.vert; its star left out)
+  const SN = { up: [[0.0, 0.52, 0.25], [0.99, 0.84, 0.0], [0.89, 0.11, 0.14]] };   // the Senegalese flag: green, yellow, red, vertical (World.flagMesh's upright bands; its star left out)
 
   // the savanna's ground under the vertex colours (256 px = 14 m, tileable as World's grass picture it takes the place of): dry straw-coloured
   // grass in tufts over the reddish sandy soil, bare patches between them; the vertex colours make the fields, the scrub and the paddock

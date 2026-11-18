@@ -16,7 +16,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('17'), K = D.K;
 const T = new Core.Track(Core.TRACKS.find(t => t.id === 'troisrivieres'));
-check('17: on Trois-Rivières, a real track', D.track === 'troisrivieres' && !Core.TRACKS.find(t => t.id === 'troisrivieres').test);
+check('17: on Trois-Rivières (a test track since 5. 11. 2026: the mission stays there until the user moves it)', D.track === 'troisrivieres' && !!Core.TRACKS.find(t => t.id === 'troisrivieres'));
 const o = D.opts(D);
 check('its race: alone, one lap, the truck (TITAN\'s physics on a copy, its own limiter), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel && o.playerModel.vLim === K.VMAX && o.playerModel !== Core.MODELS.find(m => m.id === 'titan'));
 

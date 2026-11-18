@@ -7,3 +7,7 @@ __pycache__/
 
 # predogled prog: prenesen OSM, višine, scene in slike
 tools/predogled/podatki/
+
+# ostanki spajanja (git merge, patch): ne gredo v git
+*.orig
+*.rej

@@ -54,7 +54,7 @@
   const feat = {
     id: 'izzivi', STARS, starsOf, carSpeeds, plan,
     on: false, L: null, run: null, objs: null, prev: 0, air: null,
-    fits: (race, ctx) => !ctx.on && !ctx.mis && !ctx.school && !ctx.nv && !ctx.chal && !ctx.prvi && !!race.player && !race.track.def.test,
+    fits: (race, ctx) => !ctx.on && !ctx.mis && !ctx.school && !ctx.nv && !ctx.chal && !ctx.prvi && !!race.player && !race.track.def.test && !race.en,   // (not in the endless drive: its own points, js/neskoncna.js)
     begin(race, ctx) {
       this.clear();
       this.on = Z.on('izzivi', 'zbIzz') && this.fits(race, ctx);

@@ -35,7 +35,8 @@
     const e = mesh(gBox(t, L, t), M(c, o), (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
     e.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / L, dy / L, dz / L)); return e;
   }
-  let rs = 1; const rnd = () => { rs = (rs * 16807) % 2147483647; return rs / 2147483647; }; const seed = (s) => { rs = s; };
+  let rs = 1, NB = 0; const rnd = () => { rs = (rs * 16807) % 2147483647; return rs / 2147483647; }; const seed = (s) => { rs = s; NB = 0; };
+  const hash32 = (a) => { let h = Math.imul((a | 0) ^ 0x9e3779b9, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; return h >>> 0; };   // (a person's build, as in the game)
   const pick = (a) => a[Math.floor(rnd() * a.length)];
 
   // canvas textures (TV picture, pit board, signs)
@@ -63,6 +64,7 @@
   function glow(r, col, op) { const s = new THREE.Mesh(new THREE.CircleGeometry(r, 16), new THREE.MeshBasicMaterial({ map: puffTex(), color: col, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending })); s.rotation.x = -Math.PI / 2; s.position.y = 0.03; return s; }
 
   /* ---------------- človek ----------------
+     Telo kot v igri (js/world-ljudje.js, person; docs/ljudje-grafika.md): obroči s šestimi ali štirimi stranicami, postave samo v širini in globini.
      1,78 m, obrnjen proti lokalni +z (levo +x). Sklepi: boki (višina, nagib), trup, glava, rame (z: vstran, x: naprej), komolci, kolki, kolena.
      o: shirt, pants, skin, hair ('short' | 'long' | 'bald' | 'pony'), hat ('cap' | 'helmet' | 'hard' | 'beanie' | 'police' | 'fire'), hatCol, long (rokavi),
      shorts, vest (barva odsevnega jopiča), stripes, shoes, gloves, scale, kid */
@@ -70,51 +72,179 @@
   const HAIR = [0x2a1d14, 0x4a2f1c, 0x7a5532, 0xb08850, 0x8a8a88, 0x15110e];
   const SHIRT = [0xd23a2c, 0x2f63c9, 0xf0c22e, 0xefefea, 0x2f9a48, 0xf07a1c, 0x262a33, 0x8a3b8c, 0x22848f, 0xb8bcc4, 0x7c4a2e, 0x31406e];
   const PANTS = [0x2f3f63, 0x1d1f25, 0x5b5040, 0x47494f, 0x6a6f78, 0x3a4a3a];
+  const HATX = {};   // (the game's further hats, World.peopleKit: none in the mock-ups)
+  // the builds: multipliers of widths and depths (sw shoulders, ww waist, hw hips, cd chest depth, bd belly depth, lt legs, ar arms, th thighs)
+  const BUILDS = {
+    avg:    { sw: 1.00, ww: 1.00, hw: 1.00, cd: 1.00, bd: 1.00, lt: 1.00, ar: 1.00, th: 1.00 },
+    slim:   { sw: 0.94, ww: 0.86, hw: 0.94, cd: 0.90, bd: 0.86, lt: 0.88, ar: 0.88, th: 0.92 },
+    stocky: { sw: 1.05, ww: 1.20, hw: 1.10, cd: 1.10, bd: 1.34, lt: 1.10, ar: 1.08, th: 1.10 },
+    broad:  { sw: 1.13, ww: 1.02, hw: 1.00, cd: 1.10, bd: 1.00, lt: 1.06, ar: 1.12, th: 1.04 },
+    small:  { sw: 0.90, ww: 0.90, hw: 0.92, cd: 0.92, bd: 0.92, lt: 0.90, ar: 0.90, th: 0.92 },
+    curvy:  { sw: 0.90, ww: 0.82, hw: 1.18, cd: 1.08, bd: 0.92, lt: 0.95, ar: 0.86, th: 1.12 },
+    kid:    { sw: 0.96, ww: 1.08, hw: 1.00, cd: 1.12, bd: 1.24, lt: 1.14, ar: 1.14, th: 1.10 },
+  };
+  // triangles by colour, each turned away from a point inside its part; to(): one mesh per colour on a joint (baked like any part)
+  function Tri() {
+    const T = new Map();
+    const tri = (col, a, b, c, ins) => {
+      if (col == null) return;
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      if (nx * nx + ny * ny + nz * nz < 1e-14) return;
+      const mx = (a[0] + b[0] + c[0]) / 3 - ins[0], my = (a[1] + b[1] + c[1]) / 3 - ins[1], mz = (a[2] + b[2] + c[2]) / 3 - ins[2];
+      let L = T.get(col); if (!L) T.set(col, L = []);
+      if (nx * mx + ny * my + nz * mz >= 0) L.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
+      else L.push(a[0], a[1], a[2], c[0], c[1], c[2], b[0], b[1], b[2]);
+    };
+    return {
+      tri,
+      quad(col, a, b, c, d, ins) { tri(col, a, b, c, ins); tri(col, a, c, d, ins); },
+      to(parent) {
+        for (const [col, L] of T) { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(L, 3)); g.computeVertexNormals(); parent.add(mesh(g, lam(col))); }
+        T.clear(); return parent;
+      },
+    };
+  }
+  // a ring's points, counter-clockwise from the left (+x): n 6 a hexagon with flat front and back (a: how wide they are), n 4 a rectangle (wb: its
+  // back's half-width); sides (j: from point j to j + 1) n 6: 0 front-left, 1 front, 2 front-right, 3 back-right, 4 back, 5 back-left; n 4: 0 front,
+  // 1 right, 2 back, 3 left
+  function ring(r, n) {
+    const y = r.y, w = r.w, d = r.d, cx = r.x || 0, cz = r.z || 0;
+    if (n === 4) { const wb = r.wb != null ? r.wb : w; return [[cx + w, y, cz + d], [cx - w, y, cz + d], [cx - wb, y, cz - d], [cx + wb, y, cz - d]]; }
+    const a = r.a != null ? r.a : 0.6, db = r.db != null ? r.db : d;
+    return [[cx + w, y, cz], [cx + a * w, y, cz + d], [cx - a * w, y, cz + d], [cx - w, y, cz], [cx - a * w, y, cz - db], [cx + a * w, y, cz - db]];
+  }
+  // bands between rings (col(band, side) -> a colour, or null: left out); o.apex [x, y, z] with o.apexCol(side): a fan up from the last ring;
+  // o.cap: a flat lid on the last ring (its colour)
+  function loft(B, rings, n, col, o) {
+    o = o || {};
+    const R = rings.map(r => ring(r, n)), C = rings.map(r => [r.x || 0, r.y, r.z || 0]);
+    for (let b = 0; b + 1 < R.length; b++) {
+      const ins = [(C[b][0] + C[b + 1][0]) / 2, (C[b][1] + C[b + 1][1]) / 2, (C[b][2] + C[b + 1][2]) / 2];
+      for (let j = 0; j < n; j++) { const c = col(b, j); if (c != null) B.quad(c, R[b][j], R[b][(j + 1) % n], R[b + 1][(j + 1) % n], R[b + 1][j], ins); }
+    }
+    const L = R[R.length - 1], cl = C[C.length - 1];
+    if (o.apex) for (let j = 0; j < n; j++) B.tri(o.apexCol(j), L[j], L[(j + 1) % n], o.apex, cl);
+    if (o.cap != null) for (let j = 1; j + 1 < n; j++) B.tri(o.cap, L[0], L[j], L[j + 1], [cl[0], cl[1] - 0.05, cl[2]]);
+    return B;
+  }
+  // a band from a six-sided ring (below) to a four-sided one (above): ten triangles (the shoulders' slope up to the neck)
+  function band64(B, r6, r4, col) {
+    const S = ring(r6, 6), Nq = ring(r4, 4), ins = [((r6.x || 0) + (r4.x || 0)) / 2, (r6.y + r4.y) / 2, ((r6.z || 0) + (r4.z || 0)) / 2];
+    const [L, FL, FR, R, BR, BL] = S, [nFL, nFR, nBR, nBL] = Nq;
+    B.quad(col, FL, FR, nFR, nFL, ins); B.quad(col, BR, BL, nBL, nBR, ins);
+    B.tri(col, FR, R, nFR, ins); B.tri(col, R, nBR, nFR, ins); B.tri(col, R, BR, nBR, ins);
+    B.tri(col, BL, L, nBL, ins); B.tri(col, L, nFL, nBL, ins); B.tri(col, L, FL, nFL, ins);
+    return B;
+  }
+  const all = (c) => () => c, BACK6 = (j) => j >= 3;
+  const COVER = new Set(['cap', 'beanie', 'helmet', 'hard', 'fire', 'scarf', 'veil', 'bucket', 'straw', 'flat', 'police']);   // (hats that hide the crown: no crown under them; a new hat of HATX that does: its name here)
+  const HATY = { cap: 0.218, bucket: 0.21, straw: 0.229, flat: 0.232 };   // (a hat whose lower edge is above 0.19: the skull's band goes up to it)
   function person(o) {
     o = o || {};
+    // the colours: the same random choices in the same order as the boxes' figure had (the scenes stay as they were)
     const skin = o.skin != null ? o.skin : pick(SKIN), shirt = o.shirt != null ? o.shirt : pick(SHIRT), pants = o.pants != null ? o.pants : pick(PANTS);
     const hair = o.hairCol != null ? o.hairCol : pick(HAIR), shoes = o.shoes != null ? o.shoes : 0x24262b, long = !!o.long, hands = o.gloves != null ? o.gloves : skin;
-    const root = new THREE.Group(), P = { root, o, sh: [], el: [], hand: [], hp: [], kn: [] };
-    root.scale.setScalar((o.scale || 0.97) * (o.kid ? 0.62 : 1));
+    const root = new THREE.Group(), P = { root, o, sh: [], el: [], hand: [], hp: [], kn: [] }, lite = !!o.lite, kid = !!o.kid;   // (lite: the grandstand's crowd, fewer parts)
+    root.scale.setScalar((o.scale || 0.97) * (kid ? 0.62 : 1));
     const hips = P.hips = new THREE.Group(); hips.position.y = 0.92; root.add(hips);
-    hips.add(box(0.33, 0.18, 0.2, pants, 0, 0, 0));
     const torso = P.torso = new THREE.Group(); torso.position.y = 0.06; hips.add(torso);
-    torso.add(tbox(0.31, 0.41, 0.5, 0.2, 0.225, shirt, 0, -0.02, 0));
-    if (o.vest != null) {   // a high-visibility vest over the shirt, two reflective bands
-      torso.add(tbox(0.335, 0.43, 0.4, 0.225, 0.245, o.vest, 0, 0.04, 0));
-      for (const y of [0.13, 0.27]) torso.add(tbox(0.345, 0.345 + (0.43 - 0.335) * (y + 0.035) / 0.4, 0.04, 0.235, 0.25, o.stripes != null ? o.stripes : 0xd9dde2, 0, y, 0, { mat: { emissive: 0x222222 } }));
-    }
-    if (o.belt) torso.add(box(0.33, 0.05, 0.215, o.belt, 0, 0.0, 0));
-    torso.add(box(0.1, 0.08, 0.1, skin, 0, 0.53, 0));
     const head = P.head = new THREE.Group(); head.position.y = 0.56; torso.add(head);
-    if (o.kid) head.scale.setScalar(1.22);
-    head.add(tbox(0.19, 0.175, 0.23, 0.21, 0.2, skin, 0, 0, 0));
     const hs = o.hat ? null : (o.hair || pick(['short', 'short', 'short', 'long', 'bald', 'pony']));
-    if (hs && hs !== 'bald') { head.add(box(0.205, 0.06, 0.215, hair, 0, 0.235, -0.005)); head.add(box(0.2, hs === 'long' ? 0.3 : 0.14, 0.045, hair, 0, hs === 'long' ? 0.1 : 0.165, -0.1));
-      if (hs === 'pony') head.add(box(0.06, 0.16, 0.06, hair, 0, 0.12, -0.14)); }
-    if (hs === 'bald') head.add(box(0.2, 0.05, 0.05, hair, 0, 0.12, -0.1));
     const hc = o.hatCol != null ? o.hatCol : pick(SHIRT);
-    if (o.hat === 'cap') { head.add(box(0.205, 0.07, 0.22, hc, 0, 0.25, -0.005)); head.add(box(0.17, 0.02, 0.12, hc, 0, 0.225, 0.155)); }
-    else if (o.hat === 'beanie') head.add(box(0.21, 0.11, 0.225, hc, 0, 0.225, -0.005));
-    else if (o.hat === 'helmet' || o.hat === 'hard' || o.hat === 'fire') { head.add(sph(0.14, 8, 4, hc, 0, 0.16, 0, { half: true, s: [1, 0.85, 1.08] }));
-      if (o.hat !== 'helmet') head.add(cyl(o.hat === 'fire' ? 0.2 : 0.165, o.hat === 'fire' ? 0.2 : 0.165, 0.02, 10, hc, 0, 0.165, o.hat === 'fire' ? -0.02 : 0.02));
-      if (o.hat === 'fire') head.add(box(0.2, 0.06, 0.02, 0xd9dde2, 0, 0.21, 0.13)); }
-    else if (o.hat === 'police') { head.add(cyl(0.125, 0.115, 0.08, 10, hc, 0, 0.255, 0)); head.add(cyl(0.135, 0.135, 0.02, 10, hc, 0, 0.3, 0)); head.add(box(0.17, 0.02, 0.1, 0x111111, 0, 0.22, 0.14)); head.add(box(0.25, 0.03, 0.25, 0xd9c35a, 0, 0.235, 0, { s: [0.95, 1, 0.95] })); }
-    for (const sd of [1, -1]) {   // arms: shoulder, elbow, hand (attach point)
+    // the build: kids their own; long hair or a ponytail mostly a narrower waist and wider hips; the others by a hash, not the scene's random
+    // numbers (NB counts from 0 at every seed: the same people on every build of a world)
+    const u = hash32(++NB * 7919 + rs + (shirt & 0xffff) * 31) / 4294967296;
+    const Bd = BUILDS[kid ? 'kid' : (hs === 'long' || hs === 'pony') ? (u < 0.8 ? 'curvy' : 'slim')
+      : u < 0.32 ? 'avg' : u < 0.52 ? 'slim' : u < 0.67 ? 'stocky' : u < 0.84 ? 'broad' : u < 0.94 ? 'small' : 'curvy'];
+    const B = Tri();
+
+    // the hips (hips frame): a six-sided band from inside the torso out to the hips' width, its bottom between the thighs; lite: none
+    if (!lite) loft(B, [{ y: -0.085, w: 0.165 * Bd.hw, d: 0.103 * Math.max(Bd.bd, 0.95), z: 0.0 }, { y: 0.075, w: 0.128 * Bd.ww, d: 0.085 * Bd.bd, z: 0.004 }], 6, all(pants)).to(hips);
+
+    // the torso (torso frame): from the waist out to the shoulders' line (the chest in front: its depth), up the shoulders' slope to the neck's
+    // base (six sides to four), the neck (skin; lite: a collar in the shirt's colour up into the head)
+    const W = { y: lite ? -0.09 : -0.035, w: 0.148 * Bd.ww, d: 0.098 * Bd.bd, z: 0.008 };
+    const S = { y: 0.445, w: 0.214 * Bd.sw, d: 0.112 * Bd.cd, db: 0.1 * Math.max(1, Bd.cd * 0.96), z: 0.0, a: 0.56 };
+    const N = { y: 0.53, w: 0.058, d: 0.056, z: -0.012 }, Nt = { y: 0.625, w: 0.05, d: 0.05, z: -0.006 };
+    const vest = o.vest != null;
+    loft(B, [W, S], 6, all(vest ? o.vest : shirt));   // (a vest: this band in its colour, the shirt on the shoulders and the sleeves)
+    if (lite) band64(B, S, { y: 0.6, w: 0.052, d: 0.05, z: -0.01 }, shirt).to(torso);
+    else {
+      band64(B, S, N, shirt); loft(B, [N, Nt], 4, all(skin)).to(torso);
+      if (vest) for (const y of [0.13, 0.27]) {   // the vest's two reflective bands
+        const f = (y - W.y) / (S.y - W.y), lerp = (k) => W[k] + (S[k] - W[k]) * f;
+        const rr = (dy) => ({ y: y + dy, w: lerp('w') * 1.03 + 0.005, d: lerp('d') * 1.04 + 0.005, db: (W.d + (S.db - W.d) * f) * 1.04 + 0.005, z: lerp('z'), a: 0.6 - 0.04 * f });
+        loft(B, [rr(-0.02), rr(0.02)], 6, all(o.stripes != null ? o.stripes : 0xd9dde2)).to(torso);
+      }
+      if (o.belt) { const rr = (y, k) => ({ y, w: W.w * k + 0.004, d: W.d * k + 0.004, z: W.z }); loft(B, [rr(-0.04, 1.06), rr(0.02, 1.07)], 6, all(o.belt)).to(torso); }
+    }
+
+    // the head (head frame): the skull's band from the jaw up, the crown a fan; hair on the top and at the back (the cheeks stay skin for every hair: a head seen from the side keeps its face)
+    { if (kid) head.scale.setScalar(1.26);
+      const nw = o.hat === 'scarf' ? 0.93 : 1;   // (a scarf's sides hug the head)
+      const capLite = lite && o.hat === 'cap', cover = !capLite && COVER.has(o.hat), hy = cover && HATY[o.hat] || 0.19;
+      const Hb = lite ? { y: 0.03, w: 0.103 * nw, d: 0.113, z: 0.004, a: 0.58 } : { y: 0.015, w: 0.094 * nw, d: 0.106, z: 0.01, a: 0.62 };   // (the jaw a little narrower than the skull)
+      const Hc = !cover ? { y: 0.19, w: 0.105, d: 0.113, db: 0.117, z: -0.006, a: 0.6 }   // (bare: the skull a touch bigger; under a hat it fits inside the hat)
+        : o.hat === 'police' ? { y: 0.217, w: 0.092, d: 0.09, z: 0, a: 0.6 }   // (inside the cap's eight-sided band)
+        : { y: hy, w: (hy > 0.2 ? 0.096 : 0.1) * nw, d: hy > 0.2 ? 0.106 : 0.11, db: hy > 0.2 ? 0.106 : 0.11, z: -0.006, a: 0.6 };   // (db: the back inside the beanie's box, whose back face is at -0.1175)
+      const hcol = hs && hs !== 'bald' ? hair : skin;
+      const band = (b, j) => BACK6(j) ? hcol : skin;
+      loft(B, [Hb, Hc], 6, band, { apex: cover ? null : [0, 0.25, -0.012], apexCol: () => capLite ? hc : hcol }).to(head);   // (no underside: the camera is above, a chin facing down reads as a beard)
+      if (hs === 'long' && !lite) loft(B, [{ y: -0.13, w: 0.105, d: 0.03, z: -0.098 }, { y: 0.17, w: 0.094, d: 0.035, z: -0.082 }], 4, (b, j) => j === 0 ? null : hair).to(head);   // (down the back to the shoulders)
+      if (hs === 'pony' && !lite) loft(B, [{ y: -0.02, w: 0.026, d: 0.026, z: -0.158 }, { y: 0.155, w: 0.036, d: 0.036, z: -0.076 }], 4, all(hair)).to(head);   // (a ponytail, its top inside the skull)
+      if (capLite) {   // (the grandstand's cap: the crown is the head's top in the cap's colour, a peak in front)
+        B.quad(hc, [0.085, 0.2, 0.09], [-0.085, 0.2, 0.09], [-0.075, 0.19, 0.2], [0.075, 0.19, 0.2], [0, 0.1, 0.1]);
+        B.to(head);
+      } else if (o.hat === 'cap') { head.add(box(0.205, 0.07, 0.22, hc, 0, 0.25, -0.005));   // (the peak: no face inside the crown)
+        const ins = [0, 0.2, 0.15];
+        B.quad(hc, [0.085, 0.235, 0.1], [-0.085, 0.235, 0.1], [-0.085, 0.235, 0.215], [0.085, 0.235, 0.215], ins); B.quad(hc, [0.085, 0.215, 0.215], [-0.085, 0.215, 0.215], [-0.085, 0.235, 0.215], [0.085, 0.235, 0.215], ins);
+        B.quad(hc, [0.085, 0.215, 0.1], [0.085, 0.215, 0.215], [0.085, 0.235, 0.215], [0.085, 0.235, 0.1], ins); B.quad(hc, [-0.085, 0.215, 0.1], [-0.085, 0.215, 0.215], [-0.085, 0.235, 0.215], [-0.085, 0.235, 0.1], ins);
+        B.to(head); }
+      else if (o.hat === 'beanie') head.add(box(0.21, 0.11, 0.225, hc, 0, 0.225, -0.005));
+      else if (o.hat === 'helmet' || o.hat === 'hard' || o.hat === 'fire') { head.add(sph(0.14, 6, 3, hc, 0, 0.16, 0, { half: true, s: [1, 0.85, 1.08] }));
+        if (o.hat !== 'helmet') head.add(cyl(o.hat === 'fire' ? 0.2 : 0.165, o.hat === 'fire' ? 0.2 : 0.165, 0.02, 8, hc, 0, 0.165, o.hat === 'fire' ? -0.02 : 0.02));
+        if (o.hat === 'fire') head.add(box(0.2, 0.06, 0.02, 0xd9dde2, 0, 0.21, 0.13)); }
+      else if (o.hat === 'police') { head.add(cyl(0.125, 0.115, 0.08, 8, hc, 0, 0.255, 0)); head.add(cyl(0.135, 0.135, 0.02, 8, hc, 0, 0.3, 0)); head.add(box(0.17, 0.02, 0.1, 0x111111, 0, 0.22, 0.14)); head.add(box(0.25, 0.03, 0.25, 0xd9c35a, 0, 0.235, 0, { s: [0.95, 1, 0.95] })); }
+      else if (HATX[o.hat]) head.add(HATX[o.hat](hc, o));
+    }
+
+    // the arms: shoulder (a rounded top), elbow, hand (where things are held); the upper arm thicker than the forearm
+    const ar = Bd.ar;
+    for (const sd of [1, -1]) {
       const sh = new THREE.Group(); sh.position.set(sd * 0.245, 0.45, 0); torso.add(sh); sh.rotation.order = 'ZXY';
-      if (long) sh.add(box(0.105, 0.3, 0.11, shirt, 0, -0.14, 0));
-      else { sh.add(box(0.115, 0.13, 0.12, shirt, 0, -0.06, 0)); sh.add(box(0.088, 0.19, 0.095, skin, 0, -0.2, 0)); }
-      if (o.vest != null && long) sh.add(box(0.11, 0.03, 0.115, o.stripes != null ? o.stripes : 0xd9dde2, 0, -0.2, 0));
+      const Rd = { y: -0.03, w: 0.062 * ar, d: 0.064 * ar, x: sd * 0.004 }, Re = { y: -0.295, w: 0.045 * ar, d: 0.047 * ar };
+      const top = lite ? { cap: long ? shirt : skin } : { apex: [sd * 0.006, 0.016, 0], apexCol: () => shirt };   // (the rings from the bottom up, the fan on the last; lite: a flat lid)
+      if (long) loft(B, [Re, Rd], 4, all(shirt), top);
+      else if (lite) loft(B, [Re, Rd], 4, all(skin), top);
+      else { loft(B, [{ y: -0.135, w: 0.06 * ar, d: 0.062 * ar }, Rd], 4, all(shirt), top); loft(B, [Re, { y: -0.135, w: 0.05 * ar, d: 0.052 * ar }], 4, all(skin)); }
+      B.to(sh); if (vest && long) sh.add(box(0.11, 0.03, 0.115, o.stripes != null ? o.stripes : 0xd9dde2, 0, -0.2, 0));
       const el = new THREE.Group(); el.position.y = -0.29; sh.add(el);
-      el.add(box(0.09, 0.24, 0.095, long ? shirt : skin, 0, -0.12, 0)); el.add(box(0.08, 0.09, 0.06, hands, 0, -0.285, 0));
+      loft(B, [{ y: -0.238, w: 0.034 * ar, d: 0.031 * ar }, { y: 0.03, w: 0.047 * ar, d: 0.048 * ar }], 4, all(long ? shirt : skin));
+      if (!lite) {   // the hand; the fingers' end a lid tilted a little (a face looking straight down is dropped at the bake: seen with the arm up)
+        const Rf = [[0.041, -0.315, 0.031], [-0.041, -0.315, 0.031], [-0.041, -0.335, -0.023], [0.041, -0.335, -0.023]], Rw = ring({ y: -0.226, w: 0.034, d: 0.028 }, 4), ins = [0, -0.28, 0.004];
+        for (let j = 0; j < 4; j++) B.quad(hands, Rf[j], Rf[(j + 1) % 4], Rw[(j + 1) % 4], Rw[j], ins);
+        B.quad(hands, Rf[0], Rf[1], Rf[2], Rf[3], ins);
+      }
+      B.to(el);
       const hd = new THREE.Group(); hd.position.y = -0.3; el.add(hd);
       P.sh.push(sh); P.el.push(el); P.hand.push(hd);
     }
-    for (const sd of [1, -1]) {   // legs: hip, knee
+
+    // the legs: hip, knee; the thigh wide at the hip and narrow at the knee, the shin, a shoe forwards
+    const lt = Bd.lt, th = Bd.th;
+    for (const sd of [1, -1]) {
       const hp = new THREE.Group(); hp.position.set(sd * 0.09, -0.05, 0); hips.add(hp);
-      hp.add(box(0.15, 0.43, 0.17, pants, 0, -0.2, 0));
+      loft(B, [{ y: -0.435, w: 0.058 * lt, d: 0.063 * lt, z: 0.004 }, { y: 0.045, w: 0.086 * th, d: 0.094 * th, z: 0.008, x: sd * 0.006 * (th - 1) * 5 }], 4, all(pants)).to(hp);
       const kn = new THREE.Group(); kn.position.y = -0.41; hp.add(kn);
-      kn.add(box(0.125, 0.38, 0.135, o.shorts ? skin : pants, 0, -0.19, 0)); kn.add(box(0.115, 0.09, 0.27, shoes, 0, -0.415, 0.045));
+      loft(B, [{ y: lite ? -0.44 : -0.4, w: 0.04 * lt, d: 0.044 * lt }, { y: 0.035, w: 0.056 * lt, d: 0.06 * lt, z: 0.002 }], 4, all(o.shorts ? skin : pants));
+      if (!lite) {   // the shoe: the heel up to the ankle, the toe low and forwards; no sole
+        const y0 = -0.46, hw = 0.052 * Math.min(1.1, lt), tw = 0.046 * Math.min(1.1, lt), zh = -0.078, zt = 0.19, ins = [0, -0.42, 0.05];
+        const p = { hb: [hw, y0, zh], hB: [-hw, y0, zh], ht: [hw, -0.365, zh], hT: [-hw, -0.365, zh], tb: [tw, y0, zt], tB: [-tw, y0, zt], tt: [tw * 0.9, -0.415, zt], tT: [-tw * 0.9, -0.415, zt] };
+        B.quad(shoes, p.ht, p.hT, p.tT, p.tt, ins); B.quad(shoes, p.hb, p.ht, p.tt, p.tb, ins); B.quad(shoes, p.hB, p.hT, p.tT, p.tB, ins);
+        B.quad(shoes, p.tb, p.tt, p.tT, p.tB, ins); B.quad(shoes, p.hb, p.ht, p.hT, p.hB, ins);
+      }
+      B.to(kn);
       P.hp.push(hp); P.kn.push(kn);
     }
     pose(P, 'stand');

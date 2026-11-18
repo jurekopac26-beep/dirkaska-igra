@@ -1,10 +1,17 @@
-# Samodejni testi ob vsakem pull requestu in ob vsaki spremembi veje main (glej tests/README.md).
-# Osnutek (draft) pull requesta težkih poslov ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem
+# Samodejni testi ob vsakem pull requestu, ob vsaki spremembi veje main in vsako noč na main (glej tests/README.md, docs/krog-testov.md).
+# Osnutek (draft) pull requesta testov ne požene: tečejo, ko ga označiš »Ready for review«, in ob vsakem nadaljnjem
 # potisku (odločitev uporabnika 31. 10. 2026: manj čakanja v vrsti, GitHub hkrati izvaja le ~20 poslov).
+# Krog po vrsti spremembe (odločitev uporabnika 9. 11. 2026): posel Koda razvrsti spremenjene datoteke (tests/run.js --krog, tests/lib/krog.js):
+# samo dokumenti (.md, docs/) → samo testi dokumentov (posel Dokumenti); samo proge (lastne datoteke pravih prog in njihovi vnosi v skupnih
+# datotekah) → kratek krog (posla Kratek krog: povezani testi, smoke in testi čez vse proge samo na teh progah, PROGE); vse ostalo → celoten
+# nabor (Fizika, AI in dirke; Igra v brskalniku 1–6; Vozila). Pull request se primerja z main (prvi starš združitvenega commita), potisk na
+# main z zadnjim uspešnim krogom na main (tako ne uide koda, katere krog je odpadel ali padel). Celoten nabor teče vsako noč na main; padel
+# nočni krog v poslu Vzrok našteje združitve od zadnjega zelenega nočnega kroga in katera je spremenila, kar padli testi preverjajo.
 # Ista koda se ne testira dvakrat (5. 11. 2026): posel Koda izračuna prstni odtis kode (tests/run.js --koda: vse datoteke razen .md, ki jih
-# bere samo test dokumentov); če je ista koda že prestala vse posle (artefakt koda-<odtis>, ki ga zapiše posel Zapis), težki posli odpadejo
-# (preskočen posel šteje kot uspešen) in tečejo samo testi, ki berejo .md (tests/run.js --dokumenti: imena znamk, zamrznjene testne proge). Tako odpadeta krog na main po
-# združitvi pull requesta, katerega koda je že prestala vse teste, in krog po potisku samo dokumentov (docs/vrsta.md, načrt teme, README.md).
+# bere samo test dokumentov); če je ista koda že prestala vse posle (artefakt koda-<odtis>, ki ga zapiše posel Zapis) ali sprememba samo prog
+# kratek krog (artefakt kratek-<odtis>), težki posli odpadejo (preskočen posel šteje kot uspešen) in tečejo samo testi, ki berejo .md
+# (tests/run.js --dokumenti: imena znamk, zamrznjene testne proge). Tako odpadeta krog na main po združitvi pull requesta, katerega koda je
+# že prestala svoj krog, in nočni krog, če se koda od zadnjega celotnega nabora ni spremenila.
 # Ročni zagon (workflow_dispatch) teče v celoti, razen z vhodom preskoci.
 name: Testi
 on:
@@ -12,6 +19,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, closed]
   push:
     branches: [main]
+  schedule:
+    - cron: '13 1 * * *'   # (vsako noč ob 1.13 UTC: 2.13 po ljubljanskem času pozimi, 3.13 poleti; celoten nabor na main)
   workflow_dispatch:
     inputs:
       preskoci:
@@ -23,18 +32,18 @@ permissions:
   contents: read
 
 # Pull request: nov zagon na isti veji prekine starega (ki bi preverjal staro stanje); zaprtje ali združitev pull requesta prekine njegov
-# tekoči krog (po združitvi isto kodo preveri krog na main, zaprt pull request rezultata ne potrebuje) in sam ne požene ničesar.
-# main: začeti krog se izteče do konca, najnovejši počaka v vrsti, vmesni odpadejo (odločitev uporabnika ci-main-krog, 4. 11. 2026);
-# prej je vsaka združitev prekinila krog na main, zato se noben ni končal in varovalka po združitvi ni delovala.
+# tekoči krog (po združitvi kodo preveri krog na main, zaprt pull request rezultata ne potrebuje) in sam ne požene ničesar.
+# main: začeti krog se izteče do konca, najnovejši počaka v vrsti, vmesni odpadejo (odločitev uporabnika ci-main-krog, 4. 11. 2026); njihove
+# spremembe preveri naslednji krog (primerja se z zadnjim uspešnim). Nočni krog ima svojo skupino: ne čaka na kroge po združitvah.
 # Skupina pull requesta je po njegovi številki: dogodek »closed« združenega PR ima github.ref = refs/heads/main in bi sicer
 # s cancel-in-progress prekinil tekoči krog na main (5. 11. 2026, po #321).
 concurrency:
-  group: testi-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.ref }}
+  group: testi-${{ github.event_name == 'schedule' && 'noc' || github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # prstni odtis kode in ali je ista koda že prestala vse posle (artefakt koda-<odtis> iz teka tega repozitorija, ne iz forka);
-  # ob napaki pri iskanju tečejo vsi posli
+  # razvrstitev spremembe (vrsta: dokumenti, proge ali vse; ob napaki vse) in prstni odtis kode: ali je ista koda že prestala svoj krog
+  # (artefakt iz teka tega repozitorija, ne iz forka; ob napaki pri iskanju tečejo vsi posli njene vrste)
   koda:
     name: Koda
     if: ${{ !(github.event_name == 'pull_request' && (github.event.pull_request.draft || github.event.action == 'closed')) }}
@@ -42,36 +51,73 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-      actions: read   # (seznam artefaktov)
+      actions: read   # (seznam tekov in artefaktov)
     outputs:
       odtis: ${{ steps.k.outputs.odtis }}
       preverjeno: ${{ steps.k.outputs.preverjeno }}
+      vrsta: ${{ steps.r.outputs.vrsta }}
+      proge: ${{ steps.r.outputs.proge }}
+      datoteke: ${{ steps.r.outputs.datoteke }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2   # (pull request: združitveni commit in njegov prvi starš, main)
+      - id: r
+        name: Razvrstitev
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DOGODEK: ${{ github.event_name }}
+        run: |
+          base=
+          if [ "$DOGODEK" = pull_request ]; then
+            base=$(git rev-parse --verify --quiet HEAD^1) || base=
+          elif [ "$DOGODEK" = push ]; then
+            base=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/tests.yml/runs?branch=main&status=success&per_page=20" \
+              --jq '[.workflow_runs[] | select(.event != "pull_request") | .head_sha] | first // empty') || base=
+            if [ -n "$base" ] && ! git fetch --quiet --depth=1 origin "$base"; then base=; fi
+          fi
+          if [ -n "$base" ]; then
+            node tests/run.js --krog --base "$base" --github > krog.txt || { echo "vrsta=vse" >> "$GITHUB_OUTPUT"; echo "razvrstitev ni uspela: vse" >> krog.txt; }
+          else
+            echo "vrsta=vse" >> "$GITHUB_OUTPUT"
+            echo "$DOGODEK$([ "$DOGODEK" = push ] && echo ' (zadnjega uspešnega kroga na main ni)'): celoten nabor" > krog.txt
+          fi
+          { echo 'Razvrstitev (`tests/run.js --krog`):'; echo '```'; cat krog.txt; echo '```'; } | tee -a "$GITHUB_STEP_SUMMARY"
       - id: k
+        name: Prstni odtis
         env:
           GH_TOKEN: ${{ github.token }}
           SME: ${{ github.event_name != 'workflow_dispatch' || inputs.preskoci }}
+          VRSTA: ${{ steps.r.outputs.vrsta }}
         run: |
           odtis=$(node tests/run.js --koda) || odtis=
-          tek=
+          najdi() {
+            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$1&per_page=30" \
+              --jq '[.artifacts[] | select(.expired | not) | select(.workflow_run.head_repository_id == .workflow_run.repository_id) | .workflow_run.id] | first // empty'
+          }
+          tek= ; kaj='vse teste'
           if [ -n "$odtis" ] && [ "$SME" = true ]; then
-            tek=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=koda-$odtis&per_page=30" \
-              --jq '[.artifacts[] | select(.expired | not) | select(.workflow_run.head_repository_id == .workflow_run.repository_id) | .workflow_run.id] | first // empty') || tek=
+            tek=$(najdi "koda-$odtis") || tek=
+            if [ -z "$tek" ] && [ "$VRSTA" = proge ]; then tek=$(najdi "kratek-$odtis") || tek=; kaj='kratek krog'; fi
           fi
           if [ -n "$tek" ]; then preverjeno=true; else preverjeno=false; fi
           echo "odtis=$odtis" >> "$GITHUB_OUTPUT"
           echo "preverjeno=$preverjeno" >> "$GITHUB_OUTPUT"
           if [ "$preverjeno" = true ]; then
-            echo "Ista koda (tests/run.js --koda: $odtis) je že prestala vse teste v teku $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$tek: težki posli odpadejo, tečejo samo testi dokumentov (tests/run.js --dokumenti)." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "Ista koda (tests/run.js --koda: $odtis) je že prestala $kaj v teku $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$tek: težki posli odpadejo, tečejo samo testi dokumentov (tests/run.js --dokumenti)." | tee -a "$GITHUB_STEP_SUMMARY"
           else
-            echo "Koda $odtis: tečejo vsi posli$([ "$SME" = true ] || echo ' (ročni zagon brez preskoka)')." | tee -a "$GITHUB_STEP_SUMMARY"
+            case "$VRSTA" in
+              dokumenti) posli='samo testi dokumentov' ;;
+              proge) posli='kratek krog' ;;
+              *) posli="vsi posli$([ "$SME" = true ] || echo ' (ročni zagon brez preskoka)')" ;;
+            esac
+            echo "Koda $odtis: tečejo $posli." | tee -a "$GITHUB_STEP_SUMMARY"
           fi
 
   node:
     name: Fizika, AI in dirke
     needs: koda
-    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' }}
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
     # (nabor traja na CI 19–21, 27–33 ali 37–42 min, odvisno od stroja, ki ga dodeli GitHub (3. 11. 2026: počasni stroji več kot polovica
     # tekov); pri 40 min je počasen stroj prekinil main in več pull requestov tik pred koncem ali po njem, vsaka nova proga doda 2–3 min)
@@ -86,6 +132,14 @@ jobs:
       - run: npm run test:node
         env:
           TEST_TIMEOUT_MIN: 25   # (omejitev enega testa; privzeto 15 min, races.test.js na počasnem stroju 13–14 min in raste z vsako progo)
+          TEST_PADLI: padli-node.txt   # (imena padlih testov za posel Vzrok)
+      - if: ${{ failure() && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: padli-node
+          path: padli-node.txt
+          retention-days: 7
+          if-no-files-found: ignore
 
   # Brskalniški testi na šestih strojih hkrati: tests/run.js --shard k/6 razdeli teste po tem, koliko časa traja vsak (SECS v
   # tests/run.js, mediane 6 krogov 5. 11. 2026: ~61 min na del na stroju srednje hitrosti, memory sam v svojem delu; GitHubovi stroji so
@@ -93,7 +147,7 @@ jobs:
   browser:
     name: Igra v brskalniku (${{ matrix.shard }}/6)
     needs: koda
-    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' }}
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 160   # (en del ~61 min, na počasnem stroju ~85 min; več kot omejitev testa memory (2 × SECS = 122 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
     strategy:
@@ -112,23 +166,19 @@ jobs:
         env:
           TEST_TIMEOUT_MIN: 30   # (omejitev enega testa; privzeto 15 min, smoke in memory gresta čez vse proge)
           TEST_SLOW: 2   # (ali dvakratni čas testa iz SECS, če je daljši; privzeto 4 za počasnejši stroj oblačne seje)
-
-  # en rezultat za vse dele, pod istim imenom kot prej (zelen samo, ko so zeleni vsi deli ali je ista koda že prestala vse teste)
-  browser-all:
-    name: Igra v brskalniku
-    needs: [koda, browser]
-    if: ${{ !cancelled() && needs.koda.result != 'skipped' }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - run: |
-          echo "deli brskalniških testov: ${{ needs.browser.result }} (ista koda že preverjena: ${{ needs.koda.outputs.preverjeno }})"
-          test "${{ needs.browser.result }}" = success || test "${{ needs.koda.outputs.preverjeno }}" = true
+          TEST_PADLI: padli-brskalnik-${{ matrix.shard }}.txt
+      - if: ${{ failure() && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: padli-brskalnik-${{ matrix.shard }}
+          path: padli-brskalnik-${{ matrix.shard }}.txt
+          retention-days: 7
+          if-no-files-found: ignore
 
   fleet:
     name: Vozila
     needs: koda
-    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' }}
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60   # (nabor traja na CI 11–28 min, odvisno od stroja; pri 30 min ga je počasen stroj prekinil tik pred koncem)
     steps:
@@ -140,13 +190,88 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run test:fleet
+        env:
+          TEST_PADLI: padli-vozila.txt
+      - if: ${{ failure() && github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: padli-vozila
+          path: padli-vozila.txt
+          retention-days: 7
+          if-no-files-found: ignore
 
-  # ista koda je že prestala vse teste: spremenjeni so lahko samo dokumenti (.md), zato samo testi, ki jih berejo (tests/run.js --dokumenti:
-  # imena znamk v vseh datotekah, zamrznjene datoteke testnih prog, tudi docs/proge/<id>.md)
+  # Kratek krog (sprememba samo prog, tests/lib/krog.js): povezani testi spremenjenih datotek in testi čez vse proge (golden, races, smoke,
+  # world, perf, gfx, memory …) samo na teh progah (PROGE), varovalo testnih prog vedno (tests/run.js --kratek); brskalniški na treh strojih
+  # (deli po času testov s temi progami, PROGA_SECS v tests/run.js: ena proga ~15–20 min na del)
+  kratek-node:
+    name: Kratek krog (Node)
+    needs: koda
+    if: ${{ !cancelled() && needs.koda.result == 'success' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta == 'proge' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node tests/run.js --kratek "$PROGE" --files "$DATOTEKE" node
+        env:
+          PROGE: ${{ needs.koda.outputs.proge }}
+          DATOTEKE: ${{ needs.koda.outputs.datoteke }}
+          TEST_TIMEOUT_MIN: 25
+
+  kratek-brskalnik:
+    name: Kratek krog (brskalnik ${{ matrix.shard }}/3)
+    needs: koda
+    if: ${{ !cancelled() && needs.koda.result == 'success' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta == 'proge' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: node tests/run.js --kratek "$PROGE" --files "$DATOTEKE" browser --shard ${{ matrix.shard }}/3
+        env:
+          PROGE: ${{ needs.koda.outputs.proge }}
+          DATOTEKE: ${{ needs.koda.outputs.datoteke }}
+          TEST_TIMEOUT_MIN: 30
+          TEST_SLOW: 2
+
+  # en rezultat za brskalniške teste, pod istim imenom kot prej: zelen, ko so zeleni vsi deli kroga, ki je tekel (celoten nabor ali kratek
+  # krog), ali je ista koda že prestala svoj krog, ali so spremenjeni samo dokumenti
+  browser-all:
+    name: Igra v brskalniku
+    needs: [koda, browser, kratek-brskalnik]
+    if: ${{ !cancelled() && needs.koda.result != 'skipped' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - env:
+          CELOTEN: ${{ needs.browser.result }}
+          KRATEK: ${{ needs.kratek-brskalnik.result }}
+          VRSTA: ${{ needs.koda.outputs.vrsta }}
+          PREVERJENO: ${{ needs.koda.outputs.preverjeno }}
+        run: |
+          echo "brskalniški testi: celoten nabor $CELOTEN, kratek krog $KRATEK (vrsta ${VRSTA:-vse}, ista koda že preverjena: ${PREVERJENO:-?})"
+          if [ "$PREVERJENO" = true ] || [ "$VRSTA" = dokumenti ]; then exit 0; fi
+          if [ "$VRSTA" = proge ]; then test "$KRATEK" = success; else test "$CELOTEN" = success; fi
+
+  # samo testi, ki berejo .md (tests/run.js --dokumenti: imena znamk v vseh datotekah, zamrznjene datoteke testnih prog, tudi
+  # docs/proge/<id>.md): spremenjeni so samo dokumenti, ali pa je ista koda že prestala svoj krog
   dokumenti:
     name: Dokumenti
     needs: koda
-    if: ${{ needs.koda.outputs.preverjeno == 'true' }}
+    if: ${{ needs.koda.outputs.preverjeno == 'true' || needs.koda.outputs.vrsta == 'dokumenti' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -156,18 +281,55 @@ jobs:
           node-version: 22
       - run: node tests/run.js --dokumenti
 
-  # vsi težki posli so uspeli: prstni odtis te kode kot artefakt, da je naslednji tek iste kode ne testira znova
+  # krog je uspel: prstni odtis te kode kot artefakt, da je naslednji tek iste kode ne testira znova (koda-<odtis> po vseh težkih poslih,
+  # kratek-<odtis> po kratkem krogu: tega upošteva samo sprememba samo prog)
   zapis:
     name: Zapis
-    needs: [koda, node, browser, fleet]
-    if: ${{ needs.koda.outputs.odtis != '' }}   # (in privzeti success(): koda, node, vsi deli browser in fleet uspešni)
+    needs: [koda, node, browser, fleet, kratek-node, kratek-brskalnik]
+    if: >-
+      ${{ !cancelled() && needs.koda.result == 'success' && needs.koda.outputs.odtis != '' && needs.koda.outputs.preverjeno != 'true' && (
+      (needs.koda.outputs.vrsta == 'proge' && needs.kratek-node.result == 'success' && needs.kratek-brskalnik.result == 'success') ||
+      (needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' && needs.node.result == 'success' && needs.browser.result == 'success' && needs.fleet.result == 'success')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - run: printf 'koda %s\ntek %s\ndogodek %s\ncommit %s\n' "${{ needs.koda.outputs.odtis }}" "${{ github.run_id }}" "${{ github.event_name }}" "${{ github.sha }}" > koda.txt
+      - run: printf 'koda %s\nvrsta %s\nproge %s\ntek %s\ndogodek %s\ncommit %s\n' "$ODTIS" "$VRSTA" "$PROGE" "${{ github.run_id }}" "${{ github.event_name }}" "${{ github.sha }}" > koda.txt
+        env:
+          ODTIS: ${{ needs.koda.outputs.odtis }}
+          VRSTA: ${{ needs.koda.outputs.vrsta || 'vse' }}
+          PROGE: ${{ needs.koda.outputs.proge }}
       - uses: actions/upload-artifact@v4
         with:
-          name: koda-${{ needs.koda.outputs.odtis }}
+          name: ${{ needs.koda.outputs.vrsta == 'proge' && 'kratek' || 'koda' }}-${{ needs.koda.outputs.odtis }}
           path: koda.txt
           retention-days: 30
           overwrite: true   # (ponovljen tek iste kode)
+
+  # padel nočni (ali ročni) krog na main: združitve od zadnjega zelenega nočnega kroga in katera je spremenila, kar padli testi preverjajo
+  # (tests/run.js --vzrok; imena padlih testov iz artefaktov padli-* težkih poslov)
+  vzrok:
+    name: Vzrok
+    needs: [koda, node, browser, fleet]
+    if: ${{ failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read   # (zadnji zeleni nočni krog, artefakti padli-*)
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 300   # (commiti in drevesa zadnjih tednov na main; vsebina datotek samo za HEAD)
+          filter: blob:none
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: padli-*
+          path: padli
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          od=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/tests.yml/runs?branch=main&event=schedule&status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty') || od=
+          cat padli/*.txt 2>/dev/null | sort -u > padli.txt || true
+          node tests/run.js --vzrok --od "$od" --padli padli.txt | tee -a "$GITHUB_STEP_SUMMARY"

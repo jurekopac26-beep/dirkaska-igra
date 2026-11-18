@@ -399,7 +399,7 @@
     return { mesh, seg, N };
   }
 
-  // the dress of a car with parts (render.js makeCarMesh): o { car, M, E (its kit entry), grp, bodyG, body, mat, dec, wf, wr, show }
+  // the dress of a car with parts (render.js makeCarMesh): o { car, M, E (its kit entry), grp, bodyG, body, mat, dec, wf, wr, wm (wheels.mid's), show }
   DELI.dress = function (o) {
     const D = DELI.clean(o.car.deli, o.M); if (!Object.keys(D).length) return null;
     const out = { low: 0, step: null, smoke: null }, geo = o.body.geometry, dirty = !!(o.mat && o.mat.userData && o.mat.userData.dirt);   // (the shared matCar (noDirt): never touched)
@@ -410,7 +410,7 @@
     let night = null;
     if (dirty && (D.barva || D.crte || D.zatemnitev || decals.length)) { night = dressMat(o.mat, fin, sfin, tint, decals); dressGeo(geo, decals, !!fin.jambs, o.car.color); }
     let G = null, gl = null;
-    if (D.luc_pod_avtom && GLOW[D.luc_pod_avtom]) { G = GLOW[D.luc_pod_avtom]; gl = glowMesh(o.M, o.E, o.wf, o.wr, G); o.grp.add(gl.mesh); }
+    if (D.luc_pod_avtom && GLOW[D.luc_pod_avtom]) { G = GLOW[D.luc_pod_avtom]; gl = glowMesh(o.M, o.E, o.wf, o.wr.concat(o.wm || []), G); o.grp.add(gl.mesh); }
     const cols = G && G.c ? G.c.map(hex3) : null, col = gl ? gl.mesh.geometry.attributes.color : null;
     let tt = 0, brk = 0;
     out.step = (dt, car, t, nk, braking) => {

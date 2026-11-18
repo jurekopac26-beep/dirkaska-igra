@@ -5,7 +5,7 @@
 // shore there, facing the land. The car driven into the water: its ground the bed (the bridges' decks stay), the shallow slows it, the deep
 // puts it back on the shore (NAZAJ NA OBALO) with no damage. A restart at HOME: off the jet ski, the jet skis back in their places.
 //   node tests/browser/nvwater.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, checker, tapNewVersion } from './lib.mjs';
 
 const T = checker('nvwater');
 const srv = await serve();
@@ -13,7 +13,7 @@ const browser = await launch();
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { intro: 2, quali: 0 }, { width: 412, height: 915 }, { menu: true });
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
-  await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+  await tapNewVersion(page);
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
 
   // 1. the jet skis as built: two at the pier, one at the start, on the water, ours all in one mesh (not merged with the map), js/nvboat.js's own at the pier out of the scene

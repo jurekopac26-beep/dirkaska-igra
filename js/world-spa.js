@@ -40,20 +40,19 @@
     for (const [st, n, sz] of [['rgba(46,92,42,0.55)', 90, 3], ['#f2f2ea', 70, 1], ['#e6d24a', 24, 1]]) { x.fillStyle = st; for (let k = 0; k < n; k++) x.fillRect(Math.floor(r() * (S - sz)), Math.floor(r() * (S - sz)), sz, sz); }   // clover, daisies, buttercups
     const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso || 4; t.grassPic = true; t.avgCol = avg; return t;
   }
-  function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them): 0 a plantation spruce (tall and narrow, four drooping tiers, dark blue-green), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
-    const g = new GB(), R = rng(640 + kind), rs = API.ROCK_SMOOTH; API.ROCK_SMOOTH = true;   // (smooth normals, as nrTreeGeo; the flag restored below)
-    const sp = [0.07, 0.17, 0.12], spT = [0.12, 0.26, 0.17], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
-    if (kind === 0) {
-      cone(g, 0, -0.02, 0, 0.022, 0.22, 4, [0.26, 0.19, 0.14], null, 0);
-      for (let t = 0; t < 4; t++) nrFir(g, 0, 0.14 + t * 0.2, 0, 0.19 * (1 - t * 0.2), 0.3, 5, sh(sp, 0.86 + t * 0.07), spT, t * 1.1, 0.04);
-    } else if (kind === 1) {
-      nrFir(g, 0, 0.1, 0, 0.18, 0.52, 5, sh(sp, 0.9), spT, 0.3, 0.03); nrFir(g, 0, 0.5, 0, 0.11, 0.5, 5, sp, spT, 1.1, 0.02);
-    } else {
-      cyl(g, 0, -0.02, 0, 0.022, 0.64, 4, [0.9, 0.9, 0.86], null, 0.016);
-      const be = [0.36, 0.52, 0.2]; ico(g, 0, 0.68, 0, 0.19, 1.3, be, R, 0.3); nrLump(g, 0.06, 0.52, 0.04, 0.14, 1.1, sh(be, 1.08), R, 0.25);
+  const { AB, aPuff, aTier, aTrunk } = API;   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
+  function spaTreeGeo(kind) {   // unit trees (height 1, instances scale them) in the soft look A (AB, docs/drevesa-a.md): 0 a plantation spruce (tall and narrow, four tiers, dark blue-green, the tips lighter), 1 the same far out (two tiers), 2 a birch (a white trunk, a small light crown)
+    const b = new AB(), R = rng(640 + kind), sp = [0.07, 0.17, 0.12], spT = [0.12, 0.26, 0.17], sh = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    if (kind === 0) {   // (28 faces)
+      aTrunk(b, 0, -0.02, 0, 0.022, 0.32, 4, [0.26, 0.19, 0.14]);
+      for (let t = 0; t < 4; t++) aTier(b, 0, 0.14 + t * 0.2, 0, 0.19 * (1 - t * 0.2), 0.3, 6, sh(sp, 0.62 + t * 0.08), sh(spT, 1.2 + t * 0.05), t * 1.1);
+    } else if (kind === 1) {   // (10 faces)
+      aTier(b, 0, 0.1, 0, 0.18, 0.52, 5, sh(sp, 0.66), sh(spT, 1.2), 0.3); aTier(b, 0, 0.5, 0, 0.11, 0.5, 5, sh(sp, 0.8), sh(spT, 1.3), 1.1);
+    } else {   // (40 faces)
+      aTrunk(b, 0, -0.02, 0, 0.022, 0.66, 3, [0.9, 0.9, 0.86], 0.016);
+      const be = [0.36, 0.52, 0.2]; aPuff(b, 0, 0.68, 0, 0.19, 1.3, be, R, 0.3, 0.6, 1.3); aPuff(b, 0.06, 0.52, 0.04, 0.14, 1.1, sh(be, 1.08), R, 0.25, 0.6, 1.3, -0.4);
     }
-    API.ROCK_SMOOTH = rs;
-    const geo = g.geometry(); geo.computeBoundingSphere(); return geo;
+    return b.geometry();
   }
   let spaATex = null;
   function spaAtlas(names) {   // text boards (4 x 16 cells of 256 x 64): the braking boards 300-100 m, DRS, the corner names, banners, the game's sponsors (boards on the rails)
@@ -65,7 +64,8 @@
     cell(3, '#101114', '#fff', 'DRS', 44, '#39c84a');   // (where a DRS zone opens)
     names.forEach((n, k) => cell(20 + k, '#17306a', '#fff', n.toUpperCase(), n.length > 14 ? 26 : 32, '#e8e8e0'));
     const B = 20 + names.length;
-    cell(B, '#16181c', '#fff', 'SPA-FRANCORCHAMPS', 28); cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28);
+    cell(B, '#16181c', '#fff', 'SPA · ARDENNES', 28);   // (the place, not the circuit's name: CLAUDE.md, legal safety)
+    cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28);
     const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['HITROLET', '#101418', '#ffd23f']];
     for (let k = 0; k < 8; k++) { const [txt, bg, fg] = SP[k % SP.length]; cell(40 + k, bg, fg, txt, 40, 'rgba(255,255,255,.14)'); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (spaATex = t);
@@ -318,7 +318,7 @@
     const DR = rng(9331);   // (the camp props' own random stream)
     const BE = [[0.08, 0.08, 0.09], [0.97, 0.82, 0.06], [0.84, 0.12, 0.14]];   // the Belgian flag (upright stripes)
     const flagPole = (g, x, y, z, rot, cols) => { const c = Math.cos(rot), s = Math.sin(rot); cyl(g, x, y - 0.2, z, 0.05, 6.4, 5, [0.86, 0.86, 0.88]);
-      for (let n = 0; n < 3; n++) { const a = 0.3 + n * 0.5; box(g, x + c * a, y + 5.2, z + s * a, 0.5, 0.95, 0.04, rot, cols[n], null, true); } };
+      API.flags.add(x + c * 0.05, y + 6.15, z + s * 0.05, rot, { up: cols }, 1.5, 0.95); };   // (the cloth waves: js/world-zastave.js)
     const tent = (x, z, rot, col) => {   // the fans' camp, by hash: a dome tent, a ridge tent, a gazebo or a camper van; now and then a Belgian flag beside it
       const g = scen.get(x, z), y = nrGround(x, z), h = crH(x, z, 31), c = Math.cos(rot), s = Math.sin(rot), dk = [col[0] * 0.72, col[1] * 0.72, col[2] * 0.72], dark = [0.16, 0.2, 0.26];
       if (h < 0.34) nrLump(g, x, y + 0.05, z, 1.5, 0.78, col, DR, 0.05);
@@ -358,7 +358,7 @@
       for (let d = -300; d < 210; d += 14) {   // flag poles behind the wall on the grandstand side: the Belgian flag, the circuit's, the sponsors'
         const [px, pz, ii] = onSide(sAt(d), -1, 2.2), py = nrGround(px, pz), gg = scen.get(px, pz), k = Math.floor(crH(d, 3, 57) * 4); CR.avoid(px, pz, 0.45);
         if (k < 2) flagPole(gg, px, py, pz, T.hd[ii], BE);
-        else { cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); box(gg, px + T.tx[ii] * 0.6, py + 4.8, pz + T.tz[ii] * 0.6, 1.2, 0.8, 0.05, T.hd[ii], k === 2 ? [0.07, 0.18, 0.42] : fans[Math.floor(crH(d, 4, 57) * fans.length)], null, true); }
+        else { cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [k === 2 ? [0.07, 0.18, 0.42] : fans[Math.floor(crH(d, 4, 57) * fans.length)]], 1.2, 0.8); }
       }
       for (let d = -210, n = 0; d < 150; d += 30, n++) for (const side of [-1, 1]) {   // banners on the walls of the straight: EAU ROUGE, BELGIQUE · BELGIË, DÉPART · ARRIVÉE
         const s0 = sAt(d), a0 = T.idx(s0), b0 = T.idx(s0 + 3.6), [u0, v0, u1, v1] = nrAUV(BAN + 1 + (n + (side > 0 ? 1 : 0)) % 3);
@@ -542,7 +542,7 @@
         exclPush(x, z, 4.5); CR.avoid(x, z, 2.4);
       }
       const scrTex = ownTex(spaScreenTex()), scrG = new GB(true);   // the big screens: across the track from the grandstands, facing them
-      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1], [6930, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source, the pit straight)
+      for (const [d0, sg] of [[1150, -1], [620, -1], [276, -1]]) {   // (the grandstand's distance and side: Raidillon, the descent, La Source; the pit straight's is the live one, js/world-zaslon.js)
         const p = place(d0, -sg, 5.5, 5); if (!p) continue;
         const [x, z, i] = p, g = scen.get(x, z), y = nrGround(x, z), Wsc = 7.2, Hs = 4.05, y0 = y + 3.2, fx = T.nx[i] * sg, fz = T.nz[i] * sg, ux = -fz, uz = fx;
         for (const o of [-Wsc / 2 + 0.5, Wsc / 2 - 0.5]) box(g, x + ux * o - fx * 0.3, y - 0.2, z + uz * o - fz * 0.3, 0.3, y0 - y + Hs + 0.2, 0.3, Math.atan2(uz, ux), dark);
@@ -572,7 +572,7 @@
     }
 
     /* ---- spectators on the grass banks at the famous places, fans' tents and cars in the woods behind the bigger crowds, catch fences in front ---- */
-    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, "Speaker's Corner": 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
+    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, 'Kratki levi': 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
     let nFans = 0; const crE0 = excl.length;
     for (const q of T.names) {

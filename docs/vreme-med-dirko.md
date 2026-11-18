@@ -85,7 +85,7 @@ Načrt teme (izbira uporabnika 6. 11. 2026: »Vreme se med dirko spremeni. Dež 
 | 3 | Videz: oblaki pred dežjem, lise, kapljice, prednalaganje | `js/render.js` | 5–8 |
 | — | Testi, reference, meritve obremenitve, slike pred in po | `tests/` | 3–4 |
 
-Skupaj 17–24 h; dež samo na delu proge (`vreme-obseg` 2) še 8–10 h; samo ena sprememba z boljšim videzom (`vreme-obseg` 3) 11–16 h. Pull requesta: koraka 1 in 2 (jedro), korak 3 (grafika). Model Opus, napor max; za korak 1 pregled kode z več agenti (`js/core.js`, `CLAUDE.md`, »Več agentov samo za težko delo«).
+Skupaj 17–24 h; dež samo na delu proge (`vreme-obseg` 2) še 8–10 h; samo ena sprememba z boljšim videzom (`vreme-obseg` 3) 11–16 h. Pull requesta: koraka 1 in 2 (jedro), korak 3 (grafika). Model Opus, napor max; za korak 1 pregled kode z več agenti (`js/core.js`; `CLAUDE.md`, Seje, »Proge in grafika«).
 
 ## Odvisnosti in vrstni red
 - Za »Dež in sneg« (biketraveler, `docs/dez-sneg.md`), ker spremeni oprijem, zavore in reference vseh prog: vreme gre za njo, da se reference ustvarijo enkrat. Meja: »Dež in sneg« spremeni oprijem pri dani mokroti (`WET`, `TYRE_GRIP`, zavore, profil tekmecev), ta tema urnik in mokroto po času (`_weather`), videz, zvok in posnetek.

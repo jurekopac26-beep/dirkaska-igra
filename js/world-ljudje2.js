@@ -1291,16 +1291,13 @@
       C.man(Object.assign({ hair: 'bald' }, SEC), { act: { a: 2.2, b: 2.2, pose: 'walk', face: [-1, 0] }, bliza: { pose: 'radio', face: [0, -1], hold: [['radio', 1]], look: 'car' }, run: false,
         mimo: { pose: 'arms', hold: [], look: 'car' } });   // (where he stopped)
     } };
-  site('toronto', [['varnost', 984, 1]]); site('bangsaen', [['varnost', 2080, 1]]);
 
   // the fans' places: on the open roads only (the user, 3. 11. 2026: »na dirkališčih naj bo čim manj ljudi okoli proge, tam naj bo več
   // zaposlenih«: the circuits have their staff's scenes); two or three each, where the chase camera sees them, the ground level and nothing
   // else there and no side road (a car may drive into one, the police waits in it), at least 260 m from the other fans' scenes (the staff's
   // stand by the marshals' posts: 100 m; tools/ljudje/mesta.mjs, --preveri; tests/ljudje-mesta.test.js)
   site('medvode', [['kotlicek', 1384, 1], ['badminton', 2408, 1], ['nogomet', 3160, 1]]);
-  site('ouninpohja', [['selfie', 3744, 1], ['radio', 5296, 1], ['kotlicek', 6696, 1], ['nogomet', 7024, -1]]);
   site('harju', [['plaza', 1856, -1]]);
-  site('greatalpine', [['karte', 2384, -1], ['zmaj', 5528, 1], ['lestve', 6048, -1], ['motoristi', 6992, -1]]);
   site('rastro', [['motoristi', 4064, 1], ['glasba', 4784, -1]]);
   site('caracoles', [['navijaci', 9936, -1, { club: [0xd52b1e, 0xf2f2f2] }]]);
   site('pikes', [['radio', 3824, 1]]);

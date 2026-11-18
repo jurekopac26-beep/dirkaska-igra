@@ -29,7 +29,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 
 ## Novost 1: videz avta povsod
 
-**Cilj:** v garaži izbereš barvo, izvedbo laka, črte in njihovo barvo, nalepke, senčni pas, svojo številko in platišča. Tak je avto v vsaki dirki (tudi v prvenstvu), v posnetku (tudi iz datoteke) in pri prijateljih na spletu.
+**Cilj:** v garaži izbereš barvo (16 barv), izvedbo laka, svojo številko in platišča; na KOLIBRIJU še črte in njihovo barvo, nalepke in senčni pas (`videz-1` = 2, `videz-2` = 1, odločitvi uporabnika 6. 11. 2026). Tak je avto v vsaki dirki (tudi v prvenstvu), v posnetku (tudi iz datoteke) in pri prijateljih na spletu.
 
 **Priklop (ločene datoteke):**
 - `js/videz.js` (nova datoteka, naložena za `js/deli.js` v `index.html` in `garaza.html`):
@@ -101,6 +101,12 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 - Rezultati: patrulja »Ujel 2 od 3«, begunci »Pobegnil« (3:00, cilj, predaleč) ali »Ulovljen po 1:42«. Najprej so pobegli, nato ulovljeni po času (dlje je bolje).
 - Promet je na vseh telefonih isti (seme gostitelja, gostota kot v begu 0,85). Trke s prometom računa vsak telefon zase.
 
+**Izvedba (B3–B6, 6. 11.), kjer je drugače kot zgoraj:**
+- Soba ima eno vrstico **Način**: *Dirka · Eliminacija · Pregon* (`modeRow` v `js/zabava.js`, vsak način s `netMode`; stikalo eliminacije je zdaj v njej). Velja en način naenkrat (`Z.netOne`). Pregon je samo v zasebni sobi, brez prvenstva, na odprti cesti s prometom; način, ki za izbrano progo ali sobo ne velja, se ne pokaže (gostitelj ga ob menjavi proge izklopi).
+- Patruljo gostitelj izbere v vrstici **Patrulja** (izbirni seznam namesto tapa na igralca): privzeto *Po vrsti (ime)*, kdor jo je vozil najmanjkrat, ob enakem številu po vrstnem redu v sobi; ali izbere igralca. Prijatelj vidi isto, zaklenjeno (sporočilo `{ t: 'zb', k: 'bg', on, pol, next }`).
+- Odloča gostitelj (`{ k: 'bgd', no, id, st, at, why }` za begunca, `{ k: 'bge', no, at }` za konec); ko gostitelja ni več, odloča vsak telefon sam. Pobegne tudi, ko patrulje ni več (odšla je ali pripeljala do konca ceste). Dotik je razdalja pod 5 m.
+- Ujet begunec zapelje ob rob in obstane (`race.retire`), čez ~4 s je na rezultatih, ki se sproti dopolnjujejo, dokler lov traja (namesto gledanja do konca). Čas cilja ujetega je 100000 s manj čas ulova (`OUT`, kot izpadli v eliminaciji), pobeglega čas pobega.
+
 **Priklop:**
 - Zdaj, neodvisno od #250 (veja iz `main`):
   - **B1, promet v spletni dirki:** gostitelj v sporočilu `setup` pošlje promet in seme. `newRace` (veja `on`) ustvari `Traffic` z istim semenom (`opts.seed` že obstaja). Promet je brez dvoboja in kazni za povožene. Spletne dirke brez tega ostanejo, kot so.
@@ -120,13 +126,13 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 **Prevodi:** »PATRULJA«, »BEŽI!«, »ULOVLJEN!«, »POBEGNIL SI!«, merilnik (»ARETACIJA {0} %«, »PATRULJA {0} m«) in vrstice rezultata, sl/en v `js/lang.js`.
 
 **Testi:**
-- B1, Node: dve dirki (dva telefona) z istim semenom in istimi avti imata po 60 s enak promet, dokler ga avti ne zadenejo. Spletna dirka brez prometa ostane enaka.
-- B2, Node: patrulja prijatelja ima podobo in promet se ji umika.
-- `tests/zabava.test.js`: ulov in pobeg z oddaljenim avtom, vrstni red patrulje, rezultati.
-- `tests/browser/online.test.mjs`: dva telefona (lokalni strežnik PeerJS), patrulja in begunec, ulov in konec na obeh.
+- B1, Node (`tests/net-core.test.js`, Rio do Rastro, `rastro`): dva telefona z istim semenom imata enak promet. Po 40 s je enak tudi promet stran od avtov, torej vozila, ki se nobenemu avtu niso približala na 300 m (razlika 0,000 m). Vozila blizu avtov vsak telefon računa sam: na Riu do Rastro so se 3 od 36 razlikovala, za do 0,14 m (Medvode 1 od 42, 0,11 m; prej na Vršiču, ki gre med testne, 19 od 109 za do ~140 m). Popravki gostitelja za vozila blizu avtov zato niso potrebni. Spletna dirka brez bega ostane brez prometa.
+- B2, Node: patrulja prijatelja ima podobo in sireno; promet na telefonu begunca se ji umakne (k robu, zavira), na telefonu patrulje pred beguncem na svojem pasu zavira, ob trku z avtom prijatelja se premakne samo vozilo (avto prijatelja premika njegov telefon). Brskalnik (`tests/browser/online.test.mjs`, druga dirka): na Riu do Rastro sta promet in patrulja enaka na obeh telefonih.
+- `tests/zabava.test.js` (razdelek 10, prava dirka `Core.Race` na Riu do Rastro s tremi prijatelji): en način naenkrat, patrulja po vrsti in izbira gostitelja, ulov v 5 s (z dotikom v 2 s), pobeg (predaleč, cilj, odšel, 3:00, brez patrulje), begunec 150 m pred patruljo, merilnik na telefonu begunca brez odločanja, sporočila gostitelja (napačna dirka in sporočila z gostiteljevo oznako se ne upoštevajo), konec in vrstni red rezultatov.
+- `tests/browser/online.test.mjs` (druga dirka): dva telefona (lokalni strežnik PeerJS); gostitelj v sobi izbere Pregon in prijatelja za patruljo, prijatelj vidi isto, zaklenjeno; isti promet, patrulja, gostitelj 150 m pred njo; patrulja 8 m za njim: ujet, konec in rezultati na obeh. Nato soba (Po vrsti: gostitelj), Dirka in tretja dirka brez pregona.
 - Golden in obstoječe spletne dirke ostanejo enake.
 
-**Obremenitev:** promet je enak kot v begu. Meritev v spletnem begu na Vršiču: `maxCalls` in `maxKverts` pod mejo `tests/golden/perf.json`.
+**Obremenitev:** promet je enak kot v begu. Meritev 6. 11. (dva telefona v brskalniku z nastavitvami proračuna iz `tests/browser/perf.test.mjs`: 844 × 390, NIZKA, sence; vse sličice prvih ~25 s na Riu do Rastro, oba na avtopilotu): begunec 154 klicev risanja (največ 180) in 507 tisoč oglišč (največ 700 tisoč), patrulja 146 (174) in 441 tisoč (572 tisoč); ista dirka brez pregona 130 (157) in 423 tisoč (564 tisoč). Promet doda ~20 klicev in do ~80 tisoč oglišč, vse je pod mejo ~300 klicev in ~900 tisoč oglišč (`CLAUDE.md`). Spletna dirka brez pregona in druge proge se ne spremenijo.
 
 **Koraki in ocena ur:**
 
@@ -144,16 +150,16 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 
 | id | o čem | možnosti (priporočena prva) | odgovor |
 |---|---|---|---|
-| `videz-1` | črte, nalepke in senčni pas na vseh avtih | 1 vsi avti, samodejno · 2 samo KOLIBRI (kot zdaj) | čaka |
-| `videz-2` | koliko barv | 1 16 barv · 2 ostane 8 · 3 poljubna barva | čaka |
+| `videz-1` | črte, nalepke in senčni pas na vseh avtih | 1 vsi avti, samodejno · 2 samo KOLIBRI (kot zdaj) | **2** (6. 11., stran Odločitve 3): črte, nalepke in senčni pas ostanejo samo na KOLIBRIJU; drugi avti imajo barvo, lak, platišča in številko. Korak V4 in `js/deli/mesta.js` odpadeta |
+| `videz-2` | koliko barv | 1 16 barv · 2 ostane 8 · 3 poljubna barva | **1** (6. 11., stran Odločitve 3): 16 barv, zdajšnjih 8 in srebrna, siva, temno modra, bordo, turkizna, roza, limeta, bronasta (korak V3) |
 | `beg-1` | beg pred policijo že obstaja: kaj dodamo | 1 kratek beg 3:00 · 2 nič · 3 beg s prijatelji | **3** (5. 11., v pogovoru s koordinacijo) |
 
-Seja načrta odgovora `videz-1` in `videz-2` prebere ob 23.20 (`send_later`), ju vpiše sem in obvesti koordinacijo.
+Odgovora `videz-1` in `videz-2` sta prebrana 6. 11. in vpisana tu (seja #377 po naročilu koordinacije VSE SEJE 2).
 
 ## Stanje
 
 | Korak | Stanje |
 |---|---|
 | Načrt, vprašanja, vpis v Načrtovano | narejeno 5. 11. 2026 |
-| Novost 1 (V1–V5) | čaka na odgovore in na #297 |
-| Novost 2 (B1–B6) | B1–B2 v delu (veja `novosti-e/beg-prijatelji`, osnutek pull requesta); B3–B6 po #250 |
+| Novost 1 (V1–V5) | odgovora 6. 11.: `videz-1` = 2 (črte, nalepke in senčni pas samo na KOLIBRIJU; V4 odpade, skupaj ~15 h), `videz-2` = 1 (16 barv, V3); čaka na #297 |
+| Novost 2 (B1–B6) | narejeno 6. 11. (veja `novosti-e/beg-prijatelji`, osnutek #377; na `main` za #372). B1–B2 (5. 11.): `js/core.js` `patrolCar`, `opts.netTf`, `opts.playerPolice`, `remote[].police`, `Traffic.net` (promet upošteva tudi avte prijateljev, trk jih ne premika); `js/game.js` `netBeg` (`mp.beg`), `setup` s `tf`, `seed`, `pol`, sirena prijateljeve patrulje v `roadSound`. B3–B6 (6. 11.): vrstica sobe Način (`modeRow` v `js/zabava.js`, eliminacija prestavljena vanjo), `js/zabava/beg.js` (Patrulja po vrsti ali izbrana, ulov, pobeg, konec, rezultati; kljuke `netRes`, `netOne`), `js/game.js` `netResults` z `ZB.netRes`, prevodi v `js/lang.js`, opis v `docs/igra.md` (Dirka s prijateljem: Način), testi (`tests/zabava.test.js` 10, `tests/net-core.test.js` in `tests/browser/online.test.mjs` na Riu do Rastro), meritev obremenitve zgoraj. Izvedba, kjer je drugače od načrta: odstavek »Izvedba« pod Pravili |
