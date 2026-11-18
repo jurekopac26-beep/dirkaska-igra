@@ -55,7 +55,7 @@ try {
     const srv = await serve(A.root), home = srv.base + '/dirkaska-igra/';
     const asked = new Set();   // (the lazy scripts the page itself asked for)
     try {
-      const { ctx, page, errors } = await openGame(browser, home);
+      const { ctx, page, errors } = await openGame(browser, home, {}, undefined, { lazy: true });   // (lazy: only what the game asks for itself)
       page.on('request', (r) => { if (/\/js\/.*\.js\?v=/.test(r.url()) && r.resourceType() === 'script') asked.add(r.url()); });
       await page.evaluate(() => navigator.serviceWorker.ready);
       let s = await until(page, coreOk);
@@ -107,7 +107,7 @@ try {
     const srv = await serve(B.root), home = srv.base + '/dirkaska-igra/', log = [];
     srv.setFail((req) => { if (req.headers['sec-fetch-mode'] === 'cors' && /\.js(\?|$)/.test(req.url)) log.push(req.url); return false; });   // (the worker's own downloads)
     try {
-      const { ctx, page, errors } = await openGame(browser, home);
+      const { ctx, page, errors } = await openGame(browser, home, {}, undefined, { lazy: true });   // (lazy: only what the game asks for itself)
       await page.evaluate(() => navigator.serviceWorker.ready);
       const s = await until(page, x => coreOk(x) && lazyIn(x).length === x.lazy.length, 150);
       T.check('first visit on Wi-Fi: the page, what it links and every lazy script saved without a race', coreOk(s) && s.lazy.length >= 10 && lazyIn(s).length === s.lazy.length, `${lazyIn(s).length} of ${s.lazy.length} lazy`);
