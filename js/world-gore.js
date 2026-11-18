@@ -382,6 +382,15 @@
       return pad([[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]); };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     const vergeY = (i, side, o) => { const Q = vp[side > 0 ? 1 : 0][i]; let k = 0; while (k < NP - 2 && Q[k + 1][0] < o) k++; const a = Q[k], b = Q[k + 1]; return T.hy[i] + a[1] + (b[1] - a[1]) * clamp((o - a[0]) / Math.max(1e-3, b[0] - a[0]), 0, 1); };   // (the verge's height at offset o)
+    // the map's roads that meet this one, for the look only (package Realizem E: World.cesta.stranske, def.stranske from OpenStreetMap through
+    // tools/cesta/izvoz.py): their strips, verges and the posts across their openings drawn with the road's chunks and the scenery; the model, the
+    // barrier and the cars know nothing of them. The mouths' paint only where World.cesta.CRTE has the country's rules (the name's last part)
+    const drzS = (def.name || '').split(', ').pop(), drzC = World.cesta && World.cesta.CRTE && World.cesta.CRTE[drzS] ? drzS : null;
+    const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i]; for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const edgeTone = (i) => { let sd = 1; for (const u of SR.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const d = sd * (T.wAt ? T.wAt(i) : w) - T.rl[i]; return 0.8 - 0.13 * Math.exp(-d * d / 5.5); };
+    const SR = World.cesta && World.cesta.stranske && def.stranske && def.stranske.length ? World.cesta.stranske(T, def.stranske, { tla: vrGround, rob: vergeAt, ton: edgeTone, odprta: !!T.open, drzava: drzC || undefined, barva: drzC ? undefined : false }) : null;
+    if (SR) { out.cestaRob = (out.cestaRob || []).concat(SR.ustja); for (const k of SR.krogi) exclPush(k[0], k[1], k[2]); out.stranske = SR.n; }
+    const naSR = (x, z) => { if (SR) for (const k of SR.krogi) if ((x - k[0]) ** 2 + (z - k[1]) ** 2 < k[2] * k[2]) return true; return false; };
     const bendAt = new Uint8Array(N);
     if (RD.double) for (const c of T.corners) if (c.sev >= 2) for (let k = Math.max(0, c.i0 - 25); k <= Math.min(N - 1, c.i1 + 25); k++) bendAt[k] = 1;
     {
@@ -406,7 +415,7 @@
             else if (gv2) { const k0 = 0.92 + 0.08 * rpHash(i, c), cc = [gravC[0] * k0, gravC[1] * k0, gravC[2] * k0]; gs.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [cc, cc, cc, cc], [[a0 / 4, s0], [a1 / 4, s0], [b1 / 4, s1], [b0 / 4, s1]]); }
             else gr.quadUp(Pt(i, a0, 0.02), Pt(i, a1, 0.02), Pt(j, b1, 0.02), Pt(j, b0, 0.02), [shade(i, a0), shade(i, a1), shade(j, b1), shade(j, b0)], [[(a0 + wi) / tileL, v0], [(a1 + wi) / tileL, v0], [(b1 + wj) / tileL, v1], [(b0 + wj) / tileL, v1]]); }
           if (!gv2 && RD.line !== 'none') {
-            const ln = RD.edge ? [...SB.edges(i, j, [[-(wi - 0.3), -(wi - 0.45)], [wi - 0.45, wi - 0.3]])] : [];
+            const ln = RD.edge ? [...SB.edges(i, j, [[-(wi - 0.3), -(wi - 0.45)], [wi - 0.45, wi - 0.3]])].filter(q => !SR || !((SR.rez[q[0] > 0 ? 1 : 0][i] | SR.rez[q[0] > 0 ? 1 : 0][j]) & 2)) : [];
             if (bendAt[i] || bendAt[j]) ln.push([-0.26, -0.14], [0.14, 0.26]); else if (i % 6 < 2) ln.push([-0.06, 0.06]);   // (the double unbroken line; the broken one: 4 m dashes, 8 m gaps)
             for (const [o0, o1] of ln) gl.quadUp(Pt(i, o0, 0.036), Pt(i, o1, 0.036), Pt(j, o1 * wj / wi, 0.036), Pt(j, o0 * wj / wi, 0.036), [lineC, lineC, lineC, lineC]);
           }
@@ -425,9 +434,11 @@
               else gb.quadUp(a, b, c, d, [ci[k], ci[k + 1], cj[k + 1], cj[k]], [wuv(a), wuv(b), wuv(c), wuv(d)]); }
           }
         }
+        if (SR) { const gq = new API.RB(true); SR.robovi(gq, c0, Math.min(c0 + 60, N), gColAt); addM(gq, gMat); }   // (the side roads' verges in this chunk)
         SB.emit(c0, c0 + 60, gr, SN ? gv : gs, gl);   // (in a snowy world the side roads' gravel and shoulders packed snow on the grit)
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat); if (gb !== gv) addM(gb, bMat);
       }
+      if (SR) { const sM = aMat.clone(); for (const g of SR.asfalt(API.RB, gColAt)) { const m = addM(g, sM); if (m) m.userData.stranska = 1; } }   // (the side roads' strips)
       // chequered start and finish lines, a white line at each checkpoint
       const gq = new GB(true), gw = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1];
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
@@ -627,10 +638,11 @@
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || nearPad(i) || vrLCf(T.px[i], T.pz[i], 3) > 0.5) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
+        if (SR) { const r = SR.rez[side > 0 ? 1 : 0]; for (let i = 0; i < N; i++) if (r[i] & 1) nd[i] = 0; for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6 && ((i > 0 && r[i - 1] & 1) || (j < N && r[j] & 1))) for (let k = i; k < j; k++) nd[k] = 0; i = j; } }   // (the side roads' openings)
         stubRails(nd, side); nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
         for (let i = 0; i < N - 1; i++) {
-          const g = scen.get(T.px[i], T.pz[i]), mv = SB.mouthV[side > 0 ? 1 : 0][i];
+          const g = scen.get(T.px[i], T.pz[i]), mv = SB.mouthV[side > 0 ? 1 : 0][i] || (SR && SR.rez[side > 0 ? 1 : 0][i] & 1);
           if (nd[i] && nd[i + 1]) { const a = Q(i, 0.45), b = Q(i + 1, 0.45), c = Q(i + 1, 0.8), d = Q(i, 0.8), ins = Q(i, 0.6, 3), ino = Q(i, 0.6, -3);
             g.quadO(a, b, c, d, steel, ins); g.quadO(a, b, c, d, steelB, ino); if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.13, 1.13, 0.13, T.hd[i], postC, null, true); }
             if (SN && rpHash(i >> 1, side + 40) < 0.8) { const sc = [0.94, 0.95, 0.99]; g.quadUp(Q(i, 0.835, -0.07), Q(i + 1, 0.835, -0.07), Q(i + 1, 0.835, 0.09), Q(i, 0.835, 0.09), [sc, sc, sc, sc]); } }   // (snow lying along the rail's top)
@@ -642,7 +654,7 @@
       out.propR = 150; out.propFloor = propFloorTable(null, (i, side) => vp[side > 0 ? 1 : 0][i]);
       const sA = sStart + 30, sB = sFin - 30;
       out.propStats = roadsideProps(out.props, { spots: postSpots, postEdge: [1.0, 1.4], postCol: () => 0, exits: 0, apexes: 0, wallEdge: [1.4, 1.9], stacks: [5, 6], rows2: 0, maxLat: T.w + 2,
-        floor: out.propFloor, skip: (i) => { const s = i * T.ds; return s < sA || s > sB; } });
+        floor: out.propFloor, skip: (i, side, x, z) => { const s = i * T.ds; return s < sA || s > sB || (x !== undefined && naSR(x, z)); } });
       for (const [i, side] of lampSpots) {   // a street lamp: a dark pole just past the barrier line, its arm over the road's edge, the lamp; snow on the arm
         const o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.7), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; if (excluded(x, z) || vrStubAt(x, z, 1.2)) continue;
         const y0 = Math.min(T.hy[i], vrGround(x, z)) - 0.2, g = scen.get(x, z), dk = [0.24, 0.25, 0.27], ax = x - T.nx[i] * side * 1.0, az = z - T.nz[i] * side * 1.0;
@@ -654,6 +666,8 @@
         for (let b = 0; b < 6; b++) box(g, x, y0 + H * b / 6, z, 0.09, H / 6, 0.09, T.hd[i], b === 5 || b === 3 ? PO.band : PO.col, null, true); nPole++; } }
     }
     out.stubStats = stubProps({ scen, out, root, gH: vrGround, loc: { closed: S.boards.closed, gate: S.boards.gate }, posts: 'none' });
+    let nStb = 0;   // the side roads' posts across their openings in the barrier; their paint only with the country's rules (World.cesta.CRTE)
+    if (SR) { const getP = drzC ? (x, z) => scen.get(x, z) : (x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }; nStb = SR.predmeti(getP); out.stebricki = SR.stebricki; }
 
     /* ---- the curve signs: 90 m before each bend over 70 degrees, on the kerb side (left where they drive on the left), facing the cars coming ---- */
     let nSign = 0;
@@ -799,6 +813,7 @@
     out.dyn.ext = (t, car, cam) => { moveChairs(t, cam); moveSkiers(t); moveBirds(t); };
     out.stats = { trees: nTrees, stags: nStag, young: nYoung, tiles: nTile, farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), poles: nPole + out.propStats.posts, lifts: nLift, towers: nTower, chairs: chairs.length,
       skiers: nSki, nets: nNet, signs: nSign, animals: nAnimal, groomers: nGroom, guns: nGun, pulls: pulls.length, sideRoads: out.stubStats.n };   // (read by the tests)
+    if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb });
     return out;
   }
 
