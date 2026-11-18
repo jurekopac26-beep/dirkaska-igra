@@ -6,10 +6,19 @@ const ROOT = process.env.GAME_ROOT || path.resolve(__dirname, '..', '..');
 const { loadCore } = require(path.join(ROOT, 'tests/lib/core.js'));
 const C = loadCore(), win = {};
 vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'js/geo.js'), 'utf8'), { window: win });
+// a track that js/geo.js does not place (the tracks from pull requests): its own frame, the origin on the start line, x east, z south,
+// not turned (the mark of tools/proga-uvoz.mjs in the track's file, "izhodišče lat, lon", or lat0 and lon0 in tools/<id>/<id>.json of
+// tools/proga-podatki.py); osm.py fits it to the roads all the same
+function own(id) {
+  const f = path.join(ROOT, 'js/tracks', id + '.js'), m = fs.existsSync(f) && /izhodišče (-?\d+\.\d+), (-?\d+\.\d+)/.exec(fs.readFileSync(f, 'utf8'));
+  if (m) return { kind: 'own', lat0: +m[1], lon0: +m[2], rot: 0, scale: 1 };
+  const j = path.join(ROOT, 'tools', id, id + '.json'), o = fs.existsSync(j) ? JSON.parse(fs.readFileSync(j, 'utf8')) : {};
+  return typeof o.lat0 === 'number' && typeof o.lon0 === 'number' ? { kind: 'own', lat0: o.lat0, lon0: o.lon0, rot: 0, scale: 1 } : null;
+}
 const out = {};
 for (const id of process.argv.slice(2)) {
   const d = C.TRACKS.find(t => t.id === id); if (!d) { console.error('no track ' + id); process.exit(1); }
-  const T = new C.Track(d), g = (win.GEO.tracks || {})[id] || null, r = v => +v.toFixed(2);
+  const T = new C.Track(d), g = (win.GEO.tracks || {})[id] || own(id), r = v => +v.toFixed(2);
   const px = [], pz = [], w = [];
   for (let i = 0; i < T.N; i++) { px.push(r(T.px[i])); pz.push(r(T.pz[i])); w.push(r(T.wAt(i))); }
   // for tools/cesta/izvoz.py: the start line (m along the samples), the right-hand normal at the first sample, the banked samples (runs),

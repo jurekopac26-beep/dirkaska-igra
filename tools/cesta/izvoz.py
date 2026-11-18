@@ -88,7 +88,10 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # group 569f (17. 11. 2026): circuits from pull requests, fitted to their own line (raceway), side roads only; Silkeborg 1781 m
          # left and Zandvoort 2339 m left: service ways that cross a run-off (the apron to the barrier 26-28 m out, T.gravL), as Sakhir's
          'silkeborg': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1781, -1)]), 'sosnova': dict(kinds={'raceway'}, predmeti=False),
-         'tuzla': dict(kinds={'raceway'}, predmeti=False), 'zandvoort': dict(kinds={'raceway'}, predmeti=False, izpusti=[(2339, -1)])}
+         'tuzla': dict(kinds={'raceway'}, predmeti=False), 'zandvoort': dict(kinds={'raceway'}, predmeti=False, izpusti=[(2339, -1)]),
+         # group 756a (17. 11. 2026): roads from pull requests, side roads only
+         'cusco': dict(predmeti=False), 'eljem': dict(predmeti=False), 'ghoufi': dict(predmeti=False), 'isalo': dict(predmeti=False),
+         'isuna': dict(predmeti=False)}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
