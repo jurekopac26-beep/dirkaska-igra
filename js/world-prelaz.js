@@ -551,7 +551,9 @@
     // tools/cesta/izvoz.py): measured here, drawn with the road's chunks and the scenery below; the model, the barrier's line and the cars know nothing
     // of them. A pass is an open road: its edge line is broken at the mouths and the rail opens there. drzava (from the track's name): the country whose rules for the lines
     // are known (World.cesta's CRTE); without it the mouths stay without paint (no stop line, no broken line across)
-    const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i]; for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i];   // (the drawn top: the verge, or the terrain's tile where it lies above the ditch, open in a mouth's gap)
+      for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) { const o = side * d; return Math.max(lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)), caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]); }
+      return -9; };
     const edgeTone = (i) => { let sd = 1; for (const u of SR.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const o = sd * w, d = o - T.rl[i]; return (0.8 - 0.12 * Math.exp(-d * d / 5.5)) * (0.96 + 0.08 * P.n2(T.px[i] * 0.5 + o, T.pz[i] * 0.5)); };   // (the asphalt's tone at its edge on the mouth's side: shade below)
     const drzava = ((c) => World.cesta && World.cesta.CRTE && World.cesta.CRTE[c] ? c : null)(String(def.name || '').split(',').pop().trim());   // (the country in the track's name, if World.cesta's CRTE knows its lines)
     const SR = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: true, drzava: drzava || undefined, barva: drzava ? undefined : false }) : null;
