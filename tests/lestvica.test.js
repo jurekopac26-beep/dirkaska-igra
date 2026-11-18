@@ -106,7 +106,7 @@ const repack = (o) => L.pack(J(o));
     let pairs = 0, minR = 9, maxR = 0;
     for (const id of ids) {
       const d = C.TRACKS.find(x => x.id === id), T = new C.Track(d), tt = !!d.timeTrial;
-      const b = T.open ? L.bound(T, { kind: tt ? 'tt' : 'up' }, C.MODELS) : L.bound(T, { kind: 'lap' }, C.MODELS) * (id === 'nring' || id === 'livorno' ? 1 : 2);   // (the reference races: two laps, one of the long ones)
+      const b = T.open ? L.bound(T, { kind: tt ? 'tt' : 'up' }, C.MODELS) : L.bound(T, { kind: 'lap' }, C.MODELS) * (id === 'nring' || id === 'livorno' || id === 'hakone' ? 1 : 2);   // (the reference races: two laps, one of the long ones as in tests/races.test.js)
       for (const v of ['cs', 'cs/formula', 'cs/lm', 'cs/car']) {
         const g = GOLD[id + '/' + v]; if (!g || !(g.winner > 0)) continue;
         pairs++; const r = g.winner / b; minR = Math.min(minR, r); maxR = Math.max(maxR, r);
@@ -179,7 +179,7 @@ const repack = (o) => L.pack(J(o));
 
   // 5. the size
   {
-    const table = L.keyTable(C.TRACKS), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;
+    const table = L.keyTable(C.TRACKS.filter(d => !d.test)), t = {}, cars = C.MODELS.map(m => m.id); let i = 0;   // (the real tracks: the test ones go before the release, CLAUDE.md)
     for (const k of table.keys()) { t[k] = [60000 + Math.floor(Math.random() * 600000), 300 + (i % 20), cars[i % cars.length]]; i++; }
     const P = await player('Turbo Tina', t), l = await L.link(P.pk, []);
     check(`every record of every track (${Object.keys(t).length} times) in one link: at most 8 000 characters`, l.z.length <= 8000 && l.n === 0, l.z.length + ' characters');

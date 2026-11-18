@@ -524,6 +524,7 @@ try {
     const set = (k, v) => document.querySelector(`[data-set="${k}"] button[data-v="${v}"]`).click();
     const meas = () => { Render.frame(1 / 60, 1, P, 'chase', {}); const v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {}); return __gl.verts - v0; };
     for (let k = 0; k < 6; k++) { for (let i = 0; i < 10; i++) g.sim(1, true);
+      Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, 'chase', {});   // (after the 10 s jump the camera there at once and settled, as perf.test.mjs: off, Normalni and Visoki from the same place)
       set('xBody', 0); set('xGlass', 0); out.off += meas(); set('xBody', 1); set('xGlass', 1); set('carDet', 'normal'); out.lite += meas(); set('carDet', 'high'); out.full += meas(); }
     set('xBody', 0); set('xGlass', 0); set('carDet', 'normal');
     for (const k in out) out[k] = Math.round(out[k] / 6); return out; });
