@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <title>Palau</title>
+  <!-- Ratio 5:8. A light blue field with a golden-yellow disc slightly toward the hoist (the disc's centre at 7/16 of the length,
+       its diameter 3/5 of the height). Colours: #4AADD6 and #FFDE00. -->
+  <rect x="0" y="0" width="800" height="500" fill="#4AADD6"/>
+  <circle cx="350" cy="250" r="150" fill="#FFDE00"/>
+</svg>
