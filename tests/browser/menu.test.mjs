@@ -722,7 +722,7 @@ try {
     T.check('Select on the Earth (Hakone): the track step goes to it, the Earth gone with its steps in the history; the head\'s globe turned to Japan (from Belgium, along the way)',
       sel.id === 'hakone' && sel.track === 'hakone' && sel.head === 'Hakone' && !sel.hist && turned && !sel.g.turning && Math.abs(sel.g.at[0] - suz[0]) < 0.05 && Math.abs(wrap(sel.g.at[1] - suz[1])) < 0.05 && sel.country === 'Japan' && sel.S >= 104, JSON.stringify({ sel, turned, suz }));
     // the head's globe in daylight (the Sun set over the next track's antipode: no night on it); the moon switched on the Earth (the night
-    // there, remembered): the same globe darker at once; then the next track's at night, the one after it by day (their globes not drawn yet)
+    // there, remembered): the same globe darker at once; then the next track by day, the one after it at night (their globes not drawn yet)
     await page.evaluate(() => { const s0 = MenuZemlja.sun; MenuZemlja.sun = (t) => { if (t || !window.__sun) return s0(t); const d = Menu.debug(), id = d.list[d.trackIdx], g = GEO.tracks[id], p = (MENU.globe.places || {})[id] || (g ? [g.lat0, g.lon0] : [0, 0]); return window.__sun === 'day' ? p : [-p[0], p[1] > 0 ? p[1] - 180 : p[1] + 180]; }; });
     const DISK = 'const c = root.querySelector(".thead .globe canvas"), S = c.width, d = c.getContext("2d").getImageData(0, 0, S, S).data; let n = 0, r = 0, g = 0, b = 0;' +
       'for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2; if (dx * dx + dy * dy > (S * 0.42) ** 2) continue; const i = (y * S + x) * 4; if (d[i] > 150 && d[i] - d[i + 2] > 60) continue; n++; r += d[i]; g += d[i + 1]; b += d[i + 2]; }' +
@@ -739,7 +739,7 @@ try {
     const d1 = await ev(page, DISK);
     T.check('all in daylight until the moon is on: the head\'s globe as bright with the Sun over the other side of the Earth; the moon pressed on the Earth: the night there (remembered), the head\'s globe darker as the Earth closes',
       d0.n > 500 && d1.n > 500 && d1.country === d0.country && sum(d1) < 0.5 * sum(d0) && mo.night === true && mo.nt === 1 && mo.pressed === 'true' && mo.kept === 'on', JSON.stringify({ d0, mo, d1 }));
-    const nt = await lit('night'), dy = await lit('day');
+    const dy = await lit('day'), nt = await lit('night');
     await page.evaluate(() => { window.__sun = null; });
     T.check('the head\'s globe with the moon on: its night side darker and bluer (the Sun over the other side of the Earth) than by day (the Sun over the track)', nt.n > 500 && dy.n > 500 && sum(nt) < 0.5 * sum(dy) && nt.rgb[2] / Math.max(1, nt.rgb[0]) > dy.rgb[2] / Math.max(1, dy.rgb[0]), JSON.stringify({ nt, dy }));
     // Race! on the Earth's card: the race on that track at once, the Earth gone with its steps in the history

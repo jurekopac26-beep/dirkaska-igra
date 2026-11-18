@@ -174,8 +174,8 @@ check('track: the run-up for the grid behind the start (~210 m) and the room for
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'lang.js'), 'utf8'), ctx);
   ctx.Lang.set('en');
   const en = T.names.map(q => ctx.Lang.place(q.n));
-  check('names: the HUD\'s places in English (Hospital, Hairpin 1 · 2,060 m, Hairpin 2 · 2,054 m, Sololá, Under the Power Line, Pine Woods, Lake View), the escape\'s goal',
-    en.join('|') === 'Hospital|Hairpin 1 · 2,060 m|Hairpin 2 · 2,054 m|Sololá|Under the Power Line|Pine Woods|Lake View' && ctx.Lang.place(def.escTo) === 'To the lake', en.join(' | '));
+  check('names: the HUD\'s places in English (Hospital, Hairpin 1 · 2,060 m, Hairpin 2 · 2,054 m, Sololá, Under the Power Line, Pine Wood, Lake View), the escape\'s goal',
+    en.join('|') === 'Hospital|Hairpin 1 · 2,060 m|Hairpin 2 · 2,054 m|Sololá|Under the Power Line|Pine Wood|Lake View' && ctx.Lang.place(def.escTo) === 'To the lake', en.join(' | '));
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
