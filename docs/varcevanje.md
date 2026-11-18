@@ -156,6 +156,7 @@ Ta teden (16.–22. 11. 2026) ima croatiadata drug rok: vse do torka, 17. 11., z
 
 - **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija dodaja seje s kodo, dokler račun ne pride v pas (največ 10 hkrati; meja 2 seji s kodo velja samo za račun **nad** pričakovano porabo, odločitev 17. 11., točka 13; `CLAUDE.md`, razdelek Seje; najprej seje, ki vodijo končano delo do `main`). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
 - **Predaja:** ob uri v stolpcu Predaja vsaka seja računa napiše predajo v opis svojega PR in se ustavi; končane PR drug račun vodi na `main` (`CLAUDE.md`, »Tabla med računi«, in `docs/vrsta.md`, »Prevzem zdaj«). Koordinacija računa v luknji ne zaganja novih sej.
+- **Fable brez proste ponastavitve (partyslo, odločitev uporabnika 18. 11. 2026):** partyslo prosta ponastavitev Fable ne uporablja; ko Fable zmanjka, težje delo počaka na redni reset (`docs/odlocitve.md`, »Seje«). Nadomesti »ob ~95 % uporabi prosto ponastavitev Fable«.
 - **Dnevno stanje na tabli:** porabo zapiši kot »<račun>: X % (cilj Y %)«. Odstotek računa objavi Matej ali uporabnik; če ga koordinacija ne pozna, napiše »ne poznam«.
 - **V repozitorij ne spadajo** trenutni odstotki in dnevni cilji: spreminjajo se, objavljajo jih Matej in koordinacije na tabli. Ostane samo pravilo in tabela zgoraj.
 
