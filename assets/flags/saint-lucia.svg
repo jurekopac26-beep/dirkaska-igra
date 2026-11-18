@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Saint Lucia</title>
+  <!-- Ratio 1:2. A cerulean blue field; in its centre an isosceles triangle in white, a black one inside it on the same base, and a gold
+       triangle over their lower half on the same base (the twin Pitons rising from the sea). Colours: blue #66CCFF, gold #FCD116. -->
+  <rect x="0" y="0" width="1200" height="600" fill="#66CCFF"/>
+  <path d="M600,50L850,550H350Z" fill="#FFFFFF"/>
+  <path d="M600,130L810,550H390Z" fill="#000000"/>
+  <path d="M600,300L850,550H350Z" fill="#FCD116"/>
+</svg>

@@ -62,7 +62,7 @@ try {
     // (the game's track here Jezero, hidden behind NEUPORABNO: the title shows the first real one of Circuit race, the default mode, instead)
     const first = 'const id = Menu.debug().list[0], d = Core.TRACKS.find(x => x.id === id) || {}, full = (d.en || {}).name || d.name || "", k = full.lastIndexOf(", "); return { id, name: k > 0 ? full.slice(0, k) : full, real: !d.test && !d.pending, race: (d.modes || [d.timeTrial ? "tt" : "race"]).includes("race"), game: __game.S.track };';
     const f = await ev(page, first);
-    T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero): the first real one of Circuit race, the default mode (now Bâlea; a rally stage, a time trial only, is not in it)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && f.real && f.race && t.sub === f.name + ' · Circuit race', t.sub + ' ' + JSON.stringify(f));
+    T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero): the first real one of Circuit race, the default mode (now Aguascalientes, the shortest; Hai Van, Batangas and Sogeri are pending; a rally stage, a time trial only, is not in it)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && f.real && f.race && t.sub === f.name + ' · Circuit race', t.sub + ' ' + JSON.stringify(f));
     {   // (a fresh player, no track saved: the game's own default track is that one, firstTrackId in js/game.js)
       const o = await openGame(browser, PAGE, '{"sound":0,"intro":2,"quali":0}', { width: 412, height: 915 }, { menu: true });   // (the settings as a string: lib.mjs adds no track)
       await ready(o.page);
@@ -728,7 +728,7 @@ try {
       'for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2; if (dx * dx + dy * dy > (S * 0.42) ** 2) continue; const i = (y * S + x) * 4; if (d[i] > 150 && d[i] - d[i + 2] > 60) continue; n++; r += d[i]; g += d[i + 1]; b += d[i + 2]; }' +
       'return { S, n, rgb: [r / n, g / n, b / n].map(Math.round), country: c.dataset.country };';
     const steady = () => page.waitForFunction(() => !Menu.debug().globe.turning && document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas').width >= 104, null, { timeout: 10000 }).catch(() => null);
-    const lit = async (when) => { await page.evaluate((w) => { window.__sun = w; }, when); await click(page, 'track:1'); await steady(); return ev(page, DISK); };
+    const lit = async (when, step = 1) => { await page.evaluate((w) => { window.__sun = w; }, when); await click(page, 'track:' + step); await steady(); return ev(page, DISK); };
     const sum = (v) => v.rgb[0] + v.rgb[1] + v.rgb[2];
     const d0 = await lit('night');
     await page.click('.thead .globe'); await zem(page, 1);
@@ -739,7 +739,9 @@ try {
     const d1 = await ev(page, DISK);
     T.check('all in daylight until the moon is on: the head\'s globe as bright with the Sun over the other side of the Earth; the moon pressed on the Earth: the night there (remembered), the head\'s globe darker as the Earth closes',
       d0.n > 500 && d1.n > 500 && d1.country === d0.country && sum(d1) < 0.5 * sum(d0) && mo.night === true && mo.nt === 1 && mo.pressed === 'true' && mo.kept === 'on', JSON.stringify({ d0, mo, d1 }));
-    const nt = await lit('night'), dy = await lit('day');
+    // (back from the track after Hakone, the last real track: Hakone at night, the one before it, Nürburg, by day; the tracks after Hakone are
+    // the shortest, new ones among them over the sea, a day globe of Costa Rica mostly dark ocean: zbirna Proge 2)
+    const nt = await lit('night', -1), dy = await lit('day', -1);
     await page.evaluate(() => { window.__sun = null; });
     T.check('the head\'s globe with the moon on: its night side darker and bluer (the Sun over the other side of the Earth) than by day (the Sun over the track)', nt.n > 500 && dy.n > 500 && sum(nt) < 0.5 * sum(dy) && nt.rgb[2] / Math.max(1, nt.rgb[0]) > dy.rgb[2] / Math.max(1, dy.rgb[0]), JSON.stringify({ nt, dy }));
     // Race! on the Earth's card: the race on that track at once, the Earth gone with its steps in the history
