@@ -50,10 +50,11 @@ try {
     if (STANDS.includes(id)) { T.check(`${id}: the grandstands in 3D (no painted crowd, steps and benches), a few people (at most 400) sitting on the benches, none in the air`,
       r.stands.painted === 0 && r.stands.steps > 0 && r.stands.people > 10 && r.stands.people <= 400 && r.stands.off === 0, JSON.stringify(r.stands));
       T.check(`${id}: walkers on the grandstands (vendors on the walkway, people up the aisles), on the steps or the ground, none in the air`, r.stands.walk > 0 && r.stands.wOff === 0, JSON.stringify(r.stands)); }
-    const groups = r.scenes.filter(s => !s.stand), bad = groups.filter(s => s.people < 2 || s.people > 10);
-    T.check(`${id}: each scene a group of 2-10 (the grandstand more), at most three meshes, nobody on the road`, !bad.length && r.scenes.every(s => s.meshes <= 3 && s.near === 0),
+    // (the bigger spectator groups of js/world-ljudje4.js, m_…, one on a mountain track: up to 30 people, under 20k vertices; #785)
+    const big = s => /^m_/.test(s.name), groups = r.scenes.filter(s => !s.stand), bad = groups.filter(s => s.people < 2 || s.people > (big(s) ? 30 : 10));
+    T.check(`${id}: each scene a group of 2-10 (a big group up to 30, the grandstand more), at most three meshes, nobody on the road`, !bad.length && r.scenes.every(s => s.meshes <= 3 && s.near === 0),
       r.scenes.map(s => `${s.name} ${s.people}p ${s.meshes}m near ${s.near}`).join(', '));
-    T.check(`${id}: a scene's people under 7.5k vertices (the grandstand under 30k), its things under 16k`, r.scenes.every(s => s.verts < (s.stand ? 30000 : 7500)) && r.stats.propVerts < 16000 * r.stats.scenes,
+    T.check(`${id}: a scene's people under 7.5k vertices (a big group under 20k, the grandstand under 30k), its things under 16k`, r.scenes.every(s => s.verts < (s.stand ? 30000 : big(s) ? 20000 : 7500)) && r.stats.propVerts < 16000 * r.stats.scenes,
       r.scenes.map(s => `${s.name} ${Math.round(s.verts / 100) / 10}k`).join(', ') + ` · things ${Math.round(r.stats.propVerts / 1000)}k`);
     T.check(`${id}: the world test's pose is fixed (no car: the same twice)`, r.fixed === true, String(r.fixed));
     T.check(`${id}: the roadside crowd in rare groups, far fewer than before`, r.crowd > 0 && r.crowd <= CROWD_MAX[id] || (id === 'nring' && r.crowd <= CROWD_MAX[id]), `${r.crowd} spectators (at most ${CROWD_MAX[id]})`);
