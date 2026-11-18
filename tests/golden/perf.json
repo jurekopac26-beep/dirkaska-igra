@@ -217,11 +217,11 @@
   "jsMs": 1.14
  },
  "medvode": {
-  "calls": 130,
-  "maxCalls": 151,
-  "kverts": 366,
-  "maxKverts": 545,
-  "jsMs": 1.2
+  "calls": 131,
+  "maxCalls": 146,
+  "kverts": 533,
+  "maxKverts": 779,
+  "jsMs": 1.82
  },
  "montreal": {
   "calls": 185,
@@ -362,5 +362,222 @@
   "kverts": 362,
   "maxKverts": 436,
   "jsMs": 1.14
+ },
+ "llogara": {
+  "calls": 156,
+  "maxCalls": 168,
+  "kverts": 362,
+  "maxKverts": 423,
+  "jsMs": 1.34
+ },
+ "ella": {
+  "calls": 166,
+  "maxCalls": 205,
+  "kverts": 324,
+  "maxKverts": 488,
+  "jsMs": 1.61
+ },
+ "medeu": {
+  "calls": 158,
+  "maxCalls": 175,
+  "kverts": 401,
+  "maxKverts": 479,
+  "jsMs": 1.77
+ },
+ "silkeborg": {
+  "calls": 239,
+  "maxCalls": 283,
+  "kverts": 579,
+  "maxKverts": 689,
+  "jsMs": 1.55
+ },
+ "kagerod": {
+  "calls": 225,
+  "maxCalls": 255,
+  "kverts": 467,
+  "maxKverts": 523,
+  "jsMs": 1.43
+ },
+ "sosnova": {
+  "calls": 187,
+  "maxCalls": 224,
+  "kverts": 590,
+  "maxKverts": 745,
+  "jsMs": 1.48
+ },
+ "izoard": {
+  "calls": 181,
+  "maxCalls": 231,
+  "kverts": 545,
+  "maxKverts": 754,
+  "jsMs": 1.49
+ },
+ "pembrey": {
+  "calls": 187,
+  "maxCalls": 218,
+  "kverts": 509,
+  "maxKverts": 661,
+  "jsMs": 1.11
+ },
+ "kildare": {
+  "calls": 205,
+  "maxCalls": 231,
+  "kverts": 439,
+  "maxKverts": 511,
+  "jsMs": 1.95
+ },
+ "sacalobra": {
+  "calls": 222,
+  "maxCalls": 262,
+  "kverts": 578,
+  "maxKverts": 708,
+  "jsMs": 1.5
+ },
+ "kotor": {
+  "calls": 204,
+  "maxCalls": 245,
+  "kverts": 618,
+  "maxKverts": 843,
+  "jsMs": 1.39
+ },
+ "bikernieki": {
+  "calls": 183,
+  "maxCalls": 235,
+  "kverts": 435,
+  "maxKverts": 517,
+  "jsMs": 1.22
+ },
+ "london": {
+  "calls": 172,
+  "maxCalls": 210,
+  "kverts": 328,
+  "maxKverts": 369,
+  "jsMs": 0.52
+ },
+ "zandvoort": {
+  "calls": 182,
+  "maxCalls": 224,
+  "kverts": 638,
+  "maxKverts": 834,
+  "jsMs": 1.13
+ },
+ "dades": {
+  "calls": 141,
+  "maxCalls": 172,
+  "kverts": 205,
+  "maxKverts": 234,
+  "jsMs": 1.06
+ },
+ "furka": {
+  "calls": 159,
+  "maxCalls": 192,
+  "kverts": 314,
+  "maxKverts": 426,
+  "jsMs": 1.54
+ },
+ "santoantao": {
+  "calls": 167,
+  "maxCalls": 194,
+  "kverts": 274,
+  "maxKverts": 323,
+  "jsMs": 1.14
+ },
+ "gudauri": {
+  "calls": 156,
+  "maxCalls": 187,
+  "kverts": 362,
+  "maxKverts": 483,
+  "jsMs": 1.14
+ },
+ "ngorongoro": {
+  "calls": 141,
+  "maxCalls": 166,
+  "kverts": 276,
+  "maxKverts": 326,
+  "jsMs": 1.44
+ },
+ "tuzla": {
+  "calls": 156,
+  "maxCalls": 207,
+  "kverts": 448,
+  "maxKverts": 560,
+  "jsMs": 1.17
+ },
+ "buriram": {
+  "calls": 195,
+  "maxCalls": 247,
+  "kverts": 668,
+  "maxKverts": 844,
+  "jsMs": 1
+ },
+ "lombok": {
+  "calls": 188,
+  "maxCalls": 227,
+  "kverts": 567,
+  "maxKverts": 701,
+  "jsMs": 1.02
+ },
+ "sepang": {
+  "calls": 184,
+  "maxCalls": 226,
+  "kverts": 684,
+  "maxKverts": 861,
+  "jsMs": 1.14
+ },
+ "sakhir": {
+  "calls": 200,
+  "maxCalls": 229,
+  "kverts": 695,
+  "maxKverts": 782,
+  "jsMs": 0.93
+ },
+ "portomoniz": {
+  "calls": 208,
+  "maxCalls": 246,
+  "kverts": 498,
+  "maxKverts": 602,
+  "jsMs": 2.66
+ },
+ "seoul": {
+  "calls": 134,
+  "maxCalls": 146,
+  "kverts": 455,
+  "maxKverts": 564,
+  "jsMs": 0.75
+ },
+ "espinazo": {
+  "calls": 162,
+  "maxCalls": 183,
+  "kverts": 324,
+  "maxKverts": 401,
+  "jsMs": 1.67
+ },
+ "lusail": {
+  "calls": 171,
+  "maxCalls": 234,
+  "kverts": 527,
+  "maxKverts": 822,
+  "jsMs": 1.37
+ },
+ "riohondo": {
+  "calls": 194,
+  "maxCalls": 270,
+  "kverts": 619,
+  "maxKverts": 779,
+  "jsMs": 1.03
+ },
+ "hakone": {
+  "calls": 184,
+  "maxCalls": 196,
+  "kverts": 253,
+  "maxKverts": 273,
+  "jsMs": 4.38
+ },
+ "killar": {
+  "calls": 146,
+  "maxCalls": 162,
+  "kverts": 282,
+  "maxKverts": 353,
+  "jsMs": 1.99
  }
 }

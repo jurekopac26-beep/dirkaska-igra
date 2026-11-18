@@ -3469,7 +3469,7 @@ const Render = (function () {
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
   const RS_KINDS = new Set(['rssign', 'rschev', 'rsboard']);   // (the open roads' signs and boards: World's roadside, their faces on the world's atlas)
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench', 'rssign', 'rschev', 'rsboard']);   // (the small street furniture, Medvode's thin signs on poles and bench, the open roads' signs and boards: no shadow pass of their own, the phone's budget)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench', 'rssign', 'rschev', 'rsboard', 'isign', 'iblock', 'iboard']);   // (the small street furniture, Medvode's thin signs on poles and bench, the open roads' signs and boards, the signs on the roundabouts' islands: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack' || RS_KINDS.has(kind)), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -3532,6 +3532,18 @@ const Render = (function () {
       for (const f of [-1, 1]) { const x = f * 0.032, A = (y, z) => [x, y, z], inn = [0, 0.97, 0];
         if (kind === 'msign') g.triO(A(1.17, 0), A(0.75, -0.25), A(0.75, 0.25), wh, inn);
         else { g.quadO(A(0.82, -0.22), A(0.82, 0.22), A(1.1, 0.22), A(1.1, -0.22), wh, inn); g.quadO([f * 0.034, 0.96, -0.19], [f * 0.034, 0.96, 0.19], [f * 0.034, 1.06, 0.19], [f * 0.034, 1.06, -0.19], blue, inn); } } }
+    else if (kind === 'isign' || kind === 'iblock' || kind === 'iboard') {   // Medvode's island sign (Core PROPK): a blue keep-right disc (faces ±x, the white arrow down to the
+      // right as each side's viewer sees it) on a grey post standing on three stacked black rubber bases (0.6 x 0.22 x 0.6 m, a yellow reflective band round each); 'iblock'
+      // one base, 'iboard' the post with its disc, each about its own centre (the sign's: 1.18 m up, the post's middle 0.33 m above that)
+      const base = (y0) => { W.box(g, 0, y0, 0, 0.6, 0.22, 0.6, 0, [0.17, 0.17, 0.19], [0.24, 0.24, 0.26]); W.box(g, 0, y0 + 0.08, 0, 0.606, 0.05, 0.606, 0, [0.98, 0.8, 0.12], [0.98, 0.8, 0.12], true); };
+      const disc = (yc) => { const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94], n = 12;
+        for (const f of [-1, 1]) { const x = f * 0.03, inn = [-f, yc, 0];
+          for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2; g.triO([x, yc, 0], [x, yc + Math.sin(a0) * 0.32, Math.cos(a0) * 0.32], [x, yc + Math.sin(a1) * 0.32, Math.cos(a1) * 0.32], blue, inn); }
+          const P = (r, v) => [f * 0.034, yc + v, -f * r];   // (r: to the viewer's right, v: up)
+          g.quadO(P(-0.155, 0.105), P(-0.105, 0.155), P(0.075, -0.025), P(0.025, -0.075), wh, inn); g.triO(P(0.15, -0.15), P(-0.02, -0.15), P(0.15, 0.02), wh, inn); } };
+      if (kind === 'iblock') base(-0.11);
+      else if (kind === 'iboard') { W.cyl(g, 0, -0.85, 0, 0.04, 1.7, 5, [0.62, 0.63, 0.66]); disc(0.49); }
+      else { for (let k = 0; k < 3; k++) base(-1.18 + k * 0.22); W.cyl(g, 0, -0.52, 0, 0.04, 1.7, 5, [0.62, 0.63, 0.66]); disc(0.82); } }
     else if (kind === 'nsign') {   // the street's name: a blue plate (1.4 x 0.35, faces ±x) on a pole, white bars for the lettering
       const blue = [0.11, 0.31, 0.6], wh = [0.95, 0.95, 0.93];
       W.cyl(g, 0, -1.6, 0, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.75, 0, 0.05, 0.35, 1.4, 0, blue);
@@ -10973,7 +10985,8 @@ const Render = (function () {
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
     if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
-    World.update(world, time, target, camera, opt && opt.rp);   // (a replay: its time for the spectators)
+    World.update(world, time, target, camera, opt && opt.rp, curRace);   // (a replay: its time for the spectators; the race: its cars and traffic, for the animals of a world of its own file)
+    if (world && world.dyn && world.dyn.fence) world.dyn.fence(curRace, opt && opt.rp);   // (Killar: the race's broken fence panels, at the replay's time in one: js/world-killar.js)
     if (target) updateCamera(dt, target, mode, alpha, cdt);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)

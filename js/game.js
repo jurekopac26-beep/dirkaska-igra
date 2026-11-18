@@ -225,6 +225,9 @@
   // a road's own commentator lines for a key (def.comm: Los Caracoles' instead of Vršič's): the key of its pool, registered with Comm when first said
   const ownLine = (d, key) => { const L = d && d.comm && d.comm[key]; if (!L) return key; const k = key + '@' + d.id; Comm.addLines(k, L); return k; };
   const numDot = (n) => Lang.thou(n);   // 3048 -> 3.048 (English: 3,048)
+// the altitudes the HUD shows of an open road (def.alt: the start's and the finish's); a road over a top, up and then down, as Dadès: up to its
+// highest point too (def.altTop)
+const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1], d.altTop || -Infinity)];
   const kmTxt = (m, dec) => Lang.dec((m / 1000).toFixed(dec));   // 1,9 (English: 1.9)
   const cpWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' checkpoint' : ' checkpoints') : n + (n === 1 ? ' kontrolna točka' : n === 2 ? ' kontrolni točki' : n <= 4 ? ' kontrolne točke' : ' kontrolnih točk');
   const jumpWord = (n) => Lang.cur === 'en' ? n + (n === 1 ? ' jump' : ' jumps') : n + (n === 1 ? ' skok' : n === 2 ? ' skoka' : n <= 4 ? ' skoki' : ' skokov');
@@ -1759,7 +1762,7 @@
     let sepDone = false, pendDone = false;
     const rank = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real tracks, the ones awaiting the user's choice (pending: one of them stays), the test tracks)
     list.innerHTML = Core.TRACKS.filter(d => !d.variantOf).sort((a, b) => rank(a) - rank(b)).map(d0 => { const d = pkRoadDef(d0), T = getTrack(d.id), r = rec(d.id), sel = d.id === S.track ? ' sel' : '';
-      const climb = (d.realKm ? tr(' (pravih {0} km)', Lang.dec(d.realKm)) : '') + (d.alt ? (d.alt[1] < d.alt[0] ? tr(' · spust {0} m', numDot(d.alt[0] - d.alt[1])) : tr(' · vzpon {0} m', numDot(d.alt[1] - d.alt[0]))) : '');
+      const climb = (d.realKm ? tr(' (pravih {0} km)', Lang.dec(d.realKm)) : '') + (d.alt ? (d.alt[1] < d.alt[0] ? tr(' · spust {0} m', numDot(d.alt[0] - d.alt[1])) : tr(' · vzpon {0} m', numDot((d.altTop || d.alt[1]) - d.alt[0]))) : '');
       const md = modeOf(d);
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dvoboj z enim tekmecem v prometu') + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') :
         md === 'police' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · beg pred policijo') + (r.bestRace ? tr(' · najhitrejši pobeg {0}', fmt(r.bestRace, true)) : '') :
@@ -2532,7 +2535,7 @@
       else if (race.tf && !on) { const o = race.cars.find(c => !c.isPlayer); Comm.say(ownLine(track.def, 'introTraffic'), { track: EN_NAME[track.def.id] || track.def.name, rival: o ? o.name : 'your rival' }, 2); showMsg(tr('DVOBOJ V PROMETU!') + wetTxt, 'gold', 1.8); }   // (the duel in the traffic)
       else {
         if (on) Comm.say(race.remotes.length > 1 ? 'introNetN' : 'introNet', { track: EN_NAME[track.def.id] || track.def.name, laps: track.open ? 'one run to the top' : race.laps === 1 ? 'one lap' : race.laps + ' laps', name: race.remote.name, n: race.remotes.length + 1 }, 2);
-        else if (!(race.opts.flying > 0)) Comm.say(race.cars.length < 2 ? 'introAlone' : track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? 'introOne' : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, run: race.laps === 1 ? 'one lap' : Comm.words(race.laps) + ' laps', grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
+        else if (!(race.opts.flying > 0)) Comm.say(race.cars.length < 2 ? 'introAlone' : track.open ? ownLine(track.def, 'introPass') : race.laps === 1 ? ownLine(track.def, 'introOne') : 'intro', { track: EN_NAME[track.def.id] || track.def.name, laps: race.laps, run: race.laps === 1 ? 'one lap' : Comm.words(race.laps) + ' laps', grid: Comm.ordinal(race.player.grid), cars: Comm.words(race.cars.length), rivals: Comm.words(race.cars.length - 1) }, 2);   // (how many: the field's own, in words; a flying start: the commentator only counts down, flyStep)
         if (!(race.opts.flying > 0)) showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + (track.open ? tr('DIRKA NA VRH!') : lapWord(race.laps)) + wetTxt, 'gold', race.rain || race.champ ? 1.8 : 1.2);   // (a flying start: only its countdown, flyHUD; a championship's round with VOZIŠ TI!)
         if (race.strat) toast(tr(race.fuelRate ? 'Dolga dirka: gorivo ne zdrži do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.' : 'Dolga dirka: gume se obrabijo hitreje in ne zdržijo do cilja. Vsak tekmec ima svojo strategijo, 1 ali 2 postanka.'), 5200);   // (a strategy race, Core STRAT: with fuel the tank makes the stops, else the tyres)
       }
@@ -3010,7 +3013,7 @@
   }
   function pkFlyCap(k) {   // the caption of place k: its name and height
     const C = Render.pkFly.caps, c = C[k], el = $('pk-fly'), al = track.def.alt, a = al && !k ? al[0] : al && k === C.length - 1 ? al[1] : track.altAt(track.hy[track.idx(c.s)]);   // (the start's and the finish's: as the HUD shows them)
-    el.children[1].textContent = tr(c.n); el.children[2].textContent = a != null ? numDot(al ? clamp(a, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : a) + ' m' : '';   // (a descent: its alt falls)
+    el.children[1].textContent = tr(c.n); el.children[2].textContent = a != null ? numDot(al ? clamp(a, ...altSpan(track.def)) : a) + ' m' : '';   // (a descent: its alt falls)
   }
   function pkFlyStep() {   // updatePhase, in the intro: the shot and its caption at this moment
     const o = Render.pkFly.at(phaseT), el = $('pk-fly');
@@ -3496,11 +3499,12 @@
       dryHint = true; toast(tr('Idealna linija je suha: dežne gume se na suhem hitro obrabijo. Zapelji v bokse po suhe gume.'), 4600); Comm.say('dryLine', null, 2); }
     if (track.def.pit && !race.nv && !pitHint && dmgOn() && P.dmg > 0.45 && phase === 'racing') { pitHint = true; Comm.say('pitAdvice', null, 3); }   // (the commentator tells where the pits are, no text on the screen)
     if (P.pitState === 'repair' && (!Render.crew || !Render.crew.P)) { pitWrenchT -= dt; if (pitWrenchT <= 0) { pitWrenchT = 0.28 + Math.random() * 0.35; Sfx.wrench(); } }   // (no crew of the player's: the old rattle; with the crew Sfx hears its guns, jacks and the rest itself: Sfx pitStep)
-    if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
+    if (P.propSnd) { Sfx.knock(P.propSnd, P.propSndV); if (P.propSndV > 9 && (P.propSnd === 'tstack' || P.propSnd === 'bstack' || P.propSnd === 'rbstack' || P.propSnd === 'crate' || P.propSnd === 'isign')) vibrate(25); P.propSnd = null; P.propSndV = 0; }   // knocked a cone, tyres or bales
     if (P.fall && !fallSeen && phase === 'racing') { fallSeen = true; showMsg(tr('ZGRMEL SI V PREPAD!'), 'slow', 2); Sfx.thud(1); vibrate(150); } else if (!P.fall) fallSeen = false;   // (Uncompahgre: over the edge of a drop, Race._fall)
+    if ((P.offN || 0) !== (offCar === P ? offSeen : 0)) { offCar = P; offSeen = P.offN || 0; if (offSeen && phase === 'racing') { showMsg(tr('PREDALEČ OD CESTE!'), 'slow', 1.6); vibrate(60); } }   // (Killar: a road with no barriers, too far off it: put back on it, Race._offRoad)
     for (const c of race.cars) { c.hitWall = 0; c.hitCar = 0; c.hitDebris = 0; }
   }
-  let fallSeen = false;
+  let fallSeen = false, offCar = null, offSeen = 0;   // (offCar, offSeen: the car and its count of times put back (Race._offRoad) last told)
 
   /* ---------------- the open road (Vršič: the duel in the traffic, the run from the police) ---------------- */
   // what happened on the road (race.tf.log: someone on foot or on a bicycle run over, a crash with the traffic) and with the police
@@ -5065,7 +5069,7 @@
     // altitude of the road under the car (not the body, as in the splits table), between start and summit (or the foot of a descent); frozen at the
     // finish. A stage without altitudes (a rally stage): the distance still to go to the finish, to the nearest 0.1 km (at least 0.1 until the line)
     const al = track.def.alt, alt = track.altAt(P.finished ? track.hy[track.finishIdx] : P.roadY || 0);
-    setText('h-alt', alt != null ? numDot(al ? clamp(alt, Math.min(al[0], al[1]), Math.max(al[0], al[1])) : alt) + ' m' : P.finished ? '' : tr('še {0} km', kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1)));
+    setText('h-alt', alt != null ? numDot(al ? clamp(alt, ...altSpan(track.def)) : alt) + ' m' : P.finished ? '' : tr('še {0} km', kmTxt(Math.max(100, Math.round(clamp(track.raceLen - Math.max(0, P.dist), 0, track.raceLen) / 100) * 100), 1)));
     const cur = P.finished ? P.finishTime : phase === 'racing' ? race.time : 0;
     setText('h-time', fmt(cur, true));
     setBest(R0.bestTime || NaN);   // personal best (a new one shows as soon as the run ends)
@@ -5434,7 +5438,7 @@
     const L = polLen(), al = track.def.alt, done = P.finished && !P.busted, alt = track.altAt(done && !race.pol ? track.hy[track.finishIdx] : P.roadY || 0);   // (busted by the police: where they were stopped; the run from the police: the building at the top)
     setText('h-pos', race.pol ? String(race.pol.cars.filter(c => c.pol.mode === 'chase').length) : String(P.pos || race.cars.length));
     setLap(kmTxt(clamp(done ? L : P.dist, 0, L), 1) + '/' + kmTxt(L, 1) + ' KM');
-    setText('h-alt', alt != null ? numDot(al ? clamp(alt, al[0], al[1]) : alt) + ' m' : '');
+    setText('h-alt', alt != null ? numDot(al ? clamp(alt, ...altSpan(track.def)) : alt) + ' m' : '');
     setText('h-time', fmt(P.finished ? P.finishTime : phase === 'racing' ? race.time : 0, true));
     setBest(rec(track.def.id).bestRace || NaN);
     if (race.pol) {   // the run from the police: before the chase the checkpoint (chkHUD); in it the heat (stars), the busted meter, the flat tyres, hiding; the arrows of the patrol cars behind (tailHUD)
@@ -5653,7 +5657,7 @@
     cs.wasAir = !!P.air;
     commWreck(P);
     // knocked-over trackside props
-    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' || k === 'dpost' || k === 'rssign' || k === 'rschev' || k === 'rsboard' || k === 'tbollard' || k === 'mlamp' || k === 'msign' || k === 'bsign' || k === 'nsign' || k === 'zaprta' || k === 'vboard' || k === 'flagp' || k === 'cflag' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : k === 'bboard' ? 'propBoard' : 'propStreet';   // (Medvode's bollards, lamps, signs, flags, the open roads' delineators, signs and boards: a post's lines; its bench: the street furniture's; a braking board its own)
+    if (P.propKnock) { const k = P.propKnock, key = k === 'cone' ? 'propCone' : k === 'tyre' || k === 'tstack' ? 'propTyre' : k === 'bale' || k === 'bstack' || k === 'rbale' || k === 'rbstack' ? 'propBale' : k === 'pylon' ? 'propPylon' : k === 'post' || k === 'dpost' || k === 'rssign' || k === 'rschev' || k === 'rsboard' || k === 'isign' || k === 'iboard' || k === 'tbollard' || k === 'mlamp' || k === 'msign' || k === 'bsign' || k === 'nsign' || k === 'zaprta' || k === 'vboard' || k === 'flagp' || k === 'cflag' ? 'propPost' : k === 'signal' || k === 'signalm' ? 'propSignal' : k === 'crate' ? 'propCrate' : k === 'bboard' ? 'propBoard' : 'propStreet';   // (Medvode's bollards, lamps, signs, flags, the open roads' delineators, signs and boards: a post's lines; its bench: the street furniture's; a braking board its own)
       P.propKnock = null; if (P.propKnockV > 7 && cool('prop', 12) && Math.random() < 0.75) Comm.say(key, null, 1); }
     // crashes and contact
     if (cev.wall > 6 && cool('crash', 8)) Comm.say('crash', null, 2);

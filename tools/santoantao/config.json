@@ -1,9 +1,10 @@
 {
   "id": "santoantao",
-  "about": "Santo Antão, Zelenortski otoki (id santoantao): 5 km of the cobbled EN1-SA-01 along the Delgadim ridge and down towards Ribeira Grande, 6 hairpins (docs/nove-proge-1-0.md)",
+  "about": "Santo Antão, Zelenortski otoki (id santoantao): 5 km of the cobbled EN1-SA-01 along the Delgadim ridge and down towards Ribeira Grande, 6 hairpins (docs/nove-proge-1-0.md); the line from 205 m before the start line (the grid) to 259 m past the finish (the cars' slots)",
   "box": [17.135, -25.1, 17.187, -25.059],
   "closed": false,
   "route": [
+    [17.14736, -25.08407, "Porto Novo-R.Grande", "run-up for the grid | secondary, w190520616, 205 m before the start line"],
     [17.14886, -25.08507, "Porto Novo-R.Grande", "start | secondary, w190520616, s -1 m"],
     [17.15006, -25.08504, "Porto Novo-R.Grande", "secondary, w190520616, s 149 m"],
     [17.15135, -25.08482, "Porto Novo-R.Grande", "secondary, w766320175, s 299 m"],
@@ -37,11 +38,13 @@
     [17.1716, -25.07412, "Porto Novo-R.Grande", "secondary, w190520613, s 4504 m"],
     [17.17085, -25.07451, "Porto Novo-R.Grande", "secondary, w190520613, s 4651 m"],
     [17.17185, -25.07361, "Porto novo-R.Grande", "secondary, w190520623, s 4803 m"],
-    [17.17311, -25.07373, "Porto novo-R.Grande", "finish | secondary, w190520623, s 4993 m"]
+    [17.17311, -25.07373, "Porto novo-R.Grande", "finish | secondary, w190520623, s 4993 m"],
+    [17.17539, -25.07332, "Porto Novo-R.Grande", "the cars' slots past the finish line | secondary, w190520621, 259 m past it"]
   ],
   "prefer": ["Porto Novo-R.Grande", "Porto novo-R.Grande"],
   "geoRoads": [],
   "geoWater": [],
   "marks": [],
-  "places": []
+  "places": [],
+  "dist": {"grid": 480}
 }
