@@ -326,9 +326,10 @@
         const on = plTileOn(ti, tj); if (!on) continue; if (on === 1) G.on[tj * G.ntx + ti] = 1; else nFar++;
         const m = new THREE.Mesh(plTileGeo(ti, tj, on), tMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m);
       }
-      const wMat = new THREE.MeshPhongMaterial({ map: tex.water, vertexColors: true, shininess: 70, specular: 0x2a3a44 });
+      const wMat = new THREE.MeshPhongMaterial({ map: (L.water || {}).map === false ? null : tex.water, vertexColors: true, shininess: 70, specular: 0x2a3a44 });
+      if (!wMat.map) wMat.customProgramCacheKey = () => 'water|silt';   // (water.map false: a silty river's own colour, not the lake's blue picture; the key: the ambience still hears it)
       for (const Lk of P.lakes) {   // a 4 m grid near the road, 8 m farther out: the glacial lake's deep blue-green, paler at the shore, the sky in it
-        const deep = [0.05, 0.2, 0.26], shal = [0.22, 0.4, 0.4], sky = [0.5, 0.62, 0.74];
+        const Wc = L.water || {}, deep = Wc.deep || [0.05, 0.2, 0.26], shal = Wc.shal || [0.22, 0.4, 0.4], sky = Wc.sky || [0.5, 0.62, 0.74];   // (L.water: a river's own)
         const g = new GB(true), uv = (q) => [q[0] / 14, -q[2] / 14], cc = new Map();
         const wc = (x, z) => { const key = Math.round(x) + ',' + Math.round(z); let c = cc.get(key); if (c) return c;
           const e = API.vrWater(x, z).e, ks = 0.35 * sstep(0.55, 0.8, P.n2(x * 2.2, z * 2.2)); c = [0, 1, 2].map(k => lerp(lerp(shal[k], deep[k], sstep(2, 26, e)), sky[k], ks)); cc.set(key, c); return c; };
