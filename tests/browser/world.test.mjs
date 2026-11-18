@@ -3,7 +3,9 @@
 // (type, colours, texture size and tiling, transparency), the knockable props and the prop floor. Textures' pixels are not
 // included (canvas drawing may differ between systems). Proves that a code reorganisation left every track as it was. Also the
 // braking boards: on every circuit all of them (Track.brakeBoards) in one mesh without a shadow, each standing on the ground; none elsewhere.
-// Chapman's Peak's hills behind the barrier line (def.hills) as its terrain gives them (tools/chapman-hribi.mjs).
+// And where a track has the ground a falling car lands on (def.floor: Killar), it is the ground drawn there.
+// Chapman's Peak's hills behind the barrier line (def.hills) as its terrain gives them (tools/chapman-hribi.mjs); Sa Calobra's where no wall is
+// drawn (tools/sacalobra-hribi.mjs: every stretch without a rail or wall a hill, none at a wall).
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
 //   WORLD_ONLY=medvode,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
@@ -11,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, pwNote } from './lib.mjs';
 import { DL as HILL_DL, probe as hillProbe, hills, line as hillsLine, fileLine as hillsFile } from '../../tools/chapman-hribi.mjs';
+import { probe as saProbe, fileLine as saFile } from '../../tools/sacalobra-hribi.mjs';
 
 const FILE = path.join(REPO, 'tests', 'golden', 'world.json');
 const update = process.argv.includes('--update');
@@ -25,6 +28,12 @@ try {
   for (const id of await trackIds(page)) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
+    if (id === 'sacalobra' && !update) { const h = hills(await page.evaluate(saProbe, HILL_DL)), have = saFile();   // (Sa Calobra: a hill where no rail and no wall is drawn, the user's report of 13. 11. 2026)
+      T.check('sacalobra: def.hills as its terrain and walls give them (else node tools/sacalobra-hribi.mjs)', have === hillsLine(h), have ? `${h.stats.length} hills, ${h.stats.reduce((a, x) => a + x[2], 0)} m` : 'no def.hills');
+      const r = await page.evaluate(() => { const T = window.__game.race.track, P = Render.world.hillProbe, e = Math.ceil(8 / T.ds) + 2; let both = 0, none = 0;   // (a hill nowhere at a wall; no wall missing where no hill is but at the road's closed ends and under the knot's arch)
+        for (const si of [0, 1]) for (let i = e; i < T.N - e; i++) { const h = T.hill.on[si][i]; if (h && P.rail[si][i]) both++; if (!h && !P.skip(i, si ? 1 : -1)) none++; }
+        return { both, none }; });
+      T.check('sacalobra: no hill at a drawn wall, no invisible wall where none is drawn (but the closed ends, the knot\'s arch)', r.both === 0 && r.none <= 40, `${r.both} samples of a hill at a wall, ${r.none} without a wall or hill`); }
     if (id === 'chapman' && !update) { const h = hills(await page.evaluate(hillProbe, HILL_DL)), have = hillsFile();   // (Chapman's Peak's hills behind the barrier line, def.hills: as its terrain gives them now)
       T.check('chapman: def.hills as its terrain gives them (else node tools/chapman-hribi.mjs)', have === hillsLine(h), have ? `${h.stats.length} hills, ${h.stats.reduce((a, x) => a + x[2], 0)} m` : 'no def.hills');
       const nc = await page.evaluate(() => { const T = window.__game.race.track, H = T.hill; let worst = 99, n = 0;   // (the rockfall nets the world built: the cars' soft limit short of each, its posts 0.3 m nearer the road)
@@ -85,9 +94,18 @@ try {
           for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if ((di || dj) && ii >= 0 && jj >= 0 && ii < nx && jj < nz) lo = Math.min(lo, FR.P0[3 * (jj * nx + ii) + 1]); }
           const y = FR.P0[3 * k + 1]; if (y < lo - 40) lakes.pits.push(`${FD.x0 + i * FD.cell}, ${FD.z0 + j * FD.cell}: ${Math.round(lo - y)} m below`); }
       }
-      return { bb, fnan, lakes, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
+      // the ground a falling car lands on (def.floor, Track.floorAt: tools/killar-skala.mjs) where a track has it: the ground the world draws, in
+      // both triangles of every cell it has (the user's report of 9. 11. 2026 at ~23.48 on Killar: the car fell into the slope and was gone)
+      let fall = null;
+      if (Tr.floor && W.groundH) { const Fl = Tr.floor, o = {}; fall = { n: 0, worst: 0, at: '' };
+        for (const key of Fl.M.keys()) { const i = key % 65536, j = Math.floor(key / 65536);
+          for (const [u, v] of [[0.25, 0.5], [0.7, 0.6]]) { const x = Fl.x0 + (i + u) * Fl.c, z = Fl.z0 + (j + v) * Fl.c; if (!Tr.floorAt(x, z, o)) continue;
+            const e = Math.abs(o.h - W.groundH(x, z)); fall.n++; if (e > fall.worst) { fall.worst = e; fall.at = `${x.toFixed(1)}, ${z.toFixed(1)}`; } } } }
+      return { bb, fnan, lakes, fall, meshes, verts, instances: inst, props: props.length, crowd: W.crowdN || 0, world: h.toString(16), propsHash: ph.toString(16), floor: F ? fh.toString(16) + '/' + fn : null, groups: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.toString(16)])) };
     });
-    const bb = fp.bb, fnan = fp.fnan, lakes = fp.lakes; delete fp.bb; delete fp.fnan; delete fp.lakes;
+    const bb = fp.bb, fnan = fp.fnan, lakes = fp.lakes, fall = fp.fall; delete fp.bb; delete fp.fnan; delete fp.lakes; delete fp.fall;
+    if (fall) T.check(`${id}: the ground a falling car lands on (def.floor) is the ground drawn there (within 0.3 m; tools/killar-skala.mjs)`, fall.n > 1000 && fall.worst <= 0.3,
+      `${fall.n} points, at most ${fall.worst.toFixed(2)} m off${fall.worst > 0.3 ? ' at ' + fall.at : ''}`);
     if (lakes && lakes.wet) T.check(`${id}: the far view's lakes at their own level (no wet node a pit below its neighbours)`, !lakes.pits.length,
       `${lakes.wet} wet nodes${lakes.pits.length ? '; pits at ' + lakes.pits.slice(0, 4).join('; ') : ''}`);
     if (fp.floor) T.check(`${id}: prop floor a number beside the road (0.1–12 m past its edge)`, !fnan, `NaN at ${fnan} of ${fp.floor.split('/')[1]} points`);

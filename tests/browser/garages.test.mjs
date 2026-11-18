@@ -20,7 +20,10 @@ const FREE = new Set(['cpalace wall', 'longford band']);   // (hung in the air: 
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, carV: 2, color: 5 }, { width: 640, height: 360 });
   const ids = await page.evaluate(() => Core.TRACKS.filter(d => d.pit && !d.open && !d.test).map(d => d.id));
-  T.check('5 circuits with pits (the test tracks left out)', ids.length === 5, ids.join(', '));   // (5: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026)
+  // (the five of the first version: Toronto, Bang Saen and Trois-Rivières are test tracks since 5. 11. 2026, Longford, Newcastle and Townsville since 6. 11. 2026;
+  // the new tracks N1-N8 add Silkeborg, Kågeröd, Pembrey, Bikernieki, Zandvoort, Tuzla, Sepang, Lombok, Buriram, Sakhir, Lusail and Río Hondo, 11. 11. 2026)
+  const OLD = ['spa', 'rbring', 'bathurst', 'cpalace', 'montreal'];
+  T.check('the circuits with pits (the test tracks left out): the five of the first version and those of the new tracks', OLD.every(id => ids.includes(id)), `${ids.length}: ${ids.join(', ')}`);
   const res = [];
   for (const id of ids) {
     await startTrack(page, id);
@@ -67,7 +70,13 @@ try {
         const E = pt(bx, 0, bx.lane), d = tgt.clone().sub(E), len = d.length();
         rc.set(E, d.normalize()); rc.far = len + 1;
         const hit = rc.intersectObjects(meshes.concat([rod]), false)[0];
-        const seen = !!hit && hit.object === rod && hit.instanceId === p.i;
+        // (a pillar may be shut off by nothing but the crew's own kit a hand's width before it, not by the world: (a) the player's wall, where the garage's front is closed (rod rb + nB, the
+        // same plane and paint as the pillars, 2 cm thick, its ends on the pillars' inner edges: where the road bends, the straight wall and the pillars placed along the road overlap by
+        // a few cm, and the ray from the lane's middle grazes the wall's end 1-5 cm before the pillar's point: Kågeröd, Pembrey, Sepang, Lusail, Río Hondo) and (b) a garage's flag, an
+        // 11 cm pole 15 cm before its left-hand pillar (crewFlags: rods rb + nB + 4 and on; the neighbour's pole by the right-hand pillar too), which the ray grazes where the lane is
+        // far, 13 m from the fronts (Silkeborg, Tuzla, Lombok, Sepang). They stand there by design; only a band must be seen as itself)
+        const kit = q.kind === 'pillar' && hit && hit.object === rod && hit.distance > len - 0.3 && (hit.instanceId === rb + nB || hit.instanceId >= rb + nB + 4);
+        const seen = !!hit && hit.object === rod && (hit.instanceId === p.i || kit);
         const o = tgt.clone().addScaledVector(n, -0.05); rc.set(o, n); rc.far = 2;   // (from just in front of it, straight in: the face behind)
         const back = rc.intersectObjects(meshes, false)[0], gap = back ? back.distance - 0.064 : null;   // (0.064: from there to the face the panel was put on)
         const tol = q.kind === 'wall' ? 0.35 : 0.05, noFace = FREE.has(out.id + ' ' + q.kind);

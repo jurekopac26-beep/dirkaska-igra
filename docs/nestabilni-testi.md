@@ -18,7 +18,11 @@ Krogi `.github/workflows/tests.yml` na `main` in v pull requestih od 1388 do 183
 | `smoke` | 1543, 1673, 1777 | vsakič drug pregled (1777 Vršič, testna proga) | naslednja seja |
 | `newver` | 1556, 1591, 1620 | vsi pred #429 (kliki v meniju) | verjetno že popravljeno |
 | `pitfight`, `pitreplay`, `forecast`, `pits` | po 2 | | naslednja seja |
-| po enkrat | `redflag`, `pitstats`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `memory` (teksture 129 → 130), `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
+| `share` | #698 (16. 11.) | 1: duh iz datoteke preverjen po 600 ms, uvoz še ni bil končan | popravljeno (čaka na duha v shrambi in na lestvici) |
+| `zrcalni` | #698 (16. 11.) | 1: dirka je med obračanjem zaslona tekla naprej, pogled je padel ali prestal po trenutku | popravljeno (dirka ustavljena, vsi štirje pogledi ob 18,3 s) |
+| `memory` | #698 (16. 11.), prej 129 → 130 | ena tekstura več (135 → 136) samo enkrat | popravljeno (ob rasti en krog več: puščanje raste znova) |
+| `haptics` | 44128443086 (#569, 18. 11., tudi ponovitev) | 4, 3: dirka iz menija vsakič druga; na počasnem stroju je avto zapustil stezo boksov po 0,6 s ali do boksov sploh ni prišel | popravljeno (testni način `?proga=bathurst&t=1&seme=7`, rešitev obtičanega avta; isti izid do številke pri semenih 1–4, 7, 17 in na enem jedru) |
+| po enkrat | `redflag`, `pitstats`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
 
 Prejšnji popravki nestabilnih testov na `main`: #317, #404, #429, #443, #445.
 
@@ -37,6 +41,7 @@ Ostali dve ugotovitvi tu nista popravljeni:
 
 - Red Bull Ring, uvoz v boks: avtopilot prečka črto boksa noter, ven in spet noter v ~0,8 s. Igralcu bi boksni avtopilot za trenutek vrnil volan in ga spet prevzel, tekmec pa ob tem izgubi klic (`Race.pitStep`, »an AI car out of the lane«).
 - Spa, začetek boksov: avtopilot lahko obtiči ob ograji, kjer se boks loči od proge.
+- Bathurst, ZRCALNI VLAK (16. 11. 2026, #698): v desnem ovinku od 18,8 do 21,4 s kamera za avtom pokonci (360 × 640) na Blizu ne zajame boka zloženega vlaka (x do 1,24, zaslon do 1); Srednje zajame (do 0,97). Za temo kamer; `zrcalni` gleda ob 18,3 s.
 
 ## Preverjanje
 
