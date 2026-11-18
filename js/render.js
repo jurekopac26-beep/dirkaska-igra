@@ -7445,6 +7445,7 @@ const Render = (function () {
     for (let i = R.o[0]; i < R.o[1]; i++) { const px = pa[i * 3], py = pa[i * 3 + 1], pz = pa[i * 3 + 2];
       if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; if (pz < z0) z0 = pz; if (pz > z1) z1 = pz;
       cen[0] += px / no; cen[1] += py / no; cen[2] += pz / no; N[0] += na[i * 3]; N[1] += na[i * 3 + 1]; N[2] += na[i * 3 + 2]; }
+    if (!v.xc && (name === 'doorL' || name === 'doorR')) (K.hx0 || (K.hx0 = {}))[name] = x0;   // (a front door's rear edge while shut, for xRearDoor: with no damage field yet (a view drawn afresh in a race under way) nothing else keeps it, and the field made after has the door swung)
     const sd = cen[2] < 0 ? -1 : 1, T = KIT_LOOSE[name] || (Math.abs(cen[2]) > 0.15 * M.wid ? ['side', 12] : Math.abs(cen[0]) > 0.15 * M.len ? ['drop', 10] : ['wing', 0]), kind = T[0];   // (an extra: a side one swings out, one at an end drops, one on top tilts)
     const xin = Math.abs(x0) < Math.abs(x1) ? x0 : x1, zo = sd < 0 ? z0 : z1, zin = sd < 0 ? z1 : z0;   // (its edge by the car's middle; its outer and inner face)
     let A, B;
@@ -8767,7 +8768,7 @@ const Render = (function () {
     const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
     if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
     const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
-    let hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]);
+    let hx = K.hx0 ? K.hx0[sd < 0 ? 'doorL' : 'doorR'] : null; if (hx == null) { hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]); }   // (the front door's rear edge shut: kitLoosen's, where the door swung open before the damage field was made)
     const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.3)) return;
     const sel = [], dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let hz = 0;
     for (const Q of [R.o, R.i]) { if (!Q) continue; for (let t = Q[0] / 3; t < Q[1] / 3; t++) { const o = t * 9; if (dv[t * 3]) continue;
