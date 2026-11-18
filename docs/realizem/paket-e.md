@@ -241,3 +241,41 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
 - **Spori:** `js/world-gore.js` spreminjajo tudi #775, #776 in #783 (stranske ceste na drugih gorskih progah), `tools/cesta/izvoz.py` in `crte.js` večina vej paketa E; ob spoju ostane ena izvedba v graditelju (dva prehoda, zimski trak in `carSR` iz te veje), v tabelah orodij vsi vnosi.
 - **Slike zdaj in potem:** `node tools/shot.mjs koli --m 1545 --lezece --pred b0e5ad99` (osnova z #657; Canaries `--m 2575`, Kanaba `--m 2355`); vprašanje `e-proge-762a` je na strani Artifact v opisu PR #777.
 - **Kako se preveri:** `node tests/browser/cesta.test.mjs` (skupina 762a), `WORLD_ONLY=koli,kanaba,canaries,aguascalientes node tests/browser/world.test.mjs`, `PERF_ONLY=koli,kanaba,canaries,aguascalientes node tests/browser/perf.test.mjs`, testi prog, `node tools/stamp.js --check`.
+## E, stranske ceste na progah skupine 762b (PR #780, 18. 11. 2026)
+- **Naloga:** paket E na progah zbirne veje #762, skupina 762b: **Koror, Palau**, **Savusavu, Fidži** in **Quezaltepeque, Salvador**. Stranske ceste s križišči so samo za videz (do ~60 m, samo iz OSM), črte pa po pravilih države. Nalogo je dala koordinacija po odločitvi uporabnika 16. 11. 2026 ob 22.24 (tabla #382). Osnova je veja `nove-proge/partyslo-zbirna` (#762) s spojenim #657. PR gre na `main` za #762 in #657; po `node tools/spoji-main.mjs` ostane samo njegova razlika. Skupina 762a (PR #777) dela na isti osnovi, zato v skupnih seznamih (`CRTE`, `README.md`, `PROGE` v `tools/cesta/izvoz.py`) vsaka doda samo svoje proge.
+- **Podatki:** OSM je prenesen prek `api.openstreetmap.org` (18. 11. 2026) z `tools/cesta/` (`crte.js` → `osm.py` → `izvoz.py`). Mediana prileganja sredinske črte na ceste OSM je Koror 0,2–0,3 m, Savusavu 0,2 m in Quezaltepeque 0,3 m (`highway=raceway`). Izvlečkov ni v repozitoriju: `izvoz.py … --vpisi` zapiše vrstice v `def.stranske` v `js/tracks/<id>.js` (oblika kot Livornov `side`, brez imen; ODbL je v `README.md`, »Zasluge«). Svetilk in postaj naloga ne zajema (`predmeti=False`).
+- **V igri:**
+  - **Koror:** 10 cest, od tega 9 dovozov ali kolovozov po 3,6 m in 1 ulica s 5,2 m (pri 1988 m).
+  - **Savusavu:** 8 cest, od tega 6 ulic po 5,2 m in 2 kolovoza po 3,6 m. Pri 188 m in 1616 m je križišče na obeh straneh.
+  - **Quezaltepeque:** 2 poti dirkališča po 3,6 m (pri 1588 m in 2518 m).
+- **Ročno izpuščene** (`izpusti` v `PROGE`):
+  - **Savusavu, 653 m levo in 810 m desno:** ulici odcepita pod 22° in 23° in tečeta ob ograji. Graditelj ju zato ne zgradi, v podatkih pa ostanejo samo zgrajene vrstice.
+  - **Quezaltepeque, 1940 m levo in 2119 m desno:** servisni poti dirkališča, ki se končata v izletni coni pred ograjo.
+- **Graditelja:**
+  - **Koror in Savusavu** gradi `js/world-prelaz.js` z `World.cesta.stranske` (`odprta: true`). Kamni, sneg, ovce in pastir se umaknejo s stranske ceste (`excluded(x, z, 1)` in `naSR`), zaporedje naključij pa ostane, zato je ostala okolica enaka. Robna črta in ograja se na ustju odpreta, čez odprtino stojijo oranžni stebrički.
+  - **Quezaltepeque** gradi `js/world-rbring.js` (priklop kot 569e). `qzWays` v `js/world-quezaltepeque.js` poti iz OSM, ki ležijo na stranski cesti, ne riše dvakrat.
+  - Barve na ustju (stop črta, trikotniki, robna črta čez ustje) ni nikjer: vrstici `CRTE.Palau` in `CRTE['Fidži']` nimata `stop` in `prednost` (`barva` v `js/world-prelaz.js`), Salvador pa vrstice nima.
+- **Črte:**
+  - **Palau:** `CRTE.Palau` ima rumeno sredinsko črto in bele robne. Vir so ameriške oznake, ki jih ceste države uporabljajo.
+  - **Fidži:** `CRTE['Fidži']` ima levi promet in vse črte bele, dvojno polno tam, kjer je prehitevanje prepovedano. Vir so oznake Commonwealtha po avstralskem zgledu.
+  - Obe vrstici sta prišli z #762; nove vrstice ta PR ne doda.
+  - **Salvador** nima vrstice v `CRTE` in je ta PR ne doda, ker se vrstica doda samo iz javnih pravil države z virom. Quezaltepeque kot dirkališče ohrani svoje bele robne črte in robnike brez sredinske črte.
+- **Obremenitev** (`tests/golden/perf.json`, 18. 11. 2026):
+  | Proga | Klici risanja, povprečje | Klici risanja, največ | Tisoč oglišč, povprečje | Tisoč oglišč, največ |
+  |---|---|---|---|---|
+  | Koror | 142 → 144 | 164 | 349 → 348 | 553 → 546 |
+  | Savusavu | 166 → 167 | 194 | 384 → 388 | 482 |
+  | Quezaltepeque | 228 → 230 | 257 → 261 | 609 → 610 | 720 → 737 |
+  Meja je ~300 klicev risanja in ~900 tisoč oglišč. `perf.test.mjs` čez vse proge: OK 33/33, ostale proge so v mejah reference.
+- **Kako se preveri:**
+  - `node tests/browser/cesta.test.mjs` (blok 762b);
+  - `WORLD_ONLY=koror,savusavu,quezaltepeque node tests/browser/world.test.mjs`;
+  - `PERF_ONLY=koror,savusavu,quezaltepeque,spa node tests/browser/perf.test.mjs`;
+  - `node tools/stamp.js --check`.
+  Slike zdaj in potem (kamera za avtom) so na straneh: Koror 759 m in 1966 m, Savusavu 166 m in 1594 m, Quezaltepeque 1565 m in 2496 m. Stran z vprašanjem `e-proge-762b` (možnosti 1–3) je povezana v opisu PR #780.
+- **Odprto:**
+  1. PR #764 (569c) ureja isti priklop v `js/world-prelaz.js`. Gresta na `main` drug za drugim; ohrani se en priklop (klic `World.cesta.stranske` z `barva`).
+  2. Seznam `PROGE` v `tools/cesta/izvoz.py` se prekriva s 569e in 569f. Ob sporu obdrži vse vnose.
+  3. Po novi gradnji Quezaltepequeja (sprememba sredinske črte) znova poženi `izvoz.py … --vpisi`.
+  4. Blok 762b v `cesta.test.mjs` bo morda treba združiti z bloki 569c in 569e.
+  5. Uporabnikov odgovor na vprašanje `e-proge-762b`.

@@ -96,7 +96,14 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'luanda': dict(predmeti=False), 'mombasa': dict(predmeti=False), 'portobelo': dict(predmeti=False, izpusti=[(2491, -1)]),
          # group 762a (17. 11. 2026): Aguascalientes (a circuit), Canaries, Kanaba and Koli (open roads): the side roads only
          'aguascalientes': dict(kinds={'raceway'}, predmeti=False), 'canaries': dict(predmeti=False), 'kanaba': dict(predmeti=False),
-         'koli': dict(predmeti=False)}
+         'koli': dict(predmeti=False),
+         # group 762b (18. 11. 2026): the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md:
+         # those are for the 15 tracks of main); Quezaltepeque a circuit, fitted to its own line (raceway) as the other circuits. Left out:
+         # on Savusavu two streets that leave at a slant (22 and 23 degrees) and run on beside the road about the barrier's line (653 m,
+         # left; 810 m, right); on Quezaltepeque two service tracks of the venue that end in the run-off short of the fence (1940 m, left;
+         # 2119 m, right)
+         'koror': dict(predmeti=False), 'savusavu': dict(predmeti=False, izpusti=[(653, -1), (810, 1)]),
+         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)])}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
