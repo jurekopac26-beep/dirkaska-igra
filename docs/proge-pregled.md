@@ -13,19 +13,19 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 <!-- meritve:začetek -->
 | Proga | `id` | Vrsta | Dolžina | °/km | Ravnine | Lasnice | Višina |
 |---|---|---|---|---|---|---|---|
-| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,8 km | 1347 | 22 % | 16 | +489 m |
+| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
 | Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
 | Santo Antão, Zelenortski otoki | `santoantao` | odprta cesta | 5,0 km | 936 | 27 % | 6 | −336 m |
+| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 4,2 km | 912 | 35 % | 9 | +324 m |
 | Kotor, Črna gora | `kotor` | odprta cesta | 5,0 km | 899 | 31 % | 13 | +253 m |
-| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
 | Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
-| Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
+| Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
@@ -41,11 +41,12 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
 | Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
 | Cusco, Peru | `cusco` | odprta cesta | 0,9 km | 440 | 47 % | 1 | +61 m |
-| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 5,0 km | 406 | 48 % | 1 | +134 m |
+| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 4,7 km | 405 | 49 % | 1 | +119 m |
 | Ghoufi, Alžirija | `ghoufi` | odprta cesta | 0,6 km | 406 | 35 % | 0 | +17 m |
 | Medeu, Kazahstan | `medeu` | odprta cesta | 5,0 km | 400 | 55 % | 2 | +297 m |
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
+| Hiva, Uzbekistan | `hiva` | krog | 3,0 km | 359 | 68 % | 0 | ravno |
 | Zandvoort, Nizozemska | `zandvoort` | krog | 4,3 km | 366 | 55 % | 4 | ravno |
 | Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
 | El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
@@ -89,6 +90,7 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Ghoufi, Alžirija** (`ghoufi`, asfalt): Jeklene ograje na strani kanjona (padca čez rob ni); suha okrasta zemlja z redkim grmovjem in posameznimi drevesi; Pod cesto stare kamnite hiše, zložene po steni kanjona (ruševine brez streh in cele hiše z ravnimi strehami), 22–62 m od roba; Palme oaze in sadovnjak na dnu kanjona, globlje kot 45 m pod cesto; Kamnito razgledišče z nizkim zidom in dvema klopema ob cesti na sredini proge.
 - **El Jem, Tunizija** (`eljem`, asfalt): Mestne ulice, 9,6–12 m široke; Betonske ločilne ograje ob robovih (ograja prepreči izlet); Bele in peščene hiše z ravnimi strehami in parapeti; Oljke in palme na suhih okrastih tleh; Rimski amfiteater (trije nizi arkad, model iz Blenderja) ~23 m od ceste pri ~31 % dirke, cesta ga obvozi po vzhodni strani
 - **Harju, Finska** (`harju`, asfalt in makadam): Asfalt, ~460 m makadama (greben, park), ~130 m tlakovcev; cesta ponekod ožja; Jeklene ograje v mestu, oranžna mreža v parku, bale slame v šikanah in lasnicah; ~620 stavb (bloki, trgovine, lesene hiše, šola), vodni stolp 34 m, stadion ob spustu; Pločniki z granitnimi robniki, prehodi za pešce, ~800 parkiranih avtomobilov, cestne luči, semaforji; Park: ~3.600 dreves (rdeči bori, smreke, breze, lipe, javorji), borovnice, vresje, trave; Redke skupine gledalcev na pobočjih in stopnicah; stojnice, prenosna stranišča, redarji, TV stolpi. Dlje: Gozdnati griči okoli mesta in jezero Jyväsjärvi na obzorju.
+- **Hiva, Uzbekistan** (`hiva`, asfalt): Mestne ulice okoli starega mesta, 8,8–10,4 m široke; Betonske ločilne ograje ob robovih (nevidna ograja prepreči izlet); Obzidje Ičan Kale iz blatne opeke z okroglimi stolpi tik ob cesti na zahodu, severozahodu in jugu, nad njim dva minareta; Hiše iz blatne opeke z ravnimi strehami; Topoli, bresti in drevesa z okroglimi krošnjami na puhlično rumenih tleh; Štorklje ob cesti
 - **Irohazaka, Japonska** (`iroha`, asfalt): Bele jeklene ograje, kjer teren pada in na zunanji strani serpentin; Kamniti in betonski podporni zidovi z odprtinami za odvodnjavanje, kjer se pobočje dviga; Gost listnat gozd: javorji, hrasti, bukve, čugi; ob cesti bambus sasa in balvani; Jeseni škrlatni, oranžni in rumeni javorji, zlate bukve; pozimi sneg; Pred vsakim ovinkom na levi tabla s črko hiragane in številko (25 m prej); Razgledišče Kurokamidaira: parkirišče z ograjo nad dolino, avti in obiskovalci. Dlje: Gora Nantai (2.486 m), dolina reke Daiya, jezero Chūzenji in slap Kegon.
 - **Izoard, Francija** (`izoard`, asfalt): Jeklene varnostne ograje, kjer teren pada, in na zunanji strani ovinkov, beli smerni stebrički; opozorilni trikotniki s številko pred vsako od 18 serpentin in francoske table z belimi puščicami na modrem; sredinska črta v kratkih črtah (3 m, presledek 10 m); Pod zgornjim krakom ob serpentinah kamnit podporni zid; Redek gozd macesnov s cemprini v gručah na travnatih tleh, proti gozdni meji (~2.250 m) nižji in redkejši, posamezni še na pašniku; brin in grmičevje (do 120 m od ceste); suhi alpski pašniki, bledo sivi in okrasti apnenec v pečinah, široka melišča pod prelazom; Potoka Ravin d'Izoard in Ravin du Col d'Izoard pod cesto; daljnovod z lesenimi drogovi in tremi žicami ob cesti od starta do zavetišča; redki gledalci ob startu, cilju, kontrolnih točkah in serpentinah; Zavetišče in koče ob cesti, na prelazu stojnice, kamnit obelisk na stopnicah (brez napisov), parkirišča z avtomobili in ljudmi. Dlje: Vrhovi Briançonnaisa in Queyrasa, gozd v dolini proti Le Lausu.
 - **Isuna, Butan** (`isuna`, asfalt): Dolinska cesta ~9 m asfalta (`halfWidth` 4,6 m), levi promet, bele črte; Na eni strani reka Paro Chhu pod cesto, na drugi pobočje z gozdom modrega bora; Stari železni verižni most čez reko z dvema belima kamnitima stražnima hišama (~41 m od ceste pri ~46 %); Posamezne hiše in kmetije, krave na pašnikih, nevidna ograja prepreči izlet

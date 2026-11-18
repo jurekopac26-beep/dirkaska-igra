@@ -9,6 +9,7 @@
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const ROOT = path.join(__dirname, '..'), DIR = path.join(ROOT, 'assets', 'landmarks');
+const WIDE = { hiva: 900 };   // (the landmarks wider than 400 m: their own far distance in the world file, World.znamenitost.add(..., { far }))
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 
@@ -65,8 +66,10 @@ for (const id of ids) {
   }
   check(`${id}: the far level lighter than the near one`, verts.far < verts.near, `${verts.near} > ${verts.far}`);
   const B = verts.box || [0, 0, 0, 0, 0, 0];
-  check(`${id}: about its own place (the model's middle within 30 m of (0, 0), at most 400 m across, its heights metres above the sea)`,
-    Math.abs((B[0] + B[1]) / 2) < 30 && Math.abs((B[4] + B[5]) / 2) < 30 && B[1] - B[0] < 400 && B[5] - B[4] < 400 && B[2] > -50 && B[3] < 5000,
+  // (Hiva: the town's walls, ~600 x 800 m, placed at the walls' middle with its own far distance, far: 700 in js/world-hiva.js)
+  const W = WIDE[id] || 400;
+  check(`${id}: about its own place (the model's middle within ${W * 0.075} m of (0, 0), at most ${W} m across, its heights metres above the sea)`,
+    Math.abs((B[0] + B[1]) / 2) < W * 0.075 && Math.abs((B[4] + B[5]) / 2) < W * 0.075 && B[1] - B[0] < W && B[5] - B[4] < W && B[2] > -50 && B[3] < 5000,
     `x ${B[0].toFixed(0)}..${B[1].toFixed(0)}, y ${B[2].toFixed(0)}..${B[3].toFixed(0)}, z ${B[4].toFixed(0)}..${B[5].toFixed(0)}`);
   const own = tracks.find(t => new RegExp(`id:\\s*'${id}'`).test(t));
   check(`${id}: placed by a world file (World.znamenitost.add('${id}', ...)) of a real track (not a test one, not pending)`,

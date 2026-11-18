@@ -566,31 +566,12 @@
   },
   "balea": {
     "ime": "Bâlea, Romunija",
-    "okvir": [
-      45.575,
-      24.56,
-      45.68,
-      24.68
-    ],
-    "pot": [
-      [
-        45.6116644,
-        24.613546
-      ],
-      [
-        45.6024757,
-        24.6140093
-      ]
-    ],
-    "start": [
-      45.6107785,
-      24.6144425
-    ],
-    "cilj": [
-      45.6042455,
-      24.6137231
-    ],
-    "zalet": 160,
+    "okvir": [45.575, 24.56, 45.68, 24.68],
+    "pot": [[45.6116644, 24.613546], [45.6024757, 24.6140093]],
+    "start": [45.6099761, 24.614722],
+    "start_opomba": "15. 11. 2026 premaknjen 502 m naprej (na ravnino za 2. serpentino); izhodišče x, z v js/tracks/balea.js je še stari start [45.6107785, 24.6144425], zato je tam start [21.8, 89.18]: po ponovnem zagonu z --zapisi ga nastavi na [0, 0]",
+    "cilj": [45.6042455, 24.6137231],
+    "zalet": 662,
     "po_cilju": 196,
     "polsirina": 5.5,
     "gauss": 2.5,

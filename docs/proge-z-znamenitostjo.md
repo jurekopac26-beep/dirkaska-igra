@@ -10,7 +10,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | čaka (veja `proge/luanda`) |
 | 3 | Isalo, Madagaskar (zamenjava za Antananarivo) | Madagaskar | druga: skalna tvorba Kraljica Isala (Reine de l'Isalo; OSM `natural=rock`, -22.6283, 45.3389), ~30 m od sredine RN7 | jure.kopac26 | v zbirni Proge 2 (#756) |
 | 4 | Mombasa | Kenija | stavba: trdnjava ob cesti | jure.kopac26 | v zbirni Proge 2 (#756) |
-| 5 | Hiva | Uzbekistan | stavba | jure.kopac26 | čaka |
+| 5 | Hiva | Uzbekistan | stavba: obzidje Ičan Kale in minareta | jure.kopac26 | v delu (#723; ostane model iz Blenderja) |
 | 6 | *zamenjava* (bila Elmina, občutljiva) | Gana ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
 | 8 | El Jem | Tunizija | stavba: rimski amfiteater | biketraveler | v zbirni Proge 2 (#756) |

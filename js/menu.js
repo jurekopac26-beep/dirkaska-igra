@@ -467,6 +467,12 @@
         add(y0, [want, at(!right)]); add(y0, by.sort(near)); add(y1, [x - 3 - w, x + f.width + 3].sort(near));
         if (y2 <= fb.height - 2) add(y2, [want, at(!right)].concat(by).sort(near));
       }
+      // last, with none of those (the weather's row right over a finish flag low in a narrow card): just under what lies over its place
+      for (const s of [1, 0.86, 0.74]) {
+        const w = w0 * s, h = h0 * s, want = right ? x + f.width + 3 - w : x - 3, top = f.top - fb.top - 3;
+        K.forEach(k => { const y = k[3] + h + 1; if (k[0] < want + w && k[1] > want && k[3] > top - h && y <= fb.height - 2)
+          [want, right ? x - 3 : x + f.width + 3 - w].forEach(l => { if (l >= 4 && l + w <= W - 4 && !K.some(q => l < q[1] && l + w > q[0] && y - h < q[3] && y > q[2])) out.push([s, l, y, w, h]); }); });
+      }
       return out;
     };
     const rect = (a, m) => [a[1] - m, a[1] + a[3] + m, a[2] - a[4] - m, a[2] + m];   // (a place's box, as keep's: left, right, top, bottom)
@@ -641,7 +647,7 @@
   const GRID = '<svg class="grid" viewBox="0 0 18 17" aria-hidden="true">' + [[2, 1, 1], [11, 3.6, 1], [2, 6.2, .75], [11, 8.8, .75], [2, 11.4, .5], [11, 14, .5]].map(r => '<rect x="' + r[0] + '" y="' + r[1] + '" width="7" height="4" rx="1.6" fill="#9fb0c8" opacity="' + r[2] + '"/>').join('') + '</svg>';
   const DBL = (dir) => '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="' + (dir < 0 ? 'M13 3 6 10l7 7M22 3l-7 7 7 7' : 'M6 3l7 7-7 7M15 3l7 7-7 7') + '" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // the flags of the countries (assets/flags, drawn to their official rules); a track in another country has none
-  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'algeria', 'japan', 'china', 'thailand', 'russia', 'romania', 'india', 'denmark', 'sweden', 'czechia', 'wales', 'ireland', 'spain', 'montenegro', 'latvia', 'netherlands', 'switzerland', 'cape-verde', 'georgia', 'tanzania', 'kazakhstan', 'sri-lanka', 'albania', 'portugal', 'south-korea', 'mexico', 'turkey', 'malaysia', 'indonesia', 'bahrain', 'qatar', 'argentina', 'angola', 'costa-rica', 'peru', 'kenya', 'madagascar', 'panama', 'tunisia', 'bhutan'];
+  const FLAG_FILES = ['slovenia', 'austria', 'germany', 'belgium', 'finland', 'england', 'france', 'italy', 'monaco', 'usa', 'canada', 'brazil', 'chile', 'australia', 'south-africa', 'morocco', 'algeria', 'japan', 'china', 'thailand', 'russia', 'romania', 'india', 'denmark', 'sweden', 'czechia', 'wales', 'ireland', 'spain', 'montenegro', 'latvia', 'netherlands', 'switzerland', 'cape-verde', 'georgia', 'tanzania', 'kazakhstan', 'sri-lanka', 'albania', 'portugal', 'south-korea', 'mexico', 'turkey', 'malaysia', 'indonesia', 'bahrain', 'qatar', 'argentina', 'angola', 'costa-rica', 'peru', 'kenya', 'madagascar', 'panama', 'tunisia', 'bhutan', 'uzbekistan'];
   const flagUrl = (c) => { const f = String(c || '').toLowerCase().replace(/\s+/g, '-'); return FLAG_FILES.includes(f) ? 'assets/flags/' + f + '.svg' : ''; };
   // a neighbour's button: the whole flag at its hoist (its own proportions), its last column stretched to the button's far edge, so every
   // stripe keeps its share. The column is read once from the flag drawn on a canvas one pixel wide; the buttons get it when it is ready

@@ -1,7 +1,7 @@
 /* =========================================================================
    ZNAMENITOST — the landmarks by the road made in Blender (assets/landmarks/<id>.glb and its far level <id>-far.glb, written by
    tools/znamenitost/; docs/proge/<id>.md). A world file builds its own simpler landmark first (the fallback, one mesh in its root) and calls
-     World.znamenitost.add(id, root, { x, z, fallback, out })
+     World.znamenitost.add(id, root, { x, z, fallback, out, far })
    which fetches the two files, reads them (glTF 2.0 binary: positions, normals, the materials' base colours; no textures) into one mesh each,
    puts them in a THREE.LOD at (x, 0, z) (the models' heights are metres above the sea, as the track's) and, once both are read, swaps the
    fallback for them. If a file is missing or cannot be read, or the world has been rebuilt in the meantime, the fallback stays.
@@ -79,7 +79,7 @@
         mat = mat || new THREE.MeshLambertMaterial({ vertexColors: true });
         const near = new THREE.Mesh(geometry(parse(a)), mat), far = new THREE.Mesh(geometry(parse(b)), mat);
         near.castShadow = near.receiveShadow = true; far.receiveShadow = true;
-        const lod = new THREE.LOD(); lod.addLevel(near, 0); lod.addLevel(far, FAR); lod.position.set(o.x, 0, o.z); lod.updateMatrixWorld(true);
+        const lod = new THREE.LOD(); lod.addLevel(near, 0); lod.addLevel(far, o.far || FAR);   // (o.far: a landmark wider than ~400 m, the road round it farther than FAR from its middle) lod.position.set(o.x, 0, o.z); lod.updateMatrixWorld(true);
         lod.name = 'znamenitost:' + id; root.add(lod);
         const fb = o.fallback; if (fb && fb.parent) { fb.parent.remove(fb); fb.geometry.dispose(); }
         if (o.out) o.out.landmark = lod;
