@@ -15,7 +15,7 @@
 //   begins (a lazy track asked for after the page's own start, or the page's message 'leno-vse'). A lazy file the game asks for itself
 //   is kept as it comes from the network. Offline, a lazy file not saved yet fails as without the worker (Leno.load rejects; the game
 //   keeps its track or falls back to Jezero, js/game.js boot).
-// - The menu's pictures (assets/: the models of the tracks, the maps, the cars; not the videos and the music) are kept as they are looked at, in
+// - The menu's pictures (assets/: the models of the tracks, the maps, the cars, the landmarks' models; not the videos and the music) are kept as they are looked at, in
 //   a cache of their own: the kept copy at once, the newest from the network for next time. Without internet the menu shows the pictures
 //   already seen.
 // - When a new worker takes over (activate), the saved files the saved page does not link (lazy ones of an old version, a save that
@@ -30,7 +30,7 @@ const abs = (u) => new URL(u, self.registration.scope).href;
 const PAGE = () => abs('./');   // (the key of the saved index.html, whichever address opened it)
 const STAMPED = /[?&]v=[0-9a-f]{8}(&|$)/;
 const PICTURES = 'apex-racing pictures ' + self.registration.scope;
-const PICTURE = /\/assets\/[^?#]*\.(?:webp|png|json)$/;
+const PICTURE = /\/assets\/[^?#]*\.(?:webp|png|json|glb)$/;
 const SLOW = 4000;
 
 const LAZY = /\srel\s*=\s*["']?x-lazy-script\b/i;

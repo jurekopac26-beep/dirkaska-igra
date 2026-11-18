@@ -101,7 +101,10 @@
   function caH(x, z) {   // terrain height (as vrH, on caNear: the road's blend near it, the real terrain farther out; never above the road around)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = API.vrFar(x, z);
-    else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, API.vrFar(x, z), sstep(1, 42, dd)); }
+    else { const hr = n.h - 0.3, V = API.VR; if (dd <= 1) h = hr; else { const f = API.vrFar(x, z);
+      if (V.sea === null) h = lerp(hr, f, sstep(1, 42, dd));
+      else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
+      else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 12, dx = x - p.x, dz = z - p.z, R = p.r + pb; if (dx >= R || dx <= -R || dz >= R || dz <= -R) continue; const d = Math.hypot(dx, dz); if (d < R) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
     const gul = API.VR.gul; if (i >= 0 && gul.length) for (const b of gul) {   // the stream bed under the bridge (as vrH; i < 0: none)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
