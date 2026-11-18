@@ -18,8 +18,8 @@
 //   the pause (its buttons there are the pause's); the results with Odstop (no record), Ogled vozila (close, from over the road, upright
 //   too); in the
 //   statistics a race (Dirke), never a finish (no win, podium, track raced to the line, achievement of the finish), the km as driven
-// - the commentator's destruction lines: the player's lost part (its own name), wheel, three wheels, the wreck, fire; a rival's wheel,
-//   fire and retirement nearby; the counts afresh after a repair
+// - the commentator's destruction lines: the player's lost part (its own name), the wreck, fire; a rival's wheel, fire and retirement
+//   nearby; the counts afresh after a repair; the player's wheel last (no "three wheels": the wheel rule ends the game, 9. 11. 2026)
 //   node tests/browser/cars-ui.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -73,11 +73,11 @@ try {
       Math.abs(L.cats.l - 12) <= 1 && Math.abs(L.cats.t - 8) <= 1 && L.cats.h === 34 && Math.abs(L.strip.b - (L.vh - 8)) <= 1 && L.strip.h === 44 && Math.abs(L.cats.r - (L.panel.l - 12)) <= 1 && Math.abs(L.strip.r - (L.panel.l - 12)) <= 1,
       JSON.stringify({ cats: L.cats, strip: L.strip, panel: L.panel }));
     T.check('844×390: nothing off the screen, the rows clear of the panel and the arrows; the panel as it was (its parts all in it, Nazaj / Naprej on the screen), the category under the name',
-      !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => !overlap(a, L.cats) && !overlap(a, L.strip)) && L.panelIds && L.next.b <= L.vh && L.next.r <= L.vw && L.back.l >= L.panel.l && /^Športni · 2\/6$/.test(L.cat),
+      !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => !overlap(a, L.cats) && !overlap(a, L.strip)) && L.panelIds && L.next.b <= L.vh && L.next.r <= L.vw && L.back.l >= L.panel.l && /^Športni · 2\/9$/.test(L.cat),
       JSON.stringify({ overflow: L.overflow, arrows: L.arrows, next: L.next, cat: L.cat }));
     T.check('844×390: the car is the garage\'s button (over its place, left of the panel, between the categories and the strip), its hint under it "Tapni avto za garažo"', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, txt: L.hintTxt, on: L.garOn }));
     T.check('844×390: 10 category chips, the car\'s chosen and in view; its category\'s cars in the strip (cheapest first), the chosen one in view; no chip with an arrow\'s data-act',
-      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,panter,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
+      L.nCats === 10 && L.catSel === 'sportni' && L.catIn && L.stripIds.join() === 'lisica,kaze,sokol,vortex,ris,merjasec,panter,sakal,jelen' && L.carIn && L.chipActs === 0 && L.acts.filter(a => /car-(next|prev)$/.test(a)).sort().join() === 'car-next,car-prev',
       JSON.stringify({ nCats: L.nCats, catSel: L.catSel, catIn: L.catIn, strip: L.stripIds, carIn: L.carIn, acts: L.acts }));
 
     // 2. switching by touch: a category (its first car, later the one last looked at there), a car of the strip
@@ -87,8 +87,8 @@ try {
     await tap('#car-strip [data-car="' + await page.evaluate(() => Core.MODELS.findIndex(m => m.id === 'kamen')) + '"]'); await wait(150); const t2 = await now();
     await tap('#car-cats [data-cat="mali"]'); await wait(150); const t3 = await now();
     await tap('#car-cats [data-cat="tovornjaki"]'); await wait(150); const t4 = await now();
-    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN), a tap on KAMEN PUŠČAVA picks it, Mali avti its first (the KOLIBRI, the cheapest), Tovornjaki again the KAMEN (the one last looked at)',
-      t1.id === 'titan' && t1.strip === 'titan,kamen' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/2$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'kolibri' && t3.sel === 'mali' && t4.id === 'kamen',
+    T.check('touch: Tovornjaki gives the TITAN (the strip: TITAN, KAMEN, TITAN CISTERNA, ZRCALNI VLAK: by the career price), a tap on KAMEN PUŠČAVA picks it, Mali avti its first (the KOLIBRI, the cheapest), Tovornjaki again the KAMEN (the one last looked at)',
+      t1.id === 'titan' && t1.strip === 'titan,kamen,cisterna,zrcalni' && t1.sel === 'tovornjaki' && /^Tovornjaki · 1\/4$/.test(t1.cat) && t2.id === 'kamen' && t2.name === 'KAMEN PUŠČAVA' && t3.id === 'kolibri' && t3.sel === 'mali' && t4.id === 'kamen',
       JSON.stringify({ t1, t2, t3, t4 }));
 
     // 3. the gamepad: Start on "Naprej" (as ever), X / Y the categories, LB / RB the cars in the display order
@@ -100,7 +100,7 @@ try {
     await press(5); const rb = await now(); await press(4); const lb = await now();
     await press(12); const up = await page.evaluate(() => { const f = document.querySelector('.pad-focus'); return f ? f.dataset.act || f.dataset.v || f.dataset.col || f.textContent.trim() : ''; });
     T.check('gamepad: Start shows the car screen with the highlight on "Naprej"; Y the next category (Tovornjaki → Električni → Posebni), X the one before; RB the next car, LB back; up leaves "Naprej"',
-      f0.screen === 'car' && f0.focus === 'to-track' && y1.sel === 'elektricni' && y1.id === 'jezek' && y2.sel === 'posebni' && x1.sel === 'elektricni' && rb.id === 'ev' && lb.id === 'jezek' && up && up !== 'to-track',
+      f0.screen === 'car' && f0.focus === 'to-track' && y1.sel === 'elektricni' && y1.id === 'jezek' && y2.sel === 'posebni' && x1.sel === 'elektricni' && rb.id === 'vidra' && lb.id === 'jezek' && up && up !== 'to-track',
       JSON.stringify({ f0, y1: y1.id, y2: y2.id, x1: x1.id, rb: rb.id, lb: lb.id, up }));
 
     // 4. one order everywhere: the rule's, every car in turn on the arrows (forwards and back), the strip a slice of it
@@ -150,11 +150,11 @@ try {
       ny.cat === 'sportni' && ny.shown === ny.name && nx.cat === 'mali' && nx.shown === nx.name && padSent.join() === [ny.id, nx.id].join(), JSON.stringify({ ny, nx, padSent }));
     // 5b. the championship's picker in the same order too (the arrows; Y on a pad: the next category's car)
     const chp = await page.evaluate(async () => { const g = window.__game, id = () => Core.MODELS[g.S.car].id, ids = [];
-      g.onAction('to-champ'); await new Promise(r => setTimeout(r, 150)); g.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
+      g.onAction('to-champ'); await new Promise(r => setTimeout(r, 150)); g.S.car = Core.MODELS.findIndex(m => m.id === 'osa');
       for (let k = 0; k < 3; k++) { g.onAction('champ-car-next'); ids.push(id()); } g.onAction('champ-car-prev'); ids.push(id());
       return { ids, shown: document.getElementById('ch-mycar').textContent }; });
     await press(3); const chY = await page.evaluate(() => ({ id: Core.MODELS[window.__game.S.car].id, shown: document.getElementById('ch-mycar').textContent }));
-    T.check('the championship\'s picker: the same order (from the PICO TURBO, the dearest small car: LISICA → KAZE RS → SOKOL, back to KAZE RS); Y on the pad: the next category\'s car (STREGA MR)',
+    T.check('the championship\'s picker: the same order (from the OSA R, the dearest small car: LISICA → KAZE RS → SOKOL, back to KAZE RS); Y on the pad: the next category\'s car (STREGA MR)',
       chp.ids.join() === 'lisica,kaze,sokol,kaze' && chp.shown === 'KAZE RS' && chY.id === 'strega' && chY.shown === 'STREGA MR', JSON.stringify({ chp, chY }));
     T.check('no page errors (844×390)', !errors.length, errors.slice(0, 5).join(' | '));
     await ctx.close();
@@ -169,7 +169,7 @@ try {
       L.cats.t === 8 && L.cats.b === 42 && L.strip.t === 48 && L.strip.b === 92 && L.cats.l === 10 && L.cats.r === L.vw - 10 && L.strip.l === 10 && L.strip.r === L.vw - 10, JSON.stringify({ cats: L.cats, strip: L.strip }));
     T.check('390×844: nothing off the screen, the rows clear of the panel and the arrows, the panel as it was, the chosen chips in view (Dirkalni, TIGER GT)',
       !L.overflow && !overlap(L.cats, L.panel) && !overlap(L.strip, L.panel) && L.arrows.every(a => a.t >= L.strip.b && !overlap(a, L.cats)) && L.panelIds && L.next.b <= L.vh && L.catSel === 'dirkalni' && L.catIn && L.carIn &&
-      L.stripIds.join() === 'mravlja,kozorog,strelica,tornado,bizon,tiger,lm,formula' && /^Dirkalni · 6\/8$/.test(L.cat),
+      L.stripIds.join() === 'mravlja,kozorog,strelica,tornado,bizon,orel,tiger,lm,formula' && /^Dirkalni · 7\/9$/.test(L.cat),
       JSON.stringify({ panel: L.panel, arrows: L.arrows, catSel: L.catSel, catIn: L.catIn, carIn: L.carIn, strip: L.stripIds, cat: L.cat }));
     T.check('390×844: the car is the garage\'s button (over its place, under the strip, over the panel), its hint under it', garOk(L), JSON.stringify({ gar: L.gar, mid: L.mid, hint: L.hint, panel: L.panel, on: L.garOn }));
     // a short phone (360×640): the same rows, the arrows still below the strip, Naprej on the screen
@@ -237,6 +237,7 @@ try {
       [r1, r2, r3, r4].every(r => r.car === 'levs' && r.stored.carId === 'levs' && r.stored.carV === 3 && r.stored.car <= 10) && !!up.levs && up.levs.motor === 2 && up.levs.gume === 2 && up.levs.zavore === 0 && up.levs.aero === 3 && !('p206' in up),
       JSON.stringify({ r1: r1.car, r2: r2.car, r3: r3.car, r4: r4.car, stored: r1.stored.carId, up }));
     const sv = await page.evaluate(async () => { const g = window.__game; g.onAction('to-car'); await new Promise(r => setTimeout(r, 150)); document.querySelector('#car-cats [data-cat="posebni"]').click(); await new Promise(r => setTimeout(r, 100));
+      document.querySelector('#car-strip [data-car="' + Core.MODELS.findIndex(m => m.id === 'predsednik') + '"]').click(); await new Promise(r => setTimeout(r, 100));
       return { car: Core.MODELS[g.S.car].id, stored: JSON.parse(localStorage.getItem('tdgp-settings')), rally: Core.MODELS.findIndex(m => m.id === 'rally') }; });
     await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 60000 });
     const m5 = await page.evaluate(() => Core.MODELS[window.__game.S.car].id);
@@ -268,7 +269,7 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', name: 'Ana', carV: 3, carId: 'titan', quali: 0, damage: 1 }, { width: 480, height: 270 });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
     const rivals = () => page.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, cars: [...new Set(r.cars.filter(c => !c.isPlayer).map(c => c.m.id))].join(), me: r.player.m.id, champ: !!r.champ }; });
-    await act('to-champ'); await wait(250);
+    await act('to-champ-nu'); await wait(250);   // (Domači pokal: behind NEUPORABNO, a cup of the test tracks)
     const pick0 = await page.evaluate(() => document.getElementById('ch-diff').textContent);
     await page.evaluate(() => document.querySelector('[data-champ="domaci"]').click()); await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'jezero'); }, null, { timeout: 90000 });
@@ -336,12 +337,11 @@ try {
     await page.evaluate(() => { window.__said = []; const o = Comm.say; Comm.say = (k, v, p, q) => { window.__said.push({ k, v: v ? JSON.parse(JSON.stringify(v)) : null, t: window.__game.race ? +window.__game.race.time.toFixed(2) : 0 }); return o(k, v, p, q); }; });
     await startTrack(page, 'jezero');
     const said = () => page.evaluate(() => window.__said.map(s => s.k + (s.v && (s.v.part || s.v.wheel || s.v.a) ? ':' + (s.v.part || s.v.wheel || s.v.a) : '')));
-    // the commentator: run, then the player's door, a wheel (on three for a while), the rivals' troubles near the player
+    // the commentator: run, then the player's door, the rivals' troubles near the player (the player's wheel last: it ends the game)
     const c1 = await page.evaluate(() => {
       const g = window.__game, r = g.race, P = r.player; g.pause(); g.sim(9, true);
       window.__said.length = 0;
       Core.detachPart(P, 'doorL'); g.sim(0.5, true);
-      Core.detachPart(P, 'wheelRL'); g.sim(8, true);
       const near = r.cars.filter(c => c !== P).sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
       Core.detachPart(near[0], 'wheelFR'); g.sim(0.5, true);
       near[1].dmg = 0.99; g.sim(0.5, true);   // (a total wreck: on fire at once, Render.burning; a hub's sparks need frames drawn, fire.test.mjs)
@@ -349,8 +349,8 @@ try {
       return { names: near.slice(0, 3).map(c => c.name), d: near.slice(0, 3).map(c => Math.round(Math.hypot(c.x - P.x, c.z - P.z))) };
     });
     const k1 = await said();
-    T.check('the commentator: the player\'s part by its name ("left door"), the wheel ("rear left wheel"), on three wheels; near rivals: a lost wheel, a fire, a retirement (their names)',
-      k1.includes('partLost:left door') && k1.includes('wheelLost:rear left wheel') && k1.includes('threeWheels') && k1.includes('rivalWheel:' + c1.names[0]) && k1.includes('fire:' + c1.names[1]) && k1.includes('rivalWreck:' + c1.names[2]),
+    T.check('the commentator: the player\'s part by its name ("left door"); near rivals: a lost wheel, a fire, a retirement (their names)',
+      k1.includes('partLost:left door') && k1.includes('rivalWheel:' + c1.names[0]) && k1.includes('fire:' + c1.names[1]) && k1.includes('rivalWreck:' + c1.names[2]),
       JSON.stringify({ k1, c1 }));
     // a repair (or the marshals' refit) starts the counts afresh: the same part again is said again
     const k2 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; window.__said.length = 0; r.repairCar(P); g.sim(7, true);
@@ -358,6 +358,13 @@ try {
       for (let k = 0; k < 4; k++) { const pl = window.__said.filter(s => s.k === 'partLost').pop(); if (!pl || r.time - pl.t >= 6.2) break; g.sim(pl.t + 6.2 - r.time, true); }
       Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
     T.check('after a repair the same lost part is told again', k2.includes('partLost:left door'), JSON.stringify(k2));
+    // the player's wheel (the wheel rule, game.js WHEEL_RULE; the user, 9. 11. 2026: »Ko ti enkrat odpade kolo, je igre konec«): said by its
+    // name ("rear left wheel"), never "on three wheels": the car stops there, retires, and the game is over (wheels.test.mjs)
+    const k3 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; g.sim(8, true); window.__said.length = 0;
+      Core.detachPart(P, 'wheelRL'); g.sim(6, true); return { over: !!(P.wreck && P.wreck.rule && P.wreck.rule.over), out: r.isOut(P), kmh: Math.round(P.speed * 3.6) }; });
+    const k3s = await said();
+    T.check('the player\'s wheel by its name ("rear left wheel"), never "on three wheels": the car stops, retires and the game is over',
+      k3s.includes('wheelLost:rear left wheel') && !k3s.includes('threeWheels') && k3.over && k3.out && k3.kmh === 0, JSON.stringify({ k3s, k3 }));
     // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
     // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
     // wheels and the game is over, KONEC IGRE, wheels.test.mjs)

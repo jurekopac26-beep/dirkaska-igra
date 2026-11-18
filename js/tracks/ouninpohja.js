@@ -17,7 +17,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Ouninpohja',
     cloudTh: 0.18,
     zivali: { a: ['moose', 'hare', 'fox'], t: ['cabinR', 'logPile', 'huntStand', 'fallenTree', 'mushrooms'] },
-    id: 'ouninpohja', name: 'Ouninpohja, Finska', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
+    id: 'ouninpohja', test: true, name: 'Ouninpohja, Finska', theme: 'ouni', open: true, timeTrial: true, rally: true, laps: 1, halfWidth: 6,
     desc: 'Najslavnejša hitrostna preizkušnja na Finskem: kronometer po makadamu od Hämepohje do Hassintieja. Skok za skokom skozi gozd, dolg desni ob jezeru Naarajärvi, dvorišče kmetije Ouni, skok pri Rumeni hiši (Keltainen talo), stopnice do križišča Mutanen, hitra Okskulmantie, vrhovi v smrekovem gozdu, ribnik in vas, skok Fast Crest in lasnica Kakaristo med polji. Ni nasprotnikov, dirkaš proti uri, na suhem ali v dežju.',
     en: { name: 'Ouninpohja, Finland', desc: 'The most famous special stage in Finland: a time trial on gravel from Hämepohja to Hassintie. Jump after jump through the forest, a long right by Lake Naarajärvi, the Ouni farmyard, the jump at the Yellow House (Keltainen talo), the steps down to the Mutanen junction, the fast Okskulmantie, crests in the spruce forest, a pond and a village, the Fast Crest jump and the Kakaristo hairpin between the fields. No rivals, you race against the clock, in the dry or in the rain.' },   // (the English page: Jezik · Language)
     realKm: 33,

@@ -1,6 +1,7 @@
 // Bâlea: an open road with four ways to drive it on one card, as Beartooth (def.modes: the race, the time trial, the duel in the traffic and
 // the run from the police). The road: the real line of the Transfăgărășan's north side up the glacial Bâlea valley (Romania), at full scale and
-// about 4 km: from ~1768 m up six hairpins (def.curves, the game's numbering from the bottom) to the lake (~2034 m), the hairpins flatter than
+// about 3.5 km (since 15. 11. 2026 from the straight past the second hairpin, ~1802 m): up the last four of the six hairpins (def.curves, the
+// game's numbering from the bottom; the first two before the start) to the lake (~2034 m), the hairpins flatter than
 // the legs between them. Its data as tools/proga/proga.py wrote it and the shared world of the passes (js/world-prelaz.js) reads it: the terrain's
 // rows, the land cover's run-length code (8 classes), the satellite colours (one RGB 5-6-5 per terrain cell near the road), the lake by the
 // finish, the cable car's line and pylons, the far view's grid. The open road's traffic is its own mix (def.traffic): a summer tourist road,
@@ -23,26 +24,27 @@ const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 4 checkpoints, the road 11 m wide, named "Kraj, Država"',
   def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 5.5 && def.name === 'Bâlea, Romunija' && def.en.name === 'Bâlea, Romania',
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
-check('track: from ~1768 m up to the lake (~2034 m), 3.9-4.1 km', Math.abs(def.alt[0] - 1768) < 15 && Math.abs(def.alt[1] - 2034) < 10 && T.raceLen > 3900 && T.raceLen <= 4100 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1 && Math.abs(def.realKm - T.raceLen / 1000) < 0.1,
+check('track: from ~1802 m (past the second hairpin) up to the lake (~2034 m), 3.4-3.6 km', Math.abs(def.alt[0] - 1802) < 15 && Math.abs(def.alt[1] - 2034) < 10 && T.raceLen > 3400 && T.raceLen <= 3600 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1 && Math.abs(def.realKm - T.raceLen / 1000) < 0.1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('balea'));
 
 // 2. the six hairpins: in order up the road, each a real bend of the line the way its sign says (150 degrees and more over 120 m round it), each
-// sign's altitude the road's own; the HUD knows them, the valley and the lake at the finish
+// sign's altitude the road's own; the HUD knows the four past the start (3 .. 6), the valley and the lake at the finish
 {
   const cv = def.curves || [], turn = cv.map(([d]) => { const a = T.idx(T.startS + d - 60), b = T.idx(T.startS + d + 60); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); return s; });
   const alt = cv.map(([d]) => T.altAt(T.hy[T.idx(T.startS + d)]));
   const order = cv.every((c, k) => !k || c[0] > cv[k - 1][0] + 50), bends = turn.every((a, k) => Math.abs(a) > 2.55 && Math.sign(a) === cv[k][2]), own = cv.every((c, k) => Math.abs(c[1] - alt[k]) < 3);
   check('hairpins: 6, in order up the road, each a bend of 150 degrees and more the way its sign says, each sign\'s altitude the road\'s', cv.length === 6 && order && bends && own,
     `turns ${turn.map(a => Math.round(a * 57.3)).join(' ')}, altitudes ${alt.map(a => Math.round(a)).join(' ')}`);
-  check('hairpins: the HUD and the commentator know them (Serpentina 1 .. 6, the Bâlea valley, the lake at the finish)',
-    T.names.filter(q => /^Serpentina \d+ · \d\.\d{3} m$/.test(q.n)).length === 6 && T.names.some(q => q.n === 'Valea Bâlii' && q.say) && /^Lacul Bâlea · 2\.03\d m$/.test(T.names[T.names.length - 1].n),
+  check('hairpins: the HUD and the commentator know them (Serpentina 3 .. 6, the Bâlea valley, the lake at the finish)',
+    T.names.filter(q => /^Serpentina [3-6] · \d\.\d{3} m$/.test(q.n)).length === 4 && T.names.some(q => q.n === 'Valea Bâlii' && q.say) && /^Lacul Bâlea · 2\.03\d m$/.test(T.names[T.names.length - 1].n),
     T.names.map(q => q.n).join(' | '));
-  // the climb is on the legs: the grade through the hairpins' apexes (+-12 m) lower than on the legs between them; nowhere steeper than ~11.5 %
+  // the climb is on the legs: the grade through the hairpins' apexes (+-12 m) lower than on the legs between them (by a tenth: the two flattest
+  // before the start since 15. 11. 2026); nowhere steeper than ~11.5 %
   let gin = 0, nin = 0, gout = 0, nout = 0, gmax = 0;
   const near = (s) => cv.some(([d]) => Math.abs(s - T.startS - d) < 12), far = (s) => cv.every(([d]) => Math.abs(s - T.startS - d) > 45);
   for (let i = T.startIdx; i < T.finishIdx; i++) { const s = i * T.ds, g = T.grade[i]; gmax = Math.max(gmax, g); if (near(s)) { gin += g; nin++; } else if (far(s)) { gout += g; nout++; } }
-  check('grades: the hairpins flatter than the legs, the road climbing all the way, nowhere steeper than ~11.5 %', gin / nin < 0.8 * gout / nout && gmax < 0.115 && T.hFinish > T.hStart + 240,
+  check('grades: the hairpins flatter than the legs, the road climbing all the way, nowhere steeper than ~11.5 %', gin / nin < 0.9 * gout / nout && gmax < 0.115 && T.hFinish > T.hStart + 220,
     `through the hairpins ${(gin / nin * 100).toFixed(1)} %, on the legs ${(gout / nout * 100).toFixed(1)} %, steepest ${(gmax * 100).toFixed(1)} %, climb ${Math.round(T.hFinish - T.hStart)} m`);
 }
 
@@ -132,6 +134,14 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   Math.random = orig;
   check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && P.finished && Math.abs(P.finishTime * 1.01 - M.cs[0]) < 1.5,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${P.finishTime ? P.finishTime.toFixed(1) : '-'} s`);
+  // in winter (the cold tarmac, docs/dez-sneg.md): its own set, slower than the summer's, the snow slower still; gold = the same car's winter run x 1.01
+  const Z = M.winter; Math.random = seeded(3);
+  const rz = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1, winter: true })), Pz = rz.player; rz.start();
+  t = 0; k = 0; while (!Pz.finished && t < 600) { Math.random = seeded(5000 + (++k)); C.aiControl(Pz, rz, DT); rz.step(DT); t += DT; if (Pz.stuckT > 3 || Pz.wrongT > 3) rz.rescue(Pz); }
+  Math.random = orig;
+  check('winter medals: gold < silver < bronze, in winter and in the snow; slower than the summer\'s, the snow slowest; gold = the stock rally car\'s winter run x 1.01',
+    !!Z && asc(Z.cs) && asc(Z.wet.cs) && Z.cs[0] > M.cs[0] && Z.wet.cs[0] >= Z.cs[0] && Z.wet.cs[0] > M.wet.cs[0] && Pz.finished && Math.abs(Pz.finishTime * 1.01 - Z.cs[0]) < 1.5,
+    Z ? `winter ${Z.cs.join('/')} s, snow ${Z.wet.cs.join('/')} s, autopilot ${Pz.finishTime ? Pz.finishTime.toFixed(1) : '-'} s` : 'no winter medals');
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);

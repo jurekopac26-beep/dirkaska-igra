@@ -354,7 +354,7 @@ const NVRide = (function () {
   function putModel(P, o) { for (const k of MKEYS) { if (o[k] === undefined) delete P[k]; else P[k] = o[k]; } P.gear = 1; P.rpm = P.m.idle; P.shiftT = 0; }
   function asModel(P, M) { const c = new Core.Car(M, { isPlayer: true, phys: P.phys, assist: Math.max(0, Core.ASSISTS.indexOf(P.assist)), color: P.color }), o = {}; for (const k of MKEYS) o[k] = c[k]; o.name = M.name; return o; }
   // the parts of the car's view the fire engine hides (its body and what is on it, its wheels, the marker), and puts back
-  const viewParts = (v, keep) => [].concat(v.bodyG ? v.bodyG.children.filter(o => o !== keep) : [], v.wf || [], v.wr || [], v.marker ? [v.marker] : []);
+  const viewParts = (v, keep) => [].concat(v.bodyG ? v.bodyG.children.filter(o => o !== keep) : [], v.wf || [], v.wr || [], v.wm || [], v.marker ? [v.marker] : []);
   function feBuild(P) {
     const R = typeof Render !== 'undefined' ? Render : null, v = R && R.viewOf ? R.viewOf(P) : null, M = feModel(); if (!v || !M || typeof MisKit === 'undefined') return null;
     const vis = viewParts(v, null).map(o => [o, o.visible]), lights = (v.lights || []).map(L => L.clone()), run = { P, props: [], add(o) { this.props.push(o); return o; } };

@@ -7,10 +7,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>APEX RACING · Garaža</title>
+<title>Real Roads Atlas · Garaža</title>
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="css/garage.css">
+<script src="js/sence.js"></script>
 </head>
 <body>
 <!-- The garage: opened from the menu's "Tvoj avto" card (joined with the menu later). The car on the turntable in the workshop above,
@@ -25,7 +26,7 @@
   </div>
 
   <!-- the workshop over the whole screen (the picture raised a little: Garage3D.shift), the page's buttons over it: Izberi progo and the
-       coins at the top; the car's name, the cars before and after it, back and Izberi at the bottom; a tapped part's menu (g-menu) -->
+       coins at the top; the cars before and after it (their names in them; the car's own name only for the ear), back and Izberi at the bottom; a tapped part's menu (g-menu) -->
   <div class="g-stage" id="g-stage">
     <canvas id="g-gl"></canvas>
     <div class="g-vig"></div>
@@ -42,8 +43,8 @@
   <div class="g-low" id="g-low">
     <div class="g-namerow"><h2 id="g-name">PICO TURBO</h2><small id="g-sub"></small></div>
     <div class="g-cars2">
-      <button class="g-cb prev" data-act="prev" id="g-prev" aria-label="Prejšnji avto"><span class="th"></span><b>«</b></button>
-      <button class="g-cb next" data-act="next" id="g-next" aria-label="Naslednji avto"><span class="th"></span><b>»</b></button>
+      <button class="g-cb prev" data-act="prev" id="g-prev" aria-label="Prejšnji avto"><b>«</b><span class="th"></span><i class="nm"></i></button>
+      <button class="g-cb next" data-act="next" id="g-next" aria-label="Naslednji avto"><i class="nm"></i><span class="th"></span><b>»</b></button>
     </div>
     <footer class="g-foot">
       <button class="g-btn g-btn-back" data-act="back" aria-label="Nazaj"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -99,6 +100,18 @@
 <script src="js/cars/goljat.js"></script>
 <script src="js/cars/levs.js"></script>
 <script src="js/cars/levk.js"></script>
+<script src="js/cars/osa.js"></script>
+<script src="js/cars/sakal.js"></script>
+<script src="js/cars/gams.js"></script>
+<script src="js/cars/orel.js"></script>
+<script src="js/cars/merjasec.js"></script>
+<script src="js/cars/kuna.js"></script>
+<script src="js/cars/ris.js"></script>
+<script src="js/cars/vidra.js"></script>
+<script src="js/cars/tur.js"></script>
+<script src="js/cars/vran.js"></script>
+<script src="js/cars/cisterna.js"></script>
+<script src="js/cars/zrcalni.js"></script>
 <script src="js/core.js"></script>
 <script src="js/tex.js"></script>
 <script src="js/world.js"></script>
@@ -107,6 +120,8 @@
 <script src="js/garage3d.js"></script>
 <script src="js/garage-shop.js"></script>
 <script src="js/shramba.js"></script>
+<script src="js/denar.js"></script>
+<script src="js/tester.js"></script>
 <script src="js/garage.js"></script>
 </body>
 </html>

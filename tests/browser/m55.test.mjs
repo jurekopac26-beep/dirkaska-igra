@@ -28,6 +28,7 @@ try {
     return { skin: !!r.skin && !!r.skin.parent, body: v.body.visible, jam: has(r.jam), bears: has(r.herd.g) && r.herd.g.count === 3, crowd: has(r.crowd.g), ids: [r.jam.id, r.herd.g.id, r.crowd.g.id] }; });
   T.check('in the scene: the ranger\'s own body, the jam, the three bears, the tourists', S.skin && !S.body && S.jam && S.bears && S.crowd, JSON.stringify(S));
   let d = await careful(page, { vmax: 60 / 3.6, lat: 2.6, pre: LANE, ctrl: STOP(40), maxT: 120, until: '(r) => r.P.q.s > r.sB - 41 && Math.hypot(r.P.vx, r.P.vz) < 0.3' });
+  await page.waitForTimeout(300);   // (the tag is placed with the last frame's camera: a frame after the stop, the upright chase view's closer pose since PR #650)
   s = await st(page);
   T.check('past the jam, stopped 40 m short of the bears: MEGAFON shows, the tag over the mother', s.btn === 'MEGAFON' && s.tag && s.run.dist > 25 && s.run.dist < 60, JSON.stringify({ d, btn: s.btn, tag: s.tag, dist: s.run.dist }));
   if (process.env.SHOT) { await page.evaluate(() => new Promise(requestAnimationFrame)); await page.screenshot({ path: 'test-results/m55-jam.png' }); }

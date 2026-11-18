@@ -7,7 +7,7 @@
      signed by its owner (ECDSA P-256 with SHA-256, WebCrypto: the signature of the string itself, so a friend's packet goes on to
      others unchanged). The owner is the public key (pub: the raw point, base64url, 87 characters); a friend's id is the first 12
      characters of base64url(SHA-256(pub)): a new nickname is the same friend, the same nickname with another key another player.
-     The record key is the game's (recKey: the track or its recId, the way it is driven, the rain of a time trial, @cs or @nova); ms
+     The record key is the game's (recKey: the track or its recId, the way it is driven, the winter and the rain of a time trial, @cs or @nova); ms
      the time; day the day it was first seen (1 is 1. 1. 2026; 0 not known); car the car's id, or null where the record keeps none.
    - A link (#lestvica=<Z>): Z is { app, kind: 'friends', v, p: [[packet, signature], ...] } packed (deflate-raw, base64url, as a
      ghost's link): the sender's packet first (signed as it is sent), then the newest packet of each friend the sender has, the one
@@ -219,7 +219,7 @@ const Lestvica = (function () {
   const forward = (S) => Object.keys(S.friends).map(id => S.friends[id]).filter(F => F.pk).sort((a, b) => b.got - a.got || b.sent - a.sent).map(F => F.pk);
 
   /* ---------------- the record keys and the player's own times ---------------- */
-  // every record key the game's tracks can have (as js/game.js recKey makes them): key -> { id, mode, kind, wet, phys }. kind: which time
+  // every record key the game's tracks can have (as js/game.js recKey makes them): key -> { id, mode, kind, win, wet, phys }. kind: which time
   // the record's is (the one the menu shows): 'tt' a time trial (bestTime), 'lap' a circuit's lap (bestLap), 'up' a race up an open road,
   // 'police' the run from the police, 'traffic' the duel in the traffic (bestRace)
   function keyTable(defs) {
@@ -229,7 +229,7 @@ const Lestvica = (function () {
       for (const m of ways) {
         const tt = d.modes ? m === 'tt' : !!d.timeTrial, kind = tt ? 'tt' : m === 'police' ? 'police' : m === 'traffic' ? 'traffic' : d.open ? 'up' : 'lap';
         const k0 = base + (d.modes && m !== d0 ? '-' + m : '');
-        for (const wet of tt ? [false, true] : [false]) for (const phys of PHYS) T.set(k0 + (wet ? '-wet' : '') + '@' + phys, { id: d.id, mode: m, kind, wet, phys });
+        for (const win of tt ? [false, true] : [false]) for (const wet of tt ? [false, true] : [false]) for (const phys of PHYS) T.set(k0 + (win ? '-winter' : '') + (wet ? '-wet' : '') + '@' + phys, { id: d.id, mode: m, kind, win, wet, phys });
       }
     }
     return T;

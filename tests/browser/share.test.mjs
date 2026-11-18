@@ -25,9 +25,10 @@ try {
   await pa.evaluate(() => { window.__game.onAction('to-title'); window.__game.onAction('to-stats'); });
   await pa.waitForTimeout(300);
   const s2 = await pa.evaluate(() => ({ cells: [...document.querySelectorAll('.st-cell')].map(c => c.innerText.replace(/\s+/g, ' ')), got: [...document.querySelectorAll('.ach.got b')].map(b => b.textContent), all: document.querySelectorAll('.ach').length,
-    cards: Core.TRACKS.filter(d => !d.variantOf).length,   // (the tracks on the list: the variants on their cards)
+    cards: Core.TRACKS.filter(d => !d.variantOf && !d.test && !d.pending).length,   // (the tracks on the list: the variants on their cards; the hidden ones behind NEUPORABNO (test, pending) are not counted)
     km100: [...document.querySelectorAll('.ach')].find(a => /100 kilometrov/.test(a.innerText)).innerText }));
-  T.check(`Dosežki: the numbers (Dirke 1, Proge 1/${s2.cards} ...), every achievement, the unlocked ones gold, the counting ones how far`, s2.cells.some(c => /^1 Dirke$/.test(c)) && s2.cells.includes(`1/${s2.cards} Proge`) && s2.got.includes('Prvi cilj') && s2.all >= 25 && /\(\d+,\d\/100\)/.test(s2.km100), JSON.stringify(s2));
+  // (the race above is on Jezero, a test track behind NEUPORABNO: the tracks' counter counts only the real ones, so it stays at 0)
+  T.check(`Dosežki: the numbers (Dirke 1, Proge 0/${s2.cards} ...), every achievement, the unlocked ones gold, the counting ones how far`, s2.cells.some(c => /^1 Dirke$/.test(c)) && s2.cells.includes(`0/${s2.cards} Proge`) && s2.got.includes('Prvi cilj') && s2.all >= 25 && /\(\d+,\d\/100\)/.test(s2.km100), JSON.stringify(s2));
 
   // 2. the ghost of the flying lap shared: a link and a file
   await pa.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-board'); });
@@ -70,7 +71,7 @@ try {
   await pb.evaluate(() => { localStorage.removeItem('tdgp-fghost-jezero'); window.__game.onAction('to-board'); });
   await pb.waitForTimeout(300);
   const [fc] = await Promise.all([pb.waitForEvent('filechooser'), pb.evaluate(() => window.__game.onAction('gh-import'))]);
-  await fc.setFiles(gpath); await pb.waitForTimeout(600);
+  await fc.setFiles(gpath); await pb.waitForFunction(() => localStorage.getItem('tdgp-fghost-jezero') && /Duh prijatelja/.test(document.querySelector('.gh-box').innerText), null, { timeout: 15000 }).catch(() => {});
   const g2 = await pb.evaluate(() => ({ stored: !!localStorage.getItem('tdgp-fghost-jezero'), box: document.querySelector('.gh-box').innerText.replace(/\s+/g, ' ') }));
   T.check('a ghost from a file: kept, shown on the leaderboard (Duh prijatelja: Ana)', g2.stored && /Duh prijatelja: Ana · \d\d:\d\d\.\d{3}/.test(g2.box), JSON.stringify(g2));
 

@@ -64,7 +64,8 @@
     cell(3, '#101114', '#fff', 'DRS', 44, '#39c84a');   // (where a DRS zone opens)
     names.forEach((n, k) => cell(20 + k, '#17306a', '#fff', n.toUpperCase(), n.length > 14 ? 26 : 32, '#e8e8e0'));
     const B = 20 + names.length;
-    cell(B, '#16181c', '#fff', 'SPA-FRANCORCHAMPS', 28); cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28);
+    cell(B, '#16181c', '#fff', 'SPA · ARDENNES', 28);   // (the place, not the circuit's name: CLAUDE.md, legal safety)
+    cell(B + 1, '#c8261f', '#fff', 'EAU ROUGE', 38); cell(B + 2, '#f2c21a', '#111', 'BELGIQUE · BELGIË', 28); cell(B + 3, '#123f86', '#fff', 'DÉPART · ARRIVÉE', 28);
     const SP = (typeof Tex !== 'undefined' && Tex.SPONSORS) || [['HITROLET', '#101418', '#ffd23f']];
     for (let k = 0; k < 8; k++) { const [txt, bg, fg] = SP[k % SP.length]; cell(40 + k, bg, fg, txt, 40, 'rgba(255,255,255,.14)'); }
     const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return (spaATex = t);
@@ -158,7 +159,7 @@
     const CH = 128, offs = [-w, -w * 2 / 3, -w / 3, 0, w / 3, w * 2 / 3, w], tileL = 8;
     const brk = new Float32Array(N);
     for (const c of T.corners) if (c.sev >= 2) for (let k = -70; k <= 6; k++) { const i = (c.i0 + k + N) % N, f = k < -10 ? sstep(-70, -12, k) : sstep(6, -10, k); if (f > brk[i]) brk[i] = f; }
-    const shade = (i, o) => { const rl = T.rl[i]; let k = 0.8 - (0.13 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.03]; };
+    const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.8 - (0.13 + 0.1 * brk[i]) * Math.exp(-((o - rl) * (o - rl)) / 5); if (Math.abs(o) > w * 0.92) k -= 0.03; return [k, k, k * 1.03]; };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(true), gl = new RB(), gk = new RB(true);
       let pr = -1, pl = -1; const pk = [-1, -1];
@@ -571,7 +572,7 @@
     }
 
     /* ---- spectators on the grass banks at the famous places, fans' tents and cars in the woods behind the bigger crowds, catch fences in front ---- */
-    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, "Speaker's Corner": 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
+    const FANS = { 'La Source': 3, 'Eau Rouge': 3, 'Raidillon': 3, 'Kemmel': 1, 'Les Combes': 2, 'Malmedy': 1, 'Bruxelles': 2, 'Kratki levi': 1, 'Pouhon': 3, 'Fagnes': 2, 'Campus': 1, 'Dolgi desni': 2, 'Blanchimont': 2, 'Bus Stop': 3 };
     const tcols = [[0.85, 0.16, 0.14], [0.15, 0.36, 0.8], [0.95, 0.75, 0.12], [0.2, 0.62, 0.3], [0.92, 0.92, 0.9], [0.55, 0.3, 0.7]];
     let nFans = 0; const crE0 = excl.length;
     for (const q of T.names) {

@@ -16,17 +16,14 @@
 
   // where on each track: d metres after the start line, side +1 right / -1 left of the driving direction, off metres from the road's centre
   // line, turn degrees towards the cars coming (0: square to the road), W x H metres, y the bottom edge over the ground; none on Detroit and
-  // Monterey (the US tracks go to test, the user's decision 5. 11. 2026); a new track with pits keeps its place in its own file (zaslon: { d,
+  // Monterey (the US tracks go to test, the user's decision 5. 11. 2026), nor on Toronto, Trois-Rivières and Bang Saen (street tracks, test tracks since 5. 11. 2026); a new track with pits keeps its place in its own file (zaslon: { d,
   // side, off[, turn] }, the rest as below; node tools/zaslon-mesto.mjs <id> finds one)
   const SPOT = {
     bathurst: { d: 192, side: 1, off: 19, turn: 58, W: 10, H: 5, y: 2.4 },   // (at the end of the grandstand, shortened for it: js/tracks/bathurst.js)
-    bangsaen: { d: -157, side: -1, off: 15.5, turn: 50, W: 10, H: 5, y: 2.4 },
     cpalace: { d: -67, side: -1, off: 14, turn: 50, W: 10, H: 5, y: 2.4 },
     montreal: { d: -182, side: 1, off: 14.2, turn: 50, W: 10, H: 5, y: 2.4 },
     rbring: { d: 147, side: -1, off: 16.5, turn: 50, W: 10, H: 5, y: 2.4 },
-    toronto: { d: 4, side: 1, off: 22, turn: 50, W: 10, H: 5, y: 2.4 },
     spa: { d: -21, side: -1, off: 15.7, turn: 50, W: 10, H: 5, y: 2.4 },
-    troisrivieres: { d: 3, side: 1, off: 14.8, turn: 50, W: 10, H: 5, y: 2.4 },
   };
   const RW = 512, RH = 256;   // the picture, live and still (2:1, as the wall)
   const FPS = 20;             // the live picture's frames a second

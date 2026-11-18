@@ -26,8 +26,8 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         cover: { z: 1, th: 0.72, m: 9, rW: 0.38, h: 0.23, lx: -0.52, lz: 0, f: 0.42 },
         fenderL: { lz: -0.77, y: 0.95, h: 0.12 }, fenderR: { lz: 0.77, y: 0.95, h: 0.12 },   // (the standard entries; their ranges' middles, how thick they lie: a
         quarterL: { lx: -0.66, lz: -0.78, y: 0.89, h: 0.27 }, quarterR: { lx: -0.66, lz: 0.78, y: 0.89, h: 0.27 },   // fender with the top's edge, a rear one with its flap)
-        spareL: { z: 2, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: -0.79, f: 0.43 },
-        spareR: { z: 3, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: 0.79, f: 0.43 },
+        spareL: { z: 2, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: -0.79, f: 0.43, spare: 1 },   // (the spare wheels: Core's spare, they wobble
+        spareR: { z: 3, th: 0.65, m: 10, r: 0.42, h: 0.3, lx: -0.22, lz: 0.79, f: 0.43, spare: 1 },    // from 50 % of the damage, off at 80 %)
         snorkel: { z: 3, th: 0.5, m: 2, r: 0.25, h: 0.1, lx: 0.34, lz: 0.77, f: 0.77 },
         // (as KOLIBRI's: each side's black pod with its two lamps a part of its own, mounted on the nose panel (it goes with it); a hit on its
         // corner knocks it out. The tail lamps in their black surrounds likewise; the number plate on the tail)
