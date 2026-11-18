@@ -387,9 +387,9 @@
  "silkeborg": {
   "calls": 239,
   "maxCalls": 283,
-  "kverts": 579,
-  "maxKverts": 689,
-  "jsMs": 1.55
+  "kverts": 584,
+  "maxKverts": 695,
+  "jsMs": 2.03
  },
  "kagerod": {
   "calls": 225,
@@ -457,9 +457,9 @@
  "zandvoort": {
   "calls": 182,
   "maxCalls": 224,
-  "kverts": 638,
-  "maxKverts": 834,
-  "jsMs": 1.13
+  "kverts": 651,
+  "maxKverts": 845,
+  "jsMs": 1.63
  },
  "dades": {
   "calls": 141,
