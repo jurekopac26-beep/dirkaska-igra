@@ -84,11 +84,11 @@
   "jsMs": 1.19
  },
  "chapman": {
-  "calls": 141,
-  "maxCalls": 147,
-  "kverts": 419,
-  "maxKverts": 487,
-  "jsMs": 1.47
+  "calls": 152,
+  "maxCalls": 197,
+  "kverts": 399,
+  "maxKverts": 447,
+  "jsMs": 1.49
  },
  "bigsur": {
   "calls": 138,
