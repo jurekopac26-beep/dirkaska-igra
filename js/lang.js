@@ -492,7 +492,7 @@
     'Nad zalivom Lăng Cô': 'Above Lăng Cô Bay', 'Serpentina': 'Hairpin', 'Đỉnh đèo Hải Vân': 'Hải Vân summit', 'Do sedla': 'To the saddle',   // (Hải Vân)
     'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)
     'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau',   // (Sogeri: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
-    'Greben': 'Ridge', 'Dolina': 'Valley',   // (Canaries: the HUD; the heights by the rules of Lang.place)
+    'Greben': 'Ridge', // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
@@ -511,7 +511,7 @@
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
-    'Desni na koncu ravnine': 'Right at the End of the Straight', 'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ostri desni': 'Tight Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', 'Ciljna ravnina': 'Main Straight',   // (Quezaltepeque)
+    'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
     'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
@@ -519,9 +519,9 @@
     'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Prvi levi': 'Turn One', 'Drugi levi': 'Turn Two', 'Tretji levi': 'Turn Three', 'Četrti levi': 'Turn Four', 'Lomljena ravnina': 'Dogleg Straight',   // (Aguascalientes; Zadnja ravnina is in the dictionary already)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
-    'Zapornica': 'The Gate', 'Serpentina': 'Hairpin', 'Stena kraterja': 'Crater Wall', 'Polica': 'The Ledge', 'Dno kraterja': 'Crater Floor',   // (Ngorongoro: the HUD; Windy Gap, Seneto and Magadi stay as they are, the heights by the rules of Lang.place)
+    'Zapornica': 'The Gate', 'Stena kraterja': 'Crater Wall', 'Polica': 'The Ledge', 'Dno kraterja': 'Crater Floor',   // (Ngorongoro: the HUD; Windy Gap, Seneto and Magadi stay as they are, the heights by the rules of Lang.place)
     'Do Elle': 'To Ella',   // (Ella: the results of an escape; Ella Rock and Pattiyakumbura stay as they are, Serpentina N and the heights by the rules of Lang.place)
- 'Ostri levi': 'Tight Left', 'Desni za ostrim levim': 'Right after the Tight Left', 'Trije levi': 'Three Lefts', 'Ravnina proti zahodu': 'West Straight', 'Zahodni ostri desni': 'West Hairpin', 'Desni za šikano': 'Right after the Chicane',   // (Batangas)
+ 'Desni za ostrim levim': 'Right after the Tight Left', 'Trije levi': 'Three Lefts', 'Ravnina proti zahodu': 'West Straight', 'Zahodni ostri desni': 'West Hairpin', 'Desni za šikano': 'Right after the Chicane',   // (Batangas)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',
