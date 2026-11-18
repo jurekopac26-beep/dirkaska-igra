@@ -120,6 +120,22 @@ def open_bends(x, z, R, it=300):
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
 
+# (nove-proge/limalimo opens its hairpins with widen(); which of the two stays is settled when both tracks are on main)
+def widen(x, z, rmin, it=20):
+    """The tightest hairpins opened up (def `polmer`: the least radius of the centre line, m): where the line bends tighter, it is blended
+    a step at a time (at most `it` steps, def `polmer_it`) with a 3 m Gaussian of itself round each such apex (+-10 m): the apex moves in
+    and the bend opens (OpenStreetMap's sharp corners at the tips of hairpins far tighter than a road 9-10 m wide can turn). -> x, z, steps"""
+    for n in range(it):
+        x, z, s = resample(x, z, 1.0)
+        hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
+        tight = np.where(np.abs(k) > 1 / rmin)[0]
+        if not len(tight): return x, z, n
+        w = np.zeros_like(s)
+        for t in tight: w = np.maximum(w, np.exp(-((s - s[t]) / 10.0) ** 2))
+        xs = gaussian_filter1d(x, 3, mode='nearest'); zs = gaussian_filter1d(z, 3, mode='nearest')
+        x = x * (1 - w) + xs * w; z = z * (1 - w) + zs * w
+    x, z, s = resample(x, z, 1.0); return x, z, it
+
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
     hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
