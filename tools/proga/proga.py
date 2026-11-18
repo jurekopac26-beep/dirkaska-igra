@@ -20,16 +20,17 @@ CFG = json.load(open(os.path.join(HERE, 'proge.json')))
 
 # ---------------- the road: a route over Overture's road segments (split at their connectors), from waypoint to waypoint ----------------
 ROADS = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'living_street', 'unclassified']
-def route(seg, way, G, classes=None):
+def route(seg, way, G, classes=None, allow=()):
     """The centre line (x, z arrays, metres) of the shortest route over the roads through the waypoints [(lat, lon), ...] (only roads
-    of the given classes: no footpaths, tracks or service roads that would cut across the hairpins)."""
+    of the given classes: no footpaths, tracks or service roads that would cut across the hairpins; and the OpenStreetMap ways in allow,
+    e.g. "w227761246", whatever their class: a road of the route that OSM has under construction)."""
     nodes = {}; adj = {}
     def nid(k):
         if k not in nodes: nodes[k] = len(nodes)
         return nodes[k]
     lines = []
     for r in seg:
-        if r.get('subtype') != 'road' or r.get('class') not in (classes or ROADS): continue
+        if r.get('subtype') != 'road' or (r.get('class') not in (classes or ROADS) and not any((q.get('record_id') or '').split('@')[0] in allow for q in (r.get('sources') or []))): continue
         g = wkb.loads(r['geometry']); c = np.array(g.coords); g = LineString(np.stack(G.to_xz(c[:, 1], c[:, 0]), 1)); cons = sorted([(c['at'], c['connector_id']) for c in (r.get('connectors') or [])])
         if not cons or cons[0][0] > 0: cons = [(0.0, r['id'] + ':a')] + cons
         if cons[-1][0] < 1: cons.append((1.0, r['id'] + ':b'))
@@ -81,9 +82,25 @@ def resample(x, z, step):
     d = np.concatenate([[0], np.cumsum(np.hypot(np.diff(x), np.diff(z)))]); s = np.arange(0, d[-1] + 1e-6, step)
     return np.interp(s, d, x), np.interp(s, d, z), s
 
-def separate(x, z, gap, adj, it=60):
+def crossings(x, z, far=60):
+    """Where the line crosses itself (one leg on a bridge over the other: def `kriz`): [(i, j)] the sample indices of the two legs at each
+    crossing (i < j, both on a 1 m line), the legs more than `far` metres apart along it."""
+    out = []; n = len(x)
+    from scipy.spatial import cKDTree
+    T = cKDTree(np.stack([x, z], 1))
+    for i in range(n - 1):
+        for j in T.query_ball_point([x[i], z[i]], 3.0):
+            if j <= i + far or j >= n - 1: continue
+            ax, az, bx, bz = x[i + 1] - x[i], z[i + 1] - z[i], x[j + 1] - x[j], z[j + 1] - z[j]; den = ax * bz - az * bx
+            if abs(den) < 1e-9: continue
+            ex, ez = x[j] - x[i], z[j] - z[i]; t = (ex * bz - ez * bx) / den; u = (ex * az - ez * ax) / den
+            if 0 <= t < 1 and 0 <= u < 1 and not any(abs(i - a) < 20 and abs(j - b) < 20 for a, b in out): out.append((i, j))
+    return out
+
+def separate(x, z, gap, adj, it=60, keep=()):
     """Push apart the parts of the line that come closer than `gap` (metres) while more than `adj` apart along it (the legs of a hairpin),
-    a little each step, then smooth: returns the line and how far it moved (mean, max)."""
+    a little each step, then smooth: returns the line and how far it moved (mean, max). keep: crossings [(i, j)] (crossings()), round which
+    the two legs are left as they are (within 45 m of the crossing on each: a bridge, not a hairpin's legs side by side)."""
     x0, z0 = x.copy(), z.copy(); n = len(x)
     for _ in range(it):
         P = np.stack([x, z], 1); moved = False
@@ -91,6 +108,10 @@ def separate(x, z, gap, adj, it=60):
         T = cKDTree(P); pairs = T.query_pairs(gap, output_type='ndarray')
         if len(pairs):
             pairs = pairs[np.abs(pairs[:, 0] - pairs[:, 1]) > adj]
+        for a, b in keep:
+            if len(pairs):
+                lo, hi = np.minimum(pairs[:, 0], pairs[:, 1]), np.maximum(pairs[:, 0], pairs[:, 1])
+                pairs = pairs[~((np.abs(lo - a) < 45) & (np.abs(hi - b) < 45))]
         if len(pairs):
             dx = P[pairs[:, 0]] - P[pairs[:, 1]]; d = np.maximum(np.hypot(dx[:, 0], dx[:, 1]), 1e-6); push = ((gap - d) / 2 * 0.35)[:, None] * dx / d[:, None]
             F = np.zeros_like(P); np.add.at(F, pairs[:, 0], push); np.add.at(F, pairs[:, 1], -push)
@@ -98,6 +119,42 @@ def separate(x, z, gap, adj, it=60):
         if not moved: break
     m = np.hypot(x - x0, z - z0)
     return x, z, float(m.mean()), float(m.max())
+
+def widen(x, z, rmin, it=20):
+    """The tightest hairpins opened up (def `polmer`: the least radius of the centre line, m): where the line bends tighter, it is blended
+    a step at a time (at most `it` steps, def `polmer_it`) with a 3 m Gaussian of itself round each such apex (+-10 m): the apex moves in
+    and the bend opens (OpenStreetMap's sharp corners at the tips of hairpins far tighter than a road 9-10 m wide can turn). -> x, z, steps"""
+    for n in range(it):
+        x, z, s = resample(x, z, 1.0)
+        hd = np.unwrap(np.arctan2(np.gradient(z), np.gradient(x))); k = gaussian_filter1d(np.gradient(hd) / np.gradient(s), 2)
+        tight = np.where(np.abs(k) > 1 / rmin)[0]
+        if not len(tight): return x, z, n
+        w = np.zeros_like(s)
+        for t in tight: w = np.maximum(w, np.exp(-((s - s[t]) / 10.0) ** 2))
+        xs = gaussian_filter1d(x, 3, mode='nearest'); zs = gaussian_filter1d(z, 3, mode='nearest')
+        x = x * (1 - w) + xs * w; z = z * (1 - w) + zs * w
+    x, z, s = resample(x, z, 1.0); return x, z, it
+
+def open_bends(x, z, R, it=300):
+    """Open the bends tighter than the radius R (metres): every two points a metres apart along the line at least the chord of a circle of
+    radius R apart (2R once a > pi R; as tools/proga-uvoz.mjs openHairpins), a little each step, the push smoothed: returns the line and
+    how far it moved (mean, max)."""
+    from scipy.spatial import cKDTree
+    x0, z0 = x.copy(), z.copy()
+    for _ in range(it):
+        P = np.stack([x, z], 1); pr = cKDTree(P).query_pairs(2 * R, output_type='ndarray')
+        if not len(pr): break
+        s = np.concatenate([[0], np.cumsum(np.hypot(np.diff(x), np.diff(z)))])
+        a = np.abs(s[pr[:, 0]] - s[pr[:, 1]]); need = 2 * R * np.sin(np.minimum(a, math.pi * R) / (2 * R))
+        dx = P[pr[:, 0]] - P[pr[:, 1]]; d = np.maximum(np.hypot(dx[:, 0], dx[:, 1]), 1e-6); bad = d < need - 0.02
+        if not bad.any(): break
+        pr, dx, d, need = pr[bad], dx[bad], d[bad], need[bad]
+        push = ((need - d) / 2 * 0.35)[:, None] * dx / d[:, None]
+        F = np.zeros_like(P); np.add.at(F, pr[:, 0], push); np.add.at(F, pr[:, 1], -push)
+        F[:, 0] = gaussian_filter1d(F[:, 0], 6); F[:, 1] = gaussian_filter1d(F[:, 1], 6); x = x + F[:, 0]; z = z + F[:, 1]
+    m = np.hypot(x - x0, z - z0)
+    return x, z, float(m.mean()), float(m.max())
+
 
 def turns(x, z, s, lim=1 / 60.0):
     """The bends of the line: [(s at the apex, total turn in radians (+ right), smallest radius)]: where the curvature is over `lim`."""
@@ -118,19 +175,46 @@ def turns(x, z, s, lim=1 / 60.0):
 # ---------------- heights along the road ----------------
 def profile(h, s, C, bends):
     """The road's heights from the model's along its line: a running median, monotone (an uphill road: def `gor`), smoothed, the
-    grade limited and lowered through the hairpins (as built)."""
+    grade limited and lowered through the hairpins (as built). With `tesno` (a road that also goes down, `gor` false: over a dam into
+    the basin behind it, down to a river) the grade is limited only where it is over the limit, the profile kept near the model's
+    (halfway between the highest and the lowest line within the limit round it), not the whole climb rescaled (that lifts it all along
+    the road when a short bit is steeper); the hairpins' share is then their own limit."""
     V = C.get('visine', {}); step = s[1] - s[0]
     med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
-    if V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
+    if V.get('dol'): med = np.minimum.accumulate(med)   # (a road raced downhill, def `dol`: it falls all the way, the model's bumps cut)
+    elif V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
     sm = gaussian_filter1d(med, V.get('glajenje', 40) / step, mode='nearest')
     # the grade: lower through the hairpins (a share of it), more on the legs, the total climb kept
     g = np.gradient(sm, s); w = np.ones_like(s)
     for sa, tot, r in bends:
-        if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+        if abs(tot) > math.radians(C.get('lasnica', 150)): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+    if V.get('tesno'):
+        lim = V.get('naklon', 0.12) * w * step; up = sm.copy(); dn = sm.copy()
+        for i in range(1, len(s)): up[i] = max(up[i], up[i - 1] - lim[i]); dn[i] = min(dn[i], dn[i - 1] + lim[i])
+        for i in range(len(s) - 2, -1, -1): up[i] = max(up[i], up[i + 1] - lim[i]); dn[i] = min(dn[i], dn[i + 1] + lim[i])
+        return gaussian_filter1d((up + dn) / 2, 6 / step, mode='nearest')   # (rounded where the limit starts and ends)
     g2 = g * w; gmax = V.get('naklon', 0.12)
-    for _ in range(40):
-        g2 = np.clip(g2 * (np.sum(g * step) / max(1e-9, np.sum(g2 * step))), -gmax, gmax)
+    for _ in range(40):   # (the total kept: a sum of either sign, a road raced downhill falls)
+        t2 = np.sum(g2 * step); g2 = np.clip(g2 * (np.sum(g * step) / (t2 if abs(t2) > 1e-9 else 1e-9)), -gmax, gmax)
     out = sm[0] + np.concatenate([[0], np.cumsum((g2[1:] + g2[:-1]) / 2 * step)])
+    return out
+
+def knot(hp, s, cross, K):
+    """The heights through a crossing (def `kriz`: {"dy": the least height between the two legs' road surfaces at the crossing (m),
+    "zgoraj": "prvi" / "drugi", which leg is on the bridge}): the model cannot tell the two levels apart (one 30 m cell), so where the
+    profile leaves less than dy between them, the leg on the bridge is raised by half the shortfall and the other lowered by half, eased
+    out over 200 m beyond each and linear between them (the loop between the two legs takes the extra grade)."""
+    dy = K.get('dy', 7.0); out = hp.copy()
+    for i, j in cross:
+        up, lo = (i, j) if K.get('zgoraj', 'prvi') == 'prvi' else (j, i)
+        e = dy - (out[up] - out[lo])
+        if e <= 0: log('crossing at %.0f / %.0f m: %.1f m between the legs' % (s[i], s[j], out[up] - out[lo])); continue
+        sa, sb = s[i], s[j]; ha = 0.5 * e if up == i else -0.5 * e; T = 200.0
+        c = np.where(s <= sa, ha * np.clip((s - (sa - T)) / T, 0, 1) ** 2 * (3 - 2 * np.clip((s - (sa - T)) / T, 0, 1)),
+            np.where(s >= sb, -ha * np.clip(((sb + T) - s) / T, 0, 1) ** 2 * (3 - 2 * np.clip(((sb + T) - s) / T, 0, 1)),
+                     ha + (-2 * ha) * (s - sa) / (sb - sa)))
+        out = out + gaussian_filter1d(c, 12, mode='nearest')
+        log('crossing at %.0f / %.0f m: the legs %.1f m apart in height, now %.1f (the bridge %s)' % (sa, sb, hp[up] - hp[lo], out[up] - out[lo], 'first' if up == i else 'second'))
     return out
 
 # ---------------- the terrain grids (the forms js/world-vrsic.js vrPrep reads) ----------------
@@ -232,7 +316,7 @@ def colours(C, G, geo, D, scene, meta):
 
 def far(C, G, X, Z, D):
     """The land beyond the corridor (the horizon): heights on a coarse grid ~`dalec` metres round the road (2 bytes a node: lo + v / 2
-    metres), the lakes (WorldCover's water) as runs [dry, wet, dry, ...]."""
+    metres), the lakes (WorldCover's water) as runs [dry, wet, dry, ...], with `led` the glaciers (WorldCover's snow and ice) as runs too."""
     R = C.get('dalec', 9000); cell = C.get('dalec_celica', 250)
     cx, cz = (X.min() + X.max()) / 2, (Z.min() + Z.max()) / 2
     x0 = math.floor((cx - R) / cell) * cell; z0 = math.floor((cz - R) / cell) * cell; n = int(2 * R / cell) + 1
@@ -245,12 +329,19 @@ def far(C, G, X, Z, D):
         a, o = G.to_ll(GX + ox, GZ + oz); acc = np.maximum(acc, np.nan_to_num(Dbig.sample(a, o), nan=0.0))
     H = 0.5 * H + 0.5 * acc
     lo_ = int(math.floor(H.min() / 10) * 10); v = np.clip(np.round((H - lo_) * 2), 0, 65535).astype('>u2')
-    wet = worldcover(la, lo) == 80; runs = []; cur = False; k = 0
-    for w in wet.ravel():
-        if bool(w) != cur: runs.append(k); k = 0; cur = not cur
+    wc = worldcover(la, lo)
+    out = {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': n, 'cell': cell, 'lo': lo_, 'b64': b64(v.tobytes()), 'lake': runs(wc == 80)}
+    if C.get('led'): out['ice'] = runs(wc == 70)   # (the glaciers on the horizon: WorldCover's snow and ice, Furka's Rhône Glacier)
+    return out
+
+def runs(m):
+    """A boolean grid's run lengths, row by row: [false, true, false, ...] (the first run false, maybe 0 long)."""
+    out = []; cur = False; k = 0
+    for w in m.ravel():
+        if bool(w) != cur: out.append(k); k = 0; cur = not cur
         k += 1
-    runs.append(k)
-    return {'x0': float(x0), 'z0': float(z0), 'nx': n, 'nz': n, 'cell': cell, 'lo': lo_, 'b64': b64(v.tobytes()), 'lake': runs}
+    out.append(k)
+    return out
 
 # ---------------- OpenStreetMap's buildings, lakes and streams (Overture) ----------------
 def osm(C, G, box, X, Z, name):
@@ -258,7 +349,8 @@ def osm(C, G, box, X, Z, name):
     T = cKDTree(np.stack([X[::2], Z[::2]], 1))
     near = lambda x, z: T.query([x, z])[0]
     bld = []
-    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry'], name):
+    for r in overture('buildings', 'building', box, ['id', 'subtype', 'class', 'height', 'num_floors', 'geometry', 'sources'], name):
+        if ((r.get('sources') or [{}])[0] or {}).get('dataset') != 'OpenStreetMap': continue   # (only OpenStreetMap's: not the footprints other datasets add to Overture's, machine-made from imagery)
         g = wkb.loads(r['geometry'])
         if g.geom_type == 'MultiPolygon': g = max(g.geoms, key=lambda q: q.area)
         c = np.array(g.exterior.coords); x, z = G.to_xz(c[:, 1], c[:, 0]); p = Polygon(np.stack([x, z], 1))
@@ -287,10 +379,12 @@ def osm(C, G, box, X, Z, name):
             p = []
             for u, w in cc: p += [round(float(u), 1), round(float(w), 1)]
             streams.append({'p': p})
-    # the aerialways (cable cars and chairlifts: the lines, their pylons and stations) and the car parks by the road (OpenStreetMap)
-    cables, pyl, pulls = [], [], []
+    # the aerialways (cable cars and chairlifts: the lines, their pylons and stations), the power lines (their poles and towers) and the car
+    # parks by the road (OpenStreetMap)
+    cables, pyl, pulls, power, poles = [], [], [], [], []
     for r in overture('base', 'infrastructure', box, ['id', 'subtype', 'class', 'geometry'], name):
         g = wkb.loads(r['geometry'])
+        if r.get('subtype') == 'aerialway' and r.get('class') == 'zip_line': continue   # (a zip line: no cabins or pylons of a cable car)
         if r.get('subtype') == 'aerialway' and g.geom_type == 'LineString':
             c = np.array(g.coords); x, z = G.to_xz(c[:, 1], c[:, 0])
             if T.query(np.stack([x, z], 1))[0].min() > 500: continue
@@ -300,13 +394,22 @@ def osm(C, G, box, X, Z, name):
         elif r.get('subtype') == 'aerialway' and g.geom_type == 'Point':
             x, z = G.to_xz(g.y, g.x)
             if near(x, z) < 700: pyl += [round(float(x), 1), round(float(z), 1), 1 if r.get('class') == 'aerialway_station' else 0]
+        elif r.get('subtype') == 'power' and g.geom_type == 'LineString':
+            c = np.array(g.coords); x, z = G.to_xz(c[:, 1], c[:, 0])
+            if T.query(np.stack([x, z], 1))[0].min() > 400: continue
+            p = []
+            for u, w in zip(x, z): p += [round(float(u), 1), round(float(w), 1)]
+            power.append({'k': r.get('class'), 'p': p})
+        elif r.get('subtype') == 'power' and g.geom_type == 'Point' and r.get('class') in ('power_pole', 'power_tower'):
+            x, z = G.to_xz(g.y, g.x)
+            if near(x, z) < 400: poles += [round(float(x), 1), round(float(z), 1), 1 if r.get('class') == 'power_tower' else 0]
         elif r.get('class') == 'parking' and g.geom_type in ('Polygon', 'Point'):
             if g.geom_type == 'Polygon':
                 c = np.array(g.exterior.coords); x, z = G.to_xz(c[:, 1], c[:, 0]); p = Polygon(np.stack([x, z], 1)); cx, cz, rr = p.centroid.x, p.centroid.y, math.sqrt(p.area / math.pi)
             else: cx, cz = G.to_xz(g.y, g.x); rr = 8.0
             d = near(cx, cz)
             if d < 40: pulls.append([round(float(cx), 1), round(float(cz), 1), round(float(rr), 1), round(float(d), 1)])
-    return bld, lakes, streams, cables, pyl, pulls
+    return bld, lakes, streams, cables, pyl, pulls, power, poles
 
 def trees(C, G, X, Z):
     """Trees from the canopy height map: the highest point of each 4 m cell over 2.5 m, within `drevesa` metres of the road, as
@@ -330,8 +433,8 @@ def main():
     tid = sys.argv[1]; C = CFG[tid]; write = '--zapisi' in sys.argv
     box = C['okvir']; name = tid
     G0 = Geo(*C['start'])
-    seg = overture('transportation', 'segment', box, ['id', 'names', 'subtype', 'class', 'road_surface', 'road_flags', 'width_rules', 'connectors', 'geometry'], name)
-    x, z = route(seg, C['pot'], G0, C.get('razredi'))
+    seg = overture('transportation', 'segment', box, ['id', 'names', 'subtype', 'class', 'road_surface', 'road_flags', 'width_rules', 'connectors', 'geometry', 'sources'], name)
+    x, z = route(seg, C['pot'], G0, C.get('razredi'), C.get('dovoli', ()))
     x, z, s = resample(x, z, 1.0)
     # the start and the finish snapped onto the line; the run-up before the start and the road past the finish
     sx, sz = G0.to_xz(*C['start']); fx, fz = G0.to_xz(*C['cilj'])
@@ -341,23 +444,32 @@ def main():
     x = gaussian_filter1d(x, C.get('gauss', 3), mode='nearest'); z = gaussian_filter1d(z, C.get('gauss', 3), mode='nearest')
     S0, F0 = (x[i0], z[i0]), (x[i1], z[i1])
     hw = C['polsirina']; gap = C.get('razmik', 2 * hw + 10)
-    x, z, mm, mx = separate(x, z, gap, int(gap * 2.6))
+    X0 = crossings(x, z) if C.get('kriz') else []   # (the crossings on two levels, def kriz: the line is on ~1 m samples here)
+    x, z, mm, mx = separate(x, z, gap, int(gap * 2.6), keep=X0)
+    if C.get('polmer'):   # (the tightest hairpins opened up, then the legs apart again)
+        x, z, nw = widen(x, z, C['polmer'], C.get('polmer_it', 20)); x, z, mm2, mx2 = separate(x, z, gap, int(gap * 2.6), keep=crossings(x, z) if X0 else [])
+        log('hairpins opened to %.1f m in %d steps; the legs moved %.1f m more at most' % (C['polmer'], nw, mx2)); mx = max(mx, mx2)
+    if C.get('odpri'):   # (the tightest bends opened to this radius: as Vršič's hairpins, ~10.5 m; Medeu, Llogara)
+        x, z, m2, M2 = open_bends(x, z, C['odpri']); log('bends opened to %.1f m: moved %.2f m on average, %.1f at most' % (C['odpri'], m2, M2))
     x, z, s = resample(x, z, 1.0)
     i0 = int(np.argmin(np.hypot(x - S0[0], z - S0[1]))); i1 = int(np.argmin(np.hypot(x - F0[0], z - F0[1])))
     # the game's origin: the start line
     ox, oz = x[i0], z[i0]; la_s, lo_s = G0.to_ll(ox, oz); G = Geo(float(la_s), float(lo_s))
     x, z = x - ox, z - oz
     bends, k = turns(x, z, s)
-    hairs = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(150) and s[i0] < sa < s[i1]]
+    hairs = [(sa, tot, r) for sa, tot, r in bends if abs(tot) > math.radians(C.get('lasnica', 150)) and s[i0] < sa < s[i1]]   # (the hairpins: over 150 degrees, or `lasnica`)
     log('line: %.0f m (run-up %.0f, race %.0f, past the finish %.0f); moved %.1f m on average, %.1f at most; %d hairpins, the tightest %.1f m' % (
         s[-1], s[i0], s[i1] - s[i0], s[-1] - s[i1], mm, mx, len(hairs), min([r for _, _, r in hairs] or [0])))
     # heights
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
     h = D.sample(la, lo); hp = profile(h, s, C, bends)
-    base = hp[i0]; alt = [int(round(hp[i0])), int(round(hp[i1]))]
+    X1 = crossings(x, z) if C.get('kriz') else []
+    if X1: hp = knot(hp, s, X1, C['kriz'])
+    base = hp[i0]; alt = [int(round(hp[i0])), int(C.get('vrh', round(hp[i1])))]   # (vrh: the top's official height, when the cleaned profile is a metre or two off it)
+    if C.get('desetinka'): alt[1] = int(round(hp[i0])) + round(float(hp[i1] - hp[i0]), 1)   # (the finish to a tenth: the game's heights between scale by the climb, altAt; Llogara)
     g = np.gradient(hp, s)
-    log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], g[i0:i1].max() * 100, np.mean(np.abs(h - hp))))
+    log('heights: %d -> %d m (model %d -> %d), steepest %.1f %%, the model off the road by %.1f m on average' % (alt[0], alt[1], h[i0], h[i1], np.abs(g[i0:i1]).max() * 100, np.mean(np.abs(h - hp))))
     nE = int(round(s[-1] / 4)); fr = np.linspace(0, s[-1], nE + 1); HE = np.round((np.interp(fr, s, hp) - base) * 10).astype(int).tolist()
     pts = [[round(float(x[i]), 2), round(float(z[i]), 2)] for i in range(0, len(x), 5)]
     if (len(x) - 1) % 5: pts.append([round(float(x[-1]), 2), round(float(z[-1]), 2)])
@@ -369,7 +481,7 @@ def main():
     curves = [[round(float(sa - s[i0]), 1), int(round(float(np.interp(sa, s, hp)))), 1 if tot > 0 else -1] for sa, tot, r in hairs]
     # the corridor's data
     dem, geo = grids(C, G, x, z, D, base)
-    bld, lakes, streams, cables, pyl, pulls = osm(C, G, box, x, z, name)
+    bld, lakes, streams, cables, pyl, pulls, power, poles = osm(C, G, box, x, z, name)
     scene = C.get('s2'); meta = None
     if scene:
         zone = scene.split('_')[1]; y, mo = scene.split('_')[2][:4], int(scene.split('_')[2][4:6])
@@ -381,9 +493,9 @@ def main():
     fard = far(C, G, x, z, D)
     tr = trees(C, G, x, z)
     log('land cover (16 m): ' + ', '.join('%s %d' % (n_, cnt[k_]) for k_, n_ in enumerate(['grass', 'forest', 'shrubs', 'built', 'rock', 'water', 'snow', 'scree'])))
-    log('buildings %d, lakes %d, streams %d, aerialways %d (pylons and stations %d), car parks %d, trees %d, far %dx%d' % (len(bld), len(lakes), len(streams), len(cables), len(pyl) // 3, len(pulls), len(tr) // 3, fard['nx'], fard['nz']))
+    log('buildings %d, lakes %d, streams %d, aerialways %d (pylons and stations %d), power lines %d (poles and towers %d), car parks %d, trees %d, far %dx%d' % (len(bld), len(lakes), len(streams), len(cables), len(pyl) // 3, len(power), len(poles) // 3, len(pulls), len(tr) // 3, fard['nx'], fard['nz']))
     out = {'points': pts, 'H': HE, 'alt': alt, 'realKm': round(race / 1000, 2), 'finish': [round(float(x[i1]), 1), round(float(z[i1]), 1)], 'cps': cps, 'curves': curves,
-           'dem': dem, 'lc': lc, 'col': col, 'bld': bld, 'lakes': lakes, 'streams': streams, 'cables': cables, 'pylons': pyl, 'pulls': pulls, 'farDem': fard, 'trees': tr,
+           'dem': dem, 'lc': lc, 'col': col, 'bld': bld, 'lakes': lakes, 'streams': streams, 'cables': cables, 'pylons': pyl, 'pulls': pulls, 'power': power, 'poles': poles, 'farDem': fard, 'trees': tr,
            'origin': [round(float(la_s), 7), round(float(lo_s), 7)]}
     json.dump(out, open(os.path.join(RAW, tid + '.json'), 'w'))
     log('curves', curves); log('cps', cps, 'finish', out['finish'], 'origin', out['origin'])
@@ -391,7 +503,8 @@ def main():
         p = os.path.join(ROOT, 'js', 'tracks', tid + '.js'); src = open(p).read()
         A, B = '    // ---- podatki (tools/proga) ----\n', '    // ---- konec podatkov ----\n'
         V = C.get('ime_h', tid.upper() + '_H')
-        blk = A + ''.join('    %s: %s,\n' % (k_, jsval(out[k_])) for k_ in ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'col', 'bld', 'lakes', 'streams', 'cables', 'pylons', 'pulls', 'farDem', 'trees', 'points']) + B
+        keys = ['alt', 'realKm', 'finish', 'cps', 'curves', 'dem', 'lc', 'col', 'bld', 'lakes', 'streams', 'cables', 'pylons', 'pulls'] + (['power', 'poles'] if power else []) + ['farDem', 'trees', 'points']   # (the power lines only where there are any)
+        blk = A + ''.join('    %s: %s,\n' % (k_, jsval(out[k_])) for k_ in keys) + B
         i, j = src.index(A), src.index(B) + len(B); src = src[:i] + blk + src[j:]
         hA = '  const %s = [' % V; i = src.index(hA); j = src.index('];', i); src = src[:i] + hA + ','.join(map(str, HE)) + src[j:]
         open(p, 'w').write(src); log('written', p)

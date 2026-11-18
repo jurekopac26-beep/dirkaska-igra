@@ -435,28 +435,77 @@
     'Ruski križ': 'Russian Cross', 'Ruska kapelica': 'Russian Chapel', 'Ajdovska deklica': 'Heathen Maiden', 'Velika lasnica': 'Grand Hairpin', 'Dolgi levi': 'Long Left', 'Predor': 'Tunnel',
     'Most Rocky Creek': 'Rocky Creek Bridge', 'Razgledišče Castle Rock': 'Castle Rock Viewpoint', 'Most Bixby Creek': 'Bixby Creek Bridge',   // (Big Sur)
     'Prvi ovinek': 'First Curve', 'Zanka': 'The Loop', 'Tianmenska jama': 'Tianmen Cave', 'S-zavoji': 'S Curves', 'Pod mostom': 'Under the Bridge', 'Lasnica': 'Hairpin', 'Zadnja ravnina': 'Back Straight', 'Zadnji ovinek': 'Final Corner',
-    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!',   // (Uncompahgre)
+    'Soteska Uncompahgre': 'Uncompahgre Gorge', 'Slap Bear Creek': 'Bear Creek Falls', 'Velik plaz': 'Avalanche Slide', 'Galerija Riverside': 'Riverside Snow Shed', 'ZGRMEL SI V PREPAD!': 'OVER THE EDGE!', 'PREDALEČ OD CESTE!': 'TOO FAR OFF THE ROAD!',   // (Uncompahgre; Killar: a road with no barriers, too far off it)
     'Lesoto': 'Lesotho',   // (Sani Pass: the top; Mkhomazana, Drakensberg and Twelve Apostles stay as they are)
     'Prelaz Katu-Jaryk': 'Katu-Yaryk Pass', 'Sedem serpentin': 'Seven Hairpins', 'Prečka nad Čulišmanom': 'Traverse above the Chulyshman', 'Dolina Čulišmana': 'Chulyshman Valley',   // (Katu-Jaryk: the HUD, the flyover)
     'Spodnje razgledišče': 'Valley Lookout', 'Razgledišče na grebenu': 'Ridge Lookout', 'Smučišče': 'Ski Runs', 'Smučarska vas': 'Ski Village',   // (Mount Hotham: the lookouts, the ski runs; the mountains stay as they are)
     'Šikana': 'Chicane',   // (Marrakesh: Turns 4-5)
+    'Vrh': 'Summit', 'Jezero Shōjin': 'Lake Shōjin', 'Sedem ovinkov': 'Seven Bends',   // (Hakone: the HUD; the names of the places stay as they are)
     'Terasa ob morju': 'Seafront Terrace', 'Pod železnico': 'Under the Railway', 'Lasnice Savolano': 'Savolano Hairpins', 'Stolp Castellaccio': 'Castellaccio Tower', 'Vzhodna lasnica': 'East Hairpin', 'Lasnici nad Romitom': 'Romito Hairpins', 'Grad Antignano': 'Antignano Castle',   // (Livorno: the descriptive names on the HUD; the rest are places)
     'Hitri S-zavoji': 'Fast Esses', 'Dolgi desni': 'Long Right', 'Kratki levi': 'Short Left', 'Dvojni desni': 'Double Right', 'Ovinek ob pristanišču': 'Harbour Corner', 'Ovinek pri zbiralniku': 'Reservoir Bend',   // (Nürburg, Spa, Suzuka, Monte Carlo, Pikes Peak: corners named after people, a bar or the commentary box get the plain names from the menu)
     'Postajališče': 'Turnout',   // (Palomar Mountain: the turnout; Serpentina N and the heights by the rules of Lang.place)
     'Vodni stolp': 'Water Tower', 'Viadukt': 'Viaduct', 'Most čez South Esk': 'South Esk Bridge', 'Nivojski prehod': 'Level Crossing', 'Ravnina pri strojarni': 'Tannery Straight',
     'Ovinek pri strojarni': 'Tannery Corner', 'Dolgi most': 'Long Bridge', 'Leteča milja': 'Flying Mile',   // (Longford: the HUD)
     'Razgledišče': 'Viewpoint', 'Cestninska postaja': 'Toll Plaza',   // (the viewpoints and the toll plaza above Hout Bay; the viewpoint of the Santa Monica Mountains road)
+    'Borov gozd': 'Pine Wood', 'Mestno obzidje': 'City Wall', 'Pod stolpom': 'Below the Tower', 'V mesto': 'Into the City',   // (Seoul: the HUD, the results of an escape; Razgledišče and Dvojni desni are in the dictionary already, Namsan and Huam-dong stay as they are)
     'Dolina Rock Creek': 'Rock Creek Valley', 'Vrh serpentin': 'Top of the Switchbacks',   // (Beartooth: Serpentina N and the heights by the rules of Lang.place)
     'Valea Bâlii': 'Bâlea Valley', 'Lacul Bâlea': 'Bâlea Lake', 'Do jezera': 'To the lake',   // (Bâlea: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
+    'Dvojni levi': 'Double Left', 'Hitri desni': 'Fast Right', 'Ovinek pri tribunah': 'Grandstand Corner', 'Gozdni ovinek': 'Forest Corner', 'Ovinek pri gomili': 'Barrow Corner', 'Ovinek ob resavi': 'Heath Corner', 'Ciljna ravnina': 'Finish Straight',   // (Silkeborg: its corners by plain descriptions, the burial mound and the heath by them)
+    'Hitri levi': 'Fast Left', 'Levi pod klancem': 'Left Below the Hill', 'Klanec': 'The Climb', 'Lasnica na vrhu': 'Hilltop Hairpin', 'Levi na spustu': 'Downhill Left', 'Desni nad reko': 'Right over the River',
+    'Levi ob reki': 'River Left',   // (Kågeröd: its corners by plain descriptions, the river by them)
+    'Levi za ciljem': 'Left after the Line', 'Spodnja lasnica': 'Lower Hairpin', 'Zahodna ravnina': 'West Straight', 'Zahodna lasnica': 'West Hairpin', 'Desni čez potok': 'Right over the Brook',
+    'Severna ravnina': 'North Straight', 'Esovka': 'The Esses', 'Zadnja lasnica': 'Last Hairpin',   // (Sosnová: its corners by plain descriptions, the brook by them)
+    'Trafalgarski trg': 'Trafalgar Square', 'Proti reki': 'Down to the River', 'Nabrežje Temze': 'Thames Embankment', 'Westminstrski most': 'Westminster Bridge',
+    'Urni stolp': 'Clock Tower', 'Parlamentarni trg': 'Parliament Square',   // (London: Whitehall stays as it is)
+    'Severna lasnica': 'North Hairpin', 'Levi pri depoju': 'Paddock Left', 'Desni na vzhodu': 'East Right', 'Dolga ravnina': 'Long Straight', 'Desni ob gozdu': 'Woods Right',   // (Pembrey: its corners by plain descriptions)
+    'Desni na makadamu': 'Gravel Right', 'Južna ravnina': 'South Straight', 'Ostri desni': 'Sharp Right', 'Levi na makadam': 'Left onto the Gravel', 'Makadamska ravnina': 'Gravel Straight',   // (Kildare: its corners by plain descriptions, the gravel among them)
+    'Na prelaz': 'To the pass',   // (Izoard: the results of an escape; its places are French names, the same in English; Serpentina N and the heights by the rules of Lang.place)
+    'Desni pregib': 'Right Kink', 'Levi za lasnico': 'Left after the Hairpin', 'Vzpon skozi gozd': 'Climb through the Woods', 'Desni v gozdu': 'Right in the Woods',
+    'Spust k jezeru': 'Down to the Lake', 'Levi ob jezeru': 'Lakeside Left', 'Klanec od jezera': 'Climb from the Lake', 'Zahodni ovinek': 'West Corner', 'Gozdna ravnina': 'Forest Straight',
+    'Severni ovinek': 'North Corner', 'Desni na klancu': 'Right on the Climb', 'Levi na vrhu': 'Left over the Top', 'Spust': 'The Drop', 'Desni pred ravnino': 'Right before the Straight',
+    'Levi na ravnino': 'Left onto the Straight',   // (Biķernieki: its corners by plain descriptions, the lake Linezers and the woods by them)
+    'Lasnica na koncu ravnine': 'Hairpin at the End of the Straight', 'Desni za boksi': 'Right behind the Pits', 'Nagnjeni levi': 'Banked Left', 'Greben sipine': 'Dune Crest',
+    'Hitra esa': 'Fast Esses', 'Desni v dolino': 'Right into the Valley', 'Desni ob ribniku': 'Pond Right', 'Levi okoli sipine': 'Left round the Dune',
+    'Desni pred zadnjim': 'Right before the Last', 'Nagnjeni zadnji ovinek': 'Banked Final Corner',   // (Zandvoort: its corners by plain descriptions, the dunes and the ponds by them)
+    'Spust v prvi levi': 'Drop into the First Left', 'Dolgi desni v dolini': 'Long Right in the Dip', 'Vzpon na hrib': 'Climb up the Hill', 'Desni na dnu': 'Right at the Bottom',
+    'Dolgi levi s štirimi temeni': 'Long Left with Four Apexes', 'Spust v dolino': 'Drop into the Valley', 'Levi po spustu': 'Left after the Drop', 'Desni na zadnjo ravnino': 'Right onto the Back Straight',
+    'Levi na koncu ravnine': 'Left at the End of the Straight', 'Desni v šikani': 'Chicane Right', 'Levi na ciljno ravnino': 'Left onto the Main Straight',   // (Tuzla: its corners by plain descriptions, the hills by them)
+    'Zapirajoči se desni': 'Tightening Right', 'Leva lasnica': 'Left Hairpin', 'Hitri desni v dolini': 'Fast Right in the Dip', 'Vzpon iz doline': 'Climb out of the Dip',
+    'Ostri desni na vrhu': 'Sharp Right at the Top', 'Spust proti lasnici': 'Drop to the Hairpin', 'Lasnica na dnu': 'Hairpin at the Bottom', 'Desni v klanec': 'Right up the Hill',
+    'Desni na vrhu hriba': 'Right on the Crest', 'Levi navzdol': 'Left Downhill',   // (Sepang: its corners by plain descriptions, the dips and the crests by them)
+    'Desni na koncu ravnine': 'Right at the End of the Straight', 'Desni pred esom': 'Right before the Esses', 'Desni pod hribom': 'Right under the Hill', 'Desni proti zahodu': 'Right to the West',
+    'Levi ob tribunah': 'Left by the Grandstands', 'Ravnina proti morju': 'Straight to the Sea', 'Desni ob morju': 'Right by the Sea', 'Desni pod gričem': 'Right under the Knoll',
+    'Levi na sever': 'Left to the North', 'Levi proti zahodu': 'Left to the West', 'Desni na zahodni strani': 'Right on the West Side', 'Zadnji levi': 'Last Left',   // (Lombok: its corners by plain descriptions, the sea, the hills and the compass)
+    'Hitri levi pregib': 'Fast Left Kink', 'Ravnina proti jugu': 'South Straight', 'Levi pred ribnikom': 'Left before the Pond',
+    'Ostri levi': 'Tight Left', 'Levi ob ribniku': 'Pond Left', 'Desni proti severu': 'Right Heading North', 'Desni ob mokrišču': 'Wetland Right', 'Levi na vzhodu': 'East Left',   // (Buriram: its corners by plain descriptions, the pond and the wetland by them)
+    'Levi proti severu': 'Left Heading North', 'Desni proti jugu': 'Right Heading South', 'Levi pregib': 'Left Kink',
+    'Tretji hitri desni': 'Third Fast Right', 'Levi pred zadnjim': 'Left before the Last',   // (Lusail: its corners by plain descriptions, the compass and their order; Hitri desni pregib and Zadnji desni with Sakhir)
+    'Desna lasnica': 'Right Hairpin', 'Hitri desni pregib': 'Fast Right Kink', 'Desni na vrhu': 'Right at the Top', 'Desni v esih': 'Right in the Esses', 'Levi v dolino': 'Left into the Valley',
+    'Lasnica v dolini': 'Hairpin in the Valley', 'Dolgi levi pod klancem': 'Long Left below the Climb', 'Desni na vrhu klanca': 'Right at the Top of the Climb',
+    'Zadnji desni': 'Last Right',   // (Sakhir: its corners by plain descriptions, by the hills and the valley of the desert; Ostri levi and Desni na koncu ravnine as above)
+    'Desni na dolgo ravnino': 'Right onto the Long Straight', 'Levi v notranjosti': 'Infield Left', 'Desni pred ciljem': 'Right before the Finish',   // (Termas de Río Hondo: its corners by plain descriptions; its others as above)
+    'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
+    'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
+    'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)
+    'Do El Palmita': 'To El Palmito',   // (Espinazo del Diablo: the results of an escape; Espinazo del Diablo, La Tolva and El Palmito stay as they are, Razgledišče, Lasnica and the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
+    'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
+    'Bunkerji': 'Bunkers', 'Qafa e Llogarasë': 'Llogara Pass', 'Spomenik': 'Monument', 'Znamenje': 'Wayside Shrine', 'Vzletišče': 'Paragliders\' Launch', 'Čez prelaz': 'Over the pass',   // (Llogara: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
+    'Kapelica': 'Wayside Shrine', 'Do morja': 'Down to the sea',   // (Porto Moniz: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place, the town as it is)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
+    'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
     'Radijska antena': 'Radio Antenna', 'Jezero Waiau': 'Lake Waiau', 'Vrhnji greben': 'Summit Ridge',   // (Mauna Kea; the Hawaiian names, Puʻu Haukea and Puʻu Wēkiu, stay as they are)
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
+    'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
+    'Jez Medeu': 'Medeu Dam', 'Za jezom': 'Behind the Dam', 'Soteska Gorelnik': 'Gorelnik Gorge', 'Most čez Kiši Almati': 'Kishi Almaty Bridge', 'Soteska Kiši Almati': 'Kishi Almaty Gorge', 'Po soteski': 'Up the gorge',   // (Medeu: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
     'Prva lasnica': 'First Hairpin', 'Stopnice na pobočju': 'Hillside Steps', 'Zavoj na makadam': 'Gravel Turn', 'Stari bor': 'Old Pine',   // (Harju: the places named after people get plain names)
     'Krožišče': 'Roundabout', 'Zbiljski gaj': 'Zbilje Grove', 'Zbiljsko jezero': 'Lake Zbilje', 'Most čez Savo': 'Sava Bridge', 'Smledniški hrib': 'Smlednik Hill', 'Stari grad': 'Old Castle',   // (Medvode: the HUD; the streets and the villages keep their names)
+    'Zapornica': 'The Gate', 'Serpentina': 'Hairpin', 'Stena kraterja': 'Crater Wall', 'Polica': 'The Ledge', 'Dno kraterja': 'Crater Floor',   // (Ngorongoro: the HUD; Windy Gap, Seneto and Magadi stay as they are, the heights by the rules of Lang.place)
+    'Do Elle': 'To Ella',   // (Ella: the results of an escape; Ella Rock and Pattiyakumbura stay as they are, Serpentina N and the heights by the rules of Lang.place)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',
