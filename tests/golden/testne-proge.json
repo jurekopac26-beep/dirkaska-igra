@@ -543,7 +543,7 @@
   "maketa-menija/assets/video/poster-jezero.jpg": "25a31a0335ba4776",
   "maketa-menija/orodja/geo_monaco.py": "e240c4ea72f8bc8a",
   "maketa-menija/orodja/glasba/monaco.py": "175a9ec7cb667681",
-  "tests/baldy.test.js": "befe1a577e7f0ded",
+  "tests/baldy.test.js": "3746e48cdc43b955",
   "tests/bangsaen.test.js": "02c21d8efe12f66c",
   "tests/beartooth.test.js": "2a2c00ed21a2fbb4",
   "tests/bigsur.test.js": "4068fc7d414012dd",
@@ -814,6 +814,11 @@
    "datum": "2026-11-13",
    "proga": "hotham",
    "razlog": "Uporabnik dovolil seme pregona 11 → 29 v tests/hotham.test.js (stran Odločitve, trki-hotham-seme = 1, 13. 11. 2026)"
+  },
+  {
+   "datum": "2026-11-18",
+   "proga": "baldy",
+   "razlog": "Odločitve trki-testi-policije-17-11, možnost 1: najmanjša sprememba semen v testu policijskega pregona, 18. 11. 2026"
   }
  ]
 }
