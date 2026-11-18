@@ -371,6 +371,27 @@ try {
     T.check(`${id}: no NaN, no page errors`, C.nan === 0 && !ct.errors.length, ct.errors.slice(0, 3).join(' | '));
   }
 
+  // the computed rear door of a view drawn afresh in a race under way (Render.attachRace on a damaged car): the front door swings open
+  // in the view's first frame, before the car has a damage field (one car a frame gets it: xInit) and before the field made later, which
+  // has the door swung; the rear door all the same turns about the front door's rear edge as shut (kitLoosen keeps it), where a knock's does
+  {
+    const fr = await run({ xBody: 1, xGlass: 1, xParts: 1, carDet: 'normal' }, (hs) => {
+      const hit = eval(hs), g = window.__game, R = g.race, P = R.player;
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      const door = () => { const v = Render.viewOf(P), K = v.kit, U = v.body.geometry.userData, Q = U.ranges.quarterL, a = v.body.geometry.attributes.position.array, dv = K.deadV, b = [1e9, -1e9, 1e9, -1e9]; let n = 0;
+        if (dv) for (let i = Q.o[0]; i < Q.o[1]; i++) if (dv[i]) { n++; b[0] = Math.min(b[0], a[i * 3]); b[1] = Math.max(b[1], a[i * 3]); b[2] = Math.min(b[2], a[i * 3 + 2]); b[3] = Math.max(b[3], a[i * 3 + 2]); }
+        return { xc: !!v.xc, rd: K.xRD ? K.xRD.slice() : [0, 0], n, b: b.map(q => +q.toFixed(3)) }; };
+      { const D = Render.viewOf(P).body.geometry, Q = D.userData.ranges.doorL, a = D.attributes.position.array; var edge = 1e9; for (let i = Q.o[0]; i < Q.o[1]; i++) edge = Math.min(edge, a[i * 3]); }
+      for (let k = 0; k < 8 && !door().rd[0]; k++) { hit(P, [0.15, 0.1, -1]); for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {}); }
+      const out = { edge: +edge.toFixed(3), live: door() };
+      Render.attachRace(R); Render.frame(0.016, 1, P, 'chase', {}); out.f1 = door();
+      for (let j = 0; j < 30; j++) Render.frame(0.016, 1, P, 'chase', {}); out.f30 = door();
+      return out; }, hitFn);
+    const F = fr.r, near = (A, B) => A.every((q, k) => Math.abs(q - B[k]) < 0.03);
+    T.check('rear door of a view drawn afresh mid-race (the front door open before the damage field is made): cut out and turned where a knock\'s is, about the front door\'s rear edge as shut; the same after the field is made',
+      F.live.rd[0] === 1 && F.live.n > 50 && F.f1.rd[0] === 1 && !F.f1.xc && F.f30.xc && F.f1.n === F.live.n && near(F.f1.b, F.live.b) && near(F.f30.b, F.live.b) && Math.abs(F.f1.b[1] - F.edge) < 0.02 && !fr.errors.length, JSON.stringify(F) + ' ' + fr.errors.slice(0, 3).join(' | '));
+  }
+
   // the two-door Ris (not a table car): both sides knocked on the door and behind it: its one door a side opens, nothing is cut out of its
   // quarter (the computed rear door is not for a two-door car: the user's decision of 16. 11. 2026, docs/trki-realizem.md, »Vrata v poškodbah«)
   {
