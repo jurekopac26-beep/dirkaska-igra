@@ -117,7 +117,9 @@ export function startTrack(page, id, mode) {
   return page.evaluate(async ([id, mode]) => {
     const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms));
     g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
-    const card = document.querySelector(`[data-track="${id}"]`); if (!card) throw new Error('no track card ' + id);
+    // (a page opened again by the test itself has its lazy tracks as heads: the screen loads them first, its cards only then)
+    let card = null; for (let k = 0; k < 600 && !(card = document.querySelector(`[data-track="${id}"]`)); k++) await wait(100);
+    if (!card) throw new Error('no track card ' + id);
     card.click(); await wait(150);
     if (mode) { const b = document.querySelector(`[data-track="${id}"] [data-set="mode"] [data-v="${mode}"]`); if (!b) throw new Error('no way ' + mode + ' on ' + id); b.click(); await wait(150); }
     g.onAction('start');
