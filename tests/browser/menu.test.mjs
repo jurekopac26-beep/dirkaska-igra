@@ -1583,18 +1583,20 @@ try {
     // straight on into a new lap (no wait; the user's choice 10. 11. 2026: »Da, povsod enako«); its trail the loop's: the last 1500 m behind
     // the point (round the start line), its further half narrowing to nothing
     const mo = await page.evaluate(() => Menu.debug().list.filter(id => { const R = window.ROUTES[id], d = Core.TRACKS.find(x => x.id === id); return R && !R.fly && !R.open && d && !d.test && !d.pending; }).sort((a, b) => window.ROUTES[a].len - window.ROUTES[b].len)[0]);
-    const wayM = await page.evaluate((id) => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf(id) - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; }, mo);
-    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== mo; k++) await click(page, wayM);
-    await click(page, 'cam:1');
-    await page.waitForFunction((id) => { const r = Menu.debug().run; return r.id === id && r.t > window.ROUTES[id].len / 326 + 0.8; }, mo, { timeout: 90000 }).catch(() => null);
-    const mp = await ev(page, `const id = arg, R = window.ROUTES[id], P = R.top.route, run = Menu.debug().run, go = R.len / 326;
-      const at = (s) => { const x = (((s % go) + go) % go) / go * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
-      const b = root.querySelector("#track-stage .dio.topmap"), m = b && /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
-      let best = 1e9; if (m) for (let s = run.t - 0.4; s <= run.t + 0.05; s += 0.01) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
-      const w = b ? [...b.querySelectorAll(".rt-tr path")].map(p => +p.getAttribute("stroke-width")) : [], n = w.length - 1;
-      return { id, lap: +(run.t - go).toFixed(2), best: +best.toFixed(2), n, head: w[n] > 0, last: w[n - 1] > 0, mid: w[Math.floor(n / 2)], narrow: w.some(x => x > 0 && x < w[n]) };`, mo);
-    T.check(`a track with only its map (${mo}): the point at the flyovers' even pace, at the finish straight on into a new lap (${mp.lap} s into it); its trail round the start line, narrowing, not over the whole lap`,
-      mp.lap > 0.4 && mp.best < 2.5 && mp.head && mp.last && mp.mid === 0 && mp.narrow, JSON.stringify(mp));
+    if (mo) {   // (none once every real circuit has its flyover: then nothing to check here)
+      const wayM = await page.evaluate((id) => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf(id) - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; }, mo);
+      for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== mo; k++) await click(page, wayM);
+      await click(page, 'cam:1');
+      await page.waitForFunction((id) => { const r = Menu.debug().run; return r.id === id && r.t > window.ROUTES[id].len / 326 + 0.8; }, mo, { timeout: 90000 }).catch(() => null);
+      const mp = await ev(page, `const id = arg, R = window.ROUTES[id], P = R.top.route, run = Menu.debug().run, go = R.len / 326;
+        const at = (s) => { const x = (((s % go) + go) % go) / go * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
+        const b = root.querySelector("#track-stage .dio.topmap"), m = b && /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
+        let best = 1e9; if (m) for (let s = run.t - 0.4; s <= run.t + 0.05; s += 0.01) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
+        const w = b ? [...b.querySelectorAll(".rt-tr path")].map(p => +p.getAttribute("stroke-width")) : [], n = w.length - 1;
+        return { id, lap: +(run.t - go).toFixed(2), best: +best.toFixed(2), n, head: w[n] > 0, last: w[n - 1] > 0, mid: w[Math.floor(n / 2)], narrow: w.some(x => x > 0 && x < w[n]) };`, mo);
+      T.check(`a track with only its map (${mo}): the point at the flyovers' even pace, at the finish straight on into a new lap (${mp.lap} s into it); its trail round the start line, narrowing, not over the whole lap`,
+        mp.lap > 0.4 && mp.best < 2.5 && mp.head && mp.last && mp.mid === 0 && mp.narrow, JSON.stringify(mp));
+    } else console.log('  skip: a track with only its map (every real circuit has its flyover)');
     T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
