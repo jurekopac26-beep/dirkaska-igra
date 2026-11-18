@@ -16,6 +16,7 @@ Skupna vrsta PR za `main` vseh računov (`CLAUDE.md`, Postopek). Naenkrat gre na
 - **Nov PR** se vpiše na konec vrste in ostane osnutek; hitri popravki rdečega `main` gredo na začetek.
 - **Po združitvi** seja svojo vrstico izbriše in obvesti naslednjega.
 - Koordinacija računa vrsto ureja; pri sporu obdrži vrstice obeh strani.
+- **Pospešitev vrste (Matej 18. 11., komentar 6987073576, točke 1–4):** PR z rdečim krogom ali konfliktom Združevanje **preskoči**, ga da na konec vrste in nadaljuje; popravi ga nova seja s kodo. Najprej majhni PR brez konfliktov, PR s konflikti (npr. #671, #605) pozneje; vrsta teče, medtem ko se konflikti rešujejo. Konflikte rešuje takoj čakajoči PR sam (spoji svež `main`), ne šele v vrsti. Brez ponavljanja krogov: zelen PR ne dobi novega kroga zaradi `main`; konflikti samo v žigih, seznamih testov in kazalu se spojijo brez novega kroga.
 - **Zbirne veje** (`zbirna/<ime>`): en PR, en krog; vodja spoji `main` (`node tools/stamp.js --merge`), požene `npm run test:related` in `node tools/stamp.js --check`; člene zapre po združitvi; padel del gre ven. Proge so vedno zadnje.
 - **Osnutek do vrste**: »Ready for review« samo prva dva; ostali osnutki; označen PR zunaj prvih dveh vrne v osnutek koordinacija.
 - **Prevzem dela ob koncu porabe**: predaja v opisu PR, vpis na konec vrste s pripisom »prevzame račun N«, ustavitev; PR pripelje seja Združevanje računa N; večje kode samo ob dovolj porabe.

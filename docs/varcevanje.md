@@ -138,26 +138,27 @@ Na strani 3 (`docs/vprasanja.md`) je uporabnik 3. 11. 2026 izbral »Vse (A–G)�
 - **E · `.ignore` in `-diff`:** generirani podatki z ogromnimi vrsticami (`js/routes.js`, `assets/maps/`, `maketa-menija/assets/` …) niso med zadetki Grep in Glob in ne v `git diff`.
 - **`zetoni-3` strani 3:** 2 · pull request samo z datotekami `.md` na GitHubu požene samo teste dokumentov: ni več v #279, ker to naredi #321 (krajši krog testov; dogovor koordinacije VSE SEJE 2 5. 11. 2026, da se pull requesta ne spreta v `.github/workflows/tests.yml`); 5 · kratki izpisi orodij (`CLAUDE.md`, Varčevanje); 1 in 3 VSE SEJE 2; 4 · `docs/proge-pregled.md` (#280); 6 (arhiv sej, brisanje vej) čaka na uporabnika.
 
-## Poraba: 100 % 24 h pred iztekom (odločitev uporabnika 15. 11. 2026)
+## Poraba: 100 % 12 h pred iztekom, obrazec /156 (Matej 18. 11. 2026; 24 h od 15. 11. ni v veljavi)
 
-Odločitev uporabnika 15. 11. 2026 ob ~10.08 (v pogovoru z Matejem, dobesedno): »Novo pravilo za vse racune. Vse tokene moramo 100% iskoristiti 24h predno pride do reseta.« Velja za vse račune (biketraveler, jure.kopac26, partyslo, croatiadata) in nadomesti pravilo 12 h (9. 11.) in izjemo 6 h za jure.kopac26 (15. 11. ob ~2.20). Kratko pravilo je v `CLAUDE.md`, razdelek Seje.
+Odločitev uporabnika 15. 11. 2026 ob ~10.08 (v pogovoru z Matejem, dobesedno): »Novo pravilo za vse racune. Vse tokene moramo 100% iskoristiti 24h predno pride do reseta.« Velja za vse račune (biketraveler, jure.kopac26, partyslo, croatiadata) in nadomesti pravilo 12 h (9. 11.) in izjemo 6 h za jure.kopac26 (15. 11. ob ~2.20). Kratko pravilo je v `CLAUDE.md`, razdelek Seje. Od 18. 11. velja spet obrazec /156 (Matej, tabla #382, komentar 6985139187; `docs/odlocitve.md`, »Seje«); spodnji zapis 24 h / 144 h je zgodovinski, tabela rokov spodaj je spet za 12 h.
 
-- **Cilj:** tedenska poraba teče enakomerno od reseta do roka, 144 h po resetu (168 h − 24 h). Cilj v odstotkih = 100 × (ure od reseta) / 144. Zadnjih 24 h pred iztekom račun ne porablja ničesar; takrat njegove PR vodi drug račun (spodaj). Če je račun ob roku pod 100 %, porabi ostanek takoj, tudi v luknji (bolje kot da propade).
-- **Reset, rok, predaja in vodenje PR v 24 h luknji** (ure po ljubljanskem času; vsak teden enako):
+- **Cilj:** tedenska poraba teče enakomerno od reseta do roka, 156 h po resetu (168 h − 12 h). Cilj v odstotkih = 100 × (ure od reseta) / 156. Zadnjih 12 h pred iztekom račun ne porablja ničesar; takrat njegove PR vodi drug račun (spodaj). Če je račun ob roku pod 100 %, porabi ostanek takoj, tudi v luknji (bolje kot da propade).
+- **Reset, rok, predaja in vodenje PR v 12 h luknji** (ure po ljubljanskem času; vsak teden enako; croatiadata izpeljana po istem vzorcu, predaja 5 h pred rokom):
 
-| Račun | Reset | 100 % do | Predaja | V 24 h luknji PR računa vodi |
+| Račun | Reset | 100 % do | Predaja | V 12 h luknji PR računa vodi |
 |---|---|---|---|---|
-| partyslo | pet 3.00 | čet 3.00 | sre ~22.00 | biketraveler (čet 3.00 – pet 3.00) |
-| jure.kopac26 | ned 10.00 | sob 10.00 | sob ~5.00 | partyslo (sob 10.00 – ned 10.00) |
-| biketraveler | pon 0.00 | ned 0.00 | sob ~19.00 | partyslo (ned 0.00 – 10.00), nato jure.kopac26 (ned 10.00 – pon 0.00) |
-| croatiadata | ned 22.59 | sob 22.59 | sob ~18.00 | partyslo (sob 22.59 – ned 10.00), nato jure.kopac26 (ned 10.00 – 22.59) |
+| partyslo | pet 3.00 | čet 15.00 | čet ~10.00 | biketraveler (čet 15.00 – pet 3.00) |
+| jure.kopac26 | ned 10.00 | sob 22.00 | sob ~17.00 | partyslo (sob 22.00 – ned 10.00) |
+| biketraveler | pon 0.00 | ned 12.00 | ned ~7.00 | jure.kopac26 (ned 12.00 – pon 0.00) |
+| croatiadata | ned 22.59 | ned 10.59 | ned ~6.00 | jure.kopac26 (ned 10.59 – 22.59) |
 
 Ta teden (16.–22. 11. 2026) ima croatiadata drug rok: vse do torka, 17. 11., zvečer in do 20 sej s kodo hkrati ves teden, do nedelje, 22. 11. (odločitev uporabnika 16. 11. ob ~3.35); cilj porabe od srede naprej in mejo po 22. 11. določi uporabnik (`docs/odlocitve.md`, »Seje«).
 
 - **Pas ±5 točk okoli cilja:** v pasu račun dela, kot dela. Več kot 5 točk **pod** ciljem: koordinacija dodaja seje s kodo, dokler račun ne pride v pas (največ 10 hkrati; meja 2 seji s kodo velja samo za račun **nad** pričakovano porabo, odločitev 17. 11., točka 13; `CLAUDE.md`, razdelek Seje; najprej seje, ki vodijo končano delo do `main`). Več kot 5 točk **nad** ciljem: nobene nove seje, dela samo ena seja s kodo, dokler cilj računa ne ujame; nezačeto delo prevzame račun pod ciljem (dogovor na tabli).
+- **Brez prostega teka (Matej 18. 11., komentar 6987073576, točka 6):** račun v zaostanku, ki nima dela, ki bi prehitelo vrsto, začne sejo na Opusu (partyslo: Ljudje ob progi ali Realizem E); Fable počaka na reset (partyslo pet 3.00).
 - **Predaja:** ob uri v stolpcu Predaja vsaka seja računa napiše predajo v opis svojega PR in se ustavi; končane PR drug račun vodi na `main` (`CLAUDE.md`, »Tabla med računi«, in `docs/vrsta.md`, »Prevzem zdaj«). Koordinacija računa v luknji ne zaganja novih sej.
 - **Fable brez proste ponastavitve (partyslo, odločitev uporabnika 18. 11. 2026):** partyslo prosta ponastavitev Fable ne uporablja; ko Fable zmanjka, težje delo počaka na redni reset (`docs/odlocitve.md`, »Seje«). Nadomesti »ob ~95 % uporabi prosto ponastavitev Fable«.
-- **Dnevno stanje na tabli:** porabo zapiši kot »<račun>: X % (cilj Y %)«. Odstotek računa objavi Matej ali uporabnik; če ga koordinacija ne pozna, napiše »ne poznam«.
+- **Dnevno stanje na tabli:** porabo zapiši kot »<račun>: X % (cilj Y %)«; dodaj tempo: število združenih PR in povprečen krog v minutah (Matej 18. 11., komentar 6987073576, točka 5). Odstotek računa objavi Matej ali uporabnik; če ga koordinacija ne pozna, napiše »ne poznam«.
 - **V repozitorij ne spadajo** trenutni odstotki in dnevni cilji: spreminjajo se, objavljajo jih Matej in koordinacije na tabli. Ostane samo pravilo in tabela zgoraj.
 
 ## Manj sklopov 2. del (odločitev uporabnika 13. 11. 2026 ob ~4.40)
@@ -214,6 +215,7 @@ Matejevi predlogi 11–20, komentar 6953506391 na tabli #382 (uporabnik: »brez 
 - 3. 11. 2026: pravila združena s pravili drugih sej (PR #277 in drugi na `main`); spoj je imel spore v `CLAUDE.md` in `docs/vprasanja.md`, zato je pull request #281 šel skozi celoten krog.
 - 3. 11. 2026, račun strani 3: C, E ter `zetoni-3` 2 in 5 v PR #279 (spojen z `main` po #281, v obliki teh pravil). Točko 2 je 5. 11. prevzel #321 (del `tests.yml` je iz #279 izpuščen).
 - 5. 11. 2026, račun strani 3: #279 spojen s svežim `main` (570ebca; obdržano vse z `main`, tudi #277); `tools/spoji-main.mjs` prilagojen #286: strani `index.html` in `garaza.html` reši `stamp.js --merge`, orodje ostane za kazalo, sezname testov, `README.md` in `js/lang.js`.
+- 18. 11. 2026: obrazec porabe spet 12 h / 156 (Matej, komentar 6985139187); tempo vrste v dnevnem stanju in brez prostega teka (komentar 6987073576).
 - 15. 11. 2026: pravilo porabe 100 % 24 h pred iztekom za vse račune (razdelek Poraba); nadomesti 12 h in izjemo 6 h za jure.kopac26.
 - 9. 11. 2026: pravilo porabe 100 % 12 h pred iztekom (razdelek Poraba) in zbiranje manjših popravkov v en pull request (`CLAUDE.md`, Postopek, »Popravki in posodobitve skupaj«); odločitvi uporabnika prek Mateja, tabla #382, komentar 6737552977.
 - 11. 11. 2026: »Vse štiri ukrepe« v PR #651 (račun jure.kopac26): `CLAUDE.md` 51,7 KB → ~18 KB, podrobnosti v `docs/odlocitve.md`; napor high, okno 200 tisoč (povzetek pri ~144 tisoč), predaja ~150 tisoč, tabla 4× na dan. `CLAUDE_CODE_EFFORT_LEVEL` iz nastavitev je povozil napor seje (seja, ustvarjena s high, je tekla z max), zato je odstranjen; prva seja z `effort` `max` po združitvi preveri `echo $CLAUDE_EFFORT` in zapiše sem.
