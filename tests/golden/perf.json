@@ -371,18 +371,18 @@
   "jsMs": 2.56
  },
  "savusavu": {
-  "calls": 166,
+  "calls": 167,
   "maxCalls": 194,
-  "kverts": 384,
+  "kverts": 388,
   "maxKverts": 482,
-  "jsMs": 1.13
+  "jsMs": 1.64
  },
  "quezaltepeque": {
-  "calls": 228,
-  "maxCalls": 257,
-  "kverts": 609,
-  "maxKverts": 720,
-  "jsMs": 1.18
+  "calls": 230,
+  "maxCalls": 261,
+  "kverts": 610,
+  "maxKverts": 737,
+  "jsMs": 2.26
  },
  "aguascalientes": {
   "calls": 182,
@@ -413,11 +413,11 @@
   "jsMs": 1.16
  },
  "koror": {
-  "calls": 142,
+  "calls": 144,
   "maxCalls": 164,
-  "kverts": 349,
-  "maxKverts": 553,
-  "jsMs": 1.19
+  "kverts": 348,
+  "maxKverts": 546,
+  "jsMs": 1.31
  },
  "batangas": {
   "calls": 242,
