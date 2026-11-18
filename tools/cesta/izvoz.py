@@ -91,7 +91,9 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'tuzla': dict(kinds={'raceway'}, predmeti=False), 'zandvoort': dict(kinds={'raceway'}, predmeti=False, izpusti=[(2339, -1)]),
          # group 756a (17. 11. 2026): roads from pull requests, side roads only
          'cusco': dict(predmeti=False), 'eljem': dict(predmeti=False), 'ghoufi': dict(predmeti=False), 'isalo': dict(predmeti=False),
-         'isuna': dict(predmeti=False)}
+         'isuna': dict(predmeti=False),
+         # group 756b (17. 11. 2026): Portobelo: a drive at the finish's white wall and catch fence (2491 m, left)
+         'luanda': dict(predmeti=False), 'mombasa': dict(predmeti=False), 'portobelo': dict(predmeti=False, izpusti=[(2491, -1)])}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
