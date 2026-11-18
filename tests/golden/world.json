@@ -391,22 +391,22 @@
   }
  },
  "livorno": {
-  "meshes": 1669,
-  "verts": 1191044,
+  "meshes": 1668,
+  "verts": 1191356,
   "instances": 34306,
   "props": 9,
   "crowd": 426,
-  "world": "3e0c69db",
+  "world": "c123c519",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "9acb6e08",
+   "-:MeshLambertMaterial": "c1c18fe3",
    "-:MeshPhongMaterial": "b6985ac9",
    "crowd:MeshLambertMaterial": "6817d1c3",
    "flags:MeshLambertMaterial": "34784006",
    "ao:MeshBasicMaterial": "3a98493c",
-   "tyremarks:MeshBasicMaterial": "cc70dfbf",
-   "roadwear:MeshLambertMaterial": "12d606d0",
+   "tyremarks:MeshBasicMaterial": "c2faa419",
+   "roadwear:MeshLambertMaterial": "85e463e5",
    "worn:MeshLambertMaterial": "fb5561fc",
    "brakeBoards:MeshLambertMaterial": "43625280"
   }
@@ -1244,16 +1244,16 @@
   }
  },
  "isalo": {
-  "meshes": 350,
-  "verts": 292471,
+  "meshes": 351,
+  "verts": 293447,
   "instances": 1274,
   "props": 0,
   "crowd": 84,
-  "world": "84db2da8",
+  "world": "55b9d4f0",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "a249c28b",
+   "-:MeshLambertMaterial": "1ba36299",
    "crowd:MeshLambertMaterial": "bbf55e50",
    "flags:MeshLambertMaterial": "c3d43254",
    "ao:MeshBasicMaterial": "a63406a8",
@@ -1284,19 +1284,19 @@
   }
  },
  "eljem": {
-  "meshes": 185,
-  "verts": 245288,
-  "instances": 354,
+  "meshes": 191,
+  "verts": 276760,
+  "instances": 344,
   "props": 0,
   "crowd": 120,
-  "world": "5ac10a89",
+  "world": "97479775",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "dd6cc250",
+   "-:MeshLambertMaterial": "7e9d3324",
    "crowd:MeshLambertMaterial": "e0968893",
    "flags:MeshLambertMaterial": "45378d95",
-   "ao:MeshBasicMaterial": "b6319958",
+   "ao:MeshBasicMaterial": "54d1f1ae",
    "tyremarks:MeshBasicMaterial": "14b441a4",
    "roadwear:MeshLambertMaterial": "64b0828f"
   }
@@ -1322,16 +1322,16 @@
   }
  },
  "cusco": {
-  "meshes": 203,
-  "verts": 254528,
-  "instances": 1259,
+  "meshes": 205,
+  "verts": 255734,
+  "instances": 1258,
   "props": 34,
   "crowd": 140,
-  "world": "c83c9e8f",
+  "world": "cb03afc3",
   "propsHash": "ccc40cb3",
   "floor": "53b31916/2576",
   "groups": {
-   "-:MeshLambertMaterial": "5e898863",
+   "-:MeshLambertMaterial": "c5257848",
    "-:MeshPhongMaterial": "12921d35",
    "-:MeshBasicMaterial": "109a44c4",
    "crowd:MeshLambertMaterial": "5875b18c",
