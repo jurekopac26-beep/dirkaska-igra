@@ -79,7 +79,7 @@
         mat = mat || new THREE.MeshLambertMaterial({ vertexColors: true });
         const near = new THREE.Mesh(geometry(parse(a)), mat), far = new THREE.Mesh(geometry(parse(b)), mat);
         near.castShadow = near.receiveShadow = true; far.receiveShadow = true;
-        const lod = new THREE.LOD(); lod.addLevel(near, 0); lod.addLevel(far, o.far || FAR);   // (o.far: a landmark wider than ~400 m, the road round it farther than FAR from its middle) lod.position.set(o.x, 0, o.z); lod.updateMatrixWorld(true);
+        const lod = new THREE.LOD(); lod.addLevel(near, 0); lod.addLevel(far, o.far || FAR); lod.position.set(o.x, 0, o.z); lod.updateMatrixWorld(true);   // (o.far: a landmark wider than ~400 m, the road round it farther than FAR from its middle)
         lod.name = 'znamenitost:' + id; root.add(lod);
         const fb = o.fallback; if (fb && fb.parent) { fb.parent.remove(fb); fb.geometry.dispose(); }
         if (o.out) o.out.landmark = lod;

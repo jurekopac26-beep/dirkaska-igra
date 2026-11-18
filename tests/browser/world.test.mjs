@@ -41,6 +41,7 @@ try {
         return { nets: Render.world.hillProbe.nets.length, n, worst }; });
       T.check('chapman: the cars\' soft limit on a hill at least 0.5 m short of a rockfall net (they never reach its posts and mesh)', nc.nets > 0 && nc.n > 0 && nc.worst >= 0.5, `${nc.nets} nets, ${nc.n} samples of a hill by one, the least room ${nc.worst.toFixed(2)} m`); }
     const fp = await page.evaluate(async () => {
+      if (Render.world.landmarkLoad) await Render.world.landmarkLoad;   // (a landmark made in Blender, js/znamenitost.js: its model loaded first, else the fingerprint depends on how fast it came, e.g. Hiva after Isuna)
       for (let k = 0; k < 2; k++) await new Promise(r => requestAnimationFrame(r));   // (a frame of the new world drawn first: what follows the camera is set, e.g. Pikes Peak's shadow casters and haze, however long its first frame took)
       const W = Render.world, race = window.__game.race, Tr = race.track;
       World.update(W, 0, null);   // animated scenery (boats on the lake, water) to its pose at time 0, so the fingerprint does not depend on timing
