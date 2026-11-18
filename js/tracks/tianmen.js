@@ -2,20 +2,20 @@
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
   // Tianmen (Tianmen Mountain above the city of Zhangjiajie, Hunan, China): the upper half of the mountain road known as the road of 99 bends,
-  // from bend 54 (~729 m) up the cliffs of the limestone mountain, through the subtropical forest, round the loop where the road crosses
+  // from the straight after bend 61 (~791 m) up the cliffs of the limestone mountain, through the subtropical forest, round the loop where the road crosses
   // itself on a bridge (bend 90) and up the last hairpins to the square below Tianmen Cave, the great arch through the mountain's wall
-  // (~1,218 m; the cave's floor ~1,300 m, up 999 steps). 4.83 km from the start line to the finish (the whole road is ~10.8 km); bend 99
+  // (~1,218 m; the cave's floor ~1,300 m, up 999 steps). 4.22 km from the start line to the finish (the whole road is ~10.8 km); bend 99
   // lies just past the finish. One card, four ways to drive it (def.modes), as Vršič and Los Caracoles: a race against the rivals up the
   // closed road, a time trial, a duel with one rival on the open road (the tour buses and vans of the scenic area both ways: def.traffic)
   // and a run from the police up the open road (def.police). Only place names are used: no operator, no signs, no names of events.
-  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; metres, origin = the start line, x east, z south.
+  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; metres, origin = the old start line at bend 54 (the race starts 614 m on, def.start), x east, z south.
   // OpenStreetMap is not shifted here (GCJ-02): the line fits the Copernicus terrain as it is and worse by far when shifted. Where two legs of
   // the ladder lie closer than the game can part with barriers (15 m), they are pushed apart (on average by 1 m, at most 12 m), the tightest
   // hairpins opened to a radius of ~10 m; the road is 9 m wide (the real one ~7 m). The 99 bends: counted along the whole road from its
   // foot (a turn of 25 degrees or more within 40 m), as many as the road's name says; this card has 54 to 99.
   // Heights (TIANMEN_H): Copernicus DEM GLO-30 along the line, cleaned (a running median, monotone up the road) and fitted with grades of
   // at most 12 % (the hairpins flatter than the legs; the loop's bridge 12 m over its road), every 1/1300 of the road from points[0],
-  // decimetres above the start line (~729 m).
+  // decimetres above the old start line (~729 m).
   // Scenery data for the world builder (buildTianmen; the terrain in Vršič's forms: dem, lc): terrain (dem: the same model, 32 m cells; a
   // 128 m trend in 0.1 m steps and 1 m residuals within 650 m of the road), the far mountains (far: 96 m cells out to ~5 km, 6 m steps, one
   // byte each, from lo), land cover (lc, ESA WorldCover 2021, 16 m cells, run-length coded: 0 forest, 1 shrubs and grass, 2 bare rock,
@@ -30,18 +30,19 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Tianmen',
     zivali: { a: ['macaque'], t: ['lantern', 'signPost'] },
     id: 'tianmen', name: 'Tianmen, Kitajska', theme: 'tianmen', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 4.5,
-    desc: "Cesta na goro Tianmen nad mestom Zhangjiajie na Kitajskem, imenovana cesta 99 ovinkov: njen zgornji del, od 54. ovinka na 729 m po strmih apnenčastih stenah in skozi subtropski gozd do ploščadi pod Tianmensko jamo na 1.218 m, velikanskim naravnim lokom v steni gore. 4,8 km, 45 oštevilčenih ovinkov (54.–98.), zanka z mostom čez lastno cesto. Dirka s tekmeci, vzpon proti uri, dvoboj med turističnimi avtobusi ali beg pred policijo.",
-    en: { name: 'Tianmen, China', desc: "The road up Tianmen Mountain above the city of Zhangjiajie in China, known as the road of 99 bends: its upper half, from bend 54 at 729 m up sheer limestone cliffs and through the subtropical forest to the square below Tianmen Cave at 1,218 m, a giant natural arch in the mountain wall. 4.8 km, 45 numbered bends (54 to 98) and a loop that crosses its own road on a bridge. A race against rivals, a climb against the clock, a duel among the tour buses or an escape from the police.", escTo: 'To Tianmen Cave' },   // (the English page: Jezik · Language)
-    alt: [729,1218],
-    start: [0, 0], finish: [-34.3,830.3], cps: [[219.9,408.7],[-54.5,484.1],[5.0,659.5],[-240.4,540.8]],
+    recId: 'tianmen2',   // (the start on a straight since 15. 11. 2026, 4.22 km: its records and ghost apart from the old 4.83 km road's)
+    desc: "Cesta na goro Tianmen nad mestom Zhangjiajie na Kitajskem, imenovana cesta 99 ovinkov: njen zgornji del, od ravnine za 61. ovinkom na 791 m po strmih apnenčastih stenah in skozi subtropski gozd do ploščadi pod Tianmensko jamo na 1.218 m, velikanskim naravnim lokom v steni gore. 4,2 km, 37 oštevilčenih ovinkov (62.–98.), zanka z mostom čez lastno cesto. Dirka s tekmeci, vzpon proti uri, dvoboj med turističnimi avtobusi ali beg pred policijo.",
+    en: { name: 'Tianmen, China', desc: "The road up Tianmen Mountain above the city of Zhangjiajie in China, known as the road of 99 bends: its upper half, from the straight after bend 61 at 791 m up sheer limestone cliffs and through the subtropical forest to the square below Tianmen Cave at 1,218 m, a giant natural arch in the mountain wall. 4.2 km, 37 numbered bends (62 to 98) and a loop that crosses its own road on a bridge. A race against rivals, a climb against the clock, a duel among the tour buses or an escape from the police.", escTo: 'To Tianmen Cave' },   // (the English page: Jezik · Language)
+    alt: [791,1218],
+    start: [153.95, 327.71], finish: [-34.3,830.3], cps: [[219.9,408.7],[-54.5,484.1],[5.0,659.5],[-240.4,540.8]],
     runoff: 0.55, inner: 2.0, side: 2.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 8,
     elev: TIANMEN_H.map((h, i) => [i / (TIANMEN_H.length - 1), h / 10]),
     // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac or the snow, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[204,214,230],"wet":{"cs":[242,254,273]},"winter":{"cs":[235,247,266],"wet":{"cs":[292,306,329]}}},
+    medals: {"cs":[177,186,200],"wet":{"cs":[211,221,238]},"winter":{"cs":[204,215,231],"wet":{"cs":[254,267,287]}}},
     // the loop's bridge: the upper leg over the lower one at bend 90 ([from, to] metres after the start line; Track finds the crossing itself)
-    loopBridge: [3927.1,3975.1],
+    loopBridge: [3313.1,3361.1],
     // the numbered bends (counted from the foot of the road, as its name has it): [metres after the start line, altitude, 1 right / -1 left, its number]
-    curves: [[71.9,736,1,54],[171.9,745,-1,55],[212.9,748,1,56],[275.8,755,-1,57],[358.7,765,1,58],[417.6,771,-1,59],[529.5,783,1,60],[569.8,787,-1,61],[718.9,801,1,62],[811.3,811,1,63],[911.3,821,1,64],[974.2,827,-1,65],[1098.1,839,1,66],[1275.3,858,-1,67],[1419.2,873,1,68],[1543.4,885,-1,69],[1600.3,891,-1,70],[1723.2,903,1,71],[1821.4,913,-1,72],[1900.6,921,-1,73],[1974.7,928,-1,74],[2049.6,935,1,75],[2117.3,942,1,76],[2290,961,-1,77],[2418,974,1,78],[2548.2,986,1,79],[2648,996,-1,80],[2723.7,1005,1,81],[2811.5,1014,1,82],[2909.5,1025,-1,83],[2960.4,1030,1,84],[3029.3,1035,-1,85],[3148.2,1046,1,86],[3348.2,1067,-1,87],[3484.2,1082,1,88],[3676.3,1102,-1,89],[3894.3,1123,1,90],[3957,1130,-1,91],[4078.9,1143,1,92],[4180.8,1153,-1,93],[4338.9,1169,1,94],[4465.1,1182,1,95],[4524.1,1188,1,96],[4567.8,1191,-1,97],[4727.7,1207,1,98],[4869.6,1222,1,99]],
+    curves: [[-542.1,736,1,54],[-442.1,745,-1,55],[-401.1,748,1,56],[-338.2,755,-1,57],[-255.3,765,1,58],[-196.4,771,-1,59],[-84.5,783,1,60],[-44.2,787,-1,61],[104.9,801,1,62],[197.3,811,1,63],[297.3,821,1,64],[360.2,827,-1,65],[484.1,839,1,66],[661.3,858,-1,67],[805.2,873,1,68],[929.4,885,-1,69],[986.3,891,-1,70],[1109.2,903,1,71],[1207.4,913,-1,72],[1286.6,921,-1,73],[1360.7,928,-1,74],[1435.6,935,1,75],[1503.3,942,1,76],[1676,961,-1,77],[1804,974,1,78],[1934.2,986,1,79],[2034,996,-1,80],[2109.7,1005,1,81],[2197.5,1014,1,82],[2295.5,1025,-1,83],[2346.4,1030,1,84],[2415.3,1035,-1,85],[2534.2,1046,1,86],[2734.2,1067,-1,87],[2870.2,1082,1,88],[3062.3,1102,-1,89],[3280.3,1123,1,90],[3343,1130,-1,91],[3464.9,1143,1,92],[3566.8,1153,-1,93],[3724.9,1169,1,94],[3851.1,1182,1,95],[3910.1,1188,1,96],[3953.8,1191,-1,97],[4113.7,1207,1,98],[4255.6,1222,1,99]],
     // the traffic of the open road (the duel, the run from the police): the share of each kind of vehicle [car, van, bus, motorbike, truck] and a
     // cyclist every so many metres each way; on the real road almost only the scenic area's buses and vans
     traffic: { mix: [0.1, 0.32, 0.56, 0.02, 0], bike: 30000 },
@@ -50,59 +51,51 @@ var TRACK_DEFS = TRACK_DEFS || [];
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines }; spoken in English, Zhangjiajie spelt so an
     // English voice can say it: Jahng-jyah-jyeh)
     names: [
-      {"n":"Ovinek 54 · 736 m","d":71.9,"say":["Bend fifty-four, and the ladder of hairpins starts here!","Into the hairpins! Bend fifty-four of ninety-nine!"]},
-      {"n":"Ovinek 55 · 745 m","d":171.9},
-      {"n":"Ovinek 56 · 748 m","d":212.9},
-      {"n":"Ovinek 57 · 755 m","d":275.8},
-      {"n":"Ovinek 58 · 765 m","d":358.7},
-      {"n":"Ovinek 59 · 771 m","d":417.6},
-      {"n":"Ovinek 60 · 783 m","d":529.5},
-      {"n":"Ovinek 61 · 787 m","d":569.8,"say":["Bend sixty-one, hairpin after hairpin up the cliff!"]},
-      {"n":"Ovinek 62 · 801 m","d":718.9},
-      {"n":"Ovinek 63 · 811 m","d":811.3},
-      {"n":"Ovinek 64 · 821 m","d":911.3},
-      {"n":"Ovinek 65 · 827 m","d":974.2,"say":["Bend sixty-five! Look down, the road zig-zags all the way to the valley!"]},
-      {"n":"Ovinek 66 · 839 m","d":1098.1},
-      {"n":"Ovinek 67 · 858 m","d":1275.3},
-      {"n":"Ovinek 68 · 873 m","d":1419.2},
-      {"n":"Ovinek 69 · 885 m","d":1543.4},
-      {"n":"Ovinek 70 · 891 m","d":1600.3},
-      {"n":"Ovinek 71 · 903 m","d":1723.2},
-      {"n":"Ovinek 72 · 913 m","d":1821.4},
-      {"n":"Ovinek 73 · 921 m","d":1900.6},
-      {"n":"Ovinek 74 · 928 m","d":1974.7,"say":["Bend seventy-four, three quarters of the ninety-nine behind you!"]},
-      {"n":"Ovinek 75 · 935 m","d":2049.6},
-      {"n":"Ovinek 76 · 942 m","d":2117.3},
-      {"n":"Ovinek 77 · 961 m","d":2290},
-      {"n":"Ovinek 78 · 974 m","d":2418},
-      {"n":"Ovinek 79 · 986 m","d":2548.2,"say":["Bend seventy-nine, the sharpest of them all!"]},
-      {"n":"Ovinek 80 · 996 m","d":2648},
-      {"n":"Ovinek 81 · 1.005 m","d":2723.7},
-      {"n":"Ovinek 82 · 1.014 m","d":2811.5},
-      {"n":"Ovinek 83 · 1.025 m","d":2909.5},
-      {"n":"Ovinek 84 · 1.030 m","d":2960.4},
-      {"n":"Ovinek 85 · 1.035 m","d":3029.3},
-      {"n":"Ovinek 86 · 1.046 m","d":3148.2,"say":["Bend eighty-six, the cliffs close in!"]},
-      {"n":"Ovinek 87 · 1.067 m","d":3348.2},
-      {"n":"Ovinek 88 · 1.082 m","d":3484.2},
-      {"n":"Ovinek 89 · 1.102 m","d":3676.3},
-      {"n":"Ovinek 90 · 1.123 m","d":3894.3,"say":["Bend ninety, the road loops right over itself!","Bend ninety! Round the loop and over the bridge!"]},
-      {"n":"Zanka","d":3931.1,"say":["Over the bridge, and the road you just drove is right underneath!","Across the loop bridge, over its own road!"]},
-      {"n":"Ovinek 91 · 1.130 m","d":3957},
-      {"n":"Ovinek 92 · 1.143 m","d":4078.9},
-      {"n":"Ovinek 93 · 1.153 m","d":4180.8},
-      {"n":"Ovinek 94 · 1.169 m","d":4338.9,"say":["Bend ninety-four, the cave is right above you!"]},
-      {"n":"Ovinek 95 · 1.182 m","d":4465.1},
-      {"n":"Ovinek 96 · 1.188 m","d":4524.1},
-      {"n":"Ovinek 97 · 1.191 m","d":4567.8},
-      {"n":"Ovinek 98 · 1.207 m","d":4727.7,"say":["Bend ninety-eight, one to go!","Ninety-eight bends done, the cave is waiting!"]},
-      {"n":"Tianmenska jama · 1.218 m","d":4824.7,"say":["Under Tianmen Cave! The gate of heaven, right above you!","At the top of the ninety-nine bends, under the great arch in the cliff!","Tianmen Cave! Nine hundred and ninety-nine steps up to the hole in the mountain!"]}
+      {"n":"Ovinek 62 · 801 m","d":104.9},
+      {"n":"Ovinek 63 · 811 m","d":197.3},
+      {"n":"Ovinek 64 · 821 m","d":297.3},
+      {"n":"Ovinek 65 · 827 m","d":360.2,"say":["Bend sixty-five! Look down, the road zig-zags all the way to the valley!"]},
+      {"n":"Ovinek 66 · 839 m","d":484.1},
+      {"n":"Ovinek 67 · 858 m","d":661.3},
+      {"n":"Ovinek 68 · 873 m","d":805.2},
+      {"n":"Ovinek 69 · 885 m","d":929.4},
+      {"n":"Ovinek 70 · 891 m","d":986.3},
+      {"n":"Ovinek 71 · 903 m","d":1109.2},
+      {"n":"Ovinek 72 · 913 m","d":1207.4},
+      {"n":"Ovinek 73 · 921 m","d":1286.6},
+      {"n":"Ovinek 74 · 928 m","d":1360.7,"say":["Bend seventy-four, three quarters of the ninety-nine behind you!"]},
+      {"n":"Ovinek 75 · 935 m","d":1435.6},
+      {"n":"Ovinek 76 · 942 m","d":1503.3},
+      {"n":"Ovinek 77 · 961 m","d":1676},
+      {"n":"Ovinek 78 · 974 m","d":1804},
+      {"n":"Ovinek 79 · 986 m","d":1934.2,"say":["Bend seventy-nine, the sharpest of them all!"]},
+      {"n":"Ovinek 80 · 996 m","d":2034},
+      {"n":"Ovinek 81 · 1.005 m","d":2109.7},
+      {"n":"Ovinek 82 · 1.014 m","d":2197.5},
+      {"n":"Ovinek 83 · 1.025 m","d":2295.5},
+      {"n":"Ovinek 84 · 1.030 m","d":2346.4},
+      {"n":"Ovinek 85 · 1.035 m","d":2415.3},
+      {"n":"Ovinek 86 · 1.046 m","d":2534.2,"say":["Bend eighty-six, the cliffs close in!"]},
+      {"n":"Ovinek 87 · 1.067 m","d":2734.2},
+      {"n":"Ovinek 88 · 1.082 m","d":2870.2},
+      {"n":"Ovinek 89 · 1.102 m","d":3062.3},
+      {"n":"Ovinek 90 · 1.123 m","d":3280.3,"say":["Bend ninety, the road loops right over itself!","Bend ninety! Round the loop and over the bridge!"]},
+      {"n":"Zanka","d":3317.1,"say":["Over the bridge, and the road you just drove is right underneath!","Across the loop bridge, over its own road!"]},
+      {"n":"Ovinek 91 · 1.130 m","d":3343},
+      {"n":"Ovinek 92 · 1.143 m","d":3464.9},
+      {"n":"Ovinek 93 · 1.153 m","d":3566.8},
+      {"n":"Ovinek 94 · 1.169 m","d":3724.9,"say":["Bend ninety-four, the cave is right above you!"]},
+      {"n":"Ovinek 95 · 1.182 m","d":3851.1},
+      {"n":"Ovinek 96 · 1.188 m","d":3910.1},
+      {"n":"Ovinek 97 · 1.191 m","d":3953.8},
+      {"n":"Ovinek 98 · 1.207 m","d":4113.7,"say":["Bend ninety-eight, one to go!","Ninety-eight bends done, the cave is waiting!"]},
+      {"n":"Tianmenska jama · 1.218 m","d":4210.7,"say":["Under Tianmen Cave! The gate of heaven, right above you!","At the top of the ninety-nine bends, under the great arch in the cliff!","Tianmen Cave! Nine hundred and ninety-nine steps up to the hole in the mountain!"]}
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars, five kilometres and forty-five bends up the cliffs to the cave, and you start {grid}.", "Here we are on the mountain road above Jahng-jyah-jyeh, at the foot of the hairpins. You start {grid}.", "Welcome to {track}! The road of ninety-nine bends, and the top half of it is ours today. You start {grid}."],
+      introPass: ["Welcome to {track}! {cars} cars, four kilometres and thirty-seven bends up the cliffs to the cave, and you start {grid}.", "Here we are on the mountain road above Jahng-jyah-jyeh, at the foot of the hairpins. You start {grid}.", "Welcome to {track}! The road of ninety-nine bends, and the top half of it is ours today. You start {grid}."],
       goPass: ["And away they go, up the ninety-nine bends!", "And they're off! Next stop, the cave in the mountain!", "The race is on! The pack dives into the first hairpin!", "Go, go, go! Up the cliffs to Tianmen!"],
-      introPassTT: ["Welcome to {track}! Forty-five bends, just you and the clock.", "Here we are at the foot of the hairpins. {cps} checkpoints between you and the cave.", "Welcome to {track}! No rivals today, only the cliffs and the clock."],
+      introPassTT: ["Welcome to {track}! Thirty-seven bends, just you and the clock.", "Here we are at the foot of the hairpins. {cps} checkpoints between you and the cave.", "Welcome to {track}! No rivals today, only the cliffs and the clock."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the bends!", "And you're away! Up to the gate of heaven!"],
       introTraffic: ["Welcome to {track}, and the road is open today: the tour buses are going up and down. Just you and {rival}, first to the cave wins!", "Here we are at the foot of the hairpins, with the buses on the road. You and {rival}, up to Tianmen Cave!"],
       introPolice: ["Welcome to {track}! The police want a word with you, and they are right behind. Get up to the cave without getting caught!", "Here we are at the foot of the ninety-nine bends, and the lights in the mirror are blue. Up to the cave, quick!"],
