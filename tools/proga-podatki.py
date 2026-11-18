@@ -18,6 +18,10 @@
 #        roadsExtra (neobvezno) dodatne vrste OSM highway med drugimi cestami v izhodu (npr. ["raceway"]: kartodrom in druge steze ob dirkališču)
 #        osmStep   (neobvezno) velikost kosov OSM v stopinjah [dlat, dlon], privzeto [0.03, 0.025] (API: največ 50.000 točk na zahtevo)
 #        farKm     (neobvezno) polmer daljnega terena far.png v km okoli sredine proge, privzeto 12 (gore na obzorju dlje, npr. 30 v Andih: mreža ostane 240 x 240, celice sorazmerno večje)
+#        fullRels  (neobvezno) id-ji relacij OSM, ki se prenesejo cele (relation/<id>/full) in dodajo prenosu okvira: velika jezera, ki jih
+#                  okvir zajame samo z nekaj zunanjimi potmi (Atitlán: 5781818)
+#        farBox    (neobvezno) doseg mreže far.png v m okoli sredine ceste [zahod, sever, vzhod, jug], namesto farKm
+#                  (vulkani nad jezerom Atitlán ~20 km proti jugu)
 #   2. Python: numpy in pillow sta v seji; pip install --break-system-packages scipy rasterio
 #   3. python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]   (brez korakov: vsi trije)
 #        RAW: mapa ZUNAJ repozitorija za surove prenose (npr. scratchpad seje): RAW/osm/ (kosi), RAW/<id>-osm.json, RAW/<id>-route.json,
@@ -93,6 +97,12 @@ def step_osm(raw):
         while lo < box[3] - 1e-9:
             paths += osm_tile(raw, la, lo, min(la + dlat, box[2]), min(lo + dlon, box[3])); lo += dlon
         la += dlat
+    for rid in C.get('fullRels', []):   # (the big lakes whole: the box has only a few of their outer ways)
+        path = os.path.join(raw, 'osm', 'relation_%s_full.osm' % rid)
+        if not os.path.exists(path):
+            data = http_get('https://api.openstreetmap.org/api/0.6/relation/%s/full' % rid)
+            os.makedirs(os.path.dirname(path), exist_ok=True); open(path, 'wb').write(data); print('osm relation', rid, len(data) // 1024, 'KB', flush=True); time.sleep(1)
+        paths.append(path)
     nodes, ways, rels = {}, {}, {}
     for p in paths:
         for ev, el in ET.iterparse(p, events=('end',)):
@@ -496,9 +506,14 @@ def build_grids(F, line, dsm, gnd, T, D, out):
     info['dem'] = dict(file='dem.png', x0=x0, z0=z0, nx=nx, nz=nz, cell=c, enc='uint16 (h + 100) * 10, h in m above sea level; row 0 = z0 (north), col 0 = x0 (west)', what='ground: Copernicus DEM GLO-30 less 0.8 x the canopy (Meta / WRI) and 0.8 x the buildings (OSM), bilinear')
     print('dem', nx, nz, flush=True)
     # far: the surface (what one sees from afar), 100 m cells, +-12 km round the middle of the road (C['farKm']: another radius, the cells
-    # as much bigger: still 240 x 240)
-    fr = float(C.get('farKm', 12)) * 1000; c = 100.0 * fr / 12000; cx = (line[:, 0].min() + line[:, 0].max()) / 2; cz = (line[:, 1].min() + line[:, 1].max()) / 2
-    x0, z0 = math.floor((cx - 12000 * c / 100) / c) * c, math.floor((cz - 12000 * c / 100) / c) * c; nx = nz = 240
+    # as much bigger: still 240 x 240; C['farBox']: [west, north, east, south] in m instead, 100 m cells)
+    cx = (line[:, 0].min() + line[:, 0].max()) / 2; cz = (line[:, 1].min() + line[:, 1].max()) / 2
+    if 'farBox' in C:
+        c = 100.0; fW, fN, fE, fS = C['farBox']
+        x0, z0 = math.floor((cx - fW) / c) * c, math.floor((cz - fN) / c) * c; nx, nz = int(round((fW + fE) / c)), int(round((fN + fS) / c))
+    else:
+        fr = float(C.get('farKm', 12)) * 1000; c = 100.0 * fr / 12000
+        x0, z0 = math.floor((cx - 12000 * c / 100) / c) * c, math.floor((cz - 12000 * c / 100) / c) * c; nx = nz = 240
     X, Z, lat, lon = cell_centres(F, x0, z0, nx, nz, c)
     fb = (float(lat.min()) - 0.01, float(lon.min()) - 0.01, float(lat.max()) + 0.01, float(lon.max()) + 0.01)
     urls = dem_urls(*fb)

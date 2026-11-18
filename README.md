@@ -46,6 +46,8 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [Houli, Tajvan](docs/proge/houli.md)
 - [Tocancipá, Kolumbija](docs/proge/tocancipa.md)
 - [Cromwell, Nova Zelandija](docs/proge/cromwell.md)
+- [Wadi Mujib, Jordanija](docs/proge/mujib.md)
+- [Atitlán, Gvatemala](docs/proge/atitlan.md)
 - [Dadès, Maroko](docs/proge/dades.md)
 - [Furka, Švica](docs/proge/furka.md)
 - [Santo Antão, Zelenortski otoki](docs/proge/santoantao.md)
@@ -417,6 +419,13 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine, teren in gorovja na obzorju Cromwella: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Cromwella (travinje, nasadi in gozdovi, sadovnjaki in vinogradi, rob mesta): © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Drevesa in višine pod krošnjami na progi Cromwell: High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Wadi Mujib (sredinska črta ceste 35, jezero za jezom Mujib): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/mujib.js` in `tools/mujib/` so na voljo pod ODbL 1.0.
+- Višine in teren Wadi Mujiba (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Wadi Mujiba: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Atitlán (sredinska črta ceste RN-1 iz Sololá proti jezeru Atitlán, hiše, paviljoni bolnišnice in restavracija, igrišči, daljnovod, poti, obris jezera Atitlán): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/atitlan.js` in `tools/atitlan/` so na voljo pod ODbL 1.0.
+- Višine in teren Atitlána (tudi pogled v daljavo na jezero in vulkane San Pedro, Tolimán in Atitlán): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Atitlána: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Drevesa Wadi Mujiba in Atitlána (`tools/mujib/chm.png`, `tools/atitlan/chm.png`): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Pembrey (sredinska črta dirkališča, start in cilj, boksarska steza, stavbe, gozd, raba tal): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/pembrey.js` in `tools/pembrey/` so na voljo pod ODbL 1.0.
 - Višine in teren Pembreyja (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Pembreyja: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
