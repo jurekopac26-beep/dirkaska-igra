@@ -77,6 +77,8 @@ Skupina **N11** (veja `nove-proge/N11`, osnutek #591 na `ccr-36e8dd3f-jvsmk5`): 
 
 Skupina **N12** (veja `nove-proge/N12`, osnutek #619 na `nove-proge/N11`): Cromwell (10. 11. 2026 ponoči) in Serres (10. 11. 2026 zjutraj) sta v igri; skupina je končana. Pull request gre v vrsto za N11 (proge so vedno zadnje; vrstico v `docs/vrsta.md` na `main` vpiše koordinacija biketravelerja) in ostane osnutek do vrste.
 
+**Stanje 18. 11. 2026** (biketraveler, #619): Abu Dabi, ZAE in Serres, Grčija sta iz igre odstranjena (proga, svet, test, meni, prevodi, opis in podatki `tools/<id>/`), ker nista na potrjenem seznamu 17 prog (Matejevi odločitvi 6985046146 in 6985139187 na tabli #382); zgodovina ju hrani v commitih veje `nove-proge/N12`. Skupni deli, ki jih uporabljajo druge proge (`API.rbSea` za jezero Yahuarcoche, zastave s kantonom za Houli), ostanejo; zastavi s pasovi in križem (`cols.cells`) ter s pasom ob drogu (`cols.hoist`) sta odstranjeni. #619 nosi Mogyoród, Sindio, Yahuarcocho, Pärnu, Houli, Tocancipá in Cromwell, iz #538 pa še Atitlán, Gvatemala in Wadi Mujib, Jordanija.
+
 ## Predaja
 Seja začne z branjem tega razdelka in stanja zgoraj. Ob ~300 tisoč žetonih seja tu zapiše, kje je ostala, in delo nadaljuje nova seja z isto vejo (N10: `ccr-36e8dd3f-jvsmk5`, osnutek #547 na `zbirna/nove-proge-N3`; N11: `nove-proge/N11`, osnutek #591 na `ccr-36e8dd3f-jvsmk5`; N12: `nove-proge/N12`, osnutek #619 na `nove-proge/N11`).
 

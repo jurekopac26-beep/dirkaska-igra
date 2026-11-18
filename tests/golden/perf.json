@@ -447,13 +447,6 @@
   "maxKverts": 624,
   "jsMs": 2.24
  },
- "abudabi": {
-  "calls": 169,
-  "maxCalls": 212,
-  "kverts": 553,
-  "maxKverts": 672,
-  "jsMs": 2.3
- },
  "sindia": {
   "calls": 167,
   "maxCalls": 250,
@@ -495,12 +488,5 @@
   "kverts": 600,
   "maxKverts": 715,
   "jsMs": 2.15
- },
- "serres": {
-  "calls": 221,
-  "maxCalls": 254,
-  "kverts": 595,
-  "maxKverts": 795,
-  "jsMs": 1.94
  }
 }

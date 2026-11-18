@@ -3149,56 +3149,6 @@
   "nan": false,
   "digest": "07adcd9c3efefb5646f8cdc2"
  },
- "abudabi/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 255.44,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "5e3df865f17d9da2c861bf03"
- },
- "abudabi/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 270.48,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "e5bba9a63e1ba95468c39d16"
- },
- "abudabi/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 220.81,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "5697de0bad9adc233f59759a"
- },
- "abudabi/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 223.77,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "532fc0b9c2e1762ff62ae291"
- },
- "abudabi/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 261.55,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "0170e7ea17aa92f89ee97c49"
- },
  "sindia/cs": {
   "finished": 13,
   "cars": 13,
@@ -3498,55 +3448,5 @@
   "rescues": 0,
   "nan": false,
   "digest": "9b609e4866ca917aaa9de1bd"
- },
- "serres/cs": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 167.84,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "c7240fc365306d414104796f"
- },
- "serres/cs/rain": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 181.57,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "d6dfe9a4702043f624d855dc"
- },
- "serres/cs/formula": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 145.26,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "bb8dfe1b7eae7aaeb7775790"
- },
- "serres/cs/lm": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 147.18,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "8af6baa9e0f12d4bd3fca732"
- },
- "serres/cs/car": {
-  "finished": 13,
-  "cars": 13,
-  "winner": 164.57,
-  "spins": 0,
-  "walls": 0,
-  "rescues": 0,
-  "nan": false,
-  "digest": "6de7b2f05e6af6443f7745a3"
  }
 }

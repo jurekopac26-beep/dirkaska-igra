@@ -136,17 +136,6 @@
     const P = [], N = [], C = [], F = [], I = [], r = rng(1966), SEG = 4; let v = 0;
     for (const [x, y, z, rot, cols, W, H] of list) {
       const c = Math.cos(rot), s = Math.sin(rot), ph = r() * TAU, ns = cols.length;
-      if (cols.cells) {   // (a grid of cells: cols.cells = [the columns' edges along the flag (0 at the pole .. 1), the rows' edges down it (0 .. 1), (column, row) => its colour]: Greece's stripes and the cross in its canton)
-        const [us, fs, fc] = cols.cells;
-        for (let b = 0; b + 1 < fs.length; b++) for (let q = 0; q + 1 < us.length; q++) {
-          const col = fc(q, b), n = Math.max(1, Math.round(SEG * (us[q + 1] - us[q])));
-          for (let k = 0; k <= n; k++) { const u = us[q] + (us[q + 1] - us[q]) * k / n;
-            for (const f of [fs[b], fs[b + 1]]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
-          for (let k = 0; k < n; k++) { const a = v + k * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
-          v += (n + 1) * 2;
-        }
-        continue;
-      }
       if (cols.mid) {   // (a patch across the middle of two bands: cols.mid = [its colour, from, to along the flag (0 at the pole), from, to down it]; cols[0] above the middle, cols[1] below, in twelve cells: Wales's red dragon on white over green)
         const [mc, u0, u1, f0, f1] = cols.mid, us = [0, u0, u1, 1], fs = [0, f0, 0.5, f1, 1];
         for (let b = 0; b < 4; b++) for (let q = 0; q < 3; q++) {
@@ -197,16 +186,6 @@
             for (const f of [f0(u), f1(u)]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
           for (let k = 0; k < n; k++) { const q = v + k * 2; I.push(q, q + 2, q + 3, q, q + 3, q + 1); }
           v += (n + 1) * 2;
-        }
-        continue;
-      }
-      if (cols.hoist) {   // (a band at the pole: cols.hoist = [its colour, how far along the flag it reaches (0 at the pole)]; the stripes cols[...] (top to bottom) past it: the UAE's red band and green, white and black)
-        const [hc, a] = cols.hoist, n = Math.max(1, Math.round(SEG * (1 - a)));
-        for (const [col, f0, f1, u0, u1, m] of [[hc, 0, 1, 0, a, 1], ...cols.map((cb, b) => [cb, b / ns, (b + 1) / ns, a, 1, n])]) {
-          for (let k = 0; k <= m; k++) { const u = u0 + (u1 - u0) * k / m;
-            for (const f of [f0, f1]) { P.push(x + c * W * u, y - 0.05 - H * f - u * u * 0.12 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, W * 0.07); } }
-          for (let k = 0; k < m; k++) { const q = v + k * 2; I.push(q, q + 2, q + 3, q, q + 3, q + 1); }
-          v += (m + 1) * 2;
         }
         continue;
       }
