@@ -1,5 +1,7 @@
 // The slipstream in the game: a race at the Red Bull Ring (21 rivals, the player on autopilot) has it; in the wake of a car ahead the
-// car's tow rises, out of it it falls (no ZAVETRJE tag on the screen any more). A time trial has none (Pikes Peak).
+// car's tow rises, out of it it falls (no ZAVETRJE tag on the screen any more). A time trial has none (Pikes Peak). Nastavitve: Zavetrje
+// (S.slip, on by default: the race above with the default settings, as before) switched off: the next race has none, for any car (the
+// user, 18. 11. 2026 ~23.45, through Matej: table #382, comment 6992562620).
 //   node tests/browser/slip.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -30,6 +32,14 @@ try {
   await startTrack(page, 'pikes', 'tt');
   const tt = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); return { slip: !!g.race.slip, tow: 'tow' in g.race.player }; });
   T.check('a time trial (Pikes Peak): no slipstream', !tt.slip && !tt.tow, JSON.stringify(tt));
+  // Nastavitve: Zavetrje off: a race with rivals without the slipstream, no car with a tow (race.slip null), the choice kept
+  const def = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}').slip);
+  await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="slip"] button[data-v="0"]').click(); g.onAction('settings-done'); });
+  await startTrack(page, 'rbring');
+  const off = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); const R = g.race;
+    return { slip: R.slip, cars: R.cars.length, tow: R.cars.filter(c => 'tow' in c).length, stored: JSON.parse(localStorage.getItem('tdgp-settings')).slip }; });
+  T.check('Nastavitve: Zavetrje on by default; off: a race with rivals without it (race.slip null, no car with a tow), the choice kept',
+    def !== 0 && off.slip === null && off.cars > 1 && off.tow === 0 && off.stored === 0, JSON.stringify(Object.assign({ def }, off)));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.message || e).split('\n')[0]);
