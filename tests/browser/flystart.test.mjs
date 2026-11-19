@@ -66,8 +66,8 @@ try {
     !lines.avail || (lines.n > 100 && !lines.bad.length && lines.fly.join('|') === 'Three!|Two!|One!|The race has started!' && !lines.flyBad.length && lines.some.length > 0 && lines.ord === 'twenty-first 22nd 23rd 31st 99th 100th'), JSON.stringify(lines).slice(0, 900));
   // a championship round on the Nordschleife (Legende, its last round; the rounds before it driven): its own 19 rivals and the lights
   await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(500);   // (the 100-car race off first: the page reloads quicker)
-  await page.evaluate(() => { const K = Core.champKeys(19), d = Core.CHAMPS.find(c => c.id === 'legende'), i = d.tracks.indexOf('nring');
-    localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'legende', diff: 1, n: 19, rounds: d.tracks.slice(0, i).map(t => ({ track: t, order: K.slice() })) })); });
+  await page.evaluate(() => { const K = Core.champKeys(19), d = Core.CHAMPS.find(c => c.id === 'legende'), hid = (id) => { const t = Core.TRACKS.find(q => q.id === id); return !!t && (!!t.test || !!t.pending); }, tr = d.tracks.filter(id => !hid(id)), i = tr.indexOf('nring');   // (as the game's cup: its test and pending tracks left out)
+    localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: 'legende', diff: 1, n: 19, rounds: tr.slice(0, i).map(t => ({ track: t, order: K.slice() })) })); });
   await page.reload({ timeout: 120000 }); await page.waitForFunction(() => !!(window.__game && window.__game.screen === 'title'), null, { timeout: 120000 });
   await page.evaluate(async () => { const g = window.__game; await new Promise(r => setTimeout(r, 500)); g.onAction('to-champ'); await new Promise(r => setTimeout(r, 300)); g.onAction('champ-go'); });
   await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'nring'); }, null, { timeout: 120000 });

@@ -1,6 +1,7 @@
 // tools/shot.mjs's options (sklop 14 in docs/orodje-za-napake.md), read before any browser starts: --pokonci and --lezece (each alone and
-// both) are known options, as are --m, --t, --vreme, --cas (the time of day), --nizka, --pred, --root, --out and --nabor; an unknown one is
-// named in the usage line, a time of day not known stops at the usage too. Without
+// both) are known options, as are --m, --t, --vreme, --cas (the time of day), --nizka, --guma (the rubber laid on a circuit, 0-1), --velika
+// (pictures twice the size), --pred, --root, --out and --nabor; an unknown one is named in the usage line, a time of day not known or a
+// rubber level out of 0-1 stops at the usage too. Without
 // a track (and without --nabor) the tool prints its usage and exits with 2, so nothing here opens the game.
 //   node tests/shot.test.js
 'use strict';
@@ -10,13 +11,17 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const run = (...a) => { const r = spawnSync(process.execPath, [path.join(__dirname, '..', 'tools', 'shot.mjs'), ...a], { encoding: 'utf8', timeout: 60000 }); return { code: r.status, out: (r.stdout || '') + (r.stderr || '') }; };
 
-for (const a of [['--pokonci'], ['--lezece'], ['--pokonci', '--lezece'], ['--lezece', '--m', '1284', '--vreme', 'dez', '--out', 'x'], ['--t', '20', '--root', '.', '--pokonci'], ['--nizka', '--m', '400'], ['--cas', 'vecer', '--m', '400'], ['--cas', 'noč', '--lezece']]) {
+for (const a of [['--pokonci'], ['--lezece'], ['--pokonci', '--lezece'], ['--lezece', '--m', '1284', '--vreme', 'dez', '--out', 'x'], ['--t', '20', '--root', '.', '--pokonci'], ['--nizka', '--m', '400'], ['--cas', 'vecer', '--m', '400'], ['--cas', 'noč', '--lezece'], ['--guma', '0.8', '--velika', '--m', '900']]) {
   const r = run(...a);
   check(a.join(' ') + ': known (the usage only for the missing track)', r.code === 2 && /usage:/.test(r.out) && !/unknown/.test(r.out), r.out.trim().split('\n').pop());
 }
 {
   const r = run('bathurst', '--cas', 'poldne');
   check('--cas poldne (not a time of day): the usage, nothing taken', r.code === 2 && /usage:.*--cas jutro\|dan\|vecer\|noc/.test(r.out), r.out.trim().split('\n').pop());
+}
+{
+  const r = run('spa', '--guma', '1.5');
+  check('--guma 1.5 (not within 0-1): the usage, nothing taken', r.code === 2 && /usage:.*--guma <0-1>.*--velika/.test(r.out), r.out.trim().split('\n').pop());
 }
 {
   const r = run('--pokonci', '--lezeče');
