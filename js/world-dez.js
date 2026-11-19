@@ -10,7 +10,7 @@
      nring    the Eifel: rain from Atlantic fronts under a low, even grey deck (the Nordschleife's changeable 'Eifel weather')
      spa      the Ardennes by the Hautes Fagnes, the wettest corner of Belgium: low cloud and drizzle in the forest
      livorno  a libeccio, the south-west wind off the sea: dark squalls, a slate-grey, choppy sea along the coast road
-     pikes    a summer thunderstorm on the mountain (cumulonimbus by the afternoon): darker, but broken light (World pkWx: its cloud banks)
+     pikes    a summer thunderstorm on the mountain (cumulonimbus by the afternoon): the dark base of the cloud, less light from the whole sky
      tianmen  the mountain in its cloud (Zhangjiajie's humid subtropical rain): a pale, close fog round the cliffs
      rastro   the 'cerração' of the Serra Geral: the orographic fog that closes the road on the escarpment, pale and close
    Hooks (no change to render.js or the worlds' files): World.build (the patch, once per world), World.update (the race: its rain and
@@ -26,7 +26,7 @@
     nring:   { fog: 0x8a959c, fogK: 0.45, near: 0.9, far: 0.85, sun: 0.32, hemi: 1.12, sheen: 0.8 },
     spa:     { fog: 0x87929a, fogK: 0.5, near: 0.8, far: 0.72, sun: 0.3, hemi: 1.12, sheen: 0.8 },
     livorno: { fog: 0x7f8a92, fogK: 0.5, near: 0.95, far: 0.9, sun: 0.34, hemi: 1.1, sheen: 0.85, sea: [0x4c6266, 0.8] },
-    pikes:   { fog: 0x868d95, fogK: 0.35, near: 0.9, far: 0.85, sun: 0.42, hemi: 1.06, sheen: 0.7 },
+    pikes:   { fog: 0x7a838d, fogK: 0.5, near: 0.85, far: 0.8, sun: 0.38, hemi: 0.9, sheen: 0.8 },
     tianmen: { fog: 0xb3bcbf, fogK: 0.55, near: 0.6, far: 0.62, sun: 0.3, hemi: 1.15, sheen: 0.75 },
     rastro:  { fog: 0xaeb7b8, fogK: 0.55, near: 0.62, far: 0.62, sun: 0.3, hemi: 1.15, sheen: 0.75 },
   };
@@ -124,5 +124,5 @@
     if (S && S.L.sea) S.sea.forEach((m, i) => { if (K.sea[i]) m.color.copy(K.sea[i]); });
   }
 
-  World.dez = { LOOK, U, get S() { return S; } };   // (for the tests and tools)
+  World.dez = { LOOK, U, get S() { return S; }, get K() { return { depth: K.depth, on: K.on, cams: camD }; } };   // (for the tests and tools)
 })();
