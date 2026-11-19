@@ -249,5 +249,5 @@
     return w;
   };
   PG.merge = merge; PG.plan = plan;
-  for (const id of ['kotor', 'sacalobra', 'portomoniz', 'tianmen', 'kanaba', 'izoard', 'ella']) BY[id] = (w) => merge(w, { r: 150 });
+  for (const id of ['kotor', 'sacalobra', 'portomoniz', 'tianmen', 'kanaba', 'izoard', 'ella', 'chapman', 'savusavu', 'koror', 'santoantao']) BY[id] = (w) => merge(w, { r: 150 });
 })();
