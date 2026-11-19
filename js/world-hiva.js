@@ -127,15 +127,35 @@
     };
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 37) * 70), t = 0.9 + crH(k, 5, 37) * 0.15; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.84 - 0.12 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.04; return [k, k, k * 1.02]; };
+    /* ---- the verges between the asphalt, the barriers and the terrain (lifted onto the ground where it rises) ---- */
+    const vergeRow = (i, side) => {
+      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
+      return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
+    };
+
+    /* ---- the side roads for the look (World.cesta's stranske, def.stranske from OpenStreetMap: docs/realizem/paket-e.md): measured here,
+       before the road and the barriers, whose edge lines and concrete leave the mouths open; the strips (over the verges) and the posts
+       across the openings are built with the terrain. Nothing of the track's model changes: the invisible barrier stays on its line. No
+       paint at the mouths (barva: false): the country's rules for it are not in World.cesta's table ---- */
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
+    const wF = (f) => { const a = Math.floor(f), i = ((a % N) + N) % N; return lerp(T.wAt(i), T.wAt((i + 1) % N), f - a); };
+    const barF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, j = (i + 1) % N; return side > 0 ? lerp(T.br[i], T.br[j], f - a) : lerp(T.bl[i], T.bl[j], f - a); };
+    const vergeAt = (i, side, d) => { const pr = vergeRow(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => 0.84 * secT[i] - 0.04, barva: false }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    const naStranski = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] + m; if ((x - k[0]) * (x - k[0]) + (z - k[1]) * (z - k[1]) < r * r) return true; } return false; };
+    if (SC) { for (const k of SC.krogi) exclPush(k[0], k[1], k[2]); out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; lMat.userData.crte = 1; }
     for (let c0 = 0; c0 < N; c0 += RC) {
       const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pc = 0;
       for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
         const i = ii % N, w = T.wAt(i), offs = [-w, -w / 2, 0, w / 2, w], v = ii * ds / tileL;
         const r = gr.row(offs.map(o => Pt(i, o, 0.02)), offs.map(o => shade(i, o, w)), offs.map(o => [(o + w) / tileL, v])); if (pr >= 0) gr.link(pr, r, 0, 4); pr = r;
-        const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.38, 0.034), Pt(i, w - 0.38, 0.034), Pt(i, w - 0.22, 0.034)];
-        if (cl) lp.push(Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034));
-        const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
+        const cl = CL ? CL[i] : 0;
+        if (cl) { const l = gl.row([Pt(i, -0.08, 0.034), Pt(i, 0.08, 0.034)], [wx, wx]); if (pl >= 0 && pc) gl.link(pl, l, 0, 1); pl = l; } pc = cl;   // (the centre line, on the rows it runs over)
+      }
+      for (const si of [0, 1]) for (const run of tek(si, 2, c0, Math.min(c0 + RC, N))) {   // (the edge lines, open at the side roads' mouths)
+        let p = -1;
+        for (const f of run) { const w = wF(f), l = gl.row(si ? [PtF(f, w - 0.38, 0.034), PtF(f, w - 0.22, 0.034)] : [PtF(f, -w + 0.22, 0.034), PtF(f, -w + 0.38, 0.034)], [wx, wx]); if (p >= 0) gl.link(p, l, 0, 1); p = l; }
       }
       for (const q of xk.get(c0 / RC) || []) layX(gl, q);
       addM(gr, aMat); addM(gl, lMat);
@@ -154,21 +174,21 @@
     const kindAt = (i) => (startArea(i) ? 1 : 0);   // 0 concrete, 1 white wall and fence
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const conc = [0.84, 0.82, 0.78], concD = [0.64, 0.62, 0.58], concT = [0.9, 0.88, 0.84], wh = [0.92, 0.92, 0.9], whD = [0.74, 0.74, 0.72];
-    const wallRow = (gr, i, side, k) => {
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 0.85, tone = 0.94 + crH(i >> 3, side, 71) * 0.1;
+    const wallRow = (gr, f, side, k) => {   // (f: a station, fractional at a side road's mouth)
+      const i = ((Math.floor(f) % N) + N) % N, bar = barF(f, side), o = side * (bar + 0.1), o2 = side * (bar + 0.5), h = k === 1 ? 1.15 : 0.85, tone = 0.94 + crH(i >> 3, side, 71) * 0.1;
       const c0 = k === 1 ? whD : concD.map(v => v * tone), c1 = k === 1 ? wh : conc.map(v => v * tone), c2 = k === 0 ? concT : wh;
-      let p = [Pt(i, o, -0.5), Pt(i, o, h - 0.08), Pt(i, o, h), Pt(i, o2, h)], c = [c0, c1, c2, c2];
+      let p = [PtF(f, o, -0.5), PtF(f, o, h - 0.08), PtF(f, o, h), PtF(f, o2, h)], c = [c0, c1, c2, c2];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
     for (let c0 = 0; c0 < N; c0 += RC) {
       const gr = new RB();
-      for (const side of [-1, 1]) {
+      for (const side of [-1, 1]) for (const run of tek(side > 0 ? 1 : 0, 1, c0, Math.min(c0 + RC, N))) {   // (open at the side roads' mouths)
         let prev = -1, pk = -1;
-        for (let ii = c0; ii <= Math.min(c0 + RC, N); ii++) {
-          const i = ii % N, k = kindAt(i);
-          if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, i, side, pk), 0, 3); prev = -1; }
-          const r = wallRow(gr, i, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
+        for (const f of run) {
+          const k = kindAt(((Math.floor(f) % N) + N) % N);
+          if (prev >= 0 && k !== pk) { gr.link(prev, wallRow(gr, f, side, pk), 0, 3); prev = -1; }
+          const r = wallRow(gr, f, side, k); if (prev >= 0) gr.link(prev, r, 0, 3); prev = r; pk = k;
         }
       }
       addM(gr, rMat, true);
@@ -183,14 +203,9 @@
       addM(gf, fMat);
     }
 
-    /* ---- the verges between the asphalt, the barriers and the terrain (lifted onto the ground where it rises) ---- */
-    const vergeRow = (i, side) => {
-      const w = T.wAt(i), bar = side > 0 ? T.br[i] : T.bl[i], y = T.hy[i], lift = (o, h) => { const q = side * o, g = nrGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) + 0.06 - y; return [o, Math.max(h, g)]; };
-      return [[w, 0.0], [w + 0.8, -0.04], lift(Math.max(w + 1.2, bar - 0.3), -0.08), lift(bar + 0.8, -0.16), lift(bar + 3.2, -0.4)];
-    };
-
     /* ---- the spectators' context ---- */
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.7 });
+    if (SC) for (const k of SC.krogi) CR.avoid(k[0], k[1], k[2]);   // (nobody stands on a side road)
     let nBld = 0, nStone = 0;
 
     /* ---- the landmark, the simple one (one mesh) until the model of assets/landmarks/hiva.glb has loaded (World.znamenitost), all after
@@ -348,7 +363,7 @@
       if (k > 2) continue;
       for (let q = 0; q + 3 < fl.length; q += 2) {
         const ax = fl[q], az = fl[q + 1], bx = fl[q + 2], bz = fl[q + 3], len = Math.hypot(bx - ax, bz - az); if (len < 0.6) continue;
-        const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz); if (nn.i >= 0 && nn.dd < 0.8) continue;
+        const mx = (ax + bx) / 2, mz = (az + bz) / 2, nn = nrNear(mx, mz); if (nn.i >= 0 && nn.dd < 0.8 || naStranski(mx, mz, -0.6)) continue;   // (nor across a side road)
         const y = nrGround(mx, mz), ang = Math.atan2(bz - az, bx - ax), g = scen.get(mx, mz);
         if (k === 2) box(g, mx, y - 0.2, mz, len + 0.3, 1.6, 1.1, ang, vary([0.3, 0.4, 0.2], R, 0.08), [0.32, 0.44, 0.22], true);
         else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 2.2 : 1.8, 0.45, ang, vary([0.82, 0.7, 0.54], R, 0.04), [0.86, 0.75, 0.58], true);
@@ -371,7 +386,7 @@
     }
 
     /* ---- the terrain tiles and the verges (256 m chunks), coloured now: the leaf litter under the trees ---- */
-    let nTiles = 0;
+    let nTiles = 0, nPost = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
@@ -387,7 +402,13 @@
             if (pv[si] >= 0) gv.link(pv[si], rv, 0, 4); pv[si] = rv;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + RC, N), API.nrGCol);   // (the side roads' shoulders out to the ground)
         addM(gv, gMat);
+      }
+      if (SC) {   // (the side roads' strips and the orange posts across their openings in the barrier)
+        const sMat = aMat.clone();
+        for (const g of SC.asfalt(RB, API.nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
+        nPost = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki;   // (where the posts stand: read by the tests)
       }
       G.col = G.cov = P.edge = null;   // (build only)
     }
@@ -395,7 +416,7 @@
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, wall: WS.length };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, wall: WS.length, stranske: SC ? SC.n : 0, stebricki: nPost };   // (read by the tests)
     return out;
   }
 

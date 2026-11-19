@@ -103,7 +103,8 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # left; 810 m, right); on Quezaltepeque two service tracks of the venue that end in the run-off short of the fence (1940 m, left;
          # 2119 m, right)
          'koror': dict(predmeti=False), 'savusavu': dict(predmeti=False, izpusti=[(653, -1), (810, 1)]),
-         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)])}
+         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)]),
+         'rbring': dict(kinds={'raceway'}, izpusti=[(1254, -1)]), 'hiva': dict(predmeti=False)}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own

@@ -689,7 +689,8 @@ try {
   // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
   // mouth it meets the paint's material); no paint at a mouth (Palau's and Fiji's rows in CRTE hold the main road's lines only, El Salvador
   // has none); the track's model as a track built alone has it; no errors
-  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 10], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
+  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 10], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2],
+    ['rbring', 'Štajerska', 0, 9], ['hiva', 'Hiva', 0.3, 17]]) {   // (Štajerska's service roads and Hiva's streets: docs/realizem/paket-e.md »Preostale proge«)
     await startTrack(page, id);
     const sx = await page.evaluate(([id, rob]) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
