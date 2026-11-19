@@ -21,7 +21,7 @@ try {
       if (own) SC.onBeforeRender = ob; else delete SC.onBeforeRender;
       g.pause(); Render.precompile(); for (let k = 0; k < 3; k++) await raf();
       const k3 = (W.stats || {}).kamera3, mats = new Set(); let meshes = 0;
-      for (const m of (W.ground ? W.ground.children : [])) { meshes++; const M = m.material; if (M && M.customProgramCacheKey && M.customProgramCacheKey() === 'pkGround2k3') mats.add(M); }
+      for (const m of (W.ground ? W.ground.children : [])) { meshes++; const M = m.material; if (M && M.customProgramCacheKey && /(^|\|)pkGround2k3$/.test(M.customProgramCacheKey())) mats.add(M); }   // (Render's clouds prefix the key: 'cloud|pkGround2k3')
       const prog = [];
       if (RR) {
         const gl = RR.getContext();
