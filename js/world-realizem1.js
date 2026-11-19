@@ -183,7 +183,8 @@
       R = lerp(R, 0.47, fld * 0.5); G = lerp(G, 0.5, fld * 0.5); B = lerp(B, 0.27, fld * 0.5);
       const lit = sstep(0.55, 0.85, c1) * 0.5; R = lerp(R, 0.34, lit); G = lerp(G, 0.37, lit); B = lerp(B, 0.19, lit);
       R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.09; B += (f - 0.5) * 0.05;
-      const rk = Math.max(clamp(sstep(1.3, 2.3, m) * 0.8 + sstep(0.6, 0.85, P.c2(x, z)) * 0.45, 0, 0.85), lc(x, z, 2) * 0.8);
+      // (the rock where the land cover has it, ESA WorldCover; elsewhere a fill below the road is overgrown, only its steepest stretches show stones in patches)
+      const rk = Math.max(sstep(1.9, 2.3, m) * sstep(0.6, 0.85, P.c2(x, z)) * 0.35, lc(x, z, 2) * 0.8);
       if (rk > 0) { const k = 0.8 + 0.25 * P.n2(x * 0.6, z * 0.6); R = lerp(R, 0.66 * k, rk); G = lerp(G, 0.65 * k, rk); B = lerp(B, 0.61 * k, rk); }
       if (t < 0.18) { const g = (0.18 - t) / 0.18 * 0.55; R = lerp(R, 0.5, g); G = lerp(G, 0.48, g); B = lerp(B, 0.43, g); }
       return [R, G, B]; };

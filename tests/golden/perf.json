@@ -98,11 +98,11 @@
   "jsMs": 1.91
  },
  "tianmen": {
-  "calls": 183,
-  "maxCalls": 213,
-  "kverts": 495,
-  "maxKverts": 630,
-  "jsMs": 0.84
+  "calls": 170,
+  "maxCalls": 199,
+  "kverts": 452,
+  "maxKverts": 568,
+  "jsMs": 1.83
  },
  "uncompahgre": {
   "calls": 161,
