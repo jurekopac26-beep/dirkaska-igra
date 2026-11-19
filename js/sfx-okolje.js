@@ -26,9 +26,9 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5],
-    mujib: [31.44, 471], atitlan: [14.76, 2068] };   // (Wadi Mujib and Atitlán, docs/nove-proge-1-0.md del 4: the start's altitude, their
-    // heights are from the start line as GEO's offset)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819],
+    mujib: [31.44, 471], atitlan: [14.76, 2068] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Wadi Mujib and Atitlán, docs/nove-proge-1-0.md
+    // del 4: the start's altitude, their heights are from the start line as GEO's offset)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
@@ -41,6 +41,7 @@
     ouninpohja: [[1476, 1676, 0.5], [8534, 8734, 0.5]],   // (Ouni, Kakaristo: a farm, the junction in the fields; js/world.js OB)
     livorno: [[-400, 400, 1], [3250, 3750, 1], [4300, 4580, 0.5], [7330, 7590, 0.5], [16500, 17300, 1]],   // (Livorno, Montenero, Savolano, Castellaccio, Antignano)
     nring: [[7850, 8050, 0.5], [20100, 20500, 0.5]],   // (Breidscheid, Nürburg)
+    ghoufi: [[115, 385, 0.5]],   // (the old village on the canyon's wall below the road, 20–67 % of the track: mostly ruins, a hamlet, no bells)
   };
   // the churches within ~600 m of the road (OpenStreetMap, amenity=place_of_worship or building=church, tools/zvoki-pasovi.mjs --osm):
   // [metres from the start, the side (-1 left, 1 right), how far from the road (m)]; only those with bells (not a temple, a hall, a

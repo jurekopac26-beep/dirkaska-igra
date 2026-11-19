@@ -42,6 +42,11 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Hakone, Japonska | PR #261 | 0 % (v igri, povprečno 6,7 m od asfalta) | izletna cona je |
 | Medvode, Slovenija | PR #153 | 10 %, obe 3 % (v igri, povprečno 6,1 m; na `main` zdaj 99 %) | izletna cona je (pločniki) |
 | Bâlea, Romunija | na `main` (PR #226, 7. 11. 2026) | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
+| Hải Vân, Vietnam | PR #676 | 0 % (v igri, povprečno 7,8 m) | izletna cona je |
+| Kanaba, Uganda | PR #690 (»Vse proge v enem PR«) | 0 % v OpenStreetMap (zidov in ograj ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
+| Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
+| Savusavu, Fidži | PR #693 | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
+| Koror, Palau | PR #694 | 0 % (v igri, povprečno 5,7 m) | izletna cona je |
 | Killar, Indija | PR #283 | 99 %, obe 58 % (v igri, povprečno 2,3 m) | brez izletne cone (prepad in stena ob ozki polici); v PR, samo javljeno |
 | Pau, Francija | Nove proge 7 | ulična proga | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026) |
 | Puerto Madero, Argentina | kratke D, Načrtovano | 75 %, obe 38 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
@@ -113,6 +118,13 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Anglija | Crystal Palace: na odločanju (`pending: true`; odločitev uporabnika 8. 11. 2026: ko je London v igri, uporabnik izbere, katera od obeh ostane, druga gre v test); zamrznjena kot testna (odločitev uporabnika 8. 11. 2026 ob 20.25), v igri in testih ostane do izbire | London (mestna proga po središču velikega mesta; #492, del N3 #500): tudi na odločanju, `pending: true` doda seja partyslo (od 8. 11. 2026 ob 22.03 ni več izjema od pravila ena proga na državo) | – |
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
 | Indija | Killar (na `main` 3. 11. 2026 po odločitvi uporabnika; prva proga iz Indije) | – | Auli (kratke, A), Shimla in Darjeeling (zavite, 4) |
+| Vietnam | Hải Vân (PR #676): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
+| Filipini | Batangas (PR #684, Nove proge za 1.0, linija A): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
+| Salvador | Quezaltepeque (PR #686, Nove proge za 1.0, linija A) | – | – |
+| Uganda | Kanaba (PR #690, osnutek; na `main` z »Vse proge v enem PR«) | – | – |
+| Papua Nova Gvineja | Sogeri (PR #691): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
+| Fidži | Savusavu (PR #693) | – | – |
+| Palau | Koror (PR #694) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
@@ -152,7 +164,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Kazahstan | Medeu (Nove proge za 1.0, B8; prej kratke, A) | narejena: osnutek PR #532 (8. 11. 2026), na `main` s skupino N5 |
 | Šrilanka | Ella (kratke, C1) | narejena (PR #552, nove proge 1.0, del 2, A10; skupina N5), čaka na vrsto za `main` |
 | Zelenortski otoki | Santo Antão (kratke, C2) | po vrsti |
-| Mehika | Espinazo del Diablo (kratke, C2; PR #562, skupina N6) je od 13. 11. 2026 **testna** (`test: true`, odločitev uporabnika prek Mateja: »mehiko prestavi v test, čakamo novo progo iz Mehike«) | nova proga iz Mehike: izbere jo uporabnik; **ne začni**, dokler je ne izbere |
+| Mehika | Aguascalientes (oval, 1,34 km; PR #687, zbirna #762, nato #756), nova proga iz Mehike (uporabnik jo je vodil v seji proge 14. 11. 2026); Espinazo del Diablo (kratke, C2; PR #562, skupina N6) je od 13. 11. 2026 **testna** (`test: true`, odločitev uporabnika prek Mateja: »mehiko prestavi v test, čakamo novo progo iz Mehike«) | v delu (#756) |
 | Urugvaj | Punta del Este (kratke, D) | **ne začni** (brez izletne cone, 5. 11. 2026) |
 | Ekvador | Yahuarcocha (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`); Quito (zavite, 2) | Yahuarcocha v delu (biketraveler); Quito odpade (tudi **ne začni**: brez izletne cone, 5. 11. 2026) |
 | Madžarska | Mogyoród (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v delu (biketraveler) |
@@ -170,6 +182,17 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
+| Angola | Luanda (proge z znamenitostjo, 1) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Zambija | Livingstone (proge z znamenitostjo, 2) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Madagaskar | Isalo (proge z znamenitostjo, 3; zamenjava za Antananarivo) | v delu (jure.kopac26), #722, veja `proge/zamenjava-3` (`docs/proge/isalo.md`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Kenija | Mombasa (proge z znamenitostjo, 4) | pripravljena (#718, veja `proge/mombasa` na `proge/luanda`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Uzbekistan | Hiva (proge z znamenitostjo, 5) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Gana | Elmina (proge z znamenitostjo, 6) | odpade (občutljiv kraj), zamenjava v `docs/proge-z-znamenitostjo.md`; bila v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Kambodža | Bokor (proge z znamenitostjo, 7) | se zamenja z naravno znamenitostjo ali zgradbo (`docs/proge-z-znamenitostjo.md`); bil v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Tunizija | El Jem (proge z znamenitostjo, 8) | v delu (#727, veja `proge/el-jem`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Panama | Portobelo (proge z znamenitostjo, 9) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Butan | Isuna (proge z znamenitostjo, 10; namesto Trongse) | v delu (veja `proge/butan`, PR #728): verižni most čez Paro Chhu ob cesti Chuzom–Paro; Trongsa odpade (delujoč samostan); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Sveta Lucija | Canaries (nove proge, PR #692, `nove-proge/canaries`) | v delu (naloga seje menija 13. 11. 2026); prva proga države |
 
 ## Proge z ledom (izbira uporabnika 6. 11. 2026)
 

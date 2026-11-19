@@ -62,7 +62,7 @@ try {
     // (the game's track here Jezero, hidden behind NEUPORABNO: the title shows the first real one of Circuit race, the default mode, instead)
     const first = 'const id = Menu.debug().list[0], d = Core.TRACKS.find(x => x.id === id) || {}, full = (d.en || {}).name || d.name || "", k = full.lastIndexOf(", "); return { id, name: k > 0 ? full.slice(0, k) : full, real: !d.test && !d.pending, race: (d.modes || [d.timeTrial ? "tt" : "race"]).includes("race"), game: __game.S.track };';
     const f = await ev(page, first);
-    T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero): the first real one of Circuit race, the default mode (now Bâlea; a rally stage, a time trial only, is not in it)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && f.real && f.race && t.sub === f.name + ' · Circuit race', t.sub + ' ' + JSON.stringify(f));
+    T.check('the menu is the screen on show; a new player starts on a real track, not the test one (Jezero): the first real one of Circuit race, the default mode (now Aguascalientes, the shortest; Hai Van, Batangas and Sogeri are pending; a rally stage, a time trial only, is not in it)', (await shown(page)).join() === 's-menu' && !/Jezero/.test(t.sub) && f.real && f.race && t.sub === f.name + ' · Circuit race', t.sub + ' ' + JSON.stringify(f));
     {   // (a fresh player, no track saved: the game's own default track is that one, firstTrackId in js/game.js)
       const o = await openGame(browser, PAGE, '{"sound":0,"intro":2,"quali":0}', { width: 412, height: 915 }, { menu: true });   // (the settings as a string: lib.mjs adds no track)
       await ready(o.page);
@@ -728,7 +728,7 @@ try {
       'for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const dx = x + 0.5 - S / 2, dy = y + 0.5 - S / 2; if (dx * dx + dy * dy > (S * 0.42) ** 2) continue; const i = (y * S + x) * 4; if (d[i] > 150 && d[i] - d[i + 2] > 60) continue; n++; r += d[i]; g += d[i + 1]; b += d[i + 2]; }' +
       'return { S, n, rgb: [r / n, g / n, b / n].map(Math.round), country: c.dataset.country };';
     const steady = () => page.waitForFunction(() => !Menu.debug().globe.turning && document.getElementById('menu-host').shadowRoot.querySelector('.thead .globe canvas').width >= 104, null, { timeout: 10000 }).catch(() => null);
-    const lit = async (when) => { await page.evaluate((w) => { window.__sun = w; }, when); await click(page, 'track:1'); await steady(); return ev(page, DISK); };
+    const lit = async (when, step = 1) => { await page.evaluate((w) => { window.__sun = w; }, when); await click(page, 'track:' + step); await steady(); return ev(page, DISK); };
     const sum = (v) => v.rgb[0] + v.rgb[1] + v.rgb[2];
     const d0 = await lit('night');
     await page.click('.thead .globe'); await zem(page, 1);
@@ -739,7 +739,9 @@ try {
     const d1 = await ev(page, DISK);
     T.check('all in daylight until the moon is on: the head\'s globe as bright with the Sun over the other side of the Earth; the moon pressed on the Earth: the night there (remembered), the head\'s globe darker as the Earth closes',
       d0.n > 500 && d1.n > 500 && d1.country === d0.country && sum(d1) < 0.5 * sum(d0) && mo.night === true && mo.nt === 1 && mo.pressed === 'true' && mo.kept === 'on', JSON.stringify({ d0, mo, d1 }));
-    const dy = await lit('day'), nt = await lit('night');
+    // (back from the track after Hakone, the last real track: Hakone at night, the one before it, Nürburg, by day; the tracks after Hakone are
+    // the shortest, new ones among them over the sea, a day globe of Costa Rica mostly dark ocean: zbirna Proge 2)
+    const nt = await lit('night', -1), dy = await lit('day', -1);
     await page.evaluate(() => { window.__sun = null; });
     T.check('the head\'s globe with the moon on: its night side darker and bluer (the Sun over the other side of the Earth) than by day (the Sun over the track)', nt.n > 500 && dy.n > 500 && sum(nt) < 0.5 * sum(dy) && nt.rgb[2] / Math.max(1, nt.rgb[0]) > dy.rgb[2] / Math.max(1, dy.rgb[0]), JSON.stringify({ nt, dy }));
     // Race! on the Earth's card: the race on that track at once, the Earth gone with its steps in the history
@@ -1464,32 +1466,38 @@ try {
     // behind NEUPORABNO, the game would come back from the garage on Jezero, rightly on NEUPORABNO's list, not on the track the step showed)
     const { ctx, page, errors } = await open({ track: 'spa' });
     await ready(page);
-    let gar = null, way = 'back', other = '';
-    await page.route('**/garaza.html*', (r) => { gar = r.request().url(); r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>location.replace("index.html?zaslon=avto&avto=" + ' +
-      (way === 'back' ? 'new URLSearchParams(location.search).get("car")' : JSON.stringify(other) + ' + "&naprej=proga"') + ')</script>' }); });
+    let gar = null, other = '';
+    // (the garage in the page, js/game.js garPre: a stand-in frame, as js/garage.js __garageEmbed; its open's p the car and colour asked for,
+    // its close as the garage's Nazaj (the same car) or Izberi progo (another, &naprej=proga); the frame kept: the second tap no load)
+    let loads = 0;
+    await page.route('**/garaza.html*', (r) => { loads++; r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>window.__garageEmbed = { open(p) { parent.__garStub = p; setTimeout(() => parent.__garageClose(parent.__garWay === "back" ? { car: p.car } : { car: parent.__garOther, naprej: "proga" }), 50); }, back() { parent.__garageClose({}); } }; parent.__garageReady();</script>' }); });
     const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
     other = await page.evaluate((id) => Core.MODELS.find(m => !m.retired && m.id !== id).id, car0.id);   // (the garage's other car: Izberi progo on it)
+    await page.evaluate((o) => { window.__garOther = o; }, other);
+    const url0 = await page.evaluate(() => location.search);
     for (const w of ['back', 'next']) {
-      way = w;
+      await page.evaluate((w) => { window.__garWay = w; window.__garStub = null; }, w);
       await click(page, 'single'); await click(page, 'mode:race'); await page.waitForTimeout(300);
       const was = await ev(page, 'return root.querySelector(".where .w2").textContent;');
       const dz = await page.evaluate(() => { const d = Core.TRACKS.find(d => d.id === __game.S.track); return d && /, /.test(d.name) ? d.name.split(', ').pop() : ''; });   // (the track chosen when the garage opens: its country, the flag on the garage's IZBERI PROGO)
       const car1 = await page.evaluate(() => Core.MODELS[__game.S.car].id);
       gar = null;
-      const nm = null;   // (no name over the car since 12. 11. 2026: the car itself opens the garage)
-      await Promise.all([page.waitForURL(/index\.html\?zaslon=avto/, { timeout: 60000 }), nm ? page.mouse.click(nm.x, nm.y) : page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('.yard .car').click())]);
+      // (no name over the car since 12. 11. 2026: the car itself opens the garage)
+      await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('.yard .car').click());
+      await page.waitForFunction(() => window.__garStub && document.getElementById('garaza').classList.contains('off'), null, { timeout: 60000 }).catch(() => { });
+      gar = await page.evaluate(() => window.__garStub);
       const there = await page.waitForFunction(() => window.__game && __game.screen === 'track' && window.Menu && Menu.ready && Menu.debug().screen === 'track' && document.getElementById('menu-host').shadowRoot.querySelector('#s-track .where'), null, { timeout: 120000 }).then(() => true, () => false);
       if (!there) {   // (seen on GitHub now and then, never locally: the page's state and its errors in the log, not a test stopped without them)
         T.check(`back from the garage [${w}]: the track step within 120 s`, false, JSON.stringify(await pageState(page)) + ' — ' + errors.slice(-10).join(' | '));
         break;
       }
       await page.waitForTimeout(400);
-      const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join() }));
+      const g = await page.evaluate(() => ({ car: Core.MODELS[__game.S.car].id, url: location.search, shown: [...document.querySelectorAll('.screen.show')].map(e => e.id).join(), fr: document.getElementById('garaza') && document.getElementById('garaza').className.split(' ').pop() }));
       const back = await ev(page, 'return { h1: root.querySelector(".where .w2") && root.querySelector(".where .w2").textContent, name: root.querySelector(".yard .car") && root.querySelector(".yard .car").getAttribute("aria-label") };');
       const want = w === 'back' ? car0.id : other, wname = await page.evaluate((id) => Core.MODELS.find(m => m.id === id).name, want);
-      T.check(`the yard's ${w === 'back' ? 'car' : 'car\'s name'} tapped: the garage with it (garaza.html?car=<id>&color=<its colour>&drzava=<the track's country>), its ${w === 'back' ? 'back' : 'Izberi progo'}: the track step again, the same track, on the garage's car, its name over it (the address plain again)`,
-        gar && gar.endsWith('/garaza.html?car=' + car1 + '&color=' + car0.hex + (dz ? '&drzava=' + encodeURIComponent(dz) : '')) && g.car === want && g.url === '' && g.shown === 's-menu' && back.h1 === was && (back.name || '').includes(wname),
-        JSON.stringify({ gar, car0, car1, dz, g, was, back, want, wname }));
+      T.check(`the yard's car tapped [${w}]: the garage in the page with it (open: car <id>, color <its colour>, drzava <the track's country>; loaded once), its ${w === 'back' ? 'back' : 'Izberi progo'}: the track step again, the same track, on the garage's car, its name on it (the address as it was)`,
+        gar && gar.car === car1 && gar.color === car0.hex && (gar.drzava || '') === dz && loads === 1 && g.car === want && g.url === url0 && g.shown === 's-menu' && g.fr === 'off' && back.h1 === was && (back.name || '').includes(wname),
+        JSON.stringify({ gar, loads, car0, car1, dz, g, url0, was, back, want, wname }));
       await page.click('.thead [data-act="back"]'); await click(page, 'tsub:');   // (the main menu: the modes, then their back)
     }
     T.check('the garage and back: no page errors', !real(errors).length, real(errors).join(' | '));
