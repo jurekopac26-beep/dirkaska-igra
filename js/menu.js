@@ -808,7 +808,7 @@
   }
   const carPics = {};
   function carPicOf(car) {
-    if (HAS_CAR_IMG.includes(car.id)) return carImg(car, car.color);
+    if (HAS_CAR_IMG.includes(car.id) && car.color < 8) return carImg(car, car.color);   // (pictures of the first eight colours only: the others drawn)
     const k = car.id + '-' + car.color;
     if (!(k in carPics)) { carPics[k] = ''; try { carPics[k] = G.carPic ? G.carPic(640, 360) || '' : ''; } catch (_) { /* (no showroom: the letter) */ } }
     return carPics[k];
