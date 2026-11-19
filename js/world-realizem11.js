@@ -104,7 +104,7 @@
         for (const [x, z] of D.portomoniz.trees) {   // a broadleaf: a trunk under a rounded crown (OSM's places; no tree on the road or in a landmark's room)
           k++; if (!clear(x, z, 1.5) || excluded(x, z)) continue; const y = caGround(x, z), g = scen.get(x, z), Rt = rng(1110 + k), h = 2.4 + Rt() * 0.8, cr = 1.9 + Rt() * 0.7;
           cyl(g, x, y - 0.2, z, 0.15, h + 0.6, 6, [0.4, 0.33, 0.26], [0.4, 0.33, 0.26]);
-          const L = vary([0.25, 0.41, 0.19], Rt, 0.08);
+          const L = vary([0.12, 0.24, 0.1], Rt, 0.1);   // (the green of the look's own broadleaves, js/world-portomoniz.js laurelGeo)
           ico(g, x, y + h + cr * 0.55, z, cr, 0.8, L, Rt, 0.25);
           ico(g, x + (Rt() - 0.5) * cr * 0.6, y + h + cr * 0.95, z + (Rt() - 0.5) * cr * 0.6, cr * 0.7, 0.85, vary(L, Rt, 0.05), Rt, 0.25);
         }

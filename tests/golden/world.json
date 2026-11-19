@@ -862,11 +862,11 @@
   "instances": 29840,
   "props": 81,
   "crowd": 143,
-  "world": "88e943b8",
+  "world": "708c4882",
   "propsHash": "8f77dc8c",
   "floor": "9fc8b0b0/8708",
   "groups": {
-   "-:MeshLambertMaterial": "d3d4d95c",
+   "-:MeshLambertMaterial": "78f347cf",
    "-:MeshPhongMaterial": "a6d43508",
    "-:MeshBasicMaterial": "4ff1c8f",
    "irFar:MeshLambertMaterial": "a5aa9754",
