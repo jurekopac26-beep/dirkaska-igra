@@ -232,6 +232,22 @@
     roofs: [[0.6, 0.17, 0.14], [0.2, 0.36, 0.27], [0.22, 0.33, 0.5], [0.34, 0.35, 0.37], [0.5, 0.27, 0.18]],   // (the coloured metal of the village's roofs)
     sheep: 1, portal: 2, power: 1, hotels: 1, chairs: 1,
     far: { lo: [0.43, 0.47, 0.27], hi: [0.47, 0.45, 0.42], dw: [0.23, 0.3, 0.17], snow: 3350, tree: [1900, 1650], fc: [0.19, 0.27, 0.15], rk: [2700, 3100], dwb: [1900, 2100, 2500, 2300] },
+    // Kali Gandaki (the gorge between Dhaulagiri and Annapurna, Nepal): an arid, high valley in the rain shadow of the peaks — bare brown and grey
+    // rock walls, long fans of pale scree, only thin dry grass and sparse scrub on the benches, no forest down here; the river's grey braids far
+    // below, the snow of the great massifs only high above the gorge; dusty stone-and-metal houses at the villages, no cable car, no tunnel portal
+    kaligandaki: {
+      seed: 4300, board: 'KALI GANDAKI', sub: 'MYAGDI · NEPAL', banner: ['KALI GANDAKI', 'KOPCHEPANI · 1.672 m'],
+      grass: [0.5, 0.48, 0.3], grassDry: [0.6, 0.55, 0.36], grassLush: [0.4, 0.5, 0.26], shrub: [0.3, 0.32, 0.2],
+      rock: [0.55, 0.5, 0.42], rockWarm: [0.62, 0.52, 0.4], lichen: [0.45, 0.44, 0.36], scree: [0.66, 0.6, 0.5],
+      sat: 0.5, satV: 1.25, snowLine: 4200, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.52, 0.48, 0.42], [0.58, 0.52, 0.44], [0.46, 0.43, 0.4], [0.62, 0.54, 0.44], [0.5, 0.46, 0.42], [0.56, 0.5, 0.43]],   // (the gorge's rock: brown and grey, warmed by the sun)
+      centre: [0.92, 0.92, 0.88], dash: [3, 6], solidNear: 60,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 6 m, solid through the hairpins)
+      chev: ['#d8261c', '#ffffff'], warn: 'tri', rail: 'steel', shoulder: [0.6, 0.54, 0.44],
+      fans: [[0.84, 0.14, 0.14], [0.95, 0.5, 0.12], [0.95, 0.95, 0.95], [0.12, 0.3, 0.62], [0.2, 0.5, 0.32], [0.98, 0.82, 0.12], [0.12, 0.14, 0.2], [0.55, 0.5, 0.42]],
+      cars: [[0.85, 0.85, 0.82], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.5, 0.52, 0.55], [0.72, 0.68, 0.6]],
+      roofs: [[0.5, 0.42, 0.32], [0.58, 0.5, 0.4], [0.4, 0.4, 0.42], [0.36, 0.3, 0.24]],
+      sheep: 1, portal: 0, far: { lo: [0.5, 0.44, 0.32], hi: [0.56, 0.5, 0.42], dw: [0.3, 0.4, 0.5], snow: 4200 },
+    },
   };
 
   let L = PL_LOOK.balea;   // (the look of the build under way)

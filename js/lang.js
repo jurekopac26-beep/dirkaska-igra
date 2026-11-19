@@ -538,6 +538,7 @@
     'Zapornica': 'The Gate', 'Stena kraterja': 'Crater Wall', 'Polica': 'The Ledge', 'Dno kraterja': 'Crater Floor',   // (Ngorongoro: the HUD; Windy Gap, Seneto and Magadi stay as they are, the heights by the rules of Lang.place)
     'Do Elle': 'To Ella',   // (Ella: the results of an escape; Ella Rock and Pattiyakumbura stay as they are, Serpentina N and the heights by the rules of Lang.place)
  'Desni za ostrim levim': 'Right after the Tight Left', 'Trije levi': 'Three Lefts', 'Ravnina proti zahodu': 'West Straight', 'Zahodni ostri desni': 'West Hairpin', 'Desni za šikano': 'Right after the Chicane',   // (Batangas)
+    'Slap Rupse': 'Rupse Falls', 'Do Kopčepanija': 'To Kopchepani',   // (Kali Gandaki: the HUD, the results of an escape; Kali Gandaki and Kopchepani stay as they are, Serpentina N and the heights by the rules of Lang.place)
     /* ---- the run from the police (Vršič): the checkpoint, the hideout, the HUD, the rap sheet, the call signs on the radio; the screen to turn the phone ---- */
     'Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).': 'Mission: get the car into the garage at the top of the pass (on the right of the road, just past the summit).',
     ' Povoženi pešci: {0}, kolesarji: {1}': ' People run over: {0}, cyclists: {1}', 'Misija opravljena!': 'Mission accomplished!', 'Aretiran na kontroli': 'Arrested at the checkpoint',

@@ -290,6 +290,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | iroha | Irohazaka, Japonska | iroha | `js/world-iroha.js` (`buildIroha`) |
 | izoard | Izoard, Francija | izoard | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.izoard`: macesnov gozd s cemprini `forest: 'larch'`, daljnovod `def.power`/`def.poles`, obelisk na prelazu `def.obelisk`, francoske table, grmovje samo do 120 m od ceste `shrubR`) |
 | isuna | Isuna, Butan | isuna | `js/world-isuna.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
+| kaligandaki | Kali Gandaki, Nepal | kaligandaki | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.kaligandaki`: soteska, prepad z ograjo, slap Rupse, generične hiše Kopčepanija) |
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | killar | Killar, Indija | killar | `js/world-killar.js` (kopija `buildUncompahgre` s podobo Killarja: `UNK`; hiše `klHouse`, molilne zastavice `klFlags`, table `KL_BOARDS`, lesena ograja levo `T.fence`, pregrada proti kamenju in mreža po pobočju `ukNetMat`, travnik do roba ceste brez bankine in jarka `mead`, senčenje hrbtov in kotanj na vozišču `uk` po `def.roadBase`) |
 | koli | Koli, Finska | koli | `js/world-koli.js` (`World.gore` iz `js/world-gore.js`, slog proge) |

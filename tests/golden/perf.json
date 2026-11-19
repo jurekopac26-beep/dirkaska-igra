@@ -803,5 +803,12 @@
   "kverts": 333,
   "maxKverts": 455,
   "jsMs": 1.28
+ },
+ "kaligandaki": {
+  "calls": 129,
+  "maxCalls": 155,
+  "kverts": 309,
+  "maxKverts": 336,
+  "jsMs": 2.17
  }
 }

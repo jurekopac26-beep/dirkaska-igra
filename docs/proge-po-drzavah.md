@@ -190,6 +190,7 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Gana | Elmina (proge z znamenitostjo, 6) → Atimpoku | Elmina odpade (občutljiv kraj); namesto nje Atimpoku z mostom Adomi (#721, veja `proge/zamenjava-6`); bila v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Kambodža | Bokor (proge z znamenitostjo, 7) | odpade; zamenjava je Laos (Phou Hin Boun); bil v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Laos | Phou Hin Boun (proge z znamenitostjo, 7; zamenjava za Bokor) | v zbirni Proge 3 |
+| Nepal | Kali Gandaki (Nove proge, #677) | v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) |
 | Tunizija | El Jem (proge z znamenitostjo, 8) | v delu (#727, veja `proge/el-jem`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Panama | Portobelo (proge z znamenitostjo, 9) | v delu (biketraveler); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Butan | Isuna (proge z znamenitostjo, 10; namesto Trongse) | v delu (veja `proge/butan`, PR #728): verižni most čez Paro Chhu ob cesti Chuzom–Paro; Trongsa odpade (delujoč samostan); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
