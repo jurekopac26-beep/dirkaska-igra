@@ -1,13 +1,13 @@
 /* =========================================================================
-   WORLD — Sneg (the snow the chase camera sees in winter) on real roads where, by the sources, the snow lies all winter: Medeu,
-   Kazahstan (the Tian Shan spruce of the Malaya Almatinka valley), Gudauri, Gruzija (the ski slopes over the Georgian Military Road)
-   and Koli, Finska (the crown snow on the spruce of the hill). Only the picture: the driving does not change (CLAUDE.md, »Fizika vožnje
+   WORLD — Sneg (the snow the chase camera sees in winter) on real roads where, by the sources, it snows in winter: Koli, Finska
+   (the crown snow on the spruce of the hill), Llogara, Albanija (the pass over the Ionian Sea, shut by the snow for days in winter) and
+   Biķernieki, Latvija (the circuit in the pines of Riga's forest park). Only the picture: the driving does not change (CLAUDE.md, »Fizika vožnje
    se ne spreminja«). Hooks (no change to js/world.js, js/render.js or the roads' own files): World.build and the scene's onBeforeRender.
    On the first winter frame of such a road its materials get a little more to their shaders: snow where a surface faces up (the
    terrain, roofs, rocks: by its slope, patchy), on the trees' crowns in tiers (not on the trunks: only where the colour is green), and
    the plough's narrow banks at the edge of the cleared road (one mesh, its own colours). In summer the same programs draw as before
    (the strength 0).
-   The sources: docs/proge/<id>.md, »Sneg pozimi«.
+   The sources: docs/proge/<id>.md, »Sneg pozimi« (Koli: »Tykky«).
    ========================================================================= */
 (function () {
   'use strict';
@@ -16,9 +16,9 @@
   // gb/tb/xb (else CB): [the noise on the threshold, the tiers' amplitude, their frequency per m, only on the green];
   // bank: the plough's banks at the road's edge, [lowest, highest] in m
   const LOOK = {
-    medeu: { g: [0.55, 0.6, 0.85, 0.35], t: [0.9, -0.02, 0.48, 0.9], x: [0.7, 0.55, 0.85, 0.6], bank: [0.4, 0.8] },
-    gudauri: { g: [0.95, 0.5, 0.78, 0.18], t: [0.8, 0.02, 0.5, 0.9], x: [0.75, 0.55, 0.85, 0.6], bank: [0.7, 1.3] },
     koli: { t: [0.95, -0.15, 0.35, 0.9], tb: [0.3, 0.1, 3.0, 1] },
+    llogara: { g: [0.7, 0.55, 0.85, 0.25], t: [0.75, 0.02, 0.5, 0.9], x: [0.7, 0.55, 0.85, 0.6], bank: [0.3, 0.6] },   // (the snow of a few days)
+    bikernieki: { g: [0.85, 0.5, 0.8, 0.3], t: [0.8, -0.02, 0.48, 0.9], x: [0.75, 0.55, 0.85, 0.6] },   // (a circuit: no plough's banks)
   };
   const CB = { g: [0.35, 0, 0, 0], t: [0.3, 0.16, 4.0, 1], x: [0.3, 0, 0, 0] }, CATS = ['g', 't', 'x'];
   const K = {}, B = {}, SC = { value: new THREE.Color(0.9, 0.93, 0.97) };   // (shared by every patched material of the category: set each frame)
