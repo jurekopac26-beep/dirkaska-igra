@@ -1,56 +1,50 @@
 # Pravila (vse seje vseh štirih računov)
 
-Samo bistvo; **vse podrobnosti** (celotna prejšnja pravila) so v `docs/pravila-podrobno.md`, citati in datumi v `docs/odlocitve.md`, varčevanje v `docs/varcevanje.md`; novejša odločitev pred starejšo. Proga: `docs/proge/<id>.md`, seznam v `README.md`.
+Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, številke)**: `docs/odlocitve.md`, »Pravila iz `CLAUDE.md`«; starejša `docs/pravila-podrobno.md`, citati `docs/odlocitve.md`, varčevanje `docs/varcevanje.md`. Novejša odločitev pred starejšo.
 
 ## Proge
-- Ime »Kraj, Država« (država v slovenščini; kraj = zemljepisno ime, ne dirkališče, prireditev ali podjetje): `js/tracks/<id>.js`, `js/lang.js`, `README.md`, `docs/proge/`, `docs/igra.md`.
-- **Zamrznjene** do izbrisa pred izidom (23. 12. 2026) oz. izbire: testne (`test: true`) in na odločanju (`pending: true`); nobena seja jih ne spreminja (varovalo `tests/testne-proge.test.js`; `--dovoli` samo ob izrecni prošnji uporabnika). Urejaj samo prave proge. Delovati morata Jezero (privzeta proga, avtošola, testi) in Toskana. Testi čez vse proge testne preskočijo; za slike pred/po vzemi Spa, Belgija.
-- Iz države samo **ena** nova proga, preveri `docs/proge-po-drzavah.md` (tudi v odprtih PR); dve ali več brez izbire = na odločanju. Sever (Norveška, Švedska, Danska, Finska): zima; finska je Koli.
-- Nova proga: 1–5 km, ovinkasta, zanimivosti do 60 m ob cesti, seznam potrdi uporabnik; **izletna cona**: ograja, zid, hiše ali prepad do ~3 m od asfalta na več kot pol dolžine = se ne začne (izjema mestne proge in 4 proge s prepadom, 13. 11.: Kali Gandaki, Musandam, Limalimo, Darvaz, z ograjo na strani prepada). Padec čez rob samo na Killarju.
-- **Verigi prog** (`docs/gorske-proge.md`, `docs/nove-proge.md`): PR verige gre na `main` brez vprašanja, ko so testi zeleni; uporabnik ustavi z »stop«. OSM prek `api.openstreetmap.org/api/0.6/map?bbox=…`.
-- Cilj 1.0: **70 pravih prog**, **50 avtov**; vseh 70 na `main` do 23. 12. 2026; 15. 1. 2027 kandidat; 1. 2. 2027 izid.
+- Ime »Kraj, Država«; datoteke: `js/tracks/<id>.js`, `js/lang.js`, `README.md`, `docs/proge/`, `docs/igra.md`.
+- **Zamrznjene** (`test: true`, `pending: true`) ne spreminjaj (`--dovoli` samo na izrecno prošnjo); delovati morata Jezero in Toskana.
+- Iz države **ena** nova proga (`docs/proge-po-drzavah.md`, tudi odprti PR); sever: zima, finska Koli.
+- Nova proga: 1–5 km, ovinkasta, zanimivosti do 60 m, seznam potrdi uporabnik; **izletna cona** do ~3 m od asfalta na več kot pol dolžine = se ne začne (izjemi: mestne proge, Kali Gandaki, Musandam, Limalimo, Darvaz). Padec čez rob samo Killarney.
+- **Verigi prog** (`docs/gorske-proge.md`, `docs/nove-proge.md`): PR na `main` brez vprašanja ob zelenih testih; ustavi »stop«.
+- Cilj 1.0: **70 prog**, **50 avtov**; 70 na `main` do 23. 12. 2026; 15. 1. 2027 kandidat; 1. 2. 2027 izid.
 
 ## Grafika
-- Samo kamera **za avtom** (`chase`), pokonci in ležeče; ne dodajaj kamer. Grafika za to kamero; česar ni videti, poenostavi. Gledalcev čim manj (`fewFans`).
-- Obremenitev: do ~300 klicev risanja in ~900 tisoč oglišč (`tests/golden/perf.json`); ne povečuj drugim progam.
-- Realizem (`docs/realizem.md`): paketi samo na 15 pravih prog; poškodbe samo videz, odtrgano kolo = konec dirke.
-- **Vse kot v resnici, nič izmišljenega**: stavbe, poti do hiš, ceste, predmeti in proge samo po virih (OSM, javni višinski modeli, javni podatki); česar v virih ni, se ne doda.
-- **Vidne barve avtov**: nobenih črnih ali zelo temnih (novi avti, privzete barve, tekmeci, promet); barva, ki jo igralec izbere v garaži, ostane.
-- Odločitve za grafiko in meni: 2–3 možnosti s slikami naenkrat, en »ok«. Grafika in fizika pred `main`: slike zdaj in potem. Grafika (S, G) enkrat na progo, šele ko je na `main`.
+- Samo kamera **za avtom** (`chase`), brez novih; gledalcev čim manj; do ~300 klicev risanja, ~900 tisoč oglišč (`tests/golden/perf.json`).
+- Realizem (`docs/realizem.md`): paketi samo 15 pravih prog; odtrgano kolo = konec dirke. **Vse kot v resnici**: samo po virih.
+- **Barve avtov**: nobenih črnih ali zelo temnih.
+- Grafika in meni: 2–3 možnosti s slikami, en »ok«; grafika in fizika pred `main`: slike zdaj in potem.
 
 ## Pravna varnost
-- Samo zemljepisna imena; brez logotipov, podjetij, lokalov, sponzorjev, prireditev, znamk avtov; **nikoli imen resničnih oseb**. Podatki samo OSM in javni višinski modeli; **nikoli Google Maps, Earth, Street View**. Vir z licenco gre v `README.md`, »Zasluge«.
+- Samo zemljepisna imena; brez logotipov, podjetij, lokalov, sponzorjev, prireditev, znamk avtov; **nikoli imen resničnih oseb**. Samo OSM in javni višinski modeli; **nikoli Google Maps, Earth, Street View**. Vir z licenco: `README.md`, »Zasluge«.
 
 ## Postopek
-- Meni (`js/menu.js`): nova proga potrebuje `assets/tracks/<id>.webp` in `<id>-rain.webp`; po spremembi `node tests/browser/menu.test.mjs`.
-- Žigov (`?v=…`) v repozitoriju ni; po spremembi `node tools/stamp.js --check`. Spoj `main`: `node tools/spoji-main.mjs`. Reference: `npm run golden:update`.
-- Commit konča z »Co-Authored-By: Claude <noreply@anthropic.com>« in »Claude-Session: …«; brez imen modelov.
-- Lokalno samo `npm run test:related`, uspešnih ne ponavljaj; krog na GitHubu po vrsti spremembe; celoten krog samo na zbirnih vejah in ponoči (ena zbirna veja na temo, en krog, en pregled). Nove proge samo prek `tools/proga-podatki.py` in obstoječega vzorca testov.
-- PR odpri ob začetku dela kot osnutek; »Ready for review« šele med prvima dvema v `docs/vrsta.md`. **Združevanje vodi seja Združevanje** (po vrsti, svež `main`, zeleni krogi); seja s kodo se ne naroči na PR. Pravila enkrat na dan v en PR.
-- Največ 6 odprtih tem (pri 6 nove ne začni, predlagaj, kaj zapreti; nove seje dokončujejo obstoječe teme) in **sej s kodo hkrati na račun: račun v zaostanku s porabo (več kot 5 točk pod ciljem po pravilu »Poraba«) do 10, sicer 2** (od 18. 11.; 10 je zgornja meja, ne cilj, kakovost pred hitrostjo; ko zaostanek izgine, spet 2; izjema croatiadata do 20 sej do 22. 11.; jure.kopac26 glej Tabla; dodatne seje najprej vodijo končano delo do `main`); pred zagonom `list_sessions` in odprti PR.
-- Pred združitvijo: spoji svež `main`, povezani testi, zadnji krog na `main` in nočni krog zelena (500 ponovi enkrat); rdeč `main` najprej popravi; po združitvi obvesti seje iz zbirke `cakanje`. PR na istih datotekah gredo drug za drugim; majhne spremembe iste teme v en PR.
-- Uporabnikovi popravki: čez dan jih pošilja Mateju, do 5.00 jih zbira, ob 5.00 gredo kot en sveženj v zbirno vejo dneva; »prednost« gre na začetek vrste. »Ok« na predogledu samo za grafiko, trke in meni; drobni popravki gredo na `main` po zelenih testih (`docs/odlocitve.md`, Postopek).
-- **Najprej odločitev, nato koda**: proga, meni, grafika ali nova funkcija se začne šele, ko uporabnik potrdi seznam, skico ali sliko na strani Odločitve; pripombe na isti predogled gredo seji v enem sporočilu in se popravijo v enem krogu.
+- Meni: `assets/tracks/<id>.webp`, `<id>-rain.webp`; `node tests/browser/menu.test.mjs`. `node tools/stamp.js --check`; `node tools/spoji-main.mjs`; `npm run golden:update`.
+- Commit: »Co-Authored-By: Claude <noreply@anthropic.com>«, »Claude-Session: …«; brez imen modelov.
+- Lokalno `npm run test:related` brez ponavljanja; celoten krog samo na zbirnih vejah (ena na temo, en pregled) in ponoči. Nove proge prek `tools/proga-podatki.py`.
+- PR osnutek ob začetku; »Ready for review« med prvima dvema v `docs/vrsta.md`; **Združevanje vodi seja Združevanje**, seja s kodo se ne naroči na PR. Pravila enkrat na dan v en PR.
+- Največ 6 odprtih tem; **sej s kodo hkrati na račun: v zaostanku s porabo (več kot 5 točk pod ciljem) do 10, sicer 2** (od 18. 11.; 10 je zgornja meja, ne cilj; croatiadata do 20 do 22. 11.; jure.kopac26: Tabla); pred zagonom `list_sessions`, odprti PR.
+- Pred združitvijo: svež `main`, povezani testi, zelena zadnji krog `main` in nočni; rdeč `main` najprej popravi; po združitvi obvesti seje iz `cakanje`.
+- Popravki uporabnika: čez dan Mateju, do 5.00 zbirka, ob 5.00 en sveženj. **Najprej odločitev, nato koda** (stran Odločitve).
 
 ## Seje
-- **Nov Matej vsak dan** ob 5.00 s kratko predajo (stari se ustavi; model in napor ostaneta). Velike izpise (`list_sessions`, stanje PR) bere majhen pomočnik in vrne do 5 vrstic; ob 5.00 uporabnik dobi seznam PR s povezavami, po njegovem »ok« PR do `main` pripelje seja Združevanje (`docs/varcevanje.md`, »Manj sklopov 2. del«).
-- Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
-- **Predaja vseh sej (tudi s kodo) pri ~80 tisoč konteksta**; kratka predaja, nova seja, stara se ustavi. Velikih sej ne budi po več kot 1 h mirovanja: nova seja s predajo.
-- **Model**: Opus za zasnovo, kodo, proge, meni, popravke (mehanski popravki prog: imena, oznake, slike za meni, dokumenti na Sonnetu); Fable 5.2 za grafiko in fiziko; **Trki samo Fable 5.2** (ko je porabljen, počakajo). **Rutina (koordinacija, Združevanje, obvestila, zbiranje) samo Haiku/Sonnet.** Spori, dokumenti, vrsta in Združevanje: Sonnet, napor medium. Modela in napora sredi seje ne menjaj. Napor high, max samo za trke, grafiko, težke napake, zasnovo. **Težje delo na Fable 5.2, dokler je Fable več kot 5 točk pod vsemi modeli** (od 18. 11.).
-- **Več agentov samo za trke**: do 5 agentov, preverjanje z več agenti **enkrat**, na koncu teme pred `main`; vmes in drugje en agent. Tok teče **v kosih** (agent do ~30 min, največ 2 hkrati, najdbe sproti v commit; prekinjen tok se ne ponovi enak): `docs/varcevanje.md`, »Tokovi v kosih«.
-- **Poraba 100 % 24 h pred iztekom** (vsi računi; cilj = 100 % × ure od reseta / 144, uporabnik 15. 11., potrjeno 19. 11.; ta teden partyslo izjemoma 12 h, čet 19. 11. ob 15.00; `docs/varcevanje.md`, »Poraba«): pod ciljem seje dodajaj (največ 10), nad ciljem nobene nove. Zaostanek več kot 5 točk pod ciljem = do 10 sej s kodo (glej »Postopek«), sicer 2.
-- **Varčevanje s sejami** (17. 11., `docs/varcevanje.md`, »Varčevanje 17. 11.«): koordinacija ob branju table ustavi sejo, ki 2 h ni commitala ali se ponavlja pri povzemanju, in začne svežo s predajo; ob zagonu preveri model in napor (Fable samo trki in grafika, Sonnet združevanje, spori, dokumenti, Haiku obvestila, max samo trki); tabla samo novi komentarji (`since=`); sveže male seje s predajo namesto zbujanja starih velikih; brez preverjanja v zanki (na teste `subscribe_pr_activity`, drugače zbirka `cakanje`).
-- **Fizika vožnje se ne spreminja** (samo trki; izjemi po »ok« na predogledu: »Dež in sneg« in #605, hitrejši tekmeci na Super težki in Težki, `docs/odlocitve.md`; #605 tudi v 1.0 in na `main` prednostno, 17. 11.): avto brez dotika vozi enako.
-- Čakanje: na teste `subscribe_pr_activity`; drugo v zbirko `cakanje`; brez `sleep`.
+- **Nov Matej vsak dan** ob 5.00 s predajo; ob 5.00 seznam PR, po »ok« jih pripelje Združevanje. Ena tema na sejo; vprašanja na stran Odločitve (`docs/vprasanja.md`); ure ljubljanske.
+- **Predaja pri ~80 tisoč konteksta**; velikih sej ne budi po več kot 1 h: nova s predajo.
+- **Model**: Opus zasnova, koda, proge, meni; Fable 5.2 grafika, fizika; **Trki samo Fable 5.2**; **rutina samo Haiku/Sonnet**; spori, dokumenti, vrsta, Združevanje Sonnet medium. Modela in napora ne menjaj; max samo trki, grafika, težke napake, zasnova. **Težje delo na Fable 5.2, dokler je Fable več kot 5 točk pod vsemi modeli** (od 18. 11.). Koordinacija ob zagonu preveri model in napor.
+- **Več agentov samo za trke** (do 5, preverjanje enkrat pred `main`).
+- **Poraba 100 % 24 h pred iztekom**: pod ciljem seje dodajaj (največ 10), nad ciljem nobene nove; zaostanek več kot 5 točk = do 10 sej s kodo, sicer 2.
+- **Varčevanje** (`docs/varcevanje.md`, »Varčevanje 17. 11.«): seja brez commita 2 h ali ponavljajoča: ustavi, sveža s predajo; tabla `since=`; brez preverjanja v zanki.
+- **Fizika vožnje se ne spreminja** (samo trki; izjemi: »Dež in sneg«, #605).
+- Čakanje: `subscribe_pr_activity`; drugo `cakanje`; brez `sleep`.
 
 ## Tabla (issue #382) in račun
-- Račune imenuj **biketraveler**, **jure.kopac26**, **partyslo**, **croatiadata** (nikoli polnega emaila). Tabla se bere **2× na dan** (biketraveler 6.15 in 18.15, partyslo 7.15 in 19.15, jure.kopac26 8.15 in 20.15; croatiadata 4×: 2.15, 8.15, 14.15, 20.15, od 17. 11. tudi branja jure.kopac26), majhna sveža seja; **koordinacija partyslo vsak dan ob 21.00 napiše na stran Odločitve povzetek stanja v 5 vrsticah**; komentar konča z nogo `---` / `_Generated by [Claude Code](https://claude.ai/code)_`.
-- **Matejeve odločitve** (komentar »Matej (jure.kopac26)«, lastnik OWNER) izvede koordinacija računa in odgovori v eni vrstici.
-- **jure.kopac26** po resetu v nedeljo 22. 11. ob 10.00 teče **največ 2 seji, samo Trki #608** (Fable, max, usklajeno z biketravelerjem na tabli); sejo zažene opravilo po urniku, Matej ostane za koordinacijo (do takrat brez sej s kodo, opravila po urniku izklopljena; to nadomesti vpis »brez sej s kodo« in pravilo desetih sej z 16. 11. za ta račun). Ostalo delo računa so prevzeli drugi računi (partyslo: Združevanje PR jure.kopac26 in proge, biketraveler: #569 pred Trki, grafika in fizika, croatiadata: #679, #663, #688, #672, #657, #666); `docs/odlocitve.md`, Tabla.
-- **Proge gredo na `main` čim prej** (od 16. 11.; vse pripravljene proge računa v enem PR, mesto med prvima dvema, ko so pripravljene); za njimi nova mapa in misije (zaustavljene do 2.0). Pred izidom vse nedokončano za gumb **NEUPORABNO**.
-- **Prednost: fizika (trki) in grafika** (biketraveler, jure.kopac26 samo Trki #608); partyslo od 16. 11. tudi grafika (Realizem na pravih progah), novih prog ne začne brez potrjenega seznama; croatiadata nove proge s seznama za 1.0, ena proga na državo (croatiadata ima iste meje: 2 seji s kodo, 6 tem; stran Odločitve 4). **Proge ne po predlogi: vsaka proga svoja raziskava in svoj značaj** (da si niso podobne).
+- Računi: **biketraveler**, **jure.kopac26**, **partyslo**, **croatiadata** (nikoli polnega emaila). Tabla 2× na dan (croatiadata 2.15, 8.15, 14.15, 20.15), majhna sveža seja; komentar konča z `---` / `_Generated by [Claude Code](https://claude.ai/code)_`. **Koordinacija partyslo ob 21.00: 5-vrstični povzetek na stran Odločitve.**
+- **Matejeve odločitve** (»Matej (jure.kopac26)«, OWNER) izvede koordinacija računa, odgovor v eni vrstici.
+- **jure.kopac26**: do reseta brez sej s kodo; po resetu v nedeljo 22. 11. ob 10.00 **največ 2 seji, samo Trki #608** (Fable, max; zažene opravilo po urniku). Delo prevzeli: partyslo Združevanje in proge, biketraveler #569 pred Trki, grafika in fizika, croatiadata #679, #663, #688, #672, #657, #666.
+- **Proge na `main` čim prej**; nova mapa in misije do 2.0 zaustavljene. **Prednost: fizika (trki), grafika**. **Vsaka proga svoja raziskava in značaj.**
 
 ## Kje je kaj
-- Orodje za napake (`js/napake.js`): samo slovenščina, sklopa 0 in 8 odložena; slik in seznamov napak ne shranjuj.
-- `docs/kazalo.md`: samo »Na kratko«, ostalo z grepom; velikih datotek ne beri v celoti. O progah `docs/proge-pregled.md`. Orodje za napake: `docs/orodje-za-napake.md`.
-- Žetoni: odločitve enkrat v docs; slike samo za vprašanja in ob koncu (≤300 KB); opis PR do ~20 vrstic. V `docs/vrsta.md` celica do ~2 stavka, starejše v `docs/arhiv/vrsta-zgodovina.md`.
+- Orodje za napake (`js/napake.js`): samo slovenščina; slik in seznamov napak ne shranjuj.
+- `docs/kazalo.md`: samo »Na kratko«; velikih datotek ne beri v celoti; proge `docs/proge-pregled.md`.
+- Žetoni: opis PR do ~20 vrstic; `docs/vrsta.md` celica do ~2 stavka.
