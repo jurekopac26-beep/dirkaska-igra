@@ -119,7 +119,7 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'limalimo': dict(predmeti=False, makadam=True), 'darvaz': dict(predmeti=False, makadam=True, izpusti=[(335, -1)]),
          # group 538 (from #782): the short tracks of that pull request (js/world-kratke.js) get the side roads only, no street lamps or
          # bus stops (docs/realizem.md: those are for the 15 tracks of main)
-         'atitlan': dict(predmeti=False), 'mujib': dict(predmeti=False),
+         'atitlan': dict(predmeti=False), 'mujib': dict(predmeti=False), 'sanssouci': dict(predmeti=False),   # (Sanssouci: the track comes with #538)
          # group Proge 3 (19. 11. 2026): the other tracks of #788, side roads only; Cromwell a circuit, fitted to its own line (raceway)
          'cromwell': dict(kinds={'raceway'}, predmeti=False), 'livingstone': dict(predmeti=False), 'atimpoku': dict(predmeti=False, izpusti=[(2141, 1), (2346, 1), (3278, 1)]),
          'hinboun': dict(predmeti=False), 'vinales': dict(predmeti=False)}
