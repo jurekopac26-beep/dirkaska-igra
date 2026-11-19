@@ -8,7 +8,7 @@ Obalna cesta zahodno od Khasaba na polotoku Musandam ob Hormuški ožini, vsekan
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica, duh in medalje (zlata 1:44, srebrna 1:49, bronasta 1:57, v dežju 2:05 / 2:11 / 2:21; zlato je čas relijskega avta na avtopilotu).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti (avtomobili, kombiji, kak tovornjak in avtobus, motoristi, ob cesti kolesarji).
 - **Policija**: beg pred policijo do vrha; patrulje imajo samo generičen napis POLICE.
-- **Imena pod uro**: Zaliv · 1 m, Hanna · 1 m, Pečine · 80 m, Nad zalivom · 103 m, Zaselek · 156 m, Vrh vzpona · 194 m (samo zemljepisna in opisna imena).
+- **Imena pod uro**: Zaliv · 1 m, Hanna · 1 m, Pečine · 80 m, Nad zalivom · 103 m, Zaselek · 156 m, Vrh vzpona · 194 m (samo zemljepisna in opisna imena); Hanna je zaselek v OSM (`place=hamlet`, vozlišče 1718351189, popis Omana 2010; arabsko حنا), zemljepisno ime, preverjeno 19. 11. 2026.
 - **Oblika in višine**: sredinska črta iz OpenStreetMap (zglajena), cesta v igri široka 10 m; višine iz Copernicus DEM GLO-30, očiščene: ob obali do ~1.100 m skoraj ravno (manj kot 6 m nad morjem), nato vzpon do 14 % (navzdol največ 7 %).
 - **Brez padca**: na strani prepada stoji jeklena varnostna ograja (kjer je ni videti, nevidna stena); padec čez rob je samo na Killarju (odločitev uporabnika 13. 11. 2026). Ograja ali hiše do ~3 m od roba so na več kot polovici dolžine; po odločitvi 13. 11. 2026 to ni ovira.
 
