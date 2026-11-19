@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<title>Kenya</title>
+<rect width="900" height="600" fill="#FFFFFF"/>
+<rect width="900" height="180" fill="#000000"/>
+<rect y="210" width="900" height="180" fill="#BB0000"/>
+<rect y="420" width="900" height="180" fill="#006600"/>
+<g stroke="#FFFFFF" stroke-width="12" stroke-linecap="round">
+<path d="M330,150 L570,450"/>
+<path d="M570,150 L330,450"/>
+</g>
+<g fill="#FFFFFF">
+<path d="M320,138 L345,155 L338,175 Z"/>
+<path d="M580,138 L555,155 L562,175 Z"/>
+</g>
+<path d="M450,140 C540,190 540,410 450,460 C360,410 360,190 450,140 Z" fill="#BB0000"/>
+<path d="M450,140 C405,190 400,250 405,300 C400,350 405,410 450,460 C370,410 360,190 450,140 Z" fill="#000000"/>
+<path d="M450,140 C495,190 500,250 495,300 C500,350 495,410 450,460 C530,410 540,190 450,140 Z" fill="#000000"/>
+<g fill="#FFFFFF">
+<ellipse cx="450" cy="210" rx="9" ry="32"/>
+<ellipse cx="450" cy="390" rx="9" ry="32"/>
+<ellipse cx="450" cy="300" rx="22" ry="38"/>
+</g>
+</svg>

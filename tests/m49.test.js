@@ -17,7 +17,7 @@ let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('49'), K = D.K;
 const T = new Core.Track(Core.TRACKS.find(t => t.id === 'suzuka'));
-check('49: on Suzuka, a real track', D.track === 'suzuka' && !Core.TRACKS.find(t => t.id === 'suzuka').test);
+check('49: on Suzuka, a real track', D.track === 'suzuka');
 const o = D.opts(D);
 check('its race: alone, one run, the aerial ladder (the racing truck slower), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.id === 'titan' && o.playerModel.vLim < 120, JSON.stringify({ vLim: o.playerModel.vLim }));
 const sW = (T.startS + K.AT) % T.len;

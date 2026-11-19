@@ -85,13 +85,14 @@ try {
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
     const { nan, resc } = await drive(20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    // (a road shorter than 20 s, Ghoufi's 0.57 km: across the line, the race over; the sign below then on the race started again)
+    T.check(`${id}: 20 s race on autopilot`, (r.phase === 'racing' || r.fin) && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+      `${r.fin ? 'at the finish, ' : ''}dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
@@ -114,6 +115,7 @@ try {
       for (let k = 0; k < 10; k++) { await drawn(2); const m2 = at(); if (m2.top === m.top && m2.clk === m.clk) break; m = m2; }
       return { s, cls: $('h-note').className, top: m.top, clk: m.clk, disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
+    if (r.fin) await startTrack(page, id);
     const n1 = await sign(null);
     {
       // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
