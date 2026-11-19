@@ -429,6 +429,24 @@ try {
       Q.q && !Q.d2 && Q.ajar.includes('doorL') && !Q.xOpen && Q.n === 0 && !nq.errors.length, JSON.stringify(Q) + ' ' + nq.errors.slice(0, 3).join(' | '));
   }
 
+  // the Gams (a narrow quarter too): its side window reaches behind the front door's shut line, so the facets of that pane fallen out
+  // lie in the quarter's range (collapsed, K.deadV: broken glass, 12 facets = 36 points); none of the quarter's dead points is anything
+  // else (no panel cut out or turned: xOpen false, no list of a rear door's facets)
+  {
+    const gq = await run({ xBody: 1, xGlass: 1, xParts: 1, carDet: 'normal', carId: 'gams' }, (hs) => {
+      const hit = eval(hs), g = window.__game, R = g.race, P = R.player;
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      for (let k = 0; k < 8 && !Render.viewOf(P).kit.ajar.doorL; k++) { hit(P, [0.15, 0.1, -1]); for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {}); }
+      for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {});
+      const v = Render.viewOf(P), K = v.kit, Q = v.body.geometry.userData.ranges.quarterL, dv = K.deadV, a = v.body.geometry.attributes.position.array, pt = new Set(); let n = 0, glass = 0, flat = 0;
+      for (const p of (v.xP || [])) if (p.broken) for (const t of p.tris) pt.add(t);
+      if (dv && Q) for (let t = Q.o[0] / 3; t < Q.o[1] / 3; t++) { if (!dv[t * 3]) continue; const o = t * 9; n++; if (pt.has(t)) glass++; if (a[o] === a[o + 3] && a[o] === a[o + 6] && a[o + 1] === a[o + 4] && a[o + 1] === a[o + 7] && a[o + 2] === a[o + 5] && a[o + 2] === a[o + 8]) flat++; }
+      return { ajar: Object.keys(K.ajar), xOpen: !!K.xOpen, rdt: !!(K.xRDt && K.xRDt[0]), q: !!Q, n, glass, flat }; }, hitFn);
+    const Q = gq.r;
+    T.check('Gams (a narrow quarter, its side window reaching into it): its front door opens, nothing cut out of the quarter; the quarter\'s only dead points are a broken pane\'s fallen facets (collapsed, none turned out)',
+      Q.q && Q.ajar.includes('doorL') && !Q.xOpen && !Q.rdt && Q.glass === Q.n && Q.flat === Q.n && Q.n <= 40 && !gq.errors.length, JSON.stringify(Q) + ' ' + gq.errors.slice(0, 3).join(' | '));
+  }
+
   // P4 · a knock's mark: against a wall grey (XSRC_WALL), against a car its paint, with Iskre izklop (c.fxQ) too; a view built again
   // mid-race (Render.setCrash: Detajli avtov) takes its dents again with their marks and its crumple zone (the dent log's xcol, xsp)
   {
@@ -643,6 +661,38 @@ try {
     kits.push(Z[0].kit);
   }
   T.check('P6 crumple zone: one of the bodies above is an older one without a kit (the fallback covered)', kits.includes(false), JSON.stringify(kits));
+  // an older body's panels (boxes over the skin: the bonnet, the front bumper, the front wings) go back with the nose the crumple zone
+  // shortened: none stands out ahead of the skin more than as built, the bonnet's rear edge at the windscreen where it was (shorter and
+  // steeper, not pushed into the screen); a pit repair has them as built before the car is built afresh; a kit car and the LM: none of it
+  for (const id of ['rally', 'kaze', 'tornado', 'lm']) {   // (the Kaze's bonnet starts ahead of its firewall)
+    const on = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal', carId: id }, () => {
+      const g = window.__game, R = g.race, P = R.player, out = {};
+      const fresh = () => { R.repairCar(P); Render.frame(0.016, 1, P, 'chase', {}); Render.frame(0.016, 1, P, 'chase', {}); return Render.viewOf(P); };
+      const knock = (sp) => { P.fxWall = sp; Core.applyDamage(P, 0.15, P.m.len / 2, 0.3 * P.m.wid / 2); Render.frame(0.016, 1, P, 'chase', {}); };
+      let v = fresh(), parts = v.parts || {};
+      const ext = (m) => { const a = m.geometry.attributes.position.array, c = Math.cos(m.rotation.z), s = Math.sin(m.rotation.z); let lo = Infinity, hi = -Infinity, top = -Infinity, sum = 0;
+        for (let j = 0; j < a.length; j += 3) { const x = m.position.x + a[j] * c - a[j + 1] * s, y = m.position.y + a[j] * s + a[j + 1] * c; lo = Math.min(lo, x); hi = Math.max(hi, x); top = Math.max(top, y); sum += Math.abs(a[j]) + Math.abs(a[j + 1]) + Math.abs(a[j + 2]); }
+        return { lo, hi, top, sum }; };
+      const st = () => { const a = v.body.geometry.attributes.position.array; let nose = -Infinity; for (let i = 0, n = v.xc ? v.xc.on : a.length / 3; i < n; i++) nose = Math.max(nose, a[i * 3]);
+        let front = -Infinity, sum = 0; for (const n in parts) { if (!parts[n].isMesh) continue; const e = ext(parts[n]); sum += e.sum; if (parts[n].visible) front = Math.max(front, e.hi); }
+        const h = parts.hood && parts.hood.isMesh ? ext(parts.hood) : null;
+        const eg = v.under && v.under.hood && v.under.hood.children[1], ea = eg && eg.geometry.attributes.position.array; let e0 = Infinity, e1 = -Infinity; if (ea) for (let j = 0; j < ea.length; j += 3) { e0 = Math.min(e0, ea[j]); e1 = Math.max(e1, ea[j]); }   // (the engine under the bonnet: its length)
+        return { nose, front, sum, eng: ea ? e1 - e0 : 0, hood: h ? [h.lo, h.hi, h.top] : null, hoodOn: !!(parts.hood && parts.hood.visible), rz: parts.hood ? parts.hood.rotation.z : 0, n: v.oNose ? v.oNose.size : 0, cz: !!(v.xc && v.xc.cz), calls: v.det ? v.det.children.length : 0 }; };
+      out.kit = !!v.kit; out.fp = !!v.fp; knock(0); out.new = st();   // (the same knock under 50 km/h: its dent without the zone)
+      v = fresh(); parts = v.parts || {}; knock(20); out.hit = st();
+      for (let k = 0; k < 20; k++) Render.frame(0.05, 1, P, 'chase', {}); out.later = st();   // (the bonnet ajar meanwhile, if it is: turned on its hinge, its points as the knock left them)
+      P.pitState = 'repair'; P.pitDur = 10;
+      for (let k = 0; k <= 99 && !out.rep; k++) { P.pitT = k / 10; Render.frame(0.016, 1, P, 'chase', {}); if (Render.viewOf(P) === v && v.rep && Core.repairU(P) >= Core.REPAIR.trim) out.rep = st(); }
+      out.same = Render.viewOf(P) === v; return out; });
+    const Q = on.r, f = (o) => o && JSON.stringify(o, (k, x) => typeof x === 'number' ? +x.toFixed(3) : x);
+    if (!Q.kit && !Q.fp) {
+      T.check(`P6 crumple zone, ${id}: the bonnet, bumper and wings of an older body go back with the shortened nose (none ahead of the skin more than as built, the bonnet's front edge not ahead of the nose: 3 cm), the bonnet's rear edge where it was; the engine under it shorter with it, not pressed flat`,
+        Q.hit.cz && Q.new.n === 0 && Q.hit.n > 0 && Q.hit.hoodOn && Q.new.nose - Q.hit.nose >= 0.4 && Q.hit.front - Q.hit.nose <= Q.new.front - Q.new.nose + 0.03 && Q.hit.hood[1] <= Q.hit.nose + 0.03
+        && Q.new.hood[1] - Q.hit.hood[1] >= 0.3 && Math.abs(Q.hit.hood[0] - Q.new.hood[0]) < 0.03 && Q.new.eng > 0.2 && Q.hit.eng < Q.new.eng && Q.hit.eng > 0.25 * Q.new.eng && Q.hit.calls === Q.new.calls && !on.errors.length, f(Q) + ' ' + on.errors.slice(0, 3).join(' | '));
+      T.check(`P6 crumple zone, ${id}: the shortened bonnet stays so as it stands (and opens on its hinge as before); a pit repair has the panels as built again before the car is built afresh`,
+        Math.abs(Q.later.sum - Q.hit.sum) < 1e-3 && Q.later.hood[1] <= Q.later.nose + 0.03 && Q.rep && Q.same && Q.rep.n === 0 && Math.abs(Q.rep.sum - Q.new.sum) < 1e-3 && Math.abs(Q.rep.front - Q.new.front) < 1e-3 && Math.abs(Q.rep.eng - Q.new.eng) < 1e-3, f(Q));
+    } else T.check(`P6 crumple zone, ${id} (${Q.kit ? 'a kit' : 'its own body'}): no panel of it touched by the older bodies' follow-the-nose`, Q.new.n === 0 && Q.hit.n === 0 && Q.later.n === 0 && Math.abs(Q.hit.sum - Q.new.sum) < 1e-6 && !on.errors.length, f(Q) + ' ' + on.errors.slice(0, 3).join(' | '));
+  }
   // open cars, a kart: no roof field; a rollover's roof contact moves nothing; blows on the ends never lift the driver, a hoop, a roll bar
   // (xStand: they stand, as a roofed car's seats and driver)
   for (const id of ['lisica', 'blisk', 'mravlja']) {

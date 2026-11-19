@@ -7164,7 +7164,7 @@ const Render = (function () {
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
-      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = w; v.xsC = k; } else { v.xsW = Math.max(v.xsW || 0, w); v.xsC = Math.max(v.xsC || 0, k); } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait; c.fxQ mutes the sparks only)
+      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = v.xsC = 0; v.xsK = null; } else { if (w > (v.xsW || 0)) v.xsW = w; if (k > (v.xsC || 0)) { v.xsC = k; v.xsK = xSrcCar(c); } } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait: the stronger contact holds, with its car's paint (xsK: taken now, the contact point is the last knock's only); a touch without a dent leaves nothing for the next knock; c.fxQ mutes the sparks only)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
       const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
@@ -7931,6 +7931,7 @@ const Render = (function () {
       v.lights.forEach((L, i) => L.lerpVectors(R.L[i], v.lights0[i], k));   // (the glow points a loose part turned)
       if (R.dec && v.dec0) { v.dec.position.lerpVectors(R.dec[0], v.dec0[0], k); v.dec.quaternion.slerpQuaternions(R.dec[1], v.dec0[1], k); }
       K.ver++; }
+    if (v.oNose) repNose(v, R, k);   // (an older body's bonnet, front bumper, wings and lenses back from the shortened nose: oldNose)
     if (k >= 1) { v.roofStep = 0; if (v.xtR) v.xtR = undefined; }   // (the Kolibri's default roof field: afresh, xtRoof)
   }
   function repGlass(v, R) {
@@ -8702,9 +8703,48 @@ const Render = (function () {
       const ddx = Math.max(0, t - Math.max(Q.dx[i], R[j] - a[j])), ddy = Math.max(0, ty - Q.dy[i]); if (ddx < 1e-5 && ddy < 1e-5) continue;
       Q.dx[i] += ddx; Q.dy[i] += ddy; a[j] -= ddx; a[j + 1] += ddy; tris.add((i / 3) | 0);
     }
+    oldNose(v, xc);
     if (!tris.size) return;
     if (v.lights && v.lights0) for (let k = 0; k < 2; k++) { const L0 = v.lights0[k], Lk = v.lights[k], lx = Q.lx || (Q.lx = [0, 0]); if (!L0 || !Lk) continue; const d = xcAt(Q, B, L0.x, L0.z) - lx[k]; if (d > 0) { Lk.x -= d; lx[k] += d; } }
     xTouched(v, xc, geo, tris); xWheels(v, xc);
+  }
+  // an older body without a kit: its panels are boxes laid over the skin (buildParts: the bonnet, the front bumper, the front wings, the
+  // lenses, what is under them), so they go back with the nose the crumple zone shortened, by the zone's own share at each of their
+  // corners (xcAt, as the skin under them: the bonnet shorter and steeper, its rear edge at the windscreen where it was; an offset blow
+  // askew), not left standing out over it. From the panel as built every time (v.oNose: mesh -> its points and normals as built), in its
+  // frame as built where it stands open (oldAjar turns the mesh, not its points: the 18 degrees stay). Nothing random, no draw more
+  // (a rival's: its one mesh built again, remerge). A pit repair walks them back with the bodywork (repNose)
+  function oldNose(v, xc) {
+    const Q = xc.cz; if (!Q || v.kit || v.fp || !v.parts) return;
+    const B = xc.B, N = v.oNose || (v.oNose = new Map()), A = v.oAjar; let ch = false;
+    const one = (m, s, hinge) => {
+      if (!m || !m.isMesh || m.rotation.x || m.rotation.y) return;
+      const p = m.parent && m.parent !== v.det && m.parent !== v.bodyG ? m.parent : null; if (p && (p.rotation.x || p.rotation.y)) return;
+      const mx = s ? s[0] : m.position.x, my = s ? s[1] : m.position.y, pr = p ? p.rotation.z : 0, cp = Math.cos(pr), sp = Math.sin(pr);
+      const ox = (p ? p.position.x : 0) + mx * cp - my * sp, oz = (p ? p.position.z : 0) + m.position.z, r = pr + (s ? s[2] : m.rotation.z), cr = Math.cos(r), sr = Math.sin(r);
+      const g = m.geometry, pa = g.attributes.position, a = pa.array; let S = N.get(m); const R0 = S ? S.p : a;
+      if (!S) { let far = !!(hinge && hinge.p); for (let j = 0; j < R0.length && !far; j += 3) far = xcAt(Q, B, ox + R0[j] * cr - R0[j + 1] * sr, oz + R0[j + 2]) > 1e-4; if (!far) return;   // (behind the firewall: as it is)
+        if (!g.boundingBox) g.computeBoundingBox();   // (as built: oldAjar's hinge edge)
+        S = { p: a.slice(), n: g.attributes.normal ? g.attributes.normal.array.slice() : null, D: null, R: null, x0: 0, x1: 0 }; N.set(m, S);
+        if (hinge && hinge.p) { S.x0 = hinge.x0; S.x1 = hinge.x1; }   // (what is under the bonnet: by the bonnet's own length, shorter with it and under it still; by its own the engine would be pressed flat)
+        else if (hinge) { let lo = Infinity, hi = -Infinity; for (let j = 0; j < a.length; j += 3) { const X = ox + a[j] * cr - a[j + 1] * sr; if (X < lo) lo = X; if (X > hi) hi = X; } S.x0 = lo; S.x1 = hi; } }
+      // (the bonnet and what is under it: its front edge back with the nose, its rear edge at the windscreen where it was, even where
+      // the firewall is behind it; evenly shorter between)
+      for (let j = 0; j < a.length; j += 3) { const lx = S.p[j], ly = S.p[j + 1], X = ox + lx * cr - ly * sr, Z = oz + S.p[j + 2], d = hinge ? xcAt(Q, B, S.x1, Z) * (X - S.x0) / Math.max(S.x1 - S.x0, 1e-3) : xcAt(Q, B, X, Z); a[j] = lx - d * cr; a[j + 1] = ly + d * sr; }
+      pa.needsUpdate = true; if (S.n) g.computeVertexNormals(); g.computeBoundingSphere(); ch = true;
+    };
+    for (const n in v.parts) one(v.parts[n], A && (n === 'hood' || n === 'trunk') && A[n] && A[n].length === 3 && typeof A[n][0] === 'number' ? A[n] : null, n === 'hood');
+    for (const n in v.under) v.under[n].traverse(o => one(o, null, n === 'hood' && (N.get(v.parts.hood) || true)));
+    if (v.lens) for (let k = 0; k < 2; k++) one(v.lens[k], null);
+    if (ch) v.detDirty = true;
+  }
+  // a pit repair: those panels back to as built with the bodywork (k: 0 as they came in, 1 as built)
+  function repNose(v, R, k) {
+    for (const [m, S] of v.oNose) { const g = m.geometry, pa = g.attributes.position, a = pa.array;
+      if (S.R !== R) { S.R = R; S.D = a.slice(); }
+      for (let j = 0; j < a.length; j++) a[j] = S.D[j] + (S.p[j] - S.D[j]) * k;
+      pa.needsUpdate = true; if (S.n) { if (k >= 1) { g.attributes.normal.array.set(S.n); g.attributes.normal.needsUpdate = true; } else g.computeVertexNormals(); } g.computeBoundingSphere(); }
+    if (k >= 1) v.oNose = null; v.detDirty = true;
   }
   // P4 · the marks of a knock (render only, the core's contact as it is): against a wall or rail (fxWall the stronger) a grey scuff of
   // concrete and zinc; against another car (the one whose contact point this frame is the same, carCollide sets both) its paint; a car
@@ -8713,7 +8753,10 @@ const Render = (function () {
   function xSrcCol(v, c) {
     const w = v.xsW || 0, k = v.xsC || 0; if (!(w > 0 || k > 0)) return null;
     if (w >= k) return XSRC_WALL;
-    for (const q of views) { const o = q.car; if (o !== c && o.contactX === c.contactX && o.contactZ === c.contactZ && o.color != null) return _xsc.set(o.color); }
+    return v.xsK != null ? _xsc.set(v.xsK) : null;
+  }
+  function xSrcCar(c) {   // (the paint of the car this frame's contact was with, or null)
+    for (const q of views) { const o = q.car; if (o !== c && o.contactX === c.contactX && o.contactZ === c.contactZ && o.color != null) return o.color; }
     return null;
   }
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint); the roof's shell (a

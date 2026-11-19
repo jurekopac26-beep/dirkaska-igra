@@ -143,5 +143,114 @@ function police(seed, tx, own, wreck) {
     `privzeto: ${w1.wrRoll} korakov ustavljanja, z vleko ${w1.wrXd} korakov; »Samo moj avto«: ${w0.wrRoll} korakov ustavljanja, z vleko ${w0.wrXd}`);
 }
 
+// --- 4) neoznačeni policijski avto (civilDrive: po cesti kot promet, preden se pokaže), Chapman's Peak ---
+// Krmili ga policija (Police.step), zato ga privzeto vleče, s »Samo moj avto« pa vozi do bita kot cel. Stopnja lova je tu
+// dvignjena na silo (neoznačeni avto pride šele od stopnje POL_DIFF.uc), igralec stoji, da avto ostane neoznačen.
+// Vozila prometa (race.tf.veh) niso avti z vogali (brez `cd`, svoj korak po pasu): vleke nimajo v nobeni nastavitvi.
+function unmarked(tx, cd) {
+  C.setTest(tx);
+  const T = new C.Track(C.TRACKS.find(x => x.id === 'chapman'));
+  Math.random = seeded(3);
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 0, damage: 2, police: true });
+  const P = r.player, pol = r.pol; r.start();
+  let k = 0, u = null;
+  while (k < 120 * 60 && !(u = pol.uc)) { Math.random = seeded(5000 + (++k)); pol.heat = Math.max(pol.heat, 3.5); C.aiControl(P, r, DT); r.step(DT); }
+  if (!u) { end(); return null; }
+  pol.cars = pol.cars.filter(c => c === u); pol.D = Object.assign({}, pol.D, { join: 1e9 }); pol.heli = null; pol.heliCool = 1e9; if (pol.amb) pol.amb.forEach(a => { a.done = true; });
+  if (cd) u.cd = cd.slice();
+  const out = [], N = 20 * 120, d0 = u.q.d; let xd = 0, nan = 0, civ = 0, sumD = 0, maxD = 0;
+  for (let j = 0; j < N; j++) { Math.random = seeded(5000 + (++k)); P.inThr = 0; P.inBrk = 1; P.inSteer = 0; r.step(DT);
+    if (u.xd) xd++; if (u.pol.mode === 'civil') civ++; if (!finite(u)) nan++; sumD += u.q.d; maxD = Math.max(maxD, Math.abs(u.q.d - d0));
+    out.push([u.x, u.z, u.h, u.steer, u.vx, u.vz].join(',')); }
+  const traffic = r.tf ? r.tf.veh : [];
+  end();
+  return { s: out.join(';'), xd, nan, civ, N, d: sumD / N, maxD, v: u.speed, hw: T.wS(u.q.s), dmg: u.dmgMode, tfCars: traffic.filter(v => v instanceof C.Car || v.cd).length, tf: traffic.length };
+}
+{
+  const W = unmarked(null, null), W0 = unmarked({ pull: 0 }, null), L = unmarked(null, [0.9, 0, 0, 0]), R = unmarked(null, [0, 0.9, 0, 0]), L0 = unmarked({ pull: 0 }, [0.9, 0, 0, 0]);
+  const got = W && W0 && L && R && L0;
+  check('neoznačeni avto (Chapman\'s Peak): pride, 20 s vozi neoznačen po svojem pasu, poškodbe z učinkom, stanja končna', !!got && [W, W0, L, R, L0].every(o => o.civ === o.N && o.nan === 0 && o.dmg === 2 && o.v > 8 && Math.abs(o.d) + o.maxD < o.hw),
+    got ? `${W.v.toFixed(1)} m/s, ${W.d.toFixed(2)} m od sredine (polovica ceste ${W.hw.toFixed(1)} m)` : 'ni prišel');
+  if (got) {
+    const dl = L.d - W.d, dr = R.d - W.d;
+    check('neoznačeni avto: privzeto ga zvit sprednji vogal vleče na svojo stran (levi in desni zrcalno, ostane na cesti)', L.xd === L.N && R.xd === R.N && W.xd === 0 && L.s !== W.s && dl * dr < 0 && Math.abs(dl) > 0.1 && Math.abs(dl) < 1 && Math.abs(Math.abs(dl) - Math.abs(dr)) < 0.1,
+      `povprečni odmik od celega: levi vogal ${dl.toFixed(2)} m, desni ${dr.toFixed(2)} m`);
+    check('neoznačeni avto: »Samo moj avto« vleko izklopi (zvit vozi do bita kot cel); cel avto je s privzeto vleko in s »Samo moj avto« do bita enak', L0.s === W.s && L0.xd === 0 && W0.s === W.s,
+      `zvit s pull 0 = cel: ${L0.s === W.s}, cel pull 0 = cel: ${W0.s === W.s}`);
+    check('promet: vozila prometa niso avti z vogali (vleka zanje ne obstaja)', W.tf > 0 && W.tfCars === 0, `${W.tf} vozil, z vogali ${W.tfCars}`);
+  }
+}
+
+// --- 5) vzvratna vožnja z roko na volanu (Spa, ravnina, obe fiziki) ---
+// Vleka je odmik volana: pri vzvratni vožnji se zato zasuk avta obrne tako kot pri volanu (rep gre na isto stran, kamor avto
+// vleče naprej), ne podvoji se in ne niha. Dokaz: zvit avto (vogal 0,3: brez tresenja) vozi do bita kot cel avto z volanom,
+// zasukanim za enak odmik (0,06 × 0,3 = 0,018 × min(1, v / 10)).
+function straight(phys, mode, cd, eq, secs) {
+  C.setTest(null); Math.random = seeded(7);
+  const T = spaT || (spaT = new C.Track(C.TRACKS.find(x => x.id === 'spa')));
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, tt: true, laps: 1, playerModel: C.MODELS[4], assist: 0, phys, seed: 5, difficulty: 1, damage: 2 });
+  const P = r.player; r.start(); P.locked = false;
+  let i0 = 0; for (let i = 0; i < T.N; i++) { let ok = true; for (let e = -30; e <= 30; e++) if (Math.abs(T.k[(i + e + T.N) % T.N]) > 1e-4) { ok = false; break; } if (ok) { i0 = i; break; } }
+  P.place(T.px[i0], T.pz[i0], T.hd[i0]); P.y = P.py = T.hy ? T.hy[i0] : 0; if (cd) P.cd = cd.slice();
+  const h0 = P.h, x0 = P.x, z0 = P.z, out = [], ws = []; let nan = 0, flips = 0, pw = 0, vlMin = 0;
+  for (let k = 1; k <= secs * 120; k++) { Math.random = seeded(1000 + k);
+    P.inSteer = 0; P.inHand = 0; if (mode > 0) { P.inThr = 0.4; P.inBrk = 0; } else { P.inThr = 0; P.inBrk = 1; }
+    P.steer = eq ? eq * Math.min(1, Math.hypot(P.vx, P.vz) / 10) : 0;
+    P.step(DT, T);
+    if (!Number.isFinite(P.x + P.z + P.h + P.w + P.vx + P.vz)) nan++; if (P.w * pw < 0) flips++; if (P.w) pw = P.w; ws.push(Math.abs(P.w)); vlMin = Math.min(vlMin, P.vl);
+    out.push([P.x, P.z, P.h].join(',')); }
+  end();
+  const dx = P.x - x0, dz = P.z - z0, half = ws.length >> 1;
+  return { s: out.join(';'), dh: C.wrapPi(P.h - h0), lat: -dx * Math.sin(h0) + dz * Math.cos(h0), nan, flips, vlMin, gear: P.gear, wMid: Math.max(...ws.slice(half >> 1, half)), wLate: Math.max(...ws.slice(half)) };
+}
+let spaT = null;
+for (const phys of ['cs', 'nova']) {
+  const fW = straight(phys, 1, null, 0, 3), fL = straight(phys, 1, [0.3, 0, 0, 0], 0, 3), fR = straight(phys, 1, [0, 0.3, 0, 0], 0, 3), fE = straight(phys, 1, null, -0.018, 3);
+  const W = straight(phys, -1, null, 0, 8), L = straight(phys, -1, [0.3, 0, 0, 0], 0, 8), R = straight(phys, -1, [0, 0.3, 0, 0], 0, 8), E = straight(phys, -1, null, -0.018, 8);
+  const L9 = straight(phys, -1, [0.9, 0, 0, 0], 0, 8), R9 = straight(phys, -1, [0, 0.9, 0, 0], 0, 8), all = [fW, fL, fR, fE, W, L, R, E, L9, R9];
+  check(`vzvratno (${phys}): cel avto gre naravnost naprej in vzvratno, stanja končna`, all.every(o => o.nan === 0) && fW.dh === 0 && W.dh === 0 && Math.abs(W.lat) < 1e-6 && W.gear === -1 && W.vlMin < -5,
+    `vzvratno do ${(-W.vlMin).toFixed(1)} m/s, zasuk ${W.dh}`);
+  check(`vzvratno (${phys}): zvit vogal vleče naprej in vzvratno na isto stran ceste, zasuk avta se vzvratno obrne (kot pri volanu), levi in desni zrcalno`,
+    fL.lat < -0.3 && fR.lat > 0.3 && fL.dh < 0 && fR.dh > 0 && L.lat < -1 && R.lat > 1 && L.dh > 0.05 && R.dh < -0.05 && Math.abs(L.dh + R.dh) < 1e-6 && Math.abs(L.lat + R.lat) < 1e-3,
+    `naprej 3 s: levi ${fL.lat.toFixed(2)} m / ${fL.dh.toFixed(3)} rad, desni ${fR.lat.toFixed(2)} m / ${fR.dh.toFixed(3)} rad; vzvratno 8 s: levi ${L.lat.toFixed(2)} m / ${L.dh.toFixed(3)} rad, desni ${R.lat.toFixed(2)} m / ${R.dh.toFixed(3)} rad`);
+  check(`vzvratno (${phys}): vleka je natanko odmik volana (zvit avto do bita kot cel z volanom za 0,018), naprej in vzvratno: ni podvojena in ni obrnjena`, fE.s === fL.s && E.s === L.s && fL.s !== fW.s && L.s !== W.s);
+  const k9 = L9.dh / L.dh;
+  check(`vzvratno (${phys}): močno zvit vogal (0,9) vleče v razmerju omejitve 0,05 / 0,018, brez nihanja in brez rasti zasuka`, k9 > 2.5 && k9 < 3 && Math.abs(L9.dh + R9.dh) < 1e-3 && L9.flips === 0 && R9.flips === 0 && L9.wLate <= L9.wMid * 1.02 && L9.wLate < 0.1,
+    `zasuk ${L9.dh.toFixed(3)} rad proti ${L.dh.toFixed(3)} rad (× ${k9.toFixed(2)}), menjav smeri vrtenja ${L9.flips}, največja hitrost vrtenja ${L9.wMid.toFixed(4)} → ${L9.wLate.toFixed(4)} rad/s`);
+}
+
+// --- 6) vzvratna vožnja pod samodejnim krmilom: obračanje v stranski cesti (Core.stubDrive, kot patrulja), Chapman's Peak ---
+// Edina vzvratna vožnja samodejnega krmila (tekmeci in samodejni voznik vzvratne prestave nimajo): noter do konca, obrat
+// (naprej na polnem zasuku, vzvratno na nasprotnem), ven na cesto. Zvit avto se obrne in pride ven kot cel; s »Samo moj avto«
+// do bita kot cel.
+function turnRound(k, tx, cd) {
+  C.setTest(tx); Math.random = seeded(77);
+  const T = chT || (chT = new C.Track(C.TRACKS.find(x => x.id === 'chapman'))), St = T.stubs[k];
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, tt: true, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1, damage: 2 }), P = r.player; r.start(); P.locked = false;
+  const back = St.ang > 100, i = T.idx(St.s0 + (back ? 16 : -45)), d = St.side * Math.min(2.5, T.w - 1.5);
+  P.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i] + (back ? Math.PI : 0)); P.y = P.py = T.hy[i]; P.roadY = P.y; const v0 = back ? 5 : 12; P.vx = Math.cos(P.h) * v0; P.vz = Math.sin(P.h) * v0;
+  if (cd) P.cd = cd.slice();
+  let ph = back ? 'in' : 'road', tP = 0, outOk = false, rev = 0, legs = 0, pg = 1, nan = 0, wall = 0, j = 0; const out = [];
+  for (; j < 120 * 150 && ph !== 'done'; j++) { Math.random = seeded(9000 + j);   // (vsak korak krmili samodejno krmilo: stubDrive ali aiControl)
+    if (ph === 'road') { C.aiControl(P, r, DT); if (P.speed > 9) { P.inThr = 0; P.inBrk = 0.4; } if (Math.abs(P.q.s - St.s0) < 14) ph = 'in'; }
+    else if (ph === 'in') { if (C.stubDrive(P, r, k, 1)) { ph = 'out'; C.stubDrive(P, r, k, -1); } }
+    else if (ph === 'out') { if (C.stubDrive(P, r, k, -1)) { ph = 'back'; tP = 0; C.aiControl(P, r, DT); } }
+    else { if (C.stubDrive(P, r, k, -1)) C.aiControl(P, r, DT); tP += DT; if (P.q.k < 0 && Math.abs(P.q.d) < T.w) { outOk = true; ph = 'done'; } if (tP > 10) ph = 'done'; }
+    P.hitWall = 0; r.step(DT);
+    if (P.vl < -0.5) rev++; if (P.gear === -1 && pg !== -1) legs++; pg = P.gear; if (P.hitWall > 0.3) wall++; if (!finite(P)) nan++;
+    out.push([P.x, P.z, P.h, P.steer].join(',')); }
+  end();
+  return { s: out.join(';'), outOk, t: j * DT, rev: rev * DT, legs, nan, wall };
+}
+let chT = null;
+for (const k of [0, 2]) {   // (najdaljša asfaltna in makadamska stranska cesta)
+  const W = turnRound(k, null, null), L = turnRound(k, null, [0.9, 0, 0, 0]), R = turnRound(k, null, [0, 0.9, 0, 0]), L0 = turnRound(k, { pull: 0 }, [0.9, 0, 0, 0]), W0 = turnRound(k, { pull: 0 }, null);
+  const okRun = (o) => o.outOk && o.nan === 0 && o.wall === 0 && o.legs >= 2 && o.rev > 1.5;
+  check(`obračanje v stranski cesti ${k} (Chapman's Peak, samodejno krmilo, privzeta vleka): zvit avto se obrne z vzvratno vožnjo in pride na cesto kot cel (brez dotika ograje, enako potez, čas do 5 % daljši)`,
+    okRun(W) && okRun(L) && okRun(R) && L.s !== W.s && R.s !== W.s && L.legs === W.legs && R.legs === W.legs && L.t < W.t * 1.05 && R.t < W.t * 1.05,
+    `cel ${W.t.toFixed(1)} s (vzvratno ${W.rev.toFixed(1)} s, ${W.legs} potez), levi vogal ${L.t.toFixed(1)} s (${L.rev.toFixed(1)} s, ${L.legs}), desni ${R.t.toFixed(1)} s (${R.rev.toFixed(1)} s, ${R.legs})`);
+  check(`obračanje v stranski cesti ${k}: s »Samo moj avto« zvit avto do bita kot cel; cel je s pull null in 0 do bita enak`, L0.s === W.s && W0.s === W.s);
+}
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);
