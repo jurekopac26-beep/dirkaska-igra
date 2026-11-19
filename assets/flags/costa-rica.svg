@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+  <title>Costa Rica</title>
+  <!-- Ratio 3:5. Five horizontal bands blue, white, red, white, blue in the proportions 1:1:2:1:1 (the civil flag, without the arms). -->
+  <rect width="1000" height="600" fill="#002B7F"/>
+  <rect width="1000" height="400" y="100" fill="#FFFFFF"/>
+  <rect width="1000" height="200" y="200" fill="#CE1126"/>
+</svg>
