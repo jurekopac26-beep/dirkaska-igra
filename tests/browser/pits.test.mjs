@@ -19,8 +19,9 @@ import { serve, launch, openGame, checker } from './lib.mjs';
 
 // (both races repeatable: the test mode's seed (?proga=…&seme=, the quick entry; Bathurst's race on the same page the same way). Started
 // from the menu with their own dice and real time stepping them till the test paused them, a race was a different one each run: on 11. 11.
-// a safety car and yellow flags took the first stop's toasts and the hints never came up. docs/nestabilni-testi.md)
-const SEME = +(process.env.SEME || 7);
+// a safety car and yellow flags took the first stop's toasts and the hints never came up. docs/nestabilni-testi.md. PITS_SEME: another race,
+// to try the test on)
+const SEME = +process.env.PITS_SEME || 7;
 
 const T = checker('pits (gozd, bathurst)');
 const srv = await serve();

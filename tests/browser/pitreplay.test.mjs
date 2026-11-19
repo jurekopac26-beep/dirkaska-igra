@@ -13,9 +13,10 @@
 import { serve, launch, openGame, checker } from './lib.mjs';
 
 // (each race repeatable: the test mode's seed (?proga=…&seme=, the quick entry). Started from the menu with its own dice and real time
-// stepping it till the test paused it, a race was a different one each run: on 11. 11. at Spa the player's stop came under a safety car,
-// 189 s from the way in to the hand-back, and the TV cameras' replay ran out before it. docs/nestabilni-testi.md)
-const SEME = +(process.env.SEME || 7);
+// stepping it till the test paused it, a race was a different one each run: on 11. 11. at Spa the player's stop took 189 s from the way
+// in to the hand-back (26 s with the seed) and the replay over the TV cameras gave no frame of it. docs/nestabilni-testi.md. PITREPLAY_SEME:
+// another race, to try the test on)
+const SEME = +process.env.PITREPLAY_SEME || 7;
 const QUICK = (id) => '/index.html?proga=' + id + '&t=1&seme=' + SEME;   // (the race 1 s after the start, paused there: quick.done)
 
 const T = checker('pit stop in the replay (bathurst)');
