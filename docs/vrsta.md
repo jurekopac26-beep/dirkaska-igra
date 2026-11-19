@@ -16,6 +16,7 @@ Skupna vrsta PR za `main` vseh računov (`CLAUDE.md`, Postopek). Naenkrat gre na
 - **Nov PR** se vpiše na konec vrste in ostane osnutek; hitri popravki rdečega `main` gredo na začetek.
 - **Po združitvi** seja svojo vrstico izbriše in obvesti naslednjega.
 - Koordinacija računa vrsto ureja; pri sporu obdrži vrstice obeh strani.
+- **Pospešitev vrste (Matej 18. 11., komentar 6987073576, točke 1–4):** PR z rdečim krogom ali konfliktom Združevanje **preskoči**, ga da na konec vrste in nadaljuje; popravi ga nova seja s kodo. Najprej majhni PR brez konfliktov, PR s konflikti (npr. #671, #605) pozneje; vrsta teče, medtem ko se konflikti rešujejo. Konflikte rešuje takoj čakajoči PR sam (spoji svež `main`), ne šele v vrsti. Brez ponavljanja krogov: zelen PR ne dobi novega kroga zaradi `main`; konflikti samo v žigih, seznamih testov in kazalu se spojijo brez novega kroga.
 - **Zbirne veje** (`zbirna/<ime>`): en PR, en krog; vodja spoji `main` (`node tools/stamp.js --merge`), požene `npm run test:related` in `node tools/stamp.js --check`; člene zapre po združitvi; padel del gre ven. Proge so vedno zadnje.
 - **Osnutek do vrste**: »Ready for review« samo prva dva; ostali osnutki; označen PR zunaj prvih dveh vrne v osnutek koordinacija.
 - **Prevzem dela ob koncu porabe**: predaja v opisu PR, vpis na konec vrste s pripisom »prevzame račun N«, ustavitev; PR pripelje seja Združevanje računa N; večje kode samo ob dovolj porabe.
@@ -91,8 +92,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 10.12 | #246 | **za Trki (#608), ~8. 12.**; preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva, tudi pri nekrožnih progah brez pospeševanja; ostalih 11 prog počaka na boljšo grafiko (`claude/preleti-posnetki`) | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
-| 10.13 | #756 Proge 2 | Zbirna veja končanih prog z znamenitostjo in zamenjav (naloga koordinacije 16. 11. 2026): **Luanda, Angola** (#711, s skupnim nalagalnikom `.glb`), **Ujarrás, Kostarika** (#710), **Ghoufi, Alžirija** (#712), **Cusco, Peru** (#715), **Mombasa, Kenija** (#718), **Isalo, Madagaskar** (#722), **Portobelo, Panama** (#726), **El Jem, Tunizija** (#727), **Isuna, Butan** (#728); Hiva (#723) še v delu, ni v njej. Gre na `main` takoj za #569 (in #246), na osnovi `zbirna/nove-proge-N6`; posamezni PR ostanejo odprti do združitve | jure.kopac26 | osnutek s predajo v opisu; povezani testi lokalno; na `main` ga pelje seja Združevanje |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
-| 10.14 | #769 Pravila 12.–17. 11. (#664 + #674 + #701) | samo dokumenti; pravila enkrat na dan; veja `pravila/zbirna-17-11` | partyslo (prevzem od jure.kopac26, 17. 11.) | osnutek; do `main` ga vodi Združevanje partyslo |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
