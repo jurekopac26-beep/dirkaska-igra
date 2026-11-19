@@ -10,7 +10,8 @@
    list: [x, y, z, rot, look, W, H, amp]: the pole at the cloth's top edge (x, y, z), the way the cloth flies from it (rot: radians from
    +x, as World's box turns a box), the cloth's length W and height H, its look: stripes across, top to bottom ([[r, g, b], ...]),
    { up: [...] } upright bands from the pole out, { chq: [nx, ny, c0, c1] } a chequer, { grid: [u edges, v edges, colours by row] } a
-   canton or a cross, { tri: colour } a pennant, { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
+   canton or a cross, { tri: colour } a pennant, { wedge: [top, bottom, colour, a] } two stripes with a wedge at the pole to a of the length (Czechia's), { serr: [band, field, a, b, n] } a band at the pole
+   serrated into the field, n points from a to b of the length (Bahrain's, Qatar's), { uv: [u0, u1, v top, v bottom], tex } a picture from a texture (one mesh for each texture, o.map); any look may carry emblems, look.sym (symbols(): a crescent, a star; Turkey's, Malaysia's); amp: how much it waves (1 = a cloth flag; a banner held at both ends less). o.own: the THREE objects named with World's own generator (World.api.ownRnd), so a seeded race runs as it did before
    for a world that had no such mesh (the worlds that had one, rbFlags, make theirs with Math.random as they always did).
    World.api.flags: the flags of the build under way (add as they are put up; World's build makes their mesh at the end), its clock the
    world's wind; canton(): the look of stripes with a canton.
@@ -31,8 +32,41 @@
     if (look && look.chq) { const [nx, ny, c0, c1] = look.chq, out = []; for (let a = 0; a < nx; a++) for (let b = 0; b < ny; b++) out.push([a / nx, (a + 1) / nx, b / ny, (b + 1) / ny, (a + b) % 2 ? c1 : c0]); return out; }   // a chequer
     if (look && look.grid) { const [us, vs, cols] = look.grid, out = []; for (let b = 0; b + 1 < vs.length; b++) for (let a = 0; a + 1 < us.length; a++) out.push([us[a], us[a + 1], vs[b], vs[b + 1], cols[b][a]]); return out; }   // a canton, a cross: [u edges, v edges, colours by row]
     if (look && look.tri) return [[0, 1, 0, 1, look.tri]];   // a pennant: one colour, narrowing to a point
+    if (look && look.wedge) { const [top, bot, wc, a] = look.wedge, up = (u) => (u < a ? 0.5 * u / a : 0.5), dn = (u) => 1 - up(u); return [[0, 1, 0, up, top], [0, a, up, dn, wc], [0, 1, dn, 1, bot]]; }   // a wedge at the pole (its cells' v edges as functions of u)
+    if (look && look.serr) {   // a band at the pole serrated into the field: n points of the band's colour from u a to b (Bahrain's, Qatar's)
+      const [band, field, a, b, n] = look.serr, hw = (u) => 0.5 / n * (b - u) / (b - a), out = [[0, a, 0, 1, band], [b, 1, 0, 1, field]];
+      for (let k = 0; k < n; k++) { const c = (k + 0.5) / n, lo = (u) => c - hw(u), hi = (u) => c + hw(u); out.push([a, b, k / n, lo, field], [a, b, lo, hi, band], [a, b, hi, (k + 1) / n, field]); }
+      return out;
+    }
     if (look && look.uv) return [[0, 1, 0, 1, [1, 1, 1]]];   // a picture: the cloth white under its texture (look.tex)
     return [[0, 1, 0, 1, [0.92, 0.92, 0.9]]];
+  }
+
+  // the emblems on a cloth (look.sym, on any look: Turkey's crescent and star, Malaysia's), on both faces EMB m off it at their own u, so they
+  // wave with it (the same u, phase and wave as the cloth under them); their sizes in the flag's height G, x from the pole and y down from the
+  // top edge. ['moon', colour, x, y, r1, dx, r2]: a crescent between the circle of r1 round (x, y) and the circle of r2 round (x + dx, y), its
+  // horns to the free end; ['star', colour, x, y, r1, r2, n, a]: a star of n points, r1 out and r2 in, a point at the angle a (radians: 0 to
+  // the free end, PI to the pole, -PI/2 up). put(gx, gy, side, colour) adds a vertex and answers its index; tri(a, b, c) a triangle
+  const EMB = 0.02;
+  function symbols(sym, put, tri, NC) {
+    for (const sm of sym) for (const sg of [1, -1]) {
+      const col = sm[1];
+      if (sm[0] === 'moon') {
+        const [, , gx, gy, r1, dx, r2] = sm, hx = (r1 * r1 - r2 * r2 + dx * dx) / (2 * dx), hy = Math.sqrt(Math.max(0, r1 * r1 - hx * hx));
+        const a1 = Math.atan2(hy, hx), a2 = Math.atan2(hy, hx - dx);   // (the horns: where the circles meet, on each circle)
+        let p0 = -1;
+        for (let k = 0; k <= NC; k++) {
+          const t = k / NC, p = a1 + (TAU - 2 * a1) * t, q = a2 + (TAU - 2 * a2) * t;
+          const o = put(gx + r1 * Math.cos(p), gy + r1 * Math.sin(p), sg, col), i = put(gx + dx + r2 * Math.cos(q), gy + r2 * Math.sin(q), sg, col);
+          if (p0 >= 0) { tri(p0, o, i); tri(p0, i, p0 + 1); }
+          p0 = o;
+        }
+      } else if (sm[0] === 'star') {
+        const [, , gx, gy, r1, r2, n, a0] = sm, m = put(gx, gy, sg, col), rim = [];
+        for (let k = 0; k < 2 * n; k++) { const r = k & 1 ? r2 : r1, an = a0 + k * Math.PI / n; rim.push(put(gx + r * Math.cos(an), gy + r * Math.sin(an), sg, col)); }
+        for (let k = 0; k < 2 * n; k++) tri(m, rim[k], rim[(k + 1) % (2 * n)]);
+      }
+    }
   }
 
   // the vertex shader's additions (r128's Lambert: the normal first, then the position). aFlag: u (0 at the pole .. 1 the free end), the
@@ -74,14 +108,20 @@
       const us = [...US].sort((p, q) => p - q);   // (every cell's u at the same places, its neighbours' edges among them: no cracks between rows)
       for (const [u0, u1, v0, v1, col] of CL) {
         const uu = us.filter(u => u >= q5(u0) && u <= q5(u1)), k = uu.length - 1;
-        for (const u of uu) for (const f of [v0, v1]) {
-          const fv = tri ? 0.5 + (f - 0.5) * (1 - 0.94 * u) : f;   // (a pennant narrows to its tip)
+        for (const u of uu) for (const e of [v0, v1]) {
+          const f = typeof e === 'function' ? e(u) : e, fv = tri ? 0.5 + (f - 0.5) * (1 - 0.94 * u) : f;   // (a pennant narrows to its tip)
           P.push(x + c * W * u, y - H * fv - u * u * 0.08 * H, z + s * W * u); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, A, W);
           if (UV) { const q = look.uv; UV.push(q[0] + (q[1] - q[0]) * u, q[2] + (q[3] - q[2]) * fv); }   // (look.uv: [u at the pole, u at the free end, v at the top, v at the bottom])
         }
         for (let j = 0; j < k; j++) { const a = v + j * 2; I.push(a, a + 2, a + 3, a, a + 3, a + 1); }
         v += (k + 1) * 2;
       }
+      if (look && look.sym) symbols(look.sym, (gx, gy, sg, col) => {   // (its emblems: gx, gy in the flag's height)
+        const u = gx * H / W;
+        P.push(x + c * W * u - s * EMB * sg, y - H * gy - u * u * 0.08 * H, z + s * W * u + c * EMB * sg); N.push(-s, 0, c); C.push(col[0], col[1], col[2]); F.push(u, ph, A, W);
+        if (UV) UV.push(0, 0);
+        return v++;
+      }, (a, b, d) => I.push(a, b, d), o.tier === 0 ? 8 : 12);
     }
     if (!v) return null;
     const make = () => {

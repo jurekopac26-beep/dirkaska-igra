@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 960" width="1680" height="960">
+  <title>Mexico</title>
+  <!-- Ratio 4:7. Three equal vertical stripes, green at the hoist, white, red; in the middle of the white stripe the national
+       emblem: an eagle facing the hoist with a snake in its beak, perched on a prickly pear cactus that grows from a rock in
+       a lake, a wreath of oak and laurel below tied with a ribbon. The emblem is drawn as a simple outline for the menu's
+       small flag. Colours: green #006847, red #CE1126. -->
+  <rect width="1680" height="960" fill="#FFFFFF"/>
+  <rect width="560" height="960" fill="#006847"/>
+  <rect x="1120" width="560" height="960" fill="#CE1126"/>
+  <!-- the wreath: oak on the left, laurel on the right, tied below -->
+  <path d="M668 392 C640 500 700 610 828 650" fill="none" stroke="#2f6b2a" stroke-width="20" stroke-linecap="round"/>
+  <path d="M1012 392 C1040 500 980 610 852 650" fill="none" stroke="#2f6b2a" stroke-width="20" stroke-linecap="round"/>
+  <g fill="#3f8a34">
+    <ellipse cx="652" cy="430" rx="17" ry="34" transform="rotate(-25 652 430)"/>
+    <ellipse cx="660" cy="500" rx="17" ry="34" transform="rotate(-45 660 500)"/>
+    <ellipse cx="690" cy="565" rx="17" ry="34" transform="rotate(-60 690 565)"/>
+    <ellipse cx="745" cy="615" rx="17" ry="34" transform="rotate(-72 745 615)"/>
+    <ellipse cx="1028" cy="430" rx="14" ry="30" transform="rotate(25 1028 430)"/>
+    <ellipse cx="1020" cy="500" rx="14" ry="30" transform="rotate(45 1020 500)"/>
+    <ellipse cx="990" cy="565" rx="14" ry="30" transform="rotate(60 990 565)"/>
+    <ellipse cx="935" cy="615" rx="14" ry="30" transform="rotate(72 935 615)"/>
+  </g>
+  <rect x="808" y="640" width="22" height="26" fill="#006847"/>
+  <rect x="830" y="640" width="20" height="26" fill="#FFFFFF" stroke="#bbbbbb" stroke-width="2"/>
+  <rect x="850" y="640" width="22" height="26" fill="#CE1126"/>
+  <!-- the lake and the rock -->
+  <ellipse cx="840" cy="606" rx="104" ry="22" fill="#3d7fb5"/>
+  <ellipse cx="840" cy="588" rx="52" ry="20" fill="#8a7a66"/>
+  <!-- the prickly pear: pads and red fruit -->
+  <g fill="#3a8a3a" stroke="#256b2a" stroke-width="5">
+    <ellipse cx="840" cy="535" rx="30" ry="52"/>
+    <ellipse cx="788" cy="506" rx="25" ry="40" transform="rotate(-32 788 506)"/>
+    <ellipse cx="892" cy="506" rx="25" ry="40" transform="rotate(32 892 506)"/>
+    <ellipse cx="842" cy="470" rx="24" ry="32"/>
+  </g>
+  <g fill="#c62828">
+    <circle cx="770" cy="474" r="9"/>
+    <circle cx="912" cy="474" r="9"/>
+    <circle cx="824" cy="448" r="8"/>
+  </g>
+  <!-- the eagle, facing the hoist: the far wing raised behind it, the body, the near wing, the tail, the head and beak -->
+  <path d="M884 330 L992 236 L1012 290 L972 352 L906 404 Z" fill="#5a3414"/>
+  <path d="M880 438 L936 470 L900 470 L866 452 Z" fill="#5a3414"/>
+  <ellipse cx="852" cy="378" rx="54" ry="84" transform="rotate(20 852 378)" fill="#7a4a1f"/>
+  <path d="M832 330 L762 262 L748 318 L790 376 Z" fill="#6a3f19"/>
+  <path d="M842 446 L828 466 M862 448 L858 468" stroke="#e0a030" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="806" cy="288" r="31" fill="#7a4a1f"/>
+  <path d="M780 278 L744 296 L782 302 Z" fill="#e0a030"/>
+  <circle cx="800" cy="282" r="5" fill="#1a1a1a"/>
+  <!-- the snake in its beak -->
+  <path d="M752 298 C716 318 752 350 724 378 C704 398 736 420 716 436" fill="none" stroke="#6b8e23" stroke-width="10" stroke-linecap="round"/>
+</svg>

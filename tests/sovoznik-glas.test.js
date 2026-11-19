@@ -1,7 +1,7 @@
 // The co-driver's recorded voice (docs/sovoznik.md, Glas): the sheet js/data/sovoznik-en.js (tools/sovoznik-glas.py) has every word he says
 // (each of Core.CD_EN, each distance of a call: d100 to d500) and nothing else, each word in its own place of the sheet (in order, apart,
 // a word's length), the MP3 whole (its frames end to end, 24000 Hz mono, as long as the sheet says), small for a phone (at most 160 KB),
-// every call of every road said from it (Comm.noteLen: each in at most 8.5 s, half of them in at most 3.7 s: the pace of the tool's --tempo)
+// every call of every road said from it (Comm.noteLen: each in at most 8.5 s, half of them in at most 4.4 s: the pace of the tool's --tempo)
 // (its source and licence: README »Zasluge«, not read here: a test that reads a document makes every change to it run every test,
 // tests/run.js KODA_MD).
 // The voice in the game: browser/sovoznik.test.mjs.
@@ -65,10 +65,14 @@ const WORDS = Object.keys(C.CD_EN).concat(DIST);
 }
 
 // 5. every call of every road said from the sheet (Comm.noteLen: the words and the gaps between them; the lead before the bend, game.js
-// cdLead, from it): the longest, three notes of 14 words, in at most 8.5 s, half of them in at most 3.7 s. The voice bm_george (the user's
+// cdLead, from it): the longest, three notes of 14 words, in at most 8.5 s, half of them in at most 4.4 s. The voice bm_george (the user's
 // choice, 6 Nov 2026) at the tool's --tempo 1.15 says them in 7.9 s and 3.4 s on the 16 roads of this branch (6.9 s and 2.9 s without Vršič,
 // Sani Pass and Mount Buller, which become test roads with main); at --tempo 1: 8.8 s and 3.7 s. The first voice, am_michael, was ~17% quicker
 // (6.6 s and 2.9 s; the limits were 7 s and 3.2 s). A much slower pace than the tool's must fail here.
+// The half-limit was 3.7 s until 11 Nov 2026: the ten roads of main say half of their calls in 3.2 s (the longest 6.9 s), but the 16 new roads
+// (N1-N8 and Killar: hairpins and crests joined into longer calls, "right five over crest and left three tightens and right two long tightens")
+// in 4.2 s, so on the 26 roads of all of them half of the calls take 4.00 s, the longest 7.87 s. The limit 4.4 s keeps ~10% of room for the
+// roads still to come (the tool's --tempo 1 would be 4.6 s and 9.0 s: that pace still fails here, as it did before).
 {
   const Comm = require(path.join(ROOT, 'js', 'comm.js'));
   globalThis.window = { SOVOZNIK_EN: D };
@@ -83,7 +87,7 @@ const WORDS = Object.keys(C.CD_EN).concat(DIST);
   }
   delete globalThis.window;
   const mid = all.sort((a, b) => a - b)[Math.floor((all.length - 1) / 2)] || 0;
-  check('calls: every call of every road said from the sheet, each in at most 8.5 s, half of them in at most 3.7 s', calls > 0 && !missing.length && worst.T <= 8.5 && mid <= 3.7,
+  check('calls: every call of every road said from the sheet, each in at most 8.5 s, half of them in at most 4.4 s', calls > 0 && !missing.length && worst.T <= 8.5 && mid <= 4.4,
     missing.length ? missing.slice(0, 3).join('; ') : `${calls} calls on ${roads.length} roads, half in ${mid.toFixed(2)} s, the longest ${worst.T.toFixed(2)} s (${worst.id}: ${worst.text})`);
 }
 
