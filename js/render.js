@@ -7164,7 +7164,7 @@ const Render = (function () {
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
-      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (w > 0 || k > 0 || !(c.dents && c.dents.length)) { v.xsW = w; v.xsC = k; } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait; c.fxQ mutes the sparks only)
+      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = w; v.xsC = k; } else { v.xsW = Math.max(v.xsW || 0, w); v.xsC = Math.max(v.xsC || 0, k); } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait; c.fxQ mutes the sparks only)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
       const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
@@ -7971,6 +7971,7 @@ const Render = (function () {
   // front door's, till the car is built afresh
   function xRearShut(v, R) {
     const K = v.kit, P = R && R.P; if (!K.xRD || !P) return;
+    if (R.kmax < 1) return;   // (a part repair, 'Nujno': the quarter around it stays dented, the panel as built would stand out of it; it stays as it is till the car is built afresh)
     const A = v.body.geometry.attributes, a = A.position.array, dv = K.deadV;
     for (const sel of K.xRDt || []) if (sel) for (const t of sel) { const o = t * 9;
       if (a[o] === a[o + 3] && a[o] === a[o + 6] && a[o + 1] === a[o + 4] && a[o + 1] === a[o + 7] && a[o + 2] === a[o + 5] && a[o + 2] === a[o + 8]) continue;   // (glass gone: xBreakPane)
@@ -8691,7 +8692,8 @@ const Render = (function () {
     // the bonnet: its points (outer and inner) and its length along the car
     const hood = new Uint8Array(n), HR = v.kit && U.ranges && (U.ranges.hood || U.ranges.bonnet); let h0 = Infinity, h1 = -Infinity;
     if (HR) { for (const q of [HR.o, HR.i]) if (q && q[1] > q[0]) for (let i = q[0]; i < Math.min(q[1], n); i++) { hood[i] = 1; const x = R[i * 3]; if (x < h0) h0 = x; if (x > h1) h1 = x; } }
-    else if (!v.kit) { const yb = B.y0 + 0.55 * B.H, xf = B.x1 - B.capF; for (let i = 0; i < xc.on; i++) if (R[i * 3] > xf && R[i * 3 + 1] > yb) { hood[i] = 1; const x = R[i * 3]; if (x < h0) h0 = x; if (x > h1) h1 = x; } }
+    // (an older body without a kit: its bonnet is its own flat panel over the skin (buildParts), the skin under it does not bow: it would
+    // stand through the panel, and the panes ahead of the firewall with it)
     const hl = h1 - h0, tris = new Set();
     for (let i = 0; i < n; i++) {
       if ((dv && dv[i]) || (nd && nd[i])) continue;

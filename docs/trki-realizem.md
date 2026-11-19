@@ -2084,7 +2084,7 @@ Odgovor uporabnika na `trki-vrata-slike-17-11` = 2: odpiranje dobijo tudi starej
 - **Obremenitev:** pri tekmecih gredo vrata v skupno mrežo avta (`remerge`), zato dodatnih klicev risanja ni; pri igralcu do 4 klici, ko sta odprti obe strani.
 - **Test:** `tests/browser/poskodbe.test.mjs`, razdelek 6 (`rally`, `lm`, formula; igralec in tekmec; brez klicev `Math.random`). Zapiranja ob popravilu test ne preverja.
 - **Popravek možne napake (3) iz predaje:** `xRearDoor` se kliče šele, ko ima avto polje poškodb (`v.xc`), da se bok izreže po ploščah, kot so bile narejene, ne po že vdrtih; do takrat poskusi vsako sličico znova.
-- **Odprto ostane (stanje 19. 11.):** (1) referenci obremenitve in (4) kot pokrova 18° iz predaje nista bila obdelana; (2) test vleke krmila je narejen (`tests/vleka-privzeta.test.js`, 21/21); ozka izračunana zadnja vrata so v popravljanju; obremenitev pri verižnem trku čaka odločitev (naslednji razdelek).
+- **Odprto ostane (stanje 19. 11.):** (1) referenci obremenitve in (4) kot pokrova 18° iz predaje nista bila obdelana; (2) test vleke krmila je narejen (`tests/vleka-privzeta.test.js`, 23/23); ozka izračunana zadnja vrata so popravljena (razdelek »Popravki po preverjanju«); obremenitev pri verižnem trku čaka odločitev (naslednji razdelek).
 
 ## Meritev obremenitve pri hudem trku (19. 11.)
 
@@ -2102,3 +2102,16 @@ Ukaz: `node tools/trki/obremenitev-trk.mjs` (trije prizori, Podrobne in Preprost
 - **Oglišča niso nikoli težava:** največ 533 tisoč od ~900 tisoč. **Posamezen hud trk ostane pod ~300 klici** (prizora imata enega tekmeca; s polnim poljem v pogledu je izhodišče višje).
 - **Mejo preseže samo verižni trk:** igralec s 160 km/h v 8 stoječih tekmecev, 3 sledijo s 150 km/h, zadetih 11 (najslabši primer, ne običajen start; postavitev s 4 zadetimi ostane pri 268 oziroma 233). S Podrobnimi 403 klici (348 od 361 sličic nad 300): +111 od avtov, +52 od odpadlih delov; s Preprostimi 307 (24 sličic nad 300): +20 od avtov, +60 od delov. Drobci in delci ne dodajo skoraj nič (zaloga drobcev polna pri 6000).
 - **Odprto za odločitev:** ali za verižni trk velja višja meja, kot jo že dovoljuje `tests/browser/poskodbe.test.mjs` (360 klicev pri šestih udarcih po 19 tekmecih, 400 pri vseh razbitih), ali se klici zadetih avtov in odpadlih delov zmanjšajo. Klici so šteti, ne narisani (kot v `perf.test.mjs`); z `--risi` ni bilo preverjeno.
+
+## Popravki po preverjanju z več agenti (19. 11. 2026)
+
+Preverjanje (26 agentov) je potrdilo šest vrzeli; ostale točke (P4.2–4, P2.4, P5.2, P3.2, P6.2, RD.2, RD.4, RD.6, RD.8, VL.6) so zapisane odločitve ali niso vredne posega. Jedro (`js/core.js`) ni spremenjeno: vožnja in referenci `sim.json`, `races.json` se s temi popravki ne premakneta.
+
+- **Popravilo zapre izračunana zadnja vrata** (`xRearShut` v `repTrim`): plošča se vrne v prvotno lego, normale in barvo, `K.deadV` se počisti. Pri delnem popravilu (»Nujno«, `kmax < 1`) ostane, kot je, do ponovne gradnje avta (tovarniška plošča bi štrlela iz še udrtega boka). Izpadlo steklo ostane zunaj.
+- **Izračunana zadnja vrata samo pri boku ≥ 0,55 m** za sprednjimi vrati (prej 0,3 m). Režejo: tornado (0,56), kuna (0,57), vidra (0,67), superkombi (0,83), merjasec (1,04). Ne režejo več: jezek, skorpijon, modras, gams, orel (0,38–0,50 m). Tečaj je na sprednjem robu izrezane plošče.
+- **Na novo narisan pogled ne trosi znova stekla in drobcev** (`xQuiet`, prva sličica `v.fresh`); zaporedje naključnih števil ostane enako.
+- **P4, sled trka:** vir (stena ali avto) in hitrost ostaneta, dokler odložene udrtine čakajo (močnejši stik obvelja), in se zapišeta v dnevnik udrtin (`xcol`, `xsp`); barva tekmeca se prenese tudi pri utišanih iskrah (`fxQ`).
+- **P6, pokrov:** dvig samo pri avtih s kompletom. Pri starejših karoserijah je pokrov svoja plošča nad lupino; prejšnji nadomestni izbor je dvigoval lupino pod ploščo in stekla pred požarno steno (strega do 0,20 m, tovornjak do 0,27 m), zato je odstranjen.
+- **Vleka krmila:** `tests/vleka-privzeta.test.js` zdaj za patrulje preverja »Samo moj avto« posebej (dvojček z `noPull` se razide šele po prvem zvitem vogalu patrulje) in oznako patrulj v `Police.step` (uničena patrulja, ki se ustavlja sama; brez oznake preverjanje pade, dokazano na začasni kopiji).
+- **Testi:** `tests/browser/crash.test.mjs` (popravilo zapre zadnja vrata; jezek brez izreza; ponovni priklop brez novih drobcev; siva sled stene in barva tekmeca po ponovni gradnji; dvig pokrova), `tests/vleka-privzeta.test.js` 23/23.
+- **Odprto:** test odloženih udrtin z dvema tekmecema; pri starejših karoserijah ploščati pokrov ob skrajšanem nosu ostane v legi (slika za uporabnika); RD.4 (dvovratni avti z motorjem v sredini dobijo zadnja vrata, seznam `X_2DOOR`) in vrata starejših avtov čakajo odgovor `trki-vrata-starejsi-18-11`; neoznačeni avto (`civilDrive`) in vzvratna vožnja pri vleki krmila nista preverjena; gams ima 36 mrtvih točk v zadnjem boku brez izreza vrat (ni raziskano).

@@ -435,7 +435,7 @@ try {
     const pm = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal' }, () => {
       const g = window.__game, R = g.race, P = R.player, O = R.cars.find(c => c !== P && c.color != null && c.color !== P.color), out = {};
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
-      const mark = (sd) => { const xc = Render.viewOf(P).xc, r = xc.rest; let b = -1, n = 0; if (xc.tw) for (let i = 0; i < xc.tw.length; i++) if (xc.tw[i] > 0 && r[i * 3 + 2] * sd > 0) { n++; if (b < 0 || xc.tw[i] > xc.tw[b]) b = i; }
+      const mark = (sd) => { const xc = Render.viewOf(P).xc, r = xc.rest; let b = -1, n = 0; if (xc.tw) for (let i = 0; i < xc.tw.length; i++) if (xc.tw[i] > 0 && r[i * 3 + 2] * sd > 0.35 * P.m.wid && Math.abs(r[i * 3] - 0.05 * P.m.len) < 0.15 * P.m.len) { n++;   /* (about the side knock: the head-on one after it marks the nose) */ if (b < 0 || xc.tw[i] > xc.tw[b]) b = i; }
         return { n, c: b < 0 ? null : [xc.tc[b * 3], xc.tc[b * 3 + 1], xc.tc[b * 3 + 2]] }; };
       const col = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
       P.fxWall = 8; Core.applyDamage(P, 0.12, 0.1 * P.m.len / 2, -P.m.wid / 2); Render.frame(0.016, 1, P, 'chase', {}); out.wall = mark(-1); out.grey = col(0x9c9c98);
@@ -636,8 +636,10 @@ try {
     T.check(`P6 crumple zone, ${id}: the cabin behind the firewall moves under 2 cm more than the knock's own dent; nothing NaN; no page errors`,
       Z[15].cab < 0.02 && Z[20].cab < 0.02 && !Z[15].nan && !Z[20].nan && !cz.errors.length, JSON.stringify(Z) + ' ' + cz.errors.slice(0, 3).join(' | '));
     const up = (q) => q.up >= 0.3 * q.Lt && q.up <= 0.5 * q.Lt + 1e-3;
-    T.check(`P6 crumple zone, ${id}${Z[0].kit ? '' : ' (an older body, no kit)'}: the bonnet rises as the nose shortens, its crest 0.3-0.5 of the shortening, the harder the higher; under 50 km/h not at all`,
+    if (Z[0].kit) T.check(`P6 crumple zone, ${id}: the bonnet rises as the nose shortens, its crest 0.3-0.5 of the shortening, the harder the higher; under 50 km/h not at all`,
       Z[0].up === 0 && Z[12].up === 0 && up(Z[15]) && up(Z[20]) && Z[20].up >= Z[15].up, JSON.stringify(Z));
+    else T.check(`P6 crumple zone, ${id} (an older body, no kit): its bonnet is its own panel over the skin, the skin under it does not bow (it would stand through the panel)`,
+      Z[0].up === 0 && Z[12].up === 0 && Z[15].up === 0 && Z[20].up === 0, JSON.stringify(Z));
     kits.push(Z[0].kit);
   }
   T.check('P6 crumple zone: one of the bodies above is an older one without a kit (the fallback covered)', kits.includes(false), JSON.stringify(kits));
