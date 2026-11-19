@@ -439,8 +439,10 @@ try {
     const { ctx, page, errors } = await open({}, { width: 820, height: 1180 });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
-    const dm = await page.evaluate(async () => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
-    T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.n >= 2 * Math.ceil(dm.s) + 2, JSON.stringify(dm));
+    // drawn on = the demo drawn in every frame the page draws (not once a second, as under a covering menu); counted against the
+    // page's own frames, not a fixed rate: software WebGL at 820×1180 (a cloud session, a CI machine) draws only ~2 frames a second
+    const dm = await page.evaluate(async () => { const a = __game.fr.demo, r0 = __game.fr.raf, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { raf: __game.fr.raf - r0, n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
+    T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.raf >= 3 && dm.n >= dm.raf - 1 && dm.n > Math.ceil(dm.s) + 1, JSON.stringify(dm));
     T.check('no page errors on the tablet', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
