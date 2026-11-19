@@ -4008,14 +4008,14 @@ const World = (function () {
         for (let k = 0; k < 3; k++) c[k] = lerp(c[k], (Lm + (c[k] - Lm) * 0.72) * f[k], gg); }
       return c;
     };
-    const L = T.len;
+    const L = T.len, ck = o.cestaKrogi, onRoad = (x, z) => { for (const k of ck) { const r = k[2] - 1.2; if ((x - k[0]) * (x - k[0]) + (z - k[1]) * (z - k[1]) < r * r) return true; } return false; };   // (a builder's access roads for the look, World.cesta.stranske: circles [x, z, r] along their strips)
     for (let s = 0; s < L; s += 2.2) for (const side of [-1, 1]) {
       const i = T.idx(s), h0 = crH(s, side, 5);
       if (h0 < 0.14) continue;   // (gaps)
       const bar = T.br ? (side > 0 ? T.br[i] : (T.bl ? T.bl[i] : T.w + 8)) : T.w + 8, d0 = T.w + 2.0, d1 = Math.min(bar - 0.7, T.w + 13);
       if (d1 < d0 + 0.3) continue;
       const d = d0 + (d1 - d0) * Math.pow(crH(s, side, 6), 1.6), x = T.px[i] + T.nx[i] * d * side, z = T.pz[i] + T.nz[i] * d * side;
-      if (T.surface(T.query(x, z, i, q)) !== 2 || pitRoadAt(x, z, 1)) continue;   // (on the grass only: not on the gravel, the run-off, the paths; its blades not over the pit road's junctions)
+      if (T.surface(T.query(x, z, i, q)) !== 2 || pitRoadAt(x, z, 1) || (ck && onRoad(x, z))) continue;   // (on the grass only: not on the gravel, the run-off, the paths; its blades not over the pit road's junctions or an access road's strip)
       const y = (gH ? gH(x, z) : (T.hasElev && T.hy ? T.hy[i] : 0)) - 0.02, u = crH(x, z, 7), g = 0.9 + 0.2 * crH(x, z, 8), lc = lawn(x, z);
       tu.add(x, y, z, u * 26, 0.9 + 0.8 * crH(x, z, 9), 0.34 + 0.3 * crH(x, z, 10), [lc[0] * g, lc[1] * g, lc[2] * g]);
       if (u < 0.2) { const f = 0.85 + 0.15 * crH(x, z, 11); fl.add(x + 0.2, y, z - 0.1, u * 41, 0.8 + 0.3 * crH(x, z, 12), 0.5 + 0.2 * crH(x, z, 13), [f, f, f]); }

@@ -191,9 +191,10 @@
           const p = c === 1 ? 0.42 : c === 3 ? 0.16 : c === 0 ? (top ? 0.12 : 0.04) : c === 2 ? 0.08 : c === 7 ? 0.03 : 0;
           if (r > p) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 3.2) continue;
-          if (excluded(x, z) || caSlope(x, z) > 0.95) continue;
-          const hgt = (c === 1 ? 13 + r2 * 9 : 8 + r2 * 8), wid = hgt * (0.55 + r3 * 0.2);
-          tp.add(x, G(x, z) - 0.2, z, RP() * TAU, wid, hgt, [0.88 + r3 * 0.22, 0.92 + r2 * 0.16, 0.9 + r * 0.14]); st.pines++;
+          if (excluded(x, z, 1) || caSlope(x, z) > 0.95) continue;
+          const hgt = (c === 1 ? 13 + r2 * 9 : 8 + r2 * 8), wid = hgt * (0.55 + r3 * 0.2), ro = RP() * TAU;
+          if (excluded(x, z, 2)) continue;   // (a side road's room: left out only after the draw, so the pines past it stay where they were)
+          tp.add(x, G(x, z) - 0.2, z, ro, wid, hgt, [0.88 + r3 * 0.22, 0.92 + r2 * 0.16, 0.9 + r * 0.14]); st.pines++;
         }
       }
       tp.addTo(root, true);
@@ -210,9 +211,10 @@
           const c = vrLC(x, z), p = c === 7 ? 0.56 : c === 2 ? 0.7 : c === 0 ? 0.4 : c === 3 ? 0.1 : c === 1 ? 0.08 : 0;
           if (r > p) continue;
           const nn = vrNear(x, z); if (nn.i >= 0 && nn.dd < 2.6) continue;
-          if (excluded(x, z) || caSlope(x, z) > 1.1) continue;
-          const hgt = 0.8 + r2 * r2 * 1.6, wid = hgt * (1.3 + r3 * 0.7);
-          tb.add(x, G(x, z) - 0.15, z, RB() * TAU, wid, hgt, [0.86 + r3 * 0.26, 0.9 + r2 * 0.2, 0.86 + r * 0.2]); st.bushes++;
+          if (excluded(x, z, 1) || caSlope(x, z) > 1.1) continue;
+          const hgt = 0.8 + r2 * r2 * 1.6, wid = hgt * (1.3 + r3 * 0.7), ro = RB() * TAU;
+          if (excluded(x, z, 2)) continue;   // (a side road's room, after the draw: the bushes past it stay put)
+          tb.add(x, G(x, z) - 0.15, z, ro, wid, hgt, [0.86 + r3 * 0.26, 0.9 + r2 * 0.2, 0.86 + r * 0.2]); st.bushes++;
         }
       }
       tb.addTo(root, false);
