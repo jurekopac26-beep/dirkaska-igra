@@ -11,7 +11,7 @@ tools/<id>/build.py) leaves out, written into the RZ7 block of js/world-realizem
                              road (+1: on the right of the line's direction, x east, z south)
 The OSM API's map calls (tiles of 0.004 deg over the road +-150 m) are kept in --osm DIR (fetched when missing;
 default: realizem7-osm in the system's temporary folder, outside the repository).
-  python3 -I tools/realizem7/build.py [--osm DIR] eljem luanda mombasa hiva
+  python3 -I tools/realizem7/build.py [--osm DIR] luanda mombasa
 """
 import glob, json, math, os, re, sys, tempfile, time, urllib.request, xml.etree.ElementTree as ET
 import numpy as np
@@ -20,7 +20,7 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 A_, E2 = 6378137.0, 0.00669437999014
 TILE = 0.004
 KIND = {'wall': 0, 'retaining_wall': 1, 'hedge': 2, 'fence': 3, 'railing': 3, 'handrail': 3}
-DATA = {'eljem': 'EJ_DATA', 'luanda': 'LU_DATA', 'mombasa': 'MO_DATA', 'hiva': 'HV_DATA'}
+DATA = {'luanda': 'LU_DATA', 'mombasa': 'MO_DATA'}
 
 def radii(lat):
     s = math.sin(math.radians(lat)); w = 1 - E2 * s * s
