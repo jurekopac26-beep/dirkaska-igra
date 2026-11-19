@@ -25,7 +25,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
 | Canaries, Sveta Lucija | `canaries` | odprta cesta | 5,0 km | 716 | 35 % | 3 | +134 m |
 | Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
-| Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |

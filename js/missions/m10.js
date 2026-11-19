@@ -1,5 +1,5 @@
-/* Special mission 10 · Pobegla čreda · Harju, Finska (js/missions.js; the kit: js/missions/kit.js, MisKit.skin, herd, rails, tags). Nine
-   cows have got out of the farm onto the path through the park on the ridge (from K.C0 m past the start line); the farmer's pickup
+/* Special mission 10 · Pobegla čreda · Koli, Finska (on Harju until 19. 11. 2026, when Harju became a test track; js/missions.js; the kit: js/missions/kit.js, MisKit.skin, herd, rails, tags). Nine
+   cows have got out of the farm onto the road through the national park on the hill (from K.C0 m past the start line, on the long straightish part below the hairpins); the farmer's pickup
    (MisKit.skin over the off-roader's physics, its own limiter) starts behind them (K.S0) and drives them along the path to their pen beside
    it (K.PEN m: a fence of rails on the path's right with a gate at the path's edge). The cows in the path's frame (s along, d across):
    they walk on away from the pickup when it follows them (within K.PUSH m: along the path, back toward its middle), shy from it close
@@ -12,7 +12,7 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s);
-  const K = { N: 9, S0: 1868, C0: 1900, C1: 1948, PEN: 2140, PL: 12, PD: 13, GATE: 5, VMAX: 60, FLEE: 13, PUSH: 40, SCAT: 18, VFAST: 7,
+  const K = { N: 9, S0: 1000, C0: 1032, C1: 1080, PEN: 1272, PL: 12, PD: 13, GATE: 5, VMAX: 60, FLEE: 13, PUSH: 40, SCAT: 18, VFAST: 7,
     WOOD: 5, LURE: 22, HAY: 1.6, WALK: 1.2, RUN: 3.5, BOLT: 4.5, DRIFT: 0.28, LOSE: 2 };
   const GRN = 0x2a5a3a, BLK = 0x1b1d21, GLS = 0x1d2733;
   // a seeded random (the same herd every run)
@@ -30,8 +30,8 @@
   }
 
   Missions.add({
-    id: '10', title: 'Pobegla čreda', track: 'harju', limit: 300, stars: [180, 235], K,
-    story: 'S kmetije je pobegnilo devet krav. Razkropile so se po poti skozi park.',
+    id: '10', title: 'Pobegla čreda', track: 'koli', limit: 300, stars: [180, 235], K,
+    story: 'S kmetije je pobegnilo devet krav. Razkropile so se po cesti skozi narodni park.',
     goal: 'S poltovornjakom zaženi pobegle krave nazaj v ogrado.',
     hint: 'Prehitro jih razpršiš, prepočasi pobegnejo v gozd.',
     rows: [{ k: 'pen', label: 'V OGRADI', bar: true, col: '#3fbf6a' }, { k: 'lost', label: 'V GOZDU' }, { k: 'gate', label: 'DO OGRADE' }],

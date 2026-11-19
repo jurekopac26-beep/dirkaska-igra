@@ -1,4 +1,4 @@
-// Special mission 10 · Pobegla čreda (js/missions/m10.js, the kit js/missions/kit.js), no browser: its race (Harju, alone, the pickup on the
+// Special mission 10 · Pobegla čreda (js/missions/m10.js, the kit js/missions/kit.js), no browser: its race (Koli, alone; Harju until 19. 11. 2026, the pickup on the
 // off-roader's physics with its own limiter, no damage), the start behind the herd on the gravel path, the cows (in the path's frame: on
 // it and beside it), the pen on the path's right with its gate; the cows walk on ahead of the pickup following them, left alone they
 // spread toward the trees and are lost past the wall, the pickup fast near them scatters them; through the gate into the pen (the fence
@@ -18,11 +18,11 @@ const { careful } = require('./lib/drive.js');
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const D = Missions.byId('10'), K = D.K;
-const TD = Core.TRACKS.find(t => t.id === 'harju'), T = new Core.Track(TD);
-check('10: on Harju, a real track', D.track === 'harju' && !TD.test);
+const TD = Core.TRACKS.find(t => t.id === 'koli'), T = new Core.Track(TD);
+check('10: on Koli, a real track', D.track === 'koli' && !TD.test);
 const o = D.opts(D);
 check('its race: alone, the pickup (a copy of the model, slow), no damage', o.tt && o.laps === 1 && o.damage === 0 && o.playerModel.id === 'medved' && o.playerModel.vLim === K.VMAX);
-check('the herd and the pen on the path through the park (no tight bend from the start to the pen), the pen before the finish', (() => { for (let s = K.S0; s <= K.PEN + K.PL; s += 5) if (Math.abs(T.k[T.idx(T.startS + s)]) > 0.04) return false; return true; })() && K.PEN + K.PL < T.finishS - T.startS);
+check('the herd and the pen on the road through the park (no tight bend from the start to the pen), the pen before the finish', (() => { for (let s = K.S0; s <= K.PEN + K.PL; s += 5) if (Math.abs(T.k[T.idx(T.startS + s)]) > 0.04) return false; return true; })() && K.PEN + K.PL < T.finishS - T.startS);
 
 const mk = () => ({ player: { x: 0, z: 0, h: 0, vx: 0, vz: 0, w: 0, dist: 0, q: { s: 0 }, hitWall: 0, hitCar: 0, finished: false }, track: T });
 const put = (r, s, d, v) => { const i = T.idx(s), P = r.P; P.q.s = s; P.x = T.px[i] + T.nx[i] * (d || 0); P.z = T.pz[i] + T.nz[i] * (d || 0); P.h = Math.atan2(T.tz[i], T.tx[i]); P.vx = T.tx[i] * (v || 0); P.vz = T.tz[i] * (v || 0); };
@@ -31,14 +31,14 @@ check('the start: V OGRADI 0 / 9, V GOZDU 0 / 3, DO OGRADE ' + (K.PEN - K.S0) + 
 check('nine cows between K.C0 and K.C1, on the path and beside it (within its walls)', r.cows.length === 9 && r.cows.every(c => c.s >= T.startS + K.C0 && c.s <= T.startS + K.C1 + 10 && Math.abs(c.d) <= r.wall(c.s, c.d) + 1.5));
 // a cow alone ahead of the pickup following it at 9 m: it walks on, toward the path's middle
 const one = (r, k) => { r.cows.forEach((c, j) => { if (j !== k) { c.st = 'pen'; } }); return r.cows[k]; };
-F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); let c = one(r, 0); c.s = T.startS + 1950; c.d = 3; r.pin = 0;
+F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); let c = one(r, 0); c.s = T.startS + K.C1 + 2; c.d = 3; r.pin = 0;
 for (let t = 0; t < 5; t += 1 / 30) { put(r, c.s - 9, 0, 1.5); r.step(1 / 30); }
-check('followed at 9 m: the cow walks on ahead, on the path', c.s > T.startS + 1955 && Math.abs(c.d) < r.wall(c.s, c.d) && c.st === 'free', `${(c.s - T.startS).toFixed(1)} ${c.d.toFixed(2)}`);
+check('followed at 9 m: the cow walks on ahead, on the path', c.s > T.startS + K.C1 + 7 && Math.abs(c.d) < r.wall(c.s, c.d) && c.st === 'free', `${(c.s - T.startS).toFixed(1)} ${c.d.toFixed(2)}`);
 const s1 = c.s; for (let t = 0; t < 4; t += 1 / 30) { put(r, c.s - 60, 0, 0); r.step(1 / 30); }
 check('left alone: it stops going on and wanders off sideways', Math.abs(c.s - s1) < 3 && Math.abs(c.d) > 1.0, `${(c.s - s1).toFixed(1)} ${c.d.toFixed(2)}`);
 for (let t = 0; t < 60 && c.st === 'free'; t += 1 / 30) { put(r, c.s - 60, 0, 0); r.step(1 / 30); }
 check('left alone long: past the wall into the forest, lost (V GOZDU 1 / 3)', c.st === 'lost' && r.vals.lost.text === '1 / 3', `${c.st} ${c.d.toFixed(1)}`);
-F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); c = one(r, 0); c.s = T.startS + 1950; c.d = 0.5;
+F = mk(); r = new Missions.Run(D, F); D.begin.call(D, r); c = one(r, 0); c.s = T.startS + K.C1 + 2; c.d = 0.5;
 put(r, c.s - 12, 0, 10); r.step(1 / 30);
 check('the pickup at 36 km/h 12 m behind it: the cow bolts sideways, the hint says too fast', c.scT > 0 && /Prehitro/.test(r.hint), `${c.scT} ${r.hint}`);
 // the pen: through the gate in; along the fence beside it: kept out

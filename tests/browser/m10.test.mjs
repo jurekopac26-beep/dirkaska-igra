@@ -20,7 +20,7 @@ try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=10', {}, { width: 360, height: 640 }, { touch: true });
   await ready(page); await page.waitForTimeout(300);
   let s = await st(page);
-  T.check('?misija=10: Harju', s.track === 'harju', s.track);
+  T.check('?misija=10: Koli', s.track === 'koli', s.track);
   T.check('the panel: V OGRADI 0 / 9, V GOZDU 0 / 3, DO OGRADE in m; no timing tower', s.rows[0] === 'V OGRADI 0 / 9' && s.rows[1] === 'V GOZDU 0 / 3' && /^DO OGRADE \d+ m$/.test(s.rows[2]) && !s.tower, JSON.stringify(s.rows));
   const S = await page.evaluate(() => { const r = Missions.run, has = (o) => !!o && !!Render.scene.getObjectById(o.id), v = Render.viewOf(r.P);
     return { skin: !!r.skin && !!r.skin.parent, body: v.body.visible, cows: has(r.herd.g) && r.herd.g.count === 9, pen: has(r.penMesh), ids: [r.herd.g.id, r.penMesh.id] }; });
