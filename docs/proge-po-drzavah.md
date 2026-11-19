@@ -48,6 +48,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Savusavu, Fidži | PR #693 | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
 | Koror, Palau | PR #694 | 0 % (v igri, povprečno 5,7 m) | izletna cona je |
 | Musandam, Oman | PR #681 | večinoma (ograja na strani prepada) | ni ovira (odločitev 13. 11. 2026); padca ni (ograja) |
+| Limalimo, Etiopija | PR #682 (zbirna Proge 3) | ni izmerjeno (ob prepadu jeklena ograja, nevidna stena proge) | proga ob prepadu, odobrena (odločitev uporabnika 13. 11. 2026, tabla #382, komentar 6842851627); padca ni |
 | Killar, Indija | PR #283 | 99 %, obe 58 % (v igri, povprečno 2,3 m) | brez izletne cone (prepad in stena ob ozki polici); v PR, samo javljeno |
 | Pau, Francija | Nove proge 7 | ulična proga | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026) |
 | Puerto Madero, Argentina | kratke D, Načrtovano | 75 %, obe 38 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
@@ -127,6 +128,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Fidži | Savusavu (PR #693) | – | – |
 | Palau | Koror (PR #694) | – | – |
 | Oman | Musandam (PR #681): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
+| Etiopija | Limalimo (PR #682): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 

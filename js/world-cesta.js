@@ -59,6 +59,7 @@
     'Fidži':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (left-hand traffic, the markings of the Commonwealth's roads as Australia's: all white, double solid where overtaking is forbidden)   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
     'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
     'Nepal':        { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },   // (white, a broken centre line, solid through the bends)
+    'Etiopija':     { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false },   // (white as on the B30's new tarmac, not checked against photos: docs/proge/limalimo.md, »Negotovo«)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
@@ -135,6 +136,7 @@
     kanaba:    P(CESTA, { prah: [0.6, 0.42, 0.32], kPrah: 0.8, sPrah: 1.1, kOdsek: 0.07, odsek: [60, 300], barva: 0.65, kRobV: 0.85 }),   // (the red soil of the terraces washed onto the road, the lorries' patches)
     sogeri:    P(CESTA, { prah: [0.6, 0.48, 0.36], kPrah: 0.7, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.68, kRobV: 0.9 }),   // (red earth and grit off the gorge's walls, the patched tarmac and broken edges)
     koror:     P(CESTA, { prah: [0.56, 0.54, 0.48], kPrah: 0.45, sPrah: 1.0, kOdsek: 0.1, odsek: [50, 240], barva: 0.75, kRobV: 0.8 }),   // (the sun and the salt on the causeways: patched, faded asphalt)
+    limalimo:  P(CESTA, { prah: [0.6, 0.48, 0.38], kPrah: 0.75, sPrah: 1.1, kOdsek: 0.06, odsek: [80, 320], barva: 0.72, kRobV: 0.9 }),   // (the red dust of the highland on a young tarmac)
     caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
     kaligandaki: P(CESTA, { prah: [0.66, 0.58, 0.46], kPrah: 0.68, sPrah: 1.15, kOdsek: 0.1, odsek: [50, 240], barva: 0.68, rob: 0.3, kRobV: 0.85 }),   // (the arid gorge: dust and rockfall grit; the jeep road's patched, broken edges)
     pikes:     P(CESTA, { prah: [0.62, 0.53, 0.45], kPrah: 0.5, kOdsek: 0.05, kOlje: 0.08, kKol: 0, barva: 0, rob: 0.25, robV: 0.6, kRobV: 0.4 }),   // (the builder's own wheel tracks, patches and faded paint, all in the road's mesh; the granite's pink grit)
