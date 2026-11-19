@@ -1149,11 +1149,11 @@
   "instances": 43807,
   "props": 95,
   "crowd": 146,
-  "world": "95e8c1e5",
+  "world": "7ab9d4cb",
   "propsHash": "5a404b3",
   "floor": "ab9d352f/9520",
   "groups": {
-   "-:MeshLambertMaterial": "65cfd614",
+   "-:MeshLambertMaterial": "be95d5ab",
    "-:MeshPhongMaterial": "b4c1bf16",
    "-:MeshBasicMaterial": "c58331d7",
    "crowd:MeshLambertMaterial": "73fc1991",
