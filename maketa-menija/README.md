@@ -264,6 +264,8 @@ node check.mjs                                   # vsi zasloni v vseh stanjih ->
 node flow.mjs                                    # odigra današnjo dirko, vse tri načine, izbiro avta in vremena, uvod pred dirko, vse štiri načine kariere in multiplayer -> shots/
 ```
 
+Maketa sveta, ki ima teren le ob cesti (koridor): kar ostane odprto, pokrije podlaga v barvi `fillCol` (v vrstici `proge_igra.json`); daljni pogled, ki brez kamere stoji na svojem mestu v tančici, skrije `hide` z imeni njegovih mrež (Hakone: `["hkFar", "hkFuji"]`, podlaga v barvi gozda).
+
 Zemljevidi prog potrebujejo igro z Vršičem v `maketa-menija/game_vrsic/` in ffmpeg z VP9 (paket `imageio-ffmpeg`):
 
 ```
