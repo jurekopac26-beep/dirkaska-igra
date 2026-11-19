@@ -39,19 +39,8 @@
       m.customProgramCacheKey = () => 'ouCutR2'; m.needsUpdate = true;
     });
   }
-  // a world with no cut of its own (Spa, Livorno: their crowns sway in the wind, nothing fades): the material keyed key takes ouCutMat's cone and the
-  // screen's cut after its own wind, and dyn.ouCut is made for World.view to fill
-  function addCut(out, key) {
-    const cone = World.api && World.api.ouCutMat; if (!cone || !out || !out.root || !out.dyn || out.dyn.ouCut) return 0;
-    const U = { uCam: { value: new THREE.Vector3(1e6, 0, 1e6) }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uA: v4(), uB: v4() };
-    const n = eachMat(out, key, (m) => {
-      const wind = m.onBeforeCompile; cone(m, U); const cut = m.onBeforeCompile;
-      m.onBeforeCompile = (sh, r) => { if (wind) wind(sh, r); cut(sh, r); cutPatch(sh, U); };
-      m.customProgramCacheKey = () => key + 'R2'; m.needsUpdate = true;
-    });
-    if (n) out.dyn.ouCut = U;
-    return n;
-  }
+  // (Spa and Livorno have no cut and need none: along their whole length no crown fills a tenth of the cut's core, the band from the car to the road
+  // 20 m ahead; only the railway's bridge over the road in Ardenza and the start's gantry at Spa do, and those stay)
 
   const wrap = (id, fn) => {
     const base = World.ext[id]; if (!base) return;
