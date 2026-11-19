@@ -380,7 +380,7 @@ try {
       for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
       const door = () => { const v = Render.viewOf(P), K = v.kit, U = v.body.geometry.userData, Q = U.ranges.quarterL, a = v.body.geometry.attributes.position.array, dv = K.deadV, b = [1e9, -1e9, 1e9, -1e9]; let n = 0;
         if (dv) for (let i = Q.o[0]; i < Q.o[1]; i++) if (dv[i]) { n++; b[0] = Math.min(b[0], a[i * 3]); b[1] = Math.max(b[1], a[i * 3]); b[2] = Math.min(b[2], a[i * 3 + 2]); b[3] = Math.max(b[3], a[i * 3 + 2]); }
-        return { xc: !!v.xc, rd: K.xRD ? K.xRD.slice() : [0, 0], n, b: b.map(q => +q.toFixed(3)) }; };
+        return { xc: !!v.xc, rd: K.xRD ? K.xRD.slice() : [0, 0], n, b: b.map(q => +q.toFixed(3)), sh: Render.crashInfo().shards, panes: (v.xP || []).filter(q => q.side === -1 && q.broken).length }; };
       { const D = Render.viewOf(P).body.geometry, Q = D.userData.ranges.doorL, a = D.attributes.position.array; var edge = 1e9; for (let i = Q.o[0]; i < Q.o[1]; i++) edge = Math.min(edge, a[i * 3]); }
       for (let k = 0; k < 8 && !door().rd[0]; k++) { hit(P, [0.15, 0.1, -1]); for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {}); }
       const out = { edge: +edge.toFixed(3), live: door() };
@@ -390,6 +390,66 @@ try {
     const F = fr.r, near = (A, B) => A.every((q, k) => Math.abs(q - B[k]) < 0.03);
     T.check('rear door of a view drawn afresh mid-race (the front door open before the damage field is made): cut out and turned where a knock\'s is, about the front door\'s rear edge as shut; the same after the field is made',
       F.live.rd[0] === 1 && F.live.n > 50 && F.f1.rd[0] === 1 && !F.f1.xc && F.f30.xc && F.f1.n === F.live.n && near(F.f1.b, F.live.b) && near(F.f30.b, F.live.b) && Math.abs(F.f1.b[1] - F.edge) < 0.02 && !fr.errors.length, JSON.stringify(F) + ' ' + fr.errors.slice(0, 3).join(' | '));
+    T.check('a view drawn afresh mid-race: its rear door\'s pane broken again, no glass laid on the road again (what it had broken already is no news)',
+      F.live.sh > 0 && F.f1.sh === 0 && F.f30.sh === 0 && F.f30.panes >= 1, JSON.stringify({ live: F.live.sh, f1: F.f1.sh, f30: F.f30.sh, panes: F.f30.panes }));
+  }
+
+  // the pit crew's repair shuts the computed rear door with the front one (repTrim: its panel as built again), before the car is built
+  // afresh at the end; a pane fallen out of it stays out till then (its facets collapsed: left out here)
+  {
+    const rp = await run({ xBody: 1, xGlass: 1, xParts: 1, carDet: 'normal' }, (hs) => {
+      const hit = eval(hs), g = window.__game, R = g.race, P = R.player;
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      const st = () => { const v = Render.viewOf(P), K = v.kit, Q = v.body.geometry.userData.ranges.quarterL, a = v.body.geometry.attributes.position.array, dv = K.deadV; let z = 0, n = 0;
+        for (let t = Q.o[0] / 3; t < Q.o[1] / 3; t++) { const o = t * 9; if (a[o] === a[o + 3] && a[o] === a[o + 6] && a[o + 2] === a[o + 5] && a[o + 2] === a[o + 8]) continue;
+          for (let q = 0; q < 3; q++) { z = Math.min(z, a[o + q * 3 + 2]); if (dv && dv[t * 3 + q]) n++; } }
+        return { rd: K.xRD ? K.xRD.slice() : null, xOpen: !!K.xOpen, ajar: Object.keys(K.ajar).filter(q => /door/.test(q)), n, z: +z.toFixed(3), rep: !!v.rep }; };
+      const out = { intact: st() }, v0 = Render.viewOf(P);
+      for (let k = 0; k < 8 && !st().xOpen; k++) { hit(P, [0.15, 0.1, -1]); for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {}); }
+      out.live = st(); P.pitState = 'repair'; P.pitDur = 10;
+      for (let k = 0; k <= 99 && !out.shut; k++) { P.pitT = k / 10; Render.frame(0.016, 1, P, 'chase', {}); const s = st(); if (k === 80) out.u80 = s; if (!s.ajar.length) { out.shut = s; out.u = Core.repairU(P); } }
+      out.same = Render.viewOf(P) === v0; out.trim = Core.REPAIR.trim; return out; }, hitFn);
+    const Q = rp.r;
+    T.check('pit repair: the computed rear door shuts with the front one (its panel as built again, nothing of it left turned out), before the car is built afresh',
+      Q.live.xOpen && Q.live.rd[0] === 1 && Q.live.z < Q.intact.z - 0.2 && Q.live.n > 50 && Q.u80 && Q.u80.xOpen && Q.shut && Q.same && Q.shut.rep && Q.u >= Q.trim && Q.u < 1 && Q.shut.rd === null && !Q.shut.xOpen && Q.shut.n === 0 && Math.abs(Q.shut.z - Q.intact.z) < 0.01 && !rp.errors.length, JSON.stringify(Q) + ' ' + rp.errors.slice(0, 3).join(' | '));
+  }
+
+  // a narrow quarter (the Jezek: under 0.55 m from the front door's rear edge to the rear arch) is no door: the front door opens, nothing
+  // is cut out of the quarter behind it (the Tornado's 0.56 m is: the checks above)
+  {
+    const nq = await run({ xBody: 1, xGlass: 1, xParts: 1, carDet: 'normal', carId: 'jezek' }, (hs) => {
+      const hit = eval(hs), g = window.__game, R = g.race, P = R.player;
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      for (let k = 0; k < 8 && !Render.viewOf(P).kit.ajar.doorL; k++) { hit(P, [0.15, 0.1, -1]); for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {}); }
+      for (let j = 0; j < 6; j++) Render.frame(0.05, 1, P, 'chase', {});
+      const v = Render.viewOf(P), K = v.kit, Q = v.body.geometry.userData.ranges.quarterL, dv = K.deadV; let n = 0; if (dv && Q) for (let i = Q.o[0]; i < Q.o[1]; i++) if (dv[i]) n++;
+      return { ajar: Object.keys(K.ajar), xOpen: !!K.xOpen, q: !!Q, d2: !!v.body.geometry.userData.ranges.door2L, n }; }, hitFn);
+    const Q = nq.r;
+    T.check('Jezek (a narrow quarter): its front door opens, nothing cut out of the quarter behind it (xOpen false, none of its points turned)',
+      Q.q && !Q.d2 && Q.ajar.includes('doorL') && !Q.xOpen && Q.n === 0 && !nq.errors.length, JSON.stringify(Q) + ' ' + nq.errors.slice(0, 3).join(' | '));
+  }
+
+  // P4 · a knock's mark: against a wall grey (XSRC_WALL), against a car its paint, with Iskre izklop (c.fxQ) too; a view built again
+  // mid-race (Render.setCrash: Detajli avtov) takes its dents again with their marks and its crumple zone (the dent log's xcol, xsp)
+  {
+    const pm = await run({ xBody: 1, xGlass: 1, xPaint: 1, xParts: 1, carDet: 'normal' }, () => {
+      const g = window.__game, R = g.race, P = R.player, O = R.cars.find(c => c !== P && c.color != null && c.color !== P.color), out = {};
+      for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; }
+      const mark = (sd) => { const xc = Render.viewOf(P).xc, r = xc.rest; let b = -1, n = 0; if (xc.tw) for (let i = 0; i < xc.tw.length; i++) if (xc.tw[i] > 0 && r[i * 3 + 2] * sd > 0) { n++; if (b < 0 || xc.tw[i] > xc.tw[b]) b = i; }
+        return { n, c: b < 0 ? null : [xc.tc[b * 3], xc.tc[b * 3 + 1], xc.tc[b * 3 + 2]] }; };
+      const col = (h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b]; };
+      P.fxWall = 8; Core.applyDamage(P, 0.12, 0.1 * P.m.len / 2, -P.m.wid / 2); Render.frame(0.016, 1, P, 'chase', {}); out.wall = mark(-1); out.grey = col(0x9c9c98);
+      P.fxCar = 8; P.fxQ = 1; P.contactX = O.contactX = P.x + 0.37; P.contactZ = O.contactZ = P.z + 0.41; Core.applyDamage(P, 0.12, 0.1 * P.m.len / 2, P.m.wid / 2); Render.frame(0.016, 1, P, 'chase', {}); out.car = mark(1); out.paint = col(O.color);
+      P.fxWall = 16; Core.applyDamage(P, 0.15, P.m.len / 2, 0.3 * P.m.wid / 2); Render.frame(0.016, 1, P, 'chase', {});
+      const v0 = Render.viewOf(P); out.cz0 = v0.xc.cz ? +v0.xc.cz.Lt.toFixed(3) : 0;
+      Render.setCrash({ body: 1, glass: 1, paint: 1, parts: 1, detail: 'full' }); for (let j = 0; j < 40; j++) Render.frame(0.016, 1, P, 'chase', {});
+      const v1 = Render.viewOf(P); out.again = v1 !== v0; out.left = v1.dRe ? v1.dRe.length : 0; out.cz1 = v1.xc && v1.xc.cz ? +v1.xc.cz.Lt.toFixed(3) : 0; out.wall1 = v1.xc ? mark(-1) : null; out.car1 = v1.xc ? mark(1) : null;
+      return out; });
+    const M = pm.r, same = (a, b) => !!a && a.every((q, k) => Math.abs(q - b[k]) < 0.02);
+    T.check('P4 mark: a knock against a wall leaves its grey on the points it moved; a knock against a car that car\'s paint, with Iskre izklop too',
+      M.wall.n > 10 && same(M.wall.c, M.grey) && M.car.n > 10 && same(M.car.c, M.paint) && !same(M.paint, M.grey), JSON.stringify(M));
+    T.check('P4, P6: a view built again mid-race keeps its dents\' marks and its crumple zone',
+      M.cz0 >= 0.4 && M.again && M.left === 0 && Math.abs(M.cz1 - M.cz0) < 0.01 && M.wall1 && M.wall1.n > 10 && same(M.wall1.c, M.grey) && M.car1.n > 10 && same(M.car1.c, M.paint) && !pm.errors.length, JSON.stringify(M) + ' ' + pm.errors.slice(0, 3).join(' | '));
   }
 
   // the two-door Ris (not a table car): both sides knocked on the door and behind it: its one door a side opens, nothing is cut out of its
@@ -556,6 +616,7 @@ try {
   // P6 · the crumple zone: a head-on knock against a wall over 50 km/h (14 m/s) shortens the nose 0.4-0.7 m (the zone's own length
   // at most), the bonnet bows up, the front wheels go back with it; the cabin (behind the firewall) moves no more than the knock's own
   // dent already moved it (under 2 cm more); under 50 km/h none of it; nothing NaN
+  const kits = [];
   for (const id of ['tornado', 'rally']) {
     const cz = await run({ xBody: 1, xGlass: 1, xPaint: 1, carDet: 'normal', carId: id }, () => {
       const g = window.__game, R = g.race, P = R.player, out = {};
@@ -565,16 +626,21 @@ try {
         for (let i = 0; i < xc.on; i++) nose = Math.max(nose, a[i * 3]);
         for (let i = 0; i < Rr.length / 3; i++) if (Rr[i * 3] < xf - 0.02) cab.push([a[i * 3], a[i * 3 + 1], a[i * 3 + 2]]);
         for (let i = 0; i < a.length; i++) if (!Number.isFinite(a[i])) nan++;
-        out[sp] = { short: B.x1 - nose, cab, nan, cz: !!xc.cz, capF: B.capF, wf: Math.min(...v.wf.map(w => w.position.x - w.userData.xp0.x)) }; }
+        out[sp] = { short: B.x1 - nose, cab, nan, cz: !!xc.cz, up: xc.cz ? Math.max(...xc.cz.dy) : 0, Lt: xc.cz ? xc.cz.Lt : 0, kit: !!v.kit, capF: B.capF, wf: Math.min(...v.wf.map(w => w.position.x - w.userData.xp0.x)) }; }
       const moved = (s) => { let m = 0; out[s].cab.forEach((p, i) => { const q = out[0].cab[i]; m = Math.max(m, Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2])); }); return m; };
-      const r = {}; for (const s of [0, 12, 15, 20]) r[s] = { short: +out[s].short.toFixed(3), nan: out[s].nan, cz: out[s].cz, wf: +out[s].wf.toFixed(3), cab: +moved(s).toFixed(4) };
+      const r = {}; for (const s of [0, 12, 15, 20]) r[s] = { short: +out[s].short.toFixed(3), nan: out[s].nan, cz: out[s].cz, up: +out[s].up.toFixed(3), Lt: +out[s].Lt.toFixed(3), kit: out[s].kit, wf: +out[s].wf.toFixed(3), cab: +moved(s).toFixed(4) };
       r.capF = +out[0].capF.toFixed(2); return r; });
     const Z = cz.r;
     T.check(`P6 crumple zone, ${id}: a head-on knock at 54 and 72 km/h shortens the nose 0.4-0.7 m, the harder the more; the front wheels back with it; under 50 km/h none of it`,
       !Z[0].cz && !Z[12].cz && Z[15].cz && Z[15].short >= 0.4 && Z[20].short <= 0.7 && Z[20].short > Z[15].short && Z[15].wf < -0.05 && Z[12].short < 0.1, JSON.stringify(Z));
     T.check(`P6 crumple zone, ${id}: the cabin behind the firewall moves under 2 cm more than the knock's own dent; nothing NaN; no page errors`,
       Z[15].cab < 0.02 && Z[20].cab < 0.02 && !Z[15].nan && !Z[20].nan && !cz.errors.length, JSON.stringify(Z) + ' ' + cz.errors.slice(0, 3).join(' | '));
+    const up = (q) => q.up >= 0.3 * q.Lt && q.up <= 0.5 * q.Lt + 1e-3;
+    T.check(`P6 crumple zone, ${id}${Z[0].kit ? '' : ' (an older body, no kit)'}: the bonnet rises as the nose shortens, its crest 0.3-0.5 of the shortening, the harder the higher; under 50 km/h not at all`,
+      Z[0].up === 0 && Z[12].up === 0 && up(Z[15]) && up(Z[20]) && Z[20].up >= Z[15].up, JSON.stringify(Z));
+    kits.push(Z[0].kit);
   }
+  T.check('P6 crumple zone: one of the bodies above is an older one without a kit (the fallback covered)', kits.includes(false), JSON.stringify(kits));
   // open cars, a kart: no roof field; a rollover's roof contact moves nothing; blows on the ends never lift the driver, a hoop, a roll bar
   // (xStand: they stand, as a roofed car's seats and driver)
   for (const id of ['lisica', 'blisk', 'mravlja']) {

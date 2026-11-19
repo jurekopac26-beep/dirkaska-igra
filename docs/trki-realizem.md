@@ -2084,4 +2084,21 @@ Odgovor uporabnika na `trki-vrata-slike-17-11` = 2: odpiranje dobijo tudi starej
 - **Obremenitev:** pri tekmecih gredo vrata v skupno mrežo avta (`remerge`), zato dodatnih klicev risanja ni; pri igralcu do 4 klici, ko sta odprti obe strani.
 - **Test:** `tests/browser/poskodbe.test.mjs`, razdelek 6 (`rally`, `lm`, formula; igralec in tekmec; brez klicev `Math.random`). Zapiranja ob popravilu test ne preverja.
 - **Popravek možne napake (3) iz predaje:** `xRearDoor` se kliče šele, ko ima avto polje poškodb (`v.xc`), da se bok izreže po ploščah, kot so bile narejene, ne po že vdrtih; do takrat poskusi vsako sličico znova.
-- **Odprto ostane:** (1) referenci obremenitve, (2) test vleke krmila in (4) kot pokrova 18° ter ozka izračunana zadnja vrata iz predaje niso bili obdelani.
+- **Odprto ostane (stanje 19. 11.):** (1) referenci obremenitve in (4) kot pokrova 18° iz predaje nista bila obdelana; (2) test vleke krmila je narejen (`tests/vleka-privzeta.test.js`, 21/21); ozka izračunana zadnja vrata so v popravljanju; obremenitev pri verižnem trku čaka odločitev (naslednji razdelek).
+
+## Meritev obremenitve pri hudem trku (19. 11.)
+
+Ukaz: `node tools/trki/obremenitev-trk.mjs` (trije prizori, Podrobne in Preproste, ~5 min; en prizor: `start --dmgdet 1`). Postavitev: Spa, 844×390, kakovost običajna, podrobnosti nizke, sence, kamera za avtom, trki Realistična, Poškodbe Vklop, seme 12345, 6 s po dotiku (361 sličic), prehod senc vštet. Klici risanja / tisoč oglišč:
+
+| Prizor | Poškodbe | Pred trkom | Največ | Povprečje 6 s |
+|---|---|---|---|---|
+| zid, čelno 200 km/h | Podrobne | 161 / 494 | 167 / 503 | 161 / 475 |
+| zid, čelno 200 km/h | Preproste | 161 / 484 | 170 / 491 | 163 / 463 |
+| v bok stoječega, 120 km/h | Podrobne | 125 / 372 | 138 / 378 | 136 / 366 |
+| v bok stoječega, 120 km/h | Preproste | 125 / 363 | 131 / 368 | 128 / 356 |
+| verižni trk na startu | Podrobne | 232 / 511 | **403** / 533 | 340 / 433 |
+| verižni trk na startu | Preproste | 232 / 502 | **307** / 507 | 275 / 408 |
+
+- **Oglišča niso nikoli težava:** največ 533 tisoč od ~900 tisoč. **Posamezen hud trk ostane pod ~300 klici** (prizora imata enega tekmeca; s polnim poljem v pogledu je izhodišče višje).
+- **Mejo preseže samo verižni trk:** igralec s 160 km/h v 8 stoječih tekmecev, 3 sledijo s 150 km/h, zadetih 11 (najslabši primer, ne običajen start; postavitev s 4 zadetimi ostane pri 268 oziroma 233). S Podrobnimi 403 klici (348 od 361 sličic nad 300): +111 od avtov, +52 od odpadlih delov; s Preprostimi 307 (24 sličic nad 300): +20 od avtov, +60 od delov. Drobci in delci ne dodajo skoraj nič (zaloga drobcev polna pri 6000).
+- **Odprto za odločitev:** ali za verižni trk velja višja meja, kot jo že dovoljuje `tests/browser/poskodbe.test.mjs` (360 klicev pri šestih udarcih po 19 tekmecih, 400 pri vseh razbitih), ali se klici zadetih avtov in odpadlih delov zmanjšajo. Klici so šteti, ne narisani (kot v `perf.test.mjs`); z `--risi` ni bilo preverjeno.

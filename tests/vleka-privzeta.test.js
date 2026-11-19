@@ -91,19 +91,23 @@ function mont(seed, tx) {
 }
 
 // --- 3) policija: Chapman's Peak (prava cesta, lov od štarta), lahka težavnost ---
-// own: the player's car gets no pull (c.noPull), so only the patrol cars' pull can part the twins
-function police(seed, tx, own) {
+// own: the player's car gets no pull (c.noPull), so only the patrol cars' pull can part the twins.
+// wreck: the first patrol car chasing at speed gets a bent front corner and full damage: the game takes it out ('out') and it rolls
+// to a stop with nobody steering it (no aiControl: only the police's own mark keeps the pull off it); c.xd is laid only by the pull
+function police(seed, tx, own, wreck) {
   C.setTest(tx);
   const T = new C.Track(C.TRACKS.find(x => x.id === 'chapman'));
   Math.random = seeded(3);
   const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed, difficulty: 0, damage: 2, police: true });
   const P = r.player, pol = r.pol, sg = [], polPulled = new Set(), evs = {}; if (own) P.noPull = true; r.start();
-  let t = 0, k = 0, ev = 0, resc = 0, nan = 0, firstPull = -1, firstPol = -1, chase = 0, hunt = 0, near = 0, maxCars = 0;
+  let t = 0, k = 0, ev = 0, resc = 0, nan = 0, firstPull = -1, firstPol = -1, wr = null, wrRoll = 0, wrXd = 0, chase = 0, hunt = 0, near = 0, maxCars = 0;
   while (t < 600 && !P.finished) {
     Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT;
     if (P.stuckT > 3 || P.wrongT > 3) { r.rescue(P); resc++; }
     if (pol.ev !== ev) { for (const e of pol.log) if (e.n > ev) evs[e.k] = (evs[e.k] || 0) + 1; ev = pol.ev; }
     const all = [P, ...pol.cars]; maxCars = Math.max(maxCars, pol.cars.length);
+    if (wreck && !wr && (wr = pol.cars.find(c => c.pol.mode === 'chase' && !c.locked && c.pol.kind !== 'moto' && c.speed > 15) || null)) { wr.cd[0] = Math.max(wr.cd[0], 0.6); wr.dmg = 1; }
+    if (wr) { if (wr.pol.mode === 'out' && wr.speed > 1) wrRoll++; if (wr.xd) wrXd++; }
     for (const c of pol.cars) if (pulled(c)) { polPulled.add(c); if (firstPol < 0) firstPol = k; }
     if (pol.stage === 'chase') { chase++;
       if (pol.cars.some(c => c.pol && (c.pol.mode === 'chase' || c.pol.mode === 'search'))) hunt++;
@@ -112,7 +116,7 @@ function police(seed, tx, own) {
     if (k % EVERY === 0) { sg.push(sig(all)); if (!all.every(finite)) nan++; }
   }
   end();
-  return { sg, firstPull, firstPol, t, busted: !!pol.busted, escaped: !!pol.escaped, fin: !!P.finished, rams: pol.rams, heat: pol.heatMax, maxCars, polPulled: polPulled.size, resc, nan, evs,
+  return { sg, firstPull, firstPol, wrRoll, wrXd, t, busted: !!pol.busted, escaped: !!pol.escaped, fin: !!P.finished, rams: pol.rams, heat: pol.heatMax, maxCars, polPulled: polPulled.size, resc, nan, evs,
     hunt: hunt / Math.max(1, chase), near: near / Math.max(1, chase) };
 }
 {
@@ -133,6 +137,10 @@ function police(seed, tx, own) {
   const o = police(11, null, true), dp = diverge(o, b);
   check('policija: »Samo moj avto« velja tudi za patrulje (igralca ne vleče: dvojčka razdvoji šele zvit vogal patrulje)', o.firstPol > 0 && o.firstPol === b.firstPol && dp >= o.firstPol,
     `prva patrulja z zvitim vogalom na koraku ${o.firstPol} / ${b.firstPol}, razhod na koraku ${dp}`);
+  // patrulja, ki je nihče ne krmili (uničena se ustavlja sama): privzeto jo vleče, s »Samo moj avto« ne (oznaka patrulj v Police.step)
+  const w1 = police(11, null, false, true), w0 = police(11, { pull: 0 }, false, true);
+  check('policija: uničene patrulje z zvitim vogalom, ki se ustavlja sama, s »Samo moj avto« ne vleče (privzeto jo)', w1.wrRoll >= 30 && w1.wrXd > 0 && w0.wrRoll >= 30 && w0.wrXd === 0,
+    `privzeto: ${w1.wrRoll} korakov ustavljanja, z vleko ${w1.wrXd} korakov; »Samo moj avto«: ${w0.wrRoll} korakov ustavljanja, z vleko ${w0.wrXd}`);
 }
 
 console.log(`\n${n - bad}/${n} checks passed`);
