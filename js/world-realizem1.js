@@ -260,4 +260,55 @@
       }
     }
   }
+
+  /* ================= PIKES PEAK: the old snow banks and the granite (~5300 m) =================
+     Above the treeline the plowed banks were pale blue slabs and the granite's lichen bright orange: Pikes Peak granite is pink to tan,
+     weathered grey-brown, its lichens small patches; snow banks by the road in June are grey-white with the road's grit at the foot. */
+  const pkBase = World.ext.pikes;
+  if (pkBase) World.ext.pikes = (scene, tex, opts, api) => {
+    const out = pkBase(scene, tex, opts, api);
+    try { pkFix(out); } catch (e) { console.error('realizem1 (pikes):', e); }
+    return out;
+  };
+
+  function pkFix(out) {
+    const rz = out.rz1 || (out.rz1 = {});
+    if (out.root) pkSnowRock(out, rz);
+  }
+
+  function pkSnowRock(out, rz) {   // in the scenery's own meshes, by their exact colours (pkSnow's bank; the granite's sc: granite x k + lichen)
+    const skip = new Set(out.ground ? out.ground.children : []), dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const BK = [[0.44, 0.39, 0.36], [0.6, 0.58, 0.58], [0.98, 1.0, 1.06], [0.86, 0.9, 0.99], [0.76, 0.79, 0.86], [0.9, 0.91, 0.96], [0.74, 0.72, 0.72]];   // the bank: foot, grit, top, back, back's foot (x its tone); the old drifts in hollows: middle, rim
+    const NB = [[0.42, 0.38, 0.35], [0.54, 0.51, 0.49], [0.8, 0.79, 0.77], [0.72, 0.71, 0.71], [0.62, 0.61, 0.6], [0.8, 0.79, 0.77], [0.6, 0.56, 0.53]];   // June's old snow (albedo ~0.5-0.7, fresh ~0.85): grey-white, the road's grit at the foot and rims
+    const GR = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], OR = [0.8, 0.5, 0.17], O2 = [0.6, 0.47, 0.36], f = 0.35;   // lichen: a rust-tan stain, a third as much
+    const hs = (x, y, z) => { const s = Math.sin(x * 12.9898 + y * 4.1414 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const fitR = (c, g) => { const a11 = dot(g, g), a12 = dot(g, OR), a22 = dot(OR, OR), b1 = dot(g, c), b2 = dot(OR, c), d = a11 * a22 - a12 * a12;
+      const al = (b1 * a22 - b2 * a12) / d, o = (a11 * b2 - a12 * b1) / d; return [al, o, Math.abs(c[0] - al * g[0] - o * OR[0]) + Math.abs(c[1] - al * g[1] - o * OR[1]) + Math.abs(c[2] - al * g[2] - o * OR[2])]; };
+    let nb = 0, nr = 0;
+    out.root.traverse(m => {
+      if (!m.isMesh || m.isInstancedMesh || !m.geometry || !m.geometry.attributes.color || m.geometry.attributes.color.itemSize !== 3) return;
+      const A = m.geometry.attributes, Cl = A.color.array, P = A.position.array, n = A.color.count, rk = new Int8Array(n).fill(-1), gd = skip.has(m), S = A.steep && A.steep.array; let ch = false, any = false;
+      if (gd && !S) return;   // (in the ground's tiles only their far scenery: the drifts lie flat on the ground there)
+      for (let v = 0; v < n; v++) { const o = v * 3, c = [Cl[o], Cl[o + 1], Cl[o + 2]];
+        if (gd && (S[v] < 1.5 || P[o + 1] < 320)) continue;   // (the drifts: high up only)
+        if (c[1] > 0.25 && c[2] > 0.25) { let hit = false;
+          for (let k = gd ? 5 : 0, k1 = gd ? 7 : 5; k < k1 && !hit; k++) { const B = BK[k], t = dot(c, B) / dot(B, B);
+            if (t < 0.75 || t > 1.25 || Math.abs(c[0] - t * B[0]) + Math.abs(c[1] - t * B[1]) + Math.abs(c[2] - t * B[2]) > 3e-4) continue;
+            const q = hs(P[o], P[o + 1], P[o + 2]), s = t * (0.9 + 0.14 * q) * (q < 0.18 ? 0.86 : 1);   // (lumps and streaks of grit)
+            Cl[o] = NB[k][0] * s; Cl[o + 1] = NB[k][1] * s; Cl[o + 2] = NB[k][2] * s; hit = ch = true; nb++; }
+          if (hit || gd) continue; }
+        if (gd) continue;
+        if (c[0] > c[2] + 0.04 && c[0] >= c[1]) for (let k = 0; k < 3; k++) { const [al, o, e] = fitR(c, GR[k]); if (e < 3e-4 && al > 0.15 && o > -1e-4 && o < 0.92) { rk[v] = k; any = true; break; } }
+      }
+      if (any) {   // a rock's triangles: the vertices with sage or black lichen too (no exact fit) take their triangle's granite
+        const I = m.geometry.index ? m.geometry.index.array : null, nt = I ? I.length / 3 : n / 3, vi = (t, q) => I ? I[t * 3 + q] : t * 3 + q;
+        for (let t = 0; t < nt; t++) { let k = -1; for (let q = 0; q < 3; q++) if (rk[vi(t, q)] >= 0) k = rk[vi(t, q)]; if (k < 0) continue; for (let q = 0; q < 3; q++) if (rk[vi(t, q)] < 0) rk[vi(t, q)] = k; }
+        for (let v = 0; v < n; v++) { if (rk[v] < 0) continue; const o = v * 3, g = GR[rk[v]], c = [Cl[o], Cl[o + 1], Cl[o + 2]], [al, oo] = fitR(c, g), w = Math.min(0.9, oo); if (w <= 0.003) continue;
+          const k = al / (1 - w), w2 = w * f;   // c = (1 - o) k g + o OR  ->  (1 - o f) k g + o f O2
+          for (let q = 0; q < 3; q++) Cl[o + q] = Math.max(0, c[q] + w2 * O2[q] - w * OR[q] + (w - w2) * k * g[q]);
+          ch = true; nr++; } }
+      if (ch) A.color.needsUpdate = true;
+    });
+    rz.bank = nb; rz.rock = nr;
+  }
 })();
