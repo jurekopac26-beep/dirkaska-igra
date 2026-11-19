@@ -9,12 +9,14 @@
 #        route     točke poti v vrstnem redu vožnje: [lat, lon, ime ceste v OSM ali null, opomba]; vsaka se pripne na najbližje
 #                  vozlišče ceste s tem imenom (null: katere koli ceste), med dvema točkama gre najkrajša pot po cestah
 #        prefer    imena cest, ki štejejo za krajše (ceste iz virov o progi); druge so 4-krat »daljše«
+#        allowWays (neobvezno) id-ji poti OSM (npr. "w123"), ki štejejo za vozne, čeprav niso cesta (trg ali pešpot na mestni progi)
 #        geoRoads, geoWater   zemljepisna imena cest in voda, ki smejo v izhod (druga imena se zbrišejo: OSM ima veliko ulic po osebah)
 #        marks     znamenitosti: [oznaka v igri (slovensko), angleško, vrsta, [OSM id-ji: "w123" pot, "r456" relacija; več: konveksni ovoj]]
 #        places    kraji za HUD: [oznaka, id vozlišča OSM (kraj; najbližja točka ceste) ali null, s v m (kadar id manjka)]
 #        dist      (neobvezno) razdalje od ceste v m: {"bld": 60, "trees": 60, "walls": 30, "coast": 400, "cliffs": 300, "shore": 300,
 #                  "water": 100, "rail": 200, "roads": 60, "grid": 150, "lamps": 30}
 #        driveExtra (neobvezno) dodatne vrste OSM highway, po katerih sme pot (npr. ["pedestrian"]: ulica brez avtov, ki je na dirki zaprta)
+#        drive     (neobvezno) dodatne vrste OSM highway, po katerih sme pot (npr. ["track"] za zadnji makadamski del do znamenitosti)
 #        osmStep   (neobvezno) velikost kosov OSM v stopinjah [dlat, dlon], privzeto [0.03, 0.025] (API: največ 50.000 točk na zahtevo)
 #   2. Python: numpy in pillow sta v seji; pip install --break-system-packages scipy rasterio
 #   3. python3 -I tools/proga-podatki.py tools/<id>/config.json RAW [osm] [route] [data]   (brez korakov: vsi trije)
@@ -49,6 +51,7 @@ def load_config(path):
     c['_dir'] = os.path.dirname(os.path.abspath(path)); c.setdefault('closed', True)
     c['dist'] = dict(DIST, **c.get('dist', {}))
     for k in ('prefer', 'geoRoads', 'geoWater'): c[k] = set(c.get(k, []))
+    c['allowWays'] = set(str(w).lstrip('w') for w in c.get('allowWays', []))
     return c
 
 def r1(v, k=1):
@@ -120,7 +123,7 @@ def step_route(raw):
     osm = os.path.join(raw, C['id'] + '-osm.json'); D = json.load(open(osm)); N, W = D['nodes'], D['ways']
     G, byname = {}, {}
     for wid, (refs, t) in W.items():
-        if (t.get('highway') not in DRIVE and t.get('highway') not in C.get('driveExtra', ())) or t.get('area') == 'yes': continue
+        if (t.get('highway') not in DRIVE | set(C.get('drive', [])) and t.get('highway') not in C.get('driveExtra', ()) and wid not in C['allowWays']) or t.get('area') == 'yes': continue
         nm = t.get('name', ''); f = 1.0 if nm in C['prefer'] else 4.0
         refs = [r for r in refs if r in N]
         for a, b in zip(refs, refs[1:]):
