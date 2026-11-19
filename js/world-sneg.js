@@ -50,7 +50,7 @@
     m.customProgramCacheKey = () => key; m.needsUpdate = true;
   }
   // which materials: none of the road's (asphalt, kerbs, paving, gravel, the paint and the wear), water, glass, people, the moving things
-  const SKIPN = /^(crowd|life|lifeShadow|tyremarks|ao|roadwear|flags)$/, SKIPK = /road-paint|water|brook|carPark|wheelRim|crew|gravelSeam/;
+  const SKIPN = /^(crowd|life|lifeShadow|tyremarks|ao|roadwear|flags|people|umbrellas|paragliders)$/, SKIPK = /road-paint|water|brook|carPark|wheelRim|crew|gravelSeam|crowd|Crowd/;
   const hY = new WeakMap();   // (a geometry's height, by its positions: the chunks of a plant share them)
   function geoH(g) {
     const p = g.attributes.position; let h = hY.get(p);
@@ -84,7 +84,7 @@
     }
     if (L.bank) own(() => banks(w, S));
   }
-  // the plough's banks (Medeu, Gudauri): a narrow windrow where the plough leaves it, at the edge of the cleared road (about 2 m
+  // the plough's banks (Llogara): a narrow windrow where the plough leaves it, at the edge of the cleared road (about 2 m
   // across): its dirty foot, the face, the top, the far side down to the ground; low where a barrier stands in it (its rail in view),
   // lower at the start, the finish and the checkpoints; none where the ground falls away (bridges, the walls over a drop), in a
   // tunnel or where the road passes under itself
