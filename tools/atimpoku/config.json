@@ -1,0 +1,30 @@
+{
+  "id": "atimpoku",
+  "about": "Atimpoku, Gana (id atimpoku): the road from Akosombo down through Atimpoku to the roundabout by the Volta, over the suspension bridge of Adomi (1957) and along the main road on the east bank (docs/proge/atimpoku.md)",
+  "box": [6.228, 0.072, 6.264, 0.118],
+  "closed": false,
+  "dist": {"grid": 500},
+  "route": [
+    [6.25560, 0.08038, null, "start: the road from Akosombo, southbound"],
+    [6.25391, 0.08131, null, ""],
+    [6.24921, 0.08534, null, ""],
+    [6.24599, 0.08750, null, ""],
+    [6.24426, 0.09114, null, ""],
+    [6.24176, 0.09262, null, "down into Atimpoku"],
+    [6.23931, 0.09259, null, "the roundabout of Atimpoku"],
+    [6.23941, 0.09324, null, "onto the bridge approach"],
+    [6.23955, 0.09391, null, "the suspension bridge over the Volta"],
+    [6.24017, 0.09709, null, "the east end of the bridge"],
+    [6.23796, 0.09905, null, "the bend down on the east bank"],
+    [6.23756, 0.10235, null, ""],
+    [6.23996, 0.10533, null, ""],
+    [6.24063, 0.10684, null, "finish on the main road east of the river"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": ["Volta"],
+  "marks": [
+    ["Most Adomi", "Adomi Bridge", "bridge", ["w1450901631"]]
+  ],
+  "places": []
+}

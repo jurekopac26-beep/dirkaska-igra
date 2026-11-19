@@ -789,5 +789,12 @@
   "kverts": 294,
   "maxKverts": 361,
   "jsMs": 1.26
+ },
+ "atimpoku": {
+  "calls": 103,
+  "maxCalls": 132,
+  "kverts": 242,
+  "maxKverts": 289,
+  "jsMs": 1.83
  }
 }

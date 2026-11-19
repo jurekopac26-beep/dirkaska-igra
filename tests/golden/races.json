@@ -5598,5 +5598,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "ab6c7df9ece744a9414318e3"
+ },
+ "atimpoku/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 88.97,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0f5dc9af55f34f6158317083"
+ },
+ "atimpoku/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 101.79,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "aa3c8744749e957050fe07c8"
+ },
+ "atimpoku/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 73.52,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0d5b7dd513d0a8ace2be2a21"
+ },
+ "atimpoku/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 74.28,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "18472bf0377822ea49ddc5a4"
+ },
+ "atimpoku/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 87.64,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "092be8327bec04170e3645e1"
  }
 }
