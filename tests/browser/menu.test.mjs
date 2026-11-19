@@ -1543,7 +1543,7 @@ try {
       && hub.cls === v.razredi.length && hub.cls === 10 && /37 \/ 100 km/.test(hub.goals), JSON.stringify({ hub, s1 }));
     await page.click('[data-act="kstage:2"]');
     const lk = v.stopnje[1].pokali[0];
-    await page.click(`[data-act="kcup:${lk.id}"]`); await page.waitForTimeout(300);
+    await page.click(`[data-act="kcup:${lk.id}"]`, { force: true });   // (aria-disabled: Playwright would wait for it to be enabled) await page.waitForTimeout(300);
     const ref = await page.evaluate(() => ({ toast: document.getElementById('toast').textContent, champ: localStorage.getItem('tdgp-champ'), race: !!__game.race }));
     const still = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && s.querySelector(".kp-tabs [aria-selected=true]").textContent;');
     T.check('a cup of stage 2 tapped: refused (the game\'s toast), the hub still open on stage 2, no championship, no race', /zaklenjen/.test(ref.toast) && !ref.champ && !ref.race && still === 'Club', JSON.stringify({ ref, still }));
