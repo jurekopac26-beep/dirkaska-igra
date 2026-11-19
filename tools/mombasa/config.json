@@ -1,0 +1,76 @@
+{
+  "id": "mombasa",
+  "about": "Mombasa, Kenya (id mombasa): a city course from Moi Avenue east along Nkrumah Road, past the west wall of the old Portuguese fort at the harbour entrance, south through the residential quarter to the shore road above the Likoni channel and west along it (docs/proge/mombasa.md)",
+  "box": [
+    -4.08,
+    39.66,
+    -4.055,
+    39.685
+  ],
+  "closed": false,
+  "dist": {
+    "grid": 500
+  },
+  "route": [
+    [
+      -4.062,
+      39.6683,
+      "Moi Avenue",
+      "start: the town centre, eastbound"
+    ],
+    [
+      -4.0627,
+      39.6716,
+      "Nkrumah Road",
+      "through the roundabout"
+    ],
+    [
+      -4.0633,
+      39.6741,
+      "Nkrumah Road",
+      ""
+    ],
+    [
+      -4.06324,
+      39.67832,
+      null,
+      "the lane under the west wall of the old fort (about 50 m)"
+    ],
+    [
+      -4.06399,
+      39.6792,
+      null,
+      "south past the fort"
+    ],
+    [
+      -4.0723,
+      39.68,
+      "Mama Ngina Drive",
+      "the shore road above the channel"
+    ],
+    [
+      -4.0786,
+      39.6722,
+      "Mama Ngina Drive",
+      "finish on the shore road"
+    ]
+  ],
+  "prefer": [
+    "Moi Avenue",
+    "Nkrumah Road",
+    "Mama Ngina Drive"
+  ],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [
+    [
+      "Trdnjava",
+      "Fortress",
+      "castle",
+      [
+        "w94444068"
+      ]
+    ]
+  ],
+  "places": []
+}

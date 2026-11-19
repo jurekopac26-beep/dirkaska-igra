@@ -107,7 +107,7 @@ const t0 = Date.now(), orig = Math.random;
   const BRAND = new RegExp(['peu', 'geot'].join(''), 'i'), hits = [], glbs = [];
   const scan = (rel) => { const f = path.join(ROOT, rel); if (BRAND.test(rel)) hits.push(rel);
     if (fs.statSync(f).isDirectory()) { for (const e of fs.readdirSync(f)) if (e !== 'node_modules' && e !== 'test-results' && e !== '.git') scan(path.join(rel, e)); return; }
-    if (/\.glb$/i.test(rel)) glbs.push(rel);
+    if (/\.glb$/i.test(rel)) { if (!/^assets[\\/]landmarks[\\/]/.test(rel)) glbs.push(rel); }   // (the landmarks by the road, js/znamenitost.js, are no car)
     else if (/\.(js|mjs|cjs|html|css|md|json|webmanifest|txt|svg|yml|yaml)$/i.test(rel) && BRAND.test(fs.readFileSync(f, 'utf8'))) hits.push(rel); };
   for (const e of fs.readdirSync(ROOT)) if (e !== 'node_modules' && e !== 'test-results' && e !== '.git' && e !== '.claude') scan(e);
   check('the real car is gone: no word of its maker in the page, the scripts (js/**), the styles, the tools, the tests or the READMEs (nor in a file\'s name); its packed model (js/data/p206.js) and its 3D model file (.glb) not in the game, not linked',
