@@ -13,6 +13,16 @@
      pikes    a summer thunderstorm on the mountain (cumulonimbus by the afternoon): the dark base of the cloud, less light from the whole sky
      tianmen  the mountain in its cloud (Zhangjiajie's humid subtropical rain): a pale, close fog round the cliffs
      rastro   the 'cerração' of the Serra Geral: the orographic fog that closes the road on the escarpment, pale and close
+     montreal a June thunderstorm shower (June is Quebec's third stormiest month): the dark base of the cloud, the river greyed
+     rbring   a summer thunderstorm over the Murtal (Styria has Austria's most lightning, June to August): the dark cloud, less light
+     chapman  a winter cold front off the Atlantic (heavy rain and wind; in the heaviest the road is closed): low cloud on the
+              mountain, the sea a dark slate grey
+     balea    the road above 2,000 m in its cloud (the Făgăraș weather that changes fast, the fog that closes the road): pale, close
+     katu     a shower over the sheltered Chulyshman valley (the Altai's sharply continental summer): an even grey sky; the gravel
+              (the road's own picture) only a little glossy, a rough surface holds no film of water
+     caracoles a frontal system on the cordillera (rain, wind and snow, short and intense): cold, blue-grey cloud low in the
+              valley, the Laguna del Inca dark under it
+     (Medvode, pending, and Suzuka, a test track, are frozen: no entry.)
    Hooks (no change to render.js or the worlds' files): World.build (the patch, once per world), World.update (the race: its rain and
    water) and the scene's onBeforeRender / onAfterRender: the light, the haze and the sea set for this one picture only and put back
    right after it, so what render.js sets (the camera's fog distances, applyTheme, Pikes Peak's light by the altitude, a lightning
@@ -29,6 +39,12 @@
     pikes:   { fog: 0x7a838d, fogK: 0.5, near: 0.85, far: 0.8, sun: 0.38, hemi: 0.9, sheen: 0.8 },
     tianmen: { fog: 0xb3bcbf, fogK: 0.55, near: 0.6, far: 0.62, sun: 0.3, hemi: 1.15, sheen: 0.75 },
     rastro:  { fog: 0xaeb7b8, fogK: 0.55, near: 0.62, far: 0.62, sun: 0.3, hemi: 1.15, sheen: 0.75 },
+    montreal: { fog: 0x7e888f, fogK: 0.5, near: 0.9, far: 0.82, sun: 0.34, hemi: 0.95, sheen: 0.85, sea: [0x5c6a64, 0.7] },
+    rbring:  { fog: 0x78828b, fogK: 0.5, near: 0.85, far: 0.78, sun: 0.34, hemi: 0.9, sheen: 0.8 },
+    chapman: { fog: 0x86919a, fogK: 0.5, near: 0.85, far: 0.78, sun: 0.3, hemi: 1.08, sheen: 0.8, sea: [0x435660, 0.75] },
+    balea:   { fog: 0xaab4ba, fogK: 0.55, near: 0.62, far: 0.64, sun: 0.3, hemi: 1.12, sheen: 0.75, sea: [0x5a676d, 0.6] },
+    katu:    { fog: 0x8c959a, fogK: 0.45, near: 0.9, far: 0.85, sun: 0.34, hemi: 1.1, sheen: 0.35 },
+    caracoles: { fog: 0x98a2a9, fogK: 0.55, near: 0.72, far: 0.7, sun: 0.3, hemi: 1.1, sheen: 0.75, sea: [0x506461, 0.6] },
   };
 
   // the sheen: shared uniforms (the patched programs are the same on every rebuild)
@@ -72,6 +88,7 @@
       if (m.color && (maps.includes(m.map) || m.userData.wear)) patch(m);   // (the see-through wear too: the same sheen over it and under it, so it blends as on a dry road)
       else if (L.sea && tex.water && m.map === tex.water && m.color && !st.sea.includes(m)) st.sea.push(m);
     } });
+    if (o.asphaltMat && o.asphaltMat.color && !maps.includes(o.asphaltMat.map)) patch(o.asphaltMat);   // (a road with its own picture: Katu-Jaryk's gravel)
     if (!scene.userData.dez) { const pre = scene.onBeforeRender, post = scene.onAfterRender; scene.userData.dez = true;
       scene.onBeforeRender = function (renderer, sc, camera) { pre.apply(this, arguments);
         (CAM[camD] || (CAM[camD] = new THREE.Vector3())).copy(U.dzC.value); camD++; if (camera) U.dzC.value.setFromMatrixPosition(camera.matrixWorld);
