@@ -105,7 +105,7 @@ export async function openGame(browser, address, settings = {}, viewport = { wid
   await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
   // (the worlds loaded only when needed, World.need, I17 step 5: all of them now, so a test can build any track's world at once, as before;
   // opts.lazy: only what the game itself loads, tests/browser/svet-nalaganje.test.mjs)
-  if (!opts.lazy) await page.evaluate(() => window.World && World.needAll ? World.needAll() : null);
+  if (!opts.lazy) await page.evaluate(() => typeof World !== 'undefined' && World.needAll ? World.needAll() : null);   // (World je const, ne window.World)
   // (and the whole tracks, I17 lazy tracks: the track screen otherwise loads them all first, and a card shows only then)
   if (!opts.lazy) await page.evaluate(() => typeof Core !== 'undefined' && Core.loadTracks ? Core.loadTracks(Core.TRACKS.map(d => d.id)) : null);
   return { ctx, page, errors };
