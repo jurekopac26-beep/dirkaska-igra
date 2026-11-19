@@ -78,6 +78,15 @@ def densify(P, step):
         out += [p + (q - p) * k / n for k in range(1, n + 1)]
     return np.array(out)
 
+def simplify(S, tol):
+    """Douglas-Peucker: the points of S that keep the line within tol of S"""
+    if len(S) <= 2: return list(S)
+    a, b = S[0], S[-1]; ab = b - a; L = np.hypot(*ab); M = S[1:-1]
+    d = np.abs(ab[0] * (M[:, 1] - a[1]) - ab[1] * (M[:, 0] - a[0])) / L if L > 1e-6 else np.hypot(*(M - a).T)
+    i = int(d.argmax()) + 1
+    if d[i - 1] <= tol: return [a, b]
+    return simplify(S[:i + 1], tol)[:-1] + simplify(S[i:], tol)
+
 def runs(mask):
     """the index ranges [i0, i1] where mask holds, at least 2 points long"""
     out, i = [], 0
@@ -146,11 +155,7 @@ def track(tid, osmdir):
         for i0, i1 in runs((dr <= 60) & (dw > 3.0) & ~in_mark(Q)):
             S = Q[i0:i1 + 1]
             if np.hypot(*(S[-1] - S[0])) < 1.5 and len(S) < 3: continue
-            keep = [S[0]]   # (the straight runs as one segment: points closer than 0.15 m to the chord dropped)
-            for p in S[1:-1]:
-                a, b = keep[-1], S[-1]; ab = b - a; L = np.hypot(*ab)
-                if L < 1e-6 or abs(ab[0] * (p[1] - a[1]) - ab[1] * (p[0] - a[0])) / L > 0.15 or np.hypot(*(p - a)) > 12: keep.append(p)
-            keep.append(S[-1])
+            keep = simplify(S, 0.1)   # (the line within 0.1 m of OSM's: the straight runs as one segment)
             out['w'].append([k, r1(h)] + [r1(v) for p in keep for v in p])
     # sidewalks
     for wid, (refs, t) in sorted(ways.items()):

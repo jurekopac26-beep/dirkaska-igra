@@ -33,16 +33,24 @@ Najslabše štiri (predmeti 2): El Jem, Luanda, Mombasa, Hiva. El Jem in Hiva st
 ## Kaj je narejeno
 
 - **Zidovi in živice**: takšni, kot jih proga riše sama (barva, debelina; višina iz OSM ali privzeta). Ponovitev zidov, ki jih proga že ima (3 m), in vsega ob znamenitostih (12 m od obrisa) generator izpusti.
-- **Ograje** (`fence`, `railing`): stebrički na ~2,5 m in dva vodoravna droga, siva kovina. Višina je iz OSM, sicer 1,8 m (`railing` 1,0 m).
+- **Ograje** (`fence`, `railing`): stebrički največ 2,5 m narazen in dva vodoravna droga, siva kovina. Višina je iz OSM, sicer 1,8 m (`railing` 1,0 m).
+  - Stebrički in drogovi so iz dveh tankih ploskev, sprednje in zadnje: s ceste se njihove nekaj centimetrov široke stranice ne vidijo.
+  - Drog je raven od stebrička do stebrička, dokler tla ne odstopijo od njegove črte za več kot 5 cm.
 - **Pločniki** (`footway=sidewalk`): tlakovan pas, 0,15 m nad tlemi, z robnikom proti cesti. Rišem jih samo tam, kjer robnik leži 0,3–5 m za ograjo proge.
   - V Luandi (in Hivi) so vsi pločniki OSM v razširjenem dirkalnem pasu (med asfaltom in ograjo). Tam bi bili predmet, skozi katerega se pelje, zato jih ni.
 - **Nič na cesti**: velja pravilo prog (`nrNear`, vsaj 0,8 m za ograjo).
 - **Zmogljivost**: kosi po 256 m, en klic risanja na kos z vsebino; brez gledalcev, brez rastja.
+  - Luanda, test telefona (senčenje): največ 317 tisoč oglišč na sličico. Brez ovoja jih je 307 tisoč, meja testa je 342 tisoč. Klicev risanja je 113 (brez ovoja 112, meja 145).
+  - Prva različica je imela 359 tisoč in je bila čez mejo. Stebrički in drogovi so bili škatle, generator pa je obdržal točko na vsaka 2 m.
 
 ## Slike (pred | po)
 
-- `k7-luanda-1700.jpg`: ograja levo ob cesti, 5 m za ograjo proge.
-- `k7-luanda-1800.jpg`: ograja in zid v ozadju.
+Kamera za avtom, `origin/main` | ta veja (`node tools/shot.mjs <id> --m <m> --lezece --pred origin/main`).
+
+- `k7-spa-900.jpg`: Spa (kontrola, ni med progami ovoja): brez spremembe (0 %).
+- `k7-luanda-1700.jpg`: ograja levo ob cesti, 5 m za ograjo proge (0,34 % slike).
+- `k7-luanda-1800.jpg`: zid spredaj levo, ograja v ozadju (0,64 %).
+- Mombasa: brez spremembe.
 
 ## Ni narejeno
 
@@ -56,6 +64,6 @@ Najslabše štiri (predmeti 2): El Jem, Luanda, Mombasa, Hiva. El Jem in Hiva st
 python3 -I tools/realizem7/build.py [--osm DIR] luanda mombasa
 ```
 
-Generator prenese manjkajoče ploščice OSM, nato dopolni blok `<rz7>` v ovoju (ključev ne briše).
+Generator prenese manjkajoče ploščice OSM, nato dopolni blok `<rz7>` v ovoju (ključev ne briše). Črte poenostavi po Douglas–Peuckerju, največ 0,1 m od črte OSM.
 
 **Hiva po združitvi #793**: v `DATA` v obeh datotekah dodaj `hiva: 'HV_DATA'`, v ovoj `LOOK.hiva = { col: [0.82, 0.7, 0.54], top: [0.86, 0.75, 0.58], t: 0.45, h: [1.8, 2.2] }`, nato `python3 -I tools/realizem7/build.py hiva`. Enako za Portobelo in Seul, če ju koordinacija potrdi.
