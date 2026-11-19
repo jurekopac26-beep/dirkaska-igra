@@ -719,5 +719,68 @@
   "kverts": 306,
   "maxKverts": 391,
   "jsMs": 1.07
+ },
+ "mogyorod": {
+  "calls": 185,
+  "maxCalls": 217,
+  "kverts": 512,
+  "maxKverts": 634,
+  "jsMs": 1.63
+ },
+ "sindia": {
+  "calls": 179,
+  "maxCalls": 250,
+  "kverts": 494,
+  "maxKverts": 794,
+  "jsMs": 1.16
+ },
+ "yahuarcocha": {
+  "calls": 190,
+  "maxCalls": 224,
+  "kverts": 517,
+  "maxKverts": 705,
+  "jsMs": 1.05
+ },
+ "parnu": {
+  "calls": 217,
+  "maxCalls": 264,
+  "kverts": 445,
+  "maxKverts": 737,
+  "jsMs": 1.68
+ },
+ "houli": {
+  "calls": 203,
+  "maxCalls": 248,
+  "kverts": 618,
+  "maxKverts": 806,
+  "jsMs": 1.33
+ },
+ "tocancipa": {
+  "calls": 225,
+  "maxCalls": 255,
+  "kverts": 494,
+  "maxKverts": 619,
+  "jsMs": 1.04
+ },
+ "cromwell": {
+  "calls": 214,
+  "maxCalls": 262,
+  "kverts": 612,
+  "maxKverts": 735,
+  "jsMs": 1.26
+ },
+ "mujib": {
+  "calls": 121,
+  "maxCalls": 153,
+  "kverts": 237,
+  "maxKverts": 317,
+  "jsMs": 0.74
+ },
+ "atitlan": {
+  "calls": 181,
+  "maxCalls": 229,
+  "kverts": 296,
+  "maxKverts": 334,
+  "jsMs": 0.83
  }
 }

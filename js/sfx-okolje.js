@@ -26,7 +26,9 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819],
+    mujib: [31.44, 471], atitlan: [14.76, 2068] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Wadi Mujib and Atitlán, docs/nove-proge-1-0.md
+    // del 4: the start's altitude, their heights are from the start line as GEO's offset)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));
@@ -127,9 +129,10 @@
     if (H) { h0 = Infinity; h1 = -Infinity; for (let i = 0; i < H.length; i++) { if (H[i] < h0) h0 = H[i]; if (H[i] > h1) h1 = H[i]; } }
     const alt0 = g ? g[1] : 300, relief = sstep(60, 400, h1 - h0), seaB = def.sea || SEA.has(id) ? 0.2 : 0;
     Z.clim = { lat: g ? g[0] : 45, alt: alt0 + (h0 + h1) / 2 };
+    const w0 = +def.wind || 0;   // (a track's own wind, the least along its road: a bare desert canyon's, def.wind; trees shelter it too)
     if (def.theme !== 'pikes') for (let k = 0; k < n; k++) {   // (Pikes Peak: its own wind, js/sfx.js atmo)
       const y = P[k * 5 + 4], hn = h1 > h0 ? (y - h0) / (h1 - h0) : 0, open = 1 - 0.75 * Math.max(Z.fL[k], Z.fR[k]), sn = Math.max(Z.kL[k] === SEAK ? Z.wL[k] : 0, Z.kR[k] === SEAK ? Z.wR[k] : 0);
-      Z.wind[k] = clamp((0.55 * sstep(500, 2500, alt0 + y) + 0.55 * relief * Math.pow(hn, 1.5) + seaB * Math.min(1, 0.4 + sn * 3)) * open, 0, 1);
+      Z.wind[k] = clamp(Math.max(w0, 0.55 * sstep(500, 2500, alt0 + y) + 0.55 * relief * Math.pow(hn, 1.5) + seaB * Math.min(1, 0.4 + sn * 3)) * open, 0, 1);
     }
     Z.st.ms = Math.round(performance.now() - t0);
     return Z;

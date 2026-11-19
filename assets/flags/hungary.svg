@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>Hungary</title>
+  <!-- Ratio 1:2. Three horizontal bands of equal width, red, white and green from the top (Fundamental Law of Hungary, art. I).
+       Red #CD2A3E, white, green #436F4D. -->
+  <rect width="1000" height="500" fill="#FFFFFF"/>
+  <rect width="1000" height="167" fill="#CD2A3E"/>
+  <rect y="333" width="1000" height="167" fill="#436F4D"/>
+</svg>

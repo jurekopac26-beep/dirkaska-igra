@@ -485,6 +485,17 @@
     'Lasnica v dolini': 'Hairpin in the Valley', 'Dolgi levi pod klancem': 'Long Left below the Climb', 'Desni na vrhu klanca': 'Right at the Top of the Climb',
     'Zadnji desni': 'Last Right',   // (Sakhir: its corners by plain descriptions, by the hills and the valley of the desert; Ostri levi and Desni na koncu ravnine as above)
     'Desni na dolgo ravnino': 'Right onto the Long Straight', 'Levi v notranjosti': 'Infield Left', 'Desni pred ciljem': 'Right before the Finish',   // (Termas de Río Hondo: its corners by plain descriptions; its others as above)
+    'Ovinek pri izviru': 'Spring Corner', 'Slepi levi': 'Blind Left',
+    'Ovinek Buda': 'Buda Corner', 'Ovinek Pešta': 'Pest Corner', 'Ovinek Donava': 'Danube Corner',   // (Mogyoród: its corners by plain descriptions and by the place names of the real ones)
+    'Ovinek pri baobabu': 'Baobab Corner', 'Trojni ovinek': 'Triple Bend',   // (Sindia: its corners by plain descriptions)
+    'Rahli desni': 'Gentle Right', 'Desni ob poljih': 'Right by the Fields', 'Levi v klanec': 'Uphill Left', 'Desni navzdol': 'Downhill Right', 'Ravnina ob jezeru': 'Lakeside Straight', 'Esa ob jezeru': 'Lakeside Esses', 'Lasnica ob jezeru': 'Lakeside Hairpin',   // (Yahuarcocha: its corners by plain descriptions)
+    'Esi': 'Esses', 'Južna zanka': 'South Loop', 'Vzhodna ravnina': 'East Straight', 'Vijuge': 'The Twists', 'Desni okljuk': 'Right-hand Loop',   // (Pärnu: its corners by plain descriptions)
+    'Prvi desni': 'First Right', 'Levi pred lasnico': 'Left before the Hairpin', 'Jugozahodna lasnica': 'South-west Hairpin', 'Levi ob kartingu': 'Karting Left', 'Severni esi': 'North Esses',
+    'Šikana pri hotelih': 'Hotel Chicane', 'Vzhodni levi': 'East Left', 'Notranji esi': 'Infield Esses',   // (Houli: its corners by plain descriptions)
+    'Zahodna zanka': 'West Loop', 'Levi za zanko': 'Left after the Loop', 'Srednji esi': 'Middle Esses', 'Vzhodna zanka': 'East Loop', 'Povratna ravnina': 'Return Straight',
+    'Južna lasnica': 'South Hairpin',   // (Tocancipá: its corners by plain descriptions)
+    'Jugovzhodna zanka': 'South-east Loop', 'Levi proti mostu': 'Left to the Bridge', 'Zanka ob kartingu': 'Karting Loop', 'Desni pred lasnico': 'Right before the Hairpin',
+    'Ovinki proti mostu': 'Bends to the Bridge', 'Levi-desni pred mostom': 'Left-right before the Bridge', 'Most': 'The Bridge', 'Severni levi': 'North Left', 'Ob ribniku': 'By the Pond',   // (Cromwell: its corners by plain descriptions)
     'Skalna vrata': 'Rock Gate', 'Nad Sa Calobro': 'Above Sa Calobra', 'Mimo serpentin': 'Past the hairpins',   // (Sa Calobra: the HUD, the results of an escape; its other places are Catalan names, the same in English; Serpentina N and the heights by the rules of Lang.place)
     'Nad Kotorskim zalivom': 'Above the Bay of Kotor', 'Na vrh serpentin': 'To the top of the hairpins',   // (Kotor: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Razgled na dolino Aragvija': 'Aragvi Valley View', 'Pred plazovno galerijo': 'Before the Avalanche Gallery', 'Do galerije': 'To the gallery',   // (Gudauri: the HUD, the results of an escape)
@@ -513,6 +524,8 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Iz kanjona Mujib': 'Up out of the Mujib canyon',   // (Wadi Mujib: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
+    'Bolnišnica': 'Hospital', 'Pod daljnovodom': 'Under the Power Line', 'Pogled na jezero': 'Lake View',   // (Atitlán: the HUD; the town keeps its name, the hairpins by the rules above, the results of an escape as Bâlea)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
     'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
     'Jez Medeu': 'Medeu Dam', 'Za jezom': 'Behind the Dam', 'Soteska Gorelnik': 'Gorelnik Gorge', 'Most čez Kiši Almati': 'Kishi Almaty Bridge', 'Soteska Kiši Almati': 'Kishi Almaty Gorge', 'Po soteski': 'Up the gorge',   // (Medeu: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)

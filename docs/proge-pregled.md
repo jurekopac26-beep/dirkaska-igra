@@ -15,6 +15,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 |---|---|---|---|---|---|---|---|
 | Tianmen, Kitajska | `tianmen` | odprta cesta | 4,2 km | 1343 | 23 % | 14 | +427 m |
 | Izoard, Francija | `izoard` | odprta cesta | 4,9 km | 1095 | 28 % | 19 | +387 m |
+| Wadi Mujib, Jordanija | `mujib` | odprta cesta | 1,0 km | 1013 | 33 % | 5 | +96 m |
 | Dadès, Maroko | `dades` | odprta cesta | 3,2 km | 978 | 20 % | 4 | +5 m |
 | Sosnová, Češka | `sosnova` | krog | 1,7 km | 948 | 28 % | 5 | ravno |
 | Sa Calobra, Španija | `sacalobra` | odprta cesta | 4,9 km | 946 | 35 % | 14 | −342 m |
@@ -23,6 +24,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Kotor, Črna gora | `kotor` | odprta cesta | 5,0 km | 899 | 31 % | 13 | +253 m |
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
+| Atitlán, Gvatemala | `atitlan` | odprta cesta | 1,0 km | 781 | 29 % | 2 | −79 m |
 | Canaries, Sveta Lucija | `canaries` | odprta cesta | 5,0 km | 716 | 35 % | 3 | +134 m |
 | Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
@@ -32,16 +34,20 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Kanaba, Uganda | `kanaba` | odprta cesta | 5,0 km | 618 | 30 % | 1 | −118 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
 | Gudauri, Gruzija | `gudauri` | odprta cesta | 4,8 km | 587 | 39 % | 5 | +260 m |
+| Houli, Tajvan | `houli` | krog | 3,5 km | 563 | 50 % | 2 | 25 m razpona |
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
+| Pärnu, Estonija | `parnu` | krog | 3,2 km | 524 | 46 % | 2 | ravno |
 | Hải Vân, Vietnam | `haivan` | odprta cesta | 2,0 km | 522 | 38 % | 1 | +91 m |
 | Furka, Švica | `furka` | odprta cesta | 5,0 km | 519 | 45 % | 7 | +371 m |
 | Katu-Jaryk, Rusija | `katu` | kronometer | 4,7 km | 509 | 53 % | 7 | −560 m |
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
 | Seul, Južna Koreja | `seoul` | odprta cesta | 2,5 km | 501 | 44 % | 0 | −77 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
+| Cromwell, Nova Zelandija | `cromwell` | krog | 4,1 km | 484 | 49 % | 4 | ravno |
+| Tocancipá, Kolumbija | `tocancipa` | krog | 2,7 km | 412 | 50 % | 0 | ravno |
 | Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
 | Quezaltepeque, Salvador | `quezaltepeque` | krog | 3,2 km | 455 | 51 % | 4 | 16 m razpona |
 | Sogeri, Papua Nova Gvineja | `sogeri` | odprta cesta | 2,0 km | 448 | 52 % | 1 | +117 m |
@@ -55,12 +61,15 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
 | Zandvoort, Nizozemska | `zandvoort` | krog | 4,3 km | 366 | 55 % | 4 | ravno |
+| Yahuarcocha, Ekvador | `yahuarcocha` | krog | 3,6 km | 355 | 53 % | 2 | 21 m razpona |
+| Mogyoród, Madžarska | `mogyorod` | krog | 4,4 km | 338 | 65 % | 4 | 35 m razpona |
 | Hiva, Uzbekistan | `hiva` | krog | 3,0 km | 359 | 68 % | 0 | ravno |
 | Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
 | El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
 | Sepang, Malezija | `sepang` | krog | 5,5 km | 304 | 63 % | 4 | 21 m razpona |
 | Pembrey, Wales | `pembrey` | krog | 2,3 km | 297 | 64 % | 1 | ravno |
 | Lombok, Indonezija | `lombok` | krog | 4,3 km | 297 | 62 % | 1 | ravno |
+| Sindia, Senegal | `sindia` | krog | 4,6 km | 296 | 64 % | 0 | 15 m razpona |
 | Killar, Indija | `killar` | odprta cesta | 4,4 km | 285 | 65 % | 1 | +10 m |
 | Tuzla, Turčija | `tuzla` | krog | 5,3 km | 281 | 69 % | 1 | 40 m razpona |
 | Montréal, Kanada | `montreal` | krog | 4,4 km | 279 | 75 % | 2 | ravno |
@@ -157,3 +166,12 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Tianmen, Kitajska** (`tianmen`, asfalt): Jeklene ograje, kjer teren pada; belo-črni betonski bloki na zunanji strani serpentin; Betonski podporni zidovi, kjer krak leži nad spodnjim; 14 ostrih serpentin; Strme apnenčaste stene in skalni stebri s progami, skale ob cesti; Gost subtropski gozd: zimzeleni listavci, bori, bambus ob cesti, grmičevje na policah; Zanka pri 90. ovinku: most ~12 m nad spodnjo cesto, betonski parapeti, nizka zidova; Modre table s številko ovinka; promet večinoma avtobusi in kombiji, pri cilju parkirišče. Dlje: Gore, dolina z mestom, apnenčasti stolpi, žičnica z rdečimi kabinami, nizki oblaki.
 - **Ujarrás, Kostarika** (`ujarras`, asfalt): Tropski gozd do ceste, ob cesti trava, papige; Jeklene ograje, kjer teren pada in na zunanji strani ostrejših ovinkov; Razgledišče na ~40 % dolžine dirke tik ob cesti: terasa s ploščicami na podpornem zidu, bela balustrada, nadstrešek z mizami, kiosk, korita z bugenvilijami, cvetoča drevesa in palma
 - **Štajerska, Avstrija** (`rbring`, asfalt): Asfaltni izletni pasovi; 2,5 m pas sivega proda ob izhodu 9. in 10. zavoja; Pokošena trava ob progi in za ogrado v svetlih in temnejših pasovih; Betonski zidovi z reklamami, table 300/200/100 m, TV-stolpi, svetlobni panoji, vozila reševalcev za ogrado; Boksi desno ob ciljni ravnini: 300 m dolga stavba, garaže, paddock s tovornjaki; Tribune ob ciljni ravnini in pri zavojih 1, 3, 4, 9, 10; veliki zasloni; Gozdovi (smreke, bukve), travniki, polja, kmetije, parkirišča, kampi; oranžne zastave in dim iz bakel. Dlje: Štajerski hribi in gozdovi okoli proge.
+- **Cromwell, Nova Zelandija** (`cromwell`, asfalt): Osmica z mostom (nasip in vkop med opornimi zidovi); izletne cone ob vsem krogu, bliže kot 3 m samo zid boksov in podvoz (~8 %); Suha zlata trava terase s timijanom, nasadi radiata bora, vetrozaščitni pasovi topolov in makrokarp, sadovnjaki; Ribnik v zahodni zanki z lanom in sitjem; Pokrita tribuna ob ciljni ravnini, ovalna steza in karting (OSM), hale in lope iz pločevine, pritlične hiše.
+- **Mogyoród, Madžarska** (`mogyorod`, asfalt): Rdeče-beli robniki, v ovinkih peščeni izletni pasovi, ograje več kot 3 m od roba na 92 % dolžine; Listnati gozd gričev s sestoji iglavcev, požgana trava, polja koruze in sončnic; Stavbe in žičnate ograje iz OSM, tri tribune, zastave, TV stolpi, transparenti samo z imeni krajev.
+- **Sindia, Senegal** (`sindia`, asfalt): Rdeče-beli robniki, peščeni izletni pasovi, ograje več kot 3 m od roba na 95 % dolžine; Suha savana na rdečkasti prsti, akacije, baobabi in pet starih baobabov ob progi, termitnjaki; Dve tribuni, zastave, transparenti z imeni krajev; govedo, osli in čaplje, senčnice in napajališča.
+- **Yahuarcocha, Ekvador** (`yahuarcocha`, asfalt): Krog okoli jezera z valovi in trstičjem; Suha andska trava, gozdički evkaliptusov, poprovci, agave za ograjami, polja in pašniki; Dve tribuni, zastave, TV stolpi, transparenti z imeni krajev in gora; govedo, konji, ovce in čaplje.
+- **Houli, Tajvan** (`houli`, asfalt): Asfaltne izletne cone, stene iz gum v počasnih ovinkih, ograje več kot 3 m od roba na 94 % dolžine; Stavba za dirke s 37 garažami in steklenimi nadstropji, tribuna po OSM; Kafrovci, betelove palme, bambus, brajde vinogradov in hrušk, polja cvetja in riža; Trije hoteli ob šikani, templji, karting, vasi z rezervoarji na strehah.
+- **Pärnu, Estonija** (`parnu`, asfalt): Prodišča iz granitnega proda, stene iz gum, jeklena ograja na stebričkih; Obalni travniki, borovi gozdovi z brezami, brini, jarki z ločjem; Ribnik v notranjosti kroga, žične ograje po OSM, pokrita tribuna, redarske hišice; srne, zajci, štorklje in gosi.
+- **Tocancipá, Kolumbija** (`tocancipa`, asfalt): Ravna savana na 2.560 m; Pašniki kikuja, njive na črni prsti, evkalipti, bori in vetrobranske ciprese, cvetoči uleks; Rastlinjaki cvetličnih farm, dva ribnika s sitjem, tribuna po OSM, makadamska steza in karting, cerkev in vasi.
+- **Wadi Mujib, Jordanija** (`mujib`, asfalt): Pet serpentin iz kanjona; Nizki betonski parapeti, kjer teren pada, v serpentinah rumeni bloki, smerni stebrički; Golo pobočje v plasteh apnenca in laporja, skalne police in melišča; Razgledišče s stojnico za čaj, beduinski šotor s pickupom; nubijski kozorogi, koze, kamele in osli. Dlje: jezero za jezom na dnu kanjona, planota.
+- **Atitlán, Gvatemala** (`atitlan`, asfalt): Rob mesta Sololá: barvite hiše iz zidakov s pločevinastimi strehami (OSM), bolnišnica brez imena, restavracija s senčniki, igrišči; Dvojna rumena črta, nizki betonski zidci, kjer teren pada; Daljnovod nad cesto, borov gozd s cipresami, koruza, vulkanske skale. Dlje: jezero Atitlán in vulkani San Pedro, Tolimán in Atitlán.
