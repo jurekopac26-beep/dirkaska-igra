@@ -93,6 +93,5 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 |---|---|---|---|---|
 | 10.12 | #246 | **za Trki (#608), ~8. 12.**; preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva, tudi pri nekrožnih progah brez pospeševanja; ostalih 11 prog počaka na boljšo grafiko (`claude/preleti-posnetki`) | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
-| 10.14 | #769 Pravila 12.–17. 11. (#664 + #674 + #701) | samo dokumenti; pravila enkrat na dan; veja `pravila/zbirna-17-11` | partyslo (prevzem od jure.kopac26, 17. 11.) | osnutek; do `main` ga vodi Združevanje partyslo |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
