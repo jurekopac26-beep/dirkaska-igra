@@ -483,11 +483,11 @@
   "jsMs": 1.14
  },
  "gudauri": {
-  "calls": 156,
+  "calls": 158,
   "maxCalls": 187,
-  "kverts": 362,
-  "maxKverts": 483,
-  "jsMs": 1.14
+  "kverts": 381,
+  "maxKverts": 538,
+  "jsMs": 1.5
  },
  "ngorongoro": {
   "calls": 141,

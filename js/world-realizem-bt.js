@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const API = World.api, PL = API && API.PL_LOOK; if (!PL) return;
-  const { TAU, lerp, rng, rock, vary, vrNear, cone } = API;
+  const { TAU, lerp, rng, rock, vary, vrNear, cone, ico } = API;
   let T; API.sync.push(() => { ({ T } = API); });
 
   const chain = (id, fn) => { const L = PL[id]; if (!L) return; const base = L.extra;
@@ -89,4 +89,32 @@
       API.ROCK_SMOOTH = smooth0; st.sopi = n; st.prst = m;
     } catch (e) { console.error('realizem-bt (ngorongoro):', e); }
   };
+  /* Gudauri: beside the road's gravel the pasture was one smooth face from the camera above the car. docs/proge/gudauri.md: »alpski
+     travniki in pašniki, v zaplatah grmovje«, »v strminah pečine in melišča« (the look's own notes in js/world-prelaz.js: mats of
+     Caucasian rhododendron and juniper, dark andesite and shale). So low mats of that scrub lie in patches within ~40 m of the road,
+     a few mats to a patch, and where the ground falls steep beside the road the shale lies in small fans of stones. */
+  chain('gudauri', (L, { scen, excluded, onSide }, st) => {
+    const { caGround, caSlope, vrLC } = API; if (!caGround || !caSlope || !vrLC || !T) return;
+    const R = rng(L.seed + 9353), rc = L.rockCols, smooth0 = API.ROCK_SMOOTH; let n = 0, m = 0;
+    const free = (x, z, r) => vrNear(x, z).dd > r && !excluded(x, z);
+    const mats = [[0.2, 0.28, 0.15], [0.17, 0.25, 0.14], [0.24, 0.31, 0.2], [0.27, 0.32, 0.24]];   // (rhododendron: dark green; juniper: greyer)
+    API.ROCK_SMOOTH = true;
+    for (let s = 20; s < T.len - 20; s += 9) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R();
+      const o = 4.5 + Math.pow(r1, 1.3) * 36, [gx, gz] = onSide(s + (r2 - 0.5) * 9, side, o), c = vrLC(gx, gz), sl = caSlope(gx, gz);
+      if (c >= 5 || c === 1) continue;
+      if (sl > 0.5 && sl < 1.2 && r0 < 0.5) {   // a small fan of shale on the steep ground
+        const cnt = 5 + Math.floor(R() * 7);
+        for (let q = 0; q < cnt; q++) { const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, w = 0.22 + R() * 0.42;
+          if (!free(x, z, 2 + w)) { R(); R(); continue; }
+          rock(scen.get(x, z), x, caGround(x, z) + w * 0.2, z, w * 1.5, w * 0.6, w, R() * TAU, vary(rc[Math.floor(R() * rc.length)], R, 0.05), R, 0.3, 0.3); m++; }
+        continue; }
+      if (r0 > (c === 2 ? 0.6 : 0.42) || sl > 0.75) continue;
+      const cnt = 3 + Math.floor(R() * 5), kind = R() < 0.65 ? 0 : 2;
+      for (let q = 0; q < cnt; q++) { const x = gx + (R() - 0.5) * 8, z = gz + (R() - 0.5) * 8, w = 0.6 + R() * 1.1;
+        if (!free(x, z, 2.6 + w) || caSlope(x, z) > 0.85) { R(); R(); continue; }
+        ico(scen.get(x, z), x, caGround(x, z) + 0.05, z, w, 0.32 + R() * 0.14, vary(mats[kind + Math.floor(R() * 2)], R, 0.03), R, 0.3); n++; }
+    }
+    API.ROCK_SMOOTH = smooth0; st.blazine = n; st.skrilavec = m;
+  });
 })();
