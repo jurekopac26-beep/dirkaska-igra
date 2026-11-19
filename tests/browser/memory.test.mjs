@@ -5,15 +5,21 @@
 // Every measurement is taken in the same state, so it does not depend on what happened to be on screen before: a fresh
 // race on jezero at the start lights (no contacts yet), the game paused, and one frame drawn with frustum culling off (and every
 // car in the scene: Render's carCull off), so every visible object is on the GPU; then garbage collection.
-//   node tests/browser/memory.test.mjs            (MEM_ROUNDS=4 for more rounds)
+//   node tests/browser/memory.test.mjs            (MEM_ROUNDS=4 for more rounds) the first half of the tracks (every other one from the
+//                                                 first) with the crash, the wrecks and the car menu
+//   node tests/browser/memory2.test.mjs           the other half of the tracks (MEM_DEL=2; the same rounds, the same measurements): each
+//                                                 part within GitHub's time limit, over 2 h with every track in one (tests/run.js SECS)
+//   MEM_DEL=vse node tests/browser/memory.test.mjs  every track in one go (PROGE: all its tracks in the first part, the second has none)
 import { serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
 
 const T = checker('memory');
+const DEL = process.env.MEM_DEL || '1', PROGE = !!(process.env.PROGE || '').trim(), DRUGI = DEL === '2';
+if (DRUGI && PROGE) { T.check('the second half: PROGE\'s tracks all checked in the first part (memory.test.mjs)', true, ''); T.done(); process.exit(0); }
 const srv = await serve();
 const browser = await launch(['--js-flags=--expose-gc', '--enable-precise-memory-info']);
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2 }, undefined, { seed: 777 });
-  const ids = await trackIds(page);
+  const all = await trackIds(page), ids = DEL === 'vse' || PROGE ? all : all.filter((_, i) => i % 2 === (DRUGI ? 1 : 0));   // (the half of this part)
   const measure = async () => {
     await startTrack(page, 'jezero'); await simulate(page, 2);
     return page.evaluate(async () => {
@@ -87,8 +93,7 @@ try {
   let crash = null, kit = null, old = null;
   const round = async (r) => {
     for (const id of ids) { await startTrack(page, id); await simulate(page, 3); }
-    crash = await crashAndRepair();
-    kit = await kitWreck('raketa'); old = await kitWreck('kaze');
+    if (!DRUGI) { crash = await crashAndRepair(); kit = await kitWreck('raketa'); old = await kitWreck('kaze'); }   // (in the first part only)
     await startTrack(page, 'gozd'); await simulate(page, 2);   // a restart on the same track
     await carMenu();
     await page.evaluate(async () => { window.__game.onAction('to-title'); await new Promise(r => setTimeout(r, 1500)); });   // the title demo race
@@ -101,9 +106,9 @@ try {
   let more = '';
   if (rounds[rounds.length - 1].textures > w.textures) { const y = rounds[rounds.length - 1].textures; await round(rounds.length); more = ` (one round more: ${y} -> ${rounds[rounds.length - 1].textures})`; }
   const z = rounds[rounds.length - 1];
-  T.check('the crash-and-repair part really ran (damage, loose panels still on the track at the pit repair)', crash && crash.dmg > 0 && crash.looseAtRepair > 0 && crash.repaired === 1, JSON.stringify(crash));
-  T.check('the kit wreck-and-repair part really ran (RAKETA wrecked three times: its pieces drawn, the cap pushed the first ones out; burning, sooted, its panes cracked)', kit && kit.kit && kit.pieces >= 40 && kit.dead > 0 && kit.fire === 3 && kit.sooted === 3 && kit.cracks > 0, JSON.stringify(kit));
-  T.check('one of the 11\'s wreck-and-repair part really ran (KAZE RS wrecked three times: its stock panels off as pieces, burning, sooted)', old && !old.kit && old.pieces > 0 && old.fire === 3 && old.sooted === 3, JSON.stringify(old));
+  if (!DRUGI) T.check('the crash-and-repair part really ran (damage, loose panels still on the track at the pit repair)', crash && crash.dmg > 0 && crash.looseAtRepair > 0 && crash.repaired === 1, JSON.stringify(crash));
+  if (!DRUGI) T.check('the kit wreck-and-repair part really ran (RAKETA wrecked three times: its pieces drawn, the cap pushed the first ones out; burning, sooted, its panes cracked)', kit && kit.kit && kit.pieces >= 40 && kit.dead > 0 && kit.fire === 3 && kit.sooted === 3 && kit.cracks > 0, JSON.stringify(kit));
+  if (!DRUGI) T.check('one of the 11\'s wreck-and-repair part really ran (KAZE RS wrecked three times: its stock panels off as pieces, burning, sooted)', old && !old.kit && old.pieces > 0 && old.fire === 3 && old.sooted === 3, JSON.stringify(old));
   T.check('GPU geometries do not grow after the warm-up round', z.geometries <= w.geometries + 2, `${w.geometries} -> ${z.geometries}`);
   T.check('textures do not grow', z.textures <= w.textures || (more && z.textures <= rounds[rounds.length - 2].textures), `${w.textures} -> ${z.textures}${more}`);
   T.check('shader programs do not grow', z.programs <= w.programs + 1, `${w.programs} -> ${z.programs}`);

@@ -173,13 +173,34 @@ def turns(x, z, s, lim=1 / 60.0):
     return out, k
 
 # ---------------- heights along the road ----------------
-def profile(h, s, C, bends):
+def profile_model(h, s, C, bends):
+    """visine `do_modela` (a road up and down): the median and the smoothing as profile(), then the grade limited without leaving the model:
+    the heights clipped forward and back to the steepest grade allowed at each metre (less through the hairpins), smoothed a little (6 m);
+    profile() keeps the net climb instead, which on a road up and down pushes the grades to the limit and the road off the model."""
+    V = C.get('visine', {}); step = s[1] - s[0]
+    med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
+    out = gaussian_filter1d(med, V.get('glajenje', 40) / step, mode='nearest'); w = np.ones_like(s)
+    for sa, tot, r in bends:
+        if abs(tot) > math.radians(150): w *= 1 - (1 - V.get('serpentine', 0.6)) * np.exp(-((s - sa) / V.get('serpentine_m', 18)) ** 2)
+    c = V.get('naklon', 0.12) * w * step
+    for _ in range(3):
+        for i in range(1, len(out)): out[i] = min(max(out[i], out[i - 1] - c[i]), out[i - 1] + c[i])
+        for i in range(len(out) - 2, -1, -1): out[i] = min(max(out[i], out[i + 1] - c[i]), out[i + 1] + c[i])
+    return gaussian_filter1d(out, 6 / step, mode='nearest')
+
+def profile(h, s, C, bends, s0=0.0):
     """The road's heights from the model's along its line: a running median, monotone (an uphill road: def `gor`), smoothed, the
     grade limited and lowered through the hairpins (as built). With `tesno` (a road that also goes down, `gor` false: over a dam into
     the basin behind it, down to a river) the grade is limited only where it is over the limit, the profile kept near the model's
     (halfway between the highest and the lowest line within the limit round it), not the whole climb rescaled (that lifts it all along
-    the road when a short bit is steeper); the hairpins' share is then their own limit."""
+    the road when a short bit is steeper); the hairpins' share is then their own limit. By the sea (visine.najnizje, visine.mostovi)
+    the model reads the water's level on the causeways and the bridges: the road at least `najnizje` metres up, and over each bridge
+    [a, b, top] (metres after the start line) a gentle arch up to `top` at its middle."""
     V = C.get('visine', {}); step = s[1] - s[0]
+    if V.get('najnizje') is not None:
+        lo = V['najnizje']; h = np.maximum(h, lo)
+        for a, b, top in V.get('mostovi', []):
+            m = (s >= s0 + a) & (s <= s0 + b); u = (s[m] - s0 - a) / (b - a); h[m] = np.maximum(h[m], lo + (top - lo) * (1 - (2 * u - 1) ** 2))
     med = ndimage.median_filter(h, size=max(3, int(V.get('mediana', 60) / step) | 1), mode='nearest')
     if V.get('dol'): med = np.minimum.accumulate(med)   # (a road raced downhill, def `dol`: it falls all the way, the model's bumps cut)
     elif V.get('gor', True): med = np.maximum.accumulate(med)   # (the road climbs all the way: hollows in the model filled)
@@ -194,8 +215,10 @@ def profile(h, s, C, bends):
         for i in range(len(s) - 2, -1, -1): up[i] = max(up[i], up[i + 1] - lim[i]); dn[i] = min(dn[i], dn[i + 1] + lim[i])
         return gaussian_filter1d((up + dn) / 2, 6 / step, mode='nearest')   # (rounded where the limit starts and ends)
     g2 = g * w; gmax = V.get('naklon', 0.12)
-    for _ in range(40):   # (the total kept: a sum of either sign, a road raced downhill falls)
-        t2 = np.sum(g2 * step); g2 = np.clip(g2 * (np.sum(g * step) / (t2 if abs(t2) > 1e-9 else 1e-9)), -gmax, gmax)
+    if V.get('dol') or V.get('gor', True):
+        for _ in range(40):   # (the total kept: a sum of either sign, a road raced downhill falls)
+            t2 = np.sum(g2 * step); g2 = np.clip(g2 * (np.sum(g * step) / (t2 if abs(t2) > 1e-9 else 1e-9)), -gmax, gmax)
+    else: g2 = np.clip(g2, -gmax, gmax)   # (over a pass, up and down: rescaling to the net climb would push both ways to the limit)
     out = sm[0] + np.concatenate([[0], np.cumsum((g2[1:] + g2[:-1]) / 2 * step)])
     return out
 
@@ -286,6 +309,8 @@ def landcover(C, G, geo, D, lakes, scene):
     wet = np.zeros(cls.shape, bool)
     for L in lakes: wet |= contains_xy(Polygon(np.array(L[1:]).reshape(-1, 2)), GX, GZ)
     cls[(cls == 5) & ~wet] = 0; cls[wet] = 5
+    if C.get('morje') is not None:   # (an island by the sea: WorldCover's water low by the shore is the sea, its mangroves forest; the road's own cells stay land)
+        Hs = ndimage.zoom(H, 2, order=1)[:lnz, :lnx]; cls[(wc == 80) & (Hs < C['morje'] + 3)] = 5; cls[wc == 95] = 1
     cnt = {k: int(np.sum(cls == k)) for k in range(8)}
     return {'x0': float(x0), 'z0': float(z0), 'nx': lnx, 'nz': lnz, 'cell': c2, 'rle': rle64(cls)}, cls, cnt
 
@@ -463,7 +488,7 @@ def main():
     # heights
     la, lo = G.to_ll(x, z); pad = 0.06
     D = CopDEM(float(la.min()) - pad, float(lo.min()) - pad * 1.4, float(la.max()) + pad, float(lo.max()) + pad * 1.4)
-    h = D.sample(la, lo); hp = profile(h, s, C, bends)
+    h = D.sample(la, lo); hp = profile_model(h, s, C, bends) if C.get('visine', {}).get('do_modela') else profile(h, s, C, bends, s[i0])
     X1 = crossings(x, z) if C.get('kriz') else []
     if X1: hp = knot(hp, s, X1, C['kriz'])
     base = hp[i0]; alt = [int(round(hp[i0])), int(C.get('vrh', round(hp[i1])))]   # (vrh: the top's official height, when the cleaned profile is a metre or two off it)
