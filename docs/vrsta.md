@@ -26,7 +26,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Grafika, kamera za avtom, odprte ceste zunaj skupin partyslo #798–#813 (Kotor, Ngorongoro, Gudauri, Llogara, Porto Moniz): teren ob cesti do ~60 m, najprej brežine med kraki na Kotorju; ovojna datoteka `js/world-realizem-bt.js`, brez sprememb datotek prog | biketraveler | v delu (19. 11., `grafika/chase-skupina2-bt`) |
 | Več predogledov hkrati (5+), vzame nespremenjene `assets/` iz `main` (`tools/predogled.mjs`; 12. 11. ob ~21.50) | jure.kopac26 | majhna seja Opus, ko je mesto |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |

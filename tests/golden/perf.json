@@ -434,11 +434,11 @@
   "jsMs": 1.5
  },
  "kotor": {
-  "calls": 204,
-  "maxCalls": 245,
-  "kverts": 618,
-  "maxKverts": 843,
-  "jsMs": 1.39
+  "calls": 207,
+  "maxCalls": 250,
+  "kverts": 575,
+  "maxKverts": 805,
+  "jsMs": 1.28
  },
  "bikernieki": {
   "calls": 183,

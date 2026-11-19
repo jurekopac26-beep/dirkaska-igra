@@ -615,20 +615,20 @@
  },
  "kotor": {
   "meshes": 961,
-  "verts": 594073,
+  "verts": 690116,
   "instances": 15415,
   "props": 79,
   "crowd": 125,
-  "world": "4e4bd7ff",
+  "world": "49cc3642",
   "propsHash": "67c890c8",
   "floor": "c3122f3f/10696",
   "groups": {
-   "-:MeshLambertMaterial": "50c1e48",
+   "-:MeshLambertMaterial": "af1aca28",
    "-:MeshPhongMaterial": "b9364527",
    "-:MeshBasicMaterial": "674336a7",
    "irFar:MeshLambertMaterial": "15e91440",
    "crowd:MeshLambertMaterial": "e78ee90f",
-   "ao:MeshBasicMaterial": "8559007d",
+   "ao:MeshBasicMaterial": "a88a3d3a",
    "tyremarks:MeshBasicMaterial": "5d9ae004",
    "roadwear:MeshLambertMaterial": "206e9f05"
   }
