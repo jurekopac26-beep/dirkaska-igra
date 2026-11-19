@@ -280,7 +280,7 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
   4. Blok 762b v `cesta.test.mjs` bo morda treba združiti z bloki 569c in 569e.
   5. Uporabnikov odgovor na vprašanje `e-proge-762b`.
 
-## E, stranske ceste: preostale proge biketraveler (PR #PRNUM, 19. 11. 2026)
+## E, stranske ceste: preostale proge biketraveler (PR #793, 19. 11. 2026)
 - **Naloga:** tabla #382, komentar 7005289912 (Matej, 19. 11. 2026 ob 10.40): realizem na pravih progah računa biketraveler, ki ga še nimajo. Paketi stavb (S) in rastja (G) so za vseh 15 prog iz `docs/realizem.md` že v odprtih PR drugih sej (S: #668, #696, #699, #713, #714; G: #733, #763), zato ta PR novih paketov ne dodaja (meja 15 prog). Ostane del »na vseh pravih progah«: stranske ceste in črte. Zbirna veja #779 in #678 pokrijeta 46 prog; ta PR doda **Štajersko, Avstrija** (`rbring`) in **Hivo, Uzbekistan** (`hiva`). Osnova je `zbirna/realizem-e` (#779); na `main` gre za njo.
 - **Podatki:** OSM prek `api.openstreetmap.org` (19. 11. 2026) z `tools/cesta/` (`crte.js` → `osm.py` → `izvoz.py … --vpisi`). Prileganje sredinske črte: Štajerska 0,3 m (mediana, `highway=raceway`), Hiva po javnih cestah. Svetilk in postaj ni (`predmeti=False` oz. jih OSM ob dirkališču nima). ODbL je že v `README.md`, »Zasluge«.
 - **V igri:**
