@@ -42,6 +42,7 @@
     livorno: [[-400, 400, 1], [3250, 3750, 1], [4300, 4580, 0.5], [7330, 7590, 0.5], [16500, 17300, 1]],   // (Livorno, Montenero, Savolano, Castellaccio, Antignano)
     nring: [[7850, 8050, 0.5], [20100, 20500, 0.5]],   // (Breidscheid, Nürburg)
     ghoufi: [[115, 385, 0.5]],   // (the old village on the canyon's wall below the road, 20–67 % of the track: mostly ruins, a hamlet, no bells)
+    vinales: [[-60, 20, 0.5], [230, 400, 0.5]],   // (the farmhouses at the start and on the valley's floor, 2–5 within 80 m: js/tracks/vinales.js bld)
   };
   // the churches within ~600 m of the road (OpenStreetMap, amenity=place_of_worship or building=church, tools/zvoki-pasovi.mjs --osm):
   // [metres from the start, the side (-1 left, 1 right), how far from the road (m)]; only those with bells (not a temple, a hall, a
