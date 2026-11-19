@@ -3964,7 +3964,33 @@ const Render = (function () {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
     g.computeVertexNormals();
-    const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.renderOrder = 1; return o;
+    const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.renderOrder = 1; rubberArc(o, nc, idx); return o;
+  }
+  // (a lap's rubber drawn as the arc of the lap in sight only, still one mesh and one draw call: its rows in pieces of RUB_K, each
+  // piece's sphere tested against the view (and the fog's end, as rubberRoad's pieces) just before it is drawn; the arc from the first
+  // piece in sight to the last, round the largest run of pieces out of it. The index twice over, so that an arc over the lap's start is one
+  // range too. Without it the whole lap (~34k vertices on a 5 km circuit) was drawn in every frame, behind the camera too)
+  const RUB_K = 32, _rbM = new THREE.Matrix4(), _rbF = new THREE.Frustum(), _rbP = new THREE.Vector3();
+  function rubberArc(o, nc, idx) {
+    const g = o.geometry, nq = 6 * (nc - 1), Q = idx.length / nq, C = Math.ceil(Q / RUB_K), a = g.attributes.position.array, sp = [], vis = new Uint8Array(C);
+    for (let c = 0; c < C; c++) {   // (piece c: the rows c*RUB_K .. its last transition's far row)
+      const v0 = c * RUB_K * nc, v1 = (Math.min(Q, (c + 1) * RUB_K) + 1) * nc, b = new THREE.Box3(), s = new THREE.Sphere();
+      for (let v = v0; v < v1; v++) b.expandByPoint(_rbP.set(a[v * 3], a[v * 3 + 1], a[v * 3 + 2]));
+      sp.push(b.getBoundingSphere(s));
+    }
+    g.setIndex(idx.concat(idx)); g.setDrawRange(0, idx.length);
+    o.userData.lapIdx = idx.length;   // (the lap's own indices: the index holds them twice)
+    o.onBeforeRender = (r, sc, cam) => {
+      _rbM.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); _rbF.setFromProjectionMatrix(_rbM); _rbP.setFromMatrixPosition(cam.matrixWorld);
+      const f = sc.fog ? sc.fog.far + 20 : Infinity; let n = 0;
+      for (let c = 0; c < C; c++) { const s = sp[c]; vis[c] = s.center.distanceTo(_rbP) - s.radius < f && _rbF.intersectsSphere(s) ? 1 : 0; n += vis[c]; }
+      if (!n) { g.setDrawRange(0, 0); return; }
+      if (n === C) { g.setDrawRange(0, Q * nq); return; }
+      let gs = 0, gl = 0;   // (the largest run of pieces out of sight, round the lap: gs its first piece, gl its length)
+      for (let c = 0; c < C; c++) if (!vis[c] && vis[(c + C - 1) % C]) { let l = 0; while (!vis[(c + l) % C]) l++; if (l > gl) { gl = l; gs = c; } }
+      const a0 = (gs + gl) % C, a1 = (gs + C - 1) % C, t0 = a0 * RUB_K, t1 = Math.min(Q, (a1 + 1) * RUB_K) + (a1 < a0 ? Q : 0);
+      g.setDrawRange(t0 * nq, (t1 - t0) * nq);
+    };
   }
   // (an open road's rubber along the player's line GL: a row at every sample, none off the asphalt, in pieces of RUB_CH samples under one plain
   // Object3D: a Group's renderOrder would be its pieces' group order)
@@ -4007,7 +4033,7 @@ const Render = (function () {
       if (!rbTex) rbTex = Tex.rubber();
       const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
       rbLn = road ? rubberRoad(T, GL, m) : rubberLap(T, GL, m);
-      rbLn.name = 'rubberline'; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1, gl: GL, m, road }; scene.add(rbLn);
+      rbLn.name = 'rubberline'; rbLn.matrixAutoUpdate = false; Object.assign(rbLn.userData, { w: world, k: -1, gl: GL, m, road }); scene.add(rbLn);
     }
     if (rbLn) {
       const ud = rbLn.userData;
