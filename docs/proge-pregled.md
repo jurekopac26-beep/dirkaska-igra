@@ -25,23 +25,19 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Llogara, Albanija | `llogara` | odprta cesta | 4,0 km | 818 | 34 % | 7 | +11 m |
 | Ella, Šrilanka | `ella` | odprta cesta | 3,9 km | 796 | 22 % | 4 | +311 m |
 | Atitlán, Gvatemala | `atitlan` | odprta cesta | 1,0 km | 781 | 29 % | 2 | −79 m |
+| Phou Hin Boun, Laos | `hinboun` | odprta cesta | 4,8 km | 730 | 35 % | 3 | −69 m |
 | Canaries, Sveta Lucija | `canaries` | odprta cesta | 5,0 km | 716 | 35 % | 3 | +134 m |
 | Kildare, Irska | `kildare` | krog | 1,1 km | 712 | 43 % | 2 | ravno |
-| Tianmen, Kitajska | `tianmen` | odprta cesta | 4,8 km | 1347 | 22 % | 16 | +489 m |
-| Irohazaka, Japonska | `iroha` | odprta cesta | 5,0 km | 947 | 25 % | 19 | +322 m |
-| Rio do Rastro, Brazilija | `rastro` | odprta cesta | 5,0 km | 894 | 35 % | 11 | +411 m |
-| Phou Hin Boun, Laos | `hinboun` | odprta cesta | 4,8 km | 730 | 35 % | 3 | −69 m |
-| Bâlea, Romunija | `balea` | odprta cesta | 4,0 km | 708 | 37 % | 6 | +266 m |
 | Harju, Finska | `harju` | kronometer | 2,5 km | 692 | 57 % | 2 | +5 m |
 | Bâlea, Romunija | `balea` | odprta cesta | 3,5 km | 673 | 38 % | 4 | +232 m |
 | Porto Moniz, Portugalska | `portomoniz` | odprta cesta | 4,0 km | 643 | 46 % | 8 | −436 m |
 | Hakone, Japonska | `hakone` | krog | 26,7 km | 622 | 43 % | 35 | 795 m razpona |
 | Kanaba, Uganda | `kanaba` | odprta cesta | 5,0 km | 618 | 30 % | 1 | −118 m |
+| Limalimo, Etiopija | `limalimo` | odprta cesta | 4,0 km | 604 | 44 % | 5 | +288 m |
 | Silkeborg, Danska | `silkeborg` | krog | 2,3 km | 595 | 49 % | 1 | ravno |
 | Gudauri, Gruzija | `gudauri` | odprta cesta | 4,8 km | 587 | 39 % | 5 | +260 m |
 | Houli, Tajvan | `houli` | krog | 3,5 km | 563 | 50 % | 2 | 25 m razpona |
 | Kågeröd, Švedska | `kagerod` | krog | 2,1 km | 557 | 45 % | 2 | 13 m razpona |
-| Limalimo, Etiopija | `limalimo` | odprta cesta | 4,0 km | 604 | 44 % | 5 | +288 m |
 | Los Caracoles, Čile | `caracoles` | odprta cesta | 10,8 km | 556 | 55 % | 26 | +666 m |
 | Pikes Peak, ZDA | `pikes` | kronometer | 6,1 km | 552 | 54 % | 11 | +439 m |
 | Ngorongoro, Tanzanija | `ngorongoro` | odprta cesta | 3,0 km | 532 | 43 % | 1 | −351 m |
@@ -52,27 +48,26 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Crystal Palace, Anglija | `cpalace` | krog | 3,2 km | 506 | 43 % | 1 | 26 m razpona |
 | Seul, Južna Koreja | `seoul` | odprta cesta | 2,5 km | 501 | 44 % | 0 | −77 m |
 | Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 493 | 57 % | 4 | +183 m |
-| Cromwell, Nova Zelandija | `cromwell` | krog | 4,1 km | 484 | 49 % | 4 | ravno |
-| Tocancipá, Kolumbija | `tocancipa` | krog | 2,7 km | 412 | 50 % | 0 | ravno |
 | Ujarrás, Kostarika | `ujarras` | odprta cesta | 0,7 km | 490 | 43 % | 0 | +41 m |
+| Cromwell, Nova Zelandija | `cromwell` | krog | 4,1 km | 484 | 49 % | 4 | ravno |
 | Quezaltepeque, Salvador | `quezaltepeque` | krog | 3,2 km | 455 | 51 % | 4 | 16 m razpona |
+| Kali Gandaki, Nepal | `kaligandaki` | odprta cesta | 3,0 km | 453 | 48 % | 2 | +229 m |
 | Sogeri, Papua Nova Gvineja | `sogeri` | odprta cesta | 2,0 km | 448 | 52 % | 1 | +117 m |
 | Cusco, Peru | `cusco` | odprta cesta | 0,9 km | 440 | 47 % | 1 | +61 m |
 | Savusavu, Fidži | `savusavu` | odprta cesta | 2,5 km | 431 | 50 % | 0 | +7 m |
 | Batangas, Filipini | `batangas` | krog | 3,6 km | 422 | 50 % | 2 | ravno |
+| Tocancipá, Kolumbija | `tocancipa` | krog | 2,7 km | 412 | 50 % | 0 | ravno |
 | Koli, Finska | `koli` | odprta cesta | 2,0 km | 407 | 59 % | 2 | +147 m |
 | Ghoufi, Alžirija | `ghoufi` | odprta cesta | 0,6 km | 406 | 35 % | 0 | +17 m |
 | Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 4,7 km | 405 | 49 % | 1 | +119 m |
 | Medeu, Kazahstan | `medeu` | odprta cesta | 5,0 km | 400 | 55 % | 2 | +297 m |
-| Kali Gandaki, Nepal | `kaligandaki` | odprta cesta | 3,0 km | 453 | 48 % | 2 | +229 m |
-| Medvode, Slovenija | `medvode` | odprta cesta | 6,3 km | 448 | 59 % | 4 | +183 m |
-| Chapman's Peak, Južna Afrika | `chapman` | odprta cesta | 5,0 km | 406 | 48 % | 1 | +134 m |
 | Marrakesh, Maroko | `marrakesh` | krog | 3,0 km | 392 | 64 % | 1 | 10 m razpona |
 | Livorno, Italija | `livorno` | krog | 19,1 km | 372 | 61 % | 9 | 285 m razpona |
 | Zandvoort, Nizozemska | `zandvoort` | krog | 4,3 km | 366 | 55 % | 4 | ravno |
-| Yahuarcocha, Ekvador | `yahuarcocha` | krog | 3,6 km | 355 | 53 % | 2 | 21 m razpona |
-| Mogyoród, Madžarska | `mogyorod` | krog | 4,4 km | 338 | 65 % | 4 | 35 m razpona |
 | Hiva, Uzbekistan | `hiva` | krog | 3,0 km | 359 | 68 % | 0 | ravno |
+| Yahuarcocha, Ekvador | `yahuarcocha` | krog | 3,6 km | 355 | 53 % | 2 | 21 m razpona |
+| Musandam, Oman | `musandam` | odprta cesta | 3,9 km | 350 | 41 % | 0 | +179 m |
+| Mogyoród, Madžarska | `mogyorod` | krog | 4,4 km | 338 | 65 % | 4 | 35 m razpona |
 | Mombasa, Kenija | `mombasa` | odprta cesta | 3,4 km | 335 | 69 % | 0 | −16 m |
 | El Jem, Tunizija | `eljem` | odprta cesta | 1,5 km | 335 | 66 % | 0 | −3 m |
 | Sepang, Malezija | `sepang` | krog | 5,5 km | 304 | 63 % | 4 | 21 m razpona |
@@ -81,8 +76,6 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Sindia, Senegal | `sindia` | krog | 4,6 km | 296 | 64 % | 0 | 15 m razpona |
 | Killar, Indija | `killar` | odprta cesta | 4,4 km | 285 | 65 % | 1 | +10 m |
 | Tuzla, Turčija | `tuzla` | krog | 5,3 km | 281 | 69 % | 1 | 40 m razpona |
-| Musandam, Oman | `musandam` | odprta cesta | 3,9 km | 350 | 41 % | 0 | +179 m |
-| Suzuka, Japonska | `suzuka` | krog | 5,8 km | 286 | 62 % | 1 | 41 m razpona |
 | Montréal, Kanada | `montreal` | krog | 4,4 km | 279 | 75 % | 2 | ravno |
 | Termas de Río Hondo, Argentina | `riohondo` | krog | 4,8 km | 275 | 63 % | 3 | ravno |
 | Lusail, Katar | `lusail` | krog | 5,4 km | 275 | 68 % | 3 | ravno |
@@ -98,12 +91,12 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Bathurst, Avstralija | `bathurst` | krog | 6,2 km | 208 | 73 % | 0 | 172 m razpona |
 | Portobelo, Panama | `portobelo` | odprta cesta | 2,6 km | 195 | 71 % | 0 | +5 m |
 | Isuna, Butan | `isuna` | odprta cesta | 3,4 km | 185 | 65 % | 0 | +31 m |
-| Atimpoku, Gana | `atimpoku` | odprta cesta | 4,0 km | 126 | 81 % | 0 | −9 m |
-| Luanda, Angola | `luanda` | odprta cesta | 3,5 km | 119 | 85 % | 0 | +0 m |
-| Isalo, Madagaskar | `isalo` | odprta cesta | 2,5 km | 44 | 96 % | 0 | −33 m |
-| Livingstone, Zambija | `livingstone` | odprta cesta | 4,4 km | 75 | 89 % | 0 | +6 m |
 | Darvaz, Tadžikistan | `darvaz` | odprta cesta | 3,9 km | 174 | 71 % | 0 | +2 m |
 | Viñales, Kuba | `vinales` | odprta cesta | 1,3 km | 137 | 83 % | 0 | −16 m |
+| Atimpoku, Gana | `atimpoku` | odprta cesta | 4,0 km | 126 | 81 % | 0 | −9 m |
+| Luanda, Angola | `luanda` | odprta cesta | 3,5 km | 119 | 85 % | 0 | +0 m |
+| Livingstone, Zambija | `livingstone` | odprta cesta | 4,4 km | 75 | 89 % | 0 | +6 m |
+| Isalo, Madagaskar | `isalo` | odprta cesta | 2,5 km | 44 | 96 % | 0 | −33 m |
 <!-- meritve:konec -->
 
 ## Do 60 m ob cesti
