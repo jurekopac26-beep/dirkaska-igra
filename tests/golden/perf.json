@@ -805,11 +805,11 @@
   "jsMs": 1.28
  },
  "kaligandaki": {
-  "calls": 129,
-  "maxCalls": 155,
-  "kverts": 309,
-  "maxKverts": 336,
-  "jsMs": 2.17
+  "calls": 88,
+  "maxCalls": 113,
+  "kverts": 650,
+  "maxKverts": 670,
+  "jsMs": 1.07
  },
  "musandam": {
   "calls": 127,
@@ -819,11 +819,11 @@
   "jsMs": 1.31
  },
  "limalimo": {
-  "calls": 152,
-  "maxCalls": 182,
-  "kverts": 366,
-  "maxKverts": 447,
-  "jsMs": 3.74
+  "calls": 87,
+  "maxCalls": 100,
+  "kverts": 601,
+  "maxKverts": 640,
+  "jsMs": 0.95
  },
  "darvaz": {
   "calls": 123,
