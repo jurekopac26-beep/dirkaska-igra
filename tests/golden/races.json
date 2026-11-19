@@ -4198,5 +4198,55 @@
   "rescues": 0,
   "nan": false,
   "digest": "b972871269d1419f40391087"
+ },
+ "vinales/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 33.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "966ed6ca66cff05b59f52aa5"
+ },
+ "vinales/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 38.72,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "c64e23b5de5ef9ea1f2ffb7e"
+ },
+ "vinales/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 28.11,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "0059d838a82331387f7ecfd8"
+ },
+ "vinales/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 28.56,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "2be063506e575febebb0c442"
+ },
+ "vinales/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 33.47,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1e7cc61948b7efa2a70ddaa2"
  }
 }
