@@ -2757,7 +2757,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (inCareer() && !r.paid) {   // the career: a medal, a personal best, or a little for getting there (once per run)
       r.paid = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1, C = Core.CAREER, sum = k >= 0 ? C.medal[['gold', 'silver', 'bronze'][k]] : r.newPB ? C.pb : C.finishTT;
       career.races++; careerAfter(); const line = careerPay(sum, k >= 0 ? 'Nagrada za medaljo' : r.newPB ? 'Nagrada za osebni rekord' : 'Nagrada')
-        + careerPath({ track: T.def.id, pos: 0, km: T.raceLen / 1000, medal: k >= 0 ? MEDAL_EN[k] : undefined });   // (the path: a time trial is no win; its medal, its km for the class goals)
+        + careerPath({ track: T.def.id, pos: 0, km: T.raceLen / 1000, medal: k >= 0 ? MEDAL_EN[k] : undefined });   // (the path: a gold is the track's first win, not the class win goal; its medal, its km for the class goals)
       if (line) $('res-sub').innerHTML += '<br>' + esc(line.trim());
     }
     // splits table: CP1..CPn + finish, altitude (a rally stage: the distance from the start), time, difference to the previous personal best
