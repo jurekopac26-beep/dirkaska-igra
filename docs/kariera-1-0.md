@@ -109,7 +109,7 @@ Predlog (`kariera-4`):
 - Velja pokonci in ležeče od 360 × 640, samo v angleščini. Imena pokalov so iz `en` v `js/kariera.js`.
 - Meni bere samo prek mostička: `G.kariera()` vrne navaden predmet iz `Kariera.view`, `G.karieraStart(id)` začne pokal.
 - Del C deluje tudi brez dela B (če `G.kariera` ni, kartica poti ni prikazana), da gresta B in C hkrati.
-- Pred `main` uporabnik dobi slike zdaj in potem (pokonci in ležeče).
+- **Najprej odločitev, nato koda**: seja C pred kodo pokaže skico središča na strani Odločitve (grafično vprašanje, pokonci in ležeče); pred `main` uporabnik da »ok« na predogledu s slikami zdaj in potem.
 
 ### 6. Shranjene igre
 - `tdgp-career` dobi `v: 2` z novim poljem `pot: { stopnja, pokali: { id: najboljše mesto }, cilji: { id: opravljeno }, prve: [id proge] }`.
@@ -127,11 +127,11 @@ Deli so v različnih datotekah, zato se ne prekrivajo. Hkrati tečeta največ 2 
 |---|---|---|
 | A · Logika | `js/kariera.js` (nova, brez DOM, kot `js/lang.js` za Node in brskalnik), `tests/kariera.test.js` (nov), vpis testa v `tests/run.js` | stopnje in pokali po pravilu iz `TRACKS` (brez `test`, `pending`), odklepanje, cilji razredov, nagrade poti, `view(stanje)`, `migrate(v1)`; test: samo prave proge, vsaka prava proga na poti, nova prava proga pride sama, simulacija ekonomije, prehod v1 → v2, `name` in `en` povsod |
 | B · Igra | `js/game.js`, `index.html` (skripta `js/kariera.js`), `js/lang.js` (angleščina novih `tr()`), po potrebi `js/core.js` (`CAREER`, `CHAMPS`), `tests/browser/career.test.mjs` | stanje v2 in prehod, plačila nagrad poti, odklepanje po dirki in pokalu, pokali poti na obstoječem pogonu prvenstev (preveri ceste), mostiček `G.kariera`, `G.karieraStart`; zeleni `career`, `champ`, `onchamp`, `denarnica`, `garage`, `lang` |
-| C · Meni | `js/menu.js`, `css/menu.css`, `tests/browser/menu.test.mjs` | središče kariere (točka 5); `node tests/browser/menu.test.mjs`; slike zdaj in potem |
+| C · Meni | `js/menu.js`, `css/menu.css`, `tests/browser/menu.test.mjs` | središče kariere (točka 5) po potrjeni skici; `node tests/browser/menu.test.mjs`; »ok« na predogledu |
 | D · Dokumenti | `docs/igra.md` (»Kariera«, »Prvenstvo«: nove številke in pot), `docs/kazalo.md`, `tests/README.md` | opis po izvedbi; brez kode |
 
 - **Vrstni red**: najprej se A združi v `kariera-1-0`. Nato tečeta B (veja `kariera-1-0-b`) in C (`kariera-1-0-c`) hkrati, vsak na svojih datotekah, in se združita v zbirno vejo. Na koncu pride D.
-- **Seje**: A, B in C so seje s kodo z naporom high (privzeto), D je manjša seja za dokumente; model po pravilu »Model in napor« v `CLAUDE.md`.
+- **Seje**: A, B in C so seje s kodo z naporom high, D je manjša seja za dokumente; model po pravilu »Model« v `CLAUDE.md`.
 - **Pred potiskom** vsak del požene `npm run test:related` in `node tools/stamp.js --check`.
 - **Na `main`**: zbirna veja gre v enem koraku po vrstnem redu v `docs/vrsta.md`, ki ga določita uporabnik ali Matej. Cilj je pred zamrznitvijo 23. 12. 2026.
 
@@ -177,4 +177,4 @@ Pri vsakem vprašanju je prva možnost priporočena.
 - **Stanje 19. 11.**: osnutek #792 vsebuje samo načrt, vrstico v `docs/vrsta.md` »Načrtovano« in vnos v kazalu. Seja se ustavi.
 - **Odgovore** prebere seja načrta sama (`send_later` ob 14.50, nato 23.20 in 10.50, največ trikrat; `docs/vprasanja.md`). Načrt popravi po njih (kratek commit v to vejo) in to javi na tablo v eni vrstici.
 - **Nato** koordinacija partyslo zažene sejo za del A (`source_url` repozitorija, veja `kariera-1-0`). Po združitvi A zažene sejo za B, sejo za C in na koncu sejo za D.
-- **Ko je vse zeleno**, PR vodi do `main` seja Združevanje partyslo.
+- **Ko je vse zeleno** in uporabnik da »ok« (seznam PR ob 5.00, za meni predogled), PR vodi do `main` seja Združevanje partyslo.
