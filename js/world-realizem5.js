@@ -127,4 +127,33 @@
     const n = dropTrees(out.root, ['broad']);
     if (out.stats && typeof out.stats.trees === 'number') out.stats.trees = Math.max(0, out.stats.trees - n);
   });
+
+  /* ---- Santo Antão (Cabo Verde): on the ridge road from Delgadim down to Ribeira Grande the Sentinel-2 composite of ESA WorldCover 2021
+     (6-64 m from the road, the medians of its 30 000 pixels by WorldCover class) has the grass and the shrubs khaki-brown, G/R 0.94-0.96,
+     B/R 0.83-0.85, NDVI 0.29-0.35 (the trees 1.0 and 0.87); the game's ground under them olive green, G/R 1.02-1.10, B/R 0.59. Taken
+     against the bare and built ground of both (the same in either), the ground under grass, shrubs and trees moves to the composite's hue:
+     G and B against R by the class's gain (WorldCover's shares at the vertex), its brightness kept; only where it is green (the basalt,
+     the tuff, the walls, the cobbles, the kerbs and the whitewash stay as they are; the straw and the soil only greyer, not redder). The
+     terrain tiles and the verges, not the far land ---- */
+  wrap('santoantao', (out) => {
+    const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    const GN = [[0.94, 1.19], [0.99, 1.12], [0.94, 1.107]];   // (the G and B gains against R: lc 0 grass, 1 trees, 2 shrubs)
+    const v = new THREE.Vector3();
+    const tint = (m) => {
+      const g = m.geometry, C = g.attributes.color, P = g.attributes.position; if (!C || !P || C.itemSize !== 3) return;
+      m.updateMatrixWorld(true);
+      for (let i = 0; i < C.count; i++) {
+        v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld);
+        const w0 = A.vrLCf(v.x, v.z, 0), w1 = A.vrLCf(v.x, v.z, 1), w2 = A.vrLCf(v.x, v.z, 2), W = w0 + w1 + w2; if (W <= 0) continue;
+        const r = C.getX(i), gg = C.getY(i), b = C.getZ(i); if (gg <= 0) continue;
+        const veg = ss(0.15, 0.35, (gg - b) / gg) * Math.min(1, W); if (veg <= 0) continue;   // (how green it is: the grey and brown stay)
+        const kG = (w0 * GN[0][0] + w1 * GN[1][0] + w2 * GN[2][0]) / W, kB = (w0 * GN[0][1] + w1 * GN[1][1] + w2 * GN[2][1]) / W;
+        const vg = r > 0 ? veg * ss(0.9, 1.0, gg / r) : 0;   // (G down only where it is greener than red: the straw and the soil not made redder)
+        const g2 = gg * (1 + (kG - 1) * vg), b2 = b * (1 + (kB - 1) * veg), s = (0.3 * r + 0.59 * gg + 0.11 * b) / (0.3 * r + 0.59 * g2 + 0.11 * b2);
+        C.setXYZ(i, r * s, g2 * s, b2 * s);
+      }
+      C.needsUpdate = true;
+    };
+    out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.material && o.material.vertexColors && o.material.map && o.material !== out.asphaltMat) tint(o); });
+  });
 })();
