@@ -15,7 +15,12 @@
 // (Monterey, whose lane is on the left too, became a test track on 6. 11. 2026 and is frozen: it is not tried here any more.)
 // At Bathurst the hints seen there are not shown again; one forgotten (the box's) is, in English, the way in's own toast at once.
 //   node tests/browser/pits.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
+
+// (both races repeatable: the test mode's seed (?proga=…&seme=, the quick entry; Bathurst's race on the same page the same way). Started
+// from the menu with their own dice and real time stepping them till the test paused them, a race was a different one each run: on 11. 11.
+// a safety car and yellow flags took the first stop's toasts and the hints never came up. docs/nestabilni-testi.md)
+const SEME = +(process.env.SEME || 7);
 
 const T = checker('pits (gozd, bathurst)');
 const srv = await serve();
@@ -27,8 +32,8 @@ try {
   // (the first clean lap's achievement, its toast at the line where the pit entry is, would hold the first hint back: it is given already)
   const blocked = () => { localStorage.setItem('tdgp-tips', JSON.stringify({ in: 1, box: 1, out: 1, x: 1 })); localStorage.setItem('tdgp-stats', JSON.stringify({ v: 1, ach: { cleanLap: 1 } })); const get = Storage.prototype.getItem; window.__lsGet = (k) => get.call(localStorage, k);
     Storage.prototype.getItem = function (k) { if (k === 'tdgp-tips') throw new DOMException('The operation is insecure.', 'SecurityError'); return get.call(this, k); }; };
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 640, height: 360 }, { tips: true, init: blocked });
-  await startTrack(page, 'gozd');
+  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=gozd&t=1&seme=' + SEME, { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 }, { width: 640, height: 360 }, { tips: true, init: blocked, seed: SEME });
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });   // (the race 1 s after the start, paused there)
   await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
   // the big messages (#h-msg) and the toasts, each in its own log (two observers deliver their records in observer order, not in time order)
   await page.evaluate(() => { window.__hm = []; window.__ts = []; const log = (id, a) => new MutationObserver((recs) => { for (const r of recs) for (const n of r.addedNodes) { const t = n.textContent; if (t) a.push(t); } }).observe(document.getElementById(id), { childList: true, subtree: true }); log('h-msg', window.__hm); log('toast', window.__ts); });
@@ -137,10 +142,26 @@ try {
   // on the autopilot (the wheel held at full right lock, towards the track), drawn from the camera behind the car: the car turns in to
   // the left, into its box on the apron, the crew round it on the garages' side, nobody on the lane, and nothing of the world stands between
   // the camera and the car. (Toronto's and Montréal's lanes are on the left too: tests/pits.test.js stops on every track with pits)
+  // (the race from the menu as lib.mjs's startTrack starts it, but paused as it is there: before the main loop steps it in real time
+  // (the loading screen's off: the observer's call comes before the next frame); the test mode still on, the same seed)
+  const startPaused = (id) => page.evaluate(async (id) => {
+    const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), there = () => g.race && g.race.track.def.id === id;
+    g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
+    const card = document.querySelector(`[data-track="${id}"]`); if (!card) throw new Error('no track card ' + id);
+    card.click(); await wait(150);
+    const mo = new MutationObserver(() => { if (there()) { g.pause(); mo.disconnect(); } });
+    mo.observe(document.getElementById('loading'), { attributes: true, attributeFilter: ['class'] });
+    g.onAction('start'); if (there()) { g.pause(); mo.disconnect(); }   // (its world built already: the race there at once)
+    for (let k = 0; k < 1200 && !there(); k++) await wait(100);
+    mo.disconnect();
+    if (!there()) throw new Error('race did not start on ' + id);
+    return { phase: g.phase, t: g.race.time, repro: g.repro };
+  }, id);
   const leftLane = async (id, NM, forget) => {   // (forget: the box's hint forgotten, Bathurst)
-    await startTrack(page, id);
-    // in English (as tests/browser/radio.test.mjs switches it), both logs emptied
-    await page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); }, 'en');
+    const st0 = await startPaused(id);
+    T.check(NM + ': the race repeatable (the test mode still on, the same seed), paused on the grid (its intro, not started)', st0.phase === 'intro' && st0.t === 0 && !!st0.repro && st0.repro.on && st0.repro.seed === SEME, JSON.stringify(st0));
+    // in English (as tests/browser/radio.test.mjs switches it), both logs emptied; paused again at once (no frame in between)
+    await page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.resume(); g.pause(); }, 'en');
     await page.evaluate(() => { window.__game.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; window.__hm.length = 0; window.__ts.length = 0; window.__pbEn = []; window.__hb2 = null; });
     if (forget) await page.evaluate(() => { window.__game.pitTipsSeen = { in: 1, out: 1 }; });   // (the box's hint forgotten: as if it had never been up long enough to read)
     let t2 = { work: 99, max: -99, lane: 0, lock: 0, dev: 0, busy: 0, devB: 0, pose: null, ghost: 0, dmg: 0, modes: [], v: null }, r2 = null;
