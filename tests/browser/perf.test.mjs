@@ -7,6 +7,9 @@
 // marked test: true, kept for testing only) needs more than the budget itself, 300 draw calls or 900k vertices, on average or at the
 // busiest of the six places (maxCalls, maxKverts; the new map not: it has only its reference's margin). The JavaScript time of
 // physics+AI and of the render-side updates is only printed (it depends on the machine).
+// Then a big field (zandvoort101, tianmen101): a race of 101 cars (100 rivals, the player last on the grid), stepped 21 s from the start and
+// drawn every 3 s; far cars are one coarse mesh each (render.js farBuild, bigField). Fails over 300 draw calls at the busiest frame, or
+// over the reference's margin; the vertices only by the margin (at Zandvoort's start the track alone draws ~900k).
 // Then the new map of NEW VERSION · TEST 1 (js/newmap.js over Toskana, its still meshes merged by js/nvbake.js): the same budget at
 // twelve places round it (HOME, the garages, the infield, the hill, the motocross, the coast), behind the car (the
 // game's one camera), as 'newmap'.
@@ -66,6 +69,48 @@ async function newMap() {
   T.check('newmap: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
 }
+// a big field: 101 cars, sampled from the start (BIG: the tracks and their keys)
+const BIG = [['zandvoort', 'zandvoort101'], ['tianmen', 'tianmen101']];
+async function bigFields() {
+  const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 1, camera: 'chase', zoom: 1.2, rivals: 100, ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
+  await page.evaluate(() => {
+    window.__gl = { calls: 0, verts: 0 };
+    const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
+    const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
+    wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
+  });
+  for (const [id, key] of BIG) {
+    if (only && !only.includes(key)) continue;
+    await startTrack(page, id);
+    const r = await page.evaluate(() => {
+      const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      g.onAction('restart'); g.pause(); g.race.lch = null; for (const c of g.race.cars) c.lch = null; g.race.player.kt = null;
+      const P = g.race.player, s = [], n = g.race.cars.length;
+      Render.resetCam(); for (let i = 0; i < 10; i++) Render.frame(1 / 60, 1, P, g.S.camera, {});
+      for (let t = 0; t <= 21; t += 3) {
+        while ((g.race.time || 0) < t) g.sim(1 / 30, true);
+        for (let i = 0; i < 3; i++) Render.frame(1 / 30, 1, P, g.S.camera, {});
+        const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 30, 1, P, g.S.camera, {}); s.push([__gl.calls - c0, __gl.verts - v0]);
+      }
+      const c = s.map(x => x[0]), v = s.map(x => x[1]);
+      return { n, calls: Math.round(c.reduce((a, b) => a + b) / c.length), maxCalls: Math.max(...c), kverts: Math.round(v.reduce((a, b) => a + b) / v.length / 1000), maxKverts: Math.round(Math.max(...v) / 1000), jsMs: 0 };
+    });
+    const n = r.n; delete r.n; out[key] = r;
+    const gd = golden[key], line = `${n} cars: calls/frame ${r.calls} (max ${r.maxCalls}), vertices/frame ${r.kverts}k (max ${r.maxKverts}k)`;
+    if (update) { console.log(`${key.padEnd(10)} ${line}`); continue; }
+    const why = [];
+    if (n !== 101) why.push('not 101 cars');
+    if (r.maxCalls > 300) why.push('over 300 draw calls at the busiest frame');
+    if (!gd) why.push('no reference');
+    else {
+      if (r.maxCalls > gd.maxCalls * 1.1 + 5) why.push(`draw calls ${r.maxCalls} > ${Math.round(gd.maxCalls * 1.1 + 5)}`);
+      if (r.maxKverts > gd.maxKverts * 1.1 + 20) why.push(`vertices ${r.maxKverts}k > ${Math.round(gd.maxKverts * 1.1 + 20)}k`);
+    }
+    T.check(`${key} (big field): within the phone budget`, !why.length, line + (why.length ? ' — ' + why.join(', ') : ''));
+  }
+  T.check('big field: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
+  await ctx.close();
+}
 const update = process.argv.includes('--update');
 const only = process.env.PERF_ONLY ? process.env.PERF_ONLY.split(',') : null;   // (only these tracks, 'newmap' among them)
 const golden = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
@@ -120,6 +165,7 @@ try {
   }
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();   // (the tracks' game closed first: still running beside the new map's, it slowed that one's loading past page.goto's limit)
+  if (!only || BIG.some(b => only.includes(b[1]))) await bigFields();
   if (!only || only.includes('newmap')) await newMap();
 } finally {
   await browser.close(); await srv.close();

@@ -719,5 +719,19 @@
   "kverts": 306,
   "maxKverts": 391,
   "jsMs": 1.07
+ },
+ "zandvoort101": {
+  "calls": 192,
+  "maxCalls": 252,
+  "kverts": 677,
+  "maxKverts": 957,
+  "jsMs": 0
+ },
+ "tianmen101": {
+  "calls": 139,
+  "maxCalls": 191,
+  "kverts": 395,
+  "maxKverts": 475,
+  "jsMs": 0
  }
 }
