@@ -762,11 +762,11 @@
   "instances": 9795,
   "props": 63,
   "crowd": 30,
-  "world": "273a7e6d",
+  "world": "8134e52e",
   "propsHash": "752dbb08",
   "floor": "cae8594e/6860",
   "groups": {
-   "-:MeshLambertMaterial": "191f8d54",
+   "-:MeshLambertMaterial": "e9884332",
    "-:MeshBasicMaterial": "88683b4d",
    "ng_buffalo:MeshLambertMaterial": "f1052b04",
    "ng_elephant:MeshLambertMaterial": "ac708fdd",

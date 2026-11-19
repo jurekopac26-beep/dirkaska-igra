@@ -216,4 +216,40 @@
     };
     out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o.material === gm) tint(o); });
   });
+
+  /* ---- Ngorongoro (Tanzania): the road over the crater's rim in the dry season. OSM has nothing more by it than the game already has (the
+     gate, the lookout, the lay-by, the fence, the huts; the picnic site and the springs lie 1.1 km past the finish), so it is its ground:
+     28 cloudless Sentinel-2 L2A scenes of the dry season (July to September 2024 and 2025; 6-64 m from the road, the medians of its 1700
+     grass, 2100 shrub and 160 tree pixels by WorldCover class) have the grass a tan, G/R 0.74, B/R 0.57 (the straw over the red-brown
+     soil; 64-400 m the same, 0.735 and 0.573), the shrubs 0.83 and 0.65, the trees 0.90 and 0.68; the game's ground under them a yellow
+     green, G/R 0.97 (shrubs 1.07-1.09, trees 1.19-1.23), B/R 0.55-0.63 (the composite of ESA WorldCover 2021, a whole year with the wet
+     seasons, has them greener too: 0.90, 1.07 and 1.34). The scenes' ratios are of light, the game's colours the screen's (three r128
+     without sRGB output: its murram is G/R 0.75-0.78), so they go to the screen's scale first, ^(1/2.2): the grass 0.87 and 0.78, the
+     shrubs 0.92 and 0.82, the trees 0.95 and 0.84 (as they are, the grass came out the murram's orange: docs/realizem/k5-ngorongoro.jpg).
+     G/R moves down to them and B/R up (only towards them, never past), its brightness kept; only where it is a plant's (G well above B
+     and not below 0.8 R: the soil, the paths, the verges' murram, the rock bands, the houses and the water stay as they are). The
+     terrain's tiles and the verges out to the ditch; the far view (ngFar) not ---- */
+  wrap('ngorongoro', (out) => {
+    const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    const TG = [[0.74, 0.57], [0.90, 0.68], [0.83, 0.65]].map(t => t.map(x => Math.pow(x, 1 / 2.2)));   // (lc 0 grass, 1 trees, 2 shrubs; on the screen's scale)
+    const gm = out.ground && out.ground.children.length ? out.ground.children[0].material : null; if (!gm) return;
+    const v = new THREE.Vector3();
+    const tint = (m) => {
+      const g = m.geometry, C = g.attributes.color, P = g.attributes.position; if (!C || !P || C.itemSize !== 3) return;
+      m.updateMatrixWorld(true);
+      for (let i = 0; i < C.count; i++) {
+        const r = C.getX(i), gg = C.getY(i), b = C.getZ(i); if (r <= 0 || gg <= 0) continue;
+        const veg = ss(0.8, 0.88, gg / r) * ss(0.2, 0.32, (gg - b) / gg); if (veg <= 0) continue;   // (only a plant's: not the soil, the rock, the houses)
+        v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld);
+        const w = [0, 1, 2].map(c => A.vrLCf(v.x, v.z, c)), W = w[0] + w[1] + w[2]; if (W <= 0) continue;
+        const tG = (w[0] * TG[0][0] + w[1] * TG[1][0] + w[2] * TG[2][0]) / W, tB = (w[0] * TG[0][1] + w[1] * TG[1][1] + w[2] * TG[2][1]) / W, k = veg * Math.min(1, W);
+        const g2 = gg + (Math.min(gg, tG * r) - gg) * k, b2 = b + (Math.max(b, tB * r) - b) * k;
+        const s = (0.3 * r + 0.59 * gg + 0.11 * b) / (0.3 * r + 0.59 * g2 + 0.11 * b2);
+        C.setXYZ(i, r * s, g2 * s, b2 * s);
+      }
+      C.needsUpdate = true;
+    };
+    const grit = A.vrGritTex();   // (the verges' ground out to the ditch: World's grit, js/world-ngorongoro.js gMat)
+    out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o.material && o.material !== out.asphaltMat && (o.material === gm || (o.material.vertexColors && o.material.map === grit))) tint(o); });
+  });
 })();
