@@ -5221,6 +5221,7 @@ const Render = (function () {
   // scratches show, scrU: not in the far mesh's vertex colours).
   const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
   let farRb = 0;   // (cars whose far mesh was built again this frame: frame() sets it back)
+  let xQuiet = false;   // (a view's first frame, updateCars: xShards lays nothing)
   let unRb = 0;   // (rivals taken apart for their first knock this frame (updateCars, xWait): frame() sets it back)
   let farMat = null;
   function farBuild(v) {
@@ -7163,20 +7164,23 @@ const Render = (function () {
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
-      if (v.xOn) { v.xsW = c.fxWall || 0; v.xsC = c.fxQ ? 0 : c.fxCar || 0; }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol)
+      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (w > 0 || k > 0 || !(c.dents && c.dents.length)) { v.xsW = w; v.xsC = k; } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait; c.fxQ mutes the sparks only)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
       const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
       if (v.xOn && v.mrg && !xWait && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR)))) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
-      if (v.dRe && !v.rep && !xWait && !(v.xOn && v.mrg)) { for (let n = 0; n < 8 && v.dRe.length; n++) { const d = v.dRe.shift(); if (v.xOn) xDent(v, d); else applyDent(v, d); dLog(v, d); } if (!v.dRe.length) { v.dRe = null; if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); } }   // (the view built again mid-race, Nastavitve: its knocks' dents again, the dent only, 8 a frame (dLog))
-      if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { dLog(v, d); _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
+      if (v.dRe && !v.rep && !xWait && !(v.xOn && v.mrg)) { for (let n = 0; n < 8 && v.dRe.length; n++) { const d = v.dRe.shift(); if (v.xOn) { _xT = d.xcol != null ? _xsc.set(d.xcol) : null; _xSp = d.xsp || 0; xDent(v, d); _xT = null; _xSp = 0; } else applyDent(v, d); dLog(v, d); } if (!v.dRe.length) { v.dRe = null; if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); } }   // (the view built again mid-race, Nastavitve: its knocks' dents again, the dent only, with its mark and its crumple (P4, P6: the log's xcol, xsp), 8 a frame (dLog))
+      if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); dLog(v, d, _xT, _xSp); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; v.xsW = v.xsC = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep && !xWait) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
-        const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
+        const mute = !!v.fresh || !vis; xQuiet = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
-        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones, once the car has its damage field: the quarter is cut by its panels as built, xc.rest, not as dented)
+        xEngine(v, c); if (xQuiet) particles.mute = sparkP.mute = true;
+        if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h);
+        if (xQuiet) particles.mute = sparkP.mute = !vis; }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones, with or without a damage field yet: about the front door's rear edge as shut, K.hx0; a view's first frame: its pane broken without glass again, xQuiet)
+      xQuiet = false;
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
@@ -7853,7 +7857,7 @@ const Render = (function () {
     const kb = Core.sstep(RP.body[0], RP.body[1], s) * R.kmax; if (kb !== R.kb) { R.kb = kb; repBody(v, R); }
     while (R.pi < R.parts.length && s >= RP.parts[0] + (RP.parts[1] - RP.parts[0]) * (R.pi + 0.5) / R.parts.length) repPart(v, R, R.parts[R.pi++]);   // (evenly over the phase)
     if (!R.lamps && s >= RP.lamps) { R.lamps = true; repLamps(v); }
-    if (!R.trim && s >= RP.trim) { R.trim = true; repTrim(v); }
+    if (!R.trim && s >= RP.trim) { R.trim = true; repTrim(v, R); }
   }
   // what the repair goes from (the body as it is: D) and to (the car as new: P; a kit car's its model's body in its colours again, never
   // drawn), the vertices that differ (idx), the parts lost; nothing bent (dirt only): no copies
@@ -7963,9 +7967,20 @@ const Render = (function () {
       K.tailOut[s] = 0; }
     ownRnd(() => beams(v));
   }
-  function repTrim(v) {
+  // the computed rear doors (xRearDoor) shut with the front ones: their panels as built again; a pane fallen out of one stays out, as a
+  // front door's, till the car is built afresh
+  function xRearShut(v, R) {
+    const K = v.kit, P = R && R.P; if (!K.xRD || !P) return;
+    const A = v.body.geometry.attributes, a = A.position.array, dv = K.deadV;
+    for (const sel of K.xRDt || []) if (sel) for (const t of sel) { const o = t * 9;
+      if (a[o] === a[o + 3] && a[o] === a[o + 6] && a[o + 1] === a[o + 4] && a[o + 1] === a[o + 7] && a[o + 2] === a[o + 5] && a[o + 2] === a[o + 8]) continue;   // (glass gone: xBreakPane)
+      for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !P[pk]) continue; const s = P[pk].subarray(o, o + 9); A[key].array.set(s, o); R.D[pk].set(s, o); A[key].needsUpdate = true; }
+      if (dv) dv.fill(0, t * 3, t * 3 + 3); }
+    K.xRD = null; K.xRDt = null; K.xOpen = false;
+  }
+  function repTrim(v, R) {
     for (const o of [v.dec, v.polBar, v.scBar]) if (o && o.userData.dmgHid) { o.visible = true; o.userData.dmgHid = 0; }
-    if (v.kit) { v.kit.ajar = {}; v.kit.ver++; }
+    if (v.kit) { v.kit.ajar = {}; xRearShut(v, R); v.kit.ver++; }
     else if (v.oAjar) for (const n of Object.keys(v.oAjar)) oldShut(v, n);   // (an older model's doors, bonnet and boot shut: oldAjar)
   }
 
@@ -8838,12 +8853,14 @@ const Render = (function () {
     if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
     const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
     let hx = K.hx0 ? K.hx0[sd < 0 ? 'doorL' : 'doorR'] : null; if (hx == null) { hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]); }   // (the front door's rear edge shut: kitLoosen's, where the door swung open before the damage field was made)
-    const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.3)) return;
+    const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.55)) return;   // (narrower than a door: a strip of the quarter, left shut)
     const sel = [], dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let hz = 0;
     for (const Q of [R.o, R.i]) { if (!Q) continue; for (let t = Q[0] / 3; t < Q[1] / 3; t++) { const o = t * 9; if (dv[t * 3]) continue;
       const cx = (rest[o] + rest[o + 3] + rest[o + 6]) / 3, cy = (rest[o + 1] + rest[o + 4] + rest[o + 7]) / 3, cz = (rest[o + 2] + rest[o + 5] + rest[o + 8]) / 3;
       if (cx > hx || cx < x1 || cy < ySill || cz * sd <= 0) continue; sel.push(t); hz = Math.max(hz, Math.abs(cz)); } }
     if (!sel.length) return;
+    for (const t of sel) for (let q = 0; q < 9; q += 3) hx = Math.max(hx, rest[t * 9 + q]);   // (the hinge at the panel's own front edge: none of it ahead of it, turned into the car)
+    (K.xRDt || (K.xRDt = [null, null]))[si] = sel;   // (xRearShut)
     if (XC.glass && v.glassTris) { if (v.xt) { xtGlass(v, c, sd < 0 ? 'QL' : 'QR', 1, x, y, z, h, null); xtFlush(v); }   // (a table car's: its rear window 100 %, drawn now, before it turns)
       else for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null); }   // (its window breaks as it opens: turned with it after, it could not be broken any more)
     const phi = sd * 40 * Math.PI / 180, cs = Math.cos(phi), sn = Math.sin(phi), Z = hz * sd;
@@ -9069,7 +9086,8 @@ const Render = (function () {
   // glow 0.6 (carGlows), a head lamp's beam knocked out of aim, up to 12° outward and shorter (aimed down), by how hard (beams). The core's state only.
   // the dents a view has taken (at most 40, the weakest out first): a view built again mid-race (setCrash: Nastavitve · Podrobnosti poškodb,
   // Detajli avtov) takes them again as the career's old knocks, the dent only (no chips, glass, mirror or sound); a repair's new view none
-  function dLog(v, d) { const L = v.dLog || (v.dLog = []); L.push({ lx: d.lx, lz: d.lz, amt: d.amt, top: d.top, sc: d.sc, old: true });
+  function dLog(v, d, col, sp) { const L = v.dLog || (v.dLog = []); L.push({ lx: d.lx, lz: d.lz, amt: d.amt, top: d.top, sc: d.sc, old: true, xcol: col ? col.getHex() : d.xcol, xsp: sp || d.xsp || 0 });   // (xcol, xsp: what it was against and how fast, P4 and P6: the mark and the crumple again with it)
+
     if (L.length > 40) { let w = 0; for (let i = 1; i < L.length; i++) if (L[i].amt < L[w].amt) w = i; L.splice(w, 1); } }
   function xLampCrack(v, c) {
     const cd = c.cd; if (!cd || c.net) return;
@@ -9133,9 +9151,11 @@ const Render = (function () {
       const a = rRnd() * Math.PI * 2, r = 0.15 + Math.pow(rRnd(), 0.7) * 1.4, fw = rRnd() * Math.min(1.5, sp * 0.06);   // (round the pane, out from it, some carried on with the car)
       _xv.set(wx + Math.cos(a) * r * 0.7 + out[0] * r * 0.6 + vx / sp * fw, wy + 0.012 + rRnd() * 0.006, wz + Math.sin(a) * r * 0.7 + out[1] * r * 0.6 + vz / sp * fw);
       _xq.setFromEuler(_xe.set((rRnd() - 0.5) * 0.3, rRnd() * Math.PI * 2, (rRnd() - 0.5) * 0.3)); const k = (0.6 + rRnd() * 1.1) * sz; _xs.set(k, 1, k * (0.7 + rRnd() * 0.6));
+      if (xQuiet) continue;   // (the numbers drawn all the same)
       xSh.setMatrixAt(xSh.k, _xm.compose(_xv, _xq, _xs)); xSh.setColorAt(xSh.k, col || XSH_GLASS); xShSpot(xSh.k, _xv.x, _xv.y, _xv.z, k);
       xSh.k = (xSh.k + 1) % XSH_N; xSh.count = Math.min(XSH_N, xSh.count + 1);
     }
+    if (xQuiet) return;
     // (only the slots written since the last frame go up to the GPU: their span, the whole buffer when the ring wrapped)
     if (xSh.dT !== time) { xSh.dT = time; xSh.dLo = Infinity; xSh.dHi = -1; }
     if (n >= XSH_N || k0 + n > XSH_N) xSh.dLo = -1; else if (xSh.dLo >= 0) { xSh.dLo = Math.min(xSh.dLo, k0); xSh.dHi = Math.max(xSh.dHi, k0 + n); }
