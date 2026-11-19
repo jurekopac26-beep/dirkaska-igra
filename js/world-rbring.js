@@ -80,7 +80,7 @@
           c[0] = lerp(c[0], col[0], f * 0.85); c[1] = lerp(c[1], col[1], f * 0.85); c[2] = lerp(c[2], col[2], f * 0.85); }
       } },
   };
-  Object.assign(RB_LOOK, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js; tools/razdeli-proge.mjs)
+  Object.assign(RB_LOOK, API.rbLook);   // (a lazy world's look, loaded after this file (js/leno.js, svet-<name>), is read from API.rbLook at its build; the looks of the worlds whose parts are in files of their own: js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js; tools/razdeli-proge.mjs)
   const RB_CROP = [[0.62, 0.86, 0.5], [1.5, 1.08, 0.5], [1.2, 1.0, 0.72]];   // maize, wheat and barley, hay
   function rbLC(x, z) {   // nrLCf(x, z, 2) and nrLCf(x, z, 0) (in RBN.fm) in one pass: the same bilinear over the cell centres
     const P = API.NR, L = P.L, lc = P.lc, fx = (x - L.x0) / L.cell - 0.5, fz = (z - L.z0) / L.cell - 0.5, i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, nx = L.nx, nz = L.nz;
@@ -449,7 +449,7 @@
     const hyS = (s) => T.elevAt(wrapS(s)).y;
     const PD = def.pit, PB = def.pitBuilding || [-230, 70];
     const PSD = PD && PD[0] < 0 ? -1 : 1;   // (the pit lane's side: Styria right, Bathurst left: def.pit[0] < 0)
-    const LK = RB_LOOK[THEME] || RB_LOOK.rbring, AT = LK.at, BAN = LK.ban, PER = !!LK.period;   // (Styria's, Bathurst's or Crystal Palace's own touches; PER: the 1930s)
+    const LK = RB_LOOK[THEME] || (API.rbLook && API.rbLook[THEME]) || RB_LOOK.rbring, AT = LK.at, BAN = LK.ban, PER = !!LK.period;   // (Styria's, Bathurst's or Crystal Palace's own touches; PER: the 1930s)
     const CKF = LK.ck || 1;   // (the chunks of the road, its run-offs and the scenery CKF times as big: fewer draws where much of a short circuit is in view at once, Silkeborg)
     nrPrep();
     const P = API.NR, G = P.G;
