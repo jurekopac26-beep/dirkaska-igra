@@ -2,7 +2,11 @@
 # Vir vrednosti v js/world-realizem9.js (Cusco, Isalo). Uporaba (iz korena repozitorija):
 #   python3 -I tools/realizem9/s2barve.py <mapa za predpomnilnik> tools/cusco/config.json sentinel-s2-l2a-cogs/18/L/ZL/2025/7/S2A_18LZL_20250704_0_L2A/ 600
 #   python3 -I tools/realizem9/s2barve.py <mapa za predpomnilnik> tools/isalo/config.json sentinel-s2-l2a-cogs/38/K/NV/2025/8/S2C_38KNV_20250810_0_L2A/ 120   (in 900: drevesa, gola tla)
-# Zadnji argument: do katere razdalje od ceste (m) se vzorči. Contains modified Copernicus Sentinel data (2025); ESA WorldCover 2021 (CC BY 4.0).
+#   deževna doba: tools/cusco/config.json sentinel-s2-l2a-cogs/18/L/ZL/2024/1/S2A_18LZL_20240109_0_L2A/ 600 (jesen: 18/L/ZL/2024/4/S2A_18LZL_20240428_0_L2A/),
+#   tools/isalo/config.json sentinel-s2-l2a-cogs/38/K/NV/2025/1/S2A_38KNV_20250112_0_L2A/ 120 in 900 (jesen: 38/K/NV/2025/3/S2B_38KNV_20250328_0_L2A/)
+#   snega (SCL 11 v izpisu »SCL counts«) ni na nobenem, niti v suhi dobi Cusca: še 18/L/ZL/2023/6/S2A_18LZL_20230603_0_L2A/,
+#   2024/6/S2A_18LZL_20240607_0_L2A/, 2024/7/S2A_18LZL_20240717_0_L2A/, 2024/8/S2A_18LZL_20240816_0_L2A/ (600)
+# Zadnji argument: do katere razdalje od ceste (m) se vzorči. Contains modified Copernicus Sentinel data (2023–2025); ESA WorldCover 2021 (CC BY 4.0).
 import sys, os, json, math
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'proga'))
 import numpy as np, lib
@@ -48,5 +52,7 @@ m = good & (wc == 30)
 if m.sum() > 100:
     rg = rf[m][:, 0] / np.maximum(rf[m][:, 1], 1e-4)
     print('grass R/G linear p50 %.3f p90 %.3f p97 %.3f' % tuple(np.percentile(rg, [50, 90, 97])))
+    p90 = np.percentile(rg, 90); sel = rg > p90
+    print('  reddest tenth (R/G>p90) n=%d game %s' % (sel.sum(), np.round(g(np.median(rf[m][sel], axis=0)), 3)))
     for t in (1.5, 1.6, 1.7):
         sel = rg > t; print('  R/G>%.1f share %.3f  game %s' % (t, sel.mean(), np.round(g(np.median(rf[m][sel], axis=0)), 3) if sel.sum() else '-'))
