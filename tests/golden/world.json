@@ -307,11 +307,11 @@
   "instances": 12659,
   "props": 33,
   "crowd": 5,
-  "world": "12fa364d",
+  "world": "f676b11f",
   "propsHash": "c514dbc8",
   "floor": "f747cc9e/10332",
   "groups": {
-   "-:MeshLambertMaterial": "f6b54c8f",
+   "-:MeshLambertMaterial": "471efce9",
    "-:MeshPhongMaterial": "b702964d",
    "-:MeshBasicMaterial": "2188a968",
    "crowd:MeshLambertMaterial": "9284d73e",
