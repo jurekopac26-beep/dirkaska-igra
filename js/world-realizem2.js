@@ -21,19 +21,36 @@
         '    ouF = max( ouF, smoothstep( ' + R2.r1.toFixed(2) + ', ' + R2.r0.toFixed(2) + ', length( hjP - hjCa - hjAB * hjT ) ) * smoothstep( hjW - 1.5, hjW - 5.0, vHjC.w ) * smoothstep( 0.2, 1.4, vOuW.y - ouCar.y ) );\n' +
         '  }\n  vec2 ouQ = ');
   }
-  function screenCut(out) {   // (returns how many materials took it: 0 where the world has no ouCut or already cuts on the screen)
-    const U = out && out.dyn && out.dyn.ouCut; if (!U || U.uA || !out.root) return 0;
-    U.uA = { value: new THREE.Vector4(0, 0, -1e6, 1) }; U.uB = { value: new THREE.Vector4(0, 0, -1e6, 1) };
+  const keyOf = (m) => (m && typeof m.customProgramCacheKey === 'function' ? m.customProgramCacheKey() : '');
+  function eachMat(out, key, fn) {   // (each material under the world's root whose program key is key, once)
     const seen = new Set();
     out.root.traverse((o) => {
-      for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])) {
-        if (seen.has(m) || typeof m.customProgramCacheKey !== 'function' || m.customProgramCacheKey() !== 'ouCut' || !m.onBeforeCompile) continue;
-        seen.add(m); const base = m.onBeforeCompile;
-        m.onBeforeCompile = (sh, r) => { base(sh, r); cutPatch(sh, U); };
-        m.customProgramCacheKey = () => 'ouCutR2'; m.needsUpdate = true;
-      }
+      for (const m of (Array.isArray(o.material) ? o.material : o.material ? [o.material] : [])) if (!seen.has(m) && keyOf(m) === key) { seen.add(m); fn(m); }
     });
     return seen.size;
+  }
+  const v4 = () => ({ value: new THREE.Vector4(0, 0, -1e6, 1) });
+  function screenCut(out) {   // (returns how many materials took it: 0 where the world has no ouCut or already cuts on the screen)
+    const U = out && out.dyn && out.dyn.ouCut; if (!U || U.uA || !out.root) return 0;
+    U.uA = v4(); U.uB = v4();
+    return eachMat(out, 'ouCut', (m) => {
+      const base = m.onBeforeCompile;
+      m.onBeforeCompile = (sh, r) => { base(sh, r); cutPatch(sh, U); };
+      m.customProgramCacheKey = () => 'ouCutR2'; m.needsUpdate = true;
+    });
+  }
+  // a world with no cut of its own (Spa, Livorno: their crowns sway in the wind, nothing fades): the material keyed key takes ouCutMat's cone and the
+  // screen's cut after its own wind, and dyn.ouCut is made for World.view to fill
+  function addCut(out, key) {
+    const cone = World.api && World.api.ouCutMat; if (!cone || !out || !out.root || !out.dyn || out.dyn.ouCut) return 0;
+    const U = { uCam: { value: new THREE.Vector3(1e6, 0, 1e6) }, uCar: { value: new THREE.Vector3(1e6, 0, 1e6) }, uA: v4(), uB: v4() };
+    const n = eachMat(out, key, (m) => {
+      const wind = m.onBeforeCompile; cone(m, U); const cut = m.onBeforeCompile;
+      m.onBeforeCompile = (sh, r) => { if (wind) wind(sh, r); cut(sh, r); cutPatch(sh, U); };
+      m.customProgramCacheKey = () => key + 'R2'; m.needsUpdate = true;
+    });
+    if (n) out.dyn.ouCut = U;
+    return n;
   }
 
   const wrap = (id, fn) => {
