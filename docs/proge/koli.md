@@ -6,6 +6,7 @@ Koli (Finska): zgornji del ceste Ylä-Kolintie v narodnem parku Koli nad jezerom
 
 - **Pot**: 1,97 km med štartom in ciljem, od 159 do 306 m (vzpon ~150 m, najbolj strmo 11 %), pet ovinkov, od tega dve lasnici (Serpentina 1 in 2) in še ena ostra pred njima; štart 188 m za črto (22 avtov), izteki 102 m za ciljem. Vozi se po desni.
 - **Sever v snegu**: svet je zasnežen v vsakem letnem času (`snow: 'all'` v `World.gore`), zgrnjen sneg ob cesti, cesta brez črt (zbit sneg na splužen asfalt), gozd smrek in borov, smučarji in žičnice nad vasjo. Fizika vožnje sledi izbranemu letnemu času igre (zima po izbiri); privzeta zima za severne proge je tema »Zima na severu« (`docs/vrsta.md`).
+- **Tykky**: na smrekah na vrhu Kolija pozimi obleži debela plast snega in ivja (fin. *tykky*), po kateri je hrib znan; snežna odeja tu leži približno od novembra do aprila (Finski meteorološki inštitut, statistika snežne odeje). `js/world-sneg.js` pobeli krošnje smrek in borov skoraj do tal, debla ostanejo temna (svet Kolija je v igri zasnežen v vsakem letnem času, zato tudi tykky). Prej/potem s kamere za avtom: `docs/proge/sneg-koli.webp`.
 - **Načrt in proga**: navodilo seje je reklo »krog/ovalna«, opis v `docs/proge-po-drzavah.md` pa 2 km vzpona po Ylä-Kolintie; proga sledi opisu (cesta je odprta, kroga tam ni).
 
 - **Dirka**, **kronometer**, **promet**, **policija**: kot na Vršiču (štiri vožnje na eni kartici). Dirka: 21 tekmecev, v meniju *Opponents* od 0 do največ 21 (za ciljem je le ~105 m ceste do lasnice v Ylä-Koliju, večje polje bi parkiralo avto na avto; `maxRivals`).
