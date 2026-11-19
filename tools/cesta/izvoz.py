@@ -16,7 +16,8 @@ two mouths that would run into each other, a road that comes back to the lap sto
 open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), an
 open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own; def.views: a view point's
-lay-by) gets no road for the look beside it (own). A junction the game cannot draw (the road would climb the game's hillside) is left
+lay-by; a short track's def.lanes: js/world-kratke.js draws the map's lanes itself, with a mouth in the barrier) gets no road for the
+look beside it (own). A junction the game cannot draw (the road would climb the game's hillside) is left
 out by hand, per track (PROGE, izpusti: hand).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
@@ -33,6 +34,7 @@ import osm
 SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'living_street': 1, 'tertiary': 2, 'tertiary_link': 2,
               'secondary': 3, 'secondary_link': 3, 'primary': 3, 'primary_link': 3, 'trunk': 3, 'trunk_link': 3}
 SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
+MAKADAM = {'unpaved', 'gravel', 'fine_gravel', 'compacted', 'dirt', 'earth', 'ground', 'mud', 'sand'}   # (makadam=True: such a road joins as gravel, class 0)
 # per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start), how
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
 # an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
@@ -109,7 +111,18 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # World.cesta.stranske finds no opening (as Sakhir's)
          'mogyorod': dict(kinds={'raceway'}, predmeti=False), 'sindia': dict(kinds={'raceway'}, predmeti=False),
          'yahuarcocha': dict(kinds={'raceway'}, predmeti=False), 'houli': dict(kinds={'raceway'}, predmeti=False),
-         'parnu': dict(kinds={'raceway'}, predmeti=False, izpusti=[(401, -1), (565, 1), (2698, 1)]), 'tocancipa': dict(kinds={'raceway'}, predmeti=False)}
+         'parnu': dict(kinds={'raceway'}, predmeti=False, izpusti=[(401, -1), (565, 1), (2698, 1)]), 'tocancipa': dict(kinds={'raceway'}, predmeti=False),
+         # the group "lastne" (Kali Gandaki, Musandam, Lima Limo, Darvaz; from #781): tracks from pull requests, the side roads only. Left out
+         # where World.cesta.stranske finds no opening: Kali Gandaki 2680 m left and Darvaz 335 m left fork off at about 17 degrees and run
+         # inside the barrier's line (15 to 17 m out, the open verge) for some 45 m, beyond the 22 m a strip may run there
+         'kaligandaki': dict(predmeti=False, makadam=True, izpusti=[(2680, -1)]), 'musandam': dict(predmeti=False, makadam=True),
+         'limalimo': dict(predmeti=False, makadam=True), 'darvaz': dict(predmeti=False, makadam=True, izpusti=[(335, -1)]),
+         # group 538 (from #782): the short tracks of that pull request (js/world-kratke.js) get the side roads only, no street lamps or
+         # bus stops (docs/realizem.md: those are for the 15 tracks of main)
+         'atitlan': dict(predmeti=False), 'mujib': dict(predmeti=False),
+         # group Proge 3 (19. 11. 2026): the other tracks of #788, side roads only; Cromwell a circuit, fitted to its own line (raceway)
+         'cromwell': dict(kinds={'raceway'}, predmeti=False), 'livingstone': dict(predmeti=False), 'atimpoku': dict(predmeti=False, izpusti=[(2141, 1), (2346, 1), (3278, 1)]),
+         'hinboun': dict(predmeti=False), 'vinales': dict(predmeti=False)}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
@@ -255,7 +268,7 @@ def main():
                 if op and C.get('cilj') and sa > C['cilj'] - cfg['cilj']: drop('finish'); continue   # an open road's finish: the gantry, the crowd, the run-off
                 if any(circ(s0, b) < 24 for b in br) or any(a - 24 < sa < b + 24 for a, b in C.get('brez', [])): drop('bridge'); continue   # no junction on or under a bridge, nor in a gallery
                 if any(a - 30 <= s0 <= b + 30 for a, b in bank): drop('bank'); continue  # nor in a banked corner
-                cls = SIDE_CLASS[hw]; w, ow = side_width(cls, tg)
+                w, ow = side_width(SIDE_CLASS[hw], tg); cls = 0 if cfg.get('makadam') and tg.get('surface') in MAKADAM else SIDE_CLASS[hw]   # (an unpaved road: the gravel look, no paint)
                 Wk = walk(P); N_ = [near(p) for p in Wk]; left = False; ret = None
                 for k2, (d, sm) in enumerate(N_):   # away from the lap (its own width clear of the edge), then back at it
                     if not left: left = d > hw0 + 6 + w / 2
@@ -326,7 +339,9 @@ def main():
               '    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]]; nobody drives there\n'))
     blk += ''.join('    %s: %s,\n' % (k, json.dumps(v, separators=(',', ':'))) for k, v in data if v)
     m = ([None] + list(re.finditer(r'^    points: ', src, re.M)))[-1]; assert m, 'no points line in ' + path   # (the last: Hakone's own data block has one too)
-    if any(v for k, v in data): src = src[:m.start()] + blk + src[m.start():]
+    # a track whose points lie in a data block written whole (tools/proga, tools/kratke/build.py): this block goes after its end line
+    end = '    // ---- konec podatkov ----\n'; at = src.find(end) + len(end) if end in src else m.start()
+    if any(v for k, v in data): src = src[:at] + blk + src[at:]
     open(path, 'w', encoding='utf-8').write(src); print('written: js/tracks/%s.js' % C['id'])
 
 if __name__ == '__main__': main()

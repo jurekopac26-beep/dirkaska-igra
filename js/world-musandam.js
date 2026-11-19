@@ -118,15 +118,17 @@
     // per 160 m chunk
     {
       const ta = new IChunks(acaciaGeo(), matV, 160), RT = rng(LOOK.seed + 61);
-      const maxA = Math.round(900 * dens);
-      for (let s = Math.max(6, T.startS - 150); s < Math.min(T.len - 6, sFin + 150) && st.acacias < maxA; s += 5) {
+      const maxA = Math.round(900 * dens); let nSR = 0;   // (nSR: those in a side road's circle, drawn by none, counted as drawn)
+      for (let s = Math.max(6, T.startS - 150); s < Math.min(T.len - 6, sFin + 150) && st.acacias + nSR < maxA; s += 5) {
         const i = T.idx(s);
         for (const sd of [-1, 1]) {
           if (RT() > 0.16) continue;
           const o = (sd > 0 ? T.br[i] : T.bl[i]) + 4 + RT() * 110, x = T.px[i] + T.nx[i] * sd * o, z = T.pz[i] + T.nz[i] * sd * o, y = G(x, z), c = lcAt(x, z);
-          if (!(c === 0 || c === 2 || c === 3 || (c === 7 && RT() < 0.5)) || y < seaY + 2 || y > seaY + 420 || caSlope(x, z) > 0.55 || excluded(x, z)) continue;
+          if (!(c === 0 || c === 2 || c === 3 || (c === 7 && RT() < 0.5)) || y < seaY + 2 || y > seaY + 420 || caSlope(x, z) > 0.55 || excluded(x, z, 1)) continue;
           const n = vrNear(x, z); if (n.i >= 0 && n.dd < 3.5) continue;
-          const r = RT(), h = 3 + r * 3; ta.add(x, y - 0.15, z, r * TAU, h * (1.3 + RT() * 0.3), h, [0.92 + r * 0.16, 0.95 + RT() * 0.08, 0.9]); st.acacias++;
+          const r = RT(), h = 3 + r * 3, hy = h * (1.3 + RT() * 0.3), cg = 0.95 + RT() * 0.08;
+          if (excluded(x, z, 2)) { nSR++; continue; }   // (a side road's circle: its draws taken, the sequence behind it as without the roads)
+          ta.add(x, y - 0.15, z, r * TAU, hy, h, [0.92 + r * 0.16, cg, 0.9]); st.acacias++;
         }
       }
       ta.addTo(root, true);
