@@ -45,31 +45,73 @@
     '  float e = sqrt( d2 ) - sqrt( d1 ), jt = g1 == g2 ? 0.15 : 1.0, ny = normalize( c2 - c1 + 1e-4 ).y;',
     '  float gran = mix( 1.0, ( 1.0 - jt * ( 0.34 * ( 1.0 - smoothstep( 0.0, 0.07, e ) ) + 0.14 * ny * ( 1.0 - smoothstep( 0.0, 0.45, e ) ) ) ) * mix( 0.88, 1.1, k3H( g1 + 3.0 ) ), near * 0.85 + 0.15 );',
     '  return mix( gran * 1.05, sand * 1.03, warm );',
+    '}',
+    // in the rain: water running down the face below its joints and ledges, darker: in about half the 2.4 m columns a streak 0.2-1 m wide,
+    // wavering, broken every 6-8 m; gone with distance (a fine line there only flickers)
+    'uniform float k3Wet; float k3Dk = 0.0;',
+    'float k3Streak( vec2 p, float dist ) {',
+    '  float x = p.x * 0.42 + 0.12 * sin( p.y * 0.45 + p.x * 0.3 ), X = floor( x ), f = x - X; vec2 h = k3H2( vec2( X, 71.0 ) );',
+    '  float w = mix( 0.08, 0.2, h.y ), a = 1.0 - smoothstep( w * 0.4, w, abs( f - 0.5 ) ), s = p.y * mix( 0.1, 0.16, h.x ) + h.y * 5.0, S = floor( s ), fs = s - S;',
+    '  return step( 0.5, h.x ) * a * step( 0.4, k3H( X * 3.1 + S * 17.0 ) ) * smoothstep( 0.0, 0.2, fs ) * ( 1.0 - smoothstep( 0.8, 1.0, fs ) ) * ( 1.0 - smoothstep( 60.0, 200.0, dist ) );',
     '}'].join('\n');
+  /* ---- Chapman's Peak in the rain. The road darkens (Render: wetMats), its own ground did not (World.ext.chapman gives Render no dyn.wet): the
+     cut face, the verge and the slopes stayed as pale as dry beside the dark asphalt. Wet rough ground and rock are darker than dry (the water in
+     the pores and in the film keeps the light in: Lekner & Dorf 1988, Applied Optics 27(7); Twomey, Bohren & Mergenthaler 1986, Applied Optics
+     25(3)), the porous sandstone more than the granite, the bush of the slopes least; water runs down the face in darker streaks. Render's water
+     (0..1, the drying too) comes through a dyn.wet of this world's own, whose ground.color.setScalar(1 - 0.2 w) is read back as w, into one
+     uniform on the terrain's and the verge's shaders: their colours, which the season repaints (seasonWorld), stay as they are. ---- */
+  const K3_WET = { slope: 0.15, verge: 0.2, granite: 0.28, sand: 0.38, streak: 0.16 };   // (darker by this much, fully wet)
+  const k3f = (v) => v.toFixed(3);
   const K3_STEEP = /pkG = mix\( pkG, mix\( pkR, ([0-9.]+), 0\.25 \), pkSt \);/;
   const k3Steep = (M) => [
     'float k3W = smoothstep( 0.1, 0.22, ( vColor.r - vColor.b ) / max( vColor.r, 0.02 ) ), k3D = length( vPkV );',
-    'float k3B = smoothstep( 0.3, 0.7, pkWx ), k3L = 1.0, k3M = 1.0;',   // (one face, one projection: two blended draw a lattice)
-    'if ( k3B < 0.999 ) k3L = k3Rock( vec2( vUv.x * 10.0, vPkY ), k3W, k3D );',
-    'if ( k3B > 0.001 ) k3M = k3Rock( vec2( vUv.y * 10.0 + 37.0, vPkY ), k3W, k3D );',
-    'k3L = mix( k3L, k3M, k3B );',
+    'float k3B = smoothstep( 0.3, 0.7, pkWx ), k3L = 1.0, k3M = 1.0, k3S = 0.0, k3T = 0.0;',   // (one face, one projection: two blended draw a lattice)
+    'if ( k3B < 0.999 ) { vec2 k3P = vec2( vUv.x * 10.0, vPkY ); k3L = k3Rock( k3P, k3W, k3D ); if ( k3Wet > 0.0 ) k3S = k3Streak( k3P, k3D ); }',
+    'if ( k3B > 0.001 ) { vec2 k3P = vec2( vUv.y * 10.0 + 37.0, vPkY ); k3M = k3Rock( k3P, k3W, k3D ); if ( k3Wet > 0.0 ) k3T = k3Streak( k3P, k3D ); }',
+    'k3L = mix( k3L, k3M, k3B ); k3Dk = mix( ' + k3f(K3_WET.granite) + ', ' + k3f(K3_WET.sand) + ', k3W ) + ' + k3f(K3_WET.streak) + ' * mix( k3S, k3T, k3B );',
     'float k3G = mix( texture2D( map, vec2( vUv.x, vPkY * 0.1 ) * 1.8 ).r, texture2D( map, vec2( vUv.y, vPkY * 0.1 ) * 1.8 + 0.5 ).r, k3B );',   // the grain, not stretched
     'pkG = mix( pkG, ' + M + ' * k3L * mix( 1.0, k3G / ' + M + ', 0.45 ), pkSt );'].join('\n    ');
-  const rockFace = (out) => {
+  const K3_DARK = '#include <color_fragment>\ndiffuseColor.rgb *= 1.0 - k3Wet * mix( ' + k3f(K3_WET.slope) + ', k3Dk, pkSt ) * ( 1.0 - pkW );';   // (pkW: snow)
+  const rockFace = (out, K3W) => {
     let n = 0; const seen = new Set();
     for (const m of (out.ground ? out.ground.children : [])) {
       const mat = m.material; if (!mat || seen.has(mat) || !mat.onBeforeCompile || !mat.customProgramCacheKey || mat.customProgramCacheKey() !== 'pkGround2') continue;
       seen.add(mat); const prev = mat.onBeforeCompile;
       mat.onBeforeCompile = function (sh, r) {
         prev.call(this, sh, r); const M = sh.fragmentShader.match(K3_STEEP); if (!M) return;   // (the material changed: leave it as it is)
-        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + K3_ROCK).replace(K3_STEEP, k3Steep(M[1]));
+        sh.uniforms.k3Wet = K3W;
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + K3_ROCK).replace(K3_STEEP, k3Steep(M[1])).replace('#include <color_fragment>', K3_DARK);
       };
       mat.customProgramCacheKey = () => 'pkGround2k3'; mat.needsUpdate = true; n++;
     }
     return n;
   };
+  // the verge beside the road and the land beyond the corridor: World.ext.chapman's other ground material (the grit, World.api.vrGritTex)
+  const wetVerge = (out, K3W) => {
+    const grit = World.api && World.api.vrGritTex ? World.api.vrGritTex() : null, seen = new Set(); if (!grit || !out.root) return 0;
+    out.root.traverse((o) => {
+      const mat = o.material; if (!mat || Array.isArray(mat) || seen.has(mat) || mat.map !== grit || !mat.isMeshLambertMaterial || Object.prototype.hasOwnProperty.call(mat, 'onBeforeCompile')) return;
+      seen.add(mat);
+      mat.onBeforeCompile = function (sh) {
+        sh.uniforms.k3Wet = K3W;
+        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform float k3Wet;').replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= 1.0 - ' + k3f(K3_WET.verge) + ' * k3Wet;');
+      };
+      mat.customProgramCacheKey = () => 'k3WetVerge'; mat.needsUpdate = true;
+    });
+    return seen.size;
+  };
+  // Render's water into the uniform (render.js applyRoad: W.ground.color.setScalar(1 - 0.2 * w), the rest of it on stand-ins)
+  const wetHook = (out, K3W) => {
+    if (!out.dyn || out.dyn.wet) return false;   // (a world with its own: leave it)
+    const nop = { setScalar() {}, setHex() {} };
+    out.dyn.wet = { puddles: {}, road: { color: nop, specular: nop }, ground: { color: { setScalar: (v) => { K3W.value = Math.min(1, Math.max(0, (1 - v) / 0.2)); } } }, base: { sh: 0, sp: 0 } };
+    return true;
+  };
 
   wrap('montreal', (out) => { (out.stats = out.stats || {}).kamera3 = {}; });
   wrap('rbring', (out) => { (out.stats = out.stats || {}).kamera3 = {}; });
-  wrap('chapman', (out) => { (out.stats = out.stats || {}).kamera3 = { skala: rockFace(out) }; });
+  wrap('chapman', (out) => {
+    const K3W = { value: 0 };
+    (out.stats = out.stats || {}).kamera3 = { skala: rockFace(out, K3W), rob: wetVerge(out, K3W), mokro: wetHook(out, K3W) };
+  });
 })();
