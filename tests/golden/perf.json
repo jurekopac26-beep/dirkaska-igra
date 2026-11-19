@@ -810,5 +810,12 @@
   "kverts": 309,
   "maxKverts": 336,
   "jsMs": 2.17
+ },
+ "musandam": {
+  "calls": 127,
+  "maxCalls": 152,
+  "kverts": 322,
+  "maxKverts": 422,
+  "jsMs": 1.31
  }
 }
