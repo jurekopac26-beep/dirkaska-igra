@@ -145,4 +145,10 @@
     API.ROCK_SMOOTH = smooth0; st.rebra = n; st.grusc = m;
   };
   late.push(['llogara', ribs(9359, 0, sl => 0.25 + Math.min(0.4, sl * 0.6), 1)]);
+
+  /* Porto Moniz: the terraces, their walls, the vineyards and the scrub stand by the road already; only the steep banks between the
+     legs of the hairpins were smooth green faces from the camera above the car. The island is basalt (docs/proge/portomoniz.md:
+     »bazaltne stene«, »črna lava obale«; the look's own rock colours: the dark grey basalt, the red-brown of the tuff). So ledges of
+     that dark rock break the steep banks only (slope over ~0.45) within ~35 m of the road, the pastures and terraces left as they are. */
+  late.push(['portomoniz', ribs(9371, 0.45, () => 0.28, 0.92)]);
 })();
