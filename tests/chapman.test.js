@@ -17,21 +17,22 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const def = C.TRACKS.find(d => d.id === 'chapman'), T = new C.Track(def);
+const S0 = T.startS - 324;   // (the old start line by the beach, 324 m before the start since 15. 11. 2026: the reports' places below, metres from it)
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
 const left = (v) => v.d * v.dir < -0.5;   // (a vehicle on its own half when they keep left: + across the road is the right looking uphill)
 
-// 1. the track: an open road, four ways to drive it, driven on the left; at most 5 km, from Hout Bay (~20 m) up to the view point (~150 m)
+// 1. the track: an open road, four ways to drive it, driven on the left; at most 5 km, from above Hout Bay (~35 m) up to the view point (~150 m)
 check('track: an open road with four ways to drive it, 4 checkpoints, the road 13 m wide, the traffic on the left (def.leftHand)',
   def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 6.5 && def.leftHand === true,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
-check('track: from Hout Bay (~20 m) up to the view point (~150 m), 4.5-5 km, the climb ~130 m', T.raceLen > 4500 && T.raceLen <= 5000 && Math.abs(def.alt[0] - 19) < 10 && Math.abs(def.alt[1] - 153) < 15 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
+check('track: from above Hout Bay (~35 m) up to the view point (~150 m), 4.5-5 km, the climb ~120 m', T.raceLen > 4500 && T.raceLen <= 5000 && Math.abs(def.alt[0] - 34) < 10 && Math.abs(def.alt[1] - 153) < 15 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('chapman'));
 {
   let gmax = 0, gmin = 0; for (let i = T.idx(T.startS); i < T.idx(T.finishS); i++) { gmax = Math.max(gmax, T.grade[i]); gmin = Math.min(gmin, T.grade[i]); }
   const nm = T.names.map(q => q.n), turns = T.corners.filter(c => c.sev >= 2).length;
-  check('road: winding (a bend after another), the grades as the real road (up to ~8 %), the places on the HUD from Hout Bay to the view point',
-    gmax < 0.09 && gmin > -0.04 && turns >= 10 && nm[0] === 'Hout Bay' && /^Chapman's Peak · \d+ m$/.test(nm[nm.length - 1]) && nm.includes('Cestninska postaja') && T.names.every((q, k) => !k || q.d > T.names[k - 1].d) && T.names[T.names.length - 1].d <= T.raceLen,
+  check('road: winding (a bend after another), the grades as the real road (up to ~8 %), the places on the HUD from the East Fort to the view point',
+    gmax < 0.09 && gmin > -0.04 && turns >= 10 && nm[0] === 'East Fort' && /^Chapman's Peak · \d+ m$/.test(nm[nm.length - 1]) && nm.includes('Cestninska postaja') && T.names.every((q, k) => !k || q.d > T.names[k - 1].d) && T.names[T.names.length - 1].d <= T.raceLen,
     `steepest ${(gmax * 100).toFixed(1)} % up, ${(gmin * 100).toFixed(1)} % down, ${turns} bends, places ${nm.join(' | ')}`);
 }
 
@@ -119,15 +120,16 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 // tilted, never past the soft limit (short of the net), no wall's knock (no damage, no sparks), never a stop at once (the even stop the room
 // leaves: at most 20 g over a tenth of a second, a wall takes it in a step), not rolled over; down from the hill again (the slope's pull), or held
 // against it with the throttle, stuck and put back (the button, Race.rescue). On the sea side the wall stays; no other track has hills
+// but Sa Calobra (where no wall is drawn: tests/sacalobra.test.js)
 {
-  const H = T.hill, on = (sR, si) => !!(H && H.on[si][T.idx(T.startS + sR)]), len = (si) => H ? H.on[si].reduce((a, b) => a + b, 0) * T.ds : 0;
-  check('hills: on the mountain side at the reports\' places (521, 893, 2133 m on the left) and the rock at 2133 m on the right, not on the sea side at 893 m; no other track has hills',
-    on(521, 0) && on(893, 0) && on(2133, 0) && on(2133, 1) && !on(893, 1) && len(0) > 4000 && len(1) > 1000 && C.TRACKS.every(d => d.id === 'chapman' || !d.hills),
+  const H = T.hill, on = (sR, si) => !!(H && H.on[si][T.idx(S0 + sR)]), len = (si) => H ? H.on[si].reduce((a, b) => a + b, 0) * T.ds : 0;
+  check('hills: on the mountain side at the reports\' places (521, 893, 2133 m on the left) and the rock at 2133 m on the right, not on the sea side at 893 m; no other track has hills (but Sa Calobra)',
+    on(521, 0) && on(893, 0) && on(2133, 0) && on(2133, 1) && !on(893, 1) && len(0) > 4000 && len(1) > 1000 && C.TRACKS.every(d => d.id === 'chapman' || d.id === 'sacalobra' || !d.hills),
     H ? `left ${len(0).toFixed(0)} m, right ${len(1).toFixed(0)} m of ${T.raceLen.toFixed(0)} m` : 'no hills');
   const drive = (sR, side, deg, v, thr, secs) => {   // (the player 2.5 m inside the barrier line, turned deg towards it, at v m/s, the throttle held, straight on)
     const orig = Math.random; Math.random = seeded(7);
-    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player, i = T.idx(T.startS + sR), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar - 2.5), h = T.hd[i] + side * deg * Math.PI / 180;
-    P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = sR; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
+    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1 })), P = r.player, i = T.idx(S0 + sR), bar = side > 0 ? T.br[i] : T.bl[i], off = side * (bar - 2.5), h = T.hd[i] + side * deg * Math.PI / 180;
+    P.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = S0 + sR - T.startS; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
     const si = side > 0 ? 1 : 0, q2 = {}, win = []; let past = -9, over = -9, lift = 0, tilt = 0, resc = null, back = null, wall = 0, dmg = 0, roll = 0, g1 = 0, g10 = 0, vx = P.vx, vz = P.vz, inHill = false;
     for (let t = 0; t < secs && !resc && back == null; t += DT) {
       P.inThr = thr; P.inBrk = 0; P.inSteer = 0; P.inHand = 0; r.step(DT);
@@ -197,7 +199,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     left.onK && left.up > 0.2 && left.rise > 0.2 && left.wall === 0 && !left.sea && left.dmg === 0 && !left.out && left.over < 0.05, say(left));
   check('the start: as recorded (back to the right) the same, then back onto the road and on (> 100 km/h)',
     rec.onK && rec.up > 0.2 && rec.wall === 0 && !rec.sea && rec.dmg === 0 && !rec.out && rec.over < 0.05 && rec.k < 0 && Math.abs(rec.d) < T.w && rec.kmh > 100, say(rec) + `; after 3.5 s ${f(rec.d)} m from the middle at ${f(rec.kmh, 0)} km/h`);
-  const grid = [-135, -100, -50, 0, 25, 50, 75].map(sR => { const i = T.idx(T.startS + sR), h = T.hd[i] - 30 * Math.PI / 180;
+  const grid = [-135, -100, -50, 0, 25, 50, 75].map(sR => { const i = T.idx(S0 + sR), h = T.hd[i] - 30 * Math.PI / 180;
     return Object.assign(go(T.px[i] - T.nx[i] * 1.5, T.pz[i] - T.nz[i] * 1.5, h, 30, 0.6, () => 0, 2.5), { sR }); });
   check('the start: along the grid and the start (-135 to 75 m) driven into the hill at 30 m/s, 30°: no knock (a touch at most 1 m/s), no damage, still in the race',
     grid.every(x => x.wall <= 1 && x.dmg === 0 && !x.out), grid.map(x => `${x.sR} m: ${x.wall ? 'touch ' + f(x.wall) + ' m/s' : 'no wall'}, ${f(x.up, 2)} m up${x.sea ? ', then the sea side at ' + f(x.sea) + ' m/s' : ''}`).join('; '));
@@ -210,8 +212,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 {
   const zmaj = C.MODELS.find(m => m.id === 'zmaj'), mouth = (sR) => {
     const orig = Math.random; Math.random = seeded(7);
-    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1, playerModel: zmaj, damage: 2 })), P = r.player, i = T.idx(T.startS + sR), h = T.hd[i] - 30 * Math.PI / 180, v = 115 / 3.6;
-    P.place(T.px[i] - T.nx[i] * 1.5, T.pz[i] - T.nz[i] * 1.5, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = sR; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
+    const r = new C.Race(T, opts({ tt: true, numAI: 0, playerGrid: 1, playerModel: zmaj, damage: 2 })), P = r.player, i = T.idx(S0 + sR), h = T.hd[i] - 30 * Math.PI / 180, v = 115 / 3.6;
+    P.place(T.px[i] - T.nx[i] * 1.5, T.pz[i] - T.nz[i] * 1.5, h); P.y = P.py = T.hy[i]; P.q = T.query(P.x, P.z, i, {}); P.sPrev = P.q.s; P.dist = S0 + sR - T.startS; P.vx = Math.cos(h) * v; P.vz = Math.sin(h) * v; r.start();
     let g1 = 0, wall = 0, dmg = 0, onK = false;
     for (let t = 0; t < 2.5; t += DT) { P.inThr = 0.6; P.inBrk = 0; P.inSteer = 0; P.inHand = 0; P.hitWall = 0; const vx = P.vx, vz = P.vz; r.step(DT);
       if (!(P.hitWall > 0)) g1 = Math.max(g1, Math.hypot(P.vx - vx, P.vz - vz) / DT / 9.81); wall = Math.max(wall, P.hitWall || 0); dmg = Math.max(dmg, +P.dmg || 0); if (P.q.k >= 0) onK = true; if (P.speed < 1 && t > 0.5) break; }

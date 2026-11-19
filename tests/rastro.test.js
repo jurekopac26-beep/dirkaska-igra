@@ -1,6 +1,7 @@
 // Serra do Rio do Rastro: an open road with four ways to drive it on one card, as Vršič and Los Caracoles (def.modes: the race, the time
 // trial, the duel in the traffic and the run from the police). The road: the real line up the 17 numbered bends (def.curves, from the bottom:
-// 11 of them hairpins of 150 degrees and more, stacked on the wall of the Serra Geral), from ~1010 m to the viewpoint at ~1420 m in under 5 km,
+// 11 of them hairpins of 150 degrees and more, stacked on the wall of the Serra Geral), the race from ~1097 m (since 15. 11. 2026 the straight past
+// bend 2) to the viewpoint at ~1420 m, 4.2 km,
 // the climb on the legs between the hairpins (the hairpins themselves flatter), the legs of the ladder far enough apart for the barriers. The
 // open road's traffic is its own mix (def.traffic): no lorries, many motorbikes. A whole race up to the viewpoint (12 AI + the player on
 // autopilot): every car finishes and pulls up in its own slot past the line; a whole duel in the traffic on autopilot: both reach the top and
@@ -21,7 +22,7 @@ const wrap = (a) => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
 check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 4 checkpoints, the road 11 m wide',
   def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && T.w === 5.5,
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, climb ${def.alt.join('-')} m, modes ${(def.modes || []).join(',')}`);
-check('track: up the Serra (~1010 m) to the viewpoint (~1420 m), at most 5 km', Math.abs(def.alt[0] - 1010) < 15 && Math.abs(def.alt[1] - 1421) < 15 && T.raceLen > 4900 && T.raceLen <= 5000 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
+check('track: up the Serra (~1097 m, past bend 2) to the viewpoint (~1420 m), 4.1-4.3 km', Math.abs(def.alt[0] - 1097) < 15 && Math.abs(def.alt[1] - 1421) < 15 && T.raceLen > 4100 && T.raceLen <= 4300 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1,
   `${Math.round(T.raceLen)} m, ${def.alt[0]} -> ${def.alt[1]} m`);
 check('track: not in the big championship (an open road is no circuit)', !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes('rastro'));
 
@@ -37,7 +38,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     `${cv.length} bends, turns ${turn.map(a => Math.round(a * 57.3)).join(' ')}, tightest radius ${(1 / mk).toFixed(1)} m`);
   check('bends: the first at ~1020 m, the 17th at ~1345 m, each one\'s altitude the road\'s', Math.abs(alt[0] - 1023) < 10 && Math.abs(alt[16] - 1344) < 10 && own,
     `bend 1 ${Math.round(alt[0])} m, bend 17 ${Math.round(alt[16])} m`);
-  check('bends: the HUD and the commentator know them (Serpentina 1 .. 17, the waterfall, the viewpoint at the finish)', T.names.filter(q => /^Serpentina \d+/.test(q.n)).length === 17 && T.names.some(q => q.n === 'Cascata Rio do Rastro' && q.say) && /^Mirante/.test(T.names[T.names.length - 1].n),
+  check('bends: the HUD and the commentator know the 15 past the start (Serpentina 3 .. 17, the waterfall, the viewpoint at the finish)', T.names.filter(q => /^Serpentina \d+/.test(q.n)).length === 15 && /^Serpentina 3 /.test(T.names[0].n) && T.names.some(q => q.n === 'Cascata Rio do Rastro' && q.say) && /^Mirante/.test(T.names[T.names.length - 1].n),
     T.names.length + ' places');
   // the climb is on the legs: the grade through the hairpins' apexes (+-12 m) lower than on the legs between them; nowhere steeper than ~13.5 %
   let gin = 0, nin = 0, gout = 0, nout = 0, gmax = 0;

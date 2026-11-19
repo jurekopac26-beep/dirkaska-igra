@@ -1,0 +1,29 @@
+{
+  "id": "luanda",
+  "about": "Luanda, Angola (id luanda): a city course from the shore road of the western bay, round the hill of the old fortress on the inner carriageway of the ring road, down to the seafront road along the bay of Luanda (docs/proge/luanda.md)",
+  "box": [-8.835, 13.200, -8.795, 13.250],
+  "closed": false,
+  "dist": {"grid": 500},
+  "route": [
+    [-8.81915, 13.21685, "Avenida da Praia do Bispo", "start: the shore road of the western bay, northbound"],
+    [-8.81711, 13.21770, null, ""],
+    [-8.81595, 13.21923, null, ""],
+    [-8.81122, 13.22204, null, "the inner carriageway of the ring road under the west side of the hill"],
+    [-8.80661, 13.22170, null, "the north-west bend round the hill"],
+    [-8.80617, 13.22346, null, "under the fortress walls (about 50 m)"],
+    [-8.80923, 13.22555, null, "down the east side of the hill to the seafront road"],
+    [-8.81068, 13.22761, null, "the seafront road along the bay"],
+    [-8.81075, 13.23044, null, ""],
+    [-8.81033, 13.23303, null, ""],
+    [-8.80979, 13.23525, null, ""],
+    [-8.80876, 13.23703, null, ""],
+    [-8.80815, 13.23775, null, "finish on the seafront road"]
+  ],
+  "prefer": ["Avenida da Praia do Bispo"],
+  "geoRoads": ["Avenida da Praia do Bispo"],
+  "geoWater": [],
+  "marks": [
+    ["Trdnjava", "Fortress", "castle", ["w776638420"]]
+  ],
+  "places": []
+}
