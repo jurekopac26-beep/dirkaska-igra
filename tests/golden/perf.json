@@ -364,11 +364,11 @@
   "jsMs": 1.14
  },
  "llogara": {
-  "calls": 156,
-  "maxCalls": 168,
-  "kverts": 362,
-  "maxKverts": 423,
-  "jsMs": 1.34
+  "calls": 159,
+  "maxCalls": 172,
+  "kverts": 395,
+  "maxKverts": 486,
+  "jsMs": 1.19
  },
  "ella": {
   "calls": 166,

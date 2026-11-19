@@ -833,27 +833,27 @@
   }
  },
  "llogara": {
-  "meshes": 1963,
-  "verts": 715020,
+  "meshes": 1965,
+  "verts": 851355,
   "instances": 53940,
   "props": 84,
   "crowd": 190,
-  "world": "a989002d",
+  "world": "aaa9deb0",
   "propsHash": "624ff85f",
   "floor": "ac0be231/8708",
   "groups": {
-   "-:MeshLambertMaterial": "1821122a",
+   "-:MeshLambertMaterial": "4807b104",
    "-:MeshPhongMaterial": "dce678bb",
    "-:MeshBasicMaterial": "ea147380",
    "paragliders:MeshLambertMaterial": "1f9731fd",
    "irFar:MeshLambertMaterial": "ca4cc7c1",
    "crowd:MeshLambertMaterial": "aaad09b9",
-   "ao:MeshBasicMaterial": "832b8898",
+   "ao:MeshBasicMaterial": "9cfc281b",
    "tyremarks:MeshBasicMaterial": "86e91d27",
    "roadwear:MeshLambertMaterial": "b4a6195",
-   "life:MeshLambertMaterial": "917ab757",
-   "lifeShadow:MeshBasicMaterial": "622c742d",
-   "life:MeshBasicMaterial": "1ab4aa28"
+   "life:MeshLambertMaterial": "f64a3d69",
+   "lifeShadow:MeshBasicMaterial": "c874e477",
+   "life:MeshBasicMaterial": "5061d369"
   }
  },
  "portomoniz": {

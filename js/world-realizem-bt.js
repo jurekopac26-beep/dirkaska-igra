@@ -10,7 +10,8 @@
   'use strict';
   const API = World.api, PL = API && API.PL_LOOK; if (!PL) return;
   const { TAU, lerp, rng, rock, vary, vrNear, cone, ico } = API;
-  let T; API.sync.push(() => { ({ T } = API); });
+  const late = [];   // (the looks of the files loaded after this one: chained at the first build)
+  let T; API.sync.push(() => { ({ T } = API); while (late.length) { const [id, fn] = late.pop(); chain(id, fn); } });
 
   const chain = (id, fn) => { const L = PL[id]; if (!L) return; const base = L.extra;
     L.extra = function (ctx) { if (base) base.call(this, ctx);
@@ -117,4 +118,31 @@
     }
     API.ROCK_SMOOTH = smooth0; st.blazine = n; st.skrilavec = m;
   });
+  /* Llogara: the southern slope beside the road was grass and macchia only from the camera above the car. docs/proge/llogara.md: »Južno
+     pobočje je golo sivo apnenčasto skalovje v rebrih in meliščih, vmes suha trava in temne zaplate makije«. So ribs of the grey
+     limestone break the ground within ~35 m of the road wherever it is open (not in the fir and pine of the northern side), a few to
+     a group, each lying along the slope's contour, with the rubble of a small scree below the steeper ones. */
+  const ribs = (seed, slMin, pOf, k) => (L, { scen, excluded, onSide }, st) => {
+    const { caGround, caSlope, vrLC } = API; if (!caGround || !caSlope || !vrLC || !T) return;
+    const R = rng(L.seed + seed), rc = L.rockCols, smooth0 = API.ROCK_SMOOTH; let n = 0, m = 0;
+    const free = (x, z, r) => vrNear(x, z).dd > r && !excluded(x, z);
+    API.ROCK_SMOOTH = false;
+    for (let s = 20; s < T.len - 20; s += 7) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R();
+      const o = 4 + Math.pow(r1, 1.3) * 32, [gx, gz] = onSide(s + (r2 - 0.5) * 7, side, o), c = vrLC(gx, gz), sl = caSlope(gx, gz);
+      if (c === 1 || c >= 5 || sl > 1.2 || sl < slMin || r0 > pOf(sl)) continue;
+      const dx = caGround(gx + 2, gz) - caGround(gx - 2, gz), dz = caGround(gx, gz + 2) - caGround(gx, gz - 2), gl = Math.hypot(dx, dz) || 1;
+      const ux = dx / gl, uz = dz / gl, rot = Math.atan2(-ux, uz), cnt = 2 + Math.floor(R() * 3);   // (u: uphill; a rib lies across it)
+      for (let q = 0; q < cnt; q++) { const d = (q - (cnt - 1) / 2) * (1.5 + R() * 1.2), a = (R() - 0.5) * 4;
+        const x = gx + ux * d - uz * a, z = gz + uz * d + ux * a, len = 1.5 + R() * 2.6, hh = 0.3 + R() * 0.4, col = shade(vary(rc[Math.floor(R() * rc.length)], R, 0.04), k);
+        if (!free(x, z, 2.2 + len * 0.7)) { R(); continue; }
+        rock(scen.get(x, z), x, caGround(x, z) + hh * 0.12, z, len, hh, 0.55 + R() * 0.5, rot + (R() - 0.5) * 0.35, col, R, 0.26, 0.4); n++;
+        if (sl > 0.4 && R() < 0.6) for (let k = 0; k < 4; k++) { const w = 0.16 + R() * 0.3, e = 0.8 + R() * 1.8, f = (R() - 0.5) * len * 1.4, px = x - ux * e - uz * f, pz = z - uz * e + ux * f;
+          if (!free(px, pz, 2 + w)) { R(); continue; }
+          rock(scen.get(px, pz), px, caGround(px, pz) + w * 0.2, pz, w * 1.4, w * 0.6, w, R() * TAU, [col[0] * 0.95, col[1] * 0.95, col[2] * 0.95], R, 0.3, 0.3); m++; }
+      }
+    }
+    API.ROCK_SMOOTH = smooth0; st.rebra = n; st.grusc = m;
+  };
+  late.push(['llogara', ribs(9359, 0, sl => 0.25 + Math.min(0.4, sl * 0.6), 1)]);
 })();
