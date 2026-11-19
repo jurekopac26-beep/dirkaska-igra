@@ -267,6 +267,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | canaries | Canaries, Sveta Lucija | canaries | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.canaries`: tropski gozd `trop`, morje, hiše; `CESTE.canaries` v `js/world-cesta.js`) |
 | musandam | Musandam, Oman | musandam | `js/world-musandam.js` (`PL_LOOK.musandam` za `buildPrelaz`: morje zaliva, čolni, hiše zaselka, akacije) |
 | limalimo | Limalimo, Etiopija | limalimo | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.limalimo`: ograja nad prepadom, bazalt, suha trava, ovce) |
+| darvaz | Darvaz, Tadžikistan | darvaz | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.darvaz` v `js/world-darvaz.js`: skalne stene, melišča, motni Panj, ograja nad prepadom) |
 | *baldy* | *Mount Baldy, ZDA (test)* | baldy | `js/world-baldy.js` (`buildBaldy`) |
 | *bangsaen* | *Bang Saen, Tajska (test)* | bangsaen | `js/world-bangsaen.js` (`buildBangsaen`) |
 | batangas | Batangas, Filipini | batangas | `js/world-batangas.js` na `js/world-rbring.js` (`API.rbLook.batangas`: tribune, table krajev, zastave, polja sladkornega trsa, rdeča prst) |

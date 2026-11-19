@@ -129,6 +129,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Palau | Koror (PR #694) | – | – |
 | Oman | Musandam (PR #681): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
 | Etiopija | Limalimo (PR #682): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
+| Tadžikistan | Darvaz (PR #683): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
