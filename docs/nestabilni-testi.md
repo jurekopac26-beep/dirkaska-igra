@@ -26,11 +26,12 @@ Krogi `.github/workflows/tests.yml` na `main` in v pull requestih od 1388 do 183
 | `zrcalni` | #698 (16. 11.) | 1: dirka je med obračanjem zaslona tekla naprej, pogled je padel ali prestal po trenutku | popravljeno (dirka ustavljena, vsi štirje pogledi ob 18,3 s) |
 | `memory` | #698 (16. 11.), prej 129 → 130 | ena tekstura več (135 → 136) samo enkrat | popravljeno (ob rasti en krog več: puščanje raste znova) |
 | `haptics` | 44128443086 (#569, 18. 11., tudi ponovitev) | 4, 3: dirka iz menija vsakič druga; na počasnem stroju je avto zapustil stezo boksov po 0,6 s ali do boksov sploh ni prišel | popravljeno (testni način `?proga=bathurst&t=1&seme=7`, rešitev obtičanega avta; isti izid do številke pri semenih 1–4, 7, 17 in na enem jedru) |
-| po enkrat | `redflag`, `pitstats`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
+| `pitstats` | 3-krat od 8. 11. (dvakrat »the player's stop the race's fastest«, enkrat zaprt brskalnik); od 16. 11. ni padel | 4: dirka iz menija vsakič druga (`Math.random` strani, prave sličice); tekmečev hitrejši postanek je obvestilo upravičeno skril, zato test od 11. 11. šteje samo igralčev postanek, dirka pa je ostala neponovljiva | popravljeno (testni način `?proga=bathurst&t=1&seme=7`; isti izid do številke, postanek 32,2 s) |
+| po enkrat | `redflag`, `pitsound`, `m06`, `voices`, `fuel`, `wear`, `online`, `online4` (60 s), `rivals`, `shramba` (180 s) | | naslednja seja |
 
 Prejšnji popravki nestabilnih testov na `main`: #317, #404, #429, #443, #445.
 
-Padci po enkrat od 8. do 19. 11. (štetje 19. 11.): `redflag` 4-krat (8., 10., 17. in 19. 11., večinoma »the safety car in, green at the line«; popravek v odprtem #605), `pitstats` 3-krat (dvakrat »the player's stop the race's fastest«, enkrat zaprt brskalnik), `voices` in `online4` po 2-krat (`online4` čas, 60 s in 400 s), `wear` enkrat; `pitsound`, `m06`, `fuel`, `online`, `rivals` in `shramba` od 8. 11. niso padli.
+Padci po enkrat od 8. do 19. 11. (štetje 19. 11.): `redflag` 4-krat (8., 10., 17. in 19. 11., večinoma »the safety car in, green at the line«; popravek v odprtem #605), `pitstats` 3-krat (dvakrat »the player's stop the race's fastest«, enkrat zaprt brskalnik; popravljeno, zgoraj), `voices` in `online4` po 2-krat (`online4` čas, 60 s in 400 s), `wear` enkrat; `pitsound`, `m06`, `fuel`, `online`, `rivals` in `shramba` od 8. 11. niso padli.
 
 ## Vzroki in popravki
 
@@ -58,3 +59,4 @@ Ostale ugotovitve tu niso popravljene:
 - `npm run test:related` po spoju svežega `main` (fa35dd65, z #305, #460 in #461): 21 od 21 zelenih (2546 s).
 - 19. 11., testni način s semenom 7, vsak test dvakrat in enkrat na enem jedru (`taskset -c 0`), izpis vsakič enak: `pits` 33 od 33 (3 min 13 s, 3 min 23 s; eno jedro 4 min 16 s), `pitreplay` 28 od 28 (4 min 44 s, 4 min 48 s; 8 min 17 s; drugačna sta samo število sličic posnetka in velikost slik), `forecast` 12 od 12 (57 s, 56 s; 1 min 31 s; tudi semena 1–4, vsako na svojem jedru), `pitfight` 18 od 18 (dvakrat hkrati 1 min 5 s, 1 min 16 s; 59 s). Pred popravkom je `pitfight` dvakrat prestal z različnima dirkama (predaja pri 146,4 ali 137,9 s, drug tekmec).
 - 19. 11., `sovoznik` po popravku (vzrok 6) dvakrat in enkrat na enem jedru: 13 od 13 (3 min 14 s, 3 min 26 s; eno jedro 4 min 18 s). Klici z glasom so na Rio do Rastro prišli 128–208 m pred ovinkom v slovenščini in 66–91 m v angleščini, na Ouninpohji 101–232 m (meja 20 m, v padcu #805 3 m).
+- 19. 11., `pitstats` v testnem načinu s semenom 7 dvakrat hkrati in enkrat na enem jedru: 6 od 6, izpis vsakič enak (igralčev postanek 32,158 s, edini in najhitrejši; obvestilo enkrat). Semena 1–4 hkrati: vsa 6 od 6 (408 s).
