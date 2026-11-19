@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   const API = World.api, PL = API && API.PL_LOOK; if (!PL) return;
-  const { TAU, lerp, rng, rock, vary, vrNear } = API;
+  const { TAU, lerp, rng, rock, vary, vrNear, cone } = API;
   let T; API.sync.push(() => { ({ T } = API); });
 
   const chain = (id, fn) => { const L = PL[id]; if (!L) return; const base = L.extra;
@@ -56,4 +56,37 @@
     }
     st.police = n; st.bloki = m;
   });
+
+  /* Ngorongoro (its own builder, js/world-ngorongoro.js, calls this before it closes its scenery chunks): the walls of the crater and its
+     floor beside the road were one even field of grass from the camera above the car. docs/proge/ngorongoro.md: »rumenkasto-rjava trava
+     sten, slamnata, kjer je suho«, »šopi trave«, »rdeče-rjava vulkanska prst«. So tussocks of straw grass stand in loose groups within
+     ~35 m of the road, thicker on the dry lower wall and the floor, and here and there the red-brown soil shows bare between them. */
+  World.ext.ngorongoroRob = ({ scen, excluded, onSide, gH, slope, lc, pathD, out }) => {
+    try {
+      const R = rng(9347), st = (out.stats = out.stats || {}).robBt = {}; let n = 0, m = 0;
+      const free = (x, z, r) => vrNear(x, z).dd > r && !excluded(x, z) && pathD(x, z) > 1.5;
+      const straw = [[0.6, 0.54, 0.28], [0.55, 0.5, 0.26], [0.64, 0.58, 0.33], [0.49, 0.48, 0.24]], smooth0 = API.ROCK_SMOOTH;
+      API.ROCK_SMOOTH = true;   // (rounded: a tussock is a soft mound from above, not a pyramid)
+      for (let s = 8; s < T.len - 8; s += 6) for (const side of [-1, 1]) {
+        const dry = 0.45 + 0.55 * Math.min(1, s / (T.len * 0.6)), r0 = R(), r1 = R(), r2 = R();   // (drier the lower the road)
+        if (r0 > 0.62 * dry) continue;
+        const o = 2.6 + Math.pow(r1, 1.4) * 32, [gx, gz] = onSide(s + (r2 - 0.5) * 8, side, o), c = lc(gx, gz); if (c === 1 || c >= 5) continue;   // (not in the forest, not on built ground)
+        if (r2 < 0.16 && o > 4 && slope(gx, gz) < 0.5 && free(gx, gz, 3.4)) {   // the bare soil: a low irregular patch on the ground
+          const k = 7, rr = 1.1 + R() * 1.5, a0 = R() * TAU, col = vary([0.43, 0.3, 0.21], R, 0.03), rim = [col[0] * 0.9 + 0.06, col[1] * 0.9 + 0.07, col[2] * 0.9 + 0.03];
+          const g = scen.get(gx, gz), ctr = [gx, gH(gx, gz) + 0.07, gz], P = [];
+          for (let q = 0; q < k; q++) { const a = a0 + q / k * TAU, r = rr * (0.65 + R() * 0.6), x = gx + Math.cos(a) * r, z = gz + Math.sin(a) * r * 0.75; P.push([x, gH(x, z) + 0.05, z]); }
+          for (let q = 0; q < k; q++) g.triO(ctr, P[q], P[(q + 1) % k], col, [gx, ctr[1] - 5, gz], rim, rim);
+          m++;
+        }
+        const cnt = 3 + Math.floor(R() * 6 * dry), green = 1 - dry;
+        for (let q = 0; q < cnt; q++) {   // the tussocks of one group: low wide cones, paler at the tips
+          const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = 0.35 + R() * 0.4, w = 0.45 + R() * 0.55;
+          if (!free(x, z, 2.2 + w) || slope(x, z) > 0.9) { R(); R(); continue; }
+          const c0 = straw[Math.floor(R() * straw.length)], col = vary([c0[0] - 0.16 * green, c0[1] - 0.06 * green, c0[2] - 0.05 * green], R, 0.03);
+          cone(scen.get(x, z), x, gH(x, z) - 0.08, z, w, h, 6, [col[0] * 0.62, col[1] * 0.66, col[2] * 0.6], col, R() * TAU); n++;
+        }
+      }
+      API.ROCK_SMOOTH = smooth0; st.sopi = n; st.prst = m;
+    } catch (e) { console.error('realizem-bt (ngorongoro):', e); }
+  };
 })();
