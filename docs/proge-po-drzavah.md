@@ -102,6 +102,12 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Lusail, Katar | Nove proge za 1.0, linija A (A18) | OSM 3 % (ograja); z zidom boksov ~30 % | izletna cona je |
 | Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A19) | OSM 0 %; z zidom boksov ~14 % | izletna cona je |
 | Koli, Finska | proge z ledom (zimska) | OSM 2 % (stavbe), ograj, zidov in sten ni | izletna cona je |
+| Livingstone, Zambija | zbirna Proge 3 (#788) | 0 %, obe 0 % (v igri 19. 11. 2026, povprečno 6,0 m do bližje meje) | izletna cona je |
+| Atimpoku, Gana | zbirna Proge 3 (#788) | 0 %, obe 0 % (v igri 19. 11. 2026, povprečno 6,0 m do bližje meje) | izletna cona je |
+| Phou Hin Boun, Laos | zbirna Proge 3 (#788) | 0 %, obe 0 % (v igri 19. 11. 2026, povprečno 7,4 m do bližje meje) | izletna cona je |
+| Kali Gandaki, Nepal | zbirna Proge 3 (#788) | 0 %, obe 0 % (v igri 19. 11. 2026, povprečno 8,6 m do bližje meje) | izletna cona je |
+| Darvaz, Tadžikistan | zbirna Proge 3 (#788) | 0 %, obe 0 % (v igri 19. 11. 2026, povprečno 6,6 m do bližje meje) | izletna cona je |
+| Viñales, Kuba | zbirna Proge 3 (#788) | 0 %, obe 0 % (v igri 19. 11. 2026, povprečno 5,9 m do bližje meje) | izletna cona je |
 
 ## Države s progo v igri: izbira uporabnika
 
@@ -189,6 +195,9 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Madžarska | Mogyoród (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v delu (biketraveler) |
 | Združeni arabski emirati | Abu Dabi (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | zgrajena, odpade (ni na potrjenem seznamu 17 prog, tabla #382, 18. 11. 2026) |
 | Senegal | Sindia (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v delu (biketraveler) |
+| Tajvan | Houli (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v zbirni Proge 3 (#788); prva proga države |
+| Estonija | Pärnu (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`); Vormsi (proge z ledom) ni izbrana | v zbirni Proge 3 (#788); prva proga države |
+| Kolumbija | Tocancipá (dirkališče, izbira uporabnika 9. 11. 2026, `docs/dirkalisca-celine.md`) | v zbirni Proge 3 (#788); prva proga države |
 | Južna Koreja | Seul (zavite, 3) | po vrsti |
 | Tajska | nobene na čakanju; Bang Saen je od 5. 11. 2026 testna (`test: true`, za izbris; preveč ravnine; odločitev uporabnika, PR #379), zato Tajska nima prave proge v igri | prva nova proga iz Tajske, ko pride na vrsto: Buriram (dirkališče, Nove proge za 1.0; pogoj »šele ko je #379 na `main`« je izpolnjen z združitvijo #379) |
 | Norveška | Longyearbyen (proge z ledom, izbira uporabnika 6. 11. 2026) | po vrsti (razdelek »Proge z ledom«); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |

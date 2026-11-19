@@ -784,18 +784,18 @@
   "jsMs": 0.83
  },
  "livingstone": {
-  "calls": 110,
-  "maxCalls": 138,
-  "kverts": 294,
-  "maxKverts": 361,
-  "jsMs": 1.26
+  "calls": 112,
+  "maxCalls": 140,
+  "kverts": 305,
+  "maxKverts": 379,
+  "jsMs": 1.12
  },
  "atimpoku": {
-  "calls": 103,
-  "maxCalls": 132,
-  "kverts": 242,
-  "maxKverts": 289,
-  "jsMs": 1.83
+  "calls": 105,
+  "maxCalls": 133,
+  "kverts": 253,
+  "maxKverts": 295,
+  "jsMs": 1.55
  },
  "hinboun": {
   "calls": 123,
@@ -812,11 +812,11 @@
   "jsMs": 1.07
  },
  "musandam": {
-  "calls": 127,
-  "maxCalls": 152,
-  "kverts": 322,
-  "maxKverts": 422,
-  "jsMs": 1.31
+  "calls": 129,
+  "maxCalls": 157,
+  "kverts": 331,
+  "maxKverts": 430,
+  "jsMs": 1.08
  },
  "limalimo": {
   "calls": 87,
@@ -826,17 +826,17 @@
   "jsMs": 0.95
  },
  "darvaz": {
-  "calls": 123,
-  "maxCalls": 139,
-  "kverts": 322,
-  "maxKverts": 375,
-  "jsMs": 1.4
+  "calls": 125,
+  "maxCalls": 143,
+  "kverts": 331,
+  "maxKverts": 384,
+  "jsMs": 1.15
  },
  "vinales": {
-  "calls": 121,
-  "maxCalls": 182,
-  "kverts": 133,
-  "maxKverts": 161,
-  "jsMs": 1.48
+  "calls": 123,
+  "maxCalls": 183,
+  "kverts": 141,
+  "maxKverts": 166,
+  "jsMs": 1.05
  }
 }

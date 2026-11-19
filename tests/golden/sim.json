@@ -6160,16 +6160,16 @@
   }
  },
  "musandam/car/cs": {
-  "digest": "020d7f8c9da40699a405206e",
-  "lead": 2157,
+  "digest": "1bd96e11f32593ad3bb43518",
+  "lead": 2157.6,
   "car0": [
-   -487.8,
-   -908.62
+   -481.25,
+   -940.93
   ],
   "cover": {
-   "dmg": 0.75,
-   "loose": 9,
-   "rescues": 1,
+   "dmg": 0.8,
+   "loose": 3,
+   "rescues": 0,
    "repairs": 0
   }
  },
@@ -6356,16 +6356,114 @@
   }
  },
  "darvaz/car/cs": {
-  "digest": "11c26778c2547a90d6b782dd",
-  "lead": 2325.8,
+  "digest": "0dfab4690530fb91d1ce6500",
+  "lead": 2348.9,
   "car0": [
-   587.06,
-   1990.49
+   660.4,
+   2106.52
   ],
   "cover": {
-   "dmg": 0.55,
+   "dmg": 0.38,
    "loose": 1,
    "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vinales/race/cs": {
+  "digest": "d30a0f630d3fb9882dd93ef8",
+  "lead": 1512.9,
+  "car0": [
+   -455.54,
+   -1168.91
+  ],
+  "cover": {
+   "dmg": 0.01,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vinales/demo/cs": {
+  "digest": "666a1a5aa781569733a19a28",
+  "lead": 1153.3,
+  "car0": [
+   -252.72,
+   -946.75
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vinales/upg/cs": {
+  "digest": "6927bc5f45673ca9018a3515",
+  "lead": 1512.9,
+  "car0": [
+   -407.34,
+   -1144.01
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vinales/crash/cs": {
+  "digest": "a56c5afe56b75f3e2916d8e9",
+  "lead": 1512.9,
+  "car0": [
+   -482.71,
+   -1175.27
+  ],
+  "cover": {
+   "dmg": 0.58,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vinales/formula/cs": {
+  "digest": "9c1693e6c856a0a1a285d880",
+  "lead": 1512.3,
+  "car0": [
+   -503.28,
+   -1193.98
+  ],
+  "cover": {
+   "dmg": 0.96,
+   "loose": 5,
+   "rescues": 1,
+   "repairs": 0
+  }
+ },
+ "vinales/lm/cs": {
+  "digest": "64960667ca9418ce788692f2",
+  "lead": 1512.3,
+  "car0": [
+   -503.3,
+   -1193.99
+  ],
+  "cover": {
+   "dmg": 0.73,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vinales/car/cs": {
+  "digest": "2007f3bc9465e9708c6e38b2",
+  "lead": 1512.4,
+  "car0": [
+   -503.36,
+   -1194.02
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 1,
    "repairs": 0
   }
  },
@@ -11452,14 +11550,14 @@
   }
  },
  "atimpoku/car/cs": {
-  "digest": "4b84f028c3e2e5b1cc3335b1",
-  "lead": 2681.8,
+  "digest": "3751effa88d294bfc2181448",
+  "lead": 2661.2,
   "car0": [
-   1693.38,
-   1734.93
+   1476.44,
+   1776.28
   ],
   "cover": {
-   "dmg": 0.61,
+   "dmg": 0.44,
    "loose": 1,
    "rescues": 0,
    "repairs": 0

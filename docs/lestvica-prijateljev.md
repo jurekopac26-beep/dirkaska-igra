@@ -37,14 +37,14 @@ Isti čas, kot ga meni že kaže v vrstici številk (most `record` v `js/game.js
   //    ključ rekorda: [čas v ms, dan nastanka (dni od 1. 1. 2026; 0 = neznan), avto ali nič]
   ```
 - **S** = podpis ECDSA P-256 s SHA-256 (WebCrypto `crypto.subtle`) niza P, base64url, 86 znakov.
-- **Velikost**: igralec z 20–60 časi ~0,8–2 tisoč znakov; vse proge v obeh fizikah, z dežjem in načini (~300 časov) ~7 tisoč, pod mejo 16.000, ki jo že uporablja duh. Test: polni rekordi ≤ 8.000 znakov.
+- **Velikost**: igralec z 20–60 časi ~0,8–2 tisoč znakov; vse proge v obeh fizikah, z dežjem in načini (~300 časov) ~7 tisoč, pod mejo 16.000, ki jo že uporablja duh. Test: polni rekordi ≤ 13.000 znakov (19. 11. 2026: 85 prog, 746 časov, ~11.200 znakov).
 
 ### Zaščita pred ponarejenimi časi
 
 Brez strežnika popolne zaščite ni: igra in repozitorij sta javna, kdor hoče, si lahko svoj čas izmisli. Zaščita ustavi vse ostalo:
 
 1. **Podpis in identiteta**: igralec ob prvem pošiljanju dobi par ključev (zasebni ostane v telefonu in v datoteki profila). Id prijatelja je prvih 12 znakov base64url(SHA-256(`pub`)). Povezave brez veljavnega podpisa igra ne sprejme: nihče ne more poslati časov v imenu drugega prijatelja, spremenjena črka ali prirezana povezava ne gre skozi. Brskalnik brez WebCrypto (zelo star ali stran brez HTTPS) povezave ne pošlje in ne sprejme (sporočilo).
-2. **Oblika**: kot `chalOf` (aplikacija, vrsta, različica; čas končno pozitivno število; dan in avto znana ali nič; največ 600 časov; vzdevek očiščen).
+2. **Oblika**: kot `chalOf` (aplikacija, vrsta, različica; čas končno pozitivno število; dan in avto znana ali nič; največ 1200 časov; vzdevek očiščen).
 3. **Nemogoči časi**: čas, hitrejši od najhitrejšega mogočega na progi, se zavrže (sporočilo »1 nemogoč čas izpuščen«). Meja iz oblike proge: na vsakem delu hitrost največ √(4 g · polmer ovinka) in največ 1,15 × največja končna hitrost vozil igre; meja = pot / hitrost po dolžini kroga (krog), dirke (dirka, policija, dvoboj) ali preizkušnje (kronometer); pri progah z medaljami vsaj 0,7 × zlati čas. Čas proge, ki je igra še nima, se shrani in preveri, ko proga pride.
 4. **Odstrani prijatelja**: en dotik (Lestvica → Prijatelji → Odstrani); njegove nadaljnje povezave igra doda samo, če igralec to potrdi (seznam skritih, do 100). To je tudi blokiranje, ki ga Google Play zahteva pri vsebini uporabnikov.
 
@@ -73,7 +73,7 @@ Pri vseh: meni bere podatke prek mostu (`G.friends(d)`, `G.sendTimes()`), napisi
 - Vsak čas je najboljši, kar jih je prijatelj kdaj poslal (najmanjši po ključu, z dnem in avtom). Vrstni red odpiranja ni pomemben: ista povezava dvakrat ne spremeni ničesar, starejša ne pokvari novejše. Vzdevek je iz povezave z najnovejšim `sent`.
 - Kdor ponastavi igro ali zamenja telefon brez uvoza profila, dobi nov ključ (nova vrstica); z uvozom profila ostane isti.
 - Tvoji časi se v tabeli berejo sproti iz rekordov (brez kopije). Do prijatelja pride posodobitev samo z novo povezavo (brez strežnika ni samodejnega pošiljanja); zato rezultati po novem rekordu ponudijo *Pošlji prijateljem*.
-- Meje: do 40 prijateljev (41. izrine tistega z najstarejšo zadnjo povezavo, s sporočilom), do 600 časov na prijatelja.
+- Meje: do 40 prijateljev (41. izrine tistega z najstarejšo zadnjo povezavo, s sporočilom), do 1200 časov na prijatelja (do 19. 11. 2026 600; vse proge imajo zdaj več kot 600 ključev rekordov).
 
 ## Shranjevanje
 
@@ -91,7 +91,7 @@ Imena na lestvici so vzdevki, ki jih vnese igralec. Igra ne zbira pravih imen, e
 
 ## Testi
 
-- **Node** `tests/lestvica.test.js` (logika v `js/lestvica.js` brez DOM; Node 22 ima WebCrypto in CompressionStream): povezava tja in nazaj; podpis (spremenjen znak, prirezana povezava, tuj podpis, napačna vrsta ali različica: zavrnjeno); meje (vsaka prava proga: zmagovalec AI iz `tests/golden/races.json` je počasnejši od 1,2 × meje, meja je vsaj 0,35 × njegovega časa); združevanje (najmanjši po ključu, ista povezava dvakrat, obraten vrstni red, vzdevek z najnovejšim `sent`, lastna povezava, skriti prijatelj, 40 prijateljev, 600 časov); velikost pri polnih rekordih ≤ 8.000 znakov; čiščenje vzdevka in izpis brez HTML.
+- **Node** `tests/lestvica.test.js` (logika v `js/lestvica.js` brez DOM; Node 22 ima WebCrypto in CompressionStream): povezava tja in nazaj; podpis (spremenjen znak, prirezana povezava, tuj podpis, napačna vrsta ali različica: zavrnjeno); meje (vsaka prava proga: zmagovalec AI iz `tests/golden/races.json` je počasnejši od 1,2 × meje, meja je vsaj 0,35 × njegovega časa); združevanje (najmanjši po ključu, ista povezava dvakrat, obraten vrstni red, vzdevek z najnovejšim `sent`, lastna povezava, skriti prijatelj, 40 prijateljev, 1200 časov); velikost pri polnih rekordih ≤ 13.000 znakov; čiščenje vzdevka in izpis brez HTML.
 - **Brskalnik** `tests/browser/lestvica.test.mjs`: dve igri (dva konteksta) si izmenjata povezavi; tabela na koraku izbire proge pokonci 360 × 640 in ležeče 640 × 360 (vrstice vidne, nič čez rob, značka mesta); Lestvica s prijatelji in *Odstrani*; vrstica med prijatelji na rezultatih; izvoz in uvoz profila ohrani identiteto. Po spremembi menija `menu.test.mjs`, prevodi `lang.test.js`.
 - Lokalno `npm run test:related` (zaradi `js/game.js` in `js/menu.js` izbere tudi `share`, `chal`, `menu`). Obremenitve telefona sprememba ne poveča (samo meni in zasloni).
 
