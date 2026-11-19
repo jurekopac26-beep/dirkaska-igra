@@ -40,7 +40,8 @@ const Core = (function () {
   // writes it over the head, the same object in TRACKS, so whoever holds it keeps it. Where both are there already (Node loads every
   // file; a page without lazy links), the full file is written over the head here and the track is in TRACKS once, in the head's place.
   const TRACKS = [];
-  function mergeHead(h, d) { for (const k in d) h[k] = d[k]; delete h.head; return h; }
+  // (the full file is the track: a head's field it does not have goes, e.g. killar's bumps when a test builds it at KILLAR_RAZGIBANOST 0)
+  function mergeHead(h, d) { for (const k of Object.keys(h)) if (!(k in d)) delete h[k]; for (const k in d) h[k] = d[k]; delete h.head; return h; }
   for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) {
     const h = TRACKS.find(x => x.id === d.id);
     if (!h) TRACKS.push(d); else if (h.head && !d.head) mergeHead(h, d);
