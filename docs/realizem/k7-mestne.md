@@ -51,6 +51,10 @@ Kamera za avtom, `origin/main` | ta veja (`node tools/shot.mjs <id> --m <m> --le
 - `k7-luanda-1700.jpg`: ograja levo ob cesti, 5 m za ograjo proge (0,34 % slike).
 - `k7-luanda-1800.jpg`: zid spredaj levo, ograja v ozadju (0,64 %).
 - Mombasa: brez spremembe.
+- V dežju (`--vreme dez`):
+  - `k7-luanda-1700-rain.jpg`: ograja je temnejša in manj vidna, kot mokra okolica (0,10 %).
+  - `k7-luanda-1800-rain.jpg`: zid je kot v suhem, ograjo v ozadju skrije dežna megla (0,56 %).
+  - Ograje in zidovi se v dežju zatemnijo kot ostali svet. Ovoj riše z istim materialom kot zidovi proge (`matV`).
 
 ## Ni narejeno
 
