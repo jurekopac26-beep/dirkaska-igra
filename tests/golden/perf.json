@@ -719,5 +719,19 @@
   "kverts": 306,
   "maxKverts": 391,
   "jsMs": 1.07
+ },
+ "polje101": {
+  "calls": 188,
+  "maxCalls": 188,
+  "kverts": 838,
+  "maxKverts": 838,
+  "jsMs": 0
+ },
+ "polje101s": {
+  "calls": 222,
+  "maxCalls": 222,
+  "kverts": 1191,
+  "maxKverts": 1191,
+  "jsMs": 0
  }
 }

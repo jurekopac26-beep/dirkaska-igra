@@ -57,6 +57,7 @@ Preden seja začne novo temo, jo vpiše sem (s potiskom te datoteke na `main` pr
 | Najboljše vožnje: igra za vsako progo in vreme hrani 10 najboljših veljavnih time trial voženj kot posnetke `.rrp` (IndexedDB), v Nastavitvah seznam in gumb »Deli 10 najboljših« (ena datoteka na progo za `tools/voznja.mjs`, tekmeci po vožnjah igralcev; odločitev uporabnika 11. 11. 2026 ob ~10.50 prek Mateja) | jure.kopac26 | ko se konča #650; na `main` ~14. 11. |
 | 10 novih prog z znamenitostjo ob cesti (model iz Blenderja, skupni nalagalnik `.glb`; odločitev uporabnika 15. 11. 2026 ob ~4.40 prek Mateja: »namesto 5 novih prog naredi 10 novih prog, vse naj imajo uporabo blenderja«): proga 1 Luanda in skupna pot (#711), proge 2–7 jure.kopac26 na veji `proge/luanda`, 8–10 biketraveler | jure.kopac26, biketraveler | v delu (#711) |
 | Odprte ceste: predaja na začetku ravnine, tik za tekmecem (popravek uporabnika 14. 11. ob ~16.45; Chapman's Peak, Bâlea, Tianmen in Rio do Rastro dobijo start na začetku ravnine, proge krajše) | jure.kopac26 | v delu (15. 11., `popravki/2026-11-15`) |
+| Velika polja: cenejše risanje oddaljenih tekmecev v polju 100+ (LOD po razdalji, samo risanje; Matej, tabla #382, komentar »Matej (jure.kopac26), čet 19. 11., 0.20«): grob vzorec daleč tudi na SREDNJI in VISOKI, ko je avtov več kot 22; test obremenitve `polje101` (Zandvoort, start, 101 avto) | biketraveler | v delu (19. 11.), PR `claude/happy-lamport-s8w7jj` |
 
 ## Vrsta (vrstni red od 7. 11. 2026 ob 17.00)
 
