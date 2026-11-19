@@ -151,4 +151,144 @@
      »bazaltne stene«, »črna lava obale«; the look's own rock colours: the dark grey basalt, the red-brown of the tuff). So ledges of
      that dark rock break the steep banks only (slope over ~0.45) within ~35 m of the road, the pastures and terraces left as they are. */
   late.push(['portomoniz', ribs(9371, 0.45, () => 0.28, 0.92)]);
+
+  /* ---- the circuits on the shared builder (js/world-rbring.js): the look's own LK.extra chained the same way; what it counts joins
+     the extra's own counts (out.stats.extra.robBt). All of it stands behind the fences, never on the pit's side along the pits. ---- */
+  const { sstep } = API;
+  const chainRb = (id, fn) => { const L = (API.rbLook || {})[id]; if (!L) return; const base = L.extra;
+    L.extra = function (ctx) { const r = (base ? base.call(this, ctx) : null) || {};
+      try { fn(L, ctx, r.robBt = {}); } catch (e) { console.error('realizem-bt (' + id + '):', e); } return r; }; };
+  const rbSide = (s, side, o) => { const i = T.idx(s), d = side * ((side > 0 ? T.br[i] : T.bl[i]) + o); return [T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d]; };
+  const rbPit = (s, side) => { const pd = T.def.pit; return !!pd && side === (pd[0] < 0 ? -1 : 1) && !!T.pitAt(s); };
+  const rbClear = (excluded, x, z, r) => { const q = API.nrNear(x, z); return !(q.i >= 0 && q.dd < r) && !excluded(x, z); };   // (behind every leg's fence by r, off what the build keeps clear)
+  const tuft = (g, x, y, z, w, h, col, R) => cone(g, x, y - 0.08, z, w, h, 5, [col[0] * 0.62, col[1] * 0.66, col[2] * 0.6], col, R() * TAU);
+  const mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+  const soil = (scen, gH, gx, gz, rr, col, R) => {   // bare ground: a low irregular patch lying on the terrain
+    const k = 7, a0 = R() * TAU, rim = [col[0] * 0.9 + 0.05, col[1] * 0.9 + 0.07, col[2] * 0.9 + 0.03], g = scen.get(gx, gz), ctr = [gx, gH(gx, gz) + 0.07, gz], P = [];
+    for (let q = 0; q < k; q++) { const a = a0 + q / k * TAU, r = rr * (0.65 + R() * 0.6), x = gx + Math.cos(a) * r, z = gz + Math.sin(a) * r * 0.75; P.push([x, gH(x, z) + 0.05, z]); }
+    for (let q = 0; q < k; q++) g.triO(ctr, P[q], P[(q + 1) % k], col, [gx, ctr[1] - 5, gz], rim, rim); };
+
+  /* Bathurst: behind the fences the pasture was one even face of grass from the camera above the car. docs/proge/bathurst.md: »pašniki
+     … ponekod se že sušijo v slamnato rumeno«, »trava je v šopih (… suhimi bilkami in pegami rdeče-rjave prsti)«, »Trava ob progi je
+     kot na pašnikih«. So tussocks stand in loose groups within ~35 m of the fences, straw where the ground's own colour dries off
+     (the same noise as the look's colMod) and olive elsewhere, and here and there the red-brown soil shows bare between them. */
+  chainRb('bathurst', (L, { scen, excluded }, st) => {
+    const { nrGround, nrLC, nrSlope, NR: P } = API; if (!T || !P || !nrGround) return;
+    const R = rng(9377), smooth0 = API.ROCK_SMOOTH, straw = [0.71, 0.65, 0.4], olive = [0.34, 0.4, 0.18]; let n = 0, m = 0;
+    API.ROCK_SMOOTH = true;
+    for (let s = 0; s < T.len; s += 7) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const o = 3 + Math.pow(r1, 1.5) * 33, [gx, gz] = rbSide(s + (r2 - 0.5) * 7, side, o), dry = sstep(0.42, 0.74, P.n3(gx * 0.8 + 90, gz * 0.8 - 40));
+      if (r0 > 0.42 + 0.4 * dry || nrLC(gx, gz) !== 0 || !rbClear(excluded, gx, gz, 2.5)) continue;
+      if (r2 < 0.22 && o > 5 && nrSlope(gx, gz) < 0.4 && rbClear(excluded, gx, gz, 4.5)) { soil(scen, nrGround, gx, gz, 1.3 + R() * 1.6, vary([0.47, 0.31, 0.21], R, 0.03), R); m++; }
+      for (let q = 0, cnt = 4 + Math.floor(R() * 5); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 8, z = gz + (R() - 0.5) * 8, h = 0.36 + R() * 0.4, w = 0.6 + R() * 0.7, t = Math.min(1, dry * (0.55 + R() * 0.6) + R() * 0.25);
+        if (nrLC(x, z) !== 0 || !rbClear(excluded, x, z, 2 + w)) { R(); continue; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, w, h, vary(mix3(olive, straw, t), R, 0.03), R); n++; }
+    }
+    API.ROCK_SMOOTH = smooth0; st.sopi = n; st.prst = m;
+  });
+
+  /* Pembrey: the flat coastal grass behind the fences was one even face from the camera above the car. docs/proge/pembrey.md: »obalna
+     trava v suhih in vlažnih lisah«. So tufts of that grass stand in groups within ~32 m of the fences: pale and straw-coloured where
+     the ground's own colour is dry and sandy, darker and taller (the rushes) where it is damp (the same noise as the look's colMod),
+     the plain green tussock between; clear of the gorse and the buildings (the build's own excluded). */
+  chainRb('pembrey', (L, { scen, excluded }, st) => {
+    const { nrGround, nrLC, NR: P } = API; if (!T || !P || !nrGround) return;
+    const R = rng(9391), smooth0 = API.ROCK_SMOOTH, pale = [0.68, 0.64, 0.4], rush = [0.36, 0.47, 0.22], mid = [0.44, 0.54, 0.25]; let n = 0;
+    API.ROCK_SMOOTH = true;
+    for (let s = 0; s < T.len; s += 5) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const o = 3 + Math.pow(r1, 1.5) * 30, [gx, gz] = rbSide(s + (r2 - 0.5) * 5, side, o);
+      const dry = sstep(0.5, 0.82, P.n3(gx * 0.8 + 340, gz * 0.8 - 120)), wet = sstep(0.55, 0.84, P.n1(gx * 1.2 - 60, gz * 1.2 + 230));
+      if (r0 > 0.22 + 0.45 * Math.max(dry, wet) || nrLC(gx, gz) !== 0 || !rbClear(excluded, gx, gz, 2.5)) continue;
+      for (let q = 0, cnt = 3 + Math.floor(R() * 4); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, k = R(), a = R();
+        if (nrLC(x, z) !== 0 || !rbClear(excluded, x, z, 2.4)) { R(); continue; }
+        const isRush = wet > dry && a < 0.3 + 0.6 * wet, col = isRush ? rush : mix3(mid, pale, Math.min(1, dry * (0.6 + a * 0.6) + a * 0.2));
+        tuft(scen.get(x, z), x, nrGround(x, z), z, isRush ? 0.45 + k * 0.3 : 0.5 + k * 0.55, isRush ? 0.6 + k * 0.4 : 0.32 + k * 0.34, vary(col, R, 0.03), R); n++; }
+    }
+    API.ROCK_SMOOTH = smooth0; st.sopi = n;
+  });
+
+  /* Quezaltepeque: docs/proge/quezaltepeque.md: »ob ravnini za 8. ovinkom stara lava (temna, siva in rjava kamnita tla z nizkim grmovjem)«,
+     »zelen hribovit svet s suhimi rumenimi lisami: trate, grmovje«. The lava was a dark colour on smooth ground from the camera above
+     the car, the dry patches a colour only. So on the old flow (the look's own qzLava) dark grey and brown stones lie in loose
+     groups within ~30 m of the fences, and tufts of the dry season's yellow grass stand where the ground's own colour is dry. */
+  chainRb('quezaltepeque', (L, { scen, excluded }, st) => {
+    const { nrGround, nrLC, qzLava, NR: P } = API; if (!T || !P || !nrGround || !qzLava) return;
+    const R = rng(9397), smooth0 = API.ROCK_SMOOTH, lava = [[0.3, 0.29, 0.28], [0.38, 0.32, 0.27], [0.24, 0.23, 0.23], [0.44, 0.37, 0.3]], dryC = [0.76, 0.7, 0.38], grn = [0.34, 0.46, 0.19]; let n = 0, m = 0;
+    for (let s = 0; s < T.len; s += 6) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const o = 3 + Math.pow(r1, 1.4) * 28, [gx, gz] = rbSide(s + (r2 - 0.5) * 6, side, o), c = nrLC(gx, gz), lv = qzLava(gx, gz);
+      if (c === 1 || c >= 5 || !rbClear(excluded, gx, gz, 2.5)) continue;
+      if (lv > 0.5) {   // the old flow: stones of its rock, a bigger one now and then
+        if (r0 > 0.8) continue; API.ROCK_SMOOTH = false;
+        for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
+          const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, w = 0.3 + Math.pow(R(), 2) * 0.8;
+          if (qzLava(x, z) < 0.5 || !rbClear(excluded, x, z, 2.2 + w)) { R(); R(); continue; }
+          rock(scen.get(x, z), x, nrGround(x, z) + w * 0.18, z, w * 1.4, w * 0.7, w, R() * TAU, vary(lava[Math.floor(R() * lava.length)], R, 0.03), R, 0.34, 0.35); m++; }
+        continue; }
+      if (c !== 0) continue;
+      const dry = sstep(0.5, 0.75, P.n3(gx * 0.35 + 90, gz * 0.35 - 40)) * sstep(6, 18, o);   // (as the look's colMod: the dry grass away from the track)
+      if (r0 > 0.3 + 0.5 * dry) continue; API.ROCK_SMOOTH = true;
+      for (let q = 0, cnt = 4 + Math.floor(R() * 5); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 8, z = gz + (R() - 0.5) * 8, k = R(), a = R();
+        if (nrLC(x, z) !== 0 || qzLava(x, z) > 0.3 || !rbClear(excluded, x, z, 2.4)) { R(); continue; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.55 + k * 0.7, 0.4 + k * 0.5, vary(mix3(grn, dryC, Math.min(1, dry * (0.6 + a * 0.5) + a * 0.3)), R, 0.03), R); n++; }
+    }
+    API.ROCK_SMOOTH = smooth0; st.sopi = n; st.lava = m;
+  });
+
+  /* Seoul (its own builder, js/world-seoul.js, calls this before it closes its scenery chunks): under the pines and oaks of the
+     mountain the ground beside the road was one smooth face from the camera above the car. docs/proge/seoul.md: »gozd rdečega bora in
+     hrasta … (tla iglice in listje z zelenim podrastjem)«. So low clumps of that green undergrowth lie in groups on the forest's
+     floor within ~28 m of the road, off the buildings, the landmarks and the road's own crossings. */
+  World.ext.seoulRob = ({ scen, noTree, nearCross, out }) => {
+    try {
+      const { nrGround, nrLC, nrNear } = API, T = API.T, R = rng(9413), smooth0 = API.ROCK_SMOOTH; let n = 0;
+      const und = [[0.2, 0.36, 0.16], [0.25, 0.41, 0.18], [0.3, 0.43, 0.2], [0.22, 0.33, 0.2]];
+      API.ROCK_SMOOTH = true;
+      for (let s = 8; s < T.len - 8; s += 6) for (const side of [-1, 1]) {
+        const r0 = R(), r1 = R(), r2 = R(); if (r0 > 0.6 || nearCross(s, 14)) continue;
+        const [gx, gz] = rbSideT(T, s + (r2 - 0.5) * 6, side, 2.2 + Math.pow(r1, 1.3) * 26); if (nrLC(gx, gz) !== 1) continue;
+        for (let q = 0, cnt = 2 + Math.floor(R() * 4); q < cnt; q++) {
+          const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, w = 0.5 + R() * 0.8, nn = nrNear(x, z);
+          if ((nn.i >= 0 && nn.dd < 1.6 + w) || nrLC(x, z) !== 1 || noTree(x, z)) { R(); R(); continue; }
+          ico(scen.get(x, z), x, nrGround(x, z) + 0.04, z, w, 0.34 + R() * 0.16, vary(und[Math.floor(R() * und.length)], R, 0.03), R, 0.3); n++; }
+      }
+      API.ROCK_SMOOTH = smooth0; out.robBt = { podrast: n };
+    } catch (e) { console.error('realizem-bt (seoul):', e); }
+  };
+  const rbSideT = (T, s, side, o) => { const i = T.idx(s), d = side * ((side > 0 ? T.br[i] : T.bl[i]) + o); return [T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d]; };
+
+  /* Portobelo (its own builder, js/world-portobelo.js, calls this the same way): the bank between the road and the bay and the floor
+     of the forest were smooth green faces from the camera above the car. docs/proge/portobelo.md: »temne skale ob zalivu«, »temne
+     krošnje deževnega gozda in visoka drevesa nad zelenimi tlemi«. So dark boulders lie on the land's last ~12 m above the water
+     where the road runs by it, and low green undergrowth grows in groups under the forest within ~22 m of the road; the fort and
+     its glade stay as they are. */
+  World.ext.portobeloRob = ({ scen, excluded, seaD, inFort, inGlade, out }) => {
+    try {
+      const { nrGround, nrLC, nrNear } = API, T = API.T, R = rng(9403), smooth0 = API.ROCK_SMOOTH; let n = 0, m = 0;
+      const dark = [[0.3, 0.29, 0.27], [0.25, 0.25, 0.24], [0.35, 0.31, 0.27]], und = [[0.17, 0.35, 0.14], [0.21, 0.41, 0.16], [0.26, 0.44, 0.15]];
+      const off = (x, z, r) => { const nn = nrNear(x, z); return (nn.i >= 0 && nn.dd < r) || excluded(x, z) || inFort(x, z, 6) || inGlade(x, z); };
+      API.ROCK_SMOOTH = true;
+      for (let s = 6; s < T.len - 6; s += 4) for (const side of [-1, 1]) {
+        const r0 = R(), r1 = R(), r2 = R(), o = 1.8 + r1 * 16, [gx, gz] = rbSideT(T, s + (r2 - 0.5) * 4, side, o), sd = seaD(gx, gz);
+        if (sd > -12 && sd < -0.8) {   // the shore's land: the boulders
+          if (r0 > 0.55) continue;
+          for (let q = 0, cnt = 1 + Math.floor(R() * 3); q < cnt; q++) {
+            const x = gx + (R() - 0.5) * 4, z = gz + (R() - 0.5) * 4, w = 0.4 + Math.pow(R(), 1.8) * 0.9, d2 = seaD(x, z);
+            if (d2 > -0.6 || d2 < -13 || off(x, z, 1.6 + w)) { R(); R(); continue; }
+            rock(scen.get(x, z), x, nrGround(x, z) + w * 0.15, z, w * 1.3, w * 0.75, w, R() * TAU, vary(dark[Math.floor(R() * dark.length)], R, 0.03), R, 0.3, 0.4); m++; }
+          continue; }
+        if (r0 > 0.5 || sd > -12 || nrLC(gx, gz) !== 1) continue;
+        for (let q = 0, cnt = 2 + Math.floor(R() * 3); q < cnt; q++) {   // under the forest: the undergrowth
+          const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, w = 0.5 + R() * 0.8;
+          if (seaD(x, z) > -4 || nrLC(x, z) !== 1 || off(x, z, 1.6 + w)) { R(); R(); continue; }
+          ico(scen.get(x, z), x, nrGround(x, z) + 0.04, z, w, 0.36 + R() * 0.18, vary(und[Math.floor(R() * und.length)], R, 0.03), R, 0.3); n++; }
+      }
+      API.ROCK_SMOOTH = smooth0; out.robBt = { skale: m, podrast: n };
+    } catch (e) { console.error('realizem-bt (portobelo):', e); }
+  };
 })();

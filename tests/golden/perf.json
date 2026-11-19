@@ -77,11 +77,11 @@
   "jsMs": 0.29
  },
  "bathurst": {
-  "calls": 167,
-  "maxCalls": 249,
-  "kverts": 421,
-  "maxKverts": 472,
-  "jsMs": 1.19
+  "calls": 178,
+  "maxCalls": 248,
+  "kverts": 441,
+  "maxKverts": 492,
+  "jsMs": 1.3
  },
  "chapman": {
   "calls": 149,
@@ -413,11 +413,11 @@
   "jsMs": 1.49
  },
  "pembrey": {
-  "calls": 187,
-  "maxCalls": 218,
-  "kverts": 509,
-  "maxKverts": 661,
-  "jsMs": 1.11
+  "calls": 189,
+  "maxCalls": 221,
+  "kverts": 530,
+  "maxKverts": 681,
+  "jsMs": 1.01
  },
  "kildare": {
   "calls": 205,
@@ -539,11 +539,11 @@
   "jsMs": 1.15
  },
  "seoul": {
-  "calls": 134,
-  "maxCalls": 146,
-  "kverts": 455,
-  "maxKverts": 564,
-  "jsMs": 0.75
+  "calls": 137,
+  "maxCalls": 149,
+  "kverts": 499,
+  "maxKverts": 606,
+  "jsMs": 0.62
  },
  "espinazo": {
   "calls": 162,
@@ -623,11 +623,11 @@
   "jsMs": 1.34
  },
  "portobelo": {
-  "calls": 103,
-  "maxCalls": 137,
-  "kverts": 211,
-  "maxKverts": 245,
-  "jsMs": 3.23
+  "calls": 106,
+  "maxCalls": 139,
+  "kverts": 230,
+  "maxKverts": 261,
+  "jsMs": 0.62
  },
  "eljem": {
   "calls": 97,
@@ -666,10 +666,10 @@
  },
  "quezaltepeque": {
   "calls": 228,
-  "maxCalls": 257,
-  "kverts": 609,
-  "maxKverts": 720,
-  "jsMs": 1.18
+  "maxCalls": 255,
+  "kverts": 674,
+  "maxKverts": 780,
+  "jsMs": 1.14
  },
  "aguascalientes": {
   "calls": 182,
