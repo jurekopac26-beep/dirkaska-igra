@@ -1,8 +1,8 @@
 // Realizem, skupina 5 (docs/realizem.md, »Postopek za vse proge«): real roads on main outside the 15 tracks of the packages, the ones the
 // chase camera showed least like the real place (scores in the PR): Isuna (Bhutan), Ghoufi (Algeria), Santo Antão (Cabo Verde), Ujarrás
 // (Costa Rica). Wraps World.ext.<id> as js/world-aguascalientes.js and js/world-realizem1.js do: the track's own builder runs first and stays
-// as it is, this only adds or changes what is listed here, from the sources only (OSM, ESA WorldCover 2021, Copernicus DEM GLO-30; README.md,
-// »Zasluge«). Side roads and road lines are package E (their own files), the physics and the collisions are not touched.
+// as it is, this only adds or changes what is listed here, from the sources only (OSM, ESA WorldCover 2021 and its Sentinel-2 composite,
+// Copernicus DEM GLO-30; README.md, »Zasluge«). Side roads and road lines are package E (their own files), the physics and the collisions are not touched.
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.api || !World.ext) return;
@@ -81,6 +81,18 @@
       if (sm) { const sh = e[1] || (e[1] = octa(ng)), sg = new THREE.BufferGeometry(); sg.setAttribute('position', sh.attributes.position); sg.setIndex(sh.index); sg.boundingSphere = g.boundingSphere; sm.geometry = sg; }
     }
   });
+  // World.gore's trees of the listed kinds taken out of a build: every chunk's instanced mesh of them and NIZKA's shadow copy (sharing its
+  // instances) leave the scene (world.js's distance culling keeps its note of them, which only shows or hides them); -> how many trees went
+  const dropTrees = (root, kinds) => own(() => {
+    const ref = new Set(), by = new Map(); let n = 0;
+    for (const k of kinds) for (const s of [false, true]) ref.add(bboxKey(World.gore.treeGeo(k, s)));
+    root.traverse(o => { if (o.isInstancedMesh) { if (!by.has(o.instanceMatrix)) by.set(o.instanceMatrix, []); by.get(o.instanceMatrix).push(o); } });
+    for (const L of by.values()) {
+      const im = L.find(o => o.geometry.attributes.color); if (!im || !ref.has(bboxKey(im.geometry))) continue;
+      n += im.count; for (const o of L) if (o.parent) o.parent.remove(o);
+    }
+    return n;
+  });
   // a blue pine (Pinus wallichiana), unit height: a straight grey-brown trunk up through the crown, bare at the foot; an open crown of four
   // whorls of level branches, each two clumps of long drooping needles to either side of the trunk (each whorl turned another way), glaucous
   // grey-green (rad: the crown's foot radius in the slot's unit width)
@@ -105,5 +117,14 @@
   wrap('isuna', (out) => {
     const pines = {};
     swapTrees(out.root, ['fir', 'pine'], (k, s) => pines[k + s] || (pines[k + s] = bluePine(k === 'fir' ? 0.36 : 0.26, s)));
+  });
+
+  /* ---- Ghoufi (Algeria): the road runs on the bare plateau above the canyon of the Oued El Abiod. ESA WorldCover 2021 has no tree cover
+     within 60 m of it (grass/sparse steppe 55 %, bare rock 40 %, the rest built), and the Sentinel-2 composite of 2021 (NDVI) stays at
+     0.08-0.13 along it and under all 192 of World.gore's broadleaf trees of the build (none above 0.3; the WorldCover trees, NDVI 0.41, are
+     the palm grove on the canyon's floor, js/world-ghoufi.js's date palms): the broadleaf trees go, the palms and the village stay ---- */
+  wrap('ghoufi', (out) => {
+    const n = dropTrees(out.root, ['broad']);
+    if (out.stats && typeof out.stats.trees === 'number') out.stats.trees = Math.max(0, out.stats.trees - n);
   });
 })();
