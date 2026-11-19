@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+  <title>Peru</title>
+  <!-- Ratio 2:3. Three equal vertical bands red, white, red (the civil flag, without the coat of arms).
+       Colours: red #D91023, white #FFFFFF. -->
+  <rect x="0" y="0" width="300" height="600" fill="#D91023"/>
+  <rect x="300" y="0" width="300" height="600" fill="#FFFFFF"/>
+  <rect x="600" y="0" width="300" height="600" fill="#D91023"/>
+</svg>
