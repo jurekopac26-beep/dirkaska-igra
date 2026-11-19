@@ -156,4 +156,33 @@
     };
     out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.material && o.material.vertexColors && o.material.map && o.material !== out.asphaltMat) tint(o); });
   });
+
+  /* ---- Ujarrás (Costa Rica): on the road up past the lookout over the Orosi valley the Sentinel-2 composite of ESA WorldCover 2021
+     (6-64 m from the road, the medians of its 14 000 pixels by WorldCover class) has the grass a grey green, G/R 1.02-1.07, B/R 0.87
+     (NDVI 0.47-0.57: the pastures, the gardens and the coffee between the houses), the trees 1.03-1.14 and 0.89-0.91; the game's ground
+     under them a yellow green, G/R 1.09-1.26, B/R 0.61-0.73. Taken against the built ground of both (in its band: the composite 0.97-1.0
+     and 0.83-0.90, the game 1.02-1.06 and 0.80-0.81), the grass's ground is G/R 1.04-1.17, B/R 0.77-0.86, the trees' 1.05-1.25 and
+     0.79-0.90: G/R moves down to 1.10 and 1.15 and B/R up to 0.80 and 0.84 (only towards them, never past), its brightness kept; only
+     where it is green (the built ground, the verges' grey, the road and the lookout stay as they are). The terrain and the verges ---- */
+  wrap('ujarras', (out, scene, tex) => {
+    const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    const TG = [[1.10, 0.80], [1.15, 0.84]];   // (the G/R and B/R the ground moves to: lc 0 grass, 1 trees)
+    const skip = new Set([tex.facade, tex.water, tex.makadam]), v = new THREE.Vector3();
+    const tint = (m) => {
+      const g = m.geometry, C = g.attributes.color, P = g.attributes.position; if (!C || !P || C.itemSize !== 3) return;
+      m.updateMatrixWorld(true);
+      for (let i = 0; i < C.count; i++) {
+        v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld);
+        const w0 = A.vrLCf(v.x, v.z, 0), w1 = A.vrLCf(v.x, v.z, 1), W = w0 + w1; if (W <= 0) continue;
+        const r = C.getX(i), gg = C.getY(i), b = C.getZ(i); if (r <= 0) continue;
+        const veg = ss(1.0, 1.06, gg / r) * Math.min(1, W); if (veg <= 0) continue;   // (only the green: G above R)
+        const tG = (w0 * TG[0][0] + w1 * TG[1][0]) / W, tB = (w0 * TG[0][1] + w1 * TG[1][1]) / W;
+        const g2 = gg + (Math.min(gg, tG * r) - gg) * veg, b2 = b + (Math.max(b, tB * r) - b) * veg;
+        const s = (0.3 * r + 0.59 * gg + 0.11 * b) / (0.3 * r + 0.59 * g2 + 0.11 * b2);
+        C.setXYZ(i, r * s, g2 * s, b2 * s);
+      }
+      C.needsUpdate = true;
+    };
+    out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.material && o.material.vertexColors && o.material.map && !skip.has(o.material.map) && o.material !== out.asphaltMat) tint(o); });
+  });
 })();
