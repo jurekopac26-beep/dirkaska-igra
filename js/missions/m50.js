@@ -11,9 +11,10 @@
   if (typeof Missions === 'undefined') return;
   const KIT = typeof MisKit !== 'undefined' ? MisKit : require('./kit.js');
   const tr = (s, ...a) => (typeof Lang !== 'undefined' ? Lang.tr(s, ...a) : s), dec = (s) => (typeof Lang !== 'undefined' ? Lang.dec(s) : String(s));
-  // the holes: [s past the start line, across (m from the centre line, + on the normal's side)]
-  const HOLES = [[4060, -1.6], [4240, 1.8], [4420, 0], [4610, -2.2], [4830, 1.2], [5010, -1.0], [5290, 1.4], [5380, -1.2], [5470, 0.4], [5600, -1.6], [5720, 1.5], [5830, -0.6], [5960, 1.0], [6080, -1.4], [6190, 0.6]];
-  const K = { S0: 3880, VMAX: 70, BRK: 0.2, LAT: 4.0, DROP: 0.12, KNOCK: 0.25, REC: 0.012, HOLE: 0.75, HIT: 0.2, HITV: 10, TOD0: 0.12, TOD1: 0.62, HOLES };
+  // the holes: [s past the start line, across (m from the centre line, + on the normal's side)]: on the road in its real width, each under a wheel
+  // of the racing line; on the narrow castle road (3.7 m) only where the gravel beside it, or its wider bends, leave room to drive round one
+  const HOLES = [[4106, 0.4], [4286, 1.4], [4466, 0.6], [4580, -0.3], [4670, 0.3], [4776, -0.3], [4876, -0.9], [5080, 1.35], [5150, -1.35], [5385, -0.65], [5430, -0.7], [5515, -0.6], [5820, 0.95], [5870, 0.45]];
+  const K = { S0: 3926, VMAX: 70, BRK: 0.2, LAT: 4.0, DROP: 0.12, KNOCK: 0.25, REC: 0.012, HOLE: 0.75, HIT: 0.2, HITV: 10, TOD0: 0.12, TOD1: 0.62, HOLES };
   const BOX = 0x2b5d8f, CAB = 0xe8eaec, BLK = 0x1b1d21, WOOD = 0x8a6038, ROOF = 0x6b3a26, GLS = 0x1d2733;
   const PAINT = [0xd8402c, 0x2f6fc0, 0xe2b52b, 0x3f9a4a, 0xf0ede4, 0x8a3fa0];
 
@@ -77,9 +78,11 @@
         r.bees = new THREE.Points(g, new THREE.PointsMaterial({ color: 0x2a2010, size: 0.09 })); r.bees.frustumCulled = false; if (r.skin) r.skin.add(r.bees);
         const H = KIT.parts(); for (const h of r.holes) holeMesh(H, h.x, h.y + 0.05, h.z);
         const hm = H.mesh(new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); hm.receiveShadow = true; r.add(hm); r.holeMesh = hm;
-        // the hay rack beside the castle road, the lime tree beside the finish (both on the road's roomier side)
-        const put = (s, off, build) => { const i = T.idx(s), sd = T.br[i] >= T.bl[i] ? 1 : -1, p = KIT.at(T, s, sd * (T.wS(s) + off)), B = KIT.parts(); build(B); const m = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); m.castShadow = true; m.position.set(p.x, p.y - 0.1, p.z); m.rotation.y = p.ry; r.add(m); return { m, p }; };
-        r.koz = put(T.startS + 5330, 9, kozolec).m;
+        // the hay rack beside the castle road, the lime tree beside the finish (both on the road's roomier side, behind the barrier along their length:
+        // nothing a car would drive through on the run-off)
+        const put = (s, off, build) => { const i = T.idx(s), sd = T.br[i] >= T.bl[i] ? 1 : -1, bar = Math.max(...[-7, -3.5, 0, 3.5, 7].map(a => { const j = T.idx(s + a); return sd > 0 ? T.br[j] : T.bl[j]; })),
+          p = KIT.at(T, s, sd * Math.max(T.wS(s) + off, bar + 1.4)), B = KIT.parts(); build(B); const m = B.mesh(new THREE.MeshLambertMaterial({ vertexColors: true })); m.castShadow = true; m.position.set(p.x, p.y - 0.1, p.z); m.rotation.y = p.ry; r.add(m); return { m, p }; };
+        r.koz = put(T.startS + 5376, 9, kozolec).m;
         const L = put(T.finishS + 6, 9, lipa); r.lipa = L.m; r.lipaAt = { x: L.p.x, y: L.p.y + 13, z: L.p.z };
         r.tags = KIT.tags(r);
       }
