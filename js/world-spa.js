@@ -181,6 +181,33 @@
       }
       addM(gr, aMat); addM(gl, lMat); addM(gk, cMat);
     }
+    /* ---- the access roads for the look (package Realizem E, js/world-cesta.js; def.stranske: OpenStreetMap's service roads that meet the
+       circuit, for the marshals and the rescuers; nobody drives there): a strip through an opening in the barrier with a row of orange posts
+       across it. A circuit has its own lines: the edge line and the kerbs run on across a mouth; the track's model and the invisible
+       barrier stay as they are ---- */
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
+    const barF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, j = (i + 1) % N; return side > 0 ? lerp(T.br[i], T.br[j], f - a) : lerp(T.bl[i], T.bl[j], f - a); };
+    const vergeAt = (i, side, d) => { const pr = spaVerge(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: (i) => shade(i, SC && (SC.rez[1][i] & 2) ? w : -w)[0], drzava: 'Belgija' }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    const usta = (i, side) => !!SC && (SC.rez[side2(side)][i] & 1) !== 0;   // (the sample lies in an access road's opening in the barrier)
+    const naCesti = (x, z, m) => { if (SC) for (const k of SC.krogi) { const r = k[2] + m; if ((x - k[0]) * (x - k[0]) + (z - k[1]) * (z - k[1]) < r * r) return true; } return false; };   // (on an access road or within m of its edge + 1.8 m)
+    if (SC) { out.cestaRob = SC.ustja.slice(); out.stranske = SC.n; out.cestaKrogi = SC.krogi; }   // (cestaKrogi: the shared verge() plants no grass clumps on the strips)
+    // (where an access road crosses a run-off, the run-off's own layers lie over its strip: lifted 4 cm there, easing out over 8 m either
+    //  way; the gravel stays gravel, as the cars feel it, and the road shows from the opening in the barrier on)
+    const UP = [new Float32Array(N), new Float32Array(N)];
+    if (SC) for (const si of [0, 1]) {
+      const side = si ? 1 : -1, bar = si ? T.br : T.bl, on = new Uint8Array(N); let any = false;
+      for (const k of SC.krogi) {
+        const c = T.nearestIdx(k[0], k[1]), n = Math.ceil((k[2] + 4) / ds), r = k[2] - 0.8;
+        for (let q = c - n; q <= c + n; q++) {   // (the samples whose line across the run-off passes over the strip or its shoulders)
+          const i = ((q % N) + N) % N, dx = k[0] - T.px[i], dz = k[1] - T.pz[i], o = clamp((dx * T.nx[i] + dz * T.nz[i]) * side, w, Math.max(w, bar[i] - 0.5)) * side;
+          const ex = dx - T.nx[i] * o, ez = dz - T.nz[i] * o; if (ex * ex + ez * ez < r * r) { on[i] = 1; any = true; }
+        }
+      }
+      if (any) for (let i = 0; i < N; i++) { let m = 9; for (let q = -5; q <= 5; q++) if (on[(i + q + N) % N]) m = Math.min(m, Math.abs(q)); UP[si][i] = 0.04 * clamp((5 - m) / 4, 0, 1); }
+    }
+
     /* ---- run-offs: asphalt from the kerb (or the edge) to just before the barrier where the barrier stands far out (Core: T.gravL / gravR; with
        def.runoffTarmac the cars drive on asphalt there), tapering in and out: a paler, coarser asphalt than the road's, a green painted band
        along the kerb; in a few corners gravel from the kerb out to the barrier instead (def.gravelStrips: Core's gravel there; def.wide moves
@@ -189,17 +216,17 @@
       const rc = new Chunks(128, true), gb = new Chunks(128), grn = [0.3, 0.56, 0.34], GS = T.gstrip;
       const roC = (p) => { const k = 1.06 + P.n3(p[0], p[2]) * 0.1; return [k, k * 0.99, k * 0.97]; };   // (the paler tone, in broad patches)
       for (const side of [-1, 1]) {
-        const flag = side > 0 ? T.gravR : T.gravL, bar = side > 0 ? T.br : T.bl, K = kerb[side2(side)], S2 = GS ? GS[side2(side)] : null;
+        const flag = side > 0 ? T.gravR : T.gravL, bar = side > 0 ? T.br : T.bl, K = kerb[side2(side)], S2 = GS ? GS[side2(side)] : null, U = UP[side2(side)];
         for (let i = 0; i < N; i++) {
           const j = (i + 1) % N; if (!flag[i] && !flag[j]) continue;
-          const fi = flag[i] ? 1 : 0, fj = flag[j] ? 1 : 0, inI = w + (K[i] ? T.curbW : 0.05), inJ = w + (K[j] ? T.curbW : 0.05);
+          const fi = flag[i] ? 1 : 0, fj = flag[j] ? 1 : 0, inI = w + (K[i] ? T.curbW : 0.05), inJ = w + (K[j] ? T.curbW : 0.05), yI = 0.028 + U[i], yJ = 0.028 + U[j];
           const outI = lerp(inI + 0.1, bar[i] - 0.7, fi), outJ = lerp(inJ + 0.1, bar[j] - 0.7, fj);
           let sI = inI, sJ = inJ;   // where the pale asphalt starts: past the gravel, or past the green band (side by side, not overlapping)
           if (S2 && S2[i] > 0 && S2[j] > 0) { sI = Math.min(w + T.curbW + S2[i], bar[i] - 0.7); sJ = Math.min(w + T.curbW + S2[j], bar[j] - 0.7); }
-          else if (fi && fj) { sI = Math.min(outI, inI + 2.4); sJ = Math.min(outJ, inJ + 2.4); const a = Pt(i, side * inI, 0.028);
-            gb.get(a[0], a[2]).quadUp(a, Pt(i, side * sI, 0.028), Pt(j, side * sJ, 0.028), Pt(j, side * inJ, 0.028), [grn, grn, grn, grn]); }
+          else if (fi && fj) { sI = Math.min(outI, inI + 2.4); sJ = Math.min(outJ, inJ + 2.4); const a = Pt(i, side * inI, yI);
+            gb.get(a[0], a[2]).quadUp(a, Pt(i, side * sI, yI), Pt(j, side * sJ, yJ), Pt(j, side * inJ, yJ), [grn, grn, grn, grn]); }
           if (sI > outI - 0.05 && sJ > outJ - 0.05) continue;
-          const a = Pt(i, side * sI, 0.028), b = Pt(i, side * outI, 0.028), c = Pt(j, side * outJ, 0.028), d = Pt(j, side * sJ, 0.028), uvp = (p) => [p[0] / 8, -p[2] / 8];
+          const a = Pt(i, side * sI, yI), b = Pt(i, side * outI, yI), c = Pt(j, side * outJ, yJ), d = Pt(j, side * sJ, yJ), uvp = (p) => [p[0] / 8, -p[2] / 8];
           rc.get(a[0], a[2]).quadUp(a, b, c, d, [roC(a), roC(b), roC(c), roC(d)], [uvp(a), uvp(b), uvp(c), uvp(d)]);
         }
       }
@@ -207,13 +234,13 @@
       if (T.gstrip) {
         const gs = new Chunks(128, true), gcl = [1.14, 1.04, 0.86], pc = [0.94, 0.93, 0.9], uvg = (p) => [p[0] / 2.5, -p[2] / 2.5], gp = new GB();
         for (const side of [-1, 1]) {
-          const S2 = T.gstrip[side2(side)], bar = side > 0 ? T.br : T.bl, o0 = w + T.curbW;
+          const S2 = T.gstrip[side2(side)], bar = side > 0 ? T.br : T.bl, o0 = w + T.curbW, U = UP[side2(side)];
           for (let i = 0; i < N; i++) {
             const j = (i + 1) % N; if (!(S2[i] > 0) || !(S2[j] > 0)) continue;
             const oI = Math.min(o0 + S2[i], bar[i] - 0.7), oJ = Math.min(o0 + S2[j], bar[j] - 0.7); if (oI < o0 + 1 || oJ < o0 + 1) continue;
-            const A = Pt(i, side * (o0 + 0.6), 0.036), B = Pt(i, side * oI, 0.036), C = Pt(j, side * oJ, 0.036), D = Pt(j, side * (o0 + 0.6), 0.036);
+            const A = Pt(i, side * (o0 + 0.6), 0.036 + U[i]), B = Pt(i, side * oI, 0.036 + U[i]), C = Pt(j, side * oJ, 0.036 + U[j]), D = Pt(j, side * (o0 + 0.6), 0.036 + U[j]);
             gs.get(A[0], A[2]).quadUp(A, B, C, D, [gcl, gcl, gcl, gcl], [uvg(A), uvg(B), uvg(C), uvg(D)]);
-            gp.quadUp(Pt(i, side * o0, 0.038), Pt(i, side * (o0 + 0.6), 0.038), Pt(j, side * (o0 + 0.6), 0.038), Pt(j, side * o0, 0.038), [pc, pc, pc, pc]);   // (the concrete edge)
+            gp.quadUp(Pt(i, side * o0, 0.038 + U[i]), Pt(i, side * (o0 + 0.6), 0.038 + U[i]), Pt(j, side * (o0 + 0.6), 0.038 + U[j]), Pt(j, side * o0, 0.038 + U[j]), [pc, pc, pc, pc]);   // (the concrete edge)
           }
         }
         gs.addTo(root, new THREE.MeshLambertMaterial({ map: ownTex(API.rbGravelTex()), vertexColors: true }), false, true); addM(gp, lMat);
@@ -268,31 +295,32 @@
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 256);
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (1: behind a rail or a wall, 2: behind a tyre wall); more below where the spectators stand
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.78, 0.78, 0.76], concD = [0.64, 0.64, 0.62], W1 = [1, 1, 1];
-    const railRow = (gr, i, side, k) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road)
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
+    const railRow = (gr, i, side, k) => {   // armco / wall cross-section at station i (a fractional one beside an access road's mouth; rows run so that the faces look at the road)
+      const bar = barF(i, side), o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45)), Pt = PtF;
       let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.9, 0.9, 0.88], [0.84, 0.84, 0.82]];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
     const tyreRow = (gt, i, side, u) => {   // a tyre wall: the belted face towards the road, a dark top
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.9), dk = [0.3, 0.3, 0.32];
+      const bar = barF(i, side), o = side * (bar + 0.1), o2 = side * (bar + 0.9), dk = [0.3, 0.3, 0.32], Pt = PtF;
       let p = [Pt(i, o, -0.1), Pt(i, o, 0.95), Pt(i, o2, 0.95)], uv = [[u, 0.02], [u, 0.98], [u, 0.98]], c = [W1, W1, dk];
       if (side < 0) { p = p.reverse(); uv = uv.slice().reverse(); c = c.slice().reverse(); }
       return gt.row(p, c, uv);
     };
     for (let c0 = 0; c0 < N; c0 += CH) {
-      const gr = new RB(), gt = new RB(true);
-      for (const side of [-1, 1]) {
-        let prev = -1, pk = -2, acc = c0 * ds;
-        for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++, acc += ds) {
-          const i = ii % N, k = kindAt(i, side);
-          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, i, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, i, side, pk), 0, 4); prev = -1; }   // the old kind runs up to here
+      const gr = new RB(), gt = new RB(true), c1 = Math.min(c0 + CH, N), accs = [c0 * ds]; for (let n = 1; n <= c1 - c0; n++) accs.push(accs[n - 1] + ds);
+      const accF = (f) => { const a = Math.max(c0, Math.floor(f)); return accs[a - c0] + (f - a) * ds; };   // (metres along the samples, summed as the tyre walls' texture has always run)
+      for (const side of [-1, 1]) for (const run of tek(side2(side), 1, c0, c1)) {   // (open at the access roads' mouths: a run ends at a fractional station there)
+        let prev = -1, pk = -2; const nR = run.length;
+        for (let q = 0; q < nR; q++) {
+          const ii = run[q], whole = ii === Math.round(ii), i = ((Math.round(ii) % N) + N) % N, k = kindAt(i, side), acc = accF(ii), e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
+          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, ii, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, ii, side, pk), 0, 4); prev = -1; }   // the old kind runs up to here
           if (k < 0) { pk = k; continue; }
-          const r = k === 2 ? tyreRow(gt, i, side, acc / 3) : railRow(gr, i, side, k);
+          const r = k === 2 ? tyreRow(gt, ii, side, acc / 3) : railRow(gr, ii, side, k);
           if (prev >= 0) { if (k === 2) gt.link(prev, r, 0, 2); else gr.link(prev, r, 0, 4); } prev = r; pk = k;
-          if (k === 0 && ii % 2 === 0 && ii < c0 + CH) { const p = Pt(i, side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }
-          if (k >= 1) fence[side2(side)][i] = k;
+          if (k === 0 && (e0 || e1 || (whole && ii % 2 === 0 && ii < c0 + CH))) { const f = ii + (e0 ? 0.05 : e1 ? -0.05 : 0), p = PtF(f, side * (barF(f, side) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }   // (a post at the rail's end by a mouth too)
+          if (k >= 1 && whole) fence[side2(side)][i] = k;
         }
       }
       addM(gr, rMat, true); addM(gt, tyMat, true);
@@ -303,6 +331,7 @@
     { const sb = new Chunks(128, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
         const j = (i + 2) % N; if (kindAt(i, side) !== 1 || kindAt(j, side) !== 1 || kindAt((i + 1) % N, side) !== 1) continue;
+        if (usta(i, side) || usta(j, side) || usta((i + 1) % N, side)) { n++; continue; }   // (no board across an access road's mouth; the boards elsewhere keep their brands)
         const k = (n++ * 3 + (side > 0 ? 1 : 0)) % 8, u0 = (k % 2) * 0.5, v1 = 1 - Math.floor(k / 2) * 0.25, bar = side > 0 ? T.br : T.bl, o = (ii) => side * (bar[ii] + 0.1);
         const A = Pt(i, o(i), 0.14), B = Pt(j, o(j), 0.14), C = Pt(j, o(j), 0.96), D = Pt(i, o(i), 0.96), uL = side < 0 ? u0 : u0 + 0.5, uR = side < 0 ? u0 + 0.5 : u0;
         sb.get(A[0], A[2]).quadO(A, B, C, D, W1, Pt(i, side * (bar[i] + 2), 0.5), [[uL, v1 - 0.25], [uR, v1 - 0.25], [uR, v1], [uL, v1]]); }
@@ -313,6 +342,7 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.9, 0.2, 0.15], [0.96, 0.82, 0.2], [0.2, 0.45, 0.9], [0.95, 0.95, 0.95], [0.2, 0.7, 0.3], [1, 0.55, 0.1], [0.15, 0.5, 0.55], [0.7, 0.2, 0.5], [0.12, 0.14, 0.2]];
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.8 });   // spectators (instanced)
+    if (SC) for (const k of SC.krogi) CR.avoid(k[0], k[1], k[2]);   // (nobody stands on an access road)
     const carPk = (x, z, rot, col) => { const g = scen.get(x, z), y = nrGround(x, z), c = Math.cos(rot), s = Math.sin(rot);
       parkedCar(g, x, y, z, rot, col); };   // (the car: parkedCar in js/world.js)
     const DR = rng(9331);   // (the camp props' own random stream)
@@ -502,12 +532,16 @@
       const [u0, v0, u1, v1] = nrNUV((num - 1) % 128), lx = tx * side * 0.26, lz = tz * side * 0.26, px = x - nx * 0.93, pz = z - nz * 0.93;   // the number beside them, facing the road
       numC.get(px, pz).quadO([px + lx, y + 1.62, pz + lz], [px - lx, y + 1.62, pz - lz], [px - lx, y + 2.14, pz - lz], [px + lx, y + 2.14, pz + lz], W1, [x, y + 1.8, z], [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]);
       exclPush(x, z, 4); };
+    const postMv = new Map();   // (the posts moved out of an access road's way: OpenStreetMap's point -> the sample they stand at)
+    const postOff = (i, side) => { for (const d of [3, -3, 4, -4, 5, -5, 6, -6, 8, -8, 10, -10, 12, -12]) { const j = (((i + d) % N) + N) % N, q = onSide(j * ds, side, 2.4); if (!naCesti(q[0], q[1], 2.2) && !excluded(q[0], q[1])) return [q[0], q[1], j]; } return null; };
     { const ps = (def.posts || []).map(([px, pz]) => { const i = T.nearestIdx(px, pz); return [px, pz, i, dS(i * ds)]; }).sort((a, b) => a[3] - b[3]);
       let np = 0;
       for (const [px, pz, i] of ps) {
         const lat = (px - T.px[i]) * T.nx[i] + (pz - T.pz[i]) * T.nz[i], side = lat > 0 ? 1 : -1, bar = side > 0 ? T.br[i] : T.bl[i];
         const [x, z] = Math.abs(lat) < bar + 2.4 ? onSide(i * ds, side, 2.4) : [px, pz]; scen.get(x, z);
-        if (!excluded(x, z)) post(x, z, i, side, ++np);
+        if (excluded(x, z)) continue;
+        const m = naCesti(x, z, 2.2) ? postOff(i, side) : null;   // (a post in an access road's way stands beside its mouth: the same number)
+        if (m) { postMv.set(px + ',' + pz, m[2]); post(m[0], m[1], m[2], side, ++np); } else post(x, z, i, side, ++np);
       } }
     for (const n of ['La Source', 'Les Combes', 'Bruxelles', 'Bus Stop']) { const d = nameD(n); if (d == null) continue;   // braking boards before the heavy stops
       for (let k = 3; k >= 1; k--) { const s = sAt(d - k * 100); signPost(s, roomSide(s), 1.4, k - 1, 1.5, 0.7, 0.9); } }
@@ -518,7 +552,7 @@
        screens across the track from the grandstands, the game's own sponsors on boards along the rails of the straights, and the marshals in
        orange at their posts, a flag in hand (both of them figures of the instanced crowd: filming, waving a flag) ---- */
     {
-      const free = (x, z, r) => !excluded(x, z) && nrSlope(x, z) < 0.45 && nrNear(x, z).dd > r;   // (clear of other scenery, not on a steep bank, not near another leg)
+      const free = (x, z, r) => !excluded(x, z) && !naCesti(x, z, r) && nrSlope(x, z) < 0.45 && nrNear(x, z).dd > r;   // (clear of other scenery, not on a steep bank, not near another leg)
       const place = (d0, side, extra, r) => { for (const dd of [0, 12, -12, 24, -24, 40, -40]) { const p = onSide(sAt(d0 + dd), side, extra); if (free(p[0], p[1], r)) return p; } return null; };
       const outside = (d) => { let k = 0; for (let e = -40; e <= 40; e += 4) k += T.k[T.idx(sAt(d + e))]; return k > 0 ? -1 : 1; };   // (the outside of the bend around d)
       const person = (x, y, z, fx, fz, col, pose) => { CR.ppl.put(x, y, z, Math.atan2(fx, fz), 0.98, 1, col, pose + crH(x, z, 9) * 0.998, Math.floor(crH(x, z, 11) * 4) + 4 * Math.floor(crH(x, z, 10) * 256)); CR.n++; };
@@ -557,16 +591,16 @@
       for (const [a, b, sides] of [[300, 900, [-1]], [1430, 2140, [-1, 1]], [5200, 5640, [-1, 1]], [6250, 6560, [-1, 1]]]) {   // sponsors over the rails along the straights
         for (const side of sides) for (let dd = a, k = 0; dd < b; dd += 14, k++) {
           const s = sAt(dd), i = T.idx(s); if (kindAt(i, side) !== 0) continue;
+          if (SC) { let u = false; for (let d = -3; d <= 3 && !u; d++) u = usta((((i + d) % N) + N) % N, side); if (u) continue; }   // (none across an access road's mouth)
           const [x, z] = onSide(s, side, 0.35), y = T.hy[i] + 0.78;
           board(x, y, z, T.nx[i] * side, T.nz[i] * side, 9.6, 0.82, 40 + ((k + (side > 0 ? 3 : 0) + Math.floor(a / 7)) % 8));
         }
       }
       for (const [px, pz] of def.posts || []) {   // the marshals at their posts: two in orange, one with a flag
-        const i = T.nearestIdx(px, pz), lat = (px - T.px[i]) * T.nx[i] + (pz - T.pz[i]) * T.nz[i], side = lat > 0 ? 1 : -1;
+        const i0 = T.nearestIdx(px, pz), lat = (px - T.px[i0]) * T.nx[i0] + (pz - T.pz[i0]) * T.nz[i0], side = lat > 0 ? 1 : -1, mv = postMv.get(px + ',' + pz), i = mv == null ? i0 : mv;   // (beside a post moved out of an access road's way)
         const [x, z] = onSide(i * ds, side, 1.1), fx = -T.nx[i] * side, fz = -T.nz[i] * side, y = nrGround(x, z);
         if (nrSlope(x, z) > 0.6) continue;
-        person(x + T.tx[i] * 2.6, y, z + T.tz[i] * 2.6, fx, fz, [0.98, 0.5, 0.08], 5);
-        person(x - T.tx[i] * 1.2, y, z - T.tz[i] * 1.2, fx, fz, [0.98, 0.5, 0.08], 0);
+        for (const [d, pose] of [[2.6, 5], [-1.2, 0]]) { const qx = x + T.tx[i] * d, qz = z + T.tz[i] * d; if (!naCesti(qx, qz, -1.2)) person(qx, y, qz, fx, fz, [0.98, 0.5, 0.08], pose); }   // (never on an access road)
         CR.avoid(x, z, 3.5);
       }
     }
@@ -613,6 +647,7 @@
     }
     // catch fences (chain link on posts) behind the walls, the tyre walls and wherever the spectators stand; a sponsor banner on them now and then
     const fenceC = new Chunks(256, true), spC = new Chunks(256, true);
+    if (SC) for (let si = 0; si < 2; si++) for (let i = 0; i < N; i++) if (SC.rez[si][i] & 1) fence[si][i] = 0;   // (none across an access road's mouth)
     for (const side of [-1, 1]) {
       const fc = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
       for (let i = 0; i < N; i++) {
@@ -649,7 +684,7 @@
     {
       const Lt = NRC * NRT, maxT = Math.round(140000 * dens), seen = new Set(), CRW = [0.14, 0.33, 0.2];   // (crown radius / width: spruce, beech, birch)
       const plant = (sp, far, x, z, hgt, wid, c) => {
-        if (excluded(x, z)) return false;
+        if (excluded(x, z) || naCesti(x, z, sp ? 0 : Math.max(0, wid * CRW[0] - 2.1))) return false;   // (no tree on an access road, no spruce's skirt over it: the forest elsewhere stays as it was)
         const y = nrGround(x, z) - 0.1, rot = crH(x, z, 88) * TAU;
         if (far) tf[sp === 0 ? 0 : 1].add(x, y, z, rot, wid, hgt, c); else tk[sp].add(x, y, z, rot, wid, hgt, c);
         nrShade(x, z, wid * CRW[sp], sp === 0 ? 1 : 0.8); nTrees++; return true; };
@@ -703,14 +738,14 @@
        bands on the open lawns out past the barrier from 3.5 m behind it (the terrain's own colour and grass, fading out 20-36 m out, 5 cm over
        the ground): not in the woods, the scrub or by the villages, under the stands and buildings, by the brook, where another leg of the track
        is nearer, where the inside of a bend would fold them, nor on the pit lane's side ---- */
-    let nTiles = 0;
+    let nTiles = 0, nStb = 0;
     {
       const grp = new THREE.Group(); root.add(grp); out.ground = grp;
       for (let k = 0; k < tiles.length; k += 3) { const m = new THREE.Mesh(nrTileGeo(tiles[k], tiles[k + 1], tiles[k + 2] === 1 ? 1 : 4), gMat); m.receiveShadow = true; m.matrixAutoUpdate = false; grp.add(m); nTiles++; }
       const vA = [0.93, 1.1, 0.9], vB = [0.82, 0.97, 0.8], MOW_D = vB.map((v, k) => 1 - v / vA[k]);   // the mower's stripes: light, dark (and how much darker)
       const MOW_W = 3, MOW_N = 6, MOW_B = 5, MOW_O = 3.5, bandC = (b) => (b % 2 ? vA : vB), PD = def.pit, pitSd = PD ? Math.sign(PD[0]) : 0;
       const own = (x, z, i) => { const n = nrNear(x, z), d = Math.abs(n.i - i); return n.i >= 0 && Math.min(d, N - d) < 30; };
-      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || inBrook(x, z, 4) || !own(x, z, i)) return null;
+      const mowPt = (i, side, o) => { const p = Pt(i, side * o, 0), x = p[0], z = p[2]; if (excluded(x, z) || naCesti(x, z, 0.5) || inBrook(x, z, 4) || !own(x, z, i)) return null;
         const f = (1 - nrLCf(x, z, 1)) * (1 - nrLCf(x, z, 2)) * (1 - nrLCf(x, z, 3)) * sstep(36, 20, o - (side > 0 ? T.br[i] : T.bl[i])), c = nrGCol(x, z);
         return f < 0.05 ? null : { p: [x, nrGround(x, z) + 0.05, z], c: c.map((v, k) => v * (1 - MOW_D[k] * f)) }; };
       for (let c0 = 0; c0 < N; c0 += CH) {
@@ -740,7 +775,13 @@
             pv[si] = rv; pw[si] = ow;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + CH, N), nrGCol);
         addM(gv, gMat);
+      }
+      if (SC) {   // (the access roads' strips and the orange posts across their openings in the barriers)
+        const sMat = aMat.clone();
+        for (const g of SC.asfalt(RB, nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; }
+        nStb = SC.predmeti((x, z) => scen.get(x, z)); out.stebricki = SC.stebricki;   // (where the posts stand: read by the tests)
       }
       G.col = G.cov = P.edge = null;   // (build only)
     }
@@ -752,7 +793,7 @@
     numC.addTo(root, new THREE.MeshLambertMaterial({ map: numTex }), false, true);
     fenceC.addTo(root, fMat, false, true); spC.addTo(root, new THREE.MeshLambertMaterial({ map: tex.sponsors }), false, true);
     crowdFinish(CR, root, out);
-    out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans };   // (read by the tests)
+    out.stats = { tiles: nTiles, trees: nTrees, rows: nRows, posts: nPosts, buildings: nBld, stands: nStands, fans: nFans, stranske: SC ? SC.n : 0, stebricki: nStb };   // (read by the tests)
     return out;
   }
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Ecuador</title>
+  <!-- Ratio 1:2: three horizontal bands, yellow half the height, blue and red a quarter each, the coat of arms in the centre. The coat of
+       arms drawn simply, as the menu shows the flag a few tens of pixels high: the condor with spread wings over an oval shield in a gold
+       border (the sky with the sun, a snowy mountain, green land and the water), the national flags draped on both sides of it.
+       Colours: yellow #FFD100, blue #034EA2, red #ED1C24. -->
+  <rect width="1200" height="600" fill="#FFD100"/>
+  <rect y="300" width="1200" height="150" fill="#034EA2"/>
+  <rect y="450" width="1200" height="150" fill="#ED1C24"/>
+  <g id="drape">
+    <path d="M532,224 L472,302 L486,330 L546,257 Z" fill="#FFD100" stroke="#8a6d1a" stroke-width="3"/>
+    <path d="M546,257 L486,330 L496,350 L553,277 Z" fill="#034EA2"/>
+    <path d="M553,277 L496,350 L506,372 L561,297 Z" fill="#ED1C24"/>
+  </g>
+  <use href="#drape" transform="translate(1200,0) scale(-1,1)"/>
+  <clipPath id="oval"><ellipse cx="600" cy="300" rx="66" ry="86"/></clipPath>
+  <g clip-path="url(#oval)">
+    <rect x="530" y="210" width="140" height="180" fill="#8ecae6"/>
+    <circle cx="600" cy="242" r="16" fill="#FFD100"/>
+    <path d="M546,334 L600,262 L654,334 Z" fill="#8a8f96"/>
+    <path d="M584,283 L600,262 L616,283 L607,279 L600,287 L593,279 Z" fill="#ffffff"/>
+    <rect x="530" y="330" width="140" height="24" fill="#3a7d3a"/>
+    <rect x="530" y="354" width="140" height="40" fill="#1f6fb5"/>
+  </g>
+  <ellipse cx="600" cy="300" rx="70" ry="90" fill="none" stroke="#C9A227" stroke-width="10"/>
+  <g fill="#3b2a1e">
+    <path d="M600,206 C562,170 522,164 468,184 C518,194 556,206 586,224 Z"/>
+    <path d="M600,206 C638,170 678,164 732,184 C682,194 644,206 614,224 Z"/>
+    <ellipse cx="600" cy="204" rx="15" ry="19"/>
+    <circle cx="600" cy="180" r="9"/>
+  </g>
+  <ellipse cx="600" cy="191" rx="11" ry="4" fill="#ffffff"/>
+</svg>
