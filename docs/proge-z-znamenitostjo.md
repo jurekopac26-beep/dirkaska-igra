@@ -7,7 +7,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | # | Proga | Država | Vrsta | Kdo | Stanje |
 |---|---|---|---|---|---|
 | 1 | Luanda | Angola | stavba: trdnjava na griču | jure.kopac26 | v zbirni Proge 2 (#756) |
-| 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | čaka (veja `proge/luanda`) |
+| 2 | Livingstone | Zambija | druga: most in slapovi | jure.kopac26 | v zbirni Proge 3 |
 | 3 | Isalo, Madagaskar (zamenjava za Antananarivo) | Madagaskar | druga: skalna tvorba Kraljica Isala (Reine de l'Isalo; OSM `natural=rock`, -22.6283, 45.3389), ~30 m od sredine RN7 | jure.kopac26 | v zbirni Proge 2 (#756) |
 | 4 | Mombasa | Kenija | stavba: trdnjava ob cesti | jure.kopac26 | v zbirni Proge 2 (#756) |
 | 5 | Hiva | Uzbekistan | stavba: obzidje Ičan Kale in minareta | jure.kopac26 | v delu (#723; ostane model iz Blenderja) |

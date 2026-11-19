@@ -1986,5 +1986,27 @@
    "tyremarks:MeshBasicMaterial": "e1e84f72",
    "roadwear:MeshLambertMaterial": "d2c14d1e"
   }
+ },
+ "livingstone": {
+  "meshes": 479,
+  "verts": 433387,
+  "instances": 4058,
+  "props": 0,
+  "crowd": 120,
+  "world": "2d4417a4",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "d690d3fd",
+   "-:MeshPhongMaterial": "6117db77",
+   "crowd:MeshLambertMaterial": "fbb22f03",
+   "flags:MeshLambertMaterial": "1393ea6c",
+   "ao:MeshBasicMaterial": "8f2bc795",
+   "tyremarks:MeshBasicMaterial": "57ec102c",
+   "roadwear:MeshLambertMaterial": "37430fb8",
+   "life:MeshLambertMaterial": "c6270377",
+   "lifeShadow:MeshBasicMaterial": "9ae6d990",
+   "life:MeshBasicMaterial": "3060e810"
+  }
  }
 }

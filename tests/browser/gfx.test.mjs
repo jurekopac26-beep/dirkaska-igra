@@ -11,6 +11,7 @@ import { serve, launch, openGame, startTrack, trackIds, najmanj, checker } from 
 
 const T = checker('graphics: car glint, water, worn tarmac');
 const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno', 'bikernieki', 'london', 'zandvoort', 'lombok', 'buriram', 'sakhir', 'riohondo', 'zurich', 'luanda', 'mombasa', 'portobelo', 'yahuarcocha', 'parnu', 'tocancipa', 'cromwell'];   // (with a shore band; Biķernieki: the lake Linezers and the ponds in the forest; Livorno: the Ligurian Sea; Zürich: the lake along its quay; London: the Thames; Zandvoort: the ponds in the dunes; Luanda: its bay; Mombasa: the Likoni channel and the ocean; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario; Lombok: the Indian Ocean; Buriram: the pond inside turns 4–6; Sakhir: the three ponds in the infield; Termas de Río Hondo: the reservoir behind the dam; Pärnu: the pond in the infield and the ditches; Tocancipá: the two ponds by the circuit; Cromwell: the pond in the west loop)
+const GORGE = ['livingstone'];   // (water without a shore band: Livingstone's Zambezi at the bottom of its gorge, ~100 m below the road)
 const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki', 'killar'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass, the Moki Dugway and Killar: gravel roads)
 const DEL = process.env.GFX_DEL || '1', PROGE = !!(process.env.PROGE || '').trim();
 if (DEL === '2' && PROGE) { T.check('the second half: PROGE\'s tracks all checked in the first part (gfx.test.mjs)', true, ''); T.done(); process.exit(0); }
@@ -46,7 +47,7 @@ try {
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
     const wet = WATER.includes(id);
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
-    if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
+    if ((wet || pk || GORGE.includes(id)) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
     const worn = !NO_WEAR.includes(id);
     if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < (len < 2000 ? Math.min(150, L.wear.len < 1000 ? L.wear.len * 0.15 : 150) : 500) || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));   // (a short road: fewer patches; a short landmark track under 1 km, 0.15 a metre: Ghoufi's 905 m have some 160)
     if (why.length) bad.push(id + ': ' + why.join('; '));
