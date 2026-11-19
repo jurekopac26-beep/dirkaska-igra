@@ -1,9 +1,10 @@
 // The spare wheels in sight (Core.SPARE: a part's entry spare, docs/deli.md »Rezervno kolo«; the user's decision of 9. 11. 2026: »Rezervna
 // kolesa, ki so na nekaterih vozilih, naj se ob približno 50 % poškodovanem avtu začnejo majati, kot da bodo kmalu odpadla, in nato pri 80 %
-// odpadejo«). The vehicles that have them (KAMEN and PEŠČENJAK two behind the cab, MEDVED one on its tailgate, the TITAN CISTERNA four on
-// its trailer's rack; a new vehicle may add its own); they come off by the car's damage alone at SPARE.off (never below it, whatever the
-// knock: their end battered, their corners; spread damage too), with damage Samo videz and Vklop, never with damage off; a rival's as the
-// player's; MEDVED's goes with its tailgate (its on); the trailer's pieces start at its rack, not at the tractor. The rocking from SPARE.wob
+// odpadejo«). The vehicles that have them (KAMEN and PEŠČENJAK two behind the cab, MEDVED and VRAN one on their tailgate, TUR one lying in
+// its bed, the TITAN CISTERNA four on its trailer's rack; a new vehicle may add its own); they come off by the car's damage alone at
+// SPARE.off (never below it, whatever the knock: their end battered, their corners; spread damage too), with damage Samo videz and Vklop,
+// never with damage off; a rival's as the player's; the tailgate ones go with their tailgate (their on); the trailer's pieces start at
+// its rack, not at the tractor. The rocking from SPARE.wob
 // is the renderer's: tests/browser/rezervna-kolesa.test.mjs. On a real track (Bathurst).
 //   node tests/rezervna-kolesa.test.js
 'use strict';
@@ -14,7 +15,7 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const T = new C.Track(C.TRACKS.find(d => d.id === 'bathurst')), S = C.SPARE;
-const WANT = { kamen: ['spareL', 'spareR'], pescenjak: ['spareL', 'spareR'], medved: ['spare'], cisterna: ['tlSpare1', 'tlSpare2', 'tlSpare3', 'tlSpare4'] };
+const WANT = { kamen: ['spareL', 'spareR'], pescenjak: ['spareL', 'spareR'], medved: ['spare'], tur: ['spare'], vran: ['spare'], cisterna: ['tlSpare1', 'tlSpare2', 'tlSpare3', 'tlSpare4'] };
 const pc = (x) => (x * 100).toFixed(0) + ' %';
 const race = (M, damage, numAI = 0) => { const r = new C.Race(T, { numAI, playerGrid: 1, laps: 3, playerModel: M, fieldModel: M, assist: 2, seed: 3, difficulty: 1, damage }); r.start(); return r; };
 // spread damage (no point: a hard landing's) up to `to` of the car's (its toughness taken out, as the career's wear does)
@@ -22,7 +23,7 @@ const spread = (c, to) => C.applyDamage(c, (to - c.dmg) / ((c.dmgK || 1) * (c.m.
 
 check('the thresholds: rocking from 50 %, off at 80 %', S.wob === 0.5 && S.off === 0.8, JSON.stringify(S));
 
-// 1. who has them: the four vehicles at least (a new one may add its own); every spare a part of its own, no wheel, tl only on a trailer
+// 1. who has them: the six vehicles at least (a new one may add its own); every spare a part of its own, no wheel, tl only on a trailer
 {
   const has = {}, wrong = [];
   for (const M of C.MODELS) {
@@ -31,7 +32,7 @@ check('the thresholds: rocking from 50 %, off at 80 %', S.wob === 0.5 && S.off =
     for (const k of sp) if (PT[k].wh != null || (PT[k].tl && !(M.trailer && M.trailer.look))) wrong.push(M.id + '.' + k);
   }
   const miss = Object.keys(WANT).filter(id => !has[id] || WANT[id].some(k => has[id].indexOf(k) < 0));
-  check('KAMEN, PEŠČENJAK, MEDVED and the TITAN CISTERNA have their spare wheels as parts (spare: 1)', !miss.length && !wrong.length, (miss.length ? 'missing ' + miss.join(', ') + '; ' : '') + (wrong.length ? 'wrong ' + wrong.join(', ') + '; ' : '') + JSON.stringify(has));
+  check('KAMEN, PEŠČENJAK, MEDVED, TUR, VRAN and the TITAN CISTERNA have their spare wheels as parts (spare: 1)', !miss.length && !wrong.length, (miss.length ? 'missing ' + miss.join(', ') + '; ' : '') + (wrong.length ? 'wrong ' + wrong.join(', ') + '; ' : '') + JSON.stringify(has));
 }
 
 for (const id of Object.keys(WANT)) {
@@ -63,11 +64,11 @@ for (const id of Object.keys(WANT)) {
   }
 }
 
-// 6. MEDVED: its spare is on its tailgate (on): the tailgate knocked off takes it with it, under 80 % too
-{
-  const M = C.MODELS.find(m => m.id === 'medved'), r = race(M, 2), P = r.player, PT = C.partsOf(M);
+// 6. MEDVED and VRAN: the spare is on the tailgate (on): the tailgate knocked off takes it with it, under 80 % too
+for (const id of ['medved', 'vran']) {
+  const M = C.MODELS.find(m => m.id === id), r = race(M, 2), P = r.player, PT = C.partsOf(M);
   let i = 0; for (; i < 400 && !P.lost.tailgate && P.dmg < S.off; i++) C.applyDamage(P, 0.01, -M.len / 2, 0);
-  check(`MEDVED: its spare is on its tailgate and goes with it (the tailgate off at ${pc(P.dmg)})`, PT.spare && PT.spare.on === 'tailgate' && P.lost.tailgate && P.lost.spare && P.dmg < S.off, JSON.stringify(Object.keys(P.lost)));
+  check(`${M.name}: its spare is on its tailgate and goes with it (the tailgate off at ${pc(P.dmg)})`, PT.spare && PT.spare.on === 'tailgate' && P.lost.tailgate && P.lost.spare && P.dmg < S.off, JSON.stringify(Object.keys(P.lost)));
 }
 
 // 7. the TITAN CISTERNA: its tyres' pieces start at the trailer's rack (its rear), not at the tractor, at the rack's height
