@@ -84,9 +84,25 @@ def dense(xz, step=1.0):
     out.append(tuple(xz[-1]))
     return out
 
-def fit(P, Q, rounds=40):
-    """The rigid move (R, t) of the map's points Q onto the track's centre line P (closest points, trimmed), with the distances before and after."""
-    R, t = np.eye(2), np.zeros(2); d0 = cKDTree(Q).query(P)[0]
+def coarse(P, Q, reach=400.0, step=5.0):
+    """The shift of the map's points Q that lays most of the track's line P within 6 m of them, on a grid of `step` m out to `reach` m: the
+    start of the fit for a track whose origin is not the place js/geo.js or its tool gives (a circuit's tool that moved the origin onto
+    the start line, tools/mogyorod/build.py and the like), beyond the reach of the trimmed closest points."""
+    tree, Ps = cKDTree(Q), P[::max(1, len(P) // 400)]; best, bt = -1, np.zeros(2)
+    for dx in np.arange(-reach, reach + step / 2, step):
+        for dz in np.arange(-reach, reach + step / 2, step):
+            n = int((tree.query(Ps - (dx, dz), distance_upper_bound=6.0)[0] < 6.0).sum())
+            if n > best: best, bt = n, np.array([dx, dz])
+    return bt
+
+def fit(P, Q, rounds=40, t0=None):
+    """The rigid move (R, t) of the map's points Q onto the track's centre line P (closest points, trimmed), with the distances before and
+    after; a fit that lays less than half the line within 3 m starts once more from the coarse shift (coarse) and keeps the better."""
+    if t0 is None:
+        r = fit(P, Q, rounds, np.zeros(2))
+        if (r[3] < 3).mean() >= 0.5: return r
+        r2 = fit(P, Q, rounds, coarse(P, Q)); return r2 if (r2[3] < 3).mean() > (r[3] < 3).mean() else r
+    R, t = np.eye(2), np.asarray(t0, float); d0 = cKDTree(Q).query(P)[0]
     for k in range(rounds):
         Qk = Q @ R.T + t; d, j = cKDTree(Qk).query(P); cut = max(6.0, 40.0 * 0.8 ** k); ok = d < cut
         if ok.sum() < 20: break

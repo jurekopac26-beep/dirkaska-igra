@@ -103,7 +103,13 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # left; 810 m, right); on Quezaltepeque two service tracks of the venue that end in the run-off short of the fence (1940 m, left;
          # 2119 m, right)
          'koror': dict(predmeti=False), 'savusavu': dict(predmeti=False, izpusti=[(653, -1), (810, 1)]),
-         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)])}
+         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)]),
+         # group N11 (19. 11. 2026): six circuits from pull requests (Proge 3), fitted to their own line (raceway), side roads only. Left
+         # out: Pärnu's three service ways (401 m left; 565 m and 2698 m right) cross wide run-offs to a barrier 20-27 m out, where
+         # World.cesta.stranske finds no opening (as Sakhir's)
+         'mogyorod': dict(kinds={'raceway'}, predmeti=False), 'sindia': dict(kinds={'raceway'}, predmeti=False),
+         'yahuarcocha': dict(kinds={'raceway'}, predmeti=False), 'houli': dict(kinds={'raceway'}, predmeti=False),
+         'parnu': dict(kinds={'raceway'}, predmeti=False, izpusti=[(401, -1), (565, 1), (2698, 1)]), 'tocancipa': dict(kinds={'raceway'}, predmeti=False)}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
@@ -125,9 +131,14 @@ def longest(P, ok):
         best = max(best, cur)
     return best
 
-def similarity(P, Q, rounds=60):
-    """The similarity (scale, R, t) of the map's points Q onto the track's centre line P (closest points, trimmed)."""
-    s, R, t = 1.0, np.eye(2), np.zeros(2)
+def similarity(P, Q, rounds=60, t0=None):
+    """The similarity (scale, R, t) of the map's points Q onto the track's centre line P (closest points, trimmed); one that lays less than
+    half the line within 3 m starts once more from the coarse shift (osm.coarse: an origin moved by the track's tool) and keeps the better."""
+    if t0 is None:
+        r = similarity(P, Q, rounds, np.zeros(2)); ok = lambda r: (cKDTree(r[0] * Q @ r[1].T + r[2]).query(P)[0] < 3).mean()
+        if ok(r) >= 0.5: return r
+        r2 = similarity(P, Q, rounds, osm.coarse(P, Q)); return r2 if ok(r2) > ok(r) else r
+    s, R, t = 1.0, np.eye(2), np.asarray(t0, float)
     for k in range(rounds):
         Qk = s * Q @ R.T + t; d, j = cKDTree(Qk).query(P); ok = d < max(4.0, 60.0 * 0.85 ** k)
         if ok.sum() < 20: break

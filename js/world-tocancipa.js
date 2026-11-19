@@ -289,6 +289,18 @@
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
 
+    /* ---- the side roads for the look (World.cesta's stranske, def.stranske from OpenStreetMap: docs/realizem/paket-e.md): measured here,
+       before the barriers, which open at their mouths (the barrier of the track's model stays: nobody drives there) ---- */
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a, i = ((a % N) + N) % N; if (t < 1e-4) return Pt(i, o, y); const p = Pt(i, o, y), q = Pt((i + 1) % N, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a fractional station: a barrier's end beside a mouth)
+    const barF = (f, side) => { const a = Math.floor(f), i = ((a % N) + N) % N, j = (i + 1) % N, t = f - a; if (t < 1e-4) return side > 0 ? T.br[i] : T.bl[i]; return side > 0 ? lerp(T.br[i], T.br[j], t) : lerp(T.bl[i], T.bl[j], t); };
+    const vergeAt = (i, side, d) => { const pr = tcVerge(i, side); for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) return lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)); return -9; };
+    const drzava = def.name.split(',').pop().trim();
+    const SC = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: nrGround, rob: vergeAt, ton: () => 0.78, drzava }) : null;
+    const tek = (si, bit, a, b) => (SC ? SC.tek(si, bit, a, b) : [Array.from({ length: b - a + 1 }, (_, k) => a + k)]);
+    let nStb = 0;
+    const vUstju = (i) => { if (SC) for (let o = -3; o <= 3; o++) { const j = ((i + o) % N + N) % N; if ((SC.rez[0][j] | SC.rez[1][j]) & 3) return true; } return false; };   // (a side road's mouth: no tyre stack on it)
+    if (SC) { out.cestaRob = SC.ustja.slice(); for (const k of SC.krogi) exclPush(k[0], k[1], k[2]); out.stranske = SC.n; lMat.userData.crte = 1; }   // (no tree, stand nor crowd on a side road; crte: the edge lines' material)
+
     /* ---- barriers: concrete along the pit wall and the straight's left (in front of the grandstand), tyre walls round the outside of the
        slower corners' run-offs, armco on posts elsewhere; none where the pit lane leaves and joins the circuit ---- */
     const lw = (i) => { const d = dSs(i * ds); return d > -150 && d < 300; };   // the main straight's left
@@ -307,30 +319,31 @@
     const posts = new IChunks(postGeo, new THREE.MeshLambertMaterial({ vertexColors: true }), 512);
     const fence = [new Uint8Array(N), new Uint8Array(N)];   // catch fences (1: behind a rail or a wall, 2: behind a tyre wall)
     const steel = [0.8, 0.82, 0.85], steelD = [0.5, 0.52, 0.56], conc = [0.82, 0.82, 0.8], concD = [0.66, 0.66, 0.64], W1 = [1, 1, 1];
-    const railRow = (gr, i, side, k) => {   // armco / wall cross-section at sample i (rows run so that the faces look at the road)
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
-      let p = k === 0 ? [Pt(i, o, 0.32), Pt(i, o, 0.6), Pt(i, o, 0.66), Pt(i, o, 0.95), Pt(i, o2, 0.95)] : [Pt(i, o, -0.4), Pt(i, o, 0.1), Pt(i, o, h - 0.1), Pt(i, o, h), Pt(i, o2, h)];
+    const railRow = (gr, i, side, k) => {   // armco / wall cross-section at station i (fractional by a mouth; rows run so that the faces look at the road)
+      const bar = barF(i, side), o = side * (bar + 0.12), h = 1.1, o2 = side * (bar + (k === 0 ? 0.42 : 0.45));
+      let p = k === 0 ? [PtF(i, o, 0.32), PtF(i, o, 0.6), PtF(i, o, 0.66), PtF(i, o, 0.95), PtF(i, o2, 0.95)] : [PtF(i, o, -0.4), PtF(i, o, 0.1), PtF(i, o, h - 0.1), PtF(i, o, h), PtF(i, o2, h)];
       let c = k === 0 ? [steel, steelD, steel, [0.9, 0.91, 0.93], [0.72, 0.74, 0.77]] : [concD, conc, conc, [0.9, 0.9, 0.88], [0.84, 0.84, 0.82]];
       if (side < 0) { p = p.reverse(); c = c.slice().reverse(); }
       return gr.row(p, c);
     };
     const tyreRow = (gt, i, side, u) => {   // a tyre wall: the belted face towards the road, a dark top
-      const bar = side > 0 ? T.br[i] : T.bl[i], o = side * (bar + 0.1), o2 = side * (bar + 0.9), dk = [0.3, 0.3, 0.32];
-      let p = [Pt(i, o, -0.1), Pt(i, o, 0.95), Pt(i, o2, 0.95)], uv = [[u, 0.02], [u, 0.98], [u, 0.98]], c = [W1, W1, dk];
+      const bar = barF(i, side), o = side * (bar + 0.1), o2 = side * (bar + 0.9), dk = [0.3, 0.3, 0.32];
+      let p = [PtF(i, o, -0.1), PtF(i, o, 0.95), PtF(i, o2, 0.95)], uv = [[u, 0.02], [u, 0.98], [u, 0.98]], c = [W1, W1, dk];
       if (side < 0) { p = p.reverse(); uv = uv.slice().reverse(); c = c.slice().reverse(); }
       return gt.row(p, c, uv);
     };
     for (let c0 = 0; c0 < N; c0 += CH) {
       const gr = new RB(), gt = new RB(true);
-      for (const side of [-1, 1]) {
-        let prev = -1, pk = -2, acc = c0 * ds;
-        for (let ii = c0; ii <= Math.min(c0 + CH, N); ii++, acc += ds) {
-          const i = ii % N, k = kindAt(i, side);
-          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, i, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, i, side, pk), 0, 4); prev = -1; }
+      for (const side of [-1, 1]) for (const run of tek(side2(side), 1, c0, Math.min(c0 + CH, N))) {   // (open at the side roads' mouths)
+        let prev = -1, pk = -2; const nR = run.length;
+        for (let q = 0; q < nR; q++) {
+          const ii = run[q], acc = ii * ds, i = ((Math.round(ii) % N) + N) % N, fi = ((ii % N) + N) % N, k = kindAt(i, side), e0 = q === 0 && run.z0, e1 = q === nR - 1 && run.z1;
+          if (prev >= 0 && k !== pk) { if (pk === 2) gt.link(prev, tyreRow(gt, fi, side, acc / 3), 0, 2); else if (pk >= 0) gr.link(prev, railRow(gr, fi, side, pk), 0, 4); prev = -1; }
           if (k < 0) { pk = k; continue; }
-          const r = k === 2 ? tyreRow(gt, i, side, acc / 3) : railRow(gr, i, side, k);
+          const r = k === 2 ? tyreRow(gt, fi, side, acc / 3) : railRow(gr, fi, side, k);
           if (prev >= 0) { if (k === 2) gt.link(prev, r, 0, 2); else gr.link(prev, r, 0, 4); } prev = r; pk = k;
-          if (k === 0 && ii % 2 === 0 && ii < c0 + CH) { const p = Pt(i, side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }
+          if (k === 0 && (e0 || e1 || (ii === Math.floor(ii) && ii % 2 === 0 && ii < c0 + CH))) { const f = fi + (e0 ? 0.05 : e1 ? -0.05 : 0), p = PtF(f, side * (barF(f, side) + 0.24), 0); posts.add(p[0], p[1] - 0.35, p[2], T.hd[i], 1, 1.25); }   // (a post at the rail's ends by a mouth too)
+          if (k === 1 && (e0 || e1)) { const b = barF(fi, side), o0 = side * (b + 0.12), o1 = side * (b + 0.45); gr.link(gr.row([PtF(fi, o0, -0.4), PtF(fi, o1, -0.4)], [concD, concD]), gr.row([PtF(fi, o0, 1.1), PtF(fi, o1, 1.1)], [concD, concD]), 0, 1); }   // (the end of a cut wall)
           if (k >= 1) fence[side2(side)][i] = k;
         }
       }
@@ -340,7 +353,7 @@
     // knockable props: tyre stacks at the corner exits and apexes, 2.2-3 m past the edge, not on the pit straight. Drawn out to 150 m
     out.propR = 150;
     out.propFloor = propFloorTable(null, (i, side) => tcVerge(i, side));
-    out.propStats = roadsideProps(out.props, { exits: 10, apexes: 4, wallEdge: [2.2, 3.0], stacks: [5, 7], rows2: 0.3, floor: out.propFloor, skip: (i) => { const d = dSs(i * ds); return d > -200 && d < 300; } });
+    out.propStats = roadsideProps(out.props, { exits: 10, apexes: 4, wallEdge: [2.2, 3.0], stacks: [5, 7], rows2: 0.3, floor: out.propFloor, skip: (i) => { const d = dSs(i * ds); return (d > -200 && d < 300) || vUstju(i); } });
     // the game's sponsors on the concrete walls (tex.sponsors: 4 m boards, read from the road)
     { const sb = new Chunks(256, true);
       for (const side of [-1, 1]) for (let i = 0, n = 0; i + 2 <= N; i += 2) {
@@ -359,6 +372,7 @@
       glass.get(x0, z0).quadO([x0, yb, z0], [x1, yb, z1], [x1, yt, z1], [x0, yt, z0], col || W1, inside, [[ua, 0], [ub, 0], [ub, vt], [ua, vt]]); };
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const CR = crowdCtx({ gH: nrGround, near: (x, z) => nrNear(x, z).dd, maxSlope: 0.8 });   // spectators, marshals, the crews' men (instanced)
+    if (SC) for (const k of SC.krogi) CR.avoid(k[0], k[1], k[2]);   // (nobody stands on a side road)
     const atlas = tcAtlas();
     const board = (cx, cy, cz, tx, tz, Wd, H, cellK) => {   // a text board (bottom centre cx, cy, cz) facing -t, a dark back behind it
       const [u0, v0, u1, v1] = nrAUV(cellK), ux = tz, uz = -tx, hw = -Wd / 2;
@@ -719,6 +733,7 @@
         const side = roomSide(sAt(d)); run(d - half, d + half, side, { rows, dens: 0.45, label: 'TC ' + n }); }
       for (const e of CR.circ) exclPush(e.x, e.z, e.r); }
     // catch fences (chain link on posts) behind the walls, the tyre walls and wherever the spectators stand
+    if (SC) for (let si = 0; si < 2; si++) for (let i = 0; i < N; i++) if (SC.rez[si][i] & 1) fence[si][i] = 0;   // (none across a side road's mouth)
     const fenceC = new Chunks(256, true);
     for (const side of [-1, 1]) {
       const fcs = fence[side2(side)], bar = side > 0 ? T.br : T.bl; let acc = 0;
@@ -814,8 +829,10 @@
             if (pv[si] >= 0) gv.link(pv[si], rv, 0, nL - 1); pv[si] = rv;
           }
         }
+        if (SC) SC.robovi(gv, c0, Math.min(c0 + CH, N), nrGCol);   // (the side roads' grass edges out to the meadow)
         addM(gv, gMat);
       }
+      if (SC) { const sMat = aMat.clone(); for (const g of SC.asfalt(RB, nrGCol)) { const m = addM(g, sMat); if (m) m.userData.stranska = 1; } }   // the side roads' asphalt (nrGCol: the ground's colours, before they are freed)
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
@@ -879,6 +896,7 @@
     }
     if (def.far && API.rsFar) out.dyn.far = API.rsFar(root, def.far, 'summer', 6, tcFarCol);   // the Cordillera on the horizon (World.update: no car, back where it was built)
 
+    if (SC) { nStb = SC.predmeti(World.cesta.CRTE[drzava] ? (x, z) => scen.get(x, z) : (x, z) => { const g = scen.get(x, z); return { quadO: (...a) => g.quadO(...a), triO: (...a) => g.triO(...a), quadUp() {}, triUp() {} }; }); out.stebricki = SC.stebricki; }   // the side roads (look only: OpenStreetMap, World.cesta; no paint at a mouth where the country has no row in CRTE)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     farB.addTo(sceneryGroup, matV, false, true);
@@ -890,6 +908,7 @@
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, posts: nPosts, garages: nGar, buildings: nBld, houses: nHouse, greenhouses: nGh, stands: nStands, trucks: nTrucks, cars: nCars, fans: nFans, marshals: nPosts2, tv: nTV,
       flags: flagL.length, kart: nKart, links: nLink, dirt: nDirt, water: wst.water, reeds: wst.reeds, stacks: lms.stacks, plant: lms.plant, heaps: lms.heaps, pylons: lms.pylons };   // (read by the tests)
+    if (SC) Object.assign(out.stats, { stranske: SC.n, stebricki: nStb });
     return out;
   }
 

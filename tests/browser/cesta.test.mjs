@@ -502,7 +502,7 @@ try {
   // on the shared builder (js/world-rbring.js), a strip through each mouth, a row of posts across it, the track's model untouched; nothing of
   // the world's on the road past the fence line (Silkeborg's farm fences open where a road goes through, Zandvoort's dune bushes, marram and
   // reeds off it), no paint (Denmark's and the Netherlands' rows are not in World.cesta.CRTE, and a farm track or a service road has no lines);
-  // Sosnová and Tuzla: no side roads in OpenStreetMap by the circuit, none built
+  // Sosnová and Tuzla: no side roads in its data, none built
   for (const id of ['silkeborg', 'zandvoort', 'sosnova', 'tuzla']) {
     await startTrack(page, id);
     const q = await page.evaluate((id) => {
@@ -550,7 +550,7 @@ try {
     if (q.osm) T.check(`${id}: OpenStreetMap's side roads for the look (a strip through each mouth 3 to 40 m wide, a row of posts across each, 1 to 2.2 m apart), nothing of the world's on them past the fence line (its own fences open where a road goes through; from 1 m past the fence line on, no vertex or instance of anything else 15 cm to 3 m over the strip, which a ray down finds under every metre of it), the track's model untouched, no paint (${q.drzava}: no row in World.cesta.CRTE)`,
       q.n === q.osm && q.mouths === q.n && q.wMin >= 3 && q.wMax <= 40 && q.strips >= 1 && q.stripV > q.n * 20 && q.stripV <= q.verts * 0.1 && q.far === 0 &&
       q.posts === q.stats && q.rows === q.n && q.lone === 0 && q.gMin >= 1 && q.gMax <= 2.2 && q.fenceOn === 0 && q.inst === 0 && q.rays >= q.n * 40 && q.hit === 0 && q.model && !q.crte, JSON.stringify(q));
-    else T.check(`${id}: no side roads in OpenStreetMap by the circuit, none built (no strip, no mouth, no post), the track's model untouched`,
+    else T.check(`${id}: no side roads in its data, none built (no strip, no mouth, no post), the track's model untouched`,
       q.n === 0 && q.mouths === 0 && q.strips === 0 && q.posts === 0 && q.model, JSON.stringify(q));
   }
   T.check('no errors (the road\'s and the paint\'s programs compile)', errors.length === 0, errors.slice(0, 3).join(' | '));
@@ -677,7 +677,7 @@ try {
       q.n === want[0] && q.n <= q.osm && q.mouths === q.n && q.wMin >= 3 && q.wMax <= 40 && q.strips >= 1 && q.stripV > q.n * 20 && q.stripV <= q.verts * 0.1 && q.far === 0 &&
       q.posts === q.stats && q.rows === q.n && q.lone === 0 && q.gMin >= 1 && q.gMax <= 2.2 && q.inst === 0 && q.rays >= q.n * 40 && q.hit === 0 && q.model && q.painted === 0 &&
       (id !== 'koli' || q.onAsph === 0 && q.lum > 0.7) && (id !== 'kanaba' || q.lum > 1), JSON.stringify(q));
-    else T.check(`${id}: no side roads in OpenStreetMap by the circuit, none built (no strip, no mouth, no post), the track's model untouched`,
+    else T.check(`${id}: no side roads in its data, none built (no strip, no mouth, no post), the track's model untouched`,
       q.n === 0 && q.mouths === 0 && q.strips === 0 && q.posts === 0 && q.model, JSON.stringify(q));
   }
   T.check('group 762a: no errors', errors.length === 0, errors.slice(0, 3).join(' | '));
@@ -688,8 +688,11 @@ try {
   // on the fence line (evenly, two or more, on the surface drawn under it, off the road's asphalt); on the passes the white edge line broken
   // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
   // mouth it meets the paint's material); no paint at a mouth (Palau's and Fiji's rows in CRTE hold the main road's lines only, El Salvador
-  // has none); the track's model as a track built alone has it; no errors
-  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 10], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
+  // has none); the track's model as a track built alone has it; no errors. The same on the circuits of group N11 (docs/realizem/paket-e.md
+  // »N11«): Mogyoród (js/world-rbring.js) and Tocancipá (its own builder, js/world-tocancipa.js), 4 and 2 rows (service roads and tracks
+  // of the venue), the edge lines whole as on Quezaltepeque (a circuit's)
+  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 10], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2],
+    ['mogyorod', 'Mogyoród', 0, 4], ['tocancipa', 'Tocancipá', 0, 2]]) {
     await startTrack(page, id);
     const sx = await page.evaluate(([id, rob]) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
@@ -738,7 +741,15 @@ try {
       sx.posts === sx.np && sx.posts >= sx.n * 2 && sx.posts <= sx.n * 27 && sx.rows === sx.n && sx.lone === 0 && sx.gMin >= 1 && sx.gMax <= 2.2 && sx.none === 0 && sx.off <= 0.03 && sx.road >= 1 &&
       (!rob || (sx.whole === sx.n && sx.broken === sx.n && sx.paint)) && sx.model, JSON.stringify(sx));
   }
-  T.check('no errors on the tracks of group 762b', errors.length === 0, errors.slice(0, 3).join(' | '));
+  // (group N11's other four: on Sindia, Yahuarcocha and Houli OpenStreetMap holds no road that meets their line; Pärnu's three cross
+  // run-offs to a barrier 20-27 m out and are left out (izpusti in tools/cesta/izvoz.py): none is built)
+  for (const id of ['sindia', 'yahuarcocha', 'houli', 'parnu']) {
+    await startTrack(page, id);
+    const q = await page.evaluate(() => { const W = Render.world, T = window.__game.race.track; let strips = 0; W.root.traverse(o => { if (o.isMesh && o.userData.stranska) strips++; });
+      return { osm: (T.def.stranske || []).length, n: W.stranske || 0, mouths: (W.cestaRob || []).length, strips, posts: (W.stebricki || []).length }; });
+    T.check(`${id}: no side roads in its data, none built (no strip, no mouth, no post)`, q.osm === 0 && q.n === 0 && q.mouths === 0 && q.strips === 0 && q.posts === 0, JSON.stringify(q));
+  }
+  T.check('no errors on the tracks of groups 762b and N11', errors.length === 0, errors.slice(0, 3).join(' | '));
 } catch (e) {
   T.check('the test ran', false, String(e && e.stack || e).slice(0, 600));
 } finally {
