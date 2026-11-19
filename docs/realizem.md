@@ -246,6 +246,7 @@ V vrsti so pred novimi progami (vrstice v »Načrtovano«, `docs/vrsta.md`), E p
 | Načrt in odločitve | `docs/realizem-paketi`, #540 | potrjen 8. 11. 2026; ta dokument |
 | E0, prvi kos: obraba asfalta in črte | `realizem/e0-crte-asfalt` | končano 10. 11. 2026; uporabnikov »ok« na slikah (`docs/realizem/e0-*.jpg`) 10. 11. ob ~03.30, na `main` od 11. 11. 2026 s PR #622 (squash `244f7cd7`); jure.kopac26, odločitev uporabnika 10. 11. 2026 ob ~01.40 v pogovoru z Matejem, izbira »Cesta in predmeti E0«; opis v razdelku »E0, prvi kos« |
 | E0, drugi kos: rob ceste, oznake čez cesto, Pikes Peak | `realizem/e0-crte-asfalt` (isti PR #622, ločeni commiti) | končano 10. 11. 2026, uporabnikov »ok« na slikah (`docs/realizem/e0-rob.jpg`, `e0-oznake.jpg`, `e0-pikes.jpg`) 10. 11. ob ~12.30; na `main` od 11. 11. 2026 s PR #622 (squash `244f7cd7`); opis v razdelku »E0, drugi kos« |
+| Kamera za avtom, skupina 1 (Nürburg, Pikes Peak, Tianmen): Tianmen | `realizem-kamera-skupina1`, #798 | osnutek 19. 11. 2026: pod naloženimi kraki betonski oporni zid in brežina do terena namesto do 126 m visokih golih sten (`js/world-realizem1.js`, slike `docs/realizem/kamera1-tianmen-*.jpg`); nasip nad grapo pri 1500 m (vzorci 1556–1574) porasel, skala samo po ESA WorldCover (OSM: tam ni mostu ne prepusta); Nürburg brez spremembe (bregovi v `nrH`, `js/world.js`), Pikes Peak še ni začet. |
 | E0 (ostalo), E1–E4, S0–S2, G0–G4, P1–P6 | `realizem/<korak>` | čaka na tedenski načrt (pon. 9. 11.); E prvi, E1 najprej slike na strani Odločitve; P po #460, #480 in #516 |
 
 ## Viri
