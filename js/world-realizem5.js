@@ -1,8 +1,8 @@
 // Realizem, skupina 5 (docs/realizem.md, »Postopek za vse proge«): real roads on main outside the 15 tracks of the packages, the ones the
 // chase camera showed least like the real place (scores in the PR): Isuna (Bhutan), Ghoufi (Algeria), Santo Antão (Cabo Verde), Ujarrás
-// (Costa Rica). Wraps World.ext.<id> as js/world-aguascalientes.js and js/world-realizem1.js do: the track's own builder runs first and stays
-// as it is, this only adds or changes what is listed here, from the sources only (OSM, ESA WorldCover 2021 and its Sentinel-2 composite,
-// Copernicus DEM GLO-30; README.md, »Zasluge«). Side roads and road lines are package E (their own files), the physics and the collisions are not touched.
+// (Costa Rica), Killar (India). Wraps World.ext.<id> as js/world-aguascalientes.js and js/world-realizem1.js do: the track's own builder runs
+// first and stays as it is, this only adds or changes what is listed here, from the sources only (OSM, ESA WorldCover 2021 and its Sentinel-2
+// composite, Sentinel-2 L2A scenes, Copernicus DEM GLO-30; README.md, »Zasluge«). Side roads and road lines are package E (their own files), the physics and the collisions are not touched.
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.api || !World.ext) return;
@@ -184,5 +184,36 @@
       C.needsUpdate = true;
     };
     out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material) && o.material && o.material.vertexColors && o.material.map && !skip.has(o.material.map) && o.material !== out.asphaltMat) tint(o); });
+  });
+
+  /* ---- Killar (India): along the gravel road on the shelf above the Chenab six cloudless Sentinel-2 L2A scenes of the summer (July to
+     September 2024 and 2025; 6-64 m from the road, the medians of about 10 000 grass and 5000 tree pixels each by WorldCover class) have
+     the grass a khaki grey green, G/R 1.0-1.07, B/R 0.79-0.85 (NDVI 0.51-0.65; in the composite of ESA WorldCover 2021 0.97 and 0.85, and
+     the same 64-300 m from the road), the trees 1.14-1.23 and 0.77-0.91; the game's summer ground under them olive green, G/R 1.31, B/R
+     0.59 (the meadow, also on WorldCover's bare strip along the road), the forest floor 1.10 and 0.67. Its scree and houses are already
+     near the scenes' bare ground (G/R 0.95-0.97 and 0.87-0.90 against 0.95-1.01 and 0.83-0.88), so the green moves to the scenes' as it
+     is: G/R down to 1.01 (under the trees 1.17) and B/R up to 0.83 (0.86), only towards them, never past, its brightness kept; only
+     where it is green (the rock, the scree, the snow, autumn's straw and the houses stay as they are). The terrain's own material (the
+     tiles near and far, the meadow up to the road's edge: no verge, the user's decision of 9. 11. 2026) ---- */
+  wrap('killar', (out) => {
+    const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    const TG = [[1.01, 0.83], [1.17, 0.86]];   // (the G/R and B/R the ground moves to: the grass and the rest of the green, lc 1 trees)
+    const gm = out.ground && out.ground.children.length ? out.ground.children[0].material : null; if (!gm) return;
+    const v = new THREE.Vector3();
+    const tint = (m) => {
+      const g = m.geometry, C = g.attributes.color, P = g.attributes.position; if (!C || !P || C.itemSize !== 3) return;
+      m.updateMatrixWorld(true);
+      for (let i = 0; i < C.count; i++) {
+        const r = C.getX(i), gg = C.getY(i), b = C.getZ(i); if (r <= 0 || gg <= 0) continue;
+        const veg = ss(1.0, 1.06, gg / r) * ss(0.1, 0.25, (gg - b) / gg); if (veg <= 0) continue;   // (only the green: G above R and B; not the snow)
+        v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld);
+        const w1 = Math.min(1, A.vrLCf(v.x, v.z, 1)), tG = TG[0][0] + (TG[1][0] - TG[0][0]) * w1, tB = TG[0][1] + (TG[1][1] - TG[0][1]) * w1;
+        const g2 = gg + (Math.min(gg, tG * r) - gg) * veg, b2 = b + (Math.max(b, tB * r) - b) * veg;
+        const s = (0.3 * r + 0.59 * gg + 0.11 * b) / (0.3 * r + 0.59 * g2 + 0.11 * b2);
+        C.setXYZ(i, r * s, g2 * s, b2 * s);
+      }
+      C.needsUpdate = true;
+    };
+    out.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && o.material === gm) tint(o); });
   });
 })();
