@@ -4091,8 +4091,8 @@
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = mk ? (i, o) => { const rl = T.rl[i], k = 0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
-        : (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
+      const shade = mk ? (i, o) => { const rl = (T.gl || T.rl)[i], k = 0.9 - 0.07 * Math.exp(-((o - rl) * (o - rl)) / 5.5); return [k, k * 0.91, k * 0.885]; }   // (the gravel: pink granite, a hue the winter leaves uncovered; packed a little darker on the line)
+        : (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.15 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.9) k -= 0.03; return [k, k, k * 1.02]; };
       const yel = [0.98, 0.74, 0.1], wht = [0.95, 0.95, 0.92], gc = [0.92, 0.84, 0.78], sw = 0.9;
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       // verge cross-section per sample and side: [offset, height above the road] from the gravel strip out past the barrier, lifted onto the ground where the slope starts to rise
@@ -4159,6 +4159,7 @@
       const gv = (i, k) => { const q = 0.9 + 0.2 * nF(i * T.ds / 9, 40 + k); return [gc[0] * q, gc[1] * q, gc[2] * q]; }, gIn = [0.66, 0.63, 0.6];   // the gravel's tone varies along it, greyer where it meets the asphalt
       // the side roads' mouths (PK_JN): the white edge line broken across them, [side, s0, s1] (the mouth's flared edges meet the Highway's edge at s -+ half its width / sin of its angle)
       const jGap = PK_JN.filter(J => J.sd).map(J => { const h = (J.W / 2 + J.fl) / Math.sin(J.a); return [J.sd, J.s - h, J.s + h]; });
+      out.cestaRob = jGap.map(([sd, a, b]) => [a - 1, b + 1, sd]);   // (World.cesta: the asphalt's edge whole across the mouths)
       const jCut = (a, b, sd) => { let P = [[a, b]]; for (const [g, g0, g1] of jGap) if (g === sd && g1 > a && g0 < b) P = [].concat(...P.map(([x, y]) => [[x, Math.min(y, g0)], [Math.max(x, g1), y]].filter(([u, v]) => v - u > 0.05))); return P; };
       let gs = null;   // (the gravel strip: few vertices, chunks 4 times as long)
       for (let c0 = 0; c0 < N - 1; c0 += RC) {

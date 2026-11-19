@@ -269,7 +269,7 @@ try {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', name: 'Ana', carV: 3, carId: 'titan', quali: 0, damage: 1 }, { width: 480, height: 270 });
     const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
     const rivals = () => page.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, cars: [...new Set(r.cars.filter(c => !c.isPlayer).map(c => c.m.id))].join(), me: r.player.m.id, champ: !!r.champ }; });
-    await act('to-champ'); await wait(250);
+    await act('to-champ-nu'); await wait(250);   // (Domači pokal: behind NEUPORABNO, a cup of the test tracks)
     const pick0 = await page.evaluate(() => document.getElementById('ch-diff').textContent);
     await page.evaluate(() => document.querySelector('[data-champ="domaci"]').click()); await act('champ-go');
     await page.waitForFunction(() => { const g = window.__game; return !!(g.race && g.race.champ && g.race.track.def.id === 'jezero'); }, null, { timeout: 90000 });
@@ -361,7 +361,9 @@ try {
     // the player's wheel (the wheel rule, game.js WHEEL_RULE; the user, 9. 11. 2026: »Ko ti enkrat odpade kolo, je igre konec«): said by its
     // name ("rear left wheel"), never "on three wheels": the car stops there, retires, and the game is over (wheels.test.mjs)
     const k3 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; g.sim(8, true); window.__said.length = 0;
-      Core.detachPart(P, 'wheelRL'); g.sim(6, true); return { over: !!(P.wreck && P.wreck.rule && P.wreck.rule.over), out: r.isOut(P), kmh: Math.round(P.speed * 3.6) }; });
+      // (its speed when the rule stops it: a rival may knock the parked wreck later, the event 'contact', 19. 11. 2026)
+      Core.detachPart(P, 'wheelRL'); let kmh = null; for (let t = 0; t < 6; t += 0.1) { g.sim(0.1, true); if (kmh == null && P.wreck && P.wreck.rule && P.wreck.rule.over) kmh = Math.round(P.speed * 3.6); }
+      return { over: !!(P.wreck && P.wreck.rule && P.wreck.rule.over), out: r.isOut(P), kmh }; });
     const k3s = await said();
     T.check('the player\'s wheel by its name ("rear left wheel"), never "on three wheels": the car stops, retires and the game is over',
       k3s.includes('wheelLost:rear left wheel') && !k3s.includes('threeWheels') && k3.over && k3.out && k3.kmh === 0, JSON.stringify({ k3s, k3 }));

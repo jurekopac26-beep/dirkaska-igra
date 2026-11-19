@@ -1581,14 +1581,14 @@ const World = (function () {
       const offs = makadam ? Array.from({ length: 15 }, (_, k) => -w + 2 * w * k / 14) : THEME === 'italia' ? [-w, -(w - 0.28), -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w - 0.28, w] : [-w, -w * 0.75, -w * 0.5, -w * 0.25, 0, w * 0.25, w * 0.5, w * 0.75, w];
       const ashE = (i, o, c) => { const side = o > 0 ? 1 : -1; if (THEME !== 'italia' || Math.abs(o) < w - 1e-6 || (T.curb[i] && !(side * T.k[i] < 0 && Math.abs(T.k[i]) < 0.035))) return c; return [c[0] * 1.07, c[1] * 1.04, c[2] * 0.96]; };   // (V2: grey dust off the gravel)
       const shade = (i, o) => {
-        const rl = T.rl[i];
+        const rl = (T.gl || T.rl)[i];
         let k = 1 - 0.2 * Math.exp(-((o - rl) * (o - rl)) / 5.5);
         k -= Math.abs(o) > w * 0.9 ? 0.04 : 0;
         return [k, k, k * 1.01];
       };
       // makadam: compacted, darker driven line; loose lighter gravel elsewhere; patches and damp spots along the road
       const shadeM = (i, o) => {
-        const rl = T.rl[i], rut = Math.exp(-((o - rl) * (o - rl)) / 7.5);
+        const rl = (T.gl || T.rl)[i], rut = Math.exp(-((o - rl) * (o - rl)) / 7.5);
         const pat = 0.94 + 0.08 * Math.sin(i * 0.071 + o * 0.35) * Math.sin(i * 0.023 + 1.3) + 0.05 * Math.sin(i * 0.53 + o * 1.1);
         const damp = Math.max(0, Math.sin(i * 0.047 + 0.6) * Math.sin(i * 0.019 + o * 0.21) - 0.72) * 1.6;   // occasional darker wet patches
         let k = pat * (1.05 - 0.3 * rut) * (1 - damp * 0.35);
@@ -3704,7 +3704,7 @@ const World = (function () {
       for (let k = 0; k <= n; k++) {
         const i = at(i0 + k), f = k / n, a = a0 * Math.min(1, f / 0.2, (1 - f) / 0.12) * (grow ? 0.45 + 0.55 * f : 1);
         if (deck(i) || (T.sf && T.sf[i] !== 0)) { prev = null; continue; }   // (a stage of mixed surfaces: rubber on its tarmac only)
-        const o = T.rl[i] + off + Math.sin(i * 0.37 + off * 3) * 0.08, lim = (T.wa ? T.wa[i] : T.w) - 0.25; if (Math.abs(o) > lim) { prev = null; continue; }
+        const o = (T.gl || T.rl)[i] + off + Math.sin(i * 0.37 + off * 3) * 0.08, lim = (T.wa ? T.wa[i] : T.w) - 0.25; if (Math.abs(o) > lim) { prev = null; continue; }
         const y = (q) => { let h = HYi(i) + 0.03; if (T.bank) h += T.bankAt(i * ds, q, bk).dy; return h; };
         const l = [T.px[i] + T.nx[i] * (o - wd), y(o - wd), T.pz[i] + T.nz[i] * (o - wd)], r = [T.px[i] + T.nx[i] * (o + wd), y(o + wd), T.pz[i] + T.nz[i] * (o + wd)];
         if (prev && prev.a + a > 0.01) cell(l).quadUp(prev.l, prev.r, r, l, [[0.05, 0.05, 0.06, prev.a], [0.05, 0.05, 0.06, prev.a], [0.05, 0.05, 0.06, a], [0.05, 0.05, 0.06, a]]);
@@ -3767,13 +3767,15 @@ const World = (function () {
       const f = s / ds, i0 = Math.floor(f), t = f - i0, i = at(i0), j = at(i0 + 1), L = (A) => A[i] + (A[j] - A[i]) * t;
       let y = HYi(i) + (HYi(j) - HYi(i)) * t + 0.035; if (T.bank) y += T.bankAt(s, lo, bk).dy;
       return [L(T.px) + L(T.nx) * lo, y, L(T.pz) + L(T.nz) * lo]; };
+    const onTall = (p) => !!T._tall && T._tall.some(Rg => (p[0] - Rg.x) ** 2 + (p[2] - Rg.z) ** 2 < (Rg.ie + 0.2) ** 2);   // (a ring's tall island (Medvode): no wear on its grass)
     const decal = (s, lo, hl, hw, rot, u0, v0, u1, v1, col) => {   // centre (s, lo), half length and width along and across the road, turned by rot; an atlas cell
       const cs = Math.cos(rot), sn = Math.sin(rot), Q = [[-hl, -hw, u0, v0], [hl, -hw, u1, v0], [hl, hw, u1, v1], [-hl, hw, u0, v1]].map(([a, b, u, v]) => [pt(s + a * cs - b * sn, lo + a * sn + b * cs), [u, v]]);
+      if (T._tall && Q.some(q => onTall(q[0]))) return;
       const c = chunk(Q[0][0]), k = Q.map(q => vtx(c, q[0], col, q[1])); face(c, k[0], k[1], k[2]); face(c, k[0], k[2], k[3]); };
     // patches, every 40-100 m, more often in a wheel track than not
     for (let s = R() * 50; s < len - 6; s += (40 + R() * 60) * sp / Math.sqrt(kw)) {
       const i = at(Math.round(s / ds)); if (deck(i) || bare(s)) continue;
-      const li = limAt(i), hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? T.rl[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * wAt(i)) + (R() - 0.5) * 0.6, -li + hw, li - hw), k = R() < 0.55 ? 0.84 + R() * 0.08 : 1.04 + R() * 0.06;
+      const li = limAt(i), hl = 0.8 + R() * 1.8, hw = 0.5 + R() * 1.1, lo = clamp((R() < 0.6 ? (T.gl || T.rl)[i] + (R() < 0.5 ? -0.78 : 0.78) : (R() * 2 - 1) * wAt(i)) + (R() - 0.5) * 0.6, -li + hw, li - hw), k = R() < 0.55 ? 0.84 + R() * 0.08 : 1.04 + R() * 0.06;
       const rot = (R() - 0.5) * 0.08; if (bare(s - hl) || bare(s + hl)) continue;
       decal(s, lo, hl, hw, rot, 0.02, 0.02, 0.48, 0.48, [k, k, k * 1.01, 1]);
     }
@@ -3804,9 +3806,10 @@ const World = (function () {
       for (const sd of [-1, 1]) {
         let prev = null;
         for (let k = 0; k <= N; k += st) {
-          const i = at(k), cc = T.rl[i] + sd * 0.78;
+          const i = at(k), cc = (T.gl || T.rl)[i] + sd * 0.78;
           if (deck(i) || Math.abs(cc) > w - 0.5) { prev = null; continue; }
           const a = (0.1 + 0.46 * use[i]) * (0.8 + 0.4 * R()), row = [cc - 0.36, cc - 0.13, cc + 0.13, cc + 0.36].map(lo => pt(i * ds, lo)), c = chunk(row[1]);
+          if (T._tall && row.some(onTall)) { prev = null; continue; }
           const put = (R4, al) => R4.map((p, q) => vtx(c, p, [0.07, 0.07, 0.08, q === 1 || q === 2 ? al : 0], [[0.53, 0.66, 0.84, 0.97][q], 0.25])), ids = put(row, a);
           if (prev && prev.c !== c) prev = { ids: put(prev.row, prev.a) };   // (into the next chunk: the last row again, so the strip goes on)
           if (prev) for (let q = 0; q < 3; q++) { face(c, prev.ids[q], prev.ids[q + 1], ids[q + 1]); face(c, prev.ids[q], ids[q + 1], ids[q]); }
@@ -4194,8 +4197,8 @@ const World = (function () {
     // hotels), the lamps in its two built-up stretches
     vrsic: { reg: 'SI', town: 50, out: 90, towns: [{ n: 'KRANJSKA GORA', d0: null, d1: 2404, lamps: [[-60, 1196], [1596, 2090]] }] },
     // Medvode (the start in it), Zbilje, Valburga, Smlednik (def.names, OSM); their built-up stretches. The castle hill after Smlednik: out of them
-    medvode: { reg: 'SI', town: 50, out: 70, towns: [{ n: 'MEDVODE', d0: null, d1: 1786, lamps: [[-60, 1770]] }, { n: 'ZBILJE', d0: 2052, d1: 3502, lamps: [[2058, 2880]] },
-      { n: 'VALBURGA', d0: 4036, d1: 4688, lamps: [[4040, 4680]] }, { n: 'SMLEDNIK', d0: 4704, d1: 5242, lamps: [[4708, 5236]] }] },
+    medvode: { reg: 'SI', town: 50, out: 70, towns: [{ n: 'MEDVODE', d0: null, d1: 1786, lamps: [[-60, 1770]] }, { n: 'ZBILJE', d0: 2052, d1: 3548, lamps: [[2058, 2926]] },
+      { n: 'VALBURGA', d0: 4082, d1: 4735, lamps: [[4087, 4727]] }, { n: 'SMLEDNIK', d0: 4751, d1: 5289, lamps: [[4755, 5283]] }] },
     // Ouni and Kakaristo: the real stage's places (a farm, the junction in the fields: the name only). The village of the added section has no
     // name that could be checked: no board, no limits, no lamps
     ouni: { reg: 'FI', town: 50, out: 80, towns: [{ n: 'OUNI', d0: 1576, hamlet: true }, { n: 'KAKARISTO', d0: 8634, hamlet: true }] },
@@ -4239,7 +4242,9 @@ const World = (function () {
       return q.st <= S.Lend + 2 && Math.abs(q.u) <= T.stubHw(S, q.st) + S.lim + m ? S : null; };
     const edge = (i, side) => T.wAt(i) + (T.walk ? T.walk[side > 0 ? 1 : 0][i] : 0);   // (the asphalt's edge, with the sidewalk)
     const dOf = (i) => i * T.ds - sS;
-    const yAt = (i, x, z) => { const h = T.hy ? T.hy[i] : 0, y = gH(x, z); return Math.max(h - 0.7, Math.min(h + 0.35, y)); };
+    // the ground one sees: def.barrier's inside the barrier is the run-off's, at the height the cars drive on (Track.yAt; World draws it there), not the terrain under it
+    const QG = {}, gAt = T.def.barrier ? (x, z, i) => { const q = T.query(x, z, i, QG); return Math.abs(q.d) < (q.d > 0 ? q.br : q.bl) ? T.yAt(q) : gH(x, z); } : (x, z) => gH(x, z);
+    const yAt = (i, x, z) => { const h = T.hy ? T.hy[i] : 0, y = gAt(x, z, i); return Math.max(h - 0.7, Math.min(h + 0.35, y)); };
     const small = [], cell = (k) => { let j = small.indexOf(k); if (j < 0) { j = small.length; small.push(k); } return j; };   // (the atlas cells this road needs)
     const names = [], board = (nm, crossed) => { names.push([nm, crossed]); return names.length - 1; };
     { const n0 = o.props.length; o.props = o.props.filter(p => p.kind !== 'vboard'); st.removed = n0 - o.props.length; }   // (Medvode's boards without lettering: the lettered ones instead)
@@ -4270,8 +4275,8 @@ const World = (function () {
         const si = side > 0 ? 1 : 0, gp = T.gap && T.gap[si]; if (gp && (gp[i] || gp[Math.max(0, i - 2)] || gp[Math.min(N - 1, i + 2)])) continue;
         const at = (l) => [T.px[i] + T.nx[i] * side * l, T.pz[i] + T.nz[i] * side * l];
         const [lat, behind] = fitLat(i, side, edge(i, side) + off, hw, rc); let ok = true;
-        for (const l of [lat - hw, lat, lat + hw]) { const [x, z] = at(l);   // (the whole sign: not into a rock face or over a drop (its poles reach the ground), a house, a side road, another leg of the road)
-          if ((T.hy && (gH(x, z) > T.hy[i] + 0.8 || gH(x, z) < T.hy[i] - 0.95)) || (T.onBuilding && T.onBuilding(x, z, 0.4)) || stub(x, z, 0.4, i) || Math.abs(T.nearestIdx(x, z) - i) * T.ds > 40) { ok = false; break; } }
+        for (const l of [lat - hw, lat, lat + hw]) { const [x, z] = at(l), g = T.hy ? gAt(x, z, i) : 0;   // (the whole sign: not into a rock face or over a drop (its poles reach the ground), a house, a side road, another leg of the road)
+          if ((T.hy && (g > T.hy[i] + 0.8 || g < T.hy[i] - 0.95)) || (T.onBuilding && T.onBuilding(x, z, 0.4)) || stub(x, z, 0.4, i) || Math.abs(T.nearestIdx(x, z) - i) * T.ds > 40) { ok = false; break; } }
         if (!ok) continue;
         const [x, z] = at(lat);
         if (stub(x, z, 0.8, i) || busy(x, z, r)) continue;
@@ -4296,17 +4301,18 @@ const World = (function () {
       const next = cfg.towns.find(u => u.d0 != null && u.d0 > t.d1 - 1 && u.d0 < t.d1 + 60); if (!next && sign(t.d1 + 26, 'lim:' + cfg.out)) st.lim++;
     }
     // the chevrons on the outside of the sharpest bends: two, three round a hairpin (more than 150 degrees), not in a roundabout; in front of the rail or
-    // the wall round the bend where there is one (a paved hairpin's wall may stand well out), else 1.2 m off the asphalt
+    // the wall round the bend where there is one (a paved hairpin's wall may stand well out), else 1.2 m off the asphalt (def.barrier: the circuit's
+    // barrier far out, its bale stacks in front of it: 1.2 m off the asphalt, where the real road has them)
     for (const c of T.corners.slice().sort((p, q) => p.i0 - q.i0)) {
       if (!(c.minR <= 17 || c.angle > 2.6)) continue;
       const d0 = dOf(c.i0); if (d0 < 40 || d0 > T.finishS - sS - 10) continue;
       const side = -c.dir, n = c.angle > 2.6 ? 3 : 2, k = 'chev:' + (c.dir > 0 ? 'R' : 'L');
       for (let q = 0; q < n; q++) { const i = Math.round(c.i0 + (c.i1 - c.i0) * (0.12 + 0.76 * q / (n - 1))), si = side > 0 ? 1 : 0;
         if ((T.gap && T.gap[si][i]) || dOf(i) > T.finishS - sS - 10 || T.rings.some(R => Math.hypot(T.px[i] - R.x, T.pz[i] - R.z) < R.wz + 5)) continue;   // (not past the finish, nor round a roundabout)
-        const bar = side > 0 ? T.br[i] : T.bl[i], [lat, behind] = fitLat(i, side, visBar(i, side) ? Math.max(edge(i, side) + 1.2, bar - 1.05) : edge(i, side) + 1.2, 0.75, 0.12);   // (at the rail or the wall round the bend where there is one)
+        const bar = side > 0 ? T.br[i] : T.bl[i], [lat, behind] = fitLat(i, side, visBar(i, side) && !T.def.barrier ? Math.max(edge(i, side) + 1.2, bar - 1.05) : edge(i, side) + 1.2, 0.75, 0.12);   // (at the rail or the wall round the bend where there is one)
         const x = T.px[i] + T.nx[i] * side * lat, z = T.pz[i] + T.nz[i] * side * lat;
         if (stub(x, z, 0.5, i) || busy(x, z, 0.6) || (T.onBuilding && T.onBuilding(x, z, 1.2))) continue;
-        if (T.hy && (gH(x, z) > T.hy[i] + 0.8 || gH(x, z) < T.hy[i] - 0.95)) continue;
+        if (T.hy) { const g = gAt(x, z, i); if (g > T.hy[i] + 0.8 || g < T.hy[i] - 0.95) continue; }
         placed.push(x, z, 0.6);
         const j = Math.max(0, i - 16), ax = T.px[j] - x, az = T.pz[j] - z, al = Math.hypot(ax, az) || 1;   // (facing the cars coming into the bend)
         items.push({ kind: 'chev', p: { i, x, z, y: yAt(i, x, z), d: dOf(i), lat, side, behind }, nx: ax / al, nz: az / al, cell: cell(k), y: 1.7, w: 1.4, h: 1.4 }); st.chev++; }
@@ -4390,7 +4396,7 @@ const World = (function () {
     o.yard = Y.length;
   }
   function finish(o, tex) { if (o.props && T.def.pit) o.props = o.props.filter(p => !pitRoadAt(p.x, p.z, 0.6));   // (no knockable prop on the pit road's junctions)
-     o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); grassWorld(o, tex); verge(o); wornGrass(o); yardWorld(o, tex); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
+     o.thinned = THIN.n; o.cull = CULLM; o.shadowLo = SHLO; roadside(o); aoWorld(o, tex); if (!o.ownMarks) tyreMarks(o.root); roadWear(o, tex); if (World.cesta) World.cesta.finish(o, tex, T); grassWorld(o, tex); verge(o); wornGrass(o); yardWorld(o, tex); crowdStands(o); if (!o.crowdPts && !T.open) o.crowdPts = crowdPoints(o, tex); brakeBoards(o); if (World.life) ownRnd(() => World.life(o)); if (World.people) ownRnd(() => World.people(o)); return clouds(o.root, o, tex); }   // (World.life: the glades in the woods with the things and animals of the track's country, js/world-zivali.js; it and World.people (js/world-ljudje.js) name what they make with World's own generator (ownRnd): however many things they make, a seeded race runs as before)
   // where the crowds are, for their sound (Sfx: x, z, how many 0..1), on a circuit whose builder has not given them (the Red Bull Ring's
   // does): the spectators of every crowd of this build in 24 m cells, and the packed grandstands (the crowd picture) as full ones
   function crowdPoints(o, tex) {
@@ -4442,7 +4448,8 @@ const World = (function () {
     // Oddaljenost and the view's tilt) projects a candidate spot (pkClear); off screen, or clear of the car and the road just ahead on screen; whole in the picture
     // is nicer, a bit ahead of the car too, and it does not jump around (no car, the start line: a fixed upright view, not the screen's, so the pose is the same on every screen)
     { const R = car && typeof Render !== 'undefined' ? Render : null, cm = R && R.camera && R.camera.isCamera ? R.camera : null, uc = R && R.cam, up = !cm || cm.aspect < 1, V = PK_V;
-      const D = (up ? 46 : 30) * (uc ? uc.userZoom || 1 : 1.4) * (1 + 0.25 * clamp(spd / 55, 0, 1)), pt = (up ? 0.98 : 0.9) * (1 - (uc ? uc.userTilt || 0 : 0.3)), cp = Math.cos(pt), sn = Math.sin(pt), b = (up ? 13 : 8.5) - D * cp;
+      // (upright as Render's CHASE_UP, 46 × 1.1 / 1.4 since 11. 11. 2026; no car: the fixed view as it was, 46 at Srednje)
+      const D = (!up ? 30 : uc ? 46 * 1.1 / 1.4 : 46) * (uc ? uc.userZoom || 1 : 1.4) * (1 + 0.25 * clamp(spd / 55, 0, 1)), pt = (up ? 0.98 : 0.9) * (1 - (uc ? uc.userTilt || 0 : 0.3)), cp = Math.cos(pt), sn = Math.sin(pt), b = (up ? 13 : 8.5) - D * cp;
       V.k = 1 / Math.tan((up ? 29 : 23) * Math.PI / 180); V.as = cm ? cm.aspect : 0.46;   // (looking down the car's heading at the road a0 ahead, D m off)
       V.cx = ax + fx * b; V.cy = ay + D * sn; V.cz = az + fz * b; V.fx = fx * cp; V.fy = -sn; V.fz = fz * cp; V.rx = -fz; V.rz = fx; V.ux = fx * sn; V.uy = cp; V.uz = fz * sn;
       for (let q = 0; q < 4; q++) pkScr(V, ax + fx * 7 * q, ay + (q ? 0 : 0.7), az + fz * 7 * q, V.P, 2 * q); }   // (the car and the road ahead: the same for every candidate)
@@ -4576,7 +4583,7 @@ const World = (function () {
     NRN.i = bi; NRN.d = bd; NRN.dd = bdd; NRN.lat = bl;
     if (bi < 0) return NRN;
     NRN.h = hs / ws;
-    const f = bi + ba / ds, fi = Math.floor(f), i0 = ((fi % N) + N) % N, i1 = (i0 + 1) % N; NRN.hn = T.hy[i0] + (T.hy[i1] - T.hy[i0]) * (f - fi) + nrBankY(i0, bl);   // road height across from the point (the loop wraps; the banked edge)
+    const f = bi + ba / ds, fi = Math.floor(f), op = T.open, i0 = op ? clamp(fi, 0, N - 2) : ((fi % N) + N) % N, i1 = op ? i0 + 1 : (i0 + 1) % N, tf = op ? clamp(f - i0, 0, 1) : f - fi; NRN.hn = T.hy[i0] + (T.hy[i1] - T.hy[i0]) * tf + nrBankY(i0, bl);   // road height across from the point (the loop wraps; an open road's ends hold their height; the banked edge)
     return NRN;
   }
   function nrBankY(i, o) { const b = T.bank ? T.bank[i] : 0; return b > 0 ? -b * clamp(o * T.bankSide[i], -T.w, T.w + 6) : 0; }   // banked corner: height offset at lateral offset o (as Track.bankAt)
@@ -4747,7 +4754,7 @@ const World = (function () {
   }
 
   /* ================= SPECTATORS: an instanced crowd layer on IChunks, used by every world builder =================
-     One figure is 168 index verts (112 vertices): legs, torso, head, two arms and a flag that stays folded away unless the figure waves one.
+     One figure is 165 index verts (115 vertices): legs, torso, head, two arms and a flag that stays folded away unless the figure waves one.
      Vertex attribute aPart = bone * 10 + colour group; per instance aCrowd = (pose + phase, variant). The shader tints only the shirt, caps and
      long sleeves with the instance colour; skin, trousers, hair and flags come from small palettes picked by the variant (a hash of the position).
      Poses: 0 standing, 1 cheering, 2 waving, 3 filming, 4 clapping, 5 flag, 6 sitting on the grass. The arms move with uTime; people within
@@ -4761,7 +4768,7 @@ const World = (function () {
   function crNoise(u) { const i = Math.floor(u), f = u - i, a = crH(i, 0, 99), b = crH(i + 1, 0, 99); return a + (b - a) * f * f * (3 - 2 * f); }   // smooth 1D value noise (clumps along a run)
   const CR_SHIRTS = [[0.88, 0.16, 0.13], [0.95, 0.8, 0.18], [0.16, 0.4, 0.86], [0.94, 0.94, 0.92], [0.18, 0.62, 0.28], [0.98, 0.52, 0.1], [0.12, 0.13, 0.16], [0.6, 0.18, 0.5], [0.14, 0.5, 0.58], [0.82, 0.82, 0.84], [0.5, 0.32, 0.22], [0.2, 0.24, 0.42]];
   let crGeoC = null;
-  function crowdGeo() {   // the figure (1.72 m, facing local +z), built once and shared by every world
+  function crowdGeo() {   // the figure (1.71 m, facing local +z), built once and shared by every world
     if (crGeoC) return crGeoC;
     const P = [], Nm = [], Cl = [], Pa = [], Ix = [], W1 = [1, 1, 1];
     const quad = (a, b, c, d, ins, part, col) => {   // flat quad facing away from 'ins'
@@ -4771,19 +4778,39 @@ const World = (function () {
       for (const p of flip ? [a, d, c, b] : [a, b, c, d]) { P.push(p[0], p[1], p[2]); Nm.push(nx * s, ny * s, nz * s); Cl.push(col[0], col[1], col[2]); Pa.push(part); }
       Ix.push(k, k + 1, k + 2, k, k + 2, k + 3);
     };
-    const cub = (x0, x1, y0, y1, z0, z1, f) => {   // box faces px/nx/py/ny/pz/nz -> [part, colour]; missing faces are left out
-      const ins = [(x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2], F = {
-        px: [[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], nx: [[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]],
-        py: [[x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0]], ny: [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]],
-        pz: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], nz: [[x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [x1, y0, z0]] };
-      for (const k in f) { const q = F[k]; quad(q[0], q[1], q[2], q[3], ins, f[k][0], f[k][1]); }
+    const poly = (pts, ins, part, col) => {   // a flat convex polygon (a fan) facing away from 'ins'
+      const a = pts[0], b = pts[1], c = pts[2];
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+      let cx = 0, cy = 0, cz = 0; for (const p of pts) { cx += p[0]; cy += p[1]; cz += p[2]; } cx /= pts.length; cy /= pts.length; cz /= pts.length;
+      const flip = nx * (cx - ins[0]) + ny * (cy - ins[1]) + nz * (cz - ins[2]) < 0, s = flip ? -1 : 1, k = P.length / 3;
+      const L = flip ? [pts[0]].concat(pts.slice(1).reverse()) : pts;
+      for (const p of L) { P.push(p[0], p[1], p[2]); Nm.push(nx * s, ny * s, nz * s); Cl.push(col[0], col[1], col[2]); Pa.push(part); }
+      for (let i = 1; i + 1 < L.length; i++) Ix.push(k, k + i, k + i + 1);
     };
     // bones: 0 body, 1 left arm, 2 right arm, 3 legs, 4 flag pole (in the right hand), 5 flag cloth; colour groups: 0 as modelled, 1 shirt,
-    // 2 skin, 3 trousers, 4 hair / cap, 5 sleeve (shirt or bare arm), 6 / 7 the flag's two stripes
-    cub(-0.17, 0.17, 0, 0.84, -0.11, 0.11, { px: [33, W1], nx: [33, W1], pz: [33, W1], nz: [33, W1], ny: [30, [0.12, 0.1, 0.09]] });   // legs, dark soles (seen when sitting)
-    cub(-0.22, 0.22, 0.84, 1.42, -0.13, 0.13, { px: [1, W1], nx: [1, W1], pz: [1, W1], nz: [1, W1], py: [1, W1] });   // torso
-    cub(-0.11, 0.11, 1.44, 1.7, -0.12, 0.12, { px: [2, W1], nx: [2, W1], pz: [2, W1], nz: [4, W1], py: [4, W1] });   // head: face and ears, hair (or a cap) on top and at the back
-    for (const sd of [-1, 1]) { const b = sd < 0 ? 10 : 20, x0 = sd < 0 ? -0.32 : 0.22; cub(x0, x0 + 0.1, 0.8, 1.4, -0.06, 0.06, { px: [b + 5, W1], nx: [b + 5, W1], pz: [b + 5, W1], nz: [b + 5, W1], ny: [b + 2, W1] }); }   // arms, the hand at the end
+    // 2 skin, 3 trousers, 4 hair / cap, 5 sleeve (shirt or bare arm), 6 / 7 the flag's two stripes. The proportions of the scenes' people
+    // (docs/ljudje-grafika.md): broad shoulders sloping up to the neck, a rounder head, two legs; 165 index vertices and 115 corners (the boxes: 168, 112)
+    { const zf = (y) => 0.098 + 0.03 * (1 - y / 0.86), zb = (y) => -0.094 + 0.024 * (1 - y / 0.86), xo = (y) => 0.125 + 0.042 * y / 0.86;   // (front, back, the outer side at height y)
+      const A = [-xo(0), 0, zf(0)], Bq = [-0.03, 0, zf(0)], Cq = [0, 0.4, zf(0.4)], D = [0.03, 0, zf(0)], E = [xo(0), 0, zf(0)], F = [xo(0.86), 0.86, zf(0.86)], G = [-xo(0.86), 0.86, zf(0.86)];
+      const A1 = [-xo(0), 0, zb(0)], E1 = [xo(0), 0, zb(0)], F1 = [xo(0.86), 0.86, zb(0.86)], G1 = [-xo(0.86), 0.86, zb(0.86)], ins = [0, 0.43, 0];
+      poly([Cq, Bq, A, G, F, E, D], ins, 33, W1);   // legs (bone 3): the front one fan from the crotch round the gap between the legs (one plane: shared corners)
+      poly([A, G, G1, A1], ins, 33, W1); poly([E, F, F1, E1], ins, 33, W1); poly([A1, G1, F1, E1], ins, 33, W1);   // (the outer sides, the back)
+      poly([A, E, E1, A1], [0, 0.3, 0], 30, [0.12, 0.1, 0.09]); }   // (dark soles, seen when sitting)
+    { const w0 = [0.176, 0.8, 0.108, -0.104], w1 = [0.272, 1.36, 0.124, -0.114];   // torso (bone 0, shirt): from the hips out to the shoulders, up to the neck (a low pyramid, its top inside the head)
+      const r = (w) => [[w[0], w[1], w[2]], [-w[0], w[1], w[2]], [-w[0], w[1], w[3]], [w[0], w[1], w[3]]], R0 = r(w0), R1 = r(w1), ins = [0, 1.1, 0];
+      for (let j = 0; j < 4; j++) poly([R0[j], R0[(j + 1) % 4], R1[(j + 1) % 4], R1[j]], ins, 1, W1);
+      for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], [0, 1.5, -0.004]], [0, 1.3, 0], 1, W1); }
+    { const r = (y, w, d, z) => [[w, y, z + d], [-w, y, z + d], [-w, y, z - d], [w, y, z - d]];   // head (bone 0): narrower at the jaw; the face and the sides skin, the back and the crown hair (or a cap)
+      const R0 = r(1.45, 0.086, 0.096, 0.01), R1 = r(1.638, 0.116, 0.126, -0.004), ins = [0, 1.55, 0];
+      for (let j = 0; j < 4; j++) poly([R0[j], R0[(j + 1) % 4], R1[(j + 1) % 4], R1[j]], ins, j === 2 ? 4 : 2, W1);
+      for (let j = 0; j < 4; j++) poly([R1[j], R1[(j + 1) % 4], [0, 1.708, -0.012]], [0, 1.6, 0], 4, W1); }
+    for (const sd of [-1, 1]) {   // arms (bone 1 at x < 0, bone 2 at x > 0; the sleeve): three sides, thick at the shoulder, thin at the hand; both ends open (in the shoulder, down)
+      const b = sd < 0 ? 10 : 20, X = (x) => sd * x, ins = [X(0.27), 1.1, -0.004];
+      const tri3 = (y, k) => [[X(0.27 - 0.026 * k), y, -0.004 + 0.036 * k], [X(0.27 + 0.026 * k), y, -0.004 + 0.036 * k], [X(0.27), y, -0.004 - 0.042 * k]];
+      const Lb = tri3(0.83, 1.25), Lt = tri3(1.375, 1.85);
+      for (let j = 0; j < 3; j++) poly([Lb[j], Lb[(j + 1) % 3], Lt[(j + 1) % 3], Lt[j]], ins, b + 5, W1);
+    }
     quad([0.26, 0.82, 0.09], [0.3, 0.82, 0.09], [0.3, -0.68, 0.09], [0.26, -0.68, 0.09], [0.28, 0, 0], 40, [0.84, 0.84, 0.86]);   // flag pole, one quad (mirrored to face the camera)
     for (const [y0, y1, cg] of [[-0.955, -0.68, 56], [-1.23, -0.955, 57]]) quad([0.3, y1, 0.09], [1.2, y1, 0.09], [1.2, y0, 0.09], [0.3, y0, 0.09], [0.75, y0, 0], cg, W1);   // the cloth: two stripes
     const g = new THREE.BufferGeometry();
@@ -5197,7 +5224,7 @@ const World = (function () {
     gravelSeams, hex, ico, inPoly, lerp, mergeBands, nearest, nrAUV, nrAtlas, nrBankY, nrChamfer, nrConcTex, nrDecalTex, nrDem, nrDist, nrEdge,
     nrFar, nrFir, nrGCol, nrGH, nrGrassTex, nrGround, nrLC, nrLCf, nrLump, nrNUV, nrNear, nrNumTex, nrPN, nrPrep, nrShade, nrSlope, nrTileGeo,
     nrTileOn, nrTreeGeo, nringProps, ownRnd, parkOn, pikesProps, pitExcl, pitJunction, pitKerbs, pitLaneScenery, pitOpen, pitRoadAt, pixAvg, pkSky, polyDist, propFloorTable, puff, rng, roadsideProps, rock, rpHash,
-    shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, valueNoise2, vary, waterMat, waterline, wrapS
+    shoreBand, spaScreenTex, sstep, starCone, texAvg, tuftGeo, tuftWindMat, tvHeli, tyreStack, valueNoise2, vary, waterMat, waterline, wrapS
   };
   Object.defineProperties(API, {
     LOD: { get: () => LOD },
@@ -5210,7 +5237,7 @@ const World = (function () {
   });
   Object.assign(API, { AB, aPuff, aStar, aTier, aTrunk });   // (Drevesa A: the soft trees' kit, docs/drevesa-a.md)
 
-  function update(out, t, car, cam, rp) {
+  function update(out, t, car, cam, rp, race) {   // (race: the cars and the traffic, for a world of its own file (d.ext))
     if (!out) return;
     const d = out.dyn, tw = rp ? rp.t : t;   // (a replay, rp: the spectators on its timeline, back, paused or slower as it goes (js/game.js replayFrame); the rest on the clock)
     if (d.fade && cam) {   // Red Bull Ring: the wing fades out while the camera is inside it (the high kino / iso views over Start-Ziel)
@@ -5248,11 +5275,11 @@ const World = (function () {
     if (d.bsPel) API.bsPelicanStep(d.bsPel, t);   // Big Sur: the pelicans fly along the coast
     if (d.bsWhale) for (const w of d.bsWhale) { const u = (t * 0.16 + w.ph) % 1, f = u < 0.25 ? Math.sin(u / 0.25 * Math.PI) : 0; w.m.visible = f > 0.02; w.m.scale.set(0.6 + f * 0.6, Math.max(0.01, f), 0.6 + f * 0.6); }   // Big Sur: the whales blow every ~6 s
     if (d.lfFx) API.lfFxUpdate(d.lfFx, t, car);   // Longford: the chimneys' smoke, the dust off the shoulder, the galahs taking off
-    if (d.irFar) API.irFarUpdate(d.irFar, car ? cam : null);   // Irohazaka: the view beyond the corridor follows the camera
+    if (d.irFar) (d.irFar.upd || API.irFarUpdate)(d.irFar, car ? cam : null);   // Irohazaka: the view beyond the corridor follows the camera (upd: a world's own, Ngorongoro's lighter haze)
     if (d.dt) API.dtUpdate(d.dt, t, car, cam);   // Detroit: the lit windows, the far view
     if (d.mkFar) API.maFarUpdate(d.mkFar, car ? cam : null);   // Mauna Kea: the flanks, the sea of clouds and the volcanoes on the horizon follow the camera
     if (d.gaFar) API.gaFarUpdate(d.gaFar, car ? cam : null);   // the Great Alpine Road: the same, a little less often
-    if (d.ext) d.ext(t, car, cam);   // a world of its own file (World.ext): its moving things
+    if (d.ext) d.ext(t, car, cam, race);   // a world of its own file (World.ext): its moving things
     if (d.rrMist) API.rrMist(d.rrMist, t);   // Serra do Rio do Rastro: the mist rises out of the valley
     if (d.pkLife) API.pkWildlifeUpdate(d.pkLife, t, car);   // Pikes Peak: marmots and bighorn sheep
     if (d.life && World.lifeStep) World.lifeStep(d.life, t, car, cam);   // life in the woods (js/world-zivali.js): the animals alone walk or graze

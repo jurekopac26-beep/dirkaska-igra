@@ -1,0 +1,312 @@
+{
+ "id": "zurich",
+ "about": "Zürich, Švica (id zurich): city race from the lake up the hill, one lap anticlockwise: Utoquai along the lake, Feldeggstrasse to Kreuzplatz, up Klosbachstrasse and Bergstrasse, down Dolderstrasse, Hottingerstrasse and Rämistrasse back to the lake at Bellevue (the user's choice 7. 11. 2026: along the lake, then up the hill)",
+ "box": [
+  47.355,
+  8.515,
+  47.385,
+  8.585
+ ],
+ "closed": true,
+ "osmStep": [
+  0.01,
+  0.01
+ ],
+ "route": [
+  [
+   47.3655,
+   8.5462,
+   "Utoquai",
+   "start: Utoquai, southbound along the lake"
+  ],
+  [
+   47.3625,
+   8.5474,
+   "Utoquai",
+   ""
+  ],
+  [
+   47.3615,
+   8.55,
+   "Feldeggstrasse",
+   "east, away from the lake"
+  ],
+  [
+   47.364,
+   8.5546,
+   "Feldeggstrasse",
+   "Kreuzplatz"
+  ],
+  [
+   47.3662,
+   8.557,
+   "Klosbachstrasse",
+   "north-east, uphill"
+  ],
+  [
+   47.369,
+   8.5628,
+   "Klosbachstrasse",
+   ""
+  ],
+  [
+   47.3703,
+   8.5637,
+   "Bergstrasse",
+   "Römerhof"
+  ],
+  [
+   47.3714,
+   8.5626,
+   "Bergstrasse",
+   "up"
+  ],
+  [
+   47.3709,
+   8.56,
+   "Dolderstrasse",
+   "west, downhill"
+  ],
+  [
+   47.3703,
+   8.5573,
+   "Dolderstrasse",
+   "Hottingen"
+  ],
+  [
+   47.3698,
+   8.553,
+   "Hottingerstrasse",
+   "west"
+  ],
+  [
+   47.3695,
+   8.55,
+   "Hottingerstrasse",
+   ""
+  ],
+  [
+   47.368,
+   8.5455,
+   "Rämistrasse",
+   "down to the lake"
+  ]
+ ],
+ "prefer": [
+  "Bergstrasse",
+  "Dolderstrasse",
+  "Feldeggstrasse",
+  "Hottingerstrasse",
+  "Klosbachstrasse",
+  "Rämistrasse",
+  "Utoquai"
+ ],
+ "geoRoads": [
+  "Asylstrasse",
+  "Augustinergasse",
+  "Badenerstrasse",
+  "Bahnhofbrücke",
+  "Bahnhofplatz",
+  "Bahnhofquai",
+  "Bahnhofstrasse",
+  "Bellevueplatz",
+  "Bergstrasse",
+  "Bleicherweg",
+  "Bärengasse",
+  "Börsenstrasse",
+  "Central",
+  "Dolderstrasse",
+  "Falkenstrasse",
+  "Feldeggstrasse",
+  "Forchstrasse",
+  "Fraumünsterstrasse",
+  "Freiestrasse",
+  "Färberstrasse",
+  "Füsslistrasse",
+  "Gemeindestrasse",
+  "Gessnerallee",
+  "Gloriastrasse",
+  "Heimplatz",
+  "Hirschengraben",
+  "Hofstrasse",
+  "Hottingerstrasse",
+  "In Gassen",
+  "Kappelergasse",
+  "Kirchgasse",
+  "Klosbachstrasse",
+  "Kreuzbühlstrasse",
+  "Kreuzplatz",
+  "Kreuzstrasse",
+  "Kurhausstrasse",
+  "Limmatplatz",
+  "Limmatquai",
+  "Lintheschergasse",
+  "Löwenstrasse",
+  "Marktgasse",
+  "Merkurstrasse",
+  "Minervastrasse",
+  "Museumstrasse",
+  "Mühlebachstrasse",
+  "Mühlegasse",
+  "Münsterbrücke",
+  "Münstergasse",
+  "Münsterhof",
+  "Neumühlequai",
+  "Niederdorfstrasse",
+  "Oberdorfstrasse",
+  "Paradeplatz",
+  "Pelikanstrasse",
+  "Pilgerweg",
+  "Plattenstrasse",
+  "Poststrasse",
+  "Predigerplatz",
+  "Quaibrücke",
+  "Rathausbrücke",
+  "Rathausquai",
+  "Rennweg",
+  "Rindermarkt",
+  "Rämistrasse",
+  "Römerhofplatz",
+  "Schanzengraben",
+  "Schifflände",
+  "Schillerstrasse",
+  "Schipfe",
+  "Sechseläutenplatz",
+  "Seefeldquai",
+  "Seefeldstrasse",
+  "Seidengasse",
+  "Seilergraben",
+  "Selnaustrasse",
+  "Sihlporte",
+  "Sihlquai",
+  "Sihlstrasse",
+  "Sonnenquai",
+  "Stadthausquai",
+  "Steinwiesstrasse",
+  "Stockerstrasse",
+  "Strehlgasse",
+  "Stüssihofstatt",
+  "Talacker",
+  "Talstrasse",
+  "Theaterstrasse",
+  "Torgasse",
+  "Uraniastrasse",
+  "Utoquai",
+  "Walchebrücke",
+  "Weinplatz",
+  "Werdmühleplatz",
+  "Werdmühlestrasse",
+  "Wolfbachstrasse",
+  "Zeltweg",
+  "Zähringerplatz",
+  "Zähringerstrasse"
+ ],
+ "geoWater": [
+  "Limmat",
+  "Zürichsee",
+  "Schanzengraben",
+  "Sihl"
+ ],
+ "marks": [
+  [
+   "Operna hiša",
+   "Opera house",
+   "theatre",
+   [
+    "w31966519"
+   ]
+  ],
+  [
+   "Cerkev z vitkim zvonikom",
+   "Slender-spired church",
+   "church",
+   [
+    "w61412467"
+   ]
+  ],
+  [
+   "Majhna cerkev",
+   "Small church",
+   "church",
+   [
+    "w39517539"
+   ]
+  ],
+  [
+   "Umetnostni muzej",
+   "Art museum",
+   "museum",
+   [
+    "r3768127"
+   ]
+  ],
+  [
+   "Gledališče",
+   "Theatre",
+   "theatre",
+   [
+    "w276558284"
+   ]
+  ]
+ ],
+ "places": [
+  [
+   "Utoquai",
+   null,
+   0
+  ],
+  [
+   "Feldeggstrasse",
+   null,
+   670
+  ],
+  [
+   "Kreuzplatz",
+   null,
+   1360
+  ],
+  [
+   "Klosbachstrasse",
+   null,
+   1500
+  ],
+  [
+   "Römerhof",
+   null,
+   2430
+  ],
+  [
+   "Dolderstrasse",
+   null,
+   2650
+  ],
+  [
+   "Hottingerstrasse",
+   null,
+   3230
+  ],
+  [
+   "Heimplatz",
+   null,
+   3840
+  ],
+  [
+   "Rämistrasse",
+   null,
+   3870
+  ],
+  [
+   "Bellevue",
+   null,
+   4380
+  ]
+ ],
+ "driveExtra": [
+  "pedestrian"
+ ],
+ "dist": {
+  "bld": 140,
+  "grid": 300,
+  "water": 250
+ }
+}

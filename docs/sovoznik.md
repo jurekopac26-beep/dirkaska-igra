@@ -21,7 +21,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
 - **Imena krajev in komentator**: `track.names`, napis pod uro ~70 m prej in `Comm.say`. Sovoznik imen ne bere (razdelek Pravna varnost).
 - **Table pred zaviranjem** (`Track.brakeBoards`): samo dirkališča. Ostanejo.
 - **Misije**: misija »PACE NOTES« na novi mapi (`js/nvmenu.js`, `js/missions/`) ima svoje klice. `MisKit.backRoad` skrije puščico na cesti, prevoženi v obratni smeri. Misije ostanejo, kot so.
-- **#250 (Zabava, osnutek)**: izzivi ob cesti (radar, odsek, drift cona, skok, zlati smerniki) in Živa cesta (kamenje, žival, dela na cesti, traktor) govorijo prek `Comm.say` in sovoznika ne podvajajo. Ko bo #250 na `main`, lahko sovoznik doda še »pozor, kamenje« ipd. (pozneje, ni v tem sklopu).
+- **#250 (Zabava, osnutek)**: izzivi ob cesti (radar, odsek, drift cona, skok, zlati smerniki) govorijo prek `Comm.say` in sovoznika ne podvajajo.
 
 ## Lestvica ostrine
 
@@ -165,7 +165,7 @@ Ugotovitev: novost ne podvaja ničesar. Razširi relijskega sovoznika, ki že ob
   - dirkališče brez sovoznika ali po izbiri uporabnika.
 - **`smoke.test.mjs`, `tests/lang.test.js` in `perf.test.mjs`** ostanejo zeleni.
 - Izvedeno 5. 11. 2026: opis obeh testov je v `tests/README.md`. Dirkališče brez sovoznika preveri Node test (`codrvRoad`); posnetke besed preveri test, ko pride glas.
-- Izvedeno 6. 11. 2026 (korak 2): `tests/sovoznik-glas.test.js` (Node: vsaka beseda in razdalja ima posnetek in nič drugega, odmiki znotraj lista, MP3 cel, velikost do 160 KB, vsak klic vseh cest iz lista do 8,5 s, polovica do 3,7 s (z `am_michael` 7 s in 3,2 s, razdelek Odločitve), zasluge v `README.md`); `tests/browser/sovoznik.test.mjs`: na Rio do Rastro (ležeče, z zvokom) in Ouninpohji vsi klici iz lista, nobeden prek `speechSynthesis`, z glasom 20–260 m pred ovinkom.
+- Izvedeno 6. 11. 2026 (korak 2): `tests/sovoznik-glas.test.js` (Node: vsaka beseda in razdalja ima posnetek in nič drugega, odmiki znotraj lista, MP3 cel, velikost do 160 KB, vsak klic vseh cest iz lista do 8,5 s, polovica do 4,4 s (do 11. 11. 2026 3,7 s: deset cest na `main` ima polovico klicev do 3,2 s, 16 novih cest iz N1–N8 in Killar do 4,2 s, vseh 26 skupaj 4,00 s, najdaljši klic 7,87 s; z `am_michael` 7 s in 3,2 s, razdelek Odločitve), zasluge v `README.md`); `tests/browser/sovoznik.test.mjs`: na Rio do Rastro (ležeče, z zvokom) in Ouninpohji vsi klici iz lista, nobeden prek `speechSynthesis`, z glasom 20–260 m pred ovinkom.
 
 ## Koraki izvedbe in ocena
 
