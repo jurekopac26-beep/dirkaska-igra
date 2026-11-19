@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500">
+  <title>Cuba</title>
+  <!-- Ratio 1:2. Five equal horizontal stripes, blue and white (blue at top and bottom); a red equilateral triangle
+       at the hoist, its side the flag's height; a white five-pointed star, point up, at the triangle's centre.
+       Colours: blue #002A8F, red #CF142B. -->
+  <rect width="1000" height="500" fill="#002A8F"/>
+  <rect y="100" width="1000" height="100" fill="#FFFFFF"/>
+  <rect y="300" width="1000" height="100" fill="#FFFFFF"/>
+  <path fill="#CF142B" d="M0 0L433.013 250L0 500Z"/>
+  <path fill="#FFFFFF" d="M144.340 177.500L160.617 227.596L213.292 227.596L170.677 258.557L186.954 308.654L144.340 277.693L101.726 308.654L118.003 258.557L75.388 227.596L128.063 227.596Z"/>
+</svg>

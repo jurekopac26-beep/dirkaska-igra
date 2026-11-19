@@ -27,10 +27,11 @@ const id = process.argv[2], onlyMedals = process.argv.includes('--medalje');
 if (!id || !/^[a-z0-9]+$/.test(id)) { console.log('raba: node tools/nova-proga.mjs <id> [--medalje]'); process.exit(2); }
 
 // the plan's table: | # | `id` | Ime | Angleško | Vožnja | Obseg OSM |
-const row = rd('docs/gorske-proge.md').split('\n').map(l => l.split('|').map(c => c.trim())).find(c => c[2] === '`' + id + '`');
-if (!row) { console.log('proge ' + id + ' ni v tabeli Proge v docs/gorske-proge.md'); process.exit(2); }
-const [, num, , name, en, drive] = row, left = /^leva/.test(drive), [place, country] = name.split(', '), [enPlace, enCountry] = en.split(', ');
+// (a short road outside that plan, e.g. a short track with a landmark of docs/proge-po-drzavah.md: its ime, en and vozi in tools/predogled/proge.json)
 const PJ = JSON.parse(rd('tools/predogled/proge.json')), E = PJ[id] || {}, cfg = E.cfg || {}, U = E.uvoz || {};
+const row = rd('docs/gorske-proge.md').split('\n').map(l => l.split('|').map(c => c.trim())).find(c => c[2] === '`' + id + '`') || (E.ime && ['', String(E.n || ''), '`' + id + '`', E.ime, E.en, E.vozi || 'desna']);
+if (!row) { console.log('proge ' + id + ' ni v tabeli Proge v docs/gorske-proge.md (ne ime, en, vozi v tools/predogled/proge.json)'); process.exit(2); }
+const [, num, , name, en, drive] = row, left = /^leva/.test(drive), [place, country] = name.split(', '), [enPlace, enCountry] = en.split(', ');
 const trackF = 'js/tracks/' + id + '.js', worldF = 'js/world-' + id + '.js', hex = (n) => '0x' + Number(n || 0).toString(16).padStart(6, '0');
 const jsq = (s) => "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 console.log(`${id}: ${name} (${en}), vožnja po ${left ? 'levi' : 'desni'}, proga ${num} načrta`);

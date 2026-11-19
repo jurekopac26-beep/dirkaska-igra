@@ -103,6 +103,7 @@ Izmerjeno na sredinski črti ceste v igri z `node tools/proge-pregled.js` (orodj
 | Isalo, Madagaskar | `isalo` | odprta cesta | 2,5 km | 44 | 96 % | 0 | −33 m |
 | Livingstone, Zambija | `livingstone` | odprta cesta | 4,4 km | 75 | 89 % | 0 | +6 m |
 | Darvaz, Tadžikistan | `darvaz` | odprta cesta | 3,9 km | 174 | 71 % | 0 | +2 m |
+| Viñales, Kuba | `vinales` | odprta cesta | 1,3 km | 137 | 83 % | 0 | −16 m |
 <!-- meritve:konec -->
 
 ## Do 60 m ob cesti
@@ -196,3 +197,4 @@ Povzeto iz opisov prog (3. 11. 2026). Nova proga: dopiši svojo vrstico ročno, 
 - **Tocancipá, Kolumbija** (`tocancipa`, asfalt): Ravna savana na 2.560 m; Pašniki kikuja, njive na črni prsti, evkalipti, bori in vetrobranske ciprese, cvetoči uleks; Rastlinjaki cvetličnih farm, dva ribnika s sitjem, tribuna po OSM, makadamska steza in karting, cerkev in vasi.
 - **Wadi Mujib, Jordanija** (`mujib`, asfalt): Pet serpentin iz kanjona; Nizki betonski parapeti, kjer teren pada, v serpentinah rumeni bloki, smerni stebrički; Golo pobočje v plasteh apnenca in laporja, skalne police in melišča; Razgledišče s stojnico za čaj, beduinski šotor s pickupom; nubijski kozorogi, koze, kamele in osli. Dlje: jezero za jezom na dnu kanjona, planota.
 - **Atitlán, Gvatemala** (`atitlan`, asfalt): Rob mesta Sololá: barvite hiše iz zidakov s pločevinastimi strehami (OSM), bolnišnica brez imena, restavracija s senčniki, igrišči; Dvojna rumena črta, nizki betonski zidci, kjer teren pada; Daljnovod nad cesto, borov gozd s cipresami, koruza, vulkanske skale. Dlje: jezero Atitlán in vulkani San Pedro, Tolimán in Atitlán.
+- **Viñales, Kuba** (`vinales`, asfalt): Cesta po dolini med mogoti: strmi apnenčasti stolpi s temnimi progami po stenah, zelenje na policah in gozd na zaobljenih vrhovih, od ~47 % do ~88 % 28–60 m od ceste (trije stolpi ~14 m od sredine), prvih ~600 m po glavni cesti in dnu doline brez njih; palme in listavci, polja v dolini; bela sredinska črta; nevidna ograja ob robu; brez poslikav, napisov in imen.

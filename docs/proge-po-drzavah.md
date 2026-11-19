@@ -130,6 +130,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Oman | Musandam (PR #681): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
 | Etiopija | Limalimo (PR #682): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
 | Tadžikistan | Darvaz (PR #683): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
+| Kuba | Viñales (`vinales`, kratke proge 17, PR #707; namesto Santiaga de Cube, Matej 15. 11. 2026): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
@@ -188,11 +189,11 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
 | Angola | Luanda (proge z znamenitostjo, 1) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
-| Zambija | Livingstone (proge z znamenitostjo, 2) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Zambija | Livingstone (proge z znamenitostjo, 2) | v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) |
 | Madagaskar | Isalo (proge z znamenitostjo, 3; zamenjava za Antananarivo) | v delu (jure.kopac26), #722, veja `proge/zamenjava-3` (`docs/proge/isalo.md`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Kenija | Mombasa (proge z znamenitostjo, 4) | pripravljena (#718, veja `proge/mombasa` na `proge/luanda`); vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Uzbekistan | Hiva (proge z znamenitostjo, 5) | v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
-| Gana | Elmina (proge z znamenitostjo, 6) → Atimpoku | Elmina odpade (občutljiv kraj); namesto nje Atimpoku z mostom Adomi (#721, veja `proge/zamenjava-6`); bila v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
+| Gana | Elmina (proge z znamenitostjo, 6) → Atimpoku | Elmina odpade (občutljiv kraj); namesto nje Atimpoku z mostom Adomi (#721): v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) |
 | Kambodža | Bokor (proge z znamenitostjo, 7) | odpade; zamenjava je Laos (Phou Hin Boun); bil v delu (jure.kopac26), veja `proge/luanda`; vnaprejšnja potrditev uporabnika 15. 11. 2026 (`docs/odlocitve.md`) |
 | Laos | Phou Hin Boun (proge z znamenitostjo, 7; zamenjava za Bokor) | v zbirni Proge 3 |
 | Nepal | Kali Gandaki (Nove proge, #677) | v zbirni Proge 3; potrditev Mateja 19. 11. 2026 (#382) |
