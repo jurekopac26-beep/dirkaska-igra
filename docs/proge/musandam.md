@@ -21,6 +21,7 @@ Okolica (skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z videzom 
 - **Obzorje**: pravi teren ~9 km naokoli (Copernicus DEM): grebeni polotoka, zalivi in morje.
 - **Cesta**: omanske oznake (bela prekinjena sredinska črta, v ovinkih neprekinjena), črno-rumene smerne table, rdeči opozorilni trikotniki, jeklene ograje na strani prepada; nobenih imen podjetij ali znakov služb.
 - **Dirka**: štart z lučmi, portali kontrolnih točk z višino, cilj s tablo MUSANDAM · OMAN; malo gledalcev (`fewFans`), redarji in snemalci.
+- **Izletna cona** (`docs/proge-po-drzavah.md`): ograja, zid ali prepad do 3 m od roba asfalta na 0 % dolžine dirke, na obeh straneh 0 % (v igri 19. 11. 2026; povprečno 7,0 m do roba proge). Na strani prepada ograja (proga s prepadom, izjema v `docs/proge-po-drzavah.md`); rob proge avto ustavi, zato ne pade čez rob ali v morje (pravilo »Padec čez rob samo na Killarju«).
 - **Približki**: akacije, skale, čolni in gledalci so razporejeni po rabi tal in legi ob cesti, ne po resničnih legah; hiše so preproste oblike po obrisih. Ni imen hotelov, izletov z ladjami ali trgovin.
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py musandam --zapisi`, nastavitve v `tools/proga/proge.json`). Vire glej v `README.md` pod »Zasluge«.

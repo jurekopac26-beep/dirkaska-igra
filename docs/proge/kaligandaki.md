@@ -22,6 +22,7 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Dirka**: start z lučmi pod portalom START, modri portali kontrolnih točk z višino, cilj FINISH, transparent KALI GANDAKI · KOPCHEPANI · 1.672 m (samo zemljepisna imena), pisane zastavice ob štartni vrsti, redke mirne skupine gledalcev ob startu, cilju in serpentinah.
 - **Živali**: tropi koz in ovac na pobočjih ob cesti (`sheep`).
 - **Fotografije**: Wikimedia Commons in Mapillary iz okolja seje nista bila dosegljiva (omrežje), zato je videz (gole stene, melišča, suha trava, kamnite hiše) narejen po podatkih (OpenStreetMap, Sentinel-2, Copernicus DEM, ESA WorldCover) in splošnem poznavanju kraja, brez primerjave s fotografijami z istih mest. Nikoli Google Maps, Earth ali Street View.
+- **Izletna cona** (`docs/proge-po-drzavah.md`): ograja, zid ali prepad do 3 m od roba asfalta na 0 % dolžine dirke, na obeh straneh 0 % (v igri 19. 11. 2026; povprečno 7,9 m do roba proge). Na strani prepada ograja (proga s prepadom, izjema v `docs/proge-po-drzavah.md`); rob proge avto ustavi, zato ne pade čez rob ali v reko (pravilo »Padec čez rob samo na Killarju«).
 - **Približki**: grmičevje, suha trava, skale, melišča, koze in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Hiše so generične (kamnito pritličje, pločevinasta streha), brez imen lokalov in trgovin.
 - **Pravno**: samo zemljepisna imena (Kali Gandaki, Daulagiri, Anapurna, Dana, Kopčepani, slap Rupse); brez imen vaških prenočišč, trgovin ali katere koli oddaje, po kateri je cesta znana.
 

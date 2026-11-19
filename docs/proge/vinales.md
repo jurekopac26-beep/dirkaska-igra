@@ -9,4 +9,5 @@ Viñales (Kuba): 1,34 km asfaltne ceste: 110 m po glavni cesti, desni zavoj (~10
 
 - **Dirka**, **kronometer**, **promet**, **policija**: kot na Vršiču (štiri vožnje na eni kartici).
 - **Podatki**: sredinska črta, stranske ceste, stavbe, voda in parkirišča iz OpenStreetMap; višine Copernicus GLO-30; raba tal ESA WorldCover (uvoznik `tools/proga-uvoz.mjs`).
+- **Izletna cona** (`docs/proge-po-drzavah.md`): ograja, zid ali prepad do 3 m od roba asfalta na 0 % dolžine dirke, na obeh straneh 0 % (v igri 19. 11. 2026; povprečno 4,7 m do roba proge). Rob proge avto ustavi, zato ne pade čez rob (pravilo »Padec čez rob samo na Killarju«).
 - **Približki**: drevesa, skale, gledalci in živali so razporejeni po rabi tal in naklonu, ne po resničnih legah; stavbe so poenostavljene, table generične, brez imen podjetij.

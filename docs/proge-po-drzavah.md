@@ -59,8 +59,8 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
 | Savusavu, Fidži | PR #693 | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
 | Koror, Palau | PR #694 | 0 % (v igri, povprečno 5,7 m) | izletna cona je |
-| Musandam, Oman | PR #681 | večinoma (ograja na strani prepada) | ni ovira (odločitev 13. 11. 2026); padca ni (ograja) |
-| Limalimo, Etiopija | PR #682 (zbirna Proge 3) | ni izmerjeno (ob prepadu jeklena ograja, nevidna stena proge) | proga ob prepadu, odobrena (odločitev uporabnika 13. 11. 2026, tabla #382, komentar 6842851627); padca ni |
+| Musandam, Oman | PR #681 (zbirna Proge 3, #788) | ocena: večinoma (ograja na strani prepada); v igri 19. 11. 2026 0 %, obe 0 % (povprečno 7,0 m do roba proge) | ni ovira (odločitev 13. 11. 2026); padca ni (ograja) |
+| Limalimo, Etiopija | PR #682 (zbirna Proge 3) | v igri 19. 11. 2026 0 %, obe 0 % (povprečno 7,0 m do roba proge; ob prepadu jeklena ograja, nevidna stena proge) | proga ob prepadu, odobrena (odločitev uporabnika 13. 11. 2026, tabla #382, komentar 6842851627); padca ni |
 | Killar, Indija | PR #283 | 99 %, obe 58 % (v igri, povprečno 2,3 m) | brez izletne cone (prepad in stena ob ozki polici); v PR, samo javljeno |
 | Pau, Francija | Nove proge 7 | ulična proga | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026) |
 | Puerto Madero, Argentina | kratke D, Načrtovano | 75 %, obe 38 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
@@ -98,7 +98,7 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Buriram, Tajska | Nove proge za 1.0, linija A (A15) | OSM 0 %; z zidom boksov ~20 % | izletna cona je |
 | Sakhir, Bahrajn | Nove proge za 1.0, linija A (A16) | OSM 0 % (zidovi za izletnimi conami od 10 m od sredine); z zidom boksov ~13 % | izletna cona je |
 | Cromwell, Nova Zelandija | Nove proge za 1.0, linija A (A17) | OSM 1 % (most); letalski posnetek LINZ 2025 (CC BY 4.0): izletne cone ob vsem krogu, z zidom boksov in podvozom ~8 % | izletna cona je |
-| Wadi Mujib, Jordanija; Atitlán, Gvatemala | Nove proge za 1.0, del 4 (K2, K5) | OSM 0 % | izletna cona je |
+| Wadi Mujib, Jordanija; Atitlán, Gvatemala | Nove proge za 1.0, del 4 (K2, K5); zbirna Proge 3 (#788) | OSM 0 %; v igri 19. 11. 2026 Mujib 57 %, Atitlán 31 %, obe 0 %, vse točno na meji 3,0 m (parapeti oz. zidovi), bliže nikjer (povprečno 6,6 m in 7,7 m do roba proge) | izletna cona je (meja, ne bližje) |
 | Lusail, Katar | Nove proge za 1.0, linija A (A18) | OSM 3 % (ograja); z zidom boksov ~30 % | izletna cona je |
 | Termas de Río Hondo, Argentina | Nove proge za 1.0, linija A (A19) | OSM 0 %; z zidom boksov ~14 % | izletna cona je |
 | Koli, Finska | proge z ledom (zimska) | OSM 2 % (stavbe), ograj, zidov in sten ni | izletna cona je |

@@ -22,6 +22,7 @@ Okolica (gradi jo skupni graditelj kratkih prog `buildKratke` v `js/world-kratke
 - **Živali**: nubijski kozorogi, koze, kamele in osli ob cesti (`zivali`).
 - **Zvoki okolja**: veter v kanjonu po vsej progi (`wind` 0,4 v datoteki proge, `js/sfx-okolje.js`): ob golem pobočju ni gozda, vode ne vasi.
 - **Fotografije**: videz je narejen po podatkih (OpenStreetMap, ESA WorldCover, višinski model) in splošnem poznavanju kraja, brez Google Maps, Google Earth ali Street View.
+- **Izletna cona** (`docs/proge-po-drzavah.md`): ograja, zid ali prepad do 3 m od roba asfalta na 57 % dolžine dirke, na obeh straneh 0 % (v igri 19. 11. 2026; povprečno 6,6 m do roba proge). Vseh 57 % je točno na meji 3,0 m (nizki parapeti na strani padca), bliže pregrade ni nikjer; na drugi strani je cona povsod. Rob proge avto ustavi, zato ne pade čez rob (pravilo »Padec čez rob samo na Killarju«).
 - **Približki**: skale, police, melišča, akacije in grmičevje so razporejeni po naklonu in rabi tal, ne po resničnih legah. Ob odseku v OpenStreetMap ni ničesar razen jezera: počivališče s stojnico in beduinski šotor sta generična (postavljena na primerna mesta ob cesti, oblika splošna), plasti kamnine so slogovne (ne po geološki karti).
 - **Pravno**: samo zemljepisna imena (Wadi Mujib, Dhiban, Karak, Madaba, jez Mujib) in splošne besede; ime ceste (»kraljeva cesta«) ni zemljepisno ime, zato ga igra ne uporablja. Stojnica in šotor sta brez imen in napisov.
 

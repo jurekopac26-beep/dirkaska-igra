@@ -21,6 +21,7 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Dirka**: start z lučmi pod portalom START, portali kontrolnih točk z višino, cilj FINISH s tablo LIMALIMO in višino, transparent SIMIEN (samo zemljepisna imena), gledalci ob startu, cilju in kontrolnih točkah.
 - **Živali**: tropi ovc na pobočjih ob cesti.
 - **Negotovo**: barva sredinske črte (v Etiopiji bela ali rumena) ni preverjena s fotografijami; v igri je bela. Fotografije z Wikimedia Commons in Mapillary iz okolja seje niso bile dosegljive, zato je videz narejen po podatkih (OpenStreetMap, Sentinel-2) in splošnem poznavanju kraja.
+- **Izletna cona** (`docs/proge-po-drzavah.md`): ograja, zid ali prepad do 3 m od roba asfalta na 0 % dolžine dirke, na obeh straneh 0 % (v igri 19. 11. 2026; povprečno 7,0 m do roba proge). Na strani prepada ograja (proga s prepadom, izjema v `docs/proge-po-drzavah.md`); rob proge avto ustavi, zato ne pade čez rob (pravilo »Padec čez rob samo na Killarju«).
 - **Približki**: rastje, skale, ovce in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah.
 - **Pravno**: samo zemljepisna imena (Limalimo, Simien); brez imen koč in hotelov, uradov narodnega parka ali graditeljev ceste.
 

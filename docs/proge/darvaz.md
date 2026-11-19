@@ -18,6 +18,7 @@ Slabe štiri kilometre glavne ceste M41 (РБ04) po desnem bregu reke Panj v sot
 - Obzorje: daljni teren ~9 km naokoli (celica 250 m), da se soteska vidi v daljavo.
 - Cesta: bela prekinjena sredinska črta 3 m / 9 m, polna skozi ostre ovinke. Na strani prepada je jeklena ograja, zid proge drži vsak avto na cesti (padec čez rob je samo na Killarju).
 - Dirka: generične table in transparenti (DARVAZ, M41 · PANJ), redarji in snemalci po pravilih vseh prog, gledalcev čim manj.
+- Izletna cona (`docs/proge-po-drzavah.md`): ograja, zid ali prepad do 3 m od roba asfalta na 0 % dolžine dirke, na obeh straneh 0 % (v igri 19. 11. 2026; povprečno 6,1 m do roba proge). Na strani prepada ograja (proga s prepadom, izjema v `docs/proge-po-drzavah.md`); rob proge avto ustavi, zato ne pade čez rob ali v Panj (pravilo »Padec čez rob samo na Killarju«).
 - Približki: vasi, bližnjice in vodovodi ob cesti niso narisani. Stene so iz višinskega modela 30 m in delno izmišljene.
 - Pravno: samo zemljepisna imena. Ni imen trgovin, prevoznikov ali odprav, po katerih je cesta znana. Drugi breg (Afganistan) in meja sta samo teren, brez napisov in brez črte.
 
