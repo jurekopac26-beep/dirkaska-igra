@@ -2030,5 +2030,26 @@
    "lifeShadow:MeshBasicMaterial": "a9b21ad",
    "life:MeshBasicMaterial": "f1b5d969"
   }
+ },
+ "hinboun": {
+  "meshes": 448,
+  "verts": 403945,
+  "instances": 5402,
+  "props": 0,
+  "crowd": 31,
+  "world": "5f0964af",
+  "propsHash": "811c9dc5",
+  "floor": null,
+  "groups": {
+   "-:MeshLambertMaterial": "4a0f6f9d",
+   "crowd:MeshLambertMaterial": "e5755b8b",
+   "flags:MeshLambertMaterial": "72491ae3",
+   "ao:MeshBasicMaterial": "1865d087",
+   "tyremarks:MeshBasicMaterial": "8b77f9f0",
+   "roadwear:MeshLambertMaterial": "c636e26d",
+   "life:MeshLambertMaterial": "eeb59e02",
+   "lifeShadow:MeshBasicMaterial": "83e98bb1",
+   "life:MeshBasicMaterial": "fd335389"
+  }
  }
 }

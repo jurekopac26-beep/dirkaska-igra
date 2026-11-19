@@ -12,7 +12,7 @@ Vrsta znamenitosti: 5 × **stavba** (stara stavba ali razvalina), 5 × **druga**
 | 4 | Mombasa | Kenija | stavba: trdnjava ob cesti | jure.kopac26 | v zbirni Proge 2 (#756) |
 | 5 | Hiva | Uzbekistan | stavba: obzidje Ičan Kale in minareta | jure.kopac26 | v delu (#723; ostane model iz Blenderja) |
 | 6 | Atimpoku (zamenjava za Elmino, občutljivo) | Gana | druga: star most (ločni most Adomi z obešenim voziščem, 1957) čez Volto | jure.kopac26 | v zbirni Proge 3 |
-| 7 | *zamenjava* (bil Bokor) | Kambodža ali rezerva | druga: naravna oblika ali zgradba | jure.kopac26 | izbere seja po resetu |
+| 7 | Phou Hin Boun (bil Bokor) | Laos | druga: kraški stolpi (kamniti gozd) ob razgledišču | jure.kopac26 | v zbirni Proge 3 |
 | 8 | El Jem | Tunizija | stavba: rimski amfiteater | biketraveler | v zbirni Proge 2 (#756) |
 | 9 | Portobelo | Panama | stavba | biketraveler | v zbirni Proge 2 (#756) |
 | 10 | Isuna (bila Trongsa, delujoč samostan) | Butan | druga: star železni verižni most čez Paro Chhu ob cesti Chuzom–Paro | biketraveler | v zbirni Proge 2 (#756) |

@@ -796,5 +796,12 @@
   "kverts": 242,
   "maxKverts": 289,
   "jsMs": 1.83
+ },
+ "hinboun": {
+  "calls": 123,
+  "maxCalls": 147,
+  "kverts": 333,
+  "maxKverts": 455,
+  "jsMs": 1.28
  }
 }

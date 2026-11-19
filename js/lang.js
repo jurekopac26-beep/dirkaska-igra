@@ -519,6 +519,7 @@
     'Zahodna vrata': 'West Gate', 'Ob obzidju': 'Along the Walls', 'Severna vrata': 'North Gate', 'Zunanje mesto': 'Outer Town', 'Vzhodna vrata': 'East Gate', 'Pod minaretom': 'Under the Minaret', 'Južna vrata': 'South Gate', 'Ob južnem obzidju': 'Along the South Wall', 'Obzidje': 'City Walls',   // (Hiva: the HUD)
     'Južno od mesta': 'South of Town', 'Gozdna savana': 'Dry Woodland', 'Mejni prehod': 'Border Post', 'Nad sotesko': 'Above the Gorge', 'Stari most': 'Old Bridge', 'Drugi breg': 'Far Bank', 'Zadnji kilometer': 'Last Kilometre', 'Na drugi breg': 'To the far bank',   // (Livingstone: the HUD, the results of an escape)
     'Cesta iz Akosomba': 'Road from Akosombo', 'Atimpoku': 'Atimpoku', 'Most Adomi': 'Adomi Bridge', 'Čez Volto': 'Over the Volta',   // (Atimpoku: the HUD)
+    'Vznožje': 'The Foot', 'Kraški vzpon': 'The Karst Climb', 'Kamniti gozd': 'The Stone Forest', 'Prelaz': 'The Pass', 'Do doline': 'To the valley',   // (Phou Hin Boun: the HUD, the results of an escape)
     'veslaški kanal': 'rowing basin', 'paviljoni': 'pavilions',   // (Montréal)
     'Reka Chenab': 'Chenab River',   // (Killar; Killar and Hangrung Nala are the same in English)
     'Konec asfalta': 'Pavement Ends', 'Konec makadama': 'Back on Asphalt',   // (the Moki Dugway; Razgledisce is in the dictionary already, from the Santa Monica Mountains road)
