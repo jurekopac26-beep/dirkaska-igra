@@ -79,7 +79,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         DC.side([[-0.2, 0.36], [-0.08, 0.36], [0.62, 0.86], [0.5, 0.86]], WH, null, 0.009);
         for (const sd of [-1, 1]) {
           K.number(-0.95, 0.62, sd * 0.97, 0.3, { dir: sd < 0 ? '-z' : 'z' });
-          K.rect(-0.62, 0.82, sd * 0.975, 0.13, 0.025, D, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });
+          K.rect(-0.17, 0.82, sd * 0.975, 0.13, 0.025, D, { dir: sd < 0 ? '-z' : 'z', host: sd < 0 ? 'doorL' : 'doorR' });   // (on the door, ahead of its rear edge: it goes with the door)
         }
         // the roof scoop (the air for the turbo), the bonnet's vents
         K.box(-0.45, 1.33, 0, 0.62, 0.08, 0.44, 0, B);

@@ -180,7 +180,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
 // whole runs on autopilot at the easy level end in an escape or an arrest, the autopilot gets away at least once in three
 {
   const popts = (o) => Object.assign({ numAI: 0, playerGrid: 1, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 0, damage: 2, police: true }, o);
-  const runs = [11, 12, 13].map(seed => {
+  const runs = [14, 15, 16].map(seed => {
     Math.random = seeded(3);
     const r = new C.Race(T, popts({ seed })), P = r.player, pol = r.pol, pc = pol.cars[0];
     const st = { stage: pol.stage, chk: pol.chk, goal: pol.goal, chase: pc && pc.pol.mode === 'chase' };

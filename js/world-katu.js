@@ -815,6 +815,7 @@
           } else if (!nd[i] && i % 25 === 0 && i > 2 && i < iE - 2 && !SB.mouthV[side > 0 ? 1 : 0][i]) mkPosts.push([i, side]);
         }
       }
+      out.barKind = (i, side) => { const nd = need[side > 0 ? 1 : 0]; return nd[i] && (nd[i + 1] || nd[i - 1]) ? 1 : -1; };   // (Render: what stands on the barrier line at sample i: 1 the concrete parapet, -1 nothing)
       const kp = katuProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;   // knockable where they fit on the verge; the rest stay fixed beside the barrier line
       for (const sp of mkPosts) { if (kp.has(sp)) continue;
         const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]);

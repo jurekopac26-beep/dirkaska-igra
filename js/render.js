@@ -1284,9 +1284,9 @@ const Render = (function () {
       return t;
     };
     kx.emit = (a, b, c, ca, cb, cc, nn) => {
-      const t = kx.target(), g = t.g, n0 = g.P.length / 3, qa = kitColour(ca), qb = kitColour(cb), qc = kitColour(cc);
       const A = [a[0] * sx, a[1], a[2] * sz], Bv = [b[0] * sx, b[1], b[2] * sz], C = [c[0] * sx, c[1], c[2] * sz];
       if (![...A, ...Bv, ...C].every(Number.isFinite)) kitFail('a point is not a number (NaN)');
+      const t = kx.target(), g = t.g, n0 = g.P.length / 3, qa = kitColour(ca), qb = kitColour(cb), qc = kitColour(cc);
       if (nn) { const f = (n) => { const x = n[0] / sx, y = n[1], z = n[2] / sz, l = Math.hypot(x, y, z) || 1; return [x / l, y / l, z / l]; }; g.triN(A, Bv, C, f(nn[0]), f(nn[1]), f(nn[2]), qa, qb, qc); }
       else g.tri(A, Bv, C, qa, qb, qc);
       if (qa.kt) t.tag.push(n0, qa.kt === 's' ? 1 : 0, qa.kk); if (qb.kt) t.tag.push(n0 + 1, qb.kt === 's' ? 1 : 0, qb.kk); if (qc.kt) t.tag.push(n0 + 2, qc.kt === 's' ? 1 : 0, qc.kk);
@@ -2668,12 +2668,19 @@ const Render = (function () {
     const geo = v.body.geometry, p = geo.attributes.position.array, c = geo.attributes.color && geo.attributes.color.array, groups = [[], [], [], []];
     if (!c) return groups;
     const isGlass = (i) => (Math.abs(c[i] - 0.1) < 0.02 && Math.abs(c[i + 1] - 0.13) < 0.02 && Math.abs(c[i + 2] - 0.19) < 0.02) || (Math.abs(c[i] - 0.04) < 0.02 && Math.abs(c[i + 1] - 0.05) < 0.02 && Math.abs(c[i + 2] - 0.08) < 0.02);
+    // a door's glass is side glass of its side whichever way a triangle of it faces: the wedge of a door window's warped front quad faces up or
+    // forward (by its normal a triangle of the windscreen or of the rear window), yet it swings and falls with the door, so it frosts and cracks with
+    // the door's pane (doorL, door2L: the left panes, group 2; doorR, door2R: the right ones, group 3; a view without parts' ranges: by the normals alone)
+    const RG = geo.userData && geo.userData.ranges, DR = [];
+    if (RG) for (const n in RG) { const m = /^door2?([LR])$/.exec(n); if (m) for (const r of [RG[n].o, RG[n].i]) if (r && r[1] > r[0]) DR.push([r[0], r[1], m[1] === 'L' ? 2 : 3]); }
+    const door = (i) => { for (const r of DR) if (i >= r[0] && i < r[1]) return r[2]; return 0; };
     for (let t = 0; t < p.length / 9; t++) {
       const o = t * 9; if (!isGlass(o) || !isGlass(o + 3) || !isGlass(o + 6)) continue;
       const ax = p[o + 3] - p[o], ay = p[o + 4] - p[o + 1], az = p[o + 5] - p[o + 2], bx = p[o + 6] - p[o], by = p[o + 7] - p[o + 1], bz = p[o + 8] - p[o + 2];
       const nx = ay * bz - az * by, nz = ax * by - ay * bx, cx = (p[o] + p[o + 3] + p[o + 6]) / 3;
       const l = Math.hypot(nx, ay * 0 + (az * bx - ax * bz), nz) || 1, ux = nx / l, uz = nz / l;
-      groups[Math.abs(uz) > 0.45 ? (uz < 0 ? 2 : 3) : (Math.abs(ux) > 0.3 ? (ux > 0 ? 0 : 1) : (cx > 0 ? 0 : 1))].push(t);
+      const d = door(t * 3);
+      groups[d ? d : Math.abs(uz) > 0.45 ? (uz < 0 ? 2 : 3) : (Math.abs(ux) > 0.3 ? (ux > 0 ? 0 : 1) : (cx > 0 ? 0 : 1))].push(t);
     }
     return groups;
   }
@@ -4670,6 +4677,9 @@ const Render = (function () {
     }
     v.beam.visible = true; v.beam.material.opacity = (todK <= 0.5 ? 0.18 * sstep(0.2, 0.5, todK) : 0.18 + 0.18 * (todK - 0.5) / 0.5) * (nOk === 2 ? 1 : 0.55);   // (dusk 0.18, night 0.36; one lamp left: half the light)
     v.beam.position.z = nOk === 2 ? 0 : (LB[0] ? 1 : -1) * v.car.m.wid * 0.22;   // (one lamp left: half the light, on its side)
+    const cr = v.lCr, t0 = cr && !(LB && LB[0]) ? cr[0] : 0, t1 = cr && !(LB && LB[1]) ? cr[1] : 0;   // (a cracked head lamp, xLampCrack: its beam out of aim, turned outward, shorter)
+    if (t0 || t1 || v.beam.rotation.y || v.beam.scale.x !== 1) { const a = 0.21 * (t0 - t1) / (nOk === 2 && t0 && t1 ? 2 : 1), s = 1 - 0.3 * Math.max(t0, t1), px = v.car.m.len * 0.5;
+      v.beam.rotation.y = a; v.beam.scale.x = s; v.beam.position.x = px - px * s * Math.cos(a); v.beam.position.z += px * s * Math.sin(a); }   // (pivot at the nose)
   }
   // winter: snowflakes instead of the rain's streaks (a box of flakes around the view centre, drifting down)
   class Snow {
@@ -4865,7 +4875,7 @@ const Render = (function () {
   /* ---------------- race attach ---------------- */
   // the pieces every car shares (cached body / tail / wheel geometry, the common materials): never freed with a car
   function sharedCarRes() {
-    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values()]);
+    const g = new Set([wheelGeo, wheelGeoW, ...geoCache.values(), ...tailGeoCache.values(), ...fWheelCache.values(), ...newWheelCache.values(), ...lmWheelCache.values(), ...bandWheelCache.values(), ...oldHubCache.values()]);
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
@@ -5211,6 +5221,8 @@ const Render = (function () {
   // scratches show, scrU: not in the far mesh's vertex colours).
   const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
   let farRb = 0;   // (cars whose far mesh was built again this frame: frame() sets it back)
+  let xQuiet = false;   // (a view's first frame, updateCars: xShards lays nothing)
+  let unRb = 0;   // (rivals taken apart for their first knock this frame (updateCars, xWait): frame() sets it back)
   let farMat = null;
   function farBuild(v) {
     v.grp.updateMatrixWorld(true);
@@ -7105,8 +7117,9 @@ const Render = (function () {
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45, 'land');
       if (c.isPlayer && c.speed > 8 && !c.air && c.ws && (c.ws[0] === 1 || c.ws[1] === 1 || c.ws[2] === 1 || c.ws[3] === 1)) shake(0.1 + clamp(c.speed / 60, 0, 1) * 0.14, 'kerb');   // (the kerbs' ridges: the view trembles while a wheel runs on them)
       v.spin += c.vl * dt / M.rw;
-      for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
-      for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
+      const bd = wheelBend(v, c);   // (P3: a bent wheel, both damage modes that show it: leaning out up to 12°, toed out up to 6°, its rim wobbling 2° as it turns)
+      for (const w of v.wf) { const sd = Math.sign(w.position.z), b = bd[sd < 0 ? 0 : 1]; w.rotation.set(b ? sd * b * (0.21 + 0.035 * Math.sin(v.spin)) : 0, -c.delta - sd * 0.105 * b, -v.spin); }
+      for (const w of v.wr) { const sd = Math.sign(w.position.z), b = bd[sd < 0 ? 2 : 3]; w.rotation.set(b ? sd * b * (0.21 + 0.035 * Math.sin(v.spin)) : 0, -sd * 0.105 * b, -v.spin); }
       for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
       if (fb) fallPose(v, c, fb, u, dt);
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
@@ -7145,22 +7158,29 @@ const Render = (function () {
           if (v.dirtW && da > 0) v.dirtW.value += (wt - v.dirtW.value) * da / (v.dirtU.value + da);   // (the colour: the dirt's mean by where it came from)
           v.dirtU.value += Math.max(0, da); }
       }
-      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
+      if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45 || v.xEF >= 0.15)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
+      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = v.xsC = 0; v.xsK = null; } else { if (w > (v.xsW || 0)) v.xsW = w; if (k > (v.xsC || 0)) { v.xsC = k; v.xsK = xSrcCar(c); } } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait: the stronger contact holds, with its car's paint (xsK: taken now, the core's fxKOf(c): the strongest knock's car, also of two in one frame); a touch without a dent leaves nothing for the next knock; c.fxQ mutes the sparks only)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
-      if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
-      if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
+      const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
+      if (v.xOn && v.mrg && !xWait && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR)))) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
+      if (v.dRe && !v.rep && !xWait && !(v.xOn && v.mrg)) { for (let n = 0; n < 8 && v.dRe.length; n++) { const d = v.dRe.shift(); if (v.xOn) { _xT = d.xcol != null ? _xsc.set(d.xcol) : null; _xSp = d.xsp || 0; xDent(v, d); _xT = null; _xSp = 0; } else applyDent(v, d); dLog(v, d); } if (!v.dRe.length) { v.dRe = null; if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); } }   // (the view built again mid-race, Nastavitve: its knocks' dents again, the dent only, with its mark and its crumple (P4, P6: the log's xcol, xsp), 8 a frame (dLog))
+      if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); dLog(v, d, _xT, _xSp); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; v.xsW = v.xsC = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
+      if (v.parts && !v.rep && !xWait) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
         // lost and broken already is no news: no bits, shards and sparks again (the 11's Math.random still drawn for them, as ever))
-        const mute = !!v.fresh || !vis; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
+        const mute = !!v.fresh || !vis; xQuiet = !!v.fresh; v.fresh = false; if (mute) particles.mute = sparkP.mute = true;
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
-        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
+        xEngine(v, c); if (xQuiet) particles.mute = sparkP.mute = true;
+        if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h);
+        if (xQuiet) particles.mute = sparkP.mute = !vis; }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones, with or without a damage field yet: about the front door's rear edge as shut, K.hx0; a view's first frame: its pane broken without glass again, xQuiet)
+      xQuiet = false;
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
@@ -7224,6 +7244,10 @@ const Render = (function () {
         if (y1 - y0 > 0.08) for (const [name, sd] of [['fenderL', -1], ['fenderR', 1]]) add(name, new THREE.BoxGeometry(1.0, y1 - y0, 0.035), paint, fx, (y0 + y1) / 2, sd * (a[1] * sz + 0.014), 0, new THREE.BoxGeometry(0.96, y1 - y0, 0.02)); }
       // door mirrors at the base of the windscreen
       if (iGF >= 0) { const a = at(S[iGF][0]); for (const [name, sd] of [['mirrorL', -1], ['mirrorR', 1]]) add(name, new THREE.BoxGeometry(0.15, 0.1, 0.2), paint, S[iGF][0] * sx + 0.05, a[3] + 0.1, sd * (a[1] * sz + 0.1), 0); }
+      // the doors (one a side: from the front wing back to the rear arch, sill to belt): only their place here, the panel is made when a knock
+      // swings it open (oldAjar); a whole car's look and its draws stay as they were
+      { const k = (M.len / 4.4) * 0.98, x1 = M.a * k + 0.05 - 0.54, x0 = Math.max(x1 - 1.15, -M.b * k + M.rw * 1.3), a = at(x1 / sx), b = at(x0 / sx), m = at((x0 + x1) / 2 / sx);
+        if (x1 - x0 > 0.5) v.oDoor = { x0, x1, y0: m[2] + 0.06, y1: Math.min(a[3], b[3], m[3]) - 0.02, z: Math.max(a[1], b[1], m[1]) * sz }; }
     }
     v.parts = parts; v.under = under;
     v.glassTris = findGlass(v); v.winBroken = [0, 0, 0, 0]; v.roofStep = 0;
@@ -7231,9 +7255,10 @@ const Render = (function () {
     v.lens = []; v.lightBroken = [0, 0, 0, 0];
     const lz = dB.lens || [0.11, 0.28];   // (the new bodies: their own lens, or a round one)
     if (!v.kit) for (let k = 0; k < 2; k++) { const L = v.lights[k], m = new THREE.Mesh(dB.lensR ? new THREE.CylinderGeometry(dB.lensR, dB.lensR, 0.02, 12).rotateZ(Math.PI / 2) : new THREE.BoxGeometry(0.045, lz[0], lz[1]), matLens); m.position.set(L.x - 0.02, L.y, L.z); m.visible = !v.noHead && !dB.noLens; (v.det || v.bodyG).add(m); v.lens.push(m); }   // (the kit's lenses are in its body: kitLampOut)
-    // a rival's det drawn as one mesh (remerge; not the player's, nor Razbijanje · nov način's: xMirror, xEngine take its panels one by one); det
+    // a rival's det drawn as one mesh (remerge; not the player's; Razbijanje · nov način's only while whole: unmerge at its first knock, xMirror, xEngine
+    // take its panels one by one then); det
     // itself never drawn, its matrices never updated (remerge reads its pieces' own)
-    if (v.det && !c.isPlayer && !v.xOn) { v.mrg = true; v.det.updateMatrixWorld = () => {}; ownRnd(() => remerge(v)); }
+    if (v.det && !c.isPlayer) { v.mrg = true; v.det.updateMatrixWorld = () => {}; ownRnd(() => remerge(v)); }
   }
   // the formula's parts, built with the car's mesh (the garage and the ghost show them too): front wing (bumperF), nose (hood), rear wing with the
   // DRS flap (bumperR), engine cover (trunk), mirrors, bargeboards (fenderL/R). Each is centred on its own origin (a loose one tumbles about
@@ -7273,6 +7298,10 @@ const Render = (function () {
   // instead of up to 16 (SREDNJA, VISOKA: one shadow caster instead of 8; NIZKA: none, as before). Built again whenever what det shows
   // changes (v.detDirty: a lamp smashed or burnt out, a panel lost, the crew's repair); named without Math.random (ownRnd)
   const _rmM = new THREE.Matrix4(); let matFpM = null;
+  function unmerge(v) {   // (remerge undone: det drawn again, its matrices updated again; the merged mesh gone)
+    v.mrg = false; v.detDirty = false; delete v.det.updateMatrixWorld; v.det.visible = true;
+    if (v.partsM) { v.bodyG.remove(v.partsM); v.partsM.geometry.dispose(); v.partsM = null; }
+  }
   function remerge(v) {
     v.detDirty = false; const L = []; let n = 0;
     v.det.traverse(o => { if (!o.isMesh) return; for (let p = o; p !== v.det; p = p.parent) if (!p.visible) return; L.push(o); });
@@ -7291,6 +7320,50 @@ const Render = (function () {
     else { v.partsM.geometry.dispose(); v.partsM.geometry = geo; v.partsM.material = mat; }
     v.partsM.castShadow = tierNow > 0; v.partsM.visible = n > 0; v.det.visible = false;
   }
+  // an older model's doors, bonnet and boot stand open after a hard knock (the kit's loose stage, kitLoosen, for the models without a kit:
+  // only looks, the core knows nothing of it). The bonnet (hinged at the windscreen, 18°) and the boot lid (hinged at the rear glass, 30°; a
+  // hatchback's tailgate at its top) are the panels of buildParts, turned about their hinge edge once their zone's damage passes 60 % of
+  // the part's threshold and the core no longer holds them (Core.maskHeld: the face and the tail stay shut till 70 %); what is under them
+  // shows. A door (one a side, hinged at its front edge, 28°, or 62° with Razbijanje · nov način's body) is made at that moment: a painted
+  // panel and the dark doorway behind it (side damage past 60 % of 0.72, the kit doors' threshold; nov način 35 %). The prototype: its
+  // engine cover and doors (the nose is its crash structure, it does not open); the formula and the kart have none. A pit repair shuts
+  // them all (repTrim, repPart). v.oAjar: name -> the panel's pose as built, or a door's two objects
+  const O_LM_DOOR = { x0: -0.38, x1: 0.72, y0: 0.55, y1: 0.9, z: 0.475 };
+  function oldAjar(v, c) {
+    if ((v.fp && !v.fp.lm) || v.rep || c.pitState === 'repair') return;   // (in the box they are being shut: repPart, repTrim)
+    const A = v.oAjar || (v.oAjar = {}), PT = Core.partsOf(c.m), D = Math.PI / 180;
+    for (const name of ['hood', 'trunk']) {
+      const m = v.parts[name], P = PT[name];
+      if (A[name] || !m || !m.visible || !P || P.th == null || c.lost[name] || (v.fp && name === 'hood') || Core.maskHeld(c, name, P) || c.dz[P.z] < 0.6 * P.th) continue;
+      const g = m.geometry; if (!g.boundingBox) g.computeBoundingBox();
+      const B = g.boundingBox, tall = B.max.y - B.min.y > B.max.x - B.min.x, r0 = m.rotation.z, r1 = r0 + (name === 'hood' ? 18 : -30) * D;
+      const hx = tall ? 0 : name === 'hood' ? B.min.x : B.max.x, hy = tall ? B.max.y : 0;
+      A[name] = [m.position.x, m.position.y, r0];
+      m.position.x += hx * (Math.cos(r0) - Math.cos(r1)) - hy * (Math.sin(r0) - Math.sin(r1)); m.position.y += hx * (Math.sin(r0) - Math.sin(r1)) + hy * (Math.cos(r0) - Math.cos(r1));
+      m.rotation.z = r1; if (v.under[name]) v.under[name].visible = true; v.detDirty = true;
+    }
+    const d = v.fp ? O_LM_DOOR : v.oDoor; if (!d) return;
+    for (const sd of [-1, 1]) {
+      const key = sd < 0 ? 'doorL' : 'doorR';
+      if (A[key] || !(c.dz[sd < 0 ? 2 : 3] >= (XC.body ? 0.35 : 0.6) * 0.72)) continue;
+      ownRnd(() => {
+        const L = d.x1 - d.x0, H = d.y1 - d.y0, ym = (d.y0 + d.y1) / 2, box = v.det || v.bodyG;
+        const paint = v.partMats ? v.partMats[0] : v.oPaint || (v.oPaint = cgMat(new THREE.MeshPhongMaterial({ color: c.color, shininess: 80, specular: 0x505050, envMap: envTex, combine: THREE.MixOperation, reflectivity: 0.2 }), false, 'carCg'));
+        const piv = new THREE.Group(), m = new THREE.Mesh(new THREE.BoxGeometry(L, H, 0.03).translate(-L / 2, 0, 0), paint), u = new THREE.Mesh(new THREE.BoxGeometry(L * 0.96, H * 0.94, 0.012), matUnder);
+        m.castShadow = !!c.isPlayer || tierNow > 0; piv.add(m); piv.position.set(d.x1, ym, sd * (d.z + 0.02)); piv.rotation.y = sd * (XC.body ? 62 : 28) * D;
+        u.position.set((d.x0 + d.x1) / 2, ym, sd * (d.z + 0.003)); box.add(u); box.add(piv); A[key] = [piv, u];
+      });
+      v.detDirty = true;
+    }
+  }
+  // one of them shut again (a pit repair): the panel back as built, a door's panel and doorway gone
+  function oldShut(v, name) {
+    const A = v.oAjar, s = A && A[name]; if (!s) return;
+    const m = v.parts[name];
+    if (m) { m.position.x = s[0]; m.position.y = s[1]; m.rotation.z = s[2]; if (m.visible && v.under[name]) v.under[name].visible = false; }
+    else for (const o of s) { if (o.parent) o.parent.remove(o); o.traverse(q => { if (q.geometry) q.geometry.dispose(); }); }
+    delete A[name]; v.detDirty = true;
+  }
   function updateParts(v, c, x, y, z, h) {
     const rnd = v.kit ? rRnd : Math.random;   // (the kit's effects: the renderer's own random numbers; the 11's as they always were)
     // lamps
@@ -7304,8 +7377,9 @@ const Render = (function () {
       if (!v.kit && v.lightBroken[2] && v.lightBroken[3]) v.tailDead = true;   // (both tail lamps of one of the 11 smashed: its whole tail mesh dark, not lit round the covers)
       const ch = Math.cos(h), sh = Math.sin(h), wx = x + L.x * ch - L.z * sh, wz = z + L.x * sh + L.z * ch;
       for (let n = 0; n < 14; n++) particles.emit(wx, y + L.y, wz, c.vx * 0.5 + (rnd() - 0.5) * 4, 1 + rnd() * 2.5, c.vz * 0.5 + (rnd() - 0.5) * 4, 0.7 + rnd() * 0.5, 0.18, 0.12, 0.86, 0.92, 0.98, 0.95, 9, 0.6, y);   // glass shards
-      if (v.xOn || XC.glass) { const ox = k < 2 ? ch : -ch, oz = k < 2 ? sh : -sh; xShards(12, wx + ox * 0.35, y, wz + oz * 0.35, [ox, oz], c.vx, c.vz, k < 2 ? XSH_LENS : XSH_TAIL); }   // (Razbijanje · nov način: the lamp's pieces on the road, lit: a tail lamp's red)
+      if (v.xOn || XC.glass) { const ox = k < 2 ? ch : -ch, oz = k < 2 ? sh : -sh; xShards(36, wx + ox * 0.35, y, wz + oz * 0.35, [ox, oz], c.vx, c.vz, k < 2 ? XSH_LENS : XSH_TAIL); }   // (Razbijanje · nov način: the lamp's pieces on the road, lit: a tail lamp's red)
     }
+    xLampCrack(v, c);
     if (v.kit) { kitParts(v, c, x, y, z, h); kitSpare(v, c); kitLod(v, c); }   // (the kit: the wheels off, parts loose, parts lost, the spare wheels wobbling: before the glass (a door's goes with it) and the roof; the draw range for them)
     for (let k = 0; k < 4; k++) if (c.winOut[k] && !v.winBroken[k]) { if (!XC.glass) { v.winBroken[k] = 1; breakWindow(v, k, c, x, y, z, h); } else if (c.dmg >= 0.92) { v.winBroken[k] = 1; if (v.xt) { (v.xGl || (v.xGl = [0, 0, 0, 0]))[k] = 1; for (const key of [['W'], ['R'], ['DL', 'QL'], ['DR', 'QR']][k]) xtGlass(v, c, key, 1, x, y, z, h, null); } else xBreakWindow(v, k, c, x, y, z, h); } }   // (Razbijanje · nov način: one pane a blow, xGlassHit; a wreck all of them)
     if (v.xt && XC.glass) { for (const sd of 'LR') if (v.kit.dead['mirror' + sd]) xtGlass(v, c, 'D' + sd, 0.75, x, y, z, h, null); xtFlush(v); }   // (the Kolibri: a mirror off, its door window 75 % at least; the panes' pictures due)
@@ -7316,6 +7390,10 @@ const Render = (function () {
     const crushed = v.xOn || v.xtR ? c.roofDmg >= 0.5 : v.roofStep * (rk ? 0.05 : 0.25) >= 0.5 - 1e-9;   // (Razbijanje · nov način, the Kolibri's roof field: roofStep stays 0 there, the core's roofDmg itself (two old steps))
     if (crushed || c.lost.lightbar || (v.kit && c.lost[v.kit.E.body.decalPart])) roofGear(v, c, crushed);
     if (v.kit) return;
+    // an older model's front wheel off (the wheel rule, paket-p K.3: the core's c.wreck.wl, only the front two): as a kit car's, without the sag
+    { const W = c.wreck; if (W && W.fix !== v.wheelFix) { v.wheelFix = W.fix; kitRefit(v); }
+      if (W && W.wl) for (let k = 0; k < 2; k++) if ((W.wl & (1 << k)) && !v.wheelOff[k]) oldWheelOff(v, c, k, x, y, z, h); }
+    oldAjar(v, c);   // (doors, bonnet and boot standing open: before a part goes for good)
     // parts that just came off: hide the panel, reveal what is underneath, a puff of bits
     for (const name in v.parts) {
       const m = v.parts[name];
@@ -7356,6 +7434,7 @@ const Render = (function () {
        then builds the car afresh
      Its random numbers: the renderer's own (rRnd). */
   const KIT_LOOSE = { hood: ['lid', 18], trunk: ['lid', 30], tailgate: ['lid', 30], cover: ['lid', 20], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 28], doorR: ['door', 28],
+    door2L: ['door', 28], door2R: ['door', 28],   // (a rear door of its own, a four-door car's: a door as the front one, on its own front edge)
     fenderL: ['side', 12], fenderR: ['side', 12], quarterL: ['side', 12], quarterR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
   const KIT_WHEEL = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
   function kitParts(v, c, x, y, z, h) {
@@ -7372,7 +7451,7 @@ const Render = (function () {
       if (!K.ajar[name] && P.th != null && !P.spare && !(XC.body && /^(fender|quarter)/.test(name)) && !(v.xt && v.xOn) && !Core.maskHeld(c, name, P) && c.dz[P.z] >= (XC.body && /^door/.test(name) ? 0.35 : 0.6) * P.th) kitLoosen(v, c, name);   // (Razbijanje · nov način: a door swings open sooner; the Kolibri's loose parts its table's, xTabHit; the face and the tail not before 70 %: Core.maskHeld)
       if (c.lost[name] && !kept(name)) { kitDetach(v, c, name, x, y, z, h, nOff); nOff = -Math.abs(nOff); }   // (negative: the frame's flash is out)
     }
-    if (K.sagV !== K.ver && v.wheelOff.some(Boolean)) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
+    if (K.sagV !== K.ver && (v.wheelOff.some(Boolean) || (v.bend && v.bend.some(Boolean)))) kitSag(v);   // (a wheel off and the body changed: a part loose or gone, a dent (applyDent before this))
   }
   // a part's or a wheel's bits (dark, some in the car's colour) and a spray of small sparks where it came off, a flash with the first of
   // the frame (n parts at once: each its share)
@@ -7438,6 +7517,7 @@ const Render = (function () {
     for (let i = R.o[0]; i < R.o[1]; i++) { const px = pa[i * 3], py = pa[i * 3 + 1], pz = pa[i * 3 + 2];
       if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; if (pz < z0) z0 = pz; if (pz > z1) z1 = pz;
       cen[0] += px / no; cen[1] += py / no; cen[2] += pz / no; N[0] += na[i * 3]; N[1] += na[i * 3 + 1]; N[2] += na[i * 3 + 2]; }
+    if (!v.xc && (name === 'doorL' || name === 'doorR')) (K.hx0 || (K.hx0 = {}))[name] = x0;   // (a front door's rear edge while shut, for xRearDoor: with no damage field yet (a view drawn afresh in a race under way) nothing else keeps it, and the field made after has the door swung)
     const sd = cen[2] < 0 ? -1 : 1, T = KIT_LOOSE[name] || (Math.abs(cen[2]) > 0.15 * M.wid ? ['side', 12] : Math.abs(cen[0]) > 0.15 * M.len ? ['drop', 10] : ['wing', 0]), kind = T[0];   // (an extra: a side one swings out, one at an end drops, one on top tilts)
     const xin = Math.abs(x0) < Math.abs(x1) ? x0 : x1, zo = sd < 0 ? z0 : z1, zin = sd < 0 ? z1 : z0;   // (its edge by the car's middle; its outer and inner face)
     let A, B;
@@ -7573,6 +7653,22 @@ const Render = (function () {
     kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
     kitSag(v);
   }
+  // an older model's front wheel k off (no kit: its wheel mesh in v.wf): hidden (latched), its piece that wheel (syncPiece), a bare hub and
+  // disc in its place (shared, oldHubGeo: one draw call), bits and sparks once; the hub's sparks while it moves (emitFx)
+  function oldWheelOff(v, c, k, x, y, z, h) {
+    v.wheelOff[k] = 1; const M = c.m, sd = k % 2 ? 1 : -1, w = v.wf.find(q => Math.sign(q.position.z) === sd); if (w) w.visible = false;
+    const lx = w ? w.position.x : M.a, lz = w ? w.position.z : sd * (M.wid * 0.5 - 0.1), ch = Math.cos(h), sh = Math.sin(h);
+    if (!v.hubs[k]) { const hb = v.hubs[k] = new THREE.Mesh(oldHubGeo(M.rw), vMat(v, matWheel)); hb.position.set(lx, M.rw, lz - sd * 0.04); v.grp.add(hb); }
+    v.hubs[k].visible = true;
+    kitBits(c, x + lx * ch - lz * sh, y + M.rw * 0.6, z + lx * sh + lz * ch, y, 1);
+  }
+  const oldHubCache = new Map();
+  function oldHubGeo(r) {
+    let geo = oldHubCache.get(r); if (geo) return geo;
+    const g = new GB(), D = [0.44, 0.45, 0.47], H = [0.19, 0.19, 0.21];
+    kitTube(g, [0, 0, -0.022], [0, 0, 0.022], 0.42 * r, 12, D, D, D); kitTube(g, [0, 0, -0.06], [0, 0, 0.06], 0.17 * r, 8, H, H, H);
+    oldHubCache.set(r, geo = g.geometry()); return geo;
+  }
   function kitRefit(v) {   // every wheel back on (the marshals' refit, a pit stop's new ones: repairStep), their bare hubs hidden, the body up off them
     for (let k = 0; k < 4; k++) if (v.wheelOff[k]) { v.wheelOff[k] = 0; const w = (k < 2 ? v.wf : v.wr).find(q => Math.sign(q.position.z) === (k % 2 ? 1 : -1)); if (w) w.visible = true; if (v.hubs[k]) v.hubs[k].visible = false; }
     if (v.kit) { v.kit.ver++; kitSag(v); }
@@ -7585,21 +7681,33 @@ const Render = (function () {
     kitTube(g, [0, 0, -0.06], [0, 0, 0.06], 0.17 * r, 8, H, H, H);
     return (E.hub = g.geometry());
   }
+  // a corner's bent wheel (P3): sstep(0.35, 0.7, c.cd[k]) in steps of 0.05 (v.bend), the sag laid again when one changes; a friend's car
+  // online: none
+  function wheelBend(v, c) {
+    const bd = v.bend || (v.bend = [0, 0, 0, 0]), cd = c.cd; let ch = 0;
+    if (v.rep && v.rep.wheels) return bd;   // (the crew's new wheels on: straight, repairStep)
+    for (let k = 0; k < 4; k++) { const b = c.net || !cd ? 0 : Math.round(sstep(0.35, 0.7, cd[k]) * 20) / 20; if (b !== bd[k]) { bd[k] = b; ch = 1; } }
+    if (ch) kitSag(v); return bd;
+  }
   // the body's sag onto the corners without a wheel (v.wheelOff): a plane through the four hubs' feet, a corner with no wheel 0.6 rw down.
   // One wheel off: the plane through the two corners next to it (they stay; the one across rises as much: the turn about that diagonal);
   // more: the plane nearest. Then scaled back (all of it) as far as it takes to keep every point of the body's outer shell left on it (a
   // splitter, a skirt, a long overhang's corner: not the parts it has lost) 1 cm over the road; again whenever the body's shape changes
   // (v.kit.ver: kitParts). bodyG turned to it and lifted (v.sagQ, v.sagP), after its own pose each frame (updateCars): the lamps' glow
   // points, the cockpit's eye and the wheels stay with the car
+  // A bent wheel (P3, v.bend: wheelBend) sags its corner too, up to 0.25 rw; on any car (a simple one: the plane alone, no shell to keep up)
   function kitSag(v) {
-    const off = v.wheelOff, n = off[0] + off[1] + off[2] + off[3]; v.sagQ = v.sagP = null; if (!n || !v.kit) return;
-    const M = v.car.m, K = v.kit, hw = K.E.body.hw, X = [M.a, M.a, -M.b, -M.b], Z = [-hw, hw, -hw, hw], t = [0, 1, 2, 3].map(k => off[k] ? -0.6 * M.rw : 0); K.sagV = K.ver;
+    const off = v.wheelOff || [0, 0, 0, 0], bd = v.bend || [0, 0, 0, 0], n = off[0] + off[1] + off[2] + off[3]; v.sagQ = v.sagP = null;
+    if (!(n && v.kit) && !(bd[0] + bd[1] + bd[2] + bd[3])) return;
+    const M = v.car.m, K = v.kit, hw = K ? K.E.body.hw : M.wid * 0.45, X = [M.a, M.a, -M.b, -M.b], Z = [-hw, hw, -hw, hw], t = [0, 1, 2, 3].map(k => off[k] ? -0.6 * M.rw : -0.25 * M.rw * bd[k]); if (K) K.sagV = K.ver;
     let rows;
-    if (n === 1) { const k = off.indexOf(1), nb = [[1, 2], [0, 3], [0, 3], [1, 2]][k]; rows = [k, nb[0], nb[1]].map(i => [1, X[i], Z[i], t[i]]); }
+    const k1 = off.indexOf(1), nb1 = k1 >= 0 ? [[1, 2], [0, 3], [0, 3], [1, 2]][k1] : null;   // (one wheel off: the body on its three corners, unless a bent wheel's corner is the fourth: then all four, least squares)
+    if (n === 1 && K && !bd.some((b, i) => b && i !== k1 && !nb1.includes(i))) { const k = k1, nb = nb1; rows = [k, nb[0], nb[1]].map(i => [1, X[i], Z[i], t[i]]); }
     else { const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];   // (least squares: the normal equations)
       for (let i = 0; i < 4; i++) { const r = [1, X[i], Z[i]]; for (let p = 0; p < 3; p++) { b[p] += r[p] * t[i]; for (let q = 0; q < 3; q++) A[p][q] += r[p] * r[q]; } }
       rows = A.map((r, p) => [r[0], r[1], r[2], b[p]]); }
     const s = kitSolve3(rows); if (!s) return;   // (y = s0 + s1 x + s2 z)
+    if (!K) { v.sagQ = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(-s[1], 1, -s[2]).normalize()); v.sagP = new THREE.Vector3(0, s[0], 0); return; }
     const pa = v.body.geometry.attributes.position.array, dv = K.deadV; let a = 1;   // (each point drops by about s0 + s1 x + s2 z: no lower than 1 cm over the road)
     for (let i = 0, nO = v.body.geometry.userData.outerN; i < nO; i++) { if (dv && dv[i]) continue; const d = s[0] + s[1] * pa[i * 3] + s[2] * pa[i * 3 + 2]; if (d < 0) a = Math.min(a, Math.max(0, pa[i * 3 + 1] - 0.01) / -d); }
     if (K.E.W.xm != null) for (const z of [-hw, hw]) { const d = s[0] + s[1] * K.E.W.xm + s[2] * z; if (d < 0) a = Math.min(a, K.E.W.gap / -d); }   // (wheels.mid: down onto the middle wheels by their arch's clearance at most)
@@ -7694,6 +7802,10 @@ const Render = (function () {
     const v = byId.get(d.car);
     if (v && v.kit) { const m = kitDebrisMesh(v, d); if (m === null) return; if (!m) { d.mesh = true; return; } scene.add(m); d.mesh = m; debrisMeshes.push(d); return; }
     const src = v && v.parts && v.parts[d.part];
+    if (!src && v && v.wf && (d.part === 'wheelFL' || d.part === 'wheelFR')) {   // (an older model's front wheel, oldWheelOff: the wheel's own mesh, shared geometry and material)
+      const w = v.wf.find(q => Math.sign(q.position.z) === (d.part === 'wheelFR' ? 1 : -1)); if (!w) { d.mesh = true; return; }
+      const inner = new THREE.Mesh(w.geometry, w.material); inner.rotation.x = Math.PI / 2; inner.castShadow = !!v.car.isPlayer;
+      const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner); scene.add(m); d.mesh = m; debrisMeshes.push(d); return; }
     if (!src || src.userData.xGone) { d.mesh = true; return; }   // (xGone: a mirror Razbijanje · nov način already put on the road, xMirror)
     // a loose panel lies on its biggest face: turn the thinnest box dimension upright inside a holder
     const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); inner.castShadow = true; inner.receiveShadow = true;
@@ -7738,13 +7850,14 @@ const Render = (function () {
     const RP = Core.REPAIR, u = Core.repairU(c), R = v.rep; R.ku = Core.sstep(RP.body[0], RP.body[1], u);
     if (v.scrU) v.scrU.value *= 1 - R.ku; if (v.dirtU) v.dirtU.value = R.dirt0 * (1 - R.ku);   // (every frame, with the bodywork: the scratches polished out, the dirt washed off)
     if (v.xtSc) { R.sc0 = R.sc0 || v.xtSc.a.slice(); v.xtSc.a[0] = R.sc0[0] * (1 - R.ku); v.xtSc.a[1] = R.sc0[1] * (1 - R.ku); }   // (the side scrapes with them)
+    if (u >= RP.wheel && !R.wheels) { R.wheels = true; if (v.bend && v.bend.some(Boolean)) { v.bend.fill(0); kitSag(v); } }   // (a full repair's new wheels: the bent ones (P3) off with the old, wheelBend holds them straight till Race.repairCar)
     if (u >= RP.wheel && v.wheelOff.some(Boolean)) kitRefit(v);   // (every frame: with the crew's tyre men, crewLogic)
     const q = Math.floor(u * REPAIR_N); if (q === R.q) return; R.q = q; const s = q / REPAIR_N;
     if (!R.glass && s >= RP.glass) { R.glass = true; repGlass(v, R); }
     const kb = Core.sstep(RP.body[0], RP.body[1], s) * R.kmax; if (kb !== R.kb) { R.kb = kb; repBody(v, R); }
     while (R.pi < R.parts.length && s >= RP.parts[0] + (RP.parts[1] - RP.parts[0]) * (R.pi + 0.5) / R.parts.length) repPart(v, R, R.parts[R.pi++]);   // (evenly over the phase)
     if (!R.lamps && s >= RP.lamps) { R.lamps = true; repLamps(v); }
-    if (!R.trim && s >= RP.trim) { R.trim = true; repTrim(v); }
+    if (!R.trim && s >= RP.trim) { R.trim = true; repTrim(v, R); }
   }
   // what the repair goes from (the body as it is: D) and to (the car as new: P; a kit car's its model's body in its colours again, never
   // drawn), the vertices that differ (idx), the parts lost; nothing bent (dirt only): no copies
@@ -7818,6 +7931,7 @@ const Render = (function () {
       v.lights.forEach((L, i) => L.lerpVectors(R.L[i], v.lights0[i], k));   // (the glow points a loose part turned)
       if (R.dec && v.dec0) { v.dec.position.lerpVectors(R.dec[0], v.dec0[0], k); v.dec.quaternion.slerpQuaternions(R.dec[1], v.dec0[1], k); }
       K.ver++; }
+    if (v.oNose) repNose(v, R, k);   // (an older body's bonnet, front bumper, wings and lenses back from the shortened nose: oldNose)
     if (k >= 1) { v.roofStep = 0; if (v.xtR) v.xtR = undefined; }   // (the Kolibri's default roof field: afresh, xtRoof)
   }
   function repGlass(v, R) {
@@ -7831,7 +7945,7 @@ const Render = (function () {
   }
   function repPart(v, R, name) {
     const K = v.kit;
-    if (!K) { v.parts[name].visible = true; if (v.under[name]) v.under[name].visible = false; v.detDirty = true; return; }
+    if (!K) { v.parts[name].visible = true; if (v.under[name]) v.under[name].visible = false; oldShut(v, name); v.detDirty = true; return; }
     const A = v.body.geometry.attributes, Rg = v.body.geometry.userData.ranges[name]; delete K.dead[name]; K.ver++;
     if (Rg && R.P) for (const [a, b] of [Rg.o, Rg.i]) if (b > a) {
       for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !R.P[pk]) continue; const s = R.P[pk].subarray(a * 3, b * 3); A[key].array.set(s, a * 3); R.D[pk].set(s, a * 3); A[key].needsUpdate = true; }
@@ -7841,7 +7955,7 @@ const Render = (function () {
     if (R.lamps) kitLampsBack(v);   // (the lamps on it)
   }
   function repLamps(v) {
-    v.lampsOut = false; v.tailDead = false;
+    v.lampsOut = false; v.tailDead = false; v.lCr = null;
     if (v.kit) kitLampsBack(v);   // (their lenses' colours: the body's, repBody)
     else { v.lightBroken.fill(0); for (const m of v.lens) m.material = matLens; for (const m of v.tailCov || []) { m.parent.remove(m); m.geometry.dispose(); } v.tailCov = null; v.detDirty = true; ownRnd(() => beams(v)); }
     for (const hb of v.hubs) if (hb) hb.material = vMat(v, matWheel);
@@ -7854,9 +7968,22 @@ const Render = (function () {
       K.tailOut[s] = 0; }
     ownRnd(() => beams(v));
   }
-  function repTrim(v) {
+  // the computed rear doors (xRearDoor) shut with the front ones: their panels as built again; a pane fallen out of one stays out, as a
+  // front door's, till the car is built afresh
+  function xRearShut(v, R) {
+    const K = v.kit, P = R && R.P; if (!K.xRD || !P) return;
+    if (R.kmax < 1) return;   // (a part repair, 'Nujno': the quarter around it stays dented, the panel as built would stand out of it; it stays as it is till the car is built afresh)
+    const A = v.body.geometry.attributes, a = A.position.array, dv = K.deadV;
+    for (const sel of K.xRDt || []) if (sel) for (const t of sel) { const o = t * 9;
+      if (a[o] === a[o + 3] && a[o] === a[o + 6] && a[o + 1] === a[o + 4] && a[o + 1] === a[o + 7] && a[o + 2] === a[o + 5] && a[o + 2] === a[o + 8]) continue;   // (glass gone: xBreakPane)
+      for (const [key, pk] of [['position', 'p'], ['normal', 'n'], ['color', 'c']]) { if (!A[key] || !P[pk]) continue; const s = P[pk].subarray(o, o + 9); A[key].array.set(s, o); R.D[pk].set(s, o); A[key].needsUpdate = true; }
+      if (dv) dv.fill(0, t * 3, t * 3 + 3); }
+    K.xRD = null; K.xRDt = null; K.xOpen = false;
+  }
+  function repTrim(v, R) {
     for (const o of [v.dec, v.polBar, v.scBar]) if (o && o.userData.dmgHid) { o.visible = true; o.userData.dmgHid = 0; }
-    if (v.kit) { v.kit.ajar = {}; v.kit.ver++; }
+    if (v.kit) { v.kit.ajar = {}; xRearShut(v, R); v.kit.ver++; }
+    else if (v.oAjar) for (const n of Object.keys(v.oAjar)) oldShut(v, n);   // (an older model's doors, bonnet and boot shut: oldAjar)
   }
 
   // push the bodywork in around the hit point (deterministic jitter → no cracks) and scrape the paint; the dent's size and depth with the
@@ -7920,7 +8047,7 @@ const Render = (function () {
     if (views.length) for (let k = 0; k < views.length; k++) {   // (switched during a race: the race's cars built again, as a repair does; the safety car and the police keep theirs, held elsewhere too)
       const v = views[k]; if (!curRace || curRace.cars.indexOf(v.car) < 0) continue;
       if (!all) { const xt = xTab(v.car) && !!v.kit, cut = xt && !!XC.glass; if (!!v.xt === xt && !!(v.body.material.defines && 'XT_CUT' in v.body.material.defines) === cut) continue; }   // (xGlass alone: only a damage table's car whose table or cut changed)
-      const nv = makeView(v.car); nv.sk = v.sk; nv.acc = v.acc; disposeView(v, debrisRes()); views[k] = nv; }
+      const nv = makeView(v.car); nv.sk = v.sk; nv.acc = v.acc; if (v.dLog || v.dRe) nv.dRe = (v.dLog || []).concat(v.dRe || []).slice(-40); disposeView(v, debrisRes()); views[k] = nv; }
   }
   // for the tests: each car's body in this mode (its vertex count, how dense, its clusters' depths and caps, a torn bonnet, the engine shown)
   function crashInfo() {
@@ -8075,7 +8202,7 @@ const Render = (function () {
     const keep = new Uint8Array(n), col = geo.attributes.color ? geo.attributes.color.array : null;
     if (col) for (let i = 0; i < n; i++) { const o = i * 3; if ((Math.abs(col[o] - GLASS[0]) < 0.03 && Math.abs(col[o + 1] - GLASS[1]) < 0.03 && Math.abs(col[o + 2] - GLASS[2]) < 0.03) || (Math.abs(col[o] - KIT_GL2[0]) < 0.03 && Math.abs(col[o + 1] - KIT_GL2[1]) < 0.03 && Math.abs(col[o + 2] - KIT_GL2[2]) < 0.03)) keep[i] = 1; }
     if (kit) { keep.fill(1, outerN); for (const nm in U.ranges) for (const q of U.ranges[nm].subs) if (q.o) keep.fill(1, q.o[0], q.o[1]); if (U.nums) for (const Q of U.nums) for (const sl of Q.slots) for (const q of sl) if (q) keep.fill(1, q[0], q[1]); }
-    v.xc = { cl: [], B, rest: p.slice(), nor0: geo.attributes.normal.array.slice(), col0: col ? col.slice() : null, keep, r1, r2, pn, rn, am: new Float32Array(n), cr: new Float32Array(n),
+    v.xc = { cl: [], B, rest: p.slice(), nor0: geo.attributes.normal.array.slice(), col0: col ? col.slice() : null, keep, r1, r2, pn, rn, am: new Float32Array(n), cr: new Float32Array(n), tw: new Float32Array(n), tc: new Float32Array(n * 3),
       on: outerN, nd: null, flat: (() => { const f = new Uint8Array(n); if (kit) for (const nm of ['wing', 'bumperF', 'bumperR', 'spoiler', 'deflector']) { const R = U.ranges[nm]; if (!R) continue; for (const Q of [R.o, R.i]) if (Q && Q[1] > Q[0]) f.fill(1, Q[0], Q[1]); } return f; })(), outerN };
     v.xc.rig = B.rig; delete B.rig;   // (what never crumples: a roof rack, a fin, a wing: down with a caved roof whole, never through it)
     if (v.xt) {   // (the Kolibri's table: what a hit from behind bends in a V (1 the rear bumper, 2 the spoiler, 3 the tailgate's foot, vw its
@@ -8522,6 +8649,7 @@ const Render = (function () {
       let tx = s0 + dx, ty = s1 + dy, tz = s2 + dz; S[j] = tx; S[j + 1] = ty; S[j + 2] = tz; F[i] = 0;
       if (soft) { const el = Math.hypot(tx, ty, tz); if (el > X_SOFT) { const f = X_SOFT / el; tx *= f; ty *= f; tz *= f; F[i] = 1; } }
       a[j] += tx - s0 * q; a[j + 1] += ty - s1 * q; a[j + 2] += tz - s2 * q; xc.am[i] += da; xc.cr[i] += dc; tris.add((i / 3) | 0);
+      if (_xT && da > 0 && xc.tw) { const t = xc.tw[i], f = da / (t + da); xc.tc[j] += (_xT.r - xc.tc[j]) * f; xc.tc[j + 1] += (_xT.g - xc.tc[j + 1]) * f; xc.tc[j + 2] += (_xT.b - xc.tc[j + 2]) * f; xc.tw[i] = t + da; }   // (P4: the knock's mark, xSrcCol)
     }
     xTouched(v, xc, geo, tris);
     xTear(v, xc); xWheels(v, xc);
@@ -8541,8 +8669,97 @@ const Render = (function () {
     // no deeper than X_SOFT till then, short of tearing the bonnet open; from 70 % its full depth, the next blow there)
     if (!K.top && K.end && !((v.car.dmg || 0) >= X_SOFT_DMG) && K.d > X_SOFT) { K.d = X_SOFT; K.R = Math.min(2.8, 0.45 + 1.7 * K.d); }
     xApply(v, xc, old, K);
+    if (_xSp >= 14 && K.end && K.dx < 0 && !xc.tab) xCrush(v, xc, K, _xSp);   // (P6: a frontal blow at speed, the crumple zone; not the Kolibri's: its table)
   }
   const X_SOFT = 0.3, X_SOFT_DMG = 0.7;
+  /* P6 · a frontal blow at speed (_xSp: the frame's knock against a wall or a car, m/s, before emitFx clears it; a full body's only, the
+     player's and the 5 nearest; render only, the core's box as it is): the front ahead of the firewall (B.x1 - B.capF: behind the bonnet's
+     rear edge never) folds back as a crash test's crumple zone, by L = 0.7 sstep(8, 18, sp) at the nose (0.45 m at 50 km/h, 0.7 m from
+     65), its share along the nose (0 at the firewall, 1 at the nose), the end's own crush (xPush: K.d, X_SOFT) counted in; an offset blow
+     less on the far side (to half). The bonnet (its range; one of the 11: the front's top) up in an inverted V, 0.5 L in its middle; the
+     front wheels back with their arches (xWheels), the lamps' glow points with the nose. Never less than before: each point keeps its
+     deepest (xc.cz.dx, dy; the lamps' xc.cz.lx) */
+  let _xSp = 0;
+  function xcAt(Q, B, x, z) {   // the crush's share at (x, z) of the rest body
+    const s = (x - (B.x1 - B.capF)) / B.capF; if (s <= 0) return 0;
+    return Q.L * Math.min(1, s) * (1 - 0.5 * Q.off * clamp(Math.abs(z - Q.pz) / (2 * B.hw), 0, 1));
+  }
+  function xCrush(v, xc, K, sp) {
+    const B = xc.B, Lt = Math.min(0.7 * sstep(8, 18, sp), B.capF); if (!(Lt > 0.05)) return;
+    const geo = v.body.geometry, U = geo.userData || {}, a = geo.attributes.position.array, R = xc.rest, n = R.length / 3, dv = v.kit ? v.kit.deadV : null, nd = xc.nd;
+    const Q = xc.cz || (xc.cz = { L: 0, Lt: 0, pz: 0, off: 0, dx: new Float32Array(n), dy: new Float32Array(n) });
+    if (Lt <= Q.L + 1e-3) return;   // (no deeper than it is)
+    Q.L = Lt; Q.Lt = Lt; Q.pz = K.pz; Q.off = sstep(0.2, 0.7, Math.abs(K.w));
+    // the bonnet: its points (outer and inner) and its length along the car
+    const hood = new Uint8Array(n), HR = v.kit && U.ranges && (U.ranges.hood || U.ranges.bonnet); let h0 = Infinity, h1 = -Infinity;
+    if (HR) { for (const q of [HR.o, HR.i]) if (q && q[1] > q[0]) for (let i = q[0]; i < Math.min(q[1], n); i++) { hood[i] = 1; const x = R[i * 3]; if (x < h0) h0 = x; if (x > h1) h1 = x; } }
+    // (an older body without a kit: its bonnet is its own flat panel over the skin (buildParts), the skin under it does not bow: it would
+    // stand through the panel, and the panes ahead of the firewall with it)
+    const hl = h1 - h0, tris = new Set();
+    for (let i = 0; i < n; i++) {
+      if ((dv && dv[i]) || (nd && nd[i])) continue;
+      const j = i * 3, t = xcAt(Q, B, R[j], R[j + 2]);
+      let ty = 0; if (hood[i] && hl > 0.2) { const s = (R[j] - h0) / hl, lat = clamp(Math.abs(R[j + 2]) / B.hw, 0, 1); ty = 0.5 * Q.Lt * Math.max(0, 1 - Math.abs(2 * s - 1)) * (1 - 0.35 * lat * lat); }
+      const ddx = Math.max(0, t - Math.max(Q.dx[i], R[j] - a[j])), ddy = Math.max(0, ty - Q.dy[i]); if (ddx < 1e-5 && ddy < 1e-5) continue;
+      Q.dx[i] += ddx; Q.dy[i] += ddy; a[j] -= ddx; a[j + 1] += ddy; tris.add((i / 3) | 0);
+    }
+    oldNose(v, xc);
+    if (!tris.size) return;
+    if (v.lights && v.lights0) for (let k = 0; k < 2; k++) { const L0 = v.lights0[k], Lk = v.lights[k], lx = Q.lx || (Q.lx = [0, 0]); if (!L0 || !Lk) continue; const d = xcAt(Q, B, L0.x, L0.z) - lx[k]; if (d > 0) { Lk.x -= d; lx[k] += d; } }
+    xTouched(v, xc, geo, tris); xWheels(v, xc);
+  }
+  // an older body without a kit: its panels are boxes laid over the skin (buildParts: the bonnet, the front bumper, the front wings, the
+  // lenses, what is under them), so they go back with the nose the crumple zone shortened, by the zone's own share at each of their
+  // corners (xcAt, as the skin under them: the bonnet shorter and steeper, its rear edge at the windscreen where it was; an offset blow
+  // askew), not left standing out over it. From the panel as built every time (v.oNose: mesh -> its points and normals as built), in its
+  // frame as built where it stands open (oldAjar turns the mesh, not its points: the 18 degrees stay). Nothing random, no draw more
+  // (a rival's: its one mesh built again, remerge). A pit repair walks them back with the bodywork (repNose)
+  function oldNose(v, xc) {
+    const Q = xc.cz; if (!Q || v.kit || v.fp || !v.parts) return;
+    const B = xc.B, N = v.oNose || (v.oNose = new Map()), A = v.oAjar; let ch = false;
+    const one = (m, s, hinge) => {
+      if (!m || !m.isMesh || m.rotation.x || m.rotation.y) return;
+      const p = m.parent && m.parent !== v.det && m.parent !== v.bodyG ? m.parent : null; if (p && (p.rotation.x || p.rotation.y)) return;
+      const mx = s ? s[0] : m.position.x, my = s ? s[1] : m.position.y, pr = p ? p.rotation.z : 0, cp = Math.cos(pr), sp = Math.sin(pr);
+      const ox = (p ? p.position.x : 0) + mx * cp - my * sp, oz = (p ? p.position.z : 0) + m.position.z, r = pr + (s ? s[2] : m.rotation.z), cr = Math.cos(r), sr = Math.sin(r);
+      const g = m.geometry, pa = g.attributes.position, a = pa.array; let S = N.get(m); const R0 = S ? S.p : a;
+      if (!S) { let far = !!(hinge && hinge.p); for (let j = 0; j < R0.length && !far; j += 3) far = xcAt(Q, B, ox + R0[j] * cr - R0[j + 1] * sr, oz + R0[j + 2]) > 1e-4; if (!far) return;   // (behind the firewall: as it is)
+        if (!g.boundingBox) g.computeBoundingBox();   // (as built: oldAjar's hinge edge)
+        S = { p: a.slice(), n: g.attributes.normal ? g.attributes.normal.array.slice() : null, D: null, R: null, x0: 0, x1: 0 }; N.set(m, S);
+        if (hinge && hinge.p) { S.x0 = hinge.x0; S.x1 = hinge.x1; }   // (what is under the bonnet: by the bonnet's own length, shorter with it and under it still; by its own the engine would be pressed flat)
+        else if (hinge) { let lo = Infinity, hi = -Infinity; for (let j = 0; j < a.length; j += 3) { const X = ox + a[j] * cr - a[j + 1] * sr; if (X < lo) lo = X; if (X > hi) hi = X; } S.x0 = lo; S.x1 = hi; } }
+      // (the bonnet and what is under it: its front edge back with the nose, its rear edge at the windscreen where it was, even where
+      // the firewall is behind it; evenly shorter between)
+      for (let j = 0; j < a.length; j += 3) { const lx = S.p[j], ly = S.p[j + 1], X = ox + lx * cr - ly * sr, Z = oz + S.p[j + 2], d = hinge ? xcAt(Q, B, S.x1, Z) * (X - S.x0) / Math.max(S.x1 - S.x0, 1e-3) : xcAt(Q, B, X, Z); a[j] = lx - d * cr; a[j + 1] = ly + d * sr; }
+      pa.needsUpdate = true; if (S.n) g.computeVertexNormals(); g.computeBoundingSphere(); ch = true;
+    };
+    for (const n in v.parts) one(v.parts[n], A && (n === 'hood' || n === 'trunk') && A[n] && A[n].length === 3 && typeof A[n][0] === 'number' ? A[n] : null, n === 'hood');
+    for (const n in v.under) v.under[n].traverse(o => one(o, null, n === 'hood' && (N.get(v.parts.hood) || true)));
+    if (v.lens) for (let k = 0; k < 2; k++) one(v.lens[k], null);
+    if (ch) v.detDirty = true;
+  }
+  // a pit repair: those panels back to as built with the bodywork (k: 0 as they came in, 1 as built)
+  function repNose(v, R, k) {
+    for (const [m, S] of v.oNose) { const g = m.geometry, pa = g.attributes.position, a = pa.array;
+      if (S.R !== R) { S.R = R; S.D = a.slice(); }
+      for (let j = 0; j < a.length; j++) a[j] = S.D[j] + (S.p[j] - S.D[j]) * k;
+      pa.needsUpdate = true; if (S.n) { if (k >= 1) { g.attributes.normal.array.set(S.n); g.attributes.normal.needsUpdate = true; } else g.computeVertexNormals(); } g.computeBoundingSphere(); }
+    if (k >= 1) v.oNose = null; v.detDirty = true;
+  }
+  // P4 · the marks of a knock (render only, the core's contact as it is): against a wall or rail (fxWall the stronger) a grey scuff of
+  // concrete and zinc; against another car (the one whose contact point this frame is the same, carCollide sets both) its paint; a car
+  // not drawn (traffic) or no contact: none, the bare metal as before. _xT: the colour xApply lays on the points this knock moved
+  const XSRC_WALL = new THREE.Color(0x9c9c98), _xsc = new THREE.Color(); let _xT = null;
+  function xSrcCol(v, c) {
+    const w = v.xsW || 0, k = v.xsC || 0; if (!(w > 0 || k > 0)) return null;
+    if (w >= k) return XSRC_WALL;
+    return v.xsK != null ? _xsc.set(v.xsK) : null;
+  }
+  function xSrcCar(c) {   // (the paint of the car this frame's contact was with, or null: the core's own word for the strongest of the frame's knocks, fxKOf(c), core.js fxSrc; without it, a trailer's or a contact set by hand, the car whose contact point is the same, the last knock's)
+    const fk = Core.fxKOf(c); if (fk !== undefined) return fk;   // (null: the strongest knock was a thing without paint, not the last contact's car)
+    for (const q of views) { const o = q.car; if (o !== c && o.contactX === c.contactX && o.contactZ === c.contactZ && o.color != null) return o.color; }
+    return null;
+  }
   // the paint where the metal folded: darker in the folds (always), scraped to bare metal or rust in patches (xPaint); the roof's shell (a
   // roof field's entries) darker as far as it has sunk there (always with the field, xPaint or not: by its drop d over the deepest any of
   // its points can go, dMax, XROOF_DARK darker there; on the colour this makes, never lighter, never into or through a glass colour:
@@ -8559,6 +8776,7 @@ const Render = (function () {
         const i = t * 3 + q; Pc[q * 3] = -1; if (xc.keep[i] || (v.xtCut && v.xtCut[i])) continue;   // (-1: a corner the paint leaves as it is)
         const o = i * 3, crease = clamp((1 - (nm[o] * N0[o] + nm[o + 1] * N0[o + 1] + nm[o + 2] * N0[o + 2])) * 3.5, 0, 1), k = 1 - 0.42 * crease;
         let r = C0[o] * k, g = C0[o + 1] * k, b = C0[o + 2] * k;
+        if (XC.paint && xc.tw && xc.tw[i] > 0) { const t = clamp(xc.tw[i] / 0.12, 0, 1) * (0.3 + 0.7 * clamp((xc.pn[i] - 0.25) * 2.5, 0, 1)) * 0.85; r += (xc.tc[o] - r) * t; g += (xc.tc[o + 1] - g) * t; b += (xc.tc[o + 2] - b) * t; }   // (P4: the other car's paint or the wall's grey, in streaks, under the bare metal)
         if (XC.paint) { const w = clamp(xc.am[i] / 0.18, 0, 1) * (0.25 + 0.75 * crease), s = clamp((xc.pn[i] - (1 - w * 0.7)) * 3, 0, 1) * 0.9;
           if (s > 0) { const m = xc.rn[i] > 0.45 ? [0.4, 0.21, 0.1] : [0.38, 0.38, 0.4]; r += (m[0] - r) * s; g += (m[1] - g) * s; b += (m[2] - b) * s; } }
         Pc[q * 3] = r; Pc[q * 3 + 1] = g; Pc[q * 3 + 2] = b; if (vE && vE[i] >= 0 && rf.d[vE[i]] * kD > 0) dk = true;
@@ -8668,19 +8886,27 @@ const Render = (function () {
     if (torn) { v.body.geometry.attributes.position.needsUpdate = true; K.xTorn = true; K.ver++; }
   }
   // a rear door (the new mode): the quarter's panel from the front door's rear edge to the rear wheel's arch, above the sill, turned out
-  // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it
+  // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it. Not on a two-door car (the user's
+  // decision of 16. 11. 2026, docs/trki-realizem.md, »Vrata v poškodbah«: the KOLIBRI, the LEV and the RIS have one door a side; what
+  // lies behind it is their quarter and stays shut) and not on a car with rear doors of its own
+  const X_2DOOR = new Set(['kolibri', 'lev', 'ris']);
   function xRearDoor(v, c, sd, x, y, z, h) {
-    const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return; (K.xRD || (K.xRD = [0, 0]))[si] = 1;
+    const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return;
+    if (X_2DOOR.has(c.m.id)) return;   // (a two-door car: nothing is cut out of its quarter)
+    if (v.body.geometry.userData.ranges[sd < 0 ? 'door2L' : 'door2R']) return;   // (a car with rear doors of its own, door2L / door2R: those open and fall themselves, kitLoosen and xTabHit; nothing is cut out of its quarter)
+    (K.xRD || (K.xRD = [0, 0]))[si] = 1;
     const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
     if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
     const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
-    let hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]);
-    const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.3)) return;
+    let hx = K.hx0 ? K.hx0[sd < 0 ? 'doorL' : 'doorR'] : null; if (hx == null) { hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]); }   // (the front door's rear edge shut: kitLoosen's, where the door swung open before the damage field was made)
+    const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.55)) return;   // (narrower than a door: a strip of the quarter, left shut)
     const sel = [], dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let hz = 0;
     for (const Q of [R.o, R.i]) { if (!Q) continue; for (let t = Q[0] / 3; t < Q[1] / 3; t++) { const o = t * 9; if (dv[t * 3]) continue;
       const cx = (rest[o] + rest[o + 3] + rest[o + 6]) / 3, cy = (rest[o + 1] + rest[o + 4] + rest[o + 7]) / 3, cz = (rest[o + 2] + rest[o + 5] + rest[o + 8]) / 3;
       if (cx > hx || cx < x1 || cy < ySill || cz * sd <= 0) continue; sel.push(t); hz = Math.max(hz, Math.abs(cz)); } }
     if (!sel.length) return;
+    for (const t of sel) for (let q = 0; q < 9; q += 3) hx = Math.max(hx, rest[t * 9 + q]);   // (the hinge at the panel's own front edge: none of it ahead of it, turned into the car)
+    (K.xRDt || (K.xRDt = [null, null]))[si] = sel;   // (xRearShut)
     if (XC.glass && v.glassTris) { if (v.xt) { xtGlass(v, c, sd < 0 ? 'QL' : 'QR', 1, x, y, z, h, null); xtFlush(v); }   // (a table car's: its rear window 100 %, drawn now, before it turns)
       else for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null); }   // (its window breaks as it opens: turned with it after, it could not be broken any more)
     const phi = sd * 40 * Math.PI / 180, cs = Math.cos(phi), sn = Math.sin(phi), Z = hz * sd;
@@ -8739,7 +8965,7 @@ const Render = (function () {
     v.sk.fill(null); v.acc.fill(0);   // (no skid mark from the edge to where it is put back)
     if (c.fxWall > 2.5) sparks(c.wallX, c.wallZ, c.fxWall, c.y || 0);
     if (c.fxCar > 3 && !c.fxQ) sparks(c.contactX, c.contactZ, c.fxCar * 0.7, c.y || 0, c.fxCar > 7 || Core.TX.cv === 5);
-    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    c.fxWall = 0; c.fxCar = 0; Core.fxKOf(c, true); if (c.fxQ) c.fxQ = 0;
     if (B.hn === v.fbN) return;
     const more = B.hn > v.fbN; v.fbN = B.hn; if (!more) return;   // (a replay taken back in the fall: fewer knocks so far, none of them news)
     const k = clamp(B.hv / 12, 0.3, 1.5), wetL = wetW > 0.1, dc = snowy() ? SNOW_DUST : world && world.dust || DUST0.col, hx = B.hx, hy = B.hy, hz = B.hz;   // (rain: a darker, thinner cloud off the wet ground)
@@ -8753,7 +8979,7 @@ const Render = (function () {
     for (const w of v.wf.concat(v.wr, v.wm)) {
       const p0 = w.userData.xp0 || (w.userData.xp0 = w.position.clone()); let dx = 0, dz = 0;
       for (const K of xc.cl) if (xPush(K, xc, p0.x, p0.y + 0.28, p0.z, -1, o)) { dx += o[0]; dz += o[2]; }
-      w.position.x = p0.x + clamp(dx * 0.85, -0.6, 0.6); w.position.z = p0.z + clamp(dz * 0.3, -0.12, 0.12);
+      w.position.x = p0.x + clamp(dx * 0.85, -0.6, 0.6) - (xc.cz ? xcAt(xc.cz, xc.B, p0.x, p0.z) : 0); w.position.z = p0.z + clamp(dz * 0.3, -0.12, 0.12);
     }
   }
   // a rolling car's underside (made at its first roll, drawn only while it rolls: from above, upright, nothing of it shows): the floor black
@@ -8839,7 +9065,9 @@ const Render = (function () {
   // and the pane): a star from the blow (the windscreen's laminated glass stays in), crazed all over, a hole round the blow, long cracks,
   // fallen out (shards left along the frame); its colour cracked white, the holes' triangles collapsed; a spray of shards flies and the
   // glass lies on the road after (xShards)
-  const XGL = [['star', 'crack', 'hole', 'star', 'crazed'], ['crazed', 'star', 'hole', 'gone', 'crack'], ['gone', 'crazed', 'hole', 'gone', 'crazed'], ['gone', 'crazed', 'hole', 'crazed', 'gone']];
+  // the windscreen is laminated: it cracks (a star, long cracks, a web) and stays in its frame; the rear and side panes are tempered: they burst
+  // into small cubes and fall out, a rim left in the frame (P5)
+  const XGL = ['star', 'crack', 'crazed', 'star', 'crack'];
   function xPanes(v) {
     if (v.xP) return v.xP;
     const p = (v.xc && v.xc.rest) || v.body.geometry.attributes.position.array, P = [];
@@ -8869,7 +9097,7 @@ const Render = (function () {
   function xBreakPane(v, Pn, c, x, y, z, h, d) {
     Pn.broken = 1; const tris = Pn.tris, k = Pn.k; (v.xGl || (v.xGl = [0, 0, 0, 0]))[k] = 1;
     const geo = v.body.geometry, p = geo.attributes.position.array, col = geo.attributes.color.array, rest = (v.xc && v.xc.rest) || p, side = k >= 2, dv = v.kit ? (v.kit.deadV || (v.kit.deadV = new Uint8Array(geo.userData.N))) : v.xc ? (v.xc.nd || (v.xc.nd = new Uint8Array(v.xc.rest.length / 3))) : null;   // (one of the 11: its own mask, xc.nd, so a later dent leaves a removed pane removed)
-    const type = XGL[k][((c.id || 0) * 7 + k * 3 + v.xP.indexOf(Pn) * 2 + (c.repairN || 0)) % 5];
+    const type = k ? 'gone' : XGL[((c.id || 0) * 7 + v.xP.indexOf(Pn) * 2 + (c.repairN || 0)) % 5];
     // the pane in its own plane (u along it, w up), its box; the blow: where the dent was (on the pane's line), else a little off the middle
     let u0 = Infinity, u1 = -Infinity, w0 = Infinity, w1 = -Infinity;
     for (const t of tris) for (let q = 0; q < 3; q++) { const i = (t * 3 + q) * 3, uu = side ? rest[i] : rest[i + 2], ww = rest[i + 1]; u0 = Math.min(u0, uu); u1 = Math.max(u1, uu); w0 = Math.min(w0, ww); w1 = Math.max(w1, ww); }
@@ -8881,7 +9109,6 @@ const Render = (function () {
       const craze = () => 0.42 + (Math.abs(jitN(X * 9, Y * 9, Z * 9, 62) - 0.5) < 0.07 ? 0.45 : 0);
       if (type === 'star') { const Rr = 0.42; if (r > Rr * 1.6) return 0; const ring = r < Rr && Math.abs(((r + jitN(X * 4, Y * 4, Z * 4, 63) * 0.03) / 0.065) % 1 - 0.5) > 0.44 ? 0.8 : 0; return Math.max(r < 0.06 ? 0.95 : 0, rays(14, 0.16) * (1 - r / (Rr * 1.6)), ring); }
       if (type === 'crazed') return craze();
-      if (type === 'hole') { const Rh = 0.36 * (0.75 + 0.5 * jitN(X * 3, Y * 3, Z * 3, 64)); return r < Rh ? -1 : craze() + (r < Rh + 0.06 ? 0.3 : 0); }
       if (type === 'gone') { const m = Math.min(uu - u0, u1 - uu, ww - w0, w1 - ww); return m < 0.035 + 0.05 * jitN(X * 5, Y * 5, Z * 5, 65) ? 0.55 : -1; }
       const l1 = Math.abs(dw * 0.9 + du * 0.3 - 0.2 * (jitN(X, Y, Z, 66) - 0.5)), l2 = Math.abs(du * 0.8 - dw * 0.4 + 0.25 * (jitN(X, Y, Z, 67) - 0.5)), l3 = Math.abs(r - 0.32 - 0.12 * jitN(X * 2, Y * 2, Z * 2, 68));
       return Math.max(l1 < 0.012 ? 0.9 : 0, l2 < 0.011 ? 0.85 : 0, l3 < 0.01 ? 0.7 : 0, rays(5, 0.05) * clamp(1 - r / 0.25, 0, 1));
@@ -8895,10 +9122,22 @@ const Render = (function () {
     }
     geo.attributes.color.needsUpdate = true; if (gone) geo.attributes.position.needsUpdate = true;
     // the shards: a spray that flies (the particles), and the glass that lies on the road after (more where the pane fell out)
-    const rnd = v.kit ? rRnd : Math.random, ch = Math.cos(h), sh = Math.sin(h), wx = x + Pn.cx * ch - Pn.cz * sh, wz = z + Pn.cx * sh + Pn.cz * ch;
-    for (let n = 0; n < (gone ? 30 : 18); n++) particles.emit(wx, y + Pn.cy, wz, c.vx * 0.5 + (rnd() - 0.5) * 5, 1 + rnd() * 3, c.vz * 0.5 + (rnd() - 0.5) * 5, 0.8 + rnd() * 0.6, 0.16, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
+    const rnd = rRnd, ch = Math.cos(h), sh = Math.sin(h), wx = x + Pn.cx * ch - Pn.cz * sh, wz = z + Pn.cx * sh + Pn.cz * ch;
+    if (!k) { for (let n = 0; n < 5; n++) particles.emit(wx, y + Pn.cy, wz, c.vx * 0.5 + (rnd() - 0.5) * 2, 0.5 + rnd(), c.vz * 0.5 + (rnd() - 0.5) * 2, 0.5 + rnd() * 0.4, 0.1, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y); return; }   // (the laminated windscreen: a little glass dust, nothing on the road)
+    for (let n = 0; n < 30; n++) particles.emit(wx, y + Pn.cy, wz, c.vx * 0.5 + (rnd() - 0.5) * 5, 1 + rnd() * 3, c.vz * 0.5 + (rnd() - 0.5) * 5, 0.8 + rnd() * 0.6, 0.16, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
     const out = Pn.side ? [-sh * Pn.side, ch * Pn.side] : [ch * Math.sign(Pn.cx || 1), sh * Math.sign(Pn.cx || 1)];   // (outwards from the pane's side)
-    xShards(gone ? 30 : 18, wx + out[0] * 0.5, y, wz + out[1] * 0.5, out, c.vx, c.vz, null);
+    xShards(90, wx + out[0] * 0.5, y, wz + out[1] * 0.5, out, c.vx, c.vz, null);
+  }
+  // a lamp between whole and smashed (P5): a knock on its corner (cd 0.08, the core breaks it at 0.16) cracks its lens; it still shines, its
+  // glow 0.6 (carGlows), a head lamp's beam knocked out of aim, up to 12° outward and shorter (aimed down), by how hard (beams). The core's state only.
+  // the dents a view has taken (at most 40, the weakest out first): a view built again mid-race (setCrash: Nastavitve · Podrobnosti poškodb,
+  // Detajli avtov) takes them again as the career's old knocks, the dent only (no chips, glass, mirror or sound); a repair's new view none
+  function dLog(v, d, col, sp) { const L = v.dLog || (v.dLog = []); L.push({ lx: d.lx, lz: d.lz, amt: d.amt, top: d.top, sc: d.sc, old: true, xcol: col ? col.getHex() : d.xcol, xsp: sp || d.xsp || 0 });   // (xcol, xsp: what it was against and how fast, P4 and P6: the mark and the crumple again with it)
+
+    if (L.length > 40) { let w = 0; for (let i = 1; i < L.length; i++) if (L[i].amt < L[w].amt) w = i; L.splice(w, 1); } }
+  function xLampCrack(v, c) {
+    const cd = c.cd; if (!cd || c.net) return;
+    for (let k = 0; k < 4; k++) if (cd[k] >= 0.08 && !v.lightBroken[k] && !(v.lCr && v.lCr[k])) { (v.lCr || (v.lCr = [0, 0, 0, 0]))[k] = Math.min(1, cd[k] / 0.16); if (k < 2 && v.beam) beams(v); }
   }
   // xBody: the first side blow knocks that side's mirror off: it lies on the road beside the car, there for the rest of the race (a render
   // piece of its own, cleared with the next race: xGroundReset; the core's part may come off later, its piece then has nothing to draw)
@@ -8929,24 +9168,26 @@ const Render = (function () {
     const p = geo.attributes.position.array, t = new THREE.Vector3(); let lo = 1e9; for (let i = 0; i < p.length; i += 3) { t.set(p[i] - cen[0], p[i + 1] - cen[1], p[i + 2] - cen[2]).applyQuaternion(q); if (t.y < lo) lo = t.y; }
     const out = 0.45 + rRnd() * 0.6, wx = x + cen[0] * ch - cen[2] * sh, wz = z + cen[0] * sh + cen[2] * ch;
     m.position.set(wx - sh * sd * out - c.vx * 0.02, y - lo + 0.005, wz + ch * sd * out - c.vz * 0.02); m.rotation.y = rRnd() * Math.PI * 2;
-    scene.add(m); xGround.push(m);
+    scene.add(m); xGround.push(m); xGroundCap();
     for (let k = 0; k < 6; k++) sparkP.emit(wx, y + cen[1], wz, (rRnd() - 0.5) * 5, 1 + rRnd() * 2, (rRnd() - 0.5) * 5, 0.25 + rRnd() * 0.2, 0.6, 0.14, 1, 0.82, 0.36, 1, 10, 1.2, y);
   }
   function xGroundReset() { for (const m of xGround) { scene.remove(m); if (m.userData.xDeb) freeOwn(m); else m.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== matCar) o.material.dispose(); }); } xGround.length = 0; }
-  // the parts kept on the road (XC.parts): at most 48 (the oldest freed first; drawn only where the camera looks, so few at a time)
-  function xGroundCap() { let n = 0; for (const m of xGround) if (m.userData.xDeb) n++; for (let i = 0; n > 48 && i < xGround.length; i++) { const m = xGround[i]; if (!m.userData.xDeb) continue; scene.remove(m); xGround.splice(i--, 1); n--; freeOwn(m, liveRes()); } }
+  // the pieces kept on the road (XC.parts' parts, the mirrors, a table's parts off): at most 48 in all (the oldest freed first; drawn only where
+  // the camera looks, so few at a time; a switch to Preproste mid-race keeps them, its cars then drawn as Preproste's: 48 at most still)
+  function xGroundCap() { if (xGround.length <= 48) return; const out = xGround.splice(0, xGround.length - 48); for (const m of out) scene.remove(m); const keep = liveRes(); for (const m of out) freeOwn(m, keep); }
   // a blow knocks chips of paint off: a few pieces in the car's colour on the road where it was hit
   const _xc = new THREE.Color();
   function xChips(v, d, c, x, y, z, h) {
     if (!(d.amt >= 0.05)) return;
     const ch = Math.cos(h), sh = Math.sin(h), wx = x + d.lx * ch - d.lz * sh, wz = z + d.lx * sh + d.lz * ch, l = Math.hypot(d.lx, d.lz) || 1, ox = (d.lx * ch - d.lz * sh) / l, oz = (d.lx * sh + d.lz * ch) / l;
-    xShards(Math.round(4 + d.amt * 40), wx + ox * 0.3, y, wz + oz * 0.3, [ox, oz], c.vx, c.vz, _xc.set(c.color != null ? c.color : 0x888888));
+    xShards(Math.min(40, Math.round(6 + d.amt * 80)), wx + ox * 0.3, y, wz + oz * 0.3, [ox, oz], c.vx, c.vz, _xc.set(c.color != null ? c.color : 0x888888));   // (flakes of paint, 1-3 cm)
+    if (Math.abs(d.lx) > v.car.m.len * 0.38) xShards(Math.min(16, Math.round(2 + d.amt * 30)), wx + ox * 0.3, y, wz + oz * 0.3, [ox, oz], c.vx, c.vz, XSH_PLAST, 2.5);   // (a bumper's corner: bits of its black plastic, 3-8 cm)
   }
   // the glass on the road: one instanced mesh of little flat pieces (the glass, the lamps' red and white, the paint's chips), a ring of
   // XSH_N, enough to keep every piece of a race on the road (only past that the oldest go first); a new race clears it
   const XSH_N = 6000; let xSh = null; const _xm = new THREE.Matrix4(), _xq = new THREE.Quaternion(), _xe = new THREE.Euler(), _xv = new THREE.Vector3(), _xs = new THREE.Vector3();
-  const XSH_GLASS = new THREE.Color(0xe4f6ff), XSH_TAIL = new THREE.Color(0xff2a14), XSH_LENS = new THREE.Color(0xfff4d8);
-  function xShards(n, wx, wy, wz, out, vx, vz, col) {
+  const XSH_PLAST = new THREE.Color(0x1c1c1e), XSH_GLASS = new THREE.Color(0xe4f6ff), XSH_TAIL = new THREE.Color(0xff2a14), XSH_LENS = new THREE.Color(0xfff4d8);
+  function xShards(n, wx, wy, wz, out, vx, vz, col, sz = 1) {   // (sz: the piece's size over glass's 1-3 cm; P4)
     if (!scene) return;
     if (!xSh) ownRnd(() => xShardsMake());
     if (!xSh) return;
@@ -8955,17 +9196,19 @@ const Render = (function () {
     for (let i = 0; i < n; i++) {
       const a = rRnd() * Math.PI * 2, r = 0.15 + Math.pow(rRnd(), 0.7) * 1.4, fw = rRnd() * Math.min(1.5, sp * 0.06);   // (round the pane, out from it, some carried on with the car)
       _xv.set(wx + Math.cos(a) * r * 0.7 + out[0] * r * 0.6 + vx / sp * fw, wy + 0.012 + rRnd() * 0.006, wz + Math.sin(a) * r * 0.7 + out[1] * r * 0.6 + vz / sp * fw);
-      _xq.setFromEuler(_xe.set((rRnd() - 0.5) * 0.3, rRnd() * Math.PI * 2, (rRnd() - 0.5) * 0.3)); const k = 0.6 + rRnd() * 1.1; _xs.set(k, 1, k * (0.7 + rRnd() * 0.6));
+      _xq.setFromEuler(_xe.set((rRnd() - 0.5) * 0.3, rRnd() * Math.PI * 2, (rRnd() - 0.5) * 0.3)); const k = (0.6 + rRnd() * 1.1) * sz; _xs.set(k, 1, k * (0.7 + rRnd() * 0.6));
+      if (xQuiet) continue;   // (the numbers drawn all the same)
       xSh.setMatrixAt(xSh.k, _xm.compose(_xv, _xq, _xs)); xSh.setColorAt(xSh.k, col || XSH_GLASS); xShSpot(xSh.k, _xv.x, _xv.y, _xv.z, k);
       xSh.k = (xSh.k + 1) % XSH_N; xSh.count = Math.min(XSH_N, xSh.count + 1);
     }
+    if (xQuiet) return;
     // (only the slots written since the last frame go up to the GPU: their span, the whole buffer when the ring wrapped)
     if (xSh.dT !== time) { xSh.dT = time; xSh.dLo = Infinity; xSh.dHi = -1; }
     if (n >= XSH_N || k0 + n > XSH_N) xSh.dLo = -1; else if (xSh.dLo >= 0) { xSh.dLo = Math.min(xSh.dLo, k0); xSh.dHi = Math.max(xSh.dHi, k0 + n); }
     for (const [A, w] of [[xSh.instanceMatrix, 16], [xSh.instanceColor, 3]]) { if (!A) continue; if (xSh.dLo < 0) { A.updateRange.offset = 0; A.updateRange.count = -1; } else { A.updateRange.offset = xSh.dLo * w; A.updateRange.count = (xSh.dHi - xSh.dLo) * w; } A.needsUpdate = true; }
   }
-  function xShardsMake() {   // (a piece: a flat sliver of 10-25 cm; its colour per piece: the glass's pale blue, the lamps', the paint's)
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.1, 0, -0.07, 0.11, 0, -0.02, -0.02, 0, 0.09], 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
+  function xShardsMake() {   // (a piece: a flat sliver of 1-3 cm, as tempered glass and paint break (P4; 10-25 cm before); its colour per piece: the glass's pale blue, the lamps', the paint's, black plastic)
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-0.01, 0, -0.007, 0.011, 0, -0.002, -0.002, 0, 0.009], 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, 0, 0, 1, 0, 0, 1, 0], 3));
       xSh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }), XSH_N); xSh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(XSH_N * 3), 3); xSh.count = 0; xSh.k = 0; xSh.frustumCulled = false;
       Object.assign(xSh, { px: new Float32Array(XSH_N), py: new Float32Array(XSH_N), pz: new Float32Array(XSH_N), sc: new Float32Array(XSH_N), hit: new Float32Array(XSH_N), cell: new Float64Array(XSH_N).fill(NaN), grid: new Map() });   // (driven over: xShardsRun)   // (lit by nothing: bright on the road in the sun and in the shade alike)
       for (let i = 0; i < XSH_N; i++) xSh.setColorAt(i, XSH_GLASS);
@@ -9147,7 +9390,7 @@ const Render = (function () {
     const ch = Math.cos(h), sh = Math.sin(h), wx = x + P.cx * ch - P.cz * sh, wz = z + P.cx * sh + P.cz * ch, side = key.length > 1 ? (key[1] === 'L' ? -1 : 1) : 0;
     for (let n = 0, m = Math.round(6 + 20 * df); n < m; n++) particles.emit(wx, y + P.cy, wz, c.vx * 0.5 + (rRnd() - 0.5) * 5, 1 + rRnd() * 3, c.vz * 0.5 + (rRnd() - 0.5) * 5, 0.8 + rRnd() * 0.6, 0.16, 0.1, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
     const out = side ? [-sh * side, ch * side] : [ch * Math.sign(P.cx || 1), sh * Math.sign(P.cx || 1)];   // (outwards from the pane's side)
-    xShards(Math.round(6 + 30 * df), wx + out[0] * 0.5, y, wz + out[1] * 0.5, out, c.vx, c.vz, null);
+    xShards(Math.round(18 + 90 * df), wx + out[0] * 0.5, y, wz + out[1] * 0.5, out, c.vx, c.vz, null);
   }
   // a pane's picture drawn when it is due: one a frame (the player's car its own one); with its first, its triangles (and its frame
   // panels) out of the body and into the broken glass mesh, the inside of the car drawn from then on
@@ -9241,7 +9484,7 @@ const Render = (function () {
     const ch = Math.cos(h), sh = Math.sin(h), side = Math.abs(L.c[2]) > 0.25 * c.m.wid ? Math.sign(L.c[2]) : 0, end = side ? 0 : Math.sign(L.c[0]) || 1, out = 0.35 + rRnd() * 0.6;
     const lx = L.c[0] + end * out, lz = L.c[2] + side * out;
     m.position.set(x + lx * ch - lz * sh - c.vx * 0.02, y - lo + 0.005, z + lx * sh + lz * ch - c.vz * 0.02); m.rotation.y = rRnd() * Math.PI * 2;
-    scene.add(m); xGround.push(m);
+    scene.add(m); xGround.push(m); xGroundCap();
   }
   // (crashInfo, the tests: how far the bonnet's ridge rose; the rear bumper pushed in and the spoiler bent down in their middles and at their ends)
   function xtBent(v) {
@@ -9288,7 +9531,7 @@ const Render = (function () {
     let cx = 0, cy = 0, cz = 0; for (let i = a; i < a + n; i++) { cx += pa[i * 3] / n; cy += pa[i * 3 + 1] / n; cz += pa[i * 3 + 2] / n; }
     const ch = Math.cos(h), sh = Math.sin(h), wx = x + cx * ch - cz * sh, wz = z + cx * sh + cz * ch, out = [-sh * sd, ch * sd];
     for (let k = 0, m = Math.round(4 + 8 * df); k < m; k++) particles.emit(wx, y + cy, wz, c.vx * 0.5 + (rRnd() - 0.5) * 3, 0.8 + rRnd() * 2, c.vz * 0.5 + (rRnd() - 0.5) * 3, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.84, 0.9, 0.97, 0.95, 9, 0.6, y);
-    xShards(Math.round(3 + 8 * df), wx + out[0] * 0.3, y, wz + out[1] * 0.3, out, c.vx, c.vz, null);
+    xShards(Math.round(9 + 24 * df), wx + out[0] * 0.3, y, wz + out[1] * 0.3, out, c.vx, c.vz, null);
   }
   // a door mirror (part mirrorL / mirrorR, K.mirror's place: R.mir) pressed in by a hard hit: turned back about an upright axis through its
   // housing's inner rear corner by deg (45: half folded; 90: flat along the door, squashed to 60 % of its depth against it), then moved
@@ -9332,6 +9575,12 @@ const Render = (function () {
     if (v.xc) for (const i of ids) v.xc.am[i] = Math.max(v.xc.am[i], 0.05);   // (pushed: the paint pass scrapes it)
   }
   // a blow on the Kolibri (the core's dent): its row of the table, as above
+  // a four-door car's side (its rear doors parts of their own, door2L / door2R): a blow behind the rear door's front edge (its region's:
+  // the drawn line) is the rear door's: the table's door then is that one (it hangs, it comes off; the front door and its mirror stay),
+  // the two side panes change places (the rear door's glass is the rear side pane, QL / QR) and the blows on it are counted by themselves
+  function xtRear(v, c, d) { const K = v.kit, n = d.lz < 0 ? 'door2L' : 'door2R'; if (!K || !v.body.geometry.userData.ranges[n]) return null;
+    const C = K.xD2 || (K.xD2 = {}); if (C[n] == null) { const E = K.E, r = (E.regions || []).find(q => q.part === n); C[n] = r ? Math.max(r.x[0], r.x[1]) * (c.m.len / E.body.len) : -Infinity; }
+    return d.lx < C[n] ? n : null; }
   function xTabHit(v, d, c, x, y, z, h) {
     const S = v.xtS || (v.xtS = { z: {}, rear: 0, rt: -1e9, ct: -1e9 });
     if (XT_MIN.has(c.m.id)) { if (time - S.ct >= 0.35) S.owe = { d, b: v.xtB || 0 }; else if (S.owe && d.amt > S.owe.d.amt) S.owe.d = d; S.ct = time; }   // (a crash: blows under 0.35 s apart, any zone; xtMin after the frame's)
@@ -9343,11 +9592,13 @@ const Render = (function () {
       if (s === 2) { G('R', 0.5); G('D' + (sd === 'L' ? 'R' : 'L'), 0.5); }
       return;
     }
-    const pk = xtPick(c.m, d), zone = pk.zone, Z = S.z[zone] || (S.z[zone] = { n: 0, t: -1e9, s: -1 }), again = time - Z.t < 0.35; Z.t = time;
+    const pk = xtPick(c.m, d), zone = pk.zone, d2 = zone[0] === 'S' && XT_TAB.H[zone][0] === 'D' ? xtRear(v, c, d) : null, zk = d2 ? zone + '2' : zone, Z = S.z[zk] || (S.z[zk] = { n: 0, t: -1e9, s: -1 }), again = time - Z.t < 0.35; Z.t = time;
     const rear = zone[0] === 'B', rAgain = rear && time - S.rt < 0.35; if (rear) S.rt = time;   // (the rear's order: one crash however many of its zones it touches)
     if (again && pk.s <= Z.s) return;   // (the same crash: only a harder knock in it counts)
     if (!again) Z.n++; Z.s = again ? Math.max(Z.s, pk.s) : pk.s;
-    const s = rear ? pk.s : Math.max(pk.s, Z.n >= 5 ? 2 : Z.n >= 3 ? 1 : 0), row = XT_TAB.T[zone][s], hit = XT_TAB.H[zone], fx = { g: Object.assign({}, row.g), lamp: row.lamp.slice(), hang: row.hang.slice(), off: row.off.slice(), fold: row.fold.map(q => q.slice()) };
+    const s = rear ? pk.s : Math.max(pk.s, Z.n >= 5 ? 2 : Z.n >= 3 ? 1 : 0), row = XT_TAB.T[zone][s], hit = d2 ? 'Q' + zone[1] : XT_TAB.H[zone], fx = { g: Object.assign({}, row.g), lamp: row.lamp.slice(), hang: row.hang.slice(), off: row.off.slice(), fold: row.fold.map(q => q.slice()) };
+    if (d2) { const sd = zone[1], g = fx.g, gd = g['D' + sd], gq = g['Q' + sd], dn = 'door' + sd, sw = (L) => L.filter(n => n !== 'mirror' + sd).map(n => n === dn ? d2 : n);   // (the rear door's blow: the row read for it)
+      delete g['D' + sd]; delete g['Q' + sd]; if (gd != null) g['Q' + sd] = gd; if (gq != null) g['D' + sd] = gq; fx.hang = sw(fx.hang); fx.off = sw(fx.off); }
     if (rear && !rAgain) { const n = ++S.rear, R1 = XT_TAB.T[zone][1];   // (the user's order from behind)
       if (n === 2) fx.lamp.push(...R1.lamp); if (n === 3) fx.hang.push('spoiler'); if (n >= 4) fx.off.push('spoiler'); }
     for (const key in fx.g) G(key, fx.g[key], key === hit ? d : null);
@@ -9605,6 +9856,22 @@ const Render = (function () {
     if (B.length > FIRE_EMIT) B.sort((a, b) => Math.hypot(a.car.x - cp.x, a.car.z - cp.z) - Math.hypot(b.car.x - cp.x, b.car.z - cp.z));
     for (let i = 0; i < Math.min(FIRE_EMIT, B.length); i++) B[i].fireEmit = true;
   }
+  // Poškodbe P2 (Podrobne, drawn only: the engine's power and the race untouched): how hurt the engine is, f = the front zone's damage or the
+  // two front corners' crush, whichever is more. A holed radiator first: white steam rising fast (f 0.15-0.30, more on the throttle), then steam
+  // and grey smoke (over 0.30); oil burning on the hot exhaust under it, a low bluish smoke (from 0.45), and oil dripping on the road: a short
+  // dark stain every 2 m of the way (from 0.30). The renderer's own random numbers (rRnd), never Math.random
+  function xEngF(c) { const z = c.dz, k = c.cd; return Math.max(z ? z[0] || 0 : 0, k ? ((k[0] || 0) + (k[1] || 0)) / 2 : 0); }
+  function xEngSteam(v, c, dt, f, sx, sy, sz, y) {
+    const thr = c.inThr || 0, st = Core.sstep(0.15, 0.3, f) * (0.4 + 0.6 * thr), gy = c.roadY || 0;
+    v.xStA = (v.xStA || 0) + dt * 14 * st; let n = 0;
+    while (v.xStA >= 1 && n++ < 6) { v.xStA -= 1; const g = f > 0.3 ? 0.93 - 0.35 * Core.sstep(0.3, 0.6, f) * rRnd() : 0.95;   // (over 0.30 some puffs grey: smoke in the steam)
+      particles.emit(sx + (rRnd() - 0.5) * 0.4, sy + 0.15, sz + (rRnd() - 0.5) * 0.4, c.vx * 0.5 + (rRnd() - 0.5) * 0.5, 1.6 + rRnd() * 1.2, c.vz * 0.5 + (rRnd() - 0.5) * 0.5, 0.7 + rRnd() * 0.5, 0.35, 1.8 + rRnd() * 0.8, g, g, g * 1.02, 0.34, -1.2, 1.4, y); }
+    if (f >= 0.45) { v.xOlA = (v.xOlA || 0) + dt * (3 + 6 * thr) * Core.sstep(0.45, 0.8, f);
+      while (v.xOlA >= 1) { v.xOlA -= 1; particles.emit(sx + (rRnd() - 0.5) * 0.6, gy + 0.25, sz + (rRnd() - 0.5) * 0.6, c.vx * 0.3, 0.3 + rRnd() * 0.4, c.vz * 0.3, 1.1 + rRnd() * 0.6, 0.4, 2.2, 0.34, 0.35, 0.4, 0.3, -0.2, 1.2, gy); } }
+    if (f >= 0.3 && skids && !c.air) { const sp = Math.hypot(c.vx, c.vz); v.xOlD = (v.xOlD || 0) + sp * dt;
+      if (v.xOlD >= 2) { v.xOlD = 0; const ux = sp > 0.5 ? c.vx / sp : 0, uz = sp > 0.5 ? c.vz / sp : 0, l = 0.12 + 0.2 * rRnd();
+        skids.add(sx - ux * l, sz - uz * l, sx + ux * l, sz + uz * l, 0.12 + 0.1 * Core.sstep(0.3, 0.8, f), 0.05, 0.05, 0.06, 0.55, 0.55, gy, gy); } }
+  }
   function engineFx(v, c, dt, x, y, z, h, opt, now) {
     const M = c.m, F = v.fire, live = !(opt && opt.noFx) && !dbg.noSmoke, S0 = v.seat || (v.seat = fireSeat(v)), ch = Math.cos(h), sh = Math.sin(h);
     const S = F && F.rule ? ruleSeat(v, F, S0) : F && F.side ? v.seatF || (v.seatF = [S0[0], S0[1], F.side * FIRE_SIDE * M.wid]) : S0;   // (a hub's fire: on its side of the engine; the wheel rule's: ruleSeat)
@@ -9614,7 +9881,8 @@ const Render = (function () {
     const fc = !F ? 0 : !F.rule ? 0.3 + 0.7 * Math.min(1, e / 18) : F.hk >= 0 ? 0.14 + 0.86 * Core.sstep(0, 6, e) : 0.3 + 0.7 * Core.sstep(0, 8, e);   // (the wheel rule's: from the corner that lost its wheel over the car in 6 s, from the middle in 8)
     const cw = Math.max(0.3 * Core.sstep(0.8, 1, c.dmg || 0), fc) * (1 - rk);
     if (v.charU && (v.charU.value.w !== cw || v.charU.value.x !== S[0] || v.charU.value.z !== S[2])) { v.charU.value.set(S[0], S[1], S[2], cw); charParts(v, cw); }
-    if (!F && !(c.dmg > 0.45)) return;
+    const ef = v.xOn && c.dmgMode > 0 ? xEngF(c) : 0; v.xEF = ef;   // (P2: the engine's own hurt, Podrobne only)
+    if (!F && !(c.dmg > 0.45) && !(ef >= 0.15)) return;
     // where the smoke and the flames come out, in the world (with the body's roll, pitch and sag: after updateParts)
     const W3 = F && F.rule ? ruleSpots(v, S0) : null, Q = W3 ? W3[1] : fireSpot(v, S); if (!v.cull) v.bodyG.updateMatrixWorld();   // (out of the view: its smoke and glow muted, updateCars)   // (the wheel rule's whole car: the middle spot's smoke and glow)
     if (W3) for (let i = 0; i < 3; i++) _fw3[i].set(W3[i][0], W3[i][1], W3[i][2]).applyMatrix4(v.bodyG.matrixWorld);
@@ -9631,6 +9899,7 @@ const Render = (function () {
         particles.emit(sx + (r1 - 0.5) * 0.5, sy + 0.25, sz + (r2 - 0.5) * 0.5, c.vx * 0.35 + (r3 - 0.5) * 0.6, 0.9 + r4 * 0.6, c.vz * 0.35 + (r5 - 0.5) * 0.6, 1.7 + r6 * 0.9, 0.7 * ks, (3.8 + r7 * 1.6) * ks, gc, gc, gc * 1.02, 0.52 + dark * 0.2, -0.3, 0.9, y);
       }
     }
+    if (ef >= 0.15 && !F && live && !v.cull) xEngSteam(v, c, dt, ef, sx, sy, sz, y);
     if (!F) return;
     // the fire: up in 1.5 s, dying down over its last 5 s (of race time); flames over the engine's width, black smoke over them; after it,
     // heavy black smoke
@@ -9709,6 +9978,28 @@ const Render = (function () {
     if (surf !== 5 && surf !== 6) return false;
     const T = curTrack, q = c.wq && c.wq[wi]; if (!T || !q || q.k >= 0 || !(q.a >= 0)) return false;
     return Math.abs(q.d) > (T.wa ? T.wa[q.a] : T.w) + 0.3;
+  }
+  // P4.4: the lowest point of a kit body's outer shell in corner k's quarter, as drawn this frame: [x, z, its height over the road] in the
+  // car's frame, or null. The pose: the body's own (roll, pitch, lowered: bodyG as updateCars has just set it), the sag laid over it
+  // (v.sagQ, v.sagP: after emitFx in the frame, so here by hand) and the whole car's pitch against the road's (gpitch behind the slope:
+  // a landing, a dip). A few candidate points only (the lowest under each tilt the pose can take), found again when the shape changes
+  const _sgV = new THREE.Vector3();
+  function sagLow(v, c, k) {
+    const K = v.kit, g = v.body.geometry, a = g.attributes.position.array, sw = c.m.sway || 1;
+    let C = v.xSagC; if (!C || C.ver !== K.ver) C = v.xSagC = { ver: K.ver, c: [] };
+    let I = C.c[k];
+    if (!I) { const dv = K.deadV, nO = g.userData.outerN, S = new Set();
+      for (const gx of [-0.08 * sw, 0, 0.08 * sw]) for (const gz of [-0.1 * sw, 0, 0.1 * sw]) { let lo = -1, ym = Infinity;
+        for (let i = 0; i < nO; i++) { if (dv && dv[i]) continue; const px = a[i * 3], pz = a[i * 3 + 2]; if ((k < 2) !== (px > 0) || (k % 2 === 1) !== (pz > 0)) continue;
+          const y = a[i * 3 + 1] + gx * px + gz * pz; if (y < ym) { ym = y; lo = i; } }
+        if (lo >= 0) S.add(lo); }
+      I = C.c[k] = [...S]; }
+    if (!I.length) return null;
+    const gd = c.hl && c.hl.on ? 0 : v.gpitch - Math.atan(c.gradeNow || 0), cg = Math.cos(gd), sg = Math.sin(gd); let out = null;
+    for (const i of I) { _sgV.set(a[i * 3], a[i * 3 + 1], a[i * 3 + 2]).applyMatrix4(v.body.matrix).applyQuaternion(v.bodyG.quaternion).add(v.bodyG.position);
+      if (v.sagQ) _sgV.applyQuaternion(v.sagQ).add(v.sagP);
+      const y = _sgV.y * cg + _sgV.x * sg; if (!out || y < out[2]) out = [_sgV.x, _sgV.z, y]; }
+    return out;
   }
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
@@ -9836,18 +10127,43 @@ const Render = (function () {
     if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }
+    // (P4, Realistična: a hard knock into a concrete wall, over 8 m/s into it, breaks grit off it: a coarse pale cloud that stays low and close, thrown back
+    // toward the road, with crumbs and a few lumps of concrete that fall and bounce on the ground; the more the harder the knock (full at 30 m/s). Only where
+    // the world says what stands on the barrier line there (world.barKind: 1 a concrete wall; not off a steel rail or a tyre wall), the particles' own
+    // one draw call, the renderer's own random numbers; rain: a thinner, darker cloud)
+    if (XC.dust && Core.TX.cv === 6 && c.fxWall > 8 && !(c.fxCar > c.fxWall && !c.fxQ) && world && world.barKind && curTrack && !curTrack.free && c.q && c.q.i >= 0 && !(c.q.k >= 0)) {
+      const T = curTrack, qi = c.q.i, sd = c.q.d > 0 ? 1 : -1;
+      if (world.barKind(qi, sd) === 1) { const k = clamp((c.fxWall - 8) / 22, 0, 1), px = c.wallX, pz = c.wallZ, gy = c.roadY || 0, bx = -sd * T.nx[qi], bz = -sd * T.nz[qi], wet = wetW > 0.1;
+        for (let i = 0, n = (wet ? 5 : 10) + (wet ? 8 : 18) * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = 0.6 + rRnd() * 2.4, bk = (1.5 + rRnd() * 4) * (0.5 + k), sh = (wet ? 0.62 : 0.84) + rRnd() * 0.16;
+          particles.emit(px + Math.cos(a) * 0.35, gy + 0.15 + rRnd() * 0.75, pz + Math.sin(a) * 0.35, Math.cos(a) * sp + bx * bk + c.vx * 0.15, 0.3 + rRnd() * 1.5, Math.sin(a) * sp + bz * bk + c.vz * 0.15, 1.4 + rRnd() * 1.4, 0.4, (2.3 + rRnd() * 2.1) * (0.7 + 0.5 * k), 0.8 * sh, 0.78 * sh, 0.74 * sh, wet ? 0.4 : 0.62, 0.3, 2.1, gy); }
+        for (let i = 0, n = 14 + 36 * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = (1 + rRnd() * 5) * (0.5 + 0.6 * k), bk = (2 + rRnd() * 7) * (0.5 + 0.6 * k), sh = 0.6 + rRnd() * 0.22, sz = 0.12 + rRnd() * 0.16;
+          particles.emit(px, gy + 0.2 + rRnd() * 0.7, pz, Math.cos(a) * sp + bx * bk + c.vx * 0.3, 1.2 + rRnd() * 4 * (0.5 + k), Math.sin(a) * sp + bz * bk + c.vz * 0.3, 0.9 + rRnd() * 0.9, sz, sz * 0.8, sh, sh * 0.98, sh * 0.94, 0.95, 13, 0.5, gy); }
+        for (let i = 0, n = 2 + 6 * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = 0.8 + rRnd() * 3 * k, bk = 1.5 + rRnd() * 5 * k, sh = 0.5 + rRnd() * 0.16, sz = 0.32 + rRnd() * 0.18;
+          particles.emit(px, gy + 0.3 + rRnd() * 0.5, pz, Math.cos(a) * sp + bx * bk + c.vx * 0.3, 1 + rRnd() * 2.5, Math.sin(a) * sp + bz * bk + c.vz * 0.3, 1.1 + rRnd() * 0.8, sz, sz * 0.85, sh, sh * 0.98, sh * 0.95, 0.95, 15, 0.4, gy); } } }
     if (XC.drag && v.kit && spd > 4 && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (const bn of ['bumperF', 'bumperR']) if (v.kit.ajar[bn] && !v.kit.dead[bn]) {   // (Razbijanje · nov način: a bumper hanging loose drags on the road: sparks off its low end)
       const g = v.body.geometry, R = g.userData.ranges[bn]; if (!R) continue; let lo = v.xDragI && v.xDragI[bn];
       if (lo == null) { const a = g.attributes.position.array; let ym = Infinity; for (let i = R.o[0]; i < R.o[1]; i++) if (a[i * 3 + 1] < ym) { ym = a[i * 3 + 1]; lo = i; } (v.xDragI || (v.xDragI = {}))[bn] = lo; }
       const acc = v.xDragA || (v.xDragA = {}); acc[bn] = (acc[bn] || 0) + dt * (60 + spd * 6);   // (a stream: more the faster it drags; by time, not by frame)
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
-    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    // (P4.4: a bent wheel's sagged corner (P3). Sparks only where the body as drawn this frame is down on the road there (sagLow: 1.5 cm
+    // or less) and the car is over 15 m/s, on the road: a stream off that point, by time; tools/trki/iskre-vogal.mjs has the table)
+    // (v.sagQ: a corner that did sag: a body 1 cm over the road as built (the Mravlja) has no room to, kitSag lays none; v.hop: lifted over debris)
+    if (XC.drag && v.kit && v.bend && v.sagQ && !v.hop && spd > 15 && !c.air && !c.rl && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (let k = 0; k < 4; k++) if (v.bend[k] > 0 && !v.wheelOff[k]) {
+      const L = sagLow(v, c, k); if (!L || L[2] > 0.015) continue;
+      const acc = v.xSagA || (v.xSagA = [0, 0, 0, 0]); acc[k] += dt * (10 + spd * 1.5);
+      if (acc[k] >= 1) { const ch = Math.cos(h), sh = Math.sin(h), gy = c.roadY || 0, n = Math.min(8, Math.floor(acc[k])); acc[k] -= n;
+        for (let i = 0; i < n; i++) { const t = rRnd() * dt; sparkP.emit(x + L[0] * ch - L[1] * sh - c.vx * t, gy + 0.05, z + L[0] * sh + L[1] * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3.5, 0.4 + rRnd() * 1.8, c.vz * 0.45 + (rRnd() - 0.5) * 3.5, 0.16 + rRnd() * 0.24, 0.55, 0.14, 1, 0.76 + rRnd() * 0.16, 0.32, 1, 11, 1.2, gy); } } }
+    c.fxWall = 0; c.fxCar = 0; Core.fxKOf(c, true); if (c.fxQ) c.fxQ = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)
-    if (v.kit && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {
+    if ((v.kit || v.hubs[0] || v.hubs[1]) && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {   // (an older model's front wheel too: oldWheelOff)
       v.hubAcc[k] += dt * (6 + spd * 1.3); if (v.hubAcc[k] < 1) continue;
-      const p = wheelWorld(c, k < 2 ? M.a : -M.b, (k % 2 ? 1 : -1) * v.kit.E.body.hw, x, z, h), px = p.x, pz = p.z;
+      const p = wheelWorld(c, k < 2 ? M.a : -M.b, (k % 2 ? 1 : -1) * (v.kit ? v.kit.E.body.hw : Math.abs(v.hubs[k].position.z) + 0.04), x, z, h), px = p.x, pz = p.z;
+      if (XC.drag && skids && !c.air) {   // (P4: over 15 m/s a bare hub cuts a thin pale gouge into the asphalt, as steel on the road does; drawn only)
+        const G = v.hubG || (v.hubG = []), L = G[k];
+        if (spd > 15 && L && (px - L[0]) ** 2 + (pz - L[1]) ** 2 < 16) { if ((px - L[0]) ** 2 + (pz - L[1]) ** 2 > 0.36) { skids.add(L[0], L[1], px, pz, 0.05, 0.62, 0.61, 0.58, 0.8, 0.8, L[2], yb); G[k] = [px, pz, yb]; } }
+        else G[k] = spd > 15 ? [px, pz, yb] : null; }
       while (v.hubAcc[k] >= 1) { v.hubAcc[k] -= 1;
         sparkP.emit(px + (rRnd() - 0.5) * 0.2, yb + 0.06, pz + (rRnd() - 0.5) * 0.2, c.vx * 0.45 + (rRnd() - 0.5) * 3.5, 0.4 + rRnd() * 1.8, c.vz * 0.45 + (rRnd() - 0.5) * 3.5, 0.16 + rRnd() * 0.24, 0.55, 0.14, 1, 0.76 + rRnd() * 0.16, 0.32, 1, 11, 1.2, yb); }
     }
@@ -10734,13 +11050,13 @@ const Render = (function () {
     for (let k = 0; k < 4; k++) {   // (not a hidden car's lamps)
       if (v.lampsOut || (v.lightBroken && v.lightBroken[k])) continue;   // smashed lamp (burnt out: all of them): no glow
       if (v.kit && (k < 2 ? v.kit.noHeadGlow : v.kit.noTailGlow)) continue;   // (a kit vehicle without head / tail lamps)
-      _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld);
+      _lv.copy(v.lights[k]).applyMatrix4(v.grp.matrixWorld); const cr = v.lCr && v.lCr[k] ? 0.6 : 1;   // (a cracked lens, xLampCrack: less light)
       if (v.noHead) { if (k === 2 && rainL) { glows.add(_lv.x, _lv.y, _lv.z, 1.5, 1.0, 0.15, 0.08, 0.9); if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, 0.6 * wk, 0.5, 5.5, c.id * 0.37 + k); } }
-      else if (k < 2) { glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl);
-        if (nt) { glows.add(_lv.x, _lv.y, _lv.z, 0.42, 1.0, 0.97, 0.9, 0.85 * nt); glows.add(_lv.x, _lv.y, _lv.z, 2.8, 1.0, 0.86, 0.66, 0.085 * nt * rl); }
+      else if (k < 2) { glows.add(_lv.x, _lv.y, _lv.z, 0.95, 1.0, 0.88, 0.62, 0.17 * rl * cr);
+        if (nt) { glows.add(_lv.x, _lv.y, _lv.z, 0.42, 1.0, 0.97, 0.9, 0.85 * nt * cr); glows.add(_lv.x, _lv.y, _lv.z, 2.8, 1.0, 0.86, 0.66, 0.085 * nt * rl * cr); }
         if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.9, 0.72, 0.3 * wk * (0.35 + 0.65 * nt), 0.6, 5, c.id * 0.37 + k); }
-      else { glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, braking ? 0.95 : 0.3 * rl);
-        if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl);
+      else { glows.add(_lv.x, _lv.y, _lv.z, braking ? 1.8 : 0.95, 1.0, 0.15, 0.08, (braking ? 0.95 : 0.3 * rl) * cr);
+        if (nt) glows.add(_lv.x, _lv.y, _lv.z, braking ? 3.4 : 2.1, 1.0, 0.12, 0.06, (braking ? 0.24 : 0.1) * nt * rl * cr);
         if (wk) streaks.add(_lv.x, gy, _lv.z, 1.0, 0.16, 0.08, (braking ? 0.75 : 0.36) * wk * (0.5 + 0.5 * nt), 0.55, braking ? 6.5 : 5, c.id * 0.37 + k); }
     }
     if (wk) { const pc = v.pc || (v.pc = colArr(c.color || 0x888888)); streaks.add(x, gy, z, pc[0], pc[1], pc[2], 0.2 * wk * (1 - 0.7 * nt), M.wid * 1.05, M.len * 1.1, c.id * 0.61); }   // (the car itself, a blur of its paint in the water)
@@ -10761,10 +11077,10 @@ const Render = (function () {
       let out = false;
       if (on) { const bm = v.beam && v.beam.visible ? 10.75 : 0, h = -v.grp.rotation.y;   // (the beam: from the nose to 21.5 m ahead of it; the heading updateCars gave the car)
         _ccS.center.set(v.grp.position.x + Math.cos(h) * bm, v.grp.position.y + 0.8, v.grp.position.z + Math.sin(h) * bm);
-        _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0);
+        _ccS.radius = c.m.len * 0.5 + reach + bm + ((v.fire && !v.fire.done) || c.dmg > 0.45 || v.xEF >= 0.15 ? 6 : 0);
         if (v.tlG) { const G = v.tlG, th = -G.rotation.y, tl = c.tl.D.len - c.tl.D.f, ex = G.position.x - Math.cos(th) * tl, ez = G.position.z - Math.sin(th) * tl;   // (a semi-trailer: the sphere round the rig, its nose to the trailer's tail)
           const nx = v.grp.position.x + Math.cos(h) * (c.m.len * 0.5 + 2 * bm), nz = v.grp.position.z + Math.sin(h) * (c.m.len * 0.5 + 2 * bm);
-          _ccS.center.set((nx + ex) / 2, v.grp.position.y + 1.2, (nz + ez) / 2); _ccS.radius = Math.hypot(nx - ex, nz - ez) / 2 + reach + 1.5 + ((v.fire && !v.fire.done) || c.dmg > 0.45 ? 6 : 0); }
+          _ccS.center.set((nx + ex) / 2, v.grp.position.y + 1.2, (nz + ez) / 2); _ccS.radius = Math.hypot(nx - ex, nz - ez) / 2 + reach + 1.5 + ((v.fire && !v.fire.done) || c.dmg > 0.45 || v.xEF >= 0.15 ? 6 : 0); }
         out = _ccD.dot(_ccV.subVectors(_ccS.center, p)) - _ccS.radius > far || !_ccF.intersectsSphere(_ccS); }   // (past the fog by its depth in the view, as the fog itself counts it: a car at the side of the screen as far as one ahead)
       if (out === !!v.cull) continue;
       v.cull = out; if (out) { scene.remove(v.grp); if (v.tlG) scene.remove(v.tlG); continue; }
@@ -10777,7 +11093,7 @@ const Render = (function () {
     if (crackWarm && crackWarm.parent && crackWarm.userData.drawn) scene.remove(crackWarm);   // (the crack decals' shader compiled: attachRace)
     updateCrew(cdt);   // (first: it sets how far the player's car is up on the jacks)
     updateFlags();
-    farRb = 0; updateCars(dt, alpha, opt);
+    farRb = 0; unRb = 0; updateCars(dt, alpha, opt);
     hypeStep(Math.min(dt, 0.1));
     updateRoad(dt);
     syncDebris(); syncProps(); rsGlints(target);

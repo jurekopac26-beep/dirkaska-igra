@@ -10,7 +10,9 @@
                    dy: the side ones (7, 8, 13, 16) that much higher, KOLIBRI's sill-high bands on a tall body's flat side (GOLJAT's; none: as drawn),
                    sx: [x0, x1] the bands along the sides (7, 13) only that far (none: -1.48 to 1.45; SKAKAČ's sides under its wings) }
        nalepke     decals on the sides, the bonnet beside its scoop and the roof (liveries); mounts.nalepke { side: [[x0, x1] ...] the
-                   flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] } }
+                   flat side's free stretches, y: [y0, y1] above the stripe, hood: { x: [x0, x1], z: [z0, z1] }, roof: { x: [x0, x1] },
+                   band: [x0, x1] the ends of option 10's chequered band (none: from the rear stretch + 0.05 to the front one - 0.05; a
+                   band that would be cut by one section of the shell more than its triangles allow: MEDVED's, at its rear door) }
        soncni_pas  a band across the windscreen's top, edge to edge (texts in a 5 x 7 pixel font: generic or fictional);
                    mounts.soncni_pas { x: [top, foot], lift: more over a windscreen whose glass panels bulge over the top's line; pane:
                    [top inner, top corner, base inner, base corner], a windscreen that is a pane of its own (its right half), part: its part,
@@ -193,7 +195,7 @@
       case 7: hoodSide((x0, x1, z0, z1) => chq(topP, x1 - 0.16, x1 - 0.02, z0, z1, 3, 8)); break;   // šahovnica: a chequered band across the bonnet's nose
       case 8: hoodSide((x0, x1, z0, z1) => outlined(topP, [[x1 - 0.03, z0 + 0.02], [x1 - 0.03, z0 + 0.12], [(x0 + x1) / 2 + 0.04, z0 + 0.1], [(x0 + x1) / 2 + 0.06, z1 - 0.02], [x0 + 0.04, z1 - 0.03], [(x0 + x1) / 2 - 0.04, (z0 + z1) / 2 + 0.03], [(x0 + x1) / 2 - 0.06, z0 + 0.04]], YE, 1.08)); break;   // velika strela
       case 9: fire(sideP, door[1] - 0.02, door[0] + 0.02, y0 + 0.02, y1 - 0.02, 5, 1); break;   // plameni po bokih: flames along each side from the front of the door
-      case 10: { sideP(rect(qua[0] + 0.05, y1 - 0.15, fen[1] - 0.05, y1 - 0.14), S, 0.008); chq(sideP, qua[0] + 0.05, fen[1] - 0.05, y1 - 0.12, y1 - 0.04, 26, 2); break; }   // šahovnica po bokih: a chequered band, a line under it
+      case 10: { const b = m.band || [qua[0] + 0.05, fen[1] - 0.05]; sideP(rect(b[0], y1 - 0.15, b[1], y1 - 0.14), S, 0.008); chq(sideP, b[0], b[1], y1 - 0.12, y1 - 0.04, 26, 2); break; }   // šahovnica po bokih: a chequered band, a line under it (m.band: its ends)
       case 11: {   // dirkalni vzorec: a swoosh tapering back along each side, three speed lines at its nose, a wedge on the bonnet
         sideP([[fen[1] - 0.04, ym + 0.07], [qua[0] + 0.15, ym + 0.01], [qua[0] + 0.15, ym - 0.01], [fen[1] - 0.04, ym - 0.06]], S, 0.008);
         for (let i = 0; i < 3; i++) sideP([[fen[1] - 0.06 - i * 0.07, y1 - 0.03], [fen[1] - 0.1 - i * 0.07, y1 - 0.03], [fen[1] - 0.17 - i * 0.07, ym + 0.1], [fen[1] - 0.13 - i * 0.07, ym + 0.1]], BLK, 0.008);

@@ -15,6 +15,10 @@
 //    wiper mounted on the tailgate (on: 'trunk'), each part's range on its own (non-empty in the Normalni build; the Visoki one builds)
 //  - look.wheels.mid (a middle axle, drawn only): it builds with a third arch and tub in the main loft and K.arches[2]; outside the axles,
 //    too near one of them or not a number fails the build naming wheels.mid (the middle wheels in a race: tests/browser/kit.test.mjs)
+//  - the doors (docs/trki-realizem.md, »Vrata v poškodbah«): a door carries its whole window, on every registered vehicle (both levels):
+//    an even number of glass triangles in a door's range, as many in the left door as in the right one; the four-door MEDVED 4x4 and
+//    KOZOROG TC have rear doors of their own (door2L / door2R) behind the front ones, each with its own window, cut at the
+//    drawn shut line, hinged on their front edge, with the front door's zone and threshold in the part table
 //   node tests/kit.test.js
 'use strict';
 const fs = require('fs');
@@ -264,6 +268,55 @@ function raysThrough(res) {
   check('look.wheels.mid outside the axles, nearer than 2 rw + 0.1 m to one of them or not a number fails the build naming wheels.mid (the axles and the clearance in its message); exactly 2 rw + 0.1 m off builds',
     bads.every(([, s]) => /^fallback:wheels\.mid .*rear axle \(-2\.15\).*front one \(2\.25\), 2 rw \+ 0\.1 m \(0\.82 m\)/.test(s)) && edge === 'ok',
     bads.map(([m, s]) => (typeof m === 'number' ? +m.toFixed(2) : JSON.stringify(m)) + (/^fallback:wheels\.mid/.test(s) ? ' fails' : ': ' + s)).join(', ') + ` (${bads[0][1].replace(/^fallback:/, '')}); ${+(-M.b + c).toFixed(2)}: ${edge}`);
+}
+
+// ---- 9. the doors (docs/trki-realizem.md, »Vrata v poškodbah«): a door carries its whole window. A window's panel is a quad of two
+//         glass triangles that goes to one part, so in every registered vehicle's door range (door*: the outer shell and the inner
+//         block, the Normalni and the Visoki build) lies an even number of glass triangles, as many in the left door as in the right
+//         one (an odd one: half of a window left on the body, in the opening when the door swings or falls, or half of the body's
+//         glass taken along; that a door's glass frosts with the door's pane whichever way a triangle of it faces is the renderer's
+//         findGlass: tests/browser/crash.test.mjs, section 10). The four-door MEDVED 4x4 and KOZOROG TC: rear doors of their own
+//         (door2L / door2R), each a range of its own with its own window inside its region, the shut line between the two doors
+//         where the front one ends, each door hinged on its front edge, the rear door's entry in the part table in the front door's
+//         zone with its threshold (the core takes both off together: tests/poskodbe.test.js, section 8, for the pieces on the road) ----
+{
+  const GL = [[0.1, 0.13, 0.19], [0.04, 0.05, 0.08]];   // (the renderer's own glass colours: findGlass)
+  const isGlass = (c, i) => GL.some(g => Math.abs(c[i] - g[0]) < 0.02 && Math.abs(c[i + 1] - g[1]) < 0.02 && Math.abs(c[i + 2] - g[2]) < 0.02);
+  const glassT = (col, t) => isGlass(col, t * 9) && isGlass(col, t * 9 + 3) && isGlass(col, t * 9 + 6);
+  const spans = (Q) => [Q.o, Q.i].filter(q => q && q[1] > q[0]);
+  const rows = []; let builds = 0, doors = 0, panes = 0, pairs = 0;
+  const w0 = console.warn; console.warn = () => { };
+  for (const M of Core.MODELS.filter(m => m.kit && !m.retired && m.def.look)) for (const hi of M.def.look.hi ? [false, true] : [false]) {
+    const G = R.kitTry(M.id, null, null, hi), tag = M.id + (hi ? ' (Visoki)' : '');
+    if (!G || G.status !== 'ok' || !G.geo) { rows.push(`${tag}: ${G && G.status}`); continue; }
+    const U = G.geo.userData, col = G.geo.attributes.color.array, cnt = {}; builds++;
+    for (const k in U.ranges) { if (!/^door/.test(k)) continue; doors++; let n = 0;
+      for (const [a, b] of spans(U.ranges[k])) for (let t = a / 3; t < b / 3; t++) if (glassT(col, t)) n++;
+      panes += n; cnt[k] = n; if (n % 2) rows.push(`${tag} ${k}: ${n}`); }
+    for (const b of ['door', 'door2']) { const l = cnt[b + 'L'], r = cnt[b + 'R']; if (l === undefined || r === undefined) continue; pairs++; if (l !== r) rows.push(`${tag} ${b}: left ${l}, right ${r}`); }
+    G.geo.dispose();
+  }
+  console.warn = w0;
+  check(`a door's window is whole: every door carries an even number of glass triangles, the left door as many as the right one (${builds} builds of the registered vehicles on both levels, ${doors} doors in ${pairs} pairs, ${panes} glass triangles)`,
+    !rows.length && builds >= 45 && doors >= 2 * 40 && pairs >= 40 && panes > 3 * doors, rows.slice(0, 6).join(' | '));
+  for (const id of ['medved', 'kozorog']) {
+    const M = Core.MODELS.find(m => m.id === id), G = R.kitTry(id), U = G.geo.userData, col = G.geo.attributes.color.array, pos = G.geo.attributes.position.array, PT = Core.partsOf(M), k = M.len / G.body.len, out = [], seen = [];
+    const reg = (nm) => { const r = (G.regions || []).find(q => q.part === nm); return r ? [Math.min(r.x[0], r.x[1]) * k, Math.max(r.x[0], r.x[1]) * k] : null; };
+    const ext = (nm) => { let x0 = Infinity, x1 = -Infinity, gl = 0; for (const [a, b] of spans(U.ranges[nm])) { for (let v = a; v < b; v++) { const x = pos[v * 3]; if (x < x0) x0 = x; if (x > x1) x1 = x; } for (let t = a / 3; t < b / 3; t++) if (glassT(col, t)) gl++; } return { x0, x1, gl }; };
+    for (const sd of ['L', 'R']) { const f = 'door' + sd, r = 'door2' + sd, Qf = U.ranges[f], Qr = U.ranges[r], xf = reg(f), xr = reg(r);
+      if (!Qf || !Qr || !spans(Qf).length || !spans(Qr).length || !xf || !xr) { out.push(`${r}: no range or region of its own`); continue; }
+      const ef = ext(f), er = ext(r), hx = (Q) => Q.hinge && Q.hinge.length === 2 ? Q.hinge.map(p => p[0]) : null, hf = hx(Qf), hr = hx(Qr);
+      seen.push(`${r} x ${+er.x0.toFixed(2)}..${+er.x1.toFixed(2)}, ${er.gl} glass`);
+      if (!(er.gl >= 2) || !(ef.gl >= 2)) out.push(`${sd}: glass front ${ef.gl}, rear ${er.gl}`);
+      if (ef.x0 < xf[0] - 1e-3 || ef.x1 > xf[1] + 1e-3 || er.x0 < xr[0] - 1e-3 || er.x1 > xr[1] + 1e-3) out.push(`${sd}: outside its region (front ${ef.x0.toFixed(3)}..${ef.x1.toFixed(3)} in ${xf}, rear ${er.x0.toFixed(3)}..${er.x1.toFixed(3)} in ${xr})`);
+      if (Math.abs(xf[0] - xr[1]) > 1e-9) out.push(`${sd}: the shut line (front from ${xf[0]}, rear to ${xr[1]})`);
+      if (!hf || !hr || hf.some(x => Math.abs(x - xf[1]) > 0.02) || hr.some(x => Math.abs(x - xr[1]) > 0.02)) out.push(`${sd}: hinges ${JSON.stringify([hf, hr])} (front edges ${xf[1]}, ${xr[1]})`);
+      const Pf = PT[f], Pr = PT[r];
+      if (!Pf || !Pr || Pr.z !== Pf.z || Pr.th !== Pf.th || Math.sign(Pr.lz) !== Math.sign(Pf.lz) || !(Pr.lx < Pf.lx)) out.push(`${sd}: the part table ${JSON.stringify([Pf, Pr])}`); }
+    G.geo.dispose();
+    check(`${M.name}: rear doors of their own (door2L / door2R: a range with its own glass inside its region, the shut line where the front door ends, both doors hinged on their front edge, the front door's zone and threshold in the part table)`,
+      !out.length && seen.length === 2, out.length ? out.join(' | ') : seen.join('; '));
+  }
 }
 
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} kit checks (${((Date.now() - t0) / 1000).toFixed(0)} s)`);

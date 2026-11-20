@@ -84,7 +84,8 @@ try {
 
   // 6. a challenge's link with the marks it has room for; opened on the second phone they are kept, its card says how many
   await pa.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-board'); }); await pa.waitForTimeout(300);
-  await pa.evaluate(() => window.__game.onAction('gh-chal')); await pa.waitForTimeout(800);
+  await pa.evaluate(() => { window.__game.chalLink = undefined; window.__game.onAction('gh-chal'); });
+  await pa.waitForFunction(() => window.__game.chalLink !== undefined, null, { timeout: 60000 }).catch(() => 0);   // (the link is packed several times until it fits: on a loaded machine longer than a fixed wait)
   const clink = await pa.evaluate(() => window.__game.chalLink), co = clink ? unlink(clink, 'izziv') : null, nm = co && Array.isArray(co.marks) ? co.marks.length : 0;
   T.check('the challenge\'s link: under 16 000 characters, the time and the marks as many as fit (the ghost when it fits too)', !!clink && clink.length < 16200 && co.kind === 'challenge' && nm >= 1 && nm <= 3, JSON.stringify({ len: clink && clink.length, marks: nm, ghost: !!(co && co.ghost) }));
   await pb.goto(srv.base + '/index.html' + clink.slice(clink.indexOf('#'))); await pb.reload();   // (loaded again: the same page with only another # would not start the game again)

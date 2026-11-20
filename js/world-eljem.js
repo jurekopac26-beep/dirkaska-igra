@@ -186,6 +186,7 @@
       }
       addM(gr, rMat, true);
     }
+    out.barKind = () => 1;   // (Render: what stands on the barrier line: a concrete wall all the way along on both sides, kindAt's 0 the low barrier and 1 the white wall)
     const scen = new Chunks(128);
     for (const [i, dir] of [[0, -1], [iE, 1]]) {   // (the barrier across the road at each end: Core's invisible end walls made visible)
       const eX = T.px[i] + T.tx[i] * 1.2 * dir, eZ = T.pz[i] + T.tz[i] * 1.2 * dir;

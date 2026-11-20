@@ -489,6 +489,7 @@
           } else if (!nd[i] && !onBr[i] && !vAt[i] && i % 25 === 0 && i > 2 && i < iE - 2 && !SB.mouthV[side > 0 ? 1 : 0][i]) mkPosts.push([i, side]);
         }
       }
+      out.barKind = (i, side) => (onBr[i] || need[side > 0 ? 1 : 0][i] ? 1 : -1);   // (Render: what stands on the barrier line at sample i: 1 the bridge's parapet and the low sandstone wall, -1 nothing)
       const kp = caProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
       for (const sp of mkPosts) { if (kp.has(sp) || hillOut(sp[0], sp[1] > 0 ? 1 : 0)) continue;   // (the knockable ones on the verge; the fixed ones past the barrier line, none on a hill: the cars drive there)
         const [i, side] = sp, o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.42), p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]);

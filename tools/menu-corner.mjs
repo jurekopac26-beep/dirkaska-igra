@@ -42,7 +42,7 @@ async function open(id) {
   page.on('console', m => { if (m.type() === 'error') log('console:', m.text().slice(0, 200)); });
   const raw = JSON.stringify({ track: id, sound: 0, comm: 0, codrv: 0, quali: 0, faults: 0, hlv: 0, damage: 0, quality: 'high', detail: 'high', carDet: 'high', shadows: 1, weather: 'dry', tod: 'day', season: 'summer', intro: 2, music: 0 });
   await page.addInitScript((raw) => {
-    for (const k of ['tdgp-defaults-v2', 'tdgp-defaults-v3', 'tdgp-defaults-v4', 'tdgp-defaults-v5', 'tdgp-noadapt']) localStorage.setItem(k, '1');
+    for (const k of ['tdgp-defaults-v2', 'tdgp-defaults-v3', 'tdgp-defaults-v4', 'tdgp-defaults-v5', 'tdgp-defaults-v6', 'tdgp-noadapt']) localStorage.setItem(k, '1');
     localStorage.setItem('tdgp-settings', raw); localStorage.setItem('tdgp-menu', 'old');
     // the game's clock and frames are the tool's: they go on while it loads, then only when the tool draws
     let vt = 0, q = [];
