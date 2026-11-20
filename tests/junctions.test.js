@@ -19,7 +19,7 @@ const C = loadCore();
 let bad = 0, n = 0;
 const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
 const opts = (o) => Object.assign({ numAI: 12, playerGrid: 12, laps: 1, playerModel: C.MODELS[4], assist: 2, phys: 'cs', seed: 11, difficulty: 1 }, o);
-const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller'];
+const IDS = ['vrsic', 'mulholland', 'bigsur', 'chapman', 'uncompahgre', 'caracoles', 'katu', 'baldy', 'palomar', 'maunakea', 'greatalpine', 'hotham', 'mountbuller', 'ujarras', 'isuna', 'koli'];
 const NAMED = { mulholland: ['Cornell School Road', 'Simes Lane', 'Seminole Drive', 'Lower Brewster Road'], bigsur: ['Coast Road'], uncompahgre: ['Engineer Pass Road'], chapman: ['Military Road'], vrsic: ['Borovška cesta', 'Koroška ulica'] };
 
 // every track with side roads is on the list (an open road), the others have none
@@ -31,7 +31,7 @@ for (const id of IDS) {
   const def = C.TRACKS.find(d => d.id === id), T = new C.Track(def), S = T.stubs, SR = def.sideRoads, T0 = new C.Track(Object.assign({}, def, { sideRoads: null }));
   // 1. the data
   { const D = def.dem, inDem = !D || S.every(s => { for (let j = 0; j < s.n; j++) if (s.x[j] < D.x0 || s.z[j] < D.z0 || s.x[j] > D.x0 + D.nx * D.cell || s.z[j] > D.z0 + D.nz * D.cell) return false; return true; });
-    const named = new Set(S.map(s => s.name)), inRace = S.every(s => s.s0 > T.startS - 60 && s.s0 < T.finishS + 250);
+    const named = new Set(S.map(s => s.name)), inRace = S.every(s => s.s0 > Math.min(T.startS - 60, 0) && s.s0 < T.finishS + 250);   // (or on the road behind a start moved on, from its first point: Chapman's Military Road, 210 m behind the start since #698, 15. 11. 2026)
     check(`${id}: ${S.length} side roads, in order along the road, both sides valid, ${S.filter(s => s.grav).length} gravel; open 30-240 m, a rail, a gate or a building at the end; within the race, on the terrain's map${NAMED[id] ? ' (' + NAMED[id].join(', ') + ')' : ''}`,
       S.length === SR.length && S.length > 0 && SR.every((r, k) => !k || r[0] >= SR[k - 1][0]) && S.every(s => Math.abs(s.side) === 1 && s.hw >= 1.5 && s.hw <= 3.5 && s.L > s.tb + 8 && s.L >= 25 && s.L <= 240 && s.Lend >= s.L && s.end >= 0 && s.end <= 2) &&
       inRace && inDem && (NAMED[id] || []).every(x => named.has(x)),
@@ -58,7 +58,7 @@ for (const id of IDS) {
     for (let i = 3; i < T.N - 3; i += 7) { if (S.some(x => Math.abs(x.s0 - i * T.ds) < 260)) continue;
       for (const d of [-T.w - 6, -T.w - 2, -T.w + 0.5, 0, T.w - 0.5, T.w + 2, T.w + 6]) { const x = T.px[i] + T.nx[i] * d, z = T.pz[i] + T.nz[i] * d; T.query(x, z, i, q); T0.query(x, z, i, q0); pts++;
         if (q.k >= 0 || q.s !== q0.s || q.d !== q0.d || T.wall(q, 0.5, n1) !== T0.wall(q0, 0.5, n0) || T.surface(q) !== T0.surface(q0) || T.yAt(q) !== T0.yAt(q0)) diff++; } }
-    check(`${id}: the barriers the same, open only across the mouths; away from the junctions the road exactly as without them`, same && gaps >= S.length * 2 && !stray && pts > 200 && !diff,
+    check(`${id}: the barriers the same, open only across the mouths; away from the junctions the road exactly as without them`, same && gaps >= S.length * 2 && !stray && pts > (T.N * T.ds < 2000 ? 35 : 200) && !diff,   // (a short road: most of it within 260 m of a junction)
       `${gaps} samples of open barrier (${stray} away from a junction), ${pts} points compared, ${diff} different`);
   }
   // 4. driven into one and out: the longest open one, a street (or the first) and a gravel one

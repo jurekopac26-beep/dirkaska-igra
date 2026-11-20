@@ -1,0 +1,8 @@
+{
+ "about": "the crater beyond the corridor for tools/ngorongoro/build.py: Copernicus DEM GLO-30 (\u00a9 DLR e.V. 2010-2014 and \u00a9 Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA) and ESA WorldCover 2021 (\u00a9 ESA WorldCover project / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, CC BY 4.0) on a 100 m grid in the frame of ngorongoro.json; crater.png uint16 (h + 100) * 10, craterlc.png the WorldCover class; row 0 = z0 (north), col 0 = x0 (west)",
+ "x0": -8000.0,
+ "z0": -12400.0,
+ "nx": 301,
+ "nz": 301,
+ "cell": 100.0
+}
