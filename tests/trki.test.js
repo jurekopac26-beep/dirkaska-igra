@@ -1002,14 +1002,32 @@ for (const tid of ['spa', 'bathurst']) {
   { const src = require('./lib/core.js').coreSource(), CALL = '? aiHazard(c, race, v, Lw) : null;', n1 = src.split(CALL).length - 1;
     const B = n1 === 1 ? new Function('module', 'exports', 'require', src.replace(CALL, '? null : null;') + '\n;return Core;')({ exports: {} }, {}, require) : null;
     const rows = []; let okAll = !!B;
-    if (B) for (const tid of ['jezero', 'cusco']) { const orig = Math.random; C.setTest(REAL); B.setTest(REAL); try {
+    if (B) for (const tid of ['jezero', 'cusco', 'toskana']) { const orig = Math.random; C.setTest(REAL); B.setTest(REAL); try {
       const mk = (K) => { Math.random = seeded(71); const r = new K.Race(new K.Track(K.TRACKS.find(x => x.id === tid)), { numAI: 12, playerGrid: 7, laps: 2, playerModel: K.MODELS[4], assist: 2, seed: 3, difficulty: 1, damage: 2, phys: 'cs' }); r.start(); return r; };
       const ra = mk(B), rb = mk(C); let part = null, hz = null;
       for (let k = 1; k <= 20 / DT && part == null; k++) { for (const [K, r] of [[B, ra], [C, rb]]) { Math.random = seeded(1000 + k); K.aiControl(r.player, r, DT); r.step(DT); }
         if (hz == null && rb.cars.some(c => c.aiHz)) hz = k; if (raceState(ra) !== raceState(rb)) part = k; }
       if (part != null || hz != null) okAll = false; rows.push(`${tid}: parted ${part == null ? 'never' : f(part * DT, 2) + ' s'}, a hazard ${hz == null ? 'never' : f(hz * DT, 2) + ' s'}`);
     } finally { Math.random = orig; C.setTest(null); B.setTest(null); } }
-    ok('Realistična without a car across the road: 13 cars 20 s on Jezero and Cusco, the whole state of every car after every step the same to the bit as a Core without aiHazard', okAll, B ? rows.join('; ') : `the call found ${n1}×`); }
+    ok('Realistična without a car across the road: 13 cars 20 s on Jezero, Cusco and Toskana, the whole state of every car after every step the same to the bit as a Core without aiHazard', okAll, B ? rows.join('; ') : `the call found ${n1}×`);
+    // the whole field behind it: 10 s into the race a car is stood across the road 400 m before the leader and held (tools/trki/pocez.js skoda):
+    // with aiHazard the rivals take no more damage between them than without it, and every one gets past (none left stuck in the queue behind it)
+    if (B) { const rows2 = []; let ok2 = true;
+      for (const [tid, sd] of [['hiva', 72], ['tianmen', 72]]) { const orig = Math.random; C.setTest(REAL); B.setTest(REAL); try {
+        const go = (K) => { Math.random = seeded(sd); const r = new K.Race(new K.Track(K.TRACKS.find(x => x.id === tid)), { numAI: 12, playerGrid: 7, laps: 2, playerModel: K.MODELS[4], assist: 2, seed: sd - 68, difficulty: 1, damage: 2, phys: 'cs' }); r.start();
+          const T = r.track, P = r.player; let on = false, X = 0, Z = 0, Hd = 0, pd = 0, d0 = null;
+          for (let k = 1; k <= 55 / DT; k++) { Math.random = seeded(1000 + k);
+            if (!on && r.time > 10) { on = true; const lead = r.cars.filter(c => c !== P).reduce((a, c) => c.dist > a.dist ? c : a), i = T.idx(lead.q.s + 400), d = T.rl[i];
+              X = T.px[i] + T.nx[i] * d; Z = T.pz[i] + T.nz[i] * d; Hd = T.hd[i] + Math.PI / 2; pd = lead.dist + 400; P.place(X, Z, Hd); T.query(X, Z, -1, P.q); d0 = r.cars.map(c => c.dmg || 0); }
+            if (on) { if (!(P.dmg > 0.3)) { P.x = X; P.z = Z; P.h = Hd; P.vx = P.vz = P.w = 0; } P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.dist = pd; r.step(DT); P.dist = pd; }
+            else { K.aiControl(P, r, DT); r.step(DT); } }
+          const riv = r.cars.filter(c => c !== P);
+          return { dmg: riv.reduce((s, c) => s + ((c.dmg || 0) - d0[r.cars.indexOf(c)]) * 100, 0), past: riv.filter(c => c.dist > pd + 10).length, n: riv.length, left: riv.filter(c => !(c.dist > pd + 10)).map(c => `${f(pd - c.dist, 0)} m, ${f(c.speed, 1)} m/s`).join(', ') }; };
+        const a = go(B), b = go(C);
+        if (!(b.dmg <= a.dmg && b.past === b.n)) ok2 = false; rows2.push(`${tid}: the rivals' damage ${f(a.dmg, 0)} % without, ${f(b.dmg, 0)} % with aiHazard; past it ${a.past} / ${b.past} of ${b.n}${b.left ? ' (' + b.left + ')' : ''}`);
+      } finally { Math.random = orig; C.setTest(null); B.setTest(null); } }
+      ok('Realistična, a car held across the road before a full field (Hiva, Tianmen): the rivals take no more damage than without aiHazard and every one gets past it', ok2, rows2.join('; ')); }
+  }
 }
 
 let bad = 0;

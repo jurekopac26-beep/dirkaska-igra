@@ -5134,7 +5134,7 @@ const Core = (function () {
       } else c.passing = 0;
       if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
       if (KR) {   // (Realistična: a car standing in the road or sliding across it further ahead, aiHazard: round it in time, HZ.sT s before it, and braked for it below)
-        const H = krOn(c) && race.state === 'racing' && !c.pitWant && !c.sc && !c.police && !c.pol && !race.pol && !race.tf && c.parkS == null && !(XR.ai && !c.isPlayer) ? aiHazard(c, race, v, Lw) : null;
+        const H = krOn(c) && race.state === 'racing' && !(c.pitWant && (c.inPit || c.pitG || (T.def.pit && (T.pitAt(q.s) || T.pitAt(q.s + 60))))) && !c.sc && !c.police && !c.pol && !race.pol && !race.tf && c.parkS == null && !(XR.ai && !c.isPlayer) ? aiHazard(c, race, v, Lw) : null;
         if (H) { c.aiHz = H; if (!H.far) { target = H.off; c.passing = 0; } } else if (c.aiHz) c.aiHz = null;
       }
       c.aiOffT = target;
@@ -9347,7 +9347,8 @@ const Core = (function () {
       const s = c.q.s, s0d = c.q.d || 0;
       let i = T.idx(s);
       if (T.open) i = clamp(i, 3, T.N - 4);   // not into the wall at an end of the road
-      const off = T.rl[i] * 0.5;
+      const hz = KR && c.aiHz && !c.aiHz.far && c.aiHz.o.q ? c.aiHz : null;   // (Realistična, stopped close behind a car across the road: pushed to the side past it, where its way round leads, hz.off)
+      const off = hz ? T.rl[hz.o.q.i] + hz.off : T.rl[i] * 0.5;
       c.place(T.px[i] + T.nx[i] * off, T.pz[i] + T.nz[i] * off, T.hd[i]); if (T.hasElev) { c.y = c.py = T.hy[i]; if (T.open) c.roadY = c.y; }
       c.locked = false;
       c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
@@ -9363,7 +9364,7 @@ const Core = (function () {
         const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
         c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       }
-      const v = fix || (W && W.rule && W.nL) || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      const v = fix || (W && W.rule && W.nL) || (T.open && T.len - c.q.s < 25) || hz ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall; Realistična, behind a car across the road: standing, not into the car in front)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
       if (c.tl) tlPlace(c, T);   // (its semi-trailer on the kingpin again, along the road behind it)
     }
