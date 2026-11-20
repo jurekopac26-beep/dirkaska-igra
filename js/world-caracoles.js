@@ -49,7 +49,10 @@
   function caH(x, z) {   // terrain height (as vrH, on caNear: the road's blend near it, the real terrain farther out; never above the road around)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = API.vrFar(x, z);
-    else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, API.vrFar(x, z), sstep(1, 42, dd)); }
+    else { const hr = n.h - 0.3, V = API.VR; if (dd <= 1) h = hr; else { const f = API.vrFar(x, z);
+      if (V.sea === null) h = lerp(hr, f, sstep(1, 42, dd));
+      else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
+      else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
     for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
@@ -343,7 +346,7 @@
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.92; return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.92; return [k, k, k * 1.02]; };
       const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.82, 0.77, 0.7], deck = [0.64, 0.63, 0.6], conc = [0.62, 0.61, 0.58];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
@@ -644,7 +647,11 @@
         for (let k = 0; k <= n; k++) {
           let x = x0 + ux * L * k / n, z = z0 + uz * L * k / n; const nn = API.vrNear(x, z);
           if (API.vrDist(x, z) > 430) { tops.push(null); continue; }
-          if (nn.i >= 0 && nn.dd < 3) { x += ux * 14; z += uz * 14; }   // (never on the road: a step along the line)
+          if (nn.i >= 0 && nn.dd < 3) {   // (never on the road: a step along the line, 14 m, or further either way until clear of every leg of the road; S10, docs/pregled-sveta.md)
+            const bx = x, bz = z; let bd = -1;
+            for (const e of [14, -14, 21, -21, 28, -28, 7, -7]) { const cx = bx + ux * e, cz = bz + uz * e, q = API.vrNear(cx, cz), dd = q.i < 0 ? 1e9 : q.dd;
+              if (dd > bd) { bd = dd; x = cx; z = cz; } if (dd >= 3) break; }
+          }
           const y = caGround(x, z), g = scen.get(x, z), end = k === 0 || k === n, h = end ? 4.5 : kind === 0 ? 10 + (k % 3) : 7;
           if (end) { box(g, x, y - 0.3, z, 7, 3.6, 5, rot, [0.82, 0.8, 0.74], [0.5, 0.2, 0.15], true); cyl(g, x, y + 3.3, z, 2.0, 0.3, 10, st); exclPush(x, z, 6); CR.block(x, z, 7.5, 5.5, rot); }
           else { cyl(g, x, y - 0.3, z, kind === 0 ? 0.3 : 0.2, h + 0.3, 6, st); box(g, x, y + h, z, 0.4, 0.35, kind === 0 ? 4.6 : 1.6, rot, st); exclPush(x, z, 1.2); CR.avoid(x, z, 0.8); }

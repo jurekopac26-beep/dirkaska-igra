@@ -3,18 +3,27 @@
 // title demo runs, a Pikes Peak run, an Ouninpohja run, a Harju run and a Katu-Jaryk descent finish and their records are
 // saved (Ouninpohja also in the rain, apart), Vršič's four ways to drive it (the run from the police: the checkpoint, the
 // chase, the police radio, the arrows, the mission in the building at the top). Zero page errors allowed.
-//   node tests/browser/smoke.test.mjs
+//   node tests/browser/smoke.test.mjs            the first half of the tracks (every other one from the first), the settings (1-1c), file://
+//                                                and the slow device (7)
+//   node tests/browser/smoke2.test.mjs           the other half of the tracks (SMOKE_DEL=2), the title demo, the rain and the runs (5-6e):
+//                                                each part within GitHub's time limit (over 60 min with every track in one; tests/run.js SECS)
+//   SMOKE_DEL=vse node tests/browser/smoke.test.mjs  everything in one go (PROGE: all of it in the first part, the second has nothing)
+//   SMOKE_SEME=<n>                               another run from the police on Vršič (6d), to try the test on
 import path from 'node:path';
 import url from 'node:url';
-import { ROOT, serve, launch, openGame, startTrack, trackIds, simulate, checker } from './lib.mjs';
+import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate, checker } from './lib.mjs';
 
 const T = checker('smoke');
+const DEL = process.env.SMOKE_DEL || '1', PROGE = !!(process.env.PROGE || '').trim(), DRUGI = DEL === '2', VSE = DEL === 'vse';
+const ENA = !DRUGI, DVA = DEL !== '1' || PROGE;   // (the checks of the first part, of the second; both with SMOKE_DEL=vse or PROGE)
+const SEME = +process.env.SMOKE_SEME || 7;   // (the run from the police on Vršič repeatable: the dice its race's seed is drawn from at its start, 6d)
+if (DRUGI && PROGE) { T.check('the second half: PROGE\'s tracks and every other check in the first part (smoke.test.mjs)', true, ''); T.done(); process.exit(0); }
 const srv = await serve();
 const browser = await launch();
 try {
   // 1. settings: the row Fizika vožnje (Klasična, Nova; tests/browser/nova.test.mjs) and the migration of old saves (the 'rally' and 'arcade'
   // physics were removed: Klasična; Nova kept)
-  for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs'], ['{"phys":"nova"}', 'nova']]) {
+  if (ENA) for (const [seed, want] of [[null, 'cs'], ['{"phys":"rally"}', 'cs'], ['{"phys":"arcade"}', 'cs'], ['{"sound":0}', 'cs'], ['{"phys":"nova"}', 'nova']]) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', seed);
     const got = await page.evaluate(() => window.__game.S.phys);
     T.check(`saved settings ${seed || '(none)'} -> physics '${want}'`, got === want && !errors.length, `got '${got}'${errors.length ? ', errors: ' + errors.join(' | ') : ''}`);
@@ -26,7 +35,7 @@ try {
   }
 
   // 1b. rain chosen before: the title demo behind the menu rains from the start
-  {
+  if (ENA) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { weather: 'rain' });
     await page.waitForTimeout(1500);
     const r = await page.evaluate(() => ({ demo: window.__game.demo && window.__game.demo.rain, drawn: Render.raining, sub: document.getElementById('title-sub').textContent }));
@@ -36,7 +45,7 @@ try {
 
   // 1c. four difficulty levels (Lahka, Srednja, Težka, Super težka: the police all four, a race and a championship take the last as težka);
   //     a saved value out of range is brought into it
-  {
+  if (ENA) {
     const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', '{"difficulty":7,"sound":0,"comm":0}');
     const r = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), seg = () => [...document.querySelectorAll('[data-set="difficulty"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join('|');
@@ -53,17 +62,18 @@ try {
   }
 
   // 2. the page also works when opened straight from the disk (file://)
-  {
+  if (ENA) {
     const { ctx, page, errors } = await openGame(browser, url.pathToFileURL(path.join(ROOT, 'index.html')).href);
     T.check('opens from a local file (file://)', !errors.length, errors.join(' | '));
     await ctx.close();
   }
 
-  // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«)
+  // 3. every real track: race 20 s on autopilot with full graphics (not the test tracks: frozen until they are deleted, CLAUDE.md »Testne proge«;
+  //    PROGE: only those, the menu still checked whole)
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
   const menu = await trackIds(page, true), all = await page.evaluate(() => Core.TRACKS.map(d => d.id));
-  const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), ids = menu.filter(id => !test.includes(id));
-  T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && ids.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
+  const test = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), real = menu.filter(id => !test.includes(id)), sel = izbrane(real), ids = VSE || PROGE ? sel : sel.filter((_, i) => i % 2 === (DRUGI ? 1 : 0));   // (the half of this part)
+  T.check('track menu lists every track of the game', [...menu].sort().join(',') === [...all].sort().join(',') && real.length >= 8, menu.join(','));   // (in the menu's order: a road variant, def.variantOf, is a choice on its track's card)
   // the 20 s as simulate (lib.mjs) runs them (a second on autopilot, a drawn frame), and the player stuck or the wrong way out for more than
   // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
   // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left
@@ -84,13 +94,14 @@ try {
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
     const { nan, resc } = await drive(20);
-    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
+    const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
     // line; Tianmen's 45 hairpins give ~430 m)
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane)
-    T.check(`${id}: 20 s race on autopilot`, r.phase === 'racing' && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+    // (a road shorter than 20 s, Ghoufi's 0.57 km: across the line, the race over; the sign below then on the race started again)
+    T.check(`${id}: 20 s race on autopilot`, (r.phase === 'racing' || r.fin) && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
+      `${r.fin ? 'at the finish, ' : ''}dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
@@ -113,6 +124,7 @@ try {
       for (let k = 0; k < 10; k++) { await drawn(2); const m2 = at(); if (m2.top === m.top && m2.clk === m.clk) break; m = m2; }
       return { s, cls: $('h-note').className, top: m.top, clk: m.clk, disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
+    if (r.fin) await startTrack(page, id);
     const n1 = await sign(null);
     {
       // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
@@ -127,7 +139,7 @@ try {
   }
 
   // 5. the title-screen demo drives behind the menu (two screenshots 1.5 s apart must differ)
-  {
+  if (DVA) {
     await page.evaluate(() => window.__game.onAction('to-title'));
     await page.waitForTimeout(1500);
     const s1 = await page.screenshot(), scr = await page.evaluate(() => window.__game.screen);
@@ -139,7 +151,7 @@ try {
 
   // 6b. rain: the weather row on the track screen; a race at Spa in the rain (every car on rain tyres: the wet grip, a little less as they wear; the streaks drawn, spray behind
   //     the cars), the title demo follows the setting; back to dry, the next race is dry again
-  {
+  if (DVA) {
     const row = await page.evaluate(() => [...document.querySelectorAll('[data-set="weather"] button')].map(b => b.textContent + (b.classList.contains('sel') ? '*' : '')).join(' | '));
     T.check('weather row: Suho (selected) | Dež | Naključno | Menljivo | Nevihta', row === 'Suho* | Dež | Naključno | Menljivo | Nevihta', row);
     const e0 = errors.length;
@@ -147,7 +159,7 @@ try {
     await startTrack(page, 'spa');
     const nan = await simulate(page, 20);
     await page.waitForTimeout(1500);   // (a second and a half of real frames: the spray)
-    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet <= 0.8 && c.wet > 0.79 && c.ty && c.ty.k === 'wet'), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
+    const r = await page.evaluate(() => { const g = window.__game, R = g.race; return { rain: R.rain, wet: R.cars.every(c => c.wet <= 0.65 && c.wet > 0.64 && c.ty && c.ty.k === 'wet'), drawn: Render.raining, spray: Render.fxStats().alive, dist: Math.round(R.player.dist), saved: JSON.parse(localStorage.getItem('tdgp-settings')).weather,
       birds: Render.birds.mesh.visible, clouds: Render.world.dyn.clouds.K.value }; });
     T.check('Spa in the rain: wet grip for every car, rain drawn, spray, the setting saved; no birds, no cloud shadows', r.rain === 1 && r.wet && r.drawn && r.spray > 10 && r.dist > 200 && r.saved === 'rain' && !r.birds && r.clouds === 0 && !nan && errors.length === e0, JSON.stringify(r) + (errors.length > e0 ? ' errors: ' + errors.slice(e0).join(' | ') : ''));
     await page.evaluate(() => window.__game.onAction('to-title')); await page.waitForTimeout(600);
@@ -164,7 +176,7 @@ try {
   }
 
   // 6. a Pikes Peak time trial to the finish: the record is stored under 'pikes@cs'
-  {
+  if (DVA) {
     await startTrack(page, 'pikes', 'tt');   // (Pikes Peak's time trial: the way tapped on its card, the race the other)
     const r = await page.evaluate(async () => {
       const g = window.__game;
@@ -179,7 +191,7 @@ try {
   // 6b. the Ouninpohja rally stage to the flying finish: the distance to go under the clock (no altitude), the record under
   //     'ouninpohja2@cs' (def.recId: the 9.7 km stage), the stage's own words on the results screen, the split table with the
   //     distances, the medal and the longest jump (the Yellow House kept with the record), the co-driver's calls ready
-  {
+  if (DVA) {
     await startTrack(page, 'ouninpohja');
     const r = await page.evaluate(async () => {
       const g = window.__game;
@@ -200,7 +212,7 @@ try {
 
   // 6c. Ouninpohja in the rain (Dež on the track menu): the stage's puddles drawn and on the road (Track.inRain) while the race runs,
   //     to the finish; a time trial keeps its records in the rain apart ('ouninpohja2-wet@cs'); then back to dry, the puddles gone
-  {
+  if (DVA) {
     const r = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
@@ -232,8 +244,8 @@ try {
   //     stars: the helicopter drawn over the player, the radio hears of it (Bober); the radio names the real places (the streets of Kranjska
   //     Gora, Jasna, the hairpins by number, the huts, the pass); placed below the building at the top, the autopilot drives into it: the
   //     mission done, the rap sheet with the checkpoint
-  {
-    const r = await page.evaluate(async () => {
+  if (DVA) {
+    const r = await page.evaluate(async (SEME) => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
       const card = document.querySelector('[data-track="vrsic"]'), btns = [...card.querySelectorAll('.tc-mode button')].map(b => b.textContent);
@@ -256,15 +268,21 @@ try {
       for (const md of ['traffic', 'police']) {   // the open road: the duel in the traffic (30 s), the run from the police (through the checkpoint, then 30 s of the chase)
         g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
         document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200);
-        g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100);
+        // (the run from the police repeatable: its race's seed (the traffic, the cyclists) is drawn from the page's dice at its start. With the
+        // dice as they fell it was a different race each run, and in some the autopilot knocked a cyclist off before the checkpoint and the
+        // run went another way (#770, docs/nestabilni-testi.md). The dice seeded with SMOKE_SEME for the start only, as in pitstats)
+        const R0 = Math.random; if (md === 'police') { let s = SEME; Math.random = () => { s = s * 16807 % 2147483647; return s / 2147483647; }; }
+        try { g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100); } finally { Math.random = R0; }
         if (md === 'police') {   // the start: the free drive to the checkpoint, through it on autopilot (the officer waves it down: it does not stop)
-          const pol = g.race.pol, pre = { pc: pol.cars.length, mode: pol.cars[0] && pol.cars[0].pol.mode, chkCar: !!(pol.cars[0] && pol.cars[0].pol.chk), lights: false, phases: [], pos: [], heat: [], chk: [], caps: [], radioMode: g.radio && g.radio.mode };
+          const pol = g.race.pol, pre = { seed: g.race.opts.seed, pc: pol.cars.length, mode: pol.cars[0] && pol.cars[0].pol.mode, chkCar: !!(pol.cars[0] && pol.cars[0].pol.chk), lights: false, phases: [], pos: [], heat: [], chk: [], caps: [], radioMode: g.radio && g.radio.mode };
+          g.autoDrive = true;   // (the autopilot at the wheel in every step, the game's own frames between the test's too: they drove with no hands on the wheel, as fast as the machine let them)
           for (let i = 0; i < 70 && pol.stage !== 'chase'; i++) {
-            g.sim(1, true); await frame();
+            g.sim(1, false); await frame();
             pre.lights = pre.lights || document.getElementById('h-lights').classList.contains('show'); pre.phases.push(g.phase);
             if (pol.stage !== 'chase') { pre.pos.push(txt('h-pos')); pre.heat.push(txt('h-heat')); pre.chk.push(pol.chk.st + ':' + txt('h-chk')); }
             if (g.radio.cap) pre.caps.push(g.radio.cap);
           }
+          g.autoDrive = false;
           Object.assign(pre, { stage: pol.stage, why: (pol.log.find(e => e.k === 'fled') || {}).why, seen: pol.log.some(e => e.k === 'chkSeen') });
           out.pre = pre;
           pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: the autopilot is not to be caught before the mission at the top)
@@ -305,7 +323,7 @@ try {
       }
       g.onAction('to-title'); await wait(250); out.radioOff = !g.radio.mode;
       return out;
-    });
+    }, SEME);
     T.check('Vršič: one card with the switch Dirka / Kronometer / Promet / Policija, a tap on Kronometer picks the track and the time trial',
       r.btns === 'Dirka|Kronometer|Promet|Policija' && r.picked === 'vrsic/tt' && / kronometer/.test(r.meta), `buttons "${r.btns}", picked ${r.picked}, "${r.meta}"`);
     T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
@@ -324,7 +342,7 @@ try {
       `lights ${Q.lights}, phases ${[...new Set(Q.phases)]}, patrol cars ${Q.pc} (${Q.mode}), HUD ${[...new Set(Q.pos)]} "${[...new Set(Q.heat)]}", radio ${JSON.stringify([...new Set(Q.caps)].slice(0, 3))}, prompts ${JSON.stringify([...new Set(Q.chk)].filter((c, i, a) => i < 2 || i === a.length - 1))}`);
     T.check('Vršič Policija: the autopilot drives through the checkpoint (it does not stop): the chase; the officer shouts, the unit there calls it in (the car\'s colour and model)',
       Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^KG-1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
-      `${Q.stage} (${Q.why}), radio: ${JSON.stringify(P.log.slice(0, 7))}`);
+      `${Q.stage} (${Q.why}), the race's seed ${Q.seed}, radio: ${JSON.stringify(P.log.slice(0, 7))}`);
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
@@ -350,7 +368,7 @@ try {
   // 6e. Harju, the city stage in Jyväskylä: first its evening sky from a TV camera (the sky dome drawn: the theme's own zenith and its warm glow
   //     towards the sun by day, no glow at dusk); then to the flying finish: the record under 'harju@cs', the distance to go on the HUD, the
   //     stage's words and the medal on the results, the co-driver's calls ready (the changes of surface among them: onto the gravel, the cobbles, the tarmac)
-  {
+  if (DVA) {
     await startTrack(page, 'harju');
     const s = await page.evaluate(async () => {
       const g = window.__game, fr = async (n) => { for (let k = 0; k < n; k++) await new Promise(r => requestAnimationFrame(r)); };
@@ -378,7 +396,7 @@ try {
   // 6e. Katu-Jaryk, the descent: the card shows the drop; first the course flyover (def.fly: the captions in order, the camera down into the valley,
   //     a key skips it); the run down to the flying finish on the autopilot: the altitude falling on the HUD (from 1.242 m) with the height profile,
   //     the co-driver's calls ready, the record under 'katu@cs', the descent's words on the results (Ponovi spust, the splits with the altitudes), a medal line
-  {
+  if (DVA) {
     const r = await page.evaluate(async () => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
@@ -417,7 +435,7 @@ try {
   //    the resolution goes down first; then the game decides to drop the shadows, but only at the next pause (not mid-race),
   //    for this visit only (the saved setting stays), every material is rebuilt without shadows, and the player's own
   //    choice in Nastavitve brings them back for good
-  {
+  if (ENA) {
     const { ctx: c2, page: p2, errors: e2 } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase' }, { width: 640, height: 360 }, { adaptive: true });
     await startTrack(p2, 'gozd');
     const r = await p2.evaluate(async () => {

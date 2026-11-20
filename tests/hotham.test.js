@@ -139,7 +139,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     check(`race (${tag}): past the line every car stops in its own slot (70 m on, 9 m apart, both sides in turn)`, slots.every((p, k) => p.parked && p.v < 0.3 && Math.abs(p.s - (70 + 9 * k)) < 4 && Math.sign(p.d) === (k % 2 ? -1 : 1)),
       slots.map(p => `P${p.pos}@${p.s.toFixed(0)}m/${p.d.toFixed(1)}`).join(' '));
   }
-  check('race: the rain slower than the dry (by 3-15 %)', times.rain > times.dry * 1.03 && times.rain < times.dry * 1.15, `dry ${times.dry.toFixed(1)} s, rain ${times.rain.toFixed(1)} s`);
+  check('race: the rain slower than the dry (by 10-25 %: a third less grip in the wet, docs/dez-sneg.md)', times.rain > times.dry * 1.1 && times.rain < times.dry * 1.25, `dry ${times.dry.toFixed(1)} s, rain ${times.rain.toFixed(1)} s`);
 }
 
 // 9. a whole duel in the traffic on autopilot (both cars): both reach the village, nobody on foot knocked down, the traffic keeps moving and keeps left
@@ -199,7 +199,7 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
     let t = 0, k = 0; while (!P.finished && t < 900) { Math.random = seeded(5000 + (++k)); C.aiControl(P, r, DT); r.step(DT); t += DT; if (P.stuckT > 3 || P.wrongT > 3) r.rescue(P); }
     Math.random = orig; got[rain ? 'wet' : 'dry'] = P.finished ? P.finishTime : 0;
   }
-  check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && Math.abs(got.dry * 1.01 - M.cs[0]) < 1.5 && Math.abs(got.wet * 1.01 - M.wet.cs[0]) < 1.5,
+  check('medals: gold < silver < bronze, dry and wet, the rain slower; gold = the stock rally car on the autopilot x 1.01 (the dry; this frozen track keeps its old wet medals: the autopilot in the rain 5-20 % slower than the old wet gold, a third less grip in the wet, docs/dez-sneg.md)', asc(M.cs) && asc(M.wet.cs) && M.wet.cs[0] > M.cs[0] && Math.abs(got.dry * 1.01 - M.cs[0]) < 1.5 && got.wet * 1.01 / M.wet.cs[0] > 1.05 && got.wet * 1.01 / M.wet.cs[0] < 1.2,
     `dry ${M.cs.join('/')} s, wet ${M.wet.cs.join('/')} s, autopilot ${got.dry.toFixed(1)} / ${got.wet.toFixed(1)} s`);
 }
 

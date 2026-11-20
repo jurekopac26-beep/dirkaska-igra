@@ -1,17 +1,17 @@
 /* Track definition 'rastro'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Serra do Rio do Rastro (Brazil, Santa Catarina, road SC-390 from Lauro Müller up to Bom Jardim da Serra): its top 5 km, up the wall of the
+  // Serra do Rio do Rastro (Brazil, Santa Catarina, road SC-390 from Lauro Müller up to Bom Jardim da Serra): its top 4.2 km, up the wall of the
   // Serra Geral where the famous hairpins are stacked one above the other on the cliff, to the viewpoint (Mirante) at the edge of the plateau,
-  // ~1420 m. From ~1010 m, 17 numbered bends (11 of them hairpins of 150 degrees or more) and 430 m of climb in 4.99 km. One card, four ways to
+  // ~1420 m. From ~1097 m (784 m past the old start at ~1010 m, def.start: the first long straight), 15 of the 17 numbered bends (3 to 17; 9 of them hairpins of 150 degrees or more) and 324 m of climb in 4.21 km. One card, four ways to
   // drive it (def.modes), as Vršič and Los Caracoles: a race up the closed road, a time trial, a duel with one rival on the open road (cars,
   // vans, coaches, many motorbikes, cyclists; no lorries) and a run from the police.
-  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; metres, origin = the start line, x east, z south. The
+  // Centre line: OpenStreetMap (© OpenStreetMap contributors, ODbL), via Overture Maps; metres, origin = the old start line (the race starts 784 m on, def.start), x east, z south. The
   // real road is ~7 m wide and its legs lie 12-15 m apart (8 m in the loop of hairpin 8); for the game's 11 m road and its barriers they are
   // pushed apart: every pair of points a metres apart along the road stays at least the chord of a 9.5 m circle apart (18.5 m once a > 30 m);
   // the road moved 2.3 m on average and 13 m at most (the loop), no bend was cut.
   // Heights (RASTRO_H): Copernicus DEM GLO-30 along the real line (a 60 m running median), fitted with grades of 0 to 13 % on the legs and at most
-  // 4 % within ~25 m of the hairpins, every 1/1083 of the road from points[0], decimetres above the start line (~1010 m).
+  // 4 % within ~25 m of the hairpins, every 1/1083 of the road from points[0], decimetres above the old start line (~1010 m).
   // Scenery data for the world builder (the same forms as Vršič's and Los Caracoles': buildRastro reads them): terrain (dem: the same model, 32 m
   // cells, ~8 m taken off under the forest's canopy; a 256 m trend in 0.1 m steps and 1 m residuals in each row's span of cells within 650 m of the
   // road), land cover (lc: ESA WorldCover 2021, 16 m cells, run-length coded: 0 grass, 1 forest, 2 shrubs, 3 built-up, 4 bare rock, 5 water),
@@ -25,19 +25,20 @@ var TRACK_DEFS = TRACK_DEFS || [];
     say: 'Rio do Rastro', rainP: 0.4,
     zivali: { a: ['coati', 'cowB', 'horse'], t: ['signPost', 'picnic'] },
     id: 'rastro', name: 'Rio do Rastro, Brazilija', theme: 'rastro', open: true, modes: ['race', 'tt', 'traffic', 'police'], laps: 1, halfWidth: 5.5,
+    recId: 'rastro2',   // (the start on a straight since 15. 11. 2026, 4.21 km: its records and ghost apart from the old 4.99 km road's)
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the road past the line: the second row of a bigger field's parking would stand at the barrier
-    desc: 'Cesta SC-390 v brazilski zvezni državi Santa Catarina: zadnjih 5 km vzpona iz Lauro Müllerja proti Bom Jardim da Serra, po 17 ovinkih (11 serpentinah), naloženih drug nad drugim na steni planote Serra Geral, skozi atlantski deževni gozd do razgledišča na 1.421 m. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
-    en: { name: 'Rio do Rastro, Brazil', desc: 'Road SC-390 in the Brazilian state of Santa Catarina: the last 5 km of the climb from Lauro Müller towards Bom Jardim da Serra, up 17 bends (11 hairpins) stacked one above the other on the wall of the Serra Geral, through the Atlantic rainforest to the viewpoint at 1,421 m. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the viewpoint' },   // (the English page: Jezik · Language)
-    realKm: 4.99, alt: [1010,1421],
-    start: [0, 0], finish: [-631.05,-159.18], cps: [[-272.33,152.08],[-491.96,199.9],[-537.62,367.02],[-652.98,663.64]],
+    desc: 'Cesta SC-390 v brazilski zvezni državi Santa Catarina: zadnjih 4,2 km vzpona iz Lauro Müllerja proti Bom Jardim da Serra, po 15 ovinkih (9 serpentinah), naloženih drug nad drugim na steni planote Serra Geral, skozi atlantski deževni gozd do razgledišča na 1.421 m. Dirka s tekmeci, vzpon proti uri, dvoboj v prometu ali beg pred policijo.',
+    en: { name: 'Rio do Rastro, Brazil', desc: 'Road SC-390 in the Brazilian state of Santa Catarina: the last 4.2 km of the climb from Lauro Müller towards Bom Jardim da Serra, up 15 bends (9 hairpins) stacked one above the other on the wall of the Serra Geral, through the Atlantic rainforest to the viewpoint at 1,421 m. A race against rivals, a climb against the clock, a duel in the traffic or an escape from the police.', escTo: 'To the viewpoint' },   // (the English page: Jezik · Language)
+    realKm: 4.21, alt: [1097,1421],
+    start: [-179.8, 118.61], finish: [-631.05,-159.18], cps: [[-272.33,152.08],[-491.96,199.9],[-537.62,367.02],[-652.98,663.64]],
     runoff: 0.55, inner: 2.6, side: 2.2, noCurbs: true, noGravel: true, offSurface: 'grass', gradeForce: true, elevSmooth: 10,
     elev: RASTRO_H.map((h, i) => [i / (RASTRO_H.length - 1), h / 10]),
-    // medal times of the time trial (s), dry and in the rain: the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
-    medals: {"cs":[177,185,199],"wet":{"cs":[191,201,216]}},
+    // medal times of the time trial (s), dry and in the rain, in summer and in winter (winter: the cold tarmac or the snow, docs/dez-sneg.md): the stock rally car on the autopilot x 1.01 (gold), 1.06 (silver), 1.14 (bronze) (cs: Circuit Superstars physics)
+    medals: {"cs":[151,159,171],"wet":{"cs":[182,191,205]},"winter":{"cs":[176,185,199],"wet":{"cs":[216,227,244]}}},
     // the bridge over the stream below bend 9 (OpenStreetMap: bridge): [from, to] in metres after the start line
-    bridges: [[2327.3,2335.3]],
+    bridges: [[1543.3,1551.3]],
     // the 17 numbered bends, from the bottom: [metres after the start line, altitude, 1 right / -1 left] (the hairpins: 1, 2, 4, 6, 8, 10, 12-16)
-    curves: [[138.9,1023,-1],[406.0,1053,1],[961.9,1117,1],[1042.4,1122,-1],[1170.6,1132,-1],[1391.7,1153,1],[1481.0,1159,-1],[1998.1,1209,-1],[2359.5,1251,-1],[2531.7,1266,1],[2730.5,1285,1],[2802.1,1288,-1],[2923.2,1294,1],[3089.8,1309,-1],[3232.7,1320,1],[3355.6,1329,-1],[3522.1,1344,-1]],
+    curves: [[-645.1,1023,-1],[-378,1053,1],[177.9,1117,1],[258.4,1122,-1],[386.6,1132,-1],[607.7,1153,1],[697,1159,-1],[1214.1,1209,-1],[1575.5,1251,-1],[1747.7,1266,1],[1946.5,1285,1],[2018.1,1288,-1],[2139.2,1294,1],[2305.8,1309,-1],[2448.7,1320,1],[2571.6,1329,-1],[2738.1,1344,-1]],
     // the traffic of the open road: the share of each kind of vehicle [car, van, bus, motorbike, truck] (no lorries; many
     // motorcyclists) and a cyclist every so many metres each way
     traffic: { mix: [0.58, 0.12, 0.08, 0.22, 0], bike: 1400 },
@@ -45,37 +46,35 @@ var TRACK_DEFS = TRACK_DEFS || [];
     police: { label: 'POLÍCIA', band: '#1b3f8f', text: '#f4f6f0' }, escTo: 'Do razgledišča',   // (and the results of an escape: 'Do razgledišča v ...')
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
-      {"n":"Serpentina 1 · 1.023 m","d":138.9,"say":["Serpentine one, and the climb up the wall of the Serra begins!","Into the first hairpin of the Rio do Rastro!","Here comes the ladder! Hairpin number one!"]},
-      {"n":"Serpentina 2 · 1.053 m","d":406.0},
-      {"n":"Serpentina 3 · 1.117 m","d":961.9},
-      {"n":"Serpentina 4 · 1.122 m","d":1042.4,"say":["Hairpin four, the road is stacked up the cliff now!"]},
-      {"n":"Serpentina 5 · 1.132 m","d":1170.6},
-      {"n":"Serpentina 6 · 1.153 m","d":1391.7},
-      {"n":"Serpentina 7 · 1.159 m","d":1481.0},
-      {"n":"Serpentina 8 · 1.209 m","d":1998.1,"say":["Hairpin eight, the tightest loop of the Serra!","Number eight, a full loop! Hard on the brakes!"]},
-      {"n":"Serpentina 9 · 1.251 m","d":2359.5},
-      {"n":"Serpentina 10 · 1.266 m","d":2531.7,"say":["Hairpin ten, look down: the road zig-zags all the way into the forest!","Ten! The postcard view of the Rio do Rastro!"]},
-      {"n":"Serpentina 11 · 1.285 m","d":2730.5},
-      {"n":"Serpentina 12 · 1.288 m","d":2802.1},
-      {"n":"Serpentina 13 · 1.294 m","d":2923.2,"say":["Thirteen, the bends are stacked like a staircase!"]},
-      {"n":"Cascata Rio do Rastro","d":2952.6,"say":["The waterfall of the Rio do Rastro, right beside the road!","Past the waterfall, nearly at the top!"]},
-      {"n":"Serpentina 14 · 1.309 m","d":3089.8},
-      {"n":"Serpentina 15 · 1.320 m","d":3232.7},
-      {"n":"Serpentina 16 · 1.329 m","d":3355.6,"say":["Hairpin sixteen, the last of the ladder!","Sixteen! Nearly at the top of the escarpment!"]},
-      {"n":"Serpentina 17 · 1.344 m","d":3522.1,"say":["The last bend, number seventeen, and up onto the plateau!","Seventeen! Out of the hairpins and onto the top!"]},
-      {"n":"Alto da Serra · 1.389 m","d":3880.0,"say":["Up on the plateau! The araucarias of the Serra Geral!","On top of the escarpment, one kilometre to the viewpoint!"]},
-      {"n":"Mirante · 1.421 m","d":4989.8,"say":["At the viewpoint! The whole Serra do Rio do Rastro below you!","Up at the Mirante, one thousand four hundred and twenty metres!","At the top of the Serra, the hairpins far below!"]},
+      {"n":"Serpentina 3 · 1.117 m","d":177.9},
+      {"n":"Serpentina 4 · 1.122 m","d":258.4,"say":["Hairpin four, the road is stacked up the cliff now!"]},
+      {"n":"Serpentina 5 · 1.132 m","d":386.6},
+      {"n":"Serpentina 6 · 1.153 m","d":607.7},
+      {"n":"Serpentina 7 · 1.159 m","d":697},
+      {"n":"Serpentina 8 · 1.209 m","d":1214.1,"say":["Hairpin eight, the tightest loop of the Serra!","Number eight, a full loop! Hard on the brakes!"]},
+      {"n":"Serpentina 9 · 1.251 m","d":1575.5},
+      {"n":"Serpentina 10 · 1.266 m","d":1747.7,"say":["Hairpin ten, look down: the road zig-zags all the way into the forest!","Ten! The postcard view of the Rio do Rastro!"]},
+      {"n":"Serpentina 11 · 1.285 m","d":1946.5},
+      {"n":"Serpentina 12 · 1.288 m","d":2018.1},
+      {"n":"Serpentina 13 · 1.294 m","d":2139.2,"say":["Thirteen, the bends are stacked like a staircase!"]},
+      {"n":"Cascata Rio do Rastro","d":2168.6,"say":["The waterfall of the Rio do Rastro, right beside the road!","Past the waterfall, nearly at the top!"]},
+      {"n":"Serpentina 14 · 1.309 m","d":2305.8},
+      {"n":"Serpentina 15 · 1.320 m","d":2448.7},
+      {"n":"Serpentina 16 · 1.329 m","d":2571.6,"say":["Hairpin sixteen, the last of the ladder!","Sixteen! Nearly at the top of the escarpment!"]},
+      {"n":"Serpentina 17 · 1.344 m","d":2738.1,"say":["The last bend, number seventeen, and up onto the plateau!","Seventeen! Out of the hairpins and onto the top!"]},
+      {"n":"Alto da Serra · 1.389 m","d":3096,"say":["Up on the plateau! The araucarias of the Serra Geral!","On top of the escarpment, one kilometre to the viewpoint!"]},
+      {"n":"Mirante · 1.421 m","d":4205.8,"say":["At the viewpoint! The whole Serra do Rio do Rastro below you!","Up at the Mirante, one thousand four hundred and twenty metres!","At the top of the Serra, the hairpins far below!"]},
     ],
     // the commentator's own lines on this road (Comm: instead of Vršič's)
     comm: {
-      introPass: ["Welcome to {track}! {cars} cars, five kilometres and seventeen bends up the wall of the Serra, and you start {grid}.", "Here we are in the rainforest at the foot of {track}. A race all the way up to the viewpoint, and you line up {grid}.", "Welcome to Brazil, and to {track}! {cars} cars heading for the plateau, and you start {grid}."],
-      goPass: ["And away they go, up the Serra!", "And they're off! Seventeen bends to the viewpoint!", "The race is on! The pack charges up the cliff!", "Go, go, go! Next stop, the top of the escarpment!"],
-      introPassTT: ["Welcome to {track}! Seventeen bends up the cliff, just you and the clock.", "Here we are at the foot of the hairpins. {cps} checkpoints between you and the viewpoint.", "Welcome to {track}! No rivals this time, only the clock and the mist."],
+      introPass: ["Welcome to {track}! {cars} cars, four kilometres and fifteen bends up the wall of the Serra, and you start {grid}.", "Here we are in the rainforest at the foot of {track}. A race all the way up to the viewpoint, and you line up {grid}.", "Welcome to Brazil, and to {track}! {cars} cars heading for the plateau, and you start {grid}."],
+      goPass: ["And away they go, up the Serra!", "And they're off! Fifteen bends to the viewpoint!", "The race is on! The pack charges up the cliff!", "Go, go, go! Next stop, the top of the escarpment!"],
+      introPassTT: ["Welcome to {track}! Fifteen bends up the cliff, just you and the clock.", "Here we are at the foot of the hairpins. {cps} checkpoints between you and the viewpoint.", "Welcome to {track}! No rivals this time, only the clock and the mist."],
       goPassTT: ["Green light! The clock is running!", "Go! Attack the Serra!", "And you're away! Up the ladder!"],
-      introTraffic: ["Welcome to {track}, and the road is open today: cars, coaches and motorbikes both ways. Just you and {rival}, first to the viewpoint wins!", "Here we are at the foot of the Serra. A duel with {rival} through the traffic on the hairpins. Mind the coaches in the bends!", "Welcome to {track}! No closed road this time: bikers and coaches on all seventeen bends. Beat {rival} to the top!"],
+      introTraffic: ["Welcome to {track}, and the road is open today: cars, coaches and motorbikes both ways. Just you and {rival}, first to the viewpoint wins!", "Here we are at the foot of the Serra. A duel with {rival} through the traffic on the hairpins. Mind the coaches in the bends!", "Welcome to {track}! No closed road this time: bikers and coaches on all fifteen bends. Beat {rival} to the top!"],
       introPolice: ["Welcome to {track}! The police want a word with you, and they are right behind. Get to the viewpoint without getting caught!", "Here we are at the foot of the Serra, and the lights are already flashing. Five kilometres to the top. Do not stop!", "Welcome to {track}! A patrol car on your tail, spike strips and roadblocks up the cliff. Run for the plateau!"],
-      escaped: ["You made it to the viewpoint! The police will have to wait for another day!", "Escaped! Up the Serra and away!", "What a getaway! All seventeen bends!"],
-      summitRecord: ["At the viewpoint! A new personal best, {time}!", "Record run! {time} up all seventeen bends!", "What a climb! New personal best, {time}!"],
+      escaped: ["You made it to the viewpoint! The police will have to wait for another day!", "Escaped! Up the Serra and away!", "What a getaway! All fifteen bends!"],
+      summitRecord: ["At the viewpoint! A new personal best, {time}!", "Record run! {time} up all fifteen bends!", "What a climb! New personal best, {time}!"],
       summitEven: ["At the viewpoint in {time}. That is your record to the thousandth!", "{time} at the top, dead level with your best!"],
       summit: ["At the viewpoint in {time}, {delta} seconds off your best.", "Across the line at the top. {time}, just {delta} short of the record.", "That's the top of the Serra. {time}. {delta} seconds to find next time."],
     },

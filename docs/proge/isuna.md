@@ -1,0 +1,13 @@
+# Isuna, Butan (dirka, kronometer, promet, policija)
+
+[← Vse proge](../../README.md#proge) · proga `isuna` (`js/tracks/isuna.js`, svet `js/world-isuna.js` na podatkovnem graditelju `js/world-gore.js`)
+
+Kratka proga v dolini reke Paro Chhu v Butanu, po cesti od Chuzoma proti Paru (PNH 6) mimo vasi Isuna: ob reki, pod gozdom modrega bora, mimo starega železnega verižnega mostu čez reko. Dirka meri 3,43 km (sredinska črta 3,88 km, start 200 m za prvo točko, iztek za ciljem 250 m), od 2135 do 2167 m. Proga z znamenitostjo #10 (namesto Trongse, odločitev uporabnika 15. 11. 2026). Vozi se po levi.
+
+- **Dirka**, **kronometer**, **promet**, **policija**: kot na Vršiču (štiri vožnje na eni kartici).
+- **Oblika proge:** sredinska črta, stranske ceste, stavbe, voda in reka iz OpenStreetMap; višine Copernicus GLO-30; raba tal ESA WorldCover (uvoznik `tools/proga-uvoz.mjs`, nastavitve v `tools/predogled/proge.json`; reka Paro Chhu gre v `def.riverBeds`). Cesta gre po dnu doline in nima ostrih ovinkov (najostrejši ~49° na 80 m, pri ~2,1 km dirke), zato test proge uporabi `valley` in daljšo dirko (`km: [3, 3.6]`, `tests/lib/gore.js`).
+- **Znamenitost:** železni verižni most za pešce čez Paro Chhu (OSM 452848825) je pri ~46 % dirke, bližji stolp vrat ~41 m od sredine ceste (najbližje pri s ≈ 1792 m), viden s kamere za avtom na desni pri ~1520–1560 m dirke. Model je narejen v Blenderju (`tools/znamenitost/isuna.py`, višine terena iz `tools/znamenitost/isuna-tla.mjs`; `assets/landmarks/isuna.glb` in `isuna-far.glb`, `World.znamenitost`): beljena kamnita stolpa vrat na obeh bregovih (poševne stene, rdeče-rjavi pas pod strešnim robom, temna skodlasta streha, majhen pozlačen vršiček, vrata z lesenim okvirjem), viseča lesena brv na dveh parih verig, obešala, ograja in nizi enobarvnih zastavic (brez napisov). Do nalaganja ali brez njega preprostejši most iz `js/world-isuna.js` (iste mere). Okoli mostu ni stavb in drevja (`S.excl`).
+- **Okolica (do ~60 m od ceste):** reka ob cesti, gozd jelk in borov na pobočjih, redke hiše po OSM, krave.
+- **Imena na zaslonu:** samo opisna (Ob reki, Dolina, Verižni most, Proti Paru).
+- **Približki:** drevesa, skale in živali so razporejeni po rabi tal in naklonu, ne po resničnih legah; stavbe so poenostavljene, table generične, brez imen podjetij; most poenostavljen (brez notranjosti stolpov in molilnih koles).
+- **Viri:** © OpenStreetMap contributors (ODbL 1.0), Copernicus DEM GLO-30, ESA WorldCover 2021 (CC BY 4.0); glej `README.md`, »Zasluge«.

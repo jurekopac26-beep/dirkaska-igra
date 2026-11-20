@@ -23,6 +23,8 @@
   const model = (id) => MODELS.find(m => m.id === id);
   const heirId = (id) => { const M = model(id); return M ? Core.heirOf(M).id : id; };
   // each car's colour in a new profile (the 10 older ones as before; the others in turn round the colours by their place in the order)
+  // the paint menu's two tabs (plate an_barvanje 2/6) and each colour's few words
+  const CTAB = [['Klasične', [0, 1, 4, 2]], ['Žive', [3, 5, 6, 7]]], CDESC = ['dirkalna klasika', 'svetla, čista', 'globoka in mirna', 'vidna od daleč', 'globok sijaj', 'stara dirkalna', 'topla in živa', 'drzna izbira'];
   const COLOR0 = { pico: 2, kaze: 0, muscle: 6, strega: 3, vortex: 1, truck: 4, rally: 1, ev: 5, formula: 0, lm: 2 }, color0 = (id) => COLOR0[id] != null ? COLOR0[id] : ORDER.indexOf(id) % COLORS.length;
   const FREE = ['pico', 'kaze', 'muscle'];   // (the free game's cars; the rest come with the full game)
   // service: w = 1 - the row's state; f = (the car's worth / 68.000)^0.8 (the wash ^0.3); the wash (20 + 280 w) f, the body (150 +
@@ -80,12 +82,20 @@
     for (const k of ['clean', 'body', 'engine']) o.cond[k] = c.cond && Number.isFinite(c.cond[k]) ? Math.min(1, Math.max(0, c.cond[k])) : o.cond[k]; };
   // (a save kept safe as the game's: a full storage makes room by dropping ghosts, js/shramba.js)
   const keepItem = (k, v) => { try { if (typeof Shramba !== 'undefined') Shramba.keep(k, v); else localStorage.setItem(k, v); } catch (_) { } };
+  // (the veteran's test money (the user's wish 9. 11. 2026, to test with: any car can be bought): the dearest car, every part for it (all 16
+  // options of each element the shop sells, js/data/deli.js) and its paint, up to the next 100.000 (2.100.000 with the cars and parts of
+  // 9. 11. 2026); a veteran saved before it (no vm) gets it once when opened again, one saved since keeps what it has left)
+  const VET_V = 2;
+  function vetMoney() { const top = ORDER.reduce((a, id) => (PRICE[id] || 0) > (PRICE[a] || 0) ? id : a, ORDER[0]);
+    let s = (PRICE[top] || 0) + paintPrice(top);
+    for (const el in EL) if (el !== 'barva') EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { s += price(el, t, j); }));
+    return Math.ceil(s / 100000) * 100000; }
   function profile(mode) {   // the mockup's three profiles: a new player (free), the full game, a veteran
     const S = { v: 2, mode, money: 11500, car: 'pico', cars: {}, rent: null, lang: S0lang(), sound: true, guide: 0, flag: '' };
     for (const id of ORDER) S.cars[id] = carNew(id, id === 'pico');
     S.cars.pico.cond = { clean: 0.35, body: 0.6, engine: 0.42 };
     if (mode === 'vet') {
-      S.money = 248500; S.car = 'kaze';
+      S.money = vetMoney(); S.vm = VET_V; S.car = 'kaze';
       const set = (id, P, c) => { const k = S.cars[id]; k.own = true; for (const el in P) { const o = findOpt(el, P[el]); if (o) k.parts[el] = o; } if (c) k.cond = c; };
       set('pico', { turbo: 'Turbo', cip: 'Chip', gume: 'Track Semi-slick', zavore: 'Sport pads', krilo: 'Arch' }, { clean: 0.9, body: 0.85, engine: 0.8 });
       set('kaze', { turbo: 'Turbo kit', cip: 'Stage 3 map', auspuh: 'Titanium', gume: 'Track Slick', zavore: 'Racing discs', aero: 'Sport', krilo: 'GT wing' }, { clean: 0.55, body: 0.72, engine: 0.66 });
@@ -105,11 +115,13 @@
   function load() {
     let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { s = null; }
     // the real profile: a new player's, an older garage's (the mockup's only before: g unset), or chosen
-    if (!s || s.v !== 2 || !s.g || s.mode === 'game') { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
+    // (the test money in the address, js/denar.js: the real profile, to show it)
+    if (!s || s.v !== 2 || !s.g || s.mode === 'game' || (typeof Denar !== 'undefined' && Denar.set)) { const d = fromCareer(); if (s && s.v === 2) pageOwn(d, s); else if (s && s.lang === 'en') d.lang = 'en'; return d; }
     if (!s.cars || !s.mode) { const d = profile(s.mode || 'full'); if (s.lang === 'en') d.lang = 'en'; return d; }
     const d = profile(s.mode);
     for (const id of ORDER) { const c = s.cars[id], o = d.cars[id]; if (!c || typeof c !== 'object') continue; o.own = !!c.own; carFrom(o, c); }
     d.money = Number.isFinite(s.money) ? Math.max(0, Math.round(s.money)) : d.money; d.car = ORDER.includes(heirId(s.car)) ? heirId(s.car) : d.car; pageOwn(d, s);
+    if (d.mode === 'vet' && s.vm !== VET_V) d.money = Math.max(d.money, vetMoney());   // (a veteran saved before 9. 11. 2026: the new test money)
     if (!d.cars.pico.own) d.cars.pico.own = true;
     d.rent = rentFrom(s.rent, d); for (const id of ORDER) haveFitted(d.cars[id]);
     return d;
@@ -171,7 +183,7 @@
   const worth = (id) => Math.max(20000, PRICE[id] || 48000);
   // the paint: one price by the car's size (the user's choice 2. and 3. 11. 2026: no tabs of finishes): a kart (under 4 m² of ground)
   // 600, a truck (4 t and more) 12.000, any other car 3.500
-  const paintPrice = (id) => { const Mm = model(id); return Mm.len * Mm.wid < 4 ? 600 : Mm.mass >= 4000 ? 12000 : 3500; };
+  const paintPrice = () => 0;   // (the paint free, as the plate an_barvanje 2/6 says: the user's answer to garaza-barva-okvircek, 16. 11. 2026, option 2)
   const srvPrice = (s, c, id) => { const w = 1 - c.cond[s.id]; if (w < 0.02) return 0; const f = Math.pow(worth(id) / 68000, s.e); return round((s.a + s.b * Math.pow(w, s.p)) * f); };
   const spec = (id) => { const c = S.cars[id]; return { M: model(id), color: COLORS[c.color][0], stripe: c.stripe, upg: levels(c.parts), deli: toDeli(c.parts), cond: Object.assign({}, c.cond), num: 0 }; };
   // (the aero kits' RACE tab is locked till the SPORT kit or more is fitted)
@@ -254,7 +266,8 @@
   const FLAGS = {
     'Slovenija': [hz('#fff', '#0b4ea2', '#ed1c24'), '<g transform="translate(3 0)"><path d="M5.6 3.6h6.4v5.8c0 2.9-1.6 4.4-3.2 5.1-1.6-.7-3.2-2.2-3.2-5.1z" fill="#0b4ea2" stroke="#ed1c24" stroke-width=".7"/><path d="M6.1 10.4l1.3-2.2.9 1.3.5-.8 1.6 2.6c-.6 1.4-1.4 2.1-1.6 2.3-.4-.2-2.1-1.3-2.7-3.2z" fill="#fff"/><g fill="#ffd200"><circle cx="7" cy="5.2" r=".45"/><circle cx="8.8" cy="4.7" r=".45"/><circle cx="10.6" cy="5.2" r=".45"/></g></g>', 'xMinYMid'],
     'Nemčija': [hz('#000', '#dd0000', '#ffce00')], 'Avstrija': [hz('#c8102e', '#fff', '#c8102e')], 'Rusija': [hz('#fff', '#0039a6', '#d52b1e')], 'Monako': [hz('#ce1126', '#fff')],
-    'Belgija': [vt('#000', '#fdda24', '#ef3340')], 'Francija': [vt('#0055a4', '#fff', '#ef4135')], 'Italija': [vt('#009246', '#fff', '#ce2b37')],
+    'Belgija': [vt('#000', '#fdda24', '#ef3340')], 'Peru': [vt('#d91023', '#fff', '#d91023')], 'Francija': [vt('#0055a4', '#fff', '#ef4135')], 'Italija': [vt('#009246', '#fff', '#ce2b37')],
+    'Kostarika': ['<rect width="30" height="20" fill="#002b7f"/><rect y="3.33" width="30" height="13.34" fill="#fff"/><rect y="6.67" width="30" height="6.67" fill="#ce1126"/>'],
     'Tajska': ['<rect width="30" height="20" fill="#a51931"/><rect y="3.33" width="30" height="13.34" fill="#f4f5f8"/><rect y="6.67" width="30" height="6.67" fill="#2d2a4a"/>'],
     'Finska': ['<rect width="30" height="20" fill="#fff"/><rect y="7.25" width="30" height="5.5" fill="#002f6c"/>', '<rect x="8" width="5.5" height="20" fill="#002f6c"/>', 'xMinYMid'],
     'Anglija': ['<rect width="30" height="20" fill="#fff"/><rect y="8" width="30" height="4" fill="#ce1124"/>', '<rect x="13" width="4" height="20" fill="#ce1124"/>', 'xMidYMid'],
@@ -297,9 +310,9 @@
     else { go.textContent = tr('Kupi · {0}', eur(PRICE[S.car] || 0)); go.className += ' buy'; go.dataset.act = 'buy'; }
     // the cars before and after it: their pictures (as they stand in their colour, half a metre further back), their names to the ear
     const i = ORDER.indexOf(S.car), pv = ORDER[(i - 1 + ORDER.length) % ORDER.length], nx = ORDER[(i + 1) % ORDER.length];
-    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : '';
+    for (const [el, id] of [[$('g-prev'), pv], [$('g-next'), nx]]) { const k = S.cars[id], t = thumbs[id] && thumbs[id][k.color]; el.querySelector('.th').innerHTML = t ? '<img alt="" src="' + t + '">' : ''; el.querySelector('.nm').textContent = model(id).name;
       el.setAttribute('aria-label', (el.id === 'g-prev' ? tr('Prejšnji avto') : tr('Naslednji avto')) + ': ' + model(id).name); }
-    queueThumbs([pv, nx]);
+    fitNames(); queueThumbs([pv, nx]);
     // IZBERI PROGO: the flag, for the player's car or one rented; else grey, its words: buy or rent the car first (answer 3 of 2. 11.)
     const tb = $('g-track');
     if (own || rented) { tb.disabled = false; tb.classList.remove('not'); flagButton(); }
@@ -319,7 +332,7 @@
     if (!thumbQ.length || G.busy || G.thumbed) return;
     const [id, col] = thumbQ.shift(), k = S.cars[id];
     try { (thumbs[id] = thumbs[id] || {})[col] = G.thumb({ M: model(id), color: COLORS[col][0], stripe: k.stripe, upg: levels(k.parts) }, 160, 72, { back: 0.5 }); } catch (e) { console.error(e); return; }
-    head();
+    head(); const pi = id === S.car && document.querySelector('#g-menu [data-col="' + col + '"] .pi'); if (pi) pi.innerHTML = '<img alt="" src="' + thumbs[id][col] + '">';   // (a paint card's car in its colour)
   }
 
   /* ---------------- the menu of a tapped part: four tabs (its categories: the name and the prices), four tiles (the options: the chosen
@@ -336,11 +349,18 @@
     for (const n in REGAL) if (REGAL[n][0] === el) { const o = findOpt(el, REGAL[n][1]); if (o && o[0] === t && o[1] === j) return 'rgl:' + n; }
     return inDrawer(el, t, j) ? 'drw:' + el : null; }
   function openMenu(m) {
+    ppOff();
     const c = C(); if (!c.own) { toast(locked(S.car) ? tr('{0} je na voljo v polni igri.', M().name) : S.rent === S.car ? tr('Najet avto vozi tak, kot je.') : tr('Najprej kupi avto.'), true); return; }
     menu = m; if (!menu.sel) menu.sel = has(c, m.el) && m.el !== 'barva' ? has(c, m.el).slice() : m.el === 'servis' ? [0, 3] : [0, 0]; if (menu.tab == null) menu.tab = menu.sel[0];
     $('g-low').classList.add('hide'); drawMenu(); requestAnimationFrame(() => { if (menu) $('g-menu').classList.add('on'); });
   }
-  function closeMenu() { if (!menu) return; menu = null; $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.drawer(null); G.drop(0); }
+  // the chosen colour's circle named over it (plate an_barvanje 1/6: BARVA – RDEČA), while the paint's menu is open
+  function colTag(key, ci) {
+    let t = $('g-tag'); const b = key && G.box(key);
+    if (!b) { if (t) t.classList.remove('on'); return; }
+    if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
+    t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); const hw = t.offsetWidth / 2 + 4, W = $('g-stage').clientWidth; t.style.left = Math.round(Math.max(hw, Math.min(W - hw, b.x + b.w / 2))) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }   // (kept on the screen)
+  function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -350,11 +370,14 @@
         GarageShop.SERVICE.map((q, i) => { const p = i < 3 ? ps[i] : all, done = !p; return '<button class="g-tl' + (m.sel[1] === i ? ' sel' : '') + (done ? ' fit' : '') + '" data-tile="0,' + i + '"><span class="pi">' + ICON.servis(i) + '</span><div><b>' + esc(L2(q[0])) + '</b><small>' + esc(i < 3 ? tr('Stanje {0} %', Math.round(c.cond[SRV[i].id] * 100)) : L2(q[1])) + '</small><i>' + (done ? '✓' : eur(p)) + '</i></div></button>'; }).join('') + '</div>';
       const p = m.sel[1] < 3 ? ps[m.sel[1]] : all; ok = !p; buy = ok ? tr('KOT NOV ✓') : tr('SERVIS · {0}', eur(p)); can = !ok;
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
-    } else if (el === 'barva') {   // (the eight colours as the circles round the ring, one price: the car's size)
-      const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car);
-      html += '<div class="g-mh"><h3>' + esc(L2(EL.barva.n)) + '</h3><span>' + esc(tr(COLORS[cur][1])) + '</span></div><div class="g-mg g-mc">' + COLORS.map((q, i) => '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + ICON.barva(0, 0, q[0]) + '</span></button>').join('') + '</div>';
-      ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : tr('KUPI IN NAMESTI · {0}', eur(p));
+    } else if (el === 'barva') {   // (plate an_barvanje 2/6: two tabs of four colours, each a card with the car in it; ⏱ the chamber's time; one price: the car's size)
+      const cur = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (m.ctab == null) m.ctab = CTAB.findIndex(g => g[1].includes(cur)); const g = CTAB[m.ctab][1];
+      for (const i of g) if (!(thumbs[S.car] && thumbs[S.car][i]) && !thumbQ.some(q => q[0] === S.car && q[1] === i)) thumbQ.push([S.car, i]);
+      html += '<div class="g-mh g-ch"><h3>' + esc(L2(EL.barva.n)) + '</h3>' + CTAB.map((q, i) => '<button class="g-cp' + (i === m.ctab ? ' sel' : '') + '" data-ctab="' + i + '">' + esc(tr(q[0])) + '</button>').join('') + '<span class="g-ct">⏱ 6 s</span></div><div class="g-mg g-mc">' +
+        g.map(i => { const q = COLORS[i], th = thumbs[S.car] && thumbs[S.car][i]; return '<button class="g-tl' + (i === cur ? ' sel' : '') + (i === c.color ? ' fit' : '') + '" data-col="' + i + '" aria-label="' + esc(tr(q[1])) + '"><span class="pi">' + (th ? '<img alt="" src="' + th + '">' : ICON.barva(0, 0, q[0])) + '</span><div><b>' + esc(tr(q[1])) + '</b><small>' + esc(tr(CDESC[i])) + '</small><i>' + esc(tr(i === c.color ? 'nameščeno' : 'brezplačno')) + '</i></div></button>'; }).join('') + '</div>';
+      ok = cur === c.color; can = !ok; buy = ok ? tr('NAMEŠČENO ✓') : p ? tr('KUPI IN NAMESTI · {0}', eur(p)) : tr('BARVAJ · BREZPLAČNO');
       if (!ok && p > S.money) note = tr('premalo denarja · imaš {0}', eur(S.money));
+      if (m.car) html += '<div class="g-mx"><button data-mact="aero">' + esc(tr('AERO PAKET')) + ' ›</button></div>';   // (opened from the car: its aero kits a tap away)
     } else {
       const E = EL[el], t = m.tab;
       html += '<div class="g-mt">' + E.c.map((q, i) => '<button class="' + (i === t ? 'sel' : '') + '" data-tab="' + i + '"><b>' + esc(L2(q[0])) + '</b><small>' + tabRange(el, i) + '</small></button>').join('') + '</div>';
@@ -376,6 +399,8 @@
     const kb = (el === 'barva' ? 'col' + (m.color != null ? m.color : c.color) : keyOfOpt(el, m.sel[0], m.sel[1], m.key)) || m.key;
     G.mark(kb, keysOf(el), !!m.car);   // (the car bright in the veil only when it was tapped)
     G.drawer(kb && kb.startsWith('drw:') ? el : null);   // (the chosen part's drawer out)
+    colTag(el === 'barva' && kb && kb.startsWith('col') ? kb : null, el === 'barva' ? m.color != null ? m.color : c.color : 0);
+    G.preview(null);   // (no preview of the chosen colour: the car keeps its old one till it is painted, the user's answer to garaza-barva-predogled, 16. 11. 2026, option 3)
     const E = EL[el]; if (E && E.k) { const P = Object.assign({}, c.parts, { [el]: m.sel }), L0 = levels(c.parts), L1 = levels(P); if (L1[E.k] !== L0[E.k]) G.ghost(E.k, L1[E.k]); else G.ghostOff(); } else G.ghostOff();
     // the menu at the bottom when at the top it would cover what was tapped; a drawer: the menu stays at the top, the picture lowered
     // till the drawer is under it (when it fits on the screen; measured as the picture stands without it)
@@ -390,11 +415,12 @@
     const m = menu, c = C(); if (!m || !c.own) return; const el = m.el;
     if (el === 'servis') { const ids = m.sel[1] === 3 ? ['clean', 'body', 'engine'] : [SRV[m.sel[1]].id], p = svcCost(c, ids).p; if (S.money < p) { pay(p); return; } closeMenu(); doService(ids); return; }   // (too little money: the menu stays, as a part's)
     const [t, j] = m.sel; if (el === 'aero' && t >= 2 && raceLocked(c)) return;
-    if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (col === c.color) return; if (S.money < p) { pay(p); return; } closeMenu(); doPaint(col, true); return; }
+    if (el === 'barva') { const col = m.color != null ? m.color : c.color, p = paintPrice(S.car); if (col === c.color) return; if (S.money < p) { pay(p); return; } closeMenu(); lastCost = p; doPaint(col, true); return; }
     const mine = haveIt(c, el, [t, j]), p = mine ? 0 : price(el, t, j); if (!pay(p)) { drawMenu(); return; }   // (a part the car has: fitted again free)
-    const from = m.key; haveAdd(c, el, [t, j]); closeMenu(); fit(el, [t, j], from);
+    const from = m.key; haveAdd(c, el, [t, j]); closeMenu(); lastCost = p; fit(el, [t, j], from);
   }
   function fit(el, v, from) {
+    ppArm();   // (PREJ/POTEM: the car as it was, before this part)
     const c = C(), L0 = levels(c.parts), was = c.parts[el]; if (v && !isStock(el, v)) c.parts[el] = v; else delete c.parts[el]; const L1 = levels(c.parts), k = EL[el].k; save(); render();
     const name = L2(EL[el].n) + ' · ' + (v ? L2(opt(el, v[0], v[1])[0]) : tr('serijsko'));
     lastFit = name;
@@ -405,7 +431,14 @@
     const key = v ? keyOfOpt(el, v[0], v[1], from) : null, lvc = !!k && L1[k] !== L0[k], sp = spec(S.car), real = (w) => w && !isStock(el, w) ? w : null; if (lvc) sp.upg = L0;
     G.fitPart(el, sp, { src: key, from: real(was) ? optN(was) : 0, to: real(v) ? optN(v) : 0, fromK: slotOf(el, real(was)), toK: slotOf(el, real(v)), up: lvc ? [k, L1[k]] : null });
   }
-  let lastFit = null;
+  let lastFit = null, lastCost = 0;
+  // PREJ/POTEM (the plates' common end): when the show is over, a button shows the car as it was before the part or the paint and
+  // again as it is now (at once, the same view); gone with the next show, a menu or another car (the car as it is now back first)
+  let pp = null;
+  function ppArm() { ppOff(); pp = { a: spec(S.car), car: S.car, armed: true, before: false }; }
+  function ppShow() { if (!pp || !pp.armed || pp.car !== S.car) return; pp.armed = false; const b = $('g-pp'); b.textContent = tr('PREJ'); b.classList.add('on'); }
+  function ppTap() { const q = pp; if (!q || q.armed || q.car !== S.car) return; q.before = !q.before; q.tap = true; $('g-pp').textContent = tr(q.before ? 'POTEM' : 'PREJ'); G.reshow(q.before ? q.a : spec(S.car)); }   // (its own show busy meanwhile: not the end of the button)
+  function ppOff() { if (!pp) return; const q = pp; pp = null; $('g-pp').classList.remove('on'); if (q.before && q.car === S.car) G.reshow(spec(S.car)); }
   // (an option's place among its drawer's four, -1: not in it)
   const slotOf = (el, v) => !v || !DRAWER[el] ? -1 : DRAWER[el].findIndex(n => { const o = findOpt(el, n); return !!o && o[0] === v[0] && o[1] === v[1]; });
   function stock() { if (!menu) return; const el = menu.el; closeMenu(); fit(el, null); }
@@ -419,8 +452,8 @@
     power: '<svg viewBox="0 0 32 32"><path d="M18 3L7 18h8l-2 11 12-16h-8z" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"/></svg>',
     cond: '<svg viewBox="0 0 32 32"><path d="M20.5 4.5a6.5 6.5 0 0 0-6 9L5 23v4h4l9.5-9.5a6.5 6.5 0 0 0 9-6l-4 1.5-3-3 1.5-4z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></svg>' };
   let lastChip = null;
-  function chip(small, big, icon) { const el = $('g-chip'); lastChip = { small, big: big.replace(/<[^>]+>/g, ''), icon: icon || '' };
-    el.innerHTML = '<small>' + (icon ? '<i>' + CHIP_I[icon] + '</i>' : '') + esc(small) + '</small><b>' + big + '</b>'; el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
+  function chip(small, big, icon, cost) { const el = $('g-chip'); lastChip = { small, big: big.replace(/<[^>]+>/g, ''), icon: icon || '', cost: cost || '' };   // (cost: what it cost, under it)
+    el.innerHTML = '<small>' + (icon ? '<i>' + CHIP_I[icon] + '</i>' : '') + esc(small) + '</small><b>' + big + '</b>' + (cost ? '<small class="c">' + esc(cost) + '</small>' : ''); el.className = 'g-chip on'; clearTimeout(chipT); chipT = setTimeout(() => { el.className = 'g-chip'; }, 2400); }
   function pay(p) {
     if (S.money < p) { const el = $('g-cr'); el.classList.remove('poor'); void el.offsetWidth; el.classList.add('poor'); setTimeout(() => el.classList.remove('poor'), 500); toast(tr('Premalo denarja: potrebuješ {0}, imaš {1}.', eur(p), eur(S.money)), true); return false; }
     if (p > 0) { const from = S.money; S.money -= p; countMoney(from, S.money); const el = $('g-cr'); el.classList.remove('pay'); void el.offsetWidth; el.classList.add('pay'); G.sfx('coin'); }
@@ -430,7 +463,7 @@
   function countMoney(a, b) { cancelAnimationFrame(moneyAnim); const t0 = performance.now(), el = $('g-money'); const st = (t) => { const k = Math.min(1, (t - t0) / 700); el.textContent = num(Math.round(a + (b - a) * (1 - Math.pow(1 - k, 3)))); if (k < 1) moneyAnim = requestAnimationFrame(st); }; moneyAnim = requestAnimationFrame(st); }
   function pickCar(id) {
     if (id === S.car) return;
-    closeMenu(); S.car = id; save(); render();
+    ppOff(); closeMenu(); S.car = id; save(); render();
     $('g-name').parentElement.classList.remove('new'); void $('g-name').offsetWidth; $('g-name').parentElement.classList.add('new');
     G.swap(spec(id));
   }
@@ -455,7 +488,7 @@
   function doPaint(col, paid) {
     const c = C(); if (!c.own || col === c.color) return;
     if (!pay(paid ? paintPrice(S.car) : 0)) return;
-    c.color = col; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
+    ppArm(); c.color = col; c.cond.clean = 1; c.cond.body = 1; save(); render(); queueThumbs([S.car]);
     G.paint(COLORS[col][0], c.stripe);
   }
   function buy() {
@@ -487,7 +520,7 @@
     else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
-    else if (h.key === 'car:body') m = { el: 'aero', key: null, car: true };   // (the aero kits: a tap on the car (odlocitve 30. 10., V1 b); the paint: the circles)
+    else if (h.key === 'car:body') m = { el: 'barva', key: null, car: true, sel: [0, 0] };   // (the paint: a tap on the car's body (plate barvni_krogi_B f, 15. 11.); the aero kits: AERO › in its menu)
     else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
@@ -502,13 +535,15 @@
       case 'rent': rent(); break;
       case 'locked': toast(tr('{0} je na voljo v polni igri.', M().name)); break;
       case 'go': { const go = $('g-go'); go.classList.add('done'); go.textContent = tr('Izbran ✓'); toast(tr('{0} je izbran za naslednjo dirko.', M().name)); setTimeout(() => head(), 1600); break; }
-      case 'back': location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(S.car) : ''); break;   // (the game's car screen, on the car shown)
-      case 'track': if (!C().own && S.rent !== S.car) break; location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
+      case 'back': if (EMB) { embClose(GAME_CAR ? S.car : null, ''); break; } location.href = 'index.html?zaslon=avto' + (GAME_CAR ? '&avto=' + encodeURIComponent(S.car) : ''); break;   // (the game's car screen, on the car shown)
+      case 'track': if (!C().own && S.rent !== S.car) break; if (EMB) { embClose(S.car, 'proga'); break; } location.href = 'index.html?zaslon=avto&avto=' + encodeURIComponent(S.car) + '&naprej=proga'; break;   // (the game's track screen with the car shown, when it is the player's)
+      case 'skip': G.skip(); break;
+      case 'pp': ppTap(); break;
       case 'coins': toast(tr('Imaš {0}.', eur(S.money))); break;
       case 'sound': S.sound = !S.sound; save(); G.sound(S.sound); $('g-snd').classList.toggle('mute', !S.sound); break;
       case 'lang': S.lang = S.lang === 'en' ? 'sl' : 'en'; save(); setLang(); break;
       case 'reset': if (S.mode === 'game') break; { const g = S.guide, fl = S.flag; S = profile(S.mode); S.demo = true; S.guide = g; S.flag = fl; } save(); thumbs = {}; closeMenu(); render(); carAgain(); toast(tr('Profil je ponastavljen.')); break;
-      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); break;
+      case 'demo-off': $('g-demo').classList.add('off'); S.demo = false; save(); resize(); break;   // (the buttons at the top higher: the picture fitted again)
     }
   }
   function setLang() { Lang.set(S.lang); Lang.apply(document.body); $('g-lang').textContent = S.lang === 'en' ? 'SL' : 'EN'; render(); }
@@ -549,8 +584,9 @@
       if (t.dataset.act) return onAct(t.dataset.act);
       if (t.dataset.tab) { G.sound(S.sound); if (menu) { menu.tab = +t.dataset.tab; drawMenu(); } return; }
       if (t.dataset.tile) { G.sound(S.sound); const [a, b] = t.dataset.tile.split(',').map(Number); tile(a, b); return; }
+      if (t.dataset.ctab) { G.sound(S.sound); if (menu) { menu.ctab = +t.dataset.ctab; drawMenu(); } return; }
       if (t.dataset.col) { G.sound(S.sound); if (menu) { menu.color = +t.dataset.col; drawMenu(); } return; }
-      if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); return; }
+      if (t.dataset.mact) { G.sound(S.sound); if (t.dataset.mact === 'close') closeMenu(); else if (t.dataset.mact === 'buy') buyMenu(); else if (t.dataset.mact === 'stock') stock(); else if (t.dataset.mact === 'aero') { menu = null; openMenu({ el: 'aero', key: null, car: true }); } return; }
       if (t.dataset.mode) { const g = S.guide, fl = S.flag; S = t.dataset.mode === 'game' ? fromCareer() : profile(t.dataset.mode); S.demo = true; S.guide = g; S.flag = fl; save(); thumbs = {}; closeMenu(); markMode(); render(); carAgain(); return; }
     });
     document.addEventListener('pointerdown', () => G.sound(S.sound), { once: true });
@@ -558,32 +594,150 @@
     window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); else if (e.key === 'Escape') closeMenu(); });
     G.onTap = onTap;
     G.onHud = (k, d) => {
-      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); return; }
-      if (k === 'power') { const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
+      if (k === 'busy') { $('g-stage').classList.toggle('busy', !!d); B = null; stepsOff(!d); cancelAnimationFrame(barRaf); barRaf = 0; if (d) { barZero(); if (pp && !pp.armed && !pp.tap) ppOff(); } else { if (pp) pp.tap = false; ppShow(); } return; }
+      if (k === 'fit') { const s = d.step.replace(/\./g, '_');   // (a show's step: its plan the show's start (the queued one's after the one before), the element's sentences)
+        if (s === 'plan' || s === 'plain') { if (!B || B.fin) B = barNew(d.el === 'turbo' && d.lid === false ? 'turbo_c' : d.el); if (s === 'plan') { if (!B.P) B.pair = !!(d.jobs && d.jobs[0] && d.jobs[0].arm === '0+1'); B.P = d; } }
+        if (!B) B = barNew(null); barSay(s, d); return; }
+      if (k === 'paint') { if (!B || B.fin || B.el !== 'barva') B = barNew('barva'); barSay(d.step, d); return; }
+      if (k === 'step') { if (B && !B.pair) { B.cnt = d.i + '/' + d.n; bar(); } return; }   // (a wheel's count: not by the plate's pair, its sentences say it)
+      if (k === 'power') { if (B && !B.fin) barSay('power', d); const kw = d.kw || M().kw, a = kw * [1, 1.08, 1.16, 1.25][d.from], b = kw * [1, 1.08, 1.16, 1.25][d.lv];   // (the upgraded car's: another may be chosen meanwhile)
         chip(tr('MOČ'), Math.round(a) + ' kW → <em>' + Math.round(b) + ' kW</em>', 'power'); }
-      else if (k === 'done') { if (d.kind === 'motor') { lastFit = null; return; }
+      else if (k === 'done') { if (B && !B.fin) { B.fin = true; bar(); }   // (the bar: all its stages done, the line full)
+        if (d.kind === 'motor') { lastFit = null; lastCost = 0; return; }   // (its MOČ chip: the price not left for the next KONČANO)
         if (svcChip && SRV.some(s => s.id === d.kind) && --svcChip.left <= 0) { const q = svcChip; svcChip = null;   // (the service's last item done: the state before → after)
           chip(tr('STANJE'), q.a + ' % → <em>' + q.b + ' %</em>', 'cond'); lastFit = null; return; }
         const n = { clean: 'Pranje', body: 'Karoserija', engine: 'Motor in olje', paint: 'Barva' }[d.kind];
-        chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓')); lastFit = null; }
+        chip(tr('KONČANO'), esc(lastFit || (n ? tr(n) : '')) + (lastFit ? '' : ' ✓'), '', lastCost ? '−' + eur(lastCost) : ''); lastFit = null; lastCost = 0; }
     };
   }
+  // a show's bar under the picture (the plates' common bar, an_common): the element's stages as capsules (the done ones ✓, the one now
+  // cyan with its name, the next ones their numbers, the last one Končano), the step now as a sentence (which arm does what, from where to
+  // where), a line as far as the show has run (its own clock, Garage3D.showTime); PRESKOČI runs the show to its end at once (Garage3D.skip:
+  // the same end, only sooner). Shown from the show's first sentence till it is over
+  const STG = { gume: ['Izberi', 'Dvig', 'Snemanje', 'Nove gume'], platisca: ['Izberi', 'Dvig', 'Snemanje', 'Nova platišča'], auspuh: ['Izberi', 'Snemanje', 'Montaža', 'Zvok'],
+    krilo: ['Tapni', 'Izberi', 'Priprava', 'Menjava', 'Montaža'], turbo: ['Izberi', 'Hauba gor', 'Montaža', 'Preizkus moči'], zarometi: ['Izberi', 'Roki dol', 'Menjava', 'Preizkus luči'],
+    barva: ['Izberi barvo', 'Komora dol', 'Barvanje', 'Sušenje'], def: ['Izberi', 'Snemanje', 'Menjava', 'Montaža'], fin: ['Končano'] };
+  STG.aero = STG.krilo; STG.turbo_c = ['Izberi', 'Montaža', 'Preizkus moči'];   // (a car without a bonnet of its own: the turbo on through the closed one)
+  // (the step's sentence: [the stage it is in, the sentence, its words] or what gives it from the step's fields (d) and the show (B);
+  // null: the sentence as it was. A word null: the arm's number; the other words through tr() too)
+  const SAY = {
+    def: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov del'], bonnet_up: [1, 'Hauba je gor, podpira jo drog'], old_out: [1, 'Roka {0} sname stari del', null],
+      grab: (d) => [2, d.rgl != null ? 'Roka {0} vzame nov del z regala' : 'Roka {0} vzame nov del z vozička', null],
+      hop: [3, 'Roka {0} namesti nov del', null], swap: [3, 'Roka {0} namesti nov del', null], snap: [3, 'Del zaskoči'], screws: [3, 'Vijaki so priviti'], hoses: [3, 'Cevi so priklopljene'],
+      put: (d) => d.where === 'regal' ? [3, 'Roka {0} postavi stari del na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari del na voziček', null] : null,
+      down: [3, 'Avto dol · roki gresta počivat'], revs: [3, 'Motor zaturira'], lights: [3, 'Preizkus luči'], cart_out: [3, 'Voziček odpelje'] },
+    // (the tyres by the plate: both arms on one wheel (the bridge turns between them), its number and the place of the next ones; the
+    // wheels one by one (the rims, a tyre without the regal): the arm, the old one off, onto the regal or the trolley, the new one on)
+    gume: { plan: [1, 'Kupljeno · avto gre na dvigalko, roki se zbudita'],
+      cart_in: (d, B) => [1, B.el === 'platisca' ? 'Vozička pripeljeta nova platišča' : 'Vozička pripeljeta nove gume'],
+      off: (d, B) => { const n = B.P && B.P.n || 4, at = d.wf ? (d.ws > 0 ? 'spredaj desno' : 'spredaj levo') : (d.ws > 0 ? 'zadaj desno' : 'zadaj levo');
+        if (!B.pair) return [2, 'Roka {0} sname {1}', null, B.el === 'platisca' ? 'staro platišče' : 'staro gumo'];
+        return !d.j ? [2, 'Roka 1 sname staro gumo s platišča · kolo {0}/{1}', 1, n] : B.ws == null || d.ws === B.ws ? [3, 'Enako še kolo {0}/{1} ({2})', d.j + 1, n, at] : [3, 'Druga stran: kolo {0}/{1} ({2})', d.j + 1, n, at]; },
+      grab: (d, B) => !B.pair ? [3, d.rgl != null ? 'Roka {0} vzame {1} z regala' : 'Roka {0} vzame {1} z vozička', null, B.el === 'platisca' ? 'novo platišče' : 'novo gumo'] : d.j ? null : [3, 'Roka 2 vzame novo gumo z regala'],
+      pass: (d) => d.j ? null : [3, 'Most se zavrti: stara guma gre k regalu, nova k avtu'],
+      swap: (d, B) => !B.pair ? [3, 'Roka {0} namesti {1}', null, B.el === 'platisca' ? 'novo platišče' : 'novo gumo'] : d.j ? null : [3, 'Roka 2 natakne novo gumo na platišče · kolo {0}/{1}', 1, B.P && B.P.n || 4],
+      put: (d, B) => { if (!B.pair) { const w = B.el === 'platisca' ? 'staro platišče' : 'staro gumo'; return d.where === 'regal' ? [2, 'Roka {0} postavi {1} na prazno mesto v regalu', null, w] : d.where === 'cart' ? [2, 'Roka {0} odloži {1} na voziček', null, w] : null; }
+        const n = B.P && B.P.n || 4; return d.j === n - 1 ? [3, n === 4 ? 'Vse 4 gume zamenjane · roki gresta gor' : 'Vse gume zamenjane · roki gresta gor'] : d.j ? null : [3, 'Roka 1 postavi staro gumo na prazno mesto v regalu']; } },
+    auspuh: { plan: [1, 'Kupljeno · roki se zbudita · avto gre gor'],
+      grab: (d, B) => [B.P && B.P.two ? 2 : 1, d.rgl != null ? 'Roka {0} dvigne nov auspuh z regala' : 'Roka {0} vzame nov auspuh z vozička', null],
+      wrench: (d, B) => d.n === 1 ? [2, B.P && B.P.two ? 'Roka 2 z vijačnikom privije objemko' : 'Roka 1 z vijačnikom privije objemko'] : [1, 'Roka 1 z vijačnikom odvije objemko pod odbijačem'],
+      off: [1, 'Roka 1 izvleče stari auspuh'], pass: [2, 'Most se zavrti za pol kroga: stari auspuh k regalu, nov k avtu'],
+      hop: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null], swap: [2, 'Roka {0} potisne nov auspuh pod odbijač v objemko', null],
+      put: (d, B) => B.P && B.P.two ? [2, 'Roka 1 postavi stari auspuh na prazno mesto v regalu'] : d.where === 'regal' ? [3, 'Roka {0} postavi stari auspuh na prazno mesto v regalu', null] : d.where === 'cart' ? [3, 'Roka {0} odloži stari auspuh na voziček', null] : null,
+      revs: [3, 'Motor dvakrat zarjovi'] },
+    krilo: { plan: [2, 'Kupljeno · roki se zbudita'], cart_in: [2, 'Voziček pripelje novo krilo'], old_out: [3, 'Roka {0} sname staro krilo s pokrova', null],
+      grab: (d) => [3, d.rgl != null ? 'Roka {0} prime krilo na regalu in ga nese k avtu' : 'Roka {0} vzame krilo z vozička in ga nese k avtu', null],
+      snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], swap: (d, B) => B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null],
+      put: (d) => d.where === 'regal' ? [4, 'Roka {0} postavi staro krilo na prazno mesto v regalu', null] : d.where === 'cart' ? [4, 'Roka {0} odloži staro krilo na voziček', null] : null,
+      cart_out: [4, 'Voziček odpelje'] },
+    // (the aero kit: the self-driving trolley with its pieces (the lip, the skirt, the diffuser), the wing last (its own plan, el krilo))
+    aero: { plan: (d) => d.el === 'krilo' ? [4, null] : d.sill ? [3, null] : [2, 'Kupljeno · roki se zbudita'], cart_in: [2, 'Samovozeči voziček pripelje aero paket'],
+      grab: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? [4, 'Roka {0} vzame krilo z vozička', null] : P.kind === 'skirt' ? [3, 'Roka {0} vzame prag z vozička', null] : P.kind === 'rear' ? [3, 'Roka {0} vzame difuzor z vozička', null] : [3, 'Roka {0} vzame sprednjo ustnico z vozička', null]; },
+      swap: (d, B) => { const P = B.P || {}; return P.el === 'krilo' ? (B.seen.snap ? null : [4, 'Roka {0} postavi krilo na pokrov prtljažnika', null]) : P.kind === 'skirt' ? [3, 'Roka {0} položi prag vzdolž boka', null]
+        : P.kind === 'rear' ? [3, 'Roka {0} namesti difuzor pod zadnji odbijač', null] : [3, 'Roka {0} potisne ustnico pod sprednji odbijač: zaskoči', null]; },
+      snap: [4, 'Roka {0} potisne krilo navzdol: nogi zaskočita v luknji', null], put: (d, B) => d.where === 'none' ? null : [B.P && B.P.el === 'krilo' ? 4 : 3, 'Roka {0} odloži stari kos na voziček', null], cart_out: [4, 'Voziček odpelje'] },
+    // (by the plate an_turbo (the regal's): roka 1 lifts and shuts the bonnet, roka 2 brings the turbo and bolts it down; else the bonnet by itself)
+    turbo: { plan: [1, 'Kupljeno · roki se zbudita'], bonnet_grip: [1, 'Roka 1 dvigne haubo in jo podpre z drogom'],
+      bonnet_up: (d, B) => B.seen.bonnet_grip ? null : [1, 'Hauba je gor, podpira jo drog'], cart_in: [1, 'Voziček pripelje nov turbo'],
+      grab: (d) => [2, d.rgl != null ? 'Most se obrne · roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null],
+      swap: [2, 'Roka {0} položi turbo na motor', null],
+      screws: (d, B) => B.seen.bonnet_grip ? [2, 'Roka {0} z vijačnikom privije turbo, priklopi cevi', null] : [2, 'Vijačnik privije turbo'],
+      hoses: (d, B) => B.seen.bonnet_grip ? null : [2, 'Cevi so priklopljene'],
+      put: (d) => d.where === 'regal' ? [2, 'Roka {0} postavi stari turbo na prazno mesto v regalu', null] : d.where === 'cart' ? [2, 'Roka {0} odloži stari turbo na voziček', null] : null,
+      cart_out: [2, 'Voziček odpelje'], bonnet_close: [3, 'Roka 1 zapre haubo · motor steče'],
+      bonnet_down: (d, B) => B.seen.bonnet_close ? null : [3, 'Hauba dol · motor zažene, preizkus moči'],
+      revs: (d, B) => B.seen.bonnet_close ? [3, 'Motor steče · preizkus moči'] : [3, 'Hauba dol · motor zažene, preizkus moči'] },
+    turbo_c: { plan: [1, 'Kupljeno · roki se zbudita'], cart_in: [1, 'Voziček pripelje nov turbo'],
+      grab: (d) => [1, d.rgl != null ? 'Roka {0} vzame turbo z regala' : 'Roka {0} vzame turbo z vozička', null], swap: [1, 'Roka {0} položi turbo na motor', null],
+      put: (d) => d.where === 'regal' ? [1, 'Roka {0} postavi stari turbo na prazno mesto v regalu', null] : d.where === 'cart' ? [1, 'Roka {0} odloži stari turbo na voziček', null] : null,
+      cart_out: [1, 'Voziček odpelje'], power: [2, 'Motor zažene · preizkus moči'] },
+    // (the headlamps: the near arm the near lamp, the far arm the far one at once; a drawer's: its tray with the new pair)
+    zarometi: { plan: [1, 'Kupljeno · roka {0} se spusti k žarometu', null],
+      cart_in: (d, B) => [1, B.P && B.P.drawer ? 'Voziček gre po nova žarometa v predal' : 'Voziček pripelje nova žarometa'],
+      wrench: [1, 'Roka {0} z vijačnikom odvije vijake obroča', null], hop: [2, 'Roka {0} izvleče stari žaromet iz ležišča', null], old_out: [2, 'Roka {0} izvleče stari žaromet iz ležišča', null],
+      cart_loaded: [2, 'Iz predala pride pladenj z novima lučema'], far_out: [2, 'Roka {0} hkrati zamenja še drugi žaromet', 2],
+      put: (d, B) => d.where === 'none' ? null : [2, B.P && B.P.drawer ? 'Roka {0} položi stari žaromet na pladenj' : d.where === 'regal' ? 'Roka {0} postavi stari žaromet na prazno mesto v regalu' : 'Roka {0} odloži stari žaromet na voziček', null],
+      grab: (d, B) => [2, B.P && B.P.drawer ? 'Roka {0} vzame nov žaromet s pladnja' : d.rgl != null ? 'Roka {0} vzame nov žaromet z regala' : 'Roka {0} vzame nov žaromet z vozička', null],
+      swap: (d) => d.pod ? null : [2, 'Roka {0} potisne nov žaromet v ležišče', null], ring: [2, 'Roka {0} privije obroč', null],
+      pod_out: [2, 'Predal se odpre · roka 2 iztegne podaljšek in vzame nov žaromet'], pass: [2, 'Roka 2 poda nov žaromet roki 1 nad avtom'],
+      fit: [2, 'Roka 1 vstavi in privije nov žaromet, roka 2 ga drži'], far: [2, 'Enako še drugi žaromet'], pod_back: [2, 'Roka 2 se spet iztegne in odloži stari žaromet v predal'],
+      lights: [3, 'Obe luči zasvetita (preizkus luči)'], drawer_back: [3, 'Pladenj se vrne v predal'], cart_out: [3, 'Voziček odpelje'] },
+    barva: { chamber: [1, 'Komora se spusti čez avto · roki počivata'], spray: [2, 'Barva teče po bokih navzdol, zgoraj je že nova barva'], dry: [3, 'Steber piha vroč zrak čez avto · barva se suši'] } };
+  // (the rims by the plate (an_platisca): arm 1 the wheel off its hub and down on the floor, the old rim out of the tyre; arm 2 the new one
+  // into the tyre, the wheel back on and its 5 nuts, the next wheels the same; without the plate's plan (pair false): the tyres' sentences)
+  const byRim = (k, f) => (d, B) => { if (B.pair) return f(d, B); const g = SAY.gume[k]; return typeof g === 'function' ? g(d, B) : g || null; };
+  SAY.platisca = { plan: SAY.gume.plan, cart_in: SAY.gume.cart_in,
+    off: byRim('off', (d, B) => { const n = B.P && B.P.n || 4, at = d.wf ? (d.ws > 0 ? 'spredaj desno' : 'spredaj levo') : (d.ws > 0 ? 'zadaj desno' : 'zadaj levo');
+      return !d.j ? [2, 'Roka 1 s prijemalom sname kolo s pesta'] : B.ws == null || d.ws === B.ws ? [3, 'Enako še kolo {0}/{1} ({2})', d.j + 1, n, at] : [3, 'Druga stran: kolo {0}/{1} ({2})', d.j + 1, n, at]; }),
+    lay: (d) => d.j ? null : [2, 'Roka 1 položi kolo na tla'], regrip: (d) => d.j ? null : [2, 'Roka 1 izvleče staro platišče iz gume'],
+    grab: byRim('grab', () => null), pass: byRim('pass', () => null), press: (d) => d.j ? null : [3, 'Roka 2 vtisne novo platišče v gumo · roka 1 nese staro k regalu'],
+    swap: byRim('swap', (d, B) => d.j ? null : [3, 'Roka 2 natakne kolo z novim platiščem, nato privije 5 matic · kolo {0}/{1}', 1, B.P && B.P.n || 4]),
+    put: byRim('put', (d, B) => { const n = B.P && B.P.n || 4; return d.j === n - 1 ? [3, n === 4 ? 'Vsa 4 platišča zamenjana · roki gresta gor' : 'Vsa platišča zamenjana · roki gresta gor'] : null; }) };
+  const BAR_T = { gume: 9.9, platisca: 9.8, turbo: 6.3, turbo_c: 12.8, krilo: 7.2, aero: 13, auspuh: 8, barva: 4.9, zarometi: 9.3, def: 10 };   // (a show's seconds on its own clock: the line's length)
+  const WHEEL_K = new Set(['off', 'grab', 'swap', 'put', 'pass']);   // (a wheel's steps: its count stays)
+  let B = null, barRaf = 0;
+  const barNew = (el) => ({ el: el || 'def', t0: G.showTime, st: 0, lab: null, args: [], cnt: '', fin: false, P: null, pair: false, ws: null, seen: {} });
+  // (a step: its sentence and its stage (never back); after the end only the sentence)
+  function barSay(k, d) {
+    const t = SAY[B.el] || {}, q = k in t ? t[k] : SAY.def[k], e = typeof q === 'function' ? q(d, B) : q;
+    B.seen[k] = 1; if (d.ws != null) B.ws = d.ws;   // (the side after the sentence: the next wheel's compared with this one's)
+    if (!e) return;
+    if (!B.fin) B.st = Math.max(B.st, e[0]);
+    if (e[1]) { const arm = (d.i != null ? +d.i : B.P && B.P.arm != null ? +B.P.arm : 0) + 1;
+      if (e[1] !== B.lab && !WHEEL_K.has(k)) B.cnt = '';
+      B.lab = e[1]; B.args = e.slice(2).map(a => a === null ? arm : a); }
+    bar();
+  }
+  // (the bar off: at a show's end at once, not fading 0.2 s over the table's parts)
+  function stepsOff(now) { const el = $('g-steps'); if (now && el.classList.contains('on')) { el.style.transition = 'none'; el.classList.remove('on'); void el.offsetWidth; el.style.transition = ''; } else el.classList.remove('on'); }
+  function barZero() { const i = $('g-steps').querySelector('.pr i'); i.style.transition = 'none'; i.style.width = '0%'; void i.offsetWidth; i.style.transition = ''; }   // (a new show's line from nothing: not the last one's shrinking)
+  function bar() {
+    const el = $('g-steps'); if (!B || !B.lab || !$('g-stage').classList.contains('busy')) return;   // (a plan made without a show: no bar)
+    const S = (STG[B.el] || STG.def).concat(STG.fin), N = S.length - 1, tick = B.el === 'krilo' || B.el === 'aero';
+    el.querySelector('.d').innerHTML = S.map((s, i) => B.fin || i < B.st ? '<i class="ok">✓</i>' : i === B.st ? '<i class="on">' + (i + 1) + ' ' + esc(tr(s)) + '</i>' : '<i>' + (i === N && tick ? '✓' : i + 1) + '</i>').join('');
+    el.querySelector('.l').innerHTML = esc(tr(B.lab, ...B.args.map(a => typeof a === 'string' ? tr(a) : a))) + (B.cnt ? '<small>' + B.cnt + '</small>' : '');
+    el.classList.add('on'); if (!barRaf) barRaf = requestAnimationFrame(barLine);
+  }
+  function barLine() {
+    barRaf = 0; if (!B) return; const T = B.el === 'gume' && !B.pair ? 13 : B.el === 'turbo' && B.P && B.P.lg === false ? 15 : BAR_T[B.el] || BAR_T.def;   // (the turbo with its bonnet up by itself: the longer one)
+    $('g-steps').querySelector('.pr i').style.width = (B.fin ? 100 : Math.min(97, Math.max(0, (G.showTime - B.t0) / T * 100))).toFixed(1) + '%';
+    barRaf = requestAnimationFrame(barLine);
+  }
   function markMode() { document.querySelectorAll('#g-modes button').forEach(b => b.classList.toggle('sel', b.dataset.mode === S.mode)); $('g-demo').classList.toggle('game', S.mode === 'game'); }   // (the real profile: no reset)
-  // the picture over the whole page, raised a little (its foot under the buttons)
-  // (lying down: raised more and its view taller by how little is free between the buttons at the top and the car's name, the car and
-  // the cabinet between them)
-  // (upright: raised so the cabinet's front is whole over the car's name, the car under the buttons at the top (Garage3D.fitShift))
-  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect();
-    const wide = r.width > r.height * 1.25, a = $('g-track').getBoundingClientRect(), b = $('g-name').getBoundingClientRect(), free = b.top > a.bottom ? (b.top - a.bottom) / r.height : 0.55;
-    if (wide) G.shift(Math.round(r.height * 0.29 * free), free);   // (first: resize sizes the dust by the view)
+  // the picture over the whole page, raised a little (its foot under the buttons): the regal's top under the buttons at the top, the plan
+  // chest down to the cars' buttons (Garage3D.fitShift; lying down the whole regal, odlocitve 8. 11.)
+  // (the cars' names in their buttons: a word not broken, the letters smaller till the longest fits (a narrow button: lying down))
+  function fitNames() { for (const el of [$('g-prev'), $('g-next')]) { const n = el.querySelector('.nm'); n.style.fontSize = ''; for (let f = 12; f > 8 && n.scrollWidth > n.clientWidth + 0.5; ) n.style.fontSize = --f + 'px'; } }
+  function resize() { const st = $('g-stage'), r = st.getBoundingClientRect(); fitNames();
+    const a = $('g-track').getBoundingClientRect(), b = $('g-prev').getBoundingClientRect();
     G.resize(r.width, r.height, Math.min(window.devicePixelRatio || 1, 2));
-    if (!wide) G.fitShift(a.bottom - r.top, b.top - r.top); }
+    G.fitShift(a.bottom - r.top, b.top - r.top); }
 
   // opened from the game's car screen (a tap on its car: garaza.html?car=<id>&color=<rrggbb>): that car on the table in that colour (a
   // retired model's: its heir); the money and the cars stay the profile's (the real one: the career's). Without them: the profile's car
   let GAME_CAR = null;
-  function fromGame() {
-    let P = null; try { P = new URLSearchParams(location.search); } catch (_) { return; }
+  function fromGame(P) {
+    if (!P) try { P = new URLSearchParams(location.search); } catch (_) { return; }
     const id = heirId((P.get('car') || '').trim().toLowerCase()); if (!ORDER.includes(id)) return;
     GAME_CAR = id; S.car = id;
     const hx = parseInt(P.get('color') || '', 16), ci = COLORS.findIndex(c => c[0] === hx); if (ci >= 0) S.cars[id].color = ci;
@@ -592,7 +746,10 @@
   }
 
   let last = 0, hold = false, skip = 0;   // (hold: the tests step the clock themselves, advance)
+  let run = true, looping = false;   // (run: the loop goes on; in the game's frame only while the garage is shown)
+  function kick() { if (looping) return; looping = true; last = 0; requestAnimationFrame(loop); }
   function loop(t) {
+    if (!run) { looping = false; return; }
     const dt = last ? (t - last) / 1000 : 0.016; last = t;
     // idle (nothing moving but the dust in the light): about 30 frames a second, for the battery
     if (G.idle && !thumbQ.length && (skip += dt) < 1 / 31) { requestAnimationFrame(loop); return; }
@@ -609,9 +766,35 @@
     G.init($('g-gl')); resize();
     G.show(spec(S.car));
     setLang();
-    requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); });
-    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
+    { const e = document.querySelector('script[src^="js/garage3d.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), v = $('g-ver'); if (v && m) { v.textContent = m[1]; v.hidden = false; } }   // (the stamp, only on a published page)
+    if (EMB) {   // (built in the background: one picture drawn (its shaders and textures made), then still till the game shows it)
+      run = false; G.frame(0.016);
+      setTimeout(() => { $('g-load').classList.add('done'); try { parent.__garageReady(); } catch (_) { } }, 0);
+    } else { looping = true; requestAnimationFrame((t) => { last = t; loop(t); setTimeout(() => { $('g-load').classList.add('done'); if (!S.guide && !hold) guide(0); }, 400); }); }
+    window.__garage = { get chip() { return lastChip; }, get S() { return S; }, get gameCar() { return GAME_CAR; }, ORDER, G, vetMoney, onAct, onTap, pickCar, doService, doPaint, buy, rent, rentOf, paintPrice, cabinet, fit, levels, price, findOpt, openMenu, closeMenu, tile, buyMenu, guide, get menu() { return menu; }, thumbs: () => thumbs, render, REGAL, DRAWER,
       set hold(v) { hold = !!v; }, advance(sec) { for (let t = 0; t < sec; t += 1 / 30) G.frame(1 / 30, true); G.frame(0.0001); } };
   }
+
+  /* ---------------- in the game's page (stran Odločitve, Matej 13. 11. 2026: the garage opens without loading) ---------------- */
+  // garaza.html?vgrajena=1 in a frame over the game (js/game.js garPre): built once, kept; open(p) shows it on the game's car (p: car,
+  // color, drzava, as the address has them), its Nazaj and Izberi progo hide it again (the game's __garageClose: the car, naprej); the
+  // phone's Back is its Nazaj (back). Hidden: the loop stopped, the sound off, a show cut short run to its end (what it does is saved)
+  const EMB = window.parent !== window && /[?&]vgrajena=1\b/.test(location.search);
+  function ppDrop() { pp = null; $('g-pp').classList.remove('on'); }   // (PREJ/POTEM of the garage shown before: not on this one)
+  function embOpen(p) {
+    ppDrop();
+    S = load(); GAME_CAR = null; fromGame(new URLSearchParams(p || {})); Lang.set(S.lang);
+    $('g-demo').classList.toggle('off', S.demo === false); markMode(); $('g-snd').classList.toggle('mute', !S.sound);
+    closeMenu(); G.show(spec(S.car)); setLang(); resize(); G.sound(S.sound);
+    run = true; kick();
+    if (!S.guide && !hold) setTimeout(() => guide(0), 400);   // (the guide not seen to its end: from its start, as on the page loaded)
+  }
+  function embClose(car, naprej) {
+    run = false; G.sound(false); closeMenu(); ppDrop();
+    if (G.busy) { G.skip(); for (let i = 0; i < 900 && G.busy; i++) G.frame(1 / 30, true); }
+    save();
+    try { parent.__garageClose({ car: car || '', naprej: naprej || '' }); } catch (_) { }
+  }
+  if (EMB) window.__garageEmbed = { open: embOpen, back: () => onAct('back'), get shown() { return run; } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

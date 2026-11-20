@@ -5,7 +5,7 @@
 // goes round once (the roof see-through over it), glides back into the frame. Nobody near, both turn on their own; a car near and slow, they
 // stop with the car's place at the frame. The wheel's legs and the carousel's deck are walls for the car; a restart at HOME ends a ride.
 //   node tests/browser/nvfair.test.mjs
-import { serve, launch, openGame, checker } from './lib.mjs';
+import { serve, launch, openGame, checker, tapNewVersion } from './lib.mjs';
 
 const T = checker('nvfair');
 const srv = await serve();
@@ -13,7 +13,7 @@ const browser = await launch();
 try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { intro: 2, quali: 0 }, { width: 412, height: 915 }, { menu: true });
   await page.waitForFunction(() => window.Menu && Menu.ready && document.getElementById('menu-host').shadowRoot.querySelector('#s-title'), null, { timeout: 60000 });
-  await page.evaluate(() => document.getElementById('menu-host').shadowRoot.querySelector('[data-act="newver"]').click());
+  await tapNewVersion(page);
   await page.waitForFunction(() => { const g = window.__game; return g && g.race && g.race.nv && !document.getElementById('nv-load') && g.phase === 'racing'; }, null, { timeout: 300000, polling: 500 });
 
   // 1. as built: the wheel's basket at the bottom over the ground under it, the plate in the ground, the carousel's deck; nobody near: both turn

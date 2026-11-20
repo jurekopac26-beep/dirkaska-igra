@@ -14,6 +14,7 @@ Načrt sklopa šestnajstih kratkih prog zunaj Evrope, vsaka iz druge države: 4 
 - **1. 11.**: proga 1 ima svoj pull request; proge 2–16 gredo v **5 skupinah** (A: 2–4, B: 5–7, C1: 8–10, C2: 11–13, D: 14–16), vsaka skupina je ena seja, ena veja `gorske-proge/skupina-<X>` in en pull request, ki gre na `main`, ko so zeleni vsi testi. Skupine gredo ena za drugo (naslednja se začne, ko je prejšnja na `main`). Seja skupine prebere repozitorij in načrt enkrat, gradnik družine naredi in takoj uporabi pri vseh progah skupine.
 - **1. 11.**: napor: proga 1 (z gradniki) **max**, proge 2–16 **xhigh**. Izvedba: koordinacijska seja pred zagonom seje proge naredi vejo `gorske-proge/<NN>-<id>` iz `origin/main` z enim začasnim commitom, ki v `.claude/settings.json` nastavi `env.CLAUDE_CODE_EFFORT_LEVEL` na `xhigh`, in sejo zažene s te veje. Seja proge ta commit vrne (`git revert`), preden pull request označi kot pripravljen; koordinacijska seja pred združitvijo preveri, da pull request `.claude/settings.json` ne spreminja.
 - **1. 11.**: verigo vodi koordinacijska seja (tista, ki je napisala ta načrt) z naporom medium: čaka na teste (`subscribe_pr_activity`), združi pull request, posodobi Stanje in zažene naslednjo progo. Seja proge pull request odpre kot osnutek, ga označi kot pripravljenega, ko so lokalno zeleni povezani testi, in koordinacijski seji pošlje eno vrstico (`send_message` na `@parent`). Če test na GitHubu pade, ji koordinacijska seja pošlje napako in seja proge jo popravi.
+- **8. 11. 2026**: Milford Sound (proga 6, skupina B) odpade: Nova Zelandija dobi dirkališče Cromwell (odločitev uporabnika ob 20.05, prek Mateja, tabla #382, komentar 6726246790; `docs/proge-po-drzavah.md`, `docs/nove-proge-1-0.md`, »Del 3«). Proge s čakanja od 7. 11. 2026 delajo seje po `docs/nove-proge-1-0.md`; tabela Stanje kaže, kam je šla vsaka skupina.
 - Zemljevid od zgoraj, prelet in helikopterski posnetek se ne delajo (po `CLAUDE.md` so po želji pozneje). Slika za meni je obvezna.
 
 ## Kaj vidi kamera (merilo za odseke in detajle)
@@ -57,6 +58,11 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 14 | `puntadeleste` | Punta del Este, Urugvaj | Punta del Este, Uruguay | desna | -54.965,-34.97,-54.935,-34.95 |
 | 15 | `greenpoint` | Green Point, Južna Afrika | Green Point, South Africa | leva | 18.395,-33.91,18.42,-33.895 |
 | 16 | `puertomadero` | Puerto Madero, Argentina | Puerto Madero, Argentina | desna | -58.372,-34.622,-58.355,-34.600 |
+| 20 | `ujarras` | Ujarrás, Kostarika | Ujarrás, Costa Rica | desna | -83.856,9.826,-83.828,9.848 |
+| 17 | `ghoufi` | Ghoufi, Alžirija | Ghoufi, Algeria | desna | 6.140,35.040,6.185,35.070 |
+| 21 | `cusco` | Cusco, Peru | Cusco, Peru | desna | -71.9895,-13.5175,-71.9755,-13.4985 |
+| 17 | `isuna` | Isuna, Butan | Isuna, Bhutan | leva | 89.47,27.31,89.53,27.345 |
+| 17 | `koli` | Koli, Finska | Koli, Finland | desna | 29.7555,63.0813,29.836,63.1147 |
 
 ### Smučišča (1–4)
 
@@ -106,10 +112,10 @@ Graditelji obstoječih gorskih prog imajo po 50–80 KB in vsak svoje živali in
 
 1. V `tools/predogled/proge.json` dodaj progi `sec` (začetek in konec odseka, smer vožnje) in `uvoz` (`pred`: start toliko m pred začetkom odseka, cesta se po potrebi podaljša s cesto, ki se nadaljuje; `grid` 260 m ceste pred startom za 22 avtov; `izt` 160 m izteka za ciljem; `hw` polovična širina asfalta, `hwG` na makadamu; `polmer` serpentin 12 m). `node tools/proga-uvoz.mjs <id> --pregled` izpiše cesto, dolžino dirke in ovinke brez zapisa.
 2. `node tools/nova-proga.mjs <id>` naredi in vpiše vse (glej glavo orodja), požene uvoznik, izračuna medalje in vpiše progo v tabele novega menija (dolžina, višine za graf, kraj na globusu) in naredi video zavoja za kamero 3 menija (prva serpentina, `tools/menu-corner.mjs`, ~5 min). Proga gre na konec seznama v `index.html`: testa `golden` in `races` izbereta avto scenarija »car« po indeksu proge, zato vrinjena proga spremeni reference drugih prog (pri spajanju `main` z drugo novo progo daj svojo za njo in znova naredi le svoje reference). Kratka cesta ima za ciljem malo prostora: `tests/rivals-n.test.js` (meni *Opponents*, do 100 tekmecev) preveri parkiranje za ciljem; če pade, nastavi v datoteki proge `maxRivals` malo pod največjim številom, ki še gre (Mount Buller 70: ~158 m ceste za ciljem, 73 že ne gre). Nato ročno: opisa (`desc`, `en.desc`, brez imen podjetij), imena na zaslonu (`names`; »Serpentina N« se prevede samo, druga v `js/lang.js`), komentator, `look` (svetloba, meglica: `js/render.js` ga vzame, ker nima teme proge), `docs/proge/<id>.md`.
-3. Slog sveta je v `js/world-<id>.js` (`World.gore.build(…, S)`, privzeto `DEF` v `js/world-gore.js`): `snow` ('all' smučišče v sezoni, vedno enako v vseh letnih časih; 'none'; ali višina snežne meje), `road` (`line` 'white' | 'yellow' | 'none', `double`), `trees` (`kinds`: 'gum', 'fir', 'pine', 'broad'; `h` višine; `stags` delež srebrnih suhih evkaliptov, `young` mlada drevesca in grmi ob cesti), `skiers`, `nets`, `snowbanks` (snežni zid za črto ograje, nizek kjer stojijo ljudje), `poles` (snežni količki), `signs` ('diamond' | 'triangle'), `animals` ([{ kind, n }]; ptice letijo), `boards` (napisi, generični), `extra(ctx)` za posebnost proge.
+3. Slog sveta je v `js/world-<id>.js` (`World.gore.build(…, S)`, privzeto `DEF` v `js/world-gore.js`): `snow` ('all' smučišče v sezoni, vedno enako v vseh letnih časih; 'none'; ali višina snežne meje), `road` (`line` 'white' | 'yellow' | 'none', `double`), `trees` (`kinds`: 'gum', 'fir', 'pine', 'broad'; `h` višine; `stags` delež srebrnih suhih evkaliptov, `young` mlada drevesca in grmi ob cesti), `skiers`, `nets`, `snowbanks` (snežni zid za črto ograje, nizek kjer stojijo ljudje), `poles` (snežni količki), `signs` ('diamond' | 'triangle'), `animals` ([{ kind, n }]; ptice letijo), `boards` (napisi, generični), `extra(ctx)` za posebnost proge. `excl` (seznam `[x, z, r]`: krogi brez dreves, hiš in drugih predmetov okolice, npr. okoli znamenitosti; Isuna 15. 11. 2026). Reke: uvoznik izvozi OSM reke (`waterway=river`, odseki nad 60 m) v `def.riverBeds`, gradnik nariše trak vode po strugi, kjer je teren koridorja.
 4. Stranske ceste: uvoznik vzame le ulice, poti in daljše servisne ceste (brez dovozov), v dirki od 55 m pred startom do 200 m za ciljem, dve na isti strani najmanj 40 m narazen; `tests/junctions.test.js` zahteva tudi ~400 m ceste dlje kot 260 m od vseh priključkov.
 5. Obremenitev telefona (Mount Buller po izboljšavi grafike 2. 11. 2026: ~165 klicev, ~370 tisoč oglišč na najzahtevnejšem mestu): sedeži žičnic se rišejo le blizu kamere, vrvi, redka drevesa, svetilke in sledi so v skupnih kosih scenarija (brez svojih klicev risanja); razčlenitev `node tools/obremenitev.mjs <id> --svet`.
-6. Test proge je `tests/lib/gore.js` (ime po tabeli, štirje načini, 2,5–3 km, podatki, ovinki, kraki, cela dirka, dvoboj v prometu, medalje); posebnosti proge dopiši v `tests/<id>.test.js`.
+6. Test proge je `tests/lib/gore.js` (ime po tabeli, štirje načini, 2,5–3 km, podatki, ovinki, kraki, cela dirka, dvoboj v prometu, medalje); posebnosti proge dopiši v `tests/<id>.test.js`. Možnosti: `km: [od, do]` za dolžino zunaj 2,5–3 km (proge z znamenitostjo), `valley: true` za dolinsko cesto brez ostrih ovinkov (preveri, da nobeden ni nad 70° na 80 m).
 
 ## Postopek za vsako progo
 
@@ -158,9 +164,9 @@ Uporabnik je napisal »začni« (1. 11. 2026). Navodilo seji skupine: »Naredi s
 
 | Korak | Proge | Veja | Stanje |
 |---|---|---|---|
-| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026) |
-| A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | čaka na znak VSE SEJE 2 (prej Deli sklop 4 in delitev skupnih datotek prog) |
-| B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | čaka |
-| C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | čaka |
-| C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | čaka |
-| D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | čaka |
+| 1 | Mount Buller (+ gradniki, uvoznik, generator) | `gorske-proge/01-norquay` | na main (#241, 4. 11. 2026); od 5. 11. 2026 testna proga (`test: true`, odločitev uporabnika, #379), gradniki ostanejo |
+| A | 3 Medeu (Nozawa Onsen in Auli odpadeta: ena proga na državo) | `gorske-proge/skupina-A` | preneseno: Medeu je B8 v `docs/nove-proge-1-0.md` (del 2, skupina N5; potrjeno 8. 11. 2026) |
+| B | 6 Milford Sound (Guoliang in Corvo Branco odpadeta) | `gorske-proge/skupina-B` | odpade (8. 11. 2026: Nova Zelandija dobi Cromwell) |
+| C1 | 8 Yungas (če ga ne naredijo Nove proge), 10 Ella (Hana odpade) | `gorske-proge/skupina-C1` | Yungas: ne začni (brez izletne cone, 5. 11. 2026); Ella preneseno: A10 v `docs/nove-proge-1-0.md` (del 2, N5) |
+| C2 | 11 Santo Antão, 12 Dadès, 13 Espinazo del Diablo | `gorske-proge/skupina-C2` | preneseno v `docs/nove-proge-1-0.md` (del 2): Dadès A7 (PR #508), Santo Antão A8 (PR #521), Espinazo del Diablo A11 |
+| D | 14 Punta del Este, 16 Puerto Madero (Green Point odpade) | `gorske-proge/skupina-D` | odpade (Punta del Este in Puerto Madero: ne začni, brez izletne cone, 5. 11. 2026) |

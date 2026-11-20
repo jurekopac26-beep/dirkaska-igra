@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Philippines</title>
+  <!-- Ratio 1:2 (Republic Act 8491, 1998). Blue over red, a white equilateral triangle at the hoist with a golden sun of eight rays
+       (each of three) in its centre and three golden five-pointed stars in its corners. Colours: blue #0038A8, red #CE1126, white #FFFFFF, gold #FCD116. -->
+  <rect width="1200" height="600" fill="#CE1126"/>
+  <rect width="1200" height="300" fill="#0038A8"/>
+  <polygon fill="#FFFFFF" points="0,0 519.6,300 0,600"/>
+  <circle cx="173.2" cy="300.0" r="30" fill="#FCD116"/>
+  <polygon fill="#FCD116" points="208.5,292.8 269.2,300.0 208.5,307.2"/>
+  <polygon fill="#FCD116" points="208.3,291.8 259.9,285.1 209.0,296.0"/>
+  <polygon fill="#FCD116" points="209.0,304.0 259.9,314.9 208.3,308.2"/>
+  <polygon fill="#FCD116" points="203.2,319.9 241.1,367.9 193.1,330.0"/>
+  <polygon fill="#FCD116" points="203.8,319.0 245.1,350.8 201.3,322.5"/>
+  <polygon fill="#FCD116" points="195.7,328.1 224.0,371.9 192.2,330.6"/>
+  <polygon fill="#FCD116" points="180.4,335.3 173.2,396.0 166.1,335.3"/>
+  <polygon fill="#FCD116" points="181.4,335.1 188.1,386.7 177.2,335.8"/>
+  <polygon fill="#FCD116" points="169.3,335.8 158.3,386.7 165.0,335.1"/>
+  <polygon fill="#FCD116" points="153.3,330.0 105.3,367.9 143.2,319.9"/>
+  <polygon fill="#FCD116" points="154.2,330.6 122.4,371.9 150.7,328.1"/>
+  <polygon fill="#FCD116" points="145.1,322.5 101.3,350.8 142.6,319.0"/>
+  <polygon fill="#FCD116" points="137.9,307.2 77.2,300.0 137.9,292.8"/>
+  <polygon fill="#FCD116" points="138.2,308.2 86.5,314.9 137.4,304.0"/>
+  <polygon fill="#FCD116" points="137.4,296.0 86.5,285.1 138.2,291.8"/>
+  <polygon fill="#FCD116" points="143.2,280.1 105.3,232.1 153.3,270.0"/>
+  <polygon fill="#FCD116" points="142.6,281.0 101.3,249.2 145.1,277.5"/>
+  <polygon fill="#FCD116" points="150.7,271.9 122.4,228.1 154.2,269.4"/>
+  <polygon fill="#FCD116" points="166.1,264.7 173.2,204.0 180.4,264.7"/>
+  <polygon fill="#FCD116" points="165.0,264.9 158.3,213.3 169.3,264.2"/>
+  <polygon fill="#FCD116" points="177.2,264.2 188.1,213.3 181.4,264.9"/>
+  <polygon fill="#FCD116" points="193.1,270.0 241.1,232.1 203.2,280.1"/>
+  <polygon fill="#FCD116" points="192.2,269.4 224.0,228.1 195.7,271.9"/>
+  <polygon fill="#FCD116" points="201.3,277.5 245.1,249.2 203.8,281.0"/>
+  <polygon fill="#FCD116" points="42.0,24.0 47.8,42.0 66.7,42.0 51.4,53.1 57.3,71.0 42.0,59.9 26.7,71.0 32.6,53.1 17.3,42.0 36.2,42.0"/>
+  <polygon fill="#FCD116" points="42.0,524.0 47.8,542.0 66.7,542.0 51.4,553.1 57.3,571.0 42.0,559.9 26.7,571.0 32.6,553.1 17.3,542.0 36.2,542.0"/>
+  <polygon fill="#FCD116" points="467.6,274.0 473.5,292.0 492.3,292.0 477.1,303.1 482.9,321.0 467.6,309.9 452.3,321.0 458.2,303.1 442.9,292.0 461.8,292.0"/>
+</svg>

@@ -31,7 +31,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
     zivali: { a: ['fox', 'goose'], t: ['picnic'], city: true },
-    id: 'troisrivieres', name: 'Trois-Rivières, Kanada', theme: 'troisrivieres', laps: 6, halfWidth: 5.75,
+    id: 'troisrivieres', test: true, name: 'Trois-Rivières, Kanada', theme: 'troisrivieres', laps: 6, halfWidth: 5.75,
     desc: 'Ulična proga okoli razstavnega parka v mestu Trois-Rivières v Kanadi, v pravem merilu: 2,45 km in 11 zavojev v nasprotni smeri urinega kazalca. Dolga ciljna ravnina z boksi na notranji strani, zavoji med betonskimi zidovi, ozka betonska vrata pri 3. zavoju, križišča s semaforji in znaki STOP, lasnica in hiše z zunanjimi stopnicami pod javorji. Ulična oprema v križiščih je podirljiva. Podatki: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.',
     en: { name: 'Trois-Rivières, Canada', desc: 'A street circuit round the exhibition grounds of Trois-Rivières in Canada, at full scale: 2.45 km and 11 turns, anticlockwise. A long main straight with the pits on the inside, corners between concrete walls, a narrow concrete gateway at Turn 3, junctions with traffic lights and stop signs, a hairpin and houses with outside staircases under the maples. The street furniture at the junctions can be knocked over. Data: © OpenStreetMap (ODbL), Copernicus DEM, ESA WorldCover.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 0.3, inner: 1.3, side: 1.3, noCurbs: true, noGravel: true, offSurface: 'paving', elevSmooth: 24, realKm: 2.448,

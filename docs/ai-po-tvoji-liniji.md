@@ -1,0 +1,102 @@
+# AI po tvoji liniji
+
+Želja uporabnika (4. 11. 2026): »ali lahko posnames mojo voznjo in izmeris moje povprecne linije ter hitrost in naredis da ai etkmovalci vozijo v povprecju tudi tako«. Nato: »začni z orodjem, posnetke pošljem pozneje«.
+
+## Koraki
+
+1. **Orodje** `tools/voznja.mjs` (narejeno v #300, ki gre na `main` skupaj s korakom 2 v #305): iz uporabnikovih posnetkov dirk (`.rrp`) za vsako progo in vreme izmeri povprečno linijo, hitrost in zaviranje. Test `tests/voznja.test.js`.
+2. **AI v `js/core.js`** vozi po profilu (`Race._voznja`, `aiDrive`), vsak tekmovalec po svoji težavnosti: poskus na eni progi (Tianmen, veja `ai-linija/korak-2`, vklop `index.html?voznja=1`; razdelek »Korak 2« spodaj).
+3. **Slog na vseh pravih progah** (odločitev uporabnika 8. 11. 2026): kjer posnetkov ni, tekmeci vozijo po splošnem pravilu iz posnetkov Tianmna (razdelek »Korak 3« spodaj; v #305).
+4. **Test**: AI vozi blizu uporabnikove linije in njegovega časa kroga (`tests/voznja.test.js`: podatki za igro in dirka na njih, razdelek 5; slog, razdelek 7).
+
+## Posnetki in zasebnost
+
+- Uporabnik po dirki shrani posnetek (Nastavitve → Orodje za napake → Nastavitve orodja → Zadnji posnetki → Odpri → gumb ».rrp« pri dirki; zadnjih 10 dokončanih dirk igra hrani sama; vrstica orodja je samo v slovenski igri; ali Nastavitve orodja → Posnetek dirke → Shrani za zadnjo dirko) in datoteke pošlje v sejo; uporabnik je prosil, da mu seja javi, ko orodje dela (4. 11. 2026: javljeno z obvestilom na telefon). Odpre jih `node tools/voznja.mjs <posnetek.rrp> … [--out <profil.json>|<mapa>] [--korak <m>]`; izhod privzeto v `test-results/voznja/` (`profil.json`, `povzetek.txt`).
+- **Posnetkov in profilov ne shranjuj v repozitorij** (repozitorij je javen; `CLAUDE.md`, Orodje za napake). V repozitorij gresta samo orodje in test; v koraku 2 pridejo v kodo samo izmerjene povprečne vrednosti po progah.
+- Koliko posnetkov: krožne proge najmanj 3 čisti krogi, dobro 5, najbolje 8–10, več kot 10 skoraj nič ne izboljša; odprte ceste: vsaka vožnja je en krog, 3–5 voženj. Uporabniku priporočeno (koordinacija, 4. 11. 2026): na isti progi vedno isti avto z istimi nastavitvami (tisti, s katerim običajno dirka), za vsak razred, v katerem pogosto dirka; krožna proga 2 dirki po 4–5 krogov (pri dirkah s 3 krogi 3 posnetki), odprta cesta 5 posnetkov. Suho in mokro posebej (zima posebej), vsako svoj profil. Najbolj čisti so krogi brez tekmecev ob avtu (kronometer, kvalifikacije, dirka z malo tekmeci); deli ob drugih avtih se izpustijo.
+- Posnetki od te različice igre naprej imajo v glavi tudi avto igralca (`pf`: nadgradnje, nastavitev, deli garaže, avto prvenstva, pomoč pri vožnji `as`), gume (`ty`) in spremembo vremena (`wxs`; `js/game.js` `rrpOf`). Starejši posnetki: tempo za serijski avto (opomba v povzetku), pomoč 2 (privzeta v igri), vreme kot ob koncu dirke.
+
+## Pravila meritve (`RULES` v orodju)
+
+- **Čist krog**: brez vrtenja (nos več kot 75° od smeri ceste pri več kot 5 m/s, 0,15 s), vožnje nazaj (več kot 1 m/s, 0,3 s), zleta s ceste (sredina avta 1 m čez rob asfalta in robnika, 0,25 s), trka (več kot 50 m/s² izgube hitrosti hkrati po tleh in avtove; v steno 100–150, zavore do ~16, avto, ki drsi postrani, ~30), vrnitve na cesto in boksov. Krog s katerim koli od teh je izpuščen; povzetek pove razlog in kje (metri od štarta).
+- **Izpuščeni deli kroga**: ob drugem avtu (7 m vzdolž, 5 m počez) ali tik za njim (0–22 m spredaj, 3 m počez) in 1 s prej in pozneje (prehitevanje, obramba, zavetrje); varnostni avto na progi; štart prvega kroga dirke do prvega ovinka (krožne proge, ne kvalifikacije).
+- **Vreme**: krog med spremembo vremena je izpuščen (voda na cesti sledi dežju v 40 s, suha je 240 s na enoto dežja manj; `Race._weather`). Šola vožnje, policijski pregon in vožnja s prometom niso meritve.
+- **Povprečje** po točkah na vsakih 5 m od štartne črte; vrednosti, ki so od mediane več kot 3,5 raztrosa (MAD, najmanj 0,3 m linije, 1 m/s hitrosti), izpadejo (napaka na enem mestu enega kroga ne vleče povprečja).
+- **Ovinek**: najmanjša povprečna hitrost v ±60 m, vsaj 3 m/s pod najvišjo v 500 m pred njim; zaviranje vsakega kroga v ovinek: zadnje zaviranje pred vrhom, nazaj do začetka (premor do 0,4 s je isto zaviranje).
+- **Avtopilot za primerjavo**: orodje v jedru odpelje dirko z avtom kroga (isti avto, nadgradnje, nastavitev, deli, pomoč, vreme, gume, zima; sam na progi, `Core.aiControl`, naključna števila kot v testih): dva kroga, za primerjavo leteči drugi (odprta cesta: vožnja do cilja). Zaviranje vsakega kroga se primerja z njegovim v isti ovinek: razdalja, kjer avtopilot začne 20 m ali več pred vrhom, pojemek, kjer oba zavirata vsaj 15 m (`qMin`; kratek dotik zavore na nekaj metrih je šum). Čas kroga proti njegovemu (prvi krog dirke s štartom proti njegovemu prvemu).
+
+## Profil (`profil.json`)
+
+- Glava: `orodje`, `verzija`, `narejeno`, `pravila`, `datoteke`; `proge`: en profil za vsako progo, vreme (`suho`, `mokro`, `·zima`) in razred avtov.
+- Profil: `proga`, `ime`, `odprta`, `dolzina`, `vreme`, `razred` (avti tekmecev, ki jih dirka da temu avtu), `v_razredu` (avto je eden od njih), `korak`, `avto` (avto večine krogov); po točkah (`s` metri od štarta): `n` krogov, `d` (odmik od sredine ceste, m, + desno), `d_sd`, `v` (m/s, avto večine krogov), `v_sd`, `vq` (delež tempa avtopilota, vsi krogi), `vq_sd`, `a` (pospešek, m/s²), `zav` (delež krogov, ki tu zavirajo), `rl` (idealna linija igre), `vref` (tempo avtopilota).
+- `ovinki`: `s`, `ime` (ime ovinka iz proge), `krogov`, `zavira` (krogov z zaviranjem), `v_vrh`, `vq_vrh`, `zav_s` (kje začne zavirati), `zav_pred` (metrov pred vrhom), `v_zav` (hitrost ob začetku), `pojemek` (m/s²), `zav_pred_q` in `pojemek_q` (delež razdalje in pojemka avtopilota v istem avtu in vremenu, povprečje krogov), `ap_zav_pred`, `ap_v_zav`, `ap_pojemek`, `ap_v_vrh` (avtopilot v avtu večine krogov); `krogi.uporabljeni` (`datoteka`, `krog`, `cas`, `avto`, `delez`, `izpusceno_m`) in `krogi.izpusceni` (`razlog`, `s`, `t`); `avti` (časi krogov po avtih, `avtopilot`: njegov leteči krog v tem avtu, `cas_q`: mediana deleža njegovega časa); `natancnost` (`krogov`, `ocena`: premalo / najmanj / dobro / najbolje, `d_se`, `v_se`, `d_sd`, `v_sd`, `pokritost`); `opombe`.
+
+## Odločitev: prenosljiva hitrost (4. 11. 2026)
+
+- Hitrost je shranjena tudi kot **delež tempa avtopilota** (`vq`): tempo je profil hitrosti, ki ga dirka da temu avtu v tem vremenu (`Race._prof`: meja ovinkov na idealni liniji, zaviranje pred njimi; z istimi nadgradnjami, nastavitvijo, deli, gumami in zimo), krat dodatek nadgradenj kot v `aiDrive` (`(upgGrip (1 + aeroK v²))^¼`). Orodje ga zgradi z dirko v jedru z avtom iz posnetka. V koraku 2 tekmovalec vozi `vq` krat svoj tempo (svoj avto, svoje vreme), zato profil velja za vsak avto.
+- Zaviranje kot delež **dejanskega zaviranja avtopilota** v istem avtu in vremenu (orodje ga odpelje samo, pravilo »Avtopilot za primerjavo«): `zav_pred_q` (kje pred vrhom začne) in `pojemek_q` (kako močno); poleg so `zav_pred` in `pojemek` v metrih in m/s². Pojemek iz profila hitrosti (`Race._prof`) ni primerjava, ker avtopilot ne zavira točno po njem (na Bathurstu 0,5–0,9 profila). V koraku 2 tekmovalec začne zavirati `zav_pred_q` krat tam, kjer bi sam, in zavira `pojemek_q` krat močneje. Čas kroga: `cas_q`.
+- **Profil po razredu** (4. 11. 2026, po priporočilu koordinacije): tekmovalci vozijo avte iz polja igralčevega avta (`aiModel`, `pm.field`; formula in prototip vsak svoj razred; brez polja štirje cestni avti), zato je profil po progi, vremenu in razredu. V razredu so avti podobni in hitrost se prenese kot `vq`; avto, ki ni med svojimi tekmeci (tovornjak ali reli avto med cestnimi), ima v razredu svoj profil (`v_razredu: false`: njegova hitrost ne velja zanje).
+- `a` in `zav` povesta, kje je uporabnik na polnem plinu: na ravninah `vq` ni omejitev (tam odloča motor), tekmovalec tam vozi s polnim plinom.
+- Linija je odmik od sredine ceste (`d`); `rl` je zraven, da korak 2 lahko uporabi tudi odmik od idealne linije (`d − rl`).
+- Ni zajeto: zmes in obraba gum (`aiDrive`: `c.wet / profW`), spretnost tekmecev (avtopilot igralca je nima).
+
+## Korak 2: poskus na eni progi (4. 11. 2026)
+
+- Uporabnik: »ali lahko danes sprobava samo na eni progi nastimat« (Tianmen, 5 posnetkov) in »v kategoriji lazje vozijo bolj podobno kot jaz v pocasnih voznjah in super teska tako kot jaz v hitrih voznjah. ampak se vedno pa nekje vsi vozijo po liniji mojega povprecja in bremzajo tudi tam kot jaz, prav tako kdaj zavijajo in kdaj dajo gas, tudi ai naj gre kdaj cez travo in to naj ge na tistih delih kjer sem sel jaz«.
+- **Podatki**: `js/data/voznja.js` (`VOZNJA_PROFILI`; samo povprečja po točkah na 5 m od štarta: `dd`, `vq`, `pl`, `ql`, `qh`, `tr`, `dt`, ter `k0`, `ks`). Izvozi jih `node tools/voznja.mjs <posnetki> --js js/data/voznja.js [--k0 0.8–1.1] [--ks 0.5–3]` (`gameData`). Zdaj je v datoteki en profil: Tianmen, suho, avto Perun, 5 voženj.
+- **Vklop**: `index.html?voznja=1` (ostane vklopljen v brskalniku, `rr_voznja`; `?voznja=0` ga izklopi). Velja samo v dirkah s tekmeci, ne v kronometru, pregonu in dvoboju. Brez vklopa je dirka kot doslej (`Race._voznja` ne naredi nič, zlate reference so enake); z vklopom tekmeci na pravih progah brez profila vozijo po slogu (korak 3).
+- **Linija** (enaka za vse težavnosti): idealna linija in igralčev odmik od linije avtopilota v istem avtu (`dd`, `c.uRl`). Rezanje ovinkov z volanom je v obeh, zato ni šteto dvakrat. Prehitevanje in obramba ostaneta.
+- **Hitrost** (`c.uT`) je igralčev delež tempa po tleh (`vq`) krat lastni profil tekmeca (njegov avto, vreme in zavore).
+  - Orodje vzdolžno hitrost posnetka popravi z razmerjem `kg` (0,9–1,3): to je hitrost igralca po tleh proti hitrosti avtopilota po tleh. Popravek je potreben, ker avto, ki drsi, vzdolžno kaže manj.
+  - Cilj je postavljen naprej po cesti za toliko, kolikor `aiDrive` bere naprej (`v·0,22 + 3 m`), zato ima tekmec hitrost tam, kjer jo je imel igralec.
+  - Kjer je igralec na plinu (`pl`), je cilj `VZ_PL` (2,5 m/s) nad njegovo hitrostjo, ker tam odloča motor. Drugje je cilj `VZ_M` (0,5 m/s) nad njo, ker se `aiDrive` drži malo pod ciljem.
+  - Zaviranje: prehod nazaj z najmočnejšim pojemkom profila avta. Tekmec zato zavira pred mestom, kjer je igralec upočasnil; `zav_pred_q` in `pojemek_q` niso potrebni.
+  - Meja na liniji je `VZ_CAP` (1,5 profila), ker igralec ovinek zna peljati hitreje od profila. Zunaj linije (pri prehitevanju) velja meja njegove spretnosti.
+- **Težavnost** se določi po spretnosti avta (`lamOf`):
+  - lahka vozi kot igralčevi počasnejši krogi (`ql`);
+  - srednja vozi med njimi in povprečjem;
+  - težka in super težka (ta se dirka kot težka) vozita od povprečja proti hitrejšim krogom (`qh`).
+  - `ql` in `qh` sta tempo počasnejše in hitrejše polovice krogov proti povprečju, glajen na ±5 m. Pri ±50 m je težkim tekmecem zanašalo zadek.
+  - Napaka počasnejšega kroga vzame največ četrtino tempa. Nad povprečjem gre tekmec samo do meje svojega avta (`aiSkCap`).
+- **Umeritev**: `k0` je tempo pri srednji vrednosti (lam 0), `ks` raztros proti počasnejšim krogom. Umerjeno s tekmecem samim na progi, brez gumijaste vrvi (`DIFF`): lam −1 vozi kot igralčevi počasnejši krogi, lam 0 kot njihovo povprečje. Za Tianmen `k0` 0,95 in `ks` 1,4.
+- **Čez rob** (`tr`, `dt`): samo tam, kjer je čez rob šlo vsaj 40 % krogov (`trMin`; na Tianmnu 2 od 5), in tam toliko kot igralec.
+- **Odprta cesta**: štart z mesta do prvega ovinka orodje izpusti, kot pri prvem krogu krožne proge. Igralčevo počasno speljevanje bi sicer tekmece ustavilo na štartni črti; tam vozijo svoj tempo.
+- **Rezultat na Tianmnu** (igralec povprečno 3:15,7; počasnejše vožnje okoli 3:21,6, hitrejše okoli 3:10,5):
+  - Tekmec sam na progi: lahka ≈ 3:20–3:22, srednja ≈ 3:17–3:20, težka 3:13–3:16.
+  - Polje 6 tekmecev z avtopilotom igralca zadaj: vsi so prišli do cilja, nobenega ni bilo treba vrniti na cesto.
+  - Povprečja v polju: lahka 3:31,7 (brez profila 3:52,9), srednja 3:26,2 (3:38,5), težka 3:20,4 (3:26,2). Polje je počasnejše od tekmeca samega, ker ga gumijasta vrv drži ob počasnem avtopilotu (3:24,6) in ker je na cesti promet.
+- **Omejitev**: težka ne doseže igralčevih najhitrejših voženj. Igralec skozi ovinke drsi hitreje, kot jih AI zna peljati po povprečni liniji.
+- **Proge brez uporabnikovih posnetkov**: vprašanje `ai-linija-brez-posnetkov` na strani Odločitve. Možnosti: 1. kot zdaj; 2. po splošnem pravilu iz uporabnikove vožnje (kako zgodaj zavira, koliko reže ovinke). **Odgovor uporabnika (5. 11. 2026, »Drugo«):** »Za ostale proge ti se poslem posnetke«. **Odločitev uporabnika (8. 11. 2026 ~23.00, možnost 2):** »naredi da vse proge ki so zbrane (1 proga na 1 drzavo) vozijo po mojih ai sledeh zaenkrat dokler nimas videoposnetkov mojih vozenj predvidevaj kako bi vozili tukaj iz mojih posnetkov z druge proge kjer moje posnetke ze imas«. Do posnetkov drugih prog tekmeci na vseh pravih progah vozijo po splošnem pravilu iz posnetkov Tianmna (razdelek »Korak 3«); proga s posnetki dobi svoj izmerjeni profil.
+- **Stikalo do objave**: **odgovor uporabnika (5. 11. 2026, `ai-linija-privzeto`, »Drugo«):** »Zaenkrat naj imajo vse proge stikalo, kjer je to ze mozno. Kasneje ga bomo izbrisali ko bomo dali igro na google play«. Stikalo `?voznja=1` ostane in velja na vseh progah s profilom (`voznjaOf` vzame vse profile proge, `Race._voznja` tistega za vreme na cesti) in na vseh pravih progah s slogom (korak 3). Izbriše se tik pred objavo na Google Play, skupaj s testnimi progami in sklopom 8 orodja za napake (`docs/orodje-za-napake.md`). Ali bodo tedaj tekmeci po profilu vklopljeni za vse ali ne, uporabnik še ni povedal: seja, ki stikalo briše, ga vpraša.
+- **Naprej**: proge s posnetki dobijo svoj izmerjeni profil (namesto sloga), slog se ob novih suhih profilih izpelje znova (`--slog`).
+
+## Korak 3: slog na vseh pravih progah (8. 11. 2026)
+
+- **Odločitev uporabnika** (8. 11. 2026 ~23.00, `ai-linija-brez-posnetkov`, možnost 2; citat v razdelku »Korak 2«, »Proge brez uporabnikovih posnetkov«): dokler posnetkov proge ni, tekmeci vozijo, kot bi po posnetkih Tianmna predvidoma vozil uporabnik.
+- **Kje velja**: z vklopom `?voznja=1` na vseh pravih progah (ne `test: true`, ne `pending: true`; tudi prihodnje nove proge), samo na suhem in ne pozimi. Pravilo je v `Race._voznja` (`js/core.js`): `voznjaOf` v `js/game.js` slog vedno doda, `Race._voznja` ga ne uporabi na testni progi, na progi na odločanju (Bathurst in Great Alpine Road do izbire) in v dežju. Izmerjeni profil proge ima prednost: na Tianmnu avti razreda profila (Perun) vozijo po profilu, drugi po slogu.
+- **Podatki**: `VOZNJA_SLOG` v `js/data/voznja.js` (profil Tianmna ostane, kot je). Izpelje ga `node tools/voznja.mjs --slog js/data/voznja.js [--previdno 0.3]` iz suhih profilov v datoteki (`slogOf`; `--js` ga zapiše skupaj s profili). Ovinki profila so razdeljeni v razrede po polmeru idealne linije v temenu (meji 12 in 30 m, razred z vsaj 3 ovinki); zdaj sta razreda r 7,3 m (23 ovinkov) in r 17,1 m (7 ovinkov). Vsak razred ima dve tabeli:
+  - po fazi zaviranja `fe` (−1 začetek zaviranja … 0 teme): delež tempa `vq`, plin `pl` ter tempo počasnejših in hitrejših krogov `ql`, `qh`;
+  - po razdalji od temena `m` (−80 … 80 m): odmik od linije avtopilota `dd` glede na smer ovinka (igralec gre v teme pozneje in širše od idealne linije).
+- **Ob dirki** (`Core.voznjaFaze`, `Core.voznjaIzSloga`): igra na profilu hitrosti tekmeca poišče ovinke. Teme je najnižja hitrost na ±60 m, vsaj 3 m/s pod najvišjo na 500 m pred njim; polmer je najtesnejša idealna linija na ±12 m. Iz tabel sestavi profil na mreži 5 m z istimi polji kot izmerjeni (`dd`, `vq`, `pl`, `ql`, `qh` in utež `wv`), iz katerega `Race._voznja` naredi `uRl`, `uT` in `uLim` kot pri izmerjenem profilu.
+  - **Hitrost** igralca velja pri zaviranju in v temenu z utežjo `wv` = (1 − `pl`) · w(R); w je 1 pod 30 m in 0 nad 70 m. Na izhodu (do `fe` 0,3 za temenom) utež ugasne. Tam, na ravninah in v hitrih ovinkih tekmec vozi svoj tempo (previdno nazaj na navadni AI).
+  - Na **makadamu in kocki** hitrosti iz sloga ni (`wv` 0): Tianmen je asfalt, na Saniju so tekmeci s polno hitrostjo 42-krat zleteli s ceste.
+  - **Linija**: `dd` razreda, pomnožen z w(R) in s širino ceste (`(w − 1,7) / 2,8`, največ 1). Ugasne med 60 in 80 m od temena in je glajena na ±10 m.
+  - **Odprta cesta**: pred štartno črto (na mreži) in za zadnjo točko profila tekmec vozi nevtralno (svoj tempo, brez odmika).
+  - **Obremenitev**: profil se naredi ob začetku dirke in ko se mokra cesta posuši: ~8 ms za progo in ~0,8 ms za tekmeca na računalniku (Livorno in Nürburgring z 99 tekmeci ~85 ms; prej 170–190 ms, rezultat enak bit za bitom).
+- **Previdno 0,3**: tekmec vzame samo 0,3 igralčevega presežka tempa nad 1. Umerjeno na Tianmnu (polje Perun, srednja težavnost, 3 semena): slog 205,4 s, izmerjeni profil 205,6 s. S polnim presežkom je bil čas 200,5 s, a tekmeci so na drugih progah zletali (Crystal Palace, Nürburgring, Mount Buller).
+- **Brez roba**: po slogu tekmeci ne gredo čez rob ceste. Rob iz Tianmna je drugje povzročal izlete in vrtenja: na Rio do Rastro 27 izletov in 38 vrtenj (brez roba 0 in 0), na Tianmnu po slogu 51 in 11 (brez roba 1 in 0). Polpriklopniki (`c.tl`) ne gredo čez rob nikoli, tudi po profilu ne.
+- **Posnetki z 8. 11. 2026** (reli, električni avto) so v drugih razredih avtov kot tekmeci, zato profil Peruna ostane. Obliko sloga potrjujejo: igralec zavira pozno in okoli 2,3-krat močneje od avtopilota, v temenu je 3 % (Perun) oz. 13 % (reli) hitrejši od njega, krog 3:15,7 proti 3:24,6 (`cas_q` 0,949; reli 0,889).
+- **Rezultat** (vse prave proge s tekmeci pred #379; 5 tekmecev, 2 semeni; čas kroga po slogu proti lastnemu tempu tekmecev): lahka povprečno 0,954 (0,913–1,003), srednja 0,972 (0,935–1,002), težka 0,981 (0,936–1,015).
+  - Brez Livorna je po slogu 12 izletov (lastni AI 9) in 2 vrnitvi na cesto (1).
+  - Livorno (ozka cesta, gosto polje): izletov je 73 proti 37, vrnitev 7 proti 6. Izleti so skoraj vsi ob drugem avtu (srednja: 43 od 46, lastni AI 9 od 9), noben hitrejši od profila avta.
+  - Tovornjaki (Spa, Rio do Rastro, Bâlea, Medvode) 0,95–0,98 in formula (Spa, Rio do Rastro, Bâlea) 0,94–0,98, brez vrnitev.
+  - Polpriklopniki (`c.tl`) vozijo svoj tempo in svojo linijo: na Spa jih je slog v dveh dirkah 5-krat vrnil na cesto (lastni AI enkrat), na Rio do Rastro 35 izletov proti 9. Izmerjeni profil jih zadene samo, če so v razredu profila.
+- **Test**: `tests/voznja.test.js`, razdelek 7 (opis v `tests/README.md`).
+
+## Stanje
+
+- 4. 11. 2026: korak 1 narejen (orodje z avtopilotom za primerjavo, test `tests/voznja.test.js`, glava posnetka v `js/game.js`, preverjanje v `tests/browser/napake-posnetek.test.mjs`); čaka posnetke uporabnika.
+- 4. 11. 2026: korak 2 kot poskus na Tianmnu (5 posnetkov; veja `ai-linija/korak-2`, osnutek #305 z oznako »predogled«, predogled `beta/305/?voznja=1`). Uporabnik je poskus preizkusil: »sem stestiral, mnogo bolje bravo!« #300 je zaprt, njegova vsebina gre na `main` v #305 (en krog testov). Vprašanje `ai-linija-privzeto` na strani Odločitve: ali tekmeci po njegovi vožnji veljajo za vse brez stikala.
+- 5. 11. 2026: #305 v vrsti za `main` (14. mesto, #316). Odgovora na `ai-linija-brez-posnetkov` in `ai-linija-privzeto` sta zapisana v razdelku Korak 2: posnetki drugih prog pridejo, stikalo ostane do objave na Google Play. Odgovor na `dez-sneg-oprijem` (izbira 3, dež in sneg bolj drsita) je nova tema: `docs/dez-sneg.md` (na `main` v #329).
+- 8. 11. 2026: korak 3 v #305 (odločitev uporabnika na `ai-linija-brez-posnetkov`, možnost 2): slog na vseh pravih progah (`VOZNJA_SLOG`, `voznjaIzSloga`), test v razdelku 7; #305 je prvi v vrsti za `main`.
+- 9. 11. 2026: #305 na `main` (ob 5.35, 4a24ef5, squash). Ostane: profili drugih prog, ko pridejo posnetki uporabnika (`tools/voznja.mjs --js`), in stikalo `?voznja=1` do objave na Google Play.
