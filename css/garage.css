@@ -41,6 +41,7 @@ svg { display: block; }
 /* ---- the mockup's bar (the profile to try, the language) ---- */
 .g-demo { position: relative; z-index: 4; display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #0f1521; border-bottom: 1px solid #1d2636; flex: 0 0 auto; }
 .g-demo-l { font: italic 800 13px/1 var(--f); letter-spacing: .16em; color: #5d6b84; }
+.g-ver { font: 600 10px/1 monospace; color: #5d6b84; opacity: .8; flex: 0 0 auto; }   /* (the published stamp: which version the preview runs) */
 .g-modes { display: flex; padding: 3px; border-radius: 999px; background: #070b12; border: 1px solid #222c3c; flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .g-modes::-webkit-scrollbar { display: none; }
 .g-modes button { padding: 6px 10px; border-radius: 999px; font: 700 12.5px/1.1 var(--f); color: #b7c3d9; white-space: nowrap; }
@@ -55,6 +56,8 @@ svg { display: block; }
 
 /* ---- the workshop: under everything, the whole screen ---- */
 .g-stage { position: absolute; inset: 0; overflow: hidden; background: #0d1420; touch-action: none; }
+.g-tag { position: absolute; transform: translate(-50%, calc(-100% - 6px)); padding: 3px 8px; border-radius: 6px; background: rgba(10, 18, 30, .88); border: 1px solid #3fd6d0; color: #fff; font: 700 11px/1.2 system-ui, sans-serif; letter-spacing: .04em; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 3; }
+.g-tag.on { opacity: 1; }
 .g-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .g-vig { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(13, 22, 38, .55), rgba(13, 22, 38, 0) 16%, rgba(13, 22, 38, 0) 72%, rgba(13, 22, 38, .75)); }
 .g-chip { position: absolute; left: 50%; top: calc(150px + var(--st)); transform: translate(-50%, -50%) scale(.9); opacity: 0; pointer-events: none; padding: 10px 18px; border-radius: 14px; text-align: center;
@@ -66,6 +69,24 @@ svg { display: block; }
 .g-chip small i svg { display: block; width: 100%; height: 100%; }
 .g-chip b { font: italic 900 26px/1 var(--f); color: #fff; }
 .g-chip b em { font-style: italic; color: var(--green); }
+/* a show's bar (the plates' an_common): its stages as capsules (done ones a green tick, the one now cyan with its name), the step now as a sentence, its line, PRESKOČI */
+.g-steps { position: absolute; left: 50%; bottom: calc(176px + var(--sb)); transform: translate(-50%, 8px); opacity: 0; pointer-events: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 10px;
+  width: min(440px, calc(100% - 32px)); transition: opacity .2s, transform .2s; z-index: 4; }
+.g-steps.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.g-steps .d { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.g-steps .d i { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; font: 800 11px/1 var(--f); font-style: normal; color: #fff;
+  background: rgba(10, 16, 26, .88); border: 1px solid var(--line); box-sizing: border-box; }
+.g-steps .d i.ok { background: var(--green); border-color: transparent; padding: 0; width: 22px; color: #0d1626; }
+.g-steps .d i.on { background: var(--cyan); color: #0d1626; border-color: transparent; padding: 0 10px; }
+.g-steps .bx { min-width: 0; padding: 9px 12px 10px; border-radius: 12px; background: rgba(13, 22, 38, .92); border: 1px solid var(--edge2); }
+.g-steps .l { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font: 700 13px/1.25 var(--f); color: #fff; }
+.g-steps .l small { font: 700 12px/1 var(--f); color: var(--muted); margin-left: 6px; }
+.g-steps .pr { display: block; height: 7px; margin-top: 8px; border-radius: 4px; background: var(--edge); overflow: hidden; }
+.g-steps .pr i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--cyan); transition: width .25s linear; }
+.g-steps .sk { height: 36px; padding: 0 14px; border-radius: 11px; font: italic 900 13px/1 var(--f); color: #0d1626; background: #fff; border: 0; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+.g-chip small.c { margin: 7px 0 0; color: var(--gold); letter-spacing: .06em; font-size: 13px; }   /* (what it cost) */
+.g-pp { position: absolute; left: 50%; bottom: calc(176px + var(--sb)); transform: translate(-50%, 8px); opacity: 0; pointer-events: none; height: 40px; padding: 0 20px; border-radius: 12px; font: italic 900 15px/1 var(--f); letter-spacing: .08em; color: #fff; background: rgba(10, 16, 26, .82); border: 1.5px solid var(--cyan); transition: opacity .2s, transform .2s; z-index: 4; }
+.g-pp.on { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
 .g-load { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; background: #0d1420; transition: opacity .6s; }
 .g-load p { margin: 0; font: italic 700 13px/1 var(--f); letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
 .g-load.done { opacity: 0; pointer-events: none; }
@@ -174,9 +195,19 @@ svg { display: block; }
 .g-tl.sel { background: #e9f6ff; border-color: #36aef2; box-shadow: 0 0 0 3px rgba(54, 174, 242, .25), 0 3px 8px rgba(20, 32, 51, .14); }
 .g-tl.fit::after { content: '✓'; position: absolute; right: 6px; top: 4px; font: 900 13px/1 var(--f); color: #23894a; }
 .g-tl.lock { opacity: .62; }
-/* the paint's eight colours (one price): four a row, the colour alone */
-.g-mg.g-mc { grid-template-columns: repeat(4, 1fr); }
-.g-mc .g-tl { justify-content: center; min-height: 58px; padding: 6px 4px; }
+/* the paint (plate an_barvanje 2/6): two pill tabs and the chamber's time in the head, four cards (the car in the colour, its name, a few words, the price) */
+.g-ch { align-items: center; flex-wrap: wrap; gap: 6px; }
+.g-ch h3 { margin-right: 2px; }
+.g-cp { padding: 3px 10px; border-radius: 999px; background: #e3e8f0; color: #46546c; font: 800 11.5px/1.2 var(--f); }
+.g-cp.sel { background: #36aef2; color: #fff; }
+.g-ch .g-ct { margin-left: auto; padding: 3px 8px; border-radius: 999px; background: #eef1f6; font: 800 11px/1.2 var(--f); color: #142033; }
+.g-mc .g-tl { gap: 6px; padding: 6px 6px; }
+.g-mc .g-tl .pi { width: 64px; height: 34px; }
+.g-mc .g-tl .pi img { width: 64px; height: auto; display: block; }
+.g-mc .g-tl .pi svg { width: 34px; height: 34px; }
+.g-mc .g-tl b { font-size: 13px; }
+.g-mc .g-tl small { font-size: 10.5px; }
+.g-mc .g-tl i { font-size: 11.5px; color: #23894a; }
 .g-tl .pi { flex: 0 0 auto; width: 44px; height: 44px; display: grid; place-items: center; filter: drop-shadow(0 2px 2px rgba(20, 32, 51, .3)); }
 .g-tl .pi svg { width: 44px; height: 44px; }
 .g-tl > div { min-width: 0; }
@@ -227,6 +258,7 @@ svg { display: block; }
   .g-track { flex: 0 1 300px; margin-right: auto; }
   .g-cr { flex: 0 0 180px; min-width: 0; max-width: none; }
   .g-snd { top: calc(92px + var(--st)); }
+  .g-steps, .g-pp { bottom: calc(74px + var(--sb)); }
   .g-low { padding: 0 12px 8px; display: grid; grid-template-columns: 1fr minmax(0, min(340px, 46vw)) 1fr; align-items: end; gap: 0 12px; }
   .g-cars2 { display: contents; }
   .g-cb { height: 50px; grid-row: 1; }
