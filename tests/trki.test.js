@@ -998,6 +998,18 @@ for (const tid of ['spa', 'bathurst']) {
       return hz;
     } finally { Math.random = orig; } });
     ok('Realistična, 13 cars 45 s up Tianmen\'s hairpins with none of them standing: no rival sees a hazard (a car driving a hairpin is not one)', n === 0, `hazard ticks ${n}`); }
+  // the same race to the bit: a Core with the one call of aiHazard cut out (tools/trki/pocez.js enakost does this for whole races, many tracks)
+  { const src = require('./lib/core.js').coreSource(), CALL = '? aiHazard(c, race, v, Lw) : null;', n1 = src.split(CALL).length - 1;
+    const B = n1 === 1 ? new Function('module', 'exports', 'require', src.replace(CALL, '? null : null;') + '\n;return Core;')({ exports: {} }, {}, require) : null;
+    const rows = []; let okAll = !!B;
+    if (B) for (const tid of ['jezero', 'cusco']) { const orig = Math.random; C.setTest(REAL); B.setTest(REAL); try {
+      const mk = (K) => { Math.random = seeded(71); const r = new K.Race(new K.Track(K.TRACKS.find(x => x.id === tid)), { numAI: 12, playerGrid: 7, laps: 2, playerModel: K.MODELS[4], assist: 2, seed: 3, difficulty: 1, damage: 2, phys: 'cs' }); r.start(); return r; };
+      const ra = mk(B), rb = mk(C); let part = null, hz = null;
+      for (let k = 1; k <= 20 / DT && part == null; k++) { for (const [K, r] of [[B, ra], [C, rb]]) { Math.random = seeded(1000 + k); K.aiControl(r.player, r, DT); r.step(DT); }
+        if (hz == null && rb.cars.some(c => c.aiHz)) hz = k; if (raceState(ra) !== raceState(rb)) part = k; }
+      if (part != null || hz != null) okAll = false; rows.push(`${tid}: parted ${part == null ? 'never' : f(part * DT, 2) + ' s'}, a hazard ${hz == null ? 'never' : f(hz * DT, 2) + ' s'}`);
+    } finally { Math.random = orig; C.setTest(null); B.setTest(null); } }
+    ok('Realistična without a car across the road: 13 cars 20 s on Jezero and Cusco, the whole state of every car after every step the same to the bit as a Core without aiHazard', okAll, B ? rows.join('; ') : `the call found ${n1}×`); }
 }
 
 let bad = 0;
