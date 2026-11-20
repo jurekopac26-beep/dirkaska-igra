@@ -22,6 +22,16 @@
               (the road's own picture) only a little glossy, a rough surface holds no film of water
      caracoles a frontal system on the cordillera (rain, wind and snow, short and intense): cold, blue-grey cloud low in the
               valley, the Laguna del Inca dark under it
+     isuna    the monsoon in the Paro Chhu's valley (late June to September: cloud sitting on the mountainsides, fog): pale, close
+     ghoufi   a short shower over the semi-arid Aurès (little rain, hot dry summers): a warm grey haze that stays far, the sun dimmed
+              rather than gone; the dusty road only a little glossy
+     santoantao the north-east trade wind's cloud on the Delgadim ridge (the island's rain falls mostly above 600 m, fog nets work
+              there): the ridge in its cloud, pale and close; the basalt setts glossy between their joints
+     ujarras  an afternoon downpour of the Orosi valley's long rainy season (May to November, heavy showers, mist): the dark base
+              of the cloud over the green valley, less light from the whole sky
+     killar   rain in the Pangi valley, a cold, dry zone the monsoon hardly reaches: an even, cool grey cloud in the Chenab's gorge;
+              the gravel only a little glossy
+     In winter's snow (render.js's snowy(): the season winter, a world without noSnow) none of this: the snow is no rain.
      (Medvode, pending, and Suzuka, a test track, are frozen: no entry.)
    Hooks (no change to render.js or the worlds' files): World.build (the patch, once per world), World.update (the race: its rain and
    water) and the scene's onBeforeRender / onAfterRender: the light, the haze and the sea set for this one picture only and put back
@@ -45,6 +55,11 @@
     balea:   { fog: 0xaab4ba, fogK: 0.55, near: 0.62, far: 0.64, sun: 0.3, hemi: 1.12, sheen: 0.75, sea: [0x5a676d, 0.6] },
     katu:    { fog: 0x8c959a, fogK: 0.45, near: 0.9, far: 0.85, sun: 0.34, hemi: 1.1, sheen: 0.35 },
     caracoles: { fog: 0x98a2a9, fogK: 0.55, near: 0.72, far: 0.7, sun: 0.3, hemi: 1.1, sheen: 0.75, sea: [0x506461, 0.6] },
+    isuna:   { fog: 0xa9b3b5, fogK: 0.55, near: 0.66, far: 0.66, sun: 0.3, hemi: 1.12, sheen: 0.75 },
+    ghoufi:  { fog: 0xa59c90, fogK: 0.42, near: 0.92, far: 0.88, sun: 0.36, hemi: 1.0, sheen: 0.6 },
+    santoantao: { fog: 0xb4bdbf, fogK: 0.58, near: 0.58, far: 0.6, sun: 0.3, hemi: 1.15, sheen: 0.6 },
+    ujarras: { fog: 0x7f8b86, fogK: 0.52, near: 0.78, far: 0.74, sun: 0.28, hemi: 0.95, sheen: 0.85 },
+    killar:  { fog: 0x969c9f, fogK: 0.45, near: 0.82, far: 0.8, sun: 0.34, hemi: 1.05, sheen: 0.35 },
   };
 
   // the sheen: shared uniforms (the patched programs are the same on every rebuild)
@@ -82,7 +97,7 @@
     const o = build.apply(this, arguments), L = LOOK[track && track.def && track.def.id];
     S = null; U.dzW.value = 0; lightsOf = null;   // (the lights looked up again: a new world may bring its own)
     if (!L || !o || !o.root || !o.dyn) return o;
-    const st = S = { o, L, scene, sea: [], r: 0, w: 0 };
+    const st = S = { o, L, scene, sea: [], r: 0, w: 0, snow: !!(opts && opts.season === 'winter' && !o.noSnow) };   // (snow: render.js's snowy())
     const maps = [tex.asphalt, tex.paving, tex.curb, tex.makadam].filter(Boolean);   // (the road as render.js's applyRoad finds it: its wet materials)
     o.root.traverse(n => { for (const m of n.material ? (Array.isArray(n.material) ? n.material : [n.material]) : []) {
       if (m.color && (maps.includes(m.map) || m.userData.wear)) patch(m);   // (the see-through wear too: the same sheen over it and under it, so it blends as on a dry road)
@@ -100,7 +115,7 @@
   World.update = function (out, t, car, cam, rp, race) {
     update.apply(this, arguments);
     if (!S || out !== S.o) return;
-    const r = race ? Math.max(0, Math.min(1, +race.rain || 0)) : 0, w = race ? Math.max(0, Math.min(1, race.water != null ? +race.water : r)) : 0;
+    const r = race && !S.snow ? Math.max(0, Math.min(1, +race.rain || 0)) : 0, w = race && !S.snow ? Math.max(0, Math.min(1, race.water != null ? +race.water : r)) : 0;   // (in the snow: no rain's look)
     S.r = r; S.w = w; U.dzW.value = w * S.L.sheen;
   };
 
