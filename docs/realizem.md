@@ -100,6 +100,7 @@ En postopek velja za predelavo 15 prog in za vse nove proge. Je nov korak v `too
    - Streha, barve in material iz OSM.
    - Fasada iz atlasa regije, stavbe tik ob cesti po meri.
    - Ravni podrobnosti: do 60 m podrobno, do 300 m združene škatle, dlje obris na obzorju.
+   - **Kamera za avtom obzorja in neba ne vidi** (meritev 20. 11. 2026, `chasePose` v `js/render.js`): gleda 36° navzdol ležeče (39° pokonci), zgornji rob slike je 13° (10°) pod vodoravnico in na ravnem seže ~80 m (~125 m) pred kamero. Obris na obzorju, nebo in daljni griči se zato med vožnjo ne narišejo v kadru; daljava se vidi samo navzdol čez rob na gorskih progah (Killar, Ella, Llogara), kjer je danes bela praznina v barvi megle.
 4. **Predmeti po državah.** Kompleti so ograje, smerniki, ogledala, jarki, svetilke, postajališča in table brez napisov. Postavijo se po podatkih in po pravilih (npr. ogledalo v ostrem ovinku). Rišejo se kot primerki iste mreže.
 5. **Stranske ceste in črte** (odločitev uporabnika 8. 11. ob ~23.10).
    - Iz OSM pride vsak odcep do ~60 m od proge, s pravim križiščem, črtami in znaki.
