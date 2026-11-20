@@ -2508,13 +2508,14 @@ const Render = (function () {
     // uScrL the sill: the body's own frame, scrFrame): on the flank from the sill to the belt, streaks along it at a rail's height and
     // patches of scuffed paint, more of them the more it scraped. The flank: the body's outer tenth, or a face that looks sideways (vScN, its
     // normal) in its outer third: a flank that leans or tucks in under the belt (most bodies') is one all the same
+    // (never on black rubber: an older body's rear tyres are part of its shell and stand in the band)
     '#ifdef XT_SCR',
     '  { float a = p.z < 0.0 ? uScrS.x : uScrS.y;',
     '    if (a > 0.0) { float zr = abs(p.z) / uScrS.z, fl = max(smoothstep(0.8, 0.92, zr), smoothstep(0.5, 0.75, vScN) * smoothstep(0.6, 0.72, zr)) * smoothstep(uScrL, uScrL + 0.08, p.y) * (1.0 - smoothstep(uScrS.w - 0.08, uScrS.w, p.y));',
     '      float b3 = p.y * 20.0 + sin(p.x * 2.3) * 0.35 + floor(p.x * 2.6) * 0.29, aa3 = fwidth(b3);',
     '      float l3 = (1.0 - smoothstep(0.1, 0.1 + aa3, abs(fract(b3) - 0.5))) * clamp(0.12 / max(aa3, 0.12), 0.0, 1.0);',
     '      float n3 = fract(sin(dot(floor(vec2(p.x * 2.8 + p.y * 0.7, p.y * 6.0)), vec2(39.347, 11.135))) * 43758.5453);',
-    '      s = max(s, max(l3, 0.35) * step(1.0 - 0.92 * min(a, 1.0), n3) * min(1.0, 0.45 + a) * fl * (1.0 - vIn)); } }',
+    '      s = max(s, max(l3, 0.35) * step(1.0 - 0.92 * min(a, 1.0), n3) * min(1.0, 0.45 + a) * fl * (1.0 - vIn) * smoothstep(0.05, 0.11, dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)))); } }',
     '#endif',
     '  float L = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));',
     '  vec3 sc = mix(vec3(0.82, 0.82, 0.85), vec3(0.28, 0.28, 0.3), step(0.55, L));',   // dark grime on light paint, bare metal on dark paint
@@ -5184,7 +5185,7 @@ const Render = (function () {
   }
   function makeView(c) {
     if (c.stripe === undefined) c.stripe = (c.id * 7) % 3 !== 0;
-    const xd = xDensity(c), xt = xTab(c), sf = scrFrame(c.m), xs = !!sf, v = makeCarMesh(c, xd || xt || xs ? { xd, xcut: xt && !!XC.glass, xscr: xs } : undefined);   // (xs: a closed body's side scrapes, xtScrape, whatever the switches)
+    const xd = xDensity(c), xt = xTab(c), sf = scrFrame(Core.heirOf(c.m)), xs = !!sf, v = makeCarMesh(c, xd || xt || xs ? { xd, xcut: xt && !!XC.glass, xscr: xs } : undefined);   // (xs: a closed body's side scrapes, xtScrape, whatever the switches)
     v.xOn = !!XC.body && c.m.body !== 'formula' && c.m.body !== 'lm'; if (v.xOn && v.kit && !XT_CARS.has(c.m.id)) xBayGrey(v); if (v.xOn) v.rd0 = c.roofDmg || 0;   // (Razbijanje · nov način: its dents its own way, xDent; the engine bay grey, but a reworked car's: its own bay's colours)
     v.xt = xt && !!v.kit;   // (the Kolibri: its glass, lamps and parts by the damage table, xTabHit)
     if (v.scrS) { v.scrS.value.z = sf.hw; v.scrS.value.w = sf.belt; v.scrL.value = sf.sill; }   // (the side scrapes' band: the body's own frame, scrFrame)
