@@ -387,23 +387,23 @@
  "silkeborg": {
   "calls": 239,
   "maxCalls": 283,
-  "kverts": 579,
-  "maxKverts": 689,
-  "jsMs": 1.55
+  "kverts": 593,
+  "maxKverts": 707,
+  "jsMs": 1.43
  },
  "kagerod": {
   "calls": 225,
   "maxCalls": 255,
-  "kverts": 467,
-  "maxKverts": 523,
-  "jsMs": 1.43
+  "kverts": 495,
+  "maxKverts": 556,
+  "jsMs": 1.2
  },
  "sosnova": {
   "calls": 187,
-  "maxCalls": 224,
-  "kverts": 590,
-  "maxKverts": 745,
-  "jsMs": 1.48
+  "maxCalls": 222,
+  "kverts": 620,
+  "maxKverts": 780,
+  "jsMs": 0.6
  },
  "izoard": {
   "calls": 181,
@@ -420,11 +420,11 @@
   "jsMs": 1.01
  },
  "kildare": {
-  "calls": 205,
+  "calls": 204,
   "maxCalls": 231,
-  "kverts": 439,
-  "maxKverts": 511,
-  "jsMs": 1.95
+  "kverts": 449,
+  "maxKverts": 524,
+  "jsMs": 0.93
  },
  "sacalobra": {
   "calls": 222,

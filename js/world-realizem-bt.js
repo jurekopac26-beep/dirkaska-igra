@@ -240,6 +240,99 @@
     API.ROCK_SMOOTH = smooth0; st.sopi = n; st.lava = m;
   });
 
+  /* The meadow tracks of this group share one shape: on the open grass (land cover 0) within ~33 m of the fences, off the pit side
+     and what the build keeps clear, small groups stand only where the ground's own colour (the look's colMod) already shows a patch:
+     pick(gx, gz) gives the patch's strength there (0–1) and what stands at a place, a tussock (with a tip of a flower's colour where
+     it has one) or a low cushion of flowers (blob). The mown grass between the patches stays smooth. */
+  const rbMeadow = ({ scen, excluded }, seed, step, pick) => {
+    const { nrGround, nrLC } = API, R = rng(seed), smooth0 = API.ROCK_SMOOTH; let n = 0, f = 0;
+    API.ROCK_SMOOTH = true;
+    for (let s = 0; s < T.len; s += step) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const o = 3 + Math.pow(r1, 1.4) * 30, [gx, gz] = rbSide(s + (r2 - 0.5) * step, side, o), p = pick(gx, gz);
+      if (!(p.k > 0.12) || r0 > 0.25 + 0.7 * p.k || nrLC(gx, gz) !== 0 || !rbClear(excluded, gx, gz, 2.5)) continue;
+      for (let q = 0, cnt = 5 + Math.floor(R() * 6); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 5, z = gz + (R() - 0.5) * 5, k = R(), a = R();
+        if (nrLC(x, z) !== 0 || !rbClear(excluded, x, z, 2.4)) { R(); continue; }
+        const t = p.at(k, a), col = vary(t.col, R, 0.03), y = nrGround(x, z);
+        if (t.blob) { ico(scen.get(x, z), x, y + 0.02, z, t.w, t.h, col, R, 0.3); f++; }
+        else if (t.tip) { cone(scen.get(x, z), x, y - 0.08, z, t.w, t.h, 5, [col[0] * 0.7, col[1] * 0.74, col[2] * 0.68], vary(t.tip, R, 0.03), R() * TAU); f++; }
+        else { tuft(scen.get(x, z), x, y, z, t.w, t.h, col, R); n++; }
+      }
+    }
+    API.ROCK_SMOOTH = smooth0; return [n, f];
+  };
+
+  /* Kågeröd: docs/proge/kagerod.md: »travniki z zlaticami in krebuljico«. The flowers of the meadows behind the fences were a tint
+     of smooth ground from the camera above the car. So where the ground's own colour is yellow with buttercups, low yellow cushions
+     lie among short tussocks, and where it is pale with cow parsley, taller stems tipped white stand in groups. */
+  chainRb('kagerod', (L, ctx, st) => {
+    const P = API.NR; if (!T || !P || !API.nrGround) return;
+    const grn = [0.34, 0.54, 0.22], yel = [0.9, 0.8, 0.2], wht = [0.9, 0.92, 0.84];
+    [st.sopi, st.cvetje] = rbMeadow(ctx, 9419, 5, (gx, gz) => {
+      const yf = sstep(0.58, 0.78, P.n3(gx * 0.9 + 90, gz * 0.9 - 40)), wf = sstep(0.62, 0.82, P.n1(gx * 1.3 - 210, gz * 1.3 + 75));
+      return { k: Math.max(yf, wf), at: (k, a) => a > 0.7 ? { col: grn, w: 0.35 + k * 0.3, h: 0.24 + k * 0.2 }
+        : wf > yf ? { col: grn, tip: wht, w: 0.3 + k * 0.25, h: 0.5 + k * 0.3 } : { col: yel, blob: true, w: 0.28 + k * 0.3, h: 0.24 } };
+    });
+  });
+
+  /* Silkeborg: docs/proge/silkeborg.md: »resava z reso (vijolično-rjava) in nizkimi bori, suha trava in peščene zaplate«. From the
+     camera above the car this was a colour on smooth ground. So on the open grass tufts of the dry late-summer grass stand where
+     the ground's own colour is burnt straw-yellow (most of what is seen: the heath hardly reaches the track); where the heath
+     (land cover 2) does come within ~55 m, low cushions of heather lie in groups, purple where the ground's own colour is in bloom
+     and brown where it is old, with a patch of the pale sand now and then. */
+  chainRb('silkeborg', (L, { scen, excluded }, st) => {
+    const { nrGround, nrLC, nrSlope, NR: P } = API; if (!T || !P || !nrGround) return;
+    const R = rng(9421), smooth0 = API.ROCK_SMOOTH, bloom = [0.5, 0.3, 0.5], old = [0.4, 0.3, 0.22], straw = [0.72, 0.66, 0.4], grn = [0.4, 0.5, 0.24], sand = [0.8, 0.73, 0.54]; let n = 0, h = 0, m = 0;
+    API.ROCK_SMOOTH = true;
+    for (let s = 0; s < T.len; s += 6) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const o = 3 + Math.pow(r1, 1.3) * 52, [gx, gz] = rbSide(s + (r2 - 0.5) * 6, side, o), c = nrLC(gx, gz);
+      if ((c !== 0 && c !== 2) || !rbClear(excluded, gx, gz, 2.5)) continue;
+      if (c === 2) {   // the heath
+        if (r0 > 0.7) continue;
+        if (r2 < 0.14 && o > 5 && nrSlope(gx, gz) < 0.4 && rbClear(excluded, gx, gz, 4.5)) { soil(scen, nrGround, gx, gz, 1.1 + R() * 1.4, vary(sand, R, 0.03), R); m++; }
+        const bl = sstep(0.38, 0.66, P.n1(gx * 0.9 + 40, gz * 0.9 - 60));
+        for (let q = 0, cnt = 3 + Math.floor(R() * 4); q < cnt; q++) {
+          const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, w = 0.45 + R() * 0.6, a = R();
+          if (nrLC(x, z) !== 2 || !rbClear(excluded, x, z, 2.2 + w)) { R(); continue; }
+          ico(scen.get(x, z), x, nrGround(x, z) + 0.03, z, w, 0.3 + R() * 0.14, vary(mix3(old, bloom, Math.min(1, bl * (0.5 + a * 0.7))), R, 0.03), R, 0.3); h++; }
+        continue; }
+      const dry = sstep(0.5, 0.74, P.n3(gx * 0.8 + 90, gz * 0.8 - 40)); if (o > 34 || !(dry > 0.12) || r0 > 0.3 + 0.65 * dry) continue;
+      for (let q = 0, cnt = 5 + Math.floor(R() * 6); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 5, z = gz + (R() - 0.5) * 5, k = R(), a = R();
+        if (nrLC(x, z) !== 0 || !rbClear(excluded, x, z, 2.4)) { R(); continue; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.32 + k * 0.36, 0.26 + k * 0.3, vary(mix3(grn, straw, Math.min(1, 0.45 + dry * 0.4 + a * 0.3)), R, 0.03), R); n++; }
+    }
+    API.ROCK_SMOOTH = smooth0; st.sopi = n; st.resa = h; st.pesek = m;
+  });
+
+  /* Sosnová: docs/proge/sosnova.md: »poznopoletni travniki z rmanom in glavincem«. The dry patches and the flowers of the meadows
+     behind the fences were a tint of smooth ground from the camera above the car. So where the ground's own colour has dried off,
+     short straw tussocks stand in groups, and where it is pale with flowers, low white cushions of yarrow lie among stems tipped
+     purple with knapweed. */
+  chainRb('sosnova', (L, ctx, st) => {
+    const P = API.NR; if (!T || !P || !API.nrGround) return;
+    const grn = [0.36, 0.52, 0.22], straw = [0.74, 0.67, 0.4], wht = [0.9, 0.89, 0.82], pur = [0.64, 0.34, 0.62];
+    [st.sopi, st.cvetje] = rbMeadow(ctx, 9431, 5, (gx, gz) => {
+      const dry = sstep(0.55, 0.8, P.n3(gx * 0.7 - 60, gz * 0.7 + 210)), wf = sstep(0.64, 0.84, P.n1(gx * 1.3 + 170, gz * 1.3 - 95));
+      return { k: Math.max(dry, wf), at: (k, a) => wf > dry && a < 0.75 ? (a < 0.45 ? { col: wht, blob: true, w: 0.26 + k * 0.26, h: 0.26 } : { col: grn, tip: pur, w: 0.28 + k * 0.22, h: 0.42 + k * 0.26 })
+        : { col: mix3(grn, straw, Math.min(1, 0.45 + dry * 0.4 + a * 0.3)), w: 0.35 + k * 0.35, h: 0.26 + k * 0.26 } };
+    });
+  });
+
+  /* Kildare: docs/proge/kildare.md: »pašniki v irskih zelenih tonih, vlažne kotanje«. The wet hollows of the pasture behind the
+     fences were a darker colour on smooth ground from the camera above the car. So in the hollows (where the look's colMod darkens
+     the ground) dark clumps of rushes stand in groups, their tips browning, with a tussock of the deep green pasture between them. */
+  chainRb('kildare', (L, ctx, st) => {
+    const P = API.NR; if (!T || !P || !API.nrGround) return;
+    const grn = [0.26, 0.52, 0.2], rush = [0.24, 0.4, 0.17], brn = [0.46, 0.42, 0.2];
+    [st.sopi, st.locje] = rbMeadow(ctx, 9433, 5, (gx, gz) => {
+      const wet = sstep(0.62, 0.84, P.n1(gx * 1.1 + 140, gz * 1.1 - 260));
+      return { k: wet, at: (k, a) => a < 0.75 ? { col: rush, tip: brn, w: 0.26 + k * 0.24, h: 0.5 + k * 0.4 } : { col: grn, w: 0.4 + k * 0.35, h: 0.24 + k * 0.2 } };
+    });
+  });
+
   /* Seoul (its own builder, js/world-seoul.js, calls this before it closes its scenery chunks): under the pines and oaks of the
      mountain the ground beside the road was one smooth face from the camera above the car. docs/proge/seoul.md: »gozd rdečega bora in
      hrasta … (tla iglice in listje z zelenim podrastjem)«. So low clumps of that green undergrowth lie in groups on the forest's
