@@ -1164,16 +1164,16 @@
   }
  },
  "luanda": {
-  "meshes": 347,
-  "verts": 312483,
+  "meshes": 348,
+  "verts": 367830,
   "instances": 799,
   "props": 0,
   "crowd": 45,
-  "world": "167f4d54",
+  "world": "f652d1f4",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "909c5e05",
+   "-:MeshLambertMaterial": "8f469f38",
    "-:MeshPhongMaterial": "de617b90",
    "crowd:MeshLambertMaterial": "f328cadd",
    "flags:MeshLambertMaterial": "7307d96c",
@@ -1225,16 +1225,16 @@
   }
  },
  "mombasa": {
-  "meshes": 314,
-  "verts": 267341,
+  "meshes": 323,
+  "verts": 348974,
   "instances": 1178,
   "props": 0,
   "crowd": 50,
-  "world": "2b06e14e",
+  "world": "69426411",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "25844fda",
+   "-:MeshLambertMaterial": "4e5b30ce",
    "-:MeshPhongMaterial": "8cb27484",
    "crowd:MeshLambertMaterial": "8ef2b948",
    "flags:MeshLambertMaterial": "bfe5308d",
