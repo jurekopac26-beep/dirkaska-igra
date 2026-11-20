@@ -8,7 +8,8 @@
 // back and Izberi progo lead straight to the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
-// layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
+// layouts (upright, on its side, a small phone), the old menu that stays for ?menu=old, and the career's path of 1.0 (its strip in the
+// Career panel, its hub: stages, cups, class cups; a locked cup refused, an open one started).
 //   node tests/browser/menu.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -1514,6 +1515,49 @@ try {
     const f = await ev(page, 'const y = root.querySelector(".yard"); return { img: !!y.querySelector(".car img"), cv: !!y.querySelector("canvas.c3d"), act: y.querySelector(".car").dataset.act, i: MenuCar.info() };');
     T.check('no WebGL for the yard\'s car: its picture, no canvas, the tap still the garage', f.img && !f.cv && f.act === 'garage' && f.i.failed && !f.i.on, JSON.stringify(f));
     T.check('no WebGL for the yard\'s car: no page errors', !real(errors).filter(e => !/WebGL/.test(e)).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 12. the career's path of 1.0 (js/kariera.js, part C: the hub; only through the bridge G.kariera / G.karieraStart): the career off, no
+  //     strip; on (a small phone upright), the strip in the Career panel (the stage, its progress); tapped: the hub (the four stages, the
+  //     open one chosen, its cups with their state, the class cups with their goals); a locked stage's cup refused (the game's toast, the
+  //     hub still open, no championship); on its side the hub fits the screen; an open cup tapped: its first race
+  {
+    const { ctx, page, errors } = await open({}, { width: 360, height: 640 });
+    await ready(page);
+    await click(page, 'career');
+    const off = await ev(page, 'return { strip: !!root.querySelector(".k-strip"), cards: root.querySelectorAll(".t-sub.four .mode").length, view: window.__game.kariera() };');
+    T.check('the career off: the Career panel without the path\'s strip, its four cards', !off.strip && off.cards === 4 && off.view === null, JSON.stringify(off));
+    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['pico'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: { 's1-krog': 2 }, cilji: {}, prve: [], km: { mali: 37 } } })));
+    await page.reload(); await ready(page);
+    await page.evaluate(() => { __game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); });
+    await click(page, 'career');
+    const v = await page.evaluate(() => __game.kariera());
+    const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { txt: k.querySelector("b").textContent, w: k.querySelector(".bar b").style.width, cards: root.querySelectorAll(".t-sub.four .mode").length };');
+    T.check('the career on: the strip above the four cards, the stage and its progress (1 of 2 cups: 50 %)', st && st.txt === 'STAGE 1 · ROOKIE' && st.w === '50%' && st.cards === 4 && v.napredek.done === 1 && v.napredek.need === 2, JSON.stringify({ st, n: v && v.napredek }));
+    await page.click('[data-act="kpot"]');
+    const hub = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && { tabs: [...s.querySelectorAll(".kp-tabs button")].map(b => b.getAttribute("aria-selected") + ":" + b.className + ":" + b.textContent), cups: [...s.querySelectorAll(".kp-list")[0].querySelectorAll(".k-cup")].map(c => c.dataset.act + ":" + c.className.split(" ")[1] + ":" + c.querySelector(".chip").textContent), cls: s.querySelectorAll(".k-cls").length, goals: [...s.querySelectorAll(".k-cls")].map(c => c.querySelector(".kg-row").textContent)[0] };');
+    const s1 = v.stopnje[0].pokali.map(c => 'kcup:' + c.id + ':' + c.stanje + ':' + (c.stanje === 'osvojen' ? 'BEST P' + c.best : 'OPEN'));
+    T.check('the hub: four stages (the first chosen, the other three locked), stage 1\'s cups with their state (the circuit cup won: BEST P2), the class cups with their goals (37 of 100 km)',
+      hub && hub.tabs.length === 4 && hub.tabs[0].startsWith('true::1') && hub.tabs.slice(1).every(t => t.startsWith('false:lk:')) && JSON.stringify(hub.cups) === JSON.stringify(s1) && s1.some(c => c.endsWith('BEST P2'))
+      && hub.cls === v.razredi.length && hub.cls === 10 && /37 \/ 100 km/.test(hub.goals), JSON.stringify({ hub, s1 }));
+    await page.click('[data-act="kstage:2"]');
+    const lk = v.stopnje[1].pokali[0];
+    await page.click(`[data-act="kcup:${lk.id}"]`, { force: true });   // (aria-disabled: Playwright would wait for it to be enabled) await page.waitForTimeout(300);
+    const ref = await page.evaluate(() => ({ toast: document.getElementById('toast').textContent, champ: localStorage.getItem('tdgp-champ'), race: !!__game.race }));
+    const still = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && s.querySelector(".kp-tabs [aria-selected=true]").textContent;');
+    T.check('a cup of stage 2 tapped: refused (the game\'s toast), the hub still open on stage 2, no championship, no race', /zaklenjen/.test(ref.toast) && !ref.champ && !ref.race && still === 'Club', JSON.stringify({ ref, still }));
+    await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(400);
+    const fit = await ev(page, 'const r = root.querySelector(".sheet.kpot").getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), b: Math.round(r.bottom), sw: root.querySelector(".sheet.kpot").scrollWidth, cw: root.querySelector(".sheet.kpot").clientWidth };');
+    T.check('on its side the hub fits the screen (no side scroll)', fit.l >= 0 && fit.r <= 640 && fit.t >= 0 && fit.b <= 360 && fit.sw <= fit.cw, JSON.stringify(fit));
+    await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300);
+    await page.click('[data-act="kstage:1"]');
+    const open1 = v.stopnje[0].pokali.find(c => c.stanje === 'odprt');
+    await page.click(`[data-act="kcup:${open1.id}"]`);
+    const ok = await raceOn(page, open1.tracks[0]).then(() => true).catch(() => false);
+    const ch = await page.evaluate(() => ({ champ: JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), sheet: !!document.getElementById('menu-host').shadowRoot.querySelector('.sheet.kpot') }));
+    T.check('an open cup tapped: the hub closed, its championship, its first race', ok && ch.champ && ch.champ.id === open1.id && !ch.sheet, JSON.stringify({ ok, ch, id: open1.id }));
+    T.check('the career\'s path: no page errors', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 } finally {

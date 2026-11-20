@@ -137,7 +137,8 @@
   const rentFrom = (r, d) => { const id = r && typeof r === 'object' ? heirId(r.id) : typeof r === 'string' ? heirId(r) : null; return id && ORDER.includes(id) && !d.cars[id].own ? id : null; };
   function careerRead() {
     let c = null; try { c = JSON.parse(localStorage.getItem(CKEY) || 'null'); } catch (_) { c = null; }
-    return c && typeof c === 'object' && c.v === 1 ? c : { v: 1, on: false, money: Core.CAREER.start, cars: [CAR0], upg: {}, earned: 0, races: 0, wins: 0 };
+    // (v 1 and v 2: the career with the path of 1.0, career.pot of js/kariera.js; kept as it is, toCareer writes back only its own fields)
+    return c && typeof c === 'object' && (c.v === 1 || c.v === 2) ? c : { v: 1, on: false, money: Core.CAREER.start, cars: [CAR0], upg: {}, earned: 0, races: 0, wins: 0 };
   }
   // (a car's four levels in the career: its own (a retired model's: its heir's; both: the better of each), 0 .. 3)
   function careerUpg(c, id) { const L = { motor: 0, gume: 0, zavore: 0, aero: 0 }, U = c.upg && typeof c.upg === 'object' ? c.upg : {};

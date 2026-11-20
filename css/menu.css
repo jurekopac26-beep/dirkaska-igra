@@ -229,6 +229,49 @@ svg { display: block; }
 .sheet.dtip p.fine { margin: 0 0 14px; font-size: 13px; }
 .sheet.dtip .tlink { display: block; margin: 12px auto 0; }
 .t-links { display: flex; justify-content: center; }
+/* the career's path of 1.0 (menu.js kStrip, karieraSheet): the strip in the Career panel, the hub in a sheet (its stage tabs, cups, class cups) */
+.k-strip { flex: 0 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; padding: 9px 12px; border-radius: 12px; border: 1.5px solid rgba(255, 198, 41, .55); background: linear-gradient(180deg, rgba(40, 32, 8, .82), rgba(12, 16, 26, .9)); color: var(--text); text-align: left; cursor: pointer; }
+.k-strip .ks-tx { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.k-strip b { font: 900 italic 15px/1.1 var(--f-ui); color: var(--gold); letter-spacing: .03em; }
+.k-strip small { font: 600 12px/1.25 var(--f-ui); color: var(--lav); }
+.k-strip .bar { grid-column: 1 / -1; grid-row: 2; }
+.k-strip .chip { grid-column: 2; grid-row: 1; white-space: nowrap; }
+.chip.lk { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.chip.lk svg { width: 11px; height: 11px; }
+.sheet.kpot { max-height: 90%; overflow-y: auto; overscroll-behavior: contain; padding-top: 14px; }
+.sheet.kpot h2 { align-items: center; font-size: 26px; }
+.sheet.kpot h2 .money { font-size: 14px; padding: 6px 8px; }
+.sheet.kpot h2 .money span { font-size: 15px; color: inherit; }
+.sheet.kpot h2 .money svg { width: 16px; height: 16px; }
+.sheet.kpot h3 { margin: 18px 0 2px; font: 900 italic 18px/1.1 var(--f-ui); }
+.kp-prog { margin: 12px 0 10px; display: flex; flex-direction: column; gap: 6px; }
+.kp-prog b { font: 900 italic 14px/1.1 var(--f-ui); color: var(--gold); letter-spacing: .04em; }
+.kp-prog small { font: 600 12.5px/1.3 var(--f-ui); color: var(--lav); }
+.kp-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+.kp-tabs button { display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 48px; padding: 6px 2px; border-radius: 10px; border: 1.5px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .05); color: var(--text); cursor: pointer; }
+.kp-tabs button i { font: 900 italic 17px/1 var(--f-ui); }
+.kp-tabs button span { font: 700 italic 11px/1.1 var(--f-ui); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kp-tabs button svg { width: 15px; height: 15px; }
+.kp-tabs button.lk { color: var(--muted); }
+.kp-tabs button[aria-selected="true"] { border-color: var(--gold); background: rgba(255, 198, 41, .16); color: var(--gold); }
+.kp-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 6px; }
+.sheet.kpot p.kp-note { margin: 2px 0 6px; font-size: 12.5px; }
+.k-cup { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 11px; border: 1.5px solid rgba(255, 255, 255, .14); background: rgba(255, 255, 255, .06); color: var(--text); text-align: left; cursor: pointer; }
+.k-cup .kc-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.k-cup b { font: 800 italic 15px/1.15 var(--f-ui); }
+.k-cup small { font: 700 11.5px/1.2 var(--f-ui); color: var(--gold); letter-spacing: .02em; }
+.k-cup .kc-tr { font: 500 12px/1.3 var(--f-ui); color: var(--lav); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.k-cup.osvojen { border-color: rgba(255, 198, 41, .6); }
+.k-cup.zaklenjen { opacity: .62; }
+.k-cup.zaklenjen small { color: var(--muted); }
+.k-cls { display: flex; flex-direction: column; gap: 5px; }
+.kg-row { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 2px 4px; }
+.kg { display: inline-flex; align-items: center; gap: 4px; font: 700 italic 11px/1 var(--f-ui); padding: 4px 7px; border-radius: 5px; background: rgba(255, 255, 255, .08); color: var(--muted); }
+.kg svg { width: 11px; height: 11px; }
+.kg.done { background: rgba(255, 198, 41, .18); color: var(--gold); }
+.kg.lk { background: none; padding-left: 0; font-style: normal; }
+@media (orientation: landscape) { .sheet.kpot { max-width: 640px; margin: 0 auto; } .k-strip { padding: 6px 12px; gap: 4px 10px; } .k-strip small { display: none; } }
+@media (max-height: 700px) and (orientation: portrait) { .k-strip { padding: 7px 11px; } }
 .loading { position: absolute; inset: 0; z-index: 25; background: radial-gradient(120% 60% at 50% 35%, #16304d, var(--navy2) 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; text-align: center; animation: fade .2s ease-out; }
 .toast { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 30; max-width: calc(100% - 32px); padding: 11px 16px; border-radius: 12px; background: rgba(8, 12, 20, .94); border: 1.5px solid rgba(255, 255, 255, .25); font: 700 italic 14px/1.3 var(--f-ui); text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); animation: up .2s ease-out; }
 /* ---------------- main menu: logo, three picture buttons, two small ones, the purchase ---------------- */
