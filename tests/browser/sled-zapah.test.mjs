@@ -60,7 +60,7 @@ try {
     car(P, O2, 5, 0.08, 0.3, 1); car(P, O1, 9, 0.1, -0.4, 1); fr(1); o.pWeakStrong1 = seen(P, n0); n0 = V(P).dLog.length;
     car(P, O1, 9, 0.1, 0.3, -1); car(P, O2, 5, 0.08, -0.4, -1); fr(1); o.pStrongWeak1 = seen(P, n0); n0 = V(P).dLog.length;
     car(P, O1, 7, 0.08, 0.5, 1); car(P, O2, 7, 0.08, -0.5, 1); fr(1); o.pSame = seen(P, n0); n0 = V(P).dLog.length;
-    o.fxK = [P, O1, O2].map(c => Core.fxKOf(c) == null);   // (taken with the sparks: nothing of it left for the next frame)
+    o.fxK = [P, O1, O2].map(c => Core.fxKOf(c) === undefined);   // (taken with the sparks: nothing of it left for the next frame)
     // a hard touch without a dent (a scrape along a rival), then, a frame later, a light knock against a wall: the wall's, at its own speed
     car(P, O1, 15, 0, 0, 0); fr(1); wall(P, 3, 0.06, -0.6, -1); fr(1); o.pStale = seen(P, n0); n0 = V(P).dLog.length;
     car(P, O1, 15, 0, 0, 0); fr(1); fr(1); car(P, O2, 4, 0.06, -0.6, 1); fr(1); o.pStale2 = seen(P, n0);

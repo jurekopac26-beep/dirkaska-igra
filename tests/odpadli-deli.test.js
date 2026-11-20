@@ -23,6 +23,8 @@
 //     touches it (another car's part in the way, its own parts: the car's whole state after every step as with no part at all, no random
 //     number more or less; under every one of the six versions of the knocks), a piece that has come to rest is off the road; a race in
 //     which no part comes off is the reference's, a race with a crash is Vklop's to the last digit until a car first touches a piece there
+//   - check 46 (K3, 20. 11. 2026): no piece jumps where its point goes from a side road to the road (Medvode's side roads, read only);
+//     check 47 (F5): a piece still in its car as the car's 2 s end is not knocked by it; the time ends DEB.clear s after it is clear
 // (a piece lying on the road, driven over: tests/debris.test.js)
 //   node tests/odpadli-deli.test.js            check
 //   node tests/odpadli-deli.test.js --prej     print PREJ of the tree given (GAME_ROOT=<a tree from before the change>)
@@ -729,6 +731,67 @@ function ownRun(parts, kmh, inp, off, K) {
   check('Odpadli deli, Izklop in a race: a race in which no part comes off (Spa, 13 cars, 60 s) is the reference\'s to the last digit (tests/golden/sim.json spa/race/cs); in races with a crash (Spa, 13 cars: the formula\'s, 30 s; the newer road car\'s, 45 s) parts come off, none lies on the list at a step\'s end, no car is ever over one or knocks one, and every car is where Vklop has it to the last digit until the step a car first touches a piece there',
     !!ref && r.cover.loose === 0 && r.digest === ref.digest && R.every(x => x.off.shed > 0 && x.off.lying === 0 && x.off.touched === 0 && x.on.shed > 0 && x.on.lying > 0 && (x.on.kt ? x.kd === 0 || x.kd >= x.on.kt : x.kd === 0)) && R.some(x => x.on.kt > 0 && x.kd >= x.on.kt),
     `${r.digest}; ` + R.map(x => `${x.set}: Izklop ${x.off.shed} parts off, at most ${x.off.most} on the list at once, ${x.off.left} left, lying at a step's end ${x.off.lying}, touched ${x.off.touched}; Vklop ${x.on.shed} parts off, ${x.on.lying} lying, a car first at a piece at step ${x.on.kt || '-'}, the two runs differ from step ${x.kd || '-'}`).join('; '));
+}
+
+// ---- 46: no piece jumps (K3) ----
+// A piece in a side road whose point the road takes back (Track.query: from the side road's own limits to the road, tens of metres
+// beyond its barrier) was put back to the barrier in that one step: 20 to 40 m at once. Medvode's side roads (the track is only read):
+// a bonnet from every 12 m of each side road's line that lies inside its limits, 18 and 40 m/s, eight ways, 2 s. Every step: no piece
+// moves further than its speed and the deepest push a step can ask for (3 m, generous); and the scene is the one: the point of some
+// piece does go from a side road to the road, far beyond the barrier (before the limit in stepDebris: hundreds of jumps, up to ~40 m).
+// The height too is measured, not assumed: such a piece stays in the side road as the road's (q.k -1), so the ground under it is
+// the road's at q.s (Track.yAt), not the side road's own. For a piece on the ground before and after a step: how far the ground under
+// it moves beyond a 30 % grade over its move; under 1 m in every step (measured 0.53 m where a point goes from one side road to another, 0.36 m where the point is the road's far beyond
+// its barrier: a snap of one step, left as it is, docs/trki-realizem.md)
+{
+  const orig = Math.random; try {
+  const T = road('medvode'), race = lone(T), P = race.player, Pt = PT.hood || C.PARTS.hood, S = [], _w = []; let most = 0, at = '', lost = 0, id = 0, up = 0, upF = 0, nUp = 0, upAt = '';
+  for (let k = 0; k < (T.stubs || []).length; k++) { const St = T.stubs[k];
+    for (let j = 0; j < St.x.length; j += 6) { const q0 = T.query(St.x[j], St.z[j], -1, {}); if (T.wall(q0, Pt.r * 0.5, _w) > 0) continue;
+      for (const v of [18, 40]) for (let a = 0; a < 8; a++) { const h = a * Math.PI / 4 + 0.2;
+        const d = { id: ++id, car: -1, part: 'hood', x: St.x[j], z: St.z[j], y: T.yAt(q0) + 0.6, vx: Math.cos(h) * v, vz: Math.sin(h) * v, vy: 2, yaw: 0, rx: 0, rz: 0, wx: 0, wy: 0, wz: 0, r: Pt.r, m: Pt.m, h: Pt.h, rest: false, ground: false, q: null, dead: false };
+        S.push({ d, k, j, v, a }); } } }
+  for (let b = 0; b < S.length; b += 2000) { const B = S.slice(b, b + 2000); race.debris.length = 0; for (const s of B) race.debris.push(s.d);   // (pushed by hand: the cap of 40 is spawnDebris's)
+    for (let n = 0; n < 240; n++) {
+      for (const s of B) { const d = s.d; s.x = d.x; s.z = d.z; s.sp = Math.hypot(d.vx, d.vz); s.k0 = d.q ? d.q.k : -1; s.g0 = d.ground && d.q ? T.yAt(d.q) : null; }
+      P.inThr = 0; P.inBrk = 1; race.step(DT);
+      for (const s of B) { const d = s.d, mv = Math.hypot(d.x - s.x, d.z - s.z) - s.sp * DT, q = d.q;
+        if (s.k0 >= 0 && q.k < 0 && Math.abs(q.d) - (q.d > 0 ? q.br : q.bl) > 5) lost++;
+        if (s.g0 != null && d.ground) { const u = Math.abs(T.yAt(q) - s.g0) - 0.3 * Math.hypot(d.x - s.x, d.z - s.z);   // (on the ground d.y follows Track.yAt)
+          if (u > 0.05) nUp++; if (q.k < 0 && Math.abs(q.d) - (q.d > 0 ? q.br : q.bl) > 5 && u > upF) upF = u;
+          if (u > up) { up = u; upAt = `side road ${s.k}, ${s.j * 2} m in, ${s.v} m/s, way ${s.a}, step ${n}, side road ${s.k0} to ${q.k}`; } }
+        if (mv > most) { most = mv; at = `side road ${s.k}, ${s.j * 2} m in, ${s.v} m/s, way ${s.a}, step ${n}`; } } } }
+  check('no piece jumps (Medvode, a bonnet thrown from inside every side road, 18 and 40 m/s, eight ways, 2 s): in no step does a piece move more than 3 m beyond its own speed x the step, although the point of some of them goes from its side road to the road far beyond the barrier (before: put back to the barrier at once, 20 to 40 m); and the ground under a piece lying on it moves in no step more than 1 m beyond a 30 % grade over its move (such a piece is the road\'s, at the road\'s height, while it lies in the side road)',
+    S.length > 1000 && lost > 0 && most < 3 && up < 1, `${S.length} pieces, ${lost} times a point went from a side road to the road over 5 m beyond its barrier, the longest move beyond speed x step ${f(most, 2)} m` + (most >= 3 ? ` (${at})` : '') + `; the ground under a lying piece: at most ${f(up, 2)} m in a step beyond a 30 % grade (${upAt}), ${f(upF, 2)} m where the point is the road's over 5 m beyond its barrier, over 0.05 m in ${nUp} steps`);
+  } finally { Math.random = orig; }
+}
+
+// ---- 47: a piece still in its car as the car's time ends (F5) ----
+// A piece carried along inside the car that shed it (a wreck's own part, held between it and a wall) was knocked by it in the first step
+// after its 2 s. Here a bonnet is kept in the car's nose step by step (in the air, 1 m/s slower than the car: the car closes on it), its
+// time DEB.own as a shed part's, for 2.5 s: the car is not touched once and is to the last digit where the same run without the piece
+// has it; the car is still on the piece's list then. Then the piece is put 8 m to the side, at rest: the car's time ends within
+// DEB.clear s (0.25), and a piece in the air in front of it is knocked as any car's (the time did end)
+{
+  const orig = Math.random; try {
+  const run = (withPiece) => { const T = road('asfalt'), race = lone(T), P = race.player; put(P, T, 150, 15);
+    const Pt = PT.hood, o = Math.max(...P.circles) + 0.3, L = []; let hits = 0, listed = 0, endK = -1, knock = 0;
+    const d = { id: 1, car: P.id, part: 'hood', x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, yaw: 0, rx: 0, rz: 0, wx: 0, wy: 0, wz: 0, r: Pt.r, m: Pt.m, h: Pt.h, rest: false, ground: false, q: null, dead: false, by: [P], byT: [DEB.own] };
+    const pin = (ahead, slower) => { const ch = Math.cos(P.h), sh = Math.sin(P.h); d.x = P.x + ch * ahead; d.z = P.z + sh * ahead; d.y = (P.y || 0) + 0.5; d.vx = P.vx - ch * slower; d.vz = P.vz - sh * slower; d.vy = 0; d.rest = false; d.ground = false; };
+    if (withPiece) race.debris.push(d);
+    const step = () => { P.hitDebris = 0; P.inThr = P.inBrk = P.inSteer = 0; race.step(DT); return P.hitDebris > 0; };
+    for (let k = 1; k <= 300; k++) { pin(o, 1); if (step()) hits++; L.push(SIM.stateLine(P)); }
+    if (!withPiece) return { L };
+    listed = d.by && d.by.indexOf(P) >= 0 ? 1 : 0;
+    d.x -= Math.sin(P.h) * 8; d.z += Math.cos(P.h) * 8; d.vx = d.vz = d.vy = 0; d.y = Pt.h * 0.5 + 0.02; d.rest = true; d.ground = true;   // (clear of the car)
+    for (let k = 1; k <= 120 && endK < 0; k++) { if (step()) hits++; if (!d.by || d.by.indexOf(P) < 0) endK = k; }
+    for (let k = 1; k <= 60; k++) { if (k === 1) pin(o + 4, Math.hypot(P.vx, P.vz)); if (step()) knock++; }
+    return { L, hits, listed, endK, knock }; };
+  const a = run(true), b = run(false), same = firstDiff(a.L, b.L);
+  check('a piece still in its car as the car\'s 2 s end (a bonnet kept in the car\'s nose for 2.5 s, the car closing on it): the car is not knocked and drives to the last digit as without it; once the piece is clear of the car, the car\'s time ends within DEB.clear s (0.25) and a piece in its way is knocked as any car\'s',
+    DEB.clear === 0.25 && a.hits === 0 && same === 0 && a.listed === 1 && a.endK > 0 && a.endK <= Math.round(DEB.clear * 120) + 1 && a.knock >= 1,
+    `touched in ${a.hits} steps of 2.5 s, the car's state differs from the run without the piece from step ${same || '-'}; still on the piece's list at 2.5 s: ${a.listed ? 'yes' : 'no'}; clear of it, the time ended ${a.endK > 0 ? f(a.endK * DT, 3) + ' s after' : 'never'}; then knocked in ${a.knock} step${a.knock === 1 ? '' : 's'}`);
+  } finally { Math.random = orig; }
 }
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

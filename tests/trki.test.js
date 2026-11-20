@@ -831,6 +831,39 @@ for (const tid of ['spa', 'bathurst']) {
       r.every(o => o.plain && o.fx > 3 && o.k === o.A && o.a === 0x101010 && o.b === 0x101010 && o.pt) && s.every(o => o.k === o.A) && r[0].s === s[0].s && r[1].s === s[1].s,
       `strong first: fxK ${r[0].k && r[0].k.toString(16)}, fxCar ${r[0].fx.toFixed(1)}; weak first: fxK ${r[1].k && r[1].k.toString(16)}, fxCar ${r[1].fx.toFixed(1)} (the stronger car's paint ${r[0].A.toString(16)})`);
   }
+  // an entry holds only for the fxCar it was set at (fxKOf: undefined, nothing known, once fxCar is cleared or raised without fxSrc: a contact
+  // set by hand, a trailer's after its tractor took it); null is only ever a paintless strongest knock; a tie keeps the first, a weaker later knock changes nothing
+  const knock = (tx) => test(tx, () => { const P = HC.mkCar('rally', { v: 0 }), A = HC.mkCar('rally', { v: 32 }); P.color = 0x808080; A.color = 0xc02020;
+    P.place(0, 0, 0); A.place(-(P.m.len - 0.02), 0, 0); A.vx = 9; C.carCollide(A, P); return { P, A }; });
+  for (const [nm, tx] of [['Simulacija', SIM], ['Realistična', REAL], ['Stara', { cv: 5 }]]) {
+    const { P, A } = knock(tx), k0 = C.fxKOf(P), f0 = P.fxCar; P.fxCar = 0; const z = C.fxKOf(P); P.fxCar = f0 + 4; const up = C.fxKOf(P); P.fxCar = f0; const back = C.fxKOf(P);
+    C.fxSrc(P, null, f0); const tie = C.fxKOf(P); C.fxSrc(P, null, f0 + 1); P.fxCar = f0 + 1; const thing = C.fxKOf(P);
+    C.fxSrc(P, A, f0 + 0.5); const weak = C.fxKOf(P), tk = C.fxKOf(P, true), gone = C.fxKOf(P);
+    ok(`${nm}: fxK holds only for the fxCar it was set at: nothing known (undefined) with fxCar cleared or raised by hand, the car's paint again at its own strength; a paintless thing as strong does not take it over (the first holds), a stronger one does (null), a weaker car after it does not; taken: nothing known`,
+      k0 === 0xc02020 && z === undefined && up === undefined && back === 0xc02020 && tie === 0xc02020 && thing === null && weak === null && tk === null && gone === undefined,
+      `fxCar ${f0.toFixed(1)}: ${[k0, z, up, back, tie, thing, weak, tk, gone].map(String).join(', ')}`);
+    const b = knock(tx); delete b.A.color; b.P.fxCar = 0; C.fxKOf(b.P, true); C.fxSrc(b.P, b.A, 5); b.P.fxCar = 5;
+    ok(`${nm}: a car without a colour is a knock without paint (null, not unknown: no search by the contact point)`, C.fxKOf(b.P) === null, String(C.fxKOf(b.P)));
+  }
+  // a trailer's knock is its tractor's (Race._tlStep, fxKFrom): a car into a tank's flank at 6 m/s: the tractor has that car's paint, the car
+  // null (a trailer has no paint), the trailer's fxCar and its entry cleared together (nothing known even with its fxCar put back by hand);
+  // a tractor with a stronger knock of its own keeps its own word, the trailer's entry cleared all the same
+  let spaT = null;
+  for (const [nm, tx] of [['Simulacija', SIM], ['Realistična', REAL], ['Stara', { cv: 5 }]]) {
+    const rig = (own) => test(tx, () => { const orig = Math.random; Math.random = seeded(7); try {
+      const T = spaT || (spaT = new C.Track(C.TRACKS.find(x => x.id === 'spa')));
+      const r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 1, playerModel: C.MODELS.find(m => m.id === 'cisterna'), assist: 0, phys: 'cs', seed: 5, difficulty: 1, damage: 1 }); r.start();
+      const c = r.player, O = r.cars.find(x => x !== c), R = c.tl; c.color = 0x2040c0;
+      for (const x of [c, R, O]) { x.fxCar = 0; C.fxKOf(x, true); }
+      if (own) { C.fxSrc(c, null, 20); c.fxCar = 20; }
+      const w = (R.m.wid + O.m.wid) * 0.5 - 0.05, s = 6; O.place(R.x - Math.sin(R.h) * w, R.z + Math.cos(R.h) * w, R.h); O.y = R.y; O.vx = Math.sin(R.h) * s; O.vz = -Math.cos(R.h) * s;
+      r._tlStep(DT, false);
+      const o = { c: C.fxKOf(c), cf: c.fxCar, O: C.fxKOf(O), of: O.fxCar, col: O.color, R: C.fxKOf(R), rf: R.fxCar }; R.fxCar = o.of; o.Rh = C.fxKOf(R); return o; } finally { Math.random = orig; } });
+    const a = rig(false), b = rig(true);
+    ok(`${nm}: a car knocks a trailer: the tractor's fxK is that car's paint, the car's null (a trailer has none), the trailer's fxCar and its entry cleared together (nothing known with its fxCar put back by hand); a tractor with a stronger knock of its own keeps its own (null), the trailer's cleared all the same`,
+      a.col != null && a.of > 3 && a.cf === a.of && a.c === a.col && a.O === null && a.rf === 0 && a.R === undefined && a.Rh === undefined && b.cf === 20 && b.c === null && b.O === null && b.rf === 0 && b.R === undefined && b.Rh === undefined,
+      `fxCar ${a.of.toFixed(1)}: the tractor ${String(a.c)}, the car ${String(a.O)}, the trailer ${String(a.R)} / ${String(a.Rh)}; with its own knock of 20: ${String(b.c)}, ${String(b.R)} / ${String(b.Rh)}`);
+  }
 }
 
 let bad = 0;
