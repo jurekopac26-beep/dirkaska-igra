@@ -14,6 +14,10 @@
 //    marks' mesh (hidden: one call fewer), the frame within section 3's 360; the race started again: the marks' mesh empty, the new car
 //    whole, its view without v.hubG
 // 9. P4, the grit of a concrete wall (cv 6): the knock's frame no draw call, vertex or mesh over the same at a steel rail; the pool of 2400 holds
+// 10. a pile-up (cv 6, render.js xLtCut): 10 knocked rivals in a row ahead of the camera: the 6 nearest keep their own panels, the 4 behind
+//     them are drawn light (one mesh again, v.xLt), fewer calls than with the rule off (Render.setDebug({ xLtK })) and no more vertices; a
+//     new knock on a light one: taken apart that very frame, the dent in its panels, none left waiting; light again after it with the
+//     dent in its one mesh (a page of its own: the rally car's race, rivals with panels of their own)
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('Poškodbe: Podrobne on the phone (P1.13)');
 const srv = await serve(); const browser = await launch();
@@ -88,7 +92,7 @@ try {
   // (the game paused, the core not stepped: the wheel rule's KONEC IGRE not in the way), the renderer drawing each place
   const hg = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
-    for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }   // (settled on the road: its height)
+    for (let i = 0; i < 16; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }   // (settled on the road: its height)
     const fx = Math.cos(P.h), fz = Math.sin(P.h);
     for (const c of R.cars) if (c !== P) { const y = c.y, ry = c.roadY; c.place(c.x - fx * 300, c.z - fz * 300, c.h); c.y = c.py = y; c.roadY = ry; }   // (the rivals far behind: the road ahead the player's alone)
     const sk = Render.scene.getObjectByName('skids'), G = sk.geometry, y0 = P.y, ry0 = P.roadY, near = (a, b) => Math.abs(a - b) < 0.004;
@@ -141,7 +145,7 @@ try {
   // splitter's corner, the sag held at 1 cm over the road: tools/trki/iskre-vogal.mjs). The car carried by hand as in 7
   const sc = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
-    for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
+    for (let i = 0; i < 16; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
     const fx = Math.cos(P.h), fz = Math.sin(P.h), y0 = P.y, ry0 = P.roadY;
     for (const c of R.cars) if (c !== P) { const y = c.y, ry = c.roadY; c.place(c.x - fx * 300, c.z - fz * 300, c.h); c.y = c.py = y; c.roadY = ry; }
     const drive = (v, n, air) => { for (let i = 0; i < n; i++) { P.place(P.x + fx * v / 30, P.z + fz * v / 30, P.h); P.y = P.py = y0; P.roadY = ry0; P.air = air ? 1 : 0; P.vx = fx * v; P.vz = fz * v; P.speed = v; P.w = 0; P.axF = 0; Render.frame(1 / 30, 1, P, 'chase', {}); }
@@ -189,6 +193,43 @@ try {
   T.check('9. a concrete wall found beside the road, cv 6 lays its grit: 86 particles over the knock at steel (which lays the same twice)', gd.dust === 1 && !!gd.grit && gS.em > 0 && gS.em === gS2.em && gG.em - gS.em === 86, JSON.stringify(gd));
   T.check('9. the grit costs no draw call, vertex or mesh: the knock\'s frame and the 30 after it as at steel', !!gd.grit && gG.c === gS.c && gG.c === gS2.c && gG.v === gS.v && gG.cMax === gS.cMax && gG.mesh === 0 && gS.mesh === 0 && gG.c <= 300, `calls ${gG.c} / ${gS.c} / ${gS2.c}, after ${gG.cMax} / ${gS.cMax}, vertices ${gG.v} / ${gS.v}, meshes +${gG.mesh}`);
   T.check('9. the pool of 2400 holds: one knock under 200 alive, four knocks in four frames under 600 (none written over)', gG.alive < 200 && gd.em4 === 4 * gG.em && gd.alive4 === gd.em4 && gd.alive4 < 600, `alive ${gG.alive}, four ${gd.alive4} of ${gd.em4} emitted`);
+  // 10. a pile-up: more than 6 knocked rivals in the view: the nearest 6 with their own panels, the others one mesh again (xLtCut, xLight)
+  // (a page of its own, the first one closed: the rally car's race, its rivals the older bodies, whose panels are meshes of their own; the
+  // race built at cv 6 from its start)
+  await page.close();
+  const p10 = await openGame(browser, srv.base + '/index.html', { ...base, carId: 'rally' }, { width: 844, height: 390 }, { seed: 12345 });
+  await p10.page.evaluate(() => { window.__gl = { calls: 0, verts: 0 }; const cv = document.querySelector('canvas'), gl = cv.getContext('webgl2') || cv.getContext('webgl');
+    const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
+    wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]); });
+  await startTrack(p10.page, 'spa');
+  const pu = await p10.page.evaluate(() => { const g = window.__game, cv0 = Core.TX.cv, o = {}; Core.TX.cv = 6; g.onAction('restart'); g.pause(); const R = g.race, P = R.player;
+    for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
+    for (let i = 0; i < 16; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }   // (past the camera's way in at the start; the cars standing)
+    const fx = Math.cos(P.h), fz = Math.sin(P.h), rv = R.cars.filter(c => c !== P && Render.viewOf(c) && Render.viewOf(c).xOn && Render.viewOf(c).det).slice(0, 10);
+    rv.forEach((c, i) => { const f = 9 + 6 * (i >> 1), l = i & 1 ? 1.7 : -1.7; c.place(P.x + fx * f - fz * l, P.z + fz * f + fx * l, P.h); c.y = c.py = P.y; c.roadY = P.roadY; });
+    for (const c of R.cars) if (c !== P && rv.indexOf(c) < 0) { c.place(P.x - fx * 400, P.z - fz * 400, P.h); }   // (the others out of the view)
+    Render.resetCam(); const fr = (n) => { for (let i = 0; i < n; i++) Render.frame(1 / 60, 1, P, 'chase', {}); };
+    const meas = () => { const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {}); return [__gl.calls - c0, __gl.verts - v0]; };
+    const st = () => rv.map(c => { const v = Render.viewOf(c); return v.xLt ? 'L' : v.mrg ? 'm' : 'A'; }).join('');   // (L light, A apart: its own panels, m one mesh as built)
+    const sum = (v) => { if (!v.partsM) return null; const a = v.partsM.geometry.attributes.position.array; let q = 0; for (let i = 0; i < a.length; i++) q += a[i] * (1 + i % 7); return +q.toFixed(3); };
+    fr(30); o.n = rv.length; o.ids = [...new Set(rv.map(c => c.m.id))].join(','); o.st0 = st(); o.c0 = meas();
+    for (const c of rv) { Core.applyDamage(c, 0.15, c.m.len / 2, 0); Core.applyDamage(c, 0.12, -c.m.len / 2, 0.5 * c.m.wid / 2); }
+    fr(12); o.st1 = st();   // (the first knocks: one rival taken apart a frame, none light yet)
+    fr(108); o.st2 = st(); o.cOn = meas(); o.dmg = +(rv.reduce((a, c) => a + c.dmg, 0) / rv.length).toFixed(2);
+    Render.setDebug({ xLtK: 99 }); fr(30); o.st3 = st(); o.cOff = meas();   // (the rule off: every knocked rival its own panels)
+    Render.setDebug({ xLtK: null }); fr(60); o.st4 = st(); o.cOn2 = meas();
+    // a new knock on the farthest, a light one
+    const q = rv[rv.length - 1], v = Render.viewOf(q); o.sum0 = sum(v); o.log0 = (v.dLog || []).length; o.d0 = +q.dmg.toFixed(3);
+    Core.applyDamage(q, 0.2, 0, q.m.wid / 2); o.wait = (q.dents || []).length; fr(1);
+    o.hit = { lt: !!v.xLt, mrg: !!v.mrg, det: !!(v.det && v.det.visible), left: (q.dents || []).length, log: (v.dLog || []).length, dmg: +q.dmg.toFixed(3) };
+    fr(60); o.st5 = st(); o.sum1 = sum(v); o.cOn3 = meas();
+    Core.TX.cv = cv0; return o; });
+  T.check('10. ten rivals in two files ahead, whole: each one mesh as built', pu.n === 10 && pu.st0 === 'mmmmmmmmmm', `${pu.n} rivals (${pu.ids}), ${pu.st0}, calls ${pu.c0}`);
+  T.check('10. all ten knocked: the 6 nearest keep their own panels, the 4 behind them light (one mesh again)', pu.st2 === 'AAAAAALLLL' && pu.st1.indexOf('L') < 0, `${pu.st1} → ${pu.st2}, dmg ${pu.dmg}`);
+  T.check('10. the rule off (xLtK 99): all ten their own panels, at least 20 calls more and no fewer vertices; on again: as before', pu.st3 === 'AAAAAAAAAA' && pu.cOff[0] - pu.cOn[0] >= 20 && pu.cOn[1] <= pu.cOff[1] && pu.st4 === 'AAAAAALLLL' && Math.abs(pu.cOn2[0] - pu.cOn[0]) <= 2, `on ${pu.cOn}, off ${pu.cOff}, on again ${pu.cOn2}; ${pu.st3} → ${pu.st4}`);
+  T.check('10. a new knock on a light rival: taken apart that frame, the dent in its panels, none left waiting', pu.wait > 0 && !pu.hit.lt && !pu.hit.mrg && pu.hit.det && pu.hit.left === 0 && pu.hit.log > pu.log0 && pu.hit.dmg > pu.d0, JSON.stringify({ waiting: pu.wait, hit: pu.hit, log0: pu.log0, dmg0: pu.d0 }));
+  T.check('10. light again after it, the dent in its one mesh', pu.st5 === 'AAAAAALLLL' && pu.sum0 != null && pu.sum1 != null && pu.sum1 !== pu.sum0, `${pu.st5}, mesh ${pu.sum0} → ${pu.sum1}, calls ${pu.cOn3}`);
+  T.check('10. no page errors', !p10.errors.length, p10.errors.slice(0, 2).join(' | '));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } finally { await browser.close(); await srv.close(); }
 T.done();
