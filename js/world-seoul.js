@@ -185,6 +185,7 @@
             const r = gf.row(p, [W1, W1], [[acc / 3, 0], [acc / 3, 1]]); if (pr >= 0) gf.link(pr, r, 0, 1); pr = r; } }
         addM(gf, fMat); }
     }
+    out.barKind = () => 1;   // (Render: concrete blocks all the way on both sides: a wall strike breaks grit off)
     const scen = new Chunks(192);
     for (const [i, sg] of [[0, -1], [N - 1, 1]]) { const ex = T.px[i] + T.tx[i] * sg * 1.0, ez = T.pz[i] + T.tz[i] * sg * 1.0;
       for (let o = -T.bl[i]; o <= T.br[i]; o += 2.05) { const bx = ex + T.nx[i] * o, bz = ez + T.nz[i] * o; box(scen.get(bx, bz), bx, T.hy[i] - 0.1, bz, 0.7, 0.92, 1.95, T.hd[i], [0.8, 0.8, 0.78], CON); } }

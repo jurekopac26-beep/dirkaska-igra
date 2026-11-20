@@ -4,6 +4,7 @@
 // - the choice (Core.setTest cv): Simulacija by default, cv 1-5 the versions, the rows over a version (cPm, cE, cMu, cYaw, cGl, cSl, cFx),
 //   setTest(null) back to the default; Stara is the old knock (round ends, the classic's 0.1 bounce, every touch a full swing of the nose);
 //   cv 6 Realistična (real), the sixth choice: the versions' knock with rules of its own at a touch (its checks: the point Realistična below)
+// - the traffic (Traffic._hitVeh): in Realistična the push by the two weights (momentum kept, the turn, a cyclist by its weight); cv 1-5 the old touch
 // - Simulacija, classic physics: a car hit moves (equal weights: 100 km/h into a standing car, centred, the hit car leaves faster than the
 //   one that hit it, both well under 100 and over 25 km/h; the old heavy knock left it standing); the bounce by the closing speed (a
 //   light knock bounces more than a hard one, a car leaning on another not at all); no pop (under 3 cm a step; 5 at 100 km/h head on); a racing bump 0.6 m off
@@ -35,8 +36,8 @@
 //   add energy the same push as a rigid body takes it); never over 9 rad/s with the grip
 //   lost, also when a corner leans on the barrier after the knock; the same by the weights (96 scenes: MRAVLJA 165 kg, BURJA R7, TITAN,
 //   KAMEN PUŠČAVA 7000 kg, also without turning at the start) and the yaw rate right after a touch at most 9 rad/s whichever car (460
-//   scenes: the new physics, the classic MRAVLJA, a car rolling over); the mirror image to 1e-9 without turning at the start and in all but a few
-//   scenes with it; the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
+//   scenes: the new physics, the classic MRAVLJA, a car rolling over); the mirror image to 1e-9 without turning at the start and with it
+//   (all 300 scenes: a car on the left half of the road takes its corners in the mirror image's order, wallCollide); the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
 //   damage: docs/trki-realizem.md, »Testi različice Realistična«); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the
 //   whole state of the race and of the car after every step is the same in cv 6 as in cv 1, each in a core of its own; the plane with given
 //   inputs, both physics; the control: the same comparison finds the first touch; among rivals (a race on a circuit with pits lays rubber on the
@@ -364,8 +365,8 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     ok('Realistična, the barrier, sliding and spinning, limits: with the grip lost the car never turns faster than 9 rad/s, also when a corner then leans on the barrier, and the limit is at work (reached in at least 60 of the scenes, 10 of them without turning at the start)',
       both(y => y.wGl <= 9 + 1e-9) && cap.length >= 60 && cap0.length >= 10, `the fastest ${f(two(w, y => y.wGl), 6)} rad/s (${w.name}); at the limit in ${cap.length} scenes, ${cap0.length} of them without turning at the start`);
     const off = (fn, L) => L.filter(x => !(fn(x) <= 1e-9)), S0 = SK.filter(x => !x.w0), ST = SK.filter(x => x.w0), o1 = off(x => x.m1, ST), oE = off(x => x.m, ST), top = (fn, L) => fn(worst(fn, L));
-    ok('Realistična, the barrier, sliding and spinning, symmetry: the left barrier gives the mirror image of the right one to 1e-9 right after the first touch and at the end in every scene without turning at the start (60); turning at the start (240) in all but at most 2 right after the first touch and 8 at the end (two corners at the barrier in one step are handled one after the other, and the mirror image has them in the other order)',
-      !off(x => x.m1, S0).length && !off(x => x.m, S0).length && o1.length <= 2 && oE.length <= 8,
+    ok('Realistična, the barrier, sliding and spinning, symmetry: the left barrier gives the mirror image of the right one to 1e-9 right after the first touch and at the end in every scene, without turning at the start (60) and turning (240): two corners at the barrier in one step are handled one after the other, and a car on the left half of the road takes them in the mirror image\'s order (wallCollide)',
+      !off(x => x.m1, S0).length && !off(x => x.m, S0).length && !o1.length && !oE.length,
       `without turning off by at most ${top(x => x.m1, S0).toExponential(1)} / ${top(x => x.m, S0).toExponential(1)}; turning: ${o1.length} / ${oE.length} of ${ST.length} off (at most ${f(top(x => x.m1, ST), 3)} / ${f(top(x => x.m, ST), 3)}: ${worst(x => x.m, ST).name}); Simulacija at the end: ${off(x => x.sm, SK).length} of ${SK.length} off (${off(x => x.sm, S0).length} without turning)`);
     const N = sum(x => x.r.n + x.l.n), NI = sum(x => x.r.ni + x.l.ni), DM = sum(x => x.r.dmg + x.l.dmg), DN = sum(x => x.r.dmgNi + x.l.dmgNi), h = worst(x => two(x, y => y.niHit)), NS = sum(x => x.s.ni + x.sl.ni);
     ok('Realistična, the barrier, the touch without a push (a corner swings into the barrier faster than 1.5 m/s while the middle of its patch does not close on it: the hit is recorded, nothing pushes the car; docs/trki-realizem.md, »Robni primer brez sunka«): under 2 % of the steps with a touch and under 2 % of the damage the hits stand for; none in Simulacija',
@@ -831,6 +832,136 @@ for (const tid of ['spa', 'bathurst']) {
       r.every(o => o.plain && o.fx > 3 && o.k === o.A && o.a === 0x101010 && o.b === 0x101010 && o.pt) && s.every(o => o.k === o.A) && r[0].s === s[0].s && r[1].s === s[1].s,
       `strong first: fxK ${r[0].k && r[0].k.toString(16)}, fxCar ${r[0].fx.toFixed(1)}; weak first: fxK ${r[1].k && r[1].k.toString(16)}, fxCar ${r[1].fx.toFixed(1)} (the stronger car's paint ${r[0].A.toString(16)})`);
   }
+  // an entry holds only for the fxCar it was set at (fxKOf: undefined, nothing known, once fxCar is cleared or raised without fxSrc: a contact
+  // set by hand, a trailer's after its tractor took it); null is only ever a paintless strongest knock; a tie keeps the first, a weaker later knock changes nothing
+  const knock = (tx) => test(tx, () => { const P = HC.mkCar('rally', { v: 0 }), A = HC.mkCar('rally', { v: 32 }); P.color = 0x808080; A.color = 0xc02020;
+    P.place(0, 0, 0); A.place(-(P.m.len - 0.02), 0, 0); A.vx = 9; C.carCollide(A, P); return { P, A }; });
+  for (const [nm, tx] of [['Simulacija', SIM], ['Realistična', REAL], ['Stara', { cv: 5 }]]) {
+    const { P, A } = knock(tx), k0 = C.fxKOf(P), f0 = P.fxCar; P.fxCar = 0; const z = C.fxKOf(P); P.fxCar = f0 + 4; const up = C.fxKOf(P); P.fxCar = f0; const back = C.fxKOf(P);
+    C.fxSrc(P, null, f0); const tie = C.fxKOf(P); C.fxSrc(P, null, f0 + 1); P.fxCar = f0 + 1; const thing = C.fxKOf(P);
+    C.fxSrc(P, A, f0 + 0.5); const weak = C.fxKOf(P), tk = C.fxKOf(P, true), gone = C.fxKOf(P);
+    ok(`${nm}: fxK holds only for the fxCar it was set at: nothing known (undefined) with fxCar cleared or raised by hand, the car's paint again at its own strength; a paintless thing as strong does not take it over (the first holds), a stronger one does (null), a weaker car after it does not; taken: nothing known`,
+      k0 === 0xc02020 && z === undefined && up === undefined && back === 0xc02020 && tie === 0xc02020 && thing === null && weak === null && tk === null && gone === undefined,
+      `fxCar ${f0.toFixed(1)}: ${[k0, z, up, back, tie, thing, weak, tk, gone].map(String).join(', ')}`);
+    const b = knock(tx); delete b.A.color; b.P.fxCar = 0; C.fxKOf(b.P, true); C.fxSrc(b.P, b.A, 5); b.P.fxCar = 5;
+    ok(`${nm}: a car without a colour is a knock without paint (null, not unknown: no search by the contact point)`, C.fxKOf(b.P) === null, String(C.fxKOf(b.P)));
+  }
+  // a trailer's knock is its tractor's (Race._tlStep, fxKFrom): a car into a tank's flank at 6 m/s: the tractor has that car's paint, the car
+  // null (a trailer has no paint), the trailer's fxCar and its entry cleared together (nothing known even with its fxCar put back by hand);
+  // a tractor with a stronger knock of its own keeps its own word, the trailer's entry cleared all the same
+  let spaT = null;
+  for (const [nm, tx] of [['Simulacija', SIM], ['Realistična', REAL], ['Stara', { cv: 5 }]]) {
+    const rig = (own) => test(tx, () => { const orig = Math.random; Math.random = seeded(7); try {
+      const T = spaT || (spaT = new C.Track(C.TRACKS.find(x => x.id === 'spa')));
+      const r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 1, playerModel: C.MODELS.find(m => m.id === 'cisterna'), assist: 0, phys: 'cs', seed: 5, difficulty: 1, damage: 1 }); r.start();
+      const c = r.player, O = r.cars.find(x => x !== c), R = c.tl; c.color = 0x2040c0;
+      for (const x of [c, R, O]) { x.fxCar = 0; C.fxKOf(x, true); }
+      if (own) { C.fxSrc(c, null, 20); c.fxCar = 20; }
+      const w = (R.m.wid + O.m.wid) * 0.5 - 0.05, s = 6; O.place(R.x - Math.sin(R.h) * w, R.z + Math.cos(R.h) * w, R.h); O.y = R.y; O.vx = Math.sin(R.h) * s; O.vz = -Math.cos(R.h) * s;
+      r._tlStep(DT, false);
+      const o = { c: C.fxKOf(c), cf: c.fxCar, O: C.fxKOf(O), of: O.fxCar, col: O.color, R: C.fxKOf(R), rf: R.fxCar }; R.fxCar = o.of; o.Rh = C.fxKOf(R); return o; } finally { Math.random = orig; } });
+    const a = rig(false), b = rig(true);
+    ok(`${nm}: a car knocks a trailer: the tractor's fxK is that car's paint, the car's null (a trailer has none), the trailer's fxCar and its entry cleared together (nothing known with its fxCar put back by hand); a tractor with a stronger knock of its own keeps its own (null), the trailer's cleared all the same`,
+      a.col != null && a.of > 3 && a.cf === a.of && a.c === a.col && a.O === null && a.rf === 0 && a.R === undefined && a.Rh === undefined && b.cf === 20 && b.c === null && b.O === null && b.rf === 0 && b.R === undefined && b.Rh === undefined,
+      `fxCar ${a.of.toFixed(1)}: the tractor ${String(a.c)}, the car ${String(a.O)}, the trailer ${String(a.R)} / ${String(a.Rh)}; with its own knock of 20: ${String(b.c)}, ${String(b.R)} / ${String(b.Rh)}`);
+  }
+}
+
+// Realistična and the traffic (Traffic._hitVeh -> _hitVehR, _runBikeR; docs/trki-realizem.md): one touch of the player's car (BURJA R7) and
+// a vehicle of the endless drive's traffic (Bathurst), Traffic._hitVeh called once on the two as placed (no step: neither drives). In cv 6:
+// the momentum of the car (with its fuel) and a vehicle knocked loose is kept to 1e-9 both ways, the kinetic energy with both turns never
+// grows; a vehicle that stays on its lane (a truck, a bus brushed along its flank) keeps the pair's momentum along the lane (to 1e-6; its
+// tyres take what goes across) and never rolls backwards; the bounce by the closing speed (120 km/h: under 0.2; the old touch 0.25); a touch
+// 0.6 m off the middle turns the car (the old touch only swings its nose), the mirror image the other way; a cyclist run over: the car loses
+// (1 + e) m / (M + m) of its speed (under 10 %; the old rule 15 % + 1 m/s), the bicycle leaves faster than the car, the same event and the
+// same count of the traffic's random numbers. cv 1 and cv 5 (and a friend's car online in cv 6): the old touch, by its own numbers
+{
+  let bT = null;
+  const hit = (tx, o) => test(tx, () => { const orig = Math.random; Math.random = seeded(7); try {
+    const T = bT || (bT = new C.Track(C.TRACKS.find(x => x.id === 'bathurst')));
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 99, playerModel: C.MODELS.find(m => m.id === 'rally'), assist: 2, phys: 'cs', seed: 9, difficulty: 1, damage: 2, endless: true }); r.start();
+    const P = r.player, tf = r.tf; tf.win.dens = 0; for (const q of tf.veh) q.off = true;
+    const v = tf._veh(1, o.p === 5 ? 2 : o.p, P.q.s + 60, o.p); v.off = true; tf._winPlace(v, P.q.s + 60, 0); v.v = o.vt || 0; tf._pose(v, 0); tf._pose(v, 0);
+    const hx = Math.cos(v.h), hz = Math.sin(v.h), h = v.h + (o.bok || 0) / D, off = o.off || 0;
+    if (o.bok) { const side = -(v.wid / 2 + P.m.wid / 2 - 0.05); P.x = v.x - hx * (v.len / 2 - 3) - hz * side; P.z = v.z - hz * (v.len / 2 - 3) + hx * side; }   // (its nose into the flank, 3 m ahead of the tail)
+    else { const back = v.len / 2 + P.m.len / 2 - 0.05; P.x = v.x - hx * back - hz * off; P.z = v.z - hz * back + hx * off; }   // (from behind, 5 cm in)
+    P.px = P.x; P.pz = P.z; P.h = P.ph = h; P.vx = Math.cos(h) * o.v; P.vz = Math.sin(h) * o.v; P.w = 0; P.net = !!o.net;
+    const ma = P.m.mass + (P.fuelKg || 0), mb = v.mass, Ia = P.I * ma / P.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
+    const vv = () => v.st === 0 ? [T.tx[v.i] * v.v * v.dir, T.tz[v.i] * v.v * v.dir] : [v.vx, v.vz];
+    const b0 = vv(), p0x = ma * P.vx + mb * b0[0], p0z = ma * P.vz + mb * b0[1], E0 = 0.5 * ma * o.v * o.v + 0.5 * mb * (b0[0] * b0[0] + b0[1] * b0[1]);
+    tf._hitVeh(P, v); const b1 = vv(), dpx = ma * P.vx + mb * b1[0] - p0x, dpz = ma * P.vz + mb * b1[1] - p0z, p0 = Math.hypot(p0x, p0z);
+    const E1 = 0.5 * ma * (P.vx * P.vx + P.vz * P.vz) + 0.5 * Ia * P.w * P.w + 0.5 * mb * (b1[0] * b1[0] + b1[1] * b1[1]) + (v.st === 1 ? 0.5 * Ib * v.w * v.w : 0);
+    return { st: v.st, dp: Math.hypot(dpx, dpz) / p0, dpl: (dpx * hx + dpz * hz) / p0, dE: (E1 - E0) / E0, vc: Math.hypot(P.vx, P.vz), vcl: P.vx * hx + P.vz * hz, vb: b1[0] * hx + b1[1] * hz, vbn: Math.hypot(b1[0], b1[1]), vv: v.v, w: P.w, kc: P.csKc || 0,
+      R: tf.R(), ev: tf.evK, dmg: P.dmg, hitCar: P.hitCar, wh: tf.win.hit, ma, mb, nan: !Number.isFinite(P.vx + P.vz + P.w + P.x + P.z + v.x + v.z + v.s + v.d + v.v + (v.vx || 0) + (v.vz || 0) + (v.w || 0)) };
+  } finally { Math.random = orig; } });
+  const V = 120 / 3.6, NAME = ['avto', 'kombi', 'avtobus', 'motor', 'kolo', 'tovornjak'];
+  // loose bodies: the momentum both ways, the energy, the bounce
+  { const rows = []; let okAll = true;
+    for (const p of [0, 1, 2, 3]) for (const v of [60 / 3.6, V, 200 / 3.6]) for (const off of [0, 0.6, -0.6]) { const q = hit(REAL, { p, v, off }), e = (q.vb - q.vcl) / v;
+      const good = !q.nan && q.st === 1 && q.dp < 1e-9 && q.dE < 1e-9 && q.dE > -0.97 && e >= -1e-9 && e < 0.2 && q.wh === 1 && q.hitCar > 3 && q.ev === 'crash'; if (!good) okAll = false;
+      if (!good || (off === 0 && v === V)) rows.push(`${NAME[p]} ${f(v * 3.6, 0)} km/h ${off}: dp ${q.dp.toExponential(1)}, dE ${f(q.dE * 100, 1)} %, e ${f(e)}, st ${q.st}`); }
+    { const q = hit(REAL, { p: 0, v: V, vt: 60 / 3.6 }); if (q.nan || q.dp > 1e-6 || q.dE > 1e-9 || q.st !== 1) okAll = false; rows.push(`120 into a car at 60 km/h: dp ${q.dp.toExponential(1)}, dE ${f(q.dE * 100, 1)} %`); }   // (its lane's tangent between two samples: 1e-6)
+    ok('Realistična, the traffic: a car, a van, a bus and a motorbike rear-ended at 60-200 km/h (centred and 0.6 m off either way) come loose and the pair keeps its momentum (1e-9), never gains energy, the bounce 0-0.2; a touch ends the endless drive, a crash event', okAll, rows.join('; ')); }
+  // the turn, the mirror image, against the old touch
+  { const a = hit(REAL, { p: 0, v: V, off: 0.6 }), b = hit(REAL, { p: 0, v: V, off: -0.6 }), o = hit(SIM, { p: 0, v: V, off: 0.6 }), c = hit(REAL, { p: 0, v: V });
+    ok('Realistična, the traffic: 0.6 m off the middle the car turns (1-9 rad/s, away from the vehicle; centred not at all), the mirror image the other way to 1e-9; the old touch leaves its yaw rate alone and swings the nose',
+      Math.abs(a.w) > 1 && Math.abs(a.w) <= 9 && Math.abs(a.w + b.w) < 1e-9 && Math.abs(a.vc - b.vc) < 1e-9 && Math.abs(c.w) < 1e-9 && o.w === 0 && Math.abs(o.kc) > 0.3,
+      `w ${f(a.w)} / ${f(b.w)} rad/s, centred ${c.w.toExponential(1)}; cv 1: w ${o.w}, the nose ${f(o.kc * D, 1)} deg`); }
+  // on its lane: a truck rear-ended, a bus and a truck brushed along the flank
+  { const rows = []; let okAll = true;
+    for (const o of [{ p: 5, v: V }, { p: 5, v: 60 / 3.6 }, { p: 2, v: V, bok: 5 }, { p: 2, v: 60 / 3.6, bok: 30 }, { p: 5, v: V, bok: 30 }, { p: 5, v: 60 / 3.6, bok: 5 }]) { const q = hit(REAL, o);
+      const good = !q.nan && q.st === 0 && Math.abs(q.dpl) < 1e-6 && q.dE < 1e-9 && q.vv >= 0 && q.vc < o.v + 1e-9; if (!good) okAll = false;
+      rows.push(`${NAME[o.p]} ${f(o.v * 3.6, 0)} km/h${o.bok ? ' ' + o.bok + ' deg' : ''}: along ${q.dpl.toExponential(1)}, dE ${f(q.dE * 100, 1)} %, the car ${f(q.vc * 3.6, 1)}, it ${f(q.vv * 3.6, 2)} km/h`); }
+    ok('Realistična, the traffic: a vehicle that stays on its lane (a truck rear-ended, a bus and a truck brushed at 5 and 30 deg) keeps the pair\'s momentum along the lane (1e-6), no energy gained, it never rolls backwards, the car never faster', okAll, rows.join('; ')); }
+  // a cyclist run over
+  { const rows = []; let okAll = true;
+    for (const v of [60 / 3.6, V, 200 / 3.6]) for (const off of [0, 0.4]) { const q = hit(REAL, { p: 4, v, off }), o = hit(SIM, { p: 4, v, off }), loss = 1 - q.vc / v, want = 1.3 * q.mb / (q.ma + q.mb);
+      const good = !q.nan && q.st === 1 && q.dp < 1e-9 && q.dE < 1e-9 && loss > 0.04 && loss < 0.1 && loss < want + 0.02 && q.vb > q.vcl && q.vb < 1.2 * v && q.ev === 'bike' && o.ev === 'bike' && q.R === o.R && q.dmg === o.dmg && q.wh === 1
+        && Math.abs(o.vc - (v - Math.min(v, 0.15 * v + 1))) < 1e-9 && Math.abs(o.vb - 0.5 * v) < 1e-9; if (!good) okAll = false;
+      rows.push(`${f(v * 3.6, 0)} km/h ${off}: the car -${f(loss * 100, 1)} % (cv 1 -${f((1 - o.vc / v) * 100, 1)} %), the bicycle ${f(q.vb / v)} v (cv 1 ${f(o.vb / v)} v), dp ${q.dp.toExponential(1)} (cv 1 ${f(o.dp)})`); }
+    ok('Realistična, the traffic: a cyclist run over: the pair keeps its momentum (1e-9), the car loses 4-10 % of its speed, the bicycle leaves faster than the car (under 1.2 v); the same event, damage and count of the traffic\'s random numbers as cv 1, which keeps its rule (the car -(15 % + 1 m/s), the bicycle 0.5 v)', okAll, rows.join('; ')); }
+  // cv 1 and cv 5, a friend's car online in cv 6: the old touch
+  { const rows = []; let okAll = true; const key = (q) => [q.st, q.vc, q.vcl, q.vb, q.vbn, q.vv, q.w, q.kc, q.R, q.ev, q.dmg, q.hitCar, q.dp, q.dE].join(' ');
+    for (const o of [{ p: 0, v: V }, { p: 0, v: V, off: 0.6 }, { p: 1, v: 60 / 3.6 }, { p: 2, v: V, bok: 30 }, { p: 3, v: V }, { p: 4, v: V }]) { const a = hit(SIM, o), b = hit(OLD, o), s3 = hit(SOFT, o), n1 = hit(SIM, Object.assign({ net: 1 }, o)), n6 = hit(REAL, Object.assign({ net: 1 }, o));
+      let good = key(a) === key(b) && key(a) === key(s3) && key(n1) === key(n6) && a.w === 0;
+      if (o.p < 4 && !o.off && !o.bok) good = good && Math.abs(a.vc - Math.abs(o.v * (1 - 1.25 * a.mb / (a.ma + a.mb)))) < 1e-9 && Math.abs(a.vb - 1.25 * o.v * a.ma / (a.ma + a.mb)) < 1e-9;   // (the old touch centred: e 0.25 by the two weights)
+      if (!good) okAll = false; rows.push(`${NAME[o.p]}: ${f(a.vc * 3.6, 1)} / ${f(a.vb * 3.6, 1)} km/h`); }
+    ok('the traffic, cv 1, 3 and 5 the same to the digit, by the old touch (centred: the bounce 0.25 by the two weights, no yaw rate); a friend\'s car online in Realistična as in cv 1', okAll, rows.join('; ')); }
+}
+
+// Realistična and the people (Traffic._hitPeds -> _hitPedR; docs/trki-realizem.md): the player's car (BURJA R7, Bathurst's endless drive) over
+// someone on foot standing in its outline, Traffic._hitPeds called once. In cv 6 the car gives exactly the momentum they take (75 kg x their
+// speed, to 1e-9 both ways), so it loses under 3 % of its speed whatever that is (the old rule: 6 % + 0.4 m/s whatever the car weighs, 3-4
+// times what they took); someone 0.6 m off its middle line turns its nose a little, the mirror image the other way; the same state (run
+// over, on the ground at ~0.35 of its speed), event, penalty rule and count of the traffic's random numbers. cv 1, 3 and 5 and a friend's
+// car online in cv 6: the old rule to the digit
+{
+  let bT = null;
+  const hit = (tx, o) => test(tx, () => { const orig = Math.random; Math.random = seeded(7); try {
+    const T = bT || (bT = new C.Track(C.TRACKS.find(x => x.id === 'bathurst')));
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 99, playerModel: C.MODELS.find(m => m.id === 'rally'), assist: 2, phys: 'cs', seed: 9, difficulty: 1, damage: 2, endless: true }); r.start();
+    const P = r.player, tf = r.tf; tf.win.dens = 0; for (const q of tf.veh) q.off = true; for (const q of tf.ped) q.off = true;
+    const p = tf._ped(0, P.q.s + 60, 1, 'walk'), i = T.idx(p.s), hx = T.tx[i], hz = T.tz[i], back = P.m.len / 2 - 0.1, off = o.off || 0;
+    P.x = p.x - hx * back + hz * off; P.z = p.z - hz * back - hx * off; P.px = P.x; P.pz = P.z; P.h = P.ph = Math.atan2(hz, hx); { const hn = Math.hypot(hx, hz); P.vx = hx / hn * o.v; P.vz = hz / hn * o.v; } P.w = 0; P.csKc = 0; P.net = !!o.net; const vx0 = P.vx, vz0 = P.vz;
+    const ma = P.m.mass + (P.fuelKg || 0), n0 = tf.ped.length;
+    tf.cl.length = 0; tf.cl.push(P); tf._hitPeds();
+    return { st: p.st, ma, dpx: ma * (P.vx - vx0) + 75 * p.vx, dpz: ma * (P.vz - vz0) + 75 * p.vz, vc: Math.hypot(P.vx, P.vz), vp: Math.hypot(p.vx, p.vz), w: P.w, kc: P.csKc || 0, R: tf.R(), ev: tf.evK, pen: P.tfPen || 0, dmg: P.dmg,
+      nan: !Number.isFinite(P.vx + P.vz + P.w + P.x + P.z + p.vx + p.vz + p.x + p.z), n: tf.ped.length - n0 };
+  } finally { Math.random = orig; } });
+  const V = 120 / 3.6;
+  { const rows = []; let okAll = true;
+    for (const v of [60 / 3.6, V, 200 / 3.6]) for (const off of [0, 0.6, -0.6]) { const q = hit(REAL, { v, off }), o = hit(SIM, { v, off }), loss = 1 - q.vc / v, dp = Math.hypot(q.dpx, q.dpz) / (q.ma * v);
+      const good = !q.nan && q.st === 'hit' && dp < 1e-9 && loss > 0.01 && loss < 0.03 && q.vc < v && q.vp > 0.3 * v && q.vp < 0.4 * v && q.ev === 'ped' && o.ev === 'ped' && q.R === o.R && q.pen === o.pen && q.dmg === o.dmg && o.st === 'hit'
+        && Math.abs(o.vc - (v - Math.min(v, 0.06 * v + 0.4))) < 1e-9 && o.w === 0; if (!good) okAll = false;
+      if (!good || off === 0) rows.push(`${f(v * 3.6, 0)} km/h ${off}: the car -${f(loss * 100, 2)} % (cv 1 -${f((1 - o.vc / v) * 100, 1)} %), they ${f(q.vp / v)} v, dp ${dp.toExponential(1)}`); }
+    ok('Realistična, the people: someone run over at 60-200 km/h (centred and 0.6 m off either way): the car gives exactly what they take (1e-9), 1-3 % of its speed; the same state, event, penalty and count of the traffic\'s random numbers as cv 1, which keeps its rule (the car -(6 % + 0.4 m/s))', okAll, rows.join('; ')); }
+  { const a = hit(REAL, { v: V, off: 0.6 }), b = hit(REAL, { v: V, off: -0.6 }), c = hit(REAL, { v: V });
+    ok('Realistična, the people: someone 0.6 m off the middle line turns the car a little (its turn or its line, under 0.5 rad/s), one in the middle not at all, the other way the other way round (the road bends a little under them: to 3 %) with the same speed left',
+      Math.abs(a.w + a.kc) > 1e-5 && Math.abs(a.w) < 0.5 && Math.abs(a.w + b.w) < 1e-9 && a.kc * b.kc < 0 && Math.abs(a.kc + b.kc) < 0.03 * Math.abs(a.kc) && Math.abs(c.w) + Math.abs(c.kc) < 0.02 * Math.abs(a.kc) && Math.abs(a.vc - b.vc) < 1e-9, `w ${f(a.w, 4)} / ${f(b.w, 4)} rad/s, the line ${a.kc.toExponential(2)} / ${b.kc.toExponential(2)}, centred ${f(c.w, 4)} ${c.kc.toExponential(1)}`); }
+  { let okAll = true; const rows = [], key = (q) => [q.st, q.vc, q.vp, q.w, q.kc, q.R, q.ev, q.pen, q.dmg, q.dpx, q.dpz].join(' ');
+    for (const o of [{ v: V }, { v: 60 / 3.6, off: 0.6 }]) { const a = hit(SIM, o), b = hit(OLD, o), s3 = hit(SOFT, o), n1 = hit(SIM, Object.assign({ net: 1 }, o)), n6 = hit(REAL, Object.assign({ net: 1 }, o));
+      if (!(key(a) === key(b) && key(a) === key(s3) && key(n1) === key(n6) && Math.abs(n6.vc - o.v) < 1e-12)) { okAll = false; rows.push([key(a), key(b), key(s3), key(n1), key(n6)].join(' | ')); } }
+    ok('the people, cv 1, 3 and 5 the same to the digit by the old rule; a friend\'s car online in Realistična as in cv 1 (its own phone slows it)', okAll, rows.join('; ')); }
 }
 
 let bad = 0;

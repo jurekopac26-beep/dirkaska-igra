@@ -2546,7 +2546,7 @@ const Core = (function () {
   // pulled and shaken, the rivals too (the user's choice 17. 11. 2026, question trki-vlecenje-tekmeci = 2; Nastavitve »Vleka krmila po
   // trku: Vsi avti«, the default). »Samo moj avto« (TX.pull 0): only a wheel a person holds - a car the autopilot steers in this step
   // (_aiS, nothing on the Car: filled by aiControl, stubDrive, the Race for its rivals and the police for its patrol cars, emptied
-  // here) gets 0, as before P3 (the autopilot does not steer against the pull: a knocked rival drifts towards the car beside it)
+  // here and at the end of Car.step; the Race drops it for a falling car, whose step it does not call) gets 0, as before P3 (the autopilot does not steer against the pull: a knocked rival drifts towards the car beside it)
   const _aiS = new WeakSet();
   function dmgSteer(c, spd, dt) {
     const ai = _aiS.delete(c); if ((ai && (TX.pull === 0 || c.noPull)) || c.dmgMode !== 2 || XR.net) return 0; const cd = c.cd, b = sstep(0.35, 0.7, cd[1]) - sstep(0.35, 0.7, cd[0]);   // (each bent wheel its own way: the mirror image of a car the mirror image of its wobble)
@@ -4026,9 +4026,11 @@ const Core = (function () {
   //               its way is shouldered aside (push m/s to its side, against the car), at no price to the car; the push gives it no speed
   //               beyond what it had or the car's own speed and push (a piece caught between a car and a barrier, or two cars, is not shot
   //               out along the gap), and push is under DEB_RUN.v: a piece a standing car shoulders aside lies at once (it does not dance
-  //               between two cars at push m/s until a car's time ends and it is knocked)
+  //               between two cars at push m/s until a car's time ends and it is knocked). A piece still moving that is in the car as
+  //               the car's time runs out keeps it (clear s at least, step after step): the time ends once the piece has been clear of
+  //               the car for clear s (a piece carried along by a wreck is not knocked by it at exactly 2.000 s)
   const DEB = {
-    own: 2, again: 2, push: 2.5,
+    own: 2, again: 2, clear: 0.25, push: 2.5,
     kA: 0.72, kLo: 0.01, kHi: 0.06, kW: 0.007,
     e: 0.28, vB: 2.5, muT: 0.9, keep: 0.3,
     vT: 7, muS: 0.55, spin: 0.4, edge: 0.8,
@@ -4039,17 +4041,27 @@ const Core = (function () {
     sE: [1, 1, 0.4, 0.15, 1, 0.7, 0.7, 1, 1],
     aRoll: [5, 5, 7, 14, 5, 6, 6, 5, 5],
   };
+  const _dFar = new WeakSet(), _dPen = new WeakMap();   // K3, stepDebris only: the pieces left out past a limit (no jump back), and how far out each was left a step ago
   function stepDebris(d, T, dt) {
     if (d.by) for (let i = d.by.length - 1; i >= 0; i--) if ((d.byT[i] -= dt) <= 0) { d.by.splice(i, 1); d.byT.splice(i, 1); }   // (the car it has just left may touch it again: debrisHit)
     if (d.rest) return;
     const W = d.wh || 0, re = W ? d.r : DEB.edge * d.r;           // (a piece made by hand, a test's: no wh, a panel)
     d.vy -= JUMP_G * dt;
     d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+    let k0 = d.q ? d.q.k : -1, p0 = _dPen.get(d);              // (the side road its point was in, -1 the road: d.q is written over; p0: how far out it was left a step ago, undefined: a new piece)
+    if (p0 === undefined && T.stubs && T.stubs.length) { const qb = T.query(d.x - d.vx * dt, d.z - d.vz * dt, d.q ? d.q.i : -1, {}); k0 = qb.k; p0 = Math.max(0, T.wall(qb, d.r * 0.5, _wn)); }   // (a new piece on a road with side roads: where it was before this step's move)
     d.q = T.query(d.x, d.z, d.q ? d.q.i : -1, d.q || {});
     const pen = T.wall(d.q, d.r * 0.5, _wn);                      // bounce off the barriers (a side road's limits)
+    // K3: a point in or out of a side road may change limits in one step (the side road's own to the road's barrier, tens of metres back):
+    // out by more than a step can have taken it, it is not put back (no jump), only turned back, until it is inside some limit again.
+    // Only there: on a road without side roads, and a piece that was as far out a step ago (a new one too: born out there), it is put back as ever
+    let far = _dFar.has(d);
+    if (!(pen > 0)) { if (far) { _dFar.delete(d); far = false; } }
+    else if (!far && p0 !== undefined && (k0 >= 0 || d.q.k >= 0) && pen > p0 + d.r + 2 * Math.sqrt(d.vx * d.vx + d.vz * d.vz) * dt + 0.5) { _dFar.add(d); far = true; }
+    _dPen.set(d, far ? pen : 0);
     if (pen > 0) {
       const nx = _wn[0], nz = _wn[1];
-      d.x += nx * pen; d.z += nz * pen;
+      if (!far) { d.x += nx * pen; d.z += nz * pen; }
       const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; }
     }
     if (T.open) { const pen = endPen(T, d.q, d.r * 0.5); if (pen > 0) { const nx = _en[0], nz = _en[1]; d.x += nx * pen; d.z += nz * pen; const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; } } }   // ... and the end walls
@@ -4135,6 +4147,7 @@ const Core = (function () {
       }
       const e = Math.sqrt(e2) || 0.01, nx = ex / e, nz = ez / e;
       if (free) {   // in its car's way (going deeper into it): shouldered aside, to the side it is on. A push of its speed, not of its place (no jump), and nothing to the car
+        { const bi = d.by.indexOf(c); if (d.byT[bi] < DEB.clear) d.byT[bi] = DEB.clear; }   // (still in the car as its time ends: the time ends once it has been clear of it for DEB.clear s, not with a knock in the step after)
         if ((d.vx - c.vx) * nx + (d.vz - c.vz) * nz < 0) {
           const la = dz * ch - dx * sh, s = la < -0.05 ? -1 : la > 0.05 ? 1 : (d.id & 1 ? 1 : -1);   // (one on the car's axis, a bumper, a bonnet: to the side its number gives, half of them each way)
           const px = -sh * s, pz = ch * s, a = DEB.push - ((d.vx - c.vx) * px + (d.vz - c.vz) * pz);
@@ -4472,7 +4485,11 @@ const Core = (function () {
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     };
-    for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
+    // (Realistična, krOn: two corners in the barrier in one step are taken one after the other, the first one's push before the second is asked, so
+    // the order counts; a car on the left half of the road takes its four in the mirror image's order, right before left (k ^ 1: 1, 0, 3, 2), and
+    // the left barrier gives the mirror image of the right one. On the middle line by the way it turns; one corner in it alone: as before)
+    const mir = c.corners.length === 4 && krOn(c) && c.q && (c.q.d || -c.w) < 0 ? 1 : 0;
+    for (let n = 0, nK = c.corners.length; n < nK; n++) { const k = n ^ mir;   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
       const px = c.x + wx, pz = c.z + wz;
@@ -4582,12 +4599,13 @@ const Core = (function () {
   // the source of a car's strongest knock against a car since the renderer last took its sparks (fxCar): that car's paint, fxKOf(c) (null: no
   // paint of its own, the traffic, a trailer, a rider, a log: the renderer then asks the contact point as before). Called before fxCar is
   // raised, with what it is raised to: the stronger contact holds, of two the same the first. Bookkeeping for the marks only (render.js,
-  // xSrcCar): nothing here reads it
+  // xSrcCar): nothing here reads it. An entry is tied to the strength it was set at: once fxCar is anything else (cleared without a take,
+  // set by hand, put back by a replay) fxKOf says undefined, nothing known, never an older knock's paint; null is only ever a knock without paint
   // (kept beside the car, not on it, as _aiS: the recorded state of a race, every plain field of every car, stays as it was)
   const _fxK = new WeakMap();
-  function fxSrc(c, o, fx) { if (fx > (c.fxCar || 0)) _fxK.set(c, o && o.color != null ? o.color : null); }   // (null: the strongest was a thing without paint; no entry: nothing known)
-  function fxKOf(c, take) { const k = _fxK.get(c); if (take) _fxK.delete(c); return k; }   // (take: the renderer, with the sparks; undefined: nothing known, a contact set by hand)
-  function fxKFrom(c, o) { if (_fxK.has(o)) _fxK.set(c, _fxK.get(o)); else _fxK.delete(c); }   // (a trailer's knock, taken by its tractor)
+  function fxSrc(c, o, fx) { if (fx > (c.fxCar || 0)) _fxK.set(c, { k: o && o.color != null ? o.color : null, fx }); }   // (k null: the strongest was a thing without paint, or a car without a colour; fx: what fxCar is raised to, the entry holds only while fxCar is that; no entry: nothing known)
+  function fxKOf(c, take) { const e = _fxK.get(c), k = e && e.fx === c.fxCar ? e.k : undefined; if (take) _fxK.delete(c); return k; }   // (take: the renderer, with the sparks; undefined: nothing known: no entry, a contact set by hand, or fxCar cleared or raised since without fxSrc, a stale entry never names a car)
+  function fxKFrom(c, o) { const e = _fxK.get(o); if (e && e.fx === o.fxCar) _fxK.set(c, e); else _fxK.delete(c); }   // (a trailer's knock, taken by its tractor: called with c.fxCar set to the trailer's, right before the trailer's is cleared, its entry with it)
   function carCollide(a, b) {
     if (KC && !a.inPit && !b.inPit) return kCollide(a, b, KC);   // (Trki med avti: the version's knock; the pit lane as it was: the crews' work and the way in)
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = a.circles[a.circles.length - 1] + a.rad + b.circles[b.circles.length - 1] + b.rad + 0.1;   // (the two cars' reach)
@@ -5741,6 +5759,7 @@ const Core = (function () {
     // from another car (more from a bus, less from a bicycle)
     _hitVeh(c, v) {
       if (c.ck && !c.net) return this._hitVehP(c, v);   // (the run from the police: the contacts as in GTA, CRASH)
+      if (krOn(c) && !c.net) return this._hitVehR(c, v, KC);   // (Realistična: the push by the two weights, as two cars' there)
       const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
       const cha = Math.cos(c.h), sha = Math.sin(c.h), chb = Math.cos(v.h), shb = Math.sin(v.h), nb = Math.max(2, Math.round(v.len / v.wid)), rb = v.wid / 2;
       let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
@@ -5770,6 +5789,81 @@ const Core = (function () {
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
       return imp;
+    }
+    // ... in Realistična (krOn; not a friend's car online: the old touch moves it as its phone expects): the push of two cars there (kCollide), by
+    // the two weights. The boxes with round corners (rboxHit: a flat tail square on, through the middle of the faces that touch), the overlap taken
+    // away softly; the push at the contact with the car's weight (its fuel too; the player's x pm) and the vehicle's, the levers whole, the bounce
+    // by the closing speed, the rub along the contact; the car takes its share as its tyres do (kTake: the turn anywhere on it, its grip, the
+    // slide), never more of the turn than leaves the two with the energy they came with (kTurnR, as kCollide). The vehicle as the traffic has
+    // it: knocked loose by the same change of speed as in the old touch, it is a free body and takes the push whole (speed and turn); one that
+    // stays on its lane (a bus brushed, a truck) can only change its speed along the lane: the push is worked out for a body that moves only
+    // that way (the car and the vehicle keep their momentum along the lane, the tyres take what goes across; it never rolls backwards); one
+    // lying still slides again when shoved by more than 0.15 m/s (as _hitVehP), else it stands as a wall. A cyclist: _runBikeR. Damage, sparks,
+    // the horn, the end of the endless drive: as the old touch
+    _hitVehR(c, v, K) {
+      const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
+      const B = this._rbV || (this._rbV = { x: 0, z: 0, h: 0, m: { len: 0, wid: 0 } }); B.x = v.x; B.z = v.z; B.h = v.h; B.m.len = v.len; B.m.wid = v.wid;
+      const o = rboxHit(c, B); if (!o || v.nc > 0) return 0;
+      const nx = o.nx, nz = o.nz, px = o.px, pz = o.pz, pen = o.pen, T = this.T;
+      if (this.win && c === this.race.player) this.win.hit++;   // (the endless drive: any touch ends it, Endless)
+      const ma = (c.m.mass + (c.fuelKg || 0)) * (c.isPlayer ? K.pm : 1), mb = v.mass, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
+      if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBikeR(c, v, K, nx, nz, px, pz, ma, Ia, Ib);   // (a cyclist: run over)
+      const corr = Math.max(0, pen - RB_SLOP) * RB_PUSH + Math.max(0, pen - RB_DEEP);
+      c.x += nx * corr * ia / tot; c.z += nz * corr * ia / tot;
+      if (v.st !== 0) { v.x -= nx * corr * ib / tot; v.z -= nz * corr * ib / tot; }
+      else { const f = corr * ib / tot; v.s -= (nx * T.tx[v.i] + nz * T.tz[v.i]) * f; v.d -= (nx * T.nx[v.i] + nz * T.nz[v.i]) * f; }
+      const rax = px - c.x, raz = pz - c.z, rbx = px - v.x, rbz = pz - v.z;
+      const vrx = (c.vx - c.w * raz) - (v.vx - v.w * rbz), vrz = (c.vz + c.w * rax) - (v.vz + v.w * rbx), vn = -(vrx * nx + vrz * nz);   // (vn: how fast they close)
+      if (vn <= 0) return 0;
+      const e = vn < K.eT ? 0 : (K.e1 + (K.e0 - K.e1) * Math.exp(-(vn - K.eT) / K.eV)) * sstep(K.eT, K.eT + 0.5, vn);
+      const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rna = rax * nz - raz * nx, rta = rax * tz - raz * tx, rnb = rbx * nz - rbz * nx, rtb = rbx * tz - rbz * tx;
+      const mu = K.mu * (K.muL + (1 - K.muL) * sstep(K.muV, K.muV + 1, vn)), an = ia + rna * rna / Ia, at = ia + rta * rta / Ia;
+      let J = (1 + e) * vn / (an + ib + rnb * rnb / Ib), Jt = clamp(-vt / (at + ib + rtb * rtb / Ib), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;   // (the vehicle a free body)
+      const dvb = Math.hypot(Px, Pz) * ib, lx = T.tx[v.i], lz = T.tz[v.i];
+      let free = v.st === 1;
+      if (v.st === 0 && (dvb > 1.4 || (v.kind >= 3 && dvb > 0.6))) { this._knock(v); v.w = 0; free = true; if (v.kind >= 3) this._throwRider(v, c.vx, c.vz, c); }
+      else if (v.st === 2 && dvb > 0.15) { v.st = 1; v.t = 0; free = true; }   // (a knocked one standing there: shoved, it slides again)
+      if (!free) {   // (on its lane: only along it; lying still: not at all)
+        const qn = v.st === 0 ? nx * lx + nz * lz : 0, qt = v.st === 0 ? tx * lx + tz * lz : 0;
+        J = (1 + e) * vn / (an + ib * qn * qn); Jt = clamp(-vt / (at + ib * qt * qt), -mu * J, mu * J); Px = J * nx + Jt * tx; Pz = J * nz + Jt * tz;
+      }
+      const dax = Px * ia, daz = Pz * ia, dwa = (rax * Pz - raz * Px) / Ia * K.yaw * (c.isPlayer ? K.yawP : 1), dwb = free ? (rbz * Px - rbx * Pz) / Ib : 0;
+      const dl = !free && v.st === 0 ? -(Px * lx + Pz * lz) * ib : 0, dbx = free ? -Px * ib : dl * lx, dbz = free ? -Pz * ib : dl * lz;   // (dl: its change of speed along the lane)
+      let ka;
+      { const ta = kTurnR(c, dax, daz, dwa, K, null);   // (the two never leave with more energy than they came with: kCollide's guard, the vehicle's turn whole)
+        const dE = ma * (dax * (c.vx + 0.5 * dax) + daz * (c.vz + 0.5 * daz)) + mb * (dbx * (v.vx + 0.5 * dbx) + dbz * (v.vz + 0.5 * dbz)) + Ia * ta * (c.w + 0.5 * ta) + Ib * dwb * (v.w + 0.5 * dwb);
+        if (dE > 1e-6) { const wa = c.w + ta, ra = dwa - ta, xa = wa * ra < 0 ? (Math.abs(ra) <= Math.abs(wa) ? ra : -wa) : 0;
+          if (xa) { const A = 0.5 * Ia * xa * xa, Bq = Ia * wa * xa, D = Bq * Bq - 4 * A * dE, l = D >= 0 ? Math.min(1, 2 * dE / (-Bq + Math.sqrt(D))) : 1; ka = (ta + l * xa) / dwa; } } }
+      kTake(c, Px, Pz, rax, raz, ma, Ia, K, null, ka);
+      if (free) { v.vx += dbx; v.vz += dbz; v.w += dwb; }
+      else if (v.st === 0) v.v = Math.max(0, v.v + dl * v.dir);
+      const imp = vn;
+      c.hitCar = Math.max(c.hitCar, imp); fxSrc(c, null, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = px; c.contactZ = pz;
+      if (imp > 3.5 && v.kind < 4) { const dx = px - c.x, dz = pz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * ch + dz * sh, -dx * sh + dz * ch); }
+      if (imp > 3 && v.kind < 3) this._event('crash', c, px, pz);
+      v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
+      return imp;
+    }
+    // ... a cyclist run over in Realistična (_runBike's rules: the rider dead on the road, the bicycle knocked on and out from under the car, no
+    // contacts with it for 0.8 s, the car's nose nudged, a little damage; the same draws): the speeds by the two weights instead of shares of the
+    // car's speed. The push at the contact as _hitVehR (the bicycle a free body of its 90 kg: it leaves a little faster than the car, the car
+    // loses (1 + e) m / (M + m) of the closing speed), and the kick that throws the bicycle aside taken from the car (momentum kept both ways)
+    _runBikeR(c, v, K, nx, nz, px, pz, ma, Ia, Ib) {
+      const sp = c.speed, R = this.R, vx = c.vx, vz = c.vz, mb = v.mass, ia = 1 / ma, ib = 1 / mb;
+      const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = (px - c.x) * ch + (pz - c.z) * sh, lz = -(px - c.x) * sh + (pz - c.z) * ch, sd = lz >= 0 ? 1 : -1, k = 1.2 + 0.07 * sp;
+      const rax = px - c.x, raz = pz - c.z, rbx = px - v.x, rbz = pz - v.z, vn = -((vx - c.w * raz - v.vx) * nx + (vz + c.w * rax - v.vz) * nz);
+      let Px = 0, Pz = 0;
+      if (vn > 0) { const e = vn < K.eT ? 0 : (K.e1 + (K.e0 - K.e1) * Math.exp(-(vn - K.eT) / K.eV)) * sstep(K.eT, K.eT + 0.5, vn), rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx;
+        const J = (1 + e) * vn / (ia + ib + rna * rna / Ia + rnb * rnb / Ib); Px = J * nx; Pz = J * nz; }
+      const bx = v.vx - Px * ib - sh * sd * k, bz = v.vz - Pz * ib + ch * sd * k;   // (the bicycle: the push, and thrown aside)
+      Px += mb * sh * sd * k; Pz -= mb * ch * sd * k;
+      kTake(c, Px, Pz, rax, raz, ma, Ia, K, null);
+      if (!c.air) c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24, -CSK.tapMax, CSK.tapMax);
+      knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
+      this._knock(v, 0.8); v.w = (R() - 0.5) * 9; v.vx = bx; v.vz = bz;
+      this._throwRider(v, vx, vz, c, true);
+      fxSrc(c, null, 2.5); c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
+      return sp - Math.hypot(c.vx, c.vz);
     }
     // ... in the run from the police (a car with c.ck): the two boxes, no bounce, the bodies grinding, the push at the true contact point, both
     // turned by it (CRASH); a vehicle knocked by more than ~0.6 m/s comes loose and slides as a body (more than 6 m/s, or a hard hit: a wreck
@@ -6016,6 +6110,7 @@ const Core = (function () {
           const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = rx * ch + rz * sh, lz = -rx * sh + rz * ch, hl = c.m.len / 2 + 0.22, hw = c.m.wid / 2 + 0.22;
           if (Math.abs(lx) > hl || Math.abs(lz) > hw) continue;
           if (c.speed < 2) { this._nudge(p, ch, sh, lx, lz, hl, hw); continue; }
+          if (krOn(c) && !c.net) { this._hitPedR(c, p, KC, rx, rz); break; }   // (Realistična: by the two weights, as the traffic there)
           const sp = c.speed, f = 1 - Math.min(sp, 0.06 * sp + 0.4) / sp, vx = c.vx * f, vz = c.vz * f;
           if (!c.net) { c.vx = vx; c.vz = vz; } if (!c.air) { const kc = clamp((c.csKc || 0) + (this.R() - 0.5) * 0.12, -CSK.tapMax, CSK.tapMax); if (!c.net) c.csKc = kc; }   // (a friend's car online: its own phone slows it; the same draws as there)
           this._runOver(p, vx, vz, 0.35);
@@ -6031,9 +6126,22 @@ const Core = (function () {
           const rx = p.x - v.x, rz = p.z - v.z; if (rx * rx + rz * rz > 49) continue;
           const ch = Math.cos(v.h), sh = Math.sin(v.h), lx = rx * ch + rz * sh, lz = -rx * sh + rz * ch, hl = v.len / 2 + 0.2, hw = v.wid / 2 + 0.2;
           if (Math.abs(lx) >= hl || Math.abs(lz) >= hw) continue;
-          if (v.st) this._runOver(p, v.vx, v.vz, 0.4); else this._nudge(p, ch, sh, lx, lz, hl, hw);
+          if (v.st) { this._runOver(p, v.vx, v.vz, 0.4); if (KR) { const k = TF_PED / v.mass; v.vx -= p.vx * k; v.vz -= p.vz * k; } }   // (Realistična: the wreck gives what they take)
+          else this._nudge(p, ch, sh, lx, lz, hl, hw);
         }
       }
+    }
+    // ... someone run over in Realistična (the rules of _hitPeds: on the ground under the car at 0.35 of its speed, dead on the road; the same
+    // draws): the car gives exactly the momentum they take, TF_PED kg x their speed, at the place they stood against it (kTake: a heavy car hardly
+    // feels it, a light one more; off its middle line its nose is turned a little). Before: 0.06 v + 0.4 m/s whatever the car weighs, 3-4 times
+    // what they took
+    _hitPedR(c, p, K, rx, rz) {
+      const ma = (c.m.mass + (c.fuelKg || 0)) * (c.isPlayer ? K.pm : 1), Ia = c.I * ma / c.m.mass, f = ma / (ma + 0.35 * TF_PED);   // (f: the car's speed after, the two as one push along its way)
+      if (!c.air) this.R();   // (the old rule's draw, so the traffic's numbers stay in step; the turn comes from where they stood: kTake)
+      this._runOver(p, c.vx * f, c.vz * f, 0.35);
+      kTake(c, -TF_PED * p.vx, -TF_PED * p.vz, rx, rz, ma, Ia, K, null);
+      fxSrc(c, null, 2); c.fxCar = Math.max(c.fxCar || 0, 2);
+      this._event(p.kind === 3 ? 'bike' : 'ped', c, p.x, p.z); if (p.kind !== 3) this._penalty(c);
     }
 
     // for the AI (and the autopilot): the corridor across the road it may drive in over the next stretch, from the vehicles and the people near
@@ -8228,7 +8336,7 @@ const Core = (function () {
         const target = c.inSteer;
         const rate = c.isPlayer ? (c.digitalSteer ? (Math.abs(target) < Math.abs(c.steer) || target * c.steer < 0 ? 10 : 6) : 16) : 10;
         c.steer += clamp(target - c.steer, -rate * cdt, rate * cdt);
-        if (c.fall) { this._fall(c, cdt); continue; }   // (over the edge of a drop: falling)
+        if (c.fall) { _aiS.delete(c); this._fall(c, cdt); continue; }   // (over the edge of a drop: falling; no Car.step, so the automatic-steering mark is dropped here: »Samo moj avto«, dmgSteer)
         c.step(cdt, T);
         if (c.plx) { const X = c.plx; X.t += cdt; X.k = pitLaunchK(X.t); if (!X.k) c.plx = null; }   // (a perfect exit out of the pits: its clean launch, PIT_LAUNCH)
       }
@@ -9135,12 +9243,12 @@ const Core = (function () {
         if (R.hitWall > c.hitWall) c.hitWall = R.hitWall; if (R.hitCar > c.hitCar) c.hitCar = R.hitCar;
         if (R.fxWall > (c.fxWall || 0)) { c.fxWall = R.fxWall; c.wallX = R.wallX; c.wallZ = R.wallZ; }
         if (R.fxCar > (c.fxCar || 0)) { c.fxCar = R.fxCar; fxKFrom(c, R); c.contactX = R.contactX; c.contactZ = R.contactZ; if (R.fxQ) c.fxQ = R.fxQ; }
-        R.hitWall = R.hitCar = R.fxWall = R.fxCar = R.fxQ = 0; R.speed = Math.hypot(R.vx, R.vz);
+        R.hitWall = R.hitCar = R.fxWall = R.fxCar = R.fxQ = 0; _fxK.delete(R); R.speed = Math.hypot(R.vx, R.vz);
         const R2 = R.next; if (!R2) continue;   // (the second tank's knocks the tractor's too)
         if (R2.hitWall > c.hitWall) c.hitWall = R2.hitWall; if (R2.hitCar > c.hitCar) c.hitCar = R2.hitCar;
         if (R2.fxWall > (c.fxWall || 0)) { c.fxWall = R2.fxWall; c.wallX = R2.wallX; c.wallZ = R2.wallZ; }
         if (R2.fxCar > (c.fxCar || 0)) { c.fxCar = R2.fxCar; fxKFrom(c, R2); c.contactX = R2.contactX; c.contactZ = R2.contactZ; if (R2.fxQ) c.fxQ = R2.fxQ; }
-        R2.hitWall = R2.hitCar = R2.fxWall = R2.fxCar = R2.fxQ = 0; R2.speed = Math.hypot(R2.vx, R2.vz);
+        R2.hitWall = R2.hitCar = R2.fxWall = R2.fxCar = R2.fxQ = 0; _fxK.delete(R2); R2.speed = Math.hypot(R2.vx, R2.vz);
       }
     }
     _fall(c, dt) {

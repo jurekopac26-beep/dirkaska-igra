@@ -531,7 +531,7 @@ PARTS.promet = () => {
   for (const p of [0, 2]) rows.push(tfRun({ p, kmh: 60, vt: 60 }), tfRun({ p, kmh: 60, vt: 60, off: OFF }));   // (a moving vehicle rear-ended: 120 into 60 km/h)
   for (const p of [2, 5]) for (const kmh of [60, 120]) for (const bok of [5, 30]) rows.push(tfRun({ p, kmh, bok }));   // (along a long vehicle's flank, 5 and 30 deg into it)
   for (const p of [0, 1, 2, 3, 4]) for (const kmh of SPEEDS) rows.push(tfRun({ p, kmh, pol: 1 }), tfRun({ p, kmh, off: OFF, pol: 1 }));
-  return { rows, text: table('promet: ' + CAR + ' v vozilo prometa od zadaj (stoji, razen kjer ima svojo hitrost); pol 0: Traffic._hitVeh (krogi), pol 1: beg pred policijo, Traffic._hitVehP (pravokotnika)',
+  return { rows, text: table('promet: ' + CAR + ' v vozilo prometa od zadaj (stoji, razen kjer ima svojo hitrost); pol 0: Traffic._hitVeh (cv 1-5 krogi; cv 6 _hitVehR, pravokotnika po masah), pol 1: beg pred policijo, Traffic._hitVehP (pravokotnika)',
     'km/h: hitrost približevanja; v avta / v voz.: hitrosti takoj po prvem dotiku; e: odboj; p po/pred: gibalna količina obeh po trku / pred njim; E izg.: izgubljena kinetična energija; st: 1 vozilo izbito s pasu (prosto telo); vdor: največje prekrivanje (m); sunek°: zasuk nosu (csKc)', TCOLS, rows) };
 };
 PARTS.ljudje = () => {

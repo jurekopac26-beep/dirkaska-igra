@@ -9995,6 +9995,28 @@ const Render = (function () {
     const T = curTrack, q = c.wq && c.wq[wi]; if (!T || !q || q.k >= 0 || !(q.a >= 0)) return false;
     return Math.abs(q.d) > (T.wa ? T.wa[q.a] : T.w) + 0.3;
   }
+  // P4.4: the lowest point of a kit body's outer shell in corner k's quarter, as drawn this frame: [x, z, its height over the road] in the
+  // car's frame, or null. The pose: the body's own (roll, pitch, lowered: bodyG as updateCars has just set it), the sag laid over it
+  // (v.sagQ, v.sagP: after emitFx in the frame, so here by hand) and the whole car's pitch against the road's (gpitch behind the slope:
+  // a landing, a dip). A few candidate points only (the lowest under each tilt the pose can take), found again when the shape changes
+  const _sgV = new THREE.Vector3();
+  function sagLow(v, c, k) {
+    const K = v.kit, g = v.body.geometry, a = g.attributes.position.array, sw = c.m.sway || 1;
+    let C = v.xSagC; if (!C || C.ver !== K.ver) C = v.xSagC = { ver: K.ver, c: [] };
+    let I = C.c[k];
+    if (!I) { const dv = K.deadV, nO = g.userData.outerN, S = new Set();
+      for (const gx of [-0.08 * sw, 0, 0.08 * sw]) for (const gz of [-0.1 * sw, 0, 0.1 * sw]) { let lo = -1, ym = Infinity;
+        for (let i = 0; i < nO; i++) { if (dv && dv[i]) continue; const px = a[i * 3], pz = a[i * 3 + 2]; if ((k < 2) !== (px > 0) || (k % 2 === 1) !== (pz > 0)) continue;
+          const y = a[i * 3 + 1] + gx * px + gz * pz; if (y < ym) { ym = y; lo = i; } }
+        if (lo >= 0) S.add(lo); }
+      I = C.c[k] = [...S]; }
+    if (!I.length) return null;
+    const gd = c.hl && c.hl.on ? 0 : v.gpitch - Math.atan(c.gradeNow || 0), cg = Math.cos(gd), sg = Math.sin(gd); let out = null;
+    for (const i of I) { _sgV.set(a[i * 3], a[i * 3 + 1], a[i * 3 + 2]).applyMatrix4(v.body.matrix).applyQuaternion(v.bodyG.quaternion).add(v.bodyG.position);
+      if (v.sagQ) _sgV.applyQuaternion(v.sagQ).add(v.sagP);
+      const y = _sgV.y * cg + _sgV.x * sg; if (!out || y < out[2]) out = [_sgV.x, _sgV.z, y]; }
+    return out;
+  }
   function emitFx(v, c, dt, x, z, h) {
     const M = c.m, spd = c.speed;
     const tw = M.wid * 0.43, yb = c.y || 0;
@@ -10121,12 +10143,33 @@ const Render = (function () {
     if (XC.dust && (c.fxWall > 4 || (c.fxCar > 4 && !c.fxQ))) { const w = c.fxCar > c.fxWall && !c.fxQ, px = w ? c.contactX : c.wallX, pz = w ? c.contactZ : c.wallZ, n = Math.min(14, 4 + (w ? c.fxCar : c.fxWall)), gy = c.roadY || 0;   // (Razbijanje · nov način: a puff of dust and bits at the knock)
       for (let k = 0; k < n; k++) { const a = rRnd() * Math.PI * 2, sp = 1 + rRnd() * 2.5; particles.emit(px + Math.cos(a) * 0.5, gy + 0.3 + rRnd() * 0.5, pz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.2, 0.4 + rRnd(), Math.sin(a) * sp + c.vz * 0.2, 0.7 + rRnd() * 0.6, 0.8, 3 + rRnd() * 2, 0.74, 0.7, 0.64, 0.42, -0.06, 2, gy); }
       for (let k = 0; k < n * 0.6; k++) particles.emit(px, gy + 0.5, pz, (rRnd() - 0.5) * 7 + c.vx * 0.4, 1.5 + rRnd() * 3, (rRnd() - 0.5) * 7 + c.vz * 0.4, 0.6 + rRnd() * 0.5, 0.12, 0.08, 0.2, 0.2, 0.22, 0.95, 9, 0.7, gy); }
+    // (P4, Realistična: a hard knock into a concrete wall, over 8 m/s into it, breaks grit off it: a coarse pale cloud that stays low and close, thrown back
+    // toward the road, with crumbs and a few lumps of concrete that fall and bounce on the ground; the more the harder the knock (full at 30 m/s). Only where
+    // the world says what stands on the barrier line there (world.barKind: 1 a concrete wall; not off a steel rail or a tyre wall), the particles' own
+    // one draw call, the renderer's own random numbers; rain: a thinner, darker cloud)
+    if (XC.dust && Core.TX.cv === 6 && c.fxWall > 8 && !(c.fxCar > c.fxWall && !c.fxQ) && world && world.barKind && curTrack && !curTrack.free && c.q && c.q.i >= 0 && !(c.q.k >= 0)) {
+      const T = curTrack, qi = c.q.i, sd = c.q.d > 0 ? 1 : -1;
+      if (world.barKind(qi, sd) === 1) { const k = clamp((c.fxWall - 8) / 22, 0, 1), px = c.wallX, pz = c.wallZ, gy = c.roadY || 0, bx = -sd * T.nx[qi], bz = -sd * T.nz[qi], wet = wetW > 0.1;
+        for (let i = 0, n = (wet ? 5 : 10) + (wet ? 8 : 18) * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = 0.6 + rRnd() * 2.4, bk = (1.5 + rRnd() * 4) * (0.5 + k), sh = (wet ? 0.62 : 0.84) + rRnd() * 0.16;
+          particles.emit(px + Math.cos(a) * 0.35, gy + 0.15 + rRnd() * 0.75, pz + Math.sin(a) * 0.35, Math.cos(a) * sp + bx * bk + c.vx * 0.15, 0.3 + rRnd() * 1.5, Math.sin(a) * sp + bz * bk + c.vz * 0.15, 1.4 + rRnd() * 1.4, 0.4, (2.3 + rRnd() * 2.1) * (0.7 + 0.5 * k), 0.8 * sh, 0.78 * sh, 0.74 * sh, wet ? 0.4 : 0.62, 0.3, 2.1, gy); }
+        for (let i = 0, n = 14 + 36 * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = (1 + rRnd() * 5) * (0.5 + 0.6 * k), bk = (2 + rRnd() * 7) * (0.5 + 0.6 * k), sh = 0.6 + rRnd() * 0.22, sz = 0.12 + rRnd() * 0.16;
+          particles.emit(px, gy + 0.2 + rRnd() * 0.7, pz, Math.cos(a) * sp + bx * bk + c.vx * 0.3, 1.2 + rRnd() * 4 * (0.5 + k), Math.sin(a) * sp + bz * bk + c.vz * 0.3, 0.9 + rRnd() * 0.9, sz, sz * 0.8, sh, sh * 0.98, sh * 0.94, 0.95, 13, 0.5, gy); }
+        for (let i = 0, n = 2 + 6 * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = 0.8 + rRnd() * 3 * k, bk = 1.5 + rRnd() * 5 * k, sh = 0.5 + rRnd() * 0.16, sz = 0.32 + rRnd() * 0.18;
+          particles.emit(px, gy + 0.3 + rRnd() * 0.5, pz, Math.cos(a) * sp + bx * bk + c.vx * 0.3, 1 + rRnd() * 2.5, Math.sin(a) * sp + bz * bk + c.vz * 0.3, 1.1 + rRnd() * 0.8, sz, sz * 0.85, sh, sh * 0.98, sh * 0.95, 0.95, 15, 0.4, gy); } } }
     if (XC.drag && v.kit && spd > 4 && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (const bn of ['bumperF', 'bumperR']) if (v.kit.ajar[bn] && !v.kit.dead[bn]) {   // (Razbijanje · nov način: a bumper hanging loose drags on the road: sparks off its low end)
       const g = v.body.geometry, R = g.userData.ranges[bn]; if (!R) continue; let lo = v.xDragI && v.xDragI[bn];
       if (lo == null) { const a = g.attributes.position.array; let ym = Infinity; for (let i = R.o[0]; i < R.o[1]; i++) if (a[i * 3 + 1] < ym) { ym = a[i * 3 + 1]; lo = i; } (v.xDragI || (v.xDragI = {}))[bn] = lo; }
       const acc = v.xDragA || (v.xDragA = {}); acc[bn] = (acc[bn] || 0) + dt * (60 + spd * 6);   // (a stream: more the faster it drags; by time, not by frame)
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
+    // (P4.4: a bent wheel's sagged corner (P3). Sparks only where the body as drawn this frame is down on the road there (sagLow: 1.5 cm
+    // or less) and the car is over 15 m/s, on the road: a stream off that point, by time; tools/trki/iskre-vogal.mjs has the table)
+    // (v.sagQ: a corner that did sag: a body 1 cm over the road as built (the Mravlja) has no room to, kitSag lays none; v.hop: lifted over debris)
+    if (XC.drag && v.kit && v.bend && v.sagQ && !v.hop && spd > 15 && !c.air && !c.rl && (x - (cam.vcx || 0)) ** 2 + (z - (cam.vcz || 0)) ** 2 < 150 * 150) for (let k = 0; k < 4; k++) if (v.bend[k] > 0 && !v.wheelOff[k]) {
+      const L = sagLow(v, c, k); if (!L || L[2] > 0.015) continue;
+      const acc = v.xSagA || (v.xSagA = [0, 0, 0, 0]); acc[k] += dt * (10 + spd * 1.5);
+      if (acc[k] >= 1) { const ch = Math.cos(h), sh = Math.sin(h), gy = c.roadY || 0, n = Math.min(8, Math.floor(acc[k])); acc[k] -= n;
+        for (let i = 0; i < n; i++) { const t = rRnd() * dt; sparkP.emit(x + L[0] * ch - L[1] * sh - c.vx * t, gy + 0.05, z + L[0] * sh + L[1] * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3.5, 0.4 + rRnd() * 1.8, c.vz * 0.45 + (rRnd() - 0.5) * 3.5, 0.16 + rRnd() * 0.24, 0.55, 0.14, 1, 0.76 + rRnd() * 0.16, 0.32, 1, 11, 1.2, gy); } } }
     c.fxWall = 0; c.fxCar = 0; Core.fxKOf(c, true); if (c.fxQ) c.fxQ = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)

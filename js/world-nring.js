@@ -130,6 +130,7 @@
       }
       addM(gr, rMat, true);
     }
+    { const bk = new Int8Array(N); for (let i = 0; i < N; i++) bk[i] = kind(i) ? 1 : 0; out.barKind = (i) => bk[i]; }   // (Render: 0 armco, 1 concrete, the wall and the parapets: a wall strike breaks grit off the concrete only; the same on both sides)
     const nPosts = posts.addTo(root, true);
     nringProps(out, t13, onBridge, inKar);   // knockable tyre walls and roadside posts
 

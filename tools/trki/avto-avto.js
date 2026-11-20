@@ -6,6 +6,7 @@
 //   node tools/trki/avto-avto.js --cv 4          the same with another version of the knocks (Core.setTest({ cv }): 1 Simulacija ... 5 Stara)
 //   node tools/trki/avto-avto.js --json          the results as JSON on stdout (every scenario, every metric)
 //   node tools/trki/avto-avto.js --only tbone    only the scenarios whose name holds the text (cs, the main matrix)
+//   node tools/trki/avto-avto.js --v 30,60,120,200   the matrix at other speeds (km/h; the default 60, 120, 200)
 //   node tools/trki/avto-avto.js --trace head-120-o [--phys nova] [--mode hold] [--role RR] [--car kaze] [--ph 0.5] [--tspan 2]
 //                                                one scenario step by step (the first 0.5 s after the touch, or --tspan s)
 // The matrix (V = 60, 120, 200 km/h; A the car that hits, B the car hit):
@@ -104,7 +105,7 @@ const SCN = {
     return { A, B, iA: pedal(o), iB: pedal(o), swap: () => false };
   },
 };
-const VS = [60, 120, 200];
+const VS = arg('--v') ? arg('--v').split(',').map(Number) : [60, 120, 200];   // (--v 30,60,120,200: other speeds, km/h)
 function matrix() {
   const L = [];
   for (const kmh of VS) { const V = kmh / 3.6;

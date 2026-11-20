@@ -841,6 +841,7 @@
        it fits), yellow warning diamonds before the sharper bends and chevrons round their outside, the sights' and the slides' boards ---- */
     /* ---- the side roads' cones across their mouths, the rails and gates at their ends, the streets' names (stubProps) ---- */
     out.stubStats = stubProps({ scen, out, root, gH: unGround, loc: { closed: 'ROAD CLOSED', gate: 'CLOSED', plate: ['#0f6b3e', '#f4f6f2'] }, posts: 'none' });
+    out.barKind = (i, side) => (galAt[i] || (!UNK && onBr[i]) ? 1 : -1);   // (Render: what stands on the barrier line at sample i: 1 the walls of a tunnel or a shed and a bridge's parapet (Killar has none of them), -1 nothing: the open edge, the rock of the terrain; the wooden fence below)
     let nPost = 0;
     {
       const mkPosts = [];
@@ -1144,6 +1145,8 @@
         const f = clamp(s / T.ds, 0, N - 1.001), i = Math.floor(f), u = f - i, L = (A) => A[i] + (A[i + 1] - A[i]) * u, nx = L(T.nx), nz = L(T.nz), b = L(T.bl) + o;
         return { x: L(T.px) - nx * b, z: L(T.pz) - nz * b, y: L(T.hy), ox: -nx, oz: -nz, i }; };
       const chunks = [], shown = new Uint8Array(Fn.n).fill(1), pl = [];
+      { const hard = out.barKind, fk = new Int32Array(N).fill(-1); for (let k = 0; k < Fn.n; k++) if (Fn.on[k]) for (let i = Math.max(0, Math.ceil((Fn.s0 + k * Fn.P) / T.ds)); i < N && i * T.ds <= Fn.s0 + (k + 1) * Fn.P; i++) fk[i] = k;
+        out.barKind = (i, side) => { const k = side < 0 ? fk[i] : -1; return k >= 0 && shown[k] ? 4 : hard(i, side); }; }   // (4 the timber fence on the left: the panel at sample i, while it stands)
       let P = null, Nr = null, Co = null, I = null, v = 0, ii = 0;
       const quad = (a, b, c, d, wx, wy, wz, col) => {   // a face, its normal turned to (wx, wy, wz)
         let ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], tx = d[0] - a[0], ty = d[1] - a[1], tz = d[2] - a[2];

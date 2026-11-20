@@ -632,6 +632,7 @@
         K.z[si] = [i0, i1]; }
       KN.push(K);
     }
+    let abut = null;   // (the bridges' abutments at the lower road's barriers, [left, right] per sample: railNeed's noRail, kept for out.barKind)
     const railNeed = () => {   // (where a rail or wall stands along each side, [left, right] per sample: the bends' outsides, the drops, the bridges; not near the ends, the pull-ins, the viewpoints)
       const need = [new Uint8Array(N), new Uint8Array(N)];
       if (L.hills) for (const side of [-1, 1]) {   // (L.hills, the user's word of 13. 11. 2026: a wall on both sides nearly everywhere, none only under a steep hill, where no car can drive up)
@@ -645,6 +646,7 @@
         for (const d of [4, 8, 13, 19, 26]) { const o = side * (bar + d);
           if (caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) < T.hy[i] - (d <= 8 ? 2.4 : 2.4 + (d - 8) * 0.35)) { need[side > 0 ? 1 : 0][i] = 1; if (i + 1 < N) need[side > 0 ? 1 : 0][i + 1] = 1; break; } } }
       const noRail = [new Uint8Array(N), new Uint8Array(N)];   // (the bridges: parapets along the upper road's barriers, low walls along the lower road's, none in the arch where its abutments stand)
+      abut = noRail;
       for (const K of KN) { const c = K.c;
         for (let i = 0; i < N; i++) { if (Math.abs(i - c.up) * T.ds < c.upZ || kn[0][i] || kn[1][i]) need[0][i] = need[1][i] = 1; if (Math.abs(i - c.lo) * T.ds < c.loZ + 24) need[0][i] = need[1][i] = 1; }
         for (let i = 0; i < N; i++) { const t = (i - Math.round(c.lo)) * T.ds; if (t > K.t0 - 0.6 && t < K.t1 + 0.6 && Math.abs(i - c.lo) * T.ds < 30) noRail[0][i] = noRail[1][i] = 1; } }
@@ -982,6 +984,7 @@
           if (i % 2 === 0) { const p = Q(i, -0.35, 0.14); box(g, p[0], p[1], p[2], 0.12, 1.13, 0.12, T.hd[i], postC, null, true); }
         }
       }
+      { const kd = stone ? 1 : 0; out.barKind = (i, side) => { const si = side > 0 ? 1 : 0, nd = need[si]; return nd[i] && (nd[i + 1] || nd[i - 1]) ? kd : abut[si][i] ? 1 : -1; }; }   // (Render: what stands on the barrier line at sample i: -1 nothing, 0 the steel rail, 1 masonry: the low stone wall of rail 'stone', a bridge's abutment under its arch; the grit of a wall strike only off 1)
       if (wallG) addM(wallG, wallMat);
       if (FB) {   // the bridges' own meshes and materials: they fade while the followed car drives under (Render: dyn.tunnel; Sfx: the engine rings under the arch)
         const mA = aMat.clone(), mL = lMat.clone(), mS = sMat.clone(), mG = gMat.clone(), mW = wallMat.clone();
