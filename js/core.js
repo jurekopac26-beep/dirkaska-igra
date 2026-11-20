@@ -5026,6 +5026,35 @@ const Core = (function () {
   function distFrom(BD, d) { let lo = 0, hi = BD.length; while (lo < hi) { const m = (lo + hi) >> 1; if (BD[m].dist < d) lo = m + 1; else hi = m; } return lo; }
   // how far out to its side a car reaches as a box turned to the road (Trki: ravni odbijači, the AI's room alongside)
   const aiReach = (o) => { const st = Math.abs(Math.cos(o.h) * o.q.tz - Math.sin(o.h) * o.q.tx); return (o.m.len * st + o.m.wid * Math.sqrt(Math.max(0, 1 - st * st))) * 0.5; };
+  // Realistična (cv 6), the rivals' look further ahead (Trki: ozke proge, the decision »omili«): the nearest car ahead that stands in the road or
+  // slides slowly across it: turned more than HZ.yaw from the road's direction and standing (below HZ.vs m/s), sliding (below HZ.vy m/s with its nose
+  // over HZ.sl off the way it moves: a car driving a hairpin is turned 45° to the centre line too, its nose where it goes) or square to the road
+  // (over HZ.yw, below HZ.vw m/s); or standing lengthways when retired, stuck for HZ.st s or facing back; with a part of it within the road's width.
+  // From as far as it takes to brake at HZ.a m/s² (the weather's grip in it), HZ.r0 m more, HZ.r1 m at most; the cars' own rules see a car 22 m ahead and brake for it some 11 m before it, at racing speed into it. The side with more room for c's middle
+  // inside the road (lm, as the steering's lim), HZ.mg m clear of it where there is that much; past it at HZ.v0 + HZ.vk a metre of room, HZ.v1 at most,
+  // with less than HZ.cl m either side at a crawl (HZ.vc: no stop, the stuck car's rescue clears the road). null: none, or c's own line clear of it.
+  // Draws no random number and writes nothing: a race with no such car on the road is step for step what it was.
+  const HZ = { yaw: 0.7, vy: 15, sl: 0.8, yw: 1.05, vw: 8, vs: 3, st: 0.8, a: 5.5, r0: 20, r1: 180, mg: 1, cl: 0.3, v0: 6, vk: 12, v1: 20, vc: 2.5, sT: 2.5 };
+  function aiHazard(c, race, v, Lw) {
+    const T = race.track, M = c.m, gk = race.wst ? clamp(race.wst.profW, 0.3, 1) : 1, a = HZ.a * gk, R = Math.min(HZ.r1, HZ.r0 + v * v / (2 * a));
+    let h = null, hg = R, he = 0, hl = 0;
+    for (const o of race.cars) {
+      if (o === c || !o.m || o.inPit || o.pitG || o.parked || o.parkS != null || o.sc || o.police || o.ck || !(o.speed < HZ.vy)) continue;
+      let gap = o.dist - c.dist; if (Lw && (gap > Lw / 2 || gap < -Lw / 2)) gap -= Lw * Math.round(gap / Lw);
+      if (!(gap > 2 && gap < hg)) continue;
+      const yaw = Math.abs(wrapPi(o.h - T.hd[o.q.i]));
+      if (yaw > HZ.yaw && yaw < Math.PI - HZ.yaw ? !(o.speed < HZ.vs || (yaw > HZ.yw && yaw < Math.PI - HZ.yw && o.speed < HZ.vw) || Math.abs(wrapPi(Math.atan2(o.vz, o.vx) - o.h)) > HZ.sl)
+        : !(o.speed < HZ.vs && (dnf(o) || o.stuckT > HZ.st || yaw >= Math.PI - HZ.yaw))) continue;   // (across the road: standing, square to it or sliding; or standing lengthways: retired, stuck, facing back)
+      const sy = Math.abs(Math.sin(yaw)), cy = Math.abs(Math.cos(yaw)), e = (o.m.len * sy + o.m.wid * cy) * 0.5, wq = T.wa ? T.wa[o.q.i] : T.w;
+      if (Math.abs(o.q.d) - e > wq) continue;   // (all of it off the road)
+      h = o; hg = gap; he = e; hl = (o.m.len * cy + o.m.wid * sy) * 0.5;
+    }
+    if (!h) return null;
+    const wq = T.wa ? T.wa[h.q.i] : T.w, lm = wq - (M.aiEdge || 1.25), need = he + M.wid * 0.5, od = h.q.d, RL = c.uRl || T.rl;
+    if (Math.abs(clamp(RL[h.q.i] + c.laneBias, -lm, lm) - od) >= need + HZ.mg) return null;   // (its own line passes clear of it)
+    const cR = lm - (od + need), cL = (od - need) + lm, side = cR > cL ? 1 : -1, cl = Math.max(cR, cL);
+    return { o: h, off: clamp(od + side * (need + clamp(cl, 0, HZ.mg)), -lm, lm) - RL[h.q.i], gs: M.len * 0.5 + hl + 2, vp: cl >= HZ.cl ? clamp(HZ.v0 + HZ.vk * cl, HZ.v0, HZ.v1) : HZ.vc, a, far: hg > Math.max(30, v * HZ.sT) };
+  }
   // a ghost off the lane onto the apron (its offset past the lane's edge, pz.lout) and on its way into a box that is not c's: the car behind it in the lane
   // is not held by it (gT in aiControl)
   function apronBound(o, c, race, T) {
@@ -5096,6 +5125,10 @@ const Core = (function () {
         }
       } else c.passing = 0;
       if (c.chr && !c.passing) { const d = aiDefend(c, race, v); if (d != null) target = d; }   // (a car close behind before a braking zone: an aggressive one covers the inside)
+      if (KR) {   // (Realistična: a car standing in the road or sliding across it further ahead, aiHazard: round it in time, HZ.sT s before it, and braked for it below)
+        const H = krOn(c) && race.state === 'racing' && !c.pitWant && !c.sc && !c.police && !c.pol && !race.pol && !race.tf && c.parkS == null && !(XR.ai && !c.isPlayer) ? aiHazard(c, race, v, Lw) : null;
+        if (H) { c.aiHz = H; if (!H.far) { target = H.off; c.passing = 0; } } else if (c.aiHz) c.aiHz = null;
+      }
       c.aiOffT = target;
     }
     c.aiOff += clamp(c.aiOffT - c.aiOff, -3.2 * dt, 3.2 * dt);
@@ -5243,6 +5276,8 @@ const Core = (function () {
     }
     if (c.pitG && c.aiThreat && !gT) { const o = c.aiThreat, need = (o.m.len + M.len) * 0.5 + 2; if (c.aiGap < need + 8 && Math.abs(o.q.d - q.d) < (o.m.wid + M.wid) * 0.5 + 0.4) vT = Math.min(vT, Math.max(0, Math.max(0, o.vl) + (c.aiGap - need) * 0.8)); }   // (a ghost on the pit road: nothing pushes it off the car ahead, so it drops back to a car's gap behind it, never drives in it)
     if ((c.ty || c.fuel != null) && !c.isPlayer && (c.inPit || c.pitWant)) { const o = c.aiThreat; if (o && !gT && Math.abs(o.q.d - q.d) < (M.aiFol ? M.aiFol + 0.3 : 2.4)) vT = Math.min(vT, Math.sqrt(Math.max(0, o.vl) ** 2 + 10 * Math.max(0, c.aiGap - 6))); }   // (the pit lane: wait behind a car stopping at its box or pulling out)
+    if (KR && c.aiHz) { const H = c.aiHz, Lw = T.open ? 0 : T.len; let g = H.o.dist - c.dist; if (Lw && (g > Lw / 2 || g < -Lw / 2)) g -= Lw * Math.round(g / Lw);   // (Realistična: the car in the road ahead, aiHazard: down to the speed past it by H.gs m before it)
+      vT = Math.min(vT, Math.sqrt(H.vp * H.vp + 2 * H.a * Math.max(0, g - H.gs))); }
     let thr = 0, brk = 0;
     if (v < vT - 0.8) thr = 1;
     else if (v < vT + 0.6) thr = 0.45;

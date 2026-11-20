@@ -964,6 +964,42 @@ for (const tid of ['spa', 'bathurst']) {
     ok('the people, cv 1, 3 and 5 the same to the digit by the old rule; a friend\'s car online in Realistična as in cv 1 (its own phone slows it)', okAll, rows.join('; ')); }
 }
 
+// Realistična and a car standing across the road (aiHazard; the decision »omili« of Trki: ozke proge): a rival alone on the road, 9 s into the
+// race another car is stood across its racing line 160 m ahead (or lengthways, facing back) and held there. The cars' own rules see 22 m ahead: in
+// cv 1 and 5 the rival is at racing speed 25 m before it and drives into it; in cv 6 it sees it from over 60 m, is far slower 25 m before it and
+// goes round it without a touch. Before the car stands there no rival sees a hazard in any variant, and in cv 1 and 5 never (the rule is not theirs);
+// a full field through Tianmen's hairpins (cars turned 45° to the centre line, their noses where they go) sees none either
+{
+  const tracks = {}, trk = (id) => tracks[id] || (tracks[id] = new C.Track(C.TRACKS.find(x => x.id === id)));
+  const run = (tx, tid, yawDeg) => test(tx, () => { const orig = Math.random; Math.random = seeded(64); try {
+    const T = trk(tid), r = new C.Race(T, { numAI: 1, playerGrid: 2, laps: 3, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys: 'cs' }); r.start();
+    const P = r.player, c = r.cars.find(x => x !== P); let on = false, hit = 0, v25 = null, hz0 = 0, hzAt = null, pd = 0, X = 0, Z = 0, Hd = 0, past = false;
+    for (let k = 1; k <= 60 / DT && !past; k++) {
+      Math.random = seeded(1000 + k);
+      if (!on && r.time > 9) { on = true; const i = T.idx(c.q.s + 160), d = T.rl[i]; X = T.px[i] + T.nx[i] * d; Z = T.pz[i] + T.nz[i] * d; Hd = T.hd[i] + yawDeg / D; pd = c.dist + 160; P.place(X, Z, Hd); T.query(X, Z, -1, P.q); }
+      if (on) { if (!(hit > 0)) { P.x = X; P.z = Z; P.h = Hd; P.vx = P.vz = P.w = 0; } P.inThr = 0; P.inBrk = 1; P.inSteer = 0; P.dist = pd; }
+      else { C.aiControl(P, r, DT); if (c.aiHz || P.aiHz) hz0++; }
+      c.hitCar = 0; r.step(DT);
+      if (on) { P.dist = pd; const gap = pd - c.dist; if (c.aiHz && hzAt == null) hzAt = gap;
+        if (gap > 0) { if (c.hitCar > hit) hit = c.hitCar; if (v25 == null && gap <= 25) v25 = c.speed; } else past = true; }
+    }
+    return { v25, hit, hz0, hzAt, past, dmg: c.dmg || 0 };
+  } finally { Math.random = orig; } });
+  for (const [tid, yaw] of [['spa', 90], ['cusco', 90], ['spa', 180]]) {
+    const a = run(SIM, tid, yaw), b = run(OLD, tid, yaw), q = run(REAL, tid, yaw);
+    ok(`Realistična, a car standing ${yaw === 90 ? 'across' : 'facing back on'} the racing line 160 m ahead (${tid}): the rival sees it from over 60 m, is under 0.75 of cv 5's speed 25 m before it and passes it without a touch; cv 1 and 5 see nothing (the old rule: at racing speed into it); no hazard seen before it stands there`,
+      q.past && q.hzAt > 60 && q.hz0 === 0 && q.hit === 0 && q.dmg === 0 && q.v25 < 0.75 * b.v25 && q.v25 > 5
+      && a.hzAt == null && b.hzAt == null && a.hz0 === 0 && b.hz0 === 0 && a.hit > 15 && b.hit > 15 && a.v25 > 35 && b.v25 > 35,
+      `25 m before it cv 1 ${f(a.v25, 1)}, cv 5 ${f(b.v25, 1)}, cv 6 ${f(q.v25, 1)} m/s; the touch ${f(a.hit, 1)} / ${f(b.hit, 1)} / ${f(q.hit, 1)} m/s; seen from ${f(q.hzAt, 0)} m`);
+  }
+  { const n = test(REAL, () => { const orig = Math.random; Math.random = seeded(71); try {
+      const r = new C.Race(trk('tianmen'), { numAI: 12, playerGrid: 7, laps: 2, playerModel: C.MODELS[4], assist: 2, seed: 3, difficulty: 1, damage: 2, phys: 'cs' }); r.start(); let hz = 0;
+      for (let k = 1; k <= 45 / DT; k++) { Math.random = seeded(1000 + k); C.aiControl(r.player, r, DT); r.step(DT); for (const c of r.cars) if (c.aiHz) hz++; }
+      return hz;
+    } finally { Math.random = orig; } });
+    ok('Realistična, 13 cars 45 s up Tianmen\'s hairpins with none of them standing: no rival sees a hazard (a car driving a hairpin is not one)', n === 0, `hazard ticks ${n}`); }
+}
+
 let bad = 0;
 console.log('== trki med avti (različice)');
 for (const c of checks) { if (!c.ok) bad++; console.log(`${c.ok ? 'OK  ' : 'FAIL'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`); }
