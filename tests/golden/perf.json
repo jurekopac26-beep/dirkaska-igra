@@ -497,11 +497,11 @@
   "jsMs": 1.03
  },
  "tuzla": {
-  "calls": 162,
-  "maxCalls": 223,
-  "kverts": 361,
-  "maxKverts": 480,
-  "jsMs": 0.91
+  "calls": 158,
+  "maxCalls": 207,
+  "kverts": 475,
+  "maxKverts": 596,
+  "jsMs": 1.54
  },
  "buriram": {
   "calls": 195,
@@ -518,11 +518,11 @@
   "jsMs": 1.38
  },
  "sepang": {
-  "calls": 196,
-  "maxCalls": 238,
-  "kverts": 544,
-  "maxKverts": 711,
-  "jsMs": 0.95
+  "calls": 184,
+  "maxCalls": 226,
+  "kverts": 695,
+  "maxKverts": 872,
+  "jsMs": 1.18
  },
  "sakhir": {
   "calls": 200,
@@ -553,11 +553,11 @@
   "jsMs": 1.67
  },
  "lusail": {
-  "calls": 164,
-  "maxCalls": 213,
-  "kverts": 386,
-  "maxKverts": 534,
-  "jsMs": 0.87
+  "calls": 166,
+  "maxCalls": 223,
+  "kverts": 559,
+  "maxKverts": 846,
+  "jsMs": 1.04
  },
  "riohondo": {
   "calls": 194,
