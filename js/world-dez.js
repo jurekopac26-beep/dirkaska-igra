@@ -31,6 +31,18 @@
               of the cloud over the green valley, less light from the whole sky
      killar   rain in the Pangi valley, a cold, dry zone the monsoon hardly reaches: an even, cool grey cloud in the Chenab's gorge;
               the gravel only a little glossy
+     canaries a shower of Saint Lucia's wet season (June to November: heavy showers and thunderstorms; the west coast, in the trade
+              wind's lee, drier than the east): grey cloud over the forested ridge, the Caribbean slate grey-green below
+     koror    a heavy tropical shower over the lagoon (Palau's wet months, May to October: short heavy showers, the longer rain then
+              too): a low, dark cloud, less light from the whole sky, the lagoon slate green-grey
+     savusavu a brief, heavy afternoon shower of Fiji's wet season (November to April, the South Pacific Convergence Zone): dark grey
+              cloud over the coast road and the ridge, the bay grey under it
+     sacalobra an autumn depression on the Tramuntana (it reaches the north and the north-west first; the mountains wring out short,
+              local bursts): a grey cloud on the limestone walls, the hairpins glossy
+     cusco    an afternoon storm of the Andes' rainy season (November to March, January and February the wettest; lightning, hail):
+              a cool grey cloud low over the valley and the hills, less light from the whole sky
+     isalo    a late-afternoon thunderstorm of the Isalo's rains (December to March, January the peak): a warm grey haze over the red
+              sandstone and the grass, the sun dimmed
      In winter's snow (render.js's snowy(): the season winter, a world without noSnow) none of this: the snow is no rain.
      (Medvode, pending, and Suzuka, a test track, are frozen: no entry.)
    Hooks (no change to render.js or the worlds' files): World.build (the patch, once per world), World.update (the race: its rain and
@@ -60,6 +72,12 @@
     santoantao: { fog: 0xb4bdbf, fogK: 0.58, near: 0.58, far: 0.6, sun: 0.3, hemi: 1.15, sheen: 0.6 },
     ujarras: { fog: 0x7f8b86, fogK: 0.52, near: 0.78, far: 0.74, sun: 0.28, hemi: 0.95, sheen: 0.85 },
     killar:  { fog: 0x969c9f, fogK: 0.45, near: 0.82, far: 0.8, sun: 0.34, hemi: 1.05, sheen: 0.35 },
+    canaries: { fog: 0x84928c, fogK: 0.5, near: 0.88, far: 0.84, sun: 0.36, hemi: 1.0, sheen: 0.85, sea: [0x51666a, 0.65] },
+    koror:   { fog: 0x76848a, fogK: 0.5, near: 0.8, far: 0.74, sun: 0.28, hemi: 0.92, sheen: 0.85, sea: [0x4f6a6c, 0.7] },
+    savusavu: { fog: 0x7a868c, fogK: 0.5, near: 0.86, far: 0.8, sun: 0.3, hemi: 0.9, sheen: 0.85, sea: [0x55686a, 0.6] },
+    sacalobra: { fog: 0x8f989d, fogK: 0.5, near: 0.8, far: 0.75, sun: 0.32, hemi: 1.05, sheen: 0.8 },
+    cusco:   { fog: 0x868f99, fogK: 0.5, near: 0.88, far: 0.82, sun: 0.32, hemi: 0.92, sheen: 0.8 },
+    isalo:   { fog: 0x8e8a86, fogK: 0.45, near: 0.9, far: 0.85, sun: 0.32, hemi: 0.95, sheen: 0.8 },
   };
 
   // the sheen: shared uniforms (the patched programs are the same on every rebuild)
