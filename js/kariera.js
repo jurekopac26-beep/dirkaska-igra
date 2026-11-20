@@ -10,14 +10,14 @@
 (function () {
   'use strict';
 
-  /* ---- PRIVZETKI: the answers to kariera-1 … kariera-7 (the Odločitve page) are not in yet; each value below is the recommended
-     (first) option. The plan's session changes them here, in one place, after the answers. ---- */
+  /* ---- ODLOČITVE: the answers to kariera-1 … kariera-7 (the Odločitve page, 20. 11.): option 1 everywhere but kariera-5 (option 2).
+     A change of an answer is made here, in one place. ---- */
   const ODLOCITVE = {
     zgradba: 'stopnje',     // kariera-1: 4 stages of cups on the real tracks ('seznam': one long list, 'odprto': every cup open)
     ceste: 'pokali',        // kariera-2: a circuit cup and a road cup in every stage, time trials in stage 4 ('dirke': roads as single races, 'tt': roads only as time trials)
     odklep: 'stopnje',      // kariera-3: only the stages and their cups unlock; cars are bought; everything outside the career open
     razredi: 'pokal+cilji', // kariera-4: a class cup and 3 goals for every class ('pokal': only the cup, 'nic': none)
-    ekonomija: 'pot',       // kariera-5: every car in ~250–300 wins, with the path's rewards ('hitro': ~120, 'zdaj': ~680)
+    ekonomija: 'hitro',     // kariera-5 (answered 20. 11.: option 2): every car in ~120 wins, with the path's rewards ('pot': ~250–300)
     stare: 'obdrzi',        // kariera-6: an old career keeps its money, cars and upgrades and starts the path in stage 1 ('znova', 'vse')
     finale: 'izbor',        // kariera-7: the Grand Championship on 8–10 circuits from different continents ('vse', 'sam')
   };
@@ -39,16 +39,30 @@
   const RAZRED_N = 3;                                   // kariera-4: races in a class cup
   const RAZRED_KM = 100;                                // kariera-4: the class goal »drive 100 km«
 
-  /* ---- the economy (kariera-5, option 1). Core's race prizes stay (Core.careerPrize: the place × the length × the difficulty × the car);
-     the path adds these, each paid once. Tuned with the simulation in tests/kariera.test.js ---- */
-  const NAGRADE = {
-    pokal: [null, [25000, 15000, 10000], [80000, 48000, 32000], [200000, 120000, 80000], [400000, 240000, 160000]],   // a cup of stage s: 1st, 2nd, 3rd (a better place later: the difference)
-    finale: [600000, 360000, 240000],
-    prva: [null, 6000, 18000, 36000, 70000],            // the first win on a track (once a track), by the stage of its cup
-    stopnja: [null, 0, 40000, 100000, 200000],          // the gift when a stage opens
-    razred: [50000, 30000, 20000],                      // a class cup: 1st, 2nd, 3rd
-    cilj: 20000,                                         // a class goal
+  /* ---- the economy (kariera-5). Core's race prizes stay (Core.careerPrize: the place × the length × the difficulty × the car), and the prices
+     of the cars, upgrades and rent; the path adds these, each paid once. 'hitro' (option 2, chosen 20. 11.): every car in ~120 wins (the
+     path with the class cups ~98 of them); 'pot' (option 1): ~280. Tuned with the simulation in tests/kariera.test.js ---- */
+  const EKONOMIJA = {
+    hitro: {
+      pokal: [null, [50000, 30000, 20000], [150000, 90000, 60000], [380000, 228000, 152000], [760000, 456000, 304000]],
+      finale: [1150000, 690000, 460000],
+      prva: [null, 12000, 34000, 68000, 133000],
+      stopnja: [null, 0, 76000, 190000, 380000],
+      razred: [95000, 57000, 38000],
+      cilj: 38000,
+    },
+    pot: {
+      pokal: [null, [25000, 15000, 10000], [80000, 48000, 32000], [200000, 120000, 80000], [400000, 240000, 160000]],
+      finale: [600000, 360000, 240000],
+      prva: [null, 6000, 18000, 36000, 70000],
+      stopnja: [null, 0, 40000, 100000, 200000],
+      razred: [50000, 30000, 20000],
+      cilj: 20000,
+    },
   };
+  // pokal: a cup of stage s, 1st, 2nd, 3rd (a better place later: the difference); prva: the first win on a track (once a track), by the
+  // stage of its cup; stopnja: the gift when a stage opens; razred: a class cup, 1st, 2nd, 3rd; cilj: a class goal
+  const NAGRADE = EKONOMIJA[ODLOCITVE.ekonomija] || EKONOMIJA.pot;
   // a car worth the stage (the simulation's measure »a car of the next stage after ~10–15 races of a stage«; the menu may show it): the price from
   const AVTO_STOPNJE = [null, 0, 200000, 500000, 1000000];
 

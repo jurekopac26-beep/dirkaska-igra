@@ -1,7 +1,7 @@
 // Kariera 1.0, part A (js/kariera.js, docs/kariera-1-0.md): the path's cups come from the real tracks only (every one of them, a new one by
 // itself, never a test or pending one), the cups' sizes and names, the unlocking of the stages, the class cups, the move of the save from v1
 // to v2, the rewards and the menu's view. And the economy (kariera-5): a simulation of the career, wins only, must buy every car in
-// 250–300 wins and a car of the next stage every 6–18 races; outside those ranges the test fails (the plan's numbers, tuned 19. 11.).
+// 110–130 wins and a car of the next stage every 4–16 races; outside those ranges the test fails (kariera-5, option 2 'hitro', tuned 20. 11.).
 'use strict';
 const { loadCore } = require('./lib/core.js');
 const C = loadCore();
@@ -186,9 +186,9 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
     return { wins, path, cars: car.cars.length, bought };
   }
   const a = sim('cheap');
-  check('every car in 250–300 wins (kariera-5)', a.cars === models.length && a.wins >= 250 && a.wins <= 300, `${a.wins} wins, ${a.path} on the path, ${a.cars}/${models.length} cars`);
+  check('every car in 110–130 wins (kariera-5)', a.cars === models.length && a.wins >= 110 && a.wins <= 130, `${a.wins} wins, ${a.path} on the path, ${a.cars}/${models.length} cars`);
   const b = sim('save'), at = [0, b.bought[1], b.bought[2], b.bought[3]], gaps = [1, 2, 3].map(s => at[s] - at[s - 1]);
-  check('a car of the next stage every 6–18 races', [1, 2, 3].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 6 && g <= 18), `bought after ${at.slice(1).join(', ')} races`);
+  check('a car of the next stage every 4–16 races', [1, 2, 3].every(s => Number.isFinite(at[s])) && gaps.every(g => g >= 4 && g <= 16), `bought after ${at.slice(1).join(', ')} races`);
 }
 
 console.log(`\n${n - bad}/${n} OK`);
