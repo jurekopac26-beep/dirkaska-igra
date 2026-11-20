@@ -168,7 +168,9 @@
     };
   }
 
+  // Over or near the limit, dry or in the rain (at least 720 thousand vertices or 270 draw calls; the measurements are in the pull request).
   BY.sepang = BY.zandvoort = BY.sakhir = BY.lombok = mark;
+  BY.buriram = BY.lusail = BY.quezaltepeque = BY.riohondo = BY.sosnova = BY.rbring = BY.silkeborg = BY.kagerod = mark;
 
   const build = World.build;
   World.build = function (scene, track, tex, opts) {
