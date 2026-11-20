@@ -5759,6 +5759,7 @@ const Core = (function () {
     // from another car (more from a bus, less from a bicycle)
     _hitVeh(c, v) {
       if (c.ck && !c.net) return this._hitVehP(c, v);   // (the run from the police: the contacts as in GTA, CRASH)
+      if (krOn(c) && !c.net) return this._hitVehR(c, v, KC);   // (Realistična: the push by the two weights, as two cars' there)
       const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
       const cha = Math.cos(c.h), sha = Math.sin(c.h), chb = Math.cos(v.h), shb = Math.sin(v.h), nb = Math.max(2, Math.round(v.len / v.wid)), rb = v.wid / 2;
       let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
@@ -5788,6 +5789,81 @@ const Core = (function () {
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
       return imp;
+    }
+    // ... in Realistična (krOn; not a friend's car online: the old touch moves it as its phone expects): the push of two cars there (kCollide), by
+    // the two weights. The boxes with round corners (rboxHit: a flat tail square on, through the middle of the faces that touch), the overlap taken
+    // away softly; the push at the contact with the car's weight (its fuel too; the player's x pm) and the vehicle's, the levers whole, the bounce
+    // by the closing speed, the rub along the contact; the car takes its share as its tyres do (kTake: the turn anywhere on it, its grip, the
+    // slide), never more of the turn than leaves the two with the energy they came with (kTurnR, as kCollide). The vehicle as the traffic has
+    // it: knocked loose by the same change of speed as in the old touch, it is a free body and takes the push whole (speed and turn); one that
+    // stays on its lane (a bus brushed, a truck) can only change its speed along the lane: the push is worked out for a body that moves only
+    // that way (the car and the vehicle keep their momentum along the lane, the tyres take what goes across; it never rolls backwards); one
+    // lying still slides again when shoved by more than 0.15 m/s (as _hitVehP), else it stands as a wall. A cyclist: _runBikeR. Damage, sparks,
+    // the horn, the end of the endless drive: as the old touch
+    _hitVehR(c, v, K) {
+      const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
+      const B = this._rbV || (this._rbV = { x: 0, z: 0, h: 0, m: { len: 0, wid: 0 } }); B.x = v.x; B.z = v.z; B.h = v.h; B.m.len = v.len; B.m.wid = v.wid;
+      const o = rboxHit(c, B); if (!o || v.nc > 0) return 0;
+      const nx = o.nx, nz = o.nz, px = o.px, pz = o.pz, pen = o.pen, T = this.T;
+      if (this.win && c === this.race.player) this.win.hit++;   // (the endless drive: any touch ends it, Endless)
+      const ma = (c.m.mass + (c.fuelKg || 0)) * (c.isPlayer ? K.pm : 1), mb = v.mass, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12, ia = 1 / ma, ib = 1 / mb, tot = ia + ib;
+      if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBikeR(c, v, K, nx, nz, px, pz, ma, Ia, Ib);   // (a cyclist: run over)
+      const corr = Math.max(0, pen - RB_SLOP) * RB_PUSH + Math.max(0, pen - RB_DEEP);
+      c.x += nx * corr * ia / tot; c.z += nz * corr * ia / tot;
+      if (v.st !== 0) { v.x -= nx * corr * ib / tot; v.z -= nz * corr * ib / tot; }
+      else { const f = corr * ib / tot; v.s -= (nx * T.tx[v.i] + nz * T.tz[v.i]) * f; v.d -= (nx * T.nx[v.i] + nz * T.nz[v.i]) * f; }
+      const rax = px - c.x, raz = pz - c.z, rbx = px - v.x, rbz = pz - v.z;
+      const vrx = (c.vx - c.w * raz) - (v.vx - v.w * rbz), vrz = (c.vz + c.w * rax) - (v.vz + v.w * rbx), vn = -(vrx * nx + vrz * nz);   // (vn: how fast they close)
+      if (vn <= 0) return 0;
+      const e = vn < K.eT ? 0 : (K.e1 + (K.e0 - K.e1) * Math.exp(-(vn - K.eT) / K.eV)) * sstep(K.eT, K.eT + 0.5, vn);
+      const tx = -nz, tz = nx, vt = vrx * tx + vrz * tz, rna = rax * nz - raz * nx, rta = rax * tz - raz * tx, rnb = rbx * nz - rbz * nx, rtb = rbx * tz - rbz * tx;
+      const mu = K.mu * (K.muL + (1 - K.muL) * sstep(K.muV, K.muV + 1, vn)), an = ia + rna * rna / Ia, at = ia + rta * rta / Ia;
+      let J = (1 + e) * vn / (an + ib + rnb * rnb / Ib), Jt = clamp(-vt / (at + ib + rtb * rtb / Ib), -mu * J, mu * J), Px = J * nx + Jt * tx, Pz = J * nz + Jt * tz;   // (the vehicle a free body)
+      const dvb = Math.hypot(Px, Pz) * ib, lx = T.tx[v.i], lz = T.tz[v.i];
+      let free = v.st === 1;
+      if (v.st === 0 && (dvb > 1.4 || (v.kind >= 3 && dvb > 0.6))) { this._knock(v); v.w = 0; free = true; if (v.kind >= 3) this._throwRider(v, c.vx, c.vz, c); }
+      else if (v.st === 2 && dvb > 0.15) { v.st = 1; v.t = 0; free = true; }   // (a knocked one standing there: shoved, it slides again)
+      if (!free) {   // (on its lane: only along it; lying still: not at all)
+        const qn = v.st === 0 ? nx * lx + nz * lz : 0, qt = v.st === 0 ? tx * lx + tz * lz : 0;
+        J = (1 + e) * vn / (an + ib * qn * qn); Jt = clamp(-vt / (at + ib * qt * qt), -mu * J, mu * J); Px = J * nx + Jt * tx; Pz = J * nz + Jt * tz;
+      }
+      const dax = Px * ia, daz = Pz * ia, dwa = (rax * Pz - raz * Px) / Ia * K.yaw * (c.isPlayer ? K.yawP : 1), dwb = free ? (rbz * Px - rbx * Pz) / Ib : 0;
+      const dl = !free && v.st === 0 ? -(Px * lx + Pz * lz) * ib : 0, dbx = free ? -Px * ib : dl * lx, dbz = free ? -Pz * ib : dl * lz;   // (dl: its change of speed along the lane)
+      let ka;
+      { const ta = kTurnR(c, dax, daz, dwa, K, null);   // (the two never leave with more energy than they came with: kCollide's guard, the vehicle's turn whole)
+        const dE = ma * (dax * (c.vx + 0.5 * dax) + daz * (c.vz + 0.5 * daz)) + mb * (dbx * (v.vx + 0.5 * dbx) + dbz * (v.vz + 0.5 * dbz)) + Ia * ta * (c.w + 0.5 * ta) + Ib * dwb * (v.w + 0.5 * dwb);
+        if (dE > 1e-6) { const wa = c.w + ta, ra = dwa - ta, xa = wa * ra < 0 ? (Math.abs(ra) <= Math.abs(wa) ? ra : -wa) : 0;
+          if (xa) { const A = 0.5 * Ia * xa * xa, Bq = Ia * wa * xa, D = Bq * Bq - 4 * A * dE, l = D >= 0 ? Math.min(1, 2 * dE / (-Bq + Math.sqrt(D))) : 1; ka = (ta + l * xa) / dwa; } } }
+      kTake(c, Px, Pz, rax, raz, ma, Ia, K, null, ka);
+      if (free) { v.vx += dbx; v.vz += dbz; v.w += dwb; }
+      else if (v.st === 0) v.v = Math.max(0, v.v + dl * v.dir);
+      const imp = vn;
+      c.hitCar = Math.max(c.hitCar, imp); fxSrc(c, null, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = px; c.contactZ = pz;
+      if (imp > 3.5 && v.kind < 4) { const dx = px - c.x, dz = pz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * ch + dz * sh, -dx * sh + dz * ch); }
+      if (imp > 3 && v.kind < 3) this._event('crash', c, px, pz);
+      v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
+      return imp;
+    }
+    // ... a cyclist run over in Realistična (_runBike's rules: the rider dead on the road, the bicycle knocked on and out from under the car, no
+    // contacts with it for 0.8 s, the car's nose nudged, a little damage; the same draws): the speeds by the two weights instead of shares of the
+    // car's speed. The push at the contact as _hitVehR (the bicycle a free body of its 90 kg: it leaves a little faster than the car, the car
+    // loses (1 + e) m / (M + m) of the closing speed), and the kick that throws the bicycle aside taken from the car (momentum kept both ways)
+    _runBikeR(c, v, K, nx, nz, px, pz, ma, Ia, Ib) {
+      const sp = c.speed, R = this.R, vx = c.vx, vz = c.vz, mb = v.mass, ia = 1 / ma, ib = 1 / mb;
+      const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = (px - c.x) * ch + (pz - c.z) * sh, lz = -(px - c.x) * sh + (pz - c.z) * ch, sd = lz >= 0 ? 1 : -1, k = 1.2 + 0.07 * sp;
+      const rax = px - c.x, raz = pz - c.z, rbx = px - v.x, rbz = pz - v.z, vn = -((vx - c.w * raz - v.vx) * nx + (vz + c.w * rax - v.vz) * nz);
+      let Px = 0, Pz = 0;
+      if (vn > 0) { const e = vn < K.eT ? 0 : (K.e1 + (K.e0 - K.e1) * Math.exp(-(vn - K.eT) / K.eV)) * sstep(K.eT, K.eT + 0.5, vn), rna = rax * nz - raz * nx, rnb = rbx * nz - rbz * nx;
+        const J = (1 + e) * vn / (ia + ib + rna * rna / Ia + rnb * rnb / Ib); Px = J * nx; Pz = J * nz; }
+      const bx = v.vx - Px * ib - sh * sd * k, bz = v.vz - Pz * ib + ch * sd * k;   // (the bicycle: the push, and thrown aside)
+      Px += mb * sh * sd * k; Pz -= mb * ch * sd * k;
+      kTake(c, Px, Pz, rax, raz, ma, Ia, K, null);
+      if (!c.air) c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.24, -CSK.tapMax, CSK.tapMax);
+      knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
+      this._knock(v, 0.8); v.w = (R() - 0.5) * 9; v.vx = bx; v.vz = bz;
+      this._throwRider(v, vx, vz, c, true);
+      fxSrc(c, null, 2.5); c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
+      return sp - Math.hypot(c.vx, c.vz);
     }
     // ... in the run from the police (a car with c.ck): the two boxes, no bounce, the bodies grinding, the push at the true contact point, both
     // turned by it (CRASH); a vehicle knocked by more than ~0.6 m/s comes loose and slides as a body (more than 6 m/s, or a hard hit: a wreck
