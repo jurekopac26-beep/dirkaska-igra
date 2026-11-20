@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadCore } = require('./lib/core.js');
 const crypto = require('crypto');
-const { DT, trackIds, ownModel, PHYSICS, NEW_CARS, seeded, raceState } = require('./lib/sim.js');
+const { DT, trackIds, ownModel, PHYSICS, NEW_CARS, newCar, seeded, raceState } = require('./lib/sim.js');
 
 const FILE = path.join(__dirname, 'golden', 'races.json');
 const update = process.argv.includes('--update');
@@ -56,7 +56,7 @@ for (const tid of trackIds(C)) for (const phys of PHYSICS) for (const v of ['', 
   if (ownModel(C, tid) && (v === 'formula' || v === 'lm' || v === 'car')) continue;   // (a track with its own vehicle, the tanker's: no other car drives it)
   const rain = v === 'rain' ? 1 : 0, key = `${tid}/${phys}` + (v ? '/' + v : '');
   if (only.length && !only.every(o => key.split('/').includes(o))) { if (ref[key]) out[key] = ref[key]; continue; }
-  const r = race(tid, phys, rain, v === 'formula' || v === 'lm' ? model(v) : v === 'car' ? model(NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) : null); out[key] = r;
+  const r = race(tid, phys, rain, v === 'formula' || v === 'lm' ? model(v) : v === 'car' ? model(newCar(C, tid)) : null); out[key] = r;
   const g = ref[key], why = [], dry = rain && (out[`${tid}/${phys}`] || ref[`${tid}/${phys}`]);
   if (r.nan) why.push('NaN in car state');
   if (r.finished !== r.cars) why.push(`only ${r.finished}/${r.cars} finished`);

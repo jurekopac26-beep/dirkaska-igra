@@ -37,6 +37,8 @@ function withRandom(seed, fn) {
 // electric car and the truck in turn, by the track's place in the list)
 const raceOpts = (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps: 2, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
 const NEW_CARS = ['muscle', 'ev', 'truck'];
+// the car for /car: by index among tracks without their own vehicle (the tanker tracks do not shift it)
+const newCar = (C, tid) => NEW_CARS[C.TRACKS.filter(d => !d.vehicle).findIndex(d => d.id === tid) % NEW_CARS.length];
 const SETUPS = {
   race: { opts: raceOpts },
   demo: { opts: (C, tt, phys) => ({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys }) },
@@ -44,7 +46,7 @@ const SETUPS = {
   crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(80, Math.ceil(T.len / 30) + 20) : 60 },
   formula: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'formula') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of formulas: 20 s more to reach the pit repair)
   lm: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'lm') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of prototypes)
-  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (the truck is slow on tarmac: 20 s more to the pit repair)
+  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === newCar(C, tid)) }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (the truck is slow on tarmac: 20 s more to the pit repair)
 };
 
 // the player in the crash set-up: autopilot, but from 6 s to 8.5 s full throttle and full left lock (into the barrier or
@@ -164,4 +166,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, izbrane, najmanj, ownModel, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, ownModel, PHYSICS, SETUPS, NEW_CARS, newCar, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
