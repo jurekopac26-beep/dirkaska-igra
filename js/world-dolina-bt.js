@@ -100,7 +100,7 @@
 
   // each frame (World.update): the nodes onto the camera's lines of sight, 5 m in front of where the far view puts a node as far away
   function update(V, cam) {
-    if (!cam) { V.mesh.visible = false; V.cx = 1e9; return; }   // (the world test's pose: no camera, no valley)
+    if (!cam) { V.mesh.visible = false; if (V.cx !== 1e9) { const g = V.mesh.geometry; g.attributes.position.array.set(V.P0); g.attributes.aHz.array.fill(1); g.attributes.position.needsUpdate = g.attributes.aHz.needsUpdate = true; V.cx = 1e9; } return; }   // (the world test's pose: no camera, no valley, the nodes back at their own places, else the fingerprint follows where the camera last stood)
     V.mesh.visible = true;
     const c = cam.position; if (Math.abs(c.x - V.cx) + Math.abs(c.y - V.cy) + Math.abs(c.z - V.cz) < 0.5 && cam.far === V.cf) return;
     V.cx = c.x; V.cy = c.y; V.cz = c.z; V.cf = cam.far;
