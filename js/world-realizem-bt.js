@@ -239,12 +239,12 @@
       const k = sstep(0.5, 0.72, P.n1(gx * 0.9 + 310, gz * 0.9 - 150)); if (!(k > 0.1) || R() > 0.25 + 0.7 * k) return;
       for (let q = 0, cnt = 5 + Math.floor(R() * 6); q < cnt; q++) { const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, h = R(), a = R();
         if (nrLC(x, z) !== 0 || !clear(x, z, 5)) { R(); continue; }
-        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.45, 0.24 + h * 0.3, vary(cols[Math.floor(a * cols.length)], R, 0.03), R); n++; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.42 + h * 0.4, 0.15 + h * 0.17, vary(cols[Math.floor(a * cols.length)], R, 0.03), R); n++; }
     });
     st.sopi = n;
   });
-  rbLush('buriram', 9521, [[0.3, 0.56, 0.2], [0.36, 0.6, 0.22], [0.26, 0.5, 0.19]]);
-  rbLush('sepang', 9531, [[0.26, 0.54, 0.19], [0.32, 0.6, 0.21], [0.22, 0.47, 0.18]]);
+  rbLush('buriram', 9521, [[0.4, 0.62, 0.27], [0.46, 0.66, 0.3], [0.36, 0.57, 0.25]]);
+  rbLush('sepang', 9531, [[0.36, 0.6, 0.26], [0.42, 0.66, 0.28], [0.32, 0.54, 0.24]]);
 
   /* Seoul (its own builder, js/world-seoul.js, calls this before it closes its scenery chunks): under the pines and oaks of the
      mountain the ground beside the road was one smooth face from the camera above the car. docs/proge/seoul.md: »gozd rdečega bora in
