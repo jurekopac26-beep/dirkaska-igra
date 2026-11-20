@@ -552,7 +552,7 @@ Vsi stiki, pri katerih igra spremeni hitrost, smer ali škodo avta. Koda je v `j
 | Posebne ograje | `wallCollide`, veje `rings`, `trk.open`, `trk.wall2`, `stubPen`, `altC`, `pitLead` | Isti sunek kot ograja: otok krožišča (čelno 60 km/h → 8 km/h po 1. koraku, škoda 39 %), konca odprte ceste (→ 14 km/h, 41 %), stena predora (15°/120 → 111 km/h, 19 %). Stranske ceste, nasprotni pas in pasova ob boksih črto le premaknejo ali odprejo (prebrano v kodi, ni merjeno). |
 | Rob prepada in rob nove mape | `Track.dropAt`, `wallCollide(…, canFall)`, `Race._fall`; veja `trk.free` | Rob prepada (1,2 m od asfalta): nad 2,5 m/s navzven avto pade (1,6 s, +32 % škode, vrnjen na cesto z 28,8 km/h), počasneje ga rob drži kot ograja; prepade ima samo zamrznjena testna proga. Rob nove mape: sredina avta se pripne, hitrost čez rob se izniči, brez trenja, zasuka, škode in zvoka. |
 | Predmeti ob progi | `PROPK` (40 vrst), `propCarHit`, `propImpulse`, `propFeel`, `propStep`, `Race.breakProp` | Masa 3–220 kg. Avto (3 krogi polmera 0,92 m) predmet izrine; predmet dobi sunek 1,35·vrel/(1/m + r²/I + 1/M), hitrost do min(18 m/s, 0,72·v + 2) in 7,5 m/s navzgor. Avto ne dobi nasprotnega sunka: izgubi min(4,5 %, 0,16 %·m)·min(1, vrel/8) hitrosti na vsak korak stika in dobi naključen zasuk. Ulični predmeti s škodo udarijo enkrat (0,6 s brez stika). Ograja drži predmete s središčem pod 3,2 m. |
-| Promet | `Traffic._hitVeh`, `_knock`, `_runBike`, `TFK` | Mase 1300/2400/12 500/290/90/32 000 kg (avto, kombi, avtobus, motor, kolo, tovornjak s polprikolico). Krogi proti krogom, sunek z odbojem 0,25 in ročicami; sunek smeri avta obrezan na 22,9°. Kolo: avto izgubi min(v, 0,15·v + 1), kolo dobi 0,5 v. |
+| Promet | `Traffic._hitVeh`, `_knock`, `_runBike`, `TFK` | Mase 1300/2400/12 500/290/90/32 000 kg (avto, kombi, avtobus, motor, kolo, tovornjak s polprikolico). cv 1–5: krogi proti krogom, sunek z odbojem 0,25 in ročicami; sunek smeri avta obrezan na 22,9°. Kolo: avto izgubi min(v, 0,15·v + 1), kolo dobi 0,5 v. V Realistični (cv 6) od 20. 11. `_hitVehR` in `_runBikeR`: pravokotnika z zaobljenimi vogali, sunek po masah (razdelek »Krog 20. 11. 2026, drugi del«). |
 | Ljudje in živali | `Traffic._hitPeds`, `TF_PED` | Pešec 75 kg samo v prometu in begu: avto izgubi min(v, 0,06·v + 0,4 m/s), pešec dobi 0,35 v. Gledalci, redarji, mehaniki in živali nimajo trka. |
 | Beg pred policijo in stavbe | `crashCollide`, `Police.collide`, `Traffic._hitVehP`; `boxCollide` | Škatla proti škatli, odboj 0,05 nad 1,5 m/s, trenje 0,5, izriv 35 % na korak; patrulja 1750 kg, kombi 2900 kg, motor 430 kg. Stavbe (`boxCollide`: odboj 0, trenje 0,2) ima samo skrivališče na zamrznjeni testni progi. |
 | Odstopljen avto, scenografija, nova mapa | `Race.retire`, `parkBrake`; `js/nvwalls.js` | Odstopljen avto stoji na izletni coni z ročno zavoro in trka kot avto. Drevesa, hiše in tribune nimajo trka: avto ustavi samo črta ograje. Ograje in predmeti nove mape so v `js/nvwalls.js` (ni v jedru, ni merjeno). |
@@ -1473,7 +1473,7 @@ Prvi del faze 2. Formule zasnove so v `js/core.js` kot šesta izbira `cv 6` (Nas
 - **Vrstica 13 (vožnja po ograji) ostane odprta:** po ograji je na asfaltu še vedno hitreje kot po cesti (R 60 m 15,74 s proti 17,58 s; R 30 m 14,35 s proti 16,51 s), le dražje (R 30 m: škoda 24 → 100 %, dotikov 5 → 24, najnižja hitrost 130 → 122 km/h). Odloči uporabnik (»Kje prejšnja analiza ne drži«, vrstica 13). Izhodišče R 30 m je zdaj 14,08 s in ne 14,15 s kot v zasnovi: enako da že `f1c4a0a`, zasnova je merila starejše drevo; od tod tudi 14,35 s namesto 14,37 s.
 - **Predmeti zunaj seznama zasnove:** težki predmeti stanejo več kot zdaj, ker cena ni več omejena: nadstrešek 220 kg 4,50 → 14,74/10,34/6,20 %, predmet vrste `signalm` (160 kg) 4,50 → 5,34/5,34/4,51 %. Počasno rinjenje stane več: bala pri 5 km/h 12,53 → 41,58 % (0,60 → 1,98 km/h), kup bal pri 15 km/h 25,43 → 45,25 %. Cena je po masi avta (zdaj od nje ni odvisna): stožec pri 120 km/h mravlja 0,98 %, kolibri 0,25 %, rally 0,15 %, titan 0,03 %; nadstrešek 58,16/17,49/10,34/2,25 %. Predmet med avtom in ograjo (avto 20° proti ograji; izguba proti istemu avtu brez predmeta): bala pri 120 km/h 19,7 % (najnižja hitrost 6 km/h) → 1,4 % (92 km/h). Dirka 13 avtov čez vrsto bal 250 m po štartu (Spa): srednja izguba 8,0 → 1,6 %, največji zaostanek 11,2 → 2,1 m. Naslov razdelka »izguba hitrosti ni odvisna od mase avta« v izpisu `predmeti.js` je stalno besedilo in opisuje Simulacijo.
 - **Pokrov, ki drsi ali leti: 0,88/0,54 % namesto 1,15/0,75 %.** Po popravkih O1 in O2 (»Odpadli deli«) premikajoč kos avto zadene z enim sunkom: (14 kg · 24 m/s) / 1150 kg = 0,29 m/s = 1,05 km/h = 0,88 % od 120 km/h. Zasnova je merila pred O1 in O2 (»zdaj« takrat 12,7/8,2 %, danes 5,60 %); kandidat da na istem drevesu iste številke. **Lasten pokrov** avto po O1 in O2 ne zadene več v nobeni različici (n = 0), zato pričakovanje 1,55/0,93/0,55 % ne velja več.
-- **Promet in polprikolica:** dotik s prometom (`Traffic._hitVeh`) ni del Realistične: od 81 vrstic se razlikujejo 4 (200 km/h, zamik 0,6 m), in še te šele ob ograji ovala 1,1 s pozneje (točka 3). Stoječa polprikolica z zamikom 0,6 m pri 120/200 km/h: prvi dotik je enak, avto pa dobi zasuk 0 → 192/320 °/s in se zavrti za 58/129° (točka 1; prikolica sama je izvzeta).
+- **Promet in polprikolica:** dotik s prometom (`Traffic._hitVeh`) ob tej meritvi ni bil del Realistične (od 20. 11. je, razdelek »Krog 20. 11. 2026, drugi del«): od 81 vrstic se razlikujejo 4 (200 km/h, zamik 0,6 m), in še te šele ob ograji ovala 1,1 s pozneje (točka 3). Stoječa polprikolica z zamikom 0,6 m pri 120/200 km/h: prvi dotik je enak, avto pa dobi zasuk 0 → 192/320 °/s in se zavrti za 58/129° (točka 1; prikolica sama je izvzeta).
 - **Dirke:** Bathurst ima srednjo pot na avto −0,80 % (zasnova −1,0 %): druga mera poti in drevo po O1 in O2; trki in škoda se ujemajo. Po popravkih 12. 11. Spa ni več enak Simulaciji (19 trkov nad 3 m/s proti 13, pot −0,11 %), na Bathurstu je rahlih trkov več (27 proti 14 nad 3 m/s pred popravki; nad 8 m/s 1 proti 2), pot −0,86 %; vrtenj in odstopov ni. Vzrok in širša meritev (36 dirk): »Popravki po neodvisnem preverjanju«.
 - **Glava izpisa `zid.js --cv 6`** kaže Simulacijina števila ograje (`wallE` 0,05, `wallMu` 0,25, `wallYaw` 0,3): veljajo za naslon pod 1,5 m/s, števila sunka so v `KV.real.wall`.
 
@@ -1516,7 +1516,7 @@ Druga dva spora (sledenje tekmeca prometu, `c.tfFol`, in vrstica vozila v promet
 4. **Vrstica 13** (vožnja po ograji ostane hitrejša od ceste) čaka na odločitev uporabnika.
 5. **Oplazenja z boka s plinom:** pri 60 km/h se B zavrti (−20 → −137°); pregledati, ali je to želeno, ali naj dolg naslon oprijema ne jemlje. Po popravkih 12. 11. se B pri side-60-a3-eq ne zavrti več (−21°); ostane side-120-a10-dv20 (−26 → −95°).
 6. **Težki predmeti in počasno rinjenje** stanejo več kot zdaj (nadstrešek 220 kg pri 60 km/h 4,5 → 14,7 %; bala pri 5 km/h 0,60 → 1,98 km/h): pregledati z uporabnikom na slikah.
-7. **Dotik s prometom** (`Traffic._hitVeh`) ni v Realistični.
+7. **Dotik s prometom** (`Traffic._hitVeh`) ob tem pregledu ni bil v Realistični; dodan 20. 11. (`_hitVehR`, razdelek »Krog 20. 11. 2026, drugi del«).
 8. **Ni izmerjeno:** lestvica škode za cv 6 (12. 11. samo škoda ob ograji: +6,8 % proti Simulaciji na 567 prizorih; »Odprto po testih«, točka 6), štart z 22 avti in ozke proge. Odprto tudi, ali naj otok krožišča ob vogalih pošlje `k = −1`, in glava izpisa `zid.js` za cv 6.
 9. **Slike ZDAJ/POTEM in brskalniški testi** (glavna seja), nato gumbi v Nastavitvah in Poškodbe. Besedilo izbire v meniju (»v delu«, `js/lang.js`) ostane do takrat.
 
@@ -2124,6 +2124,59 @@ Preverjanje (26 agentov) je potrdilo šest vrzeli; ostale točke (P4.2–4, P2.4
 - **Testi (20. 11. 2026):** `tests/trki.test.js` 61/61 (9 novih: veljavnost zapisa, avto brez barve, prikolica; Simulacija, Realistična, Stara; na jedru pred popravkom jih pade 6), `tests/vleka-privzeta.test.js` 43/43 (razdelek 8, 3 nova: prevračanje `cs` in `nova`, padec), `tests/poskodbe.test.js` 14/14, `tests/cisterna.test.js` 20/20. `tests/browser/sled-zapah.test.mjs`: »prevzeto« je zdaj `=== undefined` (ni zagnan, kot tudi ne dirke in zlate reference).
 - **Vprašanji na strani Odločitve (19. 11.):** `trki-zadnja-vrata-19-11` (slika zdaj/potem, JEŽEK E, Spa: zadnja vrata po bočnem trku) in `trki-obremenitev-kup-19-11` (množični trk na štartu 403 klici risanja; predlog: oddaljeni avti lažje poškodbe). Do odgovora se nič ne spreminja.
 
+## Krog 20. 11. 2026, drugi del
+
+Sedem točk iz »Stanje odprtega«, vsaka v svojem commitu; fizika vožnje in cv 1–5 nespremenjeni.
+
+- **Dotik s prometom v Realistični:** `Traffic._hitVeh` gre v cv 6 po novi poti `_hitVehR` (kolesar `_runBikeR`), cv 1-5 in spletni avto prijatelja ostanejo na starem dotiku, tabele `tools/trki/predmeti.js --del promet` za cv 1 in cv 5 so enake do znaka. Sunek je isti kot pri trku dveh avtov (`kCollide`): pravokotnika z zaobljenimi vogali namesto krogov, masa avta z gorivom, ročice cele, odboj po hitrosti približevanja, trenje ob stiku, delež avta prek `kTake` z varovalom energije. Avto 1300 kg od zadaj pri 60-200 km/h: odboj 0,25 -> 0,12, izguba hitrosti avta 66,2 % -> 59,5 %, gibalna količina po/pred 0,999-1,001; pri zamiku 0,6 m in 120 km/h se avto zavrti s 4,46 rad/s (255 °/s), prej samo sunek nosu 22,9° brez vrtenja. Kolo 90 kg: avto izgubi 8,2-8,3 % hitrosti (prej 21,1 / 18,2 / 17,0 %), kolo odleti z 1,04 v (prej 0,5 v), gibalna količina 0,998-0,999 (prej 0,828-0,866); pravila ostanejo (kolesar povožen, kazen, dogodek, isti dve naključni števili prometa). Vozilo, ki ostane na pasu (avtobus ali tovornjak ob boku, tovornjak od zadaj), se spremeni samo vzdolž pasu in nikoli ne gre nazaj: gibalna količina vzdolž pasu se ohrani na 1e-6, prečni del prevzamejo njegove pnevmatike, zato ob boku tovornjaka pri 30° in 120 km/h vzdolž vožnje ostane 0,866 (prej 0,610). Tovornjak 32 t, zadet od zadaj pri 120 km/h, zdaj ostane na pasu (1,30 m/s pod pragom 1,4), prej je bil izbit. Testi: `tests/trki.test.js`, 5 novih preverjanj (gibalna količina para na 1e-9, energija ne raste, zrcalna slika, vozilo na pasu, kolesar, cv 1/3/5 po starem). Odprto: pešci (`_hitPeds`) so še po starem.
+- **Zrcalni prizori z zavijanjem:** vzrok je bil vrstni red vogalov v `wallCollide`. Zanka jih jemlje po indeksu 0, 1, 2, 3 in potisk prvega spremeni lego in hitrost avta, preden se vpraša drugi; zrcalna slika ima leva in desna vogala zamenjana, torej v obratnem vrstnem redu. V Realistični (samo `krOn`, avto s štirimi vogali) avto na levi polovici ceste (`q.d` < 0, na sredini po predznaku zasuka) zdaj vzame vogale v zrcalnem vrstnem redu 1, 0, 3, 2; na desni polovici teče kot prej. Od 240 prizorov z zavijanjem se zrcalna slika ne ujema v 0 po prvem dotiku in v 0 na koncu (prej 1 in 6, največji odmik 0,023 / 0,267); meji v `tests/trki.test.js` sta 0 in 0 (prej 2 in 8), prizori brez zavijanja ostajajo 0 / 0, test po zložitvi 66 od 66. Udarec v ograjo (`node tools/trki/zid.js --cv 6`): od 576 vrstic sta se spremenili 2, obe Bathurst, ravnina 750 m, 90° pri 60 km/h z obema prednjima vogaloma hkrati (izstopni kot 90,0 → 90,1° v klasični in 90,1 → 90,3° v novi fiziki); udarci z enim vogalom so do znaka enaki. `zid.js --cv 1` in `--cv 5` sta do bajta enaka kot prej, `tests/golden/trki.json` se ni premaknila. Zaporedna obdelava vogalov ostaja (kateri je prvi, je dogovor, zdaj zrcalno simetričen); dirke s cv 6 se lahko razhajajo od prvega dotika leve ograje z dvema vogaloma v istem koraku, kar na dirkah še ni izmerjeno.
+- **P4, gruščast prah ob trku v betonski zid (samo Realistična, cv 6).** Ob udarcu v betonski zid z več kot 8 m/s v zid se poleg navadnega prahu dvigne svetel, grob prah z drobci betona; moč raste linearno do 30 m/s (k = (fxWall − 8) / 22). Pri polni moči je to 28 oblakov prahu (v mokrem 13, manj prekrivnih), 50 drobcev velikosti 0,12–0,28 m in 8 večjih kosov 0,32–0,5 m, skupaj največ okoli 86 delcev iz obstoječe zaloge 2400, zato brez novih klicev risanja, materialov in tekstur. Vrsto ograje pove svet z neobveznim `world.barKind(i, stran)` (0 jeklena ograja, 1 beton, 2 gume); zdaj ga podajata Spa in splošni graditelj (`js/world.js`), pri jekleni ograji in gumah ter na progah z lastnim graditeljem ostane navaden prah. Jedro in fizika vožnje nista spremenjena, cv 1–5 ostanejo enaki, učinek uporablja samo izrisovalnikov naključni niz. Meritev: scenarij `zid90` (Spa, kamera za avtom, čelno v desni betonski zid pri 100 km/h) da 27,7 m/s v zid, torej k ≈ 0,90; sliki `docs/trki-slike/prah-zid-zdaj.webp` in `prah-zid-potem.webp` (vsaka okoli 62 KiB, izreza pri +0,4 s in +0,8 s po dotiku). Testi: trki 66/66 po zložitvi, crash 216/216, poskodbe 19/19, perf Spa 174 klicev na sličico (meja 214) in 455 tisoč oglišč (meja 557 tisoč); števila klicev v sami sličici trka nismo posebej merili, enako ostane po zasnovi (ista zaloga delcev).
+- **Žleb (P4.4):** Žleb za golim pestom (P4.4) ima zdaj brskalniški test: `tests/browser/poskodbe.test.mjs`, 7. del, 9 preverjanj na telefonu 844 × 390 s Podrobnimi poškodbami. Cel avto pri 20 m/s žleba ne pusti, avto z odpadlim zadnjim levim kolesom pa ga pri 12 m/s (meja je 15 m/s) tudi ne, tam so samo iskre. Pri 20 m/s nastane po 20 m vožnje žleb dolg 19,33 m v 29 staknjenih kosih po 0,67 m, širok 0,10 m, 3 cm nad cesto, raven, točno pod golim pestom (0,85 m levo od sredine, kolikor je pol širine karoserije); po nadaljnjih 20 m meri 39,33 m v 59 kosih. V zraku žleba ni in vrzel 10,67 m se po pristanku ne premosti; druga tri kolesa ne pustijo nobene sledi. Žleb je del skupne mreže zavornih sledi: število mrež v prizoru ostane 1590, slika ima 148 klicev risanja s sledmi in 147 s skrito mrežo sledi, meja je 360. Po ponovnem zagonu dirke so sledi počiščene, avto je cel in pogled nima več konca žleba (`v.hubG`). Koda igre se ni spremenila, test je tekel dvakrat z izidom 28/28; da žleb ne porabi naključnih števil, je preverjeno samo z branjem kode.
+- **K3:** K3, ostanek (meritev 20. 11. 2026, brez spremembe jedra): pojav je bil poiskan na vseh 17 progah s stranskimi cestami (`tools/trki/odpadli-stranske.js`, pokrov iz vsake stranske ceste, 18 in 40 m/s, osem smeri, 2 s; 26 656 kosov). Na 16 progah brez Medvod ni nobenega koraka, v katerem bi kos znotraj meja stranske ceste veljal za kos glavne ceste (0 od 18 304 kosov; tudi s kolesom pri 10, 25 in 60 m/s 0). Na Medvodah je takih korakov 1059 pri 11 kosih od 8352 in vseh 1059 je v coni krožišča (stranski cesti 79 in 80), kjer `Track.query` po zasnovi (`def.barrier`, `inZone`) ne vrne stranske ceste, enako kot avtom; od 30 izgub pripadnosti jih je 10 v coni, 20 pa je kosov, ki so v ustju bočno zapustili koridor za 4 m in geometrijsko niso več v stranski cesti. Višina v coni je krožiščna (`ringH`), od višine stranske ceste se pri ležečem kosu razlikuje največ 0,09 m (0,36 m iz preverjanja 46 je enkraten prestop na robu cone); odboj pa je resničen: v coni kose obrača ograja trase do 26 m za njo, medtem ko je avti tam nimajo (`pen = 0`), in to velja tudi za kose z glavne ceste (50 od 15 307 korakov v coni, največ 0,19 m). Popravek »zadnji veljavni rezultat stranske ceste« zato ni narejen: v coni bi dal kosu višino in meje stranske ceste na krožiščnih tleh; pravi popravek so meje con za kose kot pri avtih, kar spremeni tudi kose, ki niso ob stranski cesti, zadeva samo Medvode (v odločanju) in ga ni mogoče preveriti na drugi pravi progi. Dodano preverjanje 46b (`tests/odpadli-deli.test.js`, 49/49): na šestih nezamrznjenih progah s stranskimi cestami (Caracoles, Katu, Chapman, Ujarrás, Isuna, Koli; 2352 kosov, 246 966 korakov kosa v stranski cesti) 0 takih korakov, 0 izgub, najdaljši premik nad hitrost x korak 0,06 m.
+- **Razbitina `ev`, klici risanja (`tests/browser/fleet.test.mjs`):** Preverba klicev risanja razbitine v tests/browser/fleet.test.mjs (razbitina s kosi <= cel avto + 2 na kos + 1 na razpoko) pade pri modelu ev: 38 > 37 (cel avto 21, 6 kosov, 4 razpoke). Na origin/main in tik pred commitom 677a4f2b je imela razbitina ev 32 klicev, po njem 38. Prirastek +6 je v celoti iz odpiranja vrat starejših modelov (oldAjar): vsaka od dveh odprtih vrat doda lakirano ploščo, njeno senco in temno odprtino, torej 3 klice. Plošča in odprtina imata različna materiala, zato ju ni mogoče združiti brez spremembe videza; gre za upravičeno ceno funkcije, ne za odvečno mrežo. Drugi starejši modeli ostanejo pod mejo (kaze, pico, vortex, muscle, truck 43/45, rally 45/47, lm 44/46, p206 31/32, formula 37/46), strega je točno na njej (37/37). ev in strega imata samo 6 kosov z lastno mrežo namesto 8, ev pa v razbitini ohrani še nalepko štartne številke. Koda ni spremenjena; meja je odločitev, povezana z odprtim vprašanjem trki-vrata-starejsi-18-11. Predlog: meji dodati 3 klice na odprta vrata starejšega modela (ev 38 <= 43). Do odgovora na `trki-vrata-starejsi-18-11` se meja ne spreminja.
+
+### Meritve cv 6 »Realistična« proti cv 1 (20. 11., `tools/trki/cv6-meritve.js`, 12 semen 71–82)
+
+**Lestvica avto–avto** (ravnina, enaka avta; cv 1 → cv 6)
+
+| Trk | 30 km/h | 60 km/h | 120 km/h | 200 km/h |
+|---|---|---|---|---|
+| Čelno, škoda % (enako v obeh) | 21 | 48 | 100 | 100 |
+| Od zadaj v stoječega, škoda % (enako) | 8 | 21 | 48 | 83 |
+| T v stoječega, škoda % (enako) | 8 | 21 | 48 | 88 |
+| T v zadnjo os, škoda % | – | 25 → 21 | 63 → 56 | – |
+| Čelno z zamikom, zasuk ° | 0 → 26 | 0 → 77 | 0 → 167 | 0 → 190 |
+| T v zadnjo os, zasuk zadetega ° | – | 38 → 98 | 245 → 145 | 611 → 162 |
+
+**Štart z 22 avti** (po 30 s; cv 1 → cv 6)
+
+| Proga | Dotiki | Skupna škoda % | Največja škoda avta % | Največji zasuk ° | Stoji po 30 s |
+|---|---|---|---|---|---|
+| Spa | 59.3 → 67.8 | 39.3 → 36.7 | 22.2 → 15.1 | 47 → 59 | 0 |
+| Tianmen | 42.8 → 61.3 | 30.1 → 69.9 | 53.9 → 83.8 | 58 → 180 | 0 |
+| Ujarrás | 84.1 → 99.3 | 111.2 → 213.6 | 52.5 → 100 | 49 → 180 | 0 |
+| Sosnová | 51.7 → 74.1 | 69.7 → 129.4 | – | – | 1 avto (oba) |
+
+**Cela dirka 13 tekmecev** (cv 1 → cv 6)
+
+| Proga | Skupna škoda % | Razmerje | Srednji čas s |
+|---|---|---|---|
+| Hiva (3 krogi) | 46.9 → 100.5 | 2.1× | 272.76 → 273.39 |
+| Koli | 62.4 → 109.6 | 1.8× | 59.47 → 59.70 |
+| Ujarrás | 75.4 → 109.3 | 1.45× | 27.66 → 27.82 |
+| Cusco | 23.9 → 61.0 | 2.6× | 31.76 → 31.91 |
+| Sa Calobra | 104.6 → 193.6 | 1.85× | 195.80 → 195.88 |
+| Seul | 10.8 → 14.2 | 1.3× | 83.17 → 83.21 |
+
+Ugotovitve:
+1. Škoda na posamezen udarec je v cv 6 enaka cv 1; razlika je samo pri T v zadnjo os (0.84–0.89×). Nikjer nad 2×.
+2. Smiselno drugačen je zasuk: čelni trk z zamikom avto zavrti (cv 1: 0°), pri visokih hitrostih pa so zasuki omejeni na približno pol obrata (611° → 162°).
+3. Na ozkih progah je skupna škoda 1.45–2.6× večja. Avto po zamaknjenem dotiku obstane počez (do 180°), nato zadene ograjo ali ga zadenejo zasledovalci: na Hivi škoda ob ograjo 0 → 26.9 % na dirko.
+4. Na široki progi (Spa) razlike skoraj ni; skupna škoda je celo malo nižja.
+5. Kupi se razrešijo (po 30 s nihče ne stoji, razen 1 avta na Sosnovi v obeh različicah); časi krogov so daljši za 0.1–0.4 %.
+
+Odprto iz meritev (odločitev uporabnika, vprašanje `trki-ozke-proge-20-11`): skupna škoda nad 2× na ozkih progah (Cusco 2,6×, Tianmen štart 2,3×, Hiva 2,1×); T v premikajoči se avto zavrti avto, ki zadene, za 264° pri 120 in 200 km/h (cv 1: 7°).
+
 ## Stanje odprtega 20. 11. 2026
 
 Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odloča.
@@ -2135,15 +2188,17 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 - `trki-pokrov-starejsi-20-11`: pokrov starejših karoserij (v tem dokumentu še brez svojega zapisa; sem sodita kot pokrova 18° iz predaje in lupina, ki pogleda skozi skrajšani pokrov).
 - F3, zavora izločene razbitine (»Posledice v dirki«).
 - Ključ rekorda svetovne lestvice nima različice trkov (»Okvir«; uporabnik ali seja lestvice).
+- `trki-prah-zid-20-11` (sliki gruščastega prahu), `trki-ozke-proge-20-11` (škoda na ozkih progah), `trki-tovornjak-20-11` (tovornjak 32 t ostane na pasu).
+- Meja klicev risanja razbitine `ev` (38 > 37), vezano na `trki-vrata-starejsi-18-11`.
 - Pas drsenja ob ograji čez prvi avto: v tem dokumentu ni svojega zapisa, preneseno iz predaje kroga.
 
 **Odprto, ne čaka**
-- P4.4: žleb v asfaltu za golim pestom (`v.hubG` v `js/render.js`) nima testa v brskalniku; iskre pod povešenim vogalom niso dodane.
-- Meritve cv 6: lestvica škode avto–avto, štart z 22 avti, ozke proge.
-- Dotik s prometom (`Traffic._hitVeh`) ni v Realistični.
-- »Gruščasti« prah ob trku v zid s cv 6.
-- Zrcalni prizori z zavijanjem (dva vogala v ograji v istem koraku se obdelata zaporedoma): od 240 prizorov se zrcalna slika ne ujema v 1 po prvem dotiku in v 6 na koncu (meji testa 2 in 8; `tests/trki.test.js`).
-- K3, ostanek po omejitvi skoka: kos, ki globoko v stranski cesti izgubi njeno pripadnost (`q.k = -1`), ostane v njej, vodi pa se kot kos glavne ceste. (a) Višina: `Track.yAt` da višino glavne ceste pri `q.s`, ne višine stranske ceste; preverjanje 46 meri premik tal pod ležečim kosom v koraku nad 30 % naklonom: največ 0,36 m pri takem kosu (0,53 m ob prehodu točke iz ene stranske ceste v drugo, kar ni iz omejitve), nad 0,05 m v 12 korakih od ~2 milijonov; meja testa 1 m. (b) Hitrost: odboj od ograje glavne ceste deluje sredi stranske ceste (kos, ki gre globlje vanjo, se obrne brez zidu; kos, ki gre proti cesti, meja stranske ceste ne zadrži in pride skozi ograjo glavne ceste od zunaj, ko prodor pade pod mejo). Videno samo na Medvodah; popravek pri viru (`Track.query`, `_stubQ`, namig `pk`) ali zadnji veljavni rezultat stranske ceste v `stepDebris` v poznejšem krogu.
+- P4.4: iskre pod povešenim vogalom niso dodane.
+- Pešci (`Traffic._hitPeds`) so v Realistični še po starem.
+- Gruščasti prah: ~90 prog z lastnim graditeljem ne podaja `world.barKind`; klici risanja v sličici trka niso izmerjeni.
+- Vpliv zrcalnega vrstnega reda vogalov na dirke s cv 6 ni izmerjen.
+- `tests/browser/poskodbe.test.mjs`, »2. Preproste: a light knock cracks the lamp it leaves whole«: nestabilno (1 od 3 tekov).
+- K3 na Medvodah: kosi v coni krožišča nimajo meja kot avti (razdelek »Krog 20. 11. 2026, drugi del«); ob odločitvi o Medvodah.
 - Po namestitvi koles redarjev vrnjena kolesa ostanejo zvita do popravila v boksih (opažanje, ni spremenjeno).
 - F4 (nizka, po presoji).
 
@@ -2151,3 +2206,6 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 - Veljavnost zapisa `fxK` (barva samo, dokler velja `fxCar`); `_fxK` se počisti tudi prikolicama.
 - Oznaka samodejnega krmila (`_aiS`) se pri padajočem avtu zavrže.
 - K3 (skok kosa ob ustju stranske ceste) in F5 (sunek kosa ob izteku izjeme): preverjanji 46 in 47; reference dirk in zlate reference preveri celoten krog.
+
+**Zaprto v drugem delu kroga (20. 11. 2026)**
+- Dotik s prometom v Realistični, zrcalni prizori z zavijanjem (0/0), gruščasti prah (Spa in splošni graditelj), test žleba, meritve cv 6, meritev K3 (preverjanje 46b).
