@@ -3,12 +3,17 @@
 // shore band with the foam and the shallows), the worn tarmac (patches, sealed cracks, the rubber on a circuit's racing line; none on a
 // gravel road nor on Pikes Peak, whose road has its own). On every track all of it is built and drawn without an error; the water
 // mirrors the race's sky (dark at night), the foam shows at the shore, the wear darkens with the rain.
-//   node tests/browser/gfx.test.mjs
+//   node tests/browser/gfx.test.mjs              the first half of the tracks (every other one from the first) and the checks 2-4
+//   node tests/browser/gfx2.test.mjs             the other half (GFX_DEL=2): each part within GitHub's time limit, both together every track
+//   GFX_DEL=vse node tests/browser/gfx.test.mjs  every track and the checks 2-4 in one go
+// (PROGE, the short round's few tracks: all of them in the first part, the second has none)
 import { serve, launch, openGame, startTrack, trackIds, najmanj, checker } from './lib.mjs';
 
 const T = checker('graphics: car glint, water, worn tarmac');
-const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno'];   // (with a shore band; Livorno: the Ligurian Sea; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario)
-const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki', 'svalvogar', 'fairymeadows', 'manchewe', 'yungas', 'tapini'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass and the Moki Dugway: gravel roads; the tanker's five: gravel and earth, docs/proge-cisterna.md)
+const WATER = ['jezero', 'riviera', 'monaco', 'gozd', 'toskana', 'suzuka', 'ouninpohja', 'katu', 'bigsur', 'cpalace', 'newcastle', 'rio', 'toronto', 'monterey', 'bangsaen', 'detroit', 'montreal', 'townsville', 'livorno', 'bikernieki', 'london', 'zandvoort', 'lombok', 'buriram', 'sakhir', 'riohondo', 'zurich', 'luanda', 'mombasa', 'portobelo'];   // (with a shore band; Biķernieki: the lake Linezers and the ponds in the forest; Livorno: the Ligurian Sea; Zürich: the lake along its quay; London: the Thames; Zandvoort: the ponds in the dunes; Luanda: its bay; Mombasa: the Likoni channel and the ocean; Montréal: the St. Lawrence; Pikes Peak: its reservoir only; Katu-Jaryk: the Chulyshman; Big Sur: the Pacific; Crystal Palace: the park's lakes; Newcastle: the harbour and the ocean; Toronto: Lake Ontario; Lombok: the Indian Ocean; Buriram: the pond inside turns 4–6; Sakhir: the three ponds in the infield; Termas de Río Hondo: the reservoir behind the dam)
+const NO_WEAR = ['gora', 'ouninpohja', 'pikes', 'pikesg', 'katu', 'sani', 'moki', 'killar', 'svalvogar', 'fairymeadows', 'manchewe', 'yungas', 'tapini'];   // (pikesg: Pikes Peak on its historic gravel road; Sani Pass, the Moki Dugway and Killar: gravel roads; the tanker's five: gravel and earth, docs/proge-cisterna.md)
+const DEL = process.env.GFX_DEL || '1', PROGE = !!(process.env.PROGE || '').trim();
+if (DEL === '2' && PROGE) { T.check('the second half: PROGE\'s tracks all checked in the first part (gfx.test.mjs)', true, ''); T.done(); process.exit(0); }
 const srv = await serve();
 const browser = await launch();
 try {
@@ -25,15 +30,17 @@ try {
       if (k.startsWith('water|')) { const a = o.geometry.attributes.shore; if (a) { let mn = 1e9, mx = -1e9; for (let i = 0; i < a.count; i++) { mn = Math.min(mn, a.getX(i)); mx = Math.max(mx, a.getX(i)); } bands.push([mn, mx, a.count]); } else water.push(o.geometry.attributes.position.count); }
       if (o.name === 'roadwear') { wear.meshes++; const c = o.geometry.attributes.color; wear.verts += c.count; for (let i = 3; i < c.array.length; i += 4) wear.alpha = Math.max(wear.alpha, c.array[i]); }
     });
+    const g = window.__game, TT = g && g.race && g.race.track; wear.len = TT && TT.len || 1e9;   // (the track's length: a short road has fewer patches)
     return { cars, water, bands, wear };
   });
 
   // 1. every track: built and drawn, the glint on every car, the water and its shore, the wear
-  const ids = await trackIds(page), bad = [];
+  const all = await trackIds(page), bad = [];
+  const ids = DEL === 'vse' || PROGE ? all : all.filter((_, i) => i % 2 === (DEL === '2' ? 1 : 0));   // (the half of this part)
   for (const id of ids) {
     await startTrack(page, id);
     await frames(3);
-    const L = await look(), pk = id === 'pikes' || id === 'pikesg', why = [];
+    const L = await look(), len = await page.evaluate(() => window.__game.race.track.len), pk = id === 'pikes' || id === 'pikesg', why = [];
     const bodies = Object.keys(L.cars.body), paints = Object.keys(L.cars.paint);
     if (!bodies.length || bodies.some(k => k !== (pk ? 'pkCarB' : 'dirtyCarCg') && k !== 'dirtyCarCgS')) why.push('bodies ' + JSON.stringify(L.cars.body));   // (dirtyCarCgS: a KOLIBRI's, its side scrapes)
     if (paints.some(k => k !== (pk ? 'pkCarP' : 'carCg'))) why.push('paint ' + JSON.stringify(L.cars.paint));
@@ -41,13 +48,14 @@ try {
     if (wet !== !!L.bands.length || (wet && L.bands.some(b => b[0] > -1.99 || b[1] < 9.99 || b[2] < 50))) why.push('shore bands ' + JSON.stringify(L.bands));
     if ((wet || pk) !== !!L.water.length) why.push('water ' + JSON.stringify(L.water));
     const worn = !NO_WEAR.includes(id);
-    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < 500 || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));
+    if (worn !== L.wear.meshes > 0 || (worn && (L.wear.verts < (len < 2000 ? Math.min(150, L.wear.len < 1000 ? L.wear.len * 0.15 : 150) : 500) || L.wear.alpha < 0.5))) why.push('wear ' + JSON.stringify(L.wear));   // (a short road: fewer patches; a short landmark track under 1 km, 0.15 a metre: Ghoufi's 905 m have some 160)
     if (why.length) bad.push(id + ': ' + why.join('; '));
     console.log(`  ${id.padEnd(11)} cars ${JSON.stringify(L.cars.body)} water ${L.water.length} bands ${L.bands.map(b => b[2]).join('+') || 0} wear ${L.wear.meshes}/${L.wear.verts}`);
   }
-  T.check('every track: the glint on every car (Pikes Peak its own), the water with its shore band where there is water, the worn tarmac where it is tarmac', !bad.length && ids.length >= najmanj(14), bad.join(' | '));
+  T.check('every track: the glint on every car (Pikes Peak its own), the water with its shore band where there is water, the worn tarmac where it is tarmac', !bad.length && ids.length >= (DEL === 'vse' || PROGE ? najmanj(14) : 7), bad.join(' | '));
   T.check('no shader or page errors on any track', errors.length === 0, errors.slice(0, 5).join(' | '));
 
+  if (DEL !== '2') {   // (the checks 2-4 in the first part only)
   // 2. the foam at the shore: the Riviera's beach seen from above (the shore band drawn, then hidden: the band adds the white of the foam and the surf)
   await startTrack(page, 'riviera');
   await page.evaluate(() => window.__game.pause());
@@ -86,6 +94,8 @@ try {
   await page.evaluate(() => window.__game.race.setRain(1)); await frames(4);
   const wetC = await wearCol();
   T.check('the patches and cracks darken with the wet road', dry > 0 && wetC < dry * 0.75, JSON.stringify({ dry, wet: wetC }));
+
+  }
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
