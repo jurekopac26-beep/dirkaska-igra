@@ -441,11 +441,11 @@
   "jsMs": 1.39
  },
  "bikernieki": {
-  "calls": 183,
+  "calls": 186,
   "maxCalls": 235,
-  "kverts": 435,
-  "maxKverts": 517,
-  "jsMs": 1.22
+  "kverts": 427,
+  "maxKverts": 497,
+  "jsMs": 2.41
  },
  "london": {
   "calls": 172,
@@ -506,9 +506,9 @@
  "buriram": {
   "calls": 195,
   "maxCalls": 247,
-  "kverts": 668,
-  "maxKverts": 844,
-  "jsMs": 1
+  "kverts": 716,
+  "maxKverts": 877,
+  "jsMs": 1.18
  },
  "lombok": {
   "calls": 190,
@@ -518,11 +518,11 @@
   "jsMs": 1.67
  },
  "sepang": {
-  "calls": 184,
-  "maxCalls": 226,
-  "kverts": 684,
-  "maxKverts": 861,
-  "jsMs": 1.14
+  "calls": 185,
+  "maxCalls": 228,
+  "kverts": 728,
+  "maxKverts": 897,
+  "jsMs": 1.4
  },
  "sakhir": {
   "calls": 200,
