@@ -958,7 +958,6 @@
     /* ---- the view beyond the corridor (ngFar; World.update moves it with the camera); finish the meshes ---- */
     const FAR = ngFar(def); if (FAR) { FAR.mesh.visible = false; FAR.upd = ngFarUpdate; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; moved by its own ngFarUpdate)
     out.dyn.ext = (t, car, cam, race) => ngLifeStep(life.L, t, car, race);
-    if (World.ext.ngorongoroRob) World.ext.ngorongoroRob({ scen, excluded, onSide, gH: caGround, slope: caSlope, lc: vrLC, pathD: (x, z) => segD(PA, x, z), out });   // (js/world-realizem-bt.js: the tussocks and the bare soil by the road)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: ngAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;

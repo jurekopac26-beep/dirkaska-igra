@@ -364,11 +364,11 @@
   "jsMs": 1.14
  },
  "llogara": {
-  "calls": 159,
-  "maxCalls": 172,
-  "kverts": 395,
-  "maxKverts": 486,
-  "jsMs": 1.19
+  "calls": 156,
+  "maxCalls": 168,
+  "kverts": 362,
+  "maxKverts": 423,
+  "jsMs": 1.34
  },
  "ella": {
   "calls": 166,
@@ -434,11 +434,11 @@
   "jsMs": 1.5
  },
  "kotor": {
-  "calls": 207,
-  "maxCalls": 250,
-  "kverts": 575,
-  "maxKverts": 805,
-  "jsMs": 1.28
+  "calls": 204,
+  "maxCalls": 245,
+  "kverts": 618,
+  "maxKverts": 843,
+  "jsMs": 1.39
  },
  "bikernieki": {
   "calls": 183,
@@ -483,18 +483,18 @@
   "jsMs": 1.14
  },
  "gudauri": {
-  "calls": 158,
+  "calls": 156,
   "maxCalls": 187,
-  "kverts": 381,
-  "maxKverts": 538,
-  "jsMs": 1.5
+  "kverts": 362,
+  "maxKverts": 483,
+  "jsMs": 1.14
  },
  "ngorongoro": {
   "calls": 141,
   "maxCalls": 166,
-  "kverts": 286,
-  "maxKverts": 340,
-  "jsMs": 1.78
+  "kverts": 276,
+  "maxKverts": 326,
+  "jsMs": 1.44
  },
  "tuzla": {
   "calls": 156,
@@ -532,11 +532,11 @@
   "jsMs": 0.93
  },
  "portomoniz": {
-  "calls": 212,
-  "maxCalls": 253,
-  "kverts": 538,
-  "maxKverts": 672,
-  "jsMs": 1.15
+  "calls": 208,
+  "maxCalls": 246,
+  "kverts": 498,
+  "maxKverts": 602,
+  "jsMs": 2.66
  },
  "seoul": {
   "calls": 137,
