@@ -929,6 +929,41 @@ for (const tid of ['spa', 'bathurst']) {
     ok('the traffic, cv 1, 3 and 5 the same to the digit, by the old touch (centred: the bounce 0.25 by the two weights, no yaw rate); a friend\'s car online in Realistična as in cv 1', okAll, rows.join('; ')); }
 }
 
+// Realistična and the people (Traffic._hitPeds -> _hitPedR; docs/trki-realizem.md): the player's car (BURJA R7, Bathurst's endless drive) over
+// someone on foot standing in its outline, Traffic._hitPeds called once. In cv 6 the car gives exactly the momentum they take (75 kg x their
+// speed, to 1e-9 both ways), so it loses under 3 % of its speed whatever that is (the old rule: 6 % + 0.4 m/s whatever the car weighs, 3-4
+// times what they took); someone 0.6 m off its middle line turns its nose a little, the mirror image the other way; the same state (run
+// over, on the ground at ~0.35 of its speed), event, penalty rule and count of the traffic's random numbers. cv 1, 3 and 5 and a friend's
+// car online in cv 6: the old rule to the digit
+{
+  let bT = null;
+  const hit = (tx, o) => test(tx, () => { const orig = Math.random; Math.random = seeded(7); try {
+    const T = bT || (bT = new C.Track(C.TRACKS.find(x => x.id === 'bathurst')));
+    const r = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 99, playerModel: C.MODELS.find(m => m.id === 'rally'), assist: 2, phys: 'cs', seed: 9, difficulty: 1, damage: 2, endless: true }); r.start();
+    const P = r.player, tf = r.tf; tf.win.dens = 0; for (const q of tf.veh) q.off = true; for (const q of tf.ped) q.off = true;
+    const p = tf._ped(0, P.q.s + 60, 1, 'walk'), i = T.idx(p.s), hx = T.tx[i], hz = T.tz[i], back = P.m.len / 2 - 0.1, off = o.off || 0;
+    P.x = p.x - hx * back + hz * off; P.z = p.z - hz * back - hx * off; P.px = P.x; P.pz = P.z; P.h = P.ph = Math.atan2(hz, hx); { const hn = Math.hypot(hx, hz); P.vx = hx / hn * o.v; P.vz = hz / hn * o.v; } P.w = 0; P.csKc = 0; P.net = !!o.net; const vx0 = P.vx, vz0 = P.vz;
+    const ma = P.m.mass + (P.fuelKg || 0), n0 = tf.ped.length;
+    tf.cl.length = 0; tf.cl.push(P); tf._hitPeds();
+    return { st: p.st, ma, dpx: ma * (P.vx - vx0) + 75 * p.vx, dpz: ma * (P.vz - vz0) + 75 * p.vz, vc: Math.hypot(P.vx, P.vz), vp: Math.hypot(p.vx, p.vz), w: P.w, kc: P.csKc || 0, R: tf.R(), ev: tf.evK, pen: P.tfPen || 0, dmg: P.dmg,
+      nan: !Number.isFinite(P.vx + P.vz + P.w + P.x + P.z + p.vx + p.vz + p.x + p.z), n: tf.ped.length - n0 };
+  } finally { Math.random = orig; } });
+  const V = 120 / 3.6;
+  { const rows = []; let okAll = true;
+    for (const v of [60 / 3.6, V, 200 / 3.6]) for (const off of [0, 0.6, -0.6]) { const q = hit(REAL, { v, off }), o = hit(SIM, { v, off }), loss = 1 - q.vc / v, dp = Math.hypot(q.dpx, q.dpz) / (q.ma * v);
+      const good = !q.nan && q.st === 'hit' && dp < 1e-9 && loss > 0.01 && loss < 0.03 && q.vc < v && q.vp > 0.3 * v && q.vp < 0.4 * v && q.ev === 'ped' && o.ev === 'ped' && q.R === o.R && q.pen === o.pen && q.dmg === o.dmg && o.st === 'hit'
+        && Math.abs(o.vc - (v - Math.min(v, 0.06 * v + 0.4))) < 1e-9 && o.w === 0; if (!good) okAll = false;
+      if (!good || off === 0) rows.push(`${f(v * 3.6, 0)} km/h ${off}: the car -${f(loss * 100, 2)} % (cv 1 -${f((1 - o.vc / v) * 100, 1)} %), they ${f(q.vp / v)} v, dp ${dp.toExponential(1)}`); }
+    ok('Realistična, the people: someone run over at 60-200 km/h (centred and 0.6 m off either way): the car gives exactly what they take (1e-9), 1-3 % of its speed; the same state, event, penalty and count of the traffic\'s random numbers as cv 1, which keeps its rule (the car -(6 % + 0.4 m/s))', okAll, rows.join('; ')); }
+  { const a = hit(REAL, { v: V, off: 0.6 }), b = hit(REAL, { v: V, off: -0.6 }), c = hit(REAL, { v: V });
+    ok('Realistična, the people: someone 0.6 m off the middle line turns the car a little (its turn or its line, under 0.5 rad/s), one in the middle not at all, the other way the other way round (the road bends a little under them: to 3 %) with the same speed left',
+      Math.abs(a.w + a.kc) > 1e-5 && Math.abs(a.w) < 0.5 && Math.abs(a.w + b.w) < 1e-9 && a.kc * b.kc < 0 && Math.abs(a.kc + b.kc) < 0.03 * Math.abs(a.kc) && Math.abs(c.w) + Math.abs(c.kc) < 0.02 * Math.abs(a.kc) && Math.abs(a.vc - b.vc) < 1e-9, `w ${f(a.w, 4)} / ${f(b.w, 4)} rad/s, the line ${a.kc.toExponential(2)} / ${b.kc.toExponential(2)}, centred ${f(c.w, 4)} ${c.kc.toExponential(1)}`); }
+  { let okAll = true; const rows = [], key = (q) => [q.st, q.vc, q.vp, q.w, q.kc, q.R, q.ev, q.pen, q.dmg, q.dpx, q.dpz].join(' ');
+    for (const o of [{ v: V }, { v: 60 / 3.6, off: 0.6 }]) { const a = hit(SIM, o), b = hit(OLD, o), s3 = hit(SOFT, o), n1 = hit(SIM, Object.assign({ net: 1 }, o)), n6 = hit(REAL, Object.assign({ net: 1 }, o));
+      if (!(key(a) === key(b) && key(a) === key(s3) && key(n1) === key(n6) && Math.abs(n6.vc - o.v) < 1e-12)) { okAll = false; rows.push([key(a), key(b), key(s3), key(n1), key(n6)].join(' | ')); } }
+    ok('the people, cv 1, 3 and 5 the same to the digit by the old rule; a friend\'s car online in Realistična as in cv 1 (its own phone slows it)', okAll, rows.join('; ')); }
+}
+
 let bad = 0;
 console.log('== trki med avti (različice)');
 for (const c of checks) { if (!c.ok) bad++; console.log(`${c.ok ? 'OK  ' : 'FAIL'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`); }

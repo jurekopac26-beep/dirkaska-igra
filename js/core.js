@@ -6110,6 +6110,7 @@ const Core = (function () {
           const ch = Math.cos(c.h), sh = Math.sin(c.h), lx = rx * ch + rz * sh, lz = -rx * sh + rz * ch, hl = c.m.len / 2 + 0.22, hw = c.m.wid / 2 + 0.22;
           if (Math.abs(lx) > hl || Math.abs(lz) > hw) continue;
           if (c.speed < 2) { this._nudge(p, ch, sh, lx, lz, hl, hw); continue; }
+          if (krOn(c) && !c.net) { this._hitPedR(c, p, KC, rx, rz); break; }   // (Realistična: by the two weights, as the traffic there)
           const sp = c.speed, f = 1 - Math.min(sp, 0.06 * sp + 0.4) / sp, vx = c.vx * f, vz = c.vz * f;
           if (!c.net) { c.vx = vx; c.vz = vz; } if (!c.air) { const kc = clamp((c.csKc || 0) + (this.R() - 0.5) * 0.12, -CSK.tapMax, CSK.tapMax); if (!c.net) c.csKc = kc; }   // (a friend's car online: its own phone slows it; the same draws as there)
           this._runOver(p, vx, vz, 0.35);
@@ -6125,9 +6126,22 @@ const Core = (function () {
           const rx = p.x - v.x, rz = p.z - v.z; if (rx * rx + rz * rz > 49) continue;
           const ch = Math.cos(v.h), sh = Math.sin(v.h), lx = rx * ch + rz * sh, lz = -rx * sh + rz * ch, hl = v.len / 2 + 0.2, hw = v.wid / 2 + 0.2;
           if (Math.abs(lx) >= hl || Math.abs(lz) >= hw) continue;
-          if (v.st) this._runOver(p, v.vx, v.vz, 0.4); else this._nudge(p, ch, sh, lx, lz, hl, hw);
+          if (v.st) { this._runOver(p, v.vx, v.vz, 0.4); if (KR) { const k = TF_PED / v.mass; v.vx -= p.vx * k; v.vz -= p.vz * k; } }   // (Realistična: the wreck gives what they take)
+          else this._nudge(p, ch, sh, lx, lz, hl, hw);
         }
       }
+    }
+    // ... someone run over in Realistična (the rules of _hitPeds: on the ground under the car at 0.35 of its speed, dead on the road; the same
+    // draws): the car gives exactly the momentum they take, TF_PED kg x their speed, at the place they stood against it (kTake: a heavy car hardly
+    // feels it, a light one more; off its middle line its nose is turned a little). Before: 0.06 v + 0.4 m/s whatever the car weighs, 3-4 times
+    // what they took
+    _hitPedR(c, p, K, rx, rz) {
+      const ma = (c.m.mass + (c.fuelKg || 0)) * (c.isPlayer ? K.pm : 1), Ia = c.I * ma / c.m.mass, f = ma / (ma + 0.35 * TF_PED);   // (f: the car's speed after, the two as one push along its way)
+      if (!c.air) this.R();   // (the old rule's draw, so the traffic's numbers stay in step; the turn comes from where they stood: kTake)
+      this._runOver(p, c.vx * f, c.vz * f, 0.35);
+      kTake(c, -TF_PED * p.vx, -TF_PED * p.vz, rx, rz, ma, Ia, K, null);
+      fxSrc(c, null, 2); c.fxCar = Math.max(c.fxCar || 0, 2);
+      this._event(p.kind === 3 ? 'bike' : 'ped', c, p.x, p.z); if (p.kind !== 3) this._penalty(c);
     }
 
     // for the AI (and the autopilot): the corridor across the road it may drive in over the next stretch, from the vehicles and the people near
