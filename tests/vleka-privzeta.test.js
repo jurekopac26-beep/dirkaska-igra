@@ -252,5 +252,34 @@ for (const k of [0, 2]) {   // (najdaljša asfaltna in makadamska stranska cesta
   check(`obračanje v stranski cesti ${k}: s »Samo moj avto« zvit avto do bita kot cel; cel je s pull null in 0 do bita enak`, L0.s === W.s && W0.s === W.s);
 }
 
+// --- 7) zaklenjen avto: oznaka samodejnega krmila ne ostane čez korak (»Samo moj avto«) ---
+// Zaklenjen avto (na štartu, patrulja pred zamikom) vleke ne računa, zato oznake samodejnega krmila (Core _aiS) prej ni
+// porabil: prvi korak po odklepu, ko volan že drži človek, je bil pri »Samo moj avto« brez vleke (1/120 s). Car.step jo zdaj
+// počisti na koncu vsakega koraka. Dokaz: zvit avto, ki ga je zaklenjenega en korak krmilo samodejno krmilo, vozi po odklepu
+// od prvega koraka do bita kot dvojček, ki ga samodejno krmilo ni nikoli krmilo; cel avto (nič zvitega) se z oznako ali brez ne loči.
+function lockedFlag(ai, cd, tx) {
+  C.setTest(tx); Math.random = seeded(7);
+  const T = spaT || (spaT = new C.Track(C.TRACKS.find(x => x.id === 'spa')));
+  const r = new C.Race(T, { numAI: 0, playerGrid: 1, tt: true, laps: 1, playerModel: C.MODELS[4], assist: 0, phys: 'cs', seed: 5, difficulty: 1, damage: 2 });
+  const P = r.player; r.start(); P.locked = true;
+  let i0 = 0; for (let i = 0; i < T.N; i++) { let ok = true; for (let e = -30; e <= 30; e++) if (Math.abs(T.k[(i + e + T.N) % T.N]) > 1e-4) { ok = false; break; } if (ok) { i0 = i; break; } }
+  P.place(T.px[i0], T.pz[i0], T.hd[i0]); P.y = P.py = T.hy ? T.hy[i0] : 0; P.vx = Math.cos(P.h) * 30; P.vz = Math.sin(P.h) * 30; if (cd) P.cd = cd.slice();
+  const out = []; let nan = 0;
+  const drive = () => { P.inSteer = 0; P.inHand = 0; P.inThr = 0.4; P.inBrk = 0; P.steer = 0; };
+  Math.random = seeded(1000); if (ai) C.aiControl(P, r, DT); drive(); P.step(DT, T);   // (zaklenjen: en korak pod samodejnim krmilom ali brez)
+  P.locked = false;
+  for (let k = 1; k <= 60; k++) { Math.random = seeded(1000 + k); drive(); P.step(DT, T); if (!Number.isFinite(P.x + P.z + P.h + P.w + P.vx + P.vz)) nan++; out.push([P.x, P.z, P.h, P.w, P.vx, P.vz].join(',')); }
+  end();
+  return { o: out, s: out.join(';'), nan };
+}
+{
+  const B = [0.6, 0, 0, 0], P0 = { pull: 0 };
+  const a = lockedFlag(true, B, P0), m = lockedFlag(false, B, P0), w = lockedFlag(false, null, P0), wa = lockedFlag(true, null, P0), d = lockedFlag(true, B, null), dm = lockedFlag(false, B, null);
+  let f = 0; while (f < a.o.length && a.o[f] === m.o[f]) f++;
+  check('zaklenjen avto, »Samo moj avto«: po odklepu ima zvit avto vleko že v prvem koraku (do bita kot dvojček, ki ga samodejno krmilo ni krmilo); cel avto se ne loči; privzeta vleka enako',
+    a.nan + m.nan + w.nan + wa.nan + d.nan + dm.nan === 0 && a.s === m.s && a.o[0] !== w.o[0] && wa.s === w.s && d.s === dm.s && d.s === m.s,
+    a.s === m.s ? `60 korakov enakih; prvi korak zvitega se loči od celega` : `prvi različen korak po odklepu: ${f + 1}`);
+}
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

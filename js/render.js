@@ -7164,7 +7164,7 @@ const Render = (function () {
       carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
-      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = v.xsC = 0; v.xsK = null; } else { if (w > (v.xsW || 0)) v.xsW = w; if (k > (v.xsC || 0)) { v.xsC = k; v.xsK = xSrcCar(c); } } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait: the stronger contact holds, with its car's paint (xsK: taken now, the contact point is the last knock's only); a touch without a dent leaves nothing for the next knock; c.fxQ mutes the sparks only)
+      if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = v.xsC = 0; v.xsK = null; } else { if (w > (v.xsW || 0)) v.xsW = w; if (k > (v.xsC || 0)) { v.xsC = k; v.xsK = xSrcCar(c); } } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait: the stronger contact holds, with its car's paint (xsK: taken now, the core's fxKOf(c): the strongest knock's car, also of two in one frame); a touch without a dent leaves nothing for the next knock; c.fxQ mutes the sparks only)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
       const xWait = v.xOn && v.mrg && ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))) && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
@@ -8755,7 +8755,8 @@ const Render = (function () {
     if (w >= k) return XSRC_WALL;
     return v.xsK != null ? _xsc.set(v.xsK) : null;
   }
-  function xSrcCar(c) {   // (the paint of the car this frame's contact was with, or null)
+  function xSrcCar(c) {   // (the paint of the car this frame's contact was with, or null: the core's own word for the strongest of the frame's knocks, fxKOf(c), core.js fxSrc; without it, a trailer's or a contact set by hand, the car whose contact point is the same, the last knock's)
+    const fk = Core.fxKOf(c); if (fk != null) return fk;
     for (const q of views) { const o = q.car; if (o !== c && o.contactX === c.contactX && o.contactZ === c.contactZ && o.color != null) return o.color; }
     return null;
   }
@@ -8964,7 +8965,7 @@ const Render = (function () {
     v.sk.fill(null); v.acc.fill(0);   // (no skid mark from the edge to where it is put back)
     if (c.fxWall > 2.5) sparks(c.wallX, c.wallZ, c.fxWall, c.y || 0);
     if (c.fxCar > 3 && !c.fxQ) sparks(c.contactX, c.contactZ, c.fxCar * 0.7, c.y || 0, c.fxCar > 7 || Core.TX.cv === 5);
-    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    c.fxWall = 0; c.fxCar = 0; Core.fxKOf(c, true); if (c.fxQ) c.fxQ = 0;
     if (B.hn === v.fbN) return;
     const more = B.hn > v.fbN; v.fbN = B.hn; if (!more) return;   // (a replay taken back in the fall: fewer knocks so far, none of them news)
     const k = clamp(B.hv / 12, 0.3, 1.5), wetL = wetW > 0.1, dc = snowy() ? SNOW_DUST : world && world.dust || DUST0.col, hx = B.hx, hy = B.hy, hz = B.hz;   // (rain: a darker, thinner cloud off the wet ground)
@@ -10110,7 +10111,7 @@ const Render = (function () {
       const acc = v.xDragA || (v.xDragA = {}); acc[bn] = (acc[bn] || 0) + dt * (60 + spd * 6);   // (a stream: more the faster it drags; by time, not by frame)
       if (acc[bn] >= 1) { const a = g.attributes.position.array, ch = Math.cos(h), sh = Math.sin(h), lx = a[lo * 3], lz = a[lo * 3 + 2], gy = c.roadY || 0, n = Math.min(12, Math.floor(acc[bn])); acc[bn] -= n;
         for (let k = 0; k < n; k++) { const t = rRnd() * dt; sparkP.emit(x + lx * ch - lz * sh - c.vx * t, gy + 0.05, z + lx * sh + lz * ch - c.vz * t, c.vx * 0.45 + (rRnd() - 0.5) * 3, 0.3 + rRnd() * 1.2, c.vz * 0.45 + (rRnd() - 0.5) * 3, 0.25 + rRnd() * 0.3, 0.7, 0.15, 1, 0.8 + rRnd() * 0.15, 0.34, 1, 7, 2.2, gy); } } }
-    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    c.fxWall = 0; c.fxCar = 0; Core.fxKOf(c, true); if (c.fxQ) c.fxQ = 0;
     // a kit car's wheel off: its hub scrapes the road while the car moves, a trail of sparks off it (the renderer's own random numbers;
     // dragged long enough, they set the car on fire: fireScan)
     if ((v.kit || v.hubs[0] || v.hubs[1]) && spd > 2) for (let k = 0; k < 4; k++) if (v.wheelOff[k]) {   // (an older model's front wheel too: oldWheelOff)

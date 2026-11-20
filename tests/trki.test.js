@@ -813,6 +813,26 @@ for (const tid of ['spa', 'bathurst']) {
       : `the rivals' first knock at step ${A.knock} (cv 6: ${B.knock}); the rubber sums first differ at step ${dM}${dM ? ` (${A.d[dM - 1]} / ${B.d[dM - 1]})` : ''}; the player first differs at step ${dB}${dB ? ` (${which(A.L[dB - 1], B.L[dB - 1])})` : ''}, to the end of the run by at most ${mp.toExponential(1)} m, ${mv.toExponential(1)} m/s and ${mw.toExponential(1)} of its grip; with the cv 1 race's sum the same over ${n} steps (${f(A.dist, 0)} m)`);
 }
 
+// ---- the source of the strongest knock of a step (fxK, Core fxSrc: the marks' paint, js/render.js xSrcCar) ----
+// Two cars knock a third in the same step, one from behind (9 m/s closing), one into its flank (2 m/s): the third's fxK is the stronger one's
+// paint in either order (its contact point is the last knock's, as before); each of the two has the third's; bookkeeping only: the
+// speeds after the knocks are the same to the bit with the paints swapped
+{
+  const two = (tx, strongFirst, swap) => test(tx, () => { const P = HC.mkCar('rally', { v: 0 }), A = HC.mkCar('rally', { v: 32 }), B = HC.mkCar('rally', { v: 14 });
+    P.color = 0x101010; A.color = swap ? 0x2040c0 : 0xc02020; B.color = swap ? 0xc02020 : 0x2040c0;
+    P.place(0, 0, 0); A.place(-(P.m.len - 0.02), 0, 0); A.vx = 9; B.place(0, P.m.wid * 0.5 + P.m.len * 0.5 - 0.02, -Math.PI / 2); B.vz = -2;
+    for (const c of [P, A, B]) { c.fxCar = 0; C.fxKOf(c, true); }
+    if (strongFirst) { C.carCollide(A, P); C.carCollide(B, P); } else { C.carCollide(B, P); C.carCollide(A, P); }
+    const last = strongFirst ? B : A;
+    return { k: C.fxKOf(P), fx: P.fxCar, a: C.fxKOf(A), b: C.fxKOf(B), plain: [P, A, B].every(c => !('fxK' in c)), A: A.color, B: B.color, pt: P.contactX === last.contactX && P.contactZ === last.contactZ, s: [P, A, B].map(c => [c.x, c.z, c.h, c.vx, c.vz, c.w].join()).join(';') }; });
+  for (const [nm, tx] of [['Simulacija', SIM], ['Realistična', REAL], ['Stara', { cv: 5 }]]) {
+    const r = [two(tx, true), two(tx, false)], s = [two(tx, true, true), two(tx, false, true)];
+    ok(`${nm}: two cars knock a third in one step: its fxK is the stronger one's paint in either order (the contact point the last knock's), theirs the third's; kept beside the car (no new field in a race's recorded state); the speeds the same whatever the paints`,
+      r.every(o => o.plain && o.fx > 3 && o.k === o.A && o.a === 0x101010 && o.b === 0x101010 && o.pt) && s.every(o => o.k === o.A) && r[0].s === s[0].s && r[1].s === s[1].s,
+      `strong first: fxK ${r[0].k && r[0].k.toString(16)}, fxCar ${r[0].fx.toFixed(1)}; weak first: fxK ${r[1].k && r[1].k.toString(16)}, fxCar ${r[1].fx.toFixed(1)} (the stronger car's paint ${r[0].A.toString(16)})`);
+  }
+}
+
 let bad = 0;
 console.log('== trki med avti (različice)');
 for (const c of checks) { if (!c.ok) bad++; console.log(`${c.ok ? 'OK  ' : 'FAIL'} ${c.name}${c.detail ? ' — ' + c.detail : ''}`); }

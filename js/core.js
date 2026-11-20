@@ -3630,7 +3630,7 @@ const Core = (function () {
       if (F.brT > BRK_FADE[0] && !F.brH) { F.brH = true; F.ev = 'brakes'; } else if (F.brT < BRK_FADE[0] - 120) F.brH = false;
       if (F.enT > ENG_HOT[0] && !F.enH) { F.enH = true; F.ev = 'engine'; } else if (F.enT < ENG_HOT[0] - 15) F.enH = false;
     }
-    step(dt, trk) { const r = this.phys === 'nova' ? this.stepNova(dt, trk) : this.stepCS(dt, trk); if (this.tl) tlStep(this, dt, trk); return r; }   // (a semi-trailer behind it: its own step on the kingpin, tlStep)
+    step(dt, trk) { const r = this.phys === 'nova' ? this.stepNova(dt, trk) : this.stepCS(dt, trk); _aiS.delete(this); if (this.tl) tlStep(this, dt, trk); return r; }   // (a semi-trailer behind it: its own step on the kingpin, tlStep)
   }
   // a breakable vehicle's destruction state as new (Car.wreck; repairCar: all but the retirement and the refit counter)
   const wreck0 = (W) => { if (W.rule) W.rule.burn = 0; return Object.assign(W, { wl: 0, nL: 0, fix: W.fix || 0, seq: null, st: 0, at: null, hold: 0, lt: 0, dnf: !!W.dnf, dnfT: W.dnfT != null ? W.dnfT : null, side: W.side || 0,
@@ -4579,6 +4579,15 @@ const Core = (function () {
 
   // the old knock (Trki med avti: Stara; and in the pit lane): the cars as three circles each, the classic's bounce CSK.carE and its turn as an
   // attitude kick (CSK.tapT), the new physics' NVK.carE, carMu, carYaw; as it was before the versions
+  // the source of a car's strongest knock against a car since the renderer last took its sparks (fxCar): that car's paint, fxKOf(c) (null: no
+  // paint of its own, the traffic, a trailer, a rider, a log: the renderer then asks the contact point as before). Called before fxCar is
+  // raised, with what it is raised to: the stronger contact holds, of two the same the first. Bookkeeping for the marks only (render.js,
+  // xSrcCar): nothing here reads it
+  // (kept beside the car, not on it, as _aiS: the recorded state of a race, every plain field of every car, stays as it was)
+  const _fxK = new WeakMap();
+  function fxSrc(c, o, fx) { if (fx > (c.fxCar || 0)) { if (o && o.color != null) _fxK.set(c, o.color); else _fxK.delete(c); } }
+  function fxKOf(c, take) { const k = _fxK.get(c); if (take) _fxK.delete(c); return k == null ? null : k; }   // (take: the renderer, with the sparks)
+  function fxKFrom(c, o) { const k = _fxK.get(o); if (k == null) _fxK.delete(c); else _fxK.set(c, k); }   // (a trailer's knock, taken by its tractor)
   function carCollide(a, b) {
     if (KC && !a.inPit && !b.inPit) return kCollide(a, b, KC);   // (Trki med avti: the version's knock; the pit lane as it was: the crews' work and the way in)
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = a.circles[a.circles.length - 1] + a.rad + b.circles[b.circles.length - 1] + b.rad + 0.1;   // (the two cars' reach)
@@ -4695,7 +4704,7 @@ const Core = (function () {
     if (!a.net) kTake(a, Px, Pz, rax, raz, ma, Ia, K, b, ka);
     if (!b.net) kTake(b, -Px, -Pz, rbx, rbz, mb, Ib, K, a, kb);
     const imp = carKnockFx(a, b, vn, J, rna, rnb, Ia, Ib, false, px, pz), fx = Math.max(vn, Math.abs(vt) * 0.5 * sstep(20, 200, J));   // (two flanks grinding past each other throw sparks too, pressed hard enough)
-    a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);
+    fxSrc(a, b, fx); fxSrc(b, a, fx); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);
     return imp;
   }
   // a car's share of a knock (kCollide): the push P at r from its middle, its weight m and turning mass I. The new physics: its speed and yaw rate
@@ -4820,7 +4829,7 @@ const Core = (function () {
       c.xgl = Math.min(0.9, Math.max(c.xgl || 0, clamp((imp - 4) / 10, 0, 0.55) + 0.35 * behind)); }
     a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp); grudgeHit(a, b, imp, bpx, bpz);
     if (imp > 3.5) for (const c of [a, b]) { if (c.net) continue; const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (imp - 3.5) * 0.016, dx * ch + dz * sh, -dx * sh + dz * ch); puncture(c, dx * ch + dz * sh, -dx * sh + dz * ch, imp); }
-    a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
+    fxSrc(a, b, imp); fxSrc(b, a, imp); a.fxCar = Math.max(a.fxCar || 0, imp); b.fxCar = Math.max(b.fxCar || 0, imp);
     if (KC && !KC.fx) a.fxQ = b.fxQ = 1;   // (Trki med avti: Iskre izklop: the renderer throws no sparks and no dust for it; the scrape marks stay)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
     if (XR.roll && imp > 9 && !a.net && !b.net) for (const c of [a, b]) {   // (Razbijanje · nov način: a knock on its side rolls it over, away from the knock)
@@ -4899,7 +4908,7 @@ const Core = (function () {
     const imp = -vrel;
     a.hitCar = Math.max(a.hitCar, imp); b.hitCar = Math.max(b.hitCar, imp); grudgeHit(a, b, imp, bpx, bpz);
     for (let n = 0; n < 2; n++) { const c = n ? b : a, dv = n ? dvb : dva; if (dv > CRASH.dv0) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (dv - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); } }
-    const fx = Math.max(imp, Math.abs(vt) * 0.5); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
+    const fx = Math.max(imp, Math.abs(vt) * 0.5); fxSrc(a, b, fx); fxSrc(b, a, fx); a.fxCar = Math.max(a.fxCar || 0, fx); b.fxCar = Math.max(b.fxCar || 0, fx);   // (grinding throws sparks too)
     a.contactX = b.contactX = bpx; a.contactZ = b.contactZ = bpz;
     return imp;
   }
@@ -5756,7 +5765,7 @@ const Core = (function () {
       if (v.st === 0 && (dvb > 1.4 || (v.kind >= 3 && dvb > 0.6))) { this._knock(v); v.w = 0; if (v.kind >= 3) this._throwRider(v, c.vx, c.vz, c); }
       if (v.st === 1) { v.vx -= J * bnx * ib; v.vz -= J * bnz * ib; v.w -= rnb * J / Ib; }
       else { const tx = this.T.tx[v.i], tz = this.T.tz[v.i]; v.v = Math.max(0, v.v - (J * bnx * ib * tx + J * bnz * ib * tz) * v.dir); }
-      c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = bpx; c.contactZ = bpz;
+      c.hitCar = Math.max(c.hitCar, imp); fxSrc(c, null, imp); c.fxCar = Math.max(c.fxCar || 0, imp); c.contactX = bpx; c.contactZ = bpz;
       if (imp > 3.5 && v.kind < 4 && !c.net) { const dx = bpx - c.x, dz = bpz - c.z; knock(c, (imp - 3.5) * 0.016 * clamp(mb / 1300, 0.4, 1.8), dx * cha + dz * sha, -dx * sha + dz * cha); }
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
@@ -5790,7 +5799,7 @@ const Core = (function () {
       if (v.st === 2 && dvb > 0.15) { v.st = 1; v.t = 0; }   // (a knocked one standing there: shoved, it slides again)
       if (v.st === 1) { v.vx -= Px * ib; v.vz -= Pz * ib; v.w -= (rnb * J + rtb * Jt) / Ib; if (dvb > 6 || imp > 9) v.wreck = 1; }
       else if (v.st === 0) { v.v = Math.max(0, v.v - (Px * ib * T.tx[v.i] + Pz * ib * T.tz[v.i]) * v.dir); }
-      c.hitCar = Math.max(c.hitCar, imp); c.fxCar = Math.max(c.fxCar || 0, imp, Math.abs(vt) * 0.5); c.contactX = bpx; c.contactZ = bpz;
+      c.hitCar = Math.max(c.hitCar, imp); fxSrc(c, null, Math.max(imp, Math.abs(vt) * 0.5)); c.fxCar = Math.max(c.fxCar || 0, imp, Math.abs(vt) * 0.5); c.contactX = bpx; c.contactZ = bpz;
       if (dva > CRASH.dv0 && v.kind < 4) { const dx = bpx - c.x, dz = bpz - c.z, ch = Math.cos(c.h), sh = Math.sin(c.h); knock(c, (dva - CRASH.dv0) * CRASH.dmg, dx * ch + dz * sh, -dx * sh + dz * ch); }
       if (imp > 3 && v.kind < 3) this._event('crash', c, bpx, bpz);
       v.horn = Math.max(v.horn, v.kind < 4 ? 1.5 : 0);
@@ -5815,7 +5824,7 @@ const Core = (function () {
       if (!c.net) knock(c, 0.02 + 0.001 * sp, Math.max(lx, c.m.len * 0.3), lz);
       this._knock(v, 0.8); v.w = (R() - 0.5) * 9; v.vx = vx * 0.5 - sh * sd * k; v.vz = vz * 0.5 + ch * sd * k;
       this._throwRider(v, vx, vz, c, true);
-      c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
+      fxSrc(c, null, 2.5); c.fxCar = Math.max(c.fxCar || 0, 2.5); c.contactX = px; c.contactZ = pz;
       return sp * (1 - f);
     }
 
@@ -6010,7 +6019,7 @@ const Core = (function () {
           const sp = c.speed, f = 1 - Math.min(sp, 0.06 * sp + 0.4) / sp, vx = c.vx * f, vz = c.vz * f;
           if (!c.net) { c.vx = vx; c.vz = vz; } if (!c.air) { const kc = clamp((c.csKc || 0) + (this.R() - 0.5) * 0.12, -CSK.tapMax, CSK.tapMax); if (!c.net) c.csKc = kc; }   // (a friend's car online: its own phone slows it; the same draws as there)
           this._runOver(p, vx, vz, 0.35);
-          c.fxCar = Math.max(c.fxCar || 0, 2);
+          fxSrc(c, null, 2); c.fxCar = Math.max(c.fxCar || 0, 2);
           this._event(p.kind === 3 ? 'bike' : 'ped', c, p.x, p.z); if (p.kind !== 3) this._penalty(c);
           break;
         }
@@ -6786,7 +6795,7 @@ const Core = (function () {
             if (ex * ex + ez * ez > (g.r + 0.3) * (g.r + 0.3)) continue;
             const sp = c.speed, kk = clamp(0.05 + sp * 0.004, 0.05, 0.2); c.vx *= 1 - kk; c.vz *= 1 - kk; c.logT = 0.14;
             c.csKc = clamp((c.csKc || 0) + (R() - 0.5) * 0.35, -CSK.tapMax, CSK.tapMax);
-            c.fxCar = Math.max(c.fxCar || 0, 3 + sp * 0.12); c.contactX = wx; c.contactZ = wz;
+            fxSrc(c, null, 3 + sp * 0.12); c.fxCar = Math.max(c.fxCar || 0, 3 + sp * 0.12); c.contactX = wx; c.contactZ = wz;
             if (c.police) { c.dmg = Math.min(1, c.dmg + 0.04 + sp * 0.005); if (sp > 9 && R() < 0.5) c.flat = (c.flat || 0) | (1 << k); this.st.logHits++; this.st.eur += POL_EUR.log; this._event('logHit', wx, wz, c); }
             else knock(c, 0.01 + sp * 0.0008);
             break; } } }
@@ -9125,12 +9134,12 @@ const Core = (function () {
         const c = cars[A[k]], R = c.tl; if (c.net) continue;
         if (R.hitWall > c.hitWall) c.hitWall = R.hitWall; if (R.hitCar > c.hitCar) c.hitCar = R.hitCar;
         if (R.fxWall > (c.fxWall || 0)) { c.fxWall = R.fxWall; c.wallX = R.wallX; c.wallZ = R.wallZ; }
-        if (R.fxCar > (c.fxCar || 0)) { c.fxCar = R.fxCar; c.contactX = R.contactX; c.contactZ = R.contactZ; if (R.fxQ) c.fxQ = R.fxQ; }
+        if (R.fxCar > (c.fxCar || 0)) { c.fxCar = R.fxCar; fxKFrom(c, R); c.contactX = R.contactX; c.contactZ = R.contactZ; if (R.fxQ) c.fxQ = R.fxQ; }
         R.hitWall = R.hitCar = R.fxWall = R.fxCar = R.fxQ = 0; R.speed = Math.hypot(R.vx, R.vz);
         const R2 = R.next; if (!R2) continue;   // (the second tank's knocks the tractor's too)
         if (R2.hitWall > c.hitWall) c.hitWall = R2.hitWall; if (R2.hitCar > c.hitCar) c.hitCar = R2.hitCar;
         if (R2.fxWall > (c.fxWall || 0)) { c.fxWall = R2.fxWall; c.wallX = R2.wallX; c.wallZ = R2.wallZ; }
-        if (R2.fxCar > (c.fxCar || 0)) { c.fxCar = R2.fxCar; c.contactX = R2.contactX; c.contactZ = R2.contactZ; if (R2.fxQ) c.fxQ = R2.fxQ; }
+        if (R2.fxCar > (c.fxCar || 0)) { c.fxCar = R2.fxCar; fxKFrom(c, R2); c.contactX = R2.contactX; c.contactZ = R2.contactZ; if (R2.fxQ) c.fxQ = R2.fxQ; }
         R2.hitWall = R2.hitCar = R2.fxWall = R2.fxCar = R2.fxQ = 0; R2.speed = Math.hypot(R2.vx, R2.vz);
       }
     }
@@ -9590,7 +9599,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, fxSrc, fxKOf, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, partOf, applyDamage, careerWear, detachPart, DEB, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };

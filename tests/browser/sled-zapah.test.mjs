@@ -4,7 +4,8 @@
 // takes it (xcol, xsp). Spa, the older bodies (their rivals are one mesh while whole; a kit car's are not and never wait), Podrobne.
 // 1. a rival waits 3 frames behind 3 others; two rivals of different paint knock it meanwhile, in different frames:
 //    weaker then stronger, stronger then weaker; a wall then a car, a car then a wall: the stronger one's paint (or the wall's grey) and speed
-// 2. the player (never waits: its dents are taken the frame they are made): two rivals in one frame: the stronger one's speed, a car's paint;
+// 2. the player (never waits: its dents are taken the frame they are made): two rivals in one frame, the stronger first or last, either
+//    rival the stronger: the stronger one's speed and paint (the core's fxKOf(c), Core.fxSrc: the car of the strongest knock since the last frame);
 //    a touch without a dent a frame before a knock leaves nothing in the latch (the knock's own source and speed)
 // 3. nothing NaN (the bodies' points and marks, the log), no page errors
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
@@ -28,10 +29,10 @@ try {
     const far = (a, b) => { const A = hex(a), B = hex(b); return Math.abs(A[0] - B[0]) + Math.abs(A[1] - B[1]) + Math.abs(A[2] - B[2]) > 90; }, GREY = 0x9c9c98;
     const src = rv.slice(12, 16).filter(c => far(c.color, GREY)), O1 = src[0], O2 = src.find(c => c !== O1 && far(c.color, O1.color));
     o.cols = { O1: O1 && O1.color, O2: O2 && O2.color, grey: GREY }; if (!O1 || !O2) return o;
-    // a contact as the core leaves it (carCollide, wallCollide: fxCar, fxWall the strongest since the last frame; the contact point the last one,
-    // both cars'), and its dent
+    // a contact as the core leaves it (carCollide, wallCollide: fxCar, fxWall the strongest since the last frame, fxK the paint of the car of
+    // the strongest: Core.fxSrc, the core's own, called as carCollide calls it; the contact point the last one, both cars'), and its dent
     let np = 0;
-    const car = (c, O, sp, amt, u, w) => { c.fxCar = Math.max(c.fxCar || 0, sp); O.fxCar = Math.max(O.fxCar || 0, sp); c.contactX = O.contactX = c.x + 0.31 + 0.01 * ++np; c.contactZ = O.contactZ = c.z + 0.17 + 0.01 * np; if (amt) Core.applyDamage(c, amt, u * c.m.len / 2, w * c.m.wid / 2); };
+    const car = (c, O, sp, amt, u, w) => { Core.fxSrc(c, O, sp); Core.fxSrc(O, c, sp); c.fxCar = Math.max(c.fxCar || 0, sp); O.fxCar = Math.max(O.fxCar || 0, sp); c.contactX = O.contactX = c.x + 0.31 + 0.01 * ++np; c.contactZ = O.contactZ = c.z + 0.17 + 0.01 * np; if (amt) Core.applyDamage(c, amt, u * c.m.len / 2, w * c.m.wid / 2); };
     const wall = (c, sp, amt, u, w) => { c.fxWall = Math.max(c.fxWall || 0, sp); c.contactX = c.x - 0.53 - 0.01 * ++np; c.contactZ = c.z - 0.29; if (amt) Core.applyDamage(c, amt, u * c.m.len / 2, w * c.m.wid / 2); };
     // what a car's view shows of its knocks since n0: the log's sources and speeds, the marks on its body (every marked point's colour), NaN
     const seen = (c, n0) => { const v = V(c), xc = v.xc, Lg = (v.dLog || []).slice(n0), a = v.body.geometry.attributes.position.array; let nan = 0, n = 0; const mk = {};
@@ -55,6 +56,11 @@ try {
     let n0 = (V(P).dLog || []).length; o.pre = n0;
     car(P, O1, 5, 0.08, 0.1, 1); car(P, O2, 9, 0.1, -0.2, 1); fr(1); o.pWeakStrong = seen(P, n0); n0 = V(P).dLog.length;
     car(P, O2, 9, 0.1, 0.1, -1); car(P, O1, 5, 0.08, -0.2, -1); fr(1); o.pStrongWeak = seen(P, n0); n0 = V(P).dLog.length;
+    // the same with the other rival the stronger (not the order, not which rival: the strength), and two of the same strength: the first
+    car(P, O2, 5, 0.08, 0.3, 1); car(P, O1, 9, 0.1, -0.4, 1); fr(1); o.pWeakStrong1 = seen(P, n0); n0 = V(P).dLog.length;
+    car(P, O1, 9, 0.1, 0.3, -1); car(P, O2, 5, 0.08, -0.4, -1); fr(1); o.pStrongWeak1 = seen(P, n0); n0 = V(P).dLog.length;
+    car(P, O1, 7, 0.08, 0.5, 1); car(P, O2, 7, 0.08, -0.5, 1); fr(1); o.pSame = seen(P, n0); n0 = V(P).dLog.length;
+    o.fxK = [P, O1, O2].map(c => Core.fxKOf(c) == null);   // (taken with the sparks: nothing of it left for the next frame)
     // a hard touch without a dent (a scrape along a rival), then, a frame later, a light knock against a wall: the wall's, at its own speed
     car(P, O1, 15, 0, 0, 0); fr(1); wall(P, 3, 0.06, -0.6, -1); fr(1); o.pStale = seen(P, n0); n0 = V(P).dLog.length;
     car(P, O1, 15, 0, 0, 0); fr(1); fr(1); car(P, O2, 4, 0.06, -0.6, 1); fr(1); o.pStale2 = seen(P, n0);
@@ -75,14 +81,18 @@ try {
     T.check('1. a rival (9 m/s), then a wall (5 m/s): the rival\'s paint and speed (the wall\'s contact point does not lose it)', all(r.carWall, C.O2, 9, 2), J(r.carWall));
     T.check('1. the two rivals whose paint it is stay whole (one mesh, no dents of their own)', r.srcWhole, String(r.srcWhole));
     T.check('2. the player, two rivals in one frame, weaker then stronger: the stronger one\'s paint and speed', r.pWeakStrong.log.length >= 2 && r.pWeakStrong.log.every(d => eq(d[0], C.O2) && d[1] === 9), J(r.pWeakStrong.log));
-    // (the core keeps the strongest speed of a frame but the last contact point, js/core.js carCollide: within one frame the paint is the last
-    // car's; the speed the stronger one's)
-    T.check('2. the player, two rivals in one frame, stronger then weaker: the stronger one\'s speed, a rival\'s paint (never none, never the wall\'s)', r.pStrongWeak.log.length >= 2 && r.pStrongWeak.log.every(d => (eq(d[0], C.O1) || eq(d[0], C.O2)) && d[1] === 9), J(r.pStrongWeak.log));
+    // (the core keeps the strongest speed of a frame and the paint of that knock's car, fxKOf(c), js/core.js fxSrc; the contact point is the last
+    // knock's)
+    const one = (S, col, sp) => !!S && S.log.length >= 2 && S.log.every(d => eq(d[0], col) && d[1] === sp);
+    T.check('2. the player, two rivals in one frame, stronger then weaker: the stronger one\'s paint and speed, not the last one\'s', one(r.pStrongWeak, C.O2, 9), J(r.pStrongWeak.log));
+    T.check('2. the same with the other rival the stronger, weaker then stronger: the stronger one\'s paint and speed', one(r.pWeakStrong1, C.O1, 9), J(r.pWeakStrong1 && r.pWeakStrong1.log));
+    T.check('2. the other rival the stronger, stronger then weaker: the stronger one\'s paint and speed', one(r.pStrongWeak1, C.O1, 9), J(r.pStrongWeak1 && r.pStrongWeak1.log));
+    T.check('2. two rivals of the same strength in one frame: the first one\'s paint; the core\'s fxK is taken with the sparks (none left after the frame)', one(r.pSame, C.O1, 7) && r.fxK.every(Boolean), J([r.pSame && r.pSame.log, r.fxK]));
     T.check('2. a hard touch without a dent, a wall a frame later: the wall\'s grey at the wall\'s speed (nothing left in the latch)', r.pStale.log.length >= 1 && r.pStale.log.every(d => eq(d[0], C.grey) && d[1] === 3), J(r.pStale.log));
     T.check('2. a hard touch of one rival without a dent, another rival two frames later: that one\'s paint and speed', r.pStale2.log.length >= 1 && r.pStale2.log.every(d => eq(d[0], C.O2) && d[1] === 4), J(r.pStale2.log));
     T.check('2. the player\'s body carries the marks (where knocks overlap, their colours blended)', r.pStale2.marks > 0 && r.pStale2.mk.some(q => eq(q, C.O2)), String(r.pStale2.marks));
     T.check('the latch is empty once the dents are taken', r.latch.every(q => q[0] === 0 && q[1] === 0), J(r.latch));
-    T.check('3. nothing NaN (points, marks, the log)', ['weakStrong', 'strongWeak', 'wallCar', 'carWall', 'pWeakStrong', 'pStrongWeak', 'pStale', 'pStale2'].every(k => r[k].nan === 0), J(['weakStrong', 'strongWeak', 'wallCar', 'carWall', 'pWeakStrong', 'pStrongWeak', 'pStale', 'pStale2'].map(k => r[k].nan)));
+    T.check('3. nothing NaN (points, marks, the log)', ['weakStrong', 'strongWeak', 'wallCar', 'carWall', 'pWeakStrong', 'pStrongWeak', 'pWeakStrong1', 'pStrongWeak1', 'pSame', 'pStale', 'pStale2'].every(k => r[k].nan === 0), J(['weakStrong', 'strongWeak', 'wallCar', 'carWall', 'pWeakStrong', 'pStrongWeak', 'pWeakStrong1', 'pStrongWeak1', 'pSame', 'pStale', 'pStale2'].map(k => r[k].nan)));
   }
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } finally { await browser.close(); srv.close(); }
