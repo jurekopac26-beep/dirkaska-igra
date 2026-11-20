@@ -3,16 +3,22 @@
 // postanek dirke doslej: 28,1 s", out of the lane); with a faster stop before it in the race: none. After the race the results get a table
 // of every stop (Core Race pst.log: the driver, the lap, the time in the pit lane and standing in the box in brackets, the new set), the race's fastest highlighted and its award over the
 // table ("Najhitrejši postanek dirke: …"); in English too.
-//   node tests/browser/pitstats.test.mjs
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+//   node tests/browser/pitstats.test.mjs            (PITSTATS_SEME=<n>: another race)
+import { serve, launch, openGame, checker } from './lib.mjs';
+
+// (the race repeatable: the test mode's seed (?proga=bathurst&t=1&seme=, the quick entry), the race's dice its own and its first second stepped
+// paused, the game paused there; the test steps it. Started from the menu with the page's dice and real time stepping it in between, a race was
+// a different one each run: a rival's stop could be the race's fastest when the player's ended, the notice then rightly not shown
+// (docs/nestabilni-testi.md). PITSTATS_SEME: another race, to try the test on)
+const SEME = +process.env.PITSTATS_SEME || 7;
 
 const T = checker('pit stop statistics');
 const srv = await serve();
 const browser = await launch();
 try {
   const run = async (faster) => {
-    const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', weather: 'dry' }, { width: 390, height: 844 }, { seed: 21 });
-    await startTrack(page, 'bathurst');
+    const { page, errors, ctx } = await openGame(browser, srv.base + '/index.html?proga=bathurst&t=1&seme=' + SEME, { quality: 'normal', shadows: 0, camera: 'chase', weather: 'dry' }, { width: 390, height: 844 }, { seed: SEME });
+    await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });   // (the race 1 s after the start, paused there)
     const out = await page.evaluate(async (faster) => {
       const g = window.__game, R = g.race, P = R.player, toasts = [];
       new MutationObserver(() => { const t = document.getElementById('toast').textContent; if (t && toasts[toasts.length - 1] !== t) toasts.push(t); }).observe(document.getElementById('toast'), { childList: true, characterData: true, subtree: true });
@@ -20,7 +26,7 @@ try {
       let asked = false, done = false;
       for (let k = 0; k < 4000 && !P.finished; k++) {
         // (a rival that stops too, one the first lap's crowd has hurt, can be quicker than the player's 30 s: then the notice is rightly not shown, as the second run
-        // below wants. The game's real-time frames draw Math.random in between, so the seed does not decide whether a rival does: in this run only the player's own stop counts)
+        // below wants. In this run only the player's own stop counts, whatever race the seed gives)
         if (!faster) R.pst.log = R.pst.log.filter(e => e.c === P);
         if (P.lap >= 1 && !P.repairN && !P.pitDone) { P.pitWant = true; if (!asked && faster) R.pst.log.push({ c: R.cars.find(c => c !== P), lap: 1, t: 0.8, lane: 5, ty: 'M', at: R.time }); asked = true; }   // (in at the end of the first lap, as tests/browser/hud.test.mjs; a faster stop before it: made up)
         if (P.repairN && !P.inPit) P.pitWant = false;
