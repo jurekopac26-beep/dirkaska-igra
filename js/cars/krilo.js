@@ -5,7 +5,6 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
 (function () {
   'use strict';
   const titan = () => { const d = VEHICLE_DEFS.find(q => q && q.id === 'titan'); return d && d.look; };   // (the TITAN's look, read when drawn)
-  const RACK = [-0.87, -0.29, 0.29, 0.87];   // (the rear rack's four spare tyres across (z): the look's, the parts tlSpare1..4)
   const DK = 0x1c1c1e, TYRE = 0x1b1b1b, RIM = 0xb9bdc2, GALV = 0xc4c9ce, BLK = 0x151515;
   function wheel(B, x, r, z0, z1, rim) { const full = !B.lo; const sd = Math.sign(z1);
     if (full) { B.cyl([x, r, z0], [x, r, z1], r, TYRE, { n: 14 }); B.cyl([x, r, z1], [x, r, z1 + sd * 0.015], r * 0.62, rim || RIM, { n: 12 }); B.cyl([x, r, z1 + sd * 0.015], [x, r, z1 + sd * 0.03], r * 0.2, 0x55585c, { n: 8 }); }
@@ -54,8 +53,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     snd: { kind: 'diesel', hz: 0.95, turbo: 0.8, loud: 1.35 },
     // (the TITAN's parts and mounts, as in js/cars/titan.js: its tractor is the TITAN's look; tests/cisterna.test.js keeps them the same)
     partNames: { grille: 'front grille', deflector: 'roof deflector', skirtL: 'left side skirt', skirtR: 'right side skirt', headL: 'left head lamps', headR: 'right head lamps',
-      tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wipers',
-      tlSpare1: 'spare tyre', tlSpare2: 'spare tyre', tlSpare3: 'spare tyre', tlSpare4: 'spare tyre' },
+      tailL: 'left tail lamp', tailR: 'right tail lamp', wiperFront: 'windscreen wipers' },
     parts: { set: 'truck', ht: 3, y0: 0.6,
       extra: {
         grille: { z: 0, th: 0.6, m: 6, rW: 0.35, h: 0.08, lx: 1, lz: 0, f: 0.35 },
@@ -69,9 +67,6 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         tailL: { z: 1, th: 0.42, corner: 2, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -0.991, lz: -0.576, y: 1.0 },
         tailR: { z: 1, th: 0.42, corner: 3, cth: 0.4, m: 1, r: 0.2, h: 0.05, lx: -0.991, lz: 0.576, y: 1.0 },
         wiperFront: { z: 0, th: 0.65, m: 0.6, r: 0.5, h: 0.03, lx: 0.944, lz: -0.04, y: 2.04 },
-        // (the trailer's: the four spare tyres on its rear rack, tl: lx / lz from its middle (x -5.3, half 6.2 m long, 1.25 m wide), y their
-        // middles; spare: from half the rig's damage they rock, at 80 % they come off, docs/deli.md »Rezervno kolo«. Not the TITAN's)
-        ...Object.fromEntries(RACK.map((z, i) => ['tlSpare' + (i + 1), { z: 1, th: 1, m: 10, r: 0.28, h: 0.24, lx: -0.939, lz: +(z / 1.25).toFixed(3), y: 0.905, spare: 1, tl: 1 }])),
       },
       // (where the look has them: the cab's doors and mirrors are far forward on a cab-over; a lost one flies off from there)
       over: { doorL: { lx: 0.64, y: 1.84 }, doorR: { lx: 0.64, y: 1.84 }, mirrorL: { lx: 0.87, y: 2.17 }, mirrorR: { lx: 0.87, y: 2.17 }, bumperF: { h: 0.2 } },
