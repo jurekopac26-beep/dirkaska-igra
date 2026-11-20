@@ -1,7 +1,8 @@
 // The slipstream in the game: a race at the Red Bull Ring (21 rivals, the player on autopilot) has it; in the wake of a car ahead the
 // car's tow rises, out of it it falls (no ZAVETRJE tag on the screen any more). A time trial has none (Pikes Peak). Nastavitve: Zavetrje
-// (S.slip, on by default: the race above with the default settings, as before) switched off: the next race has none, for any car (the
-// user, 18. 11. 2026 ~23.45, through Matej: table #382, comment 6992562620).
+// (S.slip; the user, 18. 11. 2026 ~23.45, through Matej: table #382, comment 6992562620) is off by default (the user's answer to
+// zavetrje-privzeto-19-11, 1: the player turns it on himself): a race with the default settings has none, for any car; switched on
+// (Vklop) the race above has it.
 //   node tests/browser/slip.test.mjs
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
@@ -13,7 +14,7 @@ try {
   // stepped paused (quickRun), the same race every run, on any machine, as in pitahead.test.mjs. Started from the menus, it drew from the
   // page's Math.random, as the drawn frames do, and its start ran on real frames with the player's car off the gas: another race each run,
   // in CI out of every wake again once the pieces were paused (inWake 0, #583 run 42705658688, docs/nestabilni-testi.md)
-  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=rbring&t=1&seme=7', { quality: 'normal', shadows: 0, camera: 'chase' }, { width: 390, height: 844 }, { seed: 7 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=rbring&t=1&seme=7', { quality: 'normal', shadows: 0, camera: 'chase', slip: 1 }, { width: 390, height: 844 }, { seed: 7 });
   await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });
   // (stepped in 0.4 s pieces; the tag ZAVETRJE is gone from the screen, the user's decision: the slipstream itself works as before. The
   // race paused throughout, two frames drawn after each piece: resumed for them, the race ran on real frames with the player's own empty
@@ -32,14 +33,16 @@ try {
   await startTrack(page, 'pikes', 'tt');
   const tt = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); return { slip: !!g.race.slip, tow: 'tow' in g.race.player }; });
   T.check('a time trial (Pikes Peak): no slipstream', !tt.slip && !tt.tow, JSON.stringify(tt));
-  // Nastavitve: Zavetrje off: a race with rivals without the slipstream, no car with a tow (race.slip null), the choice kept
-  const def = await page.evaluate(() => JSON.parse(localStorage.getItem('tdgp-settings') || '{}').slip);
+  // Nastavitve: Zavetrje off by default; off: a race with rivals without the slipstream, no car with a tow (race.slip null), the choice kept
+  // (the default read on a page of its own, its settings without slip: the game's own default, as on a new phone)
+  const fresh = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0 });
+  const def = await fresh.page.evaluate(() => window.__game.S.slip); await fresh.ctx.close();
   await page.evaluate(() => { const g = window.__game; g.onAction('to-title'); g.onAction('to-settings'); document.querySelector('[data-set="slip"] button[data-v="0"]').click(); g.onAction('settings-done'); });
   await startTrack(page, 'rbring');
   const off = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(3, true); g.resume(); const R = g.race;
     return { slip: R.slip, cars: R.cars.length, tow: R.cars.filter(c => 'tow' in c).length, stored: JSON.parse(localStorage.getItem('tdgp-settings')).slip }; });
-  T.check('Nastavitve: Zavetrje on by default; off: a race with rivals without it (race.slip null, no car with a tow), the choice kept',
-    def !== 0 && off.slip === null && off.cars > 1 && off.tow === 0 && off.stored === 0, JSON.stringify(Object.assign({ def }, off)));
+  T.check('Nastavitve: Zavetrje off by default; off: a race with rivals without it (race.slip null, no car with a tow), the choice kept',
+    def === 0 && off.slip === null && off.cars > 1 && off.tow === 0 && off.stored === 0, JSON.stringify(Object.assign({ def }, off)));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } catch (e) {
   T.check('the test ran through', false, String(e && e.message || e).split('\n')[0]);
