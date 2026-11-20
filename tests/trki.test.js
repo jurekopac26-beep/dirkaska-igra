@@ -35,8 +35,8 @@
 //   add energy the same push as a rigid body takes it); never over 9 rad/s with the grip
 //   lost, also when a corner leans on the barrier after the knock; the same by the weights (96 scenes: MRAVLJA 165 kg, BURJA R7, TITAN,
 //   KAMEN PUŠČAVA 7000 kg, also without turning at the start) and the yaw rate right after a touch at most 9 rad/s whichever car (460
-//   scenes: the new physics, the classic MRAVLJA, a car rolling over); the mirror image to 1e-9 without turning at the start and in all but a few
-//   scenes with it; the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
+//   scenes: the new physics, the classic MRAVLJA, a car rolling over); the mirror image to 1e-9 without turning at the start and with it
+//   (all 300 scenes: a car on the left half of the road takes its corners in the mirror image's order, wallCollide); the touch without a push, a hit recorded with nothing pushing the car, in under 2 % of the steps with a touch and of the
 //   damage: docs/trki-realizem.md, »Testi različice Realistična«); no touch (alone on Spa and Bathurst, 60 s, dry and wet, cones by the barriers: the
 //   whole state of the race and of the car after every step is the same in cv 6 as in cv 1, each in a core of its own; the plane with given
 //   inputs, both physics; the control: the same comparison finds the first touch; among rivals (a race on a circuit with pits lays rubber on the
@@ -364,8 +364,8 @@ const run = (H, tx, k, secs = 2) => duel(H, tx, SC[k](H), secs);
     ok('Realistična, the barrier, sliding and spinning, limits: with the grip lost the car never turns faster than 9 rad/s, also when a corner then leans on the barrier, and the limit is at work (reached in at least 60 of the scenes, 10 of them without turning at the start)',
       both(y => y.wGl <= 9 + 1e-9) && cap.length >= 60 && cap0.length >= 10, `the fastest ${f(two(w, y => y.wGl), 6)} rad/s (${w.name}); at the limit in ${cap.length} scenes, ${cap0.length} of them without turning at the start`);
     const off = (fn, L) => L.filter(x => !(fn(x) <= 1e-9)), S0 = SK.filter(x => !x.w0), ST = SK.filter(x => x.w0), o1 = off(x => x.m1, ST), oE = off(x => x.m, ST), top = (fn, L) => fn(worst(fn, L));
-    ok('Realistična, the barrier, sliding and spinning, symmetry: the left barrier gives the mirror image of the right one to 1e-9 right after the first touch and at the end in every scene without turning at the start (60); turning at the start (240) in all but at most 2 right after the first touch and 8 at the end (two corners at the barrier in one step are handled one after the other, and the mirror image has them in the other order)',
-      !off(x => x.m1, S0).length && !off(x => x.m, S0).length && o1.length <= 2 && oE.length <= 8,
+    ok('Realistična, the barrier, sliding and spinning, symmetry: the left barrier gives the mirror image of the right one to 1e-9 right after the first touch and at the end in every scene, without turning at the start (60) and turning (240): two corners at the barrier in one step are handled one after the other, and a car on the left half of the road takes them in the mirror image\'s order (wallCollide)',
+      !off(x => x.m1, S0).length && !off(x => x.m, S0).length && !o1.length && !oE.length,
       `without turning off by at most ${top(x => x.m1, S0).toExponential(1)} / ${top(x => x.m, S0).toExponential(1)}; turning: ${o1.length} / ${oE.length} of ${ST.length} off (at most ${f(top(x => x.m1, ST), 3)} / ${f(top(x => x.m, ST), 3)}: ${worst(x => x.m, ST).name}); Simulacija at the end: ${off(x => x.sm, SK).length} of ${SK.length} off (${off(x => x.sm, S0).length} without turning)`);
     const N = sum(x => x.r.n + x.l.n), NI = sum(x => x.r.ni + x.l.ni), DM = sum(x => x.r.dmg + x.l.dmg), DN = sum(x => x.r.dmgNi + x.l.dmgNi), h = worst(x => two(x, y => y.niHit)), NS = sum(x => x.s.ni + x.sl.ni);
     ok('Realistična, the barrier, the touch without a push (a corner swings into the barrier faster than 1.5 m/s while the middle of its patch does not close on it: the hit is recorded, nothing pushes the car; docs/trki-realizem.md, »Robni primer brez sunka«): under 2 % of the steps with a touch and under 2 % of the damage the hits stand for; none in Simulacija',

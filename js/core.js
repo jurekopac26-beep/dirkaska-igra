@@ -4485,7 +4485,11 @@ const Core = (function () {
         if (-vn > hit) { hit = -vn; hitK = k; hnx = nx; hnz = nz; }
       }
     };
-    for (let k = 0, nK = c.corners.length; k < nK; k++) {   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
+    // (Realistična, krOn: two corners in the barrier in one step are taken one after the other, the first one's push before the second is asked, so
+    // the order counts; a car on the left half of the road takes its four in the mirror image's order, right before left (k ^ 1: 1, 0, 3, 2), and
+    // the left barrier gives the mirror image of the right one. On the middle line by the way it turns; one corner in it alone: as before)
+    const mir = c.corners.length === 4 && krOn(c) && c.q && (c.q.d || -c.w) < 0 ? 1 : 0;
+    for (let n = 0, nK = c.corners.length; n < nK; n++) { const k = n ^ mir;   // (a car's four corners; a semi-trailer's points all along its sides, Car.tl)
       const rx = c.corners[k][0], rz = c.corners[k][1];
       const wx = rx * ch - rz * sh, wz = rx * sh + rz * ch; // world offset
       const px = c.x + wx, pz = c.z + wz;
