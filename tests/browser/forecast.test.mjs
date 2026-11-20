@@ -5,25 +5,42 @@
 // sheet at the bottom) and on its side (at the right): on the screen, over nothing else of the HUD, the line one line and not cut, every
 // button 44 px tall and reached by a tap; the default tyres by the water on the line at the stop; in English ("Forecast: Rain in ...",
 // "LAPS"); with the radio off the panel's line only. The forecast does not touch the race (Core only reads it: tests/forecast.test.js).
-//   node tests/browser/forecast.test.mjs            (SHOTS=<folder>: a picture of the panel and of the HUD's cloud each way)
+//   node tests/browser/forecast.test.mjs            (SHOTS=<folder>: a picture of the panel and of the HUD's cloud each way; FORECAST_SEME=<n>: another race)
 import path from 'node:path';
-import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
+import { serve, launch, openGame, checker } from './lib.mjs';
 
 const T = checker('the weather forecast (rbring)');
 const SHOTS = process.env.SHOTS || '';
 const RAIN_AT = 420;   // (after the second stop, before the race's last two laps: the third stop comes after it, whichever lap the first one is)
+// (the race repeatable: the test mode's seed (?proga=…&seme=, the quick entry), the race with the forecast started from the menu on the same
+// page (the seed kept) and paused before its first frame. Started from the menu with the page's dice and real time stepping it till the test
+// paused it, a race was a different one each run: docs/nestabilni-testi.md. FORECAST_SEME: another race, to try the test on)
+const SEME = +process.env.FORECAST_SEME || 7;
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'low', shadows: 0, camera: 'chase', track: 'rbring', weather: 'change', radio: 1, damage: 0, length: 'endurance' }, { width: 360, height: 640 }, { context: { reducedMotion: 'reduce' } });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html?proga=rbring&t=1&seme=' + SEME, { quality: 'low', shadows: 0, camera: 'chase', track: 'rbring', weather: 'change', radio: 1, damage: 0, length: 'endurance' }, { width: 360, height: 640 }, { context: { reducedMotion: 'reduce' }, seed: SEME });
+  await page.waitForFunction(() => window.__game.quick && window.__game.quick.done, null, { timeout: 240000 });   // (the quick entry's race, 1 s after the start: the world built, the race not used)
+  await page.evaluate(() => window.__game.pause());
   const shot = (f) => page.screenshot({ path: f, timeout: 180000 });   // (SHOTS: software WebGL on a busy machine is slow to give a picture)
   const hide = () => page.evaluate(() => { const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none'; });
   const lang = (l) => page.evaluate((l) => { const g = window.__game; g.pause(); g.onAction('to-settings'); document.querySelector(`[data-set="lang"] button[data-v="${l}"]`).click(); g.onAction('settings-done'); g.pause(); }, l);   // (as tests/browser/radio.test.mjs switches it; paused again)
   await page.evaluate((at) => { window.__game.wxNext = { rain: 0, wx: { at, dur: 30, to: 1 } };
     window.__fcV = []; const o = window.__game.comm.teamRadio; window.__game.comm.teamRadio = function (k, v) { window.__fcV.push({ k, v }); return o.apply(this, arguments); }; }, RAIN_AT);   // (the engineer's voice lines asked for)
-  await startTrack(page, 'rbring');
-  await page.evaluate(() => { const F = window.__game.race.fl; if (F) F.scUsed = true; });   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
-  await page.evaluate(() => window.__game.pause()); await hide();
+  // the race from the menu as lib.mjs's startTrack starts it, but paused at once: the same track, its world built, so the race is there as
+  // Start returns, before the main loop steps it in real time (the test mode still on, the same seed)
+  const st0 = await page.evaluate(async () => {
+    const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), r0 = g.race;
+    g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(250);
+    const card = document.querySelector('[data-track="rbring"]'); if (!card) throw new Error('no track card rbring');
+    card.click(); await wait(150);
+    g.onAction('start'); g.pause();
+    if (!g.race || g.race === r0 || g.race.track.def.id !== 'rbring') throw new Error('the race did not start at once');
+    const F = g.race.fl; if (F) F.scUsed = true;   // (no safety car: two AI cars stopped together early on would bring one out, and the timed laps and stops here would not hold)
+    return { phase: g.phase, t: g.race.time, repro: g.repro };
+  });
+  T.check('the race repeatable (the test mode still on, the same seed), paused on the grid (its intro, not started)', st0.phase === 'intro' && st0.t === 0 && !!st0.repro && st0.repro.on && st0.repro.seed === SEME, JSON.stringify(st0));
+  await hide();
   // in the page: the HUD's cloud (shown, its text and label, its box), what Race.forecast says now, the HUD elements beside it
   const cloud = () => page.evaluate(() => {
     const g = window.__game, P = g.race.player, el = document.getElementById('h-fc'), f = g.race.forecast(P), r = el.getBoundingClientRect(), shown = (e) => !!e && getComputedStyle(e).display !== 'none' && e.getBoundingClientRect().width > 1;
@@ -63,9 +80,11 @@ try {
     return b;
   };
   // the panel measured (and pictured) as the running game lays the HUD out (hudCol: not on the pause screen), the race held meanwhile (as
-  // tests/browser/hudcol.test.mjs holds it)
-  const held = async (fn) => { await page.evaluate(() => { const g = window.__game, r = g.race; r.__step = r.step; r.step = function () { }; g.resume(); }); await page.waitForTimeout(400);
-    try { return await fn(); } finally { await page.evaluate(() => { const g = window.__game, r = g.race; r.step = r.__step; delete r.__step; g.pause(); }); await hide(); } };
+  // tests/browser/hudcol.test.mjs holds it), and the pit lane's autopilot with it: Core.aiControl draws the race's own numbers (the AI's
+  // reactions) in every step of the real frames, outside Race.step, as many as the machine draws frames, and the race after the stop went
+  // another way each run (docs/nestabilni-testi.md)
+  const held = async (fn) => { await page.evaluate(() => { const g = window.__game, r = g.race; r.__step = r.step; r.step = function () { }; Core.__ai = Core.aiControl; Core.aiControl = function () { }; g.resume(); }); await page.waitForTimeout(400);
+    try { return await fn(); } finally { await page.evaluate(() => { const g = window.__game, r = g.race; r.step = r.__step; delete r.__step; Core.aiControl = Core.__ai; delete Core.__ai; g.pause(); }); await hide(); } };
   const turn = async (w, h) => { await page.setViewportSize({ width: w, height: h }); await page.evaluate(() => { window.__game.S.camera = 'chase'; window.__game.hud(0.05); }); await page.waitForTimeout(150); };
   // a stop at the box: on to the hand-back (the defaults at the box), paused
   const toOut = () => page.evaluate(() => { const g = window.__game, P = g.race.player; Render.scene.visible = false; for (let k = 0; k < 30000 && g.pitAuto.st; k++) g.sim(1 / 60, false, 0, 0); g.hud(0.05); Render.scene.visible = true; return { st: g.pitAuto.st, lap: P.lap, t: g.race.time }; });
