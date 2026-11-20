@@ -4920,7 +4920,27 @@ const Render = (function () {
     const mat = spec ? new THREE.MeshLambertMaterial({ vertexColors: true, map, specularMap: spec, envMap: envTex, combine: THREE.MixOperation, reflectivity: mr.k || 0.6 }) : new THREE.MeshLambertMaterial({ vertexColors: true, map }), y0 = -D.kp[1];
     const blob = new THREE.PlaneGeometry(D.len * 1.06, D.wid * 1.3); blob.rotateX(-Math.PI / 2); blob.translate(D.f - D.len / 2, y0 + 0.05, 0);
     const R = { D, geo: A.geo, lgeo: A.lgeo, mat, blob, lamps: A.lamps, tris: A.tris, lo: L.geo, loTris: L.tris, sh: S.geo, shTris: S.tris, sp: A.spans, loSp: L.spans, shSp: S.spans };   // (sp: the thrown parts' spans a level, B.spare; their cut looks R.cut, tlCut)
+    if (D.look && D.look.cars) R.cars = tlCars(D, y0);
     tlLooks.set(M.id, R); return R;
+  }
+  // the cars a car carrier carries (look.cars: their places, [x, the deck's top] in the trailer's look units; js/cars/avtovoz.js): the game's own
+  // bodies (a model without a kit body, not a formula's), in light colours (none black or very dark), all in one mesh: one draw call more a
+  // rig, its body's vertices only (no wheels of their own: the decks' rails hide them), the same for the player's and a rival's
+  const TL_CAR_COL = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0xff7a1a, 0x8e3bd6, 0x9fb7c9, 0xc9a26b];
+  function tlCars(D, y0) {
+    const ok = Core.MODELS.filter(m => m && !m.kit && m.body && m.body !== 'formula' && m.body !== 'lm' && m.cat !== 'tovornjaki' && !m.trailer && m.len < 4.8);
+    if (!ok.length) return null;
+    const P = [], N = [], C = []; let i = 0;
+    for (const [x, y] of D.look.cars) {
+      const m = ok[(i * 7 + 3) % ok.length], k = TL_CAR_COL[(i * 5 + 1) % TL_CAR_COL.length]; i++;
+      let g; try { g = carGeometry(m.body, m, k, false); } catch (e) { continue; }
+      if (!g) continue; g = g.index ? g.toNonIndexed() : g;
+      const p = g.attributes.position, n = g.attributes.normal, c = g.attributes.color;
+      for (let j = 0; j < p.count; j++) { P.push(p.getX(j) + x, p.getY(j) + y + y0, p.getZ(j)); N.push(n ? n.getX(j) : 0, n ? n.getY(j) : 1, n ? n.getZ(j) : 0); if (c) C.push(c.getX(j), c.getY(j), c.getZ(j)); else C.push(0.8, 0.8, 0.8); }
+    }
+    if (!P.length) return null;
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); geo.computeBoundingSphere(); return geo;
   }
   // the road train's second tank (model.trailer.next): its look built as a trailer's of its own (its cache key the model's id and #2)
   function tlBuild2(M) { const N = M.trailer && M.trailer.next; return N && N.look ? tlBuild({ id: M.id + '#2', trailer: N }) : null; }
@@ -5039,6 +5059,7 @@ const Render = (function () {
     const G = new THREE.Group(), b = new THREE.Mesh(c.isPlayer ? R.geo : R.lo, R.mat), L = new THREE.Mesh(R.lgeo, matTailOff), bl = new THREE.Mesh(R.blob, matBlob), sh = new THREE.Mesh(R.sh, matHull);
     sh.castShadow = true; sh.visible = false; (v.shadowOnly || (v.shadowOnly = [])).push(sh);
     bl.renderOrder = 1; G.add(b, L, bl, sh); G.rotation.order = 'YZX';
+    if (R.cars) { const k = new THREE.Mesh(R.cars, matCar); k.castShadow = !!c.isPlayer; G.add(k); v.tlK = k; }   // (a car carrier's cars, tlCars)
     v.tlG = G; v.tlB = b; v.tlL = L; v.tlS = bl; v.tlSh = sh; v.tlR = R; v.tlRoll = 0; scene.add(G);
     const R2 = c.tl && c.tl.next ? tlBuild2(c.m) : null; if (!R2) return;   // (the road train's second tank: a group of its own on the dolly, tl2Draw)
     const G2 = new THREE.Group(), b2 = new THREE.Mesh(c.isPlayer ? R2.geo : R2.lo, R2.mat), L2 = new THREE.Mesh(R2.lgeo, matTailOff), bl2 = new THREE.Mesh(R2.blob, matBlob), sh2 = new THREE.Mesh(R2.sh, matHull);
@@ -5054,6 +5075,7 @@ const Render = (function () {
     const D = M.trailer, R = D && D.look ? tlBuild(M) : null; if (!R) return null;
     const G = new THREE.Group(), bl = new THREE.Mesh(R.blob, matBlob); bl.renderOrder = 1;
     G.add(new THREE.Mesh(R.geo, R.mat), new THREE.Mesh(R.lgeo, matTailOff), bl); G.position.set(D.kp[0], D.kp[1], 0); v.grp.add(G);
+    if (R.cars) G.add(new THREE.Mesh(R.cars, matCar));   // (a car carrier's cars, tlCars)
     let x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len); const x1 = Math.max(M.len / 2, D.kp[0] + D.f);
     const N = D.next, R2 = N ? tlBuild2(M) : null;   // (the road train's second tank: on the dolly's fifth wheel, straight behind the first one)
     if (R2) { const G2 = new THREE.Group(), bl2 = new THREE.Mesh(R2.blob, matBlob); bl2.renderOrder = 1;

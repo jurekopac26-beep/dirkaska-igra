@@ -36,7 +36,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     for (const ax of [-7.5, -8.8, -10.1]) axle(B, ax, 0.5);
     guards(B, -2.8, -6.6, 0.68); legs(B, -2.1); rear(B, -11.44, GN);
   }
-  // LASTOVKA: a coach (its whole body here: the tractor hidden in the page), the luggage on its roof rack
+  // HRAST: the TITAN tractor (from cisterna.js) and a log trailer
   VEHICLE_DEFS.push({
     id: 'hrast', name: 'HRAST', cat: 'tovornjaki', ord: 7, drive: 'FR',
     desc: 'TITAN s hlodovino: težka prikolica s hrastovimi debli, pri zaviranju potiska.',

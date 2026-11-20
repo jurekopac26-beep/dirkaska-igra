@@ -2451,6 +2451,7 @@ const Core = (function () {
   // (the user, 4. 11. 2026, Great Alpine Road: »avto dobi pospešek, ko je med gužvo avtomobilov«: with 2.4 m and 40 m, at once, the car in a
   // pack was in some wake 90 % of the time, +7.9 % top speed on average; with these +1.6 %, behind one car on a straight as before)
   const TOW_LAT = 1.2, TOW_RNG = 25, TOW_T = 1;
+  const TK_HOLD_M = 1e9;   // (a truck in the traffic that keeps to its lane: its mass for a car's knock, Traffic._tkHold)
   // the levels of Nastavitve, Zavetrje (opts.slip 1-3; true, the tests' and the old way: 3): the share of TOW_DRAG a full wake takes away (c.towK)
   const TOW_LV = [0, 0.32, 0.6, 1];
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (snappy, a bit above real g)
@@ -5359,6 +5360,10 @@ const Core = (function () {
     }
     _dead(v) { return !!(v.rider && (v.rider.st === 'dead' || v.rider.st === 'hit')); }   // (a bicycle whose rider lies dead by it: it lies there for good)
     // a vehicle knocked loose (st 1): out of its group; a moment without contacts when it was knocked out of a car's way (nc s)
+    // a truck in the traffic (TFK 5) hit by a car (Nastavitve, Tovornjak v prometu: opts.tfTruck; the user's of 20. 11. 2026, trki-tovornjak-20-11
+    // = 1): 0 (the default) it keeps to its lane, as heavy as a wall for the car (never knocked loose); 1 the same up to 120 km/h, a faster car
+    // knocks it as before; 2 as before (its own mass, knocked loose). The tie to Trki (#608) is that branch's
+    _tkHold(v, c) { if (v.p !== 5 || v.st !== 0) return false; const m = this.race.opts.tfTruck | 0; return m === 0 || (m === 1 && c.speed * 3.6 <= 120); }
     _knock(v, nc) { v.st = 1; v.t = 0; v.yl = 0; v.ind = 0; v.nc = nc || 0; if (v.grp) { const m = v.grp.m, k = m.indexOf(v); if (k >= 0) m.splice(k, 1); v.grp = null; } }
     // off the far end (or a wreck left far behind): back at the other end, when it is clear there and out of sight of the race cars; a
     // group of cyclists all together once the last of them is off, in single file again
@@ -5465,7 +5470,7 @@ const Core = (function () {
       if (best <= 0 || v.nc > 0) return 0;
       if (this.win && c === this.race.player) this.win.hit++;   // (the endless drive: any touch ends it, Endless)
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = c.m.mass, mb = v.mass, ia = c.net ? 0 : 1 / ma, ib = 1 / mb, tot = ia + ib;   // (a friend's car online: its own phone moves it; here it is as heavy as a wall, the vehicle takes all of it)
+      const ma = c.m.mass, mb = this._tkHold(v, c) ? TK_HOLD_M : v.mass, ia = c.net ? 0 : 1 / ma, ib = 1 / mb, tot = ia + ib;   // (a truck that keeps to its lane: Nastavitve, _tkHold) (a friend's car online: its own phone moves it; here it is as heavy as a wall, the vehicle takes all of it)
       c.x += bnx * best * ia / tot; c.z += bnz * best * ia / tot;
       if (v.st !== 0) { v.x -= bnx * best * ib / tot; v.z -= bnz * best * ib / tot; }
       else { const f = best * ib / tot; v.s -= (bnx * this.T.tx[v.i] + bnz * this.T.tz[v.i]) * f; v.d -= (bnx * this.T.nx[v.i] + bnz * this.T.nz[v.i]) * f; }
@@ -5494,7 +5499,7 @@ const Core = (function () {
       const o = obbHit(c.x, c.z, c.h, c.m.len, c.m.wid, v.x, v.z, v.h, v.len, v.wid); if (!o || v.nc > 0) return 0;
       const best = o.pen, bnx = o.nx, bnz = o.nz, bpx = o.px, bpz = o.pz, T = this.T;
       if (v.kind === 4 && v.st === 0 && c.speed > 2.5) return this._runBike(c, v, bpx, bpz);   // (a cyclist: run over)
-      const ma = crashMass(c), mb = v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
+      const ma = crashMass(c), mb = this._tkHold(v, c) ? TK_HOLD_M : v.mass, ia = 1 / ma, ib = 1 / mb, tot = ia + ib, Ia = c.I * ma / c.m.mass, Ib = mb * (v.len * v.len + v.wid * v.wid) / 12;
       const corr = Math.max(0, best - CRASH.slop) * CRASH.push + Math.max(0, best - 0.25);
       c.x += bnx * corr * ia / tot; c.z += bnz * corr * ia / tot;
       if (v.st !== 0) { v.x -= bnx * corr * ib / tot; v.z -= bnz * corr * ib / tot; }

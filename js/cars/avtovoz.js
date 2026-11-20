@@ -106,7 +106,9 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       vzmeti: { in: 0.55, top: 0.92, seat: 0.6 }, amortizerji: { in: 0.55, top: 0.92 }, stabilizatorji: { in: 0.5, floor: 0.94 }, dim_gum: {},
     },
     // the semi-trailer (Core: tlDefBad, tlStep): 12 t with its tank full; its kingpin on the TITAN's fifth wheel (x -1.8, 0.98 up)
-    trailer: { mass: 12000, len: 14.0, wid: 2.5, ht: 4.0, f: 0.9, ax: [-9.6, -10.9, -12.2], kp: [-1.8, 0.98], rw: 0.42, mu: 1.5, brk: 7.5, look: { build: avtovoz } },
+    trailer: { mass: 12000, len: 14.0, wid: 2.5, ht: 4.0, f: 0.9, ax: [-9.6, -10.9, -12.2], kp: [-1.8, 0.98], rw: 0.42, mu: 1.5, brk: 7.5, look: { build: avtovoz,
+      // the cars on its decks (the renderer's tlCars: the game's own, the user's of 13. 11. 2026): [x, the deck's top], three below, three above
+      cars: [[-3.4, 0.95], [-7.3, 0.95], [-11.2, 1.25], [-1.6, 2.455], [-5.9, 2.455], [-10.3, 2.455]] } },
     // the tractor's look: the TITAN's (its shape, colours, chrome), a little rust low on it: the doors' lower edges, the steps, the bumper's lip
     look: {
       get body() { return titan().body; }, get wheels() { return titan().wheels; }, regions: 'none',
