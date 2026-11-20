@@ -24,6 +24,8 @@
 //     number more or less; under every one of the six versions of the knocks), a piece that has come to rest is off the road; a race in
 //     which no part comes off is the reference's, a race with a crash is Vklop's to the last digit until a car first touches a piece there
 //   - check 46 (K3, 20. 11. 2026): no piece jumps where its point goes from a side road to the road (Medvode's side roads, read only);
+//     check 46b: on the other tracks with side roads (not frozen) a piece inside a side road's limits is never the road's (what 46
+//     leaves open is the zones of Medvode's roundabouts only, tools/trki/odpadli-stranske.js);
 //     check 47 (F5): a piece still in its car as the car's 2 s end is not knocked by it; the time ends DEB.clear s after it is clear
 // (a piece lying on the road, driven over: tests/debris.test.js)
 //   node tests/odpadli-deli.test.js            check
@@ -763,6 +765,38 @@ function ownRun(parts, kmh, inp, off, K) {
         if (mv > most) { most = mv; at = `side road ${s.k}, ${s.j * 2} m in, ${s.v} m/s, way ${s.a}, step ${n}`; } } } }
   check('no piece jumps (Medvode, a bonnet thrown from inside every side road, 18 and 40 m/s, eight ways, 2 s): in no step does a piece move more than 3 m beyond its own speed x the step, although the point of some of them goes from its side road to the road far beyond the barrier (before: put back to the barrier at once, 20 to 40 m); and the ground under a piece lying on it moves in no step more than 1 m beyond a 30 % grade over its move (such a piece is the road\'s, at the road\'s height, while it lies in the side road)',
     S.length > 1000 && lost > 0 && most < 3 && up < 1, `${S.length} pieces, ${lost} times a point went from a side road to the road over 5 m beyond its barrier, the longest move beyond speed x step ${f(most, 2)} m` + (most >= 3 ? ` (${at})` : '') + `; the ground under a lying piece: at most ${f(up, 2)} m in a step beyond a 30 % grade (${upAt}), ${f(upF, 2)} m where the point is the road's over 5 m beyond its barrier, over 0.05 m in ${nUp} steps`);
+  } finally { Math.random = orig; }
+}
+
+// ---- 46b: a piece in a side road stays the side road's (K3, what was left: measured 20. 11. 2026) ----
+// What check 46 leaves open (a piece that lies in a side road as the road's, at the road's height, turned by the road's barrier) was
+// looked for on every track with side roads (tools/trki/odpadli-stranske.js, 17 tracks, 26 656 bonnets): it happens only in the zones of
+// Medvode's roundabouts (def.barrier, rings: Track.query gives no side road there by design, for the cars too), on no other track. Here
+// the tracks with side roads that are neither frozen nor being decided on (not Medvode): the same throws as 46; the side road a piece
+// lies in is found by this check's own search over every side road (not through the road's samples' lists, Track.stubNear). In no step
+// is a piece the road's (q.k -1) over 1 m beyond the road's barrier while inside a side road's own limits, and none jumps
+{
+  const orig = Math.random; try {
+  const ids = C.TRACKS.filter(d => d.sideRoads && d.sideRoads.length && d.open && !d.test && !d.pending).map(d => d.id), Pt = PT.hood || C.PARTS.hood, _w = [], sp = { S: null, j: -1 };
+  const inSide = (T, x, z) => { for (let k = 0; k < T.stubs.length; k++) { const S = T.stubs[k], b = S.bb; if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue;
+    sp.S = null; if (T._stubProj(S, x, z, sp) && sp.t >= S.tb && sp.t <= S.L - 0.5 && Math.abs(sp.u) <= T.stubHw(S, sp.t, sp.u) + S.lim) return k; } return -1; };
+  let all = 0, ghost = 0, lost = 0, most = 0, inK = 0, at = '', id = 0;
+  for (const tid of ids) { const T = road(tid), race = lone(T), P = race.player, S = [];
+    for (let k = 0; k < T.stubs.length; k++) { const St = T.stubs[k];
+      for (let j = 0; j < St.x.length; j += 6) { const q0 = T.query(St.x[j], St.z[j], -1, {}); if (T.wall(q0, Pt.r * 0.5, _w) > 0) continue;
+        for (const v of [18, 40]) for (let a = 0; a < 8; a++) { const h = a * Math.PI / 4 + 0.2;
+          S.push({ k, j, v, a, d: { id: ++id, car: -1, part: 'hood', x: St.x[j], z: St.z[j], y: T.yAt(q0) + 0.6, vx: Math.cos(h) * v, vz: Math.sin(h) * v, vy: 2, yaw: 0, rx: 0, rz: 0, wx: 0, wy: 0, wz: 0, r: Pt.r, m: Pt.m, h: Pt.h, rest: false, ground: false, q: null, dead: false } }); } } }
+    all += S.length; race.debris.length = 0; for (const s of S) race.debris.push(s.d);
+    for (let n = 0; n < 240; n++) {
+      for (const s of S) { const d = s.d; s.x = d.x; s.z = d.z; s.sp = Math.hypot(d.vx, d.vz); s.k0 = d.q ? d.q.k : -1; s.rest = d.rest; }
+      P.inThr = 0; P.inBrk = 1; race.step(DT);
+      for (const s of S) { const d = s.d, q = d.q; if (s.rest) continue; const mv = Math.hypot(d.x - s.x, d.z - s.z) - s.sp * DT, out = Math.abs(q.d) - (q.d > 0 ? q.br : q.bl);
+        if (mv > most) most = mv; if (q.k >= 0) inK++;
+        if (s.k0 >= 0 && q.k < 0 && out > 5) lost++;
+        if (q.k < 0 && out > 1 && inSide(T, d.x, d.z) >= 0) { if (!ghost) at = `${tid}, side road ${s.k}, ${s.j * 2} m in, ${s.v} m/s, way ${s.a}, step ${n}`; ghost++; } } } }
+  check('a piece in a side road stays the side road\'s (the tracks with side roads that are not frozen, not Medvode; a bonnet thrown from inside every side road, 18 and 40 m/s, eight ways, 2 s): in no step is a piece the road\'s over 1 m beyond the road\'s barrier while it lies inside a side road\'s own limits, none goes from a side road to the road over 5 m beyond the barrier, none moves more than 3 m beyond its speed x the step',
+    ids.length >= 3 && all > 1000 && inK > 10000 && ghost === 0 && lost === 0 && most < 3,
+    `${ids.join(', ')}: ${all} pieces, ${inK} steps of a piece in a side road; the road's inside a side road's limits in ${ghost} steps` + (ghost ? ` (first: ${at})` : '') + `, from a side road to the road beyond the barrier ${lost} times, the longest move beyond speed x step ${f(most, 2)} m`);
   } finally { Math.random = orig; }
 }
 
