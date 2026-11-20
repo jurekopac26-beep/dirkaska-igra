@@ -32,10 +32,10 @@
     tianmen: { hz: [0.3, 0.5], col(A, sl, q) { const k = 0.92 + q * 0.2, rk = sstep(0.7, 1.3, sl); return [lerp(0.2, 0.58, rk) * k, lerp(0.3, 0.58, rk) * k, lerp(0.16, 0.54, rk) * k]; } },
     // Katu-Yaryk (the Chulyshman's canyon): steppe and straw grass on the sunny slopes, grey-brown rock walls, larches on the floor, the
     // glacial river green-blue inside its banks (def.river)
-    katu: { hz: [0.3, 0.5], col(A, sl, q, x, z, def) {
+    katu: { hz: [0.3, 0.5], flat: 0.6, col(A, sl, q, x, z, def) {
       let c = mix3([0.47, 0.45, 0.28], [0.36, 0.42, 0.22], clamp(0.5 + q * 1.8, 0, 1));
       c = mix3(c, [0.26, 0.36, 0.18], sstep(760, 700, A) * 0.55);
-      c = mix3(c, [0.5 + q * 0.06, 0.46 + q * 0.05, 0.41], sstep(0.6, 1.1, sl));
+      c = mix3(c, [0.6 + q * 0.06, 0.54 + q * 0.05, 0.44], sstep(0.6, 1.1, sl) * 0.75);
       const R = def.river; if (R && R.polys) for (const P of R.polys) if (inPoly(P, x, z)) { c = [0.33, 0.47, 0.46]; break; }
       return c; } },
   };
@@ -85,6 +85,8 @@
     const g = new THREE.BufferGeometry(), [m, U] = material();
     g.setAttribute('position', new THREE.BufferAttribute(Float32Array.from(P0), 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
     g.setAttribute('aHz', new THREE.BufferAttribute(new Float32Array(n).fill(1), 1)); g.setIndex(I); g.computeVertexNormals();
+    if (land && land.flat && !fH) { const N = g.attributes.normal.array, f = land.flat;   // (the normals turned towards straight up: a canyon's far wall faces away from the sun and was one dark slab)
+      for (let k = 0; k < N.length; k += 3) { const x = N[k] * (1 - f), y = N[k + 1] * (1 - f) + f, z = N[k + 2] * (1 - f), l = Math.hypot(x, y, z) || 1; N[k] = x / l; N[k + 1] = y / l; N[k + 2] = z / l; } }
     const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = -49; mesh.matrixAutoUpdate = false; mesh.name = 'dolina'; mesh.visible = false;
     mesh.onBeforeRender = (r, sc) => { if (sc && sc.fog) U.uHz.value.copy(sc.fog.color); };
     out.root.add(mesh);
