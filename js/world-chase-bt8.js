@@ -24,6 +24,9 @@
     ctx.out.rob = karst(ctx, 9661, { step: 3, reach: 22, rocky: 0.24, scree: 0.7, wood: 0.15, slab: 0.24, tufts: 4, scrub: 0.14, maxSl: 1.3, woodTufts: true, pale: 1.05, sides: 4, soft: true,
       rock: L.rockCols, bare: [0.53, 0.51, 0.47], dry: [0.44, 0.55, 0.26], gold: [0.64, 0.63, 0.36], shrub: [0.15, 0.26, 0.13],
       share: (c, x, z) => 0.65 * f(x, z) });
+    // (the tufts' and the cushions' own meshes cast no shadow here: knee-high grass throws none worth a second draw of it in the
+    // shadow pass, which by the lake, where the pass is at its busiest, kept it over the phone budget: tests/golden/perf.json)
+    if (ctx.root) for (const g of ctx.root.children) if (g.isGroup) for (const m of g.children) if (m.userData.rob && m.name === 'rob') m.castShadow = false;
   });
   /* Sa Calobra: docs/proge/sacalobra.md: »Sive apnenčaste stene in skale (ponekod okraste), med njimi suha sredozemska makija (temni
      grmi), šopi trave càrritx na suhi travi, … rdeča zemlja (terra rossa) na brežinah ob cesti«. So within ~22 m of the low stone
