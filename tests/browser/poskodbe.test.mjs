@@ -7,6 +7,12 @@
 // 5. every car smashed (12 × 0.3): Podrobne ≤ 400 calls, switched to Preproste mid-race ≤ 460 (its cars Preproste's, the 48 pieces on the road kept),
 //    back to Podrobne as before; vertices < 900 thousand
 // 6. the older bodies (no kit): smashed, their doors, bonnet and boot stand open (rally; the prototype: doors and engine cover; the formula: none)
+// 7. P4.4, the gouge a bare hub cuts into the asphalt (render.js v.hubG; quads of the tyre marks' own mesh 'skids', 0.1 m wide, pale grey
+//    0.62 / 0.61 / 0.58): the car whole at 20 m/s lays none; a wheel off at 12 m/s (15 m/s or less) none; at 20 m/s a gouge under the bare
+//    hub (within 0.2 m of its line, joined end to end, each piece 0.6 to 4 m), longer the further the car drives; the other three wheels
+//    none; in the air none, and the gouge is not joined across the jump; no mesh more in the scene, no draw call but the one of the tyre
+//    marks' mesh (hidden: one call fewer), the frame within section 3's 360; the race started again: the marks' mesh empty, the new car
+//    whole, its view without v.hubG
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('Poškodbe: Podrobne on the phone (P1.13)');
 const srv = await serve(); const browser = await launch();
@@ -77,6 +83,59 @@ try {
     T.check(`6. ${id}: no page errors`, !o.errors.length, o.errors.slice(0, 2).join(' | ')); rcs.push(q.rc); await o.page.close();
   }
   T.check('6. opening them does not call Math.random (as many calls as the formula, which has nothing to open)', rcs[0] === rcs[2] && rcs[1] === rcs[2], String(rcs));
+  // 7. P4.4: the gouge behind a bare hub (the same page: its draw calls counted). The car is carried along the start straight by hand
+  // (the game paused, the core not stepped: the wheel rule's KONEC IGRE not in the way), the renderer drawing each place
+  const hg = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
+    for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
+    for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }   // (settled on the road: its height)
+    const fx = Math.cos(P.h), fz = Math.sin(P.h);
+    for (const c of R.cars) if (c !== P) { const y = c.y, ry = c.roadY; c.place(c.x - fx * 300, c.z - fz * 300, c.h); c.y = c.py = y; c.roadY = ry; }   // (the rivals far behind: the road ahead the player's alone)
+    const sk = Render.scene.getObjectByName('skids'), G = sk.geometry, y0 = P.y, ry0 = P.roadY, near = (a, b) => Math.abs(a - b) < 0.004;
+    // the gouge's quads among the marks: its colour and its width (no tyre mark has either)
+    const gouge = () => { const p = G.attributes.position.array, c = G.attributes.color.array, n = G.drawRange.count / 6, q = [];
+      for (let i = 0; i < n; i++) { if (!(near(c[i * 16], 0.62) && near(c[i * 16 + 1], 0.61) && near(c[i * 16 + 2], 0.58))) continue; const b = i * 12;
+        q.push({ a: [(p[b] + p[b + 3]) / 2, (p[b + 2] + p[b + 5]) / 2], b: [(p[b + 6] + p[b + 9]) / 2, (p[b + 8] + p[b + 11]) / 2], w: Math.hypot(p[b + 3] - p[b], p[b + 5] - p[b + 2]), al: c[i * 16 + 3], y: p[b + 1] }); }
+      return q; };
+    const len = (q) => q.reduce((s, e) => s + Math.hypot(e.b[0] - e.a[0], e.b[1] - e.a[1]), 0);
+    const drive = (v, n, air) => { for (let i = 0; i < n; i++) { P.place(P.x + fx * v / 30, P.z + fz * v / 30, P.h); P.y = P.py = y0; P.roadY = ry0; P.air = air ? 1 : 0; P.vx = fx * v; P.vz = fz * v; P.speed = v; Render.frame(1 / 30, 1, P, 'chase', {}); }
+      P.vx = 0; P.vz = 0; P.speed = 0; P.air = 0; };
+    const meas = () => { for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, 'chase', {}); const c0 = __gl.calls; Render.frame(1 / 60, 1, P, 'chase', {}); return __gl.calls - c0; };
+    const meshes = () => { let n = 0; Render.scene.traverse(q => { if (q.isMesh || q.isPoints || q.isLine) n++; }); return n; };
+    const v = Render.viewOf(P); o.kit = !!v.kit; o.surf = P.q ? P.q.surf : null;
+    // whole: 30 m at 20 m/s, no gouge
+    drive(20, 45); o.whole = { n: gouge().length, off: v.wheelOff.filter(Boolean).length, hubG: !!(v.hubG && v.hubG.some(Boolean)) };
+    // the rear left wheel off
+    P.dmg = Math.max(P.dmg, 0.7); Core.detachPart(P, 'wheelRL'); Render.frame(1 / 30, 1, P, 'chase', {}); o.off = v.wheelOff.slice(); const k = v.wheelOff.findIndex(Boolean);
+    drive(12, 45); o.slow = { n: gouge().length, sparks: Render.fxStats().sparksN };   // (18 m at 12 m/s: sparks off the hub, no gouge yet)
+    o.mesh0 = meshes(); o.call0 = meas(); o.marks0 = G.drawRange.count / 6;
+    // 30 frames at 20 m/s (20 m): the gouge; the hub's line: the first piece's start, along the car's heading
+    const hub0 = [P.x, P.z]; drive(20, 30); const q1 = gouge(); o.l1 = +len(q1).toFixed(2); o.n1 = q1.length;
+    const s = q1[0], off = (e) => Math.max(...[e.a, e.b].map(t => Math.abs((t[0] - s.a[0]) * -fz + (t[1] - s.a[1]) * fx)));
+    o.geo = { w: [Math.min(...q1.map(e => e.w)), Math.max(...q1.map(e => e.w))].map(x => +x.toFixed(3)), seg: [Math.min(...q1.map(e => len([e]))), Math.max(...q1.map(e => len([e])))].map(x => +x.toFixed(2)),
+      line: +Math.max(...q1.map(off)).toFixed(3), joined: q1.every((e, i) => !i || Math.hypot(e.a[0] - q1[i - 1].b[0], e.a[1] - q1[i - 1].b[1]) < 1e-3), al: +s.al.toFixed(2), y: +(s.y - y0).toFixed(3),
+      // where the hub is: the car's own corner (behind its middle for a rear wheel, to its left or right by the wheel's side)
+      side: +((s.a[0] - hub0[0]) * -fz + (s.a[1] - hub0[1]) * fx).toFixed(2), along: +((s.a[0] - hub0[0]) * fx + (s.a[1] - hub0[1]) * fz).toFixed(2), k, hw: +v.kit.E.body.hw.toFixed(2), b: +P.m.b.toFixed(2) };
+    // on: longer
+    drive(20, 30); const q2 = gouge(); o.l2 = +len(q2).toFixed(2); o.n2 = q2.length; 
+    // in the air: none, and not joined across it
+    const nA = gouge().length; drive(20, 15, true); o.air = gouge().length - nA; drive(20, 12); const q3 = gouge();
+    o.gap = +Math.max(...q3.map((e, i) => !i ? 0 : Math.hypot(e.a[0] - q3[i - 1].b[0], e.a[1] - q3[i - 1].b[1]))).toFixed(2); o.n3 = q3.length;
+    o.mesh1 = meshes(); o.call1 = meas(); sk.visible = false; o.callH = meas(); sk.visible = true; o.marks1 = G.drawRange.count / 6; o.others = o.marks1 - o.marks0 - q3.length;   // (others: marks laid meanwhile that are not the gouge's)
+    // the race again: the marks cleared, the new view without a gouge's end
+    g.onAction('restart'); g.pause(); const P2 = g.race.player, v2 = Render.viewOf(P2); for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P2, 'chase', {});
+    o.again = { fresh: v2 !== v, n: gouge().length, marks: G.drawRange.count / 6, hubG: !!(v2.hubG && v2.hubG.some(Boolean)), off: v2.wheelOff.filter(Boolean).length, lost: Object.keys(P2.lost || {}).filter(n => P2.lost[n]).length };
+    return o; });
+  const HG = hg.geo, HA = hg.again, near = (a, b, e) => Math.abs(a - b) <= e;
+  T.check('7. the car whole, 30 m at 20 m/s: no gouge', hg.kit && hg.whole.n === 0 && hg.whole.off === 0 && !hg.whole.hubG, JSON.stringify(hg.whole));
+  T.check('7. the rear left wheel off, 18 m at 12 m/s: sparks off the hub, no gouge (15 m/s or less)', hg.off.join('') === '0010' && hg.slow.n === 0 && hg.slow.sparks > 0, `${hg.off}, ${JSON.stringify(hg.slow)}`);
+  T.check('7. 20 m at 20 m/s: a gouge of 18 to 20 m, joined end to end, its pieces 0.6 to 4 m', hg.n1 >= 20 && hg.l1 >= 18 && hg.l1 <= 20.01 && HG.joined && HG.seg[0] > 0.6 && HG.seg[1] < 4, `${hg.l1} m in ${hg.n1}, pieces ${HG.seg}`);
+  T.check('7. the gouge 0.1 m wide, 3 cm over the road, under the bare hub (the rear left: the body\'s half width to the left, the rear axle behind the middle), straight along the car\'s way',
+    near(HG.w[0], 0.1, 0.002) && near(HG.w[1], 0.1, 0.002) && near(HG.al, 0.8, 0.01) && near(HG.y, 0.03, 0.005) && near(HG.side, -HG.hw, 0.02) && near(HG.along, 20 / 30 - HG.b, 0.02) && HG.line < 0.02, JSON.stringify(HG));
+  T.check('7. 20 m more: the gouge that much longer', hg.n2 > hg.n1 && near(hg.l2 - hg.l1, 20, 0.7), `${hg.l1} → ${hg.l2} m (${hg.n1} → ${hg.n2})`);
+  T.check('7. in the air (10 m): none, and on the road again not joined across it', hg.air === 0 && hg.n3 > hg.n2 && hg.gap > 9, `${hg.air} in the air, the gap ${hg.gap} m, ${hg.n2} → ${hg.n3}`);
+  T.check('7. only the bare hub marks the road (the other three wheels: no mark of any kind)', hg.marks0 === 0 && hg.others === 0 && hg.marks1 === hg.n3, `${hg.marks0} before, ${hg.marks1} after, ${hg.n3} the gouge's`);
+  T.check('7. no mesh more in the scene, no draw call but the tyre marks\' one (hidden: one fewer), the frame ≤ 360', hg.mesh1 === hg.mesh0 && hg.call1 - hg.callH === 1 && hg.call1 <= 360, `meshes ${hg.mesh0} → ${hg.mesh1}, calls ${hg.call0} before, ${hg.call1} with, ${hg.callH} with the marks hidden`);
+  T.check('7. the race again: the marks cleared, the car whole, its view without a gouge\'s end', HA.fresh && HA.n === 0 && HA.marks === 0 && !HA.hubG && HA.off === 0 && HA.lost === 0, JSON.stringify(HA));
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } finally { await browser.close(); await srv.close(); }
 T.done();
