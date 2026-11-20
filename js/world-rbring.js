@@ -635,6 +635,7 @@
       const d = dS(i * ds); if (d > -420 && d < 280) return 1;
       return wallOn[side2(side)][i] ? 1 : 0;
     };
+    out.barKind = kindAt;   // (Render: what a car that knocks the barrier at sample i on that side breaks grit off, a concrete wall only)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });

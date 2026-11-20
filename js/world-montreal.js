@@ -269,6 +269,7 @@
       return tyreOn[side2(side)][i] ? 2 : 1;
     };
     C.wallKind = kindAt;
+    C.out.barKind = kindAt;   // (Render: what a car that knocks the barrier at sample i on that side breaks grit off, the concrete only)
     const rMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }), tyMat = new THREE.MeshLambertMaterial({ map: tex.tires, vertexColors: true });
     const fMat = new THREE.MeshLambertMaterial({ map: tex.fence, vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide });
     const conc = [0.9, 0.9, 0.88], concD = [0.62, 0.62, 0.6], W1 = [1, 1, 1];

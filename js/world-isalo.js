@@ -156,6 +156,7 @@
       }
       addM(gr, rMat, true);
     }
+    { const bk = new Int8Array(N); for (let i = 0; i < N; i++) bk[i] = kindAt(i) ? 1 : -1; out.barKind = (i) => bk[i]; }   // (Render: what stands on the barrier line at sample i: 1 the white wall at the start and the finish, -1 the low earth bank: a wall strike breaks grit off the wall only)
     const scen = new Chunks(128);
     for (let d = 140; d < L - sStart - 2; d += 25) if (d < dFin - 100 || d > finA) for (const side of [-1, 1]) {   // the white marker posts on the bank (a red band on top)
       const i = T.idx(sAt(d)), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + 0.4), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, g = scen.get(x, z), y = T.hy[i] + 0.5;

@@ -528,6 +528,7 @@
           }
         }
       }
+      out.barKind = (i, side) => (onBr[i] ? 1 : need[side > 0 ? 1 : 0][i] ? 0 : -1);   // (Render: what stands on the barrier line at sample i: 1 a bridge's concrete parapet, 0 the white W-beam, -1 nothing)
     }
 
     /* ---- the buildings (HK_DATA.bld, OpenStreetMap's within 60 m): each moved back off the road where it stood inside the barrier line (its side

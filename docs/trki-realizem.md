@@ -2177,6 +2177,12 @@ Ugotovitve:
 
 Odprto iz meritev (odločitev uporabnika, vprašanje `trki-ozke-proge-20-11`): skupna škoda nad 2× na ozkih progah (Cusco 2,6×, Tianmen štart 2,3×, Hiva 2,1×); T v premikajoči se avto zavrti avto, ki zadene, za 264° pri 120 in 200 km/h (cv 1: 7°).
 
+## Krog 20. 11. 2026, tretji del: pešci po masah in `barKind` na pravih progah
+
+**Pešci v Realistični (`Traffic._hitPedR`).** Prej je avto ob povoženem izgubil 6 % hitrosti + 0,4 m/s ne glede na svojo težo, to je 3- do 4-krat več gibalne količine, kot jo je človek (75 kg) prejel (`tools/trki/predmeti.js --del ljudje`, stolpec pA/pP: 4,18 / 3,47 / 3,20 pri 60 / 120 / 200 km/h). V cv 6 avto zdaj odda natanko toliko, kolikor človek prejme (pA/pP 1,00; avto 1200 kg izgubi ~2,3 % hitrosti: 1,3 / 2,6 / 4,4 km/h), sunek prime tam, kjer je človek stal (`kTake`: zadet ob strani avto malo zasuka, v sredini nič; naključni zasuk starega pravila v cv 6 odpade, žreb ostane, da promet ostane v koraku). Pravilo igre ostane: človek pod avtom pri ~0,35 hitrosti, nikoli v zrak, isti dogodek, ista kazen. Prosta razbitina prometa, ki povozi človeka, v cv 6 prav tako odda, kar ta prejme. cv 1–5 in prijateljev avto v spletni dirki: do števke po starem. Testi: `tests/trki.test.js` (3 nova preverjanja, skupaj 69).
+
+**`world.barKind` na vseh pravih progah.** Prej samo Spa; zdaj vseh 60 pravih prog (pregled: `node tools/trki/barkind.mjs`, brez imen vse proge; izhod 1, če kateri manjka ali vrne napačno vrednost). Graditelji podajo samo to, kar že rišejo (isti podatki kot zanka ograje): -1 nič, 0 jeklena ograja, 1 beton ali kamen, 2 gume, 3 bale, 4 lesena ograja. Nobene nove mreže, materiala ali žreba: odtis sveta (`tests/golden/world.json`) in obremenitev (`tests/golden/perf.json`) nespremenjena. Skupni graditelji (`world-rbring.js`, `world-prelaz.js`, `world-gore.js`) funkcijo podajo tudi zamrznjenim progam, ki jih gradijo; narisano se tam ne spremeni. Zamrznjene proge z lastnim graditeljem (Medvode, Marrakesh, London, Dades) ostanejo brez. Presoje: nizki kamniti ali betonski zidovi, ki jih zadene karoserija (Livorno 0,85 m, Ella in Ngorongoro 0,55 m, Chapman), so 1; zemeljski nasip (Isalo), snežni bregovi in mreže -1; Pikes: kjer pred ograjo stojijo penasti bloki, -1. Posledica: gruščasti prah cv 6 (o videzu še teče vprašanje `trki-prah-zid-20-11`) se zdaj pokaže ob betonu in kamnu tudi na drugih pravih progah, ne samo na Spa.
+
 ## Stanje odprtega 20. 11. 2026
 
 Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odloča.
@@ -2194,8 +2200,7 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 
 **Odprto, ne čaka**
 - P4.4: iskre pod povešenim vogalom niso dodane.
-- Pešci (`Traffic._hitPeds`) so v Realistični še po starem.
-- Gruščasti prah: ~90 prog z lastnim graditeljem ne podaja `world.barKind`; klici risanja v sličici trka niso izmerjeni.
+- Gruščasti prah: klici risanja v sličici trka niso izmerjeni (`barKind` zdaj na vseh pravih progah).
 - Vpliv zrcalnega vrstnega reda vogalov na dirke s cv 6 ni izmerjen.
 - `tests/browser/poskodbe.test.mjs`, »2. Preproste: a light knock cracks the lamp it leaves whole«: nestabilno (1 od 3 tekov).
 - K3 na Medvodah: kosi v coni krožišča nimajo meja kot avti (razdelek »Krog 20. 11. 2026, drugi del«); ob odločitvi o Medvodah.
