@@ -5,7 +5,9 @@
 //   Leno.load(key)        → Promise, resolved once the script has run; one request per key however often it is asked for; on an error
 //                           (no network and no copy in the service worker) it rejects with an Error whose .leno is the key, and the next
 //                           call tries again
-//   Leno.loadSeq([keys])  → Promise, one after another in the order given (a builder's helpers before the builder)
+//   Leno.loadSeq([keys])  → Promise, run in the order given (a builder's helpers before the builder): all asked at once, the scripts'
+//                           async=false keeps their order of running, so 54 world files take one round of requests, not 54 one after
+//                           another with a frame drawn between each (tests: World.needAll() 17–33 s; a phone: World.need's few files)
 //   Leno.has(key)         → true once the script has run (or when the page has no such link: nothing to wait for)
 //   Leno.keys(prefix)     → the keys of the page's lazy links (all, or those starting with prefix)
 // In Node (no document) everything counts as loaded: tests/lib/core.js reads the lazy files with the others.
@@ -27,7 +29,7 @@ var Leno = Leno || (function () {
       doc.head.appendChild(sc);
     }));
   }
-  function loadSeq(ks) { return ks.reduce((p, k) => p.then(() => load(k)), Promise.resolve()).then(() => ks); }
+  function loadSeq(ks) { return Promise.all(ks.map(load)).then(() => ks); }
   function keys(prefix) {
     if (!doc) return [];
     return [...doc.querySelectorAll('link[rel="x-lazy-script"][data-lazy]')].map(l => l.getAttribute('data-lazy')).filter(k => !prefix || k.startsWith(prefix));
