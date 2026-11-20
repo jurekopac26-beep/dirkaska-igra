@@ -13,6 +13,7 @@
 //   node tests/browser/perf.test.mjs            check
 //   node tests/browser/perf.test.mjs --update   write new reference values
 //   PERF_ONLY=newmap,toskana node tests/browser/perf.test.mjs [--update]   only these (--update: the others' values kept)
+// Last a big field, Zandvoort's start with 101 cars (bigField: polje101 on NIZKA, polje101s on SREDNJA; PERF_ONLY=polje101)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, tapNewVersion } from './lib.mjs';
@@ -65,6 +66,54 @@ async function newMap() {
   }
   T.check('newmap: no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();
+}
+// A big field (Nasprotniki 100, the menu's most; the Nordschleife's hundred): Zandvoort's start with 101 cars, the camera behind the player
+// at the back of the grid, every rival in front of it (the cars' detail Visoka, a computer's default). NIZKA (the phone): within the
+// budget of CLAUDE.md and its reference (polje101). SREDNJA: the far rivals drawn as their one coarse mesh too (render.js, farBig), the
+// CROWD_K nearest in full, draw calls within 300 and the reference (polje101s; its vertices only printed: the track and its pit crews alone
+// take ~1.1M on SREDNJA, the cars ~50k); and a race of 22 on SREDNJA without far meshes (every car as ever). Only the drawing: the race the same
+async function bigField() {
+  const run = async (detail, rivals) => {
+    const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail, shadows: 1, camera: 'chase', zoom: 1.2, rivals, carDet: 'high', track: 'zandvoort', ...SHAKE }, { width: 844, height: 390 }, { seed: 12345 });
+    await page.evaluate(() => {
+      window.__gl = { calls: 0, verts: 0 };
+      const gl = document.querySelector('canvas').getContext('webgl2') || document.querySelector('canvas').getContext('webgl');
+      const P = Object.getPrototypeOf(gl), wrap = (name, count) => { const f = P[name]; if (!f) return; P[name] = function (...a) { window.__gl.calls++; window.__gl.verts += count(a); return f.apply(this, a); }; };
+      wrap('drawElements', a => a[1]); wrap('drawArrays', a => a[2]); wrap('drawElementsInstanced', a => a[1] * a[4]); wrap('drawArraysInstanced', a => a[2] * a[3]);
+    });
+    await startTrack(page, 'zandvoort');
+    const r = await page.evaluate(() => {
+      const g = window.__game, P = g.race.player; g.pause(); g.sim(0.2, true);
+      Render.resetCam(); for (let i = 0; i < 20; i++) Render.frame(1 / 60, 1, P, 'chase', {});
+      const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {});
+      const cp = Render.camera.position, seen = [];
+      let far = 0, on = 0;
+      for (const c of g.race.cars) { const v = Render.viewOf(c); if (!v || c.isPlayer) continue; if (v.far) far++; if (v.far && v.far.on) on++; if (!v.cull) seen.push([Math.hypot(c.x - cp.x, (c.y || 0) - cp.y, c.z - cp.z), !!(v.far && v.far.on)]); }
+      seen.sort((a, b) => a[0] - b[0]);
+      return { cars: g.race.cars.length, calls: __gl.calls - c0, kverts: Math.round((__gl.verts - v0) / 1000), far, on, nearFull: seen.slice(0, 3).every(q => !q[1]) };
+    });
+    await ctx.close();
+    return { r, errors };
+  };
+  const ref = (key, r, verts) => {
+    out[key] = { calls: r.calls, maxCalls: r.calls, kverts: r.kverts, maxKverts: r.kverts, jsMs: 0 };
+    const gd = golden[key], line = `${r.cars} cars, calls/frame ${r.calls}, vertices/frame ${r.kverts}k, far meshes ${r.far} (${r.on} drawn so)`;
+    if (update) { console.log(`${key.padEnd(10)} ${line}`); return null; }
+    if (!gd) return ['no reference', line];
+    const why = [];
+    if (r.calls > gd.maxCalls * 1.1 + 5) why.push(`draw calls ${r.calls} > ${Math.round(gd.maxCalls * 1.1 + 5)}`);
+    if (verts && r.kverts > gd.maxKverts * 1.1 + 20) why.push(`vertices ${r.kverts}k > ${Math.round(gd.maxKverts * 1.1 + 20)}k`);
+    if (r.calls > 300) why.push('over 300 draw calls');
+    if (verts && r.kverts > 900) why.push('over 900k vertices');
+    return [why.join(', '), line];
+  };
+  const lo = await run('low', 100), md = await run('med', 100), sm = await run('med', 21);
+  const a = ref('polje101', lo.r, true), b = ref('polje101s', md.r, false);
+  if (a) T.check('polje101 (Zandvoort, start, 101 cars, NIZKA): within the phone budget', !a[0], a[1] + (a[0] ? ' — ' + a[0] : ''));
+  if (b) T.check('polje101s (the same on SREDNJA): draw calls within 300 and the reference', !b[0], b[1] + (b[0] ? ' — ' + b[0] : ''));
+  T.check('big field on SREDNJA: the far rivals as one mesh, the nearest in full', md.r.cars === 101 && md.r.far === 100 && md.r.on > 0 && md.r.nearFull, JSON.stringify(md.r));
+  T.check('a race of 22 on SREDNJA: no far meshes (every car as ever)', sm.r.cars === 22 && sm.r.far === 0 && sm.r.on === 0, JSON.stringify(sm.r));
+  for (const [k, e] of [['NIZKA', lo], ['SREDNJA', md], ['SREDNJA, 22', sm]]) T.check(`big field (${k}): no page errors`, !e.errors.length, e.errors.slice(0, 5).join(' | '));
 }
 const update = process.argv.includes('--update');
 const only = process.env.PERF_ONLY ? process.env.PERF_ONLY.split(',') : null;   // (only these tracks, 'newmap' among them)
@@ -121,6 +170,7 @@ try {
   T.check('no page errors', !errors.length, errors.slice(0, 5).join(' | '));
   await ctx.close();   // (the tracks' game closed first: still running beside the new map's, it slowed that one's loading past page.goto's limit)
   if (!only || only.includes('newmap')) await newMap();
+  if (!only || only.includes('polje101')) await bigField();
 } finally {
   await browser.close(); await srv.close();
 }

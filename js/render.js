@@ -4346,7 +4346,7 @@ const Render = (function () {
   // the lights of the time of day: the floodlights (from late dusk; a real track's from sunset: lampK), the pits' (from dusk), the windows, the headlight beams and the cars' glow (by todK); build: the floodlights and the pits' again
   function todLights(build) { if (build || (lampK() > 0) !== !!flood) floodlights(); floodLook(); rsGlowAll();
     if (build || (todK > 0.2) !== !!pitL) pitLights(); if (pitL) pitL.mesh.material.opacity = pitK(); litWindows(); for (const v of views) { beams(v); carGlow(v); } }
-  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) farMat.emissive.setScalar(e); if (v.tlB) v.tlB.material.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
+  function carGlow(v) { const e = 0.16 * sstep(0.5, 1, todK), m = v.body && v.body.material; if (m && m.emissive) m.emissive.setScalar(e); if (v.far) v.far.mesh.material.emissive.setScalar(e); if (v.tlB) v.tlB.material.emissive.setScalar(e); }   // (at night the cars stay in sight under the floodlights; the far rivals too)
   // dusk and night: lights in the buildings' windows (the facade pictures, tex.facade and tex.facadeBal: the glass is the blue in them).
   // Some of the windows lit, each with a warm light of its own (now and then a television's cold blue), by a hash of the window (its bay
   // and floor, the wall's colour); the facade materials get it in their shader at the first dusk or night (winU 0 by day: as built)
@@ -4869,7 +4869,7 @@ const Render = (function () {
     for (const E of [...kitCache.values(), ...kitCacheHi.values()]) { g.add(E.geo); g.add(E.tail); if (E.hub) g.add(E.hub); if (E.hull) g.add(E.hull); }   // (the kit: each model's colour-neutral body and tail, its bare hub, its wheels, the showroom's two kept bodies)
     for (const w of kitWheelCache.values()) { g.add(w.f); g.add(w.r); }
     for (const q of kitShowLRU) g.add(q.geo);
-    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd, matFpM]); if (farMat) m.add(farMat);   // (matFpM: the formula's rivals' parts, remerge; farMat: the far rivals' one material)
+    const m = new Set([matCar, matWheel, matTailOff, matTailOn, matBlob, matBlobS, matMarker, matUnder, matEngine, matLens, matLensBroken, matScOn, matScOff, matCrack, matHull, matXEng, matXUnd, matFpM]); if (farMat) m.add(farMat); if (farMatHi) m.add(farMatHi);   // (matFpM: the formula's rivals' parts, remerge; farMat, farMatHi: the far rivals' one material)
     for (const R of tlLooks.values()) if (R) { g.add(R.geo); g.add(R.lgeo); g.add(R.lo); g.add(R.sh); g.add(R.blob); m.add(R.mat); if (R.cut) for (const q of R.cut) if (q) { g.add(q.no); if (q.sp) g.add(q.sp); } }   // (a semi-trailer's look: the model's, a preview's trailer in its tractor's group, tlShow)
     return { g, m };
   }
@@ -5191,7 +5191,7 @@ const Render = (function () {
     carGlow(v);
     if (curTrack && curTrack.def.theme === 'pikes') pkCarDress(v);   // Pikes Peak: dust + morning glint on the paint
     if (c.chr && c.chr.rival) nameTag(v, c.name, '#ff8a7a');   // the player's standing rival (the career): its name over the car
-    if (tierNow === 0 && !c.isPlayer) ownRnd(() => farBuild(v));   // (NIZKA: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
+    if (!c.isPlayer && (tierNow === 0 || farBig())) ownRnd(() => farBuild(v));   // (NIZKA, and a big field on every tier: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
     if (c.tl && c.m.trailer && c.m.trailer.look) tlView(v, c);   // (its semi-trailer: a group of its own on the kingpin, tlDraw)
     scene.add(v.grp); return v;
   }
@@ -5209,18 +5209,27 @@ const Render = (function () {
   // on this tier, kitShadows) has more vertices than the far mesh casts its shadow from the far mesh while far (hs). Off for good: a part or a wheel
   // lost, a kit car's pieces changed (a part loose, off, torn open; kit.ver but not by a knock), or a car beaten past FAR_DMG (it smokes, its
   // scratches show, scrU: not in the far mesh's vertex colours).
-  const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45;
+  // SREDNJA and VISOKA (a computer's screen, sharper): only in a big field (farBig: more cars than CROWD_N, the menu's Opponents up to 100,
+  // the Nordschleife's hundred); a race of 22 or fewer draws every car as ever. Closer to the car it stands for: a 10 cm grid (FAR_CELL_HI),
+  // a vertex for each colour in a cell (the glass's edge against the roof, the lamps: not blurred into the paint; one place for them, no
+  // gaps), the start number's roundel as a light patch, the paint's own material (farMatHi: matCar's shine, sky and glint), and later
+  // (FAR_ADD_HI m past the view's reach, CROWD_R_HI m at the least in a pack). Zandvoort's start with 101 cars on SREDNJA: 251 draw calls
+  // down to 222 (perf.test.mjs, polje101s). Only the drawing: the race, its cars and their steps the same (Core's LOD, Race._lodPlan, its own)
+  const FAR_LAYER = 3, FAR_CELL = 0.2, FAR_DMG = 0.45, FAR_CELL_HI = 0.1, FAR_ADD = 35, FAR_ADD_HI = 55;
+  const farBig = () => !!(curRace && curRace.cars && curRace.cars.length > CROWD_N);
+  const farR = () => (cam.vd || 40) + (tierNow === 0 ? FAR_ADD : FAR_ADD_HI);   // (past it a rival is drawn as its far mesh)
   let farRb = 0;   // (cars whose far mesh was built again this frame: frame() sets it back)
-  let farMat = null;
+  let farMat = null, farMatHi = null;   // (farMatHi: SREDNJA and VISOKA, the paint as matCar's: its shine, the sky in it, the sun's glint; matCar's own program)
   function farBuild(v) {
     v.grp.updateMatrixWorld(true);
     const inv = new THREE.Matrix4().copy(v.bodyG.matrixWorld).invert(), m4 = new THREE.Matrix4(), p = new THREE.Vector3(), cl = new THREE.Color();
-    const keep = new Set([v.hull, v.tag, v.blob].concat(v.shadowOnly || [])), list = [], cell = new Map(), acc = [], tri = [];   // (the blob: its shadow on the road stays)
+    const keep = new Set([v.hull, v.tag, v.blob].concat(v.shadowOnly || [])), list = [], cell = new Map(), acc = [], tri = [], hi = tierNow > 0, fc = hi ? FAR_CELL_HI : FAR_CELL, pk = new Map(), vk = [];   // (pk: a grid cell's place, vk: each vertex's cell)   // (the blob: its shadow on the road stays)
     v.grp.traverse(o => {
       if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite) || keep.has(o) || o.userData.farKeep) return;   // (farKeep: added after the far car was made, drawn as it is near or far: the patrol car's band and light bar, polGear)
       list.push(o);
       const mt = Array.isArray(o.material) ? null : o.material, G = o.geometry, P = G && G.attributes.position;
-      if (!o.isMesh || !mt || !P || mt.transparent || mt.map || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
+      const dec = hi && mt && mt.map && mt.transparent && mt.isMeshLambertMaterial && !mt.vertexColors;   // (SREDNJA, VISOKA: the start number's roundel in too, a light patch)
+      if (!o.isMesh || !mt || !P || (!dec && (mt.transparent || mt.map)) || !(mt.isMeshPhongMaterial || mt.isMeshLambertMaterial || mt.isMeshStandardMaterial)) return;
       for (let a = o; a; a = a === v.grp ? null : a.parent) if (!a.visible) return;   // (a hidden part: not in the far car either; the car's own, not the scene's: farRebuild may run while the scene is hidden)
       m4.multiplyMatrices(inv, o.matrixWorld);
       const C = mt.vertexColors && G.attributes.color, I = G.index, n = I ? I.count : P.count, id = new Int32Array(P.count).fill(-1), U = o === v.partsM ? G.attributes.aIn : null;   // (U: a rival's parts as one mesh, remerge: its unlit pieces, the head lamp lenses, left out as their own meshes were)
@@ -5228,9 +5237,11 @@ const Render = (function () {
       for (let i = I ? 0 : r0; i < (I ? P.count : r1); i++) {
         if (U && Math.abs(U.getX(i) - 64 / 255) < 0.03) { id[i] = -1; continue; }
         p.fromBufferAttribute(P, i).applyMatrix4(m4);
-        const k = Math.floor(p.x / FAR_CELL) + ',' + Math.floor(p.y / FAR_CELL) + ',' + Math.floor(p.z / FAR_CELL);
-        let q = cell.get(k); if (q === undefined) { q = acc.length / 7; cell.set(k, q); acc.push(0, 0, 0, 0, 0, 0, 0); }
-        if (C) cl.setRGB(C.getX(i), C.getY(i), C.getZ(i)).multiply(mt.color); else cl.copy(mt.color);
+        const k = Math.floor(p.x / fc) + ',' + Math.floor(p.y / fc) + ',' + Math.floor(p.z / fc);
+        if (C) cl.setRGB(C.getX(i), C.getY(i), C.getZ(i)).multiply(mt.color); else cl.copy(mt.color); if (dec) cl.multiplyScalar(0.8);
+        const kc = hi ? k + '|' + Math.round(cl.r * 5) + ',' + Math.round(cl.g * 5) + ',' + Math.round(cl.b * 5) : k;   // (SREDNJA, VISOKA: a colour's edge kept, the glass against the roof; one place, a vertex per colour)
+        let q = cell.get(kc); if (q === undefined) { q = acc.length / 7; cell.set(kc, q); acc.push(0, 0, 0, 0, 0, 0, 0); vk.push(k); }
+        let pc = pk.get(k); if (pc === undefined) pk.set(k, pc = [0, 0, 0, 0]); pc[0] += p.x; pc[1] += p.y; pc[2] += p.z; pc[3]++;
         const b = q * 7; acc[b] += p.x; acc[b + 1] += p.y; acc[b + 2] += p.z; acc[b + 3] += cl.r; acc[b + 4] += cl.g; acc[b + 5] += cl.b; acc[b + 6]++; id[i] = q;
       }
       for (let t = r0; t + 2 < r1; t += 3) tri.push(id[I ? I.getX(t) : t], id[I ? I.getX(t + 1) : t + 1], id[I ? I.getX(t + 2) : t + 2]);
@@ -5241,9 +5252,9 @@ const Render = (function () {
       if (seen.has(k)) continue; seen.add(k); idx.push(a, b, c); }
     if (!idx.length) return;
     const nv = acc.length / 7, pos = new Float32Array(nv * 3), col = new Float32Array(nv * 3);
-    for (let q = 0; q < nv; q++) { const b = q * 7, w = acc[b + 6]; for (let j = 0; j < 3; j++) { pos[q * 3 + j] = acc[b + j] / w; col[q * 3 + j] = acc[b + 3 + j] / w; } }
+    for (let q = 0; q < nv; q++) { const b = q * 7, w = acc[b + 6], pc = pk.get(vk[q]); for (let j = 0; j < 3; j++) { pos[q * 3 + j] = pc[j] / pc[3]; col[q * 3 + j] = acc[b + 3 + j] / w; } }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals(); g.computeBoundingSphere();
-    const m = new THREE.Mesh(g, farMat || (farMat = new THREE.MeshLambertMaterial({ vertexColors: true })));
+    const m = new THREE.Mesh(g, tierNow === 0 ? farMat || (farMat = new THREE.MeshLambertMaterial({ vertexColors: true })) : farMatHi || (farMatHi = cgMat(matCar.clone(), false, 'carCg')));
     const hs = !!v.hull && idx.length < v.hull.geometry.attributes.position.count;   // (hs: the far mesh cheaper than the kit car's hull, e.g. a small open car's: its shadow too while far)
     m.castShadow = !v.hull || hs; m.receiveShadow = false; m.visible = false; v.bodyG.add(m);   // (a kit car's shadow stays its hull's but for hs; the others' from this)
     v.far = { mesh: m, list, on: false, ok: true, dirty: false, sig: farSig(v), ver: v.kit ? v.kit.ver : 0, pv: v.kit ? v.kit.ver - v.kit.dk : 0, hs }; carGlow(v);
@@ -5260,21 +5271,21 @@ const Render = (function () {
   // CROWD_K-th this frame, Infinity when fewer are near or the field is smaller (every race of 22 or fewer as ever); a car swaps only 10 %
   // past it (no flicker). A shot (no far meshes in it: a TV lens brings a far car close) only when it asks for the rule (shot.crowd: the
   // jets' shot over the grid before the start, game.js), then every rival in front of the camera counts
-  const CROWD_N = 22, CROWD_K = 10, CROWD_R = 30, _crowd = [], _crD = new THREE.Vector3();
+  const CROWD_N = 22, CROWD_K = 10, CROWD_R = 30, CROWD_R_HI = 45, _crowd = [], _crD = new THREE.Vector3();
   let crowd2 = Infinity;
   function crowdCut() {
     crowd2 = Infinity; if (!curRace || !curRace.cars || curRace.cars.length <= CROWD_N || lastMode === 'tv' || (cam.shot && !cam.shot.crowd)) return;   // (the race's own cars: the safety car's view does not count)
-    const cp = camera.position, R = (cam.vd || 40) + 35, R2 = cam.shot ? Infinity : R * R; _crowd.length = 0; camera.getWorldDirection(_crD);
+    const cp = camera.position, R = farR(), R2 = cam.shot ? Infinity : R * R; _crowd.length = 0; camera.getWorldDirection(_crD);
     for (const v of views) { const c = v.car; if (c.isPlayer || !v.far || !v.far.ok || v.cull) continue; const dx = c.x - cp.x, dy = (c.y || 0) - cp.y, dz = c.z - cp.z, d = dx * dx + dy * dy + dz * dz; if (d <= R2 && dx * _crD.x + dy * _crD.y + dz * _crD.z > 0) _crowd.push(d); }
     const K = dbg.crowdK != null ? dbg.crowdK : CROWD_K;   // (dbg.crowdK: the tests, the rule measured off and on)
     if (_crowd.length <= K) return;
-    _crowd.sort((a, b) => a - b); crowd2 = Math.max(_crowd[K - 1], CROWD_R * CROWD_R / 0.81);
+    const CR = tierNow === 0 ? CROWD_R : CROWD_R_HI; _crowd.sort((a, b) => a - b); crowd2 = Math.max(_crowd[K - 1], CR * CR / 0.81);
   }
   function farStep(v, x, y, z) {
     const F = v.far, c = v.car;
     if (F.ok && ((c.dmg || 0) >= FAR_DMG || (c.detach && c.detach.length) || (c.lost && Object.keys(c.lost).length) || (v.kit && v.kit.ver - v.kit.dk !== F.pv) || (v.wheelOff && v.wheelOff.some(Boolean)))) F.ok = false;   // (a kit car: its pieces changed, not only knocked: pv)
     if (F.ok && !F.dirty && ((c.dents && c.dents.length) || farSig(v) !== F.sig || (v.kit && v.kit.ver !== F.ver))) F.dirty = true;   // (c.dents: taken into the body later this frame; a kit car's dent or roof: kit.dk)
-    const cp = camera.position, R = (cam.vd || 40) + 35, d2 = (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2;
+    const cp = camera.position, R = farR(), d2 = (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2;
     let far = F.ok && lastMode !== 'tv' && (!cam.shot || cam.shot.crowd) && ((!cam.shot && d2 > R * R) || d2 > crowd2 * (F.on ? 0.81 : 1.21));   // (a big field: past the CROWD_K nearest, crowdCut; a shot only by that rule)
     if (far && F.dirty && farRb < 1 && !v.cull && !(c.dents && c.dents.length)) { farRebuild(v); if (!v.far) return; return farStep(v, x, y, z); }   // (v.cull: out of the view, carCull: built again once back in it; the frame's one rebuild for a car that is seen)
     if (far === F.on) return;
