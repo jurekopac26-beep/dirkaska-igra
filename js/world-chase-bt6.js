@@ -59,11 +59,11 @@
     walk(env, seed, C.step, C.reach, 1.8, ok, (gx, gz, k, R, free) => {
       const c = vrLC(gx, gz), sl = caSlope(gx, gz), e = 1.2, dx = caGround(gx + e, gz) - caGround(gx - e, gz), dz = caGround(gx, gz + e) - caGround(gx, gz - e), dl = Math.hypot(dx, dz);
       let ax = dl > 0.02 ? -dz / dl : Math.cos(R() * TAU), az = dl > 0.02 ? dx / dl : Math.sin(R() * TAU);   // (along the contour)
-      const rocky = c === 4 || c === 7 ? 1 : c === 1 ? C.wood : C.rocky, ra = R(), rb = R();
+      const rocky = c === 4 || c === 7 ? (C.scree == null ? 1 : C.scree) : c === 1 ? C.wood : C.rocky, ra = R(), rb = R(), rk = C.ribLen || 1;   // (C.scree, C.ribLen: the later groups' own measure)
       if (ra < rocky) {   // the ribs: two to four in a row, one behind the other up the slope
         const cnt = 2 + Math.floor(R() * 4), cx = -az, cz = ax;
         for (let q = 0; q < cnt; q++) {
-          const u = (R() - 0.5) * 3.2, v = (q - (cnt - 1) / 2) * (1.6 + R() * 1.1), x = gx + ax * u + cx * v, z = gz + az * u + cz * v, len = 2.5 + R() * 4, w = 1.3 + R() * 1.6, h = 0.28 + R() * 0.42, t = R();
+          const u = (R() - 0.5) * 3.2, v = (q - (cnt - 1) / 2) * (1.6 + R() * 1.1), x = gx + ax * u + cx * v, z = gz + az * u + cz * v, len = (2.5 + R() * 4) * rk, w = (1.3 + R() * 1.6) * rk, h = 0.28 + R() * 0.42, t = R();
           if (!free(x, z, 2.2 + len * 0.5)) continue;
           const wob = (R() - 0.5) * 0.5, c0 = Math.cos(wob), s0 = Math.sin(wob);
           rib(scen.get(x, z), caGround, x, z, ax * c0 - az * s0, ax * s0 + az * c0, len, w, h, vary(dk(C.rock[Math.floor(t * C.rock.length)], C.pale), R, 0.025), R); st.rebra++; }
@@ -174,4 +174,5 @@
     if (soft.done) soft.done();
     return { sopi: n, prst: m };
   };
+  API.chaseBt = { karst, chain };   // (the next groups' files build on the same walk: js/world-chase-bt7.js)
 })();
