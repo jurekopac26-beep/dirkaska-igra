@@ -2183,29 +2183,59 @@ Odprto iz meritev (odločitev uporabnika, vprašanje `trki-ozke-proge-20-11`): s
 
 **`world.barKind` na vseh pravih progah.** Prej samo Spa; zdaj vseh 60 pravih prog (pregled: `node tools/trki/barkind.mjs`, brez imen vse proge; izhod 1, če kateri manjka ali vrne napačno vrednost). Graditelji podajo samo to, kar že rišejo (isti podatki kot zanka ograje): -1 nič, 0 jeklena ograja, 1 beton ali kamen, 2 gume, 3 bale, 4 lesena ograja. Nobene nove mreže, materiala ali žreba: odtis sveta (`tests/golden/world.json`) in obremenitev (`tests/golden/perf.json`) nespremenjena. Skupni graditelji (`world-rbring.js`, `world-prelaz.js`, `world-gore.js`) funkcijo podajo tudi zamrznjenim progam, ki jih gradijo; narisano se tam ne spremeni. Zamrznjene proge z lastnim graditeljem (Medvode, Marrakesh, London, Dades) ostanejo brez. Presoje: nizki kamniti ali betonski zidovi, ki jih zadene karoserija (Livorno 0,85 m, Ella in Ngorongoro 0,55 m, Chapman), so 1; zemeljski nasip (Isalo), snežni bregovi in mreže -1; Pikes: kjer pred ograjo stojijo penasti bloki, -1. Posledica: gruščasti prah cv 6 (o videzu še teče vprašanje `trki-prah-zid-20-11`) se zdaj pokaže ob betonu in kamnu tudi na drugih pravih progah, ne samo na Spa.
 
+## Krog 20. 11. 2026, četrti del: iskre P4.4, klici risanja s prahom, zrcalni vrstni red
+
+**Iskre pod povešenim vogalom (P4.4).** Merilo `node tools/trki/iskre-vogal.mjs` (56 modelov, ~30 s) vsak model postavi kot `updateCars` (nagib, naklon, poves `kitSag`, `gpitch`) in izmeri najnižjo točko narisane zunanje lupine nad cesto. Od 46 modelov s kitom jih povešen vogal (bend 1) z največjim zaviranjem, plinom ali nagibom do ceste (≤ 1 cm) pripelje 32; v mirovanju poves ustavi pravilo 1 cm pri 8 (modras, lev, zmaj, kozorog, tornado, superkombi, gams, orel); 14 jih ceste ne doseže nikoli (miska, kolibri, raketa, jezek, lisica, jastreb, gad, blisk, hrosc, gozdar, goljat, vran, strelica, mravlja). Zato so iskre dodane po geometriji, ne po modelu: `sagLow(v, c, k)` vrne najnižjo točko lupine v četrtini vogala v narisani drži; `emitFx` iz nje spusti curek iz obstoječega `sparkP` (10 + 1,5·v isker/s, največ 8 na sličico, `rRnd`), kadar velja: Podrobne poškodbe, kit, `bend[k] > 0`, poves res položen (`v.sagQ`; Mravlja ima celo karoserijo 1 cm nad cesto in se ne povesi), kolo ni odtrgano, ni poskoka čez razbitino, nad 15 m/s, na tleh, do 150 m od kamere, reža ≤ 1,5 cm. Brez novih mrež, materialov in klicev risanja (148 / 148). Test: `tests/browser/poskodbe.test.mjs`, del 8 (Tornado, Spa: cel 0 isker, bend 0,25 reža 3,0 cm 0 isker, bend 1 ~40 isker/s pri 20 m/s, 12 m/s 0, v zraku 0). Sliki: `docs/trki-slike/iskre-vogal-prej.jpg`, `iskre-vogal-potem.jpg`; videz, prag in gostota so vprašanje `trki-iskre-vogal-20-11`.
+- Iskre ob pristanku niso dodane: izrisovalnik ne riše posedanja vzmetenja, samo zaostanek naklona celega avta; nizki avti bi po kotu iskrili že pri 0,7 m/s navpične hitrosti.
+- 10 starejših modelov brez kita: brez isker pod vogalom (kot pri iskrah odbijača).
+- Opažanje, ni spremenjeno: pri 9 nizkih modelih (formula, lm, modras, lev, kozorog, tornado, bizon, superkombi, orel) narisana karoserija celega avta pri polnem zaviranju seže skozi cesto (do −9,4 cm, superkombi). Pri teh že malo skrivljeno kolo ob zaviranju iskri. To je drža v risanju, ne trki.
+
+**Klici risanja v sličici trka s prahom.** `node tools/trki/prah-klici.mjs [--proge spa,rbring,montreal]` (zid pod 90°, 100 km/h, 844×390, okno −0,2 do +1,5 s). Gruščasti prah ne doda klica, oglišča ali mreže (gre v obstoječo zalogo 2400 delcev, 82–86 delcev na udarec, živih največ 216):
+
+| proga, grafika | pred trkom | vrh s prahom | brez prahu | cv 5 | oglišč |
+|---|---|---|---|---|---|
+| Spa, nizka | 141 | 144 | 144 | 144 | 382 tisoč |
+| Spa, visoka | 179 | 183 | 183 | 183 | 798 tisoč |
+| rbring, nizka, suho / dež | | 93 / 95 | 93 / 95 | 97 / 99 | 210 / 222 tisoč |
+| montreal, nizka, suho / dež | | 103 / 96 | 103 / 96 | 111 / 105 | 365 / 326 tisoč |
+
+Dodatni klici v sličici trka so od odpadlih kosov (+8 pri 4 kosih) in drobcev (+1), ne od prahu. Meja Spa v `tests/golden/perf.json` je 222, proračun 300 / 900 tisoč drži; Spa na visoki grafiki ima 798 tisoč oglišč (rezerve malo, a z ali brez prahu enako). Spa v dežju in visoka grafika na drugih dveh progah nista izmerjeni. Test: `poskodbe.test.mjs`, del 9 (klici 139 / 139 / 139 jeklo / grušč / jeklo, oglišča enaka, grušč natanko +86 delcev, štirje polni udarci 436 živih). Test zdaj traja več kot 10 min na obremenjenem stroju.
+
+**Zrcalni vrstni red vogalov (`wallCollide`, cv 6) in dirke.** `node tools/trki/zrcalne-dirke.js` (načini `dirke`, `zrcalo`, `ponovi`). Vrstni red 1,0,3,2 se od 0,1,2,3 loči samo, kadar sta v istem koraku v ograji oba sprednja ali oba zadnja vogala. 9 prog × 6 semen × 3 različice (zrcalno, brez, obratno): 0/54 razhajanj, vse do bita enako. Dodatnih 48 dirk: 1 razhajanje (Sa Calobra, seme 81) brez učinka (škoda, časi, mesta enaki). Na ravni preizkusni cesti z zrcaljenim štartom 13 avtov prav zrcalni red ohrani polje simetrično (odmik do 4e-8 m v 5 od 6 semen; brez njega se zrcalo podre pri ~0,1 s). Sklep: reda dirk ne popači, jedro nespremenjeno. `tests/trki.test.js` 69/69, `tests/races.test.js` 340/340.
+- Odprto iz meritve: Sa Calobra, seme 81, cv 6: igralčev avto na avtopilotu od ~85 s stoji z nosom na levi ograji (781 m, škoda 65 %, ni razbitina), dirka se ne konča; v cv 5 pride v cilj. Vzrok je škoda + avtopilot brez vzvratne, ne vrstni red.
+- Seme 72 na ravni cesti: odmik 0,19 m od 11,7 s, izvor neizsleden (ni `wallCollide`: dotiki ograje enaki). Avtopilot sam ni zrcalno simetričen (zunaj trkov).
+
 ## Stanje odprtega 20. 11. 2026
 
 Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odloča.
 
+**Odgovorjeno 20. 11., čaka izvedbo (po vrsti)**
+- `trki-vrata-starejsi-18-11` in `trki-zadnja-vrata-19-11` (opomba): »Sprednja vrata so prevelika, zadnja premajhna; ostali avti na sliki so ok.« Štirje avti na sliki starejših modelov so v redu. JEŽEK E je po zasnovi trivratni (`body.door` 0,89 … −0,34, vrata 1,23 m; za njimi 0,4 m plošče), zato sorazmerna vrata pomenijo spremembo videza avta (stebriček B, črte vrat, steklo), ne samo trkov: vprašanje `trki-vrata-jezek-20-11`; do odgovora ostane popravek (odprejo se samo sprednja vrata).
+- `trki-prah-zid-20-11` = 1: prah z drobci ostane; postopoma še betonski zidovi drugih prog (`barKind` je že na vseh pravih progah).
+- `trki-pokrov-starejsi-20-11` = 1: ostane.
+- `trki-obremenitev-kup-19-11` = 2: pri več kot ~6 poškodovanih avtih oddaljeni rišejo lažje poškodbe (cilj pod 300 klicev).
+- `trki-tovornjak-20-11` = 1 + opomba: privzeto ostane na pasu; v Nastavitvah dodati druge možnosti.
+- `trki-ozke-proge-20-11` = 2: tekmeci se avtu počez bolje izognejo (zavirajo prej); vožnja brez ustavljenega ali poškodovanega avta na cesti ostane do števke enaka.
+
 **Čaka na uporabnika**
-- `trki-vrata-starejsi-18-11`: RD.4 (seznam `X_2DOOR`) in vrata starejših avtov.
-- `trki-zadnja-vrata-19-11`: zadnja vrata po bočnem trku (slika zdaj/potem).
-- `trki-obremenitev-kup-19-11`: verižni trk na startu, 403 klici risanja; do odgovora se nič ne spreminja.
-- `trki-pokrov-starejsi-20-11`: pokrov starejših karoserij (v tem dokumentu še brez svojega zapisa; sem sodita kot pokrova 18° iz predaje in lupina, ki pogleda skozi skrajšani pokrov).
+- `trki-vrata-jezek-20-11`: JEŽEK E ostane trivratni (1, priporočeno), postane petvratni (2) ali vseh pet z ozkim zadnjim delom (3).
+- `trki-iskre-vogal-20-11`: iskre pod povešenim vogalom (sliki prej/potem, prag in gostota).
+- Meja klicev risanja razbitine `ev` (38 > 37): odgovor o vratih meje ne omenja; meja ostane, dokler vrata niso popravljena in ponovno izmerjena.
 - F3, zavora izločene razbitine (»Posledice v dirki«).
 - Ključ rekorda svetovne lestvice nima različice trkov (»Okvir«; uporabnik ali seja lestvice).
-- `trki-prah-zid-20-11` (sliki gruščastega prahu), `trki-ozke-proge-20-11` (škoda na ozkih progah), `trki-tovornjak-20-11` (tovornjak 32 t ostane na pasu).
-- Meja klicev risanja razbitine `ev` (38 > 37), vezano na `trki-vrata-starejsi-18-11`.
 - Pas drsenja ob ograji čez prvi avto: v tem dokumentu ni svojega zapisa, preneseno iz predaje kroga.
 
 **Odprto, ne čaka**
-- P4.4: iskre pod povešenim vogalom niso dodane.
-- Gruščasti prah: klici risanja v sličici trka niso izmerjeni (`barKind` zdaj na vseh pravih progah).
-- Vpliv zrcalnega vrstnega reda vogalov na dirke s cv 6 ni izmerjen.
+- Sa Calobra, seme 81, cv 6: igralčev avto na avtopilotu obtiči ob ograji (četrti del).
+- Narisana karoserija nizkih celih avtov pri polnem zaviranju seže skozi cesto (četrti del; drža v risanju).
+- Klici s prahom: Spa v dežju in visoka grafika na rbring/montreal neizmerjeni.
 - `tests/browser/poskodbe.test.mjs`, »2. Preproste: a light knock cracks the lamp it leaves whole«: nestabilno (1 od 3 tekov).
 - K3 na Medvodah: kosi v coni krožišča nimajo meja kot avti (razdelek »Krog 20. 11. 2026, drugi del«); ob odločitvi o Medvodah.
 - Po namestitvi koles redarjev vrnjena kolesa ostanejo zvita do popravila v boksih (opažanje, ni spremenjeno).
 - F4 (nizka, po presoji).
+
+**Zaprto v četrtem delu (20. 11. 2026)**
+- P4.4 iskre pod povešenim vogalom; klici risanja v sličici trka s prahom (0 dodatnih); vpliv zrcalnega vrstnega reda vogalov na dirke (ga ni).
 
 **Zaprto v tem krogu (20. 11. 2026)**
 - Veljavnost zapisa `fxK` (barva samo, dokler velja `fxCar`); `_fxK` se počisti tudi prikolicama.

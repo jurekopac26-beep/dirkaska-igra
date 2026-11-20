@@ -13,6 +13,7 @@
 //    none; in the air none, and the gouge is not joined across the jump; no mesh more in the scene, no draw call but the one of the tyre
 //    marks' mesh (hidden: one call fewer), the frame within section 3's 360; the race started again: the marks' mesh empty, the new car
 //    whole, its view without v.hubG
+// 9. P4, the grit of a concrete wall (cv 6): the knock's frame no draw call, vertex or mesh over the same at a steel rail; the pool of 2400 holds
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 const T = checker('Poškodbe: Podrobne on the phone (P1.13)');
 const srv = await serve(); const browser = await launch();
@@ -136,6 +137,58 @@ try {
   T.check('7. only the bare hub marks the road (the other three wheels: no mark of any kind)', hg.marks0 === 0 && hg.others === 0 && hg.marks1 === hg.n3, `${hg.marks0} before, ${hg.marks1} after, ${hg.n3} the gouge's`);
   T.check('7. no mesh more in the scene, no draw call but the tyre marks\' one (hidden: one fewer), the frame ≤ 360', hg.mesh1 === hg.mesh0 && hg.call1 - hg.callH === 1 && hg.call1 <= 360, `meshes ${hg.mesh0} → ${hg.mesh1}, calls ${hg.call0} before, ${hg.call1} with, ${hg.callH} with the marks hidden`);
   T.check('7. the race again: the marks cleared, the car whole, its view without a gouge\'s end', HA.fresh && HA.n === 0 && HA.marks === 0 && !HA.hubG && HA.off === 0 && HA.lost === 0, JSON.stringify(HA));
+  // 8. P4.4: sparks under a bent wheel's sagged corner (P3), only where the body as drawn is down on the road (the Tornado: its low
+  // splitter's corner, the sag held at 1 cm over the road: tools/trki/iskre-vogal.mjs). The car carried by hand as in 7
+  const sc = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
+    for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
+    for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
+    const fx = Math.cos(P.h), fz = Math.sin(P.h), y0 = P.y, ry0 = P.roadY;
+    for (const c of R.cars) if (c !== P) { const y = c.y, ry = c.roadY; c.place(c.x - fx * 300, c.z - fz * 300, c.h); c.y = c.py = y; c.roadY = ry; }
+    const drive = (v, n, air) => { for (let i = 0; i < n; i++) { P.place(P.x + fx * v / 30, P.z + fz * v / 30, P.h); P.y = P.py = y0; P.roadY = ry0; P.air = air ? 1 : 0; P.vx = fx * v; P.vz = fz * v; P.speed = v; P.w = 0; P.axF = 0; Render.frame(1 / 30, 1, P, 'chase', {}); }
+      P.vx = 0; P.vz = 0; P.speed = 0; P.air = 0; };
+    const meas = () => { for (let i = 0; i < 3; i++) Render.frame(1 / 60, 1, P, 'chase', {}); const c0 = __gl.calls; Render.frame(1 / 60, 1, P, 'chase', {}); return __gl.calls - c0; };
+    const meshes = () => { let n = 0; Render.scene.traverse(q => { if (q.isMesh || q.isPoints || q.isLine) n++; }); return n; };
+    const v = Render.viewOf(P), sp = () => Render.fxStats().sparksN, run = (vel, n, air) => { const s0 = sp(); drive(vel, n, air); return sp() - s0; };
+    const gapOf = () => { let lo = Infinity; const a = v.body.geometry.attributes.position.array, p = new THREE.Vector3(); v.grp.updateMatrixWorld(true);   // (the lowest point of the outer shell as it stands drawn, over the road)
+      for (let i = 0, n = v.body.geometry.userData.outerN; i < n; i++) { p.set(a[i * 3], a[i * 3 + 1], a[i * 3 + 2]).applyMatrix4(v.body.matrixWorld); v.grp.worldToLocal(p); if (p.y < lo) lo = p.y; } return +lo.toFixed(4); };   // (in the car's own frame: it lies on the road's slope)
+    o.kit = !!v.kit; o.whole = run(20, 30); o.gap0 = gapOf(); o.mesh0 = meshes(); o.call0 = meas();
+    // the front left wheel bent a little: the corner sags, its body still over the road: none
+    P.cd[0] = 0.47; o.some = run(20, 30); o.bendS = v.bend[0]; o.sagS = !!v.sagQ; o.gapS = gapOf();
+    // bent all the way: down to 1 cm, sparks at 20 m/s; none at 12 m/s, none in the air, none with the detail off
+    P.cd[0] = 1; o.slow = run(12, 30); o.bend = v.bend[0]; o.gap = gapOf(); o.fast = run(20, 30); o.air = run(20, 30, true);
+    const xs = P.x, zs = P.z, again = () => { for (let i = 0; i < 30; i++) Render.frame(1 / 30, 1, P, 'chase', {}); P.place(xs, zs, P.h); return run(20, 30); };   // (the same 20 m from the same place, the camera settled before each)
+    again(); o.fast2 = again();
+    o.mesh1 = meshes(); o.callS = meas(); o.alive = Render.fxStats().sparks; const pts = []; Render.scene.traverse(q => { if (q.isPoints && q.visible) pts.push(q); }); const hid = () => { for (const q of pts) q.visible = false; const n = meas(); for (const q of pts) q.visible = true; return n; }; o.callH = hid(); o.aliveH = Render.fxStats().sparks;   // (the sparks still in the air: counted with them, then after the same run with the wheel straight again: none)
+    P.cd[0] = 0; o.back = again(); o.bendB = v.bend[0]; o.callN = meas(); o.aliveN = Render.fxStats().sparks; o.callNH = hid();
+    return o; });
+  T.check('8. the car whole, 20 m at 20 m/s: no sparks', sc.kit && sc.whole === 0 && sc.gap0 > 0.03, JSON.stringify({ sparks: sc.whole, gap: sc.gap0 }));
+  T.check('8. the front left wheel bent a little: the corner sagged, the body still over the road: no sparks', sc.bendS > 0 && sc.bendS < 0.5 && sc.sagS && sc.gapS > 0.016 && sc.gapS < sc.gap0 && sc.some === 0, JSON.stringify({ bend: sc.bendS, gap: sc.gapS, sparks: sc.some }));
+  T.check('8. bent all the way: the body 1 cm over the road; 20 m at 20 m/s: a stream of sparks (by time: about 40 a second)', sc.bend === 1 && sc.gap > 0.005 && sc.gap < 0.015 && sc.fast >= 25 && sc.fast <= 45 && sc.fast2 >= 25 && sc.fast2 <= 45, JSON.stringify({ bend: sc.bend, gap: sc.gap, sparks: [sc.fast, sc.fast2] }));
+  T.check('8. the same at 12 m/s (15 m/s or less) and in the air: none; the wheel straight again: none', sc.slow === 0 && sc.air === 0 && sc.bendB === 0 && sc.back === 0, JSON.stringify({ slow: sc.slow, air: sc.air, back: sc.back }));
+  T.check('8. no mesh more in the scene; the same draw calls with the sparks in the air as after the same run without them (the particle systems that were there before set aside; with them at most their own two)', sc.mesh1 === sc.mesh0 && sc.alive > 0 && sc.aliveH > 0 && sc.aliveN === 0 && sc.callH === sc.callNH && sc.callS - sc.callN >= 0 && sc.callS - sc.callN <= 2, `meshes ${sc.mesh0} → ${sc.mesh1}, calls ${sc.callS} with ${sc.alive} sparks, ${sc.callN} with ${sc.aliveN}; the particles hidden ${sc.callH} / ${sc.callNH}`);
+  // 9. P4, the grit of a concrete wall (cv 6, render.js: world.barKind 1): the knock's frame costs no draw call, vertex or mesh over the
+  // same frame at a steel rail (the one pool of particles, 2400, drawn whole each frame), the grit 86 particles at its fullest
+  // (28 clouds, 50 crumbs, 8 lumps), and four full knocks in four frames leave the pool far from full (tools/trki/prah-klici.mjs: the race)
+  const gd = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, T = R.track, W = Render.world, cv0 = Core.TX.cv, o = {};
+    Core.TX.cv = 6; o.dust = Render.crashInfo().XC.dust;   // (the renderer reads the version each frame; the core is not stepped here)
+    for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
+    let i0 = -1, sd = 1; for (let i = Math.floor(T.N * 0.1); i < T.N && i0 < 0; i++) for (const s of [1, -1]) if (i0 < 0) { let ok = true; for (let k = -4; k <= 4; k++) ok = ok && W.barKind(i + k, s) === 1; if (ok) { i0 = i; sd = s; } }
+    if (i0 < 0) { Core.TX.cv = cv0; return o; }
+    const q0 = T.query(T.px[i0], T.pz[i0], i0, {}), far = sd > 0 ? q0.br : q0.bl, d = far - P.m.len / 2 - 0.3;   // (the player's nose at the wall, standing)
+    P.place(T.px[i0] + sd * T.nx[i0] * d, T.pz[i0] + sd * T.nz[i0] * d, Math.atan2(sd * T.nz[i0], sd * T.nx[i0])); P.q = T.query(P.x, P.z, i0, P.q); if (T.hasElev) { P.y = P.py = T.hy[P.q.i]; P.roadY = T.hy[P.q.i]; }
+    P.wallX = T.px[i0] + sd * T.nx[i0] * far; P.wallZ = T.pz[i0] + sd * T.nz[i0] * far; o.at = [P.q.i, P.q.k];
+    Render.resetCam(); const F = Render.fxStats, fr = () => Render.frame(1 / 60, 1, P, 'chase', {}), meshes = () => { let n = 0; Render.scene.traverse(q => { if (q.isMesh || q.isPoints || q.isLine) n++; }); return n; };
+    const knock = (grit, n) => { for (let i = 0; i < (n ? 0 : 240); i++) fr();   // (the particles of the knock before died out: the two frames alike)
+      const bk = W.barKind; if (!grit) W.barKind = () => 0; const e0 = F().total, m0 = meshes(); let c0 = __gl.calls, v0 = __gl.verts;
+      P.fxWall = 30; P.fxCar = 0; fr(); P.fxWall = 0; W.barKind = bk; const r = { c: __gl.calls - c0, v: __gl.verts - v0, em: F().total - e0, alive: F().alive, cMax: 0, mesh: meshes() - m0 };
+      for (let i = 0; i < (n || 30); i++) { c0 = __gl.calls; fr(); r.cMax = Math.max(r.cMax, __gl.calls - c0); r.alive = Math.max(r.alive, F().alive); } return r; };
+    o.steel = knock(false); o.grit = knock(true); o.steel2 = knock(false);
+    for (let i = 0; i < 240; i++) fr(); const e0 = F().total; o.alive4 = 0; for (let k = 0; k < 4; k++) o.alive4 = Math.max(o.alive4, knock(true, 1).alive); o.em4 = F().total - e0;
+    Core.TX.cv = cv0; return o; });
+  const gG = gd.grit || {}, gS = gd.steel || {}, gS2 = gd.steel2 || {};
+  T.check('9. a concrete wall found beside the road, cv 6 lays its grit: 86 particles over the knock at steel (which lays the same twice)', gd.dust === 1 && !!gd.grit && gS.em > 0 && gS.em === gS2.em && gG.em - gS.em === 86, JSON.stringify(gd));
+  T.check('9. the grit costs no draw call, vertex or mesh: the knock\'s frame and the 30 after it as at steel', !!gd.grit && gG.c === gS.c && gG.c === gS2.c && gG.v === gS.v && gG.cMax === gS.cMax && gG.mesh === 0 && gS.mesh === 0 && gG.c <= 300, `calls ${gG.c} / ${gS.c} / ${gS2.c}, after ${gG.cMax} / ${gS.cMax}, vertices ${gG.v} / ${gS.v}, meshes +${gG.mesh}`);
+  T.check('9. the pool of 2400 holds: one knock under 200 alive, four knocks in four frames under 600 (none written over)', gG.alive < 200 && gd.em4 === 4 * gG.em && gd.alive4 === gd.em4 && gd.alive4 < 600, `alive ${gG.alive}, four ${gd.alive4} of ${gd.em4} emitted`);
   T.check('no page errors', !errors.length, errors.slice(0, 3).join(' | '));
 } finally { await browser.close(); await srv.close(); }
 T.done();
