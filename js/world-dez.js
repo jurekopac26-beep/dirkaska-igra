@@ -43,6 +43,9 @@
               a cool grey cloud low over the valley and the hills, less light from the whole sky
      isalo    a late-afternoon thunderstorm of the Isalo's rains (December to March, January the peak): a warm grey haze over the red
               sandstone and the grass, the sun dimmed
+     ngorongoro a shower of the long rains (March to May, April the wettest; rarely all day) on the crater's rim at Windy
+              Gap (~2200 m, cold, foggy mornings): the rim in its cool grey cloud, the floor and the far rim gone in it; the setts
+              glossy between their joints
      In winter's snow (render.js's snowy(): the season winter, a world without noSnow) none of this: the snow is no rain.
      (Medvode, pending, and Suzuka, a test track, are frozen: no entry.)
    Hooks (no change to render.js or the worlds' files): World.build (the patch, once per world), World.update (the race: its rain and
@@ -78,6 +81,7 @@
     sacalobra: { fog: 0x8f989d, fogK: 0.5, near: 0.8, far: 0.75, sun: 0.32, hemi: 1.05, sheen: 0.8 },
     cusco:   { fog: 0x868f99, fogK: 0.5, near: 0.88, far: 0.82, sun: 0.32, hemi: 0.92, sheen: 0.8 },
     isalo:   { fog: 0x8e8a86, fogK: 0.45, near: 0.9, far: 0.85, sun: 0.32, hemi: 0.95, sheen: 0.8 },
+    ngorongoro: { fog: 0xa4acad, fogK: 0.55, near: 0.72, far: 0.7, sun: 0.3, hemi: 1.1, sheen: 0.65 },
   };
 
   // the sheen: shared uniforms (the patched programs are the same on every rebuild)
