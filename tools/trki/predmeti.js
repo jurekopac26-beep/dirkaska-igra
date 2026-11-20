@@ -7,7 +7,7 @@
 //   node tools/trki/predmeti.js --json          the same results as JSON on stdout
 //   node tools/trki/predmeti.js --cv 3          a collision version chosen (Core.setTest({ cv }): 1 Simulacija, 2 Arkadna, 3 Mehka,
 //                                               4 Kaskaderska, 5 Stara, or a later one; without it the game's default)
-//   node tools/trki/predmeti.js --cv 6 --promet 1   Realistična's touch with the traffic (Nastavitve: Dotik s prometom; Core TX.tf): 1 a truck
+//   node tools/trki/predmeti.js --cv 6 --promet 1   Realistična's touch with the traffic (Nastavitve: Trk s prometom; Core TX.tf): 1 a truck
 //                                               knocked off its lane from 120 km/h, 2 the old touch; without it by the two weights
 //   node tools/trki/predmeti.js --del razbitine only one part (predmeti | vrste | zamik | pocasi | razbitine | svoj | promet | ljudje |
 //                                               policija | stavba | prikolica | kup | ograja | proga | dirka)

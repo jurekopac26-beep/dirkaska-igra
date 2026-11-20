@@ -2214,7 +2214,7 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 - `trki-prah-zid-20-11` = 1: prah z drobci ostane; postopoma še betonski zidovi drugih prog (`barKind` je že na vseh pravih progah).
 - `trki-pokrov-starejsi-20-11` = 1: ostane.
 - `trki-obremenitev-kup-19-11` = 2: pri več kot ~6 poškodovanih avtih oddaljeni rišejo lažje poškodbe (cilj pod 300 klicev).
-- `trki-tovornjak-20-11` = 1 + opomba: privzeto ostane na pasu; v Nastavitvah dodati druge možnosti.
+- `trki-tovornjak-20-11` = 1 + opomba: privzeto ostane na pasu; v Nastavitvah dodati druge možnosti. Izvedeno: Nastavitve »Trk s prometom« (Po masah privzeto, Tovornjak izbit od 120 km/h, Stari dotik; Core `TX.tf`, samo Realistična, nikoli v dirki s prijateljem).
 - `trki-ozke-proge-20-11` = 2: tekmeci se avtu počez bolje izognejo (zavirajo prej); vožnja brez ustavljenega ali poškodovanega avta na cesti ostane do števke enaka.
 
 **Čaka na uporabnika**

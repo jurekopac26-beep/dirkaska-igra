@@ -2474,7 +2474,7 @@ const Core = (function () {
   // Race.step): deb 0 Izklop: a part still comes off and flies as it does (the same throw, the same random numbers), but no car touches it
   // (no speed lost, no twitch, no hop) and one that has come to rest is taken off the road (dead, as the cap of 40 takes one: the renderer
   // frees it, or keeps it drawn with Razbijanje: deli ostanejo na progi); null as it was (Vklop). Online none of it: both phones drive the default
-  // The traffic's vehicles in Realistična (Nastavitve: Dotik s prometom; Traffic._hitVeh): tf null by the two weights (_hitVehR: a truck with its
+  // The traffic's vehicles in Realistična (Nastavitve: Trk s prometom; Traffic._hitVeh): tf null by the two weights (_hitVehR: a truck with its
   // semi-trailer rear-ended at 120 km/h stays on its lane), 1 the same, but a heavy vehicle (TF_HEAVY: the truck with its semi-trailer) closed on
   // at TF_FAST or more is knocked off its lane as the old touch knocked it, 2 the old touch (as the other versions have it). Only in Realistična
   // (krOn), never online
@@ -5764,7 +5764,7 @@ const Core = (function () {
     // from another car (more from a bus, less from a bicycle)
     _hitVeh(c, v) {
       if (c.ck && !c.net) return this._hitVehP(c, v);   // (the run from the police: the contacts as in GTA, CRASH)
-      if (krOn(c) && !c.net && TX.tf !== 2) return this._hitVehR(c, v, KC);   // (Realistična: the push by the two weights, as two cars' there; Dotik s prometom »Stari dotik«, TX.tf 2: the old touch below)
+      if (krOn(c) && !c.net && TX.tf !== 2) return this._hitVehR(c, v, KC);   // (Realistična: the push by the two weights, as two cars' there; Trk s prometom »Stari dotik«, TX.tf 2: the old touch below)
       const dx0 = v.x - c.x, dz0 = v.z - c.z, rr = (c.m.len + v.len) / 2 + 0.5; if (dx0 * dx0 + dz0 * dz0 > rr * rr) return 0;
       const cha = Math.cos(c.h), sha = Math.sin(c.h), chb = Math.cos(v.h), shb = Math.sin(v.h), nb = Math.max(2, Math.round(v.len / v.wid)), rb = v.wid / 2;
       let best = 0, bnx = 0, bnz = 0, bpx = 0, bpz = 0;
