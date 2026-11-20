@@ -1,4 +1,4 @@
-/* Vehicle 'krilo' — KRILO VETRNICE: the TITAN with a low semi-trailer carrying a wind turbine's blade (the user's decision of 20. 11. 2026,
+/* Vehicle 'vetrnica' — KRILO VETRNICE: the TITAN with a low semi-trailer carrying a wind turbine's blade (the user's decision of 20. 11. 2026,
    question tovornjaki-zasnova-20-11: as in its picture). The tractor is the TITAN CISTERNA's (js/cars/cisterna.js); the trailer a body of
    its own on the kingpin (model.trailer, Core: tlStep), its look built by the renderer's trailer builder (js/render.js, tlBuild): a yellow
    low frame, the blade's root ring in its fixture over the gooseneck, the white blade (~30 m) on two saddles, its tip red, far past the
@@ -54,10 +54,10 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   }
 
   rig({
-    id: 'krilo', name: 'KRILO VETRNICE', ord: 6,
+    id: 'vetrnica', name: 'KRILO VETRNICE', ord: 6,
     desc: 'TITAN s krilom vetrnice: krilo sega daleč za prikolico, ta se v ovinku lomi.',
     expect: { t100: [10.5, 11.5], vmax: [144, 152], latG: [1.17, 1.29], d100: [42.2, 46.6] },
-    price: 90000, field: ['krilo'],
+    price: 90000, field: ['vetrnica'],
     // the semi-trailer: ~9 t of extendable frame and a blade of ~7 t; its kingpin on the TITAN's fifth wheel
     trailer: { mass: 16000, len: 16.0, wid: 2.5, ht: 3.6, f: 0.9, ax: [-11.6, -12.6, -13.6, -14.6], kp: [-1.8, 0.98], rw: 0.42, mu: 1.5, brk: 7.5, look: { build } },
   });
