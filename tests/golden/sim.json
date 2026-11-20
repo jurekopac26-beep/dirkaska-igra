@@ -7994,11 +7994,11 @@
   }
  },
  "killar/formula/cs": {
-  "digest": "dc5a719de876c0f7d5b8b7bc",
+  "digest": "e21cd1849d1005d41c679fc6",
   "lead": 1874,
   "car0": [
-   -1230.37,
-   -1057.8
+   -1215.17,
+   -1047.59
   ],
   "cover": {
    "dmg": 0.38,
@@ -8008,14 +8008,14 @@
   }
  },
  "killar/lm/cs": {
-  "digest": "e8141eafae6ae7a7f7314008",
+  "digest": "b0f5cf558708eeb18ef499f3",
   "lead": 1852.3,
   "car0": [
-   -1158.36,
-   -1023.84
+   -1156.71,
+   -1020.36
   ],
   "cover": {
-   "dmg": 0.41,
+   "dmg": 0.45,
    "loose": 2,
    "rescues": 0,
    "repairs": 0

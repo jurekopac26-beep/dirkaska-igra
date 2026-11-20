@@ -4072,12 +4072,12 @@
  "killar/cs/formula": {
   "finished": 13,
   "cars": 13,
-  "winner": 129.7,
+  "winner": 129.65,
   "spins": 0,
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "66972564afda589c2fe06482"
+  "digest": "9881e0b000d71e00800d5cc1"
  },
  "killar/cs/lm": {
   "finished": 13,
@@ -4087,7 +4087,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "13b741156ef465c306296722"
+  "digest": "03c3ef20d07ddb69d80f7aa0"
  },
  "killar/cs/car": {
   "finished": 13,

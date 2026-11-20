@@ -77,7 +77,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 3. Kamera in meni (#650), jure.kopac26, ~13. 11. po »ok«
 4. (združeno v 2.)
 6. Najboljše vožnje, jure.kopac26, ~14. 11.
-7. Mesta za dele (#480 + #626) in 30 avtov KOLIBRI, partyslo (od 17. 11.), ~25. 11.
+7. Mesta za dele na 21 avtih (#480; #626 se zapre) in 30 avtov KOLIBRI, partyslo (od 17. 11.), ~25. 11.
 8. (združeno v 7.)
 9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
 10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge potrjene 13. 11. (19 prog do 70), partyslo in croatiadata
@@ -91,6 +91,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 7 | #480 | Mesta za dele iz garaže na 21 avtih in 30 avtov KOLIBRI (#661, #662 spojena): 10 starejših (KAZE RS, VORTEX 4WD, PICO TURBO, STREGA MR, VIHAR V8, BURJA R7, SAMUM 4x4, STRELA EV, FORMULA ORKAN, TAIFUN LM) in 11 iz #460; serijski avti trikotnik za trikotnikom enaki, fizika vožnje ista | partyslo (prevzem od biketravelerja, odločitev uporabnika prek Mateja 17. 11. 2026, tabla #382, komentarja 6935582938 in 6937084140) | pripravljen 17. 11. (svež `main` spojen, povezani testi lokalno zeleni, predaja v opisu #480), osnutek; **pred #608** (spor v `js/cars/medved.js`, vrata `door2`, razreši #608); vodi seja Združevanje partyslo; brez rezervnega kolesa na nobenem avtu (odločitev uporabnika 12. 11. 2026 ob ~3.10 prek Mateja, tabla #382, komentar 6812399354), #626 se zapre |
 | 10.12 | #246 | **za Trki (#608), ~8. 12.**; preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva, tudi pri nekrožnih progah brez pospeševanja; ostalih 11 prog počaka na boljšo grafiko (`claude/preleti-posnetki`) | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
 

@@ -130,9 +130,9 @@ try {
   T.check('default settings: at 90 % the roof drawn in from both sides, never past its limits (the seats never through it: its roof field, xtRoof)', rfOk(d), JSON.stringify(d.rfI));
   T.check('default settings: every graze dents that flank in a little more, the other side not; never caved in (under 13 cm)', dentIn(d), JSON.stringify({ car: d.carD, nose: d.nose2D, rail: d.railD, stale: d.stale, many: d.many }));
 
-  const m = await run('medved', { xBody: 1, xGlass: 1 });
-  console.log('medved:', JSON.stringify({ key: m.key, nose: m.nose.map(st), car: m.car }));
-  T.check('the Kolibri\'s only: the MEDVED (a table car too) with glass on: a light blow breaks no pane, no scrapes, its body\'s program as before (dirtyCarCgX)',
+  const m = await run('kozorog', { xBody: 1, xGlass: 1 });   // (a table car outside XT_MIN; the MEDVED has the Kolibri's extras since the pilot, docs/avti-kolibri.md)
+  console.log('kozorog:', JSON.stringify({ key: m.key, nose: m.nose.map(st), car: m.car }));
+  T.check('the Kolibri\'s and the pilot cars\' only: the KOZOROG (a table car too) with glass on: a light blow breaks no pane, no scrapes, its body\'s program as before (dirtyCarCgX)',
     m.key === 'dirtyCarCgX' && m.nose.every(p => st(p) === 'none') && m.car.every(q => q[0] === 0 && q[1] === 0) && !m.errors.length, m.key + ' ' + m.errors.slice(0, 3).join(' | '));
 } finally {
   await browser.close(); await srv.close();

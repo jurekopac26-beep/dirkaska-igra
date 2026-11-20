@@ -168,11 +168,11 @@ function follow(r, P, depth, line, kMax, rnd, flip) {
     const x = send({ T, i, line, depth }, { v: 6, ang: 20 });
     check('a verge: where the side has no drop and no ground is drawn beyond the line, a car sent across the line stays at the road\'s height (the road\'s platform goes on), rolls to a stop and is put back: it does not fall through',
       x.B && x.fin && x.end === 1 && x.out > 0.5 && x.out < 5 && x.drop < 0.05 && x.pen <= 0.03 && x.free && x.falls === 1, x.B ? `end ${x.end} after ${x.t.toFixed(2)} s, ${x.out.toFixed(1)} m beyond the line, ${(x.drop * 100).toFixed(1)} cm down, ${(x.pen * 100).toFixed(1)} cm deep` : 'no body'); }
-  // every vehicle's hull: as tall as the vehicle is drawn (its own data: def.look.body.roofY, else def.parts.ht), its centre of mass 0.25 to 0.45 of that up
+  // every vehicle's hull (0.5 to 4 m: the formula's 0.58 m the lowest): as tall as the vehicle is drawn (its own data: def.look.body.roofY, else def.parts.ht), its centre of mass 0.25 to 0.45 of that up
   { const rows = [], old = [];
     for (let k = 0; k < C.MODELS.length; k++) { const M = C.MODELS[k]; if (M.trailer) { old.push(k); continue; } const x = send(W45, { v: 5, ang: 60, model: k, kMax: 1 }); if (!x.B) { rows.push({ id: M.id, H: 0, hc: 0, own: 0 }); continue; }
       const D = M.def, own = D ? (D.look && D.look.body && D.look.body.roofY) || (D.parts && D.parts.ht) || 0 : 0; rows.push({ id: M.id, H: x.B.G.H, hc: x.B.G.hc, own }); }
-    const kit = rows.filter(r => r.own), badH = kit.filter(r => Math.abs(r.H - r.own) > 0.03), badC = rows.filter(r => !(r.H >= 0.8 && r.H <= 4 && r.hc >= 0.25 * r.H - 1e-9 && r.hc <= 0.45 * r.H + 1e-9));
+    const kit = rows.filter(r => r.own), badH = kit.filter(r => Math.abs(r.H - r.own) > 0.03), badC = rows.filter(r => !(r.H >= 0.5 && r.H <= 4 && r.hc >= 0.25 * r.H - 1e-9 && r.hc <= 0.45 * r.H + 1e-9));
     check('every vehicle\'s hull: as tall as the vehicle is drawn where its own data say how tall (within 3 cm), its centre of mass 0.25 to 0.45 of that up',
       rows.length > 0 && !badH.length && !badC.length, `${rows.length} vehicles, ${kit.length} with their own height (${kit.length ? Math.min(...kit.map(r => r.H)).toFixed(2) + ' to ' + Math.max(...kit.map(r => r.H)).toFixed(2) + ' m' : 'none in this tree'})${badH.length ? '; NOT as tall as drawn: ' + badH.map(r => `${r.id} ${r.H} against ${r.own}`).join(', ') : ''}${badC.length ? '; the centre: ' + badC.map(r => `${r.id} ${r.hc.toFixed(2)} of ${r.H}`).join(', ') : ''}`);
     // a vehicle with a semi-trailer: the old fall (Race._fall's own lines), beside a known ground too

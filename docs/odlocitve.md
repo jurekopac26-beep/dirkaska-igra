@@ -219,10 +219,10 @@ Kratka pravila so v `CLAUDE.md`. Tu so citati odločitev uporabnika, datumi in u
 - **Gorske proge** (`docs/gorske-proge.md`): načrt, odločitve, podatki OSM in stanje 16 kratkih prog iz 16 držav (4 skozi smučišča, 9 z zanimivostmi ob cesti, 3 dirkališča). Proga 1 je svoja seja; proge 2–16 gredo v 4 skupinah (»Naredi skupino X po docs/gorske-proge.md«), vsaka skupina svoja veja (`gorske-proge/skupina-<X>`) in en PR. Odločitve uporabnika 31. 10. in 1. 11. 2026: vse proge so en sklop; PR gre na `main` brez vprašanja, ko so na GitHubu zeleni vsi testi (združi ga koordinacijska seja), nato se brez vprašanja zažene naslednja proga; uporabnik verigo ustavi z »stop«. Napor je bil: proga 1 max, proge 2–16 xhigh; od 11. 11. 2026 velja »Model in napor« (proge high). Skupni gradniki (žičnice, sneg, živali) so v `js/world-gore.js`, uvoz OSM in višin v `tools/proga-uvoz.mjs`; merilo pasu ~60 m je v načrtu.
 - **Nove proge** (`docs/nove-proge.md`): načrt, viri, pravila, Recept in stanje 8 novih prog (Bâlea, Furka, Gudauri, Llogara, Porto Moniz, Yungas, Pau, Ngorongoro). Ostalih prog iz predstavitve »60 kratkih prog« ne delamo (odločitev uporabnika 31. 10. 2026; Ngorongoro, z veliko živalmi, je dodal isti dan). Odločitve uporabnika 31. 10. 2026: proga naj bo čim bolj podobna pravi in grafično čim boljša, v mejah obremenitve telefona in pravne varnosti; viri samo odprti; seje gredo ena za drugo (»Naredi sejo <N><A|B> po docs/nove-proge.md«, model `claude-opus-5-5`, ena seja brez več agentov po odločitvi 10. 11. 2026 ob ~00.57; 9. in 10. 11. `claude-fable-5-2` z besedo »ultracode«), dve seji na progo na veji `nove-proge/<id>`. Seja A odpre PR, seja B ga združi sama, ko so zeleni vsi testi na GitHubu, brez čakanja na preizkus uporabnika na telefonu; nato zažene naslednjo sejo (sama ali prek koordinacijske seje). Verigo ustavi uporabnikov »stop«.
 
+## Avti
+- **Rezervnega kolesa ni na nobenem avtu:** odločitev uporabnika 12. 11. 2026 ob ~3.10 prek Mateja (tabla #382, komentar 6812399354), dobesedno: »avtom ne dodajaj rezervnega kolesa, … to smo ukinl da lahko zamenjas kolo, sedaj si ves cas neunicljiv ko pa guma odpade je pa konec igre«. Menjave kolesa v igri ni; avto je ves čas neuničljiv, ko odpade kolo, je dirke konec. TUR (v kesonu) in VRAN (na vratih prtljažnika) ne dobita dela `spare: 1` (#480 razveljavi spremembo iz #626, kolo ostane videz kot na `main`); noben drug avto, 5 tovornjakov in novi avti ga tudi ne dobijo. V #480 so rezervna kolesa (`spare: 1`) odstranjena še s KAMNA, PEŠČENJAKA, MEDVEDA in TITAN CISTERNE (kolesa ostanejo videz: navadni deli, vrata, telo prikolice); varuje `tests/rezervna-kolesa.test.js`. #626 se zapre (iz njega gre samo rezervno kolo). Mesta za dele iz garaže ostanejo (`docs/deli.md`, »Rezervno kolo«).
 ## Pravila iz `CLAUDE.md`: celotno besedilo (stanje 17. 11. 2026)
-
 Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev uporabnika 17. 11. 2026 ob 17.05, komentar 6953506391); pravila se niso spremenila, `CLAUDE.md` ima kratko obliko in sklic sem. Razdelki so enaki kot v `CLAUDE.md`.
-
 ### Proge
 - Ime »Kraj, Država« (država v slovenščini; kraj = zemljepisno ime, ne dirkališče, prireditev ali podjetje): `js/tracks/<id>.js`, `js/lang.js`, `README.md`, `docs/proge/`, `docs/igra.md`.
 - **Zamrznjene** do izbrisa pred izidom (23. 12. 2026) oz. izbire: testne (`test: true`) in na odločanju (`pending: true`); nobena seja jih ne spreminja (varovalo `tests/testne-proge.test.js`; `--dovoli` samo ob izrecni prošnji uporabnika). Urejaj samo prave proge. Delovati morata Jezero (privzeta proga, avtošola, testi) in Toskana. Testi čez vse proge testne preskočijo; za slike pred/po vzemi Spa, Belgija.
@@ -230,7 +230,6 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - Nova proga: 1–5 km, ovinkasta, zanimivosti do 60 m ob cesti, seznam potrdi uporabnik; **izletna cona**: ograja, zid, hiše ali prepad do ~3 m od asfalta na več kot pol dolžine = se ne začne (izjema mestne proge in 4 proge s prepadom, 13. 11.: Kali Gandaki, Musandam, Limalimo, Darvaz, z ograjo na strani prepada). Padec čez rob samo na Killarju.
 - **Verigi prog** (`docs/gorske-proge.md`, `docs/nove-proge.md`): PR verige gre na `main` brez vprašanja, ko so testi zeleni; uporabnik ustavi z »stop«. OSM prek `api.openstreetmap.org/api/0.6/map?bbox=…`.
 - Cilj 1.0: **70 pravih prog**, **50 avtov**; vseh 70 na `main` do 23. 12. 2026; 15. 1. 2027 kandidat; 1. 2. 2027 izid.
-
 ### Grafika
 - Samo kamera **za avtom** (`chase`), pokonci in ležeče; ne dodajaj kamer. Grafika za to kamero; česar ni videti, poenostavi. Gledalcev čim manj (`fewFans`).
 - Obremenitev: do ~300 klicev risanja in ~900 tisoč oglišč (`tests/golden/perf.json`); ne povečuj drugim progam.
@@ -238,10 +237,8 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - **Vse kot v resnici, nič izmišljenega**: stavbe, poti do hiš, ceste, predmeti in proge samo po virih (OSM, javni višinski modeli, javni podatki); česar v virih ni, se ne doda.
 - **Vidne barve avtov**: nobenih črnih ali zelo temnih (novi avti, privzete barve, tekmeci, promet); barva, ki jo igralec izbere v garaži, ostane.
 - Odločitve za grafiko in meni: 2–3 možnosti s slikami naenkrat, en »ok«. Grafika in fizika pred `main`: slike zdaj in potem. Grafika (S, G) enkrat na progo, šele ko je na `main`.
-
 ### Pravna varnost
 - Samo zemljepisna imena; brez logotipov, podjetij, lokalov, sponzorjev, prireditev, znamk avtov; **nikoli imen resničnih oseb**. Podatki samo OSM in javni višinski modeli; **nikoli Google Maps, Earth, Street View**. Vir z licenco gre v `README.md`, »Zasluge«.
-
 ### Postopek
 - Meni (`js/menu.js`): nova proga potrebuje `assets/tracks/<id>.webp` in `<id>-rain.webp`; po spremembi `node tests/browser/menu.test.mjs`.
 - Žigov (`?v=…`) v repozitoriju ni; po spremembi `node tools/stamp.js --check`. Spoj `main`: `node tools/spoji-main.mjs`. Reference: `npm run golden:update`.
@@ -252,7 +249,6 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - Pred združitvijo: spoji svež `main`, povezani testi, zadnji krog na `main` in nočni krog zelena (500 ponovi enkrat); rdeč `main` najprej popravi; po združitvi obvesti seje iz zbirke `cakanje`. PR na istih datotekah gredo drug za drugim; majhne spremembe iste teme v en PR.
 - Uporabnikovi popravki: čez dan jih pošilja Mateju, do 5.00 jih zbira, ob 5.00 gredo kot en sveženj v zbirno vejo dneva; »prednost« gre na začetek vrste. »Ok« na predogledu samo za grafiko, trke in meni; drobni popravki gredo na `main` po zelenih testih (`docs/odlocitve.md`, Postopek).
 - **Najprej odločitev, nato koda**: proga, meni, grafika ali nova funkcija se začne šele, ko uporabnik potrdi seznam, skico ali sliko na strani Odločitve; pripombe na isti predogled gredo seji v enem sporočilu in se popravijo v enem krogu.
-
 ### Seje
 - **Nov Matej vsak dan** ob 5.00 s kratko predajo (stari se ustavi; model in napor ostaneta). Velike izpise (`list_sessions`, stanje PR) bere majhen pomočnik in vrne do 5 vrstic; ob 5.00 uporabnik dobi seznam PR s povezavami, po njegovem »ok« PR do `main` pripelje seja Združevanje (`docs/varcevanje.md`, »Manj sklopov 2. del«).
 - Ena tema na sejo, samostojno; vprašanja na stran Odločitve (`docs/vprasanja.md`), v pogovoru samo če uporabnik piše v sejo. Ure po ljubljanskem času.
@@ -263,14 +259,12 @@ Besedilo pravil pred skrajšanjem `CLAUDE.md` na polovico (točka 17, odločitev
 - **Varčevanje s sejami** (17. 11., `docs/varcevanje.md`, »Varčevanje 17. 11.«): koordinacija ob branju table ustavi sejo, ki 2 h ni commitala ali se ponavlja pri povzemanju, in začne svežo s predajo; ob zagonu preveri model in napor (Fable samo trki in grafika, Sonnet združevanje, spori, dokumenti, Haiku obvestila, max samo trki); tabla samo novi komentarji (`since=`); sveže male seje s predajo namesto zbujanja starih velikih; brez preverjanja v zanki (na teste `subscribe_pr_activity`, drugače zbirka `cakanje`).
 - **Fizika vožnje se ne spreminja** (samo trki; izjemi po »ok« na predogledu: »Dež in sneg« in #605, hitrejši tekmeci na Super težki in Težki, `docs/odlocitve.md`; #605 tudi v 1.0 in na `main` prednostno, 17. 11.): avto brez dotika vozi enako.
 - Čakanje: na teste `subscribe_pr_activity`; drugo v zbirko `cakanje`; brez `sleep`.
-
 ### Tabla (issue #382) in račun
 - Račune imenuj **biketraveler**, **jure.kopac26**, **partyslo**, **croatiadata** (nikoli polnega emaila). Tabla se bere **2× na dan** (biketraveler 6.15 in 18.15, partyslo 7.15 in 19.15, jure.kopac26 8.15 in 20.15; croatiadata 4×: 2.15, 8.15, 14.15, 20.15, od 17. 11. tudi branja jure.kopac26), majhna sveža seja; **koordinacija partyslo vsak dan ob 21.00 napiše na stran Odločitve povzetek stanja v 5 vrsticah**; komentar konča z nogo `---` / `_Generated by [Claude Code](https://claude.ai/code)_`.
 - **Matejeve odločitve** (komentar »Matej (jure.kopac26)«, lastnik OWNER) izvede koordinacija računa in odgovori v eni vrstici.
 - **jure.kopac26** po resetu v nedeljo 22. 11. ob 10.00 teče **največ 2 seji, samo Trki #608** (Fable, max, usklajeno z biketravelerjem na tabli); sejo zažene opravilo po urniku, Matej ostane za koordinacijo (do takrat brez sej s kodo, opravila po urniku izklopljena; to nadomesti vpis »brez sej s kodo« in pravilo desetih sej z 16. 11. za ta račun). Ostalo delo računa so prevzeli drugi računi (partyslo: Združevanje PR jure.kopac26 in proge, biketraveler: #569 pred Trki, grafika in fizika, croatiadata: #679, #663, #688, #672, #657, #666); `docs/odlocitve.md`, Tabla.
 - **Proge gredo na `main` čim prej** (od 16. 11.; vse pripravljene proge računa v enem PR, mesto med prvima dvema, ko so pripravljene); za njimi nova mapa in misije (zaustavljene do 2.0). Pred izidom vse nedokončano za gumb **NEUPORABNO**.
 - **Prednost: fizika (trki) in grafika** (biketraveler, jure.kopac26 samo Trki #608); partyslo od 16. 11. tudi grafika (Realizem na pravih progah), novih prog ne začne brez potrjenega seznama; croatiadata nove proge s seznama za 1.0, ena proga na državo (croatiadata ima iste meje: 2 seji s kodo, 6 tem; stran Odločitve 4). **Proge ne po predlogi: vsaka proga svoja raziskava in svoj značaj** (da si niso podobne).
-
 ### Kje je kaj
 - Orodje za napake (`js/napake.js`): samo slovenščina, sklopa 0 in 8 odložena; slik in seznamov napak ne shranjuj.
 - `docs/kazalo.md`: samo »Na kratko«, ostalo z grepom; velikih datotek ne beri v celoti. O progah `docs/proge-pregled.md`. Orodje za napake: `docs/orodje-za-napake.md`.
