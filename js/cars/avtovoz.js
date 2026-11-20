@@ -15,7 +15,18 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
   function legs(B, x) { if (B.lo === 2) return; for (const sd of [-1, 1]) { B.box(x, 0.62, sd * 0.55, 0.14, 0.78, 0.14, DK); B.box(x, 0.2, sd * 0.55, 0.32, 0.05, 0.32, DK); } }
   function guards(B, x0, x1, y) { if (B.lo === 2) return; for (const sd of [-1, 1]) B.box((x0 + x1) / 2, y, sd * 1.18, x0 - x1, 0.1, 0.05, 0xdadde0); }
 
-  // TITAN AVTOVOZ: a two-deck car carrier, galvanised frame; the cars on it are the game's own (added in the page: window.__CARS)
+  // the cars it carries: plain boxes in the trailer's own mesh (no draw call more, a few hundred vertices: the phone budget,
+  // tests/browser/fleet.test.mjs), light colours (none black or very dark), no make; [x, the deck's top]
+  const CARS = [[-3.4, 0.95], [-7.3, 0.95], [-11.2, 1.25], [-1.6, 2.455], [-5.9, 2.455], [-10.3, 2.455]];
+  const CAR_COL = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0xff7a1a, 0x9fb7c9], GLASS = 0x7d93a3;
+  function cars(B) {
+    CARS.forEach(([x, y], i) => { const k = CAR_COL[i % CAR_COL.length];
+      B.box(x, y + 0.42, 0, 4.1, 0.62, 1.74, k);                       // the body
+      if (B.lo === 2) return;
+      B.box(x - 0.25, y + 0.95, 0, 2.1, 0.44, 1.56, GLASS);            // the cabin's glass
+      B.box(x - 0.25, y + 1.19, 0, 1.9, 0.06, 1.5, k); });             // its roof
+  }
+  // TITAN AVTOVOZ: a two-deck car carrier, galvanised frame; the cars on it boxes of its own (cars)
   function avtovoz(B) {
     const full = !B.lo, sh = B.lo === 2, PK = 0xe04a2a;
     B.box(-0.4, 1.22, 0, 2.6, 0.3, 2.3, PK);                         // the gooseneck over the fifth wheel
@@ -29,7 +40,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
     if (!sh) for (const sd of [-1, 1]) for (const y of [3.85, 2.4, 1.05]) B.box(-6.2, y, sd * 1.2, 13.6, 0.1, 0.1, y === 1.05 ? DK : PK);
     if (full) for (let x = 0.0; x > -12.9; x -= 1.6) for (const sd of [-1, 1]) B.box(x, 3.12, sd * 1.2, 0.05, 1.4, 0.05, GALV);
     for (const ax of [-9.6, -10.9, -12.2]) axle(B, ax, 0.42);
-    guards(B, -2.6, -8.9, 0.6); legs(B, -1.9); rear(B, -13.05, PK);
+    guards(B, -2.6, -8.9, 0.6); legs(B, -1.9); rear(B, -13.05, PK); cars(B);
   }
   // KRILO VETRNICE: an extendable low trailer, the blade's root on its fixture over the gooseneck, the tip far behind with red markers
   VEHICLE_DEFS.push({
@@ -106,9 +117,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
       vzmeti: { in: 0.55, top: 0.92, seat: 0.6 }, amortizerji: { in: 0.55, top: 0.92 }, stabilizatorji: { in: 0.5, floor: 0.94 }, dim_gum: {},
     },
     // the semi-trailer (Core: tlDefBad, tlStep): 12 t with its tank full; its kingpin on the TITAN's fifth wheel (x -1.8, 0.98 up)
-    trailer: { mass: 12000, len: 14.0, wid: 2.5, ht: 4.0, f: 0.9, ax: [-9.6, -10.9, -12.2], kp: [-1.8, 0.98], rw: 0.42, mu: 1.5, brk: 7.5, look: { build: avtovoz,
-      // the cars on its decks (the renderer's tlCars: the game's own, the user's of 13. 11. 2026): [x, the deck's top], three below, three above
-      cars: [[-3.4, 0.95], [-7.3, 0.95], [-11.2, 1.25], [-1.6, 2.455], [-5.9, 2.455], [-10.3, 2.455]] } },
+    trailer: { mass: 12000, len: 14.0, wid: 2.5, ht: 4.0, f: 0.9, ax: [-9.6, -10.9, -12.2], kp: [-1.8, 0.98], rw: 0.42, mu: 1.5, brk: 7.5, look: { build: avtovoz } },
     // the tractor's look: the TITAN's (its shape, colours, chrome), a little rust low on it: the doors' lower edges, the steps, the bumper's lip
     look: {
       get body() { return titan().body; }, get wheels() { return titan().wheels; }, regions: 'none',
