@@ -1,6 +1,6 @@
 /* =========================================================================
    WORLD — the roadside ground from the camera behind the car (chase), the fourth group of the real tracks (after
-   js/world-realizem-bt3.js's): Luanda, Mombasa. These have their own builders (js/world-<id>.js), so each calls its hook here
+   js/world-realizem-bt3.js's): Luanda, Mombasa, El Jem. These have their own builders (js/world-<id>.js), so each calls its hook here
    (World.ext.<id>Rob) just before its scenery chunks are closed; what is added goes into those chunks (scen.get), so no draw is added,
    and only the named tracks change. What stands where follows each track's description (docs/proge/<id>.md). Nothing here is driven
    on: all of it is behind the barriers, off the built ground, the sea and what the build keeps clear.
@@ -80,5 +80,22 @@
         rock(scen.get(x, z), x, nrGround(x, z) + w * 0.14, z, w * 1.4, w * 0.55, w, R() * TAU, vary(coral[Math.floor(R() * coral.length)], R, 0.03), R, 0.34, 0.35); m++; }
     });
     return { sopi: n, kamni: m };
+  };
+  /* El Jem: docs/proge/eljem.md: »oljke in palme na suhih okrastih tleh«. Between the olives the dry ochre ground of the Sahel was a
+     colour on smooth terrain from the camera behind the car. So on the open ground within ~30 m of the barriers, where the ground's
+     own colour already shows dry grass (the same noise as the builder's colFn), sparse tufts of it stand in loose groups (straw to
+     pale ochre), thinner elsewhere, and here and there the pale dust lies bare in a low patch. */
+  World.ext.eljemRob = (ctx) => {
+    const { nrGround, nrSlope, NR: P } = API, { scen } = ctx, straw = [0.72, 0.68, 0.42], pale = [0.84, 0.74, 0.5], dust = [0.86, 0.72, 0.54]; let n = 0, m = 0;
+    const ok = (x, z) => open(x, z) * (0.38 + 0.5 * sstep(0.45, 0.8, P.n2(x, z)));
+    API.ROCK_SMOOTH = true;
+    walk(ctx, 9483, 3, 28, 2.5, ok, (gx, gz, k, R, free) => {
+      if (R() < 0.1 && nrSlope(gx, gz) < 0.4 && free(gx, gz, 5)) { soil(scen, nrGround, gx, gz, 0.9 + R() * 1.1, vary(dust, R, 0.03), R); m++; }
+      for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R(), a = R();
+        if (!free(x, z, 2.4)) { R(); continue; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.5, 0.3 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R); n++; }
+    });
+    return { sopi: n, prst: m };
   };
 })();

@@ -1087,16 +1087,16 @@
   }
  },
  "riohondo": {
-  "meshes": 706,
-  "verts": 648198,
+  "meshes": 704,
+  "verts": 683961,
   "instances": 6346,
   "props": 70,
   "crowd": 43,
-  "world": "9febe933",
+  "world": "435b5d1d",
   "propsHash": "fb5fac24",
   "floor": "32c58a94/9632",
   "groups": {
-   "-:MeshLambertMaterial": "9acc78b6",
+   "-:MeshLambertMaterial": "b4425b47",
    "-:MeshBasicMaterial": "31e3e01b",
    "riohondo service roads:MeshLambertMaterial": "9e852c65",
    "riohondo lake:MeshPhongMaterial": "630a19ec",
@@ -1109,12 +1109,12 @@
    "roadwear:MeshLambertMaterial": "6c96826d",
    "worn:MeshLambertMaterial": "cd114c0a",
    "brakeBoards:MeshLambertMaterial": "6789670b",
-   "life:MeshLambertMaterial": "be3ca3fc",
-   "lifeShadow:MeshBasicMaterial": "f1c48050",
-   "life:MeshBasicMaterial": "445579f6",
+   "life:MeshLambertMaterial": "bd1b68d5",
+   "lifeShadow:MeshBasicMaterial": "e997560a",
+   "life:MeshBasicMaterial": "eaa8768b",
    "people:MeshLambertMaterial": "88b94891",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "19d8ff34",
+   "standSteps:MeshLambertMaterial": "c901dddc",
    "zaslon-okvir:MeshLambertMaterial": "f245f283",
    "zaslon-slika:MeshBasicMaterial": "ad0e146d"
   }
@@ -1284,16 +1284,16 @@
   }
  },
  "eljem": {
-  "meshes": 185,
-  "verts": 245288,
+  "meshes": 194,
+  "verts": 271082,
   "instances": 354,
   "props": 0,
   "crowd": 120,
-  "world": "eeeba07f",
+  "world": "23ccdc6f",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "8d6847d2",
+   "-:MeshLambertMaterial": "1489baa1",
    "crowd:MeshLambertMaterial": "e0968893",
    "flags:MeshLambertMaterial": "45378d95",
    "ao:MeshBasicMaterial": "b6319958",

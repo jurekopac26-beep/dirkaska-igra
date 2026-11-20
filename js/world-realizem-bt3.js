@@ -1,6 +1,6 @@
 /* =========================================================================
    WORLD — the roadside ground from the camera behind the car (chase), the third group of the real tracks (after js/world-realizem-bt.js's):
-   Lombok, Sakhir, Aguascalientes. Each track's own look hook (LK.extra of the shared circuit builder, js/world-rbring.js) is
+   Lombok, Sakhir, Aguascalientes, Termas de Río Hondo. Each track's own look hook (LK.extra of the shared circuit builder, js/world-rbring.js) is
    chained here after the worlds are loaded; what is added goes into the builder's own scenery chunks (scen.get), so no draw is added,
    and only the named tracks change. What stands where follows each track's description (docs/proge/<id>.md) and the ground's own
    colours (the look's colMod: the same noise, so a tuft or a stone stands where the ground already shows its patch). Nothing here is
@@ -99,5 +99,29 @@
         tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + k * 0.55, 0.32 + k * 0.4, vary(col, R, 0.03), R); n++; }
     }
     API.ROCK_SMOOTH = smooth0; st.sopi = n;
+  }]);
+  /* Termas de Río Hondo: docs/proge/riohondo.md: »pokošene trate ob ograjah, dlje suha slamnata trava z lisami gole zemlje«. Past the
+     mown lawns the plain of the Gran Chaco was a colour on smooth ground from the camera behind the car. So from ~10 m behind the
+     fences, thicker the further from the lawns, tufts of the plain's dry grass stand in loose groups (straw-green, paler and browner
+     where the ground's own colour is: the same noise as the look's colMod), fewer on the monte's dusty floor, and where the ground
+     shows the pale grey-brown earth it lies bare in low patches between them. */
+  late.push(['riohondo', (L, { scen, excluded }, st) => {
+    const { nrGround, nrLC, nrSlope, NR: P } = API; if (!T || !P || !nrGround) return;
+    const R = rng(9479), smooth0 = API.ROCK_SMOOTH, straw = [0.66, 0.62, 0.36], pale = [0.78, 0.68, 0.46], earth = [0.66, 0.58, 0.44]; let n = 0, m = 0;
+    API.ROCK_SMOOTH = true;
+    for (let s = 0; s < T.len; s += 5) for (const side of [-1, 1]) {
+      const r0 = R(), r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const o = 10 + Math.pow(r1, 1.3) * 28, [gx, gz] = rbSide(s + (r2 - 0.5) * 5, side, o), c = nrLC(gx, gz);
+      if (!(c === 0 || c === 1) || !rbClear(excluded, gx, gz, 9)) continue;
+      const dry = sstep(0.35, 0.7, P.n3(gx * 0.7 + 90, gz * 0.7 - 40)), q0 = sstep(0.3, 0.75, P.n1(gx * 0.9 - 210, gz * 0.9 + 75)), far = sstep(8, 26, o);
+      if (P.n1(gx * 1.2 + 40, gz * 1.2 - 510) > 0.68 && r2 < 0.55 && o > 16 && nrSlope(gx, gz) < 0.4 && rbClear(excluded, gx, gz, 12)) { soil(scen, nrGround, gx, gz, 1.4 + R() * 1.9, vary(earth, R, 0.03), R); m++; }
+      if (r0 > (0.45 + 0.4 * dry) * (0.4 + 0.6 * far) * (c === 1 ? 0.5 : 1)) continue;
+      for (let q = 0, cnt = 3 + Math.floor(R() * 4); q < cnt; q++) {
+        const x = gx + (R() - 0.5) * 8, z = gz + (R() - 0.5) * 8, k = R(), a = R(), cc = nrLC(x, z);
+        if (!(cc === 0 || cc === 1) || !rbClear(excluded, x, z, 9)) { R(); continue; }
+        const col = vary(mix3(straw, pale, Math.min(1, q0 * (0.5 + a * 0.7))), R, 0.03);   // (four-sided: the track is near its vertex budget)
+        API.cone(scen.get(x, z), x, nrGround(x, z) - 0.08, z, 0.5 + k * 0.6, 0.34 + k * 0.44, 4, [col[0] * 0.62, col[1] * 0.66, col[2] * 0.6], col, R() * TAU); n++; }
+    }
+    API.ROCK_SMOOTH = smooth0; st.sopi = n; st.prst = m;
   }]);
 })();

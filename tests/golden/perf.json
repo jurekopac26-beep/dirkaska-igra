@@ -560,11 +560,11 @@
   "jsMs": 1.37
  },
  "riohondo": {
-  "calls": 194,
-  "maxCalls": 270,
-  "kverts": 619,
-  "maxKverts": 779,
-  "jsMs": 1.03
+  "calls": 192,
+  "maxCalls": 286,
+  "kverts": 655,
+  "maxKverts": 875,
+  "jsMs": 1.59
  },
  "hakone": {
   "calls": 184,
@@ -630,11 +630,11 @@
   "jsMs": 3.23
  },
  "eljem": {
-  "calls": 97,
-  "maxCalls": 114,
-  "kverts": 251,
-  "maxKverts": 354,
-  "jsMs": 1.34
+  "calls": 102,
+  "maxCalls": 123,
+  "kverts": 246,
+  "maxKverts": 316,
+  "jsMs": 0.95
  },
  "isuna": {
   "calls": 125,
