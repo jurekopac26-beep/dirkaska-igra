@@ -4585,9 +4585,9 @@ const Core = (function () {
   // xSrcCar): nothing here reads it
   // (kept beside the car, not on it, as _aiS: the recorded state of a race, every plain field of every car, stays as it was)
   const _fxK = new WeakMap();
-  function fxSrc(c, o, fx) { if (fx > (c.fxCar || 0)) { if (o && o.color != null) _fxK.set(c, o.color); else _fxK.delete(c); } }
-  function fxKOf(c, take) { const k = _fxK.get(c); if (take) _fxK.delete(c); return k == null ? null : k; }   // (take: the renderer, with the sparks)
-  function fxKFrom(c, o) { const k = _fxK.get(o); if (k == null) _fxK.delete(c); else _fxK.set(c, k); }   // (a trailer's knock, taken by its tractor)
+  function fxSrc(c, o, fx) { if (fx > (c.fxCar || 0)) _fxK.set(c, o && o.color != null ? o.color : null); }   // (null: the strongest was a thing without paint; no entry: nothing known)
+  function fxKOf(c, take) { const k = _fxK.get(c); if (take) _fxK.delete(c); return k; }   // (take: the renderer, with the sparks; undefined: nothing known, a contact set by hand)
+  function fxKFrom(c, o) { if (_fxK.has(o)) _fxK.set(c, _fxK.get(o)); else _fxK.delete(c); }   // (a trailer's knock, taken by its tractor)
   function carCollide(a, b) {
     if (KC && !a.inPit && !b.inPit) return kCollide(a, b, KC);   // (Trki med avti: the version's knock; the pit lane as it was: the crews' work and the way in)
     const dx0 = b.x - a.x, dz0 = b.z - a.z, R = a.circles[a.circles.length - 1] + a.rad + b.circles[b.circles.length - 1] + b.rad + 0.1;   // (the two cars' reach)

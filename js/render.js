@@ -8756,7 +8756,7 @@ const Render = (function () {
     return v.xsK != null ? _xsc.set(v.xsK) : null;
   }
   function xSrcCar(c) {   // (the paint of the car this frame's contact was with, or null: the core's own word for the strongest of the frame's knocks, fxKOf(c), core.js fxSrc; without it, a trailer's or a contact set by hand, the car whose contact point is the same, the last knock's)
-    const fk = Core.fxKOf(c); if (fk != null) return fk;
+    const fk = Core.fxKOf(c); if (fk !== undefined) return fk;   // (null: the strongest knock was a thing without paint, not the last contact's car)
     for (const q of views) { const o = q.car; if (o !== c && o.contactX === c.contactX && o.contactZ === c.contactZ && o.color != null) return o.color; }
     return null;
   }
