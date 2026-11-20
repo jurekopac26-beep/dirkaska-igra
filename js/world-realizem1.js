@@ -17,10 +17,188 @@
      meshes (its two triangles per sample and side, found by their exact corners); the camera stays above the new slope (camFloor). */
   const tmBase = World.ext.tianmen;
   if (tmBase) World.ext.tianmen = (scene, tex, opts, api) => {
-    const out = tmBase(scene, tex, opts, api);
-    try { tmWalls(out, (api && api.T) || API.T); } catch (e) { console.error('realizem1 (tianmen):', e); }
+    const out = tmBase(scene, tex, opts, api), T = (api && api.T) || API.T;
+    let br = null;
+    try { br = tmSpans(T); } catch (e) { console.error('realizem1 (tianmen, mostova):', e); }
+    try { tmWalls(out, T, br && br.mask); } catch (e) { console.error('realizem1 (tianmen):', e); }
+    try { if (br) tmBridges(out, T, br); } catch (e) { console.error('realizem1 (tianmen, mostova):', e); }
     return out;
   };
+
+  /* ---- the two small bridges over the stream (OSM: two ways bridge=yes over the stream, 8.6 m and 9.1 m long, at ~1090 m and ~1685 m) ----
+     The road crosses the stream coming down the slope twice, below the first hairpins, on short slab bridges; the game drew its plain verge
+     and barrier over them on level ground. Here the old verge, guardrail and posts over the span go (found by their exact corners), a cast-
+     concrete parapet stands on each side on the barrier's line (the barrier the physics knows stays where it was) with the deck's edge, its
+     underside and the abutments, and the stream's bed is cut into the ground under it (the ground the physics knows stays as it was). Not in
+     the sources: the parapet (plain concrete, as on the loop's bridge) and the bed's depth (~4 m under the deck); the place is good to ~15 m
+     (OSM's line against the game's). The culvert at ~2185 m (OSM: culvert, under the road) shows nothing above the road: left as it is. */
+  const TM_BR = [{ x: 96.1, z: 606.7, tx: -0.538, tz: 0.843, L: 8.6 }, { x: 108.0, z: 688.7, tx: 0.763, tz: -0.646, L: 9.1 }];
+  function tmSpans(T) {
+    const N = T.N, ds = T.ds, mask = new Uint8Array(N), list = [];
+    for (const b of TM_BR) {
+      let bi = -1, bd = 12;
+      for (let i = 0; i < N; i++) { const d = Math.hypot(T.px[i] - b.x, T.pz[i] - b.z); if (d < bd && Math.abs(T.tx[i] * b.tx + T.tz[i] * b.tz) > 0.7) { bd = d; bi = i; } }
+      if (bi < 0) continue;
+      const h = Math.max(1, Math.round(b.L / 2 / ds)), i0 = bi - h, i1 = bi + h;
+      if (i0 < 3 || i1 > N - 4) continue;
+      for (let i = i0 - 1; i <= i1 + 1; i++) mask[i] = 1;   // (the parapets' reach, a sample on past each abutment: tmWalls leaves it be)
+      list.push({ bi, i0, i1, L: b.L });
+    }
+    return list.length ? { mask, list } : null;
+  }
+  function tmBridges(out, T, br) {
+    const { GB, clamp, lerp, sstep, rpHash } = API, gH = out.groundH, N = T.N, ds = T.ds, w = T.w, sw = 0.5, def = T.def;
+    if (!out.root || !gH || !GB) return;
+    const onB0 = new Uint8Array(N);
+    if (def.loopBridge) for (let s = T.startS + def.loopBridge[0]; s <= T.startS + def.loopBridge[1]; s += ds / 2) onB0[T.idx(s)] = 1;
+    const barOf = (i, side) => side > 0 ? T.br[i] : T.bl[i];
+    // (the builder's own arithmetic, step for step, so the points come out to the same floats as its vertices)
+    const gAt = (i, side, o) => { const y = T.hy[i], q = side * o; return gH(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; };
+    const Pt = (i, o, y) => [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o];
+    const Q = (i, side, y, e) => { const o = side * (barOf(i, side) + 0.12 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
+    const vProf = (i, side) => { const bar = barOf(i, side), e = w, g = (o) => gAt(i, side, o), lift = (o, h) => [o, Math.max(h, g(o) + 0.05)];
+      if (onB0[i]) return [[e + sw, -0.02], [bar - 0.45, -0.02], [bar + 0.58, -0.02], [bar + 0.62, -1.3], [bar + 0.68, -1.4]];
+      if (g(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, g(bar + 0.42) - 0.08], [bar + 1.15, g(bar + 1.15) + 0.03], [bar + 1.9, g(bar + 1.9) + 0.03]];
+      return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, g(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, g(bar + 1.9) + 0.03]]; };
+    const key = (p) => Math.fround(p[0]) + ',' + Math.fround(p[1]) + ',' + Math.fround(p[2]);
+    // the old verge (its four bands), the guardrail or the blocks, the posts: every corner the builder may have put on the span's samples
+    // (where the barrier stands well out from the road, the inside of a hairpin, the verge's first band stays: the deck there is the verge)
+    const keys = new Set(), near = br.list.map(b => [T.px[b.bi], T.pz[b.bi]]);
+    const wideOf = (b, side) => { let m = Infinity; for (let i = b.i0 - 1; i <= b.i1 + 1; i++) m = Math.min(m, barOf(i, side)); return m > w + sw + 2; };
+    for (const b of br.list) { b.wide = { '-1': wideOf(b, -1), '1': wideOf(b, 1) }; }
+    for (const b of br.list) for (const side of [-1, 1]) for (let i = b.i0 - 1; i <= b.i1 + 1; i++) {
+      const P = vProf(i, side); for (let r = b.wide[side] ? 1 : 0; r < P.length; r++) keys.add(key(Pt(i, side * P[r][0], P[r][1])));
+      for (const [y, e] of [[0.45, 0], [0.8, 0], [-0.15, -0.05], [0.8, -0.05], [-0.15, 0.45], [0.8, 0.45]]) keys.add(key(Q(i, side, y, e)));
+      if (i % 2 === 0) { const p = Q(i, side, -0.35, 0.14), c = Math.cos(T.hd[i]), s = Math.sin(T.hd[i]), hx = 0.13 / 2, hz = 0.13 / 2, sy = 1.13;
+        for (const [lx, ly, lz] of [[-hx, 0, -hz], [hx, 0, -hz], [hx, sy, -hz], [-hx, sy, -hz], [-hx, 0, hz], [hx, 0, hz], [hx, sy, hz], [-hx, sy, hz]]) keys.add(key([p[0] + lx * c - lz * s, p[1] + ly, p[2] + lx * s + lz * c])); }
+    }
+    let removed = 0;
+    out.root.traverse((m) => {
+      if (!m.isMesh || m.isInstancedMesh || !m.geometry || m.geometry.index || m.material === out.asphaltMat) return;
+      const g = m.geometry, pos = g.attributes.position; if (!pos || pos.itemSize !== 3 || !pos.array) return;
+      if (!g.boundingSphere) g.computeBoundingSphere(); const bs = g.boundingSphere;
+      if (!bs || !near.some(([x, z]) => Math.hypot(bs.center.x - x, bs.center.z - z) < bs.radius + 30)) return;
+      const pa = pos.array, n = Math.floor(pos.count / 3), keep = new Uint8Array(n); let drop = 0;
+      for (let t = 0; t < n; t++) { let all = true;
+        for (let v = 0; v < 3 && all; v++) { const q = t * 9 + v * 3; if (!keys.has(pa[q] + ',' + pa[q + 1] + ',' + pa[q + 2])) all = false; }
+        keep[t] = all ? 0 : 1; if (all) drop++; }
+      if (!drop) return;
+      removed += drop;
+      for (const name of Object.keys(g.attributes)) { const at = g.attributes[name], s = at.itemSize, src = at.array, dst = new src.constructor((n - drop) * 3 * s);
+        let o = 0; for (let t = 0; t < n; t++) if (keep[t]) { dst.set(src.subarray(t * 3 * s, (t + 1) * 3 * s), o); o += 3 * s; }
+        g.setAttribute(name, new THREE.BufferAttribute(dst, s)); }
+      g.computeBoundingSphere();
+    });
+
+    // the bridges: the parapets (0.45 m thick, 0.95 m above the deck, the slab's edge 0.9 m under it, a wing wall down into the bank at each end),
+    // the deck's edge out to them, the slab's underside and the abutments; the concrete of the road's walls
+    const wMap = new THREE.CanvasTexture(tmWallCanvas()); wMap.wrapS = wMap.wrapT = THREE.RepeatWrapping; wMap.anisotropy = 4;
+    if (out.ownTex) out.ownTex.push(wMap);
+    const gb = new GB(true), sc = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+    for (const b of br.list) {
+      const a = b.i0 - 1, z = b.i1 + 1, q = 0.92 + 0.12 * rpHash(b.bi >> 2, 61), lit = sc([0.74, 0.73, 0.7], q), stain = sc([0.55, 0.54, 0.5], q), deck = sc([0.6, 0.59, 0.56], q), under = [0.42, 0.42, 0.4];
+      const u = (k) => (k - a) * ds / 4;
+      for (const side of [-1, 1]) {
+        const Qp = (i, y, e) => Q(i, side, y, e), bot = (i) => clamp(gAt(i, side, barOf(i, side) + 0.52) - 0.3, -7, -0.45);
+        for (let k = a; k < z; k++) { const j = k + 1, ins = Qp(k, 0.4, 0.18);
+          // the inner face, the top, the outer face (the slab's edge; at the ends a wing wall down into the bank)
+          gb.quadO(Qp(k, -0.1, -0.05), Qp(j, -0.1, -0.05), Qp(j, 0.95, -0.05), Qp(k, 0.95, -0.05), null, ins, [[u(k), 0.025], [u(j), 0.025], [u(j), -0.2375], [u(k), -0.2375]], [lit, lit, lit, lit]);
+          gb.quadO(Qp(k, 0.95, -0.05), Qp(j, 0.95, -0.05), Qp(j, 0.95, 0.4), Qp(k, 0.95, 0.4), null, ins, [[u(k), 0], [u(j), 0], [u(j), 0.11], [u(k), 0.11]], [lit, lit, lit, lit]);
+          const yk = k === a ? bot(k) : k === b.i1 ? -7 : -0.9, yj = j === z ? bot(j) : j === b.i0 ? -7 : -0.9;
+          gb.quadO(Qp(k, yk, 0.4), Qp(j, yj, 0.4), Qp(j, 0.95, 0.4), Qp(k, 0.95, 0.4), null, ins, [[u(k), -yk / 4], [u(j), -yj / 4], [u(j), -0.2375], [u(k), -0.2375]], [stain, stain, lit, lit]);
+          // the deck's edge, from the shoulder out to the parapet
+          const ok = barOf(k, side) + 0.07, oj = barOf(j, side) + 0.07;
+          if (b.wide[side]) { const [ik, yik] = vProf(k, side)[1], [ij, yij] = vProf(j, side)[1];   // (from the verge's kept band out to the parapet)
+            if (ik < ok - 0.05 && ij < oj - 0.05) gb.quadO(Pt(k, side * ik, yik), Pt(j, side * ij, yij), Pt(j, side * oj, -0.05), Pt(k, side * ok, -0.05), null, Pt(k, side * (ik + ok) / 2, -1),
+              [[u(k), ik / 4], [u(j), ij / 4], [u(j), oj / 4], [u(k), ok / 4]], [deck, deck, deck, deck]); }
+          else if (ok > w + sw + 0.05 || oj > w + sw + 0.05) gb.quadO(Pt(k, side * (w + sw), -0.02), Pt(j, side * (w + sw), -0.02), Pt(j, side * Math.max(oj, w + sw), -0.05), Pt(k, side * Math.max(ok, w + sw), -0.05), null, Pt(k, side * (w + 1), -1),
+            [[u(k), (w + sw) / 4], [u(j), (w + sw) / 4], [u(j), oj / 4], [u(k), ok / 4]], [deck, deck, deck, deck]);
+        }
+        // the parapet's ends
+        for (const [k, kn] of [[a, a + 1], [z, z - 1]]) { const yb = bot(k);
+          gb.quadO(Qp(k, yb, -0.05), Qp(k, yb, 0.4), Qp(k, 0.95, 0.4), Qp(k, 0.95, -0.05), null, Qp(kn, 0.4, 0.18), [[0, -yb / 4], [0.11, -yb / 4], [0.11, -0.2375], [0, -0.2375]], [stain, stain, lit, lit]); }
+      }
+      // the slab's underside over the span, and the abutments' faces under its ends
+      const L = (i) => Pt(i, -(T.bl[i] + 0.52), -0.9), R = (i) => Pt(i, T.br[i] + 0.52, -0.9), Ld = (i) => Pt(i, -(T.bl[i] + 0.52), -7), Rd = (i) => Pt(i, T.br[i] + 0.52, -7);
+      for (let k = b.i0; k < b.i1; k++) gb.quadO(L(k), L(k + 1), R(k + 1), R(k), null, Pt(k, 0, 0), [[u(k), -T.bl[k] / 4], [u(k + 1), -T.bl[k + 1] / 4], [u(k + 1), T.br[k + 1] / 4], [u(k), T.br[k] / 4]], [under, under, under, under]);
+      for (const [k, kb] of [[b.i0, b.i0 - 1], [b.i1, b.i1 + 1]]) { const wl = -(T.bl[k] + 0.52) / 4, wr = (T.br[k] + 0.52) / 4;
+        gb.quadO(L(k), R(k), Rd(k), Ld(k), null, Pt(kb, 0, -3), [[wl, 0.225], [wr, 0.225], [wr, 1.75], [wl, 1.75]], [deck, deck, stain, stain]); }
+    }
+    let verts = 0;
+    if (!gb.empty) { const m = new THREE.Mesh(gb.geometry(), new THREE.MeshLambertMaterial({ map: wMap, vertexColors: true })); m.receiveShadow = true; m.castShadow = false; m.matrixAutoUpdate = false; m.updateMatrix(); out.root.add(m); verts = m.geometry.attributes.position.count; }
+
+    // the stream's bed under the deck and its gully up and down the slope, cut into the ground's tiles (the ground the physics knows stays)
+    const HC = 12, hash = new Map(), hk = (a, b) => (a + 4096) * 8192 + (b + 4096);
+    for (let j = 0; j < N; j++) { const k = hk(Math.floor(T.px[j] / HC), Math.floor(T.pz[j] / HC)); let L = hash.get(k); if (!L) hash.set(k, L = []); L.push(j); }
+    const inSpan = (j) => br.list.some(b => j >= b.i0 && j <= b.i1);
+    const D = br.list.map(b => { const i = b.bi; return { b, cx: T.px[i], cz: T.pz[i], tx: T.tx[i], tz: T.tz[i], nx: T.nx[i], nz: T.nz[i], A: (b.i1 - i) * ds }; });
+    const depth = (x, z) => { let d = 0;
+      for (const q of D) { const dx = x - q.cx, dz = z - q.cz, al = dx * q.tx + dz * q.tz, lt = dx * q.nx + dz * q.nz, aa = Math.abs(al), la = Math.abs(lt);
+        if (aa > 30 || la > 36) continue;
+        const bar = lt > 0 ? T.br[q.b.bi] : T.bl[q.b.bi], uf = sstep(bar + 6, bar + 12, la);
+        const fa = 1 - ((1 - uf) * sstep(q.A - 1.5, q.A + 0.5, aa) + uf * sstep(q.A, q.A + 7, aa)); if (fa <= 0) continue;
+        const fl = 1 - sstep(18, 32, la), fd = 1 - sstep(bar + 3, bar + 12, la), yD = T.hy[clamp(q.b.bi + Math.round(al / ds), q.b.i0, q.b.i1)];
+        d = Math.max(d, 2.2 * fa * fl, fa * fd * (gH(x, z) - (yD - 4))); }
+      if (d <= 0) return 0;
+      // never under the road's other samples (the legs beside it, the road on either side of the span)
+      const cx = Math.floor(x / HC), cz = Math.floor(z / HC);
+      for (let a = cx - 1; a <= cx + 1; a++) for (let b = cz - 1; b <= cz + 1; b++) { const L = hash.get(hk(a, b)); if (!L) continue;
+        for (const j of L) { if (inSpan(j)) continue; const dx = x - T.px[j], dz = z - T.pz[j]; if (Math.abs(dx * T.tx[j] + dz * T.tz[j]) > ds * 0.75) continue;
+          const lt = dx * T.nx[j] + dz * T.nz[j], bj = lt > 0 ? T.br[j] : T.bl[j]; d *= sstep(bj + 3, bj + 9, Math.abs(lt)); if (d <= 0) return 0; } }
+      return d; };
+    // the tiles near the bridges (the fine ones 5 m a cell, the coarse 10 m); a fine tile's edge against a coarse one keeps to the coarse one's line
+    const G = API.VR && API.VR.G, tl = [], tmap = new Map();
+    if (out.ground && G) out.ground.traverse((m) => {
+      if (!m.isMesh || !m.geometry || !m.geometry.index) return;
+      const g = m.geometry, pa = g.attributes.position; if (!pa || !g.attributes.normal) return;
+      if (!g.boundingSphere) g.computeBoundingSphere(); const bs = g.boundingSphere;
+      if (!D.some(q => Math.hypot(bs.center.x - q.cx, bs.center.z - q.cz) < bs.radius + 50)) return;
+      const p = pa.array, n = Math.round(Math.sqrt(pa.count)), S = Math.abs(p[3] - p[0]); if (n * n !== pa.count || !(S > 0)) return;
+      const TS = (n - 1) * S, t = { g, S, n, x0: p[0], z0: p[2], ti: Math.round((p[0] - G.x0) / TS), tj: Math.round((p[2] - G.z0) / TS), dep: null };
+      tl.push(t); tmap.set(t.ti + ',' + t.tj, t);
+    });
+    let tiles = 0, cut = 0, maxD = 0, fixed = 0;
+    const H = (x, z) => gH(x, z) - depth(x, z);
+    for (const t of tl) {
+      const g = t.g, p = g.attributes.position.array, nr = g.attributes.normal, cl = g.attributes.color, sp = g.attributes.steep, n = t.n, m = n - 1, S = t.S, dep = new Float32Array(n * n);
+      for (let k = 0; k < n * n; k++) { const d = depth(p[k * 3], p[k * 3 + 2]); if (d > 0.01) dep[k] = d; }
+      const nbS = (a, b) => { const o = tmap.get(a + ',' + b); return o ? o.S : 0; }, fix = (k0, dk) => { for (let q = 1; q < m; q += 2) { const v = (dep[k0 + (q - 1) * dk] + dep[k0 + (q + 1) * dk]) / 2; if (v !== dep[k0 + q * dk]) fixed++; dep[k0 + q * dk] = v; } };
+      if (nbS(t.ti, t.tj - 1) > S) fix(0, 1); if (nbS(t.ti, t.tj + 1) > S) fix(m * n, 1); if (nbS(t.ti - 1, t.tj) > S) fix(0, n); if (nbS(t.ti + 1, t.tj) > S) fix(m, n);
+      if (!dep.some(v => v > 0)) continue;
+      t.dep = dep; tiles++;
+      for (let k = 0; k < n * n; k++) { const a = k % n, b = (k - a) / n, x = p[k * 3], z = p[k * 3 + 2];
+        if (!dep[k] && !(a > 0 && dep[k - 1]) && !(a < m && dep[k + 1]) && !(b > 0 && dep[k - n]) && !(b < m && dep[k + n]) && !(depth(x + S, z) > 0.01) && !(depth(x - S, z) > 0.01) && !(depth(x, z + S) > 0.01) && !(depth(x, z - S) > 0.01)) continue;
+        if (dep[k]) { p[k * 3 + 1] -= dep[k]; cut++; maxD = Math.max(maxD, dep[k]); }
+        let nx = -(H(x + S, z) - H(x - S, z)) / (2 * S), nz = -(H(x, z + S) - H(x, z - S)) / (2 * S); const l = Math.hypot(nx, 1, nz); nx /= l; nz /= l; const ny = 1 / l;
+        nr.array[k * 3] = nx; nr.array[k * 3 + 1] = ny; nr.array[k * 3 + 2] = nz; if (sp) sp.array[k] = sstep(0.78, 0.5, ny);
+        // (the bed: the limestone's grey stones, washed; the gully's sides keep their cover)
+        if (cl && dep[k]) { const f = sstep(1.5, 3.5, dep[k]) * 0.8, c = cl.array; c[k * 3] = lerp(c[k * 3], 0.44, f); c[k * 3 + 1] = lerp(c[k * 3 + 1], 0.43, f); c[k * 3 + 2] = lerp(c[k * 3 + 2], 0.39, f); }
+      }
+      g.attributes.position.needsUpdate = nr.needsUpdate = true; if (cl) cl.needsUpdate = true; if (sp) sp.needsUpdate = true; g.computeBoundingSphere();
+    }
+    // how far the drawn ground went down at (x, z): its two triangles a cell, as the tiles have them
+    const meshDepth = (x, z) => { for (const t of tl) { if (!t.dep) continue; const m = t.n - 1, fx = (x - t.x0) / t.S, fz = (z - t.z0) / t.S;
+        if (fx < 0 || fz < 0 || fx > m || fz > m) continue;
+        const a = Math.min(m - 1, Math.floor(fx)), b = Math.min(m - 1, Math.floor(fz)), u = fx - a, v = fz - b, n = t.n, k = b * n + a, d = t.dep;
+        return u + v <= 1 ? d[k] + u * (d[k + 1] - d[k]) + v * (d[k + n] - d[k]) : d[k + n + 1] + (1 - u) * (d[k + n] - d[k + n + 1]) + (1 - v) * (d[k + 1] - d[k + n + 1]); }
+      return 0; };
+    // the plants down with the ground; on the deck's footprint none
+    const seen = new Set(); let lowered = 0, hidden = 0;
+    out.root.traverse((m) => {
+      if (!m.isInstancedMesh || !m.instanceMatrix) return; const A = m.instanceMatrix.array; if (seen.has(A)) return; seen.add(A);
+      let ch = false;
+      for (let k = 0; k < m.count; k++) { const o = k * 16, x = m.position.x + A[o + 12], z = m.position.z + A[o + 14];
+        if (!D.some(q => Math.abs(x - q.cx) < 50 && Math.abs(z - q.cz) < 50)) continue;
+        let on = false;
+        for (const q of D) { const dx = x - q.cx, dz = z - q.cz, al = dx * q.tx + dz * q.tz, lt = dx * q.nx + dz * q.nz; if (Math.abs(al) < q.A + ds + 0.5 && Math.abs(lt) < (lt > 0 ? T.br[q.b.bi] : T.bl[q.b.bi]) + 1) on = true; }
+        if (on) { for (let r = 0; r < 12; r++) A[o + r] = 0; hidden++; ch = true; continue; }
+        const d = meshDepth(x, z); if (d > 0.05) { A[o + 13] -= d; lowered++; ch = true; } }
+      if (ch) m.instanceMatrix.needsUpdate = true;
+    });
+    out.rz1 = out.rz1 || {};
+    out.rz1.br = { at: br.list.map(b => b.bi), wide: br.list.map(b => [b.wide[-1] ? 1 : 0, b.wide[1] ? 1 : 0]), removed, verts, tiles, cut, fixed, maxD: +maxD.toFixed(1), lowered, hidden, near: tl.map(t => t.S),
+      g: br.list.map(b => [-1, 1].map(s => { let lo = 0; for (let i = b.i0; i <= b.i1; i++) lo = Math.min(lo, gAt(i, s, barOf(i, s) + 0.52)); return +lo.toFixed(1); })) };
+  }
 
   let wallCanvas = null;
   // a cast-concrete face, 4 x 4 m at 64 px to the metre: the formwork's lifts level every metre (a dark joint, the slurry's paler band under
@@ -54,12 +232,14 @@
     return (wallCanvas = c);
   }
 
-  function tmWalls(out, T) {
+  function tmWalls(out, T, brMask) {
     const { GB, clamp, lerp, sstep, rpHash } = API, P = API.VR, gH = out.groundH, N = T.N, def = T.def, ds = T.ds, w = T.w, sw = 0.5;
     if (!out.root || !gH || !P) return;
     // the samples on the loop's bridge, as the builder marks them (the deck has its own profile)
     const onBr = new Uint8Array(N);
     if (def.loopBridge) for (let s = T.startS + def.loopBridge[0]; s <= T.startS + def.loopBridge[1]; s += ds / 2) onBr[T.idx(s)] = 1;
+    const onB0 = onBr.slice();   // (the builder's own: its verge's profile goes by these)
+    if (brMask) for (let i = 0; i < N; i++) if (brMask[i]) onBr[i] = 1;   // (and the two small bridges over the stream, with their ends: tmBridges)
     const barOf = (i, side) => side > 0 ? T.br[i] : T.bl[i];
     // (the builder's own arithmetic, step for step, so the points come out to the same floats as its vertices)
     const gAt = (i, side, o) => { const y = T.hy[i], q = side * o; return gH(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; };
@@ -67,7 +247,7 @@
     const isWall = [-1, 1].map(side => { const a = new Uint8Array(N); for (let i = 0; i < N; i++) a[i] = !onBr[i] && gAt(i, side, barOf(i, side) + 0.45) < -2.6 ? 1 : 0; return a; });
     // the old face's corners (rows 1 and 2 of the verge's profile) of every sample beside a wall, as the builder makes them
     const rows = (i, side) => { const bar = barOf(i, side);
-      if (isWall[side > 0 ? 1 : 0][i]) return [[bar + 0.3, -0.04], [bar + 0.42, gAt(i, side, bar + 0.42) - 0.08]];
+      if (!onB0[i] && gAt(i, side, bar + 0.45) < -2.6) return [[bar + 0.3, -0.04], [bar + 0.42, gAt(i, side, bar + 0.42) - 0.08]];
       const o1 = Math.max(w + sw + 0.6, bar - 0.7); return [[o1, Math.max(-0.12, gAt(i, side, o1) + 0.05)], [bar + 0.45, Math.min(-0.42, gAt(i, side, bar + 0.45) - 0.25)]]; };
     const key = (p) => Math.fround(p[0]) + ',' + Math.fround(p[1]) + ',' + Math.fround(p[2]);
     const face = new Set(); let segs = 0;
