@@ -594,6 +594,7 @@
     'TITAN z avtovozom: dolga dvonadstropna prikolica, v ovinku se lomi.': 'The TITAN with a car transporter: a long two-deck trailer that folds in bends.',
     'TITAN s krilom vetrnice: krilo sega daleč čez prikolico, v ovinku pazi na zadek.': 'The TITAN with a wind-turbine blade: the blade reaches far past the trailer, mind the tail in bends.',
     'TITAN s hlodovino: težka prikolica s hrastovimi debli, pri zaviranju potiska.': 'The TITAN with logs: a heavy trailer of oak trunks that pushes on the brakes.',
+    'Dirkalni minibus: spuščen nad velika kolesa, s prtljago ekipe na strehi.': 'A racing minibus: lowered over big wheels, the team\'s luggage on the roof.',
     'Cestni vlak: črna kabina, dve zrcalni cisterni in dolly; dva zgiba, 28 metrov.': 'A road train: a black cab, two mirror tanks and a dolly; two joints, 28 metres long.',
     'Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi.': 'A desert rally truck with the cab behind the engine, big wheels and spare wheels.',
     'Dirkalni kombi iz 80-ih in 90-ih z dirkalnim motorjem na sredini.': 'A racing van from the 80s and 90s with a race engine in the middle.',
