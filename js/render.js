@@ -5284,26 +5284,29 @@ const Render = (function () {
   }
   // A pile-up (Razbijanje · nov način): a knocked rival is drawn panel by panel (unmerge at its first knock: its panels, what they bare, its
   // lenses and covers, 15 to 19 draws against a whole one's 7 or 8), and a dozen of them in the view is over a hundred draws more. With
-  // more than XLT_K of them in the view only the XLT_K nearest the camera keep their own panels; the others are drawn light (v.xLt): their
+  // more than XLT_K of them in the view only the XLT_F nearest the camera keep their own panels (the rest of the pile-up, its shed pieces
+  // and mirrors, is draws enough: tools/trki/obremenitev-trk.mjs start); the others are drawn light (v.xLt): their
   // panels as they are now, dents, marks, open lids and bared under-parts, one mesh again (remerge: the same triangles and colours, the
   // paint's shader for all of them), till something happens to the car (a knock, a part off or loose, the crew: xLtSig, v.xLtT; a fire
   // does not: the char and the flames are the paint's shader and the car's own effects, the same on one mesh;
   // taken apart that very frame, before the knock goes into its panels) or it is among the nearest again. xLt2: the squared distance of
-  // the XLT_K-th this frame, Infinity while the rule is off (on with XLT_K + 1 in the view, off again with XLT_K - 1); a car swaps only
-  // 10 % past it, not within XLT_Q s of its last knock, and one car a frame (ltRb)
-  const XLT_K = 6, XLT_Q = 0.25, _xlt = [];
-  let xLt2 = Infinity, xLtOn = false, ltRb = 0;   // (ltRb: rivals made light or full again by the rule this frame: frame() sets it back)
+  // the XLT_F-th this frame, Infinity while the rule is off (on with XLT_K + 1 in the view, off again with XLT_K - 1); a car goes light
+  // past it, full again 10 % inside it, not within XLT_Q s of the crew or a part coming off (v.xLq), not within XLT_H s of being made full
+  // again by the rule (v.xLw), and XLT_N cars a frame (ltRb: a light one's knock, taken apart and made light again that frame, among them)
+  const XLT_K = 6, XLT_F = 3, XLT_Q = 0.25, XLT_H = 0.4, XLT_N = 3, _xlt = [];
+  let xLt2 = Infinity, xLtOn = false, xPile = false, ltRb = 0;   // (xPile: more than XLT_K damaged rivals in the view, either way of drawing the damage)   // (ltRb: rivals made light or full again by the rule this frame: frame() sets it back)
   function xLtCut() {
-    const cp = camera.position, K = dbg.xLtK != null ? dbg.xLtK : XLT_K; _xlt.length = 0;   // (dbg.xLtK: the tests, the rule measured off and on)
-    for (const v of views) { const c = v.car; if (!v.xOn || c.isPlayer || !v.det || (v.mrg && !v.xLt) || v.cull) continue; _xlt.push((c.x - cp.x) ** 2 + ((c.y || 0) - cp.y) ** 2 + (c.z - cp.z) ** 2); }
-    xLtOn = _xlt.length > K || (xLtOn && _xlt.length >= K); xLt2 = Infinity;
-    if (xLtOn && K > 0 && _xlt.length >= K) { _xlt.sort((a, b) => a - b); xLt2 = _xlt[K - 1]; } else if (xLtOn) xLt2 = 0;
+    const cp = camera.position, K = dbg.xLtK != null ? dbg.xLtK : XLT_K; _xlt.length = 0; let nD = 0;   // (dbg.xLtK: the tests, the rule measured off and on)
+    for (const v of views) { const c = v.car; if (!c.isPlayer && !v.cull && c.dmg > 0 && !(v.far && v.far.on)) nD++; if (!v.xOn || c.isPlayer || !v.det || (v.mrg && !v.xLt) || v.cull) continue; _xlt.push((c.x - cp.x) ** 2 + ((c.y || 0) - cp.y) ** 2 + (c.z - cp.z) ** 2); }
+    xPile = nD > K || (xPile && nD >= K);
+    const on = xLtOn; xLtOn = _xlt.length > K || (xLtOn && _xlt.length >= K) || (xPile && _xlt.length > XLT_F); xLt2 = Infinity; if (xLtOn && !on) xMAll();
+    const F = Math.min(K, XLT_F); if (xLtOn && F > 0 && _xlt.length >= F) { _xlt.sort((a, b) => a - b); xLt2 = _xlt[F - 1]; } else if (xLtOn) xLt2 = 0;
   }
   function xLtSig(v, c) { return (c.dmg || 0) * 1e4 + (c.roofDmg || 0) * 1e3 + Object.keys(c.lost).length * 7 + (c.detach ? c.detach.length : 0) * 131 + (v.kit ? v.kit.ver * 17 : 0); }
   function xLight(v, c, x, y, z, vis) {
     const cp = camera.position, d2 = (x - cp.x) ** 2 + (y - cp.y) ** 2 + (z - cp.z) ** 2;
-    if (v.xLt) { if (d2 < xLt2 * 0.81 && ltRb < 1) { ltRb++; unmerge(v); } return; }   // (among the nearest again, or the rule off: its own panels back)
-    if (!vis || d2 <= xLt2 * 1.21 || ltRb >= 1 || time - (v.xLtT || 0) < XLT_Q || (c.dents && c.dents.length) || (v.far && v.far.on)) return;
+    if (v.xLt) { if (d2 < xLt2 * 0.81 && ltRb < XLT_N) { ltRb++; unmerge(v); v.xLw = time; } return; }   // (among the nearest again, or the rule off: its own panels back)
+    if (!vis || d2 <= xLt2 || ltRb >= XLT_N || time - (v.xLq || 0) < XLT_Q || time - (v.xLw || 0) < XLT_H || (c.dents && c.dents.length) || (v.far && v.far.on)) return;
     ltRb++; v.xLt = true; v.mrg = true; v.det.updateMatrixWorld = () => {}; ownRnd(() => remerge(v));
     if (v.far && v.partsM && v.far.list.indexOf(v.partsM) < 0) v.far.list.push(v.partsM);   // (the new mesh leaves the camera's layer with the others once the car is far, farStep)
   }
@@ -7193,9 +7196,9 @@ const Render = (function () {
       if (v.xOn) { const w = c.fxWall || 0, k = c.fxCar || 0; if (!(c.dents && c.dents.length)) { v.xsW = v.xsC = 0; v.xsK = null; } else { if (w > (v.xsW || 0)) v.xsW = w; if (k > (v.xsC || 0)) { v.xsC = k; v.xsK = xSrcCar(c); } } }   // (P4: what this frame's knock was against, before emitFx clears it: xSrcCol; kept while its dents wait, xWait: the stronger contact holds, with its car's paint (xsK: taken now, the core's fxKOf(c): the strongest knock's car, also of two in one frame); a touch without a dent leaves nothing for the next knock; c.fxQ mutes the sparks only)
       if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
-      if (v.xOn && !c.isPlayer && (!v.mrg || v.xLt)) { const s = xLtSig(v, c); if (s !== v.xLs || (c.dents && c.dents.length) || v.dRe || v.rep || c.pitState === 'repair') { v.xLs = s; v.xLtT = time; } }   // (a pile-up, xLtCut: when something last happened to this rival's bodywork; a light one is taken apart again this frame, before its knock goes into its panels)
+      if (v.xOn && !c.isPlayer && (!v.mrg || v.xLt)) { const s = xLtSig(v, c); if (s !== v.xLs || (c.dents && c.dents.length) || v.dRe || v.rep || c.pitState === 'repair') { v.xLs = s; v.xLtT = time; } if (v.dRe || v.rep || c.pitState === 'repair' || (c.detach && c.detach.length)) v.xLq = time; }   // (a pile-up, xLtCut: when something last happened to this rival's bodywork; a light one is taken apart again this frame, before its knock goes into its panels)
       const xNeed = v.xOn && v.mrg && (v.xLt ? v.xLtT === time : ((c.dents && c.dents.length) || c.dmg > 0 || c.lost.hood || (v.kit && (v.kit.xTorn || v.kit.ajar.doorL || v.kit.ajar.doorR))));
-      const xWait = xNeed && !v.xLt && unRb++ >= 1;   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
+      const xWait = xNeed && (v.xLt ? ltRb >= XLT_N : unRb++ >= 1);   // (a pile-up: one rival's first knock a frame (its panels, dents and parts ~15 ms), the others the frames after (their knocks wait in c.dents), not all in one frame)
       if (xNeed && !xWait) unmerge(v);   // (Razbijanje · nov način: a rival one mesh while whole, its own panels again from its first knock)
       if (v.dRe && !v.rep && !xWait && !(v.xOn && v.mrg)) { for (let n = 0; n < 8 && v.dRe.length; n++) { const d = v.dRe.shift(); if (v.xOn) { _xT = d.xcol != null ? _xsc.set(d.xcol) : null; _xSp = d.xsp || 0; xDent(v, d); _xT = null; _xSp = 0; } else applyDent(v, d); dLog(v, d); } if (!v.dRe.length) { v.dRe = null; if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); } }   // (the view built again mid-race, Nastavitve: its knocks' dents again, the dent only, with its mark and its crumple (P4, P6: the log's xcol, xsp), 8 a frame (dLog))
       if (c.dents && c.dents.length && !v.rep && !xWait) { const xs = v.xOn ? xSrcCol(v, c) : null; for (const d of c.dents) { _xT = d.old ? null : xs; _xSp = d.old || !v.xOn ? 0 : Math.max(v.xsW || 0, v.xsC || 0); dLog(v, d, _xT, _xSp); if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); _xT = null; _xSp = 0; v.xsW = v.xsC = 0; c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
@@ -7837,10 +7840,10 @@ const Render = (function () {
       const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner); scene.add(m); d.mesh = m; debrisMeshes.push(d); return; }
     if (!src || src.userData.xGone) { d.mesh = true; return; }   // (xGone: a mirror Razbijanje · nov način already put on the road, xMirror)
     // a loose panel lies on its biggest face: turn the thinnest box dimension upright inside a holder
-    const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); inner.castShadow = true; inner.receiveShadow = true;
+    const inner = new THREE.Mesh(src.geometry, pieceMat(v, src.material)); const xSh = tierNow === 0 && !v.car.isPlayer; inner.castShadow = !xSh || !xPile; inner.receiveShadow = true;   // (xSh: a pile-up on the lowest tier, xPile: a rival's pieces with no shadow while it lasts, as the kit's there always: syncDebrisAfter)
     const pr = src.geometry.parameters || {}, dims = [pr.width || 1, pr.height || 1, pr.depth || 1], thin = dims.indexOf(Math.min(...dims));
     if (thin === 2) inner.rotation.x = Math.PI / 2; else if (thin === 0) inner.rotation.z = Math.PI / 2;
-    const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner);
+    const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.add(inner); if (xSh) m.userData.xSh = inner;
     scene.add(m); d.mesh = m; debrisMeshes.push(d);
   }
   function syncDebrisAfter() {
@@ -7851,7 +7854,7 @@ const Render = (function () {
       const d = debrisMeshes[i];
       if (d.dead && XC.parts && d.mesh && d.mesh.traverse && (d.rest || d.ground)) { debrisMeshes.splice(i, 1); d.mesh.userData.xDeb = 1; xGround.push(d.mesh); xGroundCap(); continue; }   // (Razbijanje · nov način: deli ostanejo na progi: one lying on the road drawn there for the rest of the race, xGround)
       if (d.dead) { scene.remove(d.mesh); debrisMeshes.splice(i, 1); (gone = gone || []).push(d.mesh); continue; }
-      d.mesh.position.set(d.x, d.y, d.z); d.mesh.rotation.set(d.rx, -d.yaw, d.rz);
+      d.mesh.position.set(d.x, d.y, d.z); d.mesh.rotation.set(d.rx, -d.yaw, d.rz); if (d.mesh.userData.xSh) d.mesh.userData.xSh.castShadow = !xPile;
       const lay = d.mesh.userData.lay; if (lay) { const uy = Math.cos(d.rx) * Math.cos(d.rz); lay.position.y = lay.userData.down + (lay.userData.up - lay.userData.down) * (uy + 1) / 2; }
     }
     if (gone) { const keep = liveRes(); for (const g of gone) if (g && g.traverse) freeOwn(g, keep); }
@@ -9197,13 +9200,28 @@ const Render = (function () {
     const p = geo.attributes.position.array, t = new THREE.Vector3(); let lo = 1e9; for (let i = 0; i < p.length; i += 3) { t.set(p[i] - cen[0], p[i + 1] - cen[1], p[i + 2] - cen[2]).applyQuaternion(q); if (t.y < lo) lo = t.y; }
     const out = 0.45 + rRnd() * 0.6, wx = x + cen[0] * ch - cen[2] * sh, wz = z + cen[0] * sh + cen[2] * ch;
     m.position.set(wx - sh * sd * out - c.vx * 0.02, y - lo + 0.005, wz + ch * sd * out - c.vz * 0.02); m.rotation.y = rRnd() * Math.PI * 2;
-    scene.add(m); xGround.push(m); xGroundCap();
+    if (!v.kit && !c.isPlayer) m.userData.xMc = inner;   // (a rival's of the old model: into one mesh with the others in a pile-up, xMBuild)
+    if (m.userData.xMc && xLtOn) { m.userData.xMB = inner; xGround.push(m); xGroundCap(); xMBuild(); } else { scene.add(m); xGround.push(m); xGroundCap(); }
     for (let k = 0; k < 6; k++) sparkP.emit(wx, y + cen[1], wz, (rRnd() - 0.5) * 5, 1 + rRnd() * 2, (rRnd() - 0.5) * 5, 0.25 + rRnd() * 0.2, 0.6, 0.14, 1, 0.82, 0.36, 1, 10, 1.2, y);
   }
-  function xGroundReset() { for (const m of xGround) { scene.remove(m); if (m.userData.xDeb) freeOwn(m); else m.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== matCar) o.material.dispose(); }); } xGround.length = 0; }
+  // a pile-up (xLtCut): a rival's mirror of the old model (its paint's clone, a draw of its own each) put on the road into one mesh with
+  // the others (xMB: their triangles where they lie, each one's colour in its vertices, one clone of the paint for them all: the same look)
+  let xMB = null;
+  function xMAll() { let k = 0; for (const m of xGround) if (m.userData.xMc && !m.userData.xMB) { m.userData.xMB = m.userData.xMc; scene.remove(m); k++; } if (k) xMBuild(); }   // (the pile-up's start: those on the road already)
+  function xMBuild() {
+    if (xMB) { scene.remove(xMB); xMB.geometry.dispose(); xMB.material.dispose(); xMB = null; }
+    const L = xGround.filter(m => m.userData.xMB); if (!L.length) return; let n = 0;
+    const G = L.map(m => { m.updateMatrixWorld(true); const o = m.userData.xMB, g = (o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone()).applyMatrix4(o.matrixWorld); n += g.attributes.position.count; return [g, o.material.color]; });
+    const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = new Float32Array(n * 3); let k = 0;
+    for (const [g, col] of G) { const q = g.attributes.position.count; P.set(g.attributes.position.array, k * 3); if (g.attributes.normal) N.set(g.attributes.normal.array, k * 3); for (let i = k * 3; i < (k + q) * 3; i += 3) { C[i] = col.r; C[i + 1] = col.g; C[i + 2] = col.b; } k += q; g.dispose(); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(N, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3)); geo.computeBoundingSphere();
+    const mat = L[0].userData.xMB.material.clone(); mat.vertexColors = true; mat.color.setRGB(1, 1, 1);
+    xMB = new THREE.Mesh(geo, mat); xMB.castShadow = tierNow > 0; xMB.receiveShadow = true; xMB.matrixAutoUpdate = false; scene.add(xMB);
+  }
+  function xGroundReset() { if (xMB) { scene.remove(xMB); xMB.geometry.dispose(); xMB.material.dispose(); xMB = null; } for (const m of xGround) { scene.remove(m); if (m.userData.xDeb) freeOwn(m); else m.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== matCar) o.material.dispose(); }); } xGround.length = 0; }
   // the pieces kept on the road (XC.parts' parts, the mirrors, a table's parts off): at most 48 in all (the oldest freed first; drawn only where
   // the camera looks, so few at a time; a switch to Preproste mid-race keeps them, its cars then drawn as Preproste's: 48 at most still)
-  function xGroundCap() { if (xGround.length <= 48) return; const out = xGround.splice(0, xGround.length - 48); for (const m of out) scene.remove(m); const keep = liveRes(); for (const m of out) freeOwn(m, keep); }
+  function xGroundCap() { if (xGround.length <= 48) return; const out = xGround.splice(0, xGround.length - 48); for (const m of out) scene.remove(m); const keep = liveRes(); for (const m of out) freeOwn(m, keep); if (out.some(m => m.userData.xMB)) xMBuild(); }
   // a blow knocks chips of paint off: a few pieces in the car's colour on the road where it was hit
   const _xc = new THREE.Color();
   function xChips(v, d, c, x, y, z, h) {

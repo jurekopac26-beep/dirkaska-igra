@@ -101,7 +101,8 @@ function stageAndCount(o) {
     return { id: v.car.id, role }; };
   RR.renderBufferDirect = function (cam, sc, geo, mat, obj) { const c0 = __gl.calls, v0 = __gl.verts, res = orig.apply(this, arguments); if (rec) { const k = kindOf(obj); rec.c[k] += __gl.calls - c0; rec.v[k] += __gl.verts - v0;
     if (cut && k === 1) { const r = roleOf(obj); if (r) { const sh = mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial, m = cut[r.id] || (cut[r.id] = {}), n = r.role + (sh ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); } }
-    else if (cut && k === 5) { const m = cut.drugo || (cut.drugo = {}), n = (obj.name || (obj.parent && obj.parent.name) || obj.type) + ':' + (mat.name || mat.type) + (mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); } } return res; };   // (drugo, the rest: by the object's or its parent's name and its material)
+    else if (cut && k === 2) { const m = cut.deli || (cut.deli = {}); let top = obj; while (top.parent && top.parent.type !== 'Scene') top = top.parent; const n = (top.userData.xDeb ? 'road' : 'flying') + (top.userData.kit ? ' kit' : '') + ':' + (mat.name || mat.type) + (mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); }
+    else if (cut && k === 5) { const m = cut.drugo || (cut.drugo = {}), n = (obj.name || (obj.parent && obj.parent.name) || obj.type) + ':' + (mat.name || mat.type) + (mat.vertexColors ? ' vc' : '') + (mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); } } return res; };   // (drugo, the rest: by the object's or its parent's name and its material)
   const frame = (dt) => {
     for (const c of R.cars) { const v = Render.viewOf(c); if (v && v.grp) carG.add(v.grp); }   // (a view built again after a knock)
     if (R.debris) for (const d of R.debris) if (d.mesh && d.mesh.isObject3D) deb.add(d.mesh);
@@ -120,15 +121,15 @@ function stageAndCount(o) {
     inP.thr = 0;   // (after the touch: no pedal, no steer)
     post.push(Object.assign(frame(1 / 60), { t: 0 }));
     if (o.xltk != null) Render.setDebug({ xLtK: o.xltk });   // (the pile-up's rule, render.js xLtCut: how many knocked rivals keep their own panels; 99: the rule off)
-    const N = Math.round(o.secs * 60), kCut = o.razrez != null ? Math.round(o.razrez * 60) : -1, kPic = o.slika ? Math.round(o.slikaT * 60) : -1; let razrez = null, png = null, drugo = null;
+    const N = Math.round(o.secs * 60), kCut = o.razrez != null ? Math.round(o.razrez * 60) : -1, kPic = o.slika ? Math.round(o.slikaT * 60) : -1; let razrez = null, png = null, drugo = null, deliR = null;
     for (let k = 1; k <= N; k++) { one(); one();
       if (k === kCut) cut = {};
       post.push(Object.assign(frame(1 / 60), { t: +(k / 60).toFixed(3) }));
       if (k === kCut) {   // (the cars of that frame: their draws by role, how far from the camera, what state their view is in)
-        const cp = Render.camera.position; razrez = R.cars.map(c => { const v = Render.viewOf(c) || {}, m = cut[c.id] || {}; return { id: c.id, model: c.m.id, igralec: !!c.isPlayer, m: +Math.hypot(c.x - cp.x, c.z - cp.z).toFixed(1), dmg: +(c.dmg || 0).toFixed(2), klici: Object.values(m).reduce((a, b) => a + b, 0), mrg: !!v.mrg, lahek: !!v.xLt, far: !!(v.far && v.far.on), vloge: m }; }); drugo = cut.drugo || {}; cut = null; }
+        const cp = Render.camera.position; razrez = R.cars.map(c => { const v = Render.viewOf(c) || {}, m = cut[c.id] || {}; return { id: c.id, model: c.m.id, igralec: !!c.isPlayer, m: +Math.hypot(c.x - cp.x, c.z - cp.z).toFixed(1), dmg: +(c.dmg || 0).toFixed(2), klici: Object.values(m).reduce((a, b) => a + b, 0), mrg: !!v.mrg, lahek: !!v.xLt, far: !!(v.far && v.far.on), vloge: m }; }); drugo = cut.drugo || {}; deliR = cut.deli || {}; cut = null; }
       if (k === kPic) { __gl.mute = false; Render.frame(0, 1, P, 'chase', {}); png = document.querySelector('canvas').toDataURL('image/png'); __gl.mute = !o.risi; }   // (the picture: this frame drawn for real, dt 0: nothing moves on)
     }
-    return { razrez, drugo, png, pre: pre.slice(-30), post, touch, KINDS, zadetih: knocked.size, avtov: R.cars.length, skoda: +(P.dmg || 0).toFixed(2), cv: Core.TX.cv, XC: (Render.crashInfo ? Render.crashInfo().XC : null), kmhPo: +(P.speed * 3.6).toFixed(0), avto: P.m.id };
+    return { razrez, drugo, deliR, png, pre: pre.slice(-30), post, touch, KINDS, zadetih: knocked.size, avtov: R.cars.length, skoda: +(P.dmg || 0).toFixed(2), cv: Core.TX.cv, XC: (Render.crashInfo ? Render.crashInfo().XC : null), kmhPo: +(P.speed * 3.6).toFixed(0), avto: P.m.id };
   } finally { RR.renderBufferDirect = orig; R.step = core; __gl.mute = false; }
 }
 
@@ -172,6 +173,7 @@ function report(r) {
   part(bc, 'busiest by calls   '); if (bv !== bc) part(bv, 'busiest by vertices');
   if (r.razrez) { console.log(`  the cars at t ${razrez} s (id model: metres from the camera, damage, draws; state; draws by role, /s the shadow pass):`);
     for (const c of r.razrez.slice().sort((a, b) => a.m - b.m)) console.log(`    ${String(c.id).padStart(2)} ${c.model.padEnd(12)} ${String(c.m).padStart(6)} m  dmg ${c.dmg.toFixed(2)}  ${String(c.klici).padStart(3)} draws  ${c.igralec ? 'player' : c.far ? 'far' : c.lahek ? 'light' : c.mrg ? 'merged' : 'apart'}  ` + Object.entries(c.vloge).sort((a, b) => b[1] - a[1]).map(([n, k]) => n + ' ' + k).join(', '));
+    if (r.deliR) console.log('    the shed pieces (deli) by where:material: ' + Object.entries(r.deliR).sort((a, b) => b[1] - a[1]).map(([n, k]) => n + ' ' + k).join(', '));
     if (r.drugo) console.log('    the rest (drugo) by object:material: ' + Object.entries(r.drugo).sort((a, b) => b[1] - a[1]).map(([n, k]) => n + ' ' + k).join(', ')); }
   const end = r.post[r.post.length - 1]; part(end, 'the last frame     ');
   return { scena: r.scena, dmgDet: r.dmgDet, pred: [pc, Math.round(pv / 1000)], vrh: [bc.calls, Math.round(bv.verts / 1000)], povp: [mc, Math.round(mv / 1000)], nad: over, zadetih: r.zadetih };
