@@ -52,19 +52,19 @@
     if (!caGround || !vrNear || !vrLC) return st;
     const env = { near: vrNear, excluded };
     const ok = (x, z) => { const c = vrLC(x, z), sl = caSlope(x, z); if (c === 3 || c === 5 || c === 6 || sl > C.maxSl) return 0; return C.share(c, x, z); };
-    walk(env, seed, C.step, C.reach, 2.4, ok, (gx, gz, k, R, free) => {
+    walk(env, seed, C.step, C.reach, 1.8, ok, (gx, gz, k, R, free) => {
       const c = vrLC(gx, gz), sl = caSlope(gx, gz), e = 1.2, dx = caGround(gx + e, gz) - caGround(gx - e, gz), dz = caGround(gx, gz + e) - caGround(gx, gz - e), dl = Math.hypot(dx, dz);
       let ax = dl > 0.02 ? -dz / dl : Math.cos(R() * TAU), az = dl > 0.02 ? dx / dl : Math.sin(R() * TAU);   // (along the contour)
       const rocky = c === 4 || c === 7 ? 1 : c === 1 ? C.wood : C.rocky, ra = R(), rb = R();
       if (ra < rocky) {   // the ribs: two to four in a row, one behind the other up the slope
-        const cnt = 2 + Math.floor(R() * 3), cx = -az, cz = ax;
+        const cnt = 2 + Math.floor(R() * 4), cx = -az, cz = ax;
         for (let q = 0; q < cnt; q++) {
-          const u = (R() - 0.5) * 3.2, v = (q - (cnt - 1) / 2) * (1.3 + R() * 0.9), x = gx + ax * u + cx * v, z = gz + az * u + cz * v, len = 2 + R() * 3.6, w = 0.7 + R() * 0.9, h = 0.4 + R() * 0.7, t = R();
+          const u = (R() - 0.5) * 3.2, v = (q - (cnt - 1) / 2) * (1.6 + R() * 1.1), x = gx + ax * u + cx * v, z = gz + az * u + cz * v, len = 2.5 + R() * 4, w = 1.3 + R() * 1.6, h = 0.28 + R() * 0.42, t = R();
           if (!free(x, z, 2.2 + len * 0.5)) continue;
           const wob = (R() - 0.5) * 0.5, c0 = Math.cos(wob), s0 = Math.sin(wob);
           rib(scen.get(x, z), caGround, x, z, ax * c0 - az * s0, ax * s0 + az * c0, len, w, h, vary(dk(C.rock[Math.floor(t * C.rock.length)], C.pale), R, 0.025), R); st.rebra++; }
       }
-      if (rb < C.slab && sl < 0.38 && c !== 1 && free(gx, gz, 4.5)) { soil(scen, caGround, gx, gz, 1.1 + R() * 1.4, vary(C.bare, R, 0.025), R, 0.09); st.plosce++; }   // the bare ground
+      if (rb < C.slab && sl < 0.38 && c !== 1 && free(gx, gz, 4.5)) { soil(scen, caGround, gx, gz, 1.5 + R() * 2, vary(C.bare, R, 0.025), R, 0.09); st.plosce++; }   // the bare ground
       if (c === 1 && !C.woodTufts) return;
       for (let q = 0, cnt = C.tufts + Math.floor(R() * 3); q < cnt; q++) {   // the dry grass, a dark cushion of scrub among it
         const x = gx + (R() - 0.5) * 6.5, z = gz + (R() - 0.5) * 6.5, h = R(), a = R();
@@ -82,8 +82,8 @@
      serpentines are all in view at once. */
   if (API.PL_LOOK && API.PL_LOOK.kotor) chain(API.PL_LOOK.kotor, (ctx) => {
     const L = API.PL_LOOK.kotor, P = API.VR;
-    ctx.out.rob = karst(ctx, 9511, { step: 6, reach: 22, rocky: 0.6, wood: 0.55, slab: 0.2, tufts: 2, scrub: 0.14, maxSl: 1.6, woodTufts: true, pale: 1.14, sides: 4,
-      rock: L.rockCols, bare: [0.66, 0.65, 0.61], dry: [0.62, 0.58, 0.42], gold: [0.72, 0.66, 0.44], shrub: [0.22, 0.29, 0.16],
+    ctx.out.rob = karst(ctx, 9511, { step: 3, reach: 20, rocky: 0.6, wood: 0.55, slab: 0.3, tufts: 3, scrub: 0.14, maxSl: 1.6, woodTufts: true, pale: 1.03, sides: 4,
+      rock: L.rockCols, bare: [0.72, 0.71, 0.66], dry: [0.66, 0.61, 0.42], gold: [0.78, 0.7, 0.44], shrub: [0.22, 0.29, 0.16],
       share: (c, x, z) => (c === 1 ? 0.6 : 0.75) * (0.55 + 0.45 * sstep(0.3, 0.7, P.c2(x * 1.3 + 40, z * 1.3 - 90))) });
   });
   /* Llogara: docs/proge/llogara.md: »Južno pobočje je golo sivo apnenčasto skalovje v rebrih in meliščih, vmes suha trava in temne
@@ -92,8 +92,8 @@
      hillside, the scree lies bare in low patches, and the dry grass stands in tufts going gold; in the forest only a few ribs. */
   if (API.PL_LOOK && API.PL_LOOK.llogara) chain(API.PL_LOOK.llogara, (ctx) => {
     const L = API.PL_LOOK.llogara, P = API.VR;
-    ctx.out.rob = karst(ctx, 9521, { step: 5, reach: 26, rocky: 0.6, wood: 0.5, slab: 0.22, tufts: 3, scrub: 0.06, maxSl: 1.2, pale: 1.12,
-      rock: L.rockCols, bare: [0.6, 0.59, 0.56], dry: [0.6, 0.56, 0.38], gold: [0.82, 0.72, 0.4], shrub: [0.19, 0.26, 0.14],
+    ctx.out.rob = karst(ctx, 9521, { step: 3, reach: 22, rocky: 0.6, wood: 0.5, slab: 0.3, tufts: 3, scrub: 0.06, maxSl: 1.2, pale: 1.04, sides: 4,
+      rock: L.rockCols, bare: [0.7, 0.69, 0.65], dry: [0.66, 0.6, 0.4], gold: [0.82, 0.72, 0.4], shrub: [0.19, 0.26, 0.14],
       share: (c, x, z) => (c === 1 ? 0.16 : 0.8) * (0.55 + 0.45 * sstep(0.3, 0.7, P.c2(x * 1.3 - 140, z * 1.3 + 60))) });
   });
 
@@ -109,14 +109,14 @@
     const { nrGround, nrLC, nrSlope, NR: P } = API; if (!P || !nrGround) return;
     const grey = [0.5, 0.56, 0.36], straw = [0.74, 0.7, 0.46], scrub = [0.34, 0.42, 0.25], sand = [0.84, 0.78, 0.6]; let n = 0, m = 0, b = 0;
     const ok = (x, z) => nrLC(x, z) === 2 ? 0.75 : 0;
-    walk(rbEnv(excluded), 9533, 5, 38, 3.2, ok, (gx, gz, k, R, free) => {
+    walk(rbEnv(excluded), 9533, 5, 32, 3.2, ok, (gx, gz, k, R, free) => {
       const sc = sstep(0.55, 0.78, P.n2(gx * 0.9 - 130, gz * 0.9 + 70)), dry = P.n3(gx * 0.6 + 40, gz * 0.6);
       if (R() < 0.14 && nrSlope(gx, gz) < 0.35 && free(gx, gz, 5)) { soil(scen, nrGround, gx, gz, 1.2 + R() * 1.8, vary(sand, R, 0.025), R); m++; }
       for (let q = 0, cnt = 4 + Math.floor(R() * 4); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R(), a = R();
         if (nrLC(x, z) !== 2 || !free(x, z, 2.6)) { R(); continue; }
         if (a < 0.3 * sc) { cushion(scen.get(x, z), x, nrGround(x, z), z, 0.8 + h * 0.9, 0.4 + h * 0.45, vary(scrub, R, 0.025), R); b++; }
-        else { tuft(scen.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.45, 0.42 + h * 0.5, vary(mix3(grey, straw, Math.min(1, dry * 0.8 + a * 0.4)), R, 0.03), R, 4); n++; }
+        else { tuft(scen.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.45, 0.42 + h * 0.5, vary(mix3(grey, straw, Math.min(1, dry * 0.8 + a * 0.4)), R, 0.03), R, 3); n++; }
       }
     });
     if (r) r.robBt = { sopi: n, grmi: b, pesek: m };
@@ -138,7 +138,7 @@
         const x = gx + (R() - 0.5) * 6.5, z = gz + (R() - 0.5) * 6.5, h = R(), a = R(), c = nrLC(x, z);
         if ((c !== 0 && c !== 2) || !free(x, z, 15)) { R(); continue; }
         if (mq && a < 0.4) { cushion(scen.get(x, z), x, nrGround(x, z), z, 0.9 + h * 1.0, 0.45 + h * 0.5, vary(maq, R, 0.025), R); b++; }
-        else { tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.55, 0.32 + h * 0.44, vary(a < 0.25 ? brown : mix3(gold, pale, q0 * 0.7 + a * 0.3), R, 0.03), R); n++; }
+        else { tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.55, 0.32 + h * 0.44, vary(a < 0.25 ? brown : mix3(gold, pale, q0 * 0.7 + a * 0.3), R, 0.03), R, 4); n++; }
       }
     });
     if (r) r.robBt = { sopi: n, grmi: b, prst: m };
