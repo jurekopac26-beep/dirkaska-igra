@@ -9,6 +9,8 @@
 //   node tests/browser/world.test.mjs            check
 //   node tests/browser/world.test.mjs --update   write new reference values (only after an intended change!)
 //   WORLD_ONLY=medvode,spa node tests/browser/world.test.mjs [--update]   only these tracks (--update: the others' values kept)
+//   node tests/browser/world.test.mjs (without --update)   the first half of the tracks (every other one from the first); world2.test.mjs
+//   the other half (WORLD_DEL=2): each part within GitHub's time limit; WORLD_DEL=vse, --update, WORLD_ONLY or PROGE: every track (named)
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame, startTrack, trackIds, checker, pwNote } from './lib.mjs';
@@ -18,6 +20,7 @@ import { probe as saProbe, fileLine as saFile } from '../../tools/sacalobra-hrib
 const FILE = path.join(REPO, 'tests', 'golden', 'world.json');
 const update = process.argv.includes('--update');
 const only = process.env.WORLD_ONLY ? process.env.WORLD_ONLY.split(',') : null;
+const PROGE = !!(process.env.PROGE || '').trim(), DEL = process.env.WORLD_DEL || (update || only || PROGE ? 'vse' : '1');
 const golden = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
 const T = checker('world fingerprint');
 const srv = await serve();
@@ -25,7 +28,8 @@ const browser = await launch();
 const out = {};
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', shadows: 1, camera: 'chase', zoom: 1.2 });
-  for (const id of await trackIds(page)) {
+  const all = await trackIds(page), half = DEL === 'vse' ? all : DEL === '2' && PROGE ? [] : all.filter((_, i) => i % 2 === (DEL === '2' ? 1 : 0));   // (the half of this part; PROGE: all in the first)
+  for (const id of half) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
     if (id === 'sacalobra' && !update) { const h = hills(await page.evaluate(saProbe, HILL_DL)), have = saFile();   // (Sa Calobra: a hill where no rail and no wall is drawn, the user's report of 13. 11. 2026)
@@ -41,6 +45,7 @@ try {
         return { nets: Render.world.hillProbe.nets.length, n, worst }; });
       T.check('chapman: the cars\' soft limit on a hill at least 0.5 m short of a rockfall net (they never reach its posts and mesh)', nc.nets > 0 && nc.n > 0 && nc.worst >= 0.5, `${nc.nets} nets, ${nc.n} samples of a hill by one, the least room ${nc.worst.toFixed(2)} m`); }
     const fp = await page.evaluate(async () => {
+      if (Render.world.landmarkLoad) await Render.world.landmarkLoad;   // (a landmark made in Blender, js/znamenitost.js: its model loaded first, else the fingerprint depends on how fast it came, e.g. Hiva after Isuna)
       for (let k = 0; k < 2; k++) await new Promise(r => requestAnimationFrame(r));   // (a frame of the new world drawn first: what follows the camera is set, e.g. Pikes Peak's shadow casters and haze, however long its first frame took)
       const W = Render.world, race = window.__game.race, Tr = race.track;
       World.update(W, 0, null);   // animated scenery (boats on the lake, water) to its pose at time 0, so the fingerprint does not depend on timing
@@ -128,5 +133,5 @@ try {
 } finally {
   await browser.close(); await srv.close();
 }
-if (update) { fs.writeFileSync(FILE, JSON.stringify(only ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
+if (update) { fs.writeFileSync(FILE, JSON.stringify(only || DEL !== 'vse' ? Object.assign({}, golden, out) : out, null, 1) + '\n'); console.log('written ' + FILE); }
 else T.done();

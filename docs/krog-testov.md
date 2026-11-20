@@ -107,7 +107,7 @@ Ko se kak dolg test zelo podaljša (smoke, memory, perf, gfx in world z vsako pr
 
 - **7 delov**: ~68 min (p90 ~77), en stroj več na krog; 8 delov ni boljše (memory ~61 min je meja). Odloči koordinacija.
 - **Več testov hkrati v enem poslu**: en test porabi ~3,2 od 4 jeder (programski WebGL, SwiftShader); hitreje ne bi bilo, nestabilnost bi rasla.
-- **Delitev testa memory**: zmanjšala bi preverjanje (primerja 2. krog z zadnjim čez vse proge).
+- **Delitev testa memory**: z 68 progami je bil memory nad 2 h, zato je od 18. 11. 2026 v dveh delih (`memory2.test.mjs`, vsaka druga proga; vsak del primerja 2. krog z zadnjim čez svojo polovico, trki in razbijanja v prvem). Enako gfx in world (`gfx2`, `world2`), od 19. 11. 2026 še smoke (`smoke2`: vsaka druga proga, demo, dež in vožnje do cilja v drugem delu; z vsemi progami čez 60 min).
 - **Predpomnilnik Playwrighta**: ~5 s na posel, ne odtehta zapletov.
 - **Preskok po imenih spremenjenih datotek** (samo `.md` proti prejšnjemu commitu): odtis primerja vso kodo z že preverjeno, zato zajame tudi
   združitev na `main` in ne zgreši kode, ki je prišla iz drugega pull requesta. Razvrstitev po vrsti spremembe (9. 11. 2026) zato na `main` primerja
