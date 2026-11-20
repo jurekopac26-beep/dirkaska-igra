@@ -4041,17 +4041,27 @@ const Core = (function () {
     sE: [1, 1, 0.4, 0.15, 1, 0.7, 0.7, 1, 1],
     aRoll: [5, 5, 7, 14, 5, 6, 6, 5, 5],
   };
+  const _dFar = new WeakSet(), _dPen = new WeakMap();   // K3, stepDebris only: the pieces left out past a limit (no jump back), and how far out each was left a step ago
   function stepDebris(d, T, dt) {
     if (d.by) for (let i = d.by.length - 1; i >= 0; i--) if ((d.byT[i] -= dt) <= 0) { d.by.splice(i, 1); d.byT.splice(i, 1); }   // (the car it has just left may touch it again: debrisHit)
     if (d.rest) return;
     const W = d.wh || 0, re = W ? d.r : DEB.edge * d.r;           // (a piece made by hand, a test's: no wh, a panel)
     d.vy -= JUMP_G * dt;
     d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
+    let k0 = d.q ? d.q.k : -1, p0 = _dPen.get(d);              // (the side road its point was in, -1 the road: d.q is written over; p0: how far out it was left a step ago, undefined: a new piece)
+    if (p0 === undefined && T.stubs && T.stubs.length) { const qb = T.query(d.x - d.vx * dt, d.z - d.vz * dt, d.q ? d.q.i : -1, {}); k0 = qb.k; p0 = Math.max(0, T.wall(qb, d.r * 0.5, _wn)); }   // (a new piece on a road with side roads: where it was before this step's move)
     d.q = T.query(d.x, d.z, d.q ? d.q.i : -1, d.q || {});
     const pen = T.wall(d.q, d.r * 0.5, _wn);                      // bounce off the barriers (a side road's limits)
+    // K3: a point in or out of a side road may change limits in one step (the side road's own to the road's barrier, tens of metres back):
+    // out by more than a step can have taken it, it is not put back (no jump), only turned back, until it is inside some limit again.
+    // Only there: on a road without side roads, and a piece that was as far out a step ago (a new one too: born out there), it is put back as ever
+    let far = _dFar.has(d);
+    if (!(pen > 0)) { if (far) { _dFar.delete(d); far = false; } }
+    else if (!far && p0 !== undefined && (k0 >= 0 || d.q.k >= 0) && pen > p0 + d.r + 2 * Math.sqrt(d.vx * d.vx + d.vz * d.vz) * dt + 0.5) { _dFar.add(d); far = true; }
+    _dPen.set(d, far ? pen : 0);
     if (pen > 0) {
       const nx = _wn[0], nz = _wn[1];
-      if (pen <= d.r + 2 * Math.sqrt(d.vx * d.vx + d.vz * d.vz) * dt + 0.5) { d.x += nx * pen; d.z += nz * pen; }   // (deeper than a step can have taken it: the point went from a side road's limits to the road's barrier, tens of metres back; no jump there, it is turned back and stays where it is)
+      if (!far) { d.x += nx * pen; d.z += nz * pen; }
       const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; }
     }
     if (T.open) { const pen = endPen(T, d.q, d.r * 0.5); if (pen > 0) { const nx = _en[0], nz = _en[1]; d.x += nx * pen; d.z += nz * pen; const vn = d.vx * nx + d.vz * nz; if (vn < 0) { d.vx -= 1.4 * vn * nx; d.vz -= 1.4 * vn * nz; } } }   // ... and the end walls
