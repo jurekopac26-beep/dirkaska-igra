@@ -44,11 +44,15 @@
     }
     return true;
   };
+  /* The tufts and the cushions in meshes of their own (256 m chunks, the scenery's material), which the animals' and the people's
+     tests of a free place leave out (userData.rob, userData.lj): grass is no obstacle, a herd and a stand's ways stay where they were. */
+  const softScen = (root, matV) => { const ch = new API.Chunks(256); return { get: (x, z) => ch.get(x, z), done() { const grp = new THREE.Group(); ch.addTo(grp, matV, true, true);
+    for (const m of grp.children) { m.name = 'rob'; m.userData.rob = m.userData.lj = true; } if (grp.children.length) root.add(grp); } }; };
   const chain = (L, fn) => { const base = L.extra; L.extra = function (ctx) { const r = base ? base.call(this, ctx) : null; try { fn(ctx, r); } catch (e) { console.error('chase-bt6:', e); } return r; }; };
 
   /* ---- the passes: the karst by the road. The slope's way (the contour) from the ground itself, so the ribs lie along the hillside ---- */
   const karst = (ctx, seed, C) => {
-    const { caGround, caSlope, vrNear, vrLC } = API, { scen, excluded } = ctx, st = { rebra: 0, plosce: 0, sopi: 0, grmi: 0 };
+    const { caGround, caSlope, vrNear, vrLC } = API, { scen, excluded } = ctx, st = { rebra: 0, plosce: 0, sopi: 0, grmi: 0 }, soft = C.soft && ctx.root && ctx.matV ? softScen(ctx.root, ctx.matV) : scen;
     if (!caGround || !vrNear || !vrLC) return st;
     const env = { near: vrNear, excluded };
     const ok = (x, z) => { const c = vrLC(x, z), sl = caSlope(x, z); if (c === 3 || c === 5 || c === 6 || sl > C.maxSl) return 0; return C.share(c, x, z); };
@@ -69,10 +73,11 @@
       for (let q = 0, cnt = C.tufts + Math.floor(R() * 3); q < cnt; q++) {   // the dry grass, a dark cushion of scrub among it
         const x = gx + (R() - 0.5) * 6.5, z = gz + (R() - 0.5) * 6.5, h = R(), a = R();
         if (!free(x, z, 2.3) || caSlope(x, z) > 0.95) { R(); continue; }
-        if (a < C.scrub) { cushion(scen.get(x, z), x, caGround(x, z), z, 0.7 + h * 0.7, 0.4 + h * 0.4, vary(C.shrub, R, 0.025), R); st.grmi++; }
-        else { tuft(scen.get(x, z), x, caGround(x, z), z, 0.42 + h * 0.5, 0.3 + h * 0.4, vary(mix3(C.dry, C.gold, a), R, 0.03), R, C.sides); st.sopi++; }
+        if (a < C.scrub) { cushion(soft.get(x, z), x, caGround(x, z), z, 0.7 + h * 0.7, 0.4 + h * 0.4, vary(C.shrub, R, 0.025), R); st.grmi++; }
+        else { tuft(soft.get(x, z), x, caGround(x, z), z, 0.42 + h * 0.5, 0.3 + h * 0.4, vary(mix3(C.dry, C.gold, a), R, 0.03), R, C.sides); st.sopi++; }
       }
     });
+    if (soft.done) soft.done();
     return st;
   };
   /* Kotor: docs/proge/kotor.md: »Svetlo siv apnenec v rebrih, ploščah in golih kraških tleh, med njimi suho kraško grmovje (temno),
@@ -92,7 +97,7 @@
      hillside, the scree lies bare in low patches, and the dry grass stands in tufts going gold; in the forest only a few ribs. */
   if (API.PL_LOOK && API.PL_LOOK.llogara) chain(API.PL_LOOK.llogara, (ctx) => {
     const L = API.PL_LOOK.llogara, P = API.VR;
-    ctx.out.rob = karst(ctx, 9521, { step: 3, reach: 22, rocky: 0.6, wood: 0.5, slab: 0.3, tufts: 3, scrub: 0.06, maxSl: 1.2, pale: 1.04, sides: 4,
+    ctx.out.rob = karst(ctx, 9521, { step: 3, reach: 22, rocky: 0.6, wood: 0.5, slab: 0.3, tufts: 3, scrub: 0.06, maxSl: 1.2, pale: 1.04, sides: 4, soft: true,
       rock: L.rockCols, bare: [0.7, 0.69, 0.65], dry: [0.66, 0.6, 0.4], gold: [0.82, 0.72, 0.4], shrub: [0.19, 0.26, 0.14],
       share: (c, x, z) => (c === 1 ? 0.16 : 0.8) * (0.55 + 0.45 * sstep(0.3, 0.7, P.c2(x * 1.3 - 140, z * 1.3 + 60))) });
   });
@@ -105,8 +110,9 @@
      the scrub where the ground's own colour already shows it (the same noise as the look's colMod), and small pockets of blown sand
      lie bare on the gentler ground. */
   const LZ = (API.rbLook || {}).zandvoort;
-  if (LZ) chain(LZ, ({ scen, excluded }, r) => {
+  if (LZ) chain(LZ, ({ scen, excluded, root, matV }, r) => {
     const { nrGround, nrLC, nrSlope, NR: P } = API; if (!P || !nrGround) return;
+    const soft = root && matV ? softScen(root, matV) : scen;
     const grey = [0.5, 0.56, 0.36], straw = [0.74, 0.7, 0.46], scrub = [0.34, 0.42, 0.25], sand = [0.84, 0.78, 0.6]; let n = 0, m = 0, b = 0;
     const ok = (x, z) => nrLC(x, z) === 2 ? 0.75 : 0;
     walk(rbEnv(excluded), 9533, 5, 32, 3.2, ok, (gx, gz, k, R, free) => {
@@ -115,10 +121,11 @@
       for (let q = 0, cnt = 4 + Math.floor(R() * 4); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R(), a = R();
         if (nrLC(x, z) !== 2 || !free(x, z, 2.6)) { R(); continue; }
-        if (a < 0.3 * sc) { cushion(scen.get(x, z), x, nrGround(x, z), z, 0.8 + h * 0.9, 0.4 + h * 0.45, vary(scrub, R, 0.025), R); b++; }
-        else { tuft(scen.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.45, 0.42 + h * 0.5, vary(mix3(grey, straw, Math.min(1, dry * 0.8 + a * 0.4)), R, 0.03), R, 3); n++; }
+        if (a < 0.3 * sc) { cushion(soft.get(x, z), x, nrGround(x, z), z, 0.8 + h * 0.9, 0.4 + h * 0.45, vary(scrub, R, 0.025), R); b++; }
+        else { tuft(soft.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.45, 0.42 + h * 0.5, vary(mix3(grey, straw, Math.min(1, dry * 0.8 + a * 0.4)), R, 0.03), R, 3); n++; }
       }
     });
+    if (soft.done) soft.done();
     if (r) r.robBt = { sopi: n, grmi: b, pesek: m };
   });
   /* Tuzla: docs/proge/tuzla.md: »suhi travnati griči ob koncu poletja, trava zlata, v lisah bledejša in bolj rjava; tik ob progi (do
@@ -127,8 +134,9 @@
      roads) tufts of the burnt grass stand in loose groups, paler and browner as the ground's own colour (the same noise as the
      look's colMod), the brown earth shows bare here and there, and on the maquis' ground low dark cushions of it stand between. */
   const LT = (API.rbLook || {}).tuzla;
-  if (LT) chain(LT, ({ scen, excluded }, r) => {
+  if (LT) chain(LT, ({ scen, excluded, root, matV }, r) => {
     const { nrGround, nrLC, nrSlope, NR: P } = API; if (!P || !nrGround) return;
+    const soft = root && matV ? softScen(root, matV) : scen;
     const gold = [0.8, 0.66, 0.36], pale = [0.86, 0.78, 0.52], brown = [0.62, 0.48, 0.3], earth = [0.6, 0.47, 0.33], maq = [0.26, 0.3, 0.17]; let n = 0, m = 0, b = 0;
     const ok = (x, z) => { const c = nrLC(x, z); return c === 0 ? 0.7 : c === 2 ? 0.8 : 0; };
     walk(rbEnv(excluded), 9539, 5, 44, 16, ok, (gx, gz, k, R, free) => {
@@ -137,10 +145,11 @@
       for (let q = 0, cnt = 4 + Math.floor(R() * 4); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 6.5, z = gz + (R() - 0.5) * 6.5, h = R(), a = R(), c = nrLC(x, z);
         if ((c !== 0 && c !== 2) || !free(x, z, 15)) { R(); continue; }
-        if (mq && a < 0.4) { cushion(scen.get(x, z), x, nrGround(x, z), z, 0.9 + h * 1.0, 0.45 + h * 0.5, vary(maq, R, 0.025), R); b++; }
-        else { tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.55, 0.32 + h * 0.44, vary(a < 0.25 ? brown : mix3(gold, pale, q0 * 0.7 + a * 0.3), R, 0.03), R, 4); n++; }
+        if (mq && a < 0.4) { cushion(soft.get(x, z), x, nrGround(x, z), z, 0.9 + h * 1.0, 0.45 + h * 0.5, vary(maq, R, 0.025), R); b++; }
+        else { tuft(soft.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.55, 0.32 + h * 0.44, vary(a < 0.25 ? brown : mix3(gold, pale, q0 * 0.7 + a * 0.3), R, 0.03), R, 4); n++; }
       }
     });
+    if (soft.done) soft.done();
     if (r) r.robBt = { sopi: n, grmi: b, prst: m };
   });
 
@@ -151,6 +160,7 @@
      dust or of darker, damp earth. Clear of the houses, the walls and the landmark (the builder's own tests). */
   (World.ext = World.ext || {}).hivaRob = (ctx) => {
     const { nrGround, nrLC, nrNear, NR: P } = API, { scen, excluded, clear } = ctx; if (!P || !nrGround) return null;
+    const soft = ctx.root && ctx.matV ? softScen(ctx.root, ctx.matV) : scen;
     const straw = [0.74, 0.68, 0.42], pale = [0.84, 0.77, 0.52], dust = [0.86, 0.74, 0.52], damp = [0.68, 0.55, 0.38]; let n = 0, m = 0;
     const ex = (x, z) => excluded(x, z) || (clear ? !clear(x, z) : false);
     const ok = (x, z) => { const c = nrLC(x, z); return (c >= 3 ? 0.4 : c === 1 ? 0.5 : 0.75) * (0.35 + 0.65 * sstep(0.4, 0.8, P.n2(x, z))); };
@@ -159,8 +169,9 @@
       for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 6.5, z = gz + (R() - 0.5) * 6.5, h = R(), a = R();
         if (!free(x, z, 2.4)) { R(); continue; }
-        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.5, 0.28 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R); n++; }
+        tuft(soft.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.5, 0.28 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R); n++; }
     });
+    if (soft.done) soft.done();
     return { sopi: n, prst: m };
   };
 })();
