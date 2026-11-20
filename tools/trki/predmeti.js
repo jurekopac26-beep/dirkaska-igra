@@ -7,6 +7,8 @@
 //   node tools/trki/predmeti.js --json          the same results as JSON on stdout
 //   node tools/trki/predmeti.js --cv 3          a collision version chosen (Core.setTest({ cv }): 1 Simulacija, 2 Arkadna, 3 Mehka,
 //                                               4 Kaskaderska, 5 Stara, or a later one; without it the game's default)
+//   node tools/trki/predmeti.js --cv 6 --promet 1   Realistična's touch with the traffic (Nastavitve: Dotik s prometom; Core TX.tf): 1 a truck
+//                                               knocked off its lane from 120 km/h, 2 the old touch; without it by the two weights
 //   node tools/trki/predmeti.js --del razbitine only one part (predmeti | vrste | zamik | pocasi | razbitine | svoj | promet | ljudje |
 //                                               policija | stavba | prikolica | kup | ograja | proga | dirka)
 //   node tools/trki/predmeti.js --cas           part 'kup' also times a race step (wall clock, microseconds: not repeatable to the digit)
@@ -43,10 +45,11 @@ const { loadCore } = require(path.join(ROOT, 'tests', 'lib', 'core.js'));
 const SIM = require(path.join(ROOT, 'tests', 'lib', 'sim.js'));
 
 const args = process.argv.slice(2), opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
+const TF = +opt('--promet') === 1 || +opt('--promet') === 2 ? +opt('--promet') : null;   // (Core TX.tf, with --cv 6)
 const CV = opt('--cv') != null && Number.isFinite(+opt('--cv')) ? +opt('--cv') : null, AS_JSON = args.includes('--json'), ONLY = opt('--del'), TIMES = args.includes('--cas');
 const C = loadCore();
 const SEED = 20261109; Math.random = SIM.seeded(SEED);   // (whatever the core draws outside a race's own numbers: a fixed sequence)
-C.setTest(CV != null ? { cv: CV } : null);
+C.setTest(CV != null ? { cv: CV, tf: TF } : null);
 
 const DT = 1 / 120, D = 180 / Math.PI, KMH = 3.6;
 const wrap = (a) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -592,4 +595,4 @@ PARTS.dirka = () => {
 const res = {}, texts = [];
 for (const k of Object.keys(PARTS)) { if (ONLY && ONLY !== k) continue; const r = PARTS[k](); texts.push(r.text); delete r.text; res[k] = r; }
 if (AS_JSON) console.log(JSON.stringify({ cv: CV, avto: CAR, deli: res }, (k, v) => (typeof v === 'number' && !Number.isFinite(v) ? null : typeof v === 'number' ? +v.toFixed(4) : v)));
-else console.log(`Trki: avto v predmete (različica trkov: ${CV != null ? CV : 'privzeta'})` + texts.join('\n'));
+else console.log(`Trki: avto v predmete (različica trkov: ${CV != null ? CV : 'privzeta'}${TF && CV != null ? ', dotik s prometom: ' + TF : ''})` + texts.join('\n'));
