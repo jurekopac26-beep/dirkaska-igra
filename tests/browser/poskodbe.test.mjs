@@ -92,7 +92,7 @@ try {
   // (the game paused, the core not stepped: the wheel rule's KONEC IGRE not in the way), the renderer drawing each place
   const hg = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
-    for (let i = 0; i < 16; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }   // (settled on the road: its height)
+    for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }   // (settled on the road: its height)
     const fx = Math.cos(P.h), fz = Math.sin(P.h);
     for (const c of R.cars) if (c !== P) { const y = c.y, ry = c.roadY; c.place(c.x - fx * 300, c.z - fz * 300, c.h); c.y = c.py = y; c.roadY = ry; }   // (the rivals far behind: the road ahead the player's alone)
     const sk = Render.scene.getObjectByName('skids'), G = sk.geometry, y0 = P.y, ry0 = P.roadY, near = (a, b) => Math.abs(a - b) < 0.004;
@@ -145,7 +145,7 @@ try {
   // splitter's corner, the sag held at 1 cm over the road: tools/trki/iskre-vogal.mjs). The car carried by hand as in 7
   const sc = await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); const R = g.race, P = R.player, o = {};
     for (const c of R.cars) { c.locked = true; c.vx = 0; c.vz = 0; c.inThr = 0; c.rpm = 0; }
-    for (let i = 0; i < 16; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
+    for (let i = 0; i < 4; i++) { g.sim(0.5, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
     const fx = Math.cos(P.h), fz = Math.sin(P.h), y0 = P.y, ry0 = P.roadY;
     for (const c of R.cars) if (c !== P) { const y = c.y, ry = c.roadY; c.place(c.x - fx * 300, c.z - fz * 300, c.h); c.y = c.py = y; c.roadY = ry; }
     const drive = (v, n, air) => { for (let i = 0; i < n; i++) { P.place(P.x + fx * v / 30, P.z + fz * v / 30, P.h); P.y = P.py = y0; P.roadY = ry0; P.air = air ? 1 : 0; P.vx = fx * v; P.vz = fz * v; P.speed = v; P.w = 0; P.axF = 0; Render.frame(1 / 30, 1, P, 'chase', {}); }

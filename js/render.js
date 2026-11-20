@@ -7332,7 +7332,7 @@ const Render = (function () {
   const _rmM = new THREE.Matrix4(); let matFpM = null;
   function unmerge(v) {   // (remerge undone: det drawn again, its matrices updated again; the merged mesh gone)
     v.mrg = false; v.detDirty = false; v.xLt = false; v.xLtT = time; delete v.det.updateMatrixWorld; v.det.visible = true;
-    if (v.partsM) { v.bodyG.remove(v.partsM); v.partsM.geometry.dispose(); v.partsM = null; }
+    if (v.partsM) { if (v.far) { const i = v.far.list.indexOf(v.partsM); if (i >= 0) v.far.list.splice(i, 1); } v.bodyG.remove(v.partsM); v.partsM.geometry.dispose(); v.partsM = null; }   // (out of the far car's list too: a pile-up's light and full again, xLight, leaves none behind)
   }
   function remerge(v) {
     v.detDirty = false; const L = []; let n = 0;
