@@ -511,11 +511,11 @@
   "jsMs": 1
  },
  "lombok": {
-  "calls": 188,
-  "maxCalls": 227,
-  "kverts": 567,
-  "maxKverts": 701,
-  "jsMs": 1.02
+  "calls": 190,
+  "maxCalls": 228,
+  "kverts": 597,
+  "maxKverts": 724,
+  "jsMs": 1.67
  },
  "sepang": {
   "calls": 184,
@@ -527,9 +527,9 @@
  "sakhir": {
   "calls": 200,
   "maxCalls": 229,
-  "kverts": 695,
-  "maxKverts": 782,
-  "jsMs": 0.93
+  "kverts": 737,
+  "maxKverts": 857,
+  "jsMs": 1.23
  },
  "portomoniz": {
   "calls": 208,
@@ -560,11 +560,11 @@
   "jsMs": 1.37
  },
  "riohondo": {
-  "calls": 194,
-  "maxCalls": 270,
-  "kverts": 619,
-  "maxKverts": 779,
-  "jsMs": 1.03
+  "calls": 192,
+  "maxCalls": 286,
+  "kverts": 655,
+  "maxKverts": 875,
+  "jsMs": 1.59
  },
  "hakone": {
   "calls": 184,
@@ -581,11 +581,11 @@
   "jsMs": 1.99
  },
  "luanda": {
-  "calls": 110,
-  "maxCalls": 144,
-  "kverts": 212,
-  "maxKverts": 293,
-  "jsMs": 1.28
+  "calls": 113,
+  "maxCalls": 145,
+  "kverts": 230,
+  "maxKverts": 315,
+  "jsMs": 0.97
  },
  "ujarras": {
   "calls": 123,
@@ -609,11 +609,11 @@
   "jsMs": 1.53
  },
  "mombasa": {
-  "calls": 112,
-  "maxCalls": 188,
-  "kverts": 230,
-  "maxKverts": 265,
-  "jsMs": 1.45
+  "calls": 114,
+  "maxCalls": 190,
+  "kverts": 248,
+  "maxKverts": 284,
+  "jsMs": 0.94
  },
  "isalo": {
   "calls": 93,
@@ -630,11 +630,11 @@
   "jsMs": 0.62
  },
  "eljem": {
-  "calls": 97,
-  "maxCalls": 114,
-  "kverts": 251,
-  "maxKverts": 354,
-  "jsMs": 1.34
+  "calls": 102,
+  "maxCalls": 123,
+  "kverts": 246,
+  "maxKverts": 316,
+  "jsMs": 0.95
  },
  "isuna": {
   "calls": 125,
@@ -672,11 +672,11 @@
   "jsMs": 1.14
  },
  "aguascalientes": {
-  "calls": 182,
+  "calls": 183,
   "maxCalls": 208,
-  "kverts": 349,
-  "maxKverts": 506,
-  "jsMs": 0.98
+  "kverts": 362,
+  "maxKverts": 524,
+  "jsMs": 1.38
  },
  "koli": {
   "calls": 159,
