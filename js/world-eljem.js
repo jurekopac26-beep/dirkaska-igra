@@ -397,7 +397,7 @@
     }
 
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
-    const rob = World.ext.eljemRob ? World.ext.eljemRob({ scen, excluded, inFort: (x, z) => fortW(x, z) > 0 }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
+    const rob = World.ext.eljemRob ? World.ext.eljemRob({ scen, excluded, root, matV, inFort: (x, z) => fortW(x, z) > 0 }) : null;   // (the roadside ground from the camera behind the car: js/world-realizem-bt4.js)
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nStone, fans: nFans, rocks: 0, rob };   // (read by the tests)

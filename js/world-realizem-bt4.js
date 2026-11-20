@@ -10,7 +10,7 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api, { TAU, lerp, rng, rock, vary, cone, sstep } = API;
   const side = (T, s, sd, o) => { const i = T.idx(s), d = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + o); return [T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d]; };
-  const tuft = (g, x, y, z, w, h, col, R) => cone(g, x, y - 0.08, z, w, h, 5, [col[0] * 0.62, col[1] * 0.66, col[2] * 0.6], col, R() * TAU);
+  const tuft = (g, x, y, z, w, h, col, R, n) => cone(g, x, y - 0.08, z, w, h, n || 5, [col[0] * 0.62, col[1] * 0.66, col[2] * 0.6], col, R() * TAU);
   const mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
   const soil = (scen, gH, gx, gz, rr, col, R) => {   // bare ground: a low irregular patch lying on the terrain
     const k = 7, a0 = R() * TAU, rim = [col[0] * 0.9 + 0.05, col[1] * 0.9 + 0.07, col[2] * 0.9 + 0.03], g = scen.get(gx, gz), ctr = [gx, gH(gx, gz) + 0.07, gz], P = [];
@@ -86,7 +86,10 @@
      own colour already shows dry grass (the same noise as the builder's colFn), sparse tufts of it stand in loose groups (straw to
      pale ochre), thinner elsewhere, and here and there the pale dust lies bare in a low patch. */
   World.ext.eljemRob = (ctx) => {
-    const { nrGround, nrSlope, NR: P } = API, { scen } = ctx, straw = [0.72, 0.68, 0.42], pale = [0.84, 0.74, 0.5], dust = [0.86, 0.72, 0.54]; let n = 0, m = 0;
+    const { nrGround, nrSlope, NR: P } = API, straw = [0.72, 0.68, 0.42], pale = [0.84, 0.74, 0.5], dust = [0.86, 0.72, 0.54]; let n = 0, m = 0;
+    // (the tufts and the patches in meshes of their own that cast no shadow: knee-high grass throws none worth a second draw of it
+    // in the shadow pass, ~7k vertices a frame by the amphitheatre, where the track is at its busiest: tests/golden/perf.json)
+    const own = ctx.root && ctx.matV ? new API.Chunks(256) : null, scen = own || ctx.scen;
     const ok = (x, z) => open(x, z) * (0.38 + 0.5 * sstep(0.45, 0.8, P.n2(x, z)));
     API.ROCK_SMOOTH = true;
     walk(ctx, 9483, 3, 28, 2.5, ok, (gx, gz, k, R, free) => {
@@ -94,8 +97,9 @@
       for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
         const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R(), a = R();
         if (!free(x, z, 2.4)) { R(); continue; }
-        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.5, 0.3 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R); n++; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.5, 0.3 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R, 3); n++; }
     });
+    if (own) { const grp = new THREE.Group(); own.addTo(grp, ctx.matV, false, true); for (const c of grp.children) c.name = 'rob'; if (grp.children.length) ctx.root.add(grp); }
     return { sopi: n, prst: m };
   };
 })();
