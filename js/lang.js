@@ -311,7 +311,7 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
-    'Zavetrje': 'Slipstream', 'Za avtom pred sabo je manj zračnega upora, zato ga na ravnini dohitiš in prehitiš; izklop: brez zavetrja za vse avte': 'Behind the car ahead there is less air drag, so you catch it on a straight and pass it; off: no slipstream for any car',
+    'Zavetrje': 'Slipstream', 'Za avtom pred sabo je manj zračnega upora, zato ga na ravnini dohitiš in prehitiš; šibko do 8 %, srednje do 15 %, močno do 25 % manj upora; izklop (privzeto): brez zavetrja za vse avte': 'Behind the car ahead there is less air drag, so you catch it on a straight and pass it; weak up to 8 %, medium up to 15 %, strong up to 25 % less drag; off (the default): no slipstream for any car', 'Šibko': 'Weak',
     // Kontrole: the keys, the gamepad and the wheel
     'Kontrole': 'Controls', 'Tipke, plošček in volan': 'Keys, gamepad and wheel', 'Tipkovnica': 'Keyboard', 'Plošček in volan': 'Gamepad and wheel', 'Ponastavi': 'Reset',
     'Levo': 'Left', 'Desno': 'Right', 'Plin': 'Throttle', 'Zavora': 'Brake', 'Drift': 'Drift', 'Nazaj na progo': 'Back on the track', 'Plošček': 'Gamepad', 'Zamenjaj': 'Switch',

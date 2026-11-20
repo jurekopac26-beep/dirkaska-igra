@@ -2451,6 +2451,8 @@ const Core = (function () {
   // (the user, 4. 11. 2026, Great Alpine Road: »avto dobi pospešek, ko je med gužvo avtomobilov«: with 2.4 m and 40 m, at once, the car in a
   // pack was in some wake 90 % of the time, +7.9 % top speed on average; with these +1.6 %, behind one car on a straight as before)
   const TOW_LAT = 1.2, TOW_RNG = 25, TOW_T = 1;
+  // the levels of Nastavitve, Zavetrje (opts.slip 1-3; true, the tests' and the old way: 3): the share of TOW_DRAG a full wake takes away (c.towK)
+  const TOW_LV = [0, 0.32, 0.6, 1];
   const JUMP_G = 14; // vertical gravity for jumps on hilly tracks (snappy, a bit above real g)
   // Razbijanje · nov način: prevračanje (Nastavitve xRoll; off by default: nothing here runs, no car ever has rl). A hard knock on a car's
   // side (another car's, 9 m/s and more across; a wall's, 10 m/s and more) rolls it over away from the knock: for 1.2-1.6 s it slides on
@@ -3287,7 +3289,7 @@ const Core = (function () {
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
       if (gl > 0 && grounded && fwd) Fy += clamp(-vt * m / dt, -G * m * CRASH.slide, G * m * CRASH.slide) * gl * (1 - lowGrip);   // (the tyres scrub the slide)
       // ---- air + rolling + surface drag, slope, bank (shared blocks) ----
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow : 1);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow * (this.towK == null ? 1 : this.towK) : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -3510,7 +3512,7 @@ const Core = (function () {
       if ((lowGrip > 0 || !fwd) && grounded) Fy += clamp(-vt * m / dt, -G * m * 1.5, G * m * 1.5) * (fwd ? lowGrip : 1);
       if (gl > 0 && grounded && fwd) Fy += clamp(-vt * m / dt, -G * m * CRASH.slide, G * m * CRASH.slide) * gl * lo;   // (the tyres scrub the slide)
       // ---- air + rolling + surface drag, slope, bank (cs's shared blocks); the drag of one side's wheels pulls the car round ----
-      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow : 1);
+      const cdA = m * SW_DRAG * (M.cDrag / 0.42) * (this.drs ? DRS_DRAG : 1) * (this.tow ? 1 - TOW_DRAG * this.tow * (this.towK == null ? 1 : this.towK) : 1);
       Fx -= cdA * vl * spd + (grounded ? (0.015 * m * G) * Math.tanh(vl * 1.5) : 0);
       Fy -= cdA * 1.6 * vt * spd;
       if ((dragC0 > 0 || dragC1 > 0) && spd > 0.05 && grounded) {
@@ -7289,7 +7291,7 @@ const Core = (function () {
       if (track.drs) this.drsLast = track.drs.map(() => null);   // (per DRS zone: who crossed its detection line last, and when)
       // the slipstream (opts.slip, a race with rivals): less air drag in the wake of a car ahead (c.tow, see _tow; the field only with it on)
       this.slip = opts.slip && total > 1 && !this.timeTrial ? { n: 0 } : null;
-      if (this.slip) for (const c of this.cars) c.tow = 0;
+      if (this.slip) { const k = TOW_LV[opts.slip === true ? 3 : Math.max(1, Math.min(3, opts.slip | 0))]; this.slip.lv = k; for (const c of this.cars) { c.tow = 0; c.towK = k; } }
       // the marbles (opts.tyres, a real circuit: not one kept for testing only, def.test; see _marbles): d, the rubber laid since the road was
       // last washed (car-metres), lv, how thick the band is (0..1; the renderer's too)
       this.mb = opts.tyres && !track.open && !track.def.test ? { d: 0, lv: 0, rb: 0 } : null;
@@ -8678,7 +8680,7 @@ const Core = (function () {
           f = Math.max(f, (1 - (g - 3) / (TOW_RNG - 3)) * (1 - 0.6 * lat / TOW_LAT));
         }
         if (dt != null) { f = (c.tow || 0) + (f - (c.tow || 0)) * Math.min(1, (SD ? SD[ci] : dt) / TOW_T); if (f < 1e-4) f = 0; }   // (built up and died away over TOW_T s)
-        c.tow = f;
+        c.tow = f; c.towK = this.slip ? this.slip.lv : 1;   // (the level, also for a car that joined after the start)
       }
     }
     _drs(c, ds, dt) {
