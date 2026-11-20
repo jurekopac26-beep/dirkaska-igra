@@ -12,7 +12,7 @@ Odločitev uporabnika 19. 11. 2026 ob 10.35 (prek Mateja, tabla #382, komentar 7
   - zaslon v angleškem meniju;
   - prehod starih shranjenih iger.
 - **Delitev v 4 dele v ločenih datotekah**: A logika, B igra, C meni, D dokumenti. Vrstni red je A, nato B in C hkrati, nato D. Vse gre v zbirni veji `kariera-1-0` na `main` v enem koraku.
-- **Vprašanja** `kariera-1` … `kariera-7` so na strani Odločitve partyslo. Koda se začne po odgovorih.
+- **Odgovori** (20. 11. ob 0.15–0.18): pri `kariera-1`–`kariera-4`, `kariera-6` in `kariera-7` možnost 1, pri `kariera-5` možnost 2 (hitreje, vsi avti v ~120 zmagah). Del A je narejen s privzetki (možnost 1 povsod), zato se spremeni samo ekonomija.
 
 ## Kaj kariera ima zdaj
 - **Stanje** (`js/game.js`):
@@ -58,7 +58,7 @@ Odločitev uporabnika 19. 11. 2026 ob 10.35 (prek Mateja, tabla #382, komentar 7
 ## Kaj manjka za 1.0
 
 ### 1. Pot skozi pokale (samo prave proge)
-Predlog (vprašanji `kariera-1` in `kariera-2`): štiri stopnje. Vsaka ima pokal dirkališč in pokal cest, vsak pokal 3–6 dirk.
+Odločeno (`kariera-1` in `kariera-2`, možnost 1): štiri stopnje. Vsaka ima pokal dirkališč in pokal cest, vsak pokal 3–6 dirk.
 
 | Stopnja | Pokali dirkališč (dolžina kroga) | Pokali cest (dolžina) |
 |---|---|---|
@@ -74,13 +74,13 @@ Predlog (vprašanji `kariera-1` in `kariera-2`): štiri stopnje. Vsaka ima pokal
 - **Prvenstvo na cestah** (kvalifikacije, 20 avtov, dirka na vrh) zdaj ni preverjeno; preveri ga del B. Pokal cest ima toliko tekmecev, kot jih sprejme štart proge (`rivN` v `js/game.js`: `d.raceRivals`, `d.rivals`).
 
 ### 2. Odklepanje prog in avtov
-Predlog (`kariera-3`):
+Odločeno (`kariera-3`, možnost 1):
 - V karieri se odklepajo stopnje in njihovi pokali. Naslednja stopnja se odpre, ko je igralec v prvih treh v dveh pokalih trenutne stopnje.
 - Avti se samo kupijo, kot zdaj.
 - Hitra dirka, prosta vožnja, kronometer in prvenstva zunaj kariere ostanejo vsi odprti. Kariera ne zapre ničesar zunaj sebe.
 
 ### 3. Cilji po razredih
-Predlog (`kariera-4`):
+Odločeno (`kariera-4`, možnost 1):
 - Vsak od 10 razredov (`Core.CATS`) dobi pokal razreda s 3 dirkami. Odpre se, ko ima igralec avto tega razreda.
 - Proge razreda so po izbiri: reli in teren na cestah in makadamu, tovornjaki in dirkalni na dirkališčih. Razred z avti ene znamke (`oneMake`: TAIFUN LM, FORMULA ORKAN) vozi z istimi avti (`champField`).
 - Vsak razred ima še 3 cilje, na primer zmago, medaljo na kronometru in 100 km.
@@ -96,10 +96,11 @@ Predlog (`kariera-4`):
   | 40 | 343 dirk | 587 dirk |
   | vseh 55 | 677 dirk | 1.159 dirk |
 
-- **Predlog** (`kariera-5`):
+- **Odločeno** (`kariera-5`, možnost 2, hitreje):
   - Formula dirke, cene avtov, nadgradenj in najema ostanejo.
   - Dodajo se nagrade poti: pokal stopnje (1.–3. mesto, raste s stopnjo), prva zmaga na vsaki progi (enkrat), cilji razredov (enkrat) in darilo ob novi stopnji.
-  - Cilj: avto naslednje stopnje po ~10–15 dirkah stopnje, vsi avti v ~250–300 zmagah.
+  - Cilj: vsi avti v ~120 zmagah. Pot s pokali razredov ima v simulaciji ~98 zmag, zato igralec večino avtov kupi že na poti; avto naslednje stopnje pride prej kot pri možnosti 1.
+  - Del A je uglašen na možnost 1 (282 zmag; avto stopnje po 8, 16 in 29 dirkah). Seja s kodo uglasi `NAGRADE` v `js/kariera.js` (privzetek `ekonomija: 'hitro'`) in razpona v `tests/kariera.test.js` (zdaj 250–300 zmag in 6–18 dirk).
 - **Številke uglasi del A s simulacijo v testu** `tests/kariera.test.js`: koliko dirk do prvega boljšega avta, do avta vsake stopnje in do vseh avtov. Test pade, če so števila zunaj dogovorjenih razponov. Nove številke opiše del D v `docs/igra.md`.
 - **Brez denarja ostane, kot zdaj**: igra na spletu in odstop.
 
@@ -114,11 +115,11 @@ Predlog (`kariera-4`):
 ### 6. Shranjene igre
 - `tdgp-career` dobi `v: 2` z novim poljem `pot: { stopnja, pokali: { id: najboljše mesto }, cilji: { id: opravljeno }, prve: [id proge] }`.
 - Prehod je čista funkcija `Kariera.migrate`, kliče jo `careerLoad`. Stara polja ostanejo, zato garaža (`fromCareer`, `toCareer`) in stari testi delujejo brez sprememb.
-- Kaj stara kariera obdrži, odloči `kariera-6`. Shranjeno prvenstvo (`tdgp-champ`) ostane.
+- Stara kariera obdrži denar, avte in nadgradnje; pot se začne v stopnji 1 (`kariera-6`, možnost 1). Shranjeno prvenstvo (`tdgp-champ`) ostane.
 
 ### 7. Stari pokali
 - Domači pokal in Kratke proge gresta za NEUPORABNO. To že velja (`nu`), koda ostane.
-- Legende ostanejo s 4 progami. Veliko prvenstvo ostane v prvenstvih zunaj kariere; v karieri je finale po `kariera-7`.
+- Legende ostanejo s 4 progami. Veliko prvenstvo ostane v prvenstvih zunaj kariere; v karieri je finale Veliko prvenstvo na izboru 8–10 dirkališč z različnih celin (`kariera-7`, možnost 1).
 
 ## Delitev (zbirna veja `kariera-1-0`, na `main` v enem koraku)
 Deli so v različnih datotekah, zato se ne prekrivajo. Hkrati tečeta največ 2 seji s kodo (B in C).
@@ -142,39 +143,41 @@ Deli so v različnih datotekah, zato se ne prekrivajo. Hkrati tečeta največ 2 
 - Šola, privzeta proga in prvi zagon so ločene teme (»Pred izidom: NEUPORABNO«). Nova mapa in misije ostanejo ustavljeni.
 
 ## Vprašanja (stran Odločitve partyslo)
-Pri vsakem vprašanju je prva možnost priporočena.
+Pri vsakem vprašanju je prva možnost priporočena. Uporabnik je odgovoril 20. 11. ob 0.15–0.18; izbrana možnost je označena z »**izbrano**«.
 
 1. **`kariera-1` · Zgradba poti**
-   1. 4 stopnje s pokali na pravih progah; naslednja stopnja se odpre z dvema uvrstitvama v prve tri.
+   1. 4 stopnje s pokali na pravih progah; naslednja stopnja se odpre z dvema uvrstitvama v prve tri. **izbrano**
    2. En dolg seznam dogodkov po vrsti.
    3. Vsi pokali so odprti od začetka.
 2. **`kariera-2` · Ceste in kronometri**
-   1. Vsaka stopnja ima pokal dirkališč in pokal cest; kronometri so v stopnji 4.
+   1. Vsaka stopnja ima pokal dirkališč in pokal cest; kronometri so v stopnji 4. **izbrano**
    2. Pokali so samo na dirkališčih, ceste pa samostojne dirke, ki plačajo.
    3. Ceste so samo kronometri.
 3. **`kariera-3` · Odklepanje**
-   1. Odklepajo se samo stopnje in pokali v karieri; avti se kupijo; vse zunaj kariere je odprto.
+   1. Odklepajo se samo stopnje in pokali v karieri; avti se kupijo; vse zunaj kariere je odprto. **izbrano**
    2. Kot 1, poleg tega so dražji razredi zaklenjeni do stopnje 2.
    3. Nič se ne odklepa.
 4. **`kariera-4` · Cilji razredov**
-   1. Pokal razreda in 3 cilji za vsak razred.
+   1. Pokal razreda in 3 cilji za vsak razred. **izbrano**
    2. Samo pokal razreda.
    3. Brez ciljev razredov.
 5. **`kariera-5` · Ekonomija**
    1. Vsi avti v ~250–300 zmagah, z nagradami poti.
-   2. Hitreje, ~120 zmag.
+   2. Hitreje, ~120 zmag. **izbrano**
    3. Kot zdaj, ~680 zmag.
 6. **`kariera-6` · Stare kariere**
-   1. Ostanejo denar, avti in nadgradnje; pot se začne v stopnji 1.
+   1. Ostanejo denar, avti in nadgradnje; pot se začne v stopnji 1. **izbrano**
    2. Vse od začetka.
    3. Ostane vse, odprte so vse stopnje.
 7. **`kariera-7` · Finale**
-   1. Veliko prvenstvo v karieri na izboru 8–10 dirkališč z različnih celin.
+   1. Veliko prvenstvo v karieri na izboru 8–10 dirkališč z različnih celin. **izbrano**
    2. Vseh 24 dirkališč (do 70 prog več).
    3. Igralec sam izbere 6–12 dirkališč.
 
 ## Predaja
-- **Stanje 19. 11.**: osnutek #792 vsebuje samo načrt, vrstico v `docs/vrsta.md` »Načrtovano« in vnos v kazalu. Seja se ustavi.
-- **Odgovore** prebere seja načrta sama (`send_later` ob 14.50, nato 23.20 in 10.50, največ trikrat; `docs/vprasanja.md`). Načrt popravi po njih (kratek commit v to vejo) in to javi na tablo v eni vrstici.
-- **Nato** koordinacija partyslo zažene sejo za del A (`source_url` repozitorija, veja `kariera-1-0`). Po združitvi A zažene sejo za B, sejo za C in na koncu sejo za D.
+- **Stanje 20. 11.**: odgovori prebrani, načrt popravljen. Del A je na veji (`a80900d`, `js/kariera.js` s testom), narejen s privzetki; ujema se v vsem razen ekonomije (`kariera-5`).
+- **Nato** koordinacija partyslo zažene:
+  - sejo za B in sejo za C hkrati (`source_url` repozitorija, veja `kariera-1-0`); številke ekonomije ju ne ovirajo;
+  - kratko sejo s kodo za popravek A (samo `js/kariera.js` in `tests/kariera.test.js`; ekonomija na ~120 zmag, točka 4) kadar koli pred D, hkrati z B in C samo, če pravilo »Sej s kodo hkrati« v `CLAUDE.md` dovoli več kot 2;
+  - na koncu sejo za D.
 - **Ko je vse zeleno** in uporabnik da »ok« (seznam PR ob 5.00, za meni predogled), PR vodi do `main` seja Združevanje partyslo.
