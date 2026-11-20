@@ -39,7 +39,7 @@ const { DT, seeded } = require('./lib/sim.js');
 
 // the registration order (= the script tags' order, append-only: a shipped vehicle is retired, never removed or moved)
 const ROSTER = ['miska', 'kolibri', 'raketa', 'jezek', 'sokol', 'panter', 'jelen', 'lisica', 'perun', 'skorpijon', 'modras', 'jastreb', 'gad', 'blisk', 'lev', 'zmaj',
-  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni'];
+  'pescenjak', 'medved', 'hrosc', 'gozdar', 'kozorog', 'tiger', 'tornado', 'strelica', 'mravlja', 'bizon', 'titan', 'kamen', 'superkombi', 'predsednik', 'goljat', 'levs', 'levk', 'osa', 'sakal', 'gams', 'orel', 'merjasec', 'kuna', 'ris', 'vidra', 'tur', 'vran', 'cisterna', 'zrcalni', 'avtovoz', 'krilo', 'hrast'];
 const OLD = ['kaze', 'vortex', 'pico', 'strega', 'rally', 'p206', 'formula', 'lm', 'muscle', 'ev', 'truck'];
 // category envelopes: 0-100 km/h (s), top speed (km/h), side grip at 100 km/h with full lock (g), 100-0 km/h (m). Anchored on the 11
 // (measured with the rig: t100 2.50 ev .. 3.58 kaze / muscle, vmax 202 truck .. 295 lm, latG 2.07 truck .. 2.86 formula, d100 23.6-24.0
@@ -206,7 +206,7 @@ const MEAS = {};
   }
   info('statsOf on the 11 (the hand-made bars, -> the formula): ' + OLD.map(id => { const S = C.statsOf(model(id)), M = model(id); return id + ' ' + ['power', 'grip', 'weight', 'drift'].map(k => M.stats[k] + (S[k] !== M.stats[k] ? '>' + S[k] : '')).join('/'); }).join(', '));
   if (!only.length) {
-    const big = ['titan', 'kamen', 'predsednik', 'goljat', 'cisterna', 'zrcalni'], road = C.MODELS.filter(M => !big.includes(M.id) && M.cat !== 'dirkalni').map(M => M.id);
+    const big = ['titan', 'kamen', 'predsednik', 'goljat', 'cisterna', 'avtovoz', 'krilo', 'hrast', 'zrcalni'], road = C.MODELS.filter(M => !big.includes(M.id) && M.cat !== 'dirkalni').map(M => M.id);
     const dBig = Math.min(...big.map(id => MEAS[id].d100)), dRoad = Math.max(...road.map(id => MEAS[id].d100)), tBig = Math.min(...big.map(id => MEAS[id].t100));
     check('the trucks, the limousine and the monster truck: longer stops than any road car, slow launches (0-100 over 4.5 s)', dBig > dRoad && tBig > 4.5, `100-0 >= ${dBig.toFixed(1)} m (road cars <= ${dRoad.toFixed(1)} m), 0-100 >= ${tBig.toFixed(2)} s`);
     check('TITAN: the 160 km/h limiter holds it (150-160.5 km/h flat out)', MEAS.titan.vmax >= 150 && MEAS.titan.vmax <= 160.5, MEAS.titan.vmax.toFixed(1) + ' km/h');
