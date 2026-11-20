@@ -1,6 +1,6 @@
 /* =========================================================================
    WORLD — the roadside ground from the camera behind the car (chase), the third group of the real tracks (after js/world-realizem-bt.js's):
-   Lombok, Sakhir, Lusail, Aguascalientes. Each track's own look hook (LK.extra of the shared circuit builder, js/world-rbring.js) is
+   Lombok, Sakhir, Aguascalientes. Each track's own look hook (LK.extra of the shared circuit builder, js/world-rbring.js) is
    chained here after the worlds are loaded; what is added goes into the builder's own scenery chunks (scen.get), so no draw is added,
    and only the named tracks change. What stands where follows each track's description (docs/proge/<id>.md) and the ground's own
    colours (the look's colMod: the same noise, so a tuft or a stone stands where the ground already shows its patch). Nothing here is
@@ -75,17 +75,7 @@
   late.push(['sakhir', (L, ctx, st) => {
     const { nrLC, NR: P } = API; if (!T || !P || !API.nrGround) return;
     const grit = (x, z) => { const c = nrLC(x, z); return c === 1 || c >= 3 ? 0 : sstep(0.42, 0.7, P.n1(x * 0.35 + 510, z * 0.35 + 90)); };
-    st.kamni = stones(ctx, rng(9439), 5, 29, grit, [[0.5, 0.44, 0.37], [0.58, 0.5, 0.41], [0.44, 0.4, 0.36], [0.63, 0.55, 0.45]], 0.18, 0.95, 4, 8);
-  }]);
-
-  /* Lusail: docs/proge/lusail.md: »za njimi puščava: siva prodnata ravnina v velikih lisah, svetlejši in toplejši nanosi peska«. The
-     gravel plain behind the lawns was a colour on smooth ground from the camera behind the car. So on the plain (not on the lawns, the
-     drifts of sand or the paving) grey and beige stones of the gravel lie in loose groups within ~30 m of the fences, in the broad
-     patches where the ground's own colour is darker (the same noise as the look's colMod). */
-  late.push(['lusail', (L, ctx, st) => {
-    const { nrLC, NR: P } = API; if (!T || !P || !API.nrGround) return;
-    const plain = (x, z) => nrLC(x, z) !== 0 ? 0 : sstep(0.56, 0.38, P.n5(x * 0.4 + 300, z * 0.4));
-    st.kamni = stones(ctx, rng(9461), 5, 27, plain, [[0.6, 0.58, 0.54], [0.66, 0.62, 0.55], [0.52, 0.51, 0.49], [0.7, 0.66, 0.58]], 0.12, 0.55, 3, 7);
+    st.kamni = stones(ctx, rng(9439), 7, 29, grit, [[0.5, 0.44, 0.37], [0.58, 0.5, 0.41], [0.44, 0.4, 0.36], [0.63, 0.55, 0.45]], 0.18, 0.95, 4, 8);
   }]);
 
   /* Aguascalientes: docs/proge/aguascalientes.md: »suha trava planote (zlata z olivnimi krpami, ob jarkih bolj zelena)«. Behind the
