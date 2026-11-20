@@ -1287,16 +1287,17 @@
   }
  },
  "eljem": {
-  "meshes": 194,
+  "meshes": 198,
   "verts": 271082,
   "instances": 354,
   "props": 0,
   "crowd": 120,
-  "world": "23ccdc6f",
+  "world": "d3094e2f",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "1489baa1",
+   "-:MeshLambertMaterial": "8d6847d2",
+   "rob:MeshLambertMaterial": "6a805f73",
    "crowd:MeshLambertMaterial": "e0968893",
    "flags:MeshLambertMaterial": "45378d95",
    "ao:MeshBasicMaterial": "b6319958",

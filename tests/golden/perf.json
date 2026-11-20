@@ -630,11 +630,11 @@
   "jsMs": 0.62
  },
  "eljem": {
-  "calls": 102,
-  "maxCalls": 123,
-  "kverts": 246,
-  "maxKverts": 316,
-  "jsMs": 0.95
+  "calls": 101,
+  "maxCalls": 118,
+  "kverts": 263,
+  "maxKverts": 369,
+  "jsMs": 1.02
  },
  "isuna": {
   "calls": 125,

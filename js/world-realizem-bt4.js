@@ -86,7 +86,10 @@
      own colour already shows dry grass (the same noise as the builder's colFn), sparse tufts of it stand in loose groups (straw to
      pale ochre), thinner elsewhere, and here and there the pale dust lies bare in a low patch. */
   World.ext.eljemRob = (ctx) => {
-    const { nrGround, nrSlope, NR: P } = API, { scen } = ctx, straw = [0.72, 0.68, 0.42], pale = [0.84, 0.74, 0.5], dust = [0.86, 0.72, 0.54]; let n = 0, m = 0;
+    const { nrGround, nrSlope, NR: P } = API, straw = [0.72, 0.68, 0.42], pale = [0.84, 0.74, 0.5], dust = [0.86, 0.72, 0.54]; let n = 0, m = 0;
+    // (the tufts and the patches in meshes of their own that cast no shadow: knee-high grass throws none worth a second draw of it
+    // in the shadow pass, ~7k vertices a frame by the amphitheatre, where the track is at its busiest: tests/golden/perf.json)
+    const own = ctx.root && ctx.matV ? new API.Chunks(256) : null, scen = own || ctx.scen;
     const ok = (x, z) => open(x, z) * (0.38 + 0.5 * sstep(0.45, 0.8, P.n2(x, z)));
     API.ROCK_SMOOTH = true;
     walk(ctx, 9483, 3, 28, 2.5, ok, (gx, gz, k, R, free) => {
@@ -96,6 +99,7 @@
         if (!free(x, z, 2.4)) { R(); continue; }
         tuft(scen.get(x, z), x, nrGround(x, z), z, 0.45 + h * 0.5, 0.3 + h * 0.4, vary(mix3(straw, pale, a), R, 0.03), R); n++; }
     });
+    if (own) { const grp = new THREE.Group(); own.addTo(grp, ctx.matV, false, true); for (const c of grp.children) c.name = 'rob'; if (grp.children.length) ctx.root.add(grp); }
     return { sopi: n, prst: m };
   };
 })();
