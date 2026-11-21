@@ -467,6 +467,117 @@ window.MENU = {
   },
   "livorno": {
    "base": 4
+  },
+  "kildare": {
+   "base": 90
+  },
+  "bikernieki": {
+   "base": 6.2
+  },
+  "buriram": {
+   "base": 176.3
+  },
+  "santoantao": {
+   "base": 672
+  },
+  "seoul": {
+   "base": 184
+  },
+  "sepang": {
+   "base": 39.1
+  },
+  "silkeborg": {
+   "base": 61.7
+  },
+  "tuzla": {
+   "base": 129.2
+  },
+  "zandvoort": {
+   "base": 4.7
+  },
+  "ngorongoro": {
+   "base": 2169
+  },
+  "pembrey": {
+   "base": 5.6
+  },
+  "portomoniz": {
+   "base": 465
+  },
+  "riohondo": {
+   "base": 277.4
+  },
+  "sacalobra": {
+   "base": 679
+  },
+  "sakhir": {
+   "base": 7.8
+  },
+  "sosnova": {
+   "base": 255.6
+  },
+  "ella": {
+   "base": 681
+  },
+  "furka": {
+   "base": 2045
+  },
+  "gudauri": {
+   "base": 1953
+  },
+  "izoard": {
+   "base": 1973
+  },
+  "killar": {
+   "base": 2402
+  },
+  "hakone": {
+   "base": 97.3
+  },
+  "kanaba": {
+   "base": 2313
+  },
+  "koror": {
+   "base": 5
+  },
+  "quezaltepeque": {
+   "base": 518
+  },
+  "savusavu": {
+   "base": 5
+  },
+  "sogeri": {
+   "base": 293
+  },
+  "kagerod": {
+   "base": 79.6
+  },
+  "kotor": {
+   "base": 609
+  },
+  "llogara": {
+   "base": 894
+  },
+  "lombok": {
+   "base": 4.4
+  },
+  "lusail": {
+   "base": 12.3
+  },
+  "medeu": {
+   "base": 1669
+  },
+  "aguascalientes": {
+   "base": 1858.8
+  },
+  "batangas": {
+   "base": 103.4
+  },
+  "canaries": {
+   "base": 44
+  },
+  "haivan": {
+   "base": 387
   }
  },
  "intro": {
