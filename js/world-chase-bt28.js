@@ -61,15 +61,16 @@
      pepela … ob cesti povsod drobno kamenje, šopi rumene trave (coirón) … nizko grmičevje, višje gor olivno zelene blazine (llareta)«. On
      the verge the fine stones in grey, rusty and ochre patches, the coirón's yellow tufts at the barrier's foot; on the bank the same scree
      with the pale ash here and there, the coirón's tufts, low grey-olive shrubs and, on the upper third of the climb, the llareta's olive
-     cushions. Nothing on the snowfields and in Portillo (land cover 4 and 3). */
+     cushions, sparser than on Llogara (the climb is 10.8 km: at Llogara's spacing it added 640 thousand vertices). Nothing on the snowfields
+     and in Portillo (land cover 4 and 3). */
   const CA = { n: 0 };
-  const CAV = { step: 2.6, share: 0.55, foot: 0.3,
+  const CAV = { step: 3.4, share: 0.55, foot: 0.3,
     patch: (R) => { const r = R();
       return r < 0.45 ? P(R, [0.58, 0.56, 0.52], [0.62, 0.59, 0.54], 0.7, 0.9)   // (grey fine stones)
         : r < 0.75 ? P(R, [0.6, 0.5, 0.4], [0.64, 0.54, 0.43], 0.7, 0.9)   // (rusty)
         : P(R, [0.66, 0.58, 0.42], [0.69, 0.61, 0.45], 0.7, 0.9); },   // (ochre)
     tuft: (R) => vary(mix3([0.7, 0.62, 0.38], [0.6, 0.55, 0.4], R() * 0.6), R, 0.03) };
-  const CAB = { step: 2.6, n: 3, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.85, bushShare: 0.3,
+  const CAB = { step: 3.4, n: 2, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.85, bushShare: 0.3,
     patch: (R, sl) => { const r = R();
       return r < 0.35 ? P(R, [0.57, 0.55, 0.51], [0.62, 0.59, 0.54], 0.9, 1.2)   // (grey scree)
         : r < 0.6 ? P(R, [0.6, 0.5, 0.4], [0.64, 0.53, 0.42], 0.9, 1.1)   // (rusty scree)
