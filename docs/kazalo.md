@@ -270,6 +270,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | ghoufi | Ghoufi, Alžirija | ghoufi | `js/world-ghoufi.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
+| longyearbyen | Longyearbyen, Norveška | longyearbyen | `js/world-longyearbyen.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
