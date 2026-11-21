@@ -42,22 +42,22 @@
      forest, the red earth showing through ---- */
   const CNV = { step: 3.4, share: 0.6, foot: 0.25,
     patch: (R) => { const r = R();
-      return r < 0.4 ? { col: vary(mix3([0.5, 0.33, 0.23], [0.54, 0.36, 0.25], R()), R, 0.015), r: 0.9 + R() * 1.1 }   // (red-brown earth)
-        : r < 0.7 ? { col: vary(mix3([0.33, 0.47, 0.19], [0.38, 0.5, 0.22], R()), R, 0.015), r: 1.0 + R() * 1.2 }   // (lush grass)
-        : { col: vary(mix3([0.5, 0.46, 0.41], [0.54, 0.49, 0.43], R()), R, 0.015), r: 0.7 + R() * 0.9 }; },   // (andesite grit)
+      return r < 0.4 ? { col: vary(mix3([0.54, 0.43, 0.31], [0.57, 0.45, 0.33], R()), R, 0.015), r: 0.9 + R() * 1.1 }   // (red-brown earth)
+        : r < 0.7 ? { col: vary(mix3([0.46, 0.52, 0.28], [0.5, 0.54, 0.3], R()), R, 0.015), r: 1.0 + R() * 1.2 }   // (lush grass)
+        : { col: vary(mix3([0.56, 0.53, 0.45], [0.6, 0.56, 0.47], R()), R, 0.015), r: 0.7 + R() * 0.9 }; },   // (andesite grit)
     tuft: (R) => vary(mix3([0.26, 0.44, 0.15], [0.34, 0.5, 0.2], R()), R, 0.03) };
   const CNB = { step: 4.5, n: 2, reach: 8, share: 0.7, maxSl: 1.6, sl: 1.0, bushShare: 0.35,
     patch: (R, sl) => { const r = R();
-      return sl > 0.9 && r < 0.55 ? { col: vary(mix3([0.5, 0.32, 0.22], [0.55, 0.36, 0.24], R()), R, 0.015), r: 0.9 + R() * 1.1 }   // (the cutting's red earth)
-        : r < 0.45 ? { col: vary(mix3([0.42, 0.34, 0.24], [0.46, 0.37, 0.26], R()), R, 0.015), r: 1.0 + R() * 1.3 }   // (leaf litter)
-        : { col: vary(mix3([0.3, 0.45, 0.18], [0.35, 0.48, 0.2], R()), R, 0.015), r: 1.0 + R() * 1.2 }; },   // (grass)
+      return sl > 0.9 && r < 0.55 ? { col: vary(mix3([0.54, 0.42, 0.3], [0.57, 0.44, 0.32], R()), R, 0.015), r: 0.9 + R() * 1.1 }   // (the cutting's red earth)
+        : r < 0.45 ? { col: vary(mix3([0.5, 0.45, 0.33], [0.53, 0.47, 0.35], R()), R, 0.015), r: 1.0 + R() * 1.3 }   // (leaf litter)
+        : { col: vary(mix3([0.44, 0.51, 0.27], [0.48, 0.53, 0.29], R()), R, 0.015), r: 1.0 + R() * 1.2 }; },   // (grass)
     tuft: (R) => vary(mix3([0.26, 0.44, 0.15], [0.34, 0.5, 0.2], R()), R, 0.03),
     bush: (R) => vary(R() < 0.6 ? [0.18, 0.33, 0.13] : [0.22, 0.37, 0.16], R, 0.025) };   // (the undergrowth: green, not dark)
-  const CNF = { step: 6, share: 0.6, from: 8, to: 55, drop: 6, maxSl: 1.3,
+  const CNF = { step: 6, share: 0.45, from: 8, to: 55, drop: 6, maxSl: 1.3,
     patch: (R, o) => { const r = R(), k = 1 + 0.5 * Math.min(1, (o - 8) / 47);
-      return r < 0.45 ? { col: vary(mix3([0.4, 0.34, 0.24], [0.44, 0.37, 0.26], R()), R, 0.015), r: (1.6 + R() * 1.5) * k }   // (leaf litter)
-        : r < 0.8 ? { col: vary(mix3([0.3, 0.44, 0.18], [0.34, 0.47, 0.2], R()), R, 0.015), r: (1.6 + R() * 1.6) * k }   // (grass)
-        : { col: vary([0.5, 0.34, 0.24], R, 0.015), r: (1.2 + R() * 1.2) * k }; } };   // (the red earth showing through)
+      return r < 0.45 ? { col: vary(mix3([0.5, 0.46, 0.34], [0.53, 0.48, 0.36], R()), R, 0.015), r: (1.6 + R() * 1.5) * k }   // (leaf litter)
+        : r < 0.8 ? { col: vary(mix3([0.45, 0.5, 0.28], [0.48, 0.52, 0.3], R()), R, 0.015), r: (1.6 + R() * 1.6) * k }   // (grass)
+        : { col: vary([0.55, 0.44, 0.32], R, 0.015), r: (1.2 + R() * 1.2) * k }; } };   // (the red earth showing through)
   if (LK && LK.canaries) chain(LK.canaries, (ctx) => {
     if (!ctx.out) return;
     const gT = API.caGround || API.vrGround, ex = ctx.excluded || (() => false);
@@ -71,10 +71,10 @@
      tufts. Behind the barriers to ~10 m on open ground (not built: ESA WorldCover) the ochre earth, the pale dust and the olive groves'
      ploughed brown; out to ~55 m wide patches of the same, so the Sahel's dry ground reads as ground, not one colour ---- */
   const EJ = {
-    dust: (R) => vary(mix3([0.8, 0.69, 0.53], [0.84, 0.72, 0.55], R()), R, 0.015),
-    ochre: (R) => vary(mix3([0.7, 0.56, 0.38], [0.74, 0.6, 0.41], R()), R, 0.015),
-    plough: (R) => vary(mix3([0.6, 0.47, 0.33], [0.64, 0.5, 0.35], R()), R, 0.015),
-    straw: (R) => vary(mix3([0.68, 0.63, 0.4], [0.72, 0.66, 0.43], R()), R, 0.015),
+    dust: (R) => vary(mix3([0.74, 0.58, 0.4], [0.77, 0.6, 0.42], R()), R, 0.015),
+    ochre: (R) => vary(mix3([0.66, 0.49, 0.32], [0.69, 0.51, 0.33], R()), R, 0.015),
+    plough: (R) => vary(mix3([0.6, 0.44, 0.3], [0.63, 0.46, 0.31], R()), R, 0.015),
+    straw: (R) => vary(mix3([0.68, 0.58, 0.37], [0.71, 0.6, 0.38], R()), R, 0.015),
     tuft: (R) => vary(mix3([0.66, 0.62, 0.38], [0.58, 0.58, 0.32], R()), R, 0.03),
   };
   const ejPatch = (R) => { const r = R(); return r < 0.35 ? EJ.ochre(R) : r < 0.6 ? EJ.dust(R) : r < 0.82 ? EJ.plough(R) : EJ.straw(R); };
