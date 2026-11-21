@@ -89,12 +89,15 @@
       col: { ichu: [0.7, 0.64, 0.4], ichu2: [0.58, 0.57, 0.33], agave: [0.46, 0.56, 0.54], leaf: [0.38, 0.33, 0.25] } },
   };
 
-  World.ext.goreRob = (ctx, id) => {
-    const L = LOOK[id], { vrLC, vrGround: gH, vrSlope, vrNear, vrWater } = API, st = {};
+  /* o (optional, for the later groups' tracks on Vršič's corridor with a ground of their own): o.gH, o.slope (the ground and its slope;
+     default vrGround, vrSlope), o.bad(x, z) (more places to leave free, e.g. a stream's banks). LOOK is open (goreRob.LOOK) for them. */
+  World.ext.goreRob = (ctx, id, o) => {
+    o = o || {};
+    const L = LOOK[id], { vrLC, vrNear, vrWater } = API, gH = o.gH || API.vrGround, vrSlope = o.slope || API.vrSlope, st = {};
     if (!L) return st; for (const k of L.st) st[k] = 0;
     if (!vrLC || !gH || !vrNear || !API.T || !ctx.root || !ctx.out || !ctx.out.matV) return st;
     const { excluded, root } = ctx, soft = softScen(root, ctx.out.matV), riv = L.river ? riverTest(API.T.def) : null;
-    const bad = (x, z) => excluded(x, z) || (riv && riv(x, z, 5)) || (vrWater && vrWater(x, z).e > -1);
+    const bad = (x, z) => excluded(x, z) || (riv && riv(x, z, 5)) || (vrWater && vrWater(x, z).e > -1) || (o.bad && o.bad(x, z));
     const env = { near: vrNear, excluded: bad }, sl = (x, z) => vrSlope(x, z);
     const wood = (x, z) => { let a = 0; for (const [u, v] of [[12, 0], [-12, 0], [0, 12], [0, -12], [9, 9], [-9, -9], [9, -9], [-9, 9]]) if (vrLC(x + u, z + v) === 1) a++; return a / 8; };
     const S = { g: (x, z) => soft.get(x, z), c: L.col, st };
@@ -115,4 +118,5 @@
     ctx.out.rob = st;
     return st;
   };
+  World.ext.goreRob.LOOK = LOOK;
 })();
