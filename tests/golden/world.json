@@ -588,12 +588,12 @@
   }
  },
  "kildare": {
-  "meshes": 189,
-  "verts": 275991,
+  "meshes": 203,
+  "verts": 284649,
   "instances": 1341,
   "props": 61,
   "crowd": 4,
-  "world": "969436b",
+  "world": "f8c2e8db",
   "propsHash": "f99bc922",
   "floor": "ddcb77c9/2296",
   "groups": {
@@ -601,7 +601,7 @@
    "-:MeshPhongMaterial": "4656b0ee",
    "-:MeshBasicMaterial": "f488fa01",
    "rsFar:MeshBasicMaterial": "633e48c1",
-   "rob:MeshLambertMaterial": "92f9274b",
+   "rob:MeshLambertMaterial": "6a096d4d",
    "crowd:MeshLambertMaterial": "d702ffe4",
    "flags:MeshLambertMaterial": "d0981cf8",
    "ao:MeshBasicMaterial": "ef089569",
@@ -1420,12 +1420,12 @@
   }
  },
  "quezaltepeque": {
-  "meshes": 408,
-  "verts": 525091,
+  "meshes": 430,
+  "verts": 543823,
   "instances": 5547,
   "props": 46,
   "crowd": 10,
-  "world": "85e970ba",
+  "world": "35eca274",
   "propsHash": "7600c0e1",
   "floor": "14e6777b/6440",
   "groups": {
@@ -1434,7 +1434,7 @@
    "quezaltepeque service roads:MeshLambertMaterial": "f68b2f13",
    "quezaltepeque dirt tracks:MeshLambertMaterial": "e505f33d",
    "rsFar:MeshBasicMaterial": "b90bbb46",
-   "rob:MeshLambertMaterial": "df21cc8f",
+   "rob:MeshLambertMaterial": "47c7c65d",
    "crowd:MeshLambertMaterial": "2e1c7e6",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "84d20387",

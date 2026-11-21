@@ -140,11 +140,11 @@
   "jsMs": 1.03
  },
  "kildare": {
-  "calls": 224,
-  "maxCalls": 259,
-  "kverts": 523,
-  "maxKverts": 611,
-  "jsMs": 1.82
+  "calls": 225,
+  "maxCalls": 260,
+  "kverts": 527,
+  "maxKverts": 616,
+  "jsMs": 1.7
  },
  "sacalobra": {
   "calls": 244,
@@ -371,11 +371,11 @@
   "jsMs": 1.39
  },
  "quezaltepeque": {
-  "calls": 249,
-  "maxCalls": 279,
-  "kverts": 725,
-  "maxKverts": 830,
-  "jsMs": 1.5
+  "calls": 251,
+  "maxCalls": 281,
+  "kverts": 739,
+  "maxKverts": 845,
+  "jsMs": 1.48
  },
  "aguascalientes": {
   "calls": 193,

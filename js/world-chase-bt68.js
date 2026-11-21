@@ -32,7 +32,7 @@
     tuft: [[0.36, 0.5, 0.2], [0.62, 0.6, 0.36]], tuftW: [[0.3, 0.44, 0.18], [0.4, 0.48, 0.22]],
   };
   const qzLava = (x, z) => (API.qzLava ? API.qzLava(x, z) : 0);
-  const LQZ = { seed: 68101, step: 7.0, share: 0.45, foot: 0.08, farStep: 9, farShare: 0.5, from: 14, to: 60, drop: 8,
+  const LQZ = { seed: 68101, step: 4.0, share: 0.75, foot: 0.08, farStep: 5, farShare: 0.85, from: 10, to: 60, drop: 8,
     verge: (R, o, e0, e1, c, x, z) => { const u = R(), lip = o > e1 - 1.2;
       if (qzLava(x, z) > 0.5) return u < 0.5 ? P(R, QZ.ash, 1, 0.6, 0.8) : P(R, QZ.dust, 1, 0.5, 0.7);
       return lip && u < 0.12 ? P(R, QZ.dust, 1, 0.45, 0.5) : u < 0.32 ? P(R, QZ.green, 1, 0.8, 1.2) : u < 0.62 ? P(R, QZ.pale, 1, 0.8, 1.2) : u < 0.86 ? P(R, QZ.dry, 1, 0.7, 1.1) : P(R, QZ.lawn, 1, 0.8, 1.0); },
@@ -53,7 +53,7 @@
   };
   const kdGravel = (d) => { const T = API.T; if (!T || !T.sf) return false; const N = T.sf.length, i = Math.round(d / T.ds);
     for (let k = -6; k <= 6; k += 3) if (T.sf[((i + k) % N + N) % N] === 5) return true; return false; };
-  const LKD = { seed: 68201, step: 5.0, share: 0.4, foot: 0.12, farStep: 6, farShare: 0.6, from: 12, to: 60, drop: 4, skipI: (d) => kdGravel(d),
+  const LKD = { seed: 68201, step: 4.0, share: 0.55, foot: 0.12, farStep: 5, farShare: 0.75, from: 12, to: 60, drop: 4, skipI: (d) => kdGravel(d),
     verge: (R, o, e0, e1, c) => { const u = R(), lip = o > e1 - 1.2;
       return lip && u < 0.12 ? P(R, KD.worn, 1, 0.45, 0.5) : u < 0.4 ? P(R, KD.stripe, 1, 0.8, 1.2) : u < 0.7 ? P(R, KD.lush, 1, 0.8, 1.2) : P(R, KD.lawn, 1, 0.8, 1.0); },
     tuft: KD.tuft, tuftW: KD.tuftW,
