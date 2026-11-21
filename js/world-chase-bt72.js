@@ -1,24 +1,24 @@
 /* =========================================================================
-   WORLD — the roadside ground from the camera behind the car (chase), the seventy-second group of the real tracks: Isalo and Hiva, a
-   third pass on the two roads whose ground the fourteenth and thirty-first groups (js/world-chase-bt14.js, js/world-chase-bt31.js:
-   Isalo's sandy strip and low earth bank to ~4 m) and the sixth and forty-second (js/world-chase-bt6.js, js/world-chase-bt42.js: Hiva's
-   loess strip, tufts and a sparse band of wide patches to ~55 m) already set. From behind the car both still showed the asphalt's edge as
-   one clean line and, past those bands, one smooth face: on Isalo one gold out to ~60 m, on Hiva the loess between the sparse patches. So
-   here, as the seventieth group did (js/world-chase-bt70.js): on both the edge of the asphalt in short streaks (docs/proge/isalo.md: »zlata
-   trava in rdeča prst«: the red earth and the sand the wind and the rain bring onto it; docs/proge/hiva.md: »puhlično rumena tla«: the
-   loess dust blown onto it), the shoulder's grit; past the earlier bands out to ~60 m low patches and on them what stands there: Isalo the
-   golden grass and the red earth in patches, the paler sand, the golden tussocks, the scrub's low green-olive bushes and the sandstone's
-   blocks where the rock comes out; Hiva the loess in paler and greyer patches, the dry grass in tufts, the crumbs of the mud brick by the
-   walls, the fallen leaves under the poplars and elms. Nothing in the water (5), on Isalo not on built ground (3), where another leg's road
-   is nearer, far below the road or on the steep, in the builders' excluded places (Hiva's houses, walls and minarets). All of it in meshes
-   of their own (softScen: 256 m chunks, no shadow); the terrain, the road, the barriers, the trees, the horizon and the driving stay.
+   WORLD — the roadside ground from the camera behind the car (chase), the seventy-second group of the real tracks: Savusavu and Isalo, a
+   third pass on the two roads whose ground the eighth and thirtieth groups (js/world-chase-bt8.js, js/world-chase-bt30.js: Savusavu's
+   verge and bank to ~8 m past the barrier line) and the fourteenth and thirty-first (js/world-chase-bt14.js, js/world-chase-bt31.js:
+   Isalo's sandy strip and low earth bank to ~4 m) already set. From behind the car both still showed the asphalt's edge as one clean line
+   and, past those bands, one smooth face of the land cover's colour out to ~60 m: on Savusavu one green, on Isalo one gold. So here, as the
+   seventieth group did (js/world-chase-bt70.js): on both the edge of the asphalt in short streaks (docs/proge/savusavu.md: »rdečerjav prah
+   vulkanske prsti, ki ga dež spere na rob asfalta«; docs/proge/isalo.md: »zlata trava in rdeča prst«: the red earth and the sand the wind
+   and the rain bring onto it), the shoulder's grit; past the earlier bands out to ~60 m wide low patches and on them what stands there:
+   Savusavu the grass, the sun-bleached grass, the red-brown soil, the leaf litter and the ferns under the forest, the dark bushes of the
+   gardens and the forest's edge, now and then a dark basalt stone; Isalo the golden grass and the red earth in patches, the paler sand,
+   the golden tussocks, the scrub's low green-olive bushes and the sandstone's blocks where the rock comes out. Nothing on built ground (3),
+   in the water (5), where another leg's road is nearer, far below the road or on the steep, in the builders' excluded places. All of it in
+   meshes of their own (softScen: 256 m chunks, no shadow); the terrain, the road, the barriers, the trees, the horizon and the driving stay.
    ========================================================================= */
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
-  const API = World.api, BT = API.chaseBt, { vary, rng } = API;
+  const API = World.api, BT = API.chaseBt, { vary, rng } = API, LK = API.PL_LOOK;
   if (!BT || !BT.soil || !BT.tuft || !BT.cushion || !BT.softScen || !BT.mix3 || !rng || !vary) return;
-  const { soil, tuft, cushion, softScen, mix3 } = BT;
+  const { soil, tuft, cushion, softScen, mix3, chain } = BT;
   const mute = (c, k) => { const l = (c[0] + c[1] + c[2]) / 3, f = k || 0.95, g = 0.2; return [(c[0] * (1 - g) + l * g) * f, (c[1] * (1 - g) + l * g) * f, (c[2] * (1 - g) + l * g) * f]; };
   const C_ = (R, ab, j) => mute(vary(mix3(ab[0], ab[1], R()), R, j || 0.015));
 
@@ -72,13 +72,45 @@
       if (bad(x, z) || wet(x, z)) continue;
       const y = gT(x, z); if (!(y > T.hy[i] - C.drop)) continue;
       const sl = slope(x, z); if (sl > C.maxSl) continue;
-      const c = lc ? lc(x, z) : 0; if ((c === 3 && !C.built) || c === 5) continue;
+      const c = lc ? lc(x, z) : 0; if (c === 3 || c === 5) continue;
       const kk = C.put(soft, gT, x, y, z, o - bar, R, c, sl); if (kk) st[kk] = (st[kk] || 0) + 1;
     }
     soft.done();
     return st;
   };
   const rock = (c) => c === 4 || c === 7;
+
+  /* ---- Savusavu: the wet island's green grass, the red-brown volcanic soil, the dark basalt (docs/proge/savusavu.md) ---- */
+  const SV = {
+    worn: [[0.52, 0.38, 0.29], [0.57, 0.42, 0.32]], stone: [[0.5, 0.34, 0.24], [0.55, 0.38, 0.27]],   // (the red-brown dust on the edge, washed soil on the shoulder)
+    green: [[0.29, 0.48, 0.17], [0.34, 0.51, 0.2]], bleach: [[0.45, 0.56, 0.26], [0.5, 0.58, 0.29]], soilR: [[0.5, 0.34, 0.22], [0.55, 0.38, 0.25]],
+    litter: [[0.34, 0.33, 0.2], [0.4, 0.36, 0.22]], fern: [[0.2, 0.42, 0.14], [0.26, 0.47, 0.17]], tuft: [[0.24, 0.46, 0.15], [0.33, 0.52, 0.2]],
+    bush: [[0.16, 0.32, 0.12], [0.2, 0.36, 0.14]], basalt: [[0.32, 0.31, 0.29], [0.37, 0.35, 0.32]],
+  };
+  const savusavu = (ctx) => {
+    const T = API.T; if (!ctx.out || !ctx.root || !ctx.matV || !T || (T.def && T.def.id !== 'savusavu')) return;
+    const near = API.vrNear, gT = API.caGround || API.vrGround; if (!near || !gT) return;
+    const ex = ctx.excluded || (() => false), wet = API.vrWater ? (x, z) => { const q = API.vrWater(x, z); return q && q.e > -4; } : () => false;
+    // (the passes' road: asphalt at +0.02 to w, the shoulder from +0.012 at w to -0.02 at w + 0.45, then the ground)
+    const rY = (x, z) => { const q = near(x, z); if (q.i < 0) return gT(x, z); const o = Math.abs(q.lat), y = T.hy[q.i];
+      return o < T.w ? y + 0.02 : o < T.w + 0.45 ? y + 0.012 - 0.032 * (o - T.w) / 0.45 : Math.max(gT(x, z), y - 0.02); };
+    const E = { near, gT, rY, lc: API.vrLC, bad: ex, wet };
+    ctx.out.robBt72 = edge(ctx, E, 72101, { rim: 0.32, grit: 0.4, sh: 0.6, worn: SV.worn, stone: SV.stone });
+    // past the thirtieth group's bank (~8 m) out to ~60 m
+    ctx.out.pasBt72 = outer(ctx, E, 72102, { step: 4.5, n: 3, share: 0.65, from: 8, to: 60, pw: 1.1, drop: 14, maxSl: 1.3,
+      put: (soft, g, x, y, z, o, R, c, sl) => { const u = R(), h = R(), k = 1 + 0.6 * Math.min(1, (o - 8) / 52);
+        if (c === 1) {   // under the forest: leaf litter, ferns, the dark undergrowth
+          if (u < 0.45) { soil(soft, g, x, z, (1.0 + R() * 1.2) * k, C_(R, R() < 0.7 ? SV.litter : SV.soilR), R, 0.05); return 'listje'; }
+          if (u < 0.75) { tuft(soft.get(x, z), x, y, z, (0.4 + h * 0.35) * k, 0.35 + h * 0.3, C_(R, SV.fern, 0.03), R, 6); return 'praprot'; }
+          cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.6) * k, 0.4 + h * 0.4, C_(R, SV.bush, 0.025), R); return 'grmi'; }
+        if (u < 0.55) { const v = R();
+          const col = (sl > 0.9 || rock(c)) && v < 0.6 ? C_(R, SV.soilR) : v < 0.5 ? C_(R, SV.green) : v < 0.85 ? C_(R, SV.bleach) : C_(R, SV.soilR);
+          soil(soft, g, x, z, (1.3 + R() * 1.5) * k, col, R, 0.06); return 'zaplate'; }
+        if (u < 0.62 || (rock(c) && u < 0.8)) { cushion(soft.get(x, z), x, y + 0.04, z, (0.3 + h * 0.45) * k, 0.22 + h * 0.3, C_(R, SV.basalt, 0.02), R); return 'bazalt'; }
+        if (u < 0.78 && sl < 0.9) { cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.7) * k, 0.4 + h * 0.4, C_(R, SV.bush, 0.025), R); return 'grmi'; }
+        tuft(soft.get(x, z), x, y, z, (0.35 + h * 0.3) * k, 0.35 + h * 0.35, C_(R, SV.tuft, 0.03), R, 5); return 'sopi'; } }, {});
+  };
+  if (LK && LK.savusavu && chain) chain(LK.savusavu, (ctx) => { try { savusavu(ctx); } catch (e) { console.error('chase-bt72 (savusavu):', e); } });
 
   /* ---- Isalo: the golden grass, the red earth, the sand and the sandstone (docs/proge/isalo.md) ---- */
   const NR = {
@@ -114,43 +146,5 @@
     };
     Object.assign(f, base);   // (LOOK and whatever else the later groups hang on it)
     World.ext.goreRob = f;
-  }
-
-  /* ---- Hiva: the oasis' loess, the dry grass, the mud brick, the poplars and elms (docs/proge/hiva.md) ---- */
-  const HV = {
-    worn: [[0.62, 0.52, 0.4], [0.68, 0.56, 0.43]], stone: [[0.7, 0.55, 0.38], [0.82, 0.66, 0.45]],   // (the loess dust on the asphalt's edge, on the strip)
-    loess: [[0.8, 0.6, 0.36], [0.84, 0.63, 0.39]], pale: [[0.8, 0.64, 0.42], [0.83, 0.66, 0.44]], grey: [[0.7, 0.56, 0.4], [0.74, 0.59, 0.42]],
-    leaf: [[0.62, 0.52, 0.3], [0.68, 0.56, 0.32]], tuft: [[0.74, 0.66, 0.4], [0.64, 0.6, 0.34]], brick: [[0.74, 0.56, 0.38], [0.8, 0.61, 0.42]],
-  };
-  const hiva = (ctx) => {
-    const T = API.T, { nrGround, nrLC, nrNear } = API;
-    if (!ctx || !ctx.root || !ctx.matV || !T || !T.br || !T.wAt || !nrGround || !nrNear) return null;
-    const ex = ctx.excluded || (() => false), lc = nrLC || null;
-    // (js/world-hiva.js vergeRow: the asphalt to w, the verge 0 at w to -0.04 at w + 0.8, then lifted onto the ground)
-    const rY = (x, z) => { const q = nrNear(x, z), qi = q.i, a = Math.abs(q.lat); if (qi < 0) return nrGround(x, z); const w = T.wAt(qi), y = T.hy[qi];
-      return a < w ? y + 0.02 : a < w + 0.8 ? Math.max(nrGround(x, z) + 0.06, y + 0.02 - 0.04 * (a - w) / 0.8) : nrGround(x, z) + 0.06; };
-    const E = { near: nrNear, gT: nrGround, rY, lc, bad: ex, wet: (x, z) => (lc ? lc(x, z) === 5 : false) };
-    const r = {};
-    r.robBt72 = edge(ctx, E, 72301, { rim: 0.6, grit: 0.55, sh: 0.5, worn: HV.worn, stone: HV.stone });
-    // past the barrier line out to ~60 m, among the forty-second group's sparse wide patches
-    r.pasBt72 = outer(ctx, E, 72302, { step: 4, n: 3, share: 0.6, from: 1.2, to: 60, pw: 1.25, drop: 5, maxSl: 0.9, built: true,
-      put: (soft, g, x, y, z, d, R, c, sl) => { const u = R(), h = R(), k = 1 + 0.5 * Math.min(1, d / 60);
-        if (c === 1 || c === 2) {   // under the poplars and elms along the ditches: their fallen leaves, the damper ground, the grass
-          if (u < 0.5) { soil(soft, g, x, z, (0.9 + R() * 1.1) * k, C_(R, HV.leaf), R, 0.05); return 'listje'; }
-          if (u < 0.8) { tuft(soft.get(x, z), x, y, z, (0.3 + h * 0.3) * k, 0.3 + h * 0.3, C_(R, HV.tuft, 0.03), R, 5); return 'sopi'; } }
-        if (u < 0.55) { const v = R(); soil(soft, g, x, z, (1.0 + R() * 1.4) * k, C_(R, v < 0.4 ? HV.loess : v < 0.75 ? HV.pale : HV.grey), R, 0.05); return 'zaplate'; }
-        if (c === 3 && u < 0.7) { cushion(soft.get(x, z), x, y + 0.02, z, (0.18 + h * 0.25) * k, 0.1 + h * 0.12, C_(R, HV.brick, 0.02), R); return 'opeka'; }
-        for (let q = 0, n = 2 + Math.floor(R() * 3); q < n; q++) { const xx = x + (R() - 0.5) * 2.2, zz = z + (R() - 0.5) * 2.2, hh = R();
-          if (ex(xx, zz)) continue; tuft(soft.get(xx, zz), xx, g(xx, zz), zz, (0.22 + hh * 0.22) * k, 0.24 + hh * 0.24, C_(R, HV.tuft, 0.03), R, 5); }
-        return 'sopi'; } }, {});
-    return r;
-  };
-  {
-    const base = World.ext && World.ext.hivaRob;
-    if (World.ext && base) World.ext.hivaRob = (ctx) => {
-      const r = base(ctx) || {};
-      try { const q = hiva(ctx); if (q) Object.assign(r, q); } catch (e) { console.error('chase-bt72 (hiva):', e); }
-      return r;
-    };
   }
 })();

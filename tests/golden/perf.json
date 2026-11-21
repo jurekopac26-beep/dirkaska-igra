@@ -364,11 +364,11 @@
   "jsMs": 1.17
  },
  "hiva": {
-  "calls": 172,
-  "maxCalls": 212,
-  "kverts": 546,
-  "maxKverts": 607,
-  "jsMs": 1.49
+  "calls": 159,
+  "maxCalls": 197,
+  "kverts": 477,
+  "maxKverts": 516,
+  "jsMs": 1.39
  },
  "quezaltepeque": {
   "calls": 233,
@@ -406,11 +406,11 @@
   "jsMs": 1.25
  },
  "savusavu": {
-  "calls": 181,
-  "maxCalls": 217,
-  "kverts": 473,
-  "maxKverts": 567,
-  "jsMs": 0.81
+  "calls": 191,
+  "maxCalls": 225,
+  "kverts": 501,
+  "maxKverts": 600,
+  "jsMs": 1.13
  },
  "koror": {
   "calls": 154,
