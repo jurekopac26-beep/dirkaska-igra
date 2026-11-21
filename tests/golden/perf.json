@@ -63,11 +63,11 @@
   "jsMs": 1.51
  },
  "chapman": {
-  "calls": 163,
-  "maxCalls": 205,
-  "kverts": 485,
-  "maxKverts": 555,
-  "jsMs": 1.03
+  "calls": 169,
+  "maxCalls": 211,
+  "kverts": 515,
+  "maxKverts": 586,
+  "jsMs": 1.5
  },
  "tianmen": {
   "calls": 189,
@@ -329,11 +329,11 @@
   "jsMs": 0.77
  },
  "mombasa": {
-  "calls": 127,
-  "maxCalls": 203,
-  "kverts": 314,
-  "maxKverts": 357,
-  "jsMs": 0.93
+  "calls": 132,
+  "maxCalls": 208,
+  "kverts": 334,
+  "maxKverts": 375,
+  "jsMs": 1.22
  },
  "isalo": {
   "calls": 114,
