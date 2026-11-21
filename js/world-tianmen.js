@@ -64,7 +64,7 @@
       R = lerp(R, r, st); G = lerp(G, g, st); B = lerp(B, b, st);
     }
     R = lerp(R, 0.6, built * 0.6); G = lerp(G, 0.59, built * 0.6); B = lerp(B, 0.56, built * 0.6);
-    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5; R = lerp(R, 0.5, t); G = lerp(G, 0.48, t); B = lerp(B, 0.43, t); }
+    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.62; R = lerp(R, 0.36, t); G = lerp(G, 0.37, t); B = lerp(B, 0.27, t); }   // (the verge's damp dark earth under the forest)
     TMCOL[0] = R; TMCOL[1] = G; TMCOL[2] = B; return TMCOL;
   }
   function tmGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in tmTileGeo)
@@ -623,6 +623,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: tmAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: tmAtlas2(def.curves || []), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'tianmen', { gH: tmGround, slope: tmSlope });   // (the roadside ground for the chase camera: js/world-chase-bt13.js)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), steps: nSteps, cabins: nCab, town: nTown, mist: out.mist };   // (read by the tests)
     return out;
   }

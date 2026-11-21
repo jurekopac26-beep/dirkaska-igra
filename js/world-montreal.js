@@ -151,6 +151,13 @@
     const ships = mtShips(ctx), far = mtFar(ctx);
     out.dyn.ext = (t, car, cam) => { ships(t); far(cam); fade(t, car); };
     tag(() => scen.addTo(root, matV, true, true), 'mtScen');
+    if (World.ext.goreRob) tag(() => {   // (the roadside ground for the chase camera: js/world-chase-bt18.js)
+      const nq = { i: -1, dd: 0 }, near = (x, z) => { const q = ctx.near(x, z); nq.i = q.i; nq.dd = Math.max(0, q.d); return nq; };
+      const slope = (x, z) => Math.hypot(mtGround(x + 3, z) - mtGround(x - 3, z), mtGround(x, z + 3) - mtGround(x, z - 3)) / 6;
+      const legs = ctx.legs || [], inLeg = (x, z) => { for (const g of legs) { const dx = x - g.cx, dz = z - g.cz, r = dx * g.ux + dz * g.uz, v = -dx * g.uz + dz * g.ux; if (r > g.r0 - 2 && r < g.rEnd + 4 && Math.abs(v) < g.hw + 3) return true; } return false; };
+      const bad = (x, z) => gAt(MG.SD, x, z) < 4 || (ctx.roadMask && ctx.roadMask(x, z)) || inLeg(x, z);
+      World.ext.goreRob({ excluded, root, out }, 'montreal', { gH: mtGround, slope, lc: mtKind, near, bad });
+    }, 'mtRob');
     K.crowdFinish(ctx.CR, root, out);
     out.junctionProps = ctx.nJ || 0; out.mg = MG;
     { let m = 1e9; for (let k = 0; k < MG.dT.length; k++) if (MG.SD[k] < 0) m = Math.min(m, MG.dT[k]); out.waterNear = m; }   // (how close the water comes to the centre line)
@@ -170,6 +177,11 @@
         const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
         const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
         let col = KCOL[kd].map(v => v * n2 * (0.96 + 0.08 * n1));
+        if (kd === 0 || kd === 6) {   // (the park's lawns, 2nd chase pass: paler sun-dried patches, the grass trampled by the fans along the fences)
+          const dry = sstep(0.35, 0.9, Math.sin(x * 0.011 + Math.sin(z * 0.017) * 1.7) * Math.sin(z * 0.013 - x * 0.004)) * 0.7, dt = G.dT[k];
+          const worn = dt > 7 && dt < 34 ? sstep(7, 11, dt) * sstep(34, 22, dt) * (0.45 + 0.35 * n1) : 0;
+          const t = Math.min(0.85, dry + worn), gy = (col[0] + col[1] + col[2]) / 3; col = [lerp(col[0], gy * 1.22, t), lerp(col[1], gy * 1.06, t), lerp(col[2], gy * 0.72, t)];
+        } else if (kd === 1) { const lit = sstep(0.55, 0.95, n1) * 0.45; col = [lerp(col[0], 0.6, lit), lerp(col[1], 0.52, lit), lerp(col[2], 0.38, lit)]; }   // (under the maples: leaf litter in the shade)
         const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); col = [lerp(col[0], 0.72, t), lerp(col[1], 0.69, t), lerp(col[2], 0.6, t)]; }   // (the banks: stony, rip-rap)
         if (h < WL) { const t = sstep(WL, WL - 2, h); col = [lerp(col[0], 0.42, t), lerp(col[1], 0.42, t), lerp(col[2], 0.36, t)]; }
         P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 14, -z / 14);
