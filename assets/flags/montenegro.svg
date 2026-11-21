@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1200 600" width="1200" height="600">
+  <title>Montenegro</title>
+  <!-- Ratio 1:2 (the law on the state symbols of Montenegro, 2004): a red field with a gold border 1/20 of the height wide and the coat of
+       arms in the centre, 2/3 of the height. The coat of arms drawn simply, as the menu shows the flag a few tens of pixels high: the gold
+       double-headed eagle under one crown, a sceptre in its right talon and an orb in its left, on its breast a blue shield with a green
+       base and a gold lion passant. Colours: red #C40308, gold #D3AE3B. -->
+  <rect width="1200" height="600" fill="#D3AE3B"/>
+  <rect x="30" y="30" width="1140" height="540" fill="#C40308"/>
+  <g stroke="#7A5A14" stroke-width="3" stroke-linejoin="round">
+    <g id="me-half">
+      <!-- the wing, raised -->
+      <path fill="#D3AE3B" d="M628 238C650 210 690 178 735 150C760 135 790 122 812 112C818 150 820 200 812 248C808 280 800 305 790 330L772 318L768 340L750 322L744 340L726 318L718 334L700 310L690 322L672 298L660 306L640 285Z"/>
+      <path fill="none" d="M650 250L672 298M672 240L700 310M695 225L726 318M720 210L750 322M745 195L772 318M770 180L790 330M640 262C690 228 750 192 808 160"/>
+      <!-- the neck and the head, looking out -->
+      <path fill="#D3AE3B" d="M608 252C613 220 626 199 648 186L668 202C652 214 642 232 638 258Z"/>
+      <ellipse fill="#D3AE3B" cx="666" cy="182" rx="27" ry="20"/>
+      <path fill="#8E1010" d="M692 186C703 188 712 194 718 203C708 199 699 197 690 195Z"/>
+      <path fill="#D3AE3B" d="M686 170C703 167 716 172 727 183C714 185 704 187 691 190Z"/>
+      <circle fill="#3A2A08" stroke="none" cx="674" cy="177" r="4.5"/>
+    </g>
+    <use xlink:href="#me-half" href="#me-half" transform="matrix(-1 0 0 1 1200 0)"/>
+    <!-- the crown over the heads -->
+    <path fill="#D3AE3B" d="M560 142C560 104 640 104 640 142Z"/>
+    <path fill="none" d="M600 110V142M578 116C583 125 585 133 586 142M622 116C617 125 615 133 614 142"/>
+    <rect fill="#D3AE3B" x="555" y="140" width="90" height="17" rx="3"/>
+    <circle fill="#D3AE3B" cx="600" cy="101" r="8"/>
+    <path fill="#D3AE3B" d="M596 70H604V78H612V86H604V94H596V86H588V78H596Z"/>
+    <!-- the tail -->
+    <path fill="#D3AE3B" d="M572 390L558 470L577 452L586 479L600 456L614 479L623 452L642 470L628 390Z"/>
+    <path fill="none" d="M586 400L586 479M600 400V456M614 400L614 479"/>
+    <!-- the legs: the sceptre in the right talon, the orb in the left -->
+    <path fill="none" stroke="#D3AE3B" stroke-width="15" stroke-linecap="round" d="M566 376L530 404M634 376L668 404"/>
+    <path fill="#D3AE3B" d="M484 290L496 280L508 290L503 304L489 304Z"/>
+    <path fill="#D3AE3B" d="M490 304L501 302L538 448L527 451Z"/>
+    <circle fill="#D3AE3B" cx="690" cy="424" r="21"/>
+    <path fill="none" d="M669 424H711M690 403V445"/>
+    <path fill="#D3AE3B" d="M686 380H694V388H702V395H694V404H686V395H678V388H686Z"/>
+    <!-- the body and the shield on its breast: blue, a green base, a gold lion passant -->
+    <ellipse fill="#D3AE3B" cx="600" cy="318" rx="52" ry="80"/>
+    <path fill="#1E5AA8" d="M556 262H644V328C644 362 622 384 600 394C578 384 556 362 556 328Z"/>
+    <path fill="#2F8F3A" stroke="none" d="M557.5 352H642.5C639 371 621 385 600 392.5C579 385 561 371 557.5 352Z"/>
+    <path fill="#D3AE3B" stroke-width="2" d="M574 341C574 329 582 322 593 322H619C628 322 632 329 632 337V351H626V341L619 343V351H613V343H591V351H585V343H580V351H574Z"/>
+    <circle fill="#D3AE3B" stroke-width="2" cx="574" cy="318" r="9"/>
+    <path fill="none" stroke="#D3AE3B" stroke-width="4" stroke-linecap="round" d="M632 331C642 327 645 315 638 306"/>
+    <path fill="none" d="M556 262H644V328C644 362 622 384 600 394C578 384 556 362 556 328Z"/>
+  </g>
+</svg>
