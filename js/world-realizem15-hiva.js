@@ -189,7 +189,7 @@
         else for (const p of b.p) put(cutOff(p), colf);
       }
     };
-    patch(PARKING, null, [0.34, 0.34, 0.35], 0.06);
+    patch(PARKING, null, [0.4, 0.4, 0.41], 0.06);
     for (const p of GARDENS) patch(p, null, [0.4, 0.47, 0.25], 0.16);
     patch(PARK, [FOUNTAIN], [0.43, 0.5, 0.27], 0.14);
     patch(FOUNTAIN, null, [0.76, 0.73, 0.68], 0.05);   // (fountain=dry: flat stone, no water)
@@ -199,7 +199,7 @@
     if (pond) {   // the water: the game's shared water (waterMat), one mesh
       const gw = new GB(true), wc = [1, 1, 1], W = pond.W, Q = (p) => [p[0], W, p[1]], uv = (p) => [p[0] / 16, -p[1] / 16];
       for (const [a, b, c] of pond.tr) gw.triO(Q(a), Q(b), Q(c), wc, [a[0], W - 5, a[1]], wc, wc, uv(a), uv(b), uv(c));
-      const wm = new THREE.Mesh(gw.geometry(), waterMat(tex, { color: 0x5c6f62, len: 0.9, amp: 0.5, refl: 0.55, land: 0.8, shal: 0.6, lap: 0.4, surf: 0 }));
+      const wm = new THREE.Mesh(gw.geometry(), waterMat(tex, { plain: true, color: 0x41554a, len: 0.7, amp: 0.7, refl: 0.45, land: 0.9, shal: 0, lap: 0.4, surf: 0 }));   // (standing water: a murky green, hardly a wave)
       wm.receiveShadow = true; wm.matrixAutoUpdate = false; wm.updateMatrix(); wm.name = 'hiva pond'; out.root.add(wm); out.dyn.water = tex.water;
     }
 
@@ -219,10 +219,12 @@
     });
     const FC = [0.62, 0.62, 0.6];
     const post = (g, x, z, ang) => box(g, x, nrGround(x, z) - 0.2, z, 0.09, 1.8, 0.09, ang, FC, null, true);
+    let ex = NaN, ez = NaN;   // (the end of the piece drawn last: its post stands already)
     for (const f of FENCES) line(f, 6, (ax, az, bx, bz) => {   // the fences: posts every ~3 m and two rails
       if (!near(ax, az, bx, bz)) return;
       const mx = (ax + bx) / 2, mz = (az + bz) / 2, g = scen.get(mx, mz), ang = Math.atan2(bz - az, bx - ax), len = Math.hypot(bx - ax, bz - az), y = (nrGround(ax, az) + nrGround(bx, bz)) / 2;
-      post(g, ax, az, ang); post(g, mx, mz, ang); post(g, bx, bz, ang);
+      if (!(Math.abs(ax - ex) < 0.01 && Math.abs(az - ez) < 0.01)) post(g, ax, az, ang);
+      post(g, mx, mz, ang); post(g, bx, bz, ang); ex = bx; ez = bz;
       for (const h of [0.5, 1.2]) box(g, mx, y + h, mz, len, 0.07, 0.04, ang, FC, null, true);
     });
 
