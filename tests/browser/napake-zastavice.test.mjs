@@ -83,10 +83,15 @@ try {
   T.check('past 1 s after the flag: back to 2 s before it, still playing (the moment again)', z2.mode === 'flags' && z2.play && z2.t >= F[0] - 2 - 0.01 && z2.t < F[0] - 1.2, JSON.stringify({ z2, f: F[0] }));
   await Q.click('[data-act="rp-znext"]'); const z3 = await rp(), i3 = await Q.evaluate(() => document.getElementById('rp-zi').textContent);
   await Q.click('[data-act="rp-zprev"]'); await Q.click('[data-act="rp-zprev"]'); const z4 = await rp(), i4 = await Q.evaluate(() => document.getElementById('rp-zi').textContent);
-  T.check('Naslednja: the second flag (2/3); Prejšnja twice: round to the third (3/3)', Math.abs(z3.t - (F[1] - 2)) < 0.2 && i3 === '⚑ 2/3' && Math.abs(z4.t - (F[2] - 2)) < 0.2 && i4 === '⚑ 3/3', JSON.stringify({ z3, i3, z4, i4, F }));
+  // (the replay from 2 s before the flag, playing: it plays on between the click and the reading, on a busy machine 0.3 s and more, so a
+  // window from there as for the first flag above, not 0.2 s about the 2 s before; ⚑ 2/3 and ⚑ 3/3 say which flag is on)
+  const at = (z, f) => z.mode === 'flags' && z.play && z.t >= f - 2 - 0.01 && z.t < f - 1;
+  T.check('Naslednja: the second flag (2/3); Prejšnja twice: round to the third (3/3)', at(z3, F[1]) && i3 === '⚑ 2/3' && at(z4, F[2]) && i4 === '⚑ 3/3', JSON.stringify({ z3, i3, z4, i4, F }));
 
   // 6. a moment kept at the third flag: it stands for it (Zastavice still 3; the third a numbered flag)
-  await Q.waitForFunction((f) => window.__game.replay.t >= f - 0.3, F[2], { timeout: 60000, polling: 50 });
+  // (the replay stood at the flag by its own button, in the page's own turn: the third flag is 0.5 s from the race's end, so Zastavice's loop
+  // takes the replay back 2 s before it soon after, on a busy machine before Označi's click came, and the moment fell 1.8 s short of it)
+  await Q.waitForFunction((f) => { const P = window.__game.replay; if (!P.play || P.t < f - 0.3 || P.t > f + 0.5) return false; document.getElementById('rp-play').click(); return true; }, F[2], { timeout: 60000, polling: 50 });
   await Q.click('#nk-on'); await Q.mouse.move(300, 150); await Q.mouse.down(); await Q.mouse.move(340, 180, { steps: 5 }); await Q.mouse.up();
   await Q.click('#nk-bar .nk-add'); await Q.waitForTimeout(300);
   const k1 = await Q.evaluate(() => ({ tocke: Napake.stanje.tocke, txt: document.getElementById('rp-flags').textContent, fl: [...document.querySelectorAll('#rp-line .nk-flag')].map(f => f.textContent) }));
