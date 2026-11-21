@@ -336,11 +336,11 @@
   "jsMs": 0.93
  },
  "isalo": {
-  "calls": 114,
-  "maxCalls": 131,
-  "kverts": 308,
-  "maxKverts": 317,
-  "jsMs": 0.96
+  "calls": 126,
+  "maxCalls": 142,
+  "kverts": 354,
+  "maxKverts": 376,
+  "jsMs": 0.94
  },
  "portobelo": {
   "calls": 116,
@@ -406,11 +406,11 @@
   "jsMs": 1.25
  },
  "savusavu": {
-  "calls": 181,
-  "maxCalls": 217,
-  "kverts": 473,
-  "maxKverts": 567,
-  "jsMs": 0.81
+  "calls": 191,
+  "maxCalls": 225,
+  "kverts": 501,
+  "maxKverts": 600,
+  "jsMs": 1.13
  },
  "koror": {
   "calls": 154,
