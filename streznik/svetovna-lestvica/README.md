@@ -70,7 +70,7 @@ Javna branja (`/v1/lestvica`, `/v1/mesto`, `/v1/duh`, `/v1/stanje`): 120 na minu
 
 ## Preverjanje
 
-Opravilo na GitHubu (`.github/workflows/lestvica-preveri.yml`, na `main`, urnik ali ročni zagon) se prijavi z žetonom OIDC (`audience: lestvica`); strežnik preveri podpis s ključi GitHuba, `iss`, `aud`, repozitorij, vejo, potek in dogodek. Skrivnosti ni. Opravilo vzame seznam časov, starejših od 2 minut (brez id-ja igralca in vzdevka), ponovi posnetke v Node (`tools/lestvica-preveri.mjs --krog`) in pošlje izide po 200: `ok` (s časom iz Node, pri trkih `priblizno`), `zavrnjeno`, `ni-mogoce`, `sumljivo`. Sumljive pregleda skrbnik.
+Opravilo na GitHubu (`.github/workflows/lestvica-preveri.yml`, na `main`, urnik ali ročni zagon) se prijavi z žetonom OIDC (`audience: lestvica`); strežnik preveri podpis s ključi GitHuba, `iss`, `aud`, repozitorij, vejo, potek in dogodek. Skrivnosti ni. Opravilo vzame seznam časov, starejših od 2 minut (brez id-ja igralca in vzdevka), ponovi posnetke v Node (`tools/lestvica-preveri.mjs --krog`) in pošlje izide po 200: `ok` (s časom iz Node, pri trkih `priblizno`), `zavrnjeno`, `ni-mogoce`, `sumljivo`. Sumljive pregleda skrbnik. Posnetek starejše različice igre ponovi s kodo te različice (`git worktree` na zadnjem commitu z istim žigom jedra, zato `fetch-depth: 0`); žig, ki ga v zgodovini `main` ni, dobi `ni-mogoce`. Z `--meje` opravilo najprej primerja `jedro` iz `GET /v1/stanje` s svojim in ob razliki pošlje nove meje (`POST /v1/meje`).
 
 ## Skrbnik
 
@@ -100,7 +100,7 @@ openssl rand -base64 32 | npx wrangler secret put IP_SOL   # sol; seja je ne vid
 npx wrangler deploy                                         # naslov lestvica.<podračun>.workers.dev
 ```
 
-Nato opravilo preverjanja pošlje meje (`/v1/meje`); `GET /v1/stanje` mora vrniti `meje: true` in `sol: true`. Naslov Workerja gre v igro in v dovoljene gostitelje okolja (uporabnik potrdi v oknu za odobritev). Lokalno: `npx wrangler dev` (baza `--local`).
+Naslov Workerja (`https://…workers.dev`) v spremenljivko repozitorija `LESTVICA_STREZNIK` (Settings → Secrets and variables → Actions → Variables; ni skrivnost); brez nje opravilo konča brez dela. Nato opravilo preverjanja (ročni zagon) pošlje meje (`/v1/meje`); `GET /v1/stanje` mora vrniti `meje: true` in `sol: true`. Naslov Workerja gre v igro in v dovoljene gostitelje okolja (uporabnik potrdi v oknu za odobritev). Lokalno: `npx wrangler dev` (baza `--local`).
 
 ## Brezplačni paket
 

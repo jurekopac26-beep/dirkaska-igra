@@ -6,31 +6,79 @@
 // file of its own (.json: the record, or { vnos }).
 //   node tools/lestvica-preveri.mjs posnetek_spa_20261113-1010.rrp [več …] [--json]
 //   GAME_ROOT=<a copy of the game at the record's stamp> node tools/lestvica-preveri.mjs posnetek.rrp   (an older version's physics)
-//   LESTVICA_STREZNIK=https://… node tools/lestvica-preveri.mjs --krog   (ali --streznik <url>; žeton: LESTVICA_ZETON ali GitHub OIDC)
+//   LESTVICA_STREZNIK=https://… node tools/lestvica-preveri.mjs --krog [--meje]   (ali --streznik <url>; žeton: LESTVICA_ZETON ali GitHub OIDC)
 // --krog (Svetovna lestvica, seja 2: strežnik): the times waiting on the server (GET /v1/preveri) each checked (the options a plain time
 // trial's, the events the player's own inputs, car, upgrades and assist the packet's), replayed in Node and the verdicts sent (POST): ok
 // (Node's time if it differs; »preverjeno približno«: a run with crashes not exact to the bit, or an engine other than V8 or Node within
-// 0.2 %), zavrnjeno (a reason), ni-mogoce (another core, a key not a time trial's), sumljivo (events or options not known: not replayed,
-// left for a person). Only counts are printed (a public repository).
+// 0.2 %), zavrnjeno (a reason), ni-mogoce (a core stamp not in git's history, a key not a time trial's), sumljivo (events or options not
+// known: not replayed, left for a person). A time from an older version is replayed by that version's code (seja 3: a git worktree per core
+// stamp, removed after the round). --meje: the bounds sent first when the server's are another core's. Only counts are printed (a public
+// repository); the job is .github/workflows/lestvica-preveri.yml.
 // Exit 1 when a record fails. The user's recordings stay out of the repository (CLAUDE.md, Orodje za napake).
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 import zlib from 'node:zlib';
+import os from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { napake, readRrp } from './voznja.mjs';
-import { prave } from './lestvica-meje.mjs';
+import { prave, meje } from './lestvica-meje.mjs';
 
 const require = createRequire(import.meta.url);
 const { loadCore, ROOT } = require('../tests/lib/core.js');
-const { stampOf } = require('./stamp.js');
+const { stampOf, stampOfBytes } = require('./stamp.js');
 const L = require('../js/lestvica.js');
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 
-// the replaying code: the game's at GAME_ROOT (its own js/vnos.js if it has one), else this repository's
-export function koda() {
-  const f = fs.existsSync(path.join(ROOT, 'js', 'vnos.js')) ? path.join(ROOT, 'js', 'vnos.js') : path.join(REPO, 'js', 'vnos.js');
-  return { C: loadCore(), V: require(f), core: fs.existsSync(path.join(ROOT, 'js', 'core.js')) ? stampOf(path.join(ROOT, 'js', 'core.js')) : '?' };
+// the replaying code: the game's at `root` (GAME_ROOT, or an older version's worktree; its own js/vnos.js if it has one), else this repository's
+export function koda(root = ROOT) {
+  const f = fs.existsSync(path.join(root, 'js', 'vnos.js')) ? path.join(root, 'js', 'vnos.js') : path.join(REPO, 'js', 'vnos.js');
+  return { C: loadCore(root), V: require(f), core: fs.existsSync(path.join(root, 'js', 'core.js')) ? stampOf(path.join(root, 'js', 'core.js')) : '?' };
+}
+
+// the newest commit of `ref` whose js/core.js has the stamp `jedro` (tools/stamp.js --find's search, without printing), or null
+// (an unknown stamp, a shallow clone: the workflow checks out with fetch-depth 0); at most `max` versions of js/core.js read
+export function commitZaJedro(jedro, o = {}) {
+  if (!/^[0-9a-f]{8}$/.test(jedro || '')) return null;
+  const git = (a, input) => execFileSync('git', a, { cwd: o.cwd || REPO, input, maxBuffer: 1 << 30, stdio: ['pipe', 'pipe', 'ignore'] });
+  let shas;
+  try { shas = git(['log', '--format=%H', '-n', String(o.max || 400), o.ref || 'HEAD', '--', 'js/core.js']).toString().split('\n').filter(Boolean); } catch { return null; }
+  if (!shas.length) return null;
+  const buf = git(['cat-file', '--batch'], shas.map(h => h + ':js/core.js').join('\n') + '\n');
+  for (let j = 0, at = 0; j < shas.length && at < buf.length; j++) {
+    const nl = buf.indexOf(10, at), head = buf.toString('latin1', at, nl).split(' ');
+    if (head[1] === 'missing') { at = nl + 1; continue; }
+    const size = +head[2];
+    if (stampOfBytes(buf.subarray(nl + 1, nl + 1 + size)) === jedro) return shas[j];
+    at = nl + 1 + size + 1;
+  }
+  return null;
+}
+
+// the older versions of the game for one round: a worktree per core stamp (in the system's temp folder, removed by pospravi()),
+// each version's code ready for preveriCas; an unknown stamp is null (the time stays ni-mogoce: tried again next hour, after 7 days rejected)
+export function starejse(o = {}) {
+  const kes = new Map(), drevesa = [], git = (a) => execFileSync('git', a, { cwd: o.cwd || REPO, stdio: 'ignore' });
+  return {
+    koda(jedro) {
+      if (kes.has(jedro)) return kes.get(jedro);
+      let K = null;
+      try {
+        const sha = commitZaJedro(jedro, o);
+        if (sha) {
+          const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lestvica-' + jedro + '-'));
+          drevesa.push(dir); git(['worktree', 'add', '--detach', '--force', dir, sha]);
+          K = pripravi(koda(dir)); if (K.core !== jedro) K = null;
+        }
+      } catch { K = null; }
+      kes.set(jedro, K); return K;
+    },
+    pospravi() {
+      for (const d of drevesa) { try { git(['worktree', 'remove', '--force', d]); } catch { /* (removed below) */ } fs.rmSync(d, { recursive: true, force: true }); }
+      try { git(['worktree', 'prune']); } catch { /* (optional) */ }
+    },
+  };
 }
 
 // a file's record: a .rrp's header (vnos) or a .json (the record itself, or { vnos })
@@ -258,23 +306,47 @@ export async function krog(o = {}) {
   // (the token goes with every request: only https://, http:// only to this machine, for wrangler dev)
   if (!/^https:\/\/[^/?#@\s]+$/.test(base) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?$/.test(base)) throw new Error('ni naslova strežnika (--streznik ali LESTVICA_STREZNIK: https://…, http:// samo localhost ali 127.0.0.1)');
   const K = pripravi(o.K || koda()), T = L.keyTable(prave(K.C)), f = o.fetch || fetch, H = { Authorization: 'Bearer ' + await zeton(o) };
+  // the bounds (tools/lestvica-meje.mjs) sent when the server's are for another core (a new version of the game on main; o.meje, --meje)
+  if (o.meje) {
+    const rs = await f(base + '/v1/stanje'), st = rs.ok ? await rs.json() : null;
+    if (!st || st.jedro !== K.core) {
+      const M = (o.mejeIz || meje)({ jedro: K.core });
+      const rm = await f(base + '/v1/meje', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify(M) });
+      if (!rm.ok) throw new Error('meje: ' + rm.status);
+      console.log(`meje poslane: ${Object.keys(M.kljuci).length} ključev`);
+    }
+  }
   const r0 = await f(base + '/v1/preveri', { headers: H });
   if (!r0.ok) throw new Error('seznam: ' + r0.status);
   const casi = ((await r0.json()) || {}).casi || [], izidi = [];
+  // the code for a time: this version's, or the older one its core stamp names (a worktree; o.starejse for the tests)
+  const S = o.starejse || (o.K ? null : starejse()), tabele = new WeakMap([[K, T]]);
+  const zaCas = (c) => {
+    let z = c && c.zig; if (typeof z === 'string') { try { z = JSON.parse(z); } catch { z = null; } }
+    const j = isObj(z) ? z.jedro : null;
+    if (!j || j === K.core || !S) return [K, T];
+    const K2 = S.koda(j); if (!K2) return null;
+    if (!tabele.has(K2)) tabele.set(K2, L.keyTable(prave(K2.C)));
+    return [K2, tabele.get(K2)];
+  };
+  try {
   for (const c of casi) {
     let iz;
     try {
+      const KT = zaCas(c);
+      if (!KT) { izidi.push({ st: c.st, izid: 'ni-mogoce' }); continue; }
       const r = await f(`${base}/v1/preveri?st=${encodeURIComponent(c.st)}&del=vnos`, { headers: H });
       if (r.status === 404) iz = { st: c.st, izid: 'zavrnjeno', razlog: 'ni-posnetka' };
       else if (!r.ok) iz = { st: c.st, izid: 'ni-mogoce' };
       else {
         let rec = null;
         try { const j = JSON.parse(zlib.gunzipSync(Buffer.from(await r.arrayBuffer()), { maxOutputLength: 64e6 }).toString('utf8')); rec = j && j.vnos ? j.vnos : j; } catch { rec = null; }
-        iz = rec ? preveriCas(c, rec, K, T) : { st: c.st, izid: 'zavrnjeno', razlog: 'zapis' };
+        iz = rec ? preveriCas(c, rec, KT[0], KT[1]) : { st: c.st, izid: 'zavrnjeno', razlog: 'zapis' };
       }
     } catch { iz = { st: c.st, izid: 'ni-mogoce' }; }
     izidi.push(iz);
   }
+  } finally { if (S && !o.starejse) S.pospravi(); }
   for (let i = 0; i < izidi.length; i += 200) {
     const r = await f(base + '/v1/preveri', { method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ izidi: izidi.slice(i, i + 200) }) });
     if (!r.ok) throw new Error('izidi: ' + r.status);
@@ -289,10 +361,10 @@ export async function krog(o = {}) {
 if (import.meta.url === url.pathToFileURL(process.argv[1] || '').href) {
   const args = process.argv.slice(2), json = args.includes('--json'), si = args.indexOf('--streznik');
   if (args.includes('--krog')) {
-    krog({ streznik: si >= 0 ? args[si + 1] : undefined }).then(() => process.exit(0), (e) => { console.log('krog: ' + String(e && e.message).slice(0, 200)); process.exit(1); });
+    krog({ streznik: si >= 0 ? args[si + 1] : undefined, meje: args.includes('--meje') }).then(() => process.exit(0), (e) => { console.log('krog: ' + String(e && e.message).slice(0, 200)); process.exit(1); });
   } else {
     const files = args.filter((a, j) => !a.startsWith('--') && args[j - 1] !== '--streznik');
-    if (!files.length) { console.log('node tools/lestvica-preveri.mjs <posnetek.rrp | zapis.json> [več …] [--json] | --krog [--streznik <url>]'); process.exit(2); }
+    if (!files.length) { console.log('node tools/lestvica-preveri.mjs <posnetek.rrp | zapis.json> [več …] [--json] | --krog [--meje] [--streznik <url>]'); process.exit(2); }
     const K = koda(), N = napake(), out = []; let bad = 0;
     for (const f of files) {
       let rec = null, r;

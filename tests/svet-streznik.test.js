@@ -356,6 +356,16 @@ const MEJE = {
   r = await zJob('/v1/preveri', 'GET', null, null, { ...env, DB: lazniD1(), FETCH: async () => { throw new Error('mreža'); } });
   check('ključev ni mogoče dobiti: 503 oidc-kljuci', r.status === 503 && (await beri(r)).napaka === 'oidc-kljuci');
 
+  // 11b. the job the server trusts (OI.WORKFLOW): the file is there, runs only on the events the server accepts and only on main, asks for
+  // the OIDC token, has no secrets and uploads no artifacts (a public repository: the players' records stay off GitHub)
+  {
+    const wf = OI.WORKFLOW.slice(OI.REPO.length + 1).split('@')[0], f = path.join(__dirname, '..', wf), y = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+    const on = (/^on:\n((?: {2}.*\n|\n)*)/m.exec(y) || [])[1] || '', ev = [...on.matchAll(/^ {2}([a-z_]+):/gm)].map(m => m[1]);
+    check(`opravilo ${wf}: dogodki strežnika, samo main, OIDC, brez skrivnosti in artefaktov`, !!y && ev.length > 0 && ev.every(e => OI.DOGODKI.includes(e))
+      && /id-token: write/.test(y) && /github\.ref == 'refs\/heads\/main'/.test(y) && y.includes(`github.repository == '${OI.REPO}'`)
+      && !/secrets\.|upload-artifact|set -x/.test(y) && /--krog/.test(y), `${ev.join(',')}`);
+  }
+
   // 12. the router: CORS for the game's pages and a local server, OPTIONS, 405, 404, 500 without the body
   const izvor = async (o) => (await zahteva('/v1/stanje', { headers: { Origin: o } })).headers.get('Access-Control-Allow-Origin');
   check('CORS: GitHub Pages, aplikacija, lokalno', await izvor('https://jurekopac26-beep.github.io') === 'https://jurekopac26-beep.github.io' && await izvor('https://localhost') === 'https://localhost'
