@@ -259,18 +259,18 @@
   "jsMs": 1.04
  },
  "buriram": {
-  "calls": 195,
-  "maxCalls": 247,
-  "kverts": 736,
-  "maxKverts": 895,
-  "jsMs": 0.97
+  "calls": 201,
+  "maxCalls": 251,
+  "kverts": 738,
+  "maxKverts": 896,
+  "jsMs": 1.73
  },
  "sakhir": {
-  "calls": 192,
-  "maxCalls": 224,
-  "kverts": 733,
-  "maxKverts": 858,
-  "jsMs": 1.23
+  "calls": 205,
+  "maxCalls": 232,
+  "kverts": 767,
+  "maxKverts": 898,
+  "jsMs": 1.32
  },
  "lusail": {
   "calls": 181,

@@ -1027,12 +1027,12 @@
   }
  },
  "buriram": {
-  "meshes": 562,
-  "verts": 780317,
+  "meshes": 656,
+  "verts": 805769,
   "instances": 7870,
   "props": 76,
   "crowd": 29,
-  "world": "2368aaad",
+  "world": "4a7588c8",
   "propsHash": "140f165e",
   "floor": "f0b00851/9100",
   "groups": {
@@ -1044,6 +1044,7 @@
    "flags:MeshLambertMaterial": "1beaff7c",
    "buriram main grandstand crowd:MeshLambertMaterial": "4f6db367",
    "rsFar:MeshBasicMaterial": "b1d7738",
+   "rob:MeshLambertMaterial": "4b2fd7aa",
    "crowd:MeshLambertMaterial": "1739097e",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "ao:MeshBasicMaterial": "4c16c942",
@@ -1061,12 +1062,12 @@
   }
  },
  "sakhir": {
-  "meshes": 616,
-  "verts": 1002744,
+  "meshes": 726,
+  "verts": 1051098,
   "instances": 2920,
   "props": 81,
   "crowd": 27,
-  "world": "afbec175",
+  "world": "c9b83c39",
   "propsHash": "b86e8183",
   "floor": "3ccb06c6/10808",
   "groups": {
@@ -1078,6 +1079,7 @@
    "sakhir grandstand crowd:MeshLambertMaterial": "a6950710",
    "sakhir grandstand names:MeshLambertMaterial": "bd38fb44",
    "rsFar:MeshBasicMaterial": "6aa86d4",
+   "rob:MeshLambertMaterial": "9ba612ac",
    "crowd:MeshLambertMaterial": "26af18a5",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "3f7dace5",
