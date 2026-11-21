@@ -37,6 +37,8 @@ function withRandom(seed, fn) {
 // electric car and the truck in turn, by the track's place in the list)
 const raceOpts = (C, tt, phys) => ({ numAI: tt ? 0 : 12, playerGrid: tt ? 1 : 12, laps: 2, playerModel: C.MODELS[4], assist: 2, seed: 9, difficulty: 1, damage: 2, phys });
 const NEW_CARS = ['muscle', 'ev', 'truck'];
+// the car for /car: by index among tracks without their own vehicle (the tanker tracks do not shift it)
+const newCar = (C, tid) => NEW_CARS[C.TRACKS.filter(d => !d.vehicle).findIndex(d => d.id === tid) % NEW_CARS.length];
 const SETUPS = {
   race: { opts: raceOpts },
   demo: { opts: (C, tt, phys) => ({ numAI: 10, noPlayer: true, difficulty: 2, laps: 9999, seed: 11, phys }) },
@@ -44,7 +46,7 @@ const SETUPS = {
   crash: { opts: raceOpts, drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(80, Math.ceil(T.len / 30) + 20) : 60 },
   formula: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'formula') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of formulas: 20 s more to reach the pit repair)
   lm: { opts: (C, tt, phys) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === 'lm') }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (a field of prototypes)
-  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === NEW_CARS[C.TRACKS.findIndex(d => d.id === tid) % NEW_CARS.length]) }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (the truck is slow on tarmac: 20 s more to the pit repair)
+  car: { opts: (C, tt, phys, tid) => Object.assign(raceOpts(C, tt, phys), { playerModel: C.MODELS.find(m => m.id === newCar(C, tid)) }), drive: crashDrive, seconds: (T) => T.def.pit ? Math.max(100, Math.ceil(T.len / 30) + 30) : 60 },   // (the truck is slow on tarmac: 20 s more to the pit repair)
 };
 
 // the player in the crash set-up: autopilot, but from 6 s to 8.5 s full throttle and full left lock (into the barrier or
@@ -88,13 +90,17 @@ const SETUPS = {
 // report of 9. 11. 2026 at ~23.48) the electric car from 8.25 s (from 7 s it slides on the slope, no panel off; 8, 8.25 and 8.5 s all knock one off); with the road's crests and dips (KILLAR_RAZGIBANOST, 10. 11. 2026) the formula from 7.5 s (from 7 to 8 s in quarter seconds all knock one off, at 8.5 s none); since the car
 // falls over the edge as a body and is put back on the road where it went over (FALL in core.js, 10. 11. 2026; before up to 42 m on, from where it often
 // fell or crashed again) the rally car from 15.5 s and the electric car from 4 s (at 12.75 and 8.25 s each falls once and loses no panel; picked from 4 to 16 s in half seconds))
+// Svalvogar (the tanker on its own road, docs/proge-cisterna.md): at 6 s it is barely off the line (4 m/s) and only rubs the rock;
+// on the relief road (9. 11. 2026) it turns into the rock at its top speed at 30.5 s (a knock of 19 %), Manchewe's at 33 s (19 %:
+// before, its left was the drop or it only rubbed), Tapini's at 10 s, the best on that slowest road (6 m/s: 4 %); the tanker loses
+// no panel at its pace (the crash set-up's own rule in golden.test.js)
 // (Chapman's Peak's hills behind the barrier line, def.hills: from 6 s the left lock of the rally car and the prototype drives up the hill by the
 // start, no damage; tried from 4 s on in half seconds: rally 5.5, prototype 5)
 // (the starts moved to a straight, 15. 11. 2026: there the left lock first only dents or misses; tried from 4 s on in half seconds:
 // Chapman's Peak rally 9, formula 8, electric car 8, Tianmen rally 4 (muscle car 7, the start 20 m further on), Rio do Rastro rally 4.5, Bâlea rally 4, truck 4.5)
 // (zbirna Proge 2: Ujarrás muscle 6.5 (from 6 s it only dents the car, no panel off), Ghoufi rally 8 and electric car 9 (from 6 to 7.5 s mostly
 // only dents against the canyon rim, no panel off; 8-10 s each loses panels), Portobelo truck 6.5 (from 6 s no panel off); tried 4-10 s in half seconds)
-const CRASH_AT = { katu: 4.5, 'balea/rally': 4, 'balea/truck': 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 7, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 8, 'chapman/rally': 9, 'chapman/formula': 8, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 4.5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'portomoniz/lm': 4, london: 6.5, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5, 'zurich/rally': 5.5, 'killar/ev': 4, 'killar/rally': 15.5, 'killar/formula': 7.5, 'isuna/rally': 5, 'ujarras/muscle': 6.5, 'ghoufi/rally': 8, 'ghoufi/ev': 9, 'portobelo/truck': 6.5, canaries: 5, 'canaries/formula': 6, 'sogeri/muscle': 5, 'kanaba/truck': 4 };
+const CRASH_AT = { svalvogar: 30.5, manchewe: 33, tapini: 10, katu: 4.5, 'balea/rally': 4, 'balea/truck': 4.5, toronto: 6.5, montreal: 7, uncompahgre: 6.5, riverside: 6.5, 'tianmen/rally': 4, 'tianmen/muscle': 7, 'sani/rally': 4.5, 'sani/formula': 8.5, 'sani/lm': 9.5, 'sani/truck': 4, 'nring/rally': 4.5, 'chapman/ev': 8, 'chapman/rally': 9, 'chapman/formula': 8, 'chapman/lm': 5, 'maunakea/truck': 6.5, 'riverside/formula': 6, 'riverside/lm': 4, 'detroit/truck': 5, 'detroit/rally': 4, 'rastro/rally': 4.5, 'baldy/muscle': 4, 'uncompahgre/ev': 4, 'newcastle/truck': 4, 'seoul/muscle': 6.5, 'seoul/rally': 5, 'seoul/truck': 5, 'portomoniz/lm': 4, london: 6.5, 'silkeborg/rally': 9, 'izoard/muscle': 4, 'sacalobra/rally': 5, 'sacalobra/muscle': 4, dades: 7, 'ngorongoro/rally': 10, 'ella/formula': 4, 'ella/truck': 5.5, 'espinazo/rally': 5, 'zurich/rally': 5.5, 'killar/ev': 4, 'killar/rally': 15.5, 'killar/formula': 7.5, 'isuna/rally': 5, 'ujarras/muscle': 6.5, 'ghoufi/rally': 8, 'ghoufi/ev': 9, 'portobelo/truck': 6.5, canaries: 5, 'canaries/formula': 6, 'sogeri/muscle': 5, 'kanaba/truck': 4 };
 function crashDrive(C, race, k) {
   const P = race.player, t = k * DT, stuck = P.stuckT > 3 || P.wrongT > 3, id = race.track.def.id, t0 = CRASH_AT[id + '/' + P.m.id] || CRASH_AT[id] || 6;
   if (stuck) race.rescue(P);
@@ -103,9 +109,14 @@ function crashDrive(C, race, k) {
   return stuck;   // (true: rescued)
 }
 
+// the vehicle a track is driven in, whatever the player's own (def.vehicle: the tanker's short roads of docs/proge-cisterna.md), as
+// vehOf in game.js gives it; the set-ups and races with a car of their own (formula, lm, car) cannot happen there and are skipped
+const ownModel = (C, tid) => { const d = C.TRACKS.find(x => x.id === tid), M = d && d.vehicle && C.MODELS.find(m => m.id === d.vehicle); return M ? C.heirOf(M) : null; };
+
 function makeRace(C, tid, opts) {
-  const T = new C.Track(C.TRACKS.find(d => d.id === tid));
-  const race = new C.Race(T, opts(C, !!T.def.timeTrial, tid));
+  const T = new C.Track(C.TRACKS.find(d => d.id === tid)), o = opts(C, !!T.def.timeTrial, tid), own = ownModel(C, tid);
+  if (own && !o.noPlayer) o.playerModel = own;   // (the track's own vehicle: the tanker on its roads)
+  const race = new C.Race(T, o);
   race.start();
   return race;
 }
@@ -155,4 +166,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, ownModel, PHYSICS, SETUPS, NEW_CARS, newCar, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };

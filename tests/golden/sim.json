@@ -6662,5 +6662,285 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "svalvogar/race/cs": {
+  "digest": "56d1116a7f4a2c205261edc5",
+  "lead": 526.5,
+  "car0": [
+   -429.55,
+   -273.64
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "svalvogar/demo/cs": {
+  "digest": "ade2ead6271de5dc8270f6ef",
+  "lead": 484.4,
+  "car0": [
+   -75.78,
+   -21.07
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "svalvogar/upg/cs": {
+  "digest": "68b0d3d37e3685eb1268d0a6",
+  "lead": 551.9,
+  "car0": [
+   -453.3,
+   -282.76
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "svalvogar/crash/cs": {
+  "digest": "74fafd869073e5f30c9b88de",
+  "lead": 486.7,
+  "car0": [
+   -395.41,
+   -253.3
+  ],
+  "cover": {
+   "dmg": 0.19,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "fairymeadows/race/cs": {
+  "digest": "4e55f5b861746ae94359dffd",
+  "lead": 443.7,
+  "car0": [
+   -53.59,
+   100.44
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "fairymeadows/demo/cs": {
+  "digest": "899c56c180a43e2e406e6e91",
+  "lead": 462.9,
+  "car0": [
+   -56.48,
+   118.28
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "fairymeadows/upg/cs": {
+  "digest": "3b45649a5ff432e7620e9186",
+  "lead": 420.5,
+  "car0": [
+   -33.64,
+   104.65
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "fairymeadows/crash/cs": {
+  "digest": "146aa1f6fdc2510c75278354",
+  "lead": 419.8,
+  "car0": [
+   -33.43,
+   105.39
+  ],
+  "cover": {
+   "dmg": 0.19,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "manchewe/race/cs": {
+  "digest": "9feefea57f2812fea046e09d",
+  "lead": 490.5,
+  "car0": [
+   -6.08,
+   -67.44
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "manchewe/demo/cs": {
+  "digest": "168320febc2839566758a0e5",
+  "lead": 480.9,
+  "car0": [
+   -1.84,
+   2.01
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "manchewe/upg/cs": {
+  "digest": "42a0283a02bd334c85cfb8a0",
+  "lead": 502.4,
+  "car0": [
+   5.65,
+   -65.42
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "manchewe/crash/cs": {
+  "digest": "fac08aaf7af3392e92b1afcc",
+  "lead": 466.5,
+  "car0": [
+   -27.94,
+   -76.88
+  ],
+  "cover": {
+   "dmg": 0.19,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "yungas/race/cs": {
+  "digest": "95ccbf4ce825f3298661d545",
+  "lead": 434.8,
+  "car0": [
+   167.87,
+   -350.28
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "yungas/demo/cs": {
+  "digest": "0a7a39b3c8d3e3110568c350",
+  "lead": 460.2,
+  "car0": [
+   192.25,
+   -350.18
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "yungas/upg/cs": {
+  "digest": "ea8f5a6597f7521907ae3b02",
+  "lead": 437,
+  "car0": [
+   170.12,
+   -356.61
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "yungas/crash/cs": {
+  "digest": "0e92864090d44b917923c535",
+  "lead": 403.3,
+  "car0": [
+   144.8,
+   -334.03
+  ],
+  "cover": {
+   "dmg": 0.19,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tapini/race/cs": {
+  "digest": "173a169380a523343f691280",
+  "lead": 410.2,
+  "car0": [
+   232.11,
+   -199.06
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tapini/demo/cs": {
+  "digest": "6bd1104dcb509635e017db01",
+  "lead": 414.8,
+  "car0": [
+   230.77,
+   -202.45
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tapini/upg/cs": {
+  "digest": "a6809a49f8fb8d0a168fdb1c",
+  "lead": 416.9,
+  "car0": [
+   230.01,
+   -205.4
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "tapini/crash/cs": {
+  "digest": "8717804c162623d73177566d",
+  "lead": 403,
+  "car0": [
+   234.32,
+   -192.16
+  ],
+  "cover": {
+   "dmg": 0.04,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }
