@@ -76,9 +76,13 @@ const SECS = {
 // the short round's shares: with one track (Bâlea) measured on 9. 11. 2026, a track's share from SECS (5. 11., 43 real tracks then), on a
 // machine of middle speed (docs/krog-testov.md)
 const PO_PROGAH = ['golden.test.js', 'races.test.js', 'serpentine.test.js', 'lestvica.test.js', 'browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/perf.test.mjs', 'browser/gfx.test.mjs', 'browser/memory.test.mjs'];
-const PROGA_SECS = { 'browser/memory.test.mjs': [474, 74], 'browser/smoke.test.mjs': [498, 28], 'browser/perf.test.mjs': [65, 46], 'browser/gfx.test.mjs': [50, 21], 'browser/gfx2.test.mjs': [5, 0], 'browser/world.test.mjs': [17, 22], 'browser/world2.test.mjs': [5, 0], 'browser/memory2.test.mjs': [5, 0], 'browser/smoke2.test.mjs': [5, 0] };
+const PROGA_SECS = { 'browser/memory.test.mjs': [474, 74], 'browser/smoke.test.mjs': [498, 28], 'browser/perf.test.mjs': [65, 46], 'browser/gfx.test.mjs': [50, 21], 'browser/gfx2.test.mjs': [5, 0], 'browser/world.test.mjs': [17, 22], 'browser/world2.test.mjs': [5, 0], 'browser/memory2.test.mjs': [5, 0], 'browser/smoke2.test.mjs': [5, 0], 'golden.test.js': [5, 12], 'races.test.js': [5, 20] };
 let nProg = 0;   // (--kratek: how many tracks)
-const DEF_SECS = 60, secs = (f) => (nProg && PROGA_SECS[f] ? Math.round(PROGA_SECS[f][0] + nProg * PROGA_SECS[f][1]) : SECS[f] || DEF_SECS);
+// The node and fleet suites' long tests (over 3 min): s on GitHub (the jobs »Fizika, AI in dirke« and »Vozila«, 19. 11. 2026, 68 real
+// tracks), for their time limit (LIMIT_OF) as SECS for a browser test; without a time they had 15 min, too little on a cloud session's
+// machine: races.test.js took 16 min there (it grows with every track: Bâlea alone 8 s), golden 10 min, deli 8 min, more on a slower one
+const NODE_SECS = { 'races.test.js': 1381, 'golden.test.js': 843, 'deli.test.js': 484, 'police.test.js': 224, 'browser/fleet.test.mjs': 1070, 'browser/cars-ui.test.mjs': 186 };
+const DEF_SECS = 60, secs = (f) => (nProg && PROGA_SECS[f] ? Math.round(PROGA_SECS[f][0] + nProg * PROGA_SECS[f][1]) : SECS[f] || NODE_SECS[f] || DEF_SECS);
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
 // then in the list's own order; the same list always gives the same shares
 function shareOf(list, k, n) {
