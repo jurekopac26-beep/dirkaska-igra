@@ -138,7 +138,7 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
       return odg(String(u));
     };
     console.log = (...a) => vrstice.push(a.join(' '));
-    try { const r = await m.krog({ zeton: 'x', streznik: 'http://x/', K, fetch: f, ...o }); return { ...r, posted, glave, naslovi, vrstice }; } finally { console.log = log0; }
+    try { const r = await m.krog({ zeton: 'x', streznik: 'https://x/', K, fetch: f, ...o }); return { ...r, posted, glave, naslovi, vrstice }; } finally { console.log = log0; }
   }
   const gz = zlib.gzipSync(JSON.stringify(R));
   const k1 = await krog((u) => {
@@ -150,7 +150,7 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
   je('krog: posnetek se ujema', iz.find(x => x.st === 42) || {}, { izid: 'ok', t: false });
   je('krog: posnetka ni', iz.find(x => x.st === 43) || {}, Z('ni-posnetka'));
   check('krog: en POST, žeton kot je dan, naslovi brez dvojne poševnice', k1.posted.length === 1 && k1.glave.size === 1 && k1.glave.has('Bearer x')
-    && k1.naslovi.every(u => u.startsWith('http://x/v1/preveri')), `${k1.posted.length} POST, ${[...k1.glave].join('|')}`);
+    && k1.naslovi.every(u => u.startsWith('https://x/v1/preveri')), `${k1.posted.length} POST, ${[...k1.glave].join('|')}`);
   check('krog: ena vrstica s števili', k1.vrstice.length === 1 && k1.vrstice[0] === '2 preverjenih: 1 ok (0 približno), 1 zavrnjenih, 0 ni mogoče, 0 sumljivih', k1.vrstice.join(' | '));
   const k2 = await krog((u) => {
     const st = (/[?&]st=(\d+)/.exec(u) || [])[1];
@@ -166,6 +166,12 @@ for (const k of ['LESTVICA_ZETON', 'LESTVICA_STREZNIK', 'ACTIONS_ID_TOKEN_REQUES
   check('krog: vrstica 201', k2.vrstice[0] === '201 preverjenih: 0 ok (0 približno), 200 zavrnjenih, 1 ni mogoče, 0 sumljivih', k2.vrstice.join(' | '));
   const napaka = async (p) => { try { await p; return ''; } catch (e) { return String(e && e.message); } };
   check('krog: seznam zavrnjen', /^seznam: 401$/.test(await napaka(krog(() => new Response('{}', { status: 401 })))));
+  {
+    const f = async () => { throw new Error('omrežje'); }, slab = async (st) => /ni naslova strežnika/.test(await napaka(m.krog({ zeton: 'x', streznik: st, K, fetch: f })));
+    const dober = async (st) => !/ni naslova strežnika/.test(await napaka(m.krog({ zeton: 'x', streznik: st, K, fetch: f })));
+    check('krog: žeton samo prek https (http samo localhost, 127.0.0.1)', await slab('http://lestvica.example') && await slab('http://localhost.example') && await slab('ftp://x') && await slab('https://x@y')
+      && await dober('https://lestvica.example') && await dober('http://localhost:8787') && await dober('http://127.0.0.1:8787/'));
+  }
   check('krog brez naslova strežnika', /ni naslova strežnika/.test(await napaka(m.krog({ zeton: 'x', K, fetch: async () => { throw new Error('omrežje'); } }))));
 
   // --- the token: given, from the environment, from GitHub's OIDC (audience »lestvica«), else an error

@@ -255,7 +255,8 @@ export async function zeton(o = {}) {
 }
 export async function krog(o = {}) {
   const base = String(o.streznik || process.env.LESTVICA_STREZNIK || '').replace(/\/+$/, '');
-  if (!/^https?:\/\//.test(base)) throw new Error('ni naslova strežnika (--streznik ali LESTVICA_STREZNIK)');
+  // (the token goes with every request: only https://, http:// only to this machine, for wrangler dev)
+  if (!/^https:\/\/[^/?#@\s]+$/.test(base) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d{1,5})?$/.test(base)) throw new Error('ni naslova strežnika (--streznik ali LESTVICA_STREZNIK: https://…, http:// samo localhost ali 127.0.0.1)');
   const K = pripravi(o.K || koda()), T = L.keyTable(prave(K.C)), f = o.fetch || fetch, H = { Authorization: 'Bearer ' + await zeton(o) };
   const r0 = await f(base + '/v1/preveri', { headers: H });
   if (!r0.ok) throw new Error('seznam: ' + r0.status);

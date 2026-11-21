@@ -5,6 +5,8 @@ import { Napaka, unb64u, enc, isObj } from './ovoj.js';
 import { ura, dohvat } from './skupno.js';
 
 export const ISS = 'https://token.actions.githubusercontent.com', JWKS = ISS + '/.well-known/jwks';
+// the repository and its owner also by their numbers (the claims are strings): a repository of the same name made again (renamed, deleted) is another
+export const REPO_ID = '1389486838', LASTNIK_ID = '329582341';
 export const REPO = 'jurekopac26-beep/dirkaska-igra', REF = 'refs/heads/main', WORKFLOW = `${REPO}/.github/workflows/lestvica-preveri.yml@${REF}`;
 export const DOGODKI = ['schedule', 'workflow_dispatch', 'push'];
 const RS = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, URA_MS = 3600e3, ZNOVA_MS = 60e3, ZAMIK = 60;
@@ -46,7 +48,7 @@ export async function preveriOidc(req, env) {
   try { const key = await crypto.subtle.importKey('jwk', jwk, RS, false, ['verify']); ok = await crypto.subtle.verify(RS, key, unb64u(m[3]), enc(m[1] + '.' + m[2])); } catch (_) { ok = false; }
   if (!ok) throw new Napaka(401, 'oidc');
   const t = now / 1000, aud = Array.isArray(c.aud) ? c.aud : [c.aud];
-  if (c.iss !== ISS || !aud.includes(env.OIDC_AUD) || c.repository !== REPO || c.ref !== REF || c.workflow_ref !== WORKFLOW || !DOGODKI.includes(c.event_name)
+  if (c.iss !== ISS || !aud.includes(env.OIDC_AUD) || c.repository !== REPO || c.repository_id !== REPO_ID || c.repository_owner_id !== LASTNIK_ID || c.ref !== REF || c.workflow_ref !== WORKFLOW || !DOGODKI.includes(c.event_name)
     || typeof c.exp !== 'number' || c.exp + ZAMIK < t || (c.nbf != null && (typeof c.nbf !== 'number' || c.nbf - ZAMIK > t)) || (typeof c.iat === 'number' && c.iat - ZAMIK > t)) throw new Napaka(401, 'oidc');
   return c;
 }
