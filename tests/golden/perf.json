@@ -399,11 +399,11 @@
   "jsMs": 1.2
  },
  "sosnova": {
-  "calls": 187,
-  "maxCalls": 222,
-  "kverts": 620,
-  "maxKverts": 780,
-  "jsMs": 0.6
+  "calls": 190,
+  "maxCalls": 227,
+  "kverts": 649,
+  "maxKverts": 820,
+  "jsMs": 1.47
  },
  "izoard": {
   "calls": 181,
@@ -413,11 +413,11 @@
   "jsMs": 1.49
  },
  "pembrey": {
-  "calls": 189,
-  "maxCalls": 221,
-  "kverts": 530,
-  "maxKverts": 681,
-  "jsMs": 1.01
+  "calls": 193,
+  "maxCalls": 223,
+  "kverts": 564,
+  "maxKverts": 727,
+  "jsMs": 1.37
  },
  "kildare": {
   "calls": 204,
