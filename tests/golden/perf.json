@@ -63,11 +63,11 @@
   "jsMs": 1.08
  },
  "katu": {
-  "calls": 168,
-  "maxCalls": 198,
-  "kverts": 560,
-  "maxKverts": 747,
-  "jsMs": 0.9
+  "calls": 175,
+  "maxCalls": 208,
+  "kverts": 595,
+  "maxKverts": 807,
+  "jsMs": 0.71
  },
  "harju": {
   "calls": 193,
@@ -98,11 +98,11 @@
   "jsMs": 1.91
  },
  "tianmen": {
-  "calls": 189,
-  "maxCalls": 222,
-  "kverts": 610,
-  "maxKverts": 738,
-  "jsMs": 1.08
+  "calls": 195,
+  "maxCalls": 230,
+  "kverts": 652,
+  "maxKverts": 781,
+  "jsMs": 1.55
  },
  "uncompahgre": {
   "calls": 161,
