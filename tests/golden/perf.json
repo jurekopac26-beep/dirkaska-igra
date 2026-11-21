@@ -567,11 +567,11 @@
   "jsMs": 1.59
  },
  "hakone": {
-  "calls": 184,
-  "maxCalls": 196,
-  "kverts": 253,
-  "maxKverts": 273,
-  "jsMs": 4.38
+  "calls": 187,
+  "maxCalls": 200,
+  "kverts": 275,
+  "maxKverts": 310,
+  "jsMs": 2.33
  },
  "killar": {
   "calls": 146,
