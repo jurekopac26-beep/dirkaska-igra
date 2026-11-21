@@ -1312,17 +1312,18 @@
   }
  },
  "portobelo": {
-  "meshes": 249,
-  "verts": 268717,
+  "meshes": 263,
+  "verts": 390766,
   "instances": 1584,
   "props": 0,
   "crowd": 81,
-  "world": "4c9647c0",
+  "world": "c829d32a",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "254d7765",
    "-:MeshPhongMaterial": "ce91aa65",
+   "rob:MeshLambertMaterial": "52d66d62",
    "crowd:MeshLambertMaterial": "cd25d89c",
    "flags:MeshLambertMaterial": "8d45e55b",
    "ao:MeshBasicMaterial": "58bd535c",
@@ -1426,17 +1427,18 @@
   }
  },
  "aguascalientes": {
-  "meshes": 261,
-  "verts": 552593,
+  "meshes": 268,
+  "verts": 600929,
   "instances": 906,
   "props": 6,
   "crowd": 1,
-  "world": "89c4fe8c",
+  "world": "3edc26ab",
   "propsHash": "650d3a89",
   "floor": "bbd1c4c5/2688",
   "groups": {
    "-:MeshLambertMaterial": "8480bc8f",
    "-:MeshBasicMaterial": "180b5f09",
+   "rob:MeshLambertMaterial": "918cc358",
    "crowd:MeshLambertMaterial": "6fa60f04",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "605d1584",
