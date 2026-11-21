@@ -70,11 +70,11 @@
   "jsMs": 1.03
  },
  "tianmen": {
-  "calls": 181,
-  "maxCalls": 214,
-  "kverts": 546,
-  "maxKverts": 672,
-  "jsMs": 1.18
+  "calls": 189,
+  "maxCalls": 222,
+  "kverts": 610,
+  "maxKverts": 738,
+  "jsMs": 1.27
  },
  "rastro": {
   "calls": 202,
@@ -196,11 +196,11 @@
   "jsMs": 1.04
  },
  "ngorongoro": {
-  "calls": 144,
-  "maxCalls": 170,
-  "kverts": 310,
-  "maxKverts": 355,
-  "jsMs": 1.14
+  "calls": 150,
+  "maxCalls": 178,
+  "kverts": 328,
+  "maxKverts": 376,
+  "jsMs": 1.56
  },
  "medeu": {
   "calls": 165,
