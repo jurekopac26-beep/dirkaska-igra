@@ -166,12 +166,12 @@
   }
  },
  "caracoles": {
-  "meshes": 3243,
-  "verts": 1637933,
+  "meshes": 3321,
+  "verts": 1888223,
   "instances": 56153,
   "props": 277,
   "crowd": 427,
-  "world": "ca4b68a2",
+  "world": "965d6c86",
   "propsHash": "936a6b1c",
   "floor": "b5b3e5da/22736",
   "groups": {
@@ -179,7 +179,7 @@
    "-:MeshPhongMaterial": "d4963ea2",
    "-:MeshBasicMaterial": "3bc81a41",
    "crowd:MeshLambertMaterial": "552dba37",
-   "rob:MeshLambertMaterial": "c88697a5",
+   "rob:MeshLambertMaterial": "8ec449b6",
    "flags:MeshLambertMaterial": "390efa91",
    "ao:MeshBasicMaterial": "8aed127",
    "tyremarks:MeshBasicMaterial": "9f2976b6",
@@ -850,12 +850,12 @@
   }
  },
  "llogara": {
-  "meshes": 1956,
-  "verts": 770556,
+  "meshes": 1994,
+  "verts": 1012968,
   "instances": 53940,
   "props": 84,
   "crowd": 190,
-  "world": "656f8114",
+  "world": "526322e7",
   "propsHash": "624ff85f",
   "floor": "ac0be231/8708",
   "groups": {
@@ -863,7 +863,7 @@
    "-:MeshPhongMaterial": "dce678bb",
    "-:MeshBasicMaterial": "ea147380",
    "paragliders:MeshLambertMaterial": "1f9731fd",
-   "rob:MeshLambertMaterial": "38b29b2b",
+   "rob:MeshLambertMaterial": "c36729eb",
    "irFar:MeshLambertMaterial": "ca4cc7c1",
    "crowd:MeshLambertMaterial": "aaad09b9",
    "ao:MeshBasicMaterial": "832b8898",

@@ -56,11 +56,11 @@
   "jsMs": 1.21
  },
  "caracoles": {
-  "calls": 163,
-  "maxCalls": 204,
-  "kverts": 310,
-  "maxKverts": 453,
-  "jsMs": 1.32
+  "calls": 174,
+  "maxCalls": 220,
+  "kverts": 368,
+  "maxKverts": 536,
+  "jsMs": 1.19
  },
  "katu": {
   "calls": 146,
@@ -364,11 +364,11 @@
   "jsMs": 1.14
  },
  "llogara": {
-  "calls": 156,
-  "maxCalls": 168,
-  "kverts": 362,
-  "maxKverts": 423,
-  "jsMs": 1.34
+  "calls": 167,
+  "maxCalls": 182,
+  "kverts": 444,
+  "maxKverts": 555,
+  "jsMs": 0.94
  },
  "ella": {
   "calls": 171,
