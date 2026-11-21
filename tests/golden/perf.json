@@ -203,11 +203,11 @@
   "jsMs": 1.09
  },
  "medeu": {
-  "calls": 165,
-  "maxCalls": 187,
-  "kverts": 430,
-  "maxKverts": 508,
-  "jsMs": 1.39
+  "calls": 180,
+  "maxCalls": 200,
+  "kverts": 475,
+  "maxKverts": 556,
+  "jsMs": 1.33
  },
  "ella": {
   "calls": 179,
@@ -329,11 +329,11 @@
   "jsMs": 0.77
  },
  "mombasa": {
-  "calls": 117,
-  "maxCalls": 193,
-  "kverts": 275,
-  "maxKverts": 316,
-  "jsMs": 0.75
+  "calls": 127,
+  "maxCalls": 203,
+  "kverts": 314,
+  "maxKverts": 357,
+  "jsMs": 0.93
  },
  "isalo": {
   "calls": 114,
