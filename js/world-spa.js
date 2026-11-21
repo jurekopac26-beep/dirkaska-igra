@@ -742,6 +742,7 @@
         }
         addM(gv, gMat);
       }
+      if (World.ext.spaRob) out.rob = World.ext.spaRob({ excluded, inBrook, root, matV });   // the roadside ground from the camera behind the car: js/world-chase-bt9.js
       G.col = G.cov = P.edge = null;   // (build only)
     }
 

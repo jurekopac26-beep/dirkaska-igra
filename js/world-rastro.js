@@ -560,6 +560,7 @@
       out.dyn.rrMist = { L, root }; rrMist(out.dyn.rrMist, 0);
     }
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'rastro', { gH: caGround, slope: caSlope });   // (the roadside ground for the chase camera: js/world-chase-bt15.js)
     out.stats = { trees: nTrees, araucarias: nArauc, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), falls: nFalls, mist: out.dyn.rrMist.L.length };   // (read by the tests)
     return out;
   }
