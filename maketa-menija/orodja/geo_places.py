@@ -52,6 +52,10 @@ CFG = {
     'katu': dict(kind='real', start='Katu-Yaryk Pass', finish='Chulyshman', country='Russia', region='Altai', l1='altai'),
     'tianmen': dict(kind='real', start='Tianmen Mountain', finish='Tianmen Cave', country='China', region='Hunan', l1='hunan'),
     'bangsaen': dict(kind='real', start='Bang Saen', country='Thailand', region='Chonburi', l1='gulfthailand'),
+    # (their origins known, the start line of the track's own data: geo_match.py only checks them, match.json keeps the known ones)
+    'balea': dict(kind='real', start='Bâlea Valley', finish='Bâlea Lake', country='Romania', region='Făgăraș Mountains', l1='carpathians'),
+    'bathurst': dict(kind='real', start='Bathurst', country='Australia', region='New South Wales', l1='nsw'),
+    'livorno': dict(kind='real', start='Livorno', country='Italy', region='Tuscany', l1='tuscany'),
 }
 # the regional boxes (centre lat, lon; size km) shared by the tracks near each other
 L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 7.4, 700), 'japan': (34.9, 136.6, 800), 'colorado': (38.9, -105.1, 800), 'finland': (61.8, 24.9, 800),
@@ -59,7 +63,8 @@ L1 = {'alps': (46.6, 14.2, 760), 'benelux': (50.4, 6.4, 700), 'riviera': (43.9, 
       'tasmania': (-42.0, 146.6, 500), 'nsw': (-33.0, 150.8, 700), 'queensland': (-19.6, 146.4, 600), 'cape': (-33.7, 19.4, 600), 'drakensberg': (-29.4, 29.5, 600),
       'morocco': (31.7, -7.6, 800),
       'quebec': (45.9, -73.0, 600), 'victoria': (-37.3, 147.4, 600),
-      'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700)}
+      'andes': (-32.9, -70.4, 700), 'santacatarina': (-28.3, -49.8, 700), 'altai': (50.9, 87.9, 800), 'hunan': (29.0, 110.6, 800), 'gulfthailand': (13.3, 100.8, 700),
+      'carpathians': (45.6, 24.6, 700), 'tuscany': (43.5, 10.9, 600)}
 
 def bearing(la1, lo1, la2, lo2):
     p1, p2, dl = math.radians(la1), math.radians(la2), math.radians(lo2 - lo1)

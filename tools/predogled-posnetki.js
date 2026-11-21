@@ -1,6 +1,6 @@
 // The site's previews without a second copy of the heavy videos (tools/predogled.mjs; tests/predogled.test.js).
 // The menu's videos (assets/maps/: the flyovers fly-<id>.webm, the corners' videos corner-<id>.webm, the helicopter's flights before a race
-// heli-<id>.webm) are ~93 MB of a tree's ~210 MB, and the site holds main and up to three previews in 1 GB. A preview keeps no copy of a video
+// heli-<id>.webm) are ~93 MB of a tree's ~210 MB, and the site holds main and the previews in 1 GB. A preview keeps no copy of a video
 // that is the same file as main's: its menu plays main's own from the site's root (js/menu.js vidSrc: MENU.mainVideos, written here at the
 // end of the preview's js/menu-data.js). A video the pull request adds or changes stays in its preview and plays from there. A preview whose
 // menu does not know the list yet (its branch is older than this) keeps all its videos, so nothing in it is ever missing.
