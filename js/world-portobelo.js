@@ -463,6 +463,7 @@
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
+    if (World.ext.portobeloRob) World.ext.portobeloRob({ scen, excluded, seaD, inFort, inGlade, out });   // (the shore's bank and the forest floor by the road: js/world-realizem-bt.js)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     crowdFinish(CR, root, out);
