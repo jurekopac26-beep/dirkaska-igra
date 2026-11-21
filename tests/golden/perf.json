@@ -91,11 +91,11 @@
   "jsMs": 1.11
  },
  "livorno": {
-  "calls": 161,
-  "maxCalls": 189,
-  "kverts": 364,
-  "maxKverts": 479,
-  "jsMs": 3.13
+  "calls": 150,
+  "maxCalls": 180,
+  "kverts": 324,
+  "maxKverts": 414,
+  "jsMs": 2.61
  },
  "balea": {
   "calls": 166,
@@ -203,11 +203,11 @@
   "jsMs": 1.04
  },
  "medeu": {
-  "calls": 180,
-  "maxCalls": 200,
-  "kverts": 475,
-  "maxKverts": 556,
-  "jsMs": 1.33
+  "calls": 193,
+  "maxCalls": 212,
+  "kverts": 585,
+  "maxKverts": 683,
+  "jsMs": 1.47
  },
  "ella": {
   "calls": 180,
@@ -343,11 +343,11 @@
   "jsMs": 0.58
  },
  "portobelo": {
-  "calls": 122,
-  "maxCalls": 148,
-  "kverts": 294,
-  "maxKverts": 359,
-  "jsMs": 1.13
+  "calls": 116,
+  "maxCalls": 144,
+  "kverts": 274,
+  "maxKverts": 325,
+  "jsMs": 1.42
  },
  "eljem": {
   "calls": 109,
@@ -399,11 +399,11 @@
   "jsMs": 1.54
  },
  "canaries": {
-  "calls": 209,
-  "maxCalls": 223,
-  "kverts": 682,
-  "maxKverts": 803,
-  "jsMs": 1.25
+  "calls": 227,
+  "maxCalls": 245,
+  "kverts": 745,
+  "maxKverts": 870,
+  "jsMs": 1.45
  },
  "savusavu": {
   "calls": 191,

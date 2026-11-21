@@ -1,26 +1,25 @@
 /* =========================================================================
-   WORLD — the roadside ground from the camera behind the car (chase), the eightieth group of the real tracks: Portobelo and Livorno,
-   a third pass on two tracks whose verge and bank the twenty-third and forty-third groups (js/world-chase-bt43.js: Portobelo's strip to
-   the barrier, the bank to ~8 m and wide patches to ~55 m) and the eighteenth and forty-eighth (js/world-chase-bt48.js: Livorno's
-   patches 6-55 m past the barrier) already set. From behind the car both still showed the asphalt's edge as one clean line and, past
-   the first bands, only flat patches on one smooth face out to ~60 m. So here, as the seventy-fifth group did (js/world-chase-bt75.js):
-   the asphalt's edge in short streaks and the shoulder's grit inside the barrier; past ~8 m out to ~60 m wide low patches and what
-   stands on them. Portobelo (docs/proge/portobelo.md: »temne krošnje deževnega gozda in visoka drevesa nad zelenimi tlemi«, »temne
-   skale ob zalivu«): the wet brown earth on the edge, the forest's leaf litter, ferns and undergrowth, the green and lime grass with
-   tall tufts in the open, the dark (mid grey-brown, none near black) rocks only near the bay. Livorno (docs/proge/livorno.md:
-   »gozd, makija, naselja, peščenjak na strminah«, »pinije, primorski bori, črnike, ciprese in grmičje makije«): the pale dust on the
-   edge, the sandstone grit on the shoulder, the pines' needle litter, the macchia's low grey-green shrubs, the summer straw tufts and
-   the sandstone's blocks on the steep. Nothing in the towns (land cover 3), in the water, where another leg's road is nearer, far below
-   the road or on the steep, in the builders' excluded places (Portobelo: the sea, the fort, the glade; Livorno: the sea, the beaches,
-   the bridges). All in meshes of their own (softScen: 256 m chunks, no shadow); the terrain, the road, the barriers, the trees, the
-   horizon and the driving stay.
+   WORLD — the roadside ground from the camera behind the car (chase), the eightieth group of the real tracks: Medeu and Canaries (both
+   pass-builder roads, js/world-prelaz.js), a third pass on two tracks whose verge, bank and outer band the twentieth and thirty-fifth
+   groups (js/world-chase-bt35.js: Medeu) and the eighth and thirty-eighth (js/world-chase-bt38.js: Canaries) already set. From behind
+   the car both still showed the asphalt's edge as one clean line and, past the first bands, only sparse flat patches on one smooth face
+   out to ~60 m. So here, as the seventy-fifth group did (js/world-chase-bt75.js): the asphalt's edge in short streaks and the shoulder's
+   grit inside the barrier; past it out to ~60 m wide low patches and what stands on them. Medeu (docs/proge/medeu.md: »travniki, ki
+   rumenijo, z divjo jablano, glogom in brinom; siv granit z rožnatim odtenkom v pečinah in skalnih podorih«, the spruces on the shady
+   slopes): the granite's grey-pink grit on the edge, the yellowing meadow's straw and green, the low juniper and hawthorn, the spruces'
+   needle litter, the granite's blocks and scree on the steep. Canaries (docs/proge/canaries.md: »gost listnat gozd …, palme, grmovje in
+   trava«, »rdeče-rjava prst v vsekih, sivo-rjav andezit v pečinah«, »prst, ki jo dež spere na cesto«): the red-brown earth washed onto
+   the edge, the andesite's grit, the forest's leaf litter and undergrowth, the lush grass with tall tufts in the open, the andesite's
+   blocks on the steep. Nothing on built ground (land cover 3), in the water, where another leg's road is nearer, far below the road (the
+   sea under Canaries' drop) or in the builder's excluded places. All in meshes of their own (softScen: 256 m chunks, no shadow); the
+   terrain, the road, the barriers, the trees, the horizon and the driving stay.
    ========================================================================= */
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
-  const API = World.api, BT = API.chaseBt, { vary, rng } = API;
-  if (!BT || !BT.soil || !BT.tuft || !BT.cushion || !BT.softScen || !BT.mix3 || !rng || !vary) return;
-  const { soil, tuft, cushion, softScen, mix3 } = BT;
+  const API = World.api, BT = API.chaseBt, { vary, rng } = API, LK = API.PL_LOOK;
+  if (!BT || !BT.soil || !BT.tuft || !BT.cushion || !BT.softScen || !BT.mix3 || !BT.chain || !rng || !vary) return;
+  const { soil, tuft, cushion, softScen, mix3, chain } = BT;
   const mute = (c, k) => { const l = (c[0] + c[1] + c[2]) / 3, f = k || 0.95, g = 0.2; return [(c[0] * (1 - g) + l * g) * f, (c[1] * (1 - g) + l * g) * f, (c[2] * (1 - g) + l * g) * f]; };
   const C_ = (R, ab, j) => mute(vary(mix3(ab[0], ab[1], R()), R, j || 0.015));
 
@@ -88,83 +87,60 @@
   };
   const roadY = (near, gT, sw) => (x, z) => { const T = API.T, q = near(x, z); if (q.i < 0) return gT(x, z); const w = T.wAt ? T.wAt(q.i) : T.w, o = Math.abs(q.lat), y = T.hy[q.i];
     return o < w ? y + 0.02 : o < w + sw ? y + 0.012 - 0.032 * (o - w) / sw : Math.max(gT(x, z), y - 0.02); };
+  /* the pass builder's look hook: ctx = { root, matV, out, excluded } */
+  const hook = (id, seedA, seedB, K, C) => { if (LK && LK[id]) chain(LK[id], (ctx) => {
+    if (!ctx.out || !ctx.root || !ctx.matV) return;
+    try {
+      const near = API.vrNear, gT = API.caGround || API.vrGround, lc = API.vrLC, ex = ctx.excluded || (() => false);
+      if (!near || !gT) return;
+      const E = { near, gT, rY: roadY(near, gT, 0.5), lc, bad: ex, wet: (x, z) => (lc ? lc(x, z) === 5 : false), slope: API.caSlope || API.vrSlope }, m = { root: ctx.root, matV: ctx.matV };
+      ctx.out.robBt80 = edge(m, E, seedA, K);
+      ctx.out.pasBt80 = outer(m, E, seedB, C, {});
+    } catch (e) { console.error('chase-bt80 (' + id + '):', e); }
+  }); };
 
-  /* ---- Portobelo (js/world-portobelo.js: World.ext.portobeloRob({ scen, excluded, seaD, inFort, inGlade, root, out })) ---- */
-  const PB = {
-    worn: [[0.44, 0.37, 0.29], [0.48, 0.4, 0.31]], stone: [[0.5, 0.46, 0.4], [0.54, 0.5, 0.44]],   // (the wet brown earth on the edge, the grey grit)
-    gr: [[0.3, 0.45, 0.2], [0.34, 0.49, 0.22]], lime: [[0.38, 0.5, 0.24], [0.42, 0.53, 0.26]], earth: [[0.44, 0.36, 0.27], [0.48, 0.39, 0.29]],
-    leaf: [[0.5, 0.39, 0.26], [0.54, 0.42, 0.28]], fern: [[0.24, 0.43, 0.17], [0.29, 0.48, 0.2]], tall: [[0.3, 0.48, 0.19], [0.4, 0.54, 0.23]],
-    bush: [[0.22, 0.38, 0.16], [0.27, 0.43, 0.18]], rock: [[0.38, 0.36, 0.33], [0.43, 0.4, 0.36]],
+  /* ---- Medeu ---- */
+  const MD = {
+    worn: [[0.56, 0.53, 0.51], [0.6, 0.56, 0.54]], stone: [[0.62, 0.57, 0.55], [0.66, 0.6, 0.57]],   // (the granite's grey-pink grit)
+    straw: [[0.62, 0.58, 0.37], [0.67, 0.61, 0.39]], green: [[0.5, 0.53, 0.32], [0.54, 0.56, 0.35]], earth: [[0.5, 0.43, 0.34], [0.54, 0.46, 0.36]],
+    needle: [[0.46, 0.39, 0.3], [0.5, 0.42, 0.32]], juniper: [[0.3, 0.38, 0.25], [0.34, 0.41, 0.27]], haw: [[0.38, 0.42, 0.26], [0.42, 0.45, 0.28]],
+    tuft: [[0.64, 0.59, 0.36], [0.5, 0.54, 0.29]], granite: [[0.6, 0.56, 0.54], [0.66, 0.6, 0.57]],
   };
-  const portobelo = (ctx) => {
-    const T = API.T; if (!ctx.out || !ctx.root || !ctx.out.matV || !T || !T.br) return null;
-    const near = API.nrNear, gT = API.nrGround, lc = API.nrLC; if (!near || !gT) return null;
-    const { seaD, inFort, inGlade } = ctx, ex = ctx.excluded || (() => false);
-    const bad = (x, z) => ex(x, z) || (inFort && inFort(x, z, 6)) || (inGlade && inGlade(x, z));
-    const wet = (x, z) => !!seaD && seaD(x, z) > -1.5;   // (the barrier keeps the road side; the verge to it reaches the shore)
-    const E = { near, gT, rY: roadY(near, gT, 0.6), lc, bad, wet, slope: API.nrSlope }, m = { root: ctx.root, matV: ctx.out.matV };
-    const st = { rob: edge(m, E, 80101, { step: 3, seg: 3, rim: 0.55, grit: 0.6, sh: 0.5, worn: PB.worn, stone: PB.stone, verge: 0.6, vA: PB.earth, vB: PB.lime, vt: 0.5, vtC: PB.tall }) };
-    // past the barrier out to ~60 m (the forty-third group's bank only scattered small things to ~8 m)
-    st.pas = outer(m, E, 80102, { step: 3.5, n: 4, share: 0.75, from: 1.5, to: 60, pw: 1.25, drop: 18, maxSl: 1.4,
-      put: (soft, g, x, y, z, o, R, c, sl) => { const u = R(), h = R(), k = 1.2 + 1.0 * Math.min(1, o / 55), bay = !!seaD && seaD(x, z) > -14;
-        if (bay && u < 0.45) { cushion(soft.get(x, z), x, y + 0.04, z, (0.35 + h * 0.5) * k, 0.25 + h * 0.3, C_(R, PB.rock, 0.02), R); return 'skale'; }   // (»temne skale ob zalivu«)
-        if (c === 1) {   // under the rainforest: the leaf litter, the ferns, the undergrowth
-          if (u < 0.45) { soil(soft, g, x, z, (1.0 + R() * 1.2) * k, C_(R, R() < 0.7 ? PB.leaf : PB.earth), R, 0.05); return 'listje'; }
-          if (u < 0.75) { tuft(soft.get(x, z), x, y, z, (0.4 + h * 0.35) * k, 0.35 + h * 0.3, C_(R, PB.fern, 0.03), R, 6); return 'praprot'; }
-          cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.6) * k, 0.4 + h * 0.4, C_(R, PB.bush, 0.025), R); return 'grmi'; }
-        if (u < 0.55) { const v = R(), col = v < 0.5 ? C_(R, PB.gr) : v < 0.82 ? C_(R, PB.lime) : C_(R, PB.earth);
-          soil(soft, g, x, z, (1.8 + R() * 2.0) * k, col, R, 0.06); return 'zaplate'; }
-        if (u < 0.72 && sl < 0.9) { cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.7) * k, 0.4 + h * 0.4, C_(R, PB.bush, 0.025), R); return 'grmi'; }
-        tuft(soft.get(x, z), x, y, z, (0.4 + h * 0.35) * k, 0.45 + h * 0.4, C_(R, PB.tall, 0.03), R, 5); return 'sopi'; } }, {});
-    return st;
-  };
-  {
-    const base = World.ext && World.ext.portobeloRob;
-    if (World.ext) World.ext.portobeloRob = function (ctx) {
-      const r = (base ? base.call(this, ctx) : null) || {};
-      try { const s = portobelo(ctx); if (s) { r.robBt80 = s.rob; r.pasBt80 = s.pas; } } catch (e) { console.error('chase-bt80 (portobelo):', e); }
-      return r;
-    };
-  }
-
-  /* ---- Livorno (js/world-livorno.js: goreRob(…, 'livorno', { gH, slope, lc, near, bad })) ---- */
-  const LV = {
-    worn: [[0.56, 0.53, 0.47], [0.6, 0.57, 0.5]], stone: [[0.64, 0.6, 0.5], [0.68, 0.63, 0.53]],   // (the pale dust on the edge, the sandstone grit)
-    straw: [[0.66, 0.62, 0.42], [0.72, 0.67, 0.46]], earth: [[0.56, 0.51, 0.4], [0.6, 0.55, 0.43]], needle: [[0.54, 0.45, 0.33], [0.58, 0.48, 0.35]],
-    macchia: [[0.34, 0.4, 0.26], [0.39, 0.44, 0.29]], holm: [[0.28, 0.36, 0.22], [0.32, 0.4, 0.25]], green: [[0.42, 0.48, 0.28], [0.47, 0.52, 0.31]],
-    tuft: [[0.62, 0.6, 0.4], [0.7, 0.65, 0.44]], sand: [[0.7, 0.65, 0.53], [0.75, 0.7, 0.57]],
-  };
-  const livorno = (ctx, o) => {
-    const T = API.T, out = ctx.out; if (!out || !out.matV || !ctx.root || !T || !T.br || !o || !o.near || !o.gH) return null;
-    const near = o.near, gT = o.gH, lc = o.lc, ex = ctx.excluded || (() => false), bad = (x, z) => ex(x, z) || (o.bad ? o.bad(x, z) : false);
-    const E = { near, gT, rY: roadY(near, gT, 0.5), lc, bad, wet: (x, z) => (lc ? lc(x, z) === 5 : false), slope: o.slope }, m = { root: ctx.root, matV: out.matV };
-    const st = { rob: edge(m, E, 80201, { step: 4, seg: 2, rim: 0.5, grit: 0.55, sh: 0.45, worn: LV.worn, stone: LV.stone, verge: 0.5, vA: LV.earth, vB: LV.straw, vt: 0.45, vtC: LV.tuft }) };
-    // past the barrier out to ~60 m (the forty-eighth group's flat patches from ~6 m); the road is 19 km long, so a step a little wider
-    st.pas = outer(m, E, 80202, { step: 4.5, n: 3, share: 0.7, from: 1.5, to: 60, pw: 1.2, drop: 18, maxSl: 1.7,
+  hook('medeu', 80101, 80102,
+    { step: 3, seg: 3, rim: 0.5, grit: 0.6, sh: 0.45, worn: MD.worn, stone: MD.stone, verge: 0.55, vA: MD.earth, vB: MD.straw, vt: 0.5, vtC: MD.tuft },
+    { step: 3.5, n: 4, share: 0.75, from: 1.5, to: 60, pw: 1.25, drop: 20, maxSl: 1.8,
       put: (soft, g, x, y, z, d, R, c, sl) => { const u = R(), h = R(), k = 1.2 + 1.0 * Math.min(1, d / 55);
-        if (sl > 0.9) {   // »peščenjak na strminah«: the sandstone's blocks and its pale scree
-          if (u < 0.55) { cushion(soft.get(x, z), x, y + 0.05, z, (0.35 + h * 0.6) * k, 0.25 + h * 0.35, C_(R, LV.sand, 0.02), R); return 'bloki'; }
-          soil(soft, g, x, z, (1.0 + R() * 1.2) * k, C_(R, LV.sand, 0.025), R, 0.06); return 'pesc'; }
-        if (c === 1) {   // under the pines and the holm oaks: the needle litter, low holm-oak and macchia shrubs
-          if (u < 0.55) { soil(soft, g, x, z, (1.4 + R() * 1.6) * k, C_(R, R() < 0.7 ? LV.needle : LV.earth), R, 0.05); return 'iglice'; }
-          cushion(soft.get(x, z), x, y, z, (0.55 + h * 0.6) * k, 0.4 + h * 0.45, C_(R, R() < 0.5 ? LV.holm : LV.macchia, 0.025), R); return 'grmi'; }
-        if (c === 2) {   // the macchia: grey-green shrubs on the brown-grey ground
-          if (u < 0.55) { cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.7) * k, 0.4 + h * 0.5, C_(R, LV.macchia, 0.025), R); return 'makija'; }
-          soil(soft, g, x, z, (1.4 + R() * 1.6) * k, C_(R, R() < 0.6 ? LV.earth : LV.straw), R, 0.05); return 'zaplate'; }
-        if (u < 0.6) { const v = R(), col = v < 0.55 ? C_(R, LV.straw) : v < 0.85 ? C_(R, LV.earth) : C_(R, LV.green);
+        if (sl > 0.9 || c === 4) {   // »siv granit z rožnatim odtenkom v pečinah in skalnih podorih«
+          if (u < 0.55) { cushion(soft.get(x, z), x, y + 0.05, z, (0.35 + h * 0.6) * k, 0.25 + h * 0.35, C_(R, MD.granite, 0.02), R); return 'bloki'; }
+          soil(soft, g, x, z, (1.0 + R() * 1.2) * k, C_(R, MD.granite, 0.025), R, 0.06); return 'pesc'; }
+        if (c === 1) {   // under the spruces: the needle litter and low juniper
+          if (u < 0.6) { soil(soft, g, x, z, (1.4 + R() * 1.6) * k, C_(R, R() < 0.7 ? MD.needle : MD.earth), R, 0.05); return 'iglice'; }
+          cushion(soft.get(x, z), x, y, z, (0.5 + h * 0.6) * k, 0.35 + h * 0.4, C_(R, MD.juniper, 0.025), R); return 'grmi'; }
+        if (u < 0.6) { const v = R(), col = v < 0.5 ? C_(R, MD.straw) : v < 0.82 ? C_(R, MD.green) : C_(R, MD.earth);
           soil(soft, g, x, z, (1.8 + R() * 2.0) * k, col, R, 0.06); return 'zaplate'; }
-        if (u < 0.75 && sl < 0.8) { cushion(soft.get(x, z), x, y, z, (0.5 + h * 0.6) * k, 0.35 + h * 0.4, C_(R, LV.macchia, 0.025), R); return 'grmi'; }
-        tuft(soft.get(x, z), x, y, z, (0.35 + h * 0.35) * k, 0.4 + h * 0.4, C_(R, LV.tuft, 0.03), R, 5); return 'sopi'; } }, {});
-    return st;
+        if (u < 0.74 && sl < 0.8) { cushion(soft.get(x, z), x, y, z, (0.5 + h * 0.6) * k, 0.35 + h * 0.4, C_(R, R() < 0.5 ? MD.juniper : MD.haw, 0.025), R); return 'grmi'; }
+        tuft(soft.get(x, z), x, y, z, (0.35 + h * 0.35) * k, 0.4 + h * 0.4, C_(R, MD.tuft, 0.03), R, 5); return 'sopi'; } });
+
+  /* ---- Canaries ---- */
+  const CN = {
+    worn: [[0.52, 0.42, 0.33], [0.56, 0.45, 0.35]], stone: [[0.55, 0.52, 0.45], [0.59, 0.55, 0.48]],   // (the red-brown earth washed on, the andesite's grit)
+    earth: [[0.54, 0.42, 0.3], [0.58, 0.45, 0.32]], gr: [[0.42, 0.5, 0.26], [0.46, 0.53, 0.28]], lime: [[0.48, 0.54, 0.29], [0.52, 0.57, 0.31]],
+    leaf: [[0.5, 0.44, 0.32], [0.54, 0.47, 0.34]], under: [[0.26, 0.38, 0.19], [0.3, 0.42, 0.21]], tall: [[0.32, 0.47, 0.2], [0.4, 0.52, 0.24]],
+    andesite: [[0.5, 0.47, 0.41], [0.56, 0.52, 0.45]],
   };
-  if (World.ext && World.ext.goreRob) {
-    const base = World.ext.goreRob;
-    const f = function (ctx, id, o) {
-      const r = base.call(this, ctx, id, o);
-      if (id === 'livorno' && o) try { const s = livorno(ctx, o); if (s && r && typeof r === 'object') { r.robBt80 = s.rob; r.pasBt80 = s.pas; } } catch (e) { console.error('chase-bt80 (livorno):', e); }
-      return r;
-    };
-    Object.assign(f, base);   // (LOOK and whatever else the later groups hang on it)
-    World.ext.goreRob = f;
-  }
+  hook('canaries', 80201, 80202,
+    { step: 4, seg: 2, rim: 0.55, grit: 0.55, sh: 0.45, worn: CN.worn, stone: CN.stone, verge: 0.55, vA: CN.earth, vB: CN.gr, vt: 0.5, vtC: CN.tall },
+    { step: 4.5, n: 2, share: 0.7, from: 1.5, to: 60, pw: 1.25, drop: 18, maxSl: 1.6,   // (the forest's trees already fill the busiest place: fewer here)
+
+      put: (soft, g, x, y, z, d, R, c, sl) => { const u = R(), h = R(), k = 1.2 + 1.0 * Math.min(1, d / 55);
+        if (sl > 0.95 || c === 4) {   // »rdeče-rjava prst v vsekih, sivo-rjav andezit v pečinah«
+          if (u < 0.45) { cushion(soft.get(x, z), x, y + 0.05, z, (0.35 + h * 0.55) * k, 0.25 + h * 0.3, C_(R, CN.andesite, 0.02), R); return 'bloki'; }
+          soil(soft, g, x, z, (1.0 + R() * 1.2) * k, C_(R, CN.earth, 0.025), R, 0.06); return 'vsek'; }
+        if (c === 1) {   // under the dense broadleaf forest: the leaf litter and the undergrowth
+          if (u < 0.5) { soil(soft, g, x, z, (1.2 + R() * 1.4) * k, C_(R, R() < 0.7 ? CN.leaf : CN.earth), R, 0.05); return 'listje'; }
+          cushion(soft.get(x, z), x, y, z, (0.55 + h * 0.6) * k, 0.4 + h * 0.45, C_(R, CN.under, 0.025), R); return 'grmi'; }
+        if (u < 0.55) { const v = R(), col = v < 0.5 ? C_(R, CN.gr) : v < 0.8 ? C_(R, CN.lime) : C_(R, CN.earth);
+          soil(soft, g, x, z, (1.8 + R() * 2.0) * k, col, R, 0.06); return 'zaplate'; }
+        if (u < 0.72 && sl < 0.9) { cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.7) * k, 0.4 + h * 0.45, C_(R, CN.under, 0.025), R); return 'grmi'; }
+        tuft(soft.get(x, z), x, y, z, (0.4 + h * 0.35) * k, 0.45 + h * 0.4, C_(R, CN.tall, 0.03), R, 5); return 'sopi'; } });
 })();
