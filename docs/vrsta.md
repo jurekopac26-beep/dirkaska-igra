@@ -28,6 +28,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 |---|---|---|
 | Kamera za avtom, tla ob cesti, skupina 43 (drugi prehod): Luanda, Portobelo (`js/world-chase-bt43.js`, v #821) | biketraveler | PR #884, vprašanje `chase-skupina-43` 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 49 (drugi prehod): Montréal, Spa (barve tal v `js/world-montreal.js`, `js/world-spa.js`, v #821) | biketraveler | PR #890, vprašanje `chase-skupina-49` 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 58 (drugi prehod): Gudauri, Montréal (`js/world-chase-bt58.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 37 (drugi prehod): Sakhir, Seul (`js/world-chase-bt37.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 39 (drugi prehod): Pembrey, Pikes Peak (`js/world-chase-bt39.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 33: Aguascalientes, Bathurst (`js/world-chase-bt33.js`, v #821) | biketraveler | v delu 21. 11. |
