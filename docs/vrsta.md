@@ -91,6 +91,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 10.10a | #770 Garaža: slike v gumbih | jure.kopac26 | slike prejšnjega in naslednjega avta v gumbih garaže takoj ob odprtju in menjavi avta (prej šele po nekaj sekundah); ni proga, zato pred progami; prekrivanje s #653 (biketraveler) v `js/garage.js`, kaj #653 prevzame, je v opisu PR; povezani testi lokalno zeleni; predaja v opisu PR; osnutek do vrste, združi seja Združevanje |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
