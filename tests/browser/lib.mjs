@@ -1,5 +1,5 @@
 // Shared helpers for the browser tests (Playwright + headless Chromium with software WebGL).
-import { chromium } from 'playwright';
+import { chromium, resolvePlaywright } from '../lib/playwright.mjs';   // (repo's node_modules, else NODE_PATH)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,7 +51,7 @@ export function serve(root = ROOT) {
 export function pwNote() {
   try {
     const want = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8')).devDependencies.playwright;
-    const have = JSON.parse(fs.readFileSync(createRequire(import.meta.url).resolve('playwright/package.json'), 'utf8')).version;
+    const have = JSON.parse(fs.readFileSync(resolvePlaywright('playwright/package.json'), 'utf8')).version;
     return have === want ? '' : `Playwright ${have} is not the repo's ${want} (package.json; npm ci installs it): the references were made with its Chromium, whose Math differs in the last bit`;
   } catch (_) { return ''; }
 }
