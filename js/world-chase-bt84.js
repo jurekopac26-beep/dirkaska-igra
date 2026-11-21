@@ -127,6 +127,10 @@
     const kerb = (i, sd) => !!(T.curb && T.curb[i]) && (sd * T.k[i] > 0 || Math.abs(T.k[i]) > 1 / 70);   // (as js/world-rbring.js draws them)
     const trap = (i, sd) => { const g = sd > 0 ? T.gravR : T.gravL; if (!g) return false; for (let d = -4; d <= 4; d++) if (g[((i + d) % N + N) % N]) return true; return false; };
     const R = rng(84300);
+    // the circuit's verge ribbon lies over the terrain (js/world-rbring.js, rbVerge; nrNear: d from the centre line, dd past the nearest barrier: 0 at the edge, -4 cm at 1.2 m, -10 cm, at least 6 cm over
+    // the ground): the patches go on it, not under it
+    const gV = (x, z) => { const q = nrNear(x, z), g = nrGround(x, z) + 0.06; if (q.i < 0) return g; const e = q.d - w;
+      return Math.max(g, T.hy[q.i] + (e <= 0 ? 0 : e <= 1.2 ? -0.04 * e / 1.2 : -0.04 - 0.06 * Math.min(1, (e - 1.2) / 0.6))); };
     // the worn edge: past the asphalt's edge (no kerb there), a flat patch of the sand through the mown grass
     for (let i = 0; i < N; i += Math.max(1, Math.round(2.6 / T.ds))) for (const sd of [-1, 1]) {
       if (R() > 0.6) continue;
@@ -134,8 +138,8 @@
       if (kk || trap(i, sd) || pit(i * T.ds, sd)) continue;
       const bar = sd > 0 ? T.br[i] : T.bl[i], r = 0.3 + R() * 0.35, o = w + 0.08 + r + R() * 0.5; if (o + r > bar - 0.5) continue;
       const a = (R() - 0.5) * 2.6, x = T.px[i] + T.nx[i] * sd * o + T.tx[i] * a, z = T.pz[i] + T.nz[i] * sd * o + T.tz[i] * a;
-      const q = nrNear(x, z); if (q.i < 0 || Math.abs(q.i - i) * T.ds > 6 || q.dd < w + r * 0.7 || ex(x, z)) continue;
-      soil(scen, nrGround, x, z, r, R() < 0.55 ? BKC.worn(R) : BKC.sand(R), R, 0.035); st.rob++;
+      const q = nrNear(x, z); if (q.i < 0 || Math.abs(q.i - i) * T.ds > 6 || q.d < w + r * 0.7 || q.dd > 0 || ex(x, z)) continue;
+      soil(scen, gV, x, z, r, R() < 0.55 ? BKC.worn(R) : BKC.sand(R), R, 0.02); st.rob++;
     }
     // behind the barriers, ~2 to ~60 m: what stands in the woods and the wet hollows
     for (let i = 0; i < N; i += Math.max(1, Math.round(3.2 / T.ds))) for (const sd of [-1, 1]) {
@@ -145,7 +149,7 @@
         const d = 2 + Math.pow(R(), 1.4) * 58, oo = bar + d, a = (R() - 0.5) * 5, h = R(), r = R();
         if (R() > (d < 20 ? 0.8 : 0.5)) continue;
         const x = T.px[i] + T.nx[i] * sd * oo + T.tx[i] * a, z = T.pz[i] + T.nz[i] * sd * oo + T.tz[i] * a;
-        const q = nrNear(x, z); if (q.i < 0 || Math.abs(q.i - i) * T.ds > oo + 10 || q.dd < Math.min(oo, bar + 1.6) || ex(x, z)) continue;
+        const q = nrNear(x, z); if (q.i < 0 || Math.abs(q.i - i) * T.ds > oo + 10 || q.dd < 1.6 || ex(x, z)) continue;
         if (nrSlope && nrSlope(x, z) > 0.55) continue;
         const c = nrLC(x, z); if (c !== 0 && c !== 1 && c !== 2) continue;
         const wet = c === 2 || (nrLCf ? nrLCf(x, z, 2) : 0) > 0.2, wood = c === 1 || (nrLCf ? nrLCf(x, z, 1) : 0) > 0.4, y = nrGround(x, z);
@@ -153,7 +157,7 @@
         else if (wood) {
           if (r < 0.5) { cushion(scen.get(x, z), x, y, z, 0.6 + h * 0.5, 0.55 + h * 0.5, r < 0.3 ? BKC.spruce(R) : BKC.pine(R), R); st.grmi++; }   // (young spruces and pines)
           else if (r < 0.85) { tuft(scen.get(x, z), x, y, z, 0.28 + h * 0.12, 0.35 + h * 0.2, BKC.grass(R), R, 5); st.sopi++; }
-          else { soil(scen, nrGround, x, z, 0.8 + h * 0.8, BKC.worn(R), R, 0.04); st.zaplate++; }
+          else { soil(scen, gV, x, z, 0.8 + h * 0.8, BKC.worn(R), R, 0.04); st.zaplate++; }
         } else if (r < 0.12) { tuft(scen.get(x, z), x, y, z, 0.22 + h * 0.1, 0.2 + h * 0.12, BKC.grass(R), R, 5); st.sopi++; }   // (the mown lawn: a rare low tuft)
       }
     }

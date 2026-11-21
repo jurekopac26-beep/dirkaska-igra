@@ -161,11 +161,11 @@
   "jsMs": 0.91
  },
  "bikernieki": {
-  "calls": 188,
+  "calls": 189,
   "maxCalls": 236,
-  "kverts": 458,
-  "maxKverts": 522,
-  "jsMs": 1.86
+  "kverts": 469,
+  "maxKverts": 530,
+  "jsMs": 2.62
  },
  "zandvoort": {
   "calls": 200,
