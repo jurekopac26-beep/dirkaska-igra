@@ -27,13 +27,13 @@
      drying to straw, its straw tufts at the barrier's foot; on the bank the same soil and grass, the grey-brown bark and leaf litter of
      the eucalyptus, grey stones on the steeper parts, the ichu's tufts and, where it is gentle, here and there the blue-grey agave's low
      rosette (as bt11 has it further out). Nothing by the terrace walls (the builder's excluded places). */
-  const CUV = { step: 2.6, share: 0.55, foot: 0.3,
+  const CUV = { step: 3.4, share: 0.5, foot: 0.3,
     patch: (R) => { const r = R();
       return r < 0.35 ? P(R, [0.46, 0.42, 0.32], [0.5, 0.45, 0.34], 0.7, 0.9)   // (grey-brown stony soil)
         : r < 0.7 ? P(R, [0.47, 0.5, 0.29], [0.52, 0.53, 0.32], 0.8, 1.0)   // (short puna grass)
         : P(R, [0.58, 0.56, 0.36], [0.62, 0.59, 0.38], 0.7, 1.0); },   // (ichu drying to straw)
     tuft: (R) => vary(mix3([0.7, 0.64, 0.4], [0.58, 0.57, 0.33], R()), R, 0.03) };
-  const CUB = { step: 2.6, n: 3, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.85, bushShare: 0.2,
+  const CUB = { step: 3.4, n: 2, reach: 7, share: 0.45, maxSl: 1.5, sl: 0.85, bushShare: 0.2,
     patch: (R, sl) => { const r = R();
       return sl > 0.9 && r < 0.5 ? P(R, [0.52, 0.51, 0.47], [0.56, 0.54, 0.5], 0.6, 0.8)   // (grey stones)
         : r < 0.3 ? P(R, [0.46, 0.42, 0.32], [0.5, 0.45, 0.34], 0.9, 1.1)   // (soil)
@@ -50,13 +50,13 @@
      the grass, the forest's dark litter under the trees, green tufts and, where it is gentle, ferns' low cushions. Nothing in a stream's
      bed (the builder's bad), in the tea rows, the fields or the town (land cover 6, 7, 5). */
   const lc = (x, z) => (API.vrLC ? API.vrLC(x, z) : 0);
-  const ELV = { step: 2.6, share: 0.55, foot: 0.32,
+  const ELV = { step: 3.4, share: 0.5, foot: 0.32,
     patch: (R) => { const r = R();
       return r < 0.4 ? P(R, [0.52, 0.34, 0.24], [0.56, 0.37, 0.26], 0.7, 0.9)   // (red laterite)
         : r < 0.8 ? P(R, [0.3, 0.46, 0.17], [0.36, 0.5, 0.2], 0.8, 1.0)   // (short wet grass)
         : P(R, [0.27, 0.27, 0.17], [0.31, 0.3, 0.19], 0.7, 0.9); },   // (dark forest litter)
     tuft: (R) => vary(mix3([0.3, 0.5, 0.17], [0.4, 0.55, 0.21], R()), R, 0.03) };
-  const ELB = { step: 2.6, n: 3, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.85, bushShare: 0.35,
+  const ELB = { step: 3.4, n: 2, reach: 7, share: 0.45, maxSl: 1.5, sl: 0.85, bushShare: 0.35,
     patch: (R, sl) => { const r = R();
       return sl > 0.9 && r < 0.45 ? P(R, [0.47, 0.45, 0.42], [0.52, 0.5, 0.46], 0.7, 0.9)   // (grey gneiss grit)
         : r < 0.35 ? P(R, [0.52, 0.34, 0.24], [0.56, 0.37, 0.26], 0.9, 1.1)   // (laterite of the cuts)
