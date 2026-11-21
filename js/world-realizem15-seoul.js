@@ -89,7 +89,7 @@
           scen.get(mx, mz).quadO(u.p, v.p, v.f, u.f, rim, [mx + nx * sg * 20, (u.p[1] + v.p[1]) / 2, mz + nz * sg * 20]); }
       }
       let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-      for (let x = x0; x <= x1; x += 2) for (let z = z0; z <= z1; z += 2) if (inPoly(pts, x, z)) exclPush(x, z, 2.0);
+      for (let x = x0; x <= x1; x += 0.5) for (let z = z0; z <= z1; z += 0.5) if (inPoly(pts, x, z)) exclPush(x, z, 0.55);   // (just the outline itself: a tree beside it stays)
     };
 
     // a point of OSM by the road: where it falls inside the race's barriers, moved out behind them along its own station (as the world does)
@@ -108,7 +108,7 @@
     for (const [id, x0, z0] of BENCHES) {
       const p = place(x0, z0, 1.2); if (!p) { st.skipped.push(id); continue; }
       const { x, z, i } = p; if ([-0.8, 0, 0.8].some(a => inBld(x + T.tx[i] * a, z + T.tz[i] * a))) { st.skipped.push(id); continue; }
-      seat(scen.get(x, z), x, floor(x, z), z, i, 1.6); exclPush(x, z, 1.4); st.benches++;
+      seat(scen.get(x, z), x, floor(x, z), z, i, 1.6); for (const a of [-0.55, 0, 0.55]) exclPush(x + T.tx[i] * a, z + T.tz[i] * a, 0.6); st.benches++;
     }
 
     /* ---- the bicycle docking station: as many docks as its capacity, each on its own small pad ---- */
@@ -117,7 +117,7 @@
       if (p) for (let k = 0; k < n; k++) {
         const a = (k - (n - 1) / 2) * 0.7, x = p.x + T.tx[p.i] * a, z = p.z + T.tz[p.i] * a, y = floor(x, z), g = scen.get(x, z); if (inBld(x, z)) { st.skipped.push(id); continue; }
         box(g, x, y - 0.06, z, 0.72, 0.12, 1.5, T.hd[p.i], PAD); box(g, x, y + 0.06, z, 0.14, 0.78, 0.36, T.hd[p.i], DOCK, DOCKT);
-        exclPush(x, z, 1.6); st.docks++;
+        exclPush(x, z, 1.0); st.docks++;
       }
     }
 
@@ -126,7 +126,7 @@
       const [id, x0, z0] = BOXES, p = place(x0, z0, 1.5);
       if (p) [0.3, 0.45, 0.6].forEach((h, k) => {
         const a = (k - 1) * 1.3, x = p.x + T.tx[p.i] * a, z = p.z + T.tz[p.i] * a; if (inBld(x, z)) { st.skipped.push(id); return; }
-        box(scen.get(x, z), x, floor(x, z) - 0.05, z, 0.76, h + 0.05, 0.6, T.hd[p.i], PLY, PLYT); exclPush(x, z, 1.4); st.boxes++;
+        box(scen.get(x, z), x, floor(x, z) - 0.05, z, 0.76, h + 0.05, 0.6, T.hd[p.i], PLY, PLYT); exclPush(x, z, 0.9); st.boxes++;
       });
     }
 
@@ -139,7 +139,7 @@
         for (const [u, v] of [[-1.6, -1.0], [1.6, -1.0], [-1.6, 1.0], [1.6, 1.0]]) box(g, x + T.tx[i] * u + ox * v, y - 0.2, z + T.tz[i] * u + oz * v, 0.16, 2.6, 0.16, ang, POST);
         gable(g, x, y + 2.4, z, 4.0, 2.9, 1.0, ang, TILE, [0.5, 0.36, 0.26]);
         box(g, x + ox * 0.7, y + 0.42, z + oz * 0.7, 2.6, 0.08, 0.45, ang, WOOD);
-        exclPush(x, z, 3); st.shelters++;
+        exclPush(x, z, 2.6); st.shelters++;
       }
     }
 
