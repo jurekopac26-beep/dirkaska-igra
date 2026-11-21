@@ -23,8 +23,10 @@
 //       a straight: by turns left and right, a hollow (half), a ridge or a rut that crosses the road at a slant; a third of the hollows
 //         with a ridge on the other half (the whole road tilted one way), where no drop is on that side;
 //       a left-hander: a hollow along its inside or a ridge on its outside; before a right-hander (within its length + 40 m): on the right;
-//       none in a bend tighter than 60 m or an S, none within the quiet places (the start, the finish, the checkpoints, the bridge, the
-//       passing places) or from 20 m before to 40 m after a crest; never a ridge on a drop's side (it would lean the car to the edge);
+//       in a bend tighter than 60 m or an S a shallow rut along the inside; one after another with their ends overlapping, the whole road
+//       wrinkled from the start to the finish (the user, 13. 11. 2026 at ~0.36: »naredi da je nagubana celotna cesta od zacetka do konca«),
+//       none within the quiet places (the start, the finish, the checkpoints, the bridge, the passing places) or from 10 m before to 30 m
+//       after a crest (CW); never a ridge on a drop's side (it would lean the car to the edge);
 //       lower in tighter bends (to 0.4 at 60 m), and no feature leaves the road steeper across than 15 % between its edges' strips or
 //       deeper than 0.36 m (at the height --k the file's switch stands at). The road's edges stay as they were (killarCross fades the
 //       relief to nothing over the last 1.8 m: a rut by the drop is closed by a bank). The three highest ridges at least 250 m apart are
@@ -54,6 +56,7 @@ const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? +proce
 const FL = arg('--let', 0.5), FL2 = arg('--let-rob', 0.35), GAP = arg('--razmik', 100), SEED = arg('--seme', 7), A = 9, CHECK = process.argv.includes('--check'), TILT = process.argv.includes('--nagib');
 const RE_K = /const KILLAR_RAZGIBANOST = ([\d.]+);/, RE_U = /const KILLAR_UND = \{.*\};/, SRC = coreSource();
 if (!RE_K.test(SRC) || !RE_U.test(SRC)) throw new Error('js/tracks/killar.js: KILLAR_RAZGIBANOST or the line KILLAR_UND not found');
+const CW = [10, 30];   // (the road as it is by a crest, m before and after it: the take-off and the landing; on the tilt's 10 m samples, the crests 10 m apart from the start)
 const K_FILE = +SRC.match(RE_K)[1], KT = arg('--k', K_FILE) || 1, orig = Math.random, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // a fresh Core with Killar's KILLAR_RAZGIBANOST = k and KILLAR_UND = und (null: the file's), and the track built as the game builds it
@@ -106,7 +109,7 @@ const reliefOf = (ruts) => (s, d) => { let y = 0, sl = 0;   // (the ruts, ridges
 // 2-3 % one way or the other, the steps between them smoothed over ~15 m: in a right-hander tighter than 150 m the right side lower
 // (banked into the bend), in such a left-hander the left; where a drop is on one side (within 20 m) the hill's side lower 2 of 3 (in a bend
 // into the hill always), toward the drop at most 1 % (0.5-0.9 %); none at the quiet places (on to the samples whose span reaches them, eased
-// in over 15 m) and from 20 m before to 40 m after a crest (eased over 15 m: the take-off and the landing on the road as it is). It never lifts the road (its
+// in over 15 m) and from 10 m before to 30 m after a crest (CW, eased over 10 m: the take-off and the landing on the road as it is). It never lifts the road (its
 // higher side at the road's height, the lower side down, closed by a bank at the edge): where it and the ruts add up to more than the
 // ruts' limits (15 % across, 0.36 m deep where the cars drive, below) or toward a drop's edge, within its last 1.8 m, to more than 0.9 %, less of
 // it there (the ruts stay). Every 10 m from the road's start, tenths of a percent at 1 (crestS: the crests, m along the road)
@@ -122,7 +125,7 @@ function camberFor(crestS, ruts) {
   }
   const box = (a, r) => { const o = new Float64Array(N); for (let i = 0; i < N; i++) { let t = 0; for (let d = -r; d <= r; d++) t += a[clamp(i + d, 0, N - 1)]; o[i] = t / (2 * r + 1); } return o; };
   const ease = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }, tilt = box(box(tl, 3), 3);
-  const zones = Q.map(([a, b]) => [a - CS, b + CS, 15, 15]).concat(crestS.map(c => [c - 20, c + 40, 15, 15]));
+  const zones = Q.map(([a, b]) => [a - CS, b + CS, 15, 15]).concat(crestS.map(c => [c - CW[0], c + CW[1], 10, 10]));
   for (let i = 0; i < N; i++) { const s = i * ds; let f = 1; for (const [a, b, ra, rb] of zones) f = Math.min(f, ease(s < a ? (a - s) / ra : s > b ? (s - b) / rb : 0));
     let c = tilt[i] * f; if (dropIn(s - 20, s + 20, -1)) c = Math.min(c, 0.009); if (dropIn(s - 20, s + 20, 1)) c = Math.max(c, -0.009); tilt[i] = c; }
   const camber = []; for (let k = 0; k < nC; k++) { const f = Math.min(N - 1, k * CS / ds), i = Math.min(N - 2, Math.floor(f)); camber.push(Math.round((tilt[i] + (tilt[i + 1] - tilt[i]) * (f - i)) / KT * 1000) || 0); }
@@ -182,7 +185,7 @@ else {
   }
   // ---- the relief across the road: ruts, hollows and ridges on one half of it (its own draws: the dips stay where they are) ----
   const R2 = rng(SEED + 1000), ruts = [], calls = [], cores = [], r3 = (x) => Math.round(x * 1000) / 1000;
-  const nearCrest = (a, b) => crests.some(c => b > c.s - 20 && a < c.s + 40);   // (the take-off and the landing on the road as it is)
+  const nearCrest = (a, b) => crests.some(c => b > c.s - CW[0] && a < c.s + CW[1]);   // (the take-off and the landing on the road as it is)
   // the right-handers tighter than 150 m (the drop on their outside: where the cars of a race run wide over the edge): the road banked
   // into the bend, a wide hollow along its inside, the deeper the tighter the bend (0.2-0.32 m), over the bend's length (cut clear of the
   // quiet places and the crests)
@@ -203,10 +206,11 @@ else {
     const q = quietEnd(s, ext); if (q) { s = q + 1; continue; }
     if (nearCrest(s - p - 1.5 * a, s + p + 1.5 * a) || cores.some(([x, y]) => s + p + a > x && s - p - a < y)) { s += 6; continue; }
     const [klo, khi] = kRange(s - ext, s + ext), kk = Math.max(-klo, khi);
-    if (kk > 1 / 60 || (khi > 1 / 300 && klo < -1 / 300)) { s += 6; continue; }   // (a tight bend, an S: the road as it is, or banked above)
-    const amp = clamp(1 - 0.6 * (kk - 1 / 300) / (1 / 60 - 1 / 300), 0.4, 1) / KT;   // (gentler the tighter the bend; the heights as designed at KT)
+    const tight = kk > 1 / 60 || (khi > 1 / 300 && klo < -1 / 300);   // (a tight bend, an S: a shallow rut along the inside where the car is, 13. 11. 2026: the whole road wrinkled)
+    const amp = (tight ? 0.35 : clamp(1 - 0.6 * (kk - 1 / 300) / (1 / 60 - 1 / 300), 0.4, 1)) / KT;   // (gentler the tighter the bend; the heights as designed at KT)
     let kind, sd;
-    if (khi > 1 / 300 || kRange(s, s + ext + 40)[1] > 1 / 150) { kind = 'T'; sd = 1; }   // a right-hander, or one right after: a rut along its inside (banked into the bend)
+    if (tight) { kind = 'T'; sd = kH[idx(s)] >= 0 ? 1 : -1; p = 0; }
+    else if (khi > 1 / 300 || kRange(s, s + ext + 40)[1] > 1 / 150) { kind = 'T'; sd = 1; }   // a right-hander, or one right after: a rut along its inside (banked into the bend)
     else if (klo < -1 / 300) { sd = u < 0.6 ? -1 : 1; kind = sd < 0 ? 'T' : 'R'; }   // a left-hander: a rut along its inside or a ridge along its outside
     else { sd = side; side = -side; kind = u < 0.5 ? 'T' : u < 0.78 ? 'R' : 'X'; }   // a straight: one side, then the other
     if (kind === 'R' && dropIn(s - ext, s + ext, sd)) kind = 'T';   // (no ridge on a drop's side: its outer flank falls towards the edge)
@@ -216,7 +220,7 @@ else {
       if (u5 < 0.3 && kk <= 1 / 300 && !dropIn(s - ext, s + ext, -sd)) put(-sd * (1.6 + 0.6 * u4), (0.1 + 0.08 * u3) * amp, 1.8 + 0.4 * u2); }   // (with a ridge on the other half: the whole road leans)
     else if (kind === 'R') put(sd * (1.5 + 0.8 * u3), (0.12 + 0.1 * u2) * amp, 1.8 + 0.4 * u4);
     else put(0, -(0.16 + 0.1 * u2) * amp, 2 + 0.4 * u4, -sd * 2.2 / (p + a));   // (a rut from one side over to the other)
-    s += (p + a) * (1.3 + 0.6 * R2());
+    s += (p + a) * (0.85 + 0.35 * R2());   // (one after another, their ends overlapping: no level road between them, 13. 11. 2026)
   }
   // no steeper across than 15 % where the cars drive (to 2.7 m from the middle) and no deeper than 0.36 m, at KT: where the ruts and the
   // ridges add up to more, the ones there lowered (the banked bends' hollows stay)
@@ -224,7 +228,7 @@ else {
   for (let pass = 0; pass < 4; pass++) for (let k = bowls; k < ruts.length; k++) { const r = ruts[k], e = (r[5] || 0) + 1.5 * r[3]; let over = 1;
     for (let s = S0 + r[0] - e; s <= S0 + r[0] + e; s += 2) for (let d = -2.7; d <= 2.71; d += 0.3) { const [y, sl] = relief(s, d); over = Math.max(over, Math.abs(sl) / 0.15, Math.abs(y) / 0.36); }
     if (over > 1.001) r[2] = r2(r[2] / over * 0.98); }
-  for (const r of ruts.slice(bowls).sort((x, y) => x[0] - y[0])) if (r[2] * KT >= 0.17 && !calls.some(c => r[0] - c[0] < 250) && !crests.some(c => Math.abs(c.s - S0 - r[0]) < 120) && calls.length < 8) calls.push([r[0], Math.sign(r[1])]);   // (the co-driver's 'crest left / right': the highest ridges)
+  for (const r of ruts.slice(bowls).sort((x, y) => x[0] - y[0])) if (r[2] * KT >= 0.15 && !calls.some(c => r[0] - c[0] < 250) && !crests.some(c => Math.abs(c.s - S0 - r[0]) < 120) && calls.length < 8) calls.push([r[0], Math.sign(r[1])]);   // (the co-driver's 'crest left / right': the highest ridges, 0.15 m or more: with the road wrinkled all along, 13. 11. 2026, fewer stand out higher)
   ruts.sort((x, y) => x[0] - y[0]);
   const camber = camberFor(crests.map(c => c.s), ruts);
   const line = (cr) => ({ N, L: r2(T0.len), S0: r2(S0), crests: cr.map(c => [r1(c.s - S0), r2(c.h), c.w]), dips, ruts, calls, camber });

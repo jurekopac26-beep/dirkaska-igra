@@ -32,6 +32,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Katu-Yaryk, Russia', desc: 'The legendary descent of the Katu-Yaryk pass in the Altai (Russia): a time trial on gravel from the edge of the Ulagan plateau down seven hairpins and a steep traverse above the canyon to the Chulyshman river, 559 m lower. Grades up to 22 %, no rivals, you race against the clock.' },   // (the English page: Jezik · Language)
     alt: [1242,683],
     start: [0,0], finish: [-102.6,-1455.5], cps: [[787.3,119.2],[977.4,127.2],[932.3,-288.8],[429.7,-967.9]],
+    cross: typeof MakadamCesta !== 'undefined' ? MakadamCesta.cross({ seed: 11 }) : undefined,   // (the gravel's ruts, ridges and tilt across, js/makadam-cesta.js; the user, 13. 11. 2026)
     roadSurface: 'makadam', runoff: 0.55, inner: 3, side: 3.2, gradeForce: true, elevSmooth: 14,
     elev: KATU_H.map((h, i) => [i / (KATU_H.length - 1), h / 10]),
     // the dust off the dry Altai gravel (Render): a pale brown cloud that hangs on in the still air of the canyon

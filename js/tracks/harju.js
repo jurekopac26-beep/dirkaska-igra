@@ -32,6 +32,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Harju, Finland', desc: 'The city special stage in the middle of Jyväskylä, on the Harju ridge, in its 2025/2026 layout: tarmac, gravel and cobbles. The start on Yliopistonkatu, the sprint to the first hairpin left, up the avenue past the hillside steps to the famous turn onto the gravel, the steep climb to the Vesilinna water tower, a tight left and down past the Harju stadium, right onto the gravel, the new technical part by the Lyseo school with two hairpins, Pitkäkatu with two bale chicanes past the old pine, gravel through the park, left onto the cobbles at the Normaalikoulu school and the flying finish at Norssi corner. A summer evening at 19:05, the slopes full of fans.' },   // (the English of the track card: js/lang.js)
     cityStage: true,
     start: [-205.9,158.1], finish: [-404.6,330.6], cps: [[-318.1,39.9],[-353.2,-242.1]],
+    cross: typeof MakadamCesta !== 'undefined' ? MakadamCesta.cross({ seed: 23 }) : undefined,   // (the gravel's ruts, ridges and tilt across, js/makadam-cesta.js; the user, 13. 11. 2026)
     roadSurface: 'asphalt', offSurface: 'paving', noCurbs: true, noGravel: true, gradeForce: true, runoff: 0.4, side: 2.5, inner: 2.5, elevSmooth: 6,
     // the dust off the dry esker gravel (sand and fine gravel, yellower than a forest road's), only where the road is gravel
     dust: { rate: 1.2, life: 2.0, size: 1.3, s0: 2.2, rise: 1.5, alpha: 1.0, drag: 0.6, col: [0.84, 0.76, 0.6] },

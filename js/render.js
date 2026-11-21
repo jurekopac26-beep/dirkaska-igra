@@ -9704,6 +9704,11 @@ const Render = (function () {
     return ownRnd(() => { const q = m.clone(), cg = m.userData.cg; if (cg) cgMat(q, cg.glass, cg.key); return q; });   // (the 11's panels, the formula's paint, a burning car's copies: their programs' keys kept)
   }
 
+  // a rival's cloud off gravel and dirt (the user's, Killar, 13. 11. 2026: too much dust behind the rivals, the player's own car hard to see):
+  // it disperses fast (RDUST.life of the player's cloud's time) and is fainter the farther that car is from the one the view follows (cam.vcx,
+  // vcz: the player's), RDUST.a near, down to RDUST.far's share at RDUST.d[1] m and beyond. Render only; the player's own cloud as it was
+  const RDUST = { life: 0.45, a: 0.7, far: 0.15, d: [12, 60] };
+  function rivalDust(x, z) { const d = Math.hypot(x - (cam.vcx || 0), z - (cam.vcz || 0)); return RDUST.a * (1 - (1 - RDUST.far) * Core.sstep(RDUST.d[0], RDUST.d[1], d)); }
   function offRoad(c, wi, surf) {   // a wheel off the road: on the grass or in the gravel, or on a makadam verge past the road's edge
     if (surf === 2 || surf === 3) return true;
     if (surf !== 5 && surf !== 6) return false;
@@ -9816,11 +9821,11 @@ const Render = (function () {
           const vxs = c.vx * 0.25 + (Math.random() - 0.5) * 2.4, vzs = c.vz * 0.25 + (Math.random() - 0.5) * 2.4;
           if (surf === 3 || surf === 5) {
             // big, lingering dust cloud on dirt/gravel (the classic rally rooster tail)
-            const sh = 0.92 + Math.random() * 0.12, dc = snowy() ? SNOW_DUST : world && world.dust;   // (a track may raise its own cloud, def.dust: Ouninpohja's; a world may give its own dust colour: Pikes Peak's pale granite; winter: powder snow)
-            if (dust && snowy()) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.5 * D.alpha, -0.04, 1.3 * D.drag, yb);
-            else if (dust) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, D.col[0] * sh, D.col[1] * sh, D.col[2] * sh, 0.42 * D.alpha, -0.04, 1.3 * D.drag, yb);
-            else if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, 1.8 + Math.random() * 1.0, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55, -0.05, 1.2, yb);
-            else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, 1.5 + Math.random() * 0.9, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42, -0.04, 1.3, yb);
+            const sh = 0.92 + Math.random() * 0.12, dc = snowy() ? SNOW_DUST : world && world.dust, rd = c.isPlayer ? null : rivalDust(px, pz), lf = rd ? RDUST.life : 1, af = rd || 1;   // (a track may raise its own cloud, def.dust: Ouninpohja's; a world may give its own dust colour: Pikes Peak's pale granite; winter: powder snow)
+            if (dust && snowy()) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life * lf, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.5 * D.alpha * af, -0.04, 1.3 * D.drag, yb);
+            else if (dust) particles.emit(px, 0.35 + yb, pz, vxs, (0.7 + Math.random() * 0.9) * D.rise, vzs, (1.5 + Math.random() * 0.9) * D.life * lf, 1.1 * D.s0, (5.2 + Math.random() * 2.6) * D.size, D.col[0] * sh, D.col[1] * sh, D.col[2] * sh, 0.42 * D.alpha * af, -0.04, 1.3 * D.drag, yb);
+            else if (dc) particles.emit(px, 0.35 + yb, pz, vxs, 0.8 + Math.random() * 1.1, vzs, (1.8 + Math.random() * 1.0) * lf, 1.2, 6 + Math.random() * 3, dc[0] * sh, dc[1] * sh, dc[2] * sh, 0.55 * af, -0.05, 1.2, yb);
+            else particles.emit(px, 0.35 + yb, pz, vxs, 0.7 + Math.random() * 0.9, vzs, (1.5 + Math.random() * 0.9) * lf, 1.1, 5.2 + Math.random() * 2.6, 0.84 * sh, 0.69 * sh, 0.48 * sh, 0.42 * af, -0.04, 1.3, yb);
             if (Math.random() < 0.28) particles.emit(px, 0.2 + yb, pz, -c.vx * 0.04 + (Math.random() - 0.5) * 2.5, 2 + Math.random() * 2.5, -c.vz * 0.04 + (Math.random() - 0.5) * 2.5, 0.5 + Math.random() * 0.35, 0.3, 0.24, 0.32, 0.26, 0.19, 0.95, 14, 0.4, yb); // flying stones
           }
           else {
