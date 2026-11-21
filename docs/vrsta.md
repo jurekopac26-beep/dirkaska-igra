@@ -80,7 +80,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 8. (združeno v 7.)
 9. Trki + Poškodbe (#608), biketraveler, ~5. 12.
 10. Proge v dveh delih: #569 + #494 popravljene ~17.–20. 11.; nove proge potrjene 13. 11. (19 prog do 70), partyslo in croatiadata
-11. Preleti (#246), partyslo, ~7. 12.
+11. Preleti (#246 s preleti iz #753), partyslo: **čim prej** (vrstica 10.12; #569 je že na `main`; odločitev uporabnika 16. 11. 2026 ob ~3.45 prek Mateja, tabla #382, komentar 6905955445; en PR: Matej, tabla #382, komentarja 6956629243, točka 1, in 6957630615)
 12. Grafika (E, S, G), jure.kopac26 in partyslo, ~8. 12.
 13. 5 tovornjakov, biketraveler, ~16. 12.
 
@@ -90,7 +90,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 10.12 | #246 | **za Trki (#608), ~8. 12.**; preleti: na novo samo štirje obstoječi (Nürburg, Pikes Peak, Štajerska, Spa); stalna hitrost brez šiva, tudi pri nekrožnih progah brez pospeševanja; ostalih 11 prog počaka na boljšo grafiko (`claude/preleti-posnetki`) | partyslo | v delu; na `main` po »ok« na Spa (`preleti-ok`) |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
 | 10.14 | #511 | Analiza kroga (predlog I12): po vsakem krogu se minizemljevid obarva rdeče/zeleno proti najboljšemu krogu, pod uro razlika in nasvet (npr. »Prezgodaj zaviraš pred 3. ovinkom«), na rezultatih okvir z večjim zemljevidom in izbiro kroga (`js/analiza.js`, priklopi v `js/game.js`; `docs/analiza-kroga.md`); ni proga, gre pred progami | biketraveler | pripravljen; 20. 11. spojen svež `main` brez sporov, povezani testi 21/21 OK, osnutek do vrste; mesto lahko premakne Matej/partyslo |
 
