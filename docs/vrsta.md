@@ -92,5 +92,10 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
+| 10.14 | #708 Start odprte ceste | Start na 9 pravih odprtih cestah kot na gorski dirki; fizika nespremenjena | biketraveler | svež `main` 21. 11., povezani testi posamično; osnutek do vrste, združi seja Združevanje |
+| 10.15 | #787 Velika polja | Cenejši oddaljeni avti na dirkah z več kot 22 avti (»ok« 20. 11.); samo risanje | biketraveler | svež `main` 21. 11., povezani testi posamično; osnutek do vrste, združi seja Združevanje |
+| 10.16 | #671 Makadam | Razgibana makadamska cesta (Harju, Katu-Jaryk, Pikes Peak makadam, Killar; »ok« 13. 11.); osnova zdaj `main` | biketraveler | svež `main` 21. 11., golden 4 prog obnovljen; osnutek do vrste, združi seja Združevanje |
+| 10.17 | #511 Analiza kroga | Zemljevid izgube in pridobitve časa po krogu in nasvet (I12) | biketraveler | svež `main` 21. 11.; osnutek do vrste, združi seja Združevanje |
+| 10.18 | #825 Dolina pod robom | Kamera za avtom: dolina pod robom na 7 gorskih progah (odločitev `obzorje-chase-1` = 1) | biketraveler | svež `main` 21. 11.; osnutek do vrste, združi seja Združevanje |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
