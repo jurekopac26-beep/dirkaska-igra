@@ -7,7 +7,9 @@
 // and as a share of the autopilot's braking there) and the speed at the apex. Only clean laps count: a spin, a trip off the road, a hit, a
 // rescue, the pits or a changing weather leave the lap out (why: in the summary); a lap's parts beside another car or right behind one (and a
 // second either side), under the safety car or on the standing start of the first lap are left out of it. The game's own code reads the file
-// (Napake.rrp.unpack) and finds the car on the track (Core.Track.query: s and d; tests/lib/core.js).
+// (Napake.rrp.unpack) and finds the car on the track (Core.Track.query: s and d; tests/lib/core.js). A file of Najboljše vožnje
+// (najboljse_<proga>_<LLLLMMDD-UUMM>.rrp, js/najboljse.js: a track's best runs, one recording after another) is read recording by
+// recording, each as a file of its own (<file> #1, #2 …); a file of one recording as ever.
 //   node tools/voznja.mjs posnetek_bathurst_20261105-1432.rrp posnetek_bathurst_20261105-1510.rrp
 //   node tools/voznja.mjs mapa/*.rrp --out profil.json [--korak 5]
 //   node tools/voznja.mjs mapa/*.rrp --js js/data/voznja.js [--k0 0.95] [--ks 1.4]   (the game's data: the profiles and the style, Korak 2 and 3)
@@ -56,6 +58,21 @@ export function readRrp(N, file) {
   let u = new Uint8Array(fs.readFileSync(file));
   if (u[0] === 0x1f && u[1] === 0x8b) { try { u = new Uint8Array(zlib.gunzipSync(u)); } catch (_) { throw new Error('posnetek je poškodovan'); } }
   return N.rrp.unpack(u);
+}
+// every recording of a file: one (posnetek_…rrp) or several one after another (najboljse_<proga>_….rrp, js/najboljse.js: each recording's
+// length off + 4·L·NF, js/napake.js rrpUnpack); a later recording that cannot be read: its error in its place, and the file's end
+export function readRrpAll(N, file) {
+  let u = new Uint8Array(fs.readFileSync(file));
+  if (u[0] === 0x1f && u[1] === 0x8b) { try { u = new Uint8Array(zlib.gunzipSync(u)); } catch (_) { throw new Error('posnetek je poškodovan'); } }
+  const out = [], mag = (at) => u[at] === 0x52 && u[at + 1] === 0x52 && u[at + 2] === 0x50 && u[at + 3] === 0x31;   // ('RRP1')
+  let at = 0;
+  do {
+    try {
+      const rec = N.rrp.unpack(at ? u.subarray(at) : u), hl = new DataView(u.buffer, u.byteOffset + at, 8).getUint32(4, true);
+      out.push(rec); at += ((8 + hl + 3) & ~3) + 4 * rec.H.L * rec.H.NF;
+    } catch (e) { if (!at) throw e; out.push(new Error((e && e.message) || String(e))); break; }   // (an Error of this realm: js/napake.js runs in a vm)
+  } while (at + 8 <= u.length && mag(at));
+  return out;
 }
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -183,10 +200,10 @@ function classOf(C, car) {
 }
 
 /* ---------------- one recording: the player's car in every sample on the track, its laps, each lap checked and its parts left out ---------------- */
-function scanFile(C, N, file, tc, paces) {
-  const name = path.basename(file);
+function scanFile(C, N, file, tc, paces, one) {   // (one: a recording of a file of several, { rec, name }: readRrpAll)
+  const name = one ? one.name : path.basename(file);
   let rec;
-  try { rec = readRrp(N, file); } catch (e) { return { name, why: 'posnetka ni mogoče prebrati: ' + (e && e.message || e) }; }
+  try { if (one && one.rec instanceof Error) throw one.rec; rec = one ? one.rec : readRrp(N, file); } catch (e) { return { name, why: 'posnetka ni mogoče prebrati: ' + (e && e.message || e) }; }
   const { H, frames: F } = rec, t = trackOf(C, tc, H.track);
   if (!t) return { name, why: 'proge ' + H.track + ' ta različica igre nima' };
   const pk = H.cars.findIndex(c => c.pl);
@@ -502,7 +519,11 @@ function summaryOf(P, fileCount) {
 /* ---------------- the tool ---------------- */
 export function measure(files, opts = {}) {
   const step = opts.korak || 5, C = opts.core || loadCore(), N = opts.napake || napake(), tc = new Map(), paces = new Map(), runs = [];
-  for (const f of files) runs.push(scanFile(C, N, f, tc, paces));
+  for (const f of files) {
+    let all = null; try { all = readRrpAll(N, f); } catch (_) { }
+    if (all && all.length > 1) all.forEach((rec, i) => runs.push(scanFile(C, N, f, tc, paces, { rec, name: path.basename(f) + ' #' + (i + 1) })));   // (Najboljše vožnje: a track's runs)
+    else runs.push(scanFile(C, N, f, tc, paces));   // (one recording, or none to read: as ever)
+  }
   const groups = new Map();
   // (a profile: one track, one weather, one class of cars, classOf)
   for (const r of runs) for (const L of r.laps || []) { L.run = r; const key = r.t.def.id + '|' + (L.cond && L.cond.key ? L.cond.key : (r.H.rain > 0 ? 'mokro' : 'suho') + (r.H.season === 'winter' ? '·zima' : '')) + '|' + r.cls.join(',') + (r.cls.includes(r.car.m) ? '' : '/' + r.car.m); groups.set(key, (groups.get(key) || []).concat([L])); }
