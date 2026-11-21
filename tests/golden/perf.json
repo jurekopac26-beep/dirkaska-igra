@@ -379,10 +379,10 @@
  },
  "aguascalientes": {
   "calls": 193,
-  "maxCalls": 216,
-  "kverts": 420,
-  "maxKverts": 582,
-  "jsMs": 0.89
+  "maxCalls": 217,
+  "kverts": 429,
+  "maxKverts": 585,
+  "jsMs": 1.8
  },
  "koli": {
   "calls": 167,
@@ -413,11 +413,11 @@
   "jsMs": 0.81
  },
  "koror": {
-  "calls": 154,
-  "maxCalls": 179,
-  "kverts": 425,
-  "maxKverts": 650,
-  "jsMs": 1.38
+  "calls": 159,
+  "maxCalls": 188,
+  "kverts": 441,
+  "maxKverts": 680,
+  "jsMs": 1.16
  },
  "cpalace": {
   "calls": 206,
