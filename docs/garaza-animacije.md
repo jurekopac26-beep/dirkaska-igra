@@ -151,3 +151,7 @@ Del s ploščo gre po svoji plošči; del brez plošče po najbližji plošči k
 
 ## Predlog nove teme: deli z regala z obema rokama (16. 11. 2026)
 Ni del #653 (uporabnik je 16. 11. ob 2.26 potrdil animacije, kot so). Deli z regala brez svoje plošče, ki gredo še po starem z eno roko (`plan,grab,swap,put`): **vzmeti, amortizerji, stabilizatorji, zamašek, dim gum**. Predlog: po skupnem pravilu (`an_common`) roka 1 odnese stari del na prazno mesto v regalu, roka 2 prinese novega (vzor: auspuh `exS.R` in krilo `wing.R`); vzmeti, amortizerji in stabilizatorji ob kolesu z dvigalom kot platišča, zamašek in dim gum po predlogi krilo. Nova tema (vpis v »Načrtovano« v `docs/vrsta.md`), ko se uporabnik odloči.
+
+## Klik na vrata, haubo in prtljažnik (21. 11. 2026, veja `garaza/klik-deli`)
+
+Odločitev uporabnika (stran Odločitve, `garaza-klik-deli-21-11`): tap na vrata, haubo ali prtljažnik avta v garaži del odpre na tečaju (kot `K.hinge` pri delu »loose«, `js/render.js` `kitLoosen`; za haubo že `bonnet()` v `js/garage3d.js`) in odpre meni novih delov (`js/data/deli.js`: `vrata`, `hauba`, `prtljaznik`, vsak 4 kategorije po 4). Hauba, vrata in streha doslej niso naprodaj (16. 11.). Najprej vprašanje z 2–3 različicami s slikami (`garaza-klik-deli-izbira`), koda po odgovoru.
