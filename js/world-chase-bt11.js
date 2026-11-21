@@ -93,7 +93,7 @@
      default vrGround, vrSlope), o.bad(x, z) (more places to leave free, e.g. a stream's banks). LOOK is open (goreRob.LOOK) for them. */
   World.ext.goreRob = (ctx, id, o) => {
     o = o || {};
-    const L = LOOK[id], { vrLC, vrNear, vrWater } = API, gH = o.gH || API.vrGround, vrSlope = o.slope || API.vrSlope, st = {};
+    const L = LOOK[id], vrLC = o.lc || API.vrLC, vrNear = o.near || API.vrNear, vrWater = o.lc ? o.water : API.vrWater, gH = o.gH || API.vrGround, vrSlope = o.slope || API.vrSlope, st = {};
     if (!L) return st; for (const k of L.st) st[k] = 0;
     if (!vrLC || !gH || !vrNear || !API.T || !ctx.root || !ctx.out || !ctx.out.matV) return st;
     const { excluded, root } = ctx, soft = softScen(root, ctx.out.matV), riv = L.river ? riverTest(API.T.def) : null;
