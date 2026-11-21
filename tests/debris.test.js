@@ -45,10 +45,13 @@ check('a piece still in the air: knocked away as before (moved over half a metre
     r.debris.push({ id: 1, car: A.id, part, x: P.x + Math.cos(P.h) * 10 + nx * l, z: P.z + Math.sin(P.h) * 10 + nz * l, y: (P.y || 0) + Pt.h * 0.5 + 0.02, vx: 0, vz: 0, vy: 0,
       yaw: 0, rx: 0, rz: 0, wx: 0, wy: 0, wz: 0, r: Pt.r, m: Pt.m, h: Pt.h, rest: true, ground: true, q: null, dead: false });
     let n = 0; for (let t = 0; t < 1.5; t += DT) { P.inThr = 0; P.inBrk = 0; P.inSteer = 0; P.hitDebris = 0; r.step(DT); if (P.hitDebris > 0) n++; } return n; };
-  const rows = []; for (const part of ['hood', 'mirrorL']) for (let i = 0; i <= 32; i++) rows.push({ part, l: i * 0.05, n: side(part, i * 0.05) });
+  // a 5 cm sweep, then 5 mm steps 10 cm either side of the edge of touch, where the old repeats sat (a band 3 to 5 cm wide)
+  const rows = [], gap = []; for (const part of ['hood', 'mirrorL']) { const q = []; for (let i = 0; i <= 32; i++) q.push({ part, l: i * 0.05, n: side(part, i * 0.05) });
+    const e = q.filter(x => x.n > 0).reduce((m, x) => Math.max(m, x.l), 0); for (let i = -20; i <= 20; i++) { const l = e + i * 0.005; if (l > 0 && i % 10) q.push({ part, l, n: side(part, l) }); }
+    q.sort((x, y) => x.l - y.l); const z = q.findIndex(x => x.n === 0); if (z < 1 || q.slice(z).some(x => x.n > 0)) gap.push(part); rows.push(...q); }
   const many = rows.filter(q => q.n > 1), paid = rows.filter(q => q.n === 1);
-  check('a lying piece by the car\'s side: paid at most once a pass (F4), as near the side as it is touched at all', !many.length && paid.length >= 40 && rows.find(q => q.part === 'hood' && Math.abs(q.l - 1.45) < 1e-9).n === 1,
-    `${rows.length} passes, ${paid.length} paid once, more than once ${many.length}${many.length ? ' (' + many.slice(0, 4).map(q => q.part + ' ' + q.l.toFixed(2) + ' m x' + q.n).join(', ') + ')' : ''}`); }
+  check('a lying piece by the car\'s side: paid at most once a pass (F4), as near the side as it is touched at all, and once at every offset nearer', !many.length && !gap.length && paid.length >= 40,
+    `${rows.length} passes, ${paid.length} paid once, more than once ${many.length}${many.length ? ' (' + many.slice(0, 4).map(q => q.part + ' ' + q.l.toFixed(3) + ' m x' + q.n).join(', ') + ')' : ''}${gap.length ? ', not paid nearer the side: ' + gap.join(', ') : ''}`); }
 
 // broken glass on the road (Core.setCrash({ glass }), on in every local race: xPhys): a knock lays a patch where it broke a pane; with
 // damage Vklop a car on it grips 5 % less (glassK 0.95), less as it is scattered: each car driven over it and off it takes a quarter;
