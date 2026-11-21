@@ -3,10 +3,11 @@
 // and what it holds is written out: the race (the track, the way, the weather, the game's version against the one here (js/game.js's stamp,
 // as the publish step would put it on the page: tools/stamp.js; another one's commit: node tools/stamp.js --find <stamp>), the device, the
 // date, the cars), the race's flags (where the player was), the tool's own flags (a car standing, a jump, under the road, the wrong way, the
-// hitches; where that car was), the log of that race and the report's text; pictures of the replay at the times asked. In
-// test-results/posnetki/<file's name>/ (or --out):
+// hitches; where that car was), the falls over an edge (Padec čez rob: the samples in which a car fell as a body, js/game.js recFall: who,
+// from when to when, where it went over, its hard knocks), the log of that race and the report's text; pictures of the replay at the times
+// asked. In test-results/posnetki/<file's name>/ (or --out):
 //   povzetek.json, povzetek.txt
-//   <t>s-<ti|tekmecN>-<pokonci|lezece>.png       with --t (s or mm:ss.s, as in an RRA-NAPAKE report), --zastavice: at every flag
+//   <t>s-<ti|tekmecN>-<pokonci|lezece>.png       with --t (s or mm:ss.s, as in an RRA-NAPAKE report), --zastavice: at every flag and in the middle of every fall
 //   node tools/posnetek.mjs posnetek_bathurst_20261101-1432.rrp
 //   node tools/posnetek.mjs posnetek.rrp --t 41.3,00:52.1 --avto 5 --kamera tv --pokonci
 //   node tools/posnetek.mjs posnetek.rrp --zastavice
@@ -60,6 +61,7 @@ try {
   const info = await page.evaluate(([fl, pk]) => ({
     flags: fl.map((f, j) => Object.assign({ n: j + 1, t: f.t }, Napake.rrp.kje(f.t, pk))),
     auto: Napake.samodejne.map(f => Object.assign({ kind: f.kind, t: f.t, k: f.k, opis: f.opis }, Napake.rrp.kje(f.t, f.k >= 0 ? f.k : pk))),
+    falls: window.__game.rpFalls().map(f => Object.assign(f, Napake.rrp.kje(f.t0, f.k))),   // (where it went over: the fall's first sample)
     report: Napake.porocilo()
   }), [H.flags || [], pk]);
   const sum = {
@@ -68,12 +70,13 @@ try {
       vzorci: head.nf, t0: +head.t0.toFixed(3), t1: +head.t1.toFixed(3), avti: H.cars.map((c, j) => ({ k: j, ime: ime(j), name: c.name, model: c.m, grid: c.grid })) },
     zastavice: info.flags.map(f => ({ n: f.n, t: +f.t.toFixed(3), lap: f.lap, s: f.s })),
     samodejne: info.auto.map(f => ({ kind: f.kind, t: +f.t.toFixed(3), avto: ime(f.k), opis: f.opis, lap: f.lap, s: f.s })),
+    padci: info.falls.map(f => ({ t0: +f.t0.toFixed(3), t1: +f.t1.toFixed(3), avto: ime(f.k), udarci: f.n, lap: f.lap, s: f.s })),
     dnevnik: info.report.split('\n').filter(l => l.startsWith('D ')),
     porocilo: info.report, slike: []
   };
-  // the pictures: at the times asked, with --zastavice at every flag (the race's, the tool's own: its car)
+  // the pictures: at the times asked, with --zastavice at every flag (the race's, the tool's own: its car) and in the middle of every fall (its car)
   const shots = times.map(t => ({ t, k }));
-  if (zast) { for (const f of sum.zastavice) shots.push({ t: f.t, k }); for (const f of info.auto) shots.push({ t: f.t, k: f.k >= 0 ? f.k : pk }); }
+  if (zast) { for (const f of sum.zastavice) shots.push({ t: f.t, k }); for (const f of info.auto) shots.push({ t: f.t, k: f.k >= 0 ? f.k : pk }); for (const f of info.falls) shots.push({ t: (f.t0 + f.t1) / 2, k: f.k }); }
   for (const o of shots.length ? orient : []) {
     await page.setViewportSize(SIZE[o]); await page.waitForTimeout(300);
     for (const s of shots) {
@@ -90,6 +93,7 @@ try {
     `naprava ${G.devIme || G.dev} · ${G.date} · različica ${G.ver}` + (G.ver === here ? ' (ista kot tu)' : /^[0-9a-f]{8}$/.test(G.ver) ? ` (tu ${here}; commit: node tools/stamp.js --find ${G.ver})` : ` (tu ${here}; posnetek iz igre brez žigov, npr. lokalne)`),
     `zastavice med dirko: ${sum.zastavice.length}`, ...sum.zastavice.map(f => `  ⚑${f.n} ${clock(f.t)} K${f.lap} s=${f.s}m`),
     `samodejne zastavice: ${sum.samodejne.length}`, ...sum.samodejne.map(f => `  ${clock(f.t)} K${f.lap} s=${f.s}m ${f.kind} ${f.avto} »${f.opis}«`),
+    `padci čez rob: ${sum.padci.length}`, ...sum.padci.map(f => `  ${clock(f.t0)}–${clock(f.t1)} K${f.lap} s=${f.s}m padec ${f.avto} »pada ${(f.t1 - f.t0).toFixed(1).replace('.', ',')} s, trdih udarcev: ${f.udarci}«`),
     `dnevnik: ${sum.dnevnik.length}`, ...sum.dnevnik.map(l => '  ' + l),
     `slike: ${sum.slike.length ? sum.slike.join(', ') : '(--t ali --zastavice)'}`, '', sum.porocilo
   ].join('\n');

@@ -1,0 +1,15 @@
+{
+  "id": "sogeri",
+  "about": "Sogeri, Papua Nova Gvineja (id sogeri): ~2 km of the Sogeri road up the Laloki gorge to the Sogeri plateau above Port Moresby, eastbound, uphill (docs/proge/sogeri.md)",
+  "box": [-9.432, 147.352, -9.405, 147.392],
+  "closed": false,
+  "route": [
+    [-9.41706, 147.36858, null, "start: the Sogeri road in the Laloki gorge, eastbound (up to the plateau)"],
+    [-9.42204, 147.37653, null, "finish: 1.7 km before the turn to Varirata"]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [],
+  "places": []
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2800 1100" width="2800" height="1100">
+  <title>Qatar</title>
+  <!-- Ratio 11:28. The maroon field; at the hoist the white band, solid to 0.293 of the length, serrated into the field with nine
+       white points, their tips at 0.373 of the length (the cloth's height in nine equal parts, a tip at the middle of each).
+       Colours: maroon #8a1538, white #ffffff. -->
+  <rect width="2800" height="1100" fill="#8a1538"/>
+  <path d="M0 0 H821 L1045 61.1 L821 122.2 L1045 183.3 L821 244.4 L1045 305.6 L821 366.7 L1045 427.8 L821 488.9 L1045 550 L821 611.1 L1045 672.2 L821 733.3 L1045 794.4 L821 855.6 L1045 916.7 L821 977.8 L1045 1038.9 L821 1100 H0 Z" fill="#ffffff"/>
+</svg>
