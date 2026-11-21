@@ -1092,12 +1092,12 @@
   }
  },
  "lusail": {
-  "meshes": 727,
-  "verts": 1127779,
+  "meshes": 695,
+  "verts": 1034446,
   "instances": 3356,
   "props": 68,
   "crowd": 44,
-  "world": "794cd5c1",
+  "world": "762b113d",
   "propsHash": "18e857c3",
   "floor": "27a1ef37/10836",
   "groups": {
@@ -1106,7 +1106,7 @@
    "lusail service roads:MeshLambertMaterial": "7fd5639f",
    "lusail glass fronts:MeshLambertMaterial": "8be6466e",
    "rsFar:MeshBasicMaterial": "de679eb9",
-   "rob:MeshLambertMaterial": "a4c12bbf",
+   "rob:MeshLambertMaterial": "4a184a10",
    "crowd:MeshLambertMaterial": "cf30a785",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "e6a1e6bf",

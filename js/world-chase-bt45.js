@@ -8,7 +8,7 @@
    on Lusail (docs/proge/lusail.md: »zelene trate« behind the kerbs, »ravna puščava«, »siva prodnata ravnina v velikih lisah, svetlejši in
    toplejši nanosi peska«) the irrigated verge in lighter, darker and sun-dried patches, the desert's sand blown onto it at the fence's
    foot; past the fences to ~12 m the gravel plain's darker and paler patches and the sand's drifts (on the lawns, class 1, the lawn's
-   own patches); out to ~55 m a sparse band of wide low patches of the same. On Tuzla (docs/proge/tuzla.md: »pokošena trava«, »tik ob
+   own patches); all of it sparse and with five-cornered patches, Lusail's busiest place being ~10k vertices under the 900k budget. On Tuzla (docs/proge/tuzla.md: »pokošena trava«, »tik ob
    progi (do ~25 m za ograjami) zalite zelene trate s pokošenimi pasovi«, »trava zlata, v lisah bledejša in bolj rjava«) the mown verge in
    lighter, darker and drier patches, uncut grass at the fence's foot; past the fences the watered lawn in patches (greener where the
    sprinklers reach, yellowed spots), turning to straw where the lawn ends (~14 to ~24 m past the road's edge, as the look's colMod);
@@ -22,7 +22,14 @@
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api, BT = API.chaseBt, { vary, rng } = API;
   if (!BT || !BT.soil || !BT.softScen || !BT.tuft || !BT.mix3 || !BT.chain || !rng || !vary) return;
-  const { soil, tuft, softScen, mix3, chain } = BT;
+  const { soil: soil7, tuft, softScen, mix3, chain } = BT;
+  const TAU = Math.PI * 2;
+  /* (as the sixth group's soil, with k corners: Lusail's patches with five, its busiest place being near CLAUDE.md's vertex budget) */
+  const soilK = (k) => (scen, gH, gx, gz, rr, col, R, lift) => {
+    const a0 = R() * TAU, rim = [col[0] * 0.9 + 0.05, col[1] * 0.9 + 0.07, col[2] * 0.9 + 0.03], g = scen.get(gx, gz), up = lift || 0.05, ctr = [gx, gH(gx, gz) + up + 0.02, gz], Q = [];
+    for (let q = 0; q < k; q++) { const a = a0 + q / k * TAU, r = rr * (0.65 + R() * 0.6), x = gx + Math.cos(a) * r, z = gz + Math.sin(a) * r * 0.75; Q.push([x, gH(x, z) + up, z]); }
+    for (let q = 0; q < k; q++) g.triO(ctr, Q[q], Q[(q + 1) % k], col, [gx, ctr[1] - 5, gz], rim, rim); };
+  let soil = soil7;
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   // (as the thirty-ninth group: a fifth of the way to their grey and a little darker, so a patch reads as a change of ground, not a sticker)
   const mute = (c, k) => { const l = (c[0] + c[1] + c[2]) / 3, f = k || 0.95, g = 0.2; return [(c[0] * (1 - g) + l * g) * f, (c[1] * (1 - g) + l * g) * f, (c[2] * (1 - g) + l * g) * f]; };
@@ -71,7 +78,7 @@
     const at = (i, sd, o, a) => [T.px[i] + T.nx[i] * sd * o + T.tx[i] * a, T.pz[i] + T.nz[i] * sd * o + T.tz[i] * a];
     const hV = (i0) => (x, z) => { const q = nrNear(x, z), j = q.i >= 0 && gap(q.i, i0, N) < 12 ? q.i : i0, sd = q.lat >= 0 ? 1 : -1; return hAt(j, sd, Math.abs(q.lat)); };
     const st = { zaplate: 0, pesek: 0, sopi: 0 };
-    const R = rng(seed), soft = softScen(root, matV), step = 5.0;
+    const R = rng(seed), soft = softScen(root, matV), step = V.step || 5.0;
     for (let i = 0; i < N; i += Math.max(1, Math.round(step / ds))) for (const sd of [-1, 1]) {
       if (pit(i, sd)) continue;
       const gv = sd > 0 ? T.gravR : T.gravL; if (gv && gv[i]) continue;   // (the asphalt run-offs: the builder's pale tarmac, nothing on it)
@@ -102,19 +109,20 @@
     sand: [[0.82, 0.74, 0.58], [0.86, 0.78, 0.62]], coast: [[0.46, 0.54, 0.28], [0.62, 0.6, 0.38]],
     grav: [[0.6, 0.56, 0.5], [0.64, 0.6, 0.53]], gravD: [[0.5, 0.47, 0.42], [0.54, 0.5, 0.45]], drift: [[0.79, 0.71, 0.53], [0.83, 0.74, 0.56]],
   };
+  const LU_FAR = false;   // (the far band left out on Lusail: its busiest place had only ~10k vertices to spare under CLAUDE.md's 900k)
   const lusail = (ctx) => {
-    const v = verge(ctx, 45101, { share: 0.7, sandy: 0.32, foot: 0.08, grass: LU.grass, grassD: LU.grassD, dry: LU.dry, sand: LU.sand, coast: LU.coast });
+    const v = verge(ctx, 45101, { step: 8, share: 0.3, sandy: 0.32, foot: 0.03, grass: LU.grass, grassD: LU.grassD, dry: LU.dry, sand: LU.sand, coast: LU.coast });
     if (!v) return;
     const [st, badP] = v, { nrGround, nrLC, nrNear } = API, skipLC = (c) => c === 3;
     // past the fences to ~12 m (the builder's own verge runs 3.2 m past the fence): the gravel plain's patches and the sand's drifts; on the lawns the lawn's own patches
-    const breg = outer(ctx.root, ctx.matV, nrGround, nrNear, nrLC, badP, 45102, { step: 4.0, n: 2, share: 0.7, from: 3.2, to: 12, pw: 1.2, drop: 1.5, maxSl: 1.0, skipLC,
+    const breg = outer(ctx.root, ctx.matV, nrGround, nrNear, nrLC, badP, 45102, { step: 12, n: 1, share: 0.45, from: 3.2, to: 12, pw: 1.2, drop: 1.5, maxSl: 1.0, skipLC,
       put: (soft, gT, x, y, z, o, R, c) => { const u = R();
         const Pp = c === 1 ? (u < 0.5 ? P2(R, LU.grassD, 0.9, 1.1) : P2(R, LU.dry, 0.8, 1.0))
           : c === 2 ? (u < 0.6 ? P2(R, LU.drift, 1.0, 1.2) : P2(R, LU.grav, 0.8, 1.0))
           : u < 0.45 ? P2(R, LU.gravD, 0.9, 1.2) : u < 0.8 ? P2(R, LU.grav, 0.9, 1.2) : P2(R, LU.drift, 0.8, 1.0);
         soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.05); return c === 1 ? 'trata' : 'breg'; } }, {});
     // out to ~55 m: a sparse band of wide low patches of the same, so the plain reads as ground, not one colour
-    const pas = outer(ctx.root, ctx.matV, nrGround, nrNear, nrLC, badP, 45103, { step: 7, n: 1, share: 0.45, from: 12, to: 55, drop: 4, maxSl: 1.0, skipLC,
+    const pas = LU_FAR && outer(ctx.root, ctx.matV, nrGround, nrNear, nrLC, badP, 45103, { step: 8, n: 1, share: 0.35, from: 12, to: 55, drop: 4, maxSl: 1.0, skipLC,
       put: (soft, gT, x, y, z, o, R, c) => { const u = R(), k = 1 + 0.5 * Math.min(1, (o - 12) / 43);
         const Pp = c === 1 ? P2(R, LU.grassD, 1.5 * k, 1.3 * k) : c === 2 || u < 0.3 ? P2(R, LU.drift, 1.6 * k, 1.6 * k) : u < 0.7 ? P2(R, LU.gravD, 1.6 * k, 1.6 * k) : P2(R, LU.grav, 1.6 * k, 1.6 * k);
         soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.06); return 'pas'; } }, {});
@@ -151,6 +159,6 @@
   };
 
   const L = API.rbLook || {};
-  if (L.lusail) chain(L.lusail, (ctx) => { try { lusail(ctx); } catch (e) { console.error('chase-bt45 (lusail):', e); } });
-  if (L.tuzla) chain(L.tuzla, (ctx) => { try { tuzla(ctx); } catch (e) { console.error('chase-bt45 (tuzla):', e); } });
+  if (L.lusail) chain(L.lusail, (ctx) => { try { soil = soilK(5); lusail(ctx); } catch (e) { console.error('chase-bt45 (lusail):', e); } });
+  if (L.tuzla) chain(L.tuzla, (ctx) => { try { soil = soil7; tuzla(ctx); } catch (e) { console.error('chase-bt45 (tuzla):', e); } });
 })();
