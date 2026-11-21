@@ -1179,5 +1179,53 @@
     "dalec_celica": 250,
     "drevesa": 0,
     "ime_h": "KOROR_H"
+  },
+  "irishtown": {
+    "ime": "Irishtown, Jamajka",
+    "okvir": [
+      18.03,
+      -76.745,
+      18.075,
+      -76.71
+    ],
+    "pot": [
+      [
+        18.04455,
+        -76.72522
+      ],
+      [
+        18.06251,
+        -76.72146
+      ]
+    ],
+    "start": [
+      18.04662,
+      -76.7275
+    ],
+    "cilj": [
+      18.05954,
+      -76.72233
+    ],
+    "zalet": 160,
+    "po_cilju": 196,
+    "polsirina": 4.0,
+    "gauss": 2.5,
+    "razredi": [
+      "secondary"
+    ],
+    "visine": {
+      "mediana": 50,
+      "glajenje": 30,
+      "naklon": 0.12,
+      "serpentine": 0.3,
+      "serpentine_m": 20,
+      "gor": false,
+      "tesno": true
+    },
+    "s2": "S2B_18QUE_20240129_0_L2A",
+    "dalec": 9000,
+    "dalec_celica": 250,
+    "drevesa": 0,
+    "ime_h": "IRISHTOWN_H"
   }
 }
