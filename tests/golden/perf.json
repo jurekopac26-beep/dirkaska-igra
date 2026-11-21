@@ -154,11 +154,11 @@
   "jsMs": 1.6
  },
  "kotor": {
-  "calls": 217,
-  "maxCalls": 260,
-  "kverts": 642,
-  "maxKverts": 823,
-  "jsMs": 1.24
+  "calls": 219,
+  "maxCalls": 264,
+  "kverts": 693,
+  "maxKverts": 887,
+  "jsMs": 1.12
  },
  "bikernieki": {
   "calls": 188,
@@ -210,11 +210,11 @@
   "jsMs": 1.33
  },
  "ella": {
-  "calls": 179,
-  "maxCalls": 220,
-  "kverts": 417,
-  "maxKverts": 596,
-  "jsMs": 1.86
+  "calls": 180,
+  "maxCalls": 222,
+  "kverts": 467,
+  "maxKverts": 661,
+  "jsMs": 1.33
  },
  "llogara": {
   "calls": 168,
