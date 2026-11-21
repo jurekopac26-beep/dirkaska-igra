@@ -49,7 +49,8 @@ try {
       const bands = B.map((bx, j) => ({ bx, p: inst(rb + j), kind: 'band' })), extra = [0, 1, 2].map(k => inst(rb + nB + k));
       out.bandsCol = bands.every(b => b.p && b.p.col === hex(b.bx.col));
       const G = mine.gar || {}, want = (G.wall ? 1 : 0) + (G.jamb ? 2 : 0);
-      out.minePanels = want >= 1 && extra.filter(Boolean).length === want && extra.every(p => !p || p.col === GREEN) && rod.count === rb + nB + 3 + 1 + nB;   // (then the garage's door and every garage's flag's pole: pitkit.test.mjs)
+      const fence = !G.wall && !G.jamb && !!G.band;   // (Aguascalientes' boxes before a chain-link fence, no garages (world-rbring.js LK.pitFence): the player's banner on the mesh, in the player's paint (bandsCol), is all there is)
+      out.minePanels = (want >= 1 || fence) && (!fence || hex(mine.col) === GREEN) && extra.filter(Boolean).length === want && extra.every(p => !p || p.col === GREEN) && rod.count === rb + nB + 3 + 1 + nB;   // (then the garage's door and every garage's flag's pole: pitkit.test.mjs)
       out.parts = (G.wall ? 'wall' : '') + (G.jamb ? '+pillars' : '');
       // 2. where they are: the camera at the box (the world's scenery near it drawn), rays against the world's meshes and the rods
       const pt = (bx, a, w) => new THREE.Vector3(bx.ox + bx.tx * a + bx.nx * w, (bx.y || 0) + 1.6, bx.oz + bx.tz * a + bx.nz * w);

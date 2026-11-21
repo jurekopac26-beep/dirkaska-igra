@@ -118,6 +118,100 @@
       sheep: 0, portal: 0, forest: 'med', treeline: 9000, shrubR: 110, bkCap: 4, view: 1,   // (bkCap: the walls between the legs at most 4 m, a steep bank of rock and scrub below; view: the viewpoints' wall, cars, people)
       far: { lo: [0.4, 0.44, 0.31], hi: [0.64, 0.63, 0.6], dw: [0.26, 0.32, 0.2], snow: 9000, tree: [900, 350], fc: [0.19, 0.27, 0.15], rk: [800, 1500], dwb: [0, 150, 1300, 1000], wet: [0.09, 0.27, 0.36], hz: [0.3, 0.4] },
     },
+    // Hải Vân (the Trường Sơn's spur to the sea, Vietnam): the old road over the pass, the steep slopes under a dense, bright tropical forest of
+    // broadleaves (L.trop) right down to the sea, red-brown earth in the cuttings, grey granite in the crags; no snow, no sheep, no tunnel portal
+    // at the top (the tunnels run under the pass); white concrete walls and a steel rail on the drop
+    haivan: {
+      seed: 4200, board: 'ĐÈO HẢI VÂN', sub: 'THỪA THIÊN · ĐÀ NẴNG', banner: ['HẢI VÂN', 'ĐỈNH ĐÈO · 477 m'], trop: 1,
+      grass: [0.34, 0.5, 0.18], grassDry: [0.5, 0.52, 0.26], grassLush: [0.26, 0.48, 0.15], shrub: [0.14, 0.3, 0.1],
+      rock: [0.52, 0.46, 0.4], rockWarm: [0.6, 0.44, 0.32], lichen: [0.38, 0.36, 0.3], scree: [0.62, 0.48, 0.36],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.55, 0.52, 0.5], [0.6, 0.56, 0.52], [0.47, 0.45, 0.44], [0.62, 0.5, 0.4], [0.5, 0.47, 0.44], [0.56, 0.54, 0.5]],   // (granite, a little red with the laterite)
+      centre: [0.95, 0.74, 0.14], dash: [3, 9], solidNear: 70,   // (yellow centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpins)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.48, 0.4],
+      fans: [[0.84, 0.14, 0.14], [0.98, 0.84, 0.12], [0.95, 0.95, 0.95], [0.12, 0.3, 0.62], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.55, 0.62, 0.7]],
+      cars: [[0.9, 0.9, 0.88], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.78, 0.72, 0.6]],
+      roofs: [[0.62, 0.26, 0.16], [0.36, 0.38, 0.4], [0.7, 0.34, 0.2], [0.24, 0.3, 0.36]],
+      sheep: 0, portal: 0, far: { lo: [0.16, 0.3, 0.12], hi: [0.44, 0.42, 0.36], dw: [0.12, 0.24, 0.1], snow: 9000 },
+    },
+    // Kanaba (the Kigezi highlands, Uganda): the Kisoro road over the Kanaba gap, the hills terraced to their tops: green fields of beans,
+    // potatoes and sorghum in strips, the red soil between them, eucalyptus woods and bamboo in the gullies, little bare rock (weathered
+    // volcanic ash and old schists, red-brown); no snow (the line far above the Virunga tops); tin roofs of the farms and the roadside
+    // houses; generic signs (no name of a lodge, a shop or a builder of the road), the white centre line of the country's roads
+    kanaba: {
+      seed: 5400, board: 'KANABA', sub: 'KIGEZI', banner: ['KIGEZI', 'KANABA GAP · 2343 M'],
+      grass: [0.36, 0.48, 0.2], grassDry: [0.52, 0.5, 0.26], grassLush: [0.26, 0.42, 0.15], shrub: [0.16, 0.26, 0.1],
+      rock: [0.42, 0.33, 0.27], rockWarm: [0.52, 0.34, 0.24], lichen: [0.4, 0.4, 0.3], scree: [0.56, 0.36, 0.26],
+      sat: 0.6, satV: 1.25, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.42, 0.32, 0.26], [0.5, 0.36, 0.27], [0.36, 0.3, 0.27], [0.56, 0.38, 0.28], [0.44, 0.38, 0.33], [0.38, 0.33, 0.28]],   // (the weathered rock of the cuttings: red-brown, the laterite's)
+      centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed, solid through the tight bends)
+      chev: ['#111111', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.36, 0.26],
+      fans: [[0.95, 0.95, 0.93], [0.16, 0.42, 0.24], [0.9, 0.76, 0.16], [0.72, 0.16, 0.14], [0.2, 0.3, 0.6], [0.5, 0.36, 0.22], [0.12, 0.12, 0.14], [0.86, 0.84, 0.78]],
+      cars: [[0.9, 0.9, 0.88], [0.86, 0.86, 0.84], [0.16, 0.3, 0.62], [0.18, 0.18, 0.2], [0.55, 0.56, 0.58], [0.66, 0.16, 0.14]],
+      roofs: [[0.62, 0.63, 0.64], [0.5, 0.3, 0.22], [0.55, 0.56, 0.58], [0.42, 0.24, 0.18]],
+      sheep: 1, portal: 0, far: { lo: [0.3, 0.42, 0.2], hi: [0.3, 0.36, 0.22], dw: [0.22, 0.3, 0.14], snow: 9000 },
+    },
+    // Sogeri (the Owen Stanley foothills above Port Moresby, Papua New Guinea): the Sogeri road up the Laloki gorge to the plateau, the slopes
+    // under tall dry grass (kunai) with pale eucalypts, a dense tropical forest of broadleaves (L.trop) in the gully of the river, grey-brown
+    // conglomerate and red earth in the cuttings and the rock walls along the road; no snow, no sheep, no tunnel portal; white lines (the
+    // country's Australian-style markings), a steel rail on the drop; generic signs only (no name of a lodge, a plantation or a builder)
+    sogeri: {
+      seed: 6100, board: 'SOGERI', sub: 'CENTRAL', banner: ['SOGERI', 'LALOKI'], trop: 1,
+      grass: [0.44, 0.5, 0.22], grassDry: [0.62, 0.56, 0.3], grassLush: [0.3, 0.46, 0.16], shrub: [0.16, 0.3, 0.1],
+      rock: [0.5, 0.44, 0.38], rockWarm: [0.6, 0.42, 0.3], lichen: [0.4, 0.38, 0.3], scree: [0.6, 0.48, 0.36],
+      sat: 0.58, satV: 1.25, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.5, 0.45, 0.4], [0.56, 0.46, 0.38], [0.44, 0.41, 0.38], [0.62, 0.46, 0.34], [0.48, 0.44, 0.4], [0.54, 0.5, 0.45]],   // (the conglomerate of the gorge, a little red with the earth)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the tight bends)
+      chev: ['#111111', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.58, 0.44, 0.32],
+      fans: [[0.84, 0.14, 0.14], [0.98, 0.8, 0.12], [0.95, 0.95, 0.95], [0.12, 0.12, 0.14], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.14, 0.3, 0.62], [0.55, 0.62, 0.7]],
+      cars: [[0.9, 0.9, 0.88], [0.86, 0.86, 0.84], [0.16, 0.18, 0.2], [0.55, 0.56, 0.58], [0.62, 0.14, 0.12], [0.2, 0.32, 0.56]],
+      roofs: [[0.62, 0.63, 0.64], [0.55, 0.56, 0.58], [0.5, 0.3, 0.22], [0.36, 0.4, 0.42]],
+      sheep: 0, portal: 0, far: { lo: [0.36, 0.44, 0.2], hi: [0.22, 0.34, 0.16], dw: [0.14, 0.26, 0.1], snow: 9000 },
+    },
+    // Canaries (Saint Lucia, the west coast): the coast road over the ridges north of the village, the steep volcanic slopes under a dense tropical
+    // forest of broadleaves (L.trop) with banana plots and palms down to the sea, red-brown earth in the cuttings, grey-brown andesite in the crags;
+    // no snow, no sheep, no tunnel portal; the colourful houses with tin roofs, a steel rail on the drop; white lines as on the island's roads
+    canaries: {
+      seed: 5600, board: 'CANARIES', sub: 'SAINT LUCIA', banner: ['CANARIES', 'ANSE LA VERDUE'], trop: 1,
+      grass: [0.32, 0.5, 0.17], grassDry: [0.5, 0.52, 0.26], grassLush: [0.24, 0.47, 0.14], shrub: [0.13, 0.3, 0.1],
+      rock: [0.48, 0.44, 0.4], rockWarm: [0.58, 0.44, 0.34], lichen: [0.36, 0.36, 0.3], scree: [0.6, 0.48, 0.38],
+      sat: 0.58, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.5, 0.47, 0.44], [0.56, 0.52, 0.48], [0.42, 0.4, 0.38], [0.6, 0.48, 0.38], [0.46, 0.44, 0.41], [0.53, 0.5, 0.46]],   // (andesite, a little red with the weathered earth)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the island's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpin)
+      chev: ['#1c1c1c', '#f4f4f0'], warn: 'tri', rail: 'steel', shoulder: [0.55, 0.47, 0.38],
+      fans: [[0.98, 0.84, 0.12], [0.12, 0.3, 0.7], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.2, 0.55, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.75, 0.85]],
+      cars: [[0.92, 0.92, 0.9], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.2, 0.42, 0.3]],
+      roofs: [[0.62, 0.22, 0.16], [0.5, 0.52, 0.54], [0.2, 0.38, 0.5], [0.3, 0.46, 0.28]],
+      sheep: 0, portal: 0, far: { lo: [0.15, 0.3, 0.12], hi: [0.36, 0.42, 0.28], dw: [0.11, 0.24, 0.09], snow: 9000 },
+    },
+    // Savusavu (the south coast of Vanua Levu, Fiji): the coast road over a low ridge of wet tropical forest, coconut palms and gardens by the
+    // houses, red-brown volcanic soil in the cuttings, dark basalt in the few crags; no snow, no sheep, no tunnel; a steel rail where the slope falls
+    savusavu: {
+      seed: 6790, board: 'SAVUSAVU', sub: 'VANUA LEVU', banner: ['SAVUSAVU', 'VANUA LEVU'], trop: 1,
+      grass: [0.3, 0.5, 0.17], grassDry: [0.46, 0.5, 0.24], grassLush: [0.22, 0.47, 0.14], shrub: [0.13, 0.29, 0.1],
+      rock: [0.4, 0.37, 0.34], rockWarm: [0.52, 0.38, 0.28], lichen: [0.34, 0.34, 0.28], scree: [0.56, 0.44, 0.34],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.36, 0.35, 0.34], [0.42, 0.4, 0.38], [0.3, 0.3, 0.3], [0.5, 0.4, 0.32], [0.38, 0.36, 0.34], [0.44, 0.42, 0.4]],   // (basalt, reddened by the soil)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid before the blind bends)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.52, 0.46, 0.38],
+      fans: [[0.12, 0.3, 0.62], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.98, 0.84, 0.12], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.66, 0.82]],
+      cars: [[0.9, 0.9, 0.88], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.14, 0.26, 0.5], [0.62, 0.12, 0.1], [0.78, 0.72, 0.6]],
+      roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.42, 0.3]],   // (corrugated iron: bare, red, blue, green)
+      sheep: 0, portal: 0, far: { lo: [0.14, 0.3, 0.12], hi: [0.3, 0.4, 0.24], dw: [0.1, 0.24, 0.1], snow: 9000 },
+    },
+    koror: {
+      seed: 7340, board: 'KOROR', sub: 'PALAU', banner: ['KOROR', 'PALAU'], trop: 1,
+      grass: [0.28, 0.5, 0.17], grassDry: [0.44, 0.5, 0.24], grassLush: [0.2, 0.46, 0.14], shrub: [0.12, 0.28, 0.1],
+      rock: [0.62, 0.6, 0.55], rockWarm: [0.66, 0.6, 0.5], lichen: [0.4, 0.42, 0.36], scree: [0.7, 0.67, 0.6],
+      sat: 0.55, satV: 1.3, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.62, 0.6, 0.56], [0.68, 0.66, 0.6], [0.52, 0.52, 0.5], [0.58, 0.54, 0.48], [0.46, 0.47, 0.44], [0.7, 0.68, 0.64]],   // (the limestone and the weathered volcanic rock of the islands)
+      centre: [0.98, 0.8, 0.12], dash: [3, 9], solidNear: 70,   // (yellow centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid before the blind bends)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.54, 0.5],
+      fans: [[0.12, 0.3, 0.62], [0.95, 0.95, 0.95], [0.98, 0.84, 0.12], [0.84, 0.14, 0.14], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.12, 0.14, 0.2], [0.4, 0.66, 0.82]],
+      cars: [[0.9, 0.9, 0.88], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.14, 0.26, 0.5], [0.62, 0.12, 0.1], [0.78, 0.72, 0.6]],
+      roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.42, 0.3]],   // (corrugated iron: bare, red, blue, green)
+      sheep: 0, portal: 0, far: { lo: [0.13, 0.3, 0.12], hi: [0.26, 0.38, 0.22], dw: [0.1, 0.24, 0.1], snow: 9000 },
+    },
   };
   // Gudauri (Georgia, the Greater Caucasus): the open slopes above the deep valley of the White Aragvi, late-summer alpine meadow, yellowing,
   // grazed short, with mats of Caucasian rhododendron and juniper, the pine planted round the lower village (lc 1), dark grey-brown andesite and
@@ -307,7 +401,11 @@
     // the macchia (mastic, wild olive, holm oak scrub: dark rounded clumps), 7 a tussock of càrritx (a fountain of stiff leaves, straw at the
     // tips), 8 holm oak (a dense rounded crown of the darkest green on a short trunk)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
-    if (kind === 5) {
+    if (kind === 0 && L.trop) {   // (L.trop: a broadleaf of the tropical forest instead: a slim pale trunk under a wide, lumpy, bright crown)
+      cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
+      API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.6, d = k ? 0.2 + R() * 0.08 : 0; ico(g, Math.cos(a) * d, 0.62 + (k ? R() * 0.14 : 0.12), Math.sin(a) * d, 0.24, 0.62, vary(col, R, 0.22), R, 0.3); }
+    } else if (kind === 5) {
       const col = [0.25, 0.35, 0.17], bark = [0.42, 0.37, 0.33];
       cyl(g, 0, 0, 0, 0.028, 0.7, 5, bark, null, 0.018);
       API.ROCK_SMOOTH = true;
@@ -377,6 +475,7 @@
     P.c1 = valueNoise2(L.seed + 11, 140); P.c2 = valueNoise2(L.seed + 12, 60); P.c3 = valueNoise2(L.seed + 13, 190); P.c4 = valueNoise2(L.seed + 14, 110); P.c5 = valueNoise2(L.seed + 15, 24);
     P.fin = [T.px[T.finishIdx], T.pz[T.finishIdx]];
     // the buildings (def.bld [x, z, length, width, angle, height, kind 0 a hut / 1 a stall or shed / 2 a big house]), clear of the road
+    const inSea = (x, z) => P.sea !== null && caGround(x, z) < P.sea + 0.4;   // (the lagoon: nothing stands in the sea, def.sea)
     const blds = [];
     for (let [x, z, Lb, Wb, ang, hb, kind] of def.bld || []) { if (Lb < 2 || Wb < 2) continue; const c = Math.cos(ang), s = Math.sin(ang); let ok = true, hit = null;
       if (L.hotels) { Lb = Math.min(Lb, 34); Wb = Math.min(Wb, 20); }   // (L.hotels: the footprint as it is drawn)
@@ -385,7 +484,7 @@
         if (hit) { const i = hit.i, sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] >= 0 ? 1 : -1; x += T.nx[i] * sd * 2.5; z += T.nz[i] * sd * 2.5; hit = null; }
         for (const [u, v] of [[0, 0], [-Lb / 2, -Wb / 2], [Lb / 2, -Wb / 2], [Lb / 2, Wb / 2], [-Lb / 2, Wb / 2]]) { const n = vrNear(x + c * u - s * v, z + s * u + c * v); if (n.i >= 0 && n.dd < 1.2) { ok = false; hit = hit || n; } }
         if (!hit) { ok = true; break; } }
-      if (ok && vrDist(x, z) < 430) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
+      if (ok && vrDist(x, z) < 430 && !inSea(x, z)) blds.push({ x, z, L: Math.min(Lb, 34), W: Math.min(Wb, 20), ang, h: hb, kind }); }
     // the car parks by the road (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
     for (let [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; let i = n.i; const s = i * T.ds; if (s < 30 || s > T.len - 20) continue;
@@ -405,7 +504,7 @@
     const excl = [], eh = new Map(), EHC = 32;   // exclusion circles (buildings, crowds, plots) for the plants and the rocks, hashed
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lq = eh.get(k); if (!Lq) eh.set(k, Lq = []); Lq.push(e); } return e; };
     const excluded = (x, z) => { const Lq = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lq) return false; for (let k = 0; k < Lq.length; k++) { const e = Lq[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
-    const inLake = (x, z) => { for (const Lk of P.lakes) if (x > Lk.x0 - 2 && x < Lk.x1 + 2 && z > Lk.z0 - 2 && z < Lk.z1 + 2 && API.vrWater(x, z).e > -2) return true; return false; };
+    const inLake = (x, z) => { if (inSea(x, z)) return true; for (const Lk of P.lakes) if (x > Lk.x0 - 2 && x < Lk.x1 + 2 && z > Lk.z0 - 2 && z < Lk.z1 + 2 && API.vrWater(x, z).e > -2) return true; return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     if (def.hotel) { const [x, z, Lh, Wh, a] = def.hotel; for (let u = -Lh / 2; u <= Lh / 2 + 0.01; u += Lh / Math.ceil(Lh / 6)) exclPush(x + Math.cos(a) * u, z + Math.sin(a) * u, Wh / 2 + 3); }   // (the hotel, drawn with the buildings)
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
@@ -473,6 +572,26 @@
         if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); out.dyn.water = tex.water; }
       }
       const big = P.lakes.reduce((a, b) => (!a || b.area > a.area ? b : a), null); if (big) out.marks.lake = [big.cx, big.cz];
+      if (P.sea !== null) {   // the sea (def.sea.y; Koror's lagoon): one plane at its level wherever the land is below it, turquoise over the shallows by the
+        // shore, deeper blue farther out, the sky in it; 8 m cells within 330 m of the road, 24 m out to 620 m, 48 m to 1.5 km, then 240 m out to the far land's edge (480 m chunks near, 3 km ones far out; culled)
+        const seaY = P.sea, sc = new Chunks(480, true), sf = new Chunks(3000, true), deep = [0.05, 0.26, 0.4], mid = [0.09, 0.44, 0.52], shal = [0.3, 0.66, 0.62], sky = [0.62, 0.76, 0.86];
+        const gH = (x, z) => vrDist(x, z) < 470 ? caGround(x, z) : vrFar(x, z), uv = (x, z) => [x / 14, -z / 14];
+        const wc = (x, z) => { const k = seaY - gH(x, z), c = k < 2 ? shal : k < 6 ? [0, 1, 2].map(q => lerp(shal[q], mid[q], sstep(2, 6, k))) : [0, 1, 2].map(q => lerp(mid[q], deep[q], sstep(6, 30, k)));
+          const ks = 0.18 * sstep(0.55, 0.85, P.n2(x * 2.4, z * 2.4)); return [0, 1, 2].map(q => lerp(c[q], sky[q], ks)); };
+        const FD = def.farDem, X0 = Math.floor(FD.x0 / 240) * 240, Z0 = Math.floor(FD.z0 / 240) * 240, X1 = FD.x0 + (FD.nx - 1) * FD.cell, Z1 = FD.z0 + (FD.nz - 1) * FD.cell;
+        for (let z0 = Z0; z0 < Z1; z0 += 240) for (let x0 = X0; x0 < X1; x0 += 240) {
+          const d = vrDist(x0 + 120, z0 + 120), bs = d < 1500 ? 48 : 240;
+          for (let zb = z0; zb < z0 + 240; zb += bs) for (let xb = x0; xb < x0 + 240; xb += bs) {
+            const db = bs < 240 ? vrDist(xb + 24, zb + 24) : d, cs = bs < 240 ? (db < 330 ? 8 : db < 620 ? 24 : 48) : 240, g = (bs < 240 ? sc : sf).get(xb + bs / 2, zb + bs / 2);
+            for (let zz = zb; zz < zb + bs; zz += cs) for (let xx = xb; xx < xb + bs; xx += cs) {
+              const lo = (a, b) => gH(a, b) < seaY + 0.4;
+              if (!(lo(xx, zz) || lo(xx + cs, zz) || lo(xx, zz + cs) || lo(xx + cs, zz + cs))) continue;
+              const A = [xx, seaY, zz], B = [xx + cs, seaY, zz], C = [xx + cs, seaY, zz + cs], E = [xx, seaY, zz + cs];
+              g.quadUp(A, B, C, E, [wc(xx, zz), wc(xx + cs, zz), wc(xx + cs, zz + cs), wc(xx, zz + cs)], [uv(xx, zz), uv(xx + cs, zz), uv(xx + cs, zz + cs), uv(xx, zz + cs)]); }
+          }
+        }
+        sc.addTo(root, wMat, false, true); sf.addTo(root, wMat, false, true); out.dyn.water = tex.water; out.sea = seaY;
+      }
     }
 
     /* ---- the road: asphalt with white edge lines and the country's centre line (dashed; solid through the hairpins), a gravel shoulder, then the verge out to a
@@ -1048,7 +1167,7 @@
           if ((sp === 0 || sp === 3) && wireD && wireD(x, z) < 7) continue;   // (none under the power line: its strip is kept clear)
           if (L.shrubR && (sp === 1 || sp === 2) && hd > LOD.radius(L.shrubR)) continue;   // (shrubR: the dwarf pine and the juniper only so far from the road, beyond it the ground's own shrub colour; the phone's load where they are many)
           let hgt, wid, col;
-          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
+          if (sp === 0) { hgt = 10 + r4 * 12; wid = hgt * (L.trop ? 0.62 + r2 * 0.2 : 0.3 + r2 * 0.08); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.16, 0.92 + r3 * 0.16]; }
           else if (sp === 1) { hgt = 0.9 + r4 * 1.4; wid = 2.2 + r2 * 3.2; col = [0.9 + r3 * 0.2, 0.95 + r4 * 0.1, 0.9]; }
           else { hgt = 0.5 + r4 * 0.6; wid = 1.4 + r2 * 2; col = [0.95 + r3 * 0.1, 0.98, 0.95]; }
           if (med) {   // the Aleppo pine (tall, its crown wide and flat), the holm oak (round, dark), the macchia's bushes and the càrritx's tussocks
