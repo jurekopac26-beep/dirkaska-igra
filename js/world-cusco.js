@@ -140,6 +140,6 @@
     skiers: 0, nets: false, snowbanks: false,
     animals: [],
     keepOut,
-    extra: (ctx) => { for (const W of WALLS) wall(ctx.scen, W, API.T); },   // (the landmark: this one call; a Blender model (.glb in assets/landmarks/, odločitev 15. 11.) replaces wall() here, WALLS and keepOut stay its place)
+    extra: (ctx) => { for (const W of WALLS) wall(ctx.scen, W, API.T); if (World.ext.goreRob) World.ext.goreRob(ctx, 'cusco'); },   // (the landmark: this one call; a Blender model (.glb in assets/landmarks/, odločitev 15. 11.) replaces wall() here, WALLS and keepOut stay its place)
   });
 })();
