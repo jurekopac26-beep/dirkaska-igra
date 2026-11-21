@@ -1737,5 +1737,25 @@
    "tyremarks:MeshBasicMaterial": "e1e84f72",
    "roadwear:MeshLambertMaterial": "d2c14d1e"
   }
+ },
+ "irishtown": {
+  "meshes": 1685,
+  "verts": 749960,
+  "instances": 44734,
+  "props": 67,
+  "crowd": 143,
+  "world": "f0b0c71",
+  "propsHash": "e33f5f54",
+  "floor": "b97e34f3/9072",
+  "groups": {
+   "-:MeshLambertMaterial": "cfbb7918",
+   "-:MeshPhongMaterial": "386ca8b5",
+   "-:MeshBasicMaterial": "8431b854",
+   "irFar:MeshLambertMaterial": "21073a7c",
+   "crowd:MeshLambertMaterial": "73d0ac0f",
+   "ao:MeshBasicMaterial": "823e6ef9",
+   "tyremarks:MeshBasicMaterial": "26675b3f",
+   "roadwear:MeshLambertMaterial": "bec63044"
+  }
  }
 }
