@@ -84,11 +84,11 @@
   "jsMs": 1.16
  },
  "montreal": {
-  "calls": 189,
-  "maxCalls": 247,
-  "kverts": 475,
-  "maxKverts": 569,
-  "jsMs": 1.2
+  "calls": 198,
+  "maxCalls": 255,
+  "kverts": 492,
+  "maxKverts": 598,
+  "jsMs": 1.4
  },
  "livorno": {
   "calls": 150,
@@ -189,11 +189,11 @@
   "jsMs": 0.95
  },
  "gudauri": {
-  "calls": 171,
-  "maxCalls": 210,
-  "kverts": 478,
-  "maxKverts": 653,
-  "jsMs": 1.04
+  "calls": 178,
+  "maxCalls": 221,
+  "kverts": 504,
+  "maxKverts": 685,
+  "jsMs": 1.2
  },
  "ngorongoro": {
   "calls": 150,

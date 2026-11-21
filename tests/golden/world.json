@@ -364,12 +364,12 @@
   }
  },
  "montreal": {
-  "meshes": 1352,
-  "verts": 1712099,
+  "meshes": 1374,
+  "verts": 1729652,
   "instances": 7831,
   "props": 75,
   "crowd": 320,
-  "world": "35c7121f",
+  "world": "928b8b4b",
   "propsHash": "9893e9c0",
   "floor": null,
   "groups": {
@@ -388,7 +388,7 @@
    "mtBasin:MeshLambertMaterial": "73a5961e",
    "mtFar:MeshLambertMaterial": "aac2c796",
    "mtScen:MeshLambertMaterial": "d06d0e2d",
-   "rob:MeshLambertMaterial": "8a2bc68b",
+   "rob:MeshLambertMaterial": "c430ce45",
    "crowd:MeshLambertMaterial": "59e25c15",
    "flags:MeshLambertMaterial": "266b1d95",
    "ao:MeshBasicMaterial": "ad13e0c3",
@@ -766,19 +766,19 @@
   }
  },
  "gudauri": {
-  "meshes": 2360,
-  "verts": 1369307,
+  "meshes": 2388,
+  "verts": 1433735,
   "instances": 54104,
   "props": 126,
   "crowd": 153,
-  "world": "6e118aa8",
+  "world": "db53417",
   "propsHash": "255957b1",
   "floor": "4bb44d3b/10248",
   "groups": {
    "-:MeshLambertMaterial": "84049a4e",
    "-:MeshPhongMaterial": "69c3b7e0",
    "-:MeshBasicMaterial": "170fb582",
-   "rob:MeshLambertMaterial": "93f9c8a2",
+   "rob:MeshLambertMaterial": "570247ec",
    "irFar:MeshLambertMaterial": "d6264d7",
    "crowd:MeshLambertMaterial": "be9c0426",
    "ao:MeshBasicMaterial": "4141974f",
