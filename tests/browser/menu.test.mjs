@@ -961,19 +961,19 @@ try {
     await ctx.close();
   }
 
-  // 5. a time trial on a new track (Harju: the model of its land, no map or flight yet), and the short intro with its video and Skip
+  // 5. a time trial on a real track (Ghoufi; until 19. 11. 2026 Harju, now a test track: the model of its land, no map or flight yet), and the short intro with its video and Skip
   {
     const { ctx, page, errors } = await open();
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:trial');
     const n0 = await page.evaluate(() => Menu.debug().list.length);
-    for (let k = 0; k < n0; k++) { const n = await ev(page, 'return root.querySelector(".where .w2").textContent;'); if (n === 'Harju') break; await click(page, 'track:1'); }
+    for (let k = 0; k < n0; k++) { const n = await ev(page, 'return root.querySelector(".where .w2").textContent;'); if (n === 'Ghoufi') break; await click(page, 'track:1'); }
     const info = await ev(page, 'return { name: root.querySelector(".where .w2").textContent, gold: /^Gold time\\d+:\\d\\d\\.\\d\\d$/.test(root.querySelector(".trow .gt").textContent), opp: !!root.querySelector(".trow .opp") };');
-    T.check('Time trial: Harju, its Gold time first in the row (no opponents)', info.name === 'Harju' && info.gold && !info.opp, JSON.stringify(info));
+    T.check('Time trial: Ghoufi, its Gold time first in the row (no opponents)', info.name === 'Ghoufi' && info.gold && !info.opp, JSON.stringify(info));
     await click(page, 'race-single');
-    await raceOn(page, 'harju').catch(() => null);
+    await raceOn(page, 'ghoufi').catch(() => null);
     const r = await page.evaluate(() => ({ id: __game.race && __game.race.track.def.id, tt: __game.race && !!__game.race.timeTrial }));
-    T.check('Race! in Time trial: Harju as a time trial', r.id === 'harju' && r.tt, JSON.stringify(r));
+    T.check('Race! in Time trial: Ghoufi as a time trial', r.id === 'ghoufi' && r.tt, JSON.stringify(r));
     await page.evaluate(() => __game.onAction('to-title')); await page.waitForTimeout(400);
     T.check('no page errors in the time trial', !real(errors).length, real(errors).join(' | '));
     await ctx.close();

@@ -114,7 +114,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Japonska | Suzuka, Irohazaka: obe gresta med testne (`test: true`, za izbris, z ločenim pull requestom za zbirno vejo C, nova seja, 10. 11.; od odločitve zamrznjeni kot testni): Suzuka zaradi pravnega tveganja (odločitev uporabnika 9. 11. 2026 ob ~22.45: »Hakone, Japonska prestavi v med izbrane za japonsko, suzuko prestavi v test zaradi pravnega tveganja«), Irohazaka po pravilu ene proge na državo (odločitev uporabnika 9. 11. 2026 ob ~22.47: »V test«); iz Japonske ostane samo Hakone | Hakone (narejena, PR #261; izbrana proga Japonske, ni več na odločanju; na `main` pride z zbirno vejo Proge, #494) | Nozawa Onsen (kratke, A); stare veje: Aso, Zao, Tokio |
 | Brazilija | Rio do Rastro; od 5. 11. 2026 samo ta (odločitev uporabnika), Rio de Janeiro gre med testne (`test: true`, za izbris) | nobena (5. 11. 2026) | Ouro Preto (zavite, 1; odločitev uporabnika 5. 11. 2026), Corvo Branco (kratke, B); stara veja: São Paulo |
 | Južna Afrika | Chapman's Peak; Sani Pass je od 5. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #379), država ima še Chapman's Peak | nobena (Sani Pass gre v test) | Green Point (kratke, D; tudi stara veja `claude/proga-capetown`) |
-| Finska | Harju (gre v test, ko je Koli na `main`); Ouninpohja je od 8. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika 8. 11. 2026: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«) | **Koli, Finska** (izbira uporabnika 8. 11. 2026 ob 22.04, vprašanje `finska-zimska-proga`; zimska proga, razdelka »Finska: Koli« in »Sever v snegu«); Finska ni na odločanju (ob 22.08) | – |
+| Finska | Koli (prava); Harju je od 19. 11. 2026 testna (`test: true`, Koli je na `main`); Ouninpohja je od 8. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika 8. 11. 2026: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«) | **Koli, Finska** (izbira uporabnika 8. 11. 2026 ob 22.04, vprašanje `finska-zimska-proga`; zimska proga, razdelka »Finska: Koli« in »Sever v snegu«); Finska ni na odločanju (ob 22.08) | – |
 | Slovenija | Medvode; Vršič je od 6. 11. 2026 testna (`test: true`, za izbris; odločitev uporabnika, PR #394) | – | – |
 | Kitajska | Tianmen | Hongkong (zavite, 3) — **ne začni** (brez izletne cone, 5. 11. 2026) | Macao (zavite, 3), Guoliang (kratke, B); stare veje: Peking, Hong Kong ob pristanišču |
 | Čile | Los Caracoles | Valparaíso (zavite, 2) — **ne začni** (brez izletne cone, 5. 11. 2026) | stara veja: Santiago |
@@ -148,7 +148,7 @@ Uporabnik 4. 11. 2026: »prosim shrani si ocene, da izberem samo 1 progo na drž
 | Japonska | Suzuka –, Irohazaka **5** (4. 11. 2026) | Hakone (nova proga, PR #261; odločitev uporabnika 9. 11. 2026 ob ~22.45), Suzuka in Irohazaka gresta med testne (odločitvi 9. 11. 2026 ob ~22.45 in ~22.47) |
 | Brazilija | Rio do Rastro **5** (4. 11. 2026), Rio de Janeiro – | – |
 | Južna Afrika | Chapman's Peak **5** (4. 11. 2026), Sani Pass **4** (4. 11. 2026) | – |
-| Finska | Ouninpohja –, Harju – | Koli (nova proga, 8. 11. 2026 ob 22.04); Ouninpohja v test 8. 11. 2026, Harju gre v test, ko je Koli na `main` |
+| Finska | Ouninpohja –, Harju – | Koli (nova proga, 8. 11. 2026 ob 22.04); Ouninpohja v test 8. 11. 2026, Harju v test 19. 11. 2026 (Koli je na `main`) |
 | Slovenija | Vršič –, Medvode – | – |
 
 Ocene prog iz držav z eno progo v igri (za primerjavo): Spa, Belgija **5** (4. 11. 2026); Los Caracoles, Čile **5** (4. 11. 2026); Livorno, Italija **3** (4. 11. 2026).
@@ -222,7 +222,7 @@ Odločitev uporabnika 8. 11. 2026 ob ~21.20 v pogovoru z Matejem (izbire s kliko
 - **Norveška, Švedska, Danska in Finska:** zima je privzeta. Zasnežena pokrajina in snežni zameti ob cesti; na cestah zbit sneg, na dirkališčih zimski asfalt. Poletje ostane kot izbira vremena. Velja za vsako progo teh držav.
 - **Longyearbyen** (Norveška) je že zimska (razdelek »Proge z ledom«).
 - **Silkeborg, Danska** (#469) in **Kågeröd, Švedska** (#478) v N1 (#485) dobita zimo v ločenem PR »Zima na severu«, ko je N1 na `main`; N1 gre na `main` brez sprememb. Kateri račun PR naredi, predlaga ponedeljkov načrt (`docs/vrsta.md`, »Načrtovano«).
-- **Finska:** Ouninpohja je od 8. 11. 2026 testna (uporabnik: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«). Finska ni na odločanju; nova proga v snegu je **Koli** (izbira uporabnika 8. 11. 2026 ob 22.04, razdelek »Finska: Koli«), izdelava gre med nove proge (vedno zadnje), v zimski sklop z Longyearbyenom in Envaliro. Harju ostane v igri, dokler Koli ni na `main`, potem gre v test.
+- **Finska:** Ouninpohja je od 8. 11. 2026 testna (uporabnik: »ouninpuhja je premalo zavita skoraj vse lahko spolnim gasom vozis ni zanimivo, naredi novo progo za finsko da bo na sneg«). Finska ni na odločanju; nova proga v snegu je **Koli** (izbira uporabnika 8. 11. 2026 ob 22.04, razdelek »Finska: Koli«), izdelava gre med nove proge (vedno zadnje), v zimski sklop z Longyearbyenom in Envaliro. Koli je na `main`, zato je Harju od 19. 11. 2026 testna (prošnja uporabnika).
 
 ## Finska: Koli (izbira uporabnika 8. 11. 2026 ob 22.04)
 
@@ -236,7 +236,7 @@ Pri vprašanju `finska-zimska-proga` (stran Odločitve jure.kopac26; izbiro je M
 - **Zima privzeto** (razdelek »Sever v snegu«): zasnežena pokrajina, zameti ob cesti, zbit sneg na cesti, poletje kot izbira vremena; javna cesta do hotela in smučišča, pozimi splužena. Nova podlaga zbit sneg in led je skupna z Longyearbyenom in Envaliro (razdelek »Proge z ledom«).
 - **Pravno:** v igri samo zemljepisna imena (Koli, Ylä-Koli, Pielinen), brez imen hotela, centrov in podjetij.
 - **Viri** za `README.md` (»Zasluge«) ob izdelavi: OpenStreetMap (ODbL 1.0, prek Overture Maps), Copernicus DEM GLO-30, Sentinel-2 (Copernicus, zimski posnetek 15. 4. 2025), ESA WorldCover 2021 (CC BY 4.0, delež gozda).
-- **Vrstni red:** med novimi progami, zadnja v vrsti (Matej, 8. 11. 2026); Harju gre v test šele, ko je Koli na `main`. Potrjena znova 13. 11. 2026 ob ~4.35, namesto Harju.
+- **Vrstni red:** med novimi progami, zadnja v vrsti (Matej, 8. 11. 2026); Harju gre v test šele, ko je Koli na `main` (to je od 19. 11. 2026: Harju je testna, Koli je prava proga Finske). Potrjena znova 13. 11. 2026 ob ~4.35, namesto Harju.
 
 ## Kaj to pomeni za verige
 

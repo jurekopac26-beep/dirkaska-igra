@@ -863,7 +863,7 @@
     'Preglasno: počakaj med hupanji.': 'Too loud: wait between the honks.', 'Medvedi se umikajo.': 'The bears are moving away.',
     'Predaleč: medvedi te ne slišijo.': 'Too far: the bears cannot hear you.', 'Preblizu medvedke: zapelji nazaj.': 'Too close to the mother bear: back off.',
     'HUPA od daleč (25–60 m), počasi in s premori.': 'HORN from afar (25–60 m), slowly and with pauses.',
-    'Pobegla čreda': 'The Runaway Herd', 'S kmetije je pobegnilo devet krav. Razkropile so se po poti skozi park.': 'Nine cows have run away from the farm. They have scattered along the path through the park.',
+    'Pobegla čreda': 'The Runaway Herd', 'S kmetije je pobegnilo devet krav. Razkropile so se po cesti skozi narodni park.': 'Nine cows have run away from the farm. They have scattered along the road through the national park.',
     'S poltovornjakom zaženi pobegle krave nazaj v ogrado.': 'Drive the runaway cows back into their pen with the pickup.',
     'Prehitro jih razpršiš, prepočasi pobegnejo v gozd.': 'Too fast and you scatter them, too slow and they escape into the forest.',
     'V OGRADI': 'IN THE PEN', 'V GOZDU': 'IN THE FOREST', 'DO OGRADE': 'TO THE PEN', 'OGRADA': 'PEN', 'BEŽI!': 'ESCAPING!', '{0} / {1}': '{0} / {1}',
