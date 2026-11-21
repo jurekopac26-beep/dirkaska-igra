@@ -100,7 +100,7 @@
     const bad = (x, z) => excluded(x, z) || (riv && riv(x, z, 5)) || (vrWater && vrWater(x, z).e > -1) || (o.bad && o.bad(x, z));
     const env = { near: vrNear, excluded: bad }, sl = (x, z) => vrSlope(x, z);
     const wood = (x, z) => { let a = 0; for (const [u, v] of [[12, 0], [-12, 0], [0, 12], [0, -12], [9, 9], [-9, -9], [9, -9], [-9, 9]]) if (vrLC(x + u, z + v) === 1) a++; return a / 8; };
-    const S = { g: (x, z) => soft.get(x, z), c: L.col, st };
+    const S = { g: (x, z) => soft.get(x, z), c: L.col, st, lc: vrLC };   // (lc: the land cover, for a look whose put reads it: js/world-chase-bt20.js)
     const band = (B, seed, step, reach, o0, spread, inner, outer, ox, sc) => walk(env, L.seed + seed, step, reach, o0, (x, z) => {
       const w = B.wood || B === L.far ? wood(x, z) : 0; return B.ok(vrLC(x, z), sl(x, z), x, z, w) * grp(x, z, ox, -ox * 1.7, sc); }, (gx, gz, k, R, free) => {
       const w = B.wood ? wood(gx, gz) : 0;
