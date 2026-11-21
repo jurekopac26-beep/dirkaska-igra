@@ -21,13 +21,13 @@
      skrilavec v pečinah, ploščah in balvanih, melišča pod stenami«. On the wide verge the shoulder's grey-brown schist grit, the pasture's
      short grass grazed and going to straw, here and there bare brown earth; at the barrier's foot tufts of the pasture's grass. On the bank
      the pasture in greener and straw patches, the schist's scree on the steeper parts, tufts, and the dark dwarf pine and juniper mats. */
-  const BLV = { step: 2.6, share: 0.55, foot: 0.3,
+  const BLV = { step: 3.6, share: 0.6, foot: 0.15,
     patch: (R) => { const r = R();
       return r < 0.4 ? { col: vary(mix3([0.56, 0.55, 0.34], [0.6, 0.58, 0.36], R()), R, 0.015), r: 1.0 + R() * 1.2 }   // (short grass going to straw)
         : r < 0.75 ? { col: vary(mix3([0.5, 0.48, 0.44], [0.54, 0.51, 0.47], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (schist grit)
         : { col: vary([0.47, 0.42, 0.34], R, 0.015), r: 0.7 + R() * 0.8 }; },   // (bare brown earth)
     tuft: (R) => vary(mix3([0.44, 0.52, 0.25], [0.56, 0.55, 0.32], R()), R, 0.03) };
-  const BLB = { step: 2.6, n: 3, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.8, bushShare: 0.4,
+  const BLB = { step: 5, n: 2, reach: 7, share: 0.75, maxSl: 1.5, sl: 0.8, bushShare: 0.2,
     patch: (R, sl) => { const r = R();
       return sl > 1.0 && r < 0.5 ? { col: vary(mix3([0.5, 0.48, 0.45], [0.55, 0.53, 0.49], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (schist scree)
         : r < 0.55 ? { col: vary(mix3([0.38, 0.48, 0.22], [0.34, 0.46, 0.2], R()), R, 0.015), r: 1.0 + R() * 1.3 }   // (pasture, greener)
@@ -40,13 +40,13 @@
      gravel, the short grass going to straw, the sparse green of the turf; at the barrier's foot tufts. On the bank the pasture in green and
      straw patches, the pale granite scree on the steeper parts, tufts, and the low alpine rose and juniper mats where it is gentle. Paler
      and greyer than Bâlea: the Aar massif's granite, not the brown schist. */
-  const FKV = { step: 2.6, share: 0.55, foot: 0.3,
+  const FKV = { step: 3.6, share: 0.6, foot: 0.15,
     patch: (R) => { const r = R();
       return r < 0.4 ? { col: vary(mix3([0.6, 0.6, 0.57], [0.64, 0.63, 0.6], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (granite grit and gravel)
         : r < 0.75 ? { col: vary(mix3([0.57, 0.56, 0.35], [0.6, 0.58, 0.37], R()), R, 0.015), r: 1.0 + R() * 1.2 }   // (short grass going to straw)
         : { col: vary(mix3([0.42, 0.5, 0.26], [0.45, 0.52, 0.28], R()), R, 0.015), r: 0.9 + R() * 1.0 }; },   // (green turf)
     tuft: (R) => vary(mix3([0.45, 0.52, 0.26], [0.57, 0.56, 0.34], R()), R, 0.03) };
-  const FKB = { step: 2.6, n: 3, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.8, bushShare: 0.3,
+  const FKB = { step: 5, n: 2, reach: 7, share: 0.75, maxSl: 1.5, sl: 0.8, bushShare: 0.15,
     patch: (R, sl) => { const r = R();
       return sl > 0.9 && r < 0.55 ? { col: vary(mix3([0.6, 0.6, 0.58], [0.64, 0.63, 0.61], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (granite scree)
         : r < 0.55 ? { col: vary(mix3([0.41, 0.5, 0.25], [0.36, 0.48, 0.22], R()), R, 0.015), r: 1.0 + R() * 1.3 }   // (pasture, greener)
