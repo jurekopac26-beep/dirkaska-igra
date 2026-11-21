@@ -61,9 +61,10 @@
     bush: (R) => vary(R() < 0.6 ? [0.22, 0.27, 0.16] : [0.27, 0.31, 0.2], R, 0.025) };   // (maquis: mastic, holm oak scrub)
   const SCF = farBand(Object.assign({}, SCB, { step: 6, n: 3, reach: 55, share: 0.6, maxSl: 1.4, bushShare: 0.5,
     patch: (R, sl) => { const r = R();
-      const P = r < 0.5 ? { col: vary(mix3([0.6, 0.59, 0.55], [0.65, 0.63, 0.58], R()), R, 0.015), r: 1.6 + R() * 1.8 }   // (limestone)
-        : r < 0.7 ? { col: vary(mix3([0.54, 0.41, 0.31], [0.57, 0.44, 0.33], R()), R, 0.015), r: 1.4 + R() * 1.6 }   // (terra rossa)
-        : { col: vary(mix3([0.58, 0.56, 0.42], [0.62, 0.59, 0.45], R()), R, 0.015), r: 1.8 + R() * 2.0 };   // (dry grass)
+      // (further up a little darker and smaller than the near bank: drawn flat, the wide pale ones read as stickers on the shaded slope)
+      const P = r < 0.35 ? { col: vary(mix3([0.53, 0.52, 0.48], [0.57, 0.56, 0.51], R()), R, 0.015), r: 1.1 + R() * 1.2 }   // (limestone)
+        : r < 0.5 ? { col: vary(mix3([0.47, 0.37, 0.29], [0.5, 0.4, 0.31], R()), R, 0.015), r: 1.0 + R() * 1.0 }   // (terra rossa)
+        : { col: vary(mix3([0.5, 0.49, 0.37], [0.54, 0.52, 0.4], R()), R, 0.015), r: 1.2 + R() * 1.4 };   // (dry grass)
       return P; } }), 9);
 
   const add = (id, C, seed) => { if (LK[id]) chain(LK[id], (ctx) => {
