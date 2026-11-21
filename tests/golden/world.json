@@ -843,12 +843,12 @@
   }
  },
  "ella": {
-  "meshes": 1979,
-  "verts": 1044065,
+  "meshes": 2002,
+  "verts": 1097048,
   "instances": 34234,
   "props": 81,
   "crowd": 54,
-  "world": "5eb7f958",
+  "world": "e8e07b6e",
   "propsHash": "8b8ca7eb",
   "floor": "1a7d8cff/8848",
   "groups": {
@@ -857,7 +857,7 @@
    "-:MeshBasicMaterial": "c30bcc47",
    "irFar:MeshLambertMaterial": "b164b94c",
    "crowd:MeshLambertMaterial": "115cee79",
-   "rob:MeshLambertMaterial": "ad73786a",
+   "rob:MeshLambertMaterial": "fc4a660f",
    "ao:MeshBasicMaterial": "6f535d9b",
    "tyremarks:MeshBasicMaterial": "80b908fd",
    "roadwear:MeshLambertMaterial": "390d002a",
@@ -935,19 +935,19 @@
   }
  },
  "tuzla": {
-  "meshes": 801,
-  "verts": 1032441,
+  "meshes": 828,
+  "verts": 1087671,
   "instances": 6221,
   "props": 111,
   "crowd": 28,
-  "world": "6fa51eac",
+  "world": "9ead20fa",
   "propsHash": "f9b10415",
   "floor": "d84112e/10696",
   "groups": {
    "-:MeshLambertMaterial": "caef268b",
    "-:MeshBasicMaterial": "46ac5514",
    "tuzla service roads:MeshLambertMaterial": "3edd9bce",
-   "rob:MeshLambertMaterial": "d6c30a19",
+   "rob:MeshLambertMaterial": "8caf3883",
    "crowd:MeshLambertMaterial": "24956ca5",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "e15a74bc",

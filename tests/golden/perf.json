@@ -371,11 +371,11 @@
   "jsMs": 1.09
  },
  "ella": {
-  "calls": 180,
-  "maxCalls": 222,
-  "kverts": 467,
-  "maxKverts": 661,
-  "jsMs": 1.19
+  "calls": 186,
+  "maxCalls": 229,
+  "kverts": 488,
+  "maxKverts": 689,
+  "jsMs": 1.66
  },
  "medeu": {
   "calls": 180,
@@ -497,11 +497,11 @@
   "jsMs": 1.04
  },
  "tuzla": {
-  "calls": 194,
-  "maxCalls": 244,
-  "kverts": 528,
-  "maxKverts": 674,
-  "jsMs": 0.79
+  "calls": 213,
+  "maxCalls": 261,
+  "kverts": 575,
+  "maxKverts": 749,
+  "jsMs": 1.52
  },
  "buriram": {
   "calls": 200,
