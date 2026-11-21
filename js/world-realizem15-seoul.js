@@ -3,25 +3,26 @@
 // Loaded right after the track's own world builder, which calls World.api.seRealizem15 once per build (before the lamps and the trees, so
 // that they keep clear of the new things).
 // Drawn (into the world's existing scenery chunks: no collision bodies, the driving is untouched):
-//  - by the tower: the wooden deck (way 1214950314: highway=pedestrian, area, surface=wood), the paved squares (ways 1214950315,
-//    surface=paving_stones, and 1214950320) and the car park (way 1214950313), each in its own outline, laid on the ground of the
-//    elevation model;
-//  - the fitness station (way 369969740, fitness_station=box): its two flower beds (ways 1572430695, 1572430694), its three benches
-//    (nodes 14325223294, 14325212362, 14325223293) and one set of three jump boxes;
+//  - the fitness station (way 369969740, fitness_station=box): its two flower beds (ways 1572430695, 1572430694), two of its three
+//    benches (nodes 14325223294, 14325212362) and one set of three jump boxes;
 //  - four benches by the road (nodes 14138452844, 14143393984, 14138496087, 14138496086);
 //  - the bicycle docking station (node 11155393006, capacity=12): twelve plain docks in a row, no bicycles, no words, no colours of anyone;
 //  - past the finish: a shelter (node 13948974301) and two benches (nodes 14138585850, 14138585849).
 // Not drawn again (the world has them): the tower and the building at its foot, the pavilion, the bus park, the old city wall and the other
 //   walls, the bus stops, the crossings and the signals, the buildings, the other streets, and the world's own six points (three lookouts,
 //   a stone, a statue, a shelter).
-// Not drawn at all (said in the PR): what OSM has inside the outline of the building way 1554012455 (five benches, drinking water, a waste
-//   basket, two bollards, a lookout), since the world draws that outline as a building; the side paths and steps (#779); boards, guideposts
-//   and maps (words); cafes, restaurants and offices (venues); statues, artwork and memorials (the legal filter); a bollard in the woods, a
-//   gate in the road, a water tap and four benches before the start.
-// Assumed (said in the PR): the square 1214950320 has no surface tag and is paved like its neighbour; the car park is plain asphalt without
-//   bays; the benches are plain seats without backs, lengthwise to the road (no direction is mapped); the two benches 14138496087 and
-//   14138496086 lie inside the race's barriers and are moved out behind them, like the world's own points; the docks stand lengthwise to the
-//   road; the jump boxes (their number, size and place: OSM maps only the station's outline and kind); the colours of the flowers.
+// Not drawn at all (said in the PR): the wooden deck, the two paved squares and the car park by the tower (ways 1214950314, 1214950315,
+//   1214950320, 1214950313): the elevation model has a steep hillside there (the deck's outline rises some 19 m over its 85 m) and the
+//   building the world draws (way 1554012455) stands in the middle of the deck's outline, so laid on that ground they read as a painted
+//   slope, not as level ground (a question in the PR); what OSM has inside the outline of that building (five benches, drinking water, a
+//   waste basket, two bollards, a lookout); the fitness station's third bench (node 14325223293: it falls against the wall of a building
+//   the world draws); the side paths and steps (#779); boards, guideposts and maps (words); cafes, restaurants and offices (venues);
+//   statues, artwork and memorials (the legal filter); a bollard in the woods, a gate in the road, a water tap and four benches before the
+//   start.
+// Assumed (said in the PR): the benches are plain seats without backs, lengthwise to the road (no direction is mapped); the two benches
+//   14138496087 and 14138496086 lie inside the race's barriers and are moved out behind them, like the world's own points; the docks stand
+//   lengthwise to the road; the jump boxes (their number, size and place: OSM maps only the station's outline and kind); the colours of the
+//   flowers.
 // Data: © OpenStreetMap contributors, ODbL 1.0 (README.md, »Zasluge«).
 (function () {
   'use strict';
@@ -29,13 +30,6 @@
   const API = World.api, { box, gable, inPoly, nrGround, nrNear, rng, vary } = API;
 
   // Metres from the tool's first point (the world's own frame), x east, z south.
-  const AREAS = [   // [OSM way, kind, outline]
-    [1214950314, 'wood', [[-844.8, -645.0], [-807.1, -656.0], [-807.9, -660.5], [-802.8, -661.7], [-781.8, -666.8], [-782.1, -667.7], [-760.9, -673.7], [-759.4, -666.4],
-      [-783.2, -659.2], [-783.8, -656.1], [-823.3, -645.5], [-821.7, -639.5], [-835.1, -635.8], [-835.7, -641.4], [-840.8, -640.0], [-843.8, -639.0]]],
-    [1214950315, 'paving', [[-806.8, -684.6], [-806.3, -682.0], [-802.8, -661.7], [-781.8, -666.8], [-782.1, -667.7], [-785.4, -681.4], [-787.3, -689.3]]],
-    [1214950320, 'paving', [[-785.4, -681.4], [-763.9, -687.2], [-761.8, -678.3], [-760.9, -673.7], [-782.1, -667.7]]],
-    [1214950313, 'asphalt', [[-868.3, -639.3], [-867.1, -623.1], [-840.2, -629.5], [-840.8, -640.0], [-843.8, -639.0], [-844.8, -645.0], [-865.6, -639.9]]],
-  ];
   const BEDS = [   // [OSM way, outline]
     [1572430695, [[-396.1, -497.7], [-398.0, -495.6], [-386.7, -487.7], [-384.9, -490.2]]],
     [1572430694, [[-409.0, -503.3], [-398.4, -495.8], [-396.5, -497.9], [-407.3, -505.1]]],
@@ -48,11 +42,6 @@
   const SHELTER = [13948974301, -1635.6, -1000.8];    // OSM node, x, z
   const BOXES = [369969740, -392.0, -501.0];          // OSM way, the free middle of its outline
 
-  const KIND = {   // the top's colour and how much it wanders, the rim's colour, how high it lies over the ground
-    wood: [[0.6, 0.47, 0.33], 0.12, [0.42, 0.32, 0.22], 0.12],
-    paving: [[0.69, 0.68, 0.64], 0.07, [0.55, 0.54, 0.51], 0.12],
-    asphalt: [[0.42, 0.42, 0.43], 0.04, [0.36, 0.36, 0.37], 0.1],
-  };
   const WOOD = [0.6, 0.45, 0.3], WOODD = [0.5, 0.36, 0.24], METAL = [0.46, 0.47, 0.49], DOCK = [0.72, 0.73, 0.75], DOCKT = [0.82, 0.83, 0.85], PAD = [0.66, 0.65, 0.62];
   const PLY = [0.66, 0.54, 0.38], PLYT = [0.74, 0.62, 0.44], POST = [0.62, 0.16, 0.12], TILE = [0.27, 0.28, 0.3], SOIL = [0.4, 0.31, 0.22], LEAF = [0.27, 0.42, 0.2];
   const FLOWERS = [[0.86, 0.5, 0.6], [0.92, 0.88, 0.82], [0.9, 0.78, 0.3], [0.78, 0.36, 0.42]];
@@ -70,8 +59,19 @@
   function cut(a, b, max, to) { if (len(a, b) <= max) { to.push(a); return; } const p = mid(a, b); cut(a, p, max, to); cut(p, b, max, to); }
 
   API.seRealizem15 = function (W) {
-    const { T, scen, out, exclPush, inBld, bar } = W, R = rng(15882), st = { areas: 0, beds: 0, tris: 0, benches: 0, docks: 0, shelters: 0, boxes: 0, skipped: [] };   // (skipped: the OSM ids left out, since they fall inside a building the world draws)
+    const { T, scen, out, exclPush, inBld, bar, vergeRow } = W, R = rng(15882), st = { beds: 0, tris: 0, benches: 0, docks: 0, shelters: 0, boxes: 0, skipped: [] };   // (skipped: the OSM ids left out, since they fall inside a building the world draws)
     const inRace = (x, z) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < 0.8; };
+    // the ground one sees: the terrain, or the road's verge where the point lies on it (the world lays it from the asphalt to 3 m behind the
+    // barrier, over the terrain)
+    const vergeY = (i, sd, o) => { const vr = vergeRow(i, sd);
+      for (let k = 0; k + 1 < vr.length; k++) if (o >= vr[k][0] && o <= vr[k + 1][0]) return T.hy[i] + vr[k][1] + (vr[k + 1][1] - vr[k][1]) * (o - vr[k][0]) / Math.max(1e-6, vr[k + 1][0] - vr[k][0]);
+      return null; };
+    const floor = (x, z) => {
+      const g = nrGround(x, z), n = nrNear(x, z), i = n.i; if (i < 0 || !vergeRow) return g;
+      const sd = n.lat >= 0 ? 1 : -1, o = Math.abs(n.lat), f = i + ((x - T.px[i]) * T.tx[i] + (z - T.pz[i]) * T.tz[i]) / T.ds, i0 = Math.max(0, Math.min(T.N - 2, Math.floor(f))), t = Math.max(0, Math.min(1, f - i0));
+      const a = vergeY(i0, sd, o), b = vergeY(i0 + 1, sd, o);
+      return a == null || b == null ? g : Math.max(g, a + (b - a) * t);
+    };
 
     // a flat thing in an outline of OSM, laid on the ground: its top `lift` over it, a rim down into it; nothing may be planted on it
     const surface = (pts, lift, max, rim, colour) => {
@@ -108,14 +108,14 @@
     for (const [id, x0, z0] of BENCHES) {
       const p = place(x0, z0, 1.2); if (!p) { st.skipped.push(id); continue; }
       const { x, z, i } = p; if ([-0.8, 0, 0.8].some(a => inBld(x + T.tx[i] * a, z + T.tz[i] * a))) { st.skipped.push(id); continue; }
-      seat(scen.get(x, z), x, nrGround(x, z), z, i, 1.6); exclPush(x, z, 1.4); st.benches++;
+      seat(scen.get(x, z), x, floor(x, z), z, i, 1.6); exclPush(x, z, 1.4); st.benches++;
     }
 
     /* ---- the bicycle docking station: as many docks as its capacity, each on its own small pad ---- */
     {
       const [id, x0, z0, n] = DOCKS, p = place(x0, z0, 1.5);
       if (p) for (let k = 0; k < n; k++) {
-        const a = (k - (n - 1) / 2) * 0.7, x = p.x + T.tx[p.i] * a, z = p.z + T.tz[p.i] * a, y = nrGround(x, z), g = scen.get(x, z); if (inBld(x, z)) { st.skipped.push(id); continue; }
+        const a = (k - (n - 1) / 2) * 0.7, x = p.x + T.tx[p.i] * a, z = p.z + T.tz[p.i] * a, y = floor(x, z), g = scen.get(x, z); if (inBld(x, z)) { st.skipped.push(id); continue; }
         box(g, x, y - 0.06, z, 0.72, 0.12, 1.5, T.hd[p.i], PAD); box(g, x, y + 0.06, z, 0.14, 0.78, 0.36, T.hd[p.i], DOCK, DOCKT);
         exclPush(x, z, 1.6); st.docks++;
       }
@@ -126,7 +126,7 @@
       const [id, x0, z0] = BOXES, p = place(x0, z0, 1.5);
       if (p) [0.3, 0.45, 0.6].forEach((h, k) => {
         const a = (k - 1) * 1.3, x = p.x + T.tx[p.i] * a, z = p.z + T.tz[p.i] * a; if (inBld(x, z)) { st.skipped.push(id); return; }
-        box(scen.get(x, z), x, nrGround(x, z) - 0.05, z, 0.76, h + 0.05, 0.6, T.hd[p.i], PLY, PLYT); exclPush(x, z, 1.4); st.boxes++;
+        box(scen.get(x, z), x, floor(x, z) - 0.05, z, 0.76, h + 0.05, 0.6, T.hd[p.i], PLY, PLYT); exclPush(x, z, 1.4); st.boxes++;
       });
     }
 
@@ -145,9 +145,6 @@
 
     /* ---- the flower beds: low heaps of soil, planted ---- */
     for (const [, pts] of BEDS) { surface(pts, 0.22, 0.7, SOIL, () => R() < 0.36 ? vary(FLOWERS[Math.floor(R() * FLOWERS.length) % FLOWERS.length], R, 0.12) : vary(LEAF, R, 0.3)); st.beds++; }
-
-    /* ---- the deck, the squares and the car park by the tower ---- */
-    for (const [, kind, pts] of AREAS) { const [col, amt, rim, lift] = KIND[kind]; surface(pts, lift, 2.5, rim, () => vary(col, R, amt)); st.areas++; }
 
     out.r15 = st;
   };
