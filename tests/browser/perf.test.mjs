@@ -85,7 +85,8 @@ try {
   for (const id of await trackIds(page)) {
     if (only && !only.includes(id)) continue;
     await startTrack(page, id);
-    const r = await page.evaluate(() => {
+    const r = await page.evaluate(async () => {
+      if (Render.world.landmarkLoad) await Render.world.landmarkLoad;   // (a landmark made in Blender, js/znamenitost.js: its model loaded first, else the counts depend on how fast it came: El Jem 316k with the fallback, 376k with the model)
       // a fresh race with Math.random seeded, paused at once: nothing moves by itself, the race is stepped and drawn only
       // here, in one go, so the counts are the same every run
       const g = window.__game; let seed = 12345; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
