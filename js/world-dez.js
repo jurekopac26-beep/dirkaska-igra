@@ -46,6 +46,22 @@
      ngorongoro a shower of the long rains (March to May, April the wettest; rarely all day) on the crater's rim at Windy
               Gap (~2200 m, cold, foggy mornings): the rim in its cool grey cloud, the floor and the far rim gone in it; the setts
               glossy between their joints
+    koli     rain on Koli's snow (the track is always in the snow): a thaw of the early winter, when the first snow of November
+             melts again into late December, or of the spring, the snow deepest in mid-March: a cool grey cloud on the spruce
+    medeu    a storm of late spring and summer in the Trans-Ili Alatau (May the wettest month; heavy rain, thunder and gusts in the
+             mountains above Almaty): the dark base of the cloud on the spruce slopes, the peaks gone in it
+    kanaba   a shower of the Kigezi highlands' rains (March to May, April the wettest, and September to December; short, heavy
+             bursts between the sunny spells): the cloud low on the ridges and the terraces, the Virunga volcanoes gone in it
+    ella     a shower of the inter-monsoon in the Uva hills (October and November the wettest, thunderstorms): a low, humid
+             green-grey cloud in the gap below Ella Rock, the forest dark under it
+    gudauri  a summer shower on the open slopes of the Greater Caucasus (June the wettest month; foggy mornings, showers later
+             in the day): the road in a pale cloud, the valley of the White Aragvi gone in it
+    portomoniz rain of an Atlantic front on Madeira's north coast (the rain falls in the cool months, November to January; the
+             trade wind's cloud belt hangs above the slope): low grey cloud on the slope, the Atlantic slate grey below the town
+    furka    a summer shower on the Furka in its cloud (the late afternoon's storms grow over the high ground; the dry inner
+             Valais has fewer than the Pre-Alps): a cold, pale cloud on the hairpins, the Rhône Glacier gone in it
+    izoard   a late-afternoon storm over the Briançonnais, one of the sunniest corners of the Alps (summer's showers and storms
+             are short): the dark base of the cloud over the larches and the scree, the sun dimmed
      In winter's snow (render.js's snowy(): the season winter, a world without noSnow) none of this: the snow is no rain.
      (Medvode, pending, and Suzuka, a test track, are frozen: no entry.)
    Hooks (no change to render.js or the worlds' files): World.build (the patch, once per world), World.update (the race: its rain and
@@ -82,6 +98,14 @@
     cusco:   { fog: 0x868f99, fogK: 0.5, near: 0.88, far: 0.82, sun: 0.32, hemi: 0.92, sheen: 0.8 },
     isalo:   { fog: 0x8e8a86, fogK: 0.45, near: 0.9, far: 0.85, sun: 0.32, hemi: 0.95, sheen: 0.8 },
     ngorongoro: { fog: 0xa4acad, fogK: 0.55, near: 0.72, far: 0.7, sun: 0.3, hemi: 1.1, sheen: 0.65 },
+    koli:    { fog: 0x8f9aa0, fogK: 0.5, near: 0.85, far: 0.8, sun: 0.32, hemi: 1.05, sheen: 0.8 },
+    medeu:   { fog: 0x7f8992, fogK: 0.5, near: 0.82, far: 0.76, sun: 0.32, hemi: 0.95, sheen: 0.8 },
+    kanaba:  { fog: 0x9ea7a8, fogK: 0.55, near: 0.7, far: 0.68, sun: 0.3, hemi: 1.1, sheen: 0.75 },
+    ella:    { fog: 0x8d9a96, fogK: 0.52, near: 0.78, far: 0.74, sun: 0.28, hemi: 0.95, sheen: 0.85 },
+    gudauri: { fog: 0xa5afb5, fogK: 0.55, near: 0.66, far: 0.66, sun: 0.3, hemi: 1.12, sheen: 0.75 },
+    portomoniz: { fog: 0x87939a, fogK: 0.5, near: 0.85, far: 0.8, sun: 0.32, hemi: 1.05, sheen: 0.8, sea: [0x4a5c64, 0.75] },
+    furka:   { fog: 0xa8b2b8, fogK: 0.56, near: 0.62, far: 0.62, sun: 0.3, hemi: 1.12, sheen: 0.75 },
+    izoard:  { fog: 0x8a939b, fogK: 0.5, near: 0.86, far: 0.8, sun: 0.34, hemi: 0.95, sheen: 0.8 },
   };
 
   // the sheen: shared uniforms (the patched programs are the same on every rebuild)
