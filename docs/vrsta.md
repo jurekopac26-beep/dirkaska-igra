@@ -119,6 +119,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 10.13 | #779 Realizem E | **Zbirna veja Realizem E · stranske ceste in črte** (veja `zbirna/realizem-e`; opis in predaja v #779 in `docs/realizem/paket-e.md`): Livorno (#657), Spa (#759), skupine 569a–e (#765, #766, #764, #768, #773) in proge iz pull requestov (569f #774, 756a #775, 756b #776, 762a #777, 762b #780): stranske ceste iz OSM s križišči samo za videz, stebrički na ustjih, črte po pravilih države; model proge in fizika vožnje nedotaknjena; #781–#784 počakajo na svoje proge | partyslo | pripravljen 18. 11. 2026, osnutek; povezani testi lokalno zeleni; odprta vprašanja `e-proge-569a`, `569b`, `569d`, `569e` na strani Odločitve partyslo; grafika, zato pred progami (#762); do `main` ga vodi seja Združevanje partyslo |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
 | 10.14 | #821 Zbirna grafika (chase) biketraveler | Kamera za avtom, tla ob cesti: #815 (9 prog), #820 (7 prog), #826 (5 prog), vse POTEM (odločitev uporabnika 20. 11.); #824 čaka končni »ok« | biketraveler | povezani testi zeleni (20. 11.); osnutek do vrste, združi seja Združevanje |
 
