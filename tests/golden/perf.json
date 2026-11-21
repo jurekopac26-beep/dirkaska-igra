@@ -14,11 +14,11 @@
   "jsMs": 1.19
  },
  "nring": {
-  "calls": 159,
-  "maxCalls": 184,
-  "kverts": 304,
-  "maxKverts": 325,
-  "jsMs": 4.26
+  "calls": 172,
+  "maxCalls": 197,
+  "kverts": 350,
+  "maxKverts": 374,
+  "jsMs": 2.19
  },
  "spa": {
   "calls": 180,
@@ -119,11 +119,11 @@
   "jsMs": 2
  },
  "sosnova": {
-  "calls": 190,
-  "maxCalls": 227,
-  "kverts": 649,
-  "maxKverts": 820,
-  "jsMs": 1.03
+  "calls": 202,
+  "maxCalls": 244,
+  "kverts": 685,
+  "maxKverts": 869,
+  "jsMs": 1.06
  },
  "izoard": {
   "calls": 190,
