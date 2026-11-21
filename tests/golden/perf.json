@@ -238,11 +238,11 @@
   "jsMs": 1.01
  },
  "tuzla": {
-  "calls": 166,
-  "maxCalls": 214,
-  "kverts": 490,
-  "maxKverts": 622,
-  "jsMs": 0.72
+  "calls": 190,
+  "maxCalls": 236,
+  "kverts": 534,
+  "maxKverts": 696,
+  "jsMs": 1.48
  },
  "sepang": {
   "calls": 185,
@@ -273,11 +273,11 @@
   "jsMs": 1.23
  },
  "lusail": {
-  "calls": 170,
-  "maxCalls": 227,
-  "kverts": 585,
-  "maxKverts": 878,
-  "jsMs": 0.94
+  "calls": 181,
+  "maxCalls": 241,
+  "kverts": 588,
+  "maxKverts": 882,
+  "jsMs": 1.08
  },
  "riohondo": {
   "calls": 197,
