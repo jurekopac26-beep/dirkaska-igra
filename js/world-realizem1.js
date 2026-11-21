@@ -232,6 +232,50 @@
     return (wallCanvas = c);
   }
 
+  let slopeCanvas = null, slopeMean = 0.7;
+  // the slopes' face, 20 x 20 m at ~26 px to the metre: a broadleaf forest's closed canopy seen from above (ESA WorldCover has forest on most of
+  // Tianmen's slopes; the trees themselves stand only where the ground is gentler): lumpy crowns of 1.2-2.8 m radius, leafy, their tops 2.5 m
+  // apart in height, lit from up the slope (the map's -v) and above, each casting its shade down the slope onto the lower ones, the dark gaps
+  // between them; grey (the vertex colours give the land cover's colour, over the map's mean: slopeMean)
+  function tmSlopeCanvas() {
+    if (slopeCanvas) return slopeCanvas;
+    const S = 512, px = S / 20, R = API.rng(7313), h = new Float32Array(S * S).fill(1.5 * px), tone = new Float32Array(S * S).fill(0.8), v = new Float32Array(S * S);
+    const wr = (a) => ((a % S) + S) % S;
+    const dome = (cx, cy, r, top, tn) => { for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+      const d2 = ((x - cx) * (x - cx) + (y - cy) * (y - cy)) / (r * r); if (d2 >= 1) continue;
+      const k = wr(y) * S + wr(x), e = top - 0.75 * r * (1 - Math.sqrt(1 - d2)); if (e > h[k]) { h[k] = e; tone[k] = tn; } } };
+    for (let n = 0; n < 120; n++) {
+      const cx = R() * S, cy = R() * S, r = (1.2 + 1.6 * R() * R()) * px, top = (4 + 2.5 * R()) * px, tn = 0.86 + 0.28 * R();
+      dome(cx, cy, r * 0.8, top - r * 0.2, tn);
+      for (let m = 0; m < 7; m++) { const a = R() * 6.283, q = (0.25 + 0.4 * R()) * r, rr = (0.34 + 0.18 * R()) * r; dome(cx + Math.cos(a) * q, cy + Math.sin(a) * q, rr, top - q * 0.4, tn * (0.94 + 0.12 * R())); }
+    }
+    // the leaves' clumps: a value noise of 8 and 4 px cells (wrapping) on the crowns' surface, for the shading only
+    const vn = (x, y, c) => { const n = S / c, fx = x / c, fy = y / c, ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy;
+      const q = (a, b) => API.rpHash(((a % n) + n) % n, (((b % n) + n) % n) * 977 + c), sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+      return (q(ix, iy) * (1 - sx) + q(ix + 1, iy) * sx) * (1 - sy) + (q(ix, iy + 1) * (1 - sx) + q(ix + 1, iy + 1) * sx) * sy; };
+    const hl = new Float32Array(S * S);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const k = y * S + x; hl[k] = h[k] + (h[k] > 1.5 * px ? 0.3 * px * (vn(x, y, 8) + 0.5 * vn(x, y, 4)) : 0); }
+    const L = [0.35, -0.55, 0.76], lh = Math.hypot(L[0], L[1]), sx = L[0] / lh, sy = L[1] / lh, rise = L[2] / lh;
+    let sum = 0;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const k = y * S + x, h0 = h[k], gx = (hl[y * S + wr(x + 1)] - hl[y * S + wr(x - 1)]) / 2, gy = (hl[wr(y + 1) * S + x] - hl[wr(y - 1) * S + x]) / 2;
+      const nl = Math.hypot(gx, gy, 1), dif = Math.max(0, (-gx * L[0] - gy * L[1] + L[2]) / nl);
+      let sh = 1;
+      for (let st = 2; st < 48; st += 2) if (h[wr(Math.round(y + sy * st)) * S + wr(Math.round(x + sx * st))] > h0 + st * rise + 2) { sh = 0.62; break; }
+      const occ = Math.min(1, Math.max(0, (h0 - 1.5 * px) / (3 * px)));
+      const t = (0.35 + 0.65 * dif) * sh * (0.6 + 0.4 * occ) * tone[k] + (R() - 0.5) * 0.04;
+      v[k] = t; sum += t;
+    }
+    const sc = 0.66 / (sum / (S * S));
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d'), id = g.createImageData(S, S), d = id.data;
+    let m = 0;
+    for (let k = 0; k < S * S; k++) { const t = Math.max(0, Math.min(1, v[k] * sc)); m += t; d[k * 4] = 255 * t; d[k * 4 + 1] = 255 * t; d[k * 4 + 2] = 255 * t * (1.04 - 0.1 * t); d[k * 4 + 3] = 255; }
+    slopeMean = m / (S * S);
+    g.putImageData(id, 0, 0);
+    return (slopeCanvas = c);
+  }
+
   function tmWalls(out, T, brMask) {
     const { GB, clamp, lerp, sstep, rpHash } = API, P = API.VR, gH = out.groundH, N = T.N, def = T.def, ds = T.ds, w = T.w, sw = 0.5;
     if (!out.root || !gH || !P) return;
@@ -346,8 +390,9 @@
       if (r.full) { for (let k = 0; k < 5; k++) p.push([r.oW, r.yW]); p.push([r.oW + 0.4, gAt(i, side, r.oW + 0.4) - 0.4]); return p; }
       const L = r.oM - r.oW, yE = r.land ? r.yL : gAt(i, side, r.oM) - 0.05;
       for (const f of [0.2, 0.6, 0.6]) {   // (3 and 4 the same point: three bands of slope, the first, at the wall's foot, narrow)
-        const o = r.oW + L * f, q = side * o, b = (P.n4(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - 0.5) * 0.6 * Math.min(1, L / 6);
-        p.push([o, lerp(r.yW, yE, f) + b]); }
+        const o = r.oW + L * f, q = side * o, b = (P.n4(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - 0.5) * Math.min(3, 0.6 * Math.min(1, L / 6) + 0.06 * Math.max(0, L - 6));
+        // (a bank not more than 2.5 m over the ground of the elevation model: over a gully it follows the gully down, not one plane across it, ~1500 m)
+        p.push([o, Math.min(lerp(r.yW, yE, f) + b, r.oE ? 1e9 : gAt(i, side, o) + 2.5)]); }
       p.push([r.oM, yE]);
       const o6 = r.oM + (r.land === 1 ? 0.3 : 0.4); p.push([o6, r.land === 1 || r.oE ? r.yB : gAt(i, side, o6) - 0.35]);
       const o7 = r.oE ? Math.max(r.oE, o6 + 0.1) : o6 + 0.5; p.push([o7, r.oE ? r.yB : gAt(i, side, o7) - 0.35]);
@@ -355,6 +400,7 @@
     // beside the end of a run of wall: the old face's corners, then under the ground at the wall's offsets (the slope runs out into the terrain)
     const profEnd = (i, side, ref) => { const [r1, r2] = rows(i, side), p = [r1, r2]; for (let k = 2; k < 8; k++) p.push([ref[k][0], gAt(i, side, ref[k][0]) - 0.3]); return p; };
     const lc = API.vrLCf || (() => 0);
+    tmSlopeCanvas(); const TX = 0.911 / slopeMean;   // (the crowns' map over the grit map's mean, 0.911, the slopes' old one: the same brightness on average)
     const wallCol = (x, z, i, si, foot) => { const q = 0.92 + 0.12 * rpHash(i >> 2, 51 + si);
       if (!foot) return [0.74 * q, 0.73 * q, 0.7 * q];
       const moss = sstep(0.5, 0.8, P.c3(x, z)) * 0.6; return [lerp(0.56, 0.4, moss) * q, lerp(0.56, 0.46, moss) * q, lerp(0.52, 0.32, moss) * q]; };
@@ -363,19 +409,27 @@
       R = lerp(R, 0.47, fld * 0.5); G = lerp(G, 0.5, fld * 0.5); B = lerp(B, 0.27, fld * 0.5);
       const lit = sstep(0.55, 0.85, c1) * 0.5; R = lerp(R, 0.34, lit); G = lerp(G, 0.37, lit); B = lerp(B, 0.19, lit);
       R += (f - 0.5) * 0.08; G += (f - 0.5) * 0.09; B += (f - 0.5) * 0.05;
-      // (the rock where the land cover has it, ESA WorldCover; elsewhere a fill below the road is overgrown, only its steepest stretches show stones in patches)
-      const rk = Math.max(sstep(1.9, 2.3, m) * sstep(0.6, 0.85, P.c2(x, z)) * 0.35, lc(x, z, 2) * 0.8);
+      // (the forest where ESA WorldCover has it, most of Tianmen's slopes: the crowns' greens, as the trees', in clumps, not a grey face)
+      const fo = lc(x, z, 0) * (1 - fld) * 0.85;
+      if (fo > 0) { const k = 0.84 + 0.32 * P.n2(x * 0.13, z * 0.13); R = lerp(R, 0.19 * k, fo); G = lerp(G, 0.3 * k, fo); B = lerp(B, 0.115 * k, fo); }
+      // (the rock where the land cover has it, ESA WorldCover; elsewhere a fill below the road is overgrown, only its steepest stretches show
+      // stones in patches, and not under the forest)
+      const rk = Math.max(sstep(1.9, 2.3, m) * sstep(0.6, 0.85, P.c2(x, z)) * 0.35 * (1 - fo), lc(x, z, 2) * 0.8);
       if (rk > 0) { const k = 0.8 + 0.25 * P.n2(x * 0.6, z * 0.6); R = lerp(R, 0.66 * k, rk); G = lerp(G, 0.65 * k, rk); B = lerp(B, 0.61 * k, rk); }
-      if (t < 0.18) { const g = (0.18 - t) / 0.18 * 0.55; R = lerp(R, 0.5, g); G = lerp(G, 0.48, g); B = lerp(B, 0.43, g); }
-      return [R, G, B]; };
+      if (t < 0.18) { const g = (0.18 - t) / 0.18 * 0.55 * (1 - 0.6 * fo); R = lerp(R, 0.5, g); G = lerp(G, 0.48, g); B = lerp(B, 0.43, g); }
+      return [R * TX, G * TX, B * TX]; };
 
-    // the meshes: ~200 samples a chunk, both sides; the walls and cut faces (their own map), the slopes (the road's grit map, world uv)
+    // the meshes: ~200 samples a chunk, both sides; the walls and cut faces (their own map), the slopes (theirs, the crowns: along the road and down the profile)
     const wMap = new THREE.CanvasTexture(tmWallCanvas()); wMap.wrapS = wMap.wrapT = THREE.RepeatWrapping; wMap.anisotropy = 4;
     if (out.ownTex) out.ownTex.push(wMap);
     const wMat = new THREE.MeshLambertMaterial({ map: wMap, vertexColors: true });
+    const sMap = new THREE.CanvasTexture(tmSlopeCanvas()); sMap.wrapS = sMap.wrapT = THREE.RepeatWrapping; sMap.anisotropy = 4;
+    if (out.ownTex) out.ownTex.push(sMap);
+    const sMat = new THREE.MeshLambertMaterial({ map: sMap, vertexColors: true });
     const sTop = [new Float32Array(N), new Float32Array(N)];
     for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0; for (let i = 1; i < N; i++) { const a = Pt(i - 1, side * (barOf(i - 1, side) + 0.3), 0), b = Pt(i, side * (barOf(i, side) + 0.3), 0); sTop[si][i] = sTop[si][i - 1] + Math.hypot(b[0] - a[0], b[2] - a[2]); } }
-    const wuv = (p) => [p[0] / 10, -p[2] / 10];
+    const wuv = (p) => [(p[0] + 0.55 * p[1]) / 20, (-p[2] - 0.3 * p[1]) / 20];   // (the height in it too: a steep face not streaked down its fall line)
+    const puv = (u, q) => [u, (q[0] - 0.85 * q[1]) / 20];   // a slope's own: along the road, and down its profile (offset and depth)
     const fl = [];   // the slopes' cross-sections for the camera's floor: [x, y, z] per profile point, per sample and side
     let verts = 0;
     const add = (g, mat) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = false; m.matrixAutoUpdate = false; m.updateMatrix(); out.root.add(m); verts += m.geometry.attributes.position.count; };
@@ -413,11 +467,12 @@
         } else for (let k = 1; k < 7; k++) {
           if ((near0(A[k], A[k + 1]) && near0(B[k], B[k + 1])) || (k === 6 && !end6(ri) && !end6(rj))) continue;
           if (k === 5 && ri && rj && ri.land === 1 && rj.land === 1) { wq(5, Pt(i, side * (barOf(i, side) - 2), Math.min(pi[5][1], pj[5][1]) + 30)); continue; }
-          gs.quadO(A[k], A[k + 1], B[k + 1], B[k], null, inS, [wuv(A[k]), wuv(A[k + 1]), wuv(B[k + 1]), wuv(B[k])], [cs(A[k], mi, k), cs(A[k + 1], mi, k + 1), cs(B[k + 1], mj, k + 1), cs(B[k], mj, k)]);
+          const U0 = sTop[si][i] / 20, U1 = sTop[si][j] / 20;
+          gs.quadO(A[k], A[k + 1], B[k + 1], B[k], null, inS, [puv(U0, pi[k]), puv(U0, pi[k + 1]), puv(U1, pj[k + 1]), puv(U1, pj[k])], [cs(A[k], mi, k), cs(A[k + 1], mi, k + 1), cs(B[k + 1], mj, k + 1), cs(B[k], mj, k)]);
         }
         if (ri && !ri.full) fl.push(A);
       }
-      add(gw, wMat); add(gs, gMat);
+      add(gw, wMat); add(gs, sMat);
     }
     out.rz1.walls = isWall[0].reduce((s, v) => s + v, 0) + isWall[1].reduce((s, v) => s + v, 0);
     out.rz1.full = nFull; out.rz1.big = nBig; out.rz1.land = nLand; out.rz1.verts = verts;
