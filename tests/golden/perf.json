@@ -28,11 +28,11 @@
   "jsMs": 1.9
  },
  "rbring": {
-  "calls": 218,
-  "maxCalls": 265,
-  "kverts": 496,
+  "calls": 216,
+  "maxCalls": 260,
+  "kverts": 525,
   "maxKverts": 680,
-  "jsMs": 1.37
+  "jsMs": 1.25
  },
  "caracoles": {
   "calls": 174,
@@ -91,11 +91,11 @@
   "jsMs": 1.2
  },
  "livorno": {
-  "calls": 144,
-  "maxCalls": 175,
-  "kverts": 318,
-  "maxKverts": 401,
-  "jsMs": 3.03
+  "calls": 150,
+  "maxCalls": 180,
+  "kverts": 324,
+  "maxKverts": 414,
+  "jsMs": 2.61
  },
  "balea": {
   "calls": 166,
