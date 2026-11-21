@@ -63,11 +63,11 @@
   "jsMs": 1.18
  },
  "chapman": {
-  "calls": 155,
-  "maxCalls": 198,
-  "kverts": 422,
-  "maxKverts": 482,
-  "jsMs": 0.95
+  "calls": 163,
+  "maxCalls": 205,
+  "kverts": 485,
+  "maxKverts": 555,
+  "jsMs": 1.18
  },
  "tianmen": {
   "calls": 181,
@@ -98,11 +98,11 @@
   "jsMs": 3.03
  },
  "balea": {
-  "calls": 155,
-  "maxCalls": 164,
-  "kverts": 359,
-  "maxKverts": 415,
-  "jsMs": 0.91
+  "calls": 166,
+  "maxCalls": 175,
+  "kverts": 396,
+  "maxKverts": 448,
+  "jsMs": 1.49
  },
  "silkeborg": {
   "calls": 241,
@@ -175,11 +175,11 @@
   "jsMs": 0.85
  },
  "furka": {
-  "calls": 166,
-  "maxCalls": 201,
-  "kverts": 348,
-  "maxKverts": 480,
-  "jsMs": 0.83
+  "calls": 173,
+  "maxCalls": 211,
+  "kverts": 383,
+  "maxKverts": 530,
+  "jsMs": 1.28
  },
  "santoantao": {
   "calls": 170,
@@ -189,11 +189,11 @@
   "jsMs": 1.53
  },
  "gudauri": {
-  "calls": 164,
-  "maxCalls": 198,
-  "kverts": 387,
-  "maxKverts": 535,
-  "jsMs": 1.17
+  "calls": 171,
+  "maxCalls": 210,
+  "kverts": 478,
+  "maxKverts": 653,
+  "jsMs": 1.47
  },
  "ngorongoro": {
   "calls": 144,
