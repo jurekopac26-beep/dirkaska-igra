@@ -35,12 +35,12 @@
   }
  },
  "pikesg": {
-  "meshes": 747,
-  "verts": 2040352,
+  "meshes": 803,
+  "verts": 2223436,
   "instances": 459,
   "props": 352,
   "crowd": 413,
-  "world": "1232332c",
+  "world": "ab78f00e",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -63,7 +63,7 @@
    "pkSmoke:ShaderMaterial": "186acc3",
    "pkWaterTruck:MeshLambertMaterial": "6dcf2416",
    "pkSpray:ShaderMaterial": "63b596e6",
-   "rob:MeshLambertMaterial": "5504faba",
+   "rob:MeshLambertMaterial": "e479e6e9",
    "ao:MeshBasicMaterial": "9c8fe09f",
    "sceneThings:MeshLambertMaterial": "7ed2efb7",
    "people:MeshLambertMaterial": "14ba14b"
@@ -364,12 +364,12 @@
   }
  },
  "montreal": {
-  "meshes": 1374,
-  "verts": 1729652,
+  "meshes": 1419,
+  "verts": 1917956,
   "instances": 7831,
   "props": 75,
   "crowd": 320,
-  "world": "928b8b4b",
+  "world": "51d7c11d",
   "propsHash": "9893e9c0",
   "floor": null,
   "groups": {
@@ -388,7 +388,7 @@
    "mtBasin:MeshLambertMaterial": "73a5961e",
    "mtFar:MeshLambertMaterial": "aac2c796",
    "mtScen:MeshLambertMaterial": "d06d0e2d",
-   "rob:MeshLambertMaterial": "c430ce45",
+   "rob:MeshLambertMaterial": "97d7fd6f",
    "crowd:MeshLambertMaterial": "59e25c15",
    "flags:MeshLambertMaterial": "266b1d95",
    "ao:MeshBasicMaterial": "ad13e0c3",
