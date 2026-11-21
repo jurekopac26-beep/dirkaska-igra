@@ -1,7 +1,7 @@
 // Poškodbe · P1.13 (docs/realizem/paket-p.md): the load and the looks of Podrobne (dmgDet 1, the default for a new profile) on the phone
 // (844 × 390, NIZKA as perf.test.mjs counts it), Spa, the player and 20 rivals in a cluster in front of it (the worst a camera behind a car sees)
 // 1. no knocks yet: only the player is full (its dense body), the rivals as built; no more than 5 calls over Preproste
-// 2. Preproste: a light knock on a lamp (a fresh car's front, 0.08) cracks the lamp it leaves whole (lCr); a harder one (0.1) breaks it
+// 2. Preproste: a light knock on a lamp (a fresh car's front, one no rival touched while they settled, 0.08) cracks the lamp it leaves whole (lCr); a harder one (0.1) breaks it
 // 3. six blows on 19 rivals: Math.random is not called (the races stay as they were); calls ≤ 360 (Preproste 309, as main), vertices < 900 thousand
 // 4. the player's dents survive its view built again (Detajli avtov Visoki and back: Render.crashInfo().cl the same, dLog)
 // 5. every car smashed (12 × 0.3): Podrobne ≤ 400 calls, switched to Preproste mid-race ≤ 460 (its cars Preproste's, the 48 pieces on the road kept),
@@ -33,6 +33,11 @@ try {
     rv.forEach((c, i) => { const f = 10 + 6 * (i >> 2), l = ((i & 3) - 1.5) * 3; c.place(P.x + fx * f + sx * l, P.z + fz * f + sz * l, P.h); c.y = c.py = P.y; c.roadY = P.roadY; });
     for (let i = 0; i < 30; i++) { g.sim(1, true); for (const c of R.cars) { c.vx = 0; c.vz = 0; } }
     o.ys = rv.slice(0, 20).map(c => +(c.y - P.y).toFixed(2)).join(',');
+    // (section 2's car must be fresh: placed at the player's height on Spa's slope the rivals slide a little during the 30 steps and some touch,
+    // which ones from run to run, and a touch's cd on its front corner, 0.03 or more, cracks or breaks the lamp before the knocks: so the last
+    // rival with no touch takes index 19, the one left out of section 3's knocks; none such and check 2.0 fails)
+    { let fi = -1; for (let i = rv.length - 1; i >= 0 && fi < 0; i--) if (!(rv[i].dmg > 0) && !rv[i].cd.some(x => x > 0)) fi = i;
+      o.lampPre = { i: fi, cd19: rv[19].cd.map(x => +x.toFixed(4)) }; if (fi >= 0 && fi !== 19) { const t = rv[19]; rv[19] = rv[fi]; rv[fi] = t; } }
     const set = (k, v) => { const b = document.querySelector(`[data-set="${k}"] button[data-v="${v}"]`); if (b) b.click(); };
     const fr = (n) => { for (let i = 0; i < n; i++) Render.frame(1 / 60, 1, P, 'chase', {}); };
     const meas = () => { fr(3); const c0 = __gl.calls, v0 = __gl.verts; Render.frame(1 / 60, 1, P, 'chase', {}); return [__gl.calls - c0, __gl.verts - v0]; };
@@ -60,6 +65,7 @@ try {
   T.check('1. no knocks: only the player full', r.i1.xd === 1 && r.i1.xdP === 1 && r.i1.xOn === r.cars, JSON.stringify(r.i1));
   T.check('1. no knocks: calls ≤ Preproste + 5', r.pre1[0] <= r.pre0[0] + 5 && V(r.pre1), `${r.pre0} → ${r.pre1}`);
   const L = r.lc;
+  T.check('2.0 the lamp car untouched before the knocks (cd 0, dmg 0)', r.lampPre.i >= 0, JSON.stringify(r.lampPre));
   T.check('2. Preproste: a light knock cracks the lamp it leaves whole', !L[0][2] && L[1][2] && L[1][2][0] > 0 && !L[1][3][0], JSON.stringify(L[1]));
   T.check('2. Preproste: a harder knock breaks it', L[2][3][0] === 1, JSON.stringify(L[2]));
   T.check('3. knocks: Math.random not called', r.rcKnock === 0, String(r.rcKnock));
