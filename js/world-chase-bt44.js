@@ -30,13 +30,13 @@
      from the terraces and the lush pasture grass in low patches, at the barrier's foot lush green tufts (the agapanthus stand there
      already). On the bank the terraces' pasture in a greener and a sun-dried face, the red-brown tuff earth, the basalt's scree on the
      steeper parts, lush tufts and the dark heath and laurel scrub in low cushions; further up the same in wider, fewer patches. */
-  const PMV = { step: 3, share: 0.55, foot: 0.25,
+  const PMV = { step: 4, share: 0.55, foot: 0.25,
     patch: (R) => { const r = R();
       return r < 0.35 ? { col: vary(mix3([0.38, 0.37, 0.35], [0.42, 0.4, 0.37], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (basalt grit)
         : r < 0.65 ? { col: vary(mix3([0.44, 0.35, 0.28], [0.48, 0.38, 0.3], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (red-brown tuff earth)
         : { col: vary(mix3([0.3, 0.45, 0.19], [0.35, 0.48, 0.22], R()), R, 0.015), r: 1.0 + R() * 1.1 }; },   // (lush grass)
     tuft: (R) => vary(mix3([0.27, 0.44, 0.17], [0.36, 0.48, 0.22], R()), R, 0.03) };
-  const PMB = { step: 3, n: 3, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.9, bushShare: 0.4,
+  const PMB = { step: 3, n: 2, reach: 8, share: 0.5, maxSl: 1.5, sl: 0.9, bushShare: 0.4,
     patch: (R, sl) => { const r = R();
       return sl > 1.0 && r < 0.45 ? { col: vary(mix3([0.37, 0.35, 0.32], [0.42, 0.39, 0.35], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (basalt scree)
         : r < 0.45 ? { col: vary(mix3([0.27, 0.43, 0.17], [0.31, 0.46, 0.2], R()), R, 0.015), r: 1.0 + R() * 1.3 }   // (pasture, lush)
@@ -44,7 +44,7 @@
         : { col: vary(mix3([0.43, 0.33, 0.26], [0.47, 0.37, 0.29], R()), R, 0.015), r: 0.8 + R() * 0.9 }; },   // (red-brown tuff earth)
     tuft: (R) => vary(mix3([0.27, 0.44, 0.17], [0.4, 0.47, 0.24], R()), R, 0.03),
     bush: (R) => vary(R() < 0.6 ? [0.15, 0.26, 0.12] : [0.2, 0.3, 0.15], R, 0.025) };   // (heath, laurel scrub)
-  const PMF = farBand(Object.assign({}, PMB, { step: 6, n: 3, reach: 55, share: 0.6, maxSl: 1.3, bushShare: 0.45,
+  const PMF = farBand(Object.assign({}, PMB, { step: 6, n: 2, reach: 55, share: 0.6, maxSl: 1.3, bushShare: 0.15,
     patch: (R, sl) => { const P = PMB.patch(R, sl); return { col: P.col, r: P.r * 1.8 }; } }), 9);
 
   /* Sa Calobra: docs/proge/sacalobra.md: »Sive apnenčaste stene in skale (ponekod okraste), med njimi suha sredozemska makija (temni
@@ -52,14 +52,14 @@
      red earth, the pale limestone. Behind the low stone walls, where the slope rises: the terra rossa in low patches, the pale limestone
      grit and the fallen chips on the steeper parts, the dry straw grass, the càrritx in dry pale tufts and the dark maquis in cushions;
      further up the same in wider, fewer patches, more limestone and maquis, less red earth (the red lies on the banks by the road). */
-  const SCB = { step: 3, n: 3, reach: 8, share: 0.4, maxSl: 1.6, sl: 0.9, bushShare: 0.45,
+  const SCB = { step: 3, n: 2, reach: 8, share: 0.4, maxSl: 1.6, sl: 0.9, bushShare: 0.45,
     patch: (R, sl) => { const r = R();
       return (sl > 1.0 && r < 0.5) || r < 0.25 ? { col: vary(mix3([0.55, 0.54, 0.5], [0.59, 0.58, 0.53], R()), R, 0.015), r: 0.7 + R() * 0.8 }   // (limestone grit)
         : r < 0.6 ? { col: vary(mix3([0.5, 0.38, 0.29], [0.54, 0.41, 0.31], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (terra rossa)
         : { col: vary(mix3([0.6, 0.57, 0.42], [0.64, 0.6, 0.45], R()), R, 0.015), r: 1.0 + R() * 1.2 }; },   // (dry straw grass)
     tuft: (R) => vary(mix3([0.66, 0.62, 0.42], [0.74, 0.67, 0.44], R()), R, 0.03),   // (càrritx)
     bush: (R) => vary(R() < 0.6 ? [0.22, 0.27, 0.16] : [0.27, 0.31, 0.2], R, 0.025) };   // (maquis: mastic, holm oak scrub)
-  const SCF = farBand(Object.assign({}, SCB, { step: 6, n: 3, reach: 55, share: 0.45, maxSl: 1.4, bushShare: 0.5,
+  const SCF = farBand(Object.assign({}, SCB, { step: 6, n: 2, reach: 55, share: 0.45, maxSl: 1.4, bushShare: 0.15,
     patch: (R, sl) => { const r = R();
       // (further up a little darker and smaller than the near bank: drawn flat, the wide pale ones read as stickers on the shaded slope)
       const P = r < 0.35 ? { col: vary(mix3([0.53, 0.52, 0.48], [0.57, 0.56, 0.51], R()), R, 0.015), r: 1.1 + R() * 1.2 }   // (limestone)
