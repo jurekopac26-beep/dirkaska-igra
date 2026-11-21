@@ -245,11 +245,11 @@
   "jsMs": 1.48
  },
  "sepang": {
-  "calls": 185,
+  "calls": 181,
   "maxCalls": 228,
-  "kverts": 728,
-  "maxKverts": 897,
-  "jsMs": 0.84
+  "kverts": 746,
+  "maxKverts": 899,
+  "jsMs": 1.46
  },
  "lombok": {
   "calls": 204,
@@ -280,11 +280,11 @@
   "jsMs": 1.08
  },
  "riohondo": {
-  "calls": 197,
-  "maxCalls": 268,
-  "kverts": 661,
-  "maxKverts": 818,
-  "jsMs": 0.72
+  "calls": 198,
+  "maxCalls": 272,
+  "kverts": 729,
+  "maxKverts": 887,
+  "jsMs": 1.27
  },
  "hakone": {
   "calls": 199,
