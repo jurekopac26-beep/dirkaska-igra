@@ -161,11 +161,11 @@
   "jsMs": 0.93
  },
  "bikernieki": {
-  "calls": 183,
-  "maxCalls": 235,
-  "kverts": 444,
-  "maxKverts": 528,
-  "jsMs": 0.9
+  "calls": 188,
+  "maxCalls": 236,
+  "kverts": 453,
+  "maxKverts": 517,
+  "jsMs": 2.19
  },
  "zandvoort": {
   "calls": 191,
@@ -261,9 +261,9 @@
  "buriram": {
   "calls": 195,
   "maxCalls": 247,
-  "kverts": 716,
-  "maxKverts": 877,
-  "jsMs": 1.02
+  "kverts": 736,
+  "maxKverts": 895,
+  "jsMs": 1.38
  },
  "sakhir": {
   "calls": 200,
