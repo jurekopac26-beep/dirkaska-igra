@@ -71,7 +71,7 @@ Del `docs/realizem.md` (razdeljen po paketih 11. 11. 2026, ukrep 5 »Manj sklopo
 
 - **Telefon** (izmerjeno s `tests/browser/perf.test.mjs`, NIZKA, prej → potem): Spa 181 klicev risanja in 442 tisoč oglišč → enako; Tianmen 146 in 394 → enako; Livorno 141 in 288 → 141 in 289 (sredinska črta v istem mrežju kot robni; na celi progi 15,7 tisoč oglišč več, 1,5 %). Prstni odtisi svetov (`tests/golden/world.json`) so enaki, razen Livorna. Senčilnik ceste prebere 4 teksture več na piko ceste (profil in trikrat šum); gradnja sveta traja ~40–50 ms dlje.
 - **Test:** `tests/browser/cesta.test.mjs` (opis v `tests/README.md`).
-- **Slike prej in potem** (kamera za avtom, levo prej, desno potem, na vsaki progi dva kadra, obrezana na cesto): `docs/realizem/e0-spa.jpg` (dirkališče), `docs/realizem/e0-tianmen.jpg` (odprta cesta), `docs/realizem/e0-livorno.jpg` (sredinska črta: prekinjena na ravnini, polna skozi ovinke).
+- **Slike prej in potem** (kamera za avtom, levo prej, desno potem, na vsaki progi dva kadra, obrezana na cesto): `docs/realizem/e0-spa.jpg` (dirkališče), `docs/realizem/e0-tianmen.jpg` (odprta cesta), `docs/realizem/e0-livorno.jpg` (sredinska črta: prekinjena na ravnini, polna skozi ovinke); od 21. 11. 2026 `docs/realizem/e0-dirkalisca.jpg` (Sakhir in Zandvoort: puščavski pesek in pesek sipin ob robovih; Spa kot kontrola brez razlike).
 - **Kaj od E0 še manjka:** po drugem kosu v točki »Predaja« razdelka »E0, drugi kos« (spodaj).
 
 ## E0, drugi kos: rob ceste in talne oznake (PR #622, na `main` od 11. 11. 2026; uporabnikov »ok« na slikah 10. 11. ob ~12.30)
