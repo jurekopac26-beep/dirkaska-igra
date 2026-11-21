@@ -357,11 +357,11 @@
   "jsMs": 0.99
  },
  "balea": {
-  "calls": 147,
-  "maxCalls": 158,
-  "kverts": 323,
-  "maxKverts": 371,
-  "jsMs": 1.14
+  "calls": 166,
+  "maxCalls": 175,
+  "kverts": 396,
+  "maxKverts": 448,
+  "jsMs": 1.82
  },
  "llogara": {
   "calls": 156,
@@ -469,11 +469,11 @@
   "jsMs": 1.06
  },
  "furka": {
-  "calls": 159,
-  "maxCalls": 192,
-  "kverts": 314,
-  "maxKverts": 426,
-  "jsMs": 1.54
+  "calls": 169,
+  "maxCalls": 206,
+  "kverts": 365,
+  "maxKverts": 509,
+  "jsMs": 1.48
  },
  "santoantao": {
   "calls": 169,
