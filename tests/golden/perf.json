@@ -140,11 +140,11 @@
   "jsMs": 1.03
  },
  "kildare": {
-  "calls": 204,
-  "maxCalls": 231,
-  "kverts": 449,
-  "maxKverts": 524,
-  "jsMs": 1.02
+  "calls": 212,
+  "maxCalls": 242,
+  "kverts": 514,
+  "maxKverts": 600,
+  "jsMs": 1.52
  },
  "sacalobra": {
   "calls": 244,
@@ -350,10 +350,10 @@
   "jsMs": 1.42
  },
  "eljem": {
-  "calls": 105,
-  "maxCalls": 122,
-  "kverts": 274,
-  "maxKverts": 384,
+  "calls": 109,
+  "maxCalls": 126,
+  "kverts": 296,
+  "maxKverts": 415,
   "jsMs": 0.86
  },
  "isuna": {
