@@ -177,6 +177,11 @@
         const k = (cj + j) * G.nx + ci + i, x = G.x0 + (ci + i) * G.c, z = G.z0 + (cj + j) * G.c, h = G.H[k], kd = G.wet[k] ? 3 : G.kind[k];
         const n1 = hash(ci + i, cj + j), n2 = 0.92 + 0.16 * Math.sin(x * 0.031 + Math.sin(z * 0.027) * 2) * Math.sin(z * 0.023 + x * 0.007);
         let col = KCOL[kd].map(v => v * n2 * (0.96 + 0.08 * n1));
+        if (kd === 0 || kd === 6) {   // (the park's lawns, 2nd chase pass: paler sun-dried patches, the grass trampled by the fans along the fences)
+          const dry = sstep(0.35, 0.9, Math.sin(x * 0.011 + Math.sin(z * 0.017) * 1.7) * Math.sin(z * 0.013 - x * 0.004)) * 0.7, dt = G.dT[k];
+          const worn = dt > 7 && dt < 34 ? sstep(7, 11, dt) * sstep(34, 22, dt) * (0.45 + 0.35 * n1) : 0;
+          const t = Math.min(0.85, dry + worn), gy = (col[0] + col[1] + col[2]) / 3; col = [lerp(col[0], gy * 1.22, t), lerp(col[1], gy * 1.06, t), lerp(col[2], gy * 0.72, t)];
+        } else if (kd === 1) { const lit = sstep(0.55, 0.95, n1) * 0.45; col = [lerp(col[0], 0.6, lit), lerp(col[1], 0.52, lit), lerp(col[2], 0.38, lit)]; }   // (under the maples: leaf litter in the shade)
         const sd = G.SD[k]; if (sd < 5) { const t = sstep(5, 0.5, sd); col = [lerp(col[0], 0.72, t), lerp(col[1], 0.69, t), lerp(col[2], 0.6, t)]; }   // (the banks: stony, rip-rap)
         if (h < WL) { const t = sstep(WL, WL - 2, h); col = [lerp(col[0], 0.42, t), lerp(col[1], 0.42, t), lerp(col[2], 0.36, t)]; }
         P.push(x, h, z); Cl.push(col[0], col[1], col[2]); U.push(x / 14, -z / 14);
