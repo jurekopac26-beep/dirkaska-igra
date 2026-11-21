@@ -1,10 +1,10 @@
 {
  "pikes": {
-  "calls": 144,
-  "maxCalls": 160,
-  "kverts": 379,
-  "maxKverts": 457,
-  "jsMs": 1.77
+  "calls": 137,
+  "maxCalls": 151,
+  "kverts": 335,
+  "maxKverts": 402,
+  "jsMs": 1.33
  },
  "pikesg": {
   "calls": 133,
@@ -161,11 +161,11 @@
   "jsMs": 0.91
  },
  "bikernieki": {
-  "calls": 185,
+  "calls": 188,
   "maxCalls": 236,
-  "kverts": 464,
-  "maxKverts": 544,
-  "jsMs": 0.82
+  "kverts": 458,
+  "maxKverts": 522,
+  "jsMs": 1.86
  },
  "zandvoort": {
   "calls": 200,
@@ -200,7 +200,7 @@
   "maxCalls": 190,
   "kverts": 393,
   "maxKverts": 453,
-  "jsMs": 1.49
+  "jsMs": 1.41
  },
  "medeu": {
   "calls": 180,
