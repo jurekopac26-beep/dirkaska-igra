@@ -2216,6 +2216,7 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 - `trki-obremenitev-kup-19-11` = 2: pri več kot ~6 poškodovanih avtih oddaljeni rišejo lažje poškodbe (cilj pod 300 klicev).
 - `trki-tovornjak-20-11` = 1 + opomba: privzeto ostane na pasu; v Nastavitvah dodati druge možnosti.
 - `trki-ozke-proge-20-11` = 2: tekmeci se avtu počez bolje izognejo (zavirajo prej); vožnja brez ustavljenega ali poškodovanega avta na cesti ostane do števke enaka.
+  - Veja `trki/pocez` (`aiHazard`), po pregledu: redarji tekmeca, ki obstane tik za avtom počez, postavijo ob stran (na njegovo pot okoli) in stoječega, ne z 8 m/s v avto pred njim; avtopilot v boksih pravilo izgubi samo v boksih in tik pred uvozom. `pocez.js skoda` (cusco, hiva, tianmen, semeni 71/72, 50 s): škoda tekmecev 741 % → 467 %, mimo vsi 12/12; Cusco 71 »v druge« ostane 46 → 109 % (naleti v gneči pri avtu počez, odprto).
 
 **Čaka na uporabnika**
 - `trki-vrata-jezek-20-11`: JEŽEK E ostane trivratni (1, priporočeno), postane petvratni (2) ali vseh pet z ozkim zadnjim delom (3).
