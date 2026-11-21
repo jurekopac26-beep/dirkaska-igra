@@ -165,7 +165,7 @@
   "maxCalls": 236,
   "kverts": 453,
   "maxKverts": 517,
-  "jsMs": 1.45
+  "jsMs": 1.35
  },
  "zandvoort": {
   "calls": 207,
@@ -233,9 +233,9 @@
  "seoul": {
   "calls": 137,
   "maxCalls": 149,
-  "kverts": 557,
-  "maxKverts": 680,
-  "jsMs": 1.01
+  "kverts": 571,
+  "maxKverts": 695,
+  "jsMs": 0.63
  },
  "tuzla": {
   "calls": 190,
