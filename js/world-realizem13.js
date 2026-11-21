@@ -1,9 +1,11 @@
 /* =========================================================================
-   WORLD — realizem 13: the fences and walls OpenStreetMap has round three more real circuits on the shared builder (js/world-rbring.js)
+   WORLD — realizem 13: the fences and walls OpenStreetMap has round four more real circuits on the shared builder (js/world-rbring.js)
    outside the 15 tracks of the packages (docs/realizem.md) and the game did not draw: Silkeborg's metal wall, Sosnová's noise barrier and
-   the fence along its lap, Pembrey's fences. (Kågeröd: the one thing OSM has more is the fence round its grounds, whose course its own
-   note calls uncertain: not drawn.) Each circuit's part is chained onto its look's build hook (API.rbLook.<id>.build, after a world's own): the
-   walls and the fences' posts go into the scenery's chunks, a circuit's chain link into one mesh (as Silkeborg's own fences). Loaded after
+   the fence along its lap, Pembrey's fences, Zandvoort's fences that stand outside the game's barriers. (Kågeröd: the one thing OSM has
+   more is the fence round its grounds, whose course its own note calls uncertain: not drawn. Kildare: OSM has no fence or wall within
+   60 m of its lap. Biķernieki: most of its fences follow the track where the game's barriers stand and the rest are short spurs: not
+   drawn.) Each circuit's part is chained onto its look's build hook (API.rbLook.<id>.build, after a world's own): the walls and the
+   fences' posts go into the scenery's chunks, a circuit's chain link into one mesh (as Silkeborg's own fences). Loaded after
    js/world-rbring.js (index.html); chained when the builder is first called for a look (World.ext.rbring, which every world's build calls), so
    a world loaded later (lazily) gets its part too. The same way as realizem 6 (Tuzla, Lusail). Data: © OpenStreetMap contributors, ODbL.
    ========================================================================= */
@@ -133,8 +135,35 @@
     [159.9, 145.7, 160.6, 142.4, 188.2, 146.1],   // w999853116: 31 m, s 897-918 R
     [175.3, 147.8, 185.3, 148.7, 264.8, 184.2],   // w999853117: 97 m, s 908-978 R
   ] };
+  // Zandvoort: the fences (barrier=fence; not the guard rails, fence_type=guard_rail) OSM has within 60 m of the lap, only the parts of
+  // 30 m or more that stand outside the game's barriers. Most of the circuit's fences follow the track a few metres nearer the road than
+  // the game's barrier lines, where the builder's own barriers stand: those are left to the builder
+  const ZA13 = { fence: [
+    [47.9, 44.9, 84.6, 39.2],   // w1318339540: 37 m, s 764-800 L
+    [54.7, 48, 50.1, 47.8, 45.6, 48.5, 43.5, 49.1, 39.9, 51.9, 37.7, 55.9, 37, 58.5, 36.8, 61.5, 37.7, 66.4, 38.8, 69.4, 41.7, 74.9, 43.2, 76.8, 47.4, 80.4, 51.8, 82.4, 55.4, 83.1,
+      66.2, 83.1],   // w1318339541: 68 m, s 792-900 L
+    [107.2, 69.1, 125.1, 62.7, 145.7, 56.5, 148.7, 55.9],   // w1318339541: 44 m, s 944-988 L
+    [587, 17.1, 578.1, 21.5, 570.9, 26.1, 563.9, 31.4, 538.2, 55.9, 523.8, 70.3, 521.8, 74.7, 521.5, 78.7, 521.8, 80.7, 524, 85.7, 526.1, 88.3],   // w1318443042: 103 m, s 1356-2712 R
+    [517.9, 48, 558.4, 29.6],   // w1318346137: 44 m, s 1360-1408 R
+    [770.2, 251, 776.1, 245.8, 784.1, 236.8, 789.7, 231.4, 810.3, 214.1, 824.9, 200.3, 831.6, 193.4, 836.5, 187.3, 849.5, 166.6, 859.2, 148.7, 863.5, 138.5, 867.4, 126.7, 870.2, 114.1,
+      870.5, 107.8, 869.3, 82.6, 868.1, 75.8, 866.9, 72.3, 862.6, 63.4, 834.3, 27.7, 823.8, 15.1, 815.1, 6.4, 808.5, 1.5, 804.8, -0.7],   // w1318443038: 312 m, s 1648-1896 L
+    [746.2, 175.2, 743.5, 169.2, 739, 161.6, 728.9, 142.8, 721.1, 127.2, 713.4, 114.9, 709, 109.3, 700.8, 100.8, 692.4, 94, 686.1, 90.5, 676.6, 86.7, 664.6, 83.7, 657.9, 82.7, 642.4,
+      82.1, 636.7, 82.3, 629.6, 83.2, 589.5, 90.7],   // w1318796965: 204 m, s 1848-2644 R
+    [695.1, 339.5, 690.2, 344.4, 683.8, 347.9, 675.6, 350.2, 663.4, 351.5, 647.6, 351.2, 627, 349.2, 607, 345, 598.7, 342.7, 589.7, 339.6, 572.3, 332.1, 557.1, 323.8, 551.1, 320.1,
+      537.9, 310.8, 529.4, 303.9, 519.4, 294.8, 513.2, 287.1],   // w1318502052: 204 m, s 2012-2244 R
+    [697.6, 389.7, 681.3, 421.1, 680.9, 423.5],   // w1318753750: 38 m, s 2036-2048 L
+    [672.5, 424.2, 665.1, 421.4, 642.3, 410.1, 613.4, 394.5, 550.4, 362.5, 527, 348.2, 516.9, 341.1],   // w1318753751: 177 m, s 2056-2200 L
+    [445.3, 259.2, 480, 236.6],   // w1318753753: 41 m, s 2264-2280 L
+    [516.8, 268.1, 523.6, 261.9, 530.5, 256.9, 538.3, 252.2, 547.7, 248.1, 552.8, 246.4],   // w1318502052: 42 m, s 2280-2328 R
+    [612.3, 209.6, 617, 208.2, 625.4, 204.8, 648.1, 194.9, 657.6, 190.1, 661.9, 187.3, 667.9, 181.4, 670.5, 177.9, 674, 170.9, 675.8, 162.5, 675.6, 157.3, 674.8, 151.8, 673, 146.3,
+      668.6, 137.4, 663.9, 132.2, 660.7, 129.8, 653.3, 126.6, 640.4, 123.8],   // w1318796967: 143 m, s 2396-2592 L
+    [83.7, 408.6, 87.5, 428.3, 93.1, 442.2, 95, 449.6, 95.5, 453.8, 95.3, 460.3, 94.5, 463.7, 92.3, 469.1, 88.9, 475.8, 86.6, 479.3, 82.4, 484.6, 76.6, 490.7, 68.1, 497.5],   // w1318983054: 101 m, s 3420-3548 R
+    [134.7, 498.9, 133.1, 508.2, 130.6, 513.7, 126.4, 520.5, 122.3, 524.5, 117.2, 528.7, 105.6, 535.4, 99, 538.6, 84.7, 543.4, 73.7, 545.5, 62.9, 546.7, 55.6, 546.9, 37.3, 545, -0.8,
+      538.1],   // w1318983053: 158 m, s 3500-3620 L
+  ] };
 
   chain('silkeborg', (K) => { for (const f of SI13.wall) wall(K, f, 2, METAL); });
   chain('sosnova', (K) => { for (const f of SO13.wall) wall(K, f, 3, PANEL); fences(K, SO13.fence); });
   chain('pembrey', (K) => { fences(K, PE13.fence); });
+  chain('zandvoort', (K) => { fences(K, ZA13.fence); });
 })();
