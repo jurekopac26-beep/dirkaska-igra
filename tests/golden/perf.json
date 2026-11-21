@@ -1,10 +1,10 @@
 {
  "pikes": {
-  "calls": 137,
-  "maxCalls": 151,
-  "kverts": 335,
-  "maxKverts": 402,
-  "jsMs": 1.33
+  "calls": 144,
+  "maxCalls": 160,
+  "kverts": 379,
+  "maxKverts": 457,
+  "jsMs": 1.77
  },
  "pikesg": {
   "calls": 133,
@@ -196,11 +196,11 @@
   "jsMs": 1.21
  },
  "ngorongoro": {
-  "calls": 154,
-  "maxCalls": 182,
-  "kverts": 368,
-  "maxKverts": 422,
-  "jsMs": 1.04
+  "calls": 160,
+  "maxCalls": 190,
+  "kverts": 393,
+  "maxKverts": 453,
+  "jsMs": 1.49
  },
  "medeu": {
   "calls": 180,

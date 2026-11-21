@@ -1,11 +1,11 @@
 {
  "pikes": {
-  "meshes": 766,
-  "verts": 1925040,
+  "meshes": 796,
+  "verts": 2071539,
   "instances": 474,
   "props": 352,
   "crowd": 428,
-  "world": "a6a8dc37",
+  "world": "e61ddc3a",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -26,7 +26,7 @@
    "pkCloudSea:ShaderMaterial": "714d7305",
    "pkSmoke:ShaderMaterial": "186acc3",
    "pkSplitBoard:MeshBasicMaterial": "7e05cac9",
-   "rob:MeshLambertMaterial": "1d24dc63",
+   "rob:MeshLambertMaterial": "9551dd30",
    "ao:MeshBasicMaterial": "d9446f28",
    "tyremarks:MeshBasicMaterial": "4a574421",
    "sceneThings:MeshLambertMaterial": "e491568b",
@@ -788,12 +788,12 @@
   }
  },
  "ngorongoro": {
-  "meshes": 1129,
-  "verts": 878185,
+  "meshes": 1151,
+  "verts": 944770,
   "instances": 9795,
   "props": 63,
   "crowd": 30,
-  "world": "96c38158",
+  "world": "90038852",
   "propsHash": "752dbb08",
   "floor": "cae8594e/6860",
   "groups": {
@@ -810,7 +810,7 @@
    "ng_lionM:MeshLambertMaterial": "9ea899b9",
    "ng_lion:MeshLambertMaterial": "1f2411ed",
    "ng_crane:MeshLambertMaterial": "a3f8ff0b",
-   "rob:MeshLambertMaterial": "e33b88c9",
+   "rob:MeshLambertMaterial": "ce834d36",
    "ngFar:MeshLambertMaterial": "99a55540",
    "crowd:MeshLambertMaterial": "e8976908",
    "ao:MeshBasicMaterial": "57e58bc8",
