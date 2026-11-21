@@ -70,7 +70,9 @@ function touched(ref) {
   for (const f of files) {
     const m = /^js\/(?:tracks\/([a-z0-9]+)\.js|world-([a-z0-9]+)\.js)$/.exec(f); if (!m) continue;
     const id = m[1] || m[2], file = path.join(REPO, 'js', 'tracks', id + '.js');
-    if (fs.existsSync(file) && !/\btest:\s*true\b/.test(fs.readFileSync(file, 'utf8').slice(0, 4000))) out.add(id);
+    if (!fs.existsSync(file)) continue;
+    const src = fs.readFileSync(file, 'utf8');   // (a track's own file defines it: not js/tracks/glave.js, the heads of all the lazy tracks)
+    if (new RegExp("\\bid:\\s*['\"]" + id + "['\"]").test(src) && !/\btest:\s*true\b/.test(src.slice(0, 4000))) out.add(id);
   }
   return [...out];
 }

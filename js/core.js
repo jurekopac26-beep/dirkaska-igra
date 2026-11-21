@@ -35,7 +35,35 @@ const Core = (function () {
   // The track definitions (layout, heights, scenery anchors, named places) live in js/tracks/<id>.js, one file per track.
   // Each adds itself to TRACK_DEFS; index.html loads them before this file, in the order of the track menu. (In Node, load
   // Core with tests/lib/core.js, which reads the track files first; a plain require of this file gives a Core without tracks.)
-  const TRACKS = (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : []).slice();
+  // I17 korak 4 (docs/hitro-nalaganje.md): a real track may come first as a head (js/tracks/glave.js: a small entry with `head: true`,
+  // its name, flags, look and lengths) and its full file only when needed, as a lazy link (Leno, js/leno.js): loadTrack(id) loads it and
+  // writes it over the head, the same object in TRACKS, so whoever holds it keeps it. Where both are there already (Node loads every
+  // file; a page without lazy links), the full file is written over the head here and the track is in TRACKS once, in the head's place.
+  const TRACKS = [];
+  // (the full file is the track: a head's field it does not have goes, e.g. killar's bumps when a test builds it at KILLAR_RAZGIBANOST 0)
+  function mergeHead(h, d) { for (const k of Object.keys(h)) if (!(k in d)) delete h[k]; for (const k in d) h[k] = d[k]; delete h.head; return h; }
+  for (const d of (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : [])) {
+    const h = TRACKS.find(x => x.id === d.id);
+    if (!h) TRACKS.push(d); else if (h.head && !d.head) mergeHead(h, d);
+  }
+  // the menu's order (TRACK_ORDER, js/tracks/glave.js: the heads come before every track file), ids it does not list after, as they came
+  if (typeof TRACK_ORDER !== 'undefined') { const at = (d) => { const i = TRACK_ORDER.indexOf(d.id); return i < 0 ? 1e9 : i; }; TRACKS.sort((a, b) => at(a) - at(b)); }
+  const trackLoaded = (id) => { const d = TRACKS.find(x => x.id === id); return !!d && !d.head; };
+  const trackWait = {};
+  // Promise of the full definition (the same object as in TRACKS); rejects for an unknown id or a file that did not load (offline)
+  function loadTrack(id) {
+    const d = TRACKS.find(x => x.id === id);
+    if (!d) return Promise.reject(new Error('unknown track: ' + id));
+    if (!d.head) return Promise.resolve(d);
+    if (typeof Leno === 'undefined') return Promise.reject(new Error('track not loaded: ' + id));
+    // (a variant, Pikes Peak on its gravel road: its file copies the track it is a variant of, so that one first)
+    return trackWait[id] || (trackWait[id] = (d.variantOf ? loadTrack(d.variantOf) : Promise.resolve()).then(() => Leno.load('proga-' + id)).then(() => {
+      const full = TRACK_DEFS.filter(x => x.id === id && !x.head && x !== d).pop();
+      if (!full) throw new Error('track file has no definition: ' + id);
+      return mergeHead(d, full);
+    }).finally(() => { delete trackWait[id]; }));
+  }
+  const loadTracks = (ids) => Promise.all(ids.map(loadTrack));
   const TRACK_DEF = TRACKS.find(d => d.id === 'jezero'), PIKES_DEF = TRACKS.find(d => d.id === 'pikes');   // (exported by name)
 
   // centripetal Catmull-Rom through the control points. Closed loop by default; open = a road with two ends
@@ -9306,7 +9334,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, loadTrack, loadTracks, trackLoaded, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };

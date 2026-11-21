@@ -8,6 +8,7 @@
 //    is not such a video kept, main untouched; a second run, an older menu, a tree with a part missing, a folder not under the site, a link
 //    in the tree: nothing taken, nothing written
 // 3. the whole build in a repository of its own (an origin with two pull requests' heads, node tools/predogled.mjs <site> --prs <list>):
+// (sizes 1.4-1.5 MB: the fixture carries the real js/menu.js, js/menu-data.js and sw.js, which grow)
 //    main with all its videos, the preview with the new menu without main's, its page stamped with the list in (the workflow's
 //    --check-stamped passes), the preview with an older menu as it was; under a short limit the lighter preview still goes in
 // 4. shareAssets: the same files of assets/ out (not the media, not what the pages and stylesheets name), the list, sw.js with its handler
@@ -255,6 +256,7 @@ try {
 } catch (e) { check('shareAssets on trees in a temp folder', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 
 // 3. the whole build: a repository of its own, its origin with the pull requests' heads
+// (sizes 1.4-1.5 MB: the fixture carries the real js/menu.js, js/menu-data.js and sw.js, which grow)
 const repo = path.join(tmp, 'repo'), origin = path.join(tmp, 'origin.git');
 // (without the caller's GIT_* and GAME_ROOT: from a git hook GIT_DIR would point git at the real repository)
 const ENV = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^GIT_/.test(k) && k !== 'GAME_ROOT'));
@@ -308,12 +310,12 @@ try {
   const chk = spawnSync(process.execPath, [path.join(repo, 'tools', 'stamp.js'), '--check-stamped'], { cwd: repo, encoding: 'utf8', env: Object.assign({}, ENV, { GAME_ROOT: path.join(S, 'beta', '7') }) });
   check('the preview\'s page is stamped with the list in and has its short script (the workflow\'s --check-stamped passes)', /js\/menu-data\.js\?v=[0-9a-f]{8}"/.test(page) && page.includes(PAGE_HEAD) && chk.status === 0, String(chk.stdout).trim().split('\n').slice(-1)[0]);
   check('the preview with an older menu: every video, no list of videos (main\'s other files of assets/ from the root)', ls(m('beta/8')) === 'corner-a.webm fly-a.webm fly-b.webm heli-a.webm' && fs.readFileSync(path.join(S, 'beta', '8', 'js', 'menu-data.js'), 'utf8') === DATA &&
-    /^#8 pr8 \(.{7}\) → beta\/8\/ \(stamped, 1\.4 MB; 3 file\(s\) of assets\/ from main, 0\.0 MB less\)$/.test(line(8)), line(8));
+    /^#8 pr8 \(.{7}\) → beta\/8\/ \(stamped, 1\.[45] MB; 3 file\(s\) of assets\/ from main, 0\.0 MB less\)$/.test(line(8)), line(8));
 
   // a short limit: main (1.5 MB) and the preview without main's videos fit, the one that carries them does not
   const s = build('--limit', '2'), sl = (k) => (s.out.split('\n').find(l => l.startsWith('#' + k)) || '').trim();
   check('under a short limit the preview without main\'s videos still goes in, the heavy one is left out', s.st === 0 && has(path.join(S, 'beta', '7', 'index.html')) && !has(path.join(S, 'beta', '8')) &&
-    /^#8: left out, 1\.4 MB/.test(sl(8)), sl(7) + ' | ' + sl(8));
+    /^#8: left out, 1\.[45] MB/.test(sl(8)), sl(7) + ' | ' + sl(8));
 } catch (e) { check('the build in a repository of its own', false, String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 

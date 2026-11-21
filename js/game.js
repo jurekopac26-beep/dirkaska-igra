@@ -248,12 +248,26 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const GUMA_BREZ = { suzuka: 1, medvode: 1 };
   const getTrack = (id) => {
     if (!trackCache.has(id)) {
-      const T = new Core.Track(Core.TRACKS.find(d => d.id === id) || Core.TRACKS[0]), d = T.def;
+      const d = Core.TRACKS.find(x => x.id === id) || Core.TRACKS[0];
+      if (d.head) throw new Error('track not loaded: ' + d.id + ' (Core.loadTrack first)');   // (a lazy track's head, js/tracks/glave.js: no road in it)
+      const T = new Core.Track(d);
       if (!d.test && !d.pending && !GUMA_BREZ[d.id] && typeof VOZNJA_PROFILI !== 'undefined') T.voznjaLinija(VOZNJA_PROFILI.filter(p => p.proga === d.id).concat(typeof VOZNJA_SLOG !== 'undefined' && VOZNJA_SLOG ? [VOZNJA_SLOG] : []));
       trackCache.set(id, T);
     }
     return trackCache.get(id);
   };
+  // I17 korak 4 (docs/hitro-nalaganje.md): a real track may be only its head until its file is loaded (Core.loadTrack). What the menus read
+  // of a track without driving it (its length, its race's, the qualifying lap's run-up, its corners) comes from the head's hd, the same
+  // numbers its built track gives (tests/glave-prog.test.js); a track without one is built as before
+  const trackInfo = (id) => { const d = Core.TRACKS.find(x => x.id === id) || Core.TRACKS[0], h = d.hd; return h ? { def: d, len: h.len, raceLen: h.race, qualiBack: () => h.qb, corners: { length: h.nc } } : getTrack(id); };
+  const trackErr = () => toast(tr('Proge ni bilo mogoče naložiti. Preveri povezavo in poskusi znova.'), 3500);
+  // a screen that needs whole tracks: false when they are all loaded; else their files are loaded, then `again` (the screen anew), and true
+  function needTracks(ids, again) {
+    const h = ids.filter(id => !Core.trackLoaded(id));
+    if (!h.length) return false;
+    Core.loadTracks(h).then(() => again(), trackErr);
+    return true;
+  }
   // The car: S.car (an index into Core.MODELS) is what the game uses while it runs (the tests set it too). Stored as carId, the
   // vehicle's id, and as car, an index an older build of the game (the first 11 vehicles) understands: the index itself up to 10, else
   // the rally car's (an older copy on the same address lands on the rally car instead of failing). carV 3, read back: a known id wins,
@@ -1793,6 +1807,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) if ((a + b) % 2 === 0) g.fillRect(x - r + a * r * 2 / 3, y - r + b * r * 2 / 3, r * 2 / 3, r * 2 / 3);
   }
   function buildTrackScreen() {
+    if (needTracks(Core.TRACKS.map(d => d.id), buildTrackScreen)) return;   // (each card draws its track and counts its checkpoints)
     const list = $('track-list'), sd = Core.TRACKS.find(d => d.id === S.track);
     $('cmp-row').classList.toggle('off', !(sd && sd.pit && !isTT(sd)));   // (tyres: the circuits with pits)
     let sepDone = false, pendDone = false;
@@ -1822,7 +1837,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (track && track.def.id === id && !Render.worldStale) { cb(); return; }   // (the same track: rebuilt only when it paints itself for the season and that changed: Vršič)
     $('ld-msg').textContent = tr('Nalagam progo {0}…', Lang.of(Core.TRACKS.find(d => d.id === id), 'name') || '');
     $('loading').classList.remove('off');
-    setTimeout(() => {
+    const go = () => setTimeout(() => {
       const t0 = performance.now();
       track = getTrack(id);
       Render.buildWorld(track, S.quality === 'retro' ? 0.8 : 1, detailTier());
@@ -1834,7 +1849,11 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       $('loading').classList.add('off');
       cb();
     }, 40);
+    // its file first (a lazy track, js/tracks/glave.js), then its world's files (World.need, step 5)
+    (Core.trackLoaded(id) ? Promise.resolve() : Core.loadTrack(id)).then(() => needWorld(id)).then(go, () => { $('loading').classList.add('off'); trackErr(); });
   }
+  // the track's world files, loaded only when a track needs them (docs/hitro-nalaganje.md step 5: World.need; the eager ones are there)
+  function needWorld(id) { const d = Core.TRACKS.find(x => x.id === id); return World.need ? World.need(d ? d.theme : '') : Promise.resolve(); }
   let loadMs = 0;   // (tests: how long the last track took to load)
   // the title demo: ten cars racing on the loaded track behind the menus, their first seconds driven at once
   function demoMake(sec) {
@@ -2262,14 +2281,21 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   function lpBound(k, build) {   // the fastest a key's run could be (s); 0 while not known (build: the track built for it, else only one built already)
     if (lpB.has(k)) return lpB.get(k);
-    const I = lpTable().get(k); if (!I || (!build && !trackCache.has(I.id))) return 0;
+    const I = lpTable().get(k); if (!I || (!build && !trackCache.has(I.id)) || !Core.trackLoaded(I.id)) return 0;
     const b = LPX.bound(getTrack(I.id), I, Core.MODELS); lpB.set(k, b); return b;
+  }
+  const lpLoading = new Set();
+  function lpLoad(k) {   // a key's track not loaded yet: load it, then show the Leaderboard again if it is still on that track
+    const I = lpTable().get(k); if (!I || Core.trackLoaded(I.id) || lpLoading.has(I.id)) return;
+    lpLoading.add(I.id);
+    Core.loadTrack(I.id).then(() => { lpLoading.delete(I.id); if (screen === 'board' && !lpList && recKey(boardId) === k) buildBoardScreen(); }, () => lpLoading.delete(I.id));
   }
   function lpRowsOf(k, build) {   // the table of a key: the friends' times and the player's, the fastest first ([{ id, name, ms, day, car, me }]);
     // build false: a track not built yet is not built for it, its friends' times wait for the check (the rows' wait)
     const S0 = lpS(), m = lpMine()[k], any = Object.keys(S0.friends).some(id => S0.friends[id].t[k]), me = m ? { name: S.name, ms: m[0], day: m[1], car: m[2] } : null;
     const b = any ? lpBound(k, build !== false) : 0;
-    if (any && build === false && !lpB.has(k)) return Object.assign(LPX.rows({ friends: {} }, k, me, 0), { wait: true });
+    // (also build true while its track is not loaded yet (I17): load it, the Leaderboard on show again after; never the unchecked times)
+    if (any && !lpB.has(k)) { if (build !== false) lpLoad(k); return Object.assign(LPX.rows({ friends: {} }, k, me, 0), { wait: true }); }
     return LPX.rows(S0, k, me, b);
   }
   // the menu's Friends view of a track in the way it is driven now: { n (friends' times), friends, place: { at, n } (the player's, with a
@@ -2298,7 +2324,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     return '<div class="lp-box"><p class="ltab-h">' + tr('Prijatelji · {0}', esc(Lang.of(d, 'name'))) + condTxt(d) + '</p>' + (rs.some(r => !r.me)
       ? '<table class="ltab lp"><thead><tr><th>#</th><th>' + tr('Voznik') + '</th><th>' + tr('Avto') + '</th><th>' + tr('Čas') + '</th><th>' + tr('Zaostanek') + '</th><th>' + tr('Datum') + '</th></tr></thead><tbody>' +
         rs.map((r, i) => '<tr class="' + (r.me ? 'me' : '') + '"><td>' + (i + 1) + '</td><td class="nm">' + esc(r.name) + '</td><td class="nm">' + esc(lpCar(r.car) || '–') + '</td><td>' + fmt(r.ms / 1000, true) + '</td><td>' + (i ? sgn((r.ms - first) / 1000) : '') + '</td><td>' + lpDate(r.day) + '</td></tr>').join('') + '</tbody></table>'
-      : '<p class="desc small">' + tr(nf ? 'Prijatelji na tej progi še nimajo časov.' : 'Na lestvici še ni prijateljev. Pošlji jim svoje čase: ko ti pošljejo svoje, jih vidiš tukaj.') + '</p>') +
+      : '<p class="desc small">' + (rs.wait ? tr('Nalagam progo…') : tr(nf ? 'Prijatelji na tej progi še nimajo časov.' : 'Na lestvici še ni prijateljev. Pošlji jim svoje čase: ko ti pošljejo svoje, jih vidiš tukaj.')) + '</p>') +
       '<div class="btns horiz gh-btns"><button class="btn mini" data-act="lp-send">' + tr('Pošlji svoje čase') + '</button>' + (nf ? '<button class="btn mini" data-act="lp-list">' + tr('Prijatelji ({0})', nf) + '</button>' : '') + '</div></div>';
   }
   function lpListHTML() {   // the Leaderboard's Prijatelji: each friend (the nickname, the times, the last link), Odstrani
@@ -2617,7 +2643,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const load = (k, next) => { const tag = document.querySelector('link[data-lazy="' + k + '"]'), sc = document.createElement('script');
       sc.src = tag ? tag.getAttribute('href') : 'js/' + k + '.js'; sc.onload = () => { setP(f + NV_STEPS.load / 4); next(); }; sc.onerror = () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); };
       document.head.appendChild(sc); };
-    load('newmap', () => load('nvpark', () => load('nvbase', () => load('nvsite', () => load('nvedge', () => load('nvboat', () => load('nvmenu', () => load('nvschool', () => load('nvbake', () => load('nvwalls', () => load('nvheli', () => load('nvride', () => load('nvwater', () => load('nvfair', later))))))))))))));   // (the map, its park, its rescue base and lot, its course for jet skis, its garages' menus, the driving school's tasks, the merging of its still meshes for the phones, its walls of fence the car pushes, its helicopter that flies, the rides the car rides)
+    misLoad(() => load('newmap', () => load('nvpark', () => load('nvbase', () => load('nvsite', () => load('nvedge', () => load('nvboat', () => load('nvmenu', () => load('nvschool', () => load('nvbake', () => load('nvwalls', () => load('nvheli', () => load('nvride', () => load('nvwater', () => load('nvfair', later)))))))))))))), () => { nv.err = 'load'; toast(tr('Nove mape ni bilo mogoče naložiti.'), 3000); done(); });   // (the missions first: their kit, MisKit, the new map's jet skis and fire engine)   // (the map, its park, its rescue base and lot, its course for jet skis, its garages' menus, the driving school's tasks, the merging of its still meshes for the phones, its walls of fence the car pushes, its helicopter that flies, the rides the car rides)
   }
   // the wait bar: where it stands after loading the scripts, after each step of the build (hub4G's yields), after the map's hooks; from the build's times (nv.times)
   const NV_STEPS = { load: 0.06, y0: 0.086, y1: 0.087, y2: 0.095, y3: 0.096, y4: 0.104, y5: 0.156, y5a: 0.157, y5b: 0.171, y5c: 0.173, y5d: 0.177, y5e: 0.18, y5f: 0.182, y5g: 0.183, h0: 0.185, h1: 0.188, h2: 0.191, h3: 0.219, y6: 0.219, y7: 0.226, y8: 0.244, y9: 0.489, y10: 0.516, y11: 0.523, y12: 0.68, y13: 0.68, y14: 0.705, y15: 0.735, y16: 0.738, y17: 0.742, y18: 0.746, y19: 0.747, y20: 0.747, y21: 0.825, y22: 0.878, end: 0.88, hooks: 0.899 };
@@ -2757,6 +2783,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     requestAnimationFrame(() => { const tb = $('board-tabs'), se = tb.querySelector('.sel'); if (!se) return; const a = se.getBoundingClientRect(), b = tb.getBoundingClientRect(); if (a.top < b.top || a.bottom > b.bottom) tb.scrollTop += a.top - b.top - 4; });   // (the chosen track's tab in sight in the scrolling strip)
     if (lpList && LPX) { $('board-body').innerHTML = lpListHTML(); $('board-body').scrollTop = 0; return; }   // (Prijatelji: the friends on the leaderboard)
     let h;
+    if (isTT(d) && needTracks([d.id], buildBoardScreen)) return;   // (a time trial's checkpoints)
     if (isTT(d)) {
       const board = Array.isArray(r.board) ? r.board : [], T = getTrack(d.id);
       if (!board.length) h = '<p class="board-empty">' + tr(isRally(d) ? 'Na tej progi še ni časov. Odpelji preizkušnjo in postavi prvi rekord!' : 'Na tej progi še ni časov. Odpelji vzpon in postavi prvi rekord!') + '</p>';
@@ -2848,6 +2875,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function schoolMedal(L, v) { if (v == null || !Number.isFinite(v)) return -1; const m = schoolMedals(L), lo = schoolLower(L); for (let k = 0; k < 3; k++) if (lo ? v <= m[k] : v >= m[k]) return k; return -1; }
   const schoolVal = (L, v) => !Number.isFinite(v) ? '–' : L.id === 'start' ? Lang.dec(v.toFixed(2)) + ' s' : L.id === 'brake' ? Lang.dec(v.toFixed(2)) + ' m' : L.id === 'line' ? Math.round(v) + ' %' : numDot(Math.round(v)) + tr(' točk');
   function buildSchoolScreen() {
+    if (needTracks([...new Set(SCHOOL.map(L => L.track))], buildSchoolScreen)) return;   // (each lesson's medals: the autopilot drives it)
     $('school-list').innerHTML = SCHOOL.map(L => { const m = schoolMedals(L), R = schoolRec(L), lo = schoolLower(L);
       return '<div class="sch' + (R.medal === 0 ? ' gold' : '') + '"><div class="sch-h"><b>' + esc(tr(L.name)) + '</b><span class="sch-m">' + (R.medal >= 0 ? MEDAL_ICON[R.medal] : '') + '</span></div>' +
         '<p>' + esc(tr(L.goal)) + '</p><p class="sch-t">' + m.map((x, k) => MEDAL_ICON[k] + ' ' + (lo ? '\u2264 ' : '\u2265 ') + schoolVal(L, x)).join(' \u00b7 ') + '</p>' +
@@ -3161,6 +3189,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const pkLegKey = (c, w, d) => 'tdgp-pklegend-' + (d.id !== 'pikes' ? d.id + '-' : '') + c + '-' + pkLegCar(d, c) + w;   // (the car in the key: a new legend car makes a new run; the road: the gravel's runs apart, the asphalt's keep their old keys; w as pkW, the summer's keys as before)
   const pkLegTrk = (T) => Math.round(T.len * 10) + '/' + T.N;   // (the road it was driven on)
   function pkLegGet(c, w, d) {   // the legend's run on road d, or null when it is not made yet
+    if (!Core.trackLoaded(d.id)) return null;   // (not made yet: the road's file is not here, js/tracks/glave.js)
     const key = pkLegKey(c, w, d), T = getTrack(d.id), gold = pkMedW(d, w)[c][0];
     if (pkLeg.mem[key]) return pkLeg.mem[key];
     let o = null; try { o = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
@@ -3205,7 +3234,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   const pkLegIs = (J, c, w, d) => !!J && J.c === c && J.w === w && J.d === d;
   function pkLegWarm(c, w, d) {   // the menus: make the legend in the background (8 ms slices), unless it is there or on the way
-    if (pkLegGet(c, w, d) || pkLegIs(pkLeg.job, c, w, d)) return;
+    if (!Core.trackLoaded(d.id) || pkLegGet(c, w, d) || pkLegIs(pkLeg.job, c, w, d)) return;   // (a road not loaded: made when it is)
     const J = pkLegJob(c, w, d);
     const go = () => { if (pkLeg.job !== J) return; if (bg === 'race' && phase !== 'done') { setTimeout(go, 500); return; } if (!pkLegRun(J, 8)) setTimeout(go, 24); };   // (never during a race)
     setTimeout(go, 60);
@@ -3431,7 +3460,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       $('ch-title').textContent = tr('Prvenstvo'); $('ch-tag').textContent = tr('točke 25, 18, 15 …');
       $('ch-diff').textContent = (S.difficulty > 2 ? tr('Težavnost: {0} (super težka je samo za beg pred policijo; spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()])) : tr('Težavnost: {0} (spremeniš v Nastavitvah)', tr(DIFF_NAME[raceDiff()]))) + riv;
       $('ch-body').innerHTML = '<div class="ch-cards">' + CH.map(c => {
-        const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = getTrack(id); return a + T.len * lapsOf(T.def); }, 0);
+        const R0 = records.champ[c.id] || {}, km = c.tracks.reduce((a, id) => { const T = trackInfo(id); return a + T.len * lapsOf(T.def); }, 0);
         return '<button class="ch-card' + (c.id === champPick ? ' sel' : '') + '" data-champ="' + c.id + '"><h3>' + esc(Lang.of(c, 'name')) + '</h3><div class="tmeta">' + raceWord(c.tracks.length) + ' · ' + kmTxt(km, 0) + ' km</div>' +
           '<div class="ttracks">' + c.tracks.map(id => esc(trackName(id))).join(' · ') + '</div><div class="tdesc">' + esc(Lang.of(c, 'desc')) + '</div>' +
           (R0.best ? '<div class="trec">' + (R0.titles ? tr('Prvak {0}×', R0.titles) : tr('Najboljše: {0} mesto', Lang.ord(R0.best))) + '</div>' : '') + '</button>'; }).join('') + '</div>';
@@ -5899,10 +5928,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     $('on-pick').classList.remove('off'); $('on-room').classList.add('off'); $('on-go').classList.add('off');
     $('on-name').value = S.name; privOpen(false);
     showScreen('online');
-    onErr(Net.available() ? '' : netErr('browser-incompatible'));
+    netLoad(() => { if (screen === 'online' && !mp) onErr(Net.available() ? '' : netErr('browser-incompatible')); });   // (peerjs and net.js come only now: I17, step 6)
   }
+  const netLoad = (next) => lazyJs('spletna', next, () => onErr(netErr('browser-incompatible')));
   function privOpen(on) { $('on-priv').classList.toggle('off', !on); $('on-priv-btn').setAttribute('aria-expanded', on ? 'true' : 'false'); }
   function netStart(role) {   // 'quick' (wait for whoever comes: up to 22), or a private room (up to four): 'host' (with a new code) / 'guest' (with the friend's code)
+    if (typeof Net === 'undefined') { netLoad(() => { if (screen === 'online' && !mp) netStart(role); }); return; }   // (a tap before the online code arrived: the same tap once it is here, if Spletna is still up and in no room)
     const code = role === 'guest' ? Net.normCode($('on-code').value) : '';
     if (role === 'guest' && code.length !== 4) { onErr(tr('Vpiši kodo sobe (4 znaki), ki ti jo je poslal prijatelj.')); return; }
     if (!Net.available()) { onErr(netErr('browser-incompatible')); return; }
@@ -6696,7 +6727,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       case 'upg-done': buildCarScreen(); showScreen('car'); break;
       case 'upg-reset': S.upg[Core.MODELS[S.car].id] = upgNorm(null); save(); buildUpgScreen(); break;
       case 'to-board': boardId = S.track; lpList = false; buildBoardScreen(); showScreen('board'); break;
-      case 'to-missions': if (MS.openList) MS.openList(); break;   // (the title's MISSIONS tile: the missions by garage, js/missions.js)
+      case 'to-missions': misLoad(() => { if (MS.openList) MS.openList(); }); break;   // (the title's MISSIONS tile: the missions by garage, js/missions.js)
       case 'to-stats': buildStatsScreen(); showScreen('stats'); break;
       case 'to-school': if (race) toTitle(); buildSchoolScreen(); showScreen('school'); break;
       case 'school-go': schoolGo(el && el.dataset.lesson); break;
@@ -6832,10 +6863,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   /* ---------------- the menu's bridge (js/menu.js): what the menu reads and does in the game ---------------- */
   const MenuBridge = {
+    lazy: (k, ok, no) => lazyJs(k, ok, no),   // (the menu's map data come with the track step: I17, step 6)
     get S() { return S; },
     defs: () => Core.TRACKS,
     nuCups: () => CHAMPS.filter(c => c.nu).map(c => (c.en && c.en.name) || c.name),   // (the cups behind NEUPORABNO, by their English names: the menu's)
-    track: (id) => getTrack(id),
+    track: (id) => trackInfo(id),   // (the menu: a track's length and corners; js/tracks/glave.js)
+    load: (id) => Core.loadTrack(id),
     baseId: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d && d.variantOf ? d.variantOf : id; },   // (Pikes Peak on its gravel road is Pikes Peak)
     shown: (d) => pkRoadDef(d),
     modeOf: (d) => modeOf(d),
@@ -6918,7 +6951,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     // 38 m/s on average; the qualifying lap with its run-up from the straight)
     qualiCan: (d) => !isTT(d) && !d.open,
     weekend(d) {
-      const T = getTrack(d.id), laps = lapsOf(d), best = rec(d.id).bestLap, lap = best > 0 ? best : T.len / 38;
+      const T = trackInfo(d.id), laps = lapsOf(d), best = rec(d.id).bestLap, lap = best > 0 ? best : T.len / 38;
       return { cars: 1 + rivN(d), laps, quali: lap + T.qualiBack() / 38, race: lap * laps * 1.04 + 8 };
     },
     // NEW VERSION · TEST 1 (the title's button): Toskana, alone and free, the new map over it (nvStart)
@@ -6932,7 +6965,21 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   };
 
   // the special missions (js/missions.js): a mission's race on its track (no menu, no qualifying), the game's actions for its buttons
-  const MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, made() {}, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
+  // the lazy scripts (I17 step 6): a group of index.html's <link rel="x-lazy-script" data-lazy="<k>-<file>"> (js/leno.js loads each once,
+  // from its stamped href): all asked at once, run in the page's order (async=false); next() once all have run, fail() if one could not
+  // be loaded (the next call tries again)
+  function lazyJs(k, next, fail) {
+    const ks = Leno.keys(k + '-');
+    if (ks.every(Leno.has)) { next(); return; }
+    Promise.all(ks.map(Leno.load)).then(() => next(), () => { if (fail) fail(); });
+  }
+  // the special missions (js/missions.js, js/missions/): loaded on opening them (the MISSIONS tile, ?misija=, the new map's kit), till then
+  // the stand-in below (no mission chosen)
+  function misLoad(next, fail) {
+    if (typeof Missions !== 'undefined' && MS === Missions) { next(); return; }
+    lazyJs('misije', () => { if (MS !== Missions) { MS = Missions; MS.init(MisBridge); } next(); }, fail || (() => toast(tr('Misij ni bilo mogoče naložiti.'), 3000)));
+  }
+  let MS = typeof Missions !== 'undefined' ? Missions : { opts: () => null, made() {}, begin() {}, step() {}, over: () => false, stop() {}, init() {} };
   const ZB = typeof Zabava !== 'undefined' ? Zabava : { init() {}, modes: () => [], opts: () => null, made() {}, begin() {}, hold: () => false, step() {}, over: () => null, cls: () => '', rows: () => [], outWord: () => '', noPodium: () => false, finish: () => false, net() {}, room() {}, netSetup() {}, netRes: () => null, resBase() {}, resPay: () => '', resEnd() {}, stop() {} };   // (Zabava: the novelties, js/zabava.js)
   const MisBridge = {
     start(id) { nv = null; if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; qual = null; ensureTrack(id, () => newRace()); },
@@ -7024,7 +7071,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     // Dirka s prijateljem: the host's track and laps, the room code (Enter joins)
     $('on-track').addEventListener('change', netPick);
     $('on-laps').addEventListener('change', netPick);
-    $('on-code').addEventListener('input', (e) => { const v = Net.normCode(e.target.value); if (v !== e.target.value) e.target.value = v; });
+    $('on-code').addEventListener('input', (e) => { if (typeof Net === 'undefined') return; const v = Net.normCode(e.target.value); if (v !== e.target.value) e.target.value = v; });
     $('on-code').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); netStart('guest'); } });   // (typing is not driving: arrows move the cursor)
     $('on-code').addEventListener('keyup', (e) => e.stopPropagation());
   }
@@ -7078,10 +7125,27 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
 
   /* ---------------- boot ---------------- */
-  function boot() {
+  // the quick entry's track when it races there (quickGo's own conditions: a track, not a friend's challenge or ghost, the car the player's):
+  // boot builds it at once instead of the title's world, and makes no title demo (docs/hitro-nalaganje.md step 3); quickGo's ensureTrack
+  // then has it ready, and the title after the race runs its demo on it (demoShow). A start without one keeps its title as it was
+  function quickTrack() {
+    const q = Core.quickArgs(location.search);
+    if (!q || !q.track || /[#&](izziv|duh)=/.test(location.hash)) return null;
+    return owned(q.car && owned(q.car) ? q.car : Core.MODELS[S.car].id) ? q.track : null;
+  }
+  function boot(loaded) {
     if (typeof THREE === 'undefined') { $('ld-msg').textContent = tr('Knjižnice za 3D grafiko ni bilo mogoče naložiti. Preveri povezavo in osveži stran.'); return; }
+    // the first track's file first, when it is a lazy one (js/tracks/glave.js); offline without it: the default track, Jezero (in the page)
+    const want = quickTrack() || S.track;
+    // then its world's files (World.need, docs/hitro-nalaganje.md step 5); a world that did not come: the build says so (the error at start-up)
+    if (loaded !== true) {
+      (Core.trackLoaded(want) ? Promise.resolve() : Core.loadTrack(want).catch(() => { if (!Core.trackLoaded(S.track)) S.track = Core.TRACK_DEF.id; }))
+        .then(() => { const qt = quickTrack(); return needWorld(qt && Core.trackLoaded(qt) ? qt : S.track); }).then(() => boot(true), () => boot(true));
+      return;
+    }
     try {
-      track = getTrack(S.track);
+      const qt = quickTrack();
+      track = getTrack(qt && Core.trackLoaded(qt) ? qt : S.track);
       Render.init($('gl'));
       try { document.fonts.load('800 italic 20px ApexMenu'); } catch (e) { }   // (the HUD's face before the first race: its rows and clock laid out in it from the first frame)
       initAutoTier();   // the device's graphics tier for 'Samodejno' (before the first world is built)
@@ -7098,12 +7162,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       Render.setStorm(S.weather === 'storm');
       Input.onPad = (id, wheel) => toast(tr(!wheel ? 'Igralni plošček je povezan: leva palica krmili, RT plin, LT zavora, Start pavza. V menijih izbiraš s palico in A, B je nazaj.' : ctl.pads[id] ? 'Volan je povezan.' : 'Volan je povezan. Pedale nastaviš v Nastavitvah: Kontrole.'), 5200);
       applySettings();
-      demoMake(6); demoAt = demo;
-      Render.attachRace(demo);
+      if (qt) Render.precompile();   // (the race's track: its shaders compiled under the loading screen, as ensureTrack does)
+      else { demoMake(6); demoAt = demo; Render.attachRace(demo); }
       bindUI();
       refreshSegs();
       if (menuOn) Menu.init(MenuBridge);
-      MS.init(MisBridge); ZB.init(ZbBridge);
+      if (typeof Missions !== 'undefined') MS.init(MisBridge); else if (new URLSearchParams(location.search).has('misija')) misLoad(() => {}); ZB.init(ZbBridge);   // (?misija=: the missions loaded now, their quick entry starts it)
       showScreen('title');
       $('loading').classList.add('off');
       last = performance.now();
@@ -7117,7 +7181,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       if (prviCan()) { Shramba.keep('tdgp-prvi', '0'); prviShow(); }   // (Prvič na cesti: a new player's first start; shown again at the next start until skipped or the first race is driven)
       // offline play and the newest version when online (sw.js); a service worker needs http(s), not a local file
       if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
-      window.__game = { get startCam() { return { v: scV, t: Render.startCam.t, lim: Render.startCamLim() }; }, startCamForce: (v) => { scForce = v | 0; }, comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pauseInfo() { return piInfo && JSON.parse(JSON.stringify(piInfo)); }, get stopsLog() { return tw && race ? race.cars.map(c => ({ name: c.name, me: c === race.player, n: tw.stops.get(c) || 0, sets: (tw.sets.get(c) || { h: [] }).h.slice() })) : null; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0, he: cst.he }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn, demo: fr.demo }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, marksFriendOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(MK_F + mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
+      window.__game = { lazy: (k) => new Promise((ok, no) => lazyJs(k, ok, no)), get startCam() { return { v: scV, t: Render.startCam.t, lim: Render.startCamLim() }; }, startCamForce: (v) => { scForce = v | 0; }, comm: Comm, get ver() { return gameVer(); }, get race() { return race; }, get demo() { return demo; }, get phase() { return phase; }, get pitAuto() { return { st: pa.st, t: pa.t, n: pa.n, stop: pa.stop, k: pa.k }; }, get pauseInfo() { return piInfo && JSON.parse(JSON.stringify(piInfo)); }, get stopsLog() { return tw && race ? race.cars.map(c => ({ name: c.name, me: c === race.player, n: tw.stops.get(c) || 0, sets: (tw.sets.get(c) || { h: [] }).h.slice() })) : null; }, get pitStop() { return { on: cst.on, ok: cst.ok, rows: cst.rows.slice(), sel: cst.sel && Object.assign({}, cst.sel), def: cst.def && Object.assign({}, cst.def), plan: cst.plan && Object.assign({}, cst.plan), tl: cst.tl, tl0: cst.tl0, h: cst.h, h0: cst.h0, he: cst.he }; }, msg: (t, c, d) => showMsg(t, c, d), toast: (t, ms, tag) => toast(t, ms, tag), get toastTag() { return toastTag; }, get pkFly() { return pkF.on ? { t: phaseT, k: pkF.k } : null; }, get loadMs() { return loadMs; }, get fr() { return { raf: fr.raf, drawn: fr.drawn, demo: fr.demo }; }, get stats() { return JSON.parse(JSON.stringify(st)); }, ghostLink: null, profExport, ghShare: (id, how) => ghShare(id, how), marksOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, marksFriendOf: (id) => { const d = Core.TRACKS.find(x => x.id === id); return d ? mkGet(MK_F + mkKey(d)).then(l => l.map(u => Array.from(u))) : Promise.resolve([]); }, get ghostF() { return ghFr && { name: ghFr.name, t: ghFr.t, lap: ghFr.g.lap }; }, get tower() { return tw && { rows: [...$('h-tower').querySelectorAll('.tw-r')].map(r => r.innerText.replace(/\s+/g, ' ').trim()), stops: race.cars.map(c => tw.stops.get(c) || 0) }; }, get repro() { return repro && { seed: repro.seed, on: !!(race && race.opts.repro) }; }, recSum: () => { if (!recd) return null; let h = 2166136261; for (const f of recd.frames) { const u = new Uint32Array(f.buffer, f.byteOffset, f.length); for (let i = 0; i < u.length; i++) h = Math.imul(h ^ u[i], 16777619); } return { n: recd.frames.length, h: (h >>> 0).toString(16) }; },   // (the recording's digest: the same race twice, the same frames)
         get quick() { return quick && { q: Object.assign({}, quick.q), done: quick.done }; }, get saver() { return saverOn(); }, set batLow(v) { batLow = !!v; renderSettings(); }, get screen() { return screen; }, get recFlags() { return recd ? recd.flags.map(f => Object.assign({}, f)) : null; }, S, onAction, pause, resume,
         get qual() { return qual && { id: qual.id, cr: qual.cr, seed: qual.seed, rain: qual.rain, sims: qual.sims ? qual.sims.k : 0, n: qual.nAI, lap: qual.lap, grid: qual.res ? qual.res.grid : 0 }; },
         get adapt() { return { dyn: Render.getDynScale(), shadowsOn: shadowsOn(), auto: autoNoShadows, pending: perf.pending, restore: perf.restore, keep: perf.keep, check: perf.check }; },

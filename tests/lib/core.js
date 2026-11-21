@@ -8,10 +8,12 @@ const path = require('path');
 // the game folder under test: the repo itself, or another copy given in GAME_ROOT (e.g. an older version)
 const ROOT = process.env.GAME_ROOT ? path.resolve(process.env.GAME_ROOT) : path.resolve(__dirname, '..', '..');
 
-// the <script src> files of a page, in order (vendor libraries skipped: Core needs none of them)
+// the <script src> files of a page, in order (vendor libraries skipped: Core needs none of them), with the lazy track files in their
+// places (<link rel="x-lazy-script" href="js/tracks/…">, I17 korak 4: the page loads them with Core.loadTrack; Node has every track)
 function pageScripts(htmlFile) {
   const html = fs.readFileSync(htmlFile, 'utf8');
-  return [...html.matchAll(/<script\b[^>]*\bsrc="([^"?#]+)[^"]*"/g)].map(m => m[1]).filter(s => !/(^|\/)vendor\//.test(s));
+  return [...html.matchAll(/<script\b[^>]*\bsrc="([^"?#]+)[^"]*"|<link\b[^>]*\brel="x-lazy-script"[^>]*\bhref="(js\/tracks\/[^"?#]+)[^"]*"/g)]
+    .map(m => m[1] || m[2]).filter(s => !/(^|\/)vendor\//.test(s));
 }
 
 // source text that defines `Core` (plus any data scripts it reads)

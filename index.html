@@ -15,12 +15,32 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="stylesheet" href="css/fonts.css">
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/napake.css">
-<link rel="stylesheet" href="css/missions.css">
-<link rel="stylesheet" href="css/zabava.css">
-<link rel="stylesheet" href="css/neskoncna.css">
+<!-- the first picture without waiting for the styles (docs/hitro-nalaganje.md, step 2): the loading screen's own rules here (a copy of css/style.css
+     #loading), the game's styles not in the way of the first picture (media="not all", each switched on as it arrives, before the game starts at
+     window load); the page under the loading screen hidden until css/style.css is in, then these rules gone -->
+<style id="ld-css">
+:root{--asphalt:#161b23;--curb:#e63b2e;--chalk:#f6f6f1;--muted:#9fb0c3;--f-display:'Racing Sans One','Arial Black',Impact,system-ui,sans-serif;--f-ui:'Chakra Petch','Segoe UI',Roboto,system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--asphalt:#12161d}}
+:root[data-theme="dark"]{--asphalt:#12161d}
+*,*::before,*::after{box-sizing:border-box}
+:root,html,body{color-scheme:dark;forced-color-adjust:none}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--asphalt);color:var(--chalk)}
+#app{position:fixed;inset:0;overflow:hidden}
+#app>:not(#loading){visibility:hidden}
+#loading{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--asphalt)}
+.ld-logo{font:400 italic clamp(26px,min(9vh,8.6vw),48px)/1 var(--f-display);text-align:center}
+.ld-bar{width:200px;height:8px;border-radius:4px;overflow:hidden;background:repeating-linear-gradient(90deg,var(--curb) 0 12px,var(--chalk) 12px 24px);background-size:24px 100%;animation:ld .9s linear infinite}
+.ld-bar i{display:none}
+@keyframes ld{from{background-position:0 0}to{background-position:24px 0}}
+#ld-msg{margin:0;font:600 14px/1.3 var(--f-ui);color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.ld-bar{animation:none}}
+</style>
+<link rel="stylesheet" href="css/fonts.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/style.css" media="not all" onload="this.media='all';var s=document.getElementById('ld-css');if(s)s.remove()" onerror="this.onload()">
+<link rel="stylesheet" href="css/napake.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/missions.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/zabava.css" media="not all" onload="this.media='all'">
+<link rel="stylesheet" href="css/neskoncna.css" media="not all" onload="this.media='all'">
 <link rel="stylesheet" id="menu-css" href="css/menu.css" media="not all">
 <script src="js/sence.js"></script>
 </head>
@@ -553,8 +573,32 @@
   <div id="toast"></div>
   <div id="loading"><div class="ld-logo">REAL ROADS ATLAS</div><div class="ld-bar"><i></i></div><p id="ld-msg">Nalagam progo…</p></div>
 </div>
+<script>
+// the loading bar (docs/hitro-nalaganje.md, step 2): until the game starts (window load) the kerb grows with the files come so far (their bodies,
+// PerformanceObserver) against what came at the last start (localStorage, from the network or from the service worker; the first time 6 MB), and
+// the message says it (2,1 / 6,0 MB); at the start the kerb is whole again and the message the game's own (the tracks' loading screen as it was)
+(function () {
+  var bar = document.querySelector('#loading .ld-bar'), msg = document.getElementById('ld-msg');
+  if (!bar || !msg || !window.PerformanceObserver) return;
+  var key = 'rra-nalaganje-' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'sw' : 'net'), total = 6e6, sum = 0, done = false, en = false;
+  try { total = +localStorage.getItem(key) || total; en = (JSON.parse(localStorage.getItem('tdgp-settings') || 'null') || {}).lang === 'en'; } catch (e) { /* (no storage) */ }
+  var txt = document.createTextNode(''), mb = function (b) { var t = (b / 1e6).toFixed(1); return en ? t : t.replace('.', ','); };
+  var show = function () { var all = Math.max(total, sum); bar.style.width = Math.round(24 + 176 * sum / all) + 'px'; txt.nodeValue = ' ' + mb(sum) + ' / ' + mb(all) + ' MB'; };
+  var add = function (list) { for (var i = 0; i < list.length; i++) sum += list[i].encodedBodySize || 0; if (!done) show(); };
+  var po = new PerformanceObserver(function (l) { add(l.getEntries()); });
+  try { po.observe({ type: 'resource', buffered: true }); } catch (e) { return; }
+  bar.style.transition = 'width .3s'; msg.appendChild(txt); show();
+  addEventListener('load', function () {
+    add(po.takeRecords()); done = true; po.disconnect();
+    try { if (sum > 1e5) localStorage.setItem(key, String(sum)); } catch (e) { /* (no storage) */ }
+    bar.style.width = bar.style.transition = ''; txt.remove();
+  });
+})();
+</script>
 
 <script src="js/vendor/three.r128.min.js"></script>
+<script src="js/leno.js"></script>
+<script src="js/tracks/glave.js"></script>
 <script src="js/tracks/jezero.js"></script>
 <script src="js/tracks/riviera.js"></script>
 <script src="js/tracks/gora.js"></script>
@@ -562,27 +606,27 @@
 <script src="js/tracks/gozd.js"></script>
 <script src="js/tracks/toskana.js"></script>
 <script src="js/tracks/grom.js"></script>
-<script src="js/tracks/pikes.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-pikes" href="js/tracks/pikes.js">
 <script src="js/tracks/ouninpohja.js"></script>
 <script src="js/tracks/vrsic.js"></script>
-<script src="js/tracks/nring.js"></script>
-<script src="js/tracks/spa.js"></script>
-<script src="js/tracks/rbring.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-nring" href="js/tracks/nring.js">
+<link rel="x-lazy-script" data-lazy="proga-spa" href="js/tracks/spa.js">
+<link rel="x-lazy-script" data-lazy="proga-rbring" href="js/tracks/rbring.js">
 <script src="js/tracks/suzuka.js"></script>
-<script src="js/tracks/pikesg.js"></script>
-<script src="js/tracks/caracoles.js"></script>
-<script src="js/tracks/katu.js"></script>
-<script src="js/tracks/harju.js"></script>
-<script src="js/tracks/bathurst.js"></script>
-<script src="js/tracks/chapman.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-pikesg" href="js/tracks/pikesg.js">
+<link rel="x-lazy-script" data-lazy="proga-caracoles" href="js/tracks/caracoles.js">
+<link rel="x-lazy-script" data-lazy="proga-katu" href="js/tracks/katu.js">
+<link rel="x-lazy-script" data-lazy="proga-harju" href="js/tracks/harju.js">
+<link rel="x-lazy-script" data-lazy="proga-bathurst" href="js/tracks/bathurst.js">
+<link rel="x-lazy-script" data-lazy="proga-chapman" href="js/tracks/chapman.js">
 <script src="js/tracks/bigsur.js"></script>
-<script src="js/tracks/tianmen.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-tianmen" href="js/tracks/tianmen.js">
 <script src="js/tracks/uncompahgre.js"></script>
 <script src="js/tracks/sani.js"></script>
 <script src="js/tracks/iroha.js"></script>
 <script src="js/tracks/mulholland.js"></script>
 <script src="js/tracks/beartooth.js"></script>
-<script src="js/tracks/rastro.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-rastro" href="js/tracks/rastro.js">
 <script src="js/tracks/moki.js"></script>
 <script src="js/tracks/maunakea.js"></script>
 <script src="js/tracks/baldy.js"></script>
@@ -594,7 +638,7 @@
 <script src="js/tracks/rio.js"></script>
 <script src="js/tracks/toronto.js"></script>
 <script src="js/tracks/medvode.js"></script>
-<script src="js/tracks/montreal.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-montreal" href="js/tracks/montreal.js">
 <script src="js/tracks/greatalpine.js"></script>
 <script src="js/tracks/detroit.js"></script>
 <script src="js/tracks/palomar.js"></script>
@@ -604,61 +648,61 @@
 <script src="js/lang.js"></script>
 <script src="js/tracks/marrakesh.js"></script>
 <script src="js/tracks/troisrivieres.js"></script>
-<script src="js/tracks/livorno.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-livorno" href="js/tracks/livorno.js">
 <script src="js/tracks/mountbuller.js"></script>
-<script src="js/tracks/balea.js"></script>
-<script src="js/tracks/silkeborg.js"></script>
-<script src="js/tracks/kagerod.js"></script>
-<script src="js/tracks/sosnova.js"></script>
-<script src="js/tracks/izoard.js"></script>
-<script src="js/tracks/pembrey.js"></script>
-<script src="js/tracks/kildare.js"></script>
-<script src="js/tracks/sacalobra.js"></script>
-<script src="js/tracks/kotor.js"></script>
-<script src="js/tracks/bikernieki.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-balea" href="js/tracks/balea.js">
+<link rel="x-lazy-script" data-lazy="proga-silkeborg" href="js/tracks/silkeborg.js">
+<link rel="x-lazy-script" data-lazy="proga-kagerod" href="js/tracks/kagerod.js">
+<link rel="x-lazy-script" data-lazy="proga-sosnova" href="js/tracks/sosnova.js">
+<link rel="x-lazy-script" data-lazy="proga-izoard" href="js/tracks/izoard.js">
+<link rel="x-lazy-script" data-lazy="proga-pembrey" href="js/tracks/pembrey.js">
+<link rel="x-lazy-script" data-lazy="proga-kildare" href="js/tracks/kildare.js">
+<link rel="x-lazy-script" data-lazy="proga-sacalobra" href="js/tracks/sacalobra.js">
+<link rel="x-lazy-script" data-lazy="proga-kotor" href="js/tracks/kotor.js">
+<link rel="x-lazy-script" data-lazy="proga-bikernieki" href="js/tracks/bikernieki.js">
 <script src="js/tracks/london.js"></script>
-<script src="js/tracks/zandvoort.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-zandvoort" href="js/tracks/zandvoort.js">
 <script src="js/tracks/dades.js"></script>
-<script src="js/tracks/furka.js"></script>
-<script src="js/tracks/santoantao.js"></script>
-<script src="js/tracks/gudauri.js"></script>
-<script src="js/tracks/ngorongoro.js"></script>
-<script src="js/tracks/medeu.js"></script>
-<script src="js/tracks/ella.js"></script>
-<script src="js/tracks/llogara.js"></script>
-<script src="js/tracks/portomoniz.js"></script>
-<script src="js/tracks/seoul.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-furka" href="js/tracks/furka.js">
+<link rel="x-lazy-script" data-lazy="proga-santoantao" href="js/tracks/santoantao.js">
+<link rel="x-lazy-script" data-lazy="proga-gudauri" href="js/tracks/gudauri.js">
+<link rel="x-lazy-script" data-lazy="proga-ngorongoro" href="js/tracks/ngorongoro.js">
+<link rel="x-lazy-script" data-lazy="proga-medeu" href="js/tracks/medeu.js">
+<link rel="x-lazy-script" data-lazy="proga-ella" href="js/tracks/ella.js">
+<link rel="x-lazy-script" data-lazy="proga-llogara" href="js/tracks/llogara.js">
+<link rel="x-lazy-script" data-lazy="proga-portomoniz" href="js/tracks/portomoniz.js">
+<link rel="x-lazy-script" data-lazy="proga-seoul" href="js/tracks/seoul.js">
 <script src="js/tracks/espinazo.js"></script>
-<script src="js/tracks/tuzla.js"></script>
-<script src="js/tracks/sepang.js"></script>
-<script src="js/tracks/lombok.js"></script>
-<script src="js/tracks/buriram.js"></script>
-<script src="js/tracks/sakhir.js"></script>
-<script src="js/tracks/lusail.js"></script>
-<script src="js/tracks/riohondo.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-tuzla" href="js/tracks/tuzla.js">
+<link rel="x-lazy-script" data-lazy="proga-sepang" href="js/tracks/sepang.js">
+<link rel="x-lazy-script" data-lazy="proga-lombok" href="js/tracks/lombok.js">
+<link rel="x-lazy-script" data-lazy="proga-buriram" href="js/tracks/buriram.js">
+<link rel="x-lazy-script" data-lazy="proga-sakhir" href="js/tracks/sakhir.js">
+<link rel="x-lazy-script" data-lazy="proga-lusail" href="js/tracks/lusail.js">
+<link rel="x-lazy-script" data-lazy="proga-riohondo" href="js/tracks/riohondo.js">
 <script src="js/tracks/zurich.js"></script>
-<script src="js/tracks/hakone.js"></script>
-<script src="js/tracks/killar.js"></script>
-<script src="js/tracks/luanda.js"></script>
-<script src="js/tracks/ujarras.js"></script>
-<script src="js/tracks/ghoufi.js"></script>
-<script src="js/tracks/cusco.js"></script>
-<script src="js/tracks/mombasa.js"></script>
-<script src="js/tracks/isalo.js"></script>
-<script src="js/tracks/portobelo.js"></script>
-<script src="js/tracks/eljem.js"></script>
-<script src="js/tracks/isuna.js"></script>
-<script src="js/tracks/hiva.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-hakone" href="js/tracks/hakone.js">
+<link rel="x-lazy-script" data-lazy="proga-killar" href="js/tracks/killar.js">
+<link rel="x-lazy-script" data-lazy="proga-luanda" href="js/tracks/luanda.js">
+<link rel="x-lazy-script" data-lazy="proga-ujarras" href="js/tracks/ujarras.js">
+<link rel="x-lazy-script" data-lazy="proga-ghoufi" href="js/tracks/ghoufi.js">
+<link rel="x-lazy-script" data-lazy="proga-cusco" href="js/tracks/cusco.js">
+<link rel="x-lazy-script" data-lazy="proga-mombasa" href="js/tracks/mombasa.js">
+<link rel="x-lazy-script" data-lazy="proga-isalo" href="js/tracks/isalo.js">
+<link rel="x-lazy-script" data-lazy="proga-portobelo" href="js/tracks/portobelo.js">
+<link rel="x-lazy-script" data-lazy="proga-eljem" href="js/tracks/eljem.js">
+<link rel="x-lazy-script" data-lazy="proga-isuna" href="js/tracks/isuna.js">
+<link rel="x-lazy-script" data-lazy="proga-hiva" href="js/tracks/hiva.js">
 <script src="js/tracks/haivan.js"></script>
 <script src="js/tracks/batangas.js"></script>
-<script src="js/tracks/quezaltepeque.js"></script>
-<script src="js/tracks/aguascalientes.js"></script>
-<script src="js/tracks/koli.js"></script>
-<script src="js/tracks/kanaba.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-quezaltepeque" href="js/tracks/quezaltepeque.js">
+<link rel="x-lazy-script" data-lazy="proga-aguascalientes" href="js/tracks/aguascalientes.js">
+<link rel="x-lazy-script" data-lazy="proga-koli" href="js/tracks/koli.js">
+<link rel="x-lazy-script" data-lazy="proga-kanaba" href="js/tracks/kanaba.js">
 <script src="js/tracks/sogeri.js"></script>
-<script src="js/tracks/canaries.js"></script>
-<script src="js/tracks/savusavu.js"></script>
-<script src="js/tracks/koror.js"></script>
+<link rel="x-lazy-script" data-lazy="proga-canaries" href="js/tracks/canaries.js">
+<link rel="x-lazy-script" data-lazy="proga-savusavu" href="js/tracks/savusavu.js">
+<link rel="x-lazy-script" data-lazy="proga-koror" href="js/tracks/koror.js">
 <link rel="x-lazy-script" data-lazy="newmap" href="js/newmap.js">
 <link rel="x-lazy-script" data-lazy="nvpark" href="js/nvpark.js">
 <link rel="x-lazy-script" data-lazy="nvbase" href="js/nvbase.js">
@@ -740,33 +784,33 @@
 <script src="js/world-ouni.js"></script>
 <script src="js/world-vrsic.js"></script>
 <script src="js/world-caracoles.js"></script>
-<script src="js/world-nring.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-nring" data-svet="nring" href="js/world-nring.js">
 <script src="js/world-townsville.js"></script>
 <script src="js/world-toronto.js"></script>
-<script src="js/data/montreal.js"></script>
-<script src="js/world-montreal.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-podatki-montreal" data-svet="montreal" href="js/data/montreal.js">
+<link rel="x-lazy-script" data-lazy="svet-montreal" data-svet="montreal" href="js/world-montreal.js">
 <script src="js/world-harju.js"></script>
-<script src="js/world-spa.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-spa" data-svet="spa" href="js/world-spa.js">
 <script src="js/world-bathurst.js"></script>
-<script src="js/world-aguascalientes.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-aguascalientes" data-svet="aguascalientes" href="js/world-aguascalientes.js">
 <script src="js/world-rio.js"></script>
 <script src="js/world-cpalace.js"></script>
-<script src="js/world-silkeborg.js"></script>
-<script src="js/world-kagerod.js"></script>
-<script src="js/world-sosnova.js"></script>
-<script src="js/world-pembrey.js"></script>
-<script src="js/world-kildare.js"></script>
-<script src="js/world-bikernieki.js"></script>
-<script src="js/world-zandvoort.js"></script>
-<script src="js/world-tuzla.js"></script>
-<script src="js/world-sakhir.js"></script>
-<script src="js/world-sepang.js"></script>
-<script src="js/world-lombok.js"></script>
-<script src="js/world-buriram.js"></script>
-<script src="js/world-lusail.js"></script>
-<script src="js/world-riohondo.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-silkeborg" data-svet="silkeborg" href="js/world-silkeborg.js">
+<link rel="x-lazy-script" data-lazy="svet-kagerod" data-svet="kagerod" href="js/world-kagerod.js">
+<link rel="x-lazy-script" data-lazy="svet-sosnova" data-svet="kildare sosnova" href="js/world-sosnova.js">
+<link rel="x-lazy-script" data-lazy="svet-pembrey" data-svet="pembrey" href="js/world-pembrey.js">
+<link rel="x-lazy-script" data-lazy="svet-kildare" data-svet="kildare" href="js/world-kildare.js">
+<link rel="x-lazy-script" data-lazy="svet-bikernieki" data-svet="bikernieki" href="js/world-bikernieki.js">
+<link rel="x-lazy-script" data-lazy="svet-zandvoort" data-svet="zandvoort" href="js/world-zandvoort.js">
+<link rel="x-lazy-script" data-lazy="svet-tuzla" data-svet="tuzla" href="js/world-tuzla.js">
+<link rel="x-lazy-script" data-lazy="svet-sakhir" data-svet="sakhir" href="js/world-sakhir.js">
+<link rel="x-lazy-script" data-lazy="svet-sepang" data-svet="sepang" href="js/world-sepang.js">
+<link rel="x-lazy-script" data-lazy="svet-lombok" data-svet="lombok" href="js/world-lombok.js">
+<link rel="x-lazy-script" data-lazy="svet-buriram" data-svet="buriram" href="js/world-buriram.js">
+<link rel="x-lazy-script" data-lazy="svet-lusail" data-svet="lusail" href="js/world-lusail.js">
+<link rel="x-lazy-script" data-lazy="svet-riohondo" data-svet="riohondo" href="js/world-riohondo.js">
 <script src="js/world-batangas.js"></script>
-<script src="js/world-quezaltepeque.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-quezaltepeque" data-svet="quezaltepeque" href="js/world-quezaltepeque.js">
 <script src="js/world-rbring.js"></script>
 <script src="js/world-riverside.js"></script>
 <script src="js/world-longford.js"></script>
@@ -774,80 +818,80 @@
 <script src="js/world-bangsaen.js"></script>
 <script src="js/world-suzuka.js"></script>
 <script src="js/world-medvode.js"></script>
-<script src="js/world-katu.js"></script>
-<script src="js/world-chapman.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-katu" data-svet="katu" href="js/world-katu.js">
+<link rel="x-lazy-script" data-lazy="svet-chapman" data-svet="chapman" href="js/world-chapman.js">
 <script src="js/world-bigsur.js"></script>
 <script src="js/world-uncompahgre.js"></script>
-<script src="js/world-killar.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-killar" data-svet="killar" href="js/world-killar.js">
 <script src="js/world-sani.js"></script>
 <script src="js/world-iroha.js"></script>
 <script src="js/world-mulholland.js"></script>
 <script src="js/world-baldy.js"></script>
 <script src="js/world-greatalpine.js"></script>
 <script src="js/world-beartooth.js"></script>
-<script src="js/world-rastro.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-rastro" data-svet="rastro" href="js/world-rastro.js">
 <script src="js/world-moki.js"></script>
 <script src="js/world-palomar.js"></script>
 <script src="js/world-maunakea.js"></script>
 <script src="js/world-hotham.js"></script>
-<script src="js/world-tianmen.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-tianmen" data-svet="tianmen" href="js/world-tianmen.js">
 <script src="js/world-newcastle.js"></script>
 <script src="js/world-detroit.js"></script>
 <script src="js/world-marrakesh.js"></script>
 <script src="js/world-troisrivieres.js"></script>
 <script src="js/world-prelaz.js"></script>
-<script src="js/world-medeu.js"></script>
-<script src="js/world-llogara.js"></script>
-<script src="js/world-portomoniz.js"></script>
-<script src="js/data/livorno.js"></script>
-<script src="js/world-livorno.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-medeu" data-svet="medeu" href="js/world-medeu.js">
+<link rel="x-lazy-script" data-lazy="svet-llogara" data-svet="llogara" href="js/world-llogara.js">
+<link rel="x-lazy-script" data-lazy="svet-portomoniz" data-svet="portomoniz" href="js/world-portomoniz.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-livorno" data-svet="livorno" href="js/data/livorno.js">
+<link rel="x-lazy-script" data-lazy="svet-livorno" data-svet="livorno" href="js/world-livorno.js">
 <script src="js/world-gore.js"></script>
 <script src="js/world-mountbuller.js"></script>
 <script src="js/data/london.js"></script>
 <script src="js/world-london.js"></script>
 <script src="js/world-dades.js"></script>
-<script src="js/world-santoantao.js"></script>
-<script src="js/world-ngorongoro.js"></script>
-<script src="js/world-ella.js"></script>
-<script src="js/data/seoul.js"></script>
-<script src="js/world-seoul.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-santoantao" data-svet="santoantao" href="js/world-santoantao.js">
+<link rel="x-lazy-script" data-lazy="svet-ngorongoro" data-svet="ngorongoro" href="js/world-ngorongoro.js">
+<link rel="x-lazy-script" data-lazy="svet-ella" data-svet="ella" href="js/world-ella.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-seoul" data-svet="seoul" href="js/data/seoul.js">
+<link rel="x-lazy-script" data-lazy="svet-seoul" data-svet="seoul" href="js/world-seoul.js">
 <script src="js/world-espinazo.js"></script>
-<script src="js/data/hakone.js"></script>
-<script src="js/world-hakone.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-podatki-hakone" data-svet="hakone" href="js/data/hakone.js">
+<link rel="x-lazy-script" data-lazy="svet-hakone" data-svet="hakone" href="js/world-hakone.js">
 <script src="js/data/zurich.js"></script>
 <script src="js/world-zurich.js"></script>
 <script src="js/znamenitost.js"></script>
-<script src="js/data/luanda.js"></script>
-<script src="js/world-luanda.js"></script>
-<script src="js/data/mombasa.js"></script>
-<script src="js/world-mombasa.js"></script>
-<script src="js/data/isalo.js"></script>
-<script src="js/world-isalo.js"></script>
-<script src="js/data/portobelo.js"></script>
-<script src="js/world-portobelo.js"></script>
-<script src="js/data/eljem.js"></script>
-<script src="js/world-eljem.js"></script>
-<script src="js/data/hiva.js"></script>
-<script src="js/world-hiva.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-podatki-luanda" data-svet="luanda" href="js/data/luanda.js">
+<link rel="x-lazy-script" data-lazy="svet-luanda" data-svet="luanda" href="js/world-luanda.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-mombasa" data-svet="mombasa" href="js/data/mombasa.js">
+<link rel="x-lazy-script" data-lazy="svet-mombasa" data-svet="mombasa" href="js/world-mombasa.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-isalo" data-svet="isalo" href="js/data/isalo.js">
+<link rel="x-lazy-script" data-lazy="svet-isalo" data-svet="isalo" href="js/world-isalo.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-portobelo" data-svet="portobelo" href="js/data/portobelo.js">
+<link rel="x-lazy-script" data-lazy="svet-portobelo" data-svet="portobelo" href="js/world-portobelo.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-eljem" data-svet="eljem" href="js/data/eljem.js">
+<link rel="x-lazy-script" data-lazy="svet-eljem" data-svet="eljem" href="js/world-eljem.js">
+<link rel="x-lazy-script" data-lazy="svet-podatki-hiva" data-svet="hiva" href="js/data/hiva.js">
+<link rel="x-lazy-script" data-lazy="svet-hiva" data-svet="hiva" href="js/world-hiva.js">
 <script src="js/world-zaslon.js"></script>
-<script src="js/world-ujarras.js"></script>
-<script src="js/world-ghoufi.js"></script>
-<script src="js/world-cusco.js"></script>
-<script src="js/world-isuna.js"></script>
-<script src="js/world-koli.js"></script>
+<link rel="x-lazy-script" data-lazy="svet-ujarras" data-svet="ujarras" href="js/world-ujarras.js">
+<link rel="x-lazy-script" data-lazy="svet-ghoufi" data-svet="ghoufi" href="js/world-ghoufi.js">
+<link rel="x-lazy-script" data-lazy="svet-cusco" data-svet="cusco" href="js/world-cusco.js">
+<link rel="x-lazy-script" data-lazy="svet-isuna" data-svet="isuna" href="js/world-isuna.js">
+<link rel="x-lazy-script" data-lazy="svet-koli" data-svet="koli" href="js/world-koli.js">
 <script src="js/render.js"></script>
 <script src="js/render-vecer.js"></script>
 <script src="js/sfx.js"></script>
 <script src="js/sfx-okolje.js"></script>
 <script src="js/input.js"></script>
 <script src="js/comm.js"></script>
-<script src="js/vendor/peerjs.min.js"></script>
-<script src="js/net.js"></script>
+<link rel="x-lazy-script" data-lazy="spletna-peerjs" href="js/vendor/peerjs.min.js">
+<link rel="x-lazy-script" data-lazy="spletna-net" href="js/net.js">
 <script src="js/menu-data.js"></script>
-<script src="js/routes.js"></script>
+<link rel="x-lazy-script" data-lazy="karte-routes" href="js/routes.js">
 <script src="js/geo.js"></script>
-<script src="js/journey.js"></script>
-<script src="js/intro-data.js"></script>
+<link rel="x-lazy-script" data-lazy="karte-journey" href="js/journey.js">
+<link rel="x-lazy-script" data-lazy="karte-intro-data" href="js/intro-data.js">
 <script src="js/menu-car.js"></script>
 <script src="js/menu-tabla.js"></script>
 <script src="js/menu-izbor.js"></script>
@@ -855,41 +899,41 @@
 <script src="js/menu-vreme.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/napake.js"></script>
-<script src="js/missions.js"></script>
-<script src="js/missions/kit.js"></script>
-<script src="js/missions/m01.js"></script>
-<script src="js/missions/m46.js"></script>
-<script src="js/missions/m47.js"></script>
-<script src="js/missions/m49.js"></script>
-<script src="js/missions/m06.js"></script>
-<script src="js/missions/m19.js"></script>
-<script src="js/missions/m35.js"></script>
-<script src="js/missions/m37.js"></script>
-<script src="js/missions/m48.js"></script>
-<script src="js/missions/m30.js"></script>
-<script src="js/missions/m33.js"></script>
-<script src="js/missions/m53.js"></script>
-<script src="js/missions/m51.js"></script>
-<script src="js/missions/m07.js"></script>
-<script src="js/missions/m43.js"></script>
-<script src="js/missions/m52.js"></script>
-<script src="js/missions/m09.js"></script>
-<script src="js/missions/m54.js"></script>
-<script src="js/missions/m39.js"></script>
-<script src="js/missions/m50.js"></script>
-<script src="js/missions/m34.js"></script>
-<script src="js/missions/m55.js"></script>
-<script src="js/missions/m10.js"></script>
-<script src="js/missions/m02.js"></script>
-<script src="js/missions/m04.js"></script>
-<script src="js/missions/m08.js"></script>
-<script src="js/missions/m17.js"></script>
-<script src="js/missions/m26.js"></script>
-<script src="js/missions/m11.js"></script>
-<script src="js/missions/m23.js"></script>
-<script src="js/missions/m29.js"></script>
-<script src="js/missions/m40.js"></script>
-<script src="js/missions/m45.js"></script>
+<link rel="x-lazy-script" data-lazy="misije-missions" href="js/missions.js">
+<link rel="x-lazy-script" data-lazy="misije-kit" href="js/missions/kit.js">
+<link rel="x-lazy-script" data-lazy="misije-m01" href="js/missions/m01.js">
+<link rel="x-lazy-script" data-lazy="misije-m46" href="js/missions/m46.js">
+<link rel="x-lazy-script" data-lazy="misije-m47" href="js/missions/m47.js">
+<link rel="x-lazy-script" data-lazy="misije-m49" href="js/missions/m49.js">
+<link rel="x-lazy-script" data-lazy="misije-m06" href="js/missions/m06.js">
+<link rel="x-lazy-script" data-lazy="misije-m19" href="js/missions/m19.js">
+<link rel="x-lazy-script" data-lazy="misije-m35" href="js/missions/m35.js">
+<link rel="x-lazy-script" data-lazy="misije-m37" href="js/missions/m37.js">
+<link rel="x-lazy-script" data-lazy="misije-m48" href="js/missions/m48.js">
+<link rel="x-lazy-script" data-lazy="misije-m30" href="js/missions/m30.js">
+<link rel="x-lazy-script" data-lazy="misije-m33" href="js/missions/m33.js">
+<link rel="x-lazy-script" data-lazy="misije-m53" href="js/missions/m53.js">
+<link rel="x-lazy-script" data-lazy="misije-m51" href="js/missions/m51.js">
+<link rel="x-lazy-script" data-lazy="misije-m07" href="js/missions/m07.js">
+<link rel="x-lazy-script" data-lazy="misije-m43" href="js/missions/m43.js">
+<link rel="x-lazy-script" data-lazy="misije-m52" href="js/missions/m52.js">
+<link rel="x-lazy-script" data-lazy="misije-m09" href="js/missions/m09.js">
+<link rel="x-lazy-script" data-lazy="misije-m54" href="js/missions/m54.js">
+<link rel="x-lazy-script" data-lazy="misije-m39" href="js/missions/m39.js">
+<link rel="x-lazy-script" data-lazy="misije-m50" href="js/missions/m50.js">
+<link rel="x-lazy-script" data-lazy="misije-m34" href="js/missions/m34.js">
+<link rel="x-lazy-script" data-lazy="misije-m55" href="js/missions/m55.js">
+<link rel="x-lazy-script" data-lazy="misije-m10" href="js/missions/m10.js">
+<link rel="x-lazy-script" data-lazy="misije-m02" href="js/missions/m02.js">
+<link rel="x-lazy-script" data-lazy="misije-m04" href="js/missions/m04.js">
+<link rel="x-lazy-script" data-lazy="misije-m08" href="js/missions/m08.js">
+<link rel="x-lazy-script" data-lazy="misije-m17" href="js/missions/m17.js">
+<link rel="x-lazy-script" data-lazy="misije-m26" href="js/missions/m26.js">
+<link rel="x-lazy-script" data-lazy="misije-m11" href="js/missions/m11.js">
+<link rel="x-lazy-script" data-lazy="misije-m23" href="js/missions/m23.js">
+<link rel="x-lazy-script" data-lazy="misije-m29" href="js/missions/m29.js">
+<link rel="x-lazy-script" data-lazy="misije-m40" href="js/missions/m40.js">
+<link rel="x-lazy-script" data-lazy="misije-m45" href="js/missions/m45.js">
 <script src="js/zabava.js"></script>
 <script src="js/zabava/cilji.js"></script>
 <script src="js/zabava/elim.js"></script>

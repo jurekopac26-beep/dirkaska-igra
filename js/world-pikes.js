@@ -72,8 +72,11 @@
     let ws = 0, hs = 0, bd = 1e9, bi = -1, bl = 0, ba = 0, bdd = 1e9;
     for (let b = Math.max(0, cz - 2); b <= Math.min(P.ncz - 1, cz + 2); b++) for (let a = Math.max(0, cx - 2); a <= Math.min(P.ncx - 1, cx + 2); a++) {
       const L = P.cells[b * P.ncx + a]; if (!L) continue;
+      { const gx = Math.max(0, (a + P.cx0) * PKHC - x, x - (a + P.cx0 + 1) * PKHC), gz = Math.max(0, (b + P.cz0) * PKHC - z, z - (b + P.cz0 + 1) * PKHC); if (gx * gx + gz * gz > (66 + ds) * (66 + ds)) continue; }   // (the whole cell 64 m + a sample beyond: all its samples would be skipped below)
       for (let q = 0; q < L.length; q++) {
-        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d = Math.sqrt(lat * lat + ex * ex);
+        const i = L[q], dx = x - T.px[i], dz = z - T.pz[i], al = dx * T.tx[i] + dz * T.tz[i], lat = dx * T.nx[i] + dz * T.nz[i], ex = Math.max(0, Math.abs(al) - ds), d2 = lat * lat + ex * ex;
+        if (d2 >= 4096) continue;   // (d >= 64 for sure; the sqrt only for the rest)
+        const d = Math.sqrt(d2);
         if (d >= 64) continue;
         const dd = Math.max(0, d - (lat > 0 ? T.br[i] : T.bl[i])), k = 1 / (dd + 1.5), wq = k * k * k * k * (d < 48 ? 1 : sstep(64, 48, d));
         ws += wq; hs += wq * T.hy[i];
@@ -105,14 +108,42 @@
     const n = pkNear(x, z), i = n.i, dd = n.dd, hn = n.hn; let h;
     if (i < 0) h = pkFar(x, z, 200);
     else { const hr = lerp(hn, n.h, sstep(0, 6, dd)) - 0.3; h = dd <= 1 ? hr : lerp(hr, pkFar(x, z, dd), sstep(1, 45, dd)); }
-    const pads = PK.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z); const pb = p.b || 16; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // flat paddock / car park
+    const pads = PK.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], pb = p.b || 16, R = p.r + pb; if (Math.abs(x - p.x) >= R || Math.abs(z - p.z) >= R) continue; const d = Math.hypot(x - p.x, z - p.z); if (d < R) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // flat paddock / car park
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, and only a gentle rise right behind them
     PKN.dd = i >= 0 ? dd : 999;
     return h;
   }
+  // a vertex's height and dd to the cm, as the grid keeps them (pkPre's precomputed ones are the same numbers)
+  // PKN is left as it was: the code around a pkGH call reads its own pkNear's PKN after it (and PKN.h/hn stay from the last call that found a sample),
+  // so the world is the same whether a vertex comes from def.teren or is computed here
+  function pkQ(x, z) { const { i, d, dd: d0, lat, h: h0, hn } = PKN, h = pkH(x, z), dd = PKN.dd; Object.assign(PKN, { i, d, dd: d0, lat, h: h0, hn });
+    return [Math.round(h * 100) / 100 + 0, dd >= 999 ? 999 : Math.round(dd * 100) / 100 + 0]; }   // (+ 0: no -0 from a height just below 0, as the integer cm of def.teren give)
+  // the precomputed grid from the track file (def.teren, tools/pikes-teren.mjs): the vertices the build reads, so their pkH is not computed again.
+  // Used only when it is the same grid (bounds, size) and a few vertices spread over it come out the same now; otherwise the grid fills lazily as before
+  // (G.pre: 'ok', 'mreža' or 'vzorci'). The stream: varints (zigzag for signed), base64: the runs of the vertices it has (off, on, off ...), the heights
+  // in cm as the residual from the plane of the left, upper and upper-left vertex (or the one there is), then dd: runs of 999 and not, the rest in cm
+  // as the step from the one before
+  function pkPre(D) {
+    const G = PK.G; G.lz = 0; G.pre = null;
+    if (!D || (typeof window !== 'undefined' && window.__pkTerenOff)) return;
+    if (D.g[0] !== G.x0 || D.g[1] !== G.z0 || D.g[2] !== G.nx || D.g[3] !== G.nz) { G.pre = 'mreža'; return; }
+    const s = atob(D.d), W = G.nx; let p = 0;
+    const vu = () => { let v = 0, m = 1, b; do { b = s.charCodeAt(p++); v += (b & 127) * m; m *= 128; } while (b & 128); return v; };
+    const vz = () => { const u = vu(); return u % 2 ? -(u + 1) / 2 : u / 2; };
+    const n = D.n, K = new Int32Array(n), has = new Uint8Array(W * G.nz), hc = new Int32Array(W * G.nz), dc = new Int32Array(n);
+    for (let r = 0, R = vu(), k = 0, c = 0; r < R; r++) { const len = vu(); if (r & 1) for (let q = 0; q < len; q++) { has[k] = 1; K[c++] = k++; } else k += len; }
+    for (let c = 0; c < n; c++) { const k = K[c], i = k % W, L = i > 0 && has[k - 1], U = k >= W && has[k - W], UL = L && U && has[k - W - 1];
+      hc[k] = vz() + (UL ? hc[k - 1] + hc[k - W] - hc[k - W - 1] : L ? hc[k - 1] : U ? hc[k - W] : 0); }
+    for (let r = 0, R = vu(), c = 0; r < R; r++) { const len = vu(); for (let q = 0; q < len; q++) dc[c++] = r & 1 ? -1 : -2; }
+    for (let c = 0, v = 0; c < n; c++) if (dc[c] === -1) { v += vz(); dc[c] = v; }
+    for (let t = 0; t < 16; t++) { const c = Math.floor((t + 0.5) * n / 16), k = K[c], q = pkQ(G.x0 + (k % W) * PKC, G.z0 + Math.floor(k / W) * PKC);
+      if (q[0] !== hc[k] / 100 || q[1] !== (dc[c] === -2 ? 999 : dc[c] / 100)) { G.pre = 'vzorci'; return; } }
+    for (let c = 0; c < n; c++) { const k = K[c]; G.h[k] = hc[k] / 100; G.dd[k] = dc[c] === -2 ? 999 : dc[c] / 100; }
+    G.pre = 'ok';
+  }
   function pkGH(i, j) {   // terrain height at grid vertex (i, j), computed once
     const G = PK.G; i = clamp(i, 0, G.nx - 1); j = clamp(j, 0, G.nz - 1); const k = j * G.nx + i; let h = G.h[k];
-    if (h !== h) { h = G.h[k] = pkH(G.x0 + i * PKC, G.z0 + j * PKC); G.dd[k] = PKN.dd; }
+    if (h !== h) { const q = pkQ(G.x0 + i * PKC, G.z0 + j * PKC); G.h[k] = q[0]; h = G.h[k]; G.dd[k] = q[1]; G.lz++; }   // (h as stored, Float32: the same at every call)
     return h;
   }
   function pkGround(x, z) {   // height of the terrain mesh surface (the same two triangles per cell as the tiles)
@@ -4007,10 +4038,18 @@
     P.pads.push({ x: T.px[0] - T.tx[0] * 18, z: T.pz[0] - T.tz[0] * 18, r: 30, h: T.hy[0] - 0.3 });
     const padE = { x: T.px[iE] + T.tx[iE] * 30, z: T.pz[iE] + T.tz[iE] * 30, r: 28, b: 36, h: T.hy[iE] - 0.3 }; P.pads.push(padE);
     const padH = (() => { const i = T.idx(sFin + 44), lat = -(T.bl[i] + 4 + 7.5); return { i, lat, x: T.px[i] + T.nx[i] * lat, z: T.pz[i] + T.nz[i] * lat, r: 19, h: T.hy[i] - 0.3 }; })(); P.pads.push(padH);   // the summit house, left of the road after the line
+    pkPre(T.def && T.def.teren);   // (the precomputed grid, once the pads are in: pkH flattens the ground under them)
     out.bounds = { minX: P.bx0 - 170, maxX: P.bx1 + 170, minZ: P.bz0 - 170, maxZ: P.bz1 + 170 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [];   // tree exclusion circles (landmarks, crowds)
-    const excluded = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    const exG = new Map(), exBig = []; let exN = 0;   // (excluded's index: the circles in 16 m cells, big ones in a list; the new ones added as asked, the answer as a scan of all)
+    const excluded = (x, z) => {
+      for (; exN < excl.length; exN++) { const e = excl[exN]; if (e.r > 32) { exBig.push(e); continue; } for (let b = Math.floor((e.z - e.r) / 16); b <= Math.floor((e.z + e.r) / 16); b++) for (let a = Math.floor((e.x - e.r) / 16); a <= Math.floor((e.x + e.r) / 16); a++) { const k = a * 65536 + b, L = exG.get(k); if (L) L.push(e); else exG.set(k, [e]); } }
+      const L = exG.get(Math.floor(x / 16) * 65536 + Math.floor(z / 16));
+      if (L) for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; }
+      for (let k = 0; k < exBig.length; k++) { const e = exBig[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; }
+      return false;
+    };
 
     /* ---- terrain tiles (their meshes are made at the end: the verge and the far scenery that casts no shadow are merged into them, no draw calls of their own) ---- */
     let nFar = 0;   // coarse outer tiles
@@ -4041,17 +4080,33 @@
       return any || (l1 > -1e-4 && l2 > -1e-4 && l3 > -1e-4) ? l1 * A[0][1] + l2 * A[1][1] + l3 * A[2][1] : null;
     };
     const drape = (g, poly, A, hAt) => {
+      { let x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18; for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < z0) z0 = p[1]; if (p[1] > z1) z1 = p[1]; }   // (the polygon wholly beside the triangle: nothing to cut, the same 0 as below, sooner)
+        const e = 1e-3; if (x1 < Math.min(A[0][0], A[1][0], A[2][0]) - e || x0 > Math.max(A[0][0], A[1][0], A[2][0]) + e || z1 < Math.min(A[0][2], A[1][2], A[2][2]) - e || z0 > Math.max(A[0][2], A[1][2], A[2][2]) + e) return 0; }
       const sg = Math.sign((A[1][0] - A[0][0]) * (A[2][2] - A[0][2]) - (A[1][2] - A[0][2]) * (A[2][0] - A[0][0])); if (!sg) return 0;
-      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = A[e], pb = A[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], side = (p) => sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), np = [];
-        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = side(p), dq = side(q);
-          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq); np.push(p.map((v, m) => v + (q[m] - v) * t)); } }
-        poly = np.filter((p, k) => { const q = np[(k + 1) % np.length]; return Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5; }); }
+      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = A[e], pb = A[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], np = [];
+        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), dq = sg * (ex * (q[1] - pa[2]) - ez * (q[0] - pa[0]));
+          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq), r = new Array(p.length); for (let m = 0; m < p.length; m++) r[m] = p[m] + (q[m] - p[m]) * t; np.push(r); } }
+        poly = []; for (let k = 0; k < np.length; k++) { const p = np[k], q = np[(k + 1) % np.length]; if (Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5) poly.push(p); } }
       if (poly.length < 3) return 0;
       let ar = 0; for (let k = 1; k + 1 < poly.length; k++) ar += Math.abs((poly[k][0] - poly[0][0]) * (poly[k + 1][1] - poly[0][1]) - (poly[k][1] - poly[0][1]) * (poly[k + 1][0] - poly[0][0]));
       if (ar < 2e-5) return 0;
       const pts = poly.map(p => [p[0], (hAt ? hAt(p[0], p[1]) : planeY(A, p[0], p[1], 1)) + p[2], p[1]]), cs = poly.map(p => [p[3], p[4], p[5]]), us = poly[0].length > 6 ? poly.map(p => [p[6], p[7]]) : null, dn = [pts[0][0], pts[0][1] - 5, pts[0][2]];
       for (let k = 1; k + 1 < pts.length; k++) g.triO(pts[0], pts[k], pts[k + 1], cs[0], dn, cs[k], cs[k + 1], us && us[0], us && us[k], us && us[k + 1]);
       return (pts.length - 2) * 3;
+    };
+    const drapeOk = (poly, B, A, tol) => {   // drape(poly on B) with positions only ([x, z, y] points): false if a piece's corner lies more than tol above triangle A's plane (the same cut, the same test, no mesh)
+      { let x0 = 1e18, x1 = -1e18, z0 = 1e18, z1 = -1e18; for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0]; if (p[1] < z0) z0 = p[1]; if (p[1] > z1) z1 = p[1]; }
+        const e = 1e-3; if (x1 < Math.min(B[0][0], B[1][0], B[2][0]) - e || x0 > Math.max(B[0][0], B[1][0], B[2][0]) + e || z1 < Math.min(B[0][2], B[1][2], B[2][2]) - e || z0 > Math.max(B[0][2], B[1][2], B[2][2]) + e) return true; }
+      const sg = Math.sign((B[1][0] - B[0][0]) * (B[2][2] - B[0][2]) - (B[1][2] - B[0][2]) * (B[2][0] - B[0][0])); if (!sg) return true;
+      for (let e = 0; e < 3 && poly.length > 2; e++) { const pa = B[e], pb = B[(e + 1) % 3], ex = pb[0] - pa[0], ez = pb[2] - pa[2], np = [];
+        for (let k = 0; k < poly.length; k++) { const p = poly[k], q = poly[(k + 1) % poly.length], dp = sg * (ex * (p[1] - pa[2]) - ez * (p[0] - pa[0])), dq = sg * (ex * (q[1] - pa[2]) - ez * (q[0] - pa[0]));
+          if (dp >= 0) np.push(p); if ((dp >= 0) !== (dq >= 0)) { const t = dp / (dp - dq); np.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t]); } }
+        poly = []; for (let k = 0; k < np.length; k++) { const p = np[k], q = np[(k + 1) % np.length]; if (Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1e-5) poly.push(p); } }
+      if (poly.length < 3) return true;
+      let ar = 0; for (let k = 1; k + 1 < poly.length; k++) ar += Math.abs((poly[k][0] - poly[0][0]) * (poly[k + 1][1] - poly[0][1]) - (poly[k][1] - poly[0][1]) * (poly[k + 1][0] - poly[0][0]));
+      if (ar < 2e-5) return true;
+      for (let k = 0; k < poly.length; k++) { const p = poly[k]; if (!(planeY(A, p[0], p[1], 1) >= planeY(B, p[0], p[1], 1) + p[2] - tol)) return false; }
+      return true;
     };
     const aMat = new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true }); out.asphaltMat = aMat;
     aMat.onBeforeCompile = (sh) => {   // the paint (attribute paint = 1) takes its vertex colour only, without the asphalt's grain (faded paint 0.5-1: some grain; patches 0.02, asphalt 0);
@@ -4117,14 +4172,13 @@
       const decal = (g, Q, col, y, uvs, tol) => { const V = Q.map(([s, o]) => PF(s, o, 0)), S = Q.map(q => q[0]), O = Q.map(q => q[1]), s0 = Math.min(...S), s1 = Math.max(...S), o0 = Math.min(...O), o1 = Math.max(...O);
         const i0 = clamp(Math.floor(s0 / T.ds) - 1, 0, N - 2), i1 = clamp(Math.floor(s1 / T.ds) + 1, 0, N - 2), U = uvs || Q.map(([s, o]) => ruv(s, o)), C = Array.isArray(col[0]) ? col : [col, col, col, col], poly = V.map((p, k) => [p[0], p[2], y, ...C[k], ...U[k]]), TT = [], tg = new GB(true); let nv = 0;   // (col: one colour or one per corner; returns the vertices added)
         for (let i = i0; i <= i1; i++) for (let c = 0; c < 4; c++) { if (offs[c + 1] < o0 - 0.3 || offs[c] > o1 + 0.3) continue; for (let h = 0; h < 2; h++) TT.push(aTri(i, c, h)); }
-        for (const A of TT) nv += drape(tg, poly, A);
         // where the asphalt is flat enough (most of the road) the plain quad, its corners on the asphalt + y, stays within tol of that everywhere (checked at the corners of its own two
         // triangles' pieces, where the creases of both surfaces cross): 6 vertices instead of the pieces
         const aH = (x, z) => { for (const A of TT) { const h = planeY(A, x, z); if (h != null) return h; } return null; }, Pq = V.map(p => { const h = aH(p[0], p[2]); return h == null ? null : [p[0], h + y, p[2]]; });
         if (Pq.every(p => p)) { let ok = true;
-          for (const [p, q, r] of [[0, 1, 2], [0, 2, 3]]) { const tq = new GB(true), A = [Pq[p], Pq[q], Pq[r]]; for (const B of TT) drape(tq, [poly[p], poly[q], poly[r]], B);
-            for (let k = 0; k < tq.P.length && ok; k += 3) ok = planeY(A, tq.P[k], tq.P[k + 2], 1) >= tq.P[k + 1] - tol; }
+          for (const [p, q, r] of [[0, 1, 2], [0, 2, 3]]) { if (!ok) break; const A = [Pq[p], Pq[q], Pq[r]], tp = [poly[p], poly[q], poly[r]].map(v => [v[0], v[1], v[2]]); for (const B of TT) if (!(ok = drapeOk(tp, B, A, tol))) break; }
           if (ok) { g.quadUp(Pq[0], Pq[1], Pq[2], Pq[3], C, U); return 6; } }
+        for (const A of TT) nv += drape(tg, poly, A);   // (the pieces only where the plain quad will not do)
         g.P.push(...tg.P); g.N.push(...tg.N); g.C.push(...tg.C); g.U.push(...tg.U); return nv; };
       const patch = (s0, s1, o0, o1, col) => { if (!keep(s0, s1)) return; const g = xP[xAt(s0)], ss = [s0]; for (let s = (Math.floor(s0 / T.ds) + 1) * T.ds; s < s1 - 0.2; s += T.ds) ss.push(s); ss.push(s1);
         for (let k = 0; k + 1 < ss.length; k++) { const a = ss[k], b = ss[k + 1]; decal(g, [[a, o0], [a, o1], [b, o1], [b, o0]], col, 0.007, null, 0.001); } };
@@ -4601,11 +4655,17 @@
 
     pkMoving(K);
 
+    P.G.lzb = P.G.lz; if (typeof window !== 'undefined' && window.__pkTerenOff) P.G.mb = P.G.h.map(v => v === v ? 1 : 0);   // (the vertices the build computed itself, not from def.teren: tools/pikes-teren.mjs, tests/browser/world.test.mjs)
     out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, rails: +(nRail / (2 * N)).toFixed(3) };   // (read by the tests)
     return out;
   }
 
-  Object.assign(API, { pkAmbientUpdate, pkGround, pkGroundMat, pkMovingUpdate, pkOpsUpdate, pkSummitUpdate, pkTex, pkWeatherUpdate, pkWildlifeUpdate });   // (what World and the other worlds use of this one)
+  // (tools/pikes-teren.mjs, with window.__pkTerenOff: the vertices the build computed (G.mb) with their height and dd in cm as pkQ gives them, before any carving)
+  const pkTeren = () => { const G = PK.G, m = G.mb; if (!m) return null; const o = { g: [G.x0, G.z0, G.nx, G.nz], k: [], h: [], d: [] };
+    for (let k = 0; k < m.length; k++) if (m[k]) { const q = pkQ(G.x0 + (k % G.nx) * PKC, G.z0 + Math.floor(k / G.nx) * PKC); o.k.push(k); o.h.push(Math.round(q[0] * 100)); o.d.push(q[1] >= 999 ? null : Math.round(q[1] * 100)); }
+    return o; };
+  Object.assign(API, { pkTeren,
+    pkAmbientUpdate, pkGround, pkGroundMat, pkMovingUpdate, pkOpsUpdate, pkSummitUpdate, pkTex, pkWeatherUpdate, pkWildlifeUpdate });   // (what World and the other worlds use of this one)
   Object.defineProperties(API, { PK: { get: () => PK, set: (v) => { PK = v; } }, pkGMean: { get: () => pkGMean, set: (v) => { pkGMean = v; } } });
   World.keep('PK', 'pikes');   // (its grids kept between its builds; World.build frees the others': tools/razdeli-proge.mjs)
   World.ext.pikes = (scene, tex, opts) => buildPikes(scene, tex, opts);
