@@ -56,11 +56,11 @@
   "jsMs": 0.58
  },
  "bathurst": {
-  "calls": 167,
-  "maxCalls": 248,
-  "kverts": 437,
-  "maxKverts": 492,
-  "jsMs": 1.18
+  "calls": 184,
+  "maxCalls": 252,
+  "kverts": 481,
+  "maxKverts": 554,
+  "jsMs": 1.51
  },
  "chapman": {
   "calls": 163,
@@ -378,11 +378,11 @@
   "jsMs": 0.79
  },
  "aguascalientes": {
-  "calls": 186,
-  "maxCalls": 212,
-  "kverts": 388,
-  "maxKverts": 549,
-  "jsMs": 1.08
+  "calls": 193,
+  "maxCalls": 216,
+  "kverts": 420,
+  "maxKverts": 582,
+  "jsMs": 0.89
  },
  "koli": {
   "calls": 167,
