@@ -196,11 +196,11 @@
   "jsMs": 1.04
  },
  "ngorongoro": {
-  "calls": 144,
-  "maxCalls": 170,
-  "kverts": 310,
-  "maxKverts": 355,
-  "jsMs": 1.14
+  "calls": 147,
+  "maxCalls": 174,
+  "kverts": 350,
+  "maxKverts": 401,
+  "jsMs": 1.41
  },
  "medeu": {
   "calls": 165,
@@ -294,11 +294,11 @@
   "jsMs": 3.12
  },
  "killar": {
-  "calls": 145,
-  "maxCalls": 167,
-  "kverts": 332,
-  "maxKverts": 386,
-  "jsMs": 1.12
+  "calls": 148,
+  "maxCalls": 173,
+  "kverts": 344,
+  "maxKverts": 406,
+  "jsMs": 1.55
  },
  "luanda": {
   "calls": 129,

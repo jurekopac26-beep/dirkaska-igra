@@ -786,12 +786,12 @@
   }
  },
  "ngorongoro": {
-  "meshes": 1086,
-  "verts": 634567,
+  "meshes": 1108,
+  "verts": 832165,
   "instances": 9795,
   "props": 63,
   "crowd": 30,
-  "world": "6060f623",
+  "world": "34b12f01",
   "propsHash": "752dbb08",
   "floor": "cae8594e/6860",
   "groups": {
@@ -808,7 +808,7 @@
    "ng_lionM:MeshLambertMaterial": "9ea899b9",
    "ng_lion:MeshLambertMaterial": "1f2411ed",
    "ng_crane:MeshLambertMaterial": "a3f8ff0b",
-   "rob:MeshLambertMaterial": "e8954961",
+   "rob:MeshLambertMaterial": "99dacc06",
    "ngFar:MeshLambertMaterial": "99a55540",
    "crowd:MeshLambertMaterial": "e8976908",
    "ao:MeshBasicMaterial": "57e58bc8",
@@ -1183,12 +1183,12 @@
   }
  },
  "killar": {
-  "meshes": 1584,
-  "verts": 1181551,
+  "meshes": 1609,
+  "verts": 1263776,
   "instances": 43807,
   "props": 95,
   "crowd": 146,
-  "world": "cf5afd7",
+  "world": "e4ce59e7",
   "propsHash": "5a404b3",
   "floor": "ab9d352f/9520",
   "groups": {
@@ -1196,9 +1196,9 @@
    "-:MeshPhongMaterial": "b4c1bf16",
    "-:MeshBasicMaterial": "c58331d7",
    "crowd:MeshLambertMaterial": "73fc1991",
-   "rob:MeshLambertMaterial": "81c2063b",
+   "rob:MeshLambertMaterial": "474ce6ca",
    "dolina:MeshLambertMaterial": "27ba5586",
-   "ao:MeshBasicMaterial": "aa227629",
+   "ao:MeshBasicMaterial": "decc1d69",
    "life:MeshLambertMaterial": "22f399fb",
    "lifeShadow:MeshBasicMaterial": "ac4382c6",
    "life:MeshBasicMaterial": "a9d7771e"
