@@ -7,7 +7,9 @@
 // take the whole site over LIMIT is left out too (in that order: the ones after it still go in if they fit); the log gives each tree's size.
 // A preview carries no second copy of the menu's videos (the flyovers, the corners' videos, the helicopter's flights: ~93 MB a tree): a video
 // that is the same file as main's is left out of it and its menu plays main's own from the site's root (tools/predogled-posnetki.js); a video
-// the pull request adds or changes stays in its preview, and a preview of a branch from before this keeps them all.
+// the pull request adds or changes stays in its preview, and a preview of a branch from before this keeps them all. Nor a second copy of the
+// other files of assets/ (the pictures, the maps, the cars: ~70 MB): a file the same as main's is left out and the preview's own service worker
+// fetches it from the site's root (tools/predogled-deljene.js); the music stays in each preview.
 //   node tools/predogled.mjs <site folder>                (the pull requests from gh pr list: GH_TOKEN, GITHUB_REPOSITORY)
 //   node tools/predogled.mjs <site folder> --prs <file>   (the list as gh pr list --json number,title,headRefName,headRefOid,isCrossRepository,updatedAt,labels gives it)
 //   … --limit <MB>                                        (another limit than LIMIT, e.g. to see a preview left out on a short list)
@@ -17,10 +19,13 @@ import url from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
-const { shareVideos } = createRequire(import.meta.url)('./predogled-posnetki.js');
+const require = createRequire(import.meta.url);
+const { shareVideos } = require('./predogled-posnetki.js'), { shareAssets } = require('./predogled-deljene.js');
 
 const REPO = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-const MAX = 3;   // (each preview ~200 MB, mostly assets/, ~93 MB less where its videos are main's; main in the root ~210 MB)
+// (each preview ~200 MB, mostly assets/: ~93 MB less where its videos are main's, ~70 MB less where its pictures and data are; main in the root ~210 MB.
+// 12. 11. 2026, odločitev uporabnika: more previews at once; with the shared files ~45 MB a preview, LIMIT still leaves out what does not fit)
+const MAX = 8;
 // MB for the whole site (main and the previews; MB: 2^20 bytes): GitHub Pages publishes a site up to 1 GB, the rest is room for the archive's own
 // overhead (9. 11. 2026: 3 previews and main with maketa-menija/ made an artifact of ~940 MB, with the 22 new tracks of #569 it would be ~1.2 GB)
 const LIMIT = 950;
@@ -77,6 +82,7 @@ for (const p of shown) {
     const sha = run('git', ['rev-parse', 'FETCH_HEAD']).trim();
     unpack(sha, dir, (n) => GAME.includes(n));
     const shared = shareVideos(site, dir);   // (before the size and the stamps: js/menu-data.js gets the list of main's videos)
+    const common = shareAssets(site, dir);   // (the same: the pages get their short script, sw.js its handler)
     const bytes = size(dir);
     if (total + bytes > limit) {
       fs.rmSync(dir, { recursive: true, force: true }); big.push(Object.assign({ bytes }, p));
@@ -87,7 +93,8 @@ for (const p of shown) {
     total += bytes;
     built.push(Object.assign({ sha, bytes }, p));
     console.log(`#${p.number} ${p.headRefName} (${sha.slice(0, 7)}) → beta/${p.number}/ (stamped, ${mb(bytes)}` +
-      (shared.files.length ? `; ${shared.files.length} video(s) played from main, ${mb(shared.bytes)} less` : '') + ')');
+      (shared.files.length ? `; ${shared.files.length} video(s) played from main, ${mb(shared.bytes)} less` : '') +
+      (common.files.length ? `; ${common.files.length} file(s) of assets/ from main, ${mb(common.bytes)} less` : '') + ')');
   } catch (e) {
     fs.rmSync(dir, { recursive: true, force: true }); failed.push(p);
     console.log(`#${p.number}: not built (${String(e.message).split('\n')[0]})`);
@@ -113,7 +120,7 @@ li a { display: block; padding: 12px 14px 2px; color: var(--a); text-decoration:
 <h1>Predogled vej</h1>
 <p>Odprti pull requesti, kot bodo v igri po združitvi v <code>main</code>. Igra brez predogleda: <a href="../">glavna stran</a>. Predogled si deli shranjene nastavitve in napredek z glavno igro (isti naslov strani).</p>
 ${built.length ? '<ul>\n' + items + '\n</ul>' : prs.length ? '<p>Zdaj ni predogleda.</p>' : '<p>Zdaj ni odprtega pull requesta.</p>'}
-${left.length ? `<p>Brez predogleda (največ ${MAX} najnovejši): ${left.map(p => '#' + p.number).join(', ')}.</p>` : ''}
+${left.length ? `<p>Brez predogleda (največ ${MAX} najnovejših): ${left.map(p => '#' + p.number).join(', ')}.</p>` : ''}
 ${big.length ? `<p>Brez predogleda zaradi velikosti strani (GitHub Pages objavi do 1 GB, meja ${sl(limit)}; stran ima ${sl(total)}): ${big.map(p => `#${p.number} (${sl(p.bytes)})`).join(', ')}.</p>` : ''}
 ${failed.length ? `<p>Predogled ni zgrajen (napaka pri gradnji, npr. povezava na manjkajočo datoteko): ${failed.map(p => '#' + p.number).join(', ')}.</p>` : ''}
 <p><small>Zgrajeno ${when}.</small></p>
