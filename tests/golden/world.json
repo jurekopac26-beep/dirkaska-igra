@@ -223,12 +223,12 @@
   }
  },
  "harju": {
-  "meshes": 810,
-  "verts": 1675719,
+  "meshes": 818,
+  "verts": 1722483,
   "instances": 4296,
   "props": 33,
   "crowd": 1027,
-  "world": "eb0ee83f",
+  "world": "bbcfde6a",
   "propsHash": "d16c96de",
   "floor": "3cab689f/5488",
   "groups": {
@@ -238,6 +238,7 @@
    "-:MeshBasicMaterial": "863148da",
    "puddles:MeshBasicMaterial": "c916858d",
    "crowd:MeshLambertMaterial": "cb2a186d",
+   "rob:MeshLambertMaterial": "e6e62eaa",
    "flags:MeshLambertMaterial": "a6c200c4",
    "ao:MeshBasicMaterial": "2652cdd6",
    "tyremarks:MeshBasicMaterial": "1018e091",
@@ -1452,20 +1453,21 @@
   }
  },
  "koli": {
-  "meshes": 424,
-  "verts": 340271,
+  "meshes": 442,
+  "verts": 488383,
   "instances": 6950,
   "props": 79,
   "crowd": 201,
-  "world": "e18cbd80",
+  "world": "e9733fae",
   "propsHash": "e208c7c7",
   "floor": "5239e5c0/4536",
   "groups": {
    "-:MeshLambertMaterial": "92ea4e52",
    "-:MeshBasicMaterial": "6fe4118b",
+   "rob:MeshLambertMaterial": "5d8147c3",
    "crowd:MeshLambertMaterial": "a4def38c",
    "flags:MeshLambertMaterial": "82734531",
-   "ao:MeshBasicMaterial": "17534972",
+   "ao:MeshBasicMaterial": "858aee62",
    "tyremarks:MeshBasicMaterial": "764e2173",
    "roadwear:MeshLambertMaterial": "c9af1725"
   }
