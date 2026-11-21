@@ -360,12 +360,12 @@
   }
  },
  "montreal": {
-  "meshes": 1329,
-  "verts": 1618928,
+  "meshes": 1352,
+  "verts": 1712099,
   "instances": 7831,
   "props": 75,
   "crowd": 320,
-  "world": "563c46a4",
+  "world": "29bc8b79",
   "propsHash": "9893e9c0",
   "floor": null,
   "groups": {
@@ -384,6 +384,7 @@
    "mtBasin:MeshLambertMaterial": "73a5961e",
    "mtFar:MeshLambertMaterial": "aac2c796",
    "mtScen:MeshLambertMaterial": "d06d0e2d",
+   "rob:MeshLambertMaterial": "8a2bc68b",
    "crowd:MeshLambertMaterial": "59e25c15",
    "flags:MeshLambertMaterial": "266b1d95",
    "ao:MeshBasicMaterial": "ad13e0c3",
@@ -401,18 +402,19 @@
   }
  },
  "livorno": {
-  "meshes": 1670,
-  "verts": 1029570,
+  "meshes": 1763,
+  "verts": 1626087,
   "instances": 34497,
   "props": 9,
   "crowd": 428,
-  "world": "a2a0c738",
+  "world": "8a52ce6e",
   "propsHash": "bd604ff5",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "cc2f6b1e",
    "-:MeshPhongMaterial": "b6985ac9",
    "crowd:MeshLambertMaterial": "1e51600e",
+   "rob:MeshLambertMaterial": "a54b9b73",
    "flags:MeshLambertMaterial": "34784006",
    "ao:MeshBasicMaterial": "d594bf11",
    "tyremarks:MeshBasicMaterial": "c2faa419",
