@@ -881,17 +881,17 @@
  },
  "seoul": {
   "meshes": 471,
-  "verts": 219050,
+  "verts": 226168,
   "instances": 27765,
   "props": 0,
   "crowd": 3,
-  "world": "e164be55",
+  "world": "5514d255",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "dbc6946b",
+   "-:MeshLambertMaterial": "1d89f0df",
    "crowd:MeshLambertMaterial": "998832b5",
-   "ao:MeshBasicMaterial": "c4213057",
+   "ao:MeshBasicMaterial": "17156e2f",
    "tyremarks:MeshBasicMaterial": "a337b480",
    "roadwear:MeshLambertMaterial": "90b2ad82"
   }
