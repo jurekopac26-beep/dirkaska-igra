@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
-import { chromium } from 'playwright';
+import { chromium } from '../tests/lib/playwright.mjs';
 
 const DIR = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..', 'icons');
 
