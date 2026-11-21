@@ -53,7 +53,7 @@
   "maxCalls": 212,
   "kverts": 517,
   "maxKverts": 747,
-  "jsMs": 0.28
+  "jsMs": 0.58
  },
  "bathurst": {
   "calls": 167,
@@ -70,11 +70,11 @@
   "jsMs": 0.95
  },
  "tianmen": {
-  "calls": 178,
-  "maxCalls": 210,
-  "kverts": 519,
-  "maxKverts": 650,
-  "jsMs": 1.25
+  "calls": 181,
+  "maxCalls": 214,
+  "kverts": 546,
+  "maxKverts": 672,
+  "jsMs": 1.37
  },
  "rastro": {
   "calls": 187,
@@ -123,7 +123,7 @@
   "maxCalls": 227,
   "kverts": 649,
   "maxKverts": 820,
-  "jsMs": 0.65
+  "jsMs": 1.03
  },
  "izoard": {
   "calls": 179,
@@ -133,11 +133,11 @@
   "jsMs": 0.97
  },
  "pembrey": {
-  "calls": 192,
-  "maxCalls": 223,
-  "kverts": 564,
-  "maxKverts": 727,
-  "jsMs": 0.81
+  "calls": 193,
+  "maxCalls": 215,
+  "kverts": 580,
+  "maxKverts": 724,
+  "jsMs": 1.63
  },
  "kildare": {
   "calls": 204,
@@ -148,10 +148,10 @@
  },
  "sacalobra": {
   "calls": 232,
-  "maxCalls": 274,
-  "kverts": 595,
-  "maxKverts": 764,
-  "jsMs": 1.16
+  "maxCalls": 276,
+  "kverts": 605,
+  "maxKverts": 784,
+  "jsMs": 1.33
  },
  "kotor": {
   "calls": 207,
@@ -198,16 +198,16 @@
  "ngorongoro": {
   "calls": 144,
   "maxCalls": 170,
-  "kverts": 311,
-  "maxKverts": 358,
-  "jsMs": 1.76
+  "kverts": 310,
+  "maxKverts": 355,
+  "jsMs": 1.14
  },
  "medeu": {
   "calls": 165,
   "maxCalls": 187,
   "kverts": 430,
   "maxKverts": 508,
-  "jsMs": 1.13
+  "jsMs": 1.39
  },
  "ella": {
   "calls": 172,
@@ -305,7 +305,7 @@
   "maxCalls": 148,
   "kverts": 249,
   "maxKverts": 332,
-  "jsMs": 0.5
+  "jsMs": 0.77
  },
  "ujarras": {
   "calls": 129,
@@ -333,7 +333,7 @@
   "maxCalls": 193,
   "kverts": 275,
   "maxKverts": 316,
-  "jsMs": 0.62
+  "jsMs": 0.75
  },
  "isalo": {
   "calls": 105,
@@ -347,7 +347,7 @@
   "maxCalls": 140,
   "kverts": 249,
   "maxKverts": 282,
-  "jsMs": 0.49
+  "jsMs": 0.68
  },
  "eljem": {
   "calls": 101,
@@ -382,14 +382,14 @@
   "maxCalls": 212,
   "kverts": 388,
   "maxKverts": 549,
-  "jsMs": 0.93
+  "jsMs": 1.08
  },
  "koli": {
   "calls": 167,
   "maxCalls": 274,
-  "kverts": 573,
-  "maxKverts": 687,
-  "jsMs": 0.78
+  "kverts": 571,
+  "maxKverts": 684,
+  "jsMs": 1.5
  },
  "kanaba": {
   "calls": 182,
