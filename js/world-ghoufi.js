@@ -123,6 +123,7 @@
       exclPush(VX, VZ, 10);
     }
     ctx.out.ghoufi = { houses: placed.length, palms: np };
+    if (World.ext.goreRob) World.ext.goreRob(ctx, 'ghoufi');   // (the roadside ground from the chase camera: js/world-chase-bt11.js)
   }
 
   World.ext.ghoufi = (scene, tex, opts) => World.gore.build(scene, tex, opts, {
