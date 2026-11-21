@@ -7,11 +7,11 @@
   "jsMs": 1.33
  },
  "pikesg": {
-  "calls": 133,
-  "maxCalls": 148,
-  "kverts": 443,
-  "maxKverts": 540,
-  "jsMs": 1.14
+  "calls": 146,
+  "maxCalls": 161,
+  "kverts": 487,
+  "maxKverts": 588,
+  "jsMs": 1.25
  },
  "nring": {
   "calls": 172,
@@ -233,9 +233,9 @@
  "seoul": {
   "calls": 137,
   "maxCalls": 149,
-  "kverts": 571,
-  "maxKverts": 695,
-  "jsMs": 0.63
+  "kverts": 593,
+  "maxKverts": 721,
+  "jsMs": 0.94
  },
  "tuzla": {
   "calls": 194,
