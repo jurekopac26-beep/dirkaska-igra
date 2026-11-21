@@ -6678,11 +6678,11 @@
   }
  },
  "svalvogar/demo/cs": {
-  "digest": "ade2ead6271de5dc8270f6ef",
-  "lead": 484.4,
+  "digest": "76b4322b25c10f9fb216de7d",
+  "lead": 484.3,
   "car0": [
-   -75.78,
-   -21.07
+   -74.78,
+   -21.06
   ],
   "cover": {
    "dmg": 0,
@@ -6720,7 +6720,7 @@
   }
  },
  "fairymeadows/race/cs": {
-  "digest": "4e55f5b861746ae94359dffd",
+  "digest": "8544f51c3f2e2c4bd67a71db",
   "lead": 443.7,
   "car0": [
    -53.59,
@@ -6734,7 +6734,7 @@
   }
  },
  "fairymeadows/demo/cs": {
-  "digest": "899c56c180a43e2e406e6e91",
+  "digest": "f6f0c68eb0b992642b36da10",
   "lead": 462.9,
   "car0": [
    -56.48,
@@ -6776,7 +6776,7 @@
   }
  },
  "manchewe/race/cs": {
-  "digest": "9feefea57f2812fea046e09d",
+  "digest": "1c66dd19299be1375e82cf6a",
   "lead": 490.5,
   "car0": [
    -6.08,
@@ -6790,11 +6790,11 @@
   }
  },
  "manchewe/demo/cs": {
-  "digest": "168320febc2839566758a0e5",
-  "lead": 480.9,
+  "digest": "e324e33d0e3310a7bf517fe6",
+  "lead": 481,
   "car0": [
-   -1.84,
-   2.01
+   -1.94,
+   2.12
   ],
   "cover": {
    "dmg": 0,
@@ -6804,7 +6804,7 @@
   }
  },
  "manchewe/upg/cs": {
-  "digest": "42a0283a02bd334c85cfb8a0",
+  "digest": "399514864018d5933463762e",
   "lead": 502.4,
   "car0": [
    5.65,
@@ -6818,7 +6818,7 @@
   }
  },
  "manchewe/crash/cs": {
-  "digest": "fac08aaf7af3392e92b1afcc",
+  "digest": "bc4cb4c1979f03b5a0a4598d",
   "lead": 466.5,
   "car0": [
    -27.94,
@@ -6832,7 +6832,7 @@
   }
  },
  "yungas/race/cs": {
-  "digest": "95ccbf4ce825f3298661d545",
+  "digest": "ba67b0fde9f9456804001f41",
   "lead": 434.8,
   "car0": [
    167.87,
@@ -6846,7 +6846,7 @@
   }
  },
  "yungas/demo/cs": {
-  "digest": "0a7a39b3c8d3e3110568c350",
+  "digest": "acb921a22fa23be1f0f76a31",
   "lead": 460.2,
   "car0": [
    192.25,
@@ -6874,7 +6874,7 @@
   }
  },
  "yungas/crash/cs": {
-  "digest": "0e92864090d44b917923c535",
+  "digest": "07770352f31f328b234f08a9",
   "lead": 403.3,
   "car0": [
    144.8,
@@ -6902,7 +6902,7 @@
   }
  },
  "tapini/demo/cs": {
-  "digest": "6bd1104dcb509635e017db01",
+  "digest": "7ff9238c581cb374a9f0f252",
   "lead": 414.8,
   "car0": [
    230.77,
