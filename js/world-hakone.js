@@ -785,6 +785,7 @@
         for (const sd of [-1, 1]) crowdRun(CR, s0 - len / 2, s0 + len / 2, sd, Object.assign({}, M, { rows: 2, dens: dn, label: 'HK ' + nm })); }
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // the trees keep clear of the crowds
+    if (API.hkRealizem15) API.hkRealizem15({ T, scen, sag, excluded, onBr, out });   // power lines, bus stops and crossings as OSM maps them (js/world-realizem15-hakone.js; out.r15x: where no plant stands)
 
     /* ---- the forest (instanced per 96 m chunk): the canopy model's trees within 60 m of the road (HK_DATA.trees: it finds only the tallest tops,
        the stands are closer) and as many more where the land cover has woods and no tree of the model stands near; cedars in their stands (the
@@ -812,7 +813,7 @@
         const avenue = dd < 16 && inAv(nn.i);   // (the cedar avenue of the old road: all its trees)
         if (!avenue && r4 > (dd < 12 ? 0.7 : dd < 25 ? 0.55 : 0.45 * thin)) return false;
         if (hkRailD(x, z) < 4) return false;
-        if (excluded(x, z) || inRect(x, z) || vrWater(x, z).e > -1.5 || vrSlope(x, z) > 1.5) return false;
+        if (excluded(x, z) || inRect(x, z) || vrWater(x, z).e > -1.5 || vrSlope(x, z) > 1.5 || (out.r15x && out.r15x(x, z))) return false;
         const y = vrGround(x, z), A = y + base;
         let sp;
         if (avenue) sp = 0;
@@ -847,7 +848,9 @@
         if (RS() > sasaP) continue;
         const [x, z] = onSide(s, side, 1.0 + RS() * 6), c = API.vrLC(x, z); if (c === 3 || c === 5) continue;
         const nn = vrNear(x, z); if (nn.i < 0 || nn.dd < 0.7 || excluded(x, z) || inRect(x, z) || vrSlope(x, z) > 1.1 || vrWater(x, z).e > -1 || hkRailD(x, z) < 3.2) continue;
-        const sz = 0.9 + RS() * 0.8; tk[4].add(x, vrGround(x, z) - 0.08, z, RS() * TAU, sz * 1.3, sz * 0.75, [0.9 + RS() * 0.2, 0.95 + RS() * 0.15, 0.9]); nSasa++;
+        const sz = 0.9 + RS() * 0.8, sa = RS() * TAU, sc = [0.9 + RS() * 0.2, 0.95 + RS() * 0.15, 0.9];
+        if (out.r15x && out.r15x(x, z)) continue;   // (after RS: the clumps that follow stay where they were)
+        tk[4].add(x, vrGround(x, z) - 0.08, z, sa, sz * 1.3, sz * 0.75, sc); nSasa++;
       }
     }
     for (const t of tk) t.addTo(root, true);
