@@ -35,11 +35,11 @@
   "jsMs": 1.25
  },
  "caracoles": {
-  "calls": 174,
-  "maxCalls": 220,
-  "kverts": 368,
-  "maxKverts": 536,
-  "jsMs": 1.16
+  "calls": 180,
+  "maxCalls": 230,
+  "kverts": 379,
+  "maxKverts": 555,
+  "jsMs": 1.37
  },
  "katu": {
   "calls": 161,
@@ -182,11 +182,11 @@
   "jsMs": 1.28
  },
  "santoantao": {
-  "calls": 180,
-  "maxCalls": 210,
-  "kverts": 420,
-  "maxKverts": 560,
-  "jsMs": 0.95
+  "calls": 186,
+  "maxCalls": 218,
+  "kverts": 432,
+  "maxKverts": 577,
+  "jsMs": 1.26
  },
  "gudauri": {
   "calls": 171,
