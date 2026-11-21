@@ -1,11 +1,11 @@
 {
  "pikes": {
-  "meshes": 717,
-  "verts": 1860126,
+  "meshes": 766,
+  "verts": 1925040,
   "instances": 474,
   "props": 352,
   "crowd": 428,
-  "world": "7b00bf33",
+  "world": "a6a8dc37",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -26,7 +26,7 @@
    "pkCloudSea:ShaderMaterial": "714d7305",
    "pkSmoke:ShaderMaterial": "186acc3",
    "pkSplitBoard:MeshBasicMaterial": "7e05cac9",
-   "rob:MeshLambertMaterial": "a85ca963",
+   "rob:MeshLambertMaterial": "1d24dc63",
    "ao:MeshBasicMaterial": "d9446f28",
    "tyremarks:MeshBasicMaterial": "4a574421",
    "sceneThings:MeshLambertMaterial": "e491568b",
@@ -555,19 +555,19 @@
   }
  },
  "pembrey": {
-  "meshes": 334,
-  "verts": 399514,
+  "meshes": 370,
+  "verts": 434602,
   "instances": 4039,
   "props": 37,
   "crowd": 5,
-  "world": "ca7c8087",
+  "world": "f021011b",
   "propsHash": "f0b7f66c",
   "floor": "cb4f29c2/4676",
   "groups": {
    "-:MeshLambertMaterial": "47414701",
    "-:MeshBasicMaterial": "b3abe476",
    "rsFar:MeshBasicMaterial": "d9a33940",
-   "rob:MeshLambertMaterial": "959c9308",
+   "rob:MeshLambertMaterial": "1ea6f9ee",
    "crowd:MeshLambertMaterial": "853e5d59",
    "flags:MeshLambertMaterial": "a42558da",
    "ao:MeshBasicMaterial": "2b628dce",
