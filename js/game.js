@@ -2214,7 +2214,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const pack = async (x) => { try { const p = await packStr(JSON.stringify(x)); return p && p.length <= 16000 ? p : null; } catch (_) { return null; } };
     // (the ghost and the tyre marks, as many of the newest as fit; a ghost too long for it: the marks without it, as many as fit)
     let p = null; const M = Array.isArray(o.marks) ? o.marks : [];
-    for (let n = M.length; n >= 0 && !p; n--) p = await pack(Object.assign({}, o, { marks: n ? M.slice(0, n) : undefined }));
+    const p0 = await pack(Object.assign({}, o, { marks: undefined }));   // (it without the marks first: too long, no try with more, the same link sooner)
+    if (p0) { for (let n = M.length; n >= 1 && !p; n--) p = await pack(Object.assign({}, o, { marks: M.slice(0, n) })); p = p || p0; }
     for (let n = M.length; n >= 0 && !p && o.ghost; n--) p = await pack(Object.assign({}, o, { ghost: undefined, marks: n ? M.slice(0, n) : undefined }));
     const link = p ? location.origin + location.pathname + '#izziv=' + p : null;
     window.__game.chalLink = link;
