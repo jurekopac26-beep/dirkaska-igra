@@ -49,7 +49,10 @@
   function caH(x, z) {   // terrain height (as vrH, on caNear: the road's blend near it, the real terrain farther out; never above the road around)
     const n = caNear(x, z), i = n.i, dd = n.dd; let h;
     if (i < 0) h = API.vrFar(x, z);
-    else { const hr = n.h - 0.3; h = dd <= 1 ? hr : lerp(hr, API.vrFar(x, z), sstep(1, 42, dd)); }
+    else { const hr = n.h - 0.3, V = API.VR; if (dd <= 1) h = hr; else { const f = API.vrFar(x, z);
+      if (V.sea === null) h = lerp(hr, f, sstep(1, 42, dd));
+      else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
+      else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
     for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
@@ -253,8 +256,10 @@
   /* Realizem G (docs/realizem/paket-g.md, docs/proge/caracoles.md): the band 8-60 m from the road as tools/proga-podatki.py `cover` measured it
      (ESA WorldCover 2021, 5 m cells, 232 sections of 50 m; Sentinel-2 summer colours; the frame of js/geo.js, whose def.lc grass lies on
      WorldCover's with a correlation of 0.82 by cell, no shift). Bare rock and scree 76.5 % (golo), grass 22.1 %, built-up 1.3 %, shrubs 0.1 %,
-     no trees, no water and no snow in the band (the game's summer snow lies higher, beyond it). The climate (Köppen–Geiger, Beck et al. 2018) is ET (tundra), an estimate
-     for the high Andes at 2400–3200 m, not read off the map (the download was refused here). Nothing reads podnebje yet. Only the hue moves (World.rastje.MOC, the brightness kept), on the ground's vertex colours by class; no plant and no draw call more. */
+     no trees, no water and no snow in the band (the game's summer snow lies higher, beyond it). The climate (Köppen–Geiger, Beck et al. 2018) is ET (tundra) for the high Andes
+     at 2400–3200 m: Sarricolea, Herrera-Ossandón and Meseguer-Ruiz 2017 (Climatic regionalisation of continental Chile, Journal of Maps 13(2),
+     66–73, doi 10.1080/17445647.2016.1259592) give the high Andes of central Chile the polar climates, ET the predominant, by their elevation;
+     the class of the road's own cell is not read off a map (Beck et al.'s and their maps could not be downloaded here). Nothing reads podnebje yet. Only the hue moves (World.rastje.MOC, the brightness kept), on the ground's vertex colours by class; no plant and no draw call more. */
   let CAT = null;   // { trava, golo, pozidano }: the measured hue's multipliers (null: the game's own colours, to the number)
   if (World.rastje && World.rastje.MERITVE && !World.rastje.MERITVE.caracoles) {
     World.rastje.MERITVE.caracoles = { podnebje: 'ET', lat: -32.86507, lon: -70.154635, delez: { drevesa: 0, trava: 0.221, pozidano: 0.013, golo: 0.765, grmovje: 0.001 },
@@ -370,7 +375,7 @@
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.92; return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.86 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; if (galAt[i]) k *= 0.92; return [k, k, k * 1.02]; };
       const wht = [0.95, 0.95, 0.92], ylw = [0.96, 0.76, 0.16], gc = [0.82, 0.77, 0.7], deck = [0.64, 0.63, 0.6], conc = [0.62, 0.61, 0.58];
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i];
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;

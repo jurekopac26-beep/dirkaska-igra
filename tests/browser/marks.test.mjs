@@ -43,7 +43,9 @@ try {
     JSON.stringify({ runs: s1.length, bytes: s1[0] && s1[0].length, c1 }));
   // the next run: the stored one drawn, its quads all
   await page.evaluate(() => { const g = window.__game; g.onAction('restart'); g.pause(); });
-  const q2 = await page.waitForFunction(() => Render.oldMarks > 0 && Render.oldMarks, null, { timeout: 10000 }).then(h => h.jsonValue()).catch(() => 0);
+  // (30 s, not 10: in the round of 11. 11. 2026 (shard 2/6, a slow CI machine) this wait ran out with 0 quads, stored 1199, while the other checks of the
+  // test passed; the same test passed 4 of 4 times on a machine loaded six times over, so it looks like a timing flake, not the marks: more time to the page)
+  const q2 = await page.waitForFunction(() => Render.oldMarks > 0 && Render.oldMarks, null, { timeout: 30000 }).then(h => h.jsonValue()).catch(() => 0);
   T.check('the next time trial on the track draws the stored run under its own (one mesh)', q2 === c1.quads, `${q2} quads, stored ${c1 && c1.quads}`);
   // a race on the same road: none drawn, none logged
   const race = await page.evaluate(async () => {
@@ -63,7 +65,7 @@ try {
   await page.evaluate(() => { window.__game.pause(); const c = document.getElementById('gl'), gl = c && (c.getContext('webgl2') || c.getContext('webgl')), x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); });
   await page.reload({ timeout: 180000, waitUntil: 'domcontentloaded' }); await page.waitForFunction(() => window.__game, null, { timeout: 180000 });
   await startTrack(page, 'rastro');
-  const q3 = await page.waitForFunction(() => Render.oldMarks > 0 && Render.oldMarks, null, { timeout: 10000 }).then(h => h.jsonValue()).catch(() => 0);
+  const q3 = await page.waitForFunction(() => Render.oldMarks > 0 && Render.oldMarks, null, { timeout: 30000 }).then(h => h.jsonValue()).catch(() => 0);
   const want = s11.reduce((a, u) => a + chains(u).quads, 0);
   T.check('after a reload the time trial draws the ten stored runs', q3 === want, `${q3} quads, stored ${want}`);
   T.check('no errors', errors.length === 0, errors.slice(0, 3).join(' | '));
