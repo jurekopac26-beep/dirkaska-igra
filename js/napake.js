@@ -8,7 +8,8 @@
    Zgodovina napak (IndexedDB: the last 100, the newest 20 with their pictures; its state Neposlano, Poslano, Popravljeno, Zaprto) and
    offered at the end of the replay (Deli zdaj, Samo shrani sliko, Kopiraj besedilo) or by Deli at any time.
    The flag in the race (the button by the pause button, F, the pad's Select) keeps only the race's time; the replay's Zastavice goes
-   through them. Its settings (Nastavitve · Orodje za napake) are its own (tdgp-napake). The game (js/game.js) gives its hooks with Napake.init.
+   through them. Its settings (Nastavitve · Orodje za napake) are its own (tdgp-napake), but Tekmeci po moji liniji: the game's switch of
+   ?voznja=1 (G.voznja, rr_voznja; docs/ai-po-tvoji-liniji.md). The game (js/game.js) gives its hooks with Napake.init.
    The log (Dnevnik napak: the page's errors, the promises let down, the hitches of the race; the last 50, kept in the game) goes with the
    report; Prikaz za razvijalca (O) shows the frame counter of the game with more lines. What a loop circles goes with its note (v_krogu);
    the recording itself flags what looks wrong (a car standing, a jump, under the road, a rival the wrong way; the log's hitches): grey on
@@ -1200,6 +1201,9 @@ const Napake = (function () {
     el.innerHTML = '<div class="nk-box"><h3>Orodje za napake</h3>' + NK_ROWS.map(([k, lbl, opts]) => '<div class="nk-row"><span>' + lbl + '</span><div class="nk-seg" data-k="' + k + '">' +
       opts.map(([v, t]) => '<button data-v="' + v + '"' + (N[k] === v ? ' class="sel"' : '') + '>' + t + '</button>').join('') + '</div></div>').join('') +
       '<p class="nk-hint">Zastavica med dirko: gumb ob pavzi, tipka F (Kontrole) ali Select na ploščku. V posnetku Označi, Dodaj k zbirki, nato Deli. Prikaz za razvijalca: tipka O.</p>' +
+      (G && G.voznja ? '<div class="nk-row"><span>Tekmeci po moji liniji</span><div class="nk-seg" data-k="vz">' +   // (the switch of index.html?voznja=1, G.voznja: in the browser, not in N)
+        [[1, 'Vklop'], [0, 'Izklop']].map(([v, t]) => '<button data-v="' + v + '"' + (+G.voznja() === v ? ' class="sel"' : '') + '>' + t + '</button>').join('') + '</div></div>' +
+        '<p class="nk-hint">Tekmeci po moji liniji: tekmeci vozijo po tvoji liniji in tempu (na progi s tvojimi posnetki po njih, drugod na pravih progah po tvojem slogu, na suhem). Velja od naslednje dirke s tekmeci, ne v kronometru, kvalifikacijah, izzivu, pregonu in dvoboju. Enako index.html?voznja=1 (izklop ?voznja=0).</p>' : '') +
       '<div class="nk-row"><span>Dnevnik napak <small class="nk-dn-n"></small></span><span class="nk-dn-b"><button data-nk-d="dn-kop">Kopiraj</button><button data-nk-d="dn-del">Počisti</button></span></div><pre class="nk-dn"></pre>' +
       '<div class="nk-row"><span>Posnetek dirke <small>(.rrp)</small></span><span class="nk-dn-b"><button data-nk-d="rrp-shrani"' + (G && G.rec() && G.rec().frames.length >= RRP.min ? '' : ' disabled') + '>Shrani</button><button data-nk-d="rrp-odpri">Odpri …</button></span></div>' +
       '<input type="file" class="nk-rrp-in" hidden>' +   // (no accept: a phone's picker greys out a kind it does not know; rrpBeri checks the file)
@@ -1213,7 +1217,11 @@ const Napake = (function () {
     el.addEventListener('click', async (e) => {
       e.stopPropagation(); if (e.target === el) { nZapri(); return; }
       const sb = e.target.closest('.nk-seg button');
-      if (sb) { e.preventDefault(); const k = sb.parentElement.dataset.k, v = k === 'on' || k === 'size' || k === 'dev' ? +sb.dataset.v : sb.dataset.v; N[k] = v; nSave(); for (const b of sb.parentElement.children) b.classList.toggle('sel', b === sb); return; }
+      if (sb) {
+        e.preventDefault(); const k = sb.parentElement.dataset.k, v = k === 'on' || k === 'size' || k === 'dev' ? +sb.dataset.v : sb.dataset.v;
+        if (k === 'vz') { G.voznja(v === '1'); if (G.kje()) G.toast('Tekmeci po moji liniji: velja od naslednje dirke.', 2400); } else { N[k] = v; nSave(); }   // (vz: from the next race, Race opts.voznja)
+        for (const b of sb.parentElement.children) b.classList.toggle('sel', b === sb); return;
+      }
       const b = e.target.closest('[data-nk-d]'); if (!b) return; e.preventDefault();
       const a = b.dataset.nkD; if (a === 'zapri') { nZapri(); return; }
       if (a === 'dn-kop') { G.toast(await kopirajBesedilo(D.l.map(dVrstica).join('\n') || '(dnevnik je prazen)') ? 'Dnevnik je kopiran.' : 'Dnevnika ni bilo mogoče kopirati.', 2200); return; }

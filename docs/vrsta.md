@@ -38,6 +38,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |
 | Suzuka in Irohazaka v test (`test: true`, zbirna veja C #611) | partyslo | ko je prostor |
 | Hitro nalaganje, korak 2 (I17; #758 s #767 in #725; od 17. 11. ob ~2.57 prevzame croatiadata) | croatiadata | po zbirnih A (#583) in B (#579) |
+| Hitrejši tekmeci: super težka svoja raven, težka zmerno hitrejša (uporabnik 9. 11. 2026 prek Mateja); jedro igre (`js/core.js`), veja `ai/super-tezka` | jure.kopac26 | #605 prvi v vrsti za `main` (vrstica 0 spodaj, odločitev uporabnika 17. 11. 2026) |
 | Videz avta povsod (`docs/novosti-e.md`) | partyslo | po potrditvi načrta in #297; oceno da Matej 16. 11. |
 | Garaža z Dež in sneg v eni zbirni veji: animacije (8 plošč, #546) | biketraveler | prednost; pred `main` ok na posnetku |
 | **Prevzem dela 17. 11. 2026** (odločitev uporabnika 17. 11. 2026 ob ~2.57, tabla #382): KOLIBRI #480 (s #661 in #662) vodi **partyslo**; Hitro nalaganje #758 (s #767 in #725) vodi **croatiadata**; **biketraveler dela samo Trke #608** | partyslo, croatiadata, biketraveler | takoj; predaja v opisih PR |
@@ -91,6 +92,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
+| 0 | #605 | Hitrejši tekmeci: super težka svoja raven, težka zmerno hitrejša, lahka in srednja ostaneta; stikalo »Tekmeci po moji liniji« ostane privzeto izklopljeno | jure.kopac26 (prevzel od biketravelerja 17. 11.) | **Prvi v vrsti za `main`, takoj ko so testi zeleni** (odločitev uporabnika 17. 11. 2026 ob ~03.20 prek Mateja, dobesedno: »1.0 kot izjema na main damo to prioritetno da sprobam«): izjema od pravila, da se vožnja tekmecev ne spreminja, gre v 1.0; pogoj 15. 11. (posnetki vseh prog) odpade; fizika igralčevega avta in avtopilot ostaneta enaka do številke |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.

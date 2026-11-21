@@ -96,9 +96,11 @@ try {
 
   // 5. on: the game's autopilot drives (the steps' own inputs are digital); the safety car in, green at the line
   await page.evaluate(() => { window.__game.autoDrive = true; });
-  let s5 = s, toldEnd = [];
-  for (let k = 0; k < 120 && (s5.red !== '-' || s5.sc !== '-') && s5.phase === 'racing'; k++) { await sim(2); s5 = await st(); toldEnd.push(...await told()); }
-  T.check('... the safety car in, green at the line: the red flag over', s5.red === '-' && s5.sc === '-' && (toldEnd.includes('h-msg: ZELENA ZASTAVA!') || s5.phase !== 'racing'), JSON.stringify({ s5, told: toldEnd }));
+  // (the HUD's message read only after each sim(2): a later one in the same step, KAZEN +5 s after a car passed into the pits under the
+  // safety car, overwrites ZELENA ZASTAVA! before it is read, so the green flag also counts by the commentator's key, said in the same branch)
+  let s5 = s, toldEnd = [], saidEnd = [];
+  for (let k = 0; k < 120 && (s5.red !== '-' || s5.sc !== '-') && s5.phase === 'racing'; k++) { await sim(2); s5 = await st(); toldEnd.push(...await told()); saidEnd.push(...await said()); }
+  T.check('... the safety car in, green at the line: the red flag over', s5.red === '-' && s5.sc === '-' && (toldEnd.includes('h-msg: ZELENA ZASTAVA!') || saidEnd.includes('green') || s5.phase !== 'racing'), JSON.stringify({ s5, told: toldEnd, said: saidEnd }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {
