@@ -133,11 +133,11 @@
   "jsMs": 1.25
  },
  "pembrey": {
-  "calls": 214,
-  "maxCalls": 235,
-  "kverts": 609,
-  "maxKverts": 754,
-  "jsMs": 1.03
+  "calls": 221,
+  "maxCalls": 245,
+  "kverts": 628,
+  "maxKverts": 799,
+  "jsMs": 1.69
  },
  "kildare": {
   "calls": 212,
@@ -392,11 +392,11 @@
   "jsMs": 0.69
  },
  "kanaba": {
-  "calls": 195,
-  "maxCalls": 254,
-  "kverts": 514,
-  "maxKverts": 692,
-  "jsMs": 1.54
+  "calls": 203,
+  "maxCalls": 266,
+  "kverts": 568,
+  "maxKverts": 775,
+  "jsMs": 1.45
  },
  "canaries": {
   "calls": 209,
