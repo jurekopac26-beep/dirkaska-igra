@@ -357,18 +357,18 @@
   "jsMs": 0.86
  },
  "isuna": {
-  "calls": 130,
-  "maxCalls": 159,
-  "kverts": 177,
-  "maxKverts": 233,
-  "jsMs": 0.91
+  "calls": 143,
+  "maxCalls": 169,
+  "kverts": 196,
+  "maxKverts": 253,
+  "jsMs": 1.17
  },
  "hiva": {
-  "calls": 151,
-  "maxCalls": 189,
-  "kverts": 432,
-  "maxKverts": 470,
-  "jsMs": 0.6
+  "calls": 159,
+  "maxCalls": 197,
+  "kverts": 477,
+  "maxKverts": 516,
+  "jsMs": 1.39
  },
  "quezaltepeque": {
   "calls": 228,
