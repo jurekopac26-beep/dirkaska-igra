@@ -52,14 +52,14 @@
      red earth, the pale limestone. Behind the low stone walls, where the slope rises: the terra rossa in low patches, the pale limestone
      grit and the fallen chips on the steeper parts, the dry straw grass, the càrritx in dry pale tufts and the dark maquis in cushions;
      further up the same in wider, fewer patches, more limestone and maquis, less red earth (the red lies on the banks by the road). */
-  const SCB = { step: 3, n: 3, reach: 8, share: 0.5, maxSl: 1.6, sl: 0.9, bushShare: 0.45,
+  const SCB = { step: 3, n: 3, reach: 8, share: 0.4, maxSl: 1.6, sl: 0.9, bushShare: 0.45,
     patch: (R, sl) => { const r = R();
-      return (sl > 1.0 && r < 0.5) || r < 0.25 ? { col: vary(mix3([0.6, 0.59, 0.55], [0.65, 0.63, 0.58], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (limestone grit)
-        : r < 0.6 ? { col: vary(mix3([0.54, 0.4, 0.3], [0.58, 0.44, 0.33], R()), R, 0.015), r: 0.9 + R() * 1.2 }   // (terra rossa)
+      return (sl > 1.0 && r < 0.5) || r < 0.25 ? { col: vary(mix3([0.55, 0.54, 0.5], [0.59, 0.58, 0.53], R()), R, 0.015), r: 0.7 + R() * 0.8 }   // (limestone grit)
+        : r < 0.6 ? { col: vary(mix3([0.5, 0.38, 0.29], [0.54, 0.41, 0.31], R()), R, 0.015), r: 0.8 + R() * 1.0 }   // (terra rossa)
         : { col: vary(mix3([0.6, 0.57, 0.42], [0.64, 0.6, 0.45], R()), R, 0.015), r: 1.0 + R() * 1.2 }; },   // (dry straw grass)
     tuft: (R) => vary(mix3([0.66, 0.62, 0.42], [0.74, 0.67, 0.44], R()), R, 0.03),   // (càrritx)
     bush: (R) => vary(R() < 0.6 ? [0.22, 0.27, 0.16] : [0.27, 0.31, 0.2], R, 0.025) };   // (maquis: mastic, holm oak scrub)
-  const SCF = farBand(Object.assign({}, SCB, { step: 6, n: 3, reach: 55, share: 0.6, maxSl: 1.4, bushShare: 0.5,
+  const SCF = farBand(Object.assign({}, SCB, { step: 6, n: 3, reach: 55, share: 0.45, maxSl: 1.4, bushShare: 0.5,
     patch: (R, sl) => { const r = R();
       // (further up a little darker and smaller than the near bank: drawn flat, the wide pale ones read as stickers on the shaded slope)
       const P = r < 0.35 ? { col: vary(mix3([0.53, 0.52, 0.48], [0.57, 0.56, 0.51], R()), R, 0.015), r: 1.1 + R() * 1.2 }   // (limestone)
@@ -67,13 +67,15 @@
         : { col: vary(mix3([0.5, 0.49, 0.37], [0.54, 0.52, 0.4], R()), R, 0.015), r: 1.2 + R() * 1.4 };   // (dry grass)
       return P; } }), 9);
 
+  // (on the slope in the mountain's shade the flat patches still came out lighter than the shaded terrain around them: a little darker there)
+  const dim = (C, k) => Object.assign({}, C, { patch: (R, sl, i) => { const P = C.patch(R, sl, i); return { col: P.col.map(v => v * k), r: P.r }; } });
   const add = (id, C, seed) => { if (LK[id]) chain(LK[id], (ctx) => {
     if (!ctx.out) return;
     const gT = API.caGround || API.vrGround, ex = ctx.excluded || (() => false);
     if (C.v) ctx.out.robBt44 = verge(ctx.root, ctx.matV, gT, seed + 1, muted(C.v));
-    ctx.out.bregBt44 = bank(ctx.root, ctx.matV, gT, ex, seed + 2, muted(C.b));
-    ctx.out.dalBt44 = bank(ctx.root, ctx.matV, gT, ex, seed + 3, muted(C.f));
+    ctx.out.bregBt44 = bank(ctx.root, ctx.matV, gT, ex, seed + 2, dim(muted(C.b), C.k || 1));
+    ctx.out.dalBt44 = bank(ctx.root, ctx.matV, gT, ex, seed + 3, dim(muted(C.f), C.k || 1));
   }); };
   add('portomoniz', { v: PMV, b: PMB, f: PMF }, 44100);
-  add('sacalobra', { b: SCB, f: SCF }, 44200);
+  add('sacalobra', { b: SCB, f: SCF, k: 0.85 }, 44200);
 })();
