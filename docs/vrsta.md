@@ -38,7 +38,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 74: Hiva, Luanda (`js/world-chase-bt74.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-74` |
 | Kamera za avtom, tla ob cesti, skupina 78 (drugi prehod): Pembrey, Kanaba (`js/world-chase-bt78.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-78` |
 | Kamera za avtom, tla ob cesti, skupina 76 (tretji prehod): Isuna, Portobelo (`js/world-chase-bt76.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-76` |
-| Kamera za avtom, tla ob cesti, skupina 80 (tretji prehod): Medeu, Canaries (`js/world-chase-bt80.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-80-b` |
 | Kamera za avtom, tla ob cesti, skupina 79 (tretji prehod): Livorno, Lombok (`js/world-chase-bt79.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-79` |
 | Kamera za avtom, tla ob cesti, skupina 82 (drugi prehod): Seul, Pikes Peak makadam (`js/world-chase-bt82.js`, na zbirno) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-82` |
 | Kamera za avtom, tla ob cesti, skupina 83 (drugi prehod): Montréal, Pikes Peak (makadam) (`js/world-chase-bt83.js`, na zbirno grafika-chase-bt) | biketraveler | pripravljeno 21. 11.; vprašanje `chase-skupina-83` |
