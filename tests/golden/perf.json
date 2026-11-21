@@ -350,11 +350,11 @@
   "jsMs": 1.42
  },
  "eljem": {
-  "calls": 101,
-  "maxCalls": 118,
-  "kverts": 261,
-  "maxKverts": 367,
-  "jsMs": 0.77
+  "calls": 105,
+  "maxCalls": 122,
+  "kverts": 274,
+  "maxKverts": 384,
+  "jsMs": 0.86
  },
  "isuna": {
   "calls": 130,
@@ -399,11 +399,11 @@
   "jsMs": 1.54
  },
  "canaries": {
-  "calls": 192,
-  "maxCalls": 203,
-  "kverts": 645,
-  "maxKverts": 769,
-  "jsMs": 0.99
+  "calls": 209,
+  "maxCalls": 223,
+  "kverts": 682,
+  "maxKverts": 803,
+  "jsMs": 1.25
  },
  "savusavu": {
   "calls": 181,
