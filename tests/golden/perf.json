@@ -581,11 +581,11 @@
   "jsMs": 1.45
  },
  "luanda": {
-  "calls": 113,
-  "maxCalls": 145,
-  "kverts": 230,
-  "maxKverts": 315,
-  "jsMs": 0.97
+  "calls": 116,
+  "maxCalls": 148,
+  "kverts": 249,
+  "maxKverts": 332,
+  "jsMs": 1.11
  },
  "ujarras": {
   "calls": 129,
@@ -609,11 +609,11 @@
   "jsMs": 0.69
  },
  "mombasa": {
-  "calls": 114,
-  "maxCalls": 190,
-  "kverts": 248,
-  "maxKverts": 284,
-  "jsMs": 0.94
+  "calls": 117,
+  "maxCalls": 193,
+  "kverts": 275,
+  "maxKverts": 316,
+  "jsMs": 1.49
  },
  "isalo": {
   "calls": 105,
