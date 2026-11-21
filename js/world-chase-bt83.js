@@ -1,19 +1,20 @@
 /* =========================================================================
-   WORLD — the roadside ground from the camera behind the car (chase), the eighty-third group of the real tracks: Montréal and Biķernieki,
-   a second pass on two tracks whose ground the earlier groups set (Montréal: js/world-chase-bt18.js, tufts and shrubs by the walls and
-   trees, js/world-chase-bt58.js, the mower's patches to ~55 m; Biķernieki: js/world-chase-bt41.js, flat patches to ~60 m,
-   js/world-chase-bt60.js, the mowing stripes). From behind the car both asphalts met the grass in one clean line, Montréal's lawn read as
-   a few flat pale polygons on one even green and Biķernieki's woods and hollows as flat colour without anything standing in them. So here:
+   WORLD — the roadside ground from the camera behind the car (chase), the eighty-third group of the real tracks: Montréal and Pikes Peak
+   on gravel, a second pass on two tracks whose ground the earlier groups set (Montréal: js/world-chase-bt18.js, tufts and shrubs by the
+   walls and trees, js/world-chase-bt58.js, the mower's patches to ~55 m; Pikes Peak on gravel: js/world-chase-bt52.js, the grader's
+   windrow, the grit to ~10 m and sparse patches to ~55 m). From behind the car Montréal's asphalt met the grass in one clean line and its
+   lawn read as a few flat pale polygons on one even green; the gravel road's edge on Pikes Peak was one clean line too and past ~10 m its
+   slopes stood almost bare. So here:
    Montréal (docs/proge/montreal.md: »parkovne ceste … navijači na travi«, the island a mown park; a circuit used once a year): just inside
    the asphalt's edge, off the racing line, short streaks of the grey dust and the worn rubber's marbles (mid grey, none near black); on the
    grass strip between the asphalt and the walls and out to ~60 m past them the mower's long stripes, a little lighter and a little darker
    than the lawn, lying along the road; low tufts and a few worn bare spots at the walls' foot. The mower's patches of js/world-chase-bt58.js
    are toned closer to the lawn there.
-   Biķernieki (docs/proge/bikernieki.md): at the asphalt's edge the sand dragged back from the run-offs and the rubber's marbles, low tufts
-   at the barriers' foot; out to ~60 m under the pines the needles, moss, the bilberry's low dark cushions and a few ferns, in the wet
-   hollows tall grass, on the open lawn a few unmown and dry tufts. Never along the pits. Nothing on the built ground, the water, far below
-   the road, where another leg's road is nearer or in the builders' excluded places. All in meshes of their own (softScen: 256 m chunks,
-   no shadow); the terrain, the road, the barriers, the trees, the horizon and the driving stay.
+   Pikes Peak on gravel (docs/proge/pikesg.md: »rožnato siv granitni gramoz«): just inside the gravel road's edge the coarser stones the
+   tyres throw off the line, in short streaks; past ~8 m out to ~60 m the pink-grey granite's boulders and scree (more on the steep), the
+   tundra's low green-brown cushions and tufts above the trees, the needle litter and low juniper under them. Nothing on the built ground,
+   the water, far below the road, where another leg's road is nearer or in the builders' excluded places. All in meshes of their own
+   (softScen: 256 m chunks, no shadow); the terrain, the road, the barriers, the trees, the horizon and the driving stay.
    ========================================================================= */
 (function () {
   'use strict';
@@ -105,63 +106,50 @@
     return st;
   };
 
-  /* ---- Biķernieki (the shared circuit builder, js/world-rbring.js: its look's LK.extra, chained as js/world-chase-bt41.js does).
-     docs/proge/bikernieki.md: »asfalt … v ovinkih peščeni izletni pasovi, drugod pokošena trava; borov gozd s smrekovimi sestoji in
-     brezami, pokošene trate s peščenimi zaplatami, v mokrih kotanjah visoka trava«. Land cover nrLC: 0 open, 1 the woods, 2 wet ---- */
-  const BK = {
-    sand: [[0.7, 0.63, 0.47], [0.76, 0.68, 0.5]], rubber: [[0.36, 0.35, 0.34], [0.4, 0.39, 0.37]],
-    tuft: [[0.44, 0.54, 0.26], [0.52, 0.58, 0.3]], dry: [[0.6, 0.6, 0.36], [0.66, 0.64, 0.4]],
-    needle: [[0.48, 0.37, 0.24], [0.52, 0.4, 0.26]], berry: [[0.24, 0.36, 0.17], [0.28, 0.4, 0.2]], moss: [[0.34, 0.42, 0.2], [0.38, 0.45, 0.22]],
-    reed: [[0.42, 0.5, 0.24], [0.5, 0.54, 0.28]], fern: [[0.3, 0.44, 0.18], [0.34, 0.48, 0.2]],
+  /* ---- Pikes Peak on gravel (js/world-pikes.js: goreRob(ctx, 'pikes', o), only for def.id 'pikesg'). Land cover pkLC
+     (js/world-chase-bt16.js): 1 the forest, 2 the treeline, 0 the tundra, 4 the steep, 5 the summit's ground, 3 built ---- */
+  const PG = {
+    stone: [[0.5, 0.43, 0.39], [0.55, 0.47, 0.42]], coarse: [[0.56, 0.48, 0.43], [0.6, 0.51, 0.46]],
+    granite: [[0.55, 0.47, 0.43], [0.62, 0.53, 0.48]], scree: [[0.58, 0.5, 0.45], [0.63, 0.54, 0.48]],
+    tundra: [[0.4, 0.42, 0.26], [0.46, 0.44, 0.28]], cush: [[0.34, 0.38, 0.22], [0.4, 0.42, 0.25]], tuft: [[0.55, 0.52, 0.38], [0.62, 0.57, 0.42]],
+    needle: [[0.42, 0.33, 0.24], [0.47, 0.36, 0.26]], juniper: [[0.25, 0.33, 0.2], [0.29, 0.37, 0.23]],
   };
-  const bikernieki = (ctx) => {
-    const T = API.T, { nrGround: gT, nrNear, nrLC, nrLCf, nrSlope } = API;
-    if (!T || !T.br || !gT || !nrNear || !nrLC || !ctx || !ctx.root || !ctx.matV) return null;
-    const ex = ctx.excluded || (() => false), slope = nrSlope || slopeOf(gT), pd = T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0;
-    const pit = (i, sd) => ps && sd === ps && (!!T.pitAt(i * T.ds) || (T.pitLead ? T.pitLead(i * T.ds) >= 0 : false));
-    const wetK = (x, z) => nrLCf ? nrLCf(x, z, 2) : (nrLC(x, z) === 2 ? 1 : 0);
-    const E = { near: nrNear, gT, drop: 8, bad: ex };
-    const rY = roadY(nrNear, gT, 0.4), st = {};
-    // the asphalt's edge: the sand the tyres drag back from the run-offs and the worn rubber's marbles (off the line); low tufts at the
-    // barriers' foot, where the mower does not reach
-    st.rob = walk(ctx.root, ctx.matV, E, 83301, { step: 3, put: (soft, i, sd, w, bar, R, at, own) => { const c = {};
-      if (pit(i, sd)) return c;
-      if (R() < 0.5) { const oo = w - 0.15 - R() * 0.5, [x, z] = at(oo, (R() - 0.5) * 2);
-        if (own(x, z, oo)) { streak(soft, rY, x, z, T.tx[i], T.tz[i], 1.4 + R() * 2.8, 0.22 + R() * 0.3, C_(R, R() < 0.55 ? BK.sand : BK.rubber), R, 0.008, 3); c.pesek = 1; } }
-      if (bar - w > 1.5 && R() < 0.55) { const oo = bar - 0.35 - R() * 0.4, [x, z] = at(oo, (R() - 0.5) * 2.5);
-        if (own(x, z, oo)) { const h = R(); tuft(soft.get(x, z), x, gT(x, z), z, 0.2 + h * 0.16, 0.24 + h * 0.2, C_(R, R() < 0.7 ? BK.tuft : BK.dry, 0.03), R, 5); c.sopi = 1; } }
+  const pikesg = (ctx, o) => {
+    const T = API.T, out = ctx.out;
+    if (!out || !out.matV || !ctx.root || !o || !o.gH || !o.near || !T || !T.br || !T.def || T.def.id !== 'pikesg') return null;
+    const gT = o.gH, lc = o.lc || (() => 0), ex = ctx.excluded || (() => false), slope = o.slope || slopeOf(gT);
+    const E = { near: o.near, gT, drop: 14, bad: ex, off: (x, z) => lc(x, z) === 3 };
+    const rY = roadY(o.near, gT, 0.3), st = {};
+    // the coarser stones just inside the road's edge, thrown off the tyres' line
+    st.rob = walk(ctx.root, out.matV, E, 83201, { step: 3, put: (soft, i, sd, w, bar, R, at, own) => { const c = {};
+      for (let k = 0; k < 2; k++) if (R() < 0.55) { const oo = w - 0.12 - R() * 0.6, [x, z] = at(oo, (R() - 0.5) * 2.4);
+        if (own(x, z, oo)) { streak(soft, rY, x, z, T.tx[i], T.tz[i], 1.2 + R() * 2.4, 0.22 + R() * 0.28, C_(R, R() < 0.6 ? PG.stone : PG.coarse, 0.02), R, 0.01, 3); c.kamni = (c.kamni || 0) + 1; } }
       return c; } });
-    // past the barriers out to ~60 m: under the pines the needles, the moss and the low dark cushions of the bilberry, a few ferns at the
-    // woods' edge; in the wet hollows the tall grass in tufts; on the open lawn a few unmown tufts and pale dry ones round the sand
-    st.pas = walk(ctx.root, ctx.matV, E, 83302, { step: 4, put: (soft, i, sd, w, bar, R, at, own) => { const c = {};
-      if (pit(i, sd)) return c;
+    // past ~8 m out to ~60 m: the granite's boulders and scree, the tundra, the litter and the junipers under the trees
+    st.pas = walk(ctx.root, out.matV, E, 83202, { step: 4.5, put: (soft, i, sd, w, bar, R, at, own) => { const c = {};
       for (let k = 0; k < 3; k++) {
-        const d = 1 + Math.pow(R(), 1.3) * 58, oo = bar + d, [x, z] = at(oo, (R() - 0.5) * 4), u = R(), h = R();
-        if (R() > (d < 15 ? 0.8 : 0.55) || !own(x, z, oo) || slope(x, z) > 0.6) continue;
-        const y = gT(x, z), cc = nrLC(x, z), wt = wetK(x, z), kk = 1 + 0.5 * Math.min(1, d / 50);
+        const d = 8 + Math.pow(R(), 1.2) * 52, oo = bar + d, [x, z] = at(oo, (R() - 0.5) * 4.5), u = R(), h = R();
+        if (R() > 0.75 || !own(x, z, oo)) continue;
+        const y = gT(x, z), sl = slope(x, z), cc = lc(x, z), kk = 1 + 0.6 * Math.min(1, (d - 8) / 50);
         let n;
-        if (cc === 3) continue;
-        if (wt > 0.2) {   // the wet hollows and the lakes' margins: tall rank grass (never in the water itself: land cover 2's core)
-          if (wt > 0.8) continue;
-          tuft(soft.get(x, z), x, y, z, (0.3 + h * 0.2) * kk, 0.5 + h * 0.4, C_(R, BK.reed, 0.03), R, 6); n = 'mokro';
-        } else if (cc === 1) {   // the pine woods
-          if (u < 0.4) { soil(soft, gT, x, z, (0.9 + R() * 1.3) * kk, C_(R, R() < 0.6 ? BK.needle : BK.moss), R, 0.05); n = 'iglice'; }
-          else if (u < 0.8) { cushion(soft.get(x, z), x, y, z, (0.35 + h * 0.4) * kk, 0.18 + h * 0.16, C_(R, BK.berry, 0.02), R); n = 'borovnice'; }
-          else { tuft(soft.get(x, z), x, y, z, (0.32 + h * 0.2) * kk, 0.35 + h * 0.25, C_(R, BK.fern, 0.03), R, 6); n = 'praprot'; }
-        } else {   // the open lawn
-          if (u < 0.55) { tuft(soft.get(x, z), x, y, z, (0.2 + h * 0.16) * kk, 0.22 + h * 0.2, C_(R, BK.tuft, 0.03), R, 5); n = 'sopi'; }
-          else if (u < 0.75) { tuft(soft.get(x, z), x, y, z, (0.18 + h * 0.14) * kk, 0.2 + h * 0.16, C_(R, BK.dry, 0.03), R, 5); n = 'suhi'; }
-          else continue;   // (the lawn's own patches: js/world-chase-bt41.js)
+        if (cc === 4 || cc === 5 || sl > 0.9) {   // the steep and the summit: the granite only
+          if (u < 0.5) { cushion(soft.get(x, z), x, y + 0.06, z, (0.4 + h * 0.7) * kk, 0.3 + h * 0.4, C_(R, PG.granite, 0.02), R); n = 'skale'; }
+          else if (sl < 1.6) { soil(soft, gT, x, z, (1.2 + R() * 1.6) * kk, C_(R, PG.scree, 0.02), R, 0.06); n = 'melisce'; }
+        } else if (cc === 1) {   // under the spruces and firs
+          if (u < 0.5) { soil(soft, gT, x, z, (1.2 + R() * 1.4) * kk, C_(R, PG.needle), R, 0.05); n = 'iglice'; }
+          else if (u < 0.8) { cushion(soft.get(x, z), x, y, z, (0.45 + h * 0.5) * kk, 0.3 + h * 0.3, C_(R, PG.juniper, 0.02), R); n = 'brin'; }
+          else { cushion(soft.get(x, z), x, y + 0.05, z, (0.35 + h * 0.5) * kk, 0.25 + h * 0.3, C_(R, PG.granite, 0.02), R); n = 'skale'; }
+        } else {   // the tundra and the treeline
+          if (u < 0.35) { soil(soft, gT, x, z, (1.4 + R() * 1.8) * kk, C_(R, PG.tundra, 0.015), R, 0.06); n = 'tundra'; }
+          else if (u < 0.55) { cushion(soft.get(x, z), x, y, z, (0.35 + h * 0.4) * kk, 0.18 + h * 0.18, C_(R, PG.cush, 0.02), R); n = 'blazine'; }
+          else if (u < 0.75) { const hh = R(); tuft(soft.get(x, z), x, y, z, (0.22 + hh * 0.18) * kk, 0.26 + hh * 0.24, C_(R, PG.tuft, 0.03), R, 5); n = 'sopi'; }
+          else { cushion(soft.get(x, z), x, y + 0.06, z, (0.35 + h * 0.6) * kk, 0.25 + h * 0.35, C_(R, PG.granite, 0.02), R); n = 'skale'; }
         }
         if (n) c[n] = (c[n] || 0) + 1;
       }
       return c; } });
     return st;
   };
-  { const L = (API.rbLook || {}).bikernieki; if (L) { const base = L.extra;
-    L.extra = function (ctx) { const r = (base ? base.call(this, ctx) : null) || {};
-      try { const s = bikernieki(ctx); if (s) { r.robBt83 = s.rob; r.pasBt83 = s.pas; } } catch (e) { console.error('chase-bt83 (bikernieki):', e); }
-      return r; }; } }
 
   if (World.ext && World.ext.goreRob) {
     const base = World.ext.goreRob;
@@ -169,10 +157,11 @@
       const r = base.call(this, ctx, id, o);
       try {
         if (id === 'montreal' && ctx.out) { const s = montreal(ctx, o); if (s) { ctx.out.robBt83 = s.rob; ctx.out.pasBt83 = s.pas; } }
+        if (id === 'pikes' && ctx.out) { const s = pikesg(ctx, o); if (s) { ctx.out.robBt83 = s.rob; ctx.out.pasBt83 = s.pas; } }
       } catch (e) { console.error('chase-bt83 (' + id + '):', e); }
       return r;
     };
-    Object.assign(f, base);   // (LOOK, pkLC and whatever else the earlier groups hang on it)
+    Object.assign(f, base);   // (LOOK, pkLC and whatever else the earlier groups hang on it: Pikes calls goreRob only when pkLC is there)
     World.ext.goreRob = f;
   }
 })();
