@@ -450,15 +450,15 @@
  },
  "silkeborg": {
   "meshes": 340,
-  "verts": 361679,
+  "verts": 378926,
   "instances": 5035,
   "props": 39,
   "crowd": 8,
-  "world": "63ffda",
+  "world": "6bef3c9a",
   "propsHash": "f9f3905d",
   "floor": "371f690a/4536",
   "groups": {
-   "-:MeshLambertMaterial": "de638bad",
+   "-:MeshLambertMaterial": "a7d42c2b",
    "-:MeshBasicMaterial": "238cf015",
    "fences:MeshLambertMaterial": "d7ba02e0",
    "rob:MeshLambertMaterial": "55d438b",
@@ -868,16 +868,16 @@
   }
  },
  "llogara": {
-  "meshes": 1995,
-  "verts": 1021128,
+  "meshes": 2002,
+  "verts": 1050426,
   "instances": 53940,
   "props": 84,
   "crowd": 190,
-  "world": "abf18553",
+  "world": "1dcb9aba",
   "propsHash": "624ff85f",
   "floor": "ac0be231/8708",
   "groups": {
-   "-:MeshLambertMaterial": "1b35d3f7",
+   "-:MeshLambertMaterial": "3897852c",
    "-:MeshPhongMaterial": "dce678bb",
    "-:MeshBasicMaterial": "ea147380",
    "paragliders:MeshLambertMaterial": "1f9731fd",
@@ -887,9 +887,9 @@
    "ao:MeshBasicMaterial": "832b8898",
    "tyremarks:MeshBasicMaterial": "86e91d27",
    "roadwear:MeshLambertMaterial": "b4a6195",
-   "life:MeshLambertMaterial": "a04a92a4",
-   "lifeShadow:MeshBasicMaterial": "541b9a53",
-   "life:MeshBasicMaterial": "7422919",
+   "life:MeshLambertMaterial": "775f6751",
+   "lifeShadow:MeshBasicMaterial": "2e843f7d",
+   "life:MeshBasicMaterial": "cb1d994b",
    "dolina:MeshLambertMaterial": "e25ae7a6"
   }
  },

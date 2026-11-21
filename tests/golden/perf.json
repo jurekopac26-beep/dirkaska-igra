@@ -105,11 +105,11 @@
   "jsMs": 1.49
  },
  "silkeborg": {
-  "calls": 241,
+  "calls": 243,
   "maxCalls": 286,
-  "kverts": 631,
-  "maxKverts": 742,
-  "jsMs": 1.6
+  "kverts": 654,
+  "maxKverts": 771,
+  "jsMs": 1.42
  },
  "kagerod": {
   "calls": 229,
@@ -218,10 +218,10 @@
  },
  "llogara": {
   "calls": 168,
-  "maxCalls": 183,
-  "kverts": 470,
-  "maxKverts": 581,
-  "jsMs": 1.24
+  "maxCalls": 180,
+  "kverts": 476,
+  "maxKverts": 590,
+  "jsMs": 1.56
  },
  "portomoniz": {
   "calls": 236,
