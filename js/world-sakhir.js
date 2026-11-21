@@ -82,8 +82,9 @@
     'varying vec2 vSkW; varying float vSkD; uniform vec3 uSkAvg;',
     'float skHash(vec2 p) { p = fract(p * vec2(0.1031, 0.1030)); p += dot(p, p.yx + 33.33); return fract((p.x + p.y) * p.x); }',   // (no sine: steady on phones' GPUs)
     'float skNoise(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(skHash(i), skHash(i + vec2(1.0, 0.0)), u.x), mix(skHash(i + vec2(0.0, 1.0)), skHash(i + vec2(1.0, 1.0)), u.x), u.y); }'].join('\n');
+  let skAvg = [0.35, 0.49, 0.22];
   function skGround(m) {
-    const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22];
+    const avg = (m.map && m.map.avgCol) || [0.35, 0.49, 0.22]; skAvg = avg;
     m.userData.grassLook = true;
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uSkAvg = { value: new THREE.Vector3(avg[0], avg[1], avg[2]) };
@@ -106,6 +107,11 @@
     m.customProgramCacheKey = () => 'skGround';
     m.needsUpdate = true;
   }
+  // the colour a side road's strip fades into at its end (LK.stranskaBarva; World.cesta.stranske's strips are on a clone of the asphalt's
+  // material): the ground's vertex colours mean a colour over the grass picture's average (skGround), the strip's over the asphalt's
+  // (js/tex.js: about 0.40, 0.41, 0.43; the end takes 1.2 times the colour it is given), so the sand shows as sand there, not lilac
+  const SK_ASF = [0.40 * 1.2, 0.41 * 1.2, 0.43 * 1.2];
+  const skStranska = (x, z, g) => { const c = g(x, z); return [c[0] * skAvg[0] / SK_ASF[0], c[1] * skAvg[1] / SK_ASF[1], c[2] * skAvg[2] / SK_ASF[2]]; };
 
   // the ways on the ground (def.sk.svc: OSM's highway=service, 5 m wide; def.sk.alt: the asphalt of the circuit's other layouts, 13 m wide,
   // the drag strip (a negative count) 18 m): plain asphalt on the terrain, its two edges every 4 m, 8 cm over it and drawn over it; the
@@ -113,17 +119,18 @@
   // the barriers (they end at them, closed off); the trees and the people off them
   // how far past the barrier on its side of the road a point is (negative: inside it, in the run-off; i: the road's nearest index)
   const skLat = (x, z, i) => { const T = API.T, lat = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i]; return Math.abs(lat) - (lat > 0 ? T.br[i] : T.bl[i]); };
-  function skWays({ root, exclPush, CR }, ways, tex, st) {
-    const rb = new RB(true);
+  function skWays({ root, exclPush, CR, naCesti }, ways, tex, st) {
+    const rb = new RB(true), na = (p) => !!naCesti && naCesti(p[0], p[1], -1.8);   // (on a side road's asphalt: World.cesta's, def.stranske)
     for (const [S, hw, gap, col] of ways) for (let k = 0; k < S.length;) {
       const n0 = S[k], n = Math.abs(n0), HW = n0 < 0 ? hw[1] : hw[0], p = []; for (let q = 0; q < n; q++) p.push([S[k + 1 + q * 2], S[k + 2 + q * 2]]); k += 1 + n * 2;
       const pts = []; for (let q = 0; q + 1 < n; q++) { const [ax, az] = p[q], [bx, bz] = p[q + 1], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let t = 0; t < m; t++) pts.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); }
       pts.push(p[n - 1]);
-      let prev = -1, along = 0;
+      let prev = -1, along = 0; const on = naCesti ? pts.map(na) : null;
       for (let q = 0; q < pts.length; q++) {
         const [x, z] = pts[q], a = pts[Math.max(0, q - 1)], b = pts[Math.min(pts.length - 1, q + 1)], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
         if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
         const nn = nrNear(x, z); if (nn.i >= 0 && (nn.dd < gap + (gap > 3 ? HW : 0) || (gap > 3 && skLat(x, z, nn.i) < HW + 0.5))) { prev = -1; continue; }   // (the service roads not inside the run-offs' barriers)
+        if (on && on[q] && on[Math.max(0, q - 1)] && on[Math.min(pts.length - 1, q + 1)]) { prev = -1; continue; }   // (the side road is drawn there already; one step over its end, no gap)
         const nx = -dz / dl, nz = dx / dl, row = [-HW, HW].map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + 0.08, pz]; });   // (left to right in the way's direction: (nx, nz) its right)
         const r = rb.row(row, [col, col], row.map((e, j) => [j * HW / 2, along / 4]));
         if (prev >= 0) rb.link(prev, r, 0, 1); prev = r;
@@ -355,7 +362,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     sakhir: { ban: SK_BAN, at: SK_AT, nums: 15, numC: ['#ce1126', '#fff', '#fff'], shirts: SK_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.7, 1.2, 2.3], gravel: false, noVid: true,
       pitBox: [-210, 180, 1], mow: 0.001, vg: [2.12, 1.42, 2.22],   // (the pit garages on the right of the main straight; the verges inside the barriers sand, no mowing stripes)
-      woods: SK_WOODS, extra: skExtra, pad: skPad, ground: skGround, lane: true, fl: { bh: BH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: SK_WOODS, extra: skExtra, pad: skPad, ground: skGround, stranskaBarva: skStranska, lane: true, fl: { bh: BH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
       flags: { stand: [{ bh: 0.8, tm: 0.2 }, { bh: 0.7, tm: 0.2, rb: 0.1 }], ga: { bh: 0.8, tm: 0.2 }, camp: { bh: 0.85, tm: 0.15 }, pole: 'bh', podium: 'bh' },
       vid: [], poles: [-150, 160, -1], runoff: ['SAKHIR', 'BAHRAIN', 'MANAMA'], straight: [-120, 120, -1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.62, 0.6, 0.56], end: [0.9, 0.87, 0.8], barn: [0.75, 0.68, 0.56], barnRoof: [0.6, 0.6, 0.6], barnEnd: [0.72, 0.65, 0.54] },

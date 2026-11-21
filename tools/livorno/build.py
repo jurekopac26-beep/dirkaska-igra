@@ -159,7 +159,12 @@ HEAD = """/* Livorno (theme 'livorno'): the scenery data for js/world-livorno.js
    1 retaining, 2 hedge, 3 fence, 4 guard rail, [x, z, ...]]; coast (the land on the left of each line); cliffs (the lower side on the right);
    rail [bridge, tunnel, [x, z, ...]]; marks [label, kind, s, d, outline]; trees [x, z, kind]; bridges [s0, s1] (the road on a bridge);
    onRoad [s, kind, x]: OSM's nodes on the lap's own ways (kind 0 a marked pedestrian crossing, x 1 on a primary or secondary road; 1 a stop
-   sign, 2 a give-way sign, x the lane the line lies across: 1 the lap's own, -1 the oncoming one). Data: © OpenStreetMap contributors (ODbL 1.0: the
+   sign, 2 a give-way sign, x the lane the line lies across: 1 the lap's own, -1 the oncoming one);
+   side [s, side (1 right, -1 left), class (0 service or track, 1 residential or unclassified, 2 tertiary, 3 secondary or primary), width (m), one
+   way, end (0 fades into the ground, 1 joins another of these roads), [x, z, ...]]: the roads that meet the lap, their first ~60 m from the
+   junction (OSM; no names), for World.cesta.stranske (appearance only);
+   lamps [x, z]: OSM's street lamps within 30 m; stops [s, side, distance from the centre line, shelter]: OSM's bus stops within 30 m.
+   Data: © OpenStreetMap contributors (ODbL 1.0: the
    derived data here under the ODbL 1.0); Copernicus DEM GLO-30 (produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence
    and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved); ESA WorldCover 2021 (CC BY 4.0); Meta and
    World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0). Only geographic and descriptive labels. */
@@ -178,6 +183,122 @@ def on_road():
             ahead = min([e - s for e in ends if e >= s] or [1e9]); behind = min([s - e for e in ends if e < s] or [1e9])
             out.append([s, 1 if kind == 'stop' else 2, 1 if ahead <= behind else -1])
     return out
+
+# ---- the roads that meet the lap (OSM, the track data's `side`): appearance only, for World.cesta.stranske (docs/realizem.md, package E) ----
+SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'living_street': 1, 'tertiary': 2, 'tertiary_link': 2,
+              'secondary': 3, 'secondary_link': 3, 'primary': 3, 'primary_link': 3, 'trunk': 3, 'trunk_link': 3}
+SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
+def side_width(cls, v, oneway):
+    try: f = float(str(v).replace(',', '.'))
+    except ValueError: f = 0
+    if f >= 3 and (cls <= 1 or f > 4): w = f               # a width in metres (the field is OSM's lanes, or its width where there are none)
+    elif f >= 1: w = 3.0 * f + (1.0 if f < 2 else 0.4)     # lanes
+    else: w = SIDE_W[cls] * (0.8 if oneway else 1)
+    return round(min(8.0, max(3.0, w)), 1)
+
+def side_roads(stats=None):
+    from scipy.spatial import cKDTree
+    G = game_line(); K = 5; Gn = np.vstack([G, G[:1]])
+    D = np.concatenate([Gn[i] + (Gn[i + 1] - Gn[i]) * (np.arange(K) / K)[:, None] for i in range(NP)])   # the game's centre line, a point each metre
+    tree = cKDTree(D); nd = len(D); st = STEP / K
+    Tn = np.roll(D, -3, 0) - np.roll(D, 3, 0); Tn /= np.hypot(Tn[:, 0], Tn[:, 1])[:, None]
+    hw_at = lambda s: next((w for a, b, w in WIDTHS if a <= s < b), 5.0)
+    dist = lambda a, b: float(np.hypot(a[0] - b[0], a[1] - b[1]))
+    circ = lambda a, b: min(abs(a - b), L - abs(a - b))
+    def near(p):   # the distance from the centre line and the metres after the start line there
+        d, k = tree.query(p); return float(d), float(k * st)
+    plen = lambda P: sum(dist(P[i + 1], P[i]) for i in range(len(P) - 1))
+    def clip(P, m):   # the first m metres
+        out = [P[0]]; acc = 0.0
+        for i in range(1, len(P)):
+            l = dist(P[i], P[i - 1])
+            if acc + l >= m:
+                if m - acc > 0.05: out.append(P[i - 1] + (P[i] - P[i - 1]) * ((m - acc) / max(l, 1e-9)))
+                return out
+            acc += l; out.append(P[i])
+        return out
+    def walk(P):   # a point each metre of the way: the index is the metres from the junction
+        out = [P[0]]; acc = 0.0; nxt = 1.0
+        for i in range(1, len(P)):
+            l = dist(P[i], P[i - 1])
+            while nxt <= acc + l + 1e-9: out.append(P[i - 1] + (P[i] - P[i - 1]) * ((nxt - acc) / max(l, 1e-9))); nxt += 1.0
+            acc += l
+        return out
+    # OSM splits the ways: a short piece goes on along the way that continues it (the other roads within 60 m, never a carriageway alongside)
+    ends = {}
+    for r in J['roads']:
+        if r[0] not in SIDE_CLASS or r[7] or r[3]: continue
+        Q = np.array(r[8], float).reshape(-1, 2)
+        if len(Q) < 2: continue
+        for rev in (0, 1):
+            e = Q[-1] if rev else Q[0]; ends.setdefault((int(round(e[0] * 5)), int(round(e[1] * 5))), []).append(Q[::-1] if rev else Q)
+    def carry(P):
+        for _ in range(6):
+            if plen(P) >= 64: break
+            e = P[-1]; d0 = P[-1] - P[-2]; d0 = d0 / max(1e-9, float(np.hypot(*d0))); best = None; kx, kz = int(round(e[0] * 5)), int(round(e[1] * 5))
+            for ax in (-1, 0, 1):
+                for az in (-1, 0, 1):
+                    for Q in ends.get((kx + ax, kz + az), []):
+                        if dist(Q[0], e) > 0.25: continue
+                        d1 = Q[1] - Q[0]; c = float(np.dot(d0, d1)) / max(1e-9, float(np.hypot(*d1)))
+                        if c > 0.5 and (best is None or c > best[0]): best = (c, Q)
+            if best is None: break
+            P = P + [q for q in best[1][1:]]
+        return P
+    cand = []; why = {}
+    def drop(k): why[k] = why.get(k, 0) + 1
+    for s_, sd_, ang_, hw, lw, ow, name, fl in J['side']:
+        if hw not in SIDE_CLASS: drop('path'); continue
+        P = clip(carry([np.array(p) for p in np.array(fl, float).reshape(-1, 2)]), 64.0); d0, s0 = near(P[0]); hw0 = hw_at(s0)
+        if s0 < 150 or s0 > L - 330: drop('start'); continue                              # the start: the white wall, the fence and the crowd
+        if any(a - 6 <= s0 <= b + 6 for a, b in J['bridges']): drop('bridge'); continue   # no junction on a bridge
+        if 1800 < s0 < 1990: drop('ring'); continue                                       # the roundabout that game_line() straightens (1922 had none): its ring goes
+        cls = SIDE_CLASS[hw]; w = side_width(cls, lw, ow)
+        W = walk(P); N_ = [near(p) for p in W]; left = False; ret = None
+        for k, (d, s) in enumerate(N_):   # away from the lap (its own width clear of the edge), then back at it
+            if not left: left = d > hw0 + 6 + w / 2
+            elif d < hw_at(s) + 3 + w / 2: ret = (k, s); break
+        if ret and circ(ret[1], s0) < 200: drop('loop'); continue                         # a ring, a lay-by, a carriageway alongside
+        cut = len(W) if ret is None else max(0, ret[0] - 8)                               # a road to another part of the lap stops short of it
+        if cut - 1 < 14 or max(d for d, s in N_[:cut]) < hw0 + 10: drop('link' if ret else 'short'); continue   # never really leaves the roadside
+        # the side and the mouth's length along the lap, in the lap's own frame at the junction
+        k0 = int(round(s0 / st)) % nd; tk = Tn[k0]; o = 0.0
+        for k in (12, 20, 30, cut - 1):
+            q = W[min(cut - 1, k)] - D[k0]; o = float(-tk[1] * q[0] + tk[0] * q[1])
+            if abs(o) > hw0 + 1: break
+        q = W[min(cut - 1, 12)] - W[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
+        cand.append(dict(s=s0, side=1 if o > 0 else -1, osm=int(sd_), cls=cls, w=w, ow=int(ow), P=P, W=W, N=N_, hw0=hw0, cut=cut, cut0=cut, end=0, mouth=w / max(0.45, sn)))
+    # the higher class first, then the longer road: two mouths on the same side that would run into each other leave one; a road that runs into
+    # another of these roads ends there (end 1), and so does the other one where it is met at its tip
+    cand.sort(key=lambda e: (-e['cls'], -e['cut'])); out = []
+    for e in cand:
+        if any(f['side'] == e['side'] and circ(e['s'], f['s']) < (e['mouth'] + f['mouth']) / 2 + 7 for f in out): drop('pair'); continue
+        hit = None
+        if out:
+            A = [(f, k) for f in out for k in range(8, f['cut'])]; tr = cKDTree(np.array([f['W'][k] for f, k in A]))
+            for k in range(8, e['cut']):
+                p = e['W'][k]; d, j = tr.query(p); f, kf = A[j]
+                if d > f['w'] / 2 + 1.5: continue
+                t = f['W'][min(kf + 1, len(f['W']) - 1)] - f['W'][kf - 1]; t = t / max(1e-9, float(np.hypot(t[0], t[1]))); q = p - f['W'][kf]
+                u = float(t[0] * q[0] + t[1] * q[1]); v = float(-t[1] * q[0] + t[0] * q[1])
+                if abs(v) < f['w'] / 2 - 0.3 and (kf < f['cut'] - 1 or u <= 0.5): hit = (k, f, kf); break   # its centre on the other road (a square end past the tip is none)
+        if hit:
+            k, f, kf = hit
+            if k < 14 or max(d for d, s in e['N'][:k + 1]) < e['hw0'] + 10: drop('meet'); continue   # too short to that point
+            e['cut'] = k + 1; e['end'] = 1
+            if kf >= f['cut'] - 6: f['cut'] = min(f['cut'], kf + int(math.ceil(e['w'] / 2)) + 1); f['end'] = 1   # met in its last metres: a corner, no fading end beyond it
+        out.append(e)
+    out.sort(key=lambda e: e['s']); rows = []
+    for e in out:
+        Pc = clip(e['P'], float(e['cut'] - 1)); keep = [Pc[0]]   # the corners that matter (0.8 m apart), the end always
+        for i in range(1, len(Pc)):
+            if dist(Pc[i], keep[-1]) >= 0.8: keep.append(Pc[i])
+            elif i == len(Pc) - 1 and len(keep) > 1: keep[-1] = Pc[i]
+        rows.append([round(e['s'], 1), e['side'], e['cls'], e['w'], e['ow'], e['end'], [round(float(v), 1) for p in keep for v in p]])
+    if stats is not None:
+        stats.update(dict(kept=len(out), dropped=why, classes=[sum(1 for e in out if e['cls'] == c) for c in range(4)], metres=sum(e['cut'] - 1 for e in out),
+                          joined=sum(e['end'] for e in out), shortened=sum(1 for e in out if e['cut'] < e['cut0']), side_differs=sum(1 for e in out if e['side'] != e['osm'])))
+    return rows
 
 def build_world():
     P = game_line(); M = 800
@@ -210,6 +331,7 @@ def build_world():
     FAR = dict(x0=gf['x0'], z0=gf['z0'], n=n2, cell=gf['cell'] * 2, lo=0, step=2, b64=b64bytes(np.clip(np.round(fh / 2), 0, 255)))
     pl = lambda fl: [round(v, 1) for v in fl]
     KIND_W = {'wall': 0, 'city_wall': 0, 'retaining_wall': 1, 'hedge': 2, 'fence': 3, 'railing': 3, 'handrail': 3, 'guard_rail': 4, 'jersey_barrier': 4}
+    SS = {}
     data = {
         'dem': D, 'lc': LC, 'far': FAR,
         'bld': [[b[0], b[1], b[2], b[3], round(b[4], 2), b[5], b[6]] for b in J['bld']],
@@ -221,10 +343,14 @@ def build_world():
         'trees': [[t[0], t[1], t[2]] for t in J['trees']],
         'bridges': [[round(a_, 1), round(b_, 1)] for a_, b_ in J['bridges']],
         'onRoad': on_road(),
+        'side': side_roads(SS),
+        'lamps': [[round(float(x), 1), round(float(z), 1)] for x, z in J['lamps']],
+        'stops': [[int(e[0]), int(e[1]), round(float(e[2]), 1), int(e[3])] for e in J['stops']],
     }
     src = HEAD + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n'
     path = os.path.join(ROOT, 'js', 'data', 'livorno.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB; dem', D['nx'], 'x', D['nz'], '; lc', lnx, 'x', lnz, len(LC['rle']), 'chars; classes', np.bincount(lc.ravel(), minlength=4).tolist())
+    print('  side roads', SS)
     for k in data: print('  %-7s %6d KB' % (k, len(json.dumps(data[k], ensure_ascii=False, separators=(',', ':')).encode()) // 1024))
 
 if __name__ == '__main__':
