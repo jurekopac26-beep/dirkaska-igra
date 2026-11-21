@@ -84,11 +84,11 @@
   "jsMs": 1.3
  },
  "chapman": {
-  "calls": 149,
-  "maxCalls": 195,
-  "kverts": 389,
-  "maxKverts": 438,
-  "jsMs": 1.26
+  "calls": 155,
+  "maxCalls": 198,
+  "kverts": 422,
+  "maxKverts": 482,
+  "jsMs": 1.43
  },
  "bigsur": {
   "calls": 138,
@@ -140,11 +140,11 @@
   "jsMs": 1.74
  },
  "rastro": {
-  "calls": 179,
-  "maxCalls": 222,
-  "kverts": 380,
-  "maxKverts": 509,
-  "jsMs": 0.9
+  "calls": 187,
+  "maxCalls": 231,
+  "kverts": 475,
+  "maxKverts": 591,
+  "jsMs": 1.48
  },
  "moki": {
   "calls": 129,
