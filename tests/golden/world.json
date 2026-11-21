@@ -226,12 +226,12 @@
   }
  },
  "harju": {
-  "meshes": 844,
-  "verts": 1781370,
+  "meshes": 853,
+  "verts": 1808805,
   "instances": 4296,
   "props": 33,
   "crowd": 1027,
-  "world": "d05053cf",
+  "world": "2eada64d",
   "propsHash": "d16c96de",
   "floor": "3cab689f/5488",
   "groups": {
@@ -241,7 +241,7 @@
    "-:MeshBasicMaterial": "863148da",
    "puddles:MeshBasicMaterial": "c916858d",
    "crowd:MeshLambertMaterial": "cb2a186d",
-   "rob:MeshLambertMaterial": "d2d33ccb",
+   "rob:MeshLambertMaterial": "96671909",
    "flags:MeshLambertMaterial": "a6c200c4",
    "ao:MeshBasicMaterial": "2652cdd6",
    "tyremarks:MeshBasicMaterial": "1018e091",
