@@ -170,8 +170,8 @@
         if (lo < seaY + 0.6) continue;   // (none in the water)
         const area = b.L * b.W, fl = b.h > 0 ? clamp(Math.round(b.h / 3), 1, 5) : area > 160 ? 2 + (RB() < 0.4 ? 1 : 0) : area > 55 && RB() < 0.45 ? 2 : 1, H = fl * 3.0;
         const wc = vary(WALL[Math.floor(RB() * WALL.length)], RB, 0.03), flat = b.L > 22 || area > 320;
-        box(g, b.x, lo - 0.6, b.z, b.L + 0.1, hi - lo + 1.05, b.W + 0.1, b.ang, basalt, null, true);
-        box(g, b.x, hi + 0.45, b.z, b.L, H - 0.45, b.W, b.ang, wc, null, true);
+        box(g, b.x, lo - 0.6, b.z, b.L + 0.1, hi - lo + 0.9, b.W + 0.1, b.ang, basalt, null, true);
+        box(g, b.x, hi + 0.3, b.z, b.L, H - 0.3, b.W, b.ang, wc, null, true);
         if (flat) box(g, b.x, hi + H, b.z, b.L + 0.3, 0.35, b.W + 0.3, b.ang, [0.82, 0.81, 0.78], [0.62, 0.6, 0.57], true);
         else gable(g, b.x, hi + H, b.z, b.L + 0.7, b.W + 0.7, Math.min(b.W, 11) * 0.3, b.ang, vary(LOOK.roofs[Math.floor(RB() * LOOK.roofs.length)], RB, 0.06), wc);
         if (d < 110) { const n = Math.max(1, Math.min(3, Math.floor(b.L / 3.4))), sc = shut[Math.floor(RB() * shut.length)];
