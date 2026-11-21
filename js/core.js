@@ -9061,18 +9061,23 @@ const Core = (function () {
     }
 
     // open road: checkpoints (split times), the finish at T.finishS; in the menu demo (noPlayer) cars that reach the top start again at the bottom.
-    // Crossing times are interpolated inside the step from the distance covered in it.
+    // Crossing times are interpolated inside the step from the distance covered in it. The lines (the checkpoints', the finish's) are crossed
+    // where the car is on the road (q.s, its gantry over the road at the same s), not by c.dist: the distance run is a metre or two off
+    // the road's for every car in its own way (its grid slot snapped to the road's 2 m samples; the lookup jumping a few metres round the
+    // inside of a sharp corner, more than a step's 3 m the distance may move: Killar's at 1.9 km), so by c.dist a car right behind
+    // another at the line could finish before it (the user's report of 15. 11. 2026 at 4.01, Killar: »v dirki pa se lepo vidi da sem zmagal«)
     _progressOpen(c, q, ds, dt) {
       const T = this.track;
       if (this.state === 'grid' || c.finished || c.parkQ || dnf(c)) return;
       const tAt = (target) => this.time - dt * (ds > 1e-9 ? clamp((c.dist - target) / ds, 0, 1) : 0);
+      const g = q.s - T.startS, tG = (target) => this.time - dt * (ds > 1e-9 ? clamp((g - target) / ds, 0, 1) : 0);   // (g: where the car is, metres from the start line)
       if (c.lap === 0 && c.dist >= 0) { c.lap = 1; if (c.dist - ds < 0) c.lapStart = tAt(0); }
-      // (the projected position must agree - within 30 m - so a lookup snapped to another leg of the road can not trigger anything)
-      while (c.cp < T.cpS.length && c.dist >= T.cpDist[c.cp] && q.s >= T.cpS[c.cp] - 30) { c.splits.push(tAt(T.cpDist[c.cp])); c.cp++; c.cpEv++; }
-      const atFinish = c.cp >= T.cpS.length && c.dist >= T.raceLen && q.s >= T.finishS - 30 && !(this.pol && c === this.player && this.pol.goal);   // (the run from the police ends in the building at the top, not at the line)
+      // (the distance run must agree - within 30 m - so a lookup snapped to another leg of the road can not trigger anything)
+      while (c.cp < T.cpS.length && g >= T.cpDist[c.cp] && c.dist >= T.cpDist[c.cp] - 30) { c.splits.push(tG(T.cpDist[c.cp])); c.cp++; c.cpEv++; }
+      const atFinish = c.cp >= T.cpS.length && g >= T.raceLen && c.dist >= T.raceLen - 30 && !(this.pol && c === this.player && this.pol.goal);   // (the run from the police ends in the building at the top, not at the line)
       if (this.opts.noPlayer) { if (atFinish || q.s >= T.finishS + 5) this._queueRespawn(c); return; }
       if (atFinish) {
-        const ft = tAt(T.raceLen);
+        const ft = tG(T.raceLen);
         c.finished = true; c.finishTime = ft; c.lapTimes = [ft]; c.lap = this.laps + 1;
         this.finishOrder.push(c); c.finishPos = this.finishOrder.length;
         c.noReverse = true;   // (the UI holds the brake after the finish: the car must stop, not back down the hill)
