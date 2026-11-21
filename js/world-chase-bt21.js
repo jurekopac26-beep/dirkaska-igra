@@ -63,7 +63,7 @@
       const r = (base ? base.call(this, ctx) : null) || {};
       try {
         const T = API.T, pd = T && T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0, { nrGround, nrSlope, nrLC, nrNear } = API;
-        const bad = (x, z) => { if (!ps) return false; const q = nrNear(x, z); return q.i >= 0 && Math.sign(q.lat) === ps && !!T.pitAt(q.i * T.ds); };
+        const bad = (x, z) => { if (!ps) return false; const q = nrNear(x, z); return q.i >= 0 && Math.sign(q.lat) === ps && (!!T.pitAt(q.i * T.ds) || (T.pitLead ? T.pitLead(q.i * T.ds) >= 0 : false)); };   // (also the lanes into and out of the pits: T.pitLead)
         r.robBt21 = World.ext.goreRob({ excluded: ctx.excluded, root: ctx.root, out: ctx.out }, id, { gH: nrGround, slope: nrSlope, lc: nrLC, near: nrNear, bad });
       } catch (e) { console.error('chase-bt21 (' + id + '):', e); }
       return r;
