@@ -98,11 +98,11 @@
   "jsMs": 2.61
  },
  "balea": {
-  "calls": 166,
-  "maxCalls": 175,
-  "kverts": 396,
-  "maxKverts": 448,
-  "jsMs": 1.49
+  "calls": 175,
+  "maxCalls": 185,
+  "kverts": 461,
+  "maxKverts": 518,
+  "jsMs": 1.89
  },
  "silkeborg": {
   "calls": 241,
@@ -406,11 +406,11 @@
   "jsMs": 1.25
  },
  "savusavu": {
-  "calls": 187,
-  "maxCalls": 221,
-  "kverts": 504,
-  "maxKverts": 604,
-  "jsMs": 1.12
+  "calls": 181,
+  "maxCalls": 217,
+  "kverts": 473,
+  "maxKverts": 567,
+  "jsMs": 0.81
  },
  "koror": {
   "calls": 154,

@@ -1,15 +1,15 @@
 /* =========================================================================
    WORLD — the roadside ground from the camera behind the car (chase), the seventy-third group of the real tracks: Porto Moniz and
-   Savusavu, a further pass on two of the passes' roads (js/world-prelaz.js) whose ground the earlier groups set only near the road
+   Bâlea, a further pass on two of the passes' roads (js/world-prelaz.js) whose ground the earlier groups set only near the road
    (js/world-chase-bt7.js, js/world-chase-bt44.js: Porto Moniz's verge, bank to ~8 m and a sparse band to ~55 m; js/world-chase-bt8.js,
-   js/world-chase-bt30.js: Savusavu's verge and bank to ~8 m). From behind the car the asphalt's edge met the verge in one clean line, and
+   js/world-chase-bt26.js: Bâlea's verge and bank to ~7 m). From behind the car the asphalt's edge met the verge in one clean line, and
    past the near bands the slopes stood in one even sheet. So here, as the seventy-first group did (js/world-chase-bt71.js), on both a worn
    edge (grit and dust off the asphalt and washed down onto it, 0.05-0.75 m past its edge, under the rail too, thin and broken) and a
-   band from ~3 m to ~60 m past the barrier line, thinning with distance (from 9 m it lay outside the chase camera's frame). Savusavu (docs/proge/savusavu.md): »rdečerjav prah vulkanske prsti, ki ga dež spere na
-   rob asfalta« on the edge; the plateau's grass, the grass the sun bleached, the red-brown soil of the cuts, the dark basalt's grit, the
-   dark low bushes of the gardens and the forest's edge, lush tufts. Porto Moniz (docs/proge/portomoniz.md): the dark basalt grit of the
+   band from ~3 m to ~60 m past the barrier line, thinning with distance (from 9 m it lay outside the chase camera's frame). Bâlea (docs/proge/balea.md): the grey-brown schist
+   grit of the shoulder on the edge; the alpine pasture green and going to straw, the schist's scree under the crags, tufts, the dwarf
+   pine and juniper in low mats. Porto Moniz (docs/proge/portomoniz.md): the dark basalt grit of the
    shoulder on the edge; the terraces' pasture, the red-brown tuff earth, the basalt's scree on the steeper parts, lush tufts, the dark
-   heath and laurel scrub in low cushions. Nothing at or below the sea, nothing where another leg's road is nearer, in the builder's
+   heath and laurel scrub in low cushions. Nothing at or below the sea or in a lake, nothing where another leg's road is nearer, in the builder's
    excluded places (houses, viewpoints, the town) or on a face too steep. The horizon stays the existing sea and DEM terrain. All of it
    in meshes of their own (softScen: 256 m chunks, no shadow); the terrain, the road, the barriers, the walls, the trees and the driving
    stay as they are.
@@ -72,20 +72,21 @@
     soft.done(); return st;
   };
 
-  /* Savusavu: the colours of js/world-chase-bt30.js. On the edge the red-brown dust the rain washes onto the asphalt's edge, now and then
-     the dark basalt grit; further out, over and past bt30's bank, the grass, the bleached grass, the red-brown soil where it is steep, lush tufts
-     and the dark low bushes, the wider patches further away. */
-  const SVE = { step: 2.2, share: 0.75,
-    col: (R) => R() < 0.75 ? C3(R, [0.5, 0.34, 0.22], [0.55, 0.38, 0.25]) : C3(R, [0.3, 0.29, 0.27], [0.34, 0.32, 0.3]) };
-  const SVF = { step: 3.4, n: 3, from: 3, reach: 60, pw: 1.5, drop: 8, rise: 40, maxSl: 1.3,
+  /* Bâlea: the colours of js/world-chase-bt26.js and the pass's look (js/world-prelaz.js). On the edge the grey-brown schist grit off the
+     shoulder, now and then the pasture's straw; further out, over bt26's bank to ~7 m and past it up the glacial valley's slopes, the
+     pasture in greener and straw patches, the schist's scree on the steeper parts (docs/proge/balea.md: »melišča pod stenami«), tufts of
+     the pasture's grass and the dark dwarf pine and juniper in low mats, the wider patches further away. */
+  const BLE = { step: 2.2, share: 0.75,
+    col: (R) => R() < 0.7 ? C3(R, [0.5, 0.49, 0.46], [0.55, 0.53, 0.49]) : C3(R, [0.55, 0.54, 0.34], [0.58, 0.56, 0.36]) };
+  const BLF = { step: 3.4, n: 3, from: 3, reach: 60, pw: 1.5, drop: 8, rise: 45, maxSl: 1.35,
     keep: (d) => d < 25 ? 0.85 : 0.6,
     pick: (R, d, s) => { const r = R(), w = d < 25 ? 1 : 1.5;
-      if (s > 0.9) return r < 0.65 ? { k: 'p', r: (1.0 + R() * 1.6) * w, col: C3(R, [0.48, 0.3, 0.21], [0.54, 0.35, 0.24]) } : null;   // (red-brown soil in the cut)
-      if (r < 0.3) return { k: 'p', r: (1.3 + R() * 1.8) * w, col: C3(R, [0.27, 0.48, 0.15], [0.33, 0.51, 0.19]) };   // (grass)
-      if (r < 0.5) return { k: 'p', r: (1.2 + R() * 1.6) * w, col: C3(R, [0.45, 0.54, 0.26], [0.5, 0.57, 0.29]) };   // (bleached grass)
-      if (r < 0.58) return { k: 'p', r: (0.9 + R() * 1.1) * w, col: C3(R, [0.5, 0.34, 0.22], [0.55, 0.38, 0.25]) };   // (red-brown soil)
-      if (r < 0.78) return { k: 't', w: 0.34, h: 0.5, col: mute(vary(mix3([0.22, 0.46, 0.14], [0.32, 0.51, 0.19], R()), R, 0.03)) };   // (lush tufts)
-      return { k: 'g', w: d < 25 ? 0.8 : 1.1, h: 0.6, col: mute(vary(R() < 0.6 ? [0.12, 0.29, 0.1] : [0.16, 0.32, 0.12], R, 0.025), 0.97) }; } };   // (garden, forest-edge bushes)
+      if (s > 0.9) return r < 0.7 ? { k: 'p', r: (1.0 + R() * 1.6) * w, col: C3(R, [0.5, 0.48, 0.45], [0.56, 0.53, 0.5]) } : null;   // (schist scree)
+      if (r < 0.3) return { k: 'p', r: (1.3 + R() * 1.8) * w, col: C3(R, [0.36, 0.47, 0.21], [0.4, 0.5, 0.24]) };   // (pasture, greener)
+      if (r < 0.5) return { k: 'p', r: (1.2 + R() * 1.6) * w, col: C3(R, [0.53, 0.53, 0.31], [0.57, 0.56, 0.34]) };   // (pasture, straw)
+      if (r < 0.58) return { k: 'p', r: (0.9 + R() * 1.1) * w, col: C3(R, [0.47, 0.42, 0.34], [0.5, 0.45, 0.37]) };   // (bare brown earth)
+      if (r < 0.8) return { k: 't', w: 0.3, h: 0.38, col: mute(vary(mix3([0.42, 0.5, 0.24], [0.55, 0.55, 0.32], R()), R, 0.03)) };   // (pasture tufts)
+      return { k: 'g', w: d < 25 ? 0.8 : 1.1, h: 0.45, col: mute(vary(R() < 0.6 ? [0.17, 0.27, 0.14] : [0.22, 0.3, 0.18], R, 0.025), 0.97) }; } };   // (dwarf pine, juniper)
 
   /* Porto Moniz: the colours of js/world-chase-bt44.js. On the edge the dark basalt grit of the shoulder and the red-brown tuff earth
      washed down from the terraces; further out, over bt44's bank and between and past its sparse band, the terraces' pasture (lush and sun-dried), the
@@ -106,10 +107,12 @@
     if (!ctx.out) return;
     try {
       const gT = API.caGround || API.vrGround, ex = ctx.excluded || (() => false), sea = ctx.out.sea;
-      const bad = typeof sea === 'number' ? (x, z) => ex(x, z) || !(gT(x, z) > sea + 0.8) : ex;
+      const lakes = (ctx.P && ctx.P.lakes) || [], wet = API.vrWater;   // (a pass's lakes, as js/world-prelaz.js's inLake)
+      const inLake = (x, z) => { if (!wet) return false; for (const Lk of lakes) if (x > Lk.x0 - 2 && x < Lk.x1 + 2 && z > Lk.z0 - 2 && z < Lk.z1 + 2 && wet(x, z).e > -2) return true; return false; };
+      const bad = (x, z) => ex(x, z) || (typeof sea === 'number' && !(gT(x, z) > sea + 0.8)) || inLake(x, z);
       ctx.out.robBt73 = run(ctx.root, ctx.matV || ctx.out.matV, gT, API.vrNear, bad, seed, E, C);
     } catch (e) { console.error('chase-bt73 (' + id + '):', e); }
   }); };
   add('portomoniz', PME, PMF, 73100);
-  add('savusavu', SVE, SVF, 73200);
+  add('balea', BLE, BLF, 73200);
 })();
