@@ -21,11 +21,11 @@
   "jsMs": 4.26
  },
  "spa": {
-  "calls": 180,
-  "maxCalls": 227,
-  "kverts": 481,
-  "maxKverts": 609,
-  "jsMs": 1.9
+  "calls": 193,
+  "maxCalls": 232,
+  "kverts": 504,
+  "maxKverts": 618,
+  "jsMs": 1.55
  },
  "rbring": {
   "calls": 216,
@@ -168,11 +168,11 @@
   "jsMs": 1.45
  },
  "zandvoort": {
-  "calls": 207,
-  "maxCalls": 242,
-  "kverts": 708,
-  "maxKverts": 893,
-  "jsMs": 1.4
+  "calls": 200,
+  "maxCalls": 236,
+  "kverts": 701,
+  "maxKverts": 880,
+  "jsMs": 1.36
  },
  "furka": {
   "calls": 173,
