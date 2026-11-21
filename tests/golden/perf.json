@@ -37,9 +37,9 @@
  "caracoles": {
   "calls": 174,
   "maxCalls": 220,
-  "kverts": 462,
-  "maxKverts": 676,
-  "jsMs": 1.18
+  "kverts": 368,
+  "maxKverts": 536,
+  "jsMs": 1.16
  },
  "katu": {
   "calls": 161,
@@ -210,18 +210,18 @@
   "jsMs": 1.39
  },
  "ella": {
-  "calls": 172,
-  "maxCalls": 212,
-  "kverts": 392,
-  "maxKverts": 566,
-  "jsMs": 1.25
+  "calls": 179,
+  "maxCalls": 220,
+  "kverts": 417,
+  "maxKverts": 596,
+  "jsMs": 1.86
  },
  "llogara": {
   "calls": 168,
   "maxCalls": 183,
   "kverts": 470,
   "maxKverts": 581,
-  "jsMs": 1.25
+  "jsMs": 1.24
  },
  "portomoniz": {
   "calls": 220,
@@ -322,11 +322,11 @@
   "jsMs": 0.44
  },
  "cusco": {
-  "calls": 128,
-  "maxCalls": 163,
-  "kverts": 307,
-  "maxKverts": 398,
-  "jsMs": 0.64
+  "calls": 136,
+  "maxCalls": 167,
+  "kverts": 330,
+  "maxKverts": 427,
+  "jsMs": 0.77
  },
  "mombasa": {
   "calls": 117,
