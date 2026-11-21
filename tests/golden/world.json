@@ -763,12 +763,12 @@
   }
  },
  "ngorongoro": {
-  "meshes": 1066,
-  "verts": 480001,
+  "meshes": 1086,
+  "verts": 638602,
   "instances": 9795,
   "props": 63,
   "crowd": 30,
-  "world": "273a7e6d",
+  "world": "9d16c1fb",
   "propsHash": "752dbb08",
   "floor": "cae8594e/6860",
   "groups": {
@@ -785,6 +785,7 @@
    "ng_lionM:MeshLambertMaterial": "9ea899b9",
    "ng_lion:MeshLambertMaterial": "1f2411ed",
    "ng_crane:MeshLambertMaterial": "a3f8ff0b",
+   "rob:MeshLambertMaterial": "2629d826",
    "ngFar:MeshLambertMaterial": "99a55540",
    "crowd:MeshLambertMaterial": "e8976908",
    "ao:MeshBasicMaterial": "57e58bc8",
@@ -793,26 +794,27 @@
   }
  },
  "medeu": {
-  "meshes": 2658,
-  "verts": 1028656,
+  "meshes": 2680,
+  "verts": 1113478,
   "instances": 64433,
   "props": 110,
   "crowd": 149,
-  "world": "4be55e21",
+  "world": "4773b863",
   "propsHash": "45703e67",
   "floor": "142ca7aa/10724",
   "groups": {
-   "-:MeshLambertMaterial": "bf1a7677",
+   "-:MeshLambertMaterial": "bbd4bbf",
    "-:MeshPhongMaterial": "4e06f863",
    "-:MeshBasicMaterial": "bc1f3532",
+   "rob:MeshLambertMaterial": "6badf65f",
    "irFar:MeshLambertMaterial": "62680c6e",
    "crowd:MeshLambertMaterial": "573877b2",
    "ao:MeshBasicMaterial": "8fa0dfe0",
    "tyremarks:MeshBasicMaterial": "a569ef",
    "roadwear:MeshLambertMaterial": "6dfd23a7",
-   "life:MeshLambertMaterial": "d622e2c4",
-   "lifeShadow:MeshBasicMaterial": "d2f6ff53",
-   "life:MeshBasicMaterial": "4a4186f"
+   "life:MeshLambertMaterial": "808c8a94",
+   "lifeShadow:MeshBasicMaterial": "3b17437a",
+   "life:MeshBasicMaterial": "e82b0194"
   }
  },
  "ella": {
