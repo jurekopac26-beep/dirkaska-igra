@@ -45,6 +45,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Kamera za avtom, tla ob cesti, skupina 26: Bâlea, Furka (`js/world-chase-bt26.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 60 (drugi prehod): Seul, Biķernieki (`js/world-chase-bt60.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 64 (drugi prehod): Cusco, Ghoufi (`js/world-chase-bt64.js`, v #821) | biketraveler | v delu 21. 11. |
+| Kamera za avtom, tla ob cesti, skupina 67 (drugi prehod): Koror, Aguascalientes (`js/world-chase-bt67.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 27: Kotor, Koror (`js/world-chase-bt27.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 23: Portobelo, Aguascalientes (`js/world-chase-bt23.js`, v #821) | biketraveler | v delu 21. 11. |
 | Kamera za avtom, tla ob cesti, skupina 40 (drugi prehod): Kågeröd, Kanaba (`js/world-chase-bt40.js`, #880, v #821) | biketraveler | v delu 21. 11. |
