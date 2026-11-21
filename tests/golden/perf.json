@@ -126,11 +126,11 @@
   "jsMs": 1.03
  },
  "izoard": {
-  "calls": 179,
-  "maxCalls": 224,
-  "kverts": 388,
-  "maxKverts": 499,
-  "jsMs": 0.97
+  "calls": 190,
+  "maxCalls": 232,
+  "kverts": 427,
+  "maxKverts": 543,
+  "jsMs": 1.25
  },
  "pembrey": {
   "calls": 214,
@@ -252,11 +252,11 @@
   "jsMs": 0.84
  },
  "lombok": {
-  "calls": 189,
-  "maxCalls": 228,
-  "kverts": 592,
-  "maxKverts": 724,
-  "jsMs": 0.94
+  "calls": 204,
+  "maxCalls": 242,
+  "kverts": 607,
+  "maxKverts": 735,
+  "jsMs": 1.04
  },
  "buriram": {
   "calls": 195,
