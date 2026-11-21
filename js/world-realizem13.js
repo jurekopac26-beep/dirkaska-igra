@@ -1,11 +1,14 @@
 /* =========================================================================
-   WORLD — realizem 13: the fences and walls OpenStreetMap has round four more real circuits on the shared builder (js/world-rbring.js)
+   WORLD — realizem 13: the fences and walls OpenStreetMap has round seven more real circuits on the shared builder (js/world-rbring.js)
    outside the 15 tracks of the packages (docs/realizem.md) and the game did not draw: Silkeborg's metal wall, Sosnová's noise barrier and
-   the fence along its lap, Pembrey's fences, Zandvoort's fences that stand outside the game's barriers. (Kågeröd: the one thing OSM has
-   more is the fence round its grounds, whose course its own note calls uncertain: not drawn. Kildare: OSM has no fence or wall within
-   60 m of its lap. Biķernieki: most of its fences follow the track where the game's barriers stand and the rest are short spurs: not
-   drawn.) Each circuit's part is chained onto its look's build hook (API.rbLook.<id>.build, after a world's own): the walls and the
-   fences' posts go into the scenery's chunks, a circuit's chain link into one mesh (as Silkeborg's own fences). Loaded after
+   the fence along its lap, Pembrey's fences, Zandvoort's fences that stand outside the game's barriers, the fences past the barriers of
+   Sakhir, Sepang and Quezaltepeque and the walls Sakhir and Quezaltepeque have behind their first line. (Kågeröd: the one thing OSM has
+   more is the fence round its grounds, whose course its own note calls uncertain: not drawn. Kildare, Aguascalientes, Río Hondo: OSM has
+   no fence or wall within 60 m of their laps. Biķernieki: most of its fences follow the track where the game's barriers stand and the
+   rest are short spurs: not drawn. The wall, tyre wall or guard rail OSM has nearest the road is a circuit's own protective line, which
+   the builder's barriers are: never drawn a second time.) Each circuit's part is chained onto its look's build hook
+   (API.rbLook.<id>.build, after a world's own): the walls and the fences' posts go into the scenery's chunks, a circuit's chain link
+   into one mesh (as Silkeborg's own fences). Loaded after
    js/world-rbring.js (index.html); chained when the builder is first called for a look (World.ext.rbring, which every world's build calls), so
    a world loaded later (lazily) gets its part too. The same way as realizem 6 (Tuzla, Lusail). Data: © OpenStreetMap contributors, ODbL.
    ========================================================================= */
@@ -27,7 +30,7 @@
   const rb = World.ext.rbring; World.ext.rbring = (scene, tex, opts) => { TEX = tex; hook(); return rb(scene, tex, opts); };
 
   const pts = (f) => { const P = []; for (let k = 0; k + 1 < f.length; k += 2) P.push([f[k], f[k + 1]]); return P; };
-  const METAL = [0.6, 0.62, 0.65], PANEL = [0.72, 0.73, 0.7], POST = [0.58, 0.6, 0.62];
+  const METAL = [0.6, 0.62, 0.65], PANEL = [0.72, 0.73, 0.7], POST = [0.58, 0.6, 0.62], CONC = [0.76, 0.76, 0.74];   // (CONC: the builder's concrete)
   // where a wall or a fence may stand: past the circuit's own barriers (2.5 m clear of them), not by the pit lane, not by a grandstand of the
   // builder's (def.stands: its side, 8 m to either end)
   const keeper = ({ T, def, sAt }) => {
@@ -161,9 +164,67 @@
     [134.7, 498.9, 133.1, 508.2, 130.6, 513.7, 126.4, 520.5, 122.3, 524.5, 117.2, 528.7, 105.6, 535.4, 99, 538.6, 84.7, 543.4, 73.7, 545.5, 62.9, 546.7, 55.6, 546.9, 37.3, 545, -0.8,
       538.1],   // w1318983053: 158 m, s 3500-3620 L
   ] };
+  // Sakhir: OSM has walls all round its lap (barrier=wall; no height, no material) and a few fences. The wall nearest the road on either side
+  // is the circuit's own protective line, which the game's barriers are (also where OSM has it farther from the road than the game has
+  // its own): not drawn. Drawn: the parts of walls that, from every part of the lap within 60 m of them, stand 5 m or more behind another
+  // barrier OSM has on their side (a second line), in runs of 30 m or more, as concrete 2 m high (OSM has neither: as the fences), and the
+  // fences past the game's barriers, 30 m or more
+  const SK13 = { wall: [
+    [218.1, -457.2, 220.1, -459.1, 224.6, -461.5, 230.1, -463.7, 235.6, -464.7, 241.2, -464.5, 246.7, -463.5],   // w1487646599: 31 m, s 760-800 R
+    [338.2, -111.8, 328.3, -101, 320.8, -91.9, 311.9, -78, 302.8, -61.9],   // w1487646603: 61 m, s 2210-2262 R
+    [192.8, -386.3, 198.7, -413.3, 201.8, -423.7],   // w1487646599: 38 m, s 2550-2556 R
+    [149.3, 59.2, 145.4, 163.5],   // w1487655591: 104 m, s 2984-3086 R
+    [218.6, 79.8, 218.1, 91.7, 218.6, 103, 220.5, 112, 222.4, 117.3, 224.9, 122.3, 231.4, 131.8, 235.5, 136.1, 239.9, 139.9],   // w1487646594: 67 m, s 3002-3058 L
+    [143, 220, 140.9, 271.5],   // w1487655587: 52 m, s 3144-3194 R
+  ], fence: [
+    [102.2, -545.4, 89.1, -577.2, 83.9, -587.8],   // w1487646667: 46 m, s 568-604 L
+    [752.8, -453.9, 717.6, -460.4, 708.4, -458.6, 704.7, -453.4, 648, -465.5, 637.6, -467.2, 611.8, -468.6, 602.5, -470.9, 593.8, -474.2, 459.8, -503.1, 395.9, -519.2, 394, -517.2,
+      353.9, -532.9, 352.8, -546.2, 354.3, -552.4],   // w1360978576: 433 m, s 890-1300 L
+    [417.9, -462.2, 495.2, -450],   // w1487646609: 78 m, s 972-1048 R
+    [677.5, -415.8, 636.3, -422.8],   // w1487646608: 42 m, s 1194-1232 R
+    [698, -486.6, 691.6, -456],   // w1486458904: 31 m, s 1240-1242 L
+    [273.3, 578, 308.1, 560.7],   // w1487646558: 39 m, s 4438-4474 L
+    [275.2, 581.4, 265.9, 564.9, 168.8, 619.4, 178.2, 636.6],   // w1487606633: 150 m, s 4474-4586 L
+    [79.7, 665.1, 95.4, 656.3, 106.9, 677.4],   // w1487598823: 42 m, s 4668-4684 L
+    [3.6, 707.6, 29.8, 692.9],   // w1487598823: 30 m, s 4724-4730 L
+    [-80.9, 541, -66.8, 501.1, -78.7, 500.1],   // w1360978571: 54 m, s 4852-4892 L
+  ] };
+  // Sepang: its walls in OSM are its tyre walls (material=tyres) and the pit wall, the circuit's own protective lines: not drawn. Drawn: the
+  // fences past the game's barriers, 30 m or more
+  const SP13 = { fence: [
+    [-389.1, -436.7, -336.9, -434.9],   // w144510772: 52 m, s 1294-1338 L
+    [-237.6, -451.8, -237, -449.7, -291.8, -439.3, -320.3, -436.8, -336.9, -437.8],   // w144510779: 103 m, s 1344-1440 L
+    [-195.8, -463, -215.4, -457.5, -237.9, -453.3, -237.6, -451.8],   // w144510780: 45 m, s 1440-1482 L
+    [-31.1, -321.5, -29.5, -362.3, -27.7, -383, -25.1, -400.3, -21.1, -417.3],   // w144510777: 97 m, s 1672-1762 L
+    [127.7, -189.4, 114.8, -183.8, 105.5, -180.9, 93.3, -178.2, 79.4, -176.6, 68.4, -176.1, 60.9, -177.2, 52.3, -179.8, 40.9, -184.1, 22.7, -193.2],   // w144510770: 110 m, s 1924-2048 L
+    [344, -128.6, 344, -140.4, 342, -156, 339.5, -170.6, 338.7, -173.1],   // w144533527: 45 m, s 2312-2348 R
+    [309.8, -75.8, 258.4, -56.2],   // w144367516: 55 m, s 5214-5262 R
+    [300.1, -80.2, 281.1, -74.9, 262.7, -68.4],   // w144367522: 39 m, s 5222-5258 R
+  ] };
+  // Quezaltepeque: the walls behind the fence at the venue's southern edge (barrier=wall; no height, no material: concrete 2 m, as Sakhir's),
+  // 30 m or more, and the fences past the game's barriers, 30 m or more
+  const QZ13 = { wall: [
+    [167.6, 324.2, 260.5, 328.9],   // w421750604: 93 m, s 1446-1522 L
+    [225.1, 339.8, 190.3, 339.4, 79.3, 333.7],   // w421750606: 146 m, s 1482-1586 L
+    [38.7, 317.6, 125.6, 322],   // w421750604: 87 m, s 1558-1638 L
+    [-147.5, 303.6, -137.8, 307.3, -129.2, 309.3, -28.1, 314.2],   // w421750604: 120 m, s 1756-1820 L
+    [-47.5, 325.6, -118.8, 321, -121.5, 321.6, -122.3, 324.4, -121.2, 328.5, -117.8, 335],   // w421750606: 89 m, s 1776-1804 L
+    [-363, 252, -352.4, 256.3, -320.8, 274.6, -275.1, 291.2, -240.8, 296.5, -224.8, 297.6],   // w414892255: 147 m, s 2744-2814 L
+  ], fence: [
+    [289.9, -178.4, 247.5, -154.9],   // w404482197: 49 m, s 292-338 L
+    [422.2, -221.6, 406.6, -232, 399.8, -231.1, 385.8, -224.9],   // w404482197: 41 m, s 426-442 L
+    [432.9, -176, 429.8, -197.6, 426.3, -212.3, 422.2, -221.6],   // w421750608: 47 m, s 444-478 L
+    [308.2, 197.2, 302.7, 166.8, 299.5, 153.3],   // w421750607: 45 m, s 1302-1342 L
+    [221.9, 307.2, 242.9, 306.9, 257.5, 302.5],   // w421750607: 36 m, s 1440-1472 L
+    [-30.5, 269.6, -21.3, 266.8, -3.6, 265.4, 13.5, 267.1, 55.8, 275.1],   // w421750607: 88 m, s 1636-1730 L
+    [-192.1, 278, -209.9, 251],   // w421750602: 32 m, s 2710-2712 L
+  ] };
 
   chain('silkeborg', (K) => { for (const f of SI13.wall) wall(K, f, 2, METAL); });
   chain('sosnova', (K) => { for (const f of SO13.wall) wall(K, f, 3, PANEL); fences(K, SO13.fence); });
   chain('pembrey', (K) => { fences(K, PE13.fence); });
   chain('zandvoort', (K) => { fences(K, ZA13.fence); });
+  chain('sakhir', (K) => { for (const f of SK13.wall) wall(K, f, 2, CONC); fences(K, SK13.fence); });
+  chain('sepang', (K) => { fences(K, SP13.fence); });
+  chain('quezaltepeque', (K) => { for (const f of QZ13.wall) wall(K, f, 2, CONC); fences(K, QZ13.fence); });
 })();
