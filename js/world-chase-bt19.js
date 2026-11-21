@@ -18,12 +18,12 @@
 
   /* Koli: docs/proge/koli.md: snow all year on the ploughed road, the spruce and pine forest of the national park. At the barrier's foot
      the dry grass stalks poking through the ploughed bank; behind them more stalks and the young spruces under their crown snow
-     (tykky: a dark green cone with its white cap), in groups at the forest's edge; the blue-grey shaded snow between them. Nothing on
-     the steep slopes, in the water or in the yards. (No low drifts: a flat cone on the snowy slope cuts it into a star.) */
-  LOOK.koli = { seed: 19101, st: ['bilke', 'smrecice', 'senca'],
+     (tykky: a dark green cone with its white cap), in groups at the forest's edge. Nothing on
+     the steep slopes, in the water or in the yards. (No low drifts or flat patches: on the snowy slope they show as stars.) */
+  LOOK.koli = { seed: 19101, st: ['bilke', 'smrecice'],
     edge: { ok: (c, sl) => (c === 0 || c === 1 || c === 2) && sl < 1.0 ? 0.7 : 0, n: [2, 4],
       put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y - 0.05, z, 0.14 + h * 0.12, 0.34 + h * 0.34, vary(mix3(S.c.straw, S.c.stalk, R()), R, 0.03), R, 4); S.st.bilke++; } },
-    mid: { ok: (c, sl, x, z, w) => (c === 3 || c === 4 || c === 5 || sl > 1.0) ? 0 : c === 1 || w > 0.3 ? 0.85 : 0.5, n: [2, 4], wood: true, litter: 0.3, lit: 'shade', lr: [1.0, 2.0], ln: 'senca',
+    mid: { ok: (c, sl, x, z, w) => (c === 3 || c === 4 || c === 5 || sl > 1.0) ? 0 : c === 1 || w > 0.3 ? 0.85 : 0.5, n: [2, 4], wood: true,
       put: (S, x, y, z, h, R, w) => { const g = S.g(x, z);
         if ((w > 0.3 || R() < 0.25) && R() < 0.55) spruce(S, g, x, y, z, 0.9 + h * 1.4, 0.35 + h * 0.3, R);
         else { tuft(g, x, y - 0.05, z, 0.14 + h * 0.12, 0.4 + h * 0.36, vary(mix3(S.c.straw, S.c.stalk, R()), R, 0.03), R, 4); S.st.bilke++; } } },

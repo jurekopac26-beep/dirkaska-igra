@@ -681,9 +681,9 @@
  "koli": {
   "calls": 167,
   "maxCalls": 274,
-  "kverts": 577,
-  "maxKverts": 693,
-  "jsMs": 1.39
+  "kverts": 573,
+  "maxKverts": 687,
+  "jsMs": 1.64
  },
  "kanaba": {
   "calls": 172,
