@@ -56,11 +56,11 @@
   "jsMs": 1.21
  },
  "caracoles": {
-  "calls": 154,
-  "maxCalls": 190,
-  "kverts": 269,
-  "maxKverts": 393,
-  "jsMs": 1.5
+  "calls": 163,
+  "maxCalls": 204,
+  "kverts": 310,
+  "maxKverts": 453,
+  "jsMs": 1.32
  },
  "katu": {
   "calls": 143,
@@ -98,11 +98,11 @@
   "jsMs": 1.91
  },
  "tianmen": {
-  "calls": 170,
-  "maxCalls": 199,
-  "kverts": 452,
-  "maxKverts": 568,
-  "jsMs": 1.83
+  "calls": 177,
+  "maxCalls": 209,
+  "kverts": 493,
+  "maxKverts": 625,
+  "jsMs": 1.28
  },
  "uncompahgre": {
   "calls": 161,
@@ -574,11 +574,11 @@
   "jsMs": 2.33
  },
  "killar": {
-  "calls": 146,
-  "maxCalls": 162,
-  "kverts": 282,
-  "maxKverts": 353,
-  "jsMs": 1.99
+  "calls": 144,
+  "maxCalls": 166,
+  "kverts": 292,
+  "maxKverts": 346,
+  "jsMs": 1.45
  },
  "luanda": {
   "calls": 113,
