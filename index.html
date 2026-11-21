@@ -281,7 +281,8 @@
         <div class="row" title="Kamera se ob močnem trku strese bolj kot doslej (le z vklopljenim tresenjem kamere ob trku)"><span class="rlbl">Razbijanje: močnejše tresenje kamere</span><div class="seg" data-set="xShake"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Zmečkan sprednji vogal vleče avto na svojo stran (le pri vklopljenih poškodbah)"><span class="rlbl">Razbijanje: poškodbe vplivajo na vožnjo</span><div class="seg" data-set="xHandle"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row"><span class="rlbl">Okvare (predrta guma, vroče zavore in motor)</span><div class="seg" data-set="faults"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
-        <div class="row" title="Za avtom pred sabo je manj zračnega upora, zato ga na ravnini dohitiš in prehitiš; izklop: brez zavetrja za vse avte"><span class="rlbl">Zavetrje</span><div class="seg" data-set="slip"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
+        <div class="row" title="Za avtom pred sabo je manj zračnega upora, zato ga na ravnini dohitiš in prehitiš; šibko do 8 %, srednje do 15 %, močno do 25 % manj upora; izklop (privzeto): brez zavetrja za vse avte"><span class="rlbl">Zavetrje</span><div class="seg" data-set="tow"><button data-v="0">Izklop</button><button data-v="1">Šibko</button><button data-v="2">Srednje</button><button data-v="3">Močno</button></div></div>
+        <div class="row" title="Kaj naredi tovornjak v prometu, ko se zaletiš vanj. Ostane na pasu (privzeto): ne premakne se, odbije te kot zid; nad 120 km/h ga odbije: počasnejši trk kot na pasu, hitrejši ga izbije s pasu; kot prej: izbiješ ga kot vsako vozilo"><span class="rlbl">Tovornjak v prometu</span><div class="seg nw" data-set="tfTk"><button data-v="0">Ostane na pasu</button><button data-v="1">Nad 120 km/h ga odbije</button><button data-v="2">Kot prej</button></div></div>
         <div class="row"><span class="rlbl">Radio ekipe (razlike, postanki, vreme)</span><div class="seg" data-set="radio"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
         <div class="row" title="Inženir sporočila radia ekipe tudi izgovori, v angleščini (kot vsi glasovi v igri); ni ga slišati, ko je zvok izklopljen"><span class="rlbl">Glas inženirja</span><div class="seg" data-set="engV"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div><button class="mini" data-act="eng-test">&#9654; Preizkusi glas</button></div>
         <div class="row" title="Radar, odsek na čas, drift cona, skok in skriti zlati smerniki ob progi, s tremi zvezdicami in rekordom"><span class="rlbl">Izzivi ob cesti</span><div class="seg" data-set="zbIzz"><button data-v="0">Izklop</button><button data-v="1">Vklop</button></div></div>
@@ -727,6 +728,10 @@
 <script src="js/cars/vran.js"></script>
 <script src="js/cars/cisterna.js"></script>
 <script src="js/cars/zrcalni.js"></script>
+<script src="js/cars/avtovoz.js"></script>
+<script src="js/cars/krilo.js"></script>
+<script src="js/cars/hrast.js"></script>
+<script src="js/cars/lastovka.js"></script>
 <script src="js/core.js"></script>
 <script src="js/tex.js"></script>
 <script src="js/world.js"></script>

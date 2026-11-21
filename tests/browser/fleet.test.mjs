@@ -55,7 +55,7 @@ try {
   // (crV 4, Trki med avti: Stara: the knocks as when tests/golden/perf.json was recorded, as perf.test.mjs has them: the knock moves the cars
   // otherwise and with it where the field-cost samples below fall and how many rivals are in view there; a car's cost is the same in every version)
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, weather: 'dry', crV: 4 }, { width: 844, height: 390 }, { seed: 4242 });
-  const warns = []; page.on('console', m => { if (m.type() === 'warning' && !/generic kit hatch: fallback:look null/.test(m.text())) warns.push(m.text()); });
+  const warns = []; page.on('console', m => { if (m.type() === 'warning' && !/generic kit hatch: fallback:look null|GL Driver Message/.test(m.text())) warns.push(m.text()); });   // (GL Driver Message: headless Chromium's own, a GPU stall on ReadPixels, not the game's)
   // the counting wrap (as perf.test.mjs) and the page's helpers
   await page.evaluate(() => {
     window.__gl = { calls: 0, verts: 0 };

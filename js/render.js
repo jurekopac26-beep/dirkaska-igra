@@ -5055,6 +5055,7 @@ const Render = (function () {
     const G = new THREE.Group(), bl = new THREE.Mesh(R.blob, matBlob); bl.renderOrder = 1;
     G.add(new THREE.Mesh(R.geo, R.mat), new THREE.Mesh(R.lgeo, matTailOff), bl); G.position.set(D.kp[0], D.kp[1], 0); v.grp.add(G);
     let x0 = Math.min(-M.len / 2, D.kp[0] + D.f - D.len); const x1 = Math.max(M.len / 2, D.kp[0] + D.f);
+    { const g = R.geo; if (!g.boundingBox) g.computeBoundingBox(); x0 = Math.min(x0, D.kp[0] + g.boundingBox.min.x); }   // (a load past the body: KRILO's blade, look only)
     const N = D.next, R2 = N ? tlBuild2(M) : null;   // (the road train's second tank: on the dolly's fifth wheel, straight behind the first one)
     if (R2) { const G2 = new THREE.Group(), bl2 = new THREE.Mesh(R2.blob, matBlob); bl2.renderOrder = 1;
       G2.add(new THREE.Mesh(R2.geo, R2.mat), new THREE.Mesh(R2.lgeo, matTailOff), bl2); G2.position.set(N.kp[0], N.kp[1] - D.kp[1], 0); G.add(G2);
@@ -10901,7 +10902,7 @@ const Render = (function () {
     // raised to the middle of its height; the turntable's ring round the long ones (max(4.2, len / 2 + .9)) (a rig: its length, its trailer's
     // height, up to 4; a road train's up to 7)
     const bg = showCar.body.geometry; if (!bg.boundingBox) bg.computeBoundingBox();
-    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? (model.trailer.next ? 7 : 4) : 1.55);   // (a road train, docs/zrcalni-vlak.md: up to 7)
+    const h = Math.max(0.5, bg.boundingBox.max.y), L = rig ? rig.len : model.len, hr = rig ? Math.max(h, rig.ht) : h, k = clamp(Math.max(L / 4.4, hr / 1.45, (rig ? rig.wid : model.wid) / 1.9), 0.75, rig ? Math.max(model.trailer.next ? 7 : 4, L / 4.4) : 1.55);   // (a road train, docs/zrcalni-vlak.md: up to 7; a load past the trailer, KRILO's 30 m blade: by its length)
     showFr.k = k; showFr.dy = hr / 2 - 0.7 * k; showCar.h = h;
     const ring = Math.max(4.2, L / 2 + 0.9) / 4.2; showFloor.scale.set(ring, 1, ring);
     if (prev) { showScene.remove(prev.grp); disposeCarMesh(prev); }   // (after the new car exists: its shaders are reused, not compiled again)

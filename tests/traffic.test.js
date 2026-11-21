@@ -294,5 +294,13 @@ const orig = Math.random;
   check('a patrol car 150 m behind: the car drives on as it was; in the duel (no police) nobody pulls over', calm && !dy, `150 m behind: ${calm ? 'no reaction' : 'pulled over'}, ${(B.c.q.s - B.v.s).toFixed(0)} m behind after 1.5 s; the duel ${dy}`);
 }
 
+// Nastavitve, Tovornjak v prometu (opts.tfTruck, docs/tovornjak-v-prometu.md): a truck (p 5) in its lane hit by a car: 0 it keeps its
+// lane always, 1 up to 120 km/h, 2 as before; a truck already knocked loose, or another vehicle, never held
+{
+  Math.random = seeded(3); const r = new C.Race(T, opts({})); r.start(); const tf = r.tf, hold = (m, kmh, v) => { r.opts.tfTruck = m; return tf._tkHold(v || { p: 5, st: 0 }, { speed: kmh / 3.6 }); };
+  const got = [hold(0, 150), hold(1, 100), hold(1, 150), hold(2, 60), hold(undefined, 150), hold(0, 50, { p: 5, st: 1 }), hold(0, 50, { p: 1, st: 0 })];
+  check('a truck in the traffic hit by a car (Tovornjak v prometu): 0 held at 150 km/h, 1 held at 100 not at 150, 2 never, none set as 0, a loose one or a car never', got.join() === 'true,true,false,false,true,false,false', got.join());
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;

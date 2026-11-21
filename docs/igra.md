@@ -225,7 +225,7 @@ Na dirki s tekmeci (ne v kronometru in ne v kvalifikacijah) ima avto v vrtincu z
 
 Tekmeci z AI zavetrje izkoristijo: na ravnini ostanejo za avtom in se mu približujejo, vstran zapeljejo šele, ko so blizu ali ko se bliža zaviranje, in prehitijo. Pred zaviranjem za avtom pred sabo pustijo nekaj več prostora, ker jih zavetrje pripelje hitreje. Zavetrje velja tudi v dirki s prijatelji (po nastavitvi gostitelja).
 
-V **Nastavitvah** je izbira **Zavetrje** (Vklop / Izklop, privzeto Vklop; odločitev uporabnika 18. 11. 2026 ob ~23.45 prek Mateja, tabla #382). Vklop je vožnja kot doslej; Izklop: v dirki ni zavetrja za noben avto, tudi za tekmece ne (kot v vožnji na čas).
+V **Nastavitvah** je izbira **Zavetrje**: Izklop / Šibko / Srednje / Močno, **privzeto Izklop** (odločitev uporabnika 20. 11. 2026, `zavetrje-privzeto-19-11`; prej Vklop / Izklop, privzeto Vklop, 18. 11.). Močno je zavetrje kot doslej (do 25 % manj upora), Srednje do 15 %, Šibko do 8 %; Izklop: v dirki ni zavetrja za noben avto, tudi za tekmece ne (kot v vožnji na čas). Stara izbira Vklop se ne prenese: vsak začne z Izklop.
 
 ## Okvare
 
