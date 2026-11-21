@@ -2,8 +2,7 @@
    WORLD — the roadside ground from the camera behind the car (chase), the forty-seventh group of the real tracks, a second pass:
    Silkeborg and Quezaltepeque (both on the circuit builder, js/world-rbring.js). js/world-realizem-bt.js gave them dry-grass tufts,
    heather cushions and lava stones within ~30-55 m; from behind the car the fences' foot, the plantations' floor and everything past
-   ~30 m still showed one even colour. So here, in the scenery's own chunks (ctx.scen: no draw call of its own, Silkeborg has little
-   room for one): on Silkeborg the uncut straw at the fences' foot with heather where the heath comes close, under the plantations of
+   ~30 m still showed one even colour. So here, in a few big meshes of their own (Silkeborg has little room for more draw calls): on Silkeborg the uncut straw at the fences' foot with heather where the heath comes close, under the plantations of
    pine and spruce the needles' rust-brown litter with low green undergrowth, and ~30-60 m out loose tussock groups with a young pine
    now and then; on Quezaltepeque tall green and dry-season grass at the fences' foot, the scrub's bushes on the scrubland, and ~30-60 m
    out grass groups and bushes, with the old flow's stones out there too. Never on the sand, never on the pits' side along the pits;
@@ -23,12 +22,16 @@
     const ex = ctx.excluded || (() => false);
     return { near: nrNear, excluded: (x, z) => ex(x, z) || bad(x, z), pit: (s, sd) => !!ps && sd === ps && !!T.pitAt(s) };
   };
-  const wrap = (id, fn) => {
+  /* the tufts in meshes of their own, as BT.softScen (userData.rob: the animals' and the people's tests of a free place leave them out),
+     but in big chunks: a few meshes for the whole short circuit, so a draw call or two more at most */
+  const soft = (ctx, size) => { const ch = new API.Chunks(size); return { get: (x, z) => ch.get(x, z), done() { const grp = new THREE.Group(); ch.addTo(grp, ctx.matV, false, true);   // (no shadow of their own: low, and the shadow pass would draw them twice)
+    for (const m of grp.children) { m.name = 'rob'; m.userData.rob = m.userData.lj = true; } if (grp.children.length) ctx.root.add(grp); } }; };
+  const wrap = (id, size, fn) => {
     const L = (API.rbLook || {})[id]; if (!L) return;
     const base = L.extra;
     L.extra = function (ctx) {
       const r = (base ? base.call(this, ctx) : null) || {};
-      try { if (ctx.scen && API.nrGround && API.nrNear && API.nrLC && API.T) r.robBt47 = fn(ctx, envOf(ctx)); } catch (e) { console.error('chase-bt47 (' + id + '):', e); }
+      try { if (ctx.root && ctx.matV && API.Chunks && API.nrGround && API.nrNear && API.nrLC && API.T) { const S = soft(ctx, size); r.robBt47 = fn(S, envOf(ctx)); S.done(); } } catch (e) { console.error('chase-bt47 (' + id + '):', e); }
       return r;
     };
   };
@@ -37,8 +40,8 @@
      »nasadi rdečega bora in smreke z brezami«, low chain-link fences. Late summer: the straw pale, the heather purple and brown ---- */
   const SK = { straw: [0.7, 0.64, 0.4], grn: [0.4, 0.5, 0.24], bloom: [0.5, 0.31, 0.5], old: [0.42, 0.32, 0.24],
     needle: [0.48, 0.34, 0.22], under: [0.3, 0.44, 0.2], fern: [0.36, 0.48, 0.22], pine: [0.3, 0.44, 0.24], sand: [0.8, 0.73, 0.54] };
-  wrap('silkeborg', (ctx, env) => {
-    const { nrGround: gH, nrLC, nrSlope, NR: P } = API, scen = ctx.scen, sand = API.skSand || (() => 0), st = { rob: 0, resa: 0, iglice: 0, podrast: 0, dalj: 0, bori: 0 };
+  wrap('silkeborg', 1024, (scen, env) => {
+    const { nrGround: gH, nrLC, nrSlope, NR: P } = API, sand = API.skSand || (() => 0), st = { rob: 0, resa: 0, iglice: 0, podrast: 0, dalj: 0, bori: 0 };
     const open = (x, z) => { const c = nrLC(x, z); return (c === 0 || c === 2) && !(sand(x, z) > 0.2); };
     const dry = (x, z) => P ? sstep(0.45, 0.74, P.n3(x * 0.8 + 90, z * 0.8 - 40)) : 0.5;
     const bl = (x, z) => P ? sstep(0.38, 0.66, P.n1(x * 0.9 + 40, z * 0.9 - 60)) : 0.4;
@@ -77,8 +80,8 @@
      palm«, »stara lava (temna, siva in rjava kamnita tla z nizkim grmovjem)«, mown grass, the fences >3 m off the road ---- */
   const QZ = { grn: [0.34, 0.48, 0.19], lush: [0.3, 0.46, 0.17], dry: [0.74, 0.68, 0.38], bush: [0.28, 0.42, 0.16], bush2: [0.34, 0.44, 0.18],
     lava: [[0.3, 0.29, 0.28], [0.38, 0.32, 0.27], [0.26, 0.25, 0.24], [0.42, 0.36, 0.3]], ash: [0.4, 0.36, 0.31] };
-  wrap('quezaltepeque', (ctx, env) => {
-    const { nrGround: gH, nrLC, nrSlope, qzLava, NR: P, rock } = API, scen = ctx.scen, lava = qzLava || (() => 0), st = { rob: 0, grmi: 0, dalj: 0, kamni: 0 };
+  wrap('quezaltepeque', 256, (scen, env) => {
+    const { nrGround: gH, nrLC, nrSlope, qzLava, NR: P, rock } = API, lava = qzLava || (() => 0), st = { rob: 0, grmi: 0, dalj: 0, kamni: 0 };
     const dry = (x, z) => P ? sstep(0.5, 0.75, P.n3(x * 0.35 + 90, z * 0.35 - 40)) : 0.3;
     const green = (x, z) => { const c = nrLC(x, z); return (c === 0 || c === 2) && lava(x, z) < 0.3; };
     // the fences' foot: the grass the mower does not reach, tall and green, dry yellow where the ground is
@@ -98,7 +101,7 @@
       } });
     // ~30-60 m out: grass groups and bushes on the green land, the old flow's stones and its low scrub
     const smooth0 = API.ROCK_SMOOTH;
-    walk(env, 47203, 6, 30, 30, (x, z) => { const c = nrLC(x, z); return (c === 0 || c === 2) && nrSlope(x, z) < 0.9 ? (lava(x, z) > 0.5 ? 0.6 : 0.4) : 0; }, (gx, gz, k, R, free) => {
+    walk(env, 47203, 6, 30, 30, (x, z) => { const c = nrLC(x, z); return (c === 0 || c === 2) && nrSlope(x, z) < 0.9 ? (lava(x, z) > 0.5 ? 0.45 : 0.3) : 0; }, (gx, gz, k, R, free) => {
       if (lava(gx, gz) > 0.5) {
         if (free(gx, gz, 3)) { soil(scen, gH, gx, gz, 1.2 + R() * 1.4, vary(QZ.ash, R, 0.03), R, 0.04); }
         for (let q = 0, n = 3 + Math.floor(R() * 4); q < n; q++) {

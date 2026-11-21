@@ -106,10 +106,10 @@
  },
  "silkeborg": {
   "calls": 241,
-  "maxCalls": 289,
-  "kverts": 594,
-  "maxKverts": 659,
-  "jsMs": 1.33
+  "maxCalls": 286,
+  "kverts": 631,
+  "maxKverts": 742,
+  "jsMs": 1.9
  },
  "kagerod": {
   "calls": 229,
@@ -371,11 +371,11 @@
   "jsMs": 0.6
  },
  "quezaltepeque": {
-  "calls": 228,
-  "maxCalls": 255,
-  "kverts": 674,
-  "maxKverts": 780,
-  "jsMs": 0.79
+  "calls": 233,
+  "maxCalls": 261,
+  "kverts": 720,
+  "maxKverts": 839,
+  "jsMs": 1.36
  },
  "aguascalientes": {
   "calls": 193,
