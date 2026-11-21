@@ -56,11 +56,11 @@
   "jsMs": 0.45
  },
  "bathurst": {
-  "calls": 184,
-  "maxCalls": 252,
-  "kverts": 481,
-  "maxKverts": 554,
-  "jsMs": 1.51
+  "calls": 186,
+  "maxCalls": 254,
+  "kverts": 513,
+  "maxKverts": 592,
+  "jsMs": 1.68
  },
  "chapman": {
   "calls": 163,
@@ -112,11 +112,11 @@
   "jsMs": 1.6
  },
  "kagerod": {
-  "calls": 229,
-  "maxCalls": 272,
-  "kverts": 541,
-  "maxKverts": 628,
-  "jsMs": 2
+  "calls": 232,
+  "maxCalls": 261,
+  "kverts": 549,
+  "maxKverts": 618,
+  "jsMs": 1.41
  },
  "sosnova": {
   "calls": 190,
