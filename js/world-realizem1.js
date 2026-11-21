@@ -364,6 +364,9 @@
     // the cost of a profile: the walls' height (a cut face a little more), the steeper slope a little more; the plain wall down to the floor is the last resort
     const cost = (r, H) => !r ? 1e9 : r.full ? H + 0.3 : r.hw + (r.land === 1 ? 1.3 * Math.max(0, r.yL - r.yB) : 0) + 1.5 * (r.m - 0.9);
     const TRY = [[0, 0.9], [0, 1.25], [3, 1.25], [0, 1.7], [3, 1.7], [7, 1.7], [0, 2.3], [7, 2.3], [14, 2.3]];
+    // (deep in a hairpins' stack, the leg below 50-70 m down and 25-40 m out (OSM's line, the road's grade): Tianmen's karst slope, steep and
+    // overgrown, the rock showing through; a wall of the stack's whole height, 25-69 m, the face before the pit ~2200 m, is not there)
+    const TRY2 = TRY.concat([[0, 3.0], [4, 3.0], [0, 3.6], [4, 3.6]]);
     const wall = [[], []];
     let nFull = 0, nLand = 0, nBig = 0;
     for (const side of [-1, 1]) { const si = side > 0 ? 1 : 0, W = isWall[si], hwA = new Float32Array(N), mA = new Float32Array(N), HA = new Float32Array(N);
@@ -371,7 +374,7 @@
         const H = -gAt(i, side, barOf(i, side) + 0.45), q = side * barOf(i, side), nz = P.c4(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q);
         const hw0 = clamp(1.8 + 0.18 * H, 2.5, 6.5) + (nz - 0.5) * 1.2; HA[i] = H; hwA[i] = H + 0.3; mA[i] = 2.3;
         let best = H + 0.3;
-        for (const [add, m] of TRY) { const hw = hw0 + add; if (hw >= H + 0.3 || hw + 1.5 * (m - 0.9) >= best) continue;
+        for (const [add, m] of H > 20 ? TRY2 : TRY) { const hw = hw0 + add; if (hw >= H + 0.3 || hw + 1.5 * (m - 0.9) >= best) continue;
           const r = march(i, side, hw, m), c = cost(r, H); if (c < best) { best = c; hwA[i] = hw; mA[i] = m; } } }
       // smoothed along each run of wall (the most of the neighbours', then their mean: never below what each sample needs)
       const filt = (A) => { const mx = new Float32Array(N), o = new Float32Array(N);
@@ -382,7 +385,7 @@
       for (let i = 0; i < N; i++) { if (!W[i]) continue;
         const hw = Math.min(hwS[i], HA[i] + 0.3), r = march(i, side, hw, mS[i]) || { oW: footO(i, side, HA[i] + 0.3), yW: -0.34 - HA[i], hw: HA[i] + 0.3, m: 2.3, full: true };
         if (r.full) { nFull++; if (HA[i] > 6) nBig++; } else if (r.land) nLand++;
-        wall[si][i] = r; } }
+        r.H = HA[i]; wall[si][i] = r; } }
 
     // the profiles (offset from the road's centre, height above it), 8 points: 0 the wall's top, 1 its foot, 2-4 the slope, 5 where it ends, 6-7 on:
     // under the ground; or the cut face's foot (land 1), and over a pit the level ground on to the leg below
@@ -391,8 +394,9 @@
       const L = r.oM - r.oW, yE = r.land ? r.yL : gAt(i, side, r.oM) - 0.05;
       for (const f of [0.2, 0.6, 0.6]) {   // (3 and 4 the same point: three bands of slope, the first, at the wall's foot, narrow)
         const o = r.oW + L * f, q = side * o, b = (P.n4(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - 0.5) * Math.min(3, 0.6 * Math.min(1, L / 6) + 0.06 * Math.max(0, L - 6));
-        // (a bank not more than 2.5 m over the ground of the elevation model: over a gully it follows the gully down, not one plane across it, ~1500 m)
-        p.push([o, Math.min(lerp(r.yW, yE, f) + b, r.oE ? 1e9 : gAt(i, side, o) + 2.5)]); }
+        // (a bank not more than 2.5 m over the ground of the elevation model: over a gully it follows the gully down, not one plane across it, ~1500 m;
+        // not a slope onto a leg below nor one over the pit of a hairpins' stack, there the ground under it is the legs' levelling, not the land's)
+        p.push([o, Math.min(lerp(r.yW, yE, f) + b, r.land || r.oE || r.H > 15 ? 1e9 : gAt(i, side, o) + 2.5)]); }
       p.push([r.oM, yE]);
       const o6 = r.oM + (r.land === 1 ? 0.3 : 0.4); p.push([o6, r.land === 1 || r.oE ? r.yB : gAt(i, side, o6) - 0.35]);
       const o7 = r.oE ? Math.max(r.oE, o6 + 0.1) : o6 + 0.5; p.push([o7, r.oE ? r.yB : gAt(i, side, o7) - 0.35]);
@@ -414,7 +418,8 @@
       if (fo > 0) { const k = 0.84 + 0.32 * P.n2(x * 0.13, z * 0.13); R = lerp(R, 0.19 * k, fo); G = lerp(G, 0.3 * k, fo); B = lerp(B, 0.115 * k, fo); }
       // (the rock where the land cover has it, ESA WorldCover; elsewhere a fill below the road is overgrown, only its steepest stretches show
       // stones in patches, and not under the forest)
-      const rk = Math.max(sstep(1.9, 2.3, m) * sstep(0.6, 0.85, P.c2(x, z)) * 0.35 * (1 - fo), lc(x, z, 2) * 0.8);
+      // (the steepest, 70 degrees and more down a hairpins' stack: the limestone through the green in patches, under the forest too)
+      const rk = Math.max(sstep(1.9, 2.3, m) * sstep(0.6, 0.85, P.c2(x, z)) * 0.35 * (1 - fo), lc(x, z, 2) * 0.8, sstep(2.5, 3.4, m) * (0.25 + 0.4 * sstep(0.4, 0.75, P.c2(x, z))));
       if (rk > 0) { const k = 0.8 + 0.25 * P.n2(x * 0.6, z * 0.6); R = lerp(R, 0.66 * k, rk); G = lerp(G, 0.65 * k, rk); B = lerp(B, 0.61 * k, rk); }
       if (t < 0.18) { const g = (0.18 - t) / 0.18 * 0.55 * (1 - 0.6 * fo); R = lerp(R, 0.5, g); G = lerp(G, 0.48, g); B = lerp(B, 0.43, g); }
       return [R * TX, G * TX, B * TX]; };
@@ -431,7 +436,7 @@
     const wuv = (p) => [(p[0] + 0.55 * p[1]) / 20, (-p[2] - 0.3 * p[1]) / 20];   // (the height in it too: a steep face not streaked down its fall line)
     const puv = (u, q) => [u, (q[0] - 0.85 * q[1]) / 20];   // a slope's own: along the road, and down its profile (offset and depth)
     const fl = [];   // the slopes' cross-sections for the camera's floor: [x, y, z] per profile point, per sample and side
-    let verts = 0;
+    let verts = 0, nFace = 0;
     const add = (g, mat) => { if (g.empty) return; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = false; m.matrixAutoUpdate = false; m.updateMatrix(); out.root.add(m); verts += m.geometry.attributes.position.count; };
     const end6 = (r) => r && (r.full || r.oE);   // (the last band: the plain wall's skirt, the level ground over a pit; else under the ground, left out)
     const near0 = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 0.03;
@@ -445,8 +450,29 @@
         const ri = W[i] ? wall[si][i] : null, rj = W[j] ? wall[si][j] : null, yIn = Math.min(pi[1][1], pj[1][1]), u0 = sTop[si][i] / 4, u1 = sTop[si][j] / 4;
         const wq = (k, inside) => gw.quadO(A[k], A[k + 1], B[k + 1], B[k], null, inside, [[u0, -A[k][1] / 4], [u0, -A[k + 1][1] / 4], [u1, -B[k + 1][1] / 4], [u1, -B[k][1] / 4]],
           [wallCol(A[k][0], A[k][2], i, si, false), wallCol(A[k + 1][0], A[k + 1][2], i, si, true), wallCol(B[k + 1][0], B[k + 1][2], j, si, true), wallCol(B[k][0], B[k][2], j, si, false)]);
-        // the wall's face, out from under the road
-        wq(0, Pt(i, side * (barOf(i, side) - 2), yIn * 0.5));
+        // the wall's face, out from under the road; a tall one (deep in a hairpins' stack, the leg below 50-70 m down, ~2200 m) a wall only its
+        // top 6 m, below that Tianmen's karst face: the slope's map and colours, the limestone through the green, bulging a little (its offsets
+        // kept between the wall's top and foot: never out over the leg below)
+        const fc = (p, ii) => { const h = -0.04 - p[1][1], R = []; if (!(h > 8.5)) return [p[1]];
+          const oA = p[0][0], oB = Math.max(oA, p[1][0]), am = Math.min(2.5, 0.05 * h);
+          for (let k = 0; k <= 2; k++) { const f = (6 + (h - 6) * k / 2) / h, o0 = lerp(oA, p[1][0], f), q = side * o0;
+            const d = k % 2 ? (P.n4(T.px[ii] + T.nx[ii] * q, T.pz[ii] + T.nz[ii] * q + 37 * k) - 0.5) * 2 * am : 0;
+            R.push([clamp(o0 + d, oA, oB), -0.04 - h * f]); }
+          return R; };
+        const Fi = fc(pi, i), Fj = fc(pj, j), ins0 = Pt(i, side * (barOf(i, side) - 2), yIn * 0.5);
+        if (Fi.length < 2 && Fj.length < 2) wq(0, ins0);
+        else {
+          nFace++;
+          const SA = Pt(i, side * Fi[0][0], Fi[0][1]), SB = Pt(j, side * Fj[0][0], Fj[0][1]);
+          gw.quadO(A[0], SA, SB, B[0], null, ins0, [[u0, -A[0][1] / 4], [u0, -SA[1] / 4], [u1, -SB[1] / 4], [u1, -B[0][1] / 4]],
+            [wallCol(A[0][0], A[0][2], i, si, false), wallCol(SA[0], SA[2], i, si, true), wallCol(SB[0], SB[2], j, si, true), wallCol(B[0][0], B[0][2], j, si, false)]);
+          const U0 = sTop[si][i] / 20, U1 = sTop[si][j] / 20, at = (F, k) => F[Math.min(k, F.length - 1)], fcol = (v) => slopeCol(v[0], v[2], 4, 0.5);
+          const tf = (p, q, r, up, uq, ur, ins) => { if (!near0(p, q) && !near0(q, r) && !near0(p, r)) gs.triO(p, q, r, fcol(p), ins, fcol(q), fcol(r), up, uq, ur); };
+          for (let k = 0; k < 2; k++) { const a0 = at(Fi, k), a1 = at(Fi, k + 1), b0 = at(Fj, k), b1 = at(Fj, k + 1);
+            const PA0 = Pt(i, side * a0[0], a0[1]), PA1 = Pt(i, side * a1[0], a1[1]), PB0 = Pt(j, side * b0[0], b0[1]), PB1 = Pt(j, side * b1[0], b1[1]);
+            const ins = Pt(i, side * (Math.min(a0[0], a1[0], b0[0], b1[0]) - 3), (a0[1] + a1[1] + b0[1] + b1[1]) / 4);
+            tf(PA0, PA1, PB1, puv(U0, a0), puv(U0, a1), puv(U1, b1), ins); tf(PA0, PB1, PB0, puv(U0, a0), puv(U1, b1), puv(U1, b0), ins); }
+        }
         // the slope, the cut face onto the leg below (both ends landing so), the ground on
         const inS = Pt(i, side * (barOf(i, side) - 2), yIn - 30), mi = ri ? ri.m : 2.3, mj = rj ? rj.m : 2.3;
         const cs = (p, m, k) => slopeCol(p[0], p[2], m, (k - 1) / 4);
@@ -475,7 +501,7 @@
       add(gw, wMat); add(gs, sMat);
     }
     out.rz1.walls = isWall[0].reduce((s, v) => s + v, 0) + isWall[1].reduce((s, v) => s + v, 0);
-    out.rz1.full = nFull; out.rz1.big = nBig; out.rz1.land = nLand; out.rz1.verts = verts;
+    out.rz1.full = nFull; out.rz1.big = nBig; out.rz1.land = nLand; out.rz1.verts = verts; out.rz1.face = nFace;
 
     // the camera's floor: the slopes rasterised on a 1.5 m grid (the highest of each cell), so the chase camera stays out of them
     if (fl.length && out.camFloor) {
