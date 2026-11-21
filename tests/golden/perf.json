@@ -84,11 +84,11 @@
   "jsMs": 1.3
  },
  "chapman": {
-  "calls": 155,
-  "maxCalls": 198,
-  "kverts": 422,
-  "maxKverts": 482,
-  "jsMs": 1.43
+  "calls": 163,
+  "maxCalls": 205,
+  "kverts": 485,
+  "maxKverts": 555,
+  "jsMs": 1.4
  },
  "bigsur": {
   "calls": 138,
@@ -483,11 +483,11 @@
   "jsMs": 3.05
  },
  "gudauri": {
-  "calls": 156,
-  "maxCalls": 187,
-  "kverts": 362,
-  "maxKverts": 483,
-  "jsMs": 1.14
+  "calls": 166,
+  "maxCalls": 204,
+  "kverts": 459,
+  "maxKverts": 630,
+  "jsMs": 1.81
  },
  "ngorongoro": {
   "calls": 141,
