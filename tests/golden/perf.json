@@ -7,11 +7,11 @@
   "jsMs": 1.33
  },
  "pikesg": {
-  "calls": 115,
-  "maxCalls": 131,
-  "kverts": 319,
-  "maxKverts": 399,
-  "jsMs": 1.19
+  "calls": 133,
+  "maxCalls": 148,
+  "kverts": 443,
+  "maxKverts": 540,
+  "jsMs": 1.25
  },
  "nring": {
   "calls": 159,
@@ -385,11 +385,11 @@
   "jsMs": 0.89
  },
  "koli": {
-  "calls": 167,
-  "maxCalls": 274,
-  "kverts": 571,
-  "maxKverts": 684,
-  "jsMs": 1.5
+  "calls": 181,
+  "maxCalls": 290,
+  "kverts": 632,
+  "maxKverts": 748,
+  "jsMs": 1.07
  },
  "kanaba": {
   "calls": 195,
