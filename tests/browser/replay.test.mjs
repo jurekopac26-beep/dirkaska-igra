@@ -1,7 +1,7 @@
 // The replay after a race (Jezero Ring, the player on autopilot): the results screen's "Posnetek" plays the race back (the HUD and the
 // on-screen controls hidden, the replay's own controls shown); the cars where the recording has them; the camera the player drove with
 // (behind the car, the phone on its side); pause, speed, the camera button (the player's own first, then TV: on a post away from the car,
-// then behind the car again), the car followed; "Končaj" back to the results. "Najboljši trenutki" (the results, or the
+// then behind the car again), the car followed; "Končaj" back to the results, every car as the race left it behind them. "Najboljši trenutki" (the results, or the
 // replay's Trenutki): the start, the best moments of the race and the finish in the order they happened, each on the player's camera with
 // the car of the moment followed and a caption (the camera button: TV for the rest of them); then back to the results. A race driven with
 // the camera behind the car, the phone upright: its replay behind the car, the camera behind the next car (▶), at the start at once (⏮),
@@ -40,7 +40,11 @@ try {
 
   const { page, errors, act, frames, st } = await open('chase', { width: 844, height: 390 });
   const btn = await page.evaluate(() => !document.getElementById('res-replay').classList.contains('off'));
-  await act('replay'); await frames(6);
+  // every car as the race left it behind the results (the race goes on there until every car is home), the moment the replay begins; and at
+  // its end (replayEnd, the same frame: no step of the race between)
+  const carsNow = () => window.__game.race.cars.map(c => ({ x: +c.x.toFixed(3), z: +c.z.toFixed(3), h: +c.h.toFixed(3), v: +(c.vl || 0).toFixed(3), lap: c.lap, s: c.q ? +c.q.s.toFixed(2) : null, fin: !!c.finished }));
+  const before = await page.evaluate((f) => { const s = (0, eval)('(' + f + ')')(); window.__game.onAction('replay'); return s; }, carsNow.toString());
+  await frames(6);
   const a = await st();
   T.check('"Posnetek": the replay plays (its controls, no HUD, no touch controls), from the start, the player\'s car followed', btn && a.screen === 'none' && a.ui && !a.hud && !a.touch && a.t > 0.05 && a.t < 4 && /^Ti · /.test(a.info), JSON.stringify(a));
   T.check('the camera the player drove with: behind the car', chaseLand(a), JSON.stringify(a));
@@ -64,8 +68,12 @@ try {
   await act('rp-next'); await frames(2); const n1 = await st();
   T.check('another car followed, the camera behind it', !/^Ti · /.test(n1.info) && /·/.test(n1.info) && n1.k !== a.k && chaseLand(n1), JSON.stringify(n1));
   // the end: back to the results
-  await act('rp-exit'); await page.waitForTimeout(300); const e = await st();
+  const after = await page.evaluate((f) => { window.__game.onAction('rp-exit'); return (0, eval)('(' + f + ')')(); }, carsNow.toString());
+  await page.waitForTimeout(300); const e = await st();
   T.check('"Končaj": back to the results', e.screen === 'results' && !e.ui, JSON.stringify(e));
+  const moved = before.map((b, i) => [i, b, after[i]]).filter(([, b, c]) => JSON.stringify(b) !== JSON.stringify(c));
+  T.check('"Končaj": every car exactly as the race left it behind the results (where, heading, speed, lap, where on the track; never where the replay last posed it)',
+    before.length > 1 && after.length === before.length && !moved.length, JSON.stringify({ n: before.length, still: before.filter(b => !b.fin).length, moved: moved.slice(0, 3) }));
 
   // the highlights: from the results
   const hl = () => page.evaluate(() => { const g = window.__game, P = g.replay, el = (id) => document.getElementById(id), H = P && P.hl;
