@@ -168,11 +168,11 @@
   "jsMs": 0.9
  },
  "zandvoort": {
-  "calls": 191,
-  "maxCalls": 229,
-  "kverts": 671,
-  "maxKverts": 855,
-  "jsMs": 0.85
+  "calls": 207,
+  "maxCalls": 242,
+  "kverts": 708,
+  "maxKverts": 893,
+  "jsMs": 1.4
  },
  "furka": {
   "calls": 173,
@@ -308,11 +308,11 @@
   "jsMs": 0.77
  },
  "ujarras": {
-  "calls": 129,
-  "maxCalls": 196,
-  "kverts": 246,
-  "maxKverts": 279,
-  "jsMs": 0.46
+  "calls": 138,
+  "maxCalls": 202,
+  "kverts": 265,
+  "maxKverts": 302,
+  "jsMs": 0.89
  },
  "ghoufi": {
   "calls": 137,
