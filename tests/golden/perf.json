@@ -301,11 +301,11 @@
   "jsMs": 1.12
  },
  "luanda": {
-  "calls": 116,
-  "maxCalls": 148,
-  "kverts": 249,
-  "maxKverts": 332,
-  "jsMs": 0.77
+  "calls": 129,
+  "maxCalls": 159,
+  "kverts": 304,
+  "maxKverts": 398,
+  "jsMs": 0.98
  },
  "ujarras": {
   "calls": 129,
@@ -343,11 +343,11 @@
   "jsMs": 0.96
  },
  "portobelo": {
-  "calls": 108,
-  "maxCalls": 140,
-  "kverts": 249,
-  "maxKverts": 282,
-  "jsMs": 0.68
+  "calls": 116,
+  "maxCalls": 144,
+  "kverts": 274,
+  "maxKverts": 325,
+  "jsMs": 1.18
  },
  "eljem": {
   "calls": 101,
