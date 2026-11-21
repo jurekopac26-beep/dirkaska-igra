@@ -64,6 +64,7 @@
     const wrapI = (i) => ((i % N) + N) % N;
     nrPrep();
     const P = API.NR, G = P.G;
+    if (API.hvPad) P.pad = API.hvPad(P);   // (realizem 15: the ground under the pond, js/world-realizem15-hiva.js)
     out.bounds = { minX: P.x0, maxX: P.x1, minZ: P.z0, maxZ: P.z1 };
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
@@ -73,6 +74,7 @@
     const eh = new Map(), EHC = 32;
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
+    if (API.hvFree) for (const [x, z, r] of API.hvFree()) exclPush(x, z, r);   // (realizem 15: no trees on the water, the parking, the shelters)
 
     // ---- the walls of the old town (LD.cwall: OSM's city_wall lines, [height, [x, z, ...]]): their segments hashed for the distance to them ----
     const WS = [], WH = 32, whash = new Map();
@@ -264,7 +266,8 @@
       if (clash || Lb < 2.2 || Wb < 2.2) continue;
       const g = scen.get(bx, bz), hk = crH(bx, bz, 11), area = Lb * Wb, big = k0 === 5 || k0 === 6 || k0 === 9 || area > 240;
       const hh = Hb || (big ? (2 + Math.floor(hk * 2)) * 3.1 : area < 45 || k0 === 4 ? 3 + hk : 3.4 + hk * 2.6);
-      house(g, bx, bz, Lb, Wb, ang, y0, hh, vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05));
+      const wc = vary(WALL[Math.floor(crH(bx, bz, 12) * WALL.length)], R, 0.05);
+      if (!(API.hvHouse && API.hvHouse(g, bx, bz, y0, hh, wc, R))) house(g, bx, bz, Lb, Wb, ang, y0, hh, wc);   // (realizem 15: the building by the pond by its outline)
       nBld++; CR.block(bx, bz, Lb, Wb, ang); exclPush(bx, bz, Math.max(Lb, Wb) / 2 + 2);
     }
     // (no houses beyond OpenStreetMap's footprints: where it has none, the town is left to the land cover's colour and the trees)
@@ -354,6 +357,7 @@
         else box(g, mx, y - 0.4, mz, len + 0.2, k === 1 ? 2.2 : 1.8, 0.45, ang, vary([0.82, 0.7, 0.54], R, 0.04), [0.86, 0.75, 0.58], true);
       }
     }
+    if (API.hvDraw) API.hvDraw(scen, out, tex);   // (realizem 15: what OSM maps by the road and this world does not draw, js/world-realizem15-hiva.js)
 
     /* ---- the far land beyond the corridor (200 m cells): the oasis's fields and gardens and the town, a little lower so its edge hides under
        the near tiles ---- */
