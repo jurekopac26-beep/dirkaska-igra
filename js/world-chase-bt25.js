@@ -35,18 +35,18 @@
         const o = bar + 0.4 + Math.pow(r1, 1.3) * C.reach, a = (r2 - 0.5) * C.step;
         const x = T.px[i] + T.nx[i] * sd * o + T.tx[i] * a, z = T.pz[i] + T.nz[i] * sd * o + T.tz[i] * a;
         const q = near(x, z); if (q.i < 0 || Math.abs(q.i - i) * T.ds > 14 || Math.abs(q.lat) < bar + 0.35) continue;   // (this leg's bank, past its barrier line)
-        if (bad(x, z)) continue;
+        if (bad(x, z) || (C.skip && C.skip(x, z, i))) continue;
         const y = gT(x, z); if (!(y > T.hy[i] - 0.6)) continue;   // (the ground falls away here: no bank)
         const sl = slope(x, z); if (sl > C.maxSl) continue;
-        if (r0 < C.share) { const P = C.patch(R, sl); soil(soft, gT, x, z, P.r, P.col, R, 0.05); st.breg++; }
-        else if (C.bush && sl < C.sl && r3 < C.bushShare) { const h = R(), col = C.bush(R); cushion(soft.get(x, z), x, y, z, 0.45 + h * 0.45, 0.3 + h * 0.3, col, R); st.bregGrmi++; }
-        else { const h = R(); tuft(soft.get(x, z), x, y, z, 0.24 + h * 0.18, 0.28 + h * 0.26, C.tuft(R), R, 5); st.bregSopi++; }
+        if (r0 < C.share) { const P = C.patch(R, sl, i); soil(soft, gT, x, z, P.r, P.col, R, 0.05); st.breg++; }
+        else if (C.bush && sl < C.sl && r3 < C.bushShare && (!C.bushAt || C.bushAt(i))) { const h = R(), col = C.bush(R, i); cushion(soft.get(x, z), x, y, z, 0.45 + h * 0.45, 0.3 + h * 0.3, col, R); st.bregGrmi++; }
+        else { const h = R(); tuft(soft.get(x, z), x, y, z, 0.24 + h * 0.18, 0.28 + h * 0.26, C.tuft(R, i), R, 5); st.bregSopi++; }
       }
     }
     soft.done();
     return st;
   };
-  BT.bank = bank; BT.muted = muted;   // (the twenty-sixth group's passes use the same bank and the same muting: js/world-chase-bt26.js)
+  BT.bank = bank; BT.muted = muted;   // (the twenty-sixth group's passes use the same bank and the same muting: js/world-chase-bt26.js; for the later groups, js/world-chase-bt28.js: C.patch, C.tuft and C.bush also get the road's index i, C.skip(x, z, i) leaves a place out, C.bushAt(i) where cushions stand)
 
   /* Chapman's Peak: docs/proge/chapman.md: »vsek v skalo, spodaj siv granit, višje … rjave plasti peščenjaka … s sivo-zelenimi lišaji«,
      »odpadlo kamenje na bankini pod lovilnimi mrežami«, »tla so mozaik sivo-zelenega grmičevja, temno olivnih goščav, rjastih leh restij,
