@@ -34,11 +34,11 @@
      land cover's class 0, never the lawns 1 nor the paved 3) the low grey scrub in loose groups, darker gravel lying in low patches, and
      on the drifts of sand (class 2) paler patches of the sand and fewer, smaller scrub. */
   LOOK.lusail = { seed: 16201, st: ['grmicevje', 'prod', 'pesek'],
-    edge: { ok: (c) => c === 0 ? 0.55 : c === 2 ? 0.35 : 0, n: [1, 3],
+    edge: { ok: (c) => c === 0 ? 0.5 : c === 2 ? 0.3 : 0, n: [1, 2],
       put: (S, x, y, z, h, R) => { cushion(S.g(x, z), x, y, z, 0.3 + h * 0.25, 0.16 + h * 0.14, vary(mix3(S.c.scrub, S.c.scrub2, R()), R, 0.03), R); S.st.grmicevje++; } },
-    mid: { ok: (c) => c === 0 ? 0.7 : c === 2 ? 0.45 : 0, n: [3, 5], litter: 0.45, lit: 'pebble', lr: [1.0, 2.2], ln: 'prod',
+    mid: { ok: (c) => c === 0 ? 0.6 : c === 2 ? 0.4 : 0, n: [2, 3], litter: 0.45, lit: 'pebble', lr: [1.0, 2.2], ln: 'prod',
       put: (S, x, y, z, h, R) => { cushion(S.g(x, z), x, y, z, 0.5 + h * 0.5, 0.26 + h * 0.24, vary(mix3(S.c.scrub, S.c.scrub2, R()), R, 0.03), R); S.st.grmicevje++; } },
-    far: { ok: (c) => c === 0 ? 0.6 : c === 2 ? 0.4 : 0, n: [3, 5], litter: 0.4, lit: 'sand', lr: [1.6, 3.0], ln: 'pesek',
+    far: { ok: (c) => c === 0 ? 0.42 : c === 2 ? 0.3 : 0, n: [2, 3], litter: 0.4, lit: 'sand', lr: [1.6, 3.0], ln: 'pesek',
       put: (S, x, y, z, h, R) => { cushion(S.g(x, z), x, y, z, 0.7 + h * 0.6, 0.3 + h * 0.3, vary(mix3(S.c.scrub, S.c.scrub2, R()), R, 0.03), R); S.st.grmicevje++; } },
     col: { scrub: [0.56, 0.56, 0.47], scrub2: [0.49, 0.5, 0.4], pebble: [0.6, 0.57, 0.52], sand: [0.88, 0.8, 0.64] } };
 
