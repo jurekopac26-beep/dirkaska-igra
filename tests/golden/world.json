@@ -226,12 +226,12 @@
   }
  },
  "harju": {
-  "meshes": 818,
-  "verts": 1722483,
+  "meshes": 835,
+  "verts": 1770618,
   "instances": 4296,
   "props": 33,
   "crowd": 1027,
-  "world": "bbcfde6a",
+  "world": "ab586b82",
   "propsHash": "d16c96de",
   "floor": "3cab689f/5488",
   "groups": {
@@ -241,7 +241,7 @@
    "-:MeshBasicMaterial": "863148da",
    "puddles:MeshBasicMaterial": "c916858d",
    "crowd:MeshLambertMaterial": "cb2a186d",
-   "rob:MeshLambertMaterial": "e6e62eaa",
+   "rob:MeshLambertMaterial": "10f36dbd",
    "flags:MeshLambertMaterial": "a6c200c4",
    "ao:MeshBasicMaterial": "2652cdd6",
    "tyremarks:MeshBasicMaterial": "1018e091",
@@ -1247,19 +1247,19 @@
   }
  },
  "ghoufi": {
-  "meshes": 145,
-  "verts": 191000,
+  "meshes": 163,
+  "verts": 247661,
   "instances": 209,
   "props": 21,
   "crowd": 17,
-  "world": "16c8e659",
+  "world": "98085ee9",
   "propsHash": "51a42a9f",
   "floor": "29408238/1820",
   "groups": {
    "-:MeshLambertMaterial": "ff2445ea",
    "-:MeshPhongMaterial": "893b175e",
    "-:MeshBasicMaterial": "9aed12f8",
-   "rob:MeshLambertMaterial": "e101683e",
+   "rob:MeshLambertMaterial": "dd901025",
    "crowd:MeshLambertMaterial": "94eddc6b",
    "flags:MeshLambertMaterial": "211b8533",
    "ao:MeshBasicMaterial": "1f73fddb",
