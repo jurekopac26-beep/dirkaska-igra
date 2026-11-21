@@ -719,5 +719,12 @@
   "kverts": 306,
   "maxKverts": 391,
   "jsMs": 1.07
+ },
+ "vaoala": {
+  "calls": 147,
+  "maxCalls": 154,
+  "kverts": 348,
+  "maxKverts": 462,
+  "jsMs": 1.84
  }
 }

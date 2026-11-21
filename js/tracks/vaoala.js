@@ -1,8 +1,8 @@
 /* Track definition 'vaoala'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Vaoala (Samoa, Upolu): the cross-island road south of Apia, from the village of Letava (~309 m) up through Vaoala and the rain forest of the
-  // island's central ridge to Tiapapata (~479 m), 1.9 km and up all the way: the steepest ~12 %, tight bends in the forest, the town and the
+  // Vaoala (Samoa, Upolu): the cross-island road south of Apia, from the village of Letava (~306 m; the start line 13.8787° S, 171.7659° W) up through Vaoala and the rain forest of the
+  // island's central ridge to Tiapapata (~480 m), 1.9 km and up all the way: the steepest ~12 %, tight bends in the forest, the town and the
   // coast below and behind. Left-hand traffic since 2009 (def.leftHand). One card, four ways to drive it (def.modes), as Savusavu: a race
   // against the rivals on the closed road, a time trial, a duel with one rival on the open road (cars, pick-ups, the open-sided buses both
   // ways: def.traffic) and a run from the police (generic patrol cars: def.police). Only geographic names: no names of the churches, the shops,
