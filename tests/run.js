@@ -76,9 +76,13 @@ const SECS = {
 // the short round's shares: with one track (Bâlea) measured on 9. 11. 2026, a track's share from SECS (5. 11., 43 real tracks then), on a
 // machine of middle speed (docs/krog-testov.md)
 const PO_PROGAH = ['golden.test.js', 'races.test.js', 'serpentine.test.js', 'lestvica.test.js', 'browser/smoke.test.mjs', 'browser/world.test.mjs', 'browser/perf.test.mjs', 'browser/gfx.test.mjs', 'browser/memory.test.mjs'];
-const PROGA_SECS = { 'browser/memory.test.mjs': [474, 74], 'browser/smoke.test.mjs': [498, 28], 'browser/perf.test.mjs': [65, 46], 'browser/gfx.test.mjs': [50, 21], 'browser/gfx2.test.mjs': [5, 0], 'browser/world.test.mjs': [17, 22], 'browser/world2.test.mjs': [5, 0], 'browser/memory2.test.mjs': [5, 0], 'browser/smoke2.test.mjs': [5, 0] };
+const PROGA_SECS = { 'browser/memory.test.mjs': [474, 74], 'browser/smoke.test.mjs': [498, 28], 'browser/perf.test.mjs': [65, 46], 'browser/gfx.test.mjs': [50, 21], 'browser/gfx2.test.mjs': [5, 0], 'browser/world.test.mjs': [17, 22], 'browser/world2.test.mjs': [5, 0], 'browser/memory2.test.mjs': [5, 0], 'browser/smoke2.test.mjs': [5, 0], 'golden.test.js': [5, 12], 'races.test.js': [5, 20] };
 let nProg = 0;   // (--kratek: how many tracks)
-const DEF_SECS = 60, secs = (f) => (nProg && PROGA_SECS[f] ? Math.round(PROGA_SECS[f][0] + nProg * PROGA_SECS[f][1]) : SECS[f] || DEF_SECS);
+// The node and fleet suites' long tests (over 3 min): s on GitHub (the jobs »Fizika, AI in dirke« and »Vozila«, 19. 11. 2026, 68 real
+// tracks), for their time limit (LIMIT_OF) as SECS for a browser test; without a time they had 15 min, too little on a cloud session's
+// machine: races.test.js took 16 min there (it grows with every track: Bâlea alone 8 s), golden 10 min, deli 8 min, more on a slower one
+const NODE_SECS = { 'races.test.js': 1381, 'golden.test.js': 843, 'deli.test.js': 484, 'police.test.js': 224, 'browser/fleet.test.mjs': 1070, 'browser/cars-ui.test.mjs': 186 };
+const DEF_SECS = 60, secs = (f) => (nProg && PROGA_SECS[f] ? Math.round(PROGA_SECS[f][0] + nProg * PROGA_SECS[f][1]) : SECS[f] || NODE_SECS[f] || DEF_SECS);
 // one share (k of n) of a list: the longest test first, each to the share with the least time so far (ties: the lower share), each share
 // then in the list's own order; the same list always gives the same shares
 function shareOf(list, k, n) {
@@ -95,7 +99,7 @@ function shareOf(list, k, n) {
 // test itself, and the tests RELATED gives for it (the big shared files, which no name matches)
 const RELATED = [
   [/^(js|css)\/|^index\.html$|^garaza\.html$|^sw\.js$|^tools\/stamp\.js$/, ['stamp.test.js']],   // (the pages' links: every file there, no stamps; the publish step's stamping)
-  [/^js\/menu(-data)?\.js$|^tools\/predogled|^\.github\/workflows\/stran\.yml$/, ['predogled.test.js']],   // (the site's previews play main's videos: the menu's vidSrc, the list the publish step writes)
+  [/^js\/menu(-data)?\.js$|^tools\/predogled|^sw\.js$|^\.github\/workflows\/stran\.yml$/, ['predogled.test.js']],   // (the site's previews: main's videos in the menu's vidSrc, main's files of assets/ through the preview's sw.js)
   [/^js\/tracks\/|^docs\/proge\/|^assets\/|^maketa-menija\//, ['testne-proge.test.js']],   // (where the test tracks' files are: frozen until they are deleted, CLAUDE.md »Testne proge«)
   [/^tools\/razdeli-proge\.mjs$|^js\/(game|render|world[\w-]*)\.js$|^js\/tracks\/|^index\.html$/, ['razdelitev.test.js']],   // (the real tracks' own settings and world parts in their own files, docs/razdelitev-prog.md)
   [/^js\/core\.js$/, ['golden.test.js', 'cilj-odprte-ceste.test.js', 'start.test.js', 'quick.test.js', 'repro.test.js', 'nova.test.js', 'trki.test.js', 'serpentine.test.js', 'browser/repro.test.mjs']],
@@ -123,7 +127,7 @@ const RELATED = [
   [/^js\/sfx\.js$/, ['browser/sound.test.mjs', 'browser/okolje.test.mjs']],
   [/^js\/world-zivali\.js$|^tools\/zvoki-pasovi\.mjs$|^js\/comm\.js$/, ['browser/okolje.test.mjs']],   // (the sounds by the road: their zones from the woods and the herds, js/sfx-okolje.js; the commentator cuts the announcer)
   [/^js\/lang\.js$|^js\/tracks\//, ['lang.test.js']],   // (a track's English name and description)
-  [/^js\/tracks\/|^js\/core\.js$|^js\/routes\.js$|^tools\/menu-lens\.js$/, ['menu-lens.test.js']],
+  [/^js\/tracks\/|^js\/core\.js$|^js\/routes\.js$|^tools\/menu-lens\.js$|^assets\/maps\/fly-/, ['menu-lens.test.js']],
   [/^js\/tracks\/|^js\/core\.js$/, ['rivals-n.test.js', 'grid.test.js']],   // (the menu's Opponents: the most rivals each track's start and finish take, def.maxRivals)   // (the menu's tables of the tracks' lengths and heights)
   [/^js\/tracks\/|^js\/geo\.js$|^tools\/menu-globe\.mjs$|^assets\/flags\/|^assets\/geo\/earth-s\.webp$/, ['menu-globe.test.js']],   // (the countries: the flags, the globe's outlines and places)
   [/^js\/tracks\/|^js\/menu-data\.js$|^tools\/menu-corner|^assets\/maps\/corner-/, ['menu-corner.test.js', 'browser/menu.test.mjs']],   // (the corner camera: its corners, videos and posters, MENU.corners)
