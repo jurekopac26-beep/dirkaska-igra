@@ -174,5 +174,5 @@
     if (soft.done) soft.done();
     return { sopi: n, prst: m };
   };
-  API.chaseBt = { karst, chain };   // (the next groups' files build on the same walk: js/world-chase-bt7.js)
+  API.chaseBt = { karst, chain, walk, tuft, cushion, soil, softScen, rbEnv, mix3, dk };   // (the next groups' files build on the same walk: js/world-chase-bt7.js, js/world-chase-bt9.js)
 })();
