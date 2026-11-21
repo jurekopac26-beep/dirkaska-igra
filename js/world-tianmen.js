@@ -64,7 +64,7 @@
       R = lerp(R, r, st); G = lerp(G, g, st); B = lerp(B, b, st);
     }
     R = lerp(R, 0.6, built * 0.6); G = lerp(G, 0.59, built * 0.6); B = lerp(B, 0.56, built * 0.6);
-    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.5; R = lerp(R, 0.5, t); G = lerp(G, 0.48, t); B = lerp(B, 0.43, t); }
+    if (dd < 4) { const t = sstep(4, 0.5, dd) * 0.62; R = lerp(R, 0.36, t); G = lerp(G, 0.37, t); B = lerp(B, 0.27, t); }   // (the verge's damp dark earth under the forest)
     TMCOL[0] = R; TMCOL[1] = G; TMCOL[2] = B; return TMCOL;
   }
   function tmGCol(x, z) {   // the terrain mesh's own vertex colour at (x, z) (bilinear over the grid vertices, each coloured as in tmTileGeo)
