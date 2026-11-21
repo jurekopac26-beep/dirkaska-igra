@@ -145,6 +145,8 @@
     bush: (R) => mute(vary([0.6, 0.6, 0.34], R, 0.025), 0.97),   // (the scrub)
     skip: (x, z) => { const c = lc ? lc(x, z) : 0; return c === 3 || c === 4 || c === 5; } });
 
+  Object.assign(BT, { strip, face, vergeH });   // (for the later groups with their own builders: js/world-chase-bt32.js)
+
   const run = (ctx, id, o) => {
     const out = ctx.out, T = API.T, near = o && o.near, gT = o && o.gH;
     if (!out || !out.matV || !ctx.root || !T || !T.br || !near || !gT) return;
