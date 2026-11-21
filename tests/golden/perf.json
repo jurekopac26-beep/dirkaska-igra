@@ -378,11 +378,11 @@
   "jsMs": 2.82
  },
  "medeu": {
-  "calls": 158,
-  "maxCalls": 175,
-  "kverts": 401,
-  "maxKverts": 479,
-  "jsMs": 1.77
+  "calls": 165,
+  "maxCalls": 187,
+  "kverts": 430,
+  "maxKverts": 508,
+  "jsMs": 1.58
  },
  "silkeborg": {
   "calls": 239,
@@ -490,11 +490,11 @@
   "jsMs": 1.14
  },
  "ngorongoro": {
-  "calls": 141,
-  "maxCalls": 166,
-  "kverts": 276,
-  "maxKverts": 326,
-  "jsMs": 1.44
+  "calls": 144,
+  "maxCalls": 170,
+  "kverts": 311,
+  "maxKverts": 358,
+  "jsMs": 1.56
  },
  "tuzla": {
   "calls": 156,

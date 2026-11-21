@@ -955,6 +955,17 @@
     /* ---- the animals by the road (ngLife; out.dyn.ext poses them every frame) ---- */
     const life = ngLife({ root, excluded, onSide, sStart, out });
 
+    /* ---- the roadside ground for the chase camera (js/world-chase-bt20.js): the streams' green margins as class 6, nothing in their beds
+       nor on the animals' places (each group's ground with 8 m to spare and, for a crossing herd, the far side it walks to) ---- */
+    if (World.ext && World.ext.goreRob) {
+      const zA = [];
+      for (const g of life.L.groups) { const ms = [[g.x, g.z, 0]], A = life.L.A.slice(g.a0, g.a1);
+        if (g.kind === 'cross' && A.length) { let bx = 0, bz = 0; for (const a of A) { bx += a.bx; bz += a.bz; } ms.push([bx / A.length, bz / A.length, 1]); }
+        for (const [cx, cz, far] of ms) { let r = 0; for (const a of A) r = Math.max(r, far ? Math.hypot(a.bx - cx, a.bz - cz) : Math.hypot(a.hx - cx, a.hz - cz)); zA.push([cx, cz, r + 8]); } }
+      World.ext.goreRob({ excluded, root, out }, 'ngorongoro', { gH: caGround, slope: caSlope, near: vrNear, lc: (x, z) => segD(ST, x, z) < 8 ? 6 : vrLC(x, z),
+        bad: (x, z) => segD(ST, x, z) < 2.5 || zA.some(e => (x - e[0]) * (x - e[0]) + (z - e[1]) * (z - e[1]) < e[2] * e[2]) });
+    }
+
     /* ---- the view beyond the corridor (ngFar; World.update moves it with the camera); finish the meshes ---- */
     const FAR = ngFar(def); if (FAR) { FAR.mesh.visible = false; FAR.upd = ngFarUpdate; root.add(FAR.mesh); out.dyn.irFar = FAR; }   // (hidden until the first World.update; moved by its own ngFarUpdate)
     out.dyn.ext = (t, car, cam, race) => ngLifeStep(life.L, t, car, race);
