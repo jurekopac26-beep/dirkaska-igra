@@ -348,11 +348,15 @@
       if (!inC(o0)) return o0; let lo = bar + 0.3, hi = o0; if (inC(lo)) return lo;
       for (let k = 0; k < 6; k++) { const mid = (lo + hi) / 2; if (inC(mid)) hi = mid; else lo = mid; }
       return lo; };
+    // (a bank is an embankment or a cut slope, not the mountain: its toe not more than 60 m under the road, the level fill before a leg below not
+    // wider than 20 m. Past that the road stands on the mountain's own face, the wall straight into the elevation model's ground: the legs 86-94 and
+    // 124-133 m above the leg at ~1430-1560 m, 50-68 m to the side, had one plane each down to that leg's verge and a level fill over the gully)
+    const BANK = 60, FILL = 20;
     const march = (i, side, hw, m) => { const bar = barOf(i, side), oW = footO(i, side, hw), yW = -0.04 - hw, at = (o) => { const q = side * o; return [T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q]; };
       if (gAt(i, side, oW) >= yW - 0.05) return { oW, yW, hw, m, full: true };
       let prev = oW;
       for (let k = 1; k <= 130; k++) { const o = oW + k * 0.75, ys = yW - (o - oW) * m;
-        if (ys <= gAt(i, side, o)) { let lo = prev, hi = o; for (let it = 0; it < 6; it++) { const mid = (lo + hi) / 2; if (yW - (mid - oW) * m <= gAt(i, side, mid)) hi = mid; else lo = mid; } return { oW, yW, hw, m, oM: hi, land: 0 }; }
+        if (ys <= gAt(i, side, o)) { let lo = prev, hi = o; for (let it = 0; it < 6; it++) { const mid = (lo + hi) / 2; if (yW - (mid - oW) * m <= gAt(i, side, mid)) hi = mid; else lo = mid; } if (m * (hi - oW) - yW > BANK) return null; return { oW, yW, hw, m, oM: hi, land: 0 }; }
         const [x, z] = at(o), L = lowLeg(i, x, z, T.hy[i] + ys, o);
         if (L) { const j = L.j, yB = T.hy[j] - T.hy[i] - 0.05, lim = (L.lat > 0 ? T.br[j] : T.bl[j]) + 2, inside = (oo) => { const [a, b] = at(oo); return Math.abs(latTo(j, a, b)) < lim; };
           let oM = o, yL = ys, land = 2;
@@ -361,6 +365,7 @@
           // over a pit (the ground well under the leg's level): on, flat at its level, to its wall (its barrier + 0.32 m) where the slope runs towards it
           let oE = 0; if (gAt(i, side, oM + 0.5) < yB - 0.4) { const r = -Math.sign(L.lat) * side * (T.nx[i] * T.nx[j] + T.nz[i] * T.nz[j]);
             if (r > 0.25) oE = Math.max(oM + 0.4, o + Math.min(16, (Math.abs(L.lat) - (lim - 2 + 0.32)) / r)); }
+          if (-yB > BANK || oE - oM > FILL) return null;
           return { oW, yW, hw, m, oM, yL, yB, land, oE }; }
         prev = o; }
       return null; };
