@@ -49,11 +49,11 @@
   "jsMs": 0.8
  },
  "harju": {
-  "calls": 177,
-  "maxCalls": 212,
-  "kverts": 517,
-  "maxKverts": 747,
-  "jsMs": 0.58
+  "calls": 187,
+  "maxCalls": 225,
+  "kverts": 556,
+  "maxKverts": 810,
+  "jsMs": 0.53
  },
  "bathurst": {
   "calls": 167,
@@ -315,11 +315,11 @@
   "jsMs": 0.46
  },
  "ghoufi": {
-  "calls": 125,
-  "maxCalls": 190,
-  "kverts": 201,
-  "maxKverts": 273,
-  "jsMs": 0.44
+  "calls": 137,
+  "maxCalls": 197,
+  "kverts": 247,
+  "maxKverts": 341,
+  "jsMs": 0.88
  },
  "cusco": {
   "calls": 128,
