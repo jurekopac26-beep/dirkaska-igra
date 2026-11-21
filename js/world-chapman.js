@@ -356,6 +356,12 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const shirts = [[0.95, 0.95, 0.95], [0.12, 0.4, 0.26], [0.98, 0.76, 0.12], [0.12, 0.2, 0.5], [0.84, 0.2, 0.16], [0.4, 0.62, 0.86], [0.92, 0.5, 0.2], [0.14, 0.14, 0.16]];
     const CR = crowdCtx({ gH: chGround, near: (x, z) => { const nn = vrNear(x, z); return hillIn(nn) ? 0 : nn.dd; }, excluded, maxSlope: 0.6, water: (x, z) => sea(x, z), shirts }), crSoft = new Set();
+    // the shared start (js/world-start.js) on the real tracks: the old gantry, lights, timing hut and the shrubs and stones on its ground
+    // are built into SINK (never drawn), so every draw from the random streams and every exclusion circle stays and nothing moves anywhere else
+    const sOwn = !!(World.startOwn && World.startOwn(T.def)), sGr = sOwn && World.startGround ? World.startGround(T) : [], SINK = new Chunks(160);
+    const inStart = (x, z) => { for (const [cx, cz, r] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; return false; };
+    // (the old crowd is placed as ever: the start's clear circles hide it there; kept out with CR.avoid it would free its exclusion circles
+    // for the shrubs, whose cap then ends the grid a few plants sooner far down the road)
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (as Los Caracoles')
       const ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = W / 2 * f;
@@ -364,11 +370,11 @@
     };
     const row = (k) => [1 - (k + 1) / 8, 1 - k / 8];
     const board = (k) => { const v1 = 1 - (4 + Math.floor(k / 2)) / 8; return [v1 - 1 / 8, v1, (k % 2) * 0.5, (k % 2) * 0.5 + 0.5]; };
-    const arch = (s, rowK, postCol, beamCol) => {   // gantry over the road (as Los Caracoles')
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = scen.get(x, z), hd = T.hd[i];
+    const arch = (s, rowK, postCol, beamCol, hide) => {   // gantry over the road (as Los Caracoles'; hide: into SINK, no banner)
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = (hide ? SINK : scen).get(x, z), hd = T.hd[i];
       box(g, x - nx * L1, y - 0.6, z - nz * L1, 0.6, 7.4, 0.6, hd, postCol); box(g, x + nx * L2, y - 0.6, z + nz * L2, 0.6, 7.4, 0.6, hd, postCol);
       const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2; box(g, cx, y + 6.1, cz, 0.55, 0.65, L1 + L2 + 0.6, hd, beamCol);
-      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1);
+      if (!hide) { const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1); }
       const e = exclPush(x, z, Math.max(L1, L2) + 6); crSoft.add(e); return [x, y, z, i];
     };
     const person = (x, z, ro) => crowdPut(CR, x, chGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: shirts[Math.floor(R() * shirts.length)] }, 1);
@@ -393,12 +399,12 @@
     /* ---- START (Hout Bay, by the beach): the gantry with the lights, the timing hut, the road closed behind; the checkpoints; the FINISH at the view
        point: a chequered gantry, the brown sign with the altitude, the green board on to Noordhoek, the road closed farther on ---- */
     {
-      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i];
-      box(scen.get(x, z), x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
+      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18], sOwn), nx = T.nx[i], nz = T.nz[i];
+      box((sOwn ? SINK : scen).get(x, z), x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 6, -1, 3.2), hy = chGround(hx, hz), gh = scen.get(hx, hz);
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; if (!sOwn) root.add(m); lights.push(m); }
+      if (!sOwn) out.dyn.lights = lights;   // (the shared start brings its own five)
+      const [hx, hz] = onSide(sStart - 6, -1, 3.2), hy = chGround(hx, hz), gh = (sOwn ? SINK : scen).get(hx, hz);
       box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.94, 0.93, 0.9], [0.4, 0.42, 0.45], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];
       for (let o = -T.bl[0]; o < T.br[0]; o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.78, 0.77, 0.74], [0.86, 0.85, 0.82]); }
@@ -574,7 +580,8 @@
           const nn = vrNear(x, z); if (nn.i >= 0 && (nn.dd < 1.6 || hillIn(nn))) continue;
           if (excluded(x, z)) continue;
           const tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.88 + r4 * 0.18];
-          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.5 + r4 * 0.5, tint);
+          if (inStart(x, z)) { /* the shared start's ground */ }
+          else if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.5 + r3 * 0.5, 0.5 + r4 * 0.5, tint);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.8 + r3 * 1.1, 0.6 + r4 * 0.8, r2 < 0.3 ? [0.98 + r3 * 0.1, 1.04, 0.92] : r2 < 0.55 ? [0.82, 0.9, 0.8] : tint);   // (some greyer and silvery, some darker)
           else if (kind === 6) pk[6].add(x, y0 - 0.06, z, r2 * TAU, 0.9 + r3 * 1.0, 0.6 + r4 * 0.5, tint);
           else if (kind === 7) pk[7].add(x, y0 - 0.08, z, r2 * TAU, 0.9 + r3 * 0.7, 0.8 + r4 * 0.5, tint);
@@ -595,7 +602,8 @@
         if (excluded(x, z)) continue;
         const pat = P.n7(x, z) * 0.6 + P.n6(x, z) * 0.4; if (r1 > 0.25 + 0.75 * sstep(0.38, 0.62, pat)) continue;   // (in patches)
         const y = vY(i, side, o), ed = sstep(0, 2.5, o - w - 1.6), tint = [0.9 + r2 * 0.2, 0.92 + r3 * 0.14, 0.9];
-        if (r2 < 0.5) pk[0].add(x, y - 0.04, z, r3 * TAU, (0.35 + r1 * 0.4) * (0.6 + 0.4 * ed), 0.4 + r3 * 0.4, tint);
+        if (inStart(x, z)) { /* the shared start's ground */ }
+        else if (r2 < 0.5) pk[0].add(x, y - 0.04, z, r3 * TAU, (0.35 + r1 * 0.4) * (0.6 + 0.4 * ed), 0.4 + r3 * 0.4, tint);
         else if (r2 < 0.68) pk[6].add(x, y - 0.05, z, r3 * TAU, 0.5 + r1 * 0.5, 0.4 + r3 * 0.3, tint);
         else if (r2 < 0.78) pk[1].add(x, y - 0.1, z, r3 * TAU, 0.4 + r1 * 0.4, 0.35 + r3 * 0.25, tint);
         else { const k = 0.84 + r3 * 0.28; pk[4].add(x, y - 0.04, z, r1 * TAU, 0.7 + r3, 0.7 + r1 * 0.6, [k, k, k]); }
@@ -614,7 +622,7 @@
         const o = 1.7 + Math.pow(RS(), 2) * 30, [x, z] = onSide(s, side, o), r1 = RS(), r2 = RS(), r3 = RS();
         const nv = vrNear(x, z); if (nv.dd < 1.2 || hillIn(nv) || excluded(x, z) || sea(x, z) || chGround(x, z) + base < 4) continue;
         const y0 = chGround(x, z), sl = chSlope(x, z); if (sl > 1.2 || (vrLC(x, z) === 1 && r1 < 0.5)) continue;
-        const k = 0.84 + r3 * 0.28, sc = 0.8 + r1 * 1.2 - 0.008 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
+        const k = 0.84 + r3 * 0.28, sc = 0.8 + r1 * 1.2 - 0.008 * o; if (!inStart(x, z)) pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);
         if (++nS >= maxS) break edge;
       }
     }

@@ -107,7 +107,7 @@ const RELATED = [
   [/^js\/(render|game|sfx)\.js$|^tools\/posnetek\.mjs$/, ['browser/padec.test.mjs']],   // (that fall drawn, heard, followed by the camera and kept in the replay)
   [/^js\/game\.js$|^index\.html$/, ['lang.test.js', 'browser/quick.test.mjs', 'browser/repro.test.mjs', 'browser/lang.test.mjs', 'browser/nova.test.mjs']],
   [/^js\/(world[\w-]*|render|tex)\.js$/, ['browser/world.test.mjs', 'browser/world2.test.mjs', 'browser/gfx.test.mjs', 'browser/gfx2.test.mjs']],
-  [/^js\/world-ljudje[23]?\.js$|^js\/tracks\/|^tools\/ljudje\/|^tests\/lib\/ulice\.js$/, ['ljudje-mesta.test.js', 'browser/ljudje.test.mjs']],   // (the people's scenes and their places: the side roads, the streets, the pit lanes)
+  [/^js\/world-(ljudje[23]?|start)\.js$|^js\/tracks\/|^tools\/ljudje\/|^tests\/lib\/ulice\.js$/, ['ljudje-mesta.test.js', 'browser/ljudje.test.mjs']],   // (the people's scenes and their places: the side roads, the streets, the pit lanes)
   [/^js\/core\.js$/, ['ljudje-mesta.test.js']],   // (the places on Core's track: its side roads, its barriers)
   [/^js\/neskoncna\.js$|^css\/neskoncna\.css$|^tests\/browser\/neskoncna\.test\.mjs$|^js\/tracks\/bathurst\.js$/, ['neskoncna.test.js', 'browser/neskoncna.test.mjs', 'lang.test.js']],   // (the endless drive in the traffic, on Bathurst, docs/neskoncna-voznja.md)
   [/^js\/core\.js$/, ['neskoncna.test.js']],   // (its rules: Endless, the traffic on the loop and its window)

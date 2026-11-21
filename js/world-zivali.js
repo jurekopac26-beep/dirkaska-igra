@@ -767,6 +767,9 @@
     const free = (x, z, r) => { for (const p of placed) if ((p[0] - x) ** 2 + (p[1] - z) ** 2 < (p[2] + r + 6) ** 2) return false; return true; };
     const cl = (x, z) => A.clearance(x, z);
     const L0 = T.open ? Math.max(0, T.startS - 40) : 0, L1 = T.open ? Math.min(T.len, T.finishS + 60) : T.len;
+    // the shared start's ground (js/world-start.js, built after life): no glade on it or reaching into it, and no lone one walking into it
+    const sGr = World.startOwn && World.startOwn(def) && World.startGround ? World.startGround(T) : [];
+    const onStart = (x, z, r) => { for (const [cx, cz, cr] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < (cr + r) ** 2) return true; return false; };
     const peek = (i, side, b, rr) => {   // the window in the trees towards the road: it slants back along the road (the chase camera looks at the glade from behind and above)
       for (const f of [0.25, 0.5, 0.75, 1]) { const sb = i * T.ds - 24 * f, j = T.idx(((sb % T.len) + T.len) % T.len), bj = side > 0 ? T.br[j] : T.bl[j], ob = side * (bj + Math.max(1.5, b * (1 - f)));
         cut(W, T.px[j] + T.nx[j] * ob, T.pz[j] + T.nz[j] * ob, rr * 0.9 + 2.4); } };
@@ -777,7 +780,7 @@
       const k = sc * 1.15, len = t.len * k; let a = null;
       if (mode !== 'graze' && (mode === 'walk' || R() < 0.55)) {
         const L = (t.hop ? 6 : 3.5) + R() * 4.5, ex = x + Math.sin(yaw) * L, ez = z + Math.cos(yaw) * L, eh = gH(ex, ez);
-        if (cl(ex, ez) > 3 && Number.isFinite(eh) && Math.abs(eh - gH(x, z)) < L * 0.3 && occupied(G, gH, cl, ex, ez, 2) === 0) {
+        if (cl(ex, ez) > 3 && Number.isFinite(eh) && Math.abs(eh - gH(x, z)) < L * 0.3 && occupied(G, gH, cl, ex, ez, 2) === 0 && !onStart(ex, ez, 2)) {
           for (let f = 0.25; f <= 1.01; f += 0.25) cut(W, x + Math.sin(yaw) * L * f, z + Math.cos(yaw) * L * f, 2.8);
           a = { mode: 'walk', x0: x, z0: z, yaw0: yaw, L, v: t.hop ? 1.7 : 0.55 + R() * 0.45, pause: 4 + R() * 5, ph: R() * 60, stride: Math.max(0.45, len * (t.hop ? 1.2 : 0.7)) };
         }
@@ -878,6 +881,7 @@
       const crew = wantThing ? null : company(kind, R), hr = crew ? HERD_SP((tpl(crew[0][0]) || { size: 1 }).size) * Math.sqrt(crew.length) : 0;
       const alone = crew && crew.length === 1, rr = wantThing ? ROOM[kind] || 3 : Math.max(alone ? 5.2 : 4.4, hr + 2.4);
       if (cl(x, z) < rr + 2.5) continue;   // (not on another part of the road, its verges or barriers)
+      if (onStart(x, z, rr)) continue;   // (the shared start's scene stands there)
       const h = gH(x, z); if (!Number.isFinite(h) || slope(x, z, rr * 0.7) > (wantThing ? 0.32 : 0.55) || !free(x, z, rr)) continue;
       if (occupied(G, gH, cl, x, z, rr) > 1) continue;   // (nothing built there)
       const N = near(W, x, z, 9);

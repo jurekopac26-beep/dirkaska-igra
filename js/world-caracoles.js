@@ -389,6 +389,10 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.84, 0.12, 0.12], [0.95, 0.95, 0.95], [0.1, 0.24, 0.66], [0.46, 0.7, 0.92], [0.95, 0.95, 0.95], [0.96, 0.78, 0.18], [0.84, 0.12, 0.12], [0.12, 0.14, 0.2], [0.2, 0.55, 0.32], [1, 0.55, 0.1]];   // (Chile's red, white and blue, Argentina's sky blue)
     const CR = crowdCtx({ gH: caGround, near: (x, z) => API.vrNear(x, z).dd, excluded, maxSlope: 0.6, water: (x, z) => API.vrWater(x, z).e > -4, shirts: fans }), crSoft = new Set();
+    // the shared start's place (js/world-start.js): the old start (gantry, lights, hut) and what would stand in its ground go into SINK and sinkB (never drawn),
+    // so every draw from the random streams and every exclusion circle stays and nothing moves anywhere else
+    const sOwn = def.id === 'caracoles' && !!(World.startOwn && World.startOwn(def)), sGr = sOwn && World.startGround ? World.startGround(T) : [], SINK = new Chunks(110), sinkB = new GB(true);
+    const inStart = (x, z) => { for (const [cx, cz, r] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; return false; };
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1; tilt leans its top towards +t
       const ux = tz, uz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = W / 2 * f;
@@ -397,16 +401,17 @@
     };
     const row = (k) => [1 - (k + 1) / 8, 1 - k / 8];   // atlas row k (0 = top) -> [v0, v1]
     const board = (k) => { const v1 = 1 - (4 + Math.floor(k / 2)) / 8; return [v1 - 1 / 8, v1, (k % 2) * 0.5, (k % 2) * 0.5 + 0.5]; };   // a place board of the second atlas: [v0, v1, u0, u1]
-    const arch = (s, rowK, postCol, beamCol) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i]
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = scen.get(x, z), hd = T.hd[i];
+    const arch = (s, rowK, postCol, beamCol, hide) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i] (hide: into SINK)
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = (hide ? SINK : scen).get(x, z), hd = T.hd[i];
       box(g, x - nx * L1, y - 0.6, z - nz * L1, 0.6, 7.4, 0.6, hd, postCol); box(g, x + nx * L2, y - 0.6, z + nz * L2, 0.6, 7.4, 0.6, hd, postCol);
       const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2; box(g, cx, y + 6.1, cz, 0.55, 0.65, L1 + L2 + 0.6, hd, beamCol);
-      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1);
+      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 12.8, 1.6, v0, v1, 0, 1, hide ? sinkB : null);
       const e = exclPush(x, z, Math.max(L1, L2) + 6); crSoft.add(e); return [x, y, z, i];
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, caGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
-    const flagCL = (g, x, y, z, rot, h) => {   // a pole with the Chilean flag: white over red, the blue canton with its white star (both faces)
-      cyl(g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
+    const flagCL = (g, x, y, z, rot, h, hide) => {   // a pole with the Chilean flag: white over red, the blue canton with its white star (both faces; hide: the pole into SINK, no cloth)
+      cyl(hide ? SINK.get(x, z) : g, x, y - 0.2, z, 0.06, h + 0.2, 5, [0.94, 0.94, 0.92], [0.9, 0.78, 0.2]);
+      if (hide) return;   // (the cloth's wave comes from where it stands, not from a random stream: leaving it out moves nothing)
       const c = Math.cos(rot), s = Math.sin(rot), r = [0.84, 0.13, 0.12], w = [0.96, 0.96, 0.95], b = [0.04, 0.22, 0.65], st = [0.98, 0.98, 0.98];   // (the cloth waves: js/world-zastave.js; the star a square)
       API.flags.add(x + c * 0.06, y + h - 0.15, z + s * 0.06, rot, { grid: [[0, 0.122, 0.211, 1 / 3, 1], [0, 0.167, 0.3, 0.5, 1], [[b, b, b, w], [b, st, b, w], [b, b, b, w], [r, r, r, r]]] }, 1.8, 1.2);
     };
@@ -455,20 +460,21 @@
     /* ---- LARGADA (the start, by the river): gantry with the start lights, the timing hut, Chilean flags along the grid, the road closed behind it;
        the trucks held back at the closure in the lay-by beside the road ---- */
     {
-      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i], g = scen.get(x, z);
+      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18], sOwn), nx = T.nx[i], nz = T.nz[i], g = (sOwn ? SINK : scen).get(x, z);
       box(g, x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = caGround(hx, hz), gh = scen.get(hx, hz);   // the timing hut
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; if (!sOwn) root.add(m); lights.push(m); }
+      if (!sOwn) out.dyn.lights = lights;   // (the shared start brings its own five)
+      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = caGround(hx, hz), gh = (sOwn ? SINK : scen).get(hx, hz);   // the timing hut
       box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.92, 0.9, 0.84], [0.5, 0.3, 0.2], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.6, 0.24, 0.16], [0.92, 0.9, 0.84]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
-      for (let s = 8; s < sStart + 50; s += 12) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue; flagCL(scen.get(px, pz), px, caGround(px, pz), pz, T.hd[ii], 6); }
+      for (let s = 8; s < sStart + 50; s += 12) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue; flagCL(scen.get(px, pz), px, caGround(px, pz), pz, T.hd[ii], 6, inStart(px, pz)); }
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road: concrete blocks across it
       for (let o = -T.bl[0]; o < T.br[0]; o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
-      { const [bx, bz, bi] = onSide(sStart + 16, 1, 1.6), by = caGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
+      { const [bx, bz, bi] = onSide(sStart + 16, 1, 1.6), by = caGround(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
+        const hb = sOwn && [-3.3, 0, 3.3].some(o => inStart(bx + T.tx[bi] * o, bz + T.tz[bi] * o)), gb = (hb ? SINK : scen).get(bx, bz);   // (a post in the shared start's ground: into SINK)
         for (const o of [-3.3, 3.3]) box(gb, bx + T.tx[bi] * o, by - 0.2, bz + T.tz[bi] * o, 0.14, 3.0, 0.14, T.hd[bi], [0.3, 0.3, 0.32]);
-        bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 6.6, 0.82, v0, v1); exclPush(bx, bz, 4.5); }
+        bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 6.6, 0.82, v0, v1, 0, 1, hb ? sinkB : null); exclPush(bx, bz, 4.5); }
       const hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh), RT = rng(2931);   // the trucks in the lay-by, side by side
       for (let k = 0; k < 3; k++) { const b = (k - 1) * 4.2, px = padS.x - sn * b, pz = padS.z + c * b; if (API.vrNear(px, pz).dd < 1.5) continue;
         parkOn(caTruck, caGround, 12, scen.get(px, pz), px, caGround(px, pz), pz, hh, truckCols[Math.floor(RT() * truckCols.length)], trailerCols[Math.floor(RT() * trailerCols.length)]); }
@@ -706,7 +712,8 @@
           const nn = API.vrNear(x, z); if (nn.i >= 0 && nn.dd < 1.6) continue;
           if (excluded(x, z)) continue;
           const ny = 1 / Math.sqrt(1 + sl * sl); if (caSnow(x, z, A, ny, 0) > 0.35) continue;
-          if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.6 + r3 * 0.6, 0.45 + r4 * 0.45, [0.92 + r2 * 0.16, 0.92 + r3 * 0.12, 0.88 + r4 * 0.16]);
+          if (inStart(x, z)) { /* the shared start's ground */ }
+          else if (kind === 0) pk[0].add(x, y0 - 0.05, z, r2 * TAU, 0.6 + r3 * 0.6, 0.45 + r4 * 0.45, [0.92 + r2 * 0.16, 0.92 + r3 * 0.12, 0.88 + r4 * 0.16]);
           else if (kind === 1) pk[1].add(x, y0 - 0.1, z, r2 * TAU, 0.6 + r3 * 0.9, 0.5 + r4 * 0.6, [0.9 + r2 * 0.2, 0.92 + r3 * 0.12, 0.9]);
           else if (kind === 2) pk[2].add(x, y0 - 0.08, z, r2 * TAU, 0.5 + r3 * 0.9, 0.35 + r4 * 0.35, [0.9 + r2 * 0.2, 0.95 + r3 * 0.1, 0.9]);
           else { const k = 0.85 + r3 * 0.3, rc = r2 < 0.3 ? [1.04, 0.92, 0.84] : r2 < 0.55 ? [1.04, 1.0, 0.9] : [0.92, 0.92, 0.94]; pk[3].add(x, y0 - 0.15, z, r4 * TAU, 0.5 + r3 * 1.4, 0.4 + r4 * 1.0, [rc[0] * k, rc[1] * k, rc[2] * k]); }
@@ -723,7 +730,7 @@
         if (API.vrNear(x, z).dd < 1.2 || excluded(x, z) || API.vrWater(x, z).e > -3) continue;
         const y0 = caGround(x, z), sl = caSlope(x, z); if (sl > 1.15 || (API.vrLC(x, z) === 1 && r1 < 0.45)) continue;
         if (caSnow(x, z, y0 + base, 1 / Math.sqrt(1 + sl * sl), 0) > 0.3) continue;
-        const k = 0.84 + r3 * 0.28, sc = 0.85 + r1 * 1.25 - 0.006 * o; pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);   // (a little bigger at the road's edge)
+        const k = 0.84 + r3 * 0.28, sc = 0.85 + r1 * 1.25 - 0.006 * o; if (!inStart(x, z)) pk[4].add(x, y0 - 0.04, z, r2 * TAU, sc, sc * (0.8 + r3 * 0.5), [k, k, k]);   // (a little bigger at the road's edge)
         if (++nS >= maxS) break edge;
       }
     }
@@ -737,7 +744,7 @@
         const i = T.idx(s); if (galAt[i] || RV() > 0.36) continue;
         const o = 1.6 + Math.pow(RV(), 1.5) * 40, [x, z] = onSide(s, side, o), sz = 0.4 + RV() * 1.3; if (API.vrNear(x, z).dd < sz + 0.6 || excluded(x, z) || API.vrWater(x, z).e > -3) continue;
         const y = caGround(x, z), sl = caSlope(x, z); if (sl < 0.3 && API.vrLC(x, z) !== 0) continue;
-        const g = scen.get(x, z), col = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.12);
+        const g = (inStart(x, z) ? SINK : scen).get(x, z), col = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.12);
         rock(g, x, y + sz * 0.3, z, sz * 1.2, sz, sz, RV() * TAU, col, RV, 0.32);
       }
       for (let s = 16; s < T.len - 16; s += 16) for (const side of [-1, 1]) {   // crags where the slope is steep
@@ -746,7 +753,7 @@
         const sl = caSlope(x, z); if (sl < 0.7) continue;
         const y = caGround(x, z), g = scen.get(x, z), n = 2 + Math.floor(RV() * 3), b0 = vary(rockC[Math.floor(RV() * rockC.length)], RV, 0.08);
         for (let q = 0; q < n; q++) { const r0 = 2 + RV() * 3.8, qx = x + (RV() - 0.5) * 8, qz = z + (RV() - 0.5) * 8, qy = caGround(qx, qz); if (API.vrNear(qx, qz).dd < r0 + 1) continue;
-          rock(g, qx, qy + r0 * 0.4, qz, r0, r0 * (0.8 + RV() * 0.8), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.08), RV, 0.35); }
+          rock(inStart(qx, qz) ? SINK.get(qx, qz) : g, qx, qy + r0 * 0.4, qz, r0, r0 * (0.8 + RV() * 0.8), r0 * (0.7 + RV() * 0.4), RV() * TAU, vary(b0, RV, 0.08), RV, 0.35); }
       }
     }
 

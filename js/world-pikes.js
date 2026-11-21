@@ -345,7 +345,7 @@
     tier(g, x, y + h * 0.37, z, rr * 0.76, h * 0.38, 6, vary(col, R, 0.08), ct, rot + 0.5);
     tier(g, x, y + h * 0.59, z, rr * 0.5, h * 0.41, 5, vary(col, R, 0.08), ct, rot + 1);
   }
-  function pkForest(scen, R, dens, excluded, flat) {   // conifer forest below the treeline, on a jittered grid over the corridor tiles; far from the road (flat(x, z): a GB that casts no shadow) simpler
+  function pkForest(scen, R, dens, excluded, flat, hide, sink) {   // (hide(x, z): that tree into sink, its draws kept) conifer forest below the treeline, on a jittered grid over the corridor tiles; far from the road (flat(x, z): a GB that casts no shadow) simpler
     const G = PK.G, P = PK, step = 6.6 / Math.sqrt(dens), L = PKT * PKC, maxT = Math.round(15500 * dens);
     const pineCs = [[0.09, 0.2, 0.11], [0.11, 0.24, 0.12], [0.08, 0.18, 0.1], [0.13, 0.26, 0.14], [0.1, 0.22, 0.14]];
     // species on their own stream (R keeps its sequence, so every tree stands where it did): quaking aspen groves low down, bristlecone pines at the treeline
@@ -410,7 +410,7 @@
         if (nn.i >= 0 && nn.dd < 8 && r2 < 0.2) continue;
         if (excluded(x, z) || pkSlope(x, z) > 0.95) continue;
         const hk = lerp(1, 0.45, sstep(tl - 45, tl + 8, y));   // stunted towards the treeline
-        const h = (7.5 + R() * 6) * hk, col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.14), far = hd > 140 ? 3 : hd > 80 ? 2 : nn.i < 0 || nn.dd > 30 ? 1 : 0, g = far > 1 ? flat(x, z) : scen.get(x, z);   // (beyond 80 m its shadow cannot reach the road's surroundings)
+        const h = (7.5 + R() * 6) * hk, col = vary(pineCs[Math.floor(R() * pineCs.length)], R, 0.14), far = hd > 140 ? 3 : hd > 80 ? 2 : nn.i < 0 || nn.dd > 30 ? 1 : 0, g = far > 1 ? flat(x, z) : (hide && hide(x, z) ? sink : scen).get(x, z);   // (beyond 80 m its shadow cannot reach the road's surroundings)
         const yp = far > 1 ? pkGroundS(x, z) : y;   // (on the far tiles' coarser mesh)
         const gv = grove(x, z), pa = y < 150 && y < tl - 35 ? (gv > 0.56 ? lerp(0.5, 0.82, sstep(0.56, 0.7, gv)) : 0.03) * sstep(150, 135, y) : 0;
         const pb = y > tl - 30 ? 0.5 * sstep(tl - 30, tl - 18, y) : 0, q = A();
@@ -1158,22 +1158,23 @@
     /* the toll gate at the foot of the highway, behind the start: a canopy on stone pillars high over the road ("PIKES PEAK HIGHWAY" on its fascia),
        a log booth on the left with its barrier arm raised clear of the road */
     {
+      const sc = K.startOwn ? K.sink : scen, tqG = K.startOwn ? () => {} : tq;   // (on the shared start's tracks the toll gate goes into SINK: the new start stands here)
       const s0 = 17.5, q = crAt(s0), hd = Math.atan2(q.tz, q.tx), y = q.hy, FL = fr(s0, -1), FR = fr(s0, 1), yT = y + 6.1;
       const pil = [0.54, 0.5, 0.46], roofT = [0.22, 0.32, 0.25], fas = [0.36, 0.24, 0.15];
-      for (const [F, v] of [[FL, 4.9], [FR, 1.9]]) for (const u of [-2.2, 2.2]) { const [x, z] = F.at(u, v), g = scen.get(x, z), yb = gy(x, z) - 0.4;
+      for (const [F, v] of [[FL, 4.9], [FR, 1.9]]) for (const u of [-2.2, 2.2]) { const [x, z] = F.at(u, v), g = sc.get(x, z), yb = gy(x, z) - 0.4;
         box(g, x, yb, z, 0.9, 1.4, 0.9, hd, vary(pil, R, 0.06)); box(g, x, yb + 1.4, z, 0.7, yT - yb - 1.4, 0.7, hd, vary(pil, R, 0.06)); }
-      const L1 = q.bl + 5.5, L2 = q.br + 2.7, cx = q.px + q.nx * (L2 - L1) / 2, cz = q.pz + q.nz * (L2 - L1) / 2, g = scen.get(q.px, q.pz);
+      const L1 = q.bl + 5.5, L2 = q.br + 2.7, cx = q.px + q.nx * (L2 - L1) / 2, cz = q.pz + q.nz * (L2 - L1) / 2, g = sc.get(q.px, q.pz);
       box(g, cx, yT, cz, 5.6, 0.2, L1 + L2, hd, [0.7, 0.66, 0.6]);   // soffit
       box(g, cx, yT + 0.2, cz, 6.2, 1.15, L1 + L2 + 0.6, hd, fas, roofT);   // fascia and the green metal roof
-      for (const f of [1, -1]) tq(q.px + q.tx * f * 3.14, yT + 0.25, q.pz + q.tz * f * 3.14, q.tx * f, q.tz * f, 8.4, 1.05, [0, 0, 1024, 128], 0);
+      for (const f of [1, -1]) tqG(q.px + q.tx * f * 3.14, yT + 0.25, q.pz + q.tz * f * 3.14, q.tx * f, q.tz * f, 8.4, 1.05, [0, 0, 1024, 128], 0);
       for (const o of [-4.6, 4.6]) box(g, q.px + q.nx * o, yT + 1.3, q.pz + q.nz * o, 0.2, 1.3, 0.2, hd, [0.2, 0.2, 0.2]);
-      tq(q.px - q.tx * 0.3, yT + 1.4, q.pz - q.tz * 0.3, -q.tx, -q.tz, 11.2, 1.4, [0, 0, 1024, 128], 0.55);   // and on a board on the roof, leaning back (read from the cars coming up the paddock)
+      tqG(q.px - q.tx * 0.3, yT + 1.4, q.pz - q.tz * 0.3, -q.tx, -q.tz, 11.2, 1.4, [0, 0, 1024, 128], 0.55);   // and on a board on the roof, leaning back (read from the cars coming up the paddock)
       // the booth: log walls, a band of windows all round, a gable roof; the barrier arm on its post, raised
-      const [bx0, bz0] = FL.at(0, 2.95), by = gy(bx0, bz0) - 0.2, rb = FL.rot(), gb = scen.get(bx0, bz0);
+      const [bx0, bz0] = FL.at(0, 2.95), by = gy(bx0, bz0) - 0.2, rb = FL.rot(), gb = sc.get(bx0, bz0);
       box(gb, bx0, by - 0.2, bz0, 4.0, 0.6, 3.0, rb, stone, stoneT); box(gb, bx0, by + 0.4, bz0, 3.6, 2.5, 2.6, rb, [0.5, 0.34, 0.2]);
       box(gb, bx0, by + 1.35, bz0, 3.66, 0.95, 2.66, rb, [0.17, 0.22, 0.27]); gable(gb, bx0, by + 2.9, bz0, 4.4, 3.4, 1.0, rb, [0.2, 0.3, 0.23], [0.5, 0.34, 0.2]);
-      { const [fx, fz] = FL.dir(-PI / 2), [x, z] = FL.at(0, 2.95 - 1.34); tq(x, by + 0.55, z, fx, fz, 2.4, 0.3, [512, 128, 1024, 192], 0); }
-      const [px, pz] = FL.at(-2.6, 1.7), py = gy(px, pz), [ox, oz] = FL.dir(-PI / 2), ang = 1.3, Lr = 4.4, p0 = [px, py + 1.0, pz], gp = scen.get(px, pz);
+      { const [fx, fz] = FL.dir(-PI / 2), [x, z] = FL.at(0, 2.95 - 1.34); tqG(x, by + 0.55, z, fx, fz, 2.4, 0.3, [512, 128, 1024, 192], 0); }
+      const [px, pz] = FL.at(-2.6, 1.7), py = gy(px, pz), [ox, oz] = FL.dir(-PI / 2), ang = 1.3, Lr = 4.4, p0 = [px, py + 1.0, pz], gp = sc.get(px, pz);
       box(gp, px, py - 0.2, pz, 0.4, 1.3, 0.4, rb, [0.95, 0.78, 0.1]); box(gp, px, py + 0.85, pz, 0.62, 0.35, 0.62, rb, [0.18, 0.18, 0.2]);
       for (let k = 0; k < 6; k++) { const a0 = k / 6 * Lr, a1 = (k + 1) / 6 * Lr, P = (a) => [px + ox * Math.cos(ang) * a, p0[1] + Math.sin(ang) * a, pz + oz * Math.cos(ang) * a];
         beam(gp, P(a0), P(a1), 0.13, 0.13, k % 2 ? [0.85, 0.12, 0.1] : [0.95, 0.95, 0.93]); }
@@ -4011,6 +4012,10 @@
     const matV = new THREE.MeshLambertMaterial({ vertexColors: true }); out.matV = matV;
     const excl = [];   // tree exclusion circles (landmarks, crowds)
     const excluded = (x, z) => { for (let k = 0; k < excl.length; k++) { const e = excl[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
+    // the shared start (js/world-start.js) on the real tracks: the old gantry, timing hut, flag poles, toll gate and the trees and shrubs on its
+    // ground are built into SINK (never drawn), so every draw from R and every exclusion circle stays and nothing moves anywhere else
+    const sOwn = !!(World.startOwn && World.startOwn(T.def)), sGr = sOwn && World.startGround ? World.startGround(T) : [], SINK = new Chunks(110);
+    const inStart = (x, z) => { for (const [cx, cz, r] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; return false; };
 
     /* ---- terrain tiles (their meshes are made at the end: the verge and the far scenery that casts no shadow are merged into them, no draw calls of their own) ---- */
     let nFar = 0;   // coarse outer tiles
@@ -4204,6 +4209,7 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.9, 0.2, 0.15], [0.96, 0.82, 0.2], [0.2, 0.45, 0.9], [0.95, 0.95, 0.95], [0.2, 0.7, 0.3], [1, 0.55, 0.1], [0.15, 0.5, 0.55], [0.7, 0.2, 0.5], [0.12, 0.14, 0.2]];
     const CR = crowdCtx({ gH: pkGround, near: (x, z) => pkNear(x, z).dd, excluded, maxSlope: 0.6 }), crSoft = new Set();   // spectators (instanced); crSoft: tree-only exclusions (crowds, gantries)
+    for (const [x, z, r] of sGr) CR.avoid(x, z, r);   // (the shared start brings its own people there)
     const person = (x, z, ro) => { const sc = fans[Math.floor(R() * fans.length)]; R(); crowdPut(CR, x, pkGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: sc }, 1); };   // (two draws, as the old merged figure)
     const crowd = (sa, sb, side, rows, dens0, extra) => {   // spectators on the ground behind the barrier, facing the road
       for (let s = sa; s < sb; s += 1.1) for (let row = 0; row < rows; row++) { if (R() > dens0 - row * 0.12) continue;
@@ -4220,11 +4226,11 @@
         const A = [cx + ox - ux * hw, cy + oy, cz + oz - uz * hw], B = [cx + ox + ux * hw, cy + oy, cz + oz + uz * hw], C = [B[0] + kx, B[1] + ky, B[2] + kz], D = [A[0] + kx, A[1] + ky, A[2] + kz];
         ban.quadO(A, B, C, D, W1, [cx + kx / 2 - tx * ca * f, cy + ky / 2 + sa * f, cz + kz / 2 - tz * ca * f], [[0, v0], [1, v0], [1, v1], [0, v1]]); }
     };
-    const arch = (s, slot, postCol, beamCol) => {   // gantry over the road: two posts at the barriers, a beam, a text board both ways; returns [x, y, z, i]
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = scen.get(x, z), hd = T.hd[i];
+    const arch = (s, slot, postCol, beamCol, hide) => {   // gantry over the road: two posts at the barriers, a beam, a text board both ways; returns [x, y, z, i] (hide: into SINK, no board)
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = (hide ? SINK : scen).get(x, z), hd = T.hd[i];
       box(g, x - nx * L1, y - 0.5, z - nz * L1, 0.7, 7.3, 0.7, hd, postCol); box(g, x + nx * L2, y - 0.5, z + nz * L2, 0.7, 7.3, 0.7, hd, postCol);
       const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2; box(g, cx, y + 6.1, cz, 0.6, 0.7, L1 + L2 + 0.7, hd, beamCol);
-      bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 13.6, 1.7, slot);
+      if (!hide) bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 13.6, 1.7, slot);
       const e = { x, z, r: Math.max(L1, L2) + 6 }; excl.push(e); crSoft.add(e); return [x, y, z, i];
     };
     const fmtAlt = (m) => String(Math.round(m)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' m';
@@ -4232,17 +4238,17 @@
 
     /* ---- START: gantry with the start lights, timing hut, paddock with team tents, trailers, cars and spectators ---- */
     {
-      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i], g = scen.get(x, z);
+      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18], sOwn), nx = T.nx[i], nz = T.nz[i], g = (sOwn ? SINK : scen).get(x, z);
       box(g, x, y + 6.8, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);   // light panel on top of the beam
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.35, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.35, z + nz * o); m.rotation.y = -T.hd[i]; if (!sOwn) root.add(m); lights.push(m); }
+      if (!sOwn) out.dyn.lights = lights;   // (the shared start brings its own five)
       // timing hut beside the line, flags along the start straight
-      const [hx, hz] = onSide(sStart - 4, -1, 4.5), hy = pkGround(hx, hz), gh = scen.get(hx, hz);
+      const [hx, hz] = onSide(sStart - 4, -1, 4.5), hy = pkGround(hx, hz), gh = (sOwn ? SINK : scen).get(hx, hz);
       box(gh, hx, hy, hz, 4.2, 2.7, 3, T.hd[i], [0.92, 0.9, 0.84], [0.5, 0.3, 0.2], true); box(gh, hx, hy + 1.3, hz, 4.25, 0.9, 3.05, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.6, 3.4, 1.1, T.hd[i], [0.62, 0.2, 0.14], [0.92, 0.9, 0.84]);
       excl.push({ x: hx, z: hz, r: 6 });
-      for (let s = 4; s < sStart + 60; s += 9) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.6), py = pkGround(px, pz), gg = scen.get(px, pz);
-        cyl(gg, px, py, pz, 0.06, 5.4, 5, [0.85, 0.85, 0.88]); (out.pkFl || (out.pkFl = [])).push([px, py + 5.0, pz, T.hd[ii], [[fans[Math.floor(R() * fans.length)]]], 1.1, 0.8]); }   // (the cloth: pkAmbient's waving flags)
+      for (let s = 4; s < sStart + 60; s += 9) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.6), py = pkGround(px, pz), hid = inStart(px, pz), gg = (hid ? SINK : scen).get(px, pz);
+        cyl(gg, px, py, pz, 0.06, 5.4, 5, [0.85, 0.85, 0.88]); const fc = fans[Math.floor(R() * fans.length)]; if (!hid) (out.pkFl || (out.pkFl = [])).push([px, py + 5.0, pz, T.hd[ii], [[fc]], 1.1, 0.8]); }   // (the cloth: pkAmbient's waving flags)
       crowd(sStart - 4, sStart + 60, 1, 3, 0.7, 2.8); crowd(sStart + 6, sStart + 60, -1, 3, 0.65, 2.8);
       // the end of the road: concrete blocks across it (the cars cannot go past), the paddock behind
       const i0 = 0, e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];
@@ -4364,7 +4370,7 @@
     }
 
     /* ---- the real course's landmarks and race-day details (each in its own function above, on its own random stream: R is not drawn from) ---- */
-    const K = { root, out, tex, dens, N, w, P, scen, noShadow, matV, txt, excl, crSoft, excluded, onSide, carPk, tent, fans, CR, sStart, sFin, iE, padE, padH, mk,
+    const K = { root, out, tex, dens, N, w, P, scen, noShadow, matV, txt, excl, crSoft, excluded, onSide, carPk, tent, fans, CR, sStart, sFin, iE, padE, padH, mk, startOwn: sOwn, sink: SINK, inStart,
       mats: { tMat, aMat, sMat, matV },
       putPerson: (x, z, ro, col, staff) => crowdPut(CR, x, pkGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col, staff }, 1) };   // (staff: a marshal or a photographer, kept on the real tracks: World's fansOn)   // a spectator facing ro (no draws from R)
     pkLandmarks(K);
@@ -4397,7 +4403,7 @@
     for (const e of CR.circ) excl.push(e);   // the trees, shrubs and boulders keep clear of the new crowds too
 
     /* ---- vegetation and rock ---- */
-    const nTrees = pkForest(scen, R, dens, excluded, noShadow);
+    const nTrees = pkForest(scen, R, dens, excluded, noShadow, sOwn ? inStart : null, SINK);
     {
       const bushC = [[0.13, 0.25, 0.11], [0.17, 0.28, 0.12], [0.21, 0.28, 0.11]], tuftC = [[0.5, 0.5, 0.26], [0.58, 0.54, 0.3], [0.44, 0.46, 0.22]], graniteC = [[0.54, 0.44, 0.39], [0.48, 0.42, 0.39], [0.58, 0.48, 0.43]], greyC = [0.44, 0.43, 0.41];
       // the rocks' shapes, lichen, scree and snow, the undergrowth: own streams (Q, U); R keeps its sequence (skip: the draws the old boulders made), so everything stands where it did
@@ -4465,7 +4471,7 @@
         const r = R();
         if (!above && r < 0.25) {   // shrubs and young firs right behind the barrier
           const [x, z] = onSide(s, side, 1.2 + R() * 7); if (pkNear(x, z).dd < 0.8 || excluded(x, z)) continue;
-          const y = pkGround(x, z), g = scen.get(x, z);
+          const y = pkGround(x, z), g = (inStart(x, z) ? SINK : scen).get(x, z);
           if (R() < 0.6) ico(g, x, y + 0.35, z, 0.7 + R() * 0.7, 0.75, vary(bushC[Math.floor(R() * 3)], R, 0.15), R, 0.3);
           else { const q = Q(); pkPine(g, x, y, z, 2.5 + R() * 3, vary([0.12, 0.26, 0.13], R, 0.12), R, 0, q < 0.45 ? 1 : q < 0.75 ? 2 : q < 0.9 ? 3 : 0); }
         } else if (above && r < 0.45) {   // alpine grass tufts along the verge

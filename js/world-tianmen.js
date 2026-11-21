@@ -296,6 +296,10 @@
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.86, 0.13, 0.12], [0.95, 0.95, 0.95], [0.98, 0.8, 0.15], [0.2, 0.42, 0.75], [0.95, 0.95, 0.95], [0.12, 0.14, 0.2], [0.86, 0.13, 0.12], [0.3, 0.6, 0.35], [1, 0.55, 0.1], [0.6, 0.62, 0.66]];
     const CR = crowdCtx({ gH: tmGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: () => false, shirts: fans }), crSoft = new Set();
+    // the shared start's place (js/world-start.js): the old start (gantry, lights, hut, the banner) and what would stand in its ground go into SINK and
+    // sinkB (never drawn), so every draw from the random streams and every exclusion circle stays and nothing moves anywhere else
+    const sOwn = def.id === 'tianmen' && !!(World.startOwn && World.startOwn(def)), sGr = sOwn && World.startGround ? World.startGround(T) : [], SINK = new Chunks(110), sinkB = new GB(true);
+    const inStart = (x, z) => { for (const [cx, cz, r] of sGr) if ((x - cx) ** 2 + (z - cz) ** 2 < r * r) return true; return false; };
     const bannerQ = (cx, cy, cz, tx, tz, W, H, v0, v1, u0, u1, gb, tilt) => {   // double-sided board (bottom centre cx, cy, cz) readable from +t and -t; atlas cell u0..u1 x v0..v1; tilt leans its top towards +t
       const qx = tz, qz = -tx, ca = Math.cos(tilt || 0), sa = Math.sin(tilt || 0), kx = tx * H * sa, ky = H * ca, kz = tz * H * sa; u0 = u0 || 0; u1 = u1 == null ? 1 : u1;
       for (const f of [-1, 1]) { const ox = tx * ca * 0.04 * f, oy = -sa * 0.04 * f, oz = tz * ca * 0.04 * f, hw = W / 2 * f;
@@ -304,11 +308,11 @@
     };
     const row = (k) => [1 - (k + 1) / 8, 1 - k / 8];   // atlas row k (0 = top) -> [v0, v1]
     const board = (k) => { const v1 = 1 - (6 + Math.floor(k / 2)) / 8; return [v1 - 1 / 8, v1, (k % 2) * 0.5, (k % 2) * 0.5 + 0.5]; };   // a board of the second atlas: [v0, v1, u0, u1]
-    const arch = (s, rowK, postCol, beamCol) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i]
-      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = scen.get(x, z), hd = T.hd[i];
+    const arch = (s, rowK, postCol, beamCol, hide) => {   // gantry over the road: two posts at the barriers, a beam, a board both ways; returns [x, y, z, i] (hide: into SINK)
+      const i = T.idx(s), x = T.px[i], z = T.pz[i], y = T.hy[i], nx = T.nx[i], nz = T.nz[i], L1 = T.bl[i] + 0.9, L2 = T.br[i] + 0.9, g = (hide ? SINK : scen).get(x, z), hd = T.hd[i];
       box(g, x - nx * L1, y - 0.6, z - nz * L1, 0.6, 7.4, 0.6, hd, postCol); box(g, x + nx * L2, y - 0.6, z + nz * L2, 0.6, 7.4, 0.6, hd, postCol);
       const cx = x + nx * (L2 - L1) / 2, cz = z + nz * (L2 - L1) / 2; box(g, cx, y + 6.1, cz, 0.55, 0.65, L1 + L2 + 0.6, hd, beamCol);
-      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 11.5, 1.45, v0, v1);
+      const [v0, v1] = row(rowK); bannerQ(x, y + 4.3, z, T.tx[i], T.tz[i], 11.5, 1.45, v0, v1, 0, 1, hide ? sinkB : null);
       const e = exclPush(x, z, Math.max(L1, L2) + 6); crSoft.add(e); return [x, y, z, i];
     };
     const person = (x, z, ro, col) => crowdPut(CR, x, tmGround(x, z), z, -Math.sin(ro), Math.cos(ro), { col: col || fans[Math.floor(R() * fans.length)] }, 1);
@@ -330,19 +334,19 @@
 
     /* ---- START: gantry with the start lights, the timing hut, the road closed behind it; buses held back in the lay-by ---- */
     {
-      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18]), nx = T.nx[i], nz = T.nz[i];
-      box(scen.get(x, z), x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
+      const [x, y, z, i] = arch(sStart, 0, [0.2, 0.22, 0.26], [0.14, 0.15, 0.18], sOwn), nx = T.nx[i], nz = T.nz[i];
+      box((sOwn ? SINK : scen).get(x, z), x, y + 6.75, z, 0.5, 1.1, 5.4, T.hd[i], [0.08, 0.08, 0.09]);
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
-      out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = tmGround(hx, hz), gh = scen.get(hx, hz);   // the timing hut
+      for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; if (!sOwn) root.add(m); lights.push(m); }
+      if (!sOwn) out.dyn.lights = lights;   // (the shared start brings its own five)
+      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = tmGround(hx, hz), gh = (sOwn ? SINK : scen).get(hx, hz);   // the timing hut
       box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.92, 0.9, 0.84], [0.5, 0.3, 0.2], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.31, 0.33], [0.92, 0.9, 0.84]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
       const e0 = [T.px[0] - T.tx[0] * 0.9, T.pz[0] - T.tz[0] * 0.9];   // the end of the road: concrete blocks across it
       for (let o = -T.bl[0]; o < T.br[0]; o += 2.05) { const bx = e0[0] + T.nx[0] * (o + 1), bz = e0[1] + T.nz[0] * (o + 1); box(scen.get(bx, bz), bx, T.hy[0] - 0.1, bz, 0.7, 0.9, 1.95, T.hd[0], [0.76, 0.75, 0.72], [0.84, 0.83, 0.8]); }
-      { const [bx, bz, bi] = onSide(sStart + 16, 1, 1.4), by = tmGround(bx, bz), gb = scen.get(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
+      { const [bx, bz, bi] = onSide(sStart + 16, 1, 1.4), by = tmGround(bx, bz), hb = sOwn && [-2.6, 0, 2.6].some(o => inStart(bx + T.tx[bi] * o, bz + T.tz[bi] * o)), gb = (hb ? SINK : scen).get(bx, bz), [v0, v1] = row(7);   // the race's banner beside the road after the line
         for (const o of [-2.6, 2.6]) box(gb, bx + T.tx[bi] * o, by - 0.2, bz + T.tz[bi] * o, 0.14, 3.0, 0.14, T.hd[bi], [0.3, 0.3, 0.32]);
-        bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 5.2, 0.65, v0, v1); exclPush(bx, bz, 4); }
+        bannerQ(bx, by + 1.5, bz, -T.nx[bi], -T.nz[bi], 5.2, 0.65, v0, v1, 0, 1, hb ? sinkB : null); exclPush(bx, bz, 4); }
       const hh = T.hd[padS.i], c = Math.cos(hh), sn = Math.sin(hh), RB = rng(3931);   // the buses in the lay-by, side by side
       for (let k = 0; k < 2; k++) { const b = (k - 0.5) * 3.6, px = padS.x - sn * b, pz = padS.z + c * b; if (vrNear(px, pz).dd < 1.5) continue; tmBus(scen.get(px, pz), px, tmGround(px, pz), pz, hh, busCols[Math.floor(RB() * busCols.length)]); }
       for (let k = 0; k < 6; k++) { const px = padS.x + (R() - 0.5) * 14, pz = padS.z + (R() - 0.5) * 14; if (vrNear(px, pz).dd < 1) continue; person(px, pz, R() * TAU); }
