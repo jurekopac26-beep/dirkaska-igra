@@ -2932,12 +2932,12 @@
  "portomoniz/cs/lm": {
   "finished": 13,
   "cars": 13,
-  "winner": 123.14,
+  "winner": 123.13,
   "spins": 0,
-  "walls": 0,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "c29e9741bae958b366e059a0"
+  "digest": "24c8c12e4d3b7f0c12fa359f"
  },
  "portomoniz/cs/car": {
   "finished": 13,
@@ -3057,7 +3057,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "e5f6523139237b3854e4a0bb"
+  "digest": "5111dcdb7c6065f41f1c7d8e"
  },
  "livorno/cs/rain": {
   "finished": 21,
@@ -3072,32 +3072,32 @@
  "livorno/cs/formula": {
   "finished": 21,
   "cars": 21,
-  "winner": 449.86,
+  "winner": 447.97,
   "spins": 0,
-  "walls": 3,
+  "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "10135ecf57958e9fd34255ce"
+  "digest": "ebf9ad14480ec6c5f754fd5c"
  },
  "livorno/cs/lm": {
   "finished": 21,
   "cars": 21,
-  "winner": 450.53,
-  "spins": 2,
-  "walls": 6,
+  "winner": 450.75,
+  "spins": 1,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "57482e7bd5786c9cec579c6a"
+  "digest": "dce168988d5c1953ac7c7556"
  },
  "livorno/cs/car": {
   "finished": 21,
   "cars": 21,
-  "winner": 517.84,
-  "spins": 1,
-  "walls": 7,
+  "winner": 517.78,
+  "spins": 0,
+  "walls": 12,
   "rescues": 0,
   "nan": false,
-  "digest": "2986432fbb33f76b0270d436"
+  "digest": "396c3fcbab92deed008f9e57"
  },
  "mountbuller/cs": {
   "finished": 13,
@@ -3524,20 +3524,20 @@
   "cars": 13,
   "winner": 166.21,
   "spins": 0,
-  "walls": 2,
+  "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "abcdd4c74d46fa88ec6680db"
+  "digest": "2404432cc227a2acc4800045"
  },
  "kotor/cs/lm": {
   "finished": 13,
   "cars": 13,
   "winner": 168.41,
   "spins": 0,
-  "walls": 0,
+  "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "f1ee3abb62c9456256449537"
+  "digest": "2b134971da767e2dad2e3bb6"
  },
  "kotor/cs/car": {
   "finished": 13,
@@ -4087,7 +4087,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8624f48cfd177ea7c2de2f63"
+  "digest": "76328804d21600b8d1716a6c"
  },
  "killar/cs/car": {
   "finished": 13,
@@ -4177,7 +4177,7 @@
   "walls": 16,
   "rescues": 0,
   "nan": false,
-  "digest": "051429c2c07c1ceffa35dd2c"
+  "digest": "837671a1ba68afffc48b7384"
  },
  "mombasa/cs/lm": {
   "finished": 13,
@@ -4187,7 +4187,7 @@
   "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "9b60aa2c21b6912a407d13ff"
+  "digest": "e4f1e3b439d44387bb095827"
  },
  "mombasa/cs/car": {
   "finished": 13,
@@ -4197,7 +4197,7 @@
   "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "3cf53fc471b70705340b973b"
+  "digest": "18b4168c16944cc7b71c526e"
  },
  "isalo/cs": {
   "finished": 13,
