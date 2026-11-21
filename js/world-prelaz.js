@@ -796,16 +796,16 @@
        (a hut's two storeys), the stalls and sheds (timber, a tarp or a low roof) ---- */
     let nBld = 0;
     {
-      const RB = rng(L.seed + 21), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
+      const RB = rng(L.seed + 21), RP = rng(L.seed + 29), stone = [[0.58, 0.56, 0.52], [0.52, 0.5, 0.47], [0.62, 0.6, 0.56]], wood = [[0.46, 0.32, 0.2], [0.4, 0.28, 0.18], [0.54, 0.4, 0.26]], tarps = [[0.2, 0.34, 0.6], [0.7, 0.16, 0.14], [0.86, 0.86, 0.84], [0.22, 0.46, 0.3]];
       const PLASTER = [[0.88, 0.85, 0.77], [0.9, 0.9, 0.87], [0.85, 0.75, 0.58], [0.8, 0.64, 0.52], [0.7, 0.7, 0.68], [0.54, 0.4, 0.27]], GLASS = [0.15, 0.19, 0.23], BALC = [[0.74, 0.73, 0.7], [0.3, 0.26, 0.22]];   // (L.hotels: the walls' plaster, a few of timber; the windows; the balconies' slabs and rails)
       for (const b of blds) {
         const g = scen.get(b.x, b.z), c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9;
         for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = caGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); }
         if (L.hotels && b.kind !== 1) {   // (L.hotels, Gudauri's) the hotels and the apartment blocks (a big house: 3-6 storeys, or as many as OpenStreetMap's height
-          // gives), the guesthouses (2-3): plastered walls over a stone plinth, a dark band of windows along each storey (beyond ~220 m none), balconies
+          // gives), the guesthouses (2-3): plastered walls over a low stone plinth (as in reality: ~0.25 m over the highest corner, showing more only on the downhill side), a dark band of windows along each storey (beyond ~220 m none), balconies
           // along the long sides of the big ones, a low roof of coloured metal
           const big = b.kind === 2, FL = 3, nF = b.h > 0 ? clamp(Math.round(b.h / FL), 2, 8) : big ? 3 + Math.floor(RB() * 4) : 2 + (RB() < 0.35 ? 1 : 0);
-          const wl = vary(PLASTER[Math.floor(RB() * PLASTER.length)], RB, 0.05), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08), y0 = hi + 0.5, det = vrDist(b.x, b.z) < 220;
+          const wl = vary(PLASTER[Math.floor(RB() * PLASTER.length)], RB, 0.05), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08), y0 = hi + 0.25, det = vrDist(b.x, b.z) < 220;
           box(g, b.x, lo - 0.4, b.z, b.L + 0.3, y0 - lo + 0.4, b.W + 0.3, b.ang, vary(stone[nBld % 3], RB, 0.08), null, true);   // the plinth
           box(g, b.x, y0, b.z, b.L, nF * FL, b.W, b.ang, wl, null, true);   // the storeys
           if (det) for (let f = 0; f < nF; f++) { const wy = y0 + f * FL + 0.9;
@@ -822,11 +822,17 @@
           gable(g, b.x, hi + 2.2, b.z, b.L + 0.5, b.W + 0.6, 0.5, b.ang, vary(tarps[Math.floor(RB() * tarps.length)], RB, 0.08), vary(wood[0], RB, 0.1));
         } else {
           const H1 = b.kind === 2 ? 6.2 : 3.2, st = vary(stone[nBld % 3], RB, 0.08), wd = vary(wood[nBld % 3], RB, 0.1), rf = vary(L.roofs[Math.floor(RB() * L.roofs.length)], RB, 0.08);
-          box(g, b.x, lo - 0.4, b.z, b.L, hi - lo + 0.4 + H1 * 0.45, b.W, b.ang, st, null, true);
-          box(g, b.x, hi + H1 * 0.45 - 0.02, b.z, b.L, H1 * 0.55, b.W, b.ang, wd, null, true);
+          // the foundation, as in reality: ~0.25 m over the footprint's highest corner, so it shows only where the ground falls away (on a slope,
+          // the downhill side, by as much as the ground falls); the walls start on it and go down into it, never a tall block under the house.
+          // L.trop (Fiji, Palau, Vietnam, Saint Lucia, Papua): painted walls in one colour, no stone storey; elsewhere a masonry ground storey
+          // under a timber upper one, as the mountain villages build
+          const F0 = hi + 0.25, pl = L.trop ? vary(PLASTER[nBld % 5], RP, 0.05) : null;   // (its own stream: the roofs' colours as before)
+          box(g, b.x, lo - 0.4, b.z, b.L + 0.1, F0 - lo + 0.4, b.W + 0.1, b.ang, vary([0.5, 0.49, 0.46], RP, 0.06), null, true);   // (the foundation)
+          if (pl) box(g, b.x, F0 - 0.02, b.z, b.L, H1, b.W, b.ang, pl, null, true);
+          else { box(g, b.x, F0 - 0.02, b.z, b.L, H1 * 0.45, b.W, b.ang, st, null, true); box(g, b.x, F0 + H1 * 0.45 - 0.04, b.z, b.L, H1 * 0.55, b.W, b.ang, wd, null, true); }
           for (const f of [-1, 1]) for (let q = -1; q <= 1; q++) { if (b.L < 7 && q) continue; const u = q * b.L * 0.28, v = f * (b.W / 2 + 0.03);   // (windows on the long sides)
-            box(g, b.x + c * u - s * v, hi + H1 * 0.55, b.z + s * u + c * v, 1.0, 0.9, 0.06, b.ang, [0.14, 0.17, 0.2]); }
-          gable(g, b.x, hi + H1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.W, 12) * 0.42, b.ang, rf, wd);
+            box(g, b.x + c * u - s * v, F0 + H1 * 0.55, b.z + s * u + c * v, 1.0, 0.9, 0.06, b.ang, [0.14, 0.17, 0.2]);}
+          gable(g, b.x, F0 + H1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.W, 12) * 0.42, b.ang, rf, pl || wd);
         }
         CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++;
       }
@@ -878,8 +884,10 @@
       const lights = [], lg = new THREE.BoxGeometry(0.62, 0.62, 0.62);
       for (let k = 0; k < 5; k++) { const o = (k - 2) * 1.0, m = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ color: 0x2a0606 })); m.position.set(x + nx * o, y + 7.3, z + nz * o); m.rotation.y = -T.hd[i]; root.add(m); lights.push(m); }
       out.dyn.lights = lights;
-      const [hx, hz] = onSide(sStart - 5, -1, 3.2), hy = caGround(hx, hz), gh = scen.get(hx, hz); hold(hx, hz, 2.2);   // the timing hut
-      box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
+      const [hx, hz] = onSide(sStart - 5, -1, 3.2), gh = scen.get(hx, hz); hold(hx, hz, 2.2);   // the timing hut
+      let hlo = 1e9, hy = -1e9; { const c = Math.cos(T.hd[i]), s = Math.sin(T.hd[i]); for (const [u, v] of [[-2, -1.4], [2, -1.4], [2, 1.4], [-2, 1.4], [0, 0]]) { const y = caGround(hx + c * u - s * v, hz + s * u + c * v); hlo = Math.min(hlo, y); hy = Math.max(hy, y); } }
+      hy += 0.15;   // (its floor just over the highest corner, its walls down into the ground: it never floats over a slope, no tall base under it)
+      box(gh, hx, hlo - 0.3, hz, 4.0, hy - hlo + 0.3 + 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
       const pc = [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.95, 0.72, 0.16]];
       for (let s = 8, k = 0; s < sStart + 50; s += 12, k++) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue; hold(px, pz, 0.1);   // pennants on poles
