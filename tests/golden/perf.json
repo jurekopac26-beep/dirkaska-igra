@@ -590,23 +590,23 @@
  "ujarras": {
   "calls": 129,
   "maxCalls": 196,
-  "kverts": 240,
-  "maxKverts": 274,
-  "jsMs": 1
+  "kverts": 246,
+  "maxKverts": 279,
+  "jsMs": 1.17
  },
  "ghoufi": {
-  "calls": 126,
+  "calls": 125,
   "maxCalls": 190,
-  "kverts": 197,
-  "maxKverts": 266,
-  "jsMs": 0.87
+  "kverts": 201,
+  "maxKverts": 273,
+  "jsMs": 1.07
  },
  "cusco": {
   "calls": 128,
   "maxCalls": 163,
-  "kverts": 299,
-  "maxKverts": 390,
-  "jsMs": 0.6
+  "kverts": 307,
+  "maxKverts": 398,
+  "jsMs": 0.69
  },
  "mombasa": {
   "calls": 114,
@@ -639,9 +639,9 @@
  "isuna": {
   "calls": 130,
   "maxCalls": 159,
-  "kverts": 173,
-  "maxKverts": 227,
-  "jsMs": 0.91
+  "kverts": 177,
+  "maxKverts": 233,
+  "jsMs": 1.29
  },
  "hiva": {
   "calls": 142,

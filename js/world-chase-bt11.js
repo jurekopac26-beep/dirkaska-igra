@@ -48,19 +48,19 @@
           else { cushion(S.g(x, z), x, y, z, 0.4 + h * 0.35, 0.28 + h * 0.2, vary(S.c.pelin, R, 0.025), R); S.st.pelin++; } } },
       far: { ok: (c, sl) => (c === 0 || c === 2) && sl < 0.8 ? 0.4 : 0, n: [2, 4],
         put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.5 + h * 0.3, 0.6 + h * 0.35, vary(S.c.alfa, R, 0.03), R, 5); S.st.alfa++; } },
-      col: { alfa: [0.55, 0.56, 0.36], dry: [0.7, 0.62, 0.42], pelin: [0.58, 0.6, 0.5], grav: [0.74, 0.65, 0.5] } },
+      col: { alfa: [0.55, 0.56, 0.36], dry: [0.7, 0.62, 0.42], pelin: [0.58, 0.6, 0.5], grav: [0.7, 0.62, 0.48] } },
     /* Isuna: docs/proge/isuna.md: »ob reki, pod gozdom modrega bora … gozd jelk in borov na pobočjih … krave«. Under the blue pines by the
        road the floor is their long rust-brown needles; on the grazed verges short grass in tufts, and the valley's dry slopes have the
        grey-green wormwood (Artemisia) bushes in loose groups. Nothing in the river's bed or on its edge. */
     isuna: { seed: 11201, st: ['trava', 'pelin', 'iglice'], river: true,
       edge: { ok: (c, sl) => (c === 0 || c === 2) && sl < 0.8 ? 0.65 : 0, n: [3, 3],
         put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.26 + h * 0.2, 0.3 + h * 0.28, vary(mix3(S.c.gr, S.c.seed, R() * 0.5), R, 0.03), R, 4); S.st.trava++; } },
-      mid: { ok: (c, sl, x, z, w) => (c === 3 || c === 4 || c === 5 || sl > 1.1) ? 0 : c === 1 ? 0.85 : w > 0.3 ? 0.7 : 0.35, n: [1, 3], litter: 0.6, lit: 'ndl', lr: [1.2, 2.2], ln: 'iglice', wood: true,
+      mid: { ok: (c, sl, x, z, w) => (c === 3 || c === 4 || c === 5 || sl > 1.1) ? 0 : c === 1 ? 0.85 : w > 0.3 ? 0.7 : 0.35, n: [1, 3], litter: 0.35, lit: 'ndl', lr: [0.8, 1.5], ln: 'iglice', wood: true,
         put: (S, x, y, z, h, R, w) => { if (w > 0.3 && R() < 0.45) { tuft(S.g(x, z), x, y, z, 0.3 + h * 0.2, 0.25 + h * 0.2, vary(S.c.gr, R, 0.03), R, 4); S.st.trava++; }
-          else { cushion(S.g(x, z), x, y, z, 0.45 + h * 0.4, 0.4 + h * 0.35, vary(S.c.pelin, R, 0.025), R); S.st.pelin++; } } },
+          else { cushion(S.g(x, z), x, y, z, 0.6 + h * 0.5, 0.32 + h * 0.25, vary(S.c.pelin, R, 0.025), R); S.st.pelin++; } } },
       far: { ok: (c, sl, x, z, w) => (c === 0 || c === 2) && sl < 0.9 ? 0.45 * (1 - w) : 0, n: [2, 4],
-        put: (S, x, y, z, h, R) => { cushion(S.g(x, z), x, y, z, 0.55 + h * 0.45, 0.55 + h * 0.4, vary(S.c.pelin, R, 0.025), R); S.st.pelin++; } },
-      col: { gr: [0.4, 0.5, 0.22], seed: [0.62, 0.58, 0.36], pelin: [0.5, 0.55, 0.42], ndl: [0.46, 0.31, 0.17] } },
+        put: (S, x, y, z, h, R) => { cushion(S.g(x, z), x, y, z, 0.7 + h * 0.5, 0.4 + h * 0.3, vary(S.c.pelin, R, 0.025), R); S.st.pelin++; } },
+      col: { gr: [0.4, 0.5, 0.22], seed: [0.62, 0.58, 0.36], pelin: [0.5, 0.55, 0.42], ndl: [0.4, 0.33, 0.23] } },
     /* Ujarrás: docs/proge/ujarras.md: »tropski listavci … ob cesti trava«, the coffee country over the Orosi valley. The verge's tall uncut
        grass in dense tufts at the barrier's foot; at the forest's edge and under it the big ferns and broad-leaved undergrowth in low
        clumps on the dark volcanic soil; on the open slopes taller grass in loose groups. Nothing on the lookout (S.clear and its walls). */
@@ -72,7 +72,7 @@
           else { tuft(S.g(x, z), x, y, z, 0.36 + h * 0.26, 0.55 + h * 0.45, vary(S.c.gr, R, 0.03), R, 5); S.st.trava++; } } },
       far: { ok: (c, sl, x, z, w) => (c === 0 || c === 2) && sl < 0.9 ? 0.5 * (1 - w) : 0, n: [2, 4],
         put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.45 + h * 0.3, 0.8 + h * 0.6, vary(S.c.gr2, R, 0.03), R, 5); S.st.trava++; } },
-      col: { gr: [0.3, 0.5, 0.16], gr2: [0.4, 0.54, 0.2], fern: [0.22, 0.44, 0.13], under: [0.2, 0.36, 0.14], soil: [0.3, 0.22, 0.15] } },
+      col: { gr: [0.3, 0.5, 0.16], gr2: [0.4, 0.54, 0.2], fern: [0.22, 0.44, 0.13], under: [0.2, 0.36, 0.14], soil: [0.27, 0.21, 0.15] } },
     /* Cusco: docs/proge/cusco.md: »drevesa (evkaliptusi), trava, skale«, 3500-3600 m over the town. The Andes' puna grass (ichu) in tall
        straw-yellow tussocks on the open slopes and at the barrier's foot; under the eucalyptus their grey-brown litter of bark strips and
        leaves; here and there the blue-grey agave by the road, as it grows on the slopes round Cusco. Nothing by the terrace walls
@@ -86,7 +86,7 @@
           else { tuft(S.g(x, z), x, y, z, 0.4 + h * 0.3, 0.55 + h * 0.4, vary(w > 0.3 ? S.c.ichu2 : S.c.ichu, R, 0.03), R, 5); S.st.ichu++; } } },
       far: { ok: (c, sl, x, z, w) => (c === 0 || c === 2 || c === 4) && sl < 0.9 ? 0.45 * (1 - w * 0.7) : 0, n: [2, 4],
         put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.5 + h * 0.3, 0.7 + h * 0.4, vary(S.c.ichu, R, 0.03), R, 5); S.st.ichu++; } },
-      col: { ichu: [0.74, 0.65, 0.4], ichu2: [0.62, 0.58, 0.36], agave: [0.46, 0.56, 0.54], leaf: [0.46, 0.38, 0.28] } },
+      col: { ichu: [0.7, 0.64, 0.4], ichu2: [0.58, 0.57, 0.33], agave: [0.46, 0.56, 0.54], leaf: [0.38, 0.33, 0.25] } },
   };
 
   World.ext.goreRob = (ctx, id) => {
@@ -107,9 +107,9 @@
         if (!free(x, z, inner) || (outer && free(x, z, outer)) || bad(x, z)) continue;
         B.put(S, x, gH(x, z), z, h, R, w);
       } });
-    band(L.edge, 1, 1.8, 1.0, 2.2, 3.2, 0.5, 3.5, 30, 21);    // (the strip at the barrier's foot: never past 3.5 m)
-    band(L.mid, 2, 2.4, 12, 1.4, 4.5, 1.0, 0, 40, 19);
-    band(L.far, 3, 5, 24, 6, 5, 4, 0, 110, 27);
+    band(L.edge, 1, 1.2, 1.0, 2.2, 3.2, 0.5, 3.5, 30, 21);    // (the strip at the barrier's foot: never past 3.5 m)
+    band(L.mid, 2, 1.6, 12, 1.4, 4.5, 1.0, 0, 40, 19);
+    band(L.far, 3, 3.5, 24, 6, 5, 4, 0, 110, 27);
     soft.done();
     for (const g of root.children) if (g.isGroup) for (const m of g.children) if (m.userData.rob && m.name === 'rob') m.castShadow = false;   // (knee-high plants: no second draw in the shadow pass)
     ctx.out.rob = st;
