@@ -224,11 +224,11 @@
   "jsMs": 1.24
  },
  "portomoniz": {
-  "calls": 236,
-  "maxCalls": 284,
-  "kverts": 593,
-  "maxKverts": 732,
-  "jsMs": 1
+  "calls": 245,
+  "maxCalls": 295,
+  "kverts": 652,
+  "maxKverts": 809,
+  "jsMs": 1.52
  },
  "seoul": {
   "calls": 137,
@@ -406,11 +406,11 @@
   "jsMs": 1.25
  },
  "savusavu": {
-  "calls": 181,
-  "maxCalls": 217,
-  "kverts": 473,
-  "maxKverts": 567,
-  "jsMs": 0.81
+  "calls": 187,
+  "maxCalls": 221,
+  "kverts": 504,
+  "maxKverts": 604,
+  "jsMs": 1.12
  },
  "koror": {
   "calls": 154,
