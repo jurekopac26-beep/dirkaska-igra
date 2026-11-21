@@ -123,12 +123,13 @@
     return st;
   };
 
-  /* goreRob chained for these two ids (the LOOK the earlier groups fill stays the same object); what is added counts in out.stats.rob.bt50 */
-  const base = World.ext.goreRob, LOOK = base.LOOK;
-  World.ext.goreRob = function (ctx, id, o) {
-    const r = base.call(this, ctx, id, o) || {};
-    if (CFG[id]) try { r.bt50 = add(ctx, CFG[id], o || {}); if (ctx.out) ctx.out.rob = r; } catch (e) { console.error('chase-bt50 (' + id + '):', e); }
+  /* goreRob chained for these two ids (LOOK and the other properties stay the same objects); what is added counts in out.stats.rob.bt50 */
+  const base = World.ext.goreRob;
+  const f = function (ctx, id, o) {
+    let r = base.call(this, ctx, id, o);
+    if (CFG[id]) try { r = r || {}; r.bt50 = add(ctx, CFG[id], o || {}); if (ctx.out) ctx.out.rob = r; } catch (e) { console.error('chase-bt50 (' + id + '):', e); }
     return r;
   };
-  World.ext.goreRob.LOOK = LOOK;
+  Object.assign(f, base);   // (LOOK, pkLC, hjLC and whatever else the earlier groups hang on it: Pikes and Harju call goreRob only when theirs is there)
+  World.ext.goreRob = f;
 })();
