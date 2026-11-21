@@ -492,9 +492,9 @@
  "ngorongoro": {
   "calls": 144,
   "maxCalls": 170,
-  "kverts": 311,
-  "maxKverts": 358,
-  "jsMs": 1.56
+  "kverts": 310,
+  "maxKverts": 355,
+  "jsMs": 1.31
  },
  "tuzla": {
   "calls": 156,

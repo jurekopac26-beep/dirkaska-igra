@@ -963,7 +963,7 @@
         if (g.kind === 'cross' && A.length) { let bx = 0, bz = 0; for (const a of A) { bx += a.bx; bz += a.bz; } ms.push([bx / A.length, bz / A.length, 1]); }
         for (const [cx, cz, far] of ms) { let r = 0; for (const a of A) r = Math.max(r, far ? Math.hypot(a.bx - cx, a.bz - cz) : Math.hypot(a.hx - cx, a.hz - cz)); zA.push([cx, cz, r + 8]); } }
       World.ext.goreRob({ excluded, root, out }, 'ngorongoro', { gH: caGround, slope: caSlope, near: vrNear, lc: (x, z) => segD(ST, x, z) < 8 ? 6 : vrLC(x, z),
-        bad: (x, z) => segD(ST, x, z) < 2.5 || zA.some(e => (x - e[0]) * (x - e[0]) + (z - e[1]) * (z - e[1]) < e[2] * e[2]) });
+        bad: (x, z) => segD(ST, x, z) < 2.5 || segD(PA, x, z) < 1.4 || zA.some(e => (x - e[0]) * (x - e[0]) + (z - e[1]) * (z - e[1]) < e[2] * e[2]) });
     }
 
     /* ---- the view beyond the corridor (ngFar; World.update moves it with the camera); finish the meshes ---- */
