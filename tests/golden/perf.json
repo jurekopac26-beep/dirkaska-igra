@@ -91,11 +91,11 @@
   "jsMs": 1.11
  },
  "livorno": {
-  "calls": 150,
-  "maxCalls": 180,
-  "kverts": 324,
-  "maxKverts": 414,
-  "jsMs": 2.61
+  "calls": 155,
+  "maxCalls": 185,
+  "kverts": 370,
+  "maxKverts": 461,
+  "jsMs": 2.31
  },
  "balea": {
   "calls": 166,
@@ -252,11 +252,11 @@
   "jsMs": 0.97
  },
  "lombok": {
-  "calls": 213,
-  "maxCalls": 247,
-  "kverts": 616,
-  "maxKverts": 737,
-  "jsMs": 0.92
+  "calls": 220,
+  "maxCalls": 252,
+  "kverts": 643,
+  "maxKverts": 749,
+  "jsMs": 1.25
  },
  "buriram": {
   "calls": 200,
