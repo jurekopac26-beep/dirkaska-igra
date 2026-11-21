@@ -1265,20 +1265,20 @@
   }
  },
  "portobelo": {
-  "meshes": 246,
-  "verts": 216830,
-  "instances": 1584,
+  "meshes": 250,
+  "verts": 228946,
+  "instances": 1571,
   "props": 0,
   "crowd": 81,
-  "world": "ebcd9ce0",
+  "world": "cab0ff63",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "acc521b0",
+   "-:MeshLambertMaterial": "b292dbe1",
    "-:MeshPhongMaterial": "ce91aa65",
    "crowd:MeshLambertMaterial": "cd25d89c",
    "flags:MeshLambertMaterial": "8d45e55b",
-   "ao:MeshBasicMaterial": "3c23c188",
+   "ao:MeshBasicMaterial": "efe38162",
    "tyremarks:MeshBasicMaterial": "9ed9c3d7",
    "roadwear:MeshLambertMaterial": "785bd2cc"
   }
