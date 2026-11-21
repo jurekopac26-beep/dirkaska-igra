@@ -154,11 +154,11 @@
   "jsMs": 1.17
  },
  "kotor": {
-  "calls": 207,
-  "maxCalls": 250,
-  "kverts": 514,
-  "maxKverts": 695,
-  "jsMs": 0.93
+  "calls": 217,
+  "maxCalls": 260,
+  "kverts": 642,
+  "maxKverts": 823,
+  "jsMs": 1.24
  },
  "bikernieki": {
   "calls": 183,
@@ -413,11 +413,11 @@
   "jsMs": 0.81
  },
  "koror": {
-  "calls": 149,
-  "maxCalls": 170,
-  "kverts": 371,
-  "maxKverts": 587,
-  "jsMs": 1.02
+  "calls": 154,
+  "maxCalls": 179,
+  "kverts": 425,
+  "maxKverts": 650,
+  "jsMs": 1.38
  },
  "cpalace": {
   "calls": 206,
