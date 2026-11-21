@@ -964,18 +964,19 @@
   }
  },
  "sepang": {
-  "meshes": 555,
-  "verts": 976124,
+  "meshes": 586,
+  "verts": 984212,
   "instances": 6296,
   "props": 86,
   "crowd": 30,
-  "world": "72708815",
+  "world": "5f311c84",
   "propsHash": "3f2c7418",
   "floor": "9ca322ac/11060",
   "groups": {
    "-:MeshLambertMaterial": "cc7177ae",
    "-:MeshBasicMaterial": "2a57e1c7",
    "sepang service roads:MeshLambertMaterial": "3f18857b",
+   "rob:MeshLambertMaterial": "a7b6b8bd",
    "crowd:MeshLambertMaterial": "2ef6408d",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "e2824465",
@@ -1126,12 +1127,12 @@
   }
  },
  "riohondo": {
-  "meshes": 704,
-  "verts": 683961,
+  "meshes": 744,
+  "verts": 713952,
   "instances": 6346,
   "props": 70,
   "crowd": 43,
-  "world": "435b5d1d",
+  "world": "f395e4a3",
   "propsHash": "fb5fac24",
   "floor": "32c58a94/9632",
   "groups": {
@@ -1141,6 +1142,7 @@
    "riohondo lake:MeshPhongMaterial": "630a19ec",
    "-:MeshPhongMaterial": "c944c85c",
    "rsFar:MeshBasicMaterial": "ce2a70b3",
+   "rob:MeshLambertMaterial": "7b20e7d6",
    "crowd:MeshLambertMaterial": "93ef2d55",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "8d18c822",
