@@ -2198,8 +2198,12 @@ Odprto iz meritev (odločitev uporabnika, vprašanje `trki-ozke-proge-20-11`): s
 | Spa, visoka | 179 | 183 | 183 | 183 | 798 tisoč |
 | rbring, nizka, suho / dež | | 93 / 95 | 93 / 95 | 97 / 99 | 210 / 222 tisoč |
 | montreal, nizka, suho / dež | | 103 / 96 | 103 / 96 | 111 / 105 | 365 / 326 tisoč |
+| Spa, nizka, dež (21. 11.) | 140 | 143 | 143 | 143 | 375 tisoč |
+| Spa, visoka, dež (21. 11.) | 175 | 179 | 179 | 180 | 780 tisoč |
+| rbring, visoka, suho / dež (21. 11.) | 112 / 114 | 113 / 114 | 112 / 114 | 116 / 118 | 292 / 302 tisoč |
+| montreal, visoka, suho / dež (21. 11.) | 120 / 111 | 124 / 115 | 124 / 115 | 136 / 127 | 505 / 440 tisoč |
 
-Dodatni klici v sličici trka so od odpadlih kosov (+8 pri 4 kosih) in drobcev (+1), ne od prahu. Meja Spa v `tests/golden/perf.json` je 222, proračun 300 / 900 tisoč drži; Spa na visoki grafiki ima 798 tisoč oglišč (rezerve malo, a z ali brez prahu enako). Spa v dežju in visoka grafika na drugih dveh progah nista izmerjeni. Test: `poskodbe.test.mjs`, del 9 (klici 139 / 139 / 139 jeklo / grušč / jeklo, oglišča enaka, grušč natanko +86 delcev, štirje polni udarci 436 živih). Test zdaj traja več kot 10 min na obremenjenem stroju.
+Dodatni klici v sličici trka so od odpadlih kosov (+8 pri 4 kosih) in drobcev (+1), ne od prahu. Meja Spa v `tests/golden/perf.json` je 222, proračun 300 / 900 tisoč drži; Spa na visoki grafiki ima 798 tisoč oglišč (rezerve malo, a z ali brez prahu enako). Izmerjeno 21. 11. še Spa v dežju in visoka grafika na rbring/montreal: prah − brez je povsod 0 klicev (delci) in 0 oglišč ±1, vse pod mejami `perf.json` (Spa 222, rbring 262, montreal 242) in proračunom. Test: `poskodbe.test.mjs`, del 9 (klici 139 / 139 / 139 jeklo / grušč / jeklo, oglišča enaka, grušč natanko +86 delcev, štirje polni udarci 436 živih). Test zdaj traja več kot 10 min na obremenjenem stroju.
 
 **Zrcalni vrstni red vogalov (`wallCollide`, cv 6) in dirke.** `node tools/trki/zrcalne-dirke.js` (načini `dirke`, `zrcalo`, `ponovi`). Vrstni red 1,0,3,2 se od 0,1,2,3 loči samo, kadar sta v istem koraku v ograji oba sprednja ali oba zadnja vogala. 9 prog × 6 semen × 3 različice (zrcalno, brez, obratno): 0/54 razhajanj, vse do bita enako. Dodatnih 48 dirk: 1 razhajanje (Sa Calobra, seme 81) brez učinka (škoda, časi, mesta enaki). Na ravni preizkusni cesti z zrcaljenim štartom 13 avtov prav zrcalni red ohrani polje simetrično (odmik do 4e-8 m v 5 od 6 semen; brez njega se zrcalo podre pri ~0,1 s). Sklep: reda dirk ne popači, jedro nespremenjeno. `tests/trki.test.js` 69/69, `tests/races.test.js` 340/340.
 - Odprto iz meritve: Sa Calobra, seme 81, cv 6: igralčev avto na avtopilotu od ~85 s stoji z nosom na levi ograji (781 m, škoda 65 %, ni razbitina), dirka se ne konča; v cv 5 pride v cilj. Vzrok je škoda + avtopilot brez vzvratne, ne vrstni red.
@@ -2228,11 +2232,13 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 **Odprto, ne čaka**
 - Sa Calobra, seme 81, cv 6: igralčev avto na avtopilotu obtiči ob ograji (četrti del).
 - Narisana karoserija nizkih celih avtov pri polnem zaviranju seže skozi cesto (četrti del; drža v risanju).
-- Klici s prahom: Spa v dežju in visoka grafika na rbring/montreal neizmerjeni.
-- `tests/browser/poskodbe.test.mjs`, »2. Preproste: a light knock cracks the lamp it leaves whole«: nestabilno (1 od 3 tekov).
 - K3 na Medvodah: kosi v coni krožišča nimajo meja kot avti (razdelek »Krog 20. 11. 2026, drugi del«); ob odločitvi o Medvodah.
 - Po namestitvi koles redarjev vrnjena kolesa ostanejo zvita do popravila v boksih (opažanje, ni spremenjeno).
 - F4 (nizka, po presoji).
+
+**Zaprto 21. 11. 2026**
+- Nestabilna svetilka v `poskodbe.test.mjs` (del 2): tekmeci, postavljeni na višino igralca na pobočju Spa, med 30 koraki umirjanja zdrsnejo in se nekateri dotaknejo (kateri, se med teki spreminja); dotik da sprednjemu vogalu `cd` 0,03 ali več, zato je svetilka počena ali razbita že pred udarci. Popravek samo v testu (`f118ac4`): za svetilko se vzame zadnji tekmec brez dotika, preverjanje 2.0 to potrdi; igra nespremenjena.
+- Klici s prahom: Spa v dežju, visoka grafika na rbring/montreal (0 dodatnih).
 
 **Zaprto v četrtem delu (20. 11. 2026)**
 - P4.4 iskre pod povešenim vogalom; klici risanja v sličici trka s prahom (0 dodatnih); vpliv zrcalnega vrstnega reda vogalov na dirke (ga ni).
