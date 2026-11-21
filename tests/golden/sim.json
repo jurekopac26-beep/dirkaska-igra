@@ -6662,5 +6662,103 @@
    "rescues": 0,
    "repairs": 0
   }
+ },
+ "longyearbyen/race/cs": {
+  "digest": "3fa6d54b4fd470a59233d0c5",
+  "lead": 2957.3,
+  "car0": [
+   518.92,
+   1919.25
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longyearbyen/demo/cs": {
+  "digest": "1de52f28a9ca1504db0fe517",
+  "lead": 3009.6,
+  "car0": [
+   516.5,
+   2037.11
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longyearbyen/upg/cs": {
+  "digest": "5c9089b5bbf437125efc94c6",
+  "lead": 3081.1,
+  "car0": [
+   470.95,
+   2091.43
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longyearbyen/crash/cs": {
+  "digest": "da2affea012a4583e8e5b039",
+  "lead": 2922.3,
+  "car0": [
+   686.7,
+   1508.54
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longyearbyen/formula/cs": {
+  "digest": "2bdd18a39b0a3ec9ababdc16",
+  "lead": 3659,
+  "car0": [
+   271.91,
+   2381.78
+  ],
+  "cover": {
+   "dmg": 0.27,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longyearbyen/lm/cs": {
+  "digest": "ed24196c761b6731a5a32b08",
+  "lead": 3598.8,
+  "car0": [
+   300.95,
+   2335
+  ],
+  "cover": {
+   "dmg": 0.36,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "longyearbyen/car/cs": {
+  "digest": "5bbd84cb6103d8c8dce45afa",
+  "lead": 2923.6,
+  "car0": [
+   685,
+   1510.73
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 4,
+   "rescues": 1,
+   "repairs": 0
+  }
  }
 }
