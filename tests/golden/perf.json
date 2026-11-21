@@ -77,11 +77,11 @@
   "jsMs": 1.08
  },
  "rastro": {
-  "calls": 202,
-  "maxCalls": 250,
-  "kverts": 564,
-  "maxKverts": 668,
-  "jsMs": 1.16
+  "calls": 217,
+  "maxCalls": 269,
+  "kverts": 629,
+  "maxKverts": 754,
+  "jsMs": 1.18
  },
  "montreal": {
   "calls": 211,
@@ -308,11 +308,11 @@
   "jsMs": 1.55
  },
  "ujarras": {
-  "calls": 138,
-  "maxCalls": 202,
-  "kverts": 265,
-  "maxKverts": 302,
-  "jsMs": 0.89
+  "calls": 150,
+  "maxCalls": 210,
+  "kverts": 296,
+  "maxKverts": 344,
+  "jsMs": 0.75
  },
  "ghoufi": {
   "calls": 137,
