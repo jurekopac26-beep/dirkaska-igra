@@ -14,11 +14,11 @@
   "jsMs": 1.14
  },
  "nring": {
-  "calls": 172,
-  "maxCalls": 197,
-  "kverts": 350,
-  "maxKverts": 374,
-  "jsMs": 3.16
+  "calls": 179,
+  "maxCalls": 205,
+  "kverts": 388,
+  "maxKverts": 419,
+  "jsMs": 3.56
  },
  "spa": {
   "calls": 193,
@@ -28,11 +28,11 @@
   "jsMs": 1.14
  },
  "rbring": {
-  "calls": 216,
-  "maxCalls": 260,
-  "kverts": 525,
-  "maxKverts": 680,
-  "jsMs": 1.25
+  "calls": 222,
+  "maxCalls": 268,
+  "kverts": 555,
+  "maxKverts": 689,
+  "jsMs": 1.58
  },
  "caracoles": {
   "calls": 181,
