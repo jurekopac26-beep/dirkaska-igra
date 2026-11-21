@@ -285,7 +285,7 @@
       if (S.excl && S.excl.some((e) => Math.hypot(x - e[0], z - e[1]) < e[2])) continue;   // (none in the track's own circles: its landmark stands there)
       const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
       for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 1.5) || vrStubAt(px, pz, 0.8)) ok = false; }
-      if (ok) blds.push({ x, z, L: Math.min(L, 46), W: Math.min(W, 26), ang, hgt, kind, own: !!(S.ownBld && S.ownBld(x, z, L, W)) }); }   // (own: the track's S.extra draws it itself, e.g. a landmark)
+      if (ok) blds.push({ x, z, L: Math.min(L, 46), W: Math.min(W, 26), ang, hgt, kind, own: !!(S.ownBld && S.ownBld(x, z, L, W)) }); }   // (own: the track's S.extra draws it, as Učka's tower)
     // the car parks (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
     for (const [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; const i = n.i, s = i * T.ds; if (s < 30 || s > T.len - 30) continue;

@@ -331,6 +331,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | sogeri | Sogeri, Papua Nova Gvineja | sogeri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.sogeri`: kunai trava, tropski gozd v grapi, konglomerat v usekih; vožnja po levi) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
+| ucka | Učka, Hrvaška | ucka | `js/world-ucka.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | ujarras | Ujarrás, Kostarika | ujarras | `js/world-ujarras.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | tianmen | Tianmen, Kitajska | tianmen | `js/world-tianmen.js` (`buildTianmen`) |
 | *toronto* | *Toronto, Kanada (test)* | toronto | `js/world-toronto.js` |
