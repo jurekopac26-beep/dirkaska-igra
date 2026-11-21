@@ -18,13 +18,13 @@
   if (!BT || !BT.tuft || !BT.walk || !BT.mix3 || !BT.soil || !BT.softScen || !vary || !rng || !sstep) return;
   const { tuft, walk, mix3, soil, softScen } = BT;
 
-  /* Livorno: docs/proge/livorno.md: »makija«, »peščenjak na strminah«, pines and maritime pines above the coast. Every ~7 m on both
-     sides a wide low patch between 8 and 55 m past the barrier: on the gentle ground the straw grass (the summer's), the macchia's
+  /* Livorno: docs/proge/livorno.md: »makija«, »peščenjak na strminah«, pines and maritime pines above the coast. Every ~4 m on both
+     sides a wide low patch between 6 and 55 m past the barrier: on the gentle ground the straw grass (the summer's), the macchia's
      grey-brown earth and the pines' rust needle litter; on the steep ground (slope 0.9-1.7) the pale sandstone. Never in the towns
      (land cover 3), where the ground lies far below the road (a valley under the fill), where another leg's road is nearer, or in the
      builder's own bad places (the sea, the beach, the bridges). */
-  const LIV = { seed: 48101, step: 7, share: 0.55, from: 8, to: 55, drop: 9,
-    straw: [0.74, 0.67, 0.44], earth: [0.56, 0.48, 0.36], needle: [0.55, 0.42, 0.28], sand: [0.72, 0.65, 0.5], sand2: [0.64, 0.58, 0.46] };
+  const LIV = { seed: 48101, step: 4, share: 0.8, from: 6, to: 55, drop: 12,
+    straw: [0.72, 0.68, 0.46], earth: [0.58, 0.54, 0.42], needle: [0.56, 0.47, 0.34], sand: [0.74, 0.69, 0.56], sand2: [0.66, 0.62, 0.5] };
   const livBand = (ctx, o) => {
     const T = API.T, near = o.near, gT = o.gH, lc = o.lc, st = { pas: 0, pesc: 0 };
     if (!T || !T.br || !near || !gT || !lc || !ctx.root || !ctx.out || !ctx.out.matV) return st;
@@ -62,14 +62,14 @@
      the fence. So from ~34 to ~60 m on the open meadow (land cover 0 and 2, slope under 0.8) loose tussock groups of the unmown grass, its
      colour drifting between the fresh green and the hay; among them low patches of the yellow (buttercup) and the white (daisy, yarrow)
      flowering; at the woods' edge (land cover 1) the brown litter of spruce needles and beech leaves in low patches. */
-  const RB = { seed: 48201, k: 0.4, flower: 0.3, grass: [0.4, 0.52, 0.24], hay: [0.58, 0.58, 0.32], yellow: [0.86, 0.82, 0.42], white: [0.88, 0.88, 0.82], leaf: [0.46, 0.34, 0.22] };
+  const RB = { seed: 48201, k: 0.75, flower: 0.5, grass: [0.4, 0.52, 0.24], hay: [0.58, 0.58, 0.32], yellow: [0.74, 0.74, 0.38], white: [0.74, 0.78, 0.62], leaf: [0.46, 0.34, 0.22] };
   const rbFar = (ctx, env, st) => {
     const { nrGround: gH, nrLC, nrSlope } = API, scen = ctx.scen; if (!scen || !gH || !nrLC || !nrSlope) return;
     st.dalj = 0; st.cvet = 0; st.listje = 0;
-    walk(env, RB.seed, 6, 26, 34, (x, z) => { const c = nrLC(x, z); return c <= 2 && nrSlope(x, z) < 0.8 ? (c === 1 ? 0.25 : RB.k) : 0; }, (gx, gz, k, R, free) => {
+    walk(env, RB.seed, 4, 26, 34, (x, z) => { const c = nrLC(x, z); return c <= 2 && nrSlope(x, z) < 0.8 ? (c === 1 ? 0.25 : RB.k) : 0; }, (gx, gz, k, R, free) => {
       const c = nrLC(gx, gz), P = API.NR;
       if (c === 1) { if (free(gx, gz, 4)) { soil(scen, gH, gx, gz, 1.3 + R() * 1.5, vary(RB.leaf, R, 0.03), R, 0.05); st.listje++; } return; }
-      if (R() < RB.flower && free(gx, gz, 4)) { soil(scen, gH, gx, gz, 1.0 + R() * 1.4, vary(R() < 0.55 ? RB.yellow : RB.white, R, 0.025), R, 0.04); st.cvet++; }
+      if (R() < RB.flower && free(gx, gz, 4)) { soil(scen, gH, gx, gz, 1.4 + R() * 1.6, vary(R() < 0.55 ? RB.yellow : RB.white, R, 0.025), R, 0.04); st.cvet++; }
       for (let q = 0, n = 3 + Math.floor(R() * 4); q < n; q++) {
         const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R();
         if (!free(x, z, 3) || env.excluded(x, z) || nrLC(x, z) === 1 || nrLC(x, z) > 2) continue;
