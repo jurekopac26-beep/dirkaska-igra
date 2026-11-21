@@ -91,11 +91,11 @@
   "jsMs": 1.11
  },
  "livorno": {
-  "calls": 150,
-  "maxCalls": 180,
-  "kverts": 324,
-  "maxKverts": 414,
-  "jsMs": 2.61
+  "calls": 161,
+  "maxCalls": 189,
+  "kverts": 364,
+  "maxKverts": 479,
+  "jsMs": 3.13
  },
  "balea": {
   "calls": 166,
@@ -343,11 +343,11 @@
   "jsMs": 0.58
  },
  "portobelo": {
-  "calls": 116,
-  "maxCalls": 144,
-  "kverts": 274,
-  "maxKverts": 325,
-  "jsMs": 1.42
+  "calls": 122,
+  "maxCalls": 148,
+  "kverts": 294,
+  "maxKverts": 359,
+  "jsMs": 1.13
  },
  "eljem": {
   "calls": 109,
