@@ -371,11 +371,11 @@
   "jsMs": 1.34
  },
  "ella": {
-  "calls": 171,
-  "maxCalls": 211,
-  "kverts": 368,
-  "maxKverts": 542,
-  "jsMs": 2.82
+  "calls": 178,
+  "maxCalls": 219,
+  "kverts": 393,
+  "maxKverts": 572,
+  "jsMs": 1.38
  },
  "medeu": {
   "calls": 158,
@@ -602,11 +602,11 @@
   "jsMs": 1.07
  },
  "cusco": {
-  "calls": 128,
-  "maxCalls": 163,
-  "kverts": 307,
-  "maxKverts": 398,
-  "jsMs": 0.69
+  "calls": 136,
+  "maxCalls": 167,
+  "kverts": 330,
+  "maxKverts": 427,
+  "jsMs": 0.83
  },
  "mombasa": {
   "calls": 117,
