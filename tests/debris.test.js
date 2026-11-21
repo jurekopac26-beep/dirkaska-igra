@@ -37,6 +37,19 @@ check('driven over again later: it hops again (once a pass)', hood.again === 2, 
 check('a mirror\'s bit: a light thump, no hop, hardly slower', mir.hop === 0 && mir.thump > 0 && mir.thump < 6 && loss(mir) < 0.005 + 1e-9 && mir.moved < 0.02, JSON.stringify({ hop: mir.hop, thump: mir.thump, loss: +(loss(mir) * 100).toFixed(2), moved: +mir.moved.toFixed(3) }));
 check('a piece still in the air: knocked away as before (moved over half a metre), no hop', fly.moved > 0.5 && fly.hop === 0, `moved ${fly.moved.toFixed(2)} m`);
 
+// F4: a piece lying by the car's side (in its reach, between its circles as it goes by) is paid once a pass, not again at each circle
+// (before: a bonnet 1.45 m beside a SOKOL's axis 5 times in one pass). The bonnet and a mirror's bit, 0 to 1.6 m beside the line
+{ const side = (part, l) => { const r = new C.Race(T, { numAI: 1, playerGrid: 1, laps: 3, playerModel: SOKOL, assist: 2, seed: 3, difficulty: 1, damage: 2 }); r.start();
+    const P = r.player, A = r.cars.find(c => !c.isPlayer); A.place(P.x - Math.cos(P.h) * 200, P.z - Math.sin(P.h) * 200, P.h); A.locked = true; A.vx = A.vz = 0;
+    P.vx = Math.cos(P.h) * 20; P.vz = Math.sin(P.h) * 20; const Pt = C.PARTS[part], nx = -Math.sin(P.h), nz = Math.cos(P.h);
+    r.debris.push({ id: 1, car: A.id, part, x: P.x + Math.cos(P.h) * 10 + nx * l, z: P.z + Math.sin(P.h) * 10 + nz * l, y: (P.y || 0) + Pt.h * 0.5 + 0.02, vx: 0, vz: 0, vy: 0,
+      yaw: 0, rx: 0, rz: 0, wx: 0, wy: 0, wz: 0, r: Pt.r, m: Pt.m, h: Pt.h, rest: true, ground: true, q: null, dead: false });
+    let n = 0; for (let t = 0; t < 1.5; t += DT) { P.inThr = 0; P.inBrk = 0; P.inSteer = 0; P.hitDebris = 0; r.step(DT); if (P.hitDebris > 0) n++; } return n; };
+  const rows = []; for (const part of ['hood', 'mirrorL']) for (let i = 0; i <= 32; i++) rows.push({ part, l: i * 0.05, n: side(part, i * 0.05) });
+  const many = rows.filter(q => q.n > 1), paid = rows.filter(q => q.n === 1);
+  check('a lying piece by the car\'s side: paid at most once a pass (F4), as near the side as it is touched at all', !many.length && paid.length >= 40 && rows.find(q => q.part === 'hood' && Math.abs(q.l - 1.45) < 1e-9).n === 1,
+    `${rows.length} passes, ${paid.length} paid once, more than once ${many.length}${many.length ? ' (' + many.slice(0, 4).map(q => q.part + ' ' + q.l.toFixed(2) + ' m x' + q.n).join(', ') + ')' : ''}`); }
+
 // broken glass on the road (Core.setCrash({ glass }), on in every local race: xPhys): a knock lays a patch where it broke a pane; with
 // damage Vklop a car on it grips 5 % less (glassK 0.95), less as it is scattered: each car driven over it and off it takes a quarter;
 // Samo videz: the patch lies there, the grip is the road's (glassK 1); off (online): none

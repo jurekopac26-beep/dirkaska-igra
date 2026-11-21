@@ -4129,7 +4129,6 @@ const Core = (function () {
     const dx = d.x - c.x, dz = d.z - c.z, R = c.circles[c.circles.length - 1] + c.rad + d.r * 0.7 + 0.1;   // (beyond the car's reach: nothing to touch)
     if (dx * dx + dz * dz > R * R || d.y - (c.y || 0) > 1.3) { debrisGone(c, d); return; }
     const free = !!d.by && d.by.indexOf(c) >= 0;   // (the car it has just left, DEB.own / DEB.again: no knock, no price)
-    const gone = () => debrisGone(c, d);
     const ch = Math.cos(c.h), sh = Math.sin(c.h), lying = d.ground && Math.hypot(d.vx, d.vz) < DEB_RUN.v;
     for (let i = 0; i < c.circles.length; i++) {
       const ax = c.x + ch * c.circles[i], az = c.z + sh * c.circles[i];
@@ -4171,7 +4170,8 @@ const Core = (function () {
       }
       return;
     }
-    gone();   // (in reach, over none of it)
+    // (in reach, over none of it: the pass goes on. A piece by the car's side falls in the gaps between its circles; it was paid again at
+    // each circle, up to 5 times in one pass, F4. The pass ends once it is out of reach: the test at the top, and Race.step's)
   }
 
   /* ---- loose trackside props: traffic cones, striped marker pylons, spare-tyre stacks, straw bales, crates, roadside posts ----
