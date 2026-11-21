@@ -343,11 +343,11 @@
   "jsMs": 0.58
  },
  "portobelo": {
-  "calls": 116,
-  "maxCalls": 144,
-  "kverts": 274,
-  "maxKverts": 325,
-  "jsMs": 1.42
+  "calls": 123,
+  "maxCalls": 148,
+  "kverts": 295,
+  "maxKverts": 352,
+  "jsMs": 1.22
  },
  "eljem": {
   "calls": 109,
@@ -357,11 +357,11 @@
   "jsMs": 0.51
  },
  "isuna": {
-  "calls": 143,
-  "maxCalls": 169,
-  "kverts": 196,
-  "maxKverts": 253,
-  "jsMs": 1.17
+  "calls": 154,
+  "maxCalls": 178,
+  "kverts": 225,
+  "maxKverts": 280,
+  "jsMs": 1.7
  },
  "hiva": {
   "calls": 159,
