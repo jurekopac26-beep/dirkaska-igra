@@ -5191,7 +5191,7 @@ const Render = (function () {
     carGlow(v);
     if (curTrack && curTrack.def.theme === 'pikes') pkCarDress(v);   // Pikes Peak: dust + morning glint on the paint
     if (c.chr && c.chr.rival) nameTag(v, c.name, '#ff8a7a');   // the player's standing rival (the career): its name over the car
-    if (tierNow === 0 && !c.isPlayer) ownRnd(() => farBuild(v));   // (NIZKA: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
+    if ((tierNow === 0 || bigField()) && !c.isPlayer) ownRnd(() => farBuild(v));   // (NIZKA, or a big field on any tier: far from the camera, one coarse mesh; its uuids without Math.random: ownRnd)
     if (c.tl && c.m.trailer && c.m.trailer.look) tlView(v, c);   // (its semi-trailer: a group of its own on the kingpin, tlDraw)
     scene.add(v.grp); return v;
   }
@@ -5260,7 +5260,10 @@ const Render = (function () {
   // CROWD_K-th this frame, Infinity when fewer are near or the field is smaller (every race of 22 or fewer as ever); a car swaps only 10 %
   // past it (no flicker). A shot (no far meshes in it: a TV lens brings a far car close) only when it asks for the rule (shot.crowd: the
   // jets' shot over the grid before the start, game.js), then every rival in front of the camera counts
+  // SREDNJA and VISOKA build the far meshes only for a big field (bigField: a race of more than CROWD_N cars), then by the same two rules as
+  // NIZKA (past the view's reach + 35 m, past the CROWD_K nearest): a race of 22 or fewer looks as ever there, a field of 101 is bounded
   const CROWD_N = 22, CROWD_K = 10, CROWD_R = 30, _crowd = [], _crD = new THREE.Vector3();
+  function bigField() { return !!curRace && !!curRace.cars && curRace.cars.length > CROWD_N; }
   let crowd2 = Infinity;
   function crowdCut() {
     crowd2 = Infinity; if (!curRace || !curRace.cars || curRace.cars.length <= CROWD_N || lastMode === 'tv' || (cam.shot && !cam.shot.crowd)) return;   // (the race's own cars: the safety car's view does not count)
