@@ -32,9 +32,10 @@ const SUITES = {
 // requests, each time scaled to a machine of median speed: GitHub's machines differ, one job's tests all take 0.5 to 1.35 times as long;
 // ~61 min a share of 6, memory alone in one): --shard deals the tests out by it, and a test's time limit grows with it (LIMIT_OF). Update it
 // from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not listed counts as DEF_SECS
+// (menu: 1320 on 19. 11. 2026, main's run 1240 s plus the row's police chase side, ~80 s; one slow PR machine stopped it at 30 min)
 const SECS = {
   'browser/memory.test.mjs': 3000, 'browser/memory2.test.mjs': 2800, 'browser/perf.test.mjs': 2034, 'browser/smoke.test.mjs': 1900, 'browser/smoke2.test.mjs': 1900, 'browser/crash.test.mjs': 1030,
-  'browser/world.test.mjs': 950, 'browser/world2.test.mjs': 930, 'browser/gfx.test.mjs': 1000, 'browser/gfx2.test.mjs': 960, 'browser/menu.test.mjs': 759, 'browser/covers.test.mjs': 558,
+  'browser/world.test.mjs': 950, 'browser/world2.test.mjs': 930, 'browser/gfx.test.mjs': 1000, 'browser/gfx2.test.mjs': 960, 'browser/menu.test.mjs': 1320, 'browser/covers.test.mjs': 558,
   'browser/garage.test.mjs': 527, 'browser/online.test.mjs': 335, 'browser/marks.test.mjs': 319, 'browser/kolibri.test.mjs': 308,
   'browser/hudcol.test.mjs': 296, 'browser/online4.test.mjs': 286, 'browser/kerb.test.mjs': 269, 'browser/notes.test.mjs': 247,
   'browser/nova.test.mjs': 245, 'browser/sovoznik.test.mjs': 390, 'browser/carlow.test.mjs': 225, 'browser/lestvica.test.mjs': 221, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
