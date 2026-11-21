@@ -31,14 +31,14 @@
       const gV = (x, z) => { const q = near(x, z), j = q.i >= 0 ? q.i : i, o = Math.abs(q.lat);
         const t = Math.min(1, Math.max(0, (o - (w + 0.5)) / Math.max(0.3, lip - (w + 0.5)))); return T.hy[j] - 0.02 - 0.1 * t; };
       if (r0 < C.share) {   // a patch on the strip
-        const o = e0 + r1 * (e1 - e0), [x, z] = at(o), P = C.patch(R), rr = Math.min(P.r, (e1 - e0) * 0.5, o - e0 + 0.4, e1 - o + 0.4);
+        const o = e0 + r1 * (e1 - e0), [x, z] = at(o), P = C.patch(R, i), rr = Math.min(P.r, (e1 - e0) * 0.5, o - e0 + 0.4, e1 - o + 0.4);
         if (rr > 0.3 && own(x, z) && !sunk(x, z)) { soil(soft, gV, x, z, rr, P.col, R, 0.05); st.zaplate++; }
       }
       if (r2 < C.foot) {   // low tufts at the barrier's foot
         const n = 1 + Math.floor(r3 * 3);
         for (let q = 0; q < n; q++) { const o = e1 - 0.15 - R() * 0.4, [x0, z0] = at(o), x = x0 + T.tx[i] * (R() - 0.5) * 2.4, z = z0 + T.tz[i] * (R() - 0.5) * 2.4;
           if (!own(x, z) || sunk(x, z)) continue;
-          const h = R(); tuft(soft.get(x, z), x, gV(x, z), z, 0.22 + h * 0.16, 0.24 + h * 0.22, C.tuft(R), R, 5); st.sopi++; }
+          const h = R(); tuft(soft.get(x, z), x, gV(x, z), z, 0.22 + h * 0.16, 0.24 + h * 0.22, C.tuft(R, i), R, 5); st.sopi++; }
       }
     }
     soft.done();
