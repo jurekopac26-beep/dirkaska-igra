@@ -23,7 +23,7 @@
   LOOK.koli = { seed: 19101, st: ['bilke', 'smrecice'],
     edge: { ok: (c, sl) => (c === 0 || c === 1 || c === 2) && sl < 1.0 ? 0.7 : 0, n: [2, 4],
       put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y - 0.05, z, 0.14 + h * 0.12, 0.34 + h * 0.34, vary(mix3(S.c.straw, S.c.stalk, R()), R, 0.03), R, 4); S.st.bilke++; } },
-    mid: { ok: (c, sl, x, z, w) => (c === 3 || c === 4 || c === 5 || sl > 1.0) ? 0 : c === 1 || w > 0.3 ? 0.85 : 0.5, n: [2, 4], wood: true,
+    mid: { ok: (c, sl, x, z, w) => (c === 3 || c === 4 || c === 5 || c === 6 || sl > 1.0) ? 0 : c === 1 || w > 0.3 ? 0.85 : 0.5, n: [2, 4], wood: true,
       put: (S, x, y, z, h, R, w) => { const g = S.g(x, z);
         if ((w > 0.3 || R() < 0.25) && R() < 0.55) spruce(S, g, x, y, z, 0.9 + h * 1.4, 0.35 + h * 0.3, R);
         else { tuft(g, x, y - 0.05, z, 0.14 + h * 0.12, 0.4 + h * 0.36, vary(mix3(S.c.straw, S.c.stalk, R()), R, 0.03), R, 4); S.st.bilke++; } } },
