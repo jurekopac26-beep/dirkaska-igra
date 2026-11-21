@@ -57,6 +57,7 @@
     'Papua Nova Gvineja': { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (the Australian-style markings of the country's sealed roads: white both, not checked against photos: docs/proge/sogeri.md, »Negotovo«)
     'Sveta Lucija': { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (white lines as in Britain: a broken centre line, solid through the bends)
     'Fidži':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (left-hand traffic, the markings of the Commonwealth's roads as Australia's: all white, double solid where overtaking is forbidden)   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
+    'Samoa':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (left-hand traffic since 2009; no source on the markings: white lines, a dash to its gap 1 : 3, single solid before blind bends)
     'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)

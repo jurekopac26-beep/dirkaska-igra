@@ -4,7 +4,7 @@
 
 Cesta čez otok Upolu južno od Apie, od vasi Letava skozi Vaoalo in tropski deževni gozd osrednjega slemena do Tiapapate, v pravem merilu. Proga se začne v Letavi (~306 m, 13,8787° J, 171,7659° Z) in gre ves čas navkreber (do 12 %) do Tiapapate (~480 m): 1,92 km, 366 °/km, 48 % ravnin, brez lasnic, najostrejši ovinki v gozdu nad Vaoalo. Za ciljem cesta pelje še ~170 m. **Levi promet** (`def.leftHand`). Kartica proge je ena, na njej pa je stikalo **Dirka / Kronometer / Promet / Policija** (`def.modes`, kot na Savusavuju):
 
-- **Dirka**: tekmeci (v meniju *Opponents*, največ 80: več jih za ciljem ne bi imelo prostora), start v Letavi (štartna mreža za črto), skozi vas in gozd do vrha. Kvalifikacij ni (odprta cesta).
+- **Dirka**: tekmeci (v meniju *Opponents*, največ 39: cesta je ozka, za ciljem pa le ~150 m prostora za parkiranje), start v Letavi (štartna mreža za črto), skozi vas in gozd do vrha. Kvalifikacij ni (odprta cesta).
 - **Kronometer**: sam proti uri, štiri kontrolne točke z vmesnimi časi in višino, lestvica najboljših 10, duh in medalje (zlata 0:56, srebrna 0:59, bronasta 1:03, v dežju 1:10 / 1:13 / 1:18; pozimi 1:06 / 1:09 / 1:14, v snegu 1:25 / 1:29 / 1:35; zlato je čas relijskega avta na avtopilotu).
 - **Promet**: dvoboj z enim tekmecem po odprti cesti v obe smeri: predvsem avtomobili in poltovornjaki, kombiji, odprti avtobusi med Apio in južno obalo, nekaj tovornjakov in motorjev; ob cesti redki kolesarji.
 - **Policija**: beg pred policijo do Tiapapate. Patrulje imajo ob bokih generičen napis POLICE (brez imena ali znaka katere koli službe), v rezultatih pobega piše »Do Tiapapate v …«.

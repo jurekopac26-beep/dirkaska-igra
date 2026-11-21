@@ -27,7 +27,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     runoff: 0.5, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 6,
     elev: VAOALA_H.map((h, i) => [i / (VAOALA_H.length - 1), h / 10]),
     medals: { cs: [56, 59, 63], wet: { cs: [70, 73, 78] }, winter: { cs: [66, 69, 74], wet: { cs: [85, 89, 95] } } },
-    maxRivals: 80,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~170 m of road past the line
+    maxRivals: 39,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~170 m of road past the line
     // the traffic of the open road: [car, van, bus, motorbike, truck] and a cyclist every so many metres each way; Samoa: cars and pick-ups
     // above all, the open-sided buses between Apia and the south coast, a few lorries and motorbikes
     traffic: { mix: [0.55, 0.2, 0.1, 0.05, 0.1], bike: 4000 },
