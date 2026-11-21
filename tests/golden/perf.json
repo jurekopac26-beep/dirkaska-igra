@@ -403,7 +403,7 @@
   "maxCalls": 227,
   "kverts": 649,
   "maxKverts": 820,
-  "jsMs": 1.47
+  "jsMs": 1.07
  },
  "izoard": {
   "calls": 181,
@@ -415,9 +415,9 @@
  "pembrey": {
   "calls": 193,
   "maxCalls": 223,
-  "kverts": 564,
-  "maxKverts": 727,
-  "jsMs": 1.37
+  "kverts": 562,
+  "maxKverts": 724,
+  "jsMs": 1.79
  },
  "kildare": {
   "calls": 204,
