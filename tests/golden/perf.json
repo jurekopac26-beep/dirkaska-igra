@@ -301,11 +301,11 @@
   "jsMs": 1.23
  },
  "luanda": {
-  "calls": 129,
-  "maxCalls": 159,
-  "kverts": 304,
-  "maxKverts": 398,
-  "jsMs": 1.55
+  "calls": 138,
+  "maxCalls": 167,
+  "kverts": 354,
+  "maxKverts": 464,
+  "jsMs": 1.19
  },
  "ujarras": {
   "calls": 138,
@@ -364,11 +364,11 @@
   "jsMs": 1.17
  },
  "hiva": {
-  "calls": 159,
-  "maxCalls": 197,
-  "kverts": 477,
-  "maxKverts": 516,
-  "jsMs": 1.39
+  "calls": 167,
+  "maxCalls": 206,
+  "kverts": 543,
+  "maxKverts": 611,
+  "jsMs": 0.86
  },
  "quezaltepeque": {
   "calls": 233,
