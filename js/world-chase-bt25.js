@@ -46,6 +46,7 @@
     soft.done();
     return st;
   };
+  BT.bank = bank; BT.muted = muted;   // (the twenty-seventh group's tracks use the same bank: js/world-chase-bt27.js)
 
   /* Chapman's Peak: docs/proge/chapman.md: »vsek v skalo, spodaj siv granit, višje … rjave plasti peščenjaka … s sivo-zelenimi lišaji«,
      »odpadlo kamenje na bankini pod lovilnimi mrežami«, »tla so mozaik sivo-zelenega grmičevja, temno olivnih goščav, rjastih leh restij,
