@@ -20,7 +20,7 @@
   LOOK.santoantao = { seed: 12101, st: ['trava', 'grm', 'agava', 'prst'],
     edge: { ok: (c, sl) => (c === 0 || c === 2 || c === 6) && sl < 0.9 ? 0.65 : 0, n: [2, 4],
       put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.3 + h * 0.22, 0.4 + h * 0.32, vary(mix3(S.c.olive, S.c.straw, R()), R, 0.03), R, 5); S.st.trava++; } },
-    mid: { ok: (c, sl) => (c === 0 || c === 2) && sl < 1.0 ? 0.7 : c === 1 && sl < 1.0 ? 0.35 : 0, n: [2, 4], litter: 0.45, lit: 'soil', lr: [1.0, 2.0], ln: 'prst',
+    mid: { ok: (c, sl) => (c === 0 || c === 2) && sl < 1.0 ? 0.7 : c === 1 && sl < 1.0 ? 0.35 : 0, n: [2, 4], litter: 0.3, lit: 'soil', lr: [0.8, 1.5], ln: 'prst',
       put: (S, x, y, z, h, R) => { const r = R();
         if (r < 0.14) { const g = S.g(x, z), col = vary(S.c.agave, R, 0.02);   // (an agave: a low wide rosette and its taller narrow heart)
           cushion(g, x, y, z, 0.65 + h * 0.4, 0.42 + h * 0.25, col, R); tuft(g, x, y + 0.2, z, 0.32 + h * 0.15, 0.55 + h * 0.3, col, R, 6); S.st.agava++; }
@@ -29,7 +29,7 @@
     far: { ok: (c, sl, x, z, w) => (c === 0 || c === 2) && sl < 0.9 ? 0.45 * (1 - w * 0.6) : 0, n: [2, 4],
       put: (S, x, y, z, h, R) => { if (R() < 0.35) { cushion(S.g(x, z), x, y, z, 0.6 + h * 0.5, 0.38 + h * 0.3, vary(S.c.shrub, R, 0.025), R); S.st.grm++; }
         else { tuft(S.g(x, z), x, y, z, 0.45 + h * 0.3, 0.6 + h * 0.4, vary(S.c.straw, R, 0.03), R, 5); S.st.trava++; } } },
-    col: { olive: [0.47, 0.5, 0.27], straw: [0.68, 0.6, 0.38], shrub: [0.4, 0.46, 0.3], agave: [0.45, 0.55, 0.52], soil: [0.46, 0.3, 0.22] } };
+    col: { olive: [0.47, 0.5, 0.27], straw: [0.68, 0.6, 0.38], shrub: [0.4, 0.46, 0.3], agave: [0.5, 0.56, 0.47], soil: [0.5, 0.39, 0.28] } };
 
   /* Ella: docs/proge/ella.md: »travnata pobočja s posameznimi drevesi, temna tla gorskega gozda v grapah … čajni vrtovi v vrstah. Rdeča
      laterna zemlja ob robu ceste … potoki, ob bregovih grmičevje«. At the barrier's foot the wet hills' tall green grass in dense tufts;
@@ -38,10 +38,10 @@
   LOOK.ella = { seed: 12201, st: ['trava', 'praprot', 'laterit'],
     edge: { ok: (c, sl) => (c === 0 || c === 1 || c === 2) && sl < 0.9 ? 0.8 : c === 6 && sl < 0.9 ? 0.4 : 0, n: [3, 4],
       put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.32 + h * 0.26, 0.5 + h * 0.45, vary(mix3(S.c.gr, S.c.gr2, R()), R, 0.03), R, 5); S.st.trava++; } },
-    mid: { ok: (c, sl, x, z, w) => (c === 0 || c === 1 || c === 2) && sl < 1.1 ? (w > 0.25 || c === 1 ? 0.9 : 0.5) : 0, n: [2, 4], litter: 0.4, lit: 'lat', lr: [1.0, 1.9], ln: 'laterit', wood: true,
+    mid: { ok: (c, sl, x, z, w) => (c === 0 || c === 1 || c === 2) && sl < 1.1 ? (w > 0.25 || c === 1 ? 0.9 : 0.5) : 0, n: [2, 4], litter: 0.3, lit: 'lat', lr: [0.8, 1.5], ln: 'laterit', wood: true,
       put: (S, x, y, z, h, R, w) => { if (w > 0.25 || R() < 0.3) { cushion(S.g(x, z), x, y, z, 0.6 + h * 0.6, 0.48 + h * 0.5, vary(R() < 0.6 ? S.c.fern : S.c.under, R, 0.03), R); S.st.praprot++; }
         else { tuft(S.g(x, z), x, y, z, 0.36 + h * 0.26, 0.55 + h * 0.45, vary(S.c.gr, R, 0.03), R, 5); S.st.trava++; } } },
     far: { ok: (c, sl, x, z, w) => (c === 0 || c === 2) && sl < 0.9 ? 0.5 * (1 - w) : 0, n: [2, 4],
       put: (S, x, y, z, h, R) => { tuft(S.g(x, z), x, y, z, 0.45 + h * 0.3, 0.8 + h * 0.6, vary(S.c.gr2, R, 0.03), R, 5); S.st.trava++; } },
-    col: { gr: [0.3, 0.5, 0.17], gr2: [0.4, 0.55, 0.21], fern: [0.23, 0.45, 0.14], under: [0.21, 0.37, 0.15], lat: [0.55, 0.3, 0.2] } };
+    col: { gr: [0.3, 0.5, 0.17], gr2: [0.4, 0.55, 0.21], fern: [0.23, 0.45, 0.14], under: [0.21, 0.37, 0.15], lat: [0.5, 0.33, 0.24] } };
 })();
