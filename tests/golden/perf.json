@@ -588,25 +588,25 @@
   "jsMs": 0.97
  },
  "ujarras": {
-  "calls": 123,
-  "maxCalls": 191,
-  "kverts": 218,
-  "maxKverts": 259,
-  "jsMs": 1.05
+  "calls": 129,
+  "maxCalls": 196,
+  "kverts": 240,
+  "maxKverts": 274,
+  "jsMs": 1
  },
  "ghoufi": {
-  "calls": 127,
-  "maxCalls": 215,
-  "kverts": 185,
-  "maxKverts": 234,
-  "jsMs": 1.41
+  "calls": 126,
+  "maxCalls": 190,
+  "kverts": 197,
+  "maxKverts": 266,
+  "jsMs": 0.87
  },
  "cusco": {
-  "calls": 124,
-  "maxCalls": 169,
-  "kverts": 273,
-  "maxKverts": 361,
-  "jsMs": 1.53
+  "calls": 128,
+  "maxCalls": 163,
+  "kverts": 299,
+  "maxKverts": 390,
+  "jsMs": 0.6
  },
  "mombasa": {
   "calls": 114,
@@ -637,11 +637,11 @@
   "jsMs": 1.02
  },
  "isuna": {
-  "calls": 125,
-  "maxCalls": 155,
-  "kverts": 156,
-  "maxKverts": 202,
-  "jsMs": 1.53
+  "calls": 130,
+  "maxCalls": 159,
+  "kverts": 173,
+  "maxKverts": 227,
+  "jsMs": 0.91
  },
  "hiva": {
   "calls": 142,
