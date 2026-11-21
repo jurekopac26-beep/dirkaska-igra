@@ -371,11 +371,11 @@
   "jsMs": 1.34
  },
  "ella": {
-  "calls": 166,
-  "maxCalls": 205,
-  "kverts": 324,
-  "maxKverts": 488,
-  "jsMs": 1.61
+  "calls": 171,
+  "maxCalls": 211,
+  "kverts": 368,
+  "maxKverts": 542,
+  "jsMs": 2.82
  },
  "medeu": {
   "calls": 158,
@@ -476,11 +476,11 @@
   "jsMs": 1.54
  },
  "santoantao": {
-  "calls": 167,
-  "maxCalls": 194,
-  "kverts": 274,
-  "maxKverts": 323,
-  "jsMs": 1.14
+  "calls": 169,
+  "maxCalls": 196,
+  "kverts": 310,
+  "maxKverts": 389,
+  "jsMs": 3.05
  },
  "gudauri": {
   "calls": 156,
