@@ -26,6 +26,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
+| Kamera za avtom, tla ob cesti, skupina 15: Rio do Rastro, Chapman's Peak (`js/world-chase-bt15.js`, v #821) | biketraveler | v delu 21. 11. |
 | Več predogledov hkrati (5+), vzame nespremenjene `assets/` iz `main` (`tools/predogled.mjs`; 12. 11. ob ~21.50) | jure.kopac26 | majhna seja Opus, ko je mesto |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |
