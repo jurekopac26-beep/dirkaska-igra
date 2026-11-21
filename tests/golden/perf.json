@@ -42,18 +42,18 @@
   "jsMs": 1.16
  },
  "katu": {
-  "calls": 161,
-  "maxCalls": 187,
-  "kverts": 543,
-  "maxKverts": 720,
-  "jsMs": 0.73
+  "calls": 168,
+  "maxCalls": 198,
+  "kverts": 560,
+  "maxKverts": 747,
+  "jsMs": 0.96
  },
  "harju": {
-  "calls": 187,
-  "maxCalls": 225,
-  "kverts": 556,
-  "maxKverts": 810,
-  "jsMs": 0.45
+  "calls": 193,
+  "maxCalls": 234,
+  "kverts": 564,
+  "maxKverts": 825,
+  "jsMs": 0.47
  },
  "bathurst": {
   "calls": 184,
