@@ -1,0 +1,29 @@
+# Svetovna lestvica: the Worker (docs/svetovna-lestvica.md, »Zgradba«; README.md here, »Namestitev«). Names and ids only: no secret is
+# ever written here (the salt of the hashed IP is put with `openssl rand -base64 32 | npx wrangler secret put IP_SOL`, the session never
+# sees it; the Cloudflare key reaches wrangler through the environment's proxy).
+name = "lestvica"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# the database in the EU (made once: npx wrangler d1 create lestvica --jurisdiction eu; its id goes here)
+[[d1_databases]]
+binding = "DB"
+database_name = "lestvica"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+# the records and the ghosts in the EU (made once: npx wrangler r2 bucket create lestvica-posnetki --jurisdiction eu)
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "lestvica-posnetki"
+jurisdiction = "eu"
+
+[vars]
+# the audience the checking job's GitHub OIDC token is asked for (.github/workflows/lestvica-preveri.yml: audience: lestvica)
+OIDC_AUD = "lestvica"
+# the pages that may call the Worker from a browser (the game's page on GitHub Pages; an app's web view)
+IZVORI = "https://jurekopac26-beep.github.io,https://localhost"
+
+# the daily clean-up (src/pospravi.js): expired limits, old pending runs, players gone for two years, the objects left to delete
+[triggers]
+crons = ["17 3 * * *"]

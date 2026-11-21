@@ -1,0 +1,54 @@
+# Svetovna lestvica, preverjanje (docs/svetovna-lestvica.md, »2. Ponovitev vožnje v Node«; seja 3): vsako uro in ob ročnem zagonu
+# tools/lestvica-preveri.mjs --krog --meje od strežnika dobi čakajoče čase (brez vzdevkov in id-jev igralcev), vsakega ponovi s kodo
+# njegove različice igre (starejša: git worktree po žigu jedra, zato fetch-depth 0) in strežniku vrne izide (ok, zavrnjeno, ni-mogoce,
+# sumljivo). Po novi različici na main najprej pošlje nove meje (POST /v1/meje).
+# Prijava z GitHub OIDC (audience »lestvica«): strežnik (streznik/svetovna-lestvica/src/oidc.js) sprejme samo žeton tega repozitorija,
+# te datoteke in veje main. Skrivnosti v GitHubu ni; naslov strežnika je spremenljivka repozitorija LESTVICA_STREZNIK (Settings →
+# Secrets and variables → Actions → Variables), brez nje se opravilo konča brez dela.
+# Javni repozitorij: dnevnik in povzetek samo števila, brez artefaktov, brez izpisa posnetkov ali vzdevkov.
+name: Lestvica, preverjanje
+on:
+  schedule:
+    - cron: '23 * * * *'   # (vsako uro ob :23 UTC)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: lestvica-preveri
+  cancel-in-progress: false
+
+jobs:
+  preveri:
+    name: Preverjanje časov
+    if: github.repository == 'jurekopac26-beep/dirkaska-igra' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Naslov strežnika
+        id: naslov
+        env:
+          LESTVICA_STREZNIK: ${{ vars.LESTVICA_STREZNIK }}
+        run: |
+          if [ -z "$LESTVICA_STREZNIK" ]; then
+            echo "Spremenljivka repozitorija LESTVICA_STREZNIK ni nastavljena: strežnik še ni nameščen, nič za preveriti." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "je=0" >> "$GITHUB_OUTPUT"
+          else
+            echo "je=1" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.naslov.outputs.je == '1'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        if: steps.naslov.outputs.je == '1'
+        with:
+          node-version: 22
+      - name: Ponovitev čakajočih časov
+        if: steps.naslov.outputs.je == '1'
+        env:
+          LESTVICA_STREZNIK: ${{ vars.LESTVICA_STREZNIK }}
+        run: node tools/lestvica-preveri.mjs --krog --meje
