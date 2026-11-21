@@ -189,6 +189,63 @@
     });
   });
 
+  /* ---- the fifth group (after js/world-realizem-bt4.js's): Biķernieki, Buriram, Sepang on the shared builder ----
+     the common walk of these: every `step` m on both sides a group's place from o0 to o0 + reach m behind the barriers, never on the
+     pit's side along the pits; each(gx, gz, R, clear) plants the group */
+  const rbWalk = ({ excluded }, seed, step, o0, reach, each) => {
+    const R = rng(seed), smooth0 = API.ROCK_SMOOTH, clear = (x, z, r) => rbClear(excluded, x, z, r);
+    API.ROCK_SMOOTH = true;
+    for (let s = 0; s < T.len; s += step) for (const side of [-1, 1]) {
+      const r1 = R(), r2 = R(); if (rbPit(s, side)) continue;
+      const [gx, gz] = rbSide(s + (r2 - 0.5) * step, side, o0 + Math.pow(r1, 1.4) * reach);
+      if (clear(gx, gz, 2.5)) each(gx, gz, R, clear);
+    }
+    API.ROCK_SMOOTH = smooth0;
+  };
+
+  /* Biķernieki: docs/proge/bikernieki.md: »na odprtem pokošene trate s peščenimi zaplatami, v mokrih kotanjah visoka trava«. The
+     sand of the old dunes was only a colour in the lawn (the look's colMod) and the wet margins only a darker green. So where that
+     same noise shows the sand, it lies bare in low patches with thin pale grass round them, and on the open margins of the lakes and
+     the reedbeds (the land cover's class 2 beside the open ground) tall dark grass stands in groups. */
+  chainRb('bikernieki', (L, ctx, st) => {
+    const P = API.NR, { nrGround, nrLC, nrLCf, nrSlope } = API, { scen } = ctx; if (!T || !P || !nrGround || !nrLCf) return;
+    const sand = [0.86, 0.77, 0.55], pale = [0.62, 0.66, 0.36], rank = [0.2, 0.4, 0.16], seed = [0.5, 0.46, 0.24]; let n = 0, m = 0, f = 0;
+    rbWalk(ctx, 9511, 3, 3, 30, (gx, gz, R, clear) => {
+      if (nrLC(gx, gz) !== 0) return;
+      const sa = sstep(0.5, 0.76, P.n3(gx * 0.8 - 130, gz * 0.8 + 60)), wet = nrLCf(gx, gz, 2), r0 = R();
+      if (wet > 0.04) {   // the wet hollows: tall grass
+        if (r0 > 0.35 + 0.6 * sstep(0.04, 0.4, wet)) return;
+        for (let q = 0, cnt = 5 + Math.floor(R() * 6); q < cnt; q++) { const x = gx + (R() - 0.5) * 5, z = gz + (R() - 0.5) * 5, h = R();
+          if (nrLC(x, z) !== 0 || !clear(x, z, 2.4)) { R(); continue; }
+          const col = vary(rank, R, 0.03); cone(scen.get(x, z), x, nrGround(x, z) - 0.08, z, 0.3 + h * 0.3, 0.55 + h * 0.5, 5, [col[0] * 0.7, col[1] * 0.74, col[2] * 0.68], vary(seed, R, 0.03), R() * TAU); f++; }
+        return; }
+      if (!(sa > 0.1) || r0 > 0.35 + 0.6 * sa) return;
+      if (nrSlope(gx, gz) < 0.35 && clear(gx, gz, 4.5)) { soil(scen, nrGround, gx, gz, 1.1 + R() * 1.7, vary(sand, R, 0.03), R); m++; }
+      for (let q = 0, cnt = 3 + Math.floor(R() * 4); q < cnt; q++) { const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, h = R();
+        if (nrLC(x, z) !== 0 || !clear(x, z, 2.4)) { R(); continue; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.4 + h * 0.4, 0.22 + h * 0.24, vary(pale, R, 0.03), R); n++; }
+    });
+    st.sopi = n; st.pesek = m; st.visoka = f;
+  });
+
+  /* Buriram and Sepang: docs/proge/buriram.md: »zalite zelene trate s pokošenimi pasovi«; docs/proge/sepang.md: »bujne tropske
+     trate s pokošenimi pasovi, zalite do ograj in dlje«. From the camera behind the car all of the grass behind the barriers was as
+     short as the mown strips. So beyond the mown strip by the barriers (from ~7 m out, to ~32 m) the lush grass stands longer in
+     loose bands of low clumps, the lawn's own greens; the mown strips, the run-offs and the service roads stay as they are. */
+  const rbLush = (id, seed, cols) => chainRb(id, (L, ctx, st) => {
+    const P = API.NR, { nrGround, nrLC } = API, { scen } = ctx; if (!T || !P || !nrGround) return; let n = 0;
+    rbWalk(ctx, seed, 3.5, 7, 25, (gx, gz, R, clear) => {
+      if (nrLC(gx, gz) !== 0) return;
+      const k = sstep(0.5, 0.72, P.n1(gx * 0.9 + 310, gz * 0.9 - 150)); if (!(k > 0.1) || R() > 0.25 + 0.7 * k) return;
+      for (let q = 0, cnt = 5 + Math.floor(R() * 6); q < cnt; q++) { const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, h = R(), a = R();
+        if (nrLC(x, z) !== 0 || !clear(x, z, 5)) { R(); continue; }
+        tuft(scen.get(x, z), x, nrGround(x, z), z, 0.42 + h * 0.4, 0.15 + h * 0.17, vary(cols[Math.floor(a * cols.length)], R, 0.03), R); n++; }
+    });
+    st.sopi = n;
+  });
+  rbLush('buriram', 9521, [[0.4, 0.62, 0.27], [0.46, 0.66, 0.3], [0.36, 0.57, 0.25]]);
+  rbLush('sepang', 9531, [[0.36, 0.6, 0.26], [0.42, 0.66, 0.28], [0.32, 0.54, 0.24]]);
+
   /* Seoul (its own builder, js/world-seoul.js, calls this before it closes its scenery chunks): under the pines and oaks of the
      mountain the ground beside the road was one smooth face from the camera above the car. docs/proge/seoul.md: »gozd rdečega bora in
      hrasta … (tla iglice in listje z zelenim podrastjem)«. So low clumps of that green undergrowth lie in groups on the forest's
