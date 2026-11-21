@@ -294,11 +294,11 @@
   "jsMs": 3.12
  },
  "killar": {
-  "calls": 148,
-  "maxCalls": 173,
-  "kverts": 344,
-  "maxKverts": 406,
-  "jsMs": 1.23
+  "calls": 153,
+  "maxCalls": 183,
+  "kverts": 362,
+  "maxKverts": 428,
+  "jsMs": 1.72
  },
  "luanda": {
   "calls": 129,
@@ -350,11 +350,11 @@
   "jsMs": 1.42
  },
  "eljem": {
-  "calls": 109,
-  "maxCalls": 126,
-  "kverts": 296,
-  "maxKverts": 415,
-  "jsMs": 0.51
+  "calls": 114,
+  "maxCalls": 131,
+  "kverts": 310,
+  "maxKverts": 436,
+  "jsMs": 0.95
  },
  "isuna": {
   "calls": 143,
