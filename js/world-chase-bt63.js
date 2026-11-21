@@ -1,19 +1,16 @@
 /* =========================================================================
-   WORLD — the roadside ground from the camera behind the car (chase), the sixty-third group of the real tracks: Zandvoort and Buriram,
-   a further pass on two circuits of the shared builder (js/world-rbring.js: each look's LK.extra chained on top of the earlier ones).
+   WORLD — the roadside ground from the camera behind the car (chase), the sixty-third group of the real tracks: Zandvoort and Spa.
    From behind the car both still showed, past the bands of the earlier groups, one smooth face to the horizon: in Zandvoort the dunes
-   past ~35 m (js/world-chase-bt6.js's marram and scrub thin out by there, js/world-chase-bt34.js stops ~4.5 m past the rail), in Buriram
-   the paddies' patchwork painted on the flat terrain with no edge between the fields (js/world-chase-bt41.js's sparse patches on it).
-   So here, out to ~60 m: Zandvoort (docs/proge/zandvoort.md: »sipine s šopi trave, grmi rakitovca in razpihani peščeni žepi«, »borovci
-   in breze v redkih sestojih«) on the dunes the grey dune's low moss and lichen ground, the blown sand pockets on the gentler ground,
-   loose drifts of marram and low cushions of sea buckthorn where the scrub's noise shows it, under the dune woods the pines' needle
-   litter, on the rough grass a few uncut tussocks; never in or by the ponds (def.sk.pond), in the excluded places, the built ground or
-   on the pits' side along the pits. Buriram (docs/proge/buriram.md: »riževa polja v pravokotnih parcelah«, »sladkorne palme (posamič,
-   tudi na nasipih polj)«) the low earth bunds between the paddies, on the very grid the look paints the fields on (js/world-buriram.js
-   paddy(): rows 30 m wide, fields 34-56 m long, turned 22 degrees), grassed on top and showing the red-brown laterite on their flanks,
-   out to ~130 m from the centre line where the
-   paddies (land cover 2) begin past the watered lawns (which reach ~60-70 m and keep no bunds), never in the pond or on the wetlands. All of it in the
-   builder's own scenery chunks (no draw is added); the terrain, the road, the barriers, the horizon and the driving stay as they are.
+   past ~35 m (js/world-chase-bt6.js's marram and scrub thin out by there, js/world-chase-bt34.js stops ~4.5 m past the rail), in Spa
+   the meadows and the wood floor past ~40 m (js/world-chase-bt9.js's uncut strip, wood edge and hay stop there).
+   So here, out to ~60 m: Zandvoort (shared builder js/world-rbring.js, LK.extra chained; docs/proge/zandvoort.md: »sipine s šopi trave,
+   grmi rakitovca in razpihani peščeni žepi«, »borovci in breze v redkih sestojih«) the grey dune's moss and lichen ground, blown sand
+   pockets, loose drifts of marram and cushions of sea buckthorn, the pines' needle litter, a few uncut tussocks; never in the ponds,
+   the excluded places, the built ground or on the pits' side. Spa (js/world-spa.js, World.ext.spaRob wrapped after bt9's; docs/proge/
+   spa.md: »sveži zeleni pašniki in senožeti«, smreke v ravnih vrstah, posekane jase s praprotjo in mladjem, tla pod smrekami rjava od
+   iglic) taller hay in loose groups on the meadows, the needles' brown under the spruce rows, bracken and young growth on the glades;
+   never in the brook, on steep ground or the built ground. Both in the builders' own scenery chunks; the terrain, the road, the
+   barriers, the horizon and the driving stay as they are.
    ========================================================================= */
 (function () {
   'use strict';
@@ -85,59 +82,46 @@
     return st;
   });
 
-  /* ---- Buriram: the bunds on the look's own paddy grid (js/world-buriram.js paddy(): u along the rows, v across, rows 30 m) ---- */
-  const BB = { seed: 63201, piece: 4, from: 14, max: 3200, reach: 130, hw: 0.5, h: 0.22,
-    top: [[0.44, 0.54, 0.25], [0.5, 0.56, 0.28]], flank: [[0.56, 0.44, 0.3], [0.52, 0.42, 0.29]] };
-  const hsh = (a, b) => { let h = Math.imul(a | 0, 374761393) + Math.imul(b | 0, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
-  const PC = Math.cos(0.38), PS = Math.sin(0.38);
-  const toXZ = (u, v) => [u * PC - v * PS, u * PS + v * PC];
-  // the polygons of def.sk (lakes: [name, x, z, ...]; wet: [x, z, ...]) with their boxes, to keep the bunds off the water
-  const polys = (arr) => (arr || []).map(a => {
-    const p = [], k0 = typeof a[0] === 'string' ? 1 : 0; for (let k = k0; k + 1 < a.length; k += 2) p.push([a[k], a[k + 1]]);
-    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const [x, z] of p) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-    return { p, b: [x0, x1, z0, z1] };
-  });
-  const inAny = (PP, x, z, m) => { if (!API.inPoly) return false;
-    for (const { p, b } of PP) { if (x < b[0] - m || x > b[1] + m || z < b[2] - m || z > b[3] + m) continue;
-      if (API.inPoly(p, x, z) || (m > 0 && API.polyDist && API.polyDist(p, x, z) < m)) return true; }
-    return false; };
-  // one piece of a bund from (ax, az) to (bx, bz): a low rounded ridge, its two flanks sloping to the field on both sides, grassed near the crest
-  const bund = (g, gH, ax, az, bx, bz, R, st) => {
-    const dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz) || 1, px = -dz / L, pz = dx / L, h = BB.h * (0.8 + R() * 0.4);
-    const ya = gH(ax, az), yb = gH(bx, bz), top = vary(mix3(BB.top[0], BB.top[1], R()), R, 0.02), fl = vary(mix3(BB.flank[0], BB.flank[1], R()), R, 0.02);
-    const pt = (x, z, o, y) => [x + px * o, y, z + pz * o];
-    const A0 = pt(ax, az, -BB.hw, ya), A1 = pt(ax, az, 0, ya + h), A3 = pt(ax, az, BB.hw, ya);
-    const B0 = pt(bx, bz, -BB.hw, yb), B1 = pt(bx, bz, 0, yb + h), B3 = pt(bx, bz, BB.hw, yb);
-    const ref = [(ax + bx) / 2, (ya + yb) / 2 - 5, (az + bz) / 2];
-    g.triO(A0, B0, B1, fl, ref, fl, top); g.triO(A0, B1, A1, fl, ref, top, top);
-    g.triO(A1, B1, B3, top, ref, top, fl); g.triO(A1, B3, A3, top, ref, fl, fl);
-    st.kosi++;
+  /* ---- Spa: past js/world-chase-bt9.js's bands (the barrier's uncut strip, the woods' edge to ~28 m, the hay to ~40 m) out to ~60 m ---- */
+  const SP = { seed: 63301, step: 4, from: 40, reach: 20,
+    hay: [0.4, 0.55, 0.24], seed2: [0.66, 0.64, 0.38], need: [[0.36, 0.29, 0.2], [0.42, 0.33, 0.22]], fern: [0.34, 0.56, 0.14], young: [0.2, 0.36, 0.17] };
+  const base = (World.ext || {}).spaRob;
+  if (base && BT.walk && BT.softScen && BT.rbEnv) World.ext.spaRob = (ctx) => {
+    const r = base(ctx) || {};
+    try { r.bt63 = spaFar(ctx); } catch (e) { console.error('chase-bt63 (spa):', e); }
+    return r;
   };
-  chain('buriram', 'robBt63', (ctx) => {
-    const T = API.T, { nrGround: gH, nrLC, nrNear, nrSlope } = API, scen = ctx.scen, st = { kosi: 0 };
-    if (!T || !T.br || !gH || !nrLC || !nrNear || !scen) return st;
-    const sk = T.def.sk || {}, WATER = polys(sk.lakes).concat(polys(sk.wet)), ex = ctx.excluded || (() => false), ps = pitSide(T), R = rng(BB.seed);
-    // nrNear reaches 64 m: beyond it (i < 0) lie the paddies proper; the track-side lawns (land cover 0) stay without bunds
-    const NEAR = new Set(), C = 20, rc = Math.ceil(BB.reach / C);   // 20 m cells within BB.reach of the centre line
-    for (let i = 0; i < T.px.length; i += 3) { const cx = Math.floor(T.px[i] / C), cz = Math.floor(T.pz[i] / C);
-      for (let b = -rc; b <= rc; b++) for (let a = -rc; a <= rc; a++) if ((a * a + b * b) * C * C <= BB.reach * BB.reach) NEAR.add((cx + a) * 65536 + cz + b); }
-    const ok = (x, z) => { if (st.kosi >= BB.max || !NEAR.has(Math.floor(x / C) * 65536 + Math.floor(z / C))) return false; const q = nrNear(x, z);
-      if (q.i >= 0) { if (q.dd < BB.from) return false; if (ps && Math.sign(q.lat) === ps && T.pitAt(q.i * T.ds)) return false; }
-      const c = nrLC(x, z); return c === 2 && !ex(x, z) && (!nrSlope || nrSlope(x, z) < 0.5) && !inAny(WATER, x, z, 3); };
-    let u0 = 1e9, u1 = -1e9, v0 = 1e9, v1 = -1e9;
-    for (let i = 0; i < T.px.length; i++) { const u = T.px[i] * PC + T.pz[i] * PS, v = -T.px[i] * PS + T.pz[i] * PC; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
-    u0 -= 280; u1 += 280; v0 -= 280; v1 += 280;
-    const run = (pa, pb) => {   // a straight bund in pieces, each piece where its middle is on the open paddies
-      const [ax, az] = pa, [bx, bz] = pb, L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / BB.piece));
-      for (let s = 0; s < n; s++) { const t0 = s / n, t1 = (s + 1) / n, mx = ax + (bx - ax) * (t0 + t1) / 2, mz = az + (bz - az) * (t0 + t1) / 2;
-        if (!ok(mx, mz)) continue;
-        bund(scen.get(mx, mz), gH, ax + (bx - ax) * t0, az + (bz - az) * t0, ax + (bx - ax) * t1, az + (bz - az) * t1, R, st); }
-    };
-    for (let row = Math.floor(v0 / 30); row * 30 <= v1; row++) {
-      const v = row * 30, hr = hsh(row, 77), wd = 34 + 22 * hr;
-      for (let u = u0; u < u1; u += 40) run(toXZ(u, v), toXZ(Math.min(u1, u + 40), v));   // the long bund between two rows
-      for (let col = Math.floor((u0 + hr * 97) / wd); col * wd - hr * 97 <= u1; col++) { const u = col * wd - hr * 97; run(toXZ(u, v), toXZ(u, v + 30)); }   // the short ones between the fields
-    }
+  const vn = (x, z) => { const h = (i, j) => { const t = Math.sin(i * 127.1 + j * 311.7) * 43758.5453; return t - Math.floor(t); };
+    const i = Math.floor(x), j = Math.floor(z), u = x - i, v = z - j, a = u * u * (3 - 2 * u), b = v * v * (3 - 2 * v);
+    return (h(i, j) * (1 - a) + h(i + 1, j) * a) * (1 - b) + (h(i, j + 1) * (1 - a) + h(i + 1, j + 1) * a) * b; };
+  function spaFar(ctx) {
+    const { nrLC, nrGround: gH, nrSlope, nrGCol } = API, st = { seno: 0, iglice: 0, praprot: 0, mlade: 0 };
+    if (!nrLC || !gH || !API.T) return st;
+    const { excluded, inBrook, root, matV } = ctx, soft = BT.softScen(root, matV);
+    const env = BT.rbEnv((x, z) => excluded(x, z) || (inBrook ? inBrook(x, z, 3) : false));
+    const sl = (x, z) => (nrSlope ? nrSlope(x, z) : 0);
+    const gc = (x, z) => { const c = nrGCol ? nrGCol(x, z) : [0.4, 0.55, 0.3]; return [c[0] * 0.95, c[1] * 1.02, c[2] * 0.9]; };
+    const up = (c, k) => [Math.min(1, c[0] * k), Math.min(1, c[1] * k), Math.min(1, c[2] * k)];
+    BT.walk(env, SP.seed, SP.step, SP.reach, SP.from, (x, z) => { const c = nrLC(x, z); if (c === 3 || sl(x, z) > 1.1) return 0;
+      return c === 0 ? 0.55 * (0.4 + 0.6 * sstep(0.3, 0.7, vn(x / 27 + 11, z / 27 - 5))) : 0.8; }, (gx, gz, k, R, free) => {
+      const c = nrLC(gx, gz);
+      if (c === 0) {   // the hay meadow: taller grass in loose groups, seed heads catching the light
+        for (let q = 0, n = 3 + Math.floor(R() * 4); q < n; q++) { const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, h = R();
+          if (!free(x, z, 34)) continue;
+          tuft(soft.get(x, z), x, gH(x, z), z, 0.5 + h * 0.5, 0.38 + h * 0.36, vary(up(mix3(mix3(gc(x, z), SP.hay, 0.4), SP.seed2, 0.15 + R() * 0.3), 1.28), R, 0.03), R, 4); st.seno++; }
+        return;
+      }
+      // the spruce rows (1) and the felled glades (2): the needles' brown, on the glades the bracken and young growth on it
+      if (free(gx, gz, 34)) { soil(soft, gH, gx, gz, 1.8 + R() * 2.4, vary(mix3(SP.need[0], SP.need[1], R()), R, 0.02), R, 0.05); st.iglice++; }
+      const glade = c === 2, n = glade ? 3 + Math.floor(R() * 4) : (R() < 0.35 ? 1 + Math.floor(R() * 2) : 0);
+      for (let q = 0; q < n; q++) { const x = gx + (R() - 0.5) * 6, z = gz + (R() - 0.5) * 6, h = R();
+        if (!free(x, z, 34)) continue;
+        if (glade && R() < 0.3) { cushion(soft.get(x, z), x, gH(x, z), z, 0.8 + h * 0.6, 0.9 + h * 0.7, vary(mix3(SP.young, gc(x, z), 0.2), R, 0.03), R); st.mlade++; }
+        else { cushion(soft.get(x, z), x, gH(x, z), z, 0.7 + h * 0.6, 0.55 + h * 0.4, vary(mix3(SP.fern, gc(x, z), 0.15), R, 0.03), R); st.praprot++; }
+      }
+    });
+    soft.done();
+    if (root) for (const g of root.children) if (g.isGroup) for (const m of g.children) if (m.userData.rob && m.name === 'rob') m.castShadow = false;
     return st;
-  });
+  }
 })();
