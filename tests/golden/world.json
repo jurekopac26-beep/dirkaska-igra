@@ -196,12 +196,12 @@
   }
  },
  "katu": {
-  "meshes": 1822,
-  "verts": 1134616,
+  "meshes": 1871,
+  "verts": 1226482,
   "instances": 20414,
   "props": 117,
   "crowd": 126,
-  "world": "ec215260",
+  "world": "a245b0a0",
   "propsHash": "f4e9249f",
   "floor": "c390a1c7/10304",
   "groups": {
@@ -211,7 +211,7 @@
    "-:MeshBasicMaterial": "4d8f072f",
    "rapids:MeshLambertMaterial": "a65a0a4d",
    "crowd:MeshLambertMaterial": "845e2ab1",
-   "rob:MeshLambertMaterial": "7e0723d8",
+   "rob:MeshLambertMaterial": "350e3a3e",
    "dolina:MeshLambertMaterial": "62a906c3",
    "flags:MeshLambertMaterial": "41eb7c9d",
    "ao:MeshBasicMaterial": "d1e61631",
@@ -1307,18 +1307,18 @@
   }
  },
  "isalo": {
-  "meshes": 374,
-  "verts": 495916,
+  "meshes": 418,
+  "verts": 671098,
   "instances": 1274,
   "props": 0,
   "crowd": 84,
-  "world": "df7eecf3",
+  "world": "3ac69d58",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
    "-:MeshLambertMaterial": "d58dd273",
    "crowd:MeshLambertMaterial": "bbf55e50",
-   "rob:MeshLambertMaterial": "1bceface",
+   "rob:MeshLambertMaterial": "ccc84d50",
    "flags:MeshLambertMaterial": "c3d43254",
    "ao:MeshBasicMaterial": "a63406a8",
    "tyremarks:MeshBasicMaterial": "356f0607",

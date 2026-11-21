@@ -42,11 +42,11 @@
   "jsMs": 1.18
  },
  "katu": {
-  "calls": 147,
-  "maxCalls": 167,
-  "kverts": 504,
-  "maxKverts": 653,
-  "jsMs": 0.8
+  "calls": 161,
+  "maxCalls": 187,
+  "kverts": 543,
+  "maxKverts": 720,
+  "jsMs": 0.73
  },
  "harju": {
   "calls": 177,
@@ -336,11 +336,11 @@
   "jsMs": 0.75
  },
  "isalo": {
-  "calls": 105,
-  "maxCalls": 121,
-  "kverts": 263,
-  "maxKverts": 276,
-  "jsMs": 0.69
+  "calls": 114,
+  "maxCalls": 131,
+  "kverts": 308,
+  "maxKverts": 317,
+  "jsMs": 0.96
  },
  "portobelo": {
   "calls": 108,
