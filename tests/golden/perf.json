@@ -98,11 +98,11 @@
   "jsMs": 1.91
  },
  "tianmen": {
-  "calls": 177,
-  "maxCalls": 209,
-  "kverts": 493,
-  "maxKverts": 625,
-  "jsMs": 1.28
+  "calls": 180,
+  "maxCalls": 213,
+  "kverts": 520,
+  "maxKverts": 646,
+  "jsMs": 1.17
  },
  "uncompahgre": {
   "calls": 161,
@@ -427,11 +427,11 @@
   "jsMs": 0.93
  },
  "sacalobra": {
-  "calls": 222,
-  "maxCalls": 262,
-  "kverts": 578,
-  "maxKverts": 708,
-  "jsMs": 1.5
+  "calls": 231,
+  "maxCalls": 275,
+  "kverts": 581,
+  "maxKverts": 761,
+  "jsMs": 1.45
  },
  "kotor": {
   "calls": 204,
