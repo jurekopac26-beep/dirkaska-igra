@@ -224,11 +224,11 @@
   "jsMs": 1.82
  },
  "montreal": {
-  "calls": 185,
-  "maxCalls": 242,
-  "kverts": 443,
-  "maxKverts": 535,
-  "jsMs": 1.77
+  "calls": 191,
+  "maxCalls": 247,
+  "kverts": 486,
+  "maxKverts": 591,
+  "jsMs": 1.72
  },
  "greatalpine": {
   "calls": 147,
@@ -287,11 +287,11 @@
   "jsMs": 1.59
  },
  "livorno": {
-  "calls": 141,
-  "maxCalls": 173,
-  "kverts": 289,
-  "maxKverts": 352,
-  "jsMs": 3.48
+  "calls": 144,
+  "maxCalls": 175,
+  "kverts": 318,
+  "maxKverts": 401,
+  "jsMs": 3.04
  },
  "jezero": {
   "calls": 172,
