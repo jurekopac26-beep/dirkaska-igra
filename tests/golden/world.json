@@ -638,19 +638,19 @@
   }
  },
  "kotor": {
-  "meshes": 981,
-  "verts": 793729,
+  "meshes": 985,
+  "verts": 857893,
   "instances": 15415,
   "props": 79,
   "crowd": 125,
-  "world": "b475485f",
+  "world": "b7a089b2",
   "propsHash": "67c890c8",
   "floor": "c3122f3f/10696",
   "groups": {
    "-:MeshLambertMaterial": "9713f882",
    "-:MeshPhongMaterial": "b9364527",
    "-:MeshBasicMaterial": "674336a7",
-   "rob:MeshLambertMaterial": "5bd9696b",
+   "rob:MeshLambertMaterial": "87c6e9e9",
    "irFar:MeshLambertMaterial": "15e91440",
    "crowd:MeshLambertMaterial": "e78ee90f",
    "ao:MeshBasicMaterial": "836866b6",
@@ -842,12 +842,12 @@
   }
  },
  "ella": {
-  "meshes": 1972,
-  "verts": 937055,
+  "meshes": 1979,
+  "verts": 1044065,
   "instances": 34234,
   "props": 81,
   "crowd": 54,
-  "world": "8ccb5d7c",
+  "world": "5eb7f958",
   "propsHash": "8b8ca7eb",
   "floor": "1a7d8cff/8848",
   "groups": {
@@ -856,7 +856,7 @@
    "-:MeshBasicMaterial": "c30bcc47",
    "irFar:MeshLambertMaterial": "b164b94c",
    "crowd:MeshLambertMaterial": "115cee79",
-   "rob:MeshLambertMaterial": "74999245",
+   "rob:MeshLambertMaterial": "ad73786a",
    "ao:MeshBasicMaterial": "6f535d9b",
    "tyremarks:MeshBasicMaterial": "80b908fd",
    "roadwear:MeshLambertMaterial": "390d002a",
