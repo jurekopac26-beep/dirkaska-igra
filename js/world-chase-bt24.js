@@ -45,6 +45,7 @@
     for (const g of root.children) if (g.isGroup) for (const m of g.children) if (m.userData.rob && m.name === 'rob') m.castShadow = false;
     return st;
   };
+  BT.verge = verge;   // (the twenty-fifth group's tracks use the same strip: js/world-chase-bt25.js)
 
   /* Tianmen: docs/proge/tianmen.md: »gost subtropski gozd …, skale ob cesti«, the mountain's wet air (its mist). On the verge the damp
      ground shows: dark moss in streaks, the forest's brown fallen leaves blown to the barrier, wet grey-brown earth; at the barrier's and
