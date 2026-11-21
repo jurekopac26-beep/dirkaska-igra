@@ -57,7 +57,7 @@
      scree in its three colours in wide flat patches, the pale ash rarer, the darker rock bands where it is steep; the coirón's tufts near,
      on the upper third the llareta's cushions, else the low grey-olive shrubs (sparse: the climb is 10.8 km). */
   const CA = { n: 0 };
-  const CAF = { step: 7, n: 2, from: 9, reach: 55, share: 0.72, maxSl: 1.5, sl: 0.8, bushShare: 0.35, fall: false,
+  const CAF = { step: 6, n: 3, from: 9, reach: 55, share: 0.72, maxSl: 1.5, sl: 0.8, bushShare: 0.35, fall: false,
     patch: (R, sl) => { const r = R();
       return sl > 0.9 && r < 0.4 ? P(R, [0.46, 0.43, 0.4], [0.5, 0.46, 0.42], 1.4, 1.6)   // (darker rock bands on the steep parts)
         : r < 0.35 ? P(R, [0.57, 0.55, 0.51], [0.61, 0.58, 0.53], 1.6, 1.8)   // (grey scree)
