@@ -3,8 +3,7 @@
    third pass on the two roads whose ground the eighth and thirtieth groups (js/world-chase-bt8.js, js/world-chase-bt30.js: Savusavu's
    verge and bank to ~8 m past the barrier line) and the fourteenth and thirty-first (js/world-chase-bt14.js, js/world-chase-bt31.js:
    Isalo's sandy strip and low earth bank to ~4 m) already set. From behind the car both still showed the asphalt's edge as one clean line
-   and, past those bands, one smooth face of the land cover's colour out to ~60 m: on Savusavu one green, on Isalo one gold. So here, as the
-   seventieth group did (js/world-chase-bt70.js): on both the edge of the asphalt in short streaks (docs/proge/savusavu.md: »rdečerjav prah
+   and, past those bands, one smooth face of the land cover's colour out to ~60 m: on Savusavu one green, on Isalo one gold. So here, on both the edge of the asphalt in short streaks (docs/proge/savusavu.md: »rdečerjav prah
    vulkanske prsti, ki ga dež spere na rob asfalta«; docs/proge/isalo.md: »zlata trava in rdeča prst«: the red earth and the sand the wind
    and the rain bring onto it), the shoulder's grit; past the earlier bands out to ~60 m wide low patches and on them what stands there:
    Savusavu the grass, the sun-bleached grass, the red-brown soil, the leaf litter and the ferns under the forest, the dark bushes of the

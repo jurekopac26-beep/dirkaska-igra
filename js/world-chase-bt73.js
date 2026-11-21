@@ -3,7 +3,7 @@
    Savusavu, a further pass on two of the passes' roads (js/world-prelaz.js) whose ground the earlier groups set only near the road
    (js/world-chase-bt7.js, js/world-chase-bt44.js: Porto Moniz's verge, bank to ~8 m and a sparse band to ~55 m; js/world-chase-bt8.js,
    js/world-chase-bt30.js: Savusavu's verge and bank to ~8 m). From behind the car the asphalt's edge met the verge in one clean line, and
-   past the near bands the slopes stood in one even sheet. So here, as the seventy-first group did (js/world-chase-bt71.js), on both a worn
+   past the near bands the slopes stood in one even sheet. So here, on both a worn
    edge (grit and dust off the asphalt and washed down onto it, 0.05-0.75 m past its edge, under the rail too, thin and broken) and a
    band from ~3 m to ~60 m past the barrier line, thinning with distance (from 9 m it lay outside the chase camera's frame). Savusavu (docs/proge/savusavu.md): »rdečerjav prah vulkanske prsti, ki ga dež spere na
    rob asfalta« on the edge; the plateau's grass, the grass the sun bleached, the red-brown soil of the cuts, the dark basalt's grit, the
