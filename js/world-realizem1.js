@@ -297,7 +297,10 @@
     const face = new Set(); let segs = 0;
     for (const side of [-1, 1]) { const W = isWall[side > 0 ? 1 : 0];
       for (let i = 0; i < N - 1; i++) { if (!W[i] && !W[i + 1]) continue; segs++;
-        for (const j of [i, i + 1]) for (const [o, y] of rows(j, side)) face.add(key(Pt(j, side * o, y))); } }
+        for (const j of [i, i + 1]) { for (const [o, y] of rows(j, side)) face.add(key(Pt(j, side * o, y)));
+          // (and the old face's apron on the ground at its foot, to 1.9 m out: under the new wall and slope it is buried, but before a wall straight
+          // down beside a leg below it lay 3 cm over the ground's own heights, in patches over and under the ground's coarser mesh)
+          if (W[j]) { const bar = barOf(j, side); for (const d of [1.15, 1.9]) face.add(key(Pt(j, side * (bar + d), gAt(j, side, bar + d) + 0.03))); } } } }
     if (!segs) return;
     // take the old faces out of the road's meshes: the triangles with all three corners on those rows
     let removed = 0, gMat = null;
@@ -390,7 +393,10 @@
     // the profiles (offset from the road's centre, height above it), 8 points: 0 the wall's top, 1 its foot, 2-4 the slope, 5 where it ends, 6-7 on:
     // under the ground; or the cut face's foot (land 1), and over a pit the level ground on to the leg below
     const prof = (i, side) => { const r = wall[side > 0 ? 1 : 0][i], bar = barOf(i, side), p = [[bar + 0.3, -0.04], [r.oW, r.yW]];
-      if (r.full) { for (let k = 0; k < 5; k++) p.push([r.oW, r.yW]); p.push([r.oW + 0.4, gAt(i, side, r.oW + 0.4) - 0.4]); return p; }
+      // (a wall straight down into the ground: its foot at least 0.6 m under it, so the face meets the ground in one clean line; nearer the surface
+      // the soft contact shading (aoWorld: a foot within 0.45 m of the ground) laid its strips at this foot on some samples and not on others, each
+      // tilted by the ground falling away to the leg below: a column of dark stepped slabs beside the wall, ~2390 m)
+      if (r.full) { const yF = Math.min(r.yW, gAt(i, side, r.oW) - 0.6); p[1][1] = yF; for (let k = 0; k < 5; k++) p.push([r.oW, yF]); p.push([r.oW + 0.4, Math.min(yF, gAt(i, side, r.oW + 0.4) - 0.4)]); return p; }
       const L = r.oM - r.oW, yE = r.land ? r.yL : gAt(i, side, r.oM) - 0.05;
       for (const f of [0.2, 0.6, 0.6]) {   // (3 and 4 the same point: three bands of slope, the first, at the wall's foot, narrow)
         const o = r.oW + L * f, q = side * o, b = (P.n4(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - 0.5) * Math.min(3, 0.6 * Math.min(1, L / 6) + 0.06 * Math.max(0, L - 6));
