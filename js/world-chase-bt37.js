@@ -25,9 +25,9 @@
      Behind the barriers on the sand: patches of the darker grey-brown grit (more where the ground's own colour is grit: the same noise as
      the look's colMod), the paler drifts of wind-blown sand, a few of the bare beige crust; out to ~60 m the same, wider and fewer ---- */
   const SK = {
-    grit: (R) => vary(mix3([0.6, 0.52, 0.42], [0.54, 0.47, 0.39], R()), R, 0.015),
-    drift: (R) => vary(mix3([0.86, 0.77, 0.6], [0.83, 0.74, 0.58], R()), R, 0.015),
-    crust: (R) => vary(mix3([0.76, 0.66, 0.5], [0.72, 0.63, 0.49], R()), R, 0.015),
+    grit: (R) => vary(mix3([0.52, 0.45, 0.36], [0.46, 0.4, 0.33], R()), R, 0.015),
+    drift: (R) => vary(mix3([0.92, 0.85, 0.68], [0.89, 0.82, 0.66], R()), R, 0.015),
+    crust: (R) => vary(mix3([0.7, 0.57, 0.42], [0.66, 0.54, 0.4], R()), R, 0.015),
   };
   const skPatch = (R, g) => { const r = R();
     return r < 0.25 + 0.45 * g ? SK.grit(R) : r < 0.8 ? SK.drift(R) : SK.crust(R); };
@@ -37,13 +37,13 @@
     const scen = ctx.scen, ex = ctx.excluded || (() => false), pd = T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0;
     const pit = (s, sd) => ps && sd === ps && (!!T.pitAt(s) || (T.pitLead ? T.pitLead(s) >= 0 : false));
     const gritK = (x, z) => P && P.n1 ? Math.min(1, Math.max(0, (P.n1(x * 0.35 + 510, z * 0.35 + 90) - 0.42) / 0.28)) : 0.3;
-    const sand = (x, z, r) => { const q = nrNear(x, z); return q.i >= 0 && q.dd > r && nrLC(x, z) === 0 && !ex(x, z) && (!nrSlope || nrSlope(x, z) < 0.6); };
+    const sand = (x, z, r) => { const q = nrNear(x, z); return q.i >= 0 && q.dd > r && (c => c !== 1 && c !== 3)(nrLC(x, z)) && !ex(x, z) && (!nrSlope || nrSlope(x, z) < 0.6); };
     const at = (i, sd, o, a) => { const d = sd * ((sd > 0 ? T.br[i] : T.bl[i]) + o); return [T.px[i] + T.nx[i] * d + T.tx[i] * a, T.pz[i] + T.nz[i] * d + T.tz[i] * a]; };
     const R = rng(37101), N = T.px.length;
     const near = Math.max(1, Math.round(3.2 / T.ds)), far = Math.max(1, Math.round(8 / T.ds));
     for (let i = 0; i < N; i += near) for (const sd of [-1, 1]) {   // behind the barriers: 0.6 to ~16 m
       for (let k = 0; k < 2; k++) {
-        const r0 = R(), r1 = R(), r2 = R(); if (pit(i * T.ds, sd) || r0 > 0.62) continue;
+        const r0 = R(), r1 = R(), r2 = R(); if (pit(i * T.ds, sd) || r0 > 0.75) continue;
         const o = 0.6 + Math.pow(r1, 1.25) * 15, [x, z] = at(i, sd, o, (r2 - 0.5) * 3.2), rr = 0.7 + R() * (0.6 + o * 0.06);
         if (!sand(x, z, Math.min(o, 0.5 + rr * 0.6))) continue;
         const g = gritK(x, z); soil(scen, nrGround, x, z, rr, skPatch(R, g), R, 0.04); st.zaplate++;
@@ -66,8 +66,8 @@
     if (L) {
       const base = L.extra;
       L.extra = function (ctx) {
-        const r = base ? base.call(this, ctx) : null;
-        try { if (ctx && ctx.out) ctx.out.robBt37 = skRob(ctx); } catch (e) { console.error('chase-bt37 (sakhir):', e); }
+        const r = (base ? base.call(this, ctx) : null) || {};
+        try { r.robBt37 = skRob(ctx); } catch (e) { console.error('chase-bt37 (sakhir):', e); }
         return r;
       };
     }
