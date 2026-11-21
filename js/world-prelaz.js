@@ -466,6 +466,7 @@
 
   function buildPrelaz(scene, tex, opts, look) {
     L = look;
+    const FROZEN = look === PL_LOOK.haivan || look === PL_LOOK.sogeri;   // (pending tracks, frozen: the foundations' change of 21. 11. skips them)
     const R = rng(L.seed), N = T.N, w = T.w, dens = opts.density || 1, def = T.def, PI = Math.PI;
     const root = new THREE.Group(); scene.add(root);
     const out = { root, dyn: {}, groundH: caGround, camFloor: caGround, props: [], farClip: true, ownTex: [], dust: [0.7, 0.68, 0.62] };
@@ -827,6 +828,14 @@
           // L.trop (Fiji, Palau, Vietnam, Saint Lucia, Papua): painted walls in one colour, no stone storey; elsewhere a masonry ground storey
           // under a timber upper one, as the mountain villages build
           const F0 = hi + 0.25, pl = L.trop ? vary(PLASTER[nBld % 5], RP, 0.05) : null;   // (its own stream: the roofs' colours as before)
+          if (FROZEN) {   // (Hải Vân, Sogeri: pending, frozen, CLAUDE.md »Proge«: their houses as before)
+            box(g, b.x, lo - 0.4, b.z, b.L, hi - lo + 0.4 + H1 * 0.45, b.W, b.ang, st, null, true);
+            box(g, b.x, hi + H1 * 0.45 - 0.02, b.z, b.L, H1 * 0.55, b.W, b.ang, wd, null, true);
+            for (const f of [-1, 1]) for (let q = -1; q <= 1; q++) { if (b.L < 7 && q) continue; const u = q * b.L * 0.28, v = f * (b.W / 2 + 0.03);
+              box(g, b.x + c * u - s * v, hi + H1 * 0.55, b.z + s * u + c * v, 1.0, 0.9, 0.06, b.ang, [0.14, 0.17, 0.2]); }
+            gable(g, b.x, hi + H1, b.z, b.L + 0.8, b.W + 0.8, Math.min(b.W, 12) * 0.42, b.ang, rf, wd);
+            CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); nBld++; continue;
+          }
           box(g, b.x, lo - 0.4, b.z, b.L + 0.1, F0 - lo + 0.4, b.W + 0.1, b.ang, vary([0.5, 0.49, 0.46], RP, 0.06), null, true);   // (the foundation)
           if (pl) box(g, b.x, F0 - 0.02, b.z, b.L, H1, b.W, b.ang, pl, null, true);
           else { box(g, b.x, F0 - 0.02, b.z, b.L, H1 * 0.45, b.W, b.ang, st, null, true); box(g, b.x, F0 + H1 * 0.45 - 0.04, b.z, b.L, H1 * 0.55, b.W, b.ang, wd, null, true); }
@@ -886,8 +895,8 @@
       out.dyn.lights = lights;
       const [hx, hz] = onSide(sStart - 5, -1, 3.2), gh = scen.get(hx, hz); hold(hx, hz, 2.2);   // the timing hut
       let hlo = 1e9, hy = -1e9; { const c = Math.cos(T.hd[i]), s = Math.sin(T.hd[i]); for (const [u, v] of [[-2, -1.4], [2, -1.4], [2, 1.4], [-2, 1.4], [0, 0]]) { const y = caGround(hx + c * u - s * v, hz + s * u + c * v); hlo = Math.min(hlo, y); hy = Math.max(hy, y); } }
-      hy += 0.15;   // (its floor just over the highest corner, its walls down into the ground: it never floats over a slope, no tall base under it)
-      box(gh, hx, hlo - 0.3, hz, 4.0, hy - hlo + 0.3 + 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
+      if (FROZEN) hy = caGround(hx, hz); else hy += 0.15;   // (Hải Vân, Sogeri, frozen: as before; the others: its floor just over the highest corner, its walls down into the ground: it never floats over a slope, no tall base under it)
+      if (FROZEN) box(gh, hx, hy, hz, 4.0, 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); else box(gh, hx, hlo - 0.3, hz, 4.0, hy - hlo + 0.3 + 2.7, 2.8, T.hd[i], [0.62, 0.44, 0.28], [0.4, 0.28, 0.18], true); box(gh, hx, hy + 1.3, hz, 4.05, 0.9, 2.85, T.hd[i], [0.2, 0.3, 0.42], null, true); gable(gh, hx, hy + 2.7, hz, 4.4, 3.2, 1.1, T.hd[i], [0.3, 0.32, 0.3], [0.62, 0.44, 0.28]);
       exclPush(hx, hz, 5); CR.block(hx, hz, 4.2, 3, T.hd[i]);
       const pc = [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.95, 0.72, 0.16]];
       for (let s = 8, k = 0; s < sStart + 50; s += 12, k++) for (const side of [-1, 1]) { const [px, pz, ii] = onSide(s, side, 1.3); if (excluded(px, pz) && s > sStart - 8) continue; hold(px, pz, 0.1);   // pennants on poles

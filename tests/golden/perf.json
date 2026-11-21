@@ -655,7 +655,7 @@
   "maxCalls": 188,
   "kverts": 458,
   "maxKverts": 577,
-  "jsMs": 0.71
+  "jsMs": 2.56
  },
  "savusavu": {
   "calls": 170,
@@ -718,6 +718,6 @@
   "maxCalls": 150,
   "kverts": 306,
   "maxKverts": 391,
-  "jsMs": 0.73
+  "jsMs": 1.07
  }
 }
