@@ -51,7 +51,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Zima na severu: Silkeborg, Kågeröd (po N1 #485) | po načrtu 9. 11. | ko je N1 na `main` |
 | Prvi zagon z angleškim menijem (I2), samo preizkus (#673) | jure.kopac26, croatiadata | po tedenskem načrtu |
 | Najboljše vožnje: 10 najboljših `.rrp` na progo, gumb »Deli 10 najboljših« | jure.kopac26 | po #650; ~14. 11. |
-| Hiše previsoko na temeljih: temelj samo do ~0,3 m in na nižji strani pobočja, vse prave proge (`js/world-prelaz.js` in drugi svetovi; poročilo 21. 11. ob 3.45, Savusavu) | biketraveler | PR #840, slike pred/po poslane; čaka »ok« uporabnika |
+| Hiše previsoko na temeljih: temelj samo do ~0,3 m in na nižji strani pobočja, vse prave proge (`js/world-prelaz.js` in drugi svetovi; poročilo 21. 11. ob 3.45, Savusavu) | biketraveler | PR #840; ok uporabnika 21. 11. (hise-840); vrstica 10.14 |
 | Napaka posnetka po cilju (za #663): `replayEnd` ne povrne tekmecev | jure.kopac26 | po #663 |
 | **Police chase, stran Police** (`docs/meni-izbira-proge.md`) | jure.kopac26 | ~12–16 h, za menijem; ~20. 11. |
 | Test s prijatelji: štetje igranja | jure.kopac26 | v delu (12. 11.) |
@@ -93,5 +93,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
+| 10.14 | #840 Hiše brez visokih temeljev | Hiše na pravih progah stojijo na tleh (temelj ~0,25 m); zamrznjene proge in fizika nespremenjene, ok uporabnika 21. 11. (hise-840) | biketraveler | `test:related` zelen (08bf8360); združi seja Združevanje |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
