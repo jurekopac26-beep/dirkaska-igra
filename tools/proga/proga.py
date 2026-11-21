@@ -509,8 +509,8 @@ def main():
     bld, lakes, streams, cables, pyl, pulls, power, poles = osm(C, G, box, x, z, name)
     scene = C.get('s2'); meta = None
     if scene:
-        zone = scene.split('_')[1]; y, mo = scene.split('_')[2][:4], int(scene.split('_')[2][4:6])
-        scene = 'sentinel-s2-l2a-cogs/%s/%s/%s/%s/%d/%s/' % (zone[:2], zone[2], zone[3:], y, mo, scene)
+        zone = scene.split('_')[1]; y, mo = scene.split('_')[2][:4], int(scene.split('_')[2][4:6]); n = len(zone) - 3   # (a one-digit UTM zone: Samoa's 2LMK)
+        scene = 'sentinel-s2-l2a-cogs/%s/%s/%s/%s/%d/%s/' % (zone[:n], zone[n], zone[n + 1:], y, mo, scene)
         j = json.loads(fetch(S2 + scene + scene.split('/')[-2] + '.json', 's2/' + scene.split('/')[-2] + '.json'))['properties']
         meta = (j['view:sun_azimuth'], j['view:sun_elevation'])
     lc, cls, cnt = landcover(C, G, geo, D, lakes, scene)
