@@ -238,11 +238,11 @@
   "jsMs": 1.01
  },
  "tuzla": {
-  "calls": 190,
-  "maxCalls": 236,
-  "kverts": 534,
-  "maxKverts": 696,
-  "jsMs": 1.48
+  "calls": 196,
+  "maxCalls": 241,
+  "kverts": 541,
+  "maxKverts": 707,
+  "jsMs": 1.91
  },
  "sepang": {
   "calls": 185,
@@ -252,11 +252,11 @@
   "jsMs": 0.84
  },
  "lombok": {
-  "calls": 204,
-  "maxCalls": 242,
-  "kverts": 607,
-  "maxKverts": 735,
-  "jsMs": 1.04
+  "calls": 213,
+  "maxCalls": 247,
+  "kverts": 616,
+  "maxKverts": 737,
+  "jsMs": 1.43
  },
  "buriram": {
   "calls": 195,
