@@ -315,18 +315,18 @@
   "jsMs": 0.89
  },
  "ghoufi": {
-  "calls": 137,
-  "maxCalls": 197,
-  "kverts": 247,
-  "maxKverts": 341,
-  "jsMs": 0.98
+  "calls": 142,
+  "maxCalls": 201,
+  "kverts": 253,
+  "maxKverts": 350,
+  "jsMs": 0.9
  },
  "cusco": {
-  "calls": 136,
-  "maxCalls": 167,
-  "kverts": 330,
-  "maxKverts": 427,
-  "jsMs": 0.77
+  "calls": 143,
+  "maxCalls": 172,
+  "kverts": 350,
+  "maxKverts": 451,
+  "jsMs": 0.91
  },
  "mombasa": {
   "calls": 127,
