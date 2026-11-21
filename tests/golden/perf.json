@@ -7,11 +7,11 @@
   "jsMs": 1.33
  },
  "pikesg": {
-  "calls": 147,
-  "maxCalls": 161,
-  "kverts": 502,
-  "maxKverts": 603,
-  "jsMs": 1.62
+  "calls": 133,
+  "maxCalls": 148,
+  "kverts": 443,
+  "maxKverts": 540,
+  "jsMs": 1.14
  },
  "nring": {
   "calls": 172,
@@ -84,11 +84,11 @@
   "jsMs": 1.16
  },
  "montreal": {
-  "calls": 224,
+  "calls": 211,
   "maxCalls": 272,
-  "kverts": 588,
-  "maxKverts": 784,
-  "jsMs": 2.47
+  "kverts": 566,
+  "maxKverts": 687,
+  "jsMs": 2.17
  },
  "livorno": {
   "calls": 150,
@@ -161,11 +161,11 @@
   "jsMs": 0.91
  },
  "bikernieki": {
-  "calls": 185,
-  "maxCalls": 236,
-  "kverts": 464,
-  "maxKverts": 544,
-  "jsMs": 0.82
+  "calls": 198,
+  "maxCalls": 248,
+  "kverts": 499,
+  "maxKverts": 576,
+  "jsMs": 2.05
  },
  "zandvoort": {
   "calls": 200,
