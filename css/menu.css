@@ -440,7 +440,7 @@ svg { display: block; }
 #s-track .stage { flex: 0 1 58.3%; min-height: 150px; overflow: hidden; }
 #s-track .stage .empty { position: absolute; left: 0; right: 0; top: 45%; margin: 0; text-align: center; font: 800 italic 16px/1.3 var(--f-ui); color: var(--lbl); }
 /* the height graph in its frame under the back button at its left (js/menu.js graphOf): as wide as the arrow was before Back came on it, 78, 0.6 of it high; the part driven (to the point)
-   its line coloured by the climb over a strong yellow, the rest a thin white line over a light yellow; the lowest point on the bottom edge */
+   its line coloured by the steepness over a strong yellow, the rest a thin white line over a light yellow; the track's length at its top left (.len) */
 .hgraph { position: absolute; left: 14px; top: calc(88px + var(--st, 0px)); width: 78px; height: 47px; padding-top: 6px; z-index: 4; pointer-events: none; overflow: hidden; border-radius: 8px; background: rgba(10, 14, 20, .45); }
 .hgraph svg { display: block; }
 .hgraph .ah { fill: none; stroke: rgba(255, 255, 255, .55); stroke-width: 1.8; stroke-linejoin: round; }
