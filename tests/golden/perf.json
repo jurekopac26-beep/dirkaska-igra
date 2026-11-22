@@ -504,11 +504,11 @@
   "jsMs": 0.79
  },
  "buriram": {
-  "calls": 207,
-  "maxCalls": 257,
-  "kverts": 719,
-  "maxKverts": 879,
-  "jsMs": 1.16
+  "calls": 219,
+  "maxCalls": 263,
+  "kverts": 559,
+  "maxKverts": 669,
+  "jsMs": 1.54
  },
  "lombok": {
   "calls": 218,

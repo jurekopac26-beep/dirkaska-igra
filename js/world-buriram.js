@@ -292,7 +292,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     buriram: { ban: BR_BAN, at: BR_AT, nums: 12, numC: ['#a51931', '#fff', '#fff'], shirts: BR_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.08, 1.04, 0.92], gravel: false, noVid: true,
       pitBox: [-160, 120, -1], mow: 0.7,   // (the pit garages on the left of the main straight, under the main grandstand; fainter mowing stripes; no farms by the circuit)
-      woods: BR_WOODS, extra: brExtra, pad: brPad, lane: true, fl: { th: TH }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: BR_WOODS, extra: brExtra, pad: brPad, lane: true, fl: { th: TH },   // (no ck: the builder's 128 m chunks; with ck 2 its 256 m ones reached past the fog from the main straight and the busiest sample drew 879k vertices, now 669k, 6 draws more: tests/golden/perf.json)
       flags: { stand: [{ th: 0.8, tm: 0.2 }, { th: 0.7, tm: 0.15, rb: 0.15 }], ga: { th: 0.8, tm: 0.2 }, camp: { th: 0.85, tm: 0.15 }, pole: 'th', podium: 'th' },
       vid: [], poles: [-250, 200, 1], runoff: ['BURIRAM', 'ISAN', 'THAILAND'], straight: [-260, 160, 1],
       farm: { wall: [0.94, 0.92, 0.86], roof: [0.62, 0.3, 0.22], end: [0.9, 0.88, 0.82], barn: [0.55, 0.45, 0.35], barnRoof: [0.62, 0.3, 0.22], barnEnd: [0.52, 0.42, 0.32] },
