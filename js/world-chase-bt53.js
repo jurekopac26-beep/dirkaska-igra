@@ -62,7 +62,7 @@
           if (r0 > L.share) continue;
           const Pp = L.verge(R, o, e0, e1, c); if (!Pp) continue;
           const rr = Math.min(Pp.r, (e1 - e0) * 0.5, o - e0 + 0.4, e1 - o + 0.4);
-          if (rr > 0.3 && own(x, z)) { soil(soft, g, x, z, rr, Pp.col, R, 0.04); st.zaplate++; }
+          if (rr > 0.3 && own(x, z)) { soil(soft, g, x, z, rr, Pp.col, R, 0.04, L.vergeK); st.zaplate++; }
         }
         if (R() < L.foot) { const o = bar - 0.35 - R() * 0.35, [x, z] = at(i, sd, o, (R() - 0.5) * 2.6);
           if (own(x, z)) { const h = R(); tuft(soft.get(x, z), x, g(x, z), z, 0.22 + h * 0.16, 0.26 + h * 0.24, T_(R, c === 1 ? L.tuftW : L.tuft), R, 5); st.sopi++; } }
@@ -79,7 +79,7 @@
         const y = gT(x, z); if (!(y > T.hy[i] - L.drop) || slope(x, z) > 1.0) continue;
         const c = lc ? lc(x, z) : 0; if (skip(c)) continue;
         const Pp = L.far(R, o - bar, c, 1 + 0.6 * Math.min(1, (o - bar - L.from) / (L.to - L.from))); if (!Pp) continue;
-        soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.06); st.pas++;
+        soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.06, L.farK); st.pas++;
       }
       soft.done(); }
     return st;
@@ -122,7 +122,7 @@
     stub: [[0.66, 0.62, 0.4], [0.7, 0.64, 0.42]], needle: [[0.5, 0.36, 0.22], [0.54, 0.39, 0.24]],
     tuft: [[0.48, 0.54, 0.28], [0.66, 0.62, 0.38]], tuftW: [[0.36, 0.48, 0.2], [0.44, 0.52, 0.25]],
   };
-  const LSO = { seed: 53201, step: 2.6, share: 0.85, foot: 0.2, farStep: 3.5, farN: 2, farShare: 0.8, from: 3.6, to: 60, drop: 4,
+  const LSO = { seed: 53201, step: 2.6, share: 0.85, foot: 0.2, farStep: 3.5, farN: 2, farShare: 0.8, vergeK: 6, farK: 5, from: 3.6, to: 60, drop: 4,
     verge: (R, o, e0, e1, c) => { const u = R(), lip = o > e1 - 1.4;
       return lip && u < 0.14 ? P(R, SO.sand, 1, 0.45, 0.5) : u < 0.45 ? P(R, SO.lush, 1, 0.6, 0.9) : u < 0.85 ? P(R, SO.pale, 1, 0.6, 0.9) : P(R, SO.dry, 1, 0.5, 0.7); },
     tuft: SO.tuft, tuftW: SO.tuftW,

@@ -83,7 +83,7 @@
         for (let q = 0, cnt = 3 + Math.floor(R() * 5); q < cnt; q++) {
           const x = gx + (R() - 0.5) * 7, z = gz + (R() - 0.5) * 7, w = 0.3 + Math.pow(R(), 2) * 0.8;
           if (qzLava(x, z) < 0.5 || !rbClear(excluded, x, z, 2.2 + w)) { R(); R(); continue; }
-          rock(scen.get(x, z), x, nrGround(x, z) + w * 0.18, z, w * 1.4, w * 0.7, w, R() * TAU, vary(lava[Math.floor(R() * lava.length)], R, 0.03), R, 0.34, 0.35); m++; }
+          rock(scen.get(x, z), x, nrGround(x, z) + w * 0.18, z, w * 1.4, w * 0.7, w, R() * TAU, vary(lava[Math.floor(R() * lava.length)], R, 0.03), R, 0.34, 0.35, w < 0.55 ? 5 : 7); m++; }   // (the small stones 5-sided)
         continue; }
       if (c !== 0) continue;
       const dry = sstep(0.5, 0.75, P.n3(gx * 0.35 + 90, gz * 0.35 - 40)) * sstep(6, 18, o);   // (as the look's colMod: the dry grass away from the track)

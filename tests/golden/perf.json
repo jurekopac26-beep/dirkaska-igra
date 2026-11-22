@@ -401,9 +401,9 @@
  "sosnova": {
   "calls": 202,
   "maxCalls": 244,
-  "kverts": 685,
-  "maxKverts": 869,
-  "jsMs": 0.74
+  "kverts": 657,
+  "maxKverts": 840,
+  "jsMs": 1.64
  },
  "izoard": {
   "calls": 190,
@@ -422,9 +422,9 @@
  "kildare": {
   "calls": 225,
   "maxCalls": 260,
-  "kverts": 527,
-  "maxKverts": 616,
-  "jsMs": 0.65
+  "kverts": 517,
+  "maxKverts": 603,
+  "jsMs": 1.31
  },
  "sacalobra": {
   "calls": 219,
@@ -665,11 +665,11 @@
   "jsMs": 0.85
  },
  "quezaltepeque": {
-  "calls": 249,
-  "maxCalls": 280,
-  "kverts": 740,
-  "maxKverts": 863,
-  "jsMs": 0.78
+  "calls": 252,
+  "maxCalls": 282,
+  "kverts": 724,
+  "maxKverts": 828,
+  "jsMs": 1.25
  },
  "aguascalientes": {
   "calls": 194,

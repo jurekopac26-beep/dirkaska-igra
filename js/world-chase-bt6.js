@@ -16,8 +16,8 @@
   const dk = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
   const tuft = (g, x, y, z, w, h, col, R, n) => cone(g, x, y - 0.08, z, w, h, n || 5, [col[0] * 0.62, col[1] * 0.66, col[2] * 0.6], col, R() * TAU);
   const cushion = (g, x, y, z, w, h, col, R) => cone(g, x, y - 0.1, z, w, h, 6, dk(col, 0.7), [col[0] * 1.12, col[1] * 1.14, col[2] * 1.05], R() * TAU);   // a low wide shrub
-  const soil = (scen, gH, gx, gz, rr, col, R, lift) => {   // bare ground: a low irregular patch lying on the terrain
-    const k = 7, a0 = R() * TAU, rim = [col[0] * 0.9 + 0.05, col[1] * 0.9 + 0.07, col[2] * 0.9 + 0.03], g = scen.get(gx, gz), up = lift || 0.05, ctr = [gx, gH(gx, gz) + up + 0.02, gz], P = [];
+  const soil = (scen, gH, gx, gz, rr, col, R, lift, sides) => {   // bare ground: a low irregular patch lying on the terrain (sides: its corners, 7 unless given)
+    const k = sides || 7, a0 = R() * TAU, rim = [col[0] * 0.9 + 0.05, col[1] * 0.9 + 0.07, col[2] * 0.9 + 0.03], g = scen.get(gx, gz), up = lift || 0.05, ctr = [gx, gH(gx, gz) + up + 0.02, gz], P = [];
     for (let q = 0; q < k; q++) { const a = a0 + q / k * TAU, r = rr * (0.65 + R() * 0.6), x = gx + Math.cos(a) * r, z = gz + Math.sin(a) * r * 0.75; P.push([x, gH(x, z) + up, z]); }
     for (let q = 0; q < k; q++) g.triO(ctr, P[q], P[(q + 1) % k], col, [gx, ctr[1] - 5, gz], rim, rim); };
   /* a rib of limestone: a low sharp ridge of rock out of the ground (six faces), `len` long along (ax, az), `w` wide, `h` high, its crest
