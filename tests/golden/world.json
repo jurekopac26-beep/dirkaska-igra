@@ -819,19 +819,19 @@
   }
  },
  "medeu": {
-  "meshes": 2770,
-  "verts": 1278079,
+  "meshes": 2833,
+  "verts": 1619185,
   "instances": 64433,
   "props": 110,
   "crowd": 149,
-  "world": "8576d195",
+  "world": "ab6eddf9",
   "propsHash": "45703e67",
   "floor": "142ca7aa/10724",
   "groups": {
    "-:MeshLambertMaterial": "bbd4bbf",
    "-:MeshPhongMaterial": "4e06f863",
    "-:MeshBasicMaterial": "bc1f3532",
-   "rob:MeshLambertMaterial": "94448f32",
+   "rob:MeshLambertMaterial": "f4197d1d",
    "irFar:MeshLambertMaterial": "62680c6e",
    "crowd:MeshLambertMaterial": "573877b2",
    "ao:MeshBasicMaterial": "8fa0dfe0",
