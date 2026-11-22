@@ -1,7 +1,7 @@
 /* Track definition 'rbring'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Red Bull Ring (Spielberg, Styria, Austria): the Formula 1 circuit (4.318 km, 10 turns, clockwise) in its real layout and scale.
+  // Styria circuit (Spielberg, Styria, Austria): the top-category circuit (4.318 km, 10 turns, clockwise) in its real layout and scale.
   // Centre line: the TUMFTM racetrack database (LGPL-3.0), from OpenStreetMap (© OpenStreetMap contributors, ODbL), smoothed; checked against
   // the f1-circuits line (MIT; the same to 2 m, its first point is the start/finish line). Metres, origin = the start/finish line, x east, z south.
   // Data: the centre line under the ODbL and the LGPL-3.0, the heights © offene Daten Österreichs - DGM Österreich (geoland.at, CC BY 4.0),
@@ -41,17 +41,17 @@ var TRACK_DEFS = TRACK_DEFS || [];
     pitRow: [-160, -40],         // the first and the last of the 13 crews' boxes
     pitBuilding: [-235, 65],     // the 300 m pit building behind the garages
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name]: Start-Ziel (the whole straight, covered, the wing
-    // behind it), Steiermark (Turn 1), Red Bull (from Turn 1 up the hill, 15 sections), T3, Nord (Turn 4, covered), T9 and T10 (covered);
+    // behind it), Steiermark (Turn 1), the long hill stand (from Turn 1 up the hill, 15 sections), T3, Nord (Turn 4, covered), T9 and T10 (covered);
     // orange: full of Dutch fans
     stands: [[-268, 140, -1, 18, 1, 1, 0, 'START · ZIEL'], [236, 344, -1, 10, 0, 1, 0, 'STEIERMARK'], [372, 880, -1, 9, 0, 15, 1, 'BERG'], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
       [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3812, 3928, -1, 9, 1, 1, 0, 'T10']],
-    wing: [-60, -1],             // the voestalpine wing (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side]
+    wing: [-60, -1],             // the wing on the stand (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side]
     ga: [[1370, 1900, -1], [900, 1180, 1], [2600, 2860, 1]],   // spectators on the grass: [from, to, side] (the hill between Turns 3 and 4 and the infield)
     turns: [[-314.9, 81.6], [-642.6, -470.3], [-837.7, -689], [-36.3, -619.2], [-158.5, -489.7], [-461.8, -494.1], [-328, -230.7], [-234.9, -309.6], [357.8, -336], [417.5, -148.9]],   // the apexes of Turns 1-10 (their number boards)
     // 2024: gravel strips 2.5 m wide just past the kerbs at the exits of Turns 9 and 10 against running wide (Core: gravel there), a blue
     // line along the white track limit beside them: [from, to, side, width] (metres from the start line)
     gravelStrips: [[3650, 3745, -1, 2.5], [3860, 3935, -1, 2.5]],
-    // the three DRS zones of the Austrian Grand Prix: [turn, detection, activation (metres before / after that turn), the next turn]:
+    // the three DRS zones of the official layout: [turn, detection, activation (metres before / after that turn), the next turn]:
     // detection 160 m before Turn 1, open from 102 m after it up to Turn 3; 40 m before Turn 3, open from 100 m after it down to Turn 4;
     // 120 m before Turn 10, open from 106 m after it along the main straight
     drs: [[1, -160, 102, 3], [3, -40, 100, 4], [10, -120, 106, 1]],

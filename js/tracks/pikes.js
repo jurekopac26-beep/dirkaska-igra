@@ -1,7 +1,7 @@
 /* Track definition 'pikes'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Pikes Peak International Hill Climb (Colorado): a POINT-TO-POINT time trial from the start at 2862 m to the summit at 4301 m.
+  // The climb up Pikes Peak (Colorado): a POINT-TO-POINT time trial from the start at 2862 m to the summit at 4301 m.
   // The real road is 19.99 km with 156 turns; this is a scaled version (~6.2 km, ~440 m of climb, average grade ~7%) that keeps
   // its character: forest S-bends, two ladders of hairpins (the "W's"), a fast ridge and the Boulder Park switchbacks below the summit.
   // Game axes: x east, z south (north = up on the minimap). The road is OPEN: points[0] is the bottom end, the last point the top end.
