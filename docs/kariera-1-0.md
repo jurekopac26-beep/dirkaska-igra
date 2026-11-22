@@ -205,7 +205,7 @@ Pri vsakem vprašanju je prva možnost priporočena. Uporabnik je odgovoril 20. 
 
 ## Predaja
 - **Stanje 22. 11.**: A, B, C, testi in D (#792, #796, #797, #807) so v zbirni veji `kariera-1-0` na svežem `main`; nanjo gre Atlas Career (dolina, dogodki, zvezdice, kovanci).
-- **Atlas 22. 11.**: logika in igra (`js/kariera.js`, `js/game.js`) ter dolina (`js/kariera-dolina.js`, `css/menu.css`) sta v zbirni veji; meni in testi (`js/menu.js`, `tests/browser/*.mjs`) druga seja.
+- **Atlas 22. 11. (narejeno)**: logika, igra, dolina, meni in testi so v zbirni veji (`js/kariera.js`, `js/game.js`, `js/kariera-dolina.js`, `css/menu.css`, `js/menu.js`, `tests/browser/*.mjs`; Esc zapre dolino), posnetki dolina, dogodek, izid in napredek (pokonci, ležeče) v `docs/kariera/`, izid povezanih testov v PR #792 (osnutek). **Naprej**: »Ready for review« po vrsti v `docs/vrsta.md`, nato seja Združevanje do `main`.
 - **Stanje 20. 11.**: odgovori prebrani, načrt popravljen. Del A je na veji (`a80900d`, `js/kariera.js` s testom), narejen s privzetki; ujema se v vsem razen ekonomije (`kariera-5`).
 - **Nato** koordinacija partyslo zažene:
   - sejo za B in sejo za C hkrati (`source_url` repozitorija, veja `kariera-1-0`); številke ekonomije ju ne ovirajo;
