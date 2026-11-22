@@ -406,11 +406,11 @@
   "jsMs": 0.74
  },
  "izoard": {
-  "calls": 190,
-  "maxCalls": 232,
-  "kverts": 427,
-  "maxKverts": 543,
-  "jsMs": 1.25
+  "calls": 202,
+  "maxCalls": 241,
+  "kverts": 503,
+  "maxKverts": 633,
+  "jsMs": 1.48
  },
  "pembrey": {
   "calls": 220,
@@ -469,11 +469,11 @@
   "jsMs": 0.97
  },
  "furka": {
-  "calls": 173,
-  "maxCalls": 211,
-  "kverts": 383,
-  "maxKverts": 530,
-  "jsMs": 1.28
+  "calls": 188,
+  "maxCalls": 231,
+  "kverts": 477,
+  "maxKverts": 667,
+  "jsMs": 1.63
  },
  "santoantao": {
   "calls": 186,
