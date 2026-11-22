@@ -350,11 +350,11 @@
   "jsMs": 0.67
  },
  "eljem": {
-  "calls": 99,
-  "maxCalls": 116,
-  "kverts": 238,
-  "maxKverts": 303,
-  "jsMs": 0.43
+  "calls": 97,
+  "maxCalls": 114,
+  "kverts": 251,
+  "maxKverts": 354,
+  "jsMs": 1.34
  },
  "isuna": {
   "calls": 127,
