@@ -686,11 +686,11 @@
   "jsMs": 0.89
  },
  "kanaba": {
-  "calls": 172,
-  "maxCalls": 218,
-  "kverts": 444,
-  "maxKverts": 590,
-  "jsMs": 1.31
+  "calls": 180,
+  "maxCalls": 225,
+  "kverts": 504,
+  "maxKverts": 613,
+  "jsMs": 1.58
  },
  "canaries": {
   "calls": 181,

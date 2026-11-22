@@ -1628,16 +1628,16 @@
   }
  },
  "kanaba": {
-  "meshes": 2251,
-  "verts": 882313,
-  "instances": 64373,
+  "meshes": 2469,
+  "verts": 890967,
+  "instances": 64250,
   "props": 105,
   "crowd": 91,
-  "world": "b5b6611d",
+  "world": "301ce590",
   "propsHash": "7765038b",
   "floor": "c58068e6/10696",
   "groups": {
-   "-:MeshLambertMaterial": "47a55e36",
+   "-:MeshLambertMaterial": "6848fa4a",
    "-:MeshPhongMaterial": "ffc0e681",
    "-:MeshBasicMaterial": "eeb9ec09",
    "irFar:MeshLambertMaterial": "edd0c9b6",

@@ -61,15 +61,15 @@
       API.aPuff(b, x, y, z, r, sy, vary(col, R, 0.1), R, 0.3, 0.55, 1.12);
     return b.geometry();
   }
-  function bambooGeo() {   // a clump of the mountain bamboo: six slim culms leaning out from one foot, their upper half in long plumes of light leaves, the tips bare (96 vertices)
+  function bambooGeo() {   // a clump of the mountain bamboo: six slim culms leaning out from one foot, each in two long narrow plumes of light leaves from about a sixth of its height up (the leafy branches of its upper nodes), the culms bare below and their tips above (180 vertices)
     const b = new API.AB(), R = rng(5413), culm = [0.5, 0.55, 0.28], leaf = [0.34, 0.46, 0.18];
     for (let k = 0; k < 6; k++) {
-      const an = (k + R() * 0.6) / 6 * TAU, rt = 0.18 + R() * 0.12, yt = 0.88 + R() * 0.12;
-      tube(b, [Math.cos(an) * 0.04, -0.02, Math.sin(an) * 0.04], [Math.cos(an) * rt, yt, Math.sin(an) * rt], 0.009, 0.006, 3, culm);
-    }
-    for (let k = 0; k < 5; k++) {
-      const an = (k + 0.5 + R() * 0.5) / 5 * TAU, rr = 0.12 + R() * 0.06;
-      API.aPuff(b, Math.cos(an) * rr, 0.56 + R() * 0.14, Math.sin(an) * rr, 0.1 + R() * 0.025, 1.4, vary(leaf, R, 0.08), R, 0.3, 0.6, 1.15);
+      const an = (k + R() * 0.6) / 6 * TAU, rt = 0.18 + R() * 0.12, yt = 0.88 + R() * 0.12, c = Math.cos(an), s = Math.sin(an);
+      tube(b, [c * 0.04, -0.02, s * 0.04], [c * rt, yt, s * rt], 0.009, 0.006, 3, culm);
+      for (const [t, r, sy] of [[0.42, 0.085, 2.6], [0.7, 0.075, 2.4]]) {   // (along the leaning culm: the clump spreads like a fountain)
+        const rr = 0.04 + (rt - 0.04) * t;
+        API.aPuff(b, c * rr, -0.02 + (yt + 0.02) * t, s * rr, r * (0.9 + R() * 0.2), sy, vary(leaf, R, 0.08), R, 0.3, 0.6, 1.15);
+      }
     }
     return b.geometry();
   }
@@ -80,8 +80,8 @@
 
   /* ---- each tree the shared builder plants (its place by the land cover, its random numbers r2..r4: none of our own): in the reserve the
      forest's tall trees (lc 1) are bamboo in its thickets (a slow noise, about a third of the forest), else Hagenia (two in three) and Rapanea;
-     outside it the woodlots' trees are eucalyptus (four in five) and black wattle, and a few of the shrubs on the farmland (lc 0) lone trees of
-     the two; the shrubs elsewhere as the shared builder's ---- */
+     outside it the woodlots' trees are eucalyptus (four in five) and black wattle, a tenth of them left out, and a few of the shrubs on the
+     farmland (lc 0) lone trees of the two; the shrubs elsewhere as the shared builder's ---- */
   LOOK.tree = (x, z, c, sp, hgt, wid, col, r2, r3, r4, own) => {
     const res = inEchuya(x, z);
     if (c === 1 && sp === 0) {
@@ -91,6 +91,7 @@
         if (u < 0.65) { st.hagenia++; const h = 9 + r4 * 9; return [own + 1, h, h * (0.55 + r2 * 0.15), [0.9 + r2 * 0.18, 0.92 + r4 * 0.14, 0.88 + u * 0.12]]; }
         st.rapanea++; const h = 7 + r4 * 6; return [own + 1, h, h * (0.42 + r2 * 0.08), [0.78 + r2 * 0.12, 0.84 + r4 * 0.1, 0.8 + u * 0.1]];
       }
+      if (r2 > 0.9) return null;   // (the woodlots a tenth thinner: more trees fewer than the lone ones between the fields add, no more trees than the spruce were: the user's rule of fewer trees along the roads)
       if (u < 0.8) { st.eucalyptus++; const h = 14 + r4 * 12; return [own, h, h * (0.38 + r2 * 0.12), [0.92 + r2 * 0.16, 0.95 + r4 * 0.1, 0.92 + u * 0.1]]; }
       st.wattle++; const h = 6 + r4 * 8; return [own + 1, h, h * (0.55 + r2 * 0.15), [0.8 + r2 * 0.12, 0.86 + r4 * 0.1, 0.8 + u * 0.1]];
     }
