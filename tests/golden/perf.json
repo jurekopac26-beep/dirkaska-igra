@@ -553,11 +553,11 @@
   "jsMs": 1.67
  },
  "lusail": {
-  "calls": 171,
-  "maxCalls": 234,
-  "kverts": 527,
-  "maxKverts": 822,
-  "jsMs": 1.37
+  "calls": 175,
+  "maxCalls": 236,
+  "kverts": 548,
+  "maxKverts": 848,
+  "jsMs": 1.79
  },
  "riohondo": {
   "calls": 194,
