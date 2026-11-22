@@ -26,8 +26,8 @@ const sOf = (p) => { const q = T.query(p[0], p[1], -1, {}); return { s: q.s - T.
 
 // 1. the track: an open road, four ways to drive it, its checkpoints; at full scale and no longer than 1 km (the user's short roads); its name
 // as the rules want it
-check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 2 checkpoints, the road 9 m wide, named "Kraj, Država", awaiting a choice of the user (def.pending, not def.test: Vietnam keeps one of it and Hải Vân, 16. 11. 2026)',
-  def.pending === true && !def.test && def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 2 && T.w === 4.5 && def.name === 'Mã Pí Lèng, Vietnam' && def.en.name === 'Mã Pí Lèng, Vietnam',
+check('track: an open road with four ways to drive it (def.modes: race, time trial, traffic, police), 2 checkpoints, the road 9 m wide, named "Kraj, Država", a real track (the choice of 22. 11. 2026)',
+  !def.pending && !def.test && def.open && !def.timeTrial && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 2 && T.w === 4.5 && def.name === 'Mã Pí Lèng, Vietnam' && def.en.name === 'Mã Pí Lèng, Vietnam',
   `race ${Math.round(T.raceLen)} m, ${T.cpS.length} checkpoints, ${def.alt[0]} -> ${def.alt[1]} m, modes ${(def.modes || []).join(',')}`);
 let top = -1e9, low = 1e9, sTop = 0;
 for (let i = T.startIdx; i <= T.finishIdx; i++) { const a = T.altAt(T.hy[i]); if (a > top) { top = a; sTop = i * T.ds - T.startS; } low = Math.min(low, a); }

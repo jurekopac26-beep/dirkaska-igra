@@ -27,7 +27,7 @@
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
   const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5],
-    mapileng: [23.25, 1184], mujib: [31.44, 471], sanssouci: [-4.64, 202], banaue: [16.93, 1247], atitlan: [14.76, 2068] };   // (the short roads
+    mapileng: [23.25, 1184], mujib: [31.44, 471], sanssouci: [-4.64, 202], atitlan: [14.76, 2068] };   // (the short roads
     // out of Europe, docs/nove-proge-1-0.md del 4: the start's altitude, their heights are from the start line as GEO's offset)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
