@@ -14,8 +14,9 @@
       : f === 3 || f === 4 ? 'Shramba je bila polna: da se napredek shrani, so bili izbrisani {0} duhovi.' : 'Shramba je bila polna: da se napredek shrani, je bilo izbrisanih {0} duhov.', n), 5200); } });
   const STEP = 1 / 120;
   const LAPS = 3, NUM_AI = 21, CH_AI = 19, PLAYER_GRID = 999, RIV_MAX = 100;   // (RIV_MAX: the most rivals the menu's Opponents offers; a track whose start or finish takes fewer: def.maxRivals)   // (NUM_AI: a Circuit race's rivals, 22 cars, the career's too; CH_AI: a championship round's, 20 cars; PLAYER_GRID: without qualifying the player starts at the back of the grid: Core.Race puts the player at min(the field, it), the last slot of any field, the Nordschleife's 100 too)
-  const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6,
-    0xb8bcc2, 0x7d8288, 0x4a78b5, 0xa83248, 0x1fb5b0, 0xf06aa8, 0xa6d62b, 0xb07a3c];   // (the last eight: docs/novosti-e.md Novost 1, V3 (16 colours, none very dark); an older phone draws an index it does not know as the first, as ever)
+  const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x5c6168, 0x2fa84f, 0xff7a1a, 0x8e3bd6,
+    0xb8bcc2, 0x7d8288, 0x4a78b5, 0xa83248, 0x1fb5b0, 0xf06aa8, 0xa6d62b, 0xb07a3c];   // (the last eight: docs/novosti-e.md Novost 1, V3 (16 colours, none very dark); an older phone draws an index it does not know as the first, as ever; index 4 was black 0x1a1a1f, now graphite: a stored index keeps its place)
+  const OLD_BLACK = 0x1a1a1f, colFix = (c) => typeof c !== 'number' ? PLAYER_COLORS[0] : c === OLD_BLACK ? PLAYER_COLORS[4] : c;   // (a ghost file or a friend's challenge from before: its old black as the graphite)
   const DRIVE_TXT = { FR: 'Zadnji pogon', AWD: 'Štirikolesni pogon', FF: 'Prednji pogon', MR: 'Motor na sredini', RR: 'Motor zadaj' };
   const DRIVE_TAG = { FR: 'FR', AWD: '4WD', FF: 'FF', MR: 'MR', RR: 'RR' };
   const CTRL_HELP = {
@@ -1908,7 +1909,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
     const a = new Int16Array(u.buffer), f = new Float32Array(o.n * ch), q = o.q0.map(v => +v || 0);
     for (let k = 0; k < o.n; k++) { const i = k * ch; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < ch; c++) f[i + c] = a[i + c] / 1e4; }
-    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, ch, lap: o.lap === 1 };
+    return { n: o.n, t: o.t, M: modelById(o.car), color: colFix(o.color), stripe: o.stripe !== false, f, ch, lap: o.lap === 1 };
   }
   function ghLoad(id, best, lap) {   // the stored best run of this track and physics, if it is the run of the current record (lap: a circuit's best flying lap)
     let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
@@ -2160,7 +2161,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const g = o.ghost != null ? ghParse(o.ghost) : null; if (o.ghost != null && (!g || Math.abs(g.t - o.time) > 0.001)) return null;   // (its ghost, if one came with it: the same run)
     const lap = o.lap === 1; if (lap ? d.open || d.timeTrial : !hasTT(d)) return null;   // (a lap on a circuit, a time trial's run where there is one)
     const c = isObj(o.cond) ? o.cond : {}, v = (x) => x === 0 || x === 1 || x === 2 ? x : 1, st = isObj(c.setup) ? c.setup : {};
-    return { name: cleanName(o.name) || tr('Prijatelj'), time: o.time, track: d.id, lap, car: modelById(o.car).id, color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], ghost: !!g, nm: !lap && Array.isArray(o.marks) ? Math.min(o.marks.length, MK_RUNS) : 0,   // (nm: how many runs' tyre marks came with it)
+    return { name: cleanName(o.name) || tr('Prijatelj'), time: o.time, track: d.id, lap, car: modelById(o.car).id, color: colFix(o.color), ghost: !!g, nm: !lap && Array.isArray(o.marks) ? Math.min(o.marks.length, MK_RUNS) : 0,   // (nm: how many runs' tyre marks came with it)
       cond: { rain: c.rain === 1 ? 1 : 0, tod: CHAL_TOD[c.tod] ? c.tod : 'day', season: CHAL_SEASON[c.season] ? c.season : 'summer', upg: upgNorm(isObj(c.upg) ? c.upg : null), setup: { wing: v(st.wing), gear: v(st.gear) } } };
   }
   function chalLoad() { let o = null; try { o = JSON.parse(localStorage.getItem(CHAL_KEY) || 'null'); } catch (_) { } chal = chalOf(o); chalBtn(); }
@@ -3625,7 +3626,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const RD_WHO = { okc: ['OKC KRANJ', '', ''], heli: ['BOBER', 'Bober', 'Bober'], bov: ['PP BOVEC', 'Postaja Bovec', 'Bovets station'], cop: ['POLICIST', '', ''], drv: ['TI', '', ''] };
   const rdCall = (u, kind) => kind === 'moto' ? [tr('MOTORIST {0}', u), 'Motorist ' + u, 'Bike ' + u] : kind === 'uc' ? [tr('CIVILNA {0}', u), 'Civilna ' + u, 'Unmarked ' + u] : kind === 'van' || !u ? [tr('KOMBI'), 'Kombi', 'Van'] : ['KG-' + u, 'Kranjska Gora ' + u, 'Kranyska Gora ' + u];   // (the labels on the page in its language)
   // the player's car as the police describe it: the colour (the formula is feminine), the model ([Slovenian, English])
-  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple'],
+  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['grafiten', 'grafitna', 'graphite'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple'],
     ['srebrn', 'srebrna', 'silver'], ['siv', 'siva', 'grey'], ['srednje moder', 'srednje modra', 'mid-blue'], ['bordo', 'bordo', 'burgundy'], ['turkizen', 'turkizna', 'turquoise'], ['roza', 'roza', 'pink'], ['limetno zelen', 'limetno zelena', 'lime green'], ['bronast', 'bronasta', 'bronze']];
   // the lines: key -> its variants [Slovenian, English] ({at} where, {to} which way, {dir} heading for, {v} km/h, {car} the player's car, {U} the
   // unit spoken to, {sacc} / {sgen} / {sloc} into / out of / in a side road, {dead} its dead end)
