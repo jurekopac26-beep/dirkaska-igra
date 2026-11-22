@@ -665,11 +665,11 @@
   "jsMs": 1.13
  },
  "quezaltepeque": {
-  "calls": 228,
-  "maxCalls": 257,
-  "kverts": 609,
-  "maxKverts": 720,
-  "jsMs": 1.18
+  "calls": 236,
+  "maxCalls": 266,
+  "kverts": 647,
+  "maxKverts": 778,
+  "jsMs": 1.84
  },
  "aguascalientes": {
   "calls": 182,
