@@ -208,7 +208,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     lusail: { ban: LU_BAN, at: LU_AT, nums: 16, numC: ['#8a1538', '#fff', '#fff'], shirts: LU_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.6, 1.2, 2.3], gravel: false, noVid: true,
       pitBox: [-290, 100, 1], mow: 0.25,   // (the pit building on the right of the main straight; the green verges by the track artificial, no mowing stripes to speak of; no farms in the desert)
-      woods: LU_WOODS, extra: luExtra, ground: luGround, lane: true, fl: { qa: QA }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: LU_WOODS, extra: luExtra, ground: luGround, lane: true, fl: { qa: QA }, ck: 1,   // (ck: the usual 128 m chunks, not twice as big: at the busiest place, the end of the main straight, the bigger ones drew 885k vertices (the budget 900k); these 706k for 15 draws more, 276 of 300)
       flags: { stand: [{ qa: 0.8, tm: 0.2 }, { qa: 0.7, tm: 0.2, rb: 0.1 }], ga: { qa: 0.75, tm: 0.25 }, camp: { qa: 0.85, tm: 0.15 }, pole: 'qa', podium: 'qa' },
       vid: [], poles: [-280, 115, -1], runoff: ['LUSAIL', 'QATAR', 'DOHA'], straight: [-560, -320, -1],
       farm: { wall: [0.93, 0.9, 0.82], roof: [0.8, 0.79, 0.76], end: [0.9, 0.86, 0.78], barn: [0.7, 0.62, 0.5], barnRoof: [0.62, 0.63, 0.64], barnEnd: [0.66, 0.58, 0.46] },
