@@ -3871,10 +3871,11 @@ const Render = (function () {
     if (W) { W.puddles.visible = w > 0; W.road.color.setScalar((1 - 0.36 * w) * (snowy() ? 0.86 : 1)); W.road.shininess = w > 0 ? 28 : W.base.sh; W.road.specular.setHex(w > 0 ? 0x3c3e40 : W.base.sp); W.ground.color.setScalar(1 - 0.2 * w); }
   }
   // the dry line (a changing weather, Race opts weather: after the rain the racing line dries first): a band of dry road along it, as light as
-  // the line is drier than the rest of the road. One mesh along the whole lap, built the first time it shows
-  function dryLine(R) {
-    const W = R && R.wst, T = R && R.track, k = W && W.wx && T && !T.open && T.rl ? clamp((W.water - W.line) * 2.4, 0, 1) : 0;
-    if (k > 0.01 && !dryLn && world) {
+  // the line is drier than the rest of the road. One mesh along the whole lap, built the first time it shows (pre: a changing day's start,
+  // attachRace: built now, hidden, its shader compiled with the world's)
+  function dryLine(R, pre) {
+    const W = R && R.wst, T = R && R.track, can = !!T && !T.open && !!T.rl, k = W && W.wx && can ? clamp((W.water - W.line) * 2.4, 0, 1) : 0;
+    if ((k > 0.01 || (pre && can)) && !dryLn && world) {
       const N = T.N, st = N > 6000 ? 2 : 1, n = Math.ceil(N / st) + 1, O = [-1.7, -0.95, 0.95, 1.7], A = [0, 1, 1, 0];
       const pos = new Float32Array(n * 12), col = new Float32Array(n * 16), uv = new Float32Array(n * 8), idx = [], bk = { dy: 0, sl: 0 };
       for (let j = 0; j < n; j++) {
@@ -4137,9 +4138,9 @@ const Render = (function () {
     if (!pitAp || pitAp.T !== T) pitAp = { T, ap: pitLook(T).ap };
     const w = q.d * p.sd; return Math.abs(w - p.o) < 3.4 || (p.t > 0.999 && w > p.lout && w < p.lout + pitAp.ap - 1.2 && apronAt(T, q.s));
   }
-  function puddles(R) {
-    const T = R && R.track, on = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world && wetW > 0.15;
-    if (on && !pud) pud = buildPuddles(T);
+  function puddles(R, pre) {   // (pre: as dryLine's)
+    const T = R && R.track, can = !!T && !T.open && T.def.roadSurface !== 'makadam' && !!world, on = can && wetW > 0.15;
+    if ((on || (pre && can)) && !pud) pud = buildPuddles(T);
     if (!pud) return;
     const k = on ? clamp((wetW - 0.15) / 0.45, 0, 1) : 0, night = atmos.tod === 'night';
     pud.visible = k > 0.01; if (!pud.visible) return;
@@ -4747,7 +4748,7 @@ const Render = (function () {
     const mat = new THREE.ShaderMaterial({
       uniforms: { tD: { value: rt.texture }, uRes: { value: new THREE.Vector2(4, 4) }, uMB: { value: 0 }, uMF: { value: new THREE.Vector2(0.5, 1) }, uMC: { value: new THREE.Vector2(0.5, 0.3) }, uHeat: { value: 0 }, uHorY: { value: 2 }, uTm: { value: 0 }, uFocus: { value: 0.45 }, uBand: { value: 0.22 }, uBlur: { value: 0.8 }, uGam: { value: 0.88 },
         uTint: { value: new THREE.Vector3(1, 1, 1) }, uSat: { value: 1.1 }, uCon: { value: 1.04 }, uVig: { value: 0.17 },
-        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) }, uCas: { value: 0 } },
+        uSun: { value: new THREE.Vector2(0, 1.2) }, uHaze: { value: 0 }, uHazeCol: { value: new THREE.Vector3(1, 0.8, 0.6) }, tB: { value: null }, uBloom: { value: 0 }, uShT: { value: new THREE.Vector3(1, 1, 1) }, uHiT: { value: new THREE.Vector3(1, 1, 1) }, uCas: { value: 0 }, uDrop: { value: new THREE.Vector3(0, 0, 0) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
         'uniform sampler2D tD; uniform vec2 uRes; uniform float uFocus; uniform float uBand; uniform float uBlur; uniform float uGam; uniform vec3 uTint; uniform float uSat; uniform float uCon; uniform float uVig; uniform vec2 uSun; uniform float uHaze; uniform vec3 uHazeCol; uniform sampler2D tB; uniform float uBloom; uniform vec3 uShT; uniform vec3 uHiT; varying vec2 vUv;',
@@ -4765,6 +4766,26 @@ const Render = (function () {
         '  return clamp((C + w * (N + S + E + W)) / (1.0 + 4.0 * w), min(min(min(N, S), min(E, W)), C), max(max(max(N, S), max(E, W)), C));',
         '}',
         'uniform float uMB; uniform vec2 uMF; uniform vec2 uMC; uniform float uHeat; uniform float uHorY; uniform float uTm;',
+        // drops on the lens (dropLook: the heaviest rain, the spray of a car close ahead): a layer of cells (n a screen's height), in each
+        // at most one drop at a time; each of its lives (uDrop.y, the phase, at the cell's own pace and start) lands it at a new place, it
+        // fades as it dries or is blown off. Standing, it creeps down; at speed (uDrop.z) it is blown out from the middle of the picture and
+        // drawn out. A drop is a little lens: the picture behind it inverted and squeezed (a cap of a sphere: its slope nr), blurred (it is
+        // on the lens: out of focus), a dark rim, a glint of the sky's light at the top. dens: the share of the cells with a drop at uDrop.x 1
+        'uniform vec3 uDrop;',
+        'vec3 dHash(vec2 p){ vec3 q = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973)); q += dot(q, q.yxz + 33.33); return fract((q.xxy + q.yzz) * q.zyx); }',
+        'vec4 drop(vec2 as, float n, float dens, float rmax, float ph, float sd){',
+        '  vec2 p = vUv * as * n + sd, id = floor(p), f = p - id; vec3 h = dHash(id);',
+        '  float lt = ph * (0.6 + 0.8 * h.x) + h.y, cy = floor(lt); lt -= cy; vec3 g = dHash(id + cy * vec2(17.13, 31.71));',
+        '  float on = smoothstep(g.z, g.z + 0.15, uDrop.x * dens) * (1.0 - smoothstep(0.6, 1.0, lt)); if (on <= 0.0) return vec4(0.0);',
+        '  vec2 ce = 0.5 + (g.xy - 0.5) * 0.24, dir = (id + ce - sd) / n - vec2(0.5 * as.x, 0.4); float dl = length(dir);',
+        '  vec2 mv = mix(vec2(0.0, -0.4), dl > 1e-3 ? dir / dl : vec2(0.0, 1.0), uDrop.z); float ml = length(mv); vec2 m = ml > 1e-3 ? mv / ml : vec2(0.0, -1.0);',
+        '  ce += mv * lt * 0.1; float r = rmax * (0.5 + 0.5 * h.z) * smoothstep(0.0, 0.05, lt), st = 1.0 + 0.7 * uDrop.z * smoothstep(0.0, 0.4, lt);',
+        '  vec2 d = f - ce, q = vec2(d.x * m.y - d.y * m.x, dot(d, m) / st) / max(r, 1e-4); float l2 = dot(q, q); if (l2 >= 1.0) return vec4(0.0);',
+        '  vec2 nr = q.x * vec2(m.y, -m.x) + q.y * m, ru = vUv - nr * (3.0 * r / n) / as, bo = vec2(0.3 * r / n) / as;',
+        '  vec3 rc = 0.25 * (texture2D(tD, ru + bo).rgb + texture2D(tD, ru - bo).rgb + texture2D(tD, ru + vec2(bo.x, -bo.y)).rgb + texture2D(tD, ru - vec2(bo.x, -bo.y)).rgb);',
+        '  rc = rc * (1.0 - 0.5 * smoothstep(0.45, 1.0, l2)) + (1.0 - smoothstep(0.0, 0.22, length(nr - vec2(-0.35, 0.45)))) * (0.12 + 0.45 * lum(rc));',
+        '  return vec4(rc, on * (1.0 - smoothstep(0.8, 1.0, l2)));',
+        '}',
         'void main(){',
         // the summer's heat over the far asphalt: the picture just under the horizon trembles (a low camera: the TV cameras)
         '  vec2 uv = vUv; if (uHeat > 0.0) { float hb = uHeat * smoothstep(0.12, 0.0, uHorY - vUv.y) * step(vUv.y, uHorY); uv.x += sin(vUv.y * 310.0 + uTm * 8.0 + sin(vUv.x * 37.0 + uTm * 2.3) * 2.0) * 0.0011 * hb; }',
@@ -4786,6 +4807,9 @@ const Render = (function () {
         // speed: away from the followed car the picture streaks out from the point it drives towards (the edges the most)
         '  if (uMB > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0); float m = uMB * smoothstep(0.1, 0.5, length((vUv - uMF) * as) * 0.6) * smoothstep(0.07, 0.24, length((vUv - uMC) * as));',
         '    if (m > 0.01) { vec2 st = (vUv - uMF) * 0.022 * m; vec3 s = c + texture2D(tD, vUv - st).rgb + texture2D(tD, vUv - st * 2.0).rgb + texture2D(tD, vUv - st * 3.0).rgb + texture2D(tD, vUv + st).rgb; c = s * 0.2; } }',
+        // the drops on the lens: two layers (big ones, small ones); fewer over the followed car and the road just ahead (the race stays readable)
+        '  if (uDrop.x > 0.0) { vec2 as = vec2(uRes.x / uRes.y, 1.0); float cl = mix(0.35, 1.0, smoothstep(0.1, 0.4, length((vUv - vec2(0.5, 0.4)) * as)));',
+        '    vec4 d = drop(as, 6.0, 0.6, 0.17, uDrop.y, 0.0); c = mix(c, d.rgb, d.a * cl); d = drop(as, 11.0, 0.45, 0.14, uDrop.y * 1.4, 37.0); c = mix(c, d.rgb, d.a * cl * 0.85); }',
         '  c *= uTint; c *= mix(uShT, uHiT, smoothstep(0.12, 0.72, lum(c))); float l = lum(c); c = mix(vec3(l), c, uSat); c = (c - 0.5) * uCon + 0.5; c = pow(max(c, vec3(0.0)), vec3(uGam));',
         '  if (uHaze > 0.0) { vec2 sd = (vUv - uSun) * vec2(uRes.x / uRes.y, 1.0); float hg = exp(-dot(sd, sd) * 2.2); c = 1.0 - (1.0 - c) * (1.0 - uHazeCol * (uHaze * hg)); }',   // warm glow of the low sun just off screen (as in the reference)
         '  if (uBloom > 0.0) { vec3 bl = min(texture2D(tB, vUv).rgb * uBloom, vec3(1.0)); c = 1.0 - (1.0 - c) * (1.0 - bl); }',   // the lights' glow (dusk and night: bloomPass)
@@ -5387,6 +5411,7 @@ const Render = (function () {
     { const D = world && world.dyn; if (D && D.vrFin) D.vrFin.visible = !race.pol; if (D && D.vrHide) { D.vrHide.grp.visible = !!race.pol; hideDoor(D.vrHide, 0); D.vrHide.t = 0; } }   // (Vršič: the race's finish, or the building the run from the police ends in, its door up)
     particles.clear(); sparkP.clear(); skids.clear(); skids.log = null; setOldMarks(null); if (sandRuts) sandRuts.clear(); cam.init = false;   // (a time trial's old runs: the game puts them back, setOldMarks)
     if (crackWarm) { crackWarm.userData.drawn = false; scene.add(crackWarm); }   // (drawn once, then taken out: frame)
+    if (race.wst && race.wst.plan) { dryLine(race, true); puddles(race, true); precompile(); }   // (a changing day: the dry line and the puddles made now, hidden, their shaders compiled at the start, not as the rain comes)
   }
   // the run from the police over: the player has driven into the building at the top (pol.goal, the event 'hideout'): a TV camera outside, down
   // the road from its door and over to the road's side, looks at it as the car disappears inside and the roller door comes down (rdDoor); the
@@ -10764,6 +10789,24 @@ const Render = (function () {
     U.uHeat.value = 0; if (heat) { camera.getWorldDirection(_mf); const h = Math.hypot(_mf.x, _mf.z) || 1; _mf.set(camera.position.x + _mf.x / h * 900, camera.position.y, camera.position.z + _mf.z / h * 900).project(camera);
       const hy = _mf.y * 0.5 + 0.5; if (hy > 0.05 && hy < 1.1) { U.uHeat.value = heat; U.uHorY.value = hy; U.uTm.value = time % 600; } }
   }
+  // the drops on the lens (the post pass: Visoka): in the heaviest rain (race.rain 0.7..1) and in the spray of a car close ahead on a wet
+  // road (up to 35 m ahead, in its tracks, from 65 km/h: the faster, the closer and the wetter the more); they come in about 2 s and go in
+  // about 4 s (dried, blown off). Only behind the car in the race (not in the photo mode or a TV shot), none in the snow. uDrop: the amount,
+  // the drops' phase (their lives: shorter at speed, they are blown off), the speed (blown out from the middle and drawn out)
+  let dropA = 0, dropPh = 0;
+  function dropLook(target, dt, U) {
+    const sp = target ? Math.hypot(target.vx || 0, target.vz || 0) : 0, sf = clamp((sp - 8) / 40, 0, 1);
+    let want = 0;
+    if (target && !cam.shot && lastMode === 'chase' && wetW > 0 && !snowy()) {
+      want = sstep(0.7, 1, wet);
+      if (sp > 5) { const fx = target.vx / sp, fz = target.vz / sp;
+        for (const q of views) { const c = q.car; if (!c || c === target) continue;
+          const dx = c.x - target.x, dz = c.z - target.z, ah = dx * fx + dz * fz, lat = Math.abs(dx * fz - dz * fx);
+          if (ah > 2 && ah < 35 && lat < 2.5) want = Math.max(want, wetW * clamp((Math.hypot(c.vx || 0, c.vz || 0) - 18) / 25, 0, 1) * (1 - ah / 35) * (1 - 0.4 * lat / 2.5)); } }
+    }
+    if (dt > 0) { dropA += (want - dropA) * Math.min(1, dt / (want > dropA ? 2 : 4)); if (want === 0 && dropA < 0.004) dropA = 0; dropPh = (dropPh + dt * (0.1 + 0.25 * sf)) % 4096; }
+    U.uDrop.value.set(dropA, dropPh, sf);
+  }
   // whole cars out of the view: a car (not the player's) whose bounding sphere (half its length and its shadow's reach round it; its night
   // beam's 22 m ahead of it, its smoke over it) is outside the camera's view or past the fog's end is taken out of the scene (three.js neither
   // updates its matrices nor culls its meshes one by one, the shadow pass skips it); updateCars still poses it and follows its damage (its
@@ -10882,7 +10925,7 @@ const Render = (function () {
         post.hk += ((front > 0.02 ? 1 : 0) - post.hk) * Math.min(1, dt * 3); post.mat.uniforms.uHaze.value = post.hk > 0.005 ? post.haze * post.hk : 0; }   // (fades in and out as a turning view brings the sun round: no pop)
       const U = post.mat.uniforms; U.uFocus.value = post.focus; U.uBand.value = (camera.aspect < 1 ? 0.2 : 0.24) + (post.span || 0); U.uBlur.value = 0.8;   // (a soft depth of field only towards the edges)
       if (!cam.shot) U.uBlur.value = 0; else if (cam.shot && cam.shot.blur != null) { U.uBlur.value = cam.shot.blur; if (cam.shot.blur > 0) U.uBand.value = 0.06; }   // (no miniature look in the race, all the cars stay sharp in every camera; the photo mode's own: a narrow sharp band on the car)
-      speedLook(target, alpha, U); U.uCas.value = casDrawn = casK();   // (the sharpening: casK)
+      speedLook(target, alpha, U); dropLook(target, dt, U); U.uCas.value = casDrawn = casK();   // (the sharpening: casK)
       renderer.setRenderTarget(post.rt); renderer.render(scene, camera);
       if (post.bloom > 0) bloomPass(); U.uBloom.value = post.bloom;
       renderer.setRenderTarget(null); renderer.render(post.sc, post.cam);
@@ -11104,10 +11147,10 @@ const Render = (function () {
     const sc = asU.uAsC.value, U = post && post.mat.uniforms;
     return { sheen: +Math.max(sc.r, sc.g, sc.b).toFixed(3), asphalt: asph, clouds: sky ? sky.u.uCl.value : 0, overcast: sky ? +sky.u.uOv.value.toFixed(2) : 0, moon: nsky.moon && nsky.moon.visible ? +nsky.moon.material.opacity.toFixed(2) : 0, skyOn: !!(sky && sky.mesh.visible),
       ao, worn, natGrass: nat, rays: !!(pkR.mesh && pkR.mesh.visible), flare: +pkF.vis.toFixed(3),
-      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
+      speedBlur: U && postOn() ? +U.uMB.value.toFixed(3) : 0, drops: U && postOn() ? +U.uDrop.value.x.toFixed(3) : 0, heat: U && postOn() ? U.uHeat.value : 0, puddleK: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0 };
   }
   function wetFx() { return { streaks: streaks.n, splashes: splash.mesh.visible ? splash.T.filter(t => time - t < 0.45).length : 0, puddles: pud && pud.visible ? +pud.material.uniforms.uK.value.toFixed(3) : 0, water: wetW, pitDrops: pitSp,
-    patches: +asU.uAsW.value.toFixed(3), patchDark: +asU.uAsD.value.toFixed(3), sky: +Math.max(0, skyW()).toFixed(2) }; }   // (tests; sky: the rain's and the overcast's grey)
+    patches: +asU.uAsW.value.toFixed(3), patchDark: +asU.uAsD.value.toFixed(3), sky: +Math.max(0, skyW()).toFixed(2), drops: +dropA.toFixed(3) }; }   // (tests; sky: the rain's and the overcast's grey; drops: on the lens, dropLook)
   function pitWet() { const T = curTrack; if (!T || !T.def.pit || !world || !world.pitBoxes || !world.pitBoxes.length) return null; const pos = [], uv = [], pw = [], idx = []; pitPuddles(T, pos, uv, pw, idx); return { pos, pw, idx, ap: pitLook(T).ap, asph: !!pitLook(T).asph }; }   // (tests: the pits' wet parts of this world)
   function casInfo(o) { if (o) Object.assign(CAS, o); return { k: postOn() ? casK() : 0, drawn: casDrawn, r: +casR().toFixed(3), post: postOn(), base: CAS.k, full: CAS.full }; }   // (tests; o: CAS's own weight for a picture, tools/ostrenje-slike.mjs)
   function flagInfo() { return { sc: !!scView && !!scView.car, scCar: scView ? scView.car : null, lampOn: !!scView && scView.lamps.some(l => l.material === matScOn), flags: flagInst ? flagInst.men.count : 0 }; }   // (tests)
