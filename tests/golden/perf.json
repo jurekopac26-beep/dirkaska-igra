@@ -609,11 +609,11 @@
   "jsMs": 1.53
  },
  "mombasa": {
-  "calls": 112,
-  "maxCalls": 188,
-  "kverts": 230,
-  "maxKverts": 265,
-  "jsMs": 1.45
+  "calls": 115,
+  "maxCalls": 192,
+  "kverts": 241,
+  "maxKverts": 279,
+  "jsMs": 1.02
  },
  "isalo": {
   "calls": 93,

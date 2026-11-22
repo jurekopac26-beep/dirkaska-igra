@@ -1225,20 +1225,23 @@
   }
  },
  "mombasa": {
-  "meshes": 314,
-  "verts": 267341,
-  "instances": 1178,
+  "meshes": 324,
+  "verts": 273830,
+  "instances": 1162,
   "props": 0,
-  "crowd": 50,
-  "world": "2b06e14e",
+  "crowd": 44,
+  "world": "2c0f34b1",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "25844fda",
+   "roadside-asphalt:MeshLambertMaterial": "959e11b9",
+   "roadside-lawn:MeshLambertMaterial": "357f983b",
+   "roadside-pond:MeshPhongMaterial": "1bd52e70",
+   "-:MeshLambertMaterial": "a03c8538",
    "-:MeshPhongMaterial": "8cb27484",
-   "crowd:MeshLambertMaterial": "8ef2b948",
+   "crowd:MeshLambertMaterial": "e20dc0a6",
    "flags:MeshLambertMaterial": "bfe5308d",
-   "ao:MeshBasicMaterial": "a4955bd1",
+   "ao:MeshBasicMaterial": "74614af9",
    "tyremarks:MeshBasicMaterial": "f031a5ae",
    "roadwear:MeshLambertMaterial": "bf8f00e9"
   }

@@ -1,6 +1,7 @@
 /* =========================================================================
    WORLD — Mombasa, the roadside (grafika/mombasa-obcestje): what OpenStreetMap maps by the road and js/world-mombasa.js left to the
-   ground's colours, laid on the ground's own triangles from 0.8 m beyond the barriers out to ~62 m (the 60 m rule):
+   ground's colours, laid on the ground's own triangles from 0.8 m beyond the barriers out to 62 m from the road's centre line (the
+   60 m rule; the edges cut smoothly, the ponds whole, the golf course's lawn 6 m round them), 2 m off the sea:
    - the six car parks by the road (amenity=parking): none has a surface in OSM, so after PARK_B (the user's choice in the PR:
      (a) asphalt, faded and patched, (b) the red earth of the coast, murram);
    - the lawns (patches of dry grass in them) of the park in front of the fortress and of the park on the shore past the finish
@@ -9,10 +10,12 @@
    Kept open (OSM has no shape for them, or they are not to be drawn): the golf course's fairways, greens, tees and bunkers (none in
    OSM), the memorial and the information points in the park (nodes), the car parks' lines and signs, the paths and the service roads
    in the parks and on the golf course. Not drawn again: the houses, the walls, the trees and the crowd stay js/world-mombasa.js's;
-   its filling houses and its trees now keep off the car parks and the ponds, the filling houses also off the lawns (the trees may stand on them).
+   its filling houses, its trees and its crowd now keep off the car parks and the ponds, the filling houses also off the lawns (the
+   trees and the crowd may stand on them).
    Data: OpenStreetMap (© OpenStreetMap contributors, ODbL), the main API, 2026-11-22; metres, origin = the road's first point
    (js/data/mombasa.js: lat0 −4.0618471, lon0 39.6680345), x east, z south; the outlines simplified to 0.25 m.
-   js/world-mombasa.js calls World.ext.mombasaOb once its ground's heights are set (before its tiles and houses), and .open() before its trees.
+   js/world-mombasa.js calls World.ext.mombasaOb once its ground's heights are set (before its tiles and houses), and .open() before its
+   crowd and its trees.
    ========================================================================= */
 (function () {
   'use strict';
@@ -36,8 +39,9 @@
     [960.6, 1162.4, 989.2, 1153.1, 1010.6, 1149.7, 1016.6, 1153.5, 1015.3, 1168.4, 1011.0, 1175.6, 999.1, 1180.2, 980.7, 1184.0, 965.8, 1182.8, 959.8, 1174.3, 957.6, 1167.9],
     [941.8, 1187.9, 937.6, 1205.7, 937.1, 1216.7, 941.0, 1235.4, 941.4, 1241.7, 959.3, 1243.9, 974.7, 1244.3, 981.6, 1234.1, 982.4, 1221.4, 979.4, 1215.0, 965.8, 1215.0, 957.2, 1218.8, 956.8, 1206.5, 958.9, 1192.1, 954.6, 1185.7, 949.5, 1183.6]];
 
-  // the colours (multiplying the pictures): faded asphalt, the red earth (murram), the lawns green with dry patches (the golf course greener)
-  const PK_ASP = [1.04, 1.02, 1.0], PK_MUR = [0.92, 0.64, 0.48], LW_GREEN = [[0.74, 0.98, 0.5], [0.64, 0.98, 0.46]], LW_DRY = [1.0, 0.9, 0.56];
+  // the colours (multiplying the pictures: the grass's is a bright green, ~0.34 0.57 0.23): dusty asphalt, the red earth (murram), the lawns
+  // a dull green with dry patches, ~0.30 0.38 0.17 and ~0.48 0.44 0.24 (the golf course a little greener, fewer dry patches)
+  const PK_ASP = [0.96, 0.92, 0.86], PK_MUR = [0.92, 0.64, 0.48], LW_GREEN = [[0.87, 0.67, 0.75], [0.8, 0.7, 0.68]], LW_DRY = [1.4, 0.77, 1.06];
   // smooth patches (value noise on a 9 m lattice, from the place alone: the same every time, no draw from the world's random numbers)
   const hash = (i, j) => { let h = Math.imul(i, 374761393) + Math.imul(j, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
   const patch = (x, z) => {
@@ -46,7 +50,7 @@
     return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
   };
   const mix = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
-  const asphaltAt = (x, z) => { const f = 0.93 + 0.1 * patch(x + 500, z); return PK_ASP.map(c => c * f); };
+  const asphaltAt = (x, z) => { const f = 0.82 + 0.14 * patch(x + 500, z) + 0.08 * patch(3 * x, 3 * z - 400); return PK_ASP.map(c => c * f); };   // (patches of 9 m and 3 m)
   const murramAt = (x, z) => { const f = 0.92 + 0.12 * patch(x + 300, z - 200); return PK_MUR.map(c => c * f); };
   const lawnAt = (k) => (x, z) => mix(LW_GREEN[k], LW_DRY, Math.min(1, Math.max(0, patch(x - 700, z + 900) * 1.8 - (k ? 0.75 : 0.5))));
   const W1 = () => [1, 1, 1];
@@ -56,9 +60,9 @@
     const { eh, EHC, exclPush, seaD, inFort, root, tex } = o, { RB, nrGround, nrNear } = A, G = A.NR.G, X0 = G.x0, Z0 = G.z0;
     const st = { parkCells: 0, lawnCells: 0, pondCells: 0, meshes: 0, pondDrop: [] };
     const ddAt = (x, z) => { const n = nrNear(x, z); return n.i < 0 ? 99 : n.dd; };
-    // what is laid goes into a mesh per material (0 asphalt, 1 murram, 2 lawn, 3 water) and 120 m square (out of the frame, out of the draw)
-    const TILE = 120, tiles = new Map();
-    const rbAt = (mt, x, z) => { const key = mt + ',' + Math.floor(x / TILE) + ',' + Math.floor(z / TILE); let t = tiles.get(key); if (!t) tiles.set(key, t = { mt, rb: new RB(true), V: new Map() }); return t; };
+    // what is laid goes into a mesh per outline and material (0 asphalt, 1 murram, 2 lawn, 3 water): 11 meshes, each out of the draw when out of the frame
+    const tiles = new Map(); let gid = 0;
+    const rbAt = (mt) => { const key = mt + ',' + gid; let t = tiles.get(key); if (!t) tiles.set(key, t = { mt, rb: new RB(true), V: new Map() }); return t; };
     const area = (P) => { let s = 0; for (let k = 0; k < P.length; k += 2) { const j = (k + 2) % P.length; s += P[k] * P[j + 1] - P[j] * P[k + 1]; } return s / 2; };
     const clipHP = (P, a, b, c) => {   // the part of P where a x + b z + c >= 0 (Sutherland-Hodgman)
       if (!P) return null; const R = [], n = P.length / 2;
@@ -69,31 +73,41 @@
       }
       return R.length < 6 ? null : R;
     };
-    // the squares on the ground's 8 m grid (4 m, halved to 1 m by the barriers) and in each the ground's two triangles (the diagonal from
+    // the squares on the ground's 8 m grid (4 m, by the edges halved and cut along them, below) and in each the ground's two triangles (the diagonal from
     // its north-east to its south-west corner, as nrGround's): every vertex on the ground's own plane, so the mesh lies on it as laid
-    const lay = (Q, mt, colAt, lift, U, onCell) => {
-      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+    const lay = (Q, mt, colAt, lift, U, onCell, FL) => {
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9; gid++;
       for (let k = 0; k < Q.length; k += 2) { x0 = Math.min(x0, Q[k]); x1 = Math.max(x1, Q[k]); z0 = Math.min(z0, Q[k + 1]); z1 = Math.max(z1, Q[k + 1]); }
       const vtx = (t, x, z) => t.rb.row([[x, nrGround(x, z) + lift, z]], [colAt(x, z)], [[x / U, z / U]]);
-      const cor = (t, x, z) => { const key = Math.round(x - X0) * 100003 + Math.round(z - Z0); let v = t.V.get(key); if (v === undefined) t.V.set(key, v = vtx(t, x, z)); return v; };
+      const cor = (t, x, z) => { const key = Math.round((x - X0) * 1000) * 1e7 + Math.round((z - Z0) * 1000); let v = t.V.get(key); if (v === undefined) t.V.set(key, v = vtx(t, x, z)); return v; };   // (one vertex per point, to the mm)
       const tris = (t, P) => {
-        const n = P.length / 2, b0 = t.rb.n; if (Math.abs(area(P)) < 0.01) return;
-        for (let k = 0; k < n; k++) vtx(t, P[2 * k], P[2 * k + 1]);
+        const n = P.length / 2; if (Math.abs(area(P)) < 0.01) return;
+        const ix = Array.from({ length: n }, (_, k) => cor(t, P[2 * k], P[2 * k + 1]));
         for (const [a, b, c] of THREE.ShapeUtils.triangulateShape(Array.from({ length: n }, (_, k) => new THREE.Vector2(P[2 * k], P[2 * k + 1])), [])) {
           const cr = (P[2 * b] - P[2 * a]) * (P[2 * c + 1] - P[2 * a + 1]) - (P[2 * b + 1] - P[2 * a + 1]) * (P[2 * c] - P[2 * a]);
-          if (cr < 0) t.rb.I.push(b0 + a, b0 + b, b0 + c); else t.rb.I.push(b0 + a, b0 + c, b0 + b);   // (up-facing: x east, z south)
+          if (cr < 0) t.rb.I.push(ix[a], ix[b], ix[c]); else t.rb.I.push(ix[a], ix[c], ix[b]);   // (up-facing: x east, z south)
         }
       };
+      const mid = (P) => { let x = 0, z = 0; for (let k = 0; k < P.length; k += 2) { x += P[k]; z += P[k + 1]; } return [2 * x / P.length, 2 * z / P.length]; };
+      // the edges (FL: [field, smallest square, slack]; a field >= 0 where the ground is laid, its slope ~1 m per m): a square across one is halved down to
+      // the smallest and that one cut along the field's line through its middle (straight: off the field's own line by no more than the slack)
       const sq = (Q, sx, sz, C) => {
-        const P = clipHP(clipHP(clipHP(clipHP(Q, 1, 0, -sx), -1, 0, sx + C), 0, 1, -sz), 0, -1, sz + C); if (!P) return;
-        let cx = 0, cz = 0; for (let k = 0; k < P.length; k += 2) { cx += P[k]; cz += P[k + 1]; } cx /= P.length / 2; cz /= P.length / 2;
-        const dc = ddAt(cx, cz); if (dc > 62) return;
-        if (dc < 0.8 + 0.75 * C) {   // (by the barrier: every corner 0.8 m beyond it, or the square halved)
-          let mn = dc; for (let k = 0; k < P.length && mn >= 0.8; k += 2) mn = Math.min(mn, ddAt(P[k], P[k + 1]));
-          if (mn < 0.8) { if (C > 1) { const h = C / 2; sq(P, sx, sz, h); sq(P, sx + h, sz, h); sq(P, sx, sz + h, h); sq(P, sx + h, sz + h, h); } return; }
+        let P = clipHP(clipHP(clipHP(clipHP(Q, 1, 0, -sx), -1, 0, sx + C), 0, 1, -sz), 0, -1, sz + C); if (!P) return;
+        const P0 = P, split = () => { const h = C / 2; sq(P0, sx, sz, h); sq(P0, sx + h, sz, h); sq(P0, sx, sz + h, h); sq(P0, sx + h, sz + h, h); };
+        let [cx, cz] = mid(P);
+        for (const [f, mc, sl] of FL) {
+          const fc = f(cx, cz); if (fc >= 2 * C) continue; if (fc <= -2 * C) return;
+          let mn = fc, mx = fc; for (let k = 0; k < P.length; k += 2) { const v = f(P[k], P[k + 1]); mn = Math.min(mn, v); mx = Math.max(mx, v); }
+          if (mn >= 0) continue; if (mx < 0) return;
+          if (C > mc) return split();
+          const gx = f(cx + 0.5, cz) - f(cx - 0.5, cz), gz = f(cx, cz + 0.5) - f(cx, cz - 0.5), gl = Math.hypot(gx, gz);
+          let R = gl < 0.7 || gl > 1.3 ? null : clipHP(P, gx, gz, fc - gx * cx - gz * cz);
+          for (let k = 0; R && k < R.length; k += 2) if (f(R[k], R[k + 1]) < -sl) R = null;
+          if (!R) { if (C > 1) return split(); if (fc < 0) return; continue; }   // (where two fields meet: the 1 m square whole or not by its middle)
+          P = R; [cx, cz] = mid(P);
         }
-        if (seaD(cx, cz) > -2 || inFort(cx, cz, 2)) return;
-        const t = rbAt(mt, cx, cz);
+        if (inFort(cx, cz, 2)) return;
+        const t = rbAt(mt);
         if (Math.abs(Math.abs(area(P)) - C * C) < 1e-3 * C * C) { const a = cor(t, sx, sz), b = cor(t, sx + C, sz), c = cor(t, sx + C, sz + C), d = cor(t, sx, sz + C); t.rb.I.push(a, d, b, c, b, d); }
         else { const s = sx + sz + C; tris(t, clipHP(P, -1, -1, s) || [0, 0, 0, 0, 0, 0]); tris(t, clipHP(P, 1, 1, -s) || [0, 0, 0, 0, 0, 0]); }
         onCell(cx, cz, C);
@@ -101,13 +115,20 @@
       for (let j = Math.floor((z0 - Z0) / 4); j <= Math.floor((z1 - Z0) / 4); j++) for (let i = Math.floor((x0 - X0) / 4); i <= Math.floor((x1 - X0) / 4); i++) sq(Q, X0 + i * 4, Z0 + j * 4, 4);
     };
 
+    // the edges: 0.8 m beyond the barriers, 62 m from the road's centre line (the golf course's lawn round its ponds 6 m wide), 2 m off the sea
+    const FAR = 62, fNear = (x, z) => ddAt(x, z) - 0.8, fSea = (x, z) => -2 - seaD(x, z);
+    const fFar = (x, z) => { const n = nrNear(x, z); return FAR - (n.i < 0 ? 64 : n.d); };   // (nrNear sees the road only up to 64 m: flat beyond)
+    const segD = (Q, x, z) => { let b = 1e9; const n = Q.length / 2; for (let k = 0; k < n; k++) { const j = (k + 1) % n, ax = Q[2 * k], az = Q[2 * k + 1], vx = Q[2 * j] - ax, vz = Q[2 * j + 1] - az, t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1))); b = Math.min(b, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return b; };
+    const inQ = (Q, x, z) => { let c = false; const n = Q.length / 2; for (let k = 0, j = n - 1; k < n; j = k++) { const xi = Q[2 * k], zi = Q[2 * k + 1], xj = Q[2 * j], zj = Q[2 * j + 1]; if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / (zj - zi) + xi) c = !c; } return c; };
+    const pondD = (x, z) => { let b = 1e9; for (const Q of POND) b = Math.min(b, segD(Q, x, z) * (inQ(Q, x, z) ? -1 : 1)); return b; };
+    const fGolf = (x, z) => Math.max(fFar(x, z), 6 - pondD(x, z));
     // the car parks and the ponds keep everything off for good; the lawns only the houses (their circles shrink to nothing in open())
     const held = new Set(), hold = (x, z, r) => { const e = { x, z, r, held: true };
       for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); held.add(k); } };
-    for (const Q of PARK) lay(Q, PARK_B ? 1 : 0, PARK_B ? murramAt : asphaltAt, 0.08, PARK_B ? 4 : 3, (x, z, C) => { exclPush(x, z, 0.75 * C); st.parkCells++; });
-    for (const Q of LAWN) lay(Q.slice(1), 2, lawnAt(Q[0]), 0.06, 2, (x, z, C) => { hold(x, z, 0.75 * C); st.lawnCells++; });
-    for (const Q of POND) { let lo = 1e9, hi = -1e9;
-      lay(Q, 3, W1, 0.12, 8, (x, z, C) => { exclPush(x, z, 0.75 * C); st.pondCells++; const h = nrGround(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); });
+    for (const Q of PARK) lay(Q, PARK_B ? 1 : 0, PARK_B ? murramAt : asphaltAt, 0.08, PARK_B ? 4 : 3, (x, z, C) => { exclPush(x, z, 0.75 * C); st.parkCells++; }, [[fNear, 1, 0.05], [fFar, 4, 0.5], [fSea, 1, 0.3]]);
+    for (const Q of LAWN) lay(Q.slice(1), 2, lawnAt(Q[0]), 0.06, 5, (x, z, C) => { hold(x, z, 0.75 * C); st.lawnCells++; }, [[fNear, 1, 0.05], [Q[0] ? fGolf : fFar, 4, 0.5], [fSea, 1, 0.3]]);
+    for (const Q of POND) { let lo = 1e9, hi = -1e9;   // (whole: off the barriers and the sea only)
+      lay(Q, 3, W1, 0.12, 8, (x, z, C) => { exclPush(x, z, 0.75 * C); st.pondCells++; const h = nrGround(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); }, [[fNear, 1, 0.05], [fSea, 1, 0.3]]);
       if (hi >= lo) st.pondDrop.push(Math.round((hi - lo) * 100) / 100); }
 
     const MAT = [[tex.asphalt, 'roadside-asphalt'], [tex.sand, 'roadside-murram'], [tex.grass, 'roadside-lawn'], [null, 'roadside-pond']], mats = [], off = { polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 };

@@ -319,7 +319,7 @@
         cyl(gg, px, py, pz, 0.06, 6, 5, [0.86, 0.86, 0.88]); API.flags.add(px, py + 5.6, pz, T.hd[ii], [FL[Math.floor(crH(d, side, 5) * FL.length)]], 1.2, 0.8);   // (waving: js/world-zastave.js)
       }
     }
-    if (OB) OB.open();   // (the lawns open again to the trees)
+    if (OB) OB.open();   // (the lawns open again to the crowd and the trees)
     let nFans = 0;
     {   // few spectators (fewFans): at the start, under the fortress, at the finish
       const runs = [[-60, 80, 1, 0.35], [dFin - 60, dFin + 20, 1, 0.3]];   // (one row: the start and the finish are inland, both sides dry)
