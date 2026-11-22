@@ -436,9 +436,9 @@
  "kotor": {
   "calls": 219,
   "maxCalls": 264,
-  "kverts": 693,
-  "maxKverts": 887,
-  "jsMs": 0.91
+  "kverts": 674,
+  "maxKverts": 841,
+  "jsMs": 1.35
  },
  "bikernieki": {
   "calls": 195,

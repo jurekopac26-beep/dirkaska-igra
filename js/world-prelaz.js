@@ -401,6 +401,7 @@
     // the macchia (mastic, wild olive, holm oak scrub: dark rounded clumps), 7 a tussock of càrritx (a fountain of stiff leaves, straw at the
     // tips), 8 holm oak (a dense rounded crown of the darkest green on a short trunk)
     const g = new GB(), R = rng(4140 + kind), rs = API.ROCK_SMOOTH;
+    const NOG = { triO() {}, triON() {} };   // (kind 9: lumps drawn into nothing, their randoms still drawn, so the others stay as they were)
     if (kind === 0 && L.trop) {   // (L.trop: a broadleaf of the tropical forest instead: a slim pale trunk under a wide, lumpy, bright crown)
       cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
       API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
@@ -436,9 +437,10 @@
       cone(g, 0, 0.84, 0, 0.04, 0.16, 4, col, tip, 0.4);
     } else {
       API.ROCK_SMOOTH = true; const col = kind === 1 ? [0.1, 0.2, 0.11] : kind === 6 ? [0.16, 0.23, 0.12] : [0.2, 0.28, 0.2], n = kind === 1 ? 6 : kind === 6 ? 5 : 4;
-      for (let k = 0; k < n; k++) { const a = k / n * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(g, Math.cos(a) * d, 0.4 - d * 0.45, Math.sin(a) * d, 0.32, 0.7, vary(col, R, 0.18), R, 0.35); }
+      for (let k = 0; k < n; k++) { const a = k / n * TAU + R() * 0.5, d = k ? 0.32 : 0; ico(kind === 9 && (!k || k === 2) ? NOG : g, Math.cos(a) * d, 0.4 - d * 0.45, Math.sin(a) * d, 0.32, 0.7, vary(col, R, 0.18), R, 0.35); }
     }
-    if (kind === 9) {   // a light clump of scrub (two lumps: the banks between Kotor's legs, many of them, L.bkCap)
+    if (kind === 9) {   // a light clump of scrub (two lumps: the banks between Kotor's legs, many of them, L.bkCap), with two of the generic four above (not their
+      // middle one, inside this bigger one and never seen, nor the one opposite this second one: the phone's load, the busiest place's most-drawn mesh, 72 -> 48 vertices)
       API.ROCK_SMOOTH = true; const col = [0.17, 0.24, 0.12];
       ico(g, 0, 0.42, 0, 0.38, 0.72, vary(col, R, 0.12), R, 0.3); ico(g, 0.32, 0.34, 0.14, 0.27, 0.75, vary(col, R, 0.16), R, 0.35);
     }
