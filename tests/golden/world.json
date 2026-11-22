@@ -757,16 +757,17 @@
   }
  },
  "ngorongoro": {
-  "meshes": 1066,
-  "verts": 480001,
-  "instances": 9795,
+  "meshes": 1069,
+  "verts": 494820,
+  "instances": 9791,
   "props": 63,
   "crowd": 30,
-  "world": "273a7e6d",
+  "world": "dd14e301",
   "propsHash": "752dbb08",
   "floor": "cae8594e/6860",
   "groups": {
-   "-:MeshLambertMaterial": "191f8d54",
+   "-:MeshLambertMaterial": "2f503f8a",
+   "sideRoads:MeshLambertMaterial": "d8397acd",
    "-:MeshBasicMaterial": "88683b4d",
    "ng_buffalo:MeshLambertMaterial": "f1052b04",
    "ng_elephant:MeshLambertMaterial": "ac708fdd",
@@ -781,7 +782,7 @@
    "ng_crane:MeshLambertMaterial": "a3f8ff0b",
    "ngFar:MeshLambertMaterial": "99a55540",
    "crowd:MeshLambertMaterial": "e8976908",
-   "ao:MeshBasicMaterial": "57e58bc8",
+   "ao:MeshBasicMaterial": "53e05437",
    "tyremarks:MeshBasicMaterial": "cdd714e2",
    "roadwear:MeshLambertMaterial": "1acc288"
   }
