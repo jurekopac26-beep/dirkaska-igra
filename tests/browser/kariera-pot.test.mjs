@@ -57,7 +57,7 @@ try {
   // 3. the refusals
   const r1 = await start('ni-pokala', 'pico'), r2 = await start('r-super', 'pico'), r3 = await start('s1-cesta', 'strega'), r4 = await start('r-mali', 'kaze');
   T.check('the bridge refuses an unknown cup (no toast, no championship)', r1.ok === false && r1.toast === '' && !r1.champ, JSON.stringify(r1));
-  T.check('… a locked cup (Superavti: no supercar owned), with its toast', r2.ok === false && r2.toast === 'Ta pokal je še zaklenjen.' && !r2.champ, JSON.stringify(r2));
+  T.check('… a locked cup (Superavti: no supercar owned), with its toast', r2.ok === false && r2.toast === 'Ta dogodek je še zaklenjen.' && !r2.champ, JSON.stringify(r2));
   T.check('… a car not owned (the strega), with its toast', r3.ok === false && /^Ta avto še ni tvoj/.test(r3.toast) && !r3.champ, JSON.stringify(r3));
   T.check('… a car of another class (the kaze, a sports car, in the Mali avti cup), with its toast', r4.ok === false && r4.toast === 'Za ta pokal izberi avto njegovega razreda.' && !r4.champ, JSON.stringify(r4));
 
