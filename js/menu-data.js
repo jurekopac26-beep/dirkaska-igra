@@ -458,7 +458,7 @@ window.MENU = {
    "start": "Bâlea Valley",
    "finish": "Bâlea Lake",
    "alt": [
-    1768,
+    1802,
     2034
    ]
   },
