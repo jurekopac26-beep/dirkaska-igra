@@ -427,11 +427,11 @@
   "jsMs": 0.65
  },
  "sacalobra": {
-  "calls": 244,
-  "maxCalls": 292,
-  "kverts": 661,
-  "maxKverts": 868,
-  "jsMs": 1.6
+  "calls": 230,
+  "maxCalls": 275,
+  "kverts": 658,
+  "maxKverts": 861,
+  "jsMs": 1.18
  },
  "kotor": {
   "calls": 219,
@@ -532,11 +532,11 @@
   "jsMs": 1
  },
  "portomoniz": {
-  "calls": 245,
+  "calls": 243,
   "maxCalls": 295,
-  "kverts": 652,
-  "maxKverts": 809,
-  "jsMs": 0.96
+  "kverts": 625,
+  "maxKverts": 798,
+  "jsMs": 1.29
  },
  "seoul": {
   "calls": 137,
