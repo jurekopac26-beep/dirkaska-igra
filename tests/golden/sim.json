@@ -6748,16 +6748,16 @@
   }
  },
  "longyearbyen/car/cs": {
-  "digest": "5bbd84cb6103d8c8dce45afa",
-  "lead": 2923.6,
+  "digest": "ef64bb6e12cd898b2302d73f",
+  "lead": 2924.6,
   "car0": [
-   685,
-   1510.73
+   686.16,
+   1509.38
   ],
   "cover": {
    "dmg": 1,
    "loose": 4,
-   "rescues": 1,
+   "rescues": 0,
    "repairs": 0
   }
  },
@@ -6855,6 +6855,104 @@
   "cover": {
    "dmg": 0.93,
    "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/race/cs": {
+  "digest": "a7354e8e085ffda51ab7f89d",
+  "lead": 1937.6,
+  "car0": [
+   -773.04,
+   1342.96
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/demo/cs": {
+  "digest": "7602dc4e53182c793de52619",
+  "lead": 1941.8,
+  "car0": [
+   -5.21,
+   105.4
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/upg/cs": {
+  "digest": "d308e46d5cb4d30e909a59fa",
+  "lead": 1992.1,
+  "car0": [
+   -809.72,
+   1458.81
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/crash/cs": {
+  "digest": "027099571a7df562c0f30bbe",
+  "lead": 1938.4,
+  "car0": [
+   -773.46,
+   1343.78
+  ],
+  "cover": {
+   "dmg": 0.29,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/formula/cs": {
+  "digest": "ecd33a0e4ca326f875664dc9",
+  "lead": 2013.9,
+  "car0": [
+   -811.26,
+   1464.18
+  ],
+  "cover": {
+   "dmg": 0.31,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/lm/cs": {
+  "digest": "026ee92b7b3f83f70f2ac4be",
+  "lead": 2000.5,
+  "car0": [
+   -815.23,
+   1416.92
+  ],
+  "cover": {
+   "dmg": 0.35,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "vaoala/car/cs": {
+  "digest": "edc1a217595f984030d6f5be",
+  "lead": 1917.4,
+  "car0": [
+   -714.61,
+   1306.99
+  ],
+  "cover": {
+   "dmg": 0.42,
+   "loose": 1,
    "rescues": 0,
    "repairs": 0
   }
