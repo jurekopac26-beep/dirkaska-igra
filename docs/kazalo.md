@@ -329,6 +329,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | santoantao | Santo Antão, Zelenortski otoki | santoantao | `js/world-santoantao.js` (`buildSantoAntao`: teren v olivno zeleni in slamnati barvi z rdečerjavo prstjo, pasovi bazalta in tufa v stenah, cesta iz bazaltnih kock `saCobbleTex` (tudi za druge tlakovane ceste: `API.saCobble`), zidovi med kraki serpentin kot v `js/world-prelaz.js` prek `API.caBank`, nizki bazaltni parapeti, razgledišči na sedlu Delgadim, hiše, ciprese, evkalipti, akacije, agave, morje v daljnem pogledu; podatki `tools/santoantao/build.py`) |
 | seoul | Seul, Južna Koreja | seoul | `js/world-seoul.js` (`buildSeoul`; podatki `js/data/seoul.js` iz `tools/seoul/build.py world`, proga iz `build.py track`) |
 | sogeri | Sogeri, Papua Nova Gvineja | sogeri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.sogeri`: kunai trava, tropski gozd v grapi, konglomerat v usekih; vožnja po levi) |
+| tapini | Tapini, Papua Nova Gvineja | tapini | `js/world-tapini.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | ujarras | Ujarrás, Kostarika | ujarras | `js/world-ujarras.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
