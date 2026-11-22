@@ -128,7 +128,7 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Romunija | Bâlea (na `main` od 7. 11. 2026, PR #226) | – | – |
 | ZAE | – (nobena še ni na `main`) | Džebel Hafit (#695, jure.kopac26) in Abu Dabi (#547, biketraveler): obe na odločanju (`pending: true`; odločitev uporabnika 16. 11. 2026 ob ~1.55 prek Mateja: »ubedve progi prestavi v pending«, vprašanje `ena-proga-zae`, odgovor 3); oznako doda seja vsake proge; do izbire novih prog iz ZAE ne delamo | – |
 | Indija | Killar (na `main` 3. 11. 2026 po odločitvi uporabnika; prva proga iz Indije) | – | Auli (kratke, A), Shimla in Darjeeling (zavite, 4) |
-| Vietnam | Hải Vân (PR #676): na odločanju (`pending: true`, država ima dve progi; Matej, tabla #382, komentarja 6905341352 in 6906260656, 16. 11. 2026); na `main` z zbirno vejo partyslo | – | – |
+| Vietnam | Mã Pí Lèng (Nove proge za 1.0, del 4, K1, s PR #942): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.55, Matej, tabla #382, komentar 7071810014) | – | Hải Vân (PR #676): testna (`test: true`, za izbris) |
 | Filipini | Batangas (PR #684, Nove proge za 1.0, linija A): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.45, Matej, tabla #382, komentarja 7071746772 in 7071767423) | – | Banaue (#538) |
 | Salvador | Quezaltepeque (PR #686, Nove proge za 1.0, linija A) | – | – |
 | Uganda | Kanaba (PR #690, osnutek; na `main` z »Vse proge v enem PR«) | – | – |

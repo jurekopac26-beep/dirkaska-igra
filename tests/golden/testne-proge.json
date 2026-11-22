@@ -11,6 +11,7 @@
   "gozd",
   "greatalpine",
   "grom",
+  "haivan",
   "hotham",
   "iroha",
   "jezero",
@@ -377,6 +378,8 @@
   "assets/tracks/greatalpine.webp": "a3dc165930d3cb21",
   "assets/tracks/grom-rain.webp": "e267f8e01392e652",
   "assets/tracks/grom.webp": "743ce6ae370f307e",
+  "assets/tracks/haivan-rain.webp": "5bb51d8467ec0343",
+  "assets/tracks/haivan.webp": "73177fd424c842c9",
   "assets/tracks/hotham-rain.webp": "7b381fae9aa0f878",
   "assets/tracks/hotham.webp": "20e4eb5a460dcf96",
   "assets/tracks/iroha-rain.webp": "1034649f4d4df3cd",
@@ -434,6 +437,7 @@
   "docs/proge/detroit.md": "5e608bbd05883abc",
   "docs/proge/espinazo.md": "c04a0b108049d4dc",
   "docs/proge/greatalpine.md": "b1bf56bb06e33a5d",
+  "docs/proge/haivan.md": "0dcfd20bee0a3151",
   "docs/proge/hotham.md": "284c06ee14cb8a2b",
   "docs/proge/iroha.md": "6a862a1476d0df3b",
   "docs/proge/longford.md": "95cefe891af8166c",
@@ -468,6 +472,7 @@
   "js/tracks/gozd.js": "37233a520161be06",
   "js/tracks/greatalpine.js": "6d0ae470913dc6bb",
   "js/tracks/grom.js": "ff4ef504543ec79d",
+  "js/tracks/haivan.js": "8e9d2d206708fa46",
   "js/tracks/hotham.js": "8d4e4d250070d835",
   "js/tracks/iroha.js": "e18730752263a93f",
   "js/tracks/jezero.js": "16733742a2d9e030",
@@ -628,6 +633,7 @@
   "tests/detroit.test.js": "6266b08504f0522b",
   "tests/espinazo.test.js": "4ba2ae4a3310574b",
   "tests/greatalpine.test.js": "93e4b6303773d1b8",
+  "tests/haivan.test.js": "e5fe7490dd1c5f5b",
   "tests/hotham.test.js": "9c35161f67af97c4",
   "tests/iroha.test.js": "b9f650777b47df1b",
   "tests/longford.test.js": "f69a4eb30e3a682a",
@@ -943,6 +949,11 @@
    "datum": "2026-11-22",
    "proga": "sogeri",
    "razlog": "izbira uporabnika 22. 11. ob 1.50"
+  },
+  {
+   "datum": "2026-11-22",
+   "proga": "haivan",
+   "razlog": "izbira uporabnika 22. 11. ob 1.55"
   }
  ]
 }

@@ -67,7 +67,7 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [El Jem, Tunizija](docs/proge/eljem.md)
 - [Isuna, Butan](docs/proge/isuna.md)
 - [Hiva, Uzbekistan](docs/proge/hiva.md)
-- [Hải Vân, Vietnam](docs/proge/haivan.md)
+- [Mã Pí Lèng, Vietnam](docs/proge/mapileng.md)
 - [Batangas, Filipini](docs/proge/batangas.md)
 - [Quezaltepeque, Salvador](docs/proge/quezaltepeque.md)
 - [Koli, Finska](docs/proge/koli.md)
@@ -94,6 +94,7 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Gromski rt](docs/proge/toskana.md) (opis skupaj s Toskano)
 - [Santa Monica Mountains, ZDA](docs/proge/mulholland.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Sogeri, Papua Nova Gvineja](docs/proge/sogeri.md) (od 22. 11. 2026 testna, prava proga je Tapini)
+- [Hải Vân, Vietnam](docs/proge/haivan.md) (od 22. 11. 2026 testna, prava proga je Mã Pí Lèng)
 - [Detroit, ZDA](docs/proge/detroit.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Moki Dugway, ZDA](docs/proge/moki.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Riverside, ZDA](docs/proge/riverside.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
@@ -543,6 +544,9 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Hải Vâna (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Hải Vâna: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal Hải Vâna (gozd, prst, trava): Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 1. 4. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Proga Mã Pí Lèng (sredinska črta ceste QL4C, poti ob cesti, razgledišče, informacijska tabla, spomenik, svetišče, muzej, kavarna, ribnika, raba tal): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/mapileng.js` in `tools/mapileng/` so na voljo pod ODbL 1.0.
+- Višine in teren Mã Pí Lènga (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Mã Pí Lènga: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Savusavu (sredinska črta obalne ceste, stavbe, potoki): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/savusavu.js` so na voljo pod ODbL 1.0.
 - Višine in teren Savusavuja (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Savusavuja: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
