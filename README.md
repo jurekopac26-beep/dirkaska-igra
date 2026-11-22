@@ -67,21 +67,24 @@ Proge v vrstnem redu menija (`index.html`). Opis vsake proge (oblika, višine, o
 - [El Jem, Tunizija](docs/proge/eljem.md)
 - [Isuna, Butan](docs/proge/isuna.md)
 - [Hiva, Uzbekistan](docs/proge/hiva.md)
-- [Hải Vân, Vietnam](docs/proge/haivan.md)
+- [Mã Pí Lèng, Vietnam](docs/proge/mapileng.md)
 - [Batangas, Filipini](docs/proge/batangas.md)
 - [Quezaltepeque, Salvador](docs/proge/quezaltepeque.md)
 - [Koli, Finska](docs/proge/koli.md)
 - [Kanaba, Uganda](docs/proge/kanaba.md)
-- [Sogeri, Papua Nova Gvineja](docs/proge/sogeri.md)
+- [Tapini, Papua Nova Gvineja](docs/proge/tapini.md)
 - [Canaries, Sveta Lucija](docs/proge/canaries.md)
 - [Savusavu, Fidži](docs/proge/savusavu.md)
 - [Koror, Palau](docs/proge/koror.md)
+- [Irishtown, Jamajka](docs/proge/irishtown.md)
+- [Vaoala, Samoa](docs/proge/vaoala.md)
 
 Na odločanju (`pending: true`): iz Anglije ostane ena med Crystal Palace in Londonom (odločitev uporabnika 8. 11. 2026: London pride v igro z novimi progami, nato uporabnik izbere, druga dobi `test: true`); iz Japonske ostane prava proga Hakone (Suzuka in Irohazaka sta po odločitvi 9. 11. 2026 testni); iz Maroka sta Marrakesh in Dadès od 8. 11. 2026 ob 22.03 na odločanju (država z dvema ali več progami brez izbire ima vse na odločanju, iz take države novih prog ne delamo; Crystal Palace in London sta na odločanju skupaj); Finska ni na odločanju (Ouninpohja je testna, nova proga je Koli). Do izbire so Crystal Palace, Irohazaka in Marrakesh (zgoraj) v igri in testih, a zamrznjene kot testne (odločitev uporabnika 8. 11. 2026: nobena seja jih ne posodablja); meni jih pokaže za pravimi in pred testnimi, na tabli z oznako PENDING (stari seznam pod naslovom »Na odločanju · ostane ena«).
 
 Iz Avstralije ostane Bathurst (zgoraj; izbira uporabnika 9. 11. 2026 med Bathurstom in Great Alpine Road, ki sta bila od 6. 11. 2026 na odločanju); Great Alpine Road je od 9. 11. 2026 testna, prav tako od 6. 11. 2026 Longford, Mount Hotham, Newcastle in Townsville (spodaj).
 - [Ujarrás, Kostarika](docs/proge/ujarras.md)
 - [Ghoufi, Alžirija](docs/proge/ghoufi.md)
+- [Longyearbyen, Norveška](docs/proge/longyearbyen.md)
 
 Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 
@@ -93,6 +96,8 @@ Za izbris · samo za testiranje (`test: true`, glej `CLAUDE.md`):
 - [Toskana, Italija](docs/proge/toskana.md)
 - [Gromski rt](docs/proge/toskana.md) (opis skupaj s Toskano)
 - [Santa Monica Mountains, ZDA](docs/proge/mulholland.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
+- [Sogeri, Papua Nova Gvineja](docs/proge/sogeri.md) (od 22. 11. 2026 testna, prava proga je Tapini)
+- [Hải Vân, Vietnam](docs/proge/haivan.md) (od 22. 11. 2026 testna, prava proga je Mã Pí Lèng)
 - [Detroit, ZDA](docs/proge/detroit.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Moki Dugway, ZDA](docs/proge/moki.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
 - [Riverside, ZDA](docs/proge/riverside.md) (resnična pot; od 4. 11. 2026 testna, se ne posodablja več)
@@ -543,6 +548,9 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Hải Vâna (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Hải Vâna: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal Hải Vâna (gozd, prst, trava): Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 1. 4. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Proga Mã Pí Lèng (sredinska črta ceste QL4C, poti ob cesti, razgledišče, informacijska tabla, spomenik, svetišče, muzej, kavarna, ribnika, raba tal): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek glavnega API-ja OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/mapileng.js` in `tools/mapileng/` so na voljo pod ODbL 1.0.
+- Višine in teren Mã Pí Lènga (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Mã Pí Lènga: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Savusavu (sredinska črta obalne ceste, stavbe, potoki): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/savusavu.js` so na voljo pod ODbL 1.0.
 - Višine in teren Savusavuja (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Savusavuja: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
@@ -560,6 +568,7 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Raba tal Sogerija: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal Sogerija: Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 19. 6. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
 - Drevesa Sogerija (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Tapini (sredinska črta, stranske ceste, stavbe, voda): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/tapini.js` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Proga Canaries (sredinska črta obalne ceste, stranske ceste, stavbe, potoki, obala, kraji): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (prek API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/canaries.js` in `tools/canaries/` so na voljo pod ODbL 1.0.
 - Višine in teren Canariesa (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Canariesa: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
@@ -569,4 +578,16 @@ Igra potrebuje vse datoteke skupaj: sam `index.html` (brez map `css/` in `js/`) 
 - Višine in teren Kororja (tudi pogled v daljavo in laguna): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
 - Raba tal Kororja: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - Barve tal Kororja (gozd, trava, prst, plitvine): Contains modified Copernicus Sentinel data (2023): Sentinel-2 L2A, posnetek 24. 4. 2023 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Proga Vaoala (sredinska črta ceste čez otok, stavbe, potoki): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/vaoala.js` so na voljo pod ODbL 1.0.
+- Višine in teren Vaoale (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Vaoale: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); višina krošenj: High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Barve tal Vaoale (gozd, trava, prst): Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 23. 4. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Zastava Samoe v meniju (`assets/flags/samoa.svg`): državni simbol, narisan po uradnem opisu (1949), brez avtorskih pravic.
 - Zastava Palaua v meniju (`assets/flags/palau.svg`): državni simbol, narisan po uradnem opisu (1981), brez avtorskih pravic.
+- Proga Longyearbyen (sredinska črta, stranske ceste, stavbe, žičnice, smučarske proge, voda, parkirišča): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) (glavni API OpenStreetMap). Iz njih izpeljani podatki v `js/tracks/longyearbyen.js` so na voljo pod ODbL 1.0. Višine in teren: Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved. Raba tal: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Proga Irishtown (sredinska črta ceste B1, stavbe, potoki): © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, licenca [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), prek [Overture Maps Foundation](https://overturemaps.org). Iz njih izpeljani podatki v `js/tracks/irishtown.js` so na voljo pod ODbL 1.0.
+- Višine in teren Irishtowna (tudi pogled v daljavo): Copernicus DEM GLO-30 (prek [Copernicus DEM na AWS](https://registry.opendata.aws/copernicus-dem/)): produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.
+- Raba tal Irishtowna: © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium, licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Barve tal Irishtowna (gozd, trava, prst): Contains modified Copernicus Sentinel data (2024): Sentinel-2 L2A, posnetek 29. 1. 2024 (prek [Sentinel-2 Cloud-Optimized GeoTIFFs na AWS](https://registry.opendata.aws/sentinel-2-l2a-cogs/)).
+- Drevesa Irishtowna (višina krošenj): High Resolution Canopy Height Maps (Meta in World Resources Institute, 2024), licenca [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Zastava Jamajke v meniju (`assets/flags/jamaica.svg`): državni simbol, narisan po uradnem opisu (1962), brez avtorskih pravic.
