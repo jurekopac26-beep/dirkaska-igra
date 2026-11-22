@@ -7,11 +7,11 @@
   "jsMs": 1.12
  },
  "pikesg": {
-  "calls": 160,
-  "maxCalls": 174,
-  "kverts": 545,
-  "maxKverts": 651,
-  "jsMs": 0.91
+  "calls": 146,
+  "maxCalls": 161,
+  "kverts": 487,
+  "maxKverts": 588,
+  "jsMs": 1.79
  },
  "ouninpohja": {
   "calls": 146,

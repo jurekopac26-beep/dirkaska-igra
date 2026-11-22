@@ -2,7 +2,8 @@
    WORLD — the roadside ground from the camera behind the car (chase), the sixth group of the real tracks: Kotor and Llogara (the shared
    world of the passes, js/world-prelaz.js: the look's own L.extra chained), Zandvoort and Tuzla (the shared circuit builder,
    js/world-rbring.js: the look's own LK.extra chained), Hiva (its own builder calls World.ext.hivaRob just before its scenery chunks
-   are closed). What is added goes into the builders' own scenery chunks (scen.get), so no draw is added, and only the named tracks
+   are closed). What is added goes into the builders' own scenery chunks (scen.get) or, where a track asks for it (C.soft), into meshes of
+   its own (softScen: 256 m chunks, a few draws more); only the named tracks
    change. What stands where follows each track's description (docs/proge/<id>.md). Nothing here is driven on: all of it is behind the
    barriers, off the built ground and what the build keeps clear; the terrain, the road and the fences stay as they are.
    ========================================================================= */
