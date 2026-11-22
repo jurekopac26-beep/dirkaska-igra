@@ -6,7 +6,7 @@
      out to ~72 m): the trodden trails of sand and earth through the dunes (surface=ground, the mountain-bike route), the asphalt tracks
      (surface=asphalt), the unpaved ones and the sand bridleway, the service roads (no surface tag: asphalt, assumed); the car parks
      (OSM amenity=parking, the whole outline of each within ~60 m): the asphalt ones (surface=asphalt) asphalt, the ones OSM leaves
-     without a surface after PARK_B (the user's choice in the PR: (a) trampled dry grass, (b) asphalt); the communication tower (OSM
+     without a surface after PARK_B (the user's choice in the PR: (a) a trampled field, (b) asphalt); the communication tower (OSM
      man_made=tower, tower:type=communication, height 31 m) as a slim steel tube with its three antenna panels and a cabinet at its foot
      (its build is not in OSM: assumed); the golf course's tee and green by the road (OSM golf=tee/green) as mown grass.
    Kept open (docs/realizem.md: only from sources): the footbridge over the main straight (OSM man_made=bridge, its outline only: no
@@ -23,7 +23,7 @@
   const A = World.api, LK = A.rbLook && A.rbLook.zandvoort;
   if (!LK || typeof LK.extra !== 'function') return;
 
-  const PARK_B = false;   // the car parks without a surface in OSM: false (a) trampled dry grass, true (b) asphalt (the user's choice, PR)
+  const PARK_B = false;   // the car parks without a surface in OSM: false (a) a trampled field (worn sand, dry grass), true (b) asphalt (the user's choice, PR)
   // the tower: x, z, height; the car parks: [surface (0 asphalt, 2 none), x0, z0, x1, z1, ...]; the golf course: [0 tee, 1 green, outline];
   // the ways: [kind, x0, z0, ...]: 0 path of earth and sand, 1 track of asphalt, 2 unpaved track, 3 sand bridleway, 4 service road,
   // 5 paved path, 6 footway (no surface: paved, assumed)
@@ -81,9 +81,20 @@
     [1,697.7,436.6,706.8,419.8,714.7,407,719.4,401.3,730.5,390,736.3,379.7,742.6,367.1,748.9,352.5,754.8,335.5],
     [1,776.3,274.8,785.9,261,793.7,251,816.5,228.9,826.4,217.4,844.6,194.3,858.6,173.8,875.1,151.3,880.9,139.4,884.8,128,886,122.5,885.9,117.6,885.3,113.1,874.9,75.5,864.3,51.7,859.5,45.1,855.3,42.5,850.1,38.5,829.6,14.7,819.1,4.2,815,0.9,807.6,-3.4,803.9,-4.6,792.6,-6.6,715.7,-14.3,684.7,-16.5,676.4,-16.9,667,-16.7,631.9,-15.3,588.9,-12.6,574.5,-10.4,567.7,-8.8,556,-5.1,548.8,-2.4,531.4,5.3]];
   // each kind of way: half its width, its material (0 asphalt, 1 sand), its colour over the material's picture
-  const WK = [[0.65, 1, [0.84, 0.72, 0.56]], [1.5, 0, [0.8, 0.8, 0.82]], [1.25, 1, [0.92, 0.88, 0.8]], [1.25, 1, [1.02, 0.97, 0.86]],
-    [2, 0, [0.74, 0.74, 0.76]], [0.9, 0, [0.9, 0.9, 0.9]], [0.75, 0, [1, 0.97, 0.93]]];
-  const PK_ASP = [0.88, 0.88, 0.9], PK_GRASS = [0.98, 0.92, 0.6], GOLF_C = [[0.7, 1, 0.52], [0.6, 0.98, 0.46]];
+  const WK = [[0.65, 1, [0.96, 0.88, 0.75]], [1.5, 0, [0.92, 0.92, 0.94]], [1.25, 1, [0.92, 0.88, 0.8]], [1.25, 1, [1.04, 0.99, 0.88]],
+    [2, 0, [0.88, 0.88, 0.9]], [0.9, 0, [0.98, 0.98, 0.98]], [0.75, 0, [1.06, 1.02, 0.96]]];
+  // the car parks: asphalt (faded, lighter than the circuit's) or (a) a trampled field: worn sand and dry grass in patches
+  const PK_ASP = [1.02, 1.02, 1.04], PK_SAND = [0.9, 0.84, 0.68], PK_GRASS = [0.66, 0.74, 0.42], GOLF_C = [[0.7, 1, 0.52], [0.6, 0.98, 0.46]];
+  // smooth patches (value noise on a 9 m lattice, from the place alone: the same every time, no draw from the world's random numbers)
+  const hash = (i, j) => { let h = Math.imul(i, 374761393) + Math.imul(j, 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const patch = (x, z) => {
+    const u = x / 9, v = z / 9, i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, su = fu * fu * (3 - 2 * fu), sv = fv * fv * (3 - 2 * fv);
+    const a = hash(i, j), b = hash(i + 1, j), c = hash(i, j + 1), d = hash(i + 1, j + 1);
+    return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
+  };
+  const mix = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
+  const asphaltAt = (x, z) => { const f = 0.94 + 0.1 * patch(x + 500, z); return PK_ASP.map(c => c * f); };
+  const fieldAt = (x, z) => { const t = Math.min(1, Math.max(0, patch(x, z) * 1.6 - 0.3)); return mix(PK_SAND, PK_GRASS, t); };
 
   const base = LK.extra;
   LK.extra = function (o) { const mine = lay(o); const st = base(o) || {}; st.roadside = mine; return st; };
@@ -133,11 +144,11 @@
       }
       return P;
     };
-    const drape = (rb, Q, C, col, lift, U, onCell) => {
+    const drape = (rb, Q, C, colAt, lift, U, onCell) => {
       let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
       for (let k = 0; k < Q.length; k += 2) { x0 = Math.min(x0, Q[k]); x1 = Math.max(x1, Q[k]); z0 = Math.min(z0, Q[k + 1]); z1 = Math.max(z1, Q[k + 1]); }
       const i0 = Math.floor(x0 / C), i1 = Math.floor(x1 / C), j0 = Math.floor(z0 / C), j1 = Math.floor(z1 / C), V = new Map();
-      const vtx = (x, z) => rb.row([[x, nrGround(x, z) + lift, z]], [col], [[x / U, z / U]]);
+      const vtx = (x, z) => rb.row([[x, nrGround(x, z) + lift, z]], [colAt(x, z)], [[x / U, z / U]]);
       const cor = (i, j) => { const key = i * 100003 + j; let v = V.get(key); if (v === undefined) V.set(key, v = vtx(i * C, j * C)); return v; };
       for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
         const P = clip(Q, i * C, j * C, (i + 1) * C, (j + 1) * C); if (!P) continue;
@@ -157,10 +168,10 @@
       }
     };
     for (const Q of PARK) {
-      const asp = Q[0] === 0 || PARK_B, rb = asp ? rbA : rbG;
-      drape(rb, Q.slice(1), 4, asp ? PK_ASP : PK_GRASS, 0.08, asp ? 3 : 4, (x, z) => { exclPush(x, z, 3); st.parkCells++; });
+      const asp = Q[0] === 0 || PARK_B;
+      drape(asp ? rbA : rbS, Q.slice(1), 4, asp ? asphaltAt : fieldAt, 0.08, asp ? 3 : 4, (x, z) => { exclPush(x, z, 3); st.parkCells++; });
     }
-    for (const Q of GOLF) drape(rbG, Q.slice(1), 2, GOLF_C[Q[0]], 0.06, 2, (x, z) => { exclPush(x, z, 1.6); st.golfCells++; });
+    for (const Q of GOLF) drape(rbG, Q.slice(1), 2, () => GOLF_C[Q[0]], 0.06, 2, (x, z) => { exclPush(x, z, 1.6); st.golfCells++; });
 
     // the tower: a steel tube tapering up, a ring of three antenna panels near its top, a grey cabinet at its foot (built as assumed)
     if (cyl && past(MAST[0], MAST[1], 3)) {
