@@ -399,11 +399,11 @@
   "jsMs": 1.43
  },
  "sosnova": {
-  "calls": 187,
-  "maxCalls": 224,
-  "kverts": 590,
-  "maxKverts": 745,
-  "jsMs": 1.48
+  "calls": 191,
+  "maxCalls": 229,
+  "kverts": 591,
+  "maxKverts": 746,
+  "jsMs": 1.61
  },
  "izoard": {
   "calls": 181,
