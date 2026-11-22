@@ -21,6 +21,27 @@ Odločitev uporabnika 19. 11. 2026 ob 10.35 (prek Mateja, tabla #382, komentar 7
 - **Delitev v 4 dele v ločenih datotekah**: A logika, B igra, C meni, D dokumenti. Vrstni red je A, nato B in C hkrati, nato D. Vse gre v zbirni veji `kariera-1-0` na `main` v enem koraku.
 - **Odgovori** (20. 11. ob 0.15–0.18): pri `kariera-1`–`kariera-4`, `kariera-6` in `kariera-7` možnost 1, pri `kariera-5` možnost 2 (hitreje, vsi avti v ~120 zmagah). Del A je narejen s privzetki (možnost 1 povsod), zato se spremeni samo ekonomija.
 
+## Atlas Career (22. 11. 2026)
+Odločitev Mateja 22. 11.: »kariero hitreje, pred Realizem G«, »Atlas Career naj bo v verziji 1.0«.
+- **Dolina** (`js/kariera-dolina.js`, `MenuDolina`): 3D zemljevid kariere v meniju, ne kamera dirke (dirka ostane samo s kamero za avtom).
+  - Cesta teče skozi gorsko dolino z jezerom; ob njej so zatiči dogodkov in vrata stopenj.
+  - Vleka premika pogled vzdolž ceste. Dotik zatiča odpre kartico dogodka (pokonci od spodaj, ležeče z desne).
+  - Po dirki dolina pokaže izid (mesto, zvezdice, kovanci), ob novi stopnji še napredek.
+  - Meja: do ~25 klicev risanja in ~60 tisoč oglišč (`MenuDolina._R()`); riše samo, ko se kaj premika.
+- **Dogodki**: 44 v 5 stopnjah (`VELIKOST` 7, 8, 9, 10, 10). Najprej pokali poti in pokali razredov, preostanek so posamični dogodki po vrsti: dirka, kronometer (samo kjer ima proga medalje), dvoboj. Finale je zadnji.
+- **Zvezdice** po najboljšem mestu (`ZVEZDICE`):
+  - pokal, pokal razreda in finale: 3, 2, 1 za prva tri mesta;
+  - dirka: 3 za 1., 2 za 2.–3., 1 za 4.–6. mesto;
+  - dvoboj: 3 za zmago;
+  - kronometer: po medalji (zlata 3, srebrna 2, bronasta 1).
+- **Odklepanje**: stopnja se odpre z zvezdicami vseh dogodkov. Pragovi so 0, 9, 21, 36 in 54 od 132 (`PRAG`), sorazmerno z največjim številom zvezdic poti. Odprta stopnja ostane odprta (`pot.stopnja`).
+- **Darila stopenj** se plačajo od shranjene stopnje naprej (`pot.stopnja`), vsako enkrat; pri nenavadnem shranjenem stanju manjkajoča ob naslednjem dogodku.
+- **Pokali razredov** so v stopnjah po ceni najcenejšega avta razreda. Igra poda cene (`KP_CENE` iz `Core.CAREER.car`); brez cen velja vrstni red `RAZRED_RED`.
+- **Kovanci** (`kariera-5`, »hitro«):
+  - posamični dogodek plača po zvezdicah (stopnja 1: 4.000, 7.000 in 10.000 🪙; stopnja 5: 70.000, 115.000 in 165.000 🪙);
+  - boljši izid pozneje plača razliko;
+  - pokali, pokali razredov, finale, prve zmage in darila stopenj po tabeli `EKONOMIJA.hitro`.
+
 ## Kaj kariera ima zdaj
 - **Stanje** (`js/game.js`):
   - `careerLoad`, `careerNew` in `careerSave` (~173) shranijo kariero v `tdgp-career` prek `Shramba.keep`.
@@ -184,6 +205,7 @@ Pri vsakem vprašanju je prva možnost priporočena. Uporabnik je odgovoril 20. 
 
 ## Predaja
 - **Stanje 22. 11.**: A, B, C, testi in D (#792, #796, #797, #807) so v zbirni veji `kariera-1-0` na svežem `main`; nanjo gre Atlas Career (dolina, dogodki, zvezdice, kovanci).
+- **Atlas 22. 11.**: logika in igra (`js/kariera.js`, `js/game.js`) ter dolina (`js/kariera-dolina.js`, `css/menu.css`) sta v zbirni veji; meni in testi (`js/menu.js`, `tests/browser/*.mjs`) druga seja.
 - **Stanje 20. 11.**: odgovori prebrani, načrt popravljen. Del A je na veji (`a80900d`, `js/kariera.js` s testom), narejen s privzetki; ujema se v vsem razen ekonomije (`kariera-5`).
 - **Nato** koordinacija partyslo zažene:
   - sejo za B in sejo za C hkrati (`source_url` repozitorija, veja `kariera-1-0`); številke ekonomije ju ne ovirajo;
