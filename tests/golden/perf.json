@@ -420,11 +420,11 @@
   "jsMs": 1.11
  },
  "kildare": {
-  "calls": 205,
-  "maxCalls": 231,
-  "kverts": 439,
-  "maxKverts": 511,
-  "jsMs": 1.95
+  "calls": 206,
+  "maxCalls": 232,
+  "kverts": 449,
+  "maxKverts": 522,
+  "jsMs": 1.71
  },
  "sacalobra": {
   "calls": 222,
