@@ -514,6 +514,7 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Do prelaza Mã Pí Lèng': 'To the Mã Pí Lèng pass',   // (Mã Pí Lèng: the results of an escape; Spomenik, Serpentina N and the heights by the rules of Lang.place)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
     'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
     'Jez Medeu': 'Medeu Dam', 'Za jezom': 'Behind the Dam', 'Soteska Gorelnik': 'Gorelnik Gorge', 'Most čez Kiši Almati': 'Kishi Almaty Bridge', 'Soteska Kiši Almati': 'Kishi Almaty Gorge', 'Po soteski': 'Up the gorge',   // (Medeu: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)

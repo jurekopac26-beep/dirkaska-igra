@@ -270,6 +270,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | ghoufi | Ghoufi, Alžirija | ghoufi | `js/world-ghoufi.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | cusco | Cusco, Peru | cusco | `js/world-cusco.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | haivan | Hải Vân, Vietnam | haivan | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.haivan`: tropski gozd, `L.trop`, brez snega in ovc) |
+| mapileng | Mã Pí Lèng, Vietnam | mapileng | `js/world-kratke.js` (`buildKratke`, slog `KR.mapileng`: kraški apnenec, skalni stolpiči, koruza, spomenik s svetiščem, muzej, kavarna, razgledišče) |
 | savusavu | Savusavu, Fidži | savusavu | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.savusavu`: tropski gozd, `L.trop`, bela sredinska črta, brez snega in ovc) |
 | harju | Harju, Finska | harju | `js/world-harju.js` (`buildHarju`) |
 | *hotham* | *Mount Hotham, Avstralija (test)* | hotham | `js/world-hotham.js` (`buildHotham`) |
@@ -329,6 +330,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | santoantao | Santo Antão, Zelenortski otoki | santoantao | `js/world-santoantao.js` (`buildSantoAntao`: teren v olivno zeleni in slamnati barvi z rdečerjavo prstjo, pasovi bazalta in tufa v stenah, cesta iz bazaltnih kock `saCobbleTex` (tudi za druge tlakovane ceste: `API.saCobble`), zidovi med kraki serpentin kot v `js/world-prelaz.js` prek `API.caBank`, nizki bazaltni parapeti, razgledišči na sedlu Delgadim, hiše, ciprese, evkalipti, akacije, agave, morje v daljnem pogledu; podatki `tools/santoantao/build.py`) |
 | seoul | Seul, Južna Koreja | seoul | `js/world-seoul.js` (`buildSeoul`; podatki `js/data/seoul.js` iz `tools/seoul/build.py world`, proga iz `build.py track`) |
 | sogeri | Sogeri, Papua Nova Gvineja | sogeri | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.sogeri`: kunai trava, tropski gozd v grapi, konglomerat v usekih; vožnja po levi) |
+| tapini | Tapini, Papua Nova Gvineja | tapini | `js/world-tapini.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
 | spa | Spa, Belgija | spa | `js/world-spa.js` (`buildSpa`) |
 | suzuka | Suzuka, Japonska | suzuka | `js/world-suzuka.js` (`buildSuzuka`) |
 | ujarras | Ujarrás, Kostarika | ujarras | `js/world-ujarras.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
