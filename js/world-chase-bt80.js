@@ -1,5 +1,5 @@
 /* =========================================================================
-   WORLD — the roadside ground from the camera behind the car (chase), the eightieth group of the real tracks: Medeu and Canaries (both
+   WORLD — the roadside ground from the camera behind the car (chase), the eightieth group of the real tracks: Medeu (Canaries left out: no load headroom) (both
    pass-builder roads, js/world-prelaz.js), a third pass on two tracks whose verge, bank and outer band the twentieth and thirty-fifth
    groups (js/world-chase-bt35.js: Medeu) and the eighth and thirty-eighth (js/world-chase-bt38.js: Canaries) already set. From behind
    the car both still showed the asphalt's edge as one clean line and, past the first bands, only sparse flat patches on one smooth face
@@ -121,26 +121,5 @@
         if (u < 0.74 && sl < 0.8) { cushion(soft.get(x, z), x, y, z, (0.5 + h * 0.6) * k, 0.35 + h * 0.4, C_(R, R() < 0.5 ? MD.juniper : MD.haw, 0.025), R); return 'grmi'; }
         tuft(soft.get(x, z), x, y, z, (0.35 + h * 0.35) * k, 0.4 + h * 0.4, C_(R, MD.tuft, 0.03), R, 5); return 'sopi'; } });
 
-  /* ---- Canaries ---- */
-  const CN = {
-    worn: [[0.52, 0.42, 0.33], [0.56, 0.45, 0.35]], stone: [[0.55, 0.52, 0.45], [0.59, 0.55, 0.48]],   // (the red-brown earth washed on, the andesite's grit)
-    earth: [[0.54, 0.42, 0.3], [0.58, 0.45, 0.32]], gr: [[0.42, 0.5, 0.26], [0.46, 0.53, 0.28]], lime: [[0.48, 0.54, 0.29], [0.52, 0.57, 0.31]],
-    leaf: [[0.5, 0.44, 0.32], [0.54, 0.47, 0.34]], under: [[0.26, 0.38, 0.19], [0.3, 0.42, 0.21]], tall: [[0.32, 0.47, 0.2], [0.4, 0.52, 0.24]],
-    andesite: [[0.5, 0.47, 0.41], [0.56, 0.52, 0.45]],
-  };
-  hook('canaries', 80201, 80202,
-    { step: 4, seg: 2, rim: 0.55, grit: 0.55, sh: 0.45, worn: CN.worn, stone: CN.stone, verge: 0.55, vA: CN.earth, vB: CN.gr, vt: 0.5, vtC: CN.tall },
-    { step: 4.5, n: 2, share: 0.7, from: 1.5, to: 60, pw: 1.25, drop: 18, maxSl: 1.6,   // (the forest's trees already fill the busiest place: fewer here)
-
-      put: (soft, g, x, y, z, d, R, c, sl) => { const u = R(), h = R(), k = 1.2 + 1.0 * Math.min(1, d / 55);
-        if (sl > 0.95 || c === 4) {   // »rdeče-rjava prst v vsekih, sivo-rjav andezit v pečinah«
-          if (u < 0.45) { cushion(soft.get(x, z), x, y + 0.05, z, (0.35 + h * 0.55) * k, 0.25 + h * 0.3, C_(R, CN.andesite, 0.02), R); return 'bloki'; }
-          soil(soft, g, x, z, (1.0 + R() * 1.2) * k, C_(R, CN.earth, 0.025), R, 0.06); return 'vsek'; }
-        if (c === 1) {   // under the dense broadleaf forest: the leaf litter and the undergrowth
-          if (u < 0.5) { soil(soft, g, x, z, (1.2 + R() * 1.4) * k, C_(R, R() < 0.7 ? CN.leaf : CN.earth), R, 0.05); return 'listje'; }
-          cushion(soft.get(x, z), x, y, z, (0.55 + h * 0.6) * k, 0.4 + h * 0.45, C_(R, CN.under, 0.025), R); return 'grmi'; }
-        if (u < 0.55) { const v = R(), col = v < 0.5 ? C_(R, CN.gr) : v < 0.8 ? C_(R, CN.lime) : C_(R, CN.earth);
-          soil(soft, g, x, z, (1.8 + R() * 2.0) * k, col, R, 0.06); return 'zaplate'; }
-        if (u < 0.72 && sl < 0.9) { cushion(soft.get(x, z), x, y, z, (0.6 + h * 0.7) * k, 0.4 + h * 0.45, C_(R, CN.under, 0.025), R); return 'grmi'; }
-        tuft(soft.get(x, z), x, y, z, (0.4 + h * 0.35) * k, 0.45 + h * 0.4, C_(R, CN.tall, 0.03), R, 5); return 'sopi'; } });
+  /* (Canaries: left out — its load has no headroom, docs/vrsta.md) */
 })();
