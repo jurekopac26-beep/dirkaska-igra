@@ -97,9 +97,9 @@
 
   // ---- the streams (def.sk.str: OSM's waterway=stream, [points, culvert (1: in its pipe under a road, 0: open), x, z, ...]) in shallow
   //      swales cut into the plain (LK.pad: LB_DEEP deep, a flat bottom 2 * LB_R1 wide, 2 * LB_R at the top; narrower toward the barriers,
-  //      none within 1.5 m past them, under the grandstands or by the service roads and dirt tracks, which cross them on low embankments;
-  //      ending at the culverts' mouths), their beds (LB_STR), concrete headwalls at the culverts' mouths, low parapets where the roads
-  //      cross them on bridges (def.sk.brg: OSM's bridge=yes) ----
+  //      none within 1.5 m past them, under the grandstands and their concourses, end paths and gates, or by the service roads and dirt
+  //      tracks, which cross them on low embankments; ending at the culverts' mouths), their beds (LB_STR), concrete headwalls at the
+  //      culverts' mouths, low parapets where the roads cross them on bridges (def.sk.brg: OSM's bridge=yes) ----
   const LB_STR = 'a';   // (awaiting the choice, docs/slike/lombok/po-*: a a dry bed of sand and pebbles at the end of the dry season, damp edges; b a trickle of brown water on a muddy bed; c the trickle, greener banks, bushes)
   const LB_R = 12, LB_R1 = 3.5, LB_DEEP = 1, LB_C = 16, LB_NONE = [];
   const lbKey = (ci, cj) => (ci + 2048) * 4096 + (cj + 2048);
@@ -120,10 +120,20 @@
       ways.add(Math.min(s[0], s[2]) - e, Math.min(s[1], s[3]) - e, Math.max(s[0], s[2]) + e, Math.max(s[1], s[3]) + e, s); }
     const wayF = (x, z) => { let f = 1; for (const [ax, az, bx, bz, hw] of ways.at(x, z)) f = Math.min(f, sstep(hw + 1, hw + 5, lbSegD(x, z, ax, az, bx, bz))); return f; };
     const wayGap = (x, z) => { let g = 1e9; for (const [ax, az, bx, bz, hw] of ways.at(x, z)) g = Math.min(g, lbSegD(x, z, ax, az, bx, bz) - hw); return g; };
-    const RS = LB_R + 4;
-    for (const [sa, sb, side, rows] of def.stands || []) for (let d = sa - 16; d <= sb + 16; d += 4) {   // (the grandstands' footprints: their rows from the barrier out)
-      const s = sAt(d), i = T.idx(s), f0 = (side > 0 ? T.br[i] : T.bl[i]) + 2.6;
-      for (let f = f0 - 4; f <= f0 + rows * 0.95 + 4; f += 4) { const [x, z] = atSf(s, side * f); stands.add(x - RS, z - RS, x + RS, z + RS, [x, z]); } }
+    const RS = LB_R + 4, foot = (x, z) => stands.add(x - RS, z - RS, x + RS, z + RS, [x, z]);
+    const strip = (x0, z0, ux, uz, len, hw) => { const l = Math.hypot(ux, uz) || 1; ux /= l; uz /= l; for (let a = -4; a <= len + 4; a += 3) for (let w = -hw - 4; w <= hw + 4; w += 3) foot(x0 + ux * a - uz * w, z0 + uz * a + ux * w); };
+    for (const [sa, sb, side, rows, , secs] of def.stands || []) {   // (the grandstands' footprints and 4 m round them: their rows from the barrier out, World.people's concourse behind them with its kiosks and toilets, its paths off their ends and out to their gates, which follow the ground)
+      const bk = (d) => { const s = sAt(d), i = T.idx(s); return [s, (side > 0 ? T.br[i] : T.bl[i]) + 2.6 + rows * 0.95]; };   // (its back row)
+      const pt = (d, o) => { const [s, f] = bk(d); return atSf(s, side * (f + o)); }, out = (d) => { const a = pt(d, 0), b = pt(d, 1); return [b[0] - a[0], b[1] - a[1]]; };
+      for (let d = sa - 16; d <= sb + 16; d += 4) { const [s, f] = bk(d); for (let g = f - rows * 0.95 - 4; g <= f + 15; g += 4) { const [x, z] = atSf(s, side * g); foot(x, z); } }
+      // its sections (world-rbring's, 3 m apart): World.people joins those whose fronts meet into one stand with its own end paths and gate (mergeChains), so each run of them one maybe
+      const n = Math.max(1, secs || 1), sl = (sb - sa) / n, gp = n > 1 ? 3 : 0;
+      for (let i = 0; i < n; i++) for (let j = i; j < n; j++) {
+        const a = sa + i * sl + gp / 2, b = sa + (j + 1) * sl - gp / 2, p0 = pt(a, 0), p1 = pt(b, 0), cl = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) || 1, tx = (p1[0] - p0[0]) / cl, tz = (p1[1] - p0[1]) / cl;   // (its chord: the way its end paths turn)
+        for (const [d, e] of [[a, -1], [b, 1]]) { const [nx, nz] = out(d), [x, z] = pt(d, 3.65); strip(x + tx * e * 5, z + tz * e * 5, tx * e + nx, tz * e + nz, 22, 1.5); }   // (45° out, up to 22 m)
+        let tot = 0; const cum = []; for (let d = a; d <= b + 1e-6; d += 2) { if (d > a) { const u = pt(d - 2, 0), v = pt(d, 0); tot += Math.hypot(v[0] - u[0], v[1] - u[1]); } cum.push([d, tot]); }
+        const dm = cum.find(([, c]) => c >= tot / 2)[0], [nx, nz] = out(dm), [x, z] = pt(dm, 6.9); strip(x, z, nx, nz, 27, 5.5); }   // (from the middle of its back: up to 26 m, the gate, its ticket booth)
+    }
     const standD = (x, z) => { let m = 1e9; for (const [sx, sz] of stands.at(x, z)) m = Math.min(m, Math.hypot(x - sx, z - sz)); return m; };
     const ends = all.map(({ p }) => [p[0], p[p.length - 1]]);
     const join = (k, e) => { const A = ends[k][e]; for (let m = 0; m < all.length; m++) if (m !== k) for (const B of ends[m]) if (Math.hypot(A[0] - B[0], A[1] - B[1]) < 1) return m; return -1; };

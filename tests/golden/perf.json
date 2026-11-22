@@ -511,11 +511,11 @@
   "jsMs": 1
  },
  "lombok": {
-  "calls": 188,
-  "maxCalls": 227,
-  "kverts": 567,
-  "maxKverts": 701,
-  "jsMs": 1.02
+  "calls": 190,
+  "maxCalls": 228,
+  "kverts": 581,
+  "maxKverts": 719,
+  "jsMs": 1.36
  },
  "sepang": {
   "calls": 184,
