@@ -25,11 +25,14 @@
   const C_ = (R, ab, j) => mute(vary(mix3(ab[0], ab[1], R()), R, j || 0.015));
 
   /* a thin low streak lying on the surface along (ax, az), tapering to both ends (the seventy-second group's, three segments) */
-  const streak = (scen, gH, x, z, ax, az, len, wid, col, R, lift) => {
-    const g = scen.get(x, z), bx = -az, bz = ax, n = 3, up = lift || 0.04, rim = [col[0] * 0.92 + 0.04, col[1] * 0.92 + 0.05, col[2] * 0.92 + 0.03], L = [], P = [], C = [];
+  //  (path: u -> [x, z, bx, bz], the streak's centre and its sideways at u along it, so that it follows the road's own bend; without it straight)
+  const streak = (scen, gH, x, z, ax, az, len, wid, col, R, lift, path) => {
+    const g = scen.get(x, z), n = 3, up = lift || 0.04, rim = [col[0] * 0.92 + 0.04, col[1] * 0.92 + 0.05, col[2] * 0.92 + 0.03], L = [], P = [], C = [];
+    let bx = -az, bz = ax;
     for (let k = 0; k <= n; k++) {
       const u = (k / n - 0.5) * len, t = Math.sin(Math.PI * k / n), hw = wid * 0.5 * (0.2 + 0.8 * t) * (0.8 + R() * 0.4), j = (R() - 0.5) * wid * 0.3;
-      const cx = x + ax * u + bx * j, cz = z + az * u + bz * j;
+      let px = x + ax * u, pz = z + az * u; if (path) [px, pz, bx, bz] = path(u);
+      const cx = px + bx * j, cz = pz + bz * j;
       L.push([cx + bx * hw, gH(cx + bx * hw, cz + bz * hw) + up, cz + bz * hw]); P.push([cx - bx * hw, gH(cx - bx * hw, cz - bz * hw) + up, cz - bz * hw]); C.push([cx, gH(cx, cz) + up + 0.006 + (t > 0.5 ? up * 0.5 : 0), cz]);
     }
     for (let k = 0; k < n; k++) {
@@ -47,13 +50,20 @@
     for (let i = 0; i < N; i += Math.max(1, Math.round(K.step / ds))) for (const sd of [-1, 1]) {
       const r0 = R(), r1 = R(), r2 = R(), r3 = R(), a = (R() - 0.5) * K.step * 0.8, w = T.wAt ? T.wAt(i) : T.w;
       const out = K.outer && T.k && sd === -Math.sign(T.k[i]) ? Math.min(1, Math.abs(T.k[i]) * 70) * K.outer : 0;
-      const at = (o) => [T.px[i] + T.nx[i] * sd * o + T.tx[i] * a, T.pz[i] + T.nz[i] * sd * o + T.tz[i] * a];
+      const at = (o) => K.follow ? path(o)(0) : [T.px[i] + T.nx[i] * sd * o + T.tx[i] * a, T.pz[i] + T.nz[i] * sd * o + T.tz[i] * a];
+      // (K.follow: along the road between its stations, as its edge lines are laid (each station's point and normal, lerped), not along the
+      //  tangent at i: on a hairpin of R ~10 m a straight 3.6 m streak's ends stray ~0.16 m sideways, and so does its centre ~1.4 m along)
+      const path = (o) => (u) => { const f = Math.max(0, Math.min(N - 1.0001, i + (a + u) / ds)), i0 = Math.floor(f), t = f - i0, i1 = i0 + 1;
+        const nx = T.nx[i0] + (T.nx[i1] - T.nx[i0]) * t, nz = T.nz[i0] + (T.nz[i1] - T.nz[i0]) * t, l = Math.hypot(nx, nz) || 1;
+        return [T.px[i0] + (T.px[i1] - T.px[i0]) * t + nx * sd * o, T.pz[i0] + (T.pz[i1] - T.pz[i0]) * t + nz * sd * o, nx / l, nz / l]; };
       const ok = (x, z) => { const q = near(x, z); return q.i >= 0 && Math.abs(q.i - i) * ds < 6 && q.lat * sd > 0 && !bad(x, z) && !(gT(x, z) < T.hy[i] - 3); };
-      if (r0 < K.rim + out) { let o = K.in1 + r1 * (K.in0 - K.in1); if (K.gap) { const g0 = K.gap[0] - (K.gapPad || 0), g1 = K.gap[1] + (K.gapPad || 0); if (o > g0 && o < g1) o = o - g0 < g1 - o ? Math.max(0.03, g0 - 0.02) : g1 + 0.02; }   // (not on the edge line: the streak's half-width and sway, K.gapPad, kept off it too)
+      if (r0 < K.rim + out) { let o = K.in1 + r1 * (K.in0 - K.in1); if (K.gap) { const g0 = K.gap[0] - (K.gapPad || 0), g1 = K.gap[1] + (K.gapPad || 0); if (o > g0 && o < g1) o = K.gapNear !== undefined   // (not on the edge line: the streak's half-width and sway, K.gapPad, kept off it too)
+          ? (R() < K.gapNear ? K.gapMin + R() * (g0 - K.gapMin) : g1 + R() * (K.in0 - g1))   // (spread over both sides, K.gapNear of them by the edge: not all on one band)
+          : o - g0 < g1 - o ? Math.max(0.03, g0 - 0.02) : g1 + 0.02; }
         const [x, z] = at(w - o);
-        if (ok(x, z)) { const P = K.onRoad(R, out); streak(soft, rY, x, z, T.tx[i], T.tz[i], P.len, P.wid, P.col, R, P.lift); st.rob++; } }
-      if (r2 < K.grit) { const [x, z] = at(w + K.sh0 + R() * (K.sh1 - K.sh0));
-        if (ok(x, z)) { const P = K.onShoulder(R); streak(soft, rY, x, z, T.tx[i], T.tz[i], P.len, P.wid, P.col, R, 0.012); st.bankina++; } }
+        if (ok(x, z)) { const P = K.onRoad(R, out); streak(soft, rY, x, z, T.tx[i], T.tz[i], P.len, P.wid, P.col, R, P.lift, K.follow && path(w - o)); st.rob++; } }
+      if (r2 < K.grit) { const os = w + K.sh0 + R() * (K.sh1 - K.sh0), [x, z] = at(os);
+        if (ok(x, z)) { const P = K.onShoulder(R); streak(soft, rY, x, z, T.tx[i], T.tz[i], P.len, P.wid, P.col, R, 0.012, K.follow && path(os)); st.bankina++; } }
       if (r3 < K.stone) { const [x, z] = at(w + K.sh0 + 0.1 + R() * (K.sh1 - K.sh0));
         if (ok(x, z)) { const h = R(); cushion(soft.get(x, z), x, rY(x, z) - 0.02, z, 0.1 + h * 0.16, 0.07 + h * 0.1, K.stoneCol(R), R); st.kamni++; } }
     }
@@ -131,8 +141,10 @@
       return a < w ? y + 0.02 : a < w + 0.5 ? y + 0.012 - 0.032 * (a - w) / 0.5 : Math.max(gT(x, z), y - 0.02); };
     const E = { near, gT, rY, lc: null, bad, slope: o && o.slope }, soft = softScen(ctx.root, out.matV);
     // (on the asphalt by its edge, 1 m inside it, but not on the white edge line, w - 0.4 to w - 0.25 at +0.036 (js/world-tianmen.js): a streak's
-    //  half-width with its sway is at most 0.15 m, so none comes nearer the line than that; lifted 0.015 m over the asphalt against z-fighting)
-    const st = edge(soft, E, 86201, { step: 3.4, rim: 0.45, in0: 1.0, in1: 0.06, gap: [0.25, 0.4], gapPad: 0.16, grit: 0.25, sh0: 0.05, sh1: 0.45, stone: 0.05,
+    //  half-width with its sway is at most 0.15 m, so none comes nearer the line than that, on the hairpins too: the streaks follow the road's
+    //  bend (follow); those that would fall on it go to either side, 30 % by the edge from 0.04 to 0.09 m, the rest past it; lifted 0.015 m
+    //  over the asphalt against z-fighting)
+    const st = edge(soft, E, 86201, { step: 3.4, rim: 0.45, in0: 1.0, in1: 0.06, gap: [0.25, 0.4], gapPad: 0.16, gapNear: 0.3, gapMin: 0.04, follow: true, grit: 0.25, sh0: 0.05, sh1: 0.45, stone: 0.05,
       onRoad: (R) => { const v = R(); return { len: 1.2 + R() * 2.4, wid: 0.12 + R() * 0.08, lift: 0.015, col: C_(R, v < 0.5 ? TM.grime : v < 0.75 ? TM.moss : TM.leaf) }; },
       onShoulder: (R) => { const v = R(); return { len: 0.6 + R() * 1.4, wid: 0.18 + R() * 0.2, col: C_(R, v < 0.5 ? TM.wgrit : v < 0.8 ? TM.leaf : TM.moss, 0.02) }; },
       stoneCol: (R) => C_(R, TM.stone, 0.03) });
