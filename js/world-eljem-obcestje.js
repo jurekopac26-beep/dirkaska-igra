@@ -51,7 +51,7 @@
     [3,0,[629.6,-1009.2,626.1,-1018.9,617,-1030.1,604.6,-1033.7,580,-1028.1]]
   ];
   const HW = [3.5, 2.75, 2.5, 2.25, 2.0];   // (half widths by class: OSM has no width or lanes here)
-  const DY = 0.035, LIFT = 0.03, OVER = 0.07, APRON = 0.45, R0 = 6.5, FAR = 58, F = [-1, -0.5, 0, 0.5, 1];
+  const DY = 0.035, LIFT = 0.03, OVER = 0.07, APRON = 0.45, R0 = 6.5, FAR = 58, BEND = 4, F = [-1, -0.5, 0, 0.5, 1];
   const DUST = [0.86, 0.78, 0.64], VG = [0.92, 0.82, 0.68];
   let ST = null;   // (one build's state: { inFort, runs, fans, prc: the verge profiles per row and side, vergeRow })
 
@@ -109,14 +109,22 @@
     if (v.i >= 0) { const i = v.i, w = T.wAt(i), o = v.lat * side; if (o < w + m) { const d = w - 0.15 - o; return [x + T.nx[i] * side * d, z + T.nz[i] * side * d, true]; } }
     return [x, z, false];
   };
-  function sections(S, side, dy) {   // S: a run's samples [{x, z, hw, s}] -> the cross sections, 5 points each
+  const bend = (x, z, side, L) => {   // the mouth's straight road edge (through B, along the road there) onto the road's real, curving edge where it lies outside it; fades out BEND m from it
+    if (!L) return [x, z];
+    const ll = (x - L[0]) * L[2] + (z - L[1]) * L[3], g = clamp(1 - ll / BEND, 0, 1), v = g > 0 ? nrNear(x, z) : null;
+    if (!v || v.i < 0) return [x, z];
+    const e0 = v.lat * side - T.wAt(v.i), d = (e0 - ll) * g;   // (e0: past the real edge; a point far from it belongs to no mouth)
+    if (e0 > BEND + 3) return [x, z];
+    return d > 0.005 ? [x - T.nx[v.i] * side * d, z - T.nz[v.i] * side * d] : [x, z];
+  };
+  function sections(S, side, dy, L) {   // S: a run's samples [{x, z, hw, s}] -> the cross sections, 5 points each
     const n = S.length, out = [];
     for (let k = 0; k < n; k++) {
       const q = S[k], a = S[Math.max(0, k - 1)], b = S[Math.min(n - 1, k + 1)];
       let tx = b.x - a.x, tz = b.z - a.z; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
       const P = [], E = [];
       for (let j = 0; j < 5; j++) {
-        const [x, z, e] = onRoad(q.x - tz * F[j] * q.hw, q.z + tx * F[j] * q.hw, side, 0);
+        const [x, z, e] = onRoad(...bend(q.x - tz * F[j] * q.hw, q.z + tx * F[j] * q.hw, side, L), side, 0);
         P.push([x, height(x, z, side, 1 - F[j] * F[j], e) + dy, z]); E.push(e);
       }
       out.push({ P, E, tx, tz, s: q.s });
@@ -153,7 +161,7 @@
       for (let k = n - 1; k >= 0 && !side; k--) { const q = pts[k]; if (q.i >= 0 && Math.abs(q.lat) > T.wAt(q.i) + 0.5) side = Math.sign(q.lat); }
       if (!side) return;
       for (const q of pts) info(q, side);
-      let s0 = 0, sE = -1e9, sk = [-1e9, -1e9];
+      let s0 = 0, sE = -1e9, sk = [-1e9, -1e9], LN = null;
       if (joins) {
         let kE = -1;
         for (let k = 1; k < n; k++) if (pts[k].i >= 0 && pts[k].o >= pts[k].w) { kE = k; break; }
@@ -166,6 +174,7 @@
         if (i < 0) return;
         const rx = T.tx[i], rz = T.tz[i], al = (Ax - T.px[i]) * rx + (Az - T.pz[i]) * rz, w = T.wAt(i);
         const Bx = T.px[i] + al * rx + side * w * T.nx[i], Bz = T.pz[i] + al * rz + side * w * T.nz[i];
+        LN = [Bx, Bz, side * T.nx[i], side * T.nz[i]];
         const nsx = -az, nsz = ax, cr = ax * rz - az * rx, ends = [], us = [];
         for (const j of [-1, 1]) {
           const ex = Ax + j * hw * nsx, ez = Az + j * hw * nsz;
@@ -181,11 +190,11 @@
           while (dl <= -Math.PI) dl += 2 * Math.PI;
           const m = Math.max(2, Math.ceil(Math.abs(dl) / (Math.PI / 10))), arc = [];
           for (let q = 0; q <= m; q++) { const th = ts + dl * q / m; arc.push([Ccx + R * Math.cos(th), Ccz + R * Math.sin(th)]); }
-          ST.fans.push({ b, side, hw, O: [Ox, Oz], arc, Cc: [Ccx, Ccz], poly: [[Ox, Oz]].concat(arc), dy: (b % 5) * 0.002 });
+          ST.fans.push({ b, side, hw, O: [Ox, Oz], arc, Cc: [Ccx, Ccz], poly: [[Ox, Oz]].concat(arc), dy: (b % 5) * 0.002, L: LN });
           sk[j < 0 ? 0 : 1] = sE + u + Lt; ends.push([Trx, Trz]); us.push(u);
         }
         const fs = ends.map(([x, z]) => fOf(x, z)).filter((f) => f >= 0);
-        if (fs.length) { const f0 = Math.min(...fs), f1 = Math.max(...fs); for (let k = Math.max(1, Math.floor(f0) + 1); k <= Math.min(N - 1, Math.ceil(f1)); k++) GAP[k] |= side > 0 ? 2 : 1; }
+        if (fs.length) { const f0 = Math.min(...fs), f1 = Math.max(...fs); for (let k = Math.max(1, Math.ceil(f0) + 1); k <= Math.min(N - 1, Math.floor(f1)); k++) GAP[k] |= side > 0 ? 2 : 1; }   // (only rows within the mouth: past its corners the verge's edge would show)
         s0 = Math.max(0, sE + Math.min(...us) - 0.3);
       }
       // the body: from the mouth (or the way's start) on, every 1.25 m near the road, then every 2.5 m
@@ -197,7 +206,7 @@
       const dyb = (b % 5) * 0.002;
       let cur = [], out = false, piece = 0;
       const flush = () => {
-        if (cur.length >= 3) ST.runs.push({ b, side, hw, joins: !!joins, S: cur, cap0: !(joins && piece === 0), cap1: true, skirtFrom: joins && piece === 0 ? sk : [-1e9, -1e9], dy: dyb });
+        if (cur.length >= 3) ST.runs.push({ b, side, hw, joins: !!joins, S: cur, cap0: !(joins && piece === 0), cap1: true, skirtFrom: joins && piece === 0 ? sk : [-1e9, -1e9], dy: dyb, L: LN });
         cur = []; piece++;
       };
       for (const q of src) {
@@ -263,7 +272,7 @@
       g.quadUp(a, P, Q, b, [gcol(a, side, 1), gcol(P, side, 0.92), gcol(Q, side, 0.92), gcol(b, side, 1)], [UG(a), UG(P), UG(Q), UG(b)]);
     };
     for (const r of ST.runs) {
-      const sec = sections(r.S, r.side, r.dy), n = sec.length;
+      const sec = sections(r.S, r.side, r.dy, r.L), n = sec.length;
       for (const A of sec) A.C = A.P.map((p, j) => col(p, j === 0 || j === 4));
       for (let k = 0; k < n - 1; k++) {
         const A = sec[k], B = sec[k + 1], g = CA.get((A.P[2][0] + B.P[2][0]) / 2, (A.P[2][2] + B.P[2][2]) / 2);
@@ -285,7 +294,7 @@
       const [Ox, Oz] = f.O, sec = [];
       for (const [x1, z1] of f.arc) {
         const P = [], E = [];
-        for (const t of [0, 1 / 3, 2 / 3, 1]) { const [x, z, e] = onRoad(lerp(Ox, x1, t), lerp(Oz, z1, t), f.side, 0.02); P.push([x, height(x, z, f.side, 0, e) + f.dy, z]); E.push(e); }
+        for (const t of [0, 1 / 3, 2 / 3, 1]) { const [x, z, e] = onRoad(...bend(lerp(Ox, x1, t), lerp(Oz, z1, t), f.side, f.L), f.side, 0.02); P.push([x, height(x, z, f.side, 0, e) + f.dy, z]); E.push(e); }
         sec.push({ P, E });
       }
       crease(sec, f.side);

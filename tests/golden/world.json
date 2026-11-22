@@ -1284,18 +1284,18 @@
   }
  },
  "eljem": {
-  "meshes": 185,
-  "verts": 245288,
-  "instances": 354,
+  "meshes": 189,
+  "verts": 300146,
+  "instances": 339,
   "props": 0,
-  "crowd": 120,
-  "world": "eeeba07f",
+  "crowd": 118,
+  "world": "f4fca0c",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "8d6847d2",
-   "crowd:MeshLambertMaterial": "e0968893",
-   "flags:MeshLambertMaterial": "45378d95",
+   "-:MeshLambertMaterial": "7ad905c2",
+   "crowd:MeshLambertMaterial": "1fc2f910",
+   "flags:MeshLambertMaterial": "da3620fd",
    "ao:MeshBasicMaterial": "b6319958",
    "tyremarks:MeshBasicMaterial": "14b441a4",
    "roadwear:MeshLambertMaterial": "64b0828f"
