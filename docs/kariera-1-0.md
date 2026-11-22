@@ -2,6 +2,13 @@
 
 Odločitev uporabnika 19. 11. 2026 ob 10.35 (prek Mateja, tabla #382, komentar 7005268592): načrt kariere za 1.0 in delitev na 2–4 dele v različnih datotekah za zbirno vejo `kariera-1-0`; vprašanja na strani Odločitve partyslo. V tem koraku ni kode. Fizika vožnje se ne spreminja, testne proge in proge na odločanju so zamrznjene.
 
+## Stanje (19. 11. 2026, zvečer)
+- **Odgovori** na `kariera-1` do `kariera-7` še niso prišli. Koda gradi po prvi možnosti vsakega vprašanja (`Kariera.ODLOCITVE` v `js/kariera.js`). Drugo možnost izbere sprememba ene vrednosti; test `tests/kariera-pot.test.js` preveri tudi druge možnosti.
+- **A** (logika, `js/kariera.js`, `tests/kariera.test.js`): v zbirni veji `kariera-1-0` (a80900d).
+- **B** (igra, osnutek #796, veja `kariera-1-0-b`): igra naloži `js/kariera.js`, ima mostiček `MenuBridge.kariera` / `karieraStart` in vozi pokale poti na pogonu prvenstev, tudi pokale cest in kronometrov. Nagrade poti plača takšne, kot so, in jih pokaže na zaslonu z rezultati.
+- **C** (meni, osnutek #797, veja `kariera-1-0-c`): v delu.
+- **Testi in D** (osnutek #807, veja `kariera-1-0-testi` na `kariera-1-0-b`): `tests/kariera-pot.test.js` (Node) in `tests/browser/kariera-pot.test.mjs` (igra v brskalniku); šest popravkov v `js/kariera.js`. Dokumenti: `docs/igra.md` (»Prvenstvo«, »Kariera«, cene v »Vozni park«), `tests/README.md`, `docs/kazalo.md`, `README.md`.
+
 ## Na kratko
 - **Kariera že obstaja** (`docs/igra.md`, »Kariera«): denar, nakup avtov, nadgradnje, obraba, najem, stalni tekmec, prvenstva. Vse proge so odprte, ničesar se ne odklepa.
 - **Za 1.0 manjka**:
@@ -49,9 +56,9 @@ Odločitev uporabnika 19. 11. 2026 ob 10.35 (prek Mateja, tabla #382, komentar 7
   - Denar pokaže `money()`; stari pokali so pod gumbom NEUPORABNO CUPS.
   - Meni bere vse prek mostička `G` (`G.career()`, `G.champ()` …) in nima `tr()`.
 - **Testi**:
-  - Node: `tests/champ.test.js`, `fleet`, `grid`, `zrcalni`, `lang`.
-  - Brskalnik: `tests/browser/career.test.mjs`, `champ`, `onchamp`, `denarnica`, `denar`, `garage`, `cars-ui`, `menu`, `zabava`.
-- **Zastarelo v `docs/igra.md`**:
+  - Node: `tests/champ.test.js`, `fleet`, `grid`, `zrcalni`, `lang`; za pot `tests/kariera.test.js` (A) in `tests/kariera-pot.test.js` (B).
+  - Brskalnik: `tests/browser/career.test.mjs`, `champ`, `onchamp`, `denarnica`, `denar`, `garage`, `cars-ui`, `menu`, `zabava`; za pot `tests/browser/kariera-pot.test.mjs` (B).
+- **Zastarelo v `docs/igra.md`** (popravil del D, #807):
   - »Prvenstvo« še navaja Legende s Suzuko in Veliko prvenstvo z »dvanajst« progami.
   - »Kariera« še navaja zmago 6.000, naslov 20.000 in avte 5.000–150.000.
 
@@ -71,7 +78,7 @@ Odločeno (`kariera-1` in `kariera-2`, možnost 1): štiri stopnje. Vsaka ima po
 - **Nove proge**: pokale sestavi pravilo po vrsti proge (krog, cesta, kronometer) in dolžini, ne ročni seznam. Zato do 70 pravih prog vsaka nova prava proga nastopi sama. V `js/kariera.js` je še kratek seznam ročnih izjem (Legende, finale).
 - **Testne proge in proge na odločanju** (`nuTrack`) niso nikjer na poti. Harju je na poti, dokler je pravilo »Ena proga na državo« ne prestavi med testne (Koli je že na `main`); pot jo potem izpusti sama.
 - **Tekmeci** vozijo kot zdaj. Pokal izbere samo eno od obstoječih težavnosti (`CAREER.diff`).
-- **Prvenstvo na cestah** (kvalifikacije, 20 avtov, dirka na vrh) zdaj ni preverjeno; preveri ga del B. Pokal cest ima toliko tekmecev, kot jih sprejme štart proge (`rivN` v `js/game.js`: `d.raceRivals`, `d.rivals`).
+- **Prvenstvo na cestah** (kvalifikacije, 20 avtov, dirka na vrh) je preveril del B: `tests/browser/kariera-pot.test.mjs` odpelje dirko na cesti (Ghoufi) v pokalu do cilja. Pokal cest ima toliko tekmecev, kot jih sprejme štart proge (`rivN` v `js/game.js`: `d.raceRivals`, `d.rivals`).
 
 ### 2. Odklepanje prog in avtov
 Odločeno (`kariera-3`, možnost 1):
@@ -115,6 +122,7 @@ Odločeno (`kariera-4`, možnost 1):
 ### 6. Shranjene igre
 - `tdgp-career` dobi `v: 2` z novim poljem `pot: { stopnja, pokali: { id: najboljše mesto }, cilji: { id: opravljeno }, prve: [id proge] }`.
 - Prehod je čista funkcija `Kariera.migrate`, kliče jo `careerLoad`. Stara polja ostanejo, zato garaža (`fromCareer`, `toCareer`) in stari testi delujejo brez sprememb.
+- **Izvedba (B)**: na disk gre še `v: 1` s poljem `pot`, da starejša različica igre kariere ne zavrže. `careerLoad` sprejme `v: 1` in `v: 2`; pokvarjeno pot očisti `cistaPot`.
 - Stara kariera obdrži denar, avte in nadgradnje; pot se začne v stopnji 1 (`kariera-6`, možnost 1). Shranjeno prvenstvo (`tdgp-champ`) ostane.
 
 ### 7. Stari pokali
@@ -175,6 +183,7 @@ Pri vsakem vprašanju je prva možnost priporočena. Uporabnik je odgovoril 20. 
    3. Igralec sam izbere 6–12 dirkališč.
 
 ## Predaja
+- **Stanje 22. 11.**: A, B, C, testi in D (#792, #796, #797, #807) so v zbirni veji `kariera-1-0` na svežem `main`; nanjo gre Atlas Career (dolina, dogodki, zvezdice, kovanci).
 - **Stanje 20. 11.**: odgovori prebrani, načrt popravljen. Del A je na veji (`a80900d`, `js/kariera.js` s testom), narejen s privzetki; ujema se v vsem razen ekonomije (`kariera-5`).
 - **Nato** koordinacija partyslo zažene:
   - sejo za B in sejo za C hkrati (`source_url` repozitorija, veja `kariera-1-0`); številke ekonomije ju ne ovirajo;

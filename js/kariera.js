@@ -124,12 +124,12 @@
     const T = (tracks || []).filter(prava), byId = new Map(T.map(d => [d.id, d])), L = new Map(T.map(d => [d.id, km(d)]));
     const sort = (ids) => ids.slice().sort((a, b) => L.get(a) - L.get(b) || (a < b ? -1 : 1));
     const pokali = [];
-    const dodaj = (o) => { o.tracks = o.tracks.slice(); o.km = Math.round(o.tracks.reduce((s, id) => s + L.get(id) * Math.max(1, byId.get(id).laps || 1), 0) * 10) / 10; pokali.push(o); };
+    const dodaj = (o) => { o.tracks = o.tracks.slice(); o.km = Math.round(o.tracks.reduce((s, id) => s + L.get(id) * Math.max(1, o.laps || byId.get(id).laps || 1), 0) * 10) / 10; pokali.push(o); };   // (km: a cup's own laps first, the long tracks' one)
     const S = (n) => STOPNJE[n - 1];
     for (let s = 1; s <= 3; s++) for (const v of ['krog', 'cesta']) {
       const ids = sort(T.filter(d => !LEGENDE.includes(d.id) && vrsta(d) === v && stopnjaProge(d) === s).map(d => d.id)), parts = razdeli(ids);
       parts.forEach((p, i) => {
-        const r = parts.length > 1 ? rimske[i + 2] : '';
+        const r = parts.length > 1 ? rimske[i + 1] : '';
         dodaj({ id: 's' + s + '-' + v + (parts.length > 1 ? '-' + (i + 1) : ''), stopnja: s, vrsta: v, diff: S(s).diff, tracks: p,
           name: (v === 'krog' ? 'Pokal dirkališč' : 'Pokal cest') + r + ' · ' + S(s).name, en: { name: (v === 'krog' ? 'Circuit Cup' : 'Road Cup') + r + ' · ' + S(s).en } });
       });
@@ -139,10 +139,10 @@
     if (leg.length) dodaj({ id: 's4-legende', stopnja: 4, vrsta: 'krog', diff: S(4).diff, tracks: leg, name: 'Legende', en: { name: 'Legends' } });
     const dolge = sort(T.filter(d => !LEGENDE.includes(d.id) && vrsta(d) !== 'tt' && L.get(d.id) >= DOLGA).map(d => d.id));
     razdeli(dolge).forEach((p, i, a) => dodaj({ id: 's4-dolge' + (a.length > 1 ? '-' + (i + 1) : ''), stopnja: 4, vrsta: 'dolge', diff: S(4).diff, tracks: p, laps: 1,
-      name: 'Dolge proge' + (a.length > 1 ? rimske[i + 2] : ''), en: { name: 'Long tracks' + (a.length > 1 ? rimske[i + 2] : '') } }));
+      name: 'Dolge proge' + (a.length > 1 ? rimske[i + 1] : ''), en: { name: 'Long tracks' + (a.length > 1 ? rimske[i + 1] : '') } }));
     const tt = sort(T.filter(d => vrsta(d) === 'tt').map(d => d.id));
     razdeli(tt).forEach((p, i, a) => dodaj({ id: 's4-tt' + (a.length > 1 ? '-' + (i + 1) : ''), stopnja: 4, vrsta: 'tt', diff: S(4).diff, tracks: p,
-      name: 'Kronometri' + (a.length > 1 ? rimske[i + 2] : ''), en: { name: 'Time trials' + (a.length > 1 ? rimske[i + 2] : '') } }));
+      name: 'Kronometri' + (a.length > 1 ? rimske[i + 1] : ''), en: { name: 'Time trials' + (a.length > 1 ? rimske[i + 1] : '') } }));
     const fin = finale(T, L);
     if (fin.length) dodaj({ id: 's4-finale', stopnja: 4, vrsta: 'finale', diff: FINALE_DIFF, tracks: fin, name: 'Finale · Veliko prvenstvo', en: { name: 'Final · Grand Championship' } });
     // the class cups (kariera-4): open with a car of the class; not a stage's
@@ -176,10 +176,11 @@
   // shorter than DOLGA; spread over the lengths, every class from another place in the list (its index)
   function razredTracks(cat, i, T, L) {
     const ok = T.filter(d => vrsta(d) !== 'tt' && L.get(d.id) < DOLGA && !LEGENDE.includes(d.id));
+    const po = (a, b) => L.get(a.id) - L.get(b.id) || (a.id < b.id ? -1 : 1);   // (as long: by id, so the order of TRACKS does not matter)
     let pool;
-    if (cat === 'reli' || cat === 'teren') pool = ok.filter(d => vrsta(d) === 'cesta').sort((a, b) => (makadam(b) - makadam(a)) || L.get(a.id) - L.get(b.id));
-    else if (cat === 'dirkalni' || cat === 'tovornjaki') pool = ok.filter(d => vrsta(d) === 'krog').sort((a, b) => L.get(a.id) - L.get(b.id));
-    else pool = ok.slice().sort((a, b) => L.get(a.id) - L.get(b.id));
+    if (cat === 'reli' || cat === 'teren') pool = ok.filter(d => vrsta(d) === 'cesta').sort((a, b) => (makadam(b) - makadam(a)) || po(a, b));
+    else if (cat === 'dirkalni' || cat === 'tovornjaki') pool = ok.filter(d => vrsta(d) === 'krog').sort(po);
+    else pool = ok.slice().sort(po);
     const n = pool.length, out = [];
     if (!n) return out;
     const step = Math.max(1, Math.floor(n / RAZRED_N)), g = (cat === 'reli' || cat === 'teren') ? pool.filter(makadam).length : 0;
@@ -197,7 +198,7 @@
     if (isObj(p.pokali)) for (const k in p.pokali) { const v = num(p.pokali[k]); if (v >= 1) o.pokali[k] = v; }
     if (isObj(p.cilji)) for (const k in p.cilji) if (p.cilji[k]) o.cilji[k] = true;
     if (Array.isArray(p.prve)) o.prve = [...new Set(p.prve.filter(x => typeof x === 'string'))];
-    if (isObj(p.km)) for (const k in p.km) { const v = Number(p.km[k]); if (Number.isFinite(v) && v > 0) o.km[k] = Math.round(v * 1000) / 1000; }
+    if (isObj(p.km)) for (const k in p.km) { const v = Math.round(Number(p.km[k]) * 1000) / 1000; if (Number.isFinite(v) && v > 0) o.km[k] = v; }
     return o;
   }
   // the save (tdgp-career) to v2: a v1 career keeps every field (the garage's fromCareer / toCareer and the old tests read them) and gets the
@@ -245,7 +246,7 @@
   function poPokalu(car, cupId, place, P, cats) {
     const c = Object.assign({}, car), p = cistaPot(c.pot), cup = cupOf(P, cupId), out = [];
     c.pot = p;
-    if (!cup || !(num(place) >= 1)) return { career: c, nagrade: out };
+    if (!cup || !(Number.isInteger(place) && place >= 1)) return { career: c, nagrade: out };   // (a place: a whole number from 1)
     const before = p.pokali[cupId] || 0, was = odprta(p, P);
     if (!before || place < before) p.pokali[cupId] = place;
     const tbl = cup.vrsta === 'razred' ? NAGRADE.razred : cup.vrsta === 'finale' ? NAGRADE.finale : NAGRADE.pokal[cup.stopnja];
@@ -258,14 +259,15 @@
   }
   // the end of any career race (a cup's round too): ev = { track: id, pos (1 = the winner; 0 = a retirement), car: the vehicle's id,
   // cat: its class (Core MODELS' cat), km: the distance driven, medal: 'gold' | 'silver' | 'bronze' (a time trial) }. The first win on a
-  // track pays once (by the stage of its cup); the class goals count (kariera-4)
+  // track pays once (by the stage of its cup; a time trial's gold is its win: the game passes no place for a time trial, and the
+  // economy's simulation pays the first wins of the time trials' cup too); the class goals count (kariera-4)
   function poDirki(car, ev, P) {
     const c = Object.assign({}, car), p = cistaPot(c.pot), out = [];
     c.pot = p;
     if (!isObj(ev)) return { career: c, nagrade: out };
     const cat = ev.cat, d = Number(ev.km);
-    if (cat && Number.isFinite(d) && d > 0) p.km[cat] = Math.round(((p.km[cat] || 0) + d) * 1000) / 1000;
-    if (ev.pos === 1 && ev.track && !p.prve.includes(ev.track)) {
+    if (cat && Number.isFinite(d) && d > 0) { const v = Math.round(((p.km[cat] || 0) + d) * 1000) / 1000; if (Number.isFinite(v)) p.km[cat] = v; }
+    if ((ev.pos === 1 || ev.medal === 'gold') && ev.track && !p.prve.includes(ev.track)) {
       const s = stopnjaOf(P, ev.track);
       if (s) { p.prve.push(ev.track); out.push({ id: 'prva:' + ev.track, name: 'Prva zmaga na progi', en: 'First win on the track', amount: NAGRADE.prva[s] }); }
     }
