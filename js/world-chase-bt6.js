@@ -50,12 +50,8 @@
   const softScen = (root, matV) => { const ch = new API.Chunks(256); return { get: (x, z) => ch.get(x, z), done() { const grp = new THREE.Group(); ch.addTo(grp, matV, true, true);
     for (const m of grp.children) { m.name = 'rob'; m.userData.rob = m.userData.lj = true; } if (grp.children.length) root.add(grp); } }; };
   const chain = (L, fn) => { const base = L.extra; L.extra = function (ctx) { const r = base ? base.call(this, ctx) : null; try { fn(ctx, r); } catch (e) { console.error('chase-bt6:', e); } return r; }; };
-  /* the side roads (World.cesta.stranske, def.stranske: ctx.naCesti, the circles that keep the trees off a side road's strip): every edge
-     file chained after this one (this file and js/world-chase-bt7.js … on, each L.extra wrapping the one before) reads ctx.excluded when
-     its own part runs, after the builder's own extra, so it is widened here once for all of them: no tuft, cushion or patch of the edges
-     on a side road past the fence line. Only where the world has side roads (ctx.naCesti); the builder's own extra keeps its test as it was */
-  for (const L of new Set(Object.values(API.rbLook || {}))) if (L) { const base = L.extra; L.extra = function (ctx) { const r = base ? base.call(this, ctx) : null;
-    if (ctx && typeof ctx.naCesti === 'function') { const ex = ctx.excluded, on = ctx.naCesti; ctx.excluded = (x, z) => (ex ? !!ex(x, z) : false) || on(x, z, 0); } return r; }; }
+  /* the side roads (ctx.naCesti): ctx.excluded is widened in js/world-rbring.js, right after the looks are gathered, so every part chained
+     on a look's LK.extra (js/world-realizem-bt.js, this file and on) reads it; the builder's own extra keeps its test as it was */
 
   /* ---- the passes: the karst by the road. The slope's way (the contour) from the ground itself, so the ribs lie along the hillside ---- */
   const karst = (ctx, seed, C) => {

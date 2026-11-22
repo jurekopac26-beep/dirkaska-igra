@@ -64,6 +64,12 @@
   };
   Object.assign(RB_LOOK, API.rbLook);   // (the looks of the worlds whose parts are in files of their own: js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js; tools/razdeli-proge.mjs)
   API.rbLook = Object.assign(API.rbLook || {}, { rbring: RB_LOOK.rbring });   // (Styria's own look too, for the files that chain its LK.extra: js/world-chase-bt17.js)
+  /* the side roads (World.cesta.stranske, def.stranske: ctx.naCesti, the circles that keep the trees off a side road's strip): every part
+     chained on a look's LK.extra (js/world-realizem-bt.js, js/world-chase-bt6.js … on, each wrapping the one before) reads ctx.excluded
+     when it runs, after the look's own extra, so it is widened here, before any of them is chained: no tuft, cushion or patch of the edges
+     on a side road past the fence line. Only where the world has side roads (ctx.naCesti); the look's own extra keeps its test as it was */
+  for (const L of new Set(Object.values(API.rbLook))) if (L) { const base = L.extra; L.extra = function (ctx) { const r = base ? base.call(this, ctx) : null;
+    if (ctx && typeof ctx.naCesti === 'function') { const ex = ctx.excluded, on = ctx.naCesti; ctx.excluded = (x, z) => (ex ? !!ex(x, z) : false) || on(x, z, 0); } return r; }; }
   function rbCrowdTex(orange) {   // seated crowd for the grandstand tiers (as Tex.crowd; the orange one for the stands full of Dutch fans)
     return Tex.crowdPic(orange ? ['#ff7a12', '#ff8a1c', '#f26a0c', '#ff9d3a', '#ff7a12', '#f4f4f0', '#1c2856', '#e2202c', '#ff8a1c', '#ffcc00']
       : ['#e63b2e', '#f5d33a', '#2f7fe0', '#f2f2f2', '#39b54a', '#ff8a1c', '#1c2856', '#e2202c', '#1a1b1f', '#1bbfd6'], orange ? 77 : 78);

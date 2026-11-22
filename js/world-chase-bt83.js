@@ -17,8 +17,8 @@
   'use strict';
   if (typeof World === 'undefined' || !World.api) return;
   const API = World.api, BT = API.chaseBt, { vary, rng } = API;
-  if (!BT || !BT.soil || !BT.tuft || !BT.cushion || !BT.softScen || !BT.mix3 || !rng || !vary) return;
-  const { soil, tuft, cushion, softScen, mix3 } = BT;
+  if (!BT || !BT.soil || !BT.tuft || !BT.softScen || !BT.mix3 || !rng || !vary) return;
+  const { soil, tuft, softScen, mix3 } = BT;
   const C_ = (R, ab, j) => vary(mix3(ab[0], ab[1], R()), R, j || 0.015);
 
   /* the lateral offset of (x, z) at the nearest sample, whatever the track's own near() gives (the fifty-eighth group's) */
