@@ -9,7 +9,7 @@
 //   shelters (amenity=shelter, no shelter_type) 6139893756 and 6139893750 (left, 35 and 57 m);
 //   the fitness station (leisure=fitness_station, no fitness_station=*) 6139893749 (right, 14 m);
 //   toilets (amenity=toilets) 6139901317 (left, 22 m);
-//   showers (amenity=shower) 9530541686 and 9530541685 (left, 20 and 46 m), 9530541684 (s 0.44 km, left, 19 m).
+//   showers (amenity=shower) 9530541686 and 9530541685 (left, 20 and 46 m), 9530541684 (0.28 km, left, 19 m).
 // Not drawn again (the game has them): the stream 548645036 (def.streams), the pond 548387865 (def.lakes), the dock 9530541655 (a house of def.bld).
 // Not drawn at all, said in the pull request: the picnic tables 6139893752 and 6139893754 and the toilets 9530541683 (on the game's road,
 //   0–3 m from its centre line); the playground 1164303722 (no equipment, no surface mapped); the slide 9530541664 (height=10, its form and
