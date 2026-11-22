@@ -11,5 +11,6 @@
     trees: { kinds: ['fir', 'pine'], forest: 0.4, h: [8, 16] },   // (the boreal forest of the national park: spruce and pine)
     skiers: 50, nets: true, snowbanks: true,
     animals: [],
+    keepOut: (push) => { if (World.k15 && World.k15.koli) World.k15.koli(push); },   // (Realizem 15: no trees on what js/world-realizem15-koli.js draws)
   });
 })();
