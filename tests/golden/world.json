@@ -450,15 +450,15 @@
  },
  "silkeborg": {
   "meshes": 340,
-  "verts": 378926,
+  "verts": 378659,
   "instances": 5035,
   "props": 39,
   "crowd": 8,
-  "world": "6bef3c9a",
+  "world": "6b904e59",
   "propsHash": "f9f3905d",
   "floor": "371f690a/4536",
   "groups": {
-   "-:MeshLambertMaterial": "a7d42c2b",
+   "-:MeshLambertMaterial": "de3a22f",
    "-:MeshBasicMaterial": "238cf015",
    "fences:MeshLambertMaterial": "d7ba02e0",
    "rob:MeshLambertMaterial": "55d438b",
