@@ -155,8 +155,8 @@
   function lbPad(pad0) { lbPad0 = pad0; lbStrPrep(); return (x, z, h) => { const h0 = pad0(x, z, h); if (h0 !== h) return h0; const c = lbCarve(x, z, 0); return c > 0 ? h - LB_DEEP * c : h; }; }
   function lbWaterMat(U) { const m = brookMat(U), ob = m.onBeforeCompile; m.onBeforeCompile = (sh, r) => { ob(sh, r); sh.fragmentShader = sh.fragmentShader.replace('sky * fr * 0.6', 'mix(sky, vec3(0.32, 0.27, 0.18), 0.55) * fr * 0.42'); }; m.customProgramCacheKey = () => 'brook1lb'; return m; }   // (Spa's brook, the sky in it muddier: a trickle of brown water)
   function lbStreams({ root, scen, exclPush, excluded, CR, out }, st) {
-    const S = lbStrPrep(), A = LB_STR === 'a', ON = [-2.0, -1.2, 0, 1.2, 2.0], OY = [-0.06, 0.06, 0.08, 0.06, -0.06];
-    const CON = [0.58, 0.57, 0.53], CONT = [0.66, 0.65, 0.61], DARK = [0.1, 0.1, 0.09], RS = rng(7351);
+    const S = lbStrPrep(), A = LB_STR === 'a', ON = [-2.6, -1.5, 0, 1.5, 2.6], OY = [-0.06, 0.06, 0.08, 0.06, -0.06];
+    const CON = [0.76, 0.74, 0.69], CONT = [0.84, 0.82, 0.77], DARK = [0.1, 0.1, 0.09], RS = rng(7351);
     const W = A ? null : new Chunks(512, true), U = { uT: { value: 0 } };
     for (const P of S.streams) {   // the beds (and the water), 5 points across every 3 m on the swale's bottom
       let prev = null, prevW = null, along = 0;
@@ -165,8 +165,8 @@
         if (q) along += Math.hypot(p.x - P[q - 1].x, p.z - P[q - 1].z);
         if (!(p.f >= 0.2 && p.dd >= 6 && nrDist(p.x, p.z) < 400 && !excluded(p.x, p.z) && S.wayGap(p.x, p.z) >= 0.5)) { prev = prevW = null; continue; }
         const w = p.sc, h = lbHs(p.x, p.z), cur = ON.map((o, j) => { const px = p.x + nx * o * w, pz = p.z + nz * o * w; return [px, nrGround(px, pz) + OY[j], pz]; });
-        const bank = A ? [0.4, 0.38, 0.26] : [0.36, 0.36, 0.22], edge = A ? [0.46, 0.41, 0.33].map(v => v * (0.94 + 0.12 * h)) : [0.4, 0.35, 0.26];
-        const mid = A ? [0, 1, 2].map(k => lerp([0.6, 0.55, 0.46][k], [0.5, 0.48, 0.44][k], h)) : [0.36, 0.3, 0.22], cols = [bank, edge, mid, edge, bank];
+        const bank = A ? [0.42, 0.4, 0.27] : [0.34, 0.36, 0.2], edge = A ? [0.56, 0.5, 0.4].map(v => v * (0.94 + 0.12 * h)) : [0.42, 0.36, 0.26];
+        const mid = A ? [0, 1, 2].map(k => lerp([0.74, 0.68, 0.56][k], [0.62, 0.59, 0.53][k], h)) : [0.38, 0.31, 0.22], cols = [bank, edge, mid, edge, bank];
         if (prev) { const g = scen.get(p.x, p.z); for (let j = 0; j < 4; j++) g.quadUp(prev.r[j], prev.r[j + 1], cur[j + 1], cur[j], [prev.c[j], prev.c[j + 1], cols[j + 1], cols[j]]); st.str += 3; }
         prev = { r: cur, c: cols };
         if (W) { const ww = Math.max(0.6, w), wr = [-0.9, 0, 0.9].map(o => { const px = p.x + nx * o * ww, pz = p.z + nz * o * ww; return [px, nrGround(px, pz) + 0.11, pz]; });
@@ -180,7 +180,7 @@
     const wall = (mx, mz, ix, iz, cM) => {   // a culvert's headwall across the swale's end, its dark opening, wing walls along the sides
       const rot = Math.atan2(ix, -iz), ax = Math.cos(rot), az = Math.sin(rot), g = scen.get(mx, mz);
       const ya = nrGround(mx + ax * 2.3, mz + az * 2.3), yb0 = nrGround(mx - ax * 2.3, mz - az * 2.3), yc = nrGround(mx, mz), yb = Math.min(ya, yb0, yc);
-      const top = Math.max(yc + LB_DEEP * cM + 0.25, Math.max(ya, yb0) + 0.2);
+      const top = Math.max(yc + LB_DEEP * cM + 0.45, Math.max(ya, yb0) + 0.4);   // (its top a little above the plain, as by the roads)
       box(g, mx, yb - 0.3, mz, 4.6, top - yb + 0.3, 0.35, rot, CON, CONT);
       box(g, mx + ix * 0.19, yb - 0.05, mz + iz * 0.19, 0.9, Math.min(0.65, LB_DEEP * cM + 0.1) + 0.05, 0.04, rot, DARK, DARK);
       for (const sd of [-1, 1]) { const wx = mx + ax * sd * 2.15 + ix * 0.9, wz = mz + az * sd * 2.15 + iz * 0.9; box(g, wx, Math.min(nrGround(wx, wz), yb) - 0.3, wz, 1.8, top - yb + 0.2, 0.3, rot + Math.PI / 2, CON, CONT); }
@@ -198,8 +198,8 @@
       st.bridges++; }
     for (const P of S.streams) P.forEach((p, q) => { if (p.f < 0.05) return; exclPush(p.x, p.z, 3.4 * Math.max(0.5, p.sc)); if (q % 2 === 0 && p.dd < 70) CR.avoid(p.x, p.z, 3); });   // (no trees or people in the beds)
     if (LB_STR === 'c') { const BU = new IChunks(lbTreeGeo(2, false), new THREE.MeshLambertMaterial({ vertexColors: true }), 512);   // bushes along the banks
-      for (const P of S.streams) for (let q = 1; q + 1 < P.length; q += 2) { if (RS() < 0.5) continue;
-        const p = P[q], a = P[q - 1], b = P[q + 1], dl = Math.hypot(b.x - a.x, b.z - a.z) || 1, o = (RS() < 0.5 ? -1 : 1) * (4 + RS() * 5), x = p.x - (b.z - a.z) / dl * o, z = p.z + (b.x - a.x) / dl * o, nn = nrNear(x, z);
+      for (const P of S.streams) for (let q = 1; q + 1 < P.length; q++) { if (RS() < 0.45) continue;
+        const p = P[q], a = P[q - 1], b = P[q + 1], dl = Math.hypot(b.x - a.x, b.z - a.z) || 1, o = (RS() < 0.5 ? -1 : 1) * (3.2 + RS() * 4), x = p.x - (b.z - a.z) / dl * o, z = p.z + (b.x - a.x) / dl * o, nn = nrNear(x, z);
         if (excluded(x, z) || (nn.i >= 0 && nn.dd < 4) || S.wayGap(x, z) < 2 || nrDist(x, z) > 400) continue;
         const h = 1.4 + RS() * 1.8; BU.add(x, nrGround(x, z) - 0.1, z, RS() * TAU, h * (1.3 + RS() * 0.4), h, [0.8, 1.05, 0.8]); exclPush(x, z, 1.5); st.bushes++; }
       BU.addTo(root, false); }
@@ -271,7 +271,7 @@
           if (SY != null) { const sand = sstep(1.8, 0.6, nrDem(x, z) - SY) * far;   // (the beaches: pale sand down to the water)
             if (sand > 0) { c[0] = lerp(c[0], 2.3 * v, sand); c[1] = lerp(c[1], 1.75 * v, sand); c[2] = lerp(c[2], 2.3 * v, sand); } }
           if (LBS) { const w = lbCarve(x, z, 4) * far;   // (the streams' swales: damp ground, greener along the banks)
-            if (w > 0) { const C = LB_STR === 'c', t = w * (C ? 0.7 : 0.45), g = C ? [0.92, 1.05, 0.8] : [1.0, 1.05, 0.85];
+            if (w > 0) { const C = LB_STR === 'c', t = Math.min(1, w * 1.4) * (C ? 0.8 : 0.6), g = C ? [0.85, 1.05, 0.72] : [1.0, 1.05, 0.82];
               c[0] = lerp(c[0], g[0] * v, t); c[1] = lerp(c[1], g[1] * v, t); c[2] = lerp(c[2], g[2] * v, t); } }
         };
       } },
