@@ -186,8 +186,8 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Katar | Lusail (dirkališče, Nove proge za 1.0, A18) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
-| Slovaška | Krásna Hôrka (kratka z znamenitostjo, 15. 11. 2026; Spiš ne ustreza) | v delu (jure.kopac26) |
-| Hrvaška | Učka (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
+| Slovaška | Krásna Hôrka (izbrana; uporabnik 22. 11. 2026 ob 2.05: »naredi da bo daljsa med 3-4km«, PR #943) | podaljšanje na 3–4 km (jure.kopac26) |
+| Hrvaška | — (Učka izbrisana: uporabnik 22. 11. 2026 ob 2.00 »ucke zbrisi«, PR #944 zaprt) | brez proge |
 | Kuba | Santiago de Cuba (El Morro; kratka z znamenitostjo, 15. 11. 2026; kraj potrdi OSM) | v delu (jure.kopac26) |
 | Kostarika | Orosi (Ujarrás; kratka z znamenitostjo, 15. 11. 2026; kraj potrdi OSM) | v delu (jure.kopac26) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
