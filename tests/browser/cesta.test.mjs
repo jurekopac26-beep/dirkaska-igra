@@ -4,7 +4,8 @@
 // circuit) and Tianmen (an open road) take it, every road mesh and the lines; the same world built without it has as many meshes and
 // vertices (no draw call and no vertex more), and the picture from the chase camera changes only with the wear's strengths (the same frame
 // twice is the same picture); Livorno's centre line by the country's rules (World.cesta.crte: Italy, white, dashes and solid before the
-// bends); every track of PROGE is in the game and its country in the table of markings; a track not in PROGE is built as before (Jezero);
+// bends); every track of PROGE is in the game, an open road's country in the table of markings (a circuit's lines are its own: no country's
+// rules, no row of CRTE); a track not in PROGE is built as before (Jezero);
 // on NIZKA the programs compile too; no errors.
 // The second piece (docs/realizem.md »E0, drugi kos«): an open road's asphalt ends in a broken edge in the road's shader, the shoulder's
 // gravel in the bites (Tianmen: the profile 4096 x 2, most of the two edges broken, every line mesh with its place on the road, ceSO, and
@@ -31,9 +32,9 @@ const look = (page) => page.evaluate(() => {
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'high', detail: 'high', shadows: 1, camera: 'chase' }, { width: 640, height: 360 });
   const tab = await page.evaluate(() => { const C = World.cesta, ids = Object.keys(C.PROGE), by = new Map(Core.TRACKS.map(d => [d.id, d]));
-    return { ids, missing: ids.filter(id => !by.has(id)), noCountry: ids.filter(id => by.has(id) && !C.CRTE[by.get(id).name.slice(by.get(id).name.lastIndexOf(',') + 1).trim()]),
+    return { ids, missing: ids.filter(id => !by.has(id)), noCountry: ids.filter(id => by.has(id) && C.PROGE[id].vrsta === 'cesta' && !C.CRTE[by.get(id).name.slice(by.get(id).name.lastIndexOf(',') + 1).trim()]),
       kinds: ids.filter(id => !['dirka', 'cesta'].includes(C.PROGE[id].vrsta)) }; });
-  T.check('the tracks that take the look are in the game, each a circuit or an open road, its country in the table of markings',
+  T.check('the tracks that take the look are in the game, each a circuit or an open road, an open road\'s country in the table of markings (a circuit\'s lines are its own)',
     tab.ids.length >= 12 && !tab.missing.length && !tab.noCountry.length && !tab.kinds.length, JSON.stringify(tab));
 
   await startTrack(page, 'spa');
