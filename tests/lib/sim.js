@@ -136,11 +136,15 @@ function raceState(race) {
 
 // run a set-up for its time (default 60 s); the digest covers the full state at every sample (every 10 s). `cover`
 // tells what the run went through (the player's worst damage, loose panels, rescues, pit repairs)
+// a track's own vehicle (def.vehicle: the TITAN CISTERNA on its roads, docs/proge-cisterna.md): the player drives it whatever the set-up, as in the game
+const ownModel = (C, tid) => { const d = C.TRACKS.find(x => x.id === tid), M = d && d.vehicle && C.MODELS.find(m => m.id === d.vehicle); return M ? C.heirOf(M) : null; };
+
 function runScenario(C, tid, setupName, phys, every = 10) {
   const orig = Math.random;
   try {
     Math.random = seeded(7);
-    const S = SETUPS[setupName], race = makeRace(C, tid, (C2, tt, t) => S.opts(C2, tt, phys, t));
+    const S = SETUPS[setupName], own = ownModel(C, tid);
+    const race = makeRace(C, tid, (C2, tt, t) => { const o = S.opts(C2, tt, phys, t); if (own && !o.noPlayer) o.playerModel = own; return o; });
     const seconds = S.seconds ? S.seconds(race.track) : 60;
     const h = crypto.createHash('sha256'), P = race.player || race.cars[0];
     const n = Math.round(seconds / DT), m = Math.round(every / DT);
@@ -155,4 +159,4 @@ function runScenario(C, tid, setupName, phys, every = 10) {
   } finally { Math.random = orig; }
 }
 
-module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario };
+module.exports = { DT, trackIds, izbrane, najmanj, PHYSICS, SETUPS, NEW_CARS, seeded, withRandom, makeRace, stepRace, stateLine, raceState, runScenario, ownModel };

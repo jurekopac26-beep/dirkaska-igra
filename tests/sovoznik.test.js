@@ -22,6 +22,8 @@ const PLAN = ['tianmen', 'iroha', 'sani', 'rastro', 'vrsic', 'mountbuller', 'car
 const ROADS = PLAN.filter(id => { const d = C.TRACKS.find(x => x.id === id); return d && !d.test; });
 const US = ['baldy', 'beartooth', 'bigsur', 'maunakea', 'moki', 'mulholland', 'palomar', 'uncompahgre'];
 const roads = C.TRACKS.filter(d => C.codrvRoad(d));
+const TANK = C.TRACKS.filter(d => d.vehicle).map(d => d.id);   // (the tanker's roads, def.vehicle: no co-driver, the user's choice of 16. 11. 2026)
+check('roads: none of the tanker\'s roads (def.vehicle)', !roads.some(d => TANK.includes(d.id)), TANK.join(' ') || '(none yet)');
 {
   const ids = roads.map(d => d.id);
   check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, no circuit',

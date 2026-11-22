@@ -94,10 +94,11 @@ const Core = (function () {
   // 'ring' + straight / L / R (a roundabout by its exit), 'chicane' + L / R (its first way). Between notes 'into' (the next within 30 m)
   // or 'and' (70 m); 'caution' first; at the end 'dNNN' (the straight after it, m to 50) and 'fin' (the finish after that straight)
   // the roads he reads (game.js adds: not on the new map with its missions, nor in the driving school): every real open road (a rally stage
-  // too), not a test track; the roads of the USA but Pikes Peak are test tracks by the user's choice of 5. 11. 2026, by this list until
-  // def.test is on them
+  // too), not a test track, not the tanker's short roads (def.vehicle: the TITAN CISTERNA alone against the clock, docs/proge-cisterna.md;
+  // the user's choice of 16. 11. 2026); the roads of the USA but Pikes Peak are test tracks by the user's choice of 5. 11. 2026, by this
+  // list until def.test is on them
   const CD_SKIP = ['baldy', 'beartooth', 'bigsur', 'maunakea', 'moki', 'mulholland', 'palomar', 'uncompahgre'];
-  const codrvRoad = (def) => !!(def && def.open && !def.test && !CD_SKIP.includes(def.id));
+  const codrvRoad = (def) => !!(def && def.open && !def.test && !def.vehicle && !CD_SKIP.includes(def.id));
   const noteGrade = (R) => R < 16 ? 1 : R < 26 ? 2 : R < 38 ? 3 : R < 55 ? 4 : R < 80 ? 5 : R < 120 ? 6 : 0;
   const CD_EN = { L: 'left', R: 'right', 1: 'one', 2: 'two', 3: 'three', 4: 'four', 5: 'five', 6: 'six', flat: 'flat', hairpin: 'hairpin', square: 'square', long: 'long', tightens: 'tightens', opens: 'opens',
     over: 'over', crest: 'crest', jump: 'jump', bigjump: 'big jump', onto: 'onto', gravel: 'gravel', tarmac: 'tarmac', cobbles: 'cobbles', ring: 'roundabout', straight: 'straight', chicane: 'chicane',
@@ -1301,6 +1302,14 @@ const Core = (function () {
           }
         }
       }
+      // def.wideLine (the tanker's roads, docs/proge-cisterna.md): through the tight bends the line swings out to the outside edge, eased in and out
+      // over ~12 m (a semi-trailer's wheels cut far inside the tractor's path: the tractor goes round wide, its trailer clear of the inside)
+      if (this.def.wideLine) {
+        const k = this.k, R = Math.max(1, Math.round(12 / this.ds)), W = (j) => open ? clamp(j, 0, N - 1) : (j + N) % N;
+        for (let i = 0; i < N; i++) { let m = 0, sg = 0;
+          for (let d = -R; d <= R; d++) { const j = W(i + d), f = sstep(1 / 40, 1 / 16, Math.abs(k[j])) * (1 - Math.abs(d) / (R + 1)); if (f > m) { m = f; sg = k[j] > 0 ? 1 : -1; } }
+          if (m > 0) off[i] = lerp(off[i], -sg * ((wa ? wa[i] : this.w) - 1.35), m); }
+      }
       this.rl = off;
       // curvature of racing line
       const rx = new Float32Array(N), rz = new Float32Array(N);
@@ -1388,6 +1397,7 @@ const Core = (function () {
     speedProfile(latA, brakeA, vtop, wMax, aero, settMu, snow, snowB) {
       const N = this.N, rk = this.rk, rds = this.rds, la = latA * (aero || 0), gk = this.gk;
       const v = new Float32Array(N);
+      if (this.def.aiVmax) vtop = Math.min(vtop, this.def.aiVmax);   // (def.aiVmax: the autopilot's top speed on a road where faster is folly, the tanker's ledges: docs/proge-cisterna.md)
       for (let i = 0; i < N; i++) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt(latA / kk)) : vtop; }
       const gAt = gk ? (i) => gk[i] * (snow && this.sf[i] >= 5 ? snow : 1) : null;   // (a road of several surfaces: the grip of each for the corners and the brakes)
       const bAt = gk && snowB && snowB !== snow ? (i) => gk[i] * (this.sf[i] >= 5 ? snowB : 1) : gAt;   // (snowB: the snow's share of the brakes there, when it is not the grip's: in the rain, Race._prof)
@@ -1395,6 +1405,7 @@ const Core = (function () {
       if (this.settAt && settMu) for (let i = 0; i < N; i++) if (this.settAt[i]) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la * settMu; if (kk > 1e-6) v[i] = Math.min(v[i], Math.sqrt(latA * settMu / kk)); }
       if (this.bank) for (let i = 0; i < N; i++) { const b = this.bank[i], kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (b > 0) v[i] = kk > 1e-6 ? Math.min(vtop, Math.sqrt((latA + G * b / Math.sqrt(1 + b * b)) / kk)) : vtop; }   // a banked bend carries part of the cornering force
       if (wMax) for (let i = 0; i < N; i++) v[i] = Math.min(v[i], wMax / Math.max(Math.abs(rk[i]), 1e-5));   // cs: the car turns no faster than wMax (rad/s) along its path
+      if (this.dropAt && this.def.dropCare) for (let i = 0; i < N; i++) if (this.dropAt[0][i] || this.dropAt[1][i]) { const kk = Math.max(Math.abs(rk[i]), 1e-5) - la; if (kk > 1e-6) v[i] = Math.min(v[i], Math.sqrt(latA * this.def.dropCare / kk)); }   // (def.dropCare: the share of the grip the autopilot dares use in a bend over a drop)
       if (this.open) {   // open road: come to a stop at the far end of the road, nothing wraps
         v[N - 1] = 0;
         if (gk) { for (let i = N - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * brakeA * bAt(i) * rds[i])); return v; }   // a road of several surfaces (Harju): brake by each one's grip
@@ -8926,7 +8937,8 @@ const Core = (function () {
         const sd = s0d >= 0 ? 1 : -1, room = (sd > 0 ? c.q.br : c.q.bl) - c.m.wid * 0.5 - 0.4, d = sd * clamp(T.w + 2, T.w * 0.6, Math.max(T.w * 0.6, room)) - off;
         c.x += T.nx[i] * d; c.z += T.nz[i] * d; c.px = c.x; c.pz = c.z; c.q = T.query(c.x, c.z, i, c.q); c.sPrev = c.q.s;
       }
-      const v = fix || (W && W.rule && W.nL) || (T.open && T.len - c.q.s < 25) ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall)
+      const v = fix || (W && W.rule && W.nL) || (T.open && T.len - c.q.s < 25) || T.def.vehicle ? 0 : 8;   // (near the top end of an open road: standing, not off into the end wall;
+      // a track's own vehicle, def.vehicle: the tanker on its roads, docs/proge-cisterna.md: standing too, the rescue no shortcut past a crawl)
       c.vx = Math.cos(c.h) * v; c.vz = Math.sin(c.h) * v;
       if (c.tl) tlPlace(c, T);   // (its semi-trailer on the kingpin again, along the road behind it)
     }
