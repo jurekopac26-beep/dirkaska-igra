@@ -19,6 +19,7 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Jez**: protiblatni jez nad drsališčem, po njegovi kroni gre cesta; odprti paviljoni na kroni in ob cesti pod jezom (razgledišča), prelivi v kotanji za jezom, dve vodni površini (obrisi iz OpenStreetMap).
 - **Gondola**: žičnica čez dolino nad jezom (potek in stebri iz OpenStreetMap): stebri, vrvi in kabine na njih.
 - **Ob cesti**: stavbe ob cesti so samo iz OpenStreetMap (generične, brez imen in napisov); betonske »gobe« postajališča, dva spomenika ob cesti in spominski kamen v soteski (samo oblike, brez napisov); parkirišča ob cesti (iz OpenStreetMap) z avtomobili. Znamenitosti, ki bi po podatkih stale na cesti, so premaknjene za ograjo.
+- **Obcestje** (v delu, `js/world-medeu-obcestje.js`): stranske ulice, dovozi, pločniki, poti, stopnice in brvi v soteski ter klopi, koši in table ob progi po OpenStreetMap; samo grafika.
 - **Obzorje**: onstran pasu ob cesti pravi teren ~9 km naokoli (Copernicus DEM, mreža 250 m).
 - **Cesta**: bela prekinjena sredinska črta (3 m / 9 m, v serpentinah neprekinjena), bele robne črte, jeklene varnostne ograje, rdeče-bele table s puščicami na zunanji strani serpentin, opozorilni trikotniki; nobenih imen podjetij ali znakov služb.
 - **Dirka**: start z lučmi pod portalom START, portali kontrolnih točk z višino, cilj FINISH s tablo MEDEU in višino, transparent MEDEU · ILE ALATAU (samo zemljepisna imena), gledalci ob startu, cilju, kontrolnih točkah in serpentinah.
