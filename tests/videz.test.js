@@ -39,5 +39,12 @@ const r3 = new C.Race(T, Object.assign({}, base, { numAI: 0, playerGrid: 1, remo
 const fr = r3.remotes.find(c => c.netOf.id === 'g1'), fr2 = r3.remotes.find(c => c.netOf.id === 'g2');
 check('a friend\'s look on its car (drawn only); a friend without one as before', fr && J(fr.deli) === '{"krilo":7}' && fr.stripe === false && fr.m === KO && fr2 && !('deli' in fr2) && !('stripe' in fr2));
 
+// ---- V2: the stripes' colour (sc, hex; wire c) ----
+check('V2 lookWire/lookRead: the stripes\' colour as c, a hex 0..0xffffff; junk out', J(C.lookWire({ sc: 0x4a78b5 })) === '{"c":4880565}' && J(C.lookRead({ c: 0xa83248 })) === '{"sc":11022920}' && C.lookRead({ c: -1 }) === null && C.lookRead({ c: 0x1000000 }) === null && C.lookRead({ c: 1.5 }) === null && C.lookWire({ sc: 'x' }) === null);
+const dc = C.dressOnly(new C.Car(KO, { id: 6 }), { sc: 0xb07a3c });
+check('V2 dressOnly: car.stripeCol for the renderer, the physics the model\'s', dc.stripeCol === 0xb07a3c && dc.m === KO && !('stripeCol' in C.dressOnly(new C.Car(KO, { id: 7 }), { sc: 'x' })));
+const r4 = new C.Race(T, Object.assign({}, base, { playerDeli: { platisca: 4 }, playerLook: { stripe: true, sc: 0x1fb5b0 } }));
+check('V2 Race with the parts fitted: the stripes\' colour of the look kept', r4.player.stripeCol === 0x1fb5b0);
+
 console.log(`\n${n - bad}/${n} checks passed`);
 process.exit(bad ? 1 : 0);

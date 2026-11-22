@@ -57,7 +57,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 
 **Prevodi:**
 - Garaža: pari `[sl, en]` v `js/garage*.js` (Številka / Number, Barva črt / Stripe colour, Senčni pas / Sun strip). Imena delov so že v `js/data/deli.js`.
-- Igra: `js/lang.js` za imena novih barv: Srebrna, Siva, Temno modra, Bordo, Turkizna, Roza, Limeta, Bronasta.
+- Igra: `js/lang.js` za imena novih barv: Srebrna, Siva, Srednje modra, Bordo, Turkizna, Roza, Limeta, Bronasta.
 
 **Testi:**
 - `tests/videz.test.js` (Node):
@@ -151,7 +151,7 @@ Načrt dveh novosti, ki ju je uporabnik izbral 5. 11. 2026 (koordinacija »VSE S
 | id | o čem | možnosti (priporočena prva) | odgovor |
 |---|---|---|---|
 | `videz-1` | črte, nalepke in senčni pas na vseh avtih | 1 vsi avti, samodejno · 2 samo KOLIBRI (kot zdaj) | **2** (6. 11., stran Odločitve 3): črte, nalepke in senčni pas ostanejo samo na KOLIBRIJU; drugi avti imajo barvo, lak, platišča in številko. Korak V4 in `js/deli/mesta.js` odpadeta |
-| `videz-2` | koliko barv | 1 16 barv · 2 ostane 8 · 3 poljubna barva | **1** (6. 11., stran Odločitve 3): 16 barv, zdajšnjih 8 in srebrna, siva, temno modra, bordo, turkizna, roza, limeta, bronasta (korak V3) |
+| `videz-2` | koliko barv | 1 16 barv · 2 ostane 8 · 3 poljubna barva | **1** (6. 11., stran Odločitve 3): 16 barv, zdajšnjih 8 in srebrna, siva, srednje modra (namesto temno modre, pravilo o temnih barvah), svetlejša bordo, turkizna, roza, limeta, bronasta (korak V3) |
 | `beg-1` | beg pred policijo že obstaja: kaj dodamo | 1 kratek beg 3:00 · 2 nič · 3 beg s prijatelji | **3** (5. 11., v pogovoru s koordinacijo) |
 
 Odgovora `videz-1` in `videz-2` sta prebrana 6. 11. in vpisana tu (seja #377 po naročilu koordinacije VSE SEJE 2).
@@ -161,5 +161,5 @@ Odgovora `videz-1` in `videz-2` sta prebrana 6. 11. in vpisana tu (seja #377 po 
 | Korak | Stanje |
 |---|---|
 | Načrt, vprašanja, vpis v Načrtovano | narejeno 5. 11. 2026 |
-| Novost 1 (V1–V5) | odgovora 6. 11.: `videz-1` = 2 (črte, nalepke in senčni pas samo na KOLIBRIJU; V4 odpade, skupaj ~15 h), `videz-2` = 1 (16 barv, V3). V1 narejeno 22. 11. (veja `videz-avta/v1`, osnutek #950): namesto `js/videz.js` so funkcije v `js/core.js` (`lookWire`, `lookRead`, `dressOnly`), ker jih rabita le Race in `game.js`; videz = deli in črte (barva črt, številka z V2); test `tests/videz.test.js`. Naprej: V2 (garaža), V3, V5 |
+| Novost 1 (V1–V5) | odgovora 6. 11.: `videz-1` = 2 (črte, nalepke in senčni pas samo na KOLIBRIJU; V4 odpade, skupaj ~15 h), `videz-2` = 1 (16 barv, V3). V1 narejeno 22. 11. (veja `videz-avta/v1`, osnutek #950): namesto `js/videz.js` so funkcije v `js/core.js` (`lookWire`, `lookRead`, `dressOnly`), ker jih rabita le Race in `game.js`; videz = deli in črte (barva črt, številka z V2); test `tests/videz.test.js`. V2 in V3 narejena 22. 11. (ista veja): v meniju barve vrstica »Barva črt« (samodejno, 16 barv, brez črt) in »Številka« (1–99), brezplačno, takoj na avtu, v karieri `sc` in `num`, na žici in v posnetku `c`; 16 barv v 4 zavihkih (Klasične, Žive, Kovinske, Sveže), po pravilu o temnih barvah »Temno modra« → »Srednje modra« (0x4a78b5) in svetlejša »Bordo« (0xa83248). Senčni pas (predal v 3D) ostane za pozneje (grafika, slike po #297). Naprej: V5 |
 | Novost 2 (B1–B6) | narejeno 6. 11. (veja `novosti-e/beg-prijatelji`, osnutek #377; na `main` za #372). B1–B2 (5. 11.): `js/core.js` `patrolCar`, `opts.netTf`, `opts.playerPolice`, `remote[].police`, `Traffic.net` (promet upošteva tudi avte prijateljev, trk jih ne premika); `js/game.js` `netBeg` (`mp.beg`), `setup` s `tf`, `seed`, `pol`, sirena prijateljeve patrulje v `roadSound`. B3–B6 (6. 11.): vrstica sobe Način (`modeRow` v `js/zabava.js`, eliminacija prestavljena vanjo), `js/zabava/beg.js` (Patrulja po vrsti ali izbrana, ulov, pobeg, konec, rezultati; kljuke `netRes`, `netOne`), `js/game.js` `netResults` z `ZB.netRes`, prevodi v `js/lang.js`, opis v `docs/igra.md` (Dirka s prijateljem: Način), testi (`tests/zabava.test.js` 10, `tests/net-core.test.js` in `tests/browser/online.test.mjs` na Riu do Rastro), meritev obremenitve zgoraj. Izvedba, kjer je drugače od načrta: odstavek »Izvedba« pod Pravili |

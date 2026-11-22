@@ -2262,8 +2262,8 @@ const Core = (function () {
     return e;
   }
   // a car's look without its effects (docs/novosti-e.md, Novost 1: the garage's parts and stripes in a championship, on a friend's car online
-  // and in a replay file): { deli: { element: option 1..16 }, stripe: false (stripes off) }. lookWire(v) its short form for the wire and the
-  // .rrp file ({ d, s: 0 } or null: nothing to show), lookRead(o) that form checked (unknown elements, options out of 1..16 and junk out;
+  // and in a replay file): { deli: { element: option 1..16 }, stripe: false (stripes off), sc: the stripes' colour, hex (V2) }. lookWire(v) its
+  // short form for the wire and the .rrp file ({ d, s: 0, c } or null: nothing to show), lookRead(o) that form checked (unknown elements, options out of 1..16 and junk out;
   // null: nothing, e.g. an older peer's or file's without one), dressOnly(car, v) puts it on a car: car.deli (the renderer draws it),
   // dLower / dTint, stripe; the mass, power, grip, drag and brakes stay the model's (the physics as without parts)
   const LOOK_ID = /^[a-z_]{2,24}$/;
@@ -2274,6 +2274,7 @@ const Core = (function () {
     const D = typeof DELI !== 'undefined' ? DELI.clean(d, null) : d, v = {};
     if (Object.keys(D).length) v.deli = D;
     if (o.s === 0) v.stripe = false;
+    if (Number.isInteger(o.c) && o.c >= 0 && o.c <= 0xffffff) v.sc = o.c;
     return Object.keys(v).length ? v : null;
   }
   function lookWire(v) {
@@ -2281,11 +2282,13 @@ const Core = (function () {
     const D = v.deli && typeof v.deli === 'object' ? lookRead({ d: v.deli }) : null, w = {};
     if (D && D.deli) w.d = D.deli;
     if (v.stripe === false) w.s = 0;
+    if (Number.isInteger(v.sc) && v.sc >= 0 && v.sc <= 0xffffff) w.c = v.sc;
     return Object.keys(w).length ? w : null;
   }
   function dressOnly(car, v) {
     if (!v || typeof v !== 'object') return car;
     if (v.stripe === false) car.stripe = false;
+    if (Number.isInteger(v.sc) && v.sc >= 0 && v.sc <= 0xffffff) car.stripeCol = v.sc;   // (the stripes' own colour: render.js kitRecolour)
     const D = v.deli && typeof DELI !== 'undefined' ? DELI.clean(v.deli, null) : null;
     if (!D || !Object.keys(D).length) return car;
     let lower = 0, tint = 0;
@@ -7258,7 +7261,7 @@ const Core = (function () {
         let c;
         if (g === playerGrid) {
           c = new Car(opts.playerModel || MODELS[0], { id: g, isPlayer: true, phys: opts.phys, name: 'TI', color: opts.playerColor, assist: opts.assist, upg: opts.playerUpg, setup: opts.playerSetup, slide: opts.playerSlide, deli: opts.playerDeli });
-          if (opts.playerLook) dressOnly(c, opts.playerDeli ? { stripe: opts.playerLook.stripe } : opts.playerLook);   // (the garage's look without its effects: a championship's, online; with the parts fitted only the stripes)
+          if (opts.playerLook) dressOnly(c, opts.playerDeli ? { stripe: opts.playerLook.stripe, sc: opts.playerLook.sc } : opts.playerLook);   // (the garage's look without its effects: a championship's, online; with the parts fitted only the stripes)
           this.player = c; if (launch) c.lch = lch(-1);   // (the player's reaction: measured at the press, _launch)
           if (opts.playerPolice) patrolCar(c);   // (online, beg s prijatelji: I drive the patrol car)
         } else if (remoteAt.has(g)) {

@@ -14,7 +14,8 @@
       : f === 3 || f === 4 ? 'Shramba je bila polna: da se napredek shrani, so bili izbrisani {0} duhovi.' : 'Shramba je bila polna: da se napredek shrani, je bilo izbrisanih {0} duhov.', n), 5200); } });
   const STEP = 1 / 120;
   const LAPS = 3, NUM_AI = 21, CH_AI = 19, PLAYER_GRID = 999, RIV_MAX = 100;   // (RIV_MAX: the most rivals the menu's Opponents offers; a track whose start or finish takes fewer: def.maxRivals)   // (NUM_AI: a Circuit race's rivals, 22 cars, the career's too; CH_AI: a championship round's, 20 cars; PLAYER_GRID: without qualifying the player starts at the back of the grid: Core.Race puts the player at min(the field, it), the last slot of any field, the Nordschleife's 100 too)
-  const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
+  const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6,
+    0xb8bcc2, 0x7d8288, 0x4a78b5, 0xa83248, 0x1fb5b0, 0xf06aa8, 0xa6d62b, 0xb07a3c];   // (the last eight: docs/novosti-e.md Novost 1, V3 (16 colours, none very dark); an older phone draws an index it does not know as the first, as ever)
   const DRIVE_TXT = { FR: 'Zadnji pogon', AWD: 'Štirikolesni pogon', FF: 'Prednji pogon', MR: 'Motor na sredini', RR: 'Motor zadaj' };
   const DRIVE_TAG = { FR: 'FR', AWD: '4WD', FF: 'FF', MR: 'MR', RR: 'RR' };
   const CTRL_HELP = {
@@ -181,7 +182,8 @@
   // the career: a car the garage keeps (career.garage.cars[id]: its paint, parts and wear, js/garage.js toCareer)
   const garOf = (id) => inCareer() && isObj(career.garage) && isObj(career.garage.cars) && isObj(career.garage.cars[id]) ? career.garage.cars[id] : null;
   // the car's look from the garage without its effects (parts, stripes off: Core.lookRead; null: the stock look), docs/novosti-e.md Novost 1
-  const lookOf = (id) => { const g = bought(id) && garOf(id); return g ? Core.lookRead(Core.lookWire({ deli: isObj(g.deli) ? g.deli : null, stripe: g.stripe !== false })) : null; };
+  const scOf = (g) => Number.isInteger(g.sc) && g.sc >= 0 && g.sc < PLAYER_COLORS.length ? PLAYER_COLORS[g.sc] : undefined;   // (the stripes' own colour from the garage, index into PLAYER_COLORS; none: auto, white or blue)
+  const lookOf = (id) => { const g = bought(id) && garOf(id); return g ? Core.lookRead(Core.lookWire({ deli: isObj(g.deli) ? g.deli : null, stripe: g.stripe !== false, sc: scOf(g) })) : null; };
   // the colour of the car (PLAYER_COLORS' index): the career's car the garage painted, its paint (bought there); else the one chosen here
   const colOf = (id) => { const g = garOf(id), k = g && g.color; return Number.isInteger(k) && k >= 0 && k < PLAYER_COLORS.length ? k : S.color; };
   const colNow = () => colOf(Core.MODELS[S.car].id);
@@ -280,7 +282,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // Vibracija: Izklop / Osnovno / Vse (0, 1, 2: Input's level) since vibV 2; stored before it as Izklop / Vklop (0, 1), and Vklop played
   // every pattern: Vse now (an old saved setting or an imported profile, once; never in DEF, or a stored one without it would pass as new)
   if (S.vibV !== 2) { S.vibrate = +S.vibrate ? 2 : 0; S.vibV = 2; save(); }
-  const carNum = () => Core.MODELS[S.car].num || 1;
+  const carNum = () => { const id = Core.MODELS[S.car].id, g = bought(id) && garOf(id), n = g && g.num; return Number.isInteger(n) && n >= 1 && n <= 99 ? n : Core.MODELS[S.car].num || 1; };   // (the career car's own number from the garage, docs/novosti-e.md V2)
   function saveRecords() { Shramba.keep('tdgp-records', JSON.stringify(records)); }
 
   /* ---------------- state ---------------- */
@@ -1238,7 +1240,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // (for tools/voznja.mjs, AI po tvoji liniji: the player's car as the race built it, pf: its upgrades, set-up, garage parts, the field's car and the
   // assist (as: Core.ASSISTS index at the end of the race);
   // ty: the race with tyres; wxs: a changing weather, the rain from r0 to r1 over dur s from race time at; a file opened: as the file had them)
-  const lkOf = (c) => { const w = Core.lookWire({ deli: c.deli, stripe: c.stripe !== false }); return w ? { lk: w } : {}; };   // (a car's look in the file: lk, Core.lookWire; an older file's: none)
+  const lkOf = (c) => { const w = Core.lookWire({ deli: c.deli, stripe: c.stripe !== false, sc: c.stripeCol }); return w ? { lk: w } : {}; };   // (a car's look in the file: lk, Core.lookWire; an older file's: none)
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
     const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
@@ -3623,7 +3625,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const RD_WHO = { okc: ['OKC KRANJ', '', ''], heli: ['BOBER', 'Bober', 'Bober'], bov: ['PP BOVEC', 'Postaja Bovec', 'Bovets station'], cop: ['POLICIST', '', ''], drv: ['TI', '', ''] };
   const rdCall = (u, kind) => kind === 'moto' ? [tr('MOTORIST {0}', u), 'Motorist ' + u, 'Bike ' + u] : kind === 'uc' ? [tr('CIVILNA {0}', u), 'Civilna ' + u, 'Unmarked ' + u] : kind === 'van' || !u ? [tr('KOMBI'), 'Kombi', 'Van'] : ['KG-' + u, 'Kranjska Gora ' + u, 'Kranyska Gora ' + u];   // (the labels on the page in its language)
   // the player's car as the police describe it: the colour (the formula is feminine), the model ([Slovenian, English])
-  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple']];
+  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple'],
+    ['srebrn', 'srebrna', 'silver'], ['siv', 'siva', 'grey'], ['srednje moder', 'srednje modra', 'mid-blue'], ['bordo', 'bordo', 'burgundy'], ['turkizen', 'turkizna', 'turquoise'], ['roza', 'roza', 'pink'], ['limetno zelen', 'limetno zelena', 'lime green'], ['bronast', 'bronasta', 'bronze']];
   // the lines: key -> its variants [Slovenian, English] ({at} where, {to} which way, {dir} heading for, {v} km/h, {car} the player's car, {U} the
   // unit spoken to, {sacc} / {sgen} / {sloc} into / out of / in a side road, {dead} its dead end)
   const RL = {
