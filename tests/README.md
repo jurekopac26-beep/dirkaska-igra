@@ -30,7 +30,13 @@ node tests/run.js node --quiet                 # tih izpis: napake padlih testov
 `main`, z neshranjenimi in novimi datotekami; pred tem `git fetch origin main`): test z istim imenom ali delom imena (`js/tracks/spa.js`,
 `docs/proge/medvode.md` → `medvode`, `medvode-props`, `browser/medvode-castle` …; `js/world-montreal.js` → `montreal`, `world`), spremenjen
 test sam in teste iz kratkega seznama `RELATED` v `tests/run.js` za velike skupne datoteke (`js/core.js`, `js/game.js`, `js/render.js` …).
-`--quiet` ne izpiše ničesar za uspešen test; za padlega izpiše vrstice FAIL in zadnje vrstice (sled sklada), na koncu povzetek.
+`--quiet` ne izpiše ničesar za uspešen test; za padlega izpiše vrstice FAIL in zadnje vrstice (sled sklada), na koncu povzetek. Vsak test se
+sproti izpiše, ko konča (`OK   [5/27] golden.test.js (412 s)`), in vsako minuto brez izpisa vrstica s testi, ki še tečejo, in njihovim
+časom (`TEST_UTRIP=<s>`, 0 = nikoli), tako da se viseč test vidi pred mejo. Doma teče več testov hkrati (`TEST_JOBS`, privzeto pol
+procesorjev; od tega brskalniških `TEST_BROWSER_JOBS`, privzeto 1; na GitHubu po en); vsak test v svoji skupini procesov, ustavljen test
+zapre tudi svoj brskalnik. Ustavljen krog (Ctrl+C, seji poteče ukaz) izpiše povzetek tega, kar je končalo. V seji: `npm run test:related`
+v ozadju (`run_in_background`, meja do 2 h), izpis sproti v datoteko.
+
 
 **Hiter vstop** (za teste in orodja): naslov `index.html?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>&tekmeci=<n>&lod=0|1` odpre igro naravnost
 na dirki (brez menija, preleta in kvalifikacij). `nacin`: `dirka`, `kronometer`, `promet`, `policija`, `neskoncno` (ali `race`, `tt`, `traffic`,

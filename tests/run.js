@@ -20,7 +20,7 @@
 // if that is longer, is stopped and counted as failed, so a hung test still ends with the summary (LIMIT_OF). TEST_PADLI=<file>: the
 // failed tests' names are added to it, one a line (GitHub: for the job Vzrok).
 'use strict';
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
@@ -301,23 +301,87 @@ const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
 // e.g. world and gfx ~25-30 min; GitHub's browser tests 2, tests.yml), so a long test is not stopped only because the machine is slow
 const SLOW = +process.env.TEST_SLOW || 4;
 const LIMIT_OF = (f) => Math.round(Math.max((/memory2?\.test/.test(f) ? 3 : /smoke2?\.test|perf\.test|browser\/fleet\.test|browser\/garage\.test/.test(f) ? 2 : 1) * LIMIT, SLOW * secs(f) * 1000) / 60000) * 60000;   // (the memory test: three times; in whole minutes)
+// How many tests at once (22. 11. 2026, »npm run test:related se obesi«: one after another a session's 59 related tests took 48 min, longer
+// than its command may run, and --quiet printed nothing before the end, so it was stopped with no word of what failed): TEST_JOBS (default:
+// half the processors, at least 1; on GitHub 1, its shares are timed one after another, SECS), of them at most TEST_BROWSER_JOBS browser
+// tests (default 1: each draws with software WebGL on several threads). Each test still in its own process, its output kept and printed
+// whole when it ends (one at a time: straight through, as before)
+const JOBS = Math.max(1, Math.floor(+process.env.TEST_JOBS || (process.env.GITHUB_ACTIONS ? 1 : require('os').cpus().length / 2)));
+const BROWSER_JOBS = Math.max(1, Math.min(JOBS, Math.floor(+process.env.TEST_BROWSER_JOBS || 1)));
+// every minute without a word, the tests still running and how long (a hung one is seen before its limit); TEST_UTRIP: s, 0 = never
+const BEAT = (process.env.TEST_UTRIP != null ? +process.env.TEST_UTRIP : 60) * 1000;
 
-const results = [];
-for (const f of list) {
-  const t0 = Date.now();
-  if (!opt.quiet) console.log(`\n### ${f}`);
-  const r = spawnSync(process.execPath, [path.join(__dirname, f)], { stdio: opt.quiet ? ['ignore', 'pipe', 'pipe'] : 'inherit', encoding: 'utf8', maxBuffer: 512 * 1024 * 1024, timeout: LIMIT_OF(f), killSignal: 'SIGKILL' });
-  const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
-  if (opt.quiet && r.status !== 0) {   // (quiet: a failed test's FAIL lines and its last lines, a stack trace among them)
-    const out = ((r.stdout || '') + '\n' + (r.stderr || '')).split('\n').filter(l => l.trim() && !/^OK\b/.test(l)), fails = out.filter(l => /\bFAIL\b/.test(l));
-    console.log(`\n### ${f}`); for (const l of [...new Set([...fails.slice(0, 40), ...out.slice(-15)])]) console.log(l);
-  }
-  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN, TEST_SLOW)`);
-  results.push({ f, ok: r.status === 0, s: ((Date.now() - t0) / 1000).toFixed(0), timedOut });
-  if (r.status !== 0 && process.env.GITHUB_ACTIONS) console.log(`::error title=${f}::${timedOut ? `stopped after ${LIMIT_OF(f) / 60000} min` : `exit ${r.status != null ? r.status : r.signal}`} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);   // (on GitHub: an annotation of the check run, readable where the job's log is not)
+const results = new Array(list.length), running = new Map(), t00 = Date.now();
+let lastWord = Date.now(), done = 0;
+const say = (s) => { process.stdout.write(s + '\n'); lastWord = Date.now(); };
+const sec = (t) => ((Date.now() - t) / 1000).toFixed(0);
+// a test runs in its own process group (detached), so a stopped test takes its browser and the browser's helpers with it: none is left
+// holding the output pipe or the processors (a test killed alone left Chromium running, the next tests slower)
+const killGroup = (ch) => { try { process.kill(-ch.pid, 'SIGKILL'); } catch (e) { try { ch.kill('SIGKILL'); } catch (e2) { /* gone */ } } };
+function run(i) {
+  const f = list[i], t0 = Date.now(), live = JOBS === 1 && !opt.quiet, out = [];
+  if (live) say(`\n### ${f}`);
+  return new Promise((resolve) => {
+    const ch = spawn(process.execPath, [path.join(__dirname, f)], { stdio: live ? ['ignore', 'inherit', 'inherit'] : ['ignore', 'pipe', 'pipe'], detached: true });
+    running.set(f, { ch, t0 });
+    if (!live) { ch.stdout.on('data', d => out.push(d)); ch.stderr.on('data', d => out.push(d)); }
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; killGroup(ch); }, LIMIT_OF(f));
+    ch.on('error', (e) => out.push(Buffer.from(`\n${e.message}\n`)));
+    ch.on('close', (code, signal) => {
+      clearTimeout(timer); running.delete(f); killGroup(ch);   // (and what it left behind)
+      const ok = code === 0 && !timedOut, s = sec(t0), text = Buffer.concat(out).toString('utf8');
+      done++;
+      if (!live && !opt.quiet) say(`\n### ${f}\n${text.replace(/\n$/, '')}`);
+      if (opt.quiet && !ok) {   // (quiet: a failed test's FAIL lines and its last lines, a stack trace among them)
+        const lines = text.split('\n').filter(l => l.trim() && !/^OK\b/.test(l)), fails = lines.filter(l => /\bFAIL\b/.test(l));
+        say(`\n### ${f}`); for (const l of [...new Set([...fails.slice(0, 40), ...lines.slice(-15)])]) say(l);
+      }
+      if (timedOut) say(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN, TEST_SLOW)`);
+      if (opt.quiet || !live) say(`${ok ? 'OK  ' : 'FAIL'} [${done}/${list.length}] ${f} (${s} s)`);   // (each test as it ends, not only at the end)
+      results[i] = { f, ok, s, timedOut };
+      if (!ok && process.env.GITHUB_ACTIONS) say(`::error title=${f}::${timedOut ? `stopped after ${LIMIT_OF(f) / 60000} min` : `exit ${code != null ? code : signal}`} (${s} s)`);   // (on GitHub: an annotation of the check run, readable where the job's log is not)
+      resolve();
+    });
+  });
 }
-console.log('\n=== summary');
-for (const r of results) if (!opt.quiet || !r.ok) console.log(`${r.ok ? 'OK  ' : 'FAIL'} ${r.f} (${r.s} s)${r.timedOut ? ' — timed out' : ''}`);
-if (opt.quiet) console.log(`${results.filter(r => r.ok).length} of ${results.length} tests passed (${results.reduce((a, r) => a + +r.s, 0)} s)`);
-if (process.env.TEST_PADLI && results.some(r => !r.ok)) require('fs').appendFileSync(process.env.TEST_PADLI, results.filter(r => !r.ok).map(r => r.f).join('\n') + '\n');
-process.exit(results.every(r => r.ok) ? 0 : 1);
+function summary(stopped) {
+  const res = results.filter(Boolean);
+  say(`\n=== summary${stopped ? ` (stopped by ${stopped}: ${res.length} of ${list.length} tests ended)` : ''}`);
+  for (const r of res) if (!opt.quiet || !r.ok) say(`${r.ok ? 'OK  ' : 'FAIL'} ${r.f} (${r.s} s)${r.timedOut ? ' — timed out' : ''}`);
+  for (const [f, { t0 }] of running) say(`FAIL ${f} (${sec(t0)} s) — not ended, stopped with the run`);
+  if (opt.quiet) say(`${res.filter(r => r.ok).length} of ${list.length} tests passed (${res.reduce((a, r) => a + +r.s, 0)} s of tests, ${sec(t00)} s in all${JOBS > 1 ? `, ${JOBS} at once` : ''})`);
+  else if (JOBS > 1) say(`(${sec(t00)} s in all, ${JOBS} tests at once)`);
+  const bad = [...res.filter(r => !r.ok).map(r => r.f), ...running.keys()];
+  if (process.env.TEST_PADLI && bad.length) require('fs').appendFileSync(process.env.TEST_PADLI, bad.join('\n') + '\n');
+  return bad.length || res.length < list.length ? 1 : 0;
+}
+// the run itself stopped (Ctrl+C, a session's command out of time): its tests with it, and the summary of what ended
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { const code = summary(sig); for (const { ch } of running.values()) killGroup(ch); process.exit(code || 1); });
+process.on('exit', () => { for (const { ch } of running.values()) killGroup(ch); });
+
+(async () => {
+  if (JOBS > 1 && list.length > 1) say(`${list.length} tests, ${JOBS} at once (TEST_JOBS; browser ${BROWSER_JOBS}, TEST_BROWSER_JOBS)`);
+  const beat = BEAT > 0 && setInterval(() => {
+    if (running.size && Date.now() - lastWord >= BEAT) say(`… ${sec(t00)} s: ${[...running].map(([f, { t0 }]) => `${f} ${sec(t0)} s`).join(', ')}`);
+  }, Math.min(BEAT, 10000));
+  // the longest first (SECS), so the run does not end on one long test alone; the browser tests at most BROWSER_JOBS at once
+  const order = list.map((f, i) => i);
+  if (JOBS > 1) order.sort((a, b) => secs(list[b]) - secs(list[a]) || a - b);
+  const isB = (i) => list[i].startsWith('browser/');
+  await new Promise((resolveAll) => {
+    const next = () => {
+      if (!order.length && !running.size) return resolveAll();
+      while (running.size < JOBS && order.length) {
+        const nB = [...running.keys()].filter(f => f.startsWith('browser/')).length;
+        const k = order.findIndex(i => !isB(i) || nB < BROWSER_JOBS);
+        if (k < 0) break;
+        const i = order.splice(k, 1)[0];
+        run(i).then(next);
+      }
+    };
+    next();
+  });
+  if (beat) clearInterval(beat);
+  process.exit(summary());
+})();
