@@ -658,11 +658,11 @@
   "jsMs": 2.56
  },
  "savusavu": {
-  "calls": 166,
-  "maxCalls": 194,
-  "kverts": 384,
-  "maxKverts": 482,
-  "jsMs": 1.13
+  "calls": 170,
+  "maxCalls": 209,
+  "kverts": 399,
+  "maxKverts": 491,
+  "jsMs": 1.14
  },
  "quezaltepeque": {
   "calls": 228,
@@ -693,11 +693,11 @@
   "jsMs": 1.31
  },
  "canaries": {
-  "calls": 181,
-  "maxCalls": 192,
-  "kverts": 599,
-  "maxKverts": 703,
-  "jsMs": 1.16
+  "calls": 184,
+  "maxCalls": 195,
+  "kverts": 615,
+  "maxKverts": 721,
+  "jsMs": 1.56
  },
  "koror": {
   "calls": 142,
