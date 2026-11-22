@@ -22,7 +22,7 @@
   const ZV = () => (window.Kariera && Kariera.ZVEZDICE) || { pokal: [3, 2, 1] };
   const enName = (x) => (x && x.en && (x.en.name || (typeof x.en === 'string' ? x.en : ''))) || (x && x.name) || '';
   function trackName(id) {   // (a track's place, without its country)
-    const d = ((window.Core && Core.TRACKS) || []).find(t => t.id === id); if (!d) return String(id);
+    const d = ((typeof Core !== 'undefined' && Core.TRACKS) || []).find(t => t.id === id); if (!d) return String(id);   // (Core: a script's const, not on window)
     const n = (d.en && d.en.name) || d.name || String(id), k = n.lastIndexOf(', ');
     return k > 0 ? n.slice(0, k) : n;
   }

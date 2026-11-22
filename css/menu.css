@@ -1685,6 +1685,8 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   .dol.side .dol-rail { gap: 5px; } .dol.side .dol-rail button { width: 34px; height: 34px; font-size: 15px; }
   .dol.side .dol-cb { padding-top: 12px; } .dol.side .dol-cb h2 { font-size: 22px; margin-top: 8px; } .dol.side .dol-cf { padding-top: 6px; }
   .dol-ob { padding: 14px 16px; gap: 7px; } .dol-place { font-size: 44px; } .dol-zz u { width: 36px; height: 36px; }
+  .dol-ob h2 { font-size: 22px; } .dol-up { padding: 6px 10px; font-size: 13px; } .dol-ob .go { margin-top: 0; }
+  .dol-lad li { grid-template-columns: 26px 1fr auto; gap: 8px; padding: 2px 0; } .dol-lad li > b { width: 24px; height: 24px; font-size: 12px; } .dol-lad li .bar { margin-top: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dol, .dol-card, .dol-card.on, .dol-over, .dol-ob, .dol-stars, .dol-rail, .dol-hint { transition: none; }

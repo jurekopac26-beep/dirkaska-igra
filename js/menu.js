@@ -2098,7 +2098,7 @@
       if (!G || !G.visible()) return;
       const wk = $('.intro.wk', app); if (wk) { if (e.key === 'Escape') { e.preventDefault(); wk.__wk.back(); } return; }   // (Esc: the race weekend back to the tracks)
       if ($('.intro', app)) { if (e.key === 'Escape') { e.preventDefault(); const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return; }   // (Esc skips the intro)
-      if (e.key === 'Escape') { if (zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
+      if (e.key === 'Escape') { if (dolOpen() || zemOpen() || izOpen() || sheet || screen === 'track' || titleSub) { e.preventDefault(); back(); } }
       if (screen === 'track' && !sheet && !izOpen() && !zemOpen() && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) act('track:' + (e.key === 'ArrowLeft' ? -1 : 1));
     });
     window.addEventListener('resize', () => wx.resize());
