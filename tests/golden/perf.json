@@ -679,10 +679,10 @@
   "jsMs": 0.72
  },
  "koli": {
-  "calls": 181,
-  "maxCalls": 290,
-  "kverts": 632,
-  "maxKverts": 748,
+  "calls": 170,
+  "maxCalls": 270,
+  "kverts": 666,
+  "maxKverts": 785,
   "jsMs": 0.69
  },
  "kanaba": {

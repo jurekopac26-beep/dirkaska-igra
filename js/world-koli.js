@@ -7,7 +7,7 @@
   if (typeof World === 'undefined' || !World.gore) return;
   World.ext.koli = (scene, tex, opts) => World.gore.build(scene, tex, opts, {
     seed: 1717, snow: 'all',
-    road: { line: 'none' },   // (the ploughed road under packed snow: no lines to see)
+    road: { line: 'none', chunk: 300 },   // (the ploughed road under packed snow: no lines to see; 300 samples to a mesh: the draw-call headroom by the stadium)
     trees: { kinds: ['fir', 'pine'], forest: 0.4, h: [8, 16] },   // (the boreal forest of the national park: spruce and pine)
     skiers: 50, nets: true, snowbanks: true,
     animals: [],

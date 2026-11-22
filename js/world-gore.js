@@ -395,9 +395,10 @@
           const sl = k >= 2 ? vrSlope(x, z) : 0; return gCol(x, z, T.hy[i] + y, 1 / Math.sqrt(1 + sl * sl), Math.max(0, o - bar)).slice(); })); } return a; });
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       const bMat = SN ? new THREE.MeshLambertMaterial({ map: snowTex(), vertexColors: true }) : gMat;   // (the snow walls: the snow's own smooth texture)
-      for (let c0 = 0; c0 < N - 1; c0 += 60) {
+      const RCH = RD.chunk || 60;   // (S.road.chunk: road samples to a mesh; a longer chunk, fewer draw calls)
+      for (let c0 = 0; c0 < N - 1; c0 += RCH) {
         const gr = new GB(true), gl = new GB(), gs = new GB(true), gv = new GB(true), gb = SN ? new GB(true) : gv;
-        for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
+        for (let i = c0; i < Math.min(c0 + RCH, N - 1); i++) {
           const j = i + 1, wi = T.wAt ? T.wAt(i) : w, wj = T.wAt ? T.wAt(j) : w, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6, gv2 = grv[i] || grv[j];
           const nq = gv2 && SN ? 8 : 4;
           for (let c = 0; c < nq; c++) { const f0 = c / nq * 2 - 1, f1 = (c + 1) / nq * 2 - 1, a0 = f0 * wi, a1 = f1 * wi, b0 = f0 * wj, b1 = f1 * wj;

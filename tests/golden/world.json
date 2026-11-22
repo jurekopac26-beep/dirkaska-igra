@@ -1485,16 +1485,16 @@
   }
  },
  "koli": {
-  "meshes": 466,
-  "verts": 578220,
+  "meshes": 406,
+  "verts": 575715,
   "instances": 6950,
   "props": 79,
   "crowd": 201,
-  "world": "ee4dec68",
+  "world": "63743664",
   "propsHash": "e208c7c7",
   "floor": "5239e5c0/4536",
   "groups": {
-   "-:MeshLambertMaterial": "92ea4e52",
+   "-:MeshLambertMaterial": "11d676ce",
    "-:MeshBasicMaterial": "6fe4118b",
    "rob:MeshLambertMaterial": "6c73ab6b",
    "crowd:MeshLambertMaterial": "a4def38c",
