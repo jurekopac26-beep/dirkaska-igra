@@ -719,5 +719,19 @@
   "kverts": 306,
   "maxKverts": 391,
   "jsMs": 1.07
+ },
+ "mapileng": {
+  "calls": 141,
+  "maxCalls": 171,
+  "kverts": 242,
+  "maxKverts": 281,
+  "jsMs": 1.09
+ },
+ "tapini": {
+  "calls": 84,
+  "maxCalls": 91,
+  "kverts": 246,
+  "maxKverts": 271,
+  "jsMs": 0.17
  }
 }
