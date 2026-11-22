@@ -495,6 +495,7 @@
     'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau', 'Do Red Lighta': 'To Red Light',   // (Sogeri: the HUD, the results of an escape; Irishtown: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Greben': 'Ridge', // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)
+    'Gozd nad Vaoalo': 'Forest above Vaoala', 'Do Tiapapate': 'To Tiapapata',   // (Vaoala: the HUD, the results of an escape; Letava, Vaoala and Tiapapata stay as they are, the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
