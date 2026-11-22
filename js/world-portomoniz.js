@@ -29,7 +29,7 @@
     fans: [[0.86, 0.1, 0.1], [0.12, 0.42, 0.2], [0.95, 0.95, 0.95], [0.98, 0.82, 0.14], [0.14, 0.32, 0.62], [0.2, 0.5, 0.32], [0.95, 0.5, 0.14], [0.55, 0.62, 0.7]],
     cars: [[0.9, 0.9, 0.88], [0.72, 0.73, 0.74], [0.12, 0.12, 0.14], [0.16, 0.2, 0.32], [0.6, 0.12, 0.1], [0.42, 0.43, 0.45]],
     roofs: [[0.72, 0.36, 0.2], [0.66, 0.31, 0.18], [0.78, 0.43, 0.25], [0.6, 0.28, 0.17]],
-    sheep: 0, portal: 0,
+    sheep: 0, portal: 0, shrubR: 110,   // (the phone's load: the heath's shrubs only within 110 m of the road, past it the ground's own shrub colour, as on the other passes)
     // (the far slopes: the woods of laurel, eucalyptus and pine up to ~1,250 m, the heath of the plateau above them, the basalt on the steep
     // faces; the sea: wet, the far land's water, the Atlantic's deep blue where the shared far view takes a look's own (irFar))
     far: { lo: [0.3, 0.42, 0.2], hi: [0.36, 0.34, 0.3], dw: [0.36, 0.36, 0.24], snow: 9000, tree: [1350, 1150], fc: [0.13, 0.24, 0.11], dwb: [1200, 1350, 1900, 1750], rk: [1750, 1900], wet: [0.2, 0.35, 0.52] },
