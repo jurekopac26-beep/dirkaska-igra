@@ -11,7 +11,10 @@
 (function () {
   'use strict';
   if (typeof World === 'undefined' || !World.gore) return;
-  const CX = -516, CZ = 331;   // (the castle's middle, in the track's metres)
+  // the castle's literals below are in the frame of the first, short import (its start by the castle); the road now starts 3.4 km away on II/549
+  // (22. 11. 2026), so castle() draws in the old frame and shifts every point by D (the new origin, DEM base 623.84 m instead of 452.12 m)
+  const DX = -918.0, DY = -171.72, DZ = 1033.4;
+  const CX = -516, CZ = 331;   // (the castle's middle, in the old frame)
   // the castle's outer wall (OSM way 112611305, in the track's metres: x east, z south)
   const RING = [[-565.5, 299.4], [-563.9, 298.3], [-562.5, 297.8], [-560.9, 297.7], [-559.5, 298], [-558.2, 298.7], [-556.7, 300.1], [-535.6, 297.3], [-488.5, 295.6],
     [-487.9, 294.1], [-487, 292.5], [-485.8, 291.4], [-484.2, 290.6], [-483.2, 290.3], [-481.3, 290.2], [-480.7, 291.3], [-477.8, 291.5], [-475.7, 292.8], [-474, 295.1],
@@ -33,7 +36,11 @@
   ];
 
   function castle(ctx) {
-    const { box, cyl, cone, gable } = World.api, gH = ctx.out.groundH, g = ctx.scen.get(CX, CZ);
+    const { box, cyl, cone, gable } = World.api, gH0 = ctx.out.groundH, g0 = ctx.scen.get(CX + DX, CZ + DZ);
+    const gH = (x, z) => gH0(x + DX, z + DZ) - DY, S = p => [p[0] + DX, p[1] + DY, p[2] + DZ];
+    const g = Object.create(g0);   // (every triangle goes through tri/triN: shift its points there)
+    g.tri = (a, b, c, ...r) => g0.tri(S(a), S(b), S(c), ...r);
+    g.triN = (a, b, c, ...r) => g0.triN(S(a), S(b), S(c), ...r);
     // the terrace: the outer wall from the hill up to T0 (stone, darker at its foot), its top, a parapet round it
     let A = 0; for (let i = 0; i < RING.length; i++) { const p = RING[i], q = RING[(i + 1) % RING.length]; A += p[0] * q[1] - q[0] * p[1]; }
     const sg = A > 0 ? 1 : -1;
@@ -117,9 +124,10 @@
     skiers: 0, nets: false, snowbanks: false,
     animals: [],
     rails: false, fans: 0.3,
-    pads: () => [{ x: -512, z: 324, r: 38, b: 24, h: 32.5 }, { x: -464, z: 336, r: 12, b: 16, h: 31.5 }, { x: -456, z: 305, r: 10, b: 14, h: 31 }],
-    excl: [[CX, CZ, 60]],
-    bldOmit: (x, z) => Math.hypot(x - CX, z - CZ) < 58 && Math.hypot(x + 472.2, z - 366) > 1,   // (the castle's own; the small chapel below the gate stays)
+    pads: () => [{ x: -512, z: 324, r: 38, b: 24, h: 32.5 }, { x: -464, z: 336, r: 12, b: 16, h: 31.5 }, { x: -456, z: 305, r: 10, b: 14, h: 31 }]
+      .map(p => ({ ...p, x: p.x + DX, z: p.z + DZ, h: p.h + DY })),
+    excl: [[CX + DX, CZ + DZ, 60]],
+    bldOmit: (x, z) => Math.hypot(x - DX - CX, z - DZ - CZ) < 58 && Math.hypot(x - DX + 472.2, z - DZ - 366) > 1,   // (the castle's own; the small chapel below the gate stays)
     extra: castle,
   });
 })();
