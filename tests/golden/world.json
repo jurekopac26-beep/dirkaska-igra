@@ -617,17 +617,17 @@
   }
  },
  "sacalobra": {
-  "meshes": 1780,
+  "meshes": 1693,
   "verts": 1096791,
   "instances": 37011,
   "props": 10,
   "crowd": 283,
-  "world": "3d5fc7d1",
+  "world": "5e9f5957",
   "propsHash": "dbd5015f",
   "floor": "510e9528/10556",
   "groups": {
-   "-:MeshLambertMaterial": "5c5b1c64",
-   "-:MeshPhongMaterial": "af2e2690",
+   "-:MeshLambertMaterial": "af3bc01c",
+   "-:MeshPhongMaterial": "66dd8851",
    "-:MeshBasicMaterial": "4f1c46cb",
    "rob:MeshLambertMaterial": "b53a6135",
    "irFar:MeshLambertMaterial": "e555884",

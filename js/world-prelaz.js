@@ -86,7 +86,7 @@
       seed: 4500, board: 'SA CALOBRA', sub: 'SERRA DE TRAMUNTANA', banner: ['CARRETERA DE SA CALOBRA', 'MA-2141 · SERRA DE TRAMUNTANA'],
       grass: [0.5, 0.5, 0.38], grassDry: [0.6, 0.57, 0.45], grassLush: [0.38, 0.44, 0.27], shrub: [0.22, 0.27, 0.16],
       rock: [0.6, 0.59, 0.56], rockWarm: [0.66, 0.58, 0.48], lichen: [0.48, 0.48, 0.43], scree: [0.62, 0.61, 0.57],
-      bank: [0.52, 0.42, 0.33], flowers: 0.3,   // (the steep banks by the road: the red earth of the karst, terra rossa; few flowers in the dry summer)
+      bank: [0.52, 0.42, 0.33], flowers: 0.3, roadK: 3, plantLo: 1,   // (the steep banks by the road: the red earth of the karst, terra rossa; few flowers in the dry summer)
       sat: 0.35, satV: 1.1, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
       rockCols: [[0.56, 0.55, 0.52], [0.62, 0.61, 0.57], [0.5, 0.49, 0.47], [0.63, 0.56, 0.46], [0.56, 0.52, 0.45], [0.6, 0.59, 0.56]],   // (the limestone: pale grey, a little ochre)
       centre: [0.95, 0.95, 0.92], dash: [3.5, 9], solidNear: 40,   // (the Spanish centre line: 3.5 m dashes, 9 m gaps; solid through the hairpins)
@@ -687,8 +687,11 @@
         (gq || gW).quadO(a, b, c, d, null, Pt(i, side * (ti[0] - 3), (ti[1] + bi[1]) / 2), [[s0, a[1] / 3.5], [s0, b[1] / 3.5], [s1, c[1] / 3.5], [s1, d[1] / 3.5]], [top, foot, footj, topj]); };
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       const solid = (s) => hairS.some(h => Math.abs(s - h) < L.solidNear) || s < sStart + 20 || s > sFin - 10;
+      const rK = L.roadK || 1;   // (L.roadK: the asphalt, its lines and the shoulder in chunks of rK x 120 m, fewer draws; the verge, heavier, stays at 120 m)
+      let gr0, gl0, gs0;
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
-        const gr0 = new GB(true), gl0 = new GB(), gs0 = new GB(true), gv0 = new GB(true);
+        if (c0 % (60 * rK) === 0) { gr0 = new GB(true); gl0 = new GB(); gs0 = new GB(true); }
+        const gv0 = new GB(true);
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const fb = FB && fadeI[i], gr = fb ? FB.gr : gr0, gl = fb ? FB.gl : gl0, gs = fb ? FB.gs : gs0, gv = fb ? FB.gv : gv0;
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / 6, s1 = j * T.ds / 6;
@@ -718,7 +721,7 @@
                 gv.quadUp(a, b, c, d, [bc(i, r), bc(i, r + 1), bc(j, r + 1), bc(j, r)], [[u0, a[1] / 4], [u0, b[1] / 4], [u1, c[1] / 4], [u1, d[1] / 4]]); } }
           }
         }
-        addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); addM(gv0, gMat);
+        if ((c0 + 60) % (60 * rK) === 0 || c0 + 60 >= N - 1) { addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); } addM(gv0, gMat);
       }
       // the bridges (KN): the face walls under the upper road's verges (to the arch, with a ring of lighter dressed stones round it, and either side of it to
       // the ground; at the ends on to the verge's ditch), the arch's barrel, darker, and its abutments at the lower road's barriers
@@ -1203,7 +1206,8 @@
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const wMat = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), wB = wMat.onBeforeCompile; ouCutMat(wMat, cut);   // (the grass: in the wind, and the cut)
     { const cB = wMat.onBeforeCompile; wMat.onBeforeCompile = (sh) => { wB(sh); cB(sh); }; wMat.customProgramCacheKey = () => 'tuftWindCut'; wMat.side = THREE.FrontSide; }
-    const pk = [0, 1, 2, 3].map(k => new IChunks(API.btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : 96));
+    const plo = !!L.plantLo && LOD.tier === 0;   // (L.plantLo, NIZKA: as Beartooth's, the cushions and the stones lighter, the grass and the boulders in bigger chunks)
+    const pk = [0, 1, 2, 3].map(k => new IChunks(plo && (k === 1 || k === 3) ? API.ownRnd(() => API.btPlantGeo(k, true)) : API.btPlantGeo(k), k === 0 ? wMat : pMat, k === 3 ? 64 : !plo ? 96 : k === 0 ? 128 : k === 2 ? 192 : 96));
     const flowerC = [[1.0, 0.92, 0.35], [0.66, 0.5, 0.95], [1, 1, 1], [0.95, 0.5, 0.75], [0.5, 0.65, 1.0]];
     let nPlants = 0;
     {
