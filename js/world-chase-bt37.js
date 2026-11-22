@@ -20,6 +20,16 @@
   const API = World.api, BT = API.chaseBt, { vary, rng } = API;
   if (!BT || !BT.soil || !BT.tuft || !BT.cushion || !BT.mix3 || !vary || !rng) return;
   const { soil, tuft, cushion, mix3 } = BT;
+  /* (since 22. 11. 2026: the flat patches in chunks of their own, as the sixty-second group's softScen: 64 m, casting no shadow — a flat
+     patch throws none, and the builder's scenery chunks drew them twice, in the shadow pass too — and drawing nothing whose middle is
+     farther than FAR from the camera, where a patch of a metre is under a pixel; Sakhir's and Buriram's busiest places were over
+     CLAUDE.md's 900k vertices with the Realism's additions, tests/golden/perf.json. Shared with the forty-first group, BT.farScen) */
+  const FAR = 140;
+  BT.farScen = BT.farScen || ((root, matV) => { const ch = new API.Chunks(64); return { get: (x, z) => ch.get(x, z), done() { const grp = new THREE.Group(); ch.addTo(grp, matV, false, true);
+    for (const m of grp.children) { m.name = 'rob'; m.userData.rob = m.userData.lj = true;
+      const geo = m.geometry; geo.computeBoundingSphere(); const c = geo.boundingSphere.center.clone(), f2 = (FAR + geo.boundingSphere.radius) ** 2;
+      m.onBeforeRender = (r, sc, cam) => { geo.setDrawRange(0, cam.position.distanceToSquared(c) > f2 ? 0 : Infinity); }; }
+    if (grp.children.length) root.add(grp); } }; });
 
   /* ---- Sakhir: docs/proge/sakhir.md: »puščava spomladi: bled pesek, temnejši grušč in kamenje v lisah, svetlejši nanosi peska«.
      Behind the barriers on the sand: patches of the darker grey-brown grit (more where the ground's own colour is grit: the same noise as
@@ -34,7 +44,7 @@
   const skRob = (ctx) => {
     const T = API.T, { nrGround, nrLC, nrNear, nrSlope, NR: P } = API, st = { zaplate: 0, pas: 0, kamencki: 0 };
     if (!T || !T.br || !nrGround || !nrLC || !nrNear || !ctx.scen) return st;
-    const scen = ctx.scen, ex = ctx.excluded || (() => false), pd = T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0;
+    const scen = ctx.scen, flat = ctx.root && ctx.matV && API.Chunks ? BT.farScen(ctx.root, ctx.matV) : scen, ex = ctx.excluded || (() => false), pd = T.def.pit, ps = pd ? (pd[0] < 0 ? -1 : 1) : 0;
     const pit = (s, sd) => ps && sd === ps && (!!T.pitAt(s) || (T.pitLead ? T.pitLead(s) >= 0 : false));
     const gritK = (x, z) => P && P.n1 ? Math.min(1, Math.max(0, (P.n1(x * 0.35 + 510, z * 0.35 + 90) - 0.42) / 0.28)) : 0.3;
     const sand = (x, z, r) => { const q = nrNear(x, z); return q.i >= 0 && q.dd > r && (c => c !== 1 && c !== 3)(nrLC(x, z)) && !ex(x, z) && (!nrSlope || nrSlope(x, z) < 0.6); };
@@ -46,19 +56,20 @@
         const r0 = R(), r1 = R(), r2 = R(); if (pit(i * T.ds, sd) || r0 > 0.75) continue;
         const o = 0.6 + Math.pow(r1, 1.25) * 15, [x, z] = at(i, sd, o, (r2 - 0.5) * 3.2), rr = 0.7 + R() * (0.6 + o * 0.06);
         if (!sand(x, z, Math.min(o, 0.5 + rr * 0.6))) continue;
-        const g = gritK(x, z); soil(scen, nrGround, x, z, rr, skPatch(R, g), R, 0.04); st.zaplate++;
+        const g = gritK(x, z); soil(flat, nrGround, x, z, rr, skPatch(R, g), R, 0.04); st.zaplate++;
         if (g > 0.3 && R() < 0.35) for (let q = 0, n = 2 + Math.floor(R() * 3); q < n; q++) {   // a few pebbles of the grit on it
           const px = x + (R() - 0.5) * rr * 1.4, pz = z + (R() - 0.5) * rr * 1.4, h = R();
           if (!sand(px, pz, 0.5)) continue;
-          cushion(scen.get(px, pz), px, nrGround(px, pz) + 0.04, pz, 0.1 + h * 0.12, 0.05 + h * 0.05, vary(mix3([0.5, 0.44, 0.37], [0.6, 0.52, 0.43], R()), R, 0.02), R); st.kamencki++; }
+          cushion(flat.get(px, pz), px, nrGround(px, pz) + 0.04, pz, 0.1 + h * 0.12, 0.05 + h * 0.05, vary(mix3([0.5, 0.44, 0.37], [0.6, 0.52, 0.43], R()), R, 0.02), R); st.kamencki++; }
       }
     }
     for (let i = 0; i < N; i += far) for (const sd of [-1, 1]) {   // out to ~60 m: wider and fewer
       const r0 = R(), r1 = R(), r2 = R(); if (pit(i * T.ds, sd) || r0 > 0.55) continue;
       const o = 16 + r1 * 44, [x, z] = at(i, sd, o, (r2 - 0.5) * 8), q = nrNear(x, z);
       if (q.i < 0 || Math.abs(q.i - i) * T.ds > o + 10 || !sand(x, z, 10)) continue;   // (another leg nearer: its own band)
-      const k = 1 + 0.5 * (o - 16) / 44; soil(scen, nrGround, x, z, (1.6 + R() * 1.6) * k, skPatch(R, gritK(x, z)), R, 0.05); st.pas++;
+      const k = 1 + 0.5 * (o - 16) / 44; soil(flat, nrGround, x, z, (1.6 + R() * 1.6) * k, skPatch(R, gritK(x, z)), R, 0.05); st.pas++;
     }
+    if (flat !== scen) flat.done();
     return st;
   };
   {

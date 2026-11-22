@@ -2,7 +2,8 @@
    WORLD — the roadside ground from the camera behind the car (chase), the sixth group of the real tracks: Kotor and Llogara (the shared
    world of the passes, js/world-prelaz.js: the look's own L.extra chained), Zandvoort and Tuzla (the shared circuit builder,
    js/world-rbring.js: the look's own LK.extra chained), Hiva (its own builder calls World.ext.hivaRob just before its scenery chunks
-   are closed). What is added goes into the builders' own scenery chunks (scen.get), so no draw is added, and only the named tracks
+   are closed). What is added goes into the builders' own scenery chunks (scen.get) or, where a track asks for it (C.soft), into meshes of
+   its own (softScen: 256 m chunks, a few draws more); only the named tracks
    change. What stands where follows each track's description (docs/proge/<id>.md). Nothing here is driven on: all of it is behind the
    barriers, off the built ground and what the build keeps clear; the terrain, the road and the fences stay as they are.
    ========================================================================= */
@@ -49,6 +50,12 @@
   const softScen = (root, matV) => { const ch = new API.Chunks(256); return { get: (x, z) => ch.get(x, z), done() { const grp = new THREE.Group(); ch.addTo(grp, matV, true, true);
     for (const m of grp.children) { m.name = 'rob'; m.userData.rob = m.userData.lj = true; } if (grp.children.length) root.add(grp); } }; };
   const chain = (L, fn) => { const base = L.extra; L.extra = function (ctx) { const r = base ? base.call(this, ctx) : null; try { fn(ctx, r); } catch (e) { console.error('chase-bt6:', e); } return r; }; };
+  /* the side roads (World.cesta.stranske, def.stranske: ctx.naCesti, the circles that keep the trees off a side road's strip): every edge
+     file chained after this one (this file and js/world-chase-bt7.js … on, each L.extra wrapping the one before) reads ctx.excluded when
+     its own part runs, after the builder's own extra, so it is widened here once for all of them: no tuft, cushion or patch of the edges
+     on a side road past the fence line. Only where the world has side roads (ctx.naCesti); the builder's own extra keeps its test as it was */
+  for (const L of new Set(Object.values(API.rbLook || {}))) if (L) { const base = L.extra; L.extra = function (ctx) { const r = base ? base.call(this, ctx) : null;
+    if (ctx && typeof ctx.naCesti === 'function') { const ex = ctx.excluded, on = ctx.naCesti; ctx.excluded = (x, z) => (ex ? !!ex(x, z) : false) || on(x, z, 0); } return r; }; }
 
   /* ---- the passes: the karst by the road. The slope's way (the contour) from the ground itself, so the ribs lie along the hillside ---- */
   const karst = (ctx, seed, C) => {

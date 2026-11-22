@@ -7,11 +7,11 @@
   "jsMs": 1.12
  },
  "pikesg": {
-  "calls": 160,
-  "maxCalls": 174,
-  "kverts": 545,
-  "maxKverts": 651,
-  "jsMs": 0.91
+  "calls": 146,
+  "maxCalls": 161,
+  "kverts": 487,
+  "maxKverts": 588,
+  "jsMs": 1.79
  },
  "ouninpohja": {
   "calls": 146,
@@ -441,11 +441,11 @@
   "jsMs": 0.91
  },
  "bikernieki": {
-  "calls": 186,
-  "maxCalls": 236,
-  "kverts": 480,
-  "maxKverts": 554,
-  "jsMs": 0.83
+  "calls": 195,
+  "maxCalls": 242,
+  "kverts": 452,
+  "maxKverts": 512,
+  "jsMs": 1.74
  },
  "london": {
   "calls": 169,
@@ -504,11 +504,11 @@
   "jsMs": 0.79
  },
  "buriram": {
-  "calls": 200,
-  "maxCalls": 251,
-  "kverts": 738,
-  "maxKverts": 896,
-  "jsMs": 0.76
+  "calls": 207,
+  "maxCalls": 257,
+  "kverts": 719,
+  "maxKverts": 879,
+  "jsMs": 1.16
  },
  "lombok": {
   "calls": 218,
@@ -525,11 +525,11 @@
   "jsMs": 0.81
  },
  "sakhir": {
-  "calls": 205,
-  "maxCalls": 232,
-  "kverts": 767,
-  "maxKverts": 898,
-  "jsMs": 0.74
+  "calls": 209,
+  "maxCalls": 236,
+  "kverts": 741,
+  "maxKverts": 860,
+  "jsMs": 1
  },
  "portomoniz": {
   "calls": 245,
