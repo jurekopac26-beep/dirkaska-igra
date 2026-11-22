@@ -74,7 +74,6 @@
         else { tuft(S.get(x, z), x, gH(x, z), z, 0.4 + h * 0.3, 0.38 + h * 0.34, vary(mix3(KT.dry, KT.gold, R()), R, 0.03), R, 5); st.trava++; }
       } });
     API.ROCK_SMOOTH = smooth0;
-    console.log("bt57 st", JSON.stringify(st), !!API.T.br);
     S.done();
     return st;
   };
@@ -85,7 +84,8 @@
      grassy slopes taller tussocks in loose groups with the laterite showing where the grass is worn, at the forest's edge (land cover 1
      near) ferns and broad-leaved undergrowth in low clumps. Nothing in the tea rows, the fields or the town (land cover 6, 7, 5), nor
      in a stream's bed (the builder's bad) ---- */
-  const EL = { gr: [0.3, 0.5, 0.17], gr2: [0.4, 0.55, 0.21], seed: [0.5, 0.55, 0.28], fern: [0.23, 0.45, 0.14], under: [0.21, 0.37, 0.15], lat: [0.52, 0.34, 0.24] };
+  const EL = { gr: [0.28, 0.45, 0.17], gr2: [0.34, 0.47, 0.2], seed: [0.45, 0.48, 0.28],   // (gr, gr2, seed muted toward grey by the eighty-fifth group: no bright spikes)
+                fern: [0.23, 0.45, 0.14], under: [0.21, 0.37, 0.15], lat: [0.52, 0.34, 0.24] };
   const ella = (ctx, o) => {
     const vrLC = API.vrLC, vrNear = API.vrNear, gH = (o && o.gH) || API.vrGround, sl = (o && o.slope) || API.vrSlope || (() => 0), st = { trava: 0, praprot: 0, laterit: 0 };
     const out = ctx.out; if (!vrLC || !vrNear || !gH || !API.T || !ctx.root || !out || !out.matV) return st;
@@ -109,7 +109,6 @@
         if (R() < 0.15 + w * 0.6) { cushion(S.get(x, z), x, gH(x, z), z, 0.55 + h * 0.6, 0.42 + h * 0.4, vary(R() < 0.6 ? EL.fern : EL.under, R, 0.03), R); st.praprot++; }
         else { tuft(S.get(x, z), x, gH(x, z), z, 0.42 + h * 0.34, 0.6 + h * 0.6, vary(mix3(EL.gr2, EL.seed, R() * 0.5), R, 0.03), R, 5); st.trava++; }
       } });
-    console.log("bt57 st", JSON.stringify(st), !!API.T.br);
     S.done();
     return st;
   };
