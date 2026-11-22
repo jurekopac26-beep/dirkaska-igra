@@ -35,7 +35,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | Realizem G · Rastje in teren, ~16 sej | po tedenskem načrtu | za S |
 | Realizem P · Poškodbe skupaj s Trki (#608), ~16 sej | biketraveler | takoj po #480, 30 avtih in #569 + #494; na `main` ~7. 12. |
 | Nove proge za 1.0 (`docs/nove-proge-1-0.md`), vse v enem PR | partyslo, croatiadata | potrjene 13. 11. (glej zgoraj); brez izletne cone se ne začnejo, razen 4 prog s prepadom (ograja na strani prepada) |
-| Vreme med dirko (`docs/vreme-med-dirko.md`) | partyslo | po kodi za Dež in sneg, #284 + #296, #390 |
 | Suzuka in Irohazaka v test (`test: true`, zbirna veja C #611) | partyslo | ko je prostor |
 | Hitro nalaganje, korak 2 (I17; #758 s #767 in #725; od 17. 11. ob ~2.57 prevzame croatiadata) | croatiadata | po zbirnih A (#583) in B (#579) |
 | Videz avta povsod (`docs/novosti-e.md`) | partyslo | po potrditvi načrta in #297; oceno da Matej 16. 11. |
@@ -92,5 +91,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
+| 10.14 | Vreme med dirko (osnutek) | Ploha med dirko: plan vremena, postopno mokrenje, tekmeci na napačnih gumah, radio in posnetek (`docs/vreme-med-dirko.md`, koraka 1–2; grafika 3 po »ok«) | partyslo | osnutek |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
