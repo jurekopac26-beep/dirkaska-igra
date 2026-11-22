@@ -378,11 +378,11 @@
   "jsMs": 1.61
  },
  "medeu": {
-  "calls": 158,
-  "maxCalls": 175,
-  "kverts": 401,
-  "maxKverts": 479,
-  "jsMs": 1.77
+  "calls": 163,
+  "maxCalls": 180,
+  "kverts": 430,
+  "maxKverts": 513,
+  "jsMs": 1.56
  },
  "silkeborg": {
   "calls": 239,
