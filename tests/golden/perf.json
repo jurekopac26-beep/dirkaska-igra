@@ -637,11 +637,11 @@
   "jsMs": 1.34
  },
  "isuna": {
-  "calls": 125,
-  "maxCalls": 155,
-  "kverts": 156,
-  "maxKverts": 202,
-  "jsMs": 1.53
+  "calls": 128,
+  "maxCalls": 156,
+  "kverts": 163,
+  "maxKverts": 206,
+  "jsMs": 0.96
  },
  "hiva": {
   "calls": 142,
