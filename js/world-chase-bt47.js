@@ -78,7 +78,7 @@
 
   /* ---- Quezaltepeque: docs/proge/quezaltepeque.md: »zelen hribovit svet s suhimi rumenimi lisami: trate, grmovje, gaji listavcev in
      palm«, »stara lava (temna, siva in rjava kamnita tla z nizkim grmovjem)«, mown grass, the fences >3 m off the road ---- */
-  const QZ = { grn: [0.34, 0.48, 0.19], lush: [0.3, 0.46, 0.17], dry: [0.74, 0.68, 0.38], bush: [0.28, 0.42, 0.16], bush2: [0.34, 0.44, 0.18],
+  const QZ = { grn: [0.56, 0.8, 0.3], lush: [0.3, 0.46, 0.17], dry: [0.74, 0.68, 0.38], bush: [0.5, 0.74, 0.28], bush2: [0.58, 0.74, 0.32],
     lava: [[0.3, 0.29, 0.28], [0.38, 0.32, 0.27], [0.26, 0.25, 0.24], [0.42, 0.36, 0.3]], ash: [0.4, 0.36, 0.31] };
   wrap('quezaltepeque', 256, (scen, env) => {
     const { nrGround: gH, nrLC, nrSlope, qzLava, NR: P, rock } = API, lava = qzLava || (() => 0), st = { rob: 0, grmi: 0, dalj: 0, kamni: 0 };
