@@ -518,11 +518,11 @@
   "jsMs": 0.94
  },
  "sepang": {
-  "calls": 195,
-  "maxCalls": 234,
-  "kverts": 731,
-  "maxKverts": 899,
-  "jsMs": 0.81
+  "calls": 196,
+  "maxCalls": 241,
+  "kverts": 705,
+  "maxKverts": 842,
+  "jsMs": 1.5
  },
  "sakhir": {
   "calls": 209,

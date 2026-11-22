@@ -16,6 +16,29 @@
   const { auTreeGeo, auRooGeo, auRoos, btGrassTex, btGumGeo, RIO_TP, rioTreeGeo, rioFlowerGeo, RIO_BLOOM, rioTree, rioWet, rioPits, rioExtra, rioPylon, rioPre, cpPrep, cpPark, cpTrees } = API;   // (the own parts of the worlds on this builder, in js/world-bathurst.js, js/world-rio.js, js/world-cpalace.js, loaded before this file: tools/razdeli-proge.mjs)
   let LOD, T, THEME;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T, THEME } = API); });
+  // NIZKA: a scenery chunk (Chunks of 128 m or more) casts its shadow from 64 m pieces of itself, drawn only into the shadow map (out.shadowLo,
+  // as World's plants): the shadow box (fitShadow) takes in a few of them, not every chunk it touches whole. The same triangles and the same
+  // side, so the same shadow; the chunk itself is drawn as before and casts none
+  const SH_CUT = 64, SH_MAT = new THREE.MeshBasicMaterial();
+  function rbShadowCut(group, out) {
+    for (const m of group.children.slice()) {
+      const geo = m.geometry, P = geo.attributes.position.array, I = geo.index ? geo.index.array : null, n = I ? I.length : P.length / 3, cells = new Map();
+      if (n < 3000) continue;   // (a small chunk: its shadow as it is)
+      for (let t = 0; t < n; t += 3) {
+        const a = I ? I[t] : t, b = I ? I[t + 1] : t + 1, c = I ? I[t + 2] : t + 2;
+        const k = Math.floor((P[a * 3] + P[b * 3] + P[c * 3]) / (3 * SH_CUT)) + ',' + Math.floor((P[a * 3 + 2] + P[b * 3 + 2] + P[c * 3 + 2]) / (3 * SH_CUT));
+        let L = cells.get(k); if (!L) cells.set(k, L = []); L.push(a, b, c);
+      }
+      if (cells.size < 2) continue;
+      for (const L of cells.values()) {
+        const A = new Float32Array(L.length * 3); for (let v = 0; v < L.length; v++) { A[v * 3] = P[L[v] * 3]; A[v * 3 + 1] = P[L[v] * 3 + 1]; A[v * 3 + 2] = P[L[v] * 3 + 2]; }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(A, 3));
+        const sm = new THREE.Mesh(g, SH_MAT); sm.castShadow = true; sm.receiveShadow = false; sm.visible = false; sm.matrixAutoUpdate = false; sm.updateMatrix(); group.add(sm);
+        (out.shadowCut || (out.shadowCut = [])).push([sm, m]);
+      }
+      m.castShadow = false;
+    }
+  }
 
   /* ================= RED BULL RING (theme 'rbring') =================
      The Formula 1 circuit at Spielberg in Styria (4.3 km), in its real layout and heights. The terrain tiles, the land cover forest and the
@@ -1501,6 +1524,7 @@
     rbringProps(out, (i, side) => { const d = dS(i * ds); return (d > -440 && d < 280) || (side === PSD && PD && (T.pitAt(i * ds) || T.pitAt(i * ds + 25) || T.pitAt(i * ds - 25))); }, PER);
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
+    if (LK.shCut && LOD.tier === 0) rbShadowCut(sceneryGroup, out);   // NIZKA (LK.shCut: Sepang; some ten draw calls more): the scenery's shadow from 64 m pieces, so only those in the sun's box are drawn into it
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: atlas })); if (bm) bm.castShadow = false;
     addM(fenceG, fMat);
     crowdFinish(CR, root, out);
