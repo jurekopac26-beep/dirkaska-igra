@@ -26,7 +26,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Več predogledov hkrati (5+), vzame nespremenjene `assets/` iz `main` (`tools/predogled.mjs`; 12. 11. ob ~21.50) | jure.kopac26 | majhna seja Opus, ko je mesto |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |
 | Ljudje ob progi in grafika (`docs/ljudje-predlogi.md`) | partyslo | ko uporabnik reče; po #400; pred novimi progami |
@@ -94,5 +93,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.13 | #779 Realizem E | **Zbirna veja Realizem E · stranske ceste in črte** (veja `zbirna/realizem-e`; opis in predaja v #779 in `docs/realizem/paket-e.md`): Livorno (#657), Spa (#759), skupine 569a–e (#765, #766, #764, #768, #773) in proge iz pull requestov (569f #774, 756a #775, 756b #776, 762a #777, 762b #780): stranske ceste iz OSM s križišči samo za videz, stebrički na ustjih, črte po pravilih države; model proge in fizika vožnje nedotaknjena; #781–#784 počakajo na svoje proge | partyslo | pripravljen 18. 11. 2026, osnutek; povezani testi lokalno zeleni; odprta vprašanja `e-proge-569a`, `569b`, `569d`, `569e` na strani Odločitve partyslo; grafika, zato pred progami (#762); do `main` ga vodi seja Združevanje partyslo |
 | 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
 | 10.13 | #862 Zbirna Realizem bt | **Zbirna veja Realizem 2–15 biketravelerja** (veja `zbirna/realizem-bt`): #800–#802, #804–#806, #810, #812–#814, #817, #844, #854, #857 in #793 (z #779); #803 izpuščen; samo 15 pravih prog, fizika in zamrznjene proge nedotaknjene | biketraveler | Matej »ok vse« 21. 11. (vprašanje `realizem-zbirna-bt`); povezani testi zeleni, perf v mejah; grafika, zato takoj za #762; združi seja Združevanje |
+| 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |
+| 10.15 | #945 Pravila 22. 11. | dnevni PR pravil (`CLAUDE.md`, `docs/odlocitve.md`) | jure.kopac26 | osnutek |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
