@@ -63,7 +63,7 @@
           if (r0 > L.share) continue;
           const Pp = L.verge(R, o, e0, e1, c, x, z); if (!Pp) continue;
           const rr = Math.min(Pp.r, (e1 - e0) * 0.5, o - e0 + 0.4, e1 - o + 0.4);
-          if (rr > 0.3 && own(x, z)) { soil(soft, g, x, z, rr, Pp.col, R, 0.04); st.zaplate++; }
+          if (rr > 0.3 && own(x, z)) { soil(soft, g, x, z, rr, Pp.col, R, 0.04, L.vergeK); st.zaplate++; }
         }
         if (R() < L.foot) { const o = bar - 0.35 - R() * 0.35, [x, z] = at(i, sd, o, (R() - 0.5) * 2.6);
           if (own(x, z)) { const h = R(); tuft(soft.get(x, z), x, g(x, z), z, 0.22 + h * 0.16, 0.26 + h * 0.24, T_(R, c === 1 ? L.tuftW : L.tuft), R, 5); st.sopi++; } }
@@ -80,7 +80,7 @@
         const y = gT(x, z); if (!(y > T.hy[i] - L.drop) || slope(x, z) > 1.0) continue;
         const c = lc ? lc(x, z) : 0; if (skip(c) || (L.wet && L.wet(x, z))) continue;
         const Pp = L.far(R, o - bar, c, 1 + 0.6 * Math.min(1, (o - bar - L.from) / (L.to - L.from)), x, z); if (!Pp) continue;
-        soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.06); st.pas++;
+        soil(soft, gT, x, z, Pp.r, Pp.col, R, 0.06, L.farK); st.pas++;
       }
       soft.done(); }
     return st;
