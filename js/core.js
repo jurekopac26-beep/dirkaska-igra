@@ -2024,6 +2024,10 @@ const Core = (function () {
   // rain it starts from (the last one's r1, the race's own rain for the first); a point starting before the last one ends waits for it.
   // null: no change. WXW: the water's rise, dt (0.3 + r)² / WXW a step (0.6: two minutes, a downpour of 1 about 95 s, a drizzle of 0.3 some 130 s)
   const WXW = 160;
+  // PROF_DT: the AI's speed profile (Race._prof, a walk over the whole track) follows the grip on the line at most every 2 s of a race
+  const PROF_DT = 2;
+  // WX_STAY: an AI car on slicks does not go in for rain tyres when the plan's shower stops within this many seconds (Race._wxDryIn)
+  const WX_STAY = 60;
   function wxPlan(X, r) {
     if (!X) return null; const L = (Array.isArray(X) ? X : [X]).filter(p => p && typeof p === 'object'); if (!L.length) return null;
     let t = 0; return L.map(p => { const at = Math.max(t, +p.at || 0), dur = Math.max(1, +p.dur || 60), r1 = clamp(+p.to || 0, 0, 1), q = { at, dur, r0: r, r1 }; r = r1; t = at + dur; return q; });
@@ -4887,6 +4891,7 @@ const Core = (function () {
     if (race.flyOn && c === race.player && c.flyA !== undefined) vT *= FLY_PL;   // (the flying start: the player's autopilot a little under its pace, a margin; not its following of the car ahead)
     if (c.upgGrip) vT *= Math.pow(c.upgGrip * (1 + c.aeroK * vT * vT), 0.25);   // upgraded tyres / aero: carry more speed through the corners (half the grip gain: safe for every car)
     if (race.wst && race.wst.tyres && c.ty) vT *= Math.sqrt(clamp(c.wet / race.wst.profW, 0.5, 1.4));   // its own tyres (and their wear) against the grip the profile assumes
+    else if (race.wst && race.wst.wx && race.wst.pw) vT *= Math.sqrt(clamp(race.wst.pw / race.wst.profW, 0.5, 1.4));   // (no tyres: the grip on the line now against the profile's, up to PROF_DT old)
     if (c.aeroK0 != null && c.aeroK < c.aeroK0) vT *= Math.sqrt((1 + c.aeroK * vT * vT) / (1 + c.aeroK0 * vT * vT));   // the formula with a wing knocked off: less grip at speed
     if (c.wreck && c.wreck.nL) vT *= Math.sqrt(1 - 0.175 * c.wreck.nL);   // a kit vehicle on a hub or two (LOSTW): each wheel gone costs ~17.5 % of its grip
     // if displaced from line, be a little more careful
@@ -7382,8 +7387,15 @@ const Core = (function () {
         c.wet = (W.tyres && c.ty ? TYRE_GRIP[c.ty.k](w * rk) * (K ? K.g * (1 - K.loss * wl) : 1 - 0.1 * wl) * (c.kt ? 1 : tyreCliff4(c.ty)) : 1 - (1 - WET) * w * rk) * this.cold.gk * cg;
         wxSet(c, W.tyres && c.ty ? c.ty.k : null, w, this.cold.gk, rk); }   // (each tyre's own cliff: tyreCliff4; the KOLIBRI has a wear model of its own, ktWear: no cliff on top of it)
       const pw = (W.tyres ? TYRE_GRIP[tyreFor(W.line)](W.line * rk) : 1 - (1 - WET) * W.water * rk) * this.cold.gk;
-      if (Math.abs(pw - W.profW) > 0.012) { W.profW = pw; W.profB = W.tyres ? TYRE_BRK[tyreFor(W.line)](W.line * rk) * this.cold.gk : wxBrk(null, W.water * rk, this.cold.gk); this._prof(); }
+      W.pw = pw; W.pd = (W.pd || 0) + dt;   // (the grip on the line now; the profile itself at most every 2 s, PROF_DT: the cars' own pace covers the gap, aiDrive)
+      if (Math.abs(pw - W.profW) > 0.012 && W.pd >= PROF_DT) { W.pd = 0; W.profW = pw; W.profB = W.tyres ? TYRE_BRK[tyreFor(W.line)](W.line * rk) * this.cold.gk : wxBrk(null, W.water * rk, this.cold.gk); this._prof(); }
       if (this.mb) this._marbles(dt);
+    }
+    // a changing day's plan (wst.plan): the seconds until the rain stops (0 now dry; Infinity: it rains on to the finish, or no plan)
+    _wxDryIn() {
+      const W = this.wst, P = W && W.plan; if (!P) return Infinity; if (this.rain === 0) return 0;
+      for (let k = W.k; k < P.length; k++) if (P[k].r1 === 0) return Math.max(0, P[k].at + P[k].dur - this.time);
+      return Infinity;
     }
     // an AI driver's own threshold (0..1) for a tyre stop: spread evenly over the grid's slots, so that not all of them want the same lap (13 slots at
     // least: a field of 13 or fewer as ever; a bigger one over its own, a multiple of 7 one more: 7 g then still hits every slot once)
@@ -8042,7 +8054,7 @@ const Core = (function () {
           // their way in or in the lane at a time, a quarter of a bigger field's AI cars, one per crew's box: _pitRoom; the others wait a lap)
           else if (T.def.pit && !c.isPlayer && !c.net && !c.finished && !c.pitWant && !c.inPit && c.ty.k !== tyreFor(W.line) && !T.pitAt(q.s)) {
             const j = this._pitJ(c);
-            if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {
+            if ((c.ty.k === 'dry' ? W.line > 0.35 + 0.35 * j && !(this._wxDryIn() < WX_STAY) : W.line < 0.04 + 0.16 * j && this.rain < 0.05) && this.laps * T.len - c.dist > T.len * 0.4) {   // (a shower about to end, wst.plan: on slicks it stays out, WX_STAY)
               if (this._pitRoom(c)) c.pitWant = true;
             }
           }

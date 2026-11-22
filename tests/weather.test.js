@@ -102,6 +102,12 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
   r2.start(); const W2 = r2.wst, e2 = []; let t2 = 0;
   while (t2 < 260) { C.aiControl(r2.player, r2, DT); r2.step(DT); t2 += DT; if (W2.ev !== e2.length) e2.push(W2.evK); }
   check('a shower: the rain strengthens and eases once each (rain, heavy, ease, dry)', e2.join() === 'rain,heavy,ease,dry' && r2.rain === 0, e2.join());
+  // the AI's profile (Race._prof) at most every 2 s while the water rises (PROF_DT); the plan's end of the rain (Race._wxDryIn: the AI on
+  // slicks stays out when it is under a minute away)
+  const r3 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, weather: [{ at: 5, dur: 10, to: 1 }, { at: 60, dur: 20, to: 0 }] });
+  r3.start(); let np = 0, t3 = 0, dIn = []; const op = r3._prof.bind(r3); r3._prof = () => { np++; return op(); };
+  while (t3 < 90) { C.aiControl(r3.player, r3, DT); r3.step(DT); t3 += DT; if (Math.abs(r3.time - 30) < DT / 2 || Math.abs(r3.time - 70) < DT / 2) dIn.push(Math.round(r3._wxDryIn())); }
+  check('changing weather: the AI\'s profile at most every 2 s, the plan\'s end of the rain known (Race._wxDryIn)', np > 3 && np <= 90 / 2 + 1 && dIn.join() === '50,10' && r3._wxDryIn() === 0, `${np} profiles in 90 s, rain ends in ${dIn.join(' / ')} s`);
 }
 
 // 5. the AI's pit stops for tyres: the rain starts on the second lap of the Red Bull Ring (pits beside the start straight)
