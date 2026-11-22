@@ -435,6 +435,8 @@
       gs.addTo(root, matV, false, true);
     }
 
+    if (API.seRealizem15) API.seRealizem15({ T, scen, out, exclPush, inBld, bar, vergeRow });   // what OSM maps by the road and this world did not draw yet (js/world-realizem15-seoul.js); before the lamps and the trees, which keep clear of it
+
     /* ---- the lamps along the road: slim grey posts with an arm over the verge (OSM has none here); on the left in the park, both sides in
        the town ---- */
     {
