@@ -371,11 +371,11 @@
   "jsMs": 1.34
  },
  "ella": {
-  "calls": 166,
-  "maxCalls": 205,
-  "kverts": 324,
-  "maxKverts": 488,
-  "jsMs": 1.61
+  "calls": 170,
+  "maxCalls": 212,
+  "kverts": 337,
+  "maxKverts": 522,
+  "jsMs": 1.6
  },
  "medeu": {
   "calls": 158,

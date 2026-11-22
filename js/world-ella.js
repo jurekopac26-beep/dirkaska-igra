@@ -593,7 +593,7 @@
       const pads = [padF, ...views, ...parks], onPad = (x, z) => pads.some(p => Math.hypot(x - p.x, z - p.z) < p.r + 0.5);
       const lanes = (def.ways || []).map(L => { const Q = []; for (let k = 3; k + 1 < L.length; k += 2) Q.push([L[k], L[k + 1]]); return { kind: L[0], surf: L[1], hw: L[2] / 20, Q }; });
       // the ribbons (the streets, the service roads, the tracks, the footpaths) on the ground, a kerb of concrete down to it where one is raised
-      const LIFT = [0.08, 0.09, 0.1, 0.1], COL = [[0.86, 0.85, 0.82], [0.8, 0.79, 0.76], [0.74, 0.68, 0.62], [0.64, 0.54, 0.44], [0.5, 0.33, 0.23]], skC = [0.62, 0.61, 0.58];
+      const LIFT = [0.08, 0.09, 0.1, 0.1], COL = [[0.8, 0.79, 0.77], [0.58, 0.57, 0.54], [0.6, 0.55, 0.5], [0.55, 0.48, 0.4], [0.5, 0.33, 0.23]], skC = [0.52, 0.5, 0.47];
       for (const ln of lanes) {
         if (ln.kind > 3 || ln.Q.length < 2) continue;
         const Q = resample(ln.Q, 1.0), Tg = tang(Q), hw = ln.hw, nc = Math.max(1, Math.ceil(2 * hw)), onA = ln.surf === 0, gg = onA ? cA : cG, lift = LIFT[ln.kind], base = COL[ln.surf];
@@ -601,8 +601,8 @@
         const jA = junction(rows, Tg), jB = junction(rows.slice().reverse(), Tg.slice().reverse().map(([u, v]) => [-u, -v]));
         const lo = jA ? jA.r0 : 0, hi = rows.length - (jB ? jB.r0 : 0); if (hi - lo < 2) continue;
         const rr = [...(jA ? [jA.J] : []), ...rows.slice(lo, hi), ...(jB ? [jB.J] : [])];
-        const V = rr.map(row => row.map(([x, z], c) => { const s = site(x, z), k = 0.95 + 0.07 * P.c5(x * 5, z * 5); let col = [base[0] * k, base[1] * k, base[2] * k];
-          if (ln.surf === 4 && (c === 0 || c === nc)) { const e = eGCol(x, z); col = [(col[0] + e[0]) / 2, (col[1] + e[1]) / 2, (col[2] + e[2]) / 2]; }   // (an earth path's edges into the verge)
+        const V = rr.map(row => row.map(([x, z], c) => { const s = site(x, z), k = onA ? 0.95 + 0.07 * P.c5(x * 5, z * 5) : 0.88 + 0.16 * P.c5(x * 5, z * 5); let col = [base[0] * k, base[1] * k, base[2] * k];
+          if (ln.surf && (c === 0 || c === nc)) { const e = eGCol(x, z), f = ln.surf === 4 ? 0.5 : 0.25; col = [col[0] + (e[0] - col[0]) * f, col[1] + (e[1] - col[1]) * f, col[2] + (e[2] - col[2]) * f]; }   // (the edges into the verge: an earth path's half, the others' dust)
           return { p: [x, yAt(s, lift), z], col, fl: s.fl, lo: Math.min(s.v, s.g), inR: s.f >= 0 && s.a < w - 0.3, uv: onA ? [x / 8, z / 8] : [x / 10, -z / 10] }; }));
         let drawn = false;
         for (let r = 0; r + 1 < V.length; r++) for (let c = 0; c < nc; c++) {
@@ -621,7 +621,7 @@
         nLane++;
       }
       // the steps (concrete): a tread every ~0.28 m, each 0.17 m (or a multiple) above the last, its sides down to the ground
-      const stT = [0.7, 0.69, 0.66], stS = [0.64, 0.63, 0.6], stR = [0.6, 0.59, 0.56];
+      const stT = [0.62, 0.61, 0.58], stS = [0.56, 0.55, 0.52], stR = [0.52, 0.51, 0.48];
       for (const ln of lanes) {
         if (ln.kind !== 4 || ln.Q.length < 2) continue;
         const hw = ln.hw, Q0 = ln.Q.map(p => p.slice());
@@ -655,7 +655,7 @@
         if (ln.kind !== 5 || ln.Q.length < 2) continue;
         const p0 = ln.Q[0], p1 = ln.Q[ln.Q.length - 1], g0 = caGround(p0[0], p0[1]), g1 = caGround(p1[0], p1[1]), hi = g0 >= g1 ? p0 : p1, low = g0 >= g1 ? p1 : p0, hH = Math.max(g0, g1) + 0.05, hL = Math.min(g0, g1) + 0.05;
         const Lb = Math.hypot(low[0] - hi[0], low[1] - hi[1]) || 1, ux = (low[0] - hi[0]) / Lb, uz = (low[1] - hi[1]) / Lb, rot = Math.atan2(uz, ux), W = 2 * ln.hw, vx = -uz, vz = ux;
-        const brC = [0.62, 0.61, 0.58], brT = [0.68, 0.67, 0.64], rlC = [0.6, 0.61, 0.63], flat = hH - hL < 0.3, nT = flat ? 1 : Math.ceil((hH - hL) / 0.18), d = Lb / nT;
+        const brC = [0.56, 0.55, 0.52], brT = [0.6, 0.59, 0.56], rlC = [0.55, 0.56, 0.58], flat = hH - hL < 0.3, nT = flat ? 1 : Math.ceil((hH - hL) / 0.18), d = Lb / nT;
         const top = (t) => flat ? hH : hH - (hH - hL) * clamp(t / Lb, 0, 1);
         for (let k = 0; k < nT; k++) { const t = (k + 0.5) * d, cx = hi[0] + ux * t, cz = hi[1] + uz * t, yt = flat ? hH : hH - (k + 0.5) * (hH - hL) / nT;
           box(cS.get(cx, cz), cx, yt - 0.25, cz, d + 0.02, 0.25, W, rot, brC, brT);
