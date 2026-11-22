@@ -1144,23 +1144,25 @@
   }
  },
  "killar": {
-  "meshes": 1559,
-  "verts": 1114015,
-  "instances": 43807,
+  "meshes": 1576,
+  "verts": 1181606,
+  "instances": 43063,
   "props": 95,
   "crowd": 146,
-  "world": "95e8c1e5",
+  "world": "32b721b4",
   "propsHash": "5a404b3",
   "floor": "ab9d352f/9520",
   "groups": {
-   "-:MeshLambertMaterial": "65cfd614",
+   "-:MeshLambertMaterial": "8300892d",
    "-:MeshPhongMaterial": "b4c1bf16",
    "-:MeshBasicMaterial": "c58331d7",
+   "roadside-ways:MeshLambertMaterial": "711f7733",
+   "roadside-ways:MeshPhongMaterial": "7456c5d0",
    "crowd:MeshLambertMaterial": "73fc1991",
-   "ao:MeshBasicMaterial": "aa227629",
-   "life:MeshLambertMaterial": "22f399fb",
-   "lifeShadow:MeshBasicMaterial": "ac4382c6",
-   "life:MeshBasicMaterial": "a9d7771e"
+   "ao:MeshBasicMaterial": "3cb595d1",
+   "life:MeshLambertMaterial": "ccf078f7",
+   "lifeShadow:MeshBasicMaterial": "9e8374d3",
+   "life:MeshBasicMaterial": "b21f261a"
   }
  },
  "luanda": {

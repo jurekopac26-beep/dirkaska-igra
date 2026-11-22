@@ -574,11 +574,11 @@
   "jsMs": 4.38
  },
  "killar": {
-  "calls": 146,
-  "maxCalls": 162,
-  "kverts": 282,
-  "maxKverts": 353,
-  "jsMs": 1.99
+  "calls": 143,
+  "maxCalls": 163,
+  "kverts": 291,
+  "maxKverts": 345,
+  "jsMs": 1.63
  },
  "luanda": {
   "calls": 110,
