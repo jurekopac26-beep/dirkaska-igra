@@ -1165,7 +1165,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   function rpSeek(t) {   // the replay to time t (the timeline, 5 s back or on, a frame): the camera there at once after a jump
     const P = replay, F = recd.frames; t = Core.clamp(t, F[0][0], P.t1);
     if (Math.abs(t - P.t) > 1.5) Render.resetCam();
-    P.t = t; P.i = rpIdx(F, t);
+    P.t = t; P.i = rpIdx(F, t); rpWx(t);   // (the weather at t at once: a picture right after the jump, tools/posnetek.mjs --t)
   }
   const rpClock = (t) => { const d = Math.max(0, Math.round(t * 10)), m = Math.floor(d / 600); return String(m).padStart(2, '0') + ':' + ((d % 600) / 10).toFixed(1).padStart(4, '0'); };   // (00:41.3)
   function replayUI() {
