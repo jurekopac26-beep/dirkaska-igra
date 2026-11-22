@@ -497,11 +497,11 @@
   "jsMs": 1.44
  },
  "tuzla": {
-  "calls": 156,
+  "calls": 158,
   "maxCalls": 207,
-  "kverts": 448,
-  "maxKverts": 560,
-  "jsMs": 1.17
+  "kverts": 478,
+  "maxKverts": 600,
+  "jsMs": 2.04
  },
  "buriram": {
   "calls": 195,

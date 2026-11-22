@@ -2,11 +2,12 @@
    WORLD — Tuzla, Turčija (theme 'tuzla'): the circuit on the hills above Tuzla on the Asian side of Istanbul, its own parts on the shared
    builder of js/world-rbring.js (World.ext.rbring), loaded before it (index.html). Its look (RB_LOOK.tuzla) goes on API.rbLook;
    World.ext.tuzla builds it with World.ext.rbring. Plan: docs/nove-proge-1-0.md (A12), the track: docs/proge/tuzla.md.
-   Its own parts (the builder's hooks LK.woods, LK.extra, LK.fl, LK.colMod): the trees of the dry hills by the Sea of Marmara (umbrella
-   pines, Turkish red pines, the oaks and the bushes of the maquis: tzTreeGeo), the hills' grass burnt golden by the summer and the circuit's
-   watered lawns green by the track, the service roads round the circuit (def.sk.svc: OpenStreetMap) as plain asphalt on the ground, the
-   buildings by the circuit (def.sk.bld: OpenStreetMap), the Turkish flag among the fans' flags (World.flagMesh's emblems, look.sym), red turn numbers. Only
-   place names on its boards (no names of the circuit, its people, races or sponsors).
+   Its own parts (the builder's hooks LK.woods, LK.extra, LK.build, LK.fl, LK.colMod): the trees of the dry hills by the Sea of Marmara
+   (umbrella pines, Turkish red pines, the oaks and the bushes of the maquis: tzTreeGeo), the hills' grass burnt golden by the summer and the
+   circuit's watered lawns green by the track, the service roads round the circuit (def.sk.svc: OpenStreetMap) as plain asphalt on the
+   ground, the short link across the infield and the drift course (TZ_LINK, TZ_DRIFT: OpenStreetMap), the buildings by the circuit
+   (def.sk.bld) and 60-200 m off (TZ_BLD2: OpenStreetMap), the Turkish flag among the fans' flags (World.flagMesh's emblems, look.sym), red
+   turn numbers. Only place names on its boards (no names of the circuit, its people, races or sponsors).
    ========================================================================= */
 (function () {
   'use strict';
@@ -62,9 +63,52 @@
     },
   };
 
+  // the circuit's own asphalt off the track (OpenStreetMap's highway=raceway: only the lines, no widths): the short link across the infield
+  // (described there as for the shorter races: from the left of the track at 1,715 m to its right at 3,480 m), 12 m wide (the least for a
+  // circuit's road), white edge lines; the drift course (sport=drifting), a closed loop of 364 m 74-164 m right of the track at 2,300 m,
+  // 10 m wide (its hairpin's legs one asphalt wedge for ~37 m from the apex); x east, z south (m), as the track's
+  const TZ_LINK = [559.3, -819.4, 531.5, -829.1, 521.5, -831.6, 514.4, -831.9, 507.2, -830.5, 499.9, -828.3, 490.4, -824.2, 479.4, -820.0, 467.6, -816.1, 455.1, -812.9,
+    438.9, -810.4, 424.9, -809.7, 410.3, -810.8, 396.4, -813.5, 385.1, -816.7, 376.7, -819.5, 368.4, -823.4, 359.2, -828.2, 352.6, -832.2, 346.8, -836.8, 332.8, -848.9,
+    326.5, -853.7, 318.9, -858.0, 310.1, -861.0, 301.0, -862.8, 291.9, -863.6, 280.8, -863.5, 272.2, -862.0, 264.9, -859.1, 258.1, -853.9, 254.4, -849.5, 250.6, -842.3, 243.9, -828.9];
+  const TZ_DRIFT = [914.6, -801.5, 902.1, -831.4, 879.0, -849.3, 871.6, -850.7, 863.9, -849.8, 858.2, -846.4, 851.3, -839.0, 849.4, -831.7, 853.2, -825.5, 920.0, -764.2,
+    926.5, -762.3, 938.9, -767.5, 947.7, -778.9, 952.5, -788.9, 956.8, -797.0, 958.7, -804.1, 958.9, -811.5, 956.8, -818.6, 948.9, -826.9, 939.9, -835.7, 929.8, -839.5,
+    923.4, -841.4, 916.7, -840.0, 913.1, -833.6, 911.4, -826.9];
+  const TZ_LW = 6, TZ_DW = 5;   // (half-widths)
+  // the smaller buildings 60-200 m from the road (OpenStreetMap's building=yes, as def.sk.bld's within 60 m: [x, z, length, width, deg, height])
+  const TZ_BLD2 = [-26.5, -440.5, 19.3, 12.8, -21, 5.5, 900.8, -868.0, 18.9, 11.8, -10, 5.5, -592.7, 18.8, 18.7, 12.1, 11, 5.5, 715.9, -311.4, 19.3, 12.4, 7, 5.5,
+    155.1, -1045.3, 19.3, 12.8, -18, 5.5, 945.1, -709.6, 17.5, 12.4, 42, 5.5, 814.3, -1288.6, 100.0, 18.5, 10, 7.5, 75.5, -173.2, 41.9, 16.6, -11, 7.5,
+    724.1, -1299.6, 17.6, 11.4, -9, 5.5, 353.8, -64.8, 19.0, 12.1, 78, 5.5, 361.8, -110.1, 35.5, 25.7, 53, 7.5, 380.9, -115.7, 21.2, 9.0, 52, 5.5,
+    560.0, -214.0, 15.5, 5.3, 52, 3.2, 572.2, -203.2, 15.0, 11.6, 52, 5.5];
+  // a way's points every ~4 m (a closed one back to its first)
+  function tzPts(P, closed) {
+    const p = []; for (let k = 0; k < P.length; k += 2) p.push([P[k], P[k + 1]]); if (closed) p.push(p[0]);
+    const pts = []; for (let q = 0; q + 1 < p.length; q++) { const [ax, az] = p[q], [bx, bz] = p[q + 1], m = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4)); for (let t = 0; t < m; t++) pts.push([lerp(ax, bx, t / m), lerp(az, bz, t / m)]); }
+    pts.push(p[p.length - 1]); return pts;
+  }
+
+  // LK.build: before the shared builder's marshal posts, TV towers, recovery trucks, photographers and car-park lots (each kept off what is
+  // already kept clear): the link and the drift course (5 m past their edges: no trees, no huts; the people off them by the track), the
+  // buildings by the circuit and 60-200 m off (11 m round one by the car parks' land cover: a lot's tents and cars reach ~10 m from where it
+  // stands; 2 m round the others: the trees up to their walls; the people off them)
+  function tzKeep({ def, exclPush, CR }) {
+    for (const [P, hw, cl] of [[TZ_LINK, TZ_LW, false], [TZ_DRIFT, TZ_DW, true]]) {
+      const pts = tzPts(P, cl);
+      for (let q = 0; q < pts.length; q += 2) { const [x, z] = pts[q], nn = nrNear(x, z); exclPush(x, z, hw + 5); if (nn.i >= 0 && nn.dd < 70) CR.avoid(x, z, hw + 0.5); }
+    }
+    for (const B of [(def.sk || {}).bld || [], TZ_BLD2]) for (let k = 0; k < B.length; k += 6) {
+      const [x, z, L, W, deg] = B.slice(k, k + 5), rot = deg * Math.PI / 180, n = Math.ceil(L / W), R = Math.hypot(L, W) / 2;   // (a long hall: a row of circles along it)
+      let lot = false; for (let a = -R - 16; a <= R + 16 && !lot; a += 8) for (let b = -R - 16; b <= R + 16 && !lot; b += 8) lot = nrLCf(x + a, z + b, 3) > 0;   // (a lot stands on a car-park cell's centre: the share round it over 0 within a cell of it)
+      for (let j = 0; j < n; j++) { const t = -L / 2 + L * (j + 0.5) / n; exclPush(x + Math.cos(rot) * t, z + Math.sin(rot) * t, Math.hypot(L / n, W) / 2 + (lot ? 11 : 2)); }
+      CR.avoid(x, z, R + 1);
+    }
+  }
+
   // the service roads round the circuit (def.sk.svc: OSM's highway=service): plain asphalt 5 m wide on the ground, three points across every
   // 4 m (the terrain under it), 8 cm over it and drawn over it; not inside the barriers nor within 4 m past them (the run-offs are the
-  // builder's), the trees and the people off them
+  // builder's), the trees and the people off them. In the same mesh the link and the drift course (TZ_LINK, TZ_DRIFT: five points across,
+  // 10 cm over the ground, the circuit's darker asphalt; the link not within 1.5 m past the barriers: behind the track's, as its gates),
+  // the drift course rising 4 cm along its loop (its hairpin's legs, one over the other near the apex, never in the same place); the
+  // link's white edge lines in their own mesh (3 cm over its asphalt and drawn over it)
   function tzRoads({ root, tex, exclPush, CR }, st) {
     const S = (API.T.def.sk || {}).svc || [], rb = new RB(true), col = [0.9, 0.9, 0.92], HW = 2.5;
     for (let k = 0; k < S.length;) {
@@ -83,23 +127,45 @@
         st.road += 4;
       }
     }
+    const lb = new RB(), LC = [0.94, 0.94, 0.9], CE = [0.8, 0.8, 0.82], ED = [0.84, 0.84, 0.86];
+    for (const [P, hw, cl] of [[TZ_LINK, TZ_LW, false], [TZ_DRIFT, TZ_DW, true]]) {
+      const pts = tzPts(P, cl), n = pts.length, O = [-hw, -hw / 2, 0, hw / 2, hw], LO = [-(hw - 0.2), -(hw - 0.5), hw - 0.5, hw - 0.2];
+      let prev = -1, lp = -1, along = 0;
+      for (let q = 0; q < n; q++) {
+        const [x, z] = pts[q], a = pts[q ? q - 1 : cl ? n - 2 : 0], b = pts[q < n - 1 ? q + 1 : cl ? 1 : q], dx = b[0] - a[0], dz = b[1] - a[1], dl = Math.hypot(dx, dz) || 1;
+        if (q) along += Math.hypot(x - pts[q - 1][0], z - pts[q - 1][1]);
+        const nx = -dz / dl, nz = dx / dl, up = 0.1 + (cl ? 0.04 * q / (n - 1) : 0);
+        const row = O.map(o => { const px = x + nx * o, pz = z + nz * o; return [px, nrGround(px, pz) + up, pz]; });
+        if (row.some(p => { const nn = nrNear(p[0], p[2]); return nn.i >= 0 && nn.dd < 1.5; })) { prev = lp = -1; continue; }
+        const r = rb.row(row, [ED, CE, CE, CE, ED], O.map(o => [(o + hw) / 8, along / 8]));
+        if (prev >= 0) rb.link(prev, r, 0, 4); prev = r;
+        if (!cl) {   // (on the asphalt between its points across)
+          const ln = LO.map(o => { const j = Math.min(3, Math.floor((o + hw) / (hw / 2))), t = (o - O[j]) / (hw / 2); return [x + nx * o, lerp(row[j][1], row[j + 1][1], t) + 0.03, z + nz * o]; });
+          const l = lb.row(ln, [LC, LC, LC, LC]); if (lp >= 0) { lb.link(lp, l, 0, 1); lb.link(lp, l, 2, 3); } lp = l;
+        }
+        st[cl ? 'drift' : 'link'] += 4;
+      }
+    }
+    if (!lb.empty) { const m = new THREE.Mesh(lb.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 }));
+      m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'tuzla link lines'; root.add(m); }
     if (rb.empty) return;
     const m = new THREE.Mesh(rb.geometry(), new THREE.MeshLambertMaterial({ map: tex.asphalt, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }));
     m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'tuzla service roads'; root.add(m);
   }
 
-  // LK.extra: the service roads, the buildings by the circuit (OSM outlines as boxes: white or cream render, grey cladding on the big halls;
-  // flat roofs, grey or terracotta); before the crowds and the trees, which keep clear of them
+  // LK.extra: the service roads, the link, the drift course, the buildings by the circuit and 60-200 m off (OSM outlines as boxes: white or
+  // cream render, grey cladding on the big halls; flat roofs, grey or terracotta); before the crowds and the trees (the buildings kept clear
+  // in tzKeep)
   function tzExtra(o) {
-    const { scen, exclPush, CR } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, buildings: 0 };
+    const { scen } = o, sk = API.T.def.sk || {}, R = rng(9037), st = { road: 0, link: 0, drift: 0, buildings: 0 };
     tzRoads(o, st);
     const b6 = sk.bld || [], WALL = [[0.93, 0.91, 0.86], [0.9, 0.85, 0.74], [0.84, 0.82, 0.78], [0.72, 0.73, 0.75]], ROOF = [[0.36, 0.37, 0.39], [0.62, 0.32, 0.22], [0.48, 0.49, 0.5]];
-    for (let k = 0; k < b6.length; k += 6) {
-      const [x, z, L, W, deg, h] = b6.slice(k, k + 6), rot = deg * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot);
+    for (const B of [b6, TZ_BLD2]) for (let k = 0; k < B.length; k += 6) {
+      const [x, z, L, W, deg, h] = B.slice(k, k + 6), rot = deg * Math.PI / 180, c = Math.cos(rot), s = Math.sin(rot);
       let y = 1e9; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) y = Math.min(y, nrGround(x + (a * L * c - b * W * s) / 2, z + (a * L * s + b * W * c) / 2));
       const wc = h > 6 ? WALL[3] : WALL[Math.floor(R() * 3)], rc = ROOF[h > 6 ? 0 : Math.floor(R() * 3)];
       box(scen.get(x, z), x, y - 0.4, z, L, h + 0.4, W, rot, wc, rc, true);
-      exclPush(x, z, Math.hypot(L, W) / 2 + 2); CR.avoid(x, z, Math.hypot(L, W) / 2 + 1); st.buildings++;
+      st.buildings++;
     }
     return st;
   }
@@ -107,7 +173,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     tuzla: { ban: TZ_BAN, at: TZ_AT, nums: 14, numC: ['#c8102e', '#fff', '#fff'], shirts: TZ_SHIRTS, smoke: false, camps: 0, farms: 0, seC: [1.1, 1.02, 0.84], gravel: false, noVid: true,
       pitBox: [-260, 90, -1], mow: 0.7,   // (the pit building on the left of the main straight, its garages from the pit entry's end to Turn 1's brakes; fainter mowing stripes; no farms on the circuit's hills)
-      woods: TZ_WOODS, extra: tzExtra, lane: true, fl: { tr: TR }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
+      woods: TZ_WOODS, extra: tzExtra, build: tzKeep, lane: true, fl: { tr: TR }, ck: 2,   // (ck: chunks twice as big: fewer draws where much of the circuit is in view)
       flags: { stand: [{ tr: 0.8, tm: 0.2 }, { tr: 0.7, tm: 0.2, rb: 0.1 }], ga: { tr: 0.75, tm: 0.25 }, camp: { tr: 0.85, tm: 0.15 }, pole: 'tr', podium: 'tr' },
       vid: [], poles: [-240, 120, 1], runoff: ['TUZLA', 'İSTANBUL', 'TÜRKİYE'], straight: [-300, 130, 1],
       farm: { wall: [0.93, 0.9, 0.84], roof: [0.62, 0.32, 0.22], end: [0.9, 0.87, 0.8], barn: [0.55, 0.45, 0.35], barnRoof: [0.62, 0.32, 0.22], barnEnd: [0.52, 0.42, 0.32] },
