@@ -23,4 +23,8 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 - **Približki**: drevesa, palme, grmovje, skale in gledalci so razporejeni po rabi tal, višini in naklonu, ne po resničnih legah. Hiše so generične.
 - **Pravno**: samo zemljepisna imena (Savusavu, Vanua Levu); brez imen letovišč, trgovin, marin, letališča in oseb.
 
+## Ob cesti
+
+Stranske ulice in dovozi, ki se priključijo na glavno cesto (obrisi iz OpenStreetMap, površina po oznaki `surface`). V delu, glej osnutek PR (veja `grafika/savusavu-obcestje`).
+
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py savusavu --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.
