@@ -95,3 +95,4 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.16 | #943 Krásna Hôrka, Slovaška | nova proga 3,4 km (veja `proga/spis`), testi zeleni; v sporu z `main`, ob združitvi spoji; proge zadnje (Matej, #382 7079559816) | partyslo | osnutek |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
+| 21.11 | #886 Irishtown, Jamajka | Nova proga partyslo (cesta B1 nad Kingstonom, 4,2 km, dve serpentini, `pending: true`); zanimivosti potrdi uporabnik. | partyslo | osnutek, Združevanje |

@@ -6760,5 +6760,103 @@
    "rescues": 1,
    "repairs": 0
   }
+ },
+ "irishtown/race/cs": {
+  "digest": "a630ec43d6d91099b55f6689",
+  "lead": 1643.3,
+  "car0": [
+   58.96,
+   -192.31
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "irishtown/demo/cs": {
+  "digest": "a9e558334ea38f38f15a2df4",
+  "lead": 1764,
+  "car0": [
+   192.73,
+   -182.49
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "irishtown/upg/cs": {
+  "digest": "85ec221224cbb10b9e20be93",
+  "lead": 1749.3,
+  "car0": [
+   186.99,
+   -138.59
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "irishtown/crash/cs": {
+  "digest": "ddc15869db1c9f28c05dcc4c",
+  "lead": 1620.9,
+  "car0": [
+   14.02,
+   -148.37
+  ],
+  "cover": {
+   "dmg": 0.77,
+   "loose": 5,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "irishtown/formula/cs": {
+  "digest": "0422ab02f3106ba144aff848",
+  "lead": 1762.3,
+  "car0": [
+   71.89,
+   -191.86
+  ],
+  "cover": {
+   "dmg": 0.5,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "irishtown/lm/cs": {
+  "digest": "93b31c071d365420243ed0ec",
+  "lead": 1731.2,
+  "car0": [
+   56.42,
+   -194.26
+  ],
+  "cover": {
+   "dmg": 0.58,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "irishtown/car/cs": {
+  "digest": "867ae38b4cdcf41e2036b7d5",
+  "lead": 1620.9,
+  "car0": [
+   4.78,
+   -142.03
+  ],
+  "cover": {
+   "dmg": 0.93,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
  }
 }

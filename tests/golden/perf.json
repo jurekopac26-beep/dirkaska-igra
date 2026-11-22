@@ -481,5 +481,12 @@
   "kverts": 1340,
   "maxKverts": 1516,
   "jsMs": 0
+ },
+ "irishtown": {
+  "calls": 175,
+  "maxCalls": 203,
+  "kverts": 488,
+  "maxKverts": 592,
+  "jsMs": 1.12
  }
 }

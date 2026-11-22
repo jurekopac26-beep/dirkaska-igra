@@ -212,6 +212,23 @@
       roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.42, 0.3]],   // (corrugated iron: bare, red, blue, green)
       sheep: 0, portal: 0, far: { lo: [0.13, 0.3, 0.12], hi: [0.26, 0.38, 0.22], dw: [0.1, 0.24, 0.1], snow: 9000 },
     },
+    // Irishtown (the Blue Mountains above Kingston, Jamaica): the B1 up the south slope, a dense wet montane forest of broadleaves (L.trop) in the
+    // gullies, the coffee on the terraced ridges at Craighton, red-brown weathered earth in the cuttings, grey shale and volcanic rock in the crags;
+    // no snow, no sheep, no tunnel portal; the houses of the hamlets with tin roofs, a steel rail on the drop; generic signs only (no name of a hotel,
+    // a guest house or a coffee estate)
+    irishtown: {
+      seed: 7610, board: 'IRISHTOWN', sub: 'SAINT ANDREW', banner: ['IRISHTOWN', 'BLUE MOUNTAINS'], trop: 1,
+      grass: [0.3, 0.5, 0.18], grassDry: [0.46, 0.5, 0.25], grassLush: [0.22, 0.46, 0.14], shrub: [0.13, 0.29, 0.1],
+      rock: [0.46, 0.43, 0.4], rockWarm: [0.56, 0.42, 0.32], lichen: [0.36, 0.37, 0.3], scree: [0.58, 0.47, 0.37],
+      sat: 0.56, satV: 1.28, snowLine: 9000, snowC: [1.0, 1.02, 1.06],
+      rockCols: [[0.46, 0.44, 0.42], [0.52, 0.48, 0.44], [0.4, 0.39, 0.38], [0.58, 0.46, 0.36], [0.44, 0.42, 0.4], [0.5, 0.47, 0.43]],   // (the grey shale and weathered volcanic rock of the range, reddened by the earth)
+      centre: [0.95, 0.95, 0.92], dash: [3, 9], solidNear: 70,   // (white centre line, as the country's markings (World.cesta CRTE): dashed 3 m / 9 m, solid through the hairpins)
+      chev: ['#1c1c1c', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.54, 0.45, 0.36],
+      fans: [[0.98, 0.84, 0.12], [0.2, 0.55, 0.32], [0.95, 0.95, 0.95], [0.84, 0.14, 0.14], [0.12, 0.3, 0.62], [0.95, 0.5, 0.14], [0.4, 0.66, 0.82], [0.55, 0.62, 0.7]],
+      cars: [[0.9, 0.9, 0.88], [0.55, 0.57, 0.6], [0.2, 0.36, 0.62], [0.68, 0.14, 0.12], [0.78, 0.72, 0.6], [0.3, 0.5, 0.36]],   // (no black or very dark cars)
+      roofs: [[0.52, 0.54, 0.56], [0.62, 0.24, 0.18], [0.24, 0.36, 0.5], [0.3, 0.44, 0.3]],   // (corrugated iron: bare, red, blue, green)
+      sheep: 0, portal: 0, far: { lo: [0.13, 0.29, 0.12], hi: [0.28, 0.38, 0.24], dw: [0.1, 0.23, 0.1], snow: 9000 },
+    },
   };
   // Gudauri (Georgia, the Greater Caucasus): the open slopes above the deep valley of the White Aragvi, late-summer alpine meadow, yellowing,
   // grazed short, with mats of Caucasian rhododendron and juniper, the pine planted round the lower village (lc 1), dark grey-brown andesite and
