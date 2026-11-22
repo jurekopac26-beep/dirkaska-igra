@@ -100,9 +100,9 @@
  "tianmen": {
   "calls": 195,
   "maxCalls": 230,
-  "kverts": 652,
-  "maxKverts": 781,
-  "jsMs": 1.55
+  "kverts": 655,
+  "maxKverts": 783,
+  "jsMs": 1.8
  },
  "uncompahgre": {
   "calls": 161,

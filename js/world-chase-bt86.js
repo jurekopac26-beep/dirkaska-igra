@@ -49,7 +49,7 @@
       const out = K.outer && T.k && sd === -Math.sign(T.k[i]) ? Math.min(1, Math.abs(T.k[i]) * 70) * K.outer : 0;
       const at = (o) => [T.px[i] + T.nx[i] * sd * o + T.tx[i] * a, T.pz[i] + T.nz[i] * sd * o + T.tz[i] * a];
       const ok = (x, z) => { const q = near(x, z); return q.i >= 0 && Math.abs(q.i - i) * ds < 6 && q.lat * sd > 0 && !bad(x, z) && !(gT(x, z) < T.hy[i] - 3); };
-      if (r0 < K.rim + out) { let o = K.in1 + r1 * (K.in0 - K.in1); if (K.gap && o > K.gap[0] && o < K.gap[1]) o = o - K.gap[0] < K.gap[1] - o ? K.gap[0] - 0.02 : K.gap[1] + 0.02;   // (not on the edge line)
+      if (r0 < K.rim + out) { let o = K.in1 + r1 * (K.in0 - K.in1); if (K.gap) { const g0 = K.gap[0] - (K.gapPad || 0), g1 = K.gap[1] + (K.gapPad || 0); if (o > g0 && o < g1) o = o - g0 < g1 - o ? Math.max(0.03, g0 - 0.02) : g1 + 0.02; }   // (not on the edge line: the streak's half-width and sway, K.gapPad, kept off it too)
         const [x, z] = at(w - o);
         if (ok(x, z)) { const P = K.onRoad(R, out); streak(soft, rY, x, z, T.tx[i], T.tz[i], P.len, P.wid, P.col, R, P.lift); st.rob++; } }
       if (r2 < K.grit) { const [x, z] = at(w + K.sh0 + R() * (K.sh1 - K.sh0));
@@ -130,9 +130,10 @@
     const rY = (x, z) => { const q = near(x, z); if (q.i < 0) return gT(x, z); const w = T.w, a = Math.abs(q.lat), y = T.hy[q.i];
       return a < w ? y + 0.02 : a < w + 0.5 ? y + 0.012 - 0.032 * (a - w) / 0.5 : Math.max(gT(x, z), y - 0.02); };
     const E = { near, gT, rY, lc: null, bad, slope: o && o.slope }, soft = softScen(ctx.root, out.matV);
-    // (on the asphalt by its edge, 1 m inside it, but not on the white edge line, w - 0.4 to w - 0.25: the wheels keep further in)
-    const st = edge(soft, E, 86201, { step: 3.4, rim: 0.45, in0: 1.0, in1: 0.06, gap: [0.2, 0.45], grit: 0.25, sh0: 0.05, sh1: 0.45, stone: 0.05,
-      onRoad: (R) => { const v = R(); return { len: 1.2 + R() * 2.4, wid: 0.12 + R() * 0.08, lift: 0.008, col: C_(R, v < 0.5 ? TM.grime : v < 0.75 ? TM.moss : TM.leaf) }; },
+    // (on the asphalt by its edge, 1 m inside it, but not on the white edge line, w - 0.4 to w - 0.25 at +0.036 (js/world-tianmen.js): a streak's
+    //  half-width with its sway is at most 0.15 m, so none comes nearer the line than that; lifted 0.015 m over the asphalt against z-fighting)
+    const st = edge(soft, E, 86201, { step: 3.4, rim: 0.45, in0: 1.0, in1: 0.06, gap: [0.25, 0.4], gapPad: 0.16, grit: 0.25, sh0: 0.05, sh1: 0.45, stone: 0.05,
+      onRoad: (R) => { const v = R(); return { len: 1.2 + R() * 2.4, wid: 0.12 + R() * 0.08, lift: 0.015, col: C_(R, v < 0.5 ? TM.grime : v < 0.75 ? TM.moss : TM.leaf) }; },
       onShoulder: (R) => { const v = R(); return { len: 0.6 + R() * 1.4, wid: 0.18 + R() * 0.2, col: C_(R, v < 0.5 ? TM.wgrit : v < 0.8 ? TM.leaf : TM.moss, 0.02) }; },
       stoneCol: (R) => C_(R, TM.stone, 0.03) });
     // past the barrier out to ~40 m: the limestone's boulders, moss at their foot (also on the steeper ground)

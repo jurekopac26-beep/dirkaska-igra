@@ -314,11 +314,11 @@
  },
  "tianmen": {
   "meshes": 926,
-  "verts": 899402,
+  "verts": 900230,
   "instances": 12659,
   "props": 33,
   "crowd": 5,
-  "world": "79789bcb",
+  "world": "31fa52c8",
   "propsHash": "c514dbc8",
   "floor": "f747cc9e/10332",
   "groups": {
@@ -326,7 +326,7 @@
    "-:MeshPhongMaterial": "b702964d",
    "-:MeshBasicMaterial": "2188a968",
    "crowd:MeshLambertMaterial": "9284d73e",
-   "rob:MeshLambertMaterial": "43fb2166",
+   "rob:MeshLambertMaterial": "1cbf2898",
    "dolina:MeshLambertMaterial": "c31858ad",
    "flags:MeshLambertMaterial": "a526a811",
    "ao:MeshBasicMaterial": "a7b84d48",
