@@ -183,6 +183,7 @@
       cars: [[0.92, 0.92, 0.9], [0.62, 0.12, 0.1], [0.14, 0.26, 0.5], [0.16, 0.16, 0.18], [0.55, 0.57, 0.6], [0.2, 0.42, 0.3]],
       roofs: [[0.62, 0.22, 0.16], [0.5, 0.52, 0.54], [0.2, 0.38, 0.5], [0.3, 0.46, 0.28]],
       sheep: 0, portal: 0, far: { lo: [0.15, 0.3, 0.12], hi: [0.36, 0.42, 0.28], dw: [0.11, 0.24, 0.09], snow: 9000 },
+      shrubR: 110, farTree: 110,   // (the phone's load, the dense forest's: the shrubs only within 110 m of the road, the broadleaves past it lighter, kind 10)
     },
     // Savusavu (the south coast of Vanua Levu, Fiji): the coast road over a low ridge of wet tropical forest, coconut palms and gardens by the
     // houses, red-brown volcanic soil in the cuttings, dark basalt in the few crags; no snow, no sheep, no tunnel; a steel rail where the slope falls
@@ -406,6 +407,12 @@
       cyl(g, 0, 0, 0, 0.035, 0.5, 5, [0.42, 0.38, 0.32]);
       API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
       for (let k = 0; k < 6; k++) { const a = k / 6 * TAU + R() * 0.6, d = k ? 0.2 + R() * 0.08 : 0; ico(g, Math.cos(a) * d, 0.62 + (k ? R() * 0.14 : 0.12), Math.sin(a) * d, 0.24, 0.62, vary(col, R, 0.22), R, 0.3); }
+    } else if (kind === 10) {   // the tropical broadleaf far from the road (L.farTree): the same slim trunk (three faces) under three lumps of its crown, as
+      // wide and as high as kind 0's six; past L.farTree m from the road the chase camera sees it at ~100 m and more, a few pixels across
+      cyl(g, 0, 0, 0, 0.035, 0.5, 3, [0.42, 0.38, 0.32]);
+      API.ROCK_SMOOTH = true; const col = [0.13, 0.27, 0.1];
+      ico(g, 0, 0.72, 0, 0.3, 0.62, vary(col, R, 0.22), R, 0.3);
+      for (let k = 0; k < 2; k++) { const a = k * TAU / 2 + R() * 0.6; ico(g, Math.cos(a) * 0.19, 0.66 + R() * 0.1, Math.sin(a) * 0.19, 0.27, 0.62, vary(col, R, 0.22), R, 0.3); }
     } else if (kind === 5) {
       const col = [0.25, 0.35, 0.17], bark = [0.42, 0.37, 0.33];
       cyl(g, 0, 0, 0, 0.028, 0.7, 5, bark, null, 0.018);
@@ -1148,6 +1155,7 @@
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const larch = L.forest === 'larch', med = L.forest === 'med';   // (the forest's tall trees first: the spruce, or the larch and then the stone pine in tk[3]; the Mediterranean's: the Aleppo pine, the macchia, the càrritx, the holm oak)
     const tk = (larch ? [3, 1, 2, 4] : med ? [5, 6, 7, 8] : [0, 1, 2]).map(k => new IChunks(plTreeGeo(k), tMatT, 96));
+    const farTk = L.farTree && L.trop && !larch && !med ? new IChunks(plTreeGeo(10), tMatT, 96) : null;   // (L.farTree: the broadleaves past it in the lighter kind 10, no shadow: beyond the shadow's box)
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), RT = rng(L.seed + 61), SP = 3.6 / Math.sqrt(dens);
@@ -1186,7 +1194,7 @@
             if (sp === 0) { hgt = (9 + r4 * 11) * (0.5 + 0.5 * tl); wid = hgt * (0.36 + r2 * 0.1); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.14, 0.86 + r3 * 0.14]; }
             else { hgt = (6 + r4 * 7) * (0.55 + 0.45 * tl); wid = hgt * (0.52 + r2 * 0.12); col = [0.9 + r3 * 0.16, 0.94 + r4 * 0.12, 0.94 + r2 * 0.12]; }
           }
-          tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
+          (farTk && sp === 0 && hd > LOD.radius(L.farTree) ? farTk : tk[sp]).add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
           if (++nTrees >= maxT) break grid;
         }
       }
@@ -1203,6 +1211,7 @@
         nTrees++; }
       clump.addTo(root, true); }
     for (const t of tk) t.addTo(root, true);
+    if (farTk) farTk.addTo(root, false);
 
     /* ---- the pasture's plants (instanced per 96 m chunk): tufts of grass, cushions of flowers, boulders; stones on the scree and by the road ---- */
     const pMat = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
