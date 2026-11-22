@@ -737,21 +737,21 @@
   }
  },
  "gudauri": {
-  "meshes": 2281,
-  "verts": 985325,
-  "instances": 54104,
+  "meshes": 2279,
+  "verts": 1056081,
+  "instances": 53735,
   "props": 126,
-  "crowd": 153,
-  "world": "3911ef19",
+  "crowd": 149,
+  "world": "b2c6637a",
   "propsHash": "255957b1",
   "floor": "4bb44d3b/10248",
   "groups": {
-   "-:MeshLambertMaterial": "6539c0b1",
+   "-:MeshLambertMaterial": "84bc8cf1",
    "-:MeshPhongMaterial": "69c3b7e0",
    "-:MeshBasicMaterial": "170fb582",
    "irFar:MeshLambertMaterial": "d6264d7",
-   "crowd:MeshLambertMaterial": "be9c0426",
-   "ao:MeshBasicMaterial": "4141974f",
+   "crowd:MeshLambertMaterial": "5a811fda",
+   "ao:MeshBasicMaterial": "e02d1812",
    "tyremarks:MeshBasicMaterial": "98977a4",
    "roadwear:MeshLambertMaterial": "be470039"
   }
