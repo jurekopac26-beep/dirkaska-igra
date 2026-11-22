@@ -525,11 +525,11 @@
   "jsMs": 0.81
  },
  "sakhir": {
-  "calls": 205,
-  "maxCalls": 232,
-  "kverts": 767,
-  "maxKverts": 898,
-  "jsMs": 0.74
+  "calls": 202,
+  "maxCalls": 230,
+  "kverts": 712,
+  "maxKverts": 844,
+  "jsMs": 1.72
  },
  "portomoniz": {
   "calls": 245,
