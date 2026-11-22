@@ -385,11 +385,11 @@
   "jsMs": 1.77
  },
  "silkeborg": {
-  "calls": 239,
-  "maxCalls": 283,
-  "kverts": 579,
-  "maxKverts": 689,
-  "jsMs": 1.55
+  "calls": 238,
+  "maxCalls": 284,
+  "kverts": 581,
+  "maxKverts": 694,
+  "jsMs": 2.32
  },
  "kagerod": {
   "calls": 225,

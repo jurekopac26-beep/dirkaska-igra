@@ -3,7 +3,8 @@
    shared builder of js/world-rbring.js (World.ext.rbring), loaded before it (index.html). Its look (RB_LOOK.silkeborg) goes on API.rbLook;
    World.ext.silkeborg builds it with World.ext.rbring. Plan: docs/nove-proge-1-0.md (A1), the track: docs/proge/silkeborg.md.
    Its own parts (the builder's hooks LK.woods, LK.extra, LK.fl): the trees of the Danish plantations (Norway spruce, Scots pine, silver
-   birch: js/world-harju.js's hjTreeGeo), blocks of one kind as they were planted, low pines and birches on the heath; the heather in bloom
+   birch: js/world-harju.js's hjTreeGeo) where the canopy height model has crowns and as tall as they are (def.sk.ch), blocks of one kind
+   as they were planted, pines and birches on the heath; the heather in bloom
    and the sand round the circuit in the ground's colours (def.sk.sand: OSM natural=sand); the three burial mounds of the Bronze Age by
    the circuit (def.sk.mounds), the buildings round it and its fences (def.sk.bld, def.sk.fence: OpenStreetMap); the Danish flag among
    the fans' flags. Only place names on its boards (no names of the circuit, its people, races or sponsors).
@@ -45,17 +46,36 @@
       const u = fx - i, v = fz - j, k = j * nx + i; return (B[k] * (1 - u) + B[k + 1] * u) * (1 - v) + (B[k + nx] * (1 - u) + B[k + nx + 1] * u) * v; };
   }
 
+  // the crowns (def.sk.ch: Meta and WRI's canopy height model on 8 m cells within 280 m of the line, tools/silkeborg/krosnje.py): where
+  // the trees really stand and how tall they are; decoded once per def (c < 36 a cell with crowns, its top 4 + 2 (c % 12) m and its
+  // cover's level 1 + c / 12: sparse, half, closed; c >= 36 c - 35 cells without)
+  let CH = null;
+  function skCrowns() {
+    const ch = (API.T.def.sk || {}).ch; if (!ch) return null;
+    if (!CH || CH.ch !== ch) {
+      const n = ch.nx * ch.nz, top = new Uint8Array(n), cov = new Uint8Array(n), A = API.NR_A64; let k = 0;
+      for (let i = 0; i < ch.rle.length && k < n; i++) { const c = A.indexOf(ch.rle[i]); if (c < 36) { top[k] = 4 + 2 * (c % 12); cov[k] = 1 + ((c / 12) | 0); k++; } else k += c - 35; }
+      CH = { ch, top, cov };
+    }
+    return CH;
+  }
+  const skCell = (G, x, z) => { const c = G.ch, i = Math.floor((x - c.x0) / c.cell), j = Math.floor((z - c.z0) / c.cell); return i < 0 || j < 0 || i >= c.nx || j >= c.nz ? -1 : j * c.nx + i; };
+  const SK_P = [0, 0.22, 0.5, 0.9];   // (a spot's chance of a tree by its cell's cover: none, sparse, half, closed as the plantations)
+
   // the trees (LK.woods, on the builder's land cover: 0 open, 1 the plantations, 2 the heath, 3 built-up): unit trees of js/world-harju.js
-  // (0 Norway spruce, 1 Scots pine, 2 silver birch; 3-5 the plainer ones far from the road); the plantations in blocks of one kind (the
-  // noise), a birch here and there; on the heath low pines and birches seeded in it, lone ones on the open land and round the buildings
+  // (0 Norway spruce, 1 Scots pine, 2 silver birch; 3-5 the plainer ones far from the road); where the crowns are and as tall as their
+  // cell's top (pAt: the chance by the cell's cover, none where the model has no crowns; the land cover's chance p only off its grid);
+  // the plantations in blocks of one kind (the noise), a birch here and there; on the heath pines and birches, round the buildings lone ones
   const SK_WOODS = {
     n: 3, geo: (k) => API.hjTreeGeo(k % 3, k >= 3), cr: [0.26, 0.33, 0.3], p: [0.014, 0.9, 0.1, 0.03],
+    pAt(cl, x, z) { const G = skCrowns(), k = G ? skCell(G, x, z) : -1; return k < 0 ? SK_WOODS.p[cl] : SK_P[G.cov[k]]; },
     pick(cl, R, far, x, z) {
-      const P = API.NR, r = R(), r2 = R(); let sp, h;
+      const P = API.NR, r = R(), r2 = R(), G = skCrowns(), k = G ? skCell(G, x, z) : -1, top = k < 0 ? 0 : G.top[k]; let sp, h;
       if (cl === 1) { const blk = P.n1(x * 0.7 + 410, z * 0.7 - 230); sp = r < 0.1 ? 2 : blk < 0.44 ? 0 : 1; h = sp === 0 ? 15 + r2 * 7 : sp === 1 ? 13 + r2 * 6 : 11 + r2 * 4; }
       else if (cl === 2) { sp = r < 0.62 ? 1 : 2; h = 3.5 + r2 * 4.5; }
       else { sp = r < 0.45 ? 1 : 2; h = 7 + r2 * 6; }
-      if (far) h *= 1.08;
+      if (top) h = top * (0.84 + r2 * 0.22);   // (the cell's top: the tallest of its trees, the others a little lower)
+      else if (far) h *= 1.08;
       return [sp, h, h * (sp === 0 ? 0.46 + r2 * 0.12 : sp === 1 ? 0.6 + r2 * 0.22 : 0.58 + r2 * 0.2)];
     },
   };

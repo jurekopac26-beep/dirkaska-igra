@@ -5,6 +5,7 @@ import base64, json, math, os
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
+from scipy.spatial import cKDTree
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 J = json.load(open(os.path.join(HERE, 'silkeborg.json')))
@@ -89,6 +90,16 @@ def rle_lc(c):   # World's land-cover classes (0-3), run-length coded as World.n
 
 def b64bytes(a): return base64.b64encode(np.asarray(a, np.uint8).tobytes()).decode()
 
+def rle_ch(top, cov):   # the crowns, as js/world-silkeborg.js reads them: c < 36 a cell with crowns (its top 4 + 2 (c % 12) m, its cover's level c // 12:
+    out = []; z = 0     # 0 sparse (under 35 %), 1 half (under 65 %), 2 closed), c >= 36 c - 35 cells without (under 10 % cover)
+    def flush():
+        nonlocal z
+        while z > 0: r = min(z, 28); out.append(A64[35 + r]); z -= r
+    for t, c in zip(top.ravel(), cov.ravel()):
+        if c < 10 or t < 3: z += 1; continue
+        flush(); lv = 0 if c < 35 else 1 if c < 65 else 2; h = min(11, max(0, int(round((t - 4) / 2)))); out.append(A64[lv * 12 + h])
+    flush(); return ''.join(out)
+
 def scenery():
     M = 560; c = 16
     x0 = math.floor((P[:, 0].min() - M) / c) * c; z0 = math.floor((P[:, 1].min() - M) / c) * c
@@ -135,7 +146,13 @@ def scenery():
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), hh]
     # the fences round the circuit and the spectators' banks (OSM barrier=fence, within 30 m): [x, z, ...]
     fence = [pl(w[3]) for w in J['walls'] if w[0] == 'fence']
-    return D, LC, dict(sand=sand, mounds=mounds, bld=bld, fence=fence)
+    # the crowns (tools/silkeborg/krosnje.py: Meta and WRI's canopy height model sampled every 0.5 m, on 8 m cells): each cell's top and its
+    # cover, for the trees on their real places and in their real heights; only within 280 m of the line (no trees are placed farther out)
+    kj = json.load(open(os.path.join(HERE, 'krosnje.json'))); ka = np.asarray(Image.open(os.path.join(HERE, kj['file']))).astype(int); kc = kj['cell']
+    KX, KZ = np.meshgrid(kj['x0'] + (np.arange(kj['nx']) + 0.5) * kc, kj['z0'] + (np.arange(kj['nz']) + 0.5) * kc)
+    out = (cKDTree(P).query(np.c_[KX.ravel(), KZ.ravel()])[0] > 280).reshape(KX.shape)
+    ch = dict(x0=kj['x0'], z0=kj['z0'], nx=kj['nx'], nz=kj['nz'], cell=kc, rle=rle_ch(np.where(out, 0, ka[..., 0]), np.where(out, 0, ka[..., 1])))
+    return D, LC, dict(sand=sand, mounds=mounds, bld=bld, fence=fence, ch=ch)
 
 def build_track():
     hk = H[::2]; skh = ','.join(str(int(round((v - H0) * 10))) for v in hk)   # every 10 m from the start line, decimetres above it
@@ -162,7 +179,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // start line in 0.25 m steps), land cover (lc, 16 m cells: 0 grass, fields and sand, 1 the pine and spruce plantations, 2 heath and scrub,
   // 3 built-up and car parks: OSM, ESA WorldCover, the canopy), and sk: the sand round the circuit ([x, z, ...] outlines: OSM natural=sand), the
   // three burial mounds of the Bronze Age ([x, z, radius, height]: OSM historic=archaeological_site), the buildings by the circuit ([x, z,
-  // length, width, angle (deg), height]: OSM outlines as boxes, not the pit building and the grandstands, which the builder makes), the fences.
+  // length, width, angle (deg), height]: OSM outlines as boxes, not the pit building and the grandstands, which the builder makes), the fences
+  // ([x, z, ...]: OSM barrier=fence) and the crowns (ch, 8 m cells within 280 m of the line: the canopy height model sampled every 0.5 m by
+  // tools/silkeborg/krosnje.py, each cell's top 4-26 m in 2 m steps and its cover in three levels, run-length coded: js/world-silkeborg.js's
+  // skCrowns), so the trees stand where they really stand, as tall as they are.
   // The names: plain descriptions only (no names of people, firms, events or the circuit).
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
   // © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; the land cover:
@@ -202,7 +222,8 @@ var TRACK_DEFS = TRACK_DEFS || [];
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'silkeborg.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights; dem', D['nx'], 'x', D['nz'], '; lc', LC['nx'], 'x', LC['nz'],
-          len(LC['rle']), 'chars; sand', len(SK['sand']), 'mounds', len(SK['mounds']), 'buildings', len(SK['bld']) // 6, 'fences', len(SK['fence']))
+          len(LC['rle']), 'chars; sand', len(SK['sand']), 'mounds', len(SK['mounds']), 'buildings', len(SK['bld']) // 6, 'fences', len(SK['fence']),
+          'crowns', len(SK['ch']['rle']), 'chars')
     for k in ('dem', 'lc', 'sk'): print('  %-4s %5d KB' % (k, len(js({'dem': D, 'lc': LC, 'sk': SK}[k]).encode()) // 1024))
 
 if __name__ == '__main__':
