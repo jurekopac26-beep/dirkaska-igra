@@ -894,16 +894,16 @@
   }
  },
  "portomoniz": {
-  "meshes": 1703,
-  "verts": 1056663,
-  "instances": 29840,
+  "meshes": 1576,
+  "verts": 1048959,
+  "instances": 26756,
   "props": 81,
   "crowd": 143,
-  "world": "a1d5975a",
+  "world": "554823c7",
   "propsHash": "8f77dc8c",
   "floor": "9fc8b0b0/8708",
   "groups": {
-   "-:MeshLambertMaterial": "b4815918",
+   "-:MeshLambertMaterial": "98450d87",
    "-:MeshPhongMaterial": "a6d43508",
    "-:MeshBasicMaterial": "4ff1c8f",
    "rob:MeshLambertMaterial": "58fb300a",
