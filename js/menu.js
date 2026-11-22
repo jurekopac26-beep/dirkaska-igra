@@ -230,7 +230,8 @@
         ['school', 'school', 'Driving school', 'Four lessons with medals.', G.schoolChip(), I.wheelBig],
         ['stats', 'stats', 'Achievements', 'Your numbers and what you have unlocked.', G.statsChip(), I.starBig],
       ];
-      h += subHead('Career', 'Four ways to play') + '<div class="t-sub four">' + four.map(f => card('cm-' + f[0], 'game:to-' + f[1], false, f[2], f[3], f[4], f[5])).join('') + '</div>';
+      const kv = G.kariera && G.kariera();   // (the path of 1.0, js/kariera.js: its strip above the cards, the hub a tap away; no bridge, no strip)
+      h += subHead('Career', 'Four ways to play') + '<div class="t-sub four">' + (kv ? kStrip(kv) : '') + four.map(f => card('cm-' + f[0], 'game:to-' + f[1], false, f[2], f[3], f[4], f[5])).join('') + '</div>';
     } else {
       h += '<button class="tile t-single" data-act="single"><span class="tx"><b>SINGLE RACE</b><small>' + esc(t.name + ' · ' + md.name) + '</small>' + (best ? '<em class="chip">BEST ' + esc(best) + '</em>' : '<em class="chip gold">NEW TRACKS INSIDE</em>') + '</span>' +
         '<span class="im"><img src="' + trackImg(t, weatherIdx() === 1) + '" alt=""></span></button>';
@@ -1297,6 +1298,41 @@
   }
 
   /* ---------------- overlays: sheets ---------------- */
+  /* ---------------- the career's path of 1.0 (js/kariera.js, part C): the strip in the Career panel, the hub in a sheet. Only through the
+     bridge: G.kariera() its plain view, G.karieraStart(id) a cup (false: not now, the game's toast says why) ---------------- */
+  let kStage = 0;   // (the hub's stage tab; 0: the highest open one)
+  const kStName = (v, n) => { const s = v.stopnje[n - 1]; return s ? s.en.name : ''; };
+  const kPct = (a, b) => b > 0 ? Math.max(0, Math.min(100, Math.round(a / b * 100))) : 100;
+  function kNext(v) {   // what the bar under the stage means
+    const p = v.napredek;
+    return p.need ? p.done + ' of ' + p.need + ' cups in the top three · opens ' + kStName(v, v.stopnja + 1) : 'Every stage is open';
+  }
+  function kStrip(v) {
+    const p = v.napredek;
+    return '<button class="k-strip" data-act="kpot" aria-haspopup="dialog"><span class="ks-tx"><b>STAGE ' + v.stopnja + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><small>' + esc(kNext(v)) + '</small></span>' +
+      '<span class="bar"><b style="width:' + kPct(p.done, p.need) + '%"></b></span><em class="chip gold">PATH</em></button>';
+  }
+  function kCupRow(c) {
+    const names = c.tracks.map(id => { const t = trackById(id); return t ? t.name : id; });
+    const chip = c.stanje === 'zaklenjen' ? '<em class="chip lk">' + I.lock('currentColor') + 'LOCKED</em>' : c.stanje === 'osvojen' ? '<em class="chip gold">BEST P' + c.best + '</em>' : c.best ? '<em class="chip">BEST P' + c.best + '</em>' : '<em class="chip">OPEN</em>';
+    const meta = c.tracks.length + (c.tracks.length === 1 ? ' race' : ' races') + (c.km ? ' · ' + num(Math.round(c.km)) + ' km' : '') + (c.vrsta === 'tt' ? ' · time trials' : '');
+    return '<button class="k-cup ' + c.stanje + '" data-act="kcup:' + esc(c.id) + '"' + (c.stanje === 'zaklenjen' ? ' aria-disabled="true"' : '') + '><span class="kc-tx"><b>' + esc(c.en.name) + '</b><small>' + esc(meta) + '</small><span class="kc-tr">' + esc(names.join(' · ')) + '</span></span>' + chip + '</button>';
+  }
+  function kClassRow(r) {
+    const goals = r.cilji.map(g => '<span class="kg' + (g.done ? ' done' : '') + '">' + (g.done ? I.check : '') + (g.need > 1 && !g.done ? num(g.progress) + ' / ' : '') + esc(g.en) + '</span>').join('');
+    return '<div class="k-cls">' + kCupRow(r) + '<div class="kg-row">' + (r.stanje === 'zaklenjen' ? '<span class="kg lk">Buy a car of this class</span>' : goals) + '</div></div>';
+  }
+  function karieraSheet() {
+    const v = G.kariera && G.kariera(); if (!v) return '';
+    const n = Math.min(kStage || v.stopnja, v.stopnje.length), st = v.stopnje[n - 1], p = v.napredek;
+    let h = '<div class="sheet-bg" data-act="close-sheet"><div class="sheet kpot" role="dialog" aria-label="Career path"><h2>Career path' + moneyPill() + '</h2>';
+    h += '<div class="kp-prog"><b>STAGE ' + v.stopnja + ' OF ' + v.stopenj + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><span class="bar"><b style="width:' + kPct(p.done, p.need) + '%"></b></span><small>' + esc(kNext(v)) + '</small></div>';
+    h += '<div class="kp-tabs" role="tablist">' + v.stopnje.map(s => '<button role="tab" aria-selected="' + (s.n === n) + '" class="' + (s.odprta ? '' : 'lk') + '" data-act="kstage:' + s.n + '">' + (s.odprta ? '<i>' + s.n + '</i>' : I.lock('currentColor')) + '<span>' + esc(s.en.name) + '</span></button>').join('') + '</div>';
+    h += '<div class="kp-list">' + (st.odprta ? '' : '<p class="kp-note">Finish ' + (p.need || 3) + ' cups of ' + esc(kStName(v, n - 1)) + ' in the top three to open this stage.</p>') + st.pokali.map(kCupRow).join('') + '</div>';
+    h += '<h3>Class cups</h3><p class="kp-note">One cup for each class of car, in a car of that class.</p><div class="kp-list">' + v.razredi.map(kClassRow).join('') + '</div>';
+    h += '<div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
+    return h;
+  }
   function creditsSheet() {   // where the menu's pictures of the Earth and its land come from, as their licences ask
     return '<div class="sheet-bg" data-act="close-sheet"><div class="sheet credits" role="dialog" aria-label="Credits"><h2>Credits</h2><dl>' +
       D.credits.map(c => '<dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '</dd>').join('') + '</dl><div class="row"><button class="go" data-act="close-sheet">Done</button></div></div></div>';
@@ -1971,6 +2007,9 @@
       case 'zemlja': zemlja(); break;   // (the globe in the head: the Earth, js/menu-zemlja.js)   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
+      case 'kpot': kStage = 0; sheet = karieraSheet; render(true); break;   // (the career's path: the hub, js/kariera.js)
+      case 'kstage': kStage = +v || 0; render(true); { const l = $('.sheet.kpot', app); if (l) l.scrollTop = 0; } break;
+      case 'kcup': if (el.getAttribute('aria-disabled') === 'true') { G.karieraStart(v); break; } if (G.karieraStart(v)) { sheet = null; render(true); } break;   // (locked: the game's toast says why; started: the race)
       case 'riv': case 'tw': tw = k === 'riv' ? 'riv' : v; if (tw === 'riv' && !rivOf((curTrack() || {}).def || {})) break; sheet = twSheet; render(true); break;   // (the row's cells: their windows; Opponents: how many, 0..100)
       case 'diff': G.setOption('difficulty', +v); render(true); break;
       case 'rmode': rowMode(v); break;
