@@ -96,6 +96,7 @@ async function takeAll(browser, gameRoot, tag) {
       const n0 = errors.length;
       await page.goto(srv.base + '/index.html?' + q);
       await page.waitForFunction(() => window.__game && window.__game.quick && window.__game.quick.done, null, { timeout: 300000 });
+      await page.evaluate(async () => { const W = window.Render && Render.world; if (W && W.landmarkLoad) await W.landmarkLoad; });   // (a landmark made in Blender, js/znamenitost.js: its model, not the simple one drawn until it comes)
       const st = await page.evaluate((id) => { const g = window.__game; return { bad: g.quick.q.bad, race: !!(g.race && g.race.track.def.id === id), test: !!(Core.TRACKS.find(d => d.id === id) || {}).test }; }, id);
       if (st.bad.length || !st.race) { problems.push(`${tag}: ${id}: no race (${st.bad.join(', ') || 'the quick entry did not start one'})`); continue; }
       if (st.test) console.log(`(${id} is a test track: CLAUDE.md asks for a real one for pictures before / after)`);

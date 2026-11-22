@@ -41,7 +41,9 @@ WIDTHS = [  # [from, to, half width] (the data's s)
     (200, 537, 4.4),          # the lane along the north-west wall
     (537, 767, 5.0),          # the road past the north gate
     (767, 1541, 4.6),         # the streets of the outer town to the east
-    (1541, 2006, 4.4),        # the lanes back to the east gate
+    (1541, 1896, 4.4),        # the lanes back to the east gate
+    (1896, 1937, 2.9),        # the service lane round the corner of the east gate's outer face (OSM: its centre ~3.5 m from the gate)
+    (1937, 2006, 4.4),        # the lane on to the east side
     (2006, 2785, 4.6),        # down the east side and along the south wall
 ]
 def widths():

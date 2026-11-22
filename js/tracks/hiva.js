@@ -25,7 +25,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     en: { name: 'Khiva, Uzbekistan', desc: "A city course in Khiva in Uzbekistan, a lap round the walls of Itchan Kala, the old town behind its mud-brick walls: across the square before the west gate, right along the walls past the north gate, through the streets of the outer town to the east, back past the east gate and along the south wall to the line. A lap of 3.05 km, the minarets above the walls." },
     start: [0, 0], runoff: 0.42, inner: 2.6, side: 3.0, noCurbs: true, noGravel: true, offSurface: 'paving', gradeForce: true, elevSmooth: 16, realKm: 3.05,
     elev: HV_H.map((h, i) => [i / HV_H.length, h / 10]),
-    widths: [[0, 4.6], [59.0, 4.6], [82.8, 5.2], [223.8, 5.2], [247.8, 4.4], [560.8, 4.4], [584.8, 5.0], [790.8, 5.0], [814.8, 4.6], [1564.8, 4.6], [1588.8, 4.4], [2029.8, 4.4], [2053.8, 4.6], [2808.8, 4.6], [2832.8, 4.6], [3045.8, 4.6]],
+    widths: [[0, 4.6], [59.0, 4.6], [82.8, 5.2], [223.8, 5.2], [247.8, 4.4], [560.8, 4.4], [584.8, 5.0], [790.8, 5.0], [814.8, 4.6], [1564.8, 4.6], [1588.8, 4.4], [1919.8, 4.4], [1943.8, 2.9], [1960.8, 2.9], [1984.8, 4.4], [2029.8, 4.4], [2053.8, 4.6], [2808.8, 4.6], [2832.8, 4.6], [3045.8, 4.6]],
     // places on the HUD ([label, x, z, the commentator's lines]; the descriptive labels have their English in js/lang.js)
     names: [
       ["Zahodna vrata", 66.1, -157.9, ["Across the square before the west gate!", "The west gate on the right, the old town behind the walls!"]],
