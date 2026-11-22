@@ -185,7 +185,8 @@
   // of a blow-out, nor in the ponds); the sea buckthorn's bushes (js/world.js's beech, sunk into the ground, wider than tall, grey-green) in
   // the dune valleys, in thickets with gaps, from 12 m past the barriers to 140 m out; the trees and the crowds keep clear of them
   function zvDunes({ root, exclPush, excluded, CR }, st, tu) {
-    const T = API.T, P = API.NR, R = rng(5647), PO = POND, bush = new IChunks(API.nrTreeGeo(1), new THREE.MeshLambertMaterial({ vertexColors: true }), 512);
+    const T = API.T, P = API.NR, R = rng(5647), PO = POND, bMat = new THREE.MeshLambertMaterial({ vertexColors: true }), bush = new IChunks(API.nrTreeGeo(1), bMat, 512);
+    const farBush = new IChunks(API.nrTreeGeo(3), bMat, 512);   // (the phone's load: past 70 m from the road the bushes in the far beech's one lump, a few pixels across behind the car)
     let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
     for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
     const dune = (x, z) => nrLC(x, z) === 2 && !(PO && PO.f(x, z) > 0.05) && SAND(x, z) < 0.5;
@@ -194,10 +195,10 @@
       if (th < 0.52 || rr > sstep(0.52, 0.72, th) * 0.8 || !dune(bx, bz)) continue;
       const q = nrNear(bx, bz); if (q.i < 0 || q.dd < 12 || nrDist(bx, bz) > 140 || excluded(bx, bz) || P.pad(bx, bz, 0) !== 0) continue;
       const h = 1.8 + R() * 1.6, w = h * (1.3 + R() * 0.5), cv = 0.9 + R() * 0.2, y = nrGround(bx, bz);
-      bush.add(bx, y - h * 0.32, bz, R() * TAU, w, h, [1.42 * cv, 1.02 * cv, 1.7 * cv]);
+      (nrDist(bx, bz) > 70 ? farBush : bush).add(bx, y - h * 0.32, bz, R() * TAU, w, h, [1.42 * cv, 1.02 * cv, 1.7 * cv]);
       exclPush(bx, bz, w * 0.4); CR.avoid(bx, bz, w * 0.5); st.bushes++;
     }
-    bush.addTo(root, false);
+    bush.addTo(root, false); farBush.addTo(root, false);
     for (let z = z0 - 40; z < z1 + 40; z += 5) for (let x = x0 - 40; x < x1 + 40; x += 5) {   // the marram grass
       const tx = x + (R() - 0.5) * 4.6, tz = z + (R() - 0.5) * 4.6, dr = P.n2(tx * 0.35 - 80, tz * 0.35 + 210);
       if (dr < 0.42 || R() > sstep(0.42, 0.64, dr) * 0.7) continue;
