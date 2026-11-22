@@ -602,11 +602,11 @@
   "jsMs": 1.41
  },
  "cusco": {
-  "calls": 124,
-  "maxCalls": 169,
-  "kverts": 273,
-  "maxKverts": 361,
-  "jsMs": 1.53
+  "calls": 131,
+  "maxCalls": 166,
+  "kverts": 306,
+  "maxKverts": 385,
+  "jsMs": 1.01
  },
  "mombasa": {
   "calls": 112,

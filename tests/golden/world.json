@@ -1322,21 +1322,22 @@
   }
  },
  "cusco": {
-  "meshes": 203,
-  "verts": 254528,
-  "instances": 1259,
+  "meshes": 219,
+  "verts": 285408,
+  "instances": 1244,
   "props": 34,
   "crowd": 140,
-  "world": "c83c9e8f",
+  "world": "61460838",
   "propsHash": "ccc40cb3",
   "floor": "53b31916/2576",
   "groups": {
-   "-:MeshLambertMaterial": "5e898863",
+   "-:MeshLambertMaterial": "bd61e1ef",
    "-:MeshPhongMaterial": "12921d35",
    "-:MeshBasicMaterial": "109a44c4",
+   "roadside-ways:MeshLambertMaterial": "fce87d4e",
    "crowd:MeshLambertMaterial": "5875b18c",
    "flags:MeshLambertMaterial": "fc5bf0eb",
-   "ao:MeshBasicMaterial": "686e59e0",
+   "ao:MeshBasicMaterial": "a1222885",
    "tyremarks:MeshBasicMaterial": "db0674b7",
    "roadwear:MeshLambertMaterial": "e84bcb33"
   }
