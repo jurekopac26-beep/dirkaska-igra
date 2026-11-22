@@ -690,16 +690,16 @@
   }
  },
  "zandvoort": {
-  "meshes": 529,
-  "verts": 700120,
+  "meshes": 688,
+  "verts": 702764,
   "instances": 6689,
   "props": 57,
   "crowd": 18,
-  "world": "cab1b6a9",
+  "world": "6aa2599d",
   "propsHash": "52c05ac2",
   "floor": "86ea5334/8512",
   "groups": {
-   "-:MeshLambertMaterial": "72952494",
+   "-:MeshLambertMaterial": "e317a05b",
    "-:MeshBasicMaterial": "41bfff9d",
    "ponds:MeshPhongMaterial": "222ed19d",
    "pondShores:MeshPhongMaterial": "ae4f2c13",
@@ -707,7 +707,7 @@
    "crowd:MeshLambertMaterial": "8e0bb879",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "aacfbfc4",
-   "ao:MeshBasicMaterial": "e4409fd5",
+   "ao:MeshBasicMaterial": "c0cd3af9",
    "roadwear:MeshLambertMaterial": "1192240",
    "worn:MeshLambertMaterial": "dd1a0f38",
    "brakeBoards:MeshLambertMaterial": "e98578dc",
@@ -716,7 +716,7 @@
    "life:MeshBasicMaterial": "2034d397",
    "people:MeshLambertMaterial": "1abc2ea8",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "44ada441",
+   "standSteps:MeshLambertMaterial": "d4651911",
    "zaslon-okvir:MeshLambertMaterial": "1b8df575",
    "zaslon-slika:MeshBasicMaterial": "a36ef847"
   }

@@ -185,8 +185,7 @@
   // of a blow-out, nor in the ponds); the sea buckthorn's bushes (js/world.js's beech, sunk into the ground, wider than tall, grey-green) in
   // the dune valleys, in thickets with gaps, from 12 m past the barriers to 140 m out; the trees and the crowds keep clear of them
   function zvDunes({ root, exclPush, excluded, CR }, st, tu) {
-    const T = API.T, P = API.NR, R = rng(5647), PO = POND, bMat = new THREE.MeshLambertMaterial({ vertexColors: true }), bush = new IChunks(API.nrTreeGeo(1), bMat, 512);
-    const farBush = new IChunks(API.nrTreeGeo(3), bMat, 512);   // (the phone's load: past 70 m from the road the bushes in the far beech's one lump, a few pixels across behind the car)
+    const T = API.T, P = API.NR, R = rng(5647), PO = POND, bMat = new THREE.MeshLambertMaterial({ vertexColors: true }), bush = new IChunks(API.nrTreeGeo(1), bMat, 128);   // (128 m chunks: on the lower tiers Render's draw distance hides the far ones, the phone's load)
     let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
     for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
     const dune = (x, z) => nrLC(x, z) === 2 && !(PO && PO.f(x, z) > 0.05) && SAND(x, z) < 0.5;
@@ -195,10 +194,10 @@
       if (th < 0.52 || rr > sstep(0.52, 0.72, th) * 0.8 || !dune(bx, bz)) continue;
       const q = nrNear(bx, bz); if (q.i < 0 || q.dd < 12 || nrDist(bx, bz) > 140 || excluded(bx, bz) || P.pad(bx, bz, 0) !== 0) continue;
       const h = 1.8 + R() * 1.6, w = h * (1.3 + R() * 0.5), cv = 0.9 + R() * 0.2, y = nrGround(bx, bz);
-      (nrDist(bx, bz) > 70 ? farBush : bush).add(bx, y - h * 0.32, bz, R() * TAU, w, h, [1.42 * cv, 1.02 * cv, 1.7 * cv]);
+      bush.add(bx, y - h * 0.32, bz, R() * TAU, w, h, [1.42 * cv, 1.02 * cv, 1.7 * cv]);
       exclPush(bx, bz, w * 0.4); CR.avoid(bx, bz, w * 0.5); st.bushes++;
     }
-    bush.addTo(root, false); farBush.addTo(root, false);
+    bush.addTo(root, false);
     for (let z = z0 - 40; z < z1 + 40; z += 5) for (let x = x0 - 40; x < x1 + 40; x += 5) {   // the marram grass
       const tx = x + (R() - 0.5) * 4.6, tz = z + (R() - 0.5) * 4.6, dr = P.n2(tx * 0.35 - 80, tz * 0.35 + 210);
       if (dr < 0.42 || R() > sstep(0.42, 0.64, dr) * 0.7) continue;
@@ -212,7 +211,7 @@
   // cladding on the big halls; dark tiles, orange pantiles, flat grey roofs); before the crowds and the trees, which keep clear of them
   function zvExtra(o) {
     const { root, scen, exclPush, CR, out } = o, sk = API.T.def.sk || {}, R = rng(5653), st = { ponds: 0, water: 0, reeds: 0, bushes: 0, marram: 0, buildings: 0 };
-    const tm = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), tu = new IChunks(tuftGeo(false), tm, 512);   // (one material, the clumps of both in big chunks: a few draws)
+    const tm = tuftWindMat(out.dyn.wind || (out.dyn.wind = { value: 0 })), tu = new IChunks(tuftGeo(false), tm, 128);   // (one material, the clumps of both in 128 m chunks: a few draws; on the lower tiers the far ones hidden by the draw distance)
     zvPonds(o, st, tu);
     zvDunes(o, st, tu);
     tu.addTo(root, false);
@@ -230,7 +229,7 @@
   API.rbLook = Object.assign(API.rbLook || {}, {   // its look on the shared builder (RB_LOOK in js/world-rbring.js takes it)
     zandvoort: { ban: ZV_BAN, at: ZV_AT, nums: 0, shirts: ZV_SHIRTS, smoke: false, camps: 0, seC: [1.1, 1.04, 0.9], gravel: true, noVid: true,
       pitBox: [0, 186, 1], mow: 0.7,   // (the pit building on the right of the straight; fainter mowing stripes)
-      woods: ZV_WOODS, extra: zvExtra, pad: zvPad, lane: true, ck: 2,   // (ck: chunks twice as big: from the dunes much of the circuit is in view)
+      woods: ZV_WOODS, extra: zvExtra, pad: zvPad, lane: true,   // (the builder's own chunk size: ck 2 drew far more of the circuit's vertices behind the car than its draws saved, the phone's load)
       flags: { stand: [{ nl: 0.45, or: 0.45, tm: 0.1 }, { nl: 0.5, or: 0.3, tm: 0.1, rb: 0.1 }], ga: { nl: 0.4, or: 0.5, tm: 0.1 }, camp: { nl: 0.5, or: 0.5 }, pole: 'nl', podium: 'nl' },   // (FL.nl, FL.or: the builder's own)
       vid: [], poles: [-100, 100, -1], runoff: ['ZANDVOORT', 'NOORD-HOLLAND', 'NEDERLAND'], straight: [-150, 120, -1],
       farm: { wall: [0.56, 0.28, 0.2], roof: [0.2, 0.2, 0.22], end: [0.54, 0.27, 0.19], barn: [0.3, 0.3, 0.3], barnRoof: [0.62, 0.3, 0.16], barnEnd: [0.29, 0.29, 0.29] },   // a brick house under dark tiles, a dark barn under orange pantiles
