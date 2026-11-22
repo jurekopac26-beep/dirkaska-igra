@@ -124,7 +124,7 @@
      title's NEUPORABNO button (nuSheet): the test tracks and the ones awaiting the user's choice (pending), the missions, the two cups of test
      tracks and NEW VERSION · TEST 1. Everywhere else the menu shows the real tracks only (the title, the track step, the quick list, the Earth).
      A hidden track chosen there opens the track step of the hidden tracks (nuOn): its list, its quick list (NEUPORABNO again), its Earth */
-  const hidden = (t) => !!t && (t.test || !!t.def.pending);
+  const hidden = (t) => !!t && Core.nu(t.def);   // (the one flag: js/core.js nu)
   let nuOn = false;
   // the track the game stands on; a hidden one only behind NEUPORABNO (else the first real track: a new player's, js/game.js firstTrackId)
   const gameTrack = () => { const c = trackById(G.baseId(G.S.track)); return c && (!hidden(c) || nuOn) ? c : TR.find(t => !hidden(t) && inMode(t)) || TR.find(t => !hidden(t)) || TR[0]; };   // (the mode's first real one)

@@ -1,6 +1,6 @@
 // The driving school (Šola vožnje) and the racing line helper: the school's screen (four lessons, each with its medals and the best);
 // the start: the throttle before the lights go out is a jump start, after them the time to 100 m against its medals; braking to a mark
-// on the Red Bull Ring's straight (the STOP line and its boards): over the line, too slow past the 100 m board, and a stop half a metre
+// on Pembrey's finish straight (the STOP line and its boards): over the line, too slow past the 100 m board, and a stop half a metre
 // short of it (gold); the racing line: a lap on the autopilot on the line the helper draws (gold, the achievement), the result kept on the
 // school's screen; drift: no handbrake (its goal tells how: steering and braking in a corner; Space does nothing), 40 s on the autopilot,
 // as many points as its reference run (silver). The helper in a race (the setting): the
@@ -12,7 +12,7 @@ const T = checker('school');
 const srv = await serve();
 const browser = await launch();
 try {
-  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', line: 0, autoGas: 0 }, { width: 390, height: 844 });
+  const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'pembrey', line: 0, autoGas: 0 }, { width: 390, height: 844 });
   const act = (a) => page.evaluate((a) => window.__game.onAction(a), a);
   const go = async (id) => { await page.evaluate((id) => window.__game.onAction('school-go', document.querySelector(`[data-act="school-go"][data-lesson="${id}"]`)), id);
     await page.waitForFunction((id) => { const g = window.__game; return g.school && g.school.id === id && g.race && g.phase === 'intro'; }, id, { timeout: 60000 }); };
@@ -102,10 +102,10 @@ try {
   // 6. the helper in a race: on with the setting, off without
   await act('to-title');
   await page.evaluate(() => { window.__game.onAction('to-settings'); document.querySelector('[data-set="line"] button[data-v="1"]').click(); window.__game.onAction('settings-done'); });
-  await startTrack(page, 'jezero');
+  await startTrack(page, 'pembrey');
   const r1 = await lineRun(25);
   await page.evaluate(() => { window.__game.onAction('to-title'); window.__game.onAction('to-settings'); document.querySelector('[data-set="line"] button[data-v="0"]').click(); window.__game.onAction('settings-done'); });
-  await startTrack(page, 'jezero');
+  await startTrack(page, 'pembrey');
   const r0 = await page.evaluate(async () => { const g = window.__game; g.pause(); g.sim(4, true); g.resume(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); return Render.show.line; });
   T.check('the helper in a race (Nastavitve · Idealna linija): the line ahead of the car (green, yellow, red, braking points); switched off: none', r1.frames > 10 && r1.green > 5 && r1.red > 5 && r1.brakes >= 1 && r0 === null, JSON.stringify({ r1, r0 }));
 

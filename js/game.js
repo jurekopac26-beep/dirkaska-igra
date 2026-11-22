@@ -34,7 +34,7 @@
      The menu's NEUPORABNO button (js/menu.js) keeps it: the test tracks (def.test) and the ones awaiting the user's choice (def.pending, one of
      them stays), the two cups made of test tracks alone, the missions and the new map. Elsewhere the game shows the real tracks only: a new
      player's track, the championships, the leaderboard, the host's tracks online, the achievements */
-  function nuTrack(d) { return !!d && (!!d.test || !!d.pending); }
+  const nuTrack = Core.nu;   // (the one flag: js/core.js nu)
   // the first real track of the menu's list in the game's own mode, Circuit race (DEF.mode; the real ones from the shortest to the longest:
   // MENU.lens, tools/menu-lens.js; equal lengths by id): a rally stage, a time trial only (Harju), is not in that list
   function firstTrackId() {
@@ -2496,7 +2496,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     } else if (school) {   // the driving school: alone, the lesson's car, dry; the braking lesson from the start of the straight
       school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 } };
       race = new Core.Race(track, schoolOpts(school.L));
-      if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0); else if (school.L.id === 'drift') placeAt(race.player, track, DRIFT_S0);   // (the drift: before Štajerska's turn 4)
+      if (school.L.id === 'brake') placeAt(race.player, track, BRAKE_S0); else if (school.L.id === 'drift') placeAt(race.player, track, DRIFT_S0);   // (the drift: before Pembrey's north hairpin)
     } else if (nv) {   // NEW VERSION · TEST 1: alone, no laps to count (free driving), dry
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: 1, laps: 999, fuel: false, damage: +S.damage, phys: physOf(), rain: 0, weather: null, tyres: false, compounds: false, flags: false, chars: false, slip: false, faults: false, radio: false, launch: false }));   // (no lights: no start reaction)
       race.nv = true;
@@ -2788,21 +2788,24 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   // Dosežki (from the title): the player's numbers, then every achievement (unlocked: the date; the counting ones: how far)
   /* ---------------- the driving school (Šola vožnje): four lessons with medals, all in the KAZE RS (stock, standard set-up, dry), the
-     best of each kept per physics (tdgp-school). Start: from the lights out to 100 m (the throttle before they go out: a jump start);
-     braking: from a standing start down the Red Bull Ring's straight, stop as near the STOP line as you can, not over it (past the 100 m
-     board at 120 km/h at least); the racing line: a lap of Štajerska on the line the helper draws (the share of the lap within 1.5 m of
-     it, in a time limit); drift: 40 s at Štajerska from a standing start before turn 4 (DRIFT_S0: the infield's corners; from the grid the
-     40 s give two corners) (points for the angle times the speed, a chain banked when the slide ends, lost at a knock; no handbrake: the
-     car slides with the steering and the brake in a corner, as the autopilot's does). The line and the drift were the Jezero Ring's until
-     9. 11. 2026 (a test track: NEUPORABNO; the session's choice, the user's question avtosola-proga on the page Odločitve). The
+     best of each kept per physics (tdgp-school), all on Pembrey, Wales (2.3 km: a short real track; Sosnová, Češka, 1.7 km, has no straight
+     longer than ~140 m for the braking). Start: from the lights out to 100 m (the throttle before they go out: a jump start); braking: from
+     a standing start down the finish straight (490 m from the long right to the north hairpin, over the start line: BRAKE_S0 at its start,
+     the STOP line BRAKE_RUN on, ~80 m of straight left past it), stop as near the STOP line as you can, not over it (past the 100 m board
+     at 120 km/h at least); the racing line: a lap of Pembrey on the line the helper draws (the share of the lap within 1.5 m of it, in a
+     time limit); drift: 40 s from a standing start on the finish straight before the north hairpin (DRIFT_S0: the hairpin, the fast right,
+     the long left, the left by the paddock) (points for the angle times the speed, a chain banked when the slide ends, lost at a knock; no
+     handbrake: the car slides with the steering and the brake in a corner, as the autopilot's does). The line and the drift were the
+     Jezero Ring's until 9. 11. 2026 (a test track: NEUPORABNO), all four Štajerska's until 22. 11. 2026 (a short real track instead). The
      medals of the start and of the drift and the line's time limit: against the autopilot's own run of the lesson in the same car and
      physics (a quick simulation) ---------------- */
-  const SCHOOL_CAR = 'kaze', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 4000, BRAKE_RUN = 400, DRIFT_S0 = 2300;
+  const SCHOOL_CAR = 'kaze', SCHOOL_DRIFT_T = 40, BRAKE_S0 = 2190, BRAKE_RUN = 400, DRIFT_S0 = 250;
+  const SCHOOL_TRACK = 'pembrey';
   const SCHOOL = [
-    { id: 'start', track: 'rbring', name: 'Štart', goal: 'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.' },
-    { id: 'brake', track: 'rbring', name: 'Zaviranje do oznake', goal: 'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.' },
-    { id: 'line', track: 'rbring', name: 'Idealna linija', goal: 'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.' },
-    { id: 'drift', track: 'rbring', name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.' },
+    { id: 'start', track: SCHOOL_TRACK, name: 'Štart', goal: 'Ko ugasnejo luči, čim hitreje prevozi 100 m. Plin pritisni šele, ko ugasnejo: prej je prehiter štart.' },
+    { id: 'brake', track: SCHOOL_TRACK, name: 'Zaviranje do oznake', goal: 'Pospeši po ravnini in se ustavi čim bližje črti STOP, a ne čeznjo. Mimo table 100 m pelji vsaj 120 km/h.' },
+    { id: 'line', track: SCHOOL_TRACK, name: 'Idealna linija', goal: 'Odpelji krog po idealni liniji, ki jo riše pomoč (zeleno: plin, rumeno: ovinek, rdeče: zaviraj, belo: točka zaviranja). Čim več kroga na njej, v omejenem času.' },
+    { id: 'drift', track: SCHOOL_TRACK, name: 'Drift', goal: 'V 40 sekundah zberi čim več točk drsenja: ostro zavij v ovinek in v njem zaviraj, da avto zdrsne bočno. Točke so za kot in hitrost, udarec izbriše verigo.' },
   ];
   let school = null;   // the lesson under way: { L, s0, v100, on, all, D, done }
   let nv = null;   // NEW VERSION · TEST 1 (the title's button): { built, err }; the new map (js/newmap.js) over Toskana, driven freely from HOME

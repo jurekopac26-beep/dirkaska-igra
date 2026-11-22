@@ -36,6 +36,9 @@ const Core = (function () {
   // Each adds itself to TRACK_DEFS; index.html loads them before this file, in the order of the track menu. (In Node, load
   // Core with tests/lib/core.js, which reads the track files first; a plain require of this file gives a Core without tracks.)
   const TRACKS = (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : []).slice();
+  // NEUPORABNO (the user's decisions of 9. 11. 2026): a track def that waits behind the title's NEUPORABNO button, not in version 1.0:
+  // a test track (def.test) or one awaiting the user's choice (def.pending). The one flag js/menu.js and js/game.js both ask
+  function nu(d) { return !!d && (!!d.test || !!d.pending); }
   const TRACK_DEF = TRACKS.find(d => d.id === 'jezero'), PIKES_DEF = TRACKS.find(d => d.id === 'pikes');   // (exported by name)
 
   // centripetal Catmull-Rom through the control points. Closed loop by default; open = a road with two ends
@@ -9306,7 +9309,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, nu, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };
