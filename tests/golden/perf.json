@@ -700,11 +700,11 @@
   "jsMs": 1.16
  },
  "koror": {
-  "calls": 142,
-  "maxCalls": 164,
-  "kverts": 349,
-  "maxKverts": 553,
-  "jsMs": 1.19
+  "calls": 145,
+  "maxCalls": 166,
+  "kverts": 357,
+  "maxKverts": 562,
+  "jsMs": 1.35
  },
  "batangas": {
   "calls": 242,
