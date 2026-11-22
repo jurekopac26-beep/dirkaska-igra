@@ -640,15 +640,15 @@
  },
  "kotor": {
   "meshes": 985,
-  "verts": 857893,
+  "verts": 857269,
   "instances": 15415,
   "props": 79,
   "crowd": 125,
-  "world": "b7a089b2",
+  "world": "1df7c75",
   "propsHash": "67c890c8",
   "floor": "c3122f3f/10696",
   "groups": {
-   "-:MeshLambertMaterial": "9713f882",
+   "-:MeshLambertMaterial": "d0f39b82",
    "-:MeshPhongMaterial": "b9364527",
    "-:MeshBasicMaterial": "674336a7",
    "rob:MeshLambertMaterial": "87c6e9e9",
