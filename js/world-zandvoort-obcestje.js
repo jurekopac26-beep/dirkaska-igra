@@ -101,34 +101,40 @@
 
   function lay(o) {
     const { root, scen, exclPush, CR, tex } = o, { RB, nrGround, nrNear, box } = A, cyl = A.cyl;
-    const st = { ways: 0, wayM: 0, parkCells: 0, golfCells: 0, tower: 0 };
+    const st = { ways: 0, wayM: 0, parkCells: 0, golfCells: 0, tower: 0, meshes: 0 };
     const past = (x, z, m) => { const n = nrNear(x, z); return n.i < 0 || n.dd >= m; };
     const near = (x, z, m) => { const n = nrNear(x, z); return n.i >= 0 && n.dd < m; };
-    const rbA = new RB(true), rbS = new RB(true), rbG = new RB(true);   // asphalt, sand, grass (one draw each)
+    // what is laid on the ground goes into a mesh per material (0 asphalt, 1 sand, 2 grass) and 120 m square, so three.js leaves out of
+    // the frame what is out of view (one mesh over the whole circuit was drawn every frame: ~90k indices more at every place on the lap)
+    const TILE = 120, tiles = new Map();
+    const rbAt = (mt, x, z) => { const key = mt + ',' + Math.floor(x / TILE) + ',' + Math.floor(z / TILE); let t = tiles.get(key); if (!t) tiles.set(key, t = { mt, rb: new RB(true) }); return t.rb; };
 
-    // the ways: rows of three across (left, middle, right), every 2.5 m along, on the ground; cut where they run inside the barriers
+    // the ways: rows of two across (the left and the right edge), every 2.5 m along, on the ground; cut where they run inside the barriers;
+    // a stretch goes into the tile of the row it ends at (the row before it copied there when the tile changes)
     for (const W of WAYS) {
-      const [hw, mt, col] = WK[W[0]], rb = mt ? rbS : rbA, U = mt ? 4 : 3, pts = [];
+      const [hw, mt, col] = WK[W[0]], U = mt ? 4 : 3, pts = [];
       for (let q = 1; q + 3 < W.length; q += 2) {
         const ax = W[q], az = W[q + 1], bx = W[q + 2], bz = W[q + 3], L = Math.hypot(bx - ax, bz - az), m = Math.max(1, Math.ceil(L / 2.5));
         for (let t = q > 1 ? 1 : 0; t <= m; t++) pts.push(ax + (bx - ax) * t / m, az + (bz - az) * t / m);
       }
-      let prev = -1, along = 0, pAl = 0;
+      let prev = null, pi = -1, prb = null, along = 0, pAl = 0;
       for (let k = 0; k < pts.length; k += 2) {
         const x = pts[k], z = pts[k + 1];
         if (k) along += Math.hypot(x - pts[k - 2], z - pts[k - 1]);
-        if (!past(x, z, hw + 1.2)) { prev = -1; continue; }
+        if (!past(x, z, hw + 1.2)) { prev = null; continue; }
         const k0 = Math.max(0, k - 2), k1 = Math.min(pts.length - 2, k + 2), dx = pts[k1] - pts[k0], dz = pts[k1 + 1] - pts[k0 + 1], dl = Math.hypot(dx, dz) || 1;
-        const nx = -dz / dl, nz = dx / dl, row = [-hw, 0, hw].map(f => [x + nx * f, nrGround(x + nx * f, z + nz * f) + 0.1, z + nz * f]);
-        const r = rb.row(row, [col, col, col], [-hw, 0, hw].map(f => [f / U, along / U]));
-        if (prev >= 0) { rb.link(prev, r, 0, 2); st.wayM += along - pAl; } else st.ways++;
-        prev = r; pAl = along; exclPush(x, z, hw + 1);
+        const nx = -dz / dl, nz = dx / dl, row = [-hw, hw].map(f => [x + nx * f, nrGround(x + nx * f, z + nz * f) + 0.1, z + nz * f]);
+        const cols = [col, col], uvs = [[-hw / U, along / U], [hw / U, along / U]], rb = rbAt(mt, x, z);
+        if (prev && rb !== prb) pi = rb.row(prev[0], prev[1], prev[2]);
+        const r = rb.row(row, cols, uvs);
+        if (prev) { rb.link(pi, r, 0, 1); st.wayM += along - pAl; } else st.ways++;
+        prev = [row, cols, uvs]; pi = r; prb = rb; pAl = along; exclPush(x, z, hw + 1);
         if (k % 4 === 0 && near(x, z, 45)) CR.avoid(x, z, hw + 0.4);
       }
     }
 
-    // the car parks and the golf course: laid on the ground in square cells (whole ones share their corners; the edge ones cut to the
-    // outline, Sutherland-Hodgman, and triangulated); none inside the barriers
+    // the car parks and the golf course: laid on the ground in square cells (whole ones share their corners within a tile; the edge ones
+    // cut to the outline, Sutherland-Hodgman, and triangulated), each in the tile of its centre; none inside the barriers
     const area = (P) => { let s = 0; for (let k = 0; k < P.length; k += 2) { const j = (k + 2) % P.length; s += P[k] * P[j + 1] - P[j] * P[k + 1]; } return s / 2; };
     const clip = (Q, x0, z0, x1, z1) => {
       let P = Q;
@@ -144,20 +150,21 @@
       }
       return P;
     };
-    const drape = (rb, Q, C, colAt, lift, U, onCell) => {
+    const drape = (mt, Q, C, colAt, lift, U, onCell) => {
       let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
       for (let k = 0; k < Q.length; k += 2) { x0 = Math.min(x0, Q[k]); x1 = Math.max(x1, Q[k]); z0 = Math.min(z0, Q[k + 1]); z1 = Math.max(z1, Q[k + 1]); }
       const i0 = Math.floor(x0 / C), i1 = Math.floor(x1 / C), j0 = Math.floor(z0 / C), j1 = Math.floor(z1 / C), V = new Map();
-      const vtx = (x, z) => rb.row([[x, nrGround(x, z) + lift, z]], [colAt(x, z)], [[x / U, z / U]]);
-      const cor = (i, j) => { const key = i * 100003 + j; let v = V.get(key); if (v === undefined) V.set(key, v = vtx(i * C, j * C)); return v; };
+      const vtx = (rb, x, z) => rb.row([[x, nrGround(x, z) + lift, z]], [colAt(x, z)], [[x / U, z / U]]);
+      const cor = (rb, i, j) => { let M = V.get(rb); if (!M) V.set(rb, M = new Map()); const key = i * 100003 + j; let v = M.get(key); if (v === undefined) M.set(key, v = vtx(rb, i * C, j * C)); return v; };
       for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
         const P = clip(Q, i * C, j * C, (i + 1) * C, (j + 1) * C); if (!P) continue;
         let cx = 0, cz = 0; for (let k = 0; k < P.length; k += 2) { cx += P[k]; cz += P[k + 1]; } cx /= P.length / 2; cz /= P.length / 2;
         if (!past(cx, cz, 1.5)) continue;
-        if (Math.abs(Math.abs(area(P)) - C * C) < 1e-3) { const a = cor(i, j), b = cor(i + 1, j), c = cor(i + 1, j + 1), d = cor(i, j + 1); rb.I.push(a, c, b, a, d, c); }
+        const rb = rbAt(mt, cx, cz);
+        if (Math.abs(Math.abs(area(P)) - C * C) < 1e-3) { const a = cor(rb, i, j), b = cor(rb, i + 1, j), c = cor(rb, i + 1, j + 1), d = cor(rb, i, j + 1); rb.I.push(a, c, b, a, d, c); }
         else {
           const n = P.length / 2, b0 = rb.n; if (Math.abs(area(P)) < 0.01) continue;
-          for (let k = 0; k < n; k++) vtx(P[2 * k], P[2 * k + 1]);
+          for (let k = 0; k < n; k++) vtx(rb, P[2 * k], P[2 * k + 1]);
           const tri = THREE.ShapeUtils.triangulateShape(Array.from({ length: n }, (_, k) => new THREE.Vector2(P[2 * k], P[2 * k + 1])), []);
           for (const [a, b, c] of tri) {
             const cr = (P[2 * b] - P[2 * a]) * (P[2 * c + 1] - P[2 * a + 1]) - (P[2 * b + 1] - P[2 * a + 1]) * (P[2 * c] - P[2 * a]);
@@ -169,9 +176,9 @@
     };
     for (const Q of PARK) {
       const asp = Q[0] === 0 || PARK_B;
-      drape(asp ? rbA : rbS, Q.slice(1), 4, asp ? asphaltAt : fieldAt, 0.08, asp ? 3 : 4, (x, z) => { exclPush(x, z, 3); st.parkCells++; });
+      drape(asp ? 0 : 1, Q.slice(1), 4, asp ? asphaltAt : fieldAt, 0.08, asp ? 3 : 4, (x, z) => { exclPush(x, z, 3); st.parkCells++; });
     }
-    for (const Q of GOLF) drape(rbG, Q.slice(1), 2, () => GOLF_C[Q[0]], 0.06, 2, (x, z) => { exclPush(x, z, 1.6); st.golfCells++; });
+    for (const Q of GOLF) drape(2, Q.slice(1), 2, () => GOLF_C[Q[0]], 0.06, 2, (x, z) => { exclPush(x, z, 1.6); st.golfCells++; });
 
     // the tower: a steel tube tapering up, a ring of three antenna panels near its top, a grey cabinet at its foot (built as assumed)
     if (cyl && past(MAST[0], MAST[1], 3)) {
@@ -183,10 +190,11 @@
       exclPush(x, z, 4); CR.avoid(x, z, 3); st.tower = 1;
     }
 
-    for (const [rb, map, nm] of [[rbA, tex.asphalt, 'roadside-asphalt'], [rbS, tex.sand, 'roadside-sand'], [rbG, tex.grass, 'roadside-grass']]) {
+    const MAT = [[tex.asphalt, 'roadside-asphalt'], [tex.sand, 'roadside-sand'], [tex.grass, 'roadside-grass']], mats = [];
+    for (const { mt, rb } of tiles.values()) {
       if (rb.empty) continue;
-      const m = new THREE.Mesh(rb.geometry(), new THREE.MeshLambertMaterial({ map, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }));
-      m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = nm; root.add(m);
+      const mat = mats[mt] || (mats[mt] = new THREE.MeshLambertMaterial({ map: MAT[mt][0], vertexColors: true, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 }));
+      const m = new THREE.Mesh(rb.geometry(), mat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = MAT[mt][1]; root.add(m); st.meshes++;
     }
     st.wayM = Math.round(st.wayM);
     return st;
