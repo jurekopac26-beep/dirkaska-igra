@@ -1380,7 +1380,7 @@
           if (rd < 420 && nHouse < 600 && !excluded(x, z) && nrSlope(x, z) < 0.2 && RH() < 0.55) house(x, z, a0 + ((Math.floor(x / 96) + Math.floor(z / 96)) & 1 ? Math.PI / 2 : 0));
           continue;
         }
-        if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0) continue;
+        if (rd < 45 || rd > 420 || excluded(x, z) || nrSlope(x, z) > 0.08 || P.pad(x, z, 0) !== 0 || (LK.lotOk && !LK.lotOk(x, z))) continue;   // (LK.lotOk: a world's own roads, laid later: Sosnová's)
         const rot = a0 + ((Math.floor(x / 64) + Math.floor(z / 64)) & 1 ? Math.PI / 2 : 0), hb = crH(Math.floor(x / 48), Math.floor(z / 48), 83);
         const kind = hb < MIX[0] ? 'kamp' : hb < MIX[0] + MIX[1] ? 'avtodomi' : 'navijaci'; campLot(scen.get(x, z), nrGround, x, z, rot, kind, i * 7 + j); (out.lots || (out.lots = [])).push([x, z, rot, kind]); nCars++;   // (nCars: the lots; out.lots: where, for the tests and the people)
         exclPush(x, z, 11);
