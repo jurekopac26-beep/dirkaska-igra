@@ -279,6 +279,9 @@
       out.fort = fm; out.marks = { Trdnjava: FC.slice() };
       if (World.znamenitost) World.znamenitost.add('portobelo', root, { x: FC[0], z: FC[1], fallback: fm, out });
     }
+    // what OpenStreetMap maps open by the road stays open (js/world-realizem15-portobelo.js): no tree and no house of the town's own on the
+    // concrete pitch, on the squares or in the bed of a stream
+    if (API.pbFree) for (const [x, z, r] of API.pbFree()) exclPush(x, z, r);
 
     /* ---- the buildings (OSM footprints within 60 m): the houses of the town painted bright, turquoise, yellow, pink, green, blue, white and
        orange, most with a low roof of corrugated metal (rusty red, green, grey, blue), some with a flat concrete roof; the bigger ones in two
@@ -314,6 +317,7 @@
           if (crH(xx, zz, 40) > 0.55) continue;
           const x = xx + (crH(xx, zz, 41) - 0.5) * 6, z = zz + (crH(xx, zz, 42) - 0.5) * 6, rd = nrDist(x, z);
           if (rd < 15 || rd > 55 || nrLCf(x, z, 3) < 0.5) continue;
+          if (API.pbOpen && API.pbOpen(x, z)) continue;   // (nor a house of its own in the park or over a stream: the same file)
           const Lb = 7 + crH(x, z, 43) * 5, Wb = 6 + crH(x, z, 44) * 4;
           if (rd < 0.6 * Math.hypot(Lb, Wb) + 9 || excluded(x, z, 1) || seaD(x, z) > -8 || inFort(x, z, 18) || inGlade(x, z)) continue;
           const nn = nrNear(x, z), ni = nn.i, ndd = nn.dd; if (ni < 0 || ndd < 4) continue;
