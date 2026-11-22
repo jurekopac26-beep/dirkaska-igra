@@ -25,6 +25,15 @@ Okolica (gradi jo skupna okolica prelazov `buildPrelaz` v `js/world-prelaz.js` z
 
 ## Ob cesti
 
-Stranske ulice in dovozi, ki se priključijo na glavno cesto (obrisi iz OpenStreetMap, površina po oznaki `surface`). V delu, glej osnutek PR (veja `grafika/savusavu-obcestje`).
+Stranske ulice in dovozi, ki se priključijo na glavno cesto (`js/world-savusavu-obcestje.js`, potek in razred iz OpenStreetMap, slike prej in potem v `docs/slike/savusavu/`):
+
+- **Katere**: 14 poti med startom in ciljem, od roba asfalta v igri navzven, največ 70 m od ceste (120 m po poti). Terciarna 42164592 (49 m za startom); stanovanjske 401685120 (132 m), 401685119 in 996474499 (189 m, druga nasproti drugi), 401684811 (524 m), 401684810 (654 m), 1101650713 (812 m), 223938129 (1855 m) in 401622110 (2423 m); servisna 401683563 (1534 m); neklasificirana 401683564, stanovanjska 223937585 in dovoz 1065339441 v enem križišču (1618 m, dovoz se od neklasificirane odcepi 9 m od ceste); dovoz 223937775 (1697 m).
+- **Samo grafika**: teren, cesta, njen nevidni rob in vožnja so nespremenjeni (namenoma ne `def.sideRoads`, ki bi poti naredil prevozne). Pot se konča, kjer se začne morje, voda iz OpenStreetMap ali hiša, ki jo igra riše; na njej ni palm, dreves, skal ali gledalcev.
+- **Ob ustju**: jeklena ograja na zunanji strani ovinka se čez ustje odpre (1,5 m od robov poti, brez ostanka, krajšega od 12 m), pri 401683563, 223937585 in 223938129. Štirje beli smerniki, ki bi stali sredi ustja, so odstranjeni.
+- **Površina**: oznako `surface=unpaved` ima 7 poti, preostalih 7 nima oznake `surface` (vse označene ob tej cesti so neasfaltirane). Narisane so kot makadam v teksturi in barvi makadamske bankine glavne ceste (želja uporabnika 2. 11. 2026, `docs/igra.md`, »Makadam«), kolesnice malo svetlejše; v dežju so temnejše kot bankina.
+- **Predpostavke** (OpenStreetMap tu nima širin): širina po razredu (terciarna 5,5 m, neklasificirana 5 m, stanovanjska 4,5 m, servisna 3,5 m, dovoz 3 m), ustje 2,5 m širše, ki se zoži v prvih 6 m za asfaltom; čez jarek ob cesti gre pot po nasipu (cev pod njim ni narisana). Cesta v igri je širša od prave, zato se pot začne na robu asfalta v igri.
+- **Ni narisano**: poti za ciljem (kraka križišča na koncu mesta) in za startom (steza in ploščadi letališča, zunaj pogleda kamere za avtom); nobenih imen.
+- **Odprto vprašanje**: (a) vseh 14 poti kot makadam (`savusavu-177m-po.webp`) ali (b) samo 7 z oznako `unpaved` (`savusavu-177m-b-samo-oznacene.webp`).
+- **Zmogljivost**: makadam je v mreži bankine glavne ceste, brežine ob robovih v kosih okolice: brez lastnih klicev risanja. Na telefonu 171 klicev na sliko (največ 210, prej 170 in 209), 405 tisoč oglišč (največ 493 tisoč, prej 398 in 491 tisoč).
 
 Podatke proge pripravi orodje `tools/proga/proga.py` (`python3 tools/proga/proga.py savusavu --zapisi`, nastavitve v `tools/proga/proge.json`, opis v `tools/proga/README.md`). Vire glej v `README.md` pod »Zasluge«.

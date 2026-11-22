@@ -658,11 +658,11 @@
   "jsMs": 2.56
  },
  "savusavu": {
-  "calls": 166,
-  "maxCalls": 194,
-  "kverts": 384,
-  "maxKverts": 482,
-  "jsMs": 1.13
+  "calls": 171,
+  "maxCalls": 210,
+  "kverts": 405,
+  "maxKverts": 493,
+  "jsMs": 1.82
  },
  "quezaltepeque": {
   "calls": 228,
