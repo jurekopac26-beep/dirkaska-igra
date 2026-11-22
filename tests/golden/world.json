@@ -1285,15 +1285,15 @@
  },
  "eljem": {
   "meshes": 189,
-  "verts": 300146,
+  "verts": 307820,
   "instances": 339,
   "props": 0,
   "crowd": 118,
-  "world": "f4fca0c",
+  "world": "c9099bc2",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "7ad905c2",
+   "-:MeshLambertMaterial": "97d7df14",
    "crowd:MeshLambertMaterial": "1fc2f910",
    "flags:MeshLambertMaterial": "da3620fd",
    "ao:MeshBasicMaterial": "b6319958",

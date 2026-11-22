@@ -161,7 +161,7 @@
       for (let k = n - 1; k >= 0 && !side; k--) { const q = pts[k]; if (q.i >= 0 && Math.abs(q.lat) > T.wAt(q.i) + 0.5) side = Math.sign(q.lat); }
       if (!side) return;
       for (const q of pts) info(q, side);
-      let s0 = 0, sE = -1e9, sk = [-1e9, -1e9], LN = null;
+      let s0 = 0, sE = -1e9, sk = [-1e9, -1e9], LN = null; const FH = [];
       if (joins) {
         let kE = -1;
         for (let k = 1; k < n; k++) if (pts[k].i >= 0 && pts[k].o >= pts[k].w) { kE = k; break; }
@@ -190,7 +190,8 @@
           while (dl <= -Math.PI) dl += 2 * Math.PI;
           const m = Math.max(2, Math.ceil(Math.abs(dl) / (Math.PI / 10))), arc = [];
           for (let q = 0; q <= m; q++) { const th = ts + dl * q / m; arc.push([Ccx + R * Math.cos(th), Ccz + R * Math.sin(th)]); }
-          ST.fans.push({ b, side, hw, O: [Ox, Oz], arc, Cc: [Ccx, Ccz], poly: [[Ox, Oz]].concat(arc), dy: (b % 5) * 0.002, L: LN });
+          const fan = { b, side, hw, O: [Ox, Oz], a: [ax, az], Lt, arc, Cc: [Ccx, Ccz], poly: [[Ox, Oz]].concat(arc), dy: (b % 5) * 0.002, L: LN };
+          ST.fans.push(fan); FH.push(fan);
           sk[j < 0 ? 0 : 1] = sE + u + Lt; ends.push([Trx, Trz]); us.push(u);
         }
         const fs = ends.map(([x, z]) => fOf(x, z)).filter((f) => f >= 0);
@@ -203,6 +204,13 @@
       const src = [];
       if (k0 > 0 && pts[k0].s > s0 + 0.01) { const a2 = pts[k0 - 1], b2 = pts[k0], f = (s0 - a2.s) / (b2.s - a2.s); src.push(info({ x: lerp(a2.x, b2.x, f), z: lerp(a2.z, b2.z, f), s: s0 }, side)); }
       for (let k = k0; k < n; k++) { const q = pts[k], near = joins ? q.s <= sE + 25 : false; if (near || (k - k0) % 2 === 0 || k === n - 1) src.push(q); }
+      for (const f of FH) {   // (a fan's rays are sampled where the body's rows cross its first ray, the street's edge, which starts at the body's last row before the corner: the two share that edge point for point, so no slit opens where the road's edge moves them; no gap over a third of a ray)
+        const all = src.map((q) => ((q.x - f.O[0]) * f.a[0] + (q.z - f.O[1]) * f.a[1]) / f.Lt), neg = all.filter((t) => t * f.Lt <= 0.02 && t * f.Lt > -2);
+        const tq = all.filter((t) => t * f.Lt > 0.02 && (1 - t) * f.Lt > 0.02).sort((p, q) => p - q), ts = [0].concat(tq, [1]);
+        f.t0 = neg.length ? Math.max(...neg) : null;
+        f.ts = [0];
+        for (let k = 1; k < ts.length; k++) { const g = ts[k] - ts[k - 1], m = Math.ceil(g * 3 - 1e-6); for (let q = 1; q < m; q++) f.ts.push(ts[k - 1] + g * q / m); f.ts.push(ts[k]); }
+      }
       const dyb = (b % 5) * 0.002;
       let cur = [], out = false, piece = 0;
       const flush = () => {
@@ -291,22 +299,25 @@
       }
     }
     for (const f of ST.fans) {   // the rounded corners: rays from the corner (moved onto the road's edge) to the arc
-      const [Ox, Oz] = f.O, sec = [];
-      for (const [x1, z1] of f.arc) {
+      const [Ox, Oz] = f.O, sec = [], TS = f.ts || [0, 1 / 3, 2 / 3, 1], M = TS.length, L1 = M - 1;
+      f.arc.forEach(([x1, z1], k) => {   // (the first ray, the street's edge, is the body's edge: the same points, moved onto the road with the same margin)
         const P = [], E = [];
-        for (const t of [0, 1 / 3, 2 / 3, 1]) { const [x, z, e] = onRoad(...bend(lerp(Ox, x1, t), lerp(Oz, z1, t), f.side, f.L), f.side, 0.02); P.push([x, height(x, z, f.side, 0, e) + f.dy, z]); E.push(e); }
+        TS.forEach((tt, q) => {
+          const own = k === 0 && (q > 0 || f.t0 != null), t = k === 0 && q === 0 && f.t0 != null ? f.t0 : tt;
+          const [x, z, e] = onRoad(...bend(lerp(Ox, x1, t), lerp(Oz, z1, t), f.side, f.L), f.side, own ? 0 : 0.02); P.push([x, height(x, z, f.side, 0, e) + f.dy, z]); E.push(e);
+        });
         sec.push({ P, E });
-      }
+      });
       crease(sec, f.side);
       for (let k = 0; k < sec.length - 1; k++) {
-        const A = sec[k], B = sec[k + 1], g = CA.get(A.P[3][0], A.P[3][2]);
-        for (let j = 0; j < 3; j++) {
+        const A = sec[k], B = sec[k + 1], g = CA.get(A.P[L1][0], A.P[L1][2]);
+        for (let j = 0; j < L1; j++) {
           if (A.E[j] && A.E[j + 1] && B.E[j + 1] && B.E[j]) continue;
-          g.quadUp(A.P[j], A.P[j + 1], B.P[j + 1], B.P[j], [col(A.P[j], j === 3), col(A.P[j + 1], j + 1 === 3), col(B.P[j + 1], j + 1 === 3), col(B.P[j], j === 3)], [UA(A.P[j]), UA(A.P[j + 1]), UA(B.P[j + 1]), UA(B.P[j])]);
+          g.quadUp(A.P[j], A.P[j + 1], B.P[j + 1], B.P[j], [col(A.P[j], j === L1), col(A.P[j + 1], j + 1 === L1), col(B.P[j + 1], j + 1 === L1), col(B.P[j], j === L1)], [UA(A.P[j]), UA(A.P[j + 1]), UA(B.P[j + 1]), UA(B.P[j])]);
         }
-        if (!(A.E[3] && B.E[3])) {
-          const mx = (A.P[3][0] + B.P[3][0]) / 2, mz = (A.P[3][2] + B.P[3][2]) / 2, dx = f.Cc[0] - mx, dz = f.Cc[1] - mz, l = Math.hypot(dx, dz) || 1;
-          skirt(A.P[3], B.P[3], dx / l, dz / l, f.side);
+        if (!(A.E[L1] && B.E[L1])) {
+          const mx = (A.P[L1][0] + B.P[L1][0]) / 2, mz = (A.P[L1][2] + B.P[L1][2]) / 2, dx = f.Cc[0] - mx, dz = f.Cc[1] - mz, l = Math.hypot(dx, dz) || 1;
+          skirt(A.P[L1], B.P[L1], dx / l, dz / l, f.side);
         }
       }
     }
