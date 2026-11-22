@@ -21,7 +21,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     maxRivals: 60,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the ~130 m of road past the line, two rows a side
     halfWidth: 5.4,
     desc: "Mestna proga v Mombasi, pristaniškem mestu na otoku ob obali Kenije: po aveniji skozi mestno središče, ob robu starega dela mesta, pod zahodnim zidom stare portugalske trdnjave iz 16. stoletja in po obalni cesti nad kanalom Likoni. Vozi se po levi. Dirka s tekmeci, vožnja proti uri, dvoboj v prometu ali beg pred policijo.",
-    en: { name: 'Mombasa, Kenya', desc: "A city course in Mombasa, the port city on an island off the coast of Kenya: down the avenue through the town centre, along the edge of the old town, under the west wall of the old Portuguese fortress of the 16th century and along the shore road above the Likoni channel. They keep left here. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the shore road' },
+    en: { name: 'Mombasa, Kenya', desc: "A city course in Mombasa, the port city on an island off the coast of Kenya: down the avenue through the town centre, along the edge of the old town, under the west wall of the old Portuguese fortress of the 16th century and along the shore road above the Likoni channel. Drive on the left. A race against rivals, a run against the clock, a duel in the traffic or a run from the police.", escTo: 'To the shore road' },
     realKm: 3.40, alt: [23, 8],
     start: [118.4, 26.2], finish: [543.3, 1724.0], cps: [[771.8, 152.0], [1181.0, 313.0], [1385.5, 954.5], [931.1, 1178.0]],
     runoff: 0.55, inner: 3.0, side: 3.4, noCurbs: true, noGravel: true, offSurface: 'gravel', gradeForce: true, elevSmooth: 20,
