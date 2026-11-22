@@ -441,11 +441,11 @@
   "jsMs": 1.39
  },
  "bikernieki": {
-  "calls": 183,
-  "maxCalls": 235,
-  "kverts": 435,
-  "maxKverts": 517,
-  "jsMs": 1.22
+  "calls": 190,
+  "maxCalls": 237,
+  "kverts": 430,
+  "maxKverts": 511,
+  "jsMs": 1.6
  },
  "london": {
   "calls": 172,

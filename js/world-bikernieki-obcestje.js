@@ -231,7 +231,7 @@
 
     // the roads: rows of two across (the left and the right edge), every 2.5 m along, on the ground; cut where they run inside the barriers;
     // a stretch goes into the tile of the row it ends at (the row before it copied there when the tile or the mesh changes). Within FADE m
-    // of a cut or of a free end (one that meets no other road drawn here: the I/9 at its bridge, the edge of the data) the asphalt fades
+    // of a cut or of a free end (one that meets no other road drawn here: a road at an underpass, the edge of the data) the asphalt fades
     // out: those stretches go into a see-through mesh per tile, so no road stops with a hard edge in the grass
     const FADE = 20, tilesF = new Map();
     const rbFade = (x, z) => { const key = Math.floor(x / TILE) + ',' + Math.floor(z / TILE); let t = tilesF.get(key); if (!t) tilesF.set(key, t = new RB(true, true)); return t; };
@@ -241,10 +241,10 @@
       return false;
     };
     // at an end, the width of the roads of its class that end there too, together (0: none): where a road meets narrower ones end to end
-    // (the I/9's 4 lanes split into its two one-lane roadways, its 2 lanes merged into 1) it narrows to that over up to 30 m (half of it)
+    // (the main street where OSM gives it fewer lanes) it narrows to that over up to 30 m (half of it)
     const endW = (W, x, z) => { let w = 0; for (const V of WAYS) if (V !== W && V[0] === W[0]) for (const q of [2, V.length - 2]) if (Math.hypot(V[q] - x, V[q + 1] - z) < 0.5) w += wide(V); return w; };
-    // at an end where a road splits in two narrower ones of its class (the I/9's 4 lanes into its two one-lane roadways round an island,
-    // the 00913's 2 lanes into its junction branches; OSM starts both at one point): the other one, how far apart their lines must be to
+    // at an end where a road splits in two narrower ones of its class (OSM starts both at one point; none in
+    // today's data here, kept for a later OSM edit): the other one, how far apart their lines must be to
     // lie side by side over the wider one's end, and which way across (along the rows' normal) this one keeps clear of the other (null:
     // no split there). They keep that far apart until OSM's lines are, then follow them: the island opens where they part
     const split = (W, atEnd) => {
