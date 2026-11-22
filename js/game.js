@@ -4208,10 +4208,10 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (!trd || !race.mk || !S.radio) return;
     teamRadioShow(dt);
     if (phase !== 'racing' || P.finished) return;
-    const pl = race.plan(P), W = race.wst, wx = W && W.wx;
-    // the weather on the radar: the rain a minute before it comes, or its end
-    if (wx && !trd.rain && Math.abs(wx.r1 - wx.r0) > 0.2 && race.time > wx.at - 60 && race.time < wx.at) {
-      trd.rain = true; const wet = wx.r1 > wx.r0;
+    const pl = race.plan(P), N = race.wxNext();
+    // the weather on the radar: the rain a minute before it comes, or its end (each turn of the plan once: trd.rain its time)
+    if (N && trd.rain !== N.t && race.time > N.t - 60 && race.time < N.t) {
+      trd.rain = N.t; const wet = N.wet;
       teamRadioSay(tr(wet ? 'Na radarju je dež: začel bo čez približno minuto.' : 'Na radarju se dež umika: kmalu bo ponehal.'), 2, wet ? 'radioRain' : 'radioRainStop');
     }
     // the safety car out with a stop due anyway: a cheap one now
