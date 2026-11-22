@@ -154,12 +154,8 @@
   "assets/geo/l3-uncompahgre.webp": "6d15cf7cc751a3e2",
   "assets/geo/l3-vrsic-h.png": "4fbc660367ac717c",
   "assets/geo/l3-vrsic.webp": "b0d0fc55efc85c51",
-  "assets/maps/corner-haivan.webm": "37b7604bbb31c935",
-  "assets/maps/corner-haivan.webp": "e7b05a5779fb0c80",
   "assets/maps/corner-iroha.webm": "7a3d0c5cec5a906b",
   "assets/maps/corner-iroha.webp": "bc7cff375b30fb06",
-  "assets/maps/corner-sogeri.webm": "668f299e491f1266",
-  "assets/maps/corner-sogeri.webp": "6078a2af10991a0d",
   "assets/maps/corner-suzuka.webm": "27df73a632877fef",
   "assets/maps/corner-suzuka.webp": "e922152e93010ccf",
   "assets/maps/corner-vrsic.webm": "db0456903c9eeca4",
@@ -958,6 +954,16 @@
    "datum": "2026-11-22",
    "proga": "haivan",
    "razlog": "Izbira uporabnika 22. 11. 2026 ob 1.55: za Vietnam Mã Pí Lèng, Hải Vân testna"
+  },
+  {
+   "datum": "2026-11-22",
+   "proga": "sogeri",
+   "razlog": "Izbira uporabnika 22. 11. 2026 ob 1.50: za Papuo Novo Gvinejo Tapini, Sogeri testna (brez videa ovinka)"
+  },
+  {
+   "datum": "2026-11-22",
+   "proga": "haivan",
+   "razlog": "Izbira uporabnika 22. 11. 2026 ob 1.55: za Vietnam Mã Pí Lèng, Hải Vân testna (brez videa ovinka)"
   }
  ]
 }
