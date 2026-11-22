@@ -27,9 +27,10 @@
   const P = (R, a, b, r0, r1) => ({ col: vary(mix3(a, b, R()), R, 0.015), r: r0 + R() * r1 });
 
   /* ---- Silkeborg ---- */
-  const SK = { dust: [[0.66, 0.61, 0.48], [0.7, 0.64, 0.5]], edge: [[0.5, 0.53, 0.3], [0.55, 0.56, 0.33]],
-    heath: [0.42, 0.31, 0.3], bloom: [0.48, 0.32, 0.44], straw: [0.66, 0.6, 0.38], straw2: [0.58, 0.56, 0.34],
-    sand: [0.76, 0.7, 0.53], needle: [0.46, 0.33, 0.22], moss: [0.34, 0.42, 0.22] };
+  /* answer 2 to chase-skupina-69: colours half way to the grass (~[0.42, 0.5, 0.26]), fewer and smaller sand patches */
+  const SK = { dust: [[0.55, 0.55, 0.36], [0.57, 0.57, 0.38]], edge: [[0.46, 0.515, 0.28], [0.48, 0.53, 0.3]],
+    heath: [0.42, 0.39, 0.28], bloom: [0.45, 0.39, 0.35], straw: [0.53, 0.55, 0.31], straw2: [0.5, 0.53, 0.3],
+    sand: [0.58, 0.58, 0.39], needle: [0.42, 0.38, 0.24], moss: [0.36, 0.45, 0.23] };
 
   /* the worn edge (as js/world-chase-bt59.js's, its first line only): from the asphalt's edge (or the kerb's) out 0.65-1.35 m, in
      lengths of 6-22 m with gaps, on the verge as the builder draws it; never on the run-offs (nor ~30 m past their ends) or by the pits */
@@ -83,8 +84,8 @@
       const c = nrLC(gx, gz), r = R(), y = gH(gx, gz);
       if (c === 1) { if (r < 0.7) { soil(scen, gH, gx, gz, 1.6 + R() * 2.2, vary(mix3(SK.needle, SK.moss, R() * 0.4), R, 0.02), R, 0.05); st.iglice++; } return; }
       if (c === 2 ? r < 0.5 : r < 0.2) { soil(scen, gH, gx, gz, 1.8 + R() * 2.4, vary(mix3(SK.heath, SK.bloom, bl(gx, gz)), R, 0.02), R, 0.05); st.resa++; }
-      else if (r < 0.75) { soil(scen, gH, gx, gz, 1.8 + R() * 2.6, vary(mix3(SK.straw, SK.straw2, R()), R, 0.02), R, 0.05); st.slama++; }
-      else if (r < 0.88) { soil(scen, gH, gx, gz, 1.0 + R() * 1.4, vary(SK.sand, R, 0.02), R, 0.05); st.pesek++; }
+      else if (r < 0.75) { soil(scen, gH, gx, gz, 1.6 + R() * 2.0, vary(mix3(SK.straw, SK.straw2, R()), R, 0.02), R, 0.05); st.slama++; }
+      else if (r < 0.82) { soil(scen, gH, gx, gz, 0.8 + R() * 1.0, vary(SK.sand, R, 0.02), R, 0.05); st.pesek++; }
       else if (c === 2) { const h = R(); cushion(scen.get(gx, gz), gx, y + 0.02, gz, 0.5 + h * 0.4, 0.24 + h * 0.14, vary(mix3(SK.heath, SK.bloom, bl(gx, gz) * 0.9), R, 0.03), R); st.grmi++; }
     });
   };
