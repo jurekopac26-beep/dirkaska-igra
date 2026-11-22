@@ -135,6 +135,8 @@ const Comm = (() => {
     radioWindow: ['Pit window opens on lap {from}.', 'We are planning the stop between laps {from} and {to}.'],
     radioRain: ['Rain on the radar, about a minute away.', 'We expect rain in about a minute.'],
     radioRainStop: ['The rain should stop soon.', 'The radar says the rain is moving away.'],
+    radioRainHeavy: ['The rain is getting heavier, the track will be very wet.', 'More rain coming, it is getting heavier.'],
+    radioRainEase: ['The rain is easing, only a drizzle soon.', 'It is easing off now.'],
     // the weather forecast at the way in to a stop (a changing weather, game.js fcRadio): {when} 'within a lap' or 'in 2 to 3 laps', {p} the chance
     radioFcRain: ['Forecast: rain {when}, {p} percent chance.', 'The radar has rain coming {when}, {p} percent.'],
     radioFcStop: ['Forecast: the rain stops {when}, {p} percent chance.', 'The rain should ease off {when}, {p} percent.'],
@@ -165,6 +167,8 @@ const Comm = (() => {
     aiMistake: ['{name} has run wide under the pressure!', 'A mistake from {name}! Locked up into the corner!', 'Oh, {name} cracks under pressure and goes wide!'],
     dusk: ['The sun is going down, the shadows are getting long.', 'Evening now, the light is fading over the circuit.'],
     nightFall: ['Night has fallen! Headlights on, the floodlights are blazing.', 'It is dark now, racing under the lights!'],
+    rainHeavy: ['The rain is getting heavier! Standing water out there now!', 'It is really coming down now! Very little grip!', 'A proper downpour now, the spray is enormous!'],
+    rainEase: ['The rain is easing off a little.', 'Lighter rain now, just a drizzle.', 'The shower is passing, the rain is easing.'],
     rainStop: ['The rain has stopped! The track will start to dry.', 'No more rain! Watch for a dry line appearing.', 'The rain has eased off. A drying track now!'],
     dryLine: ['A dry line is appearing! Those rain tyres are overheating!', 'The racing line is dry now. Time for slicks?', 'Dry line! The rain tyres will not last on this.'],
     drs: ['DRS open down the straight!', 'The rear wing opens, DRS is on!', 'Within a second at the line, DRS for the chase!'],

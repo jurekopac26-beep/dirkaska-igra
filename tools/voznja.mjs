@@ -35,7 +35,7 @@ export const RULES = {
   hitA: 50,                             // a hit (the barrier, a car): more than 50 m/s² of speed lost between two samples, over the ground and the car's own (into a wall: 100-150; the brakes up to ~16, a car sliding sideways in a spin ~30)
   side: [7, 5], behind: [22, 3],        // traffic: another car within 7 m along and 5 m across (beside it), or 0-22 m ahead within 3 m across
   margin: 1,                            // ... and 1 s before and after (the run up to a pass, pulling away)
-  wetIn: 40, dryIn: 240,                // a changing weather: the road as wet as the rain 40 s after the rain has its new value, dry 240 s after it stops (less rain: 240 s per unit; Race._weather)
+  wetIn: 130, dryIn: 240,               // a changing weather: the road as wet as the rain 130 s after the rain has its new value, dry 240 s after it stops (less rain: 240 s per unit; Race._weather)
   apexDrop: 3, apexWin: 60,             // a corner: a minimum of the mean speed within 60 m either side, at least 3 m/s under the speed before it
   brakeWin: 500, brakeGap: 0.4,         // its braking: within 500 m before the apex; the brake let off for up to 0.4 s is still one braking
   grassIn: 0.6,                         // over the verge (tr): the car's middle within 0.6 m of the asphalt's edge or past it, its outer wheels off
@@ -146,13 +146,17 @@ function autoOf(C, t, car, cond, cache) {
 /* ---------------- the weather of a lap: the header's (wx, rain; wxs: a changing weather's rain from r0 to r1 over dur s from at, the
    recordings from 5. 11. 2026 on); a lap while the road gets wet or dries is left out ---------------- */
 function condOf(H, t0, t1, tyres) {
-  const winter = H.season === 'winter', X = H.wxs;
+  const winter = H.season === 'winter', L = Array.isArray(H.wxp) && H.wxp.length ? H.wxp : H.wxs ? [H.wxs] : [];   // (wxp: a plan of more points, 22. 11. 2026 on)
   let rain;
-  if (X && X.r0 !== X.r1) {   // (the water on the road: wet within RULES.wetIn s of the rain's end value, dry by RULES.dryIn s per unit of rain gone)
-    const a = X.at, b = X.at + X.dur;
-    if (t1 <= a) rain = X.r0;
-    else if (t0 >= b + (X.r1 > X.r0 ? RULES.wetIn : (X.r0 - X.r1) * RULES.dryIn)) rain = X.r1;
-    else return { skip: 'vreme se spreminja' };
+  if (L.some(X => X.r0 !== X.r1)) {   // (the water on the road: wet within RULES.wetIn s of the rain's end value, dry by RULES.dryIn s per unit of rain gone)
+    rain = L[0].r0;
+    for (const X of L) {
+      if (X.r0 === X.r1) continue;
+      const a = X.at, b = X.at + X.dur;
+      if (t1 <= a) break;
+      if (t0 >= b + (X.r1 > X.r0 ? RULES.wetIn : (X.r0 - X.r1) * RULES.dryIn)) rain = X.r1;
+      else return { skip: 'vreme se spreminja' };
+    }
   } else rain = H.rain > 0 ? H.rain : /^dez/.test(H.wx || '') ? 1 : 0;
   return { rain, wet: rain > 0, winter, tyres, key: (rain > 0 ? 'mokro' : 'suho') + (winter ? '·zima' : '') };
 }

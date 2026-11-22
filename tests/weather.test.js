@@ -97,6 +97,11 @@ const f3 = (x) => (Number.isFinite(x) ? x.toFixed(3) : String(x));
     JSON.stringify({ n0, a, n1, b, evs }));
   const r1 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, weather: { at: 30, dur: 20, to: 1 } });
   check('a single point: a plan of one, as before', r1.wst.plan.length === 1 && r1.wst.wx === r1.wst.plan[0] && r1.wst.wx.r0 === 0 && r1.wst.wx.r1 === 1, JSON.stringify(r1.wst.plan));
+  // a shower: drizzle, the rain strengthens, it eases, dry (each turn once: rain, heavy, ease, dry)
+  const r2 = new C.Race(T, { numAI: 0, playerGrid: 1, laps: 30, playerModel: C.MODELS[4], phys: 'cs', seed: 3, tyres: true, weather: [{ at: 10, dur: 20, to: 0.3 }, { at: 60, dur: 20, to: 1 }, { at: 150, dur: 20, to: 0.25 }, { at: 0, dur: 20, to: 0 }] });
+  r2.start(); const W2 = r2.wst, e2 = []; let t2 = 0;
+  while (t2 < 260) { C.aiControl(r2.player, r2, DT); r2.step(DT); t2 += DT; if (W2.ev !== e2.length) e2.push(W2.evK); }
+  check('a shower: the rain strengthens and eases once each (rain, heavy, ease, dry)', e2.join() === 'rain,heavy,ease,dry' && r2.rain === 0, e2.join());
 }
 
 // 5. the AI's pit stops for tyres: the rain starts on the second lap of the Red Bull Ring (pits beside the start straight)

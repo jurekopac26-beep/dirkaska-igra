@@ -7277,10 +7277,10 @@ const Core = (function () {
       // over dur s from race time at, point after point; wst.plan, k the point under way). The water on the road follows the rain (WXW: about
       // two minutes to a shower's 0.6, quicker in a downpour; dry in about four, the racing line twice as fast); a car's grip
       // follows its tyres (c.ty = { k: 'dry' | 'wet', wear }), the water where it drives (on the line or off it) and the wear (see _weather).
-      // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops; wk: x the tyres' wear (a strategy race's, _stratOn)
+      // wst.ev / evK: 'rain' when it starts to rain, 'dry' when it stops, 'heavy' / 'ease' when a wet point strengthens or eases it (evP: that point); wk: x the tyres' wear (a strategy race's, _stratOn)
       const WX = opts.weather && !opts.remote ? opts.weather : null;
       this.wst = { on: !!(opts.tyres || WX), tyres: !!opts.tyres, water: this.rain, line: this.rain, profW: (this.rain ? 1 - (1 - WET) * this.rain * this.cold.rk : 1) * this.cold.gk, profB: wxBrk(null, this.rain * this.cold.rk, this.cold.gk), ev: 0, evK: '', wk: 1,
-        plan: wxPlan(WX, this.rain), k: 0, wx: null };
+        plan: wxPlan(WX, this.rain), k: 0, wx: null, evP: -1 };
       this.wst.wx = this.wst.plan ? this.wst.plan[0] : null;   // (the point under way, or the next one: its at, dur, r0, r1)
       if (opts.tyres) for (const c of this.cars) { c.ty = { k: c.isPlayer && (opts.playerTyre === 'dry' || opts.playerTyre === 'wet') ? opts.playerTyre : tyreFor(this.rain), wear: 0 }; tyreSet(c, 0); }   // (ty.n, bp, bw: the set's burst point, see TYRE_CLIFF)
       // compounds (opts.compounds): every car's slicks one of TYRE_CMP (the rain tyres have none): the player's choice (opts.playerCmp, else by
@@ -7367,6 +7367,7 @@ const Core = (function () {
         while (W.k < W.plan.length - 1 && this.time >= W.plan[W.k + 1].at) W.wx = W.plan[++W.k];
         const Y = W.wx, r = Y.r0 + (Y.r1 - Y.r0) * clamp((this.time - Y.at) / Y.dur, 0, 1);
         if (this.rain === 0 && r > 0) { W.ev++; W.evK = 'rain'; } else if (this.rain > 0 && r === 0) { W.ev++; W.evK = 'dry'; }
+        else if (W.evP !== W.k && this.time >= Y.at && Y.r0 > 0 && Y.r1 > 0 && Math.abs(Y.r1 - Y.r0) >= 0.2) { W.evP = W.k; W.ev++; W.evK = Y.r1 > Y.r0 ? 'heavy' : 'ease'; }   // (a wet point that strengthens or eases the rain: once, at its start)
         this.rain = r;
       }
       const r = this.rain;
