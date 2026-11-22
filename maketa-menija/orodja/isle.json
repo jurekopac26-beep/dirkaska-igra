@@ -483,5 +483,16 @@
    "pad": 1.0,
    "skirt": false
   }
+ ],
+ [
+  "koli",
+  "top",
+  "isle-koli",
+  {
+   "W": 824,
+   "H": 620,
+   "wet": true,
+   "skirt": false
+  }
  ]
 ]

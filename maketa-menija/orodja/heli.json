@@ -230,5 +230,14 @@
  },
  "haivan": {
   "sea": true
+ },
+ "portobelo": {
+  "sea": true
+ },
+ "luanda": {
+  "sea": true
+ },
+ "mombasa": {
+  "sea": true
  }
 }
