@@ -476,11 +476,11 @@
   "jsMs": 1.54
  },
  "santoantao": {
-  "calls": 167,
-  "maxCalls": 194,
-  "kverts": 274,
-  "maxKverts": 323,
-  "jsMs": 1.14
+  "calls": 158,
+  "maxCalls": 190,
+  "kverts": 284,
+  "maxKverts": 320,
+  "jsMs": 1.4
  },
  "gudauri": {
   "calls": 156,
