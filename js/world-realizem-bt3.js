@@ -75,7 +75,12 @@
   late.push(['sakhir', (L, ctx, st) => {
     const { nrLC, NR: P } = API; if (!T || !P || !API.nrGround) return;
     const grit = (x, z) => { const c = nrLC(x, z); return c === 1 || c >= 3 ? 0 : sstep(0.42, 0.7, P.n1(x * 0.35 + 510, z * 0.35 + 90)); };
-    st.kamni = stones(ctx, rng(9439), 7, 29, grit, [[0.5, 0.44, 0.37], [0.58, 0.5, 0.41], [0.44, 0.4, 0.36], [0.63, 0.55, 0.45]], 0.18, 0.95, 4, 8);
+    /* (since 22. 11. 2026: the stones in chunks of their own, casting no shadow and drawn no farther than 140 m — BT.farScen,
+       js/world-chase-bt37.js: a stone of under a metre throws a shadow of a few pixels from the camera behind the car, and the
+       builder's chunks drew them twice, in the shadow pass too; Sakhir's busiest place was over CLAUDE.md's 900k vertices with #821) */
+    const BT = API.chaseBt, flat = BT && BT.farScen && ctx.root && ctx.matV && API.Chunks ? BT.farScen(ctx.root, ctx.matV) : null;
+    st.kamni = stones(flat ? { scen: flat, excluded: ctx.excluded } : ctx, rng(9439), 7, 29, grit, [[0.5, 0.44, 0.37], [0.58, 0.5, 0.41], [0.44, 0.4, 0.36], [0.63, 0.55, 0.45]], 0.18, 0.95, 4, 8);
+    if (flat) flat.done();
   }]);
 
   /* Aguascalientes: docs/proge/aguascalientes.md: »suha trava planote (zlata z olivnimi krpami, ob jarkih bolj zelena)«. Behind the
