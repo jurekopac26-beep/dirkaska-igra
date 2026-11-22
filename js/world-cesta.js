@@ -60,6 +60,7 @@
     'Jamajka':      { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (left-hand traffic, white lines as on the Commonwealth's roads; not checked against photos, the mountain roads often unmarked: docs/proge/irishtown.md, »Negotovo«)
     'Samoa':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (left-hand traffic since 2009; no source on the markings: white lines, a dash to its gap 1 : 3, single solid before blind bends)
     'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
+    'Panama':       { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (SIECA's Central American manual of road markings, after the US one: a yellow centre line, white edges; the double line not drawn yet)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
