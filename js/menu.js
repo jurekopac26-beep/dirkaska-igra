@@ -1330,12 +1330,13 @@
   const kStName = (v, n) => { const s = v.stopnje[n - 1]; return s ? s.en.name : ''; };
   const kPct = (a, b) => b > 0 ? Math.max(0, Math.min(100, Math.round(a / b * 100))) : 100;
   function kNext(v) {   // what the bar under the stage means
-    const p = v.napredek;
+    const p = v.napredek;   // (the Atlas career: the path's stars against the next stage's threshold)
+    if (v.atlas) return p.need ? num(p.done) + ' / ' + num(p.need) + '★ · opens ' + kStName(v, v.stopnja + 1) : num(p.done) + ' / ' + num(v.atlas.max) + '★ · every stage is open';
     return p.need ? p.done + ' of ' + p.need + ' cups in the top three · opens ' + kStName(v, v.stopnja + 1) : 'Every stage is open';
   }
   function kStrip(v) {
     const p = v.napredek, a = v.atlas;   // (the Atlas career: its stars instead of the path's progress, the valley a tap away)
-    const bar = a ? kPct(a.zvezdice, a.max) : kPct(p.done, p.need), chip = a ? '<em class="chip gold ks-st">★ ' + num(a.zvezdice) + ' / ' + num(a.max) + '</em>' : '<em class="chip gold">PATH</em>';
+    const bar = kPct(p.done, p.need), chip = a ? '<em class="chip gold ks-st">★ ' + num(a.zvezdice) + ' / ' + num(a.max) + '</em>' : '<em class="chip gold">PATH</em>';
     return '<button class="k-strip' + (a ? ' atlas' : '') + '" data-act="kpot" aria-haspopup="dialog"><span class="ks-tx"><b>STAGE ' + v.stopnja + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><small>' + esc(kNext(v)) + '</small></span>' +
       '<span class="bar"><b style="width:' + bar + '%"></b></span>' + chip + '</button>';
   }

@@ -23,7 +23,7 @@ const U = (motor, gume, zavore, aero) => ({ motor, gume, zavore, aero });
 // (the path compared as canonical JSON: its fields in any order)
 const canon = (x) => JSON.stringify(x, (k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(q => [q, v[q]])) : v);
 // a cup of the view by its id (a stage's or a class cup)
-const cupIn = (v, id) => v && v.stopnje.flatMap(s => s.pokali).concat(v.razredi).find(c => c.id === id);
+const cupIn = (v, id) => v && v.razredi.concat(v.stopnje.flatMap(s => s.pokali)).find(c => c.id === id);   // (a class cup: its entry with the goals)
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 0, camera: 'chase', track: 'jezero', car: 0 }, { width: 390, height: 844 });
   const reload = async (save) => { await page.evaluate((j) => localStorage.setItem('tdgp-career', JSON.stringify(j)), save); await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 120000 }); };
@@ -48,10 +48,11 @@ try {
   T.check('a career of before 1.0 (v 1, no path): the path added in stage 1, nothing won; still v 1 in memory, the save on the disk as it was',
     a.v === 1 && canon(a.pot) === canon({ stopnja: 1, pokali: {}, cilji: {}, prve: [], km: {} }) && a.disk === JSON.stringify(old), JSON.stringify({ v: a.v, pot: a.pot, disk: a.disk }));
   const va = a.view;
-  T.check('its view: stage 1 open (its cups open, none won; 2 in the first three open the next), stage 2 locked; the class cups open by the cars owned (Mali avti: the pico, Športni avti: the kaze), Superavti locked; the money; no first win',
-    !!va && va.on && va.stopnja === 1 && va.stopnje[0].odprta && va.stopnje[0].pokali.every(c => c.stanje === 'odprt' && c.best === 0) && va.napredek.done === 0 && va.napredek.need === 2
+  const ev1 = (v, n) => v.stopnje[n - 1].pokali.filter(c => c.kind !== 'razred');
+  T.check('its view: stage 1 open (its events open, none won; 9★ open the next), stage 2 locked (its class cup Športni avti too, the kaze owned); stage 1\'s class cups by the cars owned (Mali avti: the pico; no racing car), Superavti locked; the money; no first win',
+    !!va && va.on && va.stopnja === 1 && va.stopnje[0].odprta && ev1(va, 1).every(c => c.stanje === 'odprt' && c.best === 0) && va.napredek.done === 0 && va.napredek.need === 9
     && !va.stopnje[1].odprta && va.stopnje[1].pokali.every(c => c.stanje === 'zaklenjen')
-    && cupIn(va, 'r-mali').stanje === 'odprt' && cupIn(va, 'r-sportni').stanje === 'odprt' && cupIn(va, 'r-super').stanje === 'zaklenjen' && va.money === 5000 && va.prve === 0, views(va));
+    && cupIn(va, 'r-mali').stanje === 'odprt' && cupIn(va, 'r-dirkalni').stanje === 'zaklenjen' && cupIn(va, 'r-sportni').stanje === 'zaklenjen' && cupIn(va, 'r-super').stanje === 'zaklenjen' && va.money === 5000 && va.prve === 0, views(va));
 
   // 3. the refusals
   const r1 = await start('ni-pokala', 'pico'), r2 = await start('r-super', 'pico'), r3 = await start('s1-cesta', 'strega'), r4 = await start('r-mali', 'kaze');
@@ -69,8 +70,8 @@ try {
     b.v === 1 && canon(b.pot) === canon({ stopnja: 2, pokali: { 's1-krog': 2, 'r-mali': 2 }, cilji: { 'mali-zmaga': true }, prve: ['hiva'], km: { mali: 99.9 } }) && b.disk === JSON.stringify(dmg),
     JSON.stringify({ v: b.v, pot: b.pot, disk: b.disk }));
   const vb = b.view, gm = (id) => ((cupIn(vb, 'r-mali') || {}).cilji || []).find(x => x.id === id) || {};
-  T.check('its view: stage 2 open (kept, though only one stage 1 cup is in the first three), stage 3 locked; the cups won (2nd); Športni avti locked (no sports car now); the class goals (the win done, the km 99 of 100); one first win',
-    !!vb && vb.stopnja === 2 && vb.stopnje[1].odprta && vb.stopnje[1].pokali.every(c => c.stanje === 'odprt') && !vb.stopnje[2].odprta && vb.napredek.done === 0 && vb.napredek.need === 2
+  T.check('its view: stage 2 open (kept, though only 4★ of the 9), its events open, stage 3 locked (21★); the cups won (2nd); Športni avti locked (no sports car now); the class goals (the win done, the km 99 of 100); one first win',
+    !!vb && vb.stopnja === 2 && vb.stopnje[1].odprta && ev1(vb, 2).every(c => c.stanje === 'odprt') && !vb.stopnje[2].odprta && vb.napredek.done === 4 && vb.napredek.need === 21
     && cupIn(vb, 's1-krog').stanje === 'osvojen' && cupIn(vb, 's1-krog').best === 2 && cupIn(vb, 's1-cesta').stanje === 'odprt' && cupIn(vb, 'r-mali').stanje === 'osvojen' && cupIn(vb, 'r-mali').best === 2
     && cupIn(vb, 'r-sportni').stanje === 'zaklenjen' && gm('mali-zmaga').done === true && gm('mali-medalja').done === false && gm('mali-km').done === false && gm('mali-km').progress === 99 && vb.prve === 1 && vb.money === 1000, views(vb));
 

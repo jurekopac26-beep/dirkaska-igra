@@ -1615,7 +1615,7 @@ try {
   }
 
   // 12. the career's path of 1.0 (js/kariera.js, part C: the hub; only through the bridge G.kariera / G.karieraStart): the career off, no
-  //     strip; on (a small phone upright), the strip in the Career panel (the stage, its progress); tapped: the hub (the four stages, the
+  //     strip; on (a small phone upright), the strip in the Career panel (the stage, its progress); tapped: the hub without the valley (the five stages, the
   //     open one chosen, its cups with their state, the class cups with their goals); a locked stage's cup refused (the game's toast, the
   //     hub still open, no championship); on its side the hub fits the screen; an open cup tapped: its first race
   {
@@ -1630,12 +1630,14 @@ try {
     await click(page, 'career');
     const v = await page.evaluate(() => __game.kariera());
     const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { txt: k.querySelector("b").textContent, w: k.querySelector(".bar b").style.width, cards: root.querySelectorAll(".t-sub.four .mode").length };');
-    T.check('the career on: the strip above the four cards, the stage and its progress (1 of 2 cups: 50 %)', st && st.txt === 'STAGE 1 · ROOKIE' && st.w === '50%' && st.cards === 4 && v.napredek.done === 1 && v.napredek.need === 2, JSON.stringify({ st, n: v && v.napredek }));
+    const pct = v && v.napredek.need ? Math.round(v.napredek.done / v.napredek.need * 100) + '%' : '';
+    T.check('the career on: the strip above the four cards, the stage and its progress (the stars against the next stage\'s threshold: 2 of 9)', st && st.txt === 'STAGE 1 · ROOKIE' && st.w === pct && st.cards === 4 && v.napredek.done === 2 && v.napredek.need === 9, JSON.stringify({ st, n: v && v.napredek }));
+    await page.evaluate(() => { window.MenuDolina = undefined; });   // (the hub: the path without the valley, e.g. no WebGL)
     await page.click('[data-act="kpot"]');
-    const hub = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && { tabs: [...s.querySelectorAll(".kp-tabs button")].map(b => b.getAttribute("aria-selected") + ":" + b.className + ":" + b.textContent), cups: [...s.querySelectorAll(".kp-list")[0].querySelectorAll(".k-cup")].map(c => c.dataset.act + ":" + c.className.split(" ")[1] + ":" + c.querySelector(".chip").textContent), cls: s.querySelectorAll(".k-cls").length, goals: [...s.querySelectorAll(".k-cls")].map(c => c.querySelector(".kg-row").textContent)[0] };');
-    const s1 = v.stopnje[0].pokali.map(c => 'kcup:' + c.id + ':' + c.stanje + ':' + (c.stanje === 'osvojen' ? 'BEST P' + c.best : 'OPEN'));
-    T.check('the hub: four stages (the first chosen, the other three locked), stage 1\'s cups with their state (the circuit cup won: BEST P2), the class cups with their goals (37 of 100 km)',
-      hub && hub.tabs.length === 4 && hub.tabs[0].startsWith('true::1') && hub.tabs.slice(1).every(t => t.startsWith('false:lk:')) && JSON.stringify(hub.cups) === JSON.stringify(s1) && s1.some(c => c.endsWith('BEST P2'))
+    const hub = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && { next: s.querySelector(".kp-prog small").textContent, tabs: [...s.querySelectorAll(".kp-tabs button")].map(b => b.getAttribute("aria-selected") + ":" + b.className + ":" + b.textContent), cups: [...s.querySelectorAll(".kp-list")[0].querySelectorAll(".k-cup")].map(c => c.dataset.act + ":" + c.className.split(" ")[1] + ":" + c.querySelector(".chip").textContent), cls: s.querySelectorAll(".k-cls").length, goals: [...s.querySelectorAll(".k-cls")].map(c => c.querySelector(".kg-row").textContent)[0] };');
+    const s1 = v.stopnje[0].pokali.map(c => 'kcup:' + c.id + ':' + c.stanje + ':' + (c.stanje === 'zaklenjen' ? 'LOCKED' : c.stanje === 'osvojen' || c.best ? 'BEST P' + c.best : 'OPEN'));
+    T.check('the hub: every stage (the first chosen, the others locked), what opens the next (2 / 9★), stage 1\'s events with their state (the circuit cup won: BEST P2), the class cups with their goals (37 of 100 km)',
+      hub && hub.tabs.length === v.stopenj && v.stopenj === 5 && hub.next === '2 / 9★ · opens ' + v.stopnje[1].en.name && hub.tabs[0].startsWith('true::1') && hub.tabs.slice(1).every(t => t.startsWith('false:lk:')) && JSON.stringify(hub.cups) === JSON.stringify(s1) && s1.some(c => c.endsWith('BEST P2'))
       && hub.cls === v.razredi.length && hub.cls === 10 && /37 \/ 100 km/.test(hub.goals), JSON.stringify({ hub, s1 }));
     await page.click('[data-act="kstage:2"]');
     const lk = v.stopnje[1].pokali[0];
@@ -1683,7 +1685,8 @@ try {
     const dl = () => page.evaluate(() => ({ log: MenuDolina.log.join(), on: MenuDolina.on, h: history.state && history.state.nazaj || 0, hub: !!document.getElementById('menu-host').shadowRoot.querySelector('.sheet.kpot'), sub: !!document.getElementById('menu-host').shadowRoot.querySelector('.t-sub.four') }));
     await click(page, 'career');
     const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { atlas: k.classList.contains("atlas"), chip: k.querySelector(".chip").textContent, w: k.querySelector(".bar b").style.width };');
-    T.check('the valley: the strip with the stars (7 of 132: 5 %)', st && st.atlas && st.chip === '★ 7 / 132' && st.w === '5%', JSON.stringify(st));
+    const n13 = await page.evaluate(() => __game.kariera().napredek), w13 = (n13.need ? Math.round(n13.done / n13.need * 100) : 100) + '%';
+    T.check('the valley: the strip with the stars (7 of 132), its bar toward the next stage', st && st.atlas && st.chip === '★ 7 / 132' && st.w === w13, JSON.stringify({ st, n13 }));
     await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
     const d1 = await dl();
     T.check('the strip tapped: the valley opened with the view\'s atlas (no hub), one step in the history', d1.on && d1.log === 'open::true:true' && !d1.hub && d1.h === 1, JSON.stringify(d1));

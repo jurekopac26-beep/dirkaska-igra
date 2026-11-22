@@ -115,7 +115,7 @@ try {
   //    cup kept with all but its last round (the player first in each), continued from the bridge: its last track on the championship's
   //    engine; driven to the finish: the cup's place, its reward paid and shown, the save still v 1 with its path
   const v8 = await page.evaluate(() => window.__game.kariera());
-  T.check('the path: stage 1 open (its cups open), stage 2 locked', v8 && v8.stopnja === 1 && v8.stopnje[0].odprta && v8.stopnje[0].pokali.every(c => c.stanje === 'odprt') && v8.stopnje[1] && !v8.stopnje[1].odprta && v8.stopnje[1].pokali[0].stanje === 'zaklenjen', JSON.stringify(v8 && v8.stopnje.slice(0, 2)));
+  T.check('the path: stage 1 open (its events open), stage 2 locked', v8 && v8.stopnja === 1 && v8.stopnje[0].odprta && v8.stopnje[0].pokali.filter(c => c.kind !== 'razred').every(c => c.stanje === 'odprt') && v8.stopnje[1] && !v8.stopnje[1].odprta && v8.stopnje[1].pokali[0].stanje === 'zaklenjen', JSON.stringify(v8 && v8.stopnje.slice(0, 2)));
   const lock = await page.evaluate(async (id) => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); const ok = g.karieraStart(id); await new Promise(r => setTimeout(r, 150)); return { ok, toast: document.getElementById('toast').textContent, champ: localStorage.getItem('tdgp-champ') }; }, v8.stopnje[1].pokali[0].id);
   T.check('a cup of stage 2 refused (a toast, no championship)', lock.ok === false && /zaklenjen/.test(lock.toast) && !lock.champ, JSON.stringify(lock));
   const cup = v8.stopnje[0].pokali.find(c => c.vrsta === 'krog'), n = cup.tracks.length;
