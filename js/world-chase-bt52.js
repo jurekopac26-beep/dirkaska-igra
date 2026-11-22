@@ -142,11 +142,15 @@
     ctx.out.robBt52 = st; ctx.out.bregBt52 = breg; ctx.out.pasBt52 = pas;
   };
 
+  /* pikesg's layers cast no shadow (as softScen's note says, »no shadow«; js/world-chase-bt6.js passes cast true): in the shadow map they
+     were a second pass of the same ~60 thousand vertices, and from behind the car their shadows under the low tufts and flat patches
+     do not show (before | after at the six spots of tests/browser/perf.test.mjs: under 0.1 % of the pixels) */
+  const noCast = (ctx, n0) => { if (ctx.root) for (const g of ctx.root.children.slice(n0)) g.traverse(m => { if (m.isMesh) m.castShadow = false; }); };
   const base = World.ext.goreRob;
   const f = function (ctx, id, o) {
     const r = base.call(this, ctx, id, o);
     if (id === 'koli') try { koli(ctx); } catch (e) { console.error('chase-bt52 (koli):', e); }
-    if (id === 'pikes') try { pikesg(ctx, o); } catch (e) { console.error('chase-bt52 (pikesg):', e); }
+    if (id === 'pikes') try { const n0 = ctx.root ? ctx.root.children.length : 0; pikesg(ctx, o); noCast(ctx, n0); } catch (e) { console.error('chase-bt52 (pikesg):', e); }
     return r;
   };
   Object.assign(f, base);

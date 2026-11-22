@@ -191,7 +191,9 @@
     const base = World.ext.goreRob;
     const f = function (ctx, id, o) {
       const r = base.call(this, ctx, id, o);
-      if (id === 'pikes' && o && ctx && ctx.out) try { const s = pikesg(ctx, o); if (s) { ctx.out.robBt82 = s.rob; ctx.out.pasBt82 = s.pas; } } catch (e) { console.error('chase-bt82 (pikesg):', e); }
+      if (id === 'pikes' && o && ctx && ctx.out) try { const n0 = ctx.root ? ctx.root.children.length : 0, s = pikesg(ctx, o);   // (no shadow, as in js/world-chase-bt52.js: from behind the car none shows)
+        if (ctx.root) for (const g of ctx.root.children.slice(n0)) g.traverse(m => { if (m.isMesh) m.castShadow = false; });
+        if (s) { ctx.out.robBt82 = s.rob; ctx.out.pasBt82 = s.pas; } } catch (e) { console.error('chase-bt82 (pikesg):', e); }
       return r;
     };
     Object.assign(f, base);   // (pkLC, LOOK and whatever else the later groups hang on it)
