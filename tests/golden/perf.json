@@ -581,11 +581,11 @@
   "jsMs": 1.99
  },
  "luanda": {
-  "calls": 110,
-  "maxCalls": 144,
-  "kverts": 212,
-  "maxKverts": 293,
-  "jsMs": 1.28
+  "calls": 115,
+  "maxCalls": 148,
+  "kverts": 232,
+  "maxKverts": 322,
+  "jsMs": 0.98
  },
  "ujarras": {
   "calls": 123,
