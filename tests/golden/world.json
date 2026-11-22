@@ -1030,16 +1030,16 @@
   }
  },
  "buriram": {
-  "meshes": 790,
-  "verts": 805769,
+  "meshes": 901,
+  "verts": 806352,
   "instances": 7870,
   "props": 76,
   "crowd": 29,
-  "world": "b6db7688",
+  "world": "409405b9",
   "propsHash": "140f165e",
   "floor": "f0b00851/9100",
   "groups": {
-   "-:MeshLambertMaterial": "878271ab",
+   "-:MeshLambertMaterial": "c64a9f49",
    "-:MeshBasicMaterial": "a0fb767f",
    "buriram service roads:MeshLambertMaterial": "df7cdfe3",
    "buriram pond:MeshPhongMaterial": "8d04649b",
@@ -1050,7 +1050,7 @@
    "rob:MeshLambertMaterial": "3ddffc4e",
    "crowd:MeshLambertMaterial": "1739097e",
    "jet smoke:MeshBasicMaterial": "684b759b",
-   "ao:MeshBasicMaterial": "4c16c942",
+   "ao:MeshBasicMaterial": "78e840a2",
    "roadwear:MeshLambertMaterial": "b2c12371",
    "worn:MeshLambertMaterial": "cf187117",
    "brakeBoards:MeshLambertMaterial": "a2099134",
@@ -1059,7 +1059,7 @@
    "life:MeshBasicMaterial": "e9bfb0c9",
    "people:MeshLambertMaterial": "ac0e6d6e",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "193462ae",
+   "standSteps:MeshLambertMaterial": "2202022a",
    "zaslon-okvir:MeshLambertMaterial": "47803ac8",
    "zaslon-slika:MeshBasicMaterial": "a6eff889"
   }
