@@ -1656,6 +1656,59 @@ try {
     T.check('the career\'s path: no page errors', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
+
+  // 13. the career's valley (js/kariera-dolina.js, MenuDolina; here a stand-in with the same calls, the bridge's atlas and izid stood in
+  //     too): the strip with the stars; tapped: the valley opened (no hub), one step in the history; the phone's Back closes it (the
+  //     Career panel under it); closed by itself: its step out of the history; an event refused (the valley stays) or started (the history
+  //     cleared); back from an event's race (Menu.show): the valley again with its result, the result cleared
+  {
+    const { ctx, page, errors } = await open({}, { width: 360, height: 640 });
+    await ready(page);
+    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['pico'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: {}, cilji: {}, prve: [], km: {} } })));
+    // (the game's bridge is not on window: caught as the game hands it to Menu.init)
+    await page.addInitScript(() => { let M; Object.defineProperty(window, 'Menu', { configurable: true, get: () => M, set(v) { const i = v.init; v.init = (b) => { window.__bridge = b; return i(b); }; M = v; } }); });
+    await page.reload(); await ready(page);
+    await page.evaluate(() => {
+      __game.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
+      const B = window.__bridge, k0 = B.kariera;
+      let iz = null;
+      B.kariera = () => { const v = k0(); return v && Object.assign(v, { atlas: { stopnje: [], zvezdice: 7, max: 132 } }); };
+      B.karieraIzid = (clear) => { if (clear) { iz = null; return null; } return iz; };
+      window.__izid = (o) => { iz = o; };
+      const D = window.MenuDolina = { log: [], o: null, on: false,
+        open(o) { D.o = o; D.on = true; D.log.push('open:' + (o.izid ? o.izid.id : '') + ':' + !!(o.view && o.view.atlas) + ':' + !!o.root); },
+        close() { if (!D.on) return; D.on = false; D.log.push('close'); D.o.close(); },
+        back() { D.log.push('back'); D.close(); }, isOpen: () => D.on, root: () => null };
+    });
+    const dl = () => page.evaluate(() => ({ log: MenuDolina.log.join(), on: MenuDolina.on, h: history.state && history.state.nazaj || 0, hub: !!document.getElementById('menu-host').shadowRoot.querySelector('.sheet.kpot'), sub: !!document.getElementById('menu-host').shadowRoot.querySelector('.t-sub.four') }));
+    await click(page, 'career');
+    const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { atlas: k.classList.contains("atlas"), chip: k.querySelector(".chip").textContent, w: k.querySelector(".bar b").style.width };');
+    T.check('the valley: the strip with the stars (7 of 132: 5 %)', st && st.atlas && st.chip === '★ 7 / 132' && st.w === '5%', JSON.stringify(st));
+    await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
+    const d1 = await dl();
+    T.check('the strip tapped: the valley opened with the view\'s atlas (no hub), one step in the history', d1.on && d1.log === 'open::true:true' && !d1.hub && d1.h === 1, JSON.stringify(d1));
+    await page.goBack(); await page.waitForTimeout(300);
+    const d2 = await dl();
+    T.check('the phone\'s Back: the valley closed, the Career panel under it', !d2.on && d2.log.endsWith('close') && d2.sub && !d2.hub, JSON.stringify(d2));
+    await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => MenuDolina.close()); await page.waitForTimeout(400);
+    const d3 = await dl();
+    T.check('closed by itself: its step out of the history', !d3.on && d3.h === 0 && d3.sub, JSON.stringify(d3));
+    await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
+    const r0 = await page.evaluate(() => { const lk = __game.kariera().stopnje[1].pokali[0].id; document.getElementById('toast').textContent = ''; const ok = MenuDolina.o.start(lk); return { ok, on: MenuDolina.on, toast: document.getElementById('toast').textContent, h: history.state && history.state.nazaj || 0 }; });
+    T.check('an event refused (locked): false, the game\'s toast, the valley and its step stay', r0.ok === false && r0.on && /zaklenjen/.test(r0.toast) && r0.h === 1, JSON.stringify(r0));
+    await page.evaluate(() => window.__izid({ id: 's1-krog', prej: 0, zdaj: 2, nagrade: [], stopnja: 1 }));
+    await page.evaluate(() => { if (MenuDolina.on) MenuDolina.close(); MenuDolina.log.length = 0; Menu.show('title'); }); await page.waitForTimeout(300);
+    const d4 = await dl(), left = await page.evaluate(() => __bridge.karieraIzid());
+    T.check('back from an event\'s race: the valley again with its result (over the Career panel), the result cleared', d4.on && d4.log === 'open:s1-krog:true:true' && d4.sub && left === null, JSON.stringify({ d4, left }));
+    const r1 = await page.evaluate(() => { const id = __game.kariera().stopnje[0].pokali.find(c => c.stanje === 'odprt').id; return { id, ok: MenuDolina.o.start(id) }; });
+    const ok = r1.ok && await raceOn(page, (await page.evaluate((id) => __game.kariera().stopnje[0].pokali.find(c => c.id === id).tracks[0], r1.id))).then(() => true).catch(() => false);
+    await page.waitForTimeout(1700);
+    const d5 = await dl();
+    T.check('an event started from the valley: its race, the valley closed, the history cleared', ok && !d5.on && d5.h === 0, JSON.stringify({ r1, d5 }));
+    T.check('the career\'s valley: no page errors', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
 } finally {
   await browser.close(); await srv.close();
 }

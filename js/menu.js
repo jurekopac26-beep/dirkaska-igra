@@ -1035,6 +1035,32 @@
     for (const v of vs) if (v.isConnected) { const p = v.play(); if (p && p.catch) p.catch(() => {}); }
     for (const v of s.querySelectorAll('video')) if (v.__due) { v.__due = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }   // (a flyover that was ready only while the screen rested)
   }
+  /* the career's valley (js/kariera-dolina.js, MenuDolina: the Atlas career's stages and events in 3D, over the title): opened from the
+     career's strip (kpot), and again after an event's race with its result (G.karieraIzid, showNow). One layer in the phone's Back
+     (MenuIzbor.nazaj, 'dolina'): Back closes it, its own close takes the step out, an event started clears the history. No valley (its
+     file, WebGL or the bridge's atlas missing): the path's hub, karieraSheet */
+  const DO = () => window.MenuDolina || null;
+  const dolOpen = () => !!(DO() && DO().isOpen());
+  const NZ = () => window.MenuIzbor ? MenuIzbor.nazaj : null;
+  let dolQuiet = false;   // (closed by the menu itself, hide/showNow: no new screen drawn under it)
+  const dolShut = () => { dolQuiet = true; try { DO().close(true); } finally { dolQuiet = false; } };
+  const dolCan = () => { const v = DO() && G.kariera && G.kariera(); return v && v.atlas ? v : null; };
+  function dolina(izid) {
+    const D = DO(), v = dolCan(); if (!D || !v || !app) return false;
+    if (izOpen()) IZ().close(true);
+    if (zemOpen()) ZE().close(true);
+    sheet = null;
+    let started = false;
+    const ok = D.open({
+      root: app, view: v, izid: izid || null, from: () => $('.k-strip', app),
+      start: (id) => { if (!G.karieraStart(id)) return false; started = true; if (NZ()) NZ().clear(); return true; },   // (refused: the game's toast says why, the valley stays)
+      close: () => { if (!started && NZ()) NZ().drop('dolina'); if (!dolQuiet && app && app.isConnected && screen === 'title') render(true); },
+    });
+    if (ok === false) return false;
+    if (izid && G.karieraIzid) G.karieraIzid(true);   // (shown once)
+    if (NZ()) NZ().push('dolina', () => { if (dolOpen()) DO().close(true); });
+    return true;
+  }
   function izGo(id) {   // the screen to the quick list's track (false: none such in the mode's list)
     const L = TRACKS(), i = L.findIndex(t => t.id === id); if (i < 0) return false;
     if (i !== trackIdx) {
@@ -1308,9 +1334,10 @@
     return p.need ? p.done + ' of ' + p.need + ' cups in the top three · opens ' + kStName(v, v.stopnja + 1) : 'Every stage is open';
   }
   function kStrip(v) {
-    const p = v.napredek;
-    return '<button class="k-strip" data-act="kpot" aria-haspopup="dialog"><span class="ks-tx"><b>STAGE ' + v.stopnja + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><small>' + esc(kNext(v)) + '</small></span>' +
-      '<span class="bar"><b style="width:' + kPct(p.done, p.need) + '%"></b></span><em class="chip gold">PATH</em></button>';
+    const p = v.napredek, a = v.atlas;   // (the Atlas career: its stars instead of the path's progress, the valley a tap away)
+    const bar = a ? kPct(a.zvezdice, a.max) : kPct(p.done, p.need), chip = a ? '<em class="chip gold ks-st">★ ' + num(a.zvezdice) + ' / ' + num(a.max) + '</em>' : '<em class="chip gold">PATH</em>';
+    return '<button class="k-strip' + (a ? ' atlas' : '') + '" data-act="kpot" aria-haspopup="dialog"><span class="ks-tx"><b>STAGE ' + v.stopnja + ' · ' + esc(kStName(v, v.stopnja).toUpperCase()) + '</b><small>' + esc(kNext(v)) + '</small></span>' +
+      '<span class="bar"><b style="width:' + bar + '%"></b></span>' + chip + '</button>';
   }
   function kCupRow(c) {
     const names = c.tracks.map(id => { const t = trackById(id); return t ? t.name : id; });
@@ -1975,6 +2002,7 @@
   }
 
   function back() {
+    if (dolOpen()) { DO().back(); return; }
     if (zemOpen()) { ZE().back(); return; }
     if (izOpen()) { IZ().back(); return; }
     if (sheet) { sheet = null; render(true); return; }
@@ -2007,7 +2035,7 @@
       case 'zemlja': zemlja(); break;   // (the globe in the head: the Earth, js/menu-zemlja.js)   // (the flag in the row, the country's sign: the quick list, js/menu-izbor.js)
       case 'garage': carFrom = true; G.act('menu-garage'); break;   // (the garage, garaza.html; its back and its Izberi progo: this step again, game.js garageBack)
       case 'credits': sheet = creditsSheet; render(true); break;
-      case 'kpot': kStage = 0; sheet = karieraSheet; render(true); break;   // (the career's path: the hub, js/kariera.js)
+      case 'kpot': if (dolina()) break; kStage = 0; sheet = karieraSheet; render(true); break;   // (the career's path: the valley, else the hub, js/kariera.js)
       case 'kstage': kStage = +v || 0; render(true); { const l = $('.sheet.kpot', app); if (l) l.scrollTop = 0; } break;
       case 'kcup': if (el.getAttribute('aria-disabled') === 'true') { G.karieraStart(v); break; } if (G.karieraStart(v)) { sheet = null; render(true); } break;   // (locked: the game's toast says why; started: the race)
       case 'riv': case 'tw': tw = k === 'riv' ? 'riv' : v; if (tw === 'riv' && !rivOf((curTrack() || {}).def || {})) break; sheet = twSheet; render(true); break;   // (the row's cells: their windows; Opponents: how many, 0..100)
@@ -2039,14 +2067,14 @@
   // the game's gamepad on the menu (game.js padFrame: the highlight and A are the game's, over the buttons of this shadow root): where it looks
   // (the intro, else an open sheet, else the screen), and the keys that are the menu's own: B back, Start on, LB and RB the track; in the
   // intro any of A, B and Start skips it
-  const padRoot = () => app ? $('.intro', app) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
+  const padRoot = () => app ? $('.intro', app) || (dolOpen() && DO().root && DO().root()) || (zemOpen() && ZE().root()) || (izOpen() && IZ().sheet()) || $('.sheet-bg', app) || app : null;
   function padKey(k) {
     if (!app || !G || !G.visible()) return false;
     const wk = $('.intro.wk', app);   // (the race weekend: B back to the tracks, Start the button's choice, A the highlighted button)
     if (wk) { if (k === 'b' || k === 'start') { G.click(); wk.__wk[k === 'b' ? 'back' : 'go'](); return true; } return false; }
     if ($('.intro', app)) { if (k === 'a' || k === 'b' || k === 'start') { const sk = $('.intro [data-ix="skip"]', app); if (sk) sk.click(); } return true; }
     if (k === 'b') { G.click(); back(); return true; }
-    if (izOpen() || zemOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
+    if (izOpen() || zemOpen() || dolOpen()) return k === 'lb' || k === 'rb' || k === 'start' || k === 'x' || k === 'y';   // (the quick list, the Earth: A and the d-pad in it)
     if (sheet) return false;
     if (screen === 'track' && (k === 'lb' || k === 'rb')) { G.click(); act('track:' + (k === 'lb' ? -1 : 1)); return true; }
     if (k === 'start') {
@@ -2124,6 +2152,9 @@
     if (!ready) { want = name; return; }
     if (izOpen()) IZ().close(true);
     if (zemOpen()) ZE().close(true);
+    if (dolOpen()) dolShut();
+    const izid = G.karieraIzid ? G.karieraIzid() : null;   // (after an event's race: back in the valley with its result)
+    if (izid && dolCan()) name = 'title';
     if (carFrom && name === 'title' && screen === 'track') name = 'track';   // (Back from the car screen: the step it was opened from)
     carFrom = false;
     if (name === 'title') {
@@ -2137,7 +2168,9 @@
       if (cur && TRACKS().includes(cur)) trackIdx = TRACKS().indexOf(cur); else enterTrack();
     }
     cam = G.S.menuCam || 1;   // (back on the track step: the camera it had)
+    if (izid && name === 'title' && dolCan()) { titleSub = 'career'; sheet = null; }
     render();
+    if (izid && name === 'title') dolina(izid);
   }
   function hide() {   // another screen of the game is up: the menu's moving things rest (a show still waiting for the style: dropped)
     want = null;
@@ -2146,6 +2179,7 @@
     if (rg) { cancelAnimationFrame(rg.raf); rg = null; } if (ringGone) { clearTimeout(ringGoneT); ringGone.remove(); ringGone = null; } arriveDone();   // (the carousel: drawn anew when the menu is up again)
     if (izOpen()) IZ().close(true);   // (the quick list and its steps in the history gone)
     if (zemOpen()) ZE().close(true);   // (the Earth too)
+    if (dolOpen()) dolShut();   // (the career's valley too)
     rested = null; globe.reset();
     if (sheet === darkSheet) setDarkTold(false);   // (hidden at once, e.g. a friend's challenge over the title: told the next time the title is up)
     for (const v of app.querySelectorAll('video')) { v.pause(); v.__stop = 1; }   // (a flyover still loading: not played under the game later)
