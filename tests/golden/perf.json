@@ -471,9 +471,9 @@
  "furka": {
   "calls": 159,
   "maxCalls": 192,
-  "kverts": 314,
-  "maxKverts": 426,
-  "jsMs": 1.54
+  "kverts": 320,
+  "maxKverts": 445,
+  "jsMs": 1.01
  },
  "santoantao": {
   "calls": 167,

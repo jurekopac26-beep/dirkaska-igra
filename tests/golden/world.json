@@ -700,11 +700,11 @@
   "instances": 39627,
   "props": 85,
   "crowd": 225,
-  "world": "ac27a9ef",
+  "world": "ea3b3acf",
   "propsHash": "76117e6c",
   "floor": "1291237b/10640",
   "groups": {
-   "-:MeshLambertMaterial": "d208d00f",
+   "-:MeshLambertMaterial": "a37f5817",
    "-:MeshPhongMaterial": "54e58fd1",
    "-:MeshBasicMaterial": "bf326ea4",
    "irFar:MeshLambertMaterial": "e31ae696",

@@ -25,7 +25,10 @@
     ['city', -475.1, -613.1],                  // n11105697143 traffic_sign=city_limit
     ['v50', -293.8, -565.9],                   // n11105697141 traffic_sign=maxspeed, maxspeed=50
   ];
-  const BUS_PLATE = 0;   // the bus stops' plate: 0 white (a), 1 yellow (b); both without a logo, a name or any lettering
+  // the bus stops' plate: 0 white, 1 yellow. Yellow, as in reality: the SSV (5.46, Art. 79a) sets only the stop's sign on the road and its
+  // yellow zigzag, the plate at the stop is the bus operator's, and on the pass road's line those plates are yellow with a black bus
+  // (the user chose a white one on 23. 11., »check what colour it really is«: docs/proge/furka.md). Without a logo, a name or any lettering.
+  const BUS_PLATE = 1;
   const CLEAR = { guide: 0.9, bus: 1.1, city50: 1.2, city: 1.2, v50: 0.9 };   // past the barrier (m)
   const ROOM = { guide: 1.2, bus: 1.6, city50: 1.4, city: 1.4, v50: 1.0 };    // the shrubs, rocks and houses kept off (m)
   const STEEL = [0.6, 0.61, 0.63], BACK = [0.5, 0.51, 0.53], WHITE = [0.93, 0.93, 0.91], RED = [0.76, 0.09, 0.08], INK = [0.07, 0.07, 0.08],
