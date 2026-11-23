@@ -16,7 +16,9 @@
     zavore: [['Zavore', 'Brakes'], 'zavore'], zamasek: [['Zamašek', 'Fuel cap'], ''], dim_gum: [['Dim gum', 'Tyre smoke'], ''], barva: [['Barva', 'Paint'], ''],
     // (the cabinet's drawers, sklop 6d: looks only)
     zarometi: [['Žarometi', 'Headlamps'], ''], zadnje_luci: [['Zadnje luči', 'Tail lamps'], ''], luc_pod_avtom: [['Luč pod avtom', 'Underglow'], ''], zmigavci: [['Žmigavci', 'Indicators'], ''],
-    maska: [['Maska', 'Grille'], ''], nalepke: [['Nalepke', 'Decals'], ''], celjusti: [['Zavorne čeljusti', 'Brake calipers'], ''] };
+    maska: [['Maska', 'Grille'], ''], nalepke: [['Nalepke', 'Decals'], ''], celjusti: [['Zavorne čeljusti', 'Brake calipers'], ''],
+    // (the car's own panels, tapped on the car: they open on their hinge, looks only)
+    hauba: [['Hauba', 'Bonnet'], ''], vrata: [['Vrata', 'Doors'], ''], prtljaznik: [['Pokrov prtljažnika', 'Boot lid'], ''] };
   // (an option's number: the first per cent of power, grip or braking in what it gives)
   const pct = (s) => { const m = /(?:moč|oprijem(?: v ovinku)?)\s*\+([0-9]+(?:,[0-9]+)?)\s*%|\+([0-9]+(?:,[0-9]+)?)\s*% zavorne/.exec(s || ''); return m ? +(m[1] || m[2]).replace(',', '.') : 0; };
   const EL = {}, DATA = typeof DELI_DATA !== 'undefined' ? DELI_DATA : { elementi: [] };

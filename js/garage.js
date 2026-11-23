@@ -239,6 +239,10 @@
         camo: '<path d="M8 12c6-3 10 2 15 0s9 2 12 6c-4 3-9 0-13 3s-10 3-14-1z" fill="#5d6b3a"/><path d="M10 30c4-4 9-1 13-3s8 1 11 4c-5 3-9 1-13 2s-8 0-11-3z" fill="#3e4a26"/>',
         custom: ['#d8261d', '#ffc21a', '#2fbf5a', '#47a3ff'].map((c, q) => '<circle cx="' + (15 + (q & 1) * 14) + '" cy="' + (15 + (q >> 1) * 14) + '" r="5.5" fill="' + c + '"/>').join('') }[k];
       return '<svg viewBox="0 0 44 44"><rect x="6" y="6" width="32" height="32" rx="3" fill="#eef0f3"/>' + (sm ? '<g transform="translate(6.6 6.6) scale(.7)">' + M + '</g>' : M) + '</svg>'; },
+    // (the car's panels: the hood, a door, the boot lid seen from the side, open; their colour by the tab: steel, light, carbon, racing)
+    hauba: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-5l6-2 6-7h12l8 6 6 2v6z" fill="#9aa2ae"/><path d="M33 22l5-12 3 1-5 12z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
+    vrata: (t) => '<svg viewBox="0 0 44 44"><path d="M8 36V14l8-8h18v30z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><path d="M11 18l7-8h13v8z" fill="#8fc3ef"/><rect x="24" y="22" width="7" height="2.6" rx="1.3" fill="#e0e4ea"/></svg>',
+    prtljaznik: (t) => '<svg viewBox="0 0 44 44"><path d="M3 31v-6l6-2 6-7h12l8 6 6 2v7z" fill="#9aa2ae"/><path d="M9 23L4 12 1 13l5 11z" fill="' + ['#7d8796', '#c8ced8', '#2b2e35', '#d8261d'][t] + '"/><circle cx="11" cy="32" r="4" fill="#1d1f24"/><circle cx="33" cy="32" r="4" fill="#1d1f24"/></svg>',
     celjusti: (t, j, hex) => { const c = [['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', ''], ['#d8261d', '#ffc21a', '#d9a520', '#d8261d'], ['#e0362c', '#2f7fe0', '#e0b030', '#e0e4ea']][t][j] || CSS(hex || 0x3b78d8);
       return '<svg viewBox="0 0 44 44"><circle cx="22" cy="25" r="15" fill="#7b8594"/><circle cx="22" cy="25" r="5" fill="#4a5160"/><path d="M8 19.5a15 15 0 0 1 28 0l-6 2.6a8.6 8.6 0 0 0-16 0z" fill="' + c + '"/>' +
         (t === 2 && j === 3 ? '<path d="M22 10a15 15 0 0 1 14 9.5l-6 2.6A8.6 8.6 0 0 0 22 16.4z" fill="#1d1f24"/>' : '') + '</svg>'; },
@@ -360,7 +364,7 @@
     if (!b) { if (t) t.classList.remove('on'); return; }
     if (!t) { t = document.createElement('div'); t.id = 'g-tag'; t.className = 'g-tag'; $('g-stage').appendChild(t); }
     t.textContent = (tr('Barva') + ' – ' + tr(COLORS[ci][1])).toUpperCase(); const hw = t.offsetWidth / 2 + 4, W = $('g-stage').clientWidth; t.style.left = Math.round(Math.max(hw, Math.min(W - hw, b.x + b.w / 2))) + 'px'; t.style.top = Math.round(b.y) + 'px'; t.classList.add('on'); }   // (kept on the screen)
-  function closeMenu() { if (!menu) return; menu = null; colTag(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
+  function closeMenu() { if (!menu) return; menu = null; colTag(null); G.openPart(null); $('g-menu').classList.remove('on'); $('g-low').classList.remove('hide'); G.markOff(); G.ghostOff(); G.preview(null); G.drawer(null); G.drop(0); }
   function drawMenu() {
     const m = menu, c = C(), el = m.el, box = $('g-menu'), en = Lang.cur === 'en';
     let html = '', buy = '', can = true, ok = false, note = '';
@@ -407,6 +411,9 @@
     box.classList.remove('bot'); const b = kb && G.box(kb), top = box.offsetTop, h = box.offsetHeight || 330, dw = !!kb && kb.startsWith('drw:') && G.drawerBox(kb.slice(4));
     let drop = 0; if (dw) { const need = Math.ceil(top + h + 8 - dw.y); if (need > 0 && dw.y + dw.h + need <= $('g-stage').clientHeight - 4) drop = need; }
     G.drop(drop); box.classList.toggle('bot', !dw && !!b && b.y < top + h + 8 && b.y + b.h > top);   // (measured where it stands at the top)
+    // (a panel of the car tapped (the hood, a door, the boot lid): standing, the menu at the bottom; lying, small at the bottom right, the
+    // open panel in sight)
+    const side = !!m.panel && innerWidth > innerHeight; box.classList.toggle('side', side); if (m.panel && !side) box.classList.add('bot');
   }
   function tile(t, j) { if (!menu) return; menu.sel = [t, j]; drawMenu(); }
   // buying the chosen option: paid, fitted, the menu closed; the car's upgrade played when one of its four levels changes, else a word
@@ -520,11 +527,13 @@
     else if (h.kind === 'drw' && EL[h.el]) m = { el: h.el, key: h.key, sel: has(C(), h.el) ? null : findOpt(h.el, DRAWER[h.el][0]) };   // (a drawer: the part on the car, else its drawer's first)
     else if (h.kind === 'col') m = { el: 'barva', key: h.key, color: h.i, sel: [0, 0] };
     else if (h.key === 'car:wheel') m = { el: 'gume', key: null, car: true };
+    else if (h.key === 'car:hood' || h.key === 'car:door' || h.key === 'car:trunk') m = { el: { 'car:hood': 'hauba', 'car:door': 'vrata', 'car:trunk': 'prtljaznik' }[h.key], key: null, car: true, part: h.part || null, panel: true };   // (the panel opens on its hinge, a car with a kit; garaza-klik-deli-izbira, 23. 11.)
     else if (h.key === 'car:body') m = { el: 'barva', key: null, car: true, sel: [0, 0] };   // (the paint: a tap on the car's body (plate barvni_krogi_B f, 15. 11.); the aero kits: AERO › in its menu)
     else if (h.name && sold(h.name)) { const [el, en] = REGAL[h.name]; m = { el, key: h.key, sel: findOpt(el, en) }; }
     if (!m) { closeMenu(); return; }
     if (m.sel) m.tab = m.sel[0];
-    G.markOff(); G.ghostOff(); menu = null; openMenu(m);
+    G.markOff(); G.ghostOff(); menu = null; G.openPart(null); openMenu(m);
+    if (menu && m.part) G.openPart(m.part);
   }
   function onAct(act) {
     G.sound(S.sound);

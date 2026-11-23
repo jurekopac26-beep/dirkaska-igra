@@ -273,3 +273,9 @@ svg { display: block; }
   .g-tl .pi, .g-tl .pi svg { width: 36px; height: 36px; }
   .g-mb .back, .g-mb .buy { height: 44px; }
 }
+
+/* ---- the menu of a car's panel tapped (the hood, a door, the boot lid) lying: small at the bottom right, the open panel in sight ---- */
+@media (orientation: landscape) {
+  .g-menu.side { left: auto !important; right: 10px; top: auto !important; bottom: calc(8px + var(--sb)); width: min(470px, 50%); transform-origin: right bottom; transform: translateY(14px) scale(.84); }
+  .g-menu.side.on { transform: scale(.84); }
+}
