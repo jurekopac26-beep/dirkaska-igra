@@ -83,10 +83,10 @@ const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
   check('--files without --related: an error (exit 2)', r.status === 2);
 }
 
-// 6. --quiet: a passing test prints nothing of its own, the summary how many passed
+// 6. --quiet: a passing test prints only its one progress line (OK [n/N] name (s)), the summary how many passed
 {
   const r = run('--related', '--files', 'tools/stamp.js', '--quiet'), out = r.stdout;
-  check('--quiet: only the summary for a passing test (stamp.test.js)', r.status === 0 && !/###|^OK  /m.test(out) && /^1 of 1 tests passed/m.test(out), out.trim().split('\n').slice(-3).join(' | '));
+  check('--quiet: only the progress line and the summary for a passing test (stamp.test.js)', r.status === 0 && !/###|^OK   (?!\[\d+\/\d+\] )/m.test(out) && /^OK   \[1\/1\] stamp\.test\.js/m.test(out) && /^1 of 1 tests passed/m.test(out), out.trim().split('\n').slice(-3).join(' | '));
 }
 
 // 7. --koda: the code's fingerprint (in a repository of its own, a commit for each change): the same when only documents (.md) change or

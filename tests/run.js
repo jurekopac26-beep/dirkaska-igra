@@ -15,7 +15,7 @@
 //                 related tests and the tests over every track (PO_PROGAH) only on them (PROGE), testne-proge.test.js always
 //   node tests/run.js --vzrok --od <sha> --padli <file>   the pull requests merged into main since that commit (the last green nightly
 //                 round) that changed what the failed tests (their names in the file) test: GitHub's job Vzrok after a red nightly round
-//   --quiet   only the failures (a failed test's FAIL lines and its last lines) and the summary
+//   --quiet   only the failures (a failed test's FAIL lines and its last lines), one progress line for each test, and the summary
 // A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15), or than TEST_SLOW (default 4) times its usual time on GitHub (SECS)
 // if that is longer, is stopped and counted as failed, so a hung test still ends with the summary (LIMIT_OF). TEST_PADLI=<file>: the
 // failed tests' names are added to it, one a line (GitHub: for the job Vzrok).
