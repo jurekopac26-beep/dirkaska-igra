@@ -679,11 +679,11 @@
   "jsMs": 0.79
  },
  "koli": {
-  "calls": 162,
+  "calls": 163,
   "maxCalls": 270,
-  "kverts": 511,
-  "maxKverts": 610,
-  "jsMs": 0.54
+  "kverts": 534,
+  "maxKverts": 653,
+  "jsMs": 0.91
  },
  "kanaba": {
   "calls": 180,
@@ -735,11 +735,11 @@
   "jsMs": 0.07
  },
  "longyearbyen": {
-  "calls": 116,
+  "calls": 117,
   "maxCalls": 128,
-  "kverts": 173,
-  "maxKverts": 223,
-  "jsMs": 0.7
+  "kverts": 183,
+  "maxKverts": 236,
+  "jsMs": 0.83
  },
  "vaoala": {
   "calls": 147,
