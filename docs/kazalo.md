@@ -318,7 +318,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | pikes, pikesg | Pikes Peak, ZDA (asfalt, makadam) | pikes | `js/world-pikes.js` (`buildPikes`) |
 | portomoniz | Porto Moniz, Portugalska | portomoniz | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.portomoniz`) in `js/world-portomoniz.js` (lastni deli v `L.pre` in `L.extra`: morje s pljuskanjem valov ob lavi, otoček s svetilnikom, bele hiše iz obrisov OSM, suhi zidovi teras, vinogradi v vetrobranih, evkalipti, lovor, palme, agapanti, razgledišči, kapelica, krožišče z vodnjakom; gozd iz rabe tal brez skupnih smrek, polovica grmišč trava) |
 | rastro | Rio do Rastro, Brazilija | rastro | `js/world-rastro.js` (`buildRastro`) |
-| rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`) |
+| rbring | Štajerska, Avstrija | rbring | `js/world-rbring.js` (`buildRbring`); obcestje po OSM v `js/world-rbring-obcestje.js` (kavelj `extra`, `lotOk`) |
 | *rio* | *Rio de Janeiro, Brazilija (test)* | rio | `js/world-rbring.js` (`buildRbring`) in `js/world-rio.js` (lastni deli `rio*`, videz v `RB_LOOK` prek `API.rbLook`; tla za kamero za avtom: `rioGround`, `rioVerge`, `rioRoad`, `rioApron` prek `LK.ground`, `LK.verge`, `LK.road`, `LK.apron`) |
 | *riverside* | *Riverside, ZDA (test)* | riverside | `js/world-riverside.js` (`buildRiverside`) |
 | sacalobra | Sa Calobra, Španija | sacalobra | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.sacalobra`: kamniti most v »kravatnem vozlu« nad cesto pod njim (`T.cross`), kamniti zidci `rail: 'stone'`, alepski bori, črnike, makija in càrritx `forest: 'med'`, španske table, morje v obzorju `far.wet`, spust `def.descent` s kolesarji navzdol `Traffic._dn` v `js/core.js`) |
