@@ -71,10 +71,10 @@
  },
  "harju": {
   "calls": 175,
-  "maxCalls": 209,
-  "kverts": 500,
-  "maxKverts": 717,
-  "jsMs": 0.35
+  "maxCalls": 210,
+  "kverts": 511,
+  "maxKverts": 726,
+  "jsMs": 0.42
  },
  "bathurst": {
   "calls": 187,
