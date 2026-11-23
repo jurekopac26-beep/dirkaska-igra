@@ -1329,21 +1329,22 @@
   }
  },
  "isuna": {
-  "meshes": 771,
-  "verts": 462509,
-  "instances": 1424,
+  "meshes": 778,
+  "verts": 471671,
+  "instances": 1423,
   "props": 143,
   "crowd": 86,
-  "world": "a4719a06",
+  "world": "a2850a7e",
   "propsHash": "ccf26f9b",
   "floor": "63545b41/7784",
   "groups": {
-   "-:MeshLambertMaterial": "ab6dbfb2",
+   "-:MeshLambertMaterial": "cff12599",
    "-:MeshPhongMaterial": "40e448a3",
    "-:MeshBasicMaterial": "3297c9b3",
+   "roadside-ways:MeshLambertMaterial": "cb00bcf0",
    "crowd:MeshLambertMaterial": "3e3ed416",
    "flags:MeshLambertMaterial": "c6afae8b",
-   "ao:MeshBasicMaterial": "2bf9196e",
+   "ao:MeshBasicMaterial": "fc7dcfa7",
    "tyremarks:MeshBasicMaterial": "7ca91873",
    "roadwear:MeshLambertMaterial": "5d32f644"
   }
