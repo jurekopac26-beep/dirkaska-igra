@@ -145,6 +145,7 @@
     tag(() => mtBuildings(ctx), 'mtBuildings');
     tag(() => mtRoads(ctx), 'mtRoads');
     tag(() => mtJunctions(ctx), 'mtJunctions');
+    if (World.api && World.api.mtObc) tag(() => World.api.mtObc(ctx, mtGround), 'mtObcestje');   // (js/world-montreal-obcestje.js: OpenStreetMap's trees, picnic tables, racks)
     tag(() => mtTrees(ctx), 'mtTrees');
     let fade = null; tag(() => { fade = mtBridges(ctx); }, 'mtBridges');
     tag(() => mtBasin(ctx), 'mtBasin');
@@ -652,6 +653,7 @@
       const tone = 0.85 + 0.3 * R(), col = [tone * (0.95 + 0.1 * R()), tone, tone * (0.9 + 0.1 * R())];
       IC[sp].add(x, mtGround(x, z) - 0.1, z, R() * TAU, sp === 1 ? h * 0.9 : h, h, col); n++;
     }
+    for (const [x, z, rot, h, col] of C.realTrees || []) { IC[0].add(x, mtGround(x, z) - 0.1, z, rot, h, h, col); n++; }   // (OpenStreetMap's single trees: js/world-montreal-obcestje.js)
     for (const ic of IC) ic.addTo(root, true);
     C.out.treeN = n;
   }
