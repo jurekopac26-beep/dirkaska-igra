@@ -1763,104 +1763,6 @@
    "repairs": 0
   }
  },
- "krasnahorka/race/cs": {
-  "digest": "e7b7e22cb3b0514f1e0e0c94",
-  "lead": 2050.6,
-  "car0": [
-   -670.62,
-   333.3
-  ],
-  "cover": {
-   "dmg": 0.02,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "krasnahorka/demo/cs": {
-  "digest": "e75c93daf8dbca4cd7bbac5d",
-  "lead": 2240.4,
-  "car0": [
-   -754.21,
-   616.47
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "krasnahorka/upg/cs": {
-  "digest": "773821c920a5346040eb1a9c",
-  "lead": 2210.1,
-  "car0": [
-   -732.19,
-   533.36
-  ],
-  "cover": {
-   "dmg": 0,
-   "loose": 0,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "krasnahorka/crash/cs": {
-  "digest": "43e60bbf75f4fb08b96b81e8",
-  "lead": 2049.8,
-  "car0": [
-   -675.38,
-   337.52
-  ],
-  "cover": {
-   "dmg": 0.23,
-   "loose": 1,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "krasnahorka/formula/cs": {
-  "digest": "67b06dcd12513c7f8b6c94b7",
-  "lead": 2488.4,
-  "car0": [
-   -743.13,
-   573.67
-  ],
-  "cover": {
-   "dmg": 0.4,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "krasnahorka/lm/cs": {
-  "digest": "bea996f972ce9e1c6a604c33",
-  "lead": 2453.5,
-  "car0": [
-   -746.86,
-   588.6
-  ],
-  "cover": {
-   "dmg": 0.96,
-   "loose": 2,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
- "krasnahorka/car/cs": {
-  "digest": "ef7727b3307745f4fb5fd872",
-  "lead": 2037.4,
-  "car0": [
-   -516.76,
-   320.07
-  ],
-  "cover": {
-   "dmg": 1,
-   "loose": 9,
-   "rescues": 0,
-   "repairs": 0
-  }
- },
  "silkeborg/race/cs": {
   "digest": "f051e55e7f289c8eedd061c8",
   "lead": 1703.1,
@@ -7051,6 +6953,104 @@
   "cover": {
    "dmg": 0.42,
    "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/race/cs": {
+  "digest": "e7b7e22cb3b0514f1e0e0c94",
+  "lead": 2050.6,
+  "car0": [
+   -670.62,
+   333.3
+  ],
+  "cover": {
+   "dmg": 0.02,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/demo/cs": {
+  "digest": "e75c93daf8dbca4cd7bbac5d",
+  "lead": 2240.4,
+  "car0": [
+   -754.21,
+   616.47
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/upg/cs": {
+  "digest": "773821c920a5346040eb1a9c",
+  "lead": 2210.1,
+  "car0": [
+   -732.19,
+   533.36
+  ],
+  "cover": {
+   "dmg": 0,
+   "loose": 0,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/crash/cs": {
+  "digest": "43e60bbf75f4fb08b96b81e8",
+  "lead": 2049.8,
+  "car0": [
+   -675.38,
+   337.52
+  ],
+  "cover": {
+   "dmg": 0.23,
+   "loose": 1,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/formula/cs": {
+  "digest": "67b06dcd12513c7f8b6c94b7",
+  "lead": 2488.4,
+  "car0": [
+   -743.13,
+   573.67
+  ],
+  "cover": {
+   "dmg": 0.4,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/lm/cs": {
+  "digest": "bea996f972ce9e1c6a604c33",
+  "lead": 2453.5,
+  "car0": [
+   -746.86,
+   588.6
+  ],
+  "cover": {
+   "dmg": 0.96,
+   "loose": 2,
+   "rescues": 0,
+   "repairs": 0
+  }
+ },
+ "krasnahorka/car/cs": {
+  "digest": "ef7727b3307745f4fb5fd872",
+  "lead": 2037.4,
+  "car0": [
+   -516.76,
+   320.07
+  ],
+  "cover": {
+   "dmg": 1,
+   "loose": 9,
    "rescues": 0,
    "repairs": 0
   }
