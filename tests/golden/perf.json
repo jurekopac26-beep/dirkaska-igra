@@ -77,11 +77,11 @@
   "jsMs": 0.67
  },
  "rastro": {
-  "calls": 183,
-  "maxCalls": 227,
-  "kverts": 398,
-  "maxKverts": 532,
-  "jsMs": 1.35
+  "calls": 182,
+  "maxCalls": 222,
+  "kverts": 400,
+  "maxKverts": 531,
+  "jsMs": 1.3
  },
  "montreal": {
   "calls": 185,
@@ -182,11 +182,11 @@
   "jsMs": 0.94
  },
  "santoantao": {
-  "calls": 166,
-  "maxCalls": 191,
-  "kverts": 268,
+  "calls": 168,
+  "maxCalls": 194,
+  "kverts": 270,
   "maxKverts": 315,
-  "jsMs": 0.74
+  "jsMs": 1.32
  },
  "gudauri": {
   "calls": 156,
@@ -231,11 +231,11 @@
   "jsMs": 0.85
  },
  "seoul": {
-  "calls": 136,
+  "calls": 138,
   "maxCalls": 148,
-  "kverts": 464,
+  "kverts": 482,
   "maxKverts": 573,
-  "jsMs": 0.61
+  "jsMs": 1.06
  },
  "tuzla": {
   "calls": 156,
@@ -329,11 +329,11 @@
   "jsMs": 0.93
  },
  "mombasa": {
-  "calls": 113,
-  "maxCalls": 189,
-  "kverts": 239,
-  "maxKverts": 274,
-  "jsMs": 1.05
+  "calls": 141,
+  "maxCalls": 195,
+  "kverts": 260,
+  "maxKverts": 318,
+  "jsMs": 1.17
  },
  "isalo": {
   "calls": 101,
@@ -343,11 +343,11 @@
   "jsMs": 0.57
  },
  "portobelo": {
-  "calls": 105,
-  "maxCalls": 139,
-  "kverts": 219,
-  "maxKverts": 254,
-  "jsMs": 0.67
+  "calls": 106,
+  "maxCalls": 131,
+  "kverts": 220,
+  "maxKverts": 260,
+  "jsMs": 0.95
  },
  "eljem": {
   "calls": 97,
