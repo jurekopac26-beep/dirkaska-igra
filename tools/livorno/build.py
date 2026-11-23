@@ -187,14 +187,33 @@ def on_road():
 # ---- the roads that meet the lap (OSM, the track data's `side`): appearance only, for World.cesta.stranske (docs/realizem.md, package E) ----
 SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'living_street': 1, 'tertiary': 2, 'tertiary_link': 2,
               'secondary': 3, 'secondary_link': 3, 'primary': 3, 'primary_link': 3, 'trunk': 3, 'trunk_link': 3}
-SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
+SIDE_W = [3.5, 5.5, 6.25, 7.25]   # the carriageway's real width by class (m), where OSM gives neither lanes nor a width, and one lane
+LANE_W = 3.25                     # (m): as tools/cesta/izvoz.py (the decision of 23. 11. 2026, docs/realizem/paket-e.md)
+def real_width(lanes, width):   # the lap's own way in OSM (tools/cesta/izvoz.py tag_width): its width, then its lanes, else None
+    try:
+        f = float(str(width).replace(',', '.').split()[0])
+        if 2.5 <= f <= 30: return f
+    except (ValueError, IndexError): pass
+    try:
+        n = float(str(lanes).split(';')[0])
+        if n >= 1: return n * LANE_W
+    except ValueError: pass
+    return None
+def lap_scale():
+    """The lap's width in the game (WIDTHS) over its real width in OSM, the median over its ways (tools/cesta/izvoz.py road_scale): the
+    road widened for the race widens its side roads by as much, from 1.25 on and at most twice."""
+    real = [f for f in ((real_width(w[4], w[5]) or SIDE_W[SIDE_CLASS[w[3]]] if w[3] in SIDE_CLASS else None) for w in J['ways']) if f]
+    hw = [next((h for a, b, h in WIDTHS if a <= s < b), WIDTHS[-1][2]) for s in np.arange(0, L, STEP)]
+    k = 2 * float(np.median(hw)) / float(np.median(real))
+    return round(min(2.0, k), 2) if k >= 1.25 else 1.0
+SIDE_K = lap_scale()
 def side_width(cls, v, oneway):
     try: f = float(str(v).replace(',', '.'))
     except ValueError: f = 0
     if f >= 3 and (cls <= 1 or f > 4): w = f               # a width in metres (the field is OSM's lanes, or its width where there are none)
-    elif f >= 1: w = 3.0 * f + (1.0 if f < 2 else 0.4)     # lanes
+    elif f >= 1: w = f * LANE_W                            # lanes
     else: w = SIDE_W[cls] * (0.8 if oneway else 1)
-    return round(min(8.0, max(3.0, w)), 1)
+    return round(min(16.0, max(3.0, w * SIDE_K)), 1)
 
 def side_roads(stats=None):
     from scipy.spatial import cKDTree
