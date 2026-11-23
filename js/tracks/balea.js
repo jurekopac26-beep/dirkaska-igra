@@ -63,6 +63,11 @@ var TRACK_DEFS = TRACK_DEFS || [];
       summit: ["At the lake in {time}, {delta} seconds off your best.", "Across the line at Bâlea Lake. {time}, just {delta} short of the record.", "That's the top of the Transfăgărășan. {time}. {delta} seconds to find next time."],
     },
     start: [21.8, 89.18],   // (502 m past the old start, the origin: tools/proga/proge.json, start_opomba)
+    // the side roads that meet the road (OpenStreetMap, © OpenStreetMap contributors, ODbL: the car roads with a junction on it, their first ~60 m;
+    // no names), a look only (js/world-prelaz.js: stubGeo): closed at the road's edge (sideClosed: the barrier straight across their mouths, no
+    // car turns in) and never felt by a car (sideLook: Track.query keeps the road's own surface, only the world's builders see them, queryLook)
+    sideRoads: [[3619.8,-1,106,1,0,60,0,2.4,1.6,"",[-56.2,818.5,269.2,-53.8,817.2,269.6,-50.8,816.8,270.1,-48,816,270.2,-45.1,815,270.3,-42.6,813.5,270.4,-40.2,811.7,270.5,-38.1,809.6,270.6,-36.5,807.1,270.7,-34.9,804.5,270.8,-33.4,801.9,271,-31.9,799.3,271.2,-30.4,796.7,271.7,-28.9,794.1,272.1,-27.5,791.5,272.6,-26,788.9,273,-24.5,786.3,273.5,-23,783.7,273.9,-21.5,781,274.4,-20.1,778.4,274.8,-18.6,775.8,275.3,-16.4,773.8,275.7,-14.1,771.8,276.2,-11.6,770.3,276.6,-8.9,768.9,277.1,-6,768.2,277.5,-3,767.7,278,-0.1,767.8,278.4,2.9,768,278.9,5.8,768.7,279.1,8.7,769.5,279.3,11.6,770.5,279.4,14.4,771.5,279.5,17.2,772.4,279.6]]],
+    sideClosed: true, sideLook: true,
     // ---- podatki (tools/proga) ----
     alt: [1802,2034],
     realKm: 3.53,

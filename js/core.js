@@ -1776,6 +1776,7 @@ const Core = (function () {
     }
 
     // nearest point search around hint index; returns object (reused)
+    queryLook(x, z, hint, out) { this._look = 1; try { return this.query(x, z, hint, out); } finally { this._look = 0; } }   // (as query, with the side roads of def.sideLook: their surfaces as the builders draw them)
     query(x, z, hint, out) {
       const N = this.N, px = this.px, pz = this.pz;
       out = out || {};
@@ -1791,12 +1792,13 @@ const Core = (function () {
       }
       const pk = out.k, pj = out.kj; out.k = -1; out.deep = false;   // (a side road: out.k its index, -1 none; pk / pj: this result's last one, a hint)
       const zq = this.def.barrier && this.inZone(x, z);   // (def.barrier: in a roundabout's zone the ring's own ground, never a side road's: its legs are closed at the zone's edge)
-      if (this.stubs && hint >= 0 && bd > 400 && !zq && this._stubQ(x, z, hint, out, false, pk, pj)) return out;   // deep in a side road (the hint its junction): the road not searched
+      const sq = this.stubs && (!this.def.sideLook || this._look);   // (def.sideLook: the side roads only for the look, the world's builders' queryLook; the cars never in one)
+      if (sq && hint >= 0 && bd > 400 && !zq && this._stubQ(x, z, hint, out, false, pk, pj)) return out;   // deep in a side road (the hint its junction): the road not searched
       if (bi < 0 || bd > 60 * 60) {
         for (let i = 0; i < N; i++) { const dx = x - px[i], dz = z - pz[i]; const d = dx * dx + dz * dz; if (d < bd) { bd = d; bi = i; } }
       }
       this._qMain(x, z, bi, out);
-      if (this.stubs && Math.abs(out.d) > this.wAt(out.a) - 1 && !zq) this._stubQ(x, z, out.a, out, true, pk, pj);   // off the asphalt: perhaps in a side road
+      if (sq && Math.abs(out.d) > this.wAt(out.a) - 1 && !zq) this._stubQ(x, z, out.a, out, true, pk, pj);   // off the asphalt: perhaps in a side road
       return out;
     }
     // is (x, z) inside a roundabout's zone (its free ground round the island, out to zr)
