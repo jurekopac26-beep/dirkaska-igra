@@ -1495,7 +1495,7 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
    »Best race/lap«; na kartah sosedov je ime čez vso širino, zastava in »država · km« pod njim (prej »Termas de Río Hondo« in dolge
    države odrezane, tudi na namiznem). Pokončni do 380 px: celica »Best« malo širša (»Best race« je bil 1 px predolg). */
 @media (orientation: landscape) and (max-height: 640px), (orientation: landscape) and (max-width: 800px) {
-  #s-track .trow .flag img, #s-track .trow .flag .nf { width: 36px; height: 24px; }
+  #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(36px, calc(51 * var(--u))); height: max(24px, calc(34 * var(--u))); }
   #s-track .trow .flag { padding-right: 4px; }
   #s-track .trow > .best { flex-grow: 1.25; }
 }
