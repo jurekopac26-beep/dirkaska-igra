@@ -91,7 +91,7 @@
   // on the land cover (0 the grass and the fields, 1 the trees, 2 the scrub, 3 the villages and the car parks): the few groves mesquites; the
   // scrub huizaches and nopal with a mesquite here and there; on the grassland lone huizaches and mesquites, a nopal; round the houses mesquites
   const AG_WOODS = {
-    n: 3, geo: (k) => agTreeGeo(k % 3, k >= 3), cr: [0.4, 0.42, 0.3], p: [0.022, 0.5, 0.3, 0.025],
+    n: 3, geo: (k) => agTreeGeo(k % 3, k >= 3), cr: [0.4, 0.42, 0.3], p: [0.06, 0.6, 0.5, 0.04],   // (denser than the sources' lone trees, ~2.7x on the grass: the user's b of 23. 11.)
     pick(cl, R, far) {
       const r = R(), r2 = R(), r3 = R();
       const sp = cl === 1 ? (r < 0.7 ? 0 : r < 0.95 ? 1 : 2) : cl === 2 ? (r < 0.45 ? 1 : r < 0.8 ? 2 : 0) : cl === 3 ? (r < 0.6 ? 0 : 1) : r < 0.5 ? 1 : r < 0.85 ? 0 : 2;
