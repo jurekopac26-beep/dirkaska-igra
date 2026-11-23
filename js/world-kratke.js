@@ -822,6 +822,19 @@
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
       return [[e + sw, -0.02], lift(Math.max(e + sw + 0.6, bar - 0.7), -0.12), [bar + 0.45, Math.min(-0.42, gAt(bar + 0.45) - 0.25)], lift(bar + 1.15, -0.3), [bar + 1.9, gAt(bar + 1.9) + 0.03]]; };
     const vp = [-1, 1].map(side => { const a = []; for (let i = 0; i < N; i++) a.push(vProf(i, side)); return a; });
+    // the side roads of the map (def.stranske, package E, docs/realizem/paket-e.md), for the look only, as js/world-prelaz.js lays them: the edge line opens at their
+    // mouths, the wall and the posts open there, the plants and the rocks keep off their strips. drzava (from the track's name): the country whose rules for the lines
+    // are known (World.cesta's CRTE); without it the mouths stay without paint. (A track without def.stranske: nothing of this, its world as it was.)
+    const vergeAt = (i, side, d) => { const pr = vp[side > 0 ? 1 : 0][i];   // (the drawn top: the verge, or the terrain where it lies above it)
+      for (let k = 1; k < pr.length; k++) if (d <= pr[k][0]) { const o = side * d; return Math.max(lerp(pr[k - 1][1], pr[k][1], clamp((d - pr[k - 1][0]) / (pr[k][0] - pr[k - 1][0] || 1), 0, 1)), caGround(T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o) - T.hy[i]); }
+      return -9; };
+    const edgeTone = (i) => { let sd = 1; for (const u of SR.ustja) if (i * T.ds >= u[0] - T.ds && i * T.ds <= u[1] + T.ds) sd = u[2]; const o = sd * w, rl = T.rl[i];   // (the asphalt's tone at its edge on the mouth's side: shade below)
+      return (0.84 - 0.07 * Math.exp(-((o - rl - 0.9) ** 2) / 0.6) - 0.07 * Math.exp(-((o - rl + 0.9) ** 2) / 0.6)) * (0.95 + 0.1 * P.n2(T.px[i] * 0.5 + o, T.pz[i] * 0.5)); };
+    const drzava = ((c) => World.cesta && World.cesta.CRTE && World.cesta.CRTE[c] ? c : null)(String(def.name || '').split(',').pop().trim());
+    const SR = World.cesta && World.cesta.stranske && def.stranske ? World.cesta.stranske(T, def.stranske, { tla: caGround, rob: vergeAt, ton: edgeTone, odprta: !!T.open, drzava: drzava || undefined, barva: drzava ? undefined : false }) : null;
+    const PtF = (f, o, y) => { const a = Math.floor(f), t = f - a; if (t < 1e-4) return Pt(a, o, y); const p = Pt(a, o, y), q = Pt(a + 1, o, y); return [lerp(p[0], q[0], t), lerp(p[1], q[1], t), lerp(p[2], q[2], t)]; };   // (a point at a fractional station)
+    let nStb = 0;
+    if (SR) { out.cestaRob = (out.cestaRob || []).concat(SR.ustja); for (const k of SR.krogi) exclPush(k[0], k[1], k[2]); out.stranske = SR.n; lMat.userData.crte = 1; }   // (their circles: no plant, no rock)
     let nWall = 0;
     {
       const offs = [-w, -w * 0.5, 0, w * 0.5, w], tileL = 8, kerbL = 6, LN = LK.lines;
@@ -838,12 +851,17 @@
       const wuv = (p) => [p[0] / 10, -p[2] / 10];
       for (let c0 = 0; c0 < N - 1; c0 += 60) {
         const gr = new GB(true), gv = new GB(true), gw = new GB(true), gl = new GB(), gs = new GB(true);
+        if (SR && LN.edge) { const cE = Math.min(c0 + 60, N - 1), ec = [LN.edge, LN.edge, LN.edge, LN.edge];   // (with side roads: the edge lines open at their mouths, then broken across them where the rules say so)
+          for (const si of [0, 1]) { const o0 = si ? w - 0.45 : -(w - 0.3), o1 = si ? w - 0.3 : -(w - 0.45);
+            for (const run of SR.tek(si, 2, c0, cE)) for (let k = 0; k + 1 < run.length; k++) gl.quadUp(PtF(run[k], o0, 0.036), PtF(run[k], o1, 0.036), PtF(run[k + 1], o1, 0.036), PtF(run[k + 1], o0, 0.036), ec); }
+          if (drzava) for (const [f0, f1, sd] of SR.prekinjena(c0, Math.min(c0 + 60, N))) { const o0 = sd > 0 ? w - 0.45 : -(w - 0.3), o1 = sd > 0 ? w - 0.3 : -(w - 0.45);
+            gl.quadUp(PtF(f0, o0, 0.036), PtF(f0, o1, 0.036), PtF(f1, o1, 0.036), PtF(f1, o0, 0.036), ec); } }
         for (let i = c0; i < Math.min(c0 + 60, N - 1); i++) {
           const j = i + 1, v0 = i * T.ds / tileL, v1 = j * T.ds / tileL, s0 = i * T.ds / kerbL, s1 = j * T.ds / kerbL;
           for (let c = 0; c < offs.length - 1; c++) { const o0 = offs[c], o1 = offs[c + 1];
             gr.quadUp(Pt(i, o0, 0.02), Pt(i, o1, 0.02), Pt(j, o1, 0.02), Pt(j, o0, 0.02), [shade(i, o0), shade(i, o1), shade(j, o1), shade(j, o0)], [[(o0 + w) / tileL, v0], [(o1 + w) / tileL, v0], [(o1 + w) / tileL, v1], [(o0 + w) / tileL, v1]]); }
           const sm = (i + 0.5) * T.ds, pq = (a, b, col) => gl.quadUp(Pt(i, a, 0.036), Pt(i, b, 0.036), Pt(j, b, 0.036), Pt(j, a, 0.036), [col, col, col, col]);
-          if (LN.edge) { pq(-(w - 0.3), -(w - 0.45), LN.edge); pq(w - 0.45, w - 0.3, LN.edge); }
+          if (LN.edge && !SR) { pq(-(w - 0.3), -(w - 0.45), LN.edge); pq(w - 0.45, w - 0.3, LN.edge); }
           if (LN.centre && (!LN.dash || sm % (LN.dash[0] + LN.dash[1]) < LN.dash[0])) { if (LN.double) { pq(-0.21, -0.09, LN.centre); pq(0.09, 0.21, LN.centre); } else pq(-0.07, 0.07, LN.centre); }
           for (const side of [-1, 1]) {
             const si = side > 0 ? 1 : 0, ci = vc[si][i], cj = vc[si][j], qi = vp[si][i], qj = vp[si][j];
@@ -869,7 +887,9 @@
           }
         }
         addM(gr, aMat); addM(gl, lMat); addM(gs, sMat); addM(gv, gMat); addM(gw, gMat);
+        if (SR) { const gsr = new API.RB(true); SR.robovi(gsr, c0, Math.min(c0 + 60, N), krGCol); addM(gsr, gMat); }   // (the side roads' shoulders: the ground's colour and the verges' material)
       }
+      if (SR) { const sM = aMat.clone(); for (const g of SR.asfalt(API.RB, krGCol)) { const m = addM(g, sM); if (m) m.userData.stranska = 1; } }   // (their strips: a clone of the asphalt's material)
       const gq = new GB(true), gw2 = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1], wht = [0.94, 0.93, 0.88];   // chequered start and finish lines, a white line at each checkpoint
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
         gq.quadUp([a[0], y(a), a[1]], [b[0], y(b), b[1]], [c[0], y(c), c[1]], [d[0], y(d), d[1]], [W1, W1, W1, W1], [[0, 0], [uM, 0], [uM, 0.5], [0, 0.5]]); }
@@ -1097,6 +1117,7 @@
         for (let j = Math.max(0, p.i - n); j <= Math.min(N - 1, p.i + n); j++) { const dx = p.x - T.px[j], dz = p.z - T.pz[j], al = dx * T.tx[j] + dz * T.tz[j], lat = (dx * T.nx[j] + dz * T.nz[j]) * p.sd;
           if (Math.abs(al) < p.r + 1 && lat > 0 && lat < bar[j] + p.r + 3) mouth[si][j] = 1; } }
       for (const [si, i, hw] of laneM) { const n = Math.ceil((hw + 1.5) / T.ds); for (let j = Math.max(0, i - n); j <= Math.min(N - 1, i + n); j++) mouth[si][j] = 1; }   // (and the lanes', def.lanes)
+      if (SR) for (const si of [0, 1]) for (let i = 0; i < N; i++) if (SR.rez[si][i] & 1) mouth[si][i] = 1;   // (and the side roads', def.stranske)
       for (const side of [-1, 1]) {
         const si = side > 0 ? 1 : 0, nd = need[si], bar = side > 0 ? T.br : T.bl;
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || bk[si][i] || onBr[i]) nd[i] = 0;
@@ -1121,6 +1142,7 @@
         }
       }
       const kp = krProps(out, mkPosts, (i, side) => vp[side > 0 ? 1 : 0][i]).spots;
+      if (SR) { nStb = SR.predmeti((x, z) => scen.get(x, z)); out.stebricki = SR.stebricki; }   // (the posts across each mouth on the wall's line; their paint only where the rules are known)
       const vAt = (q, o) => { for (let k = 0; k + 1 < q.length; k++) if (o <= q[k + 1][0]) { const t = clamp((o - q[k][0]) / Math.max(1e-3, q[k + 1][0] - q[k][0]), 0, 1); return q[k][1] + (q[k + 1][1] - q[k][1]) * t; } return q[q.length - 1][1]; };   // (the verge's height above the road at o, on its profile)
       for (const sp of mkPosts) { if (kp.has(sp)) continue;   // (its foot in the verge: down on the ditch's floor or the ground, whichever lies lower; on a retaining wall's coping, back from its edge)
         const [i, side] = sp, q = vp[side > 0 ? 1 : 0][i], wl = q[2][1] < -2.6, op = (side > 0 ? T.br[i] : T.bl[i]) + (wl ? 0.24 : 0.42), o = side * op, p = [T.px[i] + T.nx[i] * o, T.hy[i], T.pz[i] + T.nz[i] * o], g = scen.get(p[0], p[2]);
@@ -1411,6 +1433,7 @@
     if (LK.rocks.ledges) out.stats.ledges = nLedge; if (LK.extras) out.stats.extras = nX; if ((def.bld || []).length) Object.assign(out.stats, { bldMoved: nBldMoved, bldOut: nBldOut });
     if (LK.terr) Object.assign(out.stats, { terr: nTerr, terrWalls: nTerrW });
     if (LK.rocks.boulders) out.stats.granite = nGranite; if ((def.lanes || []).length) out.stats.lanes = nLane; if ((def.stops || []).length) out.stats.stops = nStops;
+    if (SR) Object.assign(out.stats, { stranske: SR.n, stebricki: nStb });
     return out;
   }
 

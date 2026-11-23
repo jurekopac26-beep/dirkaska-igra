@@ -169,5 +169,15 @@ check('track: the run-up for the grid behind the start (~220 m) and the room for
     en[en.length - 1] === 'Monument' && ctx.Lang.place(def.escTo) === 'To the Mã Pí Lèng pass', en.join(' | '));
 }
 
+// Realizem E (docs/realizem/paket-e.md, #1025): the side road from OpenStreetMap (def.stranske, World.cesta.stranske in js/world-kratke.js)
+// only for the look: the track's model the same without it (the line, the heights, the barriers' lines), the road from its mouth at most
+// ~60 m into the land, at its real width (a track or a drive: 3.5 m)
+{
+  const T0 = new C.Track(Object.assign({}, def, { stranske: undefined })), same = ['px', 'pz', 'hy', 'bl', 'br'].every(k => T0[k].length === T[k].length && T0[k].every((v, i) => v === T[k][i]));
+  const len = (def.stranske || []).map(r => { let l = 0; for (let k = 2; k + 1 < r[6].length; k += 2) l += Math.hypot(r[6][k] - r[6][k - 2], r[6][k + 1] - r[6][k - 1]); return l; });
+  check('road: the one side road from OpenStreetMap (Realizem E) only for the look: the model the same without it, at most ~60 m from the road, 3.5 m wide',
+    len.length === 1 && same && len.every(l => l > 5 && l < 70) && def.stranske[0][3] === 3.5, `${len.length} roads, ${len.map(l => l.toFixed(0)).join(', ')} m`);
+}
+
 console.log(bad ? `FAIL: ${bad} of ${n} checks` : `OK: all ${n} checks`);
 process.exitCode = bad ? 1 : 0;

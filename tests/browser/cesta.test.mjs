@@ -444,10 +444,11 @@ try {
     T.check(name + (open ? ': an open road: the edge line breaks off at every mouth' : ': a circuit: the edge line goes on across every mouth on the asphalt (none on the gravel)') + (paint ? ', the side roads\' stop lines (Japan: 0.3 m, white)' : ', no paint on the side roads (no rule of the country in CRTE, or class 0)'),
       (open ? q.broken === q.mouths - q.gravel && q.through === 0 : q.broken === 0 && q.through === q.mouths - q.gravel) && (paint ? q.sidePaint >= 60 : q.sidePaint === 0), JSON.stringify(q));
   }
-  // the side roads of OpenStreetMap for the look on the tracks of the group 569d (docs/realizem/paket-e.md »569d«): Pembrey (a circuit), Porto
-  // Moniz and Sa Calobra (open roads): every row of the track's data built, a strip through each opening, a row of posts across it on the
-  // fence line (evenly, on the surface under it, off the road's asphalt), Porto Moniz's bus stops; the track's model as a track built alone has it
-  for (const id of ['pembrey', 'portomoniz', 'sacalobra']) {
+  // the side roads of OpenStreetMap for the look on the tracks of the group 569d (docs/realizem/paket-e.md »569d«): Pembrey (a circuit) and
+  // Porto Moniz (an open road): every row of the track's data built, a strip through each opening, a row of posts across it on the fence line
+  // (evenly, on the surface under it, off the road's asphalt), Porto Moniz's bus stops; the track's model as a track built alone has it (Sa
+  // Calobra has none since the export stops a road at the edge of World.gore's car park: its one road ran across the car park, #1025)
+  for (const id of ['pembrey', 'portomoniz']) {
     await startTrack(page, id);
     const sv = await look(page);
     const s5 = await page.evaluate((id) => {
