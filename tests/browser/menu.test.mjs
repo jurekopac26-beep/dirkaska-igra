@@ -87,15 +87,16 @@ try {
     //    poster, else the model) too. The hidden tracks (pending, test) only behind NEUPORABNO, the same way (CLAUDE.md, »Pred izidom: NEUPORABNO«)
     const MODES = [['race', 'race'], ['chase', 'police'], ['trial', 'tt'], ['duel', 'traffic']], roads = {}, heads = {}, cams = {}, lists = {};   // (heads: every track's globe and height graph, of every mode; cams: every track's pictures in cameras 1 and 3)
     // the stage's picture as it is now: its kind and its files (a video's poster and the video)
-    const PIC = `const st = root.querySelector('#track-stage'), map = st.querySelector('.dio.topmap'), v = st.querySelector('.dio.fly video, .dio.corner video');
-      if (v) return { kind: v.closest('.corner') ? 'corner' : 'flyover', files: [v.getAttribute('poster'), v.getAttribute('src')], loop: v.loop && v.muted };
-      return { kind: map ? 'map' : st.querySelector('.dio img') ? 'model' : 'none', files: [...st.querySelectorAll('.dio img, .dio image')].map(e => e.getAttribute('src') || e.getAttribute('href')) };`;
+    // (the view on top, the newest: the view shown before it stays under it for a moment while the new one fades in, stageViews)
+    const PIC = `const st = root.querySelector('#track-stage'), all = [...st.querySelectorAll('.dio')], top = all[all.length - 1], map = top && top.classList.contains('topmap') ? top : null, v = top && top.querySelector('video');
+      if (v) return { kind: top.classList.contains('corner') ? 'corner' : 'flyover', files: [v.getAttribute('poster'), v.getAttribute('src')], loop: v.loop && v.muted };
+      return { kind: map ? 'map' : top && top.querySelector('img') ? 'model' : 'none', files: top ? [...top.querySelectorAll('img, image')].map(e => e.getAttribute('src') || e.getAttribute('href')) : [] };`;
     // a mode's tracks in the menu's order: the real ones; behind NEUPORABNO (nu) the hidden ones, those awaiting the user's choice first, then the test tracks
     const expList = ([gm, nu]) => {
       const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm) && !!(d.test || d.pending) === nu);
       const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
       ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
-      return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent).length, lens: ds.every(d => L[d.id] > 0) };
+      return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent && !d.vehicle).length, lens: ds.every(d => L[d.id] > 0) };
     };
     // every track of the list on the stage in turn (camera 2), round to the first again: its picture, its head (key: the list, lists[key])
     const walk = async (key, mode, exp) => {
@@ -135,7 +136,7 @@ try {
       const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
       T.check(`${mode}: one list of the game's real tracks (${exp.ids.length}) from the shortest to the longest, no hidden one (pending, test: NEUPORABNO); no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
       roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5., 6. and 9. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass, Great Alpine Road; Irohazaka awaits the choice)`, roads.race === roads.trial && roads.race >= 7, JSON.stringify(roads));
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5., 6. and 9. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass, Great Alpine Road; Irohazaka awaits the choice; so are the tanker's roads, in Time trial only)`, roads.race === roads.trial && roads.race >= 7, JSON.stringify(roads));
       const w = await walk(mode, mode, exp);
       T.check(`${mode}: every track shows its picture (${w.seen} tracks, ${w.n} picture files, none missing); after the last the first again`, !w.bad.length && !w.gone.length && w.seen === exp.ids.length && w.again === w.first, JSON.stringify(w));
       await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
@@ -158,10 +159,10 @@ try {
     // every track's pictures in cameras 1 and 3: the map from above where the track has a route (routes.js), else its model; the corner's
     // video in a loop, muted, where MENU.corners has it (every real track, and Vršič: a test track since 6. 11. 2026 without a model), else (a
     // test track) its model
-    const cx = await page.evaluate(() => ({ routes: Object.keys(window.ROUTES || {}), corners: window.MENU.corners || [], tests: Core.TRACKS.filter(d => d.test).map(d => d.id) }));
+    const cx = await page.evaluate(() => ({ routes: Object.keys(window.ROUTES || {}), corners: window.MENU.corners || [], tests: Core.TRACKS.filter(d => d.test).map(d => d.id), tanker: Core.TRACKS.filter(d => d.vehicle).map(d => d.id) }));
     const cbad = Object.entries(cams).filter(([id, c]) => c.c1.kind !== (cx.routes.includes(id) ? 'map' : 'model') || c.c3.kind !== (cx.corners.includes(id) ? 'corner' : 'model') || (c.c3.kind === 'corner' && !(c.c3.loop && c.c3.files[0] === 'assets/maps/corner-' + id + '.webp' && c.c3.files[1] === 'assets/maps/corner-' + id + '.webm'))).map(([id, c]) => id + ':' + c.c1.kind + '/' + c.c3.kind);
-    const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
-    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || id === 'vrsic'), JSON.stringify({ cbad, nocorner }));
+    const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id) && !cx.tanker.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
+    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video, but the tanker's roads`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || id === 'vrsic'), JSON.stringify({ cbad, nocorner }));
     // every track of every mode: its height graph under the back arrow in camera 2 (the flyover, or the model where a track has none), a
     // real track's with its lowest and highest heights; its country gold on the head's globe
     const tests = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), H = Object.values(heads);
@@ -439,8 +440,10 @@ try {
     const { ctx, page, errors } = await open({}, { width: 820, height: 1180 });
     await ready(page);
     await click(page, 'single'); await click(page, 'mode:race');
-    const dm = await page.evaluate(async () => { const a = __game.fr.demo, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
-    T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.n >= 2 * Math.ceil(dm.s) + 2, JSON.stringify(dm));
+    // drawn on = the demo drawn in every frame the page draws (not once a second, as under a covering menu); counted against the
+    // page's own frames, not a fixed rate: software WebGL at 820×1180 (a cloud session, a CI machine) draws only ~2 frames a second
+    const dm = await page.evaluate(async () => { const a = __game.fr.demo, r0 = __game.fr.raf, t0 = performance.now(); await new Promise(r => setTimeout(r, 2600)); return { raf: __game.fr.raf - r0, n: __game.fr.demo - a, s: (performance.now() - t0) / 1000, covers: Menu.covers() }; });
+    T.check('a tablet held upright: the menu a column, the demo at its sides drawn on', !dm.covers && dm.raf >= 3 && dm.n >= dm.raf - 1 && dm.n > Math.ceil(dm.s) + 1, JSON.stringify(dm));
     T.check('no page errors on the tablet', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
@@ -1514,6 +1517,99 @@ try {
     const f = await ev(page, 'const y = root.querySelector(".yard"); return { img: !!y.querySelector(".car img"), cv: !!y.querySelector("canvas.c3d"), act: y.querySelector(".car").dataset.act, i: MenuCar.info() };');
     T.check('no WebGL for the yard\'s car: its picture, no canvas, the tap still the garage', f.img && !f.cv && f.act === 'garage' && f.i.failed && !f.i.on, JSON.stringify(f));
     T.check('no WebGL for the yard\'s car: no page errors', !real(errors).filter(e => !/WebGL/.test(e)).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 11. the map (camera 1) and the flyover (camera 2) are one run of the point, seen from two cameras: the switch goes on from the same moment
+  // of the run, the point at the same place, not from the start (from the flyover to the map and back); a sheet over the stage keeps the flyover playing (the
+  // same video, not started again); another track starts its own run
+  {
+    const { ctx, page, errors } = await open();
+    await ready(page);
+    await click(page, 'single'); await click(page, 'mode:race');
+    // (a real road with a flyover: Pikes Peak; the shorter way round the list to it)
+    const way = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('pikes') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
+    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'pikes'; k++) await click(page, way);
+    await click(page, 'cam:2');   // (the step opens with the map: the flyover is the camera 2)
+    const VID = 'root.querySelector("#track-stage .dio.fly video")', live = (s) => page.waitForFunction((s) => { const v = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage .dio.fly video'); return v && !v.paused && v.currentTime > s; }, s, { timeout: 120000 });
+    await live(4);
+    // (the run's place on the map at its moment s, as js/menu.js runAt and routePt; the point drawn is the run's at most a second before: a frame of software WebGL)
+    const NEAR = `const R = window.ROUTES.pikes, F = R.fly.frames, Dr = F.length / R.fly.fps;
+      const at = (s) => { s = ((s % Dr) + Dr) % Dr; const x = Math.min(F.length - 1, s * R.fly.fps), k = Math.min(F.length - 2, Math.floor(x)), f = (F[k][0] + (F[k + 1][0] - F[k][0]) * (x - k)) / R.len, P = R.top.route, xi = Math.max(0, Math.min(1, f)) * (P.length - 1), i = Math.min(P.length - 2, Math.floor(xi)), u = xi - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
+      const dot = root.querySelector("#track-stage .dio.topmap .rt-dot"), m = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(dot.getAttribute("transform") || ""), run = Menu.debug().run;
+      let best = 1e9; if (m) for (let s = run.t - 1; s <= run.t + 0.05; s += 0.02) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
+      const p0 = at(0);
+      return { run, best: +best.toFixed(2), fromStart: m ? +Math.hypot(p0[0] - +m[1], p0[1] - +m[2]).toFixed(1) : -1, drawn: root.querySelector("#track-stage .dio.topmap").classList.contains("drawn"), views: root.querySelectorAll("#track-stage .dio").length };`;
+    const a = await ev(page, 'const v = ' + VID + '; return { vt: v.currentTime, run: Menu.debug().run };');
+    await click(page, 'cam:1');
+    await page.waitForFunction(() => { const r = document.getElementById('menu-host').shadowRoot; return r.querySelectorAll('#track-stage .dio').length === 1 && !!r.querySelector('#track-stage .dio.topmap .rt-dot[opacity="1"]'); }, null, { timeout: 30000 }).catch(() => null);
+    const b = await ev(page, NEAR);
+    T.check(`flyover -> map: the map goes on from the flyover's moment (${a.vt.toFixed(1)} s, the run now at ${b.run.t.toFixed(1)} s), its point where the flyover's was, the route already drawn`,
+      a.run.id === 'pikes' && b.run.id === 'pikes' && b.run.t >= a.vt - 0.05 && b.run.t < a.vt + 15 && b.best < 2.5 && b.fromStart > 20 && b.drawn && b.views === 1, JSON.stringify({ a, b }));
+    // the map's point leaves its trail behind it coloured by the climb, as the flyover's point does (js/menu.js mapTrail): Pikes Peak's flyover
+    // is a loop on an open road, so the map's trail is the last 1.5 km of the route behind the point (TRAIL), not the route from the start:
+    // every piece of it before the point's own one, thinner towards its far end, that one up to the point, none ahead
+    const tr = await ev(page, `const b = root.querySelector("#track-stage .dio.topmap"), ps = [...b.querySelectorAll(".rt-tr path")], w = ps.map(p => +p.getAttribute("stroke-width")), n = ps.length - 1, on = w.slice(0, n).filter(x => x > 0).length;
+      const h = /^M([-\\d.]+) ([-\\d.]+)L([-\\d.]+) ([-\\d.]+)$/.exec(ps[n].getAttribute("d") || ""), P = window.ROUTES.pikes.top.route, dot = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
+      let k = -1, bd = 0.2; if (h) P.forEach((q, i) => { const e = Math.hypot(+h[1] - q[0], +h[2] - q[1]); if (e < bd) { bd = e; k = i; } });
+      const lit = w.slice(0, n).map((x, i) => x > 0 ? i : -1).filter(i => i >= 0), first = lit.length ? lit[0] : -1, last = lit.length ? lit[lit.length - 1] : -1;
+      return { n, on, k, first, last, contig: last - first + 1 === on, full: on > 0 && w[n] > 0 && Math.abs(w[last] - w[n]) < 1e-6, taper: on > 0 && w[first] < w[n], ahead: lit.some(i => i >= k), head: !!h && !!dot && k >= 0 && last === k - 1 && +h[3] === +dot[1] && +h[4] === +dot[2], colours: new Set(lit.map(i => ps[i].getAttribute("stroke"))).size };`);
+    T.check(`the map's trail (Pikes Peak, a loop flyover on an open road): the last 1.5 km of the route behind the point coloured by the climb (${tr.on} of ${tr.n} pieces, ${tr.colours} colours), thinner towards its far end, the point's own piece up to it, nothing ahead`,
+      tr.on > 0 && tr.on <= 0.3 * tr.n && (tr.first === 0 || tr.on >= 0.2 * tr.n) && tr.contig && tr.full && (tr.first === 0 || tr.taper) && !tr.ahead && tr.head && tr.colours >= 2, JSON.stringify(tr));
+    await page.waitForTimeout(2500);
+    const c0 = await page.evaluate(() => Menu.debug().run);
+    await click(page, 'cam:2');
+    await page.waitForFunction(() => { const r = document.getElementById('menu-host').shadowRoot, b = r.querySelector('#track-stage .dio.fly'), v = b && b.querySelector('video'); return v && !b.classList.contains('pend') && r.querySelectorAll('#track-stage .dio').length === 1 && !v.paused && v.readyState >= 2; }, null, { timeout: 60000 }).catch(() => null);
+    const c = await ev(page, 'const v = ' + VID + '; return { vt: v ? v.currentTime : -1, run: Menu.debug().run };');
+    T.check(`map -> flyover: the flyover goes on from the map's moment (${c0.t.toFixed(1)} s), not from its start (the video at ${c.vt.toFixed(1)} s)`, c.vt >= c0.t - 0.05 && c.vt < c0.t + 8 && Math.abs(c.vt - c.run.t) < 0.5, JSON.stringify({ c0, c }));
+    // the screen drawn again round the stage (the weather chosen, a sheet opened and closed): the same video plays on, from where it was
+    await ev(page, VID + '.__same = 1;');
+    const d0 = await ev(page, 'return ' + VID + '.currentTime;');
+    await click(page, 'weather:rain'); await page.waitForTimeout(500); await click(page, 'weather:dry'); await page.waitForTimeout(500);
+    await click(page, 'more-options'); await page.waitForTimeout(500); await done(page); await page.waitForTimeout(800);
+    const d = await ev(page, 'const v = ' + VID + '; return { same: !!v.__same, vt: v.currentTime, paused: v.paused, videos: root.querySelectorAll("video").length };');
+    T.check('the weather chosen, a sheet opened and closed: the same flyover plays on (not started again)', d.same && !d.paused && d.vt > d0 && d.videos === 1, JSON.stringify({ d0, d }));
+    // another track: a run of its own, from its start
+    await click(page, 'track:1'); await page.waitForTimeout(400);
+    const e = await page.evaluate(() => Menu.debug().run);
+    T.check('another track starts a run of its own, from the start', e.id !== 'pikes' && e.t < 2.5, JSON.stringify(e));
+    // a circuit's flyover made as a loop (Spa; R.fly.loop, maketa-menija/orodja/flyover.mjs): the video goes straight on into its next lap, so
+    // the picture is not dipped where it loops and the start line's one name stays over it either side of the lap's end (the camera is still 2)
+    const wayS = await page.evaluate(() => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf('spa') - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; });
+    for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== 'spa'; k++) await click(page, wayS);
+    await page.waitForFunction(() => { const v = document.getElementById('menu-host').shadowRoot.querySelector('#track-stage .dio.fly:not(.away) video'); return v && /fly-spa\.webm$/.test(v.getAttribute('src')) && !v.paused && v.currentTime > 1; }, null, { timeout: 120000 }).catch(() => null);
+    const lp = await page.evaluate(() => new Promise((res) => {
+      const root = document.getElementById('menu-host').shadowRoot, box = root.querySelector('#track-stage .dio.fly:not(.away)'), v = box && box.querySelector('video'), lab = box && box.querySelector('.flab'), F = window.ROUTES.spa.fly;
+      if (!v || !lab || lab.children.length < 2) { res({ loop: F.loop, none: true }); return; }
+      const S = [], t0 = performance.now(); let looped = 0, last = 0;
+      const step = () => {
+        const t = v.currentTime; if (t < last - 1) looped++; last = t;
+        S.push([t, +(v.style.opacity || 1), lab.children[0].style.opacity === '1', lab.children[1].style.opacity === '1']);
+        if (performance.now() - t0 < 30000 && !(looped && t > 1)) requestAnimationFrame(step);
+        else res({ loop: F.loop, looped, n: S.length, dip: Math.min(...S.map(q => q[1])), before: S.some(q => q[0] > 5 && q[2]), after: S.some(q => q[0] < 5 && q[2]), finish: S.some(q => q[3]) });
+      };
+      v.addEventListener('seeked', () => requestAnimationFrame(step), { once: true }); v.currentTime = v.duration - 1.5;   // (the lap's last 1.5 s, then on into the next)
+    }));
+    T.check('a circuit\'s flyover made as a loop (Spa): the picture not dipped where it goes on into its next lap, the start line\'s one name over it before and after', lp.loop === 1 && lp.looped === 1 && lp.dip === 1 && lp.before && lp.after && !lp.finish, JSON.stringify(lp));
+    // a track with only its map (the shortest such circuit of the game): its point at the flyovers' even 326 m/s all the way, at the finish
+    // straight on into a new lap (no wait; the user's choice 10. 11. 2026: »Da, povsod enako«); its trail the loop's: the last 1500 m behind
+    // the point (round the start line), its further half narrowing to nothing
+    const mo = await page.evaluate(() => Menu.debug().list.filter(id => { const R = window.ROUTES[id], d = Core.TRACKS.find(x => x.id === id); return R && !R.fly && !R.open && d && !d.test && !d.pending; }).sort((a, b) => window.ROUTES[a].len - window.ROUTES[b].len)[0]);
+    if (mo) {   // (none once every real circuit has its flyover: then nothing to check here)
+      const wayM = await page.evaluate((id) => { const d = Menu.debug(), n = d.list.length, f = (d.list.indexOf(id) - d.trackIdx + n) % n; return f <= n - f ? 'track:1' : 'track:-1'; }, mo);
+      for (let k = 0; k < 80 && (await page.evaluate(() => { const d = Menu.debug(); return d.list[d.trackIdx]; })) !== mo; k++) await click(page, wayM);
+      await click(page, 'cam:1');
+      await page.waitForFunction((id) => { const r = Menu.debug().run; return r.id === id && r.t > window.ROUTES[id].len / 326 + 0.8; }, mo, { timeout: 90000 }).catch(() => null);
+      const mp = await ev(page, `const id = arg, R = window.ROUTES[id], P = R.top.route, run = Menu.debug().run, go = R.len / 326;
+        const at = (s) => { const x = (((s % go) + go) % go) / go * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), u = x - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * u, P[i][1] + (P[i + 1][1] - P[i][1]) * u]; };
+        const b = root.querySelector("#track-stage .dio.topmap"), m = b && /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(b.querySelector(".rt-dot").getAttribute("transform") || "");
+        let best = 1e9; if (m) for (let s = run.t - 0.4; s <= run.t + 0.05; s += 0.01) { const p = at(s); best = Math.min(best, Math.hypot(p[0] - +m[1], p[1] - +m[2])); }
+        const w = b ? [...b.querySelectorAll(".rt-tr path")].map(p => +p.getAttribute("stroke-width")) : [], n = w.length - 1;
+        return { id, lap: +(run.t - go).toFixed(2), best: +best.toFixed(2), n, head: w[n] > 0, last: w[n - 1] > 0, mid: w[Math.floor(n / 2)], narrow: w.some(x => x > 0 && x < w[n]) };`, mo);
+      T.check(`a track with only its map (${mo}): the point at the flyovers' even pace, at the finish straight on into a new lap (${mp.lap} s into it); its trail round the start line, narrowing, not over the whole lap`,
+        mp.lap > 0.4 && mp.best < 2.5 && mp.head && mp.last && mp.mid === 0 && mp.narrow, JSON.stringify(mp));
+    } else console.log('  skip: a track with only its map (every real circuit has its flyover)');
+    T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 } finally {

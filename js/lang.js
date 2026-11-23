@@ -311,6 +311,7 @@
     'Vroče zavore slabše zavirajo: zaviraj prej in nežneje, na ravnini se ohladijo.': 'Hot brakes stop the car less well: brake earlier and more gently, they cool down on the straights.',
     'Vroč motor ima manj moči: popusti plin, v hitri vožnji se ohladi.': 'A hot engine has less power: ease off the throttle, it cools down at speed.',
     'Okvare': 'Failures', 'Okvare (predrta guma, vroče zavore in motor)': 'Failures (punctures, hot brakes and engine)',
+    'Zavetrje': 'Slipstream', 'Za avtom pred sabo je manj zračnega upora, zato ga na ravnini dohitiš in prehitiš; izklop: brez zavetrja za vse avte': 'Behind the car ahead there is less air drag, so you catch it on a straight and pass it; off: no slipstream for any car',
     // Kontrole: the keys, the gamepad and the wheel
     'Kontrole': 'Controls', 'Tipke, plošček in volan': 'Keys, gamepad and wheel', 'Tipkovnica': 'Keyboard', 'Plošček in volan': 'Gamepad and wheel', 'Ponastavi': 'Reset',
     'Levo': 'Left', 'Desno': 'Right', 'Plin': 'Throttle', 'Zavora': 'Brake', 'Drift': 'Drift', 'Nazaj na progo': 'Back on the track', 'Plošček': 'Gamepad', 'Zamenjaj': 'Switch',
@@ -491,9 +492,10 @@
     'Do El Palmita': 'To El Palmito',   // (Espinazo del Diablo: the results of an escape; Espinazo del Diablo, La Tolva and El Palmito stay as they are, Razgledišče, Lasnica and the heights by the rules of Lang.place)
     'Nad zalivom Lăng Cô': 'Above Lăng Cô Bay', 'Serpentina': 'Hairpin', 'Đỉnh đèo Hải Vân': 'Hải Vân summit', 'Do sedla': 'To the saddle',   // (Hải Vân)
     'Kotanja': 'The Dip', 'Prelaz Kanaba': 'Kanaba Gap', 'Razgledišče na Virunge': 'Virunga Viewpoint',   // (Kanaba: the HUD; Serpentina N and the heights by the rules of Lang.place)
-    'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau',   // (Sogeri: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
+    'Soteska Laloki': 'Laloki Gorge', 'Pobočje Sogeri': 'Sogeri Escarpment', 'Do planote': 'To the plateau', 'Do Red Lighta': 'To Red Light',   // (Sogeri: the HUD, the results of an escape; Irishtown: the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Greben': 'Ridge', // (Canaries: the HUD; the heights by the rules of Lang.place)
     'Planota pri letališču': 'Airfield Plateau', 'Sleme': 'Ridge', 'Nad zalivom Savusavu': 'Above Savusavu Bay', 'Do Savusavuja': 'To Savusavu',   // (Savusavu: the HUD, the results of an escape; the heights by the rules of Lang.place)
+    'Gozd nad Vaoalo': 'Forest above Vaoala', 'Do Tiapapate': 'To Tiapapata',   // (Vaoala: the HUD, the results of an escape; Letava, Vaoala and Tiapapata stay as they are, the heights by the rules of Lang.place)
     'Serpentine': 'Switchbacks', 'Žičnica': 'Chairlift', 'Do žičnice': 'To the chairlift',   // (Mount Baldy: the hairpins and the chairlift at the top on the HUD, the results of an escape)
     'Ronski ledenik': 'Rhône Glacier', 'Pod prelazom Furka': 'Below the Furka Pass', 'Na vrh': 'To the top',   // (Furka: the HUD, the results of an escape; Serpentina N and the heights by the rules of Lang.place)
     'Mirante': 'Viewpoint', 'Cascata Rio do Rastro': 'Rio do Rastro Falls', 'Alto da Serra': 'Top of the Serra',   // (Serra do Rio do Rastro)
@@ -513,6 +515,7 @@
     'Reka Tambo': 'Tambo River', 'Vrh vzpona': 'Top of the Climb',   // (the Great Alpine Road; the creeks, Mount Elizabeth and Ash Range Road stay as they are)
     'Dva desna': 'Two Rights', 'Desni pred levimi': 'Right before the Lefts', 'Dolgi levi pri tribuni': 'Long Left by the Grandstand', 'Levi in desni': 'Left and Right', 'Ravnina ob lavi': 'Lava Straight', 'Dolgi lasnični': 'Long Hairpin', 'Levi lasnični': 'Left Hairpin', 'Zadnji lasnični': 'Last Hairpin', // (Quezaltepeque)
     'Plaža Newcastle': 'Newcastle Beach',   // (Newcastle: the turns are numbers)
+    'Do prelaza Mã Pí Lèng': 'To the Mã Pí Lèng pass',   // (Mã Pí Lèng: the results of an escape; Spomenik, Serpentina N and the heights by the rules of Lang.place)
     'Soteska Dadès': 'Dadès Gorge', 'Reka Dadès': 'Dadès River', 'Do soteske': 'To the gorge',   // (Dadès: the HUD, the results of an escape; Serpentina N, Vrh serpentin and the heights by the rules of Lang.place)
     'Vrh grebena': 'Top of the Ridge', 'Do Ribeire Grande': 'To Ribeira Grande',   // (Santo Antão: the HUD, the results of an escape; Delgadim and Ribeira Grande stay as they are, Serpentina N and the heights by the rules of Lang.place)
     'Jez Medeu': 'Medeu Dam', 'Za jezom': 'Behind the Dam', 'Soteska Gorelnik': 'Gorelnik Gorge', 'Most čez Kiši Almati': 'Kishi Almaty Bridge', 'Soteska Kiši Almati': 'Kishi Almaty Gorge', 'Po soteski': 'Up the gorge',   // (Medeu: the HUD, the results of an escape; Serpentina N, Razgledišče and the heights by the rules of Lang.place)
