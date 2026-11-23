@@ -26,7 +26,7 @@ check('no proga: nothing (also an empty address, other parameters only)', Q('') 
   const ways = [['dirka', 'race'], ['race', 'race'], ['kronometer', 'tt'], ['tt', 'tt'], ['promet', 'traffic'], ['traffic', 'traffic'], ['policija', 'police'], ['police', 'police']];
   const got = ways.map(([w, m]) => [w, Q('?proga=vrsic&nacin=' + w).mode === m]);
   check('the ways on Vršič: in Slovene and as the code names them', got.every(g => g[1]), got.filter(g => !g[1]).map(g => g[0]).join(', '));
-  check('a track without ways: only its own (Bathurst a race, not a time trial; Pikes Peak a time trial or a race)', Q('?proga=bathurst&nacin=dirka').mode === 'race' && Q('?proga=bathurst&nacin=tt').mode === null && Q('?proga=bathurst&nacin=tt').bad.join() === 'nacin=tt' && Q('?proga=pikes&nacin=kronometer').mode === 'tt' && Q('?proga=moki&nacin=policija').mode === null);
+  check('a track without ways: only its own (Bathurst a race or its time trial, every circuit has one since 23. 11. 2026, not the police; a frozen one, Bang Saen, its race alone; Pikes Peak a time trial or a race)', Q('?proga=bathurst&nacin=dirka').mode === 'race' && Q('?proga=bathurst&nacin=tt').mode === 'tt' && Q('?proga=bathurst&nacin=policija').bad.join() === 'nacin=policija' && Q('?proga=bangsaen&nacin=tt').mode === null && Q('?proga=bangsaen&nacin=tt').bad.join() === 'nacin=tt' && Q('?proga=pikes&nacin=kronometer').mode === 'tt' && Q('?proga=moki&nacin=policija').mode === null);
 }
 {
   const ts = [['20', 20], ['12.5', 12.5], ['12,5', 12.5], ['0', 0], ['3600', 3600]].map(([s, v]) => [s, Q('?proga=spa&t=' + s).t === v]);
