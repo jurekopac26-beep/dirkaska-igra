@@ -128,7 +128,7 @@
 
   // the circuit's other raceways (def.sk.race: [surface (0 asphalt, 5 gravel), [x, z, ...]]: OpenStreetMap; the layouts this lap leaves out,
   // the pit lane), within 200 m of the road: ribbons on the ground as wide as the lap's own road (def.halfWidth; OSM has no width or lanes on
-  // any raceway, so their class gives it, as the lap's: KD_RACE_HW, which js/world-kildare-obcestje.js reads too; asphalt with white lines at
+  // any raceway, so their class gives it, as the lap's, the user's b of 23. 11.: KD_RACE_HW, which js/world-kildare-obcestje.js reads too; asphalt with white lines at
   // its edges, or gravel), every 1.5 m near the road and 3 m farther out, five points across; only past the barriers (the points inside them
   // moved out to the barrier's back, the parts with none outside left out: the junctions closed by the lap's barriers); the trees and the
   // crowds keep off them. In 512 m chunks (a few draws: the asphalt, the gravel)
