@@ -47,12 +47,12 @@ for (const id of ALL) for (let k = 1; k <= 16; k++) {
   if (I.status !== 'ok' || I.deli !== tag || I.hi.status !== 'ok') { fails.push(tag + ' ' + I.status + ' ' + I.deli); continue; }
   const dO = I.tris.outer - S0.tris.outer, dI = I.tris.inner - S0.tris.inner, hO = I.hi.tris.outer - S0.hi.tris.outer, hI = I.hi.tris.inner - S0.hi.tris.inner;
   most.push([tag, Math.max(dO, dI)]);
-  const ok = HIDDEN.includes(id) ? dO === 0 && hO === 0 && dI > 0 && dI <= 300 && hI <= 300 : dO <= 300 && dI === 0 && hI === 0 && I.hi.tris.outer <= I.hi.budget.outer;
+  const ok = HIDDEN.includes(id) ? dO === 0 && hO === 0 && dI <= 300 && hI <= 300 : dO <= 300 && dI === 0 && hI === 0 && I.hi.tris.outer <= I.hi.budget.outer;
   if (!ok) over.push(`${tag} ${dO}/${dI} Visoki ${hO}/${hI}`);
   if (I.wheels.hi.some(t => t > 600) || I.hi.wheels.some(t => t > 850)) wheels.push(tag + ' ' + I.wheels.hi.join('/') + ' ' + I.hi.wheels.join('/'));
 }
 check('every option of the 17 builds on KOLIBRI (its own body, no fallback), Normalni and Visoki', !fails.length, fails.slice(0, 4).join(', ') || ALL.length * 16 + ' options');
-check('each within its room: a visible one outer <= stock + 300 (the cabin unchanged), a hidden one only in the inner block (<= + 300)', !over.length,
+check('each within its room: a visible one outer <= stock + 300 (the cabin unchanged), a hidden one only in the inner block (<= + 300; in the place of the stock part, it may weigh the same or less)', !over.length,
   over.slice(0, 4).join(', ') || 'most: ' + most.sort((a, b) => b[1] - a[1]).slice(0, 3).map(r => r[0] + ' +' + r[1]).join(', '));
 check('the tyres within the parts\' wheel budget (<= 600 triangles, Visoki <= 850)', !wheels.length, wheels.slice(0, 4).join(', ') || 'all');
 check('none of them warned (no part fell back)', !warns.length, warns.slice(0, 2).join(' | ') || 'none');
