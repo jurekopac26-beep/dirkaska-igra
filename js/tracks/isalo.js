@@ -32,6 +32,10 @@ var TRACK_DEFS = TRACK_DEFS || [];
     traffic: { mix: [0.45, 0.2, 0.15, 0.08, 0.12], bike: 4000 },
     police: { label: 'POLISY', band: '#1e5aa8', text: '#ffffff' }, escTo: 'Do ravnine',
     hudSigns: [[1916, 1938, 'bend']],   // the corner sign (Core hudSigns: a track's own bends): the one bend of the road sharp enough, 98 m, by the Queen of Isalo (the other bends gentler than 250 m: no corner, no fast bend of 0.35 rad)
+    // the side roads (Core sideRoads, drawn only: def.sideClosed, the bank straight across the mouth, no car drives in): within the race OSM has
+    // one, the unnamed track (highway=track, way 543187071) leaving the road on the left 702 m after the start line, up the plain to the north
+    sideClosed: true,
+    sideRoads: [[702.1, -1, 71, 2, 1, 60, 1, 2.2, 1.6, '', [-612.2,550.5,837.4,-611.1,553.3,837.5,-609.9,556,837.3,-608.8,558.8,837.1,-607.6,561.6,836.9,-607,564.4,836.7,-607.8,567.3,836.5,-608.5,570.2,836.4,-609.3,573.1,836.3,-610.1,576,836.1,-610.8,578.9,836,-610.6,581.9,835.8,-610.4,584.9,835.6,-610.1,587.8,835.4,-609.8,590.8,835.2,-609.5,593.8,835,-609.2,596.8,834.8,-608.4,599.7,834.5,-607.5,602.6,834.3,-606.7,605.4,834.2,-605.9,608.3,834,-605,611.2,834,-604.2,614.1,834,-603.4,617,834,-602.5,619.9,834,-601.7,622.7,834,-600.8,625.6,834,-599.4,628.2,834,-598,630.9,834,-596.6,633.5,834,-595.1,636.2,834,-593.7,638.8,834,-592.3,641.5,834,-590.5,643.9,834.1]]],
     // named places ({ n: HUD label, d: metres after the start line, say: the commentator's lines })
     names: [
       {"n": "Planota Isalo", "d": 60, "say": ["Down off the Isalo plateau!", "The grass plain all round, the rocks ahead!"]},

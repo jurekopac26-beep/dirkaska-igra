@@ -16,7 +16,7 @@
   const API = World.api;
   const {
     Chunks, GB, IChunks, NRC, RB, TAU, atS, atSf, box, clamp, crH, crowdCtx, crowdFinish, crowdRun, cyl, ico, lerp, nrDem, nrDist,
-    nrGround, nrLC, nrLCf, nrLump, nrNear, nrPrep, nrShade, nrTileGeo, nrTileOn, rng, sstep, valueNoise2, vary
+    nrGround, nrLC, nrLCf, nrLump, nrNear, nrPrep, nrShade, nrTileGeo, nrTileOn, rng, sstep, stubExcl, stubGeo, valueNoise2, vary
   } = API;
   let T;   // (World's, for the build under way)
   API.sync.push(() => { ({ T } = API); });
@@ -74,6 +74,7 @@
     // what keeps the trees and the rocks off (the Queen, the crowds, the start), hashed circles
     const eh = new Map(), EHC = 32;
     const exclPush = (x, z, r) => { const e = { x, z, r }; for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let Lc = eh.get(k); if (!Lc) eh.set(k, Lc = []); Lc.push(e); } };
+    stubExcl(exclPush);   // (nothing grows or stands on the side road)
     const excluded = (x, z) => { const Lc = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!Lc) return false; for (const e of Lc) if ((x - e.x) ** 2 + (z - e.z) ** 2 < e.r * e.r) return true; return false; };
 
     // ---- the ground under the Queen (14 m round) as the heights are, without the far terrain's noise, so that the model (built on the
@@ -107,6 +108,8 @@
     const RC = 128, tileL = 8, secT = new Float32Array(N), CZ = World.cesta ? World.cesta.crte(T, { r: 140, pred: 40 }) : null, CL = CZ ? CZ.at : null;
     for (let i0 = 0, k = 0; i0 < N; k++) { const n = 50 + Math.floor(crH(k, 3, 41) * 70), t = 0.88 + crH(k, 5, 41) * 0.16; for (let i = i0; i < Math.min(N, i0 + n); i++) secT[i] = t; i0 += n; }
     const shade = (i, o, w) => { const rl = T.rl[i]; let k = (0.82 - 0.1 * Math.exp(-((o - rl) * (o - rl)) / 5)) * secT[i]; if (Math.abs(o) > w * 0.9) k -= 0.03; return [k * 1.02, k, k * 0.97]; };
+    // the side road (def.sideRoads: the unnamed track on the left, OSM): its red earth into one mesh of the ground's material, the edge line broken across its mouth
+    const SB = stubGeo({ gCol: (x, z) => P.colFn(x, z, 1, 99, 0, [0, 0, 0]), gravC: [0.9, 0.7, 0.52], shC: [0.88, 0.68, 0.5], line: 'none' }), gSide = new GB(true);
     for (let c0 = 0; c0 < N - 1; c0 += RC) {
       const gr = new RB(true), gl = new RB(); let pr = -1, pl = -1, pc = 0;
       for (let i = c0; i <= Math.min(c0 + RC, N - 1); i++) {
@@ -115,10 +118,12 @@
         const wl = [0.9, 0.9, 0.86], cl = CL ? CL[i] : 0, lp = [Pt(i, -w + 0.22, 0.034), Pt(i, -w + 0.36, 0.034), Pt(i, w - 0.36, 0.034), Pt(i, w - 0.22, 0.034)];
         if (cl) lp.push(Pt(i, -0.07, 0.034), Pt(i, 0.07, 0.034));
         const l = gl.row(lp, lp.map(() => wl));
-        if (pl >= 0) { gl.link(pl, l, 0, 1); gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
+        if (pl >= 0) { if (SB.edgeOn(0, i - 1, i)) gl.link(pl, l, 0, 1); if (SB.edgeOn(1, i - 1, i)) gl.link(pl, l, 2, 3); if (cl && pc) gl.link(pl, l, 4, 5); } pl = l; pc = cl;
       }
+      SB.emit(c0, c0 + RC, gSide, gSide, gSide);   // (the side road whose junction is in this chunk)
       addM(gr, aMat); addM(gl, lMat);
     }
+    if (SB.n) addM(gSide, gMat);
     {   // the chequered lines: the start, the finish
       const gq = new GB(true), HYp = (p) => T.hy[p[3]];
       for (const s0 of [sStart, sFin]) {
