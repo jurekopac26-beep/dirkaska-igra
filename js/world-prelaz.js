@@ -147,7 +147,7 @@
       centre: [0.95, 0.95, 0.92], dash: [3, 6], solidNear: 70,   // (white centre line: dashed, solid through the tight bends)
       chev: ['#111111', '#f2d21a'], warn: 'tri', rail: 'steel', shoulder: [0.56, 0.36, 0.26],
       fans: [[0.95, 0.95, 0.93], [0.16, 0.42, 0.24], [0.9, 0.76, 0.16], [0.72, 0.16, 0.14], [0.2, 0.3, 0.6], [0.5, 0.36, 0.22], [0.12, 0.12, 0.14], [0.86, 0.84, 0.78]],
-      cars: [[0.9, 0.9, 0.88], [0.86, 0.86, 0.84], [0.16, 0.3, 0.62], [0.18, 0.18, 0.2], [0.55, 0.56, 0.58], [0.66, 0.16, 0.14]],
+      cars: [[0.9, 0.9, 0.88], [0.86, 0.86, 0.84], [0.16, 0.3, 0.62], [0.62, 0.5, 0.32], [0.55, 0.56, 0.58], [0.66, 0.16, 0.14]],   // (no black or very dark car: CLAUDE.md)
       roofs: [[0.62, 0.63, 0.64], [0.5, 0.3, 0.22], [0.55, 0.56, 0.58], [0.42, 0.24, 0.18]],
       sheep: 1, portal: 0, far: { lo: [0.3, 0.42, 0.2], hi: [0.3, 0.36, 0.22], dw: [0.22, 0.3, 0.14], snow: 9000 },
     },
@@ -689,6 +689,7 @@
         const nearV = (i) => { const o = side * (bar[i] + 0.12), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o; for (const p of pulls) if (p.view && Math.hypot(x - p.x, z - p.z) < p.r - 0.3) return true; return false; };
         for (let i = 0; i < N; i++) if (noRail[side > 0 ? 1 : 0][i] || (L.view && nearV(i))) nd[i] = 0;   // (L.view: the viewpoints' plots open to the road, their gaps not closed)
       }
+      if (L.railGap) L.railGap(need);   // (a look's own gaps: where a side street joins the road, js/world-savusavu-obcestje.js)
       return need; };
     const RN = L.hills ? railNeed() : null;   // (L.hills: known here already, the verge without its ditch where no rail stands, the hills' soft limits there)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
@@ -750,6 +751,7 @@
                 gv.quadUp(a, b, c, d, [bc(i, r), bc(i, r + 1), bc(j, r + 1), bc(j, r)], [[u0, a[1] / 4], [u0, b[1] / 4], [u1, c[1] / 4], [u1, d[1] / 4]]); } }
           }
         }
+        if (L.gravel) L.gravel(gs0, c0, Math.min(c0 + 60, N - 1));   // (a look's own gravel in this chunk's shoulder mesh: the side streets joining the road, js/world-savusavu-obcestje.js)
         addM(gr0, aMat); addM(gl0, lMat); addM(gs0, sMat); addM(gv0, gMat);
       }
       // the bridges (KN): the face walls under the upper road's verges (to the arch, with a ring of lighter dressed stones round it, and either side of it to
@@ -1175,6 +1177,7 @@
     const tMatT = ouCutMat(new THREE.MeshLambertMaterial({ vertexColors: true }), cut);
     const larch = L.forest === 'larch', med = L.forest === 'med';   // (the forest's tall trees first: the spruce, or the larch and then the stone pine in tk[3]; the Mediterranean's: the Aleppo pine, the macchia, the càrritx, the holm oak)
     const tk = (larch ? [3, 1, 2, 4] : med ? [5, 6, 7, 8] : [0, 1, 2]).map(k => new IChunks(plTreeGeo(k), tMatT, 96));
+    const tkOwn = tk.length; if (L.treeGeo) for (const geo of L.treeGeo()) tk.push(new IChunks(geo, tMatT, 96));   // (a pass's own trees after the shared ones, kinds tkOwn, tkOwn + 1, ... for L.tree: Kanaba's, js/world-kanaba.js)
     let nTrees = 0;
     {
       const G = P.G, Lt = VRC * VRT, maxT = Math.round(70000 * dens), RT = rng(L.seed + 61), SP = 3.6 / Math.sqrt(dens);
@@ -1213,6 +1216,7 @@
             if (sp === 0) { hgt = (9 + r4 * 11) * (0.5 + 0.5 * tl); wid = hgt * (0.36 + r2 * 0.1); col = [0.9 + r2 * 0.2, 0.92 + r4 * 0.14, 0.86 + r3 * 0.14]; }
             else { hgt = (6 + r4 * 7) * (0.55 + 0.45 * tl); wid = hgt * (0.52 + r2 * 0.12); col = [0.9 + r3 * 0.16, 0.94 + r4 * 0.12, 0.94 + r2 * 0.12]; }
           }
+          if (L.tree) { const t = L.tree(x, z, c, sp, hgt, wid, col, r2, r3, r4, tkOwn); if (!t) continue; [sp, hgt, wid, col] = t; }   // (a pass's own species and sizes, no random draws of its own: L.treeGeo's kinds)
           tk[sp].add(x, y - 0.15, z, r1 * 70, wid, hgt, col);
           if (++nTrees >= maxT) break grid;
         }
