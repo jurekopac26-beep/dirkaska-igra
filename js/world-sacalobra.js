@@ -3,7 +3,7 @@
    (js/world-prelaz.js: PL_LOOK.sacalobra, its L.extra). The cliffs OpenStreetMap maps within ~220 m of the road (natural=cliff: the line
    along the top, the face on the right of the way) as grey limestone faces, the dark streaks the water leaves down them, ochre stains,
    the garrigue on their crests; how high from the public elevation model (Copernicus DEM GLO-30: the drop across each line, a little more
-   than half of it standing as rock, the rest left to the terrain's own slope). Choice b adds the dry-stone terraces (barrier=retaining_wall:
+   than half of it standing as rock, the rest left to the terrain's own slope). With them the dry-stone terraces (barrier=retaining_wall:
    a face of 1.2–2.2 m, as OSM gives no height; the level strip behind it) and the field walls (barrier=wall, ~1.2 m). Only to look at:
    nothing stands where a car can go (behind the stone walls along the road, 1.2 m past the barrier line; 7 m where none stands and the
    soft hills of def.hills go on, at the ends, by the plots); all in the scenery's own chunks, hardly a draw call more. Data: OSM (ODbL 1.0)
@@ -16,7 +16,6 @@
   let LOD, T;   // (World's, for the build under way)
   API.sync.push(() => { ({ LOD, T } = API); });
   const LOOK = API.PL_LOOK.sacalobra;
-  const IZBIRA = 'b';   // (a: the cliffs only; b: the cliffs, the terraces and the walls — docs/slike/sacalobra/po-a-*, po-b-*)
 
   // the cliffs: [the drop by the DEM (m), x,z, x,z, …] (OSM natural=cliff: the line along the top, the face right of the way it is drawn)
   const CLIFF = [
@@ -304,9 +303,9 @@
     if (prev) prev(ctx);
     const { scen, out, excluded } = ctx;
     EXC = excluded; ST = steepRuns(); iS0 = T.idx(T.startS + 40); iS1 = T.idx(T.finishS - 40);
-    const st = { izbira: IZBIRA, cliffs: 0, faceM: 0, moved: 0, dropped: 0, terraceM: 0, wallM: 0 };
+    const st = { cliffs: 0, faceM: 0, moved: 0, dropped: 0, terraceM: 0, wallM: 0 };
     cliffs(scen, st);
-    if (IZBIRA === 'b') { terraces(scen, st); walls(scen, st); }
+    terraces(scen, st); walls(scen, st);   // (the user's choice b, 23. 11. 2026: the 72 terraces and the 9 walls with the cliffs)
     for (const k of ['faceM', 'terraceM', 'wallM']) st[k] = Math.round(st[k]);
     out.sacalobra = st;   // (what was built: Render.world.sacalobra in the page, for tools/shot.mjs and a check by hand)
   };
