@@ -26,7 +26,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | Tema | Račun | Kdaj / pogoj |
 |---|---|---|
-| Več predogledov hkrati (5+), vzame nespremenjene `assets/` iz `main` (`tools/predogled.mjs`; 12. 11. ob ~21.50) | jure.kopac26 | majhna seja Opus, ko je mesto |
 | Pregled kode z več agenti za #289 in #319 | 3 | v delu (5. 11.) |
 | Redčenje gozda na pravih progah | 1 | prestavljeno; najprej drevesa A (#419) |
 | Ljudje ob progi in grafika (`docs/ljudje-predlogi.md`) | partyslo | ko uporabnik reče; po #400; pred novimi progami |
@@ -90,6 +89,6 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 
 | # | Pull request | Kaj | Račun | Stanje |
 |---|---|---|---|---|
-| 10.13 | #762 Zbirna partyslo | 10 novih prog partyslo (Hải Vân, Batangas, Quezaltepeque, Aguascalientes, Koli, Kanaba, Sogeri, Canaries, Savusavu, Koror; Hải Vân, Batangas in Sogeri `pending: true`), nadomesti #676, #684, #686, #687, #689–#694 (Matej, tabla #382, komentarja 6905341352 in 6906260656) | partyslo | **po #569**; osnutek do vrste, združi seja Združevanje |
+| 10.16 | #943 Krásna Hôrka, Slovaška | nova proga 3,4 km (veja `proga/spis`), testi zeleni; v sporu z `main`, ob združitvi spoji; proge zadnje (Matej, #382 7079559816) | partyslo | osnutek |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
