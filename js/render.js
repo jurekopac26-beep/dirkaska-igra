@@ -4428,9 +4428,12 @@ const Render = (function () {
         .replace('#include <project_vertex>', '#include <project_vertex>\nvAsW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;');
       let f = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uAsS; uniform vec3 uAsC; varying vec3 vAsW;' + (dry ? '' : '\nuniform sampler2D uAsN; uniform float uAsW; uniform float uAsD; uniform float uAsR; uniform vec3 uAsK;'))
         .replace('reflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * getShadowMask();', 'float asSm = getShadowMask();\nreflectedLight.directDiffuse *= BRDF_Diffuse_Lambert( diffuseColor.rgb ) * asSm;');
-      if (!dry) f = f.replace('#include <color_fragment>', '#include <color_fragment>\n' + AS_WET);
+      // (the patches after the colour; a material whose own hook took <color_fragment> away (a world's grass, the grandstands' people): just
+      // before <emissivemap_fragment>; neither there: no patches, and asWm is not used)
+      const CF = '#include <color_fragment>', EF = '#include <emissivemap_fragment>', wet = !dry && (f.includes(CF) || f.includes(EF));
+      if (wet) f = f.includes(CF) ? f.replace(CF, CF + '\n' + AS_WET) : f.replace(EF, AS_WET + '\n' + EF);
       sh.fragmentShader = f.replace('#include <envmap_fragment>', '{ vec3 asV = normalize( cameraPosition - vAsW ); float asL = max( dot( vec3( -asV.x, asV.y, -asV.z ), uAsS ), 0.0 ), asQ = asL * asL;\n' +
-        '  outgoingLight += uAsC * ( asQ * asQ * asL * asSm );' + (dry ? '' : '\n  vec3 asE = -( viewMatrix[ 3 ].xyz * mat3( viewMatrix[ 0 ].xyz, viewMatrix[ 1 ].xyz, viewMatrix[ 2 ].xyz ) );   // (the eye: r128 gives cameraPosition to a Lambert material only with an envMap)\n' +
+        '  outgoingLight += uAsC * ( asQ * asQ * asL * asSm );' + (!wet ? '' : '\n  vec3 asE = -( viewMatrix[ 3 ].xyz * mat3( viewMatrix[ 0 ].xyz, viewMatrix[ 1 ].xyz, viewMatrix[ 2 ].xyz ) );   // (the eye: r128 gives cameraPosition to a Lambert material only with an envMap)\n' +
         '  outgoingLight = mix( outgoingLight, uAsK, asWm * uAsR * pow( 1.0 - clamp( normalize( asE - vAsW ).y, 0.0, 1.0 ), 5.0 ) );') + ' }\n#include <envmap_fragment>');
     };
     m.customProgramCacheKey = () => key; m.needsUpdate = true;
