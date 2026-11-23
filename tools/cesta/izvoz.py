@@ -32,7 +32,10 @@ import osm
 
 SIDE_CLASS = {'service': 0, 'track': 0, 'residential': 1, 'unclassified': 1, 'living_street': 1, 'tertiary': 2, 'tertiary_link': 2,
               'secondary': 3, 'secondary_link': 3, 'primary': 3, 'primary_link': 3, 'trunk': 3, 'trunk_link': 3}
-SIDE_W = [3.6, 5.2, 6.4, 7.2]   # the carriageway's width by class (m), where OSM gives neither lanes nor a width
+SIDE_W = [3.5, 5.5, 6.25, 7.25]   # the carriageway's real width by class (m), where OSM gives neither a width nor lanes: the middle of the
+                                  # ranges of the decision of 23. 11. 2026 (service, track 3-4; residential, unclassified 5-6; tertiary
+                                  # 6-6.5; secondary, primary 7-7.5)
+LANE_W = 3.25                     # one lane (m), where OSM gives only lanes: the middle of 3.0-3.5 (docs/vprasanja.md, e-stranske-sirina)
 # per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start), how
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
 # an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
@@ -108,14 +111,38 @@ PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=7
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
 
-def side_width(cls, t):
-    ow = t.get('oneway') == 'yes'
-    for k, lanes in (('width', False), ('lanes', True)):
-        try: f = float(str(t.get(k, '')).replace(',', '.').split()[0])
-        except (ValueError, IndexError): continue
-        if lanes and f >= 1: return round(min(8.0, max(3.0, 3.0 * f + (1.0 if f < 2 else 0.4))), 1), ow
-        if not lanes and f >= 3: return round(min(8.0, max(3.0, f)), 1), ow
-    return round(min(8.0, max(3.0, SIDE_W[cls] * (0.8 if ow else 1))), 1), ow
+def tag_width(t):
+    """The carriageway's real width from OSM (m): its width, then its lanes, LANE_W each; None where the map gives neither."""
+    try:
+        f = float(str(t.get('width', '')).replace(',', '.').split()[0])
+        if 2.5 <= f <= 30: return f
+    except (ValueError, IndexError): pass
+    try:
+        n = float(str(t.get('lanes', '')).split(';')[0])
+        if n >= 1: return n * LANE_W
+    except ValueError: pass
+    return None
+
+def side_width(cls, t, k=1.0):
+    """A side road's width in the game (m): the real one (OSM width, lanes, the class's) at the scale k of the track's own road."""
+    ow = t.get('oneway') == 'yes'; f = tag_width(t)
+    if f is None: f = SIDE_W[cls] * (0.8 if ow else 1)
+    return round(min(16.0, max(3.0, f * k)), 1), ow
+
+def road_scale(C, cfg, ways, trk, W_):
+    """The scale of the track's own road (decision of 23. 11. 2026): its width in the game over its real width in OSM (width, lanes,
+    the class's), the median over the ways of the track. A circuit is built at its real width (1); so is an open road the game draws
+    within a quarter of the map's width (the estimate's own error): only a road widened for the race (Livorno) widens its side roads."""
+    if 'k' in cfg: return float(cfg['k']), None
+    real = []
+    for w in trk:
+        tg = ways[w][1]; hw = tg.get('highway'); f = tag_width(tg)
+        if f is None and hw in SIDE_CLASS: f = SIDE_W[SIDE_CLASS[hw]]
+        if f is None and hw in ('motorway', 'motorway_link'): f = 2 * 3.75
+        if f is not None: real.append(f)
+    if not real or 'raceway' in cfg['kinds']: return 1.0, None
+    r = float(np.median(real)); k = 2 * float(np.median(W_)) / r
+    return (round(min(2.0, k), 2) if k >= 1.25 else 1.0), r
 
 def longest(P, ok):
     """The longest stretch (m) of the polyline P whose points are all ok."""
@@ -174,6 +201,9 @@ def main():
         if tg.get('highway') not in cfg['kinds'] or len(refs) < 2: continue
         P = osm.dense([tuple(xz(r)) for r in refs if r in at0], 2.0); d, _ = tree.query(np.asarray(P))
         if np.median(d) < cfg['trk'] or op and longest(P, d < cfg['trk']) >= RUN: trk.add(wid)   # (an open road goes on beyond the game's line)
+    if not trk: print('%s: no way of the map lies within %.0f m of the game\'s line (the fit failed: a new centre line? PROGE trk, kinds)' % (C['id'], cfg['trk'])); return
+    kk_, rw = road_scale(C, cfg, ways, trk, W_)
+    print('%s: the scale of the side roads %.2f (the track %.1f m in the game%s)' % (C['id'], kk_, 2 * float(np.median(W_)), ', %.1f m in OSM' % rw if rw else ''))
     tn = {r for w in trk for r in ways[w][0]}
     Qt = np.asarray([p for w in trk for p in osm.dense([tuple(xz(r)) for r in ways[w][0] if r in at0])]); qtree = cKDTree(Qt)
     dq, _ = cKDTree(Qt).query(G)
@@ -200,12 +230,16 @@ def main():
             while nxt <= acc + l + 1e-9: out.append(P[i - 1] + (P[i] - P[i - 1]) * ((nxt - acc) / max(l, 1e-9))); nxt += 1.0
             acc += l
         return out
-    # OSM splits the ways: a short piece goes on along the way that continues it from its last node (never a bridge or a tunnel)
+    # OSM splits the ways: a short piece goes on along the way that continues it from its last node (never a bridge or a tunnel); a way
+    # that ends on another road (a T, its node inside that way) turns onto it, the branch nearest straight on, never back: a side road
+    # that goes on in the map does not end in the open field (Quezaltepeque, the decision of 18. 11. 2026)
     plain = lambda tg: tg.get('highway') in SIDE_CLASS and tg.get('bridge', 'no') == 'no' and tg.get('tunnel', 'no') == 'no'
     ends = {}
     for wid, (refs, tg) in ways.items():
         if wid in trk or not plain(tg) or len(refs) < 2: continue
-        ends.setdefault(refs[0], []).append(refs); ends.setdefault(refs[-1], []).append(refs[::-1])
+        for k, r in enumerate(refs):
+            if k < len(refs) - 1: ends.setdefault(r, []).append(refs[k:])
+            if k > 0: ends.setdefault(r, []).append(refs[k::-1])
     def carry(refs):
         refs = list(refs)
         for _ in range(6):
@@ -213,9 +247,9 @@ def main():
             if plen(P) >= 64 or refs[-1] in tn: break
             d0 = P[-1] - P[-2]; d0 = d0 / max(1e-9, float(np.hypot(*d0))); best = None
             for q in ends.get(refs[-1], []):
-                if q[1] == refs[-2]: continue
+                if q[1] in refs: continue
                 d1 = xz(q[1]) - xz(q[0]); c = float(np.dot(d0, d1)) / max(1e-9, float(np.hypot(*d1)))
-                if c > 0.5 and (best is None or c > best[0]): best = (c, q)
+                if c > -0.3 and (best is None or c > best[0]): best = (c, q)
             if best is None: break
             refs += best[1][1:]
         return refs
@@ -244,7 +278,7 @@ def main():
                 if op and C.get('cilj') and sa > C['cilj'] - cfg['cilj']: drop('finish'); continue   # an open road's finish: the gantry, the crowd, the run-off
                 if any(circ(s0, b) < 24 for b in br) or any(a - 24 < sa < b + 24 for a, b in C.get('brez', [])): drop('bridge'); continue   # no junction on or under a bridge, nor in a gallery
                 if any(a - 30 <= s0 <= b + 30 for a, b in bank): drop('bank'); continue  # nor in a banked corner
-                cls = SIDE_CLASS[hw]; w, ow = side_width(cls, tg)
+                cls = SIDE_CLASS[hw]; w, ow = side_width(cls, tg, kk_)
                 Wk = walk(P); N_ = [near(p) for p in Wk]; left = False; ret = None
                 for k2, (d, sm) in enumerate(N_):   # away from the lap (its own width clear of the edge), then back at it
                     if not left: left = d > hw0 + 6 + w / 2
