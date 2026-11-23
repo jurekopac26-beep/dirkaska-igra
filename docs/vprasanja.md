@@ -127,3 +127,19 @@ Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na ra
 - 3. 11. 2026 (seja »Predlogi za prihranek tokenov«, `docs/varcevanje.md`): obvestili tečeta na modelu Haiku in bereta samo odprta vprašanja; zbiranje dobi koraka 7 (čakanje) in 9 (nova seja zbiranja; pregled sej dela podagent), `list_sessions` do 25. Po prvi zamenjavi sta trenutna seja zbiranja in id-ja njenih opravil v `zbiranje/stanje` (`seja_zbiranja`, `opravila`); id-ji v prejšnji vrstici veljajo do takrat.
 - 3. 11. 2026, račun strani 2 (nastavila seja »Ure dela na računu«, `session_01Ck3D3TFW7AsQDT1b3or5eX`): stran 2; seja zbiranja `session_01Ck3D3SLhNMzHbU5saoCxWG` (Sonnet); opravila `trig_01PVFpiqntbvATKGsj4Xtv2M` (zbiranje 10.30 in 14.30), `trig_015J3bKoJM5YbhC3Fhpa6yHo` (zbiranje 23.00), `trig_01JvhvDxRzq8UxyxxE5LiL7M` (obvestilo 10.30 in 14.30), `trig_01BYG2XN16gzY64hBvN9REy4` (obvestilo 23.00). Stran 2 kaže sliko možnosti iz `moznosti[].slika`; odgovor, ki začne novo delo, zbiranje pošlje koordinacijski seji računa (naslov »Koordinacija …«), ki ga da v vrsto.
 - 3. 11. 2026 popoldne: stran ne more pošiljati sejam (`send_message` in opravilo v obstoječo sejo: `blocked_by_policy`, izpis ob odgovoru na `zbiranje-napaka`); od zdaj stran odgovor samo shrani, seja ga prebere sama (razdelek Odgovor), zbiranje sporoči neprebrane.
+
+## Vprašanja brez strani Odločitve
+
+Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa sejam tega računa vrnejo »no access«. Samostojna seja zato vprašanje zapiše sem in na svojo stran s slikami, kjer se odgovor shrani v zbirko `vprasanja` (isti dokument in polja kot zgoraj); koordinacija ga prebere tam (`ArtifactData` `get`).
+
+### `e-stranske-sirina` (23. 11. 2026, PR #1025, odprto)
+
+- Seja »Realizem E (#1025) nadaljevanje: izvoz prog, črte, oznake na križiščih, slike« (`session_01BFNqNJyR8tZ8UQU4zTTJCS`); stran s slikami in odgovorom v opisu PR #1025 (`vprasanja/e-stranske-sirina`).
+- Vprašanje: Gredo stranske ceste po pravih širinah tako na `main`? Zdaj: pas 3,25 m, merilo proge od 1,25×, meja 22 m za ustje, brez napisov STOP in puščic (zanje ni vira), Canaries brez cest 2604 in 3476 (hiše). Izbere se lahko več možnosti od 2 do 5.
+- Možnosti (slike na strani, kamera za avtom, ležeče):
+  1. ok, vse tako (priporočeno); slika `livorno-po` (Livorno 286 m, merilo 1,6×)
+  2. druga širina: pas 3,0 ali 3,5 m ali drug prag merila (v opombo); `hakone-pred` in `hakone-po` (Hakone 248 m: 5,2 m proti 9,3 m)
+  3. meja 30 m namesto 22 m: še 12 cest na 10 progah, Izoard ostane brez; `portomoniz-pred` in `portomoniz-po` (cesta 693 m desno, ročno izpuščena)
+  4. napisi STOP in puščice po splošnem vzorcu, brez vira; `livorno-ustje`
+  5. rez ob hišah iz OSM namesto ročnih izpustov (nova naloga; Canaries 2604 in 3476 se vrneta skrajšani); `canaries-pred` in `canaries-po`
+- Podvprašanje B, širina sistema B (`def.sideRoads`: Chapman's Peak, Koli 334 m): 1 · ostane, kot je (priporočeno; `chapman-po`); 2 · tudi sistem B po pravih širinah (nova naloga; primer `hakone-po`).

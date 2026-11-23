@@ -233,7 +233,7 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
 ## E, stranske ceste: skupina 762a (PR #777, 18. 11. 2026)
 - **Naloga** (koordinacija po odločitvi uporabnika 16. 11. 2026 ob 22.24, tabla #382): prave proge iz PR #762 dobijo stranske ceste iz OSM (samo videz, do ~60 m) in črte po pravilih države; skupina 762a: Aguascalientes, Canaries, Kanaba, Koli (osnova `nove-proge/partyslo-zbirna` z #657).
 - **Podatki:** izvoz `tools/cesta` iz `api.openstreetmap.org/api/0.6/map?bbox=…` (17. 11. 2026, ODbL) → `def.stranske` v `js/tracks/<id>.js`; črta proge se s potjo v OSM ujema na 0,2–0,5 m (mediana; Koli p90 2,0 m). Svetilk in postaj v OSM ob teh progah ni.
-- **S cestami:** Canaries **10 od 10** (9 kolovozov in dovozov, makadam; ulica pri ~2604 m, asfalt), Kanaba **3 od 4** (vse v OSM `surface=unpaved`, zato makadam: terciarna in neklasificirana pri ~2383 m, cesta pri ~4701 m), Koli **3 od 4** (dovoz pri ~544 m, makadamska pri ~788 m, parkirišče pri ~1573 m). Kanabina cesta pri ~4547 m in Kolijevo parkirišče pri ~1478 m tečeta ~25 m ob progi znotraj ograje in jo prečkata pod ostrim kotom; graditelj zanju ne najde ustja, zato ju ni. **Aguascalientes** (oval) ima v OSM do ~60 m od proge samo poti dirkališča, nobene ceste, zato ostane brez (nič izmišljenega).
+- **S cestami:** Canaries **10 od 10** (9 kolovozov in dovozov, makadam; ulica pri ~2604 m, asfalt; od PR #1025 **8**: ulica pri ~2604 m in dovoz pri ~3476 m izpuščena), Kanaba **3 od 4** (vse v OSM `surface=unpaved`, zato makadam: terciarna in neklasificirana pri ~2383 m, cesta pri ~4701 m), Koli **3 od 4** (dovoz pri ~544 m, makadamska pri ~788 m, parkirišče pri ~1573 m). Kanabina cesta pri ~4547 m in Kolijevo parkirišče pri ~1478 m tečeta ~25 m ob progi znotraj ograje in jo prečkata pod ostrim kotom; graditelj zanju ne najde ustja, zato ju ni. **Aguascalientes** (oval) ima v OSM do ~60 m od proge samo poti dirkališča, nobene ceste, zato ostane brez (nič izmišljenega).
 - **Graditelji:** Canaries in Kanaba v `World.prelaz` (`js/world-prelaz.js`, samo ob `def.stranske`): robna črta in ograja na ustju odprti, stebrički čez ustje, kamni, sneg, ovce in pastir s ceste umaknjeni (zaporedje naključnih števil ostane, ostali svet enak). Koli v `World.gore.build` (`js/world-gore.js`): prvi prehod najde ustja, drugi zgradi trakove z višino bankine; zima: trak je utrjen sneg na materialu tal, na ustju siva brozga, snežni nasip in ograja čez ustje odprta; smučarji in parkirani avti (tloris, `carSR`) se s ceste umaknejo z istim zaporedjem.
 - **Črte:** nobena stranska cesta nima črt. Vrstici Svete Lucije in Ugande v `CRTE` sta videz glavne ceste, ne objavljeno pravilo za ustje stranske ceste; za Mehiko in Finsko vrstic ni. Kanabine ceste so v OSM neasfaltirane, Kolijeve pod snegom, Canaries ima eno asfaltno ulico. V `CRTE` ni novih vrstic.
 - **Izvoz** (`tools/cesta/izvoz.py`, skupno orodje): cesta z neasfaltiranim `surface=*` (unpaved, gravel, dirt, compacted …) postane razred 0 (kolovoz: makadam, brez črt), širina in vrstni red ostaneta po razredu ceste; od prog skupine se spremeni samo Kanaba.
@@ -277,7 +277,7 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
 - **Odprto:**
   1. PR #764 (569c) ureja isti priklop v `js/world-prelaz.js`. Gresta na `main` drug za drugim; ohrani se en priklop (klic `World.cesta.stranske` z `barva`).
   2. Seznam `PROGE` v `tools/cesta/izvoz.py` se prekriva s 569e in 569f. Ob sporu obdrži vse vnose.
-  3. Po novi gradnji Quezaltepequeja (sprememba sredinske črte) znova poženi `izvoz.py … --vpisi`.
+  3. ~~Po novi gradnji Quezaltepequeja znova poženi `izvoz.py … --vpisi`.~~ Narejeno v PR #1025 (umestitev v `crte.js`, mediana 0,3 m).
   4. Blok 762b v `cesta.test.mjs` bo morda treba združiti z bloki 569c in 569e.
   5. Uporabnikov odgovor na vprašanje `e-proge-762b`.
 
@@ -290,3 +290,25 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
 - **Brez dela:** Ujarrás (OSM ob progi nima stranskih cest). **Odprto:** Bathurst in Bâlea nimata zapisa lege v `js/geo.js` (brez njega `crte.js` ne deluje; Bathurst čaka tudi vprašanje o sredinski črti); Harju, Katu-Jaryk in Pikes Peak čakajo makadam iz #671.
 - **Obremenitev** (telefon, NIZKA): Štajerska 216 klicev (meja 263), 495 tisoč oglišč (677); Hiva 144 klicev (180), 418 tisoč oglišč (458); Spa nespremenjena.
 - **Kako se preveri:** `node tests/browser/cesta.test.mjs` (blok 762b, vrstici `rbring` in `hiva`); `WORLD_ONLY=hiva,rbring node tests/browser/world.test.mjs`; `PERF_ONLY=hiva,rbring,spa node tests/browser/perf.test.mjs`; `node tools/stamp.js --check`. Slike zdaj in potem (kamera za avtom): Hiva 515 m in 2380 m, Štajerska 1220 m.
+
+## E, prave širine stranskih cest (PR #1025, 23. 11. 2026)
+- **Naloga** (odločitev 18. 11. 2026 ob 3.04, `e-proge-756a`, možnost 2; ponovljena 23. 11. 2026): stranske ceste so široke kot v resnici, z belimi črtami in oznakami na križiščih, na vseh pravih progah.
+- **Širina** (`tools/cesta/izvoz.py`, `side_width`): `width` iz OSM, sicer `lanes` × 3,25 m (`LANE_W`), sicer razred: 3,5 / 5,5 / 6,25 / 7,25 m (`SIDE_W`; enosmerna × 0,8). To se pomnoži z merilom glavne ceste proge (`road_scale`: širina v igri proti pravi širini v OSM, mediana poti proge). Merilo velja samo, če je k ≥ 1,25 (največ 2), dirkališča imajo 1. Širina je omejena na 3–16 m. Livorno (`tools/livorno/build.py`, `SIDE_W`) ima k = 1,6, Canaries in Izoard 1,38.
+- **Makadam:** cesta z neasfaltiranim `surface=*` (`UNPAVED`) postane razred 0 (kolovoz, brez črt), širino pa obdrži po svojem razredu.
+- **Poti v T-križišču** (`carry`) zavijejo na drugo cesto in ne končajo pri progi.
+- **Parkirišča** `World.gore` (`def.pulls` prek `crte.js`): cesta se ustavi na robu ploščadi (največ 22 m + 1 m). Na Koliju pri ~1573 m trak ne gre več čez parkirišče in pet parkiranih avtov je spet vidnih.
+- **Ponovni izvoz:** 30 prog sistema A, Livorno in Mã Pí Lèng (nov vnos `mapileng`: ena cesta pri 885 m desno). **Brez** Mombase, Portobela, Seula in Ria do Rastro: te ureja #1019 in jih je treba izvoziti po spoju. Graditeljeve črte veljajo tudi zanje.
+- **Črte** (`js/world-cesta.js`, `CRTE`): za stop črto oziroma črto za prednost. Sredinska črta je na dvosmerni cesti, široki vsaj 5,5 m (12 cm na ulici, 15 cm na večji cesti, črta in presledek po državi). Robni črti (12 cm, 30 cm od roba) sta na terciarni in večjih cestah. Brez vrstice države ni barve. Napisov STOP in puščic ni, ker zanje nimamo vira (vprašanje `e-stranske-sirina`).
+- **Stebrički:** stebriček v pregibu ograje, bližji od 1 m prejšnjemu, se izpusti (Livorno, `gMin` 0,9 → 1,36 m).
+- **Ročno izpuščene** (`izpusti`; rob traku seka črto ograje dlje od graditeljevih 22 m ali pa trak zadene hišo):
+  - Porto Moniz: 268, 665 in 3128 levo, 693 desno.
+  - Zandvoort: 2325 in 2339 levo.
+  - Canaries: 2604 levo (ulica 7,6 m) in 3476 levo (vogal hiše 1,83 m od osi).
+  - Izoard: 3871 desno, zato Izoard nima stranske ceste.
+  - Canaries ima zdaj **8** cest (prej 10).
+- **Meja 22 m** ostane. Pri 30 m bi dobili 12 cest na 10 progah, Izoard pa ostane brez (vprašanje).
+- **Sistem B** (`def.sideRoads`, Chapman, Kolijeva vrstica pri 334 m): širina ostane.
+- **Quezaltepeque:** vzrok odmika (mediana 194 m) je bil v izvozu. Graditelj proge premakne izhodišče na ciljno črto (260 m naprej), `crte.js` (`moved`) pa zdaj ta premik najde: mediana prileganja je 0,3 m, obe cesti ležita na `qzWays`, zato ni dvojnega risanja. Ostane stopnica 3,5 → 5 m, kjer se cesta spoji s potjo `qzWays` (HW 2,5 v `js/world-quezaltepeque.js`). Vzrok je v progi, zato je to samo javljeno.
+- **Skupini N11 in 538** (`zbirna/proge-3`, partyslo, #788): po spoju #1025 jih je treba znova izvoziti z novim `izvoz.py`, njihove vnose v `PROGE` pa obdržati. Mogyoród je bil preizkušen v delovni kopiji: 4 ceste, 3,6 → 3,5 m.
+- **Odprto:** (1) splošen rez stranske ceste ob hišah iz OSM (zdaj ročni `izpusti`); (2) izvoz prog #1019; (3) odgovor na vprašanje `e-stranske-sirina`.
+- **Kako se preveri:** `node tests/browser/cesta.test.mjs` (OK 56/56), `WORLD_ONLY=… node tests/browser/world.test.mjs`, `PERF_ONLY=… node tests/browser/perf.test.mjs`, `node tools/stamp.js --check`. Slike: `node tools/shot.mjs spa --m 4650 --lezece --pred c063a69a`.
