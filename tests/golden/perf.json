@@ -707,11 +707,11 @@
   "jsMs": 1.26
  },
  "batangas": {
-  "calls": 244,
-  "maxCalls": 286,
-  "kverts": 812,
-  "maxKverts": 859,
-  "jsMs": 1.04
+  "calls": 251,
+  "maxCalls": 287,
+  "kverts": 819,
+  "maxKverts": 865,
+  "jsMs": 1.66
  },
  "sogeri": {
   "calls": 144,
