@@ -134,7 +134,7 @@ Račun croatiadata strani Odločitve še nima (točka 4 zgoraj), strani 1–3 pa
 
 ### `e-stranske-sirina` (23. 11. 2026, PR #1025, odprto)
 
-- Seja »Realizem E (#1025) nadaljevanje: izvoz prog, črte, oznake na križiščih, slike« (`session_01BFNqNJyR8tZ8UQU4zTTJCS`); stran s slikami in odgovorom v opisu PR #1025 (`vprasanja/e-stranske-sirina`).
+- Seja »Realizem E (#1025) nadaljevanje: izvoz prog, črte, oznake na križiščih, slike« (`session_01BFNqNJyR8tZ8UQU4zTTJCS`); stran s slikami in odgovorom: https://claude.ai/artifact/PjVSKCT2VRNAamEVgP3r6r (`vprasanja/e-stranske-sirina`; zasebna, dokler je lastnik ne deli).
 - Vprašanje: Gredo stranske ceste po pravih širinah tako na `main`? Zdaj: pas 3,25 m, merilo proge od 1,25×, meja 22 m za ustje, brez napisov STOP in puščic (zanje ni vira), Canaries brez cest 2604 in 3476 (hiše). Izbere se lahko več možnosti od 2 do 5.
 - Možnosti (slike na strani, kamera za avtom, ležeče):
   1. ok, vse tako (priporočeno); slika `livorno-po` (Livorno 286 m, merilo 1,6×)
