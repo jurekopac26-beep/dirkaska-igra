@@ -18,8 +18,8 @@ function own(id) {
   const pg = PROGA[id]; if (pg && Array.isArray(pg.start) && src.includes('tools/proga/proga.py')) return { kind: 'own', lat0: pg.start[0], lon0: pg.start[1], rot: 0, scale: 1 };
   const j = path.join(ROOT, 'tools', id, id + '.json'), o = fs.existsSync(j) ? JSON.parse(fs.readFileSync(j, 'utf8')) : {};
   if (typeof o.lat0 === 'number' && typeof o.lon0 === 'number') return moved(id, o) || { kind: 'own', lat0: o.lat0, lon0: o.lon0, rot: 0, scale: 1 };
-  // the passes of tools/prelaz (Furka, Medeu, Sa Calobra ...): the first point of the route in tools/<id>/config.json is the start line,
-  // the origin of the track's file ("origin = the start line, x east, z south")
+  // a track with only tools/<id>/config.json (Cusco; Furka, Medeu and Sa Calobra are tools/proga/proga.py's now, above): the first point
+  // of the route is the start line, the origin of the track's file ("origin = the start line, x east, z south")
   const c = path.join(ROOT, 'tools', id, 'config.json'), q = fs.existsSync(c) ? JSON.parse(fs.readFileSync(c, 'utf8')) : {};
   if (Array.isArray(q.route) && q.route[0] && typeof q.route[0][0] === 'number') return { kind: 'own', lat0: q.route[0][0], lon0: q.route[0][1], rot: 0, scale: 1 };
   return ORIGIN[id] ? { kind: 'own', lat0: ORIGIN[id][0], lon0: ORIGIN[id][1], rot: 0, scale: 1 } : null;

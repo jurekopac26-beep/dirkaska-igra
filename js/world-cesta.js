@@ -687,14 +687,24 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
         }
         for (let k = 1; k < LN.length; k++) S[k] = S[k - 1] + Math.hypot(LN[k][0] - LN[k - 1][0], LN[k][2] - LN[k - 1][2]);
         const len = S[S.length - 1], n = Math.max(2, Math.round(len / 1.5)), tlak = povrsje(r);
+        const pts = [];
         for (let k = 0, m = 1; k < n; k++) {
           const s = len * (k + 0.5) / n; while (m < S.length - 1 && S[m] < s) m++;
-          const t = S[m] > S[m - 1] ? (s - S[m - 1]) / (S[m] - S[m - 1]) : 0, x = lerp(LN[m - 1][0], LN[m][0], t), z = lerp(LN[m - 1][2], LN[m][2], t), g = get(x, z), y0 = tlak(x, z); let y = y0 + 0.04;
+          const t = S[m] > S[m - 1] ? (s - S[m - 1]) / (S[m] - S[m - 1]) : 0; pts.push([lerp(LN[m - 1][0], LN[m][0], t), lerp(LN[m - 1][2], LN[m][2], t)]);
+        }
+        // a kink in the fence line (the barrier's line steps inside the opening): a post nearer than 1 m to the one before it is left out (the
+        // last keeps its place, the one before it goes), two or more a row
+        for (let k = 1; k < pts.length && pts.length > 2;) {
+          if (Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]) >= 1) { k++; continue; }
+          if (k === pts.length - 1) { pts.splice(k - 1, 1); k = Math.max(1, k - 1); } else pts.splice(k, 1);
+        }
+        for (const [x, z] of pts) {
+          const g = get(x, z), y0 = tlak(x, z); let y = y0 + 0.04;
           cyl(g, x, y0 - 0.04, z, 0.2, 0.08, 6, DK, DK);   // (the foot 4 cm into the surface)
           for (let j = 0; j < POST.length; j++) { cyl(g, x, y, z, 0.1, POST[j][0], 6, POST[j][1], j === POST.length - 1 ? OR : null); y += POST[j][0]; }
           posts++; stebricki.push(x, y0, z, ri);
         }
-        if (!r.razred || o.barva === false) continue;
+        if (!r.razred || o.barva === false || !o.drzava) continue;   // (no country given: no paint, #1011)
         // the paint on the apron (the first two rows), 1.5 cm over the strip
         const AP = (e, t) => { const cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc), f = cc - k, a = mix3(r.V[0][k], r.V[0][k + 1], f), b = mix3(r.V[1][k], r.V[1][k + 1], f); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
         const tt = (x) => Math.min(0.97, x / r.dp), la = -(r.hw - 0.15), lb = r.eno ? r.hw - 0.15 : -0.1;
@@ -704,6 +714,20 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
         } else {
           const b = C.prednost[0], h = C.prednost[1], gp = C.prednost[2], n = Math.max(1, Math.floor((lb - la + gp) / (b + gp))), m0 = (la + lb) / 2 - (n * (b + gp) - gp) / 2;
           for (let k = 0; k < n; k++) { const x0 = (m0 + k * (b + gp)) / r.hwM, x1 = (m0 + k * (b + gp) + b) / r.hwM, a = AP(x0, tt(0.25)), b2 = AP(x1, tt(0.25)), c2 = AP((x0 + x1) / 2, tt(0.25 + h)); get(a[0], a[2]).triUp(a, b2, c2, [PW, PW, PW]); }
+        }
+        // the side road's own lines by the country's rules (CRTE: sred, rob, crta; the decision of 23. 11. 2026, #1025), beyond the stop
+        // or give-way line, 1.5 cm over the strip, ending 3 m before a strip that fades out: a centre line on a two-way road 5.5 m wide
+        // or more (12 cm on a street, 15 on a bigger road; the country's dash and gap, the first dash at the line), the edge lines (12 cm,
+        // 30 cm inside the edge) on a tertiary road or a bigger one; along the strip's rows (dr), across by the row's own half width
+        const s0 = 0.25 + (r.razred === 1 ? C.stop : C.prednost[1]) + 0.6, s1 = r.D - (r.konec ? 1 : 3);
+        if (s1 - s0 > 2) {
+          const YW = [0.9, 0.7, 0.14], col = (c) => (c === 'rumena' ? YW : PW);
+          const RO = (rw, o) => { const e = o / (o < 0 ? -r.OFF[rw][0] : r.OFF[rw][4]), cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc); return mix3(r.V[rw][k], r.V[rw][k + 1], cc - k); };
+          const at = (s, o) => { let rw = 0; while (rw < r.nr - 2 && r.dr[rw + 1] < s) rw++; const t = clamp((s - r.dr[rw]) / (r.dr[rw + 1] - r.dr[rw]), 0, 1), a = RO(rw, o), b = RO(rw + 1, o); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
+          const band = (sa, sb, o0, o1, c) => { const ss = [sa]; for (const d of r.dr) if (d > sa && d < sb) ss.push(d); ss.push(sb);
+            for (let k = 0; k + 1 < ss.length; k++) { const a = at(ss[k], o0), b = at(ss[k], o1), c2 = at(ss[k + 1], o1), d = at(ss[k + 1], o0); get((a[0] + c2[0]) / 2, (a[2] + c2[2]) / 2).quadUp(a, b, c2, d, [c, c, c, c]); } };
+          if (!r.eno && r.hw >= 2.75) { const w = r.razred === 1 ? 0.06 : 0.075, p = C.crta[0] + C.crta[1]; for (let s = s0; s < s1 - 0.5; s += p) band(s, Math.min(s + C.crta[0], s1), -w, w, col(C.sred)); }
+          if (r.razred >= 2) for (const sg of [-1, 1]) { const m = sg * (r.hw - 0.3); band(s0, s1, m - 0.06, m + 0.06, col(C.rob)); }
         }
       }
       return posts;

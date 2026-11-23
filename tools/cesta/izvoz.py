@@ -36,6 +36,10 @@ SIDE_W = [3.5, 5.5, 6.25, 7.25]   # the carriageway's real width by class (m), w
                                   # ranges of the decision of 23. 11. 2026 (service, track 3-4; residential, unclassified 5-6; tertiary
                                   # 6-6.5; secondary, primary 7-7.5)
 LANE_W = 3.25                     # one lane (m), where OSM gives only lanes: the middle of 3.0-3.5 (docs/vprasanja.md, e-stranske-sirina)
+# an unpaved road (OSM surface=*): written as class 0, a track or drive drawn without lines or a stop line (gravel where the builder draws
+# it so: Kanaba, group 762a, 18. 11. 2026); its width and its place in the order still by its own class
+UNPAVED = {'unpaved', 'gravel', 'fine_gravel', 'compacted', 'dirt', 'earth', 'ground', 'grass', 'mud', 'sand', 'pebblestone', 'rock',
+           'woodchips', 'shells'}
 # per track: the start area without junctions (m after the line, m before it: the wall, the fence and the crowd of the start), how
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
 # an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
@@ -71,15 +75,18 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # the circuits of group 569c: the map's raceway is the track
          'lombok': dict(kinds={'raceway'}), 'lusail': dict(kinds={'raceway'}),
          # Porto Moniz: three streets of the town that leave the road at a slant and run along it inside the game's 16 m verge (268 m, 665 m
-         # and 3128 m, left): their edges cross the barrier's line only beyond the builder's 22 m, so it cannot open the fence for them
-         'portomoniz': dict(izpusti=[(268, -1), (665, -1), (3128, -1)]),
+         # and 3128 m, left): their edges cross the barrier's line only beyond the builder's 22 m, so it cannot open the fence for them;
+         # the same for the main road at 693 m right once it has its real width (9.5 m, 23. 11. 2026, #1025)
+         'portomoniz': dict(izpusti=[(268, -1), (665, -1), (693, 1), (3128, -1)]),
          # Pembrey and Termas de Río Hondo: circuits (the map's raceway is the track)
          'pembrey': dict(kinds={'raceway'}), 'riohondo': dict(kinds={'raceway'}),
          # Kågeröd and Kildare: circuits, fitted to their own line (raceway) as the Nürburgring
          'kagerod': dict(kinds={'raceway'}, predmeti=False), 'kildare': dict(kinds={'raceway'}, predmeti=False),
          # the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md: those are for the 15
          # tracks of main; 16. 11. 2026, group 569b)
-         'hakone': dict(predmeti=False), 'izoard': dict(predmeti=False),
+         # Izoard 3871 m right: a track at its real width (4.8 m with the road scale 1.38, 23. 11. 2026, #1025) whose left edge meets the
+         # barrier's line 22.5 m in (the verge is 11.7 m deep), beyond the builder's 22 m; Izoard has no side road then (e-stranske-sirina)
+         'hakone': dict(predmeti=False), 'izoard': dict(predmeti=False, izpusti=[(3871, 1)]),
          # group 569e (17. 11. 2026): the circuits' own roads are not side roads, the same as the other circuits; Sakhir 1816 m right and
          # 4727 m left: service ways that cross a run-off (a pale asphalt apron to the barrier 32 m out, T.gravL/gravR), as Buriram's.
          # Left out too where World.cesta.stranske finds no opening (an edge of the strip not across the fence line within 22 m): Sakhir
@@ -89,16 +96,20 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'sepang': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1496, -1)]),
          'santoantao': dict(predmeti=False), 'seoul': dict(predmeti=False, izpusti=[(979, 1), (2398, -1)]),
          # group 569f (17. 11. 2026): circuits from pull requests, fitted to their own line (raceway), side roads only; Silkeborg 1781 m
-         # left and Zandvoort 2339 m left: service ways that cross a run-off (the apron to the barrier 26-28 m out, T.gravL), as Sakhir's
+         # left and Zandvoort 2325 m and 2339 m left: service ways that cross a run-off (the apron to the barrier 26-28 m out, T.gravL), as
+         # Sakhir's (the one at 2325 m comes in with the real widths of 23. 11. 2026, #1025)
          'silkeborg': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1781, -1)]), 'sosnova': dict(kinds={'raceway'}, predmeti=False),
-         'tuzla': dict(kinds={'raceway'}, predmeti=False), 'zandvoort': dict(kinds={'raceway'}, predmeti=False, izpusti=[(2339, -1)]),
+         'tuzla': dict(kinds={'raceway'}, predmeti=False), 'zandvoort': dict(kinds={'raceway'}, predmeti=False, izpusti=[(2325, -1), (2339, -1)]),
          # group 756a (17. 11. 2026): roads from pull requests, side roads only
          'cusco': dict(predmeti=False), 'eljem': dict(predmeti=False), 'ghoufi': dict(predmeti=False), 'isalo': dict(predmeti=False),
          'isuna': dict(predmeti=False),
          # group 756b (17. 11. 2026): Portobelo: a drive at the finish's white wall and catch fence (2491 m, left)
          'luanda': dict(predmeti=False), 'mombasa': dict(predmeti=False), 'portobelo': dict(predmeti=False, izpusti=[(2491, -1)]),
-         # group 762a (17. 11. 2026): Aguascalientes (a circuit), Canaries, Kanaba and Koli (open roads): the side roads only
-         'aguascalientes': dict(kinds={'raceway'}, predmeti=False), 'canaries': dict(predmeti=False), 'kanaba': dict(predmeti=False),
+         # group 762a (17. 11. 2026): Aguascalientes (a circuit), Canaries, Kanaba and Koli (open roads): the side roads only; Canaries
+         # 2604 m left: a street at its real width (7.6 m, 23. 11. 2026, #1025) whose edge crosses the barrier's line beyond the builder's 22 m;
+         # 3476 m left: a service way that passes an OSM house's corner 1.83 m from its centre line (4.8 m wide with the road scale 1.38: into
+         # the house; a road cut at the houses is open in docs/realizem/paket-e.md)
+         'aguascalientes': dict(kinds={'raceway'}, predmeti=False), 'canaries': dict(predmeti=False, izpusti=[(2604, -1), (3476, -1)]), 'kanaba': dict(predmeti=False),
          'koli': dict(predmeti=False),
          # group 762b (18. 11. 2026): the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md:
          # those are for the 15 tracks of main); Quezaltepeque a circuit, fitted to its own line (raceway) as the other circuits. Left out:
@@ -299,7 +310,7 @@ def main():
                 if any(sd == (1 if o > 0 else -1) and circ(sa, m if op else m % L) < OWN for m, sd in C.get('ima', [])): drop('own'); continue   # the track's own side road is there
                 if any(sd == (1 if o > 0 else -1) and abs(sa - m) < 4 for m, sd in cfg.get('izpusti', [])): drop('hand'); continue   # left out by hand (PROGE)
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
-                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
+                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, razred=0 if tg.get('surface') in UNPAVED else cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
     # the higher class first, then the longer road: two mouths on the same side that would run into each other leave one; a road that runs
     # into another of these roads ends there (end 1), and so does the other one where it is met at its tip
@@ -326,8 +337,8 @@ def main():
         Pc = clip(e['P'], float(e['cut'] - 1)); keep = [Pc[0]]   # the corners that matter (0.8 m apart), the end always
         for i in range(1, len(Pc)):
             if dist(Pc[i], keep[-1]) >= 0.8 or i == len(Pc) - 1: keep.append(Pc[i])
-        rows.append([int(round(e['sa'])), e['side'], e['cls'], e['w'], e['ow'], e['end'], [round(float(v), 1) for p in keep for v in p]])
-        print('  %6d m  %s  class %d  %.1f m  %2d m%s  %s' % (e['sa'], 'right' if e['side'] > 0 else 'left ', e['cls'], e['w'], e['cut'] - 1, ' joins' if e['end'] else '', e['tags']))
+        rows.append([int(round(e['sa'])), e['side'], e['razred'], e['w'], e['ow'], e['end'], [round(float(v), 1) for p in keep for v in p]])
+        print('  %6d m  %s  class %d  %.1f m  %2d m%s  %s' % (e['sa'], 'right' if e['side'] > 0 else 'left ', e['razred'], e['w'], e['cut'] - 1, ' joins' if e['end'] else '', e['tags']))
     # street lamps and bus stops within 30 m of the centre line, each laid on the game's line as the junctions are
     lamps, stops = [], []
     for i, tg in tagged.items():

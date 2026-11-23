@@ -436,7 +436,8 @@ try {
     return { n: W.stranske, osm: T.def.stranske.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, gravel, broken, through, sidePaint,
       posts: P.length / 4, rows: rows.size, road: +road.toFixed(1), stat: [W.stats.stranske, W.stats.stebricki], model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   }, id);
-  for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 85, true], ['izoard', 'Izoard', true, 1, false], ['kagerod', 'Kågeröd', false, 11, false], ['kildare', 'Kildare', false, 4, false]]) {
+  // (Izoard has none: its one road, a track at its real width, meets the barrier's line beyond the builder's 22 m and the export leaves it out, #1025)
+  for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 85, true], ['kagerod', 'Kågeröd', false, 11, false], ['kildare', 'Kildare', false, 4, false]]) {
     await startTrack(page, id);
     const q = await stranskeQ(id);
     T.check(name + ': OpenStreetMap\'s side roads for the look (' + min + ' or more, at most the track\'s rows: those under a braking board or off the edges left out), a strip from each mouth (3 to 40 m wide) to the asphalt\'s edge, the posts across every mouth 2 m or more off the asphalt, the stats, the track\'s model untouched',
@@ -671,7 +672,7 @@ try {
         posts: n, stats: (W.stats && W.stats.stebricki) || 0, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), inst, which, rays, hit, what, painted, onAsph, lum: nc ? +(lum / nc).toFixed(3) : 0,
         model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])), drzava: dr, crte: !!World.cesta.CRTE[dr] };
     }, id);
-    const want = { canaries: [10, 'Saint Lucia: no published rule for a mouth\'s lines'], kanaba: [3, 'Uganda: its side roads unpaved in OpenStreetMap, gravel'],
+    const want = { canaries: [8, 'Saint Lucia: no published rule for a mouth\'s lines'], kanaba: [3, 'Uganda: its side roads unpaved in OpenStreetMap, gravel'],
       koli: [3, 'Finland\'s winter: its roads under snow, as its own road'], aguascalientes: [0, ''] }[id];
     if (q.osm) T.check(`${id}: OpenStreetMap's side roads by the road (${q.n} of ${q.osm}; the builder drops a road it finds no mouth for), each a strip through its mouth, a row of posts across it, nothing of the world's on it past the fence line, the track's model untouched, no paint (${want[1]})` +
       ({ koli: ', packed snow on the ground\'s material, not the asphalt', kanaba: ', pale gravel, not grey asphalt' }[id] || ''),
