@@ -569,9 +569,9 @@
  "hakone": {
   "calls": 184,
   "maxCalls": 196,
-  "kverts": 253,
-  "maxKverts": 273,
-  "jsMs": 2.84
+  "kverts": 255,
+  "maxKverts": 274,
+  "jsMs": 3.19
  },
  "killar": {
   "calls": 143,
