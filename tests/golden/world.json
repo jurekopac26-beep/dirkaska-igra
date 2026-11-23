@@ -1265,16 +1265,16 @@
   }
  },
  "isalo": {
-  "meshes": 350,
-  "verts": 292471,
-  "instances": 1274,
+  "meshes": 351,
+  "verts": 294382,
+  "instances": 1273,
   "props": 0,
   "crowd": 84,
-  "world": "415149f2",
+  "world": "7509eaae",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "d58dd273",
+   "-:MeshLambertMaterial": "64af3b4e",
    "crowd:MeshLambertMaterial": "bbf55e50",
    "flags:MeshLambertMaterial": "c3d43254",
    "ao:MeshBasicMaterial": "a63406a8",
