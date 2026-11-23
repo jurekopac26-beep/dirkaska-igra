@@ -560,11 +560,11 @@
   "jsMs": 1.02
  },
  "riohondo": {
-  "calls": 194,
-  "maxCalls": 270,
-  "kverts": 630,
-  "maxKverts": 789,
-  "jsMs": 0.96
+  "calls": 190,
+  "maxCalls": 289,
+  "kverts": 625,
+  "maxKverts": 841,
+  "jsMs": 1.11
  },
  "hakone": {
   "calls": 184,
