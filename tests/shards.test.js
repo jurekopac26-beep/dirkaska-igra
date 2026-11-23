@@ -1,4 +1,4 @@
-// The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 6 shares on 6 machines at once, see
+// The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 8 shares on 8 machines at once, see
 // .github/workflows/tests.yml): for every suite and 1-8 shares each test in exactly one share, none left out; the browser tests' shares
 // as many as the workflow's (its matrix and its --shard k/n) and about as long as each other (by run.js's SECS); every browser test that
 // takes long (over 4 min) has its time in SECS, and SECS names only tests in the list; a bad --shard stops with an error, never runs

@@ -97,16 +97,21 @@ ne preskakuj in ne izklapljaj: sprememba samo izbere, kateri nabor teče pri kat
 ## Osvežitev `SECS`
 
 Ko se kak dolg test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo) ali je kritična pot nad ~90 min:
-1. Iz zadnjih uspešnih krogov (vsaj 3, mešano `main` in pull requesti) vzemi povzetke posla »Igra v brskalniku (k/6)« (vrstice
+1. Iz zadnjih uspešnih krogov (vsaj 3, mešano `main` in pull requesti) vzemi povzetke posla »Igra v brskalniku (k/8)« (vrstice
    `OK  browser/<test> (<s> s)` za `=== summary`).
 2. Za vsak posel izračunaj hitrost: mediana razmerij čas/`SECS` čez teste ≥ 20 s. Čas vsakega testa deli s hitrostjo njegovega posla.
 3. V `SECS` vpiši mediano po krogih (zaokroženo na sekundo), padajoče. `node tests/shards.test.js` preveri, da so deli enako dolgi
-   (najdaljši največ 15 % nad povprečjem), `node tests/run.js browser --shard 1/6 --list` izpiše dolžine delov.
+   (najdaljši največ 15 % nad povprečjem), `node tests/run.js browser --shard 1/8 --list` izpiše dolžine delov.
 
 **22. 11. 2026** (pregled nestabilnih testov): poslov je bilo 97–119 min, memory in memory2 2950–3200 s, del 1–2 blizu meje posla. `SECS` je
 zdaj iz enega celotnega kroga na `main` z 68 pravimi progami (run 44994892896, vseh 169 testov, brez preračuna): vsak del ~105 min, memory in
 memory2 vsak v svojem delu le s kratkimi testi, smoke in smoke2 v različnih delih (smoke je 18. 11. na `main` dosegel mejo pred delitvijo).
 Nestabilna `m45` in `cars-ui`: fiksni zamiki zamenjani s čakanjem na stanje (zaslon igre, postavitev tri sličice enaka, napis na zaslonu).
+
+**23. 11. 2026** (#1021, še na `SECS` 5. 11.): del 3/6 s perf (3785 s) in menu (nad 30 min, ustavljen) presegel 160 min, stroj ~1,3-krat
+počasnejši. perf 2900 s, menu 1400 s (preračunano na srednji stroj); šest delov bi bilo ~107 min, na počasnem stroju čez mejo, zato
+**8 delov** po ~80 min (na stroju 1,5-krat počasnejšem ~120 min), memory, memory2, perf in crash vsak v svojem delu. Noben test ni
+izpuščen, meje testov so zaradi višjih `SECS` višje (perf ~97 min, menu ~47 min).
 
 ## Zavrnjeno ali možnost za pozneje
 
