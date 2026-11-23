@@ -670,11 +670,12 @@
   }
 
   /* ---------------- the height graph: the heights along the whole run, in a small frame under the back arrow, in every camera ----------------
-     (docs/meni-izbira-proge.md »Zadnje odločitve« and »Vrstica podatkov, graf višine in ocena«: as wide as the arrow, 0.6 of it high.) At the
-     top left the track's length (4.03 km) and nothing else: the climb the graph tells. The part already driven (up to the glowing point) its
-     line coloured by the steepness, up or down (BAND: green under 3 %, yellow 3–6 %, orange 6–9 %, red over 9 %), a strong yellow under it;
-     the rest of the run a thin white line over a light yellow. The graph as high as the track's difference in height (full from 300 m, so a
-     flat circuit is a low green line a little above the frame's bottom edge). Every track: the heights of routes.js (R.prof; the real ones by
+     (docs/meni-izbira-proge.md »Zadnje odločitve« and »Vrstica podatkov, graf višine in ocena«: as wide as the arrow, 0.6 of it high.) The
+     user's choice C of 23. 11.: the graph over the whole frame, the track's length (4.03 km) in a dark band along its bottom and nothing else.
+     The part already driven (up to the glowing point) its line coloured by the steepness, up or down (BAND: green under 3 %, yellow 3–6 %,
+     orange 6–9 %, red over 9 %), and under it the colours of the height above the sea (ALT: green low, yellow, orange, red high, as a map's
+     layers; the same height the same colour on every track), strong; the rest of the run a thin white line over the same colours, faint. The
+     graph as high as the track's difference in height (full from 300 m, so a flat circuit is a low line just above the band). Every track: the heights of routes.js (R.prof; the real ones by
      routeMaps, else from the start's height in geo.js), else of the menu's table (MENU.profs, tools/menu-lens.js). The steepness is the
      game's own heights over its own distances (a shortened road, Pikes Peak, keeps its real gradients so). The point is the run's (run: the
      flyover's video, the map's running point), or (the model of the land, the corner's camera) along the run at the same pace (RUN) from when
@@ -703,22 +704,32 @@
   // the graph in a frame W × Hh px: its svg, and where on it a fraction f of the run is
   const BAND = [[0.03, [47, 191, 74]], [0.06, [255, 210, 58]], [0.09, [255, 138, 42]], [Infinity, [232, 52, 42]]];
   const bandRgb = (v) => BAND.find(b => Math.abs(v) < b[0])[1];
+  // the height above the sea (m) as its colour, the fill under the graph's line
+  const ALT = [[0, [47, 191, 74]], [400, [154, 209, 58]], [800, [255, 210, 58]], [1500, [255, 138, 42]], [2500, [232, 52, 42]], [3500, [158, 20, 32]]];
+  function altRgb(h) {
+    if (h <= ALT[0][0]) return ALT[0][1];
+    for (let i = 1; i < ALT.length; i++) if (h <= ALT[i][0]) { const a = ALT[i - 1], b = ALT[i], k = (h - a[0]) / (b[0] - a[0]); return a[1].map((c, j) => Math.round(c + (b[1][j] - c) * k)); }
+    return ALT[ALT.length - 1][1];
+  }
   function graphOf(t, W, Hh) {
     const P = heightsOf(t); if (!P || W < 40 || Hh < 20) return null;
-    const H = P.H, n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, 300), yT = 18, yB = 2.5;
+    const H = P.H, n = H.length, lo = Math.min(...H), hi = Math.max(...H), span = Math.max(hi - lo, 300), yT = 3, yB = 14;
     const x = (f) => f * W, y = (h) => Hh - yB - (h - lo) / span * (Hh - yT - yB);
     const hAt = (f) => { const q = Math.min(n - 1, Math.max(0, f * (n - 1))), i = Math.min(n - 2, Math.floor(q)); return H[i] + (H[i + 1] - H[i]) * (q - i); };
     const line = 'M' + H.map((h, i) => x(i / (n - 1)).toFixed(1) + ' ' + y(h).toFixed(1)).join('L'), area = line + 'L' + W + ' ' + Hh + 'L0 ' + Hh + 'z';
     // the steepness at each height as its colour, a stop of the line's gradient
     const stops = climbs(P.G, P.L).map((v, i) => '<stop offset="' + (i / (n - 1)).toFixed(4) + '" stop-color="rgb(' + bandRgb(v).join(',') + ')"/>').join('');
     const len = t.km.toFixed(2) + ' km';   // (as the row of data: the track's length, not the graph's own run)
+    // the heights' colours top to bottom of the frame, a stop every tenth (the height at that row of pixels)
+    const alt = (op) => Array.from({ length: 11 }, (_, k) => { const h = lo + (Hh - yB - k / 10 * Hh) / (Hh - yT - yB) * span;
+      return '<stop offset="' + k / 10 + '" stop-color="rgb(' + altRgb(h).join(',') + ')" stop-opacity="' + op + '"/>'; }).join('');
     const svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" width="' + W + '" height="' + Hh + '" aria-hidden="true"><defs>' +
       '<linearGradient id="hgc" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + stops + '</linearGradient>' +
-      '<linearGradient id="hgs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".82"/><stop offset="1" stop-color="#ffc21a" stop-opacity=".62"/></linearGradient>' +
-      '<linearGradient id="hgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23a" stop-opacity=".3"/><stop offset="1" stop-color="#ffd23a" stop-opacity=".15"/></linearGradient>' +
+      '<linearGradient id="hgs" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + Hh + '">' + alt(0.8) + '</linearGradient>' +
+      '<linearGradient id="hgl" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + Hh + '">' + alt(0.28) + '</linearGradient>' +
       '<clipPath id="hgk"><rect x="0" y="0" width="0" height="' + Hh + '"/></clipPath></defs>' +
       '<path d="' + area + '" fill="url(#hgl)"/><path class="ah" d="' + line + '"/><g clip-path="url(#hgk)"><path d="' + area + '" fill="url(#hgs)"/><path class="ln" stroke="url(#hgc)" d="' + line + '"/></g>' +
-      '<text class="len" x="3" y="10">' + len + '</text>' +
+      '<rect class="band" x="0" y="' + (Hh - yB + 1.5) + '" width="' + W + '" height="' + (yB - 1.5) + '"/><text class="len" x="3" y="' + (Hh - 3) + '">' + len + '</text>' +
       '<g class="pt" transform="translate(0 ' + y(H[0]).toFixed(1) + ')"><circle class="halo" r="7.5"/><circle r="3.8"/></g></svg>';
     return { svg, at: (f) => [x(f), y(hAt(f))] };
   }
