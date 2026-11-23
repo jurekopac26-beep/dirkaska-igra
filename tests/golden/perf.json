@@ -455,11 +455,11 @@
   "jsMs": 0.42
  },
  "zandvoort": {
-  "calls": 182,
-  "maxCalls": 224,
+  "calls": 190,
+  "maxCalls": 228,
   "kverts": 648,
-  "maxKverts": 843,
-  "jsMs": 0.85
+  "maxKverts": 839,
+  "jsMs": 1.1
  },
  "dades": {
   "calls": 140,
@@ -520,9 +520,9 @@
  "sepang": {
   "calls": 184,
   "maxCalls": 226,
-  "kverts": 695,
-  "maxKverts": 872,
-  "jsMs": 0.79
+  "kverts": 676,
+  "maxKverts": 863,
+  "jsMs": 0.97
  },
  "sakhir": {
   "calls": 200,
@@ -555,9 +555,9 @@
  "lusail": {
   "calls": 166,
   "maxCalls": 223,
-  "kverts": 559,
-  "maxKverts": 846,
-  "jsMs": 0.93
+  "kverts": 531,
+  "maxKverts": 819,
+  "jsMs": 0.83
  },
  "riohondo": {
   "calls": 194,
@@ -709,9 +709,9 @@
  "batangas": {
   "calls": 244,
   "maxCalls": 286,
-  "kverts": 812,
-  "maxKverts": 859,
-  "jsMs": 1.04
+  "kverts": 808,
+  "maxKverts": 855,
+  "jsMs": 0.83
  },
  "sogeri": {
   "calls": 144,
