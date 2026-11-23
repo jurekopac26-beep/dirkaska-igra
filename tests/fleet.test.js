@@ -342,16 +342,16 @@ const MEAS = {};
 
 // ---- 6. the AI's cars ----
 {
-  const same = Array.from({ length: 21 }, (_, k) => C.aiModel(k) === C.MODELS[(k * 3 + 1) % 4] && C.aiDriver(k).model === C.MODELS[(k * 3 + 1) % 4] && C.aiModel(k, model('rally')) === C.MODELS[(k * 3 + 1) % 4]).every(Boolean);
+  const same = Array.from({ length: 21 }, (_, k) => C.aiModel(k) === C.heirOf(C.MODELS[(k * 3 + 1) % 4]) && C.aiDriver(k).model === C.heirOf(C.MODELS[(k * 3 + 1) % 4]) && C.aiModel(k, model('rally')) === C.heirOf(C.MODELS[(k * 3 + 1) % 4])).every(Boolean);
   check('aiModel(k) without a vehicle (or with one of the 11): the old four road cars in turn, the same objects (k 0..20)', same);
   const T = model('titan'), S = model('sokol');
-  check('aiModel with a field: the field\'s vehicles (TITAN: titans); SOKOL R / PANTER 6 (no field): the four road cars', Array.from({ length: 12 }, (_, k) => C.aiModel(k, T) === T && C.aiModel(k, S) === C.MODELS[(k * 3 + 1) % 4] && C.aiModel(k, model('panter')) === C.MODELS[(k * 3 + 1) % 4]).every(Boolean));
+  check('aiModel with a field: the field\'s vehicles (TITAN: titans); SOKOL R / PANTER 6 (no field): the four road cars', Array.from({ length: 12 }, (_, k) => C.aiModel(k, T) === T && C.aiModel(k, S) === C.heirOf(C.MODELS[(k * 3 + 1) % 4]) && C.aiModel(k, model('panter')) === C.heirOf(C.MODELS[(k * 3 + 1) % 4])).every(Boolean));
   // the qualifying sim (game.js qsimStep: each rival alone, aiOrder [k], sized by fieldSize, the player's car as playerModel): the race's cars
   const F = model('formula'), Tq = track('rbring'), qs = (pm, k) => new C.Race(Tq, { numAI: C.fieldSize(pm, 12), aiOrder: [k], noPlayer: true, playerModel: pm, laps: 1, qualiBack: 200, seed: 3, damage: 0 }).cars;
   const capped = { field: ['titan'], fieldN: 9 };   // (a big vehicle with no fill: its field capped)
   const sizes = [C.fieldSize(T, 12), C.fieldSize(T, 5), C.fieldSize(model('kaze'), 12), C.fieldSize(F, 12), C.fieldSize(null, 12), C.fieldSize(model('goljat'), 99), C.fieldSize(capped, 12), C.fieldSize(capped, 5)];
   check('fieldSize: as many rivals as the race (TITAN 12 of 12, 5 of 5; KAZE, the formula, none: 12; GOLJAT 99 of 99; a big vehicle with no fill: fieldN at most, 9 of 12, 5 of 5); the qualifying sim drives the race\'s cars (TITAN\'s 12: each its own of aiModel; the formula: formulas)',
-    sizes.join() === '12,5,12,12,12,99,9,5' && Array.from({ length: 12 }, (_, k) => { const L = qs(T, k); return L.length === 1 && L[0].m === C.aiModel(k, T, 12); }).every(Boolean) && qs(F, 3)[0].m === F && qs(model('kaze'), 4)[0].m === C.MODELS[(4 * 3 + 1) % 4],
+    sizes.join() === '12,5,12,12,12,99,9,5' && Array.from({ length: 12 }, (_, k) => { const L = qs(T, k); return L.length === 1 && L[0].m === C.aiModel(k, T, 12); }).every(Boolean) && qs(F, 3)[0].m === F && qs(model("muscle"), 4)[0].m === C.heirOf(C.MODELS[(4 * 3 + 1) % 4]),
     sizes.join(','));
   // a big vehicle's bigger race (fieldN and a fill): driver 0 its own, its own fieldN of the n in all, spread evenly (no gap between two
   // of them, or after the last, over n / fieldN rounded up), the others its fill's cars in turn (each as many as the next, one more at most);
@@ -378,7 +378,7 @@ const MEAS = {};
     let nan = false;
     for (let k = 1; k <= 20 / DT; k++) { Math.random = seeded(7000 + k); C.aiControl(P, r, DT); r.step(DT); for (const c of r.cars) if (!fin(c.x + c.z + c.vx + c.vz + c.h)) nan = true; }
     const want = C.fieldSize(M, 12), ids = (L) => L.map(A => A.id).sort().join();
-    const cars = M.field ? ids(ai.map(c => c.m)) === ids(Array.from({ length: want }, (_, k) => C.aiModel(k, M, want))) : ai.every((c, k) => c.m === C.MODELS[(k * 3 + 1) % 4]);
+    const cars = M.field ? ids(ai.map(c => c.m)) === ids(Array.from({ length: want }, (_, k) => C.aiModel(k, M, want))) : ai.every((c, k) => c.m === C.heirOf(C.MODELS[(k * 3 + 1) % 4]));
     const prof = M.field ? r.cars.every(c => c.vprof instanceof Float32Array && c.vprof.every(v => fin(v) && v > 0)) && P.vprof === ai[0].vprof : ai.every(c => !c.vprof) && !P.vprof && r.vprof.every(fin);
     const minD = Math.min(...ai.map(c => c.dist));
     check(`${id}: a ${M.fill ? 'mixed ' : M.field ? 'one-make ' : ''}race, 20 s: ${want} rivals${M.field ? ' in ' + M.field.concat(M.fill || []).join('/') : ' in the four road cars'}, every one > 150 m on, ${M.field ? 'every profile the model\'s own, finite' : 'the race\'s profile'}, no NaN`,
@@ -697,7 +697,7 @@ if (!only.length) {
   const m = (id) => X.MODELS.find(o => o.id === id), ev = m('ev'), skipped = X.DEFS_SKIPPED.map(s => s.id).sort();
   check('patch defs: one attaches its fields to a vehicle (the STRELA EV: category, part table with its extra, price, sound preset, look, names; the Core without the patch untouched)', ev.cat === 'reli' && X.partsOf(ev) === ev.parts && ev.parts.spoiler && ev.parts.wheelRR.wh === 3 &&
     X.CAREER.car.ev === 21000 && ev.sndP.kind === 'i4' && ev.def.look.body.len === 4.62 && ev.def.partNames.spoiler === 'rear spoiler' && ev.glb === undefined && !C.MODELS.find(o => o.id === 'ev').parts && C.CAREER.car.ev === 160000, Object.keys(ev.parts).length + ' parts');
-  const four = (k) => X.MODELS[(k * 3 + 1) % 4];
+  const four = (k) => X.heirOf(X.MODELS[(k * 3 + 1) % 4]);
   check('fields: a patched field (the STRELA EV\'s: an EV / LEV R cup; the PICO TURBO\'s: STRELA EVs); a glb model races in one only with a look of its own for the AI (a throwaway def with a look: in; one with no look: out, the field left empty: the four road cars); a patch may take the glb away (null: in again); the retired model never (left out of a field that names it); fieldN, the fill (null: none, the field capped again) and texts patched, the def itself untouched; a def\'s own fuel tank (def.tank), a patched one',
     Array.from({ length: 6 }, (_, k) => X.aiModel(k, ev) === (k % 2 ? m('lev') : ev) && X.aiModel(k, m('pico')) === ev && X.aiModel(k, m('vortex')) === four(k) && X.aiModel(k, m('zzok')) === (k % 2 ? m('zzskin') : m('zzok')) &&
       X.aiModel(k, m('zzskin')) === m('zzskin') && X.aiModel(k, m('zzbare')) === m('zzbare')).every(Boolean) &&
