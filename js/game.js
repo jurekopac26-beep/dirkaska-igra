@@ -135,7 +135,7 @@
   // a time trial in winter keeps its own too (id-winter, in the snow id-winter-wet): the season of the race on it (a challenge's its own), before a race the season setting
   const winRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!(race.opts && race.opts.winter) : S.season === 'winter');
   // (the endless drive, js/neskoncna.js: its records by the level too, id-endless-1: the race's own while it is on, else the setting)
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless|drag)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (winRec(d) ? '-winter' : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless|drag|tt)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (winRec(d) ? '-winter' : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
   const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
@@ -200,15 +200,17 @@
   const upgCount = (id) => UPG_IDS.reduce((a, k) => a + upgOf(id)[k], 0);
   // a time trial: a track that is one (def.timeTrial), or one with more ways to drive it (def.modes: a race against the rivals up the
   // road, the time trial, ...) switched to it (S.mode 'tt'); while a race on it is on, the way that race is driven
-  const hasTT = (d) => !!(d && (d.timeTrial || (d.modes && d.modes.indexOf('tt') >= 0)));
+  const hasTT = (d) => !!(d && Core.ways(d).indexOf('tt') >= 0);   // (every track now: a circuit too, Core.ways)
+  const ownTT = (d) => !!(d && (d.timeTrial || (d.modes && d.modes.indexOf('tt') >= 0)));   // (a time trial of its own: a road's with checkpoints, before the circuits had one)
+  const lapTT = (d) => !!(d && !d.modes && !d.timeTrial && Core.ways(d).indexOf('tt') >= 0);   // (a track whose time trial is the circuit's: its laps alone, its best lap; a road without def.modes the same, one lap)
   // modeOf: the way a track with def.modes is driven ('race', 'tt', 'traffic': the duel with one rival on the open road, 'police': the run from the
   // police): while a race on it is on, that race's; else the setting
   // modesOf: the ways a track is driven (def.modes, else its own: a race or a time trial) and the novelties' own on top (Zabava, js/zabava.js:
   // the elimination race wherever there is a race, the pursuit wherever the duel in the traffic is); modeSet: the one the settings choose
-  const modesOf = (d) => { const L = d.modes ? d.modes.slice() : [d.timeTrial ? 'tt' : 'race']; if (typeof Zabava !== 'undefined') for (const m of Zabava.modes(d, L)) if (L.indexOf(m) < 0) L.push(m); return L; };
-  const modeSet = (d) => !d.modes ? (/^(elim|lov|endless|drag)$/.test(S.mode) && modesOf(d).indexOf(S.mode) >= 0 ? S.mode : 'race') : modesOf(d).indexOf(S.mode) >= 0 ? S.mode : d.modes[0];
-  const modeOf = (d) => !d ? 'race' : race && race.track.def.id === d.id && race.zbMode ? race.zbMode : !d.modes ? (race && race.track.def.id === d.id ? 'race' : modeSet(d)) : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf && !race.opts.remote ? 'traffic' : 'race') : modeSet(d);   // (a road with no race up it, Sani Pass: its first way)
-  const isTT = (d) => !!(d && (d.modes ? hasTT(d) && modeOf(d) === 'tt' : d.timeTrial));   // (Pikes Peak, a time trial with def.modes: as its way)
+  const modesOf = (d) => { const L = Core.ways(d).slice(); if (typeof Zabava !== 'undefined') for (const m of Zabava.modes(d, L)) if (L.indexOf(m) < 0) L.push(m); return L; };
+  const modeSet = (d) => !d.modes ? ((/^(elim|lov|endless|drag)$/.test(S.mode) || (S.mode === 'tt' && lapTT(d))) && modesOf(d).indexOf(S.mode) >= 0 ? S.mode : 'race') : modesOf(d).indexOf(S.mode) >= 0 ? S.mode : d.modes[0];
+  const modeOf = (d) => !d ? 'race' : race && race.track.def.id === d.id && race.zbMode ? race.zbMode : !d.modes ? (race && race.track.def.id === d.id ? (race.timeTrial && lapTT(d) ? 'tt' : 'race') : modeSet(d)) : race && race.track.def.id === d.id ? (race.timeTrial ? 'tt' : race.pol ? 'police' : race.tf && !race.opts.remote ? 'traffic' : 'race') : modeSet(d);   // (a road with no race up it, Sani Pass: its first way)
+  const isTT = (d) => !!(d && (d.modes ? hasTT(d) && modeOf(d) === 'tt' : d.timeTrial || modeOf(d) === 'tt'));   // (Pikes Peak, a time trial with def.modes: as its way)
   const MODE_NAME = { race: 'Dirka', tt: 'Kronometer', traffic: 'Promet', police: 'Policija' };   // (tr() at use)
   const upRace = (d) => !!(d && d.open && !isTT(d));   // a race against the rivals up an open road (Vršič)
   // a time trial is a hill climb (Pikes Peak), a rally special stage (def.rally: Ouninpohja) or a descent (def.descent: Katu-Jaryk, down a gravel
@@ -348,7 +350,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // a round of the career's path on a track driven more ways (def.modes): its own way, a time trial event's or cup's the time trial, the
   // others' the race (S.mode, as a challenge sets it; the menu's choice not)
   const potMode = (cup, id) => { const d = cup && cup.pot ? Core.TRACKS.find(x => x.id === id) : null, m = cup && (cup.kind === 'kronometer' || cup.vrsta === 'tt') ? 'tt' : 'race';
-    if (d && d.modes && d.modes.includes(m) && S.mode !== m) { S.mode = m; save(); refreshSegs(); } };
+    if (d && Core.ways(d).length > 1 && Core.ways(d).includes(m) && S.mode !== m) { S.mode = m; save(); refreshSegs(); } };
   // the last event of the path just ended (Atlas: the valley's result screen, MenuBridge.karieraIzid): its id, the place, the stars before
   // and now, the rewards, the stage before and now; null when shown or a new one started
   let kIzid = null;
@@ -1844,16 +1846,16 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       const md = modeOf(d);
       let meta = md === 'traffic' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dvoboj z enim tekmecem v prometu') + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') :
         md === 'police' ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · beg pred policijo') + (r.bestRace ? tr(' · najhitrejši pobeg {0}', fmt(r.bestRace, true)) : '') :
-        upRace(d) ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dirka z {0} tekmeci', rivN(d)) + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') : isTT(d) ? kmTxt(T.raceLen, 1) + ' km' + climb + (isRally(d) && d.bumps ? ' · ' + jumpWord(d.bumps.length) : '') + ' · ' + cpWord(T.cpS.length) + tr(' · kronometer') + (r.bestTime ? tr(' · rekord {0}', fmt(r.bestTime, true)) : '')
+        upRace(d) ? kmTxt(T.raceLen, 1) + ' km' + climb + tr(' · dirka z {0} tekmeci', rivN(d)) + (r.bestRace ? tr(' · rekord {0}', fmt(r.bestRace, true)) : '') : isTT(d) && lapTT(d) ? kmTxt(T.len, 2) + ' km · ' + lapWord(lapsOf(d)).toLowerCase() + tr(' · kronometer') + (r.bestTime ? tr(' · rekord {0}', fmt(r.bestTime, true)) : '') : isTT(d) ? kmTxt(T.raceLen, 1) + ' km' + climb + (isRally(d) && d.bumps ? ' · ' + jumpWord(d.bumps.length) : '') + ' · ' + cpWord(T.cpS.length) + tr(' · kronometer') + (r.bestTime ? tr(' · rekord {0}', fmt(r.bestTime, true)) : '')
         : kmTxt(T.len, 2) + ' km · ' + tr('{0} ovinkov', T.corners.length) + ' · ' + lapWord(lapsOf(d)).toLowerCase() + (r.bestLap ? tr(' · rekord {0}', fmt(r.bestLap, true)) : '');
       if (wetRec(d) || winRec(d)) meta = meta.replace(tr(' · kronometer'), tr(' · kronometer') + condTxt(d));
       if (isTT(d) && medalOf(d, r.bestTime) >= 0) meta += ' ' + MEDAL_ICON[medalOf(d, r.bestTime)];
       const desc = '<div class="tmeta">' + meta + '</div>' + (pkIs(d) && isTT(d) ? pkTrackTag(r, d) : '') + '<div class="tdesc">' + (Lang.of(d, 'desc') || '').replace(/\b(\d{1,3}),?(\d{3}) m\b/g, (m, a, b) => numDot(+(a + b)) + '\u00a0m') + '</div>';   // 2862 m (or 2,862 m) -> 2.862 m (as on the HUD)
       const sep = d0.test && !sepDone ? (sepDone = true, '<div class="track-sep">' + tr('Za izbris · samo za testiranje') + '</div>') :
         d0.pending && !pendDone ? (pendDone = true, '<div class="track-sep">' + tr('Na odločanju · ostane ena') + '</div>') : '';   // (the made-up tracks kept for testing: after the real ones, under their own heading)
-      const modeSeg = d.modes ? '<div class="seg tc-mode" data-set="mode" role="group" aria-label="' + tr('Način vožnje') + '">' + d.modes.map(k => '<button data-v="' + k + '" class="' + (md === k ? 'sel' : '') + '">' + tr(MODE_NAME[k]) + '</button>').join('') + '</div>' : '';
+      const W = Core.ways(d), modeSeg = W.length > 1 ? '<div class="seg tc-mode" data-set="mode" role="group" aria-label="' + tr('Način vožnje') + '">' + W.map(k => '<button data-v="' + k + '" class="' + (md === k ? 'sel' : '') + '">' + tr(MODE_NAME[k]) + '</button>').join('') + '</div>' : '';
       if (pkRoads(d0).length) return sep + pkRoadCard(d0, d, sel, desc, modeSeg);   // (Pikes Peak: the road, asphalt or the historic gravel, and the way to drive it)
-      if (d.modes) return sep + '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + Lang.of(d, 'name') + '</h3>' + modeSeg + '</div>' + desc + '</div>';
+      if (W.length > 1) return sep + '<div class="track-card modes' + sel + '" data-track="' + d.id + '" role="button" tabindex="0"><canvas></canvas><div class="tc-head"><h3>' + Lang.of(d, 'name') + '</h3>' + modeSeg + '</div>' + desc + '</div>';
       return sep + '<button class="track-card' + sel + '" data-track="' + d.id + '"><canvas></canvas><h3>' + Lang.of(d, 'name') + '</h3>' + desc + '</button>'; }).join('');
     requestAnimationFrame(() => list.querySelectorAll('.track-card').forEach(el => drawTrackMini(el.querySelector('canvas'), getTrack(el.dataset.track))));
     fitSegs();   // (the tyres' row comes and goes with the track)
@@ -2171,7 +2173,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const name = cleanName(o.name) || tr('Prijatelj');
     if (!Shramba.keep('tdgp-fghost-' + d.id, JSON.stringify({ name, time: g.t, ghost: o.ghost }))) { toast(tr('Duha ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
     if (!g.lap) mkFriendPut(d, o.marks, (o.ghost.cond || {}).season);   // (the friend's tyre marks: drawn in the time trial with the friend's ghost)
-    S.track = d.id; if (d.modes) S.mode = g.lap ? 'race' : 'tt'; save(); refreshSegs();
+    S.track = d.id; if (Core.ways(d).length > 1) S.mode = g.lap ? 'race' : 'tt'; save(); refreshSegs();
     toast(tr(g.lap ? 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu na letečem krogu.' : 'Duh igralca {0} na progi {1} ({2}): dirkaj proti njemu v kronometru.', name, Lang.of(d, 'name'), fmt(g.t)), 5200);
     if (screen === 'board') { boardId = d.id; buildBoardScreen(); }
     return true;
@@ -2195,7 +2197,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const d = isObj(o) && o.app === 'apex-racing' && o.kind === 'challenge' && o.v === 1 ? Core.TRACKS.find(x => x.id === o.track) : null;
     if (!d || !posNum(o.time)) return null;
     const g = o.ghost != null ? ghParse(o.ghost) : null; if (o.ghost != null && (!g || Math.abs(g.t - o.time) > 0.001)) return null;   // (its ghost, if one came with it: the same run)
-    const lap = o.lap === 1; if (lap ? d.open || d.timeTrial : !hasTT(d)) return null;   // (a lap on a circuit, a time trial's run where there is one)
+    const lap = o.lap === 1; if (lap ? d.open || d.timeTrial : !ownTT(d)) return null;   // (a lap on a circuit, a time trial's run where there is one)
     const c = isObj(o.cond) ? o.cond : {}, v = (x) => x === 0 || x === 1 || x === 2 ? x : 1, st = isObj(c.setup) ? c.setup : {};
     return { name: cleanName(o.name) || tr('Prijatelj'), time: o.time, track: d.id, lap, car: modelById(o.car).id, color: colFix(o.color), ghost: !!g, nm: !lap && Array.isArray(o.marks) ? Math.min(o.marks.length, MK_RUNS) : 0,   // (nm: how many runs' tyre marks came with it)
       cond: { rain: c.rain === 1 ? 1 : 0, tod: CHAL_TOD[c.tod] ? c.tod : 'day', season: CHAL_SEASON[c.season] ? c.season : 'summer', upg: upgNorm(isObj(c.upg) ? c.upg : null), setup: { wing: v(st.wing), gear: v(st.gear) } } };
@@ -2206,7 +2208,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const c = chalOf(o); if (!c) return false;
     if ((c.ghost && !Shramba.keep('tdgp-fghost-' + c.track, JSON.stringify({ name: c.name, time: c.time, ghost: o.ghost }))) || !Shramba.keep(CHAL_KEY, JSON.stringify(o))) { toast(tr('Izziva ni bilo mogoče shraniti (premalo prostora).'), 3200); return false; }
     chal = c; const d = Core.TRACKS.find(x => x.id === c.track); if (!c.lap) mkFriendPut(d, o.marks, c.cond.season);   // (the friend's tyre marks, as many as came with the link)
-    S.track = d.id; if (d.modes) S.mode = c.lap ? 'race' : 'tt'; save(); refreshSegs(); chalBtn();
+    S.track = d.id; if (Core.ways(d).length > 1) S.mode = c.lap ? 'race' : 'tt'; save(); refreshSegs(); chalBtn();
     if (bg !== 'race' || screen !== 'none') chalShow();
     return true;
   }
@@ -2227,7 +2229,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   function chalGo() {   // the challenge's run: its track and way, then alone with the friend's ghost (newRace 'chal')
     if (!chal) return;
-    const C = chal, d = Core.TRACKS.find(x => x.id === C.track); S.track = d.id; if (d.modes) S.mode = C.lap ? 'race' : 'tt'; save();
+    const C = chal, d = Core.TRACKS.find(x => x.id === C.track); S.track = d.id; if (Core.ways(d).length > 1) S.mode = C.lap ? 'race' : 'tt'; save();
     if (S.control === 'tilt') enableTilt(true); Comm.unlock(); champRun = false; school = null; qual = null;
     ensureTrack(C.track, () => newRace('chal'));
   }
@@ -2391,7 +2393,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   function lpGo(k) {   // the track step of a key's track and way, its Friends view (the old menus: the Leaderboard on it)
     const I = lpTable().get(k), d = I && Core.TRACKS.find(x => x.id === I.id); if (!d) { showScreen('title'); return; }
-    S.track = d.id; if (d.modes && d.modes.indexOf(I.mode) >= 0) S.mode = I.mode; if (d.theme === 'pikes') S.pkRoad = d.id === 'pikesg' ? 'pikesg' : 'pikes';
+    S.track = d.id; if (Core.ways(d).length > 1 && Core.ways(d).indexOf(I.mode) >= 0) S.mode = I.mode; if (d.theme === 'pikes') S.pkRoad = d.id === 'pikesg' ? 'pikesg' : 'pikes';
     if (menuOn) { S.menuCam = 4; save(); refreshSegs(); showScreen('track'); return; }
     save(); refreshSegs(); boardId = d.id; lpList = false; buildBoardScreen(); showScreen('board');
   }
@@ -2507,7 +2509,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     Napake.pusti();   // (the race before, if any: kept among Zadnji posnetki when over the finish, js/napake.js)
     if (repro) repro.R = Core.rng((repro.seed * 2731 + 19) >>> 0);   // (the test mode: this race's draws from its seed, from the start)
     const ch = mode === 'chal' && chal && chal.track === track.def.id && !(mp && mp.race) ? chal : null;   // a friend's challenge: alone, with the friend's car and conditions
-    const on = mp && mp.race, md = on ? 'race' : modeSet(track.def), tt = !on && (track.def.modes ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
+    const md0 = mp && mp.race ? 'race' : modeSet(track.def), md = md0 === 'tt' && lapTT(track.def) && (champRun || MS.cur || inCareer() || school || nv || mode === 'chal' || mode === 'quali') ? 'race' : md0;   // (a circuit's time trial: a quick run of its own only; a championship, the career, a mission, a challenge: its race as ever)
+    const on = mp && mp.race, tt = !on && (track.def.modes || lapTT(track.def) ? md === 'tt' : !!track.def.timeTrial), M = ch ? modelById(ch.car) : nv ? modelById('medved') : Core.MODELS[S.car];   // (online: always the race; NEW VERSION · TEST 1: the new map starts in the MEDVED 4x4)
     const duel = md === 'traffic', chase = md === 'police';
     const cd = !on && champRun ? champDef() : null, cr = cd && !champDone() && cd.tracks[champ.rounds.length] === track.def.id ? champ.rounds.length : -1;   // a championship round (its index), or -1
     const pick = !on && !ch && !duel && !chase && cr < 0 && !MS.cur ? quickRivals(rivSet(track.def)) : -1;   // (the rivals chosen in the menu, Opponents, or for the visit the quick entry's tekmeci: a race of its own, not online, a challenge, a championship round or a mission)
@@ -2544,7 +2547,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       race.nv = true;
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, numSet: !solo && pick >= 0 || undefined, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
-      laps: solo ? 1 : cr >= 0 && cd.laps ? cd.laps : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
+      laps: solo && !(tt && lapTT(track.def)) ? 1 : cr >= 0 && cd.laps ? cd.laps : lapsOf(track.def),   // (a circuit's time trial: the quick race's laps)
+      fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo && !!S.slip, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
       voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)

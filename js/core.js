@@ -37,6 +37,9 @@ const Core = (function () {
   // Core with tests/lib/core.js, which reads the track files first; a plain require of this file gives a Core without tracks.)
   const TRACKS = (typeof TRACK_DEFS !== 'undefined' ? TRACK_DEFS : []).slice();
   const TRACK_DEF = TRACKS.find(d => d.id === 'jezero'), PIKES_DEF = TRACKS.find(d => d.id === 'pikes');   // (exported by name)
+  // the ways a track is driven: its def.modes; a time trial (def.timeTrial) only as one; every other track, a circuit too, its race (the
+  // first, as ever) and its time trial alone against the clock (Kronometer na vseh progah)
+  const ways = (d) => !d ? ['race'] : d.modes ? d.modes : d.timeTrial ? ['tt'] : d.test || d.pending ? ['race'] : ['race', 'tt'];   // (the frozen tracks, test and pending: as they were)
 
   // centripetal Catmull-Rom through the control points. Closed loop by default; open = a road with two ends
   // (phantom end points mirror the first / last segment, and the last point itself is appended).
@@ -7212,7 +7215,7 @@ const Core = (function () {
       // time trial (def.timeTrial, e.g. the Pikes Peak hill climb; a track with both ways to drive it, def.modes, driven as one when
       // opts.tt): the player alone, standing ON the start line; the clock is race.time. A time trial that can also be raced (def.timeTrial
       // with 'race' in def.modes: Pikes Peak) is the race only when asked for one (opts.tt false), else its time trial as ever
-      const md = track.def.modes || [];
+      const md = ways(track.def);   // (a circuit, a road without def.modes: its race and its time trial too, ways)
       this.timeTrial = !!(((track.def.timeTrial && !(opts.tt === false && md.indexOf('race') >= 0)) || (opts.tt && !opts.remote && md.indexOf('tt') >= 0)) && !opts.noPlayer);
       this._rq = [];   // open road + noPlayer (menu demo): cars that reached the top, waiting for a free spot at the start
       // a field race: the AI drive the field of the player's vehicle (or of opts.fieldModel: a championship's car, the title demo's
@@ -9333,7 +9336,7 @@ const Core = (function () {
     const d = TRACKS.find(x => x.id === id.trim().toLowerCase());
     if (d) q.track = d.id; else q.bad.push('proga=' + id);
     if (P.has('nacin')) {   // (a track with ways to drive it: one of them; else only its own: a race, or a time trial)
-      const m = QUICK_MODE[low('nacin')], own = d && (d.modes || [d.timeTrial ? 'tt' : 'race']).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : [], d && EN.tracks.indexOf(d.id) >= 0 ? ['endless'] : [], d && DRAG[d.id] ? ['drag'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is, the drag race on its straights; the endless drive on its circuits, EN.tracks)
+      const m = QUICK_MODE[low('nacin')], own = d && ways(d).concat(d && (d.modes || ['race']).indexOf('race') >= 0 && !(d.timeTrial && !d.modes) ? ['elim'] : [], d && d.modes && d.modes.indexOf('traffic') >= 0 ? ['lov'] : [], d && EN.tracks.indexOf(d.id) >= 0 ? ['endless'] : [], d && DRAG[d.id] ? ['drag'] : []);   // (the novelties' modes: the elimination race wherever a race is, the pursuit wherever the duel in the traffic is, the drag race on its straights; the endless drive on its circuits, EN.tracks)
       if (m && (!d || own.indexOf(m) >= 0)) q.mode = m; else q.bad.push('nacin=' + P.get('nacin'));
     }
     if (P.has('t')) { const t = Number(P.get('t').replace(',', '.')); if (P.get('t').trim() !== '' && t >= 0 && t <= 3600) q.t = t; else q.bad.push('t=' + P.get('t')); }   // (up to an hour of a race)
@@ -9345,7 +9348,7 @@ const Core = (function () {
     return q;
   }
 
-  return { EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, dressOnly, lookWire, lookRead, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
+  return { ways, EN, Endless, setCrash, XR, setTest, TX, KV, KV_IDS, XROLL, crashCollide, CRASH, G, clamp, lerp, wrapPi, sstep, rng, LAUNCH, launchSev, PIT_LAUNCH, Track, BB, RUB, TCOLD, noteGrade, codrvSay, codrvCap, codrvRoad, CD_CAP, CD_EN, CD_MAX, CD_MAX2, TRACK_DEF, PIKES_DEF, TRACKS, MODELS, ASSISTS, Car, Race, wallCollide, carCollide, aiControl, stubDrive, stubPlace, DRIVER_NAMES, driverChar, UPG, upgMods, upgStats, applyDeli, dressOnly, lookWire, lookRead, CSK, CSP, CSASSIST, CSSURF, NVK, NVASSIST,
     aiDriver, CHAMPS, CHAMP_PTS, PLAYER_KEY, champPoints, champTable, champKeys, tyreFor, TYRE_GRIP, TYRE_BRK, WET, WET_BRK, COLD, TYRE_CMP, cmpFor, STRAT, TYRE_WORN, TYRE_CLIFF, TYRE_BURST, TYRE_WMAX, tyreCliff, tyreCliff4, tyreWear4, tyreW4, TW4, RAIN_STOP, CAREER, careerPrize, careerCarK, careerUpgPrice,
     DEFS, DEFS_SKIPPED, CATS, SND_KINDS, PARTS, PART_SETS, partsOf, SPARE, applyDamage, careerWear, detachPart, KT, ktGrip, ktWear, wreckCar, maskHeld, aiModel, fieldSize, statsOf, ARC, heirOf, fuelTank, REPAIR, repairU, BAY, RED, LOD, quickArgs, HAPTIC, CREW_U, Haptic, PIT_V, stopDur, stopJobs, keepTyres, NEED_DMG, TLK, tlPlace, tlPose, voznjaFaze, voznjaIzSloga, voznjaOdmik,
     MAN, manRev, DRAG, PWR_MULT };
