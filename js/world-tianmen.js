@@ -538,12 +538,12 @@
       if (!g.empty) { const m = new THREE.Mesh(g.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true })); m.matrixAutoUpdate = false; root.add(m); }
     }
 
-    /* ---- by the road (def.side: OpenStreetMap's, 23. 11. 2026): the footway along the ridge (pale stone, a step where the ground falls), the
+    /* ---- by the road (def.obcestje: OpenStreetMap's, 23. 11. 2026): the footway along the ridge (pale stone, a step where the ground falls), the
        viewpoint at its end (a paved terrace, a railing on the three far sides), the mast (a grey three-legged lattice, 15 m: OpenStreetMap gives
        no height), the bus stop below the finish (a pole and a blank blue plate), the concrete heads of the culverts under the road; each
        past the barrier, clear of the buildings, out of the forest ---- */
     let nSide = 0;
-    { const S = def.side || {}, RS = rng(5233), stone = [0.7, 0.68, 0.64], rail = [0.55, 0.57, 0.6], conc = [0.66, 0.65, 0.62], dark = [0.07, 0.07, 0.08], stl = [0.58, 0.6, 0.63];
+    { const S = def.obcestje || {}, RS = rng(5233), stone = [0.7, 0.68, 0.64], rail = [0.55, 0.57, 0.6], conc = [0.66, 0.65, 0.62], dark = [0.07, 0.07, 0.08], stl = [0.58, 0.6, 0.63];
       const clear = (x, z, m) => { const n = vrNear(x, z); return !(n.i >= 0 && n.dd < m) && !excluded(x, z); };
       const away = (x, z, m) => { for (let k = 0; k < 14; k++) { const n = vrNear(x, z); if (n.i < 0 || n.dd >= m) return excluded(x, z) ? null : [x, z, n.i];
         const i = n.i, sd = (x - T.px[i]) * T.nx[i] + (z - T.pz[i]) * T.nz[i] >= 0 ? 1 : -1; x += T.nx[i] * sd * 0.5; z += T.nz[i] * sd * 0.5; } return null; };
