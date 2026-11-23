@@ -412,6 +412,8 @@
       }
     }
 
+    if (API.nringObc) API.nringObc({ scen, fenceC, exclPush, excluded, ground: nrGround, near: nrNear, out });   // the roadside from OpenStreetMap (js/world-nring-obcestje.js): ways, car parks, fences, lift gates
+
     /* ---- the forest: spruce and beech where OpenStreetMap has woods, bushes on the scrub, lone trees on the meadows; young trees and scrub along the
        edges of the woods and in the strip between the track and the forest behind it (a closed 'green hell' corridor). Stands differ in colour: yellow-green
        larch, fresher or darker beech, grey dead spruce (bark beetle) alone and in patches. The ground under the crowns turns to forest floor (G.cov). ---- */
@@ -467,6 +469,7 @@
           const cv = 0.86 + R() * 0.28; plant(sp, far, x, y - 0.1, z, R() * TAU, wid, hgt, [cv * (0.95 + R() * 0.1), cv, cv * (0.95 + R() * 0.1)]);
         }
       }
+      if (API.nringObcTrees) API.nringObcTrees({ plant, ground: nrGround, near: nrNear, out });   // OpenStreetMap's lone trees (js/world-nring-obcestje.js)
       for (const side of [-1, 1]) for (let d = 17930; d < 19560; d += 13) {   // Döttinger Höhe: a row of poplars and beech along the field edge, both sides
         const [x, z] = onSide(sAt(d + (crH(d, side, 61) - 0.5) * 6), side, 15 + crH(d, side, 62) * 5); if (nrLC(x, z) === 1 || excluded(x, z) || !clear(x, z, 2)) continue;
         const hq = crH(d, side, 63), pop = hq < 0.6, hgt = pop ? 15 + hq * 9 : 10 + hq * 4, cv = 0.9 + crH(d, side, 64) * 0.2;
