@@ -1,5 +1,5 @@
 // Uvoz proge iz OpenStreetMap, višinskega modela in rabe tal (sklop kratkih prog, docs/gorske-proge.md). Podatke proge vzame iz
-// tools/predogled/proge.json (obseg OSM bbox, ime ceste key, odsek sec, slog cfg; dodatno uvoz: { pred, grid, izt, hw, hwG, polmer, naklon }) in
+// tools/predogled/proge.json (obseg OSM bbox, ime ceste key ali seznam id-jev poti OSM, odsek sec, slog cfg; dodatno uvoz: { pred, grid, izt, hw, hwG, polmer, naklon }) in
 // naredi podatke datoteke proge v oblikah, ki jih berejo Vršičevi pomočniki koridorja (vrPrep v js/world-vrsic.js) in podatkovni graditelj
 // js/world-gore.js: sredinsko črto (zglajeno, serpentine odprte na najmanjši polmer, kraki narazen, kot na Irohazaki), višine ob njej
 // (očiščene, omejen naklon, serpentine bolj položne), pas terena (dem), rabo tal (lc: ESA WorldCover in OSM: voda, smučarske proge), podlago
@@ -175,7 +175,9 @@ const isCar = (t) => CAR.has(t.highway) && t.area !== 'yes' && t.access !== 'no'
 // the road of the track: the ways whose name, English name or number holds the key, joined end to end; the longest chain (by its nodes), as
 // tools/predogled/prep.py. Returns its nodes and, per segment, its way
 function chainByKey(O, key) {
-  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key));
+  // (a key of way ids, where the name won't do: a list of OSM way ids, or "w4684750,w4209126": those ways, for a road without a name or number)
+  const ids = Array.isArray(key) ? new Set(key.map(String)) : /^w\d+(,w\d+)*$/.test(key) ? new Set(key.split(',').map(x => x.slice(1))) : null;
+  const sel = O.ways.filter(w => w.nds.length > 1 && w.tags.highway && (ids ? ids.has(String(w.id)) : ((w.tags.name || '') + '|' + (w.tags['name:en'] || '') + '|' + (w.tags.ref || '')).includes(key)));
   if (!sel.length) throw new Error('cesta: ni poti s ključem "' + key + '"');
   const adj = new Map(), add = (n, i) => { const L = adj.get(n) || []; L.push(i); adj.set(n, L); };
   sel.forEach((w, i) => { add(w.nds[0], i); add(w.nds[w.nds.length - 1], i); });
@@ -495,12 +497,23 @@ async function main() {
   }
   sideRoads.sort((a, b) => a[0] - b[0]);
   for (let k = sideRoads.length - 1; k > 0; k--) for (let m = k - 1; m >= 0; m--) { const A = sideRoads[k], B = sideRoads[m]; if (!A || !B || A[1] !== B[1] || A[0] - B[0] > 40) continue; sideRoads[A[3] > B[3] ? k : m] = null; }
-  const SR = sideRoads.filter(Boolean);
+  let SR = sideRoads.filter(Boolean);
+  // (uvoz.sideMax: a town's many streets thinned to the N that matter, the streets before the service roads, the longer first; none dropped without it)
+  if (U.sideMax != null && SR.length > U.sideMax) { const keep = new Set(SR.slice().sort((a, b) => a[3] - b[3] || b[5] - a[5]).slice(0, U.sideMax)); SR = SR.filter(r => keep.has(r)); }
   // the buildings within 170 m ([x, z, length, width, angle, height (0: unknown), kind: 0 house or lodge, 1 big, 2 shed or garage, 3 hut]),
   // the lakes, the car parks and the viewpoints by the road
   const bld = bld0.filter(B => dRoad(B[0], B[1], 220) < 170 || zoneD(B[0], B[1]) < 40);
   const centroid = (p) => [p.reduce((a, q) => a + q[0], 0) / p.length, p.reduce((a, q) => a + q[1], 0) / p.length];
   const lakes = water.filter(p => p.length > 3 && dRoad(...centroid(p), 500) < 320).map(p => [Math.round(polyArea(p)), ...p.slice(0, -1).flatMap(q => [+q[0].toFixed(1), +q[1].toFixed(1)])]);
+  // the rivers (OSM waterway=river, its ways joined end to end in the direction they flow): [width, x, z, x, z, ...] every ~8 m, only the stretches
+  // within 320 m of the road (js/world-vrsic.js vrPrep: a bed dug into the terrain, the water sloping down it)
+  const rivers = [], rw = O.ways.filter(w => w.tags.waterway === 'river'), used = new Set();
+  for (const w0 of rw) { if (used.has(w0)) continue; used.add(w0); let nds = [...w0.nds], wd = +String(w0.tags.width || '').split(' ')[0] || 0;
+    for (let more = true; more;) { more = false; for (const w of rw) { if (used.has(w)) continue;
+      if (w.nds[0] === nds[nds.length - 1]) { nds = nds.concat(w.nds.slice(1)); used.add(w); more = true; } else if (w.nds[w.nds.length - 1] === nds[0]) { nds = w.nds.slice(0, -1).concat(nds); used.add(w); more = true; } } }
+    const p = polyXZ(nds); if (p.length < 2) continue; let run = [];
+    const flush = () => { if (run.length > 1 && lineLen(run) > 60) { const q = resample(run, 8); rivers.push([Math.round(Math.min(30, Math.max(12, wd || 18))), ...q.flatMap(v => [+v[0].toFixed(1), +v[1].toFixed(1)])]); } run = []; };
+    for (const v of resample(p, 8)) { if (dRoad(v[0], v[1], 400) < 320) run.push(v); else flush(); } flush(); }
   const pulls = areasOf(O, t => t.amenity === 'parking').map(polyXZ).filter(p => p.length > 3).map(p => { const [x, z] = centroid(p); return [+x.toFixed(1), +z.toFixed(1), Math.round(Math.sqrt(polyArea(p) / Math.PI)), Math.round(dRoad(x, z, 160))]; }).filter(p => p[3] < 110);
   const vistas = []; for (const [, nd] of O.nodes) if (nd.tags.tourism === 'viewpoint') { const [x, z] = G.xz(nd.lat, nd.lon), d = dRoad(x, z, 200); if (d < 150) vistas.push([+x.toFixed(1), +z.toFixed(1), Math.round(d)]); }
   const trees = []; for (const [, nd] of O.nodes) if (nd.tags.natural === 'tree') { const [x, z] = G.xz(nd.lat, nd.lon); if (dRoad(x, z, 100) < 80) trees.push(+x.toFixed(1), +z.toFixed(1)); }
@@ -514,11 +527,11 @@ async function main() {
     bends: bRace, elevSmooth: 12, elevDm: H5, surf, widths,
     dem: { x0, z0, nx: dnx, nz: dnz, cell, base: +base.toFixed(2), tr: ED.tr, rows: ED.rows, res: ED.res },
     lc: { x0, z0, nx: lnx, nz: lnz, cell: lcell, rle: rleLC(lc) },
-    zones, lifts, bld, lakes, pulls, vistas, trees, sideRoads: SR, points: P5,
+    zones, lifts, bld, lakes, riverBeds: rivers, pulls, vistas, trees, sideRoads: SR, points: P5,
   };
   let gmax = 0; for (let i = iS; i < iF; i++) gmax = Math.max(gmax, Math.abs(HT.h[i + 1] - HT.h[i]) / ds);
   console.log(`zapis: dirka ${data.realKm} km, ${data.alt[0]} -> ${data.alt[1]} m (najstrmeje ${(gmax * 100).toFixed(1)} %), ovinkov ${bRace.length} (serpentin ${bRace.filter(b => b[3] > 140).length}), ` +
-    `makadam ${surf.map(s => s[0] + '-' + s[1]).join(', ') || '-'}, stranskih cest ${SR.length}, žičnic ${lifts.length}, stavb ${bld.length}, jezer ${lakes.length}, parkirišč ${pulls.length}, dreves ${trees.length / 2}; ` +
+    `makadam ${surf.map(s => s[0] + '-' + s[1]).join(', ') || '-'}, stranskih cest ${SR.length}, žičnic ${lifts.length}, stavb ${bld.length}, jezer ${lakes.length}, rek ${rivers.length}, parkirišč ${pulls.length}, dreves ${trees.length / 2}; ` +
     `teren ${dnx}x${dnz} (ostanki do ${ED.worst} m${ED.clip ? ', odrezanih ' + ED.clip : ''}), raba tal ${lnx}x${lnz} [${[...new Set(lc)].sort().join(',')}]`);
   if (o.pregled) return;
   const jf = path.join(DATA, 'uvoz', id + '.json'); fs.mkdirSync(path.dirname(jf), { recursive: true }); fs.writeFileSync(jf, JSON.stringify(data));
@@ -554,6 +567,7 @@ function writeTrack(f, d) {
     `    zones: ${J(d.zones)}, lifts: ${J(d.lifts)},`,
     `    bld: ${J(d.bld)},`,
     `    lakes: ${J(d.lakes)}, pulls: ${J(d.pulls)}, vistas: ${J(d.vistas)}, trees: ${J(d.trees)},`,
+    ...(d.riverBeds && d.riverBeds.length ? [`    riverBeds: ${J(d.riverBeds)},`] : []),
     ...(d.sideRoads.length ? [`    sideRoads: ${J(d.sideRoads)},`] : []),
     `    points: ${J(d.points)},`,
   ];

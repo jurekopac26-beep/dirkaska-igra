@@ -82,6 +82,13 @@ const Render = (function () {
     return l > 0.6 ? [0.12, 0.24, 0.75] : [0.96, 0.96, 0.94];
   }
 
+  // a rear wheel drawn in the body: the geometry's userData.wr keeps where its triangles are (a, b: its vertices) and what it is (sd, x, y, z:
+  // its centre, r, wd, k: where its tyre begins, a share of r), so the garage can take the tyre off its rim (garage3d.js, fitWheels)
+  function rearWheel(g, w, fn) { const a = g.P.length / 3; fn(); (g.wr || (g.wr = [])).push(Object.assign(w, { a, b: g.P.length / 3 })); }
+  // an exhaust drawn in the body: the geometry's userData.ex keeps where its triangles are ([a, b]: its vertices), so the garage's arm can draw it out
+  function exIn(g, fn) { const a = g.P.length / 3; fn(); (g.ex || (g.ex = [])).push([a, g.P.length / 3]); }
+  const withWr = (g) => { const geo = g.geometry(); if (g.wr) geo.userData.wr = g.wr; if (g.ex) geo.userData.ex = g.ex; return geo; };
+
   // (band: the compound's band on the sidewalls (tyreBand), the outer one only for a wheel in the body (cz off the car's middle), else both)
   function wheelInto(g, cx, cy, cz, r, wd, tire, rim, band) {
     const S = 12, inn = [cx, cy, cz];
@@ -237,10 +244,10 @@ const Render = (function () {
     // rear wheels (fronts are separate meshes) + mud flaps
     const r = M.rw, fx = M.a * (M.len / 4.4) * 0.98 + 0.05, rx = -M.b * (M.len / 4.4) * 0.98;
     for (const sd of [-1, 1]) {
-      wheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.1), r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band);
+      const z = sd * (M.wid * 0.5 - 0.1); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.26, k: 0.68 }, () => wheelInto(g, rx, r, z, r, 0.26, [0.07, 0.07, 0.08], [0.93, 0.93, 0.9], band));
       for (const wxp of [fx, rx]) World.box(g, wxp - 0.44, 0.17, sd * (M.wid * 0.5 - 0.08), 0.03, 0.26, 0.2, 0, K);
     }
-    return g.geometry();
+    return withWr(g);
   }
   /* ---------------- formula car: open wheels, wings, halo ----------------
      x forward from the centre of mass, y up, z right; the axles at M.a / -M.b. The body mesh is the tub (chassis, cockpit, airbox), the
@@ -512,10 +519,10 @@ const Render = (function () {
     // the tail: a black panel round the lamps (the lamps are the tail mesh), the chrome fuel cap in the middle; twin exhausts under the bumper
     World.box(g, rear.x - 0.01, 0.62, 0, 0.04, 0.17, rear.w * 1.66, 0, K);
     discX(g, rear.x - 0.035, 0.7, 0, 0.06, 10, CH, -1);
-    for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]);
+    exIn(g, () => { for (const sd of [-1, 1]) for (const z of [0.5, 0.62]) tubeX(g, rear.x + 0.25, rear.x - 0.07, 0.31, sd * z, 0.042, 8, CH, [0.04, 0.04, 0.045]); });
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) muscleWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);   // (the rear wheels in the body; the fronts are meshes of their own)
-    return g.geometry();
+    for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.13); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.3, k: 0.68 }, () => muscleWheelInto(g, rx, r, z, r, 0.3, band)); }   // (the rear wheels in the body; the fronts are meshes of their own)
+    return withWr(g);
   }
   function muscleWheelInto(g, cx, cy, cz, r, wd, band) { wheelInto(g, cx, cy, cz, r, wd, [0.07, 0.07, 0.08], [0.8, 0.81, 0.84], band); }
 
@@ -548,8 +555,8 @@ const Render = (function () {
     World.box(g, rear.x + 0.14, 0.19, 0, 0.34, 0.1, 1.5, 0, CF);
     for (let i = -2; i <= 2; i++) World.box(g, rear.x + 0.12, 0.13, i * 0.3, 0.3, 0.2, 0.025, 0, K);
     const r = M.rw, rx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) aeroWheelInto(g, rx, r, sd * (M.wid * 0.5 - 0.13), r, 0.3, band);
-    return g.geometry();
+    for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.13); rearWheel(g, { sd, x: rx, y: r, z, r, wd: 0.3, k: 0.8 }, () => aeroWheelInto(g, rx, r, z, r, 0.3, band)); }
+    return withWr(g);
   }
   // the electric car's wheel: a low tyre, a silver rim lip, a dark aero disc with five swept cyan blades (the spin shows), a centre lock
   function aeroWheelInto(g, cx, cy, cz, r, wd, band) {
@@ -598,14 +605,14 @@ const Render = (function () {
     World.box(g, front.x - 0.18, 0.5, 0, 0.5, 0.05, 1.3, 0, K2);
     // the tail: the lamps' black surrounds (the lamps are the tail mesh), the exhaust out of the side in front of the rear wheel
     for (const sd of [-1, 1]) World.box(g, rear.x - 0.012, 0.92, sd * 0.85, 0.03, 0.23, 0.16, 0, K);
-    tubeX(g, rx + 0.95, rx + 0.62, 0.66, M.wid * 0.5 - 0.1, 0.055, 8, [0.62, 0.62, 0.64], [0.04, 0.04, 0.045]);
+    exIn(g, () => tubeX(g, rx + 0.95, rx + 0.62, 0.66, M.wid * 0.5 - 0.1, 0.055, 8, [0.62, 0.62, 0.64], [0.04, 0.04, 0.045]));
     // the flares over the wheels, the coil-overs in the arches; the rear wheels (the fronts are meshes of their own)
     for (const x of [fx, rx]) for (const sd of [-1, 1]) {
       flareInto(g, x, r, r + 0.07, r + 0.17, sd * 0.86, sd * (M.wid * 0.5 + 0.04), K);
       fRod(g, [x + 0.08, r + 0.1, sd * (hz - 0.2)], [x - 0.1, 1.08, sd * 0.7], 0.07, [0.74, 0.74, 0.77]);
       fRod(g, [x + 0.05, r + 0.3, sd * (hz - 0.23)], [x - 0.05, 0.86, sd * 0.74], 0.1, S);   // (its spring)
     }
-    for (const sd of [-1, 1]) knobWheelInto(g, rx, r, sd * hz, r, 0.36, null, band);
+    for (const sd of [-1, 1]) rearWheel(g, { sd, x: rx, y: r, z: sd * hz, r, wd: 0.36, k: 0.56 }, () => knobWheelInto(g, rx, r, sd * hz, r, 0.36, null, band));
     // the bed: the spare lying in it, the cage from the roof down to the tail; the light bar on the roof; the snorkel
     knobWheelInto(g, -1.72, 1.24 + 0.17, 0, 0.44, 0.34, 'y');
     const cg = [0.1, 0.1, 0.11];
@@ -618,7 +625,7 @@ const Render = (function () {
     for (let i = 0; i < 6; i++) World.box(g, 0.325, 1.815, (i - 2.5) * 0.25, 0.012, 0.08, 0.19, 0, [1, 0.96, 0.82]);
     for (const sd of [-1, 1]) fRod(g, [0.24, 1.77, sd * 0.6], [0.24, 1.8, sd * 0.6], 0.05, K);
     fRod(g, [1.0, 1.22, M.wid * 0.5 - 0.1], [0.62, 1.8, M.wid * 0.5 - 0.2], 0.1, K); World.box(g, 0.6, 1.76, M.wid * 0.5 - 0.2, 0.14, 0.12, 0.12, 0, K);
-    return g.geometry();
+    return withWr(g);
   }
   // a wheel-arch flare: a thick arc over the wheel (centre cx, cy) from radius r0 to r1, from z0 (in) to z1 (out)
   function flareInto(g, cx, cy, r0, r1, z0, z1, col) {
@@ -2453,8 +2460,8 @@ const Render = (function () {
     }
     // rear wheels
     const r = M.rw, wx = -M.b * (M.len / 4.4) * 0.98;
-    for (const sd of [-1, 1]) wheelInto(g, wx, r, sd * (M.wid * 0.5 - 0.1), r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band);
-    return done(smoothNormals(g.geometry(), 38));
+    for (const sd of [-1, 1]) { const z = sd * (M.wid * 0.5 - 0.1); rearWheel(g, { sd, x: wx, y: r, z, r, wd: 0.24, k: 0.68 }, () => wheelInto(g, wx, r, z, r, 0.24, [0.08, 0.08, 0.09], [0.62, 0.64, 0.68], band)); }
+    return done(smoothNormals(withWr(g), 38));
   }
   let wheelGeo = null, tailGeoCache = new Map();
   let wheelGeoW = null;
@@ -3462,7 +3469,7 @@ const Render = (function () {
   const POST_SNOW = [1, 0.53, 0.13];                              // instance tint of the orange snow poles high up on Pikes Peak (a 'post' with col 1)
   let propMat = null, propMatTyre = null;
   const RS_KINDS = new Set(['rssign', 'rschev', 'rsboard']);   // (the open roads' signs and boards: World's roadside, their faces on the world's atlas)
-  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench', 'rssign', 'rschev', 'rsboard']);   // (the small street furniture, Medvode's thin signs on poles and bench, the open roads' signs and boards: no shadow pass of their own, the phone's budget)
+  const PROP_NOSHADOW = new Set(['sign', 'hydrant', 'bin', 'cabinet', 'mailbox', 'bollard', 'barrel', 'msign', 'bsign', 'nsign', 'zaprta', 'bench', 'rssign', 'rschev', 'rsboard', 'isign', 'iblock', 'iboard']);   // (the small street furniture, Medvode's thin signs on poles and bench, the open roads' signs and boards, the signs on the roundabouts' islands: no shadow pass of their own, the phone's budget)
   function propGeometry(kind) {
     const W = World, g = new W.GB(kind === 'tyre' || kind === 'tstack' || RS_KINDS.has(kind)), white = [1, 1, 1], TAU2 = Math.PI * 2;
     const disc = (y, r, n, rim, mid, up) => { for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2, c = [0, y, 0], p0 = [Math.cos(a0) * r, y, Math.sin(a0) * r], p1 = [Math.cos(a1) * r, y, Math.sin(a1) * r];
@@ -3525,6 +3532,18 @@ const Render = (function () {
       for (const f of [-1, 1]) { const x = f * 0.032, A = (y, z) => [x, y, z], inn = [0, 0.97, 0];
         if (kind === 'msign') g.triO(A(1.17, 0), A(0.75, -0.25), A(0.75, 0.25), wh, inn);
         else { g.quadO(A(0.82, -0.22), A(0.82, 0.22), A(1.1, 0.22), A(1.1, -0.22), wh, inn); g.quadO([f * 0.034, 0.96, -0.19], [f * 0.034, 0.96, 0.19], [f * 0.034, 1.06, 0.19], [f * 0.034, 1.06, -0.19], blue, inn); } } }
+    else if (kind === 'isign' || kind === 'iblock' || kind === 'iboard') {   // Medvode's island sign (Core PROPK): a blue keep-right disc (faces ±x, the white arrow down to the
+      // right as each side's viewer sees it) on a grey post standing on three stacked black rubber bases (0.6 x 0.22 x 0.6 m, a yellow reflective band round each); 'iblock'
+      // one base, 'iboard' the post with its disc, each about its own centre (the sign's: 1.18 m up, the post's middle 0.33 m above that)
+      const base = (y0) => { W.box(g, 0, y0, 0, 0.6, 0.22, 0.6, 0, [0.17, 0.17, 0.19], [0.24, 0.24, 0.26]); W.box(g, 0, y0 + 0.08, 0, 0.606, 0.05, 0.606, 0, [0.98, 0.8, 0.12], [0.98, 0.8, 0.12], true); };
+      const disc = (yc) => { const blue = [0.1, 0.3, 0.72], wh = [0.95, 0.95, 0.94], n = 12;
+        for (const f of [-1, 1]) { const x = f * 0.03, inn = [-f, yc, 0];
+          for (let k = 0; k < n; k++) { const a0 = k / n * TAU2, a1 = (k + 1) / n * TAU2; g.triO([x, yc, 0], [x, yc + Math.sin(a0) * 0.32, Math.cos(a0) * 0.32], [x, yc + Math.sin(a1) * 0.32, Math.cos(a1) * 0.32], blue, inn); }
+          const P = (r, v) => [f * 0.034, yc + v, -f * r];   // (r: to the viewer's right, v: up)
+          g.quadO(P(-0.155, 0.105), P(-0.105, 0.155), P(0.075, -0.025), P(0.025, -0.075), wh, inn); g.triO(P(0.15, -0.15), P(-0.02, -0.15), P(0.15, 0.02), wh, inn); } };
+      if (kind === 'iblock') base(-0.11);
+      else if (kind === 'iboard') { W.cyl(g, 0, -0.85, 0, 0.04, 1.7, 5, [0.62, 0.63, 0.66]); disc(0.49); }
+      else { for (let k = 0; k < 3; k++) base(-1.18 + k * 0.22); W.cyl(g, 0, -0.52, 0, 0.04, 1.7, 5, [0.62, 0.63, 0.66]); disc(0.82); } }
     else if (kind === 'nsign') {   // the street's name: a blue plate (1.4 x 0.35, faces ±x) on a pole, white bars for the lettering
       const blue = [0.11, 0.31, 0.6], wh = [0.95, 0.95, 0.93];
       W.cyl(g, 0, -1.6, 0, 0.04, 2.9, 5, [0.62, 0.63, 0.66]); W.box(g, 0, 0.75, 0, 0.05, 0.35, 1.4, 0, blue);
@@ -3868,18 +3887,21 @@ const Render = (function () {
   // the marbles (Race mb, a race with tyres): the rubber the tyres shed, a dark speckled band just off the racing line on the outside of the
   // corners (Track.marbles: its middle and width, how thick it gets there in the vertices' alpha), as dark as the race has laid it (mb.lv;
   // the rain washes it away). One mesh over the lap (a row every 4 m, only where there is a band; a strip ends where the band changes
-  // sides), built the first time it shows; a new world: built again for its track. Its picture: Tex.marbles, made once
+  // sides), built the first time it shows; a new world: built again for its track. Its picture: Tex.marbles, made once.
+  // A track with the player's line (Track gl, docs/zgumirana-linija.md): the band is drawn off that line, beside the rubber drawn there
+  // (Track.marblesAlong; the look only: the grip of it stays off the computed line, Track.marbleAt)
   let mbLn = null, mbTex = null;
   function marbles(R) {
-    if (mbLn && mbLn.userData.w !== world) { scene.remove(mbLn); mbLn.geometry.dispose(); mbLn.material.dispose(); mbLn = null; }
-    const T = R && R.track, lv = R && R.mb && T === curTrack ? R.mb.lv : 0;
+    const T = R && R.track, cur = !!T && T === curTrack, GL = cur && T.gl && T.gl !== T.rl ? T.gl : null;
+    if (mbLn && (mbLn.userData.w !== world || (cur && mbLn.userData.gl !== GL))) { scene.remove(mbLn); mbLn.geometry.dispose(); mbLn.material.dispose(); mbLn = null; }
+    const lv = R && R.mb && cur ? R.mb.lv : 0;
     if (lv > 0.01 && !mbLn && world) {
-      const M = T.marbles(), N = T.N, st = 2, n = Math.ceil(N / st), kAt = (j) => M.k[((j * st) % N + N) % N], O = [-1, -0.45, 0.45, 1], A = [0, 1, 1, 0];
+      const M = GL ? T.marblesAlong(GL) : T.marbles(), LN = GL || T.rl, N = T.N, st = 2, n = Math.ceil(N / st), kAt = (j) => M.k[((j * st) % N + N) % N], O = [-1, -0.45, 0.45, 1], A = [0, 1, 1, 0];
       const pos = [], col = [], uv = [], idx = [], bk = { dy: 0, sl: 0 };
       let last = -2, side = 0;
       for (let j = 0; j <= n; j++) {
         if (Math.max(kAt(j - 1), kAt(j), kAt(j + 1)) < 0.02) continue;
-        const i = (j * st) % N, k = kAt(j), sd = M.c[i] > T.rl[i] ? 1 : -1, b = pos.length / 3;
+        const i = (j * st) % N, k = kAt(j), sd = M.c[i] > LN[i] ? 1 : -1, b = pos.length / 3;
         for (let v = 0; v < 4; v++) {
           const o = M.c[i] + O[v] * M.h[i]; let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.035;
           if (T.bank) y += T.bankAt(i * T.ds, o, bk).dy;
@@ -3893,7 +3915,7 @@ const Render = (function () {
       g.computeVertexNormals();
       if (!mbTex) mbTex = Tex.marbles();
       const m = new THREE.MeshLambertMaterial({ map: mbTex, vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-      mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length }; scene.add(mbLn);
+      mbLn = new THREE.Mesh(g, m); mbLn.name = 'marbles'; mbLn.receiveShadow = true; mbLn.renderOrder = 2; mbLn.matrixAutoUpdate = false; mbLn.userData = { w: world, none: !idx.length, gl: GL }; scene.add(mbLn);
     }
     if (mbLn) { mbLn.visible = lv > 0.01 && !mbLn.userData.none; mbLn.material.opacity = Math.min(1, lv); }
   }
@@ -3902,39 +3924,97 @@ const Render = (function () {
   // there). RUB_O: the columns across (m from the line), RUB_A their alpha, RUB_C their colour; a little more of it in the bends (the line's
   // curvature over ±16 m) than on the straights. As the race lays it (rb) it darkens and its sheen grows (a Phong highlight, bluish).
   // One mesh over the lap (a row every 4 m in the bends, every 8 m on the straights), built the first time it shows; a new world: built
-  // again for its track. Its picture: Tex.rubber
+  // again for its track. Its picture: Tex.rubber.
+  // A track with the player's line (Track gl, gld: docs/zgumirana-linija.md) has the layer along that line and wider (RUB_OW, RUB_AW,
+  // RUB_CW; kept on the road), darker where the tyres work (gld: braking and cornering) and fainter on the straights, and only on the
+  // asphalt (rubberW). The look only: the grip of it stays on the computed line (Track.rubberAt). An open road has no race laying it:
+  // there it lies at RUB_OPEN, matt, fading as the road gets wet (the rain washes it off) and fainter in the snow (RUB_SNOW), a row at
+  // every sample in pieces of RUB_CH samples (rubberRoad), of which only those this side of the fog's end are drawn
   const RUB_O = [-1.75, -0.95, 0, 0.95, 1.75], RUB_A = [0, 0.6, 1, 0.6, 0], RUB_C = [0.3, 0.19, 0.12, 0.19, 0.3];
+  const RUB_OW = [-3.1, -2.1, -1.05, 0, 1.05, 2.1, 3.1], RUB_AW = [0, 0.4, 0.85, 1, 0.85, 0.4, 0], RUB_CW = [0.3, 0.25, 0.16, 0.12, 0.16, 0.25, 0.3];
+  const RUB_OPEN = 0.6, RUB_SNOW = 0.6, RUB_CH = 128;
   let rbLn = null, rbTex = null;
-  function rubberLine(R) {
-    if (rbLn && rbLn.userData.w !== world) { scene.remove(rbLn); rbLn.geometry.dispose(); rbLn.material.dispose(); rbLn = null; }
-    const T = R && R.track, rb = R && R.mb && T === curTrack && T.rl ? R.mb.rb || 0 : 0;
-    if (rb > 0.005 && !rbLn && world) {
-      const N = T.N, nc = RUB_O.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
-      for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
-      for (let i = 0, j = 0; i <= N; j++) {
-        const ii = i % N, kb = 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), b0 = pos.length / 3;
-        for (let v = 0; v < nc; v++) {
-          const o = T.rl[ii] + RUB_O[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
-          if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
-          pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
-          col.push(RUB_C[v], RUB_C[v] * 0.96, RUB_C[v] * 0.92, RUB_A[v] * kb); uv.push(RUB_O[v] / 4, i * T.ds / 8);
-        }
-        if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
-        if (i === N) break;
-        let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
-        i = Math.min(N, i + st);
+  const rubberOff = () => { scene.remove(rbLn); (rbLn.isMesh ? [rbLn] : rbLn.children).forEach(c => c.geometry.dispose()); rbLn.userData.m.dispose(); rbLn = null; };
+  // (the wide layer's weight per sample: how hard the tyres work there (gld), none off the asphalt, fading in over the first 10 m of it; an open road: fading over 30 m at its two ends)
+  function rubberW(T) {
+    const N = T.N, open = T.open, at = (i) => open ? Math.max(0, Math.min(N - 1, i)) : ((i % N) + N) % N, a = new Uint8Array(N), e = new Uint8Array(N), w = new Float32Array(N);
+    for (let i = 0; i < N; i++) a[i] = !(T.settAt && T.settAt[i]) && (T.sf ? T.sf[i] === 0 : T.def.roadSurface !== 'makadam' || !!(T.pavedAt && T.pavedAt[i])) ? 1 : 0;
+    for (let i = 0; i < N; i++) { let m = 1; for (let o = -3; o <= 3; o++) m &= a[at(i + o)]; e[i] = m; }
+    for (let i = 0; i < N; i++) { let s = 0; for (let o = -2; o <= 2; o++) s += e[at(i + o)]; w[i] = (0.4 + 0.6 * Math.pow(T.gld[i], 0.7)) * s / 5 * (open ? Core.sstep(0, 15, i) * Core.sstep(0, 15, N - 1 - i) : 1); }
+    return w;
+  }
+  // (a lap's rubber, one mesh: the old layer along the computed line, or with GL the wide one along the player's line)
+  function rubberLap(T, GL, m) {
+    const RO = GL ? RUB_OW : RUB_O, RA = GL ? RUB_AW : RUB_A, RC = GL ? RUB_CW : RUB_C, w = GL ? rubberW(T) : null;
+    const N = T.N, nc = RO.length, rk = T.rk, bk = { dy: 0, sl: 0 }, cu = new Float32Array(N), pos = [], col = [], uv = [], idx = [];
+    for (let i = 0; i < N; i++) { let s = 0; for (let o = -8; o <= 8; o++) s += rk[(i + o + N) % N]; cu[i] = Math.abs(s / 17); }
+    for (let i = 0, j = 0; i <= N; j++) {
+      const ii = i % N, kb = w ? w[ii] : 0.7 + 0.3 * Core.sstep(1 / 400, 1 / 90, cu[ii]), lim = GL ? (T.wa ? T.wa[ii] : T.w) - 0.1 : 0, b0 = pos.length / 3;
+      for (let v = 0; v < nc; v++) {
+        const o = GL ? Core.clamp(GL[ii] + RO[v], -lim, lim) : T.rl[ii] + RO[v]; let y = (T.hasElev && T.hy ? T.hy[ii] : 0) + 0.032;
+        if (T.bank) y += T.bankAt(ii * T.ds, o, bk).dy;
+        pos.push(T.px[ii] + T.nx[ii] * o, y, T.pz[ii] + T.nz[ii] * o);
+        col.push(RC[v], RC[v] * 0.96, RC[v] * 0.92, RA[v] * kb); uv.push(RO[v] / 4, i * T.ds / 8);
       }
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
-      g.computeVertexNormals();
+      if (j) for (let v = 0; v < nc - 1; v++) { const a = b0 - nc + v, c = b0 + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+      if (i === N) break;
+      let st = 4; for (let o = 0; o <= 4; o++) if (cu[(i + o) % N] > 1 / 400) { st = 2; break; }   // (a bend within the next 8 m: a row every 4 m)
+      i = Math.min(N, i + st);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 4)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    g.computeVertexNormals();
+    const o = new THREE.Mesh(g, m); o.receiveShadow = true; o.renderOrder = 1; return o;
+  }
+  // (an open road's rubber along the player's line GL: a row at every sample, none off the asphalt, in pieces of RUB_CH samples under one plain
+  // Object3D: a Group's renderOrder would be its pieces' group order)
+  function rubberRoad(T, GL, m) {
+    const N = T.N, nc = RUB_OW.length, w = rubberW(T), bk = { dy: 0, sl: 0 }, row = new Int32Array(N).fill(-1), pos = [], col = [], uv = [], idx = [];
+    let nr = 0;
+    for (let i = 0; i < N; i++) {
+      if (Math.max(w[Math.max(0, i - 1)], w[i], w[Math.min(N - 1, i + 1)]) < 0.004) continue;
+      const lim = (T.wa ? T.wa[i] : T.w) - 0.1;
+      for (let v = 0; v < nc; v++) {
+        const o = Core.clamp(GL[i] + RUB_OW[v], -lim, lim); let y = (T.hasElev && T.hy ? T.hy[i] : 0) + 0.05;
+        if (T.bank) y += T.bankAt(i * T.ds, o, bk).dy;
+        pos.push(T.px[i] + T.nx[i] * o, y, T.pz[i] + T.nz[i] * o);
+        col.push(RUB_CW[v], RUB_CW[v] * 0.96, RUB_CW[v] * 0.92, RUB_AW[v] * w[i]); uv.push(RUB_OW[v] / 4, i * T.ds / 8);
+      }
+      if (i && row[i - 1] >= 0) for (let v = 0; v < nc - 1; v++) { const a = (nr - 1) * nc + v, c = nr * nc + v; idx.push(a, a + 1, c, a + 1, c + 1, c); }   // (facing up)
+      row[i] = nr++;
+    }
+    const P = new Float32Array(pos), C = new Float32Array(col), U = new Float32Array(uv), g0 = new THREE.BufferGeometry();
+    g0.setAttribute('position', new THREE.BufferAttribute(P, 3)); g0.setIndex(idx); g0.computeVertexNormals();   // (the normals over the whole strip: the pieces' seams shade alike)
+    const Nn = g0.attributes.normal.array; g0.dispose();
+    const grp = new THREE.Object3D();
+    for (let i0 = 0; i0 < N - 1; i0 += RUB_CH) {
+      const i1 = Math.min(N - 1, i0 + RUB_CH), ix = []; let r0 = -1, r1 = -1;   // (the seam's row in both pieces)
+      for (let i = i0; i <= i1; i++) if (row[i] >= 0) { if (r0 < 0) r0 = row[i]; r1 = row[i]; if (i > i0 && row[i - 1] >= 0) for (let v = 0; v < nc - 1; v++) { const a = (row[i - 1] - r0) * nc + v, c = a + nc; ix.push(a, a + 1, c, a + 1, c + 1, c); } }
+      if (!ix.length) continue;
+      const g = new THREE.BufferGeometry(), v0 = r0 * nc, v1 = (r1 + 1) * nc;
+      g.setAttribute('position', new THREE.BufferAttribute(P.slice(v0 * 3, v1 * 3), 3)); g.setAttribute('normal', new THREE.BufferAttribute(Nn.slice(v0 * 3, v1 * 3), 3));
+      g.setAttribute('color', new THREE.BufferAttribute(C.slice(v0 * 4, v1 * 4), 4)); g.setAttribute('uv', new THREE.BufferAttribute(U.slice(v0 * 2, v1 * 2), 2)); g.setIndex(ix); g.computeBoundingSphere();
+      const c = new THREE.Mesh(g, m); c.receiveShadow = true; c.renderOrder = 1; c.matrixAutoUpdate = false; grp.add(c);
+    }
+    return grp;
+  }
+  function rubberLine(R) {
+    const T = R && R.track, on = !!T && T === curTrack && !!T.rl, GL = on && T.gl && T.gl !== T.rl && T.gld ? T.gl : null;
+    if (rbLn && (rbLn.userData.w !== world || (on && rbLn.userData.gl !== GL))) rubberOff();
+    const road = !!GL && T.open;   // (an open road: no race lays it, it lies there as the dry days left it)
+    const rb = !on ? 0 : R.mb ? R.mb.rb || 0 : road ? RUB_OPEN * (1 - Core.sstep(0.1, 0.6, Math.max(0, wetW))) * (snowy() ? RUB_SNOW : 1) : 0;
+    if (rb > 0.005 && !rbLn && world) {
       if (!rbTex) rbTex = Tex.rubber();
       const m = new THREE.MeshPhongMaterial({ map: rbTex, vertexColors: true, transparent: true, depthWrite: false, shininess: 36, specular: 0x000000, polygonOffset: true, polygonOffsetFactor: -1.5, polygonOffsetUnits: -1.5 });
-      rbLn = new THREE.Mesh(g, m); rbLn.name = 'rubberline'; rbLn.receiveShadow = true; rbLn.renderOrder = 1; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1 }; scene.add(rbLn);
+      rbLn = road ? rubberRoad(T, GL, m) : rubberLap(T, GL, m);
+      rbLn.name = 'rubberline'; rbLn.matrixAutoUpdate = false; rbLn.userData = { w: world, k: -1, gl: GL, m, road }; scene.add(rbLn);
     }
     if (rbLn) {
+      const ud = rbLn.userData;
       rbLn.visible = rb > 0.005;
+      if (rbLn.visible && ud.road) { const p = camera.position, f = scene.fog ? scene.fog.far + 20 : Infinity; for (const c of rbLn.children) { const s = c.geometry.boundingSphere; c.visible = s.center.distanceTo(p) - s.radius < f; } }   // (as cullByDistance: the haze hides the far pieces anyway)
       const k = Math.round(Math.min(1, rb) * 100) / 100;   // (in steps: the material only when it changes)
-      if (k !== rbLn.userData.k) { rbLn.userData.k = k; rbLn.material.opacity = 0.22 + 0.5 * k; rbLn.material.specular.setRGB(0.05 + 0.13 * k, 0.06 + 0.15 * k, 0.08 + 0.2 * k); }
+      if (k !== ud.k) { const sk = ud.road ? 0.2 : 1; ud.k = k; ud.m.opacity = ud.road ? (0.3 / RUB_OPEN + 0.6) * k : 0.22 + 0.5 * k; ud.m.specular.setRGB((0.05 + 0.13 * k) * sk, (0.06 + 0.15 * k) * sk, (0.08 + 0.2 * k) * sk); }
     }
   }
 
@@ -7000,6 +7080,7 @@ const Render = (function () {
       const c = v.car, M = c.m, u = lodU(c, alpha);
       const x = lerp(c.px, c.x, u), z = lerp(c.pz, c.z, u), h = c.ph + wrapPi(c.h - c.ph) * u;
       const y = lerp(c.py, c.y, u), jk = crew && c === crew.P;   // jk: the player's car, maybe up on the jacks in its pit box
+      const fb = c.fall && c.fall.b || null;   // (over the edge, falling down the slope as a rigid body, Core fallBody: its pose its own, fallPose below)
       // over a piece of debris on the road (Core debrisHit: hopN, hopT, hopH): the body up and down once, as if it jumped ~2 m
       if (v.hopN === undefined) v.hopN = c.hopN || 0;   // (a view built afresh: none of the old ones)
       else if ((c.hopN || 0) !== v.hopN) { v.hopN = c.hopN || 0; v.hop = c.hopN ? { t: 0, T: c.hopT || 0.2, h: c.hopH || 0.08 } : null; }
@@ -7014,10 +7095,11 @@ const Render = (function () {
       v.gpitch += (pitchTarget - v.gpitch) * Math.min(1, dt * (c.air ? 9 : 6));
       const bnx = c.bnx != null ? c.bnx : c.q.nx, bnz = c.bnz != null ? c.bnz : c.q.nz, bankT = (c.bankSl && !c.air ? -Math.atan(c.bankSl * (-Math.sin(h) * bnx + Math.cos(h) * bnz)) : 0) - (hl ? clamp(Math.atan(hl.lat), -0.8, 0.8) : 0);   // a banked corner: tilt with the surface (the new map's bend: its own way across, Car.bnx)
       v.broll = (v.broll || 0) + (bankT - (v.broll || 0)) * Math.min(1, dt * 10);
+      if (v.fb && !fb) fallBack(v, pitchTarget, bankT, dt);   // (put back on the road after its fall: standing there at once)
       v.grp.rotation.set(v.broll + (c.nvR || 0), -h, v.gpitch + (jk ? crew.liftP : 0) + (c.nvP || 0), 'YZX');   // whole car (incl. separate front wheels) follows the slope (and the bank)
       v.bodyG.rotation.set(v.roll, 0, v.pitch);
       v.bodyG.position.set(0, Math.abs(v.roll) * 0.4 + (c.onCurb ? Math.sin(time * 60) * 0.015 : 0) - (v.dl ? v.dl.low : 0), 0);   // (all of it: the sag below turns the whole offset each frame)
-      if (c.rl) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
+      if (c.rl && !fb) xRollPose(v, c, h, dt); else { if (v.xRB) { v.xRB = false; if (v.blob) v.blob.visible = true; } if (v.xUnd && v.xUnd.visible) v.xUnd.visible = false; }   // (Razbijanje · nov način: rolling over, the core's c.rl; its black underside only then)
       if (v.blob) v.blob.position.y = (c.roadY - c.y) + 0.05 - (jk ? crew.lift : 0); // shadow stays on the ground during jumps (and on the jacks)
       v.landed = !!(v.wasAir && !c.air);   // landing this frame (dust ring is emitted in emitFx)
       if (v.landed && c.isPlayer && c.speed > 3) shake(0.15 + clamp(-(c.impactVY || 0) / 8, 0, 1) * 0.45, 'land');
@@ -7026,6 +7108,7 @@ const Render = (function () {
       for (const w of v.wf) { w.rotation.set(0, -c.delta, -v.spin); }
       for (const w of v.wr) { w.rotation.set(0, 0, -v.spin); }
       for (const w of v.wm) w.rotation.set(0, 0, -v.spin);   // (wheels.mid: as the rear ones, never steered)
+      if (fb) fallPose(v, c, fb, u, dt);
       if (c.kt || v.ktHot != null) ktGlow(v, c);   // (the KOLIBRI's tyre on fire: that wheel a little red)
       if ((v.noHead || (v.fp && v.fp.lm)) && c.ty) { const tk = c.ty.k + (c.ty.c || ''); if (v.tyreK !== tk) {   // new tyres after a pit stop: their band on the sidewalls
         const col = tyreCol(c), lm = !v.noHead, [W, H] = lm ? [lmWheelGeo, LM_HUB] : [fWheelGeo, F_HUB]; v.tyreK = tk;   // (the formula's wheels, the prototype's)
@@ -7043,6 +7126,7 @@ const Render = (function () {
       const nt = todK, rl = (1 + Math.max(0, wet) * 0.9) * (1 + 0.5 * nt);   // (rain, dusk, night: the lights stand out more in the gloom)
       const gy = (c.roadY != null ? c.roadY : y) + 0.03;   // (the road under the car: the lamps' reflections on it when it is wet)
       v.gq = { braking, rainL, wk, sk, x, y, z, nt, rl, gy };   // (carGlows: this frame's lamps, also for carCull's car back in view)
+      if (fb) v.gq.wk = v.gq.sk = 0;   // (falling: no road under it to mirror its lamps and its paint, no glint off a roof that tumbles)
       if (vis) carGlows(v);
       if (v.tlG) tlDraw(v, c, u, dt, braking, vis);   // (its semi-trailer on the kingpin, as the tractor is drawn)
       const e = v.grp.matrixWorld.elements;   // (the car's forward, up and right)
@@ -7064,10 +7148,10 @@ const Render = (function () {
       if (!vis && !((v.fire && !v.fire.done) || c.dmg > 0.45)) particles.mute = sparkP.mute = glows.mute = true;   // (out of the view: its effects muted, up to engineFx; not a burning or smoking car's: its plume stands grown as it comes into view, fireScan keeps those few)
       if (v.pk) pkCarTick(v, c, dt, opt);
       if (v.scrS) { if (dt > 0 && !(opt && opt.noFx) && !v.rep) xtScrape(v, c, dt); const A = v.xtSc; v.scrS.value.x = A ? A.a[0] : 0; v.scrS.value.y = A ? A.a[1] : 0; }   // (before emitFx clears the contacts)
-      carFx(v, c, dt, !(opt && opt.noFx) && dt > 0);
+      carFx(v, c, dt, !(opt && opt.noFx) && dt > 0 && !fb);   // (falling: its brakes' glow only, no flames, no sparks off a road)
       if (v.marker) { v.marker.visible = !!markerOn; v.marker.position.y = 4 + Math.sin(time * 5) * 0.3; v.marker.rotation.y = time * 2; }
       // --- effects ---
-      if (!opt || !opt.noFx) emitFx(v, c, dt, x, z, h);
+      if (!opt || !opt.noFx) { if (fb) fallFx(v, c, fb); else emitFx(v, c, dt, x, z, h); }
       v.wasAir = !!c.air;
       if (c.dents && c.dents.length && !v.rep) { for (const d of c.dents) { if (d.old) { if (v.xOn) xDent(v, d); else applyDent(v, d); continue; } if (v.xOn) { xDent(v, d); xChips(v, d, c, x, y, z, h); if (!v.xt) xMirror(v, d, c, x, y, z, h); } else { applyDent(v, d); if (XT_MIN.has(c.m.id)) xtRoofKnock(v, d); } if (v.xt) xTabHit(v, d, c, x, y, z, h); else if (XC.glass) xGlassHit(v, d, c, x, y, z, h); if (v.scrS) xtScuff(v, d); } if (v.xOn && v.xc && v.xc.rf && v.xc.rf.due) xRoofApply(v, v.xc); else if (v.xtR && v.xtR.rf.due) xRoofApply(v, v.xtR); if (v.xt) xtMin(v, c, x, y, z, h); c.dents.length = 0; }   // (d.old: the career's old knocks, Core.careerWear: the dent only; none taken while the crew repairs it: repairCar clears them; Razbijanje · nov način: xDent, xGlassHit, the roof field; the Kolibri's table, xTabHit; its default body's roof field, xtRoof)
       if (v.parts && !v.rep) {   // (a view's first frame (a car drawn afresh in a race under way: Render.attachRace on it, the title demo after a race): what it had
@@ -7079,7 +7163,7 @@ const Render = (function () {
         xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
-      if (v.sagQ) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
+      if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
       engineFx(v, c, dt, x, y, z, h, opt, now);   // the damaged engine's smoke, a burning one's fire, the char
       if (!vis) particles.mute = sparkP.mute = glows.mute = false;
     }
@@ -8620,6 +8704,49 @@ const Render = (function () {
       for (let k = 0; k < 4; k++) sparkP.emit(x + (rRnd() - 0.5) * 2, gy + 0.1, z + (rRnd() - 0.5) * 2, (rRnd() - 0.5) * 6 + c.vx * 0.4, 0.5 + rRnd() * 2, (rRnd() - 0.5) * 6 + c.vz * 0.4, 0.2 + rRnd() * 0.2, 0.6, 0.14, 1, 0.82, 0.36, 1, 10, 1.2, gy);
     }
   }
+  // a car falling down a slope as a rigid body (Core fallBody: c.fall.b, here B; a replay's too, made again from its recording): the pose is the
+  // body's own, all of it. Its quaternion between its last two steps, the shorter way round (the body's axes are the group's: x forward, y up,
+  // z to the right), the group's origin its centre of mass less the centre's height along its own up. Nothing of the road's stays in it
+  // (updateCars set those just before: the hop, the jacks, the kerbs' lift, the bank, the grade), the body sits level on its wheels at once (no
+  // lean, and no sag: updateCars), the front wheels point straight and all of them run down; its black underside shown and its contact
+  // shadow hidden, as a car rolling over (xRollPose; updateCars puts both back after); its name stays over it
+  function fallPose(v, c, B, u, dt) {
+    const a = B.pq, b = B.q, s = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3] < 0 ? -1 : 1, hc = B.hc;
+    let qx = a[0] + (s * b[0] - a[0]) * u, qy = a[1] + (s * b[1] - a[1]) * u, qz = a[2] + (s * b[2] - a[2]) * u, qw = a[3] + (s * b[3] - a[3]) * u;
+    const l = 1 / (Math.hypot(qx, qy, qz, qw) || 1); qx *= l; qy *= l; qz *= l; qw *= l;
+    const ux = 2 * (qx * qy - qw * qz), uy = 1 - 2 * (qx * qx + qz * qz), uz = 2 * (qy * qz + qw * qx);   // (its up, in the world)
+    v.grp.quaternion.set(qx, qy, qz, qw);
+    v.grp.position.set(lerp(B.px, B.x, u) - hc * ux, lerp(B.py, B.y, u) - hc * uy, lerp(B.pz, B.z, u) - hc * uz);
+    v.roll = v.pitch = 0; v.bodyG.rotation.set(0, 0, 0); v.bodyG.position.set(0, -(v.dl ? v.dl.low : 0), 0);
+    if (v.fb !== 1) { v.fb = 1; v.fbW = 1; v.fbB = null; }   // (the first frame of it)
+    if (v.fbB !== B) { v.fbB = B; v.fbN = B.hn; }   // (the first frame of this body: the fall's own, or another body on a car still falling (a replay's own in place of the race's, and the race's again after Posnetek do sem); the knocks it has had already are no news: fallFx)
+    v.fbW *= Math.exp(-dt / 1.5); v.spin -= (1 - v.fbW) * c.vl * dt / c.m.rw;   // (the wheels in the air: from the speed it went over at down to a stop)
+    for (const w of v.wf) w.rotation.set(0, 0, -v.spin); for (const w of v.wr) w.rotation.z = -v.spin; for (const w of v.wm) w.rotation.z = -v.spin;
+    if (v.xUnd === undefined) { ownRnd(() => xUnder(v, c)); if (!v.xUnd) v.xUnd = null; }   // (made once; a body it cannot be made for: not tried again every frame)
+    if (v.xUnd) v.xUnd.visible = true;
+    if (v.blob && v.blob.visible) { v.blob.visible = false; v.xRB = true; }
+    if (v.tag) { const k = (v.tagY || (v.tagY = v.tag.position.y)) - hc; v.tag.position.set(k * 2 * (qx * qy + qw * qz), hc + k * uy, k * 2 * (qy * qz - qw * qx)); }   // (the world's up from its middle, in its own axes)
+  }
+  // the frame it is back on the road (Core Race.rescue): a car standing there, at the road's grade and bank at once (not eased out of the pose its
+  // fall ended in), and no landing of it either (wasAir: no ring of dust, no shake). For three frames in all (v.fb: 1 falling, then 2, 3, 0): the
+  // car's bank is the edge's it went over, none, until its first step on the road, and the roll would lean into the road's over 0.3 s
+  function fallBack(v, pitch, bank, dt) { if (dt > 0) v.fb = v.fb < 3 ? v.fb + 1 : 0; v.fbB = null; v.gpitch = pitch; v.broll = bank; v.roll = v.pitch = 0; v.wasAir = false; if (v.tag && v.tagY) v.tag.position.set(0, v.tagY, 0); }
+  // a falling body's effects, in place of a car on the road's (emitFx: no wheel of it on a road, no exhaust flame, no hub or bumper dragging;
+  // the sparks of the fence it broke on its way over still): at each hard knock on the ground (B.hn counts them; where: B.hx, hy, hz; how
+  // hard: B.hv, m/s) a burst of the ground's dust from the place, stones with it off a harder one (the renderer's own random numbers); the
+  // player's view is shaken by game.js (fallFb: as at a wall of that speed, Nastavitve · Tresenje kamere: ob trku)
+  function fallFx(v, c, B) {
+    v.sk.fill(null); v.acc.fill(0);   // (no skid mark from the edge to where it is put back)
+    if (c.fxWall > 2.5) sparks(c.wallX, c.wallZ, c.fxWall, c.y || 0);
+    if (c.fxCar > 3 && !c.fxQ) sparks(c.contactX, c.contactZ, c.fxCar * 0.7, c.y || 0, c.fxCar > 7 || Core.TX.cv === 5);
+    c.fxWall = 0; c.fxCar = 0; if (c.fxQ) c.fxQ = 0;
+    if (B.hn === v.fbN) return;
+    const more = B.hn > v.fbN; v.fbN = B.hn; if (!more) return;   // (a replay taken back in the fall: fewer knocks so far, none of them news)
+    const k = clamp(B.hv / 12, 0.3, 1.5), wetL = wetW > 0.1, dc = snowy() ? SNOW_DUST : world && world.dust || DUST0.col, hx = B.hx, hy = B.hy, hz = B.hz;   // (rain: a darker, thinner cloud off the wet ground)
+    for (let i = 0, n = 6 + 10 * k; i < n; i++) { const a = rRnd() * Math.PI * 2, sp = (1.2 + rRnd() * 3) * k, sh = (wetL ? 0.68 : 0.92) + rRnd() * 0.12;
+      particles.emit(hx + Math.cos(a) * 0.5, hy + 0.2 + rRnd() * 0.4, hz + Math.sin(a) * 0.5, Math.cos(a) * sp + c.vx * 0.3, 0.5 + rRnd() * 1.4 * k, Math.sin(a) * sp + c.vz * 0.3, 1.2 + rRnd() * 0.9, 1, (3.2 + rRnd() * 2.6) * (0.7 + 0.4 * k), dc[0] * sh, dc[1] * sh, dc[2] * sh, wetL ? 0.3 : 0.5, -0.06, 2, hy - 2); }
+    if (k > 0.5) for (let i = 0, n = 8 * k; i < n; i++) particles.emit(hx, hy + 0.2, hz, (rRnd() - 0.5) * 6 * k + c.vx * 0.4, 1.5 + rRnd() * 3 * k, (rRnd() - 0.5) * 6 * k + c.vz * 0.4, 0.7 + rRnd() * 0.5, 0.3, 0.24, 0.32, 0.26, 0.19, 0.95, 14, 0.4, hy - 6);   // (stones, down the slope)
+  }
   // the wheels go back (and toe out a little) with the metal crushed over them
   function xWheels(v, xc) {
     const o = [0, 0, 0, 0, 0];
@@ -9978,6 +10105,7 @@ const Render = (function () {
     const nv = c.phys === 'nova', LK = cam.look;
     let hv = h + clamp(c.beta || 0, -1.2, 1.2) * (nv ? 1 : 0.85);
     if (LK && LK.k > 0) hv += wrapPi(Math.atan2(LK.z - z, LK.x - x) - hv) * LK.k;   // (a special mission's target, cam.look { x, z, k }: the view behind the car turned toward it by k, js/missions/kit.js look)
+    if (cam.fall) hv = fallHead(dt);   // (a car falling down a slope: along the road where it went over, fallCam)
     const dh = wrapPi(hv - cam.hs) * (1 - Math.exp(-dt * (nv ? 12 : 2.8)));
     cam.hs += nv ? clamp(dh, -2.5 * dt, 2.5 * dt) : dh;   // (nova: no faster than 2.5 rad/s, a knock's sudden change of travel is a swing, not a jerk)
     cam.zoom += (pitZ * (1 + 0.25 * clamp(spd / 55, 0, 1)) - cam.zoom) * k2;
@@ -9988,6 +10116,7 @@ const Render = (function () {
     const LK = cam.look, D = (portrait ? CHASE_UP : 30) * cam.zoom * cam.userZoom * (LK && LK.k > 0 ? 1 + 0.2 * LK.k : 1), pitch = (portrait ? 0.98 : 0.9) * (1 - cam.userTilt);   // (userTilt: always 30 % flatter, the camera looks further ahead along the road from the same distance)
     const a0 = portrait ? 13 : 8.5, fov = portrait ? 58 : 46;
     let back = cam.userBack || 0;
+    if (cam.fall) back *= 1 - sstep(0, 1, cam.fall.k);   // (a car falling down a slope: Položaj avta's metres out of the view, fallCam)
     const tlB = c.tl ? c.tl.back : 0;   // (a semi-trailer, Core c.tl: its tail straight behind, past the tractor's own; docs/titan-cisterna.md)
     if (back > 0 || tlB > 0) {   // Položaj avta never takes the car off the screen (on its side 15 and 20 m did, and 10 m on the grid; upright 20 m on the grid):
       // the room is how far the look-ahead may go with the car's tail (half its length and 0.4 m, on the road) still 6 % of the half-height over
@@ -10001,11 +10130,34 @@ const Render = (function () {
     const fx = Math.cos(cam.hs), fz = Math.sin(cam.hs), tx = x + fx * ahead, tz = z + fz * ahead;
     return [tx - fx * D * Math.cos(pitch), baseY + D * Math.sin(pitch), tz - fz * D * Math.cos(pitch), tx, baseY, tz, fov];
   }
+  // the view behind a car that falls down a slope as a body (Core fallBody: c.fall.b; a replay's too): the falling car's own heading tumbles
+  // and its place on the road stays where it went over, so the view's heading is the road's own there, the way the car was going (taken once,
+  // from the track at the car's place, when the fall is first seen; across the road, at a crawl: the way the view looks already; a view made
+  // afresh in the middle of it, a replay's jump, where the car's speed is its tumbling heading's: the race's way), eased to as any heading
+  // (chaseStep: fallHead). The view's place follows the car down as it follows it on the road, 4 m over the slope at least (updateCamera), and
+  // the car stays in the picture at the usual distance and height (640 x 360 and 360 x 640, Blizu to Daleč, 38 falls along Killar: its middle
+  // never outside the picture, no slope and no road's edge between it and the camera while it is over the drawn ground), but for Položaj avta:
+  // its metres of view ahead sink a car that falls 15 m/s and more, under the view's eased height, to the picture's foot and past it, so they
+  // go out of the view in 0.4 s (chasePose; F.k) and are back with the car on the road. Back on the road (Core Race.rescue) the view is behind
+  // the car there in that very frame, as resetCam's, its last knock's shake left down the slope
+  const _fcQ = {};
+  function fallCam(c, x, z) {
+    const B = c.fall && c.fall.b, F = cam.fall;
+    if (F && (F.c !== c || !B)) { cam.fall = null; if (F.c === c) { resetCam(); cam.shake = 0; } }
+    if (!B) return;
+    if (!cam.fall) {
+      const q = curTrack.query(x, z, c.q ? c.q.i : -1, _fcQ), vt = c.vx * q.tx + c.vz * q.tz, s = !cam.init ? 1 : Math.abs(vt) > 1 ? Math.sign(vt) : Math.cos(cam.hs) * q.tx + Math.sin(cam.hs) * q.tz < 0 ? -1 : 1;
+      cam.fall = { c, h: Math.atan2(s * q.tz, s * q.tx), k: 0, snap: false };
+    }
+    if (!cam.init) { cam.fall.snap = true; cam.fall.k = 1; }   // (a view made afresh while it falls: along the road at once, not swung round from the tumbling car's heading)
+  }
+  function fallHead(dt) { const F = cam.fall; F.k = Math.min(1, F.k + dt / 0.4); if (F.snap) { F.snap = false; cam.hs = F.h; } return F.h; }
   function updateCamera(dt, target, mode, alpha, cdt) {   // (cdt: the pit stop's film camera's step, the replay's own: frame)
     const c = target;
     const x = lerp(c.px, c.x, alpha), z = lerp(c.pz, c.z, alpha);
     const h = c.ph + wrapPi(c.h - c.ph) * alpha;
     const spd = c.speed, pitZ = crew && c === crew.P && !pitOn(c) && (crew.mode === 'work' || (crew.mode === 'out' && (c.rpPit || c).pitState === 'stop')) ? 0.62 : 1;   // pitZ: closer while the car pulls into its box and the crew works on it (not under the pit stop's camera, pitCine: its view behind the car as ever)
+    fallCam(c, x, z);   // (the followed car over the edge, or just back on the road)
     if (!cam.init) { cam.zoom = 1; cam.hs = h; cam.gy = c.roadY || 0; cam.init = true; }
     if (cam.shot && cam.shot.gy != null) cam.gy = cam.shot.gy; else cam.gy += ((c.roadY || 0) - cam.gy) * (1 - Math.exp(-dt * 5));   // (a shot may say how high its view is: Pikes Peak's flyover, for the altitude's light and the sun's shadow box)
     const baseY = cam.gy;
@@ -10634,7 +10786,8 @@ const Render = (function () {
       for (let n = 0; n < 12; n++) sparkP.emit(c.x + (Math.random() - 0.5) * 3, (c.y || 0) + 0.4 + Math.random() * 1.2, c.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 0.4 + Math.random() * 0.3, 0.45, 0.8, 1, 0.95, 0.7, 0.7, -1, 1.2, c.y || 0); } }
     particles.update(dt); sparkP.update(dt);
     if (world && world.dyn.bsMist) world.dyn.bsMist.on = curRace && curRace.opts && curRace.opts.mist ? 1 : 0;   // (Big Sur: the marine layer of this run)
-    World.update(world, time, target, camera, opt && opt.rp);   // (a replay: its time for the spectators)
+    World.update(world, time, target, camera, opt && opt.rp, curRace);   // (a replay: its time for the spectators; the race: its cars and traffic, for the animals of a world of its own file)
+    if (world && world.dyn && world.dyn.fence) world.dyn.fence(curRace, opt && opt.rp);   // (Killar: the race's broken fence panels, at the replay's time in one: js/world-killar.js)
     if (target) updateCamera(dt, target, mode, alpha, cdt);
     lineStep(target);   // (the racing line helper, from the followed car's place of this frame)
     if (world && world.dyn.afterCam) world.dyn.afterCam(camera, target);   // (what depends on the camera of this very frame: Pikes Peak, which scenery chunks cast shadows)

@@ -17,6 +17,7 @@ Uporabnik dela na več računih. Seja vidi samo seje, strani in opravila po urni
 1. https://claude.ai/artifact/5XpmrynR392z1RgTtx9ACV — od 3. 11. 2026, račun sej `session_01UuPU9…`; zbiranje je nastavljeno.
 2. https://claude.ai/artifact/PCXaC5F3xSgjAQ1cAhe3kR — od 3. 11. 2026, račun sej `session_01Ck3D3…` (nova mapa, meni, orodje za napake); zbiranje je nastavljeno.
 3. https://claude.ai/artifact/1jxNEJ27WiYpCAw3YbRXEV — prvotna stran iz `CLAUDE.md` (31. 10. 2026), račun sej `session_01Wbg…` (»VSE SEJE«); zbiranje je nastavljeno.
+4. Stran Odločitve 4 za račun croatiadata (od 13. 11. 2026): naredi jo prva seja croatiadata kot kopijo strani 2 (isti videz in zbirka `vprasanja`) in povezavo vpiše sem. Dokler je ni, seje croatiadata sprašujejo v pogovoru (`AskUserQuestion`, priporočena možnost prva).
 
 Če nobena ni dosegljiva, seja vpraša v pogovoru in v poročilu napiše, da njen račun strani nima (razdelek Nastavitev).
 
@@ -31,7 +32,7 @@ Stran 1: vprašanja so kartice z oštevilčenimi gumbi (številka kot tabla s š
 | `seja` | naslov seje |
 | `seja_id` | id te seje (`session_…`; `get_session` brez argumentov); sem gre odgovor |
 | `naslov` | kratko, o čem se odloča (do ~60 znakov) |
-| `vprasanje` | 1–3 stavki v preprosti slovenščini: kaj se odloča, zakaj in kaj pomeni izbira; uporabnik odloči brez odpiranja seje |
+| `vprasanje` | 1–3 stavki v preprosti slovenščini: kaj se odloča, zakaj in kaj pomeni izbira; uporabnik odloči brez odpiranja seje. **Pri preizkusu ali potrditvi** (»ok« za PR, predogled) še korak za korakom, kaj naj uporabnik preizkusi: kje odpre (povezava predogleda), kaj klikne ali odpelje (proga, avto, pokonci ali ležeče) in kaj mora videti, da je prav; sama številka PR ni dovolj (odločitev uporabnika 13. 11. 2026 ob ~16.55: »napiši malce bolj podrobno, kaj moram sploh stestirat in ne samo številke PR«) |
 | `moznosti` | 2–5 možnosti `[{k: "1", opis}]`, oštevilčene od 1; vsaka je cela odločitev (ne samo »da« ali »ne«) |
 | `priporoceno` | `k` priporočene možnosti, kadar jo seja ima |
 | `vec` | `true`: izbira več možnosti hkrati (stran pokaže »Pošlji izbiro«; `odgovor` so izbrani `k`, ločeni z vejico, npr. `1,3,5`); stran Odločitve partyslo od 6. 11. 2026, drugi dve, ko ju lastnik objavi z isto kodo |
@@ -46,9 +47,9 @@ Ob odgovoru stran zapiše `stanje` `odgovorjeno`, `odgovor` (`k`), `odgovor_opis
 
 ### Odgovor: seja ga prebere sama
 
-- Po zapisu vprašanja seja pokliče `send_later` z `at` ob prvem naslednjem 10.50, 14.50 ali 23.20 (npr. `2026-11-03T14:50:00[Europe/Ljubljana]`; 20 minut po obvestilu, da uporabnik utegne odgovoriti) in sporočilom »Preberi odgovor na vprašanje `<id>` s strani Odločitve (docs/vprasanja.md, razdelek Odgovor).«
+- Po zapisu vprašanja seja pokliče `send_later` z `at` ob naslednjem 23.20 (od 22. 11. 2026 enkrat na dan, `zetoni-5`; prej 10.50, 14.50 ali 23.20) (npr. `2026-11-03T23:20:00[Europe/Ljubljana]`; 20 minut po obvestilu, da uporabnik utegne odgovoriti) in sporočilom »Preberi odgovor na vprašanje `<id>` s strani Odločitve (docs/vprasanja.md, razdelek Odgovor).«
 - Ob bujenju prebere dokument (`ArtifactData` `get`, `vprasanja`/`<id>`). Če je `stanje` `odgovorjeno` ali `posredovano`, so `odgovor`, `odgovor_opis` in `opomba` uporabnikova izbira (tapnil jo je sam na svoji strani): seja jo izvede in zapiše `prebrano` (`update` z `if_version`). Z `popravek` uporabnik spreminja prejšnji odgovor: velja novi.
-- Če odgovora še ni, si nastavi naslednje bujenje (največ trikrat), nato konča korak in počaka na sporočilo zbiranja.
+- Če odgovora še ni, si nastavi naslednje bujenje (največ dvakrat; od 22. 11. 2026, prej trikrat), nato konča korak in počaka na sporočilo zbiranja.
 - Sporočilo seje zbiranja (»Na strani Odločitve te čaka odgovor …«) ni odgovor sam: seja odgovor prebere s strani in ravna enako.
 
 ### Slike (grafična vprašanja)
