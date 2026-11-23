@@ -38,7 +38,7 @@ try {
     razredi: v.razredi.map(r => r.id + ':' + r.stanje + ':' + r.best).join(), mali: (cupIn(v, 'r-mali') || {}).cilji });
 
   // 1. no career
-  const v1 = await page.evaluate(() => window.__game.kariera()), s1 = await start('s1-cesta', 'pico');
+  const v1 = await page.evaluate(() => window.__game.kariera()), s1 = await start('s1-cesta-1', 'pico');
   T.check('no career: no view of the path (null), no cup started (no championship)', v1 === null && s1.ok === false && !s1.champ, JSON.stringify({ v1, s1 }));
 
   // 2. a career of before 1.0
@@ -55,7 +55,7 @@ try {
     && cupIn(va, 'r-mali').stanje === 'odprt' && cupIn(va, 'r-dirkalni').stanje === 'zaklenjen' && cupIn(va, 'r-sportni').stanje === 'zaklenjen' && cupIn(va, 'r-super').stanje === 'zaklenjen' && va.money === 5000 && va.prve === 0, views(va));
 
   // 3. the refusals
-  const r1 = await start('ni-pokala', 'pico'), r2 = await start('r-super', 'pico'), r3 = await start('s1-cesta', 'strega'), r4 = await start('r-mali', 'kaze');
+  const r1 = await start('ni-pokala', 'pico'), r2 = await start('r-super', 'pico'), r3 = await start('s1-cesta-1', 'strega'), r4 = await start('r-mali', 'kaze');
   T.check('the bridge refuses an unknown cup (no toast, no championship)', r1.ok === false && r1.toast === '' && !r1.champ, JSON.stringify(r1));
   T.check('… a locked cup (Superavti: no supercar owned), with its toast', r2.ok === false && r2.toast === 'Ta dogodek je še zaklenjen.' && !r2.champ, JSON.stringify(r2));
   T.check('… a car not owned (the strega), with its toast', r3.ok === false && /^Ta avto še ni tvoj/.test(r3.toast) && !r3.champ, JSON.stringify(r3));
@@ -63,7 +63,7 @@ try {
 
   // 4. a save of v 2 with a damaged path (the class km 0.1 short of its goal: the race of 5 passes it)
   const dmg = { v: 2, on: true, money: 1000, earned: 2000, races: 3, wins: 1, cars: ['pico'], upg: { pico: U(0, 0, 0, 0) },
-    pot: { stopnja: 2, pokali: { 's1-krog': 2, 's1-cesta': 0, 'r-mali': 2.7, 's2-krog-1': -1 }, cilji: { 'mali-zmaga': 1, 'mali-medalja': 0 }, prve: ['hiva', 'hiva', 7, null], km: { mali: 99.9, sportni: -5, super: 'x' }, smeti: 1 } };
+    pot: { stopnja: 2, pokali: { 's1-krog': 2, 's1-cesta-1': 0, 'r-mali': 2.7, 's2-krog-1': -1 }, cilji: { 'mali-zmaga': 1, 'mali-medalja': 0 }, prve: ['hiva', 'hiva', 7, null], km: { mali: 99.9, sportni: -5, super: 'x' }, smeti: 1 } };
   await reload(dmg);
   const b = await page.evaluate(() => { const g = window.__game; return { v: g.career.v, pot: g.career.pot, disk: localStorage.getItem('tdgp-career'), view: g.kariera() }; });
   T.check('a save of v 2 with a damaged path: cleaned (the places whole from 1, the goals true, the first wins strings once, the km over 0, the junk gone); v 1 in memory, the save on the disk as it was',
@@ -72,7 +72,7 @@ try {
   const vb = b.view, gm = (id) => ((cupIn(vb, 'r-mali') || {}).cilji || []).find(x => x.id === id) || {};
   T.check('its view: stage 2 open (kept, though only 4★ of the 9), its events open, stage 3 locked (21★); the cups won (2nd); Športni avti locked (no sports car now); the class goals (the win done, the km 99 of 100); one first win',
     !!vb && vb.stopnja === 2 && vb.stopnje[1].odprta && ev1(vb, 2).every(c => c.stanje === 'odprt') && !vb.stopnje[2].odprta && vb.napredek.done === 4 && vb.napredek.need === 21
-    && cupIn(vb, 's1-krog').stanje === 'osvojen' && cupIn(vb, 's1-krog').best === 2 && cupIn(vb, 's1-cesta').stanje === 'odprt' && cupIn(vb, 'r-mali').stanje === 'osvojen' && cupIn(vb, 'r-mali').best === 2
+    && cupIn(vb, 's1-krog').stanje === 'osvojen' && cupIn(vb, 's1-krog').best === 2 && cupIn(vb, 's1-cesta-1').stanje === 'odprt' && cupIn(vb, 'r-mali').stanje === 'osvojen' && cupIn(vb, 'r-mali').best === 2
     && cupIn(vb, 'r-sportni').stanje === 'zaklenjen' && gm('mali-zmaga').done === true && gm('mali-medalja').done === false && gm('mali-km').done === false && gm('mali-km').progress === 99 && vb.prve === 1 && vb.money === 1000, views(vb));
 
   // 5. the class cup from the bridge: its first round driven to the finish
@@ -105,7 +105,7 @@ try {
     JSON.stringify({ v: r.v, disk: r.disk, champ: r.champ && { id: r.champ.id, rounds: r.champ.rounds.map(x => x.track) } }));
 
   // 6. another cup while that one runs
-  const r6 = await start('s1-cesta', 'pico');
+  const r6 = await start('s1-cesta-1', 'pico');
   T.check('another cup (Pokal cest · Začetnik) while the class cup runs: refused with its toast, the championship kept',
     r6.ok === false && /^Najprej končaj ali opusti prvenstvo/.test(r6.toast) && !!r6.champ && JSON.parse(r6.champ).id === 'r-mali' && JSON.parse(r6.champ).rounds.length === 1, JSON.stringify(r6));
 
