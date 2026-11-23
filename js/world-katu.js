@@ -844,6 +844,7 @@
       for (const sd of [-1, 1]) run(sBot - 40, sBot + 110, sd, { rows: 2, dens: 0.3, clump: 0.9, label: 'KT camp' });
     }
     for (const e of CR.circ) exclPush(e.x, e.z, e.r);   // the trees keep clear of the crowds
+    if (World.katuObcestje) World.katuObcestje.keepOut({ exclPush, near: ktNear, riv: ktRiv });   // (js/world-katu-obcestje.js: nothing grows on the map's footpaths)
 
     /* ---- the woods (instanced per 96 m chunk): larch and stone pine on the plateau and the shady slopes, birches at the edges, poplars and willows down by
        the river; shrubs dotted over the steppe slopes, junipers on the rocks; lone larches out on the steppe. Right up to the ditch, thinner farther out ---- */
@@ -926,13 +927,15 @@
         for (let t = RV() * 14; t < L; t += 11 + RV() * 8) { const x = ax + (bx - ax) * t / L, z = az + (bz - az) * t / L; if (ktDist(x, z) < 330) crag(x, z, true); } }
     }
 
+    const obc = World.katuObcestje ? World.katuObcestje.extra({ scen, ground: ktGround, near: ktNear, riv: ktRiv }) : null;   // (the footpaths and the shower, into the chunks there are)
+
     /* ---- finish the meshes ---- */
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: ktAtlas(cpAlt), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: ktAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), foam: nFoam, sideRoads: out.stubStats.n };   // (read by the tests)
+    out.stats = { trees: nTrees, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), foam: nFoam, sideRoads: out.stubStats.n, obcestje: obc ? obc.paths + obc.shower : 0 };   // (read by the tests)
     return out;
   }
 
