@@ -243,6 +243,7 @@
     const exclPush = (x, z, r) => { const e = { x, z, r }; excl.push(e); for (let a = Math.floor((x - r) / EHC); a <= Math.floor((x + r) / EHC); a++) for (let b = Math.floor((z - r) / EHC); b <= Math.floor((z + r) / EHC); b++) { const k = a + ',' + b; let L = eh.get(k); if (!L) eh.set(k, L = []); L.push(e); } return e; };
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     for (const p of views) exclPush(p.x, p.z, p.r + 2);
+    API.stubExcl(exclPush);   // (nothing grows or stands on the side roads: def.sideRoads, OSM)
     exclPush(padF.x, padF.z, padF.r + 4);
     out.marks = {}; if (views.length) out.marks.view = [views[0].x, views[0].z];   // (where the landmarks stand: the tests look for them)
 
@@ -294,7 +295,10 @@
     const lMat = new THREE.MeshLambertMaterial({ vertexColors: true }), gMat = new THREE.MeshLambertMaterial({ map: vrGritTex(), vertexColors: true });
     const addM = (g, mat, cast) => { if (g.empty) return null; const m = new THREE.Mesh(g.geometry(), mat); m.receiveShadow = true; m.castShadow = !!cast; m.matrixAutoUpdate = false; root.add(m); return m; };
     const sw = 0.45;
+    const sMat = new THREE.MeshLambertMaterial({ map: tex.makadam, vertexColors: true });   // (the side roads' gravel)
+    const SB = API.stubGeo({ gCol: saGCol, paveC: [0.9, 0.89, 0.87], gravC: [0.62, 0.5, 0.4], shC: [0.62, 0.5, 0.4], line: 'none' });   // the side roads (their mouths; their surfaces in the road's chunks below)
     const vProf = (i, side) => { const bar = side > 0 ? T.br[i] : T.bl[i], e = w;
+      const ms = API.stubVerge(SB, i, side, e + sw, bar); if (ms) return ms;   // (a side road's mouth: no ditch, the verge at its surface)
       const y = T.hy[i], gAt = (o) => { const q = side * o; return caGround(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q) - y; }, lift = (o, h) => [o, Math.max(h, gAt(o) + 0.05)];
       if (bk[side > 0 ? 1 : 0][i]) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, -0.08], [bar + 0.42, -0.08], [bar + 0.42, -0.08]];   // (a bank down to the leg below: the wall's coping, then the bank)
       if (gAt(bar + 0.45) < -2.6) return [[e + sw, -0.02], [bar + 0.3, -0.04], [bar + 0.42, gAt(bar + 0.42) - 0.08], [bar + 1.15, gAt(bar + 1.15) + 0.03], [bar + 1.9, gAt(bar + 1.9) + 0.03]];   // (a retaining wall: its top flush with the verge)
@@ -333,7 +337,8 @@
               gw.quadUp(D, C, F, E, [sc, sc, sc, sc], [wuv(D), wuv(C), wuv(F), wuv(E)]); nWall++; }
           }
         }
-        addM(gr, aMat); addM(gv, gMat); addM(gw, gMat);
+        const gs = new GB(true), gk = new GB(); SB.emit(c0, c0 + 60, gr, gs, gk);   // (the side roads whose junctions are in this chunk)
+        addM(gr, aMat); addM(gv, gMat); addM(gw, gMat); addM(gs, sMat); addM(gk, lMat);
       }
       const gq = new GB(true), gw2 = new GB(), uM = Math.round(w * 2 / 0.8) / 16, W1 = [1, 1, 1], wht = [0.94, 0.93, 0.88];   // chequered start and finish lines, a white line at each checkpoint
       for (const s0 of [sStart, sFin]) { const a = atSf(s0 - 0.8, -w), b = atSf(s0 - 0.8, w), c = atSf(s0 + 0.8, w), d = atSf(s0 + 0.8, -w), y = (p) => T.hy[p[3]] + 0.045;
@@ -345,6 +350,7 @@
 
     /* ---- scenery (vertex coloured, 110 m chunks) ---- */
     const scen = new Chunks(110), ban = new GB(true), ban2 = new GB(true), W1 = [1, 1, 1];   // (ban: the race's boards, ban2: the signs)
+    out.stubStats = API.stubProps({ scen, out, root, gH: caGround, loc: { closed: 'ESTRADA FECHADA', gate: 'FECHADO' }, posts: 'none' });   // the side roads' cones, the rails at their ends
     const onSide = (s, side, extra) => { const i = T.idx(s), o = side * ((side > 0 ? T.br[i] : T.bl[i]) + extra); return [T.px[i] + T.nx[i] * o, T.pz[i] + T.nz[i] * o, i]; };
     const fans = [[0.84, 0.16, 0.14], [0.95, 0.95, 0.94], [0.12, 0.26, 0.56], [0.97, 0.82, 0.1], [0.18, 0.46, 0.3], [0.5, 0.32, 0.2], [0.12, 0.14, 0.2], [0.86, 0.62, 0.42], [0.46, 0.66, 0.86], [0.7, 0.2, 0.36]];
     const CR = crowdCtx({ gH: caGround, near: (x, z) => vrNear(x, z).dd, excluded, maxSlope: 0.6, water: () => false, shirts: fans }), crSoft = new Set();
@@ -470,6 +476,7 @@
         for (let i = 0; i < N; i++) if (i < iS0 || i > iS1 || nearPad(i) || bk[si][i]) nd[i] = 0;
         for (let i = 1, last = -1; i < N; i++) { if (nd[i]) { if (last >= 0 && i - last > 1 && i - last < 12) for (let k = last; k < i; k++) nd[k] = 1; last = i; } }
         for (let i = 0; i < N;) { if (!nd[i]) { i++; continue; } let j = i; while (j < N && nd[j]) j++; if (j - i < 6) for (let k = i; k < j; k++) nd[k] = 0; i = j; }
+        API.stubRails(nd, side);   // (open across the side roads' mouths)
         nRail += nd.reduce((a, b) => a + b, 0);
         const Q = (i, y, e) => { const o = side * (bar[i] + 0.15 + (e || 0)); return [T.px[i] + T.nx[i] * o, T.hy[i] + y, T.pz[i] + T.nz[i] * o]; };
         for (let i = 0; i < N - 1; i++) {
@@ -594,7 +601,7 @@
     const bm = addM(ban, new THREE.MeshLambertMaterial({ map: saAtlas(cpAlt, fmtAlt(T.altAt(T.hy[T.finishIdx]))), side: THREE.FrontSide }), true); if (bm) bm.castShadow = false;
     const bm2 = addM(ban2, new THREE.MeshLambertMaterial({ map: saAtlas2(), side: THREE.FrontSide }), true); if (bm2) bm2.castShadow = false;
     crowdFinish(CR, root, out);
-    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, far: !!FAR };   // (read by the tests)
+    out.stats = { trees: nTrees, shrubs: nShrubs, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), walls: nWall, views: views.length, far: !!FAR, sideRoads: out.stubStats.n };   // (read by the tests)
     return out;
   }
 
