@@ -1490,3 +1490,21 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .trow > :is(.best, .rate, .dif, .md) { padding: 0 1px; }
   #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(36px, calc(60 * var(--u))); height: max(24px, calc(40 * var(--u))); }
 }
+
+/* 23. 11. 2026: ležeče besedilo proge brez odrezanih koncev. Na nizkih zaslonih (telefon, tablica) manjša zastava v vrstici in širša celica
+   »Best race/lap«; na kartah sosedov je ime čez vso širino, zastava in »država · km« pod njim (prej »Termas de Río Hondo« in dolge
+   države odrezane, tudi na namiznem). Pokončni do 380 px: celica »Best« malo širša (»Best race« je bil 1 px predolg). */
+@media (orientation: landscape) and (max-height: 640px), (orientation: landscape) and (max-width: 800px) {
+  #s-track .trow .flag img, #s-track .trow .flag .nf { width: 36px; height: 24px; }
+  #s-track .trow .flag { padding-right: 4px; }
+  #s-track .trow > .best { flex-grow: 1.25; }
+}
+@media (orientation: landscape) {
+  #s-track .rlab { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: max(4px, calc(6 * var(--u))); row-gap: calc(3 * var(--u)); align-items: center; }
+  #s-track .rlab > span:last-child { display: contents; }
+  #s-track .rlab b { grid-column: 1 / -1; grid-row: 1; }
+  #s-track .rlab img, #s-track .rlab .nf { grid-column: 1; grid-row: 2; height: max(12px, calc(15 * var(--u))); max-width: max(20px, calc(26 * var(--u))); }
+  #s-track .rlab .nf { width: max(18px, calc(24 * var(--u))); font-size: 7px; }
+  #s-track .rlab small { grid-column: 2; grid-row: 2; }
+}
+@media (orientation: portrait) and (max-width: 380px) { #s-track .trow > .best { flex-grow: 1.12; } }
