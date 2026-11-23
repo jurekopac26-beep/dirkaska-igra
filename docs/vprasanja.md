@@ -47,9 +47,9 @@ Ob odgovoru stran zapiše `stanje` `odgovorjeno`, `odgovor` (`k`), `odgovor_opis
 
 ### Odgovor: seja ga prebere sama
 
-- Po zapisu vprašanja seja pokliče `send_later` z `at` ob prvem naslednjem 10.50, 14.50 ali 23.20 (npr. `2026-11-03T14:50:00[Europe/Ljubljana]`; 20 minut po obvestilu, da uporabnik utegne odgovoriti) in sporočilom »Preberi odgovor na vprašanje `<id>` s strani Odločitve (docs/vprasanja.md, razdelek Odgovor).«
+- Po zapisu vprašanja seja pokliče `send_later` z `at` ob naslednjem 23.20 (od 22. 11. 2026 enkrat na dan, `zetoni-5`; prej 10.50, 14.50 ali 23.20) (npr. `2026-11-03T23:20:00[Europe/Ljubljana]`; 20 minut po obvestilu, da uporabnik utegne odgovoriti) in sporočilom »Preberi odgovor na vprašanje `<id>` s strani Odločitve (docs/vprasanja.md, razdelek Odgovor).«
 - Ob bujenju prebere dokument (`ArtifactData` `get`, `vprasanja`/`<id>`). Če je `stanje` `odgovorjeno` ali `posredovano`, so `odgovor`, `odgovor_opis` in `opomba` uporabnikova izbira (tapnil jo je sam na svoji strani): seja jo izvede in zapiše `prebrano` (`update` z `if_version`). Z `popravek` uporabnik spreminja prejšnji odgovor: velja novi.
-- Če odgovora še ni, si nastavi naslednje bujenje (največ trikrat), nato konča korak in počaka na sporočilo zbiranja.
+- Če odgovora še ni, si nastavi naslednje bujenje (največ dvakrat; od 22. 11. 2026, prej trikrat), nato konča korak in počaka na sporočilo zbiranja.
 - Sporočilo seje zbiranja (»Na strani Odločitve te čaka odgovor …«) ni odgovor sam: seja odgovor prebere s strani in ravna enako.
 
 ### Slike (grafična vprašanja)
