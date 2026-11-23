@@ -759,7 +759,10 @@
     dry: '<defs><radialGradient id="wx-sun" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fff7c8"/><stop offset=".5" stop-color="#ffd23a"/><stop offset="1" stop-color="#ff8f1a"/></radialGradient></defs>' +
       '<circle cx="12" cy="12" r="4.8" fill="url(#wx-sun)"/><g stroke="#ffbf2e" stroke-width="2.2" stroke-linecap="round"><path d="M19 12h3M16.95 16.95l2.12 2.12M12 19v3M7.05 16.95l-2.12 2.12M5 12H2M7.05 7.05 4.93 4.93M12 5V2M16.95 7.05l2.12-2.12"/></g>',
     rain: WX_CLOUD(0) + WX_DROPS,
-    change: '<circle cx="8" cy="8" r="3.4" fill="#ffd23a"/>' + WX_CLOUD(1) + WX_DROPS,
+    // Changing: half sun, half rain, a slanted dashed border between them (the user's choice b of 23. 11., docs/vreme-ikona)
+    change: '<defs><clipPath id="wx-cl"><path d="M0 0h22.65L1.47 24H0z"/></clipPath><clipPath id="wx-cr"><path d="M22.65 0H24v24H1.47z"/></clipPath></defs>' +
+      '<g clip-path="url(#wx-cl)"><circle cx="9" cy="9.5" r="4.3" fill="#ffd23a"/><g stroke="#ffbf2e" stroke-width="2" stroke-linecap="round"><path d="M9 2.2v1.6M9 15.2v1.6M1.7 9.5h1.6M14.7 9.5h1.6M3.85 4.35l1.13 1.13M13.02 13.52l1.13 1.13M3.85 14.65l1.13-1.13M13.02 5.48l1.13-1.13"/></g></g>' +
+      '<g clip-path="url(#wx-cr)">' + WX_CLOUD(1) + WX_DROPS + '</g><path d="M20.5 2.6 4 21.4" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="2.2 2"/>',
     storm: WX_CLOUD(0) + '<path d="M12.5 16.5l-2.4 4h2.4l-1.2 3.5 4-5h-2.5l1.4-2.5z" fill="#ffd23a"/>',
     snow: '<g stroke="#e4f3ff" stroke-width="1.9" stroke-linecap="round" fill="none"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.6 3.9L12 6l2.4-2.1M9.6 20.1L12 18l2.4 2.1M3.3 10.4l3.1-.7-1-3M20.7 13.6l-3.1.7 1 3M3.3 13.6l3.1.7-1 3M20.7 10.4l-3.1-.7 1-3"/></g>',
   })[w] + '</svg>';

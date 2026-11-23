@@ -43,6 +43,7 @@ Načrt teme (izbira uporabnika 6. 11. 2026: »Vreme se med dirko spremeni. Dež 
 - **Cesta v lisah** (vprašanje `vreme-videz`): v senčilniku asfalta (`asphaltLook`, ki ima svetovne koordinate `vAsW`) šum iz majhne teksture: mokro je, kjer je šum pod mokroto ceste. Lise se večajo in zlijejo, nato pridejo luže in odsevi kot zdaj; sušenje gre obratno, s suho sledjo kot zdaj. Brez novih klicev risanja; uniform je v senčilniku od gradnje sveta, zato med dirko ni prevajanja. Robniki in tlakovci temnijo enakomerno kot zdaj.
 - **Kapljice na zaslonu** (če jih uporabnik izbere): samo pri kakovosti Visoka, v obstoječem post-processingu (kapljica lomi sliko, s hitrostjo odteka navzven), ob nalivu in v pršcu za avtom pred sabo; pri Normalni in Nizki jih ni.
 - **Prednalaganje:** dirka z urnikom zgradi suho sled in luže in prevede njune materiale na štartu (`Render.precompile`), da se slika ne zatakne, ko se prvič pokažeta (zdaj se zgradita sredi dirke).
+- 23. 11. 2026: uporabnik na #949: kapljice na objektivu **C** (brez, koda odstranjena), lise **B** (~2–4 m), ikona Changing **B** (pol sonca, pol dežja).
 - Slike za vprašanja: Spa 1.100 m, kamera za avtom; lise so prototip v senčilniku asfalta, kapljice dodane na sliko (orodje v scratchpadu seje, ne v repozitoriju).
 
 ### 4. Zvok
