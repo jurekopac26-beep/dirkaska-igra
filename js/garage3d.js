@@ -3889,7 +3889,7 @@ const Garage3D = (function () {
      orange plate with an arrow on the lift's carriage: a tap lifts the car and lets it down. Each a thing to tap (FRONT.items, with the
      regal's: pick), its outline for the marks (mark). The words in English (generic) ---------------- */
   const FRONT = { ry: 0.3, items: [], cache: new Map(), cars: [null, null, null], keys: [null, null, null], names: ['', '', ''], lit: 0, lock: [false, false, true], price: ['450 \u{1FA99}', ''], mesh: null, signs: null, glow: null, sprites: [], tex: null, cv: null, cc: null, plate: null, lamps: [], ring: null };
-  const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's colours, as garage.js's COLORS)
+  const CIRC_COLS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x5c6168, 0x2fa84f, 0xff7a1a, 0x8e3bd6];   // (the game's first eight colours, as garage.js's COLORS: the floor's wells; the paint menu has all 16)
   // (a thing to tap: its key, its kind, its box in the world, its outline (positions, normals) for the marks)
   function tapItem(key, kind, P, N, extra) { const b = new THREE.Box3(); for (let i = 0; i < P.length; i += 3) b.expandByPoint(_tv.set(P[i], P[i + 1], P[i + 2])); const it = Object.assign({ key, kind, box: b, P, N }, extra || {}); FRONT.items.push(it); return it; }
   const _tv = new V3(), _yAx = new V3(0, 1, 0);
@@ -4229,8 +4229,9 @@ const Garage3D = (function () {
   // if all at once), the last ones kept (back and forth)
   const THB = { at: -1, n: 0 };   // (the frame a car's picture was last drawn in; the frames drawn)
   // (the parts the car shows: js/deli.js, those its vehicle has a place for)
+  const stripeK = (spec) => spec.stripe == null || spec.stripe === true ? true : spec.stripe;   // (the stripes: auto, off, or their own colour, hex)
   const deliKey = (spec) => typeof DELI !== 'undefined' && spec.deli ? DELI.key(spec.deli, spec.M) : '';
-  const carKey = (spec) => { const u = spec.upg || {}, cd = spec.cond || {}; return spec.M.id + '|' + spec.color + '|' + (spec.stripe !== false) + '|' + (u.motor | 0) + (u.gume | 0) + (u.zavore | 0) + (u.aero | 0) + '|' + deliKey(spec) + '|' + ['clean', 'body', 'engine'].map(k => Math.round((cd[k] == null ? 1 : cd[k]) * 10)).join(','); };
+  const carKey = (spec) => { const u = spec.upg || {}, cd = spec.cond || {}; return spec.M.id + '|' + spec.color + '|' + stripeK(spec) + '|' + (u.motor | 0) + (u.gume | 0) + (u.zavore | 0) + (u.aero | 0) + '|' + deliKey(spec) + '|' + ['clean', 'body', 'engine'].map(k => Math.round((cd[k] == null ? 1 : cd[k]) * 10)).join(','); };
   function frontCars(specs) { const F = FRONT;
     for (let i = 0; i < 3; i++) { const sp = F.sprites[i], spec = specs[i]; if (!sp) continue;
       if (!spec) { sp.visible = false; F.keys[i] = null; continue; }
@@ -5539,7 +5540,7 @@ const Garage3D = (function () {
     swapNext = spec;
     return (swapP = play(function* () {
       const spec = swapNext; swapNext = null; swapP = null; svcStop();
-      if (cur && cur.M === spec.M && cur.spec.color === spec.color && (cur.spec.stripe !== false) === (spec.stripe !== false) && deliKey(cur.spec) === deliKey(spec)) { if (spec.again) show(spec); return; }   // (again: shown as it is now)
+      if (cur && cur.M === spec.M && cur.spec.color === spec.color && stripeK(cur.spec) === stripeK(spec) && deliKey(cur.spec) === deliKey(spec)) { if (spec.again) show(spec); return; }   // (again: shown as it is now)
       const old = cur, nw = makeCar(spec);
       // (the new car's shaders are made now, while the old one still stands: no stutter when it rolls in)
       nw.root.position.set(-30, 0, 0); tt.add(nw.root); renderer.compile(scene, camera);
