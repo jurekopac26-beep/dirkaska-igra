@@ -263,5 +263,5 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #713. Graditelj je skupni `js
 - **Krilo** na Start-Ziel se premakne s tribuno (`wing[2]` 6,9 m).
 - **Boksi**: stavba na obrisu iz OSM (`pitBuilding` −165…140, prej krajša); spredaj ostane pri garažah. Ravna tla kompleksa (`pitPad` −235…140) so na začetku enaka kot prej, vozna površina (`pit`) se ne spremeni.
 - **Prehod pred tribunami** (`World.people`, skupni): tlakovan od tribune do ograje, z `def.standApron` največ 6 m (privzeto 14, druge proge enake), naprej trava.
-- Obremenitev: 208 klicev in 495 tisoč oglišč, na najbolj obremenjenem mestu 246 / 666 (prej 215 / 262 klicev in 480 / 669 tisoč oglišč; `tests/golden/perf.json`).
+- Obremenitev (po svežem `main` 23. 11.): 208 klicev in 503 tisoč oglišč, na najbolj obremenjenem mestu 246 / 675 (prej 215 / 262 klicev in 489 / 677 tisoč oglišč; `tests/golden/perf.json`).
 - `tests/browser/ljudje.test.mjs`: sprehajalec sredi stopnice, višje od 0,3 m (na prehodih tribun so do 0,53 m, tudi prej do 0,47 m), na svoji poti nad stopnico pred njo ni »v zraku«; prej je test uspel samo zato, ker v izbranem trenutku nihče ni bil sredi take stopnice.
