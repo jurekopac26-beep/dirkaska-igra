@@ -5985,7 +5985,7 @@ const Core = (function () {
   // any of them (one searching, one parked at a strip or a roadblock, an ambush, the unmarked car), the chase is on again. The helicopter
   // (from the heat POL_DIFF.heli on; heliT s over them, then it flies off to refuel and is not back for heliCool s) follows the player from
   // above: nobody hides from it. Ambushes: patrol cars waiting with their lights off by the huts (POL_DIFF.amb of them), after the player as
-  // soon as they come by. The unmarked car (from the heat POL_DIFF.uc on): a dark saloon driving up the road ahead of the player like the
+  // soon as they come by. The unmarked car (from the heat POL_DIFF.uc on): a grey saloon driving up the road ahead of the player like the
   // traffic, its hidden lights and siren on once they come up behind it (then it brakes in front of them). Log piles by the road in the
   // woods (def.logs [metres after the start, side]): the player knocking over the stake that holds one sends the logs rolling across the
   // road behind them; a car over a log is jolted and slowed (a patrol car's tyres burst). Everything by the game's difficulty: POL_DIFF.
@@ -6074,7 +6074,7 @@ const Core = (function () {
     _car(s, d, rot, mode, delay, kind) {
       const T = this.T, race = this.race, i = T.idx(s), o = race.opts, K = kind || 'car', moto = K === 'moto', van = K === 'van';
       const M = moto ? POL_MOTO : van ? POL_VAN : MODELS.find(m => m.id === 'vortex');
-      const c = new Car(M, { id: 100 + (++this.nid), name: 'POLICIJA', color: K === 'uc' ? 0x22262d : 0xf2f4f6, skill: moto ? 1.08 : 1.05, assist: CSK.aiAssist, phys: o.phys, upg: van ? null : POL_UPG });
+      const c = new Car(M, { id: 100 + (++this.nid), name: 'POLICIJA', color: K === 'uc' ? 0x6e747c : 0xf2f4f6, skill: moto ? 1.08 : 1.05, assist: CSK.aiAssist, phys: o.phys, upg: van ? null : POL_UPG });
       c.place(T.px[i] + T.nx[i] * d, T.pz[i] + T.nz[i] * d, T.hd[i] + rot); if (T.hasElev) { c.y = c.py = T.hy[i]; c.roadY = c.y; }
       c.police = true; c.pol = { mode, kind: K, t: 0, delay: delay || 0, spike: null, unit: van ? 0 : ++this.unit, side: this.R() < 0.5 ? -1 : 1, v0: 0, hitP: -1 };
       c.skCap = moto ? 1.16 : this.D.pace; c.rubber = 1; c.dmgMode = o.damage == null ? 2 : o.damage; c.dmgK = moto ? 0.5 : 0.3; c.wet = race.cars[0] ? race.cars[0].wet : 1; if (race.cars[0]) c.wx = race.cars[0].wx;   // (the weather of the race's cars: its grip and its brakes)
@@ -6786,11 +6786,11 @@ const Core = (function () {
     [0.4, 0.1], [0.3, 0.35], [0.25, 0.5], [0.55, 0.6], [0.75, 0.15], [0.35, 0.6], [0.5, 0.25], [0.75, 0.5], [0.4, 0.35], [0.25, 0.35],
     [0.7, 0.35], [0.65, 0.45], [0.65, 0.25], [0.5, 0.75], [0.8, 0.4], [0.75, 0.25], [0.8, 0.45], [0.6, 0.3], [0.65, 0.35]];
   const driverChar = (k) => { const d = DRIVER_CHAR[((k % DRIVER_CHAR.length) + DRIVER_CHAR.length) % DRIVER_CHAR.length]; return { agg: d[0], err: d[1] }; };
-  const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x3b3fa8, 0x8a1c2b, 0x0f5e4e, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a,
-    0x1dc980, 0x73257e, 0xd2ef39, 0x4d85b3, 0x6c132a, 0x7cde80, 0x551dc9, 0x7e5c25, 0x39efde, 0xb34d9e, 0x406c13, 0x7c91de, 0xc92a1d, 0x257e46, 0xb139ef, 0xb3ae4d, 0x13576c, 0xde7caa, 0x3ac91d, 0x2f257e,
-    0xef8439, 0x4db394, 0x6c136c, 0xc2de7c, 0x39ef56, 0x7b4db3, 0x6c5613, 0x7cdbde, 0x477e25, 0x3949ef, 0xb3614d, 0xca7cde, 0xbbc91d, 0x255d7e, 0xef3976, 0x51b34d, 0x29136c, 0xdeb17c, 0x1dc9ac, 0xa3ef39,
-    0x4d6ab3, 0x811dc9, 0x7e7325, 0x39d1ef, 0x807cde, 0xc9561d, 0xe039ef, 0x13406c, 0x1dc92b, 0x4db3ae, 0xa9de7c, 0x1d39c9, 0x7e3025, 0x39ef85, 0x954db3, 0x6c6c13, 0x5839ef, 0xb37b4d, 0x8fc91d, 0x25467e,
-    0xef3948, 0xdeca7c, 0x7e255d, 0x75ef39, 0x4d50b3, 0x6c2a13, 0x7cdeb2, 0xad1dc9, 0x39a2ef, 0xb34d6a, 0x136c14, 0xc9821d, 0x257e74, 0xef39d0, 0x83b34d, 0x13296c, 0xde817c, 0x1dc957, 0xefe139];   // (one for each driver: no two alike, none like the one before it on the grid)
+  const AI_COLORS = [0xe8e8ee, 0x1c5fd6, 0xf2c230, 0x5c6168, 0x2fa84f, 0xf07a1a, 0x9a2bd8, 0x19b7c7, 0xd81f45, 0xc9c3b0, 0x6b8e23, 0xff5fa2, 0x8b93c5, 0xdf6273, 0x1ba771, 0x8ec9e8, 0xb87333, 0x6b737c, 0xb4dc2c, 0xc2187a,
+    0x1dc980, 0xb384c8, 0xd2ef39, 0x4d85b3, 0xc32c53, 0x7cde80, 0xaa70ea, 0x7e5c25, 0x39efde, 0xb34d9e, 0x406c13, 0x7c91de, 0xc92a1d, 0x257e46, 0xb139ef, 0xb3ae4d, 0x187386, 0xde7caa, 0x3ac91d, 0x6a55cd,
+    0xef8439, 0x4db394, 0xb328a6, 0xc2de7c, 0x39ef56, 0x7b4db3, 0xa9871e, 0x7cdbde, 0x477e25, 0x3949ef, 0xb3614d, 0xca7cde, 0xbbc91d, 0x399fc1, 0xef3976, 0x51b34d, 0x834de0, 0xdeb17c, 0x1dc9ac, 0xa3ef39,
+    0x4d6ab3, 0xc65ae7, 0x7e7325, 0x39d1ef, 0x807cde, 0xc9561d, 0xe039ef, 0x227bbf, 0x1dc92b, 0x4db3ae, 0xa9de7c, 0x4858e5, 0xbd4438, 0x39ef85, 0x954db3, 0x6c6c13, 0x5839ef, 0xb37b4d, 0x8fc91d, 0x3e68c6,
+    0xef3948, 0xdeca7c, 0xcc5290, 0x75ef39, 0x4d50b3, 0xe07652, 0x7cdeb2, 0xad1dc9, 0x39a2ef, 0xb34d6a, 0x136c14, 0xc9821d, 0x257e74, 0xef39d0, 0x83b34d, 0x4083dd, 0xde817c, 0x1dc957, 0xefe139];   // (one for each driver: no two alike, none like the one before it on the grid)
   const CAR_NUMS = [7, 3, 11, 21, 5, 44, 9, 16, 27, 8, 12, 33, 2, 55, 14, 23, 31, 46, 63, 77, 88]; for (let n = 1; n <= 101; n++) if (CAR_NUMS.indexOf(n) < 0) CAR_NUMS.push(n);   // by grid slot (the player's own number replaces the one of its slot); then the rest of 1..101 in order, every car of a 101-car field its own (the menu's Opponents: up to 100 and the player)
   // the AI drivers in grid order (the fastest first): name, car and colour are the same in every race (a championship's standings follow them).
   // Their cars (aiModel, the one place that picks them): the field of the player's vehicle (pm.field: ids; left out: a retired model, and
