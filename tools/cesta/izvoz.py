@@ -17,7 +17,9 @@ open road's ends is the track where a long stretch of it lies on the game's line
 open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own; def.views: a view point's
 lay-by) gets no road for the look beside it (own). A junction the game cannot draw (the road would climb the game's hillside) is left
-out by hand, per track (PROGE, izpusti: hand).
+out by hand, per track (PROGE, izpusti: hand). On a track of PAS a road runs on along the map's ways until it is that far off the centre
+line, out of the ~60 m band the camera sees (at most PAS_MAX m along the way); one that ends short of that, on no other of these roads,
+would end in the grass or before the fence: it is left out (blind).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
 a main road), width (m), one-way, end (0 fades into the terrain, 1 joins another of these roads), [x, z, ...]]; svetilke [x, z];
@@ -105,6 +107,10 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'koror': dict(predmeti=False), 'savusavu': dict(predmeti=False, izpusti=[(653, -1), (810, 1)]),
          'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)])}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
+# per track: no side road ends in the band the camera sees, in the grass or before the fence; each runs on along the map's ways to this
+# far off the centre line, out of the band (m), or onto another of these roads (Koror and Savusavu, 23. 11. 2026); PAS_MAX: how far
+# along the map's ways a side road may run on to leave the band (m)
+PAS, PAS_MAX = {'koror': 64.0, 'savusavu': 64.0}, 250.0
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
 
@@ -154,7 +160,7 @@ def local(tree, D, Qt, qtree, c):
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]; write = '--vpisi' in sys.argv
-    C = json.load(open(args[0]))[args[1]]; raw = args[2]; cfg = dict(PRIVZETO, **PROGE.get(C['id'], {}))
+    C = json.load(open(args[0]))[args[1]]; raw = args[2]; cfg = dict(PRIVZETO, **PROGE.get(C['id'], {}), pas=PAS.get(C['id']))
     g = C['geo']; geo = osm.Geo(g['lat0'], g['lon0'], g['rot'], g.get('scale', 1.0))
     G = np.column_stack([C['px'], C['pz']]); N = C['N']; ds = C['ds']; L = N * ds; op = C['open']; W_ = np.asarray(C['w'])
     nodes, tagged, ways = osm.parse(sorted(glob.glob(os.path.join(raw, '*.osm'))))
@@ -193,6 +199,14 @@ def main():
                 return out
             acc += l; out.append(P[i])
         return out
+    def reach(P, m):   # with pas: the way up to its first point m off the centre line (out of the band), at most PAS_MAX m of it
+        P = clip(P, PAS_MAX); acc = 0.0
+        for i in range(1, len(P)):
+            l = dist(P[i], P[i - 1]); n = max(1, int(math.ceil(l)))
+            for j in range(1, n + 1):
+                if near(P[i - 1] + (P[i] - P[i - 1]) * (j / n))[0] >= m: return clip(P, acc + l * j / n)
+            acc += l
+        return P
     def walk(P):   # a point each metre of the way: the index is the metres from the junction
         out = [P[0]]; acc = 0.0; nxt = 1.0
         for i in range(1, len(P)):
@@ -208,9 +222,9 @@ def main():
         ends.setdefault(refs[0], []).append(refs); ends.setdefault(refs[-1], []).append(refs[::-1])
     def carry(refs):
         refs = list(refs)
-        for _ in range(6):
+        for _ in range(24 if cfg.get('pas') else 6):
             P = [xz(r) for r in refs]
-            if plen(P) >= 64 or refs[-1] in tn: break
+            if plen(P) >= (PAS_MAX if cfg.get('pas') else 64) or refs[-1] in tn: break
             d0 = P[-1] - P[-2]; d0 = d0 / max(1e-9, float(np.hypot(*d0))); best = None
             for q in ends.get(refs[-1], []):
                 if q[1] == refs[-2]: continue
@@ -237,7 +251,7 @@ def main():
                 P0 = np.asarray([xz(r) for r in carry(br_)]); Rl, tl = local(tree, D, Qt, qtree, P0[0]); P1 = P0 @ Rl.T + tl
                 d, kk = tree.query(P1[0])
                 if d > FAR: drop('far'); continue                                        # on the way's continuation beyond the game's line
-                resid.append(float(d)); P = clip([p for p in P1 + (D[kk] - P1[0])], 64.0)
+                resid.append(float(d)); P = [p for p in P1 + (D[kk] - P1[0])]; P = reach(P, cfg['pas']) if cfg.get('pas') else clip(P, 64.0)
                 d0, s0 = near(P[0]); hw0 = hw_at(s0); sa = after(s0)
                 if op and (s0 < 40 or s0 > L - 40): drop('end'); continue                # the road's own continuation beyond the game's line
                 if sa < cfg['start'][0] or sa > L - cfg['start'][1]: drop('start'); continue   # the start: the wall, the fence and the crowd
@@ -259,28 +273,46 @@ def main():
                 if any(sd == (1 if o > 0 else -1) and circ(sa, m if op else m % L) < OWN for m, sd in C.get('ima', [])): drop('own'); continue   # the track's own side road is there
                 if any(sd == (1 if o > 0 else -1) and abs(sa - m) < 4 for m, sd in cfg.get('izpusti', [])): drop('hand'); continue   # left out by hand (PROGE)
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
-                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
+                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, cut0=cut, end=0, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
     # the higher class first, then the longer road: two mouths on the same side that would run into each other leave one; a road that runs
     # into another of these roads ends there (end 1), and so does the other one where it is met at its tip
-    cand.sort(key=lambda e: (-e['cls'], -e['cut'])); out = []
-    for e in cand:
-        if any(f['side'] == e['side'] and circ(e['s'], f['s']) < (e['mouth'] + f['mouth']) / 2 + 7 for f in out): drop('pair'); continue
-        hit = None
-        if out:
-            A = [(f, k) for f in out for k in range(8, f['cut'])]; tr = cKDTree(np.array([f['W'][k] for f, k in A]))
-            for k in range(8, e['cut']):
-                p = e['W'][k]; d, j = tr.query(p); f, kf = A[j]
-                if d > f['w'] / 2 + 1.5: continue
-                tt = f['W'][min(kf + 1, len(f['W']) - 1)] - f['W'][kf - 1]; tt = tt / max(1e-9, float(np.hypot(tt[0], tt[1]))); q = p - f['W'][kf]
-                u = float(tt[0] * q[0] + tt[1] * q[1]); v = float(-tt[1] * q[0] + tt[0] * q[1])
-                if abs(v) < f['w'] / 2 - 0.3 and (kf < f['cut'] - 1 or u <= 0.5): hit = (k, f, kf); break   # its centre on the other road
-        if hit:
-            k, f, kf = hit
-            if k < 14 or max(d for d, sm in e['N'][:k + 1]) < e['hw0'] + 10: drop('meet'); continue   # too short to that point
-            e['cut'] = k + 1; e['end'] = 1
-            if kf >= f['cut'] - 6: f['cut'] = min(f['cut'], kf + int(math.ceil(e['w'] / 2)) + 1); f['end'] = 1
-        out.append(e)
+    why0 = dict(why)
+    def meet(cand):
+        why.clear(); why.update(why0); out = []
+        for e in cand: e['cut'], e['end'] = e['cut0'], 0
+        for e in sorted(cand, key=lambda e: (-e['cls'], -e['cut0'])):
+            if any(f['side'] == e['side'] and circ(e['s'], f['s']) < (e['mouth'] + f['mouth']) / 2 + 7 for f in out): drop('pair'); continue
+            hit = None
+            if out:
+                A = [(f, k) for f in out for k in range(8, f['cut'])]; tr = cKDTree(np.array([f['W'][k] for f, k in A]))
+                for k in range(8, e['cut']):
+                    p = e['W'][k]; d, j = tr.query(p); f, kf = A[j]
+                    if d > f['w'] / 2 + 1.5: continue
+                    tt = f['W'][min(kf + 1, len(f['W']) - 1)] - f['W'][kf - 1]; tt = tt / max(1e-9, float(np.hypot(tt[0], tt[1]))); q = p - f['W'][kf]
+                    u = float(tt[0] * q[0] + tt[1] * q[1]); v = float(-tt[1] * q[0] + tt[0] * q[1])
+                    if abs(v) < f['w'] / 2 - 0.3 and (kf < f['cut'] - 1 or u <= 0.5): hit = (k, f, kf); break   # its centre on the other road
+            if hit:
+                k, f, kf = hit
+                if k < 14 or max(d for d, sm in e['N'][:k + 1]) < e['hw0'] + 10: drop('meet'); continue   # too short to that point
+                e['cut'] = k + 1; e['end'] = 1
+                if kf >= f['cut'] - 6: f['cut'] = min(f['cut'], kf + int(math.ceil(e['w'] / 2)) + 1); f['end'] = 1
+            out.append(e)
+        return out
+    out = meet(cand)
+    # with pas: a road that ends in the band on no other of these roads would end blind (in the grass, before the fence): it is left out
+    # and the rest meet again without it (a road that ended on it runs on)
+    blind = 0
+    while cfg.get('pas'):
+        bl = []
+        for e in out:
+            if e['end'] or near(e['W'][e['cut'] - 1])[0] >= cfg['pas'] - 4: continue
+            p = e['W'][e['cut'] - 1]
+            if any(f is not e and min(dist(p, f['W'][k]) for k in range(f['cut'])) < f['w'] / 2 + 1.5 for f in out): e['end'] = 1
+            else: bl.append(e)
+        if not bl: break
+        blind += len(bl); cand = [e for e in cand if all(e is not b for b in bl)]; out = meet(cand)
+    if blind: why['blind'] = blind
     out.sort(key=lambda e: e['sa']); rows = []
     for e in out:
         Pc = clip(e['P'], float(e['cut'] - 1)); keep = [Pc[0]]   # the corners that matter (0.8 m apart), the end always

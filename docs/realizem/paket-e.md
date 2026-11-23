@@ -245,12 +245,19 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
 - **Naloga:** paket E na progah zbirne veje #762, skupina 762b: **Koror, Palau**, **Savusavu, Fidži** in **Quezaltepeque, Salvador**. Stranske ceste s križišči so samo za videz (do ~60 m, samo iz OSM), črte pa po pravilih države. Nalogo je dala koordinacija po odločitvi uporabnika 16. 11. 2026 ob 22.24 (tabla #382). Osnova je veja `nove-proge/partyslo-zbirna` (#762) s spojenim #657. PR gre na `main` za #762 in #657; po `node tools/spoji-main.mjs` ostane samo njegova razlika. Skupina 762a (PR #777) dela na isti osnovi, zato v skupnih seznamih (`CRTE`, `README.md`, `PROGE` v `tools/cesta/izvoz.py`) vsaka doda samo svoje proge.
 - **Podatki:** OSM je prenesen prek `api.openstreetmap.org` (18. 11. 2026) z `tools/cesta/` (`crte.js` → `osm.py` → `izvoz.py`). Mediana prileganja sredinske črte na ceste OSM je Koror 0,2–0,3 m, Savusavu 0,2 m in Quezaltepeque 0,3 m (`highway=raceway`). Izvlečkov ni v repozitoriju: `izvoz.py … --vpisi` zapiše vrstice v `def.stranske` v `js/tracks/<id>.js` (oblika kot Livornov `side`, brez imen; ODbL je v `README.md`, »Zasluge«). Svetilk in postaj naloga ne zajema (`predmeti=False`).
 - **V igri:**
-  - **Koror:** 10 cest, od tega 9 dovozov ali kolovozov po 3,6 m in 1 ulica s 5,2 m (pri 1988 m).
+  - **Koror:** 8 cest, od tega 7 dovozov ali kolovozov po 3,6 m in 1 ulica s 5,2 m (pri 1988 m).
   - **Savusavu:** 8 cest, od tega 6 ulic po 5,2 m in 2 kolovoza po 3,6 m. Pri 188 m in 1616 m je križišče na obeh straneh.
   - **Quezaltepeque:** 2 poti dirkališča po 3,6 m (pri 1588 m in 2518 m).
 - **Ročno izpuščene** (`izpusti` v `PROGE`):
   - **Savusavu, 653 m levo in 810 m desno:** ulici odcepita pod 22° in 23° in tečeta ob ograji. Graditelj ju zato ne zgradi, v podatkih pa ostanejo samo zgrajene vrstice.
   - **Quezaltepeque, 1940 m levo in 2119 m desno:** servisni poti dirkališča, ki se končata v izletni coni pred ograjo.
+- **Popravki 23. 11. 2026** (odgovor 2 na vprašanje `e-proge-762b`, 18. 11.: nobena stranska cesta se ne konča slepo v travi ali pred ograjo ob cesti):
+  - `PAS` v `tools/cesta/izvoz.py` (Koror in Savusavu 64 m, `PAS_MAX` 250 m): stranska cesta teče naprej po poteh OSM, dokler ni 64 m od sredinske črte (zunaj pasu, ki ga vidi kamera), ali do druge stranske ceste. Cesta, ki se konča prej, odpade (`blind`), ostale se znova združijo.
+  - **Koror:** 10 → 8 cest. Odpadeta 782 m levo (zanka, ki se vrne na progo) in 1055 m levo (slepa po 34 m). Cesta pri 798 m desno je zdaj dolga 213 m, cesta pri 2997 m levo se združi s cesto pri 2940 m levo.
+  - **Savusavu:** ostane 8 cest, zdaj dolgih 65–93 m.
+  - **Quezaltepeque, 1565 m** (vrstica pri 1588 m): popravek je v #1025 (`realizem/e-stranske-sirina`) kot splošen popravek v skupni kodi.
+  - `cesta.test.mjs`: Koror ima najmanj 8 cest.
+  - #1025 je 23. 11. znova izvozil Koror in Savusavu z resničnimi širinami, zato se vrstici `stranske:` v `js/tracks/koror.js` in `js/tracks/savusavu.js` sporeta. PR, ki pride na `main` drugi, obe progi znova izvozi s skupnim orodjem (`izvoz.py … koror … --vpisi` in `izvoz.py … savusavu … --vpisi`, kar da 8 in 8 cest). `izvoz.py` in `cesta.test.mjs` se spojita brez spora. Širin, belih črt in oznak na križiščih se ne nastavlja ročno.
 - **Graditelja:**
   - **Koror in Savusavu** gradi `js/world-prelaz.js` z `World.cesta.stranske` (`odprta: true`). Kamni, sneg, ovce in pastir se umaknejo s stranske ceste (`excluded(x, z, 1)` in `naSR`), zaporedje naključij pa ostane, zato je ostala okolica enaka. Robna črta in ograja se na ustju odpreta, čez odprtino stojijo oranžni stebrički.
   - **Quezaltepeque** gradi `js/world-rbring.js` (priklop kot 569e). `qzWays` v `js/world-quezaltepeque.js` poti iz OSM, ki ležijo na stranski cesti, ne riše dvakrat.
@@ -278,4 +285,4 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
   2. Seznam `PROGE` v `tools/cesta/izvoz.py` se prekriva s 569e in 569f. Ob sporu obdrži vse vnose.
   3. Po novi gradnji Quezaltepequeja (sprememba sredinske črte) znova poženi `izvoz.py … --vpisi`.
   4. Blok 762b v `cesta.test.mjs` bo morda treba združiti z bloki 569c in 569e.
-  5. Uporabnikov odgovor na vprašanje `e-proge-762b`.
+  5. Odgovor 2 na `e-proge-762b` (18. 11.) je izveden 23. 11. (veja `realizem/e-proge-762b`, gre na `main` za #779); drugi krog vprašanja je na isti strani. Z #1025 gresta drug za drugim (glej Popravki).

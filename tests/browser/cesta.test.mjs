@@ -684,12 +684,12 @@ try {
 
   // the side roads of OpenStreetMap for the look on the tracks of group 762b (docs/realizem/paket-e.md »762b«): Koror and Savusavu (open
   // roads, js/world-prelaz.js) and Quezaltepeque (a circuit, js/world-rbring.js; its rows are tracks of the venue): every row of the track's
-  // data built (as many as js/tracks/ holds today, 10, 8 and 2), a strip through an opening at each mouth, a row of orange posts across it
+  // data built (as many as js/tracks/ holds today, 8, 8 and 2), a strip through an opening at each mouth, a row of orange posts across it
   // on the fence line (evenly, two or more, on the surface drawn under it, off the road's asphalt); on the passes the white edge line broken
   // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
   // mouth it meets the paint's material); no paint at a mouth (Palau's and Fiji's rows in CRTE hold the main road's lines only, El Salvador
   // has none); the track's model as a track built alone has it; no errors
-  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 10], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
+  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 8], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
     await startTrack(page, id);
     const sx = await page.evaluate(([id, rob]) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
