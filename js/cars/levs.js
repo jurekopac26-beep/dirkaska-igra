@@ -144,6 +144,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const RED = [0.45, 0.03, 0.04], AMBER = [0.85, 0.42, 0.06], DRED = [0.5, 0.03, 0.04];
         // ---- the shell: the paint; the glass (the windscreen, the side windows to the C-pillar, the rear glass); the roof's panel dark
         //      gloss from the C-pillars to the windscreen's top; the arches dark ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (at.end) return P;
           if (e === 0 || e === 8) return at.arch ? B : K.shade(P, 0.62);

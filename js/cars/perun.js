@@ -123,6 +123,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;   // (between the arches: the sills)
         // ---- the shell: the paint; the glass (the windscreen and the side glass beside it, the door glass, the rear glass); the sills black;
         //      the nose's face black over a painted valance (the bumper), the tail's face painted over a dark valance ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XB) ? B : K.shade(P, 0.7);
           if (kind === 'gf' && e >= 2 && e <= 6) return G;

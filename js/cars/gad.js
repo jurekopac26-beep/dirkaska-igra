@@ -127,6 +127,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const P = K.paint, S = K.strp, B = K.black, CH = K.chrome, G = K.GLASS, D = [0.09, 0.09, 0.1], IN = [0.11, 0.1, 0.09];
         const CR = !!(K.fitted && K.fitted.crte);   // (the garage's stripes fitted: mounts.crte; the stock twin stripes give way to them)
         // ---- the shell: the paint; the cockpit's top open; the sills a shade darker, black ledges in the arches ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
           if (at.end) return P;
           if (e === 0 || e === 8) return at.arch ? B : K.shade(P, 0.62);

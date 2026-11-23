@@ -60,7 +60,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the shell: the paint; the glass (the windscreen, the side windows, the roof, the rear glass); the sills dark between the arches,
         // the paint's shade under the bumpers' corners
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
-        K.regions(R => { const h = R.find(r => r.part === 'hood'); return h ? [{ part: 'hood', x: h.x, bands: ['window'], top: true }].concat(R) : R; });   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XB) ? DK : K.shade(P, 0.55);
           if (kind === 'gf' && e >= 2 && e <= 6) return G;

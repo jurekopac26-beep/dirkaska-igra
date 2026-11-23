@@ -994,6 +994,7 @@ const Render = (function () {
                                call: car.deli.platisca is the wheels' look
        K.topY(x, z)            the main loft's top at (x, z) (look units; after the main loft): what lies on the roof, a wing's feet
        K.regions(preset | list | fn(std))   the regions from here on (returns them, look units)
+       K.hoodWhole()                        the bonnet one whole panel, the full width: the shoulders beside it too (from here on)
        -- the loft --
        K.secs(rows)            rows [x, w, yb, ybelt, wt, yt, cr, kind, tk?] -> sections. x: from the tail (first) to the nose (last); w: the
                                side's half width; yb: the bottom's height; ybelt: the belt (the side's top: where the glass starts); wt: the
@@ -1802,6 +1803,10 @@ const Render = (function () {
       else kx.regions = kitRegionsIn(kx, r);
       return kitRegionsOut(kx, kx.regions);
     };
+    // the bonnet one whole panel: the shoulders beside the lid (the nose's 'window' band, the fenders' by the standard list) go with the hood,
+    // over the hood's own length, whatever the regions are now (the look's own kept: the new region goes in just before the fenders)
+    K.hoodWhole = () => { const R = kx.regions, h = R.find(r => r.part === 'hood'), i = R.findIndex(r => r.part === 'fenderL' || r.part === 'fenderR');
+      if (h && i >= 0) kx.regions = R.slice(0, i).concat([{ part: 'hood', x: h.x.slice(), bands: ['window'], top: true }], R.slice(i)); };
     // sections and the loft
     K.secs = (table) => { kitRowsOk(table, 'secs'); return table.map(kitRow); };
     K.loft = (secs, col, o) => { const S = secs && secs.length && Array.isArray(secs[0]) ? K.secs(secs) : secs;

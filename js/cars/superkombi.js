@@ -124,6 +124,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const XI0 = A1.x + A1.half * Math.cos(Math.PI / 6), XI1 = A1.x - A1.half;               // (the side intake: between two of the rear arch's cuts)
         // ---- the shell: the paint; the glass (the windscreen and the quarter-lights beside it, the side windows forward of the intake, the
         //      tailgate's window); black under the sills, the spoiler and the bumper ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (e === 0 || e === 8) return B;
           if (kind === 'gf') return e >= 2 && e <= 6 ? G : P;

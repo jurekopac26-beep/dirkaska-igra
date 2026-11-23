@@ -135,6 +135,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;   // (the rear arch's front end, the front arch's rear end)
         // ---- the shell: the paint; the windscreen, the side windows (the front door's up to the A-pillar), the rear glass; dark sills; the
         //      landau roof (black padded vinyl) over the rear compartment and the C-pillars ----
+        K.hoodWhole();   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.body.secs, (k, e, kind, at) => {
           if (at.end) return P;
           if (e === 0 || e === 8) return at.arch ? B : SILL;
