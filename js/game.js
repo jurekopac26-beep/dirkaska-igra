@@ -14,7 +14,9 @@
       : f === 3 || f === 4 ? 'Shramba je bila polna: da se napredek shrani, so bili izbrisani {0} duhovi.' : 'Shramba je bila polna: da se napredek shrani, je bilo izbrisanih {0} duhov.', n), 5200); } });
   const STEP = 1 / 120;
   const LAPS = 3, NUM_AI = 21, CH_AI = 19, PLAYER_GRID = 999, RIV_MAX = 100;   // (RIV_MAX: the most rivals the menu's Opponents offers; a track whose start or finish takes fewer: def.maxRivals)   // (NUM_AI: a Circuit race's rivals, 22 cars, the career's too; CH_AI: a championship round's, 20 cars; PLAYER_GRID: without qualifying the player starts at the back of the grid: Core.Race puts the player at min(the field, it), the last slot of any field, the Nordschleife's 100 too)
-  const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6];
+  const PLAYER_COLORS = [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x5c6168, 0x2fa84f, 0xff7a1a, 0x8e3bd6,
+    0xb8bcc2, 0x7d8288, 0x4a78b5, 0xa83248, 0x1fb5b0, 0xf06aa8, 0xa6d62b, 0xb07a3c];   // (the last eight: docs/novosti-e.md Novost 1, V3 (16 colours, none very dark); an older phone draws an index it does not know as the first, as ever; index 4 was black 0x1a1a1f, now graphite: a stored index keeps its place)
+  const OLD_BLACK = 0x1a1a1f, colFix = (c) => typeof c !== 'number' ? PLAYER_COLORS[0] : c === OLD_BLACK ? PLAYER_COLORS[4] : c;   // (a ghost file or a friend's challenge from before: its old black as the graphite)
   const DRIVE_TXT = { FR: 'Zadnji pogon', AWD: 'Štirikolesni pogon', FF: 'Prednji pogon', MR: 'Motor na sredini', RR: 'Motor zadaj' };
   const DRIVE_TAG = { FR: 'FR', AWD: '4WD', FF: 'FF', MR: 'MR', RR: 'RR' };
   const CTRL_HELP = {
@@ -184,6 +186,9 @@
   const owned = (id) => bought(id) || rentId() === id;
   // the career: a car the garage keeps (career.garage.cars[id]: its paint, parts and wear, js/garage.js toCareer)
   const garOf = (id) => inCareer() && isObj(career.garage) && isObj(career.garage.cars) && isObj(career.garage.cars[id]) ? career.garage.cars[id] : null;
+  // the car's look from the garage without its effects (parts, stripes off: Core.lookRead; null: the stock look), docs/novosti-e.md Novost 1
+  const scOf = (g) => Number.isInteger(g.sc) && g.sc >= 0 && g.sc < PLAYER_COLORS.length ? PLAYER_COLORS[g.sc] : undefined;   // (the stripes' own colour from the garage, index into PLAYER_COLORS; none: auto, white or blue)
+  const lookOf = (id) => { const g = bought(id) && garOf(id); return g ? Core.lookRead(Core.lookWire({ deli: isObj(g.deli) ? g.deli : null, stripe: g.stripe !== false, sc: scOf(g) })) : null; };
   // the colour of the car (PLAYER_COLORS' index): the career's car the garage painted, its paint (bought there); else the one chosen here
   const colOf = (id) => { const g = garOf(id), k = g && g.color; return Number.isInteger(k) && k >= 0 && k < PLAYER_COLORS.length ? k : S.color; };
   const colNow = () => colOf(Core.MODELS[S.car].id);
@@ -282,7 +287,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // Vibracija: Izklop / Osnovno / Vse (0, 1, 2: Input's level) since vibV 2; stored before it as Izklop / Vklop (0, 1), and Vklop played
   // every pattern: Vse now (an old saved setting or an imported profile, once; never in DEF, or a stored one without it would pass as new)
   if (S.vibV !== 2) { S.vibrate = +S.vibrate ? 2 : 0; S.vibV = 2; save(); }
-  const carNum = () => Core.MODELS[S.car].num || 1;
+  const carNum = () => { const id = Core.MODELS[S.car].id, g = bought(id) && garOf(id), n = g && g.num; return Number.isInteger(n) && n >= 1 && n <= 99 ? n : Core.MODELS[S.car].num || 1; };   // (the career car's own number from the garage, docs/novosti-e.md V2)
   function saveRecords() { Shramba.keep('tdgp-records', JSON.stringify(records)); }
 
   /* ---------------- state ---------------- */
@@ -1257,12 +1262,13 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // (for tools/voznja.mjs, AI po tvoji liniji: the player's car as the race built it, pf: its upgrades, set-up, garage parts, the field's car and the
   // assist (as: Core.ASSISTS index at the end of the race);
   // ty: the race with tyres; wxs: a changing weather, the rain from r0 to r1 over dur s from race time at; a file opened: as the file had them)
+  const lkOf = (c) => { const w = Core.lookWire({ deli: c.deli, stripe: c.stripe !== false, sc: c.stripeCol }); return w ? { lk: w } : {}; };   // (a car's look in the file: lk, Core.lookWire; an older file's: none)
   function rrpOf() {
     const R = recd; if (!R || !race || R.frames.length < 40) return null;
     const A = R.file || Render.atmos || {}, ci = (c) => R.cars.indexOf(c), F = R.file, O = race.opts || {}, X = race.wst && race.wst.wx;
     const pf = (k) => F ? (F.cars[k] && F.cars[k].pf ? { pf: F.cars[k].pf } : {}) : { pf: { upg: O.playerUpg || null, setup: O.playerSetup || null, deli: O.playerDeli || null, fm: O.fieldModel ? O.fieldModel.id : null, as: race.player ? Core.ASSISTS.indexOf(race.player.assist) : O.assist } };
     const H = Object.assign(rpMeta(), { w: R.w, n: R.n, tt: !!race.timeTrial, rain: race.rain || 0, season: A.season || S.season, tod: A.tod || S.tod,
-      cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
+      cars: R.cars.map((c, k) => Object.assign({ m: c.m.id, name: c.name, color: c.color, num: c.num, grid: c.grid, pl: c.isPlayer ? 1 : 0, lap: c.lap || 1, lapStart: c.lapStart || 0, lapTimes: (c.lapTimes || []).slice() }, lkOf(c), c.finished ? Object.assign({ fin: 1, ft: c.finishTime }, c.busted ? { bust: 1 } : {}) : {}, c.isPlayer ? pf(k) : {})),   // (bust: arrested by the police: over the run's end, not at its finish)
       fin: race.finishOrder.map(ci).filter(k => k >= 0), ev: R.ev.map(e => Object.assign({}, e)), flags: R.flags.map(f => ({ t: f.t }))  },
       F ? { ty: F.ty, wxs: F.wxs } : { ty: race.wst && race.wst.tyres ? 1 : 0, wxs: X ? { at: X.at, dur: X.dur, r0: X.r0, r1: X.r1 } : undefined });
     delete H.file; delete H.dev; return { H, frames: R.frames };
@@ -1278,7 +1284,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     Render.setAtmos({ season: H.season || 'summer', tod: H.tod || 'day' }, true);
     ensureTrack(d.id, () => {
       const cars = H.cars.map((o, k) => { const c = new Core.Car(modelById(o.m), { id: k + 1, isPlayer: !!o.pl, name: o.name, color: o.color, phys: physOf() });
-        Object.assign(c, { num: o.num, grid: o.grid, lap: o.lap, lapStart: o.lapStart, lapTimes: o.lapTimes || [], finished: !!o.fin }); if (o.fin) c.finishTime = o.ft; return c; });
+        Object.assign(c, { num: o.num, grid: o.grid, lap: o.lap, lapStart: o.lapStart, lapTimes: o.lapTimes || [], finished: !!o.fin }); if (o.fin) c.finishTime = o.ft; Core.dressOnly(c, Core.lookRead(o.lk)); return c; });
       race = new Core.Race(track, { numAI: 0, laps: H.laps || 1, phys: physOf(), rain: H.rain || 0, damage: 0, seed: 7 });
       race.cars = cars; race.player = cars.find(c => c.isPlayer) || cars[0]; race.timeTrial = !!H.tt; race.state = 'done'; race.time = frames[frames.length - 1][0];
       race.finishOrder = (H.fin || []).map(k => cars[k]).filter(Boolean);
@@ -1939,7 +1945,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
     const a = new Int16Array(u.buffer), f = new Float32Array(o.n * ch), q = o.q0.map(v => +v || 0);
     for (let k = 0; k < o.n; k++) { const i = k * ch; for (let c = 0; c < 3; c++) { q[c] += a[i + c]; f[i + c] = q[c] / 100; } for (let c = 3; c < ch; c++) f[i + c] = a[i + c] / 1e4; }
-    return { n: o.n, t: o.t, M: modelById(o.car), color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], stripe: o.stripe !== false, f, ch, lap: o.lap === 1 };
+    return { n: o.n, t: o.t, M: modelById(o.car), color: colFix(o.color), stripe: o.stripe !== false, f, ch, lap: o.lap === 1 };
   }
   function ghLoad(id, best, lap) {   // the stored best run of this track and physics, if it is the run of the current record (lap: a circuit's best flying lap)
     let o = null; try { o = JSON.parse(localStorage.getItem(ghKey(id)) || 'null'); } catch (_) { return null; }
@@ -2191,7 +2197,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const g = o.ghost != null ? ghParse(o.ghost) : null; if (o.ghost != null && (!g || Math.abs(g.t - o.time) > 0.001)) return null;   // (its ghost, if one came with it: the same run)
     const lap = o.lap === 1; if (lap ? d.open || d.timeTrial : !hasTT(d)) return null;   // (a lap on a circuit, a time trial's run where there is one)
     const c = isObj(o.cond) ? o.cond : {}, v = (x) => x === 0 || x === 1 || x === 2 ? x : 1, st = isObj(c.setup) ? c.setup : {};
-    return { name: cleanName(o.name) || tr('Prijatelj'), time: o.time, track: d.id, lap, car: modelById(o.car).id, color: typeof o.color === 'number' ? o.color : PLAYER_COLORS[0], ghost: !!g, nm: !lap && Array.isArray(o.marks) ? Math.min(o.marks.length, MK_RUNS) : 0,   // (nm: how many runs' tyre marks came with it)
+    return { name: cleanName(o.name) || tr('Prijatelj'), time: o.time, track: d.id, lap, car: modelById(o.car).id, color: colFix(o.color), ghost: !!g, nm: !lap && Array.isArray(o.marks) ? Math.min(o.marks.length, MK_RUNS) : 0,   // (nm: how many runs' tyre marks came with it)
       cond: { rain: c.rain === 1 ? 1 : 0, tod: CHAL_TOD[c.tod] ? c.tod : 'day', season: CHAL_SEASON[c.season] ? c.season : 'summer', upg: upgNorm(isObj(c.upg) ? c.upg : null), setup: { wing: v(st.wing), gear: v(st.gear) } } };
   }
   function chalLoad() { let o = null; try { o = JSON.parse(localStorage.getItem(CHAL_KEY) || 'null'); } catch (_) { } chal = chalOf(o); chalBtn(); }
@@ -2519,7 +2525,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const W = ch ? { rain: ch.cond.rain, wx: null, storm: false } : quali || Q ? { rain: qual.rain, wx: qual.wx, storm: qual.storm } : weatherOf(track.def);   // (qualifying: the weather at the start of the race to come, no change during the lap)
     wxWet = null;   // (the start of a changing day, rolled in the menu, is for this start only: not left over, unused by a challenge, the race after qualifying or another weather, for a later start)
     const solo = tt || quali || !!ch, lapRun = !!ch && !tt;   // (alone: a time trial, qualifying, a challenge: its time trial or a circuit's flying lap)
-    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[colNow()], playerDeli: !ch && !on && bought(M.id) && garOf(M.id) && isObj(garOf(M.id).deli) ? garOf(M.id).deli : undefined, playerNum: carNum(), playerSlide: physOf() === 'nova' && S.slide === 1, seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
+    const mine = { playerModel: M, fieldModel: FM || undefined, playerUpg: Object.assign({}, ch ? ch.cond.upg : upgOf(M.id)), playerSetup: Object.assign({}, ch ? ch.cond.setup : setupOf(track.def.id)), playerColor: ch ? ch.color : PLAYER_COLORS[colNow()], playerDeli: !ch && !on && bought(M.id) && garOf(M.id) && isObj(garOf(M.id).deli) ? garOf(M.id).deli : undefined, playerLook: lookOf(M.id) || undefined, playerNum: carNum(), playerSlide: physOf() === 'nova' && S.slide === 1, seed: quali || Q ? qual.seed : repro ? repro.seed : (Math.random() * 1e6) | 0, difficulty: cr >= 0 ? champ.diff : S.difficulty, assist: S.assist, repro: !!repro && !on };
     Core.setCrash(xPhys(on));   // (Razbijanje · nov način: its physics off in an online race)
     Core.setTest(testOf(!!on));   // (Preizkus: tekmeci in trki: off online too)
     const zctx = { md, on: !!on, tt, quali, chal: !!ch, cr, school: !!school, nv: !!nv, mis: !!MS.cur, career: inCareer(), prvi: !!(prvi && prvi.race), track, nAI, pm: M };   // (Zabava: what this race is, for its novelties)
@@ -2528,7 +2534,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       race = new Core.Race(track, Object.assign(mine, { numAI: 0, playerGrid: on.grid.indexOf(mp.me) + 1, laps: on.laps, damage: on.damage, phys: on.phys, rain: on.rain, playerNum: nums[mp.me], slip: on.slip !== 0, faults: !!on.faults,
         netTf: !!on.tf, seed: on.tf ? on.seed || 7 : undefined, playerPolice: !!on.tf && on.pol === mp.me,   // (beg s prijatelji: the traffic from the host's seed, the patrol car)
         remote: on.grid.filter(id => id !== mp.me).map(id => { const F = rs.find(p => p.id === id) || { name: tr('Prijatelj'), car: M.id, color: 0 };
-          return { id, model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: nums[id], name: F.name, grid: on.grid.indexOf(id) + 1, police: !!on.tf && on.pol === id }; }) }));
+          return { id, model: modelById(F.car), color: PLAYER_COLORS[F.color] || PLAYER_COLORS[0], num: nums[id], name: F.name, grid: on.grid.indexOf(id) + 1, police: !!on.tf && on.pol === id, look: Core.lookRead(F.look) || undefined }; }) }));
     } else if (school) {   // the driving school: alone, the lesson's car, dry; the braking lesson from the start of the straight
       school = { L: school.L, on: 0, all: 0, D: { pts: 0, chain: 0, calm: 0, best: 0, lost: 0 } };
       race = new Core.Race(track, schoolOpts(school.L));
@@ -3677,7 +3683,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const RD_WHO = { okc: ['OKC KRANJ', '', ''], heli: ['BOBER', 'Bober', 'Bober'], bov: ['PP BOVEC', 'Postaja Bovec', 'Bovets station'], cop: ['POLICIST', '', ''], drv: ['TI', '', ''] };
   const rdCall = (u, kind) => kind === 'moto' ? [tr('MOTORIST {0}', u), 'Motorist ' + u, 'Bike ' + u] : kind === 'uc' ? [tr('CIVILNA {0}', u), 'Civilna ' + u, 'Unmarked ' + u] : kind === 'van' || !u ? [tr('KOMBI'), 'Kombi', 'Van'] : ['KG-' + u, 'Kranjska Gora ' + u, 'Kranyska Gora ' + u];   // (the labels on the page in its language)
   // the player's car as the police describe it: the colour (the formula is feminine), the model ([Slovenian, English])
-  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['črn', 'črna', 'black'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple']];
+  const RD_COL = [['rdeč', 'rdeča', 'red'], ['bel', 'bela', 'white'], ['moder', 'modra', 'blue'], ['rumen', 'rumena', 'yellow'], ['grafiten', 'grafitna', 'graphite'], ['zelen', 'zelena', 'green'], ['oranžen', 'oranžna', 'bright orange'], ['vijoličen', 'vijolična', 'purple'],
+    ['srebrn', 'srebrna', 'silver'], ['siv', 'siva', 'grey'], ['srednje moder', 'srednje modra', 'mid-blue'], ['bordo', 'bordo', 'burgundy'], ['turkizen', 'turkizna', 'turquoise'], ['roza', 'roza', 'pink'], ['limetno zelen', 'limetno zelena', 'lime green'], ['bronast', 'bronasta', 'bronze']];
   // the lines: key -> its variants [Slovenian, English] ({at} where, {to} which way, {dir} heading for, {v} km/h, {car} the player's car, {U} the
   // unit spoken to, {sacc} / {sgen} / {sloc} into / out of / in a side road, {dead} its dead end)
   const RL = {
@@ -5922,7 +5929,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   };
   const netErr = (type) => tr(Object.prototype.hasOwnProperty.call(NET_ERR, type) ? NET_ERR[type] : 'Povezava s strežnikom ni uspela. Preveri internetno povezavo in poskusi znova.');
   const onErr = (t) => { const el = $('on-err'); el.textContent = t; if (t) { try { el.scrollIntoView({ block: 'nearest' }); } catch (_) { } } };   // (on a short screen it may be below the fold)
-  const peerOf = (m) => ({ name: cleanName(m.name) || tr('Prijatelj'), car: String(m.car), color: m.color | 0, num: Core.clamp(m.num | 0, 1, 99) });
+  const peerOf = (m) => { const o = { name: cleanName(m.name) || tr('Prijatelj'), car: String(m.car), color: m.color | 0, num: Core.clamp(m.num | 0, 1, 99) }, w = Core.lookWire(Core.lookRead(m.look)); if (w) o.look = w; return o; };   // (look: the garage's, short form; an older friend's: none)
   // mp: the room, or null. role 'host' | 'guest'; me: my id in the room ('h' the host, 'g1'..'g3' its friends, up to 'g21' in a quick
   // match); quick: a quick match (Počakaj prijatelja: up to 22, its race starts when full or when the host starts it); players: everyone in it
   // { id, name, car, color, num, in } (the host keeps the list and sends it round; in: in the room, not still racing or on the results);
@@ -5975,7 +5982,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     Net.close(true); mp = null;
     if (race) toTitle(); else showScreen('title');
   }
-  const meInfo = () => ({ name: S.name || tr('Igralec'), car: Core.MODELS[S.car].id, color: colNow(), num: carNum() });   // (the colour the player's own car is drawn in: the garage's paint in the career)
+  const meInfo = () => { const o = { name: S.name || tr('Igralec'), car: Core.MODELS[S.car].id, color: colNow(), num: carNum() }, w = Core.lookWire(lookOf(o.car)); if (w) o.look = w; return o; };   // (the colour the player's own car is drawn in: the garage's paint in the career)
   function me() { return Object.assign({ t: 'me' }, meInfo()); }
   function onNet(type, m, id) {
     if (!mp) return;
@@ -6145,7 +6152,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (mp.quick) Net.lock();   // (a quick match: nobody new comes into a room whose race starts; its place is free for the next room)
     const no = ++mp.no, k = (no - 1) % ins.length, grid = ins.slice(k).concat(ins.slice(0, k));
     ZB.netSetup(grid);   // (Zabava: the elimination race's switch to every phone, the pursuit's patrol car for this grid (mp.beg), before the setup)
-    const s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, faults: S.faults ? 1 : 0, slip: S.slip ? 1 : 0, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), grid, roster: mp.players.filter(p => grid.includes(p.id)).map(p => ({ id: p.id, name: p.name, car: p.car, color: p.color, num: p.num })), ready: new Set() };
+    const s = mp.setup = { no, track: mp.track, laps: mp.laps, phys: physOf(), damage: +S.damage, faults: S.faults ? 1 : 0, slip: S.slip ? 1 : 0, rain: 0, hold: +(0.5 + Math.random() * 0.9).toFixed(3), grid, roster: mp.players.filter(p => grid.includes(p.id)).map(p => Object.assign({ id: p.id, name: p.name, car: p.car, color: p.color, num: p.num }, p.look ? { look: p.look } : {})), ready: new Set() };
     s.rain = S.weather === 'rain' ? 1 : (S.weather === 'random' || S.weather === 'change') && Math.random() < (RAIN_P[s.track] || 0.35) ? 1 : 0;   // (the host's weather for everyone)
     Object.assign(s, netBeg(s));   // (beg s prijatelji: the traffic and the patrol car)
     for (const id of grid) if (id !== 'h') Net.sendTo(id, { t: 'setup', no, track: s.track, laps: s.laps, phys: s.phys, damage: s.damage, faults: s.faults, slip: s.slip, rain: s.rain, hold: s.hold, grid, roster: s.roster, tf: s.tf, seed: s.seed, pol: s.pol });
