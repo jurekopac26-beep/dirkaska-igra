@@ -392,11 +392,11 @@
   "jsMs": 1.04
  },
  "kagerod": {
-  "calls": 225,
-  "maxCalls": 255,
-  "kverts": 471,
-  "maxKverts": 527,
-  "jsMs": 0.83
+  "calls": 230,
+  "maxCalls": 272,
+  "kverts": 550,
+  "maxKverts": 637,
+  "jsMs": 1.95
  },
  "sosnova": {
   "calls": 189,
