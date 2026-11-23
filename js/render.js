@@ -1157,9 +1157,9 @@ const Render = (function () {
   // the PartGB router: GB-compatible (tri, triO, quadO, triN, triON, quadON, quadUp; World.box, World.cyl & co. draw into it). Each triangle
   // goes to the bucket of the current target (kx.target: the block, the part, the sub-range, the flags), its corners from look units to metres
   class KitGB {
-    constructor(kx) { this.kx = kx; }
-    tri(a, b, c, ca, cb, cc) { this.kx.emit(a, b, c, ca, cb || ca, cc || ca, null); }
-    triN(a, b, c, na, nb, nc, ca, cb, cc) { this.kx.emit(a, b, c, ca, cb || ca, cc || ca, [na, nb, nc]); }
+    constructor(kx) { this.kx = kx; this.n = 0; }   // (n: the triangles so far)
+    tri(a, b, c, ca, cb, cc) { this.n++; this.kx.emit(a, b, c, ca, cb || ca, cc || ca, null); }
+    triN(a, b, c, na, nb, nc, ca, cb, cc) { this.n++; this.kx.emit(a, b, c, ca, cb || ca, cc || ca, [na, nb, nc]); }
   }
   for (const k of ['triO', 'quadO', 'triON', 'quadON', 'quadUp']) KitGB.prototype[k] = GB.prototype[k];
 
@@ -1793,7 +1793,7 @@ const Render = (function () {
     K.mainDecal = () => { if (!kx.mainS) kitFail('mainDecal: before the main loft'); return kx.mainD || (kx.mainD = kitDecal(kx, kx.mainS, kx.mainR)); };   // (the main loft's decals, as its own L.decal: the garage's stripes and decals, js/deli/barve.js)
     K.deli = (id, stock, around) => { const n = kx.deli && kx.deli[id], m = M.def && M.def.mounts && M.def.mounts[id]; let ok = false;
       if (n && m && typeof DELI !== 'undefined') kx.scope('dl', id, () => { ok = DELI.build(K, id, n, m, M); });   // (its triangles tagged: Render.deliMesh)
-      if (!ok) stock();
+      if (!ok) { const v0 = g.n; stock(); if (m && g.n === v0 && typeof DELI !== 'undefined' && DELI.stock) DELI.stock(K, id, m, M); }   // (the vehicle's own stock part, or the common one in the option's place: js/deli/skriti.js)
       if (around) kx.scope('dl', ok ? id + '+' : kx.dl || '', () => around(ok ? n : 0));   // (the car's own housing round it, drawn after the option fitted (0: stock); with an option, part of it: id + '+')
       return ok ? n : 0; };
     K.hinge = (part, a, b) => { kx.partOk(part); if (![a, b].every(p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite))) kitFail('hinge: two points [x, y, z]'); kx.hinges[part] = [[a[0] * sx, a[1], a[2] * sz], [b[0] * sx, b[1], b[2] * sz]]; };
@@ -1952,6 +1952,7 @@ const Render = (function () {
       kx.prim(x, y + h / 2, z, () => { World.box(g, x, y, z, l, h * 0.72, w, 0, col); World.box(g, x, y + h * 0.72, z, l * 0.86, h * 0.16, w * 0.62, 0, o.cover || [0.6, 0.12, 0.1]);
         tubeX(g, x + l * 0.3, x - l * 0.2, y + h * 0.95, z + w * 0.18, h * 0.18, 8, [0.12, 0.12, 0.13], [0.3, 0.3, 0.32]); }, Object.assign({ part: kx.ex ? null : 'body' }, o, { inner }));
       kx.engineAt = [x, y + h];
+      if (!(M.def && M.def.mounts && M.def.mounts.filter_zraka) && !o.bare && typeof DELI !== 'undefined' && DELI.stockBay) DELI.stockBay(K, x, y, z, l, w, h, M);   // (no mounts: the stock filter, battery and control box beside the block)
     };
     K.cage = (bars, r, col, o) => {   // a roll cage (or a buggy's frame): bars [[a, b], ...] of radius r
       o = o || {}; if (!Array.isArray(bars) || !bars.length) kitFail('cage: a list of bars [[a, b] ...]');
