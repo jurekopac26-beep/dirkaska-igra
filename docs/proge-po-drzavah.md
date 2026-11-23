@@ -57,6 +57,8 @@ Pravilo v `CLAUDE.md` (»Ena proga na državo«): nova proga mora imeti izletno 
 | Sogeri, Papua Nova Gvineja | PR #691 | 0 % v OpenStreetMap (zidov, ograj in hiš ni); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
 | Savusavu, Fidži | PR #693 | 0 % (v igri, povprečno 6,8 m) | izletna cona je |
 | Koror, Palau | PR #694 | 0 % (v igri, povprečno 5,7 m) | izletna cona je |
+| Irishtown, Jamajka | PR #886 | največ 14 % katerega koli 500-metrskega odseka v OpenStreetMap (hiše zaselkov ob cesti); v igri ni izmerjeno (jeklena ograja, kjer teren pada, nevidna stena proge) | izletna cona je; padca ni |
+| Vaoala, Samoa | PR #861 | 17,5 % (v igri) | izletna cona je |
 | Killar, Indija | PR #283 | 99 %, obe 58 % (v igri, povprečno 2,3 m) | brez izletne cone (prepad in stena ob ozki polici); v PR, samo javljeno |
 | Pau, Francija | Nove proge 7 | ulična proga | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026) |
 | Puerto Madero, Argentina | kratke D, Načrtovano | 75 %, obe 38 % (stara veja, v igri) | **ne začni**: brez izletne cone (odločitev uporabnika 5. 11. 2026): ulična proga |
@@ -135,6 +137,8 @@ Odločitvi uporabnika 8. 11. 2026 ob ~22.00 in 22.03 (prek Mateja, tabla #382, k
 | Papua Nova Gvineja | Tapini (proga za cisterno, s PR #783): prava proga od 22. 11. 2026 (izbira uporabnika ob 1.50, Matej, tabla #382, komentarja 7071746772 in 7071767423) | – | Sogeri (PR #691): testna (`test: true`, za izbris) |
 | Fidži | Savusavu (PR #693) | – | – |
 | Palau | Koror (PR #694) | – | – |
+| Jamajka | Irishtown (PR #886, `pending: true`, zanimivosti potrdi uporabnik) | – | – |
+| Samoa | Vaoala (PR #861, osnutek) | – | – |
 
 ## Ocene prog v igri: ena proga na državo
 
@@ -186,8 +190,8 @@ Proge gredo v delo, ko pridejo na vrsto. Ko država dobi progo (na `main` ali v 
 | Katar | Lusail (dirkališče, Nove proge za 1.0, A18) | po vrsti (odločitev uporabnika 8. 11. 2026 ob 20.45) |
 | Singapur | stara veja: Singapur (ni v načrtu) | ne pride na vrsto |
 | Švedska | Kågeröd (nove proge 1.0, N1, #478); stara veja: Höljes (ni v načrtu) | Kågeröd po vrsti (N1), Höljes ne pride na vrsto; zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |
-| Slovaška | Krásna Hôrka (kratka z znamenitostjo, 15. 11. 2026; Spiš ne ustreza) | v delu (jure.kopac26) |
-| Hrvaška | Učka (kratka z znamenitostjo, 15. 11. 2026) | v delu (jure.kopac26) |
+| Slovaška | Krásna Hôrka (izbrana; uporabnik 22. 11. 2026 ob 2.05: »naredi da bo daljsa med 3-4km«, PR #943) | podaljšanje na 3–4 km (jure.kopac26) |
+| Hrvaška | — (Učka izbrisana: uporabnik 22. 11. 2026 ob 2.00 »ucke zbrisi«, PR #944 zaprt) | brez proge |
 | Kuba | Santiago de Cuba (El Morro; kratka z znamenitostjo, 15. 11. 2026; kraj potrdi OSM) | v delu (jure.kopac26) |
 | Kostarika | Orosi (Ujarrás; kratka z znamenitostjo, 15. 11. 2026; kraj potrdi OSM) | v delu (jure.kopac26) |
 | Danska | Silkeborg (nove proge 1.0, N1, #469) | po vrsti (N1); zima je privzeta (8. 11. 2026, razdelek »Sever v snegu«) |

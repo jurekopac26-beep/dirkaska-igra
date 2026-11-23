@@ -65,8 +65,9 @@ const notesOf = (t) => 1 + t.filter(w => w === 'into' || w === 'and').length;   
 const slowOk = (t) => t.some(w => w === 'hairpin' || w === 'square' || w === 'ring' || w === 'chicane' || (typeof w === 'number' && w <= 3));
 const rows = [], long = { sl: 0, en: 0, of: 0 };
 // (roads with almost no bends to read: Luanda's waterfront 4 bends of 29-44 m over 3.5 km, Isalo's plateau none under the corner radius over
-// 2.5 km; zbirna Proge 2: these roads were made that way, so no lower limit of calls a km there, the rest of the check stands)
-const FEW = ['luanda', 'isalo'];
+// 2.5 km, Longyearbyen's coast and town road 3 calls over 4.3 km; zbirna Proge 2: these roads were made that way, so no lower limit of calls a km
+// there, the rest of the check stands)
+const FEW = ['luanda', 'isalo', 'longyearbyen'];
 let worst = 0;
 for (const def of roads) {
   const T = new C.Track(def), t0 = process.hrtime.bigint(), N = T.paceNotes(), ms = Number(process.hrtime.bigint() - t0) / 1e6, km = (T.finishS - T.startS) / 1000;

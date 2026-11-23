@@ -921,5 +921,60 @@
    55.9,
    53.7
   ]
+ },
+ "longyearbyen": {
+  "s": 1564,
+  "o": "Desni ovinek",
+  "cam": [
+   1214.7,
+   32.1,
+   669.8,
+   1196.6,
+   7,
+   602.1,
+   56.6
+  ]
+ },
+ "irishtown": {
+  "s": 856,
+  "o": "Serpentina 1, lasnica v desno pod zaselkom Irishtown (~190°)",
+  "cam": [
+   -599.4,
+   56.8,
+   -110.6,
+   -549.4,
+   33,
+   -110.6,
+   47.8
+  ]
+ },
+ "vaoala": {
+  "s": 1910,
+  "o": "Ostri esasti ovinek ob robu deževnega gozda pod Tiapapato",
+  "search": {
+   "heights": [
+    16,
+    25,
+    40,
+    60,
+    80
+   ],
+   "dists": [
+    35,
+    50,
+    70,
+    95,
+    120
+   ]
+  },
+  "cam": [
+   -739.2,
+   177.5,
+   1288.8,
+   -671.6,
+   155.2,
+   1306.9,
+   58.7
+  ]
  }
 }
