@@ -78,6 +78,9 @@ try {
   T.check('the railway\'s bridge at Deyama over the road, 5.5 m above it at least (a car passes under it)', !!r.bridge && r.bridge.clear >= 5.5 && r.bridge.clear < 20, JSON.stringify(r.bridge));
   T.check('the villages\' utility poles, the old road\'s stones, the torii at Hatajuku (within 400 m of the place on the HUD)', S.poles > 50 && S.paving > 500 && r.dH < 400,
     `${S.poles} poles, ${S.paving} pieces of paving, the torii ${Math.round(r.dH)} m from Hatajuku`);
+  { const O = S.obcestje || {};
+    T.check('by the road from OpenStreetMap (js/world-hakone-obcestje.js): the side roads, paths and steps (300+ ways, 15+ km), the bus stops (60+, some with a shelter), the street things, the power line\'s towers (10+) and their spans, the penstock',
+      O.ways > 300 && O.waysM > 15000 && O.stops > 60 && O.shelters > 0 && O.things > 60 && O.towers >= 10 && O.spans >= 8 && O.pipeM > 20, JSON.stringify(O)); }
   T.check('the corridor narrowed (the rule of 60 m): 700-1600 tiles, no tile\'s middle farther than 345 m from the road', r.tiles > 700 && r.tiles < 1600 && r.tileFar === 0, `${r.tiles} tiles (${S.tiles} full), ${r.tileFar} farther`);
   T.check('Lake Shōjin by the road: its water there', r.water >= 4, `${r.water} of the points beside it on water`);
   T.check('the far view (the caldera, Lake Ashi, the sea, Mount Fuji): the track\'s def.fuji \'real\', Fuji in the far land\'s meshes, hidden by every ridge in front of it (no mesh of its own)',
