@@ -286,10 +286,10 @@ Na naslovnem zaslonu tapni **Prvenstvo** in izberi serijo dirk: **Domači pokal*
 
 ## Kariera
 
-Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 kovančkov in avto PICO TURBO. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 🪙«). Denar v igri so **kovančki** (🪙), evrov ni.
+Gumb **Kariera** na naslovnem zaslonu odpre kariero: z dirkami služiš denar, z njim kupuješ avte in nadgradnje. **Začni kariero** ti da 10.000 kovančkov in avto LEV S. Dokler je kariera vklopljena, gumb na naslovnem zaslonu kaže, koliko denarja imaš (npr. »Kariera · 12.300 🪙«). Denar v igri so **kovančki** (🪙), evrov ni.
 
 - **Nagrade:** po vsaki dirki, ki jo pripelješ do cilja (tudi v prvenstvu), dobiš denar glede na mesto (zmagovalec 6.000 kovančkov, zadnji 300 kovančkov; v dirki z več kot 13 avti po mestu samem: 6.000, 4.500, 3.500 kovančkov … in od 13. mesta naprej 300 kovančkov). Daljša dirka prinese več (dirka na 2 km 0,6-krat toliko, na 8 km enkrat, največ 2,5-krat), težja težavnost tudi (lahka 0,7-krat, težka 1,4-krat). Za najhitrejši krog dirke dobiš še 500 kovančkov, za prvo štartno mesto v kvalifikacijah 1.000 kovančkov. Naslov prvaka prinese 20.000 kovančkov, 2. mesto v prvenstvu 10.000 kovančkov in 3. mesto 6.000 kovančkov (pomnoženo s težavnostjo). Na kronometrih dobiš 5.000 kovančkov, 3.000 kovančkov ali 1.500 kovančkov za zlato, srebrno ali bronasto medaljo, 2.000 kovančkov za osebni rekord, sicer 500 kovančkov. Nagrada piše na zaslonu z rezultati.
-- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 kovančkov za kart MRAVLJA do 150.000 kovančkov za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 kovančkov, RAKETA 16V 14.000 kovančkov, LEV S 20.000 kovančkov, KAZE RS 30.000 kovančkov, VIHAR V8 40.000 kovančkov, TITAN 60.000 kovančkov, FORMULA ORKAN 90.000 kovančkov, TAIFUN LM 110.000 kovančkov; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
+- **Avti:** v izbiri avta imajo vozila, ki jih še nimaš, ceno: od 5.000 kovančkov za kart MRAVLJA do 150.000 kovančkov za hiperšportnik ŠKORPIJON H (npr. MIŠKA 6.000 kovančkov, RAKETA 16V 14.000 kovančkov, VIHAR V8 40.000 kovančkov, TITAN 60.000 kovančkov, FORMULA ORKAN 90.000 kovančkov, TAIFUN LM 110.000 kovančkov; vse cene so v razpredelnicah v razdelku **Vozni park**). Gumb Naprej postane **Kupi**. Z avtom, ki ga nimaš, ne moreš dirkati. V garaži kariere so vsa vozila po kategorijah (v vsaki najprej najcenejše), kupljena so označena.
 - **Nadgradnje:** za vozila do 50.000 kovančkov stane vsaka stopnja 4.000 kovančkov, 7.000 kovančkov ali 12.000 kovančkov, za dražja sorazmerno več, največ dvakrat toliko (od 100.000 kovančkov naprej; zaokroženo na 100 kovančkov). Cena je napisana na gumbu, preskočene stopnje se plačajo zraven. Kupljenih delov ne moreš prodati.
 - **Izklopi kariero** te vrne v prosto igro z vsemi avti in brezplačnimi nadgradnjami (te so ločene od kariere). Kariera ostane shranjena in jo kasneje nadaljuješ. **Nova kariera** (dvakrat tapni) začne znova.
 - **Garaža ima isto denarnico** (odločitev uporabnika, 2. 11. 2026): pravi profil garaže (`garaza.html`, privzet, v vrstici MOCKUP »Kariera«) so kovančki, avti in nadgradnje kariere. Avto ali del, kupljen v garaži, plača kariera in ga imaš v karieri; stopnje nadgradenj (motor, gume, zavore, aerodinamika) se izračunajo iz delov na avtu. Nadgradnja, kupljena v igri, se v garaži pokaže z deli te stopnje (npr. motor 2: čip in športni turbo, aero 2: paket SPORT). Deli, barva in obraba vsakega avta iz garaže so shranjeni v karieri, zato jih **Nova kariera** pobriše. To velja tudi, ko kariera ni vklopljena: kariera, ki še ni začeta, ima v garaži 10.000 kovančkov in PICO TURBO. Preizkusni profili v vrstici MOCKUP (brezplačna igra, polna igra, veteran) imajo svoj preizkusni denar in se kariere ne dotaknejo; veteran ima dovolj za katerikoli avto z vsemi deli (najdražji avto, vsi deli zanj in barva, navzgor na 100.000, zdaj 2.100.000; želja uporabnika 9. 11. 2026), tudi če je bil shranjen prej z manj.
@@ -306,7 +306,7 @@ V **Nastavitvah** je pod Upravljanjem vrstica **Prvič na cesti** z gumbom **Pok
 
 ## Šola vožnje
 
-Gumb **Šola vožnje** na naslovnem zaslonu odpre štiri vaje z medaljami (zlato, srebro, bron). Vse vaje se vozijo z avtom KAZE RS (serijski, na suhem), igra pa za vsako fiziko hrani najboljši rezultat in medaljo.
+Gumb **Šola vožnje** na naslovnem zaslonu odpre štiri vaje z medaljami (zlato, srebro, bron). Vse vaje se vozijo z avtom SOKOL R (serijski, na suhem), igra pa za vsako fiziko hrani najboljši rezultat in medaljo.
 
 - **Štart** (Štajerska): ko ugasnejo luči, čim hitreje prevozi 100 m. Plin moraš pritisniti šele, ko luči ugasnejo; če ga pritisneš prej, je to prehiter štart (samodejni plin je v tej vaji izklopljen). Pozna reakcija stane tudi zdrs koles (glej **Reakcija na štartu**). Medalje so merjene ob vožnji avtopilota: zlato do 0,55 s počasneje od njega, srebro do 1,1 s, bron do 1,5 s (približno reakcija 0,3, 0,5 in 0,9 s).
 - **Zaviranje do oznake** (ravnina proge Štajerska): pospeši z mesta in se ustavi čim bližje črti STOP (rdeče-bela črta čez cesto s tablo STOP), a ne čeznjo. Ob cesti stojijo table 150, 100 in 50 m do črte; mimo table 100 m moraš peljati vsaj 120 km/h. Zlato do 1 m pred črto, srebro do 3 m, bron do 8 m.
@@ -663,13 +663,14 @@ Na pravih progah se ob cesti tiho slišijo zvoki okolja, izračunani iz sveta pr
 
 ## Zvok motorjev
 
-Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik LEV S brenči in hrešči pri visokih vrtljajih, PICO TURBO ima turbo (žvižg in odpihovalni ventil, ko spustiš plin), VORTEX 4WD boksarski motor z neenakomernim brbotanjem, KAZE RS gladek vrstni šestvaljnik s turbom, STREGA MR tuleč V6, reli avto BURJA R7 turbo z »anti-lag« poki, formula ORKAN kričeč V10, policija pa brbotajoč V8. Ob prestavljanju se sliši menjalnik (pri formuli in reli avtu trd sekvenčni), navzgor še turbo, navzdol medgas s pokom; ko spustiš plin, iz izpuha poka. Trije najbližji tekmeci se slišijo s svojimi motorji in z Dopplerjevim pojavom: ko pripeljejo mimo, se ton zniža.
+Vsak avto ima svoj motor, sestavljen iz vžigov njegovih valjev: štirivaljnik LEV S brenči in hrešči pri visokih vrtljajih, reli avto BURJA R7 turbo z »anti-lag« poki, formula ORKAN kričeč V10, policija pa brbotajoč V8. Ob prestavljanju se sliši menjalnik (pri formuli in reli avtu trd sekvenčni), navzgor še turbo, navzdol medgas s pokom; ko spustiš plin, iz izpuha poka. Trije najbližji tekmeci se slišijo s svojimi motorji in z Dopplerjevim pojavom: ko pripeljejo mimo, se ton zniža.
 
 ## Vozni park
 
 V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega tovornjaka s 1496 KM. Vsa so izmišljena: imena, oblike in napisi ne posnemajo nobene prave znamke. Vsako ima svoj 3D model, svoje vozne lastnosti (Moč, Oprijem, Lahkost, Drift), svoj zvok motorja (od dvovaljnika in dvotaktnega motorja karta do V12, rotacijskega motorja, hibrida, elektromotorja in turbo dizla tovornjaka) in se ob trkih razbija po delih (glej **Razpadanje vozil**).
 
 - **Izbira:** na vrhu zaslona za izbiro avta sta vrstici s kategorijami in z vozili izbrane kategorije (v karieri s ceno ali kljukico, če je vozilo že tvoje). ◀ ▶ listata po vozilih kategorije (pod imenom vozila piše npr. »Mali avti · 3/7«). Na igralnem plošku LB / RB listata po vozilih, X / Y pa po kategorijah. Enak vrstni red (in X / Y) velja pri izbiri avta za prvenstvo in v sobi dirke s prijatelji, v garaži kariere pa so vozila po kategorijah v istem vrstnem redu. V novem meniju na koraku s progo tap na avto (v 3D, z vetrom okoli njega; nad njim majhen napis z imenom modela) odpre garažo, njena puščica nazaj (in *IZBERI PROGO*) te vrne naravnost na isto progo, z avtom iz garaže, če je tvoj. Slika proge s kamero 1 je zemljevid poti od zgoraj (opis menija je v `README.md`, »Nov meni«). **Tap na avto** na vrtljivi plošči (pod njim piše »Tapni avto za garažo«) odpre garažo (`garaza.html`) s tem avtom v izbrani barvi; njena puščica nazaj te vrne na izbiro avta na isti avto, **Nazaj** pa potem tja, od koder si izbiro odprl (opis garaže je v `README.md`).
+- **Upokojeni avti (odločitev uporabnika, 21. 11. 2026):** PICO TURBO, VORTEX 4WD, STREGA MR in KAZE RS niso več v igri (ne v meniju, ne v garaži). Shranjena igra, rekordi, duhovi in nadgradnje se prenesejo na naslednike: KAZE RS → SOKOL R, VORTEX 4WD → RIS G, PICO TURBO → LEV S, STREGA MR → PANTER 6 (`retired`, `heir` v `js/core.js`). Začetni avto kariere je LEV S, šola vožnje se vozi s SOKOL R. Policijski in varnostni avto ostaneta službena limuzina (`Core.SLUZBENI`).
 - **Tekmeci:** z novimi vozili (razen SOKOL R in PANTER 6) vozijo vsi tekmeci isti model kot ti, vsak v svoji barvi in s svojo številko, tako kot s formulo in prototipom. Tovornjakov, limuzin in pošastnih tovornjakov je na progi manj, ker so veliki: TITAN in PREDSEDNIK največ 9, GOLJAT 7, KAMEN PUŠČAVA 5, TITAN CISTERNA 5 (polje samo iz tovornjakov s cisterno, brez dopolnitve), ZRCALNI VLAK 3 (samo vlaki, brez dopolnitve). Polje je vseeno polno (21 tekmecev, v Nürburgu 99): ta vozila so enakomerno razporejena po štartni vrsti (prvo na prvem mestu), ostala mesta zapolnijo počasnejši navadni avti s skoraj enakim tempom (krog na Nürburgu, Bathurstu in Spa): s TITAN-om in KAMNOM KOLIBRI in MIŠKA, z GOLJATOM BLISK 30 in KOLIBRI, s PREDSEDNIKOM BLISK 30, SKAKAČ 1600 in KOLIBRI (`fill` v opisu vozila; brez njega bi bilo polje manjše). S SOKOL R, PANTER 6 in starejšimi cestnimi avti dirkaš kot doslej proti KAZE RS, VORTEX 4WD, PICO TURBO in STREGA MR.
 - V predstavitveni dirki na naslovnem zaslonu ob vsakem obisku vozi drug, naključno izbran model.
 - Kdor je imel izbran avto, ki ga v igri ni več, ima zdaj namesto njega LEV S (tudi v karieri, z rekordi in duhom).
@@ -678,11 +679,10 @@ V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **PICO TURBO** | prednji | 291 KM | 1040 kg | začetni | Lahek in okreten, rad podvija; začetni avto kariere. |
 | **MIŠKA** | zadnji, motor zadaj | 52 KM | 560 kg | 6.000 kovančkov | Italijanski mestni malček iz 60-ih, predelan za dirke: pokrov motorja vedno priprt. |
 | **KOLIBRI** | prednji | 64 KM | 680 kg | 8.000 kovančkov | Japonski žepni hot hatch iz 90-ih: škatlast, lahek in živahen, s strešnim spojlerjem. |
 | **RAKETA 16V** | prednji | 340 KM | 1080 kg | 14.000 kovančkov | Oglat hot hatch iz 80-ih: štirje okrogli žarometi, rdeča črta na odbijačih in pragovih. Vozi kot LEV S (isti motor, prestave, masa in oprijem). |
-| **LEV S** | prednji | 340 KM | 1080 kg | 20.000 kovančkov | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
+| **LEV S** | prednji | 340 KM | 1080 kg | začetni | Lahek trivratni hatchback z velikimi mandljastimi žarometi, živahen v ovinkih. |
 | **LEV KABRIO** | prednji | 299 KM | 1150 kg | 24.000 kovančkov | Kabriolet družine LEV: kovinska streha zložena v prtljažnik, dva sedeža in roll bar. |
 | **OSA R** | 4WD | 422 KM | 1450 kg | 55.000 kovančkov | Sodoben hot hatch s pogonom 4x4: široki blatniki, črna streha in velik strešni spojler. Najhitrejši mali avto (0–100 hitreje od LEV S). |
 | **KUNA S** | prednji | 347 KM | 1190 kg | 30.000 kovančkov | Vroči hečbek s prednjim pogonom za drift: bela streha, visoko krilo, zlata platišča. |
@@ -692,10 +692,8 @@ V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
 | **LISICA** | zadnji | 163 KM | 980 kg | 18.000 kovančkov | Lahek roadster iz leta 1990 z dvižnimi žarometi, odprto streho in varnostnim lokom. |
-| **KAZE RS** | zadnji | 356 KM | 1240 kg | 30.000 kovančkov | Rad obrne rep, rojen za drift. |
 | **SOKOL R** | zadnji | 340 KM | 1260 kg | 35.000 kovančkov | Japonski kupe z dvojnim turbo rotacijskim motorjem, dvižnimi žarometi in račjim repom. |
 | **PANTER 6** | zadnji, motor zadaj | 394 KM | 1350 kg | 48.000 kovančkov | Športni kupe z motorjem zadaj: okrogla žarometa, poševna zadnjica in kitov rep. |
-| **VORTEX 4WD** | 4WD | 404 KM | 1400 kg | 50.000 kovančkov | Veliko oprijema, stabilen tudi na robu. |
 | **JELEN GT** | zadnji | 544 KM | 1650 kg | 60.000 kovančkov | Gran turismo z V12 spredaj: dolg pokrov motorja, hiter in miren na dolgih ravninah. |
 | **ŠAKAL D** | zadnji | 761 KM | 1350 kg | 180.000 kovančkov | Sodoben tekmovalni drift kupe: široki blatniki, veliko krilo in velik zasuk koles. Največ točk za drift od vseh vozil (meritev kot v avtošoli Drift). |
 | **RIS G** | 4WD | 544 KM | 1360 kg | 85.000 kovančkov | Širok kupe 4x4 za gimkano: veliko krilo, široki blatniki in zajemalka na strehi. |
@@ -705,7 +703,6 @@ V igri je **53 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 
 | Vozilo | Pogon | Moč | Masa | Cena | Opis |
 |---|---|---|---|---|---|
-| **STREGA MR** | zadnji, motor na sredini | 385 KM | 1180 kg | 45.000 kovančkov | Oster in živahen, hitro zavrti. |
 | **PERUN V12** | zadnji, motor na sredini | 571 KM | 1490 kg | 85.000 kovančkov | Klinast superšportnik iz 80-ih s škarjastimi vrati, dovodi NACA in ogromnim krilom. |
 | **MODRAS V10** | 4WD | 639 KM | 1450 kg | 110.000 kovančkov | Sodoben superšportnik z V10 na sredini in ostrimi šesterokotnimi linijami. |
 | **ŠKORPIJON H** | 4WD | 925 KM | 1550 kg | 150.000 kovančkov | Hibridni hiperšportnik: izpuha na vrhu, nizka kabina, krila ga držijo ob cesti. |
@@ -835,7 +832,7 @@ Pri vklopljenih poškodbah (Nastavitve → Poškodbe avtov: **Samo videz**, priv
 - **Tekmeci:** tekmec, ki izgubi kolo, gre po novega v bokse, na progah brez boksov pa mu ga namestijo redarji. Kdor izgubi dve kolesi, odstopi: zapelje na varno mesto ob progi in tam obstane (če obtiči na cesti, ga redarji prestavijo). Zastave in varnostni avto ga obravnavajo kot ustavljen avto.
 - **Ogled vozila:** gumb v pavzi in na rezultatih pokaže tvoj avto od blizu v foto načinu, da si lahko ogledaš razbitino.
 - Komentator pove, ko izgubiš kolo, ko voziš po treh kolesih, ko je avto uničen, ko gori in ko odstopiš, pa tudi, ko kolo izgubi ali zagori tekmec.
-- Starejših deset avtov (PICO TURBO, KAZE RS, VORTEX 4WD, STREGA MR, BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV, SAMUM 4x4) se razbija kot doslej (odpadejo jim posamezni deli, kolesa ostanejo), ko so uničeni do konca, pa tudi oni zagorijo in se počrnijo.
+- Starejših šest avtov (BURJA R7, FORMULA ORKAN, TAIFUN LM, VIHAR V8, STRELA EV, SAMUM 4x4) se razbija kot doslej (odpadejo jim posamezni deli, kolesa ostanejo), ko so uničeni do konca, pa tudi oni zagorijo in se počrnijo.
 
 ## Dirkalnik formule
 
@@ -861,7 +858,7 @@ V izbiri avta je **TAIFUN LM**, prototip za 24-urne vzdržljivostne dirke: nizek
 
 **VIHAR V8** je ameriški »muscle car« iz leta 1970: dolg pokrov motorja z zajemalko zraka, streha, ki se v loku spusti do kratkega »račjega repa« (fastback), žaluzije na zadnjem steklu, dvojni dirkalni trakovi od nosu do repa (črni na svetli barvi, beli na temni), okrogli žarometi v črni maski, trodelne zadnje luči, dvojni izpušni cevi, kromirani odbijači in kromirana platišča (zadaj širša).
 
-- Zadnji pogon, 517 KM, 1540 kg. Na ravnini ga je težko ujeti (~239 km/h, od 0 do 200 km/h je 1,5 s hitrejši od KAZE RS), a ima najmanj oprijema med cestnimi avti.
+- Zadnji pogon, 517 KM, 1540 kg. Na ravnini ga je težko ujeti (~239 km/h), a ima najmanj oprijema med cestnimi avti.
 - V ovinkih drsi bolj kot drugi avti, pri polnem plinu se mu kolesa vrtijo v prazno do ~120 km/h in mu zanašajo zadek: kralj drifta.
 - Zvok: globok V8, ki v prostem teku neenakomerno »brbota«.
 

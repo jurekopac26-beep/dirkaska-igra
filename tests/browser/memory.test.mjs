@@ -54,7 +54,7 @@ try {
       return { dmg: +dmg.toFixed(2), loose, repaired: P.repairN || 0, looseAtRepair: g.race.debris.length };
     });
   };
-  // a registered vehicle (RAKETA: the render kit) and one of the 11 (KAZE RS: its stock body and panels) wrecked and repaired where they
+  // a registered vehicle (RAKETA: the render kit) and one of the 11 (VIHAR V8: its stock body and panels) wrecked and repaired where they
   // stand on Bakreni gozd, three times over each: Core.wreckCar (the kit's parts' copies, its pieces thrown and drawn, the wheels off, the
   // body sagged; the fire, the soot, the cracked panes, the stock panels' own charred copies of their materials), Race.repairCar (the car
   // built afresh while its pieces lie on the road); RAKETA's third wreck pushes the first one's pieces out (the cap of 40): freed with
@@ -90,12 +90,12 @@ try {
   let crash = null, kit = null, old = null;
   const round = async (r) => {
     for (const id of ids) { await startTrack(page, id); await simulate(page, 3); }
-    if (!DRUGI) { crash = await crashAndRepair(); kit = await kitWreck('raketa'); old = await kitWreck('kaze'); }   // (in the first part only)
+    if (!DRUGI) { crash = await crashAndRepair(); kit = await kitWreck('raketa'); old = await kitWreck('muscle'); }   // (in the first part only)
     await startTrack(page, 'gozd'); await simulate(page, 2);   // a restart on the same track
     await carMenu();
     await page.evaluate(async () => { window.__game.onAction('to-title'); await new Promise(r => setTimeout(r, 1500)); });   // the title demo race
     rounds.push(await measure());
-    console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}  crash ${JSON.stringify(crash)}  kit wreck ${JSON.stringify(kit)}  KAZE RS wreck ${JSON.stringify(old)}`);
+    console.log(`round ${r + 1}: ${JSON.stringify(rounds[r], (k, v) => typeof v === 'number' ? +v.toFixed(1) : v)}  crash ${JSON.stringify(crash)}  kit wreck ${JSON.stringify(kit)}  VIHAR V8 wreck ${JSON.stringify(old)}`);
   };
   for (let r = 0; r < ROUNDS; r++) await round(r);
   const w = rounds[Math.min(1, rounds.length - 1)];
@@ -105,7 +105,7 @@ try {
   const z = rounds[rounds.length - 1];
   if (!DRUGI) T.check('the crash-and-repair part really ran (damage, loose panels still on the track at the pit repair)', crash && crash.dmg > 0 && crash.looseAtRepair > 0 && crash.repaired === 1, JSON.stringify(crash));
   if (!DRUGI) T.check('the kit wreck-and-repair part really ran (RAKETA wrecked three times: its pieces drawn, the cap pushed the first ones out; burning, sooted, its panes cracked)', kit && kit.kit && kit.pieces >= 40 && kit.dead > 0 && kit.fire === 3 && kit.sooted === 3 && kit.cracks > 0, JSON.stringify(kit));
-  if (!DRUGI) T.check('one of the 11\'s wreck-and-repair part really ran (KAZE RS wrecked three times: its stock panels off as pieces, burning, sooted)', old && !old.kit && old.pieces > 0 && old.fire === 3 && old.sooted === 3, JSON.stringify(old));
+  if (!DRUGI) T.check('one of the 11\'s wreck-and-repair part really ran (VIHAR V8 wrecked three times: its stock panels off as pieces, burning, sooted)', old && !old.kit && old.pieces > 0 && old.fire === 3 && old.sooted === 3, JSON.stringify(old));
   T.check('GPU geometries do not grow after the warm-up round', z.geometries <= w.geometries + 2, `${w.geometries} -> ${z.geometries}`);
   T.check('textures do not grow', z.textures <= w.textures || (more && z.textures <= rounds[rounds.length - 2].textures), `${w.textures} -> ${z.textures}${more}`);
   T.check('shader programs do not grow', z.programs <= w.programs + 1, `${w.programs} -> ${z.programs}`);

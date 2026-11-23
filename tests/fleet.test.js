@@ -169,8 +169,9 @@ check('Core: the 11 first, in their places, then all the new ones in the roster 
   // the retired model (DESIGN R3: kept at index 5 with its physics, never shown): a stored id or index of it goes to its heir, the LEV S
   // (Core.heirOf: a vehicle in use, the name the same), no skin and no credit of its own; every other model its own heir
   const R5 = C.MODELS[5], H5 = C.heirOf(R5);
-  check('the retired model at index 5: retired, its heir the LEV S (in use, the same name), no glb skin, no credit; every other model is its own heir',
-    R5.id === 'p206' && R5.retired === true && H5 === model('levs') && !H5.retired && H5.name === R5.name && R5.glb === undefined && R5.credit === undefined && C.MODELS.every(M => M === R5 || C.heirOf(M) === M),
+  check('the retired model at index 5: retired, its heir the LEV S (in use, the same name), no glb skin, no credit; the four first road cars retired too (KAZE RS → SOKOL R, VORTEX 4WD → RIS G, PICO TURBO → LEV S, STREGA MR → PANTER 6); every other model is its own heir',
+    R5.id === 'p206' && R5.retired === true && H5 === model('levs') && !H5.retired && H5.name === R5.name && R5.glb === undefined && R5.credit === undefined && C.MODELS.every(M => M.retired ? C.heirOf(M) !== M && !C.heirOf(M).retired && C.heirOf(M).name === M.name : C.heirOf(M) === M) &&
+    [['kaze', 'sokol'], ['vortex', 'ris'], ['pico', 'levs'], ['strega', 'panter']].every(([o, h]) => model(o).retired === true && C.heirOf(model(o)) === model(h)),
     `${R5.id}: retired ${R5.retired}, heir ${H5 && H5.id}, name ${R5.name}, glb ${R5.glb}, credit ${R5.credit}`);
   const inField = [];
   for (const M of [null].concat(C.MODELS.filter(m => !m.retired))) for (let k = 0; k < 16; k++) for (const n of [undefined, 16]) { const A = C.aiModel(k, M || undefined, n); if (!A || A.retired) inField.push((M ? M.id : 'none') + ':' + k + (n ? '/' + n : '')); }

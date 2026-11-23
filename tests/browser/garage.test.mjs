@@ -6,7 +6,7 @@
 // blue and the others orange in the picture too, the new part seen through on the car, at the bottom when at the top it would cover
 // the part), buying (coins, the tyres on offer, the stock part back), the parts put on by the ring's arms (off the regal, out of a drawer,
 // on the trolley: sklops 7 and 8), the four upgrades from the parts (the chip over the car: MOČ
-// with its bolt, x kW → y kW); the service by the arms (its price by the wear and the car's worth; the PICO, the FORMULA, the KAMEN
+// with its bolt, x kW → y kW); the service by the arms (its price by the wear and the car's worth; the LEV S, the FORMULA, the KAMEN
 // lorry; at its end the chip: STANJE with its wrench, x % → 100 %), the paint in the glass chamber; the English page;
 // every car of the game's fleet with all its parts (the lift's pads); the wide vehicles' way in and out; the garage opened from the
 // game's car screen and its back and Izberi progo buttons. The animations run on a clock the test steps itself (software WebGL is
@@ -73,26 +73,26 @@ try {
       jobs: (st('plan').jobs || []).map(j => j.arm + ':' + j.src + ':' + j.mode + (j.virt ? ':virt' : '')).join(), old: st('swap').old, parked: D.fx.parked, stay: !!D.RGL.P.stay, ret: D.RGL.ret.length, cart: D.cart, cartB: D.cartB, lamp: D.FIT.lamp, chip: document.getElementById('g-chip').textContent }; });
 
   // 0. a fresh garage: the real profile (the career's, odlocitve denarnica-mockup 1): Kariera marked in the MOCKUP row, the career's
-  // 10.000 coins and its PICO TURBO, no reset; then the mockup's Polna igra for the rest (its own test money: 11.500, a worn PICO)
+  // 10.000 coins and its LEV S, no reset; then the mockup's Polna igra for the rest (its own test money: 11.500, a worn PICO)
   // (the career shared with the game: tests/browser/denarnica.test.mjs)
   {
     const r = await page.evaluate(() => { const S = __garage.S; return { mode: S.mode, money: S.money, car: S.car, own: Object.keys(S.cars).filter(id => S.cars[id].own), coins: document.getElementById('g-money').textContent,
       sel: [...document.querySelectorAll('#g-modes button.sel')].map(b => b.dataset.mode), reset: getComputedStyle(document.querySelector('#g-demo [data-act="reset"]')).display }; });
-    T.check('a fresh garage opens on the real profile (the career\'s): Kariera marked in MOCKUP, 10.000 coins, the PICO TURBO its only car, no reset', r.mode === 'game' && r.money === 10000 && r.coins === '10.000' && r.car === 'pico' && r.own.join() === 'pico' && r.sel.join() === 'game' && r.reset === 'none', JSON.stringify(r));
+    T.check('a fresh garage opens on the real profile (the career\'s): Kariera marked in MOCKUP, 10.000 coins, the LEV S its only car, no reset', r.mode === 'game' && r.money === 10000 && r.coins === '10.000' && r.car === 'levs' && r.own.join() === 'levs' && r.sel.join() === 'game' && r.reset === 'none', JSON.stringify(r));
     await page.evaluate(() => document.querySelector('#g-modes [data-mode="full"]').click()); await run();
     const f = await page.evaluate(() => ({ mode: __garage.S.mode, sel: [...document.querySelectorAll('#g-modes button.sel')].map(b => b.dataset.mode), reset: getComputedStyle(document.querySelector('#g-demo [data-act="reset"]')).display, career: localStorage.getItem('tdgp-career') && JSON.parse(localStorage.getItem('tdgp-career')).money }));
     T.check('Polna igra: the mockup\'s profile marked, its reset there, the career untouched (10.000)', f.mode === 'full' && f.sel.join() === 'full' && f.reset !== 'none' && (f.career == null || f.career === 10000), JSON.stringify(f));
   }
 
-  // 1. the page: a fresh profile (the full game: 11.500, the PICO TURBO), the car on the table, the page's buttons over the workshop
+  // 1. the page: a fresh profile (the full game: 11.500, the LEV S), the car on the table, the page's buttons over the workshop
   // (the whole screen), the room drawn in a sensible number of draws
   {
     const u = await ui(), calls = await page.evaluate(() => { __garage.advance(0.1); return Garage3D.renderer.info.render.calls; });
-    T.check('opens: 11.500 by the gold coin, PICO TURBO on the turntable, the go button "Izberi", Izberi progo at the top (a flag, no words: no track known yet, a chequered one)', u.money === '11.500' && u.name === 'PICO TURBO' && u.info.car === 'pico' && u.go === 'Izberi' && u.track === 'Izberi progo' && u.flag, JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
+    T.check('opens: 11.500 by the gold coin, LEV S on the turntable, the go button "Izberi", Izberi progo at the top (a flag, no words: no track known yet, a chequered one)', u.money === '11.500' && u.name === 'LEV S' && u.info.car === 'levs' && u.go === 'Izberi' && u.track === 'Izberi progo' && u.flag, JSON.stringify({ money: u.money, name: u.name, car: u.info.car, go: u.go }));
     const L0 = await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(), st = r('g-stage'), app = document.getElementById('g-app').getBoundingClientRect(), cr = r('g-cr'), hd = document.querySelector('.g-head').getBoundingClientRect();
       const pv = r('g-prev'), nx = r('g-next'), go = r('g-go'), row = document.querySelector('.g-namerow').getBoundingClientRect(), nm = [...document.querySelectorAll('.g-cb .nm')];
       return { full: Math.abs(st.top - app.top) < 1 && Math.abs(st.bottom - app.bottom) < 1 && Math.abs(st.width - app.width) < 1, coin: +(cr.width / (hd.width - 28)).toFixed(2), cars: pv.bottom <= go.top && nx.bottom <= go.top && Math.abs(pv.top - nx.top) < 1 && pv.right < nx.left,
-        names: nm.map(n => n.textContent), named: nm.every(n => n.textContent.length > 1 && n.textContent !== 'PICO TURBO' && n.scrollWidth <= n.clientWidth + 1), row: row.width <= 1 && row.height <= 1,
+        names: nm.map(n => n.textContent), named: nm.every(n => n.textContent.length > 1 && n.textContent !== 'LEV S' && n.scrollWidth <= n.clientWidth + 1), row: row.width <= 1 && row.height <= 1,
         imgs: [...document.querySelectorAll('.g-cb .th img')].length, shift: Garage3D.camera.view ? Garage3D.camera.view.offsetY : 0 }; });
     T.check('the workshop over the whole page, raised (its picture shifted up), the coins\' button a third of the top, the two cars\' buttons (their names in them, the car\'s own only for the ear) over back and Izberi', L0.full && L0.shift > 30 && L0.coin > 0.3 && L0.coin < 0.37 && L0.cars && L0.named && L0.row, JSON.stringify(L0));
     T.check('the worn car shows its wear: dirt and scratches on the paint', u.info.dirt > 0.2 && u.info.scr > 0.2, JSON.stringify(u.info));
@@ -184,11 +184,11 @@ try {
   }
 
   // 1d. the service by the arms (the near one: the lance's four passes along the near side, the scanner from beside the car, the
-  // wrench under the car up on the lift; the far one: the brush and the pad over the bonnet, the lamp under the car), on the PICO, the
+  // wrench under the car up on the lift; the far one: the brush and the pad over the bonnet, the lamp under the car), on the LEV S, the
   // FORMULA (low, open) and the KAMEN lorry (tall, wide): every item done, in its order, its cues met (none late), clean, no scratches,
   // the engine mended; the arms in the ring all along, parked after; the lift down, the table never turning
-  for (const id of ['pico', 'formula', 'kamen']) {
-    if (id !== 'pico') { await page.evaluate((id) => Garage3D.show(Object.assign({}, Garage3D.cur.spec, { M: Core.MODELS.find(m => m.id === id) })), id); await page.evaluate(() => __garage.advance(0.5)); }
+  for (const id of ['levs', 'formula', 'kamen']) {
+    if (id !== 'levs') { await page.evaluate((id) => Garage3D.show(Object.assign({}, Garage3D.cur.spec, { M: Core.MODELS.find(m => m.id === id) })), id); await page.evaluate(() => __garage.advance(0.5)); }
     await page.evaluate(() => { Garage3D._dbg.svcRun(['clean', 'body', 'engine']); }); const r = await run();
     const sv = await page.evaluate(() => { const D = Garage3D._dbg, S = D.svc; return { done: S.done.map(d => d.kind).join(), late: S.log.filter(q => /^late/.test(q[1])).map(q => q[1]), parked: D.fx.parked, info: Garage3D.info, cue: Object.keys(S.cue).length, plans: S.plans, beams: S.fx.beams, oil: S.fx.oil }; });
     T.check(`the service on the ${id.toUpperCase()} by the arms: wash, body, engine in a row (${r.t} s), no cue late; clean, no scratches; the lift up (${r.lift.toFixed(2)} m) and down; the arms in the ring (lowest ${r.low} m), parked after`,
@@ -206,12 +206,12 @@ try {
 
   // 2. a car not bought: it drives in (the button of the next car), the go button buys it; too little money: refused, nothing taken
   {
-    await page.evaluate(() => { __garage.pickCar('kaze'); }); await run();
-    const u = await ui(), cab1 = await page.evaluate(() => __garage.cabinet()[1]);   // (the RENT A CAR maquette's car: the second car not owned after the player's in the garage's order; a newer car may stand between, then the KAZE RS is a plain one)
-    T.check('another car: the PICO drives out, the KAZE RS drives in and stops on the table, its price in coins under its name and on the go button (the RENT A CAR maquette\'s car: its word over its price; any other car: one line, Kupi · price)', u.info.car === 'kaze' && u.name === 'KAZE RS' && Math.abs(u.info.ang) < 0.01 && (cab1 === 'kaze' ? /^Kupi62\.000\s🪙$/ : /^Kupi\s·\s62\.000\s🪙$/).test(u.go), JSON.stringify({ car: u.info.car, go: u.go, cab1 }));
+    await page.evaluate(() => { __garage.pickCar('sokol'); }); await run();
+    const u = await ui(), cab1 = await page.evaluate(() => __garage.cabinet()[1]);   // (the RENT A CAR maquette's car: the second car not owned after the player's in the garage's order; a newer car may stand between, then the SOKOL R is a plain one)
+    T.check('another car: the LEV S drives out, the SOKOL R drives in and stops on the table, its price in coins under its name and on the go button (the RENT A CAR maquette\'s car: its word over its price; any other car: one line, Kupi · price)', u.info.car === 'sokol' && u.name === 'SOKOL R' && Math.abs(u.info.ang) < 0.01 && (cab1 === 'sokol' ? /^Kupi62\.000\s🪙$/ : /^Kupi\s·\s62\.000\s🪙$/).test(u.go), JSON.stringify({ car: u.info.car, go: u.go, cab1 }));
     await page.evaluate(() => __garage.buy());
     const u2 = await ui(), toast = await page.evaluate(() => document.getElementById('g-toast').textContent);
-    T.check('too little money for it: refused, the money unchanged', u2.money === '11.500' && !u2.S.cars.kaze.own && /Premalo denarja/.test(toast), toast);
+    T.check('too little money for it: refused, the money unchanged', u2.money === '11.500' && !u2.S.cars.sokol.own && /Premalo denarja/.test(toast), toast);
     const m = await tap('rgl:TURBO');
     T.check('a part of a car not bought tapped: no menu, a word to buy the car first', !m && /Najprej kupi avto/.test(await page.evaluate(() => document.getElementById('g-toast').textContent)), JSON.stringify(m));
   }
@@ -223,8 +223,8 @@ try {
     const u = await ui(), vt = await page.evaluate(() => { const P = Core.CAREER.car, ids = __garage.ORDER, top = ids.reduce((a, id) => (P[id] || 0) > (P[a] || 0) ? id : a, ids[0]); let parts = 0;
       for (const el in GarageShop.EL) if (el !== 'barva') GarageShop.EL[el].c.forEach((c, t) => c[1].forEach((o, j) => { parts += __garage.price(el, t, j); }));
       const vm = __garage.vetMoney(); return { vm, top, need: (P[top] || 0) + parts + __garage.paintPrice(top), txt: Lang.thou(vm) }; });
-    T.check('the veteran: money for the dearest car (' + vt.top + '), every part for it and its paint, up to the next 100.000 (' + vt.txt + '); the KAZE RS (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)',
-      vt.vm >= vt.need && vt.vm - vt.need < 100000 && vt.vm % 100000 === 0 && u.S.money === vt.vm && u.money === vt.txt && u.S.car === 'kaze' && u.info.car === 'kaze' && u.S.cars.kaze.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ vt, money: u.money, car: u.info.car, upg: u.info.upg }));
+    T.check('the veteran: money for the dearest car (' + vt.top + '), every part for it and its paint, up to the next 100.000 (' + vt.txt + '); the SOKOL R (owned) on the table, its parts\' levels (engine 3, tyres 3, brakes 2, aero 3)',
+      vt.vm >= vt.need && vt.vm - vt.need < 100000 && vt.vm % 100000 === 0 && u.S.money === vt.vm && u.money === vt.txt && u.S.car === 'sokol' && u.info.car === 'sokol' && u.S.cars.sokol.own && u.info.upg.motor === 3 && u.info.upg.gume === 3 && u.info.upg.zavore === 2 && u.info.upg.aero === 3, JSON.stringify({ vt, money: u.money, car: u.info.car, upg: u.info.upg }));
     await page.evaluate(() => __garage.pickCar('kozorog')); await run();
     await page.evaluate(() => __garage.buy());
     const u2 = await ui();
@@ -650,7 +650,7 @@ try {
     T.check('the next car\'s button: that car on the table', u.info.car === b.want[2] && u.S.car === b.want[2], JSON.stringify({ car: u.info.car, want: b.want[2] }));
   }
 
-  // 8b. the wide vehicles' way out and in (the monster truck, the lorries; the PICO and the RALLY as before): each car swapped in, the
+  // 8b. the wide vehicles' way out and in (the monster truck, the lorries; the LEV S and the RALLY as before): each car swapped in, the
   // clock stepped a frame at a time (nothing drawn), every vertex of every car on the turntable (in its own frame, moved as it is)
   // clear of the regal's boxes (nothing else stands on the floor round the lane now: no stand steps aside); every car on the table's
   // middle after
@@ -676,7 +676,7 @@ try {
         out.ways[id] = { inWay: sum(w1), prevOut: sum(w0), z: +Garage3D.cur.root.position.z.toFixed(3), car: Garage3D.cur.M.id };
       }
       return out;
-    }, ['goljat', 'kamen', 'titan', 'pico', 'rally']);
+    }, ['goljat', 'kamen', 'titan', 'levs', 'rally']);
     const W = R.ways, ok = !Object.keys(R.hits).length && Object.values(W).every(q => q.z === 0 && (!q.inWay || !q.inWay.fade) && (!q.prevOut || !q.prevOut.fade));
     T.check(`the wide vehicles' way in and out (${R.frames} frames): no car through the regal; nothing steps aside; every car on the table's middle after`,
       ok, JSON.stringify(R));

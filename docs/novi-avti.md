@@ -8,7 +8,7 @@ Izbira uporabnika 5. 11. 2026: »5 novih avtov iz sedanjega časa (sodobni, ne k
 - Nova vozila so v **novih datotekah** `js/cars/<id>.js`. Skupne sezname se spremeni čim manj in samo z dodajanjem na konec (README, razdelek »Novo vozilo«): `index.html`, `garaza.html`, `ROSTER` v `tests/fleet.test.js`, `js/lang.js`, `docs/igra.md` (Vozni park). Obstoječih vozil (npr. `tiger.js`) ne spreminjamo.
 
 ## Kaj že imamo (pred načrtom 43 vozil, zdaj 47; `docs/igra.md` »Vozni park«)
-GT3 z motorjem spredaj je TIGER GT, reli avti so LEV R, BURJA R7 in ZMAJ 85, električni hiperavto je STRELA EV, turing limuzina je KOZOROG TC, terenca sta MEDVED 4x4 in SAMUM 4x4, zadnji pogon za drift imata starejša športna avta SOKOL R in KAZE RS. **Manjka sodobno:** vroči hečbek s štirikolesnim pogonom (mali avti imajo prednji pogon, MIŠKA zadnjega), družinski avto z V8, električni terenec ali pickup, sodoben tekmovalni drift kupe in drugi GT3, da ima TIGER GT svoj razred.
+GT3 z motorjem spredaj je TIGER GT, reli avti so LEV R, BURJA R7 in ZMAJ 85, električni hiperavto je STRELA EV, turing limuzina je KOZOROG TC, terenca sta MEDVED 4x4 in SAMUM 4x4, zadnji pogon za drift ima športni avto SOKOL R. **Manjka sodobno:** vroči hečbek s štirikolesnim pogonom (mali avti imajo prednji pogon, MIŠKA zadnjega), družinski avto z V8, električni terenec ali pickup, sodoben tekmovalni drift kupe in drugi GT3, da ima TIGER GT svoj razred.
 
 ## Izbor (priporočeno: možnost 1 vprašanja `novi-avti-izbor`)
 Moč je moč v igri (kW, kot v obstoječih vozilih), cena je vrednost v EUR po merilu tabele cen iz #297 (1 kovanec = 1 EUR; vozilo, ki ga ni v tabeli, ima ceno iz `price`, zato tabele v `js/core.js` ne spreminjamo).

@@ -50,7 +50,7 @@ try {
   const room = async (p) => p.evaluate(() => ({ players: document.getElementById('on-players').textContent, status: document.getElementById('on-status').textContent, go: !document.getElementById('on-go').classList.contains('off') && !document.getElementById('on-go').disabled }));
   const rA = await room(A.page), rB = await room(B.page);
   T.check('room: the host has a 4-character code, the friend joins with it (typed in small letters)', /^[A-Z2-9]{4}$/.test(code), code);
-  T.check('room: both phones list both players with their cars', /Ana \(ti\) · KAZE RS/.test(rA.players) && /Bor · PICO TURBO/.test(rA.players) && /Bor \(ti\) · PICO TURBO/.test(rB.players) && /Ana · KAZE RS/.test(rB.players), `host: ${rA.players} | friend: ${rB.players}`);
+  T.check('room: both phones list both players with their cars', /Ana \(ti\) · SOKOL R/.test(rA.players) && /Bor · LEV S/.test(rA.players) && /Bor \(ti\) · LEV S/.test(rB.players) && /Ana · SOKOL R/.test(rB.players), `host: ${rA.players} | friend: ${rB.players}`);
   T.check('room: only the host can start', rA.go && !rB.go, `host ${rA.go}, friend ${rB.go}`);
   await A.page.evaluate(() => { const t = document.getElementById('on-track'); t.value = 'jezero'; t.dispatchEvent(new Event('change')); const l = document.getElementById('on-laps'); l.value = '1'; l.dispatchEvent(new Event('change')); });
   const pick = await until(B.page, () => { const n = window.__game.net; return n.track === 'jezero' && n.laps === 1 ? { track: n.track, laps: n.laps, shown: document.getElementById('on-track').value } : null; });
@@ -85,7 +85,7 @@ try {
     `host +${oA.late.toFixed(0)} ms (the frame before at ${oA.before == null ? '-' : oA.before.toFixed(0)} ms, a frame ${oA.frame == null ? '-' : oA.frame.toFixed(0)} ms), friend +${oB.late.toFixed(0)} ms (${oB.before == null ? '-' : oB.before.toFixed(0)} ms, ${oB.frame == null ? '-' : oB.frame.toFixed(0)} ms)`);
   const cars = (p) => p.evaluate(() => { const r = window.__game.race; return { n: r.cars.length, me: r.player.num, it: r.remote.num, model: r.remote.m.id, grid: [r.player.grid, r.remote.grid] }; });
   const cA = await cars(A.page), cB = await cars(B.page);
-  T.check("race: the two of them on the grid, each with the other's car; the same start number is changed for the friend", cA.n === 2 && cB.n === 2 && cA.model === 'pico' && cB.model === 'kaze' && cA.me === 1 && cA.it === 2 && cB.me === 2 && cB.it === 1 && cA.grid.join() === '1,2' && cB.grid.join() === '2,1',
+  T.check("race: the two of them on the grid, each with the other's car; the same start number is changed for the friend", cA.n === 2 && cB.n === 2 && cA.model === 'levs' && cB.model === 'sokol' && cA.me === 1 && cA.it === 2 && cB.me === 2 && cB.it === 1 && cA.grid.join() === '1,2' && cB.grid.join() === '2,1',
     `host ${JSON.stringify(cA)}, friend ${JSON.stringify(cB)}`);
   // each sees the other's car where the other really is: the host's last frame showed the friend's car as it was 100 ms
   // earlier; after allowing for that and for the time between the two phones' last frames, within 12 m (a car standing still

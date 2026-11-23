@@ -1,7 +1,7 @@
 // The compound's band on the tyres (render.js tyreBand), in a race with compounds: Bathurst (tyres and compounds on, as on every track
 // with pits), the slicks for the start Mehke (Gume), for the stop Trde (Gume v boksih). Red soft, yellow medium, white hard
 // (Core.TYRE_CMP), blue the rain tyres. Damage off (no knock moves or scrapes a band's vertices on the way).
-//  - KAZE RS (one of the 11: its front wheels are meshes of their own, the rear ones are in the body) against the four road cars: every
+//  - SOKOL R (one of the 11: its front wheels are meshes of their own, the rear ones are in the body) against the four road cars: every
 //    car's band in its own compound's colour, a ring of 12 segments on the outer wall of each rear wheel (144 vertices in the body, out
 //    beside it) and on both walls of each front wheel's mesh (144 vertices), nothing else of the car in that colour there; no mesh more
 //    than without it (no draw call more)
@@ -40,7 +40,7 @@ const side = async (page, name) => {   // (and a close look at the player's left
 };
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.1, cmp: 'S', pitCmp: 'H', radio: 0, damage: 0 }, { width: 640, height: 360 });
-  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'kaze'); });
+  await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'sokol'); });
   await startTrack(page, 'bathurst');
   await page.evaluate(() => {
     const g = window.__game; g.pause(); const e = document.querySelector('.screen.show'); if (e) e.style.display = 'none';
@@ -71,7 +71,7 @@ try {
   });
   const bad = a.cars.filter(c => !c.ok);
   T.check('a race with compounds: every car on slicks of one (the player on Mehke), the slicks for the stop Trde', a.wst && a.cars.every(c => c.k === 'dry' && ['S', 'M', 'H'].includes(c.c)) && a.cars.find(c => c.me).c === 'S' && a.pitCmp === 'H', JSON.stringify({ cmp: a.cmp, pitCmp: a.pitCmp, me: a.cars.find(c => c.me) && a.cars.find(c => c.me).c }));
-  T.check('KAZE RS against the road cars: every car\'s band in its compound\'s colour, 12 segments on each rear wheel\'s outer wall (in the body) and on both walls of each front wheel', !bad.length && a.cars.every(c => ['coupe', 'sedan', 'hatch', 'wedge'].includes(c.body)),
+  T.check('SOKOL R against the road cars: every car\'s band in its compound\'s colour, 12 segments on each rear wheel\'s outer wall (in the body) and on both walls of each front wheel', !bad.length && a.cars.every(c => ['coupe', 'sedan', 'hatch', 'wedge'].includes(c.body)),
     `${a.cars.length} cars, compounds ${a.cmp.join('')}` + (bad.length ? ' — ' + JSON.stringify(bad.slice(0, 3)) : ''));
   // ---- the crew: the new set white (Trde for the stop), the old one red; a wet line: the new set blue ----
   const cr = await page.evaluate(([H, S]) => {

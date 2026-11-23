@@ -1840,7 +1840,7 @@ body.mk-clean #h-msg { display: none !important; }
     const put = (c, p) => { c.place(p.x, p.z, p.h); c.y = c.py = c.roadY = p.y != null ? p.y : H3.top; c.vx = c.vz = 0; };
     const take = (id, col, p) => { if (k >= cs.length) return null; const c = cs[k++]; c.keep = true; mods.push([c, id, col]); put(c, p); return c; };
     if (o.showroom !== false) { const SR = { circuit: [['tiger', 0xf2c12e], ['jelen', 0x2f6a4a], ['perun', 0xd8282a], ['modras', 0x8a2ad8], ['lm', 0xf4f4f0], ['skorpijon', 0x1c1c1c], ['jastreb', 0x2a5ab8], ['tornado', 0xe8452c], ['strelica', 0xd8282a], ['blisk', 0x3a6a3a]],
-        street: [['muscle', 0x1c1c1c], ['sokol', 0xf4f4f0], ['panter', 0xd8642a], ['gad', 0x2a5ab8], ['raketa', 0xd8282a], ['kolibri', 0xf2c12e], ['lisica', 0xc86bff], ['levk', 0x23c8ff], ['kaze', 0xe8452c], ['vortex', 0x3fbf6a]],
+        street: [['muscle', 0x1c1c1c], ['sokol', 0xf4f4f0], ['panter', 0xd8642a], ['gad', 0x2a5ab8], ['raketa', 0xd8282a], ['kolibri', 0xf2c12e], ['lisica', 0xc86bff], ['levk', 0x23c8ff], ['kuna', 0xe8452c], ['ris', 0x3fbf6a]],
         cross: [['rally', 0x2a5ab8], ['lev', 0xf4f4f0], ['zmaj', 0xd8282a], ['hrosc', 0xf2c12e], ['pescenjak', 0xd8642a], ['gozdar', 0x3f8a3a], ['kamen', 0x8a8450], ['truck', 0xd8a02a], ['bizon', 0x2a2a2a], ['goljat', 0x3f8a3a]] };
       for (const key of ['circuit', 'street', 'cross']) SR[key].slice(0, o.showN || 10).forEach(([id, col], i) => { const s2 = S3[key].show[i]; take(id, col, { ...s2, y: 0.03 }); }); }
     const REW = { school: ['miska', 0x23c8ff], car: ['levs', 0xf4f4f0], truck: ['titan', 0xff8a2a], rally: ['rally', 0xd8282a] };
@@ -4545,9 +4545,9 @@ body.mk-clean #h-msg { display: none !important; }
     const put = (c, p) => { c.place(p.x, p.z, p.h); c.y = c.py = c.roadY = p.y != null ? p.y : H3.top; c.vx = c.vz = 0; };
     const take = (id, col, p) => { if (k >= cs.length) return null; const c = cs[k++]; c.keep = true; mods.push([c, id, col]); put(c, p); return c; };
     if (o.showroom !== false) { const SR = { circuit: [['tiger', 0xf2c12e], ['jelen', 0x2f6a4a], ['perun', 0xd8282a], ['modras', 0x8a2ad8], ['lm', 0xf4f4f0], ['skorpijon', 0x1c1c1c], ['jastreb', 0x2a5ab8], ['tornado', 0xe8452c], ['strelica', 0xd8282a], ['blisk', 0x3a6a3a]],
-        street: [['muscle', 0x1c1c1c], ['sokol', 0xf4f4f0], ['panter', 0xd8642a], ['gad', 0x2a5ab8], ['raketa', 0xd8282a], ['kolibri', 0xf2c12e], ['lisica', 0xc86bff], ['levk', 0x23c8ff], ['kaze', 0xe8452c], ['vortex', 0x3fbf6a]],
+        street: [['muscle', 0x1c1c1c], ['sokol', 0xf4f4f0], ['panter', 0xd8642a], ['gad', 0x2a5ab8], ['raketa', 0xd8282a], ['kolibri', 0xf2c12e], ['lisica', 0xc86bff], ['levk', 0x23c8ff], ['kuna', 0xe8452c], ['ris', 0x3fbf6a]],
         cross: [['rally', 0x2a5ab8], ['lev', 0xf4f4f0], ['zmaj', 0xd8282a], ['hrosc', 0xf2c12e], ['pescenjak', 0xd8642a], ['gozdar', 0x3f8a3a], ['kamen', 0x8a8450], ['truck', 0xd8a02a], ['bizon', 0x2a2a2a], ['goljat', 0x3f8a3a]] };
-      const COV = new Set(o.uncover ? [] : ['skorpijon', 'lm', 'tornado', 'modras', 'muscle', 'gad', 'vortex', 'goljat', 'kamen', 'bizon']); H3.covered = [];
+      const COV = new Set(o.uncover ? [] : ['skorpijon', 'lm', 'tornado', 'modras', 'muscle', 'gad', 'ris', 'goljat', 'kamen', 'bizon']); H3.covered = [];
       for (const key of ['circuit', 'street', 'cross']) SR[key].slice(0, o.showN || 10).forEach(([id, col], i) => { const s2 = S3[key].show[i]; const c = take(id, col, { ...s2, y: 0.06 }); if (c && COV.has(id)) H3.covered.push(c); }); }
     { const sc = H3.lic.school, Lw = (lx, lz) => toW(sc.g, lx, lz * sc.fz), e0 = Lw(16, -6), e1 = Lw(11, 0), e2 = Lw(7, 0);
       // (the way from the start straight to the school: the gravel way, or the asphalt way to the boxes, js/nvbase.js, only its line for the arrows)
@@ -4562,11 +4562,11 @@ body.mk-clean #h-msg { display: none !important; }
     if (o.school !== false && !H3.BOAT) { H3.lot = practiceLot(62, 118, 170, 206); H3.gate = taskGate(56, 188, 0, 'DRIVING SCHOOL · ROAD', 0x23c8ff); }
     if (o.gates) { if (o.gates.includes('m')) { H3.gateM = taskGate(52, 88, Math.atan2(-20, 22), 'DRIVING SCHOOL · GRAVEL', 0xd9a23a); H3.gateM.g.position.y = H3.gy(52, 88); }
       if (o.gates.includes('k')) { const cv = H3.hill.paths[0].cv, q = cv.getPointAt(0.05), tg = cv.getTangentAt(0.05); H3.gateK = taskGate(q.x, q.z, Math.atan2(tg.z, tg.x), 'DRIVING SCHOOL · HILL', 0x3fbf6a); H3.gateK.g.position.y = H3.hill.bump(q.x, q.z); } }
-    const REW = { school: ['miska', 0x23c8ff], car: ['sokol', 0x2a5ab8], truck: ['titan', 0xff8a2a], rally: ['rally', 0xd8282a], circuit: ['jelen', 0x2f6a4a], street: ['panter', 0xd8642a], cross: ['zmaj', 0xd8282a], multi: ['strega', 0x2ad8b0], police: ['muscle', 0x1c2a4a], kamikaze: ['raketa', 0xff3d2a], president: ['predsednik', 0x0c0c0c] }; H3.rew = REW;
+    const REW = { school: ['miska', 0x23c8ff], car: ['sokol', 0x2a5ab8], truck: ['titan', 0xff8a2a], rally: ['rally', 0xd8282a], circuit: ['jelen', 0x2f6a4a], street: ['panter', 0xd8642a], cross: ['zmaj', 0xd8282a], multi: ['orel', 0x2ad8b0], police: ['muscle', 0x1c2a4a], kamikaze: ['raketa', 0xff3d2a], president: ['predsednik', 0x0c0c0c] }; H3.rew = REW;
     yield 'y19';
     // the cars each garage gives, on its own parking behind it: the first ones open, the rest covered
     const PK = { school: [['miska', 0x23c8ff, 1], ['jezek', 0x3fbf6a], ['kolibri', 0xf2c12e]], car: [['sokol', 0x2a5ab8, 1], ['lisica', 0xd8282a]], truck: [['titan', 0xff8a2a, 1], ['bizon', 0x2a2a2a]], rally: [['rally', 0xd8282a, 1], ['pescenjak', 0xd8642a]],
-      police: [['muscle', 0x1c2a4a, 1], ['gad', 0x2a5ab8, 1], ['skorpijon', 0x1c1c1c], ['perun', 0xd8282a]], kamikaze: [['raketa', 0xff3d2a, 1], ['strelica', 0xf2c12e], ['tornado', 0xe8452c]], president: [['predsednik', 0x0c0c0c, 1], ['superkombi', 0x1c2a4a], ['goljat', 0x3f8a3a]], multi: [['strega', 0x2ad8b0, 1], ['vortex', 0x3fbf6a], ['blisk', 0x3a6a3a]] }; H3.pk = PK; H3.covered = H3.covered || [];
+      police: [['muscle', 0x1c2a4a, 1], ['gad', 0x2a5ab8, 1], ['skorpijon', 0x1c1c1c], ['perun', 0xd8282a]], kamikaze: [['raketa', 0xff3d2a, 1], ['strelica', 0xf2c12e], ['tornado', 0xe8452c]], president: [['predsednik', 0x0c0c0c, 1], ['superkombi', 0x1c2a4a], ['goljat', 0x3f8a3a]], multi: [['orel', 0x2ad8b0, 1], ['vortex', 0x3fbf6a], ['blisk', 0x3a6a3a]] }; H3.pk = PK; H3.covered = H3.covered || [];
     if (o.park !== false) for (const key of Object.keys(PK)) { const st = H3.lic[key] || S3[key]; if (!st || !st.park) continue; if ((o.done || []).includes(key)) spriteLabel('PASSED ✓', '#3fbf6a', { x: st.ring.x, y: 0, z: st.ring.z }, 6.2, 5); st.parked = [];
       PK[key].forEach(([id, col, open], i) => { const p = st.park[i]; if (!p) return; const c = take(id, col, { x: p.x, z: p.z, h: p.h, y: H3.top }); if (!c) return; st.parked.push(c); if (!open) H3.covered.push(c); }); }
     const stOf = (x) => S3[x] || H3.lic[x];

@@ -75,7 +75,7 @@ try {
     await page.evaluate(() => { window.__game.S.car = 0; });
     await startTrack(page, 'spa');
     const r = await page.evaluate(() => { const P = window.__game.race.player; return { id: P.m.id, rule: !!(P.wreck && P.wreck.rule), kt: !!P.kt }; });
-    T.check('one of the ten cars without parts that come off (KAZE RS): its own tyres (Car.kt), no wheel rule', r.id === 'kaze' && !r.rule && r.kt, JSON.stringify(r));
+    T.check('one of the ten cars without parts that come off (VIHAR V8): its own tyres (Car.kt), no wheel rule', r.id === 'muscle' && !r.rule && r.kt, JSON.stringify(r));
     await ctx.close();
   }
 } finally {
