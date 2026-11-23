@@ -1381,24 +1381,25 @@
   }
  },
  "mapileng": {
-  "meshes": 615,
-  "verts": 311555,
-  "instances": 5136,
+  "meshes": 617,
+  "verts": 313420,
+  "instances": 5132,
   "props": 20,
   "crowd": 73,
-  "world": "726c93bc",
+  "world": "ce4580d6",
   "propsHash": "cb1dc0b6",
   "floor": "ae0d56c2/2940",
   "groups": {
-   "-:MeshLambertMaterial": "e24bdfcf",
+   "-:MeshLambertMaterial": "c55dee09",
    "-:MeshBasicMaterial": "98eccd17",
    "irFar:MeshLambertMaterial": "ad971d2c",
    "crowd:MeshLambertMaterial": "7973c469",
-   "ao:MeshBasicMaterial": "b65a8643",
+   "ao:MeshBasicMaterial": "5b231513",
    "tyremarks:MeshBasicMaterial": "42c2a69c",
    "roadwear:MeshLambertMaterial": "89632d9a",
-   "life:MeshLambertMaterial": "56a84d8e",
-   "life:MeshBasicMaterial": "7dc382a0"
+   "life:MeshLambertMaterial": "f56b5a9",
+   "lifeShadow:MeshBasicMaterial": "75b4e407",
+   "life:MeshBasicMaterial": "91c4218"
   }
  },
  "batangas": {

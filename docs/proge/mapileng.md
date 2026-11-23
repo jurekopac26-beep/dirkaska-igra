@@ -27,6 +27,6 @@ Okolica (gradi jo skupni graditelj kratkih prog `buildKratke` v `js/world-kratke
 - **Približki**: drevesa, koruza, grmičevje, skale in kamni so razporejeni po rabi tal in naklonu, ne po resničnih legah. Spomenik, svetišče, muzej in kavarna so generični (lega iz OpenStreetMap, oblika splošna); terasa razgledišča stoji ob cesti (v OpenStreetMap je točka na cesti sami).
 - **Pravno**: samo zemljepisna imena (Mã Pí Lèng, Đồng Văn, Mèo Vạc, Lũng Cú, QL4C) in splošne besede; spomenik in muzej sta brez imen in napisov.
 
-Obremenitev telefona (`tests/golden/perf.json`, nizka podrobnost): v povprečju 138 klicev risanja in 229 tisoč oglišč, največ 170 klicev in 273 tisoč oglišč.
+Obremenitev telefona (`tests/golden/perf.json`, nizka podrobnost): v povprečju 142 klicev risanja in 246 tisoč oglišč, največ 171 klicev in 282 tisoč oglišč.
 
 Podatke proge pripravita orodji `tools/proga-podatki.py` (nastavitve v `tools/mapileng/config.json`) in skupno orodje kratkih prog `tools/kratke/build.py` (`python3 -I tools/kratke/build.py mapileng --osm <surovi OSM>`: podatkovni blok in višine `MAPILENG_H` v `js/tracks/mapileng.js`, zanimivosti ob cesti v `tools/mapileng/extra.json`; `--png` načrt in profil). Vire glej v `README.md` pod »Zasluge«.

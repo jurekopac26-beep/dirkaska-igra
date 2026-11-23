@@ -721,11 +721,11 @@
   "jsMs": 1.07
  },
  "mapileng": {
-  "calls": 141,
+  "calls": 142,
   "maxCalls": 171,
-  "kverts": 242,
-  "maxKverts": 281,
-  "jsMs": 0.54
+  "kverts": 246,
+  "maxKverts": 282,
+  "jsMs": 1.37
  },
  "tapini": {
   "calls": 84,
