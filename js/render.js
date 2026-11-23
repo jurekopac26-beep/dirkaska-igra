@@ -10983,6 +10983,15 @@ const Render = (function () {
     if (o.cut && M.kit) { const E = kitEntry(M, false, o.deli), g2 = kitRecolour(E.geo.clone(), o.color != null ? o.color : 0xc0392b, true, o.num || 7), U = g2.userData, pa = g2.attributes.position.array;
       for (const n of o.cut) { const R = U.ranges[n]; if (!R) continue; for (const [a, b] of [R.o, R.i]) for (let i = a; i < b; i++) { pa[i * 3] = pa[a * 3]; pa[i * 3 + 1] = pa[a * 3 + 1]; pa[i * 3 + 2] = pa[a * 3 + 2]; } }
       g2.setDrawRange(0, U.N); geo0 = car.body.geometry; car.body.geometry = g2; }
+    if (o.open && M.kit && car.kit) {   // o.open: { part: degrees } (true: every door, the bonnet, the boot wide open) on the whole car: a still of how its parts open; the show car built again after
+      const g2 = car.body.geometry.clone(); g2.userData = car.body.geometry.userData; car.body.geometry = g2;   // (a copy of its own: the showroom's kept body stays whole; ranges, lamps: read only)
+      if (car.tail && car.tail.geometry) { const t2 = car.tail.geometry.clone(); t2.userData = car.tail.geometry.userData; car.tail.geometry = t2; }
+      const U = g2.userData, fk = { m: M, cd: [0, 0, 0, 0], dz: [] }, O = o.open === true ? {} : o.open; g2.setDrawRange(0, U.N);   // (the whole buffer: the lining, the cabin, the engine bay)
+      if (o.open === true) for (const n in U.ranges) if (/^(hood|trunk|tailgate|cover|door)/.test(n)) O[n] = /^door/.test(n) ? 62 : /^hood|^cover/.test(n) ? 55 : 70;
+      if (!car.glassTris) car.glassTris = [0, 0, 0, 0]; if (!car.winBroken) car.winBroken = [0, 0, 0, 0];
+      for (const n in O) if (U.ranges[n] && !car.kit.ajar[n]) kitLoosen(car, fk, n, O[n]);
+      if (o.rear !== false) for (const sd of [-1, 1]) if (car.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(car, fk, sd, 0, 0, 0, 0);
+      car.opened = true; }
     let gh = null;   // o.ghost: [id, n] the garage's part alone, whole and solid, on the car drawn see-through (a hidden part under the bonnet, in a wheel arch)
     if (o.ghost && M.kit) { const part = deliMesh(M, o.ghost[0], o.ghost[1], o.color != null ? o.color : 0xc0392b); gh = { part, mats: [] };
       car.grp.traverse(m => { if (!m.isMesh || !m.material || m === car.blob) return; gh.mats.push([m, m.material]); const c = m.material.clone(); c.transparent = true; c.opacity = 0.16; c.depthWrite = false; m.material = c; });
@@ -11026,6 +11035,7 @@ const Render = (function () {
     if (solo) { car.rigG.visible = true; car.cx = cx0; }
     showCam.fov = fov0; showCam.up.copy(up0); showCam.updateProjectionMatrix(); showFloor.visible = true; showTurn(showAngle);
     if (geo0) { car.body.geometry.dispose(); car.body.geometry = geo0; }
+    if (car.opened) { const A = showArgs, g2 = car.body.geometry, t2 = car.tail && car.tail.geometry; setShowCar(A[0], A[1], A[2], A[3]); g2.dispose(); if (t2) t2.dispose(); }
     if (gh) { for (const [m, mat] of gh.mats) { m.material.dispose(); m.material = mat; } if (gh.part) { car.bodyG.remove(gh.part); gh.part.traverse(m => { if (m.geometry) m.geometry.dispose(); }); } }
     resize();
     return out;

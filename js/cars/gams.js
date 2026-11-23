@@ -69,6 +69,7 @@ var VEHICLE_DEFS = VEHICLE_DEFS || [];
         // the shell: the paint, the roof in the stripe colour (the snow over the peaks); the glass (windscreen, the side windows from the
         // broad C-pillars on, the tailgate's glass); the sills black between the arches, dark under the bumpers' corners
         const XA = K.arches[1].x + K.arches[1].half, XB = K.arches[0].x - K.arches[0].half;
+        K.regions(R => { const h = R.find(r => r.part === 'hood'); return h ? [{ part: 'hood', x: h.x, bands: ['window'], top: true }].concat(R) : R; });   // (the bonnet one whole panel from the windscreen to the nose's front edge, the full width: the shoulders beside it too, not the fenders')
         const L = K.loft(K.secs(K.body.secs), (k, e, kind, at) => {
           if (e === 0 || e === 8) return at.arch || (at.x > XA && at.x < XB) ? B : K.shade(P, 0.55);
           if (kind === 'gf' && e >= 2 && e <= 6) return G;
