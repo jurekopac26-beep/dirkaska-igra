@@ -103,6 +103,11 @@ Ko se kak dolg test zelo podaljša (smoke, memory, perf, gfx in world z vsako pr
 3. V `SECS` vpiši mediano po krogih (zaokroženo na sekundo), padajoče. `node tests/shards.test.js` preveri, da so deli enako dolgi
    (najdaljši največ 15 % nad povprečjem), `node tests/run.js browser --shard 1/6 --list` izpiše dolžine delov.
 
+**22. 11. 2026** (pregled nestabilnih testov): poslov je bilo 97–119 min, memory in memory2 2950–3200 s, del 1–2 blizu meje posla. `SECS` je
+zdaj iz enega celotnega kroga na `main` z 68 pravimi progami (run 44994892896, vseh 169 testov, brez preračuna): vsak del ~105 min, memory in
+memory2 vsak v svojem delu le s kratkimi testi, smoke in smoke2 v različnih delih (smoke je 18. 11. na `main` dosegel mejo pred delitvijo).
+Nestabilna `m45` in `cars-ui`: fiksni zamiki zamenjani s čakanjem na stanje (zaslon igre, postavitev tri sličice enaka, napis na zaslonu).
+
 ## Zavrnjeno ali možnost za pozneje
 
 - **7 delov**: ~68 min (p90 ~77), en stroj več na krog; 8 delov ni boljše (memory ~61 min je meja). Odloči koordinacija.
