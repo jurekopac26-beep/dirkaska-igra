@@ -282,7 +282,7 @@ Naslovi `/*  <naslov>`: telesa avtov `car body definitions`, nova vozila `the ne
 | katu | Katu-Jaryk, Rusija | katu | `js/world-katu.js` (`buildKatu`) |
 | killar | Killar, Indija | killar | `js/world-killar.js` (kopija `buildUncompahgre` s podobo Killarja: `UNK`; hiše `klHouse`, molilne zastavice `klFlags`, table `KL_BOARDS`, lesena ograja levo `T.fence`, pregrada proti kamenju in mreža po pobočju `ukNetMat`, travnik do roba ceste brez bankine in jarka `mead`, senčenje hrbtov in kotanj na vozišču `uk` po `def.roadBase`) |
 | koli | Koli, Finska | koli | `js/world-koli.js` (`World.gore` iz `js/world-gore.js`, slog proge) |
-| koror | Koror, Palau | koror | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.koror`: laguna `def.sea`, most in nasipi z zidovi, tropski gozd, rumena sredinska črta) |
+| koror | Koror, Palau | koror | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.koror`: laguna `def.sea`, most in nasipi z zidovi, tropski gozd, rumena sredinska črta) in `js/world-koror-obcestje.js` (stranske ulice in dovozi iz OSM prek `L.pre`, `L.gravel`, `L.railGap` in `L.extra`: makadam v mreži bankine, samo grafika) |
 | irishtown | Irishtown, Jamajka | irishtown | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.irishtown`: tropski gorski gozd, kavni nasadi, hiše zaselkov; vožnja po levi) |
 | vaoala | Vaoala, Samoa | vaoala | `js/world-prelaz.js` (`buildPrelaz`, videz `PL_LOOK.vaoala`: deževni gozd na slemenu, `L.trop`, bela sredinska črta, rdečkastorjav prah ob robu) |
 | livorno | Livorno, Italija | livorno | `js/world-livorno.js` (`buildLivorno`; podatki `js/data/livorno.js` iz `tools/livorno/build.py world`, proga iz `build.py track`) |
