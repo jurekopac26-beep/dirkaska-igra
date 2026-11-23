@@ -1,5 +1,5 @@
-// The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 6 shares on 6 machines at once, see
-// .github/workflows/tests.yml): for every suite and 1-8 shares each test in exactly one share, none left out; the browser tests' shares
+// The shares of the test runner (tests/run.js --shard k/n; GitHub runs the browser tests in 10 shares on 10 machines at once, see
+// .github/workflows/tests.yml): for every suite and 1-10 shares each test in exactly one share, none left out; the browser tests' shares
 // as many as the workflow's (its matrix and its --shard k/n) and about as long as each other (by run.js's SECS); every browser test that
 // takes long (over 4 min) has its time in SECS, and SECS names only tests in the list; a bad --shard stops with an error, never runs
 // everything. --related (npm run test:related): the tests of the files given (--files) by their names and RELATED; --quiet: a passing test
@@ -18,19 +18,19 @@ const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? '
 const run = (...a) => spawnSync(process.execPath, [RUN, ...a], { encoding: 'utf8' });
 const lines = (r) => r.stdout.trim().split('\n').filter(Boolean);
 
-// 1. every suite, 1-8 shares: each test in exactly one share
+// 1. every suite, 1-10 shares: each test in exactly one share
 {
   const out = [];
   for (const suite of ['node', 'fleet', 'browser']) {
     const all = lines(run(suite, '--list'));
-    for (let k = 1; k <= 8; k++) {
+    for (let k = 1; k <= 10; k++) {
       let got = [];
       for (let j = 1; j <= k; j++) got = got.concat(lines(run(suite, '--shard', `${j}/${k}`, '--list')).slice(1));
       const ok = all.length > 0 && got.length === all.length && new Set(got).size === got.length && all.every(f => got.includes(f));
       if (!ok) out.push(`${suite} in ${k}: ${got.length} of ${all.length}`);
     }
   }
-  check('every suite in 1-8 shares: each test in exactly one share, none left out', !out.length, out.join('; ') || 'node, fleet, browser');
+  check('every suite in 1-10 shares: each test in exactly one share, none left out', !out.length, out.join('; ') || 'node, fleet, browser');
 }
 
 // 2. the browser tests in as many shares as on GitHub (each job's matrix 1..n, its --shard k/n and its name k/n: the full suite's, browser,
