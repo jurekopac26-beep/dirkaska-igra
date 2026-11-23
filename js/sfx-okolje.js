@@ -26,7 +26,7 @@
   const NO = new Set(['baldy', 'beartooth', 'bigsur', 'monterey', 'palomar', 'uncompahgre', 'rio', 'vrsic', 'mountbuller', 'toronto', 'troisrivieres', 'sani', 'bangsaen', 'hotham', 'longford', 'newcastle', 'townsville']);
   const eligible = (def) => !!def && !def.test && !NO.has(def.id);
   // the places GEO has not (latitude, the altitude of the road's lowest point, m)
-  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge)
+  const PLACE = { bathurst: [-33.45, 700], cpalace: [51.42, 95], livorno: [43.5, 5], ghoufi: [35.05, 724], isalo: [-22.62, 819], mapileng: [23.25, 1184], krasnahorka: [48.67, 608] };   // (Ghoufi, Isalo: Copernicus GLO-30, docs/proge; Krásna Hôrka: the import's origin and alt, the height of the road's y = 0)
   const SEA = new Set(['livorno']);   // (by the sea, without def.sea: its big water is the sea)
   function geoOf(id) {
     const G = window.GEO && GEO.tracks, g = G && (G[id] || (id === 'pikesg' ? G.pikes : null));

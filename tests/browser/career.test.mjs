@@ -4,7 +4,8 @@
 // the fastest lap) on the results screen; a car bought with the money; a car not bought cannot race; the career off: the free game
 // again (every car, its own free upgrades), on again: the money and the garage kept; a career saved with the retired model at index 5
 // in its garage loads with the LEV S in its place (once, with its upgrades; both owned: the better level of each part), the garage
-// listing the LEV S once and never the retired model.
+// listing the LEV S once and never the retired model; the path of 1.0 (Kariera.pot): its view, a locked cup refused, a cup's last round
+// driven from the bridge (its place, its reward).
 //   node tests/browser/career.test.mjs
 import { serve, launch, openGame, startTrack, driveToResults, checker } from './lib.mjs';
 
@@ -109,6 +110,27 @@ try {
   const m2 = await reload({ v: 1, on: true, money: 50, earned: 0, races: 0, wins: 0, cars: ['jezek', 'levs', 'p206'], upg: { jezek: U(0, 0, 0, 0), levs: U(1, 3, 0, 0), p206: U(2, 1, 2, 0) } });
   T.check('a saved career owning both the LEV S and the retired model: the LEV S once, the better level of each part (Motor 2, Gume 3, Zavore 2)',
     m2.cars.join() === 'jezek,levs' && JSON.stringify(m2.upg.levs) === JSON.stringify(U(2, 3, 2, 0)) && !('p206' in m2.upg) && m2.lev.join() === 'true', JSON.stringify(m2));
+
+  // 8. the path of 1.0 (js/kariera.js; part B): the view (stage 1 open, stage 2 locked); a cup of stage 2 refused; the stage 1 circuit
+  //    cup kept with all but its last round (the player first in each), continued from the bridge: its last track on the championship's
+  //    engine; driven to the finish: the cup's place, its reward paid and shown, the save still v 1 with its path
+  const v8 = await page.evaluate(() => window.__game.kariera());
+  T.check('the path: stage 1 open (its events open), stage 2 locked', v8 && v8.stopnja === 1 && v8.stopnje[0].odprta && v8.stopnje[0].pokali.filter(c => c.kind !== 'razred').every(c => c.stanje === 'odprt') && v8.stopnje[1] && !v8.stopnje[1].odprta && v8.stopnje[1].pokali[0].stanje === 'zaklenjen', JSON.stringify(v8 && v8.stopnje.slice(0, 2)));
+  const lock = await page.evaluate(async (id) => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'levs'); const ok = g.karieraStart(id); await new Promise(r => setTimeout(r, 150)); return { ok, toast: document.getElementById('toast').textContent, champ: localStorage.getItem('tdgp-champ') }; }, v8.stopnje[1].pokali[0].id);
+  T.check('a cup of stage 2 refused (a toast, no championship)', lock.ok === false && /zaklenjen/.test(lock.toast) && !lock.champ, JSON.stringify(lock));
+  const cup = v8.stopnje[0].pokali.find(c => c.vrsta === 'krog'), n = cup.tracks.length;
+  await page.evaluate(([cup, n]) => localStorage.setItem('tdgp-champ', JSON.stringify({ v: 1, id: cup.id, diff: cup.diff, car: 'levs', n: 19, rounds: cup.tracks.slice(0, n - 1).map(t => ({ track: t, order: [Core.PLAYER_KEY], rain: 0 })) })), [cup, n]);
+  await page.reload(); await page.waitForFunction(() => window.__game, null, { timeout: 120000 });
+  const exp = await page.evaluate((id) => { const c = window.__game.career, P = Kariera.pot(Core.TRACKS, Core.CATS), cats = [...new Set(c.cars.map(i => Core.MODELS.find(m => m.id === i).cat))];
+    return [1, 2, 3, 4].map(pl => Kariera.poPokalu(c, id, pl, P, cats).nagrade.reduce((a, x) => a + x.amount, 0)); }, cup.id);
+  const go = await page.evaluate((id) => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'levs'); return { ok: g.karieraStart(id), money: g.career.money }; }, cup.id);
+  await page.waitForFunction((t) => { const g = window.__game; return !!(g.race && g.race.track.def.id === t && g.race.champ); }, cup.tracks[n - 1], { timeout: 90000 });
+  await driveToResults(page);
+  const r8 = await page.evaluate((id) => { const g = window.__game, c = g.career, s = JSON.parse(localStorage.getItem('tdgp-career'));
+    return { place: g.race.champ.place, sub: document.getElementById('res-sub').textContent, money: c.money, best: c.pot && c.pot.pokali[id], v: s.v, saved: s.pot && s.pot.pokali[id] }; }, cup.id);
+  T.check('the stage 1 cup continued from the bridge, its last round driven: its place kept in the path (and in the save, still v 1), its reward paid and on the results screen',
+    go.ok && r8.place >= 1 && r8.place <= 4 && r8.best === r8.place && r8.saved === r8.place && r8.v === 1 && r8.money - go.money >= exp[r8.place - 1] && (exp[r8.place - 1] === 0 || /Pokal/.test(r8.sub)),
+    JSON.stringify({ go, r8, exp }));
 
   T.check('no page errors', errors.length === 0, errors.slice(0, 5).join(' | '));
 } catch (e) {

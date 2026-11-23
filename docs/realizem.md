@@ -157,6 +157,7 @@ Mestne proge po središču velikih mest ostanejo generične (`CLAUDE.md`). Stavb
 | ZDA | Pikes Peak | ni preverjeno: §120(a), stavbe, vidne z javnega mesta, na slikah prosto; 3D ni potrjeno | stavba na vrhu poenostavljena, brez imena |
 | Brazilija | Rio do Rastro | ni preverjeno: čl. 48 zakona 9.610, dela na javnih mestih prosto | razgledišče generično |
 | Kitajska | Tianmen | ni preverjeno: čl. 24(10), dopolnitev 2020; prodajna raba ni potrjena | Nebeška vrata so naravna jama, ne delo |
+| Slovaška | Krásna Hôrka | ni preverjeno: §42 zakona 185/2015 (dela, trajno postavljena na javnem mestu); prodajna raba ni potrjena. Grad je srednjeveški (avtorske pravice so potekle), obnova po požaru 2012 še traja | grad po obrisu iz OSM in višinah, cel kot pred požarom, samo od zunaj, brez napisov, kipov, grbov in okrasja (odločitev 15. 11. 2026) |
 | Peru | Cusco | ni preverjeno: inkovski zidovi Sacsayhuamána (15. st.) niso avtorsko varovani; ali zakon o kulturni dediščini omejuje prodajno rabo podob, ni preverjeno | zidovi po poteku iz OSM, kamni izmišljeni; kipa nad mestom ni |
 
 Viri (8. 11. 2026):

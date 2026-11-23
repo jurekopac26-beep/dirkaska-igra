@@ -571,7 +571,7 @@ try {
     const mp = await tap('col5'), dp = await menuDom();
     const pp = await page.evaluate(() => __garage.paintPrice('rally'));
     const cp = await page.evaluate(() => ({ pills: [...document.querySelectorAll('#g-menu .g-cp')].map(b => [b.textContent, b.classList.contains('sel')]), time: (document.querySelector('#g-menu .g-ct') || {}).textContent }));
-    T.check('a colour circle (green) tapped: the paint\'s menu as plate an_barvanje 2/6 (tabs Klasične and Žive, Žive open with its four colours, green chosen, ⏱ 6 s), free as the plate says (BARVAJ · BREZPLAČNO; the user\'s answer to garaza-barva-okvircek, 16. 11. 2026)', mp && mp.el === 'barva' && mp.color === 5 && !dp.tabs.length && JSON.stringify(cp.pills) === '[["Klasične",false],["Žive",true]]' && cp.time === '⏱ 6 s' && dp.tiles.map(t => t.n).join() === 'Rumena,Zelena,Oranžna,Vijolična' && dp.tiles[1].sel && dp.tiles[1].p === 'brezplačno' && pp === 0 && dp.buy === 'BARVAJ · BREZPLAČNO', JSON.stringify({ mp, dp, cp, pp }));
+    T.check('a colour circle (green) tapped: the paint\'s menu as plate an_barvanje 2/6 (tabs Klasične and Žive, Žive open with its four colours, green chosen, ⏱ 6 s), free as the plate says (BARVAJ · BREZPLAČNO; the user\'s answer to garaza-barva-okvircek, 16. 11. 2026)', mp && mp.el === 'barva' && mp.color === 5 && !dp.tabs.length && JSON.stringify(cp.pills) === '[["Klasične",false],["Žive",true],["Kovinske",false],["Sveže",false]]' && cp.time === '⏱ 6 s' && dp.tiles.map(t => t.n).join() === 'Rumena,Zelena,Oranžna,Vijolična' && dp.tiles[1].sel && dp.tiles[1].p === 'brezplačno' && pp === 0 && dp.buy === 'BARVAJ · BREZPLAČNO', JSON.stringify({ mp, dp, cp, pp }));
     // (no preview (the user's answer to garaza-barva-predogled, 16. 11. 2026): the car keeps its old colour while green is chosen)
     const nv = await page.evaluate(() => { __garage.advance(0.1); return { col: Garage3D.cur.spec.color, was: __garage.S.cars.rally.color }; });
     T.check('no preview of the colour chosen: the car stays in its old colour till it is painted', nv.was !== 5 && nv.col !== 0x2fa84f, JSON.stringify(nv));
@@ -587,6 +587,14 @@ try {
     const bb = await page.evaluate(async () => { const b = document.getElementById('g-pp'), col = () => Garage3D.cur.spec.color, o = { chip: __garage.chip, on: b.classList.contains('on'), now: col(), lab0: b.textContent }, tick = () => new Promise(r => setTimeout(r, 0));
       b.click(); await tick(); __garage.advance(0.1); await tick(); o.was = col(); o.lab1 = b.textContent; b.click(); await tick(); __garage.advance(0.1); await tick(); o.back = col(); o.lab2 = b.textContent;
       b.click(); await tick(); __garage.advance(0.1); await tick(); __garage.onAct('next'); o.off = !b.classList.contains('on'); __garage.advance(0.1); o.after = col(); __garage.onAct('prev'); for (let i = 0; i < 80 && Garage3D.busy; i++) __garage.advance(0.25); return o; });
+    // (V2, docs/novosti-e.md: the stripes' colour and the car's number in the paint's menu, free, at once, kept in the career or the profile)
+    await tap('col5');
+    const v2 = await page.evaluate(async () => { const tick = () => new Promise(r => setTimeout(r, 0)), fr = async () => { await tick(); __garage.advance(0.1); await tick(); }, saved = () => { const S = __garage.S; return S.mode === 'game' ? (JSON.parse(localStorage.getItem('tdgp-career')).garage.cars.rally || {}) : JSON.parse(localStorage.getItem('apex-garage')).cars.rally; };
+      const o = { sw: document.querySelectorAll('#g-menu .g-sw').length, sc0: !!document.querySelector('#g-menu [data-sc]') }, n0 = +document.querySelector('#g-menu .g-nm').textContent;   // (rally is no kit body: no stripes' row, render.js kitBodyGeo only; videz.test.js checks the colour's path)
+      document.querySelector('#g-menu [data-num="1"]').click(); o.n = +document.querySelector('#g-menu .g-nm').textContent; o.n0 = n0; o.num = saved().num;
+      document.querySelector('#g-menu [data-num="-1"]').click(); o.n2 = +document.querySelector('#g-menu .g-nm').textContent;
+      __garage.S.cars.rally.num = 0; document.querySelector('#g-menu [data-mact="close"]').click(); return o; });
+    T.check('V2: the number (+/−) in the paint\'s menu, kept; no stripes\' row on a car with no kit body', v2.sw === 0 && !v2.sc0 && v2.n === v2.n0 % 99 + 1 && v2.num === v2.n && v2.n2 === v2.n0, JSON.stringify(v2));
     T.check('KONČANO with no price (the paint free); PREJ shows the car in its old colour, POTEM green again; another car: the button gone', bb.chip && bb.chip.small === 'KONČANO' && !bb.chip.cost && bb.on && bb.lab0 === 'PREJ'
       && bb.was !== bb.now && bb.lab1 === 'POTEM' && bb.back === bb.now && bb.lab2 === 'PREJ' && bb.off, JSON.stringify(bb));
   }
