@@ -672,11 +672,11 @@
   "jsMs": 0.77
  },
  "aguascalientes": {
-  "calls": 182,
-  "maxCalls": 206,
-  "kverts": 354,
-  "maxKverts": 514,
-  "jsMs": 0.79
+  "calls": 189,
+  "maxCalls": 214,
+  "kverts": 392,
+  "maxKverts": 532,
+  "jsMs": 2.15
  },
  "koli": {
   "calls": 162,
