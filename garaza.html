@@ -7,10 +7,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>APEX RACING · Garaža</title>
+<title>Real Roads Atlas · Garaža</title>
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="css/garage.css">
+<script src="js/sence.js"></script>
 </head>
 <body>
 <!-- The garage: opened from the menu's "Tvoj avto" card (joined with the menu later). The car on the turntable in the workshop above,
@@ -18,6 +19,7 @@
 <div id="g-app">
   <div id="g-demo" class="g-demo">
     <span class="g-demo-l">MOCKUP</span>
+    <small class="g-ver" id="g-ver" hidden></small>
     <div class="g-modes" id="g-modes"><button data-mode="game">Kariera</button><button data-mode="free">Brezplačno</button><button data-mode="full">Polna igra</button><button data-mode="vet">Veteran</button></div>
     <button class="g-ico" data-act="reset" aria-label="Ponastavi"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 0 2.1-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M4 3.5v5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button class="g-ico g-lang" data-act="lang" id="g-lang">EN</button>
@@ -30,6 +32,8 @@
     <canvas id="g-gl"></canvas>
     <div class="g-vig"></div>
     <div class="g-chip" id="g-chip"></div>
+    <div class="g-steps" id="g-steps"><span class="d"></span><div class="bx"><b class="l"></b><span class="pr"><i></i></span></div><button class="sk" data-act="skip">PRESKOČI ›</button></div>   <!-- (a show's bar as it runs (the plates' an_common): its stages, the step now as a sentence and its line; PRESKOČI: to its end at once) -->
+    <button class="g-pp" id="g-pp" data-act="pp">PREJ</button>   <!-- (PREJ/POTEM after a part or the paint: the car before, then again now) -->
     <div class="g-load" id="g-load"><div class="g-spin"></div><p>Odpiram garažo …</p></div>
   </div>
 
@@ -120,6 +124,7 @@
 <script src="js/garage-shop.js"></script>
 <script src="js/shramba.js"></script>
 <script src="js/denar.js"></script>
+<script src="js/tester.js"></script>
 <script src="js/garage.js"></script>
 </body>
 </html>
