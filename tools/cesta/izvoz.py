@@ -106,7 +106,9 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # left; 810 m, right); on Quezaltepeque two service tracks of the venue that end in the run-off short of the fence (1940 m, left;
          # 2119 m, right)
          'koror': dict(predmeti=False), 'savusavu': dict(predmeti=False, izpusti=[(653, -1), (810, 1)]),
-         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)])}
+         'quezaltepeque': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1940, -1), (2119, 1)]),
+         # Ma Pi Leng (a track of main since 22. 11. 2026, not among the 15): the side roads only
+         'mapileng': dict(predmeti=False)}
 PRIVZETO = dict(start=(150, 330), trk=6.0, kinds=osm.ROADS - {'raceway'}, cilj=70.0)
 RUN, FAR, OWN = 150.0, 25.0, 30.0   # a way that goes on beyond the game's line is the track with this long a stretch on it (m); a junction
                                     # this far off the line is not on the track; no road for the look this near a mouth of the track's own
@@ -285,7 +287,11 @@ def main():
                     elif d < hw_at(sm) + 3 + w / 2: ret = (k2, sm); break
                 if ret and circ(ret[1], s0) < 200: drop('loop'); continue                 # a ring, a lay-by, a carriageway alongside
                 cut = len(Wk) if ret is None else max(0, ret[0] - 8)                      # a road to another part of the lap stops short of it
-                if cut - 1 < 14 or max(d for d, sm in N_[:cut]) < hw0 + 10: drop('link' if ret else 'short'); continue   # never really leaves the roadside
+                pk = False                                                                # the game's own car parks (def.pulls of World.gore, the pad at most 22 m round,
+                for px_, pz_, pr_ in C.get('pulls', []):                                  # its parked cars within ~11 m of it): the road stops at the pad's edge (Koli ~1573 m)
+                    rr = max(6.0, min(pr_, 22.0)) + 1.0; hk = next((k2 for k2 in range(cut) if math.hypot(Wk[k2][0] - px_, Wk[k2][1] - pz_) < rr), None)
+                    if hk is not None and hk < cut: cut = hk; pk = True
+                if cut - 1 < 14 or max(d for d, sm in N_[:cut]) < hw0 + 10: drop('own' if pk else 'link' if ret else 'short'); continue   # never really leaves the roadside
                 k0 = int(round(s0 / st)) % nd; o = 0.0
                 for k2 in (12, 20, 30, cut - 1):
                     q = Wk[min(cut - 1, k2)] - D[k0]; o = float(Nr[k0] @ q)
