@@ -100,9 +100,9 @@
  "balea": {
   "calls": 150,
   "maxCalls": 160,
-  "kverts": 338,
-  "maxKverts": 395,
-  "jsMs": 0.8
+  "kverts": 339,
+  "maxKverts": 398,
+  "jsMs": 1.24
  },
  "silkeborg": {
   "calls": 241,
@@ -190,10 +190,10 @@
  },
  "gudauri": {
   "calls": 156,
-  "maxCalls": 188,
-  "kverts": 356,
-  "maxKverts": 497,
-  "jsMs": 1.12
+  "maxCalls": 187,
+  "kverts": 357,
+  "maxKverts": 498,
+  "jsMs": 1.41
  },
  "ngorongoro": {
   "calls": 141,
@@ -219,16 +219,16 @@
  "llogara": {
   "calls": 158,
   "maxCalls": 171,
-  "kverts": 372,
-  "maxKverts": 432,
-  "jsMs": 1.02
+  "kverts": 371,
+  "maxKverts": 428,
+  "jsMs": 1.57
  },
  "portomoniz": {
   "calls": 212,
   "maxCalls": 253,
   "kverts": 517,
   "maxKverts": 635,
-  "jsMs": 0.85
+  "jsMs": 1.26
  },
  "seoul": {
   "calls": 136,
@@ -408,9 +408,9 @@
  "kanaba": {
   "calls": 175,
   "maxCalls": 222,
-  "kverts": 457,
-  "maxKverts": 608,
-  "jsMs": 1.09
+  "kverts": 458,
+  "maxKverts": 610,
+  "jsMs": 1.15
  },
  "tapini": {
   "calls": 84,
@@ -421,10 +421,10 @@
  },
  "canaries": {
   "calls": 184,
-  "maxCalls": 195,
-  "kverts": 614,
-  "maxKverts": 721,
-  "jsMs": 0.96
+  "maxCalls": 196,
+  "kverts": 611,
+  "maxKverts": 723,
+  "jsMs": 1.48
  },
  "savusavu": {
   "calls": 170,

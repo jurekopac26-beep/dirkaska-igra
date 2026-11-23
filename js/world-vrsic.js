@@ -190,7 +190,7 @@
       const t = VRSP.t, au = Math.abs(VRSP.u), hw = T.stubHw(S, t, VRSP.u), end = S.end === 2 ? S.L + 1 : S.Lend;
       if (t < 0 || t > end + 10 || au > hw + 13) continue;
       const f = sstep(hw + 13, hw + 4, au) * sstep(end + 10, end, t) * sstep(0.5, 3, dd); if (f <= 0) continue;
-      const q = au < hw + S.lim + 3 ? T.query(x, z, T.stubHint(S.k, t), VRSQ) : null, ys = q && q.k === S.k ? q.y : T.stubPt(S.k, t, VRSQ).y;   // (its surface; the profile out where the query gives the road's)
+      const q = au < hw + S.lim + 3 ? T.queryLook(x, z, T.stubHint(S.k, t), VRSQ) : null, ys = q && q.k === S.k ? q.y : T.stubPt(S.k, t, VRSQ).y;   // (its surface; the profile out where the query gives the road's)
       h = lerp(h, ys - 0.15, f);
     }
     return h;
@@ -415,7 +415,7 @@
   function stubCorner(S, c) {   // corner c (0: left of it going in, 1: right): its apex V (where the two edges meet) and the arc's points from its own edge to the road's, each [x, z]; UT: each one's [t, u] on the side road (the texture's way)
     const k = S.k, sg = c ? 1 : -1, r = S.cr, lt = S.lt[c], th = S.th[c], tv = S.tv[c], n = Math.max(3, Math.ceil((Math.PI - th) / 0.2)), F = {}, Q = {}, w = T.w;
     const at = (a, e) => { const p = T.stubPt(k, tv + a, F), u = sg * (S.hw + e); return [p.x - p.tz * u, p.z + p.tx * u]; };
-    const edge = (P, onto) => { const q = T.query(P[0], P[1], S.i0, Q); if (q.deep) return P; const e = w + 0.02 - Math.abs(q.d), sd = q.d >= 0 ? 1 : -1;   // (onto the road's edge along its normal: a point on its asphalt out, onto: one short of it in too)
+    const edge = (P, onto) => { const q = T.queryLook(P[0], P[1], S.i0, Q); if (q.deep) return P; const e = w + 0.02 - Math.abs(q.d), sd = q.d >= 0 ? 1 : -1;   // (onto the road's edge along its normal: a point on its asphalt out, onto: one short of it in too)
       if (e > 0 || onto) { P[0] += q.nx * sd * e; P[1] += q.nz * sd * e; } return P; };
     const V = edge(at(0, 0), true), A = [], UT = [[tv, sg * S.hw]];
     for (let m = 0; m <= n; m++) { const ph = -Math.PI / 2 - (Math.PI - th) * m / n, a = lt + r * Math.cos(ph), e = r + r * Math.sin(ph); A.push(edge(at(a, e), m === n)); UT.push([tv + a, sg * (S.hw + e)]); }
@@ -423,12 +423,12 @@
   }
   function stubGeo(K) {
     const w = T.w, N = T.N, Q = {}, F = {}, RS = rng(7671), list = T.stubs || [];
-    const dash = K.edge === 'dash', lh = !!T.def.leftHand, yAt = (x, z, S, t) => T.yAt(T.query(x, z, T.stubHint(S.k, t), Q));   // (the surface there, as the cars drive on it)
+    const dash = K.edge === 'dash', lh = !!T.def.leftHand, yAt = (x, z, S, t) => T.yAt(T.queryLook(x, z, T.stubHint(S.k, t), Q));   // (the surface there, as the cars drive on it)
     // the corners, and where the mouth crosses the road's edge: from one arc's end to the other's (mouthE), the verge at its surface there and where the barrier is open (mouthV)
     const cor = list.map(S => [stubCorner(S, 0), stubCorner(S, 1)]);
     const mouthE = [new Uint8Array(N), new Uint8Array(N)], mouthV = [new Uint8Array(N), new Uint8Array(N)];
     list.forEach((S, n) => { const si = S.side > 0 ? 1 : 0; let a = 1e9, b = -1e9;
-      for (const C of cor[n]) for (const P of [C.V, C.A[C.A.length - 1]]) { const s = T.query(P[0], P[1], S.i0, Q).s; a = Math.min(a, s); b = Math.max(b, s); }
+      for (const C of cor[n]) for (const P of [C.V, C.A[C.A.length - 1]]) { const s = T.queryLook(P[0], P[1], S.i0, Q).s; a = Math.min(a, s); b = Math.max(b, s); }
       for (let i = Math.max(0, Math.floor((a - 0.6) / T.ds)); i <= Math.min(N - 1, Math.ceil((b + 0.6) / T.ds)); i++) { mouthE[si][i] = 1; mouthV[si][i] = 1; }
       if (T.gap) for (let i = Math.max(0, S.i0 - 80); i <= Math.min(N - 1, S.i0 + 80); i++) if (T.gap[si][i]) mouthV[si][i] = 1; });
     const edgeOn = (si, i, j) => !(mouthE[si][i] || mouthE[si][j]) || (dash && i % 2 === 0);
@@ -446,7 +446,7 @@
         const shL = 0.6 * sstep(0, 1.5, tt - S.tv[0] - S.lt[0]), shR = 0.6 * sstep(0, 1.5, tt - S.tv[1] - S.lt[1]), us = [-hw - shL, -hw, -hw / 2, 0, hw / 2, hw, hw + shR];
         const fade = tEnd > S.L + 10 ? sstep(S.L + 6, tEnd, tt) : 0, sink = tEnd > S.L + 10 ? sstep(tEnd - 6, tEnd, tt) * 0.12 : 0;   // (the road on past the rail fades into the ground; one ending at a building does not)
         secs.push({ t: tt, pts: us.map((u, j) => { let x = p.x + nx * u, z = p.z + nz * u;
-          for (let it = 0; it < 3; it++) { const q = T.query(x, z, S.i0, Q); if (q.deep) break; const e = w + 0.02 - Math.abs(q.d); if (e <= 0) break; const sa = Math.max(0.3, Math.abs(p.tx * q.nx + p.tz * q.nz)); x += p.tx * e / sa; z += p.tz * e / sa; }   // (onto the road's edge, along the side road)
+          for (let it = 0; it < 3; it++) { const q = T.queryLook(x, z, S.i0, Q); if (q.deep) break; const e = w + 0.02 - Math.abs(q.d); if (e <= 0) break; const sa = Math.max(0.3, Math.abs(p.tx * q.nx + p.tz * q.nz)); x += p.tx * e / sa; z += p.tz * e / sa; }   // (onto the road's edge, along the side road)
           const out = j === 0 || j === 6, y = yAt(x, z, S, tt) + (out ? 0.035 : 0.055) - sink, gc = gC(x, z), s0 = gcol(x, z, sC), c = out ? [lerp(s0[0], gc[0], 0.6), lerp(s0[1], gc[1], 0.6), lerp(s0[2], gc[2], 0.6)] : paved ? pc : gcol(x, z, pc);
           return [x, y, z, [lerp(c[0], gc[0], fade), lerp(c[1], gc[1], fade), lerp(c[2], gc[2], fade)], u, tt]; }) });
         if (tt >= tEnd) break; }
@@ -461,7 +461,7 @@
           GS.triUp(a, b, c, [cl[0], cl[m], cl[m + 1]], [uv[0], uv[m], uv[m + 1]]); } }
       // across its lane out at the road's edge (paved streets and service roads, not the narrow driveways): the stop line (solid) or the give-way line (dashes)
       if (paved && hw >= 2.2 && K.line !== 'none') { const u0 = lh ? 0.15 : -hw + 0.2, u1 = lh ? hw - 0.2 : -0.15, wht = [0.95, 0.95, 0.92];
-        let tl = 0; for (const u of [u0, (u0 + u1) / 2, u1]) for (let t = Math.max(0, S.te - 6); t < S.te + 30; t += 0.25) { const p = T.stubPt(k, t, F), q = T.query(p.x - p.tz * u, p.z + p.tx * u, S.i0, Q); if (q.deep || Math.abs(q.d) >= w) { tl = Math.max(tl, t); break; } }
+        let tl = 0; for (const u of [u0, (u0 + u1) / 2, u1]) for (let t = Math.max(0, S.te - 6); t < S.te + 30; t += 0.25) { const p = T.stubPt(k, t, F), q = T.queryLook(p.x - p.tz * u, p.z + p.tx * u, S.i0, Q); if (q.deep || Math.abs(q.d) >= w) { tl = Math.max(tl, t); break; } }
         const t = tl + (K.line === 'dash' ? 0.5 : 0.6), p = T.stubPt(k, t, F), nx = -p.tz, nz = p.tx, lw = K.line === 'dash' ? 0.15 : 0.22;
         const at = (uu, dt) => { const x = p.x + nx * uu + p.tx * dt, z = p.z + nz * uu + p.tz * dt; return [x, yAt(x, z, S, t) + 0.07, z]; };
         if (K.line === 'dash') { for (let u = u0; u + 0.5 <= u1 + 0.01; u += 1) G.l.quadUp(at(u, -lw), at(u + 0.5, -lw), at(u + 0.5, lw), at(u, lw), [wht, wht, wht, wht]); }
@@ -475,7 +475,7 @@
   // the shoulder's edge e0 at the side road's surface, no ditch
   function stubVerge(SB, i, side, e0, bar) {
     if (!SB || !SB.mouthV[side > 0 ? 1 : 0][i]) return null;
-    const y = T.hy[i], sf = (o) => { const q = side * o; return [o, T.yAt(T.query(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q, i, VRSQ)) - y - 0.03]; };
+    const y = T.hy[i], sf = (o) => { const q = side * o; return [o, T.yAt(T.queryLook(T.px[i] + T.nx[i] * q, T.pz[i] + T.nz[i] * q, i, VRSQ)) - y - 0.03]; };
     return [[e0, -0.02], sf(Math.max(e0 + 0.6, bar - 0.7)), sf(bar + 0.45), sf(bar + 1.15), sf(bar + 1.9)];
   }
   function stubRails(nd, side) { const G = T.gap && T.gap[side > 0 ? 1 : 0]; if (G) for (let i = 0; i < nd.length; i++) if (G[i]) nd[i] = 0; return nd; }   // (the barrier open across the mouths)
