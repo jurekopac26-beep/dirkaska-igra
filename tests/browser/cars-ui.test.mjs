@@ -377,9 +377,13 @@ try {
       Core.detachPart(P, 'doorL'); g.sim(0.5, true); return window.__said.map(s => s.k + ':' + ((s.v && s.v.part) || '')); });
     T.check('after a repair the same lost part is told again', k2.includes('partLost:left door'), JSON.stringify(k2));
     // the player's wheel (the wheel rule, game.js WHEEL_RULE; the user, 9. 11. 2026: »Ko ti enkrat odpade kolo, je igre konec«): said by its
-    // name ("rear left wheel"), never "on three wheels": the car stops there, retires, and the game is over (wheels.test.mjs)
-    const k3 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; g.sim(8, true); window.__said.length = 0;
-      // (its speed when the rule stops it: a rival may knock the parked wreck later, the event 'contact', 19. 11. 2026)
+    // name ("rear left wheel"), never "on three wheels": the car stops there, retires, and the game is over (wheels.test.mjs). In a race of
+    // its own with no rivals (the menu's Opponents 0): with them a rival's knock (rivalWheel, contact) set the stopped wreck moving again
+    // in some runs (74 km/h on one branch, 1 on another, 23. 11. 2026); the field back as it was for the races after it
+    const riv0 = await page.evaluate(() => { const S = window.__game.S, v = S.rivals; S.rivals = 0; return v; });
+    await startTrack(page, 'jezero');
+    const k3 = await page.evaluate(() => { const g = window.__game, r = g.race, P = r.player; g.pause(); g.sim(8, true); window.__said.length = 0;
+      if (r.cars.length !== 1) return { cars: r.cars.length };
       Core.detachPart(P, 'wheelRL'); let kmh = null; for (let t = 0; t < 6; t += 0.1) { g.sim(0.1, true); if (kmh == null && P.wreck && P.wreck.rule && P.wreck.rule.over) kmh = Math.round(P.speed * 3.6); }
       return { over: !!(P.wreck && P.wreck.rule && P.wreck.rule.over), out: r.isOut(P), kmh }; });
     const k3s = await said();
@@ -388,7 +392,7 @@ try {
     // destroyed: VOZILO UNIČENO, the wreck and the fire said; Odstopi asks, then retires. A new race with the KAZE RS: no parts that come
     // off, so no wheel rule (a vehicle with them, the KOZOROG too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its
     // wheels and the game is over, KONEC IGRE, wheels.test.mjs)
-    await page.evaluate(() => { window.__game.S.car = 0; }); await startTrack(page, 'jezero');
+    await page.evaluate((v) => { window.__game.S.car = 0; window.__game.S.rivals = v; }, riv0); await startTrack(page, 'jezero');
     const st0 = await page.evaluate(() => { const g = window.__game; g.pause(); g.sim(9, true); return g.stats; });
     const w = await page.evaluate(async () => {
       const g = window.__game, r = g.race, P = r.player; window.__said.length = 0;

@@ -35,7 +35,7 @@ const SUITES = {
 // run 44994892896, and 23. 11. #1031 in eight shares, run 45153277100, and #953 in six, run 45165119735, each job's times divided by
 // its speed, the median of time/SECS over its tests of 20 s or more; the machines were loaded, eight shares took 64-109 min and six
 // 94-115 min, so the browser tests run in ten shares of ~61 min, ~90 min on a machine 1.5 times slower):
-// --shard deals the tests out by it (memory, memory2, perf and crash each in a share with only short tests besides), and a test's time limit grows with
+// --shard deals the tests out by it (memory, memory2 and perf each in its own share), and a test's time limit grows with
 // it (LIMIT_OF). Update it from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not
 // listed counts as DEF_SECS
 const SECS = {
