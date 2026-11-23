@@ -596,21 +596,21 @@
   }
  },
  "sacalobra": {
-  "meshes": 1714,
-  "verts": 809130,
+  "meshes": 1772,
+  "verts": 886578,
   "instances": 37011,
   "props": 10,
   "crowd": 283,
-  "world": "fea015d",
+  "world": "fcd35348",
   "propsHash": "dbd5015f",
   "floor": "510e9528/10556",
   "groups": {
-   "-:MeshLambertMaterial": "82792d63",
+   "-:MeshLambertMaterial": "dc635547",
    "-:MeshPhongMaterial": "af2e2690",
    "-:MeshBasicMaterial": "4f1c46cb",
    "irFar:MeshLambertMaterial": "e555884",
    "crowd:MeshLambertMaterial": "bf2198b0",
-   "ao:MeshBasicMaterial": "dd2dee02",
+   "ao:MeshBasicMaterial": "b2fbd59",
    "tyremarks:MeshBasicMaterial": "87b6bdf9",
    "roadwear:MeshLambertMaterial": "ed2ef62c"
   }
