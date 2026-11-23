@@ -63,6 +63,7 @@ Vrstni red je vrstni red verige. Prva seja naredi tudi skupne gradnike in uvozni
 | 21 | `cusco` | Cusco, Peru | Cusco, Peru | desna | -71.9895,-13.5175,-71.9755,-13.4985 |
 | 17 | `isuna` | Isuna, Butan | Isuna, Bhutan | leva | 89.47,27.31,89.53,27.345 |
 | 17 | `koli` | Koli, Finska | Koli, Finland | desna | 29.7555,63.0813,29.836,63.1147 |
+| 17 | `longyearbyen` | Longyearbyen, Norveška | Longyearbyen, Norway | desna | 15.55,78.192,15.69,78.236 |
 
 ### Smučišča (1–4)
 
