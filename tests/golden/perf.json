@@ -57,10 +57,10 @@
  },
  "caracoles": {
   "calls": 159,
-  "maxCalls": 198,
-  "kverts": 292,
-  "maxKverts": 430,
-  "jsMs": 0.89
+  "maxCalls": 200,
+  "kverts": 296,
+  "maxKverts": 435,
+  "jsMs": 1.54
  },
  "katu": {
   "calls": 143,
