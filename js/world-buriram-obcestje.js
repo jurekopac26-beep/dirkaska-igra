@@ -3,7 +3,8 @@
    builder's hook LK.extra wrapped: what is here is laid out first, so the builder's trees and the crowds keep clear of it, then
    js/world-buriram.js's own parts).
    Drawn: the walls (OSM barrier=wall, 3, east of the paddock: by the main straight's end, along the east side and round to the south;
-     no height or material in OSM: 2 m of concrete, 0.25 m thick, grey precast, assumed, as on Lusail).
+     no height or material in OSM: 2 m of concrete, 0.25 m thick, grey precast, assumed, as on Lusail; open where a service road
+     crosses one).
    Kept open (docs/realizem.md: only from sources): nothing else within ~60 m of the road is in OSM that the track does not draw already.
    Not drawn again: the circuit's paved area, the barriers, the run-off and the grandstands (the builder's and js/world-buriram.js's), the
      service roads, the building, the pond and the marshes (js/tracks/buriram.js, def.sk); nothing within the barriers; no names of the
@@ -17,10 +18,11 @@
   const A = World.api, LK = A.rbLook && A.rbLook.buriram;
   if (!LK || typeof LK.extra !== 'function') return;
 
-  // the walls: [x0, z0, x1, z1, ...] each
+  // the walls: [x0, z0, x1, z1, ...] each; the east one (OSM way 1327506913) cut 7 m wide where two service roads (def.sk.svc) cross it
+  // (OSM has no gate there, but the road goes through: an opening, assumed)
   const WALLS = [
     [162.02,44.97,183.05,3.69,195.37,-53.4],
-    [197.42,-58,208.71,-129.36,207.67,-162.5],
+    [197.42,-58,198.85,-67.34], [199.95,-74.26,206.05,-112.64], [207.15,-119.56,208.71,-129.36,207.67,-162.5],
     [209.73,-175.24,195.88,-206.85,186.64,-223.67,174.34,-236.92,147.14,-257.32,73.27,-295.04]];
 
   const base = LK.extra;
