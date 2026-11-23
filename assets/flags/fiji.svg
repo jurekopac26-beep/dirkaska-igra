@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+<title>Fiji</title>
+<!-- Ratio 1:2. A light blue field, the Union Flag in the canton and the shield of the arms in the middle of the fly, simplified
+     for the menu's small flag: a red chief with a gold lion, a red cross on white and in its quarters sugar cane, a coconut palm,
+     a dove and bananas. Colours: blue #68BFE5, navy #012169, red #CE1126, gold #FFD100. -->
+<defs>
+<clipPath id="fj-uj-s"><path d="M0,0V30H60V0Z"/></clipPath>
+<clipPath id="fj-uj-t"><path d="M30,15H60V30ZV30H0ZH0V0ZV0H60Z"/></clipPath>
+<clipPath id="fj-shield"><path d="M765,135H1035V360Q1035,462 900,482Q765,462 765,360Z"/></clipPath>
+</defs>
+<path fill="#68BFE5" d="M0,0H1200V600H0Z"/>
+<g clip-path="url(#fj-uj-s)" transform="scale(10)">
+<path fill="#012169" d="M0,0H60V30H0Z"/>
+<path d="M0,0L60,30M60,0L0,30" stroke="#FFFFFF" stroke-width="6"/>
+<path d="M0,0L60,30M60,0L0,30" clip-path="url(#fj-uj-t)" stroke="#CE1126" stroke-width="4"/>
+<path d="M30,0V30M0,15H60" stroke="#FFFFFF" stroke-width="10"/>
+<path d="M30,0V30M0,15H60" stroke="#CE1126" stroke-width="6"/>
+</g>
+<g clip-path="url(#fj-shield)">
+<path fill="#FFFFFF" d="M700,100H1100V500H700Z"/>
+<path fill="#CE1126" d="M700,100H1100V215H700Z"/>
+<path fill="#CE1126" d="M885,215H915V500H885ZM700,330H1100V360H700Z"/>
+<!-- the lion: body, head, legs and tail, a cocoa pod in its paw -->
+<g fill="#FFD100">
+<ellipse cx="905" cy="178" rx="52" ry="17"/>
+<circle cx="850" cy="165" r="17"/>
+<path d="M866,186h10v22h-10zM890,188h9v20h-9zM925,188h9v20h-9zM945,186h10v22h-10z"/>
+<path d="M955,175q28,-12 22,-30" fill="none" stroke="#FFD100" stroke-width="6"/>
+</g>
+<ellipse cx="826" cy="174" rx="7" ry="11" fill="#8A5A2B"/>
+<!-- sugar cane -->
+<g stroke="#5F9E3A" stroke-width="7">
+<path d="M800,320V230M825,320V225M850,320V232"/>
+</g>
+<g stroke="#2E6B1F" stroke-width="3">
+<path d="M796,255h8M796,285h8M821,250h8M821,282h8M846,258h8M846,288h8"/>
+</g>
+<!-- coconut palm -->
+<path d="M972,322Q968,280 978,248" fill="none" stroke="#8A5A2B" stroke-width="9"/>
+<g fill="#2E8B3A">
+<path d="M978,248Q950,230 930,250Q955,236 978,252Z"/>
+<path d="M978,248Q1006,228 1026,248Q1000,236 978,252Z"/>
+<path d="M978,248Q960,215 940,222Q962,222 976,250Z"/>
+<path d="M978,248Q996,214 1018,222Q996,222 980,250Z"/>
+</g>
+<!-- the dove with an olive branch -->
+<path d="M790,420Q812,395 840,402L862,388L856,410Q850,436 815,440Q800,440 790,420Z" fill="#F4F4F4" stroke="#555555" stroke-width="3"/>
+<path d="M862,394L876,390" stroke="#2E8B3A" stroke-width="4"/>
+<!-- bananas -->
+<g fill="#FFD100" stroke="#B08A00" stroke-width="2">
+<path d="M945,385Q930,430 965,452Q945,425 955,388Z"/>
+<path d="M962,382Q955,430 990,448Q968,422 972,385Z"/>
+<path d="M980,382Q982,428 1012,440Q990,418 990,384Z"/>
+</g>
+<path d="M950,384Q970,372 990,382" fill="none" stroke="#5F9E3A" stroke-width="6"/>
+</g>
+<path d="M765,135H1035V360Q1035,462 900,482Q765,462 765,360Z" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+</svg>

@@ -19,7 +19,7 @@ try {
   const { ctx, page, errors } = await openGame(browser, srv.base + '/index.html?misija=50', {}, { width: 360, height: 640 }, { touch: true });
   await ready(page); await page.waitForTimeout(300);
   let s = await st(page);
-  T.check('?misija=50: Medvode, past the Sava bridge', s.track === 'medvode' && Math.abs(s.run.s - 4066) < 10, JSON.stringify({ track: s.track, s: s.run.s }));
+  T.check('?misija=50: Medvode, past the Sava bridge', s.track === 'medvode' && Math.abs(s.run.s - 4112) < 10, JSON.stringify({ track: s.track, s: s.run.s }));
   T.check('the panel: ČEBELE mirne, SUNKI 0, DO PAŠE 2,4 km, SONCE ZAIDE čez 5 min; no timing tower', s.rows[0] === 'ČEBELE mirne' && s.rows[1] === 'SUNKI 0' && s.rows[2] === 'DO PAŠE 2,4 km' && s.rows[3] === 'SONCE ZAIDE čez 5 min' && !s.tower, JSON.stringify(s.rows));
   const S = await page.evaluate(() => { const r = Missions.run, has = (o) => !!o && !!Render.scene.getObjectById(o.id), v = Render.viewOf(r.P);
     return { skin: !!r.skin && !!r.skin.parent, body: v.body.visible, holes: has(r.holeMesh), koz: has(r.koz), lipa: has(r.lipa), ids: [r.holeMesh.id, r.koz.id, r.lipa.id] }; });

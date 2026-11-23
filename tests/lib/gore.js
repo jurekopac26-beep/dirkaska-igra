@@ -1,7 +1,7 @@
 // The checks every short road of docs/gorske-proge.md has (tests/<id>.test.js: const G = goreTrack(id); its own checks with G.check; G.done()):
 // 1. the name: "Kraj, Država" as in the plan's table, the English one too, the side of the road they drive on; an open road with four ways to drive
 //    it (the race, the time trial, the duel in the traffic, the run from the police), four checkpoints, no round of the big championship
-// 2. the stage: 2.5-3 km between the lines (the plan), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
+// 2. the stage: 2.5-3 km between the lines (the plan; a short road to a landmark its own, goreTrack(id, { km })), its altitudes the road's own, room for the grid of 22 below the start line and a run-out past
 //    the finish
 // 3. the data of the import (tools/proga-uvoz.mjs): the terrain and the land cover decode to their grids, the bends in order and turning the way
 //    they say, the legs of the hairpins apart and the barriers off the asphalt, the grades, the side roads in order within the road drawn, the lifts
@@ -9,13 +9,16 @@
 //    its own and stays there
 // 5. a duel in the traffic on autopilot: both reach the finish, nobody on foot hit, no vehicle stuck for long
 // 6. the medal times of the time trial: gold < silver < bronze, the rain slower, gold the stock rally car on the autopilot x 1.01
+// The options (goreTrack(id, o)): o.km, the stage's length when the plan gives the road another ([lo, hi] km; Isuna, the landmark's road: 3-3.6);
+// o.valley, a road up a valley without a bend over 70 degrees within 80 m (the import's bends none): the check is then that it has none
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const { loadCore, ROOT } = require('./core.js');
 const { DT, seeded } = require('./sim.js');
 
-function goreTrack(id) {
+function goreTrack(id, o = {}) {   // (o: { km: [min, max] } or, as the older tests, [min, max] in metres: the stage's bounds between the lines; the plan's 2.5-3 km, a short road to a landmark its own)
+  const len = Array.isArray(o) ? o : o.km ? o.km.map(x => x * 1000) : [2450, 3050];
   const C = loadCore();
   let bad = 0, n = 0;
   const check = (name, ok, detail) => { n++; if (!ok) bad++; console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ' — ' + detail : ''}`); };
@@ -32,7 +35,7 @@ function goreTrack(id) {
   check('track: an open road with four ways to drive it (race, time trial, traffic, police), 4 checkpoints, not a round of the big championship',
     def.open && (def.modes || []).join(',') === 'race,tt,traffic,police' && T.cpS.length === 4 && !C.CHAMPS.find(s => s.id === 'veliko').tracks.includes(id), `${T.cpS.length} checkpoints`);
   // 2. the stage
-  check('stage: 2.5-3 km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish', T.raceLen > 2450 && T.raceLen < 3050 &&
+  check(`stage: ${(len[0] / 1000).toFixed(2)}-${(len[1] / 1000).toFixed(2)} km between the lines, the altitudes the road\'s own, room for 22 on the grid and a run-out past the finish`, T.raceLen > len[0] && T.raceLen < len[1] &&
     Math.abs(T.altAt(T.hStart) - def.alt[0]) < 1.5 && Math.abs(T.altAt(T.hFinish) - def.alt[1]) < 1.5 && T.startS >= 13 + 21 * 7.5 && T.len - T.finishS >= 100,
     `race ${Math.round(T.raceLen)} m, ${def.alt.join(' -> ')} m, ${Math.round(T.startS)} m below the start, ${Math.round(T.len - T.finishS)} m past the finish`);
   // 3. the data
@@ -46,9 +49,12 @@ function goreTrack(id) {
   {
     const B = def.bends || [], turn = B.map(([d]) => { const a = T.idx(T.startS + d - 45), b = T.idx(T.startS + d + 45); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); return s; });
     const okB = B.every((b, k) => (!k || b[0] > B[k - 1][0]) && Math.sign(turn[k]) === b[2] && Math.abs(turn[k]) > 0.8);
-    check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
+    if (o.valley) {   // (a valley road: no bend in the import, and none on the road over 70 degrees within 80 m)
+      let tmax = 0; for (let d = 0; d < T.raceLen; d += 5) { const a = T.idx(T.startS + d - 40), b = T.idx(T.startS + d + 40); let s = 0; for (let i = a; i < b; i++) s += wrap(T.hd[i + 1] - T.hd[i]); tmax = Math.max(tmax, Math.abs(s)); }
+      check('bends: a road up a valley, none over 70 degrees within 80 m (none in the import)', !B.length && tmax < 70 / 57.3, `the sharpest ${Math.round(tmax * 57.3)} degrees`);
+    } else check('bends: in order along the road, each turning the way its side says (over ~45 degrees within 90 m)', B.length > 0 && okB, B.map((b, k) => `${Math.round(b[0])}:${b[2] > 0 ? 'R' : 'L'}${Math.round(turn[k] * 57.3)}`).join(' '));
     let dmin = 1e9; for (let i = 0; i < T.N; i += 2) for (let j = i + 40; j < T.N; j += 2) dmin = Math.min(dmin, Math.hypot(T.px[i] - T.px[j], T.pz[i] - T.pz[j]));
-    let bmin = 1e9; for (let i = 0; i < T.N; i++) bmin = Math.min(bmin, T.bl[i], T.br[i]);
+    let bmin = 1e9; for (let i = 0; i < T.N; i++) { const nw = T.wa ? Math.max(0, T.w - T.wa[i]) : 0; bmin = Math.min(bmin, T.bl[i] + nw, T.br[i] + nw); }   // (nw: where the road is narrower than its base width, e.g. a gravel stretch, past its own edge)
     let gmax = 0; for (let i = T.startIdx; i < T.finishIdx; i++) gmax = Math.max(gmax, Math.abs(T.grade[i]));
     check('the road: the legs of the hairpins 20 m apart or more, the barriers 3 m past the asphalt or more, nowhere steeper than 12 %', dmin >= 20 && bmin >= T.w + 2.9 && gmax < 0.12,
       `legs ${dmin.toFixed(1)} m apart at the closest, barriers ${(bmin - T.w).toFixed(2)} m past the edge, steepest ${(gmax * 100).toFixed(1)} %`);
