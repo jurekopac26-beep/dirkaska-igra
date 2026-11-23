@@ -742,11 +742,11 @@
   "jsMs": 0.7
  },
  "vaoala": {
-  "calls": 147,
-  "maxCalls": 154,
-  "kverts": 348,
+  "calls": 148,
+  "maxCalls": 156,
+  "kverts": 351,
   "maxKverts": 462,
-  "jsMs": 1.11
+  "jsMs": 1.29
  },
  "irishtown": {
   "calls": 175,
