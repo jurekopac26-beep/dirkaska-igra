@@ -280,25 +280,25 @@
   }
  },
  "chapman": {
-  "meshes": 2283,
-  "verts": 1168735,
-  "instances": 78711,
+  "meshes": 2282,
+  "verts": 1178565,
+  "instances": 78697,
   "props": 188,
   "crowd": 29,
-  "world": "8c738187",
+  "world": "31356508",
   "propsHash": "8581e956",
   "floor": "86d0eaad/10808",
   "groups": {
-   "-:MeshLambertMaterial": "e6ed299d",
+   "-:MeshLambertMaterial": "7511a16d",
    "-:MeshPhongMaterial": "8a6e71fa",
    "-:MeshBasicMaterial": "7aba95f0",
    "crowd:MeshLambertMaterial": "27308d95",
-   "ao:MeshBasicMaterial": "13b0f689",
+   "ao:MeshBasicMaterial": "1a3ac6bc",
    "tyremarks:MeshBasicMaterial": "7b39af58",
    "roadwear:MeshLambertMaterial": "35b69101",
-   "life:MeshLambertMaterial": "ddf31a1",
-   "lifeShadow:MeshBasicMaterial": "be1d63fa",
-   "life:MeshBasicMaterial": "c697d752"
+   "life:MeshLambertMaterial": "e89aee99",
+   "lifeShadow:MeshBasicMaterial": "7e4b2667",
+   "life:MeshBasicMaterial": "c4b83a80"
   }
  },
  "tianmen": {

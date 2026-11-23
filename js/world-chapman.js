@@ -390,7 +390,8 @@
           const RR = rng(3077 + Math.round(b.x * 7 + b.z)), t = 0.55;
           for (const [u0, v0, u1, v1] of [[-b.L / 2, -b.W / 2, b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2, b.L / 2, b.W / 2], [b.L / 2, b.W / 2, -b.L / 2, b.W / 2], [-b.L / 2, b.W / 2, -b.L / 2, -b.W / 2]]) {
             const len = Math.hypot(u1 - u0, v1 - v0), n = Math.max(1, Math.round(len / 1.5)), wa = b.ang + Math.atan2(v1 - v0, u1 - u0), gap = Math.floor(RR() * n * 3);
-            for (let k = 0; k < n; k++) { if (k === gap) continue; const f = (k + 0.5) / n, u = u0 + (u1 - u0) * f, v = v0 + (v1 - v0) * f, px = b.x + c * u - s * v, pz = b.z + s * u + c * v, y = chGround(px, pz);
+            for (let k = 0; k < n; k++) { if (k === gap) continue; const f = (k + 0.5) / n, u = u0 + (u1 - u0) * f, v = v0 + (v1 - v0) * f, px = b.x + c * u - s * v, pz = b.z + s * u + c * v, y = chGround(px, pz), nn = vrNear(px, pz);
+              if ((nn.i >= 0 && nn.dd < 2.5) || hillIn(nn)) continue;
               const hh = RR() < 0.25 ? 0.3 + RR() * 0.3 : 0.9 + RR() * 1.3; box(g, px, y - 0.3, pz, len / n + 0.05, hh + 0.3, t, -wa, vary([0.56, 0.5, 0.42], RB, 0.08), [0.5, 0.47, 0.38], true);
               if (RR() < 0.3) box(g, px + (RR() - 0.5) * 1.2, y - 0.15, pz + (RR() - 0.5) * 1.2, 0.5, 0.35, 0.4, RR() * 3, vary([0.52, 0.47, 0.4], RB, 0.08)); }
           }
