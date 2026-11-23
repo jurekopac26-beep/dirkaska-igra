@@ -153,7 +153,7 @@
   // (read again when the garage in the page is closed: it keeps its buys in the career, js/garage.js toCareer)
   function careerLoad() {
   try { career = JSON.parse(localStorage.getItem('tdgp-career') || 'null'); } catch (_) { career = null; }
-  if (!isObj(career) || career.v !== 1) career = null;
+  if (!isObj(career) || ![1, 2].includes(career.v)) career = null;
   else {
     const ids = Core.MODELS.map(m => m.id), num = (x) => Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0;
     career.on = !!career.on; career.money = num(career.money); career.earned = num(career.earned); career.races = num(career.races); career.wins = num(career.wins);
@@ -167,10 +167,14 @@
     if (!cars.includes(car0)) { cars.unshift(car0); upg[car0] = upgNorm(isObj(u[car0]) ? u[car0] : null); }
     career.cars = cars; career.upg = {}; for (const id of cars) career.upg[id] = upg[id];
     const rv = career.rival; career.rival = isObj(rv) && Number.isInteger(rv.k) && rv.k >= 0 && rv.k < Core.DRIVER_NAMES.length ? { k: rv.k, me: num(rv.me), him: num(rv.him) } : null;   // (the standing rival: a roster index (a new one is picked from every field's, under CH_AI; an older save's kept), the head-to-head)
+    // the path of 1.0 (js/kariera.js): career.pot, cleaned; an older save without it gets it (Kariera.migrate: null, a new career). Kept as v 1
+    // on disk: the garage (js/garage.js careerRead) and ?denar= (js/denar.js) read only v 1 and would start over on a v 2
+    const m = Kariera.migrate(isObj(career.pot) ? Object.assign({}, career, { v: 2 }) : Object.assign({}, career, { v: 1 }));
+    if (m) { career.pot = m.pot; career.v = 1; } else career = null;
   }
   }
   careerLoad();
-  const careerNew = () => ({ v: 1, on: true, money: Core.CAREER.start, cars: [Core.CAREER.car0], upg: { [Core.CAREER.car0]: upgNorm(null) }, earned: 0, races: 0, wins: 0 });
+  const careerNew = () => Object.assign(Kariera.novo({ on: true, money: Core.CAREER.start, cars: [Core.CAREER.car0], upg: { [Core.CAREER.car0]: upgNorm(null) }, earned: 0, races: 0, wins: 0 }), { v: 1 });   // (with the path, career.pot; v 1 on disk: careerLoad)
   function careerSave() { Shramba.keep('tdgp-career', JSON.stringify(career)); }
   const inCareer = () => !!(career && career.on);
   // the career's cars: bought (career.cars), or rented for one race (the garage's RENT A CAR: career.rent = { id }; driven as it is, stock,
@@ -322,19 +326,36 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const champHid = (id) => nuTrack(Core.TRACKS.find(d => d.id === id));
   const CHAMPS = Core.CHAMPS.map(c => c.tracks.every(champHid) ? Object.assign({}, c, { nu: true }) : Object.assign({}, c, { tracks: c.tracks.filter(id => !champHid(id)) })).filter(c => c.tracks.length);
   let champNu = false;
+  // the career's path of 1.0 (js/kariera.js, docs/kariera-1-0.md): its cups raced on this championship's engine, each a championship of its
+  // own (pot: true; its id the cup's, never one of CHAMPS'); its rounds' laps (the long tracks: one), its difficulty (the final's 3 raced as 2,
+  // Core.Race's rule, its prizes at 3's). Only in the career, started from the menu's G.karieraStart
+  // (Atlas: the class cups' stages by the price of each class's cheapest car on sale, Core.CAREER.car; a retired model none)
+  const KP_CENE = {}; for (const M of Core.MODELS) { const p = Core.CAREER.car[M.id]; if (!M.retired && M.cat && Number.isFinite(p) && !(KP_CENE[M.cat] <= p)) KP_CENE[M.cat] = p; }
+  const KP = Kariera.pot(Core.TRACKS, Core.CATS, KP_CENE);
+  const KPC = KP.vse.filter(c => c.tracks.length).map(c => Object.assign({}, c, { pot: true, desc: '' }));
+  const champCup = (id) => CHAMPS.find(c => c.id === id) || KPC.find(c => c.id === id) || null;
+  const ownedCats = () => inCareer() ? [...new Set(career.cars.map(id => (Core.MODELS.find(m => m.id === id) || {}).cat).filter(Boolean))] : [];
   const CH_KEYS = Core.champKeys(CH_AI);   // (every championship's drivers: an older one's 12 are the first of them)
   const champN = () => champ && Number.isInteger(champ.n) ? champ.n : CH_AI;   // (how many AI drivers race its rounds)
-  const champDef = () => champ ? CHAMPS.find(c => c.id === champ.id) || null : null;
+  const champDef = () => champ ? champCup(champ.id) : null;
+  const ttCupPlace = (rounds) => clamp(Math.round(rounds.reduce((a, r) => a + (Number.isInteger(r.medal) && r.medal >= 0 ? r.medal + 1 : 4), 0) / Math.max(1, rounds.length)), 1, 4);   // (a time trial cup's place: its medals' mean, none 4)
   const champDone = () => { const d = champDef(); return !!d && champ.rounds.length >= d.tracks.length; };
+  // a round of the career's path on a track driven more ways (def.modes): its own way, a time trial event's or cup's the time trial, the
+  // others' the race (S.mode, as a challenge sets it; the menu's choice not)
+  const potMode = (cup, id) => { const d = cup && cup.pot ? Core.TRACKS.find(x => x.id === id) : null, m = cup && (cup.kind === 'kronometer' || cup.vrsta === 'tt') ? 'tt' : 'race';
+    if (d && d.modes && d.modes.includes(m) && S.mode !== m) { S.mode = m; save(); refreshSegs(); } };
+  // the last event of the path just ended (Atlas: the valley's result screen, MenuBridge.karieraIzid): its id, the place, the stars before
+  // and now, the rewards, the stage before and now; null when shown or a new one started
+  let kIzid = null;
   // a round as kept: every driver at most once (a big vehicle's field races fewer than its 19 rivals, an older championship 12), the player in it
   const roundOk = (r, t) => { if (!isObj(r) || r.track !== t || !Array.isArray(r.order) || (r.dnf != null && !Array.isArray(r.dnf))) return false;
     const all = r.order.concat(r.dnf || []); return all.length <= CH_KEYS.length && new Set(all).size === all.length && all.every(k => CH_KEYS.includes(k)) && all.includes(Core.PLAYER_KEY); };
   try {
-    const j = JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), d = isObj(j) && CHAMPS.find(c => c.id === j.id);
-    if (d && j.v === 1 && [0, 1, 2].includes(j.diff) && Array.isArray(j.rounds) && j.rounds.length <= d.tracks.length && j.rounds.every((r, i) => roundOk(r, d.tracks[i])))
+    const j = JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), d = isObj(j) && champCup(j.id);
+    if (d && j.v === 1 && [0, 1, 2].concat(d.pot ? [3] : []).includes(j.diff) && Array.isArray(j.rounds) && j.rounds.length <= d.tracks.length && j.rounds.every((r, i) => roundOk(r, d.tracks[i])))
       champ = { v: 1, id: d.id, diff: j.diff, car: typeof j.car === 'string' && Core.MODELS.some(m => m.id === j.car) ? heirId(j.car) : Core.MODELS[S.car].id,   // (one kept before the car was: the car chosen now; a retired one: its heir)
         n: Number.isInteger(j.n) && j.n >= 1 && j.n <= CH_AI ? j.n : 12,   // (one kept before the field size was: its 12 drivers to the end)
-        rounds: j.rounds.map(r => Object.assign({ track: r.track, order: r.order.slice(), rain: r.rain ? 1 : 0 }, r.dnf && r.dnf.length ? { dnf: r.dnf.slice() } : null)) };
+        rounds: j.rounds.map(r => Object.assign({ track: r.track, order: r.order.slice(), rain: r.rain ? 1 : 0 }, r.dnf && r.dnf.length ? { dnf: r.dnf.slice() } : null, Number.isInteger(r.medal) ? { medal: r.medal } : null)) };   // (a time trial cup's round: its medal, 0 gold .. 2 bronze, -1 none)
   } catch (_) { champ = null; }
   // the championship's rivals: the field of the car it was started with, in every round, its qualifying and its standings (the player may
   // change cars between the rounds). A one-make class (the formula, the prototype) has no field of its own and Core.Race takes one only
@@ -1724,6 +1745,21 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (career.earned >= 100000) achGet('rich');
     return tr(' {0}: +{1} (imaš {2}).', tr(what), eur(sum), eur(career.money));
   }
+  // the path's rewards (js/kariera.js poPokalu, poDirki: a cup's place, a stage opened, the first win on a track, a class goal): paid as they
+  // are, not grown with the car (the economy of docs/kariera-1-0.md, tested in tests/kariera.test.js); the career (with its pot) saved; the
+  // lines for the results screen ('' outside the career, online)
+  function careerGift(o) {
+    if (!inCareer() || (mp && mp.race) || !o || !o.career) return '';
+    career.pot = o.career.pot;
+    let txt = '';
+    for (const n of o.nagrade || []) { if (!(n.amount > 0)) continue; career.money += n.amount; career.earned += n.amount;
+      txt += tr(' {0}: +{1} (imaš {2}).', Lang.cur === 'en' ? n.en : n.name, eur(n.amount), eur(career.money)); }
+    careerSave();
+    if (career.earned >= 100000) achGet('rich');
+    return txt;
+  }
+  // a career race's end for the path (Kariera.poDirki): the track, the place (0: out), the car and its class, the km driven, a time trial's medal
+  const careerPath = (ev) => inCareer() && !(mp && mp.race) ? careerGift(Kariera.poDirki(career, Object.assign({ car: race.player.m.id, cat: race.player.m.cat }, ev), KP)) : '';
   // the career's own car brings its wear (the garage's cond, not serviced since: Core.careerWear) into a race of its own (apart: online,
   // the school, a challenge, whose cars are as new)
   function careerCond(M, apart) {
@@ -2475,7 +2511,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     // After qualifying the lights, as the Nordschleife's: the column would put the player at its back)
     if (cr < 0) champRun = false;
     const FM = cr >= 0 ? champField() : null;   // (a championship round: the rivals in the field of the car it was started with)
-    const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? champN() : pick >= 0 ? pick : track.def.raceRivals || track.def.rivals || NUM_AI;   // (a championship round: its own 19 in every round; the Nordschleife's race its 99)
+    const quali = mode === 'quali' && qualiOn(track.def), nAI = tt || chase ? 0 : duel ? 1 : cr >= 0 ? (cd.pot ? Math.min(champN(), track.def.raceRivals || track.def.rivals || CH_AI, rivMax(track.def)) : champN()) : pick >= 0 ? pick : track.def.raceRivals || track.def.rivals || NUM_AI;   // (a championship round: its own 19 in every round; the Nordschleife's race its 99)
     if (quali && !(qual && qual.id === track.def.id && qual.cr === cr && !qual.res)) { const W = weatherOf(track.def); qual = { id: track.def.id, cr, seed: repro ? repro.seed : (Math.random() * 1e6) | 0, rain: W.rain, wx: W.wx, storm: !!W.storm, nAI: Core.fieldSize(fieldFor(M, FM), nAI), pm: M, fm: FM, back: track.qualiBack(), diff: cr >= 0 ? champ.diff : S.difficulty, phys: physOf(), sims: null, lap: 0, res: null }; }   // (as many rivals as the race will have: a big vehicle's field is smaller)
     const Q = !quali && !on && !tt && qual && qual.res && qual.id === track.def.id && qual.cr === cr ? qual : null;   // the race after qualifying
     if (!quali && !Q) qual = null;
@@ -2502,7 +2538,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       race.nv = true;
     } else race = new Core.Race(track, Object.assign(mine, {   // time trial: alone on the start line, one run to the finish; qualifying: alone, one flying lap
       numAI: solo ? 0 : nAI, numSet: !solo && pick >= 0 || undefined, playerGrid: solo || chase ? 1 : duel ? 2 : Q ? Q.res.grid : PLAYER_GRID, aiOrder: Q ? Q.res.order : undefined, qualiBack: quali ? qual.back : lapRun ? track.qualiBack() : 0,
-      laps: solo ? 1 : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
+      laps: solo ? 1 : cr >= 0 && cd.laps ? cd.laps : lapsOf(track.def), fuel: !solo && !!S.fuel, damage: +S.damage, phys: physOf(), rain: W.rain, weather: quali || ch ? null : W.wx, tyres: !tt && !!track.def.pit, compounds: true, playerCmp: S.cmp, playerName: S.name, strat: !solo && LEN_K[S.length] > 1, flags: !solo, winter: (ch ? ch.cond.season : S.season) === 'winter', champ: cr >= 0, tt,   // (strat: a long or an endurance race, the rivals' strategies and the wear by the race's length, Core STRAT)
       traffic: duel, police: chase, flying: flyGo && !Q ? FLY_T : 0, chars: !solo, slip: !solo && !!S.slip, faults: !solo && !!S.faults, radio: !solo && !school && !!S.radio, rival: !solo && inCareer() && career.rival ? career.rival.k : undefined,
       tyreRule: TYRE_RULE, tyreCold: TYRE_COLD, wheelRule: solo || chase ? undefined : WHEEL_RULE,   // (a race only: not a time trial, qualifying, a challenge or the run from the police, whose records an ended run must not touch)
       voznja: solo || chase || duel ? undefined : voznjaOf(track.def)   // (the rivals on the player's driving: a race with rivals)
@@ -2729,7 +2765,8 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     }
     if (inCareer() && !r.paid) {   // the career: a medal, a personal best, or a little for getting there (once per run)
       r.paid = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1, C = Core.CAREER, sum = k >= 0 ? C.medal[['gold', 'silver', 'bronze'][k]] : r.newPB ? C.pb : C.finishTT;
-      career.races++; careerAfter(); const line = careerPay(sum, k >= 0 ? 'Nagrada za medaljo' : r.newPB ? 'Nagrada za osebni rekord' : 'Nagrada');
+      career.races++; careerAfter(); const line = careerPay(sum, k >= 0 ? 'Nagrada za medaljo' : r.newPB ? 'Nagrada za osebni rekord' : 'Nagrada')
+        + careerPath({ track: T.def.id, pos: 0, km: T.raceLen / 1000, medal: k >= 0 ? MEDAL_EN[k] : undefined });   // (the path: a gold is the track's first win, not the class win goal; its medal, its km for the class goals)
       if (line) $('res-sub').innerHTML += '<br>' + esc(line.trim());
     }
     // splits table: CP1..CPn + finish, altitude (a rally stage: the distance from the start), time, difference to the previous personal best
@@ -2741,6 +2778,13 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     $('res-table').querySelector('tbody').innerHTML = boardRows(R0.board || [], r.entry);
     if (pk.on) pkResults(r);   // (Pikes Peak: its class)
     $('res-restart').textContent = ttAgain(T.def);
+    if (race && race.champ) {   // a time trial cup's round (the career's path): its medal into the cup, the standings behind the button
+      champRecord(medalSet(T.def) ? medalOf(T.def, r.time) : -1);
+      const cd = champDef();
+      if (cd && champ) { const last = champDone();
+        $('res-sub').innerHTML += '<br>' + esc(tr('{0}: kronometer {1}/{2}', Lang.of(cd, 'name'), champ.rounds.length, cd.tracks.length) + (last && race.champ.place ? tr(', končno {0} mesto.', Lang.ord(race.champ.place)) : '.') + (race.champ.line || ''));
+        $('res-restart').dataset.act = 'to-champ'; $('res-restart').textContent = tr(last ? 'Končna razvrstitev' : 'Lestvica prvenstva'); }
+    }
     const wrap = $('res-table').parentElement; wrap.scrollTop = 0;
     ZB.resEnd('tt', { r });   // (Zabava: the coach, the challenges by the road)
     showScreen('results');
@@ -3284,6 +3328,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       if (out) { careerSave(); $('res-sub').textContent += tr(' Brez nagrade.'); }
       else $('res-sub').textContent += careerPay(prize + (fl ? Core.CAREER.fastest : 0), 'Nagrada' + (fl ? ' (z najhitrejšim krogom)' : ''));
       $('res-sub').textContent += ZB.resPay({ pos, n: res.length, out, prize, fl, grid: P.grid, res });   // (Zabava: the team's goal, its share of the prize)
+      $('res-sub').textContent += careerPath({ track: track.def.id, pos: out ? 0 : pos, km: clamp(P.dist, 0, up ? track.raceLen : track.len * race.laps) / 1000 });   // (the path: the first win on a track, the class goals)
       const ri = res.findIndex(r => r.car.chr && r.car.chr.rival);
       if (ri >= 0 && career.rival) { if (myIdx < ri) career.rival.me++; else career.rival.him++; careerSave();   // the standing rival: who was ahead
         $('res-sub').textContent += res[ri].dnf ? tr(' Stalni tekmec {0}: odstop (skupaj ti {1}, tekmec {2}).', res[ri].car.name, career.rival.me, career.rival.him)   // (the rival retired)
@@ -3298,9 +3343,11 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       if (d && mi >= 0) {
         $('res-sub').textContent += (out ? tr(' {0}: brez točk, skupaj {1} in {2} mesto', Lang.of(d, 'name'), t[mi].pts, Lang.ord(mi + 1)) : tr(' {0}: +{1} {2}, skupaj {3} in {4} mesto', Lang.of(d, 'name'), pts, ptsWord(pts), t[mi].pts, Lang.ord(mi + 1))) + (last ? tr(' v končni razvrstitvi.') : tr(' po {0} dirki.', Lang.ord(champ.rounds.length)));   // (retired: no points)
         if (last) Comm.say(mi === 0 ? 'champWin' : 'champEnd', { pos: Comm.ordinal(mi + 1) }, 5);
-        if (last && mi < 3) $('res-sub').textContent += careerPay(Math.round(Core.CAREER.champ[mi] * (Core.CAREER.diff[champ.diff] || 1)), mi === 0 ? 'Za naslov prvaka' : tr('Za {0} mesto v prvenstvu', Lang.ord(mi + 1)));
+        if (d.pot) $('res-sub').textContent += race.champ.line || '';   // (a cup of the path: its own reward, champRecord)
+        else if (last && mi < 3) $('res-sub').textContent += careerPay(Math.round(Core.CAREER.champ[mi] * (Core.CAREER.diff[champ.diff] || 1)), mi === 0 ? 'Za naslov prvaka' : tr('Za {0} mesto v prvenstvu', Lang.ord(mi + 1)));
       }
-      $('res-restart').dataset.act = 'to-champ'; $('res-restart').textContent = tr(last ? 'Končna razvrstitev' : 'Lestvica prvenstva');
+      const dol = !!(d && d.pot && last && inCareer());   // (an event of the path over: back to the valley, its result there)
+      $('res-restart').dataset.act = dol ? 'to-title' : 'to-champ'; $('res-restart').textContent = tr(dol ? 'V dolino' : last ? 'Končna razvrstitev' : 'Lestvica prvenstva');
       $('res-table').querySelector('thead').innerHTML = head.replace('</tr>', '<th>' + tr('Točke') + '</th></tr>');
     }
     $('res-sub').textContent += achLine();
@@ -3402,14 +3449,22 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const names = new Set(); for (let k = 0; k < n; k++) names.add((M.oneMake ? M : Core.aiModel(k, F, n)).name);
     return { n, txt: names.size === 1 ? n + '\u00d7 ' + [...names][0] : tr('različni avti') }; };
   // the championship round just driven: its finishing order into the standings (once); after the last round the final place into the records
-  function champRecord() {
+  function champRecord(medal) {   // (medal: a time trial cup's round, the run's medal: 0 gold .. 2 bronze, -1 none)
     if (!race || !race.champ || race.champ.done || !(race.player.finished || race.isOut(race.player)) || !champ) return;
     const d = champDef(); if (!d || champ.rounds.length !== race.champ.round || d.tracks[race.champ.round] !== race.track.def.id) return;
     const res = race.estimateResults(), key = (r) => r.car.isPlayer ? Core.PLAYER_KEY : r.car.name, dnf = res.filter(r => r.dnf).map(key);   // (retired: Odstop, no points)
-    champ.rounds.push(Object.assign({ track: race.track.def.id, order: res.filter(r => !r.dnf).map(key), rain: race.rain ? 1 : 0 }, dnf.length ? { dnf } : null));
+    champ.rounds.push(Object.assign({ track: race.track.def.id, order: res.filter(r => !r.dnf).map(key), rain: race.rain ? 1 : 0 }, dnf.length ? { dnf } : null, race.timeTrial ? { medal: Number.isInteger(medal) ? medal : -1 } : null));
     race.champ.done = true; champSave();
     if (champDone()) {
-      const pos = Core.champTable(CH_KEYS, champ.rounds).findIndex(e => e.key === Core.PLAYER_KEY) + 1, R0 = records.champ[champ.id] || (records.champ[champ.id] = {});
+      let pos = Core.champTable(CH_KEYS, champ.rounds).findIndex(e => e.key === Core.PLAYER_KEY) + 1;
+      if (d.pot) {   // a cup of the career's path: its place (a time trial cup: the mean of its medals, gold 1 .. bronze 3, none 4), its reward (Kariera.poPokalu, flat)
+        if (d.vrsta === 'tt') pos = ttCupPlace(champ.rounds);
+        race.champ.place = pos;
+        const r = inCareer() ? Kariera.poPokalu(career, champ.id, pos, KP, ownedCats()) : null;
+        kIzid = r ? { id: champ.id, mesto: pos, prej: r.zvezdice.prej, zdaj: r.zvezdice.zdaj, nagrade: r.nagrade.map(n => ({ id: n.id, name: n.name, en: n.en, amount: n.amount })), stopnja: Object.assign({}, r.stopnja) } : null;
+        race.champ.line = r ? careerGift(r) : '';
+      }
+      const R0 = records.champ[champ.id] || (records.champ[champ.id] = {});
       if (!R0.best || pos < R0.best) R0.best = pos;
       if (pos === 1) { R0.titles = (R0.titles || 0) + 1; st.titles++; achGet('champ'); if (champ.id === 'legende') achGet('legend'); stSave(); }
       saveRecords();
@@ -3444,10 +3499,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const next = champ.rounds.length, mi = t.findIndex(e => e.key === Core.PLAYER_KEY), lastR = champ.rounds[next - 1];
     $('ch-title').textContent = Lang.of(d, 'name'); $('ch-tag').textContent = done ? tr('končano') : tr('dirka {0}/{1}', next + 1, d.tracks.length);
     $('ch-diff').textContent = tr('Težavnost: {0}', tr(DIFF_NAME[champ.diff])) + riv;
-    const placeIn = (r, k) => { const i = r.order.indexOf(k); return i >= 0 ? Lang.ord(i + 1) : r.dnf && r.dnf.includes(k) ? tr('odstop') : '\u2013'; };   // (a round: the place, a retirement, or not in it)
+    const placeIn = (r, k) => { if (Number.isInteger(r.medal) && k === Core.PLAYER_KEY) return r.medal >= 0 ? MEDAL_ICON[r.medal] : tr('brez medalje');   // (a time trial cup's round: the medal)
+      const i = r.order.indexOf(k); return i >= 0 ? Lang.ord(i + 1) : r.dnf && r.dnf.includes(k) ? tr('odstop') : '\u2013'; };   // (a round: the place, a retirement, or not in it)
     const chips = '<ol class="ch-rounds">' + d.tracks.map((id, i) => { const r = champ.rounds[i];
       return '<li class="' + (r ? 'done' : i === next ? 'next' : '') + '">' + (i + 1) + '. ' + esc(trackName(id)) + (r ? ' · <b>' + placeIn(r, Core.PLAYER_KEY) + '</b>' + (r.rain ? tr(' (dež)') : '') : '') + '</li>'; }).join('') + '</ol>';
-    const fin = done ? '<div class="ch-final"><div class="res-pos">' + Lang.ord(mi + 1) + '</div><div><h2>' + tr(mi === 0 ? 'Prvak!' : mi < 3 ? 'Na stopničkah prvenstva!' : 'Konec prvenstva') + '</h2>' +
+    const fp = d.pot && d.vrsta === 'tt' ? ttCupPlace(champ.rounds) - 1 : mi;   // (a time trial cup: the place of its medals)
+    const fin = done ? '<div class="ch-final"><div class="res-pos">' + Lang.ord(fp + 1) + '</div><div><h2>' + tr(fp === 0 ? 'Prvak!' : fp < 3 ? 'Na stopničkah prvenstva!' : 'Konec prvenstva') + '</h2>' +
       '<p class="desc">' + tr('{0} {1}, {2}. Zmagovalec {3} ({4}).', t[mi].pts, ptsWord(t[mi].pts), winsWord(t[mi].wins), esc(champDriver(t[0].key).name), t[0].pts) + '</p></div></div>' : '';
     const rows = t.map((e, i) => { const c = champDriver(e.key);
       return '<tr class="' + (e.key === Core.PLAYER_KEY ? 'me' : '') + '"><td>' + (i + 1) + '.</td><td class="nm"><span class="dot" style="background:' + hexCss(c.color) + '"></span>' + esc(c.name) + '</td><td class="nm">' + esc(c.car) + '</td>' +
@@ -6755,7 +6812,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
         if (!bought(Core.MODELS[S.car].id)) { toast(tr('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.'), 3000); break; }   // (a rented car: one race, no championship)
         if (!champ) { const d = CHAMPS.find(c => c.id === champPick) || CHAMPS.find(c => !!c.nu === champNu); champ = { v: 1, id: d.id, diff: raceDiff(), car: Core.MODELS[S.car].id, n: CH_AI, rounds: [] }; champSave(); }   // (super težka is the police's: a championship is raced as težka; its car: the rivals' field for the whole championship)
         if (S.control === 'tilt') enableTilt(true);
-        Comm.unlock(); champRun = true; ensureTrack(champDef().tracks[champ.rounds.length], startRace); break;
+        Comm.unlock(); champRun = true; potMode(champDef(), champDef().tracks[champ.rounds.length]); ensureTrack(champDef().tracks[champ.rounds.length], startRace); break;
       }
       case 'champ-quit':   // a second tap within 4 s gives the championship up
         if (Date.now() - champQuitT < 4000) { champ = null; champSave(); champQuitT = 0; buildChampScreen(); toast(tr('Prvenstvo je opuščeno.')); }
@@ -6924,6 +6981,23 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     // NEW VERSION · TEST 1 (the title's button): Toskana, alone and free, the new map over it (nvStart)
     newVer() { const d = Core.TRACKS.find(x => x.id === 'toskana'); if (!d) return; S.track = d.id; save(); refreshSegs(); nv = { built: false }; this.launch((start) => start()); },
     act: (a, el) => onAction(a, el),
+    // the career's path of 1.0 (js/kariera.js; the menu shows it, part C): its view (null outside the career), and a cup started or
+    // continued on the championship's engine (false: not now, a toast says why)
+    kariera: () => inCareer() ? Kariera.view(career, KP, ownedCats()) : null,
+    karieraStart(id) {
+      const cup = KPC.find(c => c.id === id), M = Core.MODELS[S.car];
+      if (!inCareer() || !cup) return false;
+      if (Kariera.stanje(career.pot, cup, KP, ownedCats()).stanje === 'zaklenjen') { toast(tr('Ta dogodek je še zaklenjen.'), 3000); return false; }
+      if (!bought(M.id)) { toast(tr('Ta avto še ni tvoj: izberi avto iz garaže ali ga kupi.'), 3000); return false; }   // (a rented car: one race, no cup)
+      if (cup.cat && M.cat !== cup.cat) { toast(tr('Za ta pokal izberi avto njegovega razreda.'), 3000); return false; }   // (a class cup: in a car of the class)
+      if (champ && champ.id !== id && !champDone()) { toast(tr('Najprej končaj ali opusti prvenstvo, ki ga voziš.'), 3500); return false; }
+      if (!champ || champ.id !== id || champDone()) { champ = { v: 1, id, diff: cup.diff, car: M.id, n: Number.isInteger(cup.n) ? cup.n : CH_AI, rounds: [] }; champSave(); }   // (a duel: one rival)
+      if (S.control === 'tilt') enableTilt(true);
+      kIzid = null; potMode(cup, cup.tracks[champ.rounds.length]);
+      nv = null; Comm.unlock(); school = null; qual = null; champRun = true; ensureTrack(cup.tracks[champ.rounds.length], startRace); return true;
+    },
+    // the last event's result for the valley (null: none); clear: shown, forgotten
+    karieraIzid(clear) { if (clear) { kIzid = null; return null; } return kIzid; },
     click: () => { Sfx.resume(); Sfx.click(); },
     buzz: () => Input.vibrate(20),   // (a short tremble: a country or a track chosen in the quick list; the settings' vibration decides)
     visible: () => screen === 'title' || screen === 'track',
@@ -7127,7 +7201,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
             race: R && { at: R.at, goAt: R.goAt, mine: R.mine, theirs: F ? F.fin : null, left: F ? F.left : false, got: F ? F.buf.length : 0, fins: Object.fromEntries([...R.cars].map(([k, C]) => [k, C.fin])), grid: R.grid, frameT: R.frameT, startT: R.startT, big: R.big } }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, get chal() { return chal && Object.assign({}, chal); }, chalPack: (o) => packStr(JSON.stringify(o)),
         lp: { get on() { return !!LPX; }, get store() { return LPX ? lpS() : null; }, key: (id) => recKey(id), open: (z) => lpOpen(z), send: () => lpSend(), mine: () => LPX ? lpMine() : null, bound: (k) => LPX ? lpBound(k, true) : 0, friends: (id) => lpFriends(Core.TRACKS.find(d => d.id === id)) },   // (tests: Lestvica prijateljev)
-        get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
+        get teamRadio() { return trd && { log: trd.log.slice(), cur: trd.cur && trd.cur.text }; }, get aiPit() { return aip.log.map(e => Object.assign({}, e)); }, get pitSwing() { return psw.log.map(e => Object.assign({}, e)); }, get pitOut() { return { on: !!pout.c, log: pout.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, get pitFight() { return { on: !!pfg.c, hb: pfg.hb, out: pfg.out, log: pfg.log.map(e => Object.assign({}, e, { txt: e.txt.slice() })) }; }, pitFightOpen, get pitExit() { return { hb: pxs.hb, log: pxs.log.map(e => Object.assign({}, e)) }; }, pitExitOpen, get pitTips() { return { seen: Object.assign({}, tipSeen), cur: tip.cur && tip.cur.id, log: tip.log.map(e => Object.assign({}, e)) }; }, set pitTipsSeen(o) { tipSeen = {}; for (const k in o) if (o[k] === 1) tipSeen[k] = 1; tipSave(); }, get hlv() { return { rec: hlRec && { mime: hlRec.mime, dur: hlRec.dur, w: hlRec.cv.width, h: hlRec.cv.height, lbl: hlRec.C.lbl, cap: hlRec.C.cap, t0: hlRec.C.t0, t1: hlRec.C.t1 }, vid: hlVid && { type: hlVid.type, name: hlVid.name, bytes: hlVid.blob.size, dur: hlVid.dur, wall: +hlVid.wall.toFixed(2), w: hlVid.w, h: hlVid.h, cap: hlVid.cap } }; }, set wxNext(v) { wxNext = v; }, get wxWet() { return wxWet; }, rollWet: () => MenuBridge.rollWet(), get career() { return career; }, kariera: () => MenuBridge.kariera(), karieraStart: (id) => MenuBridge.karieraStart(id), karieraIzid: (c) => MenuBridge.karieraIzid(c), get demoModel() { return demoM && demoM.id; }, get carOrder() { return ORDER.map(i => Core.MODELS[i].id); }, get ghost() { return ghPlay && { car: ghPlay.M.id, name: ghPlay.M.name, t: ghPlay.t, lap: ghPlay.lap }; },
         now: () => Net.now(), set autoDrive(v) { autoDrive = !!v; }, set wxNext(v) { wxNext = v; }, get career() { return career; }, get replay() { return replay && { t: replay.t, t0: recd.frames[0][0], t1: replay.t1, i: replay.i, clk: replay.clk || 0, speed: replay.speed, play: replay.play, k: replay.k, cam: replay.cam, here: !!replay.here, mode: replay.mode, hl: replay.hl && { i: replay.hl.i, clips: replay.hl.clips.map(c => ({ t0: c.t0, t1: c.t1, k: c.k, lbl: c.lbl })) } }; }, get rpCount() { return rpCd ? rpCd.t : 0; }, get paused() { return paused; },
         get rpPit() { return recd && { log: (recd.pit || []).map(e => Object.assign({}, e)), cur: race.player.rpPit ? Object.assign({}, race.player.rpPit) : null }; }, rpSeek(t) { if (replay) { replay.t = Core.clamp(t, recd.frames[0][0], replay.t1); Render.resetCam(); } },   // (tests: the player's pit stops as recorded and as the replay has them now; the replay at t s of the race)
         rpFalls,   // (tools/posnetek.mjs, tests: the falls over an edge the recording holds)

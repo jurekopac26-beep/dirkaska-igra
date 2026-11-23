@@ -140,6 +140,17 @@ Naslovnica, izbira načina in izbira proge so nov meni (`js/menu.js`, `css/menu.
 - **Star meni:** ostane v `index.html` za testne poti in se odpre z `?menu=old` (ali `localStorage` `tdgp-menu` = `old`); odpre se tudi sam, če se novi meni ne more zagnati (npr. njegov slog se ne naloži), in vedno, kadar igro odpreš neposredno z diska (`file://`: novi meni potrebuje spletni strežnik): v konzoli je napaka »the new menu failed«, igra pa ima vedno meni, iz katerega se da igrati. Testi (`tests/browser/lib.mjs`) ga uporabljajo, novi meni preizkuša `tests/browser/menu.test.mjs`.
 - **Brez interneta** meni dobi svoj slog in pisavo (so vezani v `index.html`), slike prog, zemljevidov in avtov (`assets/`) pa si `sw.js` zapomni, ko si jih enkrat ogledal (sproti, v ločen predpomnilnik; najnovejša različica se shrani za naslednjič). Videoposnetki preleta in zavoja ter glasba se vedno naložijo s strežnika: brez interneta se uvod preskoči in dirka gre takoj na štartne luči.
 
+## Kariera
+
+Kariera za 1.0 je pot skozi pokale na pravih progah (logika `js/kariera.js`, v igri pokali na pogonu prvenstva; načrt `docs/kariera-1-0.md`, opis v `docs/igra.md`, »Kariera«). Zaslon poti v novem meniju je v delu.
+
+- **Stopnje:** 1 Začetnik, 2 Klub, 3 Celina, 4 Legende. Pokali stopenj 1–3 so iz pravih prog po dolžini, krožna dirkališča in ceste posebej, največ 6 dirk na pokal; stopnja 4 ima Legende, dolge proge, kronometre in finale (Veliko prvenstvo). Testnih prog in prog na odločanju pot nima.
+- **Odklep:** naslednja stopnja se odpre z mestom med prvimi tremi v dveh pokalih trenutne stopnje.
+- **Pokali razredov:** odprt je pokal vsakega razreda, v katerem imaš avto, vozi se z avtom tega razreda; trije cilji (zmaga, medalja na kronometru, 100 km).
+- **Nagrade poti:** mesto v pokalu, prva zmaga na progi poti, nova stopnja in cilj razreda; boljše mesto pozneje doplača razliko.
+- **Stara kariera** obdrži denar, avte in nadgradnje in začne na stopnji 1.
+- **Testi:** `tests/kariera.test.js`, `tests/kariera-pot.test.js`, `tests/browser/kariera-pot.test.mjs`.
+
 ## Garaža (`garaza.html`)
 
 Garažo odpreš v igri: na zaslonu za izbiro avta **tapni avto na vrtljivi plošči** (pod njim piše »Tapni avto za garažo«, v angleščini »Tap the car for the garage«; z igralnim ploščkom ga izbereš kot gumb in pritisneš A) ali v novem meniju na izbiri proge **tapni avto pred tablo**. Odpre se stran `garaza.html` s tem avtom v izbrani barvi (`garaza.html?car=<id>&color=<rrggbb>`). Puščica nazaj v garaži te vrne na izbiro avta, na isti avto (`index.html?zaslon=avto&avto=<id>`; naslov je potem spet navaden), gumb **Nazaj** tam pa tja, od koder si izbiro avta odprl (naslovnica, korak s progo v novem meniju ali prvenstvo). Garaža, odprta v novem meniju z izbire proge, te s puščico nazaj vrne naravnost na izbiro proge (z avtom iz garaže, če je tvoj). Garaža in kariera imata **skupno denarnico**: pravi profil garaže (privzet, v vrstici MOCKUP »Kariera«) so kovančki, kupljeni avti in nadgradnje kariere, zato imaš, kar kupiš v garaži, tudi v karieri in obratno (glej MOCKUP spodaj). Garaža se odpre tudi sama, brez parametrov (z avtom iz svojega profila). Brez interneta se ne odpre (igra to pove), ker je v shranjeni kopiji igre (`sw.js`) ni.
