@@ -632,8 +632,8 @@
  "eljem": {
   "calls": 102,
   "maxCalls": 120,
-  "kverts": 277,
-  "maxKverts": 365,
+  "kverts": 297,
+  "maxKverts": 425,
   "jsMs": 0.82
  },
  "isuna": {
