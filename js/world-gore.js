@@ -32,7 +32,7 @@
       roofs: [[0.22, 0.32, 0.26], [0.5, 0.18, 0.14], [0.3, 0.32, 0.34], [0.62, 0.64, 0.66], [0.16, 0.2, 0.26]] },
     boards: { start: 'START', finish: 'FINISH', banner: 'HILL CLIMB', cp: '#8c1d1d', closed: 'ROAD CLOSED', gate: 'CLOSED' },
     signs: 'diamond', crowd: [[0.84, 0.14, 0.14], [0.95, 0.95, 0.95], [0.14, 0.26, 0.6], [0.2, 0.5, 0.32], [0.95, 0.72, 0.16], [0.46, 0.66, 0.86], [0.12, 0.14, 0.2], [0.9, 0.45, 0.14]],
-    animals: [], dust: null, extra: null,
+    animals: [], dust: null, extra: null, ownBld: null, clear: null, keepOut: null, excl: null,   // (ownBld(x, z, L, W): true for the buildings S.extra draws itself)
   };
   const SNOW = [0.93, 0.95, 0.99], PISTE = [0.97, 0.98, 1.0], SLUSH = [0.62, 0.62, 0.63];
   let S = DEF, SN = 1, SNL = 1e9;   // (the style of the build under way; snow everywhere (1) or above SNL)
@@ -282,9 +282,10 @@
     // the buildings (def.bld [x, z, length, width, angle, height (0: unknown), kind]), clear of the road and the side roads
     const blds = [];
     for (const b of def.bld || []) { const [x, z, L, W, ang, hgt, kind] = b; if (L < 2.5 || W < 2.5 || (S.bldOmit && S.bldOmit(x, z, b))) continue;   // (S.bldOmit: the ones the track builds itself)
+      if (S.excl && S.excl.some((e) => Math.hypot(x - e[0], z - e[1]) < e[2])) continue;   // (none in the track's own circles: its landmark stands there)
       const c = Math.cos(ang), s = Math.sin(ang); let ok = true;
       for (const [u, v] of [[0, 0], [-L / 2, -W / 2], [L / 2, -W / 2], [L / 2, W / 2], [-L / 2, W / 2]]) { const px = x + c * u - s * v, pz = z + s * u + c * v, n = vrNear(px, pz); if ((n.i >= 0 && n.dd < 1.5) || vrStubAt(px, pz, 0.8)) ok = false; }
-      if (ok) blds.push({ x, z, L: Math.min(L, 46), W: Math.min(W, 26), ang, hgt, kind }); }
+      if (ok) blds.push({ x, z, L: Math.min(L, 46), W: Math.min(W, 26), ang, hgt, kind, own: !!(S.ownBld && S.ownBld(x, z, L, W)) }); }   // (own: the track's S.extra draws it itself, e.g. a landmark)
     // the car parks (def.pulls [x, z, radius, distance]): a level plot at the road's height
     const pulls = [];
     for (const [x, z, r] of def.pulls || []) { const n = vrNear(x, z); if (n.i < 0) continue; const i = n.i, s = i * T.ds; if (s < 30 || s > T.len - 30) continue;
@@ -299,8 +300,10 @@
     const excluded = (x, z) => { const L = eh.get(Math.floor(x / EHC) + ',' + Math.floor(z / EHC)); if (!L) return false; for (let k = 0; k < L.length; k++) { const e = L[k], dx = x - e.x, dz = z - e.z; if (dx * dx + dz * dz < e.r * e.r) return true; } return false; };
     for (const b of blds) exclPush(b.x, b.z, Math.hypot(b.L, b.W) / 2 + 2.5);
     for (const p of pulls) exclPush(p.x, p.z, p.r + 2);
+    for (const [x, z, r] of S.clear || []) exclPush(x, z, r);   // (S.clear: circles the track's own things keep free of the trees, as Ujarrás's lookout)
     stubExcl(exclPush);
     if (S.excl) for (const [x, z, r] of S.excl) exclPush(x, z, r);   // (the track's own: no trees where it builds, a castle)
+    if (typeof S.keepOut === 'function') S.keepOut(exclPush);   // (the track's own things that S.extra draws later, kept clear of the trees)
 
     /* ---- terrain tiles (four to a mesh), the lakes (ice in a snowy world) ---- */
     let nFar = 0, nTile = 0;
@@ -331,7 +334,17 @@
         if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
         exclPush(L.cx, L.cz, Math.max(L.x1 - L.x0, L.z1 - L.z0) / 2 + 6);
       }
-      if (P.lakes.length && !SN) out.dyn.water = tex.water;
+      for (const R of P.rivers) {   // a river (def.riverBeds): a ribbon of water down its bed, its edges 4 m into the banks (vrFar), only where the corridor's terrain is
+        const g = new GB(true), hw = R.w / 2, O = [-hw - 4, -hw * 0.5, 0, hw * 0.5, hw + 4], n = R.pts.length, uv = (q) => [q[0] / 14, -q[2] / 14];
+        const col = (o) => [0, 1, 2].map(k => lerp(shal[k], deep[k], sstep(1, 8, hw - Math.abs(o)))), row = (k) => { const p = R.pts[k], q = R.pts[Math.min(n - 1, k + 1)], r = R.pts[Math.max(0, k - 1)], tx = q[0] - r[0], tz = q[1] - r[1], l = Math.hypot(tx, tz) || 1;
+          return O.map(o => [p[0] - tz / l * o, R.h[k], p[1] + tx / l * o]); };
+        let A = row(0);
+        for (let k = 1; k < n; k++) { const B = row(k), p = R.pts[k];
+          if (vrDist(p[0], p[1]) < 420) for (let m = 0; m + 1 < O.length; m++) g.quadUp(A[m], A[m + 1], B[m + 1], B[m], [col(O[m]), col(O[m + 1]), col(O[m + 1]), col(O[m])], [uv(A[m]), uv(A[m + 1]), uv(B[m + 1]), uv(B[m])]);
+          A = B; }
+        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
+      }
+      if ((P.lakes.length || P.rivers.length) && !SN) out.dyn.water = tex.water;
     }
 
     /* ---- the road: asphalt with its lines (S.road: white or yellow, a broken centre line, the double unbroken one through the sharper bends, the
@@ -373,7 +386,7 @@
     if (RD.double) for (const c of T.corners) if (c.sev >= 2) for (let k = Math.max(0, c.i0 - 25); k <= Math.min(N - 1, c.i1 + 25); k++) bendAt[k] = 1;
     {
       const tileL = 8, gc = SN ? [0.66, 0.67, 0.69] : RD.shoulder;
-      const shade = (i, o) => { const rl = T.rl[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
+      const shade = (i, o) => { const rl = (T.gl || T.rl)[i]; let k = 0.84 - 0.13 * Math.exp(-((o - rl) * (o - rl)) / 5.5); if (Math.abs(o) > w * 0.88) k -= 0.04; return [k, k, k * 1.02]; };
       const BANK = [[0.6, 0.6, 0.62], [0.74, 0.74, 0.76], [0.8, 0.83, 0.9], [0.93, 0.95, 0.99], [0.97, 0.98, 1.0], [0.95, 0.96, 0.99]];   // (the wall: grey slush at the shoulder, its dirty foot, the plough's cut face bluish, white on top)
       const vc = [-1, 1].map((side, si) => { const a = []; for (let i = 0; i < N; i++) { const bar = side > 0 ? T.br[i] : T.bl[i], bk = bankH(i, side) > 0 && !SB.mouthV[si][i], dirt = 0.94 + 0.08 * rpHash(i >> 1, side + 9);
         a.push(vp[si][i].map(([o, y], k) => { const x = T.px[i] + T.nx[i] * side * o, z = T.pz[i] + T.nz[i] * side * o;
@@ -454,6 +467,7 @@
       const lowHigh = (b) => { const c = Math.cos(b.ang), s = Math.sin(b.ang); let lo = 1e9, hi = -1e9; for (const [u, v] of [[-b.L / 2, -b.W / 2], [b.L / 2, -b.W / 2], [b.L / 2, b.W / 2], [-b.L / 2, b.W / 2], [0, 0]]) { const y = vrGround(b.x + c * u - s * v, b.z + s * u + c * v); lo = Math.min(lo, y); hi = Math.max(hi, y); } return [lo, hi]; };
       const roofOf = () => (SN ? vary(roofSnow, RB, 0.03) : vary(S.bld.roofs[Math.floor(RB() * S.bld.roofs.length)], RB, 0.1));
       for (const b of blds) {
+        if (b.own) { CR.block(b.x, b.z, b.L + 1, b.W + 1, b.ang); continue; }
         const g = scen.get(b.x, b.z), [lo, hi] = lowHigh(b);
         if (b.kind === 2) { const col = vary([0.6, 0.62, 0.6], RB, 0.12); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 0.3 + 4.2, b.W, b.ang, col, null, true); gable(g, b.x, hi + 3.9, b.z, b.L + 0.6, b.W + 0.6, Math.min(b.L, b.W) * 0.18, b.ang, roofOf(), col); }
         else if (b.kind === 3) { const wd = vary([0.5, 0.36, 0.22], RB, 0.12); box(g, b.x, lo - 0.3, b.z, b.L, hi - lo + 0.3 + 2.5, b.W, b.ang, wd, null, true); gable(g, b.x, hi + 2.2, b.z, b.L + 0.6, b.W + 0.6, Math.min(b.L, b.W) * 0.45, b.ang, roofOf(), wd); }

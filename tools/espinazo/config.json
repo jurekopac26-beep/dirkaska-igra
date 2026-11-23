@@ -1,9 +1,10 @@
 {
   "id": "espinazo",
-  "about": "Espinazo del Diablo, Mehika (id espinazo): 5 km of the old MEX 40 up the Espinazo del Diablo ridge to El Palmito, 2 hairpins (docs/nove-proge-1-0.md)",
+  "about": "Espinazo del Diablo, Mehika (id espinazo): 5 km of the old MEX 40 along the Espinazo del Diablo ridge to El Palmito, 1 hairpin (docs/nove-proge-1-0.md); the line from 205 m before the start line (the grid) to 255 m past the finish (the cars' slots, on the way into El Palmito)",
   "box": [23.531, -105.868, 23.583, -105.826],
   "closed": false,
   "route": [
+    [23.54456, -105.83922, "Carretera Durango - Villa Unión", "run-up for the grid | primary, w744679918, 205 m before the start line"],
     [23.54496, -105.84082, "Carretera Durango - Villa Unión", "start | primary, w744679918, s -10 m"],
     [23.54449, -105.8418, "Carretera Durango - Villa Unión", "primary, w744679918, s 136 m"],
     [23.54562, -105.84293, "Carretera Durango - Villa Unión", "primary, w744679918, s 309 m"],
@@ -37,11 +38,15 @@
     [23.56843, -105.84822, "Carretera Durango - Villa Unión", "primary, w744679918, s 4492 m"],
     [23.56728, -105.84731, "Carretera Durango - Villa Unión", "primary, w744679918, s 4650 m"],
     [23.56723, -105.84606, "Carretera Durango - Villa Unión", "primary, w744679918, s 4805 m"],
-    [23.56665, -105.84463, "Carretera Durango - Villa Unión", "finish | primary, w744679918, s 5003 m"]
+    [23.56665, -105.84463, "Carretera Durango - Villa Unión", "finish | primary, w744679918, s 5003 m"],
+    [23.56542, -105.84275, "Carretera Durango - Villa Unión", "the cars' slots past the finish line | primary, w744679918, 255 m past it (on the way into El Palmito)"]
   ],
   "prefer": ["Carretera Durango - Villa Unión"],
-  "geoRoads": [],
+  "geoRoads": ["Carretera Durango - Villa Unión"],
   "geoWater": [],
   "marks": [],
-  "places": []
+  "places": [
+    ["El Palmito", "3869566483", null]
+  ],
+  "dist": {"grid": 480}
 }
