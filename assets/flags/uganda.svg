@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<title>Uganda</title>
+<path fill="#000000" d="M0,0H900V100H0Z"/>
+<path fill="#FCDC04" d="M0,100H900V200H0Z"/>
+<path fill="#D90000" d="M0,200H900V300H0Z"/>
+<path fill="#000000" d="M0,300H900V400H0Z"/>
+<path fill="#FCDC04" d="M0,400H900V500H0Z"/>
+<path fill="#D90000" d="M0,500H900V600H0Z"/>
+<circle cx="450" cy="300" r="128" fill="#FFFFFF"/>
+<g stroke="#000000" stroke-width="3" stroke-linejoin="round">
+<path fill="#9CA69C" d="M448,272C478,268 512,286 520,318C526,340 512,352 494,354C476,356 456,344 446,326C440,314 440,290 448,272Z"/>
+<path fill="#FFFFFF" d="M466,282C492,284 512,300 516,320C504,310 488,302 470,300Z"/>
+<path fill="#D90000" d="M494,340C506,346 516,356 520,368C506,364 496,356 490,346Z"/>
+<path fill="#9CA69C" d="M450,286C440,268 432,246 426,226L438,222C444,240 452,262 462,280Z"/>
+<path fill="#000000" d="M420,204C428,196 442,198 446,210C446,222 434,228 424,222Z"/>
+<path fill="#FFFFFF" d="M432,206C438,206 442,212 440,218C434,218 430,212 432,206Z"/>
+<path fill="#D90000" d="M426,222C430,228 430,236 426,240C422,236 422,228 426,222Z"/>
+<path fill="#000000" d="M420,210L396,216L420,214Z"/>
+</g>
+<g stroke="#FCDC04" stroke-width="3" stroke-linecap="round" fill="none">
+<path d="M432,200L424,182M436,199L432,180M440,200L440,182M444,202L448,184M428,201L416,186"/>
+</g>
+<g stroke="#000000" stroke-width="4" stroke-linecap="round" fill="none">
+<path d="M478,354L474,420L460,422M474,420L486,424"/>
+<path d="M486,352L506,384L478,398"/>
+</g>
+</svg>
