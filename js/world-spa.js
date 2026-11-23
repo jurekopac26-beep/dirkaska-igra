@@ -18,7 +18,7 @@
   /* ================= SPA-FRANCORCHAMPS (theme 'spa') =================
      Its own builder on the Nordschleife's corridor terrain (nrPrep and the nr* helpers: the LiDAR bare earth of def.dem on a 16 m grid, the
      OpenStreetMap land cover def.lc), in the Ardennes' own look: fresh grazed pastures, spruce planted in straight rows on the steep valley
-     sides (forestry compartments of mature, young and felled spruce and of beech; birches along the edges of the woods), a Formula 1
+     sides (forestry compartments of mature, young and felled spruce and of beech; birches along the edges of the woods), a top-category
      circuit's run-offs (asphalt where the barriers stand far out, gravel in a few corners: def.runoffTarmac, def.gravelStrips), red and
      white kerbs, mown stripes on the verges, concrete walls, tyre walls and catch fences, slate-roofed houses, grandstands with coloured
      seats; the pits, the support pits behind their wall, the Eau Rouge brook, the TV towers, the big screens, the sponsors' boards and the
@@ -233,7 +233,7 @@
       }
       tex.checker.repeat.set(1, 1); addM(gq, new THREE.MeshLambertMaterial({ map: tex.checker })); addM(gw, lMat);
     }
-    if (T.drs) {   // the DRS lines across the road (def.drs, as on the Red Bull Ring): a solid one at each detection point, a dashed one where the zone opens
+    if (T.drs) {   // the DRS lines across the road (def.drs, as on Štajerska): a solid one at each detection point, a dashed one where the zone opens
       const gd = new GB(), wl = [0.95, 0.95, 0.92], HYp = (p) => T.hy[p[3]];
       for (const z of T.drs) for (const [at, dash] of [[z.det, false], [z.act, true]]) {
         const s0 = sAt(at), s1 = s0 + 0.3;
@@ -699,7 +699,7 @@
     for (const t of tf) t.addTo(root, false);
 
     /* ---- terrain tiles and the grass verges out past the barriers (256 m chunks), coloured now; mown in stripes along the track (as at the
-       Red Bull Ring and Suzuka): MOW_W m bands on the verge inside the barrier, light and dark in turn from 1.2 m past the edge, and MOW_B dark
+       Štajerska and Suzuka): MOW_W m bands on the verge inside the barrier, light and dark in turn from 1.2 m past the edge, and MOW_B dark
        bands on the open lawns out past the barrier from 3.5 m behind it (the terrain's own colour and grass, fading out 20-36 m out, 5 cm over
        the ground): not in the woods, the scrub or by the villages, under the stands and buildings, by the brook, where another leg of the track
        is nearer, where the inside of a bend would fold them, nor on the pit lane's side ---- */
