@@ -490,11 +490,11 @@
   "jsMs": 1.12
  },
  "ngorongoro": {
-  "calls": 141,
-  "maxCalls": 166,
-  "kverts": 276,
-  "maxKverts": 326,
-  "jsMs": 0.91
+  "calls": 140,
+  "maxCalls": 164,
+  "kverts": 275,
+  "maxKverts": 323,
+  "jsMs": 1.92
  },
  "tuzla": {
   "calls": 159,
