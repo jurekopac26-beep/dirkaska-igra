@@ -135,10 +135,10 @@
   // a time trial in winter keeps its own too (id-winter, in the snow id-winter-wet): the season of the race on it (a challenge's its own), before a race the season setting
   const winRec = (d) => isTT(d) && (race && race.track.def.id === d.id ? !!(race.opts && race.opts.winter) : S.season === 'winter');
   // (the endless drive, js/neskoncna.js: its records by the level too, id-endless-1: the race's own while it is on, else the setting)
-  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless|drag|tt)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (winRec(d) ? '-winter' : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
+  const recKey = (id) => { const d = Core.TRACKS.find(x => x.id === id), m = modeOf(d), r = ((d && d.recId) || id) + (d && (d.modes || /^(elim|lov|endless|drag|tt)$/.test(m)) && m !== (d.timeTrial ? 'tt' : 'race') ? '-' + m + (m === 'tt' && lapTT(d) && lapsOf(d) !== (d.laps || LAPS) ? '_' + lapsOf(d) : '') : '') + (m === 'endless' ? '-' + (race && race.en && race.track.def.id === id ? race.en.lv : S.difficulty) : '') + (winRec(d) ? '-winter' : '') + (wetRec(d) ? '-wet' : ''); return r + '@' + physOf(); };
   const rec = (id) => { const k = recKey(id); return records.tracks[k] || (records.tracks[k] = {}); };
   // time-trial records: bestTime, bestSplits [cp1..cpN, finish], board = top 10 [{name, car, carId, time, splits, date, upg}] (drop anything malformed, rebuild the rest from known fields)
-  const splitsOf = (a) => a.slice(0, 12).map(v => posNum(v) ? v : NaN);
+  const splitsOf = (a) => a.slice(0, 40).map(v => posNum(v) ? v : NaN);
   // (a run in a retired model: the vehicle that took its place, its id and its name)
   const boardCar = (o) => { const M = Core.MODELS.find(m => m.id === o.carId), H = M && Core.heirOf(M); if (H && H !== M) { o.carId = H.id; o.car = H.name; } return o; };
   const boardEntry = (e) => isObj(e) && posNum(e.time) ? boardCar({ name: cleanName(e.name) || '?', car: typeof e.car === 'string' ? e.car.slice(0, 24) : '', carId: typeof e.carId === 'string' ? e.carId.slice(0, 24) : '',
@@ -202,7 +202,7 @@
   // road, the time trial, ...) switched to it (S.mode 'tt'); while a race on it is on, the way that race is driven
   const hasTT = (d) => !!(d && Core.ways(d).indexOf('tt') >= 0);   // (every track now: a circuit too, Core.ways)
   const ownTT = (d) => !!(d && (d.timeTrial || (d.modes && d.modes.indexOf('tt') >= 0)));   // (a time trial of its own: a road's with checkpoints, before the circuits had one)
-  const lapTT = (d) => !!(d && !d.modes && !d.timeTrial && Core.ways(d).indexOf('tt') >= 0);   // (a track whose time trial is the circuit's: its laps alone, its best lap; a road without def.modes the same, one lap)
+  const lapTT = (d) => !!(d && !d.modes && !d.timeTrial && !d.open && Core.ways(d).indexOf('tt') >= 0);   // (a track whose time trial is the circuit's: its laps alone, its best lap)
   // modeOf: the way a track with def.modes is driven ('race', 'tt', 'traffic': the duel with one rival on the open road, 'police': the run from the
   // police): while a race on it is on, that race's; else the setting
   // modesOf: the ways a track is driven (def.modes, else its own: a race or a time trial) and the novelties' own on top (Zabava, js/zabava.js:
@@ -225,11 +225,11 @@
   const medalOf = (d, t) => { const M = medalSet(d); if (!M || !(t > 0)) return -1; for (let k = 0; k < 3; k++) if (t <= M[k]) return k; return -1; };
   const medalLine = (d, t) => { const M = medalSet(d); if (!M) return ''; const k = medalOf(d, t), n = k < 0 ? 2 : k - 1;   // (won, and how far the next one is)
     return (k >= 0 ? MEDAL_ICON[k] + ' ' + tr(MEDAL[k]) : tr('Brez medalje')) + (n >= 0 ? tr(k < 0 ? ' · do brona {0} ({1})' : n === 0 ? ' · do zlata {0} ({1})' : ' · do srebra {0} ({1})', fmt(M[n], true), sgn(t - M[n])) : '') + '.'; };
-  const ttAgain = (d) => tr(isRally(d) ? 'Ponovi preizkušnjo' : isDesc(d) ? 'Ponovi spust' : 'Ponovi vzpon');
-  const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT', 'introDescTT'], go: ['goTT', 'goStage', 'goPassTT', 'goDescTT'], cpFirst: ['cpFirst', 'cpFirstStage', null, 'cpFirstDesc'],
-    record: ['summitRecord', 'stageRecord', null, 'descRecord'], even: ['summitEven', 'stageEven', null, 'descEven'], end: ['summit', 'stageEnd', null, 'descEnd'] };
+  const ttAgain = (d) => tr(lapTT(d) ? 'Ponovi kronometer' : isRally(d) ? 'Ponovi preizkušnjo' : isDesc(d) ? 'Ponovi spust' : 'Ponovi vzpon');
+  const TT_LINES = { intro: ['introTT', 'introStage', 'introPassTT', 'introDescTT', 'introLapTT'], go: ['goTT', 'goStage', 'goPassTT', 'goDescTT', 'goLapTT'], cpFirst: ['cpFirst', 'cpFirstStage', null, 'cpFirstDesc', 'lapFirstTT'],
+    record: ['summitRecord', 'stageRecord', null, 'descRecord', 'lapTTRecord'], even: ['summitEven', 'stageEven', null, 'descEven', 'lapTTEven'], end: ['summit', 'stageEnd', null, 'descEnd', 'lapTTEnd'] };   // (the last: a circuit's time trial, lapTT)
   const TT_CITY = { intro: 'introCity', go: 'goCity' };   // (a city stage, def.cityStage: Harju in Jyväskylä, its own welcome and start)
-  const ttLine = (d, k) => (d && d.cityStage && TT_CITY[k]) || (k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][isRally(d) ? 1 : isDesc(d) ? 3 : d && d.modes && !d.timeTrial ? 2 : 0] || TT_LINES[k][0]);   // (a hill climb (Pikes Peak, also with its race), a rally stage, a mountain pass, a descent, a city stage)
+  const ttLine = (d, k) => (d && d.cityStage && TT_CITY[k]) || (k === 'intro' && d && d.theme === 'pikes' && d.roadSurface === 'makadam' ? 'introTTg' : TT_LINES[k][lapTT(d) ? 4 : isRally(d) ? 1 : isDesc(d) ? 3 : d && d.modes && !d.timeTrial ? 2 : 0] || TT_LINES[k][0]);   // (a hill climb (Pikes Peak, also with its race), a rally stage, a mountain pass, a descent, a city stage)
   // (Pikes Peak on its historic gravel road: its own welcome)
   // a road's own commentator lines for a key (def.comm: Los Caracoles' instead of Vršič's): the key of its pool, registered with Comm when first said
   const ownLine = (d, key) => { const L = d && d.comm && d.comm[key]; if (!L) return key; const k = key + '@' + d.id; Comm.addLines(k, L); return k; };
@@ -2606,7 +2606,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     Sfx.resume(); Sfx.setRunning(true);
     Comm.stop(); commReset(); Comm.setRadioMode(rdOn);   // (the run from the police on Vršič: only the police radio speaks)
     const wetTxt = race.rain ? tr(' · DEŽ') : '';
-    if (race.timeTrial) { Comm.say(ownLine(track.def, ttLine(track.def, 'intro')), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg(tr(isRally(track.def) ? 'POLNI PLIN!' : isDesc(track.def) ? 'SPUST V DOLINO!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
+    if (race.timeTrial) { Comm.say(ownLine(track.def, ttLine(track.def, 'intro')), { track: EN_NAME[track.def.id] || track.def.name, cps: track.cpS.length }, 2); showMsg(tr(lapTT(track.def) ? 'KRONOMETER!' : isRally(track.def) ? 'POLNI PLIN!' : isDesc(track.def) ? 'SPUST V DOLINO!' : 'VZPON NA VRH!') + wetTxt, 'gold', race.rain ? 1.8 : 1.2); }
     else if (quali) { Comm.say('qualiIntro', { track: EN_NAME[track.def.id] || track.def.name }, 2); showMsg((race.champ ? tr('DIRKA {0}/{1} · ', race.champ.round + 1, race.champ.n) : '') + tr('KVALIFIKACIJE') + wetTxt, 'gold', 1.8); }
     else {
       if (race.pol && race.pol.chk) { showMsg('KRANJSKA GORA' + wetTxt, 'gold', 1.8); if (race.pol.goal) toast(tr('Misija: pripelji avto do garaže na vrhu Vršiča (desno ob cesti, takoj za prelazom).'), 4200); }   // (the run from the police up to its checkpoint: a calm start, nobody after the player yet)
@@ -2719,8 +2719,11 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   }
   // time trial finished: compare with the personal best, store the records right away (also if the player leaves before the results screen)
   function ttFinish() {
-    const P = race.player, R0 = rec(track.def.id), time = P.finishTime;
-    const splits = P.splits.slice(0, track.cpS.length).concat([time]);
+    const P = race.player, R0 = rec(track.def.id), time = P.finishTime, LT = lapTT(track.def);
+    // (a circuit's time trial, lapTT: its laps' times; the splits the time at the end of each lap, the last the finish)
+    const laps = LT ? P.lapTimes.slice(0, race.laps) : null; let cum = 0;
+    const splits = LT ? laps.map(t => (cum += t)).slice(0, -1).concat([time]) : P.splits.slice(0, track.cpS.length).concat([time]);
+    const lap = LT && laps.length ? Math.min(...laps) : 0, lapPB = lap > 0 && (!R0.bestLap || lap < R0.bestLap); if (lapPB) R0.bestLap = lap;
     const prev = R0.bestTime > 0 ? R0.bestTime : 0, prevSplits = Array.isArray(R0.bestSplits) ? R0.bestSplits.slice() : null;
     const newPB = !prev || time < prev;
     if (newPB) { R0.bestTime = time; R0.bestSplits = splits.slice(); ghSave(track.def.id, time); } else ghRec = null;
@@ -2731,19 +2734,19 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     const rank = board.indexOf(entry) + 1;
     R0.board = board.slice(0, 10);
     saveRecords();
-    ttRes = { time, splits, prev, prevSplits, newPB, rank, date, entry };
+    ttRes = { time, splits, prev, prevSplits, newPB, rank, date, entry, laps, lap, lapPB };
     if (pk.on) ttRes.pk = pkFinish(R0, entry);   // (Pikes Peak: the class board)
     return ttRes;
   }
   // split rows, CP1..CPn + finish: this run's time, the previous best run's time there and the difference (alt: with the altitude)
   function splitRows(r, alt) {
-    const T = track, pts = T.cpS.map((s, k) => ['CP' + (k + 1), s]).concat([[tr('CILJ'), T.finishS]]);
+    const T = track, LT = !!r.laps, pts = LT ? r.splits.map((_, k) => [String(k + 1), 0]) : T.cpS.map((s, k) => ['CP' + (k + 1), s]).concat([[tr('CILJ'), T.finishS]]);   // (a circuit's time trial: a row a lap, with the lap's time)
     return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
-      return '<tr><td>' + p[0] + '</td>' + (alt ? '<td>' + ttWhere(T, p[1]) + '</td>' : '') + '<td>' + fmt(t, true) + '</td><td>' + (isFinite(pb) ? fmt(pb, true) : '\u2013') + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
+      return '<tr><td>' + p[0] + '</td>' + (alt ? '<td>' + (LT ? fmt(r.laps[k], true) + (r.laps.length > 1 && r.laps[k] === r.lap ? ' \u2605' : '') : ttWhere(T, p[1])) + '</td>' : '') + '<td>' + fmt(t, true) + '</td><td>' + (isFinite(pb) ? fmt(pb, true) : '\u2013') + '</td><td class="' + (isFinite(dd) ? dCls(dd) : '') + '">' + (isFinite(dd) ? sgn(dd) : '\u2013') + '</td></tr>'; }).join('');
   }
   // the same splits for the column under the map at the finish (the map's width): each point and the difference to the record (none yet: the time)
   function splitMini(r) {
-    const pts = track.cpS.map((_, k) => 'CP' + (k + 1)).concat([tr('CILJ')]);
+    const pts = r.laps ? r.splits.map((_, k) => tr('KROG {0}', k + 1)) : track.cpS.map((_, k) => 'CP' + (k + 1)).concat([tr('CILJ')]);
     return pts.map((p, k) => { const t = r.splits[k], pb = r.prevSplits ? r.prevSplits[k] : NaN, dd = t - pb;
       return '<tr><td>' + p + '</td>' + (isFinite(dd) ? '<td class="' + dCls(dd) + '">' + sgn(dd) + '</td>' : '<td>' + fmt(t) + '</td>') + '</tr>'; }).join('');
   }
@@ -2765,6 +2768,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     $('res-sub').innerHTML = (r.newPB ? (r.prev ? tr('Prejšnji rekord {0} ({1}).', fmt(r.prev, true), '<span class="fast">' + sgn(d) + '</span>') : tr('Prvi čas na tej progi.'))   // (the title already says "Nov osebni rekord!")
       : tr('{0} za rekordom (rekord {1}).', '<span class="slow">' + sgn(d) + '</span>', fmt(r.prev, true))) +
       ' ' + esc(Lang.of(T.def, 'name')) + (race && race.opts && race.opts.winter ? (race.rain ? tr(' v snegu') : tr(' pozimi')) : race && race.rain ? tr(' v dežju') : '') + ' · ' + esc(Core.MODELS[S.car].name) + ' · ' + (r.rank <= 10 ? tr('{0} mesto na lestvici.', Lang.ord(r.rank)) : tr('izven prvih 10.')) +
+      (r.lap > 0 ? '<br>' + tr('Najboljši krog {0}', fmt(r.lap, true)) + (r.lapPB ? tr(' (nov rekord kroga)') : '') + '.' : '') +   // (a circuit's time trial)
       (medalSet(T.def) ? '<br>' + medalLine(T.def, r.time) : '') + (jumpLine() ? '<br>' + jumpLine() : '');
     if (!r.st) {   // the statistics: a time trial run, its medal (once per run)
       r.st = true; const k = medalSet(T.def) ? medalOf(T.def, r.time) : -1; st.tt++; st.tracks[T.def.id] = (st.tracks[T.def.id] || 0) + 1;
@@ -2782,7 +2786,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     // splits table: CP1..CPn + finish, altitude (a rally stage: the distance from the start), time, difference to the previous personal best
     { const a = achLine(); if (a) $('res-sub').innerHTML += '<br>' + esc(a.trim()); }
     const tt = $('res-tt'); tt.classList.remove('off');
-    tt.innerHTML = '<p class="ltab-h">' + tr('Vmesni časi') + '</p><table class="ltab sp"><thead><tr><th>' + tr('Točka') + '</th><th>' + ttWhereHead(T.def) + '</th><th>' + tr('Čas') + '</th><th>' + tr('Rekord') + '</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, true) + '</tbody></table>' +
+    tt.innerHTML = '<p class="ltab-h">' + tr('Vmesni časi') + '</p><table class="ltab sp"><thead><tr><th>' + tr(r.laps ? 'Krog' : 'Točka') + '</th><th>' + (r.laps ? tr('Čas kroga') : ttWhereHead(T.def)) + '</th><th>' + tr('Čas') + '</th><th>' + tr('Rekord') + '</th><th>\u00b1</th></tr></thead><tbody>' + splitRows(r, true) + '</tbody></table>' +
       '<p class="ltab-h">' + tr('Lestvica · {0}', esc(Lang.of(T.def, 'name'))) + '</p>';
     $('res-table').querySelector('thead').innerHTML = ttHead();
     $('res-table').querySelector('tbody').innerHTML = boardRows(R0.board || [], r.entry);
@@ -2813,10 +2817,13 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     let h;
     if (isTT(d)) {
       const board = Array.isArray(r.board) ? r.board : [], T = getTrack(d.id);
-      if (!board.length) h = '<p class="board-empty">' + tr(isRally(d) ? 'Na tej progi še ni časov. Odpelji preizkušnjo in postavi prvi rekord!' : 'Na tej progi še ni časov. Odpelji vzpon in postavi prvi rekord!') + '</p>';
+      if (!board.length) h = '<p class="board-empty">' + tr(lapTT(d) ? 'Na tej progi še ni časov. Odpelji kronometer in postavi prvi rekord!' : isRally(d) ? 'Na tej progi še ni časov. Odpelji preizkušnjo in postavi prvi rekord!' : 'Na tej progi še ni časov. Odpelji vzpon in postavi prvi rekord!') + '</p>';
       else {
         h = '<p class="ltab-h">' + tr('Najboljših 10 · {0} · kronometer', esc(Lang.of(d, 'name'))) + condTxt(d) + '</p><table class="ltab b"><thead>' + ttHead() + '</thead><tbody>' + boardRows(board, null) + '</tbody></table>';
-        if (Array.isArray(r.bestSplits) && r.bestTime) {
+        if (lapTT(d) && r.bestLap) h += '<p class="ltab-h">' + tr('Najboljši krog {0}', fmt(r.bestLap, true)) + '</p>';   // (a circuit's time trial: its best lap; the splits a lap each)
+        if (Array.isArray(r.bestSplits) && r.bestTime && lapTT(d)) h += '<p class="ltab-h">' + tr('Osebni rekord {0} · vmesni časi', fmt(r.bestTime, true)) + '</p><table class="ltab"><thead><tr><th>' + tr('Krog') + '</th><th>' + tr('Čas kroga') + '</th><th>' + tr('Čas') + '</th></tr></thead><tbody>' +
+          r.bestSplits.map((t, k) => '<tr><td>' + (k + 1) + '</td><td>' + fmt(t - (k ? r.bestSplits[k - 1] : 0), true) + '</td><td>' + fmt(t, true) + '</td></tr>').join('') + '</tbody></table>';
+        else if (Array.isArray(r.bestSplits) && r.bestTime) {
           const pts = T.cpS.map((s, k) => ['CP' + (k + 1), s]).concat([[tr('CILJ'), T.finishS]]);
           h += '<p class="ltab-h">' + tr('Osebni rekord {0} · vmesni časi', fmt(r.bestTime, true)) + '</p><table class="ltab"><thead><tr><th>' + tr('Točka') + '</th><th>' + ttWhereHead(d) + '</th><th>' + tr('Čas') + '</th></tr></thead><tbody>' +
             pts.map((p, k) => '<tr><td>' + p[0] + '</td><td>' + ttWhere(T, p[1]) + '</td><td>' + fmt(r.bestSplits[k], true) + '</td></tr>').join('') + '</tbody></table>';
@@ -2827,7 +2834,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       const v = (x) => x ? x : '\u2013';
       h = '<p class="ltab-h">' + tr('Rekordi · {0} · {1}', esc(Lang.of(d, 'name')), d.open ? tr('dirka na vrh') : lapWord(d.laps || 3).toLowerCase()) + '</p><table class="ltab rec"><tbody>' +
         (d.open ? '' : '<tr><td>' + tr('Najboljši krog') + '</td><td>' + v(r.bestLap && fmt(r.bestLap, true)) + '</td></tr>') + '<tr><td>' + tr('Najboljša dirka') + '</td><td>' + v(r.bestRace && fmt(r.bestRace, true)) + '</td></tr><tr><td>' + tr('Najboljše mesto') + '</td><td>' + v(r.bestPos && Lang.ord(r.bestPos)) + '</td></tr></tbody></table>' +
-        '<p class="board-empty">' + tr('Lestvica najboljših časov se vodi za kronometre ({0}).', Core.TRACKS.filter(hasTT).map(x => esc(Lang.of(x, 'name')) + (x.modes ? tr(' v načinu Kronometer') : '')).join(', ')) + '</p>';
+        '<p class="board-empty">' + tr('Lestvica najboljših časov se vodi za kronometre ({0}).', Core.TRACKS.filter(ownTT).map(x => esc(Lang.of(x, 'name')) + (x.modes ? tr(' v načinu Kronometer') : '')).join(', ') + tr(' in krožne proge v načinu Kronometer')) + '</p>';
     }
     { const M = isTT(d) && medalSet(d), R = rec(d.id), J = d.jumpRec;   // the medal times; the famous jump: the player's longest there
       if (M) h += '<p class="ltab-h">' + tr('Medalje') + (winRec(d) ? (wetRec(d) ? tr(' (sneg)') : tr(' (zima)')) : wetRec(d) ? tr(' (dež)') : '') + ' · ' + M.map((t, k) => MEDAL_ICON[k] + ' ' + fmt(t, true)).join(' · ') + '</p>';
@@ -5155,6 +5162,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   // time trial: CP counter, altitude, clock from the green light, personal best, split popups with the difference to the PB splits
   function updateHUDTT(dt, P) {
     hxFrame(dt, P);   // (turn counter, live difference to the best run, height profile: below)
+    if (lapTT(track.def)) { hudLapTT(P); return; }   // (a circuit: laps, not checkpoints)
     const nCP = track.cpS.length, R0 = rec(track.def.id);
     setLap(P.finished ? tr('CILJ') : 'CP ' + P.cp + '/' + nCP);
     // altitude of the road under the car (not the body, as in the splits table), between start and summit (or the foot of a descent); frozen at the
@@ -5176,6 +5184,25 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
       else Comm.say(Math.abs(d) < 0.005 ? 'cpEven' : d < 0 ? 'cpFast' : 'cpSlow', { cp: k, delta: spkDelta(d) }, 3);
     }
   }
+  // a circuit's time trial (lapTT): the lap under way, the run's clock and the record, the best lap of the run under them; at each lap's end its
+  // time and the difference to the record run at the same lap (its splits: the time at the end of each lap)
+  function hudLapTT(P) {
+    const R0 = rec(track.def.id), n = race.laps, k0 = clamp(P.lap, 1, n);
+    setLap(P.finished ? tr('CILJ') : tr('KROG {0}/{1}', k0, n));
+    const best = P.lapTimes.length ? Math.min(...P.lapTimes) : NaN;
+    setText('h-alt', isFinite(best) ? tr('naj. krog {0}', fmt(best, true)) : '');
+    setText('h-time', fmt(P.finished ? P.finishTime : phase === 'racing' ? race.time : 0, true));
+    setBest(R0.bestTime || NaN);
+    if (P.lapTimes.length <= lastLapCount) return;
+    lastLapCount = P.lapTimes.length; if (P.finished) return;   // (the finish popup has the last lap)
+    const k = lastLapCount, t = P.lapTimes[k - 1], at = P.lapTimes.reduce((a, b) => a + b, 0), pb = Array.isArray(R0.bestSplits) ? R0.bestSplits[k - 1] : NaN, d = at - pb, has = isFinite(d) && k < R0.bestSplits.length;
+    const fast = k > 1 && t <= best + 1e-6, el = $('h-split');
+    el.textContent = tr('KROG {0}: {1}', k, fmt(t, true)) + (has ? '  ' + sgn(d) : fast ? '  \u2605' : ''); el.className = 'show ' + (has ? dCls(d) : 'even'); splitT = 3.5; cornerShow = false;
+    showMsg(k === n - 1 ? tr('ZADNJI KROG!') : tr('KROG {0}', fmt(t, true)), has && d < 0 ? 'fast' : 'gold', 1.5);
+    Sfx.beep(has && d < 0 ? 990 : 740, 0.12, 0.12);
+    if (!has) Comm.say(ttLine(track.def, 'cpFirst'), { cp: k, time: spkTime(t) }, 2);
+    else Comm.say(Math.abs(d) < 0.005 ? 'lapEvenTT' : d < 0 ? 'lapFastTT' : 'lapSlowTT', { cp: k, delta: spkDelta(d) }, 3);
+  }
   /* ---------------- time trial HUD: turn counter, live difference to the best run, height profile ---------------- */
   // OVINEK n/156 (def.turnNos): the real number of the next modelled corner ahead of the car; 156/156 after the last one. The live
   // difference to the best run (its stored ghost), on the NAJ line under the clock: this run's clock against the time the best run
@@ -5187,7 +5214,7 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
   const hx = { turns: null, gs: null, gt: 0, dSm: 0, dT: 0, prof: false };
   const pf = { cv: null, g: null, w: 0, h: 0, dpr: 1, key: '', base: null, done: null, ys: null, x0: 0, x1: 0, lp: -1, lg: -1, hooked: false };
   function hxStart() {   // newRace (after ghStart): what this race shows
-    const on = race.timeTrial && !(mp && mp.race), d = track.def;
+    const d = track.def, on = race.timeTrial && !(mp && mp.race) && !lapTT(d);   // (a circuit's time trial: its laps instead, hudLapTT)
     hx.turns = on && typeof d.turnNos === 'function' ? d.turnNos(track) : null; if (hx.turns && !hx.turns.length) hx.turns = null;
     hx.gs = on && ghPlay ? hxTable(ghPlay) : null; hx.gt = ghPlay ? ghPlay.t : 0; hx.dSm = 0; hx.dT = 0; setText('h-delta', '\u00b10.00'); $('h-delta').className = 'even';
     hx.prof = on && !!d.alt; pf.key = '';

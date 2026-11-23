@@ -225,10 +225,11 @@ const Lestvica = (function () {
   function keyTable(defs) {
     const T = new Map();
     for (const d of defs || []) {
-      const base = d.recId || d.id, ways = d.modes ? d.modes.slice() : [d.timeTrial ? 'tt' : 'race'], d0 = d.timeTrial ? 'tt' : 'race';
+      // (as Core.ways: a track without its own ways, a circuit too, is also a time trial (id-tt, at its usual laps); the frozen ones, test and pending, not)
+      const base = d.recId || d.id, ways = d.modes ? d.modes.slice() : d.timeTrial ? ['tt'] : d.test || d.pending || d.open ? ['race'] : ['race', 'tt'], d0 = d.timeTrial ? 'tt' : 'race';
       for (const m of ways) {
-        const tt = d.modes ? m === 'tt' : !!d.timeTrial, kind = tt ? 'tt' : m === 'police' ? 'police' : m === 'traffic' ? 'traffic' : d.open ? 'up' : 'lap';
-        const k0 = base + (d.modes && m !== d0 ? '-' + m : '');
+        const tt = d.modes || !d.timeTrial ? m === 'tt' : true, kind = tt ? 'tt' : m === 'police' ? 'police' : m === 'traffic' ? 'traffic' : d.open ? 'up' : 'lap';
+        const k0 = base + ((d.modes || m === 'tt') && m !== d0 ? '-' + m : '');
         for (const win of tt ? [false, true] : [false]) for (const wet of tt ? [false, true] : [false]) for (const phys of PHYS) T.set(k0 + (win ? '-winter' : '') + (wet ? '-wet' : '') + '@' + phys, { id: d.id, mode: m, kind, win, wet, phys });
       }
     }

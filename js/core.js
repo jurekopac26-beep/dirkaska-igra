@@ -39,7 +39,7 @@ const Core = (function () {
   const TRACK_DEF = TRACKS.find(d => d.id === 'jezero'), PIKES_DEF = TRACKS.find(d => d.id === 'pikes');   // (exported by name)
   // the ways a track is driven: its def.modes; a time trial (def.timeTrial) only as one; every other track, a circuit too, its race (the
   // first, as ever) and its time trial alone against the clock (Kronometer na vseh progah)
-  const ways = (d) => !d ? ['race'] : d.modes ? d.modes : d.timeTrial ? ['tt'] : d.test || d.pending ? ['race'] : ['race', 'tt'];   // (the frozen tracks, test and pending: as they were)
+  const ways = (d) => !d ? ['race'] : d.modes ? d.modes : d.timeTrial ? ['tt'] : d.test || d.pending || d.open ? ['race'] : ['race', 'tt'];   // (the frozen tracks, test and pending: as they were; a road without def.modes: its race)
 
   // centripetal Catmull-Rom through the control points. Closed loop by default; open = a road with two ends
   // (phantom end points mirror the first / last segment, and the last point itself is appended).
