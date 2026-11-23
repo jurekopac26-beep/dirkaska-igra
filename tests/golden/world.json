@@ -1287,15 +1287,15 @@
  },
  "portobelo": {
   "meshes": 246,
-  "verts": 216710,
+  "verts": 218272,
   "instances": 1584,
   "props": 0,
   "crowd": 81,
-  "world": "eda8dca5",
+  "world": "636512e6",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "218eabd1",
+   "-:MeshLambertMaterial": "9f4b522e",
    "-:MeshPhongMaterial": "ce91aa65",
    "crowd:MeshLambertMaterial": "cd25d89c",
    "flags:MeshLambertMaterial": "8d45e55b",
