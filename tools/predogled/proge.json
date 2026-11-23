@@ -207,30 +207,18 @@
   "bbox": "-49.41,-28.08,-49.34,-28.03"
  },
  "yungas": {
-  "key": "Camino Nor Yungas",
+  "key": "North Yungas Road",
   "sec": [
    [
-    -16.28433,
-    -67.79921
+    -16.29115,
+    -67.80525
    ],
    [
-    -16.28109,
-    -67.7972
+    -16.27864,
+    -67.79506
    ]
   ],
-  "uvoz": {
-   "pred": 0,
-   "grid": 60,
-   "izt": 80,
-   "hw": 2.0,
-   "hwG": 2.0,
-   "polmer": 12,
-   "naklon": 0.12,
-   "prepad": 10,
-   "grbine": 1,
-   "siri": 0.9
-  },
-  "focus": "cliff",
+  "focus": "stream",
   "cfg": {
    "ground": "jungle",
    "cover": "forest",
@@ -238,14 +226,13 @@
    "snow": "none",
    "center": "none",
    "gravel": 1,
-   "fog": 14673122,
-   "bld": 10127984,
-   "roof": 5921352,
-   "rock": 7236192,
+   "fog": 14672866,
+   "bld": 10126448,
+   "roof": 5918792,
    "falls": 1
   },
-  "n": 4,
-  "bbox": "-67.82,-16.30,-67.78,-16.27"
+  "n": 8,
+  "bbox": "-67.86,-16.30,-67.73,-16.20"
  },
  "hana": {
   "key": "Hana Highway",
@@ -452,6 +439,180 @@
   },
   "n": 16,
   "bbox": "-58.372,-34.622,-58.355,-34.600"
+ },
+ "ujarras": {
+  "key": [
+   "247205698"
+  ],
+  "sec": [
+   [
+    9.835676,
+    -83.839062
+   ],
+   [
+    9.836582,
+    -83.844347
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 190,
+   "izt": 200,
+   "hw": 3.3,
+   "hwG": 2.7
+  },
+  "focus": "mirador",
+  "cfg": {
+   "ground": "grass",
+   "cover": "forest",
+   "tree": "broad",
+   "snow": "none",
+   "center": "yellow",
+   "fog": 13424352,
+   "bld": 14208952,
+   "roof": 9058858
+  },
+  "n": 20,
+  "bbox": "-83.856,9.826,-83.828,9.848"
+ },
+ "ghoufi": {
+  "key": "w308263161",
+  "sec": [
+   [
+    35.05441,
+    6.16519
+   ],
+   [
+    35.05192,
+    6.16262
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 175,
+   "izt": 160,
+   "hw": 3.4
+  },
+  "focus": "canyon",
+  "cfg": {
+   "ground": "dry",
+   "cover": "sparse",
+   "tree": "palm",
+   "snow": "none",
+   "center": "none",
+   "fog": 15129800,
+   "bld": 13150338,
+   "roof": 10123866
+  },
+  "n": 17,
+  "bbox": "6.140,35.040,6.185,35.070"
+ },
+ "cusco": {
+  "key": [
+   "1184931694",
+   "1184931693",
+   "584983117"
+  ],
+  "sec": [
+   [
+    -13.510786,
+    -71.9822
+   ],
+   [
+    -13.505841,
+    -71.98404
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 190,
+   "izt": 160,
+   "hw": 3.8,
+   "hwG": 3.0
+  },
+  "focus": "walls",
+  "cfg": {
+   "ground": "grass",
+   "cover": "patchy",
+   "tree": "broad",
+   "snow": "none",
+   "center": "yellow",
+   "fog": 14212308,
+   "bld": 11046494,
+   "roof": 10504238,
+   "rock": 9077880
+  },
+  "n": 21,
+  "bbox": "-71.9895,-13.5175,-71.9755,-13.4985"
+ },
+ "isuna": {
+  "key": "Chunzom - Paro Highway",
+  "sec": [
+   [
+    27.33233,
+    89.5175
+   ],
+   [
+    27.32867,
+    89.48855
+   ]
+  ],
+  "uvoz": {
+   "pred": 120,
+   "grid": 200,
+   "izt": 250,
+   "hw": 4.6,
+   "hwG": 4.2
+  },
+  "focus": "bridge",
+  "cfg": {
+   "ground": "grass",
+   "cover": "patchy",
+   "tree": "pine",
+   "snow": "none",
+   "center": "white",
+   "fog": 13226972,
+   "bld": 15328978,
+   "roof": 9056036,
+   "animals": "cow"
+  },
+  "n": 17,
+  "bbox": "89.47,27.31,89.53,27.345"
+ },
+ "koli": {
+  "key": "Ylä-Kolintie",
+  "sec": [
+   [
+    63.10116,
+    29.7853
+   ],
+   [
+    63.09611,
+    29.80614
+   ]
+  ],
+  "uvoz": {
+   "pred": 0,
+   "grid": 190,
+   "izt": 105,
+   "hw": 3.6,
+   "hwG": 3.4
+  },
+  "focus": "piste",
+  "cfg": {
+   "ground": "snow",
+   "cover": "forest",
+   "tree": "conifer",
+   "snow": "all",
+   "center": "none",
+   "fog": 13425888,
+   "bld": 7346738,
+   "roof": 3355443,
+   "snowbanks": 1,
+   "ski": 1
+  },
+  "n": 17,
+  "bbox": "29.7555,63.0813,29.836,63.1147"
  },
  "svalvogar": {
   "key": "Svalvogavegur",

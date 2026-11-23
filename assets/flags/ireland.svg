@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" width="600" height="300">
+  <title>Ireland</title>
+  <!-- Ratio 1:2. Three equal vertical bands green (Pantone 347 C), white and orange (Pantone 151 C), the green at the hoist. -->
+  <rect width="200" height="300" x="0" fill="#169B62"/>
+  <rect width="200" height="300" x="200" fill="#FFFFFF"/>
+  <rect width="200" height="300" x="400" fill="#FF883E"/>
+</svg>

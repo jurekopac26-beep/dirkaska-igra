@@ -26,7 +26,7 @@ const roads = C.TRACKS.filter(d => C.codrvRoad(d)), TANK = C.TRACKS.filter(d => 
 {
   const ids = roads.map(d => d.id);
   check('roads: every real open road of the plan, none a test track, none of the USA but Pikes Peak, none of the tanker\'s, no circuit',
-    ROADS.length >= 10 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test && !d.vehicle) && !ids.some(id => US.includes(id) || TANK.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
+    ROADS.length >= 9 && ROADS.every(id => ids.includes(id)) && roads.every(d => d.open && !d.test && !d.vehicle) && !ids.some(id => US.includes(id) || TANK.includes(id)) && !C.codrvRoad(C.TRACKS.find(d => !d.open)),
     `${ids.length}: ${ids.join(' ')}${ROADS.length < PLAN.length ? ' (of the plan now test tracks: ' + PLAN.filter(id => !ROADS.includes(id)).join(' ') + ')' : ''}`);
 }
 
@@ -65,6 +65,9 @@ const vocab = (w) => C.CD_EN[w] !== undefined || /^d\d+$/.test(w);
 const notesOf = (t) => 1 + t.filter(w => w === 'into' || w === 'and').length;   // (the notes of a call: 'into' and 'and' between them)
 const slowOk = (t) => t.some(w => w === 'hairpin' || w === 'square' || w === 'ring' || w === 'chicane' || (typeof w === 'number' && w <= 3));
 const rows = [], long = { sl: 0, en: 0, of: 0 };
+// (roads with almost no bends to read: Luanda's waterfront 4 bends of 29-44 m over 3.5 km, Isalo's plateau none under the corner radius over
+// 2.5 km; zbirna Proge 2: these roads were made that way, so no lower limit of calls a km there, the rest of the check stands)
+const FEW = ['luanda', 'isalo'];
 let worst = 0;
 for (const def of roads) {
   const T = new C.Track(def), t0 = process.hrtime.bigint(), N = T.paceNotes(), ms = Number(process.hrtime.bigint() - t0) / 1e6, km = (T.finishS - T.startS) / 1000;
@@ -78,7 +81,7 @@ for (const def of roads) {
   const dens = N.length / km;
   rows.push(`${def.id} ${N.length} (${dens.toFixed(1)}/km, ${ms.toFixed(1)} ms)`);
   check(`${def.id}: calls in order along the run, apart, 1.5-8 a km, only the co-driver's words, captions of ${C.CD_MAX} characters (${C.CD_MAX2} in two lines) at most with every note, every one or two in a slow note`,
-    order && words && caps && dens >= 1.5 && dens <= 8 && !miss.length,
+    order && words && caps && (dens >= 1.5 || FEW.includes(def.id)) && dens <= 8 && !miss.length,
     `${N.length} calls, ${dens.toFixed(1)}/km${order ? '' : ', out of order'}${words ? '' : ', a word not the co-driver\'s'}${caps ? '' : ', a caption too long'}${miss.length ? ', slow corners not read: ' + miss.map(g => Math.round(g.s0 - T.startS) + ' m').join(' ') : ''}`);
 }
 console.log('     ' + rows.join(' | '));

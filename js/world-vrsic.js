@@ -29,11 +29,12 @@
   let VRS = 'summer';                          // the season the world is painted in ('summer' or 'autumn': buildVrsic, from opts.season; winter: the autumn look, the render's season code snows it over)
   let VR = null;                               // per-build data: sample hash, the terrain, the land cover, the distance to the road, lakes, pads, gullies, terrain height grid
   const VRN = { i: -1, d: 1e9, dd: 1e9, lat: 0, h: 0, hn: 0 };   // vrNear: nearest sample, its distance and lateral offset, distance beyond the barrier, blended and exact road height
-  const VRCOL = [0, 0, 0], VRW = { L: null, e: -1e9 };            // (vrCol's colour; vrWater's lake and how deep inside its shore line)
+  const VRCOL = [0, 0, 0], VRW = { L: null, e: -1e9, h: 0 };            // (vrCol's colour; vrWater's lake and how deep inside its shore line)
   function vrPrep() {
     const def = T.def, N = T.N, M = 460; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
     for (let i = 0; i < N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
-    const P = VR = { bx0: x0, bx1: x1, bz0: z0, bz1: z1, pads: [], gul: [], lakes: [] };
+    const P = VR = { bx0: x0, bx1: x1, bz0: z0, bz1: z1, pads: [], gul: [], lakes: [], rivers: [] };
+    P.sea = def.sea && def.sea.y != null ? def.sea.y - def.dem.base : null;   // (by the sea, def.sea.y: its level above the road's zero; the land below it under the water, vrFar)
     x0 -= M; x1 += M; z0 -= M; z1 += M; P.x0 = x0; P.z0 = z0;
     // every 2nd road sample (and the last one) in a hash grid
     P.cx0 = Math.floor(x0 / VRHC); P.cz0 = Math.floor(z0 / VRHC); P.ncx = Math.floor(x1 / VRHC) - P.cx0 + 1; P.ncz = Math.floor(z1 / VRHC) - P.cz0 + 1; P.cells = new Array(P.ncx * P.ncz);
@@ -67,8 +68,24 @@
       for (const [x, z] of poly) { lx0 = Math.min(lx0, x); lx1 = Math.max(lx1, x); lz0 = Math.min(lz0, z); lz1 = Math.max(lz1, z); h = Math.min(h, vrDem(x, z)); cx += x / poly.length; cz += z / poly.length; }
       const i = T.nearestIdx(cx, cz);
       return { poly, x0: lx0, x1: lx1, z0: lz0, z1: lz1, h: Math.min(h - 0.6, T.hy[i] - 1.8), area: a[0], cx, cz, near: Math.min(...poly.map(([x, z]) => { const k = T.nearestIdx(x, z); return Math.hypot(x - T.px[k], z - T.pz[k]); })) }; }).filter(L => L.near < 380);   // (only those the corridor reaches)
+    // the rivers (def.riverBeds [width, x, z, ...] every ~8 m, downstream; tools/proga-uvoz.mjs): the water level at each point the lowest real ground
+    // across the bed, smoothed over ~80 m, never rising downstream and well below the road; the bed dug under it (vrFar), its segments in 32 m cells
+    P.rivers = (def.riverBeds || []).map((a) => { const w = a[0], pts = []; for (let k = 1; k + 1 < a.length; k += 2) pts.push([a[k], a[k + 1]]);
+      const n = pts.length, m = new Float32Array(n), h = new Float32Array(n);
+      for (let k = 0; k < n; k++) { const p = pts[k], q = pts[Math.min(n - 1, k + 1)], r = pts[Math.max(0, k - 1)], tx = q[0] - r[0], tz = q[1] - r[1], l = Math.hypot(tx, tz) || 1; let lo = 1e9;
+        for (let o = -w / 2; o <= w / 2 + 0.01; o += w / 4) lo = Math.min(lo, vrDem(p[0] - tz / l * o, p[1] + tx / l * o));
+        m[k] = Math.min(lo, T.hy[T.nearestIdx(p[0], p[1])] - 4); }
+      for (let k = 0; k < n; k++) { let sm = 0, c = 0; for (let j = Math.max(0, k - 5); j <= Math.min(n - 1, k + 5); j++) { sm += m[j]; c++; } h[k] = (k ? Math.min(h[k - 1], sm / c) : sm / c); }
+      for (let k = 0; k < n; k++) h[k] -= 0.6;
+      const R = { w, pts, h, cells: new Map() }, ext = w / 2 + 34;
+      for (let k = 0; k + 1 < n; k++) { const [x, z] = pts[k], [x2, z2] = pts[k + 1];
+        for (let ci = Math.floor((Math.min(x, x2) - ext) / VRHC); ci <= Math.floor((Math.max(x, x2) + ext) / VRHC); ci++) for (let cj = Math.floor((Math.min(z, z2) - ext) / VRHC); cj <= Math.floor((Math.max(z, z2) + ext) / VRHC); cj++) {
+          const key = ci * 65536 + cj; let L = R.cells.get(key); if (!L) R.cells.set(key, L = []); L.push(k); } }
+      return R; });
     // under each longer bridge (def.bridges [from, to], metres after the start line) a gully for the stream, straight across the road
-    for (const [a, b] of def.bridges || []) { if (b - a < 15) continue;
+    P.brS = null;   // (a bridge over the sea: the ground beside it falls straight to the sea floor, js/world-caracoles.js caH)
+    if (P.sea !== null && def.bridges) { P.brS = new Uint8Array(N); for (const [a, b] of def.bridges) for (let s = T.startS + a - 3; s <= T.startS + b + 3; s += T.ds / 2) P.brS[T.idx(s)] = 1; }
+    for (const [a, b] of def.bridges || []) { if (b - a < 15 || P.brS) continue;
       const i = T.idx(T.startS + (a + b) / 2), half = (b - a) / 2;
       P.gul.push({ i, half, x: T.px[i], z: T.pz[i], tx: T.tx[i], tz: T.tz[i], nx: T.nx[i], nz: T.nz[i], y: T.hy[i] - clamp(2.5 + (b - a) * 0.07, 3, 6.5), bw: Math.min(8, half * 0.5) }); }
     // terrain height grid (filled lazily, NaN = not computed yet) and the distance beyond the nearest barrier at each vertex
@@ -114,16 +131,19 @@
     return VRN;
   }
   function vrWater(x, z) {   // the lake at (x, z) and how far inside its shore polygon (VRW.L null: none within 40 m)
-    VRW.L = null; VRW.e = -1e9;
+    VRW.L = null; VRW.e = -1e9; VRW.h = 0;
     for (const L of VR.lakes) { if (x < L.x0 - 40 || x > L.x1 + 40 || z < L.z0 - 40 || z > L.z1 + 40) continue;
-      const e = (inPoly(L.poly, x, z) ? 1 : -1) * polyDist(L.poly, x, z); if (e > VRW.e) { VRW.e = e; VRW.L = L; } }
+      const e = (inPoly(L.poly, x, z) ? 1 : -1) * polyDist(L.poly, x, z); if (e > VRW.e) { VRW.e = e; VRW.L = L; VRW.h = L.h; } }
+    for (const R of VR.rivers) { const ks = R.cells.get(Math.floor(x / VRHC) * 65536 + Math.floor(z / VRHC)); if (!ks) continue;   // a river: e from its bank line (half its width out), VRW.h its level there
+      for (const k of ks) { const [ax, az] = R.pts[k], [bx, bz] = R.pts[k + 1], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = clamp(((x - ax) * dx + (z - az) * dz) / l2, 0, 1);
+        const e = R.w / 2 - Math.hypot(x - ax - dx * t, z - az - dz * t); if (e > VRW.e) { VRW.e = e; VRW.L = R; VRW.h = R.h[k] + (R.h[k + 1] - R.h[k]) * t; } } }
     return VRW;
   }
   function vrFar(x, z) {   // the land away from the road: the real terrain, a little made-up relief, the lake basins
     const P = VR, d0 = vrDem(x, z); let f = d0 + (P.n1(x, z) - 0.5) * 5 + (P.n2(x, z) - 0.5) * 2;
-    if (P.sea != null && d0 < P.sea + 3) f = Math.min(f, lerp(P.sea - 2.5, f, sstep(P.sea + 0.3, P.sea + 3, d0)));   // (a builder's sea, P.sea: its level; the ground under it, no made-up islets)
+    if (P.sea !== null && d0 < P.sea + 1.4) f = Math.min(f, lerp(P.sea - 2.2, f, sstep(P.sea + 0.3, P.sea + 1.4, d0)));   // (the sea's floor: no made-up relief poking out of the water)
     const W = vrWater(x, z), L = W.L;
-    if (L) { const e = W.e, shore = L.h + 0.9 - 0.35 * e; if (e > -30) f = Math.min(f, e > 0 ? Math.max(L.h - 3.5, shore) : lerp(shore, f, sstep(0, -30, e))); }   // (the water line ~3 m inside the shore polygon)
+    if (L) { const e = W.e, shore = W.h + 0.9 - 0.35 * e; if (e > -30) f = Math.min(f, e > 0 ? Math.max(W.h - 3.5, shore) : lerp(shore, f, sstep(0, -30, e))); }   // (the water line ~3 m inside the shore polygon)
     return f;
   }
   function vrH(x, z) {   // terrain height
@@ -139,6 +159,7 @@
     if (i >= 0 && dd < 6) h = Math.min(h, hn - 0.3 + 0.12 * dd * dd);   // never above the road inside the barriers, only a gentle rise right behind them
     if (STG) h = vrStubH(x, z, h, i >= 0 ? dd : 999);   // the side roads: the ground levelled under them
     if (VR.edgeH && i >= 0) h = VR.edgeH(x, z, h, i, dd, n.lat);   // (a builder's own shaping by the road: World.gore's ledge, the tanker's roads)
+    if (VR.hfix) h = VR.hfix(x, z, h, i >= 0 ? dd : 999);   // a world's own shaping of the ground after vrPrep (Hakone: the railway's bed)
     VRN.dd = i >= 0 ? dd : 999;
     return h;
   }

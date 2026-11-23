@@ -52,6 +52,14 @@
     'Kanada':       { rob: 'bela', sred: 'rumena', crta: [3, 6], dvojna: true },
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
+    'Japonska':     { rob: 'bela', sred: 'bela', crta: [5, 5], dvojna: false, stop: 0.3 },   // (the ministry's 1974 notice on the lines: 5 m and 5 m outside towns; a single yellow line where overtaking is forbidden; the stop line 30 cm, 45 cm on two lanes or more; no give-way triangles, no line across a mouth)
+    'Francija':     { rob: 'bela', sred: 'bela', crta: [3, 10], dvojna: false },   // (the IISR, part 7: the T1 centre line, one solid line where overtaking is forbidden; the edge line broken off at a mouth; no paved side road on its track yet: no stop or give-way line)
+    'Vietnam':      { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
+    'Uganda':       { rob: 'rumena', sred: 'bela', crta: [3, 6], dvojna: false },   // (white centre line, yellow edges as on East Africa's trunk roads, not checked against photos: docs/proge/kanaba.md, »Negotovo«)
+    'Papua Nova Gvineja': { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (the Australian-style markings of the country's sealed roads: white both, not checked against photos: docs/proge/sogeri.md, »Negotovo«)
+    'Sveta Lucija': { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (white lines as in Britain: a broken centre line, solid through the bends)
+    'Fidži':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },   // (left-hand traffic, the markings of the Commonwealth's roads as Australia's: all white, double solid where overtaking is forbidden)   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
+    'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
   };
   const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (a country not in the table: white, as most of the world)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
@@ -121,7 +129,13 @@
     tianmen:   P(CESTA, { prah: [0.50, 0.50, 0.41], rob: 0.22, robV: 0.55, kRobV: 0.3 }),   // (a show road, well kept)
     rastro:    P(CESTA, { prah: [0.58, 0.46, 0.36], barva: 0.6 }),   // (the serra's red soil)
     chapman:   P(CESTA, { prah: [0.66, 0.60, 0.49], sPrah: 0.95, kOdsek: 0.055, barva: 0.5, kRobV: 0.3 }),   // (sand off the sandstone cliffs)
+    canaries:  P(CESTA, { prah: [0.56, 0.44, 0.34], kPrah: 0.55, kOdsek: 0.07, odsek: [50, 240], barva: 0.6, kRobV: 0.75 }),   // (the island's red earth washed onto the road by the rains, many patches, the edges broken)
     balea:     P(CESTA, { prah: [0.58, 0.57, 0.52], kPrah: 0.6, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.7, kRobV: 0.85 }),   // (grit after every winter, the frost's patches)
+    savusavu:  P(CESTA, { prah: [0.56, 0.48, 0.38], kPrah: 0.45, sPrah: 0.95, kOdsek: 0.07, odsek: [50, 240], barva: 0.68, kRobV: 0.75 }),   // (the island's red-brown volcanic soil washed onto the edges by the rains; patched tarmac)
+    haivan:    P(CESTA, { prah: [0.6, 0.5, 0.4], kPrah: 0.5, sPrah: 1.0, kOdsek: 0.06, odsek: [60, 280], barva: 0.72, kRobV: 0.8 }),   // (red-brown laterite dust from the cuttings, the tarmac patched)
+    kanaba:    P(CESTA, { prah: [0.6, 0.42, 0.32], kPrah: 0.8, sPrah: 1.1, kOdsek: 0.07, odsek: [60, 300], barva: 0.65, kRobV: 0.85 }),   // (the red soil of the terraces washed onto the road, the lorries' patches)
+    sogeri:    P(CESTA, { prah: [0.6, 0.48, 0.36], kPrah: 0.7, sPrah: 1.05, kOdsek: 0.08, odsek: [60, 280], barva: 0.68, kRobV: 0.9 }),   // (red earth and grit off the gorge's walls, the patched tarmac and broken edges)
+    koror:     P(CESTA, { prah: [0.56, 0.54, 0.48], kPrah: 0.45, sPrah: 1.0, kOdsek: 0.1, odsek: [50, 240], barva: 0.75, kRobV: 0.8 }),   // (the sun and the salt on the causeways: patched, faded asphalt)
     caracoles: P(CESTA, { prah: [0.67, 0.60, 0.49], kPrah: 0.62, sPrah: 1.1, kRobV: 0.8 }),   // (the dry Andes: dust everywhere; the lorries' road over the pass, its edges broken)
     pikes:     P(CESTA, { prah: [0.62, 0.53, 0.45], kPrah: 0.5, kOdsek: 0.05, kOlje: 0.08, kKol: 0, barva: 0, rob: 0.25, robV: 0.6, kRobV: 0.4 }),   // (the builder's own wheel tracks, patches and faded paint, all in the road's mesh; the granite's pink grit)
   };
@@ -454,11 +468,12 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
        SC.asfalt(RB, barva)           // the strips: a few meshes for a clone of the asphalt's material
        SC.predmeti(get)               // a row of orange posts across each opening on the fence line and the paint; returns the posts' count
      o: tla(x, z) the ground's height; rob(i, side, d) the verge's height above the road at the sample i, d metres from the centre line;
-     ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE) */
+     ton(i) the main asphalt's tone at its edge; odprta: the track is not a lap; drzava: the lines' rules (CRTE); barva: false leaves
+     the mouths without paint (a country whose rules were not found: no stop line and no triangles) */
   function stranske(T, ceste, o) {
     o = o || {};
     const N = T.N, ds = T.ds, L = T.len, px = T.px, pz = T.pz, nx = T.nx, nz = T.nz, hy = T.hy, tla = o.tla, rob = o.rob || null, ton = o.ton || (() => 0.8), odprta = !!o.odprta;
-    const C = CRTE[o.drzava] || CRTE.Italija, wrap = (i) => ((i % N) + N) % N, mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+    const C = Object.assign({}, PRIVZETO, CRTE[o.drzava] || CRTE.Italija), wrap = (i) => ((i % N) + N) % N, mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
     const hsh = (a, b) => { let h = Math.imul(a + 1, 374761393) ^ Math.imul(b + 7, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
     // the main road: the nearest point of its centre line (the samples in a grid, both segments at each sample)
     const CELL = 24, grid = new Map(), key = (cx, cz) => cx * 73856093 ^ cz * 19349663;
@@ -675,7 +690,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
           for (let j = 0; j < POST.length; j++) { cyl(g, x, y, z, 0.1, POST[j][0], 6, POST[j][1], j === POST.length - 1 ? OR : null); y += POST[j][0]; }
           posts++; stebricki.push(x, y0, z, ri);
         }
-        if (!r.razred) continue;
+        if (!r.razred || o.barva === false) continue;
         // the paint on the apron (the first two rows), 1.5 cm over the strip
         const AP = (e, t) => { const cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc), f = cc - k, a = mix3(r.V[0][k], r.V[0][k + 1], f), b = mix3(r.V[1][k], r.V[1][k + 1], f); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
         const tt = (x) => Math.min(0.97, x / r.dp), la = -(r.hw - 0.15), lb = r.eno ? r.hw - 0.15 : -0.1;
