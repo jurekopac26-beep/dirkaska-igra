@@ -7,9 +7,14 @@
    - the lawns (patches of dry grass in them) of the park in front of the fortress and of the park on the shore past the finish
      (leisure=park), and of the golf course (leisure=golf_course);
    - the golf course's two ponds (natural=water, golf=water_hazard): still, murky water.
+   - the roads that lead to the car parks (the user's wish in the PR, 23. 11.): the OSM ways (service, parking aisles, the ring and
+     its spurs by the hotels) from the barrier's gap to and through each car park, in the car parks' asphalt; P0 and P5 have no way
+     in OSM, so a short drive from the road straight to them; P3 lies on the road itself;
+   - the car parks' white stall lines (the user's wish in the PR, 23. 11.; OSM maps no stalls, so approximate): 2.5 × 5 m stalls
+     in rows along the aisles' both sides and along the car parks' edges, kept off the roads, the barriers and the sea.
    Kept open (OSM has no shape for them, or they are not to be drawn): the golf course's fairways, greens, tees and bunkers (none in
-   OSM), the memorial and the information points in the park (nodes), the car parks' lines and signs, the paths and the service roads
-   in the parks and on the golf course. Not drawn again: the houses, the walls, the trees and the crowd stay js/world-mombasa.js's;
+   OSM), the memorial and the information points in the park (nodes), the car parks' signs, the paths and the service roads in the
+   parks and on the golf course. Not drawn again: the houses, the walls, the trees and the crowd stay js/world-mombasa.js's;
    its filling houses, its trees and its crowd now keep off the car parks and the ponds, the filling houses also off the lawns (the
    trees and the crowd may stand on them).
    Data: OpenStreetMap (© OpenStreetMap contributors, ODbL), the main API, 2026-11-22; metres, origin = the road's first point
@@ -39,6 +44,26 @@
     [960.6, 1162.4, 989.2, 1153.1, 1010.6, 1149.7, 1016.6, 1153.5, 1015.3, 1168.4, 1011.0, 1175.6, 999.1, 1180.2, 980.7, 1184.0, 965.8, 1182.8, 959.8, 1174.3, 957.6, 1167.9],
     [941.8, 1187.9, 937.6, 1205.7, 937.1, 1216.7, 941.0, 1235.4, 941.4, 1241.7, 959.3, 1243.9, 974.7, 1244.3, 981.6, 1234.1, 982.4, 1221.4, 979.4, 1215.0, 965.8, 1215.0, 957.2, 1218.8, 956.8, 1206.5, 958.9, 1192.1, 954.6, 1185.7, 949.5, 1183.6]];
 
+  // the roads to the car parks ([[half width, x0, z0, x1, z1, ...] per way] per car park; open lines): OSM's highway ways where it maps them, cut to
+  // what lies past the barriers and within the 62 m (the fields below); inside a car park a way is its aisle (the stalls along it, both sides).
+  // The car park by the fortress (0) and the one by the golf course (5) have no way in OSM: a short drive from the nearer carriageway to the
+  // middle of the car park's side facing it; the strip along the road past the roundabout (3) lies on the road itself (none)
+  const ROAD = [
+    [[3.0, 408.9, 108.3, 405.3, 121.2]],
+    [[2.75, 930.6, 141.5, 931.2, 128.8, 932.4, 122.6, 932.3, 120.7, 932.9, 118.9, 934.6, 117.8, 952.0, 116.7, 953.7, 116.7, 955.4, 117.7, 957.4, 125.5, 961.2, 139.4]],
+    [[3.5, 1068.0, 77.8, 1069.5, 77.2, 1071.1, 76.8, 1075.6, 76.0, 1076.4, 76.2, 1078.6, 76.8, 1081.2, 78.5, 1084.4, 80.8, 1086.9, 83.9, 1088.5, 87.5, 1089.1, 91.4, 1088.7, 95.3, 1079.9, 105.6, 1077.9, 106.8, 1059.8, 119.0, 1052.3, 121.2, 1048.3, 120.8, 1044.6, 119.4, 1041.3, 117.0, 1038.3, 112.5, 1038.3, 107.2, 1039.6, 101.5, 1044.6, 93.5, 1068.0, 77.8],
+     [3.0, 1062.1, 52.3, 1066.0, 54.8, 1068.7, 57.7, 1072.1, 61.4, 1075.9, 64.6, 1076.7, 67.9, 1076.7, 71.3, 1075.6, 76.0],
+     [3.0, 1068.0, 77.8, 1067.7, 71.6, 1066.9, 67.6, 1066.0, 64.1, 1064.9, 61.0, 1063.4, 57.4, 1062.1, 52.3],
+     [3.0, 1076.4, 76.2, 1084.3, 65.6, 1093.4, 60.5, 1105.9, 58.1], [3.0, 1105.9, 58.1, 1084.4, 80.8],
+     [3.5, 1038.3, 112.5, 1024.4, 113.0, 1017.1, 115.6], [3.5, 1017.1, 115.6, 1020.4, 111.1, 1026.0, 106.2, 1033.9, 100.2, 1044.6, 93.5],
+     [3.5, 1059.8, 119.0, 1052.7, 141.5], [3.5, 1052.7, 141.5, 1044.6, 119.4],
+     [3.0, 1015.4, 23.1, 1049.4, 38.2, 1055.7, 43.5, 1062.1, 52.3], [3.0, 1151.8, 42.5, 1125.7, 50.3, 1105.9, 58.1]],
+    [],
+    [[3.0, 1337.6, 379.4, 1312.5, 389.5, 1301.6, 392.9, 1270.8, 404.0, 1249.0, 413.0, 1243.4, 414.7, 1228.1, 421.6],
+     [2.5, 1249.0, 413.0, 1254.2, 423.4, 1259.0, 426.9, 1266.3, 425.8, 1273.3, 423.8, 1290.2, 418.6, 1310.0, 411.2, 1315.2, 408.7, 1318.7, 404.2, 1317.9, 399.3, 1315.4, 395.3, 1312.5, 389.5],
+     [2.5, 1259.0, 426.9, 1259.8, 436.3, 1262.5, 444.7, 1266.1, 451.0, 1272.0, 453.3, 1277.9, 452.5, 1284.0, 449.0, 1291.6, 443.6, 1294.6, 440.3, 1295.3, 436.4, 1295.2, 432.0, 1293.2, 425.3, 1290.2, 418.6]],
+    [[3.0, 1190.2, 1126.9, 1196.6, 1119.3]]];
+
   // the colours (multiplying the pictures: the grass's is a bright green, ~0.34 0.57 0.23): dusty asphalt, the red earth (murram), the lawns
   // a dull green with dry patches, ~0.30 0.38 0.17 and ~0.48 0.44 0.24 (the golf course a little greener, fewer dry patches)
   const PK_ASP = [0.96, 0.92, 0.86], PK_MUR = [0.92, 0.64, 0.48], LW_GREEN = [[0.87, 0.67, 0.75], [0.8, 0.7, 0.68]], LW_DRY = [1.4, 0.77, 1.06];
@@ -58,7 +83,7 @@
   let last = null;   // (the last build's numbers, for the stats)
   World.ext.mombasaOb = function (o) {
     const { eh, EHC, exclPush, seaD, inFort, root, tex } = o, { RB, nrGround, nrNear } = A, G = A.NR.G, X0 = G.x0, Z0 = G.z0;
-    const st = { parkCells: 0, lawnCells: 0, pondCells: 0, meshes: 0, pondDrop: [] };
+    const st = { parkCells: 0, lawnCells: 0, pondCells: 0, roadCells: 0, stalls: 0, lines: 0, meshes: 0, pondDrop: [] };
     const ddAt = (x, z) => { const n = nrNear(x, z); return n.i < 0 ? 99 : n.dd; };
     // what is laid goes into a mesh per outline and material (0 asphalt, 1 murram, 2 lawn, 3 water): 11 meshes, each out of the draw when out of the frame
     const tiles = new Map(); let gid = 0;
@@ -130,6 +155,57 @@
     for (const Q of POND) { let lo = 1e9, hi = -1e9;   // (whole: off the barriers and the sea only)
       lay(Q, 3, W1, 0.12, 8, (x, z, C) => { exclPush(x, z, 0.75 * C); st.pondCells++; const h = nrGround(x, z); lo = Math.min(lo, h); hi = Math.max(hi, h); }, [[fNear, 1, 0.05], [fSea, 1, 0.3]]);
       if (hi >= lo) st.pondDrop.push(Math.round((hi - lo) * 100) / 100); }
+
+    // the roads to the car parks: asphalt as the car parks' (a little darker), off the car parks and the lawns, a mesh per car park's roads
+    const segO = (W, x, z) => { let b = 1e9; for (let k = 1; k + 3 < W.length; k += 2) { const ax = W[k], az = W[k + 1], vx = W[k + 2] - ax, vz = W[k + 3] - az, t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz || 1))); b = Math.min(b, Math.hypot(x - ax - vx * t, z - az - vz * t)); } return b; };
+    const fWays = (Ws) => (x, z) => { let b = -1e9; for (const W of Ws) b = Math.max(b, W[0] - segO(W, x, z)); return b; };
+    const fOut = (x, z) => { let b = 1e9; for (const Q of PARK) b = Math.min(b, segD(Q, x, z) * (inQ(Q, x, z) ? -1 : 1)); for (const Q of LAWN) b = Math.min(b, segD(Q.slice(1), x, z) * (inQ(Q.slice(1), x, z) ? -1 : 1)); return b; };
+    const roadAt = (x, z) => asphaltAt(x, z).map(c => c * 0.9);
+    for (const Ws of ROAD) { if (!Ws.length) continue;
+      let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+      for (const W of Ws) for (let k = 1; k < W.length; k += 2) { x0 = Math.min(x0, W[k] - W[0]); x1 = Math.max(x1, W[k] + W[0]); z0 = Math.min(z0, W[k + 1] - W[0]); z1 = Math.max(z1, W[k + 1] + W[0]); }
+      lay([x0, z0, x1, z0, x1, z1, x0, z1], 0, roadAt, 0.07, 3, (x, z, C) => { exclPush(x, z, 0.75 * C); st.roadCells++; }, [[fWays(Ws), 1, 0.05], [fOut, 1, 0.05], [fNear, 1, 0.05], [fFar, 4, 0.5], [fSea, 1, 0.3]]);
+    }
+    // the stalls' white lines (OSM maps no stalls: 2.5 by 5 m, as the usual, in rows along the aisles (the ways inside the car park, both sides) and
+    // inward from the car park's sides; a stall whole inside the car park, off the aisles and the roads, past the barriers, within the 62 m and not
+    // on another): a stall's two side lines, 12 cm wide, on the ground in 1 m pieces, those of neighbours once
+    const fAll = fWays([].concat(...ROAD)), SW = 2.5, SD = 5, SH = [], LR = new RB(false), lk = new Set(), LCOL = [0.86, 0.86, 0.83];
+    const okPt = (Q, x, z) => inQ(Q, x, z) && segD(Q, x, z) > 0.2 && fAll(x, z) < -0.25 && fNear(x, z) > 0.3 && fFar(x, z) > 0.5 && fSea(x, z) > 0.3 && !inFort(x, z, 2);
+    const over = (a, b) => { for (const [ux, uz] of [[a.ux, a.uz], [-a.uz, a.ux], [b.ux, b.uz], [-b.uz, b.ux]]) {   // (the two rectangles' separating axes)
+      const pr = (r) => SW / 2 * Math.abs(r.ux * ux + r.uz * uz) + SD / 2 * Math.abs(-r.uz * ux + r.ux * uz);
+      if (Math.abs((a.x - b.x) * ux + (a.z - b.z) * uz) >= pr(a) + pr(b) - 0.05) return false; } return true; };
+    const line = (ax, az, bx, bz) => {
+      const key = Math.round((ax + bx) * 2.5) + ',' + Math.round((az + bz) * 2.5); if (lk.has(key)) return; lk.add(key);
+      const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L)), px = -(bz - az) / L * 0.06, pz = (bx - ax) / L * 0.06; let r0 = -1;
+      for (let i = 0; i <= n; i++) { const x = ax + (bx - ax) * i / n, z = az + (bz - az) * i / n, r = LR.row([[x - px, nrGround(x - px, z - pz) + 0.1, z - pz], [x + px, nrGround(x + px, z + pz) + 0.1, z + pz]], [LCOL, LCOL]);
+        if (r0 >= 0) { const cr = (2 * px) * (z - (az + (bz - az) * (i - 1) / n)) - (2 * pz) * (x - (ax + (bx - ax) * (i - 1) / n)); if (cr < 0) LR.I.push(r0, r0 + 1, r, r0 + 1, r + 1, r); else LR.I.push(r0, r, r0 + 1, r0 + 1, r, r + 1); }
+        r0 = r; }
+      st.lines++;
+    };
+    const row = (Q, ax, az, bx, bz, nx, nz, o) => {   // a row of stalls along a→b, their fronts o m off it towards n
+      const L = Math.hypot(bx - ax, bz - az); if (L < SW + 0.5) return; const ux = (bx - ax) / L, uz = (bz - az) / L, m = Math.floor((L - 0.4) / SW), t0 = (L - m * SW) / 2;
+      for (let i = 0; i < m; i++) {
+        const t = t0 + (i + 0.5) * SW, s = { x: ax + ux * t + nx * (o + SD / 2), z: az + uz * t + nz * (o + SD / 2), ux, uz };
+        let ok = okPt(Q, s.x, s.z); for (const [p, q] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) ok = ok && okPt(Q, s.x + ux * p * SW / 2 + nx * q * SD / 2, s.z + uz * p * SW / 2 + nz * q * SD / 2);
+        if (!ok || SH.some(r => over(r, s))) continue;
+        SH.push(s); st.stalls++;
+        for (const p of [-1, 1]) line(s.x + ux * p * SW / 2 - nx * SD / 2, s.z + uz * p * SW / 2 - nz * SD / 2, s.x + ux * p * SW / 2 + nx * SD / 2, s.z + uz * p * SW / 2 + nz * SD / 2);
+      }
+    };
+    if (!PARK_B) PARK.forEach((Q, k) => {
+      for (const W of ROAD[k]) for (let j = 1; j + 3 < W.length; j += 2) {   // the aisles: the ways' pieces inside the car park, both sides
+        const ax = W[j], az = W[j + 1], bx = W[j + 2], bz = W[j + 3], L = Math.hypot(bx - ax, bz - az); if (!inQ(Q, (ax + bx) / 2, (az + bz) / 2)) continue;
+        for (const sg of [-1, 1]) row(Q, ax, az, bx, bz, -sg * (bz - az) / L, sg * (bx - ax) / L, W[0] + 0.2);
+      }
+      const n = Q.length / 2, sides = [];
+      for (let j = 0; j < n; j++) { const ax = Q[2 * j], az = Q[2 * j + 1], bx = Q[(2 * j + 2) % Q.length], bz = Q[(2 * j + 3) % Q.length]; sides.push([Math.hypot(bx - ax, bz - az), ax, az, bx, bz]); }
+      for (const [L, ax, az, bx, bz] of sides.sort((p, q) => q[0] - p[0])) {   // the sides, the longest first: inward
+        let nx = -(bz - az) / L, nz = (bx - ax) / L; if (!inQ(Q, (ax + bx) / 2 + nx * 0.5, (az + bz) / 2 + nz * 0.5)) { nx = -nx; nz = -nz; }
+        row(Q, ax, az, bx, bz, nx, nz, 0.4);
+      }
+    });
+    if (!LR.empty) { const m = new THREE.Mesh(LR.geometry(), new THREE.MeshLambertMaterial({ vertexColors: true, polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -12 }));
+      m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'roadside-lines'; root.add(m); st.meshes++; }
 
     const MAT = [[tex.asphalt, 'roadside-asphalt'], [tex.sand, 'roadside-murram'], [tex.grass, 'roadside-lawn'], [null, 'roadside-pond']], mats = [], off = { polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -6 };
     const matOf = (mt) => mats[mt] || (mats[mt] = mt === 3
