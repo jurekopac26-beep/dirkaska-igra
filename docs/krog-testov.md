@@ -97,11 +97,11 @@ ne preskakuj in ne izklapljaj: sprememba samo izbere, kateri nabor teče pri kat
 ## Osvežitev `SECS`
 
 Ko se kak dolg test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo) ali je kritična pot nad ~90 min:
-1. Iz zadnjih uspešnih krogov (vsaj 3, mešano `main` in pull requesti) vzemi povzetke posla »Igra v brskalniku (k/8)« (vrstice
+1. Iz zadnjih uspešnih krogov (vsaj 3, mešano `main` in pull requesti) vzemi povzetke posla »Igra v brskalniku (k/10)« (vrstice
    `OK  browser/<test> (<s> s)` za `=== summary`).
 2. Za vsak posel izračunaj hitrost: mediana razmerij čas/`SECS` čez teste ≥ 20 s. Čas vsakega testa deli s hitrostjo njegovega posla.
 3. V `SECS` vpiši mediano po krogih (zaokroženo na sekundo), padajoče. `node tests/shards.test.js` preveri, da so deli enako dolgi
-   (najdaljši največ 15 % nad povprečjem), `node tests/run.js browser --shard 1/8 --list` izpiše dolžine delov.
+   (najdaljši največ 15 % nad povprečjem), `node tests/run.js browser --shard 1/10 --list` izpiše dolžine delov.
 
 **22. 11. 2026** (pregled nestabilnih testov): poslov je bilo 97–119 min, memory in memory2 2950–3200 s, del 1–2 blizu meje posla. `SECS` je
 zdaj iz enega celotnega kroga na `main` z 68 pravimi progami (run 44994892896, vseh 169 testov, brez preračuna): vsak del ~105 min, memory in
@@ -113,9 +113,14 @@ počasnejši. perf 2900 s, menu 1400 s (preračunano na srednji stroj); šest de
 **8 delov** po ~80 min (na stroju 1,5-krat počasnejšem ~120 min), memory, memory2, perf in crash vsak v svojem delu. Noben test ni
 izpuščen, meje testov so zaradi višjih `SECS` višje (perf ~97 min, menu ~47 min).
 
+**23. 11. 2026** (#1031, preobremenjeni stroji): v osmih delih (run 45153277100) 64–109 min, v šestih na #953 (run 45165119735)
+94–115 min. `SECS` je zdaj mediana treh krogov (22. 11. `main`, obe meritvi 23. 11., preračunano na srednji stroj; memory 3365 s,
+perf 2629 s, memory2 2577 s): **10 delov** po ~61 min (na stroju 1,5-krat počasnejšem ~90 min), memory, memory2 in perf vsak v svojem
+delu. 11 delov bi bilo ~56 min (memory sam je meja), 8 delov ~76 min.
+
 ## Zavrnjeno ali možnost za pozneje
 
-- **7 delov**: ~68 min (p90 ~77), en stroj več na krog; 8 delov ni boljše (memory ~61 min je meja). Odloči koordinacija.
+- **11 delov**: ~56 min, en stroj več na krog; več kot 11 ni boljše (memory ~56 min je meja). Odloči koordinacija.
 - **Več testov hkrati v enem poslu**: en test porabi ~3,2 od 4 jeder (programski WebGL, SwiftShader); hitreje ne bi bilo, nestabilnost bi rasla.
 - **Delitev testa memory**: z 68 progami je bil memory nad 2 h, zato je od 18. 11. 2026 v dveh delih (`memory2.test.mjs`, vsaka druga proga; vsak del primerja 2. krog z zadnjim čez svojo polovico, trki in razbijanja v prvem). Enako gfx in world (`gfx2`, `world2`), od 19. 11. 2026 še smoke (`smoke2`: vsaka druga proga, demo, dež in vožnje do cilja v drugem delu; z vsemi progami čez 60 min).
 - **Predpomnilnik Playwrighta**: ~5 s na posel, ne odtehta zapletov.

@@ -144,20 +144,20 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # Brskalniški testi na osmih strojih hkrati: tests/run.js --shard k/8 razdeli teste po tem, koliko časa traja vsak (SECS v
-  # tests/run.js, krog 22. 11. 2026, perf in menu 23. 11.: ~80 min na del, memory, memory2, perf in crash vsak v svojem delu; GitHubovi
-  # stroji so do 1,5-krat počasnejši: v šestih delih (~107 min) je 23. 11. del 3 s perf in menu presegel 160 min). Celoten nabor na enem
-  # stroju bi trajal ~10,5 h in se z vsako novo progo podaljša.
+  # Brskalniški testi na desetih strojih hkrati: tests/run.js --shard k/10 razdeli teste po tem, koliko časa traja vsak (SECS v
+  # tests/run.js, mediana treh krogov 22. in 23. 11. 2026: ~61 min na del, memory, memory2 in perf vsak v svojem delu; GitHubovi
+  # stroji so do 1,5-krat počasnejši: 23. 11. je bilo v osmih delih 64–109 min, v šestih 94–115 min). Celoten nabor na enem
+  # stroju bi trajal ~10 h in se z vsako novo progo podaljša.
   browser:
-    name: Igra v brskalniku (${{ matrix.shard }}/8)
+    name: Igra v brskalniku (${{ matrix.shard }}/10)
     needs: koda
     if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 160   # (en del ~80 min, na počasnem stroju ~120 min; več kot omejitev testa memory (2 × SECS = 106 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
+    timeout-minutes: 160   # (en del ~61 min, na počasnem stroju ~90 min; več kot omejitev testa memory (2 × SECS = 112 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
     strategy:
       fail-fast: false   # (vsak del do konca: napaka v enem ne ustavi drugih)
       matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -166,7 +166,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps --only-shell chromium   # (testi tečejo v Chromium headless shell: celotnega Chromiuma ne rabijo)
-      - run: npm run test:browser -- --shard ${{ matrix.shard }}/8
+      - run: npm run test:browser -- --shard ${{ matrix.shard }}/10
         env:
           TEST_TIMEOUT_MIN: 30   # (omejitev enega testa; privzeto 15 min, smoke in memory gresta čez vse proge)
           TEST_SLOW: 2   # (ali dvakratni čas testa iz SECS, če je daljši; privzeto 4 za počasnejši stroj oblačne seje)
