@@ -133,7 +133,10 @@ try {
       for (let k = 0; k < 10; k++) { await drawn(2); const m2 = at(); if (m2.top === m.top && m2.clk === m.clk) break; m = m2; }
       return { s, cls: $('h-note').className, top: m.top, clk: m.clk, disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
-    if (r.fin) await startTrack(page, id);
+    // (the race started again taken to its green light: the sign is shown only while racing (game.js updateNote), and the new race stands
+    // in its intro and lights; Ghoufi got there in real time during the waits below, Tapini's time trial (from 23. 11. across its line in the
+    // 20 s) did not: the sign empty, '' top 12 px on GitHub)
+    if (r.fin) { await startTrack(page, id); await page.evaluate(() => { const g = window.__game; for (let i = 0; i < 150 && g.phase !== 'racing'; i++) g.sim(0.1, true); }); }
     const n1 = await sign(null);
     {
       // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
