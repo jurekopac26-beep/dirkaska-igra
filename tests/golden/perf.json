@@ -63,11 +63,11 @@
   "jsMs": 0.89
  },
  "katu": {
-  "calls": 143,
+  "calls": 142,
   "maxCalls": 160,
-  "kverts": 435,
-  "maxKverts": 553,
-  "jsMs": 0.74
+  "kverts": 428,
+  "maxKverts": 545,
+  "jsMs": 0.75
  },
  "harju": {
   "calls": 175,
@@ -666,10 +666,10 @@
  },
  "quezaltepeque": {
   "calls": 229,
-  "maxCalls": 257,
-  "kverts": 618,
-  "maxKverts": 734,
-  "jsMs": 0.77
+  "maxCalls": 266,
+  "kverts": 645,
+  "maxKverts": 782,
+  "jsMs": 1.95
  },
  "aguascalientes": {
   "calls": 182,
