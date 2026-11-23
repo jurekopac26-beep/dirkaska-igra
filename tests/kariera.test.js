@@ -149,9 +149,10 @@ check('the racing cars and trucks on circuits', ['dirkalni', 'tovornjaki'].every
     && r.stopnja.zdaj === 2 && r.nagrade.some(x => x.id === 'pokal:' + e1[0].id && x.amount === Q[1]));
   r = K.poPokalu(r.career, e1[0].id, 1, P);
   check('the race won later: the difference to 3 stars', r.nagrade.length === 1 && r.nagrade[0].amount === Q[2] - Q[1] && r.zvezdice.prej === 2 && r.zvezdice.zdaj === 3);
-  const duel = K.poPokalu(r.career, e1[2].id, 2, P);
-  check('a duel lost: no star, nothing paid, the event still open', !duel.nagrade.length && duel.zvezdice.zdaj === 0
-    && K.stanje(duel.career.pot, P.vse.find(x => x.id === e1[2].id), P).stanje === 'odprt');
+  // (the first duel of the path, whatever its stage: with more tracks a stage's cups fill it and its single events are fewer, stage 1 may have none)
+  const d1 = P.posamezne.find(e => e.kind === 'dvoboj'), duel = K.poPokalu(r.career, d1.id, 2, P);
+  check('a duel lost: no star, nothing paid, the event not won', !duel.nagrade.length && duel.zvezdice.zdaj === 0
+    && K.stanje(duel.career.pot, P.vse.find(x => x.id === d1.id), P).stanje !== 'osvojen');
   check('the career passed in is not changed', c.pot.stopnja === 1 && !Object.keys(c.pot.pokali).length);
   const ev = { track: 'kildare', pos: 1, car: 'pico', cat: 'mali', km: 12 };
   let d = K.poDirki(K.novo(), ev, P);
