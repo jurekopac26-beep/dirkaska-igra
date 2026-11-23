@@ -427,11 +427,11 @@
   "jsMs": 0.67
  },
  "sacalobra": {
-  "calls": 223,
-  "maxCalls": 262,
-  "kverts": 530,
-  "maxKverts": 680,
-  "jsMs": 1.14
+  "calls": 225,
+  "maxCalls": 266,
+  "kverts": 540,
+  "maxKverts": 689,
+  "jsMs": 1.54
  },
  "kotor": {
   "calls": 205,
