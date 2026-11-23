@@ -472,8 +472,8 @@
   "calls": 159,
   "maxCalls": 192,
   "kverts": 320,
-  "maxKverts": 444,
-  "jsMs": 0.94
+  "maxKverts": 445,
+  "jsMs": 1.19
  },
  "santoantao": {
   "calls": 166,
