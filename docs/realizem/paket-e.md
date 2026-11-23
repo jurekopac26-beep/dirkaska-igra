@@ -274,12 +274,14 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
   | Savusavu | 166 → 167 | 194 | 384 → 388 | 482 |
   | Quezaltepeque | 228 → 230 | 257 → 261 | 609 → 610 | 720 → 737 |
   Meja je ~300 klicev risanja in ~900 tisoč oglišč. `perf.test.mjs` čez vse proge: OK 33/33, ostale proge so v mejah reference.
+  Po popravkih 23. 11. (`PERF_ONLY=koror,savusavu`, OK; reference zbirne veje #779 v `tests/golden/perf.json` ostanejo): Koror 146 klicev risanja (največ 166, enako) in 356 → 355 tisoč oglišč (največ 556 → 555 tisoč), Savusavu enako (169 klicev, največ 196; 398 tisoč oglišč, največ 491 tisoč). Svet (`tests/golden/world.json`, posodobljen samo za Koror in Savusavu): Koror 1789 → 1787 mrež, 826 924 → 825 429 oglišč, predmetov 71 → 72; Savusavu 1636 mrež (enako), 681 311 → 681 590 oglišč, primerkov 36 917 → 36 874.
 - **Kako se preveri:**
   - `node tests/browser/cesta.test.mjs` (blok 762b);
   - `WORLD_ONLY=koror,savusavu,quezaltepeque node tests/browser/world.test.mjs`;
   - `PERF_ONLY=koror,savusavu,quezaltepeque,spa node tests/browser/perf.test.mjs`;
   - `node tools/stamp.js --check`.
   Slike zdaj in potem (kamera za avtom) so na straneh: Koror 759 m in 1966 m, Savusavu 166 m in 1594 m, Quezaltepeque 1565 m in 2496 m. Stran z vprašanjem `e-proge-762b` (možnosti 1–3) je povezana v opisu PR #780.
+  Slike popravkov 23. 11. (`node tools/shot.mjs koror --m 759,1032,1966,2917 --lezece --pred a3319dfe`; zdaj je zbirna veja #779) so na isti strani, z drugim krogom vprašanja (povezava v opisu PR #1029). Na Savusavuju se konci cest s kamere za avtom ne vidijo ne prej ne potem (8 pogledov med 1500 m in 1670 m, največ 0,01 % razlike).
 - **Odprto:**
   1. PR #764 (569c) ureja isti priklop v `js/world-prelaz.js`. Gresta na `main` drug za drugim; ohrani se en priklop (klic `World.cesta.stranske` z `barva`).
   2. Seznam `PROGE` v `tools/cesta/izvoz.py` se prekriva s 569e in 569f. Ob sporu obdrži vse vnose.
