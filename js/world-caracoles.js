@@ -53,6 +53,9 @@
       if (V.sea === null) h = lerp(hr, f, sstep(1, 42, dd));
       else if (V.brS && V.brS[i]) h = lerp(hr, Math.min(f, V.sea - 2.2), sstep(1, 3, dd));   // (by the sea: under the bridge the sea floor right past the parapets,
       else h = lerp(hr, f, sstep(1, f < V.sea + 1 ? 7 : 42, dd)); } }                       //  beside a causeway a steep bank down into the water)
+    if (i >= 0 && dd > 4) { const W = API.vrWater(x, z);   // the Juncalillo's bed (def.riverBeds) cut into the road's blend too: the bed 3 m wider than the water each side
+      // (the 5 m terrain grid: a narrower cut would miss its vertices), a steep bank (1:1) up from it
+      if (W.L && W.L.pts && W.e > -14) { const e = W.e, bed = e > -3 ? W.h - 0.4 - 0.3 * Math.max(0, e + 3) : W.h - 3.4 - e; h = Math.min(h, lerp(h, bed, sstep(4, 8, dd))); } }
     const pads = API.VR.pads; for (let k = 0; k < pads.length; k++) { const p = pads[k], d = Math.hypot(x - p.x, z - p.z), pb = p.b || 12; if (d < p.r + pb) h = lerp(p.h, h, sstep(p.r, p.r + pb, d)); }   // level plots: the car parks, the named buildings
     for (const b of API.VR.gul) {   // the stream bed under the bridge (as vrH)
       if (i < 0 || Math.abs(i - b.i) * T.ds > b.half + 30) continue;
@@ -321,7 +324,17 @@
         for (let a = -56; a < 56; a += 4) { const P0 = (q, o) => [b.x + b.nx * q + b.tx * o, y, b.z + b.nz * q + b.tz * o];
           g.quadUp(P0(a, -hw), P0(a, hw), P0(a + 4, hw), P0(a + 4, -hw), [cw, cw, cw, cw], [[a / 14, 0], [a / 14, 0.3], [(a + 4) / 14, 0.3], [(a + 4) / 14, 0]]); }
         const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; root.add(m); out.dyn.water = tex.water; }
-      if (P.lakes.length) out.dyn.water = tex.water;
+      for (const R of P.rivers) {   // the Juncalillo beside the road (def.riverBeds, OSM): a ribbon at its level, shallow and warm grey at the banks (as world-gore.js)
+        const g = new GB(true), hw = R.w / 2, O = [-hw - 4, -hw * 0.5, 0, hw * 0.5, hw + 4], n = R.pts.length, uv = (q) => [q[0] / 14, -q[2] / 14], shal = [0.72, 0.62, 0.46], deep = [0.52, 0.47, 0.37];   // (glacier meltwater: grey, not blue)
+        const col = (o) => [0, 1, 2].map(k => lerp(shal[k], deep[k], sstep(1, 8, hw - Math.abs(o)))), row = (k) => { const p = R.pts[k], q = R.pts[Math.min(n - 1, k + 1)], r = R.pts[Math.max(0, k - 1)], tx = q[0] - r[0], tz = q[1] - r[1], l = Math.hypot(tx, tz) || 1;
+          return O.map(o => [p[0] - tz / l * o, R.h[k], p[1] + tx / l * o]); };
+        let A = row(0);
+        for (let k = 1; k < n; k++) { const B = row(k), p = R.pts[k];
+          if (API.vrDist(p[0], p[1]) < 420) for (let m = 0; m + 1 < O.length; m++) g.quadUp(A[m], A[m + 1], B[m + 1], B[m], [col(O[m]), col(O[m + 1]), col(O[m + 1]), col(O[m])], [uv(A[m]), uv(A[m + 1]), uv(B[m + 1]), uv(B[m])]);
+          A = B; }
+        if (!g.empty) { const m = new THREE.Mesh(g.geometry(), wMat); m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); root.add(m); }
+      }
+      if (P.lakes.length || P.rivers.length) out.dyn.water = tex.water;
     }
 
     /* ---- the road: asphalt with white edge lines and a double yellow centre line (no overtaking up the curves), a gravel shoulder, then the verge
