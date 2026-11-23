@@ -48,6 +48,8 @@ try {
   for (let k = 0; k < 40; k++) { const r = await page.evaluate(() => { const R = window.__game.race; return R.state === 'racing' ? R.time : -1; }); if (r >= 35) break; await sim(3); }
   const wx = () => page.evaluate(() => { const r = window.__game.race; return { t: r.time, rain: r.rain, water: r.wst.water, line: r.wst.line, rp: !!window.__game.replay }; });
   const w0 = await wx();
+  const hw = await page.evaluate(async () => { const r = await Napake.rrp.pisi(); return r ? (await Napake.rrp.beri(r.blob)).H.wx : null; });
+  T.check('the file\'s header: the weather at the start and the shower (suho,ploha), not the rain at its end', /^suho,ploha(,|$)/.test(hw || ''), String(hw));
   await act('rp-here'); await page.waitForTimeout(300);
   const at = async (t) => { await page.evaluate((t) => window.__game.rpSeek(t), t); await page.waitForTimeout(250); return wx(); };
   const a = await at(2), b = await at(30);

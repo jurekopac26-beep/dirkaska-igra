@@ -1208,7 +1208,12 @@ const altSpan = (d) => [Math.min(d.alt[0], d.alt[1]), Math.max(d.alt[0], d.alt[1
     if (recd && recd.file) { const H = recd.file; return { ver: H.ver, track: H.track, name: H.name, mode: H.mode, wx: H.wx, laps: H.laps, dev: H.dev, file: H.ime || '' }; }   // (an opened file: the race as it was driven, its device)
     const e = document.querySelector('script[src^="js/game.js"]'), m = e && /[?&]v=(\w+)/.exec(e.getAttribute('src')), d = track.def;
     const how = [modeOf(d)].concat(race.quali ? ['kvalifikacije'] : [], race.champ ? ['prvenstvo'] : [], inCareer() ? ['kariera'] : [], race.chal ? ['izziv'] : [], school ? ['sola'] : []);
-    return { ver: m ? m[1] : 'lokalno', track: d.id, name: d.name, mode: how.join('+'), wx: (race.rain ? 'dez' : 'suho') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+    const P = race.wst && race.wst.plan, r0 = rpRain0();   // (a changing day: the weather at the start, ',ploha' after it; the end's is in wxr)
+    return { ver: m ? m[1] : 'lokalno', track: d.id, name: d.name, mode: how.join('+'), wx: (r0 ? 'dez' : 'suho') + (P && P.length ? ',ploha' : '') + (S.tod && S.tod !== 'day' ? ',' + S.tod : ''), laps: track.open ? 1 : race.laps || 1 };
+  }
+  // the rain at the race's start: a changing day's (Race wst.plan) first point's r0, else the race's own
+  function rpRain0() {
+    const P = race.wst && race.wst.plan; return P && P.length ? P[0].r0 || 0 : race.rain || 0;
   }
   function rpMap() {   // the track's line for the picture's map (at most about 600 points), its start
     const T = track, st = Math.max(1, Math.floor(T.N / 600)), pts = [];
