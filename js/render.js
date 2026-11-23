@@ -8677,7 +8677,7 @@ const Render = (function () {
   function xRearDoor(v, c, sd, x, y, z, h) {
     const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return; (K.xRD || (K.xRD = [0, 0]))[si] = 1;
     const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
-    if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0]) return;
+    if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0] || U.ranges[sd < 0 ? 'door2L' : 'door2R']) return;   // (a car with its own rear doors, parts door2L / door2R: they open as parts, the quarter stays)
     const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
     let hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]);
     const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.3)) return;
