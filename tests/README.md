@@ -30,7 +30,13 @@ node tests/run.js node --quiet                 # tih izpis: napake padlih testov
 `main`, z neshranjenimi in novimi datotekami; pred tem `git fetch origin main`): test z istim imenom ali delom imena (`js/tracks/spa.js`,
 `docs/proge/medvode.md` → `medvode`, `medvode-props`, `browser/medvode-castle` …; `js/world-montreal.js` → `montreal`, `world`), spremenjen
 test sam in teste iz kratkega seznama `RELATED` v `tests/run.js` za velike skupne datoteke (`js/core.js`, `js/game.js`, `js/render.js` …).
-`--quiet` ne izpiše ničesar za uspešen test; za padlega izpiše vrstice FAIL in zadnje vrstice (sled sklada), na koncu povzetek.
+`--quiet` ne izpiše ničesar za uspešen test; za padlega izpiše vrstice FAIL in zadnje vrstice (sled sklada), na koncu povzetek. Vsak test se
+sproti izpiše, ko konča (`OK   [5/27] golden.test.js (412 s)`), in vsako minuto brez izpisa vrstica s testi, ki še tečejo, in njihovim
+časom (`TEST_UTRIP=<s>`, 0 = nikoli), tako da se viseč test vidi pred mejo. Doma teče več testov hkrati (`TEST_JOBS`, privzeto pol
+procesorjev; od tega brskalniških `TEST_BROWSER_JOBS`, privzeto 1; na GitHubu po en); vsak test v svoji skupini procesov, ustavljen test
+zapre tudi svoj brskalnik. Ustavljen krog (Ctrl+C, seji poteče ukaz) izpiše povzetek tega, kar je končalo. V seji: `npm run test:related`
+v ozadju (`run_in_background`, meja do 2 h), izpis sproti v datoteko.
+
 
 **Hiter vstop** (za teste in orodja): naslov `index.html?proga=<id>&nacin=<način>&t=<s>&vreme=suho|dez&avto=<id>&seme=<n>&tekmeci=<n>&lod=0|1` odpre igro naravnost
 na dirki (brez menija, preleta in kvalifikacij). `nacin`: `dirka`, `kronometer`, `promet`, `policija`, `neskoncno` (ali `race`, `tt`, `traffic`,
@@ -123,8 +129,8 @@ ima tako `world` 45 min, `gfx` 49 min, `perf` 124 min, `memory` 177 min.
 Brskalniški testi na GitHubu tečejo na šestih strojih hkrati (posli »Igra v brskalniku (1/6)« do »(6/6)«, vsak do 160 minut, več kot omejitev testa pomnilnika in ostalih testov v njegovem delu),
 posel »Igra v brskalniku« pa je zelen, ko so zeleni vsi deli. `tests/run.js --shard k/6` razdeli teste po tem, koliko časa traja
 vsak na GitHubu (tabela `SECS` v `tests/run.js`; test, ki ga ni v tabeli, šteje 60 s): najdaljši najprej, vsak v del, ki ima do tedaj
-najmanj časa. Po medianah 6 krogov 5. 11. 2026 (vsak čas preračunan na stroj srednje hitrosti) traja vsak del ~61 min, memory je sam v
-svojem delu; GitHubovi stroji so 0,5- do 1,35-krat tako hitri, zato najdaljši del traja ~65–85 min (celoten nabor na enem stroju bi
+najmanj časa. Po celotnem krogu na `main` 22. 11. 2026 (68 pravih prog, `docs/krog-testov.md`, »Osvežitev `SECS`«) traja vsak del ~105 min, memory in memory2
+sta vsak v svojem delu le s kratkimi testi; GitHubovi stroji niso enako hitri, zato del traja ~95–120 min (meja posla 160 min) (celoten nabor na enem stroju bi
 trajal ~6 h). Ko se kak test zelo podaljša (smoke, memory, perf, gfx in world z vsako progo), popravi njegov čas v `SECS` po povzetkih
 zadnjih krogov (postopek v `docs/krog-testov.md`), da ostanejo deli enako dolgi.
 

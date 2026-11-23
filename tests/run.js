@@ -15,12 +15,12 @@
 //                 related tests and the tests over every track (PO_PROGAH) only on them (PROGE), testne-proge.test.js always
 //   node tests/run.js --vzrok --od <sha> --padli <file>   the pull requests merged into main since that commit (the last green nightly
 //                 round) that changed what the failed tests (their names in the file) test: GitHub's job Vzrok after a red nightly round
-//   --quiet   only the failures (a failed test's FAIL lines and its last lines) and the summary
+//   --quiet   only the failures (a failed test's FAIL lines and its last lines), one progress line for each test, and the summary
 // A test that runs longer than TEST_TIMEOUT_MIN minutes (default 15), or than TEST_SLOW (default 4) times its usual time on GitHub (SECS)
 // if that is longer, is stopped and counted as failed, so a hung test still ends with the summary (LIMIT_OF). TEST_PADLI=<file>: the
 // failed tests' names are added to it, one a line (GitHub: for the job Vzrok).
 'use strict';
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 
 const SUITES = {
@@ -28,48 +28,56 @@ const SUITES = {
   fleet: ['kit.test.js', 'deli.test.js', 'videz.test.js', 'deli-barve.test.js', 'deli-pregled.test.js', 'fleet.test.js', 'cisterna.test.js', 'zrcalni.test.js', 'rezervna-kolesa.test.js', 'browser/fleet.test.mjs', 'browser/cisterna.test.mjs', 'browser/zrcalni.test.mjs', 'browser/rezervna-kolesa.test.mjs', 'browser/kit.test.mjs', 'browser/cars-ui.test.mjs', 'browser/deli-barve.test.mjs', 'browser/maketa-delov.test.mjs'],
   browser: ['browser/garage.test.mjs', 'browser/smoke.test.mjs', 'browser/smoke2.test.mjs', 'browser/zivali.test.mjs', 'browser/zastave.test.mjs', 'browser/cesta.test.mjs', 'browser/zaslon.test.mjs', 'browser/ljudje.test.mjs', 'browser/repro.test.mjs', 'browser/flystart.test.mjs', 'browser/startcam.test.mjs', 'browser/newver.test.mjs', 'browser/nvschool.test.mjs', 'browser/nvheli.test.mjs', 'browser/nvride.test.mjs', 'browser/nvfair.test.mjs', 'browser/nvwater.test.mjs', 'browser/app.test.mjs', 'browser/crash.test.mjs', 'browser/padec.test.mjs', 'browser/nova.test.mjs', 'browser/kolibri.test.mjs', 'browser/kolibri-hud.test.mjs', 'browser/wheels.test.mjs', 'browser/world.test.mjs', 'browser/world2.test.mjs', 'browser/pits.test.mjs', 'browser/pitjoin.test.mjs', 'browser/pitkit.test.mjs', 'browser/tyrebands.test.mjs', 'browser/garages.test.mjs', 'browser/crew.test.mjs', 'browser/pitstop.test.mjs', 'browser/forecast.test.mjs', 'browser/voices.test.mjs', 'browser/repair.test.mjs', 'browser/carcull.test.mjs', 'browser/champ.test.mjs', 'browser/quali.test.mjs', 'browser/weather.test.mjs', 'browser/marbles.test.mjs', 'browser/zgumirana-linija.test.mjs', 'browser/wear.test.mjs', 'browser/flags.test.mjs', 'browser/redflag.test.mjs', 'browser/career.test.mjs', 'browser/kariera-pot.test.mjs', 'browser/replay.test.mjs', 'browser/atmos.test.mjs', 'browser/vecer.test.mjs', 'browser/sound.test.mjs', 'browser/okolje.test.mjs', 'browser/fire.test.mjs', 'browser/gfx.test.mjs', 'browser/gfx2.test.mjs', 'browser/look.test.mjs', 'browser/look2.test.mjs', 'browser/carlow.test.mjs', 'browser/camtilt.test.mjs', 'browser/camshake.test.mjs', 'browser/pad.test.mjs', 'browser/memory.test.mjs', 'browser/memory2.test.mjs', 'browser/perf.test.mjs', 'browser/online.test.mjs', 'browser/online4.test.mjs', 'browser/medvode-castle.test.mjs', 'browser/medvode-fence.test.mjs', 'browser/medvode-net.test.mjs', 'browser/medvode-props.test.mjs', 'browser/lang.test.mjs', 'browser/menu.test.mjs', 'browser/darktip.test.mjs', 'browser/saver.test.mjs', 'browser/ostrenje.test.mjs', 'browser/tower.test.mjs', 'browser/share.test.mjs', 'browser/shramba.test.mjs', 'browser/lestvica.test.mjs', 'browser/prvi.test.mjs', 'browser/sledi.test.mjs', 'browser/denarnica.test.mjs', 'browser/denar.test.mjs', 'browser/tester.test.mjs', 'browser/sky.test.mjs', 'browser/pitlights.test.mjs', 'browser/pitrain.test.mjs', 'browser/fuel.test.mjs', 'browser/rivals.test.mjs', 'browser/school.test.mjs', 'browser/slip.test.mjs', 'browser/faults.test.mjs', 'browser/radio.test.mjs', 'browser/boxwarn.test.mjs', 'browser/aipits.test.mjs', 'browser/pitswing.test.mjs', 'browser/pitfight.test.mjs', 'browser/pitexit.test.mjs', 'browser/chal.test.mjs', 'browser/onchamp.test.mjs', 'browser/hlvid.test.mjs', 'browser/ctrl.test.mjs', 'browser/rio.test.mjs', 'browser/townsville.test.mjs', 'browser/hakone.test.mjs', 'browser/start.test.mjs', 'browser/hudcol.test.mjs', 'browser/hud.test.mjs', 'browser/notes.test.mjs', 'browser/sovoznik.test.mjs', 'browser/kerb.test.mjs', 'browser/marks.test.mjs', 'browser/boards.test.mjs', 'browser/covers.test.mjs', 'browser/roadside.test.mjs', 'browser/quick.test.mjs', 'browser/seams.test.mjs', 'browser/napake.test.mjs', 'browser/napake-slika.test.mjs', 'browser/napake-seznami.test.mjs', 'browser/napake-zastavice.test.mjs', 'browser/pitsound.test.mjs', 'browser/haptics.test.mjs', 'browser/pitreplay.test.mjs', 'browser/pitcam.test.mjs', 'browser/pauseinfo.test.mjs', 'browser/pitout.test.mjs', 'browser/pitahead.test.mjs', 'browser/pitstats.test.mjs', 'browser/napake-samodejno.test.mjs', 'browser/napake-posnetek.test.mjs', 'browser/napake-zadnji.test.mjs', 'browser/missions.test.mjs', 'browser/m06.test.mjs', 'browser/m01.test.mjs', 'browser/m49.test.mjs', 'browser/m47.test.mjs', 'browser/m46.test.mjs', 'browser/m19.test.mjs', 'browser/m35.test.mjs', 'browser/m37.test.mjs', 'browser/m48.test.mjs', 'browser/m30.test.mjs', 'browser/m33.test.mjs', 'browser/m53.test.mjs', 'browser/m07.test.mjs', 'browser/m09.test.mjs', 'browser/m43.test.mjs', 'browser/m51.test.mjs', 'browser/m52.test.mjs', 'browser/m54.test.mjs', 'browser/m39.test.mjs', 'browser/m50.test.mjs', 'browser/m34.test.mjs', 'browser/m55.test.mjs', 'browser/m10.test.mjs', 'browser/m02.test.mjs', 'browser/m04.test.mjs', 'browser/m08.test.mjs', 'browser/m17.test.mjs', 'browser/m26.test.mjs', 'browser/m11.test.mjs', 'browser/m23.test.mjs', 'browser/m29.test.mjs', 'browser/m40.test.mjs', 'browser/m45.test.mjs', 'browser/zabava.test.mjs', 'browser/neskoncna.test.mjs', 'browser/drag.test.mjs', 'browser/ngorongoro.test.mjs'],
 };
-// How long each browser test takes on GitHub (seconds: the median of 6 runs' summaries, 5. 11. 2026, runs 1229-1246, 3 of main and 3 of pull
-// requests, each time scaled to a machine of median speed: GitHub's machines differ, one job's tests all take 0.5 to 1.35 times as long;
-// ~61 min a share of 6, memory alone in one): --shard deals the tests out by it, and a test's time limit grows with it (LIMIT_OF). Update it
-// from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not listed counts as DEF_SECS
+// How long each browser test takes on GitHub (seconds: the summaries of the full round 22. 11. 2026 on main, run 44994892896, 68 real tracks,
+// all 169 tests; the six jobs took 97-119 min, so the old times of 5. 11. were too short for many tests: garage, garages, crash, pitstats ...):
+// --shard deals the tests out by it (memory and memory2 each in a share with only short tests besides), and a test's time limit grows with
+// it (LIMIT_OF). Update it from the summaries when a test grows a lot (smoke, memory, perf, gfx and world grow with every track); a test not
+// listed counts as DEF_SECS
 const SECS = {
-  'browser/memory.test.mjs': 3000, 'browser/memory2.test.mjs': 2800, 'browser/perf.test.mjs': 2034, 'browser/smoke.test.mjs': 1900, 'browser/smoke2.test.mjs': 1900, 'browser/crash.test.mjs': 1030,
-  'browser/world.test.mjs': 950, 'browser/world2.test.mjs': 930, 'browser/gfx.test.mjs': 1000, 'browser/gfx2.test.mjs': 960, 'browser/menu.test.mjs': 759, 'browser/covers.test.mjs': 558,
-  'browser/garage.test.mjs': 527, 'browser/online.test.mjs': 335, 'browser/marks.test.mjs': 319, 'browser/kolibri.test.mjs': 308,
-  'browser/hudcol.test.mjs': 296, 'browser/online4.test.mjs': 286, 'browser/kerb.test.mjs': 269, 'browser/notes.test.mjs': 247,
-  'browser/nova.test.mjs': 245, 'browser/sovoznik.test.mjs': 390, 'browser/carlow.test.mjs': 225, 'browser/lestvica.test.mjs': 221, 'browser/startcam.test.mjs': 210, 'browser/pits.test.mjs': 206,
-  'browser/school.test.mjs': 190, 'browser/onchamp.test.mjs': 189, 'browser/radio.test.mjs': 185, 'browser/look.test.mjs': 182,
-  'browser/share.test.mjs': 177, 'browser/ljudje.test.mjs': 176, 'browser/sledi.test.mjs': 164, 'browser/look2.test.mjs': 163,
-  'browser/prvi.test.mjs': 160, 'browser/wheels.test.mjs': 150, 'browser/roadside.test.mjs': 146, 'browser/app.test.mjs': 142,
-  'browser/quali.test.mjs': 141, 'browser/sound.test.mjs': 134, 'browser/okolje.test.mjs': 560, 'browser/chal.test.mjs': 134, 'browser/flystart.test.mjs': 132,
-  'browser/sky.test.mjs': 128, 'browser/napake-zadnji.test.mjs': 125, 'browser/napake-seznami.test.mjs': 125, 'browser/replay.test.mjs': 122, 'browser/medvode-fence.test.mjs': 121,
-  'browser/newver.test.mjs': 120, 'browser/pad.test.mjs': 119, 'browser/repair.test.mjs': 113, 'browser/nvschool.test.mjs': 111,
-  'browser/fuel.test.mjs': 111, 'browser/napake-slika.test.mjs': 107, 'browser/slip.test.mjs': 98, 'browser/rio.test.mjs': 98,
-  'browser/ctrl.test.mjs': 97, 'browser/flags.test.mjs': 89, 'browser/zivali.test.mjs': 86, 'browser/zaslon.test.mjs': 150, 'browser/weather.test.mjs': 78,
-  'browser/darktip.test.mjs': 78, 'browser/seams.test.mjs': 76, 'browser/napake.test.mjs': 75, 'browser/hlvid.test.mjs': 73,
-  'browser/nvheli.test.mjs': 72, 'browser/repro.test.mjs': 71, 'browser/carcull.test.mjs': 71, 'browser/start.test.mjs': 68,
-  'browser/napake-posnetek.test.mjs': 62, 'browser/ostrenje.test.mjs': 60, 'browser/shramba.test.mjs': 60, 'browser/camtilt.test.mjs': 59,
-  'browser/career.test.mjs': 58, 'browser/kariera-pot.test.mjs': 20, 'browser/atmos.test.mjs': 55, 'browser/camshake.test.mjs': 54, 'browser/denarnica.test.mjs': 53, 'browser/denar.test.mjs': 62,
-  'browser/champ.test.mjs': 51, 'browser/nvride.test.mjs': 50, 'browser/nvwater.test.mjs': 90, 'browser/boards.test.mjs': 50, 'browser/lang.test.mjs': 49,
-  'browser/medvode-castle.test.mjs': 48, 'browser/rivals.test.mjs': 48, 'browser/faults.test.mjs': 48, 'browser/napake-samodejno.test.mjs': 48,
-  'browser/quick.test.mjs': 47, 'browser/missions.test.mjs': 47, 'browser/saver.test.mjs': 46, 'browser/napake-zastavice.test.mjs': 46,
-  'browser/hud.test.mjs': 42, 'browser/medvode-props.test.mjs': 41, 'browser/fire.test.mjs': 40, 'browser/tower.test.mjs': 35,
-  'browser/townsville.test.mjs': 31, 'browser/hakone.test.mjs': 60, 'browser/m30.test.mjs': 28, 'browser/m09.test.mjs': 28, 'browser/m26.test.mjs': 27,
-  'browser/m43.test.mjs': 26, 'browser/m39.test.mjs': 26, 'browser/m06.test.mjs': 25, 'browser/m33.test.mjs': 25,
-  'browser/m53.test.mjs': 25, 'browser/m52.test.mjs': 25, 'browser/m50.test.mjs': 25, 'browser/m35.test.mjs': 24,
-  'browser/m48.test.mjs': 24, 'browser/m02.test.mjs': 24, 'browser/m04.test.mjs': 24, 'browser/m08.test.mjs': 24,
-  'browser/m01.test.mjs': 23, 'browser/m47.test.mjs': 23, 'browser/m37.test.mjs': 23, 'browser/m54.test.mjs': 22,
-  'browser/m49.test.mjs': 21, 'browser/m07.test.mjs': 21, 'browser/m51.test.mjs': 21, 'browser/m55.test.mjs': 21,
-  'browser/m10.test.mjs': 21, 'browser/m17.test.mjs': 21, 'browser/m46.test.mjs': 20, 'browser/m34.test.mjs': 20,
-  'browser/m19.test.mjs': 18,
-  'browser/pitlights.test.mjs': 120, 'browser/pitrain.test.mjs': 150, 'browser/pitjoin.test.mjs': 420, 'browser/garages.test.mjs': 120,
-  'browser/pitkit.test.mjs': 200, 'browser/crew.test.mjs': 150, 'browser/pitcam.test.mjs': 340, 'browser/pauseinfo.test.mjs': 150,
-  'browser/pitout.test.mjs': 60, 'browser/boxwarn.test.mjs': 120, 'browser/pitswing.test.mjs': 75, 'browser/pitfight.test.mjs': 120,
-  'browser/pitexit.test.mjs': 100, 'browser/voices.test.mjs': 120, 'browser/redflag.test.mjs': 200,
-  // (the pits tests of #284, from its run on 4. 11. 2026)
-  'browser/m11.test.mjs': 30, 'browser/m23.test.mjs': 25, 'browser/m29.test.mjs': 25, 'browser/m40.test.mjs': 25, 'browser/m45.test.mjs': 25,
-  'browser/drag.test.mjs': 110,   // (the drag race, docs/drag-dirka.md: 77 s on 8. 11. 2026 here, three pages)
-  'browser/zgumirana-linija.test.mjs': 300,   // (the rubbered-in line by the player's driving, docs/zgumirana-linija.md: 214 s on 15. 11. 2026 here, six tracks)
+  'browser/memory.test.mjs': 3187, 'browser/memory2.test.mjs': 2953, 'browser/crash.test.mjs': 2717, 'browser/perf.test.mjs': 2505,
+  'browser/smoke2.test.mjs': 1544, 'browser/smoke.test.mjs': 1348, 'browser/menu.test.mjs': 1267, 'browser/garage.test.mjs': 1021,
+  'browser/gfx.test.mjs': 942, 'browser/world2.test.mjs': 893, 'browser/world.test.mjs': 885, 'browser/gfx2.test.mjs': 830,
+  'browser/garages.test.mjs': 626, 'browser/pitstats.test.mjs': 528, 'browser/crew.test.mjs': 511, 'browser/covers.test.mjs': 496,
+  'browser/okolje.test.mjs': 489, 'browser/pitcam.test.mjs': 455, 'browser/pitkit.test.mjs': 418, 'browser/hudcol.test.mjs': 370,
+  'browser/sovoznik.test.mjs': 340, 'browser/pauseinfo.test.mjs': 321, 'browser/cesta.test.mjs': 318, 'browser/kolibri.test.mjs': 317,
+  'browser/notes.test.mjs': 310, 'browser/online.test.mjs': 267, 'browser/lestvica.test.mjs': 266, 'browser/nova.test.mjs': 255,
+  'browser/pitahead.test.mjs': 242, 'browser/zaslon.test.mjs': 239, 'browser/pitreplay.test.mjs': 231, 'browser/carlow.test.mjs': 230,
+  'browser/online4.test.mjs': 229, 'browser/startcam.test.mjs': 226, 'browser/kerb.test.mjs': 222, 'browser/zastave.test.mjs': 217,
+  'browser/look.test.mjs': 213, 'browser/pitjoin.test.mjs': 201, 'browser/marks.test.mjs': 198, 'browser/radio.test.mjs': 196,
+  'browser/quali.test.mjs': 185, 'browser/look2.test.mjs': 182, 'browser/onchamp.test.mjs': 178, 'browser/school.test.mjs': 175,
+  'browser/ljudje.test.mjs': 162, 'browser/pitrain.test.mjs': 153, 'browser/tester.test.mjs': 153, 'browser/pad.test.mjs': 150,
+  'browser/sound.test.mjs': 148, 'browser/flystart.test.mjs': 147, 'browser/sledi.test.mjs': 146, 'browser/app.test.mjs': 145,
+  'browser/share.test.mjs': 144, 'browser/pits.test.mjs': 142, 'browser/sky.test.mjs': 137, 'browser/replay.test.mjs': 136,
+  'browser/zgumirana-linija.test.mjs': 133, 'browser/darktip.test.mjs': 132, 'browser/medvode-fence.test.mjs': 131,
+  'browser/chal.test.mjs': 126, 'browser/wheels.test.mjs': 123, 'browser/napake-zadnji.test.mjs': 123, 'browser/redflag.test.mjs': 123,
+  'browser/weather.test.mjs': 119, 'browser/neskoncna.test.mjs': 117, 'browser/zabava.test.mjs': 115, 'browser/prvi.test.mjs': 111,
+  'browser/repair.test.mjs': 110, 'browser/denarnica.test.mjs': 108, 'browser/ctrl.test.mjs': 108, 'browser/flags.test.mjs': 106,
+  'browser/boxwarn.test.mjs': 104, 'browser/seams.test.mjs': 103, 'browser/medvode-net.test.mjs': 102, 'browser/fuel.test.mjs': 101,
+  'browser/pitlights.test.mjs': 98, 'browser/kolibri-hud.test.mjs': 97, 'browser/roadside.test.mjs': 97, 'browser/slip.test.mjs': 96,
+  'browser/nvschool.test.mjs': 96, 'browser/newver.test.mjs': 86, 'browser/start.test.mjs': 85, 'browser/zivali.test.mjs': 85,
+  'browser/marbles.test.mjs': 84, 'browser/carcull.test.mjs': 76, 'browser/napake-slika.test.mjs': 74, 'browser/voices.test.mjs': 74,
+  'browser/faults.test.mjs': 73, 'browser/atmos.test.mjs': 71, 'browser/career.test.mjs': 71, 'browser/hlvid.test.mjs': 69,
+  'browser/rio.test.mjs': 69, 'browser/napake.test.mjs': 69, 'browser/napake-seznami.test.mjs': 64, 'browser/camtilt.test.mjs': 63,
+  'browser/tyrebands.test.mjs': 61, 'browser/forecast.test.mjs': 61, 'browser/nvfair.test.mjs': 60, 'browser/camshake.test.mjs': 58,
+  'browser/repro.test.mjs': 58, 'browser/wear.test.mjs': 57, 'browser/quick.test.mjs': 55, 'browser/lang.test.mjs': 54,
+  'browser/napake-posnetek.test.mjs': 53, 'browser/shramba.test.mjs': 52, 'browser/rivals.test.mjs': 52, 'browser/boards.test.mjs': 52,
+  'browser/medvode-castle.test.mjs': 51, 'browser/pitexit.test.mjs': 51, 'browser/medvode-props.test.mjs': 50,
+  'browser/pitswing.test.mjs': 50, 'browser/drag.test.mjs': 50, 'browser/denar.test.mjs': 50, 'browser/nvheli.test.mjs': 50,
+  'browser/saver.test.mjs': 48, 'browser/fire.test.mjs': 47, 'browser/hud.test.mjs': 47, 'browser/napake-samodejno.test.mjs': 46,
+  'browser/ostrenje.test.mjs': 44, 'browser/hakone.test.mjs': 43, 'browser/pitstop.test.mjs': 43, 'browser/pitsound.test.mjs': 43,
+  'browser/aipits.test.mjs': 43, 'browser/m29.test.mjs': 42, 'browser/vecer.test.mjs': 39, 'browser/napake-zastavice.test.mjs': 39,
+  'browser/pitout.test.mjs': 39, 'browser/nvride.test.mjs': 38, 'browser/m40.test.mjs': 38, 'browser/missions.test.mjs': 36,
+  'browser/nvwater.test.mjs': 36, 'browser/tower.test.mjs': 36, 'browser/townsville.test.mjs': 36, 'browser/champ.test.mjs': 35,
+  'browser/haptics.test.mjs': 31, 'browser/pitfight.test.mjs': 29, 'browser/padec.test.mjs': 25, 'browser/m39.test.mjs': 24,
+  'browser/ngorongoro.test.mjs': 22, 'browser/m09.test.mjs': 21, 'browser/m02.test.mjs': 21, 'browser/m30.test.mjs': 20,
+  'browser/m04.test.mjs': 20, 'browser/m17.test.mjs': 20, 'browser/m50.test.mjs': 19, 'browser/m26.test.mjs': 19,
+  'browser/m53.test.mjs': 19, 'browser/m34.test.mjs': 19, 'browser/m52.test.mjs': 19, 'browser/m33.test.mjs': 19,
+  'browser/m06.test.mjs': 18, 'browser/m48.test.mjs': 18, 'browser/m01.test.mjs': 18, 'browser/m35.test.mjs': 18,
+  'browser/m43.test.mjs': 18, 'browser/m51.test.mjs': 18, 'browser/m08.test.mjs': 18, 'browser/m07.test.mjs': 17,
+  'browser/m47.test.mjs': 17, 'browser/m55.test.mjs': 17, 'browser/m54.test.mjs': 17, 'browser/m11.test.mjs': 16,
+  'browser/m45.test.mjs': 16, 'browser/m23.test.mjs': 16, 'browser/m49.test.mjs': 15, 'browser/m46.test.mjs': 15,
+  'browser/m37.test.mjs': 15, 'browser/m10.test.mjs': 15, 'browser/m19.test.mjs': 13,
+  'browser/kariera-pot.test.mjs': 20,   // (from main: not in the round of 22. 11.)
 };
 // The tests that go over every real track (trackIds: tests/lib/sim.js, tests/browser/lib.mjs): in the short round only over its tracks
 // (PROGE). Every test that calls trackIds is here (tests/shards.test.js checks). PROGA_SECS: [s besides the tracks, s a track] on GitHub, for
@@ -304,23 +312,87 @@ const LIMIT = (+process.env.TEST_TIMEOUT_MIN || 15) * 60000;
 // e.g. world and gfx ~25-30 min; GitHub's browser tests 2, tests.yml), so a long test is not stopped only because the machine is slow
 const SLOW = +process.env.TEST_SLOW || 4;
 const LIMIT_OF = (f) => Math.round(Math.max((/memory2?\.test/.test(f) ? 3 : /smoke2?\.test|perf\.test|browser\/fleet\.test|browser\/garage\.test/.test(f) ? 2 : 1) * LIMIT, SLOW * secs(f) * 1000) / 60000) * 60000;   // (the memory test: three times; in whole minutes)
+// How many tests at once (22. 11. 2026, »npm run test:related se obesi«: one after another a session's 59 related tests took 48 min, longer
+// than its command may run, and --quiet printed nothing before the end, so it was stopped with no word of what failed): TEST_JOBS (default:
+// half the processors, at least 1; on GitHub 1, its shares are timed one after another, SECS), of them at most TEST_BROWSER_JOBS browser
+// tests (default 1: each draws with software WebGL on several threads). Each test still in its own process, its output kept and printed
+// whole when it ends (one at a time: straight through, as before)
+const JOBS = Math.max(1, Math.floor(+process.env.TEST_JOBS || (process.env.GITHUB_ACTIONS ? 1 : require('os').cpus().length / 2)));
+const BROWSER_JOBS = Math.max(1, Math.min(JOBS, Math.floor(+process.env.TEST_BROWSER_JOBS || 1)));
+// every minute without a word, the tests still running and how long (a hung one is seen before its limit); TEST_UTRIP: s, 0 = never
+const BEAT = (process.env.TEST_UTRIP != null ? +process.env.TEST_UTRIP : 60) * 1000;
 
-const results = [];
-for (const f of list) {
-  const t0 = Date.now();
-  if (!opt.quiet) console.log(`\n### ${f}`);
-  const r = spawnSync(process.execPath, [path.join(__dirname, f)], { stdio: opt.quiet ? ['ignore', 'pipe', 'pipe'] : 'inherit', encoding: 'utf8', maxBuffer: 512 * 1024 * 1024, timeout: LIMIT_OF(f), killSignal: 'SIGKILL' });
-  const timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
-  if (opt.quiet && r.status !== 0) {   // (quiet: a failed test's FAIL lines and its last lines, a stack trace among them)
-    const out = ((r.stdout || '') + '\n' + (r.stderr || '')).split('\n').filter(l => l.trim() && !/^OK\b/.test(l)), fails = out.filter(l => /\bFAIL\b/.test(l));
-    console.log(`\n### ${f}`); for (const l of [...new Set([...fails.slice(0, 40), ...out.slice(-15)])]) console.log(l);
-  }
-  if (timedOut) console.log(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN, TEST_SLOW)`);
-  results.push({ f, ok: r.status === 0, s: ((Date.now() - t0) / 1000).toFixed(0), timedOut });
-  if (r.status !== 0 && process.env.GITHUB_ACTIONS) console.log(`::error title=${f}::${timedOut ? `stopped after ${LIMIT_OF(f) / 60000} min` : `exit ${r.status != null ? r.status : r.signal}`} (${((Date.now() - t0) / 1000).toFixed(0)} s)`);   // (on GitHub: an annotation of the check run, readable where the job's log is not)
+const results = new Array(list.length), running = new Map(), t00 = Date.now();
+let lastWord = Date.now(), done = 0;
+const say = (s) => { process.stdout.write(s + '\n'); lastWord = Date.now(); };
+const sec = (t) => ((Date.now() - t) / 1000).toFixed(0);
+// a test runs in its own process group (detached), so a stopped test takes its browser and the browser's helpers with it: none is left
+// holding the output pipe or the processors (a test killed alone left Chromium running, the next tests slower)
+const killGroup = (ch) => { try { process.kill(-ch.pid, 'SIGKILL'); } catch (e) { try { ch.kill('SIGKILL'); } catch (e2) { /* gone */ } } };
+function run(i) {
+  const f = list[i], t0 = Date.now(), live = JOBS === 1 && !opt.quiet, out = [];
+  if (live) say(`\n### ${f}`);
+  return new Promise((resolve) => {
+    const ch = spawn(process.execPath, [path.join(__dirname, f)], { stdio: live ? ['ignore', 'inherit', 'inherit'] : ['ignore', 'pipe', 'pipe'], detached: true });
+    running.set(f, { ch, t0 });
+    if (!live) { ch.stdout.on('data', d => out.push(d)); ch.stderr.on('data', d => out.push(d)); }
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; killGroup(ch); }, LIMIT_OF(f));
+    ch.on('error', (e) => out.push(Buffer.from(`\n${e.message}\n`)));
+    ch.on('close', (code, signal) => {
+      clearTimeout(timer); running.delete(f); killGroup(ch);   // (and what it left behind)
+      const ok = code === 0 && !timedOut, s = sec(t0), text = Buffer.concat(out).toString('utf8');
+      done++;
+      if (!live && !opt.quiet) say(`\n### ${f}\n${text.replace(/\n$/, '')}`);
+      if (opt.quiet && !ok) {   // (quiet: a failed test's FAIL lines and its last lines, a stack trace among them)
+        const lines = text.split('\n').filter(l => l.trim() && !/^OK\b/.test(l)), fails = lines.filter(l => /\bFAIL\b/.test(l));
+        say(`\n### ${f}`); for (const l of [...new Set([...fails.slice(0, 40), ...lines.slice(-15)])]) say(l);
+      }
+      if (timedOut) say(`FAIL ${f}: stopped after ${LIMIT_OF(f) / 60000} min (TEST_TIMEOUT_MIN, TEST_SLOW)`);
+      if (opt.quiet || !live) say(`${ok ? 'OK  ' : 'FAIL'} [${done}/${list.length}] ${f} (${s} s)`);   // (each test as it ends, not only at the end)
+      results[i] = { f, ok, s, timedOut };
+      if (!ok && process.env.GITHUB_ACTIONS) say(`::error title=${f}::${timedOut ? `stopped after ${LIMIT_OF(f) / 60000} min` : `exit ${code != null ? code : signal}`} (${s} s)`);   // (on GitHub: an annotation of the check run, readable where the job's log is not)
+      resolve();
+    });
+  });
 }
-console.log('\n=== summary');
-for (const r of results) if (!opt.quiet || !r.ok) console.log(`${r.ok ? 'OK  ' : 'FAIL'} ${r.f} (${r.s} s)${r.timedOut ? ' — timed out' : ''}`);
-if (opt.quiet) console.log(`${results.filter(r => r.ok).length} of ${results.length} tests passed (${results.reduce((a, r) => a + +r.s, 0)} s)`);
-if (process.env.TEST_PADLI && results.some(r => !r.ok)) require('fs').appendFileSync(process.env.TEST_PADLI, results.filter(r => !r.ok).map(r => r.f).join('\n') + '\n');
-process.exit(results.every(r => r.ok) ? 0 : 1);
+function summary(stopped) {
+  const res = results.filter(Boolean);
+  say(`\n=== summary${stopped ? ` (stopped by ${stopped}: ${res.length} of ${list.length} tests ended)` : ''}`);
+  for (const r of res) if (!opt.quiet || !r.ok) say(`${r.ok ? 'OK  ' : 'FAIL'} ${r.f} (${r.s} s)${r.timedOut ? ' — timed out' : ''}`);
+  for (const [f, { t0 }] of running) say(`FAIL ${f} (${sec(t0)} s) — not ended, stopped with the run`);
+  if (opt.quiet) say(`${res.filter(r => r.ok).length} of ${list.length} tests passed (${res.reduce((a, r) => a + +r.s, 0)} s of tests, ${sec(t00)} s in all${JOBS > 1 ? `, ${JOBS} at once` : ''})`);
+  else if (JOBS > 1) say(`(${sec(t00)} s in all, ${JOBS} tests at once)`);
+  const bad = [...res.filter(r => !r.ok).map(r => r.f), ...running.keys()];
+  if (process.env.TEST_PADLI && bad.length) require('fs').appendFileSync(process.env.TEST_PADLI, bad.join('\n') + '\n');
+  return bad.length || res.length < list.length ? 1 : 0;
+}
+// the run itself stopped (Ctrl+C, a session's command out of time): its tests with it, and the summary of what ended
+for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { const code = summary(sig); for (const { ch } of running.values()) killGroup(ch); process.exit(code || 1); });
+process.on('exit', () => { for (const { ch } of running.values()) killGroup(ch); });
+
+(async () => {
+  if (JOBS > 1 && list.length > 1) say(`${list.length} tests, ${JOBS} at once (TEST_JOBS; browser ${BROWSER_JOBS}, TEST_BROWSER_JOBS)`);
+  const beat = BEAT > 0 && setInterval(() => {
+    if (running.size && Date.now() - lastWord >= BEAT) say(`… ${sec(t00)} s: ${[...running].map(([f, { t0 }]) => `${f} ${sec(t0)} s`).join(', ')}`);
+  }, Math.min(BEAT, 10000));
+  // the longest first (SECS), so the run does not end on one long test alone; the browser tests at most BROWSER_JOBS at once
+  const order = list.map((f, i) => i);
+  if (JOBS > 1) order.sort((a, b) => secs(list[b]) - secs(list[a]) || a - b);
+  const isB = (i) => list[i].startsWith('browser/');
+  await new Promise((resolveAll) => {
+    const next = () => {
+      if (!order.length && !running.size) return resolveAll();
+      while (running.size < JOBS && order.length) {
+        const nB = [...running.keys()].filter(f => f.startsWith('browser/')).length;
+        const k = order.findIndex(i => !isB(i) || nB < BROWSER_JOBS);
+        if (k < 0) break;
+        const i = order.splice(k, 1)[0];
+        run(i).then(next);
+      }
+    };
+    next();
+  });
+  if (beat) clearInterval(beat);
+  process.exit(summary());
+})();
