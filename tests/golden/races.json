@@ -899,6 +899,56 @@
   "nan": false,
   "digest": "2fa2deb6d9228882bfbc751c"
  },
+ "krasnahorka/cs": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 95.35,
+  "spins": 0,
+  "walls": 2,
+  "rescues": 0,
+  "nan": false,
+  "digest": "1da7dd75a871749974d1f2fe"
+ },
+ "krasnahorka/cs/rain": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 112.24,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "588f43000d50ac22d8425069"
+ },
+ "krasnahorka/cs/formula": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 84.32,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d993e8cd38c80a6e54c3ffec"
+ },
+ "krasnahorka/cs/lm": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 85.31,
+  "spins": 0,
+  "walls": 0,
+  "rescues": 0,
+  "nan": false,
+  "digest": "d6757a2473f8f2371d11ae53"
+ },
+ "krasnahorka/cs/car": {
+  "finished": 13,
+  "cars": 13,
+  "winner": 96.09,
+  "spins": 0,
+  "walls": 3,
+  "rescues": 0,
+  "nan": false,
+  "digest": "767e1ef7d7a2ae35b94feed4"
+ },
  "silkeborg/cs": {
   "finished": 13,
   "cars": 13,

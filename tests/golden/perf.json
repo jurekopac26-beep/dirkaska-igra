@@ -756,10 +756,10 @@
   "jsMs": 1.35
  },
  "krasnahorka": {
-  "calls": 132,
-  "maxCalls": 233,
-  "kverts": 172,
-  "maxKverts": 201,
-  "jsMs": 1.41
+  "calls": 113,
+  "maxCalls": 124,
+  "kverts": 200,
+  "maxKverts": 239,
+  "jsMs": 0.83
  }
 }
