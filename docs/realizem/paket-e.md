@@ -254,7 +254,7 @@ Naloga koordinacije partyslo (16. 11. 2026, tabla #382, »Grafika že zdaj«): p
 - **Popravki 23. 11. 2026** (odgovor 2 na vprašanje `e-proge-762b`, 18. 11.: nobena stranska cesta se ne konča slepo v travi ali pred ograjo ob cesti):
   - `PAS` v `tools/cesta/izvoz.py` (Koror in Savusavu 64 m, `PAS_MAX` 250 m): stranska cesta teče naprej po poteh OSM, dokler ni 64 m od sredinske črte (zunaj pasu, ki ga vidi kamera), ali do druge stranske ceste. Cesta, ki se konča prej, odpade (`blind`), ostale se znova združijo.
   - **Koror:** 10 → 8 cest. Odpadeta 782 m levo (zanka, ki se vrne na progo) in 1055 m levo (slepa po 34 m). Cesta pri 798 m desno je zdaj dolga 213 m, cesta pri 2997 m levo se združi s cesto pri 2940 m levo.
-  - **Savusavu:** ostane 8 cest, zdaj dolgih 65–93 m.
+  - **Savusavu:** ostane 8 cest, zdaj dolgih 64–93 m.
   - **Quezaltepeque, 1565 m** (vrstica pri 1588 m): popravek je v #1025 (`realizem/e-stranske-sirina`) kot splošen popravek v skupni kodi.
   - `cesta.test.mjs`: Koror ima najmanj 8 cest.
   - #1025 je 23. 11. znova izvozil Koror in Savusavu z resničnimi širinami, zato se vrstici `stranske:` v `js/tracks/koror.js` in `js/tracks/savusavu.js` sporeta. PR, ki pride na `main` drugi, obe progi znova izvozi s skupnim orodjem (`izvoz.py … koror … --vpisi` in `izvoz.py … savusavu … --vpisi`, kar da 8 in 8 cest). `izvoz.py` in `cesta.test.mjs` se spojita brez spora. Širin, belih črt in oznak na križiščih se ne nastavlja ročno.
