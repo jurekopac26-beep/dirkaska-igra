@@ -95,5 +95,7 @@ Pred novo temo jo vpiši sem in preveri, da je ni že tu ali v odprtih PR; ob os
 | 10.13 | #862 Zbirna Realizem bt | **Zbirna veja Realizem 2–15 biketravelerja** (veja `zbirna/realizem-bt`): #800–#802, #804–#806, #810, #812–#814, #817, #844, #854, #857 in #793 (z #779); #803 izpuščen; samo 15 pravih prog, fizika in zamrznjene proge nedotaknjene | biketraveler | Matej »ok vse« 21. 11. (vprašanje `realizem-zbirna-bt`); povezani testi zeleni, perf v mejah; grafika, zato takoj za #762; združi seja Združevanje |
 | 10.14 | #965 Predogled do 12 | `MAX` 8 → 12, da izbira prog ne da 404 (majhen, brez konfliktov) | jure.kopac26 | osnutek, testi zeleni |
 | 10.15 | #945 Pravila 22. 11. | dnevni PR pravil (`CLAUDE.md`, `docs/odlocitve.md`) | jure.kopac26 | osnutek |
+| 10.16 | #943 Krásna Hôrka, Slovaška | nova proga 3,4 km (veja `proga/spis`), testi zeleni; v sporu z `main`, ob združitvi spoji; proge zadnje (Matej, #382 7079559816) | partyslo | osnutek |
+| 10.17 | #976 Realizem 2–15 dodatek | zbirka osnutkov realizma 15 prog na #862; svež `main` spojen 23. 11. #952 čaka odločitev, #917/#933 zunaj (spori v kodi). | partyslo | osnutek |
 
 Zgodovina (vrstni red 4. in 7. 11., premiki 10. 11., stari prevzemi, odprti PR drugih računov): `docs/arhiv/vrsta-zgodovina.md`.
