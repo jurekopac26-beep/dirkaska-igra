@@ -246,8 +246,8 @@ Odločitev Mateja na tabli #382 (15. 11. 2026). PR #699. Obe progi imata v `PROG
 **Montréal (`js/world-montreal.js`, `js/tracks/montreal.js`):**
 - 360 manjših stavb brez imena (pod 1500 m², skoraj pravokotnih) gradi skupni graditelj na obrisih iz podatkov (komplet Kanade, 60 % ravnih streh). Višina je iz podatkov, sicer privzeta za vrsto. Paviljoni, boksi (`pitBld`, enak obrisu Paddocks) in velike stavbe ostanejo svoji, na svojih obrisih.
 - Izključitve dreves ostanejo enake kot prej (isti krogi v istem redu), zato se drevesa drugod ne premaknejo (0 % razlike pri 1300, 2000 in 3400 m).
-- Tribune na obrisih iz OSM (`def.bleachers`, 4 obrisi `leisure=bleachers`): do 20 vrst, ki se dvigajo od ceste. Zadaj je ploščad z ograjo, na tribunah ni ljudi (malo gledalcev). Sprednji rob ostane vsaj 3 m za robom ceste. Približne začasne tribune (`def.stands`) ostanejo; vprašanje je v PR.
-- Obremenitev: 189 klicev in 456 tisoč oglišč, na najbolj obremenjenem mestu 246 / 554 (prej 185 / 242 klicev in 443 / 535 tisoč oglišč).
+- Tribune na obrisih iz OSM (`def.bleachers`, 4 obrisi `leisure=bleachers`): do 20 vrst, ki se dvigajo od ceste. Zadaj je ploščad z ograjo, na tribunah ni ljudi (malo gledalcev). Sprednji rob ostane vsaj 3 m za robom ceste. Približne začasne tribune (`def.stands`) so odstranjene (`stands: []`): odločitev uporabnika 15. 11. 2026, »Postavi samo tribune, ki so v resnici tam.« Ostanejo samo 4 tribune iz OSM.
+- Obremenitev: 184 klicev in 429 tisoč oglišč, na najbolj obremenjenem mestu 243 / 532 (prej 185 / 242 klicev in 443 / 535 tisoč oglišč).
 
 **Bâlea (`js/world-prelaz.js`):**
 - 14 koč in hotelov ter postajo žičnice gradi skupni graditelj na pravih obrisih (komplet Romunije, slog `gora`).

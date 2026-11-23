@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<title>Panama</title>
+<rect width="900" height="600" fill="#FFFFFF"/>
+<rect x="450" width="450" height="300" fill="#DA121A"/>
+<rect y="300" width="450" height="300" fill="#072357"/>
+<path fill="#072357" d="M225,85 L244.1,143.8 L305.9,143.8 L255.9,180.2 L275,239 L225,202.6 L175,239 L194.1,180.2 L144.1,143.8 L205.9,143.8 Z"/>
+<path fill="#DA121A" d="M675,385 L694.1,443.8 L755.9,443.8 L705.9,480.2 L725,539 L675,502.6 L625,539 L644.1,480.2 L594.1,443.8 L655.9,443.8 Z"/>
+</svg>

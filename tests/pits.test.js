@@ -111,7 +111,10 @@ const IN0 = -C.BAY.inL - 10;   // (metres before the box where the S onto the ap
         if (rep && dd > J.b + 20 && Math.abs(pl.q.d) < T.w) back = true;
         pl.hitWall = 0;
       }
-      out.push({ id: d.id, inLane, lane: J.li > 15, accel: accelN ? accel / accelN : 1, back, wall });
+      // (a lane of its own: its parallel part, after the taper, at least 8 m: Lombok's 29 m lane (taper 17 m) has 11.6 m and the car is 3.4 m in
+      // at its end; Buriram's 20 m lane (taper 15 m, N7, 11 Nov 2026) has 5 m, the car at racing speed cannot get 2 m in over it and crosses the
+      // gore as it does with only the taper)
+      out.push({ id: d.id, inLane, lane: J.li - J.ta >= 8, accel: accelN ? accel / accelN : 1, back, wall });
     } finally { Math.random = orig; }
   }
   check('the autopilot uses them: in the deceleration lane at the way in (its centre more than 2 m past the circuit\'s edge; where there is only the taper, the cars cross the gore as before), in the acceleration lane along its parallel part, back on the circuit after it, no wall',

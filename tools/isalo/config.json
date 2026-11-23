@@ -1,0 +1,81 @@
+{
+ "id": "isalo",
+ "about": "Isalo, Madagaskar (id isalo): the RN7 across the grass plain at the foot of the Isalo sandstone massif, from the park's village south-west past the Reine de l'Isalo rock (docs/proge/isalo.md)",
+ "box": [
+  -22.65,
+  45.315,
+  -22.605,
+  45.375
+ ],
+ "closed": false,
+ "dist": {
+  "grid": 500
+ },
+ "route": [
+  [
+   -22.62056,
+   45.35542,
+   null,
+   "start: the RN7 south-west of the park's village, south-westbound"
+  ],
+  [
+   -22.62454,
+   45.35065,
+   null,
+   ""
+  ],
+  [
+   -22.62771,
+   45.34626,
+   null,
+   "the long left-hand sweep"
+  ],
+  [
+   -22.62817,
+   45.34367,
+   null,
+   ""
+  ],
+  [
+   -22.62776,
+   45.33999,
+   null,
+   "the right-hand sweep past the rock"
+  ],
+  [
+   -22.62853,
+   45.33761,
+   null,
+   ""
+  ],
+  [
+   -22.63094,
+   45.33528,
+   null,
+   ""
+  ],
+  [
+   -22.63203,
+   45.3343,
+   null,
+   ""
+  ],
+  [
+   -22.6342,
+   45.3322,
+   null,
+   ""
+  ],
+  [
+   -22.6397656,
+   45.3257125,
+   null,
+   "finish on the RN7, on the straight across the plain"
+  ]
+ ],
+ "prefer": [],
+ "geoRoads": [],
+ "geoWater": [],
+ "marks": [],
+ "places": []
+}

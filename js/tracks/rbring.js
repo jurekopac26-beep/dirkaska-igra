@@ -1,7 +1,7 @@
 /* Track definition 'rbring'. index.html loads the track files before js/core.js, in the order of the track menu. */
 var TRACK_DEFS = TRACK_DEFS || [];
 (function () {
-  // Red Bull Ring (Spielberg, Styria, Austria): the Formula 1 circuit (4.318 km, 10 turns, clockwise) in its real layout and scale.
+  // Styria circuit (Spielberg, Styria, Austria): the top-category circuit (4.318 km, 10 turns, clockwise) in its real layout and scale.
   // Centre line: the TUMFTM racetrack database (LGPL-3.0), from OpenStreetMap (© OpenStreetMap contributors, ODbL), smoothed; checked against
   // the f1-circuits line (MIT; the same to 2 m, its first point is the start/finish line). Metres, origin = the start/finish line, x east, z south.
   // Data: the centre line under the ODbL and the LGPL-3.0, the heights © offene Daten Österreichs - DGM Österreich (geoland.at, CC BY 4.0),
@@ -23,7 +23,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['roe', 'chamois', 'cowB', 'fox'], t: ['huntStand', 'feedRack', 'logPile', 'cabin', 'hayrack'], open: true },
     id: 'rbring', name: 'Štajerska, Avstrija', theme: 'rbring', laps: 2, halfWidth: 6.5,
     desc: 'Hitra proga v štajerskih hribih: 4,3 km, 10 zavojev in 64 m višinske razlike. Strm vzpon (12 %) od 1. zavoja do lasnice na vrhu hriba, spust do 4. zavoja, hitra leva zavoja 6 in 7 ter zavoja 9 in 10 nazaj na ciljno ravnino. Tribune, boksi (zapelji vanje in mehaniki ti popravijo avto) in štajerski gozdovi. Podatki: © OpenStreetMap (ODbL), DGM Avstrija, ESA WorldCover.',
-    en: { name: 'Styria, Austria', desc: 'A fast circuit in the Styrian hills: 4.3 km, 10 turns and 64 m of height difference. A steep climb (12 %) from Turn 1 to the hairpin at the top of the hill, down to Turn 4, the fast left-handers 6 and 7 and turns 9 and 10 back onto the finish straight. Grandstands, pits (drive in and the mechanics repair your car) and Styrian forests. Data: © OpenStreetMap (ODbL), DGM Austria, ESA WorldCover.' },   // (the English page: Jezik · Language)
+    en: { name: 'Styria, Austria', desc: 'A fast circuit in the Styrian hills: 4.3 km, 10 turns and 64 m of height difference. A steep climb (12 %) from Turn 1 to the hairpin at the top of the hill, down to Turn 4, the fast left-handers 6 and 7 and turns 9 and 10 back onto the finish straight. Grandstands, pits (drive in and the mechanics fix your car) and Styrian forests. Data: © OpenStreetMap (ODbL), DGM Austria, ESA WorldCover.' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 1, inner: 4.2, side: 5, gradeForce: true, elevSmooth: 12, realKm: 4.318, runoffTarmac: true,
     elev: RBR_H.map((h, i) => [i / RBR_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the turns by their numbers only (no names of people, places or sponsors)
@@ -42,22 +42,22 @@ var TRACK_DEFS = TRACK_DEFS || [];
     pitBuilding: [-165, 140],    // the 300 m pit building behind the garages (its length and place from its OSM outline; its front stays at the garages)
     pitPad: [-235, 140],         // the level ground of the pit complex: as before at the start, on to the moved pit building's end
     // grandstands [from, to, side (-1 left, 1 right), rows, roof, sections, orange, name, front]: Start-Ziel (the whole straight, covered, the wing
-    // behind it), Steiermark (Turn 1), Red Bull (from Turn 1 up the hill, in three parts), T3, Nord (Turn 4, covered), T9 and T10 (covered);
+    // behind it), Steiermark (Turn 1), the hill stand (from Turn 1 up the hill, in three parts), T3, Nord (Turn 4, covered), T9 and T10 (covered);
     // orange: full of Dutch fans; front: the front's offset from the centre line, from the stand's OSM outline (a number, or [at from, at to]),
-    // never nearer than 2.6 m behind the barrier. Start-Ziel, Steiermark, Red Bull and T10 on their OSM outlines (paket S, docs/realizem/paket-s.md);
+    // never nearer than 2.6 m behind the barrier. Start-Ziel, Steiermark, the hill stand and T10 on their OSM outlines (paket S, docs/realizem/paket-s.md);
     // T3, Nord and T9 have none near the road and stay; Mitte, Ost and Nord on their OSM outlines 44-115 m from the road (the user's choice, 15. 11. 2026)
     stands: [[-244, 175, -1, 18, 1, 1, 0, 'START · ZIEL', 21], [273, 333, -1, 10, 0, 1, 0, 'STEIERMARK', 20], [415, 452, -1, 10, 0, 1, 1, 'BERG', 43],
       [454, 645, -1, 16, 0, 8, 1, 'BERG', [32, 24]], [656, 842, -1, 18, 0, 7, 1, 'BERG', [31, 50]], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
       [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3786, 3876, -1, 12, 1, 1, 0, 'T10', [48, 32]],
       [2990, 3040, -1, 14, 0, 2, 0, 'MITTE', [53, 44]], [3718, 3777, -1, 12, 0, 2, 0, 'OST', [70, 53]], [2078, 2102, -1, 10, 0, 1, 0, 'NORD', 115]],
     standApron: 6,               // the paved walkway in front of the stands (World.people): at most 6 m wide, the grass on to the barrier where a stand stands far back
-    wing: [-60, -1, 6.9],        // the voestalpine wing (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side, moved out (m): with the stand]
+    wing: [-60, -1, 6.9],        // the wing on the stand (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side, moved out (m): with the stand]
     ga: [[1370, 1900, -1], [900, 1180, 1], [2600, 2860, 1]],   // spectators on the grass: [from, to, side] (the hill between Turns 3 and 4 and the infield)
     turns: [[-314.9, 81.6], [-642.6, -470.3], [-837.7, -689], [-36.3, -619.2], [-158.5, -489.7], [-461.8, -494.1], [-328, -230.7], [-234.9, -309.6], [357.8, -336], [417.5, -148.9]],   // the apexes of Turns 1-10 (their number boards)
     // 2024: gravel strips 2.5 m wide just past the kerbs at the exits of Turns 9 and 10 against running wide (Core: gravel there), a blue
     // line along the white track limit beside them: [from, to, side, width] (metres from the start line)
     gravelStrips: [[3650, 3745, -1, 2.5], [3860, 3935, -1, 2.5]],
-    // the three DRS zones of the Austrian Grand Prix: [turn, detection, activation (metres before / after that turn), the next turn]:
+    // the three DRS zones of the official layout: [turn, detection, activation (metres before / after that turn), the next turn]:
     // detection 160 m before Turn 1, open from 102 m after it up to Turn 3; 40 m before Turn 3, open from 100 m after it down to Turn 4;
     // 120 m before Turn 10, open from 106 m after it along the main straight
     drs: [[1, -160, 102, 3], [3, -40, 100, 4], [10, -120, 106, 1]],

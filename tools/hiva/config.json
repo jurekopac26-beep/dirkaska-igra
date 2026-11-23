@@ -1,0 +1,95 @@
+{
+  "id": "hiva",
+  "about": "Hiva, Uzbekistan (id hiva): mestna proga, krog okoli obzidja Ičan Kale (OSM w185036984, obzidje barrier=city_wall). Zahod: ob obzidju mimo zahodnih vrat (trg in pešpot pred vrati, allowWays); sever in jug tik ob obzidju; vzhod: lok po ulicah vzhodno od vzhodnih vrat (ob vzhodnem zidu ni ceste)",
+  "box": [
+    41.366,
+    60.346,
+    41.39,
+    60.374
+  ],
+  "closed": true,
+  "dist": {
+    "grid": 500
+  },
+  "route": [
+    [
+      41.377662,
+      60.356259,
+      null,
+      "start: Tinchlik street by the west wall, northbound"
+    ],
+    [
+      41.37834,
+      60.356738,
+      null,
+      "the square before the West Gate"
+    ],
+    [
+      41.379019,
+      60.356834,
+      null,
+      "the path under the north-west wall"
+    ],
+    [
+      41.380375,
+      60.357696,
+      null,
+      "the road along the north-west wall"
+    ],
+    [
+      41.38176,
+      60.359,
+      null,
+      "north wall"
+    ],
+    [
+      41.38176,
+      60.36138,
+      null,
+      "north-east corner"
+    ],
+    [
+      41.38,
+      60.36313,
+      null,
+      "east wall"
+    ],
+    [
+      41.3776,
+      60.3625,
+      null,
+      "by the East Gate"
+    ],
+    [
+      41.3745,
+      60.36075,
+      null,
+      "south-east corner"
+    ],
+    [
+      41.3755,
+      60.35538,
+      null,
+      "south-west corner"
+    ]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [
+    [
+      "Obzidje",
+      "City wall",
+      "city_wall",
+      [
+        "w185036984"
+      ]
+    ]
+  ],
+  "places": [],
+  "allowWays": [
+    "w1092202046",
+    "w1330160948",
+    "w1426824516"
+  ]
+}
