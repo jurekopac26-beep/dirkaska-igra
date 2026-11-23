@@ -5,7 +5,6 @@ import base64, json, math, os
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
-from scipy.spatial import cKDTree
 
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 J = json.load(open(os.path.join(HERE, 'silkeborg.json')))
@@ -90,16 +89,6 @@ def rle_lc(c):   # World's land-cover classes (0-3), run-length coded as World.n
 
 def b64bytes(a): return base64.b64encode(np.asarray(a, np.uint8).tobytes()).decode()
 
-def rle_ch(top, cov):   # the crowns, as js/world-silkeborg.js reads them: c < 36 a cell with crowns (its top 4 + 2 (c % 12) m, its cover's level c // 12:
-    out = []; z = 0     # 0 sparse (under 35 %), 1 half (under 65 %), 2 closed), c >= 36 c - 35 cells without (under 10 % cover)
-    def flush():
-        nonlocal z
-        while z > 0: r = min(z, 28); out.append(A64[35 + r]); z -= r
-    for t, c in zip(top.ravel(), cov.ravel()):
-        if c < 10 or t < 3: z += 1; continue
-        flush(); lv = 0 if c < 35 else 1 if c < 65 else 2; h = min(11, max(0, int(round((t - 4) / 2)))); out.append(A64[lv * 12 + h])
-    flush(); return ''.join(out)
-
 def scenery():
     M = 560; c = 16
     x0 = math.floor((P[:, 0].min() - M) / c) * c; z0 = math.floor((P[:, 1].min() - M) / c) * c
@@ -109,20 +98,20 @@ def scenery():
     lo, step = -42.0, 0.25; dem = np.clip(np.round((hv - lo) / step), 0, 255)
     D = dict(x0=x0, z0=z0, nx=nx, nz=nz, cell=c, lo=lo, step=step, base=0, noise=0.12, b64=b64bytes(dem))
     # land cover, 16 m cells: 0 open (grass, fields, sand), 1 forest (the plantations), 2 heath and scrub, 3 built-up and car parks;
-    # OSM's land use first (the circuit's grass and sand are OSM's), ESA WorldCover and the canopy height for the rest
-    g1, a1 = grid('lc'); g2, a2 = grid('lu'); g3, a3 = grid('chm')
+    # the trees only from OSM (landuse=forest, natural=wood: the user's choice b, 23. 11. 2026, no canopy model); OSM's land use first (the
+    # circuit's grass and sand are OSM's), ESA WorldCover only for the heath and the built-up ground where OSM has nothing
+    g1, a1 = grid('lc'); g2, a2 = grid('lu')
     lnx = nx - 1; lnz = nz - 1; votes = np.zeros((4, lnz, lnx), np.float32)
     for fz in (-0.25, 0.25):
         for fx in (-0.25, 0.25):
             X, Z = np.meshgrid(x0 + (np.arange(lnx) + 0.5 + fx) * c, z0 + (np.arange(lnz) + 0.5 + fz) * c)
-            wc = sample(g1, a1, X, Z, False); lu = sample(g2, a2, X, Z, False); ch = sample(g3, a3, X, Z, False)
+            wc = sample(g1, a1, X, Z, False); lu = sample(g2, a2, X, Z, False)
             cls = np.zeros(wc.shape, np.int8)
-            cls[(wc == 10) | (ch > 5)] = 1
             cls[(wc == 20) | (wc == 90) | (wc == 100)] = 2
-            cls[(wc == 50) & (ch <= 6)] = 3
-            cls[lu == 9] = 1; cls[(lu == 8) & (ch <= 6)] = 2; cls[(lu == 8) & (ch > 6)] = 1
+            cls[wc == 50] = 3
+            cls[lu == 9] = 1; cls[lu == 8] = 2
             cls[(lu == 4) | (lu == 3) | (lu == 12) | (lu == 10)] = 0
-            cls[((lu == 1) | (lu == 2) | (lu == 14)) & (ch <= 6)] = 3
+            cls[(lu == 1) | (lu == 2) | (lu == 14)] = 3
             for k in range(4): votes[k] += (cls == k)
     lc = votes.argmax(0).astype(np.uint8)
     LC = dict(x0=x0, z0=z0, nx=lnx, nz=lnz, cell=c, rle=rle_lc(lc))
@@ -146,13 +135,7 @@ def scenery():
         bld += [round(x, 1), round(z, 1), round(l, 1), round(w, 1), round(math.degrees(ang)), hh]
     # the fences round the circuit and the spectators' banks (OSM barrier=fence, within 30 m): [x, z, ...]
     fence = [pl(w[3]) for w in J['walls'] if w[0] == 'fence']
-    # the crowns (tools/silkeborg/krosnje.py: Meta and WRI's canopy height model sampled every 0.5 m, on 8 m cells): each cell's top and its
-    # cover, for the trees on their real places and in their real heights; only within 280 m of the line (no trees are placed farther out)
-    kj = json.load(open(os.path.join(HERE, 'krosnje.json'))); ka = np.asarray(Image.open(os.path.join(HERE, kj['file']))).astype(int); kc = kj['cell']
-    KX, KZ = np.meshgrid(kj['x0'] + (np.arange(kj['nx']) + 0.5) * kc, kj['z0'] + (np.arange(kj['nz']) + 0.5) * kc)
-    out = (cKDTree(P).query(np.c_[KX.ravel(), KZ.ravel()])[0] > 280).reshape(KX.shape)
-    ch = dict(x0=kj['x0'], z0=kj['z0'], nx=kj['nx'], nz=kj['nz'], cell=kc, rle=rle_ch(np.where(out, 0, ka[..., 0]), np.where(out, 0, ka[..., 1])))
-    return D, LC, dict(sand=sand, mounds=mounds, bld=bld, fence=fence, ch=ch)
+    return D, LC, dict(sand=sand, mounds=mounds, bld=bld, fence=fence)
 
 def build_track():
     hk = H[::2]; skh = ','.join(str(int(round((v - H0) * 10))) for v in hk)   # every 10 m from the start line, decimetres above it
@@ -177,16 +160,15 @@ var TRACK_DEFS = TRACK_DEFS || [];
   // start line, decimetres above it (61.7 m a.s.l.): nearly flat, the south loop 3 m lower.
   // Scenery data for the world builder (js/world-silkeborg.js on js/world-rbring.js): terrain (dem: the same model, 16 m cells, heights above the
   // start line in 0.25 m steps), land cover (lc, 16 m cells: 0 grass, fields and sand, 1 the pine and spruce plantations, 2 heath and scrub,
-  // 3 built-up and car parks: OSM, ESA WorldCover, the canopy), and sk: the sand round the circuit ([x, z, ...] outlines: OSM natural=sand), the
+  // 3 built-up and car parks; the plantations only OSM's landuse=forest and natural=wood, the rest OSM and ESA WorldCover),
+  // and sk: the sand round the circuit ([x, z, ...] outlines: OSM natural=sand), the
   // three burial mounds of the Bronze Age ([x, z, radius, height]: OSM historic=archaeological_site), the buildings by the circuit ([x, z,
-  // length, width, angle (deg), height]: OSM outlines as boxes, not the pit building and the grandstands, which the builder makes), the fences
-  // ([x, z, ...]: OSM barrier=fence) and the crowns (ch, 8 m cells within 280 m of the line: the canopy height model sampled every 0.5 m by
-  // tools/silkeborg/krosnje.py, each cell's top 4-26 m in 2 m steps and its cover in three levels, run-length coded: js/world-silkeborg.js's
-  // skCrowns), so the trees stand where they really stand, as tall as they are.
+  // length, width, angle (deg), height]: OSM outlines as boxes, not the pit building and the grandstands, which the builder makes), the fences.
   // The names: plain descriptions only (no names of people, firms, events or the circuit).
   // Data: the OSM-derived data in this file under the ODbL 1.0; the heights: produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and
   // © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved; the land cover:
-  // ESA WorldCover 2021 (CC BY 4.0); the canopy: Meta and World Resources Institute, High Resolution Canopy Height Maps (CC BY 4.0).
+  // ESA WorldCover 2021 (CC BY 4.0); the canopy height (only taken off the heights): Meta and World Resources Institute, High Resolution
+  // Canopy Height Maps (CC BY 4.0).
   const SK_H = [%(skh)s];
   TRACK_DEFS.push({
     // ---- its own, once in the shared lists (tools/razdeli-proge.mjs): look (render.js), say, rainP (game.js), cloudTh, roadWear, grassNat, lawn, bbClassic (world.js), zivali (world-zivali.js)
@@ -222,8 +204,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
            sectors=json.dumps(SECTORS), dem=js(D), lc=js(LC), sk=js(SK), pts=pts)
     path = os.path.join(ROOT, 'js', 'tracks', 'silkeborg.js'); open(path, 'w').write(src)
     print('wrote', path, len(src.encode()) // 1024, 'KB;', NP, 'points, %.1f m;' % LEN, len(hk), 'heights; dem', D['nx'], 'x', D['nz'], '; lc', LC['nx'], 'x', LC['nz'],
-          len(LC['rle']), 'chars; sand', len(SK['sand']), 'mounds', len(SK['mounds']), 'buildings', len(SK['bld']) // 6, 'fences', len(SK['fence']),
-          'crowns', len(SK['ch']['rle']), 'chars')
+          len(LC['rle']), 'chars; sand', len(SK['sand']), 'mounds', len(SK['mounds']), 'buildings', len(SK['bld']) // 6, 'fences', len(SK['fence']))
     for k in ('dem', 'lc', 'sk'): print('  %-4s %5d KB' % (k, len(js({'dem': D, 'lc': LC, 'sk': SK}[k]).encode()) // 1024))
 
 if __name__ == '__main__':
