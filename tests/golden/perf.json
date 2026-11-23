@@ -28,18 +28,18 @@
   "jsMs": 3.48
  },
  "nring": {
-  "calls": 156,
-  "maxCalls": 180,
-  "kverts": 271,
-  "maxKverts": 288,
-  "jsMs": 3.06
+  "calls": 170,
+  "maxCalls": 198,
+  "kverts": 298,
+  "maxKverts": 322,
+  "jsMs": 2.24
  },
  "spa": {
-  "calls": 174,
-  "maxCalls": 222,
-  "kverts": 446,
-  "maxKverts": 587,
-  "jsMs": 1.27
+  "calls": 186,
+  "maxCalls": 228,
+  "kverts": 462,
+  "maxKverts": 600,
+  "jsMs": 1.24
  },
  "rbring": {
   "calls": 215,
@@ -287,11 +287,11 @@
   "jsMs": 1.59
  },
  "livorno": {
-  "calls": 141,
-  "maxCalls": 173,
-  "kverts": 289,
-  "maxKverts": 352,
-  "jsMs": 2.6
+  "calls": 144,
+  "maxCalls": 179,
+  "kverts": 299,
+  "maxKverts": 374,
+  "jsMs": 2.21
  },
  "jezero": {
   "calls": 172,
