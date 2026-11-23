@@ -2,9 +2,9 @@
 // (844x390, normal quality, shadows on), the game paused and stepped (g.sim), so every number is the same each run.
 //  - the kit: Render.kitStatus 'ok' for every vehicle with a look (a look that throws or breaks a rule falls back: a FAIL here), the
 //    place-holders (look null) drawn as the generic kit hatch; the body's outer shell and inner block within their triangle budgets (a car
-//    1400 / 800, a truck, the limousine, the monster truck 2400 / 1200; a look's own budget: look.budget, KOLIBRI's cabin), every part of
+//    1400 / 1100, a truck, the limousine, the monster truck 2400 / 1500; a look's own budget: look.budget, KOLIBRI's cabin), every part of
 //    the vehicle's table with geometry of its own (a non-empty range), the wheels' detail (the player's / the showroom's <= 400 triangles,
-//    a rival's <= 160); a look with Visoki details (look.hi, Nastavitve · Detajli avtov) builds them ok within 2400 / 1200 (or its
+//    a rival's <= 160); a look with Visoki details (look.hi, Nastavitve · Detajli avtov) builds them ok within 2400 / 1500 (or its
 //    look.budgetHi), its player's wheels <= 700 (the rest of the test: Normalni, a phone's)
 //  - the showroom: the vehicle over a whole turn stays on the screen and off the car panel, in landscape (844x390) and portrait (390x844)
 //  - the caches: after the car menu has been through every car, one colour-neutral body per model and at most two showroom copies
@@ -92,7 +92,7 @@ try {
   T.check(`Render.kitStatus: 'ok' for every vehicle with a look (${K1.length - held}), the place-holders (${held}, look null) drawn as the generic kit hatch`, !badStatus.length && K1.length === kits.length,
     badStatus.map(k => k.id + ': ' + k.status).slice(0, 4).join(' | '));
   const overB = K1.filter(k => k.tris.outer > k.budget.outer || k.tris.inner > k.budget.inner);
-  T.check('the body within its triangle budget (outer shell / inner block: a car 1400 / 800, the big ones 2400 / 1200)', !overB.length,
+  T.check('the body within its triangle budget (outer shell / inner block: a car 1400 / 1100, the big ones 2400 / 1500)', !overB.length,
     (overB.length ? overB : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.tris.outer}/${k.budget.outer} ${k.tris.inner}/${k.budget.inner}`).join(', '));
   const noR = K1.filter(k => k.noRange.length);
   T.check('every part of the vehicle\'s table has geometry of its own (a non-empty range; the wheels are their own meshes, a trailer\'s parts its look\'s)', !noR.length, noR.map(k => k.id + ': ' + k.noRange.join(' ')).slice(0, 4).join(' | '));
@@ -100,7 +100,7 @@ try {
   T.check('the wheels\' detail: the player\'s and the showroom\'s <= 400 triangles, a rival\'s <= 160', !wBad.length, (wBad.length ? wBad : K1.filter(k => k.look)).slice(0, 6).map(k => `${k.id} ${k.hi.join('/')} | ${k.lo.join('/')}`).join(', '));
   // (Nastavitve · Detajli avtov: Visoki, a computer's: a look with small details (look.hi) built again for the player and the showroom)
   const V = K1.filter(k => k.vis), vBad = V.filter(k => k.vis.status !== 'ok' || k.vis.tris.outer > k.vis.budget.outer || k.vis.tris.inner > k.vis.budget.inner || k.vis.wheels.some(t => t > 700));
-  T.check('Visoki (look.hi): its body built ok within 2400 / 1200 (or its look\'s budgetHi), its player\'s wheels <= 700 triangles', !vBad.length, (vBad.length ? vBad : V).slice(0, 6).map(k => `${k.id} ${k.vis.status} ${k.vis.tris.outer}/${k.vis.tris.inner} w${k.vis.wheels.join('/')}`).join(', ') || 'none');
+  T.check('Visoki (look.hi): its body built ok within 2400 / 1500 (or its look\'s budgetHi), its player\'s wheels <= 700 triangles', !vBad.length, (vBad.length ? vBad : V).slice(0, 6).map(k => `${k.id} ${k.vis.status} ${k.vis.tris.outer}/${k.vis.tris.inner} w${k.vis.wheels.join('/')}`).join(', ') || 'none');
 
   // ---- 2. the showroom: over a whole turn on the screen and off the car panel (landscape and portrait) ----
   for (const [w, h] of [[844, 390], [390, 844]]) {

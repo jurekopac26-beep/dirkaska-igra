@@ -126,15 +126,13 @@
     turbo: (K, m, M) => { const S = M && (M.snd || M.def && M.def.snd); if (!S || !S.turbo) return; const { x, y, z } = m, k = 0.8;
       cyl(K, [x, y + 0.08 * k, z - 0.05 * k], [x, y + 0.08 * k, z], 0.07 * k, DK, { capA: DK, capB: DK }); cyl(K, [x, y + 0.08 * k, z], [x, y + 0.08 * k, z + 0.05 * k], 0.06 * k, [0.42, 0.24, 0.16]);
       cyl(K, [x, y + 0.08 * k, z - 0.06], [x - 0.15, y + 0.22, z - 0.2], 0.03, BLK, { n: 6 }); },
-    vzmeti: (K, m) => { if (!K.arches) return; const ti = m.in || 0.13, top = m.top || 0.66;
-      wheels(K, (x, sd, front) => { const z = sd * (K.hw - ti), y0 = m.seat == null ? K.rw + 0.04 : [].concat(m.seat)[front ? 0 : [].concat(m.seat).length - 1], h = (top - y0) / 5;
-        for (let i = 0; i < 3; i++) cyl(K, [x, y0 + i * 2 * h, z], [x, y0 + (i * 2 + 1) * h, z], 0.055, SPR, { n: 6, capA: null, capB: null });
-        cyl(K, [x, y0 - 0.01, z], [x, top, z], 0.034, BLK, { n: 4, capA: null, capB: DK }); }); },
+    vzmeti: (K, m) => { if (!K.arches) return; const ti = m.in || 0.13, top = m.top || 0.66;   // (a strut's top under the bonnet: its upper coil and its cap; the wheels' own: 4)
+      wheels(K, (x, sd) => { const z = sd * (K.hw - ti); cyl(K, [x, top - 0.1, z], [x, top - 0.03, z], 0.055, SPR, { n: 6, capA: null, capB: null }); cyl(K, [x, top - 0.03, z], [x, top, z], 0.07, DK, { n: 6, capA: null, capB: DK }); }); },
   };
   DELI.stock = (K, id, m, M) => { const b = STOCK[id]; if (!b || !m) return false; b(K, m, M); return true; };
   DELI.stockBay = (K, x, y, z, l, w, h, M) => { const hw = K.hw || 0.75, out = Math.max(w / 2 + 0.14, Math.min(w / 2 + 0.26, hw - 0.3));   // (the outer side of what stands beside the block: clear of the tyre)
     STOCK.filter_zraka(K, { x: x - l * 0.1, y: y + h * 0.5, z: -(out - 0.08) }); STOCK.akumulator(K, { x: x - l * 0.3, y: y + h * 0.35, z: out - 0.07 });
-    STOCK.cip(K, { x: x - l / 2 - 0.1, y: y + h * 0.75, z: z + 0.12 }); STOCK.turbo(K, { x: x + l * 0.3, y: y + h * 0.2, z: out - 0.1 }, M); };
+    STOCK.cip(K, { x: x - l / 2 - 0.1, y: y + h * 0.75, z: z + 0.12 }); STOCK.turbo(K, { x: x + l * 0.3, y: y + h * 0.2, z: out - 0.1 }, M); STOCK.vzmeti(K, {}); };
 
   for (const [id, b] of [['filter_zraka', filter_zraka], ['cip', cip], ['turbo', turbo], ['akumulator', akumulator], ['vzmeti', vzmeti], ['amortizerji', amortizerji], ['stabilizatorji', stabilizatorji], ['dim_gum', dim_gum]]) DELI.add(id, b);
 })();

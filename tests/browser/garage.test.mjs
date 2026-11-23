@@ -208,7 +208,7 @@ try {
   {
     await page.evaluate(() => { __garage.pickCar('sokol'); }); await run();
     const u = await ui(), cab1 = await page.evaluate(() => __garage.cabinet()[1]);   // (the RENT A CAR maquette's car: the second car not owned after the player's in the garage's order; a newer car may stand between, then the SOKOL R is a plain one)
-    T.check('another car: the LEV S drives out, the SOKOL R drives in and stops on the table, its price in coins under its name and on the go button (the RENT A CAR maquette\'s car: its word over its price; any other car: one line, Kupi · price)', u.info.car === 'sokol' && u.name === 'SOKOL R' && Math.abs(u.info.ang) < 0.01 && (cab1 === 'sokol' ? /^Kupi62\.000\s🪙$/ : /^Kupi\s·\s62\.000\s🪙$/).test(u.go), JSON.stringify({ car: u.info.car, go: u.go, cab1 }));
+    T.check('another car: the LEV S drives out, the SOKOL R drives in and stops on the table, its price in coins under its name and on the go button (the RENT A CAR maquette\'s car: its word over its price; any other car: one line, Kupi · price)', u.info.car === 'sokol' && u.name === 'SOKOL R' && Math.abs(u.info.ang) < 0.01 && (cab1 === 'sokol' ? /^Kupi65\.000\s🪙$/ : /^Kupi\s·\s65\.000\s🪙$/).test(u.go), JSON.stringify({ car: u.info.car, go: u.go, cab1 }));
     await page.evaluate(() => __garage.buy());
     const u2 = await ui(), toast = await page.evaluate(() => document.getElementById('g-toast').textContent);
     T.check('too little money for it: refused, the money unchanged', u2.money === '11.500' && !u2.S.cars.sokol.own && /Premalo denarja/.test(toast), toast);

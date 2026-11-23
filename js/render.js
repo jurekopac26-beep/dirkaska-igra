@@ -1125,7 +1125,7 @@ const Render = (function () {
   const KIT_EYES = ['closed', 'open', 'formula', 'kart'];
   const kitTagged = (kt, kk) => { const b = kt === 's' ? KIT_S0 : KIT_P0, c = [b[0] * kk, b[1] * kk, b[2] * kk]; c.kt = kt; c.kk = kk; return c; };
   const kitBig = (M) => M.cat === 'tovornjaki' || M.len >= 5.5 || M.wid >= 2.4;   // (the budgets of the trucks, the limousine, the monster truck)
-  const kitBudget = (M) => kitBig(M) ? { outer: 2400, inner: 1200 } : { outer: 1400, inner: 800 };
+  const kitBudget = (M) => kitBig(M) ? { outer: 2400, inner: 1500 } : { outer: 1400, inner: 1100 };   // (the inner block: 300 for the parts under the bonnet, the garage's slots filled as they leave the factory: js/deli/skriti.js DELI.stock)
   class KitFail extends Error {}
   const kitFail = (msg) => { throw new KitFail(msg); };
   const kitIsGlass = (c) => c === GLASS || c === KIT_GL2 || (!!c && !c.kt && [GLASS, KIT_GL2].some(G => Math.abs(c[0] - G[0]) < 1e-6 && Math.abs(c[1] - G[1]) < 1e-6 && Math.abs(c[2] - G[2]) < 1e-6));
@@ -2053,7 +2053,7 @@ const Render = (function () {
     for (let i = 0; i < outerN; i++) if (Cl[i * 3] === KIT_LINE[0] && Cl[i * 3 + 1] === KIT_LINE[1] && Cl[i * 3 + 2] === KIT_LINE[2]) ain[i] = 128;
     geo.setAttribute('aIn', new THREE.BufferAttribute(ain, 1, true));
     geo.computeBoundingSphere(); geo.computeBoundingBox(); geo.setDrawRange(0, outerN);
-    const B = Object.assign(kx.hi ? { outer: 2400, inner: 1200 } : kitBudget(kx.M), kx.look && kx.look[kx.hi ? 'budgetHi' : 'budget'] || {}), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };   // (Visoki: the big vehicles' budget; look.budget / budgetHi: a vehicle's own)
+    const B = Object.assign(kx.hi ? { outer: 2400, inner: 1500 } : kitBudget(kx.M), kx.look && kx.look[kx.hi ? 'budgetHi' : 'budget'] || {}), tris = { outer: outerN / 3, inner: (total - outerN) / 3 };   // (Visoki: the big vehicles' budget; look.budget / budgetHi: a vehicle's own)
     // the lining's twins: each inner vertex's outer vertex (the shell's point it is inset from; -1: none: the cabin, the floor, the engine)
     const twin = new Int32Array(total - outerN).fill(-1), kM = (x, y, z) => Math.round(x * 1e5) + ',' + Math.round(y * 1e5) + ',' + Math.round(z * 1e5);
     if (kx.twins.size && total > outerN) { const idx = new Map(); for (let i = 0; i < outerN; i++) { const k = kM(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]); if (!idx.has(k)) idx.set(k, i); }

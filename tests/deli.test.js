@@ -100,8 +100,8 @@ function loadRender() {
 const warns = [], warn = console.warn; console.warn = (m) => warns.push(String(m));
 const X = loadRender(), R = X.Render;
 const I0 = R.kitInfo('kolibri');
-check('stock KOLIBRI: built ok, within its budgets (outer 1400; its cabin\'s inner block 1400; Visoki 2400 / 1750)', I0.status === 'ok' && I0.deli === '' && I0.tris.outer <= 1400 && I0.tris.inner <= I0.budget.inner && I0.budget.inner === 1400 &&
-  I0.hi.status === 'ok' && I0.hi.tris.outer <= 2400 && I0.hi.tris.inner <= I0.hi.budget.inner && I0.hi.budget.inner === 1750, `${I0.tris.outer}/${I0.tris.inner}, Visoki ${I0.hi.tris.outer}/${I0.hi.tris.inner}`);
+check('stock KOLIBRI: built ok, within its budgets (outer 1400; its cabin\'s inner block 1700; Visoki 2400 / 2050)', I0.status === 'ok' && I0.deli === '' && I0.tris.outer <= 1400 && I0.tris.inner <= I0.budget.inner && I0.budget.inner === 1700 &&
+  I0.hi.status === 'ok' && I0.hi.tris.outer <= 2400 && I0.hi.tris.inner <= I0.hi.budget.inner && I0.hi.budget.inner === 2050, `${I0.tris.outer}/${I0.tris.inner}, Visoki ${I0.hi.tris.outer}/${I0.hi.tris.inner}`);
 // every vehicle with mounts (KOLIBRI; the trial's PANTER, JASTREB, TITAN): each element it has a mount for, all 16 options
 const MOUNTED = C.MODELS.filter(m => m.kit && m.def.mounts), rows = [], fails = [], over = [], wheelsBad = [], rangeBad = [];
 const HIDDEN = ['filter_zraka', 'cip', 'turbo', 'akumulator', 'vzmeti', 'amortizerji', 'stabilizatorji', 'dim_gum'];   // (js/deli/skriti.js: drawn in the inner block, under the bonnet and in the arches)

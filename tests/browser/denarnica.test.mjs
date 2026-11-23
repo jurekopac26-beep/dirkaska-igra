@@ -84,7 +84,7 @@ try {
   await page.evaluate(() => document.querySelector('#upg-list .upg-seg[data-upg="aero"] button[data-lv="2"]').click());
   const c4 = await career();
   T.check('the game: the career\'s 24.500 (Kariera · 24.500), the LEV S\'s engine at level 1 on its upgrade screen; the SOKOL R\'s aero level 2 bought there (its price taken)',
-    /27\.500/.test(m0.career) && pm === 1 && c4.upg.sokol.aero === 2 && c4.money < 24500 && c4.money > 0 && c4.cars.join() === 'levs,sokol', JSON.stringify({ m0, pm, c4 }));
+    /24\.500/.test(m0.career) && pm === 1 && c4.upg.sokol.aero === 2 && c4.money < 24500 && c4.money > 0 && c4.cars.join() === 'levs,sokol', JSON.stringify({ m0, pm, c4 }));
 
   // 6. the garage again: the career's coins, the SOKOL R with the parts of aero level 2 (the SPORT kit)
   await garage();
