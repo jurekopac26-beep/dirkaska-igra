@@ -18,23 +18,23 @@ var TRACK_DEFS = TRACK_DEFS || [];
     zivali: { a: ['roe', 'boar', 'fox', 'cowB', 'hare'], t: ['huntStand', 'logPile', 'fallenTree', 'stumps', 'feedRack'], open: true },
     id: 'spa', name: 'Spa, Belgija', theme: 'spa', laps: 2, halfWidth: 6.5,
     desc: 'Prava proga v Belgiji v pravem merilu (7 km) skozi gozdove Arden: lasnica La Source, spust do Eau Rouge in strm vzpon Raidillon (do 16 %), dolga ravnina Kemmel, Les Combes in Malmedy na vrhu (469 m), dvojni levi ovinek Pouhon, hitri Blanchimont in šikana Bus Stop pred ciljem, za njo pa boksi (zapelji vanje in mehaniki ti popravijo avto). 102 m višinske razlike, dva kroga proti 21 tekmecem. Podatki: \u00a9 OpenStreetMap (ODbL), relief Valonije (SPW, CC BY 4.0).',
-    en: { name: 'Spa, Belgium', desc: 'The real circuit in Belgium at full scale (7 km) through the forests of the Ardennes: the La Source hairpin, down to Eau Rouge and the steep climb of Raidillon (up to 16 %), the long Kemmel straight, Les Combes and Malmedy at the top (469 m), the double left of Pouhon, the fast Blanchimont and the Bus Stop chicane before the line, with the pits behind it (drive in and the mechanics repair your car). 102 m of height difference, two laps against 21 rivals. Data: © OpenStreetMap (ODbL), relief of Wallonia (SPW, CC BY 4.0).' },   // (the English page: Jezik · Language)
+    en: { name: 'Spa, Belgium', desc: 'The real circuit in Belgium at full scale (7 km) through the forests of the Ardennes: the La Source hairpin, down to Eau Rouge and the steep climb of Raidillon (up to 16 %), the long Kemmel straight, Les Combes and Malmedy at the top (469 m), the double left of Pouhon, the fast Blanchimont and the Bus Stop chicane before the line, with the pits behind it (drive in and the mechanics fix your car). 102 m of height difference, two laps against 21 rivals. Data: © OpenStreetMap (ODbL), relief of Wallonia (SPW, CC BY 4.0).' },   // (the English page: Jezik · Language)
     start: [0, 0], runoff: 0.8, inner: 4.2, side: 3.8, gradeForce: true, elevSmooth: 6, realKm: 7.004,
     elev: SPA_H.map((h, i) => [i / SPA_H.length, h / 10]),
     pit: [15.5, -245, 195, -95, 100],   // pit lane right of the pit straight: [centre offset to the right, from, to, the player's box, a long way in] (metres from the start line)
     pitRow: [-140, 140],                // the first and the last box (the crews in the first 13, as many garages as boxes)
     walls: [[360, 860, 1, 1.5]],        // the support pit lane's wall on the way down to Eau Rouge, 1.5 m past the road edge (the lane and its garages behind it)
-    // run-offs as at a Formula 1 circuit: asphalt where the barriers stand far out (Core: they drive as asphalt), gravel from the kerb out in a few
+    // run-offs as at a top-category circuit: asphalt where the barriers stand far out (Core: they drive as asphalt), gravel from the kerb out in a few
     // corners (the outside of Raidillon, Les Combes, Bruxelles, Pouhon, the long right (Dolgi desni) and Blanchimont): [from, to, side (-1 left, 1 right), width]
     // (at Blanchimont the barrier on the outside moves back 12 m for its gravel: [from, to, side, metres])
     runoffTarmac: true,
     wide: [[5640, 5760, 1, 12]],
     gravelStrips: [[990, 1110, -1, 24], [2268, 2340, -1, 20], [2344, 2422, 1, 20], [2866, 3030, -1, 22], [3620, 3800, 1, 24], [5010, 5110, -1, 22], [5640, 5760, 1, 24]],
-    // the apexes of the 19 numbered turns (as in Formula 1): 1 La Source, 2 Eau Rouge, 3-4 Raidillon, 5-7 Les Combes and Malmedy, 8 Bruxelles,
+    // the apexes of the 19 numbered turns (as in the official layout): 1 La Source, 2 Eau Rouge, 3-4 Raidillon, 5-7 Les Combes and Malmedy, 8 Bruxelles,
     // 9 the short left (Kratki levi), 10-11 Pouhon, 12-13 Fagnes, 14 Campus, 15 the long right (Dolgi desni), 16 the kink before Blanchimont, 17 Blanchimont, 18-19 the Bus Stop
     turns: [[-123.7, -234.3], [378.7, 176.2], [447.5, 224.2], [492.7, 356.2], [881.9, 1412.6], [823.9, 1480.2], [845.7, 1613.1], [505.2, 1792.3], [646.5, 1655], [521.9, 1131.3],
       [320.2, 1122.8], [114.8, 1515.5], [-41.2, 1492], [-215, 1703.9], [-380.9, 1600], [-194.1, 1252.1], [76.9, 1091.3], [95.4, 288.5], [150.9, 277]],
-    // the two DRS zones of the Belgian Grand Prix: [turn, detection, activation (metres before / after that turn), the next turn]: the Kemmel
+    // the two DRS zones of the official layout: [turn, detection, activation (metres before / after that turn), the next turn]: the Kemmel
     // straight (detection at Eau Rouge, 250 m before Turn 4; open from 200 m after it up to Les Combes) and the start / finish straight
     // (detection 160 m before Turn 19, before the Bus Stop; open from 80 m after the chicane down to La Source)
     drs: [[4, -250, 200, 5], [19, -160, 80, 1]],
