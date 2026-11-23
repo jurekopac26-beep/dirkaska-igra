@@ -718,25 +718,25 @@
   }
  },
  "santoantao": {
-  "meshes": 2127,
-  "verts": 1943382,
-  "instances": 10913,
+  "meshes": 2115,
+  "verts": 1942942,
+  "instances": 17834,
   "props": 80,
   "crowd": 70,
-  "world": "6a07b72a",
+  "world": "7503b2e2",
   "propsHash": "5a2abb45",
   "floor": "fa877770/10864",
   "groups": {
-   "-:MeshLambertMaterial": "6f65d66a",
+   "-:MeshLambertMaterial": "70cecfb3",
    "-:MeshBasicMaterial": "f34f6dbd",
    "irFar:MeshLambertMaterial": "739667b0",
    "crowd:MeshLambertMaterial": "363ce3b6",
    "ao:MeshBasicMaterial": "7f7e406b",
    "tyremarks:MeshBasicMaterial": "e570ad62",
    "roadwear:MeshLambertMaterial": "ce73204e",
-   "life:MeshLambertMaterial": "5f1c4533",
-   "lifeShadow:MeshBasicMaterial": "35c488aa",
-   "life:MeshBasicMaterial": "fe9fb2e1"
+   "life:MeshLambertMaterial": "91281619",
+   "lifeShadow:MeshBasicMaterial": "2ea25473",
+   "life:MeshBasicMaterial": "76f37d49"
   }
  },
  "gudauri": {
