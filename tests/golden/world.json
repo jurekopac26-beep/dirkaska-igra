@@ -895,19 +895,19 @@
   }
  },
  "portomoniz": {
-  "meshes": 1576,
+  "meshes": 1529,
   "verts": 1048959,
   "instances": 26756,
   "props": 81,
   "crowd": 143,
-  "world": "554823c7",
+  "world": "25137e56",
   "propsHash": "8f77dc8c",
   "floor": "9fc8b0b0/8708",
   "groups": {
    "-:MeshLambertMaterial": "98450d87",
    "-:MeshPhongMaterial": "a6d43508",
    "-:MeshBasicMaterial": "4ff1c8f",
-   "rob:MeshLambertMaterial": "58fb300a",
+   "rob:MeshLambertMaterial": "55a03831",
    "irFar:MeshLambertMaterial": "a5aa9754",
    "crowd:MeshLambertMaterial": "5a73db91",
    "ao:MeshBasicMaterial": "182ef8c0",

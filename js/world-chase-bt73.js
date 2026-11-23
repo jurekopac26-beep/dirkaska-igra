@@ -111,5 +111,40 @@
     } catch (e) { console.error('chase-bt73 (' + id + '):', e); }
   }); };
   add('portomoniz', PME, PMF, 73100);
+  /* (since 22. 11. 2026: Porto Moniz's edge layers, js/world-chase-bt7.js, js/world-chase-bt44.js and this file, five softScens on one
+     material, each its own 256 m chunks, reached ~300 draws on the hairpins, where up to five chunk sets lie in the frame at once. So,
+     after the last of them, the meshes of one 256 m cell with the same material and the same shadow flags are joined into one: the same
+     triangles, the same colours, the same shadows (each mesh's castShadow as the layers left it), fewer draws. Only Porto Moniz) */
+  const joinRob = (root, size) => {
+    const buckets = new Map(), olds = [];
+    for (const g of root.children) {
+      if (!g.isGroup || !g.children.length || !g.children.every(m => m.isMesh && m.name === 'rob' && m.userData.rob && m.geometry && m.geometry.boundingSphere)) continue;
+      olds.push(g);
+      for (const m of g.children) {
+        const a = m.geometry.attributes, c = m.geometry.boundingSphere.center;
+        const k = [Math.floor(c.x / size), Math.floor(c.z / size), m.material.id, m.castShadow ? 1 : 0, m.receiveShadow ? 1 : 0, a.color ? a.color.itemSize : 0, a.uv ? 1 : 0].join(',');
+        let b = buckets.get(k); if (!b) buckets.set(k, b = []); b.push(m);
+      }
+    }
+    if (olds.length < 2) return 0;
+    const grp = new THREE.Group(), cat = (ms, n) => { let len = 0; for (const m of ms) len += m.geometry.attributes[n].array.length;
+      const A = new Float32Array(len); let o = 0; for (const m of ms) { A.set(m.geometry.attributes[n].array, o); o += m.geometry.attributes[n].array.length; } return A; };
+    for (const ms of buckets.values()) {
+      let m;
+      if (ms.length === 1) m = ms[0];
+      else {
+        const g = new THREE.BufferGeometry(), a0 = ms[0].geometry.attributes;
+        for (const n of Object.keys(a0)) g.setAttribute(n, new THREE.BufferAttribute(cat(ms, n), a0[n].itemSize));
+        g.computeBoundingSphere();
+        m = new THREE.Mesh(g, ms[0].material); m.castShadow = ms[0].castShadow; m.receiveShadow = ms[0].receiveShadow;
+        m.matrixAutoUpdate = false; m.updateMatrix(); m.name = 'rob'; m.userData.rob = m.userData.lj = true;
+        for (const q of ms) q.geometry.dispose();
+      }
+      grp.add(m);
+    }
+    for (const g of olds) root.remove(g);
+    root.add(grp); return olds.length;
+  };
+  if (LK.portomoniz) chain(LK.portomoniz, (ctx) => { if (ctx.root) { const n = joinRob(ctx.root, 256); if (ctx.out) ctx.out.robJoin = n; } });
   // add('savusavu', SVE, SVF, 73200);   (in the aggregate branch Savusavu's far band comes from the seventy-second group, js/world-chase-bt72.js; only Porto Moniz here)
 })();
