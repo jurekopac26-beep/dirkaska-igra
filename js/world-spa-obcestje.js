@@ -183,7 +183,7 @@
   const WATER = [[10.7, 104.3], [166.8, -145.5], [289.8, 8.7], [859.7, 1693.7]];   // amenity=drinking_water (n13975411646, n13975411642, n13061869477, n13989136102)
   const WIDTH = { 0: 1.0, 2: 2.6, 4: 3.6, 5: 2.0, 6: 1.6, 7: 1.4 };
   const COL = { 0: [0.5, 0.42, 0.32], 2: [0.56, 0.51, 0.43], 4: [0.4, 0.4, 0.41], 5: [0.6, 0.59, 0.56], 6: [0.62, 0.61, 0.58], 7: [0.68, 0.67, 0.64] };
-  const STEP = 2, LIFT = 0.07, CLEAR = 1.5;   // (the ribbons' sample spacing, their height over the terrain, the room past the barrier: m)
+  const STEP = 2, LIFT = 0.07, CLEAR = 1.5, MINRUN = 5;   // (the ribbons' sample spacing, their height over the terrain, the room past the barrier: m; the shortest run drawn: samples)
 
   World.api.spaObc = function (o) {
     const { scen, exclPush, excluded, ground, near, out } = o, st = { ways: 0, m: 0, water: 0 };
@@ -199,6 +199,11 @@
         const p = P[Math.max(0, j - 1)], q = P[Math.min(P.length - 1, j + 1)], dx = q[0] - p[0], dz = q[1] - p[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * hw, nz = dx / l * hw;
         return [[x + nx, ground(x + nx, z + nz) + LIFT, z + nz], [x - nx, ground(x - nx, z - nz) + LIFT, z - nz]];
       });
+      for (let j = 0; j < P.length;) {   // (a free run shorter than MINRUN samples is dropped: no lone scraps of a path cut by the barrier or a building)
+        let e = j; while (e < P.length && ok[e]) e++;
+        if (e - j < MINRUN) for (let q = j; q < e; q++) ok[q] = false;
+        j = e + 1;
+      }
       let used = 0;
       for (let j = 0; j + 1 < P.length; j++) {
         if (!ok[j] || !ok[j + 1]) continue;
