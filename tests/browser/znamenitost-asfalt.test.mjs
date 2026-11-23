@@ -2,13 +2,14 @@
 // model above the road's height (more than 0.3 m under it: in the ground) is farther from the centre line than half the road's width
 // there plus 0.3 m (Matej 22. 11.: »Grad (vrata) sredi ceste tako zagotovo ni v resnici« — Hiva's east gate at s ≈ 1944: the gates sit in
 // the walls, the road beside them, as OSM draws them). The same for the simple one drawn until the model has loaded (out.landmarkFallback),
-// here with the models' files held back. Test tracks (test: true) are frozen and not checked.
+// here with the models' files held back. And the barriers stand in front of it (barriers(), below). Test tracks (test: true) are frozen and not checked.
 //   node tests/browser/znamenitost-asfalt.test.mjs        every real track with a landmark
 //   ZN_ONLY=hiva node tests/browser/znamenitost-asfalt.test.mjs   only these
 import { serve, launch, openGame, startTrack, checker } from './lib.mjs';
 
 const IDS = (process.env.ZN_ONLY || 'eljem,hiva,isalo,isuna,luanda,mombasa,portobelo').split(',');
 const MARGIN = 0.3;
+const BAR = ['hiva'];   // the tracks whose barriers are already checked against their landmark (the others are reported: Eljem's amphitheatre at s 834-870)
 // every vertex of the landmark's near model (fb: of its fallback) against the centre line of the race's track
 function measure(page, id, fb) {
   return page.evaluate(async ([id, M, fb]) => {
@@ -38,6 +39,34 @@ function measure(page, id, fb) {
   }, [id, MARGIN, fb]);
 }
 
+// the barriers stand in front of the landmark, not behind it (Matej 23. 11.: »popravi da je ograja pred obzidjem«): at every sample, on each
+// side, the barrier's back (its offset + 0.5 m, js/world-*.js) no farther out than the foot of the landmark's walls (its vertices up to 6 m
+// above the road) within 3 m behind the barrier
+function barriers(page, id) {
+  return page.evaluate(async (id) => {
+    const W = Render.world; if (W.landmarkLoad) await W.landmarkLoad;
+    let lod = null; W.root.traverse(o => { if (o.name === 'znamenitost:' + id) lod = o; }); if (!lod) return { err: 'no landmark model' };
+    const near = lod.levels[0].object; near.updateMatrixWorld(true);
+    const t = window.__game.race.track, N = t.N, ds = t.ds, H = 10, G = new Map(), D = [new Float32Array(N).fill(1e9), new Float32Array(N).fill(1e9)];
+    for (let i = 0; i < N; i++) { const k = Math.floor(t.px[i] / H) + ',' + Math.floor(t.pz[i] / H); (G.get(k) || G.set(k, []).get(k)).push(i); }
+    const P = near.geometry.attributes.position, e = near.matrixWorld.elements;
+    for (let v = 0; v < P.count; v++) {
+      const lx = P.getX(v), ly = P.getY(v), lz = P.getZ(v);
+      const x = e[0] * lx + e[4] * ly + e[8] * lz + e[12], y = e[1] * lx + e[5] * ly + e[9] * lz + e[13], z = e[2] * lx + e[6] * ly + e[10] * lz + e[14];
+      const a = Math.floor(x / H), c = Math.floor(z / H);
+      for (let p = a - 2; p <= a + 2; p++) for (let q = c - 2; q <= c + 2; q++) for (const i of G.get(p + ',' + q) || []) {
+        const dx = x - t.px[i], dz = z - t.pz[i], lat = dx * t.nx[i] + dz * t.nz[i];
+        if (Math.abs(dx * t.nz[i] - dz * t.nx[i]) > ds * 0.75 || y < t.hy[i] - 0.3 || y > t.hy[i] + 6) continue;
+        const sd = lat > 0 ? 1 : 0; D[sd][i] = Math.min(D[sd][i], Math.abs(lat));
+      }
+    }
+    const bad = [];
+    for (const sd of [0, 1]) for (let i = 0; i < N; i++) { const bar = sd ? t.br[i] : t.bl[i], d = D[sd][i];
+      if (d < bar + 3 && bar + 0.5 > d + 0.05) bad.push('s=' + Math.round(i * ds) + (sd ? ' right' : ' left') + ' wall ' + d.toFixed(2) + ' m, barrier ' + bar.toFixed(2) + ' m'); }
+    return { bad };
+  }, id);
+}
+
 const T = checker('landmark off the asphalt');
 const srv = await serve();
 const browser = await launch();
@@ -51,6 +80,10 @@ try {
     if (r.err) { T.check(id, false, r.err); continue; }
     T.check(`${id}: no vertex of the landmark within half width + ${MARGIN} m of the centre line`, r.n === 0,
       `${r.verts} vertices, closest ${r.min === null ? 'over 5 m' : r.min + ' m'} beyond the road's edge` + (r.n ? `; ${r.n} on the asphalt: ${r.at.join('; ')}` : ''));
+    const b = await barriers(page, id);
+    const why = b.err || (b.bad.length ? `${b.bad.length} samples behind it: ${b.bad.slice(0, 6).join('; ')}` : '');
+    if (BAR.includes(id)) T.check(`${id}: the barriers in front of the landmark`, !b.err && b.bad.length === 0, why);
+    else if (why) console.log(`--  ${id}: the barriers not yet in front of the landmark (not checked: its own pull request) — ${why}`);
   }
   T.check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
   // the fallback: the models' files never come (as on a slow or broken connection)
