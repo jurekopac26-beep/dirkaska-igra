@@ -1,11 +1,11 @@
 {
  "pikes": {
-  "meshes": 692,
-  "verts": 1706745,
+  "meshes": 694,
+  "verts": 1715667,
   "instances": 474,
   "props": 352,
   "crowd": 428,
-  "world": "bab03b57",
+  "world": "c296bb84",
   "propsHash": "fed9419e",
   "floor": "67c951b5/12544",
   "groups": {
@@ -26,7 +26,9 @@
    "pkCloudSea:ShaderMaterial": "714d7305",
    "pkSmoke:ShaderMaterial": "186acc3",
    "pkSplitBoard:MeshBasicMaterial": "7e05cac9",
-   "ao:MeshBasicMaterial": "d9446f28",
+   "roadside-paths:MeshLambertMaterial": "b4bca242",
+   "roadside-things:MeshLambertMaterial": "be54c9b7",
+   "ao:MeshBasicMaterial": "fc6ad306",
    "tyremarks:MeshBasicMaterial": "4a574421",
    "sceneThings:MeshLambertMaterial": "e491568b",
    "people:MeshLambertMaterial": "214e656",
@@ -1533,21 +1535,22 @@
   }
  },
  "tapini": {
-  "meshes": 106,
-  "verts": 59265,
-  "instances": 2708,
+  "meshes": 108,
+  "verts": 83290,
+  "instances": 2699,
   "props": 0,
   "crowd": 46,
-  "world": "8ee5f5a5",
+  "world": "908eb941",
   "propsHash": "811c9dc5",
   "floor": null,
   "groups": {
-   "-:MeshLambertMaterial": "f7c52a1",
+   "-:MeshLambertMaterial": "5917e785",
    "-:MeshPhongMaterial": "71841734",
    "-:MeshBasicMaterial": "5e4531fb",
+   "roadside-washes:MeshLambertMaterial": "c7bec4bf",
    "crowd:MeshLambertMaterial": "b023b004",
    "flags:MeshLambertMaterial": "2c3879b7",
-   "ao:MeshBasicMaterial": "3d198164"
+   "ao:MeshBasicMaterial": "f17237e5"
   }
  },
  "canaries": {
