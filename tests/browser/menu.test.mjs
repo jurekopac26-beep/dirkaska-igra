@@ -8,7 +8,8 @@
 // back and Izberi progo lead straight to the track step), a race from the menu (the intro
 // off, the short intro with its video and Skip; in Circuit race the race weekend's calendar: qualifying off by default and remembered
 // when switched on, the race from the back of the grid without it, Back, the pad) and the way back to the title, the game's own screens the menu links to, the
-// layouts (upright, on its side, a small phone), and the old menu that stays for ?menu=old.
+// layouts (upright, on its side, a small phone), the old menu that stays for ?menu=old, and the career's path of 1.0 (its strip in the
+// Career panel, its hub: stages, cups, class cups; a locked cup refused, an open one started).
 //   node tests/browser/menu.test.mjs
 import { serve, launch, openGame, checker } from './lib.mjs';
 
@@ -96,7 +97,7 @@ try {
       const L = window.MENU.lens, ds = Core.TRACKS.filter(d => !d.variantOf && (d.modes || (d.timeTrial ? ['tt'] : ['race'])).includes(gm) && !!(d.test || d.pending) === nu);
       const rk = (d) => d.test ? 2 : d.pending ? 1 : 0;   // (the real ones, the ones awaiting the user's choice, the test tracks)
       ds.sort((a, b) => (rk(a) - rk(b)) || (L[a.id] - L[b.id]) || (a.id < b.id ? -1 : 1));
-      return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent).length, lens: ds.every(d => L[d.id] > 0) };
+      return { ids: ds.map(d => d.id), roads: ds.filter(d => d.open && !d.test && !d.rally && !d.descent && !d.vehicle).length, lens: ds.every(d => L[d.id] > 0) };
     };
     // every track of the list on the stage in turn (camera 2), round to the first again: its picture, its head (key: the list, lists[key])
     const walk = async (key, mode, exp) => {
@@ -136,7 +137,7 @@ try {
       const list = await page.evaluate(() => Menu.debug().list), groups = await ev(page, 'return !!root.querySelector(".groups");');
       T.check(`${mode}: one list of the game's real tracks (${exp.ids.length}) from the shortest to the longest, no hidden one (pending, test: NEUPORABNO); no groups`, exp.lens && !groups && JSON.stringify(list) === JSON.stringify(exp.ids), JSON.stringify({ list, exp: exp.ids }));
       roads[mode] = exp.roads;
-      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5., 6. and 9. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass, Great Alpine Road; Irohazaka awaits the choice)`, roads.race === roads.trial && roads.race >= 7, JSON.stringify(roads));
+      if (mode === 'trial') T.check(`every open road in Circuit race as in Time trial (${roads.race} and ${roads.trial}: Pikes Peak too; the open roads that became test tracks on 4., 5., 6. and 9. 11. 2026 are left out: the USA's but Pikes Peak, Vršič, Mount Buller, Sani Pass, Great Alpine Road; Irohazaka awaits the choice; so are the tanker's roads, in Time trial only)`, roads.race === roads.trial && roads.race >= 7, JSON.stringify(roads));
       const w = await walk(mode, mode, exp);
       T.check(`${mode}: every track shows its picture (${w.seen} tracks, ${w.n} picture files, none missing); after the last the first again`, !w.bad.length && !w.gone.length && w.seen === exp.ids.length && w.again === w.first, JSON.stringify(w));
       await page.click('.thead [data-act="back"]');   // (back to the modes: the head's arrow)
@@ -159,10 +160,10 @@ try {
     // every track's pictures in cameras 1 and 3: the map from above where the track has a route (routes.js), else its model; the corner's
     // video in a loop, muted, where MENU.corners has it (every real track, and Vršič: a test track since 6. 11. 2026 without a model), else (a
     // test track) its model
-    const cx = await page.evaluate(() => ({ routes: Object.keys(window.ROUTES || {}), corners: window.MENU.corners || [], tests: Core.TRACKS.filter(d => d.test).map(d => d.id) }));
+    const cx = await page.evaluate(() => ({ routes: Object.keys(window.ROUTES || {}), corners: window.MENU.corners || [], tests: Core.TRACKS.filter(d => d.test).map(d => d.id), tanker: Core.TRACKS.filter(d => d.vehicle).map(d => d.id) }));
     const cbad = Object.entries(cams).filter(([id, c]) => c.c1.kind !== (cx.routes.includes(id) ? 'map' : 'model') || c.c3.kind !== (cx.corners.includes(id) ? 'corner' : 'model') || (c.c3.kind === 'corner' && !(c.c3.loop && c.c3.files[0] === 'assets/maps/corner-' + id + '.webp' && c.c3.files[1] === 'assets/maps/corner-' + id + '.webm'))).map(([id, c]) => id + ':' + c.c1.kind + '/' + c.c3.kind);
-    const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
-    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || id === 'vrsic'), JSON.stringify({ cbad, nocorner }));
+    const real0 = Object.keys(cams).filter(id => !cx.tests.includes(id) && !cx.tanker.includes(id)), nocorner = real0.filter(id => !cx.corners.includes(id));
+    T.check(`every track (${Object.keys(cams).length}): camera 1 its map (else its model), camera 3 its corner's video in a loop with its poster (else its model); every real track (${real0.length}) has its corner's video, but the tanker's roads`, Object.keys(cams).length >= 47 && !cbad.length && !nocorner.length && cx.corners.every(id => !cx.tests.includes(id) || id === 'vrsic'), JSON.stringify({ cbad, nocorner }));
     // every track of every mode: its height graph under the back arrow in camera 2 (the flyover, or the model where a track has none), a
     // real track's with its lowest and highest heights; its country gold on the head's globe
     const tests = await page.evaluate(() => Core.TRACKS.filter(d => d.test).map(d => d.id)), H = Object.values(heads);
@@ -1474,7 +1475,7 @@ try {
     // its close as the garage's Nazaj (the same car) or Izberi progo (another, &naprej=proga); the frame kept: the second tap no load)
     let loads = 0;
     await page.route('**/garaza.html*', (r) => { loads++; r.fulfill({ contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><script>window.__garageEmbed = { open(p) { parent.__garStub = p; setTimeout(() => parent.__garageClose(parent.__garWay === "back" ? { car: p.car } : { car: parent.__garOther, naprej: "proga" }), 50); }, back() { parent.__garageClose({}); } }; parent.__garageReady();</script>' }); });
-    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x1a1a1f, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
+    const car0 = await page.evaluate(() => ({ id: Core.MODELS[__game.S.car].id, hex: [0xd81f2a, 0xf5f5f0, 0x1c5fd6, 0xf2c230, 0x5c6168, 0x2fa84f, 0xff7a1a, 0x8e3bd6][__game.S.color].toString(16).padStart(6, '0') }));
     other = await page.evaluate((id) => Core.MODELS.find(m => !m.retired && m.id !== id).id, car0.id);   // (the garage's other car: Izberi progo on it)
     await page.evaluate((o) => { window.__garOther = o; }, other);
     const url0 = await page.evaluate(() => location.search);
@@ -1610,6 +1611,105 @@ try {
         mp.lap > 0.4 && mp.best < 2.5 && mp.head && mp.last && mp.mid === 0 && mp.narrow, JSON.stringify(mp));
     } else console.log('  skip: a track with only its map (every real circuit has its flyover)');
     T.check('no page errors in the switches', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 12. the career's path of 1.0 (js/kariera.js, part C: the hub; only through the bridge G.kariera / G.karieraStart): the career off, no
+  //     strip; on (a small phone upright), the strip in the Career panel (the stage, its progress); tapped: the hub without the valley (the five stages, the
+  //     open one chosen, its cups with their state, the class cups with their goals); a locked stage's cup refused (the game's toast, the
+  //     hub still open, no championship); on its side the hub fits the screen; an open cup tapped: its first race
+  {
+    const { ctx, page, errors } = await open({}, { width: 360, height: 640 });
+    await ready(page);
+    await click(page, 'career');
+    const off = await ev(page, 'return { strip: !!root.querySelector(".k-strip"), cards: root.querySelectorAll(".t-sub.four .mode").length, view: window.__game.kariera() };');
+    T.check('the career off: the Career panel without the path\'s strip, its four cards', !off.strip && off.cards === 4 && off.view === null, JSON.stringify(off));
+    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['pico'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: { 's1-krog': 2 }, cilji: {}, prve: [], km: { mali: 37 } } })));
+    await page.reload(); await ready(page);
+    await page.evaluate(() => { __game.S.car = Core.MODELS.findIndex(m => m.id === 'pico'); });
+    await click(page, 'career');
+    const v = await page.evaluate(() => __game.kariera());
+    const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { txt: k.querySelector("b").textContent, w: k.querySelector(".bar b").style.width, cards: root.querySelectorAll(".t-sub.four .mode").length };');
+    const pct = v && v.napredek.need ? Math.round(v.napredek.done / v.napredek.need * 100) + '%' : '';
+    T.check('the career on: the strip above the four cards, the stage and its progress (the stars against the next stage\'s threshold: 2 of 9)', st && st.txt === 'STAGE 1 · ROOKIE' && st.w === pct && st.cards === 4 && v.napredek.done === 2 && v.napredek.need === 9, JSON.stringify({ st, n: v && v.napredek }));
+    await page.evaluate(() => { window.MenuDolina = undefined; });   // (the hub: the path without the valley, e.g. no WebGL)
+    await page.click('[data-act="kpot"]');
+    const hub = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && { next: s.querySelector(".kp-prog small").textContent, tabs: [...s.querySelectorAll(".kp-tabs button")].map(b => b.getAttribute("aria-selected") + ":" + b.className + ":" + b.textContent), cups: [...s.querySelectorAll(".kp-list")[0].querySelectorAll(".k-cup")].map(c => c.dataset.act + ":" + c.className.split(" ")[1] + ":" + c.querySelector(".chip").textContent), cls: s.querySelectorAll(".k-cls").length, goals: [...s.querySelectorAll(".k-cls")].map(c => c.querySelector(".kg-row").textContent)[0] };');
+    const s1 = v.stopnje[0].pokali.map(c => 'kcup:' + c.id + ':' + c.stanje + ':' + (c.stanje === 'zaklenjen' ? 'LOCKED' : c.stanje === 'osvojen' || c.best ? 'BEST P' + c.best : 'OPEN'));
+    T.check('the hub: every stage (the first chosen, the others locked), what opens the next (2 / 9★), stage 1\'s events with their state (the circuit cup won: BEST P2), the class cups with their goals (37 of 100 km)',
+      hub && hub.tabs.length === v.stopenj && v.stopenj === 5 && hub.next === '2 / 9★ · opens ' + v.stopnje[1].en.name && hub.tabs[0].startsWith('true::1') && hub.tabs.slice(1).every(t => t.startsWith('false:lk:')) && JSON.stringify(hub.cups) === JSON.stringify(s1) && s1.some(c => c.endsWith('BEST P2'))
+      && hub.cls === v.razredi.length && hub.cls === 10 && /37 \/ 100 km/.test(hub.goals), JSON.stringify({ hub, s1 }));
+    await page.click('[data-act="kstage:2"]');
+    const lk = v.stopnje[1].pokali[0];
+    await page.click(`[data-act="kcup:${lk.id}"]`, { force: true });   // (aria-disabled: Playwright would wait for it to be enabled) await page.waitForTimeout(300);
+    const ref = await page.evaluate(() => ({ toast: document.getElementById('toast').textContent, champ: localStorage.getItem('tdgp-champ'), race: !!__game.race }));
+    const still = await ev(page, 'const s = root.querySelector(".sheet.kpot"); return s && s.querySelector(".kp-tabs [aria-selected=true]").textContent;');
+    T.check('a cup of stage 2 tapped: refused (the game\'s toast), the hub still open on stage 2, no championship, no race', /zaklenjen/.test(ref.toast) && !ref.champ && !ref.race && still === 'Club', JSON.stringify({ ref, still }));
+    await page.setViewportSize({ width: 640, height: 360 }); await page.waitForTimeout(400);
+    const fit = await ev(page, 'const r = root.querySelector(".sheet.kpot").getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), b: Math.round(r.bottom), sw: root.querySelector(".sheet.kpot").scrollWidth, cw: root.querySelector(".sheet.kpot").clientWidth };');
+    T.check('on its side the hub fits the screen (no side scroll)', fit.l >= 0 && fit.r <= 640 && fit.t >= 0 && fit.b <= 360 && fit.sw <= fit.cw, JSON.stringify(fit));
+    await page.setViewportSize({ width: 360, height: 640 }); await page.waitForTimeout(300);
+    await page.click('[data-act="kstage:1"]');
+    const open1 = v.stopnje[0].pokali.find(c => c.stanje === 'odprt');
+    await page.click(`[data-act="kcup:${open1.id}"]`);
+    const ok = await raceOn(page, open1.tracks[0]).then(() => true).catch(() => false);
+    const ch = await page.evaluate(() => ({ champ: JSON.parse(localStorage.getItem('tdgp-champ') || 'null'), sheet: !!document.getElementById('menu-host').shadowRoot.querySelector('.sheet.kpot') }));
+    T.check('an open cup tapped: the hub closed, its championship, its first race', ok && ch.champ && ch.champ.id === open1.id && !ch.sheet, JSON.stringify({ ok, ch, id: open1.id }));
+    T.check('the career\'s path: no page errors', !real(errors).length, real(errors).join(' | '));
+    await ctx.close();
+  }
+
+  // 13. the career's valley (js/kariera-dolina.js, MenuDolina; here a stand-in with the same calls, the bridge's atlas and izid stood in
+  //     too): the strip with the stars; tapped: the valley opened (no hub), one step in the history; the phone's Back closes it (the
+  //     Career panel under it); closed by itself: its step out of the history; an event refused (the valley stays) or started (the history
+  //     cleared); back from an event's race (Menu.show): the valley again with its result, the result cleared
+  {
+    const { ctx, page, errors } = await open({}, { width: 360, height: 640 });
+    await ready(page);
+    await page.evaluate(() => localStorage.setItem('tdgp-career', JSON.stringify({ v: 1, on: true, money: 4200, cars: ['pico'], upg: {}, earned: 0, races: 3, wins: 1, pot: { stopnja: 1, pokali: {}, cilji: {}, prve: [], km: {} } })));
+    // (the game's bridge is not on window: caught as the game hands it to Menu.init)
+    await page.addInitScript(() => { let M; Object.defineProperty(window, 'Menu', { configurable: true, get: () => M, set(v) { const i = v.init; v.init = (b) => { window.__bridge = b; return i(b); }; M = v; } }); });
+    await page.reload(); await ready(page);
+    await page.evaluate(() => {
+      __game.S.car = Core.MODELS.findIndex(m => m.id === 'pico');
+      const B = window.__bridge, k0 = B.kariera;
+      let iz = null;
+      B.kariera = () => { const v = k0(); return v && Object.assign(v, { atlas: { stopnje: [], zvezdice: 7, max: 132 } }); };
+      B.karieraIzid = (clear) => { if (clear) { iz = null; return null; } return iz; };
+      window.__izid = (o) => { iz = o; };
+      const D = window.MenuDolina = { log: [], o: null, on: false,
+        open(o) { D.o = o; D.on = true; D.log.push('open:' + (o.izid ? o.izid.id : '') + ':' + !!(o.view && o.view.atlas) + ':' + !!o.root); },
+        close() { if (!D.on) return; D.on = false; D.log.push('close'); D.o.close(); },
+        back() { D.log.push('back'); D.close(); }, isOpen: () => D.on, root: () => null };
+    });
+    const dl = () => page.evaluate(() => ({ log: MenuDolina.log.join(), on: MenuDolina.on, h: history.state && history.state.nazaj || 0, hub: !!document.getElementById('menu-host').shadowRoot.querySelector('.sheet.kpot'), sub: !!document.getElementById('menu-host').shadowRoot.querySelector('.t-sub.four') }));
+    await click(page, 'career');
+    const st = await ev(page, 'const k = root.querySelector(".k-strip"); return k && { atlas: k.classList.contains("atlas"), chip: k.querySelector(".chip").textContent, w: k.querySelector(".bar b").style.width };');
+    const n13 = await page.evaluate(() => __game.kariera().napredek), w13 = (n13.need ? Math.round(n13.done / n13.need * 100) : 100) + '%';
+    T.check('the valley: the strip with the stars (7 of 132), its bar toward the next stage', st && st.atlas && st.chip === '★ 7 / 132' && st.w === w13, JSON.stringify({ st, n13 }));
+    await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
+    const d1 = await dl();
+    T.check('the strip tapped: the valley opened with the view\'s atlas (no hub), one step in the history', d1.on && d1.log === 'open::true:true' && !d1.hub && d1.h === 1, JSON.stringify(d1));
+    await page.goBack(); await page.waitForTimeout(300);
+    const d2 = await dl();
+    T.check('the phone\'s Back: the valley closed, the Career panel under it', !d2.on && d2.log.endsWith('close') && d2.sub && !d2.hub, JSON.stringify(d2));
+    await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
+    await page.evaluate(() => MenuDolina.close()); await page.waitForTimeout(400);
+    const d3 = await dl();
+    T.check('closed by itself: its step out of the history', !d3.on && d3.h === 0 && d3.sub, JSON.stringify(d3));
+    await page.click('[data-act="kpot"]'); await page.waitForTimeout(150);
+    const r0 = await page.evaluate(() => { const lk = __game.kariera().stopnje[1].pokali[0].id; document.getElementById('toast').textContent = ''; const ok = MenuDolina.o.start(lk); return { ok, on: MenuDolina.on, toast: document.getElementById('toast').textContent, h: history.state && history.state.nazaj || 0 }; });
+    T.check('an event refused (locked): false, the game\'s toast, the valley and its step stay', r0.ok === false && r0.on && /zaklenjen/.test(r0.toast) && r0.h === 1, JSON.stringify(r0));
+    await page.evaluate(() => window.__izid({ id: 's1-krog', prej: 0, zdaj: 2, nagrade: [], stopnja: 1 }));
+    await page.evaluate(() => { if (MenuDolina.on) MenuDolina.close(); MenuDolina.log.length = 0; Menu.show('title'); }); await page.waitForTimeout(300);
+    const d4 = await dl(), left = await page.evaluate(() => __bridge.karieraIzid());
+    T.check('back from an event\'s race: the valley again with its result (over the Career panel), the result cleared', d4.on && d4.log === 'open:s1-krog:true:true' && d4.sub && left === null, JSON.stringify({ d4, left }));
+    const r1 = await page.evaluate(() => { const id = __game.kariera().stopnje[0].pokali.find(c => c.stanje === 'odprt').id; return { id, ok: MenuDolina.o.start(id) }; });
+    const ok = r1.ok && await raceOn(page, (await page.evaluate((id) => __game.kariera().stopnje[0].pokali.find(c => c.id === id).tracks[0], r1.id))).then(() => true).catch(() => false);
+    await page.waitForTimeout(1700);
+    const d5 = await dl();
+    T.check('an event started from the valley: its race, the valley closed, the history cleared', ok && !d5.on && d5.h === 0, JSON.stringify({ r1, d5 }));
+    T.check('the career\'s valley: no page errors', !real(errors).length, real(errors).join(' | '));
     await ctx.close();
   }
 } finally {
