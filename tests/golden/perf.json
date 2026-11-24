@@ -735,11 +735,11 @@
   "jsMs": 0.07
  },
  "longyearbyen": {
-  "calls": 117,
+  "calls": 116,
   "maxCalls": 128,
-  "kverts": 183,
-  "maxKverts": 236,
-  "jsMs": 0.83
+  "kverts": 173,
+  "maxKverts": 223,
+  "jsMs": 0.7
  },
  "vaoala": {
   "calls": 147,

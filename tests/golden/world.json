@@ -1611,21 +1611,21 @@
   }
  },
  "longyearbyen": {
-  "meshes": 578,
-  "verts": 752196,
-  "instances": 425,
+  "meshes": 572,
+  "verts": 680806,
+  "instances": 432,
   "props": 205,
   "crowd": 87,
-  "world": "2a375136",
+  "world": "c5103c4a",
   "propsHash": "ef732687",
   "floor": "94b2201c/9240",
   "groups": {
-   "-:MeshLambertMaterial": "bd7f4928",
+   "-:MeshLambertMaterial": "b12ce2ac",
    "-:MeshPhongMaterial": "56a346e3",
    "-:MeshBasicMaterial": "f9dd398d",
    "crowd:MeshLambertMaterial": "9e34637d",
    "flags:MeshLambertMaterial": "6c340839",
-   "ao:MeshBasicMaterial": "c6589ad",
+   "ao:MeshBasicMaterial": "f592bda",
    "tyremarks:MeshBasicMaterial": "32254bc3",
    "roadwear:MeshLambertMaterial": "911ee1a5"
   }
