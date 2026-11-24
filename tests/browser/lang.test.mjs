@@ -81,7 +81,7 @@ try {
   const r5 = await page.evaluate(() => ({ info: document.getElementById('career-info').textContent, money: document.getElementById('career-money').textContent, toggle: document.getElementById('career-toggle').textContent,
     garage: [...document.querySelectorAll('#career-garage h4')].map(h => h.textContent).join('/'), price: (document.querySelectorAll('#career-garage .gcar .pr')[1] || {}).textContent }));   // (the MIŠKA's)
   const sr = await slovene();
-  T.check('career in English, the money as 10,000 🪙 (coins, no €); the garage under the categories (Small cars … Specials), the prices as 6,000 🪙', /^In the career you earn money/.test(r5.info) && /You start with 10,000\u00a0🪙 and the PICO TURBO\./.test(r5.info) && r5.money === '10,000\u00a0🪙' && r5.toggle === 'Start career' &&
+  T.check('career in English, the money as 10,000 🪙 (coins, no €); the garage under the categories (Small cars … Specials), the prices as 6,000 🪙', /^In the career you earn money/.test(r5.info) && /You start with 10,000\u00a0🪙 and the LEV S\./.test(r5.info) && r5.money === '10,000\u00a0🪙' && r5.toggle === 'Start career' &&
     r5.garage === 'Small cars/Sports cars/Supercars/Classics/Rally/Off-road/Racing/Trucks/Electric/Specials' && /^\d+,\d{3}\u00a0🪙$/.test(r5.price || '') && !sr.length, JSON.stringify({ r5, sr }));
   await act('to-title'); await page.waitForTimeout(150); await act('to-online'); await page.waitForTimeout(250);
   const o5 = await page.evaluate(() => document.querySelector('#s-online').innerText);
@@ -123,7 +123,7 @@ try {
   await page.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'miska'); g.onAction('to-car'); }); await page.waitForTimeout(300);
   const f6 = await page.evaluate(() => ({ cat: document.getElementById('car-cat').textContent, desc: document.getElementById('car-desc').textContent, strip: [...document.querySelectorAll('#car-strip .car-chip b')].map(b => b.textContent).join('/') }));
   const sF = await slovene();
-  T.check('a vehicle of the fleet in English: "Small cars · 4/8", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 4/8' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
+  T.check('a vehicle of the fleet in English: "Small cars · 4/7", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 4/7' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
   await page.evaluate(() => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === 'muscle'); });   // (the VIHAR V8, as the title below expects too)
   await startTrack(page, 'jezero');
   const w6 = await page.evaluate(async () => { const g = window.__game, P = g.race.player, raf = () => new Promise(q => requestAnimationFrame(q));
