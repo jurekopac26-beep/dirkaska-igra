@@ -961,15 +961,15 @@
  },
  "lombok": {
   "meshes": 714,
-  "verts": 997449,
+  "verts": 1005657,
   "instances": 5473,
   "props": 51,
   "crowd": 19,
-  "world": "d5ef5301",
+  "world": "47ba0e12",
   "propsHash": "b21d4ce1",
   "floor": "1feaa0d3/8596",
   "groups": {
-   "-:MeshLambertMaterial": "6671e067",
+   "-:MeshLambertMaterial": "34dfceba",
    "-:MeshBasicMaterial": "36ac0d23",
    "lombok service roads:MeshLambertMaterial": "a91d8",
    "lombok dirt tracks:MeshLambertMaterial": "84b255eb",
@@ -979,7 +979,7 @@
    "crowd:MeshLambertMaterial": "5443521",
    "jet smoke:MeshBasicMaterial": "684b759b",
    "flags:MeshLambertMaterial": "3ac86444",
-   "ao:MeshBasicMaterial": "996abd27",
+   "ao:MeshBasicMaterial": "e951d98b",
    "roadwear:MeshLambertMaterial": "2e0a12e7",
    "worn:MeshLambertMaterial": "9aafa2a6",
    "brakeBoards:MeshLambertMaterial": "58f893ab",
@@ -1650,6 +1650,26 @@
    "roadwear:MeshLambertMaterial": "af9e14b8"
   }
  },
+ "krasnahorka": {
+  "meshes": 426,
+  "verts": 371949,
+  "instances": 3827,
+  "props": 154,
+  "crowd": 12,
+  "world": "964654e4",
+  "propsHash": "89028a26",
+  "floor": "436e5379/7364",
+  "groups": {
+   "-:MeshLambertMaterial": "428ae687",
+   "-:MeshPhongMaterial": "f177a5c0",
+   "-:MeshBasicMaterial": "53339fdc",
+   "crowd:MeshLambertMaterial": "fb825c43",
+   "flags:MeshLambertMaterial": "303dbfda",
+   "ao:MeshBasicMaterial": "4ba83a39",
+   "tyremarks:MeshBasicMaterial": "394556b2",
+   "roadwear:MeshLambertMaterial": "c1369259"
+  }
+ },
  "cpalace": {
   "meshes": 312,
   "verts": 485500,
@@ -1812,26 +1832,6 @@
    "ao:MeshBasicMaterial": "823e6ef9",
    "tyremarks:MeshBasicMaterial": "26675b3f",
    "roadwear:MeshLambertMaterial": "bec63044"
-  }
- },
- "krasnahorka": {
-  "meshes": 426,
-  "verts": 371949,
-  "instances": 3827,
-  "props": 154,
-  "crowd": 12,
-  "world": "964654e4",
-  "propsHash": "89028a26",
-  "floor": "436e5379/7364",
-  "groups": {
-   "-:MeshLambertMaterial": "428ae687",
-   "-:MeshPhongMaterial": "f177a5c0",
-   "-:MeshBasicMaterial": "53339fdc",
-   "crowd:MeshLambertMaterial": "fb825c43",
-   "flags:MeshLambertMaterial": "303dbfda",
-   "ao:MeshBasicMaterial": "4ba83a39",
-   "tyremarks:MeshBasicMaterial": "394556b2",
-   "roadwear:MeshLambertMaterial": "c1369259"
   }
  }
 }

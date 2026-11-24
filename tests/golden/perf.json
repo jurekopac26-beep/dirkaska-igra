@@ -513,9 +513,9 @@
  "lombok": {
   "calls": 189,
   "maxCalls": 228,
-  "kverts": 582,
-  "maxKverts": 719,
-  "jsMs": 1.39
+  "kverts": 586,
+  "maxKverts": 727,
+  "jsMs": 1.02
  },
  "sepang": {
   "calls": 184,
