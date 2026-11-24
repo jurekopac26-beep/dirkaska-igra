@@ -37,7 +37,9 @@
      countries of the real tracks on main: a new track's country gets its row with the track.
      The markings across the road (precne; a country's own sizes when a builder first draws by them, so far Italy's: the highway code's
      regulation, art. 144 and 145): prehod: a pedestrian crossing's stripes along the road [their width, the gap, their length on a town's
-     streets, on a main road], m; stop: the stop line's width, m; prednost: the give-way line's triangles [base, height, gap], m ---- */
+     streets, on a main road], m; stop: the stop line's width, m; prednost: the give-way line's triangles [base, height, gap], m; napis:
+     the word painted before a stop line ('' none; by the general pattern, as no country's source is at hand: the user's decision of
+     24. 11. 2026, #1025) ---- */
   const BELA = [0.95, 0.95, 0.92], RUMENA = [0.95, 0.74, 0.14];
   const CRTE = {
     'Italija':      { rob: 'bela', sred: 'bela', crta: [4.5, 7.5], dvojna: false, prehod: [0.5, 0.5, 2.5, 4], stop: 0.5, prednost: [0.5, 0.6, 0.25], ustje: [1, 1] },
@@ -45,14 +47,14 @@
     'Avstrija':     { rob: 'bela', sred: 'bela', crta: [6, 12], dvojna: false },
     'Nemčija':      { rob: 'bela', sred: 'bela', crta: [4, 8], dvojna: false },
     'Belgija':      { rob: 'bela', sred: 'bela', crta: [2.5, 10], dvojna: false },
-    'Kitajska':     { rob: 'bela', sred: 'rumena', crta: [4, 6], dvojna: true },
-    'Brazilija':    { rob: 'bela', sred: 'rumena', crta: [4, 12], dvojna: true },
-    'Čile':         { rob: 'bela', sred: 'rumena', crta: [4.5, 7.5], dvojna: true },   // (yellow where it snows, as on the Andes' passes: elsewhere in the country the centre line is white)
+    'Kitajska':     { rob: 'bela', sred: 'rumena', crta: [4, 6], dvojna: true, napis: '' },   // (the word in its own script: not drawn)
+    'Brazilija':    { rob: 'bela', sred: 'rumena', crta: [4, 12], dvojna: true, napis: 'PARE' },
+    'Čile':         { rob: 'bela', sred: 'rumena', crta: [4.5, 7.5], dvojna: true, napis: 'PARE' },   // (yellow where it snows, as on the Andes' passes: elsewhere in the country the centre line is white)
     'ZDA':          { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },
     'Kanada':       { rob: 'bela', sred: 'rumena', crta: [3, 6], dvojna: true },
     'Južna Afrika': { rob: 'rumena', sred: 'bela', crta: [3, 9], dvojna: true },
     'Avstralija':   { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: true },
-    'Japonska':     { rob: 'bela', sred: 'bela', crta: [5, 5], dvojna: false, stop: 0.3 },   // (the ministry's 1974 notice on the lines: 5 m and 5 m outside towns; a single yellow line where overtaking is forbidden; the stop line 30 cm, 45 cm on two lanes or more; no give-way triangles, no line across a mouth)
+    'Japonska':     { rob: 'bela', sred: 'bela', crta: [5, 5], dvojna: false, stop: 0.3, napis: '' },   // (the ministry's 1974 notice on the lines: 5 m and 5 m outside towns; a single yellow line where overtaking is forbidden; the stop line 30 cm, 45 cm on two lanes or more; no give-way triangles, no line across a mouth; the word before a stop line in its own script: not drawn)
     'Francija':     { rob: 'bela', sred: 'bela', crta: [3, 10], dvojna: false },   // (the IISR, part 7: the T1 centre line, one solid line where overtaking is forbidden; the edge line broken off at a mouth; no paved side road on its track yet: no stop or give-way line)
     'Vietnam':      { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (QCVN 41:2019: the line between the two directions yellow, a dash to its gap 1 : 3; double solid where overtaking is forbidden)
     'Uganda':       { rob: 'rumena', sred: 'bela', crta: [3, 6], dvojna: false },   // (white centre line, yellow edges as on East Africa's trunk roads, not checked against photos: docs/proge/kanaba.md, »Negotovo«)
@@ -63,8 +65,18 @@
     'Samoa':        { rob: 'bela', sred: 'bela', crta: [3, 9], dvojna: false },   // (left-hand traffic since 2009; no source on the markings: white lines, a dash to its gap 1 : 3, single solid before blind bends)
     'Palau':        { rob: 'bela', sred: 'rumena', crta: [3, 9], dvojna: true },   // (the US markings, as the country's roads follow them: a yellow centre line, white edges)
   };
-  const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25] };   // (the main road of a country not in the table, crte(): white, as most of the world; stranske() falls back to Italija's lines instead, mouths painted: pass barva: false where the country's rules were not found)
+  const PRIVZETO = { rob: 'bela', sred: 'bela', crta: [3, 6], dvojna: false, prehod: [0.5, 0.5, 3, 4], stop: 0.4, prednost: [0.5, 0.6, 0.25], napis: 'STOP' };   // (the main road of a country not in the table, crte(): white, as most of the world; stranske() falls back to Italija's lines instead, mouths painted: pass barva: false where the country's rules were not found)
   const drzava = (T) => { const n = (T && T.def && T.def.name) || '', k = n.lastIndexOf(','); return k < 0 ? '' : n.slice(k + 1).trim(); };
+  // the countries of the tracks that keep left (a track's def.leftHand says so too): the entering lane of a side road is its left half
+  const LEVO = new Set(['Japonska', 'Avstralija', 'Južna Afrika', 'Uganda', 'Kenija', 'Tanzanija', 'Papua Nova Gvineja', 'Sveta Lucija', 'Fidži', 'Jamajka', 'Samoa', 'Šrilanka', 'Butan', 'Indija', 'Indonezija', 'Malezija', 'Tajska', 'Irska', 'Anglija', 'Wales']);
+  // the letters of a word on a road (the general pattern: block letters in a box 1 wide and 1 long, y toward the junction, x from the
+  // reader's left; a stroke along the road 0.25 wide, one across 0.2 long): rectangles [x0, y0, x1, y1], a slanted stroke by its corners
+  const CRKE = (() => {
+    const v = 0.25, L = [0, 0, v, 1], D = [1 - v, 0, 1, 1], Z = [0, 0.8, 1, 1], SP = [0, 0, 1, 0.2], ZL = [v, 0.8, 1, 1], SR = [v, 0.4, 1, 0.6];
+    return { S: [Z, [0, 0.4, 1, 0.6], SP, [0, 0.6, v, 0.8], [1 - v, 0.2, 1, 0.4]], T: [Z, [0.375, 0, 0.625, 0.8]], O: [L, D, [v, 0.8, 1 - v, 1], [v, 0, 1 - v, 0.2]],
+      P: [L, ZL, SR, [1 - v, 0.6, 1, 0.8]], R: [L, ZL, SR, [1 - v, 0.6, 1, 0.8], [[0.4, 0.4], [0.68, 0.4], [1, 0], [0.72, 0]]],
+      A: [[0, 0, v, 0.8], [1 - v, 0, 1, 0.8], Z, [v, 0.35, 1 - v, 0.55]], E: [L, ZL, [v, 0.4, 0.85, 0.6], [v, 0, 1, 0.2]] };
+  })();
   // the markings of the track's country and where its centre line runs: at[i] 0 none, 1 a dash, 2 solid (no overtaking: within `pred` m
   // before a bend tighter than `r` m and through it, both ways, as the lines are for the traffic of both directions). o.sred false: the
   // track has no centre line (a circuit)
@@ -478,6 +490,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     o = o || {};
     const N = T.N, ds = T.ds, L = T.len, px = T.px, pz = T.pz, nx = T.nx, nz = T.nz, hy = T.hy, tla = o.tla, rob = o.rob || null, ton = o.ton || (() => 0.8), odprta = !!o.odprta;
     const C = Object.assign({}, PRIVZETO, CRTE[o.drzava] || CRTE.Italija), wrap = (i) => ((i % N) + N) % N, mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+    const lev = !!(T.def && T.def.leftHand) || LEVO.has(o.drzava);   // (the traffic keeps left: the entering lane of a side road is its left half)
     const hsh = (a, b) => { let h = Math.imul(a + 1, 374761393) ^ Math.imul(b + 7, 668265263); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
     // the main road: the nearest point of its centre line (the samples in a grid, both segments at each sample)
     const CELL = 24, grid = new Map(), key = (cx, cz) => cx * 73856093 ^ cz * 19349663;
@@ -545,7 +558,7 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
       for (let k = 0; k < 5; k++) { const e = E[k], f = (m) => ins(P(m, e)); let u = top; if (f(u)) break; while (u > uc - 25 && !f(u - 0.25)) u -= 0.25; if (u <= uc - 25) break; u0.push(bis(f, u - 0.25, u)); }
       if (u0.length < 5) continue;
       // the opening in the wall: where the two edges cross the fence line; the gap in the edge line: the mouth's two corners
-      const fen = (k) => { const e = E[k], f = (m) => { const p = P(m, e); mr(p[0], p[1]); return Q.d <= Q.bar + 0.3; }; let u = u0[k]; const lim = Math.min(uEnd - 0.5, u0[k] + 22); while (u < lim && f(u + 0.25)) u += 0.25; if (u >= lim) return NaN; const p = P(bis(f, u, u + 0.25), e); mr(p[0], p[1]); return Q.lat === side ? Q.i + Q.t : NaN; };
+      const fen = (k) => { const e = E[k], f = (m) => { const p = P(m, e); mr(p[0], p[1]); return Q.d <= Q.bar + 0.3; }; let u = u0[k]; const lim = Math.min(uEnd - 0.5, u0[k] + 30); while (u < lim && f(u + 0.25)) u += 0.25; if (u >= lim) return NaN; const p = P(bis(f, u, u + 0.25), e); mr(p[0], p[1]); return Q.lat === side ? Q.i + Q.t : NaN; };
       const idx = (p) => { mr(p[0], p[1]); return Q.i + Q.t; }, span = (a, b, m) => { if (b - a > N / 2) b -= N; else if (a - b > N / 2) b += N; return a < b ? [a - m, b + m] : [b - m, a + m]; };
       const wa = fen(0), wb = fen(4); if (!(wa === wa && wb === wb)) continue;
       const zid = span(wa, wb, 0.2), crt = span(idx(P(u0[0], -1)), idx(P(u0[4], 1)), 0.1);
@@ -662,7 +675,8 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
     // the orange posts across the openings on the fence line (the wall stops at an opening and a row of posts stands in its place: a
     // post every ~1.5 m, half a gap from the wall's ends, each on the surface under it; a dark foot, an orange body with two white
     // bands, no inscriptions) and the paint by the country's rules: a street stops, a bigger road gives way, a driveway has nothing;
-    // on the entering lane (the left half, seen from the main road), a one-way road across. Returns the number of posts; `stebricki`
+    // on the entering lane (the right half of a driver coming to the main road, the left where the traffic keeps left), a one-way road
+    // across; beyond it the road's own lines, the word before a stop line and the arrows (below). Returns the number of posts; `stebricki`
     // keeps where they stand (x, the height of the surface under the post, z and the road's number: four numbers a post; for the tests)
     const stebricki = [];
     const predmeti = (get) => {
@@ -707,7 +721,8 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
         if (!r.razred || o.barva === false || !o.drzava) continue;   // (no country given: no paint, #1011)
         // the paint on the apron (the first two rows), 1.5 cm over the strip
         const AP = (e, t) => { const cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc), f = cc - k, a = mix3(r.V[0][k], r.V[0][k + 1], f), b = mix3(r.V[1][k], r.V[1][k + 1], f); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
-        const tt = (x) => Math.min(0.97, x / r.dp), la = -(r.hw - 0.15), lb = r.eno ? r.hw - 0.15 : -0.1;
+        // the entering lane across the road, o from la to lb (+o is the right going out, so the left of a driver coming to the main road)
+        const tt = (x) => Math.min(0.97, x / r.dp), la = r.eno || !lev ? -(r.hw - 0.15) : 0.1, lb = r.eno || lev ? r.hw - 0.15 : -0.1;
         if (r.razred === 1) {
           const t0 = tt(0.25), t1 = tt(0.25 + C.stop), cuts = [la / r.hwM, ...[-0.5, 0, 0.5].filter(v => v > la / r.hwM + 0.01 && v < lb / r.hwM - 0.01), lb / r.hwM];
           for (let k = 0; k + 1 < cuts.length; k++) { const a = AP(cuts[k], t0), b = AP(cuts[k + 1], t0), c2 = AP(cuts[k + 1], t1), d = AP(cuts[k], t1); get((a[0] + c2[0]) / 2, (a[2] + c2[2]) / 2).quadUp(a, b, c2, d, [PW, PW, PW, PW]); }
@@ -720,14 +735,44 @@ ${V.paint ? '  float ceA0 = 1.0 - step( 0.03, vPaint );\n  diffuseColor.rgb *= m
         // or more (12 cm on a street, 15 on a bigger road; the country's dash and gap, the first dash at the line), the edge lines (12 cm,
         // 30 cm inside the edge) on a tertiary road or a bigger one; along the strip's rows (dr), across by the row's own half width
         const s0 = 0.25 + (r.razred === 1 ? C.stop : C.prednost[1]) + 0.6, s1 = r.D - (r.konec ? 1 : 3);
+        const YW = [0.9, 0.7, 0.14], col = (c) => (c === 'rumena' ? YW : PW);
+        const RO = (rw, o) => { const e = o / (o < 0 ? -r.OFF[rw][0] : r.OFF[rw][4]), cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc); return mix3(r.V[rw][k], r.V[rw][k + 1], cc - k); };
+        const at = (s, o) => { let rw = 0; while (rw < r.nr - 2 && r.dr[rw + 1] < s) rw++; const t = clamp((s - r.dr[rw]) / (r.dr[rw + 1] - r.dr[rw]), 0, 1), a = RO(rw, o), b = RO(rw + 1, o); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
+        const band = (sa, sb, o0, o1, c) => { const ss = [sa]; for (const d of r.dr) if (d > sa && d < sb) ss.push(d); ss.push(sb);
+          for (let k = 0; k + 1 < ss.length; k++) { const a = at(ss[k], o0), b = at(ss[k], o1), c2 = at(ss[k + 1], o1), d = at(ss[k + 1], o0); get((a[0] + c2[0]) / 2, (a[2] + c2[2]) / 2).quadUp(a, b, c2, d, [c, c, c, c]); } };
         if (s1 - s0 > 2) {
-          const YW = [0.9, 0.7, 0.14], col = (c) => (c === 'rumena' ? YW : PW);
-          const RO = (rw, o) => { const e = o / (o < 0 ? -r.OFF[rw][0] : r.OFF[rw][4]), cc = clamp((e + 1) * 2, 0, 3.999), k = Math.floor(cc); return mix3(r.V[rw][k], r.V[rw][k + 1], cc - k); };
-          const at = (s, o) => { let rw = 0; while (rw < r.nr - 2 && r.dr[rw + 1] < s) rw++; const t = clamp((s - r.dr[rw]) / (r.dr[rw + 1] - r.dr[rw]), 0, 1), a = RO(rw, o), b = RO(rw + 1, o); return [lerp(a[0], b[0], t), lerp(a[1], b[1], t) + 0.015, lerp(a[2], b[2], t)]; };
-          const band = (sa, sb, o0, o1, c) => { const ss = [sa]; for (const d of r.dr) if (d > sa && d < sb) ss.push(d); ss.push(sb);
-            for (let k = 0; k + 1 < ss.length; k++) { const a = at(ss[k], o0), b = at(ss[k], o1), c2 = at(ss[k + 1], o1), d = at(ss[k + 1], o0); get((a[0] + c2[0]) / 2, (a[2] + c2[2]) / 2).quadUp(a, b, c2, d, [c, c, c, c]); } };
           if (!r.eno && r.hw >= 2.75) { const w = r.razred === 1 ? 0.06 : 0.075, p = C.crta[0] + C.crta[1]; for (let s = s0; s < s1 - 0.5; s += p) band(s, Math.min(s + C.crta[0], s1), -w, w, col(C.sred)); }
           if (r.razred >= 2) for (const sg of [-1, 1]) { const m = sg * (r.hw - 0.3); band(s0, s1, m - 0.06, m + 0.06, col(C.rob)); }
+        }
+        // the word before a stop line and the arrows, by the general pattern (the user's decision of 24. 11. 2026, #1025: no country's
+        // source; only a country with its own row in CRTE), on a two-way road's entering lane, for a driver coming to the main road (a
+        // letter's top and the arrow's heads toward it, the first letter on the driver's left): the word (C.napis) on a street, 1.6 m
+        // long, 0.4 m past the start of the lines, its letters up to 0.5 m wide and 0.15 m apart; on a street or a bigger road an arrow
+        // to the left and the right 4.5 m past the start of the lines (about 2 m beyond the word), 4 m long, up to 1.6 m across (a stem
+        // 15 cm wide, a bar of 30 cm, heads 0.9 by 0.35 m).
+        // A one-way road has neither: its direction is not in the data. In the mesh of the paint: no draw calls of its own
+        if (r.eno || !CRTE[o.drzava]) continue;
+        // a convex polygon of [s, o] points on the strip: cut at its rows (the strip bends there), each piece a fan
+        const rez = (P, f) => { const out = []; for (let k = 0; k < P.length; k++) { const a = P[k], b = P[(k + 1) % P.length], fa = f(a), fb = f(b); if (fa >= 0) out.push(a); if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return out; };
+        const lik = (P) => { let lo = Infinity, hi = -Infinity; for (const p of P) { lo = Math.min(lo, p[0]); hi = Math.max(hi, p[0]); } const ss = [lo]; for (const d of r.dr) if (d > lo && d < hi) ss.push(d); ss.push(hi);
+          for (let k = 0; k + 1 < ss.length; k++) {
+            const G = rez(rez(P, (p) => p[0] - ss[k]), (p) => ss[k + 1] - p[0]); if (G.length < 3) continue;
+            const M = G.map((p) => at(p[0], p[1])); let cx = 0, cz = 0; for (const m of M) { cx += m[0] / M.length; cz += m[2] / M.length; }
+            const g = get(cx, cz); for (let j = 1; j + 1 < M.length; j++) g.triUp(M[0], M[j], M[j + 1], [PW, PW, PW]);
+          } };
+        const lw = lb - la, oc = (la + lb) / 2, W = Math.min(0.5, (lw - 0.3 - 0.45) / 4);
+        if (r.razred === 1 && C.napis && W >= 0.25 && s1 >= s0 + 2.5) {
+          const H = 1.6, gp = 0.15, sb = s0 + 0.4 + H, n = C.napis.length, oL = oc + (n * W + (n - 1) * gp) / 2;
+          for (let i = 0; i < n; i++) for (const q of CRKE[C.napis[i]] || []) {
+            const ol = oL - i * (W + gp), P = typeof q[0] === 'number' ? [[q[0], q[1]], [q[2], q[1]], [q[2], q[3]], [q[0], q[3]]] : q;
+            lik(P.map(([x, y]) => [sb - y * H, ol - x * W]));
+          }
+        }
+        if (s1 >= s0 + 9 && lw >= 1.8) {
+          const a0 = s0 + 4.5, a1 = a0 + 4, pol = Math.min(lw - 0.7, 1.6) / 2, sw = 0.075, hd = 0.35, hb = 0.45, sc = a0 + 0.15;
+          lik([[a1, oc - sw], [a1, oc + sw], [a0 + 0.3, oc + sw], [a0 + 0.3, oc - sw]]);   // (the stem)
+          lik([[a0, oc - pol + hd], [a0, oc + pol - hd], [a0 + 0.3, oc + pol - hd], [a0 + 0.3, oc - pol + hd]]);   // (the bar across)
+          for (const sg of [-1, 1]) lik([[sc - hb, oc + sg * (pol - hd)], [sc + hb, oc + sg * (pol - hd)], [sc, oc + sg * pol]]);   // (the heads)
         }
       }
       return posts;

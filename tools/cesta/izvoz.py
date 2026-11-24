@@ -7,6 +7,8 @@ of the package Realizem E for World.cesta.stranske (docs/realizem/paket-e.md, "E
   python3 -I tools/cesta/izvoz.py crte.json <id> <raw-dir> [--vpisi]  (prints the rows and the count of what was dropped and why;
                                                                        --vpisi writes them into js/tracks/<id>.js)
   python3 -I tools/cesta/izvoz.py --obcestje <id> ...                 (drops the roadside's roads from the rows already written)
+  python3 -I tools/cesta/izvoz.py crte.json <id> <raw-dir> --b [--vpisi]  (the widths of the track's own side roads, def.sideRoads:
+                                                                       printed; --vpisi writes them into their rows, nothing else)
 
 A junction is a node of the map that a way of the track shares with another road: nothing is invented, a track without such nodes gets
 no side roads. The map is laid on the game's line in three steps, because the game's line is smoothed and not everywhere to scale: one
@@ -18,8 +20,10 @@ open road's ends is the track where a long stretch of it lies on the game's line
 open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own; def.views: a view point's
 lay-by) gets no road for the look beside it (own), nor does a road or a bus stop the track's roadside from OSM draws already
-(js/world-<id>-obcestje.js, obcestje: roadside; until the decision e-obcestje of docs/vprasanja.md). A junction the game cannot
-draw (the road would climb the game's hillside) is left out by hand, per track (PROGE, izpusti: hand).
+(js/world-<id>-obcestje.js, obcestje: roadside; until the decision e-obcestje of docs/vprasanja.md). A road stops 1 m short of the
+first house of the map its strip would touch beyond the track's edge (OSM's building ways, the road at its drawn width; house where
+too little is left: the decision e-stranske-sirina 5, 24. 11. 2026). A junction the game cannot draw (the road would climb the game's
+hillside) is left out by hand, per track (PROGE, izpusti: hand).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
 a main road), width (m), one-way, end (0 fades into the terrain, 1 joins another of these roads), [x, z, ...]]; svetilke [x, z];
@@ -46,12 +50,15 @@ UNPAVED = {'unpaved', 'gravel', 'fine_gravel', 'compacted', 'dirt', 'earth', 'gr
 # close to the game's line a way of the map must lie to be the track itself (the median of its points, m) and from how far before
 # an open road's finish line there is no junction (cilj, m); izpusti: junctions left out by hand ([m after the start line, side]), where
 # the game's ground beside the road is not the map's and World.cesta.stranske cannot draw the road (its edges never cross the barrier's
-# line): the data say only what is drawn; predmeti=False: a track outside the 15 of the packages gets the side roads only (no street lamps,
-# no bus stops: docs/realizem.md)
+# line): the data say only what is drawn (the builder's limit for a mouth was 22 m until 24. 11. 2026 and is 30 m since, decision
+# e-stranske-sirina 3: the entries were measured at 22 m; at 30 m Porto Moniz 693 m right, Spa 2519 m left and Sepang 1496 m left came back,
+# Seoul's two are measured again after #1019; a house of the map needs no
+# entry since, decision 5: a road stops 1 m before the first house its drawn strip would touch, HOUSE_GAP); predmeti=False: a track
+# outside the 15 of the packages gets the side roads only (no street lamps, no bus stops: docs/realizem.md)
 PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal': dict(kinds={'raceway'}),
          # Spa: the service road at the corner after the long straight (2519 m, left) meets the circuit behind an asphalt run-off wider
-         # than the 22 m a strip may run inside the barrier's line
-         'spa': dict(kinds={'raceway'}, izpusti=[(2519, -1)]),
+         # than the 22 m a strip could run inside the barrier's line until 24. 11. 2026; at 30 m it is drawn (under the run-off, out past the fence)
+         'spa': dict(kinds={'raceway'}),
          # Biķernieki and Buriram: the ways that cross a run-off (a sand trap or a pale asphalt apron the game draws from the edge to
          # the barrier's far line, T.gravL/gravR): the strip would lie on it, 2 mm under its surface (most of them stranske drops anyway:
          # the barrier stands more than 22 m out; 2961 m left, 2481 m and 3755 m right it would draw them); Buriram 1728 m left: a 28 m
@@ -61,7 +68,8 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          'buriram': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1728, -1), (2246, 1), (2481, 1), (2567, 1), (2648, 1), (2716, 1), (3399, -1), (3656, 1), (3755, 1)]),
          # Furka: a farm track that runs along the road just inside the barrier's line (4346 m, left); Gudauri: a drive that runs 20 m along
          # the road inside it (849 m, right) and a street that meets the road at a shallow angle (3660 m, left): their edges cross the
-         # barrier's line more than 22 m on
+         # barrier's line more than 22 m on; at 30 m (24. 11. 2026) Furka's is still not drawn, and without the entries the exporter now
+         # drops Gudauri's two by itself (the entries stay)
          'furka': dict(predmeti=False, izpusti=[(4346, -1)]), 'gudauri': dict(predmeti=False, izpusti=[(849, 1), (3660, -1)]),
          'ella': dict(predmeti=False),
          # Rio do Rastro: a farm track that runs along the road inside the barrier's line (3180 m, left) and a 22 m stub that curls back
@@ -77,9 +85,9 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # the circuits of group 569c: the map's raceway is the track
          'lombok': dict(kinds={'raceway'}), 'lusail': dict(kinds={'raceway'}),
          # Porto Moniz: three streets of the town that leave the road at a slant and run along it inside the game's 16 m verge (268 m, 665 m
-         # and 3128 m, left): their edges cross the barrier's line only beyond the builder's 22 m, so it cannot open the fence for them;
-         # the same for the main road at 693 m right once it has its real width (9.5 m, 23. 11. 2026, #1025)
-         'portomoniz': dict(izpusti=[(268, -1), (665, -1), (693, 1), (3128, -1)]),
+         # and 3128 m, left): their edges cross the barrier's line only beyond the builder's limit (22 m, and still at 30 m), so it cannot
+         # open the fence for them; the main road at 693 m right (its real width 9.5 m, 23. 11. 2026) draws at 30 m (24. 11. 2026, #1025)
+         'portomoniz': dict(izpusti=[(268, -1), (665, -1), (3128, -1)]),
          # Pembrey and Termas de Río Hondo: circuits (the map's raceway is the track)
          'pembrey': dict(kinds={'raceway'}), 'riohondo': dict(kinds={'raceway'}),
          # Kågeröd and Kildare: circuits, fitted to their own line (raceway) as the Nürburgring
@@ -87,15 +95,17 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md: those are for the 15
          # tracks of main; 16. 11. 2026, group 569b)
          # Izoard 3871 m right: a track at its real width (4.8 m with the road scale 1.38, 23. 11. 2026, #1025) whose left edge meets the
-         # barrier's line 22.5 m in (the verge is 11.7 m deep), beyond the builder's 22 m; Izoard has no side road then (e-stranske-sirina)
+         # barrier's line 22.5 m in (the verge is 11.7 m deep), beyond the builder's 22 m of the time; it stays left out at 30 m by the
+         # decision of 24. 11. 2026 (e-stranske-sirina 3): Izoard has no side road
          'hakone': dict(predmeti=False), 'izoard': dict(predmeti=False, izpusti=[(3871, 1)]),
          # group 569e (17. 11. 2026): the circuits' own roads are not side roads, the same as the other circuits; Sakhir 1816 m right and
          # 4727 m left: service ways that cross a run-off (a pale asphalt apron to the barrier 32 m out, T.gravL/gravR), as Buriram's.
-         # Left out too where World.cesta.stranske finds no opening (an edge of the strip not across the fence line within 22 m): Sakhir
-         # 1680 m right and Sepang 1496 m left leave at a slant of 30 to 50 degrees back and run on in the run-off; Seoul 979 m right runs
-         # along the fence, 2398 m left beside a fence that bends out with it
+         # Left out too where World.cesta.stranske finds no opening (an edge of the strip not across the fence line within 22 m, 30 m since
+         # 24. 11. 2026): Sakhir 1680 m right leaves at a slant of 30 to 50 degrees back and runs on in the run-off (at 30 m still no opening;
+         # Sepang 1496 m left, the same, is drawn at 30 m); Seoul 979 m right runs along the fence, 2398 m left beside a fence that bends
+         # out with it (measured again after #1019)
          'sakhir': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1680, 1), (1816, 1), (4727, -1)]),
-         'sepang': dict(kinds={'raceway'}, predmeti=False, izpusti=[(1496, -1)]),
+         'sepang': dict(kinds={'raceway'}, predmeti=False),
          'santoantao': dict(predmeti=False), 'seoul': dict(predmeti=False, izpusti=[(979, 1), (2398, -1)]),
          # group 569f (17. 11. 2026): circuits from pull requests, fitted to their own line (raceway), side roads only; Silkeborg 1781 m
          # left and Zandvoort 2325 m and 2339 m left: service ways that cross a run-off (the apron to the barrier 26-28 m out, T.gravL), as
@@ -108,10 +118,10 @@ PROGE = {'nring': dict(start=(230, 290), trk=12.0, kinds={'raceway'}), 'montreal
          # group 756b (17. 11. 2026): Portobelo: a drive at the finish's white wall and catch fence (2491 m, left)
          'luanda': dict(predmeti=False), 'mombasa': dict(predmeti=False), 'portobelo': dict(predmeti=False, izpusti=[(2491, -1)]),
          # group 762a (17. 11. 2026): Aguascalientes (a circuit), Canaries, Kanaba and Koli (open roads): the side roads only; Canaries
-         # 2604 m left: a street at its real width (7.6 m, 23. 11. 2026, #1025) whose edge crosses the barrier's line beyond the builder's 22 m;
-         # 3476 m left: a service way that passes an OSM house's corner 1.83 m from its centre line (4.8 m wide with the road scale 1.38: into
-         # the house; a road cut at the houses is open in docs/realizem/paket-e.md)
-         'aguascalientes': dict(kinds={'raceway'}, predmeti=False), 'canaries': dict(predmeti=False, izpusti=[(2604, -1), (3476, -1)]), 'kanaba': dict(predmeti=False),
+         # (24. 11. 2026, cut at the houses, no longer by hand): 3476 m left, a service way that passes an OSM house's corner 1.83 m from its
+         # centre line (4.8 m wide with the road scale 1.38), stops 1 m before it (48 m); 2604 m left (a street 7.6 m wide) and 2793 m left
+         # would stop at a house 3.6 m and 7.4 m beyond the track's edge, too short to draw (dropped: house)
+         'aguascalientes': dict(kinds={'raceway'}, predmeti=False), 'canaries': dict(predmeti=False), 'kanaba': dict(predmeti=False),
          'koli': dict(predmeti=False),
          # group 762b (18. 11. 2026): the tracks from pull requests get the side roads only, no street lamps or bus stops (docs/realizem.md:
          # those are for the 15 tracks of main); Quezaltepeque a circuit, fitted to its own line (raceway) as the other circuits. Left out:
@@ -196,6 +206,7 @@ def local(tree, D, Qt, qtree, c):
     return R, t
 
 JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'js')
+HOUSE_GAP = 0.25   # a side road's strip (its drawn width) keeps this clear of a house of the map (m)
 RS_D, RS_STOP = 4.0, 25.0   # a side road with half its points or more this near (m) a way of the track's roadside is the roadside's; a bus
                             # stop this near one of the roadside's is the same stop: neither is written again (dropped: roadside)
 
@@ -270,13 +281,74 @@ def obcestje(ids):
         if stops and data[2][1]: print('  %s: bus stops beside the roadside\'s own: check them by hand (rows hold no x, z)' % id_)
         if len(keep) < len(rows): data[0] = ('stranske', keep); vpisi(id_, data)
 
+def widths_b(C, ways, xz, at0, trk, k, write):
+    """--b: the side roads of the track's own model (def.sideRoads, driven on: Track._buildStubs) at their real width by the rule of
+    the roads for the look (decision B2 of 24. 11. 2026, docs/realizem/paket-e.md): each one the map's way along its metres 12-50 from
+    the junction (past the road's edge), its half width side_width's (OSM width, lanes, the class's; at the scale k of the track's
+    own road) over 2; a road the map does not show there keeps its width. --vpisi writes the half widths into the rows, nothing else."""
+    cand = [(refs, tg) for wid, (refs, tg) in ways.items() if wid not in trk and 'highway' in tg and len(refs) > 1]
+    pts, lab = [], []
+    for j, (refs, tg) in enumerate(cand):
+        P = osm.dense([tuple(xz(r)) for r in refs if r in at0], 1.0); pts += P; lab += [j] * len(P)
+    if not pts: print('%s: no side road in the map' % C['id']); return
+    tr = cKDTree(np.asarray(pts)); lab = np.asarray(lab); new = {}
+    TT, TW, N = cKDTree(np.column_stack([C['px'], C['pz']])), np.asarray(C['w']), C['N']
+    def room(P, hn, ho):
+        """a road that runs on beside the track (its points 25 m and more along the track from its mouth: a lay-by, a carriageway
+        alongside, a hairpin's other leg) keeps the room between the two, 6 m from asphalt to asphalt (the roads for the look's rule of
+        leaving the track) or its old width's if less (Chapman's Peak, the road on the left beside the start, 24. 11. 2026): the half width
+        it may have and the least distance from the track's edge to its centre line there (None: never beside it)"""
+        d, i = TT.query(P); g = np.abs(i - i[0])
+        if not C['open']: g = np.minimum(g, N - g)
+        far = g * C['ds'] >= 25
+        if not far.any(): return hn, None
+        c = float((d[far] - TW[i[far]]).min()); return min(hn, max(ho, c - 6)), c
+    for n, (m, sd, hw, flat) in enumerate(C['sb']):
+        P = np.asarray(osm.dense([tuple(flat[i:i + 2]) for i in range(0, len(flat) - 1, 2)], 1.0)); a = 12 if len(P) > 30 else 6
+        d, j = tr.query(P[a:51]); ok = d < 6.0; tag = '%d%s' % (round(m), 'D' if sd > 0 else 'L')
+        if ok.sum() < max(4, 0.5 * len(d)): print('  %s: not in the map (%d of %d points within 6 m): keeps %.1f m' % (tag, ok.sum(), len(d), 2 * hw)); continue
+        tg = cand[int(np.bincount(lab[j[ok]]).argmax())][1]
+        if tg['highway'] not in SIDE_CLASS: print('  %s: the map has a %s there: keeps %.1f m' % (tag, tg['highway'], 2 * hw)); continue
+        w, ow = side_width(SIDE_CLASS[tg['highway']], tg, k); hn, c = room(P, w / 2, hw)
+        why = '' if hn >= w / 2 else ', beside the track %.1f m from its edge: %.1f m' % (c, 2 * hn)
+        print('  %s: %s%s%s%s -> %.1f m (was %.1f m)%s' % (tag, tg['highway'], ' width=' + tg['width'] if 'width' in tg else '',
+              ' lanes=' + tg['lanes'] if 'lanes' in tg else '', ' one-way' if ow else '', w, 2 * hw, why))
+        new[n] = round(hn, 2)
+    if not write or not new: return
+    path = os.path.join(JS, 'tracks', C['id'] + '.js'); src = open(path, encoding='utf-8').read()
+    if re.search(r'^\s*(test|pending): true', src, re.M): print('%s: frozen (test, pending): not written' % C['id']); return
+    i = re.search(r'^\s*sideRoads: \[', src, re.M).end(); rep = []; n = 0
+    while True:   # the rows of the array: the field 7 (the half width) of each, by the brackets and the strings
+        while src[i] in ' \n\t,': i += 1
+        if src[i] == ']': break
+        p, dep, q, f0, fs = i, 0, False, i + 1, []
+        while True:
+            c = src[p]
+            if q:
+                if c == '\\': p += 1
+                elif c == '"': q = False
+            elif c == '"': q = True
+            elif c in '[{': dep += 1
+            elif c in ']}':
+                dep -= 1
+                if dep == 0: break
+            elif c == ',' and dep == 1: fs.append((f0, p)); f0 = p + 1
+            p += 1
+        if n in new:
+            a, b = fs[7]; lead = src[a:b][:len(src[a:b]) - len(src[a:b].lstrip())]
+            rep.append((a, b, lead + ('%.2f' % new[n]).rstrip('0').rstrip('.')))
+        n += 1; i = p + 1
+    assert n == len(C['sb']), 'the rows of def.sideRoads: %d, the export %d' % (n, len(C['sb']))
+    for a, b, v in sorted(rep, reverse=True): src = src[:a] + v + src[b:]
+    open(path, 'w', encoding='utf-8').write(src); print('written: js/tracks/%s.js (%d half widths)' % (C['id'], len(rep)))
+
 def main():
     if '--obcestje' in sys.argv: return obcestje([a for a in sys.argv[1:] if not a.startswith('--')])
     args = [a for a in sys.argv[1:] if not a.startswith('--')]; write = '--vpisi' in sys.argv
     C = json.load(open(args[0]))[args[1]]; raw = args[2]; cfg = dict(PRIVZETO, **PROGE.get(C['id'], {}))
     g = C['geo']; geo = osm.Geo(g['lat0'], g['lon0'], g['rot'], g.get('scale', 1.0))
     G = np.column_stack([C['px'], C['pz']]); N = C['N']; ds = C['ds']; L = N * ds; op = C['open']; W_ = np.asarray(C['w'])
-    nodes, tagged, ways = osm.parse(sorted(glob.glob(os.path.join(raw, '*.osm'))))
+    houses = {}; nodes, tagged, ways = osm.parse(sorted(glob.glob(os.path.join(raw, '*.osm'))), houses)
     ids = list(nodes.keys()); ll = np.asarray([nodes[i] for i in ids]); x, z = geo.to_xz(ll[:, 0], ll[:, 1])
     # the game's centre line, a point each ~0.4 m (the index is the place along it)
     K = 5; Gn = G if op else np.vstack([G, G[:1]])
@@ -287,6 +359,10 @@ def main():
     xz0 = np.column_stack([x, z]); at0 = dict(zip(ids, range(len(ids))))
     Q = np.asarray([p for refs, t in ways.values() if t.get('highway') in cfg['kinds'] and len(refs) > 1 for p in osm.dense([tuple(xz0[at0[r]]) for r in refs if r in at0])])
     s, R, t = similarity(G, Q); XZ = s * xz0 @ R.T + t; xz = lambda r: XZ[at0[r]]
+    # the houses of the map within 150 m of the line, their outlines a point each 0.5 m (the cut at the houses)
+    hv = [refs for refs in houses.values() if all(r in at0 for r in refs)]
+    if hv: hv = [refs for refs, d in zip(hv, tree.query(np.asarray([xz(refs[0]) for refs in hv]))[0]) if d < 150]
+    HP = np.asarray([p for refs in hv for p in osm.dense([tuple(xz(r)) for r in refs], 0.5)]) if hv else np.zeros((0, 2)); HT = cKDTree(HP) if len(HP) else None
     # the ways of the track itself, their nodes and points
     trk = set()
     for wid, (refs, tg) in ways.items():
@@ -294,8 +370,10 @@ def main():
         P = osm.dense([tuple(xz(r)) for r in refs if r in at0], 2.0); d, _ = tree.query(np.asarray(P))
         if np.median(d) < cfg['trk'] or op and longest(P, d < cfg['trk']) >= RUN: trk.add(wid)   # (an open road goes on beyond the game's line)
     if not trk: print('%s: no way of the map lies within %.0f m of the game\'s line (the fit failed: a new centre line? PROGE trk, kinds)' % (C['id'], cfg['trk'])); return
-    kk_, rw = road_scale(C, cfg, ways, trk, W_); RSW, RSS = roadside(C['id']); RST = rs_tree(RSW)
+    kk_, rw = road_scale(C, cfg, ways, trk, W_)
     print('%s: the scale of the side roads %.2f (the track %.1f m in the game%s)' % (C['id'], kk_, 2 * float(np.median(W_)), ', %.1f m in OSM' % rw if rw else ''))
+    if '--b' in sys.argv: return widths_b(C, ways, xz, at0, trk, kk_, write)
+    RSW, RSS = roadside(C['id']); RST = rs_tree(RSW)
     tn = {r for w in trk for r in ways[w][0]}
     Qt = np.asarray([p for w in trk for p in osm.dense([tuple(xz(r)) for r in ways[w][0] if r in at0])]); qtree = cKDTree(Qt)
     dq, _ = cKDTree(Qt).query(G)
@@ -363,7 +441,7 @@ def main():
                 P0 = np.asarray([xz(r) for r in carry(br_)]); Rl, tl = local(tree, D, Qt, qtree, P0[0]); P1 = P0 @ Rl.T + tl
                 d, kk = tree.query(P1[0])
                 if d > FAR: drop('far'); continue                                        # on the way's continuation beyond the game's line
-                resid.append(float(d)); P = clip([p for p in P1 + (D[kk] - P1[0])], 64.0)
+                sh = D[kk] - P1[0]; resid.append(float(d)); P = clip([p for p in P1 + sh], 64.0)
                 d0, s0 = near(P[0]); hw0 = hw_at(s0); sa = after(s0)
                 if op and (s0 < 40 or s0 > L - 40): drop('end'); continue                # the road's own continuation beyond the game's line
                 if sa < cfg['start'][0] or sa > L - cfg['start'][1]: drop('start'); continue   # the start: the wall, the fence and the crowd
@@ -381,7 +459,12 @@ def main():
                 for px_, pz_, pr_ in C.get('pulls', []):                                  # its parked cars within ~11 m of it): the road stops at the pad's edge (Koli ~1573 m)
                     rr = max(6.0, min(pr_, 22.0)) + 1.0; hk = next((k2 for k2 in range(cut) if math.hypot(Wk[k2][0] - px_, Wk[k2][1] - pz_) < rr), None)
                     if hk is not None and hk < cut: cut = hk; pk = True
-                if cut - 1 < 14 or max(d for d, sm in N_[:cut]) < hw0 + 10: drop('own' if pk else 'link' if ret else 'short'); continue   # never really leaves the roadside
+                hs = False                                                                # the houses of the map: beyond the track's edge the strip (its drawn
+                k1 = next((k2 for k2, (d, sm) in enumerate(N_[:cut]) if d > hw0), cut)    # width) stops 1 m short of the first it would touch (Canaries 3476 m)
+                if HT is not None and k1 < cut:
+                    dh, _ = HT.query((np.asarray(Wk[k1:cut]) - sh - tl) @ Rl, distance_upper_bound=w / 2 + HOUSE_GAP); hk = np.flatnonzero(np.isfinite(dh))
+                    if len(hk): cut = max(0, k1 + int(hk[0]) - 1); hs = True
+                if cut - 1 < 14 or max(d for d, sm in N_[:cut]) < hw0 + 10: drop('house' if hs else 'own' if pk else 'link' if ret else 'short'); continue   # never really leaves the roadside
                 k0 = int(round(s0 / st)) % nd; o = 0.0
                 for k2 in (12, 20, 30, cut - 1):
                     q = Wk[min(cut - 1, k2)] - D[k0]; o = float(Nr[k0] @ q)
@@ -390,7 +473,7 @@ def main():
                 if any(sd == (1 if o > 0 else -1) and abs(sa - m) < 4 for m, sd in cfg.get('izpusti', [])): drop('hand'); continue   # left out by hand (PROGE)
                 if on_roadside(RST, Wk[:cut]): drop('roadside'); continue                # the track's roadside (obcestje) draws it already
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
-                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, razred=0 if tg.get('surface') in UNPAVED else cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
+                cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, razred=0 if tg.get('surface') in UNPAVED else cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, hs=hs, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
     # the higher class first, then the longer road: two mouths on the same side that would run into each other leave one; a road that runs
     # into another of these roads ends there (end 1), and so does the other one where it is met at its tip
@@ -418,7 +501,7 @@ def main():
         for i in range(1, len(Pc)):
             if dist(Pc[i], keep[-1]) >= 0.8 or i == len(Pc) - 1: keep.append(Pc[i])
         rows.append([int(round(e['sa'])), e['side'], e['razred'], e['w'], e['ow'], e['end'], [round(float(v), 1) for p in keep for v in p]])
-        print('  %6d m  %s  class %d  %.1f m  %2d m%s  %s' % (e['sa'], 'right' if e['side'] > 0 else 'left ', e['razred'], e['w'], e['cut'] - 1, ' joins' if e['end'] else '', e['tags']))
+        print('  %6d m  %s  class %d  %.1f m  %2d m%s  %s' % (e['sa'], 'right' if e['side'] > 0 else 'left ', e['razred'], e['w'], e['cut'] - 1, (' joins' if e['end'] else '') + (' at a house' if e['hs'] else ''), e['tags']))
     # street lamps and bus stops within 30 m of the centre line, each laid on the game's line as the junctions are
     lamps, stops = [], []
     for i, tg in tagged.items():

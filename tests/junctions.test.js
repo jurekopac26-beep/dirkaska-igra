@@ -30,11 +30,12 @@ check('tracks: the open roads with side roads that can be driven into are these 
 
 for (const id of IDS) {
   const def = C.TRACKS.find(d => d.id === id), T = new C.Track(def), S = T.stubs, SR = def.sideRoads, T0 = new C.Track(Object.assign({}, def, { sideRoads: null }));
-  // 1. the data
+  // 1. the data (the half width up to 8 m: the map's width by the rule of the roads for the look, tools/cesta/izvoz.py --b, scaled as the
+  // track is, decision B2 of 24. 11. 2026, docs/realizem/paket-e.md; one beside the track keeps its width; on the tracks 3.5 m at most now)
   { const D = def.dem, inDem = !D || S.every(s => { for (let j = 0; j < s.n; j++) if (s.x[j] < D.x0 || s.z[j] < D.z0 || s.x[j] > D.x0 + D.nx * D.cell || s.z[j] > D.z0 + D.nz * D.cell) return false; return true; });
     const named = new Set(S.map(s => s.name)), inRace = S.every(s => s.s0 > Math.min(T.startS - 60, 0) && s.s0 < T.finishS + 250);   // (or on the road behind a start moved on, from its first point: Chapman's Military Road, 210 m behind the start since #698, 15. 11. 2026)
     check(`${id}: ${S.length} side roads, in order along the road, both sides valid, ${S.filter(s => s.grav).length} gravel; open 30-240 m, a rail, a gate or a building at the end; within the race, on the terrain's map${NAMED[id] ? ' (' + NAMED[id].join(', ') + ')' : ''}`,
-      S.length === SR.length && S.length > 0 && SR.every((r, k) => !k || r[0] >= SR[k - 1][0]) && S.every(s => Math.abs(s.side) === 1 && s.hw >= 1.5 && s.hw <= 3.5 && s.L > s.tb + 8 && s.L >= 25 && s.L <= 240 && s.Lend >= s.L && s.end >= 0 && s.end <= 2) &&
+      S.length === SR.length && S.length > 0 && SR.every((r, k) => !k || r[0] >= SR[k - 1][0]) && S.every(s => Math.abs(s.side) === 1 && s.hw >= 1.5 && s.hw <= 8 && s.L > s.tb + 8 && s.L >= 25 && s.L <= 240 && s.Lend >= s.L && s.end >= 0 && s.end <= 2) &&
       inRace && inDem && (NAMED[id] || []).every(x => named.has(x)),
       `${S.filter(s => s.side < 0).length} left, ${S.filter(s => s.side > 0).length} right; open ${Math.min(...S.map(s => s.L)).toFixed(0)}-${Math.max(...S.map(s => s.L)).toFixed(0)} m`);
   }

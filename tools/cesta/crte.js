@@ -66,6 +66,8 @@ for (const id of process.argv.slice(2)) {
     start: r(T.startS), n0: [T.nx[0], T.nz[0]], bank, mostovi: [].concat(d.brO || [], d.brU || []).map(p => [p[0], p[1]]),
     brez: T.open ? [].concat(d.bridges || [], d.galleries || []).filter(b => b.length <= 3).map(b => [b[0], b[1]]) : [], cilj: T.open ? r(T.finishS - T.startS) : null,
     ima: [].concat(d.sideRoads || [], d.junctions || [], d.views || []).filter(e => typeof e[0] === 'number' && typeof e[1] === 'number').map(e => [e[0], e[1]]),
+    // the side roads of the track's own model (def.sideRoads, driven on): [m, side, half width, [x, z, ...]] for izvoz.py --b (their width by the same rule)
+    sb: (d.sideRoads || []).map(e => [e[0], e[1], e[7], e[10].filter((v, i) => i % 3 !== 2).map(r)]),
     pulls: (d.pulls || []).filter(p => typeof p[0] === 'number').map(p => [p[0], p[1], p[2]]) };   // (World.gore's car parks [x, z, r]: no road across them)
 }
 process.stdout.write(JSON.stringify(out));
