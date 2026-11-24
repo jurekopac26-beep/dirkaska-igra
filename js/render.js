@@ -4436,7 +4436,14 @@ const Render = (function () {
   function seasonWorld() {
     const sea = world && world.forceSeason ? world.forceSeason : world && (world.ownSeason || (world.season === 'autumn' && atmos.season !== 'winter')) ? 'summer' : atmos.season === 'winter' && !snowy() ? 'summer' : atmos.season;   // (a world painted for every season itself (world.ownSeason: Sani Pass) is as built; a world painted for a season of its own (world.season: Vršič's autumn look) is as built in autumn; the winter snows it over)   // (a world without snow, world.noSnow: its winter green and rainy, as built)   // (world.forceSeason: a world under snow all year, Envalira)
     if (!world || !world.root || world.seasonKey === sea) return;
-    if (!world.seasonKey && sea === 'summer') { world.seasonKey = 'summer'; return; }   // (a new world in summer: as built)
+    if (!world.seasonKey && sea === 'summer') {   // (a new world in summer: as built; but what it shares with an earlier world (js/world-zivali.js's materials
+      // by colour, its baked colours) that world may have painted (Envalira's winter in every season, world.forceSeason): those back as built)
+      world.seasonKey = 'summer';
+      world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) { const U = m.userData; if (U && U.c0 && m.color && (!m.color.equals(U.c0) || m.map !== U.map0)) { m.color.copy(U.c0); if (m.map !== U.map0) m.map = U.map0; if (U.dry && U.dry0) U.dry.copy(U.dry0); m.needsUpdate = true; } }
+        const a = o.geometry && o.geometry.attributes && o.geometry.attributes.color, b = o.isInstancedMesh && o.instanceColor;
+        for (const c of [a, b]) if (c && colOrig.has(c)) { c.array.set(colOrig.get(c)); c.needsUpdate = true; } });
+      return;
+    }
     world.seasonKey = seaW = sea;
     const roads = new Set([tex.asphalt, tex.curb, tex.paving].filter(Boolean)), mats = new Set(), cols = new Map(), inst = new Set();   // (colour attributes: some are shared by several meshes, each is changed once)
     world.root.traverse(o => { for (const m of o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []) mats.add(m); const g = o.geometry; if (g && g.attributes && g.attributes.color && !g.attributes.color.noSeason && !cols.has(g.attributes.color)) cols.set(g.attributes.color, g.attributes.normal || null); if (o.isInstancedMesh && o.instanceColor && !o.instanceColor.noSeason) inst.add(o.instanceColor); });   // (noSeason: colours the season leaves as built, e.g. the people by the track and their things: js/world-ljudje.js)

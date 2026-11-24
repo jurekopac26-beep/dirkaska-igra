@@ -27,6 +27,7 @@ var TRACK_DEFS = TRACK_DEFS || [];
     desc: "Krog na ledu pod prelazom Port d'Envalira v Andori, na 2.370 m nad morjem: 730 m zaledenele ceste med snežnimi nasipi. Dve dolgi desni lasnici, levi lok in S-zavoji, nato kratka ravnina do cilja. Oprijem je le okoli petine suhega asfalta: zavore, plin in volan z občutkom, avto drsi. Naokoli sneg in gore Pirenejev, ob progi nekaj stavb.",
     en: { name: 'Envalira, Andorra', desc: "An ice circuit under the Port d'Envalira pass in Andorra, 2,370 m above the sea: 730 m of frozen road between snow banks. Two long right hairpins, a left sweep and the esses, then a short straight to the line. The grip is only about a fifth of dry tarmac: brake, throttle and steer with feeling, the car slides. Snow and the Pyrenees all round, a few buildings by the track." },
     maxRivals: 21,   // the most rivals the menu's Opponents gives a race here (game.js rivSet; tests/rivals-n.test.js): the shortest circuit (0.72 km): with more its flying start's column would stand car on car
+    brakeBoards: false,   // (no distance boards: an ice circuit between snow banks has none, and its short straights no heavy braking zone; Track.brakeBoards)
     start: [0, 0], edgeBar: 2.5, noCurbs: true, noGravel: true, gradeForce: true, elevSmooth: 10, realKm: 0.73,
     elev: EV_H.map((h, i) => [i / EV_H.length, h / 10]),
     // named places ([HUD label, x, z, the commentator's lines]): the corners by plain descriptions, in their order round the lap

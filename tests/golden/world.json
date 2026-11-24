@@ -1902,5 +1902,26 @@
    "tyremarks:MeshBasicMaterial": "26675b3f",
    "roadwear:MeshLambertMaterial": "bec63044"
   }
+ },
+ "envalira": {
+  "meshes": 61,
+  "verts": 59088,
+  "instances": 0,
+  "props": 18,
+  "crowd": 0,
+  "world": "a461d04d",
+  "propsHash": "d0ba69ab",
+  "floor": "7a088c17/1456",
+  "groups": {
+   "-:MeshLambertMaterial": "ba63e595",
+   "-:MeshBasicMaterial": "fdf5dd25",
+   "flags:MeshLambertMaterial": "503ba7f7",
+   "ao:MeshBasicMaterial": "b23df90e",
+   "roadwear:MeshLambertMaterial": "784e0923",
+   "worn:MeshLambertMaterial": "2c7a3522",
+   "life:MeshLambertMaterial": "5c10e02f",
+   "lifeShadow:MeshBasicMaterial": "7b0a2ed1",
+   "life:MeshBasicMaterial": "da96a65e"
+  }
  }
 }
