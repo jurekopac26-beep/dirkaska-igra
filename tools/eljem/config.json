@@ -1,0 +1,90 @@
+{
+  "id": "eljem",
+  "about": "El Jem, Tunizija (id eljem): a short town course from the south-west, round the east side of the Roman amphitheatre and north through the town (docs/proge/eljem.md)",
+  "box": [
+    35.284,
+    10.692,
+    35.308,
+    10.716
+  ],
+  "closed": false,
+  "dist": {
+    "grid": 500
+  },
+  "route": [
+    [
+      35.29016,
+      10.70074,
+      null,
+      "start: the road from the south-west, north-eastbound through the roundabout"
+    ],
+    [
+      35.29307,
+      10.70327,
+      null,
+      ""
+    ],
+    [
+      35.29423,
+      10.7047,
+      null,
+      ""
+    ],
+    [
+      35.29522,
+      10.70624,
+      null,
+      "towards the amphitheatre"
+    ],
+    [
+      35.29558,
+      10.70765,
+      null,
+      "round the east side of the amphitheatre (about 30 m from the wall)"
+    ],
+    [
+      35.29676,
+      10.708,
+      null,
+      ""
+    ],
+    [
+      35.29785,
+      10.708,
+      null,
+      "north into the town"
+    ],
+    [
+      35.29999,
+      10.70855,
+      null,
+      ""
+    ],
+    [
+      35.30219,
+      10.70888,
+      null,
+      ""
+    ],
+    [
+      35.30544,
+      10.70927,
+      null,
+      "finish at the north edge of the town"
+    ]
+  ],
+  "prefer": [],
+  "geoRoads": [],
+  "geoWater": [],
+  "marks": [
+    [
+      "Amfiteater",
+      "Amphitheatre",
+      "ruins",
+      [
+        "r2894555"
+      ]
+    ]
+  ],
+  "places": []
+}
