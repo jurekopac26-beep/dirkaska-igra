@@ -513,28 +513,22 @@
   "chapman",
   {
    "kbps": 450,
-   "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "East Fort",
-     "d": 847
+     "d": 521
     },
     {
      "n": "Toll Plaza",
-     "d": 2225
+     "d": 1899
     },
     {
-     "n": "The Sentinel",
-     "d": 3214
+     "n": "Viewpoint · The Sentinel",
+     "d": 2888
     }
    ],
    "alt": [
-    19,
+    34,
     153
    ]
   }
@@ -1009,28 +1003,22 @@
   "rastro",
   {
    "kbps": 450,
-   "speed": 178,
-   "back": 231,
-   "up": 146,
-   "ahead": 116,
-   "fogNear": 498,
-   "fogFar": 1922,
    "places": [
     {
      "n": "Hairpin 8 · 1,209 m",
-     "d": 1998
+     "d": 1214
     },
     {
      "n": "Rio do Rastro Falls",
-     "d": 2953
+     "d": 2169
     },
     {
      "n": "Top of the Serra · 1,389 m",
-     "d": 3880
+     "d": 3096
     }
    ],
    "alt": [
-    1010,
+    1097,
     1421
    ]
   }
@@ -1069,29 +1057,47 @@
   "tianmen",
   {
    "kbps": 450,
-   "speed": 172,
-   "back": 224,
-   "up": 141,
-   "ahead": 112,
-   "fogNear": 482,
-   "fogFar": 1858,
    "places": [
     {
      "n": "Bend 66 · 839 m",
-     "d": 1098
+     "d": 484
     },
     {
      "n": "Bend 77 · 961 m",
-     "d": 2290
+     "d": 1676
     },
     {
      "n": "The Loop",
-     "d": 3931
+     "d": 3317
     }
    ],
    "alt": [
-    729,
+    791,
     1218
+   ]
+  }
+ ],
+ [
+  "balea",
+  {
+   "kbps": 450,
+   "places": [
+    {
+     "n": "Hairpin 3 · 1,823 m",
+     "d": 271
+    },
+    {
+     "n": "Bâlea Valley",
+     "d": 648
+    },
+    {
+     "n": "Hairpin 5 · 1,947 m",
+     "d": 2224
+    }
+   ],
+   "alt": [
+    1802,
+    2034
    ]
   }
  ],
