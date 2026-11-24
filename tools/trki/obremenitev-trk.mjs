@@ -18,13 +18,16 @@
 //   node tools/trki/obremenitev-trk.mjs                      all three scenes, dmgDet 1 then 0
 //   node tools/trki/obremenitev-trk.mjs zid200 --dmgdet 1    one scene, one setting
 // Options: --dmgdet 1,0  --proga spa  --s 6 (seconds after the touch)  --detajl low|high (Grafika: NIZKA, the budget's tier)  --risi
+//   --razrez 0.6            the cars of the frame that far after the touch: each one's draws by what of the car they are
+//   --slika f.png [--slika-t 0.6]   that frame drawn for real and saved (844 x 390, the chase camera)
+//   --xltk 99               the pile-up's rule (render.js xLtCut): how many knocked rivals keep their own panels (99: the rule off)
 // Writes test-results/obremenitev/trk.json (every frame of every scene).
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO, serve, launch, openGame } from '../../tests/browser/lib.mjs';
 
 const args = process.argv.slice(2), flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args.splice(i, 2)[1] : null; }, has = (k) => { const i = args.indexOf(k); if (i >= 0) args.splice(i, 1); return i >= 0; };
-const dets = (flag('--dmgdet') || '1,0').split(',').map(Number), proga = flag('--proga') || 'spa', secs = +(flag('--s') || 6), detajl = flag('--detajl') || 'low', risi = has('--risi');
+const dets = (flag('--dmgdet') || '1,0').split(',').map(Number), proga = flag('--proga') || 'spa', secs = +(flag('--s') || 6), detajl = flag('--detajl') || 'low', risi = has('--risi'), razrez = flag('--razrez'), slika = flag('--slika'), slikaT = +(flag('--slika-t') || 0.6), xltk = flag('--xltk');
 // m: metres after the start (the straights tools/trki/slike-scenariji.json uses on Spa); igralec / tekmeci: the road's frame there
 // (naprej along it, desno across it to the right, kot the nose's angle to the road, do_ograje: the nearest corner that far from the barrier)
 const SCENES = {
@@ -87,8 +90,19 @@ function stageAndCount(o) {
   const RR = window.__R, orig = RR.renderBufferDirect, deb = new WeakSet(), carG = new WeakSet(), KINDS = ['svet', 'avti', 'deli', 'drobci', 'delci', 'drugo'];
   for (const c of R.cars) { const v = Render.viewOf(c); if (v && v.grp) carG.add(v.grp); }
   const kindOf = (obj) => { for (let q = obj; q; q = q.parent) { if (q === Render.world.root) return 0; if (carG.has(q)) return 1; if (deb.has(q) || (q.userData && q.userData.xDeb)) return 2; } return obj.isInstancedMesh ? 3 : obj.isPoints || obj.isSprite ? 4 : 5; };
-  let rec = null;
-  RR.renderBufferDirect = function (cam, sc, geo, mat, obj) { const c0 = __gl.calls, v0 = __gl.verts, res = orig.apply(this, arguments); if (rec) { const k = kindOf(obj); rec.c[k] += __gl.calls - c0; rec.v[k] += __gl.verts - v0; } return res; };
+  let rec = null, cut = null;
+  // --razrez: every draw of one frame put down to its car and to what of the car it is (the view's own field that holds the object or
+  // its nearest named parent: body, det, parts.hood, under.hood, wheels.0 ...; '/s' the shadow pass)
+  const roleOf = (obj) => { let v = null, top = null; for (let q = obj; q; q = q.parent) if (carG.has(q)) { top = q; break; } if (!top) return null;
+    for (const c of R.cars) { const w = Render.viewOf(c); if (w && w.grp === top) { v = w; break; } } if (!v) return null;
+    if (!v.__role) { const M = v.__role = new Map(), put = (o, n) => { if (o && o.isObject3D && !M.has(o)) M.set(o, n); };
+      for (const k of Object.keys(v)) { const x = v[k]; if (!x || typeof x !== 'object' || k === 'grp' || k === 'bodyG' || k === '__role') continue; if (x.isObject3D) put(x, k); else if (k === 'far') put(x.mesh, 'far'); else if (Array.isArray(x)) x.forEach((o, i) => put(o, k + '.' + i)); else if (!x.isMaterial && !x.isBufferGeometry) for (const n of Object.keys(x)) put(x[n], k + '.' + n); } }
+    let role = '?'; for (let q = obj; q && q !== top; q = q.parent) { const n = v.__role.get(q); if (n) { role = n + (q === obj ? '' : '>'); break; } }
+    return { id: v.car.id, role }; };
+  RR.renderBufferDirect = function (cam, sc, geo, mat, obj) { const c0 = __gl.calls, v0 = __gl.verts, res = orig.apply(this, arguments); if (rec) { const k = kindOf(obj); rec.c[k] += __gl.calls - c0; rec.v[k] += __gl.verts - v0;
+    if (cut && k === 1) { const r = roleOf(obj); if (r) { const sh = mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial, m = cut[r.id] || (cut[r.id] = {}), n = r.role + (sh ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); } }
+    else if (cut && k === 2) { const m = cut.deli || (cut.deli = {}); let top = obj; while (top.parent && top.parent.type !== 'Scene') top = top.parent; const n = (top.userData.xDeb ? 'road' : 'flying') + (top.userData.kit ? ' kit' : '') + ':' + (mat.name || mat.type) + (mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); }
+    else if (cut && k === 5) { const m = cut.drugo || (cut.drugo = {}), n = (obj.name || (obj.parent && obj.parent.name) || obj.type) + ':' + (mat.name || mat.type) + (mat.vertexColors ? ' vc' : '') + (mat.isMeshDepthMaterial || mat.isMeshDistanceMaterial ? '/s' : ''); m[n] = (m[n] || 0) + (__gl.calls - c0); } } return res; };   // (drugo, the rest: by the object's or its parent's name and its material)
   const frame = (dt) => {
     for (const c of R.cars) { const v = Render.viewOf(c); if (v && v.grp) carG.add(v.grp); }   // (a view built again after a knock)
     if (R.debris) for (const d of R.debris) if (d.mesh && d.mesh.isObject3D) deb.add(d.mesh);
@@ -106,9 +120,16 @@ function stageAndCount(o) {
     if (!pre.length) pre.push(frame(1 / 60));
     inP.thr = 0;   // (after the touch: no pedal, no steer)
     post.push(Object.assign(frame(1 / 60), { t: 0 }));
-    const N = Math.round(o.secs * 60); let vmax = 0;
-    for (let k = 1; k <= N; k++) { one(); one(); post.push(Object.assign(frame(1 / 60), { t: +(k / 60).toFixed(3) })); }
-    return { pre: pre.slice(-30), post, touch, KINDS, zadetih: knocked.size, avtov: R.cars.length, skoda: +(P.dmg || 0).toFixed(2), cv: Core.TX.cv, XC: (Render.crashInfo ? Render.crashInfo().XC : null), kmhPo: +(P.speed * 3.6).toFixed(0), avto: P.m.id };
+    if (o.xltk != null) Render.setDebug({ xLtK: o.xltk });   // (the pile-up's rule, render.js xLtCut: how many knocked rivals keep their own panels; 99: the rule off)
+    const N = Math.round(o.secs * 60), kCut = o.razrez != null ? Math.round(o.razrez * 60) : -1, kPic = o.slika ? Math.round(o.slikaT * 60) : -1; let razrez = null, png = null, drugo = null, deliR = null;
+    for (let k = 1; k <= N; k++) { one(); one();
+      if (k === kCut) cut = {};
+      post.push(Object.assign(frame(1 / 60), { t: +(k / 60).toFixed(3) }));
+      if (k === kCut) {   // (the cars of that frame: their draws by role, how far from the camera, what state their view is in)
+        const cp = Render.camera.position; razrez = R.cars.map(c => { const v = Render.viewOf(c) || {}, m = cut[c.id] || {}; return { id: c.id, model: c.m.id, igralec: !!c.isPlayer, m: +Math.hypot(c.x - cp.x, c.z - cp.z).toFixed(1), dmg: +(c.dmg || 0).toFixed(2), klici: Object.values(m).reduce((a, b) => a + b, 0), mrg: !!v.mrg, lahek: !!v.xLt, far: !!(v.far && v.far.on), vloge: m }; }); drugo = cut.drugo || {}; deliR = cut.deli || {}; cut = null; }
+      if (k === kPic) { __gl.mute = false; Render.frame(0, 1, P, 'chase', {}); png = document.querySelector('canvas').toDataURL('image/png'); __gl.mute = !o.risi; }   // (the picture: this frame drawn for real, dt 0: nothing moves on)
+    }
+    return { razrez, drugo, deliR, png, pre: pre.slice(-30), post, touch, KINDS, zadetih: knocked.size, avtov: R.cars.length, skoda: +(P.dmg || 0).toFixed(2), cv: Core.TX.cv, XC: (Render.crashInfo ? Render.crashInfo().XC : null), kmhPo: +(P.speed * 3.6).toFixed(0), avto: P.m.id };
   } finally { RR.renderBufferDirect = orig; R.step = core; __gl.mute = false; }
 }
 
@@ -129,7 +150,8 @@ async function run(browser, base, name, det) {
     const st = await page.evaluate(([id, det]) => { const g = window.__game; return { ok: !!(g.race && g.race.track.def.id === id), bad: g.quick.q.bad, cv: Core.TX.cv, det: g.S.dmgDet, dmg: g.S.damage, test: !!g.race.track.def.test }; }, [proga, det]);
     if (!st.ok || st.bad.length) throw new Error(`no race on ${proga} (${st.bad.join(', ') || 'the quick entry did not start one'})`);
     if (st.cv !== 6 || +st.det !== det || +st.dmg !== 2) throw new Error(`the page's settings are not the ones asked for: cv ${st.cv}, dmgDet ${st.det}, damage ${st.dmg}`);
-    const r = await page.evaluate(stageAndCount, Object.assign({ secs, risi }, S));
+    const r = await page.evaluate(stageAndCount, Object.assign({ secs, risi, razrez: razrez != null ? +razrez : null, slika: !!slika, slikaT, xltk: xltk != null ? +xltk : null }, S));
+    if (r.png) { const f = slika.replace(/\.png$/, '') + (names.length * dets.length > 1 ? `-${name}-${det}` : '') + '.png'; fs.mkdirSync(path.dirname(path.resolve(f)), { recursive: true }); fs.writeFileSync(f, Buffer.from(r.png.split(',')[1], 'base64')); console.log('picture: ' + f); } delete r.png;
     if (r.error) throw new Error(`${name}, dmgDet ${det}: ${r.error}`);
     if (errors.length) console.log(`(${errors.length} page errors: ${errors.slice(0, 3).join(' | ').slice(0, 300)})`);
     return Object.assign(r, { scena: name, dmgDet: det });
@@ -149,6 +171,10 @@ function report(r) {
   const part = (f, tag) => { const p0c = r.KINDS.map((_, k) => mean(r.pre.map(x => x.c[k]))), p0v = r.KINDS.map((_, k) => mean(r.pre.map(x => x.v[k])));
     console.log(`  ${tag} (t ${f.t} s): ` + r.KINDS.map((n, k) => `${n} ${f.c[k]}/${kv(f.v[k])} (${f.c[k] - p0c[k] >= 0 ? '+' : ''}${Math.round(f.c[k] - p0c[k])}/${f.v[k] - p0v[k] >= 0 ? '+' : ''}${kv(f.v[k] - p0v[k])})`).join(', ') + `; pieces ${f.deli}, on the road ${f.natleh}, shards ${f.drobci}`); };
   part(bc, 'busiest by calls   '); if (bv !== bc) part(bv, 'busiest by vertices');
+  if (r.razrez) { console.log(`  the cars at t ${razrez} s (id model: metres from the camera, damage, draws; state; draws by role, /s the shadow pass):`);
+    for (const c of r.razrez.slice().sort((a, b) => a.m - b.m)) console.log(`    ${String(c.id).padStart(2)} ${c.model.padEnd(12)} ${String(c.m).padStart(6)} m  dmg ${c.dmg.toFixed(2)}  ${String(c.klici).padStart(3)} draws  ${c.igralec ? 'player' : c.far ? 'far' : c.lahek ? 'light' : c.mrg ? 'merged' : 'apart'}  ` + Object.entries(c.vloge).sort((a, b) => b[1] - a[1]).map(([n, k]) => n + ' ' + k).join(', '));
+    if (r.deliR) console.log('    the shed pieces (deli) by where:material: ' + Object.entries(r.deliR).sort((a, b) => b[1] - a[1]).map(([n, k]) => n + ' ' + k).join(', '));
+    if (r.drugo) console.log('    the rest (drugo) by object:material: ' + Object.entries(r.drugo).sort((a, b) => b[1] - a[1]).map(([n, k]) => n + ' ' + k).join(', ')); }
   const end = r.post[r.post.length - 1]; part(end, 'the last frame     ');
   return { scena: r.scena, dmgDet: r.dmgDet, pred: [pc, Math.round(pv / 1000)], vrh: [bc.calls, Math.round(bv.verts / 1000)], povp: [mc, Math.round(mv / 1000)], nad: over, zadetih: r.zadetih };
 }
