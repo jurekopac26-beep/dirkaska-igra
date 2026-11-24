@@ -101,7 +101,7 @@
   // it is), over its cells and two more round them where the ground lies under it (the beds' sides cut the water into its shore); reeds round
   // the shore (js/world.js's clumps of grass, tall, brown-green); nobody standing in the water, no tree in it (the trees keep off the pad's
   // ground anyway)
-  function zvPonds({ root, tex, out, exclPush, CR, excluded, naCesti }, st, reed) {
+  function zvPonds({ root, tex, out, exclPush, CR, excluded }, st, reed) {
     const PO = POND; if (!PO) return;
     const { M, nx, nz, x0, z0, C } = PO, n = nx * nz, lab = new Int32Array(n).fill(-1), comps = [], X = (i) => x0 + (i + 0.5) * C, Z = (j) => z0 + (j + 0.5) * C;
     for (let s = 0; s < n; s++) {   // (the ponds: the mask's 4-connected parts)
@@ -166,9 +166,8 @@
           const x = x0 + (i + RR()) * C, z = z0 + (j + RR()) * C, y = nrGround(x, z);
           if (Math.abs(y - lv) > 0.3 || API.NR.n2(x * 0.5 + 70, z * 0.5) < 0.38 || nrDist(x, z) > 160 || excluded(x, z)) continue;
           const nn = nrNear(x, z); if (nn.i >= 0 && nn.dd < 4) continue;
-          const hh = 1.4 + RR() * 0.9, cv = 0.86 + RR() * 0.2, a = RR() * TAU, w = hh * (0.75 + RR() * 0.3);
-          if (naCesti && naCesti(x, z, 0)) continue;   // (none on a side road: after its draws, so the others stay where they were)
-          reed.add(x, Math.max(y, lv) - 0.15, z, a, w, hh, [0.6 * cv, 0.62 * cv, 0.36 * cv]); st.reeds++;
+          const hh = 1.4 + RR() * 0.9, cv = 0.86 + RR() * 0.2;
+          reed.add(x, Math.max(y, lv) - 0.15, z, RR() * TAU, hh * (0.75 + RR() * 0.3), hh, [0.6 * cv, 0.62 * cv, 0.36 * cv]); st.reeds++;
         }
       }
       st.ponds++;
@@ -184,9 +183,8 @@
 
   // the dunes by the road: clumps of marram grass on them, from 3 m past the barriers to 30 m out (in drifts: the noise; not on the bare sand
   // of a blow-out, nor in the ponds); the sea buckthorn's bushes (js/world.js's beech, sunk into the ground, wider than tall, grey-green) in
-  // the dune valleys, in thickets with gaps, from 12 m past the barriers to 140 m out; the trees and the crowds keep clear of them; neither
-  // on a side road (def.stranske: after their random draws, so the others stay where they were)
-  function zvDunes({ root, exclPush, excluded, CR, naCesti }, st, tu) {
+  // the dune valleys, in thickets with gaps, from 12 m past the barriers to 140 m out; the trees and the crowds keep clear of them
+  function zvDunes({ root, exclPush, excluded, CR }, st, tu) {
     const T = API.T, P = API.NR, R = rng(5647), PO = POND, bush = new IChunks(API.nrTreeGeo(1), new THREE.MeshLambertMaterial({ vertexColors: true }), 512);
     let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
     for (let i = 0; i < T.N; i++) { x0 = Math.min(x0, T.px[i]); x1 = Math.max(x1, T.px[i]); z0 = Math.min(z0, T.pz[i]); z1 = Math.max(z1, T.pz[i]); }
@@ -195,9 +193,8 @@
       const bx = x + (R() - 0.5) * 6, bz = z + (R() - 0.5) * 6, rr = R(), th = P.n1(bx * 0.9 + 330, bz * 0.9 - 120);
       if (th < 0.52 || rr > sstep(0.52, 0.72, th) * 0.8 || !dune(bx, bz)) continue;
       const q = nrNear(bx, bz); if (q.i < 0 || q.dd < 12 || nrDist(bx, bz) > 140 || excluded(bx, bz) || P.pad(bx, bz, 0) !== 0) continue;
-      const h = 1.8 + R() * 1.6, w = h * (1.3 + R() * 0.5), cv = 0.9 + R() * 0.2, y = nrGround(bx, bz), a = R() * TAU;
-      if (naCesti && naCesti(bx, bz, w * 0.4)) continue;
-      bush.add(bx, y - h * 0.32, bz, a, w, h, [1.42 * cv, 1.02 * cv, 1.7 * cv]);
+      const h = 1.8 + R() * 1.6, w = h * (1.3 + R() * 0.5), cv = 0.9 + R() * 0.2, y = nrGround(bx, bz);
+      bush.add(bx, y - h * 0.32, bz, R() * TAU, w, h, [1.42 * cv, 1.02 * cv, 1.7 * cv]);
       exclPush(bx, bz, w * 0.4); CR.avoid(bx, bz, w * 0.5); st.bushes++;
     }
     bush.addTo(root, false);
@@ -205,9 +202,8 @@
       const tx = x + (R() - 0.5) * 4.6, tz = z + (R() - 0.5) * 4.6, dr = P.n2(tx * 0.35 - 80, tz * 0.35 + 210);
       if (dr < 0.42 || R() > sstep(0.42, 0.64, dr) * 0.7) continue;
       const q = nrNear(tx, tz); if (q.i < 0 || q.dd < 3 || q.dd > 30 || !dune(tx, tz) || excluded(tx, tz) || P.pad(tx, tz, 0) !== 0) continue;
-      const s = 0.8 + R() * 0.5, dry = P.n3(tx * 0.6 + 40, tz * 0.6), cv = 0.92 + R() * 0.16, a = R() * TAU, sw = s * (1 + R() * 0.3), sh = s * (0.85 + R() * 0.25);
-      if (naCesti && naCesti(tx, tz, 0)) continue;
-      tu.add(tx, nrGround(tx, tz) - 0.05, tz, a, sw, sh, [lerp(0.66, 0.84, dry) * cv, lerp(0.72, 0.78, dry) * cv, lerp(0.5, 0.52, dry) * cv]); st.marram++;
+      const s = 0.8 + R() * 0.5, dry = P.n3(tx * 0.6 + 40, tz * 0.6), cv = 0.92 + R() * 0.16;
+      tu.add(tx, nrGround(tx, tz) - 0.05, tz, R() * TAU, s * (1 + R() * 0.3), s * (0.85 + R() * 0.25), [lerp(0.66, 0.84, dry) * cv, lerp(0.72, 0.78, dry) * cv, lerp(0.5, 0.52, dry) * cv]); st.marram++;
     }
   }
 

@@ -657,16 +657,6 @@
     }
 
     /* ---- finish the meshes ---- */
-    /* ---- OpenStreetMap's bus stops for the look (def.postaje from tools/cesta/izvoz.py, World.cesta's postaja): a pole with a blank plate behind
-       the barrier, a few metres along the road if need be, where the ground beside the road is about level with it; no side roads here (the
-       map has none that a car could take) ---- */
-    let nStop = 0;
-    if (World.cesta && World.cesta.postaja) for (const [sd, side, dist, shel] of def.postaje || []) for (const k of [0, 2, -2, 4, -4, 6, -6]) {
-      const i = T.idx(sStart + sd + k * T.ds); if (onBr[i]) continue;
-      const o = side * Math.max(dist, (side > 0 ? T.br[i] : T.bl[i]) + (shel ? 1.3 : 1.0)), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o, y = tmGround(x, z);
-      if (Math.abs(y - T.hy[i]) > 1.5 || excluded(x, z)) continue;
-      World.cesta.postaja(scen.get(x, z), x, y, z, Math.atan2(-side * T.nz[i], -side * T.nx[i]), shel); out.postaja = [x, y, z]; nStop++; break;
-    }
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     fac.addTo(sceneryGroup, ouCutMat(new THREE.MeshLambertMaterial({ map: tex.facade, vertexColors: true }), cut), true, true);

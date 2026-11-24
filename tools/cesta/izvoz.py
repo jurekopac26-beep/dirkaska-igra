@@ -6,6 +6,7 @@ of the package Realizem E for World.cesta.stranske (docs/realizem/paket-e.md, "E
   python3 -I tools/cesta/osm.py crte.json <id> <raw-dir>              (downloads the tiles; they stay outside the repository)
   python3 -I tools/cesta/izvoz.py crte.json <id> <raw-dir> [--vpisi]  (prints the rows and the count of what was dropped and why;
                                                                        --vpisi writes them into js/tracks/<id>.js)
+  python3 -I tools/cesta/izvoz.py --obcestje <id> ...                 (drops the roadside's roads from the rows already written)
 
 A junction is a node of the map that a way of the track shares with another road: nothing is invented, a track without such nodes gets
 no side roads. The map is laid on the game's line in three steps, because the game's line is smoothed and not everywhere to scale: one
@@ -16,8 +17,9 @@ two mouths that would run into each other, a road that comes back to the lap sto
 open road's ends is the track where a long stretch of it lies on the game's line (its junctions out there are dropped: far, end), an
 open road has no junction from 70 m before its finish line on (the gantry, the crowd, the run-off beyond: finish), and
 a road the track's own model has already (def.sideRoads, def.junctions: driven on, with walls of its own; def.views: a view point's
-lay-by) gets no road for the look beside it (own). A junction the game cannot draw (the road would climb the game's hillside) is left
-out by hand, per track (PROGE, izpusti: hand).
+lay-by) gets no road for the look beside it (own), nor does a road or a bus stop the track's roadside from OSM draws already
+(js/world-<id>-obcestje.js, obcestje: roadside; until the decision e-obcestje of docs/vprasanja.md). A junction the game cannot
+draw (the road would climb the game's hillside) is left out by hand, per track (PROGE, izpusti: hand).
 
 Rows: stranske [m after the start line, side (1 right, -1 left), class (0 a driveway or a track, 1 a street, 2 tertiary, 3 secondary or
 a main road), width (m), one-way, end (0 fades into the terrain, 1 joins another of these roads), [x, z, ...]]; svetilke [x, z];
@@ -193,7 +195,83 @@ def local(tree, D, Qt, qtree, c):
         Dg = np.diag([1.0, np.sign(np.linalg.det(Vt.T @ U.T))]); Rk = Vt.T @ Dg @ U.T; R, t = Rk @ R, Rk @ (t - ca) + cb
     return R, t
 
+JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'js')
+RS_D, RS_STOP = 4.0, 25.0   # a side road with half its points or more this near (m) a way of the track's roadside is the roadside's; a bus
+                            # stop this near one of the roadside's is the same stop: neither is written again (dropped: roadside)
+
+RS_W = 2.5   # a roadside's way narrower than this (m) is a footway or a path: a side road beside it is not the roadside's
+RS_HDR = {'gudauri': 4, 'medeu': 4, 'ella': 3, 'luanda': 3, 'bikernieki': 2, 'pembrey': 2, 'sosnova': 2, 'isuna': 2, 'ujarras': 2,
+          'cusco': 1, 'killar': 1, 'zandvoort': 1}   # the numbers before a roadside way's points in its row (Eljem, Koror, Savusavu: its points
+                                                     # a list of their own, last; Porto Moniz's SIDE are sidewalks along the road: not ways)
+
+def js_array(txt, name):
+    """The JS array literal after the first match of the regex name (e.g. r'\\bconst WAYS = '), its comments out, as lists (None: none)."""
+    m = re.search(name, txt or '', re.M)
+    if not m: return None
+    k, d, out = txt.index('[', m.end() - 1), 0, []
+    while k < len(txt):
+        if txt.startswith('//', k): k = txt.find('\n', k); k = len(txt) if k < 0 else k; continue
+        if txt.startswith('/*', k): k = txt.find('*/', k) + 2; continue
+        out.append(txt[k]); d += {'[': 1, ']': -1}.get(txt[k], 0); k += 1
+        if d == 0: break
+    return json.loads(re.sub(r',\s*([\]}])', r'\1', re.sub(r"'([^']*)'", r'"\1"', ''.join(out))))
+
+def roadside(id_):
+    """What the track's roadside from OSM on main draws already (js/world-<id>-obcestje.js; Ella's obcestje block and Tianmen's obcestje
+    object in js/tracks/<id>.js, never the rows of this tool): its ways a car drives on (RS_W) as polylines [[x, z], ...], and its bus stops
+    [x, z]. Until the decision of docs/vprasanja.md (e-obcestje) the roadside keeps them and they get no road for the look beside them."""
+    p = os.path.join(JS, 'world-%s-obcestje.js' % id_); t = open(os.path.join(JS, 'tracks', id_ + '.js'), encoding='utf-8').read()
+    txt = open(p, encoding='utf-8').read() if os.path.exists(p) else ''
+    blk = ''.join(m.group(0) for m in re.finditer(r'// ---- obcestje.*?// ---- konec obcestja', t, re.S))   # Ella
+    obj = ''.join(m.group(0) for m in re.finditer(r'^    obcestje: .*$', t, re.M))                          # Tianmen
+    rows, wk, h = js_array(txt, r'\bconst WAYS = ') or js_array(blk, r'^\s*ways: ') or [], js_array(txt, r'\bconst WK = '), RS_HDR.get(id_)
+    ways = []
+    for r in rows:
+        if isinstance(r[-1], list): pts, w = r[-1], None                                         # [class, ..., [x, z, ...]]
+        else:
+            assert h is not None, 'the roadside ways of %s: the numbers before their points? (RS_HDR)' % id_
+            pts = r[h:]; w = (r[3] / 10 if h == 4 else r[2] / 10 if id_ == 'ella' else 2 * r[1] if id_ == 'pembrey' else
+                              (min(r[0][1::2]) if isinstance(r[0], list) else r[0]) if id_ == 'luanda' else 2 * wk[r[0]][0] if wk and h == 1 else None)
+        if (w is None or w >= RS_W) and len(pts) >= 4: ways.append(np.asarray(pts, float).reshape(-1, 2))
+    stops = [js_array(obj, r'\bstop: ') or [], js_array(txt, r'\bconst PLATFORM = ') or []]   # [[x, z], ...] (Tianmen); [x, z] (Gudauri's bus platform)
+    stops = stops[0] + ([stops[1]] if stops[1] else []); v = js_array(txt, r'\bconst STOP = ') or []   # STOP = [x, z, ...] (Bikernieki, Sosnova)
+    return ways, stops + [v[i:i + 2] for i in range(0, len(v) - 1, 2)]
+
+def rs_tree(ways):
+    """The roadside's ways, a point each metre (None: the track has no roadside)."""
+    return cKDTree(np.asarray([q for w in ways for q in osm.dense([tuple(r) for r in w], 1.0)])) if ways else None
+
+def on_roadside(tr, P):
+    """Whether the side road P ([[x, z], ...], a point each metre or closer) is one of the roadside's ways: half its points or more near one."""
+    return tr is not None and float(np.mean(tr.query(np.asarray(P))[0] < RS_D)) >= 0.5
+
+def vpisi(id_, data):
+    """The block before the track's centre-line points in js/tracks/<id>.js (an earlier block of this tool is replaced, nothing else)."""
+    path = os.path.join(JS, 'tracks', id_ + '.js'); src = open(path, encoding='utf-8').read()
+    src = re.sub(r'    // roads for the look only .*?\n(?:    //.*\n)*?(?:    (?:stranske|svetilke|postaje): .*\n)+', '', src)
+    lamps = any(v for k, v in data if k != 'stranske')
+    blk = ('    // roads for the look only (package Realizem E, World.cesta.stranske; tools/cesta/izvoz.py from OpenStreetMap, ODbL): the roads that\n'
+           + ('    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]], street lamps [x, z] and bus stops\n'
+              '    // [m after the start line, side, distance from the centre line, shelter]; nobody drives there\n' if lamps else
+              '    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]]; nobody drives there\n'))
+    blk += ''.join('    %s: %s,\n' % (k, json.dumps(v, separators=(',', ':'))) for k, v in data if v)
+    m = ([None] + list(re.finditer(r'^    points: ', src, re.M)))[-1]; assert m, 'no points line in ' + path   # (the last: Hakone's own data block has one too)
+    if any(v for k, v in data): src = src[:m.start()] + blk + src[m.start():]
+    open(path, 'w', encoding='utf-8').write(src); print('written: js/tracks/%s.js' % id_)
+
+def obcestje(ids):
+    """--obcestje <id> ...: the rows already written, without a new download: a side road or a bus stop of the roadside is dropped."""
+    for id_ in ids:
+        src = open(os.path.join(JS, 'tracks', id_ + '.js'), encoding='utf-8').read(); ways, stops = roadside(id_); tr = rs_tree(ways)
+        data = [(k, json.loads(m.group(1)) if m else []) for k in ('stranske', 'svetilke', 'postaje') for m in [re.search(r'^    %s: (.*),$' % k, src, re.M)]]
+        rows = data[0][1]; keep = [r for r in rows if not on_roadside(tr, osm.dense([tuple(r[6][i:i + 2]) for i in range(0, len(r[6]), 2)], 1.0))]
+        print('%s: %d of %d side roads stay (dropped: roadside %s); the roadside: %d ways, %d stops' % (id_, len(keep), len(rows),
+              ' '.join('%d%s' % (r[0], 'D' if r[1] > 0 else 'L') for r in rows if r not in keep) or '-', len(ways), len(stops)))
+        if stops and data[2][1]: print('  %s: bus stops beside the roadside\'s own: check them by hand (rows hold no x, z)' % id_)
+        if len(keep) < len(rows): data[0] = ('stranske', keep); vpisi(id_, data)
+
 def main():
+    if '--obcestje' in sys.argv: return obcestje([a for a in sys.argv[1:] if not a.startswith('--')])
     args = [a for a in sys.argv[1:] if not a.startswith('--')]; write = '--vpisi' in sys.argv
     C = json.load(open(args[0]))[args[1]]; raw = args[2]; cfg = dict(PRIVZETO, **PROGE.get(C['id'], {}))
     g = C['geo']; geo = osm.Geo(g['lat0'], g['lon0'], g['rot'], g.get('scale', 1.0))
@@ -216,7 +294,7 @@ def main():
         P = osm.dense([tuple(xz(r)) for r in refs if r in at0], 2.0); d, _ = tree.query(np.asarray(P))
         if np.median(d) < cfg['trk'] or op and longest(P, d < cfg['trk']) >= RUN: trk.add(wid)   # (an open road goes on beyond the game's line)
     if not trk: print('%s: no way of the map lies within %.0f m of the game\'s line (the fit failed: a new centre line? PROGE trk, kinds)' % (C['id'], cfg['trk'])); return
-    kk_, rw = road_scale(C, cfg, ways, trk, W_)
+    kk_, rw = road_scale(C, cfg, ways, trk, W_); RSW, RSS = roadside(C['id']); RST = rs_tree(RSW)
     print('%s: the scale of the side roads %.2f (the track %.1f m in the game%s)' % (C['id'], kk_, 2 * float(np.median(W_)), ', %.1f m in OSM' % rw if rw else ''))
     tn = {r for w in trk for r in ways[w][0]}
     Qt = np.asarray([p for w in trk for p in osm.dense([tuple(xz(r)) for r in ways[w][0] if r in at0])]); qtree = cKDTree(Qt)
@@ -310,6 +388,7 @@ def main():
                     if abs(o) > hw0 + 1: break
                 if any(sd == (1 if o > 0 else -1) and circ(sa, m if op else m % L) < OWN for m, sd in C.get('ima', [])): drop('own'); continue   # the track's own side road is there
                 if any(sd == (1 if o > 0 else -1) and abs(sa - m) < 4 for m, sd in cfg.get('izpusti', [])): drop('hand'); continue   # left out by hand (PROGE)
+                if on_roadside(RST, Wk[:cut]): drop('roadside'); continue                # the track's roadside (obcestje) draws it already
                 tk = Tn[k0]; q = Wk[min(cut - 1, 12)] - Wk[0]; sn = abs(float(tk[0] * q[1] - tk[1] * q[0])) / max(1e-9, float(np.hypot(q[0], q[1])))
                 cand.append(dict(s=s0, sa=sa, side=1 if o > 0 else -1, cls=cls, razred=0 if tg.get('surface') in UNPAVED else cls, w=w, ow=int(ow), P=P, W=Wk, N=N_, hw0=hw0, cut=cut, end=0, mouth=w / max(0.45, sn),
                                  tags=' '.join('%s=%s' % (a, tg[a]) for a in ('highway', 'service', 'access', 'surface') if a in tg)))
@@ -349,6 +428,7 @@ def main():
         Rl, tl = local(tree, D, Qt, qtree, p); p = Rl @ p + tl; d, kk = tree.query(p)
         if d > 30: continue
         if tg['highway'] == 'street_lamp': lamps.append([round(float(p[0]), 1), round(float(p[1]), 1)])
+        elif any(math.hypot(p[0] - a, p[1] - b) < RS_STOP for a, b in RSS): drop('roadside stop')   # the roadside's own
         else: stops.append([int(round(after(kk * st))), 1 if float(Nr[kk] @ (p - D[kk])) > 0 else -1, round(float(d), 1), 1 if tg.get('shelter') == 'yes' else 0])
     lamps.sort(); stops.sort()
     if not cfg.get('predmeti', True): lamps, stops = [], []
@@ -358,16 +438,6 @@ def main():
     if not write:
         for k, v in data: print(k + ': ' + json.dumps(v, separators=(',', ':')))
         return
-    # into the track's file: the block before the centre line's points (an earlier block is replaced)
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'js', 'tracks', C['id'] + '.js'); src = open(path, encoding='utf-8').read()
-    src = re.sub(r'    // roads for the look only .*?\n(?:    (?://|stranske:|svetilke:|postaje:).*\n)*', '', src)
-    blk = ('    // roads for the look only (package Realizem E, World.cesta.stranske; tools/cesta/izvoz.py from OpenStreetMap, ODbL): the roads that\n'
-           + ('    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]], street lamps [x, z] and bus stops\n'
-              '    // [m after the start line, side, distance from the centre line, shelter]; nobody drives there\n' if lamps or stops else
-              '    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]]; nobody drives there\n'))
-    blk += ''.join('    %s: %s,\n' % (k, json.dumps(v, separators=(',', ':'))) for k, v in data if v)
-    m = ([None] + list(re.finditer(r'^    points: ', src, re.M)))[-1]; assert m, 'no points line in ' + path   # (the last: Hakone's own data block has one too)
-    if any(v for k, v in data): src = src[:m.start()] + blk + src[m.start():]
-    open(path, 'w', encoding='utf-8').write(src); print('written: js/tracks/%s.js' % C['id'])
+    vpisi(C['id'], data)
 
 if __name__ == '__main__': main()

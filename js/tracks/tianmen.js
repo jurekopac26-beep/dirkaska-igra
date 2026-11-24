@@ -112,10 +112,6 @@ var TRACK_DEFS = TRACK_DEFS || [];
     cables: [[-183.4,-5847.5,-192.8,-5746.1,-202.0,-5067.6,-207.3,-4675.2,-209.6,-4505.9,-211.0,-4406.6,-212.0,-4330.6,-228.6,-4070.5,-235.0,-3764.0,-236.0,-3717.3,-240.2,-3514.0,-244.4,-3312.8,-251.4,-2981.2,-254.6,-2825.4,-259.3,-2602.1,-265.5,-2305.3,-270.1,-2083.3,-273.4,-1926.5,-275.3,-1836.7,-280.3,-1595.1,-281.0,-1560.7,-282.9,-1473.5,-287.2,-1266.3,-287.8,-1238.0,-288.4,-1208.6,-292.7,-1001.3,-296.5,-742.2,-296.2,-708.1,-300.1,-646.7,-304.4,-580.9,-312.4,-452.6,-322.3,-329.9,-330.3,-235.4,-360.4,279.4,-381.4,536.9,-393.1,729.1,-441.9,1203.9,-448.3,1276.2],[-394.2,602.4,-422.4,496.1,-700.3,-550.4]],
     cave: {"x":258.3,"z":1230.3,"y":570.7,"ang":1.095,"w":57,"h":131,"d":60},
     steps: {"p":[124.9,971.8,230.8,1177.0],"y":[517.8,568.7]},
-    // roads for the look only (package Realizem E, World.cesta.stranske; tools/cesta/izvoz.py from OpenStreetMap, ODbL): the roads that
-    // meet the track [m after the start line, side, class, width, one-way, end, [x, z, ...]], street lamps [x, z] and bus stops
-    // [m after the start line, side, distance from the centre line, shelter]; nobody drives there
-    postaje: [[4978,1,12.1,0]],
     // by the road (OpenStreetMap, © OpenStreetMap contributors, ODbL; read 23. 11. 2026; its nodes moved as the centre line was: 37 m west,
     // 563 m south of the old origin): view, the viewpoint at the end of the ridge's footway; path, that footway from the road [x, z, ...];
     // mast, a mast beside the road (no height given); stop, the bus stop below the finish; culv, the culverts' ends [x0, z0, x1, z1]
