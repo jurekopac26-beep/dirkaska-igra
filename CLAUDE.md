@@ -27,6 +27,7 @@ Samo kratka pravila. **Celotno besedilo vsakega razdelka (podrobnosti, izjeme, �
 - Največ 6 odprtih tem; **sej s kodo hkrati na račun: v zaostanku s porabo (več kot 5 točk pod ciljem) do 10, sicer 2** (od 18. 11.; 10 je zgornja meja, ne cilj; croatiadata do 20 do 22. 11.; jure.kopac26: Tabla); pred zagonom `list_sessions`, odprti PR.
 - Pred združitvijo: svež `main`, povezani testi, zelena zadnji krog `main` in nočni; rdeč `main` najprej popravi; po združitvi obvesti seje iz `cakanje`.
 - Popravki uporabnika: čez dan Mateju, do 5.00 zbirka, ob 5.00 en sveženj. **Najprej odločitev, nato koda** (stran Odločitve).
+- **Vprašanja uporabniku vedno s klikom na oštevilčene možnosti** (AskUserQuestion; na strani Odločitve oštevilčene možnosti; pri grafiki in meniju s slikami). Stranske ceste samo tam, kjer so v OSM.
 
 ## Seje
 - **Nov Matej vsak dan** ob 5.00 s predajo; ob 5.00 seznam PR, po »ok« jih pripelje Združevanje. Ena tema na sejo; vprašanja na stran Odločitve (`docs/vprasanja.md`); ure ljubljanske.
