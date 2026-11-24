@@ -282,25 +282,25 @@
   }
  },
  "chapman": {
-  "meshes": 2285,
-  "verts": 1170473,
-  "instances": 78711,
+  "meshes": 2280,
+  "verts": 1176570,
+  "instances": 78738,
   "props": 188,
   "crowd": 29,
-  "world": "d8496212",
+  "world": "ed55e452",
   "propsHash": "8581e956",
   "floor": "86d0eaad/10808",
   "groups": {
-   "-:MeshLambertMaterial": "4ccf166f",
-   "-:MeshPhongMaterial": "738c4341",
-   "-:MeshBasicMaterial": "2801018d",
+   "-:MeshLambertMaterial": "3af5426a",
+   "-:MeshPhongMaterial": "8a6e71fa",
+   "-:MeshBasicMaterial": "d26d6bd0",
    "crowd:MeshLambertMaterial": "27308d95",
-   "ao:MeshBasicMaterial": "589a27a4",
+   "ao:MeshBasicMaterial": "5cb4bf7f",
    "tyremarks:MeshBasicMaterial": "7b39af58",
    "roadwear:MeshLambertMaterial": "35b69101",
-   "life:MeshLambertMaterial": "bae27f84",
-   "lifeShadow:MeshBasicMaterial": "9a7a10c9",
-   "life:MeshBasicMaterial": "710e24bb"
+   "life:MeshLambertMaterial": "a6b45605",
+   "lifeShadow:MeshBasicMaterial": "6e15b16",
+   "life:MeshBasicMaterial": "33aa677f"
   }
  },
  "tianmen": {
@@ -353,11 +353,11 @@
  },
  "montreal": {
   "meshes": 1425,
-  "verts": 1646687,
+  "verts": 1645463,
   "instances": 7869,
   "props": 75,
   "crowd": 320,
-  "world": "d0613c48",
+  "world": "d0d061ba",
   "propsHash": "9893e9c0",
   "floor": null,
   "groups": {
@@ -368,7 +368,7 @@
    "mtPits:MeshLambertMaterial": "395454f6",
    "mtPits:MeshBasicMaterial": "bf541e5b",
    "mtStands:MeshLambertMaterial": "d873597a",
-   "mtBuildings:MeshLambertMaterial": "30d82dbe",
+   "mtBuildings:MeshLambertMaterial": "4ed35944",
    "mtRoads:MeshLambertMaterial": "23361b52",
    "mtJunctions:MeshLambertMaterial": "d3e092e5",
    "mtTrees:MeshLambertMaterial": "5781b545",
@@ -378,7 +378,7 @@
    "mtScen:MeshLambertMaterial": "83eb9990",
    "crowd:MeshLambertMaterial": "59e25c15",
    "flags:MeshLambertMaterial": "266b1d95",
-   "ao:MeshBasicMaterial": "4b71dd58",
+   "ao:MeshBasicMaterial": "8b57bea5",
    "tyremarks:MeshBasicMaterial": "ee0d166",
    "roadwear:MeshLambertMaterial": "3bfc60f7",
    "worn:MeshLambertMaterial": "3cccb8e6",

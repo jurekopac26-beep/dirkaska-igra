@@ -649,8 +649,8 @@
 
   // the plots of a builder's track set into its terrain, before the first vertex is asked for: the mountain worlds (VR: caH, chH call VR.plots
   // after their own level plots) and the corridor worlds (NR: nrH's pad; the plots first, the world's own level ground, the pit apron or the sea
-  // floor, after them). raw: the world's terrain function (caH, chH; the corridor's is nrH)
-  function parceleVR(T, list, raw) { const f = PROGE[T && T.def && T.def.id] ? parcele({ list, raw, dd: () => API.VR.pdd, cell: API.VRC }) : null; if (f) { API.VR.plots = f; f.settle(raw); } return f; }
+  // floor, after them). raw: the world's terrain function (caH, chH; the corridor's is nrH); guard: parcele's o.guard (Chapman's Peak: its hills)
+  function parceleVR(T, list, raw, guard) { const f = PROGE[T && T.def && T.def.id] ? parcele({ list, raw, dd: () => API.VR.pdd, cell: API.VRC, guard }) : null; if (f) { API.VR.plots = f; f.settle(raw); } return f; }
   function parceleNR(T, list) { const f = PROGE[T && T.def && T.def.id] ? parcele({ list, raw: API.nrH, dd: () => API.NRN.dd, cell: API.NRC }) : null; if (!f) return null;
     const NR = API.NR, N = API.NRN, p0 = NR.pad; NR.pad = (x, z, h) => { h = f(x, z, h, N.dd); return p0 ? p0(x, z, h) : h; }; f.settle(API.nrH); return f; }
 
