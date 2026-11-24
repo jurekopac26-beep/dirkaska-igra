@@ -57,7 +57,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5992386284eba2a58b403e75"
+  "digest": "ef13c2ab7936eb62fc71c346"
  },
  "nring/cs/rain": {
   "finished": 21,
@@ -67,7 +67,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "738be665fc55085e0a024a8a"
+  "digest": "28d00ff60bb134a3305cd36e"
  },
  "nring/cs/formula": {
   "finished": 21,
@@ -77,7 +77,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "185adf0951c69c16fbbcc3a3"
+  "digest": "b28b2910d1625d628b2c2501"
  },
  "nring/cs/lm": {
   "finished": 21,
@@ -87,7 +87,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "eb35aecc39e37f685d55ac4d"
+  "digest": "65b2b01a627d9e577d9b6ecd"
  },
  "nring/cs/car": {
   "finished": 21,
@@ -97,7 +97,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "81ed13bd61240c26907b83ae"
+  "digest": "1f9f778ba99b88a01d506acc"
  },
  "spa/cs": {
   "finished": 13,
@@ -107,7 +107,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "eedf91c4f569bc8ddd5d0e31"
+  "digest": "491dc60ad3a191fbc2f67dbb"
  },
  "spa/cs/rain": {
   "finished": 13,
@@ -117,7 +117,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7aa31df1c636f175022cca11"
+  "digest": "7b30f6368694189dd38bcd8e"
  },
  "spa/cs/formula": {
   "finished": 13,
@@ -127,7 +127,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "3120a365ad23f17ae747d148"
+  "digest": "279626e8c4a0480482ba0766"
  },
  "spa/cs/lm": {
   "finished": 13,
@@ -137,7 +137,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cd9f08006bef8a00b09abac4"
+  "digest": "b8b1a827f93f9ae61ee57b35"
  },
  "spa/cs/car": {
   "finished": 13,
@@ -147,7 +147,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "227099e7468bb5eaf74cea1e"
+  "digest": "5b8f0d2fba1f06c8fe824b47"
  },
  "rbring/cs": {
   "finished": 13,
@@ -157,7 +157,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "81cdafec775eaeb42055b9ca"
+  "digest": "21e5d85a22bea7c7c9a0be1a"
  },
  "rbring/cs/rain": {
   "finished": 13,
@@ -167,7 +167,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "082f52122f9d1e137dbbc8b2"
+  "digest": "7592d34488c1db78ce5a94f7"
  },
  "rbring/cs/formula": {
   "finished": 13,
@@ -177,7 +177,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "3a03bec7e140661ea0169d53"
+  "digest": "f6b7af8ddb2fd9a2b37183b3"
  },
  "rbring/cs/lm": {
   "finished": 13,
@@ -187,7 +187,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6eb711eebbb9419712cb40b8"
+  "digest": "67c6b5420d6b37798be687ab"
  },
  "rbring/cs/car": {
   "finished": 13,
@@ -197,7 +197,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1febeb35cbcacb3f72a3a265"
+  "digest": "926a369a7023af6dc58a3ada"
  },
  "pikesg/cs": {
   "finished": 1,
@@ -257,7 +257,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "eab254d46de700c1f91c8f31"
+  "digest": "177434650d8ac159d455b7f0"
  },
  "caracoles/cs/rain": {
   "finished": 13,
@@ -267,7 +267,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0b0af3255ebe2249fe8c02b9"
+  "digest": "254d13fe6460940719a7814d"
  },
  "caracoles/cs/formula": {
   "finished": 13,
@@ -277,7 +277,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d777353ccbe586ba877d683b"
+  "digest": "00d0259fff920d84d6cd7b2d"
  },
  "caracoles/cs/lm": {
   "finished": 13,
@@ -287,7 +287,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d9d3dda818bd40387dcce444"
+  "digest": "66f3c9721db6e2a9684a219b"
  },
  "caracoles/cs/car": {
   "finished": 13,
@@ -297,7 +297,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a98846d36b1ec77504b53065"
+  "digest": "b731588e6621b95f5f91c9df"
  },
  "katu/cs": {
   "finished": 1,
@@ -407,7 +407,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "199b8848ecc0412cb212a913"
+  "digest": "9f6d5817cd208fbf8697e9c4"
  },
  "bathurst/cs/rain": {
   "finished": 13,
@@ -417,7 +417,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "daae60258c9e8898cf0c83bb"
+  "digest": "e5ca809aca64ece622d33642"
  },
  "bathurst/cs/formula": {
   "finished": 13,
@@ -427,7 +427,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c11ad7962946d5924719ee27"
+  "digest": "a6e2310aaf3ef4c9365e6984"
  },
  "bathurst/cs/lm": {
   "finished": 13,
@@ -437,7 +437,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "dc15a6b2c80bff646744cd71"
+  "digest": "640d2ffa4def5a7272b8f466"
  },
  "bathurst/cs/car": {
   "finished": 13,
@@ -447,7 +447,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "050716ea70906552117e8c93"
+  "digest": "92e1d17b628701d4c3b059e9"
  },
  "chapman/cs": {
   "finished": 13,
@@ -457,7 +457,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8ac29f2ea9ec23a5b465cc85"
+  "digest": "1a77643584a5eb24d5f1ea8b"
  },
  "chapman/cs/rain": {
   "finished": 13,
@@ -467,7 +467,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "593141ba28a2c55f61e88c75"
+  "digest": "f51e57b593c6973da86452ff"
  },
  "chapman/cs/formula": {
   "finished": 13,
@@ -477,7 +477,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "58e7e967a12ed3e98597a707"
+  "digest": "be28dbc5e04e704ecee32f76"
  },
  "chapman/cs/lm": {
   "finished": 13,
@@ -487,7 +487,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "09cdfb8bf610566a550274d2"
+  "digest": "f651035b5cfd2d06bb9b6efa"
  },
  "chapman/cs/car": {
   "finished": 13,
@@ -497,7 +497,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cf217fd841342f905f94bc93"
+  "digest": "731020cb81721234e35b97f7"
  },
  "tianmen/cs": {
   "finished": 13,
@@ -507,7 +507,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "35ab16e54082345a60c7a12d"
+  "digest": "bd63dc2bdab8200a9c1e55e2"
  },
  "tianmen/cs/rain": {
   "finished": 13,
@@ -517,7 +517,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "66167f3b2f9b3079676d568f"
+  "digest": "adb0b276432417cae6860ede"
  },
  "tianmen/cs/formula": {
   "finished": 13,
@@ -527,7 +527,7 @@
   "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "cb3541fd25815e08d390aaf2"
+  "digest": "88ba7bc9a48c724481e7eb8e"
  },
  "tianmen/cs/lm": {
   "finished": 13,
@@ -537,7 +537,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fd341b817791f073bf339887"
+  "digest": "b4f64da04ded2da00bbfdc9e"
  },
  "tianmen/cs/car": {
   "finished": 13,
@@ -547,7 +547,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "1ac2a42b9cbbb4f17192b8d1"
+  "digest": "ce7ad80593b762fb53b3636d"
  },
  "rastro/cs": {
   "finished": 13,
@@ -557,7 +557,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "996e083b001fbc71de3d8432"
+  "digest": "8516af443c963695e05c2112"
  },
  "rastro/cs/rain": {
   "finished": 13,
@@ -567,7 +567,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "3747dc03f0b9480947f5974a"
+  "digest": "83aea5a08f802dce8fb41c0d"
  },
  "rastro/cs/formula": {
   "finished": 13,
@@ -577,7 +577,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "45c229e6609b6d1bd817fd1e"
+  "digest": "935c8e91fcc2e383cb573fad"
  },
  "rastro/cs/lm": {
   "finished": 13,
@@ -587,7 +587,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4209737ace8161ef76943ef0"
+  "digest": "d668a893cf7e089e39e69ce0"
  },
  "rastro/cs/car": {
   "finished": 13,
@@ -597,7 +597,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "ad7e658711e26c7fedf021fd"
+  "digest": "931bd3e0265ca5f9c1828b46"
  },
  "cpalace/cs": {
   "finished": 13,
@@ -607,7 +607,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "a2d2bd74afcf76c24877b141"
+  "digest": "96597f0ef3ff1bf32e0e6dc4"
  },
  "cpalace/cs/rain": {
   "finished": 13,
@@ -617,7 +617,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0f469ed3c89db77f52950d57"
+  "digest": "fb4a27129984561e0086b9b1"
  },
  "cpalace/cs/formula": {
   "finished": 13,
@@ -627,7 +627,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0c8313906d14a04c022fb860"
+  "digest": "53119428888165af61a3a130"
  },
  "cpalace/cs/lm": {
   "finished": 13,
@@ -637,7 +637,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "07b8f748c691d29dda6f1972"
+  "digest": "1f2aa4ca8503ff58ec1eaf77"
  },
  "cpalace/cs/car": {
   "finished": 13,
@@ -647,7 +647,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6607f167d9defa6992063f0e"
+  "digest": "7800e738287ff00b1facfa2d"
  },
  "medvode/cs": {
   "finished": 13,
@@ -657,7 +657,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "b8007bd98f5ac875237fe443"
+  "digest": "e90d91bdbd11f7e1fb938dbc"
  },
  "medvode/cs/rain": {
   "finished": 13,
@@ -667,7 +667,7 @@
   "walls": 3,
   "rescues": 1,
   "nan": false,
-  "digest": "eb1314618f59d23a086da3e3"
+  "digest": "62ff497bb893b3468e334fad"
  },
  "medvode/cs/formula": {
   "finished": 13,
@@ -677,7 +677,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "640dd859fe93fa3387abcfb8"
+  "digest": "c7569cadf1a4e0db3042e929"
  },
  "medvode/cs/lm": {
   "finished": 13,
@@ -687,7 +687,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d31e71d4fe9acf7ff6d7dde5"
+  "digest": "b12e98e5b9d73d18d33ab080"
  },
  "medvode/cs/car": {
   "finished": 13,
@@ -697,7 +697,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "806646283294abe2a6bad7e8"
+  "digest": "070a0c5587472ebad605bdeb"
  },
  "montreal/cs": {
   "finished": 13,
@@ -707,7 +707,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8c0ed0cbddef38003e5d85f7"
+  "digest": "06f30077b14a796a902da41f"
  },
  "montreal/cs/rain": {
   "finished": 13,
@@ -717,7 +717,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "93b809c1f0c2b7ed5d43f4e4"
+  "digest": "c402f1e895d78fdfe8befad5"
  },
  "montreal/cs/formula": {
   "finished": 13,
@@ -727,7 +727,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ee6ecf76d1770df125dc9aef"
+  "digest": "ed7251e0b827209636b7293e"
  },
  "montreal/cs/lm": {
   "finished": 13,
@@ -737,7 +737,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "53f9a1de3df0f29dd79cf5c6"
+  "digest": "5502c8bb285468d73c2781c3"
  },
  "montreal/cs/car": {
   "finished": 13,
@@ -747,7 +747,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "01f78c7cd9a79f85da68e4d1"
+  "digest": "aa065ff230b7245065abb0e2"
  },
  "marrakesh/cs": {
   "finished": 13,
@@ -757,7 +757,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4eee922e11dfb8f5123e7fe7"
+  "digest": "779ff5ea4a2e6aa4a21eb78d"
  },
  "marrakesh/cs/rain": {
   "finished": 13,
@@ -767,7 +767,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b19e095c84f0cb6e036f1fca"
+  "digest": "8cf343f7768cdd81de705ba2"
  },
  "marrakesh/cs/formula": {
   "finished": 13,
@@ -777,7 +777,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "80145bf99fd7555a905c1ff5"
+  "digest": "a6217036685994059a677a89"
  },
  "marrakesh/cs/lm": {
   "finished": 13,
@@ -787,7 +787,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "14327fb716f6b0bafcef6af0"
+  "digest": "1ef5c03ec71dc02dd7ca24fd"
  },
  "marrakesh/cs/car": {
   "finished": 13,
@@ -797,7 +797,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e010b335417aba8a3a2029d2"
+  "digest": "a32fe5a4c889111a959d5be9"
  },
  "livorno/cs": {
   "finished": 21,
@@ -807,7 +807,7 @@
   "walls": 8,
   "rescues": 0,
   "nan": false,
-  "digest": "2b82da99c891cb9e9ca6db6f"
+  "digest": "477ef6ea100b11a3c06e9f3a"
  },
  "livorno/cs/rain": {
   "finished": 21,
@@ -817,7 +817,7 @@
   "walls": 8,
   "rescues": 0,
   "nan": false,
-  "digest": "29216c334f0e30a811dc7d5b"
+  "digest": "d86623072b941abbf3114633"
  },
  "livorno/cs/formula": {
   "finished": 21,
@@ -827,7 +827,7 @@
   "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "5565bcb242625f59f63222ca"
+  "digest": "74088e7280b065eb6ae82d03"
  },
  "livorno/cs/lm": {
   "finished": 21,
@@ -837,7 +837,7 @@
   "walls": 18,
   "rescues": 0,
   "nan": false,
-  "digest": "1318297ce64f660f1a43093b"
+  "digest": "106fd2f3a9ceff3923223016"
  },
  "livorno/cs/car": {
   "finished": 21,
@@ -847,7 +847,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "5e605f15f99a568d1a0a8ca7"
+  "digest": "9807b19ccb3b0b785cc96c0d"
  },
  "balea/cs": {
   "finished": 13,
@@ -857,7 +857,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "86263bba276e02adb1cc90e1"
+  "digest": "8e73386191314aaf3287fa1f"
  },
  "balea/cs/rain": {
   "finished": 13,
@@ -867,7 +867,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "23d3e25d556b44cafe8bc1b5"
+  "digest": "f56193639e89bb35e9d86c80"
  },
  "balea/cs/formula": {
   "finished": 13,
@@ -877,7 +877,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4fbe93a1a25d38599f5e981c"
+  "digest": "89a3b2b7f84f1e427a15c98f"
  },
  "balea/cs/lm": {
   "finished": 13,
@@ -887,7 +887,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f3048a3d5675d5fb3688b82e"
+  "digest": "e1c7039c1ef55d70472f5b54"
  },
  "balea/cs/car": {
   "finished": 13,
@@ -897,7 +897,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2fa2deb6d9228882bfbc751c"
+  "digest": "701c17285eb2ab4814ddd464"
  },
  "silkeborg/cs": {
   "finished": 13,
@@ -907,7 +907,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fff2fe94db802a6f15ea6f92"
+  "digest": "e170d35acc490ad9673eff55"
  },
  "silkeborg/cs/rain": {
   "finished": 13,
@@ -917,7 +917,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f0b005a179df68a853b0b618"
+  "digest": "2be55ae16db68abbaeb3d700"
  },
  "silkeborg/cs/formula": {
   "finished": 13,
@@ -927,7 +927,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "304487445363b502e0f9c787"
+  "digest": "70083d629351e1802012387b"
  },
  "silkeborg/cs/lm": {
   "finished": 13,
@@ -937,7 +937,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5fdf1193c0e4c27516df1399"
+  "digest": "c42b2a37dcfa485826eb6081"
  },
  "silkeborg/cs/car": {
   "finished": 13,
@@ -947,7 +947,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b9840d7cdeb6e99246f07fc8"
+  "digest": "9af5b43775853f0ed0f2336d"
  },
  "kagerod/cs": {
   "finished": 13,
@@ -957,7 +957,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8d866c385ba3400504d0c65e"
+  "digest": "6082cde7a7b30359202bef20"
  },
  "kagerod/cs/rain": {
   "finished": 13,
@@ -967,7 +967,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d6825a9806e16871bead8f2b"
+  "digest": "f05c0d60c9306a717f72d60f"
  },
  "kagerod/cs/formula": {
   "finished": 13,
@@ -977,7 +977,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "96e9727bfda9268acdb553d7"
+  "digest": "37dafccedab3213601d80fa9"
  },
  "kagerod/cs/lm": {
   "finished": 13,
@@ -987,7 +987,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "bb692fb3173296dcd6dee664"
+  "digest": "1c99c79aa1928414c066cb34"
  },
  "kagerod/cs/car": {
   "finished": 13,
@@ -997,7 +997,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "26e674baa38b2dd2a94bd028"
+  "digest": "756733642419106b159fd5c9"
  },
  "sosnova/cs": {
   "finished": 13,
@@ -1007,7 +1007,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2e6a2048709f7450f8ed192f"
+  "digest": "17d1bc978077a9a115cfd225"
  },
  "sosnova/cs/rain": {
   "finished": 13,
@@ -1017,7 +1017,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "89b9570aea88b591ba43a539"
+  "digest": "45293b10c8bfcb7d900dc152"
  },
  "sosnova/cs/formula": {
   "finished": 13,
@@ -1027,7 +1027,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5b36b9aa875779992ee3f029"
+  "digest": "c8650ad21d7757342cf9cbc3"
  },
  "sosnova/cs/lm": {
   "finished": 13,
@@ -1037,7 +1037,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f2a0fc79c5078a9a915eb84b"
+  "digest": "8a2a8892761f974b2b8280eb"
  },
  "sosnova/cs/car": {
   "finished": 13,
@@ -1047,7 +1047,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c5698642eb3045924dbe4dab"
+  "digest": "cdd16572fe9dd6ca2c8cb749"
  },
  "izoard/cs": {
   "finished": 13,
@@ -1057,7 +1057,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "c0964ea164456fca7b28b987"
+  "digest": "f534cb91d8b148f632d90f3f"
  },
  "izoard/cs/rain": {
   "finished": 13,
@@ -1067,7 +1067,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7b0e786d7e011121769d356c"
+  "digest": "4a0ae761b5b942e38144e171"
  },
  "izoard/cs/formula": {
   "finished": 13,
@@ -1077,7 +1077,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b48b2bc76271c42984a968fb"
+  "digest": "0f07c4365829a731dff1f3f3"
  },
  "izoard/cs/lm": {
   "finished": 13,
@@ -1087,7 +1087,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ba85613d308095f2b4a33933"
+  "digest": "b7a3e4ecf949b538fcd6f25e"
  },
  "izoard/cs/car": {
   "finished": 13,
@@ -1097,7 +1097,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "0ca60c3c15e52b2358c8fbc2"
+  "digest": "6a572a9a1364919e0815c4c5"
  },
  "pembrey/cs": {
   "finished": 13,
@@ -1107,7 +1107,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1471f9a61cede2db1eda7387"
+  "digest": "64d68d408f4dcc3b8b22b43d"
  },
  "pembrey/cs/rain": {
   "finished": 13,
@@ -1117,7 +1117,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "579f4e0afc218353140fafee"
+  "digest": "5e6ae4dc321f629131b1142b"
  },
  "pembrey/cs/formula": {
   "finished": 13,
@@ -1127,7 +1127,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5570196f768c2e30d389e0ec"
+  "digest": "72348067f59688124bdc36f3"
  },
  "pembrey/cs/lm": {
   "finished": 13,
@@ -1137,7 +1137,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "20c35656e2d32269655ac40c"
+  "digest": "02922789919bf4145f8cbe8c"
  },
  "pembrey/cs/car": {
   "finished": 13,
@@ -1147,7 +1147,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ee5ea57de387f0cde679baf2"
+  "digest": "ae77ca74f2934a58d52e494a"
  },
  "kildare/cs": {
   "finished": 13,
@@ -1157,7 +1157,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6e9832c9cc9efdaeaa103f4f"
+  "digest": "e41a6ffcd1c287d46b7ca032"
  },
  "kildare/cs/rain": {
   "finished": 13,
@@ -1167,7 +1167,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ed60159c7da87391f49b5f3f"
+  "digest": "8e071033db551c860dc3978e"
  },
  "kildare/cs/formula": {
   "finished": 13,
@@ -1177,7 +1177,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2673c4f4e95db9cd1ef1f312"
+  "digest": "1034d6eb5a16ba3f7d47c853"
  },
  "kildare/cs/lm": {
   "finished": 13,
@@ -1187,7 +1187,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "d6b72a39de8ba16cecf1e29e"
+  "digest": "731df603cb31f32739c67cae"
  },
  "kildare/cs/car": {
   "finished": 13,
@@ -1197,7 +1197,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "07a22b6d96d41b7ad1d8e1df"
+  "digest": "8b93c75a5e874d50d8065846"
  },
  "sacalobra/cs": {
   "finished": 13,
@@ -1207,7 +1207,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "711c352aa52f7fe31d6da808"
+  "digest": "75b9be0efbf82da080420874"
  },
  "sacalobra/cs/rain": {
   "finished": 13,
@@ -1217,7 +1217,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "527afc050900dddb4f846192"
+  "digest": "a7e0254db29da7f41efd2fa4"
  },
  "sacalobra/cs/formula": {
   "finished": 13,
@@ -1227,7 +1227,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "66c8896ed78638572359497e"
+  "digest": "54edc9ea17b59ea0100be7bf"
  },
  "sacalobra/cs/lm": {
   "finished": 13,
@@ -1237,7 +1237,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "bd437138ce4fd6242361b0f7"
+  "digest": "0c6ed04597574fe2e2dbbaa3"
  },
  "sacalobra/cs/car": {
   "finished": 13,
@@ -1247,7 +1247,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b5e5436a595da88e817d8de2"
+  "digest": "84c2d5813eb538fb7ac10ecc"
  },
  "kotor/cs": {
   "finished": 13,
@@ -1257,7 +1257,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7b48414aa90fbe9051327bd0"
+  "digest": "fff0a694a94f9da856043f21"
  },
  "kotor/cs/rain": {
   "finished": 13,
@@ -1267,7 +1267,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cfce82469209c90a0a970377"
+  "digest": "58831452acda387a2327ef90"
  },
  "kotor/cs/formula": {
   "finished": 13,
@@ -1277,7 +1277,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "17d74a30dbf903c2e81a8742"
+  "digest": "ffd75c9c1390c01b86106726"
  },
  "kotor/cs/lm": {
   "finished": 13,
@@ -1287,7 +1287,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d9ed82636cbc81a3b55d095a"
+  "digest": "1289fc6902a1b0e93d7dc784"
  },
  "kotor/cs/car": {
   "finished": 13,
@@ -1297,7 +1297,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "b9b0434075c36b7a2c377359"
+  "digest": "33e633fbcccdcaac2f9e361e"
  },
  "bikernieki/cs": {
   "finished": 13,
@@ -1307,7 +1307,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c0a252cc40345cfdc3761cf3"
+  "digest": "bf19211ff76c9262c6b3aa8c"
  },
  "bikernieki/cs/rain": {
   "finished": 13,
@@ -1317,7 +1317,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0cc1f6794ee2d8691e0e7832"
+  "digest": "a29f56dcbc2c0d5f9e0b191c"
  },
  "bikernieki/cs/formula": {
   "finished": 13,
@@ -1327,7 +1327,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4b850cbd0dbcd74ebec8a01b"
+  "digest": "fd59a8fb6a045ca0ce8d3749"
  },
  "bikernieki/cs/lm": {
   "finished": 13,
@@ -1337,7 +1337,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "61ba6b7a0b6e2967ee2ba584"
+  "digest": "d7c3fd56c3813d63db8a6050"
  },
  "bikernieki/cs/car": {
   "finished": 13,
@@ -1347,7 +1347,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "49e0c8bd99a9a3a8be613d0d"
+  "digest": "f6bcb79d8a83cce6d4379dc2"
  },
  "london/cs": {
   "finished": 13,
@@ -1357,7 +1357,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2d134217305a062cb441b6d3"
+  "digest": "6a080b6deb2a81f8ae337a91"
  },
  "london/cs/rain": {
   "finished": 13,
@@ -1367,7 +1367,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7aeb3a2f236b4eefaa266b8f"
+  "digest": "38554ea32be3bee1cd65b971"
  },
  "london/cs/formula": {
   "finished": 13,
@@ -1377,7 +1377,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d50975875f5878cf02721c8b"
+  "digest": "7ddd50e7fc1dd140a5f3fa02"
  },
  "london/cs/lm": {
   "finished": 13,
@@ -1387,7 +1387,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a5f83b720e208e0ef4f89319"
+  "digest": "ef4a81af16d6430e499f34c5"
  },
  "london/cs/car": {
   "finished": 13,
@@ -1397,7 +1397,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "baf6bb83eb27e41cdc3d14d4"
+  "digest": "558c503dc58519b4b9b715f5"
  },
  "zandvoort/cs": {
   "finished": 13,
@@ -1407,7 +1407,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d02e2817f4d0c0f0d26bd20e"
+  "digest": "d193dcaf772792840449f959"
  },
  "zandvoort/cs/rain": {
   "finished": 13,
@@ -1417,7 +1417,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "9876e6deb598d664d7c8ad69"
+  "digest": "40f2b7a0064fa83189181f8f"
  },
  "zandvoort/cs/formula": {
   "finished": 13,
@@ -1427,7 +1427,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a289952e8a9e85a350f067b9"
+  "digest": "658a735cf51f432d68c9ba44"
  },
  "zandvoort/cs/lm": {
   "finished": 13,
@@ -1437,7 +1437,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "86db240edd9655ffbb630387"
+  "digest": "83bd58fd932f47da97a8553f"
  },
  "zandvoort/cs/car": {
   "finished": 13,
@@ -1447,7 +1447,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cc036c52a5356d6b6b712f2a"
+  "digest": "be10c316424842e6a88318a5"
  },
  "dades/cs": {
   "finished": 13,
@@ -1457,7 +1457,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8e0b8a5cbf916f9696610857"
+  "digest": "205715f4afd306dbb0f63920"
  },
  "dades/cs/rain": {
   "finished": 13,
@@ -1467,7 +1467,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "df16841eb6214957f32cd0c3"
+  "digest": "d79e130da976d67dc617870a"
  },
  "dades/cs/formula": {
   "finished": 13,
@@ -1477,7 +1477,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "85b0970fd4a0d55a083c9e96"
+  "digest": "86095bd6028a29d879abf690"
  },
  "dades/cs/lm": {
   "finished": 13,
@@ -1487,7 +1487,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "517d9495d52447e3079aafcf"
+  "digest": "7c4a2d2e5cef36aae88e2ca2"
  },
  "dades/cs/car": {
   "finished": 13,
@@ -1497,7 +1497,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2d36c1950d86157cf6f12ab1"
+  "digest": "731aeeddea5bda98775535f6"
  },
  "furka/cs": {
   "finished": 13,
@@ -1507,7 +1507,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "793f461c3685a6dca0109bfe"
+  "digest": "41a8d0ba95904e8c06ce5cf7"
  },
  "furka/cs/rain": {
   "finished": 13,
@@ -1517,7 +1517,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "400dbce1a88e1a33ec01c14d"
+  "digest": "3a6462a1872a987a7930af38"
  },
  "furka/cs/formula": {
   "finished": 13,
@@ -1527,7 +1527,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4dbfb45f0e3fdbd37b87c7f7"
+  "digest": "abe639f1442b764a124f2b86"
  },
  "furka/cs/lm": {
   "finished": 13,
@@ -1537,7 +1537,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "942c3c36e115383e8cf86fe9"
+  "digest": "5e65537229ea31c28aa82b31"
  },
  "furka/cs/car": {
   "finished": 13,
@@ -1547,7 +1547,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4f838a959aba3af2ed6b02d4"
+  "digest": "3209bb01d21cbf0b3c36947f"
  },
  "santoantao/cs": {
   "finished": 13,
@@ -1557,7 +1557,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "372d84cf50eeb0dc392bb2a8"
+  "digest": "c286ca374bca9c6f4544a682"
  },
  "santoantao/cs/rain": {
   "finished": 13,
@@ -1567,7 +1567,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1ccbb2b9d7bcb82691a9cf93"
+  "digest": "9cd2cdd81bbf11c41f5c1a38"
  },
  "santoantao/cs/formula": {
   "finished": 13,
@@ -1577,7 +1577,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "94294edb5eb7d5a94789e868"
+  "digest": "340e8d2cf9bc0a8cabe6ea64"
  },
  "santoantao/cs/lm": {
   "finished": 13,
@@ -1587,7 +1587,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "954e22238171c18093be9956"
+  "digest": "14a72e93b2693473aaa73d09"
  },
  "santoantao/cs/car": {
   "finished": 13,
@@ -1597,7 +1597,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "f311b42dd7f1429db4107de7"
+  "digest": "40ef2eba23406ef1708be17f"
  },
  "gudauri/cs": {
   "finished": 13,
@@ -1607,7 +1607,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "408b18d5f7b2b768a2f2f09e"
+  "digest": "eb7824b8ae03a011252c70ca"
  },
  "gudauri/cs/rain": {
   "finished": 13,
@@ -1617,7 +1617,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6d221cc1fd40ddb494619885"
+  "digest": "115176bd93e57ec1ac82f4d9"
  },
  "gudauri/cs/formula": {
   "finished": 13,
@@ -1627,7 +1627,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b0f5ceb71e8ad314c03d893c"
+  "digest": "8d08f8fcb277382ee08a211d"
  },
  "gudauri/cs/lm": {
   "finished": 13,
@@ -1637,7 +1637,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9a891c54c03d3c6da1342083"
+  "digest": "71a81ddb5894b7a3197fc729"
  },
  "gudauri/cs/car": {
   "finished": 13,
@@ -1647,7 +1647,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "33d43ac3c182464e5cd7c5a3"
+  "digest": "dfa311e6d1ba0929e861cb4a"
  },
  "ngorongoro/cs": {
   "finished": 13,
@@ -1657,7 +1657,7 @@
   "walls": 3,
   "rescues": 1,
   "nan": false,
-  "digest": "e565d1ac4b6d0a52dd2b864f"
+  "digest": "5229601f7da9528da0b98993"
  },
  "ngorongoro/cs/rain": {
   "finished": 13,
@@ -1667,7 +1667,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "49f4d6b1c51589e5c97dd797"
+  "digest": "cffd9f7711374213455d24a8"
  },
  "ngorongoro/cs/formula": {
   "finished": 13,
@@ -1677,7 +1677,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b68033e152af60a785d5810a"
+  "digest": "d65e60a348111c33dc388a5c"
  },
  "ngorongoro/cs/lm": {
   "finished": 13,
@@ -1687,7 +1687,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4dde277ed85d13b90ed02afa"
+  "digest": "ff68aadc6a939c93cd36b333"
  },
  "ngorongoro/cs/car": {
   "finished": 13,
@@ -1697,7 +1697,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "98df6cd10629e5f95472530f"
+  "digest": "a3015d3d6f696471497f45a5"
  },
  "medeu/cs": {
   "finished": 13,
@@ -1707,7 +1707,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "9c5ca6de836d68dad7497aed"
+  "digest": "ffe8d4df6863c5e941408dd0"
  },
  "medeu/cs/rain": {
   "finished": 13,
@@ -1717,7 +1717,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ad416e78afe0713f1773789e"
+  "digest": "f8dce4f060282fe399b636b1"
  },
  "medeu/cs/formula": {
   "finished": 13,
@@ -1727,7 +1727,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "05a1e3e2b7ffab1d4c16dd87"
+  "digest": "6823016d7adef12d52135e50"
  },
  "medeu/cs/lm": {
   "finished": 13,
@@ -1737,7 +1737,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "32599c50abd189f0c81559b3"
+  "digest": "e588ca1ba8446b4470430540"
  },
  "medeu/cs/car": {
   "finished": 13,
@@ -1747,7 +1747,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "97431b4442a96d708d65f4b1"
+  "digest": "ab407dd491358fa27eb504a0"
  },
  "ella/cs": {
   "finished": 13,
@@ -1757,7 +1757,7 @@
   "walls": 1,
   "rescues": 1,
   "nan": false,
-  "digest": "45ce2df65f2b28cdfc61193d"
+  "digest": "8b2b38397e72ac3ed0a85e8e"
  },
  "ella/cs/rain": {
   "finished": 13,
@@ -1767,7 +1767,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5ed42ffbabf10e1f52b5ffa2"
+  "digest": "32166e071ce6eabfbb6d8d4c"
  },
  "ella/cs/formula": {
   "finished": 13,
@@ -1777,7 +1777,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ef63c0ac15ca8f7535914a20"
+  "digest": "01acbb8c67931403acac96e5"
  },
  "ella/cs/lm": {
   "finished": 13,
@@ -1787,7 +1787,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e765ad50ba4103dfa17c8c77"
+  "digest": "c14554506dceeada9e081923"
  },
  "ella/cs/car": {
   "finished": 13,
@@ -1797,7 +1797,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "cefe9024fb5fbb47fb940f89"
+  "digest": "23b4fdab358cd58d78af69a6"
  },
  "llogara/cs": {
   "finished": 13,
@@ -1807,7 +1807,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "806f80d12ef82fd50ec517b5"
+  "digest": "a58d1e7beeb13baf40289fd2"
  },
  "llogara/cs/rain": {
   "finished": 13,
@@ -1817,7 +1817,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1786561b09f044d7c378bfe0"
+  "digest": "5266d0e0223b513641fac1d2"
  },
  "llogara/cs/formula": {
   "finished": 13,
@@ -1827,7 +1827,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "74817caa96d3ac4cc6cc505f"
+  "digest": "c393524e7112a78ae6995f44"
  },
  "llogara/cs/lm": {
   "finished": 13,
@@ -1837,7 +1837,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b21a021019f4bab2b6c73001"
+  "digest": "3b2945804cc3e22ee71f7d44"
  },
  "llogara/cs/car": {
   "finished": 13,
@@ -1847,7 +1847,7 @@
   "walls": 11,
   "rescues": 0,
   "nan": false,
-  "digest": "f38416b14ba971d63d746b28"
+  "digest": "a2bb1da2097771916c9c5c9a"
  },
  "portomoniz/cs": {
   "finished": 13,
@@ -1857,7 +1857,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8d5cabd0da6e65b30e06cce0"
+  "digest": "a1e13d6a73cfcb1191e8f6a6"
  },
  "portomoniz/cs/rain": {
   "finished": 13,
@@ -1867,7 +1867,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "05c487d84d5f8cbee3e2b6dd"
+  "digest": "9814607df06621bd17411082"
  },
  "portomoniz/cs/formula": {
   "finished": 13,
@@ -1877,7 +1877,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "f1f2e1e8c7ffbcba5a1d16d4"
+  "digest": "ea23a03596284c2c20abdede"
  },
  "portomoniz/cs/lm": {
   "finished": 13,
@@ -1887,7 +1887,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1d04c08766e4389bfcc1ec5d"
+  "digest": "7ce92840e4347c6cf50ee220"
  },
  "portomoniz/cs/car": {
   "finished": 13,
@@ -1897,7 +1897,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fd37aca987e9668d5dad3422"
+  "digest": "2f9b172e8c72a56c27059f18"
  },
  "seoul/cs": {
   "finished": 13,
@@ -1907,7 +1907,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "99dbde2e9da5b80e238d161e"
+  "digest": "0f200b429df81a5206b8a445"
  },
  "seoul/cs/rain": {
   "finished": 13,
@@ -1917,7 +1917,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "35b90e1ed55801feedece86b"
+  "digest": "1a2b2fa17c9f24cd143bbfb9"
  },
  "seoul/cs/formula": {
   "finished": 13,
@@ -1927,7 +1927,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "76aff5d31d3af0df4f0efa11"
+  "digest": "0cd03a74c0245c036748a60e"
  },
  "seoul/cs/lm": {
   "finished": 13,
@@ -1937,7 +1937,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "299bfa5add27ecf1fb4b2789"
+  "digest": "253d38340ad40762a8e83a16"
  },
  "seoul/cs/car": {
   "finished": 13,
@@ -1947,7 +1947,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0e417c9b39766d0d4db72878"
+  "digest": "18c3816429b521969e860fab"
  },
  "tuzla/cs": {
   "finished": 13,
@@ -1957,7 +1957,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9ae34f8521d0bf64ca437403"
+  "digest": "ca355c597bbcbfec1d6e0b31"
  },
  "tuzla/cs/rain": {
   "finished": 13,
@@ -1967,7 +1967,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d222f119d24f0e01d4a7a6a0"
+  "digest": "25c45a7b5a6dc015a0175a63"
  },
  "tuzla/cs/formula": {
   "finished": 13,
@@ -1977,7 +1977,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0cb9c60a85738d5e9cde3d6d"
+  "digest": "9db4e2dca430b3126c21fcd6"
  },
  "tuzla/cs/lm": {
   "finished": 13,
@@ -1987,7 +1987,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b8ca94f1532c801205cc7358"
+  "digest": "e4d195bd9f58fbbc76b1a02b"
  },
  "tuzla/cs/car": {
   "finished": 13,
@@ -1997,7 +1997,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "519d1ee21fa9a8f53c8a529a"
+  "digest": "60b4c9fc7f3a43860edbdd6f"
  },
  "sepang/cs": {
   "finished": 13,
@@ -2007,7 +2007,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0fa3116a4aebd90fcc3ae35d"
+  "digest": "b35832d263f71c2d015a08aa"
  },
  "sepang/cs/rain": {
   "finished": 13,
@@ -2017,7 +2017,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "69baa631fc38880896a2d41d"
+  "digest": "e4503276135f1a75ef725d7d"
  },
  "sepang/cs/formula": {
   "finished": 13,
@@ -2027,7 +2027,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9526cc596238ce34fd6084fa"
+  "digest": "be204b757ee3f1c693376afc"
  },
  "sepang/cs/lm": {
   "finished": 13,
@@ -2037,7 +2037,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ea08a0b01ab1653c138b02ca"
+  "digest": "9b6c4c5d88d5d146a34697a7"
  },
  "sepang/cs/car": {
   "finished": 13,
@@ -2047,7 +2047,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "122d68a628ca5bd7537a8e7d"
+  "digest": "cbd2c35216b83d59f1bd8008"
  },
  "lombok/cs": {
   "finished": 13,
@@ -2057,7 +2057,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "769cb496f75cb75fff52adfb"
+  "digest": "080fa1eb8eb941d3c5106f55"
  },
  "lombok/cs/rain": {
   "finished": 13,
@@ -2067,7 +2067,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c4f6876b4e1ca98d1fb5aa53"
+  "digest": "f414209243fa4c5111cbee04"
  },
  "lombok/cs/formula": {
   "finished": 13,
@@ -2077,7 +2077,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2a71405b412e1971e9be8a55"
+  "digest": "5b0048bd8320473da34430d1"
  },
  "lombok/cs/lm": {
   "finished": 13,
@@ -2087,7 +2087,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2112f7ae9ed7bbd216e27a08"
+  "digest": "b3a9654925ac7cf4a3eacb22"
  },
  "lombok/cs/car": {
   "finished": 13,
@@ -2097,7 +2097,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "0d4d54dc77c46b0109dc0e23"
+  "digest": "56649e79bbbc981e4e7d5102"
  },
  "buriram/cs": {
   "finished": 13,
@@ -2107,7 +2107,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b0a711cdf0801638ee704d2e"
+  "digest": "580412d2494a70fc556a8fb8"
  },
  "buriram/cs/rain": {
   "finished": 13,
@@ -2117,7 +2117,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "83ccd10d7bdce3bbf5c5fbca"
+  "digest": "2df6dd96bf91dfe5a9c8ec00"
  },
  "buriram/cs/formula": {
   "finished": 13,
@@ -2127,7 +2127,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f016eb48af983b63d14638a9"
+  "digest": "a461767ca45e863e9930e30f"
  },
  "buriram/cs/lm": {
   "finished": 13,
@@ -2137,7 +2137,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f909c6ba4a5c084829419ea1"
+  "digest": "dbc6d9d61a6e741667334fda"
  },
  "buriram/cs/car": {
   "finished": 13,
@@ -2147,7 +2147,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2d851b9494983265845d6a2b"
+  "digest": "6c4cb394baa5e9f5c85d7a49"
  },
  "sakhir/cs": {
   "finished": 13,
@@ -2157,7 +2157,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "392011d158359f854a504366"
+  "digest": "a009a6ab7c4b903fb5cd4794"
  },
  "sakhir/cs/rain": {
   "finished": 13,
@@ -2167,7 +2167,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "c37d4fddf6d77ad001970f2c"
+  "digest": "9caf86613eeda697afe726a9"
  },
  "sakhir/cs/formula": {
   "finished": 13,
@@ -2177,7 +2177,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c89a531dede47353474e2020"
+  "digest": "6ed50f2ae1f64bfb0816236c"
  },
  "sakhir/cs/lm": {
   "finished": 13,
@@ -2187,7 +2187,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a29839604ae32c26b703b6c8"
+  "digest": "425f2f241312837f9aa9e4e1"
  },
  "sakhir/cs/car": {
   "finished": 13,
@@ -2197,7 +2197,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ab0b9ae720531c45d441dd28"
+  "digest": "5f8fd91c6e61c49e9cbf9ef3"
  },
  "lusail/cs": {
   "finished": 13,
@@ -2207,7 +2207,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5fa888febc3232809509e6d0"
+  "digest": "901d668b6419ce7d41eaded5"
  },
  "lusail/cs/rain": {
   "finished": 13,
@@ -2217,7 +2217,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e51cc07bc75d3ba42b62f7cd"
+  "digest": "afc30820bb6baef28b68160f"
  },
  "lusail/cs/formula": {
   "finished": 13,
@@ -2227,7 +2227,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ec461196e2302f36f4a29eea"
+  "digest": "bcd4f4252e69baeda3127d8d"
  },
  "lusail/cs/lm": {
   "finished": 13,
@@ -2237,7 +2237,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b0c530fa1c60040a6196dfa6"
+  "digest": "fcd915a012cd7350e410f1a1"
  },
  "lusail/cs/car": {
   "finished": 13,
@@ -2247,7 +2247,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d6a7d5631ed93c8ffc551b3e"
+  "digest": "537899539c6f795e5d50e739"
  },
  "riohondo/cs": {
   "finished": 13,
@@ -2257,7 +2257,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "67644ff89dc12a784f6034c4"
+  "digest": "7577e9c45cb2030825726e92"
  },
  "riohondo/cs/rain": {
   "finished": 13,
@@ -2267,7 +2267,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "250e7d7fcc3cf0f1e994dd92"
+  "digest": "786e31d72c28d89ab3f1c98e"
  },
  "riohondo/cs/formula": {
   "finished": 13,
@@ -2277,7 +2277,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ffe322aec387e9e41fb8a2b3"
+  "digest": "83d52c72f276331e40947d67"
  },
  "riohondo/cs/lm": {
   "finished": 13,
@@ -2287,7 +2287,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c6d5fd4b0c11466d5501ce0c"
+  "digest": "6df4a77f028108d2a741bdaa"
  },
  "riohondo/cs/car": {
   "finished": 13,
@@ -2297,7 +2297,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "db31ac6ca94c8ae682934d9d"
+  "digest": "624701f89d9def89413d441d"
  },
  "hakone/cs": {
   "finished": 21,
@@ -2307,7 +2307,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "08a60e2116e33c7990a26b5f"
+  "digest": "26d28c332527073c25e60dbf"
  },
  "hakone/cs/rain": {
   "finished": 21,
@@ -2317,7 +2317,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8e46024ded5db1583a9ef62f"
+  "digest": "f597c864484dcd6a69573f18"
  },
  "hakone/cs/formula": {
   "finished": 21,
@@ -2327,7 +2327,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "f85b5a602e15e58772ad652d"
+  "digest": "0ea29d0bd1dfb42cc47a8b57"
  },
  "hakone/cs/lm": {
   "finished": 21,
@@ -2337,7 +2337,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f657736af10f82bec927f935"
+  "digest": "ae0cf224d135c32049557f2b"
  },
  "hakone/cs/car": {
   "finished": 21,
@@ -2347,7 +2347,7 @@
   "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "66569dca913596f74e5d99de"
+  "digest": "3874678a77ba89561fb84d76"
  },
  "killar/cs": {
   "finished": 13,
@@ -2357,7 +2357,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "06e4af125fb81dfafb559d30"
+  "digest": "37c706f7690a9bd1aada5155"
  },
  "killar/cs/rain": {
   "finished": 13,
@@ -2367,7 +2367,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a5fab134a38447fdc4ff52b2"
+  "digest": "8fda175d8d6a4a9567b32995"
  },
  "killar/cs/formula": {
   "finished": 13,
@@ -2377,7 +2377,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "48709fb16c222004eca73f37"
+  "digest": "d51cc82f3f28944cfa3ca7cb"
  },
  "killar/cs/lm": {
   "finished": 13,
@@ -2387,7 +2387,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a7b65739dc0fb7c599977160"
+  "digest": "8fd0c620ce9c9969f6e27278"
  },
  "killar/cs/car": {
   "finished": 13,
@@ -2397,7 +2397,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0809f982c50db75a93faae79"
+  "digest": "2a5f4436391c777f7529f6c7"
  },
  "luanda/cs": {
   "finished": 13,
@@ -2407,7 +2407,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "70c6904b0a3b3487505d2637"
+  "digest": "790e627399edc4bdf36feaec"
  },
  "luanda/cs/rain": {
   "finished": 13,
@@ -2417,7 +2417,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2c05a61602897d50df3ca6ee"
+  "digest": "e56fc8a5301f261d1d741990"
  },
  "luanda/cs/formula": {
   "finished": 13,
@@ -2427,7 +2427,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8f876002a4c7d1c87d14ed82"
+  "digest": "1e5f778080ec55f837143c49"
  },
  "luanda/cs/lm": {
   "finished": 13,
@@ -2437,7 +2437,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0b47fc7aab754f89f5a82e96"
+  "digest": "98c9efd85677c5cbd5d33a8f"
  },
  "luanda/cs/car": {
   "finished": 13,
@@ -2447,7 +2447,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "90a4da1fb90625c89aaff009"
+  "digest": "608f2bf9202b00d5c54bcf89"
  },
  "ujarras/cs": {
   "finished": 13,
@@ -2457,7 +2457,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b619537f16bde2d12d0b9382"
+  "digest": "f8dcd1f27f7d5fc6ca5e3e3b"
  },
  "ujarras/cs/rain": {
   "finished": 13,
@@ -2467,7 +2467,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "74d64bee923299c8d748d0b1"
+  "digest": "88371e6585d1c4ac6e9f23d0"
  },
  "ujarras/cs/formula": {
   "finished": 13,
@@ -2477,7 +2477,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "77f138767f4f1d85a8169c63"
+  "digest": "bf37358f41ed54e90d02ebd9"
  },
  "ujarras/cs/lm": {
   "finished": 13,
@@ -2487,7 +2487,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "f315bb2f6064b68f41a75162"
+  "digest": "bbe2c7af8a3a3e91dce81d3d"
  },
  "ujarras/cs/car": {
   "finished": 13,
@@ -2497,7 +2497,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "907660fd979dc78960b54634"
+  "digest": "a70a0f9eecb74e26b9b8fe65"
  },
  "ghoufi/cs": {
   "finished": 13,
@@ -2507,7 +2507,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "04dc83aea84ccf4e92cc4086"
+  "digest": "1514a549def924065fdd98cd"
  },
  "ghoufi/cs/rain": {
   "finished": 13,
@@ -2517,7 +2517,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f359df4f630f1e1058e247c1"
+  "digest": "8b3b82223764fe5502c562a9"
  },
  "ghoufi/cs/formula": {
   "finished": 13,
@@ -2527,7 +2527,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "06c421ed2caddfc67e6455d5"
+  "digest": "87459c7677a26049ad2892c2"
  },
  "ghoufi/cs/lm": {
   "finished": 13,
@@ -2537,7 +2537,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ca871f5f0f17bbd895d88936"
+  "digest": "829ae4d6bb5d29499ba08f00"
  },
  "ghoufi/cs/car": {
   "finished": 13,
@@ -2547,7 +2547,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c13e5c05894bdc9cd6645a73"
+  "digest": "85e27d55a2e14a5782a9858d"
  },
  "cusco/cs": {
   "finished": 13,
@@ -2557,7 +2557,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "f17ad69b494b897f1399abc9"
+  "digest": "0b821142bf814c49a42b4238"
  },
  "cusco/cs/rain": {
   "finished": 13,
@@ -2567,7 +2567,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fbe94f5f451c7bfaabaa9fd6"
+  "digest": "cd5a04d193664c70a18d4a89"
  },
  "cusco/cs/formula": {
   "finished": 13,
@@ -2577,7 +2577,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "84cf74f79433dd2b63e02f79"
+  "digest": "69ce898765394037bab40482"
  },
  "cusco/cs/lm": {
   "finished": 13,
@@ -2587,7 +2587,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cb18a820078239580ac2d409"
+  "digest": "e3d60d9427501b65005f6819"
  },
  "cusco/cs/car": {
   "finished": 13,
@@ -2597,7 +2597,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "200edbf22d0859106aa765dd"
+  "digest": "fca5a69fd7ea8b5f63ada9b5"
  },
  "mombasa/cs": {
   "finished": 13,
@@ -2607,7 +2607,7 @@
   "walls": 11,
   "rescues": 0,
   "nan": false,
-  "digest": "acf01712addb4b7a23927e98"
+  "digest": "ee24d07b67d5c822a950eecd"
  },
  "mombasa/cs/rain": {
   "finished": 13,
@@ -2617,7 +2617,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "44c5a0d416a8adf36186f248"
+  "digest": "438c399606528097ddae40ec"
  },
  "mombasa/cs/formula": {
   "finished": 13,
@@ -2627,7 +2627,7 @@
   "walls": 12,
   "rescues": 0,
   "nan": false,
-  "digest": "6e6e532cb77416492db95421"
+  "digest": "a2c82eb330fa4df0807ea57c"
  },
  "mombasa/cs/lm": {
   "finished": 13,
@@ -2637,7 +2637,7 @@
   "walls": 6,
   "rescues": 0,
   "nan": false,
-  "digest": "e4d61b35aa6bfe0cf6573798"
+  "digest": "15600f3197943a1fae2f3823"
  },
  "mombasa/cs/car": {
   "finished": 13,
@@ -2647,7 +2647,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "e7b9dc7212a168fc2922558c"
+  "digest": "e51d718da159767c092f76ea"
  },
  "isalo/cs": {
   "finished": 13,
@@ -2657,7 +2657,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e10d260c201618379bfa8c4c"
+  "digest": "0fea3e8668ce5784030b1d42"
  },
  "isalo/cs/rain": {
   "finished": 13,
@@ -2667,7 +2667,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "7d18bb6ed6b779586d05b149"
+  "digest": "0f23776840e05676ec9c5c0c"
  },
  "isalo/cs/formula": {
   "finished": 13,
@@ -2677,7 +2677,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "082720d72ae0ade3b5f28659"
+  "digest": "57b5ae28e8144855f66f81ec"
  },
  "isalo/cs/lm": {
   "finished": 13,
@@ -2687,7 +2687,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4c7cec084282c040c8c93b26"
+  "digest": "94aa390eda36b129f28e63b9"
  },
  "isalo/cs/car": {
   "finished": 13,
@@ -2697,7 +2697,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "dc940a42113a024fa682572c"
+  "digest": "fc6864074d54bd0f7c8b6c6b"
  },
  "portobelo/cs": {
   "finished": 13,
@@ -2707,7 +2707,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0fb81562291830e3dcbb26a7"
+  "digest": "93bbc19c7a74300d29157b2f"
  },
  "portobelo/cs/rain": {
   "finished": 13,
@@ -2717,7 +2717,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "709d6f39e20ab2606590bc99"
+  "digest": "eeead0acfebe29ef0048fc61"
  },
  "portobelo/cs/formula": {
   "finished": 13,
@@ -2727,7 +2727,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ae68d19af5560a7518357e47"
+  "digest": "b82dcd13fcb025ba333edbd4"
  },
  "portobelo/cs/lm": {
   "finished": 13,
@@ -2737,7 +2737,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2e6417d0f2181cd1e40fb03b"
+  "digest": "0cbb7837a007225c99ce5302"
  },
  "portobelo/cs/car": {
   "finished": 13,
@@ -2747,7 +2747,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c66b839edb50c17297bad47a"
+  "digest": "7bcc3758c2d7c6c540d97225"
  },
  "eljem/cs": {
   "finished": 13,
@@ -2757,7 +2757,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cfa2702f5dcc9fbf753cdfa2"
+  "digest": "418ad680205aae47bc98e9dd"
  },
  "eljem/cs/rain": {
   "finished": 13,
@@ -2767,7 +2767,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "54ad3d18f04c0252f1a98d89"
+  "digest": "7a37528e10cc478638ba1097"
  },
  "eljem/cs/formula": {
   "finished": 13,
@@ -2777,7 +2777,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d1f6356989e338a4261de9df"
+  "digest": "c29e813c6e195b77ceb71d68"
  },
  "eljem/cs/lm": {
   "finished": 13,
@@ -2787,7 +2787,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f143b5de66f3cfe26798264a"
+  "digest": "bdd86ae8d1ee2e1b75e7109f"
  },
  "eljem/cs/car": {
   "finished": 13,
@@ -2797,7 +2797,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4bf90b7c53665902e077864a"
+  "digest": "8aa905aa5f4cd3090da4a201"
  },
  "isuna/cs": {
   "finished": 13,
@@ -2807,7 +2807,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "fd94af995b49a9ea42d32537"
+  "digest": "03edc75882a6d405ad5de53f"
  },
  "isuna/cs/rain": {
   "finished": 13,
@@ -2817,7 +2817,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b6f8ed183a7c95e5f78eb842"
+  "digest": "67fddeeb65c17f09283e05a5"
  },
  "isuna/cs/formula": {
   "finished": 13,
@@ -2827,7 +2827,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b8da01d0407aadcb8c564db0"
+  "digest": "181e49ee39a85bc2f8b3546d"
  },
  "isuna/cs/lm": {
   "finished": 13,
@@ -2837,7 +2837,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "8d975fc52b21a8ae5aa6bb0b"
+  "digest": "96b83d77a5d1a59104daa355"
  },
  "isuna/cs/car": {
   "finished": 13,
@@ -2847,7 +2847,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "22639300fb8ba85546dd1faa"
+  "digest": "c2a47422af9cac7d604dfc8c"
  },
  "hiva/cs": {
   "finished": 13,
@@ -2857,7 +2857,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "bafcaf60b91b5d07bc6f4b54"
+  "digest": "515c790fbaa906cff75bb4fc"
  },
  "hiva/cs/rain": {
   "finished": 13,
@@ -2867,7 +2867,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "6bf71cf81c20b5a978fc7b92"
+  "digest": "f2704fe7b1500c1d0e767037"
  },
  "hiva/cs/formula": {
   "finished": 13,
@@ -2877,7 +2877,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fe2c6b2bd14413e57deb7790"
+  "digest": "b80cf7eb9b5cc595d8920558"
  },
  "hiva/cs/lm": {
   "finished": 13,
@@ -2887,7 +2887,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "20cf780ac7c3b89ed7c61c18"
+  "digest": "bcd10fdf297f9778ae6d4476"
  },
  "hiva/cs/car": {
   "finished": 13,
@@ -2897,7 +2897,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f99a6b7baf9a726876051970"
+  "digest": "1de46fda517a65005e0b0d09"
  },
  "mapileng/cs": {
   "finished": 13,
@@ -2907,7 +2907,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9a1f608e9c506e3e88e1ff75"
+  "digest": "e5cb05da0c82ece0b8045bc9"
  },
  "mapileng/cs/rain": {
   "finished": 13,
@@ -2917,7 +2917,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "2f2351487e8d3fd94459e3d2"
+  "digest": "0486e014c5c589ddc03cbd27"
  },
  "mapileng/cs/formula": {
   "finished": 13,
@@ -2927,7 +2927,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "99ac4cc52bd3058794fb7abf"
+  "digest": "d9b7f0854b29d802976bf308"
  },
  "mapileng/cs/lm": {
   "finished": 13,
@@ -2937,7 +2937,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "946b9a769a3075836e153314"
+  "digest": "45e30469926b1f7b31cdcaaf"
  },
  "mapileng/cs/car": {
   "finished": 13,
@@ -2947,7 +2947,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "73cf5445f14520bb3fb5fff6"
+  "digest": "ee27080239ee23deccd58fe5"
  },
  "batangas/cs": {
   "finished": 13,
@@ -2957,7 +2957,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "510529d99412bd03fe402beb"
+  "digest": "f5e30439b5528ba4a1dfccb4"
  },
  "batangas/cs/rain": {
   "finished": 13,
@@ -2967,7 +2967,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "68159dc3d6b7e46941b21096"
+  "digest": "969cd4d252b49d3dc68efd73"
  },
  "batangas/cs/formula": {
   "finished": 13,
@@ -2977,7 +2977,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "24a6eca6c56ad904f4f97727"
+  "digest": "5b291e86ba851c7504014c8a"
  },
  "batangas/cs/lm": {
   "finished": 13,
@@ -2987,7 +2987,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "418a8b2c796f0a83d5e1f666"
+  "digest": "7b38383db0a47c467a10b53d"
  },
  "batangas/cs/car": {
   "finished": 13,
@@ -2997,7 +2997,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "915662ffbc902a45ef52b520"
+  "digest": "45675089823422a17b9ffef2"
  },
  "quezaltepeque/cs": {
   "finished": 13,
@@ -3007,7 +3007,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f08bc7ae638426aa71a6e5a2"
+  "digest": "eb1e2ce3f978ffa497626ae6"
  },
  "quezaltepeque/cs/rain": {
   "finished": 13,
@@ -3017,7 +3017,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "68fb6bf995ebf428df36028c"
+  "digest": "ef0f0212fc2cc5fa6e06ef1b"
  },
  "quezaltepeque/cs/formula": {
   "finished": 13,
@@ -3027,7 +3027,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e25348fd8f1932075d47b9df"
+  "digest": "0411aa6974b2648bdc0498f5"
  },
  "quezaltepeque/cs/lm": {
   "finished": 13,
@@ -3037,7 +3037,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "1a527a8cb75cb5fa3c3e8d9b"
+  "digest": "1aa408c8181295ce799d1f74"
  },
  "quezaltepeque/cs/car": {
   "finished": 13,
@@ -3047,7 +3047,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "3f252fee03d13f18e3218c9c"
+  "digest": "e765aa79f0bd9b07c6a38de0"
  },
  "aguascalientes/cs": {
   "finished": 13,
@@ -3057,7 +3057,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d851d18b65ac911ce3dbe2af"
+  "digest": "de406212071eb0756e3154bd"
  },
  "aguascalientes/cs/rain": {
   "finished": 13,
@@ -3067,7 +3067,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "fefc8f387303a0eff2400c65"
+  "digest": "6073e0f3608078931352ed0b"
  },
  "aguascalientes/cs/formula": {
   "finished": 13,
@@ -3077,7 +3077,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "de0c2e74eb83652eeb280ba0"
+  "digest": "3bcd15c5ebd7647ca03b20e7"
  },
  "aguascalientes/cs/lm": {
   "finished": 13,
@@ -3087,7 +3087,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "5c0c5f6eb6d0d5c671963a2f"
+  "digest": "fb3eb37470fd538688227c96"
  },
  "aguascalientes/cs/car": {
   "finished": 13,
@@ -3097,7 +3097,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "b3147f9ce435d99278739e71"
+  "digest": "8b68d413d3cd12c48cd67ec1"
  },
  "koli/cs": {
   "finished": 13,
@@ -3107,7 +3107,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "60c85622158f4ee52259689e"
+  "digest": "e04e596a6a1efbc20e86f841"
  },
  "koli/cs/rain": {
   "finished": 13,
@@ -3117,7 +3117,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "4edc8604891873dbdb8cd335"
+  "digest": "d272b5dfdec192de94705204"
  },
  "koli/cs/formula": {
   "finished": 13,
@@ -3127,7 +3127,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "40a51791167957b2c2829a06"
+  "digest": "69c9adcc64a170391bc81576"
  },
  "koli/cs/lm": {
   "finished": 13,
@@ -3137,7 +3137,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "3b06fbcb53042a0cb0a8bdb3"
+  "digest": "29ba3003be58167e07a76b7f"
  },
  "koli/cs/car": {
   "finished": 13,
@@ -3147,7 +3147,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b9e900936f06eb53bc9c9f4d"
+  "digest": "0f6e63277a29d88b394344cd"
  },
  "kanaba/cs": {
   "finished": 13,
@@ -3157,7 +3157,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b262fd2f5c70fd8efa24f9ff"
+  "digest": "4001742cdf1da1ab48d5a03f"
  },
  "kanaba/cs/rain": {
   "finished": 13,
@@ -3167,7 +3167,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a688a5f937c15ad085ed8e32"
+  "digest": "7fe677edcfb262652797c24d"
  },
  "kanaba/cs/formula": {
   "finished": 13,
@@ -3177,7 +3177,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "fb739fdf10714926889e0a96"
+  "digest": "b0ba8eb191a75cfff3e23fc3"
  },
  "kanaba/cs/lm": {
   "finished": 13,
@@ -3187,7 +3187,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "7bbafbc1d404ca13e006ed01"
+  "digest": "58e8669c833fd75ce486478e"
  },
  "kanaba/cs/car": {
   "finished": 13,
@@ -3197,7 +3197,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "bcc656c388c6e86fd2d64bab"
+  "digest": "272e5940ee3eedeebdad7d6f"
  },
  "tapini/cs": {
   "finished": 1,
@@ -3257,7 +3257,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "178252612d1818291d1ee241"
+  "digest": "42a129ba78fcb727baaf12ce"
  },
  "canaries/cs/rain": {
   "finished": 13,
@@ -3267,7 +3267,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "a1a9ec6289842ffa83d1889d"
+  "digest": "e2e1ac2b19f13b74040f260f"
  },
  "canaries/cs/formula": {
   "finished": 13,
@@ -3277,7 +3277,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c130210ba7e41d747d198424"
+  "digest": "3ed9a8ac919d4898cddefb5f"
  },
  "canaries/cs/lm": {
   "finished": 13,
@@ -3287,7 +3287,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "82ab1a758f23deabc98202d3"
+  "digest": "d77c60ba38f01abf243b6dc6"
  },
  "canaries/cs/car": {
   "finished": 13,
@@ -3297,7 +3297,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cc39d6e4aba8ffad4147726d"
+  "digest": "ec797f398151ba3a65eaa8e9"
  },
  "savusavu/cs": {
   "finished": 13,
@@ -3307,7 +3307,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "e966067cac9fb95f6832f6ae"
+  "digest": "b63649d21027f40a5130152a"
  },
  "savusavu/cs/rain": {
   "finished": 13,
@@ -3317,7 +3317,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "ec28f80d2f65710792082f32"
+  "digest": "69b49c326eaf52b0d783dcfa"
  },
  "savusavu/cs/formula": {
   "finished": 13,
@@ -3327,7 +3327,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "743f075f7a63c71da09603ef"
+  "digest": "3f68ac28adb03beb9ef15132"
  },
  "savusavu/cs/lm": {
   "finished": 13,
@@ -3337,7 +3337,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "a6efb39119b04a5f65dea57b"
+  "digest": "8b24eefb5721a0246ee82486"
  },
  "savusavu/cs/car": {
   "finished": 13,
@@ -3347,7 +3347,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "9eb34951229bae3eb2da9c1f"
+  "digest": "e50def9028efaede0ca7599c"
  },
  "koror/cs": {
   "finished": 13,
@@ -3357,7 +3357,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "cd0c1dc6367782a82700bd12"
+  "digest": "fca5e9a1b3876b68aa8a6bc4"
  },
  "koror/cs/rain": {
   "finished": 13,
@@ -3367,7 +3367,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c41ecb72e1e9419dbda4e751"
+  "digest": "0202259e00c61a72fe9991b9"
  },
  "koror/cs/formula": {
   "finished": 13,
@@ -3377,7 +3377,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b1f415e83f52f8cd177677b0"
+  "digest": "fe8fbeb8dbca3b986da78e53"
  },
  "koror/cs/lm": {
   "finished": 13,
@@ -3387,7 +3387,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "c06e4dfe3514bfd37f4a28f0"
+  "digest": "8eb3bab602c91b114030b64a"
  },
  "koror/cs/car": {
   "finished": 13,
@@ -3397,7 +3397,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "b9d6561f34bc36d6b9baa77b"
+  "digest": "79405fb8290939d62fab513a"
  },
  "longyearbyen/cs": {
   "finished": 13,
@@ -3407,7 +3407,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "728c7f06074df8c7fc424502"
+  "digest": "22c439662c6d8b20adcbc8ab"
  },
  "longyearbyen/cs/rain": {
   "finished": 13,
@@ -3417,7 +3417,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "b3bc166fcb12967ef2f2c6a5"
+  "digest": "0d05d82ca377dbdf2060b950"
  },
  "longyearbyen/cs/formula": {
   "finished": 13,
@@ -3427,7 +3427,7 @@
   "walls": 3,
   "rescues": 1,
   "nan": false,
-  "digest": "52532f35ef118cfa38f7d0d2"
+  "digest": "8181cdc9a23739a6a7d86252"
  },
  "longyearbyen/cs/lm": {
   "finished": 13,
@@ -3437,7 +3437,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d09427dd6180d3b5fea5f4cf"
+  "digest": "9e0d22144c2dc2619cc5264f"
  },
  "longyearbyen/cs/car": {
   "finished": 13,
@@ -3447,7 +3447,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "0e09ea5984e26971ee7f2a7c"
+  "digest": "2f7ac3d1c83791e3ae0f3833"
  },
  "irishtown/cs": {
   "finished": 13,
@@ -3457,7 +3457,7 @@
   "walls": 4,
   "rescues": 0,
   "nan": false,
-  "digest": "f83128f1c4b8d4f6986bc925"
+  "digest": "b54f7ecb1bc158a50702eee2"
  },
  "irishtown/cs/rain": {
   "finished": 13,
@@ -3467,7 +3467,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "f627401d266c0d5eba1009a4"
+  "digest": "0deef0a3cfa692dd1399bfd9"
  },
  "irishtown/cs/formula": {
   "finished": 13,
@@ -3477,7 +3477,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "646a7e919dd18c31fb1055ba"
+  "digest": "0d991b036bbb0858de7cf369"
  },
  "irishtown/cs/lm": {
   "finished": 13,
@@ -3487,7 +3487,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "b7b5bd61e9091cb3ddb99972"
+  "digest": "f5a9176d8717548d80e411ac"
  },
  "irishtown/cs/car": {
   "finished": 13,
@@ -3497,7 +3497,7 @@
   "walls": 3,
   "rescues": 1,
   "nan": false,
-  "digest": "36f86733f8f8fd8ee9360e6a"
+  "digest": "9f8e70d245bf816e5afb9bee"
  },
  "vaoala/cs": {
   "finished": 13,
@@ -3507,7 +3507,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "96f43d3ca30851f79651f001"
+  "digest": "bb269f6f57780bc6aa583b1a"
  },
  "vaoala/cs/rain": {
   "finished": 13,
@@ -3517,7 +3517,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "bdc5720d89f1fbd6d98971a6"
+  "digest": "b08b1d92fabcc26245ef25ab"
  },
  "vaoala/cs/formula": {
   "finished": 13,
@@ -3527,7 +3527,7 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "0498d11a09d0989c2c23b4c3"
+  "digest": "413da4d70a4b1d4d11f78a2d"
  },
  "vaoala/cs/lm": {
   "finished": 13,
@@ -3537,7 +3537,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "894d6746852298823cfb7f28"
+  "digest": "2511b1b118d5d48e8e83aa71"
  },
  "vaoala/cs/car": {
   "finished": 13,
@@ -3547,7 +3547,7 @@
   "walls": 1,
   "rescues": 0,
   "nan": false,
-  "digest": "bc9e1974cc376d191428dac6"
+  "digest": "25f1fe762a4ed81cbda2bd40"
  },
  "krasnahorka/cs": {
   "finished": 13,
@@ -3557,7 +3557,7 @@
   "walls": 2,
   "rescues": 0,
   "nan": false,
-  "digest": "1da7dd75a871749974d1f2fe"
+  "digest": "d36ec4b3b2b3941ee1da56bc"
  },
  "krasnahorka/cs/rain": {
   "finished": 13,
@@ -3567,7 +3567,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "588f43000d50ac22d8425069"
+  "digest": "05dc68564bbdb30be8114209"
  },
  "krasnahorka/cs/formula": {
   "finished": 13,
@@ -3577,7 +3577,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d993e8cd38c80a6e54c3ffec"
+  "digest": "4a6c0f72f5373f748c1d0756"
  },
  "krasnahorka/cs/lm": {
   "finished": 13,
@@ -3587,7 +3587,7 @@
   "walls": 0,
   "rescues": 0,
   "nan": false,
-  "digest": "d6757a2473f8f2371d11ae53"
+  "digest": "ae38d6d9e0d487f700187285"
  },
  "krasnahorka/cs/car": {
   "finished": 13,
@@ -3597,6 +3597,6 @@
   "walls": 3,
   "rescues": 0,
   "nan": false,
-  "digest": "767e1ef7d7a2ae35b94feed4"
+  "digest": "3d90a894163c1701378b53f1"
  }
 }
