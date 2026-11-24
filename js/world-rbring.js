@@ -852,7 +852,12 @@
         gp.quadUp(at(s0, pi.o + 3.18, 0.033), at(s0, pi.o + 3.36, 0.033), at(s1, pj.o + 3.36, 0.033), at(s1, pj.o + 3.18, 0.033), [wl, wl, wl, wl]);   // solid line on the outer edge
         if (((q / 2) | 0) % 2 === 0) gp.quadUp(at(s0, pi.o - 3.36, 0.033), at(s0, pi.o - 3.18, 0.033), at(s1, pj.o - 3.18, 0.033), at(s1, pj.o - 3.36, 0.033), [wl, wl, wl, wl]);   // dashed inner line
         if (pi.t > 0.999 && pj.t > 0.999) { gp.quadUp(at(s0, pi.o + 3.5, 0.022), at(s0, pi.o + 12.5, 0.022), at(s1, pj.o + 12.5, 0.022), at(s1, pj.o + 3.5, 0.022), LK.apron ? LK.apron(q) : [apC, apC, apC, apC]);   // concrete apron (LK.apron: Rio's, weathered slab by slab)
-          if (q % 20 === 0) gp.quadUp(at(s0, pi.o + 3.5, 0.03), at(s0, pi.o + 3.7, 0.03), at(s1, pj.o + 3.7, 0.03), at(s1, pj.o + 3.5, 0.03), [wl, wl, wl, wl]); }   // (dashes along the fast lane's edge)
+          if (q % 20 === 0) gp.quadUp(at(s0, pi.o + 3.5, 0.03), at(s0, pi.o + 3.7, 0.03), at(s1, pj.o + 3.7, 0.03), at(s1, pj.o + 3.5, 0.03), [wl, wl, wl, wl]);   // (dashes along the fast lane's edge)
+          if (def.pitDrain) { const dr = [0.12, 0.12, 0.13], jt = [0.62, 0.63, 0.6], st = [0.5, 0.52, 0.55];   // (Štajerska: the apron's channel drain at the garages' foot, a steel bar across it every 2 m, the slabs' joints: one along the middle, one across the middle of each 10 m box)
+            gp.quadUp(at(s0, pi.o + 11.95, 0.028), at(s0, pi.o + 12.25, 0.028), at(s1, pj.o + 12.25, 0.028), at(s1, pj.o + 11.95, 0.028), [dr, dr, dr, dr]);
+            gp.quadUp(at(s0, pi.o + 11.95, 0.031), at(s0, pi.o + 12.25, 0.031), at(s0 + 0.08, pi.o + 12.25, 0.031), at(s0 + 0.08, pi.o + 11.95, 0.031), [st, st, st, st]);
+            gp.quadUp(at(s0, pi.o + 7.97, 0.026), at(s0, pi.o + 8.03, 0.026), at(s1, pj.o + 8.03, 0.026), at(s1, pj.o + 7.97, 0.026), [jt, jt, jt, jt]);
+            if (((q % 10) + 10) % 10 === 4) gp.quadUp(at(s0 + 0.97, pi.o + 3.7, 0.026), at(s0 + 0.97, pi.o + 11.95, 0.026), at(s0 + 1.03, pi.o + 11.95, 0.026), at(s0 + 1.03, pi.o + 3.7, 0.026), [jt, jt, jt, jt]); } }
       }
       pitJunction(gl, gp, hyS);   // the deceleration and acceleration lanes, the gores (in the lane's meshes)
       const TEAM = [[0.12, 0.16, 0.36], [0.85, 0.12, 0.14], [0.16, 0.46, 0.3], [0.96, 0.52, 0.1], [0.94, 0.94, 0.92], [0.14, 0.14, 0.16], [0.16, 0.36, 0.8], [0.1, 0.62, 0.72], [0.96, 0.78, 0.12], [0.55, 0.26, 0.7], [0.4, 0.42, 0.46], [0.7, 0.1, 0.1], [0.2, 0.3, 0.55]];

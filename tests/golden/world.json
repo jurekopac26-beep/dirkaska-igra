@@ -132,15 +132,15 @@
  },
  "rbring": {
   "meshes": 770,
-  "verts": 1091901,
+  "verts": 1099839,
   "instances": 11161,
   "props": 79,
   "crowd": 141,
-  "world": "8271201a",
+  "world": "720bdcf3",
   "propsHash": "7dce562f",
   "floor": "7f9d45a6/8652",
   "groups": {
-   "-:MeshLambertMaterial": "6dcdcf7f",
+   "-:MeshLambertMaterial": "dee2f0ba",
    "-:MeshBasicMaterial": "2c6c0503",
    "crowd:MeshLambertMaterial": "ee5a7c3d",
    "smoke:ShaderMaterial": "c531504c",
@@ -159,7 +159,7 @@
    "people:MeshLambertMaterial": "5ceb98ea",
    "sceneSmoke:MeshLambertMaterial": "9e026998",
    "umbrellas:MeshLambertMaterial": "80253bfd",
-   "standSteps:MeshLambertMaterial": "da15fc08",
+   "standSteps:MeshLambertMaterial": "26f74602",
    "zaslon-okvir:MeshLambertMaterial": "957cda9",
    "zaslon-slika:MeshBasicMaterial": "21085669"
   }

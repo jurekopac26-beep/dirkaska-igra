@@ -1844,11 +1844,49 @@
         let d = 1.5; while (d > -1 && A.clearance(e0.p[0] + tx * s * 2.6 + e0.f[0] * d, e0.p[2] + tz * s * 2.6 + e0.f[1] * d) < 1.0) d -= 0.5;
         way([[e0.p[0] + tx * s * 2.6 + e0.f[0] * d, e0.p[2] + tz * s * 2.6 + e0.f[1] * d], [e1.p[0] + tx * s * 2.6 - e1.f[0] * wo, e1.p[2] + tz * s * 2.6 - e1.f[1] * wo]], 4, AR_COL.pave); }
       // the strip in front: paved from the stand's front to a metre off the barrier (the vendors' walkway)
+      // (def.standWalk, a track's own cross-sections there, from its map: [from, to, bands] for the stand whose middle lies between from and to
+      // (metres after the start line); the bands from the stand's front outwards, each [kind, width]: kind 0 pavers, 1 grass (the ground as it
+      // is), 2 a tarmac service lane, 3 concrete; one width may be null: what is left to a metre off the barrier (concrete as the last band: to the wall's foot). Between the lane and pavers or
+      // concrete a kerb, white lines along the lane's edges, a gully at the kerb every 24 m. A stand without one: the plain strip, as before)
+      const sw = def.standWalk && def.standWalk.find(w => (f.s >= w[0] && f.s <= w[1]) || (f.s - T.len >= w[0] && f.s - T.len <= w[1]));
+      if (sw) { const bands = sw[2], fixed = bands.reduce((a, b) => a + (b[1] || 0), 0), flex = bands.some(b => b[1] == null), toWall = bands.length && bands[bands.length - 1][0] === 3 ? 0.35 : 1.0;   // (concrete last: on to the wall's foot)
+        const BH = [0.08, 0, 0.065, 0.08], BC = [AR_COL.pave, null, [0.3, 0.3, 0.31], [0.7, 0.7, 0.68]], KERB = [0.8, 0.8, 0.78], LINE = [0.93, 0.93, 0.9], GUL = [0.1, 0.1, 0.11];
+        // (the heights: the ground's mesh is coarser than its height function. Hard from the stand's foot: on the chord from the foot to the wall, as the plain strip; beyond grass:
+        // the highest of the ground there and 2.5 m round it)
+        const hard = bands.length && bands[0][0] !== 1, gy = (x, z) => gr(x, z, 0);
+        const at = (e, s, h) => { const x = e.p[0] + e.f[0] * s, z = e.p[2] + e.f[1] * s; let y = gy(x, z);
+          if (hard && e.ch) y = Math.max(y, e.ch[0] + (e.ch[1] - e.ch[0]) * Math.min(1, Math.max(0, (s - 0.1) / e.ch[2])));
+          else for (const [a, b] of [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]]) y = Math.max(y, gy(x + e.f[0] * a - e.f[1] * b, z + e.f[1] * a + e.f[0] * b));
+          return [x, y + h, z]; };
+        const rib = (g, p, c, I, O, h, col, uv) => g.quad(at(p.e, I(p), h), at(c.e, I(c), h), at(c.e, O(c), h), at(p.e, O(p), h), up, col, null, uv || PLU);
+        let prev = null, d = 0;
+        for (let k = 0; k < Fr.length; k++) {
+          const e = Fr[k]; let gap = 0, hit = false; for (let s = 0.25; s <= 60; s += 0.25) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < toWall) { hit = true; break; } gap = s; }
+          if (k) d += Math.hypot(e.p[0] - Fr[k - 1].p[0], e.p[2] - Fr[k - 1].p[2]);
+          let cur = null;
+          if (hit || !flex) { const E = [0.1], lim = hit ? gap : 1e9; let s = 0.1; for (const b of bands) { s = Math.min(lim, s + (b[1] == null ? Math.max(0, gap - 0.1 - fixed) : b[1])); E.push(s); } if (hit && toWall < 1 && E.length > 1 && E[E.length - 1] > E[E.length - 2]) E[E.length - 1] += 0.6; cur = { e, E, d }; if (hit && gap > 0.2) e.ch = [gy(e.p[0] + e.f[0] * 0.1, e.p[2] + e.f[1] * 0.1), gy(e.p[0] + e.f[0] * gap, e.p[2] + e.f[1] * gap), gap - 0.1];
+            if (E[E.length - 1] > 1) clear(e.p[0] + e.f[0] * E[E.length - 1] / 2, e.p[2] + e.f[1] * E[E.length - 1] / 2, E[E.length - 1] / 2 + 1.5); }
+          if (cur && prev && !e.gap) { const g = sbAt(e.p[0], e.p[2]), grate = Math.floor(cur.d / 24) !== Math.floor(prev.d / 24);
+            for (let j = 0; j < bands.length; j++) { const kind = bands[j][0], w0 = prev.E[j + 1] - prev.E[j], w1 = cur.E[j + 1] - cur.E[j]; if (!BC[kind] || w0 < 0.3 || w1 < 0.3) continue;
+              const h = BH[kind], I = (q) => q.E[j], O = (q) => q.E[j + 1], vw = Math.min(1, Math.max(w0, w1) / 6);
+              rib(g, prev, cur, I, O, h, BC[kind], kind === 0 ? [[prev.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, vw)], [prev.d / 4, kv(KIT.pave, vw)]] : null);
+              if (kind !== 2) continue;
+              if (Math.min(w0, w1) >= 2) { rib(g, prev, cur, (q) => q.E[j] + 0.22, (q) => q.E[j] + 0.34, h + 0.012, LINE); rib(g, prev, cur, (q) => q.E[j + 1] - 0.34, (q) => q.E[j + 1] - 0.22, h + 0.012, LINE); }
+              for (const [nb, sg, B] of [[bands[j - 1], -1, I], [bands[j + 1], 1, O]]) { if (!nb || (nb[0] !== 0 && nb[0] !== 3)) continue;   // the kerb: its top, its face to the lane; the gully beside it
+                const nw0 = sg < 0 ? prev.E[j] - prev.E[j - 1] : prev.E[j + 2] - prev.E[j + 1], nw1 = sg < 0 ? cur.E[j] - cur.E[j - 1] : cur.E[j + 2] - cur.E[j + 1]; if (nw0 < 0.3 || nw1 < 0.3) continue;
+                rib(g, prev, cur, (q) => B(q) - 0.09 + sg * 0.09, (q) => B(q) + 0.09 + sg * 0.09, 0.16, KERB);
+                g.quad(at(prev.e, B(prev), h), at(cur.e, B(cur), h), at(cur.e, B(cur), 0.16), at(prev.e, B(prev), 0.16), [-sg * e.f[0], 0, -sg * e.f[1]], KERB, null, PLU);
+                if (grate) { const a0 = at(e, B(cur) - sg * 0.08, h + 0.014), a1 = at(e, B(cur) - sg * 0.5, h + 0.014), l = Math.hypot(e.p[0] - prev.e.p[0], e.p[2] - prev.e.p[2]) || 1, ux = (prev.e.p[0] - e.p[0]) / l * 0.6, uz = (prev.e.p[2] - e.p[2]) / l * 0.6;
+                  g.quad(a0, a1, [a1[0] + ux, a1[1], a1[2] + uz], [a0[0] + ux, a0[1], a0[2] + uz], up, GUL, null, PLU);
+                  for (let b = 1; b < 4; b++) { const w = b / 4; g.quad([a0[0] + ux * (w - 0.04), a0[1] + 0.004, a0[2] + uz * (w - 0.04)], [a1[0] + ux * (w - 0.04), a1[1] + 0.004, a1[2] + uz * (w - 0.04)], [a1[0] + ux * (w + 0.04), a1[1] + 0.004, a1[2] + uz * (w + 0.04)], [a0[0] + ux * (w + 0.04), a0[1] + 0.004, a0[2] + uz * (w + 0.04)], up, AR_COL.steel, null, PLU); } }
+              } } }
+          prev = cur;
+        } }
       { let prev = null, d = 0;
         for (let k = 0; k < Fr.length; k++) {
           const e = Fr[k]; let gap = 0; for (let s = 0.5; s <= (def.standApron || 14); s += 0.5) { if (A.clearance(e.p[0] + e.f[0] * s, e.p[2] + e.f[1] * s) < 1.0) break; gap = s; }   // (def.standApron: at most so wide, a stand far behind the barrier)
           if (k) d += Math.hypot(e.p[0] - Fr[k - 1].p[0], e.p[2] - Fr[k - 1].p[2]);
-          const cur = gap >= 1.0 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
+          const cur = !sw && gap >= 1.0 ? { i: [e.p[0] + e.f[0] * 0.1, 0, e.p[2] + e.f[1] * 0.1], o: [e.p[0] + e.f[0] * gap, 0, e.p[2] + e.f[1] * gap], d } : null;
           if (cur) { cur.i[1] = gr(cur.i[0], cur.i[2], 0) + 0.07; cur.o[1] = gr(cur.o[0], cur.o[2], 0) + 0.07; clear((cur.i[0] + cur.o[0]) / 2, (cur.i[2] + cur.o[2]) / 2, gap / 2 + 1.5); }
           if (cur && prev && !e.gap) sbAt(e.p[0], e.p[2]).quad(prev.i, cur.i, cur.o, prev.o, up, AR_COL.pave, null, [[prev.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 0)], [cur.d / 4, kv(KIT.pave, 1)], [prev.d / 4, kv(KIT.pave, 1)]]);
           if (k && !e.gap) { const a = Fr[k - 1], l = Math.hypot(e.p[0] - a.p[0], e.p[2] - a.p[2]);   // (the trees in front of it gone: every 4 m along its front, to the barrier)

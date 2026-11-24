@@ -50,6 +50,14 @@ var TRACK_DEFS = TRACK_DEFS || [];
       [454, 645, -1, 16, 0, 8, 1, 'BERG', [32, 24]], [656, 842, -1, 18, 0, 7, 1, 'BERG', [31, 50]], [1196, 1330, -1, 9, 0, 2, 1, 'T3'],
       [1984, 2104, -1, 9, 1, 1, 0, 'NORD'], [3598, 3702, -1, 8, 0, 1, 0, 'T9'], [3786, 3876, -1, 12, 1, 1, 0, 'T10', [48, 32]],
       [2990, 3040, -1, 14, 0, 2, 0, 'MITTE', [53, 44]], [3718, 3777, -1, 12, 0, 2, 0, 'OST', [70, 53]], [2078, 2102, -1, 10, 0, 1, 0, 'NORD', 115]],
+    // in front of the stands, from OpenStreetMap (the service roads, the walls and the grass between the stands and the road; docs/realizem/paket-s.md):
+    // [from, to, bands] by the stand's middle (World.people standAround), the bands from the stand's front out, [kind, width]: 0 pavers, 1 grass,
+    // 2 a tarmac service lane, 3 concrete, null what is left to the barrier. Start-Ziel: hard ground from the stand to the wall, the service
+    // road 3.3 m off the wall; Steiermark: the road along the wall; the hill stand: grass only; T10, Mitte, Ost and Nord (the far one): the
+    // service road 3-17 m in front of them, grass on both sides. T3, Nord and T9 (no stand in the map): the plain strip, standApron
+    standWalk: [[-100, 60, [[0, null], [2, 3.6], [3, 0.5]]], [290, 330, [[2, null]]], [400, 860, []], [3800, 3870, [[1, 1.4], [2, 3.5]]],
+      [2990, 3040, [[1, 14.7], [2, 3.5]]], [3730, 3765, [[1, 3.3], [2, 3.5]]], [2080, 2095, [[1, 8.5], [2, 5]]]],
+    pitDrain: true,   // (World.buildRbring: the pit apron's channel drain and slab joints)
     standApron: 6,               // the paved walkway in front of the stands (World.people): at most 6 m wide, the grass on to the barrier where a stand stands far back
     wing: [-60, -1, 6.9],        // the wing on the stand (a 90 m racing car rear wing) on top of Start-Ziel: [metres from the start line of its middle, side, moved out (m): with the stand]
     ga: [[1370, 1900, -1], [900, 1180, 1], [2600, 2860, 1]],   // spectators on the grass: [from, to, side] (the hill between Turns 3 and 4 and the infield)
