@@ -49,11 +49,11 @@
   "jsMs": 1
  },
  "katu": {
-  "calls": 168,
-  "maxCalls": 198,
-  "kverts": 560,
-  "maxKverts": 747,
-  "jsMs": 0.63
+  "calls": 175,
+  "maxCalls": 208,
+  "kverts": 595,
+  "maxKverts": 807,
+  "jsMs": 0.81
  },
  "harju": {
   "calls": 193,
@@ -77,11 +77,11 @@
   "jsMs": 1.05
  },
  "tianmen": {
-  "calls": 189,
-  "maxCalls": 222,
-  "kverts": 610,
-  "maxKverts": 738,
-  "jsMs": 1.16
+  "calls": 195,
+  "maxCalls": 230,
+  "kverts": 653,
+  "maxKverts": 781,
+  "jsMs": 1.2
  },
  "rastro": {
   "calls": 216,
