@@ -1220,21 +1220,21 @@
   }
  },
  "ghoufi": {
-  "meshes": 140,
-  "verts": 170487,
-  "instances": 208,
+  "meshes": 152,
+  "verts": 194853,
+  "instances": 198,
   "props": 21,
   "crowd": 17,
-  "world": "73c3730b",
+  "world": "f437b1ea",
   "propsHash": "51a42a9f",
   "floor": "29408238/1820",
   "groups": {
-   "-:MeshLambertMaterial": "6bbb1373",
+   "-:MeshLambertMaterial": "e82a31ba",
    "-:MeshPhongMaterial": "40595a55",
    "-:MeshBasicMaterial": "9aed12f8",
    "crowd:MeshLambertMaterial": "94eddc6b",
    "flags:MeshLambertMaterial": "211b8533",
-   "ao:MeshBasicMaterial": "13097779",
+   "ao:MeshBasicMaterial": "b62cdbda",
    "tyremarks:MeshBasicMaterial": "9359d705",
    "roadwear:MeshLambertMaterial": "34d92930"
   }
