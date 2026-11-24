@@ -108,18 +108,16 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 - **Odločeno 24. 11. (uporabnik, prek koordinacije biketraveler): »Pusti zamrznjene«.** Crystal Palace, London, Marrakech ostanejo nespremenjena.
   Zvoki živali ob progi (`js/sfx-okolje.js`, golobi `zivali.city`) so nespremenjeni.
 
-## Podrobnost ptic: preizkus in vprašanje (24. 11. zvečer)
+## Podrobnost ptic: odločeno 24. 11.
 
-- `Birds.setDetail(d)` v `js/render.js`: 0 = sedanja ptica (3 trikotniki, privzeto, videz nespremenjen), 1 = A (8), 2 = B (14), 3 = C (22);
-  tabela `BIRD_TRIS`, oblika v `Birds._bird` (trup, glava, kljun, rep, krilo z nadlahtjo in dlanjo, odtenki po ogliščih). En klic risanja;
-  največ 16 × 66 = 1056 oglišč. Barve so samo odtenki osnovne barve; barve vrst šele po virih.
-- Vprašanje `ptice-podrobnost-1060` (stran Odločitve 1): 1 = A, 2 = B (priporočeno), 3 = C, 4 = pusti sedanjo. Slike so samo na strani.
-  Koordinacija biketraveler obveščena; branje odgovora nastavljeno za 23.20.
-- **Do »ok« privzeta stopnja ostane 0.** Po odgovoru: izbrano stopnjo nastavi kot privzeto, drugi dve odstrani, `npm run golden:update`.
+- **Uporabnik je na strani Odločitve izbral »3 · C, 22 trikotnikov«** (vprašanje `ptice-podrobnost-1060`, odgovor 24. 11. ob 23.28).
+- `Birds` v `js/render.js` riše samo še to obliko (`Birds._bird`: trup s hrbtom, glava s temenom, kljun, rep v treh delih, krilo z
+  nadlahtjo, dlanjo in prsti; dlan zamahne za nadlahtjo). Stopnje 0, A in B ter `setDetail` so odstranjene.
+- En klic risanja; največ 16 × 66 = 1056 oglišč (prej 144). Barve so odtenki osnovne barve po ogliščih; barve vrst šele po virih.
 
 ## Predaja (naslednja seja)
 
-1. Preberi odgovor na `ptice-podrobnost-1060`; dokončaj samo izbrano stopnjo (glej zgoraj).
+1. Podrobnost ptic je končana (C, glej zgoraj); ostane samo raziskava vrst.
 2. Raziskava: manjkajo države »še brez raziskave« in številke jat v letu; `en.wikipedia.org` in `hww.ca` iz okolja nista dosegljiva.
    Dovolj potrjeno za kodo (kraj + formacija + let): žerjav (Nemčija, Švedska, Finska; klin), črni jastreb (jadranje), andski kondor (Čile; jadranje),
    škorec (Združeno kraljestvo, Italija; gosta jata). Številke v jati so potrjene le za žerjava in škorca.

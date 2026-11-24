@@ -3283,64 +3283,46 @@ const Render = (function () {
   }
 
   /* ---------------- birds: now and then a small flock flies across the view a little above the trees (gulls by the sea), its shadows
-     sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: three triangles a bird, written
-     every frame ---------------- */
-  // the birds' detail (docs/ptice.md; the user picks one of A, B, C on the page Odločitve, until then 0, the birds as they were):
-  // 0: 3 triangles a bird (a body, two wings), one colour; 1 (A): 8 (body, head, tail, each wing in two parts); 2 (B): 14 (a beak, a
-  // fanned tail, each wing in three parts, the hand beating after the arm); 3 (C): 22 (a body with a back, a head with a crown, the wing's
-  // fingers). From 1 on the colours are the vertices' own (shades of the bird's one colour; a kind's own colours only by a source)
-  const BIRD_TRIS = [3, 8, 14, 22];
+     sweeping over the ground; the wings beat, then the birds glide a while. Not in the rain. One mesh: 22 triangles a bird (a body with
+     a back, a head with a crown, a beak, a fanned tail, each wing an arm, a hand beating after it and its fingers; the user's choice of
+     three, docs/ptice.md), written every frame. The colours are the vertices' own: shades of the bird's one colour (a kind's own colours
+     only by a source) ---------------- */
+  const BIRD_ST = 22 * 9;
   class Birds {
     constructor(n) {
-      this.n = n;
-      this.mat = new THREE.MeshBasicMaterial({ color: 0x2a2c31, side: THREE.DoubleSide });
-      this.mesh = new THREE.Mesh(new THREE.BufferGeometry(), this.mat); this.mesh.frustumCulled = false; this.mesh.castShadow = true; this.mesh.visible = false;
-      this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] }));
-      this.setDetail(0);
-    }
-    setDetail(d) {
-      d = Math.max(0, Math.min(3, d | 0)); this.detail = d; this.st = BIRD_TRIS[d] * 9;
-      const g = new THREE.BufferGeometry(); this.pos = new Float32Array(this.n * this.st);
+      this.n = n; this.st = BIRD_ST;
+      this.mat = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, side: THREE.DoubleSide });
+      const g = new THREE.BufferGeometry(); this.pos = new Float32Array(n * BIRD_ST); this.col = new Float32Array(n * BIRD_ST);
       this.attr = new THREE.BufferAttribute(this.pos, 3); this.attr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('position', this.attr);
-      this.col = null; this.cattr = null;
-      if (d) { this.col = new Float32Array(this.n * this.st); this.cattr = new THREE.BufferAttribute(this.col, 3); this.cattr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('color', this.cattr); }
+      this.cattr = new THREE.BufferAttribute(this.col, 3); this.cattr.setUsage(THREE.DynamicDrawUsage); g.setAttribute('color', this.cattr);
       g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
-      this.mesh.geometry.dispose(); this.mesh.geometry = g;
-      this.mat.vertexColors = !!d; this.mat.needsUpdate = true; this._hex();
+      this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.castShadow = true; this.mesh.visible = false;
+      this.flocks = [0, 1].map((k) => ({ on: false, wait: 3 + k * 7 + Math.random() * 5, m: [] }));
     }
-    _hex() { this.mat.color.setHex(this.detail ? 0xffffff : this.gull ? 0xe6e9ec : 0x2a2c31); }
-    reset(gull) { this.gull = !!gull; this._hex(); for (const f of this.flocks) { f.on = false; f.wait = (2 + Math.random() * 8) * (this.rare || 1); } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; }
-    // one bird of detail 1 to 3 into the buffers at o: its place (x, y, z), heading (ch, sh), size sc, half span, the arm's and the hand's angle
+    reset(gull) { this.gull = !!gull; for (const f of this.flocks) { f.on = false; f.wait = (2 + Math.random() * 8) * (this.rare || 1); } this.vx = this.vz = 0; this.cx = this.cz = null; this.pos.fill(0); this.attr.needsUpdate = true; }
+    // one bird into the buffers at o: its place (x, y, z), heading (ch, sh), size sc, half span, the arm's and the hand's angle
     _bird(o, x, y, z, ch, sh, sc, span, a1, a2) {
-      const P = this.pos, C = this.col, d = this.detail, gull = this.gull;
+      const P = this.pos, C = this.col, gull = this.gull;
       const R = gull ? 0.9 : 0.165, G = gull ? 0.914 : 0.173, B = gull ? 0.925 : 0.192;
       let k = 1;
       const v = (fw, sd, up) => { P[o] = x + ch * fw * sc - sh * sd; P[o + 1] = y + up; P[o + 2] = z + sh * fw * sc + ch * sd; C[o] = Math.min(1, R * k); C[o + 1] = Math.min(1, G * k); C[o + 2] = Math.min(1, B * k); o += 3; };
       const w = 0.07 * sc, hw = 0.045 * sc, up = 0.05 * sc;
-      // the body
-      k = 1;
-      if (d < 3) { v(0.2, 0, 0); v(-0.02, -w, 0); v(-0.02, w, 0); v(-0.02, -w, 0); v(-0.26, 0, 0); v(-0.02, w, 0); }
-      else { v(0.2, 0, 0); v(-0.02, -w, 0); v(0, 0, up); v(0.2, 0, 0); v(0, 0, up); v(-0.02, w, 0); k = 0.88; v(-0.02, -w, 0); v(-0.26, 0, 0); v(0, 0, up); v(0, 0, up); v(-0.26, 0, 0); v(-0.02, w, 0); }
-      // the head (C: with a crown), the beak (B, C)
+      // the body with its back
+      v(0.2, 0, 0); v(-0.02, -w, 0); v(0, 0, up); v(0.2, 0, 0); v(0, 0, up); v(-0.02, w, 0); k = 0.88; v(-0.02, -w, 0); v(-0.26, 0, 0); v(0, 0, up); v(0, 0, up); v(-0.26, 0, 0); v(-0.02, w, 0);
+      // the head with its crown, the beak
       k = gull ? 1.04 : 0.86;
-      if (d < 3) { v(d > 1 ? 0.34 : 0.37, 0, 0.01 * sc); v(0.2, -hw, 0); v(0.2, hw, 0); }
-      else { v(0.34, 0, 0.01 * sc); v(0.2, -hw, 0); v(0.26, 0, up); v(0.34, 0, 0.01 * sc); v(0.26, 0, up); v(0.2, hw, 0); }
-      if (d > 1) { k = gull ? 0.72 : 1.9; v(0.43, 0, 0); v(0.31, -0.016 * sc, 0.012 * sc); v(0.31, 0.016 * sc, 0.012 * sc); }
-      // the tail: one piece (A), a fan of two (B) or three (C)
+      v(0.34, 0, 0.01 * sc); v(0.2, -hw, 0); v(0.26, 0, up); v(0.34, 0, 0.01 * sc); v(0.26, 0, up); v(0.2, hw, 0);
+      k = gull ? 0.72 : 1.9; v(0.43, 0, 0); v(0.31, -0.016 * sc, 0.012 * sc); v(0.31, 0.016 * sc, 0.012 * sc);
+      // the tail: a fan of three
       k = gull ? 0.93 : 0.8;
-      if (d === 1) { v(-0.22, 0, 0); v(-0.42, -w, 0); v(-0.42, w, 0); }
-      else if (d === 2) { v(-0.22, 0, 0); v(-0.44, -0.09 * sc, 0); v(-0.46, 0, 0); v(-0.22, 0, 0); v(-0.46, 0, 0); v(-0.44, 0.09 * sc, 0); }
-      else { v(-0.22, 0, 0); v(-0.43, -0.11 * sc, 0); v(-0.46, -0.035 * sc, 0); v(-0.22, 0, 0); v(-0.46, -0.035 * sc, 0); v(-0.46, 0.035 * sc, 0); v(-0.22, 0, 0); v(-0.46, 0.035 * sc, 0); v(-0.43, 0.11 * sc, 0); }
-      // the wings: the arm to the elbow (angle a1), the hand beyond it (a2); the tip swept back
+      v(-0.22, 0, 0); v(-0.43, -0.11 * sc, 0); v(-0.46, -0.035 * sc, 0); v(-0.22, 0, 0); v(-0.46, -0.035 * sc, 0); v(-0.46, 0.035 * sc, 0); v(-0.22, 0, 0); v(-0.46, 0.035 * sc, 0); v(-0.43, 0.11 * sc, 0);
+      // the wings: the arm to the elbow (angle a1), the hand beyond it (a2), the fingers; the tip swept back
       const r0 = 0.05 * sc, r1 = span * 0.46, r2 = span * 0.8;
       const s1 = r0 + Math.cos(a1) * (r1 - r0), u1 = Math.sin(a1) * (r1 - r0), s2 = s1 + Math.cos(a2) * (r2 - r1), u2 = u1 + Math.sin(a2) * (r2 - r1), s3 = s1 + Math.cos(a2) * (span - r1), u3 = u1 + Math.sin(a2) * (span - r1);
       for (let q = -1; q <= 1; q += 2) {
-        const kin = gull ? 0.8 : 1.18, kout = gull ? 0.62 : 0.84, ktip = gull ? 0.2 : 0.66;
-        if (d === 1) { k = kin; v(0.12, q * r0, 0); v(-0.14, q * r0, 0); v(-0.13, q * s1, u1); k = kout; v(0.12, q * r0, 0); v(-0.13, q * s1, u1); v(-0.1, q * s3, u3); continue; }
-        k = kin; v(0.12, q * r0, 0); v(-0.14, q * r0, 0); v(-0.15, q * s1, u1); v(0.12, q * r0, 0); v(-0.15, q * s1, u1); v(0.1, q * s1, u1);
-        if (d === 2) { k = kout; v(0.1, q * s1, u1); v(-0.15, q * s1, u1); v(-0.16, q * s2, u2); k = ktip; v(0.1, q * s1, u1); v(-0.16, q * s2, u2); v(-0.08, q * s3, u3); continue; }
-        k = kout; v(0.1, q * s1, u1); v(-0.15, q * s1, u1); v(-0.17, q * s2, u2); v(0.1, q * s1, u1); v(-0.17, q * s2, u2); v(0.02, q * s2, u2);
-        k = ktip; v(0.02, q * s2, u2); v(-0.07, q * s2, u2); v(-0.06, q * s3, u3); v(-0.07, q * s2, u2); v(-0.17, q * s2, u2); v(-0.16, q * (s2 + (s3 - s2) * 0.8), u2 + (u3 - u2) * 0.8);
+        k = gull ? 0.8 : 1.18; v(0.12, q * r0, 0); v(-0.14, q * r0, 0); v(-0.15, q * s1, u1); v(0.12, q * r0, 0); v(-0.15, q * s1, u1); v(0.1, q * s1, u1);
+        k = gull ? 0.62 : 0.84; v(0.1, q * s1, u1); v(-0.15, q * s1, u1); v(-0.17, q * s2, u2); v(0.1, q * s1, u1); v(-0.17, q * s2, u2); v(0.02, q * s2, u2);
+        k = gull ? 0.2 : 0.66; v(0.02, q * s2, u2); v(-0.07, q * s2, u2); v(-0.06, q * s3, u3); v(-0.07, q * s2, u2); v(-0.17, q * s2, u2); v(-0.16, q * (s2 + (s3 - s2) * 0.8), u2 + (u3 - u2) * 0.8);
       }
     }
     update(dt, cx, cz, gH) {
@@ -3369,20 +3351,14 @@ const Render = (function () {
           for (const m of f.m) {
             if (b >= this.n) break;
             m.fl -= dt; if (m.fl < -1.6) m.fl = 1 + Math.random() * 1.6;   // beating (fl > 0), then gliding
-            const flap = m.fl > 0 ? Math.sin(m.ph += dt * (this.gull ? 9 : 13)) * 0.55 : 0.12, lift = Math.sin(flap) * span;
+            const flap = m.fl > 0 ? Math.sin(m.ph += dt * (this.gull ? 9 : 13)) * 0.55 : 0.12;
             const x = f.x + ch * m.fw - sh * m.sd, z = f.z + sh * m.fw + ch * m.sd, y = f.y + m.up + Math.sin((m.bob += dt * 1.3)) * 0.25;
-            const pt = (fw, sd, up, o) => { P[o] = x + ch * fw - sh * sd; P[o + 1] = y + up; P[o + 2] = z + sh * fw + ch * sd; };
-            const o = b * this.st;
-            if (this.detail) { this._bird(o, x, y, z, ch, sh, sc, span, flap, m.fl > 0 && this.detail > 1 ? Math.sin(m.ph - 0.7) * 0.8 : flap * 1.3); b++; continue; }
-            pt(0.34 * sc, 0, 0, o); pt(-0.3 * sc, -0.06 * sc, 0, o + 3); pt(-0.3 * sc, 0.06 * sc, 0, o + 6);                     // body
-            pt(0.13 * sc, 0.04 * sc, 0, o + 9); pt(-0.15 * sc, 0.04 * sc, 0, o + 12); pt(-0.08 * sc, span, lift, o + 15);          // right wing
-            pt(0.13 * sc, -0.04 * sc, 0, o + 18); pt(-0.15 * sc, -0.04 * sc, 0, o + 21); pt(-0.08 * sc, -span, lift, o + 24);      // left wing
-            b++;
+            this._bird(b * this.st, x, y, z, ch, sh, sc, span, flap, m.fl > 0 ? Math.sin(m.ph - 0.7) * 0.8 : flap * 1.3); b++;
           }
         }
       }
       for (let k = b * this.st; k < this.n * this.st; k++) P[k] = 0;
-      this.attr.needsUpdate = true; if (this.cattr) this.cattr.needsUpdate = true;
+      this.attr.needsUpdate = true; this.cattr.needsUpdate = true;
     }
   }
 

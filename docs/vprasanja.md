@@ -125,6 +125,8 @@ Ptice so zdaj ploščat trikotnik s kriloma (3 trikotniki). Tri podrobnejše obl
 3. C: 22 trikotnikov (še prsti peruti, vrat, širši rep).
 4. Pusti sedanjo ptico.
 
+Odgovor (uporabnik, 24. 11.): **3 · C, 22 trikotnikov.** Izvedeno na veji PR #1060.
+
 ## Preklic
 
 Ko uporabnik reče »prekliči zbiranje vprašanj« ali spremeni ure, seja na računu (in vsakem drugem, kjer je nastavljeno) izbriše ali spremeni štiri opravila (`list_triggers`, nato `delete_trigger` ali `update_trigger`), sejo zbiranja arhivira (`archive_session`) in tu v Stanju zapiše datum. Stran ostane.
