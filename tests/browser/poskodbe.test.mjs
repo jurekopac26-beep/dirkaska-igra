@@ -49,11 +49,11 @@ try {
     o.cars = R.cars.length;
     set('dmgDet', 0); o.pre0 = meas(); o.i0 = info(); set('dmgDet', 1); o.pre1 = meas(); o.i1 = info();
     { set('dmgDet', 0); fr(3); const q = rv[19]; const lc = []; for (const am of [0.06, 0.08, 0.1]) { Core.applyDamage(q, am, q.m.len / 2, 0); fr(3); const V = Render.viewOf(q); lc.push([am, q.cd.map(x => +x.toFixed(3)), V.lCr && V.lCr.slice(), V.lightBroken.slice()]); } o.lc = lc; set('dmgDet', 1); fr(3); }
-    let rc = 0; const MR = Math.random; Math.random = function () { rc++; return MR(); };
+    let rc = 0; const MR = Math.random, rcS = {}; Math.random = function () { rc++; if (rc <= 400) { const k = (new Error().stack || '').split('\n').slice(2, 4).map(l => l.trim().replace(/^at /, '').replace(/https?:\/\/[^/]+\//, '')).join(' < '); rcS[k] = (rcS[k] || 0) + 1; } return MR(); };
     const H = [[0.15, 1, 0], [0.12, -1, 0.5], [0.12, 0.5, 1], [0.12, -0.5, -1], [0.15, 1, -0.6], [0.1, -1, -0.4]];
     const knocked = rv.slice(0, 19);
     for (const c of knocked) for (const h of H) Core.applyDamage(c, h[0], h[1] * c.m.len / 2, h[2] * c.m.wid / 2);
-    fr(40); o.rcKnock = rc; Math.random = MR;
+    fr(40); o.rcKnock = rc; o.rcS = rcS; Math.random = MR;
     o.post1 = meas(); o.ip1 = info(); o.dmg = +(knocked.reduce((s, c) => s + c.dmg, 0) / knocked.length).toFixed(2);
     set('dmgDet', 0); o.post0 = meas(); set('dmgDet', 1); fr(40); o.post1b = meas();
     // player's dents across a rebuild
@@ -72,7 +72,7 @@ try {
   T.check('2.0 the lamp car untouched before the knocks (cd 0, dmg 0)', r.lampPre.i >= 0, JSON.stringify(r.lampPre));
   T.check('2. Preproste: a light knock cracks the lamp it leaves whole', !L[0][2] && L[1][2] && L[1][2][0] > 0 && !L[1][3][0], JSON.stringify(L[1]));
   T.check('2. Preproste: a harder knock breaks it', L[2][3][0] === 1, JSON.stringify(L[2]));
-  T.check('3. knocks: Math.random not called', r.rcKnock === 0, String(r.rcKnock));
+  T.check('3. knocks: Math.random not called', r.rcKnock === 0, r.rcKnock ? r.rcKnock + ' ' + JSON.stringify(r.rcS) : '0');
   T.check('3. six blows on 19 rivals: calls ≤ 360, vertices < 900 thousand', r.post1[0] <= 360 && V(r.post1), `${r.post1} (Preproste ${r.post0}), dmg ${r.dmg}`);
   T.check('3. back to Podrobne after Preproste: the same', Math.abs(r.post1b[0] - r.post1[0]) <= 3, `${r.post1} / ${r.post1b}`);
   T.check('4. the dents survive the view built again', r.clN > 0 && r.clSame[0] && r.clSame[1], `${r.clN} clusters, ${r.clSame}`);

@@ -55,7 +55,7 @@ try {
   // (crV 4, Trki med avti: Stara: the knocks as when tests/golden/perf.json was recorded, as perf.test.mjs has them: the knock moves the cars
   // otherwise and with it where the field-cost samples below fall and how many rivals are in view there; a car's cost is the same in every version)
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', shadows: 1, camera: 'chase', zoom: 1.2, damage: 2, weather: 'dry', crV: 4 }, { width: 844, height: 390 }, { seed: 4242 });
-  const warns = []; page.on('console', m => { if (m.type() === 'warning' && !/generic kit hatch: fallback:look null/.test(m.text())) warns.push(m.text()); });
+  const warns = []; page.on('console', m => { if (m.type() === 'warning' && !/generic kit hatch: fallback:look null/.test(m.text()) && !/GL Driver Message \(OpenGL, Performance, [^)]*\): GPU stall due to ReadPixels/.test(m.text())) warns.push(m.text()); });   // (the stall note: this test's own read-backs of the picture, Render.snapshot + getImageData in »the wrecks as seen«; the game reads pixels only on a photo or a replay shot)
   // the counting wrap (as perf.test.mjs) and the page's helpers
   await page.evaluate(() => {
     window.__gl = { calls: 0, verts: 0 };
@@ -198,7 +198,7 @@ try {
   // ---- 4. in a race on Bakreni gozd: each vehicle as the player and as a rival ----
   await page.evaluate((id) => { window.__game.S.car = Core.MODELS.findIndex(m => m.id === id); }, kits.length ? kits[0].id : 'rally');
   await startTrack(page, 'gozd');
-  const R4 = [], bodyKey = (id) => id === 'kolibri' ? 'body:dirtyCarCgS' : 'body:dirtyCarCg';   // (the KOLIBRI's body: its side scrapes' own program, render.js XT_SCR)
+  const R4 = [], NOSCR = new Set(['formula', 'lm', 'blisk', 'strelica', 'mravlja', 'goljat']), bodyKey = (id) => NOSCR.has(id) ? 'body:dirtyCarCg' : 'body:dirtyCarCgS';   // (a closed body: its side scrapes' own program, render.js XT_SCR, scrFrame; none: the open-wheelers, the prototype, the bodies much narrower than the car)
   for (const m of kits) {
     const r = await page.evaluate((id) => {
       const g = window.__game, M = Core.MODELS.find(q => q.id === id), FL = window.__fl;
@@ -286,7 +286,7 @@ try {
     R4.every(r => r.lod.ok), R4.filter(r => !r.lod.ok).concat(R4).slice(0, 4).map(r => `${r.id} (${r.lod.lose} off): off / again / back ${r.lod.got.join(' / ')} of ${r.lod.want.join(' / ')}`).join(' | '));
   T.check('a crushed roof: nothing moves outside the roof\'s footprint (body.crush), a noCrush range only whole, the lining with its shell (each point by its twin), the cabin and floor stay; dents never move a noDent range',
     R4.every(r => r.crushOk), R4.filter(r => !r.crushOk).concat(R4.filter(r => r.cr.nc || r.cr.moved)).slice(0, 4).map(r => `${r.id}: ${r.cr.moved} moved, ${r.cr.outside} outside, noCrush ${r.cr.nc} (spread ${r.cr.spread.toFixed(4)}), lining off ${r.cr.lining}, stray ${r.cr.stray}, noDent moved ${r.ndMoved}`).join(' | '));
-  T.check('the materials the graphics test expects: the bodies \'dirtyCarCg\' (the KOLIBRI\'s \'dirtyCarCgS\': its side scrapes), any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')),
+  T.check('the materials the graphics test expects: the bodies \'dirtyCarCgS\' (the side scrapes; a body without a flank \'dirtyCarCg\'), any paint \'carCg\' (player and rival)', R4.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')),
     R4.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | '));
   T.check('no colour that is not glass within 0.06 of a glass colour (the paint and the stripe aside)', R4.every(r => !r.near), R4.filter(r => r.near).slice(0, 3).map(r => `${r.id}: ${r.near} vertices, e.g. ${r.nearC.map(c => c.toFixed(3))}`).join(' | '));
   T.check('the start number lit on every K.number panel (as many bars as the car\'s number has)', R4.every(r => r.num !== false), lim(r => r.num === false) || R4.filter(r => r.num).map(r => r.id).join(', '));
@@ -422,7 +422,7 @@ try {
   T.check('the marshals\' refit (wreck.fix): the wheels back on, no bare hubs, the body up off its hubs (level, down by the bent wheels\' 0.25 rw at most, P3, and no lower than it sat on its hubs, give or take 1 mm), nothing of the sag\'s offset left (it limped through a corner on its hubs first)', R5.every(refitOk),
     R5.filter(r => !refitOk(r)).concat(R5).slice(0, 4).map(r => `${r.id} shown ${r.refit.shown} hubs ${r.refit.hubs} xz ${r.refit.xz.toExponential(1)} tilt ${r.refit.tilt.toExponential(1)} drop ${r.refit.drop.toFixed(4)} (on its hubs ${r.refit.drop0.toFixed(4)}, 0.25 rw ${(0.25 * r.refit.rw).toFixed(4)})`).join(', '));
   T.check('a repair: the car built afresh (whole, its outer shell, every wheel on), its pieces on the road still drawn', R5.every(r => r.rebuilt && r.onRoad === r.nPieces), R5.map(r => `${r.id} rebuilt ${r.rebuilt}, ${r.onRoad}/${r.nPieces} pieces drawn`).slice(0, 6).join(', '));
-  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCg\', the KOLIBRI\'s \'dirtyCarCgS\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
+  T.check('the wreck\'s materials keep their program keys (the body and its pieces \'dirtyCarCgS\', a body\'s without a flank \'dirtyCarCg\', any paint \'carCg\')', R5.every(r => r.keys.length && r.keys.every(k => k === bodyKey(r.id) || k === 'paint:carCg')), R5.filter(r => !r.keys.length || r.keys.some(k => k !== bodyKey(r.id) && k !== 'paint:carCg')).slice(0, 3).map(r => r.id + ' ' + r.keys.join(',')).join(' | ') || R5.map(r => r.id + ' ' + r.keys.join(',')).slice(0, 3).join(' | '));
 
   // ---- 4d. the wreck as a player sees it (stage B2: pictures at 844x390, the chase camera at zoom 1.2), each vehicle (the 11 too: the wreck
   //          look is every vehicle's) as the player on Bakreni gozd, paused and stepped: the car whole, then Core.wreckCar and its fire
