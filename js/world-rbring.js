@@ -1357,7 +1357,8 @@
         }
       }
     }
-    if (LK.roos) {   // Bathurst: kangaroos in mobs on the open pastures 60-220 m from the road (out.dyn.roos: World.update moves them)
+    if (LK.roos && !(World.noAnimals && World.noAnimals(API.T && API.T.def))) {   // (a circuit has no animals, 24. 11. 2026: World.noAnimals, js/world-zivali.js)
+    //   // Bathurst: kangaroos in mobs on the open pastures 60-220 m from the road (out.dyn.roos: World.update moves them)
       const RR = rng(4343), L2 = [], ok = (x, z) => nrLC(x, z) !== 1 && nrDist(x, z) > 30 && nrSlope(x, z) < 0.35;
       for (let tries = 0, mobs = 0; tries < 500 && mobs < 7; tries++) {
         const x = P.x0 + 150 + RR() * (P.x1 - P.x0 - 300), z = P.z0 + 150 + RR() * (P.z1 - P.z0 - 300), rd = nrDist(x, z);

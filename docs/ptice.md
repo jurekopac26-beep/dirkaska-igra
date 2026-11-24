@@ -1,7 +1,7 @@
 # Ptice in živali: raziskava in načrt
 
 Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7120588492). Veja `grafika/ptice-zivali-bt`.
-**Stanje: raziskava v teku, kode še ni.** Pravilo: najprej raziskava po virih, nato koda.
+**Stanje 24. 11.:** točki 1 in 2 sta v kodi (PR #1060); raziskava delna; podrobne ptice, vrste po državah in slike še čakajo (glej »Predaja«).
 
 ## Odločitev (povzetek)
 
@@ -11,7 +11,7 @@ Odločitev uporabnika 24. 11. 2026 (tabla #382, komentar 7120588492). Veja `graf
 4. Vrsta ptice po državi proge: število v jati, formacija, let (mahanje ali jadranje), vse po virih.
 5. Pred `main`: 2–3 možnosti podrobnosti s slikami, potrdi uporabnik.
 
-## Kje je kaj v kodi (ugotovljeno, še nespremenjeno)
+## Kje je kaj v kodi
 
 - Skupina proge: `gr(d)` v `js/menu.js` (~vrstica 104): `test` → test, `rally` ali `descent && timeTrial` → rally, `open` → road, sicer `circuit`.
 - Živali: `World.life(o)` v `js/world-zivali.js` (~758), seznami `ZIV`, `SCENE`, žive `goLive`; testne proge že izstopijo (`def.test`).
@@ -63,6 +63,28 @@ Predlog je delovna domneva seje, **ne vir**. Vsaka vrstica potrebuje vir za kraj
 | Azijski odprtokljuni štrk | Tajska (Buriram) | potrjeno [16]; število manjka |
 | Kravja čaplja | Filipini, Indonezija, Šrilanka, Malezija | potrjena Šrilanka [17]; formacija manjka |
 | Še brez raziskave | Avstralija, Kanada, ZDA, Čile, Jamajka, Sveta Lucija, Katar, Bahrajn, Kenija, Tanzanija, Angola, Madagaskar, Južna Afrika, Zelenortski otoki, Alžirija, Uzbekistan, Južna Koreja, Kitajska, Romunija, Norveška, Fidži, Samoa, Palau, Papua Nova Gvineja | vrsta še ni izbrana |
+
+## Narejeno v kodi (24. 11.)
+
+- `World.noAnimals(def)` v `js/world-zivali.js`: res za skupino `circuit` (kot `gr` v meniju), razen zamrznjenih (`pending`).
+  Na takih progah `World.life` ne postavi prizorov (`SCENE`), čred ne živih živali; jase obdržijo samo stvari (`Z.t`). 25 dirkališč.
+- Kenguruji v Bathurstu (`LK.roos`, `js/world-rbring.js`): na dirkališču jih ni.
+- Ptice (`Birds`, `js/render.js`): `birds.rare = 5` na dirkališčih; čakanje je 5-kratno in še 4-kratni čas zadnjega preleta,
+  torej so v zraku petino časa kot drugje.
+- Test `tests/browser/zivali.test.mjs`: Nürburg, Bathurst in Spa brez živali; Katu-Jaryk, Caracoles, Medvode kot prej.
+- **Odprto vprašanje:** zamrznjena dirkališča Crystal Palace, London, Marrakech so nespremenjena (pravilo o zamrznjenih progah).
+  Zvoki živali ob progi (`js/sfx-okolje.js`, golobi `zivali.city`) so nespremenjeni.
+
+## Predaja (naslednja seja)
+
+1. Raziskava: dopolniti tabeli (države »še brez raziskave«, številke jat, formacije); `en.wikipedia.org` iz okolja ni dosegljiv.
+2. Podrobne ptice v `Birds`: zdaj 9 oglišč na ptico, ena barva materiala. Predlog treh možnosti za slike:
+   A ~8 trikotnikov (trup, glava, krilo v 2 delih, rep), B ~14 (krilo v 3 delih, kljun, barve po ogliščih), C ~22 (še prsti peruti, vrat ali noge po vrsti).
+   Barve vrste zahtevajo atribut `color` in `vertexColors`; ostane en klic risanja. 16 ptic × 22 trikotnikov = ~1000 oglišč, daleč pod mejo.
+3. Vrsta po državi: polje v datoteki proge (npr. `ptice: { vrsta, n: [min, max], formacija, let }`), samo za potrjene vrstice; sicer sedanja ptica.
+   Formacije: klin, vrsta, ohlapna jata, gosta jata, posamič ali par (jadranje v krogu). `Birds` uporablja `Math.random` (ne semena dirke).
+4. Slike zdaj in potem, 2–3 možnosti; vprašanje na stran Odločitve (`docs/vprasanja.md`); sporočilo koordinaciji.
+5. `npm run golden:update`, če se spremeni `tests/golden/perf.json` (dirkališča imajo manj mrež).
 
 ## Naslednji koraki
 
