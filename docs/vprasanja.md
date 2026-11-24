@@ -4,6 +4,7 @@ Odločitev uporabnika 3. 11. 2026 (seja »Dnevna vprašanja za seje«): »Pripra
 
 ## Na kratko
 
+- **Od 24. 11. 2026 (uporabnik): vsak dan ob 23.00 vsa vprašanja in vsi ok-ji vseh sej računa na strani Odločitve, s slikami, klikom na pravi odgovor in poljem za komentar; velja za vse štiri račune** (tabla 7140887694). Na jure.kopac26 to dela opravilo »Vprašanja v slikah (23.00)« ob 22.31 v sveži seji (Sonnet, obvestilo push); krogi ob 10.30 in 14.30 se ne vračajo (vprašanja enkrat na dan, zetoni-5).
 - Seja zapiše vprašanje na stran Odločitve svojega računa takoj, ko ga ima, in dela naprej pri tem, kar od odgovora ni odvisno (ali konča korak). Uporabnika ne sprašuje v pogovoru in ga ne obvešča sproti (brez `PushNotification`).
 - Stalna seja »Zbiranje vprašanj« vsak dan pobere vprašanja vseh sej računa in jih pripravi do **10.30, 14.30 in 23.00** po ljubljanskem času (opravilo po urniku jo zbudi 19 minut prej). Ob 10.29, 14.29 in 22.59 dobi uporabnik eno obvestilo na telefon: koliko vprašanj čaka in povezavo na stran.
 - Uporabnik tapne možnost in stran odgovor shrani. Stran sejam ne more pošiljati sporočil (povezava »Claude Code Remote« tega stranem ne dovoli: `blocked_by_policy`, preizkus 3. 11. 2026), zato **seja, ki je vprašala, odgovor prebere sama** ob 10.50, 14.50 ali 23.20 (razdelek Odgovor). Kar ostane neprebrano, ji sporoči zbiranje.
