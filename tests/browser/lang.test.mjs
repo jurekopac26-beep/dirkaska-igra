@@ -89,8 +89,13 @@ try {
   T.check('a friend\'s race in English (Wait for a friend, Private room with a code)', /Wait for a friend/.test(o5) && /Private room with a code/.test(o5) && !so.length, JSON.stringify({ o5: o5.slice(0, 200), so }));
   await act('to-title'); await page.waitForTimeout(200);
 
-  // 6. a race: the HUD, the pause, the results
-  await startTrack(page, 'jezero');
+  // 6. a race: the HUD, the pause, the results. Both races of this test start with Odpadlo kolo: Dirka teče naprej (the wheel rule is
+  //    the race's own, set at its start; the setting is back at once, so the settings screen below is as ever): since paket P (K.1) every
+  //    model, the KAZE RS too, is under the rule, and with damage Vklop a crushed front corner pulls the autopilot's steering as well
+  //    (P3), so 2 of 26 such races on the autopilot ended with a wheel off, GAME OVER (wheels.test.mjs), and the results never came.
+  //    Without the rule even a car wrecked at the start drives its three laps on the autopilot (156 s, whole 152 s)
+  const startRace = async () => { await page.evaluate(() => { window.__game.S.wheelOver = 0; }); await startTrack(page, 'jezero'); await page.evaluate(() => { window.__game.S.wheelOver = 1; }); };
+  await startRace();
   await page.evaluate(() => window.__game.sim(8, true));
   // sim() advances the race but does not redraw the HUD (that happens on the next frame); drive a frame so h-lap reflects the running race, not its initial markup
   await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -116,8 +121,8 @@ try {
 
   // 6b. a vehicle of the fleet: the MIŠKA (Small cars, its engine at the back) on the car screen; then the KAZE RS in a race destroyed
   //     (wreckCar): VEHICLE DESTROYED with Retire on the HUD, the pause with View the car and Retire, the first tap asks (Really retire?
-  //     and the toast), the second retires: the results with Retired; nowhere a Slovenian word. (The KAZE RS: no parts that come off, so
-  //     no wheel rule; a vehicle with them, the MIŠKA too, is under it since 1. 11. 2026, game.js WHEEL_RULE: its wreck loses its wheels
+  //     and the toast), the second retires: the results with Retired; nowhere a Slovenian word. (Odpadlo kolo: Dirka
+  //     teče naprej, startRace above: under the wheel rule, every model since paket P K.1, the next knock takes a wheel of the wreck
   //     and the game is over, GAME OVER, wheels.test.mjs)
   await act('to-title'); await page.waitForTimeout(200);
   await page.evaluate(() => { const g = window.__game; g.S.car = Core.MODELS.findIndex(m => m.id === 'miska'); g.onAction('to-car'); }); await page.waitForTimeout(300);
@@ -125,7 +130,7 @@ try {
   const sF = await slovene();
   T.check('a vehicle of the fleet in English: "Small cars · 4/8", "Rear-engined. A tiny Italian city car from the 60s ... hp, 560 kg."', f6.cat === 'Small cars · 4/8' && /^Rear-engined\. A tiny Italian city car from the 60s, [^.]*\. \d+ hp, 560 kg\.$/.test(f6.desc) && /MIŠKA/.test(f6.strip) && !sF.length, JSON.stringify({ f6, sF }));
   await page.evaluate(() => { window.__game.S.car = 0; });   // (the KAZE RS, as the title below expects too)
-  await startTrack(page, 'jezero');
+  await startRace();
   const w6 = await page.evaluate(async () => { const g = window.__game, P = g.race.player, raf = () => new Promise(q => requestAnimationFrame(q));
     g.pause(); g.sim(5, true); Core.wreckCar(P); g.sim(1, true); g.resume(); for (let i = 0; i < 6; i++) await raf();
     for (let i = 0; i < 150 && !document.getElementById('h-wreck').classList.contains('show'); i++) await raf();   // (a slow machine: the banner comes with the first HUD frame after the wreck, not always within six)
