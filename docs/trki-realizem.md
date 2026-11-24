@@ -2232,7 +2232,7 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 
 **Odprto, ne čaka**
 - Sa Calobra, seme 81, cv 6: igralčev avto na avtopilotu obtiči ob ograji (četrti del).
-- Narisana karoserija nizkih celih avtov pri polnem zaviranju seže skozi cesto (četrti del; drža v risanju).
+- Narisana karoserija nizkih celih avtov pri polnem zaviranju seže skozi cesto (četrti del; drža v risanju). Popravljeno 24. 11. (`poseFit`, razdelek »Krog 24. 11. 2026«).
 - K3 na Medvodah: kosi v coni krožišča nimajo meja kot avti (razdelek »Krog 20. 11. 2026, drugi del«); ob odločitvi o Medvodah.
 - Po namestitvi koles redarjev vrnjena kolesa ostanejo zvita do popravila v boksih (opažanje, ni spremenjeno).
 
@@ -2251,3 +2251,21 @@ Zbrano iz razdelkov zgoraj; o vprašanjih uporabnika ta razdelek ničesar ne odl
 
 **Zaprto v drugem delu kroga (20. 11. 2026)**
 - Dotik s prometom v Realistični, zrcalni prizori z zavijanjem (0/0), gruščasti prah (Spa in splošni graditelj), test žleba, meritve cv 6, meritev K3 (preverjanje 46b).
+
+## Krog 24. 11. 2026: osnutki v veji, svež `main`, drža nizkih avtov
+
+**Osnutki spojeni v `trki/realizem` (squash).** #834 kup poškodovanih avtov (`be69def0`, `trki-obremenitev-kup-19-11` = 2: ob več kot 6 poškodovanih tekmecih v pogledu ostanejo polni 3 najbližji kameri, ostali so spet ena mreža; vrh klicev na startu 403 → 299, `tools/trki/obremenitev-trk.mjs`), #822 pas odrgnin na vseh polnih telesih (`34197abc`), #835 Nastavitve »Trk s prometom« (`0b63e722`, `trki-tovornjak-20-11` = 1), #836 avto počez (`8eec0165`, `trki-ozke-proge-20-11` = 2). Osnutke zapre Združevanje ob združitvi #608.
+
+**Svež `main` v vejo (`0c316c94`, `main` `c4671dab`).** `tests/golden/sim.json` (504) in `races.json` (360) sta izračunana na spojenem drevesu in tristransko preverjena: kar je spremenil samo `main`, je enako `main`, kar samo veja, enako veji, razen treh voženj po odprti cesti (pikes/crash, pikesg/car, katu/car), kjer je drugačen samo povzetek (mainovo novo prečkanje črt na odprti cesti, potrjeno s poskusom; vodilni in pokritost trkov enaka). `tests/lib/sim.js`, `CRASH_AT`: trije novi časi trka za mainove nove vožnje, kjer je levi zasuk avto samo vdrl (Tapini tovornjak 20 s, Krásna Hôrka reli 5 s, Kanaba 5 s).
+
+**Betonski zidovi novih prog (`trki-prah-zid-20-11` = 1).** `node tools/trki/barkind.mjs` na šestih progah, ki so prišle z `main` (tapini, irishtown, vaoala, krasnahorka, longyearbyen, mapileng): samo -1 (nič) in 0 (jeklena ograja), vrste 1 (beton ali kamen) ni na nobeni. Mapileng (splošni svet brez ograje) funkcije `world.barKind` nima, kar izrisovalnik bere kot -1 (orodje zato vrne izhod 1; ni napaka igre). Kode ni treba.
+
+**Vrata starejših modelov.** Odgovor 20. 11. (»sprednja prevelika, zadnja premajhna; ostali avti na sliki so ok«) velja za JEŽEK E; ta ostane, kot je, do odgovora na `trki-vrata-jezek-20-11`. Pri ostalih ni dela.
+
+**Drža nizkih avtov ne seže več skozi cesto (`poseFit`, `js/render.js`).** Izrisovalnik karoserijo nagne (do 0,06 rad × `sway`) in potopi (do 0,045 rad × `sway`) okoli izhodišča avta, ne glede na to, koliko je pod njo prostora: nizek avto z dolgim previsom je pri polnem zaviranju z nosom, pri polnem plinu z zadkom segel skozi asfalt (superkombi: nos 13,9 cm navzdol pri 4,5 cm reže). Zdaj `poseFit(v, roll, pitch, low)` vrne delež 0..1 obeh kotov, pri katerem vsaka točka zunanje lupine ostane nad cesto: 1 cm (isto pravilo kot poves `kitSag`), točka, ki že v mirovanju leži nižje od 2 cm, do polovice svoje višine. Upošteva poves poškodovanega vogala (`sagQ`, `sagP`), spuščene vzmeti (`dl.low`) in odpadle dele (`deadV`). Točke, ki jih najširša drža sploh lahko pripelje tako nizko, se poiščejo enkrat in na novo samo ob spremembi oblike (vdrtina, odpadel del), povesa ali vzmeti; večina avtov nima nobene (delež 1 brez računanja). Glajena `v.roll` in `v.pitch` ostaneta, kot sta; prevračanje in padec čez rob nista omejena. Samo risanje: fizika, zapisi dirk in zlate reference nespremenjeni; brez novih mrež, materialov in klicev risanja.
+- Meritev `node tools/trki/iskre-vogal.mjs` (meri z `Render.poseFit`; `--surovo`: drža brez omejitve, kot prej), najnižja točka lupine celega avta nad cesto, cm, prej → zdaj. Polno zaviranje: formula -0,5 → 1; lm -5,9 → 1; modras -3,3 → 1; lev -4,1 → 1; kozorog -2,6 → 1; tornado -6,4 → 1; bizon 0 → 1; superkombi -9,4 → 1; orel -2,5 → 1. Poln plin: formula -3,4 → 1; lm -3,7 → 1; lev -2,6 → 1; medved -1,5 → 1; gams -2,1 → 1; superkombi -3,2 → 1; tur -7,3 → 1. Ostalih 45 od 57 modelov: do števke enako (drža cela).
+- Povešen vogal (bend 1) z največjim zaviranjem in nagibom: pri 34 modelih prej -24,8 … 0,1 cm, zdaj 0,5 … 1 cm (formula in lm, ki nimata kita in se povesita brez pravila 1 cm: toliko kot v mirovanju, -1,4 in -2,7). Iskre P4.4 (prag 1,5 cm) zato ostanejo, kjer so bile; `tests/browser/poskodbe.test.mjs`, del 8, nespremenjen in zelen (bend 1: reža 1 cm, 39–40 isker/s).
+- Videz: potop nosu pri polnem zaviranju je pri naštetih avtih manjši (toliko, kolikor je reže), pri vseh drugih enak. Sliki ZDAJ/POTEM in potrditev: seznam za »ok« 24. 11.
+- Opažanje, ni spremenjeno: 8 starejših modelov brez kita (kaze, vortex, pico, strega, rally, muscle, ev, truck) ima zadnji kolesi v mreži karoserije, zato se z držo vred pogrezneta v cesto (poln plin -4,2 … -5,6 cm, tovornjak -12,5 cm). `poseFit` jih pusti pri miru (najnižje točke so gume; omejitev bi jim vzela ves nagib). Lastnost starih mrež, ne trkov.
+
+**Odprto naprej (ne čaka):** Sa Calobra seme 81 (igralčev avto na avtopilotu obtiči ob ograji; avtopilot igralca nima vzvratne ne reševanja, to je testno okolje); Cusco seme 71 (naleti v gneči pri avtu počez, 46 → 109 %); zvita vrnjena kolesa po namestitvi redarjev; K3 Medvode ob odločitvi. **Čaka na uporabnika:** kot v »Stanje odprtega 20. 11. 2026« (`trki-vrata-jezek-20-11`, `trki-iskre-vogal-20-11`, meja klicev razbitine `ev` 38 > 37, F3) in potrditev seznama 24. 11.

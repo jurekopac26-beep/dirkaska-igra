@@ -4,7 +4,8 @@
 //   node tools/trki/iskre-vogal.mjs --json     the same as JSON
 // How: the game opened in the test browser, a race started (the renderer's shared resources), then every model's car built as the
 // garage builds it (Render.garageCar: the same makeCarMesh a race's view is) and posed as updateCars poses it (js/render.js):
-//   bodyG.rotation (roll, 0, pitch), bodyG.position.y = |roll| x 0.4, then the sag (kitSag's plane, written again here: a bent wheel's
+//   bodyG.rotation (roll, 0, pitch) x the share the road leaves (Render.poseFit, the game's own: a low body never leans or dives
+//   through the road; --surovo: the pose whole, as it was drawn before that), bodyG.position.y = |roll| x 0.4, then the sag (kitSag's plane, written again here: a bent wheel's
 //   corner 0.25 rw down at bend 1, least squares over the four corners; a kit car's scaled back so its outer shell stays 1 cm over the
 //   road; one wheel off: 0.6 rw down, the plane through that corner and the two next to it), then the whole car's pitch (grp: gpitch).
 // The gap: the lowest y of the body's vertices (a kit car: its outer shell, the parts on it; another: the body mesh) in the car's frame,
@@ -18,12 +19,12 @@
 //              vy (m/s) at 30 m/s forward that draws it (the renderer's gpitch in the air: 0.8 x atan2(vy, max(vl, 6)))
 import { serve, launch, openGame, startTrack } from '../../tests/browser/lib.mjs';
 
-const json = process.argv.includes('--json');
+const json = process.argv.includes('--json'), raw = process.argv.includes('--surovo');
 const srv = await serve(); const browser = await launch();
 try {
   const { page, errors } = await openGame(browser, srv.base + '/index.html', { quality: 'normal', detail: 'low', shadows: 0, camera: 'chase', damage: 2, weather: 'dry', carId: 'tornado', carV: 3, dmgDet: 1 }, { width: 480, height: 270 }, { seed: 12345 });
   await startTrack(page, 'spa');
-  const rows = await page.evaluate(() => { const g = window.__game; g.pause(); const T = THREE, out = [];
+  const rows = await page.evaluate((raw) => { const g = window.__game; g.pause(); const T = THREE, out = [];
     const solve3 = (R) => { const det = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
       const A = R.map(r => r.slice(0, 3)), D = det(A); if (!(Math.abs(D) > 1e-12)) return null; return [0, 1, 2].map(j => det(A.map((r, i) => r.map((q, cc) => cc === j ? R[i][3] : q))) / D); };
     for (const M of Core.MODELS) { let v; try { v = Render.garageCar(M, 0xcc3333, 0, true); } catch (e) { out.push({ id: M.id, err: String(e.message || e) }); continue; }
@@ -38,9 +39,11 @@ try {
         if (K) { for (let i = 0; i < nO; i++) { const d = s[0] + s[1] * pa[i * 3] + s[2] * pa[i * 3 + 2]; if (d < 0) a = Math.min(a, Math.max(0, pa[i * 3 + 1] - 0.01) / -d); }
           if (K.E.W.xm != null) for (const z of [-hw, hw]) { const d = s[0] + s[1] * K.E.W.xm + s[2] * z; if (d < 0) a = Math.min(a, K.E.W.gap / -d); }
           if (!(a > 1e-3)) return null; s[0] *= a; s[1] *= a; s[2] *= a; }
-        return { q: new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(-s[1], 1, -s[2]).normalize()), y: s[0], a }; };
+        return { q: new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), new T.Vector3(-s[1], 1, -s[2]).normalize()), y: s[0], p: new T.Vector3(0, s[0], 0), a }; };
       // the pose as updateCars lays it; the lowest vertex of the body in the car's frame (the road: y 0)
-      const gap = (roll, pitch, S, gp, kc) => { v.grp.position.set(0, 0, 0); v.grp.rotation.set(0, 0, gp || 0, 'YZX'); v.bodyG.rotation.set(roll, 0, pitch); v.bodyG.position.set(0, Math.abs(roll) * 0.4, 0);
+      const gap = (roll, pitch, S, gp, kc) => { v.grp.position.set(0, 0, 0); v.grp.rotation.set(0, 0, gp || 0, 'YZX');
+        v.sagQ = S ? S.q : null; v.sagP = S ? S.p : null; if (!raw) { const f = Render.poseFit(v, roll, pitch, 0); roll *= f; pitch *= f; }   // (the game's own share of the pose, js/render.js poseFit)
+        v.bodyG.rotation.set(roll, 0, pitch); v.bodyG.position.set(0, Math.abs(roll) * 0.4, 0);
         if (S) { v.bodyG.quaternion.premultiply(S.q); v.bodyG.position.applyQuaternion(S.q); v.bodyG.position.y += S.y; }
         v.grp.updateMatrixWorld(true); const m = v.body.matrixWorld; let lo = Infinity, at = null;
         for (let i = 0; i < nO; i++) { if (kc != null) { const x = pa[i * 3], z = pa[i * 3 + 2]; if ((kc < 2) !== (x > 0) || (kc % 2 === 1) !== (z > 0)) continue; }   // (kc: that corner's quarter of the body only)
@@ -58,13 +61,13 @@ try {
       let a0 = 0, a1 = 0.6; for (let i = 0; i < 30; i++) { const mid = (a0 + a1) / 2; if (gap(0, 0, null, -mid).lo > 0) a0 = mid; else a1 = mid; }
       o.kot = +(a1 * 180 / Math.PI).toFixed(1); o.vy = +(30 * Math.tan(a1 / 0.8)).toFixed(1);
       out.push(o); if (Render.garageFree) try { Render.garageFree(v); } catch (_) { /* shared */ } }
-    return out; });
+    return out; }, raw);
   if (json) console.log(JSON.stringify(rows, null, 1));
   else { const H = ['avto', 'telo', 'kit', 'mir', 'zav', 'plin', 'ovn', 'P3 mir', 'a', 'P3 zav+ovn', 'kolo', 'kot deg', 'vy m/s'], pad = (s, n) => String(s).padEnd(n);
     console.log('== iskre P4.4: najnizja tocka narisane karoserije nad cesto (cm)'); console.log(H.map((h, i) => pad(h, i < 2 ? 12 : 11)).join(''));
     for (const o of rows) console.log(o.err ? `${o.id}: ${o.err}` : [o.id, o.body, o.kit ? 'da' : 'ne', o.mir, o.zav, o.plin, o.ovn, o.p3, o.p3a, o.p3dyn, o.kolo, o.kot, o.vy].map((h, i) => pad(h, i < 2 ? 12 : 11)).join(''));
     const ok = rows.filter(o => !o.err), min = (f) => Math.min(...ok.map(f).filter(Number.isFinite));
-    console.log(`najmanj: mir ${min(o => o.mir)}, zav ${min(o => o.zav)}, ovn ${min(o => o.ovn)}, P3 mir ${min(o => o.p3)}, P3 zav+ovn ${min(o => o.p3dyn)}, kolo ${min(o => o.kolo)} cm; kot ${min(o => o.kot)} deg, vy ${min(o => o.vy)} m/s`);
+    console.log(`najmanj: mir ${min(o => o.mir)}, zav ${min(o => o.zav)}, plin ${min(o => o.plin)}, ovn ${min(o => o.ovn)}, P3 mir ${min(o => o.p3)}, P3 zav+ovn ${min(o => o.p3dyn)}, kolo ${min(o => o.kolo)} cm; kot ${min(o => o.kot)} deg, vy ${min(o => o.vy)} m/s`);
     console.log(`dotik (<= 1 cm): P3 mir ${ok.filter(o => o.p3 <= 1.05).map(o => o.id).join(', ') || 'nobeden'}; P3 zav+ovn ${ok.filter(o => o.p3dyn <= 1.05).map(o => o.id).join(', ') || 'nobeden'}; cel zav ${ok.filter(o => o.zav <= 1.05).map(o => o.id).join(', ') || 'nobeden'}; cel ovn ${ok.filter(o => o.ovn <= 1.05).map(o => o.id).join(', ') || 'nobeden'}`);
     if (errors.length) console.log('napake strani: ' + errors.slice(0, 3).join(' | ')); }
 } finally { await browser.close(); await srv.close(); }
