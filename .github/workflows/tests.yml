@@ -134,6 +134,7 @@ jobs:
       - run: npm run test:node
         env:
           TEST_TIMEOUT_MIN: 45   # (omejitev enega testa; privzeto 15 min, races.test.js na počasnem stroju 13–14 min, s 29 novimi progami 20 min in raste z vsako progo)
+          TEST_SLOW: 2   # (ali dvakratni čas testa iz NODE_SECS v tests/run.js, če je daljši: races.test.js 23 min 19. 11. z 68 progami, meja 46 min; privzeto 4 za oblačno sejo)
           TEST_PADLI: padli-node.txt   # (imena padlih testov za posel Vzrok)
       - if: ${{ failure() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4
@@ -143,19 +144,20 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-  # Brskalniški testi na šestih strojih hkrati: tests/run.js --shard k/6 razdeli teste po tem, koliko časa traja vsak (SECS v
-  # tests/run.js, mediane 6 krogov 5. 11. 2026: ~61 min na del na stroju srednje hitrosti, memory sam v svojem delu; GitHubovi stroji so
-  # 0,5- do 1,35-krat tako hitri). Celoten nabor na enem stroju bi trajal ~6 h in se z vsako novo progo podaljša.
+  # Brskalniški testi na desetih strojih hkrati: tests/run.js --shard k/10 razdeli teste po tem, koliko časa traja vsak (SECS v
+  # tests/run.js, mediana treh krogov 22. in 23. 11. 2026: ~61 min na del, memory, memory2 in perf vsak v svojem delu; GitHubovi
+  # stroji so do 1,5-krat počasnejši: 23. 11. je bilo v osmih delih 64–109 min, v šestih 94–115 min). Celoten nabor na enem
+  # stroju bi trajal ~10 h in se z vsako novo progo podaljša.
   browser:
-    name: Igra v brskalniku (${{ matrix.shard }}/6)
+    name: Igra v brskalniku (${{ matrix.shard }}/10)
     needs: koda
     if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 160   # (en del ~61 min, na počasnem stroju ~85 min; več kot omejitev testa memory (2 × SECS = 122 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
+    timeout-minutes: 160   # (en del ~61 min, na počasnem stroju ~90 min; več kot omejitev testa memory (2 × SECS = 112 min) in ostalih testov v njegovem delu, da se tudi obstali test konča s povzetkom; pri 120 min je počasen stroj 4. 11. prekinil del 4 pri zadnjem testu)
     strategy:
       fail-fast: false   # (vsak del do konca: napaka v enem ne ustavi drugih)
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -164,7 +166,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps --only-shell chromium   # (testi tečejo v Chromium headless shell: celotnega Chromiuma ne rabijo)
-      - run: npm run test:browser -- --shard ${{ matrix.shard }}/6
+      - run: npm run test:browser -- --shard ${{ matrix.shard }}/10
         env:
           TEST_TIMEOUT_MIN: 30   # (omejitev enega testa; privzeto 15 min, smoke in memory gresta čez vse proge)
           TEST_SLOW: 2   # (ali dvakratni čas testa iz SECS, če je daljši; privzeto 4 za počasnejši stroj oblačne seje)
@@ -182,7 +184,7 @@ jobs:
     needs: koda
     if: ${{ !cancelled() && needs.koda.result != 'skipped' && needs.koda.outputs.preverjeno != 'true' && needs.koda.outputs.vrsta != 'proge' && needs.koda.outputs.vrsta != 'dokumenti' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60   # (nabor traja na CI 11–28 min, odvisno od stroja; pri 30 min ga je počasen stroj prekinil tik pred koncem)
+    timeout-minutes: 90   # (nabor traja na CI 42 min 19. 11. 2026, browser/fleet 18 min in deli 8 min, in raste z vsakim vozilom; na počasnem stroju do dvakrat toliko; pri 30 min ga je počasen stroj prekinil tik pred koncem)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -193,6 +195,7 @@ jobs:
       - run: npx playwright install --with-deps --only-shell chromium
       - run: npm run test:fleet
         env:
+          TEST_SLOW: 2   # (test ima 15 min ali dvakratni čas iz NODE_SECS v tests/run.js, če je daljši: deli 16 min, browser/fleet 36 min; privzeto 4 za oblačno sejo)
           TEST_PADLI: padli-vozila.txt
       - if: ${{ failure() && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4

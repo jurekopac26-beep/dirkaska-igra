@@ -8,6 +8,7 @@
 //   node tests/browser/smoke2.test.mjs           the other half of the tracks (SMOKE_DEL=2), the title demo, the rain and the runs (5-6e):
 //                                                each part within GitHub's time limit (over 60 min with every track in one; tests/run.js SECS)
 //   SMOKE_DEL=vse node tests/browser/smoke.test.mjs  everything in one go (PROGE: all of it in the first part, the second has nothing)
+//   SMOKE_SEME=<n>                               another run from the police on Vršič (6d), to try the test on
 import path from 'node:path';
 import url from 'node:url';
 import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate, checker } from './lib.mjs';
@@ -15,6 +16,7 @@ import { ROOT, serve, launch, openGame, startTrack, trackIds, izbrane, simulate,
 const T = checker('smoke');
 const DEL = process.env.SMOKE_DEL || '1', PROGE = !!(process.env.PROGE || '').trim(), DRUGI = DEL === '2', VSE = DEL === 'vse';
 const ENA = !DRUGI, DVA = DEL !== '1' || PROGE;   // (the checks of the first part, of the second; both with SMOKE_DEL=vse or PROGE)
+const SEME = +process.env.SMOKE_SEME || 7;   // (the run from the police on Vršič repeatable: the dice its race's seed is drawn from at its start, 6d)
 if (DRUGI && PROGE) { T.check('the second half: PROGE\'s tracks and every other check in the first part (smoke.test.mjs)', true, ''); T.done(); process.exit(0); }
 const srv = await serve();
 const browser = await launch();
@@ -76,22 +78,31 @@ try {
   // 3 s put back on the road after each second, like a player tapping Na progo: the autopilot has no reverse gear and the race rescues only
   // the rivals (Trki med avti, Simulacija: a rival's tap on a rear quarter spins the player; out of Tianmen's first hairpin the rival behind it on its left
   // can push it off the road into the barrier, where it stood for the rest of the 20 s). The other autopilot races do the same (radio, fuel,
-  // memory; races.test.js, lib/sim.js)
+  // memory; races.test.js, lib/sim.js). The 20 s are 20 s of the race, counted from the green light (race.time): the jets' intro on the circuits
+  // with them (7.4 s) and the lights (4.5-5.4 s, a random hold) took 12-13 of them, so the grid had ~9 s left, and the random hold, the rivals'
+  // random launches and the pack decided over the 200 m (Kagerod 23. 11. on GitHub: -88 m from -166 m, Batangas 1 m, Buriram 32 m; locally
+  // 253-321 m). And the autopilot also in the game's own frames between the seconds (autoDrive, as the police drive below): before, the
+  // player's car stood or rolled there with no hands, up to 10 steps a frame on a slow machine (docs/nestabilni-testi.md, cause 1)
   const drive = (sec) => page.evaluate(async (sec) => {
     const g = window.__game; let nan = false, resc = 0;
-    for (let i = 0; i < sec; i++) {
-      g.sim(1, true);
-      const R = g.race, P = R && R.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) { R.rescue(P); resc++; }
-      await new Promise(r => requestAnimationFrame(r));
-      for (const c of g.race.cars) if (!Number.isFinite(c.x) || !Number.isFinite(c.z) || !Number.isFinite(c.speed)) nan = true;
-    }
-    return { nan, resc };
+    g.autoDrive = true;
+    try {
+      for (let i = 0; i < sec + 15; i++) {   // (at most 15 s of intro and lights on top)
+        const R0 = g.race, P0 = R0 && R0.player;
+        if (P0 && (P0.finished || g.phase === 'finish' || g.phase === 'done' || (g.phase === 'racing' && R0.time >= sec))) break;
+        g.sim(1, true);
+        const R = g.race, P = R && R.player; if (P && !P.inPit && !P.finished && (P.stuckT > 3 || P.wrongT > 3)) { R.rescue(P); resc++; }
+        await new Promise(r => requestAnimationFrame(r));
+        for (const c of g.race.cars) if (!Number.isFinite(c.x) || !Number.isFinite(c.z) || !Number.isFinite(c.speed)) nan = true;
+      }
+    } finally { g.autoDrive = false; }
+    return { nan, resc, rt: g.race ? +g.race.time.toFixed(1) : 0 };
   }, sec);
   for (const id of ids) {
     const e0 = errors.length;
     await startTrack(page, id);
     const d0 = await page.evaluate(() => window.__game.race.player.dist);   // (where it starts: its slot on the grid, or a flying start's place in the column below the line)
-    const { nan, resc } = await drive(20);
+    const { nan, resc, rt } = await drive(20);
     const r = await page.evaluate(() => { const g = window.__game, P = g.race.player; return { phase: g.phase, fin: !!P.finished, dist: Math.round(P.dist), phys: P.phys, crew: Render.crew ? Render.crew.men.length : 0, id: g.race.track.def.id, pit: !!g.race.track.def.pit }; });
     // (more than 200 m from where it started in 20 s, measured from there: a car that does not move stays there; the player at the back of
     // 22 cars on a grid stands up to ~170 m behind the line; a flying start (an open road, the Nordschleife's 100 cars) puts it 3 s below the
@@ -99,7 +110,7 @@ try {
     const crewOk = r.pit ? r.crew > 0 : r.crew === 0;   // (pit crews on the circuits with a pit lane)
     // (a road shorter than 20 s, Ghoufi's 0.57 km: across the line, the race over; the sign below then on the race started again)
     T.check(`${id}: 20 s race on autopilot`, (r.phase === 'racing' || r.fin) && r.dist - d0 > 200 && r.phys === 'cs' && !nan && crewOk && errors.length === e0,
-      `${r.fin ? 'at the finish, ' : ''}dist ${r.dist} m (from ${Math.round(d0)} m), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
+      `${r.fin ? 'at the finish, ' : ''}dist ${r.dist} m (from ${Math.round(d0)} m, ${rt} s from the green light), phys ${r.phys}, pit crew ${r.crew}${resc ? `, put back on the road ${resc}x (Na progo)` : ''}${nan ? ', NaN!' : ''}${errors.length > e0 ? ', errors: ' + errors.slice(e0).join(' | ') : ''}`);
     // the corner sign (#h-note), 20 m before the next one (window.__game.noteAt): lying in the top row, upright high under the clock (the
     // police's block: under it); Pikes Peak in a time trial as well (its own pill is gone)
     const sign = (s) => page.evaluate(async (s) => {
@@ -122,7 +133,10 @@ try {
       for (let k = 0; k < 10; k++) { await drawn(2); const m2 = at(); if (m2.top === m.top && m2.clk === m.clk) break; m = m2; }
       return { s, cls: $('h-note').className, top: m.top, clk: m.clk, disp: getComputedStyle($('h-note')).display, pkn: hud.contains('pkn'), pol: hud.contains('pol'), pkc: hud.contains('pkc') };
     }, s);
-    if (r.fin) await startTrack(page, id);
+    // (the race started again taken to its green light: the sign is shown only while racing (game.js updateNote), and the new race stands
+    // in its intro and lights; Ghoufi got there in real time during the waits below, Tapini's time trial (from 23. 11. across its line in the
+    // 20 s) did not: the sign empty, '' top 12 px on GitHub)
+    if (r.fin) { await startTrack(page, id); await page.evaluate(() => { const g = window.__game; for (let i = 0; i < 150 && g.phase !== 'racing'; i++) g.sim(0.1, true); }); }
     const n1 = await sign(null);
     {
       // (upright: right under the clock's block, 6 px under its bottom as placeNote puts it, or where css puts it higher up, 82 px on this
@@ -243,7 +257,7 @@ try {
   //     Gora, Jasna, the hairpins by number, the huts, the pass); placed below the building at the top, the autopilot drives into it: the
   //     mission done, the rap sheet with the checkpoint
   if (DVA) {
-    const r = await page.evaluate(async () => {
+    const r = await page.evaluate(async (SEME) => {
       const g = window.__game, wait = (ms) => new Promise(r => setTimeout(r, ms)), frame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
       const card = document.querySelector('[data-track="vrsic"]'), btns = [...card.querySelectorAll('.tc-mode button')].map(b => b.textContent);
@@ -266,15 +280,21 @@ try {
       for (const md of ['traffic', 'police']) {   // the open road: the duel in the traffic (30 s), the run from the police (through the checkpoint, then 30 s of the chase)
         g.onAction('to-title'); await wait(250); g.onAction('to-track'); await wait(300);
         document.querySelector('[data-track="vrsic"] .tc-mode button[data-v="' + md + '"]').click(); await wait(200);
-        g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100);
+        // (the run from the police repeatable: its race's seed (the traffic, the cyclists) is drawn from the page's dice at its start. With the
+        // dice as they fell it was a different race each run, and in some the autopilot knocked a cyclist off before the checkpoint and the
+        // run went another way (#770, docs/nestabilni-testi.md). The dice seeded with SMOKE_SEME for the start only, as in pitstats)
+        const R0 = Math.random; if (md === 'police') { let s = SEME; Math.random = () => { s = s * 16807 % 2147483647; return s / 2147483647; }; }
+        try { g.onAction('start'); for (let k = 0; k < 1200 && !(g.race && g.race.track.def.id === 'vrsic' && (md === 'police' ? g.race.pol : g.race.tf && !g.race.pol)); k++) await wait(100); } finally { Math.random = R0; }
         if (md === 'police') {   // the start: the free drive to the checkpoint, through it on autopilot (the officer waves it down: it does not stop)
-          const pol = g.race.pol, pre = { pc: pol.cars.length, mode: pol.cars[0] && pol.cars[0].pol.mode, chkCar: !!(pol.cars[0] && pol.cars[0].pol.chk), lights: false, phases: [], pos: [], heat: [], chk: [], caps: [], radioMode: g.radio && g.radio.mode };
+          const pol = g.race.pol, pre = { seed: g.race.opts.seed, pc: pol.cars.length, mode: pol.cars[0] && pol.cars[0].pol.mode, chkCar: !!(pol.cars[0] && pol.cars[0].pol.chk), lights: false, phases: [], pos: [], heat: [], chk: [], caps: [], radioMode: g.radio && g.radio.mode };
+          g.autoDrive = true;   // (the autopilot at the wheel in every step, the game's own frames between the test's too: they drove with no hands on the wheel, as fast as the machine let them)
           for (let i = 0; i < 70 && pol.stage !== 'chase'; i++) {
-            g.sim(1, true); await frame();
+            g.sim(1, false); await frame();
             pre.lights = pre.lights || document.getElementById('h-lights').classList.contains('show'); pre.phases.push(g.phase);
             if (pol.stage !== 'chase') { pre.pos.push(txt('h-pos')); pre.heat.push(txt('h-heat')); pre.chk.push(pol.chk.st + ':' + txt('h-chk')); }
             if (g.radio.cap) pre.caps.push(g.radio.cap);
           }
+          g.autoDrive = false;
           Object.assign(pre, { stage: pol.stage, why: (pol.log.find(e => e.k === 'fled') || {}).why, seen: pol.log.some(e => e.k === 'chkSeen') });
           out.pre = pre;
           pol.D = Object.assign({}, pol.D, { bust: 1e9 });   // (this run is about what is drawn and said: the autopilot is not to be caught before the mission at the top)
@@ -315,7 +335,7 @@ try {
       }
       g.onAction('to-title'); await wait(250); out.radioOff = !g.radio.mode;
       return out;
-    });
+    }, SEME);
     T.check('Vršič: one card with the switch Dirka / Kronometer / Promet / Policija, a tap on Kronometer picks the track and the time trial',
       r.btns === 'Dirka|Kronometer|Promet|Policija' && r.picked === 'vrsic/tt' && / kronometer/.test(r.meta), `buttons "${r.btns}", picked ${r.picked}, "${r.meta}"`);
     T.check('Vršič time trial: alone, to the pass, its own record and board (vrsic-tt@cs), a medal line',
@@ -334,7 +354,7 @@ try {
       `lights ${Q.lights}, phases ${[...new Set(Q.phases)]}, patrol cars ${Q.pc} (${Q.mode}), HUD ${[...new Set(Q.pos)]} "${[...new Set(Q.heat)]}", radio ${JSON.stringify([...new Set(Q.caps)].slice(0, 3))}, prompts ${JSON.stringify([...new Set(Q.chk)].filter((c, i, a) => i < 2 || i === a.length - 1))}`);
     T.check('Vršič Policija: the autopilot drives through the checkpoint (it does not stop): the chase; the officer shouts, the unit there calls it in (the car\'s colour and model)',
       Q.stage === 'chase' && Q.why === 'skip' && Q.seen && P.log.some(l => /^POLICIST: (Stojte|Hej|Stoj)/.test(l)) && P.log.some(l => /^KG-1: .*kontrol.*Gre za [a-zčšž]+ [A-Z]/.test(l)),
-      `${Q.stage} (${Q.why}), radio: ${JSON.stringify(P.log.slice(0, 7))}`);
+      `${Q.stage} (${Q.why}), the race's seed ${Q.seed}, radio: ${JSON.stringify(P.log.slice(0, 7))}`);
     T.check('Vršič Policija: the chase: patrol cars drawn with their lights flashing, the HUD with the patrol cars after the player and the heat',
       P.mode === 'police' && P.cars === 1 && P.tf && P.pol >= 1 && P.polHud && !P.duel && P.lbl === 'POLICIJA' && P.chased >= 1 && /^\u2605+\u2606*$/.test(P.heat) && P.heat.length === 5 && P.road && P.road.pol >= 1 && P.road.lampOn && P.dist > 300,
       `${P.pol} patrol cars, HUD "${P.lbl} ${P.pos}" (up to ${P.chased} in the chase) "${P.heat}", drawn ${JSON.stringify(P.road)}, ${Math.round(P.dist)} m, ${P.phase}`);
