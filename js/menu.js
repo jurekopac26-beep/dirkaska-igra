@@ -1054,6 +1054,7 @@
     const ok = D.open({
       root: app, view: v, izid: izid || null, from: () => $('.k-strip', app),
       start: (id) => { if (!G.karieraStart(id)) return false; started = true; if (NZ()) NZ().clear(); return true; },   // (refused: the game's toast says why, the valley stays)
+      act: (a) => { dolShut(); act(a); },   // (a place's mode, the dock's garage and shops: the valley shut, the menu's own act)
       close: () => { if (!started && NZ()) NZ().drop('dolina'); if (!dolQuiet && app && app.isConnected && screen === 'title') render(true); },
     });
     if (ok === false) return false;

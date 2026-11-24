@@ -1534,8 +1534,9 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
   #s-track .trow .flag img, #s-track .trow .flag .nf { width: max(36px, calc(60 * var(--u))); height: max(24px, calc(40 * var(--u))); }
 }
 
-/* Career 1.0, the valley (js/kariera-dolina.js): a 3D map of the career over a sky; it opens from the career's strip like the Earth (.zem);
-   the events' badges and the stages' names follow their pins; a tap: the event's card (from below upright, from the right on its side) */
+/* Career 1.0, the valley (js/kariera-dolina.js, Atlas Career): a 3D valley of the career's places under a sky; it opens from the career's strip
+   like the Earth (.zem). Over it the coins and the stars' strip; the places' labels follow their models; under it NEXT, CONTINUE, LIST and the
+   dock; a place, an event: its window (from below upright, from the right on its side) */
 .dol { position: absolute; inset: 0; z-index: 46; overflow: hidden; font-family: var(--f-ui); color: #fff; touch-action: none; -webkit-user-select: none; user-select: none;
   background: linear-gradient(180deg, #8fc3ec 0%, #cfe6f7 55%, #e4f1fa 100%);
   clip-path: circle(var(--zr, 26px) at var(--zx, 50%) var(--zy, 50%)); transition: clip-path .5s cubic-bezier(.3, .7, .2, 1); }
@@ -1544,62 +1545,67 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .dol-pins { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .dol-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .dol-ui > * { pointer-events: auto; }
-.dol-title { position: absolute; left: calc(100px + var(--sl)); right: calc(120px + var(--sr)); top: calc(14px + var(--st)); height: 52px; display: flex; flex-direction: column; justify-content: center; pointer-events: none; }
-.dol-title b { font: 900 italic 34px/1 var(--f-ui); letter-spacing: .02em; text-shadow: 0 2px 0 rgba(10, 30, 60, .45), 0 0 14px rgba(10, 30, 60, .35); }
-.dol-title small { margin-top: 4px; font: 700 12.5px/1.1 var(--f-ui); color: #fff; text-shadow: 0 1px 3px rgba(10, 30, 60, .7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dol-stars { position: absolute; right: calc(14px + var(--sr)); top: calc(14px + var(--st)); height: 52px; display: flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 11px;
-  border: 1.5px solid rgba(255, 255, 255, .38); background: linear-gradient(180deg, var(--steel1), var(--steel2)); color: #fff; font: 900 italic 22px/1 var(--f-ui);
+.dol-title { position: absolute; left: calc(100px + var(--sl)); right: calc(130px + var(--sr)); top: calc(14px + var(--st)); height: 52px; display: flex; flex-direction: column; justify-content: center; pointer-events: none !important; }
+.dol-title b { font: 900 italic 30px/1 var(--f-ui); letter-spacing: .02em; text-shadow: 0 2px 0 rgba(10, 30, 60, .45), 0 0 14px rgba(10, 30, 60, .35); }
+.dol-title small { margin-top: 4px; font: 800 italic 11.5px/1.1 var(--f-ui); letter-spacing: .04em; color: #fff; text-shadow: 0 1px 3px rgba(10, 30, 60, .8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dol-coins { position: absolute; right: calc(14px + var(--sr)); top: calc(20px + var(--st)); height: 40px; display: flex; align-items: center; gap: 7px; padding: 0 13px 0 8px; border-radius: 999px;
+  background: rgba(10, 18, 34, .78); border: 1.5px solid rgba(255, 214, 90, .55); box-shadow: 0 3px 10px rgba(0, 0, 0, .25); pointer-events: none !important; transition: right .3s cubic-bezier(.2, .8, .25, 1); }
+.dol-coins svg { width: 24px; height: 24px; }
+.dol-coins b { font: 900 italic 18px/1 var(--f-ui); color: var(--gold-hi); }
+.dol-strip { position: absolute; left: calc(14px + var(--sl)); right: calc(14px + var(--sr)); top: calc(78px + var(--st)); height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px;
+  border-radius: 11px; border: 1.5px solid rgba(255, 255, 255, .38); background: linear-gradient(180deg, var(--steel1), var(--steel2)); color: #fff;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 0 var(--steel-sh); cursor: pointer; transition: right .3s cubic-bezier(.2, .8, .25, 1); }
-.dol-stars i { font-style: normal; color: var(--gold); font-size: 20px; }
-.dol-stars small { font: 700 13px/1 var(--f-ui); color: #c9d4e6; }
-.dol-stars:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 1px 0 var(--steel-sh); }
-.dol-rail { position: absolute; right: calc(12px + var(--sr)); top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; transition: opacity .2s; }
-.dol-rail button { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255, 255, 255, .5);
-  background: linear-gradient(180deg, var(--steel1), var(--steel2)); color: #fff; font: 900 italic 17px/1 var(--f-ui); box-shadow: 0 3px 0 var(--steel-sh); cursor: pointer; }
-.dol-rail button.off { color: #c3cad6; opacity: .78; }
-.dol-rail button svg { width: 16px; height: 16px; }
-.dol-rail button.cur { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 50%, var(--gold-lo)); border-color: #fff0b0; color: var(--gold-ink); box-shadow: 0 3px 0 var(--gold-sh); }
-.dol-rail button.cur.off { color: #4a3a00; }
-.dol.carded:not(.side) .dol-rail { opacity: 0; pointer-events: none; }
-.dol-hint { position: absolute; left: 50%; bottom: calc(26px + var(--sb)); transform: translateX(-50%); padding: 9px 16px; border-radius: 999px; background: rgba(8, 13, 24, .72);
-  font: 600 13px/1 var(--f-ui); white-space: nowrap; pointer-events: none !important; transition: opacity .3s; }
-.dol-hint.gone { opacity: 0; }
+.dol-strip > i { font-style: normal; color: var(--gold); font-size: 19px; }
+.dol-strip > b { font: 900 italic 19px/1 var(--f-ui); min-width: 24px; }
+.dol-strip .bar { flex: 1 1 auto; height: 10px; border-radius: 5px; background: rgba(0, 0, 0, .3); }
+.dol-strip .bar b { border-radius: 5px; }
+.dol-strip em { font: 800 italic 11.5px/1 var(--f-ui); font-style: italic; letter-spacing: .03em; color: var(--gold-hi); white-space: nowrap; }
+.dol-strip:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), 0 1px 0 var(--steel-sh); }
 
-/* the badges (an event: its stars over its sign; white open, gold won, steel locked) and the gates' names */
-.dol-ev { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0 0 10px; margin: 0; border: 0; background: none;
-  color: #1b2433; transform-origin: 50% 100%; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; will-change: transform, opacity; --pc: #f4f7fb; }
-.dol-ev::after { content: ''; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); border: 7px solid transparent; border-bottom: 0; border-top: 10px solid var(--pc); }
-.dol-ev i { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f4f7fb; border: 2px solid #fff;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 6px 14px rgba(0, 0, 0, .22), inset 0 -3px 0 rgba(0, 0, 0, .1); }
-.dol-ev i svg { width: 22px; height: 22px; }
-.dol-ev.osvojen { --pc: var(--gold); color: var(--gold-ink); }
-.dol-ev.osvojen i { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); border-color: #fff3c4; }
-.dol-ev.zaklenjen { --pc: #5f6776; color: #dfe4ec; }
-.dol-ev.zaklenjen i { background: linear-gradient(180deg, #7d8697, #565e6d); border-color: rgba(255, 255, 255, .55); }
-.dol-ev.zaklenjen i svg { width: 18px; height: 18px; }
-.dol-ev.zaklenjen .dol-z { visibility: hidden; }
-.dol-ev.fin i { width: 50px; height: 50px; }
-.dol-ev.fin i svg { width: 28px; height: 28px; }
-.dol-ev.sel { z-index: 2000 !important; }
-.dol-ev.sel i { box-shadow: 0 0 0 4px #fff3c4, 0 0 20px 6px rgba(255, 214, 90, .75), 0 3px 0 rgba(0, 0, 0, .25); }
-.dol-ev:focus { outline: none; }
-.dol-ev:focus-visible i { outline: 3px solid #fff; outline-offset: 3px; }
+/* the places' labels: a pill over each model (its sign, its name, its stars; steel and a lock when shut) */
+.dol-pl { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; margin: 0 0 10px; border: 2px solid #fff; border-radius: 999px;
+  background: #f6f8fb; color: #1b2433; cursor: pointer; pointer-events: auto; -webkit-tap-highlight-color: transparent; will-change: transform; white-space: nowrap;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 6px 14px rgba(0, 0, 0, .2); }
+.dol-pl::after { content: ''; position: absolute; left: 50%; bottom: -11px; transform: translateX(-50%); border: 6px solid transparent; border-bottom: 0; border-top: 9px solid #fff; }
+.dol-pl i { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #3d5f94, #26406b); color: #fff; }
+.dol-pl i svg { width: 18px; height: 18px; }
+.dol-pl span { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
+.dol-pl b { font: 900 italic 13px/1 var(--f-ui); letter-spacing: .02em; }
+.dol-pl small { font: 800 10.5px/1 var(--f-ui); color: #8a6200; letter-spacing: .02em; }
+.dol-pl.gold i { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); color: var(--gold-ink); }
+.dol-pl.off { background: linear-gradient(180deg, #8a93a3, #616a7a); border-color: rgba(255, 255, 255, .6); color: #eef1f6; }
+.dol-pl.off::after { border-top-color: rgba(255, 255, 255, .6); }
+.dol-pl.off i { background: rgba(0, 0, 0, .22); }
+.dol-pl.off i svg { width: 14px; height: 14px; }
+.dol-pl.off small { color: #dfe4ec; }
+.dol-pl.sel { z-index: 5; box-shadow: 0 0 0 4px #fff3c4, 0 0 20px 6px rgba(255, 214, 90, .75), 0 3px 0 rgba(0, 0, 0, .25); }
+.dol-pl:focus { outline: none; }
+.dol-pl:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .dol-z { display: inline-flex; gap: 2px; }
 .dol-z u { display: block; width: 14px; height: 14px; background: rgba(255, 255, 255, .3); text-decoration: none;
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .dol-z u.on { background: var(--gold); }
-.dol-ev .dol-z { padding: 3px 5px; border-radius: 8px; background: rgba(10, 16, 28, .74); }
-.dol-ev .dol-z u { width: 11px; height: 11px; }
 .dol-z.big u { width: 26px; height: 26px; background: rgba(255, 255, 255, .18); }
 .dol-z.big u.on { background: var(--gold); }
-.dol-gate { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: rgba(10, 16, 28, .8);
-  font: 800 italic 12px/1 var(--f-ui); letter-spacing: .04em; white-space: nowrap; transform-origin: 50% 100%; pointer-events: none !important; box-shadow: 0 4px 12px rgba(0, 0, 0, .25); will-change: transform, opacity; }
-.dol-gate b { color: var(--gold); }
-.dol-gate em { font-style: normal; color: var(--gold-hi); }
-.dol-gate svg { width: 12px; height: 12px; color: #c3cad6; }
-.dol-gate.off b, .dol-gate.off em { color: #c3cad6; }
 
-/* the event's card */
+/* NEXT, CONTINUE, LIST; the dock (GARAGE, DEALER, WORKSHOP, SCHOOL) */
+.dol-acts { position: absolute; left: calc(14px + var(--sl)); right: calc(14px + var(--sr)); bottom: calc(80px + var(--sb)); display: flex; gap: 8px; }
+.dol-a { flex: 1 1 0; min-width: 0; height: 52px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 10px; border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, .38); background: linear-gradient(180deg, var(--steel1), var(--steel2)); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 0 var(--steel-sh); cursor: pointer; }
+.dol-a[data-list] { flex: 0 0 auto; }
+.dol-a svg { flex: 0 0 auto; width: 18px; height: 18px; }
+.dol-a > span { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font: 900 italic 16px/1 var(--f-ui); letter-spacing: .02em; }
+.dol-a small { max-width: 100%; font: 700 10.5px/1.1 var(--f-ui); font-style: normal; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dol-a.go.gold { min-width: 0; height: 52px; padding: 0 10px; font-size: 16px; color: var(--gold-ink); }
+.dol-a:active { transform: translateY(2px); }
+.dol-dock { position: absolute; left: 0; right: 0; bottom: 0; display: flex; padding: 6px calc(8px + var(--sr)) calc(6px + var(--sb)) calc(8px + var(--sl));
+  background: linear-gradient(180deg, rgba(14, 23, 41, .9), rgba(9, 15, 28, .96)); box-shadow: 0 -4px 16px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .12); }
+.dol-dock button { flex: 1 1 0; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 10px; background: none; color: #dfe7f3; cursor: pointer; }
+.dol-dock button svg { width: 24px; height: 24px; color: #fff; }
+.dol-dock button span { font: 800 italic 10.5px/1 var(--f-ui); letter-spacing: .05em; }
+.dol-dock button:active { background: rgba(255, 255, 255, .08); }
+
+/* the windows: a place's events, an event's card, the list, the trophies */
 .dol-card { position: absolute; left: 0; right: 0; bottom: 0; max-height: min(470px, calc(100% - 150px - var(--st))); display: flex; flex-direction: column; border-radius: 18px 18px 0 0;
   background: linear-gradient(180deg, rgba(26, 39, 66, .97) 0, rgba(17, 28, 49, .98) 120px, rgba(11, 20, 36, .98) 100%); box-shadow: 0 -10px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .14);
   transform: translateY(105%); visibility: hidden; transition: transform .3s cubic-bezier(.2, .8, .25, 1), visibility 0s .3s; }
@@ -1665,30 +1671,86 @@ path.rt { fill: none; stroke: #ffd23a; stroke-width: 6; stroke-linejoin: round; 
 .dol-next { margin: 0; font: 600 13px/1.3 var(--f-ui); color: #dbe6f7; }
 .dol-ob .go { width: 100%; max-width: 300px; margin-top: 4px; }
 
+/* a place's window: its head, its events by stage; the game's modes; the class goals */
+.dol-bk { right: auto; left: 10px; padding: 0; background: rgba(255, 255, 255, .1); }
+.dol-card:has(.dol-bk) .dol-cb > .dol-chips:first-child, .dol-card:has(.dol-bk) .dol-cb > .dol-ph:first-child, .dol-card:has(.dol-bk) .dol-cb > h2:first-child { margin-left: 50px; }
+.dol-ph { display: flex; align-items: center; gap: 10px; padding-right: 44px; margin-bottom: 8px; }
+.dol-ph > i { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(180deg, #3d5f94, #26406b); color: #fff; }
+.dol-ph > i svg { width: 24px; height: 24px; }
+.dol-ph > div { flex: 1 1 auto; min-width: 0; }
+.dol-ph h2 { margin: 0 !important; font-size: 24px !important; }
+.dol-ph p { margin: 3px 0 0; font: 600 12.5px/1.3 var(--f-ui); color: #c9d6ea; }
+.dol-ph > em { font: 900 italic 18px/1 var(--f-ui); font-style: italic; color: var(--gold); white-space: nowrap; }
+.dol-ph > em small { font: 700 12px/1 var(--f-ui); color: #c9d4e6; }
+.dol-list, .dol-modes, .dol-goals { margin: 0 0 8px; padding: 0; list-style: none; }
+.dol-sh { display: flex; align-items: center; gap: 6px; margin: 10px 0 4px; font: 800 italic 11.5px/1 var(--f-ui); letter-spacing: .06em; color: var(--lbl); }
+.dol-sh svg { width: 12px; height: 12px; }
+.dol-sh em { margin-left: auto; font-style: normal; color: var(--gold-hi); }
+.dol-sh.off { color: #8d9bb3; }
+.dol-row, .dol-mode { width: 100%; display: flex; align-items: center; gap: 10px; margin: 0 0 5px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .06); color: #fff; text-align: left; cursor: pointer; }
+.dol-row > i { width: 32px; height: 32px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f4f7fb; color: #1b2433; }
+.dol-row > i svg { width: 18px; height: 18px; }
+.dol-row > span:not(.dol-z), .dol-mode > span { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.dol-row b, .dol-mode b { font: 800 14px/1.15 var(--f-ui); }
+.dol-row small, .dol-mode small { font: 600 11.5px/1.2 var(--f-ui); color: #aebbd0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dol-row.osvojen > i { background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); color: var(--gold-ink); }
+.dol-row.zaklenjen { opacity: .62; }
+.dol-row.zaklenjen > i { background: #5f6776; color: #dfe4ec; }
+.dol-row.zaklenjen > i svg { width: 14px; height: 14px; }
+.dol-row.zaklenjen .dol-z { visibility: hidden; }
+.dol-mode > i { width: 36px; height: 36px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo)); color: var(--gold-ink); }
+.dol-mode > i svg { width: 16px; height: 16px; }
+.dol-mode.off { opacity: .6; cursor: default; }
+.dol-mode.off > i { background: #5f6776; color: #dfe4ec; }
+.dol-h3 { margin: 14px 0 6px; font: 800 italic 12px/1 var(--f-ui); letter-spacing: .06em; color: var(--lbl); }
+.dol-h3 small { font: 600 11px/1 var(--f-ui); letter-spacing: 0; color: #8d9bb3; margin-left: 6px; }
+.dol-goals li { display: flex; align-items: center; gap: 5px; padding: 5px 0; font: 700 13px/1 var(--f-ui); border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.dol-goals li span { flex: 1 1 auto; }
+.dol-goals li.zaklenjen { opacity: .55; }
+.dol-goals u { display: block; width: 16px; height: 16px; background: rgba(255, 255, 255, .2); clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.dol-goals u.on { background: var(--gold); }
+.dol-card .dol-lad { margin-bottom: 6px; }
+.dol-card .dol-lad li span { color: #fff; }
+
 @media (max-height: 700px) and (orientation: portrait) {
-  .dol-title { left: calc(86px + var(--sl)); top: calc(10px + var(--st)); height: 44px; } .dol-title b { font-size: 28px; }
-  .dol-stars { top: calc(10px + var(--st)); height: 44px; font-size: 19px; }
-  .dol-card { max-height: calc(100% - 120px - var(--st)); } .dol-cb h2 { font-size: 24px; }
+  .dol .zem-back { top: calc(10px + var(--st)); height: 46px; width: 68px; }
+  .dol-title { left: calc(90px + var(--sl)); top: calc(10px + var(--st)); height: 46px; } .dol-title b { font-size: 26px; }
+  .dol-coins { top: calc(13px + var(--st)); }
+  .dol-strip { top: calc(66px + var(--st)); height: 36px; }
+  .dol-acts { bottom: calc(70px + var(--sb)); } .dol-a, .dol-a.go.gold { height: 46px; }
+  .dol-dock button { height: 50px; }
+  .dol-card { max-height: calc(100% - 112px - var(--st)); } .dol-cb h2 { font-size: 24px; }
 }
+/* on its side: the strip between the title and the coins; the dock left, the buttons right, one row; the window from the right */
 .dol.side .zem-back { top: calc(10px + var(--st)); width: 64px; height: 44px; }
-.dol.side .dol-title { left: calc(90px + var(--sl)); top: calc(10px + var(--st)); height: 44px; } .dol.side .dol-title b { font-size: 28px; }
-.dol.side .dol-stars { top: calc(10px + var(--st)); height: 44px; font-size: 19px; }
-.dol.side .dol-rail { right: auto; left: calc(12px + var(--sl)); top: calc(50% + 24px); }
-.dol.side .dol-card { left: auto; top: 0; width: min(412px, 60%); max-height: none; padding-right: var(--sr); border-radius: 18px 0 0 18px; transform: translateX(105%);
+.dol.side .dol-title { left: calc(90px + var(--sl)); right: auto; width: 190px; top: calc(10px + var(--st)); height: 44px; } .dol.side .dol-title b { font-size: 24px; }
+.dol.side .dol-coins { top: calc(12px + var(--st)); }
+.dol.side .dol-strip { left: calc(292px + var(--sl)); right: calc(150px + var(--sr)); top: calc(12px + var(--st)); }
+.dol.side .dol-dock { right: auto; width: auto; bottom: calc(8px + var(--sb)); left: calc(8px + var(--sl)); padding: 4px; border-radius: 14px; }
+.dol.side .dol-dock button { flex: 0 0 auto; width: 70px; height: 50px; }
+.dol.side .dol-acts { left: auto; right: calc(10px + var(--sr)); bottom: calc(12px + var(--sb)); width: min(46%, 470px); }
+.dol.side .dol-a, .dol.side .dol-a.go.gold { height: 48px; }
+.dol.side .dol-card { left: auto; top: 0; width: min(412px, 60%); max-height: none; z-index: 3; padding-right: var(--sr); border-radius: 18px 0 0 18px; transform: translateX(105%);
   box-shadow: -10px 0 30px rgba(0, 0, 0, .55), inset 1px 0 0 rgba(255, 255, 255, .14); }
 .dol.side .dol-card.on { transform: none; }
-.dol.side.carded .dol-stars { right: calc(min(412px, 60%) + 14px); }
-.dol.side.carded .dol-title { right: calc(min(412px, 60%) + 130px); }
-.dol.side.carded .dol-hint { left: calc((100% - min(412px, 60%)) / 2); }
+.dol.side.carded .dol-coins, .dol.side.carded .dol-strip { opacity: 0; pointer-events: none; }
+.dol.side.carded .dol-acts { opacity: 0; pointer-events: none; }
+@media (orientation: landscape) and (max-width: 760px) {
+  .dol.side .dol-title { width: 130px; } .dol.side .dol-title small { display: none; }
+  .dol.side .dol-strip { left: calc(232px + var(--sl)); } .dol.side .dol-strip em { display: none; }
+  .dol.side .dol-dock button { width: 56px; } .dol.side .dol-dock button span { font-size: 9px; }
+  .dol.side .dol-a small { display: none; } .dol.side .dol-a[data-list] span { display: none; }
+}
 @media (orientation: landscape) and (max-height: 520px) {
-  .dol.side .zem-back { width: 56px; } .dol.side .dol-title { left: calc(78px + var(--sl)); } .dol.side .dol-title b { font-size: 24px; }
-  .dol.side .dol-rail { gap: 5px; } .dol.side .dol-rail button { width: 34px; height: 34px; font-size: 15px; }
+  .dol.side .zem-back { width: 56px; } .dol.side .dol-title { left: calc(78px + var(--sl)); }
   .dol.side .dol-cb { padding-top: 12px; } .dol.side .dol-cb h2 { font-size: 22px; margin-top: 8px; } .dol.side .dol-cf { padding-top: 6px; }
   .dol-ob { padding: 14px 16px; gap: 7px; } .dol-place { font-size: 44px; } .dol-zz u { width: 36px; height: 36px; }
   .dol-ob h2 { font-size: 22px; } .dol-up { padding: 6px 10px; font-size: 13px; } .dol-ob .go { margin-top: 0; }
   .dol-lad li { grid-template-columns: 26px 1fr auto; gap: 8px; padding: 2px 0; } .dol-lad li > b { width: 24px; height: 24px; font-size: 12px; } .dol-lad li .bar { margin-top: 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .dol, .dol-card, .dol-card.on, .dol-over, .dol-ob, .dol-stars, .dol-rail, .dol-hint { transition: none; }
+  .dol, .dol-card, .dol-card.on, .dol-over, .dol-ob, .dol-strip, .dol-coins, .dol-acts { transition: none; }
   .dol-zz u.new { animation: none; }
 }
