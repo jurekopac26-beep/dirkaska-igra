@@ -29,8 +29,8 @@ check('track: not in the big championship (an open road is no circuit)', !C.CHAM
   // without them (the line, the heights, the barriers' lines), each road from its mouth at most ~60 m into the land
   const T0 = new C.Track(Object.assign({}, def, { stranske: undefined })), same = ['px', 'pz', 'hy', 'bl', 'br'].every(k => T0[k].length === T[k].length && T0[k].every((v, i) => v === T[k][i]));
   const len = def.stranske.map(r => { let l = 0; for (let k = 2; k + 1 < r[6].length; k += 2) l += Math.hypot(r[6][k] - r[6][k - 2], r[6][k + 1] - r[6][k - 1]); return l; });
-  check('road: the 23 side roads from OpenStreetMap (Realizem E) only for the look: the model the same without them, each at most ~60 m from the road',
-    def.stranske.length === 23 && same && len.every(l => l > 5 && l < 70), `${def.stranske.length} roads, ${Math.min(...len).toFixed(0)}-${Math.max(...len).toFixed(0)} m`);
+  check('road: the one side road from OpenStreetMap (Realizem E) only for the look (the other roads of the town are the obcestje of main): the model the same without it, at most ~60 m from the road',
+    def.stranske.length === 1 && same && len.every(l => l > 5 && l < 70), `${def.stranske.length} roads, ${Math.min(...len).toFixed(0)}-${Math.max(...len).toFixed(0)} m`);
 }
 {
   const ws = (def.widths || []).map(w => w[1]);
