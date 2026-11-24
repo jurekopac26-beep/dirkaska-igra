@@ -478,6 +478,7 @@
     if (HS) HS.addTo(sceneryGroup);   // (the builder's houses: one material, the façade atlas)
     if (OK) OK.addTo(sceneryGroup, tex);   // (the ground round them: the asphalt and the makadam, a material each)
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'livorno', { gH: nrGround, slope: API.nrSlope, lc: nrLC, near: nrNear, bad: (x, z) => { const sd = seaD(x, z); return sd > -2 || (sd > -16 && nrDem(x, z) < 2.0) || (BRC.length > 0 && deckH(x, z) != null); } });   // (the roadside ground for the chase camera: js/world-chase-bt18.js)
     out.stats = { tiles: nTiles, trees: nTrees, buildings: nBld, stone: nCast, fans: nFans, rocks: out.rocks };   // (read by the tests)
     if (HS) out.stats.stavbe = HS.stats; if (OK) out.stats.okolica = OK.stats; out.okolica = OK;   // (the ground round the houses: js/world-potke.js)
     return out;

@@ -793,6 +793,8 @@
       out.dyn.condors = { L, x0: T.px[i0], z0: T.pz[i0], y0: T.hy[i0], ax: T.px[i0], az: T.pz[i0], ay: T.hy[i0], t: null };
       caCondors(out.dyn.condors, 0, null); }
     crowdFinish(CR, root, out);
+    if (World.ext && World.ext.goreRob) World.ext.goreRob({ excluded, root, out }, 'caracoles', { gH: caGround, slope: caSlope,
+      bad: (x, z) => { const n = API.vrNear(x, z); return n.i >= 0 && galAt[n.i] !== 0 && n.dd < 1.2; } });   // (the roadside ground for the chase camera: js/world-chase-bt13.js; nothing in a gallery's parapet and pillars)
     out.stats = { plants: nPlants, tiles: P.G.on.reduce((a, b) => a + b, 0), farTiles: nFar, buildings: nBld, rails: +(nRail / (2 * N)).toFixed(3), railway: nRailway, galleries: GAL.length, sideRoads: out.stubStats.n };   // (read by the tests)
     if (HS) out.stats.stavbe = HS.stats;
     return out;

@@ -519,6 +519,7 @@
       G.col = G.cov = P.edge = null;   // (build only)
     }
 
+    if (World.ext && World.ext.goreRob && World.ext.goreRob.LOOK && World.ext.goreRob.LOOK.nring) World.ext.goreRob({ excluded, root, out }, 'nring', { gH: nrGround, slope: nrSlope, lc: nrLC, near: nrNear });   // (the roadside ground: js/world-chase-bt17.js)
     const sceneryGroup = new THREE.Group(); root.add(sceneryGroup);
     scen.addTo(sceneryGroup, matV, true, true);
     if (HS) HS.addTo(sceneryGroup);   // (the builder's houses: one material, the façade atlas)
