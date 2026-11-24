@@ -320,7 +320,8 @@ try {
       // loose: the part with the biggest outer range, its zone at 65 % of its threshold (not one of the face or the tail, which hang loose
       // only once the car is 70 % gone: Core.maskHeld)
       // (not a spare wheel: it rocks by the car's damage, not by its zone, Core.SPARE: rezervna-kolesa.test.mjs; KAMEN's are its biggest)
-      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !PT[n].spare && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
+      // (not a rear quarter: it never opens, kitLoosen: the user's, 24. 11. 2026)
+      const parts = Object.keys(U.ranges).filter(n => n !== 'body' && PT[n] && !PT[n].spare && !/^quarter/.test(n) && !Core.maskHeld(P, n, PT[n])), lp = parts.sort((a, b) => (U.ranges[b].o[1] - U.ranges[b].o[0]) - (U.ranges[a].o[1] - U.ranges[a].o[0]))[0], LR = U.ranges[lp];
       const P0 = Float32Array.from(pa); P.dz[PT[lp].z] = Math.max(P.dz[PT[lp].z], 0.65 * PT[lp].th); F(1);
       let lmx = 0, lrig = 0; const idx = []; for (const [s, e] of [LR.o, LR.i]) for (let i = s; i < e; i++) idx.push(i);
       for (const i of idx) lmx = Math.max(lmx, Math.hypot(pa[i * 3] - P0[i * 3], pa[i * 3 + 1] - P0[i * 3 + 1], pa[i * 3 + 2] - P0[i * 3 + 2]));
