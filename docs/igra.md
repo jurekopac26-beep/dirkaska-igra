@@ -776,11 +776,11 @@ V igri je **54 vozil** v desetih kategorijah, od karta s 30 KM do pošastnega to
 | **KAMEN PUŠČAVA** | 4WD | 1088 KM | 7000 kg | 800.000 kovančkov | Puščavski relijski tovornjak s kabino za motorjem, velikimi kolesi in rezervnimi kolesi. |
 | **TITAN CISTERNA** | zadnji | 1115 KM | 5300 kg in 12 t prikolice | 850.000 kovančkov | TITAN s cisterno na sedlu: prikolica se v ovinku lomi, pri zaviranju potiska in je težka (glej spodaj). |
 | **ZRCALNI VLAK** | 4WD | 1360 KM | 7000 kg in 2 × 11 t cistern | 1.000.000 kovančkov | Cestni vlak: črna kabina, dve zrcalni cisterni in dolly, dva zgiba (glej spodaj). |
-| **TITAN AVTOVOZ** | zadnji | 1115 KM | 5300 kg in 13 t prikolice | 85.000 kovančkov | TITAN z avtovozom: na dveh palubah pelje pet avtov iz igre (glej spodaj). |
-| **KRILO VETRNICE** | zadnji | 1115 KM | 5300 kg in 11 t prikolice | 95.000 kovančkov | TITAN s krilom vetrnice: 27 m dolgo krilo sega daleč čez zadnje osi prikolice (glej spodaj). |
-| **HRAST** | 4WD | 1360 KM | 7000 kg in 14 t prikolice | 88.000 kovančkov | Puščavski vlačilec z gozdarsko prikolico: dva kupa hlodov med koli, en zgib (glej spodaj). |
-| **LASTOVKA** | zadnji | 1115 KM | 11.000 kg | 78.000 kovančkov | Turistični avtobus, 12 m v enem kosu, s prtljago potnikov na strehi (glej spodaj). |
-| **GASILEC** | zadnji | 1115 KM | 7800 kg | 70.000 kovančkov | Gasilsko vozilo z lestvijo: težko in visoko, z modrimi lučmi na strehi kabine (glej spodaj). |
+| **TITAN AVTOVOZ** | zadnji | 1115 KM | 5300 kg in 13 t prikolice | 650.000 kovančkov | TITAN z avtovozom: na dveh palubah pelje pet avtov iz igre (glej spodaj). |
+| **KRILO VETRNICE** | zadnji | 1115 KM | 5300 kg in 11 t prikolice | 700.000 kovančkov | TITAN s krilom vetrnice: 27 m dolgo krilo sega daleč čez zadnje osi prikolice (glej spodaj). |
+| **HRAST** | 4WD | 1360 KM | 7000 kg in 14 t prikolice | 750.000 kovančkov | Puščavski vlačilec z gozdarsko prikolico: dva kupa hlodov med koli, en zgib (glej spodaj). |
+| **LASTOVKA** | zadnji | 1115 KM | 11.000 kg | 900.000 kovančkov | Turistični avtobus, 12 m v enem kosu, s prtljago potnikov na strehi (glej spodaj). |
+| **GASILEC** | zadnji | 1115 KM | 7800 kg | 950.000 kovančkov | Gasilsko vozilo z lestvijo: težko in visoko, z modrimi lučmi na strehi kabine (glej spodaj). |
 
 ### Električni
 
