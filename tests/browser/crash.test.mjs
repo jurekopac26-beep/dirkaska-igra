@@ -169,7 +169,7 @@ try {
     const xc = v.xc, R = xc.rest, a = v.body.geometry.attributes.position.array, B = xc.B; let sL = 0, nL = 0, sR = 0, nR = 0;
     for (let i = 0; i < xc.on; i++) { const y = R[i * 3 + 1], z = R[i * 3 + 2], x = R[i * 3]; if (y < B.y0 + B.H * 0.85 || Math.abs(x) > 1 || (v.kit.deadV && v.kit.deadV[i])) continue; const d = a[i * 3 + 1] - y; if (z < -0.2) { sL += d; nL++; } else if (z > 0.2) { sR += d; nR++; } }
     out.roofL = nL ? sL / nL : 0; out.roofR = nR ? sR / nR : 0;
-    out.rd = v.kit.xRD ? v.kit.xRD.slice() : [0, 0]; out.leftPanes = (v.xP || []).filter(q => q.side === -1).map(q => q.broken);
+    out.rd = v.kit.xRD ? v.kit.xRD.slice() : [0, 0]; Render.frame(1 / 30, 1, P, 'chase', {}); out.qAjar = (v.kit.ajar.quarterL ? 1 : 0) + (v.kit.ajar.quarterR ? 1 : 0); out.leftPanes = (v.xP || []).filter(q => q.side === -1).map(q => q.broken);
     return out; }, hitFn);
   const Gs = gl.r, side = (k) => Gs.sides[k];
   const newIdx = Gs.steps.map((s, j) => s.findIndex((b, k) => b && !(j ? Gs.steps[j - 1][k] : 0)));
@@ -181,7 +181,7 @@ try {
   T.check('mirrors: the first right blow knocks the right one off, the left one stays', !Gs.mir[0] && Gs.mir[1] && Gs.ground === 1, JSON.stringify({ mir: Gs.mir, ground: Gs.ground }));
   T.check('mirrors: it stays on the road while the car drives on', Gs.ground2 === 1, 'ground ' + Gs.ground2);
   T.check('roof: after blows on the left again and again it sinks on the left (the shell; more than the right, hit three times first: the Tornado\'s cage holds both sides\' rails within some 4 cm)', Gs.roofL < -0.03 && Gs.roofL < Gs.roofR - 0.005, 'left ' + Gs.roofL.toFixed(3) + ' right ' + Gs.roofR.toFixed(3));
-  T.check('glass: a rear door swung open has its window broken (both panes on that side)', Gs.rd[0] && Gs.leftPanes.length === 2 && Gs.leftPanes.every(Boolean), JSON.stringify({ rearDoors: Gs.rd, leftPanes: Gs.leftPanes }));
+  T.check('the rear quarter never opens: no rear door swung out, the quarters not ajar (the user\'s, 24. 11. 2026)', !Gs.rd[0] && !Gs.rd[1] && !Gs.qAjar, JSON.stringify({ rearDoors: Gs.rd, quarters: Gs.qAjar }));
   T.check('glass / mirrors / roof: no page errors', !gl.errors.length, gl.errors.slice(0, 3).join(' | '));
 
   // 6. one of the 11, and switching off during a race

@@ -900,7 +900,7 @@ const Render = (function () {
      BREAKING APART (stage B2: render only, from the core's state, the same every time; kitParts)
        loose   a part whose zone has taken 60 % of what knocks it off (c.dz[z] >= 0.6 th) turns once about its hinge, its shell and its
                lining together (enough to see from the chase camera): a bonnet (hood) pops 18 degrees, a boot lid or a tailgate (trunk,
-               tailgate) opens 30, a cover 20, a hardtop and a deflector 14, a door hangs 28 ajar, a fender or a quarter stands 12 out (a
+               tailgate) opens 30, a cover 20, a hardtop and a deflector 14, a door hangs 28 ajar, a fender stands 12 out, a quarter stays shut (a
                side extra 12), a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, an extra at an end of the car tips 10
                off it (one on top tilts as a wing); what lies on it (its lamps, its start number) and the parts mounted on it (their
                entry's on, js/core.js: a number plate, a wiper on a tailgate) turn with it. The hinge:
@@ -7166,7 +7166,7 @@ const Render = (function () {
         try { updateParts(v, c, x, y, z, h); } finally { particles.mute = sparkP.mute = !vis; } }
       if (!v.xOn && !v.rep && v.xtR === undefined && v.kit && XT_MIN.has(c.m.id) && xInitT !== time) { xInitT = time; xtRoof(v); }   // (the Kolibri's default body: its roof field made ahead of its first knock, xtRoof)
       if (v.xOn) { if (!v.xc && xInitT !== time) { xInitT = time; xInit(v); }   // (its damage field made ahead of its first knock, one car a frame: no stall then)
-        xEngine(v, c); if (v.kit) for (const sd of [-1, 1]) if (v.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(v, c, sd, x, y, z, h); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear doors open with the front ones)
+        xEngine(v, c); }   // (Razbijanje · nov način: the grey engine under a lost or torn bonnet; the rear quarter never opens: the user's, 24. 11. 2026)
       repairStep(v, c);   // the pit crew at work: the damage undone bit by bit (render only; Race.repairCar's car built afresh at the end: frame)
       if (v.mrg && v.detDirty) ownRnd(() => remerge(v));   // (a rival's panels, lenses and covers as they are now: one mesh again, after the knocks and the crew of this frame)
       if (v.sagQ && !fb) { v.bodyG.quaternion.premultiply(v.sagQ); v.bodyG.position.applyQuaternion(v.sagQ).add(v.sagP); }   // (a kit car with a wheel off: the body sagged onto that corner, after its own pose (above): kitSag)
@@ -7347,7 +7347,7 @@ const Render = (function () {
      Render only, from the core's state (c.dz, c.cd, c.lost, c.lightOut, c.winOut, c.wreck.wl / fix), the same each time it is drawn:
      - loose: a part whose zone has taken 60 % of what knocks it off (dz >= 0.6 th) turns once about its hinge (K.part opts.hinge,
        K.hinge; else one from its range's box: KIT_LOOSE): a bonnet pops 18 degrees open, a boot lid or a tailgate 30, a door hangs 28 ajar,
-       a fender or a quarter stands 12 out, a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, a deflector tilts 14 up;
+       a fender stands 12 out (a quarter never opens: kitLoosen), a mirror dangles 45, a bumper's free end drops 16 cm, a wing's 12 cm, a deflector tilts 14 up;
        the inner block shows from then on (the gap it opens is not a hole into nothing)
      - lost (c.lost): its live ranges (dented, scraped, loose, frosted) are copied into a geometry of its own (car space: v.loose[name],
        waiting for the core's piece of that car and part: syncDebris), then collapsed to one point inside the car (v.kit.deadV: dents and the
@@ -7362,7 +7362,7 @@ const Render = (function () {
        then builds the car afresh
      Its random numbers: the renderer's own (rRnd). */
   const KIT_LOOSE = { hood: ['lid', 55], trunk: ['lid', 70], tailgate: ['lid', 70], cover: ['lid', 55], hardtop: ['lid', 14], deflector: ['lid', 14], doorL: ['door', 62], doorR: ['door', 62],   // (a loose bonnet, boot lid, door: wide open, as on the showroom's stills of the open car, carShot's o.open)
-    fenderL: ['side', 12], fenderR: ['side', 12], quarterL: ['side', 12], quarterR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
+    fenderL: ['side', 12], fenderR: ['side', 12], mirrorL: ['mirror', 45], mirrorR: ['mirror', 45], bumperF: ['bumper', 0], bumperR: ['bumper', 0], wing: ['wing', 0] };
   const KIT_WHEEL = ['wheelFL', 'wheelFR', 'wheelRL', 'wheelRR'];
   function kitParts(v, c, x, y, z, h) {
     const K = v.kit, U = v.body.geometry.userData, PT = Core.partsOf(c.m), W = c.wreck;
@@ -7438,6 +7438,7 @@ const Render = (function () {
   }
   // the loose stage: part `name` turned once about its hinge (both its ranges, the points and their normals); what lies on it turns with it
   function kitLoosen(v, c, name, deg) {
+    if (/^quarter/.test(name)) return;   // (the rear quarter, the panel behind the doors by the rear wheel, never opens, however wrecked the car: the user's, 24. 11. 2026; the bonnet, the boot and the doors do)
     const K = v.kit, geo = v.body.geometry, R = geo.userData.ranges[name], pa = geo.attributes.position.array, na = geo.attributes.normal.array, M = c.m;
     K.ajar[name] = 1; K.ver++; if (!R || R.o[1] <= R.o[0]) return;
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9, z0 = 1e9, z1 = -1e9; const cen = [0, 0, 0], N = [0, 0, 0], no = R.o[1] - R.o[0];
@@ -8672,27 +8673,6 @@ const Render = (function () {
         torn++; } }
     }
     if (torn) { v.body.geometry.attributes.position.needsUpdate = true; K.xTorn = true; K.ver++; }
-  }
-  // a rear door (the new mode): the quarter's panel from the front door's rear edge to the rear wheel's arch, above the sill, turned out
-  // about its front edge 40 degrees, once (with that side's door open); the lining shows behind it
-  function xRearDoor(v, c, sd, x, y, z, h) {
-    const K = v.kit, si = sd > 0 ? 1 : 0; if (K.xRD && K.xRD[si]) return; (K.xRD || (K.xRD = [0, 0]))[si] = 1;
-    const qn = sd < 0 ? 'quarterL' : 'quarterR', g = v.body.geometry, U = g.userData, R = U.ranges[qn], D = U.ranges[sd < 0 ? 'doorL' : 'doorR'];
-    if (!R || !D || K.dead[qn] || R.o[1] <= R.o[0] || U.ranges[sd < 0 ? 'door2L' : 'door2R']) return;   // (a car with its own rear doors, parts door2L / door2R: they open as parts, the quarter stays)
-    const pa = g.attributes.position.array, na = g.attributes.normal.array, rest = (v.xc && v.xc.rest) || pa, M = c.m;
-    let hx = Infinity; for (let i = D.o[0]; i < D.o[1]; i++) hx = Math.min(hx, rest[i * 3]);
-    const x1 = -M.b * (M.len / 4.4) * 0.98 + M.rw * 1.3, ySill = M.rw * 0.95; if (!(hx - x1 > 0.3)) return;
-    const sel = [], dv = K.deadV || (K.deadV = new Uint8Array(U.N)); let hz = 0;
-    for (const Q of [R.o, R.i]) { if (!Q) continue; for (let t = Q[0] / 3; t < Q[1] / 3; t++) { const o = t * 9; if (dv[t * 3]) continue;
-      const cx = (rest[o] + rest[o + 3] + rest[o + 6]) / 3, cy = (rest[o + 1] + rest[o + 4] + rest[o + 7]) / 3, cz = (rest[o + 2] + rest[o + 5] + rest[o + 8]) / 3;
-      if (cx > hx || cx < x1 || cy < ySill || cz * sd <= 0) continue; sel.push(t); hz = Math.max(hz, Math.abs(cz)); } }
-    if (!sel.length) return;
-    if (XC.glass && v.glassTris) { if (v.xt) { xtGlass(v, c, sd < 0 ? 'QL' : 'QR', 1, x, y, z, h, null); xtFlush(v); }   // (a table car's: its rear window 100 %, drawn now, before it turns)
-      else for (const P of xPanes(v)) if (!P.broken && P.side === sd && P.cx < hx && P.cx > x1 - 0.3) xBreakPane(v, P, c, x, y, z, h, null); }   // (its window breaks as it opens: turned with it after, it could not be broken any more)
-    const phi = sd * 40 * Math.PI / 180, cs = Math.cos(phi), sn = Math.sin(phi), Z = hz * sd;
-    for (const t of sel) for (let q = 0; q < 3; q++) { const i = t * 3 + q, dx = pa[i * 3] - hx, dz = pa[i * 3 + 2] - Z, nx = na[i * 3], nz = na[i * 3 + 2];
-      pa[i * 3] = hx + dx * cs + dz * sn; pa[i * 3 + 2] = Z - dx * sn + dz * cs; na[i * 3] = nx * cs + nz * sn; na[i * 3 + 2] = -nx * sn + nz * cs; dv[i] = 1; }
-    g.attributes.position.needsUpdate = true; g.attributes.normal.needsUpdate = true; K.xOpen = true; K.ver++;
   }
   // a car rolling over (the core's c.rl: Core.xRollStart): turned about its long axis round its middle, its full turns eased in and out (the
   // core lifts it in its arc); its contact shadow hidden; where its roof meets the road, dust and sparks
@@ -10996,7 +10976,6 @@ const Render = (function () {
       if (o.open === true) for (const n in U.ranges) if (/^(hood|trunk|tailgate|cover|door)/.test(n)) O[n] = KIT_LOOSE[n] ? KIT_LOOSE[n][1] : /^door/.test(n) ? 62 : 70;   // (the race's loose angles; a further door, a boot's second leaf: as its kind)
       if (!car.glassTris) car.glassTris = [0, 0, 0, 0]; if (!car.winBroken) car.winBroken = [0, 0, 0, 0];
       for (const n in O) if (U.ranges[n] && !car.kit.ajar[n]) kitLoosen(car, fk, n, O[n]);
-      if (o.rear !== false) for (const sd of [-1, 1]) if (car.kit.ajar[sd < 0 ? 'doorL' : 'doorR']) xRearDoor(car, fk, sd, 0, 0, 0, 0);
       car.opened = true; }
     let gh = null;   // o.ghost: [id, n] the garage's part alone, whole and solid, on the car drawn see-through (a hidden part under the bonnet, in a wheel arch)
     if (o.ghost && M.kit) { const part = deliMesh(M, o.ghost[0], o.ghost[1], o.color != null ? o.color : 0xc0392b); gh = { part, mats: [] };
