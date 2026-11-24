@@ -476,6 +476,16 @@ async function main() {
       const k = w.nds.indexOf(jn), seqs = []; if (k < w.nds.length - 1) seqs.push(w.nds.slice(k)); if (k > 0) seqs.push(w.nds.slice(0, k + 1).reverse());
       for (const seq of seqs) side.push({ w, seq }); if (mid > 0) break; } }
   const sideRoads = [], kinds = { residential: 0, unclassified: 0, tertiary: 0, secondary: 0, primary: 0, living_street: 0, road: 0, service: 1, track: 2 };
+  // a side road's half width (decision B2 of 24. 11. 2026, docs/realizem/paket-e.md): the rule of the roads for the look (tools/cesta/izvoz.py,
+  // side_width): its real width (OSM width, else lanes 3.25 m each, else its class's middle width, one-way 0.8 of it) at the scale of the
+  // track's own road (road_scale: its width in the game over its real width, the median over its ways; from 1.25 on, at most 2), 3-16 m
+  const SW = { service: 3.5, track: 3.5, residential: 5.5, unclassified: 5.5, living_street: 5.5, tertiary: 6.25, tertiary_link: 6.25, secondary: 7.25, secondary_link: 7.25, primary: 7.25, primary_link: 7.25, trunk: 7.25, trunk_link: 7.25 };
+  const num = (v) => { const t = String(v == null ? '' : v).trim(); return t !== '' && isFinite(+t) ? +t : NaN; };
+  const tagW = (t) => { const f = num(String(t.width || '').replace(/,/g, '.').trim().split(/\s+/)[0]); if (f >= 2.5 && f <= 30) return f; const l = num(String(t.lanes || '').split(';')[0]); return l >= 1 ? l * 3.25 : null; };
+  const kS = (() => { const real = [...new Map(Sway.map(w => [w.id, w.tags])).values()].map(t => tagW(t) ?? SW[t.highway] ?? (/^motorway(_link)?$/.test(t.highway) ? 7.5 : null)).filter(f => f != null).sort((a, b) => a - b);
+    if (!real.length || Sway.some(w => w.tags.highway === 'raceway')) return 1;
+    const m = real.length % 2 ? real[real.length >> 1] : (real[real.length / 2 - 1] + real[real.length / 2]) / 2, k = 2 * U.hw / m; return k >= 1.25 ? Math.round(Math.min(2, k) * 100) / 100 : 1; })();
+  const sideHw = (t) => { const f = tagW(t) ?? (SW[t.highway] ?? (t.highway === 'road' ? 5.5 : 3.5)) * (t.oneway === 'yes' ? 0.8 : 1); return Math.round(Math.round(Math.min(16, Math.max(3, f * kS)) * 10) / 10 * 50) / 100; };
   for (const { w, seq } of side) {
     const p = polyXZ(seq); if (p.length < 2) continue; const L0 = lineLen(p), kind0 = kinds[w.tags.highway] != null ? kinds[w.tags.highway] : 1;
     if (L0 < 45 || (kind0 === 1 && L0 < 80) || /driveway|parking_aisle|drive-through|alley|emergency_access/.test(w.tags.service || '')) continue;   // (the side roads that matter: no driveways, no stubs too short to drive into)
@@ -490,7 +500,12 @@ async function main() {
       for (let m = 1; m < q.length && m * 3 <= 15; m++) { const f = m * 3 / 15; q[m] = [q[0][0] + vx * m * 3 * (1 - f) + (q[m][0] - q[0][0]) * f, q[0][1] + vz * m * 3 * (1 - f) + (q[m][1] - q[0][1]) * f]; } ang = tgt * 180 / Math.PI; }
     q[0] = S[i].slice();
     const kind = kind0, grav = GRAVEL.test(w.tags.surface || '') || (w.tags.highway === 'track' && !/asphalt|concrete|paved/.test(w.tags.surface || '')) ? 1 : 0;
-    const L = Math.max(30, Math.min(L0 - 6, kind === 0 ? 90 : 60)), hwd = +w.tags.width ? Math.min(3.5, Math.max(2.2, +w.tags.width / 2)) : kind === 0 ? 3.0 : kind === 1 ? 2.4 : 2.2;
+    const L = Math.max(30, Math.min(L0 - 6, kind === 0 ? 90 : 60));
+    // one that runs on beside the track (25 m and more along it from the mouth) keeps the room between the two, 6 m from asphalt to asphalt,
+    // or the old rule's width if less (tools/cesta/izvoz.py, widths_b's room: Chapman's Peak, the road on the left beside the start, 24. 11. 2026)
+    const hw0 = +w.tags.width ? Math.min(3.5, Math.max(2.2, +w.tags.width / 2)) : kind === 0 ? 3.0 : kind === 1 ? 2.4 : 2.2;
+    let cMin = Infinity; for (let m = 1; m < q.length && m * 3 < L + 40; m++) { const g = near(q[m][0], q[m][1], 40); if (g.i >= 0 && Math.abs(g.i - i) * ds >= 25) cMin = Math.min(cMin, g.d - U.hw); }
+    const hwd = +Math.min(sideHw(w.tags), Math.max(hw0, cMin - 6)).toFixed(2);
     const endB = bld0.some(B => q.slice(0, Math.ceil(L / 3) + 2).some(([x, z]) => Math.hypot(x - B[0], z - B[1]) < Math.max(B[2], B[3]) / 2 + 6)) && L0 < 140 ? 2 : kind === 2 ? 1 : 0;
     const hs = [], h0 = HT.h[i] - base; let hp = h0; for (let m = 0; m < q.length && m * 3 < L + 40; m++) { let h = m ? at(q[m][0], q[m][1]) - base : h0; h = Math.max(hp - 0.45, Math.min(hp + 0.45, h)); hs.push(+q[m][0].toFixed(1), +q[m][1].toFixed(1), +h.toFixed(1)); hp = h; }
     sideRoads.push([s, sd, Math.round(ang), kind, grav, Math.round(L), endB, hwd, kind === 0 ? 1.2 : 1.6, '', hs]);

@@ -58,8 +58,9 @@ def fetch(box, raw, depth=0):
     os.replace(path + '.part', path); time.sleep(1.0)
     return [path]
 
-def parse(paths):
-    """Nodes (id -> lat, lon), tagged nodes (id -> tags) and ways with a highway tag (id -> node ids, tags); the name tags are dropped."""
+def parse(paths, houses=None):
+    """Nodes (id -> lat, lon), tagged nodes (id -> tags) and ways with a highway tag (id -> node ids, tags); the name tags are dropped.
+    With a dict for houses, the closed ways with a building tag go into it too (id -> node ids; the cut at the houses of tools/cesta/izvoz.py)."""
     nodes, tagged, ways = {}, {}, {}
     for p in paths:
         for _, el in ET.iterparse(p, events=('end',)):
@@ -71,6 +72,9 @@ def parse(paths):
             elif el.tag == 'way':
                 t = {c.get('k'): c.get('v') for c in el if c.tag == 'tag' and not c.get('k').startswith(('name', 'ref', 'operator', 'brand', 'wikidata', 'wikipedia'))}
                 if 'highway' in t: ways[int(el.get('id'))] = ([int(c.get('ref')) for c in el if c.tag == 'nd'], t)
+                elif houses is not None and t.get('building', 'no') != 'no':
+                    refs = [int(c.get('ref')) for c in el if c.tag == 'nd']
+                    if len(refs) > 3 and refs[0] == refs[-1]: houses[int(el.get('id'))] = refs
                 el.clear()
             elif el.tag == 'relation': el.clear()
     return nodes, tagged, ways

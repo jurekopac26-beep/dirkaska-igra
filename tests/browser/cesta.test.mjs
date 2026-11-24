@@ -120,12 +120,12 @@ try {
   T.check('Tianmen: the broken edge shows from the chase camera (the picture changes without it, and only with it: the same frame twice the same picture)',
     tPic.plain > tPic.px * 0.002 && tPic.same <= tPic.px * 0.002 && tPic.back <= tPic.px * 0.002, JSON.stringify(tPic));
 
-  // OpenStreetMap's bus stop (package E1): the map has no road beside this one that a car could take and no street lamps, only the stop
-  const tS = await page.evaluate(() => { const W = Render.world, T = window.__game.race.track, d = T.def.postaje || [], p = W.postaja; let m = 1e9, mi = 0;
-    if (p) for (let i = 0; i < T.N; i++) { const q = (p[0] - T.px[i]) ** 2 + (p[2] - T.pz[i]) ** 2; if (q < m) { m = q; mi = i; } }
-    return { osm: d.length, side: (T.def.stranske || []).length, stops: W.stats.stops, d: +Math.sqrt(m).toFixed(1), bar: p ? +Math.min(T.bl[mi], T.br[mi]).toFixed(1) : 0, dy: p ? +(p[1] - T.hy[mi]).toFixed(2) : 9, mouths: (W.cestaRob || []).filter(u => u[2] !== 0).length }; });
-  T.check('Tianmen: OpenStreetMap\'s bus stop for the look (a pole behind the barrier, on ground about level with the road); no side roads (the map has none)',
-    tS.osm === 1 && tS.stops === 1 && tS.side === 0 && tS.mouths === 0 && tS.d >= tS.bar + 0.5 && Math.abs(tS.dy) <= 1.5, JSON.stringify(tS));
+  // OpenStreetMap's bus stop: the roadside of main draws it (def.obcestje.stop, js/world-tianmen.js); this package draws none there (no
+  // def.postaje, no W.postaja: decision e-obcestje pending, docs/vprasanja.md), and the map has no road beside this one that a car could take
+  const tS = await page.evaluate(() => { const W = Render.world, T = window.__game.race.track;
+    return { osm: ((T.def.obcestje || {}).stop || []).length, own: (T.def.postaje || []).length, postaja: !!W.postaja, obc: W.stats.side || 0, side: (T.def.stranske || []).length, mouths: (W.cestaRob || []).filter(u => u[2] !== 0).length }; });
+  T.check('Tianmen: OpenStreetMap\'s bus stop drawn once, by the roadside of main (def.obcestje), none of this package; no side roads (the map has none)',
+    tS.osm === 1 && tS.own === 0 && !tS.postaja && tS.obc >= 1 && tS.side === 0 && tS.mouths === 0, JSON.stringify(tS));
 
   await startTrack(page, 'livorno');
   const liv = await look(page);
@@ -194,8 +194,10 @@ try {
     return { n: W.stranske, osm: LV_DATA.side.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, worst: +worst.toFixed(2),
       lamps: W.stats.lamps, osmLamps: LV_DATA.lamps.length, stops: W.stats.stops, osmStops: LV_DATA.stops.length, posts: W.stats.mouthPosts, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   });
-  T.check('Livorno: OpenStreetMap\'s side roads for the look (a strip of asphalt through an opening in the wall at each mouth, the mouths 3 to 40 m wide, a row of orange posts across each opening), its street lamps and bus stops behind the fence; the track\'s model as a track built alone has it',
-    sr.n >= sr.osm * 0.8 && sr.n <= sr.osm && sr.mouths === sr.n && sr.wMin >= 3 && sr.wMax <= 40 && sr.strips >= 1 && sr.stripV > sr.n * 20 && sr.stripV <= liv.verts * 0.1 && sr.far === 0 &&
+  // (up to 45 m: the builder's reach of 30 m to the fence line, decision of 24. 11. 2026, point 3, lets in a street that leaves the
+  // main road at a shallow angle, the row at 3199 m on the right, 8.8 m wide, its mouth on the asphalt 40.4 m long)
+  T.check('Livorno: OpenStreetMap\'s side roads for the look (a strip of asphalt through an opening in the wall at each mouth, the mouths 3 to 45 m wide, a row of orange posts across each opening), its street lamps and bus stops behind the fence; the track\'s model as a track built alone has it',
+    sr.n >= sr.osm * 0.8 && sr.n <= sr.osm && sr.mouths === sr.n && sr.wMin >= 3 && sr.wMax <= 45 && sr.strips >= 1 && sr.stripV > sr.n * 20 && sr.stripV <= liv.verts * 0.1 && sr.far === 0 &&
     sr.lamps >= sr.osmLamps * 0.75 && sr.lamps <= sr.osmLamps && sr.stops >= sr.osmStops * 0.85 && sr.stops <= sr.osmStops && sr.posts >= sr.n * 2 && sr.posts <= sr.n * 27 && sr.model, JSON.stringify(sr));
 
   // the posts across the openings: evenly along the fence line, each on the surface drawn under it, none near the road's asphalt
@@ -243,7 +245,9 @@ try {
       if (o.userData.stranska) { strips++; for (let k = 0; k < A.count; k++) V.push(A.getX(k), A.getZ(k)); }
       else if (o.material && !Array.isArray(o.material) && o.material.userData.cesta === 'barva') for (let k = 0; k < A.count; k++) L.push(A.getX(k), A.getZ(k)); });
     for (const [a, b, sd] of M) { let m = 1e9;
-      for (let j = 0; j <= 8; j++) { const i = T.idx(a + (b - a) * j / 8), o = sd * (sd > 0 ? T.br[i] : T.bl[i]), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
+      // (the opening in the barrier: where the road's edges cross the fence line, which a road leaving at a slant meets some metres on from
+      // the mouth on the asphalt, up to the builder's reach of 30 m: decision of 24. 11. 2026, point 3)
+      const nj = Math.ceil(b - a + 60); for (let j = 0; j <= nj; j++) { const i = T.idx(a - 30 + (b - a + 60) * j / nj), o = sd * (sd > 0 ? T.br[i] : T.bl[i]), x = T.px[i] + T.nx[i] * o, z = T.pz[i] + T.nz[i] * o;
         for (let k = 0; k < V.length; k += 2) { const d = (V[k] - x) ** 2 + (V[k + 1] - z) ** 2; if (d < m) m = d; } }
       if (Math.sqrt(m) > 4.5) far++;
       const i0 = Math.floor(a / T.ds) - 8, i1 = Math.ceil(b / T.ds) + 8, ic = T.idx((a + b) / 2); let pre = 0, mid = 0, post = 0;
@@ -256,6 +260,10 @@ try {
     return { n: W.stranske, osm: T.def.stranske.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, open, posts: P.length / 4, rows: rows.size, road: +road.toFixed(1),
       stat: [W.stats.stranske, W.stats.stebricki], lamps: [W.stats.svetilke || 0, (T.def.svetilke || []).length], model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   }, id);
+  // (a track whose roads off the track main's roadside draws, js/world-<id>-obcestje.js: the export leaves their rows out of the track's
+  // data, decision e-obcestje pending, so this package builds none there: no strip, no mouth, no post)
+  const noRoads = (name, q, posts) => T.check(`${name}: no side road of this package (main's roadside draws the roads off the track there): no row in the track's data, no strip, no mouth, no post; the track's model as a track built alone has it`,
+    !q.n && q.mouths === 0 && q.strips === 0 && !posts && q.model, JSON.stringify(q));
   await startTrack(page, 'nring');
   const nq = await sideQ('nring');
   T.check('Nürburg: OpenStreetMap\'s access roads for the look (a strip through an opening in the rail at each mouth, the mouths 3 to 40 m wide, a row of orange posts across each, none within 2 m of the asphalt; the circuit\'s edge line runs on across every mouth); the track\'s model as a track built alone has it',
@@ -338,6 +346,7 @@ try {
         worldV: verts, far, worst: +worst.toFixed(2), posts: W.stats.stebricki, stats: W.stats.stranske, whole, broken, paint: !!(line && line.isMeshLambertMaterial && !line.map && line !== W.asphaltMat),
         model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
     }, id);
+    if (!ps.osm) { noRoads(name, ps, ps.posts); continue; }   // (Medeu: js/world-medeu-obcestje.js)
     T.check(`${name}: OpenStreetMap's side roads for the look (each drawn: a strip of asphalt through an opening in the rail at each mouth, 3 to 40 m wide, a row of orange posts across it); the white edge line broken across each mouth and whole beside it; the track's model as a track built alone has it`,
       ps.osm >= 3 && ps.n === ps.osm && ps.stats === ps.n && ps.mouths === ps.n && ps.wMin >= 3 && ps.wMax <= 40 && ps.strips >= 1 && ps.stripV > ps.n * 20 && ps.stripV <= ps.worldV * 0.05 && ps.far === 0 &&
       ps.posts >= ps.n * 2 && ps.posts <= ps.n * 27 && ps.whole === ps.n && ps.broken === ps.n && ps.paint && ps.model, JSON.stringify(ps));
@@ -388,6 +397,7 @@ try {
         posts: n, stats: W.stats.stebricki, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), bar: +bar.toFixed(2), road: +road.toFixed(2), none, fl: +fl.toFixed(3), sk: +sk.toFixed(3),
         open: !!T.open, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])), drzava: dr, crte: !!World.cesta.CRTE[dr] };
     }, id);
+    if (!q.osm) { noRoads(id, q, q.posts); continue; }   // (Gudauri: js/world-gudauri-obcestje.js)
     T.check(`${id}: OpenStreetMap's side roads for the look (a strip through each mouth 3 to 40 m wide, a row of posts across each, 1 to 2.2 m apart, standing on the surface drawn under them or set into it by at most 25 cm, every post behind the barriers of each leg of the road near it or reaching them by at most its radius, at least ${q.open ? '1.5' : '2'} m from the asphalt; no lines of ${q.drzava}'s own: no paint), the track's model as a track built alone has it`,
       q.n >= 1 && q.n >= q.osm * 0.8 && q.n <= q.osm && q.mouths === q.n && q.wMin >= 3 && q.wMax <= 40 && q.strips >= 1 && q.stripV > q.n * 20 && q.stripV <= q.verts * 0.1 && q.far === 0 &&
       q.posts === q.stats && q.rows === q.n && q.lone === 0 && q.gMin >= 1 && q.gMax <= 2.2 && q.none === 0 && q.fl <= 0.03 && q.sk <= 0.25 && q.bar > -0.1 && q.road >= (q.open ? 1.5 : 2) && q.model && !q.crte, JSON.stringify(q));
@@ -436,8 +446,9 @@ try {
     return { n: W.stranske, osm: T.def.stranske.length, mouths: M.length, wMin: +Math.min(...wid).toFixed(1), wMax: +Math.max(...wid).toFixed(1), strips, stripV: V.length / 2, far, gravel, broken, through, sidePaint,
       posts: P.length / 4, rows: rows.size, road: +road.toFixed(1), stat: [W.stats.stranske, W.stats.stebricki], model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
   }, id);
-  // (Izoard has none: its one road, a track at its real width, meets the barrier's line beyond the builder's 22 m and the export leaves it out, #1025)
-  for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 85, true], ['kagerod', 'Kågeröd', false, 11, false], ['kildare', 'Kildare', false, 4, false]]) {
+  // (Izoard has none: its one road, a track at its real width, meets the barrier's line 22.5 m in, and the decision of 24. 11. 2026, point 3, leaves it out, #1025;
+  // Hakone 45 or more: the export cuts a road where it reaches a house of OpenStreetMap and leaves out one too short then, 24. 11. 2026, point 5)
+  for (const [id, name, open, min, paint] of [['hakone', 'Hakone', true, 45, true], ['kagerod', 'Kågeröd', false, 11, false], ['kildare', 'Kildare', false, 4, false]]) {
     await startTrack(page, id);
     const q = await stranskeQ(id);
     T.check(name + ': OpenStreetMap\'s side roads for the look (' + min + ' or more, at most the track\'s rows: those under a braking board or off the edges left out), a strip from each mouth (3 to 40 m wide) to the asphalt\'s edge, the posts across every mouth 2 m or more off the asphalt, the stats, the track\'s model untouched',
@@ -448,7 +459,8 @@ try {
   // the side roads of OpenStreetMap for the look on the tracks of the group 569d (docs/realizem/paket-e.md »569d«): Pembrey (a circuit) and
   // Porto Moniz (an open road): every row of the track's data built, a strip through each opening, a row of posts across it on the fence line
   // (evenly, on the surface under it, off the road's asphalt), Porto Moniz's bus stops; the track's model as a track built alone has it (Sa
-  // Calobra has none since the export stops a road at the edge of World.gore's car park: its one road ran across the car park, #1025)
+  // Calobra has none since the export stops a road at the edge of World.gore's car park: its one road ran across the car park, #1025;
+  // Pembrey's roads off the circuit main's roadside draws, js/world-pembrey-obcestje.js: none of this package there)
   for (const id of ['pembrey', 'portomoniz']) {
     await startTrack(page, id);
     const sv = await look(page);
@@ -493,6 +505,7 @@ try {
         posts: W.stats.stebricki, pn: n, prow: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), road: +road.toFixed(2), none, off: +off.toFixed(3),
         stops: W.stats.stops || 0, stops0: (def.postaje || []).length, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
     }, id);
+    if (!s5.rows0) { noRoads(id, s5, s5.posts); continue; }
     T.check(id + ': OpenStreetMap\'s side roads for the look (every row of the track\'s data, a strip of asphalt through an opening at each mouth, the mouths 3 to 40 m wide), its bus stops behind the barrier\'s line; the track\'s model as a track built alone has it',
       s5.n === s5.rows0 && s5.n >= 1 && s5.mouths === s5.n && s5.wMin >= 3 && s5.wMax <= 40 && s5.strips >= 1 && s5.stripV > s5.n * 20 && s5.stripV <= sv.verts * 0.05 && s5.far === 0 &&
       s5.stops === s5.stops0 && s5.model, JSON.stringify(s5));
@@ -672,8 +685,8 @@ try {
         posts: n, stats: (W.stats && W.stats.stebricki) || 0, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), inst, which, rays, hit, what, painted, onAsph, lum: nc ? +(lum / nc).toFixed(3) : 0,
         model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])), drzava: dr, crte: !!World.cesta.CRTE[dr] };
     }, id);
-    const want = { canaries: [8, 'Saint Lucia: no published rule for a mouth\'s lines'], kanaba: [3, 'Uganda: its side roads unpaved in OpenStreetMap, gravel'],
-      koli: [3, 'Finland\'s winter: its roads under snow, as its own road'], aguascalientes: [0, ''] }[id];
+    const want = { canaries: [8, 'Saint Lucia: no published rule for a mouth\'s lines'], kanaba: [4, 'Uganda: its side roads unpaved in OpenStreetMap, gravel'],
+      koli: [4, 'Finland\'s winter: its roads under snow, as its own road'], aguascalientes: [0, ''] }[id];
     if (q.osm) T.check(`${id}: OpenStreetMap's side roads by the road (${q.n} of ${q.osm}; the builder drops a road it finds no mouth for), each a strip through its mouth, a row of posts across it, nothing of the world's on it past the fence line, the track's model untouched, no paint (${want[1]})` +
       ({ koli: ', packed snow on the ground\'s material, not the asphalt', kanaba: ', pale gravel, not grey asphalt' }[id] || ''),
       q.n === want[0] && q.n <= q.osm && q.mouths === q.n && q.wMin >= 3 && q.wMax <= 40 && q.strips >= 1 && q.stripV > q.n * 20 && q.stripV <= q.verts * 0.1 && q.far === 0 &&
@@ -686,12 +699,13 @@ try {
 
   // the side roads of OpenStreetMap for the look on the tracks of group 762b (docs/realizem/paket-e.md »762b«): Koror and Savusavu (open
   // roads, js/world-prelaz.js) and Quezaltepeque (a circuit, js/world-rbring.js; its rows are tracks of the venue): every row of the track's
-  // data built (as many as js/tracks/ holds today, 10, 8 and 2), a strip through an opening at each mouth, a row of orange posts across it
+  // data built (as many as js/tracks/ holds today, 1, 0 and 2: the others main's roadside draws, js/world-koror-obcestje.js and
+  // js/world-savusavu-obcestje.js), a strip through an opening at each mouth, a row of orange posts across it
   // on the fence line (evenly, two or more, on the surface drawn under it, off the road's asphalt); on the passes the white edge line broken
   // across each mouth (a ray down at the line's place in the mouth's middle meets no paint) and whole beside it (12 m before or after the
   // mouth it meets the paint's material); no paint at a mouth (Palau's and Fiji's rows in CRTE hold the main road's lines only, El Salvador
   // has none); the track's model as a track built alone has it; no errors
-  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 10], ['savusavu', 'Savusavu', 0.375, 8], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
+  for (const [id, name, rob, least] of [['koror', 'Koror', 0.375, 1], ['savusavu', 'Savusavu', 0.375, 0], ['quezaltepeque', 'Quezaltepeque', 0, 2]]) {
     await startTrack(page, id);
     const sx = await page.evaluate(([id, rob]) => {
       const W = Render.world, T = window.__game.race.track, F = new Core.Track(Core.TRACKS.find(d => d.id === id));
@@ -735,6 +749,7 @@ try {
         worldV: verts, far, worst: +worst.toFixed(2), posts: W.stats.stebricki, np, rows: rows.size, lone, gMin: +gMin.toFixed(2), gMax: +gMax.toFixed(2), road: +road.toFixed(1), none, off: +off.toFixed(3),
         whole, broken, paint, model: ['px', 'pz', 'hy', 'nx', 'nz', 'bl', 'br'].every(k => same(T[k], F[k])) };
     }, [id, rob]);
+    if (!sx.osm) { noRoads(name, sx, sx.posts); continue; }
     T.check(`${name}: OpenStreetMap's side roads for the look (every row of the track's data: a strip of asphalt through an opening at each mouth, 3 to 40 m wide, a row of orange posts across it, evenly on the fence line, each on the surface drawn under it, none within 1 m of the road's asphalt)${rob ? '; the white edge line broken across each mouth and whole beside it' : ''}; the track's model as a track built alone has it`,
       sx.osm >= least && sx.n === sx.osm && sx.stats === sx.n && sx.mouths === sx.n && sx.wMin >= 3 && sx.wMax <= 40 && sx.strips >= 1 && sx.stripV > sx.n * 20 && sx.stripV <= sx.worldV * 0.05 && sx.far === 0 &&
       sx.posts === sx.np && sx.posts >= sx.n * 2 && sx.posts <= sx.n * 27 && sx.rows === sx.n && sx.lone === 0 && sx.gMin >= 1 && sx.gMax <= 2.2 && sx.none === 0 && sx.off <= 0.03 && sx.road >= 1 &&
